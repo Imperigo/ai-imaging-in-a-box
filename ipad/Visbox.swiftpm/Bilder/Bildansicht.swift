@@ -264,7 +264,9 @@ struct Bildansicht: View {
             VStack(alignment: .leading, spacing: 6) {
                 Abschnittstitel(text: "Hinweise der Bildstufe")
                 // DREI ANTWORTEN: nicht gemessen (`nil`), gemessen ohne Hinweis (`[]`), und
-                // die Hinweise selbst, unverändert.
+                // die Hinweise selbst, unverändert. Dazu seit dem 23.09.2026 eine vierte Lage:
+                // Die Liste kam, ist aber nicht lesbar (`hinweiseLage`) — das ist nicht
+                // «nicht gemessen».
                 if let hinweise = aktuell.angaben.hinweise {
                     if hinweise.isEmpty {
                         Text("Gemessen, ohne Hinweis.")
@@ -276,10 +278,28 @@ struct Bildansicht: View {
                             .font(Schrift.text(13))
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                } else if aktuell.angaben.hinweiseLage == .nichtLesbar {
+                    Text("Nicht lesbar — die Bildstufe hat Hinweise geschickt, aber mindestens einer ist kein Text. Darum steht hier keiner, auch nicht die übrigen.")
+                        .font(Schrift.text(13))
+                        .foregroundStyle(Zeichenblatt.leise)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text("Nicht gemessen — die Bildstufe hat zu diesem Bild nichts gemeldet.")
                         .font(Schrift.text(13))
                         .foregroundStyle(Zeichenblatt.leise)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            // DER SATZ ZUR UNTERLAGE (23.09.2026): «gestreckt» oder «auf Grau» ändert, was das
+            // Bild bedeutet. Der Server hängt ihn an `hinweise` nur, wenn dort eine Liste
+            // steht; sonst kommt er allein in `unterlage_hinweis`. Der Kern gibt ihn nur her,
+            // wenn er nicht schon oben steht (`Mappenbild.unterlageHinweisEigens`).
+            if let satz = aktuell.angaben.unterlageHinweisEigens {
+                VStack(alignment: .leading, spacing: 6) {
+                    Abschnittstitel(text: "Zur Unterlage")
+                    Text(satz)
+                        .font(Schrift.text(13))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

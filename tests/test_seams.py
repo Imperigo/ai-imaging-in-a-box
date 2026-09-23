@@ -551,11 +551,17 @@ def test_richtungskuerzel_wird_durchgereicht():
     assert kommando[kommando.index("--kamera") + 1] == "nNE"
 
 
-def test_fertige_koordinaten_schlagen_das_kuerzel():
-    """Wer selbst gerechnet hat, hat den Vortritt — sonst rechnete der Runner nochmal."""
+def test_fertige_koordinaten_und_kuerzel_zugleich_werden_abgewiesen():
+    """Bis zum 23.09.2026 hiess dieser Test «fertige Koordinaten schlagen das Kürzel» —
+    und hielt damit genau die stille Vorrangregel fest, die die Kette seit dem 22.09.2026
+    abweist: Das Kürzel fiel weg, ohne dass es irgendwo stand. Seither weist auch die
+    Naht ab. Die Gegenprobe (Koordinaten allein) steht darunter."""
+    with pytest.raises(SeamError, match="Standpunkt zweimal bestellt"):
+        baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                kamera="n", auge=(1.0, -2.0, 1.7),
+                                blick_auf=(0.0, 0.0, 5.0))
     kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
-                                       kamera="n", auge=(1.0, -2.0, 1.7),
-                                       blick_auf=(0.0, 0.0, 5.0))
+                                       auge=(1.0, -2.0, 1.7), blick_auf=(0.0, 0.0, 5.0))
     assert "--kamera" not in kommando
     assert "--auge=1.0,-2.0,1.7" in kommando
     assert "--blick-auf=0.0,0.0,5.0" in kommando

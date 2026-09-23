@@ -114,7 +114,8 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         Feld, das drüben niemand liest.
 
     Raises:
-        QUELLEN_FEHLER: Verzeichnis oder Auftragsdatei fehlen oder sind unlesbar.
+        QUELLEN_FEHLER: Verzeichnis oder Auftragsdatei fehlen oder sind unlesbar — oder
+            der Auftrag ergibt keine lesbare Szene.
     """
     ordner = Path(verzeichnis)
     if not ordner.is_dir():
@@ -138,7 +139,22 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         raise QUELLEN_FEHLER(f"Auftrag nicht als Szene lesbar: {fehler}") from fehler
     warnungen.extend(uebersetzt["hinweise"])
 
-    szene = kosmo_szene.lies_szene(uebersetzt["szene"])
+    # EINE UNLESBARE SZENE IST EIN FEHLER DIESES AUFTRAGS, nicht des Durchgangs
+    # (Befund 23.09.2026). Der Abholer faengt nur QUELLEN_FEHLER; was `lies_szene` sonst
+    # wirft, riss `hole_einen` und mit ihm `durchgang` heraus, und kein weiterer Auftrag
+    # der Ablage wurde angesehen. Nachgestellt ueber den MCP-Einlass: `samples: "viele"`
+    # wird angenommen und auf `queued` gesetzt, und `lies_szene` wirft dann ValueError
+    # aus `int(...)` — der Weg, der heute wirklich erreichbar ist. `SzenenError` ist es
+    # heute nicht (`kosmo_naht.als_render_scene` baut stets einen Geometrieblock), sie
+    # steht fuer eine kuenftige Uebersetzung. Beide bewacht in
+    # tests/test_runde7_abholer.py. Dasselbe Vorbild wie `NahtError` direkt darueber.
+    # `SzenenError` erbt von ValueError; sie steht der Lesbarkeit halber ausdruecklich
+    # da — ein Waechter kann ihr Fehlen im Tupel nicht bemerken.
+    try:
+        szene = kosmo_szene.lies_szene(uebersetzt["szene"])
+    except (kosmo_szene.SzenenError, ValueError, TypeError) as fehler:
+        raise QUELLEN_FEHLER(
+            f"Szene nicht lesbar: {type(fehler).__name__}: {fehler}") from fehler
     warnungen.extend(szene["warnungen"])
     maengel.extend(szene["maengel"])
 

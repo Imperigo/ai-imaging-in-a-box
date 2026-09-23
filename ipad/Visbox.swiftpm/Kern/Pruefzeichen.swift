@@ -451,8 +451,13 @@ public struct Mappenbild: Equatable, Sendable {
     public let entwurf: Bool?
     public let variantengruppe: Variantengruppe?
     /// Die Hinweise der Bildstufe. `[]` heisst gemessen und ohne Hinweis, **`nil` heisst
-    /// nicht gemessen.**
+    /// nicht gemessen — oder nicht lesbar**; welches von beiden, sagt `hinweiseLage`.
     public let hinweise: [String]?
+    /// Wie `hinweise` stand. `nichtLesbar` heisst: Der Server schickte eine Liste, aber
+    /// mindestens ein Eintrag ist kein Text (oder das Feld ist keine Liste). Dann ist die
+    /// ganze Liste `nil` — und die Bildansicht sagt «nicht lesbar», nicht «nicht gemessen».
+    /// Bis zum 23.09.2026 fiel ein solcher Eintrag still weg.
+    public let hinweiseLage: Listenlage
     /// Drei Antworten: `true` (die Skizze kam beim Modell nicht an), `false` (kam an),
     /// `nil` (kein Skizzenbild oder nicht gemessen).
     public let skizzeNichtAngekommen: Bool?
@@ -468,6 +473,17 @@ public struct Mappenbild: Equatable, Sendable {
     /// Produkt nie zu sehen (Durchsicht der Verdrahtung vom 22.09.2026). Die Bytes holt die
     /// App-Schicht über `GET /bild` unter genau diesem Namen.
     public let vorher: String?
+    /// **Der Satz zur Unterlage** (`unterlage_hinweis`, seit dem 23.09.2026): dass die Skizze
+    /// **gestreckt** auf ihr Bild gesetzt oder **ohne Unterlage auf Grau** gerechnet wurde —
+    /// der `grund` der Bibliothek, unverändert. `nil`: nichts dazu zu sagen, oder ein Server,
+    /// der das Feld nicht führt. Ein leerer Satz gilt wie keiner.
+    ///
+    /// Der Server hängt denselben Satz, wortgleich, **auch** hinten an `hinweise` — aber nur,
+    /// wenn `hinweise` eine Liste ist (`_hinweise_zum_bild` in `oberflaeche/server.py`,
+    /// nachgelesen am 23.09.2026). Bei `hinweise: null` trägt ihn dieses Feld allein; bis
+    /// zum 23.09.2026 las die App es nicht, und der Satz ging dort verloren. Gezeigt wird er
+    /// über `unterlageHinweisEigens`.
+    public let unterlageHinweis: String?
 
     public init(_ o: [String: JSONWert]) {
         bild = o["bild"]?.alsText
@@ -484,12 +500,31 @@ public struct Mappenbild: Equatable, Sendable {
         }
         entwurf = o["entwurf"]?.alsWahrheit
         variantengruppe = o["variantengruppe"]?.alsObjekt.map(Variantengruppe.init)
-        hinweise = o["hinweise"]?.alsListe?.compactMap { $0.alsText }
+        // GANZ ODER GAR NICHT (23.09.2026): ein Hinweis, der kein Text ist, macht die Liste
+        // `nil` mit der Lage `nichtLesbar` — nicht still einen Hinweis weniger.
+        let h = JSONWert.ganzOderNicht(o["hinweise"]) { $0.alsText }
+        hinweise = h.liste
+        hinweiseLage = h.lage
         skizzeNichtAngekommen = o["skizze_nicht_angekommen"]?.alsWahrheit
         skizzeHinweis = o["skizze_hinweis"]?.alsText
         vorher = o["vorher"]?.alsText.flatMap {
             $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
         }
+        unterlageHinweis = o["unterlage_hinweis"]?.alsText.flatMap {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
+        }
+    }
+
+    /// Der Satz zur Unterlage, **wenn er nicht schon unter den Hinweisen steht** — sonst `nil`.
+    ///
+    /// Die Bildansicht zeigt die Hinweise Wort für Wort und darunter diesen Satz; stünde er
+    /// in beiden, stünde er zweimal da. Verglichen wird wortgleich, wie der Server und die
+    /// Webseite es tun (`oberflaeche/seite.html`: `hinweise.includes(unterlage_hinweis)`).
+    /// Sind die Hinweise nicht gemessen oder nicht lesbar, kommt der Satz hier — er hängt
+    /// nicht an der Bildstufe. Bewacht: `PruefzeichenTests.testDerSatzZurUnterlage…`.
+    public var unterlageHinweisEigens: String? {
+        guard let satz = unterlageHinweis else { return nil }
+        return (hinweise ?? []).contains(satz) ? nil : satz
     }
 
     /// Wie das Bild ohne eigenen Schalter gelesen wird: **Ein Entwurf als Entwurf** (das
@@ -573,15 +608,52 @@ public struct Mappenlage: Equatable, Sendable {
     /// Die Standnummer (§6) — `nil` bei einer Mappe, die sie nicht führt. Geht als
     /// `von_stand` an `POST /api/benennen`.
     public let standNr: Int?
-    /// `nil` heisst **nicht geliefert** — nicht «keine Bilder».
+    /// `nil` heisst **nicht geliefert oder nicht lesbar** — nicht «keine Bilder». Welches von
+    /// beiden, sagt `bilderLage`.
     public let bilder: [Mappenbild]?
     public let skizzen: [Mappenskizze]?
+    /// Wie die beiden Listen standen. Ein Eintrag, der kein Objekt ist, macht die ganze
+    /// Liste `nil` und die Lage `nichtLesbar` (23.09.2026; bis dahin fiel er still weg, und
+    /// die Mappe zeigte ein Bild weniger, als der Server schickte).
+    public let bilderLage: Listenlage
+    public let skizzenLage: Listenlage
 
     public init(_ o: [String: JSONWert]) {
         name = o["name"]?.alsText
         standNr = o["stand_nr"]?.alsGanz
-        bilder = o["bilder"]?.alsListe?.compactMap { $0.alsObjekt.map(Mappenbild.init) }
-        skizzen = o["skizzen"]?.alsListe?.compactMap { $0.alsObjekt.map(Mappenskizze.init) }
+        let b = JSONWert.ganzOderNicht(o["bilder"]) { $0.alsObjekt.map(Mappenbild.init) }
+        bilder = b.liste
+        bilderLage = b.lage
+        let s = JSONWert.ganzOderNicht(o["skizzen"]) { $0.alsObjekt.map(Mappenskizze.init) }
+        skizzen = s.liste
+        skizzenLage = s.lage
+    }
+
+    /// **Was die Mappe über ihre beiden Listen sagen muss** — oder `nil`, wenn es nichts zu
+    /// sagen gibt. Drei Lagen, drei Sätze: Eine nicht gelieferte Bilderliste ist nicht
+    /// dasselbe wie eine nicht lesbare, und keine von beiden ist eine leere.
+    ///
+    /// Eine nicht gelieferte Skizzenliste bekommt hier keinen Satz: Die Skizzenliste der App
+    /// sagt dann selbst, dass sie nicht geladen ist. Bewacht:
+    /// `PruefzeichenTests.testDieMappeSagtNichtLesbarUndNichtLeer`.
+    public var listensatz: String? {
+        var saetze: [String] = []
+        switch bilderLage {
+        case .nichtGeliefert:
+            saetze.append("Die HomeStation hat keine Bilderliste mitgeschickt.")
+        case .nichtLesbar:
+            saetze.append("Die Bilderliste der Mappe ist nicht lesbar: Mindestens ein Eintrag "
+                + "hat nicht die Form eines Bildes. Aus dieser Liste ist darum keines gezeigt, "
+                + "auch nicht die übrigen.")
+        case .gelesen:
+            break
+        }
+        if skizzenLage == .nichtLesbar {
+            saetze.append("Die Skizzenliste der Mappe ist nicht lesbar: Mindestens ein Eintrag "
+                + "hat nicht die Form einer Skizze. Aus dieser Liste ist darum keine gezeigt, "
+                + "auch nicht die übrigen.")
+        }
+        return saetze.isEmpty ? nil : saetze.joined(separator: " ")
     }
 
     public static func lies(status: Int, daten: Data) throws -> Mappenlage {

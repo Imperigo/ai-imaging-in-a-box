@@ -429,8 +429,7 @@ final class PruefzeichenTests: XCTestCase {
            {"bild": "a.png", "zeichen": "bestanden", "titel": "  ",
             "variantengruppe": {"id": "g1", "art": "startwerte", "nummer": 2, "von": 3, "seed": 43}},
            {"bild": "b.png", "zeichen": "nicht-gemessen", "titel": "Attika",
-            "variantengruppe": {"id": "g2", "art": "ebenen", "nummer": 1, "von": 2, "skizze": "s1.png"}},
-           "kein Objekt"],
+            "variantengruppe": {"id": "g2", "art": "ebenen", "nummer": 1, "von": 2, "skizze": "s1.png"}}],
          "skizzen": [
            {"skizze": "s1.png", "stand": "offen", "titel": null, "bemerkung": "Ebene 1"},
            {"skizze": "s2.png", "stand": "gerechnet", "ergebnis": "b.png", "titel": "Zwei"},
@@ -439,7 +438,10 @@ final class PruefzeichenTests: XCTestCase {
         let lage = try Mappenlage.lies(status: 200, daten: Data(antwort.utf8))
         XCTAssertEqual(lage.standNr, 12)
         XCTAssertEqual(lage.name, "Testkörper")
-        XCTAssertEqual(lage.bilder?.count, 2, "was kein Objekt ist, ist kein Bild")
+        XCTAssertEqual(lage.bilder?.count, 2)
+        XCTAssertEqual(lage.bilderLage, .gelesen)
+        XCTAssertEqual(lage.skizzenLage, .gelesen)
+        XCTAssertNil(lage.listensatz, "beide Listen gelesen — nichts zu sagen")
         XCTAssertNil(lage.bilder?[0].titel, "ein leerer Name ist kein Name")
         XCTAssertEqual(lage.bilder?[1].titel, "Attika")
         let g = lage.bilder?[0].variantengruppe
@@ -459,10 +461,146 @@ final class PruefzeichenTests: XCTestCase {
         XCTAssertNil(ohne.bilder)
         XCTAssertNil(ohne.skizzen)
         XCTAssertNil(ohne.standNr)
+        XCTAssertEqual(ohne.bilderLage, .nichtGeliefert)
+        XCTAssertEqual(ohne.skizzenLage, .nichtGeliefert)
         XCTAssertThrowsError(try Mappenlage.lies(
             status: 404, daten: Data(#"{"fehler": "Kein Projekt."}"#.utf8))) { f in
             XCTAssertEqual((f as? Serverfehler)?.satz, "Kein Projekt.")
         }
+    }
+
+    // ------------------------------------------- Listen ganz oder gar nicht (23.09.2026)
+
+    private func lage(_ json: String) throws -> Mappenlage {
+        try Mappenlage.lies(status: 200, daten: Data(json.utf8))
+    }
+
+    /// **Ein Bild, das kein Objekt ist, macht die ganze Bilderliste `nil`** — nicht eine
+    /// Mappe mit einem Bild weniger. Bis zum 23.09.2026 fiel es still weg, und die Mappe
+    /// zeigte drei Bilder, wo der Server vier schickte.
+    func testEinUnlesbarerEintragMachtDieBilderlisteNil() throws {
+        let a = #"{"bild": "a.png", "zeichen": "bestanden"}"#
+        for fremd in ["\"b.png\"", "7", "null", "[\(a)]"] {
+            let l = try lage(#"{"bilder": ["# + a + ", " + fremd + #"], "skizzen": []}"#)
+            XCTAssertNil(l.bilder, fremd)
+            XCTAssertEqual(l.bilderLage, .nichtLesbar, fremd)
+            XCTAssertEqual(l.skizzen, [], "die andere Liste bleibt gelesen: \(fremd)")
+            XCTAssertEqual(l.skizzenLage, .gelesen, fremd)
+        }
+        let keineListe = try lage(#"{"bilder": "a.png"}"#)
+        XCTAssertNil(keineListe.bilder)
+        XCTAssertEqual(keineListe.bilderLage, .nichtLesbar, "da, aber keine Liste")
+        let leer = try lage(#"{"bilder": []}"#)
+        XCTAssertEqual(leer.bilder, [])
+        XCTAssertEqual(leer.bilderLage, .gelesen)
+        XCTAssertEqual(try lage(#"{"bilder": null}"#).bilderLage, .nichtGeliefert)
+    }
+
+    /// Dasselbe für die Skizzenliste der Mappe.
+    func testEinUnlesbarerEintragMachtDieSkizzenlisteNil() throws {
+        let s1 = #"{"skizze": "s1.png", "stand": "offen"}"#
+        for fremd in ["\"s2.png\"", "3", "null", "true"] {
+            let l = try lage(#"{"bilder": [], "skizzen": ["# + s1 + ", " + fremd + "]}")
+            XCTAssertNil(l.skizzen, fremd)
+            XCTAssertEqual(l.skizzenLage, .nichtLesbar, fremd)
+            XCTAssertEqual(l.bilder, [], "die andere Liste bleibt gelesen: \(fremd)")
+        }
+        let gelesen = try lage(#"{"skizzen": ["# + s1 + ", " + s1 + "]}")
+        XCTAssertEqual(gelesen.skizzen?.count, 2)
+        XCTAssertEqual(gelesen.skizzenLage, .gelesen)
+    }
+
+    /// **Ein Hinweis, der kein Text ist, macht die Hinweise `nil`** — mit der Lage
+    /// `nichtLesbar`, damit die Bildansicht «nicht lesbar» sagt und nicht «nicht gemessen».
+    func testEinUnlesbarerEintragMachtDieHinweiseNil() {
+        for fremd in ["7", "null", "{}", "[\"x\"]"] {
+            let b = bild(#"{"bild": "a.png", "hinweise": ["Erster.", "# + fremd + "]}")
+            XCTAssertNil(b.hinweise, fremd)
+            XCTAssertEqual(b.hinweiseLage, .nichtLesbar, fremd)
+        }
+        let keineListe = bild(#"{"bild": "a.png", "hinweise": "Erster."}"#)
+        XCTAssertNil(keineListe.hinweise)
+        XCTAssertEqual(keineListe.hinweiseLage, .nichtLesbar)
+        let nichtGemessen = bild(#"{"bild": "a.png", "hinweise": null}"#)
+        XCTAssertNil(nichtGemessen.hinweise)
+        XCTAssertEqual(nichtGemessen.hinweiseLage, .nichtGeliefert, "null heisst nicht gemessen")
+        XCTAssertEqual(bild(#"{"bild": "a.png"}"#).hinweiseLage, .nichtGeliefert)
+        let ohneHinweis = bild(#"{"bild": "a.png", "hinweise": []}"#)
+        XCTAssertEqual(ohneHinweis.hinweise, [])
+        XCTAssertEqual(ohneHinweis.hinweiseLage, .gelesen)
+        let zwei = bild(#"{"bild": "a.png", "hinweise": ["Erster.", "Zweiter."]}"#)
+        XCTAssertEqual(zwei.hinweise, ["Erster.", "Zweiter."])
+        XCTAssertEqual(zwei.hinweiseLage, .gelesen)
+    }
+
+    /// **Drei Lagen, drei Sätze** im Kopf der Mappe: nicht geliefert, nicht lesbar, gelesen.
+    /// Eine nicht lesbare Liste sagt nie dasselbe wie eine fehlende oder eine leere.
+    func testDieMappeSagtNichtLesbarUndNichtLeer() throws {
+        let a = #"{"bild": "a.png"}"#
+        let s1 = #"{"skizze": "s1.png"}"#
+        let fehlt = try lage(#"{"skizzen": []}"#).listensatz
+        let unlesbar = try lage(#"{"bilder": ["# + a + #", 1], "skizzen": []}"#).listensatz
+        let leer = try lage(#"{"bilder": [], "skizzen": []}"#).listensatz
+        XCTAssertEqual(fehlt, "Die HomeStation hat keine Bilderliste mitgeschickt.")
+        XCTAssertTrue(unlesbar?.contains("Bilderliste der Mappe ist nicht lesbar") == true,
+                      unlesbar ?? "kein Satz")
+        XCTAssertNotEqual(unlesbar, fehlt)
+        XCTAssertNil(leer, "leer ist gelesen: kein Satz, die Mappe zeigt dann keine Bilder")
+
+        let skizzenUnlesbar = try lage(#"{"bilder": [], "skizzen": ["# + s1 + ", 1]}").listensatz
+        XCTAssertTrue(skizzenUnlesbar?.contains("Skizzenliste der Mappe ist nicht lesbar") == true,
+                      skizzenUnlesbar ?? "kein Satz")
+        XCTAssertNil(try lage(#"{"bilder": []}"#).listensatz,
+                     "eine fehlende Skizzenliste sagt die Skizzenliste selbst («nicht geladen»)")
+        // Beide nicht lesbar: beide Sätze, keiner verdrängt den anderen.
+        let beide = try lage(#"{"bilder": [1], "skizzen": [2]}"#).listensatz ?? ""
+        XCTAssertTrue(beide.contains("Bilderliste") && beide.contains("Skizzenliste"), beide)
+    }
+
+    // --------------------------------------------------- der Satz zur Unterlage (23.09.2026)
+
+    /// `unterlage_hinweis` wird gelesen — **da oder fehlt**, und ein leerer Satz ist keiner.
+    func testDerSatzZurUnterlageKommtAusSeinemFeld() {
+        let satz = "gestreckt: Die Skizze ist 4:3, das Bild 1:1; sie wurde gestreckt."
+        XCTAssertEqual(bild(#"{"bild": "b.png", "unterlage_hinweis": ""# + satz + #""}"#)
+                        .unterlageHinweis, satz)
+        for roh in [#"{"bild": "b.png"}"#, #"{"bild": "b.png", "unterlage_hinweis": null}"#,
+                    #"{"bild": "b.png", "unterlage_hinweis": ""}"#,
+                    #"{"bild": "b.png", "unterlage_hinweis": "  "}"#,
+                    #"{"bild": "b.png", "unterlage_hinweis": 3}"#] {
+            XCTAssertNil(bild(roh).unterlageHinweis, roh)
+            XCTAssertNil(bild(roh).unterlageHinweisEigens, roh)
+        }
+    }
+
+    /// **Bei `hinweise: null` trägt `unterlage_hinweis` den Satz allein** — der Server hängt
+    /// ihn dann nicht an (`_hinweise_zum_bild`). Die Bildansicht zeigt ihn trotzdem, und die
+    /// Hinweise bleiben «nicht gemessen».
+    func testDerSatzZurUnterlageStehtAuchOhneHinweise() {
+        let satz = "ohne Unterlage, auf Grau gerechnet."
+        let b = bild(#"{"bild": "b.png", "hinweise": null, "unterlage_hinweis": ""# + satz + #""}"#)
+        XCTAssertNil(b.hinweise, "die Hinweise bleiben nicht gemessen")
+        XCTAssertEqual(b.hinweiseLage, .nichtGeliefert)
+        XCTAssertEqual(b.unterlageHinweisEigens, satz)
+        let unlesbar = bild(#"{"bild": "b.png", "hinweise": [1], "unterlage_hinweis": ""#
+                            + satz + #""}"#)
+        XCTAssertEqual(unlesbar.unterlageHinweisEigens, satz, "auch neben nicht lesbaren Hinweisen")
+    }
+
+    /// **Kein Doppel:** Steht der Satz schon unter den Hinweisen (so hängt ihn der Server an,
+    /// wortgleich), gibt es ihn nicht ein zweites Mal. Steht dort ein anderer, kommt er.
+    func testDerSatzZurUnterlageStehtNichtZweimal() {
+        let satz = "gestreckt: Die Skizze wurde gestreckt."
+        let drin = bild(#"{"bild": "b.png", "hinweise": ["Erster.", ""# + satz
+                        + #""], "unterlage_hinweis": ""# + satz + #""}"#)
+        XCTAssertEqual(drin.hinweise, ["Erster.", satz])
+        XCTAssertEqual(drin.unterlageHinweis, satz, "gelesen ist er trotzdem")
+        XCTAssertNil(drin.unterlageHinweisEigens, "aber nicht ein zweites Mal gezeigt")
+        let daneben = bild(#"{"bild": "b.png", "hinweise": ["Erster."], "unterlage_hinweis": ""#
+                           + satz + #""}"#)
+        XCTAssertEqual(daneben.unterlageHinweisEigens, satz)
+        let leer = bild(#"{"bild": "b.png", "hinweise": [], "unterlage_hinweis": ""# + satz + #""}"#)
+        XCTAssertEqual(leer.unterlageHinweisEigens, satz)
     }
 
     // ------------------------------------------------------- Rechnen lassen, Namen geben

@@ -46,13 +46,18 @@ extension Verbindungsstand {
         bildband.projektname = lage.name
         bildband.standNr = lage.standNr
         // NICHT GELIEFERT BLEIBT NICHT GELIEFERT: Kommt keine Skizzenliste, steht keine
-        // leere da, sondern die Anzeige sagt, dass keine kam (`skizzen == nil`).
+        // leere da, sondern die Anzeige sagt, dass keine kam (`skizzen == nil`). Ist sie
+        // nicht lesbar (23.09.2026: ein Eintrag ist kein Objekt), ist sie ebenfalls `nil`,
+        // und der Satz dazu steht im Kopf der Mappe (`Mappenlage.listensatz`).
         bildband.skizzen = lage.skizzen
         bildband.reihe = bildband.reihe.filter { name in
             lage.skizzen?.contains { $0.skizze == name && $0.stand == .offen } ?? false
         }
+        // NICHT GELIEFERT UND NICHT LESBAR SIND ZWEI SAETZE — der Kern sagt, welcher
+        // (`Mappenlage.listensatz`, 23.09.2026). Was schon im Band liegt, bleibt in beiden
+        // Fällen stehen.
         guard let eintraege = lage.bilder else {
-            setzeMappenSatz("Die HomeStation hat keine Bilderliste mitgeschickt.")
+            setzeMappenSatz(lage.listensatz)
             return
         }
 
@@ -79,8 +84,12 @@ extension Verbindungsstand {
             neu.append(b)
         }
         bildband.bilder = neu
-        setzeMappenSatz(ohneNamen == 0 ? nil
-            : "\(ohneNamen) Bildeinträge der Mappe tragen keinen Dateinamen und sind hier nicht gezeigt.")
+        let ohneNamenSatz: String? = ohneNamen == 0 ? nil
+            : "\(ohneNamen) Bildeinträge der Mappe tragen keinen Dateinamen und sind hier nicht gezeigt."
+        // BEIDE SAETZE, NICHT DER LETZTE: Eine nicht lesbare Skizzenliste darf nicht
+        // verschwinden, weil die Bilderliste gelesen ist.
+        let saetze = [lage.listensatz, ohneNamenSatz].compactMap { $0 }
+        setzeMappenSatz(saetze.isEmpty ? nil : saetze.joined(separator: " "))
 
         for b in neu where b.grafik == nil && b.vorhanden != false {
             let bild = await sender.fuehreAus(

@@ -611,7 +611,9 @@ def test_das_urteil_nennt_die_polaritaet_mit_der_es_gerechnet_wurde(bild):
         "der Dauervorbehalt lief bis zum 26.08.2026 in JEDEM Produktionslauf mit — eine "
         "Warnung, die immer feuert, verdeckt die echten"
     )
-    assert any("ERWARTETE Fall" in w for w in urteil["warnungen"]), (
+    # Seit dem 23.09.2026 heisst der Satz «erwartete Richtung» statt «ERWARTETE Fall», und
+    # er fällt erst über der Richtungsgrenze (Wächter: tests/test_runde7_richtung.py).
+    assert any("erwartete Richtung" in w for w in urteil["warnungen"]), (
         "das negative Vorzeichen bleibt sichtbar, es wird nur nicht mehr als Verdacht "
         "gemeldet"
     )

@@ -448,6 +448,67 @@ final class AnfragenTests: XCTestCase {
         XCTAssertEqual(leer.bestellung?.skizzen, [], "leer geliefert ist leer, nicht nil")
     }
 
+    // ------------------------------------------- Listen ganz oder gar nicht (23.09.2026)
+
+    /// Ein fertiger Knoten, der kein Objekt ist, macht die **ganze** Liste `nil` — mit der
+    /// Lage `nichtLesbar`, nicht eine Liste mit einem Knoten weniger. Bis zum 23.09.2026 fiel
+    /// er still weg.
+    func testEinUnlesbarerEintragMachtDieFertigenNichtLesbar() throws {
+        func stand(_ fertige: String) throws -> Fortschrittsstand {
+            try Fortschrittsstand.lies(status: 200, daten: json(#"{"laeuft": true, "fertige": "#
+                                                                 + fertige + "}"))
+        }
+        let k = #"{"knoten": "k1", "status": "ok"}"#
+        for roh in ["[\(k), 7]", "[\(k), \"k2\"]", "[\(k), null]", "[\(k), [\(k)]]", "\"k1\""] {
+            let s = try stand(roh)
+            XCTAssertNil(s.fertige, roh)
+            XCTAssertEqual(s.fertigeLage, .nichtLesbar, roh)
+        }
+        let gelesen = try stand("[\(k), \(k)]")
+        XCTAssertEqual(gelesen.fertige?.count, 2)
+        XCTAssertEqual(gelesen.fertigeLage, .gelesen)
+        let leer = try stand("[]")
+        XCTAssertEqual(leer.fertige, [], "leer geliefert ist leer, nicht nil")
+        XCTAssertEqual(leer.fertigeLage, .gelesen)
+        XCTAssertEqual(try stand("null").fertigeLage, .nichtGeliefert, "null ist nicht geliefert")
+        let ohne = try Fortschrittsstand.lies(status: 200, daten: json(#"{"laeuft": false}"#))
+        XCTAssertNil(ohne.fertige)
+        XCTAssertEqual(ohne.fertigeLage, .nichtGeliefert, "fehlt ist nicht «nicht lesbar»")
+    }
+
+    /// Dasselbe an der Projektsicht, für Bilder und Skizzen je einzeln: ein Eintrag, der kein
+    /// Objekt ist → `nil`, nicht eine kürzere Liste.
+    func testEinUnlesbarerEintragMachtDieListenDerProjektsichtNil() throws {
+        let bild = #"{"bild": "a.png", "zeichen": "bestanden"}"#
+        let skizze = #"{"skizze": "s1.png", "stand": "offen"}"#
+        let bilderUnlesbar = try Projektsicht.lies(status: 200, daten: json(
+            #"{"bilder": ["# + bild + #", "b.png"], "skizzen": ["# + skizze + "]}"))
+        XCTAssertNil(bilderUnlesbar.bilder, "ganz, nicht zur Hälfte")
+        XCTAssertEqual(bilderUnlesbar.skizzen?.count, 1, "die andere Liste bleibt gelesen")
+        let skizzenUnlesbar = try Projektsicht.lies(status: 200, daten: json(
+            #"{"bilder": ["# + bild + #"], "skizzen": ["# + skizze + ", 3]}"))
+        XCTAssertNil(skizzenUnlesbar.skizzen, "ganz, nicht zur Hälfte")
+        XCTAssertEqual(skizzenUnlesbar.bilder?.count, 1, "die andere Liste bleibt gelesen")
+    }
+
+    /// Die gemeinsame Hilfe selbst: drei Lagen, und `null` ist nicht geliefert.
+    func testGanzOderNichtKenntDreiLagen() {
+        let text: (JSONWert) -> String? = { $0.alsText }
+        let fehlt = JSONWert.ganzOderNicht(nil, text)
+        XCTAssertNil(fehlt.liste)
+        XCTAssertEqual(fehlt.lage, .nichtGeliefert)
+        XCTAssertEqual(JSONWert.ganzOderNicht(.null, text).lage, .nichtGeliefert)
+        let keineListe = JSONWert.ganzOderNicht(.text("a"), text)
+        XCTAssertNil(keineListe.liste)
+        XCTAssertEqual(keineListe.lage, .nichtLesbar)
+        let gemischt = JSONWert.ganzOderNicht(.liste([.text("a"), .ganz(1)]), text)
+        XCTAssertNil(gemischt.liste)
+        XCTAssertEqual(gemischt.lage, .nichtLesbar)
+        let ganz = JSONWert.ganzOderNicht(.liste([.text("a"), .text("b")]), text)
+        XCTAssertEqual(ganz.liste, ["a", "b"])
+        XCTAssertEqual(ganz.lage, .gelesen)
+    }
+
     /// Die Kopfzeile der Laufanzeige: **nur, was der Server sagt.** Fehlt ein Feld, fehlt
     /// sein Teil — kein «Prüfen» aus einem fehlenden `entwurf`.
     func testDieKopfzeileSagtNurWasDerServerSagt() throws {

@@ -299,8 +299,10 @@ GEMESSENE_POLARITAET = {
     "depth-anything-v2-small": POLARITAET_DISPARITAET,
 }
 
-#: Um wie viele Zufallsstreuungen ``polaritaet * rho`` unter null liegen muss, bevor die
-#: Meldung «vorne und hinten sind vertauscht» fällt.
+#: Um wie viele Zufallsstreuungen ``polaritaet * rho`` von null entfernt liegen muss, bevor
+#: eine Richtung gemeldet wird: darunter «vorne und hinten sind vertauscht», darüber —
+#: seit dem 23.09.2026 mit derselben Grenze — «erwartete Richtung». Dazwischen steht
+#: «Richtung nicht bestimmbar» (:func:`_richtungshinweis`).
 #:
 #: **Der Befund vom 22.09.2026 (auf-20260922-137):** Die Meldung löste bis dahin schon bei
 #: ``polaritaet * rho < 0`` aus, ganz ohne Mindestbetrag. Am Gerät gemessen: ρ = +0,037
@@ -316,8 +318,9 @@ GEMESSENE_POLARITAET = {
 #: übersteigt sie 1, und dann ist die Richtung gar nicht bestimmbar. Das ist gewollt.
 #:
 #: **Was diese Zahl NICHT tut:** Sie ändert kein Urteil. Der Score schneidet jeden Wert
-#: unter null ohnehin auf 0 ab (``max(0, ·)``), und ``gerichtet`` im Maskenweg bleibt
-#: unverändert. Sie entscheidet allein, welcher Hinweis in ``warnungen`` steht.
+#: unter null ohnehin auf 0 ab (``max(0, ·)``), nimmt jeden Wert darüber unverändert, ob
+#: er die Grenze erreicht oder nicht, und ``gerichtet`` im Maskenweg bleibt unverändert.
+#: Sie entscheidet allein, welcher Hinweis in ``warnungen`` steht.
 RICHTUNG_MIN_STREUUNGEN = 2.0
 
 
@@ -334,6 +337,125 @@ def richtungsgrenze(n: int) -> float:
     if n < 2:
         return math.inf
     return RICHTUNG_MIN_STREUUNGEN / math.sqrt(n - 1)
+
+
+# DIE GRENZE GILT IN BEIDE RICHTUNGEN — Befund 23.09.2026 (Runde 7).
+#
+# Runde 6 hat nur die NEGATIVE Seite an :func:`richtungsgrenze` gebunden. Die positive
+# Seite blieb ohne Schwelle: Score-Weg und Maskenweg meldeten jedes ``rho < 0`` bei
+# Polarität −1 als «den ERWARTETEN Fall» — auch ``rho = −0,01`` über 848 Punkte, wo die
+# Grenze bei 0,069 liegt. Das war eine Richtung aus Rauschen, dieselbe Falle wie am
+# 22.09.2026, nur mit dem angenehmeren Vorzeichen. Und bei Polarität +1 mit kleinem
+# positivem ``rho`` schrieb keiner der Zweige etwas.
+#
+# Seither fällt die Antwort an EINER Stelle, die beide Wege rufen, und sie ist
+# symmetrisch: Betrag unter der Grenze → «Richtung nicht bestimmbar»; darüber in der
+# erwarteten Richtung → die Bestätigung; darüber in der falschen → «vertauscht». Die
+# Wächter stehen in ``tests/test_runde7_richtung.py`` und fahren über ``qa_gegen_soll``.
+#
+# WAS DAS NICHT TUT: Es ändert weder ``score`` noch ``bestanden`` noch ``gerichtet``. Es
+# entscheidet allein, welcher Satz in ``warnungen`` steht. Der Wächter prüft die drei
+# Werte über eine Reihe von rho gegen die ausgeschriebene Rechnung; die Probe alte gegen
+# neue Fassung (23.09.2026, 1680 synthetische Fälle, beide Polaritäten und None) ergab
+# keine einzige Abweichung darin. Geändert hat sich dabei eine Begründung: Wo kein Score
+# entsteht, nennt ``geometrie_gate`` jetzt den Grund statt des Richtungssatzes (dort).
+
+_RICHTUNG_ERWARTET = "erwartet"
+_RICHTUNG_UNBESTIMMT = "unbestimmt"
+_RICHTUNG_VERTAUSCHT = "vertauscht"
+
+
+def _richtungsfall(gerichtet: float, n: int) -> str:
+    """Welche der drei Antworten ``gerichtet = polaritaet * rho`` über ``n`` Punkte trägt.
+
+    Die Grenze ist in beide Richtungen dieselbe (:func:`richtungsgrenze`). Unter zwei
+    Punkten ist sie unendlich, und dann ist die Richtung nie bestimmt.
+    """
+    grenze = richtungsgrenze(n)
+    if gerichtet <= -grenze:
+        return _RICHTUNG_VERTAUSCHT
+    if gerichtet >= grenze:
+        return _RICHTUNG_ERWARTET
+    return _RICHTUNG_UNBESTIMMT
+
+
+#: Was die beiden Wege an der Meldung unterscheidet — Wortwahl und Nachsatz, nicht die
+#: Regel. Der Score-Weg schneidet unter null ab, der Maskenweg nicht; das muss im Satz
+#: stehen, weil es wahr ist, und nur das.
+_RICHTUNG_WEGE = {
+    "score": {
+        "wort": "spearman", "stellen": 3, "punkte": "Punkte", "ort": "",
+        _RICHTUNG_VERTAUSCHT: "Der Score ist auf 0 abgeschnitten.",
+        _RICHTUNG_UNBESTIMMT: (
+            "Am Score und am Urteil ändert dieser Hinweis nichts: gerechnet wird wie "
+            "immer mit max(0, polaritaet * spearman)."),
+        _RICHTUNG_ERWARTET: (
+            "Das ist eine Feststellung über die Richtung, kein Urteil — ob das Bild "
+            "besteht, entscheidet allein der Score."),
+    },
+    "maske": {
+        "wort": "rho", "stellen": 4, "punkte": "Maskenpunkte",
+        "ort": " innerhalb der Maske",
+        _RICHTUNG_VERTAUSCHT: (
+            "Der gerichtete Wert ist NICHT bei 0 abgeschnitten: 'genau umgekehrt' ist "
+            "etwas anderes als 'kein Zusammenhang'."),
+        _RICHTUNG_UNBESTIMMT: "'gerichtet' bleibt, wie gemessen.",
+        _RICHTUNG_ERWARTET: "'gerichtet' bleibt, wie gemessen.",
+    },
+}
+
+
+def _richtungshinweis(rho: float | None, polaritaet: int | None, n: int, *,
+                      weg: str) -> str | None:
+    """Der eine Satz zur Richtung, den Score-Weg und Maskenweg gleichermassen melden.
+
+    ``None`` heisst: Hier gibt es keine Richtung zu beurteilen — weil ``rho`` nicht
+    gemessen ist oder die Polarität nicht übergeben wurde. Für den zweiten Fall haben
+    beide Wege ihre eigene, ausführliche Warnung; eine Richtung ohne Polarität gibt es
+    nicht.
+    """
+    if rho is None or polaritaet is None:
+        return None
+    w = _RICHTUNG_WEGE[weg]
+    st = w["stellen"]
+    gerichtet = polaritaet * rho
+    grenze = richtungsgrenze(n)
+    fall = _richtungsfall(gerichtet, n)
+    kopf = (f"{w['wort']} = {rho:+.{st}f} bei Polarität {polaritaet:+d}, über {n} "
+            f"{w['punkte']}; gewertet {polaritaet:+d} * {w['wort']} = {gerichtet:+.{st}f}")
+
+    if fall == _RICHTUNG_VERTAUSCHT:
+        text = (
+            f"Rangkorrelation zeigt in die falsche Richtung ({kopf}): Die Ist-Karte "
+            f"ordnet die Tiefe{w['ort']} umgekehrt, und zwar deutlicher, als der Zufall "
+            f"es erklärt (Grenze {-grenze:+.{st}f}). Weil die Polarität GEMESSEN ist, "
+            f"ist das kein Konventionsbefund mehr, sondern ein Geometriebefund — vorne "
+            f"und hinten sind vertauscht."
+        )
+    elif fall == _RICHTUNG_ERWARTET:
+        text = (
+            f"Rangkorrelation zeigt in die erwartete Richtung ({kopf}): Die Ist-Karte "
+            f"ordnet die Tiefe{w['ort']} wie die Soll-Karte, und zwar deutlicher, als der "
+            f"Zufall es erklärt (Grenze {grenze:+.{st}f})."
+        )
+        if rho < 0.0:
+            text += (
+                f" Das negative Vorzeichen von {w['wort']} gehört zur gemessenen "
+                f"Polarität: Dieser Schätzer liefert Disparität (nah = grosser Wert)."
+            )
+    else:
+        streuung = grenze / RICHTUNG_MIN_STREUUNGEN
+        text = (
+            f"Kein messbarer Zusammenhang ({w['wort']} von null nicht zu "
+            f"unterscheiden), die Richtung ist nicht bestimmbar: {kopf}. Die "
+            f"Zufallsstreuung einer Rangkorrelation ohne jeden Zusammenhang liegt dort "
+            f"bei 1/sqrt(n-1) = {streuung:.{st}f}; eine Richtung wird erst ab dem Betrag "
+            f"{grenze:.{st}f} festgestellt, in der erwarteten wie in der umgekehrten. "
+            f"Das ist kein Freispruch und kein Befund über die Richtung, sondern: eine "
+            f"Ordnung der Tiefe{w['ort']} ist nicht nachweisbar."
+        )
+    return f"{text} {w[fall]}"
+
 
 #: Kurzform des Rechenwegs, wandert in jedes Ergebnis. Wer später eine Zahl in der Arbeit
 #: wiederfindet, soll ihr ansehen, wie sie entstanden ist — und an welcher Fassung.
@@ -827,38 +949,14 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
             )
     # «Vertauscht» erst DEUTLICH unter null — Befund 22.09.2026 (auf-20260922-137): ρ =
     # +0,037 über 848 Punkte bei Polarität −1 ergab bis dahin «vertauscht», obwohl es von
-    # null nicht zu unterscheiden war. Dazwischen steht die dritte Antwort. Am Score
-    # ändert das nichts: max(0, ·) schneidet beide Fälle gleich ab.
-    elif rho is not None and polaritaet * rho <= -richtungsgrenze(n_gemeinsam):
-        warnungen.append(
-            f"Rangkorrelation zeigt in die falsche Richtung ({rho:+.3f} bei Polarität "
-            f"{polaritaet:+d}, über {n_gemeinsam} Punkte): Die Ist-Karte ordnet die Tiefe "
-            f"umgekehrt, und zwar deutlicher, als der Zufall es erklärt (Grenze "
-            f"{-richtungsgrenze(n_gemeinsam):+.3f}). Weil die "
-            f"Polarität GEMESSEN ist, ist das kein Konventionsbefund mehr, sondern ein "
-            f"Geometriebefund — vorne und hinten sind vertauscht. Der Score ist auf 0 "
-            f"abgeschnitten."
-        )
-    elif rho is not None and polaritaet * rho < 0.0:
-        warnungen.append(
-            f"Kein messbarer Zusammenhang (rho ≈ 0), die Richtung ist nicht bestimmbar: "
-            f"gewertet {polaritaet:+d} * spearman = {polaritaet * rho:+.3f} über "
-            f"{n_gemeinsam} Punkte. Die Zufallsstreuung einer Rangkorrelation ohne jeden "
-            f"Zusammenhang liegt dort bei 1/sqrt(n-1) = {1.0 / math.sqrt(n_gemeinsam - 1):.3f}; "
-            f"eine Umkehrung von vorne und hinten wird erst ab "
-            f"{-richtungsgrenze(n_gemeinsam):+.3f} festgestellt. Das ist kein Freispruch "
-            f"und kein Befund über die Richtung, sondern: eine Ordnung der Tiefe ist "
-            f"nicht nachweisbar. "
-            f"Der Score ist wie jeder Wert unter null auf 0 abgeschnitten; am Urteil "
-            f"ändert dieser Hinweis nichts."
-        )
-    elif rho is not None and rho < 0.0:
-        warnungen.append(
-            f"Rangkorrelation ist negativ ({rho:+.3f}), und das ist hier der ERWARTETE "
-            f"Fall: Die gemessene Polarität {polaritaet:+d} sagt, dass dieser Schätzer "
-            f"Disparität liefert (nah = grosser Wert). Gewertet wird "
-            f"{polaritaet:+d} * spearman = {polaritaet * rho:+.3f}."
-        )
+    # null nicht zu unterscheiden war. Und seit dem 23.09.2026 «bestätigt» ebenso erst
+    # DEUTLICH über null: Bis dahin hiess hier jedes negative rho bei Polarität −1 «der
+    # erwartete Fall», auch −0,01 über 848 Punkte. Die Regel steht in _richtungshinweis,
+    # dieselbe wie im Maskenweg. Am Score ändert sie nichts.
+    else:
+        richtung = _richtungshinweis(rho, polaritaet, n_gemeinsam, weg="score")
+        if richtung is not None:
+            warnungen.append(richtung)
 
     anteil_soll = n_soll / len(s) if s else 0.0
     if 0 < n_soll < ANTEIL_GEMESSEN_NIEDRIG * len(s):
@@ -1061,7 +1159,15 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE, **kw) -> 
     bestanden = score is not None and score >= schwelle
 
     if score is None:
-        grund = ergebnis["warnungen"][-1] if ergebnis["warnungen"] else "Grund unbekannt."
+        # Der Richtungshinweis ist nie der Grund, warum kein Score da ist — er steht nur
+        # zuletzt, weil er nach der Punktzählung geschrieben wird. Seit dem 23.09.2026
+        # schreibt ihn jede gemessene Polarität (auch +1 mit kleinem rho, wo vorher nichts
+        # stand); ohne diesen Filter hätte er bei zu kleiner gemeinsamer Silhouette die
+        # eigentliche Begründung verdrängt, bei Polarität −1 tat er das schon vorher.
+        richtung = _richtungshinweis(ergebnis["spearman"], ergebnis["polaritaet"],
+                                     ergebnis["n_gemeinsam"], weg="score")
+        gruende = [w for w in ergebnis["warnungen"] if w != richtung]
+        grund = gruende[-1] if gruende else "Grund unbekannt."
         begruendung = (
             f"Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist "
             f"kein bestandener Score. {grund}"
@@ -1365,38 +1471,15 @@ def rho_ueber_maske(soll: Sequence[float], ist: Sequence[float],
             "Abhilfe: die Polarität einmal bestimmen (polaritaet_aus_messungen) und "
             "mitgeben."
         )
-    # Dieselbe Grenze wie im Score-Weg, wo die Gerätemessung des 22.09.2026 auflief
-    # (auf-20260922-137: +0,037 über 848 gemeinsame Punkte). ``gerichtet`` bleibt
-    # unverändert; nur der Hinweis unterscheidet «umgekehrt» von «kein Zusammenhang».
-    elif rho is not None and polaritaet * rho <= -richtungsgrenze(n_maske):
-        warnungen.append(
-            f"Rangkorrelation zeigt in die falsche Richtung ({rho:+.4f} bei Polarität "
-            f"{polaritaet:+d}, über {n_maske} Punkte): Die Ist-Karte ordnet die Tiefe "
-            f"innerhalb der Maske umgekehrt, und zwar deutlicher, als der Zufall es "
-            f"erklärt (Grenze {-richtungsgrenze(n_maske):+.4f}). Weil die Polarität "
-            f"GEMESSEN ist, ist das kein Konventionsbefund "
-            f"mehr, sondern ein Geometriebefund — vorne und hinten sind vertauscht. "
-            f"Gewertet wird {polaritaet * rho:+.4f}, und der Wert ist NICHT bei 0 "
-            f"abgeschnitten: 'genau umgekehrt' ist etwas anderes als 'kein Zusammenhang'."
-        )
-    elif rho is not None and polaritaet * rho < 0.0:
-        warnungen.append(
-            f"Kein messbarer Zusammenhang (rho ≈ 0), die Richtung ist nicht bestimmbar: "
-            f"gewertet {polaritaet:+d} * rho = {polaritaet * rho:+.4f} über {n_maske} "
-            f"Maskenpunkte. Die Zufallsstreuung einer Rangkorrelation ohne jeden "
-            f"Zusammenhang liegt dort bei 1/sqrt(n-1) = {1.0 / math.sqrt(n_maske - 1):.4f}; "
-            f"eine Umkehrung von vorne und hinten wird erst ab "
-            f"{-richtungsgrenze(n_maske):+.4f} festgestellt. Das ist kein Freispruch und "
-            f"kein Befund über die Richtung, sondern: eine Ordnung der Tiefe innerhalb "
-            f"der Maske ist nicht nachweisbar. 'gerichtet' bleibt, wie gemessen."
-        )
-    elif rho is not None and rho < 0.0:
-        warnungen.append(
-            f"Rangkorrelation ist negativ ({rho:+.4f}), und das ist hier der ERWARTETE "
-            f"Fall: Die gemessene Polarität {polaritaet:+d} sagt, dass dieser Schätzer "
-            f"Disparität liefert (nah = grosser Wert). Gewertet wird "
-            f"{polaritaet:+d} * rho = {polaritaet * rho:+.4f}."
-        )
+    # Dieselbe Regel wie im Score-Weg, und zwar DIESELBE FUNKTION: Die Gerätemessung
+    # des 22.09.2026 lief dort auf (auf-20260922-137: +0,037 über 848 gemeinsame
+    # Punkte), die schwellenlose Bestätigung des 23.09.2026 in beiden Wegen. Zwei
+    # Abschriften einer Regel waren genau das, was die positive Seite hat liegen lassen.
+    # ``gerichtet`` bleibt unverändert; nur der Hinweis unterscheidet die drei Antworten.
+    else:
+        richtung = _richtungshinweis(rho, polaritaet, n_maske, weg="maske")
+        if richtung is not None:
+            warnungen.append(richtung)
 
     if n_maske == n_bild:
         # Eine Maske über das ganze Bild ist keine Maske, sondern der alte Weg unter neuem

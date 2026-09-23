@@ -1120,7 +1120,9 @@ def test_bei_disparitaet_ist_das_negative_vorzeichen_der_erwartete_fall():
                                polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
 
     assert ergebnis["score"] == pytest.approx(1.0)
-    assert [w for w in ergebnis["warnungen"] if "ERWARTETE" in w]
+    # Seit dem 23.09.2026 heisst der Satz «erwartete Richtung» statt «ERWARTETE Fall», und
+    # er fällt erst über der Richtungsgrenze (Wächter: tests/test_runde7_richtung.py).
+    assert [w for w in ergebnis["warnungen"] if "erwartete Richtung" in w]
     assert not [w for w in ergebnis["warnungen"] if "falsche Richtung" in w]
 
 
@@ -1529,7 +1531,9 @@ def test_mit_gemessener_polaritaet_wird_das_vorzeichenbehaftete_rho_gewertet():
 
     assert ergebnis["rho"] == pytest.approx(-1.0)
     assert ergebnis["gerichtet"] == pytest.approx(1.0)
-    assert [w for w in ergebnis["warnungen"] if "ERWARTETE" in w]
+    # Seit dem 23.09.2026 heisst der Satz «erwartete Richtung» statt «ERWARTETE Fall», und
+    # er fällt erst über der Richtungsgrenze (Wächter: tests/test_runde7_richtung.py).
+    assert [w for w in ergebnis["warnungen"] if "erwartete Richtung" in w]
     assert not [w for w in ergebnis["warnungen"] if "falsche Richtung" in w]
 
 

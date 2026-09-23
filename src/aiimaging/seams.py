@@ -831,6 +831,34 @@ def ifc_raeume(ifc_path, *, timeout: float = GESAMTFRIST_IFC_S, _starte=None) ->
         raise SeamError(f"Runner lieferte kein JSON: {e}\n{ergebnis.stdout[:400]}") from e
 
 
+def _standpunkt_pruefen(kamera, auge, blick_auf) -> None:
+    """Genau eine Quelle fuer den Standpunkt — oder ein Satz, warum nicht.
+
+    **Befund 23.09.2026** (nachgelesen): Stand ``kamera`` neben ``auge``, fiel das Kuerzel
+    hier STILL weg — ``--auge`` wurde weitergereicht, ``--kamera`` nicht. Die Kette weist
+    die Kombination seit dem 22.09.2026 ab (``kette._fuehre_multipass``), diese Naht nicht;
+    wer sie direkt rief, bekam das Bild von Hand und nie die bestellte Richtung. Eine
+    Vorrangregel ist genau die Sorte Entscheidung, an die sich spaeter niemand erinnert —
+    und die falsche Kamera sieht man dem Bild nicht an.
+
+    Raises:
+        SeamError: ``auge`` ohne ``blick_auf`` oder umgekehrt; ``kamera`` zusammen mit
+            ``auge``/``blick_auf``.
+    """
+    if (auge is None) != (blick_auf is None):
+        raise SeamError(
+            "auge und blick_auf gehören zusammen: "
+            f"auge={auge!r}, blick_auf={blick_auf!r}. Ein Standort ohne Blickziel "
+            "beschreibt keine Kamera."
+        )
+    if kamera is not None and auge is not None:
+        raise SeamError(
+            f"Standpunkt zweimal bestellt: `kamera` {kamera!r} rechnet ihn aus der "
+            f"Huellbox, und auge, blick_auf gibt ihn vor. Welcher gilt, entscheidet "
+            f"diese Naht nicht."
+        )
+
+
 def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, samples: int,
                          beauty: bool, material_id: bool, kamera=None,
                          auge=None, blick_auf=None, brennweite=None,
@@ -858,18 +886,14 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
     Raises:
         SeamError: ``auge`` ohne ``blick_auf`` (oder umgekehrt). Ein Standort ohne
             Blickziel beschreibt keine Kamera, und der Runner würde erst nach dem
-            Blender-Start abbrechen — Minuten später, für nichts.
+            Blender-Start abbrechen — Minuten später, für nichts. Oder ``kamera``
+            zusammen mit ``auge``/``blick_auf`` — siehe :func:`_standpunkt_pruefen`.
     """
     argumente = [
         "--glb", str(glb_path), "--out", str(out_dir),
         "--aufloesung", str(aufloesung), "--samples", str(samples),
     ]
-    if (auge is None) != (blick_auf is None):
-        raise SeamError(
-            "auge und blick_auf gehören zusammen: "
-            f"auge={auge!r}, blick_auf={blick_auf!r}. Ein Standort ohne Blickziel "
-            "beschreibt keine Kamera."
-        )
+    _standpunkt_pruefen(kamera, auge, blick_auf)
     # ZAHLENWERTE IMMER IN DER GLEICHHEITSZEICHEN-FORM.
     #
     # AM GERAET GEFUNDEN (19.08.2026, erster echter Auftrag der fremden Bruecke): Der
@@ -890,6 +914,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
     #
     # Betroffen ist JEDER Zahlenwert, nicht nur `--auge`: Ein Gelaende unter dem Nullpunkt
     # (`--gelaende-z`) und eine Huellbox mit negativer Ecke tragen dasselbe Minus.
+    # `elif` ist seit dem 23.09.2026 keine Vorrangregel mehr: Beide zugleich weist
+    # `_standpunkt_pruefen` oben ab.
     if auge is not None:
         argumente += [f"--auge={_punkt(auge, 'auge')}",
                       f"--blick-auf={_punkt(blick_auf, 'blick_auf')}"]
@@ -1077,7 +1103,9 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
 
     Raises:
         ContractError: `up_axis` fehlt oder ist nicht deutbar.
-        SeamError: Blender fehlt oder der Lauf scheitert.
+        SeamError: Blender fehlt oder der Lauf scheitert — oder der Standpunkt ist
+            zweimal bestellt (``kamera`` neben ``auge``/``blick_auf``), siehe
+            :func:`_standpunkt_pruefen`. Dann wird weder aufgeraeumt noch gestartet.
     """
     # Die Abweisung steht VOR jeder Starterwahl. Sonst verschluckt der Herzschlag-Zweig
     # sie, seit er voreingestellt ist — und ein Aufrufer, der stillstand_frist_s setzt,
@@ -1116,6 +1144,11 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             "Das ist der voreingestellte Herzschlag (herzschlag_takt_s bei "
             f"{HERZSCHLAG_TAKT_S} s) zusammen mit timeout=None."
         )
+    # ZWEI STANDPUNKTE WERDEN VOR DEM AUFRAEUMEN ABGEWIESEN (23.09.2026). Die Pruefung
+    # steht auch in `_multipass_argumente` — dort erst NACH dem Loeschen der Ausgaben
+    # des Vorlaufs. Eine Bestellung, die nie haette laufen koennen, soll keine Dateien
+    # kosten.
+    _standpunkt_pruefen(kamera=kamera, auge=auge, blick_auf=blick_auf)
     frist = _gesamtfrist(timeout, was="timeout")
 
     if _starte is not None:

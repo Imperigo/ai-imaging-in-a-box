@@ -238,6 +238,13 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
     except quelle.QUELLEN_FEHLER as fehler:
         antwort["grund"] = f"Auftrag nicht lesbar: {fehler}"
+        # AUCH DIESER WARTEGRUND GEHOERT AN DEN LAUFZETTEL (Befund 23.09.2026). Eine
+        # dauerhaft unlesbare Bestellung — etwa eine Szene ohne `geometry.path` — blieb
+        # auf `queued`, und der Grund stand nur in dieser Antwort, also im Journal.
+        # Drueben sah man denselben Zustand wie beim Demolauf 12: wartet, Grund
+        # unbekannt. `_grund_vermerken` faengt seine eigenen Fehler; ist auch der
+        # Laufzettel unlesbar, steht das als `grund_vermerkt: "NEIN: ..."` hier.
+        _grund_vermerken(quelle, ordner, antwort)  # auch der Lesefehler
         return antwort
 
     antwort["job_id"] = auftrag.get("job_id") or ordner.name
@@ -366,6 +373,12 @@ DATEI_BEFUND = "befund.json"
 
 #: Dateiname des Urteils EINER Kamera, in deren eigenem Ausgabeordner.
 DATEI_URTEIL = "urteil.json"
+
+#: Das Feld am Kameraurteil, das nennt, welche ausdruecklich gesetzten Rahmungswerte
+#: (``kamera_modus``, ``deckungsgrad``, ``augenhoehe``, ``bias_grad``) NICHT an den
+#: Runner gingen, weil die Kamera kein Richtungskuerzel hat (23.09.2026). ``None``:
+#: nichts zurueckgehalten. Steht an jedem Urteil, auch an einem nicht gerenderten.
+URTEIL_KAMERAWERTE_ZURUECK = "kamerawerte_zurueckgehalten"
 
 
 def _urteil_ablegen(ordner, urteil: dict) -> None:
@@ -1964,6 +1977,23 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 "Der Auftrag nennt keine einzige Kamera, und auch keine automatische "
                 "Richtung ist eingestellt. Es gibt nichts zu rendern."
             )
+        # ZWEI QUELLEN FUER DEN STANDPUNKT (Befund 23.09.2026). Eine mitgesandte Kamera
+        # wird mit `dict(k, ...)` ganz kopiert; traegt sie neben `auge`/`blick_auf` ein
+        # `richtung`, ginge beides an `seams` — und der Runner laesst `auge` still
+        # vorgehen. Abgewiesen wird VOR dem ersten Blender-Lauf und fuer alle Aufgaben:
+        # dieselbe Regel wie bei `innenraum` oben und in `kette._fuehre_multipass`.
+        # Auf dem Produktweg liefert `kosmo_szene.spec_zu_kamera` kein `richtung`; die
+        # Abweisung steht fuer eine von Hand gebaute Szene oder eine kuenftige Quelle und
+        # ist an einer solchen bewacht (tests/test_runde7_abholer.py).
+        doppelt = [str(a.get("kuerzel")) for a in aufgaben
+                   if a.get("richtung") is not None
+                   and (a.get("auge") is not None or a.get("blick_auf") is not None)]
+        if doppelt:
+            raise AbholerError(
+                f"Standpunkt zweimal bestellt: Kamera {', '.join(doppelt)} nennt ein "
+                f"Richtungskuerzel (`richtung`) UND einen Standort (`auge`/`blick_auf`). "
+                f"Welcher gilt, entscheidet dieses Modul nicht — der Runner liesse den "
+                f"Standort still vorgehen, und das Kuerzel stuende nur noch im Auftrag.")
 
         # DIE BLENDER-FASSUNG, EINMAL JE AUFTRAG. Sie gehoert in den Cache-Schluessel
         # (4.2 und 5.2 sind zwei Renderer) und kostet 0,22 s — je Kamera abgefragt waere
@@ -1988,6 +2018,31 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # WIRKUNG bewacht: seine Zeile `**innen` ist gleichwertig zu ihrem Fehlen, weil
             # das Vorbild denselben Vermerk traegt (siehe dort).
             innen = {_kosmo_szene.URTEIL_INNENANSICHT: aufgabe.get("innenraum")}
+            # DIE RAHMUNGSWERTE REISEN NUR MIT EINER RICHTUNG (Befund 23.09.2026).
+            # `kamera_modus`, `deckungsgrad`, `augenhoehe` und `bias_grad` liest der
+            # Runner allein auf dem Weg «abgeleitet», wo `kameras.kamerasatz` aus dem
+            # Kuerzel den Standort rechnet. Bis heute gingen sie bei JEDER Aufgabe mit,
+            # auch bei einer mitgesandten oder Innenkamera (`auge`) — `kamera_modus`
+            # sogar immer, denn seine Vorgabe ist MODUS_SHIFT und nie `None`. Wirkung
+            # hatten sie dort keine; jetzt gehen sie dort gar nicht erst hin.
+            #
+            # Was ein Aufrufer ausdruecklich gesetzt hat und hier zurueckbleibt, steht
+            # als Satz am Urteil dieser Kamera, statt still zu verfallen. Die Vorgabe
+            # MODUS_SHIFT zaehlt dabei nicht als Bestellung: Sie ist von einem
+            # ausdruecklich gesetzten MODUS_SHIFT nicht zu unterscheiden.
+            mit_richtung = aufgabe.get("richtung") is not None
+            zurueck = [] if mit_richtung else [
+                f"{name}={wert!r}" for name, wert in (
+                    ("kamera_modus", None if kamera_modus == _kameras_modul.MODUS_SHIFT
+                     else kamera_modus),
+                    ("deckungsgrad", deckungsgrad), ("augenhoehe", augenhoehe),
+                    ("bias_grad", bias_grad))
+                if wert is not None]
+            innen[URTEIL_KAMERAWERTE_ZURUECK] = (
+                f"Nicht an den Runner gegangen: {', '.join(zurueck)}. Diese Kamera "
+                f"kommt ohne Richtungskuerzel (Standort gegeben oder Rueckfall), und "
+                f"diese Werte wirken nur, wo der Standort aus einer Richtung gerechnet "
+                f"wird — hier waeren sie wirkungslos gewesen." if zurueck else None)
             aus = ziel / str(kuerzel)
             aus.mkdir(parents=True, exist_ok=True)
             beginn = time.monotonic()
@@ -2042,7 +2097,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
-                kamera_modus=kamera_modus,
+                kamera_modus=kamera_modus if mit_richtung else None,
                 gelaende_z=gelaende_z,
                 # Der Sonnenstand der Bestellung. Bis zum 26.08.2026 lief er ins Leere:
                 # Ein Auftrag mit Abendstand wurde gerendert, als waere er nicht
@@ -2060,9 +2115,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 #
                 # `None` heisst NICHT ANGEFASST: Dann gelten die Vorgaben des Runners, und
                 # jede bisher gemessene Aufnahme bleibt reproduzierbar.
-                deckungsgrad=deckungsgrad,
-                augenhoehe=augenhoehe,
-                bias_grad=bias_grad,
+                # Seit dem 23.09.2026 nur mit Richtung — siehe `mit_richtung` oben.
+                deckungsgrad=deckungsgrad if mit_richtung else None,
+                augenhoehe=augenhoehe if mit_richtung else None,
+                bias_grad=bias_grad if mit_richtung else None,
                 stillstand_frist_s=stillstand_frist_s,
                 # DER ZEITDECKEL, seit dem 26.08.2026 bestellbar. Er wird IMMER gesetzt,
                 # auch auf seinen Vorgabewert — ein «durchgereicht, wenn bestellt» waere
@@ -2941,10 +2997,32 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
     #
     # Aeltere Berichte tragen das Feld nicht. Dann gilt die Vorgabe, und `quelle` sagt es:
     # NICHT FESTSTELLBAR wird nicht zu FESTGESTELLT, nur weil eine Konstante zur Hand ist.
-    gemeldet = bericht.get("deckungsgrad")
-    deckungsgrad = (float(gemeldet) if isinstance(gemeldet, (int, float))
-                    and not isinstance(gemeldet, bool) else kameras.DECKUNGSGRAD)
-    quelle = "bericht" if gemeldet is not None else "vorgabe"
+    #
+    # FEHLT UND NULL SIND ZWEI AUSSAGEN (Befund 23.09.2026). Seit dem 22.09.2026 meldet
+    # der Runner `deckungsgrad` nur auf dem Weg «abgeleitet» und sonst `null` samt
+    # `deckungsgrad_wirkungslos` (`_deckungsgrad_befund` dort). Hier stand
+    # `bericht.get(...)`, und das liest das Fehlen und das `null` gleich: Jeder Bericht
+    # einer vorgegebenen Kamera bekam die Vorgabe 0,70 mit Quelle «vorgabe» ins Urteil
+    # und dazu die Rechnung, die auf ihr ruht — genau die Rahmung, von der der Runner
+    # gerade gesagt hatte, dass sie nie gestellt wurde. Die Vorgabe gilt darum NUR, wenn
+    # das Feld fehlt (alter Runner) oder keine Zahl ist; `null` heisst NICHT GERAHMT.
+    # Bewacht ueber Bruecke, Abholer und Verarbeiter in tests/test_runde7_abholer.py.
+    wirkungslos = None
+    if "deckungsgrad" not in bericht:
+        deckungsgrad, quelle, unlesbar = kameras.DECKUNGSGRAD, "vorgabe", None
+    elif bericht["deckungsgrad"] is None:
+        deckungsgrad, quelle, unlesbar = None, "nicht_gerahmt", None
+        wirkungslos = (bericht.get("deckungsgrad_wirkungslos") or (
+            "Der Bericht meldet keinen Deckungsgrad (null) und nennt keinen Grund dafuer."))
+    elif (isinstance(bericht["deckungsgrad"], (int, float))
+          and not isinstance(bericht["deckungsgrad"], bool)):
+        deckungsgrad, quelle, unlesbar = float(bericht["deckungsgrad"]), "bericht", None
+    else:
+        # `True` ist in Python eine Zahl und waere eine Rahmung von 100 %. Das Feld
+        # steht da, sagt aber nichts Lesbares — also gilt die Vorgabe, und zwar als
+        # Vorgabe benannt (bis zum 23.09.2026 stand hier Quelle «bericht»).
+        deckungsgrad, quelle = kameras.DECKUNGSGRAD, "vorgabe"
+        unlesbar = bericht["deckungsgrad"]
 
     # DER GEMESSENE FUELLGRAD SCHLAEGT DEN SOLLWERT.
     #
@@ -2958,16 +3036,37 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
     kamera = bericht.get("kamera") or {}
     gemessen = kamera.get("fuellgrad") if weg == "abgeleitet" else None
 
-    lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
-                                       bericht.get("bbox_bauwerk"),
-                                       deckungsgrad=deckungsgrad,
-                                       gemessener_fuellgrad=gemessen)
+    if deckungsgrad is None:
+        # NICHT GERAHMT: keine wirksame Bildbreite, kein Knie, kein Abbruch. Gerechnet
+        # wird nur der Breitenanteil (Bauwerk zu Szene), denn der haengt allein an den
+        # beiden Huellboxen — mit der Einheitsrahmung 1,0 ist die Bildbreite genau er,
+        # und alles, was auf einer Rahmung ruhen wuerde, wird danach geleert.
+        lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
+                                           bericht.get("bbox_bauwerk"),
+                                           deckungsgrad=1.0)
+        lage.update(wirksame_bildbreite=None, traegt=None, abbruch=None,
+                    abbruch_grund="", basis=None, grundlage=None,
+                    grund=(f"NICHT GERAHMT: {wirkungslos} Ohne Deckungsgrad gibt es "
+                           f"keine wirksame Bildbreite; die Vorgabe der Bibliothek "
+                           f"sprach ueber einen anderen Kameraweg und wird hier nicht "
+                           f"eingesetzt."
+                           + (f" {lage['grund']}" if lage.get("breitenanteil") is None
+                              else "")))
+    else:
+        lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
+                                           bericht.get("bbox_bauwerk"),
+                                           deckungsgrad=deckungsgrad,
+                                           gemessener_fuellgrad=gemessen)
     lage = dict(lage, weg=weg, note=bericht.get("bbox_bauwerk_note") or "",
                 deckungsgrad=deckungsgrad, deckungsgrad_quelle=quelle,
+                deckungsgrad_wirkungslos=wirkungslos,
                 massgebend=kamera.get("massgebend"))
     if quelle == "vorgabe" and lage.get("abbruch"):
         lage["abbruch_grund"] += (
-            f" ACHTUNG: Der Bericht nennt keinen Deckungsgrad; gerechnet wurde mit der "
+            f" ACHTUNG: Der Bericht nennt keinen Deckungsgrad"
+            + (f" (das Feld steht da, ist aber keine Zahl: {unlesbar!r})"
+               if unlesbar is not None else "")
+            + f"; gerechnet wurde mit der "
             f"Vorgabe {kameras.DECKUNGSGRAD}. Wurde dieser Lauf mit einem anderen "
             f"gestellt, spricht diese Zahl ueber einen anderen Lauf. Runner ab dem "
             f"26.08.2026 melden das Feld.")
@@ -2976,8 +3075,12 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
         lage["abbruch_grund"] = (
             f"Die Kamera kam auf dem Weg {weg!r} zustande, nicht aus der Huellbox. Der "
             f"Deckungsgrad beschreibt diesen Lauf darum NICHT, und es wird nichts "
-            f"abgebrochen. Die gerechnete Bildbreite steht trotzdem da — als Auskunft, "
-            f"nicht als Urteil.")
+            f"abgebrochen. "
+            + ("Eine Bildbreite wird nicht gerechnet — der Runner meldet, dass kein "
+               "Deckungsgrad gewirkt hat." if deckungsgrad is None else
+               "Die gerechnete Bildbreite steht trotzdem da — als Auskunft, nicht als "
+               "Urteil (ein Runner ab dem 22.09.2026 meldet auf diesem Weg keinen "
+               "Deckungsgrad)."))
     return lage
 
 

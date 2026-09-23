@@ -328,6 +328,17 @@ _KAMERA_PARAMS = ("augenhoehe", "gelaende_z", "kamera_modus", "kamera_huellbox",
                   # abgelegt worden, weil dieselbe Frage nicht gestellt wurde.
                   "auge", "blick_auf")
 
+#: Kameraangaben, die **nur mit einem Richtungskürzel** wirken — der Runner rechnet mit
+#: ihnen nur auf dem Weg ``abgeleitet`` (``kameras.kamerasatz``).
+#:
+#: **Befund 23.09.2026** (nachgelesen): Mit ``auge``/``blick_auf`` reichte dieses Skript
+#: sie trotzdem weiter, und zusätzlich IMMER ``kamera`` (``VORGABE_KAMERA``). ``seams``
+#: liess das Kürzel dann still fallen, und die vier Angaben kamen beim Runner an, ohne
+#: etwas zu bewirken. Seither wird mit Standpunkt von Hand kein Kürzel gesetzt, diese
+#: vier werden nicht weitergereicht, und das Ergebnis sagt je Angabe, dass sie
+#: wirkungslos gewesen wäre (``messwerte.kamerabestellung.wirkungslos``).
+_NUR_MIT_KAMERA = ("augenhoehe", "bias_grad", "kamera_modus", "deckungsgrad")
+
 #: Was die einzelnen Pfade an `params` tatsächlich verbrauchen. Wird ein Auftrag mit
 #: Angaben gestellt, die hier nicht stehen, ist er hier nicht ausführbar — und das muss
 #: er sagen, statt etwas anderes zu messen.
@@ -366,6 +377,52 @@ def _unverstandene_params(_art: str, params: dict) -> list[str]:
     ist. Die Grenze läuft zwischen „hier ungenutzt" und „hier unbekannt".
     """
     return sorted(set(params) - _GENUTZTE_PARAMS)
+
+
+def _kamerabestellung(params: dict) -> tuple[dict, dict, str | None]:
+    """Welche Kamera dieser Auftrag bestellt — und was davon wirken kann.
+
+    Zwei Quellen für den Standpunkt gibt es: das Richtungskürzel ``kamera`` (ohne Angabe
+    ``VORGABE_KAMERA``) und den Standpunkt von Hand, ``auge`` mit ``blick_auf``. Stehen
+    beide **ausdrücklich** im Auftrag, wird nicht geordnet — ``seams`` weist die
+    Kombination seit dem 23.09.2026 ab, und die Kette seit dem 22.09.2026. Steht nur der
+    Standpunkt von Hand da, fällt die Vorgabe ``VORGABE_KAMERA`` weg: Sie war nie
+    bestellt, sie ist nur die Antwort auf «nichts gesagt».
+
+    Returns:
+        ``(gaben, befund, fehler)``. ``gaben`` geht an ``seams`` (``kamera``
+        eingeschlossen, ``None``-Werte nie). ``befund`` reist ins Ergebnis:
+        ``{"kamera", "kamera_quelle", "wirkungslos"}`` — ``kamera_quelle`` ist
+        ``"bestellt"``, ``"vorgabe"`` oder ``None`` (Standpunkt von Hand), und
+        ``wirkungslos`` nennt je nicht weitergereichter Angabe den Grund (leer, wenn alles
+        wirkt). ``fehler`` ist ein Satz, wenn der Standpunkt zweimal bestellt ist.
+    """
+    von_hand = [n for n in ("auge", "blick_auf") if params.get(n) is not None]
+    bestellt = params.get("kamera") or None
+    if von_hand and bestellt is not None:
+        return {}, {"kamera": None, "kamera_quelle": None, "wirkungslos": {}}, (
+            f"Standpunkt zweimal bestellt: `kamera` {bestellt!r} rechnet ihn aus der "
+            f"Huellbox, und {', '.join(von_hand)} gibt ihn vor. Welcher gilt, entscheidet "
+            f"dieses Skript nicht — die falsche Kamera sieht man dem Bild nicht an.")
+    if von_hand:
+        kamera, quelle = None, None
+    else:
+        kamera = bestellt or VORGABE_KAMERA
+        quelle = "bestellt" if bestellt is not None else "vorgabe"
+
+    gaben = {n: params[n] for n in _KAMERA_PARAMS
+             if params.get(n) is not None
+             and (kamera is not None or n not in _NUR_MIT_KAMERA)}
+    if kamera is not None:
+        gaben["kamera"] = kamera
+    wirkungslos = {
+        n: (f"{n} {params[n]!r} wurde NICHT an Blender gereicht: Der Standpunkt kam von "
+            f"Hand ({', '.join(von_hand)}), und {n} wirkt nur, wenn die Kamera aus einem "
+            f"Richtungskuerzel gerechnet wird. Das Bild entstand ohne diese Angabe.")
+        for n in _NUR_MIT_KAMERA
+        if kamera is None and params.get(n) is not None}
+    return gaben, {"kamera": kamera, "kamera_quelle": quelle,
+                   "wirkungslos": wirkungslos}, None
 
 
 def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=None) -> dict:
@@ -450,6 +507,16 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
                 f"verbraucht."),
             dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
+    # DER STANDPUNKT WIRD VOR DER UMWANDLUNG GEKLAERT: Eine Bestellung, die nicht laufen
+    # kann, soll keine IFC-Umwandlung kosten (23.09.2026).
+    kamera_gaben, kamerabestellung, zweimal = _kamerabestellung(params)
+    if zweimal is not None:
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler",
+            urteil={"auftrag": "standpunkt zweimal bestellt"},
+            fehler=zweimal,
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
     ifc = _geometrie_bereitstellen(satz, repo)
     aus = Path(params.get("out_dir") or (repo / "build" / satz["auftrag_id"]))
     aus.mkdir(parents=True, exist_ok=True)
@@ -463,17 +530,18 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
 
     # DIE KAMERA WIRD ANGEFORDERT — bis zum 28.08.2026 stand hier keine, und der Runner
     # stellte darum seine Notkamera. Ein Demolauf zeigte dann Blenders 50-mm-Optik von
-    # irgendwoher statt eines Bildes auf Augenhoehe.
-    kamera_gaben = {n: params[n] for n in _KAMERA_PARAMS if params.get(n) is not None}
+    # irgendwoher statt eines Bildes auf Augenhoehe. Seit dem 23.09.2026 nur, wenn kein
+    # Standpunkt von Hand bestellt ist — siehe `_kamerabestellung`.
     blender_bericht = seams.glb_zu_tiefenkarte(
         glb_bericht["glb_path"], aus, up_axis=glb_bericht["up_axis"],
         aufloesung=params.get("aufloesung", 512), samples=params.get("samples", 32),
-        kamera=params.get("kamera") or VORGABE_KAMERA, **kamera_gaben)
+        **kamera_gaben)
 
     if art == "render":
         return _render_und_qa(satz, blender_bericht, glb_bericht, aus, params, beginn,
                               _render_modell=_render_modell,
-                              _tiefen_modell=_tiefen_modell)
+                              _tiefen_modell=_tiefen_modell,
+                              kamerabestellung=kamerabestellung)
 
     # Nur Zahlen und Dateinamen — nie Bildinhalte (Regel 3).
     messwerte = {
@@ -492,6 +560,9 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
         "bbox": blender_bericht.get("bbox"),
         "bbox_bauwerk": blender_bericht.get("bbox_bauwerk"),
         "kamera": _nur_dateinamen(blender_bericht.get("kamera")),
+        # WELCHE KAMERA BESTELLT WAR UND WAS DAVON NICHT WEITERGING (23.09.2026). Ohne
+        # dieses Feld verschwaende eine nicht weitergereichte Augenhoehe spurlos.
+        "kamerabestellung": kamerabestellung,
         "dateien": [Path(p).name for p in aus.glob("*") if p.is_file()],
     }
 
@@ -562,7 +633,8 @@ def _nur_dateinamen(wert):
 
 def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
                    aus: Path, params: dict, beginn: float, *,
-                   _render_modell=None, _tiefen_modell=None) -> dict:
+                   _render_modell=None, _tiefen_modell=None,
+                   kamerabestellung: dict | None = None) -> dict:
     """Die Stufe, für die es diesen Rechner gibt: Bildmodell, dann Messung.
 
     Bis zum 18.08.2026 meldete `art: "render"` hier `uebersprungen` — der Adapter in
@@ -593,6 +665,10 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         "depth_exr_kanaele": blender_bericht.get("depth_exr_kanaele"),
         "depth_exr_format": blender_bericht.get("depth_exr_format"),
         "depth_png_fehler": blender_bericht.get("depth_png_fehler"),
+        # Wie im Multipass-Zweig, an JEDEM Ergebnis dieses Wegs (23.09.2026). `None`
+        # nur, wenn diese Stufe direkt gerufen wird, ohne dass eine Bestellung
+        # ausgewertet wurde — also NICHT BEKANNT, nicht «alles wirkte».
+        "kamerabestellung": kamerabestellung,
     }
 
     # Der Lizenzentscheid fällt **vor** dem Render, nicht danach.

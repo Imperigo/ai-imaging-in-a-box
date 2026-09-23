@@ -533,6 +533,13 @@ def baue_kette(
             ``kamera``: Nur dort rechnet der Runner die Kamera aus ihm. Ohne ``kamera``
             wird der Lauf abgewiesen — sonst käme dieselbe Tiefenkarte heraus wie ohne
             die Angabe (Befund 22.09.2026, ``auf-20260922-137``).
+        augenhoehe, bias_grad, kamera_modus: Augenhöhe in Metern; Winkel der
+            Diagonalen in Grad (regelt das Verhältnis der beiden sichtbaren Fassaden);
+            ``"shift"`` oder ``"gekippt"``. Alle drei sind Eingaben der Kamerarechnung
+            ``kameras.kamerasatz``. **Wirken nur mit** ``kamera``, aus demselben Grund
+            wie ``deckungsgrad``; ohne ``kamera`` wird der Lauf abgewiesen (Befund
+            23.09.2026). Der Runner meldet im Bericht, mit welchen Werten er gerechnet
+            hat.
         auge, blick_auf, brennweite: Der Standpunkt von Hand, in Metern im Weltsystem.
         innenraum: Eine Innenaufnahme bestellen: ``{"raum": <Name>, "art": "frontal"``
             ``| "ueber_eck"}``. Der Standpunkt wird beim Lauf aus den Räumen des
@@ -1159,6 +1166,24 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                           f"`deckungsgrad` {p['deckungsgrad']!r} wirkt nur zusammen mit "
                           f"`kamera` (Richtungskuerzel, Standpunkt aus der Huellbox "
                           f"gerechnet). Ohne `kamera` wuerde er still uebergangen.")}
+
+    # DIESELBE LUECKE BEI DREI WEITEREN ANGABEN (Befund 23.09.2026, im Runner
+    # nachgelesen): `augenhoehe`, `bias_grad` und `kamera_modus` gehen nur in
+    # `kameras.kamerasatz`, und das rechnet der Runner nur auf dem Weg `abgeleitet` —
+    # also nur mit `kamera`. Angenommen wurden sie hier trotzdem auf jedem Weg, und eine
+    # Augenhoehe von 1,30 m ergab bei vorgegebenem Standpunkt dieselbe Kamera wie ohne
+    # sie (am Runner mit Attrappe nachgefahren, tests/test_runde7_kamera.py). Die Regel
+    # ist die des Deckungsgrads: abweisen statt still uebergehen.
+    ohne_weg = [n for n in ("augenhoehe", "bias_grad", "kamera_modus")
+                if p.get(n) is not None]
+    if ohne_weg and p.get("kamera") is None:
+        return {"status": STATUS_FEHLER,
+                "error": (f"Kameraangaben bestellt, aber kein Kameraweg, auf dem sie "
+                          f"wirken: "
+                          + ", ".join(f"`{n}` {p[n]!r}" for n in ohne_weg)
+                          + " wirken nur zusammen mit `kamera` (Richtungskuerzel, "
+                            "Standpunkt aus der Huellbox gerechnet). Ohne `kamera` "
+                            "wuerden sie still uebergangen.")}
 
     auge = p.get("auge")
     blick_auf = p.get("blick_auf")

@@ -123,6 +123,46 @@ extension JSONWert: Codable {
     }
 }
 
+// ======================================================== Listen: ganz oder gar nicht
+
+/// Wie eine Liste in einer Antwort stand — **drei Antworten**, nicht zwei.
+///
+/// Ein `nil` an einer Liste sagt allein nicht, *warum* sie fehlt. Die Anzeige muss aber
+/// «nicht geliefert» und «nicht lesbar» auseinanderhalten können, und beides von «leer».
+public enum Listenlage: Equatable, Sendable {
+    /// Das Feld fehlt oder ist `null`.
+    case nichtGeliefert
+    /// Das Feld ist da, aber keine Liste — **oder** mindestens ein Eintrag hat nicht die
+    /// Form, die erwartet ist. Dann ist die ganze Liste nicht gelesen.
+    case nichtLesbar
+    /// Jeder Eintrag gelesen; auch eine leer gelieferte Liste.
+    case gelesen
+}
+
+extension JSONWert {
+    /// Liest eine Liste **ganz oder gar nicht**: Jeder Eintrag muss sich lesen lassen, sonst
+    /// gibt es keine Liste (`nil`) und die Lage `nichtLesbar`.
+    ///
+    /// Befund der Durchsicht vom 23.09.2026: Sechs Stellen lasen ihre Listen mit einem
+    /// stillen `compactMap` — ein Eintrag, der kein Objekt (oder kein Text) war, fiel
+    /// spurlos weg, und die Mappe zeigte drei Bilder, wo der Server vier schickte. Eine
+    /// kürzere Liste sieht aus wie eine gelesene; `nil` mit der Lage `nichtLesbar` nicht.
+    /// Bewacht an jeder Stelle einzeln (`AnfragenTests.testEinUnlesbarerEintrag…`,
+    /// `PruefzeichenTests.testEinUnlesbarerEintrag…`).
+    public static func ganzOderNicht<T>(_ wert: JSONWert?,
+                                        _ lies: (JSONWert) -> T?) -> (liste: [T]?, lage: Listenlage) {
+        guard let wert = wert, !wert.istNull else { return (nil, .nichtGeliefert) }
+        guard let roh = wert.alsListe else { return (nil, .nichtLesbar) }
+        var liste: [T] = []
+        liste.reserveCapacity(roh.count)
+        for eintrag in roh {
+            guard let gelesen = lies(eintrag) else { return (nil, .nichtLesbar) }
+            liste.append(gelesen)
+        }
+        return (liste, .gelesen)
+    }
+}
+
 // ========================================================================= Anmeldung
 
 /// Benutzer und Kennwort für die Tür des Servers (HTTP-Basic).
@@ -613,7 +653,7 @@ public struct Projektsicht: Equatable, Sendable {
     public let name: String?
     public let ordner: String?
     public let modell: Modellangabe?
-    /// `nil` heisst: **nicht geliefert** — nicht «keine Bilder».
+    /// `nil` heisst: **nicht geliefert oder nicht lesbar** — nicht «keine Bilder».
     public let bilder: [Bildeintrag]?
     public let skizzen: [Skizzeneintrag]?
     public let knotenbaumFehler: String?
@@ -635,8 +675,11 @@ public struct Projektsicht: Equatable, Sendable {
             Modellangabe(pfad: $0["pfad"]?.alsText, standRoh: $0["stand"]?.alsText,
                          grund: $0["grund"]?.alsText)
         }
-        bilder = o["bilder"]?.alsListe?.compactMap { $0.alsObjekt.map(Bildeintrag.init) }
-        skizzen = o["skizzen"]?.alsListe?.compactMap { $0.alsObjekt.map(Skizzeneintrag.init) }
+        // GANZ ODER GAR NICHT (23.09.2026): Ein Eintrag, der kein Objekt ist, macht die
+        // ganze Liste `nil`, statt still zu fehlen. Die Lage dazu führt `Mappenlage`, die die
+        // App liest; diese Sicht hat keine Anzeige.
+        bilder = JSONWert.ganzOderNicht(o["bilder"]) { $0.alsObjekt.map(Bildeintrag.init) }.liste
+        skizzen = JSONWert.ganzOderNicht(o["skizzen"]) { $0.alsObjekt.map(Skizzeneintrag.init) }.liste
         knotenbaumFehler = o["knotenbaum_fehler"]?.alsText
         einstellungen = o["einstellungen"]
         einfuhr = o["import"]
@@ -718,7 +761,12 @@ public struct Fortschrittsstand: Equatable, Sendable {
     public let schritteGesamt: Int?
     /// `belegt` oder `unbelegt` — roh.
     public let artDesZeichens: String?
+    /// `nil` heisst: nicht geliefert **oder** nicht lesbar — welches von beiden, sagt
+    /// `fertigeLage`. Ein Eintrag, der kein Objekt ist, macht die ganze Liste `nil`
+    /// (23.09.2026; bis dahin fiel er still weg, und der Lauf hatte einen Knoten weniger).
     public let fertige: [FertigerKnoten]?
+    /// Wie `fertige` stand: nicht geliefert, nicht lesbar oder gelesen.
+    public let fertigeLage: Listenlage
     public let ergebnis: JSONWert?
     public let fehler: String?
     /// Ob `POST /api/abbrechen` kam — **nicht**, ob der Abbruch gewirkt hat (das steht nach
@@ -757,6 +805,16 @@ public struct Fortschrittsstand: Equatable, Sendable {
 
     public static func lies(status: Int, daten: Data) throws -> Fortschrittsstand {
         let o = try liesAntwort(status: status, daten: daten)
+        let fertige = JSONWert.ganzOderNicht(o["fertige"]) { w in
+            w.alsObjekt.map {
+                FertigerKnoten(knoten: $0["knoten"]?.alsText,
+                               knotenart: $0["knotenart"]?.alsText,
+                               status: $0["status"]?.alsText,
+                               ausCache: $0["aus_cache"]?.alsWahrheit,
+                               dauerS: $0["dauer_s"]?.alsZahl,
+                               variante: $0["variante"]?.alsGanz)
+            }
+        }
         return Fortschrittsstand(
             laeuft: o["laeuft"]?.alsWahrheit,
             ordner: o["ordner"]?.alsText,
@@ -769,16 +827,8 @@ public struct Fortschrittsstand: Equatable, Sendable {
             schritt: o["schritt"]?.alsGanz,
             schritteGesamt: o["schritte_gesamt"]?.alsGanz,
             artDesZeichens: o["art_des_zeichens"]?.alsText,
-            fertige: o["fertige"]?.alsListe?.compactMap { w in
-                w.alsObjekt.map {
-                    FertigerKnoten(knoten: $0["knoten"]?.alsText,
-                                   knotenart: $0["knotenart"]?.alsText,
-                                   status: $0["status"]?.alsText,
-                                   ausCache: $0["aus_cache"]?.alsWahrheit,
-                                   dauerS: $0["dauer_s"]?.alsZahl,
-                                   variante: $0["variante"]?.alsGanz)
-                }
-            },
+            fertige: fertige.liste,
+            fertigeLage: fertige.lage,
             ergebnis: o["ergebnis"].flatMap { $0.istNull ? nil : $0 },
             fehler: o["fehler"]?.alsText,
             abbruchVerlangt: o["abbruch_verlangt"]?.alsWahrheit,
@@ -796,8 +846,7 @@ public struct Fortschrittsstand: Equatable, Sendable {
     /// Eine Liste, in der **jeder** Eintrag Text ist — sonst `nil` für die ganze Liste,
     /// statt still einen weniger (siehe `Laufbestellung.skizzen`).
     static func nurTexte(_ liste: [JSONWert]) -> [String]? {
-        let texte = liste.compactMap { $0.alsText }
-        return texte.count == liste.count ? texte : nil
+        JSONWert.ganzOderNicht(.liste(liste)) { $0.alsText }.liste
     }
 }
 

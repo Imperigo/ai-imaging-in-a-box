@@ -143,17 +143,25 @@ def _argumente():
     # und eine stillschweigend geänderte Optik verschöbe sie alle.
     ap.add_argument("--brennweite", type=float, default=None)
     ap.add_argument("--kamera-modus", dest="kamera_modus", default=None,
-                    help="'gekippt' (Vorgabe) oder 'shift'. Wirkt nur zusammen mit "
-                         "--kamera: Der Modus geht in `kameras.kamerasatz`, und der von "
-                         "dort gerechnete Shift wird gestellt. Ein ausdrücklich "
-                         "gesetztes --shift-y schlägt ihn.")
+                    help="'shift' oder 'gekippt'; ohne Angabe gilt die Vorgabe von "
+                         "aiimaging.kameras (seit 23.08.2026 'shift'). Wirkt nur zusammen "
+                         "mit --kamera: Der Modus geht in `kameras.kamerasatz`, und der "
+                         "von dort gerechnete Shift wird gestellt. Ein ausdrücklich "
+                         "gesetztes --shift-y schlägt ihn. Auf den anderen Wegen meldet "
+                         "der Bericht ihn als wirkungslos (kamera_modus_wirkungslos).")
     ap.add_argument("--shift-y", dest="shift_y", type=float, default=None,
                     help="Objektiv-Shift nach oben, als Anteil der GRÖSSEREN Sensorkante "
                          "(Blenders Einheit). Gesetzt heisst: waagrechte Kamera, "
                          "senkrechte Kanten bleiben senkrecht. Gerechnet wird er in "
                          "`kameras.MODUS_SHIFT`; hier wird er nur gestellt.")
-    ap.add_argument("--bias", type=float, default=35.0)
-    ap.add_argument("--augenhoehe", type=float, default=1.70)
+    # KEINE Vorgabe hier, sondern `None` — und das nicht nur wegen der einen Quelle
+    # (siehe `_vorgabe`). Befund 23.09.2026: Mit `default=35.0` / `1.70` war eine
+    # Bestellung von der Vorgabe nicht mehr zu unterscheiden, und der Bericht konnte
+    # darum nicht sagen, ob auf dem Weg `vorgegeben` eine Augenhoehe BESTELLT und
+    # uebergangen wurde. Die Zahlen gelten unveraendert: `kameras.BIAS_GRAD` und
+    # `kameras.AUGENHOEHE_M` sind dieselben 35.0 und 1.70.
+    ap.add_argument("--bias", type=float, default=None)
+    ap.add_argument("--augenhoehe", type=float, default=None)
     # KEIN fester Vorgabewert hier. Am 23.08.2026 sind zwei abgeschriebene 28.0
     # aufgefallen, die beim Wechsel der Brennweite still auseinandergelaufen
     # waeren; dies ist dieselbe Stelle fuer den Deckungsgrad. None heisst: was
@@ -306,6 +314,65 @@ def _deckungsgrad_befund(a, herkunft: dict) -> dict:
     grund += (f"Bestellt war {float(bestellt)} — die Bestellung ist an diesem Bild "
               f"wirkungslos." if bestellt is not None else "Bestellt war keiner.")
     return {"deckungsgrad": None, "deckungsgrad_wirkungslos": grund}
+
+
+#: Die drei Kameraangaben, die — wie der Deckungsgrad — nur auf dem Weg ``abgeleitet``
+#: wirken: ``(Berichtsname, Schalter im Namensraum, Feld in der Herkunft)``.
+#: Der Berichtsname ist der Name, unter dem sie bestellt werden (``kette.baue_kette``,
+#: ``seams.glb_zu_multipass``) — wer ``augenhoehe`` bestellt, findet
+#: ``augenhoehe_wirkungslos``.
+_NUR_ABGELEITET = (
+    ("augenhoehe", "augenhoehe", "augenhoehe_m"),
+    ("bias_grad", "bias", "bias_grad"),
+    ("kamera_modus", "kamera_modus", "modus"),
+)
+
+
+def _kamerawerte_befund(a, herkunft: dict) -> dict:
+    """Augenhoehe, Bias und Kameramodus im Bericht — **so, wie sie gewirkt haben.**
+
+    **Befund 23.09.2026** (nachgelesen, dieselbe Fehlerart wie der Deckungsgrad am
+    22.09.2026): ``kameras.kamerasatz`` rechnet mit allen dreien, und aufgerufen wird es
+    nur auf dem Weg ``abgeleitet``. Mit ``--auge``/``--blick-auf`` (``vorgegeben``) und im
+    ``rueckfall`` greifen sie nirgends — angenommen wurden sie trotzdem auf jedem Weg, und
+    der Bericht sagte dazu nichts.
+
+    **Gemeldet als wirkungslos wird nur, was BESTELLT war** — ausdruecklich uebergeben,
+    also nicht ``None`` im Namensraum. Entschieden 23.09.2026: Eine Vorgabe, die niemand
+    bestellt hat, ist nicht «wirkungslos bestellt»; ein Satz dazu stuende auf JEDEM Bild
+    mit vorgegebenem Standpunkt und verdraengte den einen Fall, in dem jemand wirklich
+    etwas bestellt hat, das nicht ankam. Darum tragen ``--bias`` und ``--augenhoehe`` seit
+    demselben Tag ``None`` statt ihrer Zahl als Vorgabe — sonst waere «bestellt» hier
+    nicht feststellbar.
+
+    Returns:
+        Je Angabe zwei Felder, beide immer da: ``<name>`` und ``<name>_wirkungslos``.
+        Auf ``abgeleitet`` der Wert, mit dem die Kamera gerechnet wurde (bestellt oder
+        Vorgabe der Bibliothek), und ``None``. Sonst ``None`` — **nicht gestellt** — und
+        ein Satz, warum, wenn die Angabe bestellt war; ohne Bestellung ``None``.
+    """
+    weg = herkunft.get("weg")
+    befund = {}
+    for name, schalter, feld in _NUR_ABGELEITET:
+        if weg == "abgeleitet":
+            befund[name] = herkunft.get(feld)
+            befund[f"{name}_wirkungslos"] = None
+            continue
+        bestellt = getattr(a, schalter, None) if a is not None else None
+        befund[name] = None
+        if bestellt is None:
+            befund[f"{name}_wirkungslos"] = None
+            continue
+        warum = ("der Standpunkt kam von Hand (--auge/--blick-auf) und wurde nur gestellt"
+                 if weg == "vorgegeben" else
+                 "es wurde der Rueckfall gestellt (keine Kamera angegeben, oder "
+                 "'aiimaging.kameras' von diesem Blender aus nicht erreichbar)")
+        befund[f"{name}_wirkungslos"] = (
+            f"Bestellt war {name} {bestellt!r}, aber die Kamera kam auf dem Weg {weg!r} "
+            f"zustande: {warum}. {name} wirkt nur auf dem Weg 'abgeleitet' (Kamera aus "
+            f"dem Richtungskuerzel gerechnet) — an diesem Bild ist die Bestellung "
+            f"wirkungslos.")
+    return befund
 
 
 def _kameras_modul():
@@ -748,8 +815,8 @@ def _kamera_setzen(lo, hi, a=None):
             satz = kameras.kamerasatz(
                 [list(lo), list(hi)], kuerzel=[a.kamera],
                 brennweite_mm=brennweite,
-                bias_grad=float(getattr(a, "bias", 35.0)),
-                augenhoehe_m=float(getattr(a, "augenhoehe", 1.70)),
+                bias_grad=_vorgabe(a, "bias", kameras.BIAS_GRAD),
+                augenhoehe_m=_vorgabe(a, "augenhoehe", kameras.AUGENHOEHE_M),
                 deckungsgrad=deckungsgrad,
                 gelaende_z=getattr(a, "gelaende_z", None),
                 # Das TATSÄCHLICHE Seitenverhältnis dieses Laufs, nicht eine Annahme.
@@ -792,6 +859,12 @@ def _kamera_setzen(lo, hi, a=None):
                 "deckungsgrad": deckungsgrad,
                 "azimut_grad": k["azimut_grad"],
                 "modus": k["modus"],
+                # WAS DIE RECHNUNG WIRKLICH BENUTZT HAT, aus `kamerasatz` zurueckgelesen
+                # und nicht aus den Schaltern abgeschrieben (Befund 23.09.2026). Nur
+                # dieser Weg rechnet mit Augenhoehe und Bias — auf `vorgegeben` und
+                # `rueckfall` stehen sie darum nicht hier, siehe `_kamerawerte_befund`.
+                "augenhoehe_m": satz["augenhoehe_m"],
+                "bias_grad": satz["bias_grad"],
                 "neigung_grad": k["neigung_grad"],
                 "shift_mm": k["shift_mm"],
                 "massgebend": k["massgebend"],
@@ -1628,6 +1701,10 @@ def main() -> int:
         # Absturz weg, den `_kameras_modul().DECKUNGSGRAD` auf dem Rueckfall ohne
         # erreichbare Bibliothek ausgeloest haette.
         **_deckungsgrad_befund(a, kamera_herkunft),
+        # DIESELBE REGEL FUER AUGENHOEHE, BIAS UND KAMERAMODUS (Befund 23.09.2026): Sie
+        # wirken nur auf `abgeleitet`. Dort steht der benutzte Wert; sonst `None` (NICHT
+        # GESTELLT) und, wenn bestellt, `<name>_wirkungslos` mit dem Grund.
+        **_kamerawerte_befund(a, kamera_herkunft),
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,
