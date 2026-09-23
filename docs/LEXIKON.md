@@ -4960,6 +4960,20 @@ Dazu die Regel **ganz oder gar nicht**: Eine Liste wird ganz gelesen oder gilt a
 gelesen — sie wird nie still kürzer. Eine kürzere Liste sähe aus wie «es gibt weniger»,
 und das wäre gelogen.
 
+**Überlauf** — Eine Zahl, die zu gross ist für die Art, in der ein Programm sie rechnen
+will. Eine ganze Zahl mit 400 Stellen kann Python lesen, aber nicht in eine Kommazahl
+verwandeln — dort bricht die Rechnung ab. *In diesem Projekt:* Eine solche Zahl in einer
+Bestellung ist seit dem 23.09.2026 ein Mangel mit Satz, kein Absturz.
+
+**Zweite Linie** — Ein Fang hinter der eigentlichen Prüfung: Übersieht die Prüfung einen
+Fall, fällt er nicht durch bis zum Absturz, sondern wird dort mit Satz aufgefangen. *In
+diesem Projekt:* eine gemeinsame Liste der Lesefehler für Brücke und eigene Ablage — eine
+Liste, nicht zwei, damit beide Wege dasselbe fangen.
+
+**Obergrenze, gesetzt, nicht gemessen** — Eine Grenze, die aus einer Quelle abgelesen
+(hier: dem Quelltext von Blender 4.2) und nicht am eigenen Gerät nachgeprüft ist. Sie wird
+so beschriftet, bis die Messung kommt (`auf-151` V7 fragt nach Blender 5.2).
+
 **Zwillingsansicht** — Eine Kameraansicht, deren Soll-Tiefenkarte genau gleich aussieht
 wie die einer anderen (etwa zwei Über-Eck-Ansichten eines Quaders). Sie wird nicht neu
 gerechnet, sondern übernimmt Bild und Urteil der ersten. Darum darf ein Befund über sie
@@ -5642,6 +5656,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus Runde 7b/7c: **Ueberlauf**, **Zweite Linie**, **Obergrenze, gesetzt, nicht gemessen** |
 | 2026-09-23 | Ergaenzt aus Runde 7: **Standpunkt zweimal bestellt**, **Bias (Winkel einer Ueber-Eck-Ansicht)**, **Nicht gerahmt**, **Listenlage** (mit «ganz oder gar nicht»); nachgefuehrt: **Richtungsgrenze** (gilt in beide Richtungen), **Wirkungslos (im Bericht)** (auch Augenhoehe, Bias, Kameramodus) |
 | 2026-09-23 | Ergaenzt aus der Welle 2c: **Mitgesandte Kamera**, **Neuzentrierung**, **Gleichwertige Mutation**, **Abschrift-Probe**, **Zweiter Zustand (eines Entwurfsblatts)**, **Owner-Entscheid offen (Schild)** |
 | 2026-09-23 | Ergaenzt aus der Welle 2b: **Blattunterlage**, **Darauf skizzieren**, **Ablageplan**, **Fachzaehlung**, **Aufraeumfehler**, **Zug (Stiftzug)**, **Beruehrungsart**, **Deckungsbild**, **Einbausperre**, **Reine Absicherung**, **Bereich der Anmeldung (realm)**, **Pruefsumme im Dateinamen**; berichtigt: **Eingangsbild** (gestreckt wird die Skizze, nicht die Unterlage) |

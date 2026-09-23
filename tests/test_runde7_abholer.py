@@ -376,10 +376,25 @@ def _durchgang(store) -> tuple[dict, list]:
 
 def test_eine_ueber_mcp_angenommene_unlesbare_szene_nimmt_den_durchgang_nicht_mit(
         tmp_path, store):
-    """**Der Wächter von E2**, auf dem heute erreichbaren Weg: ``samples: "viele"`` geht
-    durch den Einlass, und ``lies_szene`` scheitert an ``int("viele")``. Der zweite
-    Auftrag der Ablage wird trotzdem angesehen und gerechnet."""
-    kaputt = _bestelle(tmp_path, samples="viele")
+    """**Der Wächter von E2**: ``samples: "viele"`` in einem Auftrag der Ablage, und
+    ``lies_szene`` scheiterte an ``int("viele")``. Der zweite Auftrag der Ablage wird
+    trotzdem angesehen und gerechnet.
+
+    **Seit der Runde 7b (23.09.2026)** weist der Einlass ``"viele"`` ab
+    (``tests/test_runde7b_einlass.py``), und ``lies_szene`` nennt die Zahl als Mangel,
+    statt zu werfen. Der Auftrag entsteht hier darum so, wie er in einer Ablage liegt,
+    die VOR der Runde 7b gefüllt wurde: angenommen und danach mit ``"viele"``
+    zurückgeschrieben. Der Grund am Auftrag ist jetzt der Mangel mit Feld und Wert.
+
+    **Was dieser Wächter seither NICHT mehr prüft** (Runde 7c, 23.09.2026): den Fang in
+    ``eigene_quelle.lies_auftrag`` — ``lies_szene`` wirft hier nicht mehr, der Fang
+    könnte fehlen, und dieser Test bliebe grün. Den Fang bewacht seither
+    ``test_die_zweite_linie_der_eigenen_ablage_faengt_dasselbe_wie_die_bruecke`` in
+    ``tests/test_runde7b_einlass.py`` mit einer Attrappe für ``lies_szene``."""
+    kaputt = _bestelle(tmp_path)
+    alt = _satz(store, kaputt)
+    alt["params"]["samples"] = "viele"
+    jobs.schreibe_job(alt, store / kaputt)
     gut = _bestelle(tmp_path)
 
     bericht, gesehen = _durchgang(store)
@@ -388,10 +403,11 @@ def test_eine_ueber_mcp_angenommene_unlesbare_szene_nimmt_den_durchgang_nicht_mi
     assert gesehen == [gut], "der lesbare Auftrag wurde trotzdem gerechnet"
     antworten = {a["job_id"]: a for a in bericht["ergebnisse"]}
     assert antworten[kaputt]["tat"] == abholer.TAT_LIEGENGELASSEN
-    assert "Szene nicht lesbar" in antworten[kaputt]["grund"]
+    assert "'render.samples' ist 'viele'" in antworten[kaputt]["grund"]
     satz = _satz(store, kaputt)
     assert satz["status"] == jobs.STATUS_QUEUED
-    assert "Szene nicht lesbar" in satz["meldung"], "E1: der Grund steht am Auftrag"
+    assert "'render.samples' ist 'viele'" in satz["meldung"], \
+        "E1: der Grund steht am Auftrag"
 
 
 def test_ein_szenenfehler_der_uebersetzung_nimmt_den_durchgang_nicht_mit(

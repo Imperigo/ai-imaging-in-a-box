@@ -1178,8 +1178,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                 if p.get(n) is not None]
     if ohne_weg and p.get("kamera") is None:
         return {"status": STATUS_FEHLER,
-                "error": (f"Kameraangaben bestellt, aber kein Kameraweg, auf dem sie "
-                          f"wirken: "
+                "error": ("Kameraangaben bestellt, aber kein Kameraweg, auf dem sie "
+                          "wirken: "
                           + ", ".join(f"`{n}` {p[n]!r}" for n in ohne_weg)
                           + " wirken nur zusammen mit `kamera` (Richtungskuerzel, "
                             "Standpunkt aus der Huellbox gerechnet). Ohne `kamera` "

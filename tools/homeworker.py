@@ -149,9 +149,9 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
     soll = _auflage(auflagen, "leistungsgrenze_w", auf.LEISTUNGSGRENZE_W)
     ist = zustand.get("leistungsgrenze_w")
     if ist is None:
-        return False, (f"Leistungsgrenze der Karte unbekannt — nvidia-smi hat sie nicht "
-                       f"gemeldet. Unbekannt ist nicht dasselbe wie niedrig. Prüfen mit:  "
-                       f"nvidia-smi --query-gpu=power.limit --format=csv")
+        return False, ("Leistungsgrenze der Karte unbekannt — nvidia-smi hat sie nicht "
+                       "gemeldet. Unbekannt ist nicht dasselbe wie niedrig. Prüfen mit:  "
+                       "nvidia-smi --query-gpu=power.limit --format=csv")
     if ist > soll + 1:
         return False, (f"Leistungsgrenze steht bei {ist:.0f} W, gefordert sind {soll} W. "
                        f"Setzen mit:  sudo nvidia-smi -pl {soll}")
@@ -379,7 +379,7 @@ def _unverstandene_params(_art: str, params: dict) -> list[str]:
     return sorted(set(params) - _GENUTZTE_PARAMS)
 
 
-def _kamerabestellung(params: dict) -> tuple[dict, dict, str | None]:
+def _kamerabestellung(params: dict) -> tuple[dict, dict, tuple[str, str] | None]:
     """Welche Kamera dieser Auftrag bestellt — und was davon wirken kann.
 
     Zwei Quellen für den Standpunkt gibt es: das Richtungskürzel ``kamera`` (ohne Angabe
@@ -393,19 +393,42 @@ def _kamerabestellung(params: dict) -> tuple[dict, dict, str | None]:
         ``(gaben, befund, fehler)``. ``gaben`` geht an ``seams`` (``kamera``
         eingeschlossen, ``None``-Werte nie). ``befund`` reist ins Ergebnis:
         ``{"kamera", "kamera_quelle", "wirkungslos"}`` — ``kamera_quelle`` ist
-        ``"bestellt"``, ``"vorgabe"`` oder ``None`` (Standpunkt von Hand), und
+        ``"bestellt"``, ``"vorgabe"`` oder ``"von_hand"`` (Standpunkt von Hand), und
         ``wirkungslos`` nennt je nicht weitergereichter Angabe den Grund (leer, wenn alles
-        wirkt). ``fehler`` ist ein Satz, wenn der Standpunkt zweimal bestellt ist.
+        wirkt). ``fehler`` ist ``None`` oder ``(kennwort, satz)``: Der Standpunkt ist
+        unvollstaendig (``auge`` ohne ``blick_auf`` oder umgekehrt) oder zweimal bestellt.
+
+    **Warum ``"von_hand"`` und nicht mehr ``None``** (Durchsicht der Runde 7,
+    23.09.2026): ``None`` heisst in diesem Projekt «nicht gemessen, nicht bekannt». Hier
+    ist die Quelle aber bekannt — sie steht im Auftrag. Ein Auswerter, der ``None`` als
+    «unbekannt» liest, haette einen bestellten Standpunkt fuer einen fehlenden gehalten.
+
+    **Und warum der unvollstaendige Standpunkt zuerst geprueft wird**: ``kamera``
+    ausdruecklich und NUR ``blick_auf`` meldete bis dahin «Standpunkt zweimal bestellt» —
+    eigentlich fehlt das ``auge``, und wer den Satz liest, streicht das Falsche. Die
+    Reihenfolge ist die von ``seams._standpunkt_pruefen``: erst das Paar, dann die zwei
+    Quellen. Anders als dort kommt der Satz hier VOR der IFC-Umwandlung.
     """
     von_hand = [n for n in ("auge", "blick_auf") if params.get(n) is not None]
     bestellt = params.get("kamera") or None
+    ohne_befund = {"kamera": None, "kamera_quelle": None, "wirkungslos": {}}
+    if len(von_hand) == 1:
+        fehlt = "blick_auf" if von_hand == ["auge"] else "auge"
+        return {}, ohne_befund, ("standpunkt unvollstaendig", (
+            f"Standpunkt unvollstaendig: {von_hand[0]} "
+            f"{params[von_hand[0]]!r} ist bestellt, {fehlt} fehlt. auge und blick_auf "
+            f"gehoeren zusammen — ein Standort ohne Blickziel (oder ein Blickziel ohne "
+            f"Standort) beschreibt keine Kamera"
+            + (f", und `kamera` {bestellt!r} ersetzt die fehlende Haelfte nicht: Es "
+               f"rechnet einen ganzen Standpunkt aus der Huellbox." if bestellt is not None
+               else ".")))
     if von_hand and bestellt is not None:
-        return {}, {"kamera": None, "kamera_quelle": None, "wirkungslos": {}}, (
+        return {}, ohne_befund, ("standpunkt zweimal bestellt", (
             f"Standpunkt zweimal bestellt: `kamera` {bestellt!r} rechnet ihn aus der "
             f"Huellbox, und {', '.join(von_hand)} gibt ihn vor. Welcher gilt, entscheidet "
-            f"dieses Skript nicht — die falsche Kamera sieht man dem Bild nicht an.")
+            f"dieses Skript nicht — die falsche Kamera sieht man dem Bild nicht an."))
     if von_hand:
-        kamera, quelle = None, None
+        kamera, quelle = None, "von_hand"
     else:
         kamera = bestellt or VORGABE_KAMERA
         quelle = "bestellt" if bestellt is not None else "vorgabe"
@@ -509,12 +532,13 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
 
     # DER STANDPUNKT WIRD VOR DER UMWANDLUNG GEKLAERT: Eine Bestellung, die nicht laufen
     # kann, soll keine IFC-Umwandlung kosten (23.09.2026).
-    kamera_gaben, kamerabestellung, zweimal = _kamerabestellung(params)
-    if zweimal is not None:
+    kamera_gaben, kamerabestellung, standpunkt_fehler = _kamerabestellung(params)
+    if standpunkt_fehler is not None:
+        kennwort, satz_fehler = standpunkt_fehler
         return auf.baue_ergebnis(
             auftrag_id=satz["auftrag_id"], status="fehler",
-            urteil={"auftrag": "standpunkt zweimal bestellt"},
-            fehler=zweimal,
+            urteil={"auftrag": kennwort},
+            fehler=satz_fehler,
             dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
     ifc = _geometrie_bereitstellen(satz, repo)

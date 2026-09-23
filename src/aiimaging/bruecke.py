@@ -179,7 +179,8 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         BrueckenError: Verzeichnis fehlt, Laufzettel oder Szene fehlen oder sind
             unlesbar — auch dann, wenn :func:`aiimaging.kosmo_szene.lies_szene` die Szene
             als unbrauchbar abweist (seit 23.09.2026 hier umgesetzt, vorher entkam deren
-            ``SzenenError``). Alles, was sich sinnvoll melden lässt, wird gemeldet statt
+            ``SzenenError``) oder an einem Feld mit einem anderen Lesefehler scheitert
+            (seit der Runde 7b, 23.09.2026). Alles, was sich sinnvoll melden lässt, wird gemeldet statt
             geworfen — geworfen wird nur, wenn es gar nichts zu lesen gibt.
     """
     ordner = Path(verzeichnis)
@@ -218,10 +219,27 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     # `abholer.hole_einen` faengt nur `BrueckenError`. Nachgestellt: Ein einziger solcher
     # Auftrag warf aus `hole_einen` heraus, und mit ihm `durchgang` und
     # `tools/abholen.py` — kein anderer Auftrag der Ablage wurde mehr angesehen.
+    #
+    # DIE ZWEITE LINIE (Durchsicht der Runde 7, 23.09.2026). Nachgestellt: `samples:
+    # "viele"` warf ValueError aus `int(...)` in `lies_szene`, und das fing hier niemand
+    # — derselbe Abbruch des ganzen Durchgangs. Die erste Linie ist `lies_szene` selbst
+    # (jede Zahl ueber `kosmo_szene.lies_zahl`, ein Mangel mit Satz statt einer
+    # Ausnahme). Diese hier faengt, was dort kuenftig uebersehen wird: die Fehlerarten,
+    # die ein unlesbares Feld in Python ausloest — auch AttributeError (ein Block, der
+    # keiner ist) und OverflowError (`Infinity` in eine ganze Zahl). Ein Fehler UNSERES
+    # Codes ist dann ebenfalls ein Satz am Laufzettel statt eines Absturzes; der Typ
+    # steht darum im Satz, damit er als solcher erkennbar bleibt.
     try:
         szene = kosmo_szene.lies_szene(roh)
     except kosmo_szene.SzenenError as fehler:
         raise BrueckenError(f"Szene (render-scene.json) nicht lesbar: {fehler}") from fehler
+    # EINE LISTE FUER BEIDE WEGE (23.09.2026): dieselbe wie in `eigene_quelle`, aus
+    # `kosmo_szene.LESEFEHLER` — zwei inline gefuehrte Listen laufen irgendwann auseinander.
+    except kosmo_szene.LESEFEHLER as fehler:
+        raise BrueckenError(
+            f"Szene (render-scene.json) nicht lesbar: {type(fehler).__name__}: {fehler}. "
+            f"Ein Feld liess sich nicht deuten, und die Pruefung in `lies_szene` hat es "
+            f"nicht als Mangel benannt — das gehoert dort nachgetragen.") from fehler
     # Die Vertragsvorgaben wandern NICHT in `warnungen`. Sie treffen jeden Auftrag
     # gleich; unter die Warnungen gemischt haben sie am 26.08.2026 nachweislich die
     # auftragsspezifischen verdraengt (`kosmo_szene`, Feld `vertragsvorgaben`).

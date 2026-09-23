@@ -458,6 +458,13 @@ public struct Mappenbild: Equatable, Sendable {
     /// ganze Liste `nil` — und die Bildansicht sagt «nicht lesbar», nicht «nicht gemessen».
     /// Bis zum 23.09.2026 fiel ein solcher Eintrag still weg.
     public let hinweiseLage: Listenlage
+    /// **Der Satz, wenn die Hinweise nicht lesbar sind** — er nennt beide Ursachen, weil die
+    /// Lage nicht sagt, welche es war (keine Liste, oder ein Eintrag ist kein Text). Bis zum
+    /// 23.09.2026 stand er in der Bildansicht und behauptete, es sei eine Liste gekommen —
+    /// falsch für `"hinweise": "Erster."`. Bewacht: `testDerHinweissatzNenntBeideUrsachen`.
+    public static let hinweiseUnlesbarSatz =
+        "Nicht lesbar — was die Bildstufe als Hinweise schickte, ist keine Liste, oder "
+        + "mindestens ein Eintrag ist kein Text. Darum steht hier keiner, auch nicht die übrigen."
     /// Drei Antworten: `true` (die Skizze kam beim Modell nicht an), `false` (kam an),
     /// `nil` (kein Skizzenbild oder nicht gemessen).
     public let skizzeNichtAngekommen: Bool?
@@ -633,32 +640,123 @@ public struct Mappenlage: Equatable, Sendable {
     /// sagen gibt. Drei Lagen, drei Sätze: Eine nicht gelieferte Bilderliste ist nicht
     /// dasselbe wie eine nicht lesbare, und keine von beiden ist eine leere.
     ///
+    /// **Bei den Bildern sagt der Satz, was stehen bleibt.** Befund der Durchsicht vom
+    /// 23.09.2026: Der Satz zur nicht lesbaren Bilderliste sagte «Aus dieser Liste ist darum
+    /// keines gezeigt, auch nicht die übrigen» — die App (`ladeMappe`) lässt bei fehlender
+    /// oder nicht lesbarer Bilderliste das Band aber unverändert, und die Bilder des früheren
+    /// Ladens bleiben sichtbar. Der Satz sagt darum, dass aus dieser Liste keines übernommen
+    /// ist und das Band den vorigen Stand zeigt (`vorigerStandSatz`), bei beiden Lagen.
+    /// Bewacht: `PruefzeichenTests.testDieMappeSagtNichtLesbarUndNichtLeer` und
+    /// `testDerBildersatzBehauptetKeinLeeresBand` — am Satz; dass die App das Band wirklich
+    /// stehen lässt, prüft hier keiner (App-Schicht, unübersetzt).
+    ///
     /// Eine nicht gelieferte Skizzenliste bekommt hier keinen Satz: Die Skizzenliste der App
-    /// sagt dann selbst, dass sie nicht geladen ist. Bewacht:
-    /// `PruefzeichenTests.testDieMappeSagtNichtLesbarUndNichtLeer`.
+    /// sagt es dann selbst (`skizzenlistensatz`). Eine nicht lesbare bekommt ihn hier **und**
+    /// dort — mit demselben Anfang, damit Kopf und Liste nicht zwei Wörter für denselben
+    /// Zustand haben (Befund 23.09.2026: die Liste sagte «nicht geladen», der Kopf «nicht
+    /// lesbar»). Bewacht: `testKopfUndSkizzenlisteSagenDasselbeWort`.
+    ///
+    /// **«Nicht lesbar» hat zwei Ursachen, und der Satz nennt beide.** Befund der Durchsicht
+    /// vom 23.09.2026: Die Sätze sagten «Mindestens ein Eintrag hat nicht die Form eines
+    /// Bildes» — `ganzOderNicht` gibt `nichtLesbar` aber auch, wenn das Feld gar keine Liste
+    /// ist (`"bilder": "a.png"`), und dann gibt es keinen Eintrag, der die Form verfehlen
+    /// könnte. `Listenlage` trägt den Grund nicht, und ihn nachzutragen hiesse, jeden Vergleich
+    /// mit `.nichtLesbar` umzubauen, auch in der App-Schicht (`Bildansicht`); der Satz ist
+    /// darum so gebaut, dass er in beiden Fällen stimmt.
+    /// Bewacht für beide Ursachen: `testNichtLesbarSagtBeideUrsachen`.
     public var listensatz: String? {
         var saetze: [String] = []
         switch bilderLage {
         case .nichtGeliefert:
-            saetze.append("Die HomeStation hat keine Bilderliste mitgeschickt.")
+            saetze.append("Die HomeStation hat keine Bilderliste mitgeschickt. "
+                + Mappenlage.vorigerStandSatz)
         case .nichtLesbar:
-            saetze.append("Die Bilderliste der Mappe ist nicht lesbar: Mindestens ein Eintrag "
-                + "hat nicht die Form eines Bildes. Aus dieser Liste ist darum keines gezeigt, "
-                + "auch nicht die übrigen.")
+            saetze.append("Die Bilderliste der Mappe ist nicht lesbar: " + Mappenlage.bilderUrsache
+                + " Darum ist keines daraus übernommen. " + Mappenlage.vorigerStandSatz)
         case .gelesen:
             break
         }
         if skizzenLage == .nichtLesbar {
-            saetze.append("Die Skizzenliste der Mappe ist nicht lesbar: Mindestens ein Eintrag "
-                + "hat nicht die Form einer Skizze. Aus dieser Liste ist darum keine gezeigt, "
-                + "auch nicht die übrigen.")
+            saetze.append(Mappenlage.skizzenlistensatz(.nichtLesbar) + " "
+                + Mappenlage.skizzenUrsache + " Darum ist keine daraus gezeigt.")
         }
         return saetze.isEmpty ? nil : saetze.joined(separator: " ")
+    }
+
+    /// Warum eine Bilderliste nicht lesbar ist — **beide Ursachen**, weil die Lage nicht
+    /// sagt, welche es war (siehe `listensatz`).
+    public static let bilderUrsache =
+        "Was kam, ist keine Liste, oder mindestens ein Eintrag hat nicht die Form eines Bildes."
+    /// Dasselbe für die Skizzenliste.
+    public static let skizzenUrsache =
+        "Was kam, ist keine Liste, oder mindestens ein Eintrag hat nicht die Form einer Skizze."
+
+    /// Was das Band zeigt, wenn keine Bilderliste übernommen wurde: **den vorigen Stand** —
+    /// die Bilder des letzten gelesenen Ladens, oder keine, wenn es noch keines gab.
+    public static let vorigerStandSatz =
+        "Das Band zeigt weiter den vorigen Stand, sofern es einen gab."
+
+    /// **Was die Skizzenliste sagt, wenn sie keine Liste hat** — aus der Lage, mit der die
+    /// Liste zuletzt kam. `nil` heisst: noch nie geladen (oder die Mappe gibt es nicht).
+    ///
+    /// Drei verschiedene Sätze für vier Fälle, keiner wie «Keine Skizze in der Mappe» — das
+    /// sagt die Liste nur bei einer gelesenen leeren. `.gelesen` ohne Liste kommt im
+    /// Produktweg nicht vor; es heisst dann ebenfalls «nicht geladen» statt etwas zu erfinden.
+    /// Der Satz zu `.nichtLesbar` ist der Anfang des Satzes im Kopf der Mappe (`listensatz`).
+    /// Bewacht: `PruefzeichenTests.testKopfUndSkizzenlisteSagenDasselbeWort`.
+    public static func skizzenlistensatz(_ lage: Listenlage?) -> String {
+        switch lage {
+        case .some(.nichtLesbar):
+            return "Die Skizzenliste der Mappe ist nicht lesbar."
+        case .some(.nichtGeliefert):
+            return "Die HomeStation hat keine Skizzenliste mitgeschickt."
+        case .some(.gelesen), .none:
+            return "Die Skizzenliste der Mappe ist noch nicht geladen."
+        }
     }
 
     public static func lies(status: Int, daten: Data) throws -> Mappenlage {
         Mappenlage(try liesAntwort(status: status, daten: daten))
     }
+}
+
+// ============================================================ die fertigen Knoten eines Laufs
+
+extension Fortschrittsstand {
+    /// **Der Satz über die Liste der fertigen Knoten** — `nil`, wenn es nichts zu sagen gibt.
+    ///
+    /// Drei Lagen, ein Satz: Nur eine **nicht lesbare** Liste bekommt einen. Eine **nicht
+    /// gelieferte** nicht (ein Server, der die Liste nicht führt, sagt nichts über fertige
+    /// Knoten, und die App auch nicht), eine **gelesene** auch nicht — mit Einträgen stehen die
+    /// dann selbst da, und eine leere behauptet nichts.
+    ///
+    /// Befunde der Durchsicht vom 23.09.2026: Die Regel lag als `Laufanzeige.fertigeSatz` in
+    /// der App-Schicht, unübersetzt und ohne Probe; sie liegt jetzt hier. Der Satz sagte
+    /// «Mindestens ein Eintrag hat nicht die Form eines Schritts» — falsch, wenn `fertige` gar
+    /// keine Liste ist (`"fertige": "k1"` gibt ebenfalls `nichtLesbar`). Und eine gelesene
+    /// leere Liste sagte «Noch kein Schritt dieses Laufs fertig.» — ein Satz, der weder im
+    /// Auftrag noch auf dem Blatt «Lauf» steht, und «Schritte» heissen in derselben Ansicht
+    /// die gezählten Schritte im Knoten («14 / 28 Schritte»). Er ist gestrichen.
+    ///
+    /// Bewacht über den Produktweg (`Fortschrittsstand.lies`):
+    /// `AnfragenTests.testDerSatzZuDenFertigenNenntBeideUrsachen` und
+    /// `testDieFertigenSagenNurBeiNichtLesbarEtwas`.
+    public var fertigeSatz: String? {
+        switch fertigeLage {
+        case .nichtLesbar: return Fortschrittsstand.fertigeUnlesbarSatz
+        case .nichtGeliefert: return nil
+        case .gelesen: return nil
+        }
+    }
+
+    /// Der Satz zu einer nicht lesbaren Liste der fertigen Knoten — **stimmt für beide
+    /// Ursachen** (keine Liste, oder ein Eintrag in fremder Form), weil die Lage nicht sagt,
+    /// welche es war. Ohne die Wörter «Knoten» und «Schritt»: Das eine steht sichtbar nirgends
+    /// in der Ansicht, das andere meint dort die gezählten Schritte.
+    public static let fertigeUnlesbarSatz =
+        "Welche Teile dieses Laufs schon fertig sind, lässt sich nicht lesen: Die HomeStation "
+        + "schickte dazu etwas, das keine Liste ist, oder eine Liste mit mindestens einem "
+        + "Eintrag in fremder Form. Darum steht hier nichts davon."
 }
 
 // ============================================================ Rechnen lassen, Namen geben

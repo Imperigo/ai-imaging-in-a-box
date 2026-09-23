@@ -105,6 +105,20 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 23.09.2026 · Was angenommen wird und nicht wirkt, wird jetzt gesagt
+
+* **Einstellungen ohne Wirkung werden nicht mehr still geschluckt.** Augenhöhe, Winkel und
+  Kameramodus wirken nur, wenn der Standpunkt aus einer Himmelsrichtung kommt. Neben einem
+  Standpunkt von Hand werden sie jetzt abgewiesen oder als «wirkungslos» gemeldet.
+* **Eine unsinnige Zahl in einer Bestellung** (z. B. «viele» statt einer Zahl) legte bisher
+  das ganze Abholen lahm — auch alle anderen Bestellungen. Jetzt bleibt nur diese eine
+  liegen, mit einem Satz, warum.
+* **Keine Richtung mehr aus Zufall.** Die Prüfung sagt «erwartete Richtung» erst, wenn die
+  Zahl deutlich genug ist; vorher schon bei Rauschen.
+* **Die App lässt nichts mehr still weg**, was sie nicht lesen kann — sie sagt es.
+
+Nichts davon ändert ein Bild oder ein Urteil; es ändert, was **gesagt** wird.
+
 ### 23.09.2026 · Die App ist zusammengesteckt — und wartet auf Ihren Stift
 
 * **Alles hängt zusammen:** Zeichnen, Koppeln, Parken, Senden, Rechnen lassen, Abbrechen,

@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import UIKit
 
@@ -35,6 +36,7 @@ extension Verbindungsstand {
                 if f.art == .nichtGefunden {
                     bildband.bilder = []
                     bildband.skizzen = nil
+                    bildband.skizzenLage = nil
                     bildband.standNr = nil
                 }
                 return
@@ -49,13 +51,19 @@ extension Verbindungsstand {
         // leere da, sondern die Anzeige sagt, dass keine kam (`skizzen == nil`). Ist sie
         // nicht lesbar (23.09.2026: ein Eintrag ist kein Objekt), ist sie ebenfalls `nil`,
         // und der Satz dazu steht im Kopf der Mappe (`Mappenlage.listensatz`).
+        // LISTE UND LAGE ZUSAMMEN: Die Skizzenliste liest die Lage, damit sie dasselbe Wort
+        // sagt wie der Kopf (`Mappenlage.skizzenlistensatz`, Befund 23.09.2026).
         bildband.skizzen = lage.skizzen
+        bildband.skizzenLage = lage.skizzenLage
         bildband.reihe = bildband.reihe.filter { name in
             lage.skizzen?.contains { $0.skizze == name && $0.stand == .offen } ?? false
         }
         // NICHT GELIEFERT UND NICHT LESBAR SIND ZWEI SAETZE — der Kern sagt, welcher
         // (`Mappenlage.listensatz`, 23.09.2026). Was schon im Band liegt, bleibt in beiden
-        // Fällen stehen.
+        // Fällen stehen, und genau das sagt der Satz auch (`Mappenlage.vorigerStandSatz`):
+        // Bis zur Durchsicht vom 23.09.2026 hiess er «keines gezeigt, auch nicht die
+        // übrigen», während das Band die Bilder des früheren Ladens weiter zeigte. Wer das
+        // Band hier leert, muss den Satz im Kern mitändern.
         guard let eintraege = lage.bilder else {
             setzeMappenSatz(lage.listensatz)
             return

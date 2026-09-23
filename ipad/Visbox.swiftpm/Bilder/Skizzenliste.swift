@@ -52,8 +52,14 @@ struct Skizzenliste: View {
                     reihenknopf
                 }
             } else {
-                // NICHT GELIEFERT IST NICHT LEER.
-                leise("Die Skizzenliste der Mappe ist nicht geladen.")
+                // NICHT GELIEFERT IST NICHT LEER — und nicht lesbar ist nicht «nicht geladen».
+                // Bis zur Durchsicht vom 23.09.2026 stand hier bei jeder fehlenden Liste
+                // «nicht geladen», während der Kopf der Mappe «nicht lesbar» sagte. Der Satz
+                // kommt aus dem Kern und beginnt wie der Kopfsatz
+                // (`PruefzeichenTests.testKopfUndSkizzenlisteSagenDasselbeWort`). Die Lage
+                // liegt am Bildband selbst (`Bildbandstand.skizzenLage`), nicht in einem
+                // zweiten Stand daneben (Befund 23.09.2026).
+                leise(Mappenlage.skizzenlistensatz(mappe.skizzenLage))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

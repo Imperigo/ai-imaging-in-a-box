@@ -351,7 +351,11 @@ def richtungsgrenze(n: int) -> float:
 # Seither fällt die Antwort an EINER Stelle, die beide Wege rufen, und sie ist
 # symmetrisch: Betrag unter der Grenze → «Richtung nicht bestimmbar»; darüber in der
 # erwarteten Richtung → die Bestätigung; darüber in der falschen → «vertauscht». Die
-# Wächter stehen in ``tests/test_runde7_richtung.py`` und fahren über ``qa_gegen_soll``.
+# Wächter stehen in ``tests/test_runde7_richtung.py``: Polarität −1 über
+# ``tiefenschaetzer.qa_gegen_soll`` (so ruft ihn der Homeworker), Polarität +1 — die der
+# Produktschätzer nicht hat — über ``geometrie_gate`` und ``rho_ueber_maske`` direkt.
+# (Hier stand bis zum 23.09.2026, alle Wächter führen über ``qa_gegen_soll``; das galt
+# nur für −1.)
 #
 # WAS DAS NICHT TUT: Es ändert weder ``score`` noch ``bestanden`` noch ``gerichtet``. Es
 # entscheidet allein, welcher Satz in ``warnungen`` steht. Der Wächter prüft die drei
@@ -382,6 +386,12 @@ def _richtungsfall(gerichtet: float, n: int) -> str:
 #: Was die beiden Wege an der Meldung unterscheidet — Wortwahl und Nachsatz, nicht die
 #: Regel. Der Score-Weg schneidet unter null ab, der Maskenweg nicht; das muss im Satz
 #: stehen, weil es wahr ist, und nur das.
+#:
+#: Der Nachsatz ``"ohne_score"`` gilt im Score-Weg, wenn KEIN Score entsteht (gemeinsame
+#: Silhouette unter :data:`MIN_GEMEINSAME_PUNKTE`). Bis zum 23.09.2026 stand dort der
+#: gewöhnliche Nachsatz, und der sagte «gerechnet wird wie immer mit max(0, polaritaet *
+#: spearman)» bzw. «Der Score ist auf 0 abgeschnitten» — über einen Score, der ``None``
+#: ist. Es wurde nicht gerechnet, und ``None`` ist nicht 0.
 _RICHTUNG_WEGE = {
     "score": {
         "wort": "spearman", "stellen": 3, "punkte": "Punkte", "ort": "",
@@ -392,6 +402,9 @@ _RICHTUNG_WEGE = {
         _RICHTUNG_ERWARTET: (
             "Das ist eine Feststellung über die Richtung, kein Urteil — ob das Bild "
             "besteht, entscheidet allein der Score."),
+        "ohne_score": (
+            "Ein Score ist hier NICHT gerechnet (None, nicht 0) — der Satz beschreibt "
+            "nur, wie die vorhandenen Punkte die Tiefe ordnen, und trägt kein Urteil."),
     },
     "maske": {
         "wort": "rho", "stellen": 4, "punkte": "Maskenpunkte",
@@ -406,8 +419,11 @@ _RICHTUNG_WEGE = {
 
 
 def _richtungshinweis(rho: float | None, polaritaet: int | None, n: int, *,
-                      weg: str) -> str | None:
+                      weg: str, gewertet: bool = True) -> str | None:
     """Der eine Satz zur Richtung, den Score-Weg und Maskenweg gleichermassen melden.
+
+    ``gewertet=False`` heisst: Im Score-Weg ist kein Score entstanden. Dann steht statt
+    des Nachsatzes über die Rechnung der Satz ``"ohne_score"`` (23.09.2026).
 
     ``None`` heisst: Hier gibt es keine Richtung zu beurteilen — weil ``rho`` nicht
     gemessen ist oder die Polarität nicht übergeben wurde. Für den zweiten Fall haben
@@ -454,7 +470,8 @@ def _richtungshinweis(rho: float | None, polaritaet: int | None, n: int, *,
             f"Das ist kein Freispruch und kein Befund über die Richtung, sondern: eine "
             f"Ordnung der Tiefe{w['ort']} ist nicht nachweisbar."
         )
-    return f"{text} {w[fall]}"
+    nachsatz = w[fall] if gewertet or "ohne_score" not in w else w["ohne_score"]
+    return f"{text} {nachsatz}"
 
 
 #: Kurzform des Rechenwegs, wandert in jedes Ergebnis. Wer später eine Zahl in der Arbeit
@@ -954,7 +971,8 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
     # erwartete Fall», auch −0,01 über 848 Punkte. Die Regel steht in _richtungshinweis,
     # dieselbe wie im Maskenweg. Am Score ändert sie nichts.
     else:
-        richtung = _richtungshinweis(rho, polaritaet, n_gemeinsam, weg="score")
+        richtung = _richtungshinweis(rho, polaritaet, n_gemeinsam, weg="score",
+                                     gewertet=score is not None)
         if richtung is not None:
             warnungen.append(richtung)
 
@@ -1165,7 +1183,8 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE, **kw) -> 
         # stand); ohne diesen Filter hätte er bei zu kleiner gemeinsamer Silhouette die
         # eigentliche Begründung verdrängt, bei Polarität −1 tat er das schon vorher.
         richtung = _richtungshinweis(ergebnis["spearman"], ergebnis["polaritaet"],
-                                     ergebnis["n_gemeinsam"], weg="score")
+                                     ergebnis["n_gemeinsam"], weg="score",
+                                     gewertet=False)
         gruende = [w for w in ergebnis["warnungen"] if w != richtung]
         grund = gruende[-1] if gruende else "Grund unbekannt."
         begruendung = (

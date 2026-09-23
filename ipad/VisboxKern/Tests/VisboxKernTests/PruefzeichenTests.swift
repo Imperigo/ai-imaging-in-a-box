@@ -539,22 +539,123 @@ final class PruefzeichenTests: XCTestCase {
         let a = #"{"bild": "a.png"}"#
         let s1 = #"{"skizze": "s1.png"}"#
         let fehlt = try lage(#"{"skizzen": []}"#).listensatz
-        let unlesbar = try lage(#"{"bilder": ["# + a + #", 1], "skizzen": []}"#).listensatz
+        let unlesbar = try lage(#"{"bilder": [\#(a), 1], "skizzen": []}"#).listensatz
         let leer = try lage(#"{"bilder": [], "skizzen": []}"#).listensatz
-        XCTAssertEqual(fehlt, "Die HomeStation hat keine Bilderliste mitgeschickt.")
+        XCTAssertEqual(fehlt, "Die HomeStation hat keine Bilderliste mitgeschickt. "
+                       + Mappenlage.vorigerStandSatz)
         XCTAssertTrue(unlesbar?.contains("Bilderliste der Mappe ist nicht lesbar") == true,
                       unlesbar ?? "kein Satz")
         XCTAssertNotEqual(unlesbar, fehlt)
         XCTAssertNil(leer, "leer ist gelesen: kein Satz, die Mappe zeigt dann keine Bilder")
 
-        let skizzenUnlesbar = try lage(#"{"bilder": [], "skizzen": ["# + s1 + ", 1]}").listensatz
+        let skizzenUnlesbar = try lage(#"{"bilder": [], "skizzen": [\#(s1), 1]}"#).listensatz
         XCTAssertTrue(skizzenUnlesbar?.contains("Skizzenliste der Mappe ist nicht lesbar") == true,
                       skizzenUnlesbar ?? "kein Satz")
         XCTAssertNil(try lage(#"{"bilder": []}"#).listensatz,
-                     "eine fehlende Skizzenliste sagt die Skizzenliste selbst («nicht geladen»)")
+                     "eine fehlende Skizzenliste sagt die Skizzenliste selbst («keine "
+                     + "Skizzenliste mitgeschickt», `skizzenlistensatz`)")
         // Beide nicht lesbar: beide Sätze, keiner verdrängt den anderen.
         let beide = try lage(#"{"bilder": [1], "skizzen": [2]}"#).listensatz ?? ""
         XCTAssertTrue(beide.contains("Bilderliste") && beide.contains("Skizzenliste"), beide)
+    }
+
+    /// **Der Satz zur Bilderliste behauptet kein leeres Band.** Die App lässt bei fehlender
+    /// oder nicht lesbarer Bilderliste das Band stehen (`ladeMappe`); bis zum 23.09.2026 sagte
+    /// der Satz trotzdem «keines gezeigt, auch nicht die übrigen», während die Bilder des
+    /// früheren Ladens sichtbar blieben. Geprüft ist der Satz, nicht das Band (App-Schicht).
+    func testDerBildersatzBehauptetKeinLeeresBand() throws {
+        // EIN GUELTIGES BILD UND EIN UNGUELTIGER EINTRAG: dass `a` allein gelesen wird,
+        // steht hier fest, damit die Liste wirklich an der `1` scheitert und nicht an `a`.
+        let a = #"{"bild": "a.png"}"#
+        XCTAssertEqual(try lage(#"{"bilder": [\#(a)], "skizzen": []}"#).bilder?.count, 1)
+        let saetze = [try lage(#"{"bilder": [\#(a), 1], "skizzen": []}"#).listensatz,
+                      try lage(#"{"bilder": "a.png", "skizzen": []}"#).listensatz,
+                      try lage(#"{"skizzen": []}"#).listensatz,
+                      try lage(#"{"bilder": null, "skizzen": []}"#).listensatz]
+        for satz in saetze {
+            let s = satz ?? ""
+            XCTAssertTrue(s.contains(Mappenlage.vorigerStandSatz), s)
+            XCTAssertFalse(s.contains("keines gezeigt"), s)
+        }
+        XCTAssertTrue(Mappenlage.vorigerStandSatz.contains("vorigen Stand"))
+        // Eine gelesene Liste ersetzt das Band — dann ist vom vorigen Stand nicht die Rede.
+        XCTAssertNil(try lage(#"{"bilder": [], "skizzen": []}"#).listensatz)
+        let nurSkizzen = try lage(#"{"bilder": [], "skizzen": [1]}"#).listensatz ?? ""
+        XCTAssertFalse(nurSkizzen.contains(Mappenlage.vorigerStandSatz), nurSkizzen)
+    }
+
+    /// **«Nicht lesbar» hat zwei Ursachen, und der Satz stimmt für beide** — für eine Liste
+    /// mit einem Eintrag in fremder Form und für ein Feld, das gar keine Liste ist. Bis zur
+    /// Durchsicht vom 23.09.2026 sagte der Satz in beiden Fällen «Mindestens ein Eintrag hat
+    /// nicht die Form eines Bildes», und dieser Test segnete ihn für `"bilder": "a.png"` ab —
+    /// wo es keinen Eintrag gibt. Geprüft über den Produktweg (`Mappenlage.lies`).
+    func testDerHinweissatzNenntBeideUrsachen() {
+        let satz = Mappenbild.hinweiseUnlesbarSatz
+        XCTAssertTrue(satz.contains("keine Liste"), satz)
+        XCTAssertTrue(satz.contains("oder mindestens ein Eintrag"), satz)
+        XCTAssertFalse(satz.contains("hat Hinweise geschickt"), satz)
+    }
+
+    func testNichtLesbarSagtBeideUrsachen() throws {
+        let a = #"{"bild": "a.png"}"#
+        let s1 = #"{"skizze": "s1.png"}"#
+        // BILDER: ein Eintrag in fremder Form, und keine Liste.
+        let bildEintrag = try lage(#"{"bilder": [\#(a), 1], "skizzen": []}"#)
+        let bildKeineListe = try lage(#"{"bilder": "a.png", "skizzen": []}"#)
+        for l in [bildEintrag, bildKeineListe] {
+            XCTAssertEqual(l.bilderLage, .nichtLesbar)
+            let satz = l.listensatz ?? ""
+            XCTAssertTrue(satz.contains("keine Liste"), satz)
+            XCTAssertTrue(satz.contains("oder mindestens ein Eintrag"), satz)
+            XCTAssertFalse(satz.contains("nicht lesbar: Mindestens ein Eintrag"), satz)
+        }
+        XCTAssertEqual(bildEintrag.listensatz, bildKeineListe.listensatz,
+                       "die Lage sagt nicht, welche Ursache — also sagt der Satz beide")
+        // SKIZZEN: dasselbe.
+        let skizzeEintrag = try lage(#"{"bilder": [], "skizzen": [\#(s1), 1]}"#)
+        let skizzeKeineListe = try lage(#"{"bilder": [], "skizzen": "s1.png"}"#)
+        for l in [skizzeEintrag, skizzeKeineListe] {
+            XCTAssertEqual(l.skizzenLage, .nichtLesbar)
+            let satz = l.listensatz ?? ""
+            XCTAssertTrue(satz.contains("keine Liste"), satz)
+            XCTAssertTrue(satz.contains("oder mindestens ein Eintrag"), satz)
+            XCTAssertTrue(satz.contains("Form einer Skizze"), satz)
+            XCTAssertFalse(satz.contains("nicht lesbar. Mindestens ein Eintrag"), satz)
+            XCTAssertFalse(satz.contains("die übrigen"), "bei keiner Liste gibt es keine übrigen")
+        }
+        XCTAssertEqual(skizzeEintrag.listensatz, skizzeKeineListe.listensatz)
+        // Eine gelesene Liste bekommt keinen Ursachensatz.
+        XCTAssertNil(try lage(#"{"bilder": [\#(a)], "skizzen": [\#(s1)]}"#).listensatz)
+    }
+
+    /// **Kopf und Skizzenliste sagen dasselbe Wort.** Bis zum 23.09.2026 sagte die
+    /// Skizzenliste bei jeder fehlenden Liste «nicht geladen», der Kopf der Mappe bei einer
+    /// nicht lesbaren «nicht lesbar» — zwei Sätze zum selben Zustand. Jetzt liest die Liste
+    /// die Lage, und ihr Satz ist der Anfang des Kopfsatzes.
+    func testKopfUndSkizzenlisteSagenDasselbeWort() throws {
+        let kopf = try lage(#"{"bilder": [], "skizzen": [{"skizze": "s1.png"}, 1]}"#)
+        XCTAssertEqual(kopf.skizzenLage, .nichtLesbar)
+        let liste = Mappenlage.skizzenlistensatz(kopf.skizzenLage)
+        XCTAssertTrue(liste.contains("nicht lesbar"), liste)
+        XCTAssertTrue(kopf.listensatz?.hasPrefix(liste) == true, kopf.listensatz ?? "kein Satz")
+
+        // DREI LAGEN OHNE LISTE, DREI SAETZE — und nur die nicht lesbare sagt «nicht lesbar».
+        let geliefertNicht = Mappenlage.skizzenlistensatz(.nichtGeliefert)
+        let nieGeladen = Mappenlage.skizzenlistensatz(nil)
+        XCTAssertEqual(Set([liste, geliefertNicht, nieGeladen]).count, 3)
+        for satz in [geliefertNicht, nieGeladen] {
+            XCTAssertFalse(satz.contains("nicht lesbar"), satz)
+        }
+        XCTAssertTrue(geliefertNicht.contains("keine Skizzenliste mitgeschickt"), geliefertNicht)
+        XCTAssertTrue(nieGeladen.contains("nicht geladen"), nieGeladen)
+        // KEINER SAGT «LEER»: Das sagt die Liste nur bei einer gelesenen leeren.
+        for lage in [Listenlage.nichtLesbar, .nichtGeliefert, .gelesen, nil] {
+            let satz = Mappenlage.skizzenlistensatz(lage)
+            XCTAssertFalse(satz.contains("Keine Skizze"), satz)
+            XCTAssertFalse(satz.isEmpty)
+        }
+        XCTAssertEqual(Mappenlage.skizzenlistensatz(.gelesen), nieGeladen,
+                       "gelesen ohne Liste erfindet nichts")
     }
 
     // --------------------------------------------------- der Satz zur Unterlage (23.09.2026)

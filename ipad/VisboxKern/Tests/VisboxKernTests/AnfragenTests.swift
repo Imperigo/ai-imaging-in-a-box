@@ -476,6 +476,59 @@ final class AnfragenTests: XCTestCase {
         XCTAssertEqual(ohne.fertigeLage, .nichtGeliefert, "fehlt ist nicht «nicht lesbar»")
     }
 
+    // ------------------------------------------- der Satz zu den fertigen Knoten (23.09.2026)
+
+    private func fertigeStand(_ fertige: String?) throws -> Fortschrittsstand {
+        let feld = fertige.map { #", "fertige": "# + $0 } ?? ""
+        return try Fortschrittsstand.lies(status: 200,
+                                          daten: json(#"{"laeuft": true"# + feld + "}"))
+    }
+
+    /// **Der Satz zu einer nicht lesbaren Liste der fertigen Knoten stimmt für beide
+    /// Ursachen** — ein Eintrag in fremder Form, und ein Feld, das gar keine Liste ist.
+    /// Bis zur Durchsicht vom 23.09.2026 sagte er «Mindestens ein Eintrag hat nicht die Form
+    /// eines Schritts», auch bei `"fertige": "k1"`, wo es keinen Eintrag gibt. Geprüft über
+    /// den Produktweg (`Fortschrittsstand.lies` → `fertigeSatz`).
+    func testDerSatzZuDenFertigenNenntBeideUrsachen() throws {
+        let k = #"{"knoten": "k1", "status": "ok"}"#
+        let eintrag = try fertigeStand("[\(k), 7]")
+        let keineListe = try fertigeStand(#""k1""#)
+        for s in [eintrag, keineListe] {
+            XCTAssertEqual(s.fertigeLage, .nichtLesbar)
+            let satz = s.fertigeSatz ?? ""
+            XCTAssertTrue(satz.contains("keine Liste"), satz)
+            XCTAssertTrue(satz.contains("mindestens einem Eintrag"), satz)
+            XCTAssertFalse(satz.contains("nicht lesbar: Mindestens"), satz)
+            // «SCHRITT» MEINT IN DER LAUFANZEIGE DIE GEZAEHLTEN SCHRITTE IM KNOTEN.
+            XCTAssertFalse(satz.contains("Schritt"), satz)
+        }
+        XCTAssertEqual(eintrag.fertigeSatz, keineListe.fertigeSatz,
+                       "die Lage sagt nicht, welche Ursache — also sagt der Satz beide")
+    }
+
+    /// **Nur eine nicht lesbare Liste bekommt einen Satz.** Nicht geliefert behauptet nichts
+    /// (auch kein «noch keiner fertig»), gelesen mit Einträgen zeigt die Einträge, und
+    /// gelesen leer behauptet ebenfalls nichts: Der Satz «Noch kein Schritt dieses Laufs
+    /// fertig.» stand weder im Auftrag noch auf dem Blatt «Lauf» und ist seit dem 23.09.2026
+    /// gestrichen.
+    func testDieFertigenSagenNurBeiNichtLesbarEtwas() throws {
+        let k = #"{"knoten": "k1", "status": "ok"}"#
+        XCTAssertNotNil(try fertigeStand("[\(k), null]").fertigeSatz)
+        let ohne = try fertigeStand(nil)
+        XCTAssertEqual(ohne.fertigeLage, .nichtGeliefert)
+        XCTAssertNil(ohne.fertigeSatz, "nicht geliefert: nichts behaupten")
+        let mitNull = try fertigeStand("null")
+        XCTAssertEqual(mitNull.fertigeLage, .nichtGeliefert)
+        XCTAssertNil(mitNull.fertigeSatz, "null ist nicht geliefert")
+        let leer = try fertigeStand("[]")
+        XCTAssertEqual(leer.fertigeLage, .gelesen)
+        XCTAssertEqual(leer.fertige, [])
+        XCTAssertNil(leer.fertigeSatz, "gelesen und leer: kein erfundener Satz")
+        let zwei = try fertigeStand("[\(k), \(k)]")
+        XCTAssertEqual(zwei.fertige?.count, 2)
+        XCTAssertNil(zwei.fertigeSatz, "die Einträge stehen selbst da")
+    }
+
     /// Dasselbe an der Projektsicht, für Bilder und Skizzen je einzeln: ein Eintrag, der kein
     /// Objekt ist → `nil`, nicht eine kürzere Liste.
     func testEinUnlesbarerEintragMachtDieListenDerProjektsichtNil() throws {

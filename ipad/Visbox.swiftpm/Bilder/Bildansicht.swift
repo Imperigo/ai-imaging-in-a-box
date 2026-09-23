@@ -279,7 +279,7 @@ struct Bildansicht: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } else if aktuell.angaben.hinweiseLage == .nichtLesbar {
-                    Text("Nicht lesbar — die Bildstufe hat Hinweise geschickt, aber mindestens einer ist kein Text. Darum steht hier keiner, auch nicht die übrigen.")
+                    Text(Mappenbild.hinweiseUnlesbarSatz)
                         .font(Schrift.text(13))
                         .foregroundStyle(Zeichenblatt.leise)
                         .fixedSize(horizontal: false, vertical: true)

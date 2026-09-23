@@ -384,7 +384,8 @@ def test_homeworker_standpunkt_von_hand_kommt_ohne_kuerzel_bei_blender_an(
     assert not [a for a in kommando if a.startswith(SCHALTER)], kommando
 
     befund = ergebnis["messwerte"]["kamerabestellung"]
-    assert befund["kamera"] is None and befund["kamera_quelle"] is None
+    # Seit der Runde 7b (23.09.2026) "von_hand" statt None — None hiesse «unbekannt».
+    assert befund["kamera"] is None and befund["kamera_quelle"] == "von_hand"
     assert sorted(befund["wirkungslos"]) == sorted(NUR_MIT_KAMERA), (
         "Nicht still verworfen: Jede nicht weitergereichte Angabe steht mit Grund da.")
     assert all(repr(NUR_MIT_KAMERA[n]) in s for n, s in befund["wirkungslos"].items())

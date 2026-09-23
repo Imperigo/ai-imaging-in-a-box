@@ -136,8 +136,19 @@ struct Laufanzeige: View {
         }
     }
 
+    /// Die fertigen Knoten des Laufs — **in drei Lagen, nicht zwei.**
+    ///
+    /// Befund der Durchsicht vom 23.09.2026: Hier stand `if let liste = s.fertige,
+    /// !liste.isEmpty` — eine nicht lesbare Liste (`fertige == nil`, `fertigeLage ==
+    /// .nichtLesbar`) sah aus wie eine, die nicht kam, und beide wie eine leere. Jetzt sagt
+    /// eine nicht lesbare es, und die beiden anderen Lagen behaupten nichts. Welcher Satz, liegt
+    /// im Kern (`Fortschrittsstand.fertigeSatz`, geprüft in `AnfragenTests`); diese Ansicht
+    /// ruft ihn nur. Dass sie ihn zeigt, ist unübersetzt und am Gerät unbestätigt (23.09.2026).
     @ViewBuilder
     private func fertige(_ s: Fortschrittsstand) -> some View {
+        if let satz = s.fertigeSatz {
+            leise(satz)
+        }
         if let liste = s.fertige, !liste.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(Array(liste.enumerated()), id: \.offset) { paar in

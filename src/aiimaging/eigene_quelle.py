@@ -142,19 +142,25 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     # EINE UNLESBARE SZENE IST EIN FEHLER DIESES AUFTRAGS, nicht des Durchgangs
     # (Befund 23.09.2026). Der Abholer faengt nur QUELLEN_FEHLER; was `lies_szene` sonst
     # wirft, riss `hole_einen` und mit ihm `durchgang` heraus, und kein weiterer Auftrag
-    # der Ablage wurde angesehen. Nachgestellt ueber den MCP-Einlass: `samples: "viele"`
-    # wird angenommen und auf `queued` gesetzt, und `lies_szene` wirft dann ValueError
-    # aus `int(...)` — der Weg, der heute wirklich erreichbar ist. `SzenenError` ist es
-    # heute nicht (`kosmo_naht.als_render_scene` baut stets einen Geometrieblock), sie
-    # steht fuer eine kuenftige Uebersetzung. Beide bewacht in
-    # tests/test_runde7_abholer.py. Dasselbe Vorbild wie `NahtError` direkt darueber.
-    # `SzenenError` erbt von ValueError; sie steht der Lesbarkeit halber ausdruecklich
-    # da — ein Waechter kann ihr Fehlen im Tupel nicht bemerken.
+    # der Ablage wurde angesehen. Dasselbe Vorbild wie `NahtError` direkt darueber.
+    #
+    # BERICHTIGT IN DER RUNDE 7c (23.09.2026). Hier stand, `samples: "viele"` werde am
+    # MCP-Einlass angenommen und `lies_szene` werfe dann ValueError — seit der Runde 7b
+    # stimmt beides nicht mehr: Der Einlass weist ab, und `lies_szene` nennt die Zahl als
+    # Mangel. Damit loeste kein Waechter diesen Fang mehr aus, und nachgestellt wurde,
+    # dass er zu schmal war: `samples` mit 400 Stellen warf OverflowError aus
+    # `lies_zahl`, und den fing hier niemand (die Bruecke schon). Seither faengt diese
+    # Quelle `kosmo_szene.LESEFEHLER` — dieselben Fehlerarten wie die Bruecke. Bewacht in
+    # tests/test_runde7b_einlass.py mit einer Attrappe fuer `lies_szene`, die auf BEIDEN
+    # Wegen dieselben Fehlerarten wirft.
     try:
         szene = kosmo_szene.lies_szene(uebersetzt["szene"])
-    except (kosmo_szene.SzenenError, ValueError, TypeError) as fehler:
+    except kosmo_szene.LESEFEHLER as fehler:
+        nachsatz = "" if isinstance(fehler, kosmo_szene.SzenenError) else (
+            ". Ein Feld liess sich nicht deuten, und die Pruefung in `lies_szene` hat es "
+            "nicht als Mangel benannt — das gehoert dort nachgetragen.")
         raise QUELLEN_FEHLER(
-            f"Szene nicht lesbar: {type(fehler).__name__}: {fehler}") from fehler
+            f"Szene nicht lesbar: {type(fehler).__name__}: {fehler}{nachsatz}") from fehler
     warnungen.extend(szene["warnungen"])
     maengel.extend(szene["maengel"])
 

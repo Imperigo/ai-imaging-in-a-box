@@ -103,13 +103,41 @@ def check_geometry(args: dict) -> dict:
 def enqueue_render(args: dict) -> dict:
     """Geometrie → gegateter Render-Auftrag. Rührt die GPU nicht an.
 
-    Ablauf: Vertrag prüfen → bei IFC-Eingang konvertieren (Subprozess im `.venv-ifc`) →
-    Torwächter → Auftrag ablegen. Bricht eine Stufe, entsteht **kein** Auftrag: Ein
-    Auftrag auf kaputter Geometrie würde später GPU-Zeit verbrennen, um dann doch zu
-    scheitern.
+    Ablauf: Zahlen prüfen (``aufloesung``, ``samples``) → Vertrag prüfen → bei
+    IFC-Eingang konvertieren (Subprozess im `.venv-ifc`) → Torwächter → Auftrag ablegen.
+    Bricht eine Stufe, entsteht **kein** Auftrag: Ein Auftrag auf kaputter Geometrie
+    würde später GPU-Zeit verbrennen, um dann doch zu scheitern.
     """
     geom = _geometrie_aus_argumenten(args)
     out_dir = args.get("out_dir") or str(Path(tempfile.gettempdir()) / "aiimaging-out")
+
+    # 0) WAS ANGENOMMEN WIRD, MUSS WIRKEN (Durchsicht der Runde 7, 23.09.2026). Bis
+    #    dahin nahm dieser Einlass `samples: "viele"` an und legte den Auftrag auf
+    #    `queued`; gescheitert ist er erst beim Abholer, am Lesen der Szene. `true` wurde
+    #    still 1 Sample, `1.5` still 1. Geprueft wird mit DERSELBEN Regel, mit der
+    #    `kosmo_szene.lies_szene` die Szene dieses Auftrags spaeter liest — eine Regel,
+    #    nicht zwei, sonst naehme der Einlass an, was der Abholer dann abweist. Vor allem
+    #    anderen, damit eine unbrauchbare Zahl keine IFC-Umwandlung kostet. Fehlt die
+    #    Angabe (oder ist sie null), entscheidet weiterhin der Vertrag.
+    #
+    #    ABGELEGT WIRD, WAS GELESEN WURDE — NICHT DER ROHE WERT (Durchsicht der Runde 7b,
+    #    23.09.2026). Bis dahin pruefte dieser Einlass mit `lies_zahl` und legte danach
+    #    `args[feld]` ab: `512.0` blieb ein float, und `kosmo_naht.aufloesung_zu_resolution`
+    #    wies genau diesen Auftrag ab, den der Einlass angenommen hatte. Und ohne
+    #    Obergrenze galten `samples: 1e300` und `2**63` als angenommen. Seither dieselben
+    #    Regeln wie in `lies_szene` (`kosmo_szene.REGEL_KANTE`, `REGEL_SAMPLES`, mit
+    #    Obergrenze), und abgelegt wird die gelesene ganze Zahl.
+    from aiimaging import kosmo_szene as _k
+    saetze = []
+    gelesen: dict = {"aufloesung": None, "samples": None}
+    for feld, regel in (("aufloesung", _k.REGEL_KANTE), ("samples", _k.REGEL_SAMPLES)):
+        if args.get(feld) is not None:
+            zahl, satz = _k.lies_zahl(args[feld], feld, **regel)
+            if satz:
+                saetze.append(satz)
+            gelesen[feld] = zahl
+    if saetze:
+        return _fehler("Angabe abgewiesen, es entsteht kein Auftrag: " + " ".join(saetze))
 
     # 1) Vertrag. Hier fällt insbesondere ein fehlendes `up_axis` bei glb-Eingang auf —
     #    der Phase-0-Befund, und zwar bevor irgendetwas Teures passiert.
@@ -156,8 +184,9 @@ def enqueue_render(args: dict) -> dict:
             # Auftrag ergab damit ueber den MCP-Einlass ein anderes Bild als ueber die
             # Bruecke, ohne dass es irgendwo stand. Fehlt die Angabe, entscheidet der
             # Vertrag — und nur er.
-            "aufloesung": args.get("aufloesung"),
-            "samples": args.get("samples"),
+            # Die gelesene Zahl (Schritt 0), nicht `args[...]` — `512.0` wird 512.
+            "aufloesung": gelesen["aufloesung"],
+            "samples": gelesen["samples"],
             "empfiehlt_neuzentrierung": urteil.get("empfiehlt_neuzentrierung", False),
         },
         approval_token=args.get("approval_token"),

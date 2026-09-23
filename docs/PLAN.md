@@ -7327,12 +7327,31 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] **Owner:** Abnahmeblatt am iPad; Cloud-Block vom 23.09. hinüberreichen; zwei Schilder
       «Owner-Entscheid offen» (Beschriftung des Vergleichs, das Wort «offen»).
-- [ ] **Kern:** Satz am Laufzettel für eine dauerhaft unlesbare Bestellung;
+- [x] **Kern:** Satz am Laufzettel für eine dauerhaft unlesbare Bestellung;
       `eigene_quelle.lies_auftrag` fängt `SzenenError` nicht; stille `compactMap` in der
-      Mappe der App; die App liest `unterlage_hinweis` nicht.
-- [ ] **Kern-Reste aus Runde 6:** `augenhoehe`, `bias_grad`, `kamera_modus` nur auf
+      Mappe der App; die App liest `unterlage_hinweis` nicht. *(Sitzung 69, Runde 7)*
+- [x] **Kern-Reste aus Runde 6:** `augenhoehe`, `bias_grad`, `kamera_modus` nur auf
       «abgeleitet»; Rahmung des Abholers auf den anderen Wegen; Richtung und Standpunkt
-      zugleich an `seams`; positive Seite der Richtungsmeldung.
+      zugleich an `seams`; positive Seite der Richtungsmeldung. *(Sitzung 69, Runde 7)*
 - [ ] **local:** `auf-139`, `auf-141`, `auf-144`, `auf-151`. **cloud:** `auf-142`, `auf-133`,
       `auf-129`, `auf-152`. **ui:** neun Aufträge, zuletzt `auf-153`.
+
+## Sitzung 69 — 23.09.2026 · Runde 7: was angenommen wird und nicht wirkt
+
+**Erledigt**
+
+- [x] Runde 7: Kameraangaben ohne Wirkung abgewiesen oder als wirkungslos gemeldet; Richtung
+      und Standpunkt zugleich überall abgewiesen; keine angenommene Rahmung im Urteil;
+      Richtungsmeldung symmetrisch; App: «ganz oder gar nicht», Satz zur Unterlage.
+- [x] Runde 7b/7c: unlesbare und riesige Zahlen halten nur ihren Auftrag auf (Brücke, eigene
+      Ablage, MCP-Einlass — eine Regel, eine Fehlerliste, eine Obergrenze).
+- [x] Nachtrag in `auf-151` (local), `auf-145` R4 nachgeführt (ui).
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern:** `kamera_zu_spec` mit unendlichem Auge; Obergrenze in
+      `resolution_zu_aufloesung`; Wertebereich für `faithful`; `als_kosmo_auftrag` ohne
+      `aufloesung`; Deckungsgrad meldet anders als die drei neuen Werte.
+- [ ] **local:** `auf-151` V7 — die Obergrenzen an Blender 5.2.
+- [ ] **Owner:** unverändert (Abnahmeblatt, Cloud-Block, zwei Schilder).
 

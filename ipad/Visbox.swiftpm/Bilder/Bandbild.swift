@@ -94,9 +94,18 @@ final class Bildbandstand: ObservableObject {
     static let gemeinsam = Bildbandstand()
 
     @Published var bilder: [Bandbild] = []
-    /// Die Skizzen der Mappe. `nil` heisst: **nicht geliefert** (noch nicht geladen, oder der
-    /// Server schickte keine Liste) — nicht «keine Skizzen».
+    /// Die Skizzen der Mappe. `nil` heisst: **nicht gelesen** — nicht «keine Skizzen». Warum
+    /// nicht, sagt `skizzenLage` (seit Runde 7b kann `nil` auch «nicht lesbar» heissen).
     @Published var skizzen: [Mappenskizze]?
+    /// **Wie die Skizzenliste beim letzten Laden stand** — nicht geliefert, nicht lesbar oder
+    /// gelesen; `nil`: noch nie geladen. Gesetzt in `ladeMappe`, an derselben Stelle wie die
+    /// Liste; der Satz dazu kommt aus dem Kern (`Mappenlage.skizzenlistensatz`).
+    ///
+    /// **Ein Stand, nicht zwei** (Durchsicht der Runden 7b und 7c, 23.09.2026): Die Lage lag
+    /// erst in einem eigenen globalen Stand neben dem Bildband, dann als angehängter Wert der
+    /// Objective-C-Laufzeit an ihm. Jetzt ist sie ein gewöhnliches Feld — wer den Bildband
+    /// beobachtet, zeichnet bei einer Änderung neu. *Unübersetzt hier, am Gerät unbestätigt.*
+    @Published var skizzenLage: Listenlage?
     /// Die Standnummer der Mappe, für `von_stand` beim Benennen. `nil`: nicht geführt.
     @Published var standNr: Int?
     @Published var projektname: String?

@@ -111,10 +111,20 @@ def aufloesung_zu_resolution(aufloesung: int) -> str:
     `resolution` eine **Zeichenkette** ``"1920x1440"``. Selbst nach dem Umbenennen wäre
     der Typ noch verschieden — das ist der Grund, warum eine Umbenennung allein nicht
     genügt hätte.
+
+    **Dieselbe Regel wie am Einlass und im Abholer** (Runde 7c, 23.09.2026): Geprüft wird
+    mit :func:`aiimaging.kosmo_szene.lies_zahl` und :data:`~aiimaging.kosmo_szene.REGEL_KANTE`.
+    Bis dahin stand hier eine eigene Fassung, die ``512.0`` abwies — während
+    ``enqueue_render`` und ``lies_szene`` es als 512 annahmen. Entschieden ist einheitlich
+    für die Annahme: JSON kennt keinen Unterschied zwischen ganzer und Gleitkommazahl,
+    ``512.0`` ist dieselbe Zahl wie ``512``, und als 512 gelesen wirkt sie genau wie
+    bestellt. Abgewiesen wird, was nicht wie bestellt wirken könnte (``1.5``, ``true``,
+    ``0``, über :data:`~aiimaging.kosmo_szene.KANTE_HOECHSTENS`).
     """
-    if isinstance(aufloesung, bool) or not isinstance(aufloesung, int) or aufloesung < 1:
-        raise NahtError(f"aufloesung: ganze Zahl ab 1 erwartet, war {aufloesung!r}.")
-    return f"{aufloesung}x{aufloesung}"
+    kante, satz = kosmo_szene.lies_zahl(aufloesung, "aufloesung", **kosmo_szene.REGEL_KANTE)
+    if satz:
+        raise NahtError(satz)
+    return f"{kante}x{kante}"
 
 
 def resolution_zu_aufloesung(resolution) -> dict:

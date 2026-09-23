@@ -3044,12 +3044,28 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
         lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
                                            bericht.get("bbox_bauwerk"),
                                            deckungsgrad=1.0)
+        #
+        # ZWEI SAETZE, NICHT EINER (Durchsicht der Runde 7, 23.09.2026). Auf dem Weg
+        # «abgeleitet» ist der Satz «die Vorgabe sprach ueber einen anderen Kameraweg»
+        # falsch — es IST der Weg, auf dem der Deckungsgrad wirkt, und der Runner meldet
+        # dort immer eine Zahl. Ein `null` dort ist ein Bericht, der sich widerspricht;
+        # das wird gesagt statt einer Begruendung, die nicht zutrifft. Eingesetzt wird die
+        # Vorgabe auch hier nicht: Ob mit ihr gerahmt wurde, belegt der Bericht nicht.
+        if weg == "abgeleitet":
+            satz = (f"NICHT GERAHMT, UND DER BERICHT WIDERSPRICHT SICH: Die Kamera kam "
+                    f"auf dem Weg 'abgeleitet' zustande — dem einzigen, auf dem der "
+                    f"Runner einen Deckungsgrad stellt und meldet —, und trotzdem steht "
+                    f"dort null. {wirkungslos} Mit welchem Deckungsgrad gerahmt wurde, "
+                    f"ist damit nicht feststellbar; die Vorgabe der Bibliothek wird nicht "
+                    f"eingesetzt, weil sie eine Rahmung behaupten wuerde, die der Bericht "
+                    f"nicht belegt.")
+        else:
+            satz = (f"NICHT GERAHMT: {wirkungslos} Ohne Deckungsgrad gibt es keine "
+                    f"wirksame Bildbreite; die Vorgabe der Bibliothek sprach ueber einen "
+                    f"anderen Kameraweg und wird hier nicht eingesetzt.")
         lage.update(wirksame_bildbreite=None, traegt=None, abbruch=None,
                     abbruch_grund="", basis=None, grundlage=None,
-                    grund=(f"NICHT GERAHMT: {wirkungslos} Ohne Deckungsgrad gibt es "
-                           f"keine wirksame Bildbreite; die Vorgabe der Bibliothek "
-                           f"sprach ueber einen anderen Kameraweg und wird hier nicht "
-                           f"eingesetzt."
+                    grund=(satz
                            + (f" {lage['grund']}" if lage.get("breitenanteil") is None
                               else "")))
     else:
@@ -3063,10 +3079,10 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
                 massgebend=kamera.get("massgebend"))
     if quelle == "vorgabe" and lage.get("abbruch"):
         lage["abbruch_grund"] += (
-            f" ACHTUNG: Der Bericht nennt keinen Deckungsgrad"
+            " ACHTUNG: Der Bericht nennt keinen Deckungsgrad"
             + (f" (das Feld steht da, ist aber keine Zahl: {unlesbar!r})"
                if unlesbar is not None else "")
-            + f"; gerechnet wurde mit der "
+            + "; gerechnet wurde mit der "
             f"Vorgabe {kameras.DECKUNGSGRAD}. Wurde dieser Lauf mit einem anderen "
             f"gestellt, spricht diese Zahl ueber einen anderen Lauf. Runner ab dem "
             f"26.08.2026 melden das Feld.")

@@ -165,9 +165,50 @@ class SzenenError(ValueError):
     """
 
 
+#: Was ein Leser von :func:`lies_szene` fangen muss, damit ein unlesbarer Auftrag nur
+#: sich selbst aufhaelt und nicht den ganzen Abholdurchgang (Runde 7c, 23.09.2026).
+#:
+#: Die erste Linie ist :func:`lies_szene` selbst: Jede Zahl geht durch
+#: :func:`lies_zahl`, ein unlesbares Feld wird ein Mangel mit Satz. Diese Liste ist die
+#: zweite Linie — die Fehlerarten, die ein unlesbares Feld in Python ausloest, wenn die
+#: erste Linie etwas uebersieht: auch ``AttributeError`` (ein Block, der keiner ist),
+#: ``ArithmeticError`` (darunter ``OverflowError``) und ``LookupError`` (darunter
+#: ``KeyError``).
+#:
+#: **Der Befund dazu:** ``bruecke.lies_auftrag`` fing seit der Runde 7b diese sechs,
+#: ``eigene_quelle.lies_auftrag`` nur die ersten drei. ``samples`` mit 400 Stellen warf
+#: ``OverflowError`` aus ``lies_zahl`` und riss ueber die eigene Ablage
+#: ``abholer.durchgang`` heraus. Beide Wege fangen darum dieselben — ``eigene_quelle``
+#: liest sie hier; ``bruecke`` fuehrt sie heute noch als eigene Aufzaehlung mit gleichem
+#: Inhalt. Dass beide Wege dieselben fangen, prueft
+#: ``tests/test_runde7b_einlass.py`` mit derselben Attrappenliste auf beiden Wegen.
+LESEFEHLER = (SzenenError, ValueError, TypeError, AttributeError, ArithmeticError,
+              LookupError)
+
+
 # --------------------------------------------------------------------------------------
 # Brennweite ↔ Bildwinkel
 # --------------------------------------------------------------------------------------
+
+#: Was ``float(...)`` einer Angabe aus der Bestellung werfen kann: ein Text
+#: (``ValueError``), ein Block (``TypeError``) — und eine ganze Zahl jenseits des
+#: Gleitkommabereichs (``OverflowError``, Runde 7c, 23.09.2026: Sie fehlte in allen drei
+#: Kamerafunktionen, die ``SzenenError`` zusagen).
+_UMWANDLUNGSFEHLER = (TypeError, ValueError, OverflowError)
+
+
+def _als_float(wert) -> float:
+    """Eine schon als Zahl gepruefte Angabe als ``float`` — ``inf`` statt ``OverflowError``.
+
+    Eine ganze Zahl jenseits des Gleitkommabereichs ist fuer die Pruefung dahinter
+    dasselbe wie eine unendliche: nicht endlich, also ``SzenenError`` mit Satz (Runde 7c,
+    23.09.2026).
+    """
+    try:
+        return float(wert)
+    except OverflowError:
+        return math.inf if wert > 0 else -math.inf
+
 
 def brennweite_zu_fov(brennweite_mm: float) -> float:
     """Brennweite in mm → **horizontaler** Bildwinkel in Grad.
@@ -190,9 +231,11 @@ def brennweite_zu_fov(brennweite_mm: float) -> float:
     """
     if isinstance(brennweite_mm, bool) or not isinstance(brennweite_mm, (int, float)):
         raise SzenenError(f"brennweite_mm muss eine Zahl sein, war: {brennweite_mm!r}")
-    f = float(brennweite_mm)
+    # Eine riesige ganze Zahl warf hier OverflowError aus `float` (Runde 7c, 23.09.2026).
+    f = _als_float(brennweite_mm)
     if not math.isfinite(f) or f <= 0.0:
-        raise SzenenError(f"brennweite_mm muss positiv und endlich sein, war: {f}")
+        raise SzenenError(
+            f"brennweite_mm muss positiv und endlich sein, war: {_zeige(brennweite_mm)}")
     return math.degrees(2.0 * math.atan(SENSOR_BREITE_MM / (2.0 * f)))
 
 
@@ -205,9 +248,10 @@ def fov_zu_brennweite(fov_grad: float) -> float:
     """
     if isinstance(fov_grad, bool) or not isinstance(fov_grad, (int, float)):
         raise SzenenError(f"fov muss eine Zahl sein, war: {fov_grad!r}")
-    w = float(fov_grad)
+    w = _als_float(fov_grad)
     if not math.isfinite(w) or not (0.0 < w < 180.0):
-        raise SzenenError(f"fov muss zwischen 0 und 180 Grad liegen, war: {w}")
+        raise SzenenError(
+            f"fov muss zwischen 0 und 180 Grad liegen, war: {_zeige(fov_grad)}")
     return SENSOR_BREITE_MM / (2.0 * math.tan(math.radians(w) / 2.0))
 
 
@@ -240,10 +284,19 @@ def kamera_zu_spec(kamera: dict) -> dict:
             f"Vertrag lässt nur {FOV_MIN_GRAD:.0f}–{FOV_MAX_GRAD:.0f}° zu und würde den "
             f"Auftrag abweisen. Entweder die Brennweite ändern oder die Naht nicht nehmen."
         )
+    # Die Punkte werden VOR dem Woerterbuch umgewandelt, damit ein Text darin als
+    # `SzenenError` ankommt und nicht als nackter ValueError (Durchsicht 23.09.2026).
+    try:
+        position = [float(v) for v in kamera["auge"]]
+        ziel = [float(v) for v in kamera["blick_auf"]]
+    except _UMWANDLUNGSFEHLER as e:
+        raise SzenenError(
+            f"Kamera mit Punkten, die keine Zahlen sind: auge {kamera['auge']!r}, "
+            f"blick_auf {kamera['blick_auf']!r}") from e
     return {
         "name": kamera.get("kuerzel"),
-        "position": [float(v) for v in kamera["auge"]],
-        "target": [float(v) for v in kamera["blick_auf"]],
+        "position": position,
+        "target": ziel,
         "fov": fov,
         # PFLICHTFELD IHRES VERTRAGS, und es fehlte hier. `CameraSpec.up_axis` ist
         # `z.enum(['y','z'])` OHNE Default (P-ACHSENRIEGEL, 26.08.2026) — eine Spec
@@ -306,9 +359,16 @@ def kamera_nach_blender(punkt, up_axis):
             Vorgabewert hier wäre die stille Verdrehung, gegen die er gebaut wurde.
     """
     achse = _hochachse(up_axis)
+    try:
+        zahlen = [float(v) for v in punkt]
+    except _UMWANDLUNGSFEHLER as e:
+        # Auch diese Umwandlung warf nackt (Durchsicht 23.09.2026); die Funktion ist
+        # oeffentlich und sagt `SzenenError` zu. OverflowError seit der Runde 7c: `float`
+        # einer ganzen Zahl mit 400 Stellen.
+        raise SzenenError(f"Kamerapunkt enthaelt keine Zahlen: {punkt!r}") from e
     if achse == HOCHACHSE_BLENDER:
-        return tuple(float(v) for v in punkt)
-    return tuple(_contracts.blender_gltf_import_dreht([float(v) for v in punkt]))
+        return tuple(zahlen)
+    return tuple(_contracts.blender_gltf_import_dreht(zahlen))
 
 
 def _hochachse(wert) -> str:
@@ -360,8 +420,15 @@ def spec_zu_kamera(spec: dict) -> dict:
             raise SzenenError(f"CameraSpec ohne brauchbares '{fremd}': {w!r}")
         try:
             bestellt = tuple(float(v) for v in w)
-        except (TypeError, ValueError) as e:
+        except _UMWANDLUNGSFEHLER as e:
+            # OverflowError seit der Runde 7c (23.09.2026): `float` einer ganzen Zahl mit
+            # 400 Stellen warf nackt, der Docstring sagt `SzenenError` zu.
             raise SzenenError(f"CameraSpec '{fremd}' enthält keine Zahlen: {w!r}") from e
+        # NICHT ENDLICH IST KEIN STANDPUNKT (23.09.2026): `Infinity` liest das
+        # Python-JSON, und `float` nimmt es an — die Kamera ging so an den Runner.
+        if not all(math.isfinite(v) for v in bestellt):
+            raise SzenenError(
+                f"CameraSpec '{fremd}' enthält keine endlichen Zahlen: {w!r}")
         werte[unser] = kamera_nach_blender(bestellt, achse)
         werte[f"{unser}_bestellt"] = bestellt
     werte["kuerzel"] = spec.get("name")
@@ -654,6 +721,145 @@ def wert_oder(quelle: dict, schluessel: str, ersatz):
     return ersatz if wert is None else wert
 
 
+#: Die groesste Samplezahl, die angenommen wird: 2 hoch 24 = 16'777'216.
+#:
+#: **Warum eine Obergrenze** (Durchsicht der Runde 7b, 23.09.2026): Der MCP-Einlass nahm
+#: ``samples: 1e300`` und ``2**63`` an und legte den Auftrag auf ``queued``. Wirken kann
+#: das nicht — der Runner reicht die Zahl an Blender weiter
+#: (``runners/blender_depth_stage.py``, ``szene.cycles.samples = a.samples``), und dort
+#: ist sie begrenzt.
+#:
+#: **Woher die Zahl stammt — GESETZT, NICHT GEMESSEN.** Im Bestand dieses Repos nimmt
+#: keine Stelle eine Obergrenze an: weder Runner (``--samples``, ``type=int``) noch Kette
+#: (``int(samples)``) noch der fremde Vertrag, soweit er hier abgebildet ist. Die Zahl
+#: ist die harte Grenze, die die Cycles-Erweiterung von Blender ihrer Eigenschaft
+#: ``samples`` gibt (``max=(1 << 24)``) — nachgelesen am 23.09.2026 im Quelltext von
+#: Blender 4.2.0 (``intern/cycles/blender/addon/properties.py``), an keinem Blender
+#: dieses Projekts nachgeprueft. Ob Blender darueber klemmt oder abweist, ist
+#: ebenfalls nicht gemessen; wie bestellt waere es in keinem der beiden Faelle. Die
+#: groesste Zahl, die hier je bestellt wurde, sind 220'000 Samples (HomeStation,
+#: ``auftraege/ergebnisse/auf-20260820-18.json``) — weit darunter.
+#:
+#: Die Grenze sagt nur: DARUEBER kann die Angabe nicht wirken. Dass darunter jeder Lauf
+#: in seiner Frist fertig wird, sagt sie nicht.
+SAMPLES_HOECHSTENS = 1 << 24
+
+#: Die groesste Kantenlaenge in Pixeln, die angenommen wird: 65'536.
+#:
+#: Derselbe Befund und dieselbe Herkunft wie bei :data:`SAMPLES_HOECHSTENS`, GESETZT,
+#: NICHT GEMESSEN: Blenders ``RenderSettings.resolution_x`` ist laut Quelltext von
+#: Blender 4.2.0 (``makesrna/intern/rna_scene.cc``, nachgelesen am 23.09.2026) auf 4 bis
+#: 65'536 begrenzt; der Runner setzt beide aus
+#: ``--aufloesung``/``--hoehe``. Nach unten gilt ohnehin das Raster von 16
+#: (:func:`_auf_raster`), und 65'536 ist ein Vielfaches davon.
+KANTE_HOECHSTENS = 1 << 16
+
+#: DIE EINE REGEL fuer eine Kantenlaenge — gelesen in :func:`lies_szene`
+#: (``render.resolution``), am MCP-Einlass (``aufloesung``) und in
+#: :func:`aiimaging.kosmo_naht.aufloesung_zu_resolution`. Als Woerterbuch hier, damit
+#: keiner der drei eine eigene Fassung fuehrt (Runde 7c, 23.09.2026).
+REGEL_KANTE = {"ganzzahlig": True, "mindestens": 1, "hoechstens": KANTE_HOECHSTENS}
+
+#: DIE EINE REGEL fuer die Samplezahl — in :func:`lies_szene` und am MCP-Einlass.
+REGEL_SAMPLES = {"ganzzahlig": True, "mindestens": 1, "hoechstens": SAMPLES_HOECHSTENS}
+
+
+def lies_zahl(wert, feld: str, *, ganzzahlig: bool, mindestens=None, hoechstens=None):
+    """Eine Zahl der Bestellung lesen — ``(zahl, None)`` oder ``(None, satz)``.
+
+    **Der Befund** (Durchsicht der Runde 7, nachgestellt am 23.09.2026): Eine
+    ``render-scene.json`` mit ``render.samples: "viele"`` warf in :func:`lies_szene` einen
+    nackten ``ValueError`` aus ``int(...)``; ``resolution: ["x", 1024]`` ebenso,
+    ``faithful: "hoch"`` aus ``float(...)``, und ``Infinity`` — das Python-JSON liest es —
+    einen ``OverflowError``. :func:`aiimaging.bruecke.lies_auftrag` fing nur
+    ``SzenenError``; der Fehler riss ``abholer.durchgang`` und mit ihm
+    ``tools/abholen.py`` heraus, und kein weiterer Auftrag der Ablage wurde angesehen.
+
+    Und was NICHT warf, war schlimmer: ``samples: true`` ergab still 1 Sample, ``1.5``
+    still 1, ``-3`` ging so an den Runner. Angenommen und nicht wie bestellt.
+
+    **Ein Satz statt einer Ausnahme**, weil es dem Muster von :func:`lies_szene` folgt:
+    ``SzenenError`` steht dort nur, wo es gar nichts zu rendern gibt (kein Block, kein
+    ``geometry.path``); ein Feld, das sich nicht deuten laesst, ist ein Mangel mit Satz
+    (``geometry.format``, ``gelaende``, ``interior``). So sieht der Besteller ALLE
+    unlesbaren Felder auf einmal und nicht nur das erste.
+
+    **Auch eine zu grosse ganze Zahl ist ein Satz** (Durchsicht der Runde 7b,
+    23.09.2026). Das JSON kennt keine Obergrenze, und Python liest ``1`` mit 400 Nullen
+    als ``int``; ``math.isfinite`` und ``float(...)`` warfen darauf ``OverflowError`` —
+    genau die Ausnahme, die diese Funktion ersetzen sollte. Ganze Zahlen werden darum
+    nie in ``float`` umgewandelt, bevor sie verglichen sind, und im Satz erscheint eine
+    riesige Zahl als Stellenzahl statt als 400 Ziffern.
+
+    Dieselbe Funktion prueft den MCP-Einlass (:func:`aiimaging.werkzeuge.enqueue_render`)
+    und :func:`aiimaging.kosmo_naht.aufloesung_zu_resolution`, jeweils mit derselben
+    Regel aus :data:`REGEL_KANTE` bzw. :data:`REGEL_SAMPLES`: Was dort angenommen wird,
+    liest :func:`lies_szene` auch — eine Regel, nicht zwei.
+
+    Args:
+        wert: der Wert, wie er ankam (``null`` hat der Aufrufer schon ersetzt).
+        feld: der Punktpfad fuer den Satz.
+        ganzzahlig: ``True``: nur ganze Zahlen; ``64.0`` gilt als 64, ``1.5`` nicht —
+            abgeschnitten waere es ein anderes Bild als das bestellte.
+        mindestens: kleinster zulaessiger Wert, oder ``None``.
+        hoechstens: groesster zulaessiger Wert, oder ``None`` (seit der Runde 7c).
+
+    Returns:
+        ``(zahl, None)`` — ``int`` bei ``ganzzahlig``, sonst ``float`` — oder
+        ``(None, satz)``. ``None`` heisst NICHT GELESEN, nicht 0.
+    """
+    erwartet = ("eine ganze Zahl" if ganzzahlig else "eine endliche Zahl") + (
+        f" ab {mindestens}" if mindestens is not None else "") + (
+        f" bis {hoechstens}" if hoechstens is not None else "")
+    grund = None
+    zahl = None
+    if isinstance(wert, bool):
+        grund = "ein Wahrheitswert ist keine Zahl (true waere still 1)"
+    elif not isinstance(wert, (int, float)):
+        grund = f"{type(wert).__name__} ist keine Zahl"
+    elif isinstance(wert, float) and not math.isfinite(wert):
+        grund = "keine endliche Zahl"
+    elif ganzzahlig:
+        # Eine ganze Zahl bleibt `int`, egal wie gross; ein `float` ist es nur, wenn er
+        # keinen Rest hat — und dann ist `int(...)` exakt.
+        if isinstance(wert, float) and not wert.is_integer():
+            grund = ("keine ganze Zahl — abgeschnitten waere es ein anderes Bild als "
+                     "bestellt")
+        else:
+            zahl = int(wert)
+    else:
+        try:
+            zahl = float(wert)
+        except OverflowError:  # eine ganze Zahl jenseits des Gleitkommabereichs
+            grund = "ausserhalb dessen, was eine Gleitkommazahl fassen kann"
+    if grund is None and mindestens is not None and zahl < mindestens:
+        grund = "zu klein"
+    if grund is None and hoechstens is not None and zahl > hoechstens:
+        grund = "zu gross — darueber kann die Angabe nicht wirken"
+    if grund is not None:
+        return None, (
+            f"'{feld}' ist {_zeige(wert)}, erwartet war {erwartet}: {grund}. Das Feld "
+            f"wird weder geraten noch durch die Vorgabe ersetzt — abgewiesen statt still "
+            f"anders gerechnet.")
+    return zahl, None
+
+
+def _zeige(wert) -> str:
+    """Ein Wert fuer den Satz — eine riesige ganze Zahl als Stellenzahl.
+
+    ``repr`` einer ganzen Zahl mit ueber 4300 Stellen wirft in Python ab 3.11 selbst
+    ``ValueError`` (Grenze der Umwandlung in Text), und 400 Ziffern im Satz liest
+    niemand. Die Stellenzahl ist aus der Bitlaenge geschaetzt, darum «rund».
+    """
+    if isinstance(wert, int) and not isinstance(wert, bool) and wert.bit_length() > 64:
+        stellen = int(wert.bit_length() * math.log10(2)) + 1
+        # DAS VORZEICHEN GEHT MIT (23.09.2026): «rund 401 Stellen … zu klein» las sich
+        # widerspruechlich, solange nicht dastand, dass die Zahl negativ ist.
+        art = "negative ganze Zahl" if wert < 0 else "ganze Zahl"
+        return f"eine {art} mit rund {stellen} Stellen"
+    return repr(wert)
+
+
 def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
     """``interior`` → ``(innenraum, bestellt)``: was wir rechnen, und was bestellt war.
 
@@ -738,6 +944,21 @@ def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
     return {"raum": None, "art": _raumkamera.ART_FRONTAL, "bestellt": bestellt}, bestellt
 
 
+def _block(fremd: dict, name: str, maengel: list) -> dict:
+    """Ein Unterblock der Bestellung — ``{}``, wenn er fehlt, und ein Mangel, wenn er
+    da ist und kein Block ist (23.09.2026, siehe :func:`lies_szene`)."""
+    inhalt = fremd.get(name)
+    if inhalt is None:
+        return {}
+    if not isinstance(inhalt, dict):
+        maengel.append(
+            f"'{name}' ist {type(inhalt).__name__} ({inhalt!r}) und kein Block. Was "
+            f"darin bestellt sein sollte, raten wir nicht; gerechnet wuerde sonst mit "
+            f"den Vorgaben, und das waere nicht die Bestellung.")
+        return {}
+    return inhalt
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -758,6 +979,11 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         ankam, und ``prompt_sprache`` den ganzen Befund samt Verfahren. Drei Felder für
         einen Text, und das ist der Punkt: Wer nur die Übersetzung protokolliert, kann
         sie nie mehr prüfen.
+
+        ``aufloesung``, ``hoehe``, ``samples``, ``controlnet_staerke``,
+        ``ueberspringen`` und ``hochskalieren`` sind ``None``, wenn das Feld der
+        Bestellung nicht lesbar war — NICHT GELESEN, nicht die Vorgabe; der Grund steht
+        dann unter ``maengel`` (seit 23.09.2026, siehe :func:`lies_zahl`).
 
         ``maengel`` hält den Lauf auf, ``warnungen`` nicht. Der Unterschied ist wichtig:
         Ein unbekanntes Backbone ist ein Mangel (wir wüssten nicht, womit wir rendern),
@@ -846,7 +1072,11 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             f"unverständlich zu scheitern."
         )
 
-    render = fremd.get("render") or {}
+    # EIN BLOCK, DER KEINER IST, IST EIN MANGEL — und kein Absturz (Durchsicht der
+    # Runde 7, 23.09.2026, nachgestellt mit `render: "x"`: AttributeError aus `.get`,
+    # ueber die Bruecke bis in `abholer.durchgang`). Gelesen wird dann, als fehlte der
+    # Block; der Mangel haelt den Lauf auf, bevor eine Vorgabe ein Bild ergibt.
+    render = _block(fremd, "render", maengel)
     # Ob die Bildmasse GEWAEHLT oder geerbt sind, entscheidet, wo der Rundungshinweis
     # landet: Die Vorgabe des fremden Vertrags ist 1600x1000 und damit nie ein Vielfaches
     # von 16 — dieser Hinweis trifft jeden Auftrag gleich. Wer selbst 999x777 bestellt,
@@ -857,23 +1087,53 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         warnungen.append(f"'render.resolution' ist kein Paar: {aufl!r} — es gilt 1600x1000.")
         aufl = [1600, 1000]
         gewaehlt = False
-    aufl, hinweis = _auf_raster(aufl)
-    if hinweis:
-        (warnungen if gewaehlt else vorgaben).append(hinweis)
+    # JEDE ZAHL DER BESTELLUNG GEHT DURCH `lies_zahl` (Befund 23.09.2026, dort): Eine
+    # unlesbare ist ein Mangel mit Satz, und ihr Feld bleibt `None` — NICHT GELESEN, nicht
+    # die Vorgabe. Der Mangel haelt den Lauf auf, bevor jemand das Feld liest.
+    # Die Regeln sind DIESELBEN wie am MCP-Einlass (`REGEL_KANTE`, `REGEL_SAMPLES`, Runde
+    # 7c): Was der Einlass abweist, haelt hier auf, und umgekehrt.
+    masse = [lies_zahl(w, f"render.resolution[{k}]", **REGEL_KANTE)
+             for k, w in enumerate(aufl)]
+    maengel.extend(satz for _, satz in masse if satz)
+    if all(satz is None for _, satz in masse):
+        aufl, hinweis = _auf_raster([zahl for zahl, _ in masse])
+        if hinweis:
+            (warnungen if gewaehlt else vorgaben).append(hinweis)
+    else:
+        aufl = [None, None]
 
-    treue = wert_oder(render, "faithful", 0.8)
-    vorgaben.append(
-        f"'faithful' ({treue}) wird auf 'controlnet_staerke' abgebildet — die einzige "
-        f"ehrliche Zuordnung. Was dabei NICHT abgebildet wird: 'denoise' und die "
-        f"Schrittzahl beeinflussen die Treue mit, und die Wirkung ist nicht monoton "
-        f"(auf-20260818-13: 0.80 schneidet besser ab als 1.00). Ein einzelner Regler von "
-        f"0 bis 1 kann das nicht ausdrücken."
-    )
+    samples, satz = lies_zahl(wert_oder(render, "samples", 128), "render.samples",
+                              **REGEL_SAMPLES)
+    if satz:
+        maengel.append(satz)
+    treue, satz = lies_zahl(wert_oder(render, "faithful", 0.8), "render.faithful",
+                            ganzzahlig=False)
+    if satz:
+        maengel.append(satz)
+    if treue is not None:
+        # KEIN SATZ UEBER EINE ABBILDUNG, DIE NICHT STATTFAND (Durchsicht der Runde 7b,
+        # 23.09.2026). Bei unlesbarem 'faithful' stand hier «'faithful' (None) wird auf
+        # 'controlnet_staerke' abgebildet» — abgebildet wurde nichts, der Grund steht
+        # unter `maengel`, und nur dort.
+        vorgaben.append(
+            f"'faithful' ({treue}) wird auf 'controlnet_staerke' abgebildet — die einzige "
+            f"ehrliche Zuordnung. Was dabei NICHT abgebildet wird: 'denoise' und die "
+            f"Schrittzahl beeinflussen die Treue mit, und die Wirkung ist nicht monoton "
+            f"(auf-20260818-13: 0.80 schneidet besser ab als 1.00). Ein einzelner Regler "
+            f"von 0 bis 1 kann das nicht ausdrücken."
+        )
 
-    stil = fremd.get("style") or {}
-    vis = fremd.get("vis") or {}
+    stil = _block(fremd, "style", maengel)
+    vis = _block(fremd, "vis", maengel)
     fremd_bb = vis.get("backbone", "qwen")
-    bb = backbone_von_fremd(fremd_bb)
+    if not isinstance(fremd_bb, str):
+        # Eine Liste als Kuerzel warf TypeError aus dem Nachschlagen (23.09.2026).
+        bb = {"name": None, "bekannt": False, "zulaessig": False, "begruendung": (
+            f"'vis.backbone' ist {fremd_bb!r} und kein Kuerzel. Welches Modell gemeint "
+            f"ist, raten wir nicht — ein ersetztes Modell waere ein anderes Bild unter "
+            f"demselben Auftrag.")}
+    else:
+        bb = backbone_von_fremd(fremd_bb)
     if not bb["bekannt"]:
         maengel.append(bb["begruendung"])
     elif not bb["zulaessig"]:
@@ -970,24 +1230,50 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     if bauteile:
         warnungen.append(prompts.bauteilwaechter(" ".join(bauteile))["hinweis"])
 
+    # WAHRHEITSWERTE WERDEN GELESEN, NICHT UMGEWANDELT (23.09.2026): `bool("false")` ist
+    # True — `skip: "false"` haette den Lauf still abbestellt. Dieselbe Regel wie bei
+    # `gelaende`: Was nicht true, false oder null ist, ist ein Mangel, und das Feld
+    # bleibt `None` (nicht gelesen).
+    schalter = {}
+    for name in ("skip", "upscale"):
+        wert = wert_oder(vis, name, False)
+        if isinstance(wert, bool):
+            schalter[name] = wert
+        else:
+            schalter[name] = None
+            maengel.append(
+                f"'vis.{name}' ist {wert!r}, erwartet war true, false oder null. Ein "
+                f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+    # Die Referenzbilder: Eine Zahl warf TypeError aus `list(...)`, ein Text zerfiel
+    # still in einzelne Zeichen (23.09.2026).
+    refs = stil.get("refs") or []
+    if isinstance(refs, (list, tuple)):
+        referenzen = list(refs)
+    else:
+        referenzen = []
+        maengel.append(
+            f"'style.refs' ist {refs!r} und keine Liste. Als Text zerfiele es in "
+            f"einzelne Zeichen; welche Bilder gemeint sind, raten wir nicht.")
+
     return {
         "geometrie": pfad,
         "format": fmt or None,
         "out": fremd.get("out"),
         "kameras": kameras,
-        "aufloesung": int(aufl[0]),
-        "hoehe": int(aufl[1]),
-        "samples": int(wert_oder(render, "samples", 128)),
-        "controlnet_staerke": float(treue),
+        # `None` heisst hier NICHT GELESEN — dann steht der Grund unter `maengel`.
+        "aufloesung": aufl[0],
+        "hoehe": aufl[1],
+        "samples": samples,
+        "controlnet_staerke": treue,
         "prompt": sprachbefund["uebersetzt"],
         "prompt_original": sprachbefund["original"],
         "prompt_sprache": sprachbefund,
         "prompt_bauteile": tuple(bauteile),
         "stil_modus": wert_oder(stil, "mode", "none"),
-        "stil_referenzen": list(stil.get("refs") or []),
+        "stil_referenzen": referenzen,
         "backbone": bb["name"],
-        "ueberspringen": bool(wert_oder(vis, "skip", False)),
-        "hochskalieren": bool(wert_oder(vis, "upscale", False)),
+        "ueberspringen": schalter["skip"],
+        "hochskalieren": schalter["upscale"],
         "sonne": sonne,
         "innenraum": innenraum,
         "innen_bestellt": innen_bestellt,
