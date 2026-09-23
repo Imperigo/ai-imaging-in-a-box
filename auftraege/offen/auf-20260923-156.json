@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260923-156",
+  "art": "frage",
+  "beschreibung": "Owner-Wunsch 23.09.2026: die zwei Klone von KosmoPrepare und KosmoPublish an eurer Maschine auf den heutigen Stand bringen. Der KosmoPrepare-Klon faehrt noch die ALTE Fassung von tools/libs_pruefen.py, die pyphen als KANN WEG meldet — genau der Rat, der am 21.09. den PDF-Weg gebrochen hat.",
+  "anweisung": "=== ZWEI KLONE NACHZIEHEN — ERST SICHERN, DANN ZIEHEN, DANN NACHMESSEN\n\nWARUM\nEure Antworten auf 146 und 149 haben gezeigt: der KosmoPrepare-Klon steht 1 voraus / 4 zurueck, und sein tools/libs_pruefen.py ist die Fassung von VOR dem 22.09. — sie meldet pyphen weiter als «KANN WEG» und druckt eine rm-Zeile dazu. pyphen ist seit heute auf Owner-Entscheid zurueck in libs/; ein zweiter Lauf der alten Fassung wuerde denselben Rat noch einmal geben. Die reparierten Fassungen liegen auf origin/main:\n\n    KosmoPrepare   3bf8220   (libs_pruefen kennt jetzt FEHLT, liest METADATA)\n    KosmoPublish   7d8b4b6\n\n--- K1 · KosmoPrepare\n\n    cd <euer KosmoPrepare-Klon>\n    git status --short          # muss LEER sein, sonst: STOPP und melden\n    git fetch origin\n    git branch sicherung/a6584ca-2026-09-21 a6584ca\n    git switch main\n    git reset --keep origin/main\n\nDer lokale Commit a6584ca (21.09., nie gepusht) aendert nur tests/test_lizenzriegel.py und setzt COPYLEFT_IN_LIBS = {ifcopenshell}. Seit pyphen zurueck ist, stimmt das nicht mehr — darum NICHT mergen, sondern auf einen Sicherungszweig legen (die erste Zeile oben) und main auf origin/main setzen. `reset --keep` bricht ab, statt etwas zu ueberschreiben, falls doch etwas Ungesichertes da ist; dann STOPP und melden. Der Sicherungszweig bleibt liegen, loeschen entscheidet der Owner.\n\nDanach nachmessen:\n\n    python3 tools/libs_pruefen.py; echo \"exit=$?\"\n    ./run_tests.sh 2>&1 | tail -3\n\nErwartet: pyphen als «[WIRD GEBRAUCHT]» mit «gebraucht von weasyprint», pysolar als «[nicht da]», KEINE rm-Zeile, exit=0. Und die Suite gruen.\n\n--- K2 · KosmoPublish\n\nEuer Klon steht laut Antwort 103 auf einem ANDEREN Zweig (claude/kosmo-orbit-v010-build-…). Den bitte NICHT umschalten, ohne nachzusehen:\n\n    cd <euer KosmoPublish-Klon>\n    git status --short\n    git fetch origin\n    git branch --show-current\n    git log --oneline origin/main..HEAD | wc -l     # eigene Commits dieses Zweigs\n\n* Ist der Arbeitsbaum sauber UND die Zahl 0 (der Zweig traegt nichts, was main nicht hat): `git switch main && git pull --ff-only origin main`.\n* Sonst: NICHT umschalten, nichts ziehen — nur die zwei Zahlen und die Zweignamen melden. Wem der Zweig gehoert, entscheidet der Owner.\n\nWurde gezogen, danach:\n\n    .venv/bin/python tools/kosmopublish_cli.py diagnose; echo \"exit=$?\"\n\n--- WAS MIT DEM PULL BEI EUCH ANKOMMT (angesagt, damit es nicht wie ein Fehler aussieht)\n\n* KosmoPrepare: libs_pruefen meldet ein fehlendes, aber gebrauchtes Paket als «[FEHLT]» mit exit=1 — heute sollte es das NICHT tun, weil pyphen wieder da ist. Sagt es FEHLT, ist das ein Befund, kein Programmfehler.\n* KosmoPublish: Blender wird fuer das Massenmodell mit --python-exit-code 3 gerufen, und ein altes Bild zaehlt nicht mehr als neues. Der Bildtest meldet fuer massing-demo darum beim naechsten Lauf «Basis veraltet» — gewollt.\n* KosmoPublish: `visual-test --update-golden` endet nach dem Setzen eines Vergleichsbilds mit 0 statt 1 («neu gesetzt, nicht verglichen»).\n* KosmoPublish: `vorlagen-lernen --anzahl N` zaehlt jetzt geladene Plakat-PDF, nicht Suchtreffer.\n* KosmoPublish: `build` ohne --engine liefert seit dem 21.09. EIN A0-Blatt (generativ) statt fuenf Blaettern; die fuenf gibt es weiter mit --engine reportlab.\n\nWAS NICHT GETAN WERDEN SOLL\n* Nichts loeschen — weder den Sicherungszweig noch den fremden KosmoPublish-Zweig noch etwas in libs/.\n* Nichts installieren, kein pip, keine Blender-Profile anfassen, keine GPU-Last (nichts hier braucht die Karte).\n* Keinen Bildtest mit --update-golden fahren.\n* Keine Pfade mit Benutzernamen in der Antwort (REGEL 3).",
+  "erstellt": "2026-09-23T15:30:00Z",
+  "geometrie": {"synthetisch": true, "pfad": null, "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"},
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Erst sichern (Sicherungszweig), dann ziehen — a6584ca nicht mergen.",
+      "KosmoPublish-Zweig nur umschalten, wenn er nichts Eigenes traegt; sonst nur melden.",
+      "Nichts loeschen, nichts installieren, keine GPU-Last.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "K1 KosmoPrepare: steht main jetzt auf 3bf8220? Existiert der Sicherungszweig? Ausgabe von libs_pruefen.py woertlich (die pyphen- und pysolar-Zeilen) samt exit, und die letzte Zeile der Suite.",
+    "K2 KosmoPublish: Zweigname, Zahl eigener Commits, sauber ja/nein — und ob gezogen wurde. Wenn ja: steht main auf 7d8b4b6, und was sagt diagnose (exit)?",
+    "K3 Falls etwas STOPP ausloeste: welcher Schritt, woertliche Meldung.",
+    "K4 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 2
+}
