@@ -143,7 +143,9 @@ unbestätigt».
 
 * ~~**Wie die Geräte sich finden.**~~ *Entschieden am 22.09.2026 (Nr. 27): automatisch,
   eigener Rundruf.*
-* **Was bei zwei iPads passiert.** Die Mappe kennt heute keinen zweiten Schreiber.
+* ~~**Was bei zwei iPads passiert.**~~ *Gebaut am 22.09.2026: Jede Mappe trägt eine
+  Standnummer; wer auf einem veralteten Stand speichert, wird abgewiesen
+  (`projekt.ProjektKollision`), statt still zu überschreiben. Nachgeführt am 23.09.2026.*
 * **Wie gross eine Skizze werden darf**, bevor das Senden spürbar wird. Ohne Messung am
   Gerät ist das eine Vermutung — also ein unverschickter Auftrag und keine offene Frage.
 

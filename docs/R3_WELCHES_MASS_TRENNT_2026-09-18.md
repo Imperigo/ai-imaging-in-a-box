@@ -1,7 +1,7 @@
 # R3 — Welches Mass trennt? Die Antwort ist: **zwei, und sie beantworten verschiedene Fragen**
 
 **Grundlage:** `geometrie_qa`, `tiefenschaetzer`
-**Nachgesehen bis:** `38c740f` — am 19.09.2026, jede Zahl unten neu an
+**Nachgesehen bis:** `3711221` — am 23.09.2026: seither in `geometrie_qa` nur der Wortlaut der Richtungsmeldung (Runde 7; score, bestanden und ρ an 1680 Fällen vor und nach gleich) — keine Zahl unten hängt daran; der Nachtrag zu Frage A ist nach `auf-115` berichtigt. Davor: `38c740f` — am 19.09.2026, jede Zahl unten neu an
 `auftraege/ergebnisse/auf-20260909-92-tabelle.json` nachgerechnet. **Alle Zahlen stimmen.
 Die Aussage zu Frage A nicht mehr ganz** — siehe «Nachtrag 19.09.2026».
 
@@ -62,6 +62,15 @@ Müllbildern durchgingen.
 
 #### Nachtrag 19.09.2026 · Sie sieht mindestens einmal auch auf ein **brauchbares** Bild wie auf Müll
 
+> **Berichtigt am 23.09.2026 — die Überschrift stimmt nicht.** Die HomeStation hat die offene
+> Frage beantwortet (`auftraege/ergebnisse/auf-20260918-115.json`, 21.09.2026, 36 von 36
+> Werten auf vier Stellen reproduziert): Das Bild war **nicht brauchbar**. Gegen die
+> *richtige* Karte liegt es bei −0,1549, gegen die **falsche** bei **+0,3001** — es folgt der
+> fremden Geometrie besser als der eigenen. Die Silhouette sitzt (`geom_iou` 0,9119), das
+> Innere nicht. `rho_maske` hat **recht**, die Schwelle 0,10 bleibt. Der Text unten ist der
+> Stand vom 19.09. und bleibt stehen, damit die Fehlannahme nachvollziehbar ist; siehe
+> «Nachtrag 23.09.2026» direkt darunter.
+
 **Keine Zahl oben ist falsch. Das Wort «und nur sie» ist zu stark.**
 
 Dieser Abschnitt stützt sich auf zwei Reihen desselben Laufs — Stärke 1,00 und 0,30. Die
@@ -96,6 +105,20 @@ nahe am besten Wert der 1,00-Reihe.
 *Der alte Stand dieses Abschnitts bleibt oben stehen, weil er die Reihen 1,00 und 0,30
 richtig beschreibt. Ergänzt ist nur, was die dritte Reihe dazu sagt — und die lag im
 selben Verzeichnis, genau wie die Tabelle, die am 18.09. den ersten Fehler entlarvt hat.*
+
+#### Nachtrag 23.09.2026 · Die Gegenprobe ist da — und sie spricht für `rho_maske`
+
+Die HomeStation hat alle 36 Bilder gegen die richtige **und** die falsche Karte gemessen
+(`auf-20260918-115`, beantwortet 21.09.2026; kein neuer Renderlauf, die Messung selbst auf
+vier Stellen reproduziert):
+
+* **Deutung (1) gilt:** Das Bild der Zelle C/gebaeude/Startwert 2 folgt bei 0,75 wirklich
+  weniger — der fremden Karte sogar besser als der eigenen. Eine blinde Zahl könnte das
+  nicht unterscheiden. *Kein Fehlalarm, sondern ein richtiger Treffer.*
+* **Aber paarweise trennt `geom_iou` sauberer:** richtige gegen falsche Karte bei 1,00 in
+  **12 von 12** Fällen, bei 0,75 ebenfalls **12 von 12**; `rho_maske` in 10 bzw. 9 von 12.
+  Die Aufgabenteilung aus Frage A und B bleibt: `rho_maske` sagt, ob das Innere folgt,
+  `geom_iou`, ob es dieses Modell ist.
 
 ### Frage B · Folgt es **diesem** Modell und nicht einem anderen?
 
@@ -186,13 +209,11 @@ nach hinten. *«Fällt» hiess gemeint: fällt als **Urteil**. Als Rechenweg ble
   Schachtel und ein fünfgeschossiger Bau. Wie sich zwei **ähnliche** Gebäude verhalten,
   ist damit nicht geprüft, und genau dort wird es schwer.
 * **Ein Bildmodell, eine Maschine.** Alles auf `z-image-turbo` und auf der HomeStation.
-* **Die Gegenprobe lief bei Stärke 1,00.** Ob `geom_iou` auch bei 0,75 noch trennt, ist
-  nicht ausgewertet.
-* **Und dasselbe gilt für `rho_maske` — dort ist es dringender** *(ergänzt 19.09.2026)*.
-  Bei Stärke 0,75 liegt ein Bild mit sauberer Silhouette auf `rho_maske` unter dem
-  Rauschband. Ohne Gegenprobe für diese Reihe lässt sich nicht sagen, ob die Zahl recht
-  hat oder danebenliegt. Der Messauftrag dazu liegt bei der HomeStation
-  (`auf-20260918-115`). Siehe «Nachtrag 19.09.2026» oben.
+* ~~**Die Gegenprobe lief bei Stärke 1,00.** Ob `geom_iou` auch bei 0,75 noch trennt, ist
+  nicht ausgewertet.~~ *Ausgewertet (`auf-115`, 21.09.2026): auch bei 0,75 paarweise 12 von 12.*
+* ~~**Und dasselbe gilt für `rho_maske`** … Der Messauftrag dazu liegt bei der HomeStation
+  (`auf-20260918-115`).~~ *Beantwortet am 21.09.2026: `rho_maske` hatte recht, das Bild
+  folgte der fremden Karte besser. Siehe «Nachtrag 23.09.2026» oben.*
 
 **Die nächste Messung folgt daraus von selbst:** dieselbe Gegenprobe mit **ähnlichen**
 Gebäuden statt zweier offensichtlich verschiedener. Wenn `geom_iou` dort nicht mehr trennt,

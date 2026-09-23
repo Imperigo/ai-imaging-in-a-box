@@ -7,7 +7,7 @@
 
 **Grundlage:** `bildlesen`, `raumkamera`, `seams` — abgelesen an den Importen von `tools/studie_innenansicht.py`, dem Skript, das dieses Dokument nachbaubar macht. Nachgetragen am 09.09.2026, weil sie hier feststellbar war und nicht geraten werden musste.
 
-**Nachgesehen bis:** `a00eaae` — am 19.09.2026 mit `python tools/beruehrung.py`, in zwei Durchgängen. Gemeldet war wieder `seams`, geändert in `46b2acc` und `afa1bc9`. *Die Zahlen unten stehen unverändert.* Der Prüfweg steht unter «Zweite Durchsicht» am Fuss dieses Dokuments — **samt dem, was dabei nicht ging.**
+**Nachgesehen bis:** `3711221` — am 23.09.2026 mit `python tools/studie_innenansicht.py` neu gerechnet: alle acht Zeilen der Tabelle stellengleich (seither geändert: `bildlesen`, `seams` — Messschalter der Runde 10, Vorgabe aus). Davor: `a00eaae` — am 19.09.2026 mit `python tools/beruehrung.py`, in zwei Durchgängen. Gemeldet war wieder `seams`, geändert in `46b2acc` und `afa1bc9`. *Die Zahlen unten stehen unverändert.* Der Prüfweg steht unter «Zweite Durchsicht» am Fuss dieses Dokuments — **samt dem, was dabei nicht ging.**
 
 *Zuvor nachgesehen bis `4c804e9`* — am 09.09.2026. Gemeldet war `seams`, geändert in `b7a53d8`: die **Anlauffrist** der Prozesswache. Sie betrifft, wie lange auf das erste Zeichen gewartet wird, nicht das Gerechnete. — Genau dafür ist die Meldung da: Sie sagt «ansehen», nicht «falsch».
 
@@ -155,6 +155,14 @@ darum verdächtig: Es fehlt die Messung an einem erzeugten Bild.
 **`auf-20260909-89` fragt sie am Gerät:** dieselben vier Fälle, aber mit dem echten
 Schätzer und ρ über der Maske. Erst dann steht fest, ob «von einer Fläche beherrscht» eine
 Zuständigkeitsgrenze verdient oder bloss eine Zeile im Befund.
+
+> **Beantwortet** (`auftraege/ergebnisse/auf-20260909-89-innenmessung.md`, nachgetragen am
+> 23.09.2026): 30 Renderläufe, fünf frontale und fünf Über-Eck-Standpunkte, je drei
+> Startwerte. **Über Eck** steht ρ über der Maske fest bei +0,97 … +1,00 (Spanne über drei
+> Startwerte höchstens 0,025). **Frontal** wandert ρ mit dem Startwert um bis zu **0,94**
+> und fällt in **6 von 15** Läufen unter den Nullanker aus weissem Rauschen. *Der frontale
+> Wert ist darum keine Messung* — nicht, weil er niedrig wäre, sondern weil er nicht
+> reproduzierbar ist. Die Vorprüfung oben lag also richtig.
 
 ---
 

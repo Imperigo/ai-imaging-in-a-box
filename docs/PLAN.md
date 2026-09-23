@@ -6989,10 +6989,12 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [x] **Kern (wir):** Das zu dunkle Rot in `oberflaeche/seite.html` — erledigt am
       22.09.2026 (`#e2776f`, 6.13 auf dem Grund). Siehe Sitzung 56.
-- [ ] **Kern (wir):** Wie das iPad die HomeStation erstmals findet — Heimnetz mit Kennwort
+- [x] **Kern (wir):** Wie das iPad die HomeStation erstmals findet — Heimnetz mit Kennwort
       ist entschieden, die Entdeckung nicht.
-- [ ] **Kern (wir):** Was bei zwei iPads an derselben Mappe passiert. Die Mappe kennt
+      *(erledigt, abgehakt 23.09. Sitzung 70: Entscheid 27 — `oberflaeche/rundruf.py` kündigt an, `Verbindung/Sucher.swift` sucht; am Gerät unbestätigt)*
+- [x] **Kern (wir):** Was bei zwei iPads an derselben Mappe passiert. Die Mappe kennt
       heute keinen zweiten Schreiber.
+      *(erledigt, abgehakt Sitzung 70: Standnummer seit 22.09.2026 — `projekt.speichere` wirft `ProjektKollision`, statt den Letzten gewinnen zu lassen)*
 - [ ] **local:** Ab welcher Grösse das Senden einer Skizze spürbar wird — ohne Messung am
       Gerät eine Vermutung, also ein Auftrag und keine offene Frage.
 
@@ -7030,6 +7032,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern (wir):** Führung (`guidance_scale`) ist bei destillierten Modellen nicht
       gesetzt und übernimmt die Vorgabe von diffusers — eine fremde Entscheidung, und bei
       solchen Modellen der Unterschied zwischen einem Bild und Matsch (`auf-134`).
+      *(Sitzung 70: nachgefragt in `auf-20260923-157` — vermutlich heisst der Regler dort `true_cfg_scale`, und den setzen wir nirgends)*
 - [ ] **Kern (wir):** Die Tiefenkonvention von `qwen-image-edit-2511` ist nicht gemessen.
       Selbst wenn die Tiefenkarte ankommt, ist ungeprüft, ob sie richtig herum ankommt.
 
@@ -7053,6 +7056,7 @@ Bekannt und ausdrücklich nicht erledigt:
       `auf-128` (Schwellenreihe, Rang 3, Frist 15.10.).
 - [ ] **Kern (wir):** Die Führung (`guidance_scale`) bleibt für sieben von acht Einträgen
       ungesetzt. Sie hier zu setzen hiesse raten — darum Teil 3 des Auftrags.
+      *(Sitzung 70: → `auf-20260923-157`)*
 
 ## Sitzung 56 — 22.09.2026 · Der Kontrast wird gerechnet
 
@@ -7073,7 +7077,8 @@ Bekannt und ausdrücklich nicht erledigt:
 **Offen, und bei wem es liegt**
 
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).
-- [ ] **Kern (wir):** Wie das iPad die HomeStation erstmals findet.
+- [x] **Kern (wir):** Wie das iPad die HomeStation erstmals findet.
+      *(erledigt, s. oben — Entscheid 27)*
 - [x] **Kern (wir):** Was bei zwei iPads an derselben Mappe geschieht — erledigt am
       22.09.2026, siehe Sitzung 57.
 
@@ -7114,9 +7119,10 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (wir):** Wie das iPad die **Adresse** der HomeStation erfährt. Ein Verfahren
+- [x] **Kern (wir):** Wie das iPad die **Adresse** der HomeStation erfährt. Ein Verfahren
       dafür (mDNS/Bonjour) brächte eine Abhängigkeit mit, deren Lizenz nach Regel 1 erst
       zu prüfen wäre — also kein Nebenbei.
+      *(erledigt: mDNS mit Standardbibliothek, `oberflaeche/rundruf.py`; keine neue Abhängigkeit)*
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).
 
 ## Sitzung 59 — 22.09.2026 · Ein kleiner Turm auf einem grossen Feld
@@ -7157,16 +7163,19 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (wir):** `--im-heimnetz` zeigt `http://0.0.0.0:8799` — eine Adresse, die es
+- [x] **Kern (wir):** `--im-heimnetz` zeigt `http://0.0.0.0:8799` — eine Adresse, die es
       im Netz nicht gibt — und wirft eine getippte `--adresse` bedingungslos weg.
+      *(erledigt: `a64bea3`, Protokoll 64 §5 — Widerspruch abgewiesen, echte Adresse über `heimnetz_adresse()`)*
 - [ ] **Kern (wir):** `pruefe_verdrahtbarkeit` wird nur von der Testsuite gerufen; der
       echte Bestellweg trägt eine dritte Kopie der vier Feldnamen (A7).
 - [ ] **Kern (wir):** Der Läufer prüft kein Token mehr, nur noch den Status im File; die
       Befugnisprüfung hängt an einem Schalter ohne Ausgeber (A12).
-- [ ] **Kern (wir):** Einbau-Stand nachziehen — C8 und C10 sind seit dem 21.09. am Gerät
+- [x] **Kern (wir):** Einbau-Stand nachziehen — C8 und C10 sind seit dem 21.09. am Gerät
       bestätigt, die Tabelle sagt weiter «unbestätigt». Vor dem Abhaken selbst nachsehen.
-- [ ] **Kern (wir):** Zwei berührte Messdokumente — Zahlen unberührt, aber eines enthält
+      *(nachgesehen Sitzung 70: bewusst «unbestätigt» gelassen — bestätigt war unsere Anzeige, nicht der Vertrag; Vertragsfrage in `auf-142`)*
+- [x] **Kern (wir):** Zwei berührte Messdokumente — Zahlen unberührt, aber eines enthält
       eine inzwischen falsche Aussage.
+      *(erledigt Sitzung 70: R3 nach `auf-115` berichtigt — `rho_maske` hatte recht; INNENANSICHT mit der Antwort auf `auf-89`; beide neu nachgesehen, `tools/beruehrung.py` meldet nichts)*
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
 
 ## Sitzung 61 — 22.09.2026 · Ein `null` legte die Warteschlange lahm
@@ -7193,16 +7202,18 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern:** drei Textwächter (`test_oberflaeche.py` zweimal, `test_kopplung.py` einmal
       — letzterer von mir, aus dieser Sitzung).
 - [x] **Kern:** `bruecke.py:77` — dasselbe Muster für die fremde Kennung an drei Stellen. *(Sitzung 63)*
-- [ ] **Kern:** `einbau.py:181`, `homeworker.py:652` — «unbekannt» wird zu 0 bzw. False.
+- [x] **Kern:** `einbau.py:181`, `homeworker.py:652` — «unbekannt» wird zu 0 bzw. False.
       *(Sitzung 63: `einbau.py` erledigt, `homeworker.py` noch offen)*
+      *(erledigt: `homeworker._auflage`, Sitzung 61; Wächter Sitzung 65 §8)*
 - [x] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2). *(beide beantwortet, Sitzung 62)*
 
 ## Sitzung 62 — 22.09.2026 · Der Weg des Produkts läuft zum ersten Mal ganz durch
 
 - [x] SDXL und SD3.5 nur zum Messen, nie ausgeliefert (Owner-Entscheid) — an beiden Wegen.
 - [x] Tür → Mappe → Lauf → Bild am Gerät durch, alle fünf Stufen (`auf-137`).
-- [ ] **Kern:** Sonne und Bildausschnitt ohne Wirkung aufs Bild; Deckungsgrad ändert die
+- [x] **Kern:** Sonne und Bildausschnitt ohne Wirkung aufs Bild; Deckungsgrad ändert die
       Tiefenkarte nicht; Tiefenrichtung auf dem Produktweg vertauscht.
+      *(erledigt bzw. als Grenze benannt: Sonne = Modellgrenze (Protokoll 65 §6); Bildausschnitt `deckungsgrad_wirkungslos` (`796ee94`); Deckungsgrad von local berichtigt (Protokoll 69 §8); Richtung `geometrie_qa.richtungsgrenze`. Ob die Tiefe das Endbild steuert: `auf-154`)*
 
 ## Sitzung 63 — 22.09.2026 · Sechs Befunde, deren Fehler niemand sah
 
@@ -7218,9 +7229,11 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (Runde 4):** Ladeweg nach Modellfamilie; Mappe (Grund, Lizenz, geteilte
       Objekte — «nicht zutreffend» stimmte auf dem Produktweg nicht); Komposition
       (Geländebezug, Rollwinkel, benannte Ungemessene); Adresse im Heimnetz. *(Sitzung 64)*
-- [ ] **Kern:** Innenansicht über die Mappe lieferbar machen — Räume mitführen.
-- [ ] **Kern:** C8/C10 — nur der Grund der schlechtesten Kamera kommt an;
+- [x] **Kern:** Innenansicht über die Mappe lieferbar machen — Räume mitführen.
+      *(erledigt: `kette.mit_raeumen`, `arbeitsgang._raeume_der_mappe`, `2c7a081`)*
+- [x] **Kern:** C8/C10 — nur der Grund der schlechtesten Kamera kommt an;
       `geometry_gates` bleibt leer.
+      *(erledigt: jede Kamera spricht, `geometry_gates` gefüllt, `2c7a081`; ob drüben gelesen: `auf-142`)*
 - [x] **ui:** Messung am Bild anzeigen; Freitext im Feld Innenansicht; `_probewert`.
       *(als Auftrag abgelegt: `auf-20260922-140`, Sitzung 64)*
 
@@ -7281,9 +7294,10 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [x] **Owner:** Hineinskizzieren auf dem Vorgabemodell sperren oder mit Vorbehalt rechnen?
       *(Entschieden: rechnen mit Hinweis, E24; gebaut in Sitzung 67)*
-- [ ] **Kern:** `augenhoehe`/`bias_grad`/`kamera_modus` wirken nur auf «abgeleitet»;
+- [x] **Kern:** `augenhoehe`/`bias_grad`/`kamera_modus` wirken nur auf «abgeleitet»;
       Abholer-Rahmung auf anderen Wegen; Richtung + Standpunkt an `seams` aus Homeworker
       und Abholer; positive Seite der Richtungsmeldung.
+      *(erledigt: Runde 7, `a785458`, Protokoll 69 §2)*
 
 ## Sitzung 67 — 22.09.2026 · Eine eigene iPad-App, ein Grundlagenblatt, acht Antworten von drüben
 
