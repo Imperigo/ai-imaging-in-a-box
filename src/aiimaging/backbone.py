@@ -314,6 +314,55 @@ class Backbone:
     #: (`auf-20260818-09`), nur an einem anderen Argument.
     fuehrung: float | None = None
 
+    #: Der Führungsregler, der bei diesem Modell **wirklich wirkt** — im eigenen Namen der
+    #: Pipeline, also so, wie er in ihrer Signatur steht (z. B. ``"true_cfg_scale"``).
+    #:
+    #: **BEFUND 23.09.2026 (`auf-20260923-157`, HomeStation, nur gelesen):**
+    #: ``QwenImageEditPlusPipeline`` (diffusers 0.39.0) schaltet die klassifikatorfreie
+    #: Führung NICHT über ``guidance_scale``, sondern über ``true_cfg_scale`` — und nur,
+    #: wenn zugleich ein ``negative_prompt`` da ist, der nicht ``None`` ist (Pipeline
+    #: Z.708/719). ``true_cfg_scale`` kam bis dahin in ``src/`` nirgends vor; ``fuehrung``
+    #: urteilte für dieses Modell über einen Regler, den es gar nicht liest.
+    #:
+    #: ``None`` heisst **nicht bestimmt** — nicht «kein solcher Regler». Dann wird nichts
+    #: zusätzlich übergeben, und die Aufrufargumente bleiben die von vorher.
+    #: :func:`_eintrag` weist einen Eintrag ab, der Regler und Wert nicht beide führt oder
+    #: sie ohne Auftragskennung in :attr:`fuehrung_regler_beleg` führt.
+    fuehrung_regler: str | None = None
+
+    #: Der Wert, der an :attr:`fuehrung_regler` geht. ``None`` genau dann, wenn
+    #: :attr:`fuehrung_regler` ``None`` ist.
+    fuehrung_regler_wert: float | None = None
+
+    #: Der **Leer-Negativprompt**, den die Modellkarte schickt, damit die Führung überhaupt
+    #: anspringt — bei ``qwen-image-edit-2511`` ein einzelnes Leerzeichen ``" "``.
+    #:
+    #: Warum ein eigenes Feld: Unser Vorgabe-Negativprompt ist ``""``, und
+    #: :mod:`aiimaging.render` macht daraus ``None``. Für diese Pipeline heisst ``None``
+    #: «keine Führung» (`auf-20260923-157`, Q4) — jeder Lauf ohne eigenen Negativprompt
+    #: rechnete also ganz OHNE Führung. ``None`` in diesem Feld heisst **nicht bestimmt**:
+    #: dann geht wie bisher ``None`` hin. Nur zusammen mit :attr:`fuehrung_regler` zulässig.
+    leer_negativ_prompt: str | None = None
+
+    #: Woher Regler, Wert und Leer-Negativprompt stammen — mit Auftragskennung. ``None``
+    #: genau dann, wenn :attr:`fuehrung_regler` ``None`` ist.
+    fuehrung_regler_beleg: str | None = None
+
+    #: Ist ``guidance_scale`` bei **diesen Gewichten** wirkungslos?
+    #:
+    #: **Die dritte Antwort:** ``None`` heisst NICHT BESTIMMT. ``True`` steht nur mit einem
+    #: Beleg in :attr:`guidance_scale_beleg` — bei ``qwen-image-edit-2511``
+    #: ``transformer/config.json`` mit ``"guidance_embeds": false``; die Pipeline
+    #: ignoriert den Wert dann (diffusers 0.39.0, Z.789-795). Aus der Pipeline allein folgt
+    #: es nicht: Dieselbe Klasse würde ``guidance_scale`` bei guidance-destillierten
+    #: Gewichten lesen. Darum steht es am Eintrag und wird nicht aus dem Klassennamen
+    #: geraten.
+    guidance_scale_wirkungslos: bool | None = None
+
+    #: Die Auftragskennung zu :attr:`guidance_scale_wirkungslos`. ``None`` genau dann,
+    #: wenn nicht bestimmt ist.
+    guidance_scale_beleg: str | None = None
+
     #: Kommt ein **Ausgangsbild** (``beauty_png``, das Hineingezeichnete) auf diesem
     #: Backbone beim Modell an? Gelesen von :func:`aiimaging.kette.bildeingang_lage`, und
     #: über sie vom Nachrender-Knoten mitgemeldet.
@@ -621,6 +670,43 @@ def _eintrag(backbone: Backbone) -> None:
             f"ein Urteil braucht eine Auftragskennung, und ohne Urteil steht keine."
         )
 
+    # Derselbe Riegel für die Führung (Befund 23.09.2026, siehe `fuehrung_regler`): Ein
+    # Regler ohne Wert oder ohne Beleg ist eine Vermutung über eine fremde Signatur, und
+    # ein Leer-Negativprompt ohne Regler schaltet nichts ein.
+    _auftrag = r"auf-\d{8}-\d+"
+    regler, wert = backbone.fuehrung_regler, backbone.fuehrung_regler_wert
+    if ((regler is None) != (wert is None)
+            or (regler is None) != (not backbone.fuehrung_regler_beleg)
+            or (regler is not None
+                and not re.search(_auftrag, str(backbone.fuehrung_regler_beleg)))):
+        raise BackboneError(
+            f"{backbone.name}: fuehrung_regler={regler!r}, fuehrung_regler_wert={wert!r} "
+            f"und fuehrung_regler_beleg={backbone.fuehrung_regler_beleg!r} passen nicht "
+            f"zusammen — Regler und Wert kommen nur gemeinsam und nur mit "
+            f"Auftragskennung in die Tabelle.")
+    if regler is not None and (not str(regler).isidentifier()
+                               or regler == "guidance_scale"):
+        # `guidance_scale` hat schon sein Feld (`fuehrung`); ein zweiter Weg zum selben
+        # Argument hiesse, dass zwei Felder um einen Wert streiten.
+        raise BackboneError(
+            f"{backbone.name}: fuehrung_regler={regler!r} ist kein eigener Argumentname "
+            f"einer Pipeline. 'guidance_scale' gehört in das Feld 'fuehrung'.")
+    if backbone.leer_negativ_prompt is not None and (
+            regler is None or not isinstance(backbone.leer_negativ_prompt, str)):
+        raise BackboneError(
+            f"{backbone.name}: leer_negativ_prompt={backbone.leer_negativ_prompt!r} steht "
+            f"ohne fuehrung_regler da. Er ist nur dazu da, die Führung einzuschalten — "
+            f"ohne Regler schaltet er nichts.")
+    if ((backbone.guidance_scale_wirkungslos is None)
+            != (not backbone.guidance_scale_beleg)
+            or (backbone.guidance_scale_beleg
+                and not re.search(_auftrag, str(backbone.guidance_scale_beleg)))):
+        raise BackboneError(
+            f"{backbone.name}: guidance_scale_wirkungslos="
+            f"{backbone.guidance_scale_wirkungslos!r} und guidance_scale_beleg="
+            f"{backbone.guidance_scale_beleg!r} passen nicht zusammen — ein Urteil "
+            f"braucht eine Auftragskennung, und ohne Urteil steht keine.")
+
     BACKBONES[backbone.name] = backbone
 
 
@@ -750,6 +836,31 @@ _eintrag(Backbone(
     bildeingang_grund=("Diese Pipeline hat genau einen Bildeingang, und den bekommt die "
                        "Tiefenkarte. Das Ausgangsbild wird überschrieben — das "
                        "Hineingezeichnete erreicht das Modell nicht."),
+    # DIE FÜHRUNG, NACHGELESEN AM 23.09.2026 (`auf-20260923-157`, HomeStation, ohne GPU,
+    # nur gelesen). Bis dahin lief jeder Lauf ohne eigenen Negativprompt GANZ OHNE
+    # Führung: Wir schickten `negative_prompt=None`, und die Pipeline rechnet die
+    # klassifikatorfreie Führung nur mit `true_cfg_scale > 1` UND einem Negativprompt,
+    # der nicht None ist (pipeline_qwenimage_edit_plus.py Z.708/719, diffusers 0.39.0).
+    #
+    # Regler und Wert: die Signatur sagt `true_cfg_scale: float = 4.0` (Q1, gemessen), die
+    # Modellkarte schickt 4.0 (README Z.53-62). Der Docstring derselben Pipeline sagt
+    # «defaults to 1.0» — ein Widerspruch in diffusers selbst; wir schicken den Wert
+    # darum ausdrücklich, statt uns auf eine der beiden Vorgaben zu verlassen.
+    fuehrung_regler="true_cfg_scale",
+    fuehrung_regler_wert=4.0,
+    # Die Modellkarte schickt ein einzelnes Leerzeichen, «damit CFG anspringt» — der
+    # Docstring der Pipeline sagt es wörtlich: «even an empty negative prompt like " "».
+    leer_negativ_prompt=" ",
+    fuehrung_regler_beleg=("auf-20260923-157: Modellkarte bei den Gewichten, README "
+                           "Z.53-62 (Code-Beispiel: true_cfg_scale 4.0, negative_prompt "
+                           "' '); Signatur QwenImageEditPlusPipeline, diffusers 0.39.0: "
+                           "true_cfg_scale=4.0"),
+    # Q3 derselben Antwort: transformer/config.json führt "guidance_embeds": false, und
+    # dann ignoriert die Pipeline guidance_scale (Z.789-795) — jeden Wert.
+    guidance_scale_wirkungslos=True,
+    guidance_scale_beleg=("auf-20260923-157: transformer/config.json "
+                          "\"guidance_embeds\": false; pipeline_qwenimage_edit_plus.py "
+                          "Z.789-795 (diffusers 0.39.0) ignoriert guidance_scale dann"),
 ))
 
 _eintrag(Backbone(

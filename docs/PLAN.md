@@ -7386,6 +7386,13 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## Sitzung 70 — 23.09.2026 · Runde 11: Altposten abtragen, und die erste Antwort zur Tiefe
 
+> **Entschieden:** Freigabe-Tor ohne zweite Tür; Zwillinge im Urteil; iPad-Schriften
+> mitgeliefert; `ferne_abstand` bleibt Messschalter; das Bearbeitungsmodell führt über
+> `true_cfg_scale` (auch auf dem Abholer-Weg, angesagt).
+> **Gemessen:** Abstand trägt nicht über Startwerte/Körper (`auf-158` B); Hochbau zeigt die
+> Tiefe verkehrt; Union-2.1 steuert sichtbar besser, unsere QA nennt es «nicht messbar».
+> **Offen:** `auf-160` (Polarität, Führung, QA an sauberen Bildern, Laden ohne Netz).
+
 **Erledigt**
 
 - [x] Elf längst erledigte Posten mit Beleg abgehakt; zwei Messdokumente (R3, INNENANSICHT)
@@ -7409,4 +7416,18 @@ Bekannt und ausdrücklich nicht erledigt:
       `auf-158`: wird der Abstand zur Vorgabe?
 - [x] **Mac-CI:** Schriften übersetzen ohne Warnung — vor `main`. *(erst rot: `Bundle.module` gibt es im App-Paket nicht; auf `Bundle.main` umgestellt, Lauf 12 grün)*
 - [ ] **local:** `auf-159` (Rang 3, von der KosmoPublish-Sitzung) — Klone nachziehen.
+
+**Nachtrag Sitzung 70, Runde 12**
+
+- [x] `auf-157`, `auf-158` (vollständig), `auf-159` beantwortet und gelesen.
+- [x] Runde 12: Bearbeitungsmodell führt über `true_cfg_scale`, belegt; übrige bitgleich.
+- [ ] **local:** `auf-160` (Rang 1) — Hochbau-Polarität (1.0/2.1), Führung am
+      Bearbeitungsmodell, QA an sauberen Bildern, Laden ohne Netz.
+- [ ] **cloud:** `auf-155` mit Nachtrag 2 (F5 Rechenzeit).
+- [ ] **Kern:** QA für saubere Bilder ohne Boden (nach `auf-160` D) — erst dann 1.0 gegen 2.1
+      in Zahlen.
+- [ ] **Kern (später):** Inpaint — Original ausserhalb der Maske zurückkopieren.
+- [ ] **Kern:** Zwischenspeicher der Mappe kennt den Codestand nicht.
+- [ ] **Andere Sitzung (KosmoPublish):** KosmoPrepare-Suite rot (3), nächtlicher Push ohne
+      vorher zu holen (`auf-159` K4) — nicht unser Repo, dem Owner gemeldet.
 

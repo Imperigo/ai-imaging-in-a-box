@@ -1610,8 +1610,40 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
             argumente["image"] = Image.open(parameter["beauty_png"]).convert("RGB")
             argumente["strength"] = parameter["denoise"]
 
+        # DER REGLER, DER WIRKT (23.09.2026, `auf-20260923-157`): Bei
+        # `QwenImageEditPlusPipeline` schaltet `true_cfg_scale` die Führung, und nur
+        # zusammen mit einem Negativprompt, der nicht None ist. Bis hierher ging bei leerem
+        # Negativprompt `None` hin — jeder solche Lauf rechnete ohne Führung. Nur wenn der
+        # Eintrag Regler UND Wert führt, kommt etwas dazu; sonst bleibt `argumente`, wie
+        # es war.
+        regler = parameter.get("fuehrung_regler")
+        regler_wert = parameter.get("fuehrung_regler_wert")
+        karte = parameter.get("negativ_prompt_karte")
+        if regler is not None and regler_wert is not None:
+            argumente[regler] = regler_wert
+            if karte is not None:
+                argumente["negative_prompt"] = karte
+
         genommen, verworfen = _vertraegliche_argumente(pipeline, argumente)
         hinweise = []
+
+        if regler is not None and regler in verworfen:
+            # NICHTS DAVON, auch nicht der Leer-Negativprompt: Er ist nur dazu da, die
+            # Führung über diesen Regler einzuschalten. An einer Pipeline, die den Regler
+            # nicht kennt, wäre er ein Eingriff in eine Rechnung, die niemand gelesen hat.
+            # Es geht dann hin, was vor dem 23.09.2026 hinging.
+            if karte is not None and "negative_prompt" in genommen:
+                genommen["negative_prompt"] = parameter["negativ_prompt"] or None
+            hinweise.append(
+                f"'{regler}' ({regler_wert}) kennt diese Pipeline nicht und wurde nicht "
+                f"übergeben — und mit ihm auch nicht der Leer-Negativprompt der "
+                f"Modellkarte ({karte!r}); als Negativprompt ging "
+                f"{genommen.get('negative_prompt')!r} hin. Der Eintrag "
+                f"'{eintrag.name}' erwartet diesen Regler "
+                f"({getattr(eintrag, 'fuehrung_regler_beleg', None)}); die geladene "
+                f"Pipeline ist offenbar nicht die belegte. Ob hier klassifikatorfreie "
+                f"Führung läuft, ist UNBEKANNT — nicht nein."
+            )
 
         if "control_image" in verworfen:
             # Ohne eigenen Steuereingang ist die Tiefenkarte das Bild selbst — sie ist
@@ -1667,7 +1699,8 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
 
         uebrig = [n for n in verworfen
                   if n not in ("control_image", "controlnet_conditioning_scale",
-                               "guidance_scale", "strength", "callback_on_step_end")]
+                               "guidance_scale", "strength", "callback_on_step_end",
+                               regler)]
         if uebrig:
             hinweise.append(f"Nicht übergeben, weil unbekannt: {', '.join(uebrig)}.")
 
@@ -1735,6 +1768,11 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
         bild.save(ziel)
         return {"bild_png": ziel, "hinweise": hinweise,
                 "schritte_gerechnet": gerechnet[0] or None,
+                # KAM DER FUEHRUNGSREGLER AN? (Durchsicht Runde 12.) Der Parametersatz
+                # nennt, was der Eintrag BESTELLT; ob die geladene Pipeline es nahm, weiss
+                # nur diese Stelle. None: kein Regler bestellt.
+                "fuehrung_regler_angekommen": (None if regler is None or regler_wert is None
+                                               else regler in genommen),
                 # ZWEI FELDER, NICHT EINES. Sie sind meistens gleich, und genau darum
                 # faellt der Fall auf, in dem sie es nicht sind.
                 "modus_bestellt": modus_bestellt,
@@ -1795,6 +1833,31 @@ def _baue_parameter(a: RenderAuftrag, eintrag, *,
         "fuehrung": (float(a.fuehrung) if a.fuehrung is not None
                      else (float(eintrag.fuehrung) if getattr(eintrag, "fuehrung", None)
                            is not None else None)),
+        # DER REGLER, DER WIRKT (23.09.2026, `auf-20260923-157`): Bei
+        # `qwen-image-edit-2511` ist das `true_cfg_scale`, nicht `guidance_scale`. Name und
+        # Wert stehen am Eintrag; `None` heisst nicht bestimmt, und dann geht NICHTS
+        # zusätzlich an die Pipeline — die Argumente aller übrigen Einträge bleiben die
+        # von vorher (tests/test_runde12_fuehrung.py, Schnappschuss).
+        "fuehrung_regler": getattr(eintrag, "fuehrung_regler", None),
+        "fuehrung_regler_wert": (float(eintrag.fuehrung_regler_wert)
+                                 if getattr(eintrag, "fuehrung_regler_wert", None)
+                                 is not None else None),
+        # Der Leer-Negativprompt der Modellkarte, wie er BESTELLT ist: nur bei leerem
+        # eigenem Negativprompt und nur, wenn der Eintrag ihn führt. Ob er ankam, sagt
+        # `fuehrung_regler_angekommen` (Durchsicht Runde 12: vorher behauptete dieser
+        # Kommentar «wenn er hingeht», auch an einer Pipeline, die ihn verwarf). `None` heisst
+        # — wie bei `tiefe_invertiert_ueberschrieben` — nicht ersetzt; dann geht der
+        # eigene Negativprompt unverändert hin. `negativ_prompt` oben bleibt die
+        # Bestellung und wird nicht umgeschrieben.
+        "negativ_prompt_karte": (getattr(eintrag, "leer_negativ_prompt", None)
+                                 if not a.negativ_prompt
+                                 and getattr(eintrag, "fuehrung_regler", None) is not None
+                                 else None),
+        # Ob Regler (und Leerprompt) bei der geladenen Pipeline ANKAMEN — erst nach dem
+        # Lauf bekannt, von `rendere` aus der Antwort des Adapters eingetragen. `None`
+        # heisst: kein Regler bestellt, oder die Naht meldet es nicht (Attrappe, fremdes
+        # Modell) — nicht «nein».
+        "fuehrung_regler_angekommen": None,
         "modell_wurzel": str(wurzel),
     }
 
@@ -1825,8 +1888,20 @@ def negativ_wirksam(backbone_name: str, *, fuehrung: float | None = None) -> dic
         wenn die Führung **unbestimmt** ist — dann greift die Vorgabe von ``diffusers``,
         eine fremde Entscheidung, und was sie ist, wissen wir hier nicht. Nicht ``False``:
         Das hiesse «wirkt nicht», und behauptet würde damit etwas Ungemessenes.
+
+        **Geurteilt wird über den Regler, der wirkt** (Befund 23.09.2026,
+        `auf-20260923-157`). Führt der Eintrag einen eigenen
+        :attr:`~aiimaging.backbone.Backbone.fuehrung_regler` (bei
+        ``qwen-image-edit-2511``: ``true_cfg_scale``), dann entscheidet dessen Wert gegen
+        :data:`FUEHRUNG_MINDESTENS`, nicht ``fuehrung``/``guidance_scale`` — die dort
+        nichts schaltet. ``fuehrung`` in der Antwort ist dann der Wert dieses Reglers; ein
+        mitgegebenes ``fuehrung`` ändert das Urteil nicht und wird im Grund genannt.
     """
     eintrag = backbone.BACKBONES.get(backbone_name)
+    regler = getattr(eintrag, "fuehrung_regler", None)
+    regler_wert = getattr(eintrag, "fuehrung_regler_wert", None)
+    if regler is not None and regler_wert is not None:
+        return _negativ_wirksam_ueber_regler(eintrag, fuehrung)
     wert = fuehrung
     if wert is None and eintrag is not None:
         wert = getattr(eintrag, "fuehrung", None)
@@ -1857,6 +1932,59 @@ def negativ_wirksam(backbone_name: str, *, fuehrung: float | None = None) -> dic
             f"ihn braucht, setzt die Führung über {FUEHRUNG_MINDESTENS}; wer das "
             f"Turbo-Modell braucht, verzichtet auf ihn.")
     return antwort
+
+
+def _guidance_satz(eintrag, fuehrung) -> str:
+    """Was ``fuehrung`` (``guidance_scale``) bei diesem Eintrag ausrichtet — ein Satz.
+
+    Nur bei BELEGTER Wirkungslosigkeit (``guidance_scale_wirkungslos is True``) gibt es
+    einen Satz; sonst ist das nicht bestimmt, und die Aufrufer sagen es mit ihren
+    bisherigen Worten. Leer heisst: kein Beleg.
+    """
+    if getattr(eintrag, "guidance_scale_wirkungslos", None) is not True:
+        return ""
+    genannt = ("Es ist keine gesetzt" if fuehrung is None
+               else f"fuehrung={fuehrung} geht zwar als guidance_scale hin")
+    regler = getattr(eintrag, "fuehrung_regler", None)
+    folge = (f"die Führung läuft über '{regler}'" if regler is not None
+             else "der Wert richtet nichts aus")
+    return (f"guidance_scale ist bei den Gewichten von '{eintrag.name}' belegt "
+            f"WIRKUNGSLOS ({eintrag.guidance_scale_beleg}). {genannt} — das ist hier "
+            f"keine fremde Entscheidung, sondern gleichgültig: {folge}.")
+
+
+def _negativ_wirksam_ueber_regler(eintrag, fuehrung) -> dict:
+    """:func:`negativ_wirksam` für einen Eintrag mit eigenem Führungsregler.
+
+    Dieselbe Rückgabeform ``{wirksam, fuehrung, mindestens, backbone, grund}``. Die
+    Schwelle ist dieselbe wie bei ``guidance_scale``: diffusers rechnet die Führung bei
+    ``QwenImageEditPlusPipeline`` nur mit ``true_cfg_scale > 1`` (Z.719,
+    `auf-20260923-157`) — und mit einem Negativprompt, der nicht None ist. Ein
+    mitgegebener Negativprompt ist nie None; fehlt er, geht der Leer-Negativprompt der
+    Modellkarte hin, sofern der Eintrag ihn führt.
+    """
+    regler, wert = eintrag.fuehrung_regler, float(eintrag.fuehrung_regler_wert)
+    wirksam = wert > FUEHRUNG_MINDESTENS
+    teile = [f"Auf '{eintrag.name}' schaltet '{regler}' die klassifikatorfreie Führung, "
+             f"nicht guidance_scale ({eintrag.fuehrung_regler_beleg})."]
+    if wirksam:
+        teile.append(
+            f"'{regler}' = {wert} liegt über {FUEHRUNG_MINDESTENS} — die Führung läuft, ein "
+            f"negativer Prompt kann wirken.")
+        if getattr(eintrag, "leer_negativ_prompt", None) is not None:
+            teile.append(
+                f"Ohne eigenen Negativprompt geht der Leer-Negativprompt der Modellkarte "
+                f"({eintrag.leer_negativ_prompt!r}) hin, damit sie anspringt.")
+    else:
+        teile.append(
+            f"'{regler}' = {wert} liegt nicht über {FUEHRUNG_MINDESTENS} — die Führung ist "
+            f"abgeschaltet, ein negativer Prompt bliebe WIRKUNGSLOS.")
+    if fuehrung is not None:
+        satz = _guidance_satz(eintrag, fuehrung)
+        teile.append(satz or f"Die mitgegebene fuehrung={fuehrung} (guidance_scale) "
+                             f"entscheidet hier nicht darüber.")
+    return {"wirksam": wirksam, "fuehrung": wert, "mindestens": FUEHRUNG_MINDESTENS,
+            "backbone": eintrag.name, "grund": " ".join(teile)}
 
 
 def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...]:
@@ -1925,13 +2053,56 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
             f"Umkehrung |spearman| von 0.38–0.52 auf 0.79–0.85 gehoben."
         )
 
-    if parameter["fuehrung"] is None:
+    # ÜBER DEN REGLER, DER WIRKT (Befund 23.09.2026, `auf-20260923-157`). Bei
+    # `qwen-image-edit-2511` sprach der Satz darunter von guidance_scale und einer
+    # «fremden Entscheidung» — über einen Regler, den diese Gewichte gar nicht lesen,
+    # während die Führung über `true_cfg_scale` lief oder (ohne Negativprompt) gar nicht.
+    eintrag = backbone.BACKBONES.get(parameter["backbone"])
+    regler = parameter.get("fuehrung_regler")
+    if regler is not None and parameter.get("fuehrung_regler_wert") is not None:
+        wert = parameter["fuehrung_regler_wert"]
+        beleg = getattr(eintrag, "fuehrung_regler_beleg", None)
+        if parameter.get("negativ_prompt_karte") is not None:
+            negativ = (
+                f"Ohne eigenen Negativprompt ist der Leer-Negativprompt der Modellkarte "
+                f"({parameter['negativ_prompt_karte']!r}) bestellt statt None — mit None "
+                f"schaltet die Pipeline die Führung ab, und genau so liefen solche Läufe "
+                f"bis zum 23.09.2026. Ob Regler und Leerprompt ankamen, steht im Feld "
+                f"'fuehrung_regler_angekommen'.")
+        elif a.negativ_prompt:
+            negativ = (f"Der eigene Negativprompt ({a.negativ_prompt!r}) geht "
+                       f"unverändert hin.")
+        else:
+            negativ = ("Ein Leer-Negativprompt ist für dieses Modell nicht bestimmt; es "
+                       "geht None hin. Ob die Pipeline dann führt, ist UNBEKANNT.")
+        if wert > FUEHRUNG_MINDESTENS:
+            # Die zwei Durchgänge nur, wo ein Negativprompt hingeht — sonst ist unbekannt,
+            # ob überhaupt geführt wird (Durchsicht Runde 12).
+            doppelt = ("" if parameter.get("negativ_prompt_karte") is None
+                       and not a.negativ_prompt else
+                       " Die Führung rechnet zwei Transformer-Durchgänge je Schritt statt "
+                       "einem; wie viel Rechenzeit das kostet, ist nicht gemessen.")
+            hinweise.append(
+                f"FÜHRUNG über '{regler}' = {wert} für '{parameter['backbone']}' "
+                f"({beleg}). {negativ}{doppelt} Kennt die geladene Pipeline '{regler}' "
+                f"nicht, geht beides nicht hin, und ein eigener Hinweis sagt das.")
+        else:
+            hinweise.append(
+                f"'{regler}' = {wert} für '{parameter['backbone']}' liegt nicht über "
+                f"{FUEHRUNG_MINDESTENS} — die klassifikatorfreie Führung ist abgeschaltet, "
+                f"ein negativer Prompt bleibt WIRKUNGSLOS ({beleg}).")
+
+    guidance = _guidance_satz(eintrag, parameter["fuehrung"])
+    if guidance:
+        hinweise.append(guidance)
+    elif parameter["fuehrung"] is None:
         hinweise.append(
             f"Für '{parameter['backbone']}' ist keine Führung (guidance_scale) bestimmt. "
             f"Es greift die Vorgabe von diffusers — eine fremde Entscheidung, keine "
             f"eigene. Bei einem destillierten Turbo-Modell ist sie nachweislich falsch."
         )
-    elif parameter["fuehrung"] <= 1.0 and a.negativ_prompt:
+    elif parameter["fuehrung"] <= 1.0 and a.negativ_prompt and regler is None:
+        # Nur ohne eigenen Regler: Wo einer steht, urteilt der Satz oben (23.09.2026).
         # Der stille Fall: Der negative Prompt steht im Protokoll, im Bild wirkt er nicht.
         hinweise.append(
             f"fuehrung={parameter['fuehrung']} schaltet die klassifikatorfreie Führung "
@@ -2227,6 +2398,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         vorn = tuple(h for h in eigene if h.startswith("BESTELLT WAR"))
         hinweise = vorn + tuple(hinweise) + tuple(h for h in eigene if h not in vorn)
         gerechnet = antwort.get("schritte_gerechnet")
+        parameter["fuehrung_regler_angekommen"] = antwort.get("fuehrung_regler_angekommen")
         modus_bestellt = antwort.get("modus_bestellt")
         modus_gerechnet = antwort.get("modus_gerechnet")
     else:

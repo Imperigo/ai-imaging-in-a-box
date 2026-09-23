@@ -5663,6 +5663,23 @@ abfragen und ihre Animationen weglassen. Wer sie eingeschaltet hat, darf dadurch
 Auskunft verlieren — *eine Aussage, die nur in der Bewegung steckt, ist für diese Leute
 keine Aussage.*
 
+**Führungsregler (`true_cfg_scale`)** — Nicht jedes Bildmodell lässt sich über denselben
+Knopf führen. Beim Bearbeitungsmodell `qwen-image-edit-2511` heisst der Knopf, der wirklich
+wirkt, `true_cfg_scale`; der verbreitete Name `guidance_scale` ist dort ohne Wirkung. Der
+Führungsregler ist darum im Register **je Modell** mit Namen, Wert und Beleg eingetragen
+(seit dem 23.09.2026, Befund aus `auf-157`).
+
+**Leer-Negativprompt** — Ein einzelnes Leerzeichen als Gegentext. Es sagt dem Modell
+inhaltlich nichts, schaltet aber bei manchen Modellen die Führung überhaupt erst ein: Ohne
+irgendeinen Gegentext rechnet die Pipeline nur einen Durchgang und führt nicht. Beim
+Bearbeitungsmodell lief darum jeder Lauf ohne eigenen Gegentext **ganz ohne Führung**, bis
+das Leerzeichen der Modellkarte eingetragen wurde.
+
+**Guidance-destilliert (`guidance_embeds`)** — Manche Gewichte haben den Führungswert als
+Eingabe gelernt; nur bei ihnen wirkt `guidance_scale`. Ob das so ist, steht in der
+Konfiguration der Gewichte (`guidance_embeds: true/false`). Bei `qwen-image-edit-2511`
+steht dort `false` — belegt an der HomeStation.
+
 **Zweite Tür** — Ein Weg, der an der vorgesehenen Prüfstelle vorbei zum selben Ziel führt.
 Im Projekt war es das Einstellen eines Renderauftrags mit Freigabe-Token: Es stellte den
 Auftrag allein nach der *Form* des Tokens auf «freigegeben» und ging am Tokenbuch vorbei.
@@ -5738,6 +5755,7 @@ Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus Runde 12: **Führungsregler (`true_cfg_scale`)**, **Leer-Negativprompt**, **Guidance-destilliert (`guidance_embeds`)** |
 | 2026-09-23 | Ergaenzt aus Runde 11: **Zweite Tür**, **Freigabe-Abdruck**, **Buchprüfung (`FREIGABE_MIT_BUCH`)**, **Schrift mitliefern / registrieren** (mit CoreText), **PostScript-Name** (mit Namentabelle), **Variable Schrift** (mit Schriftschnitt), **TrueType**, **SHA-256**, **Ressource im App-Paket**, **Kreuzprobe** |
 | 2026-09-23 | Ergaenzt aus Runde 10: **Messschalter**, **Abstand zum Hintergrund (`ferne_abstand`)** |
 | 2026-09-23 | Ergaenzt aus Runde 9: **Lieferstatus**, **Heimrelativer Pfad**; nachgefuehrt: **Obergrenze, gesetzt, nicht gemessen** (an Blender 5.2.2 nachgemessen) |
