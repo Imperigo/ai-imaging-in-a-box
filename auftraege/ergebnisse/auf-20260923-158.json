@@ -1,0 +1,390 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-158",
+ "status": "teilweise",
+ "beendet": "2026-09-23T21:10:00Z",
+ "stand": "a3aebb1",
+ "geprueft": "A gelesen vor dem Ziehen. B: alle 24 Laeufe ueber arbeitsgang.lege_an/rechne, frische Mappe je Lauf, keiner mit Fehlersatz. C: NICHT gefahren — das Herunterladen der einen Datei (C0) hat an der HomeStation die Berechtigungspruefung meines Werkzeugs abgelehnt; umgangen habe ich das nicht, der Owner entscheidet. Alles fuer C liegt bereit und ist an 1.0 geprueft (siehe C_vorbereitung). Darum Status 'teilweise': C folgt mit derselben Auftrags-ID.",
+ "kurzantwort": "Der Gewinn aus 154 traegt NICHT ueber Startwerte und Koerper. Beim Quader ist fuer Startwert 1 und 2 fast jedes Bild nicht messbar, egal mit welchem Abstand; nur Startwert 0 gibt stabile Zahlen, und dort ist 0.05 der beste Abstand (score 0.791, der einzige bestandene Lauf der Reihe), ab 0.30 kippt es (score 0.167, der Verlauf innen geht verloren). Beim Hochbau aendert der Abstand nichts: jedes messbare Bild hat score 0.000 bei positivem spearman um +0.5 — das Bild traegt die Tiefe verkehrt herum. C offen (Download an der HomeStation blockiert, Owner-Entscheid).",
+ "befunde": {
+  "A": "A1–A4 gelesen, vor dem Ziehen. freigabe-token.json: NEIN — gesucht im Heimatordner und unter der Datenplatte (je 5 Ebenen tief) sowie im Auftragsordner der Bruecke (existiert gerade nicht); Gegenprobe: dieselbe Suche findet eine absichtlich angelegte Probedatei.",
+  "B_laeufe": [
+   {
+    "lauf": "testbau-ohne-s0",
+    "koerper": "testbau",
+    "ferne_abstand": null,
+    "seed": 0,
+    "score": 0.4498098352496061,
+    "spearman": -0.5824046492456221,
+    "geom_iou": 0.3474025974025974,
+    "bestanden": false,
+    "dauer_s": 9.2,
+    "qa": "Score 0.450 < Schwelle 0.65 (|spearman| 0.582 über 26750 gemeinsame Punkte, geom_iou 0.347)."
+   },
+   {
+    "lauf": "testbau-ohne-s1",
+    "koerper": "testbau",
+    "ferne_abstand": null,
+    "seed": 1,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.5,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieantei"
+   },
+   {
+    "lauf": "testbau-ohne-s2",
+    "koerper": "testbau",
+    "ferne_abstand": null,
+    "seed": 2,
+    "score": 0.023823102528675758,
+    "spearman": -0.03288831047455818,
+    "geom_iou": 0.017256593783704286,
+    "bestanden": false,
+    "dauer_s": 7.5,
+    "qa": "Score 0.024 < Schwelle 0.65 (|spearman| 0.033 über 1760 gemeinsame Punkte, geom_iou 0.017)."
+   },
+   {
+    "lauf": "testbau-0.05-s0",
+    "koerper": "testbau",
+    "ferne_abstand": 0.05,
+    "seed": 0,
+    "score": 0.790860724564468,
+    "spearman": -0.7850104630162058,
+    "geom_iou": 0.7967545849713386,
+    "bestanden": true,
+    "dauer_s": 7.7,
+    "qa": "Score 0.791 ≥ Schwelle 0.65 (|spearman| 0.785 über 46007 gemeinsame Punkte, geom_iou 0.797)."
+   },
+   {
+    "lauf": "testbau-0.05-s1",
+    "koerper": "testbau",
+    "ferne_abstand": 0.05,
+    "seed": 1,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.7,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieantei"
+   },
+   {
+    "lauf": "testbau-0.05-s2",
+    "koerper": "testbau",
+    "ferne_abstand": 0.05,
+    "seed": 2,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieantei"
+   },
+   {
+    "lauf": "testbau-0.15-s0",
+    "koerper": "testbau",
+    "ferne_abstand": 0.15,
+    "seed": 0,
+    "score": 0.5335270250986025,
+    "spearman": -0.31016362095108874,
+    "geom_iou": 0.9177449168207024,
+    "bestanden": false,
+    "dauer_s": 7.9,
+    "qa": "Score 0.534 < Schwelle 0.65 (|spearman| 0.310 über 49650 gemeinsame Punkte, geom_iou 0.918)."
+   },
+   {
+    "lauf": "testbau-0.15-s1",
+    "koerper": "testbau",
+    "ferne_abstand": 0.15,
+    "seed": 1,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieantei"
+   },
+   {
+    "lauf": "testbau-0.15-s2",
+    "koerper": "testbau",
+    "ferne_abstand": 0.15,
+    "seed": 2,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieantei"
+   },
+   {
+    "lauf": "testbau-0.3-s0",
+    "koerper": "testbau",
+    "ferne_abstand": 0.3,
+    "seed": 0,
+    "score": 0.16699265793621776,
+    "spearman": -0.0293631768471876,
+    "geom_iou": 0.9497115366545769,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Score 0.167 < Schwelle 0.65 (|spearman| 0.029 über 50537 gemeinsame Punkte, geom_iou 0.950)."
+   },
+   {
+    "lauf": "testbau-0.3-s1",
+    "koerper": "testbau",
+    "ferne_abstand": 0.3,
+    "seed": 1,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieantei"
+   },
+   {
+    "lauf": "testbau-0.3-s2",
+    "koerper": "testbau",
+    "ferne_abstand": 0.3,
+    "seed": 2,
+    "score": 0.026412305889266862,
+    "spearman": -0.05384423438757099,
+    "geom_iou": 0.012956074319244702,
+    "bestanden": false,
+    "dauer_s": 7.7,
+    "qa": "Score 0.026 < Schwelle 0.65 (|spearman| 0.054 über 1327 gemeinsame Punkte, geom_iou 0.013)."
+   },
+   {
+    "lauf": "hochbau-ohne-s0",
+    "koerper": "hochbau",
+    "ferne_abstand": null,
+    "seed": 0,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.6,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-ohne-s1",
+    "koerper": "hochbau",
+    "ferne_abstand": null,
+    "seed": 1,
+    "score": 0.0,
+    "spearman": 0.5100037648988639,
+    "geom_iou": 0.939597560530256,
+    "bestanden": false,
+    "dauer_s": 7.7,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.510 über 51458 gemeinsame Punkte, geom_iou 0.940)."
+   },
+   {
+    "lauf": "hochbau-ohne-s2",
+    "koerper": "hochbau",
+    "ferne_abstand": null,
+    "seed": 2,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.6,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-0.05-s0",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.05,
+    "seed": 0,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-0.05-s1",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.05,
+    "seed": 1,
+    "score": 0.0,
+    "spearman": 0.5011341612054241,
+    "geom_iou": 0.9335602599341063,
+    "bestanden": false,
+    "dauer_s": 7.9,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.501 über 51287 gemeinsame Punkte, geom_iou 0.934)."
+   },
+   {
+    "lauf": "hochbau-0.05-s2",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.05,
+    "seed": 2,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-0.15-s0",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.15,
+    "seed": 0,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-0.15-s1",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.15,
+    "seed": 1,
+    "score": 0.0,
+    "spearman": 0.5299648699844843,
+    "geom_iou": 0.9514991181657848,
+    "bestanden": false,
+    "dauer_s": 7.9,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.530 über 51792 gemeinsame Punkte, geom_iou 0.951)."
+   },
+   {
+    "lauf": "hochbau-0.15-s2",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.15,
+    "seed": 2,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-0.3-s0",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.3,
+    "seed": 0,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   },
+   {
+    "lauf": "hochbau-0.3-s1",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.3,
+    "seed": 1,
+    "score": 0.0,
+    "spearman": 0.5385580804446807,
+    "geom_iou": 0.9622780928453993,
+    "bestanden": false,
+    "dauer_s": 7.9,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.539 über 52091 gemeinsame Punkte, geom_iou 0.962)."
+   },
+   {
+    "lauf": "hochbau-0.3-s2",
+    "koerper": "hochbau",
+    "ferne_abstand": 0.3,
+    "seed": 2,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhou"
+   }
+  ],
+  "B_mittel": {
+   "testbau / ohne": {
+    "score_mittel_messbare": 0.237,
+    "abs_spearman_mittel_messbare": 0.308,
+    "geom_iou_mittel_alle_drei": 0.122,
+    "messbar_von_3": 2,
+    "bestanden_von_3": 0
+   },
+   "testbau / 0.05": {
+    "score_mittel_messbare": 0.791,
+    "abs_spearman_mittel_messbare": 0.785,
+    "geom_iou_mittel_alle_drei": 0.266,
+    "messbar_von_3": 1,
+    "bestanden_von_3": 1
+   },
+   "testbau / 0.15": {
+    "score_mittel_messbare": 0.534,
+    "abs_spearman_mittel_messbare": 0.31,
+    "geom_iou_mittel_alle_drei": 0.306,
+    "messbar_von_3": 1,
+    "bestanden_von_3": 0
+   },
+   "testbau / 0.3": {
+    "score_mittel_messbare": 0.097,
+    "abs_spearman_mittel_messbare": 0.042,
+    "geom_iou_mittel_alle_drei": 0.321,
+    "messbar_von_3": 2,
+    "bestanden_von_3": 0
+   },
+   "hochbau / ohne": {
+    "score_mittel_messbare": 0.0,
+    "abs_spearman_mittel_messbare": 0.51,
+    "geom_iou_mittel_alle_drei": 0.313,
+    "messbar_von_3": 1,
+    "bestanden_von_3": 0
+   },
+   "hochbau / 0.05": {
+    "score_mittel_messbare": 0.0,
+    "abs_spearman_mittel_messbare": 0.501,
+    "geom_iou_mittel_alle_drei": 0.311,
+    "messbar_von_3": 1,
+    "bestanden_von_3": 0
+   },
+   "hochbau / 0.15": {
+    "score_mittel_messbare": 0.0,
+    "abs_spearman_mittel_messbare": 0.53,
+    "geom_iou_mittel_alle_drei": 0.317,
+    "messbar_von_3": 1,
+    "bestanden_von_3": 0
+   },
+   "hochbau / 0.3": {
+    "score_mittel_messbare": 0.0,
+    "abs_spearman_mittel_messbare": 0.539,
+    "geom_iou_mittel_alle_drei": 0.321,
+    "messbar_von_3": 1,
+    "bestanden_von_3": 0
+   }
+  },
+  "B_saetze_seed0": {
+   "testbau / ohne": "Fassadenrechteck mit Fensterreihe an der Stelle des Quaders, drumherum skizzenhafte Hilfslinien (dasselbe Bild wie 154 B2, Pruefsumme gleich).",
+   "testbau / 0.05": "Dasselbe Motiv, das Rechteck sitzt am saubersten auf der Silhouette des Quaders — das einzige bestandene Bild der ganzen Reihe.",
+   "testbau / 0.15": "Wie ohne Abstand, von blossem Auge kaum zu unterscheiden (dasselbe Bild wie 154 B3).",
+   "testbau / 0.3": "Wie 0.15, Rechteck und Fenster an der richtigen Stelle; der Unterschied zeigt sich nur in der Messung (Verlauf innen verloren, |spearman| 0.029).",
+   "hochbau / ohne": "Andeutung — dunkle Fassadenflaeche in der Mitte, links und rechts helle Wandscheiben, die in der Tiefe nicht vorkommen; das Bild liest sich wie ein Blick durch eine Gasse.",
+   "hochbau / 0.05": "Wie ohne Abstand — der Schalter aendert beim Hochbau sichtbar nichts.",
+   "hochbau / 0.15": "Wie ohne Abstand.",
+   "hochbau / 0.3": "Wie ohne Abstand."
+  },
+  "B_lesart": "Nein, der Gewinn traegt nicht: Er haengt am Startwert (Quader: 2 von 12 Laeufen mit Startwert 1/2 ueberhaupt messbar, beide score ≤ 0.026) und fehlt beim Hochbau ganz, wo jedes messbare Bild die Tiefe umgekehrt traegt (spearman +0.50 bis +0.54, score 0.000) — unabhaengig vom Abstand. Wenn ueberhaupt, dann 0.05; ab 0.30 kippt es, weil der Abstand den Verlauf innen zusammendrueckt (geom_iou bleibt 0.95, |spearman| faellt auf 0.03).",
+  "C_vorbereitung": {
+   "lizenz_selbst_geprueft": "Modellkarte alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1, Front-Matter «license: apache-2.0», cardData.license apache-2.0, nicht gated.",
+   "datei_laut_hub": "Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors, 6 712 485 600 Byte, SHA-256 laut Hub d1251cc7bc3486bc61d25c3be498ef394c31c85ddf4ee9137d2e933411f4a689 (nach dem Laden nachzurechnen)",
+   "platz": "2.9 TB frei auf der Datenplatte",
+   "skript_kontrolle": "Das C2-Skript erzeugt mit dem 1.0-ControlNet fuer beide Karten stellengleich dasselbe Bild wie die Kette (Pruefsumme der Bildpunkte 61cdc29e4fc85e63 bzw. 6d143a191be25b42) und misst dieselben Zahlen (0.4498/-0.5824/0.3474 und 0.5335/-0.3102/0.9177). Der Vergleich 1.0 gegen 2.1 ist damit ein einziger Lauf, sobald die Datei da ist."
+  },
+  "C0": "offen — Download blockiert (Berechtigungspruefung an der HomeStation), nichts geladen, 1.0 unberuehrt.",
+  "C1": "offen",
+  "C2": "offen",
+  "C3": "offen",
+  "D": "Die Messbarkeit selbst haengt am Startwert, nicht nur der Score: dieselbe Soll-Karte (Quader, 19.8 % Geometrie) ist bei Startwert 0 messbar und bei Startwert 1 «nicht messbar — geringer Geometrieanteil». Wer Abstaende vergleicht, vergleicht darum bei n=3 oft nur einen einzigen messbaren Lauf je Zelle."
+ },
+ "bemerkungen": "Leerlauf vor dem Start hergestellt: das Kosmo-Sprachmodell lag noch von meinem eigenen Browsertest geladen auf der Karte (25 GB) und wurde von mir entladen, danach 65 W / 604 MiB. testbau ohne Abstand bei Startwert 0 ergibt heute stellengleich dieselben Zahlen wie 154 B2 — die Kette ist ueber die Tage stabil.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu": "RTX 5090, Leistungsgrenze 400 W",
+  "gpu_last_max_w": 324.21,
+  "gpu_speicher_max_mib": 25518
+ },
+ "fehler": null
+}
