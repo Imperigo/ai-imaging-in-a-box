@@ -43,6 +43,8 @@ Fehler nicht vorab sehen.
 """
 from __future__ import annotations
 
+from aiimaging.contracts import LANE_FIELDS
+
 LANE = "aiimaging"
 
 #: Werkzeugnamen tragen den Lane-Namen nochmals — KosmoOrbit ruft
@@ -62,10 +64,19 @@ WERKZEUG_FAEHIGKEITEN = f"{LANE}_capabilities"
 
 #: Feldnamen der Nachbar-Lanes, belegt in Phase 0 aus `kosmodraw_mcp_server.py:274-300`.
 #: Sie sind bindend: Ein abweichender Name erzeugt keine Kante und keine Fehlermeldung.
-GEOMETRIE_FELDER = ("ifc_path", "glb_path", "up_axis", "bbox")
+#:
+#: **Kein eigenes Tupel mehr, sondern** ``contracts.LANE_FIELDS`` (Prüfung 23.09.2026).
+#: Bis dahin standen dieselben vier Namen dreimal von Hand da — hier, in
+#: ``contracts`` und in ``werkzeuge._geometrie_aus_argumenten`` —, und ein Feld, das nur
+#: im Schema steht, verdrahtet KosmoOrbit, während der Einlass es still liegen lässt.
+GEOMETRIE_FELDER = LANE_FIELDS
 
 
-_GEOMETRIE_EINGANG = {
+#: Die Beschreibung je Geometriefeld. Das Eingangsschema wird unten aus
+#: ``LANE_FIELDS`` gebaut; fehlt hier die Beschreibung eines dort ergänzten Feldes,
+#: bricht schon das Laden dieses Moduls mit ``KeyError`` ab — laut, statt dass das Feld
+#: im Schema fehlt und die Kante still nicht entsteht.
+_GEOMETRIE_BESCHREIBUNG = {
     "ifc_path": {
         "type": "string",
         "description": "Quell-IFC (IFC4 oder IFC2X3; ArchiCAD liefert IFC2X3). "
@@ -91,6 +102,8 @@ _GEOMETRIE_EINGANG = {
                        "GPU-Zeit verbraucht wird.",
     },
 }
+
+_GEOMETRIE_EINGANG = {feld: _GEOMETRIE_BESCHREIBUNG[feld] for feld in LANE_FIELDS}
 
 
 def _eingang_enqueue() -> dict:
@@ -471,6 +484,12 @@ def pruefe_verdrahtbarkeit(erzeuger: dict, verbraucher: dict,
 
     Returns:
         Liste von Befunden `{art, schwere, detail}`. **Leer heisst verdrahtbar.**
+
+    **Warum sie nur von der Testsuite gerufen wird** (entschieden 23.09.2026, Runde 11):
+    Der Produktweg hat das ``outputSchema`` eines fremden Vorgängers nie in der Hand — die
+    Kante verdrahtet KosmoOrbit zur Entwurfszeit, bei sich. Hier kann sie darum nur als
+    Wächter über **unsere** Schemata laufen (``tests/test_mcp_schemas.py``). Ein Aufruf im
+    Produktweg prüfte eine Kante, die es dort nicht gibt.
     """
     befunde: list[dict] = []
     verfuegbar = _mit_synonymen(

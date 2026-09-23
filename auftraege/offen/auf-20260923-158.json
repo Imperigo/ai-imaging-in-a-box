@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260923-158",
+  "art": "frage",
+  "beschreibung": "Danke fuer 154. Ansage Runde 11 (Freigabe-Tor, Zwillinge im verdict.reason) — und zwei Messungen: traegt ferne_abstand ueber drei Startwerte und zwei Koerper, und steuert das neuere ControlNet Union-2.1 (Apache-2.0) die Tiefe besser und oeffnet es den Inpaint-Weg?",
+  "anweisung": "=== ANSAGE RUNDE 11 UND ZWEI MESSUNGEN, DIE AUF EURER ANTWORT ZU 154 AUFBAUEN ===\n\nDanke fuer 154 — die Kreuzprobe war genau der Beleg, der gefehlt haette. Was wir daraus\nlesen: Der Abstand zum Hintergrund (ferne_abstand) veraendert, was das Modell ZEICHNET, und\nhebt geom_iou von 0.35 auf 0.92. Bestanden hat trotzdem kein Lauf. Bevor der Schalter zur\nVorgabe wird (das aenderte jede Tiefenkarte und kaeme mit Ansage), wollen wir wissen, ob der\nGewinn ueber Startwerte und Koerper traegt. Und euer Teil C zeigt einen zweiten Hebel: ein\nneueres ControlNet desselben Herstellers.\n\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, vor dem Ziehen)\n\n  A1 FREIGABE-TOR (tools/abholen.py ueber die eigene Ablage). Ein Auftrag, der mit Token\n     eingestellt wird, geht jetzt durch dieselbe Pruefung wie eine nachtraegliche Freigabe.\n     Sichtbar im Auftrag: neues Feld freigabe_abdruck (ein Abdruck, nie das Token),\n     verlauf zeigt awaiting_approval UND queued, ein abgewiesenes Token hinterlaesst\n     meldung. Fuer die eigene Ablage NEU: Liegt in der Ablage oder im Auftragsordner eine\n     Datei freigabe-token.json (das Tokenbuch), nimmt der Abholer einen queued-Auftrag nur,\n     wenn das Buch ihn fuer genau diesen Auftrag als verbraucht fuehrt — sonst bleibt er\n     mit Satz am Laufzettel liegen. OHNE diese Datei aendert sich nichts. Bitte einmal\n     nachsehen: Gibt es bei euch eine freigabe-token.json? (Wir erwarten: nein.)\n  A2 ZWILLINGE IM URTEIL. Bei einem Auftrag mit Zwilling (Kamera mit derselben Soll-Karte\n     wie eine andere) steht in verdict.reason jetzt vorn z. B.:\n       «Nicht neu gerendert (identische Soll-Karte), nNW; Geometrie 0.81 gegen 0.65; …»\n     Bisher schwieg verdict.reason darueber. score, passed, qa_je_kamera, lieferstatus\n     bleiben gleich. Auftraege ohne Zwilling: bitgleich.\n  A3 Die zwei Messschalter erscheinen in der Flaeche nur noch, wenn eine Mappe sie traegt.\n  A4 tools/homeworker.py: unveraendert.\n\n\nTEIL B — TRAEGT ferne_abstand? (Produktweg ueber die Mappe, wie in 154)\n\n  Vorbereiten:\n      python3 tools/make_test_ifc.py build/testbau.ifc\n      python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau\n\n  Je Lauf eine frische Mappe:\n      arbeitsgang.lege_an(<mappe>, <ifc>, name='Abstand',\n          einstellungen={'prompt': 'a residential building, architectural photograph',\n                         'seed': SEED, 'kamera': 's', 'aufloesung': 512,\n                         'controlnet_staerke': 1.0, 'schritte': 8, **X})\n      ergebnis = arbeitsgang.rechne(<mappe>)\n\n  Koerper {testbau, hochbau} × X {—, ferne_abstand 0.05, 0.15, 0.30} × SEED {0, 1, 2}\n  = 24 Laeufe (bei euch rund 8 s je Lauf). Gelesen am QA-Knoten wie in 154.\n\n  Zurueck: je Lauf score, spearman, geom_iou, bestanden; je (Koerper, X) der Mittelwert\n  ueber die drei Startwerte; und EIN Satz je (Koerper, X) zum Endbild bei SEED 0. Dazu\n  eure Lesart in zwei Saetzen: Traegt der Gewinn ueber Startwerte und Koerper? Welcher\n  Abstand, und gibt es einen, ab dem es kippt?\n\n\nTEIL C — DAS NEUERE CONTROLNET (Union-2.1)\n\n  Lizenz von uns geprueft (23.09.2026): Modellkarte von\n  alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1, Front-Matter «license: apache-2.0»\n  (das Repo ...-Union-2.0 leitet dorthin um). Zulaessig nach Regel 1.\n\n  C0 EINE Datei laden, nicht mehr:\n       Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors\n     aus diesem Repo, in einen NEUEN Ordner neben dem bisherigen\n     (<modellwurzel>/z-image-controlnet-union-2.1/). Die 1.0-Datei bleibt, wo sie ist,\n     unveraendert. Vorher freien Platz pruefen. Zurueck: Groesse und SHA-256.\n     Warum diese: laut Karte fuer 8 Schritte destilliert (wie unsere Laeufe), Tiefe\n     unterstuetzt, Inpaint-Modus unterstuetzt.\n  C1 Laedt sie ueber ZImageControlNetModel.from_single_file + ZImageControlNetPipeline —\n     derselbe Weg wie render._lade_mit_controlnet, aber in EUREM Skript (unser Code\n     bleibt unberuehrt)? Befehl und Satz.\n  C2 STEUERT SIE BESSER? Zwei Tiefenkarten aus Teil B (testbau, SEED 0, ohne Abstand und\n     mit 0.15 — die depth_png der Mappen). Je Karte zwei Bilder, alles gleich ausser dem\n     ControlNet (1.0 gegen 2.1): Prompt, Startwert 0, 8 Schritte, Staerke 1.0, 512 px,\n     dieselbe Polaritaet wie das Register (umgedreht). Gemessen mit eurem Nachbau aus der\n     Kreuzprobe von 154 (bildlesen.tiefen_aus_report + maske + tiefenschaetzer.qa_gegen_soll,\n     Vorgaben der Kette), und als Kontrolle das 1.0-Bild stellengleich zu Teil B.\n     Zurueck: je (ControlNet, Karte) score, spearman, geom_iou, bestanden, ein Satz.\n  C3 INPAINT: Laedt ZImageControlNetInpaintPipeline mit der 2.1? Wenn ja, euer\n     vorbereitetes C2-Skript aus 154 (Maske ueber dem oberen Drittel des Quaders,\n     «+ 1 Geschoss, same building», 8 Schritte): aendert sich das Bild nur in der Maske?\n     Pruefsumme ausserhalb vorher/nachher. Wenn nein: der Satz woertlich — und KEINE\n     weitere Datei laden.\n\n\nWAS ZURUECKKOMMEN SOLL\n  A  gelesen vor dem Ziehen; freigabe-token.json vorhanden ja/nein.\n  B  24 Zeilen, 8 Mittelwerte, 8 Saetze, zwei Saetze Lesart.\n  C0 Groesse + SHA-256 · C1 laedt ja/nein · C2 vier Zeilen · C3 ja/nein + Pruefsumme.\n  D  Eine Zeile, die wir nicht erfragt haben und wissen sollten.\n\n\nWAS NICHT GETAN WERDEN SOLL\n  - Nichts an unserem Code aendern; die Skripte fuer C liegen bei euch, nicht im Repo.\n  - Genau EINE Datei herunterladen (C0), nichts sonst; die 1.0 nicht ersetzen oder\n    verschieben; nichts in unser Register eintragen.\n  - Die Messschalter nicht in echte Bestellungen setzen.\n  - Keine Bilder, Pfade mit Namen oder Projektnamen zurueck — Zahlen und Saetze.",
+  "erstellt": "2026-09-23T21:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts an unserem Code aendern.",
+      "Genau EINE Datei laden (C0), die 1.0 bleibt unberuehrt.",
+      "Messschalter nie in echte Bestellungen.",
+      "Keine Bilder, Pfade mit Namen oder Projektnamen zurueck."
+    ]
+  },
+  "rueckgabe": [
+    "A Ansage gelesen vor dem Ziehen; freigabe-token.json vorhanden ja/nein.",
+    "B 24 Laeufe (score, spearman, geom_iou, bestanden), Mittel je Koerper x Abstand, je ein Satz bei SEED 0, zwei Saetze Lesart.",
+    "C0 Groesse und SHA-256 der Union-2.1-2602-8steps-Datei.",
+    "C1 Laedt sie ueber ZImageControlNetPipeline? Befehl + Satz.",
+    "C2 1.0 gegen 2.1 an zwei Karten: score, spearman, geom_iou, bestanden, ein Satz je Bild.",
+    "C3 Inpaint mit 2.1: laedt ja/nein; wenn ja nur in der Maske veraendert? Pruefsumme ausserhalb.",
+    "D Eine Zeile, die wir nicht erfragt haben."
+  ],
+  "rang": 1
+}

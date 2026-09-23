@@ -15,8 +15,10 @@ Was bewiesen wird
    ``aiimaging_query_render`` gelesen, bestätigt das — und beide Male ist
    ``images == []``: Es ist nichts entstanden, was einen Render voraussetzt.
 2. Derselbe Aufruf MIT einem gültigen ``CONFIRMED_RENDER_…``-Token ergibt
-   ``status == "queued"`` — echt, nicht behauptet: ``jobs.baue_job`` entscheidet allein
-   über ``jobs.ist_gueltiges_token``.
+   ``status == "queued"`` — echt, nicht behauptet. Seit dem 23.09.2026 geht
+   ``jobs.baue_job`` dafür durch dieselbe Tür wie ``jobs.freigeben`` (Formprüfung, bei
+   eingeschalteter Buchprüfung auch das Tokenbuch); vorher entschied es allein über
+   ``jobs.ist_gueltiges_token``.
 3. ``jobs.setze_status(job_id, "queued", …)`` — der Weg AM Werkzeug vorbei, direkt in
    der Ablage — wird für BEIDE Aufträge mit ``jobs.UebergangError`` abgewiesen: für den
    noch wartenden ebenso wie für den bereits freigegebenen. Das ist die zweite Hälfte

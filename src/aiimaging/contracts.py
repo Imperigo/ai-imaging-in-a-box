@@ -33,6 +33,10 @@ SCHEMA_ID = "aiimaging.render-scene/v1"
 #: ``kosmodraw_mcp_server.py:274-300``). Diese Namen sind bindend: KosmoOrbits
 #: ``mergeInputs`` zieht Kanten allein über Feldnamen-Gleichheit — ein abweichender Name
 #: erzeugt keine Kante und keine Fehlermeldung.
+#:
+#: **Die eine Quelle dieser Namen** (seit 23.09.2026): ``mcp_schemas`` baut das
+#: Eingangsschema daraus, ``werkzeuge`` nimmt genau diese Felder am Einlass an. Bis dahin
+#: standen sie dort je ein weiteres Mal von Hand.
 LANE_FIELDS = ("ifc_path", "glb_path", "up_axis", "bbox")
 
 

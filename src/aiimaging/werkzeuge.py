@@ -67,9 +67,22 @@ def _geometrie_aus_argumenten(args: dict) -> dict:
 
     `mergeInputs` reicht sämtliche Vorgängerfelder durch — der Aufruf enthält also weit
     mehr, als uns angeht. Wir nehmen nur, was wir kennen, und lassen den Rest liegen.
+
+    **Welche Felder, sagt allein** ``contracts.LANE_FIELDS`` (Prüfung 23.09.2026). Bis
+    dahin stand die Liste hier ein zweites Mal von Hand, und ein drittes Mal im
+    Eingangsschema (``mcp_schemas``). Ein Feld, das nur im Schema steht, verdrahtet
+    KosmoOrbit — und hier wird es still liegen gelassen. Seither lesen beide dieselbe
+    Quelle; bewacht in ``tests/test_runde11_einlass.py`` (ein Wert je heutiges Feld kommt
+    im Auftrag an; ein in ``LANE_FIELDS`` ergänztes Feld wird **hier gelesen**).
+
+    **Was das nicht heisst** (Durchsicht Runde 11): Ein neues Feld steht damit noch nicht
+    im Auftrag. Den Auftrag baut :func:`enqueue_render` aus dem, was ein Render braucht —
+    ``glb_path``, ``up_axis``, ``bbox``; ``ifc_path`` wird vorher zu ``glb_path``
+    umgewandelt. Wer ``LANE_FIELDS`` erweitert, muss dort entscheiden, was das Feld im
+    Auftrag bewirkt.
     """
     geom = {}
-    for feld in ("ifc_path", "glb_path", "up_axis", "bbox"):
+    for feld in contracts.LANE_FIELDS:
         if args.get(feld) is not None:
             geom[feld] = args[feld]
     return geom
@@ -194,6 +207,15 @@ def enqueue_render(args: dict) -> dict:
 
     # 4) Auftrag ablegen. Der Status folgt ALLEIN dem Token — dieses Werkzeug kann
     #    `queued` nicht selbst setzen, und das ist der Freeze-Schutz.
+    #
+    #    DURCH DIE TÜR VON `jobs.freigeben` (Prüfung 23.09.2026). Bis dahin stellte
+    #    `baue_job` den Auftrag allein nach der Form des Tokens auf `queued`, am Tokenbuch
+    #    vorbei. Seither geht das Token durch dieselbe Prüfung mit derselben Vorgabe
+    #    (`jobs.FREIGABE_MIT_BUCH`, heute aus); das Buch liegt einmal in der Ablage, nicht
+    #    im Ordner des Auftrags — dort sucht es auch `eigene_quelle`. Ein abgewiesenes
+    #    Token laesst den Auftrag auf `awaiting_approval`, mit dem Grund als `meldung`.
+    #    Eine Buchpruefung, die der Aufrufer ueber `args` abschalten koennte, waere keine:
+    #    `mit_buch` wird darum hier NICHT aus den Argumenten gelesen.
     satz = jobs.baue_job(
         job_id=jobs.neue_job_id(),
         art="render",
@@ -217,6 +239,7 @@ def enqueue_render(args: dict) -> dict:
             "empfiehlt_neuzentrierung": urteil.get("empfiehlt_neuzentrierung", False),
         },
         approval_token=args.get("approval_token"),
+        buch_verzeichnis=job_verzeichnis(),
     )
     jobs.schreibe_job(satz, auftrags_ordner(satz["job_id"]))
 

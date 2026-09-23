@@ -113,6 +113,8 @@ Lücke.
 | A1 | Die App lässt sich aufspielen (Weg A oder B — welcher?) | |
 | A2 | Sie startet ohne Absturz, quer und hochkant | |
 | A3 | Die Frage nach dem lokalen Netz kommt, und nach «erlauben» geht es weiter | |
+| A4 | Die eigenen Schriften erscheinen: Titel in einer Serifenschrift, Zahlen gleich breit (Plex Mono). Steht überall die Systemschrift, bitte die Konsolenzeile `Schriftregister` notieren | |
+| A5 | *Nur Weg B:* Nach dem Ändern von Symbol oder Farbe in Swift Playgrounds startet die App noch (Playgrounds schreibt dabei das Manifest neu — die Schriftangabe könnte verloren gehen) | |
 
 ### B · Verbinden
 

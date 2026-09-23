@@ -5663,6 +5663,59 @@ abfragen und ihre Animationen weglassen. Wer sie eingeschaltet hat, darf dadurch
 Auskunft verlieren — *eine Aussage, die nur in der Bewegung steckt, ist für diese Leute
 keine Aussage.*
 
+**Zweite Tür** — Ein Weg, der an der vorgesehenen Prüfstelle vorbei zum selben Ziel führt.
+Im Projekt war es das Einstellen eines Renderauftrags mit Freigabe-Token: Es stellte den
+Auftrag allein nach der *Form* des Tokens auf «freigegeben» und ging am Tokenbuch vorbei.
+Seit dem 23.09.2026 geht es durch dieselbe Prüfung wie jede Freigabe. *Ein Tor mit einer
+zweiten Tür daneben prüft nur die, die das Tor benutzen.*
+
+**Freigabe-Abdruck** — Statt des Freigabe-Tokens selbst steht im Auftrag ein Abdruck davon:
+eine Zeichenfolge, die sich aus dem Token errechnen lässt, aus der sich das Token aber nicht
+zurückgewinnen lässt. Damit kann der Abholer im Tokenbuch nachsehen, ob genau dieser
+Auftrag freigegeben wurde — ohne dass jemand, der die Auftragsdatei liest, eine gültige
+Freigabe in die Hand bekommt.
+
+**Buchprüfung (`FREIGABE_MIT_BUCH`)** — Der Schalter, der entscheidet, ob eine Freigabe nur
+mit einem Token gilt, das wir **ausgegeben** und das noch **niemand benutzt** hat. Heute
+aus, weil noch niemand Token ausgibt (die Oberfläche von KosmoOrbit soll es tun,
+`auf-20260909-99`). Eine Stelle für beide Wege — Einstellen und nachträgliche Freigabe.
+
+**Schrift mitliefern / registrieren** — Eine Schrift, die nicht zum Betriebssystem gehört,
+muss als Datei in der App liegen und beim Start dem System bekannt gemacht
+(«registriert») werden; erst dann lässt sie sich beim Namen verwenden. Die iPad-App tut das
+mit Apples Schriftbaukasten **CoreText** (Plattform, nicht mitgeliefert). Scheitert es,
+zeigt sie die Systemschrift — nie unsichtbaren Text.
+
+**PostScript-Name** — Der Name, unter dem das System eine Schrift nach dem Registrieren
+kennt, z. B. `IBMPlexMono-Medium`. Er steht in der Schriftdatei selbst, in ihrer
+**Namentabelle**; die App verlangt die Schrift genau unter diesem Namen. Ein Wächter liest
+die Tabelle und prüft, dass jeder Name, den die App verlangt, in einer Datei vorkommt.
+
+**Variable Schrift** — Eine einzige Schriftdatei, deren Strichstärke (Achse «wght») und
+Breite (Achse «wdth») stufenlos einstellbar sind, statt je Stärke eine eigene Datei
+(**Schriftschnitt**: normal, mittel, halbfett). IBM Plex Sans liegt in der Originalquelle
+nur so vor; die App stellt die Stärke über die Achse ein.
+
+**TrueType** — Ein verbreitetes Dateiformat für Schriften (Endung `.ttf`). Erkennbar an den
+ersten vier Bytes der Datei; ein Wächter prüft sie, damit keine umbenannte andere Datei als
+Schrift durchgeht.
+
+**SHA-256 (Prüfsumme einer Datei)** — Ein Fingerabdruck, der sich bei jeder noch so
+kleinen Änderung einer Datei völlig ändert. Im `NOTICE` steht er für jede mitgelieferte
+Schriftdatei: So ist belegt, dass sie **unverändert** aus der Originalquelle stammt — eine
+Auflage der Schriftlizenz OFL.
+
+**Ressource im App-Paket** — Eine Datei, die keine Programmzeile ist (Bild, Schrift) und
+trotzdem mit der App ausgeliefert wird. Im Paket muss sie ausdrücklich als solche
+angegeben sein (`resources: [.process("Schriften")]`); sonst warnt der Übersetzer, und die
+App findet sie nicht.
+
+**Kreuzprobe** — Zwei Läufe unterscheiden sich, und man will wissen, **woran**: Man misst
+das Bild des einen gegen die Vorgabe des anderen und umgekehrt. Bleiben die Zahlen am Bild
+hängen, liegt der Unterschied im Bild; wandern sie mit der Vorgabe, lag er in der Messung.
+Die HomeStation hat so am 23.09.2026 gezeigt, dass der Abstand zum Hintergrund wirklich
+ändert, was das Modell zeichnet (`auf-154`).
+
 **Messschalter** — Eine Einstellung, die es nur gibt, damit sich **eine Ursache von einer
 anderen trennen lässt** — nicht, damit jemand sie im Alltag stellt. Sie ist
 ausgeschaltet, solange niemand sie setzt, und dann rechnet alles bitgenau wie vorher. Im
@@ -5685,6 +5738,7 @@ Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus Runde 11: **Zweite Tür**, **Freigabe-Abdruck**, **Buchprüfung (`FREIGABE_MIT_BUCH`)**, **Schrift mitliefern / registrieren** (mit CoreText), **PostScript-Name** (mit Namentabelle), **Variable Schrift** (mit Schriftschnitt), **TrueType**, **SHA-256**, **Ressource im App-Paket**, **Kreuzprobe** |
 | 2026-09-23 | Ergaenzt aus Runde 10: **Messschalter**, **Abstand zum Hintergrund (`ferne_abstand`)** |
 | 2026-09-23 | Ergaenzt aus Runde 9: **Lieferstatus**, **Heimrelativer Pfad**; nachgefuehrt: **Obergrenze, gesetzt, nicht gemessen** (an Blender 5.2.2 nachgemessen) |
 | 2026-09-23 | Ergaenzt aus Runde 7b/7c: **Ueberlauf**, **Zweite Linie**, **Obergrenze, gesetzt, nicht gemessen** |

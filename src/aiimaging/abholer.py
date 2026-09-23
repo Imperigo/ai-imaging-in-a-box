@@ -3132,7 +3132,19 @@ def _nicht_gerendert_kurz(kameras) -> tuple[str, ...]:
     nach_art: dict[str, list] = {}
     anteile: dict[str, list] = {}
     for eintrag in kameras:
-        if not isinstance(eintrag, dict) or eintrag.get("bild_png"):
+        if not isinstance(eintrag, dict):
+            continue
+        # DER ZWILLING HAT KEIN EIGENES BILD, auch wenn `bild_png` an ihm steht (Befund
+        # 23.09.2026): Er wird als `dict(zwilling["urteil"], kamera=…, doppelt_von=…)`
+        # gebaut und erbt so das Bild seines Vorbilds. Hier stand bis dahin
+        # `or eintrag.get("bild_png")` — jeder Zwilling eines gerenderten Vorbilds fiel
+        # darum weg, bevor `_art_ohne_bild` «doppelt» sagen konnte, und `verdict.reason`
+        # schwieg ueber ihn; genannt war er nur in `lieferstatus_grund` und im eigenen
+        # Kurzbefund. Uebersprungen wird jetzt nur, wer ein Bild UND kein Vorbild hat.
+        # BEWACHT ist der Zwillingsfall (tests/test_runde11_zwilling.py, Produktweg). Das
+        # Ueberspringen eigener Bilder ist Abwehr und NICHT bewacht: `_art_ohne_bild` gibt
+        # fuer sie heute ohnehin None — eine Mutation dieser Zeile ueberlebt (Durchsicht).
+        if eintrag.get("bild_png") and not eintrag.get("doppelt_von"):
             continue
         art = _art_ohne_bild(eintrag)
         if art is None:

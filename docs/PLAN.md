@@ -7368,7 +7368,9 @@ Bekannt und ausdrücklich nicht erledigt:
       `aufloesung`; Deckungsgrad meldet anders als die drei neuen Werte. *(Runde 8)*
 - [x] **local:** `auf-151` V7 — die Obergrenzen an Blender 5.2. *(5.2.2: dieselben)*
 - [x] **Runde 9:** Mappenpfad heimrelativ; Lieferstatus je Kamera; faithful am Einlass.
-- [ ] **local:** `auf-154` — steuert die Tiefe das Bild? Inpaint-Weg zum Skizzieren?
+- [x] **local:** `auf-154` — steuert die Tiefe das Bild? Inpaint-Weg zum Skizzieren?
+      *(beantwortet 23.09.: Abstand hebt geom_iou 0,35 → 0,92 im Endbild; Inpaint braucht
+      Union-2.x — Protokoll 70 §6)*
       *(berichtigt 23.09. abends: kein Verdrahtungsfehler; wahrscheinlich Rückkante im
       Hintergrund bei freistehendem Körper — Messschalter in Runde 10, Nachtrag in 154)*
 - [x] **Runde 10:** zwei Messschalter (`ferne_abstand`, `tiefe_invertieren`), Vorgabe aus,
@@ -7378,7 +7380,32 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Nachtrag in `auf-154`:** Teil B ersetzt durch B1–B6 (Boden, Abstand, Polarität,
       Pixel, Stärke), Prämisse berichtigt.
 - [ ] **cloud:** `auf-155` — Zusage Lieferstatus, drei Fragen.
-- [ ] **Kern (klein):** Zwilling fehlt in `verdict.reason` (`_nicht_gerendert_kurz` fragt
-      `bild_png` vor `doppelt_von`) — nur mit Ansage ändern.
+- [x] **Kern (klein):** Zwilling fehlt in `verdict.reason` (`_nicht_gerendert_kurz` fragt
+      `bild_png` vor `doppelt_von`) — nur mit Ansage ändern. *(Runde 11, angesagt in 155/158)*
 - [ ] **Owner:** unverändert (Abnahmeblatt, Cloud-Block, zwei Schilder).
+
+## Sitzung 70 — 23.09.2026 · Runde 11: Altposten abtragen, und die erste Antwort zur Tiefe
+
+**Erledigt**
+
+- [x] Elf längst erledigte Posten mit Beleg abgehakt; zwei Messdokumente (R3, INNENANSICHT)
+      nach ihren Antworten berichtigt und neu nachgesehen.
+- [x] Runde 11: die zweite Tür am Freigabe-Tor geschlossen, Buchprüfung im Abholer; eine
+      Quelle für die Geometriefelder; Zwillinge im Urteil; Schriften in der iPad-App.
+- [x] `auf-154` und `auf-156` beantwortet und gelesen.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **local:** `auf-158` (Rang 1) — trägt der Abstand? Steuert Union-2.1 besser? Inpaint?
+- [ ] **local:** `auf-157` (Rang 2) — welche Führung will das Edit-Modell?
+- [ ] **cloud:** `auf-155` mit Nachtrag (Zwillingssatz, F4); dazu 142, 133, 129, 152.
+- [ ] **ui:** `auf-99` mit Nachtrag; dazu die übrigen acht.
+- [ ] **Kern (klein):** `meldung` eines abgewiesenen Tokens an `enqueue_render`/`query_render`
+      zurückgeben — vor dem Einschalten der Buchprüfung.
+- [ ] **Kern (klein):** Abbruchfall in `verdict.reason` — «… fehlt.; Geometrie None gegen
+      0.65» (doppelte Satzzeichen, «None» sichtbar), schon vorher so.
+- [ ] **Owner:** Abnahmeblatt am iPad (A4/A5 neu); zwei Entscheide aus `auf-156`
+      (Kennwort-Änderung im KosmoPrepare-Klon, Bildtest-Commits bei KosmoPublish); nach
+      `auf-158`: wird der Abstand zur Vorgabe?
+- [ ] **Mac-CI:** Schriften übersetzen ohne Warnung — vor `main`.
 

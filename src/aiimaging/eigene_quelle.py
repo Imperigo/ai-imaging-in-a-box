@@ -106,6 +106,12 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
             Status. Wer ihn hier setzt, bekommt das als Warnung gesagt statt einer
             stillen Nichtwirkung.
 
+    **Führt die Ablage ein Tokenbuch** (seit 23.09.2026), genügt das Statuswort nicht:
+    Ein ``queued``-Auftrag gilt dann nur als freigegeben, wenn das Buch den Abdruck
+    seines Tokens als verbraucht für genau diesen Auftrag führt
+    (:func:`aiimaging.jobs.freigabe_im_buch`); sonst steht der Grund unter ``maengel``,
+    und der Abholer lässt ihn liegen. Ohne Buch gilt wie bisher das Statuswort.
+
     Returns:
         Dieselben Felder wie :func:`aiimaging.bruecke.lies_auftrag`, plus ``hochachse``
         und ``ausserhalb``: Angaben, die unser MCP-Eingang kennt und für die
@@ -175,9 +181,26 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         modell = None
 
     freigegeben = satz.get("status") == STATUS_QUEUED
-    if freigegeben:
+    buchbefund = _freigabe_laut_buch(ordner, satz) if freigegeben else None
+    if freigegeben and buchbefund is None:
         grund = (f"Der Auftrag steht auf {STATUS_QUEUED!r} — dorthin führt allein "
-                 f"`jobs.freigeben` mit gültigem Token.")
+                 f"`jobs.freigeben` mit gültigem Token. Ein Tokenbuch gibt es in dieser "
+                 f"Ablage nicht; geprüft ist damit die Form des Tokens, nicht die "
+                 f"Befugnis.")
+    elif freigegeben and buchbefund["belegt"]:
+        grund = f"Der Auftrag steht auf {STATUS_QUEUED!r}. {buchbefund['grund']}"
+    elif freigegeben:
+        # DEM STATUSWORT NICHT BLIND GLAUBEN, SOBALD ES EIN BUCH GIBT (Prüfung
+        # 23.09.2026). `queued` im File kann jeder schreiben, der die Ablage erreicht,
+        # und bis dahin setzte `jobs.baue_job` es sogar am Buch vorbei. Wer Token
+        # ausgibt, will, dass nur ausgegebene rechnen — darum bleibt ein Auftrag ohne
+        # passenden Eintrag liegen, mit Satz, wie jeder andere Wartegrund hier.
+        freigegeben = False
+        grund = (f"Der Auftrag steht auf {STATUS_QUEUED!r}, aber diese Ablage führt ein "
+                 f"Tokenbuch, und es belegt diese Freigabe nicht: {buchbefund['grund']} "
+                 f"Er bleibt liegen, bis er über `jobs.freigeben` mit einem ausgegebenen "
+                 f"Token und eingeschalteter Buchprüfung freigegeben ist.")
+        maengel.append(grund)
     else:
         grund = (f"Der Auftrag steht auf {satz.get('status')!r} und ist nicht "
                  f"freigegeben. Nur `jobs.freigeben` mit einem {jobs.TOKEN_PRAEFIX}…-"
@@ -205,6 +228,31 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         "vertragsvorgaben": tuple(szene["vertragsvorgaben"]),
         "maengel": tuple(maengel),
     }
+
+
+def _freigabe_laut_buch(ordner: Path, satz: dict) -> dict | None:
+    """Was das Tokenbuch zu dieser Freigabe sagt — ``None``, wenn es keines gibt.
+
+    Gesucht wird an beiden Orten, an die ein Buch dieser Ablage gehört: in der Ablage
+    selbst (``<store>/``, dorthin legt es ``werkzeuge.enqueue_render``) und im Ordner
+    des Auftrags (dorthin, wenn jemand ``jobs.freigeben`` mit diesem Ordner und ohne
+    ``buch_verzeichnis`` ruft). Belegt ist die Freigabe, wenn eines der vorhandenen
+    Bücher sie für genau diesen Auftrag als verbraucht führt.
+
+    ``None`` heisst **kein Buch, nicht geprüft** — dann gilt, was vor dem 23.09.2026
+    galt: das Statuswort. Ein unlesbares Buch wirft ``QUELLEN_FEHLER`` (aus
+    ``jobs.freigabe_im_buch``); ein Buch, über das nichts zu entscheiden ist, lässt den
+    Auftrag nicht durch.
+    """
+    befunde = [jobs.freigabe_im_buch(satz, ort) for ort in (ordner.parent, ordner)]
+    vorhanden = [b for b in befunde if b["buch"]]
+    if not vorhanden:
+        return None
+    for befund in vorhanden:
+        if befund["belegt"]:
+            return befund
+    return {"buch": True, "belegt": False,
+            "grund": " ".join(dict.fromkeys(b["grund"] for b in vorhanden))}
 
 
 def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict:

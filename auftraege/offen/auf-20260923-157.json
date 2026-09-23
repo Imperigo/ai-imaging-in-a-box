@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260923-157",
+  "art": "frage",
+  "beschreibung": "Welche Fuehrung will qwen-image-edit-2511? Die Pipeline heisst ihren Regler true_cfg_scale, wir setzen nur guidance_scale (und fuer dieses Modell gar keinen Wert) — nachlesen, nicht rechnen: Signatur, Modellkarte, Pipeline-Konfiguration, mit Quelle.",
+  "anweisung": "=== WELCHE FUEHRUNG WILL DAS EDIT-MODELL? — NUR LESEN, NICHT RECHNEN ===\n\nWARUM\nDie «Fuehrung» (classifier-free guidance: wie stark der Prompt das Bild zwingt) ist in\nunserem Register fuer sieben von acht Eintraegen NICHT gesetzt. Fuer z-image-turbo steht 0.0\n(destilliert, laeuft ohne). Fuer qwen-image-edit-2511 steht nichts — dann greift, was die\nPipeline selbst vorgibt, und das ist eine fremde Entscheidung. Euer auf-138 hat gezeigt:\nQwenImageEditPlusPipeline hat fuer guidance_scale KEINE Vorgabe (null), und eure Empfehlung\nwar «keine». Wir vermuten inzwischen den Grund: Diese Pipeline heisst ihren Regler\nwahrscheinlich true_cfg_scale, nicht guidance_scale — und den setzen wir nirgends. Wenn das\nstimmt, rechnet jeder Lauf mit der Vorgabe von diffusers, und unser negativer Prompt wirkt\noder wirkt nicht, ohne dass wir es wissen.\n\nWir setzen den Wert erst, wenn er BELEGT ist. Geraten wird nicht.\n\nWAS ZU TUN IST (keine GPU-Last, kein Render — Laden der Klasse genuegt, oder nicht einmal das)\n\n  Q1 SIGNATUR. Im Render-venv:\n        import inspect, diffusers\n        from diffusers import QwenImageEditPlusPipeline\n        print(diffusers.__version__)\n        s = inspect.signature(QwenImageEditPlusPipeline.__call__)\n        for n in (\"true_cfg_scale\", \"guidance_scale\", \"num_inference_steps\",\n                  \"negative_prompt\"):\n            print(n, s.parameters[n].default if n in s.parameters else \"FEHLT\")\n     Zurueck: die vier Zeilen woertlich und die diffusers-Fassung.\n\n  Q2 WANN WIRKT DER NEGATIVE PROMPT? Im Quelltext von __call__ derselben Klasse (Datei\n     unter site-packages/diffusers/pipelines/qwenimage/) die Bedingung, unter der\n     negative_prompt ueberhaupt gerechnet wird (vermutlich etwas wie\n     «true_cfg_scale > 1 and has_neg_prompt»), WOERTLICH mit Dateiname und Zeilennummer.\n     Und: Was tut guidance_scale in dieser Klasse (woertlich, mit Zeile) — wird es fuer\n     dieses Modell ueberhaupt benutzt, oder nur bei «guidance-distilled» Gewichten?\n\n  Q3 WAS DIE MODELLKARTE EMPFIEHLT. Im Modellordner von Qwen/Qwen-Image-Edit-2511 bei\n     euch (README.md der Gewichte, falls vorhanden; sonst model_index.json und die\n     scheduler-Konfiguration): die empfohlenen Werte fuer true_cfg_scale,\n     num_inference_steps und ggf. guidance_scale, WOERTLICH mit Dateiname. Liegt keine\n     README bei den Gewichten: sagt das, und schaut NICHT im Netz nach (die Quelle muss\n     die Fassung sein, die ihr faehrt).\n\n  Q4 WAS WIR HEUTE WIRKLICH UEBERGEBEN. In unserem Code (nur lesen): render.py uebergibt\n     guidance_scale aus parameter[\"fuehrung\"] (~Zeile 1589/1650) und true_cfg_scale gar\n     nicht. Bestaetigt oder widerlegt das an eurem letzten Lauf mit diesem Modell (falls\n     einer in einem Ergebnis steht: dessen parameter/hinweise woertlich). Kein neuer Lauf.\n\nWAS ZURUECKKOMMEN SOLL\n  Q1 die vier Vorgaben + Fassung · Q2 zwei Stellen woertlich · Q3 Empfehlung mit Quelle ·\n  Q4 bestaetigt/widerlegt · Q5 eine Zeile, die wir nicht gefragt haben und wissen sollten.\n\nWAS WIR DAMIT TUN (damit ihr wisst, wozu)\n  Belegt die Antwort true_cfg_scale als den wirksamen Regler, bekommt das Register ein Feld\n  dafuer mit eurem Wert und der Quelle, und render.py uebergibt ihn — MIT Ansage an euch,\n  bevor es ankommt, weil es jedes Bild dieses Modells aendert.\n\nWAS NICHT GETAN WERDEN SOLL\n  - Kein Render, keine GPU-Last, nichts herunterladen, nichts installieren.\n  - Nichts an unserem Code aendern.\n  - Keine Pfade mit Benutzernamen (REGEL 3); Modellordner als <modellwurzel>/… angeben.",
+  "erstellt": "2026-09-23T20:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nur lesen: kein Render, keine GPU-Last, nichts herunterladen.",
+      "Nichts an unserem Code aendern.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Q1 Vorgaben von true_cfg_scale, guidance_scale, num_inference_steps, negative_prompt + diffusers-Fassung.",
+    "Q2 Bedingung fuer negative_prompt und Rolle von guidance_scale, woertlich mit Datei:Zeile.",
+    "Q3 Empfehlung der Modellkarte bei euren Gewichten, woertlich mit Dateiname (oder: keine README).",
+    "Q4 Was render.py heute uebergibt — bestaetigt/widerlegt am letzten Lauf.",
+    "Q5 Eine Zeile, die wir nicht erfragt haben."
+  ],
+  "rang": 2
+}

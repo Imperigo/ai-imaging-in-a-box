@@ -23,9 +23,16 @@ sie gehört in einen Scheduler, der diese Ablage liest.
 Der eine Satz, an dem alles hängt
 ---------------------------------
 **Der Status folgt allein dem Freigabe-Token.** Kein Aufrufer kann ``queued`` setzen —
-weder über ``baue_job`` (dort entscheidet ausschliesslich ``ist_gueltiges_token``) noch
-über ``setze_status`` (das ``queued`` ausdrücklich verweigert). Der einzige Weg nach
-``queued`` führt durch ``freigeben`` mit gültigem Token.
+weder über ``baue_job`` noch über ``setze_status`` (das ``queued`` ausdrücklich
+verweigert). Der einzige Weg nach ``queued`` führt durch die Tür von ``freigeben``
+(``_freigabe_pruefen`` und ``_freigabe_vollziehen``), und ``baue_job`` geht mit einem
+mitgegebenen Token durch **dieselbe** Tür, mit derselben Prüfung und derselben Vorgabe
+:data:`FREIGABE_MIT_BUCH`.
+
+*Bis zum 23.09.2026 stimmte der Satz nicht ganz:* ``baue_job`` stellte selbst auf
+``queued``, allein nach der **Form** des Tokens — am Tokenbuch vorbei. Solange die
+Buchprüfung aus ist, war das gleichwertig; eingeschaltet wäre es eine zweite, offene Tür
+gewesen (Prüfung 23.09.2026, bewacht in ``tests/test_runde11_einlass.py``).
 
 Das ist der Freeze-Schutz: Ein Sprachmodell, das an dieser Bibliothek hängt, soll
 Aufträge **einstellen** können, ohne Hardware **blockieren** zu können. Ein Modell, das
@@ -270,14 +277,28 @@ def _wehre_token_in_params_ab(params) -> None:
 
 def baue_job(*, job_id: str, art: str, params: dict,
              approval_token: str | None = None,
-             idle_window_only: bool = True) -> dict:
+             idle_window_only: bool = True,
+             buch_verzeichnis=None,
+             mit_buch: bool | None = None) -> dict:
     """Auftragssatz bauen — ohne die GPU anzurühren.
 
-    **Der Status folgt allein dem Token.** Ein gültiges ``approval_token`` ergibt
-    ``queued``, alles andere ``awaiting_approval``. Es gibt keinen Parameter, mit dem ein
-    Aufrufer den Status selbst setzen könnte, und ein ungültiges Token ist kein Fehler,
-    sondern schlicht keine Freigabe — fail-closed. Ein ``JobError`` an dieser Stelle
-    würde nur dazu verleiten, ihn abzufangen und den Auftrag doch einzustellen.
+    **Der Status folgt allein dem Token.** Gebaut wird immer ``awaiting_approval``. Ein
+    mitgegebenes ``approval_token`` geht danach durch **dieselbe Tür wie**
+    :func:`freigeben` — dieselbe Prüfung, dieselbe Vorgabe :data:`FREIGABE_MIT_BUCH` —
+    und nur wenn sie aufgeht, steht der Satz auf ``queued``. Es gibt keinen Parameter,
+    mit dem ein Aufrufer den Status selbst setzen könnte, und ein abgewiesenes Token ist
+    kein Fehler, sondern schlicht keine Freigabe — fail-closed. Ein ``JobError`` an
+    dieser Stelle würde nur dazu verleiten, ihn abzufangen und den Auftrag doch
+    einzustellen.
+
+    **Abgewiesen heisst nicht still** (23.09.2026): Wurde ein Token mitgegeben und die
+    Tür ging nicht auf, trägt der Satz den Grund als ``meldung`` — ohne das Token. Bis
+    dahin blieb ein untaugliches Token wortlos auf ``awaiting_approval``.
+
+    **Warum nicht mehr selbst auf ``queued``** (Prüfung 23.09.2026): Bis dahin setzte
+    diese Funktion ``queued`` allein nach der Form des Tokens. Mit eingeschalteter
+    Buchprüfung wäre das eine zweite Tür gewesen, an ``freigeben`` und am Tokenbuch
+    vorbei — der MCP-Einlass (``werkzeuge.enqueue_render``) ging genau durch sie.
 
     ``idle_window_only`` wird nur **mitgeführt**, nicht ausgewertet: Der Scheduler, der
     entscheidet, ob gerade Leerlauffenster ist, kommt später. Das Feld jetzt schon zu
@@ -291,6 +312,11 @@ def baue_job(*, job_id: str, art: str, params: dict,
             kopiert; spätere Änderungen am übergebenen Objekt erreichen den Auftrag nicht.
         approval_token: Freigabe, falls sie schon vorliegt.
         idle_window_only: Vermerk für den Scheduler.
+        buch_verzeichnis: Wo das Tokenbuch liegt. Nur bei eingeschalteter Buchprüfung
+            gebraucht; fehlt es dann, geht die Tür nicht auf (nicht prüfbar ist nicht
+            dasselbe wie geprüft).
+        mit_buch: ``None`` heisst: die Vorgabe :data:`FREIGABE_MIT_BUCH`, zur Zeit des
+            Aufrufs gelesen — dieselbe wie bei :func:`freigeben`.
 
     Returns:
         Der Auftragssatz als ``dict`` — noch nicht geschrieben.
@@ -305,11 +331,9 @@ def baue_job(*, job_id: str, art: str, params: dict,
         raise JobError(f"params muss ein dict sein, war {type(params).__name__}")
 
     _wehre_token_in_params_ab(params)
-    freigegeben = ist_gueltiges_token(approval_token)
-    status = STATUS_QUEUED if freigegeben else STATUS_AWAITING
     jetzt = _jetzt()
 
-    return {
+    satz = {
         "schema": JOB_SCHEMA_ID,
         "job_id": job_id,
         "art": art,
@@ -317,13 +341,15 @@ def baue_job(*, job_id: str, art: str, params: dict,
         # Aufrufer soll seinen params-Dict weiterverwenden dürfen, ohne den bereits
         # eingestellten Auftrag nachträglich zu verändern.
         "params": copy.deepcopy(params),
-        "status": status,
+        "status": STATUS_AWAITING,
         "idle_window_only": bool(idle_window_only),
         # Nur die Tatsache der Freigabe wird abgelegt, nie das Token selbst. Das Token
         # ist eine Befugnis; eine Auftragsdatei ist für jeden lesbar, der das Verzeichnis
-        # sieht. Wer das Token dort ablegt, verteilt die Befugnis mit.
-        "freigegeben": freigegeben,
-        "freigegeben_am": jetzt if freigegeben else None,
+        # sieht. Wer das Token dort ablegt, verteilt die Befugnis mit. (Seit dem
+        # 23.09.2026 kommt bei einer Freigabe sein Abdruck dazu, `FELD_ABDRUCK` — nicht
+        # zurückrechenbar, siehe `_fingerabdruck`.)
+        "freigegeben": False,
+        "freigegeben_am": None,
         "erstellt": jetzt,
         "geaendert": jetzt,
         "ergebnis": None,
@@ -331,8 +357,23 @@ def baue_job(*, job_id: str, art: str, params: dict,
         # Nur `geaendert` mitzuführen hiesse, bei jedem Wechsel die Vorgeschichte zu
         # überschreiben. Der Verlauf beantwortet die Frage, die man später wirklich
         # stellt: wie lange lag der Auftrag, und wie lange lief er.
-        "verlauf": [{"status": status, "zeit": jetzt}],
+        "verlauf": [{"status": STATUS_AWAITING, "zeit": jetzt}],
     }
+    if approval_token is None:
+        return satz
+
+    # DURCH DIESELBE TÜR WIE `freigeben` (23.09.2026). Der Verlauf zeigt danach beide
+    # Stationen — `awaiting_approval` und `queued` im selben Augenblick —, wie bei einer
+    # nachträglichen Freigabe; bis dahin stand hier allein `queued`.
+    mit_buch = _mit_buch(mit_buch)
+    try:
+        _freigabe_pruefen(approval_token, buch_verzeichnis, mit_buch)
+        _freigabe_vollziehen(satz, approval_token, buch_verzeichnis, mit_buch, zeit=jetzt)
+    except JobError as fehler:
+        # Der Grund nennt das Token nie — die Meldungen der Tür sind so gebaut.
+        satz["meldung"] = (f"Freigabe beim Einstellen abgewiesen, der Auftrag wartet auf "
+                           f"Freigabe: {fehler}")
+    return satz
 
 
 def schreibe_job(record: dict, verzeichnis) -> Path:
@@ -451,9 +492,15 @@ def liste_jobs(verzeichnis, status: str | None = None) -> list[dict]:
     return sorted(gefunden, key=lambda s: (str(s.get("erstellt") or ""), str(s.get("job_id") or "")))
 
 
-def _wechsle(satz: dict, neuer_status: str, *, ergebnis=None, fehler=None) -> dict:
-    """Statuswechsel im Speicher vollziehen, nachdem er als erlaubt erkannt wurde."""
-    jetzt = _jetzt()
+def _wechsle(satz: dict, neuer_status: str, *, ergebnis=None, fehler=None,
+             zeit: str | None = None) -> dict:
+    """Statuswechsel im Speicher vollziehen, nachdem er als erlaubt erkannt wurde.
+
+    ``zeit`` nur für :func:`baue_job`: Dort geschehen Einstellen und Freigeben im selben
+    Augenblick, und ``freigegeben_am`` soll dann ``erstellt`` gleichen, statt über eine
+    Sekundengrenze zu rutschen.
+    """
+    jetzt = zeit or _jetzt()
     satz["status"] = neuer_status
     satz["geaendert"] = jetzt
     if ergebnis is not None:
@@ -691,22 +738,40 @@ def token_entwerten(token, verzeichnis, *, job_id=None) -> dict:
     return eintrag
 
 
-def freigeben(job_id: str, token: str, verzeichnis, *, mit_buch: bool = False) -> dict:
-    """``awaiting_approval`` → ``queued``, ausschliesslich mit gültigem Token.
+#: **Die EINE Vorgabe der Buchprüfung** — gelesen zur Zeit jedes Aufrufs von
+#: :func:`freigeben` und :func:`baue_job` (``mit_buch=None``).
+#:
+#: **Warum eine Konstante statt zweier Vorgabewerte** (Prüfung 23.09.2026): Bis dahin
+#: stand die Vorgabe als ``mit_buch=False`` allein an ``freigeben``, und ``baue_job``
+#: kannte gar keine. Wer die Prüfung dort einschaltete, liess den MCP-Einlass offen.
+#: Jetzt schaltet diese eine Zeile beide Türen; bewacht in
+#: ``tests/test_runde11_einlass.py`` über ``werkzeuge.enqueue_render``.
+#:
+#: **AUS**, aus demselben Grund wie seit dem 09.09.2026: Es gibt niemanden, der Token
+#: ausgibt (ui-Auftrag ``auf-20260909-99``). Eingeschaltet wiese sie über Nacht jede
+#: bestehende Freigabe ab.
+FREIGABE_MIT_BUCH = False
 
-    Die einzige Tür zum Ausführungspfad. Sie prüft in dieser Reihenfolge:
+#: Das Feld, in dem ein freigegebener Auftrag den Abdruck seines Tokens trägt
+#: (:func:`_fingerabdruck`, nie das Token selbst). Seit dem 23.09.2026: Nur so kann ein
+#: Leser der Ablage im Tokenbuch nachsehen, **ob diese Freigabe für genau diesen
+#: Auftrag verbraucht wurde** (:func:`freigabe_im_buch`) — statt dem Statuswort zu
+#: glauben, das jeder mit Dateizugriff schreiben kann.
+FELD_ABDRUCK = "freigabe_abdruck"
 
-    1. Token gültig? Sonst ``JobError`` — und die Datei auf der Platte bleibt unberührt.
-       Die Prüfung steht vor dem Lesen, damit ein ungültiges Token nicht einmal verrät,
-       ob es den Auftrag überhaupt gibt.
-    2. Auftrag in ``awaiting_approval``? Sonst ``UebergangError``. Ein bereits
-       freigegebener Auftrag wird **nicht** stillschweigend noch einmal freigegeben:
-       Eine zweite Freigabe auf einem laufenden Auftrag wäre ein Hinweis darauf, dass
-       zwei Stellen dasselbe Gate bedienen — das gehört gemeldet.
+
+def _mit_buch(wert) -> bool:
+    """``None`` → :data:`FREIGABE_MIT_BUCH`, zur Zeit des Aufrufs gelesen."""
+    return FREIGABE_MIT_BUCH if wert is None else bool(wert)
+
+
+def _freigabe_pruefen(token, buch_verzeichnis, mit_buch: bool) -> None:
+    """Die Prüfung der Tür, **bevor** ein Auftrag gelesen oder angefasst wird.
 
     Raises:
-        JobError: Token ungültig oder Auftrag nicht vorhanden.
-        UebergangError: Auftrag ist nicht (mehr) in ``awaiting_approval``.
+        JobError: Form falsch, oder — bei eingeschalteter Buchprüfung — kein Buch
+            angegeben oder das Token nicht ausgegeben bzw. schon verbraucht. Keine
+            Meldung nennt das Token.
     """
     if not ist_gueltiges_token(token):
         raise JobError(
@@ -714,7 +779,7 @@ def freigeben(job_id: str, token: str, verzeichnis, *, mit_buch: bool = False) -
             f"nicht-leerem Rest. Ohne gültige Freigabe wird keine GPU belegt."
         )
 
-    # DIE BEFUGNIS, und sie ist VORGABE AUS — `mit_buch=False`.
+    # DIE BEFUGNIS, und sie ist VORGABE AUS — `FREIGABE_MIT_BUCH`.
     #
     # Eingeschaltet gilt ein Token nur, wenn es ausgegeben und unverbraucht ist. Das
     # schliesst das Loch aus `auf-vis-20260821-03`: Wer das Praefix kennt, kommt sonst
@@ -724,23 +789,122 @@ def freigeben(job_id: str, token: str, verzeichnis, *, mit_buch: bool = False) -
     # bestehende Freigabe abgewiesen — ein Gate, das ueber Nacht alles sperrt, ist
     # dieselbe Sorte stille Verhaltensaenderung, gegen die dieses Haus antritt.
     if mit_buch:
-        befund = token_befugt(token, verzeichnis)
+        if buch_verzeichnis is None:
+            raise JobError(
+                "Freigabe abgelehnt: Die Buchprüfung ist eingeschaltet, aber kein "
+                "Verzeichnis des Tokenbuchs angegeben. Nicht prüfbar ist nicht dasselbe "
+                "wie geprüft.")
+        befund = token_befugt(token, buch_verzeichnis)
         if not befund["gilt"]:
             raise JobError(f"Freigabe abgelehnt: {befund['grund']}")
 
-    satz = lies_job(job_id, verzeichnis)
+
+def _freigabe_vollziehen(satz: dict, token, buch_verzeichnis, mit_buch: bool, *,
+                         zeit: str | None = None) -> dict:
+    """``awaiting_approval`` → ``queued`` im Speicher — **der einzige Ort, der das tut.**
+
+    Vorher muss :func:`_freigabe_pruefen` durchgelaufen sein. Schreibt den Abdruck des
+    Tokens in :data:`FELD_ABDRUCK` und verbraucht es bei eingeschalteter Buchprüfung
+    für genau diesen Auftrag.
+
+    Raises:
+        UebergangError: Der Satz steht nicht auf ``awaiting_approval``.
+    """
     _pruefe_uebergang(satz.get("status"), STATUS_QUEUED)
 
-    _wechsle(satz, STATUS_QUEUED)
+    # ERST ENTWERTEN, DANN DEN SATZ ANFASSEN, DANN SCHREIBEN (der Aufrufer schreibt).
+    # Bricht das Schreiben ab, ist das Token verbraucht und der Auftrag nicht freigegeben —
+    # die teurere Reihenfolge waere die andere: ein freigegebener Auftrag mit einem Token,
+    # das noch einmal gilt. Und wirft das Entwerten (Wettlauf um dasselbe Token, Buch
+    # dazwischen unlesbar), bleibt der Satz UNBERUEHRT auf awaiting_approval (Durchsicht
+    # Runde 11: vorher stand er dann schon auf queued, mit einer Meldung «abgewiesen»).
+    if mit_buch:
+        token_entwerten(token, buch_verzeichnis, job_id=satz.get("job_id"))
+
+    _wechsle(satz, STATUS_QUEUED, zeit=zeit)
     satz["freigegeben"] = True
     satz["freigegeben_am"] = satz["geaendert"]
-    # ERST ENTWERTEN, DANN SCHREIBEN. Bricht das Schreiben ab, ist das Token verbraucht
-    # und der Auftrag nicht freigegeben — die teurere Reihenfolge waere die andere: ein
-    # freigegebener Auftrag mit einem Token, das noch einmal gilt.
-    if mit_buch:
-        token_entwerten(token, verzeichnis, job_id=job_id)
+    # DER ABDRUCK, NIE DAS TOKEN (23.09.2026). Dieselbe Funktion wie im Tokenbuch — nur
+    # so findet ein Leser der Ablage den Eintrag, der zu dieser Freigabe gehört.
+    satz[FELD_ABDRUCK] = _fingerabdruck(token)
+    return satz
+
+
+def freigeben(job_id: str, token: str, verzeichnis, *, mit_buch: bool | None = None,
+              buch_verzeichnis=None) -> dict:
+    """``awaiting_approval`` → ``queued``, ausschliesslich mit gültigem Token.
+
+    Die einzige Tür zum Ausführungspfad — :func:`baue_job` geht mit einem mitgegebenen
+    Token durch dieselbe (seit dem 23.09.2026). Sie prüft in dieser Reihenfolge:
+
+    1. Token gültig — und bei eingeschalteter Buchprüfung ausgegeben und unverbraucht?
+       Sonst ``JobError`` — und die Datei auf der Platte bleibt unberührt. Die Prüfung
+       steht vor dem Lesen, damit ein ungültiges Token nicht einmal verrät, ob es den
+       Auftrag überhaupt gibt.
+    2. Auftrag in ``awaiting_approval``? Sonst ``UebergangError``. Ein bereits
+       freigegebener Auftrag wird **nicht** stillschweigend noch einmal freigegeben:
+       Eine zweite Freigabe auf einem laufenden Auftrag wäre ein Hinweis darauf, dass
+       zwei Stellen dasselbe Gate bedienen — das gehört gemeldet.
+
+    Args:
+        mit_buch: ``None`` heisst :data:`FREIGABE_MIT_BUCH` (heute aus).
+        buch_verzeichnis: Wo das Tokenbuch liegt; ohne Angabe ``verzeichnis``. In der
+            eigenen Ablage des MCP-Einlasses liegt jeder Auftrag in einem eigenen Ordner,
+            das Buch aber einmal in der Ablage darüber — dafür gibt es diese Angabe.
+
+    Raises:
+        JobError: Token ungültig oder Auftrag nicht vorhanden.
+        UebergangError: Auftrag ist nicht (mehr) in ``awaiting_approval``.
+    """
+    mit_buch = _mit_buch(mit_buch)
+    buch = verzeichnis if buch_verzeichnis is None else buch_verzeichnis
+    _freigabe_pruefen(token, buch, mit_buch)
+
+    satz = lies_job(job_id, verzeichnis)
+    _freigabe_vollziehen(satz, token, buch, mit_buch)
     schreibe_job(satz, verzeichnis)
     return satz
+
+
+def freigabe_im_buch(satz: dict, buch_verzeichnis) -> dict:
+    """Führt das Tokenbuch die Freigabe dieses Auftrags als **für ihn** verbraucht?
+
+    Für Leser der Ablage, die einem ``queued`` im File nicht blind glauben wollen
+    (:mod:`aiimaging.eigene_quelle`, seit dem 23.09.2026).
+
+    Returns:
+        ``{buch, belegt, grund}``. ``buch`` sagt, ob es dort ein Tokenbuch gibt.
+        ``belegt`` ist ``None``, wenn es keines gibt — **nicht geprüft**, nicht «nein» —,
+        sonst ``True`` nur, wenn der Abdruck aus :data:`FELD_ABDRUCK` im Buch steht,
+        verbraucht ist und ``verbraucht_fuer`` genau diese ``job_id`` nennt.
+
+    Raises:
+        JobError: Das Buch ist unlesbar — dann ist hier nichts zu entscheiden.
+    """
+    if not _tokenbuch_pfad(buch_verzeichnis).is_file():
+        return {"buch": False, "belegt": None,
+                "grund": "Kein Tokenbuch — die Freigabe ist nicht gegen ein Buch geprüft."}
+    buch = _tokenbuch_lesen(buch_verzeichnis)
+    abdruck = satz.get(FELD_ABDRUCK)
+    job_id = satz.get("job_id")
+    if not abdruck:
+        return {"buch": True, "belegt": False,
+                "grund": ("Der Auftrag trägt keinen Abdruck eines Tokens — er ist nicht "
+                          "durch `jobs.freigeben` gegangen, sondern von Hand oder von "
+                          "einer älteren Fassung auf 'queued' gesetzt.")}
+    eintrag = buch.get(abdruck)
+    if eintrag is None:
+        return {"buch": True, "belegt": False,
+                "grund": "Das Token dieser Freigabe wurde nie ausgegeben."}
+    if not eintrag.get("verbraucht"):
+        return {"buch": True, "belegt": False,
+                "grund": ("Das Token ist ausgegeben, aber nicht verbraucht — die Freigabe "
+                          "lief ohne Buchprüfung, und dasselbe Token gälte noch einmal.")}
+    if eintrag.get("verbraucht_fuer") != job_id:
+        return {"buch": True, "belegt": False,
+                "grund": "Das Token wurde für einen anderen Auftrag verbraucht."}
+    return {"buch": True, "belegt": True,
+            "grund": f"Das Tokenbuch führt die Freigabe als verbraucht für {job_id}."}
 
 
 __all__ = [
@@ -750,8 +914,9 @@ __all__ = [
     "STATUS_AWAITING", "STATUS_CANCELLED", "STATUS_DONE", "STATUS_ERROR",
     "STATUS_QUEUED", "STATUS_RUNNING",
     "JobError", "UebergangError",
-    "TOKENBUCH",
-    "baue_job", "freigeben", "ist_gueltiges_token", "lies_job", "liste_jobs",
+    "TOKENBUCH", "FREIGABE_MIT_BUCH", "FELD_ABDRUCK",
+    "baue_job", "freigabe_im_buch", "freigeben", "ist_gueltiges_token", "lies_job",
+    "liste_jobs",
     "token_ausgeben", "token_befugt", "token_entwerten",
     "neue_job_id", "schreibe_job", "setze_status",
 ]

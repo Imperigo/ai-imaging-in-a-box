@@ -105,6 +105,21 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 23.09.2026 (nachts) · Die Tiefe steuert — mit einem Handgriff besser
+
+* **Die HomeStation hat gemessen:** Hebt man das Gebäude in der Tiefenkarte leicht vom
+  Hintergrund ab, folgt das KI-Bild der Form deutlich besser — die Deckung steigt von rund
+  einem Drittel auf über neun Zehntel. Belegt ist, dass der Gewinn im Bild liegt und nicht
+  in der Messung. Die Prüfung besteht trotzdem noch keiner der Läufe.
+* **Zwei weitere Hebel werden gemessen:** ob der Gewinn über mehrere Startwerte und ein
+  zweites Gebäude trägt, und ob ein neueres Steuermodell desselben Herstellers (frei
+  lizenziert) besser führt und das Hineinskizzieren möglich macht.
+* **Aufgeräumt:** Elf alte Posten waren längst erledigt und nie abgehakt. Zwei Messblätter
+  widersprachen ihren eigenen Antworten — berichtigt.
+* **Sicherer:** Ein Renderauftrag konnte die Freigabeprüfung umgehen, wenn er gleich mit
+  Token eingestellt wurde. Die Tür ist zu.
+* **Die iPad-App bringt ihre Schriften mit** — am Gerät noch unbestätigt.
+
 ### 23.09.2026 (spät) · Warum die Form manchmal nicht ankommt — jetzt messbar
 
 * **Zwei Messschalter**, ausgeschaltet, solange niemand sie setzt: Der eine hebt das
