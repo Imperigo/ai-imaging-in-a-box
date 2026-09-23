@@ -102,8 +102,15 @@ enum Schriftregister {
     /// Wo die Datei in der Ablage liegt. `.process` legt sie flach hinein (so SwiftPM,
     /// nachgefahren am 23.09.2026 unter Linux); sollte eine Umgebung die Unterordner
     /// behalten, wird dort gesucht.
+    ///
+    /// **Im Haupt-Bundle, nicht in `Bundle.module`** (Mac-CI, 23.09.2026): Xcode legt fuer
+    /// ein App-Paket (`.iOSApplication`) kein `Bundle.module` an — das Uebersetzen brach
+    /// daran ab. Die Ressourcen liegen im Bundle der App; die rekursive Suche unten findet
+    /// sie auch in einem verschachtelten `*.bundle`, falls eine Umgebung eines anlegt. Und
+    /// fehlt die Datei ganz, kommt `nil` zurueck — dann greift der Rueckfall auf die
+    /// Systemschrift, statt dass die App abbricht.
     private static func fundort(_ schnitt: Schriftschnitt) -> URL? {
-        let ablage = Bundle.module
+        let ablage = Bundle.main
         if let flach = ablage.url(forResource: schnitt.datei, withExtension: "ttf") {
             return flach
         }

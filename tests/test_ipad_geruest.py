@@ -604,3 +604,18 @@ def test_die_schriftnamen_stehen_nur_im_zeichenblatt():
         if re.search(r'\.custom\(\s*"', _ohne_kommentarzeilen(text)):
             funde.append(f"{datei.relative_to(WURZEL)}: .custom mit festem Namen")
     assert not funde, "Schriftnamen ausserhalb des Zeichenblatts:\n  " + "\n  ".join(funde)
+
+
+def test_die_app_sucht_ihre_schriften_nicht_in_bundle_module():
+    """**Mac-CI, 23.09.2026.** Xcode legt für ein App-Paket (`.iOSApplication`) kein
+    `Bundle.module` an — das Übersetzen brach daran ab, unter Linux fiel es nicht auf.
+    Die Schriften werden darum im Bundle der App gesucht. Abwesenheit, weil der Fehler
+    hier nicht übersetzt werden kann."""
+    fundstellen = [
+        f"{pfad.relative_to(APP)}:{nr}"
+        for pfad in sorted(APP.rglob("*.swift"))
+        for nr, zeile in enumerate(pfad.read_text(encoding="utf-8").splitlines(), 1)
+        if "Bundle.module" in zeile and not zeile.lstrip().startswith("///")
+        and not zeile.lstrip().startswith("//")
+    ]
+    assert not fundstellen, f"Bundle.module im App-Paket: {fundstellen}"

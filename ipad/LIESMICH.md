@@ -218,12 +218,12 @@ diesem Zertifikat trauen (`--cacert`); die Verbindung ungeprüft zu lassen ist k
   `<Familie>-OFL.txt`. Ungeprüft: ob CoreText die variable Plex-Sans-Datei unter
   `IBMPlexSans-Regular` führt und ihr Gewicht über die Achse annimmt — **scheitert das
   Registrieren oder die Namensnachfrage**, zeigt die App die Systemschrift und schreibt den
-  Grund in die Konsole (`Schriftregister.stand.befunde`). **Kein Rückfall** gibt es für zwei
-  andere Fälle (Durchsicht Runde 11): Legt Swift Playgrounds `Bundle.module` nicht wie
-  Xcode an, lässt sich die App dort gar nicht übersetzen; und schreibt Playgrounds das
+  Grund in die Konsole (`Schriftregister.stand.befunde`). Gesucht wird im Bundle der App,
+  **nicht** in `Bundle.module` — das legt Xcode für ein App-Paket gar nicht an (die Mac-CI
+  brach am 23.09.2026 daran ab). Offen bleibt ein Fall: Schreibt Swift Playgrounds das
   Manifest beim Ändern von Symbol oder Farbe neu und lässt dabei `resources:
-  [.process("Schriften")]` fallen, ebenso. Beides zeigt erst das Öffnen in Playgrounds —
-  im Abnahmeblatt nachzusehen.
+  [.process("Schriften")]` fallen, liegen die Dateien nicht mehr in der App — dann zeigt
+  sie die Systemschrift. Das zeigt erst das Öffnen in Playgrounds (Abnahmeblatt A5).
 * **Ob iOS die Verbindung zur HomeStation zulässt** — lokale Netzwerkfreigabe
   (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) und die ATS-Ausnahme
   `NSAllowsLocalNetworking` sind eingetragen, am Gerät nicht erprobt.
