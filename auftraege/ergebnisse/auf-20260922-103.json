@@ -1,0 +1,62 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-103",
+ "status": "ok",
+ "beendet": "2026-09-23T13:06:00Z",
+ "stand": "e490b66",
+ "geprueft": "An der Blender-Szene eines echten Projekts gemessen (ein ArchiCAD-Modell, das hier fuer die Innenraum-Renderkette als Szene liegt; 40'240 Mesh-Objekte). V1 ist JA: das Modell fuehrt 82 Kontextvolumen neben dem Hauptgebaeude. V2 lief erst im zweiten Anlauf: euer Befehl woertlich bricht in Blenders eigenem Python ab, weil dort lxml fehlt (und shapely). Mit fertigen Python-3.13-Paketen, die schon auf der Maschine lagen, nur zur Laufzeit auf sys.path gelegt (nichts installiert), lief er durch — ohne BuildingOBB-Marker, ueber den Dichte-Ausweichweg. Das gefilterte Blatt ist lesbarer, aber keines der beiden ist ein brauchbarer Plan. V3: 16'815 Linien statt «~hundert», das Bild ist trotzdem ein lesbares Geschossschema. Keine Bilder zurueck, Szene und Ausgaben bleiben auf der HomeStation.",
+ "kurzantwort": {
+  "V1": "JA. 82 Kontextvolumen (je ein Mesh, alle mit demselben dunkelgrauen Material, Hoehen bis rund 40 m), ueber das Gelaende verteilt, dazu gelaendeweite Platten (Freiflaechen/Decken bis ~400 m Ausdehnung). Ob jemand sie heute von Hand wegraeumt: WEISS ICH NICHT. Aber: der Plan-Generator des Add-ons (Knoten «3 · Plan Generator») zeichnet gar nicht aus der Blender-Szene, sondern aus einer Bruecken-Nutzlast (JSON) — Nachbarn in der Szene erscheinen dort also nicht, egal ob jemand raeumt.",
+  "V2": "JA, mit Vorbehalt. Woertlich: Abbruch «RuntimeError: lxml ist erforderlich fuer SVG-Postprocessing» (Blender-Python hat weder lxml noch shapely). Mit lxml und shapely (je cp313, schon auf der Maschine) zur Laufzeit: laeuft in ~1 s, KEIN Abbruch wegen fehlendem Marker — der Dichte-Ausweichweg greift (obb_source 'density_cluster_fallback', 156 × 31 × 30 m, 34'180 von 40'240 Objekten; alle 82 Kontextvolumen ausgeschlossen, 1856 Silhouettenlinien). Urteil: siehe befunde.v2_urteil. SVG-Groessen bei z = 1,2 m: ungefiltert 1119 KB, gefiltert 903 KB.",
+  "V3": "16'815 Linien (nicht ~hundert). Ausdehnung 122 × 89 m. Angesehen: ein lesbares, sauberes Geschossschema (gestapelte Platten, Stuetzenraster als kleine Ringe je Geschoss); brauchbar als Schema, nicht zu grob — eher zu fein fuer das, was der Modulkopf verspricht, weil jede Stuetze pro Geschoss ihren Umriss mitbringt.",
+  "V4": "Wer Blender ueber den Snap-Starter (/snap/bin/blender) mit Ausgabe IN EINE DATEI faehrt, bekommt 0 Byte — auch euer «print('URTEIL', …)» ginge verloren; und Blender endet bei einer Python-Ausnahme mit Exitcode 0, solange --python-exit-code fehlt."
+ },
+ "befunde": {
+  "szene": "eine echte ArchiCAD-Projektszene (Import vom 10.09.2026, 408 MB, 40'240 Objekte, alles MESH, keine Collections, kein Objekt «BuildingOBB»). Name und Ort nicht genannt (Regel 3).",
+  "v1_messung": {
+   "befehl": "blender --background --factory-startup <szene> --python inspect.py (XY-Belegung auf 4-m-Raster, zusammenhaengende Komponenten; Objekte ueber 200 m Ausdehnung ausgelassen)",
+   "ergebnis": "45 Komponenten, eine grosse (39'358 Objekte, das Hauptensemble) und 44 kleine, fast alle aus 1 bis 5 Objekten namens «UUID_{…}», Hoehe 5 bis 40 m, Material einheitlich — typische Kontextkoerper aus einem Umgebungsmodell.",
+   "zaehlung": "Objekte mit Namen «UUID_…»: 82, Material bei allen 82 dasselbe; davon im Hauptgebaeude-Filter: 0.",
+   "dazu": "12 Objekte ueber 200 m Ausdehnung (Freiflaechen, Deckenplatten des Gelaendes) — sie sind der eigentliche Grund, warum der ungefilterte Plan unlesbar wird (siehe v2_urteil)."
+  },
+  "v1_addon_zeichnet_nicht_aus_der_szene": "blender_addon/nodes/native_slicer_node.py (Stand da752be): execute liest «Payload» → BridgePayload.from_json_file → write_floor_plans_from_bridge / write_sections_from_bridge / write_facades_from_bridge / bridge_to_site_plan_svg. Kein Zugriff auf bpy.context.scene.objects. Eure Annahme «die vier angeschlossenen Zeichner zeichnen alles, was in der Szene steht» stimmt fuer diesen Knoten nicht; ob es einen weiteren Szenen-Weg im Panel gibt, habe ich nicht verfolgt.",
+  "v2_woertlich": {
+   "befehl": "euer Befehl unveraendert, cwd = <KosmoPublish origin/main da752be als Wegwerfkopie>",
+   "abbruch": "RuntimeError: lxml ist erforderlich für SVG-Postprocessing. In Blender's Python: pip install lxml --break-system-packages",
+   "exitcode": "0 (!) — Blender beendet sich trotz Ausnahme mit 0",
+   "blender": "Blender 5.2.2 LTS (Snap), Python 3.13; lxml: nein, shapely: nein, numpy: ja"
+  },
+  "v2_mit_leihpfad": {
+   "was": "lxml 6.1.1 (cp313) aus einem vorhandenen uv-Zwischenspeicher und shapely 2.1.2 (cp313) aus <KosmoPrepare>/libs in einen Hilfsordner kopiert und per sys.path.append nur fuer diesen Lauf angehaengt. Nichts installiert, Blender unveraendert. Das ist NICHT «was auf der HomeStation ohnehin steht», sondern eine Leihgabe — darum als eigener Befund.",
+   "b_gefiltert_z1_2": "OK 1,2 s; main_objects_count 34180; obb_source density_cluster_fallback; silhouette_lines_added 1856; visible 5574, hidden 8720; 107 Objekte in Schnittklassen, 10 nicht polygonisierbar; Datei 924'801 B",
+   "a_ungefiltert_z1_2": "render_floor_plan_per_object_hatches (derselbe Zeichner ohne Filter) OK 0,5 s; visible 10684, hidden 9016; 209 Objekte in Schnittklassen, 17 nicht polygonisierbar; Datei 1'145'886 B",
+   "zusatz_z17_3": "weil 1,2 m in diesem Modell nicht auf einem Hauptgeschoss liegt (Geschosse in 3,00-m-Takt, ein Fertigboden bei 16,30): gefiltert 315'159 B (308 KB), ungefiltert 502'152 B (490 KB)",
+   "was_a_ist": "Als «heutigen Weg» habe ich den Zeichner genommen, den render_main_only umhuellt, ohne Filter — nicht den Add-on-Knoten, weil der nicht aus der Szene zeichnet (siehe oben). Nur so ist es dieselbe Szene zweimal."
+  },
+  "v2_urteil": "Beide Paare als PNG gerastert und angesehen (danach nur in einem fluechtigen Ordner). Ungefiltert: der Rahmen spannt ueber rund 1,2 km, weil die gelaendeweiten Platten mitkommen — die geschnittene Architektur ist ein Fleck in der Blattmitte, als Plan unbrauchbar. Gefiltert: deutlich lesbarer — das Hauptvolumen steht dunkel, die Nachbarn als feine graue Silhouetten, also genau der SIA-uebliche Kontext-Look. Aber auch hier fuellt der Plan das Blatt nicht, weil die Silhouetten (bis 200 m) den Rahmen aufziehen, und der Dichte-Ausweichweg waehlt einen 156 × 31 m-Streifen des Ensembles, nicht zwingend das Gebaeude, das man zeichnen will. Fazit als Architekt: die Faehigkeit wird gebraucht — ohne sie ist ein echtes Modell mit Kontext nicht planfaehig — aber ohne gesetzten Marker ist sie ein Glueckstreffer.",
+  "v3": {
+   "befehl": "extract_axo_outline(bpy.context.scene, view='SW', sia_scale='1:200') — mit demselben Leihpfad",
+   "ergebnis": "len(visible_lines) = 16815, in 4,3 s; Ausdehnung 122,1 × 89,1 m",
+   "verteilung": "je Geschoss drei Ebenen (floor/ceil/vert) mit je bis 1552 Linien, z.B. Storey_Zwischen_+10.2 / +11.1 / +7.3 — die Geschosserkennung findet Zwischenebenen im Abstand von unter einem Meter",
+   "angesehen": "Linien selbst als SVG geschrieben und gerastert: klares, ruhiges Axonometrie-Schema; Stuetzen erscheinen als Ringe je Geschoss, darum die hohe Zahl. Fuer ein Diagramm brauchbar; «~hundert» trifft fuer dieses Modell nicht zu."
+  },
+  "v4_belege": {
+   "snap_ausgabe": "/snap/bin/blender --background --factory-startup --python-expr \"print('ZEILE')\" > datei 2>&1 → exit 0, Datei 0 Byte. Gegenprobe: dasselbe mit /snap/blender/current/blender → 1 Treffer «ZEILE». Mit Pipe statt Umleitung kommt die Ausgabe auch ueber den Starter an.",
+   "exitcode": "siehe v2_woertlich.exitcode; mit --python-exit-code 3 endet ein Skriptfehler mit 3 (in meinen eigenen Laeufen so gesehen)."
+  }
+ },
+ "bemerkungen": [
+  "Eigene Fehler, benannt: zwei meiner Messlaeufe brachen an MEINEM Skript ab (obb.width ohne Klammern; json.dumps ueber ein Ergebnis mit Tupel-Schluesseln) — die Zeichner selbst liefen durch, die SVG lagen jeweils schon da. Die Zahlen oben stammen aus dem dritten, fehlerfreien Lauf.",
+  "Eine eigene Vermutung verworfen: ich hielt /tmp im Snap fuer privat; eine Probe zeigte, dass Snap-Blender dasselbe /tmp sieht. Der Ausgabeverlust liegt am Snap-Starter bei Datei-Umleitung, nicht an /tmp.",
+  "Die Laeufe liefen gegen euren Stand origin/main da752be als Wegwerfkopie; der lokale KosmoPublish-Klon steht auf einem anderen Zweig (claude/kosmo-orbit-v010-build-…) und wurde nicht umgeschaltet, nicht gezogen, nicht veraendert.",
+  "Die erzeugten SVG und der Leihpfad liegen in einem Hilfsordner im Heimatordner (ausserhalb aller Repos), nicht geloescht."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "blender": "5.2.2 LTS (Snap), nur --background, kein Render",
+  "netz_benutzt": true,
+  "netz_zweck": "git fetch (KosmoPublish)",
+  "dauer_min": 35
+ },
+ "fehler": null
+}

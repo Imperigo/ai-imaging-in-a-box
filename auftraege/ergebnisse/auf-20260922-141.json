@@ -1,0 +1,264 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-141",
+ "status": "ok",
+ "beendet": "2026-09-23T15:10:00Z",
+ "stand": "e490b66",
+ "geprueft": "Alle sechs Schritte gefahren. Eure Erklaerung stimmt — nur mit dem dritten Weg statt dem vermuteten: in auf-137 war GAR KEINE Kamera bestellt (Weg «rueckfall»), nicht auge/blick_auf. Und eine Aussage aus meinem auf-137 war FALSCH und ist hier berichtigt: der Deckungsgrad kam NICHT im Blender-Bild an; die Beauty-Dateien unterschieden sich nur durch Metadaten, genau wie ihr in Punkt 6 vermutet habt.",
+ "kurzantwort": {
+  "A": "Ansage A1–A3 gelesen, vor dem Ziehen.",
+  "v1": "L1, L2, L3, L5: kamera.weg «rueckfall», auge [16.8, -13.5, 10.975] in allen vier, fuellgrad null, brennweite 50.0, aufloesung 256, hoehe 256. Argumente: siehe befunde.",
+  "v2": "Beauty-BILDPUNKTE: L1 = L3 (16dfd662db26666b) — der Deckungsgrad aendert das Blender-Bild NICHT. L1, L2, L5 (drei Sonnen) verschieden. tiefe_norm.png in allen vier gleich (0e152528937df838). Metadaten der Blender-PNG: Date, RenderTime, Time, cycles.*.render_time … — das erklaert die verschiedenen Datei-Pruefsummen.",
+  "v3": "Mit kamera='s': A weg «abgeleitet», auge [3.2, -11.1111, 1.45], fuellgrad 0.6985; B «abgeleitet», auge [3.2, -14.1414, 1.45], fuellgrad 0.5493. Tiefe (Bildpunkte) A a02b7481a213d4cb gegen B 638a852bf8152c81, bild.png A 07bf29d66b9d3a68 gegen B be7ca64bc3ef5363. ANTWORT: JA, der Deckungsgrad aendert auf diesem Weg die Tiefenkarte. Eure Vorhersage (-11,1 gegen -14,1) trifft genau.",
+  "v4": "spearman -0.918, geom_iou 0.063, score 0.240 — rho deutlich negativ und KEIN «vertauscht», wie erwartet. Bildvergleich: die Tiefenkarte zeigt die Kiste klar in der Mitte, das Endbild zeigt dort KEIN Bauwerk, sondern ein luftbildartiges Gemenge. Die Tiefe steuert das Endbild praktisch nicht.",
+  "v5": "diffusers 0.39.0 — KEINE Z-Image-Klasse nimmt control_image UND image UND strength. Am naechsten: ZImageControlNetInpaintPipeline (control_image + image + mask_image, ohne strength). Woertlich in befunde.",
+  "v6": "Woertlich nach Anleitung: KettenError «prompt fehlt oder ist leer (None)». Mit Prompt (von mir ergaenzt, gekennzeichnet): weg «vorgegeben», auge [6.35, 0.61, 1.3], blick_auf [6.35, 2.5, 1.3], brennweite 24.0 mm, 302 Tiefenstufen, und das Blender-Bild zeigt klar INNEN (Boden, nahe Seitenwand, Rueckwand, oben offen)."
+ },
+ "befunde": {
+  "v1_argumente_der_laeufe": {
+   "ifc_path": "<ifc>",
+   "prompt": "a residential building, architectural photograph",
+   "seed": 0,
+   "schritte": 8,
+   "aufloesung": 256,
+   "samples": 8,
+   "sonne": {
+    "elevation": 60.0,
+    "azimuth": 180.0
+   },
+   "deckungsgrad": 0.7,
+   "L2": "sonne {elevation 12, azimuth 250}",
+   "L3": "deckungsgrad 0.55",
+   "L5": "sonne {elevation 35, azimuth 95}",
+   "kamera/auge/blick_auf": "in KEINEM Lauf gesetzt"
+  },
+  "v1_felder": {
+   "L1": {
+    "kamera.weg": "rueckfall",
+    "kamera.auge": [
+     16.8,
+     -13.5,
+     10.975
+    ],
+    "kamera.blick_auf": [
+     4.0,
+     2.5,
+     1.375
+    ],
+    "kamera.brennweite_mm": 50.0,
+    "kamera.fuellgrad": null,
+    "deckungsgrad": 0.7,
+    "aufloesung": 256,
+    "hoehe": 256,
+    "sonne.weg": "bestellt",
+    "sonne.euler": [
+     0.5235987755982988,
+     0.0,
+     -3.141592653589793
+    ]
+   },
+   "L2": {
+    "kamera.weg": "rueckfall",
+    "kamera.auge": [
+     16.8,
+     -13.5,
+     10.975
+    ],
+    "kamera.blick_auf": [
+     4.0,
+     2.5,
+     1.375
+    ],
+    "kamera.brennweite_mm": 50.0,
+    "kamera.fuellgrad": null,
+    "deckungsgrad": 0.7,
+    "aufloesung": 256,
+    "hoehe": 256,
+    "sonne.weg": "bestellt",
+    "sonne.euler": [
+     1.361356816555577,
+     0.0,
+     -4.363323129985824
+    ]
+   },
+   "L3": {
+    "kamera.weg": "rueckfall",
+    "kamera.auge": [
+     16.8,
+     -13.5,
+     10.975
+    ],
+    "kamera.blick_auf": [
+     4.0,
+     2.5,
+     1.375
+    ],
+    "kamera.brennweite_mm": 50.0,
+    "kamera.fuellgrad": null,
+    "deckungsgrad": 0.55,
+    "aufloesung": 256,
+    "hoehe": 256,
+    "sonne.weg": "bestellt",
+    "sonne.euler": [
+     0.5235987755982988,
+     0.0,
+     -3.141592653589793
+    ]
+   },
+   "L5": {
+    "kamera.weg": "rueckfall",
+    "kamera.auge": [
+     16.8,
+     -13.5,
+     10.975
+    ],
+    "kamera.blick_auf": [
+     4.0,
+     2.5,
+     1.375
+    ],
+    "kamera.brennweite_mm": 50.0,
+    "kamera.fuellgrad": null,
+    "deckungsgrad": 0.7,
+    "aufloesung": 256,
+    "hoehe": 256,
+    "sonne.weg": "bestellt",
+    "sonne.euler": [
+     0.9599310885968813,
+     0.0,
+     -1.6580627893946132
+    ]
+   }
+  },
+  "v1_wie_nachgeschlagen": "Die Arbeitsordner von auf-137 lagen im fluechtigen Arbeitsverzeichnis und sind mit einem Neustart verloren gegangen — mein Fehler. Darum wortgleich neu gefahren, in einer getrennten Arbeitskopie auf DEMSELBEN Code-Stand wie gestern (f8fd21d), festem Startwert. Beleg, dass es derselbe Lauf ist: bild.png hat wieder die sha256 50958ed0e66c73a7, wie in auf-137.",
+  "v1_heute_abgewiesen": "Derselbe Aufruf auf dem heutigen Kopf wird ABGEWIESEN: «Rahmung bestellt, aber kein Kameraweg, auf dem sie wirkt: `deckungsgrad` 0.7 wirkt nur zusammen mit `kamera` … Ohne `kamera` wuerde er still uebergangen.» Euer Fix fuer Punkt 2 greift.",
+  "v2_bildpunkte": {
+   "L1": {
+    "beauty_.png": "16dfd662db26666b",
+    "material_id.png": "eed434853a83143a",
+    "tiefe_norm.png": "0e152528937df838"
+   },
+   "L2": {
+    "beauty_.png": "0f3129885128770f",
+    "material_id.png": "eed434853a83143a",
+    "tiefe_norm.png": "0e152528937df838"
+   },
+   "L3": {
+    "beauty_.png": "16dfd662db26666b",
+    "material_id.png": "eed434853a83143a",
+    "tiefe_norm.png": "0e152528937df838"
+   },
+   "L5": {
+    "beauty_.png": "1ea2769921d7a69b",
+    "material_id.png": "eed434853a83143a",
+    "tiefe_norm.png": "0e152528937df838"
+   }
+  },
+  "v2_metadaten_schluessel": [
+   "Camera",
+   "Date",
+   "File",
+   "Frame",
+   "RenderTime",
+   "Scene",
+   "Time",
+   "chromaticity",
+   "cycles.ViewLayer.render_time",
+   "cycles.ViewLayer.samples",
+   "cycles.ViewLayer.synchronization_time",
+   "cycles.ViewLayer.total_time",
+   "dpi",
+   "exif",
+   "gamma",
+   "srgb"
+  ],
+  "v3": {
+   "A": {
+    "kamera.weg": "abgeleitet",
+    "kamera.auge": [
+     3.2,
+     -11.1111,
+     1.45
+    ],
+    "kamera.blick_auf": [
+     4.0,
+     2.5,
+     1.45
+    ],
+    "kamera.brennweite_mm": 35.0,
+    "kamera.fuellgrad": 0.6985232561415422,
+    "deckungsgrad": 0.7,
+    "aufloesung": 256,
+    "hoehe": 256,
+    "sonne.weg": "vorgabe",
+    "sonne.euler": [
+     0.8726646259971648,
+     0.0,
+     0.6108652381980153
+    ],
+    "tiefe_bildpunkte": "a02b7481a213d4cb",
+    "bild_sha": "07bf29d66b9d3a68"
+   },
+   "B": {
+    "kamera.weg": "abgeleitet",
+    "kamera.auge": [
+     3.2,
+     -14.1414,
+     1.45
+    ],
+    "kamera.blick_auf": [
+     4.0,
+     2.5,
+     1.45
+    ],
+    "kamera.brennweite_mm": 35.0,
+    "kamera.fuellgrad": 0.5492535699966911,
+    "deckungsgrad": 0.55,
+    "aufloesung": 256,
+    "hoehe": 256,
+    "sonne.weg": "vorgabe",
+    "sonne.euler": [
+     0.8726646259971648,
+     0.0,
+     0.6108652381980153
+    ],
+    "tiefe_bildpunkte": "638a852bf8152c81",
+    "bild_sha": "be7ca64bc3ef5363"
+   }
+  },
+  "v4_hinweise_1_bis_3": [
+   "Rangkorrelation zeigt in die erwartete Richtung (spearman = -0.918 bei Polarität -1, über 1321 Punkte …)",
+   "Geringer Geometrieanteil: nur 17.0% der Bildpunkte tragen Geometrie … Bei 17 % deckelt 'geom_iou' bei 0.256 — die Schwelle 0.65 ist dann ARITHMETISCH UNERREICHBAR …",
+   "Innen stimmig, aussen daneben: Die Tiefenordnung stimmt im Überlappungsbereich gut (|spearman| 0.918), die Silhouetten decken sich aber kaum (geom_iou 0.063) …"
+  ],
+  "v4_was_das_heisst": "Der Messweg ist fuer die Tiefenordnung heil. geom_iou ist bei 17 % Geometrieanteil unbrauchbar — auch am perfekten Bild 0.063. Die Bilder liegen bei uns (tiefe_norm.png und bild.png nebeneinander), nicht im Repo.",
+  "v5_woertlich": {
+   "ZImageControlNetInpaintPipeline": "control_image, controlnet_conditioning_scale, image, mask_image — kein strength",
+   "ZImageControlNetPipeline": "control_image, controlnet_conditioning_scale — kein image, kein strength",
+   "ZImageImg2ImgPipeline": "image, strength — kein control_image",
+   "ZImageInpaintPipeline": "image, mask_image, masked_image_latents, strength — kein control_image",
+   "ZImageOmniPipeline": "image — kein control_image, kein strength",
+   "ZImagePipeline": "weder noch",
+   "ZImageModularPipeline": "kwargs, output, state"
+  },
+  "v5_ein_gedanke": "Ob die Inpaint-ControlNet-Klasse mit einer ganz weissen Maske dem bestellten image_edit nahekommt, ist NICHT gemessen — nur ein Hinweis, wo man suchen koennte.",
+  "v6_woertlich_nach_anleitung": "KettenError: prompt fehlt oder ist leer (None). Die Kubatur kommt aus der Tiefenkarte, aber Material, Licht und Stimmung kommen aus dem Prompt — ohne ihn ist nicht beschrieben, was entstehen soll.",
+  "v6_mit_prompt": "einstellungen={'prompt': 'interior view, daylight'} — VON MIR ERGAENZT, sonst wie angegeben. 13,1 s.",
+  "v6_eine_beobachtung": "In tiefe_norm.png (16 Bit) ist die ganze Rueckwand schwarz (Wert 0), obwohl sie im Blender-Bild klar sichtbar ist; Boden und Seitenwand tragen Verlaeufe. Ob die Rueckwand ausserhalb der normierten Reichweite liegt oder als Hintergrund gilt, ist NICHT gemessen."
+ },
+ "bemerkungen": [
+  "BERICHTIGUNG zu auf-20260922-137: dort stand «Beauty aus Blender: VIER VERSCHIEDENE … die Bestellung kommt an», gemeint Sonne UND Deckungsgrad. Fuer den Deckungsgrad war das falsch — die Bildpunkte von L1 und L3 sind gleich; ich hatte Datei-Pruefsummen verglichen, die Blender mit Datum und Renderzeit unterscheidet. Euer Punkt 6 hatte recht.",
+  "Eigener Messfehler, vor der Meldung gefunden: die Tiefenstufen zuerst nach convert('L') gezaehlt — das quetscht die 16-Bit-Karte auf 3 Werte. Im Original sind es 302.",
+  "Schritt 6 zeigt nebenbei den Pfadfehler aus auf-139 NICHT, weil die Mappe diesmal im Heimatordner lag — absichtlich, siehe dort.",
+  "Nichts an eurem Code geaendert. Keine Gewichte heruntergeladen. GPU im Leerlauf gestartet, 400 W."
+ ],
+ "umgebung": {
+  "gpu_benutzt": true,
+  "gpu_leistungsgrenze_w": 400,
+  "leerlauf_schwellen_eingehalten": true,
+  "netz_benutzt": false,
+  "backbone": "z-image-turbo (Apache-2.0)",
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}

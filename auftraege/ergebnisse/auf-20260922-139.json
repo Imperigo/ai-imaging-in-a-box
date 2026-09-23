@@ -1,0 +1,59 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-139",
+ "status": "ok",
+ "beendet": "2026-09-23T13:45:00Z",
+ "stand": "e490b66",
+ "geprueft": "A gelesen, V1, V2, V4 und V5 beantwortet, V3 nicht moeglich (Grundmodell liegt hier nicht). Dazu ein Produktfehler, den der Lauf fuer V4 freigelegt hat: die Mappe findet ihr eigenes Modell nicht mehr, sobald sie AUSSERHALB des Heimatordners liegt — die Reparatur vom 21.09. deckt diesen Fall nicht.",
+ "kurzantwort": {
+  "A": "Ansage A1–A5 gelesen, vor dem Ziehen. A5 am Geraet bestaetigt (V5).",
+  "v1": "0.39.0 True True",
+  "v2": "Ordner `qwen-image-controlnet-union` (im ComfyUI-Modellordner, controlnet/), darin nur `diffusion_pytorch_model.safetensors` (3 536 027 816 Bytes) — KEINE config.json. Daneben eine gleichnamige Einzeldatei `qwen_image_controlnet_union.safetensors`, die auf dieselbe Datei verweist. Laden: from_single_file NEIN (ValueError: FromOriginalModelMixin kennt die Klasse nicht), from_pretrained NEIN (OSError: no file named config.json).",
+  "v2_das_wichtigere": "Das Format ist NICHT VideoX-Fun, sondern schon diffusers: die 181 Schluessel heissen controlnet_blocks.*, controlnet_x_embedder.*, transformer_blocks.*, img_in, txt_in, txt_norm, time_text_embed. Es fehlt nur die config.json. Das ist eine viel kleinere Luecke als befuerchtet.",
+  "v3": "Nicht gefahren. qwen-image-2512 liegt auf dieser Maschine nicht (im Modellordner nur qwen-image-edit-2511); ein Laden ueber den Produktweg haette nichts zu laden. Nicht heruntergeladen (48 GB, nicht bestellt).",
+  "v4": "siehe befunde.v4 — drei von vier Punkten wie erwartet, modus_* stehen NICHT am Bild.",
+  "v5": "stimmt — die gedruckte Adresse gehoert zur Hauptnetzkarte (dieselbe, ueber die der Standardweg ins Netz fuehrt). Keine VPN-, keine Docker-Karte."
+ },
+ "befunde": {
+  "v1_befehl": "python -c \"import diffusers; print(diffusers.__version__, hasattr(...,'QwenImageControlNetModel'), hasattr(...,'QwenImageControlNetPipeline'))\" im .venv-render",
+  "v2_meldungen_woertlich": {
+   "from_single_file": "ValueError: FromOriginalModelMixin is currently only compatible with StableCascadeUNet, UNet2DConditionModel, AutoencoderKL, ControlNetModel, SD3Transformer2DModel, MotionAdapter, SparseControlNetModel, FluxTransformer2DModel, ChromaTransformer2DModel, ErnieImageTransform…",
+   "from_pretrained": "OSError: Error no file named config.json found in directory <ComfyUI>/models/controlnet/qwen-image-controlnet-union.",
+   "gemessen_mit": "CUDA_VISIBLE_DEVICES='' , torch_dtype=bfloat16 — ohne Grafikkarte, nur Laden",
+   "format_gemessen_mit": "nur der safetensors-Kopf gelesen (8-Byte-Laenge + JSON), kein Laden der Gewichte; __metadata__ = {format: pt}"
+  },
+  "v4": {
+   "gefahren": "arbeitsgang.lege_an(<mappe>, <abs>/build/testbau.ifc, name='Probe', einstellungen={'prompt':'Abendlicht','seed':7}); arbeitsgang.rechne(<mappe>) — 20,3 s, 1 Bild",
+   "herkunft_grund_am_bild": "JA, ein Satz: «Score 0.085 < Schwelle 0.65 (|spearman| 0.185 über 3325 gemeinsame Punkte, geom_iou 0.039).»",
+   "herkunft_lizenz_am_bild": "JA — name 'z-image-turbo', lizenz 'Apache-2.0', zulaessig true (dazu controlnet-Block mit eigener Lizenz Apache-2.0, lizenz_quelle 'modellkarte').",
+   "letzter_lauf": "messungen, modus_abweichungen, modus_ungemessen ([]), angaben — alle vier VORHANDEN.",
+   "modus_am_bild": "NEIN — modus_bestellt und modus_gerechnet stehen weder am Bildeintrag noch in dessen herkunft (beide null). Sie stehen nur im Laufeintrag: messungen.render.modus_bestellt 'image_edit', modus_gerechnet 'txt2img', modus_abweichung true."
+  },
+  "der_produktfehler_den_v4_freilegte": {
+   "was": "arbeitsgang.rechne bricht ab mit «An diesem Pfad liegt keine Datei mehr …», obwohl die Datei da ist. In projekt.json steht modell.pfad = '../../../../../../home/<nutzer>/ai-imaging-in-a-box/build/testbau.ifc'.",
+   "ursache": "pfad_fuer_die_mappe (projekt.py) schreibt den Pfad relativ zur Mappe und verlaesst sich darauf, dass ein relativer Pfad keinen Benutzernamen enthaelt. Das stimmt nur, solange Mappe und Modell beide im Heimatordner liegen. Liegt die Mappe AUSSERHALB (anderes Laufwerk wie der grosse Datentraeger, oder ein temporaerer Ordner), fuehrt der relative Weg nach oben durch /home/<benutzer>/ — und die Saeuberung nach Regel 3 macht daraus <nutzer>. Der Pfad zeigt auf nichts mehr.",
+   "gegenprobe": "Dieselbe Mappe im Heimatordner angelegt: modell.pfad = '../../ai-imaging-in-a-box/build/testbau.ifc', der Lauf rechnet durch. Einziger Unterschied ist der Ort der Mappe.",
+   "warum_das_zaehlt": "Auf der HomeStation liegen grosse Dinge auf dem Datenlaufwerk, nicht im Heimatordner. Eine Projektmappe dort mit einem Modell im Heimatordner ist der naheliegende Fall — und er bricht.",
+   "was_ich_nicht_tat": "Nichts an eurem Code geaendert. Die Loesung (etwa: relativ zum gemeinsamen Stamm speichern, oder den Benutzernamen erst NACH dem Relativieren saeubern und beim Laden den Heimatordner einsetzen) ist eure."
+  },
+  "v5": {
+   "gefahren": "python -u oberflaeche/server.py --im-heimnetz --kennwort-erzeugen, nach 12 s beendet; Adresse mit `ip -o -4 addr` zugeordnet. Ausgabe samt Kennwort danach geloescht, nichts gespeichert.",
+   "ergebnis": "Hauptnetzkarte (die mit dem Standardweg ins Netz).",
+   "nebenbefund": "Ohne `-u` erscheint die Startzeile gar nicht, solange die Flaeche laeuft — Python puffert die Ausgabe, wenn sie nicht in ein Terminal geht. Wer die Flaeche als Dienst oder hinter einer Umleitung startet, sieht die Adresse nie. Ein flush=True an der Startzeile wuerde reichen."
+  }
+ },
+ "bemerkungen": [
+  "Eigener Bedienfehler zuerst: der erste V4-Versuch uebergab den Modellpfad relativ; die Kette hat es sofort und verstaendlich gemeldet. Der zweite Versuch mit absolutem Pfad scheiterte gleich — erst dort war es der Produktfehler oben.",
+  "Keine Non-Commercial-Gewichte geladen. Nichts heruntergeladen. Keine Adressen, keine Pfade mit Benutzernamen in dieser Antwort.",
+  "GPU im Leerlauf gestartet (13,9 W, 0,7 GB), Leistungsgrenze 400 W."
+ ],
+ "umgebung": {
+  "gpu_benutzt": true,
+  "gpu_leistungsgrenze_w": 400,
+  "leerlauf_schwellen_eingehalten": true,
+  "netz_benutzt": false,
+  "backbone": "z-image-turbo (Apache-2.0)",
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}

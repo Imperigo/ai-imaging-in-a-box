@@ -1,0 +1,99 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-146",
+ "status": "ok",
+ "beendet": "2026-09-23T12:52:00Z",
+ "stand": "e490b66",
+ "geprueft": "Euer korrigiertes Werkzeug (Stand origin/main 297f369) gegen das ECHTE libs/ gefahren — und dabei zuerst eine Lage gefunden, die eure Fragen ueberholt: pyphen UND pysolar liegen seit dem 21.09.2026 nicht mehr in libs/. Sie wurden an dieser Maschine geloescht, festgehalten im lokalen, NICHT gepushten Commit a6584ca («pyphen und pysolar sind aus libs/ heraus», 21.09. 09:40). Der Lauf sagt darum bei beiden «[nicht da]». Damit fehlt Pyphen, und weasyprint laesst sich mit dem echten libs/ NICHT MEHR IMPORTIEREN (ModuleNotFoundError: No module named 'pyphen', gemessen mit Blenders eigenem Python 3.13). Genau der Bruch, vor dem eure Korrektur schuetzen soll, ist hier schon eingetreten — vor der Korrektur. Damit V2/V3 trotzdem eine Antwort haben, habe ich dasselbe Werkzeug an der einzigen Stelle gefahren, an der beide Pakete noch liegen (eine Juni-Sicherung von libs/ im Klon, gitignored und im Manifest ausgeschlossen): dort sagt es pyphen WIRD GEBRAUCHT, gebraucht von weasyprint, und pysolar KANN WEG. Eure Korrektur arbeitet also richtig; nur der Gegenstand ist ein anderer, als ihr annehmt.",
+ "kurzantwort": {
+  "V1": "Siehe befunde.v1_ausgabe_woertlich: 53 Pakete mit dist-info; ifcopenshell WIRD GEBRAUCHT (6 Aufrufer in tools/), pyphen [nicht da], pysolar [nicht da]; «1 Copyleft-Paket(e) in libs/».",
+  "V2": "Am echten libs/: NEIN — es steht «[nicht da]  pyphen», weil pyphen seit 21.09. geloescht ist. Gegenprobe an einer Kopie, die pyphen noch hat: JA, woertlich «[WIRD GEBRAUCHT]  pyphen 0.17.2 …» und «gebraucht von weasyprint (Requires-Dist) — loeschen braeche dessen Weg». Die Korrektur ist vollstaendig; der Schaden ist vorher entstanden.",
+  "V3": "Am echten libs/: NEIN — «[nicht da]  pysolar». In der Gegenprobe: JA, «[KANN WEG]  pysolar 0.13 — GPL-3 … kein Produktimport, kein Nutzer in libs/». Das Werkzeug kann also weiterhin eine Loeschung nennen.",
+  "V4": "NEIN. Keine Zeile «ohne lesbare METADATA». Gegenprobe per Schleife: alle 53 dist-info-Ordner haben eine lesbare METADATA.",
+  "V5": "libs/ gesamt 455 MB (du -sh: 455M). pysolar* und pyphen* in libs/: nicht vorhanden (0). In der Juni-Sicherung: pysolar* 228 KB, pyphen* 6,2 MB.",
+  "V6": "Der PDF-Weg (vier core-Module ueber weasyprint) ist an dieser Maschine seit dem 21.09.2026 gebrochen, weil pyphen aus libs/ geloescht wurde; eine eigens angelegte Kopie vom 21.09. habe ich nicht gefunden, pyphen 0.17.2 liegt aber noch in zwei Juni-Sicherungen (im Klon und auf der Archivplatte)."
+ },
+ "befunde": {
+  "v1_ausgabe_woertlich": [
+   "<Stand-297f369>/tools/libs_pruefen.py:164: DeprecationWarning: 'maxsplit' is passed as positional argument",
+   "  kopf = re.split(r\"[\\s(\\[<>=!~]\", kopf, 1)[0]",
+   "libs/: <libs>",
+   "  53 Paket(e) mit dist-info gefunden.",
+   "",
+   "  [WIRD GEBRAUCHT]  ifcopenshell 0.8.5 — LGPL-3, mit statisch einkompiliertem CGAL (GPL-3)",
+   "                 ruft es: tools/archicad_ifc_impl.py",
+   "                 ruft es: tools/ifc_abfrage_impl.py",
+   "                 ruft es: tools/ifc_export_impl.py",
+   "                 ruft es: tools/ifc_geruest_impl.py",
+   "                 ruft es: tools/ifc_reader_impl.py",
+   "                 ruft es: tools/ifc_runner.py",
+   "  [nicht da]  pyphen",
+   "  [nicht da]  pysolar",
+   "",
+   "  [permissiv] numpy 2.4.6 — zieht libquadmath nach (LGPL, aufgeloest 08.09.2026)",
+   "  [permissiv] shapely 2.1.2 — zieht GEOS nach (LGPL, aufgeloest 08.09.2026)",
+   "  [permissiv] weasyprint 68.1 — zieht Pyphen nach — darum wird seine METADATA gelesen, s. abhaengigkeiten_in",
+   "",
+   "1 Copyleft-Paket(e) in libs/. Dieses Werkzeug loescht nichts — der Entscheid gehoert dem Owner."
+  ],
+  "v1_befehl": "git fetch origin; git archive 297f369 | tar -x -C <kopie>; (cd <kopie>; git init; git add -A); python3 tools/libs_pruefen.py --libs <libs>   -> exit=0",
+  "warum_nicht_git_pull": "Der Klon ist gegen origin/main auseinandergelaufen: «voraus 1, hinterher 4» (git status -sb) plus eine lokale Aenderung in integrations/odysseus/register_in_odysseus.sh. git pull haette einen Merge-Commit erzeugt; Commits sind mir untersagt. Darum euren Stand 297f369 per git archive in eine Wegwerfkopie ausserhalb des Repos gelegt und dort gegen das echte libs/ gefahren (Werkzeug liest libs per --libs, Produktimporte per git ls-files der Kopie: 376 .py). Am Klon selbst ist nichts veraendert.",
+  "der_lokale_commit": "git log origin/main..HEAD -> a6584ca «pyphen und pysolar sind aus libs/ heraus — und der Riegel ist strenger geworden» (21.09.2026 09:40 +0200). Der Text sagt: «Owner-Entscheid vom 21.09.2026: beide weg. Eine Kopie liegt ausserhalb des Baums». libs/ traegt mtime 21.09.2026 09:38:58 (stat) — passt zur Loeschung. Der Commit aendert nur tests/test_lizenzriegel.py (COPYLEFT_IN_LIBS = {ifcopenshell}); er ist nie gepusht worden, darum wisst ihr nichts davon.",
+  "weasyprint_ist_gebrochen": {
+   "befehl": "<blender-5.2>/python/bin/python3.13 -c \"import sys; sys.path.insert(0,'<libs>'); import weasyprint\"",
+   "ergebnis": "ModuleNotFoundError: No module named 'pyphen'",
+   "ursache": "<libs>/weasyprint/text/line_break.py Zeile 6: «import pyphen» (auf Modulebene); METADATA von weasyprint 68.1: «Requires-Dist: Pyphen >=0.9.1».",
+   "gegenprobe": "Dasselbe mit der Juni-Sicherung zusaetzlich auf sys.path: pyphen wird aus <KosmoPrepare>/libs.darwin-bak-2026-06-10/pyphen geladen, «weasyprint OK 68.1», exit 0. Der Bruch liegt also allein am fehlenden pyphen.",
+   "nutzer": "grep -l weasyprint core/*.py -> briefing_pdf, dossier_composer, plakat_layout, raumprogramm_publish (4, wie von euch gezaehlt)."
+  },
+  "gegenprobe_v2_v3_woertlich": [
+   "<Stand-297f369>/tools/libs_pruefen.py:164: DeprecationWarning: 'maxsplit' is passed as positional argument",
+   "  kopf = re.split(r\"[\\s(\\[<>=!~]\", kopf, 1)[0]",
+   "libs/: <KosmoPrepare>/libs.darwin-bak-2026-06-10",
+   "  54 Paket(e) mit dist-info gefunden.",
+   "",
+   "  [WIRD GEBRAUCHT]  ifcopenshell 0.8.5 — LGPL-3, mit statisch einkompiliertem CGAL (GPL-3)",
+   "                 ruft es: tools/archicad_ifc_impl.py",
+   "                 ruft es: tools/ifc_abfrage_impl.py",
+   "                 ruft es: tools/ifc_export_impl.py",
+   "                 ruft es: tools/ifc_geruest_impl.py",
+   "                 ruft es: tools/ifc_reader_impl.py",
+   "                 ruft es: tools/ifc_runner.py",
+   "  [WIRD GEBRAUCHT]  pyphen 0.17.2 — GPL-2+ / LGPL-2.1+ / MPL-1.1 — keine davon im Mandat Q29",
+   "                 gebraucht von weasyprint (Requires-Dist) — loeschen braeche dessen Weg",
+   "  [KANN WEG]  pysolar 0.13 — GPL-3",
+   "                 kein Produktimport, kein Nutzer in libs/. Loeschen mit:",
+   "                   rm -rf <KosmoPrepare>/libs.darwin-bak-2026-06-10/pysolar* ",
+   "",
+   "  [permissiv] numpy 2.4.6 — zieht libquadmath nach (LGPL, aufgeloest 08.09.2026)",
+   "  [permissiv] shapely 2.1.2 — zieht GEOS nach (LGPL, aufgeloest 08.09.2026)",
+   "  [permissiv] weasyprint 68.1 — zieht Pyphen nach — darum wird seine METADATA gelesen, s. abhaengigkeiten_in",
+   "",
+   "3 Copyleft-Paket(e) in libs/. Dieses Werkzeug loescht nichts — der Entscheid gehoert dem Owner."
+  ],
+  "gegenprobe_ort": "<KosmoPrepare>/libs.darwin-bak-2026-06-10 — 54 dist-info, 324 MB; laut .gitignore Zeile 28 ignoriert und laut blender_manifest.toml («/libs.darwin-bak*/») vom Paket ausgeschlossen. Sie ist KEINE Auslieferungsmenge, nur der einzige Ort mit beiden Paketen.",
+  "v4_befehl": "for d in <libs>/*.dist-info; do [ -r $d/METADATA ] || echo ohne; done -> keine Ausgabe; ls -d <libs>/*.dist-info | wc -l -> 53",
+  "v5_befehle": {
+   "du -sh <libs>": "455M",
+   "ls -d <libs>/pysolar* <libs>/pyphen*": "No such file or directory (beide) — Gegenprobe desselben Suchwegs: ls -d <libs>/ezdxf* findet 2 Eintraege",
+   "du -shc libs.darwin-bak-2026-06-10/pysolar*": "228K",
+   "du -shc libs.darwin-bak-2026-06-10/pyphen*": "6.2M",
+   "du -sh .venv/lib/python3.11/site-packages/pysolar": "304K (weiterer pysolar-Rest im .venv; laut Manifest «/.venv*/» nicht ausgeliefert)"
+  },
+  "suche_nach_der_kopie": "Datenplatte und Heimatordner (find -type d -iname 'pyphen*', ohne Editor-Stubs): nur <KosmoPrepare>/libs.darwin-bak-2026-06-10/pyphen samt dist-info. Archivplatte (find <archiv> -type d -iname 'pyphen*'): eine weitere Kopie im Juni-Abzug des OneDrive (<archiv>/FromSSD/onedrive-2026-06-09/…/01_Source_Code/libs/pyphen, Fassung 0.17.2). Unter ~/KosmoBetrieb: kein Treffer. Eine eigens am 21.09. angelegte Kopie habe ich nicht gefunden; es gibt aber zwei aeltere (Juni)."
+ },
+ "bemerkungen": [
+  "Nichts geloescht, nichts installiert, am Klon nichts geaendert (git fetch aktualisiert nur die Fernverweise).",
+  "Das Werkzeug gibt eine DeprecationWarning aus (re.split mit positionalem maxsplit, Zeile 164) — unter Python 3.14 harmlos, aber sie steht in der woertlichen Ausgabe.",
+  "Eigene Einordnung: Wer am 21.09. geloescht hat, kann ich nicht belegen; Autor und Commit-Trailer deuten auf eine Worker-Sitzung an dieser Maschine auf Grund des damaligen «KANN WEG». Der Fehler, den ihr im Werkzeug korrigiert habt, ist also real ausgefuehrt worden.",
+  "Wiederherstellen waere ein Kopieren von pyphen/ und pyphen-0.17.2.dist-info aus der Juni-Sicherung zurueck nach libs/ — das habe ich NICHT getan (Maschinen-Aenderung, nicht bestellt). Entscheid beim Owner."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git fetch origin (KosmoPrepare)",
+  "dauer_min": 15,
+  "python": "3.14 (Werkzeug), Blender-Python 3.13 (Importprobe)"
+ },
+ "fehler": null
+}

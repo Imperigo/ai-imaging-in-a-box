@@ -1,0 +1,88 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-149",
+ "status": "ok",
+ "beendet": "2026-09-23T12:58:00Z",
+ "stand": "e490b66",
+ "geprueft": "V1 NICHT geloescht — weil es nichts zu loeschen gab: der Lauf aus auf-146 sagt «[nicht da]  pysolar», nicht «KANN WEG». pysolar (und leider auch pyphen) sind an dieser Maschine schon am 21.09.2026 aus libs/ entfernt worden (lokaler, nie gepushter Commit a6584ca); Einzelheiten und der daraus folgende weasyprint-Bruch stehen in auf-146. V2 und V3 erledigt: die kosmodraw-Kopie liegt jetzt zusaetzlich auf der Archivplatte (eigene Festplatte, nicht OneDrive), samt Git-Verlauf, geprueft per sha256 und git fsck; in DIESER Kopie liegt eine LICENSE (GPL-3 im Volltext) und alle 13 .py tragen einen Lizenzkopf. V4 und V5 sind am Code eures Vertrags gemessen beantwortet: ein eigenes Feld `absender` ist der richtige Schnitt, ein weiterer worker-Wert wuerde vom Runner still liegengelassen. Fuer V5 gibt es ein Merkmal mit null Fehlalarmen im Bestand.",
+ "kurzantwort": {
+  "V1": "NEIN, nicht geloescht. Der erste Lauf sagt «[nicht da]  pysolar» (nicht KANN WEG, nicht WIRD GEBRAUCHT): libs/pysolar* existiert seit dem 21.09.2026 nicht mehr. Nichts kopiert, nichts geloescht; die Sicherungsstelle ~/KosmoBetrieb/sicherung/… wurde darum nicht angelegt.",
+  "V2": "Zusaetzlich auf der Archivplatte (eigene 12-TB-Festplatte, getrennt von Daten- und Systemplatte) in einem eigenen Sicherungsordner «Sicherungen/kosmodraw-0.13.5_2026-09-23», vollstaendig samt .git (25 Commits). Ohne OneDrive erreichbar: JA — `python3 -m kosmodraw --help` laeuft aus der Kopie mit PYTHONPATH nur auf die Kopie, exit 0.",
+  "V3": "JA, in der Archivkopie: LICENSE daneben (GPL-3 Volltext, sha256 3972dc97…6986 = der FSF-Text aus /usr/share/common-licenses) und 13 von 13 .py mit dreizeiligem Kopf (Projekt, SPDX GPL-3.0-or-later, Urheber wie in der README). Der OneDrive-Abzug selbst bleibt unveraendert als Ursprung.",
+  "V4": "Ein eigenes Feld `absender` (frei, z.B. \"kosmopublish\"). `worker` ist heute der EMPFAENGER, und der Runner entscheidet allein daran, ob er einen Auftrag anfasst; ein neuer worker-Wert «kosmopublish» wuerde in pruefe_auftrag als «Unbekannter worker» fallen und im Runner als fremd liegenbleiben — fuer immer. Ein `absender` bricht heute nichts, weil pruefe_auftrag unbekannte Felder nicht prueft — und genau das ist auch seine Schwaeche (siehe befunde).",
+  "V5": "Ja: «Lauf-Art (qa/multipass/render) UND params leer UND anweisung gesetzt». Im Bestand (157 Auftraege) trifft das 39 Auftraege, alle in Worten beantwortet, und 0 der 9 maschinell beantworteten. Das ist ein Hinweis, kein Riegel — besser noch: der Runner laesst solche Auftraege liegen wie eine `frage`, statt sie mit `fehler` zu beantworten.",
+  "V6": "Der 21.09.-Commit a6584ca hat auch pyphen geloescht; damit ist weasyprint mit dem echten libs/ nicht mehr importierbar (ModuleNotFoundError) — euer PDF-Weg ist an dieser Maschine heute gebrochen (Belege in auf-146)."
+ },
+ "befunde": {
+  "v1": {
+   "befehl": "python3 <Stand-297f369>/tools/libs_pruefen.py --libs <libs>  (exit 0)",
+   "zeilen_woertlich": [
+    "  [nicht da]  pyphen",
+    "  [nicht da]  pysolar"
+   ],
+   "gegenprobe": "ls -d <libs>/pysolar* -> No such file or directory; derselbe Suchweg findet <libs>/ezdxf* (2 Eintraege).",
+   "reste_ausserhalb_libs": "pysolar liegt noch in <KosmoPrepare>/libs.darwin-bak-2026-06-10 (228 KB, gitignored, im Manifest per «/libs.darwin-bak*/» ausgeschlossen) und im .venv (python3.11, per «/.venv*/» ausgeschlossen). Beides wird laut Manifest nicht ausgeliefert; nicht angefasst, weil nicht bestellt.",
+   "git_pull": "nicht gefahren: der Klon steht «voraus 1, hinterher 4» — pull haette einen Merge-Commit erzeugt. Euer Werkzeug ist in einer Wegwerfkopie von origin/main 297f369 gelaufen (siehe auf-146)."
+  },
+  "v2": {
+   "quelle": "der OneDrive-Abzug vom 09.06. auf der Datenplatte (1,9 MB, Git-Klon, Arbeitsbaum sauber, letzter Commit 31.05.2026)",
+   "ziel": "<archiv>/Sicherungen/kosmodraw-0.13.5_2026-09-23 — die Archivplatte ist ein eigener Datentraeger (lsblk: sda 10.9T auf /mnt/archiv), nicht die Datenplatte und nicht die Systemplatte",
+   "befehle": {
+    "cp -a <quelle> <ziel>": "exit 0",
+    "diff -r <quelle> <ziel>": "exit 0 (vor V3)",
+    "sha256sum -c (241 Dateien, ohne __pycache__)": "exit 0",
+    "git -C <ziel> fsck --no-progress": "exit 0, keine Ausgabe",
+    "git -C <ziel> log --oneline | wc -l": "25",
+    "PYTHONPATH=<ziel> python3 -m kosmodraw --help": "exit 0 (usage: kosmodraw [-h] [--project PROJECT] …)"
+   },
+   "wichtig_die_github_kopie_gibt_es_nicht_mehr": "Der Klon hat eine Fernadresse (privates GitHub-Repo). git ls-remote origin -> «ERROR: Repository not found.», exit 128. Entweder geloescht oder ohne Zugang von hier. Die Archivkopie ist damit neben dem OneDrive-Abzug die einzige, die ich belegen kann.",
+   "grenze": "Die Kopie laeuft fuer --help ohne OneDrive. Fuer echte Laeufe sucht `_libs.py` libs/ in der Kopie oder relativ unter «../KosmosPrepare/01_Source_Code/libs» (ifcopenshell) — das gibt es neben der Archivkopie nicht. Die Lizenzfrage beruehrt das nicht; ein IFC-Export aus der Kopie braucht aber ein eigenes libs/ (requirements.txt liegt bei)."
+  },
+  "v3": {
+   "license": "cp /usr/share/common-licenses/GPL-3 <ziel>/LICENSE; sha256 3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+   "kopf": [
+    "# KosmoDraw — Teil von ArchitekturKosmos",
+    "# SPDX-License-Identifier: GPL-3.0-or-later",
+    "# Copyright (C) 2026 <Urheber laut README> — Volltext siehe LICENSE im Paketstamm"
+   ],
+   "kopf_hinweis": "In der Datei steht der Name des Urhebers woertlich, wie in der README; hier nur als Platzhalter.",
+   "nachweis": "grep -l 'SPDX-License-Identifier: GPL-3.0-or-later' <ziel>/kosmodraw/*.py | wc -l -> 13; grep -L … -> leer. Gegenprobe Suchweg: dieselbe Suche im unveraenderten Ursprung -> 0.",
+   "laeuft_noch": "Alle 12 Untermodule plus Paket importieren aus der Kopie (Fassung 0.13.5, Paket-Docstring erhalten, exit 0); --help exit 0. Der Kopf steht VOR dem Modul-Docstring als Kommentar — Docstrings bleiben Docstrings.",
+   "git": "In der Kopie als nicht festgeschriebene Aenderung (13 × M, LICENSE ??). Kein Commit, weil mir Commits untersagt sind; wer die Kopie weiterfuehrt, kann das mit einem Commit festhalten."
+  },
+  "v4": {
+   "gemessen_am_code": {
+    "pruefe_auftrag": "src/aiimaging/auftrag.py: WORKER = (local, cloud, ui, kern); ein anderer Wert -> Mangel «Unbekannter worker». Unbekannte FELDER werden nicht geprueft — ein zusaetzliches `absender` geht heute unbemerkt durch.",
+    "runner": "tools/homeworker.py Z. 866f.: fremd = worker != EIGENER_WORKER (\"local\"). Ein Auftrag mit worker «kosmopublish» waere fuer den Runner fremd und bliebe «nicht fuer 'local'» liegen — kein Ergebnis, niemals. Das ist der Bruch eines weiteren worker-Werts.",
+    "deckelstand": "zaehlt je worker — ein neuer worker-Wert haette einen eigenen, leeren Deckel und verschleierte, dass die Arbeit bei local landet."
+   },
+   "meinung": "`worker` beantwortet «wer fuehrt aus», `absender` «wer fragt und wem gehoert die Antwort». Das sind zwei Achsen; KosmoPublish-Auftraege an die HomeStation sind worker=local, absender=kosmopublish. Die Werte von absender sollten eine geschlossene Menge sein (wie WORKER), sonst ist «kosmo-publish» ein zweiter Absender. Und: solange pruefe_auftrag unbekannte Felder schweigend annimmt, wuerde ein Tippfehler «absendr» genauso durchgehen — ein Riegel «unbekanntes Feld» waere der eigentliche Gewinn.",
+   "was_nicht_gebaut_wurde": "nichts — Frage, kein Bauauftrag."
+  },
+  "v5": {
+   "regel": "art in ARTEN_LAUF (qa, multipass, render) UND params leer UND anweisung gesetzt",
+   "messung": "python3 ueber auftraege/offen/*.json (157) und auftraege/ergebnisse/*.json; «maschinell beantwortet» = Ergebnis mit urteil-Schluessel multipass/render/auftrag (eine eigene Naeherung, nicht euer Begriff).",
+   "ergebnis": {
+    "qa": "28 von 51 getroffen, alle in Worten beantwortet",
+    "multipass": "4 getroffen (alle in Worten beantwortet); 7 maschinell beantwortete nicht getroffen",
+    "render": "7 getroffen (alle in Worten); 2 maschinell beantwortete nicht getroffen",
+    "fehlalarme": "0 — kein maschinell beantworteter Auftrag faellt unter die Regel"
+   },
+   "grenze": "Die Regel faengt 23 qa-Auftraege mit params NICHT, obwohl auch die in Worten beantwortet wurden (der qa-Zweig misst ja nichts). Eure Faelle vom 09.09. (auf-20260909-97, -98, -100) und 137 vom 22.09. waeren getroffen worden.",
+   "eure_zahl": "Ihr nennt 152 Auftraege / 54 qa; ich zaehle heute 157 / 51 in auftraege/offen (Bestand hat sich seither bewegt, oder ihr zaehlt ein anderes Verzeichnis).",
+   "vorschlag": "Nicht im Validator als Fehler, sondern im Runner: ein Lauf-Auftrag ohne params und mit anweisung wird wie `frage` liegengelassen (kein Ergebnis) und in der Liste «bleiben liegen» genannt. Dann kostet ein Irrtum in `art` nichts mehr."
+  }
+ },
+ "bemerkungen": [
+  "Geloescht: nichts. Kopiert: der kosmodraw-Ordner auf die Archivplatte (V2). Zum Pruefen der Schreibbarkeit der Archivplatte habe ich eine leere Probedatei angelegt und sofort wieder entfernt.",
+  "Am KosmoPrepare-Klon nichts veraendert, kein Commit, kein Push.",
+  "Die Entscheidung, pyphen wiederherzustellen, liegt beim Owner (Kopie aus libs.darwin-bak-2026-06-10 oder aus dem Juni-Abzug auf der Archivplatte)."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git fetch (KosmoPrepare), git ls-remote (kosmodraw)",
+  "dauer_min": 25
+ },
+ "fehler": null
+}

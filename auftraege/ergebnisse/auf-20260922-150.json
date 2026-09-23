@@ -1,0 +1,82 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-150",
+ "status": "ok",
+ "beendet": "2026-09-23T13:11:00Z",
+ "stand": "e490b66",
+ "geprueft": "Drei von vier Laeufen gefahren, einer ging nicht. V1: beide Vergleichsbilder EINZELN neu gesetzt — aber mit --tier1-only, weil euer Befehl ohne diese Fahne das Vision-Modell ueber Ollama auf der Grafikkarte laedt, und die Karte gehoert gerade dem Haupt-Worker. Und nicht im KosmoPublish-Klon, sondern in einer Wegwerfkopie eures Stands origin/main da752be (der Klon steht auf einem anderen Zweig; umschalten und aendern ist mir untersagt) — die neuen Bilder liegen dort zum Abholen. V2 NICHT gefahren: auf der ganzen Maschine gibt es kein KosmoDesign-Paket (kein einziges publish-handoff.json), und euer Befehl braucht ohnehin --paket statt eines Positionsarguments. V3: in manchen — die eine ArchiCAD-Ausgabe hier fuehrt 4 IfcFurnishingElement und 0 IfcFurniture, ein fremdes Revit-Referenzmodell 137 IfcFurniture. V4: 0 Vorlagen gelernt, nicht wegen Netz, sondern weil die zwei angesehenen Treffer kein PDF hatten; «nicht gemessen» meldet der Lauf NICHT. `--limit` gibt es nicht, es heisst `--anzahl`.",
+ "kurzantwort": {
+  "V1": "bridge-grundriss: JA erneuert («golden aktualisiert → bridge-grundriss.png», Werkzeugmarke rsvg-convert 2.61.3 + Nimbus Sans). massing-demo: JA erneuert (Werkzeugmarke Blender 5.2.2 LTS · snap 7803, vorher 5.2.1 · snap 7740). Beide Laeufe enden mit Exitcode 1 und «0 pass / 1 fail», Grund: «kein Vergleichsbild — Tier-1 kann nichts beurteilen». Die Bilder liegen in der Wegwerfkopie, NICHT im Repo (siehe befunde).",
+  "V2": "NICHT GEFAHREN — kein echtes Paket vorhanden. find nach publish-handoff.json auf Daten-, Heim- und Archivplatte: 0 Treffer (Gegenprobe desselben Suchwegs findet kosmopublish_cli.py). Ausserdem: `handoff <pfad>` scheitert am Parser, die Tuer verlangt `handoff --paket <pfad>`.",
+  "V3": "IN MANCHEN. Die einzige ArchiCAD-Ausgabe auf der Maschine (IFC2X3, Archicad 28.4, zwei Fassungen derselben Datei): 0 IfcFurniture, 4 IfcFurnishingElement — sie ist aber ein Gelaende-/Plattenmodell (111 IfcSlab, 0 Waende). Ein fremdes Revit-Referenzmodell (IFC4): 137 IfcFurniture, 2445 Waende, 358 Raeume. Projekt-IFC, die ueber IfcOpenShell umgeschrieben wurden (Kontext, ein Wettbewerb): nur IfcBuildingElementProxy, keine Moebel. Ein echtes Gebaeude-IFC mit Waenden AUS ARCHICAD liegt hier nicht — fuer eure eigenen Werkplaene also: weiss ich nicht.",
+  "V4": "0 Vorlagen gelernt, 2 Eintraege angesehen, beide «no_pdf_url». KEIN «nicht gemessen». Der Ordner ~/.kosmopublish/user_templates entstand darum gar nicht. `build --engine typst --vorlage liste` zeigt die 7 eingebauten Vorlagen (klassisch 5 Slots, dominant_lageplan 3, schnitt_fokus 4, fassaden_strip 7, konzept_textreich 3, visuell_dominant 3, massenstudie_stapelung 5).",
+  "V5": "`--anzahl` begrenzt die SUCHTREFFER, nicht die PDF — steht vorne ein Eintrag ohne PDF, lernt `--anzahl 2` nichts; wer «hoechstens zwei PDF» will, braucht einen Zaehler nach dem PDF-Filter."
+ },
+ "befunde": {
+  "grundlage": "KosmoPublish-Klon: Zweig claude/kosmo-orbit-v010-build-…, sauber, 183 Commits hinter origin/main. `git pull` haette diesen Zweig nicht auf euren Stand gebracht; umschalten waere eine Aenderung am Klon. Darum: git fetch, dann `git archive da752be` in einen Hilfsordner im Heimatordner (ausserhalb aller Repos); gefahren mit dem Interpreter des Klons (<KosmoPublish>/.venv/bin/python, 3.12.13).",
+  "v1": {
+   "befehl": "CUDA_VISIBLE_DEVICES='' .venv/bin/python tools/kosmopublish_cli.py visual-test --golden output/visual_tests/golden --update-golden --tier1-only --nur <fall>",
+   "warum_tier1_only": "tools/visual_test_runner.py: ohne tier1_only wird nodes.poster_vision_critic geladen und das Vision-Modell (Vorgabe qwen3-vl:8b ueber Ollama) vorgewaermt und je Fall befragt — GPU-Last. Die Vergleichsbilder werden VOR diesem Schritt geschrieben (shutil.copyfile im update_golden-Zweig), also aendert --tier1-only an den neuen Bildern nichts.",
+   "bridge_grundriss": {
+    "exit": 1,
+    "ausgabe": [
+     "golden aktualisiert → bridge-grundriss.png",
+     "Werkzeugmarke gesichert: rsvg-convert=rsvg-convert version 2.61.3; schrift:Helvetica=NimbusSans-Regular.otf: \"Nimbus Sans\" \"Regular\"",
+     "kein Vergleichsbild — Tier-1 kann nichts beurteilen"
+    ],
+    "alt": "4486f10 vom 02.09.2026, 1200 × 840 px, sha256 59adb0e2…",
+    "neu": "1200 × 800 px, sha256 8ad3110b…",
+    "vergleich": "Groesse verschieden (840 → 800 px hoch) — der Code zeichnet ein anderes Blatt, wie ihr vermutet habt; Werkzeugmarke identisch zur alten."
+   },
+   "massing_demo": {
+    "exit": 1,
+    "ausgabe": [
+     "golden aktualisiert → massing-demo.png",
+     "Werkzeugmarke gesichert: blender=Blender 5.2.2 LTS · snap 7803",
+     "kein Vergleichsbild — Tier-1 kann nichts beurteilen"
+    ],
+    "alt": "4486f10 vom 02.09.2026, sha256 c2aa9c72…, Blender 5.2.1 · snap 7740",
+    "neu": "sha256 64bfd7b9…, 900 × 700 wie vorher",
+    "vergleich": "0,00 % der Pixel weichen um mehr als 16/255 ab (PIL, eigener Vergleich) — inhaltlich dasselbe Bild; nur die Blender-Fassung ist neu."
+   },
+   "generativ_poster": "nicht angefasst (sha256 6347ea37… vorher = nachher).",
+   "wo_die_bilder_liegen": "~/kosmo-hilfslauf-2026-09-23/kpub-main/output/visual_tests/golden/ (bridge-grundriss.png + .werkzeuge.json, massing-demo.png + .werkzeuge.json). Zum Uebernehmen in euren Klon: diese vier Dateien kopieren und committen — das habe ich nicht getan.",
+   "cycles": "massing rendert laut tools/blender_massing.py mit scene.cycles.device = \"CPU\" — keine Kartenlast."
+  },
+  "v2": {
+   "suche": "find /mnt/data /home /mnt/archiv -name publish-handoff.json → 0; Gegenprobe: find … -name kosmopublish_cli.py → 2 Treffer",
+   "parser": "sub.add_parser('handoff') verlangt `--paket` (required=True); `handoff <pfad>` scheitert mit argparse-Fehler.",
+   "was_fehlt": "ein von KosmoDesign (core/handoff_publish.py) geschriebenes Paket aus einem echten Projekt. Das zu erzeugen waere ein eigener Lauf in einer anderen Lane — nicht bestellt, nicht getan."
+  },
+  "v3": {
+   "befehl": "python3: alle .ifc auf Daten-, Heim- und Archivplatte (ohne Bibliotheks-Fixtures, ohne Papierkorb), nach sha256 entdoppelt; Erzeuger aus FILE_NAME; Zaehlung per Regex '=\\s*IFCFURNITURE\\s*\\(' usw.",
+   "bestand": "162 eindeutige IFC-Dateien: 98 von IfcOpenShell/eigenen Werkzeugen, 33 Testkoerper dieses Repos, 2 ArchiCAD (eine Datei in zwei Fassungen), 1 Revit, 3 sonstige",
+   "archicad": "IFC2X3, «Graphisoft - Archicad - 28.4.0», 314 MB: IfcFurniture 0, IfcFurnishingElement 4, IfcSlab 111, IfcWall 0, IfcSpace 0, IfcBuildingElementProxy 2 — ein Gelaende-/Plattenmodell, kein Gebaeude mit Raeumen",
+   "revit": "IFC4, Autodesk Revit 24.1 (fremdes Referenzmodell): IfcFurniture 137, IfcFurnishingElement 0, Waende 2445, IfcSpace 358",
+   "gegenprobe": "Derselbe Zaehler findet in der Revit-Datei 2445 Waende und in den Testkoerpern je 4 bzw. 90 Waende — der Suchweg sieht also, was da ist.",
+   "hinweis": "ArchiCAD schreibt in IFC2X3 Moebel als IfcFurnishingElement; furniture_symbols.py liest laut Zeile 99 beide Klassen (dazu IfcSystemFurnitureElement)."
+  },
+  "v4": {
+   "woertlich": "vorlagen-lernen --limit 2 → exit 2, «kosmopublish: error: unrecognized arguments: --limit 2»",
+   "gefahren": "vorlagen-lernen --anzahl 2 → exit 0, «0 Vorlage(n) gelernt, 2 Eintrag/Eintraege angesehen, Ordner: ~/.kosmopublish/user_templates»; stderr: «– gobekli-tepe: no_pdf_url», «– catal-huyuk: no_pdf_url»",
+   "netz": "Die Suche lief durch (sonst stuende «ERROR: Die Suche auf architekturkosmos.ch ist nicht durchgelaufen»). Es lag nicht am Netz und nicht an pypdf, sondern daran, dass die ersten zwei Suchtreffer kein PDF fuehren.",
+   "liste": "build --engine typst --vorlage liste → exit 0, 7 eingebaute Vorlagen; vorlagen-lernen --liste → «Noch keine gelernte Vorlage — der Ordner … gibt es nicht.»",
+   "nicht_gemacht": "keinen Lauf mit groesserer --anzahl, weil das mehr als zwei fremde PDF laden koennte — eure Grenze."
+  }
+ },
+ "bemerkungen": [
+  "Abweichungen vom Befehl, alle drei benannt: --tier1-only (GPU), Wegwerfkopie statt Klon (Repo-Regel), --anzahl statt --limit (Parser).",
+  "Keine Bilder, Plaene oder Pakete zurueckgeschickt; keine Projektnamen genannt.",
+  "Nichts geloescht, nichts installiert. Netz nur fuer git fetch und die Vorlagensuche.",
+  "Status von teilweise auf ok gesetzt (Haupt-Worker): die offenen Punkte sind mit Belegen begruendet — nach eurer Regel ist «geht nicht» mit Belegen eine vollstaendige Antwort."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "vision_modell_geladen": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git fetch (KosmoPublish), Suche auf architekturkosmos.ch",
+  "python": "KosmoPublish-.venv 3.12.13",
+  "dauer_min": 30
+ },
+ "fehler": null
+}

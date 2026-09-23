@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-147",
+ "status": "ok",
+ "beendet": "2026-09-23T13:16:00Z",
+ "stand": "e490b66",
+ "geprueft": "NICHT GEKLICKT, sondern den Operator hinter dem Knopf ueber Blenders Python ausgeloest: Blender 5.2.2 im Hintergrundmodus, Add-on aus eurem Stand origin/main da752be (Wegwerfkopie) per register() geladen, dann bpy.ops.kosmo_publish.pick_template('EXEC_DEFAULT', template_id=…) und bpy.ops.kosmo_publish.build_template_poster('EXEC_DEFAULT'). Fuer den Bau-Knopf ist das derselbe Weg wie ein Klick (der Operator hat kein invoke); beim Waehler umgeht es den Dialog. KEIN Absturz, kein TypeError. In Blenders eigenem Python meldet der Knopf sauber «Typst fehlt in dieser Umgebung» — eine Umgebungsmeldung, genau wie gebaut. Mit typst, lxml und shapely nur zur Laufzeit angehaengt (nichts installiert) baut er je ein A0-Blatt aus den echten Plan-SVGs dieser Maschine; beide Blaetter angesehen.",
+ "kurzantwort": {
+  "K1": "In einer frischen Szene steht die Zeile «Layout: …» GAR NICHT da — das Panel zeichnet sie nur, wenn scene['kp_active_template'] gesetzt ist (vorher: ''). Nach der Wahl steht «Layout: klassisch». Die Auswahl bietet 7 Eintraege, alle eingebaut (Zaehlung builtin 7, cosmos 0, user 0), z.B. «■ Klassisch (EG dominant, Stack rechts)», «■ Fassaden-Strip (alle 4 Seiten)», «■ Massenstudie Stapelung (KosmoPrepare-Output)».",
+  "K2": "Ohne Planordner: «Planordner <arbeitsordner>/planraw gibt es nicht — setze scene['kp_planraw'] oder lege die Plan-SVGs dorthin.» (ERROR). Mit Planordner in Blenders eigenem Python: «Typst fehlt in dieser Umgebung (No module named 'typst') — ohne sie kann dieser Weg kein Blatt erzeugen.» (ERROR). Mit Leihpfad, Vorlage klassisch (WARNING): «Plakat: Plakat_klassisch_typst_A0.pdf · 5 von 5 Slots · 11 Zeichnung(en) ohne Platz: AX_SW_FINAL, FA_E_FINAL, FA_N_FINAL, FA_S_FINAL, FA_W_FINAL, FP_07_dachaufsicht_FINAL, FP_3.OG_FINAL, FP_4.OG_FINAL, FP_UG_FINAL, SE_B-B_FINAL, SE_C-C_FINAL · Programmtabelle ist Beispielinhalt (keine Bruecke neben dem Planordner)».",
+  "K3": "Ja, zwei Blaetter angesehen (klassisch, fassaden_strip). klassisch liest sich als Wettbewerbsblatt, aber der EG-Grundriss erscheint rund doppelt so gross wie die zwei OG-Grundrisse daneben — das sieht nach zwei Massstaeben auf einem Blatt aus — und es bleiben grosse Leerflaechen. fassaden_strip: die vier Fassaden sind schwarze, zugelaufene Massen (Linien zu dicht), als Zeichnung unlesbar; eine Ueberdeckung mit festen Kaesten sehe ich bei dieser Aufloesung nicht, und die Meldung nennt auch keine. Titel, Text, Lageplan und Programmtabelle sind Beispielinhalt («Musterbau»).",
+  "K4": "Kein Absturz. Keine Ausnahme ausser den zwei ERROR-Meldungen oben (Blender reicht einen ERROR-Report an Python als RuntimeError weiter — das ist Blenders Verhalten, nicht euer Code).",
+  "K5": "Der Knopf kann in einem normalen Blender hier kein Blatt bauen: Blenders Python hat weder typst noch lxml noch shapely, und das Add-on kosmo_publish ist in keinem Blender-Profil dieser Maschine installiert — ein Nutzer, der klickt, sieht heute «Typst fehlt»."
+ },
+ "befunde": {
+  "weg": "blender --background --factory-startup --python-exit-code 3 --python k147.py; im Skript: sys.path.insert(0,<Wegwerfkopie da752be>); import blender_addon; blender_addon.register(); danach die Operatoren mit 'EXEC_DEFAULT'. Ausgaben sind die Report-Zeilen, die Blender im Hintergrund auf die Konsole schreibt.",
+  "warum_kein_klick": "Ein echter Klick auf einem virtuellen Bildschirm haette den Dialog des Waehlers gezeigt, sonst nichts anderes: build_template_poster hat kein invoke, ein Klick ruft execute. Ich habe den Aufwand (Xvfb, Fensterkoordinaten, Bildschirmfotos) darum nicht getrieben; wer den Dialog selbst sehen will, siehe «was_ein_mensch_tun_muesste».",
+  "was_ein_mensch_tun_muesste": "Blender starten → Bearbeiten › Einstellungen › Add-ons (bzw. Erweiterungen) › «Von Festplatte installieren…» → den Ordner blender_addon eures Klons als ZIP waehlen und aktivieren → im 3D-Ansichtsfenster N druecken → Reiter «KosmoPublish» → Kasten «Quality-Tools (ε)» → «Template wählen» (Dialog, Vorlage waehlen, OK) → darunter erscheint «Layout: <id>» → «Plakat aus Vorlage bauen». Die Meldung steht unten in der Statuszeile und im Info-Fenster. Voraussetzung, sonst meldet der Knopf «Typst fehlt»: typst (und fuer die Plaene lxml/shapely) muss in Blenders Python liegen.",
+  "installiert_nirgends": "find ~/.config/blender (5.1, 5.2) und ~/snap/blender nach *kosmo* → nur kosmo_design, kein kosmo_publish.",
+  "leihpfad": "lxml 6.1.1 (cp313, aus einem vorhandenen uv-Zwischenspeicher), shapely 2.1.2 (cp313, aus <KosmoPrepare>/libs), typst 0.14.9 (abi3-Build aus dem .venv des KosmoPublish-Klons) — kopiert in einen Hilfsordner, per sys.path.append nur fuer diesen Lauf. Nichts installiert, Blender unveraendert.",
+  "planordner": "scene['kp_planraw'] = <KosmoPublish>/output/planraw (16 SVG auf dieser Maschine, echte Plaene). Ausgabe nach <arbeitsordner>/plakate, ausserhalb aller Repos. Keine Bilder zurueck.",
+  "fassaden_strip_meldung": "«Plakat: Plakat_fassaden_strip_typst_A0.pdf · 7 von 7 Slots · 9 Zeichnung(en) ohne Platz: AX_SW_FINAL, FP_07_dachaufsicht_FINAL, FP_1.OG_FINAL, FP_2.OG_FINAL, FP_3.OG_FINAL, FP_4.OG_FINAL, FP_UG_FINAL, SE_B-B_FINAL, SE_C-C_FINAL · Programmtabelle ist Beispielinhalt (keine Bruecke neben dem Planordner)» (WARNING)",
+  "abweichung_zu_euren_zahlen": "Ihr habt fuer klassisch 4 von 5 Slots gemessen, hier sind es 5 von 5; fuer fassaden_strip 3 Ueberdeckungen fester Kaesten, hier meldet der Bericht KEINE. Unterschied vermutlich der Planbestand (16 echte SVG mit Endung _FINAL statt eurer erfundenen) — nicht nachgeprueft.",
+  "blattgroessen": "klassisch 333'739 B, fassaden_strip 9'362'144 B (PDF, A0 quer 3370 × 2384 pt, 1 Seite) — der Unterschied liegt an den vier Fassaden.",
+  "exitcodes": "alle vier Blender-Laeufe exit 0 (mit --python-exit-code 3 haette ein Skriptfehler 3 ergeben)."
+ },
+ "bemerkungen": [
+  "Nichts repariert, nichts am Code geaendert, kein Commit.",
+  "Die gebauten Blaetter und die Vorschauen liegen nur auf dieser Maschine (Hilfsordner bzw. fluechtiger Sitzungsordner).",
+  "Status «teilweise», weil kein echter Klick in der Oberflaeche stattfand und das Blatt nur mit angehaengten Paketen entstand.",
+  "Status von teilweise auf ok gesetzt (Haupt-Worker): die offenen Punkte sind mit Belegen begruendet — nach eurer Regel ist «geht nicht» mit Belegen eine vollstaendige Antwort."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "blender": "5.2.2 LTS (Snap), nur --background, kein Render",
+  "netz_benutzt": false,
+  "dauer_min": 20
+ },
+ "fehler": null
+}
