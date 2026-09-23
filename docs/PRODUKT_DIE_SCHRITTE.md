@@ -114,7 +114,12 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
   **verkehrt herum** — was vorn ist, erscheint hinten. Beim einfachen Quader nicht. Das wird
   jetzt gezielt gemessen.
 * **Ein stiller Fehler beim zweiten Bildmodell:** Es lief ohne Führung durch den Prompt, weil
-  ein leerer Gegentext die Führung ganz abschaltet. Wird behoben.
+  ein leerer Gegentext die Führung ganz abschaltet. **Behoben** — mit den Werten seiner
+  Modellkarte. Das betrifft auch jede Bestellung aus KosmoOrbit ohne Modellangabe; sie
+  rechnet jetzt etwa doppelt so lang (angesagt, wird gemessen).
+* **Das neuere Steuermodell zeichnet sichtbar viel besser** — ein sauberes Gebäude genau auf
+  der Form. Ausgerechnet diese Bilder erklärt unsere Prüfung aber für «nicht messbar». Die
+  Prüfung muss das erst lernen; die HomeStation misst, woran es liegt.
 
 ### 23.09.2026 (nachts) · Die Tiefe steuert — mit einem Handgriff besser
 
