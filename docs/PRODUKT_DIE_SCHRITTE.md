@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 23.09.2026 (spät nachts) · Berichtigt: Der Handgriff trägt nicht
+
+* **Die Meldung darunter war zu früh.** Über drei Startwerte und ein zweites Gebäude
+  wiederholt, trägt der Gewinn nicht: Er hängt an einem einzigen Startwert eines einzigen
+  Körpers. Der Schalter bleibt ein Messinstrument und wird nicht eingebaut.
+* **Neu gefunden, und wichtiger:** Beim gegliederten Hochhaus zeichnet das Modell die Tiefe
+  **verkehrt herum** — was vorn ist, erscheint hinten. Beim einfachen Quader nicht. Das wird
+  jetzt gezielt gemessen.
+* **Ein stiller Fehler beim zweiten Bildmodell:** Es lief ohne Führung durch den Prompt, weil
+  ein leerer Gegentext die Führung ganz abschaltet. Wird behoben.
+
 ### 23.09.2026 (nachts) · Die Tiefe steuert — mit einem Handgriff besser
 
 * **Die HomeStation hat gemessen:** Hebt man das Gebäude in der Tiefenkarte leicht vom
