@@ -7357,6 +7357,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **local:** `auf-154` — steuert die Tiefe das Bild? Inpaint-Weg zum Skizzieren?
       *(berichtigt 23.09. abends: kein Verdrahtungsfehler; wahrscheinlich Rückkante im
       Hintergrund bei freistehendem Körper — Messschalter in Runde 10, Nachtrag in 154)*
+- [x] **Runde 10:** zwei Messschalter (`ferne_abstand`, `tiefe_invertieren`), Vorgabe aus,
+      bitgleich; dabei behoben: der Leser rechnete den Boden von `ferne_trennen` nicht ein;
+      der Schalter ging auf dem Skizzenweg verloren; die Fläche zeigt Messschalter nur,
+      wenn gesetzt. *(Protokoll 69 §10)*
+- [x] **Nachtrag in `auf-154`:** Teil B ersetzt durch B1–B6 (Boden, Abstand, Polarität,
+      Pixel, Stärke), Prämisse berichtigt.
 - [ ] **cloud:** `auf-155` — Zusage Lieferstatus, drei Fragen.
 - [ ] **Kern (klein):** Zwilling fehlt in `verdict.reason` (`_nicht_gerendert_kurz` fragt
       `bild_png` vor `doppelt_von`) — nur mit Ansage ändern.

@@ -741,6 +741,20 @@ def _knotenbaum(graph) -> list[dict]:
 NICHT_EINSTELLBAR = ("ifc_path", "glb_path", "bbox")
 
 
+def _angeboten(name: str, einstellungen: dict) -> bool:
+    """Ob die Flaeche ein Feld der Kette anbietet.
+
+    Die Messschalter (:data:`aiimaging.kette.MESSSCHALTER`) erschienen am 23.09.2026 von
+    selbst als gewoehnliche Felder, weil diese Datei die Felder aus der Kette liest. Sie
+    sind fuer Messungen, nicht fuer den Alltag — **aber ein gesetzter Schalter bleibt
+    sichtbar.** Eine Mappe, die anders rechnet, als ihre Anzeige sagt, waere schlimmer
+    als ein Feld zu viel.
+    """
+    if name in NICHT_EINSTELLBAR:
+        return False
+    return name not in kette.MESSSCHALTER or name in einstellungen
+
+
 def _probewert(vorgabe, annotation=""):
     """Ein Wert, mit dem sich ausprobieren lässt, wo ein Feld landet.
 
@@ -817,7 +831,7 @@ def _wo_landet(einstellungen: dict, graph, glb: str | None) -> dict[str, tuple]:
     vorher = bild(graph)
     wo: dict[str, tuple] = {}
     for name, p in inspect.signature(kette.baue_kette).parameters.items():
-        if name in NICHT_EINSTELLBAR:
+        if not _angeboten(name, einstellungen):
             continue
         vorgabe = None if p.default is inspect.Parameter.empty else p.default
         probe = dict(grund)
@@ -881,7 +895,7 @@ def bedienfelder(einstellungen: dict, graph=None, glb: str | None = None) -> lis
 
     felder = []
     for name, p in inspect.signature(kette.baue_kette).parameters.items():
-        if name in NICHT_EINSTELLBAR:
+        if not _angeboten(name, einstellungen):
             continue
         vorgabe = None if p.default is inspect.Parameter.empty else p.default
         felder.append({

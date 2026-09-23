@@ -5663,12 +5663,29 @@ abfragen und ihre Animationen weglassen. Wer sie eingeschaltet hat, darf dadurch
 Auskunft verlieren — *eine Aussage, die nur in der Bewegung steckt, ist für diese Leute
 keine Aussage.*
 
+**Messschalter** — Eine Einstellung, die es nur gibt, damit sich **eine Ursache von einer
+anderen trennen lässt** — nicht, damit jemand sie im Alltag stellt. Sie ist
+ausgeschaltet, solange niemand sie setzt, und dann rechnet alles bitgenau wie vorher. Im
+Projekt seit dem 23.09.2026 zwei: der **Abstand zum Hintergrund** und die **Umkehr der
+Tiefe** (siehe *Polarität*). Die Oberfläche zeigt sie nur, wenn eine Mappe sie schon
+trägt — *eine Mappe, die anders rechnet, als ihre Anzeige sagt, wäre schlimmer als ein Feld
+zu viel.*
+
+**Abstand zum Hintergrund (`ferne_abstand`)** — In unserer Tiefenkarte ist das Nächste
+weiss und das Fernste schwarz, und der leere Himmel dahinter ist ebenfalls schwarz. Das
+entfernteste Stück Gebäude sieht darum genauso aus wie *nichts*. Steht ein Gebäude auf
+einer Bodenplatte, ist das Fernste der Boden und fällt nicht auf; steht ein Quader frei,
+**verschwindet seine Rückkante im Hintergrund.** Der Abstand hebt alles Gebaute um einen
+kleinen Grauwert an (z. B. 0,15), der Hintergrund bleibt schwarz — die Kante trennt sich ab.
+Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus Runde 10: **Messschalter**, **Abstand zum Hintergrund (`ferne_abstand`)** |
 | 2026-09-23 | Ergaenzt aus Runde 9: **Lieferstatus**, **Heimrelativer Pfad**; nachgefuehrt: **Obergrenze, gesetzt, nicht gemessen** (an Blender 5.2.2 nachgemessen) |
 | 2026-09-23 | Ergaenzt aus Runde 7b/7c: **Ueberlauf**, **Zweite Linie**, **Obergrenze, gesetzt, nicht gemessen** |
 | 2026-09-23 | Ergaenzt aus Runde 7: **Standpunkt zweimal bestellt**, **Bias (Winkel einer Ueber-Eck-Ansicht)**, **Nicht gerahmt**, **Listenlage** (mit «ganz oder gar nicht»); nachgefuehrt: **Richtungsgrenze** (gilt in beide Richtungen), **Wirkungslos (im Bericht)** (auch Augenhoehe, Bias, Kameramodus) |

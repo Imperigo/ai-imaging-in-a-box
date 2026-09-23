@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 23.09.2026 (spät) · Warum die Form manchmal nicht ankommt — jetzt messbar
+
+* **Zwei Messschalter**, ausgeschaltet, solange niemand sie setzt: Der eine hebt das
+  Gebaute in der Tiefenkarte vom Hintergrund ab, der andere dreht die Tiefe für einen
+  Versuch um. Ohne sie rechnet alles genau wie vorher — belegt, nicht angenommen.
+* **Die HomeStation fährt sechs gezielte Läufe** (`auf-154`, Nachtrag): mit und ohne
+  Boden, mit Abstand, umgedreht, kleiner, schwächer. Danach ist bekannt, ob es an unserer
+  Aufbereitung liegt oder am Bildmodell.
+* **Nebenbei behoben:** Eine Rückrechnung von Grau in Meter lieferte in einem selten
+  benutzten Fall Punkte zu nah; ein Schalter ging beim Skizzieren still verloren.
+
 ### 23.09.2026 (abends) · Eine ehrliche Lieferauskunft, und eine schlechte Nachricht zum Bild
 
 * **KosmoOrbit erfährt jetzt je Kamera, ob ihr Bild kam.** Bisher stand dort still

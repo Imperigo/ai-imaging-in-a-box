@@ -224,6 +224,12 @@ KNOTEN_MULTIPASS = "multipass"
 KNOTEN_RENDER = "render"
 KNOTEN_QA = "qa"
 
+#: Die Messschalter von :func:`baue_kette` (23.09.2026): Sie gibt es, damit die
+#: HomeStation eine Ursache von einer anderen trennen kann — nicht, damit jemand sie im
+#: Alltag stellt. Eine Oberflaeche, die die Felder der Kette ausliest, bietet sie darum
+#: nur an, wenn eine Mappe sie schon traegt.
+MESSSCHALTER = ("ferne_abstand", "tiefe_invertieren")
+
 #: Knoten-IDs des Bild-Eingangs. Sie tragen eine laufende Nummer, sobald mehr als eine
 #: Runde angehängt wird (siehe :func:`haenge_nachrender_an`) — zwei Runden im selben
 #: Graphen sind der Normalfall und keine Ausnahme.
@@ -2651,6 +2657,7 @@ def fuehre_aus(
 __all__ = [
     "HINWEIS_SKIZZE_NICHT_ANGEKOMMEN",
     "ART_BILDQUELLE", "ART_GEOMETRIE", "ART_MULTIPASS", "ART_NACHRENDER", "ART_QA",
+    "MESSSCHALTER",
     "ART_RENDER",
     "AUSFUEHRER", "BEDARF", "EINGABEDATEIEN",
     "BASIS_BESTANDEN", "BASIS_BILD", "BASIS_GRUND", "BASIS_HERKUNFT", "BASIS_KNOTEN",

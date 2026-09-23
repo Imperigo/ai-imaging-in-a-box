@@ -344,10 +344,27 @@ def test_die_bedienfelder_kommen_aus_der_bibliothek_und_nicht_aus_einer_liste(se
 
     namen = {f["name"] for f in server.sicht(_projekt_mit_glb(tmp_path))["bedienfelder"]}
     erwartet = {n for n in inspect.signature(kette.baue_kette).parameters
-                if n not in server.NICHT_EINSTELLBAR}
+                if n not in server.NICHT_EINSTELLBAR and n not in kette.MESSSCHALTER}
     assert namen == erwartet, (
         f"Die Fläche bietet nicht an, was die Bibliothek kann: fehlt {sorted(erwartet - namen)}, "
         f"zu viel {sorted(namen - erwartet)}")
+
+
+def test_ein_messschalter_erscheint_nur_wenn_die_mappe_ihn_traegt(server, tmp_path):
+    """**Messschalter sind kein Alltagsfeld — aber ein gesetzter bleibt sichtbar**
+    (23.09.2026). Sonst rechnete eine Mappe anders, als ihre Anzeige sagt."""
+    from aiimaging import kette
+
+    assert set(kette.MESSSCHALTER) == {"ferne_abstand", "tiefe_invertieren"}
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    ohne = {f["name"] for f in server.sicht(_projekt_mit_glb(tmp_path / "a"))["bedienfelder"]}
+    assert not ohne & set(kette.MESSSCHALTER)
+    mit = {f["name"]: f for f in server.sicht(_projekt_mit_glb(
+        tmp_path / "b", {"prompt": "Abendlicht", "up_axis": "Y",
+                         "ferne_abstand": 0.15}))["bedienfelder"]}
+    assert mit["ferne_abstand"]["gesetzt"] is True and mit["ferne_abstand"]["wert"] == 0.15
+    assert "tiefe_invertieren" not in mit
 
 
 def test_ein_noch_nicht_gesetztes_feld_findet_trotzdem_seinen_knoten(server, tmp_path):
