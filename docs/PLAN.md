@@ -7404,8 +7404,9 @@ Bekannt und ausdrücklich nicht erledigt:
       zurückgeben — vor dem Einschalten der Buchprüfung.
 - [ ] **Kern (klein):** Abbruchfall in `verdict.reason` — «… fehlt.; Geometrie None gegen
       0.65» (doppelte Satzzeichen, «None» sichtbar), schon vorher so.
-- [ ] **Owner:** Abnahmeblatt am iPad (A4/A5 neu); zwei Entscheide aus `auf-156`
+- [ ] **Owner:** Abnahmeblatt am iPad (A4/A5 neu); ~~zwei Entscheide aus `auf-156`~~ (von der KosmoPublish-Sitzung gelöst, `auf-159`)
       (Kennwort-Änderung im KosmoPrepare-Klon, Bildtest-Commits bei KosmoPublish); nach
       `auf-158`: wird der Abstand zur Vorgabe?
-- [ ] **Mac-CI:** Schriften übersetzen ohne Warnung — vor `main`.
+- [x] **Mac-CI:** Schriften übersetzen ohne Warnung — vor `main`. *(erst rot: `Bundle.module` gibt es im App-Paket nicht; auf `Bundle.main` umgestellt, Lauf 12 grün)*
+- [ ] **local:** `auf-159` (Rang 3, von der KosmoPublish-Sitzung) — Klone nachziehen.
 
