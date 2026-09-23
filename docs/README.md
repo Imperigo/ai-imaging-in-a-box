@@ -111,6 +111,15 @@ Vertiefungsarbeit, nicht ihr Arbeitsprotokoll.
 
 ---
 
+## Visbox — die eigene Software und die iPad-App
+
+| Datei | wofür |
+|---|---|
+| [`VISBOX_IPAD_ERSTE_PROBE.md`](VISBOX_IPAD_ERSTE_PROBE.md) | **Für den Owner:** die App auf das iPad bringen, koppeln, zeichnen — und das Abnahmeblatt für die erste Probe am Gerät. |
+| [`ENTSCHEIDE_VISBOX_2026-09-18.md`](ENTSCHEIDE_VISBOX_2026-09-18.md) | Die Entscheide zur eigenen Software (E1–E24), darunter die Rückkehr nach KosmoOrbit nach der Abgabe. |
+| [`ENTSCHEIDE_IPAD_2026-09-21.md`](ENTSCHEIDE_IPAD_2026-09-21.md) | Die Entscheide zur iPad-Oberfläche (Nr. 1–34 und Nachträge). |
+| [`VISBOX_PROTOKOLL.md`](VISBOX_PROTOKOLL.md) | Wie App und Rechner miteinander sprechen — Wege, Felder, Zustände. Grundlage für die spätere Integration als KosmoSketch. |
+
 ## Die Naht zu KosmoOrbit
 
 | Datei | wofür |
