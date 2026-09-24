@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-166",
+  "art": "frage",
+  "beschreibung": "KosmoPublish tests_slow: test_plakat_1_konzept_fingerprint (g_count 54 -> 70). Nicht e5c964b — gemessen. Nur MESSEN, woher die 16 Gruppen kommen; der Vergleichsstand wird danach von der KosmoPublish-Lane gesetzt, nicht dort.",
+  "anweisung": "=== WOHER KOMMEN DIE 16 GRUPPEN AUF DEM KONZEPT-BLATT?\n\nDanke fuer die Meldung (tests_slow rot: plakat_1_konzept.g_count erwartet 54, aktuell 70). Die Vermutung «Folge von e5c964b» stimmt NICHT, gemessen: e5c964b aendert nur den Werkzeugserver, und dasselbe erfundene Planset ergibt vor und nach e5c964b genau 68 Gruppen auf Plakat 01.\n\nDer Vergleichsstand ist vom 22.07.2026 und an EUREN Plaenen (output/planraw) gemessen. Seither hat sich das Konzept-Blatt mehrfach absichtlich geaendert (Programm-Stapel, Hoehe als Masskette, Gelaendemarke «topo-erfunden», Lageplan-Grund, weniger doppelte Beschriftungen). Welche Aenderung auf euren Plaenen wieviele Gruppen bringt, laesst sich nur bei euch messen — denn die meisten Gruppen sind die inneren Gruppen der Zeichnungen selbst, und die haengen an eurem Planordner.\n\nBITTE NUR DIESES SKRIPT FAHREN und die Ausgabe zurueckgeben:\n\ncd <KosmoPublish-Klon>   # auf main, git pull --ff-only\n.venv/bin/python - <<'PY'\nimport sys, tempfile, io, contextlib, re, collections, os, datetime\nfrom pathlib import Path\nsys.path.insert(0, \".\"); sys.path.insert(0, \"tests\")\nfrom layout import build_posters_v18 as v18\nfrom config import poster_content as content\nfrom test_layout_snapshots import extract_fingerprint\ndef zaehle(svg):\n    c = collections.Counter()\n    for a in re.findall(r'<g\\b([^>]*)>', svg):\n        m = re.search(r'(?:id|class)=\"([^\"]+)\"', a)\n        c[re.sub(r'\\d+', 'N', m.group(1)) if m else \"(ohne id/class)\"] += 1\n    return c\nout = Path(tempfile.mkdtemp())\nwith contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):\n    v18.build_all(content.load_default(), out_dir=out)\nfor n in (\"Plakat_01_Konzept_A0\", \"Plakat_02_Grundrisse_A0\", \"Plakat_03_Schnitte_A0\", \"Plakat_04_Fassaden_Details_A0\"):\n    p = out / (n + \".svg\")\n    if p.exists():\n        print(\"NEU\", n, extract_fingerprint(p.read_text(\"utf-8\")))\nprint(\"GRUPPEN NEU\", dict(zaehle((out / \"Plakat_01_Konzept_A0.svg\").read_text(\"utf-8\")).most_common()))\nalt = [p for p in Path(\"output\").rglob(\"Plakat_01_Konzept_A0.svg\")]\nfor p in sorted(alt, key=lambda p: p.stat().st_mtime)[:3]:\n    t = datetime.date.fromtimestamp(p.stat().st_mtime)\n    print(\"ALT\", t, extract_fingerprint(p.read_text(\"utf-8\"))[\"g_count\"], dict(zaehle(p.read_text(\"utf-8\")).most_common()))\npl = sorted(Path(\"output/planraw\").glob(\"*_FINAL.svg\"))\nprint(\"PLANRAW\", len(pl), \"Dateien, geaendert zwischen\",\n      datetime.date.fromtimestamp(min(p.stat().st_mtime for p in pl)), \"und\",\n      datetime.date.fromtimestamp(max(p.stat().st_mtime for p in pl)))\nPY\n\nNICHT TUN: kein --update-golden, tests/_snapshots/ NICHT anfassen, keine Probe aendern, nichts committen. Den Vergleichsstand setzt die KosmoPublish-Lane, nachdem der Unterschied erklaert ist — ein Vergleichsstand, der ungeklaert nachgezogen wird, bewacht danach nichts mehr.\nKeine Plaene, keine Bilder, keine Projektnamen zurueckgeben — nur die Zahlen und Gruppennamen.",
+  "erstellt": "2026-09-24T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU-Last; reiner CPU-Lauf (~15 s).",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "tests/_snapshots/ nicht anfassen, kein --update-golden, nichts committen.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des KosmoPublish-Klons.",
+    "Die Zeilen NEU … (vier Fingerabdruecke), GRUPPEN NEU, ALT … (falls vorhanden) und PLANRAW."
+  ],
+  "rang": 2
+}
