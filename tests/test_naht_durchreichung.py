@@ -104,9 +104,12 @@ def test_ein_gesetzter_sonnenstand_wird_jetzt_bedient():
 
     assert kosmo_szene.stehengebliebene_felder(szene) == ()
     assert "sonne" in DURCHGEREICHT and "sonne" not in STEHENGEBLIEBEN
-    assert szene["sonne"] == {"elevation": 8, "azimuth": 250}
-    assert any("ANNAHME" in w for w in szene["warnungen"]), (
-        "bedient unter einer ungeklaerten Konvention ist NICHT dasselbe wie bedient")
+    # Mit ihrer Konvention seit dem 24.09.2026 (B161, sonne.KOSMO_KONVENTION).
+    assert szene["sonne"] == {"elevation": 8, "azimuth": 250, "konvention": "von_norden"}
+    # Die Warnung sagte bis zum 24.09.2026 «unter der ANNAHME von Süden» — die Frage ist
+    # seither aus ihrem Vertrag beantwortet. Sie nennt jetzt die Konvention, die gilt.
+    assert any("ab Nord" in w for w in szene["warnungen"]), szene["warnungen"]
+    assert not any("ANNAHME" in w for w in szene["warnungen"])
 
 
 def test_ohne_bestellte_sonne_steht_die_annahme_nicht_da():

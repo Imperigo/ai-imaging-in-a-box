@@ -257,11 +257,74 @@ def artefakt(ablage, job_id: str, name: str) -> Path:
     return ziel
 
 
-def gesundheit(ablage) -> dict:
+#: Wie alt der letzte Puls sein darf, bevor der Abholer als «steht» gilt (Sekunden).
+#:
+#: **Gesetzt, nicht gemessen** (24.09.2026, B161/B8): Wie oft der Abholer auf der
+#: HomeStation läuft (Dienst, Cron, von Hand), steht nirgends im Repo — gefragt in
+#: ``auf-20260924-170``. Bis dahin fünf Minuten, und ``alter_s`` geht immer mit, damit
+#: niemand dieser Zahl glauben muss.
+PULS_FRIST_S = 300
+
+#: Die Zustände, die ``services.abholer.zustand`` annehmen kann.
+ABHOLER_ZUSTAENDE = ("nie_gesehen", "arbeitet", "wartet", "laeuft_leer", "steht")
+
+
+def abholer_zustand(ablage, *, _uhr=None) -> dict:
+    """Was der Abholer zuletzt getan hat — aus seiner Pulsdatei und den Laufzetteln.
+
+    ================  ==========================================================
+    ``nie_gesehen``   Keine Pulsdatei. Der Abholer lief nie gegen diese Ablage —
+                      oder er schaut in eine andere.
+    ``arbeitet``      Ein Auftrag steht auf ``running``.
+    ``steht``         Der letzte Puls ist älter als :data:`PULS_FRIST_S`.
+    ``wartet``        Er läuft und hat Aufträge gesehen, die er liegenliess — der Grund
+                      steht je Auftrag in ``message``.
+    ``laeuft_leer``   Er läuft und hatte nichts zu tun.
+    ================  ==========================================================
+    """
+    if ablage is None:
+        return {"zustand": "nie_gesehen", "zuletzt": None, "alter_s": None,
+                "frist_s": PULS_FRIST_S, "grund": "Keine Ablage eingestellt."}
+    ordner = Path(ablage)
+    jetzt = (_uhr or time.time)()
+    try:
+        puls = json.loads((ordner / "abholer-puls.json").read_text(encoding="utf-8"))
+        zuletzt = float(puls["zuletzt_epoch_s"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return {"zustand": "nie_gesehen", "zuletzt": None, "alter_s": None,
+                "frist_s": PULS_FRIST_S,
+                "grund": ("Kein Lebenszeichen des Abholers in dieser Ablage. Entweder läuft "
+                          "er nicht, oder er schaut in eine andere Ablage.")}
+    alter = round(max(0.0, jetzt - zuletzt), 1)
+    laeuft = bool(bruecke.offene_auftraege(ordner, nur_status=(bruecke.STATUS_RUNNING,))) \
+        if ordner.is_dir() else False
+    if laeuft:
+        zustand = "arbeitet"
+    elif alter > PULS_FRIST_S:
+        zustand = "steht"
+    elif puls.get("liegengelassen"):
+        zustand = "wartet"
+    else:
+        zustand = "laeuft_leer"
+    return {"zustand": zustand, "zuletzt": puls.get("zuletzt"), "alter_s": alter,
+            "frist_s": PULS_FRIST_S,
+            "letzter_durchgang": {k: puls.get(k) for k in
+                                  ("gesehen", "verarbeitet", "liegengelassen", "fehler",
+                                   "waisen")},
+            "grund": ""}
+
+
+def gesundheit(ablage, *, _uhr=None) -> dict:
     """Die Antwort auf ``/health`` — dieselben Felder wie die Brücke, nichts vorgetäuscht.
 
     Sprach-, Einbettungs- und Sprachmodell-Dienste gibt es in Visbox nicht; sie stehen auf
     ``False``. Eine Grafikkarten-Angabe fehlt, wie bei der Brücke ohne echte Abfrage.
+
+    **Neu seit dem 24.09.2026 (B161/B8):** ``abholer`` — ob der Abholer läuft, leer ist,
+    wartet, arbeitet oder steht (:func:`abholer_zustand`). Neben ``services`` und nicht
+    darin: Ihr Vertrag (``BridgeHealth``, ``bridge-api.ts``) führt dort nur Wahrheitswerte,
+    und ein Block dazwischen wäre ein Formbruch. Als Nachbar von ``gpu`` liest ihr
+    nicht-strenges Schema ihn als unbekannt und lässt die Antwort gültig.
     """
     return {
         "ok": True,
@@ -272,6 +335,7 @@ def gesundheit(ablage) -> dict:
         "services": {"jobstore": ablage is not None,
                      "ollama": False, "stt": False,
                      "tts": False, "embed": False},
+        "abholer": abholer_zustand(ablage, _uhr=_uhr),
     }
 
 

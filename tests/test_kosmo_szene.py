@@ -717,14 +717,19 @@ def test_auch_in_einem_block_wird_gesucht():
         szene(render={"samples": 128, "glas": "physikalisch"})) == ("render.glas",)
 
 
-def test_der_sonnenblock_wird_nicht_durchsucht():
-    """`render.sun` reichen wir unverändert an den Runner weiter.
+def test_der_sonnenblock_wird_seit_b161_durchsucht():
+    """Bis zum 24.09.2026 hiess es hier «wird nicht durchsucht» — und genau das war der Fehler.
 
-    Was darin steht, ist seine Sache. Eine Prüfung hier würde eine Zuständigkeit
-    erfinden, die wir nicht haben — und jede Erweiterung des Sonnenmodells abweisen.
+    Die Begründung damals: eine Prüfung erfände eine Zuständigkeit. Gemessen zu B161:
+    ``staerke``, ``kelvin`` und ``winkelGrad`` fielen wortlos weg, während die Warnung
+    «wird bedient» sagte, und ``azimut`` statt ``azimuth`` fiel still auf die Vorgabe.
     """
     assert ks.unbekannte_felder(
-        szene(render={"samples": 128, "sun": {"azimut": 135, "irgendwas": 7}})) == ()
+        szene(render={"samples": 128, "sun": {"azimut": 135, "irgendwas": 7}})) == (
+        "render.sun.azimut", "render.sun.irgendwas")
+    assert ks.unbekannte_felder(szene(render={"samples": 128, "sun": {
+        "azimuth": 200, "elevation": 32, "staerke": 6, "kelvin": 4900,
+        "winkelGrad": 0.62}})) == ()
 
 
 def test_streng_false_meldet_statt_aufzuhalten():
@@ -761,7 +766,10 @@ def test_die_karte_deckt_ab_was_lies_szene_wirklich_liest():
     voll = szene(cameras="auto",
                  geometry={"path": "/synthetisch/m.glb", "format": "glb", "up_axis": "Y"},
                  render={"resolution": [1600, 1000], "samples": 128, "faithful": 0.8,
-                         "sun": {"azimut": 135.0, "hoehe": 40.0}},
+                         # Hier stand bis zum 24.09.2026 {"azimut", "hoehe"} — zwei
+                         # Namen, die ihr Vertrag nicht kennt. Die Probe sah es nicht,
+                         # weil der Sonnenblock nicht durchsucht wurde (B161).
+                         "sun": {"azimuth": 135.0, "elevation": 40.0}},
                  style={"mode": "none", "refs": [], "prompt": "ein Haus"},
                  vis={"skip": False, "backbone": "qwen", "upscale": False})
 

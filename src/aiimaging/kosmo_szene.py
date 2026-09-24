@@ -471,6 +471,14 @@ def spec_zu_kamera(spec: dict) -> dict:
     werte["kuerzel"] = spec.get("name")
     werte["brennweite_mm"] = fov_zu_brennweite(spec.get("fov", 50.0))
     werte["up_axis"] = achse
+    # Gelesen und berichtet, nicht angewandt — siehe KAMERA_FELDER.
+    bezug = spec.get("referenzpunkt")
+    if bezug is not None and bezug not in KAMERA_REFERENZPUNKTE:
+        raise SzenenError(
+            f"CameraSpec 'referenzpunkt' ist {bezug!r}. Ihr Vertrag kennt "
+            f"{', '.join(KAMERA_REFERENZPUNKTE)}; ein anderer Wert hiesse, dass die "
+            f"Augenhöhe auf etwas bezogen ist, das wir nicht kennen.")
+    werte["referenzpunkt"] = bezug
     return werte
 
 
@@ -638,14 +646,19 @@ ABGEWIESENE_FELDER = {
         "Kette nicht gelesen: Ein bestelltes Umgebungslicht fiele still weg. Noetig waere "
         "ein Weg, Umgebungsbilder mit permissiver Lizenz zu uns zu bringen (Regeln 1 und 3)."),
     "render.himmel": (
-        "Der Name ist bekannt (auf-104), Form und Bedeutung sind es nicht, und unsere "
-        "Kette liest das Feld nicht. Wir raten nicht, was es verlangt."),
+        "Form bekannt (render-scene.ts: modell, staerke, luftdichte, aerosoldichte, "
+        "drehungGrad), aber unsere Kette liest das Feld nicht: Der Himmel unseres "
+        "Cycles-Schritts ist fest, und das KI-Bild entsteht aus der Tiefe, nicht aus dem "
+        "Himmel. Noetig waere eine Leitung bis in den Blender-Schritt (B161, 24.09.2026)."),
     "render.belichtung": (
-        "Der Name ist bekannt (auf-104), Form und Bedeutung sind es nicht, und unsere "
-        "Kette liest das Feld nicht. Wir raten nicht, was es verlangt."),
+        "Form bekannt (render-scene.ts: belichtung, farbraum, anmutung), aber unsere "
+        "Kette liest das Feld nicht: Die Farbverwaltung unseres Cycles-Schritts ist fest. "
+        "Noetig waere eine Leitung bis in den Blender-Schritt (B161, 24.09.2026)."),
     "render.rauschschwelle": (
-        "Der Name ist bekannt (auf-104), Form und Bedeutung sind es nicht, und unsere "
-        "Kette liest das Feld nicht. Wir raten nicht, was es verlangt."),
+        "Form bekannt (render-scene.ts: Zahl 0..1, Cycles adaptive_threshold), aber "
+        "unsere Kette liest das Feld nicht: Die Abtastung unseres Cycles-Schritts steuert "
+        "render.samples allein. Noetig waere eine Leitung bis in den Blender-Schritt "
+        "(B161, 24.09.2026)."),
     "vis.research_only": (
         "Der Name ist bekannt (auf-104), die Bedeutung nicht. Gaebe es Modelle mit "
         "reiner Forschungslizenz frei, widerspraeche es Regel 1 (nur permissive "
@@ -679,9 +692,29 @@ def abgewiesene_felder(fremd: dict) -> tuple[str, ...]:
 #:
 #: ``render.sun`` reichen wir unverändert an den Runner weiter — was darin steht, ist
 #: seine Sache, und eine Prüfung hier würde eine Zuständigkeit erfinden. ``cameras`` ist
-#: entweder ``"auto"`` oder eine Liste von Kameraspezifikationen, die
-#: :func:`spec_zu_kamera` einzeln prüft.
+#: entweder ``"auto"`` oder eine Liste von Kameraspezifikationen; deren Schlüssel prüft
+#: seit dem 24.09.2026 :data:`KAMERA_FELDER` (unten, in :func:`unbekannte_felder`).
 NICHT_DURCHSUCHT = ("render.sun", "cameras")
+
+#: Die Schlüssel einer ``CameraSpec``, die wir kennen (B161/B3, 24.09.2026).
+#:
+#: **Bis dahin wurde eine Kameraliste gar nicht auf fremde Schlüssel geprüft** — ein
+#: ``referenzpunkt`` kam an und fiel wortlos weg, und jedes neue Feld hätte es ebenso
+#: getan. ``referenzpunkt`` verlangt nichts: Er sagt, auf welche Höhe sich die Augenhöhe
+#: drüben bezog (``okff``, ``huellbox_unterkante``, ``weltnull``); ``position`` trägt die
+#: Zahl bereits im Weltsystem. Er wird darum gelesen und in den Bericht getragen, nicht
+#: angewandt.
+KAMERA_FELDER = ("name", "position", "target", "fov", "up_axis", "referenzpunkt")
+
+#: Die Schlüssel von ``render.sun``, die wir kennen — und seit dem 24.09.2026 auch prüfen.
+#:
+#: Bis dahin stand ``render.sun`` in :data:`NICHT_DURCHSUCHT` mit dem Grund, eine Prüfung
+#: hier «erfände eine Zuständigkeit». Gemessen zu B161: ``staerke``, ``kelvin`` und
+#: ``winkelGrad`` kamen an, fielen wortlos weg — und die Warnung sagte «Sonnenstand … wird
+#: bedient». Ein Tippfehler (``azimut`` statt ``azimuth``) fiel still auf die Vorgabe
+#: zurück. Seither werden alle fünf gelesen und bis in den Blender-Schritt gereicht.
+SONNE_FELDER = ("azimuth", "elevation", "staerke", "kelvin", "winkelGrad")
+KAMERA_REFERENZPUNKTE = ("okff", "huellbox_unterkante", "weltnull")
 
 
 def unbekannte_felder(fremd: dict) -> tuple[str, ...]:
@@ -721,6 +754,17 @@ def unbekannte_felder(fremd: dict) -> tuple[str, ...]:
                 continue
             if name not in bekannt:
                 gefunden.append(pfad)
+    render_block = fremd.get("render")
+    sonne_block = render_block.get("sun") if isinstance(render_block, dict) else None
+    if isinstance(sonne_block, dict):
+        gefunden.extend(f"render.sun.{name}" for name in sorted(sonne_block)
+                        if name not in SONNE_FELDER)
+    kameras = fremd.get("cameras")
+    if isinstance(kameras, list):
+        for i, spec in enumerate(kameras):
+            if isinstance(spec, dict):
+                gefunden.extend(f"cameras[{i}].{name}" for name in sorted(spec)
+                                if name not in KAMERA_FELDER)
     return tuple(gefunden)
 
 
@@ -1258,18 +1302,32 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         gelaende = None
 
     sonne = render.get("sun")
-    if sonne is not None:
-        # Bedient wird der Sonnenstand seit dem 26.08.2026 — aber unter EINER Annahme,
-        # und die stammt nicht aus dem fremden Vertrag. Die beiden ueblichen Konventionen
-        # unterscheiden sich um 180 Grad und vertauschen damit Vormittag und Nachmittag.
-        # Das ist eine Warnung ueber DIESEN Auftrag und keine Vertragsvorgabe: Sie
-        # erscheint nur, wenn wirklich eine Sonne bestellt wurde.
-        warnungen.append(
-            f"Sonnenstand {sonne!r} wird bedient, der Azimut aber unter der ANNAHME "
-            f"'{_sonne.VORGABE_KONVENTION}' (0 Grad im Sueden, positiv nach Westen). Ob "
-            f"der fremde Vertrag von Norden zaehlt, ist NICHT geklaert — der Unterschied "
-            f"betraegt 180 Grad und vertauscht Vormittag und Nachmittag. Die benutzte "
-            f"Konvention steht im Bericht des Runners (Feld 'sonne').")
+    if sonne is not None and not isinstance(sonne, dict):
+        maengel.append(f"'render.sun' ist {sonne!r} und kein Block {{azimuth, elevation}}.")
+        sonne = None
+    elif sonne is not None:
+        # IHRE KONVENTION, NICHT UNSERE VORGABE (24.09.2026, bei der Nachmessung zu B161).
+        # Hier stand eine Warnung, der Azimut gelte unter der ANNAHME 'von Süden', und ob
+        # ihr Vertrag von Norden zähle, sei «nicht geklärt». Ihr Vertrag sagt es seit
+        # langem wörtlich: im Uhrzeigersinn ab Nord (sonne.KOSMO_KONVENTION). Jede
+        # bestellte Sonne stand damit um 180 Grad verdreht.
+        sonne = dict(sonne, konvention=_sonne.KOSMO_KONVENTION)
+        try:
+            befund = _sonne.aus_bestellung(sonne)
+        except _sonne.SonnenError as fehler:
+            maengel.append(f"'render.sun' ist nicht zu bedienen: {fehler}")
+            befund = None
+        if befund is not None:
+            satz = (f"Sonnenstand bedient: Höhe {befund['hoehe_grad']:g} Grad, Azimut "
+                    f"{befund['azimut_grad']:g} Grad im Uhrzeigersinn ab Nord (euer "
+                    f"Vertrag, render-scene.ts).")
+            if befund["licht_bestellt"]:
+                satz += (f" Dazu {', '.join(befund['licht_bestellt'])} an der Sonne des "
+                         f"Cycles-Schritts. Vorbehalt: Das gelieferte KI-Bild entsteht aus "
+                         f"der Tiefenkarte; beim Vorgabemodell kommt das Cycles-Bild — und "
+                         f"mit ihm dieses Licht — darin nicht an (gemessen, auf-123, "
+                         f"auf-137 V5).")
+            warnungen.append(satz)
     if sonne is None:
         vorgaben.append(
             "Keine Sonnenangabe. Unser Runner setzt eine feste Sonne von schräg "
@@ -1340,6 +1398,19 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     refs = stil.get("refs") or []
     if isinstance(refs, (list, tuple)):
         referenzen = list(refs)
+        # EINE NICHT-LEERE LISTE WIRD ABGEWIESEN (B161, Blatt -02, 24.09.2026). Bis dahin
+        # ging sie ohne Mangel durch und stand nur im Befund als «stehengeblieben»:
+        # Kein Bildmodell unserer Kette nimmt nachweislich ein Referenzbild an (auf-123,
+        # auf-137 V5), einen Erzeugungsweg dafür gibt es nicht. Drüben ist das Feld seit
+        # dem 04.09.2026 aus dem Senden genommen — kommt es trotzdem, soll es ein Wort
+        # hören (E75). Die leere Liste bestellt nichts und bleibt gültig.
+        if referenzen:
+            maengel.append(
+                f"'style.refs' ({len(referenzen)} Referenz(en)) wird abgewiesen: Kein "
+                f"Bildmodell unserer Kette nimmt nachweislich ein Referenzbild an "
+                f"(gemessen: z-image-turbo und qwen-image-edit-2511 liefern mit und ohne "
+                f"Eingangsbild dasselbe Bild), und einen Weg dafür gibt es nicht. "
+                f"Abgewiesen statt uebergangen (E75 drueben, 19.09.2026).")
     else:
         referenzen = []
         maengel.append(
@@ -1429,7 +1500,8 @@ DURCHGEREICHT = {
     "ueberspringen": "abholer.verarbeiter: der Auftrag wird NICHT gerendert",
     # Seit 26.08.2026 — vorher der GEFAEHRLICHSTE der stehengebliebenen Felder, weil das
     # Bild danach richtig AUSSAH (auf-vis-20260825-15 Posten 5.3).
-    "sonne": "seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut",
+    "sonne": ("seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut/"
+              "-konvention/-staerke/-kelvin/-winkel"),
     # Seit 22.09.2026 (auf-104): `interior` {rooms: "auto"}. Nur ohne mitgesandte
     # Kameras gesetzt — mit ihnen gelten diese, siehe `_lies_interior`.
     "innenraum": "abholer.verarbeiter: Raeume aus der IFC (seams.ifc_raeume), EINE "

@@ -159,7 +159,7 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, quelle=bruecke, _uhr=None) 
 def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                darf_rechnen=None, wache_bauen=None,
                beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
-               quelle=bruecke) -> dict:
+               quelle=bruecke, speicher_frei=None) -> dict:
     """Einen einzelnen Auftrag bearbeiten — mit allen Entscheidungen davor.
 
     Args:
@@ -181,6 +181,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             weiss der Verarbeiter und nicht dieses Modul. ``None`` heisst **nicht** „lief
             durch", sondern **nicht beobachtet** — und genau so steht es im Bericht.
         beobachtungs_takt_s: Sekunden zwischen zwei Blicken der Wache.
+        speicher_frei: ``() -> int | None`` — freier Grafikspeicher in MiB, **bevor**
+            geladen wird. Liegt er unter :data:`MINDEST_FREI_MIB`, wartet der Auftrag
+            mit Grund am Laufzettel (B161/B1). ``None`` als Antwort heisst «nicht
+            anwendbar» (etwa: die eigenen Gewichte liegen schon auf der Karte);
+            ``None`` als Parameter heisst: keine Prüfung, wie bis zum 24.09.2026.
         quelle: **Woher der Auftrag kommt.** Vorgabe :mod:`aiimaging.bruecke` — die
             fremde Warteschlange. Die zweite Ablage ist :mod:`aiimaging.eigene_quelle`,
             unser eigenes Auftragsverzeichnis, in das der MCP-Einlass schreibt.
@@ -265,6 +270,14 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         _grund_vermerken(quelle, ordner, antwort)
         return antwort
 
+    # ZU WENIG GRAFIKSPEICHER: WARTEN MIT GRUND, NICHT LADEN UND STERBEN (B161/B1).
+    # Dieselbe Form wie oben: Status bleibt `queued`, der Grund steht am Laufzettel.
+    reicht, warum = _speicher_reicht(speicher_frei)
+    if not reicht:
+        antwort["grund"] = warum
+        _grund_vermerken(quelle, ordner, antwort)
+        return antwort
+
     # Ein Auftrag, der jetzt LÄUFT, darf die Begründung von vorhin nicht mehr tragen.
     # Ohne diese Zeile bliebe „die Karte war nicht frei" an einem Auftrag stehen, der
     # gerade rechnet — und wäre von einem, der noch wartet, nicht zu unterscheiden.
@@ -284,6 +297,12 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             f"Verarbeitung gescheitert: {type(fehler).__name__}: {fehler}. Der Auftrag "
             f"ist auf '{quelle.STATUS_ERROR}' gesetzt — ein Auftrag ohne Antwort ist "
             f"für den Wartenden dasselbe wie ein hängender Rechner."))
+        # REICHTE DER SPEICHER MITTEN IM LAUF NICHT, STEHT DAS AUCH IN `message`
+        # (B161/B1). `error` trägt die Ausnahme wörtlich; die Anzeige drüben liest
+        # `message` («Abbruch-/Wartegrund, UI-lesbar»), und dort stand bis zum 24.09.2026
+        # nichts. Der Vermerk fasst den Status nicht an — er bleibt `error`.
+        if ist_speichermangel(fehler):
+            _grund_vermerken(quelle, ordner, {"grund": _speichermangel_satz(fehler)})
         return antwort
     finally:
         # Auch auf dem Fehlerweg: Ein Faden, den niemand anhält, läuft weiter und sieht
@@ -1416,11 +1435,66 @@ def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
                    f"{warum}")
 
 
+#: Unter so viel freiem Grafikspeicher (MiB) wird **nicht geladen**, sondern gewartet.
+#:
+#: **Vorläufig, aus Messungen abgeleitet und nicht eigens gemessen** (24.09.2026, B161/B1):
+#: Auf dem sparsamsten Weg (Stufe 3, ``cuda+schichtauslagerung``) hielt das
+#: Bearbeitungsmodell 2,4–2,5 GiB Spitze (``auf-20260924-163`` B1/B2), das Vorgabemodell
+#: in ``auf-20260923-160`` C rund 3,6 GiB. 4096 MiB liegt knapp darüber und ist zugleich
+#: die Grenze, ab der ``tools/abholen.karte_auskunft`` einen fremden Belegungsgast
+#: vermutet. Den echten Mindestwert je Modell misst die HomeStation (``auf-20260924-170``);
+#: bis dahin ist diese Zahl eine Untergrenze mit Herkunft, keine Messung.
+MINDEST_FREI_MIB = 4096
+
+
+def ist_speichermangel(fehler) -> bool:
+    """Ist das ein «Grafikspeicher reichte nicht»? — am Namen und am Wortlaut erkannt.
+
+    Die Ausnahme kommt aus torch (``torch.cuda.OutOfMemoryError``), wird aber auf dem Weg
+    zu uns in ``render.rendere`` zu Text und im Abholer zu einem ``AbholerError``. Darum
+    wird am Text geprüft, nicht am Typ — der Typ ist hier nicht mehr da.
+    """
+    text = f"{type(fehler).__name__}: {fehler}"
+    return "OutOfMemoryError" in text or "out of memory" in text.lower()
+
+
+def _speichermangel_satz(fehler) -> str:
+    return ("Abgebrochen: Der Grafikspeicher reichte während des Rechnens nicht "
+            "(CUDA out of memory). Meist hält ein anderes Programm Speicher auf der "
+            "Karte. Der Auftrag ist nicht gerechnet und muss neu bestellt werden. "
+            f"Wortlaut: {str(fehler)[:240]}")
+
+
+def _speicher_reicht(speicher_frei) -> tuple[bool, str]:
+    """Reicht der freie Grafikspeicher, um überhaupt zu laden? — B161/B1.
+
+    Unbekannt (keine Auskunft, oder die Auskunft sagt ``None``) heisst hier **rechnen**,
+    anders als bei ``idle_window_only``: Diese Prüfung ist neu und darf nichts sperren,
+    was bis heute lief. Sie fängt den einen Fall, der bisher mit einem Absturz endete —
+    ein fremdes Programm hält die Karte fast ganz.
+    """
+    if speicher_frei is None:
+        return True, ""
+    try:
+        frei = speicher_frei()
+    except Exception:                                   # noqa: BLE001 — Auskunft, kein Riegel
+        return True, ""
+    if frei is None or isinstance(frei, bool) or not isinstance(frei, (int, float)):
+        return True, ""
+    if frei >= MINDEST_FREI_MIB:
+        return True, ""
+    return False, (
+        f"Wartet: Die Grafikkarte hat nur {int(frei)} MiB frei; zum Laden braucht es auf "
+        f"dem sparsamsten Weg mindestens {MINDEST_FREI_MIB} MiB. Es wird nicht gerechnet — "
+        f"der Auftrag bleibt in der Warteschlange und läuft, sobald Speicher frei wird "
+        f"(meist hält ein anderes Programm ein Modell auf der Karte).")
+
+
 def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
               darf_rechnen=None, hoechstens: int | None = None,
               waisenfrist_s: float = WAISENFRIST_S, wache_bauen=None,
               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
-              quelle=bruecke, _uhr=None) -> dict:
+              quelle=bruecke, speicher_frei=None, _uhr=None) -> dict:
     """**Ein** Durchgang über den Ablageort. Kein Dauerlauf, keine Schleife, kein Schlaf.
 
     Warum kein Dauerlauf: Wer wie oft nachsieht, ist eine Betriebsfrage — Cron, Dienst,
@@ -1462,12 +1536,12 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         hole_einen(ordner, verarbeite=verarbeite,
                    fremde_freigabe_gilt=fremde_freigabe_gilt, darf_rechnen=darf_rechnen,
                    wache_bauen=wache_bauen, beobachtungs_takt_s=beobachtungs_takt_s,
-                   quelle=quelle)
+                   quelle=quelle, speicher_frei=speicher_frei)
         for ordner in offen
     ]
     verwaist = waisen(store, frist_s=waisenfrist_s, quelle=quelle, _uhr=_uhr)
 
-    return {
+    bericht = {
         "gesehen": len(offen),
         "verarbeitet": sum(1 for e in ergebnisse if e["tat"] == TAT_VERARBEITET),
         "fehler": sum(1 for e in ergebnisse if e["tat"] == TAT_FEHLER),
@@ -1476,6 +1550,60 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         "waisen": verwaist,
         "ergebnisse": ergebnisse,
     }
+    bericht["puls"] = schreibe_puls(store, bericht, _uhr=_uhr)
+    return bericht
+
+
+#: Der Name der Pulsdatei im Ablageort (B161/B8, 24.09.2026).
+DATEI_PULS = "abholer-puls.json"
+SCHEMA_PULS = "aiimaging.abholer-puls/v1"
+
+
+def schreibe_puls(store, bericht: dict, *, _uhr=None) -> str:
+    """Nach JEDEM Durchgang ein Lebenszeichen in den Ablageort — auch nach einem leeren.
+
+    **Der Anlass (B161/B8):** KosmoOrbit fragte, was der Abholer meldet, wenn er läuft,
+    aber nichts zu tun hat. Nachgemessen am 24.09.2026: nichts. Ein leerer Durchgang und
+    ein Abholer, der gar nicht läuft, hinterliessen dieselbe Ablage, Datei für Datei —
+    und ``/health`` wusste vom Abholer nichts. «Läuft, leer» war von «läuft nicht» nicht
+    zu unterscheiden, und «schaut in die falsche Ablage» auch nicht.
+
+    Die Datei trägt nur Zählungen und den Zeitpunkt; keinen Pfad (Regel 3), keine
+    Auftragsinhalte. Gelesen wird sie von :func:`aiimaging.knotenweg.gesundheit` und —
+    als Vorschlag — von ihrer Brücke.
+
+    Returns:
+        ``"geschrieben"`` oder ein Satz, warum nicht. Nie eine Ausnahme: Ein Puls, der den
+        Durchgang umwirft, wäre ein Lebenszeichen, das tötet.
+    """
+    import json as _json  # noqa: PLC0415
+    from datetime import datetime, timezone  # noqa: PLC0415
+
+    ordner = Path(store)
+    if not ordner.is_dir():
+        # Den Ablageort NICHT anlegen: Ein Abholer, der in die falsche Ablage schaut, soll
+        # dort keinen Puls hinterlassen, der nach «alles in Ordnung» aussieht.
+        return "nicht geschrieben: Ablageort fehlt"
+    jetzt = (_uhr or time.time)()
+    puls = {
+        "schema": SCHEMA_PULS,
+        "zuletzt": datetime.fromtimestamp(jetzt, tz=timezone.utc).isoformat(
+            timespec="seconds").replace("+00:00", "Z"),
+        "zuletzt_epoch_s": round(jetzt, 3),
+        "gesehen": bericht["gesehen"],
+        "verarbeitet": bericht["verarbeitet"],
+        "liegengelassen": bericht["liegengelassen"],
+        "fehler": bericht["fehler"],
+        "waisen": len(bericht["waisen"] or ()),
+    }
+    ziel = ordner / DATEI_PULS
+    zwischen = ordner / (DATEI_PULS + ".schreibt")
+    try:
+        zwischen.write_text(_json.dumps(puls, ensure_ascii=False), encoding="utf-8")
+        zwischen.replace(ziel)
+    except OSError as fehler:
+        return f"nicht geschrieben: {type(fehler).__name__}: {fehler}"
+    return "geschrieben"
 
 
 # ======================================================================================

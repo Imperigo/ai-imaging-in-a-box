@@ -972,6 +972,12 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
             argumente += [f"{schalter}={float(wert)}"]
     if (sonne or {}).get("konvention"):
         argumente += [f"--sonne-konvention={sonne['konvention']}"]
+    # Licht der Sonne (B161, 24.09.2026) — ebenso nur, was bestellt ist.
+    for schalter, schluessel in (("--sonne-staerke", "staerke"), ("--sonne-kelvin", "kelvin"),
+                                 ("--sonne-winkel", "winkelGrad")):
+        wert = (sonne or {}).get(schluessel)
+        if wert is not None:
+            argumente += [f"{schalter}={float(wert)}"]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:

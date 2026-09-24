@@ -2277,6 +2277,16 @@ def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0
     }
 
 
+
+def _leere_grafikspeicher() -> None:
+    """``torch.cuda.empty_cache()``, wenn es torch und eine Karte gibt — sonst nichts."""
+    try:
+        import torch  # noqa: PLC0415 — nur hier, und nur wenn schon ein Fehler da ist
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:                                   # noqa: BLE001 — Aufräumen, kein Urteil
+        pass
+
 def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             schrittzaehler=None, tiefe_invertieren: bool | None = None) -> dict:
     """Einen Bildauftrag ausführen — oder begründet ablehnen.
@@ -2429,9 +2439,18 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         # (CUDA-OOM, kaputte Gewichte, ein Fehler in unserem eigenen Adapter). Ein
         # Stapelabbruch mitten in einer Serie kostet die ganze Serie; ein
         # 'status=fehler' mit Meldung kostet einen Auftrag und bleibt protokolliert.
+        #
+        # GRAFIKSPEICHER (B161/B1, 24.09.2026): Der Satz steht VOR der Ausnahme, und der
+        # Zwischenspeicher von torch wird geleert — sonst hält der gescheiterte Versuch
+        # den Speicher fest, den der nächste Auftrag braucht.
+        text = f"{type(fehler).__name__}: {fehler}"
+        if "OutOfMemoryError" in text or "out of memory" in text.lower():
+            _leere_grafikspeicher()
+            text = ("Grafikspeicher reichte nicht (Weg "
+                    f"{getattr(modell, 'geraet', None) or 'unbekannt'}) — " + text)
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=time.perf_counter() - beginn,
-            error=f"{type(fehler).__name__}: {fehler}", lizenz=lizenz, hinweise=hinweise,
+            error=text, lizenz=lizenz, hinweise=hinweise,
             # Gerade hier: Ein Fehlschlag SAGT erst etwas, wenn dabeisteht, auf welchem
             # Weg er passiert ist. `modell` kann noch None sein, wenn schon das Laden
             # scheiterte — dann steht das da, und nicht nichts.

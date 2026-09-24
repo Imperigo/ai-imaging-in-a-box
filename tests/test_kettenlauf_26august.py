@@ -178,18 +178,26 @@ def test_die_bestellte_sonne_erreicht_den_multipass(tmp_path):
     _lauf(tmp_path, ordner, attrappen)
 
     assert protokoll["multipass"], "kein Multipass gelaufen"
-    assert protokoll["multipass"][0]["sonne"] == {"elevation": 8, "azimuth": 250}
+    # Seit dem 24.09.2026 mit ihrer Konvention (B161): Der Block reist mit dem Vermerk,
+    # von wo der Azimut zählt — bis dahin galt still unsere Vorgabe «von Süden».
+    assert protokoll["multipass"][0]["sonne"] == {"elevation": 8, "azimuth": 250,
+                                                  "konvention": "von_norden"}
 
 
 def test_die_angenommene_azimutkonvention_steht_neben_dem_bild(tmp_path):
-    """Sie ist eine **Setzung** und keine Messung. Ein Bild, dem man die Annahme nicht
-    ansieht, ist später nicht mehr einzuordnen."""
+    """Ein Bild, dem man die Konvention nicht ansieht, ist später nicht mehr einzuordnen.
+
+    Bis zum 24.09.2026 stand hier «von_sueden» als **Setzung**. Ihr Vertrag sagt es
+    längst ausdrücklich: im Uhrzeigersinn ab Nord (``render-scene.ts``, ``sun.azimuth``;
+    ``sonne.KOSMO_KONVENTION``). Jede bestellte Sonne stand bis dahin um 180 Grad
+    verdreht — gefunden bei der Nachmessung zu B161.
+    """
     ordner = _auftragsordner(tmp_path, sonne={"elevation": 8, "azimuth": 250})
     _protokoll, attrappen = _kette(tmp_path)
     _lauf(tmp_path, ordner, attrappen)
 
     sonne = abholer.lies_befund(ordner)["kameras"][0]["sonne"]
-    assert sonne["konvention"] == "von_sueden"
+    assert sonne["konvention"] == "von_norden"
     assert sonne["bestellt"] == ["hoehe", "azimut"]
 
 

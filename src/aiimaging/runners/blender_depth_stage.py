@@ -116,6 +116,14 @@ def _argumente():
                     help="Grad nach --sonne-konvention")
     ap.add_argument("--sonne-konvention", default=None,
                     help="von_sueden (Vorgabe) oder von_norden")
+    # Licht der Sonne (B161, 24.09.2026). `None` heisst nicht bestellt: Dann bleiben die
+    # festen 2.0 und 3 Grad, und der Bericht sagt es.
+    ap.add_argument("--sonne-staerke", type=float, default=None,
+                    help="sun.energy; ohne Angabe 2.0")
+    ap.add_argument("--sonne-kelvin", type=float, default=None,
+                    help="Farbtemperatur; ohne Angabe weiss")
+    ap.add_argument("--sonne-winkel", type=float, default=None,
+                    help="Winkeldurchmesser in Grad (sun.angle); ohne Angabe 3.0")
     ap.add_argument("--hoehe", type=int, default=None,
                     help="Bildhöhe in Punkten. Ohne Angabe quadratisch. Das "
                          "Seitenverhältnis geht in den Bildwinkel und damit in den "
@@ -1060,7 +1068,32 @@ def _sonne_setzen(mitte, spanne: float, a=None):
 
     objekt.rotation_euler = befund["euler"]
     weg = "bestellt" if befund["bestellt"] else "vorgabe"
-    return objekt, dict(befund, weg=weg, euler=list(befund["euler"]), grund="")
+    # DAS LICHT DER SONNE (B161, 24.09.2026). Geprüft in `aiimaging.sonne.licht` —
+    # dieselben Grenzen wie ihr Vertrag. Unbrauchbar heisst hier: feste Werte behalten
+    # und den Grund in den Bericht, wie beim Stand.
+    licht_befund = {"staerke": licht.energy, "winkel_grad": math.degrees(licht.angle),
+                    "kelvin": None, "farbe_linear": None, "licht_bestellt": (),
+                    "licht_grund": ""}
+    try:
+        bestellt = modul.licht(getattr(a, "sonne_staerke", None),
+                               getattr(a, "sonne_kelvin", None),
+                               getattr(a, "sonne_winkel", None))
+    except (modul.SonnenError, AttributeError) as fehler:
+        licht_befund["licht_grund"] = f"Bestelltes Sonnenlicht nicht gesetzt: {fehler}"
+    else:
+        if bestellt["staerke"] is not None:
+            licht.energy = bestellt["staerke"]
+        if bestellt["winkel_grad"] is not None:
+            licht.angle = math.radians(bestellt["winkel_grad"])
+        if bestellt["farbe_linear"] is not None:
+            licht.color = bestellt["farbe_linear"]
+        licht_befund.update(staerke=licht.energy, winkel_grad=math.degrees(licht.angle),
+                            kelvin=bestellt["kelvin"],
+                            farbe_linear=(list(bestellt["farbe_linear"])
+                                          if bestellt["farbe_linear"] else None),
+                            licht_bestellt=list(bestellt["licht_bestellt"]))
+    return objekt, dict(befund, weg=weg, euler=list(befund["euler"]), grund="",
+                        **licht_befund)
 
 
 # --------------------------------------------------------------------------------------

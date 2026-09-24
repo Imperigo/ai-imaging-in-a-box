@@ -67,6 +67,26 @@ KONVENTIONEN = (AZIMUT_VON_SUEDEN, AZIMUT_VON_NORDEN)
 #: Es ist eine **Setzung und keine Messung** — siehe Modulkopf.
 VORGABE_KONVENTION = AZIMUT_VON_SUEDEN
 
+#: Welche Konvention eine Bestellung von **KosmoOrbit** trägt — seit dem 24.09.2026 belegt
+#: statt angenommen.
+#:
+#: Ihr Vertrag sagt es wörtlich (``kosmo-contracts/src/render-scene.ts``, ``sun.azimuth``,
+#: gelesen am 24.09.2026 auf ihrem Zweig ``claude/kosmo-orbit-v1-build-pzxkbj``):
+#: *«Grad, im Uhrzeigersinn ab Nord: 0=N, 90=O, 180=S, 270=W»*, mit ``+Y = Norden,
+#: +X = Osten`` als Weltsystem. Das ist :data:`AZIMUT_VON_NORDEN`. **Bis zu diesem Tag
+#: galt für ihre Bestellungen :data:`VORGABE_KONVENTION`, also Süden — jede bestellte
+#: Sonne kam von der Gegenseite** (die offene Frage aus ``auf-20260826-44``, beantwortet in
+#: ihrem Vertrag, bei uns nie nachgezogen; gefunden bei der Nachmessung zu B161).
+#:
+#: Die Vorgabe selbst bleibt Süden: Sie gilt für Läufe ohne fremden Vertrag, und deren
+#: Bilder sollen sich nicht still drehen.
+KOSMO_KONVENTION = AZIMUT_VON_NORDEN
+
+#: Grenzen der drei Lichtangaben — dieselben wie in ihrem Vertrag (``render-scene.ts``:
+#: ``staerke`` ≥ 0, ``kelvin`` 1000–12000, ``winkelGrad`` 0–90).
+KELVIN_BEREICH = (1000.0, 12000.0)
+WINKEL_BEREICH_GRAD = (0.0, 90.0)
+
 #: Welche Achse wohin zeigt. Setzung, keine Messung; wandert in den Bericht.
 WELTSYSTEM = "+Y=Norden, +X=Osten, +Z=oben"
 
@@ -187,14 +207,79 @@ def aus_bestellung(sonne, *, konvention: str = VORGABE_KONVENTION) -> dict:
     ``None`` oder ein leerer Block ergeben die Vorgabe mit ``bestellt = ()``. Ein Block
     mit unbrauchbaren Zahlen wirft — **nicht** stillschweigend die Vorgabe: Wer eine
     Sonne bestellt und eine andere bekommt, merkt es am Bild nicht.
+
+    Trägt der Block selbst eine ``konvention`` (so legt ``kosmo_szene.lies_szene`` ihn seit
+    dem 24.09.2026 ab), gilt sie vor dem Parameter. Die Lichtangaben (``staerke``,
+    ``kelvin``, ``winkelGrad``) kommen geprüft mit, siehe :func:`licht`.
     """
     if not isinstance(sonne, dict):
         return lage(konvention=konvention)
-    return lage(sonne.get("elevation"), sonne.get("azimuth"), konvention=konvention)
+    befund = lage(sonne.get("elevation"), sonne.get("azimuth"),
+                  konvention=sonne.get("konvention") or konvention)
+    befund.update(licht(sonne.get("staerke"), sonne.get("kelvin"), sonne.get("winkelGrad")))
+    return befund
+
+
+def licht(staerke=None, kelvin=None, winkel_grad=None) -> dict:
+    """Stärke, Farbe und Winkeldurchmesser der Sonne — geprüft, ``None`` heisst nicht bestellt.
+
+    Returns:
+        ``{staerke, kelvin, winkel_grad, farbe_linear, licht_bestellt}``. ``farbe_linear``
+        ist ``None`` ohne Kelvin, sonst :func:`kelvin_zu_farbe`.
+
+    Raises:
+        SonnenError: eine Angabe ausserhalb der Grenzen ihres Vertrags.
+    """
+    bestellt = []
+    if staerke is not None:
+        staerke = _grad(staerke, "staerke")
+        if staerke < 0.0:
+            raise SonnenError(f"staerke darf nicht negativ sein, war {staerke}.")
+        bestellt.append("staerke")
+    if kelvin is not None:
+        kelvin = _grad(kelvin, "kelvin")
+        if not (KELVIN_BEREICH[0] <= kelvin <= KELVIN_BEREICH[1]):
+            raise SonnenError(f"kelvin muss in {KELVIN_BEREICH} liegen, war {kelvin}.")
+        bestellt.append("kelvin")
+    if winkel_grad is not None:
+        winkel_grad = _grad(winkel_grad, "winkelGrad")
+        if not (WINKEL_BEREICH_GRAD[0] <= winkel_grad <= WINKEL_BEREICH_GRAD[1]):
+            raise SonnenError(
+                f"winkelGrad muss in {WINKEL_BEREICH_GRAD} liegen, war {winkel_grad}.")
+        bestellt.append("winkelGrad")
+    return {"staerke": staerke, "kelvin": kelvin, "winkel_grad": winkel_grad,
+            "farbe_linear": None if kelvin is None else kelvin_zu_farbe(kelvin),
+            "licht_bestellt": tuple(bestellt)}
+
+
+def kelvin_zu_farbe(kelvin: float) -> tuple[float, float, float]:
+    """Farbtemperatur → lineare RGB-Farbe für ``licht.color``, hellster Kanal = 1.
+
+    **Eine Näherung, und sie steht so da:** die bekannte Kurvenanpassung von Tanner
+    Helland (2012) an die Schwarzkörperfarben, 1000–40000 K, in sRGB; danach linearisiert,
+    weil Blender Lichtfarben linear liest. Für eine Sonnenfarbe genügt das — die
+    Abweichung zur Planck-Rechnung liegt unter dem, was ein Weissabgleich ohnehin
+    verschiebt. Blenders eigener «Blackbody»-Knoten wäre genauer, lebt aber im Runner;
+    hier bleibt die Rechnung ohne Blender prüfbar (Regel 4).
+    """
+    t = _grad(kelvin, "kelvin") / 100.0
+    if t <= 66.0:
+        r = 255.0
+        g = 99.4708025861 * math.log(t) - 161.1195681661
+        b = 0.0 if t <= 19.0 else 138.5177312231 * math.log(t - 10.0) - 305.0447927307
+    else:
+        r = 329.698727446 * ((t - 60.0) ** -0.1332047592)
+        g = 288.1221695283 * ((t - 60.0) ** -0.0755148492)
+        b = 255.0
+    srgb = [min(max(k, 0.0), 255.0) / 255.0 for k in (r, g, b)]
+    linear = [k / 12.92 if k <= 0.04045 else ((k + 0.055) / 1.055) ** 2.4 for k in srgb]
+    hoechster = max(linear) or 1.0
+    return tuple(round(k / hoechster, 6) for k in linear)
 
 
 __all__ = [
     "AZIMUT_VON_NORDEN", "AZIMUT_VON_SUEDEN", "KONVENTIONEN", "METHODE",
-    "SonnenError", "VORGABE_AZIMUT_GRAD", "VORGABE_HOEHE_GRAD", "VORGABE_KONVENTION",
-    "WELTSYSTEM", "aus_bestellung", "blender_euler", "lage",
+    "KELVIN_BEREICH", "KOSMO_KONVENTION", "SonnenError", "VORGABE_AZIMUT_GRAD",
+    "VORGABE_HOEHE_GRAD", "VORGABE_KONVENTION", "WELTSYSTEM", "WINKEL_BEREICH_GRAD",
+    "aus_bestellung", "blender_euler", "kelvin_zu_farbe", "lage", "licht",
 ]

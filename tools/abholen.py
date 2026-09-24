@@ -145,6 +145,25 @@ def karte_auskunft() -> tuple[bool, str]:
     return True, f"Auslastung {last} %, {speicher} MiB belegt."
 
 
+def speicher_frei_mib() -> int | None:
+    """Freier Grafikspeicher in MiB laut ``nvidia-smi`` — ``None``, wenn unbekannt.
+
+    Für den Speicher-Riegel vor dem Laden (``abholer.MINDEST_FREI_MIB``, B161/B1).
+    Unbekannt heisst dort «rechnen»: Diese Auskunft darf nichts sperren, was bis zum
+    24.09.2026 lief.
+    """
+    werkzeug = shutil.which("nvidia-smi")
+    if not werkzeug:
+        return None
+    try:
+        roh = subprocess.run(
+            [werkzeug, "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=15, check=True).stdout.strip()
+        return int(roh.splitlines()[0].strip())
+    except (subprocess.SubprocessError, OSError, ValueError, IndexError):
+        return None
+
+
 class EinmalGeladen:
     """Ein Modell je Name — beim ersten Gebrauch geladen, danach **behalten**.
 
@@ -203,6 +222,13 @@ class EinmalGeladen:
         self.geraet = None
         self.ladeweg = None
         self.entflechtung = None
+        self.bedarf = None
+
+    @property
+    def haelt_gewichte(self) -> bool:
+        """Liegt schon ein Modell dieses Prozesses bereit? Dann ist der belegte Speicher
+        unserer — und kein Grund, einen Auftrag warten zu lassen (B161/B1)."""
+        return bool(self._modelle)
 
     def __call__(self, parameter: dict):
         name = parameter.get(self._name_schluessel)
@@ -218,7 +244,20 @@ class EinmalGeladen:
         self.geraet = getattr(modell, "geraet", None)
         self.ladeweg = getattr(modell, "ladeweg", None)
         self.entflechtung = getattr(modell, "entflechtung", None)
-        return modell(parameter)
+        # `bedarf` fehlte hier bis zum 24.09.2026 (Befund B161/B1): Die Rechnung der
+        # Stufenwahl kam darum auf dem Betriebsweg nie im Ergebnis an, und
+        # `abholer._bedarfszusatz` schwieg immer.
+        self.bedarf = getattr(modell, "bedarf", None)
+        try:
+            return modell(parameter)
+        except Exception as fehler:
+            # Nach einem Speicherfehler das Modell NICHT behalten: Es hält auf der Karte,
+            # was der nächste Versuch braucht. Neu laden kostet Zeit, ein zweiter
+            # Speicherfehler kostet den nächsten Auftrag.
+            if abholer.ist_speichermangel(fehler):
+                self._modelle.pop(schluessel, None)
+                render._leere_grafikspeicher()
+            raise
 
 
 #: Wieviel Text eine Zeile traegt, bevor gekuerzt wird.
@@ -401,6 +440,13 @@ def main(argv=None) -> int:
         # der Auftrag scheiterte erst beim Rendern, weil dieser Python kein torch hatte.
         from aiimaging import render as _render
         print(f"Render-Umgebung: {_render.umgebung_da()['satz']}")
+        frei_mib = speicher_frei_mib()
+        print("Grafikspeicher frei: "
+              + ("unbekannt (nvidia-smi fehlt oder antwortet nicht) — es wird gerechnet"
+                 if frei_mib is None else
+                 f"{frei_mib} MiB (zum Laden mindestens {abholer.MINDEST_FREI_MIB} MiB) — "
+                 + ("reicht" if frei_mib >= abholer.MINDEST_FREI_MIB
+                    else "REICHT NICHT, Auftraege warten mit Grund")))
         for name, pfad, quelle in ablagen:
             offen = quelle.offene_auftraege(pfad)
             print(f"Offene Auftraege [{name}]: {len(offen)}")
@@ -469,6 +515,8 @@ def main(argv=None) -> int:
         bericht = abholer.durchgang(pfad, verarbeite=verarbeite,
                                     fremde_freigabe_gilt=a.fremde_freigabe,
                                     darf_rechnen=karte_auskunft,
+                                    speicher_frei=lambda: (None if render_modell.haelt_gewichte
+                                                           else speicher_frei_mib()),
                                     hoechstens=a.hoechstens,
                                     wache_bauen=None if a.ohne_wache else wache_bauen,
                                     quelle=quelle)
