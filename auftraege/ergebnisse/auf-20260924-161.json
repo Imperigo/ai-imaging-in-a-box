@@ -1,0 +1,43 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-161",
+ "status": "ok",
+ "beendet": "2026-09-24T12:10:00Z",
+ "stand": "6711624",
+ "geprueft": "Beide Klone sauber (git status leer), per pull --ff-only nachgezogen, gemessen wie angewiesen. Nichts angepasst, nichts installiert, keine GPU-Last.",
+ "kurzantwort": "K1 KosmoPrepare gruen: a461b9b, libs_pruefen exit 0 (pyphen WIRD GEBRAUCHT, pysolar nicht da), Suite «Ran 1354 tests … OK (skipped=89)». K2 KosmoPublish: tests gruen (3998, OK), tests_slow ROT: 1 Fehlschlag test_plakat_1_konzept_fingerprint (g_count 70 statt 54, 30 % > 20 %). K3: noch keine Nacht mit der neuen Fassung.",
+ "befunde": {
+  "K1": {
+   "git_log_1": "a461b9b B164 P2: die Fragenbeantwortung uebersteuert das Programm, A2 als Entwurf",
+   "libs_pruefen_exit": 0,
+   "pyphen": "[WIRD GEBRAUCHT]  pyphen 0.17.2 — GPL-2+ / LGPL-2.1+ / MPL-1.1 — keine davon im Mandat Q29",
+   "pysolar": "[nicht da]  pysolar",
+   "suite_exit": 0,
+   "suite_letzte_zeilen": "Ran 1354 tests in 12.360s / OK (skipped=89) (Ausgabe endet mit dem Dashboard-Druck der Massing-Demo)"
+  },
+  "K2": {
+   "git_log_1": "e5c964b Das A0-Werkzeug am Werkzeugserver liefert jetzt, was Befehlszeile und Tu…",
+   "pull": "ff-only ohne Hindernis (origin/main..HEAD war leer)",
+   "tests": "Ran 3998 tests in 105.924s / OK (skipped=18), exit 0",
+   "tests_slow": "Ran 19 tests in 22.548s / FAILED (failures=1, skipped=5), exit 1",
+   "roter_test_woertlich": "FAIL: test_plakat_1_konzept_fingerprint (test_plakat_snapshots.PlakatSnapshotTests.test_plakat_1_konzept_fingerprint) — AssertionError: 0.2962962962962963 not less than or equal to 0.2 : Snapshot-Diff [plakat_1_konzept.g_count]: erwartet 54, aktuell 70 (30%) — tests_slow/test_plakat_snapshots.py:70 → :67 → tests/test_layout_snapshots.py:110"
+  },
+  "K3": {
+   "zustellung_zeile_letzte_nacht": "Zustellung: Push gescheitert, Grund unbekannt — Commit liegt lokal, der Nachzuegler holt ihn",
+   "gilt_fuer": "Nacht auf den 24.09., also noch die ALTE Fassung (vor 72c3b0f); eine Nacht mit der neuen Fassung gab es noch nicht",
+   "bericht_auf_origin": "ja — 7de5fb4 «Visueller Test 2026-09-24» liegt auf origin/main; der lokale Commit 32b4bc6 wurde am 24.09. vormittags vom lokalen Worker als reiner Berichtscommit auf origin/main aufgesetzt und vom Nachzuegler zugestellt",
+   "origin_main_3": [
+    "e5c964b",
+    "7de5fb4 Visueller Test 2026-09-24",
+    "72c3b0f Die Nacht setzt ihren Bericht auf den Stand von origin, bevor sie pusht"
+   ]
+  },
+  "C": "Der rote Plakat-Test stammt vermutlich aus einer gewollten Aenderung am A0-Werkzeug (e5c964b liegt direkt davor) — ob der Vergleichsstand nachzuziehen ist oder das Plakat zu viele Gruppen hat, entscheidet der Prepare/Publish-Worker; ich habe keinen --update-golden gefahren."
+ },
+ "bemerkungen": "zustellung.sh (KosmoBetrieb) bleibt bewusst ohne Rebase: die Nacht setzt ihren Bericht jetzt selbst auf; der Nachzuegler meldet Abweisungen einem Menschen.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine"
+ },
+ "fehler": null
+}
