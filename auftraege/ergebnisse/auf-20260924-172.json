@@ -1,0 +1,2417 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-172",
+ "status": "ok",
+ "beendet": "2026-09-24T16:30:00Z",
+ "stand": "7c8d148",
+ "git_log_1": "7c8d148ae927517a03e1fe953e0508144e22f0c1 2026-09-24 13:54:28 +0000 Owner-Entscheid: E8-Knoten erst nach n1 — und bis dahin wird gewartet",
+ "geprueft": "Klon sauber, git pull --ff-only: «Bereits aktuell» (7c8d148, enthaelt 9215742 mit sprungordnung). Kein Render, nichts heruntergeladen, Code unberuehrt, keine Schwelle. Tiefenschaetzer depth-anything-v2-small einmal geladen (GPU vorher 7537 MiB belegt, also unter 20000), 24 Schaetzungen in 18 s, dann alles Weitere auf der CPU. s0 = erg['sprungordnung'] aus qa_gegen_soll mit Material-ID-Maske wie 160; roh = schaetze_tiefe(HG_KEINE) mit demselben Modell. Kontrolle: s0 direkt aus roh nachgerechnet = s0 aus qa_gegen_soll, in allen 24 Faellen stellengleich.",
+ "kurzantwort": "NEIN, die Zahl trennt nicht. Das einzige 160-Nein (1.0 Hochbau Register, die «Gasse») liegt mit s0 0.705 / s1 0.602·0.748·0.806 (g=1/2/4) UEBER den Ja-Bildern 1.0 Testbau Register (0.094 / 0.237·0.198·0.217) und 1.0 Hochbau nicht umgedreht (0.448 / 0.431·0.486·0.722) und auch ueber dem saubersten 2.1-Bild (0.657 / 0.533·0.661·0.832, nur bei g=4 darueber). Eigenes Soll schlaegt fremdes und alle vier Verschiebungen nur in 4 (s0), 4 (g=1), 7 (g=2), 8 (g=4) von 17 echten Bildern — darunter jedesmal die Gasse und beide Schoenbilder. Die Nullprobe «grau» bekommt gegen das Testbau-Soll 1.000 (s0) — genau so viel wie das Schoenbild. Die zweite Differenz zieht ein lineares Ortsfeld ab, nicht dessen Kruemmung: auf leerem Grau ist die Schaetzkarte eine Schuessel (Minimum nahe der Horizontzeile), und an einer Oberkante darueber faellt die zweite Differenz dadurch von selbst «richtig» aus.",
+ "befunde": {
+  "material": {
+   "bilder": "12 Bilder 160 B1 (Union-1.0, testbau/hochbau x register/nicht_umgedreht x Startwert 0..2, ~/kosmo-probe/auf160/B1/*/laeufe/render-*/bild.png) + die vier Bilder aus 160 D (~/kosmo-probe/auf158/C/{1.0,2.1}-{ohne,0.15}.png, Testbau, Startwert 0, Soll aus 158 B wie im 160-D-Skript) + Blender-Schoenbild je Koerper (beauty_.png derselben Mappe) + drei Nullproben (grau 128, senkrechter Verlauf 0..255 oben->unten, gleichverteiltes Rauschen Startwert 0), jede gegen beide Soll-Karten.",
+   "fehlt": "Die zwoelf 2.1-Bilder aus 160 B2 gibt es nicht mehr: ~/kosmo-probe/auf160/B2/ ist leer (nach dem Lauf um 07:39 geleert, vermutlich Spurenbereinigung) und sie liegen nirgends sonst. Neu erzeugen haette Rendern geheissen — nicht getan. Damit fehlen drei 160-Urteile: «2.1 hochbau Register» (Ja), «2.1 testbau nicht umgedreht» (Nein), «2.1 hochbau nicht umgedreht» (Nein). «2.1 testbau Register» (Ja) ist dagegen da: es ist dasselbe Bild wie 158 C 2.1-ohne (rho_maske -0.46195503992599185 in 160 B2 und 160 D stellengleich).",
+   "doppelt": "D-1.0-ohne ist bildpunktgleich mit B1-testbau-register-s0 (md5 e061d417…); die Zeile steht der Vollstaendigkeit halber da, zaehlt aber nur einmal.",
+   "karte": "«karte» heisst hier bei B1 register/nicht_umgedreht (Tiefe umgedreht oder nicht), bei den D-Bildern ferne_abstand ohne/0.15 wie in 158/160 D. Welche Lesart die Auftragszeile «mit/ohne Karte» meinte, war nicht eindeutig; beide sind gemessen.",
+   "urteile": "Ja/Nein nur, wo 160 (bzw. fuer die zwei 0.15-Bilder 158 C2) einen Satz hat: 8 Bilder. Startwerte 1 und 2 hat 160 nicht beurteilt; mein Blick von heute steht getrennt als 'blick_172_nicht_aus_160' und fliesst NICHT in das Urteil unten ein.",
+   "ordner": "~/kosmo-probe/auf172/ (a172_planar.py, a172_stufe1_schaetzen.py, a172_stufe2_sprung.py, a172_ergebnis_schreiben.py, a172_json.py, stufe1.log, stufe2.json)"
+  },
+  "aufruf": {
+   "s0": "erg = tiefenschaetzer.qa_gegen_soll(bild, soll, breite=512, hoehe=512, maske=maske_aus_bericht(mp, gelaende_erwartet=True)['maske'], modell=<einmal geladen>); s0 = erg['sprungordnung'] (polaritaet dort = GEMESSENE_POLARITAET = -1, abstand 2, ohne Horizont)",
+   "s1": "geometrie_qa.sprungordnung(soll, roh, breite=512, polaritaet=-1, horizont_zeile=H, abstand_px=g) fuer g = 1, 2, 4 (g=2 ist die Vorgabe, also «s1»)",
+   "gegenprobe_a": "Testbau-Bild gegen Hochbau-Soll und umgekehrt; Horizontzeile die des SOLL-Koerpers (300 bzw. 253), weil eine Pruefung mit falschem Soll auch dessen Kamera annehmen wuerde",
+   "gegenprobe_b": "Soll um +48/-48 px in x und in y verschoben, frei gewordener Rand = inf («nichts»); Horizontzeile unverschoben (die Kamera ist dieselbe). s0-Gegenproben direkt mit sprungordnung(..., polaritaet=-1) ohne Horizont gerechnet — die Direktrechnung ist fuer das eigene Soll stellengleich mit qa_gegen_soll."
+  },
+  "kernzahlen": [
+   {
+    "bild": "B1-testbau-register-s0",
+    "urteil": "Ja",
+    "s0": 0.0938,
+    "s1_g1_2_4": [
+     0.2374,
+     0.1982,
+     0.2168
+    ],
+    "fremd_s0_s1g2": [
+     0.4521,
+     0.4895
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.3775,
+     0.4171
+    ]
+   },
+   {
+    "bild": "D-1.0-0.15",
+    "urteil": "Ja",
+    "s0": 0.1246,
+    "s1_g1_2_4": [
+     0.33,
+     0.1227,
+     0.1615
+    ],
+    "fremd_s0_s1g2": [
+     0.4901,
+     0.4988
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.3648,
+     0.3547
+    ]
+   },
+   {
+    "bild": "D-2.1-ohne",
+    "urteil": "Ja",
+    "s0": 0.6569,
+    "s1_g1_2_4": [
+     0.5332,
+     0.661,
+     0.832
+    ],
+    "fremd_s0_s1g2": [
+     0.4916,
+     0.5873
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.7465,
+     0.6191
+    ]
+   },
+   {
+    "bild": "D-2.1-0.15",
+    "urteil": "Ja",
+    "s0": 0.5126,
+    "s1_g1_2_4": [
+     0.5412,
+     0.6398,
+     0.8119
+    ],
+    "fremd_s0_s1g2": [
+     0.4862,
+     0.5425
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.6008,
+     0.6359
+    ]
+   },
+   {
+    "bild": "B1-hochbau-nicht_umgedreht-s0",
+    "urteil": "Ja",
+    "s0": 0.4483,
+    "s1_g1_2_4": [
+     0.4306,
+     0.4856,
+     0.7218
+    ],
+    "fremd_s0_s1g2": [
+     0.3319,
+     0.4416
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.6419,
+     0.637
+    ]
+   },
+   {
+    "bild": "B1-testbau-nicht_umgedreht-s0",
+    "urteil": "Unklar",
+    "s0": 0.7227,
+    "s1_g1_2_4": [
+     0.662,
+     0.6871,
+     0.7918
+    ],
+    "fremd_s0_s1g2": [
+     0.5596,
+     0.5054
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.7521,
+     0.6016
+    ]
+   },
+   {
+    "bild": "B1-hochbau-register-s0",
+    "urteil": "Nein",
+    "s0": 0.705,
+    "s1_g1_2_4": [
+     0.6015,
+     0.7478,
+     0.8061
+    ],
+    "fremd_s0_s1g2": [
+     0.4027,
+     0.4105
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.6434,
+     0.6606
+    ]
+   },
+   {
+    "bild": "schoen-testbau",
+    "urteil": null,
+    "s0": 1.0,
+    "s1_g1_2_4": [
+     0.998,
+     0.999,
+     0.999
+    ],
+    "fremd_s0_s1g2": [
+     0.5204,
+     0.5479
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.9601,
+     0.8063
+    ]
+   },
+   {
+    "bild": "schoen-hochbau",
+    "urteil": null,
+    "s0": 0.7904,
+    "s1_g1_2_4": [
+     0.5565,
+     0.7778,
+     0.9279
+    ],
+    "fremd_s0_s1g2": [
+     0.5217,
+     0.6102
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.7784,
+     0.6882
+    ]
+   },
+   {
+    "bild": "null-grau-testbau",
+    "urteil": null,
+    "s0": 1.0,
+    "s1_g1_2_4": [
+     0.9115,
+     0.8908,
+     0.8521
+    ],
+    "fremd_s0_s1g2": [
+     0.2354,
+     0.4163
+    ],
+    "verschoben_max_s0_s1g2": [
+     1.0,
+     0.9944
+    ]
+   },
+   {
+    "bild": "null-grau-hochbau",
+    "urteil": null,
+    "s0": 0.2354,
+    "s1_g1_2_4": [
+     0.4174,
+     0.4163,
+     0.5246
+    ],
+    "fremd_s0_s1g2": [
+     1.0,
+     0.8908
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.3856,
+     0.5116
+    ]
+   },
+   {
+    "bild": "null-verlauf-testbau",
+    "urteil": null,
+    "s0": 0.9797,
+    "s1_g1_2_4": [
+     0.7425,
+     0.9095,
+     0.8768
+    ],
+    "fremd_s0_s1g2": [
+     0.4819,
+     0.5583
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.9986,
+     0.9678
+    ]
+   },
+   {
+    "bild": "null-verlauf-hochbau",
+    "urteil": null,
+    "s0": 0.4819,
+    "s1_g1_2_4": [
+     0.4687,
+     0.5583,
+     0.654
+    ],
+    "fremd_s0_s1g2": [
+     0.9797,
+     0.9095
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.5785,
+     0.6134
+    ]
+   },
+   {
+    "bild": "null-rauschen-testbau",
+    "urteil": null,
+    "s0": 0.7899,
+    "s1_g1_2_4": [
+     0.6026,
+     0.6987,
+     0.7404
+    ],
+    "fremd_s0_s1g2": [
+     0.4603,
+     0.4858
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.8151,
+     0.7108
+    ]
+   },
+   {
+    "bild": "null-rauschen-hochbau",
+    "urteil": null,
+    "s0": 0.4603,
+    "s1_g1_2_4": [
+     0.4542,
+     0.4858,
+     0.5262
+    ],
+    "fremd_s0_s1g2": [
+     0.7899,
+     0.6987
+    ],
+    "verschoben_max_s0_s1g2": [
+     0.4598,
+     0.5012
+    ]
+   }
+  ],
+  "zeilen": [
+   {
+    "bild": "B1-testbau-register-s0",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "register",
+    "startwert": 0,
+    "ja_nein_160": "Ja",
+    "quelle_urteil": "160 B, Satz seed0 «1.0 testbau Register»",
+    "score_heute": 0.4498,
+    "s0_anteil": 0.0938,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.2374,
+    "s1_anteil_g2": 0.1982,
+    "s1_anteil_g4": 0.2168,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.2374,
+     0.1982,
+     0.2168
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4521,
+     "s1_g1_2_4": [
+      0.4193,
+      0.4895,
+      0.5812
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.2178,
+      "s1_g1_2_4": [
+       0.4054,
+       0.3265,
+       0.3003
+      ]
+     },
+     "x-48": {
+      "s0": 0.1443,
+      "s1_g1_2_4": [
+       0.3763,
+       0.2691,
+       0.2077
+      ]
+     },
+     "y+48": {
+      "s0": 0.3775,
+      "s1_g1_2_4": [
+       0.3204,
+       0.4171,
+       0.3628
+      ]
+     },
+     "y-48": {
+      "s0": 0.1793,
+      "s1_g1_2_4": [
+       0.2572,
+       0.3255,
+       0.3946
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-testbau-register-s1",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "register",
+    "startwert": 1,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Unklar",
+    "blick_172_satz": "Fensterband an der Stelle des Quaders, rundum schwarz — liest sich eher als Oeffnung in einer dunklen Wand als freistehend",
+    "score_heute": null,
+    "s0_anteil": 0.2647,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.2716,
+    "s1_anteil_g2": 0.3451,
+    "s1_anteil_g4": 0.1559,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.2716,
+     0.3451,
+     0.1559
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4511,
+     "s1_g1_2_4": [
+      0.5048,
+      0.454,
+      0.557
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.2815,
+      "s1_g1_2_4": [
+       0.3089,
+       0.3058,
+       0.3043
+      ]
+     },
+     "x-48": {
+      "s0": 0.3074,
+      "s1_g1_2_4": [
+       0.5151,
+       0.4965,
+       0.3592
+      ]
+     },
+     "y+48": {
+      "s0": 0.598,
+      "s1_g1_2_4": [
+       0.5212,
+       0.601,
+       0.6708
+      ]
+     },
+     "y-48": {
+      "s0": 0.3796,
+      "s1_g1_2_4": [
+       0.4562,
+       0.4435,
+       0.3004
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-testbau-register-s2",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "register",
+    "startwert": 2,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Nein",
+    "blick_172_satz": "Bildraster fuellt das ganze Bild, kein Baukoerper",
+    "score_heute": 0.0238,
+    "s0_anteil": 0.2913,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.4115,
+    "s1_anteil_g2": 0.3722,
+    "s1_anteil_g4": 0.2767,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.4115,
+     0.3722,
+     0.2767
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4845,
+     "s1_g1_2_4": [
+      0.4067,
+      0.4528,
+      0.431
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.3515,
+      "s1_g1_2_4": [
+       0.4185,
+       0.337,
+       0.2711
+      ]
+     },
+     "x-48": {
+      "s0": 0.1569,
+      "s1_g1_2_4": [
+       0.2656,
+       0.2143,
+       0.1459
+      ]
+     },
+     "y+48": {
+      "s0": 0.4314,
+      "s1_g1_2_4": [
+       0.4676,
+       0.4352,
+       0.3404
+      ]
+     },
+     "y-48": {
+      "s0": 0.4419,
+      "s1_g1_2_4": [
+       0.5169,
+       0.497,
+       0.4774
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-testbau-nicht_umgedreht-s0",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "nicht_umgedreht",
+    "startwert": 0,
+    "ja_nein_160": "Unklar",
+    "quelle_urteil": "160 B, Satz seed0 «1.0 testbau nicht umgedreht»",
+    "score_heute": 0.2962,
+    "s0_anteil": 0.7227,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.662,
+    "s1_anteil_g2": 0.6871,
+    "s1_anteil_g4": 0.7918,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.662,
+     0.6871,
+     0.7918
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.5596,
+     "s1_g1_2_4": [
+      0.5422,
+      0.5054,
+      0.6431
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.7374,
+      "s1_g1_2_4": [
+       0.501,
+       0.5578,
+       0.6678
+      ]
+     },
+     "x-48": {
+      "s0": 0.7521,
+      "s1_g1_2_4": [
+       0.5221,
+       0.6016,
+       0.6851
+      ]
+     },
+     "y+48": {
+      "s0": 0.3964,
+      "s1_g1_2_4": [
+       0.4613,
+       0.394,
+       0.5726
+      ]
+     },
+     "y-48": {
+      "s0": 0.3074,
+      "s1_g1_2_4": [
+       0.4132,
+       0.4376,
+       0.5554
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": true,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "B1-testbau-nicht_umgedreht-s1",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "nicht_umgedreht",
+    "startwert": 1,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Unklar",
+    "blick_172_satz": "fast gleich wie register-s1",
+    "score_heute": null,
+    "s0_anteil": 0.3964,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.2696,
+    "s1_anteil_g2": 0.2867,
+    "s1_anteil_g4": 0.3104,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.2696,
+     0.2867,
+     0.3104
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4345,
+     "s1_g1_2_4": [
+      0.5038,
+      0.4908,
+      0.6039
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.4804,
+      "s1_g1_2_4": [
+       0.4266,
+       0.4638,
+       0.5262
+      ]
+     },
+     "x-48": {
+      "s0": 0.5014,
+      "s1_g1_2_4": [
+       0.5915,
+       0.6237,
+       0.6403
+      ]
+     },
+     "y+48": {
+      "s0": 0.6919,
+      "s1_g1_2_4": [
+       0.5686,
+       0.6172,
+       0.721
+      ]
+     },
+     "y-48": {
+      "s0": 0.1639,
+      "s1_g1_2_4": [
+       0.2614,
+       0.1653,
+       0.0864
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-testbau-nicht_umgedreht-s2",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "nicht_umgedreht",
+    "startwert": 2,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Unklar",
+    "blick_172_satz": "Fassadenblock etwa auf der Silhouette, rundum rote Flecken und Streifen",
+    "score_heute": null,
+    "s0_anteil": 0.57,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.5191,
+    "s1_anteil_g2": 0.5704,
+    "s1_anteil_g4": 0.8758,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.5191,
+     0.5704,
+     0.8758
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4534,
+     "s1_g1_2_4": [
+      0.4882,
+      0.519,
+      0.5141
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.5588,
+      "s1_g1_2_4": [
+       0.4628,
+       0.5141,
+       0.7784
+      ]
+     },
+     "x-48": {
+      "s0": 0.549,
+      "s1_g1_2_4": [
+       0.4366,
+       0.5191,
+       0.7973
+      ]
+     },
+     "y+48": {
+      "s0": 0.5161,
+      "s1_g1_2_4": [
+       0.5885,
+       0.5293,
+       0.4155
+      ]
+     },
+     "y-48": {
+      "s0": 0.3971,
+      "s1_g1_2_4": [
+       0.5438,
+       0.4633,
+       0.4285
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": true,
+     "s1_g1": false,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "B1-hochbau-register-s0",
+    "koerper": "hochbau",
+    "cn": "1.0",
+    "karte": "register",
+    "startwert": 0,
+    "ja_nein_160": "Nein",
+    "quelle_urteil": "160 B, Satz seed0 «1.0 hochbau Register» (die Gasse)",
+    "score_heute": null,
+    "s0_anteil": 0.705,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.6015,
+    "s1_anteil_g2": 0.7478,
+    "s1_anteil_g4": 0.8061,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.5961,
+     0.6881,
+     0.7933
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.6153,
+     0.8174,
+     0.8136
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.4027,
+     "s1_g1_2_4": [
+      0.3984,
+      0.4105,
+      0.328
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.6434,
+      "s1_g1_2_4": [
+       0.3636,
+       0.4393,
+       0.2864
+      ]
+     },
+     "x-48": {
+      "s0": 0.5685,
+      "s1_g1_2_4": [
+       0.524,
+       0.5204,
+       0.4588
+      ]
+     },
+     "y+48": {
+      "s0": 0.6093,
+      "s1_g1_2_4": [
+       0.5552,
+       0.6606,
+       0.729
+      ]
+     },
+     "y-48": {
+      "s0": 0.5474,
+      "s1_g1_2_4": [
+       0.5125,
+       0.6414,
+       0.7092
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": true,
+     "s1_g1": true,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "B1-hochbau-register-s1",
+    "koerper": "hochbau",
+    "cn": "1.0",
+    "karte": "register",
+    "startwert": 1,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Unklar",
+    "blick_172_satz": "Fassade genau auf der Silhouette, Grund dunkel und unruhig",
+    "score_heute": 0.0,
+    "s0_anteil": 0.2145,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.3731,
+    "s1_anteil_g2": 0.285,
+    "s1_anteil_g4": 0.4927,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.4217,
+     0.2373,
+     0.3333
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.2485,
+     0.3406,
+     0.5865
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.3536,
+     "s1_g1_2_4": [
+      0.4638,
+      0.4442,
+      0.4286
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.475,
+      "s1_g1_2_4": [
+       0.6988,
+       0.5214,
+       0.4763
+      ]
+     },
+     "x-48": {
+      "s0": 0.3426,
+      "s1_g1_2_4": [
+       0.3792,
+       0.3378,
+       0.3129
+      ]
+     },
+     "y+48": {
+      "s0": 0.2532,
+      "s1_g1_2_4": [
+       0.3848,
+       0.299,
+       0.4562
+      ]
+     },
+     "y-48": {
+      "s0": 0.2534,
+      "s1_g1_2_4": [
+       0.3678,
+       0.3627,
+       0.5086
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-hochbau-register-s2",
+    "koerper": "hochbau",
+    "cn": "1.0",
+    "karte": "register",
+    "startwert": 2,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Nein",
+    "blick_172_satz": "Fassade in der Mitte, links/rechts Gassenperspektive",
+    "score_heute": null,
+    "s0_anteil": 0.5797,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.5973,
+    "s1_anteil_g2": 0.7105,
+    "s1_anteil_g4": 0.414,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.5392,
+     0.728,
+     0.362
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.7463,
+     0.6901,
+     0.4446
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.2045,
+     "s1_g1_2_4": [
+      0.3018,
+      0.2354,
+      0.2633
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.1928,
+      "s1_g1_2_4": [
+       0.3773,
+       0.3767,
+       0.3622
+      ]
+     },
+     "x-48": {
+      "s0": 0.5293,
+      "s1_g1_2_4": [
+       0.5597,
+       0.4945,
+       0.4556
+      ]
+     },
+     "y+48": {
+      "s0": 0.6271,
+      "s1_g1_2_4": [
+       0.5964,
+       0.724,
+       0.5052
+      ]
+     },
+     "y-48": {
+      "s0": 0.6429,
+      "s1_g1_2_4": [
+       0.6336,
+       0.783,
+       0.6645
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-hochbau-nicht_umgedreht-s0",
+    "koerper": "hochbau",
+    "cn": "1.0",
+    "karte": "nicht_umgedreht",
+    "startwert": 0,
+    "ja_nein_160": "Ja",
+    "quelle_urteil": "160 B, Satz seed0 «1.0 hochbau nicht umgedreht»",
+    "score_heute": 0.0,
+    "s0_anteil": 0.4483,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.4306,
+    "s1_anteil_g2": 0.4856,
+    "s1_anteil_g4": 0.7218,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.441,
+     0.4386,
+     0.7172
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.4042,
+     0.5404,
+     0.7246
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.3319,
+     "s1_g1_2_4": [
+      0.4648,
+      0.4416,
+      0.5262
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.5853,
+      "s1_g1_2_4": [
+       0.5794,
+       0.4447,
+       0.371
+      ]
+     },
+     "x-48": {
+      "s0": 0.6419,
+      "s1_g1_2_4": [
+       0.6053,
+       0.637,
+       0.573
+      ]
+     },
+     "y+48": {
+      "s0": 0.4552,
+      "s1_g1_2_4": [
+       0.4431,
+       0.4885,
+       0.6364
+      ]
+     },
+     "y-48": {
+      "s0": 0.4531,
+      "s1_g1_2_4": [
+       0.4535,
+       0.4763,
+       0.5539
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "B1-hochbau-nicht_umgedreht-s1",
+    "koerper": "hochbau",
+    "cn": "1.0",
+    "karte": "nicht_umgedreht",
+    "startwert": 1,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Unklar",
+    "blick_172_satz": "wie register-s1",
+    "score_heute": 0.0,
+    "s0_anteil": 0.3408,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.3876,
+    "s1_anteil_g2": 0.4888,
+    "s1_anteil_g4": 0.632,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.3553,
+     0.3974,
+     0.5763
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.4701,
+     0.5951,
+     0.6647
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.4384,
+     "s1_g1_2_4": [
+      0.3964,
+      0.5272,
+      0.4902
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.5749,
+      "s1_g1_2_4": [
+       0.6503,
+       0.5095,
+       0.3847
+      ]
+     },
+     "x-48": {
+      "s0": 0.2937,
+      "s1_g1_2_4": [
+       0.4552,
+       0.3405,
+       0.3384
+      ]
+     },
+     "y+48": {
+      "s0": 0.3754,
+      "s1_g1_2_4": [
+       0.4179,
+       0.4991,
+       0.6058
+      ]
+     },
+     "y-48": {
+      "s0": 0.4432,
+      "s1_g1_2_4": [
+       0.4086,
+       0.5677,
+       0.7255
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "B1-hochbau-nicht_umgedreht-s2",
+    "koerper": "hochbau",
+    "cn": "1.0",
+    "karte": "nicht_umgedreht",
+    "startwert": 2,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "blick_172_nicht_aus_160": "Nein",
+    "blick_172_satz": "Fassade in der Mitte, rundum Innenraum-/Gassenperspektive",
+    "score_heute": null,
+    "s0_anteil": 0.607,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.3522,
+    "s1_anteil_g2": 0.4734,
+    "s1_anteil_g4": 0.2949,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.3802,
+     0.6299,
+     0.5
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.2807,
+     0.2912,
+     0.1742
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.2801,
+     "s1_g1_2_4": [
+      0.501,
+      0.422,
+      0.3916
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.4936,
+      "s1_g1_2_4": [
+       0.4073,
+       0.4723,
+       0.3128
+      ]
+     },
+     "x-48": {
+      "s0": 0.6286,
+      "s1_g1_2_4": [
+       0.5776,
+       0.6626,
+       0.6824
+      ]
+     },
+     "y+48": {
+      "s0": 0.6077,
+      "s1_g1_2_4": [
+       0.3973,
+       0.4805,
+       0.4276
+      ]
+     },
+     "y-48": {
+      "s0": 0.4613,
+      "s1_g1_2_4": [
+       0.4035,
+       0.4579,
+       0.456
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "D-1.0-ohne",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "ohne",
+    "startwert": 0,
+    "ja_nein_160": "Ja",
+    "quelle_urteil": "bildpunktgleich mit B1-testbau-register-s0 (md5 gleich), also dasselbe 160-Urteil",
+    "score_heute": 0.4498,
+    "s0_anteil": 0.0938,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.2374,
+    "s1_anteil_g2": 0.1982,
+    "s1_anteil_g4": 0.2168,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.2374,
+     0.1982,
+     0.2168
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4521,
+     "s1_g1_2_4": [
+      0.4193,
+      0.4895,
+      0.5812
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.2178,
+      "s1_g1_2_4": [
+       0.4054,
+       0.3265,
+       0.3003
+      ]
+     },
+     "x-48": {
+      "s0": 0.1443,
+      "s1_g1_2_4": [
+       0.3763,
+       0.2691,
+       0.2077
+      ]
+     },
+     "y+48": {
+      "s0": 0.3775,
+      "s1_g1_2_4": [
+       0.3204,
+       0.4171,
+       0.3628
+      ]
+     },
+     "y-48": {
+      "s0": 0.1793,
+      "s1_g1_2_4": [
+       0.2572,
+       0.3255,
+       0.3946
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "D-1.0-0.15",
+    "koerper": "testbau",
+    "cn": "1.0",
+    "karte": "0.15",
+    "startwert": 0,
+    "ja_nein_160": "Ja",
+    "quelle_urteil": "kein eigener 160-Satz; 158 C2: «wie ohne Abstand, kaum zu unterscheiden»",
+    "score_heute": 0.5335,
+    "s0_anteil": 0.1246,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.33,
+    "s1_anteil_g2": 0.1227,
+    "s1_anteil_g4": 0.1615,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.33,
+     0.1227,
+     0.1615
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4901,
+     "s1_g1_2_4": [
+      0.4195,
+      0.4988,
+      0.5961
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.1835,
+      "s1_g1_2_4": [
+       0.3883,
+       0.2364,
+       0.2772
+      ]
+     },
+     "x-48": {
+      "s0": 0.1485,
+      "s1_g1_2_4": [
+       0.3944,
+       0.2057,
+       0.1715
+      ]
+     },
+     "y+48": {
+      "s0": 0.3648,
+      "s1_g1_2_4": [
+       0.4613,
+       0.3547,
+       0.2406
+      ]
+     },
+     "y-48": {
+      "s0": 0.2115,
+      "s1_g1_2_4": [
+       0.3069,
+       0.2698,
+       0.3642
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "D-2.1-ohne",
+    "koerper": "testbau",
+    "cn": "2.1",
+    "karte": "ohne",
+    "startwert": 0,
+    "ja_nein_160": "Ja",
+    "quelle_urteil": "160 B, Satz seed0 «2.1 testbau Register» — dasselbe Bild: rho_maske -0.46195503992599185 in 160 B2 und 160 D stellengleich",
+    "score_heute": null,
+    "s0_anteil": 0.6569,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.5332,
+    "s1_anteil_g2": 0.661,
+    "s1_anteil_g4": 0.832,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.5332,
+     0.661,
+     0.832
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4916,
+     "s1_g1_2_4": [
+      0.5631,
+      0.5873,
+      0.728
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.7465,
+      "s1_g1_2_4": [
+       0.4718,
+       0.6102,
+       0.7613
+      ]
+     },
+     "x-48": {
+      "s0": 0.6296,
+      "s1_g1_2_4": [
+       0.505,
+       0.5312,
+       0.6391
+      ]
+     },
+     "y+48": {
+      "s0": 0.6225,
+      "s1_g1_2_4": [
+       0.6047,
+       0.6191,
+       0.5751
+      ]
+     },
+     "y-48": {
+      "s0": 0.5364,
+      "s1_g1_2_4": [
+       0.4916,
+       0.5704,
+       0.7359
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "D-2.1-0.15",
+    "koerper": "testbau",
+    "cn": "2.1",
+    "karte": "0.15",
+    "startwert": 0,
+    "ja_nein_160": "Ja",
+    "quelle_urteil": "kein eigener 160-Satz; 158 C2: «wieder genau auf der Silhouette»",
+    "score_heute": null,
+    "s0_anteil": 0.5126,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.5412,
+    "s1_anteil_g2": 0.6398,
+    "s1_anteil_g4": 0.8119,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.5412,
+     0.6398,
+     0.8119
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4862,
+     "s1_g1_2_4": [
+      0.5721,
+      0.5425,
+      0.66
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.6008,
+      "s1_g1_2_4": [
+       0.3612,
+       0.4774,
+       0.6949
+      ]
+     },
+     "x-48": {
+      "s0": 0.4776,
+      "s1_g1_2_4": [
+       0.4748,
+       0.4572,
+       0.5905
+      ]
+     },
+     "y+48": {
+      "s0": 0.591,
+      "s1_g1_2_4": [
+       0.6234,
+       0.6359,
+       0.5044
+      ]
+     },
+     "y-48": {
+      "s0": 0.3866,
+      "s1_g1_2_4": [
+       0.5245,
+       0.5729,
+       0.7009
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "schoen-testbau",
+    "koerper": "testbau",
+    "cn": null,
+    "karte": "blender-beauty",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": 0.1325,
+    "s0_anteil": 1.0,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.998,
+    "s1_anteil_g2": 0.999,
+    "s1_anteil_g4": 0.999,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.998,
+     0.999,
+     0.999
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.5204,
+     "s1_g1_2_4": [
+      0.4977,
+      0.5479,
+      0.5556
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.9601,
+      "s1_g1_2_4": [
+       0.8008,
+       0.7817,
+       0.749
+      ]
+     },
+     "x-48": {
+      "s0": 0.9307,
+      "s1_g1_2_4": [
+       0.7736,
+       0.8063,
+       0.7842
+      ]
+     },
+     "y+48": {
+      "s0": 0.4636,
+      "s1_g1_2_4": [
+       0.5187,
+       0.5187,
+       0.7678
+      ]
+     },
+     "y-48": {
+      "s0": 0.3824,
+      "s1_g1_2_4": [
+       0.5556,
+       0.5818,
+       0.8215
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": true,
+     "s1_g1": true,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "schoen-hochbau",
+    "koerper": "hochbau",
+    "cn": null,
+    "karte": "blender-beauty",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": 0.3417,
+    "s0_anteil": 0.7904,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.5565,
+    "s1_anteil_g2": 0.7778,
+    "s1_anteil_g4": 0.9279,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.5225,
+     0.7392,
+     0.958
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.6437,
+     0.8226,
+     0.9102
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.5217,
+     "s1_g1_2_4": [
+      0.5443,
+      0.6102,
+      0.6074
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.7784,
+      "s1_g1_2_4": [
+       0.4264,
+       0.6882,
+       0.6638
+      ]
+     },
+     "x-48": {
+      "s0": 0.458,
+      "s1_g1_2_4": [
+       0.3302,
+       0.4042,
+       0.5001
+      ]
+     },
+     "y+48": {
+      "s0": 0.6261,
+      "s1_g1_2_4": [
+       0.5011,
+       0.6606,
+       0.8051
+      ]
+     },
+     "y-48": {
+      "s0": 0.5629,
+      "s1_g1_2_4": [
+       0.4816,
+       0.6176,
+       0.6943
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": true,
+     "s1_g1": true,
+     "s1_g2": true,
+     "s1_g4": true
+    }
+   },
+   {
+    "bild": "null-grau-testbau",
+    "koerper": "testbau",
+    "cn": null,
+    "karte": "null-grau",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": null,
+    "s0_anteil": 1.0,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.9115,
+    "s1_anteil_g2": 0.8908,
+    "s1_anteil_g4": 0.8521,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.9115,
+     0.8908,
+     0.8521
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.2354,
+     "s1_g1_2_4": [
+      0.4174,
+      0.4163,
+      0.5246
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 1.0,
+      "s1_g1_2_4": [
+       0.83,
+       0.8551,
+       0.8589
+      ]
+     },
+     "x-48": {
+      "s0": 1.0,
+      "s1_g1_2_4": [
+       0.9135,
+       0.9779,
+       1.0
+      ]
+     },
+     "y+48": {
+      "s0": 1.0,
+      "s1_g1_2_4": [
+       0.909,
+       0.9944,
+       0.9819
+      ]
+     },
+     "y-48": {
+      "s0": 0.8761,
+      "s1_g1_2_4": [
+       0.7099,
+       0.6994,
+       0.6743
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "null-grau-hochbau",
+    "koerper": "hochbau",
+    "cn": null,
+    "karte": "null-grau",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": null,
+    "s0_anteil": 0.2354,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.4174,
+    "s1_anteil_g2": 0.4163,
+    "s1_anteil_g4": 0.5246,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.429,
+     0.2971,
+     0.2662
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.3877,
+     0.555,
+     0.6766
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 1.0,
+     "s1_g1_2_4": [
+      0.9115,
+      0.8908,
+      0.8521
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.1266,
+      "s1_g1_2_4": [
+       0.4472,
+       0.3025,
+       0.4703
+      ]
+     },
+     "x-48": {
+      "s0": 0.2132,
+      "s1_g1_2_4": [
+       0.5324,
+       0.3513,
+       0.4026
+      ]
+     },
+     "y+48": {
+      "s0": 0.3856,
+      "s1_g1_2_4": [
+       0.4555,
+       0.5004,
+       0.6737
+      ]
+     },
+     "y-48": {
+      "s0": 0.2636,
+      "s1_g1_2_4": [
+       0.4726,
+       0.5116,
+       0.6122
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "null-verlauf-testbau",
+    "koerper": "testbau",
+    "cn": null,
+    "karte": "null-verlauf",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": null,
+    "s0_anteil": 0.9797,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.7425,
+    "s1_anteil_g2": 0.9095,
+    "s1_anteil_g4": 0.8768,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.7425,
+     0.9095,
+     0.8768
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4819,
+     "s1_g1_2_4": [
+      0.4687,
+      0.5583,
+      0.654
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.9902,
+      "s1_g1_2_4": [
+       0.6147,
+       0.8013,
+       0.8109
+      ]
+     },
+     "x-48": {
+      "s0": 0.9776,
+      "s1_g1_2_4": [
+       0.7726,
+       0.9678,
+       0.9982
+      ]
+     },
+     "y+48": {
+      "s0": 0.4566,
+      "s1_g1_2_4": [
+       0.4065,
+       0.495,
+       0.8943
+      ]
+     },
+     "y-48": {
+      "s0": 0.9986,
+      "s1_g1_2_4": [
+       0.7884,
+       0.8419,
+       0.7624
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "null-verlauf-hochbau",
+    "koerper": "hochbau",
+    "cn": null,
+    "karte": "null-verlauf",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": null,
+    "s0_anteil": 0.4819,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.4687,
+    "s1_anteil_g2": 0.5583,
+    "s1_anteil_g4": 0.654,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.4492,
+     0.4727,
+     0.5509
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.5187,
+     0.6579,
+     0.7146
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.9797,
+     "s1_g1_2_4": [
+      0.7425,
+      0.9095,
+      0.8768
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.2939,
+      "s1_g1_2_4": [
+       0.5195,
+       0.3594,
+       0.4053
+      ]
+     },
+     "x-48": {
+      "s0": 0.2914,
+      "s1_g1_2_4": [
+       0.5822,
+       0.3931,
+       0.3567
+      ]
+     },
+     "y+48": {
+      "s0": 0.5785,
+      "s1_g1_2_4": [
+       0.4923,
+       0.6134,
+       0.7797
+      ]
+     },
+     "y-48": {
+      "s0": 0.3994,
+      "s1_g1_2_4": [
+       0.4701,
+       0.5657,
+       0.6798
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "null-rauschen-testbau",
+    "koerper": "testbau",
+    "cn": null,
+    "karte": "null-rauschen",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": null,
+    "s0_anteil": 0.7899,
+    "s0_n_kontur": 714,
+    "s0_n_stufen": 0,
+    "s1_anteil_g1": 0.6026,
+    "s1_anteil_g2": 0.6987,
+    "s1_anteil_g4": 0.7404,
+    "n_kontur_g1_2_4": [
+     497,
+     994,
+     1988
+    ],
+    "n_stufen_g1_2_4": [
+     0,
+     0,
+     0
+    ],
+    "anteil_stufen_g1_2_4": [
+     null,
+     null,
+     null
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.6026,
+     0.6987,
+     0.7404
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "hochbau",
+     "s0": 0.4603,
+     "s1_g1_2_4": [
+      0.4542,
+      0.4858,
+      0.5262
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.8151,
+      "s1_g1_2_4": [
+       0.673,
+       0.7108,
+       0.7714
+      ]
+     },
+     "x-48": {
+      "s0": 0.7542,
+      "s1_g1_2_4": [
+       0.5775,
+       0.6695,
+       0.6881
+      ]
+     },
+     "y+48": {
+      "s0": 0.542,
+      "s1_g1_2_4": [
+       0.5137,
+       0.5449,
+       0.6206
+      ]
+     },
+     "y-48": {
+      "s0": 0.5581,
+      "s1_g1_2_4": [
+       0.5776,
+       0.5523,
+       0.4998
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   },
+   {
+    "bild": "null-rauschen-hochbau",
+    "koerper": "hochbau",
+    "cn": null,
+    "karte": "null-rauschen",
+    "startwert": null,
+    "ja_nein_160": null,
+    "quelle_urteil": "in 160 nicht beurteilt",
+    "score_heute": null,
+    "s0_anteil": 0.4603,
+    "s0_n_kontur": 408,
+    "s0_n_stufen": 1555,
+    "s1_anteil_g1": 0.4542,
+    "s1_anteil_g2": 0.4858,
+    "s1_anteil_g4": 0.5262,
+    "n_kontur_g1_2_4": [
+     668,
+     1336,
+     2672
+    ],
+    "n_stufen_g1_2_4": [
+     1711,
+     1555,
+     1572
+    ],
+    "anteil_stufen_g1_2_4": [
+     0.4603,
+     0.4685,
+     0.4647
+    ],
+    "anteil_kontur_g1_2_4": [
+     0.4386,
+     0.506,
+     0.5623
+    ],
+    "gegenprobe_a_fremdes_soll": {
+     "soll_von": "testbau",
+     "s0": 0.7899,
+     "s1_g1_2_4": [
+      0.6026,
+      0.6987,
+      0.7404
+     ]
+    },
+    "gegenprobe_b_verschoben_48px": {
+     "x+48": {
+      "s0": 0.4554,
+      "s1_g1_2_4": [
+       0.5277,
+       0.5012,
+       0.5022
+      ]
+     },
+     "x-48": {
+      "s0": 0.4598,
+      "s1_g1_2_4": [
+       0.5063,
+       0.4728,
+       0.4619
+      ]
+     },
+     "y+48": {
+      "s0": 0.4175,
+      "s1_g1_2_4": [
+       0.4509,
+       0.4585,
+       0.5517
+      ]
+     },
+     "y-48": {
+      "s0": 0.3961,
+      "s1_g1_2_4": [
+       0.4554,
+       0.4882,
+       0.565
+      ]
+     }
+    },
+    "eigen_ueber_allen_5_gegenproben": {
+     "s0": false,
+     "s1_g1": false,
+     "s1_g2": false,
+     "s1_g4": false
+    }
+   }
+  ],
+  "entscheidende_fragen": {
+   "jedes_ja_ueber_jedem_nein": "Nein. Das einzige 160-Nein (B1-hochbau-register-s0, Gasse) liegt bei s0 und bei g=1 und g=2 ueber ALLEN Ja-Bildern, bei g=4 (0.806) ueber drei der fuenf Ja-Bilder (0.162, 0.217, 0.722) und nur unter den beiden 2.1-Bildern (0.812, 0.832). Die Unklar-Zeile (1.0 testbau nicht umgedreht, 0.723/0.687) liegt ebenfalls ueber den meisten Ja. Mit meinem Blick fuer Startwert 2 (drei Nein) aendert sich das nicht: 0.291–0.607 (s0), mitten zwischen den Ja.",
+   "eigen_ueber_fremd_und_verschoben": "In der Regel nicht. Eigenes Soll > alle fuenf Gegenproben bei 4 (s0), 4 (g=1), 7 (g=2), 8 (g=4) von 17 echten Bildern. Stets dabei: die Gasse (Nein) und beide Schoenbilder. Nie dabei: 1.0 Testbau Register s0 (Ja) — dort liegt JEDE Gegenprobe hoeher als das eigene Soll (eigen 0.094/0.198, fremd 0.452/0.489).",
+   "schoenbild_mindestens_so_hoch": "Weitgehend ja: Testbau-Schoenbild 1.000/0.998/0.999/0.999 ist hoechstes Testbau-Bild; Hochbau-Schoenbild 0.790 (s0), 0.778 (g=2), 0.928 (g=4) liegt ueber allen Hochbau-Bildern, bei g=1 aber mit 0.556 UNTER der Gasse (0.602) und hochbau-register-s2 (0.597). Das Testbau-Schoenbild verliert allerdings seine Aussagekraft, weil die graue Nullprobe gegen dasselbe Soll ebenfalls 1.000 (s0) bzw. 0.891 (g=2) bekommt.",
+   "nullproben": "gegen Testbau-Soll hoch (grau 1.000, Verlauf 0.980, Rauschen 0.790 bei s0; 0.891/0.909/0.699 bei g=2), gegen Hochbau-Soll niedrig bis mittel (0.235/0.482/0.460 bzw. 0.416/0.558/0.486). Wo 0,5 «kein Zusammenhang» heissen sollte, liegen leere Bilder also je nach Lage der Kante im Bild zwischen 0.24 und 1.00.",
+   "warum_grau_1_0": "Rohkarte der grauen Flaeche, Spalte 256: Disparitaet 0.80 (Zeile 170) -> 0.64 (183) -> 0.31 (250) -> 0.33 (300) -> 1.57 (400) -> 3.67 (500): eine Schuessel mit Minimum nahe der Horizontzeile. An der Testbau-Oberkante (Zeile 184, darueber aussen) ist sie konvex: (q−p) = 0.0223, (r−q) = 0.0234 → zweite Differenz mit Polaritaet −1 positiv → «richtig». Beim Hochbau (Oberkante Zeile 70, bei s1 kommen die Seitenkanten und 1555 Stufen dazu) faellt es anders aus. Die zweite Differenz hebt ein lineares Ortsfeld auf, eine Kruemmung nicht. Das ist gemessen an dieser einen Karte; dass es der ganze Grund ist, ist meine Lesart."
+  },
+  "horizont": {
+   "testbau": {
+    "zeile": 253,
+    "rechnung": "256 + shift_y*512 = 256 + -0.005348*512 = 253.26 -> Zeile 253 (0 = oben; floor = die Zeile, die den Horizont enthaelt)",
+    "kamera": {
+     "modus": "shift",
+     "neigung_grad": 0.0,
+     "augenhoehe_m": 1.7,
+     "auge_z_m": 1.45,
+     "gelaende_z_m": -0.2500007152557373,
+     "shift_y": -0.005348,
+     "brennweite_mm": 35.0,
+     "sensor_breite_mm": 36.0,
+     "sensor_fit": "HORIZONTAL"
+    },
+    "gegenrechnung_aus_soll": "Spalte 256: Bauwerk Zeilen 184..328, Planartiefe 11.1309 m, f = 497.78 px; aus Oberkante (z 3.00 m) folgt Horizont 253.32, aus Unterkante (z -0.25 m) 252.98"
+   },
+   "hochbau": {
+    "zeile": 300,
+    "rechnung": "256 + shift_y*512 = 256 + 0.087374*512 = 300.74 -> Zeile 300 (0 = oben; floor = die Zeile, die den Horizont enthaelt)",
+    "kamera": {
+     "modus": "shift",
+     "neigung_grad": 0.0,
+     "augenhoehe_m": 1.7,
+     "auge_z_m": 1.45,
+     "gelaende_z_m": -0.25000110268592834,
+     "shift_y": 0.087374,
+     "brennweite_mm": 35.0,
+     "sensor_breite_mm": 36.0,
+     "sensor_fit": "HORIZONTAL"
+    },
+    "gegenrechnung_aus_soll": "Spalte 256: Bauwerk Zeilen 70..329, Planartiefe 29.1860 m, f = 497.78 px; aus Oberkante (z 15.00 m) folgt Horizont 301.10, aus Unterkante (z -0.25 m) 301.01"
+   },
+   "im_schoenbild_sichtbar": "Nicht pruefbar: Das Blender-Schoenbild hat keinen Boden (Bericht: «Kein Objekt wurde als Gelaende erkannt») und einen gleichmaessig grauen Hintergrund, Zeilenmittel am linken Rand ueberall ~107.5 — es gibt dort keinen sichtbaren Horizont. Stattdessen gegengerechnet aus Ober- und Unterkante des Bauwerks in der Soll-Karte (siehe gegenrechnung_aus_soll): Testbau 253.0–253.3 gegen 253.26, Hochbau 301.0–301.1 gegen 300.74 — Abweichung unter einem halben Bildpunkt beim Testbau, rund 0.3 px beim Hochbau.",
+   "vorzeichen_shift": "Angenommen: positives shift_y schiebt den Bildausschnitt nach oben, der Horizont rutscht im Bild nach unten (Zeile = 256 + shift_y·512, Sensor quadratisch, sensor_fit HORIZONTAL). Die Gegenrechnung aus dem Soll bestaetigt das Vorzeichen bei beiden Koerpern."
+  },
+  "planar_oder_radial": {
+   "antwort": "planar (Z entlang der Kameraachse), nicht Strahllaenge",
+   "beleg_messung": "Soll-Karte, senkrechte Wand, je Spalte ueber alle Zeilen der Silhouette: Testbau Spalte 256 145 Zeilen alle 11.1309 m, Spalte 196 alle 11.0526 m, Spalte 316 alle 11.2104 m; Hochbau Spalte 256 260 Zeilen alle 29.186 m (je auf 4 Stellen gleich). Radial muesste die Tiefe von der Horizontzeile zur Ober-/Unterkante wachsen: beim Testbau um bis zu Z·(sqrt(1+(77/497.8)^2)−1) ≈ 0.13 m, beim Hochbau an der Oberkante (231 px ueber dem Horizont) um rund 3 m. Nichts davon ist da.",
+   "beleg_code": "src/aiimaging/runners/blender_depth_stage.py, _compositor_auf_tiefe: view_layers[0].use_pass_z = True, Z-Pass des Render-Layers ueber den Compositor als 32-Bit-EXR (Kanal tiefe_.V). Der Code selbst sagt nicht, ob planar oder radial — das belegt erst die Messung oben. Der Blender-Bericht nennt nur depth_exr_kanaele ['tiefe_.V'], keine Konvention."
+  },
+  "blick_172": "Startwerte 1/2 (nicht in 160 beurteilt), meine Saetze stehen in den Zeilen; drei Nein (testbau-register-s2, hochbau-register-s2, hochbau-nicht_umgedreht-s2), fuenf Unklar. Nur zur Einordnung, nicht im Urteil."
+ },
+ "urteil_ein_satz": "Nein, die Zahl trennt nicht: Das Gassen-Nein liegt bei s0 und bei g=1/2 ueber jedem Ja-Bild und bei g=4 noch ueber drei von fuenf (nur die zwei 2.1-Bilder liegen darueber), das eigene Soll schlaegt fremdes und verschobenes nur in 4–8 von 17 Bildern, und eine leere graue Flaeche bekommt gegen das Testbau-Soll denselben Wert wie das Schoenbild (1.000) — sie misst an der Oberkante die Kruemmung des Ortsfelds, am Hochbau eher Rauschen um 0,5.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu": "RTX 5090, Leistungsgrenze 400 W",
+  "gpu_belegt_vor_schaetzer_mib": 7537,
+  "gpu_belegt_danach_mib": 1695,
+  "schaetzerteil_s": 18.0,
+  "sprungordnung_cpu_s": 5.7,
+  "python": ".venv-render"
+ },
+ "fehler": null,
+ "gegenprobe_hauptworker": "Unabhaengig nachgerechnet (24.09., eigenes graues Bild 128/128/128, Schaetzer auf CPU statt GPU, dieselbe Soll-Karte): gegen Testbau s0 1.0 / g=2 0.905, gegen Hochbau s0 0.212 / g=2 0.414. Kernbefund bestaetigt: eine leere graue Flaeche erreicht gegen das Testbau-Soll den Hoechstwert 1.0. Kleine Abweichungen zu den Tabellenwerten (0.891/0.235/0.416) kommen von CPU gegen GPU und dem Grauwert."
+}
