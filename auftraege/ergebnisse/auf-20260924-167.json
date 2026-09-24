@@ -1,0 +1,39 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-167",
+ "status": "ok",
+ "beendet": "2026-09-24T14:20:00Z",
+ "stand": "a9f4bde",
+ "geprueft": "UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (Spitze 532c2a303, enthaelt cb282e80b) in eigener Arbeitskopie gebaut (npm ci, vite build), auf 127.0.0.1:5190 bereitgestellt; die ausgelieferte Webversion (5183) blieb unberuehrt. Nichts gemerged, am UI-Zweig nichts geaendert.",
+ "kurzantwort": "Fund 1 am Geraet bestaetigt: × per Mausklick, Escape und erneuter Zeilenklick schliessen das Dossier bei 1440x900 und 1100x900, je zweimal. Gegenprobe am Hauptstrang ohne cb282e80b: Escape und Zeilenklick schliessen NICHT — die Probe erkennt den alten Fehler.",
+ "befunde": {
+  "V1": "Empfangen; cb282e80b ist NICHT im Hauptstrang (git merge-base --is-ancestor), B164 U1/U2 (2999b3e0c, eb23fe975) dagegen schon.",
+  "V2": {
+   "1440x900": {
+    "x_mausklick": "schliesst (2 von 2); × jetzt bei y 90, Zahnrad y 11–55",
+    "escape": "schliesst (2 von 2)",
+    "zeilenklick": "schliesst (2 von 2)"
+   },
+   "1100x900": {
+    "x_mausklick": "schliesst (2 von 2); × bei y 90",
+    "escape": "schliesst (2 von 2)",
+    "zeilenklick": "schliesst (2 von 2)"
+   },
+   "390x844_nur_hinweis": {
+    "x_mausklick": "schliesst NICHT (locator.click Timeout, Mausklick ohne Wirkung) — × bei x 360, Zahnrad x 335–379 ueberlappt noch waagrecht; Telefon ist kein Ziel",
+    "escape": "schliesst (2 von 2)",
+    "zeilenklick": "schliesst (2 von 2)"
+   },
+   "tabwechsel": "Dossier bleibt offen (420 px), wie bewusst belassen",
+   "sync_pille": "Schnittflaeche mit der Dossier-Kopfzeile jetzt 0 px (vorher 2157 px²)",
+   "gegenprobe_hauptstrang_1440": "Escape und Zeilenklick je 2x «schliesst NICHT»"
+  },
+  "V3": "Die ausgelieferte Webversion (Hauptstrang) hat den Fehler weiter — sichtbar fuer den Owner bleibt er, bis der Integrator cb282e80b holt und ich ausliefere."
+ },
+ "umgebung": {
+  "geraet": "HomeStation",
+  "browser": "Chromium headless (Playwright), echte Mausereignisse",
+  "gpu_last": "keine"
+ },
+ "fehler": null
+}
