@@ -586,7 +586,10 @@
  "umgebung": {
   "geraet": "HomeStation",
   "gpu": "RTX 5090, Leistungsgrenze 400 W",
-  "stand": "5c30547 beim Messen"
+  "stand": "5c30547 beim Messen",
+  "gpu_last_max_w_B_E": 320.95,
+  "gpu_speicher_max_mib_B_E": 29051,
+  "gpu_last_max_w_C": 145.78
  },
  "fehler": null
 }
