@@ -1313,7 +1313,18 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None,
     # dieser Weg schon haengt.
     entflechtung = _entflechte_controlnet(pipeline)
 
-    if frei >= groesster * zuschlag:
+    # STUFE 2 NICHT MIT CONTROLNET (24.09.2026, auf-20260924-170 B2). Mit ControlNet endet
+    # sie gemessen im Gerätekonflikt — «Expected all tensors to be on the same device …
+    # mat1 is on cuda:0, different from other tensors on cpu», nach 23 s, z-image-turbo
+    # bei 20 280 MiB frei; derselbe Fehler seit auf-123, trotz Entflechtung. Stufe 3 läuft
+    # dagegen am selben Modell nachweislich durch (448 s bei 8 GiB, 480 s bei 4 GiB frei).
+    # Ein langsamer Lauf, der ankommt, schlägt einen schnellen, der abbricht.
+    mit_controlnet = getattr(pipeline, "controlnet", None) is not None
+    if frei >= groesster * zuschlag and mit_controlnet:
+        bericht["grund"] += (" Stufe 2 (Auslagerung je Komponente) übersprungen: Mit "
+                             "ControlNet endet sie im Gerätekonflikt (gemessen auf-123, "
+                             "auf-20260924-170 B2); Stufe 3 läuft durch.")
+    elif frei >= groesster * zuschlag:
         # diffusers holt jede Komponente einzeln auf die Karte und legt sie danach zurück.
         pipeline.enable_model_cpu_offload()
         return "cuda+auslagerung", entflechtung, bericht

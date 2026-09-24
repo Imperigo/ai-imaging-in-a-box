@@ -294,6 +294,9 @@ def test_auf_dem_auslagerungsweg_wird_sehr_wohl_entflochten():
             raise AssertionError("hier wird ausgelagert und nicht umgezogen")
 
         def enable_model_cpu_offload(self):
+            raise AssertionError("Stufe 2 mit ControlNet ist seit auf-170 B2 gesperrt")
+
+        def enable_sequential_cpu_offload(self):
             pass
 
     class _Torch:
@@ -312,7 +315,10 @@ def test_auf_dem_auslagerungsweg_wird_sehr_wohl_entflochten():
         pipe, "/gibt/es/nicht", _Torch, erwartet=(30 * 2**30, 1 * 2**30),
         erwartet_gemessen=True)
 
-    assert weg == "cuda+auslagerung"
+    # Seit dem 24.09.2026 Stufe 3 statt 2: Mit ControlNet endet Stufe 2 gemessen im
+    # Gerätekonflikt (auf-20260924-170 B2). Entflochten wird trotzdem.
+    assert weg == "cuda+schichtauslagerung"
+    assert "Stufe 2" in bedarf["grund"] and "übersprungen" in bedarf["grund"]
     assert entflechtung["noetig"] is True and entflechtung["nachher"] == 0
     # Und der Bericht sagt, GEGEN WELCHE ZAHL entschieden wurde — nicht bloss, dass
     # ausgelagert wurde. Ein negativer Spielraum ist genau das: es reichte nicht.

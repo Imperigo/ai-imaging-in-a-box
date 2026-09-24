@@ -7475,7 +7475,10 @@ Bekannt und ausdrücklich nicht erledigt:
         Riegel gebaut, B3 überholt (Demohaus Weg A angenommen), B8 Puls gebaut; Sonne ab
         Nord (war 180 Grad verdreht) mit Licht; Feldkarte hört in Kameras und Sonne hin
         (Protokoll 71 §16).
-  - [ ] **local:** `auf-20260924-170` — Mindestspeicher, Stufe 2, Takt, Puls, Sonne am Bild.
+  - [x] **local:** `auf-20260924-170` — Mindestspeicher, Stufe 2, Takt, Puls, Sonne am Bild.
+        Folgen: Grenze je Modell (4102 / 7992 MiB), Stufe 2 mit ControlNet gesperrt,
+        Puls-Frist 120 s (Protokoll 71 §23).
+  - [ ] **local:** `auf-20260924-173` — Zwillinge, Grenze je Modell, Stufe 3 statt 2.
   - [ ] **cloud:** `auf-20260924-171` — komposition nicht senden, Puls lesen, Glas OPAQUE,
         Pässe zu- oder absagen.
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut

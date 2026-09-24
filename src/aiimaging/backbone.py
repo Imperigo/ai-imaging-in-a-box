@@ -390,6 +390,18 @@ class Backbone:
     #: ``bildeingang_lage`` den Grund aus der Konditionierungsart.
     bildeingang_grund: str | None = None
 
+    #: Wie viel Grafikspeicher (MiB) vor dem Laden mindestens frei sein muss, damit der
+    #: sparsamste Weg (Stufe 3) durchläuft — **gemessen**, mit Beleg in
+    #: :attr:`mindest_frei_beleg`. ``None`` heisst nicht gemessen; dann gilt die
+    #: Untergrenze ``abholer.MINDEST_FREI_MIB``.
+    #:
+    #: **BEFUND 24.09.2026 (auf-20260924-170 B1):** Eine Grenze für alle trägt nicht. Das
+    #: Vorgabemodell lief bei 4102 MiB frei durch, das Bearbeitungsmodell brach bei 4102
+    #: und 5944 MiB mit *CUDA out of memory* ab — beide hatte der gemeinsame Riegel von
+    #: 4096 MiB durchgelassen.
+    mindest_frei_mib: int | None = None
+    mindest_frei_beleg: str | None = None
+
 
 def _vram_schaetzung(parameter_b: float) -> float:
     """Grobe VRAM-Schätzung in GB aus der Parameterzahl.
@@ -715,6 +727,10 @@ def _eintrag(backbone: Backbone) -> None:
 # hier qwen-image-edit-2511 — der Wechsel ist bei VORGABE_BACKBONE begruendet.
 _eintrag(Backbone(
     name="z-image-turbo",
+    # Stufe 3 gemessen bei 7992 / 5944 / 4102 MiB frei: 448 / 438 / 480 s, alle durch.
+    # Der kleinste gemessene Wert ist die Grenze; darunter ist nichts gemessen.
+    mindest_frei_mib=4102,
+    mindest_frei_beleg="auf-20260924-170 B1",
     modell_id="Tongyi-MAI/Z-Image-Turbo",
     parameter_b=6.0,
     lizenz="Apache-2.0",
@@ -789,6 +805,11 @@ _eintrag(Backbone(
 
 _eintrag(Backbone(
     name="qwen-image-edit-2511",
+    # Stufe 3 gemessen: bei 7992 MiB frei durch (1469 s), bei 5944 und 4102 MiB nach
+    # 164 bzw. 193 s CUDA out of memory. Der Bedarf liegt zwischen 6 und 8 GiB, nicht
+    # feiner gemessen — die Grenze ist der kleinste Wert, der gemessen trug.
+    mindest_frei_mib=7992,
+    mindest_frei_beleg="auf-20260924-170 B1",
     modell_id="Qwen/Qwen-Image-Edit-2511",
     parameter_b=20.0,
     lizenz="Apache-2.0",

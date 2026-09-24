@@ -215,3 +215,24 @@ gibt es noch nicht.
 
 *Die ausfuehrliche Herleitung steht im Sitzungsprotokoll
 `docs/sitzungen/2026-09-24_sitzung-71.md` §16.*
+
+---
+
+## Nachtrag 24.09.2026, abends — die Messungen der HomeStation sind da (`auf-20260924-170`)
+
+* **B1:** Der Riegel wirkt: Das Vorgabemodell wartet bei 3896 und 2872 MiB frei mit dem
+  angesagten Satz und rechnet ab 4102 MiB. Der Satz nach einem Speicherfehler steht in
+  `message`. **Aber eine Grenze für alle trug nicht:** Das Bearbeitungsmodell brach bei 4102
+  und 5944 MiB frei nach dem Laden ab. Seither gilt die Grenze **je Modell, gemessen**:
+  `z-image-turbo` 4102 MiB, `qwen-image-edit-2511` 7992 MiB. Die Stufe 2 ist mit ControlNet
+  gesperrt (gemessen: Gerätekonflikt nach 23 s). Das Modell geht dann direkt auf Stufe 3,
+  die nachweislich durchläuft.
+* **Für eure Bestellungen:** Sie tragen immer `idle_window_only: true`. Bei euch greift darum
+  zuerst die Leerlaufsperre (ab 4096 MiB **belegt** wartet der Auftrag, mit Satz in
+  `message`) und erst danach der Speicher-Riegel. Beides endet gleich: warten mit Grund,
+  kein Absturz.
+* **B8:** Der Takt ist gemessen, der Abholer läuft alle 30 s (systemd-Timer). `frist_s` ist
+  jetzt **120** (vier Takte) statt 300. Der Puls liegt in der echten Ablage und wird alle
+  rund 30 s erneuert.
+* **Sonne (Blatt -01), am Bild belegt:** `azimuth: 90` beleuchtet die **Ostfassade**, warm
+  (4900 K). Der Bericht trägt `staerke`, `kelvin`, `winkel_grad` und `farbe_linear`.

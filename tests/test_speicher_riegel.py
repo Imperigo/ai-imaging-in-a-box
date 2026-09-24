@@ -50,7 +50,8 @@ def test_zu_wenig_speicher_laesst_den_auftrag_mit_grund_warten(tmp_path):
     zettel = _zettel(ordner)
     assert zettel["status"] == bruecke.STATUS_QUEUED, "E79: bleibt in der Warteschlange"
     meldung = zettel[bruecke.FELD_MELDUNG]
-    assert "500 MiB" in meldung and str(abholer.MINDEST_FREI_MIB) in meldung
+    # Der Auftrag bestellt «qwen» — die Grenze ist die GEMESSENE dieses Modells.
+    assert "500 MiB" in meldung and "7992" in meldung and "gemessen" in meldung
     assert "Warteschlange" in meldung
 
 
@@ -58,9 +59,38 @@ def test_genug_speicher_rechnet_wie_bisher(tmp_path):
     """Die Gegenprobe — sonst wäre ein Riegel, der immer sperrt, ebenfalls grün."""
     ordner = _auftrag(tmp_path)
     antwort = abholer.hole_einen(ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
-                                 speicher_frei=lambda: abholer.MINDEST_FREI_MIB)
+                                 speicher_frei=lambda: 7992)
     assert antwort["tat"] == abholer.TAT_VERARBEITET
     assert _zettel(ordner)["status"] == bruecke.STATUS_DONE
+
+
+def _szene_mit(backbone):
+    return {"schema": bruecke.kosmo_szene.SCHEMA_SZENE,
+            "geometry": {"path": "model.glb", "format": "glb"}, "cameras": "auto",
+            "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
+            "style": {"prompt": "ein Haus", "mode": "none"},
+            "vis": {"backbone": backbone}}
+
+
+@pytest.mark.parametrize("backbone,frei,rechnet", [
+    # Die Messpunkte aus auf-20260924-170 B1, je Modell.
+    ("z-image-turbo", 4102, True),
+    ("qwen", 5944, False),       # dort CUDA out of memory nach 164 s — jetzt: warten
+    ("qwen", 4102, False),       # dort CUDA out of memory nach 193 s
+    ("qwen", 7992, True),
+])
+def test_die_grenze_gilt_je_modell(tmp_path, backbone, frei, rechnet):
+    """Eine Grenze für alle trug nicht: 4096 MiB liessen das Bearbeitungsmodell zweimal
+    in den Speicherfehler laufen (auf-20260924-170)."""
+    ordner = _auftrag(tmp_path, szene=_szene_mit(backbone))
+    antwort = abholer.hole_einen(ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
+                                 speicher_frei=lambda: frei)
+    assert (antwort["tat"] == abholer.TAT_VERARBEITET) is rechnet, antwort.get("grund")
+
+
+def test_ein_ungemessenes_modell_bekommt_die_untergrenze():
+    grenze, herkunft = abholer.mindest_frei_mib("gibt-es-nicht")
+    assert grenze == abholer.MINDEST_FREI_MIB and "Untergrenze" in herkunft
 
 
 @pytest.mark.parametrize("auskunft", [None, lambda: None, lambda: 1 / 0, lambda: True,

@@ -272,7 +272,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
 
     # ZU WENIG GRAFIKSPEICHER: WARTEN MIT GRUND, NICHT LADEN UND STERBEN (B161/B1).
     # Dieselbe Form wie oben: Status bleibt `queued`, der Grund steht am Laufzettel.
-    reicht, warum = _speicher_reicht(speicher_frei)
+    reicht, warum = _speicher_reicht(
+        speicher_frei, (auftrag.get("szene") or {}).get("backbone"))
     if not reicht:
         antwort["grund"] = warum
         _grund_vermerken(quelle, ordner, antwort)
@@ -1437,7 +1438,10 @@ def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
 
 #: Unter so viel freiem Grafikspeicher (MiB) wird **nicht geladen**, sondern gewartet.
 #:
-#: **Vorläufig, aus Messungen abgeleitet und nicht eigens gemessen** (24.09.2026, B161/B1):
+#: **Nur noch die Untergrenze für ungemessene Modelle** — seit ``auf-20260924-170`` trägt
+#: jedes gemessene Modell seine eigene Grenze (``backbone.Backbone.mindest_frei_mib``).
+#:
+#: Ursprünglich, **vorläufig und abgeleitet, nicht gemessen** (24.09.2026, B161/B1):
 #: Auf dem sparsamsten Weg (Stufe 3, ``cuda+schichtauslagerung``) hielt das
 #: Bearbeitungsmodell 2,4–2,5 GiB Spitze (``auf-20260924-163`` B1/B2), das Vorgabemodell
 #: in ``auf-20260923-160`` C rund 3,6 GiB. 4096 MiB liegt knapp darüber und ist zugleich
@@ -1465,7 +1469,25 @@ def _speichermangel_satz(fehler) -> str:
             f"Wortlaut: {str(fehler)[:240]}")
 
 
-def _speicher_reicht(speicher_frei) -> tuple[bool, str]:
+def mindest_frei_mib(backbone_name) -> tuple[int, str]:
+    """Die Speichergrenze für DIESES Modell, und woher sie stammt.
+
+    Gemessen am Registereintrag (``backbone.Backbone.mindest_frei_mib``, seit
+    ``auf-20260924-170``), sonst :data:`MINDEST_FREI_MIB`. Ohne Modellangabe gilt das
+    Vorgabemodell der Kette.
+    """
+    from . import backbone as _backbone, render as _render  # noqa: PLC0415
+    name = backbone_name or _render.VORGABE_BACKBONE
+    try:
+        eintrag = _backbone.hole(name)
+    except _backbone.BackboneError:
+        return MINDEST_FREI_MIB, "Untergrenze (Modell unbekannt)"
+    if eintrag.mindest_frei_mib is None:
+        return MINDEST_FREI_MIB, f"Untergrenze ({name}: nicht gemessen)"
+    return eintrag.mindest_frei_mib, f"gemessen für {name} ({eintrag.mindest_frei_beleg})"
+
+
+def _speicher_reicht(speicher_frei, backbone_name=None) -> tuple[bool, str]:
     """Reicht der freie Grafikspeicher, um überhaupt zu laden? — B161/B1.
 
     Unbekannt (keine Auskunft, oder die Auskunft sagt ``None``) heisst hier **rechnen**,
@@ -1481,11 +1503,12 @@ def _speicher_reicht(speicher_frei) -> tuple[bool, str]:
         return True, ""
     if frei is None or isinstance(frei, bool) or not isinstance(frei, (int, float)):
         return True, ""
-    if frei >= MINDEST_FREI_MIB:
+    grenze, herkunft = mindest_frei_mib(backbone_name)
+    if frei >= grenze:
         return True, ""
     return False, (
         f"Wartet: Die Grafikkarte hat nur {int(frei)} MiB frei; zum Laden braucht es auf "
-        f"dem sparsamsten Weg mindestens {MINDEST_FREI_MIB} MiB. Es wird nicht gerechnet — "
+        f"dem sparsamsten Weg mindestens {grenze} MiB ({herkunft}). Es wird nicht gerechnet — "
         f"der Auftrag bleibt in der Warteschlange und läuft, sobald Speicher frei wird "
         f"(meist hält ein anderes Programm ein Modell auf der Karte).")
 

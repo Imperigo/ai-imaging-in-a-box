@@ -259,11 +259,14 @@ def artefakt(ablage, job_id: str, name: str) -> Path:
 
 #: Wie alt der letzte Puls sein darf, bevor der Abholer als «steht» gilt (Sekunden).
 #:
-#: **Gesetzt, nicht gemessen** (24.09.2026, B161/B8): Wie oft der Abholer auf der
-#: HomeStation läuft (Dienst, Cron, von Hand), steht nirgends im Repo — gefragt in
-#: ``auf-20260924-170``. Bis dahin fünf Minuten, und ``alter_s`` geht immer mit, damit
-#: niemand dieser Zahl glauben muss.
-PULS_FRIST_S = 300
+#: **Aus dem gemessenen Takt abgeleitet** (auf-20260924-170 B3): Die HomeStation startet
+#: den Abholer als systemd-Benutzertimer mit ``OnUnitInactiveSec=30s``, also 30 s nach dem
+#: Ende des vorigen Durchgangs; gemessen 30,3–30,5 s zwischen zwei Pulsen. Vier Takte
+#: lassen drei ausgefallene Durchgänge zu, bevor «steht» gemeldet wird. Ein langer Lauf
+#: ist davon nicht betroffen: Solange ein Auftrag auf ``running`` steht, heisst es
+#: «arbeitet». Bis dahin standen hier 300 s, gesetzt.
+PULS_TAKT_S = 30
+PULS_FRIST_S = 4 * PULS_TAKT_S
 
 #: Die Zustände, die ``services.abholer.zustand`` annehmen kann.
 ABHOLER_ZUSTAENDE = ("nie_gesehen", "arbeitet", "wartet", "laeuft_leer", "steht")
