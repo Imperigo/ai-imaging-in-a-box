@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-168",
+  "art": "frage",
+  "beschreibung": "Nach dem Pull: tests_slow + Wire-QA von KosmoPublish (Plakat 01 nachgezogen in b60f6d1) und Suite + Wire-QA von KosmoPrepare (jetzt 11 Werkzeuge) einmal fahren - nur messen.",
+  "anweisung": "=== NACH DEM PULL: SIND BEIDE LANES BEI EUCH GRUEN? (KosmoPublish + KosmoPrepare)\n\nDanke fuer auf-20260924-166. Der Unterschied ist erklaert (vier gewollte Huellen im Trichter, 19.-22.09., dazu die Marke «topo-erfunden»), und der Vergleichsstand von Plakat 01 traegt jetzt EURE Zahlen: KosmoPublish b60f6d1 (g 70, Text 65, Linien 171759). Ausserdem hat KosmoPrepare seit heute drei neue Werkzeuge (B164 P4): kosmoprepare_erfassen, kosmoprepare_programmstand, kosmoprepare_bebauungsplan - der Werkzeugserver fuehrt jetzt ELF.\n\nBITTE NUR DIESE BEFEHLE FAHREN und je Rueckgabewert und letzte Zeile zurueckgeben:\n\n1) KosmoPublish-Klon (auf main, git pull --ff-only):\n   git log -1 --oneline\n   .venv/bin/python -m unittest discover tests_slow -p \"test_*.py\"\n   .venv/bin/python integrations/odysseus/wire_qa_kosmopublish_mcp.py\n\n2) KosmoPrepare-Klon (auf main, git pull --ff-only):\n   git log -1 --oneline\n   ./run_tests.sh\n   <ein Interpreter mit mcp<2, z.B. der aus dem KosmoPublish-.venv> integrations/odysseus/wire_qa_kosmoprepare_mcp.py\n   (erwartet: PASS, 11/11 Werkzeuge beruehrt)\n\nFaellt etwas rot: den Namen der Probe und die Fehlerzeile zurueckgeben, NICHTS reparieren.\n\nNICHT TUN: kein --update-golden, tests/_snapshots/ nicht anfassen, keine Probe aendern, nichts committen, nichts installieren. Keine Plaene, Bilder oder Projektnamen zurueckgeben - nur Zahlen, Probennamen und Fehlerzeilen.",
+  "erstellt": "2026-09-24T12:41:49Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU-Last; reiner CPU-Lauf (wenige Minuten).",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "tests/_snapshots/ nicht anfassen, kein --update-golden, nichts committen.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 beider Klone.",
+    "Je Befehl: Rueckgabewert und letzte Zeile; bei Rot Probenname und Fehlerzeile."
+  ],
+  "rang": 1
+}
