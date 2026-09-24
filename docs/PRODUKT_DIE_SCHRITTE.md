@@ -121,6 +121,10 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Entschieden (E27):** Die Knoten-Oberfläche baut der UI-Worker in KosmoOrbit gerade
   um — Visbox übernimmt sie, wenn er fertig meldet. Fest ist ein Punkt: **das Urteil gehört
   an den Render-Knoten.** Die Blätter gehen ihm als Vorschlag mit.
+* **Am Abend:** Der UI-Worker hat drei Knoten-Entwürfe gezeichnet, der Owner hat «n1
+  Insel-Karte» gewählt — runde Karten mit Fächern, das Bild im Ergebnis. Gebaut wird es vom
+  Cloud-Worker in KosmoOrbit; Visbox wartet und holt es danach. Das Urteil fehlt im Entwurf
+  noch und ist nachgefordert.
 
 ### 24.09.2026 (abends) · Die Knotenansicht bestellt jetzt bei Visbox
 

@@ -7471,8 +7471,11 @@ Bekannt und ausdrücklich nicht erledigt:
           Urteil am Render-Knoten, Übernahme wenn er fertig meldet, App-Modus offen.
     - [x] ~~Umsetzen, was entschieden ist — in `kosmovis/` als «geändert» mit Grund.~~ —
           überholt durch E27: gebaut wird drüben, hier wird übernommen.
-    - [ ] **ui:** `auf-20260924-165` — Urteil am Render-Knoten; Meldung, wenn die
-          Knoten-Überarbeitung steht (Commit, geänderte Dateien, neue Importe).
+    - [x] UI-Worker hat die Knoten neu entworfen; Owner-Wahl «n1 Insel-Karte» (Protokoll 71 §11).
+    - [ ] **Integrator (Cloud-Worker KosmoOrbit):** n1 einbauen (KV1–KV6) — nicht unser Auftrag,
+          wir warten (Owner-Entscheid).
+    - [ ] **ui:** `auf-20260924-165` — Urteil als Teil von KV4 in den Einbau-Auftrag; Meldung,
+          wenn gebaut (Commit, geänderte Dateien, neue Importe).
     - [ ] Dann: `tools/kosmovis_uebernahme.py` vom gemeldeten Commit, Stellvertreter
           nachziehen, Proben, Bau, Durchklicken.
     - [ ] **Owner:** Figma-Konto mit Weave verknüpfen, dann Beispiel-Abläufe auslesen.

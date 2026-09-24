@@ -886,3 +886,20 @@ Gefragt per Auswahlfragen, weil der Owner das so wollte («frag mit AskUserQuest
   gab, an dem ein Benutzer zwischen Varianten wählt. E27 hebt das **nicht** auf. Der
   Auftrag an den UI-Worker sagt es ausdrücklich: Schafft seine Überarbeitung einen solchen
   Ort, wird es eine Vertragsfrage an den Cloud-Worker.
+
+### Nachtrag vom Abend (24.09.2026): n1 ist gezeichnet, nicht gebaut — und wir warten
+
+* Der UI-Worker hat die Knoten auf seinem Zweig `claude/kosmo-ui-worker-setup-jjed26` neu
+  entworfen (`docs/entwuerfe/kosmovis-knoten/`, drei Varianten hell/dunkel); der Owner hat
+  **«n1 Insel-Karte»** gewählt: runde Karte, Kopf mit Zeichen im Kreis, Fächer Eingang /
+  Einstellung / Ergebnis, Bild im Fach «Ergebnis» mit Fassungsstreifen.
+* **Gebaut ist davon nichts.** Der Einbau-Auftrag (KV1–KV6) liegt beim **Integrator = dem
+  Cloud-Worker** von KosmoOrbit auf dem Hauptstrang, Stand «offen, nichts gebaut», Ziel
+  v0.1.5 oder v0.1.6.
+* **Owner-Entscheid (Auswahlfrage):** *Warten auf den Integrator* — wir bauen n1 nicht selbst
+  nach. Die Empfehlung war, es hier zu bauen und zurückzugeben; der Owner zieht den
+  einfacheren Weg ohne Doppelbau vor.
+* **Das Urteil fehlt in n1.** Der Nachtrag zu `auf-20260924-165` bittet den UI-Worker, es als
+  Teil von KV4 (oder KV7) in seinen Einbau-Auftrag aufzunehmen, damit es in derselben Runde
+  gebaut wird.
+
