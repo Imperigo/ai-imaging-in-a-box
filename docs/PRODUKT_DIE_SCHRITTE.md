@@ -118,7 +118,9 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Gezeichnet (Blatt 12 und 12b):** der Render-Knoten mit allen Empfehlungen, und daneben die
   sieben Entscheide als Bildpaare — oben die Empfehlung, unten die Alternative. Neu ist ein
   eigener Knoten «Geometrie-Pässe» und das Urteil als eigener Ausgang.
-* **Offen:** Der Owner entscheidet am Bild; erst danach wird gebaut.
+* **Entschieden (E27):** Die Knoten-Oberfläche baut der UI-Worker in KosmoOrbit gerade
+  um — Visbox übernimmt sie, wenn er fertig meldet. Fest ist ein Punkt: **das Urteil gehört
+  an den Render-Knoten.** Die Blätter gehen ihm als Vorschlag mit.
 
 ### 24.09.2026 (abends) · Die Knotenansicht bestellt jetzt bei Visbox
 

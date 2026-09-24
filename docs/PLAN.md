@@ -7467,7 +7467,13 @@ Bekannt und ausdrücklich nicht erledigt:
           Render-Familien) → `docs/RECHERCHE_KNOTENSYSTEME_2026-09-24.md`.
     - [x] Blatt 12 / 12b «Der Render-Knoten» auf der Entwurfsfläche, mit den Empfehlungen
           (Owner: «gleich mit deinen Empfehlungen»).
-    - [ ] **Owner:** die sieben Entscheide am Bild (Blatt 12b).
-    - [ ] Umsetzen, was entschieden ist — in `kosmovis/` als «geändert» mit Grund.
+    - [x] **Owner:** die Entscheide am Bild → **E27**: Knoten-Oberfläche vom UI-Worker,
+          Urteil am Render-Knoten, Übernahme wenn er fertig meldet, App-Modus offen.
+    - [x] ~~Umsetzen, was entschieden ist — in `kosmovis/` als «geändert» mit Grund.~~ —
+          überholt durch E27: gebaut wird drüben, hier wird übernommen.
+    - [ ] **ui:** `auf-20260924-165` — Urteil am Render-Knoten; Meldung, wenn die
+          Knoten-Überarbeitung steht (Commit, geänderte Dateien, neue Importe).
+    - [ ] Dann: `tools/kosmovis_uebernahme.py` vom gemeldeten Commit, Stellvertreter
+          nachziehen, Proben, Bau, Durchklicken.
     - [ ] **Owner:** Figma-Konto mit Weave verknüpfen, dann Beispiel-Abläufe auslesen.
 

@@ -3,7 +3,7 @@
  "auftrag_id": "auf-20260921-132",
  "art": "frage",
  "worker": "ui",
- "rang": 4,
+ "rang": 5,
  "erstellt": "2026-09-21T19:00:00Z",
  "params": {},
  "beschreibung": "Zwei Luecken in der Entwurfszeit-Pruefung, gemessen an unserem Nachbau und bei uns repariert: Typen gemeinsamer Felder werden nicht verglichen (vier Nullbarkeitsfaelle an der echten Kante), und eine Kante kann leben, ohne ein tragendes Feld zu liefern. Vier Fragen, ob eure Originalpruefung dieselben Luecken hat.",

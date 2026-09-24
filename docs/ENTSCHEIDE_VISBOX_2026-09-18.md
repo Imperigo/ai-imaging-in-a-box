@@ -844,3 +844,45 @@ Und auf die vier Rückfragen desselben Tages:
 * **Regel 3 gilt für den kopierten Code wie für jeden anderen:** vor dem ersten Commit auf
   Namen, Pfade mit Benutzernamen, Adressen und Schlüssel durchsucht.
 
+
+---
+
+## E27 · Der Render-Knoten: die Oberfläche kommt vom UI-Worker, das Urteil gehört an den Knoten — **24.09.2026**
+
+Vorlauf: Recherche Knotensysteme (`docs/RECHERCHE_KNOTENSYSTEME_2026-09-24.md`) und
+Blatt 12/12b der Entwurfsfläche mit sieben Entscheiden, je Empfehlung und Alternative.
+Gefragt per Auswahlfragen, weil der Owner das so wollte («frag mit AskUserQuestion»).
+
+| Frage | Antwort des Owners |
+|---|---|
+| 1 · Ein Knoten oder viele? | *«UI-Worker überarbeitet aktuell Knoten, übernimm dann seine UI»* |
+| 2 · Pässe als eigene Anschlüsse? | *«dito — UI von UI-Worker»* |
+| 3 · Wie wird Treue eingestellt? | *«dito»* |
+| 4 · Wo steht das Urteil? | **Am Render-Knoten** (Empfehlung) |
+| Wann übernehmen? | **Wenn er fertig meldet** (Empfehlung) |
+| Unser Material an den UI-Worker? | **Ja, als Vorschlag** (Empfehlung) |
+| Visbox-Seite als App-Modus? | **Offen lassen** (Empfehlung) |
+
+### Was damit entschieden ist
+
+* **Die Knoten-Oberfläche baut der UI-Worker in KosmoOrbit**, nicht wir. Visbox übernimmt
+  seinen Stand mit `tools/kosmovis_uebernahme.py` von einem neueren Commit — **einmal, wenn
+  er fertig meldet**, nicht laufend. Die Fragen 1–3 (und mit ihnen 5 und 6 von Blatt 12b:
+  Varianten/Verlauf im Knoten, Aufwand am Knopf) gehen damit an ihn; unsere Empfehlungen
+  sind **Material, keine Vorgabe**.
+* **Fest ist ein Punkt: Das Urteil gehört an den Render-Knoten** — als eigener Ausgang und
+  je Bild sichtbar, mit seinem Vorbehalt. Kein Bild geht ohne sein Urteil weiter. An den
+  UI-Worker als Teil A von `auftraege/offen/auf-20260924-165.json`, Rang 1.
+* **Wir bauen am Render-Knoten in `kosmovis/` bis dahin nichts um.** Zwei Fassungen desselben
+  Knotens — seine drüben, unsere hier — wären genau das Auseinanderlaufen, das E26
+  vermeiden will.
+* **Die Richtungsfrage «Visbox-Seite als App-Modus des Graphen» bleibt offen.** Was jetzt
+  gebaut wird, soll ihr nur nicht im Weg stehen.
+* **Blatt 12/12b bleibt stehen**, als Material und als Beleg, was vorgeschlagen war; es ist
+  kein Bauplan mehr.
+* **Eine Kollision, gefunden beim Eintragen:** Blatt 12 zeigte «3 Varianten × 4 Kameras».
+  Varianten je Kamera hat der Cloud-Worker am 03.09.2026 im Vertrag ausdrücklich abgelehnt
+  (`auf-20260826-49`, Owner-Entscheid V3, `docs/EINBAU_STAND.md` B6), weil es keinen Ort
+  gab, an dem ein Benutzer zwischen Varianten wählt. E27 hebt das **nicht** auf. Der
+  Auftrag an den UI-Worker sagt es ausdrücklich: Schafft seine Überarbeitung einen solchen
+  Ort, wird es eine Vertragsfrage an den Cloud-Worker.

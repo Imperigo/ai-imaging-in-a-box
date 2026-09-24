@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260909-99",
   "art": "frage",
   "worker": "ui",
-  "rang": 1,
+  "rang": 2,
   "erstellt": "2026-09-09T17:00:00Z",
   "params": {},
   "beschreibung": "Das Freigabe-Gate prueft, ob ein Token so AUSSIEHT wie eines — nicht, ob wir es ausgegeben haben. Die Pruefung ist gebaut und steht aus, weil niemand Token ausgibt. Der Ausgeber gehoert in die Oberflaeche.",
