@@ -1,0 +1,29 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-166",
+ "status": "ok",
+ "beendet": "2026-09-24T13:45:00Z",
+ "stand": "777698a",
+ "geprueft": "KosmoPublish-Klon sauber, pull --ff-only auf c33c0f8, nur das vorgegebene Skript gefahren (exit 0). Nichts committet, tests/_snapshots/ und Proben unberuehrt, kein --update-golden.",
+ "kurzantwort": "70 Gruppen = 54 + 16. Davon 1 benannte neue Gruppe «topo-erfunden»; die uebrigen 15 sind Gruppen OHNE id/class (46 → 61). Der Planordner output/planraw ist seit dem 27.05.2026 unveraendert (15 Dateien, 26.–27.05.) — die 15 unbenannten Gruppen kommen damit aus dem Layout-Code, nicht aus neuen Plaenen.",
+ "befunde": {
+  "git_log_1": "c33c0f8 tests_slow an der HomeStation rot: nicht e5c964b (gemessen), Ursache wird dort gemessen",
+  "ausgabe_woertlich": [
+   "NEU Plakat_01_Konzept_A0 {'g_count': 70, 'text_count': 65, 'path_count': 0, 'rect_count': 33, 'line_count': 171759, 'circle_count': 118, 'polygon_count': 21, 'viewbox': '0 0 1189.0 841.0', 'has_defs': True, 'has_pattern': False}",
+   "NEU Plakat_02_Grundrisse_A0 {'g_count': 169, 'text_count': 74, 'path_count': 1, 'rect_count': 180, 'line_count': 117549, 'circle_count': 11, 'polygon_count': 0, 'viewbox': '0 0 1189.0 841.0', 'has_defs': False, 'has_pattern': False}",
+   "NEU Plakat_03_Schnitte_A0 {'g_count': 156, 'text_count': 40, 'path_count': 0, 'rect_count': 16, 'line_count': 127265, 'circle_count': 21, 'polygon_count': 0, 'viewbox': '0 0 1189.0 841.0', 'has_defs': True, 'has_pattern': False}",
+   "NEU Plakat_04_Fassaden_Details_A0 {'g_count': 43, 'text_count': 31, 'path_count': 0, 'rect_count': 18, 'line_count': 148727, 'circle_count': 0, 'polygon_count': 0, 'viewbox': '0 0 1189.0 841.0', 'has_defs': True, 'has_pattern': False}",
+   "GRUPPEN NEU {'(ohne id/class)': 61, 'block_AX_SW_FINAL': 1, 'block_LAGEPLAN_N_N': 1, 'block_SE_A-A_FINAL': 1, 'poster-extras': 1, 'title-block': 1, 'topo-erfunden': 1, 'program-stack': 1, 'concept-text': 1, 'material-strip': 1}",
+   "ALT 2026-05-26 49 {'(ohne id/class)': 41, 'block_AX_SW_FINAL': 1, 'block_LAGEPLAN_N_N': 1, 'block_SE_A-A_FINAL': 1, 'poster-extras': 1, 'title-block': 1, 'program-stack': 1, 'concept-text': 1, 'material-strip': 1}",
+   "ALT 2026-05-27 54 {'(ohne id/class)': 46, 'block_AX_SW_FINAL': 1, 'block_LAGEPLAN_N_N': 1, 'block_SE_A-A_FINAL': 1, 'poster-extras': 1, 'title-block': 1, 'program-stack': 1, 'concept-text': 1, 'material-strip': 1}",
+   "PLANRAW 15 Dateien, geaendert zwischen 2026-05-26 und 2026-05-27"
+  ],
+  "lesart": "Gegen den juengsten ALT-Stand (27.05., g_count 54): benannte Gruppen gleich bis auf +1 «topo-erfunden»; «(ohne id/class)» 46 → 61 (+15). Der Vergleichsstand vom 22.07. (54) passt zum ALT-Stand vom 27.05. — beide 54. Da die Plaene unveraendert sind, sitzen die +15 in Code, der unbenannte <g> erzeugt (Kandidaten nach eurer Liste: Hoehe als Masskette, Lageplan-Grund, Programm-Stapel). Welche Aenderung wie viele bringt, laesst sich durch Auszaehlen der unbenannten Gruppen je Blockcontainer weiter eingrenzen — nicht gemacht, weil der Auftrag nur dieses Skript verlangt.",
+  "eigene_berichtigung": "Meine Vermutung aus auf-161 («Folge von e5c964b») war falsch — von euch gemessen, von dieser Messung gestuetzt (die Differenz haengt nicht an einem Werkzeugserver-Commit)."
+ },
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine"
+ },
+ "fehler": null
+}
