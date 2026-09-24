@@ -1,29 +1,33 @@
 {
- "schema": "aiimaging.homeworker-auftrag/v1",
- "worker": "local",
- "auftrag_id": "auf-20260924-161",
- "art": "frage",
- "beschreibung": "Nachfolger von auf-20260923-159: eure drei roten Proben (K1) und der Einwand zur Nacht (K4) sind auf origin/main behoben. Beide Klone nachziehen und nachmessen — damit ist der Einbau belegt, nicht nur gebaut.",
- "anweisung": "=== BEIDE KLONE AUF DEN NEUEN STAND — UND NACHMESSEN\n\nDANKE fuer 159. Alles, was ihr gefunden habt, ist inzwischen auf main:\n* K1 (drei rote Proben in KosmoPrepare): cb0bca9. Die Probe neben libs_pruefen fragt jetzt DIESELBE Rechnung wie das Werkzeug (weasyprint braucht pyphen), und test_lizenzriegel erwartet pysolar nicht mehr. Mit einem nachgestellten libs/ wie eurem gemessen: alter Stand genau eure drei Fehler, neuer null.\n* K4 (die Nacht pusht ohne vorher zu holen): KosmoPublish 72c3b0f. tools/visual_test_nightly.sh setzt seinen EIGENEN Berichtscommit auf den Stand von origin, bevor er pusht — nur wenn zwischen origin und HEAD nichts ausser Berichten liegt und der Arbeitsbaum sauber ist; sonst bleibt alles liegen und das Log sagt warum. Eure Schwesterstelle KosmoBetrieb/wachen/zustellung.sh gehoert euch; dieselbe Variante waere dort unsere Empfehlung.\n* Neu dazu in KosmoPrepare 54152ea: das Datenblatt nennt die groesste Zahl im Balkendiagramm (fehlte immer), KosmoFit sagt, ob ein Ueberhang an der FLAECHE oder an der GEOMETRIE der Boxen liegt, und zwei Programmsummen stehen mit Herkunft da.\n\n--- K1 · KosmoPrepare\n\n    cd <euer KosmoPrepare-Klon>\n    git status --short          # muss LEER sein, sonst STOPP und melden\n    git pull --ff-only origin main\n    git log --oneline -1        # 54152ea oder neuer\n    python3 tools/libs_pruefen.py; echo \"exit=$?\"\n    ./run_tests.sh 2>&1 | tail -3\n\nErwartet: pyphen «[WIRD GEBRAUCHT]», pysolar «[nicht da]», exit=0, und die Suite GRUEN. Ist sie rot: die Namen der roten Proben woertlich melden, nichts anpassen.\n\n--- K2 · KosmoPublish\n\n    cd <euer KosmoPublish-Klon>\n    git status --short          # muss LEER sein, sonst STOPP und melden\n    git pull --ff-only origin main\n    git log --oneline -1        # 72c3b0f oder neuer\n    .venv/bin/python -m unittest discover tests -p 'test_*.py' 2>&1 | tail -3\n    .venv/bin/python -m unittest discover tests_slow -p 'test_*.py' 2>&1 | tail -3\n\nScheitert `pull --ff-only`, weil die Nacht inzwischen einen Bericht lokal liegen hat: `git log --oneline origin/main..HEAD` woertlich melden, NICHT mergen oder zuruecksetzen.\n\n--- K3 · Die naechste Nacht (nur wenn sie schon gelaufen ist, sonst leer lassen)\n\nIm Log des naechtlichen Bildtests steht jetzt eine Zeile, die mit «Zustellung:» beginnt. Bitte woertlich melden, und ob der Bericht auf origin/main angekommen ist (`git log --oneline -3 origin/main`).\n\n--- NICHT TUN\n\n* Keine Proben anpassen, nichts in libs/ anfassen, nichts installieren.\n* Keine GPU-Last; nichts davon braucht sie.",
- "erstellt": "2026-09-24T00:00:00Z",
- "geometrie": {
-  "synthetisch": true,
-  "pfad": null,
-  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
- },
- "params": {},
- "auflagen": {
-  "leistungsgrenze_w": 0,
-  "nur_bei_leerlauf": false,
-  "leerlauf_schwelle_w": 120,
-  "leerlauf_schwelle_mem_gb": 8,
-  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
-  "hinweise": [
-   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
-   "Keine Proben anpassen, nichts in libs/ anfassen, nichts installieren, keine GPU-Last.",
-   "Keine absoluten Pfade mit Benutzernamen, keinen Kennwort-Wert (REGEL 3)."
-  ]
- },
- "rueckgabe": "K1: git log -1, libs_pruefen-Zeilen zu pyphen/pysolar mit exit, letzte drei Zeilen der Suite. K2: git log -1 und die letzten drei Zeilen beider Laeufe. K3: die «Zustellung:»-Zeile und ob der Bericht auf origin/main liegt (oder leer).",
- "rang": 3
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-161",
+  "art": "frage",
+  "beschreibung": "Nachfolger von auf-20260923-159: eure drei roten Proben (K1) und der Einwand zur Nacht (K4) sind auf origin/main behoben. Beide Klone nachziehen und nachmessen — damit ist der Einbau belegt, nicht nur gebaut.",
+  "anweisung": "=== BEIDE KLONE AUF DEN NEUEN STAND — UND NACHMESSEN\n\nDANKE fuer 159. Alles, was ihr gefunden habt, ist inzwischen auf main:\n* K1 (drei rote Proben in KosmoPrepare): cb0bca9. Die Probe neben libs_pruefen fragt jetzt DIESELBE Rechnung wie das Werkzeug (weasyprint braucht pyphen), und test_lizenzriegel erwartet pysolar nicht mehr. Mit einem nachgestellten libs/ wie eurem gemessen: alter Stand genau eure drei Fehler, neuer null.\n* K4 (die Nacht pusht ohne vorher zu holen): KosmoPublish 72c3b0f. tools/visual_test_nightly.sh setzt seinen EIGENEN Berichtscommit auf den Stand von origin, bevor er pusht — nur wenn zwischen origin und HEAD nichts ausser Berichten liegt und der Arbeitsbaum sauber ist; sonst bleibt alles liegen und das Log sagt warum. Eure Schwesterstelle KosmoBetrieb/wachen/zustellung.sh gehoert euch; dieselbe Variante waere dort unsere Empfehlung.\n* Neu dazu in KosmoPrepare 54152ea: das Datenblatt nennt die groesste Zahl im Balkendiagramm (fehlte immer), KosmoFit sagt, ob ein Ueberhang an der FLAECHE oder an der GEOMETRIE der Boxen liegt, und zwei Programmsummen stehen mit Herkunft da.\n\n--- K1 · KosmoPrepare\n\n    cd <euer KosmoPrepare-Klon>\n    git status --short          # muss LEER sein, sonst STOPP und melden\n    git pull --ff-only origin main\n    git log --oneline -1        # 54152ea oder neuer\n    python3 tools/libs_pruefen.py; echo \"exit=$?\"\n    ./run_tests.sh 2>&1 | tail -3\n\nErwartet: pyphen «[WIRD GEBRAUCHT]», pysolar «[nicht da]», exit=0, und die Suite GRUEN. Ist sie rot: die Namen der roten Proben woertlich melden, nichts anpassen.\n\n--- K2 · KosmoPublish\n\n    cd <euer KosmoPublish-Klon>\n    git status --short          # muss LEER sein, sonst STOPP und melden\n    git pull --ff-only origin main\n    git log --oneline -1        # 72c3b0f oder neuer\n    .venv/bin/python -m unittest discover tests -p 'test_*.py' 2>&1 | tail -3\n    .venv/bin/python -m unittest discover tests_slow -p 'test_*.py' 2>&1 | tail -3\n\nScheitert `pull --ff-only`, weil die Nacht inzwischen einen Bericht lokal liegen hat: `git log --oneline origin/main..HEAD` woertlich melden, NICHT mergen oder zuruecksetzen.\n\n--- K3 · Die naechste Nacht (nur wenn sie schon gelaufen ist, sonst leer lassen)\n\nIm Log des naechtlichen Bildtests steht jetzt eine Zeile, die mit «Zustellung:» beginnt. Bitte woertlich melden, und ob der Bericht auf origin/main angekommen ist (`git log --oneline -3 origin/main`).\n\n--- NICHT TUN\n\n* Keine Proben anpassen, nichts in libs/ anfassen, nichts installieren.\n* Keine GPU-Last; nichts davon braucht sie.",
+  "erstellt": "2026-09-24T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine Proben anpassen, nichts in libs/ anfassen, nichts installieren, keine GPU-Last.",
+      "Keine absoluten Pfade mit Benutzernamen, keinen Kennwort-Wert (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "K1: git log -1, libs_pruefen-Zeilen zu pyphen/pysolar mit exit, letzte drei Zeilen der Suite.",
+    "K2: git log -1 und die letzten drei Zeilen beider Laeufe.",
+    "K3: die «Zustellung:»-Zeile und ob der Bericht auf origin/main liegt (oder leer)."
+  ],
+  "rang": 3
 }

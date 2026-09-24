@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-163",
+  "art": "frage",
+  "beschreibung": "Danke fuer die dringende Meldung aus 160 C3. Ansage: Der Ladeweg nimmt fuer den groessten Einzelteil jetzt nie weniger als die Platte (qwen-image-edit-2511 → Stufe 3 statt Stufe 2). Nachmessen: laeuft die Bestellung ueber die Mappe und ueber den Abholer jetzt durch, und wie lange dauert sie?",
+  "anweisung": "=== ANSAGE: DER LADEWEG LEGT QWEN-EDIT NICHT MEHR AUF STUFE 2 — UND EINE NACHMESSUNG ===\n\nDanke fuer die dringende Vorabmeldung aus 160 C3. Euer Befund stimmt, und er ist aelter als\nRunde 12: Er trat immer dann auf, wenn die Karte frei war.\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, vor dem Ziehen)\n\n  A1 render._lege_auf_geraet: Stammt der Bedarf aus einer SCHAETZUNG des Registers (nicht\n     gemessen), zaehlt als groesster Einzelteil jetzt der groessere von beiden: Schaetzung\n     (Haelfte der Summe) oder groesster Teil auf der Platte (_gewichte_byte). Fuer\n     qwen-image-edit-2511: 24 GiB geschaetzt, 40,9 GB auf der Platte → es gilt 40,9 GB →\n     bei ~30,6 GiB frei Stufe 3 (sequential_cpu_offload) statt Stufe 2. Also so, wie 134\n     am 21.09. lief — nur jetzt verlaesslich, nicht nur, wenn zufaellig ein Sprachmodell\n     daneben liegt.\n  A2 Eine GEMESSENE Spitze (z-image-turbo, 25,1 GB) bleibt unberuehrt: Dort ist die Platte\n     groesser als die Laufzeit (fp32), und das darf den vollen Weg nicht umstossen.\n  A3 Im Bedarfsbericht (geraeteweg/bedarf) steht dann ein Zusatz: «Groesster Einzelteil nach\n     der Platte: … MiB (die Schaetzung sagte … MiB).»\n  A4 Folge fuer KosmoOrbit-Bestellungen ohne vis.backbone: Sie laufen wieder durch, aber\n     auf Stufe 3 — langsam, und mit Fuehrung (Runde 12) doppelt so viele Durchgaenge.\n\nTEIL B — NACHMESSEN, NACH DEM PULL\n\n  B1 Ueber die Mappe (frische Mappe, testbau, kamera 's', 512 px, backbone\n     'qwen-image-edit-2511', 20 Schritte, Startwert 0): status, geraeteweg, der Satz im\n     Bedarfsbericht woertlich, Dauer des Renderknotens, Spitzenlast, und\n     fuehrung_regler_angekommen.\n  B2 Ueber den Abholer wie eine KosmoOrbit-Bestellung ohne vis.backbone (eure Attrappe\n     einer Bestellung oder ein Testauftrag in der eigenen Ablage, EINE Kamera): status,\n     Dauer je Bild, und ob lieferstatus 'geliefert' heisst.\n  B3 Falls ein Sprachmodell auf der Karte liegt: vorher entladen und sagen, dass ihr es\n     getan habt (die Messung soll die freie Karte zeigen).\n\nWAS ZURUECKKOMMEN SOLL\n  A gelesen vor dem Ziehen · B1 die sechs Angaben · B2 status, Dauer, lieferstatus ·\n  C eine Zeile, die wir nicht gefragt haben.\n\nWAS NICHT GETAN WERDEN SOLL\n  - Nichts an unserem Code aendern, nichts herunterladen.\n  - Keine echte KosmoOrbit-Bestellung fuer die Messung verwenden — nur Testauftraege.\n  - Keine Bilder, Pfade mit Namen oder Projektnamen zurueck.",
+  "erstellt": "2026-09-24T10:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts an unserem Code aendern, nichts herunterladen.",
+      "Nur Testauftraege, keine echte KosmoOrbit-Bestellung.",
+      "Keine Bilder, Pfade mit Namen oder Projektnamen zurueck."
+    ]
+  },
+  "rueckgabe": [
+    "A Ansage gelesen vor dem Ziehen.",
+    "B1 Ueber die Mappe: status, geraeteweg, Bedarfssatz woertlich, Dauer, Spitzenlast, fuehrung_regler_angekommen.",
+    "B2 Ueber den Abholer ohne vis.backbone: status, Dauer je Bild, lieferstatus.",
+    "C Eine Zeile, die wir nicht erfragt haben."
+  ],
+  "rang": 2
+}

@@ -687,3 +687,88 @@ def test_der_vorgabe_backbone_traegt_eine_gemessene_zahl():
     from aiimaging import backbone
 
     assert backbone.hole(render.VORGABE_BACKBONE).vram_gemessen is True
+
+
+def _grosse_ablage(tmp_path, transformer_byte):
+    """Eine Gewichtsablage mit einem Transformer der gegebenen Grösse — als dünn besetzte
+    Datei, damit sie keinen Plattenplatz kostet, aber die Grösse meldet."""
+    wurzel = tmp_path / "gewichte"
+    (wurzel / "transformer").mkdir(parents=True)
+    with open(wurzel / "transformer" / "teil.safetensors", "wb") as f:
+        f.truncate(transformer_byte)
+    (wurzel / "vae").mkdir()
+    (wurzel / "vae" / "teil.safetensors").write_bytes(b"x" * 1024)
+    return wurzel
+
+
+class _Karte:
+    """Eine Karte mit 30,6 GiB frei — so an der HomeStation gemessen (`auf-160` C3)."""
+    class cuda:
+        @staticmethod
+        def is_available():
+            return True
+
+        @staticmethod
+        def mem_get_info():
+            return (int(30.6 * 2**30), 32 * 2**30)
+
+
+class _Auslagernd:
+    def __init__(self):
+        self.weg = None
+
+    def to(self, wohin):
+        self.weg = "voll"
+
+    def enable_model_cpu_offload(self):
+        self.weg = "komponentenweise"
+
+    def enable_sequential_cpu_offload(self):
+        self.weg = "schichtweise"
+
+
+def test_die_schaetzung_unterbietet_den_groessten_brocken_der_platte_nicht(tmp_path):
+    """**Befund `auf-20260923-160` C3 (24.09.2026).** Geschätzt 48 GiB, grösster Brocken 24
+    GiB; auf der Platte ist der Transformer 40,9 GB. Stufe 2 legt ihn ganz auf die Karte —
+    CUDA out of memory. Jetzt gilt der grössere der beiden, und es wird schichtweise."""
+    wurzel = _grosse_ablage(tmp_path, 40_861_227_537)
+    pipe = _Auslagernd()
+    weg, _ent, bedarf = render._lege_auf_geraet(
+        pipe, wurzel, _Karte, erwartet=(48 * 2**30, 24 * 2**30), erwartet_gemessen=False)
+    assert weg == "cuda+schichtauslagerung" and pipe.weg == "schichtweise"
+    assert bedarf["groesster_byte"] == 40_861_227_537
+    assert "nach der Platte" in bedarf["grund"]
+
+
+def test_der_eintrag_des_registers_waehlt_ueber_den_ladeweg_die_schichtauslagerung(tmp_path):
+    """Derselbe Fall mit der echten Zahl aus dem Register, nicht mit einer abgeschriebenen."""
+    from aiimaging import backbone
+    eintrag = backbone.BACKBONES["qwen-image-edit-2511"]
+    erwartet = render._erwarteter_bedarf(eintrag)
+    assert eintrag.vram_gemessen is False, "sonst gilt die Messung, und dieser Fall entfällt"
+    weg, _ent, _b = render._lege_auf_geraet(
+        _Auslagernd(), _grosse_ablage(tmp_path, 40_861_227_537), _Karte,
+        erwartet=erwartet, erwartet_gemessen=eintrag.vram_gemessen)
+    assert weg == "cuda+schichtauslagerung"
+
+
+def test_eine_gemessene_spitze_bleibt_von_der_platte_unberuehrt(tmp_path):
+    """Die Gegenprobe: z-image-turbo liegt mit fp32 auf der Platte (grösser als zur
+    Laufzeit). Eine gemessene Spitze darf die Platte nicht überstimmen — sonst lagerte der
+    Vorgabe-Backbone wieder aus, obwohl er passt (Demolauf 2, 19.08.2026)."""
+    pipe = _Auslagernd()
+    weg, _ent, bedarf = render._lege_auf_geraet(
+        pipe, _grosse_ablage(tmp_path, 40 * 2**30), _Karte,
+        erwartet=(int(25.1 * 2**30), int(12.5 * 2**30)), erwartet_gemessen=True)
+    assert weg == "cuda", "passt gemessen ganz — die Platte darf das nicht umstossen"
+    assert bedarf["groesster_byte"] == int(12.5 * 2**30)
+
+
+def test_ist_die_platte_kleiner_bleibt_die_schaetzung(tmp_path):
+    pipe = _Auslagernd()
+    weg, _ent, bedarf = render._lege_auf_geraet(
+        pipe, _grosse_ablage(tmp_path, 1 * 2**30), _Karte,
+        erwartet=(48 * 2**30, 20 * 2**30), erwartet_gemessen=False)
+    assert weg == "cuda+auslagerung"
+    assert bedarf["groesster_byte"] == 20 * 2**30
+    assert "nach der Platte" not in bedarf["grund"]

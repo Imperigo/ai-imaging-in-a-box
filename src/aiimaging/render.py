@@ -1234,6 +1234,19 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None,
     else:
         summe, groesster = erwartet
         quelle, zuschlag = QUELLE_SCHAETZUNG, GERAETE_ZUSCHLAG
+    platte_groesster = None
+    if erwartet is not None and erwartet_gemessen is not True:
+        # DER GROESSTE BROCKEN NIE KLEINER ALS AUF DER PLATTE (Befund `auf-20260923-160`
+        # C3, HomeStation, 24.09.2026). Die Schaetzung setzt ihn als Haelfte der Summe an
+        # — bei `qwen-image-edit-2511` 24 GiB, auf der Platte ist der Transformer aber
+        # 40,9 GB. Mit 30,6 GiB frei waehlte das Stufe 2, die den ganzen Transformer auf
+        # die Karte legen muss: CUDA out of memory, auf dem Abholer-Weg bei JEDER
+        # KosmoOrbit-Bestellung ohne Modellangabe. Lief nur, wenn zufaellig ein
+        # Sprachmodell daneben lag und Stufe 3 erzwang. Eine Plattengroesse kann zu gross
+        # sein (fp32 auf der Platte), nie zu klein — und ein zu grosser Wert waehlt
+        # hoechstens den langsameren Weg. Eine GEMESSENE Spitze bleibt davon unberuehrt.
+        _summe_platte, platte_groesster = _gewichte_byte(wurzel)
+        groesster = max(groesster or 0, platte_groesster) or groesster
 
     if not summe:                                  # nichts messbar: wie bisher verfahren
         pipeline.to("cuda")
@@ -1245,6 +1258,11 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None,
 
     bericht = _bedarfsbericht(quelle=quelle, summe=summe, groesster=groesster,
                               zuschlag=zuschlag, frei=frei)
+    if platte_groesster and platte_groesster >= groesster and erwartet is not None \
+            and platte_groesster > erwartet[1]:
+        bericht["grund"] += (f" Groesster Einzelteil nach der Platte: "
+                             f"{platte_groesster / 2**20:.0f} MiB (die Schaetzung sagte "
+                             f"{erwartet[1] / 2**20:.0f} MiB).")
 
     if frei >= summe * zuschlag:
         pipeline.to("cuda")
