@@ -1,0 +1,71 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-169",
+ "status": "ok",
+ "beendet": "2026-09-24T16:31+02:00",
+ "stand": "7c8d148 Owner-Entscheid: E8-Knoten erst nach n1 — und bis dahin wird gewartet",
+ "geprueft": [
+  "git pull --ff-only: sauber, Stand 7c8d148",
+  "Teil B: .venv-render/bin/python -m pytest -q tests/test_kameras.py tests/test_multipass.py tests/test_kettenlauf_echt.py -rs → rc 0, '267 passed in 41.65s', nichts uebersprungen (Abweichung: es gibt hier kein .venv; .venv-render ist das Python des Abholers)",
+  "Teil C: Skript aus der Anweisung woertlich, Probe: 'Render-Umgebung: da (torch, diffusers)', Auftrag '— frei', ohne --fremde-freigabe",
+  "Teil C: Bilder und Blender-Berichte je Kamera angesehen bzw. ausgelesen; sha256 der gelieferten Bilder verglichen"
+ ],
+ "kurzantwort": "Alle drei Automatik-Kameras rendern jetzt (A1 bestaetigt): 3 Bilder, lieferstatus 'geliefert', Fuellgrad je 0.70. Zwei Befunde: (1) Kamera s liefert ein Bild OHNE das Bauwerk (Himmel und ein erfundenes Satteldachhaus unten links), Score 0.159 nicht bestanden — trotzdem 'geliefert'. (2) sSE und nNW sind byteidentisch, weil der Testbau punktsymmetrisch ist und die beiden Kameras genau gegenueber stehen.",
+ "befunde": {
+  "teil_b": {
+   "letzte_zeile": "267 passed in 41.65s",
+   "rc": 0
+  },
+  "teil_c": {
+   "job": "vis-1790258501-1417a1",
+   "je_kamera": {
+    "s": {
+     "gerendert": true,
+     "fuellgrad": 0.6985,
+     "azimut_grad": 180,
+     "lieferstatus": "geliefert",
+     "bilder": "1 soll / 1 ist",
+     "score": 0.1587,
+     "bestanden": false,
+     "zeit_s": 510.5,
+     "blick": "Das Bauwerk steht NICHT im Bild: oben grauer Himmel, unten links ein angeschnittenes Haus mit Satteldach und Balkon, das es im Modell nicht gibt. Das Blender-Schoenbild derselben Kamera zeigt den Quader richtig; die KI hat ihn ersetzt."
+    },
+    "sSE": {
+     "gerendert": true,
+     "fuellgrad": 0.7,
+     "azimut_grad": 145,
+     "lieferstatus": "geliefert",
+     "bilder": "1 soll / 1 ist",
+     "score": 0.327,
+     "bestanden": false,
+     "zeit_s": 473.8,
+     "blick": "Das Bauwerk steht ganz im Bild, nicht angeschnitten, als heller Quader auf einer Platte, rund 55-60 % der Bildbreite, unter bewoelktem Himmel."
+    },
+    "nNW": {
+     "gerendert": true,
+     "fuellgrad": 0.7,
+     "azimut_grad": 325,
+     "lieferstatus": "geliefert",
+     "bilder": "1 soll / 1 ist",
+     "score": 0.327,
+     "bestanden": false,
+     "zeit_s": 468.0,
+     "blick": "Wie sSE — das gelieferte Bild ist byteidentisch (sha256 df4520479379df7b… fuer beide)."
+    }
+   },
+   "lieferstatus_auftrag": "geliefert",
+   "rechenzeit": "1452.3 s laut timings (s 510.5 / sSE 473.8 / nNW 468.0), Abholer-Wanduhr 1456.0 s; Geraeteweg cuda+schichtauslagerung (qwen-image-edit-2511, Vorgabe bei leerem vis); 'Wache: kein Stillstand, laengste Pause 178 s'",
+   "befund_identische_bilder": "sSE.png und nNW.png sind byteidentisch (df4520479379df7b…), ihre Blender-Schoenbilder nicht (5642f978… gegen 7694901b…). Ursache belegt: Der Testbau (8 x 5 x 3 m) ist punktsymmetrisch, 145 und 325 Grad stehen genau gegenueber — Tiefen- und Maskenkarte sind gleich (geom_iou beide 0.17015502863808082, n_soll beide 537719), Startwert gleich, also gleiches KI-Bild. Kein Fehler der Kette, aber auf dem Testbau sind es praktisch nur ZWEI verschiedene Bilder.",
+   "befund_geliefert_trotz_fehlendem_bauwerk": "Kamera s: Score 0.159 (spearman -0.43, geom_iou 0.059, ohne Boden -0.38), bestanden false — lieferstatus trotzdem 'geliefert'. Das Bild zeigt das bestellte Bauwerk nicht. Ob 'geliefert' hier gewollt ist (Lieferung ≠ Abnahme), entscheidet ihr; gemeldet, nicht repariert."
+  }
+ },
+ "umgebung": {
+  "python": ".venv-render (3.14.4)",
+  "AIIMAGING_MODELLE": "/mnt/data/ai-models/diffusers (wie der Dienst kosmo-abholer)",
+  "gpu": "RTX 5090, vor dem Lauf 667 MiB belegt"
+ },
+ "fehler": [
+  "Erster Versuch vis-1790258458-a0a3e0 scheiterte an mir, nicht an der Kette: Meine Shell laeuft im VS-Code-Snap, der Modellordner wurde dorthin umgebogen ('Gewichte fuer qwen-image-edit-2511 unvollstaendig … Verzeichnis existiert: False'). Mit AIIMAGING_MODELLE wie im Dienst neu angelegt.",
+  "Zweiter Anlauf blieb zuerst liegen ('idle_window_only … 7537 MiB belegt'): ein Ollama-Modell aus einem parallelen Testlauf hielt die Karte; nach seinem Ablauf (16:06) gerechnet. Die Leerlauf-Sperre hat richtig gewirkt."
+ ]
+}
