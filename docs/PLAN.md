@@ -7465,7 +7465,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Jeden Knoten einzeln mit dem Owner durchgehen (vorgemerkt: «1 Bauteile» am Modell-Knoten).
     - [x] Render-Knoten, Vorlauf: Recherche Knotensysteme (Weave, 23 KI-Werkzeuge, 15
           Render-Familien) → `docs/RECHERCHE_KNOTENSYSTEME_2026-09-24.md`.
-    - [ ] **Owner:** sieben Fragen zum Render-Knoten (Recherche §7).
-    - [ ] Blatt «Render-Knoten» auf der Entwurfsfläche — nach den Antworten.
+    - [x] Blatt 12 / 12b «Der Render-Knoten» auf der Entwurfsfläche, mit den Empfehlungen
+          (Owner: «gleich mit deinen Empfehlungen»).
+    - [ ] **Owner:** die sieben Entscheide am Bild (Blatt 12b).
+    - [ ] Umsetzen, was entschieden ist — in `kosmovis/` als «geändert» mit Grund.
     - [ ] **Owner:** Figma-Konto mit Weave verknüpfen, dann Beispiel-Abläufe auslesen.
 

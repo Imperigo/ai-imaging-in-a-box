@@ -115,7 +115,10 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Was sich bewährt hat:** ein Knoten vorne, aufklappbar dahinter; Aufwand vor dem Klick;
   Ergebnisse stapeln statt überschreiben; Varianten als Achsen; eine einfache Ansicht, die
   aus dem Graphen entsteht.
-* **Offen:** sieben Fragen an den Owner, dann wird der Render-Knoten gezeichnet.
+* **Gezeichnet (Blatt 12 und 12b):** der Render-Knoten mit allen Empfehlungen, und daneben die
+  sieben Entscheide als Bildpaare — oben die Empfehlung, unten die Alternative. Neu ist ein
+  eigener Knoten «Geometrie-Pässe» und das Urteil als eigener Ausgang.
+* **Offen:** Der Owner entscheidet am Bild; erst danach wird gebaut.
 
 ### 24.09.2026 (abends) · Die Knotenansicht bestellt jetzt bei Visbox
 
