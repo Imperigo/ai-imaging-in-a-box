@@ -7475,8 +7475,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] **local:** `auf-20260924-170` — Mindestspeicher, Stufe 2, Takt, Puls, Sonne am Bild.
   - [ ] **cloud:** `auf-20260924-171` — komposition nicht senden, Puls lesen, Glas OPAQUE,
         Pässe zu- oder absagen.
-  - [ ] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen (Option B,
-        Protokoll 71 §17); urteilt zuerst nicht mit, Messung am Heimrechner danach.
+  - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut
+        (`geometrie_qa.sprungordnung`, Ortsfeld abgezogen), urteilt nicht mit (Protokoll
+        71 §18).
+  - [ ] **local:** `auf-20260924-172` — trennt sie an echten Bildern Ja von Nein?
+  - [ ] Danach: mitentscheiden lassen oder verwerfen; Horizontzeile aus der Kamera in den
+        Maskenweg; Option C (Umriss aus RGB-Kanten) als zweites Bein.
   - [ ] **Owner:** Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
         `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt
         einen Einbauauftrag an ui schreiben — oder erst nach der n1-Übernahme (E27)?

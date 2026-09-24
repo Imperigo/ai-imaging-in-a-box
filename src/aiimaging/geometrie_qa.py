@@ -4085,3 +4085,217 @@ def zwei_tore(rho_maske, geom_iou, *,
             "tor_folgt": a, "tor_dieses": b, "gegenprobe": gegenprobe,
             "zuordnung": ordnung,
             "begruendung": begruendung, "warnungen": warnungen}
+
+
+# --------------------------------------------------------------------------------------
+# Ordnung an Tiefensprüngen — die Messung für saubere Bilder (24.09.2026, Protokoll 71 §17)
+#
+# **Der Befund, aus dem sie entsteht** (HomeStation, auf-20260923-160 D): Die zwei
+# saubersten Bilder des Tages — ein freistehendes Gebäude genau auf der Silhouette —
+# bekamen «nicht messbar» (``wie_soll``: 100 % der gewählten Punkte im erfundenen Boden)
+# oder Score 0 (``quantil``/``keine``: ρ +0,30 … +0,48 über die Fassade). Zwei Gründe:
+#
+# 1. Alles ausserhalb der Soll-Silhouette gilt als «muss Hintergrund sein». Das Soll sagt
+#    dort aber nichts — es hat keinen Boden modelliert, und der Owner will den Vordergrund
+#    gefüllt (21.08.2026). Ein überzeugender Boden wird so zum Fehler.
+# 2. ρ läuft über eine fast ebene Front (Tiefenband 0,4 m bei 11–29 m Abstand). Dort
+#    spiegelt die Rangfolge des Schätzers sein Ortsfeld, nicht die Geometrie.
+#
+# **Was hier stattdessen gezählt wird:** Paare von Bildpunkten, zwischen denen das Soll
+# einen echten Sprung trägt — und ob der Schätzer sie gleich ordnet. An der Kontur: innen
+# Bauwerk, aussen nichts (also fern). Gewertet wird die Konturseite nur, wo aussen **über
+# dem Horizont** liegt; darunter steht im erzeugten Bild erlaubterweise Boden, der näher
+# sein darf als der Sockel. Ohne Horizontangabe zählt nur die Oberkante (aussen darüber).
+#
+# **Was diese Zahl NICHT tut — noch nicht:** Sie urteilt nicht. Score, ``bestanden`` und
+# die zwei Tore bleiben unverändert, bis am Heimrechner gemessen ist, ob sie Ja- und
+# Nein-Bilder trennt. Dieselbe Regel wie bei :func:`zuordnung`: Eine Zahl, die noch nicht
+# gezeigt hat, dass sie trennt, darf nicht mitentscheiden.
+# --------------------------------------------------------------------------------------
+
+#: Unter so vielen Paaren je Klasse ist ein Anteil keine Aussage. Dieselbe Grössenordnung
+#: wie ``MIN_RANDPUNKTE`` (16) — gesetzt, nicht gemessen; bei 16 Paaren liegt die
+#: Zufallsstreuung eines Anteils um 0,5 bei rund 0,125.
+MIN_SPRUNGPAARE = 16
+
+#: Wie viel grösser als die typische Nachbardifferenz im Soll eine Stufe innerhalb der
+#: Silhouette sein muss, um als Sprung zu zählen. **Gesetzt, nicht gemessen** — die
+#: HomeStation misst die Innenstufen getrennt (``anteil_stufen``), damit diese Zahl ihren
+#: Beleg bekommt oder fällt. Die Kontur hängt nicht an ihr.
+STUFE_VIELFACHES = 8.0
+
+#: Und mindestens so viel in Metern — sonst wäre auf einer exakt ebenen Front (Median 0)
+#: jede Rundungsspur eine Stufe. Gesetzt: 5 cm, etwa eine Fensterleibung.
+STUFE_MIN_M = 0.05
+
+METHODE_SPRUNGORDNUNG = (
+    "Anteil richtig geordneter Paare im Abstand g an Soll-Tiefensprüngen (Kontur: aussen "
+    "über dem Horizont bzw. oberhalb; Stufen: |Δsoll| > max(8 × Median |Δsoll|, 5 cm) "
+    "innen), je "
+    "Paar abzüglich des Unterschieds im nächsten Abstand g in derselben Richtung ohne "
+    "Soll-Sprung (Ortsfeld, zweite Differenz), gerichtet über die Polarität, "
+    "Gleichstand zählt halb, v3")
+
+#: Unterhalb dieses Anteils der Spanne der Schätzkarte gilt ein Unterschied als Gleichstand.
+GLEICHSTAND_ANTEIL = 1e-6
+
+
+def sprungordnung(soll: Sequence[float], ist: Sequence[float], *, breite: int,
+                  polaritaet: int | None, horizont_zeile: int | None = None,
+                  abstand_px: int = 2, hintergrund: float | None = None) -> dict:
+    """Ordnet der Schätzer die Punkte an den Tiefensprüngen des Soll richtig?
+
+    **Das Ortsfeld wird abgezogen — und zwei Fassungen ohne das richtige Mass lagen
+    falsch** (``tests/test_sprungordnung.py``, 24.09.2026). Ein Schätzer schätzt unten
+    näher als oben und zur Mitte anders als am Rand, auch auf leerer Fläche (Ortsfeld,
+    siehe Lexikon). Ohne Abzug war jedes Paar «aussen über innen» von selbst richtig: Ein
+    **leeres Grundstück bekam 1,0**. Mit dem Median ganzer Zeilen als Bezug noch 0,66,
+    weil das Ortsfeld quer zur Zeile nicht gleich ist. Gezählt wird darum je Paar der
+    Unterschied über die Soll-Kante **abzüglich** des Unterschieds gleich weit dahinter, in
+    derselben Richtung, wo das Soll keinen Sprung hat — eine zweite Differenz. Ein glattes
+    Ortsfeld hebt sich so auf; ein Sprung bleibt.
+
+    Args:
+        soll: Tiefenkarte aus der Geometrie (Meter; Hintergrund nicht endlich oder über
+            der Marke, siehe :func:`silhouette`).
+        ist: rohe Schätzkarte des erzeugten Bildes, **nicht** hintergrundmarkiert.
+        breite: Bildbreite; die Höhe folgt aus der Länge.
+        polaritaet: :data:`POLARITAET_TIEFE` oder :data:`POLARITAET_DISPARITAET`.
+            ``None`` heisst ungemessen — dann gibt es keinen Anteil, nur den Grund.
+        horizont_zeile: Bildzeile des Horizonts (0 = oben). Aussenpunkte (und ihr Bezug)
+            **in oder unter** ihr zählen nicht, weil dort Boden stehen darf. ``None``: nur
+            Paare, deren Aussenpunkt **über** dem Innenpunkt liegt (Oberkante).
+        abstand_px: Abstand des Aussen- bzw. Partnerpunkts in Bildpunkten. Mehr als 1,
+            weil Kanten im erzeugten Bild weich sind.
+
+    Returns:
+        ``{anteil, anteil_kontur, anteil_stufen, n_kontur, n_stufen, n_ohne_bezug,
+        gemessen, polaritaet, horizont_zeile, abstand_px, methode, warnungen}``.
+        ``anteil`` über **alle** gewerteten Paare; ``None``, wenn es weniger als
+        :data:`MIN_SPRUNGPAARE` sind. 1 heisst: jeder Sprung richtig herum, 0,5: kein
+        Zusammenhang, 0: jeder verkehrt. ``n_ohne_bezug`` zählt Paare, hinter denen kein
+        Bezugspaar liegt (Bildrand, nächste Kante) — sie werden nicht gewertet.
+    """
+    soll_w = _als_zahlen(soll, "soll")
+    ist_w = _als_zahlen(ist, "ist")
+    if len(soll_w) != len(ist_w):
+        raise QaError(f"soll und ist verschieden lang: {len(soll_w)} gegen {len(ist_w)}.")
+    if isinstance(breite, bool) or not isinstance(breite, int) or breite <= 0 \
+            or len(soll_w) % breite:
+        raise QaError(f"breite {breite!r} passt nicht zu {len(soll_w)} Punkten.")
+    if isinstance(abstand_px, bool) or not isinstance(abstand_px, int) or abstand_px < 1:
+        raise QaError(f"abstand_px muss eine ganze Zahl ab 1 sein, war {abstand_px!r}.")
+    hoehe = len(soll_w) // breite
+    warnungen: list[str] = []
+    leer = {"anteil": None, "anteil_kontur": None, "anteil_stufen": None,
+            "n_kontur": 0, "n_stufen": 0, "n_ohne_bezug": 0, "gemessen": False,
+            "polaritaet": polaritaet, "horizont_zeile": horizont_zeile,
+            "abstand_px": abstand_px, "methode": METHODE_SPRUNGORDNUNG,
+            "warnungen": warnungen}
+    if polaritaet not in (POLARITAET_TIEFE, POLARITAET_DISPARITAET):
+        warnungen.append("Polarität des Schätzers nicht gemessen — ohne sie ist «richtig "
+                         "herum» nicht definiert. Kein Anteil.")
+        return leer
+
+    innen = silhouette(soll_w, hintergrund)
+    g = abstand_px
+    endlich = [v for v in ist_w if math.isfinite(v)]
+    spanne = (max(endlich) - min(endlich)) if endlich else 0.0
+    gleich = GLEICHSTAND_ANTEIL * spanne
+
+    def punkt(x: int, y: int):
+        if 0 <= x < breite and 0 <= y < hoehe:
+            return y * breite + x
+        return None
+
+    ohne_bezug = 0
+
+    def urteil(nah: int, fern: int, bezug_nah: int | None, bezug_fern: int | None):
+        """``fern − nah`` gegen ``bezug_fern − bezug_nah`` (dieselbe Richtung, kein Sprung)."""
+        nonlocal ohne_bezug
+        if bezug_nah is None or bezug_fern is None:
+            ohne_bezug += 1
+            return None
+        werte = (ist_w[nah], ist_w[fern], ist_w[bezug_nah], ist_w[bezug_fern])
+        if not all(math.isfinite(v) for v in werte):
+            return None
+        d = polaritaet * ((werte[1] - werte[0]) - (werte[3] - werte[2]))
+        if abs(d) <= gleich:
+            return 0.5
+        return 1.0 if d > 0 else 0.0
+
+    def unter_horizont(y: int) -> bool:
+        return horizont_zeile is not None and y >= horizont_zeile
+
+    # 1 · Kontur: innen Bauwerk (p), aussen im Abstand g nichts (q); Bezug: q → q + g·d,
+    #     ebenfalls aussen. Richtig heisst: q ist ferner als p, über das Ortsfeld hinaus.
+    kontur: list[float] = []
+    for y in range(hoehe):
+        for x in range(breite):
+            p = y * breite + x
+            if not innen[p]:
+                continue
+            for dx, dy in ((0, -1), (1, 0), (-1, 0), (0, 1)):
+                q = punkt(x + dx * g, y + dy * g)
+                if q is None or innen[q]:
+                    continue          # Anschnitt am Bildrand, oder kein Sprung
+                qy = y + dy * g
+                if horizont_zeile is None and dy != -1:
+                    continue          # ohne Horizont nur die Oberkante
+                if unter_horizont(qy):
+                    continue          # unter dem Horizont darf Boden stehen
+                r = punkt(x + 2 * dx * g, y + 2 * dy * g)
+                if r is not None and (innen[r] or unter_horizont(y + 2 * dy * g)):
+                    r = None
+                wert = urteil(p, q, q if r is not None else None, r)
+                if wert is not None:
+                    kontur.append(wert)
+
+    # 2 · Stufen innerhalb der Silhouette, wo das Soll einen echten Sprung trägt; Bezug
+    #     ist das Paar davor in derselben Richtung, sofern dort kein Sprung liegt.
+    kandidaten = []
+    differenzen = []
+    for y in range(hoehe):
+        for x in range(breite):
+            i = y * breite + x
+            if not innen[i]:
+                continue
+            for dx, dy in ((1, 0), (0, 1)):
+                q = punkt(x + dx * g, y + dy * g)
+                if q is None or not innen[q]:
+                    continue
+                d = soll_w[q] - soll_w[i]
+                differenzen.append(abs(d))
+                kandidaten.append((x, y, dx, dy, i, q, d))
+    stufen: list[float] = []
+    if differenzen:
+        grenze = max(STUFE_VIELFACHES * _median(differenzen), STUFE_MIN_M)
+        if grenze > 0:
+            for x, y, dx, dy, i, q, d in kandidaten:
+                if abs(d) <= grenze:
+                    continue
+                vor = punkt(x - dx * g, y - dy * g)
+                if vor is not None and (not innen[vor]
+                                        or abs(soll_w[i] - soll_w[vor]) > grenze):
+                    vor = None
+                if d > 0:             # q ist fern: fern − nah = q − i, Bezug i − vor
+                    wert = urteil(i, q, vor, i if vor is not None else None)
+                else:                 # i ist fern: fern − nah = i − q = −(q − i)
+                    wert = urteil(q, i, i if vor is not None else None, vor)
+                if wert is not None:
+                    stufen.append(wert)
+
+    def anteil(werte):
+        return round(sum(werte) / len(werte), 4) if len(werte) >= MIN_SPRUNGPAARE else None
+
+    alle = kontur + stufen
+    ergebnis = dict(leer, anteil_kontur=anteil(kontur), anteil_stufen=anteil(stufen),
+                    n_kontur=len(kontur), n_stufen=len(stufen), n_ohne_bezug=ohne_bezug)
+    if len(alle) < MIN_SPRUNGPAARE:
+        warnungen.append(f"Nur {len(alle)} Paare an Tiefensprüngen (mindestens "
+                         f"{MIN_SPRUNGPAARE}). Kein Anteil — zu wenig, um etwas zu sagen.")
+        return ergebnis
+    if horizont_zeile is None:
+        warnungen.append("Ohne Horizontzeile zählt an der Kontur nur die Oberkante.")
+    ergebnis.update(anteil=round(sum(alle) / len(alle), 4), gemessen=True)
+    return ergebnis

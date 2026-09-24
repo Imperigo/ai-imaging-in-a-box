@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (Nacht auf den 25.) · Eine Prüfung, die saubere Bilder messen kann — im Versuch
+
+* **Das Problem:** Unsere Bildprüfung nannte die besten Bilder «nicht messbar». Sie hielt
+  den Boden, den das Bildmodell vor das Haus malt, für einen Fehler, weil unser Modell dort
+  nichts hat.
+* **Neu gebaut:** eine zweite Messung. Sie schaut nur an den Kanten des Gebäudes, ob «vorne»
+  und «hinten» richtig herum stehen. Den Boden lässt sie in Ruhe.
+* **Ehrlich dazu:** Die erste Fassung gab einem leeren Grundstück die Bestnote. Die eigenen
+  Proben haben das gefunden, bevor es jemand sah. Jetzt stimmt sie auf den Testbildern.
+* **Sie entscheidet noch nichts.** Der Heim-PC prüft zuerst an echten Bildern, ob sie gute
+  von schlechten trennt.
+
 ### 24.09.2026 (Nacht auf den 25.) · KosmoOrbit fragt, was für das erste echte Bild fehlt
 
 * **Beantwortet, Punkt für Punkt**, mit einem Ergebnisblatt für die KosmoOrbit-Seite.

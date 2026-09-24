@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-172",
+  "art": "frage",
+  "beschreibung": "Messung der neuen QA-Zahl 'sprungordnung' (Ordnung an Soll-Tiefenspruengen, Ortsfeld abgezogen, Boden unter dem Horizont egal) auf den Bildern aus 160 D, mit Gegenproben fremdes/verschobenes Soll: trennt sie Ja- von Nein-Bildern? Urteilt noch nicht mit.",
+  "anweisung": "=== MESSUNG: TRENNT DIE NEUE «ORDNUNG AN TIEFENSPRUENGEN» SAUBERE VON SCHLECHTEN BILDERN? ===\n\nHintergrund (euer Befund 160 D): Die zwei saubersten Bilder des Tages (Union-2.1, freistehend\ngenau auf der Silhouette) bekamen «nicht messbar» oder Score 0. Gruende, bei uns nachgelesen:\n(1) alles ausserhalb der Soll-Silhouette gilt als «muss Hintergrund sein», also wird der\nerfundene Boden zum Fehler; (2) rho ueber eine fast ebene Front misst das Ortsfeld des\nSchaetzers.\n\nNeu: geometrie_qa.sprungordnung. Sie zaehlt Paare an den Tiefenspruengen des Soll (Kontur:\ninnen Bauwerk, aussen nichts; Stufen innerhalb) und ob der Schaetzer sie richtig herum\nordnet, JE PAAR ABZUEGLICH DES ORTSFELDS (zweite Differenz: derselbe Schritt gleich dahinter,\nwo das Soll keinen Sprung hat). Unterhalb des Horizonts zaehlt die Kontur nicht (dort darf\nBoden stehen); ohne Horizontangabe nur die Oberkante. 1 = alles richtig, 0,5 = kein\nZusammenhang, 0 = alles verkehrt. Synthetisch bei uns: sauber 1,0, leeres Grundstueck 0,5,\nverschoben 0,59, «Gasse» 0,0 — das belegt den Mechanismus, NICHT den echten Schaetzer.\n\nDIE ZAHL URTEILT NOCH NICHT MIT. Score, bestanden und die zwei Tore bleiben unveraendert.\nSie steht seit dem Pull im QA-Ergebnis unter 'sprungordnung' (Maskenweg, ohne Horizont).\nOb sie mitentscheiden darf, entscheidet diese Messung.\n\nWAS ZU TUN IST (kein neuer Render, nichts herunterladen, nur CPU/Schaetzer):\n\n  Nehmt dieselben Bilder und dasselbe Skript wie in 160 D (beide Koerper, Union-1.0 und 2.1,\n  mit/ohne Karte, Startwerte 0..2), dazu das Blender-Schoenbild derselben Kamera als\n  «bestes moegliches Bild» und die drei Nullproben (grau, Verlauf, Rauschen). Je Bild:\n\n    erg = tiefenschaetzer.qa_gegen_soll(bild, soll, ..., maske=<Material-ID-Maske>)   # wie in 160 D\n    s0  = erg['sprungordnung']                                              # ohne Horizont\n    roh = <rohe Schaetzkarte desselben Bildes, wie qa_gegen_soll sie rechnet>\n    s1  = geometrie_qa.sprungordnung(soll, roh, breite=B, polaritaet=-1,\n                                     horizont_zeile=<Zeile des Horizonts>)\n    for g in (1, 2, 4): geometrie_qa.sprungordnung(..., abstand_px=g, horizont_zeile=<dito>)\n\n  Horizontzeile: waagrechte Kamera (Shift-Modus, Augenhoehe 1,70 m) → der Horizont liegt auf\n  der Bildzeile der Augenhoehe. Rechnet sie aus der Kamera im Blender-Bericht (Bildmitte plus\n  Shift in Bildpunkten) und nennt sie. Wenn unklar: Bildmitte, und sagt es.\n\n  GEGENPROBEN je Bild (sonst trennt die Zahl nicht, sondern misst etwas anderes):\n    (a) fremdes Soll: Testbau-Bild gegen Hochbau-Soll und umgekehrt;\n    (b) Soll um ±48 px in x und in y verschoben (Rand mit «nichts» auffuellen).\n\n  Und zwei Fragen: Ist die Blender-Tiefe planar (Z) oder radial (Strahllaenge)? Liegt die\n  errechnete Horizontzeile dort, wo im Schoenbild der Horizont zu sehen ist?\n\nENTSCHEIDEND: Jedes Bild, das ihr in 160 als «Ja, das Gebaeude steht richtig» beschrieben\nhabt, liegt ueber jedem «Nein»? Eigenes Soll ueber fremdem und verschobenem, in allen Paaren?\nSchoenbild mindestens so hoch wie jedes erzeugte? Gibt es keine Luecke, ist das die Antwort —\nkeine Schwelle vorschlagen, nur die Zahlen zeigen.\n\nNICHT TUN: keine Schwelle einbauen, sprungordnung nicht anfassen, nichts committen ausser\neurer Ergebnisdatei, keine Bilder ins Repo.\n",
+  "erstellt": "2026-09-24T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "abstand_px": [
+      1,
+      2,
+      4
+    ],
+    "verschiebung_px": 48,
+    "polaritaet": -1
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nur der Tiefenschaetzer auf vorhandenen Bildern; kein Render.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des ai-imaging-Klons.",
+    "Je Bild eine Zeile: Koerper, cn, Karte, Startwert, euer Ja/Nein aus 160, s0.anteil, s1.anteil (g=1/2/4), n_kontur, n_stufen, anteil_stufen, dazu die Gegenproben (a) und (b).",
+    "Schoenbild und drei Nullproben: dieselben Zahlen.",
+    "Die Horizontzeile je Koerper und wie sie bestimmt wurde; planar oder radial.",
+    "Ein Satz: trennt die Zahl, ja oder nein — und wo nicht."
+  ],
+  "rang": 3
+}

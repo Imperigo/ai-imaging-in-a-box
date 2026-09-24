@@ -693,8 +693,10 @@ def test_beide_wege_liefern_dieselben_felder(bild, tmp_path):
     # `maske_auf_hintergrund` seit dem 11.09.2026, aus demselben Grund: Es misst, wieviel
     # der Maske in der SOLL-Karte auf der Hintergrundmarke steht — auch das gibt es nur
     # mit Maske.
+    # `sprungordnung` seit dem 24.09.2026: Sie steht im Maskenweg und hängt damit an
+    # derselben Bedingung — ohne Maske wird sie nicht gerechnet (Protokoll 71 §17).
     maskenfelder = {"rho_maske", "kante", "kantenanteil", "himmel", "paarurteil",
-                    "soll_durchsichtig", "maske_auf_hintergrund"}
+                    "soll_durchsichtig", "maske_auf_hintergrund", "sprungordnung"}
 
     assert set(gemessen) - maskenfelder == set(ohne), (
         "ein Feld, das nur einer der beiden Wege trägt, zwingt jeden Aufrufer zu einer "
