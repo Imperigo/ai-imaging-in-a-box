@@ -7436,3 +7436,16 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Rechner im neuen Aussehen** (Blatt 10) und Laiennamen für die Bedienfelder.
 - [ ] **iPad-Blätter 1 und 2** bauen (Mappe wählen, Standpunkt setzen) — nach dem Gerätetest.
 
+## Sitzung 71 — 24.09.2026 · Wo die Knoten sind
+
+> **Entschieden:** Beides — der Knoteneditor bleibt bei KosmoOrbit (gezeigt über
+> `auf-161`), und Visbox bekommt eine eigene Knotenansicht (Blatt 11, gezeichnet).
+> **Gemessen:** nichts.
+> **Offen:** zwei Owner-Entscheide an Blatt 11; Antwort auf `auf-161`.
+
+- [x] Blatt 11 «Der Knotenweg am Rechner» gezeichnet (Entwurfsfläche).
+- [x] `auf-20260924-161` an ui (Bildschirmfotos, Stand E8/E7); Block vom 24.09.
+- [ ] **Owner:** Liste oder Knoten umschaltbar? Nur zeigen oder ziehen?
+- [ ] **Kern/Fläche:** Knotenansicht bauen — nach den zwei Antworten.
+- [ ] **ui:** `auf-161` — und falls E8 nie ankam: Einbauauftrag für die acht Knoten.
+

@@ -466,6 +466,24 @@ Die Vertiefungsarbeit beschreibt **Visbox**. Die KosmoOrbit-Fläche kommt darin 
 *Einbauort* vor (Kapitel 8), nicht als Produktfläche. Umgekehrt ist die Fläche hier keine
 Vorarbeit für drüben — *sie ist die Fläche des Programms, das abgegeben wird.*
 
+### Nachtrag 24.09.2026 — Visbox bekommt eine eigene Knotenansicht
+
+**Owner-Entscheid 24.09.2026**, auf die Frage, wo «die Oberfläche mit den verbundenen
+Knoten» sei, und drei Wege zur Wahl (KosmoOrbit zeigen · Visbox eine eigene geben ·
+beides): *«3.»* — beides.
+
+* **Die Trennung bleibt.** Der Knoteneditor von KosmoOrbit bleibt dort, und Visbox bleibt
+  dort ein Knoten. Beauftragt: `auftraege/offen/auf-20260924-161.json` (ui) —
+  Bildschirmfotos und der Stand der acht Knoten aus E8.
+* **Neu:** Auch die Fläche von Visbox zeigt ihre eigene Kette als verbundene Knoten — nicht
+  die achtzehn von KosmoOrbit, sondern die vier (bzw. mit Skizze sieben), die `kette`
+  wirklich baut. Gezeichnet als Blatt 11 «Der Knotenweg am Rechner» auf der Entwurfsfläche,
+  **noch nicht gebaut** (erst zeichnen, dann bauen).
+* **Offen beim Owner** (Schilder auf dem Blatt): Ersetzt die Knotenansicht die Liste «Was
+  gerechnet würde» oder sind beide umschaltbar? Und: nur zeigen, oder Verbindungen auch
+  ziehen? *Vorschlag:* umschaltbar, nur zeigen — die Kette von Visbox ist fest, freies
+  Verdrahten ist die Aufgabe von KosmoOrbit.
+
 ---
 
 ## E23 · Nach der Abgabe: zurück in KosmoOrbit — die iPad-App wird KosmoSketch

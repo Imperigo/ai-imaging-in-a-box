@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260924-161",
+  "art": "frage",
+  "beschreibung": "Der Owner moechte die Knotenoberflaeche sehen: Bildschirmfotos eures Knoteneditors (NodeCanvas) mit dem aiimaging-Knoten, und der Stand der acht neuen Knoten aus unserem Entscheid E8 vom 18.09.2026 — gebaut, begonnen oder nie beauftragt?",
+  "anweisung": "=== DER KNOTENEDITOR — ZEIGT IHN UNS, UND SAGT, WIE WEIT DIE NEUEN KNOTEN SIND ===\n\nWARUM\nDer Owner hat am 24.09.2026 gefragt, wo «die Oberflaeche mit den verbundenen Knoten» ist. Die\nAntwort ist: bei euch — euer Knoteneditor (NodeCanvas.tsx, handgeschrieben in SVG, mit\ntypgeprueften Anschluessen, Zyklus-Riegel und Rueckgaengig). Wir haben ihn nie gesehen und\nkoennen ihn nicht zeigen. Und wir haben am 18.09.2026 entschieden, welche Knoten dazukommen\nsollen (Entscheid E8, unten woertlich) — aber in unseren Unterlagen findet sich kein\nAuftrag an euch, der das verlangt, und keine Rueckmeldung. Wenn das nie bei euch ankam, ist\ndas unser Fehler, nicht eurer; sagt es einfach.\n\nE8, WOERTLICH (unser Entscheid vom 18.09.2026)\n  Vorhanden: modell szene material prompt stimmung kombinierer zahl render.\n  Neu: import · kamera · tiefe · skizze · maske · variante · vergleich · export.\n  Begruendung: import und export sind die Raender des Ablaufs. kamera und tiefe tragen die\n  Geometrietreue — das ist der Kern der Arbeit. skizze und maske sind Schritt 5 und 6.\n  variante und vergleich machen aus einem Bildwerkzeug ein Entwurfswerkzeug.\n  Faellt etwas aus Zeitgruenden, dann vergleich zuerst.\nDazu E7: Vorschau an jedem Knoten, Ausfuehrung auf Knopfdruck, Ergebnis bleibt am Knoten\nstehen (das Verhalten von Figma Weave, nicht das Aussehen).\n\nWAS ZU TUN IST (nichts bauen — zeigen und sagen)\n\n  B1 DREI BILDSCHIRMFOTOS eures laufenden Editors, als PNG:\n     (a) ein Graph, in dem der aiimaging-Knoten mit seinen Vorgaengern verbunden ist\n         (z. B. modell → aiimaging → Ergebnis), ganz sichtbar;\n     (b) derselbe Knoten ausgewaehlt, mit seinem Inspektor/Seitenfeld;\n     (c) die Liste oder Palette der Knotenarten, die man hinzufuegen kann.\n     NUR ein synthetisches Projekt (z. B. euer Testkoerper) — keine Kunden-, Buero- oder\n     Projektnamen im Bild, keine Pfade mit Benutzernamen (REGEL 3). Pruefe jedes Bild\n     darauf, bevor es hinausgeht.\n  B2 STAND DER ACHT NEUEN KNOTEN (E8), je eine Zeile:\n     import / kamera / tiefe / skizze / maske / variante / vergleich / export →\n     gebaut (Datei) · begonnen · nicht begonnen · abgelehnt (Grund) · nie bei uns angekommen.\n  B3 E7 (Vorschau am Knoten, Ergebnis bleibt stehen): Wie weit ist das bei euch? Ein Satz.\n\nWAS ZURUECKKOMMEN SOLL\n  Die drei PNG nach auftraege/ergebnisse/auf-20260924-161-bilder/ in unserem Repo, und die\n  Antwort als auftraege/ergebnisse/auf-20260924-161.json (B2 als Tabelle, B3 ein Satz,\n  dazu je Bild ein Satz, was es zeigt). Ihr habt unser Repo als Quelle — committen und\n  pushen.\n\nWAS NICHT GETAN WERDEN SOLL\n  - Nichts bauen oder umbauen fuer diesen Auftrag. Es geht ums Zeigen und um den Stand.\n  - Keine echten Projektdaten, Namen oder Pfade mit Benutzernamen im Bild.\n  - Keine Bilder von anderen Anwendungen als eurem Editor.",
+  "erstellt": "2026-09-24T08:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nur synthetische Projekte in den Bildschirmfotos.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade (REGEL 3).",
+      "Nichts bauen — zeigen und Stand sagen."
+    ]
+  },
+  "rueckgabe": [
+    "B1 Drei PNG: Graph mit aiimaging-Knoten, derselbe Knoten im Inspektor, Palette der Knotenarten.",
+    "B2 Stand der acht Knoten aus E8, je eine Zeile.",
+    "B3 Stand von E7 (Vorschau am Knoten, Ergebnis bleibt), ein Satz."
+  ],
+  "rang": 10
+}

@@ -105,6 +105,15 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 · Die Knoten sichtbar machen
+
+* **Die Oberfläche mit den verbundenen Knoten gehört zu KosmoOrbit.** Dort ist Visbox ein
+  Knoten unter vielen. Wir haben um Bildschirmfotos gebeten und gefragt, wie weit die acht
+  neuen Knoten sind, die am 18.09. beschlossen wurden.
+* **Visbox bekommt eine eigene Knotenansicht** ihres festen Ablaufs: Modell, Tiefenbilder,
+  KI-Bild, Prüfung, mit Vorschau an jedem Kästchen und Einstellungen in verständlichen
+  Namen. Gezeichnet, noch nicht gebaut.
+
 ### 23.09.2026 (spät nachts) · Berichtigt: Der Handgriff trägt nicht
 
 * **Die Meldung darunter war zu früh.** Über drei Startwerte und ein zweites Gebäude

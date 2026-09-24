@@ -5663,6 +5663,13 @@ abfragen und ihre Animationen weglassen. Wer sie eingeschaltet hat, darf dadurch
 Auskunft verlieren — *eine Aussage, die nur in der Bewegung steckt, ist für diese Leute
 keine Aussage.*
 
+**Knotenansicht / Knoteneditor** — Eine Darstellung des Ablaufs als Kästchen (Knoten), die
+mit Linien verbunden sind: Jede Linie sagt, woher ein Kästchen seine Eingabe liest. Ein
+**Knoteneditor** lässt diese Linien auch selbst ziehen und Knoten hinzufügen — so einer ist
+der von KosmoOrbit. Die **Knotenansicht** von Visbox (entschieden am 24.09.2026, gezeichnet,
+nicht gebaut) zeigt nur die feste Kette von Visbox: Modell → Tiefenbilder → KI-Bild →
+Prüfung, mit Vorschau und Zustand an jedem Knoten.
+
 **Führungsregler (`true_cfg_scale`)** — Nicht jedes Bildmodell lässt sich über denselben
 Knopf führen. Beim Bearbeitungsmodell `qwen-image-edit-2511` heisst der Knopf, der wirklich
 wirkt, `true_cfg_scale`; der verbreitete Name `guidance_scale` ist dort ohne Wirkung. Der
@@ -5755,6 +5762,7 @@ Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus Sitzung 71: **Knotenansicht / Knoteneditor** |
 | 2026-09-23 | Ergaenzt aus Runde 12: **Führungsregler (`true_cfg_scale`)**, **Leer-Negativprompt**, **Guidance-destilliert (`guidance_embeds`)** |
 | 2026-09-23 | Ergaenzt aus Runde 11: **Zweite Tür**, **Freigabe-Abdruck**, **Buchprüfung (`FREIGABE_MIT_BUCH`)**, **Schrift mitliefern / registrieren** (mit CoreText), **PostScript-Name** (mit Namentabelle), **Variable Schrift** (mit Schriftschnitt), **TrueType**, **SHA-256**, **Ressource im App-Paket**, **Kreuzprobe** |
 | 2026-09-23 | Ergaenzt aus Runde 10: **Messschalter**, **Abstand zum Hintergrund (`ferne_abstand`)** |
