@@ -7468,6 +7468,15 @@ Bekannt und ausdrücklich nicht erledigt:
         Ursache: `WANDABSTAND_M` 10 m, gesetzt statt gemessen. Jetzt 3 m, alle drei ≈ 70 %,
         ab 12 m bitgleich, Schwelle unverändert (Protokoll 71 §13).
   - [ ] **local:** die drei Auto-Kameras am Gerät rendern und ansehen (`auf-20260924-169`).
+  - [x] **B161 an KosmoOrbit beantwortet** (`erg-20260924-b161-bildstrecke.md`): B1 Speicher-
+        Riegel gebaut, B3 überholt (Demohaus Weg A angenommen), B8 Puls gebaut; Sonne ab
+        Nord (war 180 Grad verdreht) mit Licht; Feldkarte hört in Kameras und Sonne hin
+        (Protokoll 71 §16).
+  - [ ] **local:** `auf-20260924-170` — Mindestspeicher, Stufe 2, Takt, Puls, Sonne am Bild.
+  - [ ] **cloud:** `auf-20260924-171` — komposition nicht senden, Puls lesen, Glas OPAQUE,
+        Pässe zu- oder absagen.
+  - [ ] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen (Option B,
+        Protokoll 71 §17); urteilt zuerst nicht mit, Messung am Heimrechner danach.
   - [ ] **Owner:** Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
         `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt
         einen Einbauauftrag an ui schreiben — oder erst nach der n1-Übernahme (E27)?

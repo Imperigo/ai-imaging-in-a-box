@@ -1,0 +1,50 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-170",
+  "art": "frage",
+  "beschreibung": "Ansage B161 (Speicher-Riegel, Sonne ab Nord mit Licht, Abholer-Puls, strengere Feldkarte) und Messungen: echter Mindestspeicher auf Stufe 3 je Modell, Stufe 2 mit ControlNet, Takt des Abholers, Puls in der echten Ablage, Sonne am Bild.",
+  "anweisung": "=== ANSAGE B161 UND FUENF MESSUNGEN (Grafikspeicher, Takt, Puls, Sonne) ===\n\nHintergrund: KosmoOrbit braucht fuer v0.1.5 ein echtes Bild vom echten Modell und hat\ngefragt, was bei uns fehlt (B161). Gebaut ist es; was nur an eurer Karte zu messen ist,\nsteht hier. Auftrag 169 (drei Auto-Kameras) bitte ZUERST, dieser danach.\n\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, bevor ihr zieht)\n\n  A1 SPEICHER-RIEGEL. tools/abholen.py fragt vor dem LADEN den freien Grafikspeicher\n     (nvidia-smi memory.free). Unter 4096 MiB wird nicht geladen: Der Auftrag bleibt\n     queued, der Satz «Wartet: Die Grafikkarte hat nur … MiB frei …» steht in message.\n     Haelt der Abholer seine eigenen Gewichte schon, gilt der Riegel nicht (sein Speicher).\n     nvidia-smi fehlt/antwortet nicht → keine Sperre (wie bisher).\n     --probe druckt neu eine Zeile «Grafikspeicher frei: … MiB (zum Laden mindestens 4096)».\n  A2 SPEICHERFEHLER IM LAUF: Status bleibt error wie bisher, NEU steht der Satz auch in\n     message, und das Modell wird danach verworfen (naechster Auftrag laedt neu).\n  A3 SONNE — ACHTUNG, 180 GRAD: Bestellungen von KosmoOrbit rechnen den Azimut jetzt AB\n     NORD im Uhrzeigersinn (so steht es in ihrem Vertrag). Bisher ab Sued. Jede bestellte\n     Sonne steht damit um 180 Grad anders als in euren bisherigen Laeufen — richtig jetzt.\n     Neu gehen render.sun.staerke/.kelvin/.winkelGrad bis an die Blender-Lampe (energy,\n     color, angle). Ohne Bestellung bleiben 2.0 und 3 Grad. Der Blender-Bericht traegt im\n     Block 'sonne' neu: staerke, winkel_grad, kelvin, farbe_linear, licht_bestellt.\n  A4 PULS: Jeder Durchgang (auch ein leerer) schreibt <ablage>/abholer-puls.json (nur\n     Zaehlungen und Zeitpunkt). Eine NEUE DATEI in eurer Brueckenablage — kein Auftrag,\n     wird von offene_auftraege nicht gesehen.\n  A5 STRENGER: fremde Schluessel in cameras[] oder render.sun halten einen Auftrag auf;\n     style.refs mit Inhalt wird abgewiesen. Unbekannter referenzpunkt → Auftrag unlesbar.\n\n\nTEIL B — MESSUNGEN (GPU)\n\n  B1 DER ECHTE MINDESTSPEICHER AUF STUFE 3. Die 4096 MiB sind aus 163/160 abgeleitet, nicht\n     gemessen. Bitte fuer z-image-turbo UND qwen-image-edit-2511: einen Fueller-Prozess\n     starten, der Grafikspeicher belegt, so dass FREI ungefaehr 8, 6, 4 und 3 GiB bleiben:\n\n       <Render-Python> -c \"import torch,time; x=torch.empty(int(<GiB>*2**30),dtype=torch.uint8,device='cuda'); time.sleep(3600)\" &\n\n     dann je Stufe EINEN Auftrag wie in 169 Teil C (Skript dort), aber mit\n     \"vis\": {\"backbone\": \"<modell>\"} und --hoechstens 1, und danach den Fueller beenden.\n     Achtung: Bei FREI < 4096 MiB muss der Auftrag jetzt WARTEN (A1) — genau das ist die\n     Probe fuer die 3 GiB. Fuer den Lauf darunter den Riegel NICHT abschalten; der Wert\n     kommt aus den Stufen darueber.\n\n  B2 STUFE 2 MIT CONTROLNET. Einmal z-image-turbo bei ca. 20 GiB frei (Fueller ca. 10 GiB):\n     Kommt «Expected all tensors to be on the same device» noch? (auf-123/131: offen und nie\n     nachgemessen.)\n\n  B3 DER TAKT. Wie laeuft der Abholer bei euch: als Dienst, per Cron oder von Hand — und\n     wie oft (Sekunden zwischen zwei Durchgaengen)? Die Frist fuer «steht» (heute 300 s\n     gesetzt) wird daraus abgeleitet.\n\n  B4 PULS. Nach dem Pull einmal tools/abholen.py gegen eure echte Brueckenablage (ohne\n     Auftrag reicht): Liegt danach abholer-puls.json dort, und was steht drin?\n\n  B5 SONNE AM BILD. Ein Auftrag wie in 169 Teil C, aber mit\n     \"render\": {..., \"sun\": {\"azimuth\": 90, \"elevation\": 20, \"staerke\": 6, \"kelvin\": 4900,\n                            \"winkelGrad\": 0.62}}\n     Im Ausgabeordner je Kamera beauty_.png ansehen: Kommt das Licht von OSTEN (die\n     Ostfassade hell, Schatten nach Westen)? Warm getoent? Und der Block 'sonne' aus\n     blender-report.json.\n\nNICHT TUN: den Riegel, die Frist oder die Konvention anfassen, auch nicht zur Probe; nichts\ncommitten ausser eurer Ergebnisdatei; keine Bilder ins Repo. Fueller-Prozesse am Ende\nbeenden. Laeuft etwas rot: STOPP, Ausgabe zurueck, nichts reparieren.\n",
+  "erstellt": "2026-09-24T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/auf169/bau.ifc"
+  },
+  "params": {
+    "mindest_frei_mib": 4096,
+    "puls_frist_s": 300,
+    "frei_stufen_gib": [
+      8,
+      6,
+      4,
+      3
+    ],
+    "modelle": [
+      "z-image-turbo",
+      "qwen-image-edit-2511"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: rund zehn Einzelauftraege (B1 acht, B2 einer, B5 einer), dazu Fueller-Prozesse.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur der synthetische Testbau (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "Fueller-Prozesse nach jeder Stufe beenden."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des ai-imaging-Klons.",
+    "B1: je Modell und Stufe (frei laut --probe): gewartet ja/nein mit message, sonst geraeteweg, Erfolg, Rechenzeit, Spitze belegt laut nvidia-smi waehrend des Laufs.",
+    "B2: geraeteweg und ob der Geraetekonflikt auftritt (Wortlaut).",
+    "B3: Betriebsart des Abholers und Takt in Sekunden.",
+    "B4: Inhalt von abholer-puls.json.",
+    "B5: Block 'sonne' aus blender-report.json und je Kamera ein Satz zum beauty_.png (Lichtrichtung, Farbe)."
+  ],
+  "rang": 2
+}

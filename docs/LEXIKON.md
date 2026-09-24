@@ -5872,12 +5872,46 @@ Gebäude zu klein im Bild stand und die eigene Rahmungsprüfung zwei von drei An
 Konstante `kameras.WANDABSTAND_M`. Für Innenräume gilt ein eigener, kleiner Wert
 (`raumkamera.WANDABSTAND_INNEN_M`, 0,30 m).
 
+**Abholer-Puls** — Eine kleine Datei (`abholer-puls.json`), die der Abholer nach **jedem**
+Durchgang in die Auftragsablage schreibt, auch wenn er nichts zu tun hatte: wann er zuletzt
+nachsah und wie viele Aufträge er dabei sah, rechnete oder liegen liess. Wozu: Ohne sie sah
+ein Abholer, der läuft und nichts zu tun hat, genau gleich aus wie einer, der gar nicht läuft.
+Aus dem Alter des letzten Pulses liest `/health` seit dem 24.09.2026 einen von fünf Zuständen
+(nie gesehen, arbeitet, wartet, läuft leer, steht). Siehe *Lebenszeichen gegen
+Fortschrittszeichen* — der Puls ist ein Lebenszeichen.
+
+**Farbtemperatur (Kelvin)** — Wie warm oder kalt ein Licht wirkt, als Zahl ausgedrückt: um
+2000 K rötlich wie Kerzenlicht, um 5000 K die Nachmittagssonne, um 6500 K neutrales
+Tageslicht, darüber bläulich. Die Zahl stammt aus der Physik glühender Körper (je heisser,
+desto bläulicher). Im Projekt kann eine Bestellung seit dem 24.09.2026 die Farbtemperatur der
+Sonne angeben (`render.sun.kelvin`); `aiimaging.sonne.kelvin_zu_farbe` rechnet daraus die
+Lichtfarbe für Blender, als Näherung.
+
+**Speicher-Riegel (Grafikspeicher)** — Eine Prüfung **vor** dem Laden des Bildmodells: Ist auf
+der Grafikkarte zu wenig Speicher frei (siehe *VRAM*), wird gar nicht erst geladen. Der
+Auftrag wartet in der Reihe, und sein Wartegrund steht dabei, statt dass der Lauf mitten im
+Rechnen abbricht. Seit dem 24.09.2026, Grenze 4096 MiB, vorläufig abgeleitet und noch nicht
+am Gerät gemessen (`abholer.MINDEST_FREI_MIB`).
+
+**Konvention (einer Himmelsrichtung)** — Die Abmachung, von wo aus ein Winkel gezählt wird.
+Beim *Azimut* gibt es zwei verbreitete: ab Norden im Uhrzeigersinn (Karten) oder ab Süden
+(Bauphysik). Wer die falsche annimmt, dreht die Sonne um 180 Grad — Vormittag wird
+Nachmittag. Im Projekt galt für Bestellungen aus KosmoOrbit bis zum 24.09.2026 die falsche;
+ihr Vertrag zählt ab Norden (`sonne.KOSMO_KONVENTION`).
+
+**Transmission (Glas im Renderer)** — Wie viel Licht ein Material **durch sich hindurch**
+lässt und dabei bricht, wie eine Glasscheibe. Nicht zu verwechseln mit dem *Alphakanal*:
+Alpha lässt einen Teil der Strahlen am Material vorbei, als wäre an der Stelle nichts.
+Trägt ein Glas beides (so kam es aus KosmoOrbit), laufen die meisten Strahlen ungebrochen
+durch — die Scheibe wirkt wie Luft. Befund vom 24.09.2026 zu B161.
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus B161: **Abholer-Puls**, **Farbtemperatur (Kelvin)**, **Speicher-Riegel**, **Konvention (einer Himmelsrichtung)**, **Transmission** |
 | 2026-09-24 | Ergaenzt aus der Kamera-Berichtigung: **Wandabstand (Mindestabstand der Aussenkamera)** |
 | 2026-09-24 | Ergaenzt aus den Antworten 163/164: **Render-Umgebung** |
 | 2026-09-24 | Ergaenzt aus der Recherche Knotensysteme: **App-Modus**, **Teilgraph**, **Render-Pass (AOV)**, **Variantenachse (Wedge)**, **Übernehmen (Bake)**, **Überbrücken (Bypass)**, **Credit**, **Abwesenheitsbefund** |

@@ -3,7 +3,7 @@
  "auftrag_id": "auf-20260921-133",
  "art": "frage",
  "worker": "cloud",
- "rang": 2,
+ "rang": 3,
  "erstellt": "2026-09-21T20:00:00Z",
  "params": {},
  "beschreibung": "Vertragsfrage: Vier Felder an der Kante KosmoDraw -> aiimaging sind beim Erzeuger nullbar und bei uns nicht — und derselbe Fall steht in unserer eigenen Kette. Drei moegliche Festlegungen, wir neigen zu C (Warnung in der Oberflaeche), aber es ist eine Festlegung fuer alle Lanes.",

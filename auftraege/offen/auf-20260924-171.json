@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260924-171",
+  "art": "frage",
+  "beschreibung": "B161, eure Haelfte: komposition (und himmel/belichtung/rauschschwelle/environment) nicht an /jobs senden, den Abholer-Puls in eurer Bruecke lesen, Glas als OPAQUE/Alpha 1 ausfuehren, Zusage oder Absage zum Paesse-Vorschlag. Antwort auf B161 im Ergebnisblatt erg-20260924-b161-bildstrecke.md.",
+  "anweisung": "=== B161: EURE HAELFTE — VIER PUNKTE, DAMIT DAS DEMOHAUS MIT VOREINSTELLUNG DURCHKOMMT ===\n\nUnsere Antwort auf euren Auftrag B161 liegt als Ergebnisblatt in unserem (oeffentlichen)\nRepo: auftraege/ergebnisse/erg-20260924-b161-bildstrecke.md (Stand-Zeile oben). Kurz: B1\ngebaut (Warten mit Grund in message), B3 ueberholt (Demohaus ueber Weg A wird angenommen,\nBeleg tests/test_b161_weg_a.py), B8 gebaut (Puls + Block 'abholer' in /health), dazu ein\nFehler, den ihr nicht gefragt habt: eure Sonne zaehlt ab Nord, wir rechneten ab Sued —\njede bestellte Sonne stand 180 Grad verdreht. Behoben.\n\nWas bei EUCH liegt — je Punkt bitte erledigt / abgelehnt mit Grund / nicht entscheidbar:\n\nK1 · KOMPOSITION NICHT AN /jobs SCHICKEN. Jede Render-Voreinstellung setzt `komposition`\n     (render-presets.ts), und wir weisen das Feld ab — also jeden Demohaus-Auftrag mit\n     Voreinstellung (gemessen: «praesentation» und «innenraum»). Sein Inhalt steht schon in\n     cameras[].fov und render.resolution, und eure Werte widersprechen euren Kameras\n     (praesentation 50 mm, Eingang fov 55 Grad = rund 35 mm). Ebenso `render.himmel`,\n     `render.belichtung`, `render.rauschschwelle` (Voreinstellung «innenraum») und\n     `render.environment` (Stimmungsinsel): angenommen werden sie bei uns nicht; im\n     gelieferten KI-Bild kaemen sie auch nicht an (unser Vorgabemodell nimmt kein\n     Eingangsbild, gemessen). Entweder nicht senden, oder als «nicht bedient» vor dem Klick\n     zeigen. ALTERNATIVE, falls ihr sie senden MUESST: sagt es, dann nehmen wir `komposition`\n     mit einer Warnung an («fov gewinnt, resolution setzt das Seitenverhaeltnis,\n     horizontlinie nicht bedient») — das waere eine Ausnahme von E75, die ihr entscheidet.\n\nK2 · DEN PULS IN EURER BRUECKE LESEN. Unser Abholer schreibt nach jedem Durchgang\n     <store>/abholer-puls.json {schema \"aiimaging.abholer-puls/v1\", zuletzt, zuletzt_epoch_s,\n     gesehen, verarbeitet, liegengelassen, fehler, waisen}. Unser /bruecke/health gibt daraus\n     einen Block `abholer` (Nachbar von `gpu`, NICHT in services, weil euer BridgeHealth dort\n     nur Wahrheitswerte kennt): {zustand: nie_gesehen|arbeitet|wartet|laeuft_leer|steht,\n     zuletzt, alter_s, frist_s, letzter_durchgang, grund}. Die Regel steht in\n     aiimaging.knotenweg.abholer_zustand. Vorschlag: eure kosmo_bridge /health liest dieselbe\n     Datei aus ihrem Store und gibt denselben Block aus; BridgeHealth bekommt `abholer`\n     optional. frist_s (300) ist gesetzt, bis die HomeStation ihren Takt gemeldet hat\n     (auf-170 B3) — nehmt alter_s, nicht die Frist, als Wahrheit.\n\nK3 · GLAS IN DER AUSFUHR ALS OPAQUE MIT ALPHA 1. Eure glb-Ausfuhr (derive/gltf.ts) schreibt\n     Glas mit alphaMode BLEND, Alpha 0.25 UND KHR_materials_transmission 1. Blender 4.2.1\n     macht daraus beides: rund 75 % der Strahlen laufen ungebrochen durch, als waere die\n     Scheibe Luft (gemessen). Richtig: Transmission 1, alphaMode OPAQUE, Alpha 1; eine\n     Brechzahl nur ueber KHR_materials_ior, wenn nicht 1.5. Kein neues Feld noetig (Zeile 39).\n\nK4 · PAESSE ZURUECK (Blatt -03): Zusage oder Absage zu unserem Vorschlag im Ergebnisblatt\n     §2 (render.passes als Bestellung, eigenes Ergebnisfeld `ebenen`, flache Dateinamen\n     wegen der Einsegment-Regel von get_artifact). Bei Zusage bauen wir unsere Seite.\n\nZur Kenntnis, kein Handlungsbedarf: Die sechs Blaetter auf-vis-20260917-01..-06 sind im\nErgebnisblatt §2 je beantwortet (-01 gebaut, -02/-04/-05 nicht vorgesehen, -03 Vorschlag,\n-06 ueberholt bestaetigt), mit dem Feld, das wir annehmen.\n",
+  "erstellt": "2026-09-24T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc IFC4 --raeume"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine Rechenlast; Vertrag und Code bei euch.",
+    "hinweise": [
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "K1: komposition u. a. nicht mehr gesendet (Commit) / abgelehnt mit Grund / Ausnahme gewuenscht.",
+    "K2: Puls in eurer /health gelesen (Commit) / abgelehnt mit Grund.",
+    "K3: Glas als OPAQUE/Alpha 1 (Commit) / abgelehnt mit Grund.",
+    "K4: Paesse-Vorschlag zugesagt (mit Feldnamen) / abgelehnt."
+  ],
+  "rang": 1
+}

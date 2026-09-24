@@ -105,6 +105,20 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (Nacht auf den 25.) · KosmoOrbit fragt, was für das erste echte Bild fehlt
+
+* **Beantwortet, Punkt für Punkt**, mit einem Ergebnisblatt für die KosmoOrbit-Seite.
+* **Ein Demohaus aus KosmoOrbit wird angenommen**, wenn drüben keine Render-Voreinstellung
+  gewählt ist. Mit Voreinstellung schickt KosmoOrbit ein Feld mit, das wir nicht lesen, und
+  der Auftrag wird abgewiesen. Das liegt jetzt als Auftrag bei ihnen.
+* **Ein alter Fehler gefunden:** Die bestellte Sonne stand um 180 Grad verdreht, weil die
+  beiden Seiten die Himmelsrichtung von verschiedenen Enden zählten. Behoben. Helligkeit
+  und Farbe der Sonne kommen jetzt auch an, allerdings nur im Blender-Bild, nicht im
+  KI-Bild.
+* **Neu:** Ist auf der Grafikkarte zu wenig Speicher frei, wartet der Auftrag mit Grund,
+  statt abzustürzen. Und der Abholer gibt ein Lebenszeichen, damit man sieht, ob er läuft.
+* **Offen:** Der Heim-PC misst am echten Gerät nach, KosmoOrbit baut seine Hälfte.
+
 ### 24.09.2026 (tief nachts) · Alle drei automatischen Kameras rendern wieder
 
 * **Die Ursache war eine gesetzte Zahl:** Die Kamera durfte der Fassade nie näher als 10 m
