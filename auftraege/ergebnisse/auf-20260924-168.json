@@ -1,0 +1,43 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-168",
+ "status": "ok",
+ "beendet": "2026-09-24T14:50:00Z",
+ "stand": "6cc77b2",
+ "geprueft": "Beide Klone sauber (git status leer), pull --ff-only, dann genau die vier Befehle. Nichts repariert, nichts committet, nichts installiert, tests/_snapshots/ unberuehrt, kein --update-golden.",
+ "kurzantwort": "Beide Lanes gruen: KosmoPublish tests_slow rc 0 (19 Tests OK), Wire-QA rc 0 PASS; KosmoPrepare run_tests rc 0 (1393 Tests OK), Wire-QA rc 0 PASS, 11/11 Werkzeuge beruehrt.",
+ "befunde": {
+  "KosmoPublish": {
+   "git_log_1": "b60f6d1 Plakat 01: 16 Gruppen mehr sind vier gewollte Huellen — Vergleichsstand nachgezogen",
+   "tests_slow": {
+    "rc": 0,
+    "ergebnis": "Ran 19 tests in 25.861s / OK (skipped=5)",
+    "letzte_zeile": "⚠ Deckblatt: der Projekttitel wurde auf 50 pt verkleinert, damit er den Blattrand einhaelt (nominell 56 pt)."
+   },
+   "wire_qa": {
+    "rc": 0,
+    "letzte_zeile": "WIRE-QA: PASS"
+   }
+  },
+  "KosmoPrepare": {
+   "git_log_1": "d9833c2 B164 P4 (2/2): die Knoten Pflichtenheft, Baugesetz, Bebauungsplan, Raumprogramm als Werkzeug",
+   "run_tests": {
+    "rc": 0,
+    "ergebnis": "Ran 1393 tests in 12.534s / OK (skipped=90)",
+    "letzte_zeile": "Dashboard geschrieben: <tmp> (4 Varianten, 5 Profile)"
+   },
+   "wire_qa": {
+    "interpreter": "KosmoPublish-.venv, mcp 1.27.2 (< 2)",
+    "rc": 0,
+    "letzte_zeile": "WIRE-QA: PASS",
+    "beruehrt": "11/11"
+   }
+  },
+  "rot": "keine"
+ },
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine"
+ },
+ "fehler": null
+}
