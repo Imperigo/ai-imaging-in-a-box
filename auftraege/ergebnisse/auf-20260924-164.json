@@ -1,0 +1,54 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-164",
+ "status": "ok",
+ "beendet": "2026-09-24T12:30:00Z",
+ "stand": "bdaa23d",
+ "geprueft": "A gelesen vor dem Ziehen. B mit synthetischer Mappe (make_test_ifc, lege_an) und dem Server auf 127.0.0.1:8731, Auftraege per curl wie die Knotenansicht; Abholer OHNE --fremde-freigabe. C mit gebauter Knotenansicht (npm install + build, Node v22.22.1) in Chromium headless (Playwright), echte Mausbedienung. Nichts am Code geaendert.",
+ "kurzantwort": "Ja: Ein Bild entsteht, und es kommt ueber /bruecke zurueck — per curl (1024 x 640, 779 686 B, image/png ueber /bruecke/jobs/<id>/artifacts/s.png) UND in der Knotenansicht (Bild am Render-Knoten, naturalWidth 1600, Status FERTIG). Die menschliche Freigabe aus der Knotenansicht genuegt ohne --fremde-freigabe. lieferstatus des curl-Auftrags aber 'fehlgeschlagen': 1 von 3 Kameras, die zwei anderen absichtlich nicht gerendert (Rahmung 63.9 % < 65 %).",
+ "befunde": {
+  "A": "A1 und A2 gelesen, vor dem Ziehen.",
+  "B3_antwort_jobs": {
+   "job_id": "vis-1790250392-43d0cb",
+   "status": "awaiting_approval",
+   "idle_window_only": true,
+   "requested_engine": "ki",
+   "requested_style": "none",
+   "created_at": "2026-09-24T11:46:32+00:00",
+   "message": "Wartet auf Freigabe — erst ein Klick auf «Freigeben» schickt den Auftrag an die Grafikkarte."
+  },
+  "B3_nach_approve": "status queued, Feld visbox_freigabe {am, durch: 'Klick in der Knotenansicht'}",
+  "B4_probe": "«vis-…  — frei» und «Fremde Freigabe gilt: NEIN — gerechnet wird nur, was ein Mensch freigegeben hat»",
+  "B4_lauf": {
+   "status": "verarbeitet — 1 Bild(er) geschrieben",
+   "dauer_abholer_s": 61,
+   "timings": {
+    "s": 46.5,
+    "sSE": 8.6,
+    "nNW": 4.6,
+    "gesamt": 59.8,
+    "stillstand_s": 16.11058376800065
+   }
+  },
+  "B4_eigener_fehler": "Erster Versuch mit dem System-python3 (wie woertlich im Auftrag): Auftrag endete mit status error, «RenderError: torch/diffusers nicht verfuegbar (No module named 'torch')» — erst beim Rendern, NACHDEM die Probe «frei» gemeldet hatte. Der Dienst kosmo-abholer laeuft mit .venv-render; mit diesem Python ein neuer Auftrag, der durchlief. Hinweis: die Probe prueft nicht, ob die Render-Umgebung da ist — ein Satz dazu in der Probe wuerde den Fehlstart vorher zeigen.",
+  "B5": {
+   "status": "done",
+   "lieferstatus": "fehlgeschlagen",
+   "lieferstatus_grund": "1 von 3 Kameras geliefert, 1 von 3 Bildern — sSE fehlgeschlagen: NICHT GERENDERT (Rahmung), sSE: Das Bauwerk fuellt 63.9% der Bildbreite, gemessen noetig sind 65%; nNW fehlgeschlagen: NICHT GERENDERT (Rahmung), nNW: Das Bauwerk fuellt 63.9% der Bildbreite, gemessen noetig sind 65%",
+   "bilder": 1,
+   "artefakt_ueber_bruecke": "HTTP 200, 779 686 B, image/png, 1024 x 640",
+   "urteil": "Kette traegt: Server nimmt an, Freigabe per Knopf genuegt, der Abholer rechnet, das Bild (Holzfassade im Abendlicht, wie bestellt) kommt ueber /bruecke zurueck — der Lieferstatus ist wegen zweier absichtlich nicht gerenderter Kameras 'fehlgeschlagen', obwohl das eine Bild da ist."
+  },
+  "C": {
+   "gebaut": "npm install (172 Pakete) + npm run build ok (Warnung Chunk > 500 kB)",
+   "ablauf": "GRAPH-Insel oeffnen → «Graph erstellen» → Palette Modell, Prompt, Render → Ports Modell.szene→Render.szene und Prompt.prompt→Render.prompt per Maus gezogen (2 Kanten) → Prompt getippt → «Ausfuehren» → Status «WARTET AUF FREIGABE» → «Freigeben» → «WARTET — NICHT ABGEHOLT (GRUND UNBEKANNT)» → Abholer (1 Bild, 111 s) → «RENDERT» → «FERTIG», Bild am Render-Knoten (naturalWidth 1600, Aufloesung-Vorgabe 1600 x 1000, Bildwerkzeug Z-Image Turbo). 0 Seitenfehler.",
+   "beobachtung": "Solange kein Abholer laeuft, sagt der Knoten «NICHT ABGEHOLT (GRUND UNBEKANNT)» — der Grund waere hier bekannt (keiner holt ab) und koennte so heissen."
+  }
+ },
+ "bemerkungen": "Server mit frei gewaehltem Kennwort gestartet (liegt nur im Arbeitsordner, nicht in dieser Antwort); approval_token nicht wiedergegeben.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu": "RTX 5090, Leistungsgrenze 400 W"
+ },
+ "fehler": null
+}

@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-163",
+ "status": "ok",
+ "beendet": "2026-09-24T13:20:00Z",
+ "stand": "bdaa23d",
+ "geprueft": "A gelesen vor dem Ziehen (Ladeweg-Aenderung im Code: render.py Z. 1263, «Groesster Einzelteil nach der Platte»). B1 ueber eine frische Mappe, B2 ueber den eigenen Server (oberflaeche/server.py, Testmappe) und tools/abholen.py mit der Render-Umgebung — beides reine Testauftraege, keine KosmoOrbit-Bestellung.",
+ "kurzantwort": "Behoben: qwen-image-edit-2511 laeuft auf beiden Wegen durch, jetzt auf Stufe 3 (cuda+schichtauslagerung). B1 Mappe: status ok, Renderknoten 130.6 s fuer 20 Schritte, Fuehrung angekommen. B2 Abholer ohne vis.backbone: 1 Bild, lieferstatus geliefert, 349.3 s je Bild.",
+ "befunde": {
+  "A": "A1–A4 gelesen, vor dem Ziehen.",
+  "B3_sprachmodell": "Vor B1 lag qwen2.5:7b (7.5 GB, nicht von mir geladen) auf der Karte — per Ollama keep_alive 0 entladen, danach 667 MiB belegt. Vor B2 lag nichts auf der Karte.",
+  "B1": {
+   "status": "ok",
+   "geraeteweg": "cuda+schichtauslagerung",
+   "bedarfssatz_woertlich": "Entschieden an Schaetzung aus der Parameterzahl (Registry): 49152 MiB x 1.25 = 61440 MiB verlangt, 30935 MiB frei. Groesster Einzelteil nach der Platte: 38968 MiB (die Schaetzung sagte 24576 MiB).",
+   "dauer_renderknoten_s": 130.6,
+   "dauer_ganzer_lauf_s": 140.3,
+   "schritte_gerechnet": 20,
+   "spitzenlast": "140.1 W, 2 403 MiB (Sekundentakt)",
+   "fuehrung_regler_angekommen": "true (parameter.fuehrung_regler_angekommen am Renderknoten); fuehrung_regler true_cfg_scale 4.0, negativ_prompt_karte ' '"
+  },
+  "B2": {
+   "weg": "Szene ohne vis.backbone, eine Kamera (s, aus kosmo_szene.kamera_zu_spec), 512 x 512, ueber /bruecke/jobs gestellt, per Knopf freigegeben, tools/abholen.py --hoechstens 1 mit .venv-render",
+   "status": "verarbeitet — 1 Bild(er) geschrieben",
+   "dauer_je_bild_s": 349.3,
+   "stillstand_s": 126.0,
+   "lieferstatus": "geliefert",
+   "geraeteweg": "cuda+schichtauslagerung",
+   "spitzenlast": "146.7 W, 2 525 MiB",
+   "welches_modell": "Das Ergebnis der Bruecke nennt KEIN Modell. Belegt ueber den Code: fehlt vis.backbone, setzt kosmo_szene.py Z. 1219 «qwen» ein; dazu passen Stufe 3 und die Laufzeit — z-image-turbo laeuft ganz auf der Karte."
+  },
+  "C": "Das Brueckenergebnis (render-result.json) traegt weder das gerechnete Modell noch fuehrung_regler_angekommen — fuer KosmoOrbit ist damit nicht sichtbar, ob mit Fuehrung und mit welchem Modell gerechnet wurde. Ein Feld dafuer im Ergebnis wuerde reichen."
+ },
+ "bemerkungen": "Der Abholer braucht die Render-Umgebung (.venv-render); mit dem System-python3 scheitert ein Auftrag erst beim Rendern, obwohl die Probe ihn «frei» nennt (siehe auf-164).",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu": "RTX 5090, Leistungsgrenze 400 W"
+ },
+ "fehler": null
+}
