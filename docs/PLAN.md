@@ -7461,7 +7461,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Brücken-Schnittstelle auf unserem Server (`/bruecke/…`, `aiimaging.knotenweg`);
         Aufträge warten auf menschliche Freigabe (Protokoll 71 §7).
   - [x] Knopf «Knotenansicht» auf der Visbox-Seite.
-  - [ ] **local:** ein echtes Bild über diesen Weg (`auf-20260924-164`).
+  - [x] **local:** ein echtes Bild über diesen Weg (`auf-20260924-164`) — belegt 24.09.,
+        Bild am Render-Knoten.
+  - [x] Probe sagt, ob die Render-Umgebung da ist (`render.umgebung_da`, Befund 164 B4).
+  - [ ] **Kern:** Auto-Kameras (Schrägansichten) bleiben unter der Rahmung (63,9 % < 65 %) —
+        Ursache klären, Schwelle nicht senken.
+  - [ ] **cloud:** F7 (Feld für das gerechnete Modell im render-result), F6 dringlicher.
   - [ ] Jeden Knoten einzeln mit dem Owner durchgehen (vorgemerkt: «1 Bauteile» am Modell-Knoten).
     - [x] Render-Knoten, Vorlauf: Recherche Knotensysteme (Weave, 23 KI-Werkzeuge, 15
           Render-Familien) → `docs/RECHERCHE_KNOTENSYSTEME_2026-09-24.md`.

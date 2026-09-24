@@ -105,6 +105,16 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (nachts) · Das erste Bild über die Knotenansicht
+
+* **Die HomeStation hat es gemacht:** Knoten verbunden, «Ausführen», «Freigeben» — das Bild
+  erscheint am Render-Knoten. Der ganze Weg vom Klick bis zum Bild läuft.
+* **Das zweite Bildmodell rechnet jetzt durch**, mit Führung durch den Prompt — aber
+  langsam (knapp 6 Minuten je Bild gegen knapp eine mit dem Vorgabemodell).
+* **Ein neuer Befund:** Von drei automatischen Kameras wurden zwei nicht gerendert — unsere
+  eigene Prüfung fand das Gebäude zu klein im Bild. Das ist jetzt ein offener Posten.
+* **Behoben:** Die Probe sagt jetzt vorher, ob der Rechner rechnen kann.
+
 ### 24.09.2026 (spät) · Was andere Knotensysteme vormachen — Vorlauf für den Render-Knoten
 
 * **Recherchiert:** Figma Weave (alle Hilfe-Artikel), 23 KI-Knotenwerkzeuge, 15

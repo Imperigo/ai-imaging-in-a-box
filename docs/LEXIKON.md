@@ -5856,12 +5856,19 @@ der Aufwand keine Gebühr, sondern Rechenzeit auf der HomeStation.
 Suche, die sie stützt, und wird darum so gekennzeichnet. Im Projekt: «Kein Werkzeug prüft
 das Bild gegen die Geometrie» (Recherche vom 24.09.2026).
 
+**Render-Umgebung** — Die eigene Python-Umgebung (siehe *venv*) auf der HomeStation, in der
+die grossen Rechenpakete für das Bildmodell liegen (`torch`, `diffusers`). Das gewöhnliche
+Python des Rechners hat sie nicht. Startet man den Abholer von Hand mit dem falschen Python,
+nimmt er Aufträge an und scheitert erst beim Rendern. Seit dem 24.09.2026 sagt die Probe
+(`tools/abholen.py --probe`) vorher, ob die Render-Umgebung da ist (`render.umgebung_da`).
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus den Antworten 163/164: **Render-Umgebung** |
 | 2026-09-24 | Ergaenzt aus der Recherche Knotensysteme: **App-Modus**, **Teilgraph**, **Render-Pass (AOV)**, **Variantenachse (Wedge)**, **Übernehmen (Bake)**, **Überbrücken (Bypass)**, **Credit**, **Abwesenheitsbefund** |
 | 2026-09-24 | Ergaenzt aus dem Knotenweg: **Vorsilbe eines Wegs**, **Formular-Upload (multipart/form-data)**, **Freigabe-Marke** |
 | 2026-09-24 | Ergaenzt aus der Übernahme des Vis-Werkzeugs (E26): **Stellvertreter**, **Wörtliche Kopie mit Herkunft**, **npm und Arbeitsbereich**, **Sperrdatei**, **Bau (Build)**, **Vite**, **Vitest**, **zod**, **woff2** |

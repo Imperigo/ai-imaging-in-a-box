@@ -739,6 +739,46 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
 # Die Naht zum Modell
 # --------------------------------------------------------------------------------------
 
+#: Was die Bildmodell-Stufe zum Rechnen importiert. :func:`umgebung_da` fragt genau diese.
+RENDER_PAKETE = ("torch", "diffusers")
+
+
+def umgebung_da(*, finde=None) -> dict:
+    """Kann **dieser** Python die Bildmodell-Stufe rechnen? — ohne etwas zu importieren.
+
+    Der Befund, aus dem das entstand (`auf-20260924-164`, B4): Die HomeStation startete den
+    Abholer mit dem System-Python. Die Probe meldete den Auftrag «frei», und erst beim
+    Rendern kam «torch/diffusers nicht verfügbar» — der Auftrag endete mit Fehler. Der
+    Dienst läuft mit einer eigenen Render-Umgebung; ein Aufruf von Hand mit dem falschen
+    Python fällt erst auf, wenn es zu spät ist.
+
+    Gefragt wird mit ``importlib.util.find_spec``: Es sagt, ob ein Paket **gefunden**
+    würde, ohne es zu laden. ``torch`` zu importieren kostete Sekunden und Speicher — für
+    eine Probe, die nur wissen will, ob es da ist, der falsche Preis.
+
+    Returns:
+        ``{"da": bool, "fehlend": tuple[str, ...], "satz": str}``
+    """
+    import importlib.util
+
+    finde = finde or importlib.util.find_spec
+    fehlend = []
+    for name in RENDER_PAKETE:
+        try:
+            gefunden = finde(name) is not None
+        except (ImportError, ValueError):
+            gefunden = False
+        if not gefunden:
+            fehlend.append(name)
+    if not fehlend:
+        return {"da": True, "fehlend": (), "satz": "da (" + ", ".join(RENDER_PAKETE) + ")"}
+    return {"da": False, "fehlend": tuple(fehlend),
+            "satz": (f"FEHLT — {', '.join(fehlend)} mit diesem Python nicht auffindbar. "
+                     f"Ein Auftrag würde angenommen und scheiterte erst beim Rendern. Den "
+                     f"Abholer mit der Render-Umgebung starten (der, mit der der Dienst "
+                     f"läuft).")}
+
+
 def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
     """Ein Bildmodell laden — die einzige Stelle, die ``torch`` und ``diffusers`` kennt.
 

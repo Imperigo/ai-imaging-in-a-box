@@ -397,6 +397,10 @@ def main(argv=None) -> int:
         print(f"Zwischenspeicher: {ziel.name} ({len(list(ziel.glob('*.json')))} Eintraege)")
 
     if a.probe:
+        # DIE RENDER-UMGEBUNG ZUERST (auf-20260924-164, B4): Die Probe meldete «frei», und
+        # der Auftrag scheiterte erst beim Rendern, weil dieser Python kein torch hatte.
+        from aiimaging import render as _render
+        print(f"Render-Umgebung: {_render.umgebung_da()['satz']}")
         for name, pfad, quelle in ablagen:
             offen = quelle.offene_auftraege(pfad)
             print(f"Offene Auftraege [{name}]: {len(offen)}")
