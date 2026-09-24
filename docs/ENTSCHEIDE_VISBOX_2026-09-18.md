@@ -473,7 +473,7 @@ Knoten» sei, und drei Wege zur Wahl (KosmoOrbit zeigen · Visbox eine eigene ge
 beides): *«3.»* — beides.
 
 * **Die Trennung bleibt.** Der Knoteneditor von KosmoOrbit bleibt dort, und Visbox bleibt
-  dort ein Knoten. Beauftragt: `auftraege/offen/auf-20260924-161.json` (ui) —
+  dort ein Knoten. Beauftragt: `auftraege/offen/auf-20260924-162.json` (ui) —
   Bildschirmfotos und der Stand der acht Knoten aus E8.
 * **Neu:** Auch die Fläche von Visbox zeigt ihre eigene Kette als verbundene Knoten — nicht
   die achtzehn von KosmoOrbit, sondern die vier (bzw. mit Skizze sieben), die `kette`
