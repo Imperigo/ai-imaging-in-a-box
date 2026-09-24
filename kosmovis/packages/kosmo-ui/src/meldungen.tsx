@@ -258,7 +258,7 @@ const TON_FARBE: Record<Meldung['ton'], string> = {
 
 /** Höchstens so viele volle Meldungskarten gleichzeitig — P-TOASTDECKEL
  * (`docs/UI-2026-08-27-B72-MELDUNG-UEBER-FENSTER.md` §3a, gemessen im
- * Browser am unveränderten TKB): der Host wächst je Toast um exakt +67,2px
+ * Browser am unveränderten Testobjekt Lichthof): der Host wächst je Toast um exakt +67,2px
  * nach oben (`bottom:160px` bleibt fix, `.k-meldungen-host` unten) — ab dem
  * DRITTEN gleichzeitig stehenden Toast erreicht der Stapel die «Ausführen»-
  * Knöpfe, die ihn selbst ausgelöst haben. Ursache ist die Stapelgeometrie

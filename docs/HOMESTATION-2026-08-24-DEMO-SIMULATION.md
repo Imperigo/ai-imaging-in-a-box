@@ -30,7 +30,7 @@ Einstellungen … Nicht die Bridge neustarten — den Token pruefen.»
 
 | # | Vision | 20.08. | 24.08. | Was sich geaendert hat |
 |---|---|---|---|---|
-| 1 | Modell laden | GEHT | **GEHT** | Beispielprojekt «TKB Bibliothek Hoenggerberg» statt Demohaus Kubus; Modell-Knoten meldet «Szene: 39 Bauteile (GLB)» |
+| 1 | Modell laden | GEHT | **GEHT** | Beispielprojekt «Testobjekt Lichthof» statt Demohaus Kubus; Modell-Knoten meldet «Szene: 39 Bauteile (GLB)» |
 | 2 | Uebersetzen | TEIL | **TEIL** | Plan mit Raumnamen und Bemassung (28.25 x 14.00 m); an 12 Raeumen steht ein ⚠ |
 | 3 | KosmoVis oeffnen | GEHT | **GEHT** | ueber «…» → STATIONEN: Prepare · Vis · Publish |
 | 4 | Preset (Kameras, Stimmung) | TEIL | **TEIL+** | Auto-Kamera nennt jetzt **drei** Standpunkte und sagt beim dritten selbst, dass er nicht geht: «Innenraum — abgeleitet, ueber diesen Weg nicht bestellbar (braucht IFC)» |
@@ -261,7 +261,7 @@ Das ist der Fund dieses Laufs, und er erklaert rueckwirkend alles, was davor une
 
 | Beobachtung | Messung |
 |---|---|
-| Nach «Zur Zentrale» aus der Vis-Station | Startseite («GUTEN MORGEN», «Beispielprojekt laden — TKB Bibliothek Hoenggerberg», «Neu hier?») **und** Vis-Station mit allen vier Knoten stehen gleichzeitig im Bild |
+| Nach «Zur Zentrale» aus der Vis-Station | Startseite («GUTEN MORGEN», «Beispielprojekt laden — Testobjekt Lichthof», «Neu hier?») **und** Vis-Station mit allen vier Knoten stehen gleichzeitig im Bild |
 | `elementFromPoint` an 10 verteilten Punkten | **10 von 10** liefern `HTML` — auch (611,31) und (300,645) |
 | `elementsFromPoint(31,645)` | Stapel beginnt mit `HTML`, darunter erst `BUTTON.isl-pill` |
 | Knopfzustand an derselben Stelle | `pointer-events: auto`, `opacity: 1`, `visibility: visible`, `getBoundingClientRect` = (14, 600.5, 34, 88) |

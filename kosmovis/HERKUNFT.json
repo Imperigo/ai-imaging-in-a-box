@@ -205,7 +205,12 @@
     "packages/kosmo-ui/tsconfig.json": "4277908660594ffe72545e017d525b331ec7c15bb7ac7538d07d1011e7b0c2ac",
     "tsconfig.base.json": "4a84ae266c5ee08dd584a7969e0f85c111287dd7b9531f38da7d4bf9fa337969"
   },
-  "geaendert": {},
+  "geaendert": {
+    "packages/kosmo-contracts/test/contracts.test.ts": "Regel 3 (24.09.2026): realer Projektname entfernt, «Testobjekt Lichthof» wie im Original (Architektur-Cosmos, Umbenennung vom selben Tag). Bei der nächsten Übernahme vom umbenannten Commit wieder wörtlich.",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "Regel 3 (24.09.2026): realer Projektname entfernt, «Testobjekt Lichthof» wie im Original (Architektur-Cosmos, Umbenennung vom selben Tag). Bei der nächsten Übernahme vom umbenannten Commit wieder wörtlich.",
+    "packages/kosmo-ui/src/meldungen.tsx": "Regel 3 (24.09.2026): realer Projektname entfernt, «Testobjekt Lichthof» wie im Original (Architektur-Cosmos, Umbenennung vom selben Tag). Bei der nächsten Übernahme vom umbenannten Commit wieder wörtlich.",
+    "packages/kosmo-ui/test/meldungen-stapel-deckel.test.tsx": "Regel 3 (24.09.2026): realer Projektname entfernt, «Testobjekt Lichthof» wie im Original (Architektur-Cosmos, Umbenennung vom selben Tag). Bei der nächsten Übernahme vom umbenannten Commit wieder wörtlich."
+  },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter.",
     "packages/kosmo-kernel/package.json": "Nur zod als Abhängigkeit (Original: Architekturkern mit clipper2-ts, earcut, suncalc).",

@@ -11,7 +11,7 @@ import { KMeldungen, melde } from '../src/meldungen';
 /**
  * P-TOASTDECKEL — «die Meldung deckt den Knopf zu, der sie ausgelöst hat»
  * (`docs/UI-2026-08-27-B72-MELDUNG-UEBER-FENSTER.md` §3a). Gemessen im
- * Browser, unveränderter TKB, «Ausführen» mehrmals gedrückt: der Host wächst
+ * Browser, unverändertes Testobjekt Lichthof, «Ausführen» mehrmals gedrückt: der Host wächst
  * je Toast um genau +67,2 px nach oben (`bottom:160px` bleibt fix,
  * `aura.css:3096`), Unterkante bleibt bei 740. Ab dem DRITTEN gleichzeitig
  * stehenden Toast erreicht der Stapel die Ausführen-Knöpfe, die ihn selbst

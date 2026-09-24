@@ -284,7 +284,7 @@ function istNurResearchBackbone(backbone: string | undefined): boolean {
  * `NodeCanvas.tsx`/`austausch.tsx` (beide abonnieren `revision`, laufen also
  * bei JEDEM Befehl irgendwo in der App neu, solange KosmoVis offen ist) UND
  * ein zweites Mal bei jedem `laeufe`-Poll-Tick, OHNE dass sich die Geometrie
- * geändert hätte. Gemessen am mitgelieferten TKB-Referenzprojekt (7
+ * geändert hätte. Gemessen am mitgelieferten Referenzprojekt «Testobjekt Lichthof» (7
  * Geschosse, 32 Wände, 139 Entities): `deriveAll` kostet dort **~18 ms
  * MEDIAN** je invalidiertem Aufruf (Wand-Gehrung `miterWallEnds` scannt für
  * JEDE Wand ALLE anderen Wände des Docs — O(Wandzahl) je Wand). An einem
@@ -294,7 +294,7 @@ function istNurResearchBackbone(backbone: string | undefined): boolean {
  * offen ist, wäre keine Reparatur, sondern eine neue, versteckte Bremse
  * (Auflage: «Eine Reparatur, die die Oberfläche zäh macht, ist keine»). Die
  * Kind-Zählung unten bleibt dagegen bei **< 0.02 ms** selbst am
- * TKB-Referenzprojekt (reines `Map`-Durchlaufen, keine Extrusion, keine
+ * Referenzprojekt «Testobjekt Lichthof» (reines `Map`-Durchlaufen, keine Extrusion, keine
  * Gehrungsrechnung) — kein Memo-Cache nötig, die billige Zählung ist schon
  * schnell genug, dass ein zusätzlicher Cache nur Komplexität ohne
  * messbaren Nutzen wäre.

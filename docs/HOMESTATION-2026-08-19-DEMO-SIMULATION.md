@@ -29,7 +29,7 @@ Grundriss, eine Einrichtung, die live misst statt zu behaupten.
 
 | # | Vision | Stand | Belegt durch |
 |---|---|---|---|
-| 1 | Modell laden | **GEHT** | «Beispielprojekt TKB Bibliothek Hönggerberg» lädt in ~5 s |
+| 1 | Modell laden | **GEHT** | «Beispielprojekt Testobjekt Lichthof» lädt in ~5 s |
 | 2 | Übersetzen (Ebenen, Klassen, Materialien) | **TEIL** | Räume, Beschriftung, Möblierung, Masskette 28.25 m; Knoten «Material-Bausteine» vorhanden, Durchgriff ungeprüft |
 | 3 | KosmoVis öffnen | **GEHT** | Untermenü oben links: **Prepare · Vis · Publish** |
 | 4 | Preset (Kameras, Stimmung, Stil) | **TEIL** | `Auto-Kamera`, `Stimmung`, `Kamera vorschlagen`, `Palette` da; HDRI/Renderstil nicht gefunden |

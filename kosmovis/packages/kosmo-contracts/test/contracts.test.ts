@@ -797,8 +797,8 @@ describe('kosmo.project/v1', () => {
       // mehr) — dieser Test baute vorher ein Manifest ohne `schema` und
       // profitierte unbemerkt vom (falschen) Lese-Default. Befund im Bericht.
       schema: 'kosmo.project/v1',
-      id: 'tkb-hoenggerberg',
-      name: 'Bibliothek Hönggerberg',
+      id: 'testobjekt-lichthof',
+      name: 'Testobjekt Lichthof',
       created_at: '2026-07-02T08:00:00Z',
       updated_at: '2026-07-02T08:00:00Z',
     });
@@ -1178,7 +1178,7 @@ describe('kosmodev.workorder/v1 (Block 2 / AB1)', () => {
   it('parst eine Workorder und füllt das Schema-Literal als Default', async () => {
     const { Workorder } = await import('../src');
     const wo = Workorder.parse({
-      projekt: 'TKB Bibliothek Hönggerberg',
+      projekt: 'Testobjekt Lichthof',
       erzeugt_um: '2026-07-07T09:05:00Z',
       auftraege: [auftrag, { ...auftrag, id: 'auftrag-abc123-x2', quelle: 'kosmo', ort: 'Werkzeugleiste' }],
     });

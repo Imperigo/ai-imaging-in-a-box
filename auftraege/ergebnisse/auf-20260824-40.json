@@ -31,7 +31,7 @@
       "teil_2_uebernahme_frage": {
         "urteil": "NICHT GEBAUT — offener ENTSCHEID, kein Versaeumnis.",
         "befund": "Aus der Vis-Station heraus gibt es weiterhin keinen direkten Weg zu Geometrie. Der Knopf 'Beispielprojekt laden' navigiert nach dem Laden fest nach der Design-Station, nie in die Vis-Station.",
-        "selbst_nachgemessen": "apps/kosmo-orbit/src/App.tsx:1690-1694 — onClick ruft loadTkbDemo() gefolgt von gehZu('design')",
+        "selbst_nachgemessen": "apps/kosmo-orbit/src/App.tsx:1690-1694 — onClick ruft loadLichthofDemo() gefolgt von gehZu('design')",
         "entscheid_noetig": "Soll gehZu('vis') kuenftig automatisch das zuletzt aktive Projekt mitfuehren? Kosten laut eigener Pruefung: eine geaenderte Navigationsfunktion, gegen rund 90 E2E-Fundstellen zu pruefen, die den heutigen Zwei-Schritt-Weg (Startseite -> Palette -> zurueck) voraussetzen. Das ist eine Owner-Entscheidung, die wir nicht ohne Freigabe treffen.",
         "nachtrag_03_09_2026": {
           "urteil": "GEBAUT — der Entscheid ist am 03.09.2026 gefallen und noch am selben Tag umgesetzt. Der Owner hat GEGEN unsere eigene Empfehlung entschieden: 'Ja, mitfuehren.' ROADMAP-Eintrag 1336.",
