@@ -1151,7 +1151,7 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     """
     leer = {"rho_maske": None, "kante": None, "kantenanteil": None,
             "himmel": None, "paarurteil": None, "soll_durchsichtig": None,
-            "maske_auf_hintergrund": None, "sprungordnung": None}
+            "maske_auf_hintergrund": None}
     if maske is None or breite is None:
         return leer
 
@@ -1202,20 +1202,17 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     # verrutschter Streifen mit +0,9873. Wer die Zahl nicht kennt, liest rho als Aussage
     # ueber das Bauwerk.
     auf_hintergrund = geometrie_qa.maske_auf_hintergrund(list(soll), maske)
-    # DIE ORDNUNG AN DEN TIEFENSPRÜNGEN (24.09.2026, Protokoll 71 §17) — die Messung für
-    # saubere Bilder mit erfundenem Boden. Sie URTEILT NICHT MIT: Score, `bestanden` und
-    # die zwei Tore bleiben, bis die HomeStation gemessen hat, ob sie Ja- und Nein-Bilder
-    # trennt (auf-20260924-172). Ohne Horizontzeile zählt nur die Oberkante — die
-    # Kamera ist hier nicht bekannt, und unter dem Horizont darf Boden stehen.
-    try:
-        sprung = geometrie_qa.sprungordnung(list(soll), list(roh), breite=breite,
-                                            polaritaet=zeichen)
-    except geometrie_qa.QaError as fehler:
-        sprung = {"anteil": None, "gemessen": False, "warnungen": [str(fehler)]}
+    # HIER HING VOM 24.09.2026 MITTAGS BIS ABENDS `geometrie_qa.sprungordnung`, und sie
+    # ist wieder heraus — mit dem Beleg der HomeStation (auf-20260924-172): An echten
+    # Bildern sortiert sie VERKEHRT. Das einzige Nein-Bild (die «Gasse») lag mit 0,705
+    # über jedem Ja-Bild (0,094 bis 0,657), und eine graue Fläche bekam gegen das
+    # Testbau-Soll 1,000 — so viel wie das Blender-Schönbild. Dieselbe Regel wie bei R2
+    # darunter: Eine angezeigte Zahl, die schlechtere Bilder höher stellt, führt den
+    # Menschen in die Irre, der das Urteil liest. Die Funktion bleibt in `geometrie_qa`,
+    # mit dem Befund im Docstring.
     return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil, "himmel": himmel,
             "soll_durchsichtig": durchsichtig,
             "maske_auf_hintergrund": auf_hintergrund,
-            "sprungordnung": sprung,
             "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil,
                                                   himmel_ergebnis=himmel)}
 

@@ -164,3 +164,22 @@ def test_ein_ruecksprung_in_der_fassade_wird_als_stufe_gewertet(verkehrt, erwart
                            horizont_zeile=HORIZONT)
     assert erg["n_stufen"] >= gq.MIN_SPRUNGPAARE
     assert erg["anteil_stufen"] == pytest.approx(erwartet)
+
+
+def test_ein_gekruemmtes_ortsfeld_taeuscht_die_zweite_differenz():
+    """Der Befund der HomeStation (auf-20260924-172), nachgestellt — und warum die Zahl
+    verworfen ist: Auf leerem Grau ist die Schätzkarte eine Schüssel mit dem Tiefpunkt nahe
+    dem Horizont. Die zweite Differenz zieht nur die Neigung ab, nicht die Krümmung, und
+    über dem Tiefpunkt fällt jede Oberkante von selbst «richtig» aus. Diese Probe hält fest,
+    DASS die Zahl hier versagt; sie ist kein Wunsch, sondern der Grund, sie nicht
+    anzuzeigen.
+    """
+    grau = [0.3 + 0.002 * (y - HORIZONT) ** 2 for y in range(H) for x in range(B)]
+    erg = _messe(grau, horizont_zeile=None)
+    assert erg["anteil"] >= 0.9, erg["anteil"]
+
+
+def test_die_zahl_steht_nicht_mehr_im_pruefbericht():
+    """Verworfen am 24.09.2026 abends — sie darf nicht still wieder auftauchen."""
+    import inspect
+    assert "sprungordnung(" not in inspect.getsource(ts._maskenweg)

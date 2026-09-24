@@ -4107,10 +4107,20 @@ def zwei_tore(rho_maske, geom_iou, *,
 # dem Horizont** liegt; darunter steht im erzeugten Bild erlaubterweise Boden, der näher
 # sein darf als der Sockel. Ohne Horizontangabe zählt nur die Oberkante (aussen darüber).
 #
-# **Was diese Zahl NICHT tut — noch nicht:** Sie urteilt nicht. Score, ``bestanden`` und
-# die zwei Tore bleiben unverändert, bis am Heimrechner gemessen ist, ob sie Ja- und
-# Nein-Bilder trennt. Dieselbe Regel wie bei :func:`zuordnung`: Eine Zahl, die noch nicht
-# gezeigt hat, dass sie trennt, darf nicht mitentscheiden.
+# **VERWORFEN AM 24.09.2026 ABENDS — gemessen, nicht vermutet** (``auf-20260924-172``):
+# An echten Bildern trennt sie nicht, sie sortiert verkehrt. Das einzige Nein-Bild aus 160
+# (die «Gasse») lag mit 0,705 über jedem Ja-Bild (0,094 bis 0,657); das eigene Soll lag
+# nur in 4 bis 8 von 17 Bildern über allen fünf Gegenproben; eine **graue Fläche bekam
+# gegen das Testbau-Soll 1,000**, so viel wie das Blender-Schönbild. Die Lesart der
+# HomeStation (ohne eigenen Beleg): Die zweite Differenz zieht ein LINEARES Ortsfeld ab,
+# nicht seine Krümmung; auf leerem Grau ist die Schätzkarte eine Schüssel mit dem Tiefpunkt
+# nahe dem Horizont, und an einer Oberkante darüber fällt die zweite Differenz von selbst
+# «richtig» aus (nachgestellt in ``tests/test_sprungordnung.py``).
+#
+# Sie ist darum **nicht** mehr im Maskenweg angeschlossen — dieselbe Regel wie bei R2
+# (``tiefenschaetzer._maskenweg``): Eine angezeigte Zahl, die schlechtere Bilder höher
+# stellt, führt in die Irre. Die Funktion bleibt hier, mit diesem Befund. Wer sie wieder
+# anschliessen will, liest ihn zuerst — und misst gegen die graue Nullprobe.
 # --------------------------------------------------------------------------------------
 
 #: Unter so vielen Paaren je Klasse ist ein Anteil keine Aussage. Dieselbe Grössenordnung

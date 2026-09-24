@@ -7478,9 +7478,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut
         (`geometrie_qa.sprungordnung`, Ortsfeld abgezogen), urteilt nicht mit (Protokoll
         71 §18).
-  - [ ] **local:** `auf-20260924-172` — trennt sie an echten Bildern Ja von Nein?
-  - [ ] Danach: mitentscheiden lassen oder verwerfen; Horizontzeile aus der Kamera in den
-        Maskenweg; Option C (Umriss aus RGB-Kanten) als zweites Bein.
+  - [x] **local:** `auf-20260924-172` — **trennt nicht, verworfen** (Nein-Bild über allen
+        Ja-Bildern, graue Fläche 1,0). Aus dem Maskenweg genommen (Protokoll 71 §21).
+  - [ ] **Kern, offen:** QA für saubere Bilder neu ansetzen — nächster Kandidat Option C
+        (Umriss aus den RGB-Kanten, kein Schätzer, kein Ortsfeld); Option A braucht ein
+        Segmentierungsmodell (Lizenzfrage). Jeder Kandidat zuerst gegen die graue
+        Nullprobe.
   - [x] **Owner (24.09., «gut wir warten»):** E8-Knoten erst nach der n1-Übernahme beauftragen.
   - [ ] **Nach n1:** Einbauauftrag an ui für die sechs neuen Knoten aus E8 — Frage war: Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
         `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt

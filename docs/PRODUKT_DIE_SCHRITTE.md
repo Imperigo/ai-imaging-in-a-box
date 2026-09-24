@@ -105,6 +105,15 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (abends) · Berichtigt: Die neue Prüfung trennt nicht — sie ist wieder draussen
+
+* **Am Heim-PC gemessen:** An echten Bildern stellt sie das schlechte Bild über alle guten,
+  und eine graue Fläche bekommt die Bestnote.
+* **Darum wieder herausgenommen**, bevor jemand ihr glaubt. Sie hatte noch nichts
+  entschieden; es ist nichts kaputt gegangen.
+* **Offen bleibt die Frage** «Wie misst man ein sauberes Bild?». Als Nächstes käme ein Weg
+  über die sichtbaren Kanten im Bild statt über die geschätzte Tiefe.
+
 ### 24.09.2026 (Nacht auf den 25.) · Eine Prüfung, die saubere Bilder messen kann — im Versuch
 
 * **Das Problem:** Unsere Bildprüfung nannte die besten Bilder «nicht messbar». Sie hielt
