@@ -797,3 +797,50 @@ Und die Frage, an der ein erster Mac-Lauf zuerst scheitern würde, ist offen: ob
 
 *Eine Messung auf einem echten M1 Max, früh, ist der billigste Weg, den ganzen Plan gegen
 eine böse Überraschung im Januar abzusichern.*
+
+---
+
+## E26 · Die Vis-Oberfläche von KosmoOrbit kommt herüber — **als Kopie, bis Februar, dann zurück**
+
+**Owner-Entscheid 24.09.2026**, im Wortlaut:
+
+> *«Das Ziel ist, Code von KosmoVis-UI-Oberfläche etc. zu übernehmen, den Code zu kopieren,
+> weiterzubearbeiten bis Februar und dann wieder seamless in die KosmoOrbit-Software
+> einzubauen. Die Node-Oberfläche hat starke Prio und soll dringend sauber gelöst werden.
+> Danach schauen wir jeden einzelnen Knoten an.»*
+
+Und auf die vier Rückfragen desselben Tages:
+
+| Frage | Antwort des Owners |
+|---|---|
+| Wird der Code öffentlich (Apache-2.0)? | *«Bitte nur Code von KosmoVis und nicht der ganzen Software … ja, das ist mir klar, dass bis zur Februarversion der Code von Vis öffentlich wird — das ist das Ziel. Einfach wirklich nur Code vom Vis-Tool nehmen, und auch UI und UX davon.»* |
+| Umfang zuerst | **Die ganze KosmoVis-Ansicht** (Knoteneditor, Kuratieren, Bericht, …). |
+| Laufort | **Im Browser**, ausgeliefert von unserem Server auf der HomeStation. |
+| Die heutige Visbox-Fläche | *«Die aktuelle ist die richtige neue — wir bauen nur die Node-Oberfläche ergänzend rein, denn die soll genauso wichtig sein wie der Rest.»* |
+
+### Was damit entschieden ist
+
+* **Quelle:** das Vis-Werkzeug von KosmoOrbit, `kosmo-orbit/apps/kosmo-orbit/src/modules/vis/`
+  im Repo Architektur-Cosmos, samt dem, was nur ihm dient. **Nicht** der Rest von KosmoOrbit
+  (Architekturkern, Zeichnen, Publizieren, Synchronisieren). **Nicht** das ältere Repo
+  «KosmoVis» mit seinem Blender-Add-on — ein Add-on bleibt nach Regel 2 verboten.
+* **Was ausserhalb des Vis-Werkzeugs liegt und gebraucht wird, bekommt einen Stellvertreter**
+  mit denselben Namen (Bausteine der Oberfläche, Projektspeicher, Anbindung an den
+  Rechenweg). So bleibt der kopierte Code **unverändert**, und die Rückkehr im Februar ist
+  ein Austausch der Stellvertreter gegen die Originale — nicht ein Zusammenführen zweier
+  auseinandergelaufener Fassungen.
+* **Jede Änderung am kopierten Code wird einzeln geführt** (Herkunft mit Commit, Liste der
+  Abweichungen). *Seamless heisst: Man kann bis Februar jederzeit sagen, was anders ist.*
+* **E22 ist damit abgelöst, soweit es um das Vis-Werkzeug geht:** Die beiden Flächen bleiben
+  nicht getrennt, sondern das Vis-Werkzeug lebt bis Februar hier und geht dann zurück.
+* **Die heutige Visbox-Fläche bleibt die Hauptfläche**; die Knotenoberfläche kommt als
+  gleichwertiger Teil dazu. Blatt 11 der Entwurfsfläche (eigene Knotenansicht) ist damit
+  überholt: Die Knotenansicht ist die von KosmoVis, mit ihrem Aussehen und ihrer Bedienung.
+* **Die Auflage «keine fremden Bausteine, kein Web-Rahmenwerk»** der Visbox-Fläche
+  (`oberflaeche/LIESMICH.md`) gilt für die Knotenoberfläche nicht: Sie ist React und
+  TypeScript und wird beim Bauen zu festen Dateien gebündelt, die unser Server ausliefert.
+  **Unverändert gilt:** zum Start keine Netzverbindung, nur permissive Lizenzen (Regel 1),
+  jede Abhängigkeit geprüft und im `NOTICE`.
+* **Regel 3 gilt für den kopierten Code wie für jeden anderen:** vor dem ersten Commit auf
+  Namen, Pfade mit Benutzernamen, Adressen und Schlüssel durchsucht.
+

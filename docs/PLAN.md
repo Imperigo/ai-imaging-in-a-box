@@ -7448,4 +7448,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Owner:** Liste oder Knoten umschaltbar? Nur zeigen oder ziehen?
 - [ ] **Kern/Fläche:** Knotenansicht bauen — nach den zwei Antworten.
 - [ ] **ui:** `auf-162` — und falls E8 nie ankam: Einbauauftrag für die acht Knoten.
+- [x] **Owner-Entscheid E26:** Vis-Werkzeug von KosmoOrbit übernehmen (nur Vis, öffentlich
+      bis Februar, ganze Ansicht, im Browser, ergänzend zur Visbox-Fläche).
+- [ ] **Kern/Fläche (hohe Priorität):** Schnitt bestimmen → kopieren mit Herkunft →
+      Stellvertreter → an unseren Server → dann jeden Knoten einzeln durchgehen.
 
