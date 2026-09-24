@@ -7481,7 +7481,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] **local:** `auf-20260924-172` — trennt sie an echten Bildern Ja von Nein?
   - [ ] Danach: mitentscheiden lassen oder verwerfen; Horizontzeile aus der Kamera in den
         Maskenweg; Option C (Umriss aus RGB-Kanten) als zweites Bein.
-  - [ ] **Owner:** Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
+  - [x] **Owner (24.09., «gut wir warten»):** E8-Knoten erst nach der n1-Übernahme beauftragen.
+  - [ ] **Nach n1:** Einbauauftrag an ui für die sechs neuen Knoten aus E8 — Frage war: Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
         `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt
         einen Einbauauftrag an ui schreiben — oder erst nach der n1-Übernahme (E27)?
         `variante` stösst dabei an B6 (Varianten vom Cloud-Worker abgelehnt).
