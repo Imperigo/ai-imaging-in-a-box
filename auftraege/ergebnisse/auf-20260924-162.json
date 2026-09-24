@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260924-162",
+  "status": "ok",
+  "beendet": "2026-09-24T12:43:10Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "Drei Bilder plus ein vergroesserter Ausschnitt liegen bei; von den acht E8-Knoten stehen zwei (kamera, vergleich), und die standen schon vor E8 — sechs sind nicht begonnen, E8 kam bei uns nie als Auftrag an.",
+    "klaerung_aiimaging_knoten": "Einen Knoten namens «aiimaging» gibt es nicht. Der Knoten, der mit eurem Bildrechner spricht, heisst «Render» (Katalog packages/kosmo-kernel/src/derive/visgraph.ts, typ 'render', Eingaenge Szene/Prompt/Geometrie-Treue/Samples/Kamera-Standpunkte, Ausgang Bild). Die Bilder zeigen ihn.",
+    "B1_bilder": {
+      "ordner": "auftraege/ergebnisse/auf-20260924-162-bilder/",
+      "a-graph-verbunden.png": "Der ganze Graph, den «Drei Stimmungen» auf dem synthetischen Testkoerper anlegt: Modell und Material-Bausteine -> drei Stimmungen -> drei Prompt-Kombinierer -> drei Render-Knoten -> Bildvergleich. Der oberste Render-Knoten ist ueber die Test-Attrappe gelaufen (Status fertig, Platzhalterbild).",
+      "a2-kette-vergroessert.png": "Ausschnitt aus a in doppelter Aufloesung: die obere Kette lesbar, mit den farbigen Anschluessen je Typ und dem Ergebnis, das am Render-Knoten stehen bleibt.",
+      "b-render-knoten-mit-beiblatt.png": "Derselbe Render-Knoten ausgewaehlt: rechts daneben sein Beiblatt (Fassade, Szene, Jahreszeit, Personen, Freitext) mit den ehrlichen Vorbehalten zu Qualitaet gegen Zeit, Himmel, Bildwerkzeug und den sechs Auftragsfeldern, die am Bild nichts aendern.",
+      "c-palette-knotenarten.png": "Die Palette der Knotenarten, gruppiert in Quelle (Modell, Material-Bausteine, Auto-Kamera, Bild-Referenz, Viewport-Aufnahme), Wandler (Prompt, Stimmung, Prompt-Kombinierer, Zahl), Render (Render) und Ausgabe (Bildvergleich, Aufs Blatt).",
+      "regel3": "Nur der synthetische Testkoerper, keine Namen, keine Pfade. Jedes Bild vor dem Ablegen angesehen.",
+      "aufgenommen": "Container, Build des UI-Zweigs claude/kosmo-ui-worker-setup-jjed26 (enthaelt den Hauptstrang), Chromium 1400x900, Test-Attrappe statt echtem Bildrechner — das Ergebnisbild ist darum ein Platzhalter."
+    },
+    "B2_e8_stand": {
+      "import": "nicht begonnen",
+      "kamera": "gebaut — visgraph.ts typ 'kamera' «Auto-Kamera», vor E8 (seit v0.6.3)",
+      "tiefe": "nicht begonnen",
+      "skizze": "nicht begonnen",
+      "maske": "nicht begonnen",
+      "variante": "nicht begonnen",
+      "vergleich": "gebaut — visgraph.ts typ 'vergleich' «Bildvergleich», vor E8",
+      "export": "nicht begonnen (am naechsten liegt 'blatt' «Aufs Blatt», das ist die Uebergabe an KosmoPublish, kein allgemeiner Export)",
+      "ankunft": "E8 ist bei uns nie als Auftrag angekommen — kein Auftrag, kein Blatt, keine ROADMAP-Zeile nennt ihn. Euer Verdacht stimmt; wollt ihr die sechs, braucht es einen Einbauauftrag, der je Knoten Eingaenge, Ausgaenge und was er am Bildrechner ausloest nennt."
+    },
+    "B3_e7": "Fuer den Render-Knoten weitgehend da: eigener Ausfuehren-Knopf am Knoten, Status und Fortschritt am Knoten, das Ergebnisbild bleibt im Knoten stehen (NodeCanvas.tsx); eine Vorschau an JEDEM Knoten gibt es nicht — Wandler-Knoten zeigen ihren Text, nicht ein Bild.",
+    "nebenbei_gesehen": "Drei Oberflaechenpunkte, die wir an unseren Integrator weitergeben (nicht eure Sache): die Palette laeuft unten unter die Speicherleiste («Aufs Blatt» halb verdeckt), das Schliessen-Kreuz der Palette sitzt auf «Graph loeschen», und die drei Render-Knoten von «Drei Stimmungen» ueberlappen sich."
+  },
+  "umgebung": {},
+  "fehler": null
+}
