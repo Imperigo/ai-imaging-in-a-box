@@ -2341,7 +2341,7 @@ def _andere_kameras_einrechnen(block: dict, je_kamera, eigene) -> None:
     seinen Grund dazu, statt nur «kein Torurteil» zu sagen.
 
     **Die Zwillingsansicht der eigenen Kamera ist keine andere Kamera** (``doppelt_von``,
-    siehe ``abholer._sollkennung``): Sie traegt dasselbe Bild und dasselbe Torurteil. Faellt
+    siehe ``abholer._finde_zwilling``): Sie traegt dasselbe Bild und dasselbe Torurteil. Faellt
     die eigene Kamera durch, steht das schon im Block; ein zweites Mal unter anderem Namen
     hiesse, ein Bild als zwei Befunde zu zaehlen. Derselbe Grundsatz gilt seit dem
     22.09.2026 fuer den Zwilling einer ANDEREN Kamera: Er wird mit ihr einmal genannt,

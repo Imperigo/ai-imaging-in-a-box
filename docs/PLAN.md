@@ -7467,7 +7467,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Kern:** Auto-Kameras (Schrägansichten) bleiben unter der Rahmung (63,9 % < 65 %) —
         Ursache: `WANDABSTAND_M` 10 m, gesetzt statt gemessen. Jetzt 3 m, alle drei ≈ 70 %,
         ab 12 m bitgleich, Schwelle unverändert (Protokoll 71 §13).
-  - [ ] **local:** die drei Auto-Kameras am Gerät rendern und ansehen (`auf-20260924-169`).
+  - [x] **local:** die drei Auto-Kameras am Gerät rendern und ansehen (`auf-20260924-169`) —
+        belegt 24.09.: alle drei gerendert, Füllgrad 0,70. Befunde: Kamera s zeigt das Bauwerk
+        nicht (Bearbeitungsmodell), sSE/nNW byte-gleich — Zwillingserkennung repariert
+        (Protokoll 71 §22).
   - [x] **B161 an KosmoOrbit beantwortet** (`erg-20260924-b161-bildstrecke.md`): B1 Speicher-
         Riegel gebaut, B3 überholt (Demohaus Weg A angenommen), B8 Puls gebaut; Sonne ab
         Nord (war 180 Grad verdreht) mit Licht; Feldkarte hört in Kameras und Sonne hin

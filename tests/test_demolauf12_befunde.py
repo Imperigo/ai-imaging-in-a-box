@@ -253,8 +253,14 @@ def _kette_mit_kameras(*, bricht_bei=None):
         Path(a.ausgabe_png).write_bytes(b"png")
         return {"status": "ok", "bild_png": a.ausgabe_png}
 
+    aufrufe = [0]
+
     def soll(bericht):
-        return [0.0, 1.0, 2.0, 3.0], 2, 2
+        # JE KAMERA EINE EIGENE KARTE (24.09.2026). Bis dahin bekam jede Kamera dieselbe —
+        # das ging nur gut, weil die Zwillingserkennung im Betrieb tot war (auf-169). Seit
+        # sie greift, wären hier alle Kameras Zwillinge der ersten.
+        aufrufe[0] += 1
+        return [0.0, 1.0, 2.0, 3.0 + aufrufe[0]], 2, 2
 
     def qa(bild, soll_werte, **kw):
         if Path(bild).name.startswith("nullprobe_"):

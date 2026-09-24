@@ -2135,8 +2135,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         urteile: list[dict] = []
         zeiten: dict[str, float] = {}
         # Welche Soll-Karte schon gerendert wurde, und von welcher Kamera. Siehe
-        # `_sollkennung`: Bei einem Quader fallen `sSE` und `nNW` zusammen.
-        gesehen: dict[str, dict] = {}
+        # `_finde_zwilling`: Bei einem Quader fallen `sSE` und `nNW` zusammen.
+        gesehen: list[dict] = []
         beginn_gesamt = time.monotonic()
 
         for aufgabe in aufgaben:
@@ -2418,8 +2418,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # sind `sSE` und `nNW` byte-identisch. 24,5 s Diffusion fuer ein Bild, das
             # schon dalag (auf-vis-20260824-12) — und gerade bei den einfachen
             # Demofaellen.
-            kennung = _sollkennung(soll, breite, hoch)
-            zwilling = gesehen.get(kennung) if kennung else None
+            # SEIT DEM 24.09.2026 MIT TOLERANZ UND AUF DER FLACHEN KARTE (auf-169): Hier stand
+            # ein Abgleich exakter Kennungen, und er griff im Betrieb NIE — die Karte kommt
+            # flach aus `tiefen_aus_report`, `_sollkennung` erwartete Zeilen und gab still
+            # «nicht vergleichbar» zurück; und selbst richtig gelesen unterscheiden sich
+            # zwei gegenüberliegende Ansichten eines Quaders um 1e-5 m Rechenrauschen.
+            zwilling = _finde_zwilling(gesehen, soll, breite, hoch)
             if zwilling is not None:
                 # `**innen`: der Vermerk DIESER Aufgabe, nicht der des Vorbilds. Heute
                 # sind beide gleich — alle Aufgaben eines Auftrags tragen denselben
@@ -2547,8 +2551,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
             _urteil_ablegen(aus, urteil)
-            if kennung:
-                gesehen[kennung] = {"kamera": kuerzel, "urteil": urteil}
+            flach = _flache_karte(soll)
+            if flach is not None:
+                gesehen.append({"soll": flach, "breite": breite, "hoehe": hoch,
+                                "kamera": kuerzel, "urteil": urteil})
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
 
         zeiten["gesamt"] = round(time.monotonic() - beginn_gesamt, 1)
@@ -3047,43 +3053,66 @@ def _bilder_vollstaendig(bericht: dict) -> dict:
             "beschaedigt": tuple(beschaedigt), "grund": " | ".join(gruende)}
 
 
-def _sollkennung(soll, breite, hoehe) -> str | None:
-    """Eine Kennzahl der **Soll-Tiefenkarte** — zwei gleiche Karten, zwei gleiche Kennungen.
+#: Bis zu welcher Abweichung zwei Soll-Karten als DIESELBE Ansicht gelten (Meter).
+#:
+#: Gemessen am 24.09.2026 (Blender 4.2.1, Testbau 8 × 5 × 3 m, ``sSE`` gegen ``nNW``, 128 ×
+#: 80 Punkte): gleiche Maske, grösste Abweichung **9,5·10⁻⁶ m** — Rechenrauschen der
+#: EXR bei rund 10 m Abstand. Zwei wirklich verschiedene Ansichten unterscheiden sich
+#: um Dezimeter bis Meter. Ein Millimeter liegt zwei Grössenordnungen über dem Rauschen
+#: und drei unter jedem echten Unterschied.
+ZWILLING_TOLERANZ_M = 1e-3
 
-    **Der Anlass ist ein Renderlauf für nichts** (HomeStation, `auf-vis-20260824-12`): Bei
-    einem Quader sind die Ansichten ``sSE`` und ``nNW`` **byte-identisch**. Ein Quader hat
-    zweizählige Drehsymmetrie, und die beiden Über-Eck-Ansichten der HABS/NPS-Regel fallen
-    dann zusammen. 24,5 s Diffusion für ein Bild, das schon dalag — gerade bei den
-    einfachen Demofällen.
 
-    **Warum an der Soll-Karte und nicht an der Hüllbox.** Die Hüllbox hat *immer*
-    zweizählige Symmetrie; aus ihr allein liesse sich das nicht entscheiden, ohne bei
-    jedem realen Bauwerk falschen Alarm zu schlagen — ein Haus mit Eingang auf einer Seite
-    steckt in derselben Box wie eines ohne. Die Soll-Karte entscheidet es zuverlässig,
-    und sie liegt **vor** dem teuren Bildrender vor.
+def _flache_karte(soll) -> list[float] | None:
+    """Die Soll-Karte als flache Liste — so, wie ``tiefen_aus_report`` sie liefert.
 
-    Gerundet wird auf sechs Nachkommastellen: Zwei Läufe derselben Geometrie sollen
-    dieselbe Kennung ergeben, auch wenn das letzte Bit einer Fliesskommazahl abweicht.
-    Zwei *verschiedene* Ansichten unterscheiden sich um Grössenordnungen mehr.
-
-    Returns:
-        Ein Hexstring, oder ``None``, wenn die Karte nicht lesbar ist. ``None`` heisst
-        **nicht vergleichbar** und führt nie zu einer Doppelung — im Zweifel wird
-        gerendert, denn ein fehlendes Bild ist teurer als ein doppeltes.
+    Zeilenweise Listen (die Form der älteren Proben) werden flach gemacht. ``None``, wenn
+    etwas darin keine Zahl ist.
     """
-    import hashlib
-
-    if soll is None or not breite or not hoehe:
+    if soll is None:
         return None
-    h = hashlib.sha256()
-    h.update(f"{int(breite)}x{int(hoehe)}|".encode())
+    flach: list[float] = []
     try:
-        for zeile in soll:
-            for wert in zeile:
-                h.update(f"{float(wert):.6f};".encode())
+        for eintrag in soll:
+            if isinstance(eintrag, (list, tuple)):
+                flach.extend(float(w) for w in eintrag)
+            else:
+                flach.append(float(eintrag))
     except (TypeError, ValueError):
         return None
-    return h.hexdigest()
+    return flach
+
+
+def _gleiche_ansicht(a: list[float], b: list[float], *,
+                     toleranz_m: float = ZWILLING_TOLERANZ_M) -> bool:
+    """Zeigen zwei Soll-Karten dieselbe Ansicht? Gleiche Maske, Abweichung ≤ Toleranz."""
+    import math
+
+    if len(a) != len(b):
+        return False
+    for x, y in zip(a, b):
+        ex, ey = math.isfinite(x), math.isfinite(y)
+        if ex != ey:
+            return False
+        if ex and abs(x - y) > toleranz_m:
+            return False
+    return True
+
+
+def _finde_zwilling(gesehen: list[dict], soll, breite, hoehe) -> dict | None:
+    """Die erste schon gerenderte Kamera dieses Auftrags mit derselben Ansicht, oder ``None``.
+
+    ``None`` auch, wenn die Karte nicht lesbar ist — im Zweifel wird gerendert, denn ein
+    fehlendes Bild ist teurer als ein doppeltes.
+    """
+    flach = _flache_karte(soll)
+    if flach is None or not breite or not hoehe:
+        return None
+    for vorbild in gesehen:
+        if (vorbild["breite"], vorbild["hoehe"]) == (breite, hoehe) \
+                and _gleiche_ansicht(vorbild["soll"], flach):
+            return vorbild
+    return None
 
 
 def _rahmung_vor_dem_render(bericht: dict) -> dict:

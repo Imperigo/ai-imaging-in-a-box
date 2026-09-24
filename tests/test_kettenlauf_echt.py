@@ -300,7 +300,13 @@ def test_der_gesunde_lauf_traegt_keine_solche_zeile(frei):
     # aber sSE und nNW blieben am Riegel hängen (63,9 % < 65 %) — übrig blieben drei
     # Aufrufe einer einzigen Kamera. Seit dem Wandabstand von 3 m rendern alle drei.
     standpunkte = {Path(r.ausgabe_png).parent.name for r in protokoll["render"]}
-    assert len(standpunkte) == kameras.STANDPUNKTE_ANZAHL, sorted(standpunkte)
+    # Und seit dem 24.09.2026 abends rechnet sie nur ZWEI davon (auf-169): Der Testbau ist
+    # punktsymmetrisch, `nNW` zeigt dieselbe Ansicht wie `sSE`, und die Zwillingserkennung
+    # greift endlich auch im Betrieb. Der dritte Standpunkt ist «übersprungen» mit Grund
+    # (Vertrag seit auf-155), kein zweites gleiches Bild.
+    assert standpunkte == {"s", "sSE"}, sorted(standpunkte)
+    assert len(antwort["ergebnis"]["images"]) == 2, antwort["ergebnis"]["images"]
+    assert "identische Soll-Karte" in json.dumps(antwort["ergebnis"], ensure_ascii=False)
 
 
 # ======================================================================================
