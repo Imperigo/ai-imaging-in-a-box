@@ -217,7 +217,30 @@ ZIEL_HOECHSTANTEIL = 0.5
 
 #: Mindestabstand zur Fassade in Metern, zusätzlich zur halben Grundrissseite. Verhindert,
 #: dass die analytische Rechnung eine Kamera in die Wand stellt.
-WANDABSTAND_M = 10.0
+#:
+#: **Bis zum 24.09.2026 stand hier 10,0 — und die Zahl hat mehr getan als ihr Zweck.**
+#: Gesetzt, nie gemessen, und ihr einziger Grund steht im Satz oben: keine Kamera in der
+#: Wand. Dafür sind 10 m ein Vielfaches des Nötigen, und bei kleinen Bauten entschied sie
+#: statt des Bildwinkels über den Abstand. Gemessen an der HomeStation (`auf-20260924-164`):
+#: Am synthetischen Testbau (8 × 5 × 3 m) standen die beiden Über-Eck-Kameras der
+#: Automatik ``sSE`` und ``nNW`` auf der Untergrenze, füllten 63,9 % statt der verlangten
+#: 70 % (:data:`DECKUNGSGRAD`, Owner-Entscheid 28.08.2026) — und der eigene Rahmungsriegel
+#: (:data:`BILDBREITE_ABBRUCH` 0,65, gemessen) liess sie nicht rendern. **Zwei Regeln
+#: desselben Moduls sperrten einander**, und zwei von drei Standardansichten gingen verloren.
+#:
+#: Nachgerechnet mit :func:`kamerasatz` über fünf Bauformen und alle zwölf Richtungen
+#: (Protokoll Sitzung 71 §13):
+#:
+#:     Wandabstand     Kiosk 3×2   Pavillon 4×4   Testbau 8×5   ab 12 m Kante
+#:     10 m (alt)      0,432       0,518          0,517–0,699   0,700
+#:      3 m (neu)      0,699       0,699          0,697–0,700   0,700 (bitgleich)
+#:
+#: Mit 3 m greift die Untergrenze in keinem dieser Fälle mehr: Die Kameras stehen dann
+#: mindestens 6,2 m vor der nächsten Fassade, der Bildwinkel entscheidet, und der
+#: Objektivversatz bleibt weit unter :data:`MAX_SHIFT_MM` (höchstens 2,2 mm). Für Bauten ab
+#: rund 12 m Kante ändert sich nichts. **Die Rahmungsschwelle wurde NICHT gesenkt** — sie
+#: ist gemessen; gesenkt wurde eine Zahl, die nie eine Messung war.
+WANDABSTAND_M = 3.0
 
 #: Seitlicher Versatz bei frontalen Ansichten, als Anteil der Gebäudebreite. Eine exakt
 #: mittige Frontale ist symmetrisch und damit bildlich tot.
@@ -1206,6 +1229,16 @@ def ecken_im_bild(auge, blick_auf, bbox, *,
     }
 
 
+def _shift_zu_steil(shift_mm: float, *, brennweite_mm: float, seitenverhaeltnis: float,
+                    bildrand: float) -> bool:
+    """Ob dieser Shift die Blickachse aus dem Rahmen schiebt — dieselbe Grenze wie in
+    ``ecken_im_bild``, damit beide Stellen über denselben Fall gleich urteilen."""
+    _, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+    grenze_v = math.tan(vfov / 2.0) * bildrand
+    versatz = abs(float(shift_mm)) / float(brennweite_mm)
+    return grenze_v - versatz <= grenze_v * DEGENERIERT_ANTEIL
+
+
 def schiebe_bis_im_bild(auge, blick_auf, bbox, *,
                         shift_mm: float = 0.0,
                         brennweite_mm: float = BRENNWEITE_MM,
@@ -1262,6 +1295,14 @@ def schiebe_bis_im_bild(auge, blick_auf, bbox, *,
 
         # Der Rückschub gilt entlang der Blickachse; ausgewichen wird waagrecht.
         # Bei geneigtem Blick bringt ein waagrechter Meter weniger als einen Meter Tiefe.
+        # Kein Rückschub bekannt (Hüllbox unlesbar, Kamerabasis entartet, Shift jenseits
+        # des halben Bildwinkels): Weiterschieben wäre Raten. Die Position geht
+        # gekennzeichnet zurück, mit dem Grund des Eckentests — nie ein TypeError.
+        if pruefung["noetiger_rueckschub_m"] is None:
+            return {"auge": aktuell, "vollstaendig": False, "durchlaeufe": durchlauf,
+                    "max_ueberstehen": pruefung["max_ueberstehen"],
+                    "begruendung": pruefung["begruendung"]}
+
         voll = _normiert(_minus(ziel, aktuell))
         neigung = abs(voll[2]) if voll else 0.0
         waagrecht = math.sqrt(max(1.0 - neigung * neigung, 1e-6))
@@ -2050,6 +2091,36 @@ def kamerasatz(bbox, *,
         # beiden Fällen dasselbe; im Shift-Modus wird es auf Augenhöhe zurückgeholt und
         # der Höhenunterschied wandert in den Shift.
         schief = shift_aus_ziel(auge, ziel, brennweite_mm=brennweite_mm)
+        # **Ein Shift, der die Blickachse aus dem Rahmen schiebt, ist keine Rahmung.**
+        # Bei kleinen Körpern unter Augenhöhe steht die Kamera seit dem Wandabstand von
+        # 3 m (24.09.2026) so nah, dass der Blick steil nach unten müsste — der Shift
+        # wird dann grösser als der halbe Bildwinkel, und der Eckentest kann das durch
+        # keinen Rückschub heilen (er verschiebt die Kamera, nicht den Shift). Hier wird
+        # die Kamera darum VOR dem Eckentest waagrecht so weit zurückgenommen, dass der
+        # Shift auf das Mass eines wirklichen Shift-Objektivs fällt. Das betrifft nur
+        # Fälle, die vorher mit einem TypeError abbrachen; jeder andere Standort bleibt
+        # bitgleich.
+        if modus == MODUS_SHIFT and _shift_zu_steil(
+                schief["shift_mm"], brennweite_mm=brennweite_mm,
+                seitenverhaeltnis=seitenverhaeltnis, bildrand=bildrand):
+            # Ziel ist höchstens die HALBE Rahmenhälfte als Shift, und nie mehr als ein
+            # wirkliches Objektiv leistet. Die 12 mm allein reichen nicht: Bei 16:9 ist
+            # die halbe Sensorhöhe nur 10,1 mm, die Achse läge also noch immer draussen.
+            # Mit der halben Rahmenhälfte bleibt unter der Achse Platz für den Fuss.
+            _, _vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+            ziel_shift = min(MAX_SHIFT_MM,
+                             0.5 * float(brennweite_mm) * math.tan(_vfov / 2.0) * bildrand)
+            noetig = float(brennweite_mm) * abs(ziel[2] - auge_z) / ziel_shift
+            auge = (mitte[0] + standort[0] * noetig + quer[0] * versatz,
+                    mitte[1] + standort[1] * noetig + quer[1] * versatz,
+                    auge_z)
+            alle_warnungen.append(
+                f"{k}: Der Körper liegt so tief unter Augenhöhe, dass der Standort im "
+                f"gerechneten Abstand einen Shift jenseits des halben Bildwinkels "
+                f"verlangt hätte. Die Kamera wurde auf {noetig:.1f} m zurückgenommen, "
+                f"wo {ziel_shift:.1f} mm Shift genügen; das Bauwerk steht darum "
+                f"kleiner im Bild als angefordert.")
+            schief = shift_aus_ziel(auge, ziel, brennweite_mm=brennweite_mm)
         if modus == MODUS_SHIFT:
             blick = schief["waagrechtes_ziel"]
             shift_mm = schief["shift_mm"]

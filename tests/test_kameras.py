@@ -191,12 +191,47 @@ def test_hoher_bau_wird_von_der_hoehe_bestimmt():
 
 
 def test_kleiner_bau_faellt_auf_die_untergrenze():
-    """Ein Gartenhaus soll nicht aus zwei Metern fotografiert werden."""
-    masse = (3.0, 3.0, 2.5)
-    ergebnis = kameras.abstand_aus_bildwinkel(masse, 0.0, hoehe_ueber_grund=2.2,
+    """Ein Objekt von einem Meter soll nicht aus einem Meter fotografiert werden.
+
+    **Seit dem 24.09.2026 an einem kleineren Objekt geprüft.** Hier stand ein Gartenhaus
+    (3 × 3 × 2,5 m) bei 10 m Wandabstand. Mit 3 m greift die Untergrenze bei ihm nicht mehr
+    — die Höhe setzt den Abstand (8,07 m), und genau so ist es gewollt: Die Untergrenze ist
+    ein Schutz gegen die Kamera in der Wand, keine Bildgestaltung (``WANDABSTAND_M``). Sie
+    greift nun dort, wo der Bildwinkel die Kamera wirklich zu nah stellen würde.
+    """
+    masse = (1.0, 1.0, 1.0)
+    ergebnis = kameras.abstand_aus_bildwinkel(masse, 0.0, hoehe_ueber_grund=0.6,
                                               deckungsgrad=1.0)
     assert ergebnis["massgebend"] == "untergrenze"
     assert ergebnis["abstand_m"] >= kameras.WANDABSTAND_M
+
+
+def test_die_ueber_eck_kameras_der_automatik_erreichen_ihren_fuellgrad():
+    """Befund der HomeStation (`auf-20260924-164`): Am Testbau 8 × 5 × 3 m standen ``sSE``
+    und ``nNW`` auf der Untergrenze, füllten 63,9 % und wurden vom eigenen Rahmungsriegel
+    nicht gerendert. Die Untergrenze darf den Füllgrad nicht unter die Abbruchschwelle
+    drücken — für keine der drei Automatik-Richtungen, auch nicht an kleinen Bauten."""
+    for bbox in ([[0, 0, 0], [8, 5, 3]], [[0, 0, 0], [4, 4, 3]], [[0, 0, 0], [3, 2, 2.5]]):
+        satz = kameras.kamerasatz(bbox, kuerzel=("s", "sSE", "nNW"))
+        for k in satz["kameras"]:
+            assert k["massgebend"] != "untergrenze", (bbox, k["kuerzel"])
+            assert k["fuellgrad"] >= kameras.BILDBREITE_ABBRUCH, (bbox, k["kuerzel"],
+                                                                   k["fuellgrad"])
+
+
+def test_grosse_bauten_bleiben_vom_neuen_wandabstand_unberuehrt():
+    """Ab rund 12 m Kante hat die Untergrenze schon mit 10 m nie gegriffen — dort muss der
+    Kamerasatz Zahl für Zahl derselbe bleiben."""
+    for bbox in ([[0, 0, 0], [12, 9.5, 15]], [[0, 0, 0], [20, 20, 45]], [[0, 0, 0], [40, 12, 10]]):
+        neu = kameras.kamerasatz(bbox)
+        alt_wand = kameras.WANDABSTAND_M
+        try:
+            kameras.WANDABSTAND_M = 10.0
+            alt = kameras.kamerasatz(bbox)
+        finally:
+            kameras.WANDABSTAND_M = alt_wand
+        assert [k["abstand_m"] for k in neu["kameras"]] == \
+            [k["abstand_m"] for k in alt["kameras"]]
 
 
 def test_beim_kleinen_bau_gewinnt_die_hoehe_schon_vor_der_untergrenze():
@@ -712,12 +747,11 @@ def test_der_eckentest_allein_bemerkt_ein_winziges_bauwerk_nicht():
     sieht wie ein Fehler des Bildmodells aus — die Ursache liegt in der Kamera, und dort
     würde niemand suchen.
     """
-    # 1,5 m und nicht 2 m: Bei der Vorgabe-Brennweite von 35 mm füllt ein 2-m-Körper
-    # aus dem Mindestabstand bereits 34,6 % und liegt damit über der Warnschwelle.
-    # Die Aussage des Tests hängt nicht an der Grösse, sondern daran, dass es
+    # 1,0 m: Seit dem Wandabstand von 3 m (24.09.2026) füllt schon ein 1,5-m-Körper den
+    # Rahmen. Die Aussage des Tests hängt nicht an der Grösse, sondern daran, dass es
     # überhaupt einen Bereich gibt, in dem der Eckentest schweigt und der Füllgrad
-    # nicht — und den gibt es weiterhin.
-    winzig = [[0.0, 0.0, 0.0], [1.5, 1.5, 1.5]]
+    # nicht — und den gibt es weiterhin: Körper deutlich unter Augenhöhe.
+    winzig = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
     satz = kameras.kamerasatz(winzig, kuerzel=["n"])
     assert satz["unvollstaendig"] == []          # der Eckentest ist zufrieden …
     assert satz["warnungen"]                     # … der Füllgrad nicht
@@ -774,12 +808,11 @@ def test_der_abstand_ist_der_endgueltige_nicht_der_gerechnete():
 
 def test_die_warnung_nennt_die_ursache_und_nicht_nur_die_zahl():
     """Ein Verdacht kostet einen Menschen, der nachsieht; eine Diagnose sagt ihm, wo."""
-    # 1,5 m und nicht 2 m: Bei der Vorgabe-Brennweite von 35 mm füllt ein 2-m-Körper
-    # aus dem Mindestabstand bereits 34,6 % und liegt damit über der Warnschwelle.
-    # Die Aussage des Tests hängt nicht an der Grösse, sondern daran, dass es
+    # 1,0 m: Seit dem Wandabstand von 3 m (24.09.2026) füllt schon ein 1,5-m-Körper den
+    # Rahmen. Die Aussage des Tests hängt nicht an der Grösse, sondern daran, dass es
     # überhaupt einen Bereich gibt, in dem der Eckentest schweigt und der Füllgrad
-    # nicht — und den gibt es weiterhin.
-    winzig = [[0.0, 0.0, 0.0], [1.5, 1.5, 1.5]]
+    # nicht — und den gibt es weiterhin: Körper deutlich unter Augenhöhe.
+    winzig = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
     text = " ".join(kameras.kamerasatz(winzig, kuerzel=["n"])["warnungen"])
     assert "füllt nur" in text
     assert "Gebäudemasse" in text or "zurückgeschoben" in text
@@ -1486,3 +1519,30 @@ def test_ein_wahrheitswert_ist_auch_beim_nachtragen_keine_bildbreite():
     """
     with pytest.raises(ValueError, match="Wahrheitswert"):
         kameras.struktur_nachtragen(_lage_ohne_karte(), _verlauf(), breite=True)
+
+
+@pytest.mark.parametrize("kante", [0.1, 0.3, 0.6, 1.0, 1.2])
+def test_winzige_koerper_unter_augenhoehe_brechen_nicht_ab(kante):
+    """Der Fall, den der Wandabstand von 3 m freilegte (24.09.2026).
+
+    Ein Körper weit unter Augenhöhe, aus 3 m Wandabstand gesehen, verlangt einen Shift
+    jenseits des halben Bildwinkels. Der Eckentest meldet dafür keinen Rückschub
+    (``None``), und ``schiebe_bis_im_bild`` teilte ``None`` durch eine Zahl — ein
+    ``TypeError`` statt einer Kamera. Jetzt: zurückgenommen, gerahmt, und gewarnt.
+    """
+    satz = kameras.kamerasatz([[0.0, 0.0, 0.0], [kante, kante, kante]])
+    assert satz["unvollstaendig"] == []
+    text = " ".join(satz["warnungen"])
+    assert "zurückgenommen" in text
+    assert "füllt nur" in text
+
+
+def test_ohne_bekannten_rueckschub_bricht_das_schieben_ab_statt_zu_rechnen():
+    """Liefert der Eckentest keinen Rückschub, geht die Position gekennzeichnet zurück."""
+    # Ein Shift von 30 mm bei 35 mm: die Achse liegt ausserhalb des Rahmens.
+    ergebnis = kameras.schiebe_bis_im_bild((0.0, 10.0, 1.7), (0.0, 0.0, 1.7),
+                                           [[-1.0, -1.0, 0.0], [1.0, 1.0, 2.0]],
+                                           shift_mm=30.0, brennweite_mm=35.0)
+    assert ergebnis["vollstaendig"] is False
+    assert ergebnis["auge"] == (0.0, 10.0, 1.7)
+    assert "Blickachse" in ergebnis["begruendung"]

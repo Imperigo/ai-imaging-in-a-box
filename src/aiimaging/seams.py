@@ -759,8 +759,8 @@ def ifc_raeume(ifc_path, *, timeout: float = GESAMTFRIST_IFC_S, _starte=None) ->
     JSON, sie importiert nichts.
 
     Sie ist die **Voraussetzung** für Innenaufnahmen, nicht deren Umsetzung: `kameras.py`
-    rechnet ausschliesslich Standpunkte um eine Hüllbox herum, und ``WANDABSTAND_M = 10.0``
-    macht eine Innenaufnahme rechnerisch unmöglich. Bevor sich daran etwas ändern lässt,
+    rechnet ausschliesslich Standpunkte um eine Hüllbox herum, und ``WANDABSTAND_M`` (damals 10 m,
+    seit 24.09.2026 3 m) macht eine Innenaufnahme rechnerisch unmöglich. Bevor sich daran etwas ändern lässt,
     muss bekannt sein, wo die Räume sind. Hier steht nur das.
 
     **IFC4 *und* IFC2X3**, in Metern *und* in Millimetern — alle vier Kombinationen sind

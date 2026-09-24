@@ -213,10 +213,20 @@ def test_der_bestellte_sonnenstand_kommt_bis_in_den_bericht(frei):
     antwort, _, ausgabe = frei
 
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
-    berichte = [p for p in ausgabe.rglob("*.json")
-                if "sonne" in p.read_text(encoding="utf-8")]
+    # **Der Schlüssel, nicht das Wort.** Bis zum 24.09.2026 genügte, dass «sonne»
+    # irgendwo in der Datei stand — der erste Treffer war zufällig immer der
+    # Multipass-Bericht. Seit alle drei Kameras rendern, liegen mehr JSON-Dateien im
+    # Ausgabeordner, die das Wort tragen, ohne einen Sonnenblock zu haben.
+    berichte = []
+    for pfad in sorted(ausgabe.rglob("*.json")):
+        try:
+            inhalt = json.loads(pfad.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        if isinstance(inhalt, dict) and isinstance(inhalt.get("sonne"), dict):
+            berichte.append(inhalt)
     assert berichte, "Kein Multipass-Bericht mit Sonnenblock im Ausgabeordner."
-    sonne = json.loads(berichte[0].read_text(encoding="utf-8"))["sonne"]
+    sonne = berichte[0]["sonne"]
     assert sonne["hoehe_grad"] == 12.0 and sonne["azimut_grad"] == 60.0, sonne
     assert set(sonne["bestellt"]) == {"hoehe", "azimut"}, (
         "`bestellt` unterscheidet eine Bestellung von der Vorgabe — über die ganze Kette "
@@ -273,7 +283,7 @@ def test_der_gesunde_lauf_traegt_keine_solche_zeile(frei):
     #
     # Bis dahin trug der gesunde Lauf das Wort «NICHT GERENDERT» überhaupt nicht, und die
     # Abwesenheit des Wortes war die Probe. Seither steht es auch hier, und es steht zu
-    # Recht: Der Testbau ist 8 × 5 × 3 m; bei zwei der zwölf Diagonalen setzt der
+    # Recht (bis zum 24.09.2026): Der Testbau ist 8 × 5 × 3 m; bei zwei der zwölf Diagonalen setzt der
     # Mindestabstand von 10 m den Standort, nicht der Bildwinkel, und dort füllt das
     # Bauwerk 63,9 % der Bildbreite statt der geforderten 65 %. Diese beiden Richtungen
     # lagen IMMER knapp unter dem Riegel — der Füllgrad wurde nur bis dahin an der nahen
@@ -285,7 +295,12 @@ def test_der_gesunde_lauf_traegt_keine_solche_zeile(frei):
     # benennt, sagt nichts — ein Lauf mit drei Bildern und einer mit null sind aber zu
     # unterscheiden.
     assert antwort["ergebnis"]["images"], "Ein gesunder Lauf liefert Bilder."
-    assert len(protokoll["render"]) == kameras.STANDPUNKTE_ANZAHL, len(protokoll["render"])
+    # Gezählt werden die STANDPUNKTE, nicht die Renderaufrufe. Bis zum 24.09.2026 waren
+    # beide Zahlen zufällig gleich: Von den drei Kameras rendert jede ihre Varianten,
+    # aber sSE und nNW blieben am Riegel hängen (63,9 % < 65 %) — übrig blieben drei
+    # Aufrufe einer einzigen Kamera. Seit dem Wandabstand von 3 m rendern alle drei.
+    standpunkte = {Path(r.ausgabe_png).parent.name for r in protokoll["render"]}
+    assert len(standpunkte) == kameras.STANDPUNKTE_ANZAHL, sorted(standpunkte)
 
 
 # ======================================================================================

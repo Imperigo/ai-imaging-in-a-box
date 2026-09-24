@@ -19,7 +19,8 @@ Dateien und Prozess-Rückgabewerte. Es entsteht eine Aggregation, kein abgeleite
 Wozu das gebraucht wird
 -----------------------
 `aiimaging.kameras` rechnet ausschliesslich Standpunkte **um eine Hüllbox herum**, und
-``WANDABSTAND_M = 10.0`` macht eine Innenaufnahme rechnerisch unmöglich — in einem 4 m
+``WANDABSTAND_M`` (damals 10 m, seit 24.09.2026 3 m) macht eine Innenaufnahme rechnerisch
+unmöglich — in einem 4 m
 breiten Zimmer gibt es keinen zulässigen Standpunkt. Bevor sich daran etwas ändern kann,
 muss überhaupt bekannt sein, **wo die Räume sind**. Genau das und nicht mehr leistet
 dieses Skript: Es liefert Räume als schlichte Daten. Kamerasetzung, Standpunktwahl und

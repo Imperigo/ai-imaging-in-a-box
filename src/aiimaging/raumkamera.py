@@ -4,7 +4,7 @@ Warum dieses Modul entsteht
 ---------------------------
 Bis zum 22.08.2026 konnte dieses Projekt Gebäude nur von **aussen**. :mod:`aiimaging.kameras`
 rechnet ausschliesslich Standpunkte um eine Hüllbox herum, und seine Konstante
-``WANDABSTAND_M = 10.0`` macht eine Innenaufnahme nicht etwa schlecht, sondern
+``WANDABSTAND_M = 10.0`` (damals; seit 24.09.2026 3 m) macht eine Innenaufnahme nicht etwa schlecht, sondern
 **rechnerisch unmöglich**: In einem 4 m breiten Zimmer gibt es keinen zulässigen
 Standpunkt. Wer bis dahin „Innenbild" sagte, bekam eine Kamera zehn Meter ausserhalb der
 Wand.

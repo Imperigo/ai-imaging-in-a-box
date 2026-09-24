@@ -821,9 +821,9 @@ def test_die_kamera_sieht_das_bauwerk_wirklich(lauf_mit_kamera):
     aus 2-m-Quadern, und bei so kleinen Körpern setzt nicht der Bildwinkel den Abstand,
     sondern der Mindestabstand von 10 m. Die Kamera steht 11 m von einem 2-m-Körper — das
     Bauwerk füllt gut ein Viertel des Bildes in der Höhe und entsprechend wenig Fläche.
-    **Das ist keine Fehlfunktion, sondern die untere Grenze eines Verfahrens, das auf
-    Gebäudemasse ausgelegt ist** — und `kamerasatz` sagt es als Warnung, statt es
-    stillschweigend zu liefern (siehe der Test darunter).
+    *(So bis zum 24.09.2026. Seit dem Wandabstand von 3 m rahmt der Bildwinkel diese
+    Szene, und sie füllt den Rahmen — siehe der Test darunter. Die Schranke bleibt
+    niedrig, weil sie prüft, OB Geometrie im Bild steht, nicht wie viel.)*
 
     **Die zweite Schranke stand bis zum 28.08.2026 auf 20 und war abgeschrieben.** Sie
     stammte aus der Zeit der gekippten Kamera. Gemessen an derselben Szene, derselben
@@ -862,23 +862,30 @@ def test_die_kamera_sieht_das_bauwerk_wirklich(lauf_mit_kamera):
 
 
 @ohne_blender
-def test_bei_dieser_kleinen_szene_warnt_der_kamerasatz(lauf_mit_kamera):
-    """Der Grund, warum die Schranke oben so niedrig sein darf.
+def test_bei_dieser_kleinen_szene_fuellt_die_kamera_den_rahmen(lauf_mit_kamera):
+    """Was bis zum 24.09.2026 eine Warnung war, ist jetzt ein gefülltes Bild.
 
-    Ein Bild, auf dem das Bauwerk ein Fleck ist, sieht wie ein Fehler des Bildmodells aus
-    — die Ursache liegt aber in der Kamera, und dort würde niemand suchen. Darum meldet
-    `aiimaging.kameras` den erreichten Füllgrad, statt ihn nur zu erzeugen.
+    Hier stand ``test_bei_dieser_kleinen_szene_warnt_der_kamerasatz``: Der Mindestabstand
+    von 10 m stellte die Kamera 11 m vor einen 2-m-Körper, das Bauwerk war ein Fleck,
+    und der Test sicherte zu, dass ``kamerasatz`` das als Warnung sagt. Der Wandabstand
+    steht seither auf 3 m (Begründung in ``kameras.WANDABSTAND_M``) — und genau diese
+    Szene rahmt jetzt der Bildwinkel, nicht mehr die Untergrenze.
+
+    Die Warnung selbst ist nicht weg: ``tests/test_kameras.py`` prüft sie an einem Körper
+    unter Augenhöhe, wo sie weiterhin greift. Hier wird zugesichert, was die Änderung
+    an einer ECHTEN Szene bewirken sollte — auch bei 28 mm, wo der Abstand am knappsten
+    ist.
     """
     from aiimaging import kameras as kameras_modul
-    # Die Brennweite steht hier AUSDRÜCKLICH und wird nicht geerbt: Bei 35 mm füllt
-    # dieser 2-m-Körper aus dem Mindestabstand bereits über die Warnschwelle, und der
-    # Test prüfte dann nicht mehr, was er prüfen will. Ein Test, dessen Aussage an einer
-    # Vorgabe hängt, misst die Vorgabe und nicht den Mechanismus.
     satz = kameras_modul.kamerasatz(lauf_mit_kamera["bbox"], kuerzel=["n"],
                                     brennweite_mm=28.0)
-    assert satz["warnungen"], "keine Warnung, obwohl das Bauwerk winzig im Bild steht"
-    assert "füllt nur" in satz["warnungen"][0]
-    assert satz["kameras"][0]["fuellgrad"] < 0.4
+    kamera = satz["kameras"][0]
+    assert not any("füllt nur" in w for w in satz["warnungen"]), satz["warnungen"]
+    # Nicht gegen BILDBREITE_ABBRUCH: Die Szene ist 8 m tief, der Eckentest schiebt für
+    # die fernen Dachecken noch etwas zurück (gemessen 0,621 bei 28 mm, 0,635 bei 35 mm).
+    # Zugesichert wird, was die Warnung selbst zusichert — und vorher lag hier < 0,4.
+    assert kamera["fuellgrad"] >= (kameras_modul.DECKUNGSGRAD
+                                   * kameras_modul.FUELLGRAD_WARNSCHWELLE), kamera["fuellgrad"]
 
 
 @pytest.fixture(scope="module")
