@@ -1,0 +1,18 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-99",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "V1": "Erzeugt, nicht verdrahtet: die Bridge legt je Job ein Zufallszeichen an (tools/homestation-bridge/kosmo_bridge/main.py:873, CONFIRMED_RENDER_ + secrets.token_hex(4)), gibt es beim Anlegen zurueck, die Oberflaeche reicht es beim Klick «freigeben» unveraendert zurueck (vis-jobs.ts), und die Bridge vergleicht es in konstanter Zeit mit dem gespeicherten Wert (main.py:897, secrets.compare_digest). Wer nur das Praefix kennt, kommt nicht durch.",
+    "V2": "Nicht noetig auf unserem Weg: KosmoOrbit ruft eure MCP-Werkzeuge (aiimaging_enqueue_render, freigeben) nicht auf — die Bestellung laeuft ueber die eigene Bridge und deren Ablage. Euer Tokenbuch und unser Freigabezeichen sind zwei getrennte Tore.",
+    "V3": "Ja, drei weitere im selben Muster: CONFIRMED_SIM_, CONFIRMED_BAKE_ (vis-jobs.ts) und SPLAT (main.py). Alle vier je Job zufaellig, alle mit demselben Vergleich.",
+    "V4": "Schaltet mit_buch ein, wann ihr wollt — unser Weg laeuft nicht ueber euer freigeben, er bricht dadurch nicht.",
+    "V5": "Falls ihr eines Tages direkt aus KosmoOrbit bestellt werden wollt (ohne Bridge), wird V2 wieder eine Frage — dann als Vertragsauftrag an unseren Integrator."
+  },
+  "umgebung": {},
+  "fehler": null
+}

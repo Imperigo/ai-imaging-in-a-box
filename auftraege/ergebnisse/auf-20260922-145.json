@@ -1,0 +1,19 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260922-145",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "R1": "Nicht eingebaut: Grundriss und Richtung gibt es bei uns als getrennte Wege nicht (siehe auf-143 Q6); die Regel betrifft eure Flaeche.",
+    "R2": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (= Q5, deckungsgrad)",
+    "R3": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (deckungsgrad_wirkungslos)",
+    "R4": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (= Q8)",
+    "R5": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (bildeingang_lage.traegt)",
+    "aufgefallen": "R2/Q5 und R4/Q8 sind je dieselbe Sache unter zwei Namen — im Vertragsvorschlag bitte je einmal."
+  },
+  "umgebung": {},
+  "fehler": null
+}

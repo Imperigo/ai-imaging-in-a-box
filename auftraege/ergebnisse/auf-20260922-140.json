@@ -1,0 +1,24 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260922-140",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "P1": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (modus_bestellt/gerechnet/abweichung)",
+    "P2": "Teilweise: verdict.reason erscheint ungekuerzt, wenn ihr ihn schickt (NodeCanvas.tsx BildKachel, KuratierInspektor). Ein ausdrueckliches «NICHT GEMESSEN» bei fehlendem Grund fehlt. Weitergegeben an den Integrator als Einbauauftrag docs/AUFTRAG-EINBAU-KOSMOVIS-SAMMEL-20260924-AN-INTEGRATOR.md (KosmoOrbit, UI-Zweig): die Vis-Dateien gehoeren in dieser Welle ihm, nicht uns.",
+    "P3": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (Lizenz je Bild)",
+    "P4": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (laeufe[].angaben[].maengel)",
+    "P5": "Von euch selbst ueberholt (auf-143: «statt P5 gelten Q1–Q3»).",
+    "P6": "Geht in Q1 auf (euer Text in auf-143).",
+    "P7": "Von euch ersetzt durch Q4 (Sonne) und Q5 (Bildausschnitt).",
+    "P8": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (alle_waagrecht, rollwinkel_grad); Teil b ist Q9.",
+    "P9": "Betrifft eure eigene Flaeche (oberflaeche/seite.html, server.py), nicht KosmoOrbit.",
+    "pruefweg": "Kein Einbau, darum kein Zustand angezeigt. Geprueft per Suche nach jedem Feldnamen im ganzen KosmoOrbit-Repo (0 Treffer) und am Vertragsschema.",
+    "aufgefallen": "Fast alles haengt am Vertrag, nicht an der Oberflaeche. Schickt die Felder gebuendelt als EIN Vertragsvorschlag an unseren Integrator (herkunft.*, maengel, Lizenz, alle_waagrecht*, rollwinkel*, deckungsgrad*, import.raeume, bildeingang_lage, kamerahoehe.verlaesslich) — sonst bleibt jeder UI-Auftrag hier offen."
+  },
+  "umgebung": {},
+  "fehler": null
+}

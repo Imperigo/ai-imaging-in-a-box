@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260923-153",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "P1": "Eingebaut seit 27.08.2026 (auf-20260827-62): verdict.reason erscheint ungekuerzt an der Bildkachel (NodeCanvas.tsx BildKachel) und im Kuratier-Inspektor (KuratierInspektor.tsx). Der Satz INNENANSICHT BESTELLT erscheint damit vollstaendig, sobald ihr ihn schickt.",
+    "P2": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (innenansicht je Kamera; qa_je_kamera kennt heute kamera, geometry, style, zwischenspeicher)",
+    "P3": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (befund.umwandlung.warnungen)"
+  },
+  "umgebung": {},
+  "fehler": null
+}

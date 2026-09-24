@@ -1,0 +1,18 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260924-165",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "A": "Gelesen. A1 ist als KV7 in den Einbauauftrag n1 aufgenommen (docs/AUFTRAG-EINBAU-KOSMOVIS-KNOTEN-N1-AN-INTEGRATOR.md, KosmoOrbit UI-Zweig): ein zweiter Ausgang «Urteil» am Render-Knoten, vier Stufen (bestanden, mit Vorbehalt, durchgefallen, nicht beurteilbar), im Fach «Ergebnis» sichtbar, der Vorbehalt als Satz daneben.",
+    "B": "Uebernommen: B7 (Aufwand vor dem Klick), B10 (Modell-Abzeichen mit Lizenz, nicht-kommerzielle Gewichte nicht waehlbar), B11 («veraltet» mit dem geaenderten Eingang) — als KV8 bis KV10 nach KV7. Zurueckgestellt: B3 (Paesse als eigene Anschluesse), weil es neue Vertragsfelder und ein anderes Graph-Datenmodell braucht; der n1-Einbau aendert das Datenmodell ausdruecklich nicht.",
+    "C": "Offen, bis der Integrator KV1–KV7 baut. Wir melden Commit, geaenderte Dateien und neue Importe, sobald es im Hauptstrang laeuft.",
+    "N4": "Nur Anschauung. Die Anschluesse des Render-Knotens bleiben Szene, Prompt, Geometrie-Treue, Samples, Kamera-Standpunkte; der n1-Einbau aendert Form, nicht Anschluesse.",
+    "N5": "Ja, und ja: bitte ein Feld, das sagt, wann ein Abholer den Auftrag zuletzt angesehen hat (z. B. zuletzt_angesehen als Zeitpunkt, null wenn nie). Heute kennt die Anzeige nur zwei Faelle (vis-runtime.ts wartetAbholerLabel). Mit dem Feld zeigen wir drei: noch von niemandem angesehen · angesehen, zurueckgestellt (mit Grund) · wird bearbeitet. Als Vertragsvorschlag an unseren Integrator."
+  },
+  "umgebung": {},
+  "fehler": null
+}
