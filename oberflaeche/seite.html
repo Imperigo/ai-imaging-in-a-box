@@ -51,6 +51,9 @@
     border: 1px solid var(--rand); border-radius: 6px; padding: 7px 10px;
   }
   button { cursor: pointer; }
+  a.knopf { color: var(--schrift); text-decoration: none; border: 1px solid var(--rand);
+            border-radius: 6px; padding: 7px 10px; }
+  a.knopf:hover { border-color: var(--leise); }
   button:hover { border-color: var(--leise); }
   .leise { color: var(--leise); }
   .satz { color: var(--leise); font-size: 13px; margin-top: 4px; }
@@ -228,6 +231,9 @@
     <option value="2">2 Startwerte</option>
     <option value="3">3 Startwerte</option>
   </select>
+  <!-- DIE KNOTENANSICHT (E26, 24.09.2026): gleich wichtig wie diese Seite, darum oben und
+       nicht in einem Menue. Sie oeffnet dieselbe Mappe; `?ordner=` setzt das Skript unten. -->
+  <a id="knoten" class="knopf" href="/knoten/">Knotenansicht</a>
   <span id="stand" class="leise"></span>
 </header>
 
@@ -1598,6 +1604,12 @@ $("ebenenRechnen").addEventListener("click", ebenenRechnen);
 setInterval(nachsehen, 10000);
 $("laden").addEventListener("click", laden);
 $("rechnen").addEventListener("click", rechnen);
+// DIE KNOTENANSICHT OEFFNET DIE MAPPE, DIE HIER OFFEN IST — nicht die vom Start. Ohne
+// Eintrag im Feld bleibt es bei der Mappe, mit der der Server gestartet wurde.
+$("knoten").addEventListener("click", (e) => {
+  const ordner = $("ordner").value.trim();
+  if (ordner) { e.preventDefault(); location.href = "/knoten/?ordner=" + encodeURIComponent(ordner); }
+});
 $("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") laden(); });
 // Beim Start einmal fragen: Wer mit --ordner gestartet hat, soll nicht erst klicken.
 laden();

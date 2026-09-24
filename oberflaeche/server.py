@@ -61,8 +61,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import inspect                                                  # noqa: E402
 
-from aiimaging import (arbeitsgang, glbbox, importeur, kette, kopplung,   # noqa: E402
-                       projekt)
+from aiimaging import (arbeitsgang, glbbox, importeur, kette, knotenweg,  # noqa: E402
+                       kopplung, projekt)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -408,6 +408,47 @@ WEG_RECHNE_SKIZZE = "/api/rechne-skizze"
 #: Die Koppelseite (Entscheid 26) — neben ``WEG_VERBINDEN`` der einzige Weg, der ohne
 #: Anmeldung durchkommt, und nur, solange eine Kopplung offen ist. Siehe ``_darf_herein``.
 WEG_KOPPELN = "/koppeln"
+
+# DIE KNOTENANSICHT (E26, 24.09.2026) — und warum ihre Wege NICHT in den Tafeln stehen.
+#
+# Die Knotenansicht ist das aus KosmoOrbit kopierte Vis-Werkzeug (`kosmovis/`) und laeuft
+# nur im Browser (Owner-Antwort «Im Browser»). Die Tafeln unten sind der Vertrag mit der
+# iPad-App (`tests/test_ipad_geruest.py` gleicht sie mit `Wege.swift` ab); ein Weg, den
+# nur der Browser kennt, gehoert dort nicht hinein. Die Knotenwege werden darum ueber ihre
+# VORSILBE erkannt, vor den Tafeln, und haben dieselbe Anmeldung wie alles andere.
+#
+# `WEG_BRUECKE` traegt die Schnittstelle, die `vis-jobs.ts` in KosmoOrbit anspricht
+# (`/health`, `/jobs`, `/jobs/{id}`, `/approve`, `/cancel`, `/artifacts/{name}`) — die
+# Knotenansicht zeigt mit `localStorage['kosmo.bridge']` hierher. Was dahinter passiert,
+# entscheidet `aiimaging.knotenweg`.
+WEG_KNOTEN = "/knoten"
+WEG_KNOTEN_MAPPE = "/knoten/mappe"
+WEG_KNOTEN_MODELL = "/knoten/modell.glb"
+WEG_BRUECKE = "/bruecke"
+
+#: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
+#: (``cd kosmovis && npm install && npm run build``).
+KNOTEN_BAU = Path(__file__).resolve().parents[1] / "kosmovis" / "apps" / "visbox-knoten" / "dist"
+
+#: Was der Bau enthält, mit dem Typ, den der Browser braucht. Alles andere wird nicht
+#: ausgeliefert — auch nicht, wenn es im Bauordner liegt.
+KNOTEN_TYPEN = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".woff2": "font/woff2",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".txt": "text/plain; charset=utf-8",
+    ".md": "text/plain; charset=utf-8",
+}
+
+#: Die Wege der Brücke, die es in Visbox NICHT gibt — mit Satz statt «Unbekannter Weg».
+BRUECKE_NICHT_IN_VISBOX = {
+    "/jobs/blender-sim": "Blender-Simulationen",
+    "/jobs/bake": "Textur-Backen",
+    "/jobs/video-splat": "Video zu Splat",
+}
 
 BENUTZER = "visbox"
 
@@ -1290,11 +1331,48 @@ WEGTAFEL_LESEN = {
 }
 
 
+def _ist_knotenweg(pfad: str) -> bool:
+    """Gehört dieser Weg der Knotenansicht? Über die Vorsilbe, mit Grenze.
+
+    ``/knotenwerk`` gehört nicht dazu — ein reiner ``startswith`` hielte es dafür.
+    """
+    return any(pfad == v or pfad.startswith(v + "/") for v in (WEG_KNOTEN, WEG_BRUECKE))
+
+
+def lies_formular(inhaltstyp: str, rumpf: bytes) -> dict:
+    """Ein ``multipart/form-data``-Rumpf → ``{feldname: (dateiname, bytes)}``.
+
+    Mit dem E-Mail-Leser der Standardbibliothek, der dasselbe Format spricht — ``cgi`` ist
+    abgekündigt, und ein fremdes Paket wäre für vier Zeilen eine Abhängigkeit.
+
+    Raises:
+        knotenweg.KnotenwegError: kein Formular.
+    """
+    from email.parser import BytesParser
+    from email.policy import HTTP
+
+    if not inhaltstyp.lower().startswith("multipart/form-data"):
+        raise knotenweg.KnotenwegError(
+            "Ein Auftrag kommt als Formular (multipart/form-data) mit Szene und Modell.")
+    nachricht = BytesParser(policy=HTTP).parsebytes(
+        b"Content-Type: " + inhaltstyp.encode("latin-1") + b"\r\n\r\n" + rumpf)
+    if not nachricht.is_multipart():
+        raise knotenweg.KnotenwegError("Das Formular liess sich nicht zerlegen.")
+    felder = {}
+    for teil in nachricht.iter_parts():
+        name = teil.get_param("name", header="content-disposition")
+        if name:
+            felder[name] = (teil.get_filename(), teil.get_payload(decode=True) or b"")
+    return felder
+
+
 class Flaeche(BaseHTTPRequestHandler):
     """Übersetzt Anfragen in Bibliotheksaufrufe. Mehr tut sie nicht."""
 
     ordner: Path | None = None
     kennwort: str | None = None
+    #: Wohin die Aufträge der Knotenansicht kommen (siehe ``aiimaging.knotenweg``).
+    ablage: Path | None = None
     #: Die offene Kopplung fuer das erste Verbinden, oder ``None``.
     #:
     #: Sie liegt auf der KLASSE und nicht in einer Anfrage: Alle Anfragen teilen sie
@@ -1398,6 +1476,9 @@ class Flaeche(BaseHTTPRequestHandler):
         if not self._darf_herein():
             return
         weg = urllib.parse.urlparse(self.path)
+        if _ist_knotenweg(weg.path):
+            self._knotenweg_lesen(weg.path, urllib.parse.parse_qs(weg.query))
+            return
         methode = WEGTAFEL_LESEN.get(weg.path)
         if methode is None:
             self._fehler(f"Unbekannter Weg: {weg.path}", 404)
@@ -1485,11 +1566,153 @@ class Flaeche(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(roh)
 
+    # --------------------------------------------------------------- die Knotenansicht
+    def _ablage(self) -> Path:
+        """Wohin die Aufträge der Knotenansicht kommen — oder ein Satz, warum nirgendwohin."""
+        ablage = type(self).ablage
+        if ablage is None:
+            raise knotenweg.KnotenwegError(
+                "Keine Auftragsablage: mit --ordner (dann liegt sie in der Mappe) oder "
+                "--auftragsablage starten.", 503)
+        return Path(ablage)
+
+    def _sende_datei(self, roh: bytes, typ: str) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", typ)
+        self.send_header("Content-Length", str(len(roh)))
+        # Wie bei den Bildern: ein neuer Lauf, ein neuer Bau — nichts aus dem Speicher.
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(roh)
+
+    def _knotenweg_lesen(self, pfad: str, frage: dict | None = None) -> None:
+        try:
+            if pfad.startswith(WEG_BRUECKE):
+                rest = pfad[len(WEG_BRUECKE):]
+                teile = [t for t in rest.split("/") if t]
+                if rest in ("", "/health"):
+                    self._sende(knotenweg.gesundheit(type(self).ablage))
+                elif teile == ["jobs"]:
+                    self._sende(knotenweg.liste(self._ablage()))
+                elif len(teile) == 2 and teile[0] == "jobs":
+                    self._sende(knotenweg.lies(self._ablage(), teile[1]))
+                elif len(teile) == 4 and teile[0] == "jobs" and teile[2] == "artifacts":
+                    ziel = knotenweg.artefakt(self._ablage(), teile[1],
+                                              urllib.parse.unquote(teile[3]))
+                    self._sende_datei(ziel.read_bytes(), BILDTYPEN.get(
+                        ziel.suffix.lower(), "application/octet-stream"))
+                else:
+                    self._fehler(f"Diesen Weg der Brücke gibt es in {NAME} nicht: {rest}", 404)
+            elif pfad == WEG_KNOTEN_MAPPE:
+                # WIE `_projekt`: der Ordner aus der Anfrage, sonst der vom Start.
+                ordner = ((frage or {}).get("ordner") or [None])[0] or self.ordner
+                if not ordner:
+                    self._fehler("Kein Projektordner — mit --ordner starten oder auf der "
+                                 f"{NAME}-Seite einen öffnen.", 404)
+                    return
+                antwort = knotenweg.mappe_fuer_knoten(ordner)
+                # DER PFAD BLEIBT HIER: Die Seite braucht nur, OB es ein Modell gibt. Ein
+                # Plattenpfad im Browser traegt den Rechnernamen nach aussen (Regel 3).
+                antwort["glb"] = bool(antwort["glb"])
+                self._sende(antwort)
+            elif pfad == WEG_KNOTEN_MODELL:
+                ordner = ((frage or {}).get("ordner") or [None])[0] or self.ordner
+                if not ordner:
+                    self._fehler("Kein Projektordner — mit --ordner starten oder auf der "
+                                 f"{NAME}-Seite einen öffnen.", 404)
+                    return
+                glb = knotenweg.mappe_fuer_knoten(ordner)["glb"]
+                if not glb:
+                    self._fehler("Die Mappe hat noch kein glb.", 404)
+                    return
+                self._sende_datei(Path(glb).read_bytes(), "model/gltf-binary")
+            else:
+                self._knotenseite(pfad)
+        except knotenweg.KnotenwegError as fehler:
+            self._fehler(str(fehler), fehler.code)
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler), 404)
+
+    def _knotenseite(self, pfad: str) -> None:
+        """Der Bau der Knotenansicht — nur Dateien darin, nur bekannte Typen."""
+        if pfad == WEG_KNOTEN:
+            # Die Seite laedt ihre Teile relativ (`./assets/…`); ohne den Schraegstrich
+            # suchte der Browser sie eine Ebene zu hoch.
+            self.send_response(301)
+            self.send_header("Location", WEG_KNOTEN + "/")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if not (KNOTEN_BAU / "index.html").is_file():
+            self._fehler("Die Knotenansicht ist nicht gebaut. Einmal im Ordner kosmovis/: "
+                         "npm install, dann npm run build.", 404)
+            return
+        rest = pfad[len(WEG_KNOTEN) + 1:] or "index.html"
+        ziel = (KNOTEN_BAU / rest)
+        try:
+            ziel.resolve().relative_to(KNOTEN_BAU.resolve())
+        except ValueError:
+            self._fehler(f"Unbekannter Weg: {pfad}", 404)
+            return
+        typ = KNOTEN_TYPEN.get(ziel.suffix.lower())
+        if typ is None or not ziel.is_file():
+            self._fehler(f"Unbekannter Weg: {pfad}", 404)
+            return
+        self._sende_datei(ziel.read_bytes(), typ)
+
+    def _knotenweg_handeln(self, pfad: str, laenge: int) -> None:
+        rest = pfad[len(WEG_BRUECKE):] if pfad.startswith(WEG_BRUECKE) else None
+        teile = [t for t in (rest or "").split("/") if t]
+        try:
+            if rest is None:
+                self._fehler(f"Unbekannter Weg: {pfad}", 404)
+            elif rest in BRUECKE_NICHT_IN_VISBOX:
+                self._fehler(f"{BRUECKE_NICHT_IN_VISBOX[rest]} gibt es in {NAME} nicht — "
+                             f"das bleibt bei KosmoOrbit.", 404)
+            elif teile == ["jobs"]:
+                if laenge > knotenweg.MAX_MODELL_BYTES + 16 * 1024 * 1024:
+                    raise knotenweg.KnotenwegError(
+                        "Der Auftrag ist zu gross — angenommen werden Modelle bis "
+                        f"{knotenweg.MAX_MODELL_BYTES // (1024 * 1024)} MB.", 413)
+                felder = lies_formular(self.headers.get("Content-Type", ""),
+                                       self.rfile.read(laenge))
+                if "scene" not in felder or "model" not in felder:
+                    raise knotenweg.KnotenwegError(
+                        "Ein Auftrag braucht die Felder «scene» und «model».")
+                try:
+                    szene = json.loads(felder["scene"][1] or b"{}")
+                except ValueError as fehler:
+                    raise knotenweg.KnotenwegError(f"Die Szene ist kein JSON: {fehler}") \
+                        from fehler
+                dateiname, modell = felder["model"]
+                self._sende(knotenweg.lege_an(self._ablage(), szene, modell, dateiname))
+            elif len(teile) == 3 and teile[0] == "jobs" and teile[2] in ("approve", "cancel"):
+                roh = self.rfile.read(laenge) if laenge else b""
+                if teile[2] == "approve":
+                    try:
+                        wunsch = json.loads(roh or b"{}")
+                    except ValueError:
+                        wunsch = {}
+                    self._sende(knotenweg.freigeben(self._ablage(), teile[1],
+                                                    (wunsch or {}).get("approval_token")))
+                else:
+                    self._sende(knotenweg.abbrechen(self._ablage(), teile[1]))
+            else:
+                self._fehler(f"Diesen Weg der Brücke gibt es in {NAME} nicht: {rest}", 404)
+        except knotenweg.KnotenwegError as fehler:
+            self._fehler(str(fehler), fehler.code)
+
     # ------------------------------------------------------------------------ handeln
     def do_POST(self) -> None:                       # noqa: N802 — Name der Basisklasse
         if not self._darf_herein():
             return
         laenge = int(self.headers.get("Content-Length") or 0)
+        # DER KNOTENWEG ZUERST: Sein Auftrag kommt als Formular mit einer Modelldatei, nicht
+        # als JSON — die Zeile darunter wuerde ihn als unlesbar abweisen.
+        weg_knoten = urllib.parse.urlparse(self.path).path
+        if _ist_knotenweg(weg_knoten):
+            self._knotenweg_handeln(weg_knoten, laenge)
+            return
         try:
             wunsch = json.loads(self.rfile.read(laenge) or b"{}")
         except ValueError as fehler:
@@ -2033,7 +2256,7 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
 
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                 anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
-                kopplung_offen=None) -> HTTPServer:
+                kopplung_offen=None, ablage=None) -> HTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -2066,10 +2289,15 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
             "übergeben. Entweder --kennwort/--kennwort-erzeugen dazu, oder --kopplung "
             "weglassen.")
 
+    # DIE AUFTRAGSABLAGE DER KNOTENANSICHT liegt ohne ausdrueckliche Angabe IN DER MAPPE:
+    # Bilder, Urteile und die Auftraege, aus denen sie wurden, bleiben so beisammen.
+    if ablage is None and ordner:
+        ablage = Path(ordner) / "knotenweg"
     klasse = type("FlaecheMitOrdner", (Flaeche,),
                   {"ordner": Path(ordner) if ordner else None,
                    "kennwort": kennwort or None,
-                   "kopplung_offen": kopplung_offen})
+                   "kopplung_offen": kopplung_offen,
+                   "ablage": Path(ablage) if ablage else None})
     return HTTPServer((adresse, anschluss), klasse)
 
 
@@ -2204,6 +2432,10 @@ def main(argv=None) -> int:
     ap.add_argument("--adresse", default=None,
                     help="Vorgabe 127.0.0.1 — nur die eigene Maschine. Siehe LIESMICH.")
     ap.add_argument("--anschluss", type=int, default=VORGABE_ANSCHLUSS)
+    ap.add_argument("--auftragsablage", default=None,
+                    help="Wohin die Knotenansicht ihre Aufträge legt. Vorgabe: <ordner>/"
+                         "knotenweg. Rechnen lässt sie der Abholer: tools/abholen.py "
+                         "--store <diese Ablage>.")
     ap.add_argument("--kennwort", default=None,
                     help="Kennwort für die Anmeldung. Pflicht, sobald --adresse nicht "
                          "127.0.0.1 ist.")
@@ -2239,7 +2471,8 @@ def main(argv=None) -> int:
 
     try:
         server = baue_server(ordner=a.ordner, adresse=adresse, anschluss=a.anschluss,
-                             kennwort=kennwort, kopplung_offen=offen)
+                             kennwort=kennwort, kopplung_offen=offen,
+                             ablage=a.auftragsablage)
     except FlaechenError as fehler:
         # KEIN STACKTRACE. Das ist der eine Fehler, den ein Mensch beim Start wirklich
         # sieht, und er ist fuer ihn geschrieben.

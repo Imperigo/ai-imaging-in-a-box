@@ -105,6 +105,15 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (abends) · Die Knotenansicht bestellt jetzt bei Visbox
+
+* **Das Gebäude der Mappe erscheint in der Knotenansicht**, und der Knopf «Ausführen» ist frei.
+* **Eine Bestellung landet bei unserem eigenen Server** und wartet, bis jemand «Freigeben»
+  drückt. Erst dann steht sie in der Reihe — eine Maschine gibt sich hier nichts selbst frei.
+* **Gerechnet wird mit dem bestehenden Abholer**, ohne zweite Rechenstrecke. Das erste
+  echte Bild auf diesem Weg misst die HomeStation (Auftrag 164).
+* **Auf der Visbox-Seite steht oben der Knopf «Knotenansicht».**
+
 ### 24.09.2026 (später) · Die Knotenansicht von KosmoOrbit ist herübergekommen — und läuft
 
 * **Neue Richtung des Owners (E26):** Statt eine eigene Knotenansicht zu zeichnen, kommt die

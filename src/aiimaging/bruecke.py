@@ -109,6 +109,15 @@ TOKEN_VORSATZ = "CONFIRMED_RENDER_"
 #: Feld dafür. Er hatte eines.
 FELD_MELDUNG = "message"
 
+#: Die Marke einer **menschlichen** Freigabe aus der Knotenansicht (E26, 24.09.2026).
+#:
+#: Die fremde Brücke schreibt dieses Feld nie. Es entsteht allein in
+#: :func:`aiimaging.knotenweg.freigeben`, also wenn in der Visbox-Knotenansicht jemand
+#: «Freigeben» gedrückt hat — auf einem Auftrag, der bis dahin auf ``awaiting_approval``
+#: stand. Nur dann gilt der Token, ohne dass der Betreiber ``fremde_freigabe_gilt`` setzt.
+#: Für jeden Auftrag der fremden Brücke ändert sich damit nichts.
+FELD_FREIGABE_KNOTEN = "visbox_freigabe"
+
 
 class BrueckenError(ValueError):
     """Ein Auftragsverzeichnis ist unbrauchbar, oder eine Antwort passte nicht hinein."""
@@ -348,6 +357,11 @@ def _freigabe(laufzettel: dict, fremde_freigabe_gilt: bool) -> tuple[bool, str]:
     if not isinstance(token, str) or not token.startswith(TOKEN_VORSATZ):
         return False, (f"Der Freigabe-Token hat nicht die vereinbarte Form "
                        f"({TOKEN_VORSATZ}…): {token!r}")
+    marke = laufzettel.get(FELD_FREIGABE_KNOTEN)
+    if (isinstance(marke, dict) and marke.get("am")
+            and laufzettel.get("status") != STATUS_AWAITING):
+        return True, (f"Freigegeben per Klick in der Visbox-Knotenansicht am {marke['am']} — "
+                      f"ein Mensch hat entschieden, nicht die Brücke.")
     if not fremde_freigabe_gilt:
         return False, (
             "Der Freigabe-Token dieses Auftrags stammt von der Brücke SELBST — ihr "

@@ -7440,8 +7440,9 @@ Bekannt und ausdrücklich nicht erledigt:
 
 > **Entschieden:** E26 — das Vis-Werkzeug von KosmoOrbit kommt als wörtliche Kopie herüber
 > (ersetzt die zwei Fragen an Blatt 11).
-> **Gemessen:** Kopie übersetzt fehlerfrei, 722 Proben grün, läuft im Browser.
-> **Offen:** Mappe und Server anschliessen; dann jeden Knoten mit dem Owner; `auf-162`.
+> **Gemessen:** Kopie übersetzt fehlerfrei, 722 Proben grün; im Browser bis «freigegeben,
+> wartet auf den Abholer» durchgeklickt.
+> **Offen:** ein echtes Bild auf diesem Weg (`auf-164`); jeden Knoten mit dem Owner; `auf-162`.
 
 - [x] Blatt 11 «Der Knotenweg am Rechner» gezeichnet (Entwurfsfläche).
 - [x] `auf-20260924-162` an ui (Bildschirmfotos, Stand E8/E7); Block vom 24.09.
@@ -7456,9 +7457,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] 19 Stellvertreter, Wirtsseite `apps/visbox-knoten`; übersetzt fehlerfrei, 722 Proben
         grün, läuft im Browser (Protokoll 71 §6).
   - [x] Wächter `tests/test_kosmovis_herkunft.py`; `NOTICE`, Lexikon, README.
-  - [ ] Modell der offenen Mappe in die Knotenansicht (`setzeModellGlb` + Bauteil im Dokument).
-  - [ ] Brücken-Schnittstelle auf unserem Server (`/health`, `/jobs`, Freigabe, Abbruch,
-        Ergebnisdateien) — dieselbe, die `vis-jobs.ts` in KosmoOrbit anspricht.
-  - [ ] Schalter in der Visbox-Fläche, der die Knotenansicht öffnet.
-  - [ ] Jeden Knoten einzeln mit dem Owner durchgehen.
+  - [x] Modell der offenen Mappe in die Knotenansicht (`setzeModellGlb` + Hüllbox als Bauteil).
+  - [x] Brücken-Schnittstelle auf unserem Server (`/bruecke/…`, `aiimaging.knotenweg`);
+        Aufträge warten auf menschliche Freigabe (Protokoll 71 §7).
+  - [x] Knopf «Knotenansicht» auf der Visbox-Seite.
+  - [ ] **local:** ein echtes Bild über diesen Weg (`auf-20260924-164`).
+  - [ ] Jeden Knoten einzeln mit dem Owner durchgehen (vorgemerkt: «1 Bauteile» am Modell-Knoten).
 

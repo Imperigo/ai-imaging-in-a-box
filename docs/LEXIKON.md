@@ -5800,12 +5800,31 @@ jeden Befehl und jede Antwort des Rechenwegs. MIT-lizenziert.
 `.ttf`-Datei, aber gepackt, damit sie schnell lädt. Die drei Schriften der Knotenansicht
 (Lato, PT Sans Narrow, IBM Plex Mono) liegen so vor.
 
+**Vorsilbe eines Wegs** — Der Anfang einer Adresse, an dem ein Server erkennt, wem eine
+Anfrage gehört: alles, was mit `/bruecke/` beginnt, geht an die Knotenansicht-Schnittstelle.
+Wichtig ist die **Grenze**: `/brueckenbau` beginnt zwar mit denselben Buchstaben, gehört
+aber nicht dazu — darum wird auf «genau `/bruecke` oder `/bruecke/…`» geprüft. Im Projekt:
+`oberflaeche/server.py`, `_ist_knotenweg`.
+
+**Formular-Upload (multipart/form-data)** — Die Art, wie ein Browser mehrere Teile in einer
+Anfrage schickt, etwa einen Text (die Szene) und eine Datei (das Modell). Die Teile sind
+durch eine vereinbarte Grenzzeile getrennt. Im Projekt schickt die Knotenansicht so ihre
+Bestellung; zerlegt wird sie mit dem E-Mail-Leser der Standardbibliothek, der dasselbe
+Format kennt (`lies_formular`).
+
+**Freigabe-Marke** — Ein Vermerk im Laufzettel eines Auftrags, der sagt: *Hier hat ein Mensch
+freigegeben, nicht die Maschine.* Die fremde Brücke gibt sich ihren Freigabe-Token selbst;
+darum zählt ein Token allein bei uns nicht. Die Marke `visbox_freigabe` entsteht nur, wenn in
+der Knotenansicht jemand «Freigeben» drückt, und wirkt nur nach diesem Schritt. Im Projekt:
+`bruecke.FELD_FREIGABE_KNOTEN`, geschrieben von `knotenweg.freigeben`.
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus dem Knotenweg: **Vorsilbe eines Wegs**, **Formular-Upload (multipart/form-data)**, **Freigabe-Marke** |
 | 2026-09-24 | Ergaenzt aus der Übernahme des Vis-Werkzeugs (E26): **Stellvertreter**, **Wörtliche Kopie mit Herkunft**, **npm und Arbeitsbereich**, **Sperrdatei**, **Bau (Build)**, **Vite**, **Vitest**, **zod**, **woff2** |
 | 2026-09-24 | Ergaenzt aus Sitzung 71: **Knotenansicht / Knoteneditor** |
 | 2026-09-23 | Ergaenzt aus Runde 12: **Führungsregler (`true_cfg_scale`)**, **Leer-Negativprompt**, **Guidance-destilliert (`guidance_embeds`)** |

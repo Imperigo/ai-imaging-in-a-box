@@ -401,8 +401,18 @@ def main(argv=None) -> int:
             offen = quelle.offene_auftraege(pfad)
             print(f"Offene Auftraege [{name}]: {len(offen)}")
             for o in offen:
-                print(f"  {Path(o).name}")
-        print(f"Fremde Freigabe gilt: {'ja' if a.fremde_freigabe else 'NEIN — nichts wird gerechnet'}")
+                # JE AUFTRAG, OB ER FREI IST (24.09.2026). Hier stand pauschal «NEIN — nichts
+                # wird gerechnet», solange --fremde-freigabe fehlte. Seit der Knotenansicht
+                # stimmt das nicht mehr: Ein Auftrag, den dort ein Mensch freigegeben hat,
+                # wird gerechnet (`bruecke.FELD_FREIGABE_KNOTEN`). Die Probe sagt darum,
+                # was der Lauf je Auftrag entscheiden wird — mit derselben Funktion.
+                try:
+                    frei = quelle.lies_auftrag(o, fremde_freigabe_gilt=a.fremde_freigabe)
+                    lage = "frei" if frei.get("freigegeben", True) else "NICHT frei"
+                except quelle.QUELLEN_FEHLER as fehler:
+                    lage = f"unlesbar: {fehler}"
+                print(f"  {Path(o).name}  — {lage}")
+        print(f"Fremde Freigabe gilt: {'ja' if a.fremde_freigabe else 'NEIN — gerechnet wird nur, was ein Mensch freigegeben hat'}")
         return 0
 
     seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())

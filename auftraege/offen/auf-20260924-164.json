@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-164",
+  "art": "frage",
+  "beschreibung": "Die Knotenansicht (E26) bestellt ueber unseren Server; bis «freigegeben, wartet auf den Abholer» geprueft. Einmal echt durchrechnen: entsteht ein Bild, und kommt es ueber /bruecke zurueck? Dazu Ansage: menschliche Freigabe aus der Knotenansicht gilt ohne --fremde-freigabe.",
+  "anweisung": "=== DIE KNOTENANSICHT BESTELLT EIN BILD — EINMAL ECHT DURCHRECHNEN ===\n\nSeit dem 24.09.2026 hat Visbox die Knotenansicht aus KosmoOrbit (kosmovis/, Entscheid E26).\nSie bestellt Bilder ueber dieselbe Schnittstelle wie dort — nur spricht sie jetzt mit\nUNSEREM Server (oberflaeche/server.py, Weg /bruecke/...). Die Auftraege landen in der Form\nder Bruecke in einer Ablage, und der Abholer rechnet sie. Hier ist alles bis «freigegeben,\nwartet auf den Abholer» geprueft; ein Bild ist auf diesem Weg noch nie entstanden.\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, vor dem Ziehen)\n\n  A1 bruecke.lies_auftrag: Ein Auftrag mit dem Feld «visbox_freigabe» (entsteht NUR, wenn in\n     der Knotenansicht jemand «Freigeben» drueckt) gilt als freigegeben, auch ohne\n     --fremde-freigabe. Auftraege der KosmoOrbit-Bruecke tragen dieses Feld nie — fuer sie\n     aendert sich nichts.\n  A2 tools/abholen.py --probe nennt jetzt je Auftrag «frei» oder «NICHT frei», statt pauschal\n     «nichts wird gerechnet». Nur die Ausgabe der Probe aendert sich.\n\nTEIL B — DER DURCHSTICH, NACH DEM PULL\n\n  B1 Mappe anlegen, synthetisch:\n       python3 tools/make_test_ifc.py build/testbau.ifc\n       python3 -c \"import sys; sys.path.insert(0,'src'); from aiimaging import arbeitsgang;\n         arbeitsgang.lege_an('build/mappe-knoten', 'build/testbau.ifc', name='Testbau')\"\n  B2 Server starten (eigenes Fenster):\n       python3 oberflaeche/server.py --ordner build/mappe-knoten --kennwort <frei gewaehlt>\n     Die Auftraege liegen dann unter build/mappe-knoten/knotenweg/.\n  B3 Einen Auftrag so stellen, wie die Knotenansicht es tut — per curl, zwei Schritte:\n       Szene (Datei szene.json):\n         {\"schema\":\"kosmovis.render-scene/v1\",\"cameras\":\"auto\",\n          \"render\":{\"resolution\":[1024,640],\"samples\":128,\"faithful\":0.8},\n          \"style\":{\"mode\":\"none\",\"prompt\":\"Wohnhaus im Abendlicht, Holzfassade\"},\n          \"vis\":{\"skip\":false,\"backbone\":\"z-image-turbo\",\"upscale\":false},\n          \"geometry\":{\"format\":\"glb\"}}\n       curl -u visbox:<kennwort> -F scene=@szene.json;type=application/json\n            -F model=@model.glb;filename=model.glb http://127.0.0.1:8731/bruecke/jobs\n       (die glb der Mappe holt ihr vom Server selbst, wie die Knotenansicht:\n        curl -u visbox:<kennwort> -o model.glb http://127.0.0.1:8731/knoten/modell.glb)\n       Dann mit dem approval_token aus der Antwort:\n       curl -u visbox:<kennwort> -H 'Content-Type: application/json'\n            -d '{\"approval_token\":\"<token>\"}' http://127.0.0.1:8731/bruecke/jobs/<id>/approve\n  B4 Abholer auf diese Ablage (ohne --fremde-freigabe!):\n       python3 tools/abholen.py --store build/mappe-knoten/knotenweg --probe\n       python3 tools/abholen.py --store build/mappe-knoten/knotenweg --hoechstens 1\n  B5 Zurueck ueber den Server lesen:\n       curl -u visbox:<kennwort> http://127.0.0.1:8731/bruecke/jobs/<id>\n     und ein Bild aus result holen: /bruecke/jobs/<id>/artifacts/<name>\n\nTEIL C — FALLS NODE 22 UND EIN BROWSER DA SIND (sonst ueberspringen und sagen)\n  C1 cd kosmovis && npm install && npm run build\n  C2 http://127.0.0.1:8731/knoten/ oeffnen, GRAPH-Insel → «+ Graph erstellen» → Modell,\n     Prompt, Render legen, Modell→Szene und Prompt→Prompt verbinden, Prompt eintippen,\n     «Ausfuehren», «Freigeben». Abholer wie B4. Erscheint das Bild am Render-Knoten?\n\nWAS ZURUECKKOMMEN SOLL\n  A gelesen vor dem Ziehen · B3 die Antwort von /jobs (Status, ohne Token) · B4 die Zeile\n  der Probe zum Auftrag und status/Dauer des Laufs · B5 status, lieferstatus, Zahl der\n  Bilder, das Urteil in einem Satz · C was die Knotenansicht zeigte, oder warum C nicht ging.\n\nWAS NICHT GETAN WERDEN SOLL\n  - Nichts an unserem Code aendern, nichts ausser npm-Paketen herunterladen.\n  - --fremde-freigabe NICHT setzen: Geprueft wird gerade, dass es ohne geht.\n  - Keine echte Mappe, keine echte KosmoOrbit-Bestellung; keine Bilder, Pfade mit Namen\n    oder Projektnamen zurueck.",
+  "erstellt": "2026-09-24T12:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts an unserem Code aendern.",
+      "--fremde-freigabe nicht setzen.",
+      "Nur synthetische Mappe; keine Bilder, Pfade mit Namen oder Projektnamen zurueck."
+    ]
+  },
+  "rueckgabe": [
+    "A Ansage gelesen vor dem Ziehen.",
+    "B3 Antwort von /bruecke/jobs (Status, ohne Token).",
+    "B4 Probezeile zum Auftrag; status und Dauer des Laufs.",
+    "B5 status, lieferstatus, Zahl der Bilder, Urteil in einem Satz.",
+    "C Was die Knotenansicht zeigte — oder warum C nicht ging."
+  ],
+  "rang": 3
+}

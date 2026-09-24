@@ -257,3 +257,28 @@ Ersatz erkennt.*
 
 Das Blickziel liegt auf **halber Gebäudehöhe**. Wer auf den Boden zielt, bekommt ein Bild,
 in dem das Haus nach hinten kippt.
+
+## Die Knotenansicht (E26, 24.09.2026)
+
+Oben rechts neben «Rechnen» steht **Knotenansicht**. Sie öffnet das aus KosmoOrbit kopierte
+Vis-Werkzeug (`kosmovis/`) für dieselbe Mappe — Knoten legen, verbinden, ein Bild bestellen.
+Sie ist gleich wichtig wie diese Seite und ersetzt sie nicht.
+
+**Einmal bauen**, denn der Bau ist erzeugt und nicht im Repo:
+
+    cd kosmovis && npm install && npm run build
+
+Ohne Bau sagt `/knoten/` genau diesen Satz.
+
+**Wie ein Bild entsteht:** «Ausführen» am Render-Knoten legt einen Auftrag in die Ablage
+(Vorgabe `<ordner>/knotenweg`, sonst `--auftragsablage`). Er **wartet**, bis jemand
+«Freigeben» drückt — erst dann steht er in der Reihe. Gerechnet wird er vom Abholer:
+
+    python3 tools/abholen.py --store <ordner>/knotenweg
+
+Ohne laufenden Abholer zeigt der Render-Knoten ehrlich «wartet — nicht abgeholt».
+
+**Warum die Wege `/knoten` und `/bruecke` nicht in den Wegtafeln stehen:** Die Tafeln sind
+der Vertrag mit der iPad-App. Die Knotenansicht läuft nur im Browser; ihre Wege werden über
+die Vorsilbe erkannt, hinter derselben Anmeldung wie alles andere. Was hinter `/bruecke`
+passiert, entscheidet `aiimaging.knotenweg` — hier wird nur durchgereicht.
