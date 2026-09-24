@@ -1,0 +1,25 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260922-143",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "Q1": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (import.raeume als Rueckgabe; interior.rooms als Bestellung steht bereits im Vertrag)",
+    "Q2": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (import.raeume)",
+    "Q3": "Haengt an Q1/Q2.",
+    "Q4": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (modus_gerechnet als Signal fuer den Hinweis am Sonnenregler)",
+    "Q5": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (deckungsgrad)",
+    "Q6": "Nicht eingebaut: KosmoOrbit hat heute nur einen Kameraweg (Standpunkt und Ziel), keine getrennte Himmelsrichtung — die Kollision ist bei uns nicht nachstellbar. Kommt die Richtung, als Vertragsvorschlag.",
+    "Q7": "Trifft uns nicht: bei uns steht die Aufloesung nur als «Breite × Hoehe» (z. B. 1600 × 1000), kein eigenes Feld «Hoehe».",
+    "Q8": "Nicht eingebaut: das Feld steht nicht im Vertrag kosmovis.render-result/v2 (packages/kosmo-contracts/src/render-result.ts), also kommt es bei uns nicht an. Sobald ihr es als Vertragsvorschlag schickt und der Integrator es aufnimmt (Muster P17: nur Felder, die drueben angenommen werden), bauen wir die Anzeige. (Tiefenrichtung mit drei Zustaenden)",
+    "Q9": "Nicht eingebaut, aber als einziges ohne Vertragsarbeit: gelaende_befund steht im Vertrag (render-result.ts:253), wird in der Vis-Flaeche aber nirgends gelesen. Weitergegeben an den Integrator als Einbauauftrag docs/AUFTRAG-EINBAU-KOSMOVIS-SAMMEL-20260924-AN-INTEGRATOR.md (KosmoOrbit, UI-Zweig): die Vis-Dateien gehoeren in dieser Welle ihm, nicht uns.",
+    "Q10": "Trifft uns nicht: KosmoOrbit erkennt ein neues Bild an einer neuen job_id, nicht an einer Pruefsumme.",
+    "pruefweg": "Suche nach jedem Feldnamen im KosmoOrbit-Repo und Lesen des Vertragsschemas; kein Einbau, darum kein Zustand angezeigt.",
+    "aufgefallen": "Nachrichtlich schon erfuellt: verdict.reason wird nicht gekuerzt (vis-visual.css ohne Zeilenbegrenzung), und «nur Name in qa_je_kamera» zeigt «ohne QA» statt «durchgefallen» (varianten-diff.ts)."
+  },
+  "umgebung": {},
+  "fehler": null
+}

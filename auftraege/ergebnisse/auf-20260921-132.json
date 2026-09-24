@@ -1,0 +1,17 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-132",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "V1": "Nein, und es gibt keine feldweise Pruefung: die Kanten im Knoteneditor pruefen nur die grobe Anschlussart (Szene, Bild, Prompt, Zahl, Material, Kameras; NodeCanvas.tsx). Einen Nachbau namens pipelineReadiness gibt es bei uns nicht.",
+    "V2": "Nein, aus demselben Grund.",
+    "V3": "Vorstellbar, aber ein Neubau (zwei Werkzeugvertraege lesen und die Kante kennzeichnen), kein Lueckenschluss. Nicht geplant; wenn ihr es wollt, als Vertragsauftrag an unseren Integrator.",
+    "V4": "Nein. kosmodraw_bim_layers ist kein Knoten im Knoteneditor; die Kante ist dort nicht herstellbar. Der Name kommt nur im Werkzeugweg des Chats vor."
+  },
+  "umgebung": {},
+  "fehler": null
+}

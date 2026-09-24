@@ -1,0 +1,20 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-119",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "V1": "Nein. apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx:735 zeigt das Abzeichen nur, wenn qa vorliegt; ohne qa steht gar keins. Weitergegeben an den Integrator als Einbauauftrag docs/AUFTRAG-EINBAU-KOSMOVIS-SAMMEL-20260924-AN-INTEGRATOR.md (KosmoOrbit, UI-Zweig): die Vis-Dateien gehoeren in dieser Welle ihm, nicht uns.",
+    "V2": "Schwelle: gebaut (KuratierInspektor.tsx, varianten-diff.ts, 17.09.). Aufloesung und Backbone: nicht gebaut, obwohl die Rohwerte im Job vorliegen (vis-jobs.ts). Die drei Vorbehaltssaetze aus aiimaging_capabilities: nicht gebaut — die Vis-Flaeche ruft capabilities nicht auf. Weitergegeben an den Integrator als Einbauauftrag docs/AUFTRAG-EINBAU-KOSMOVIS-SAMMEL-20260924-AN-INTEGRATOR.md (KosmoOrbit, UI-Zweig): die Vis-Dateien gehoeren in dieser Welle ihm, nicht uns.",
+    "V3": "Vom Cloud-Worker beantwortet (KosmoOrbit ROADMAP 1491, 21.09.): das Feld stammt von euch, niemand fuellt es; wir bekommen es nicht.",
+    "V4": "Solange lieferstatus nicht gesendet wird, nichts zu bauen. Kommt es je Kamera, zeigen wir «8 von 12 Bildern» neben der Kamera — Vertragsvorschlag an unseren Integrator.",
+    "V5": "Keinen. Alle drei bleiben, zwei davon als Einbau beim Integrator.",
+    "V6": "Teilweise: die Schwelle ist am 17.09. dazugekommen; Abzeichen und Aufloesung/Backbone/Vorbehalte stehen wie am 03.09.",
+    "V7": "Die Vis-Dateien gehoeren in dieser Welle dem Integrator; der UI-Worker schreibt dafuer Einbauauftraege und bestaetigt erst, was im Hauptstrang laeuft."
+  },
+  "umgebung": {},
+  "fehler": null
+}

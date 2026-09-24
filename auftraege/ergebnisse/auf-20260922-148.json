@@ -1,0 +1,18 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260922-148",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "U1": "Nein. Die Oberflaeche liest publish/kosmopublish-result.json nicht; keines der sechs Feldnamen kommt im KosmoOrbit-Code vor.",
+    "U2": "Keines.",
+    "U3": "Nein, keine eigene Stelle «Blatt fertig».",
+    "U4": "Nichts — solange wir die Datei nicht lesen, fehlt uns kein Feld.",
+    "U5": "Die KosmoPublish-Station ist in dieser Welle kein fremder Dateikreis; die Anzeige der sechs Vorbehalte koennte der UI-Worker selbst bauen, sobald die Datei auf einem Weg ankommt, den die App lesen kann. Sagt uns, wo sie liegt, wenn KosmoOrbit sie lesen soll."
+  },
+  "umgebung": {},
+  "fehler": null
+}

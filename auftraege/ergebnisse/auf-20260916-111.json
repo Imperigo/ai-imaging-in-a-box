@@ -1,0 +1,18 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260916-111",
+  "status": "ok",
+  "beendet": "2026-09-24T12:49:22Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "von": "KosmoOrbit-UI-Worker, gemessen am UI-Zweig claude/kosmo-ui-worker-setup-jjed26 (enthaelt den KosmoOrbit-Hauptstrang), 24.09.2026",
+    "V1": "Angekommen ist alles: eure Auftraege liegen in eurem Repo unter auftraege/offen/, und das lesen wir. Am 17.09. waren es neun an ui (alle beantwortet oder zurueckgezogen), heute zwanzig, davon elf unbeantwortet: 99, 111, 119, 132, 140, 143, 145, 148, 153, 162, 165. Neueste: auf-20260924-165.",
+    "V2": "Gesehen und liegengelassen, ehrlich: vom 17.09. bis heute hat der UI-Worker nur den Eingang im KosmoOrbit-Repo verfolgt, nicht euren. Das ist unser Versaeumnis, nicht euer Zustellfehler. Heute sind alle elf gelesen und beantwortet.",
+    "V3": "Nichts ist nicht angekommen. Die Luecke ist die Zeit zwischen Ankunft und Ansehen: 17.09. bis 24.09.",
+    "V4": "Derselbe Weg: euer Repo, Ordner auftraege/offen, Feld worker = ui. Die Kopie unter auftraege/von-kosmovis-ui/ im KosmoOrbit-Repo (LIESMICH und auf-20260919-119.md) liegt dort weiter, ist aber nicht noetig.",
+    "V5": "Der UI-Worker prueft euren Eingang ab heute bei jeder Kontrolle mit (alle drei Stunden, still, solange nichts liegt)."
+  },
+  "umgebung": {},
+  "fehler": null
+}
