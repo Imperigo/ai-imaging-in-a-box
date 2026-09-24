@@ -1,0 +1,167 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-170",
+ "status": "ok",
+ "beendet": "2026-09-24T18:09+02:00",
+ "stand": "7c8d148 (git pull --ff-only sauber)",
+ "geprueft": [
+  "Fueller je Stufe per gemerkter PID gestartet und beendet; freier Speicher per nvidia-smi und --probe abgelesen",
+  "je Stufe: job.json-Status und message, Abholer-Protokoll (Geraeteweg), Spitze memory.used alle 2 s",
+  "B5: blender-report.json Block 'sonne' und die drei beauty_.png angesehen; Lichtrichtung aus den Euler-Winkeln nachgerechnet"
+ ],
+ "kurzantwort": "z-image-turbo rechnet noch bei 4102 MiB frei — der Riegel 4096 MiB passt fuer z-image. qwen-image-edit-2511 dagegen LAEDT bei 4.1 und 6 GiB frei (Riegel laesst durch) und bricht dann mit CUDA out of memory ab; erst bei 8 GiB rechnet es. Fuer qwen reicht der Riegel also nicht (Mindestbedarf zwischen 6 und 8 GiB frei). B2: der Geraetekonflikt tritt auf Stufe 2 weiter auf. B1 wie beschrieben ist NICHT messbar, weil jeder Knotenweg-Auftrag idle_window_only=true traegt und die Leerlauf-Sperre (4096 MiB BELEGT) vor dem Speicher-Riegel greift.",
+ "befunde": {
+  "b1_kollision": {
+   "befund": "Jeder Auftrag aus knotenweg.lege_an traegt idle_window_only=True (knotenweg.py:166). Die Leerlauf-Pruefung sperrt ab 4096 MiB BELEGT. Ein Fueller, der die Karte auf 8 GiB FREI drueckt, belegt ~24 GB — der Auftrag bleibt an der Leerlauf-Sperre haengen, der neue Speicher-Riegel wird nie gefragt.",
+   "gemessen": "Stufe 8 GiB frei wie beschrieben, zweimal (16:31, 16:46): status queued, message «Der Auftrag trägt 'idle_window_only' und die Karte ist nicht frei: 24117 MiB belegt (Grenze 4096)».",
+   "abweichung": "Weil Auftrag 170 nur_bei_leerlauf=false traegt, habe ich fuer alle weiteren B1/B2/B5-Stufen idle_window_only in MEINEN eigenen Probe-Auftraegen (build/auf170/*) vor der Freigabe auf false gesetzt. Kein Code geaendert, Riegel/Frist/Konvention unberuehrt."
+  },
+  "b1": {
+   "z-image-turbo": [
+    {
+     "frei_mib": 7992,
+     "gewartet": false,
+     "geraeteweg": "cuda+schichtauslagerung (ZImageControlNetPipeline + from_single_file)",
+     "erfolg": true,
+     "rechenzeit_s": 448,
+     "spitze_belegt_mib": 27062
+    },
+    {
+     "frei_mib": 5944,
+     "gewartet": false,
+     "geraeteweg": "cuda+schichtauslagerung",
+     "erfolg": true,
+     "rechenzeit_s": 438,
+     "spitze_belegt_mib": 29102
+    },
+    {
+     "frei_mib": 4102,
+     "gewartet": false,
+     "geraeteweg": "cuda+schichtauslagerung",
+     "erfolg": true,
+     "rechenzeit_s": 480,
+     "spitze_belegt_mib": 31680
+    },
+    {
+     "frei_mib": 3896,
+     "gewartet": true,
+     "message": "Wartet: Die Grafikkarte hat nur 3896 MiB frei; zum Laden braucht es auf dem sparsamsten Weg mindestens 4096 MiB. …"
+    },
+    {
+     "frei_mib": 2872,
+     "gewartet": true,
+     "message": "Wartet: Die Grafikkarte hat nur 2872 MiB frei; …"
+    }
+   ],
+   "qwen-image-edit-2511": [
+    {
+     "frei_mib": 7992,
+     "gewartet": false,
+     "geraeteweg": "cuda+schichtauslagerung",
+     "erfolg": true,
+     "rechenzeit_s": 1469,
+     "spitze_belegt_mib": 31114
+    },
+    {
+     "frei_mib": 5944,
+     "gewartet": false,
+     "geraeteweg": "cuda+schichtauslagerung",
+     "erfolg": false,
+     "rechenzeit_s": 164,
+     "spitze_belegt_mib": 31198,
+     "message": "Abgebrochen: Der Grafikspeicher reichte während des Rechnens nicht (CUDA out of memory). … Der Auftrag ist nicht gerechnet und muss neu bestellt werden."
+    },
+    {
+     "frei_mib": 4102,
+     "gewartet": false,
+     "erfolg": false,
+     "rechenzeit_s": 193,
+     "spitze_belegt_mib": 31296,
+     "message": "Abgebrochen: … CUDA out of memory …"
+    },
+    {
+     "frei_mib": 3896,
+     "gewartet": true,
+     "message": "Wartet: … nur 3896 MiB frei …"
+    },
+    {
+     "frei_mib": 2872,
+     "gewartet": true,
+     "message": "Wartet: … nur 2872 MiB frei …"
+    }
+   ],
+   "lesart": "Der Riegel 4096 MiB ist fuer z-image richtig gemessen. Fuer qwen ist er zu niedrig: der Auftrag laedt, rechnet 2-3 min und stirbt an OOM; Mindestbedarf frei liegt zwischen 5944 und 7992 MiB (nicht feiner gemessen). A2 wirkt wie angesagt: der OOM-Satz steht in message.",
+   "hinweis_stufen": "Die Stufe '4 GiB' kam wegen 0.3 GiB Sicherheitsabstand in meinem Skript auf 3896 MiB (unter dem Riegel); darum zusaetzlich eine Stufe bei 4102 MiB nachgemessen. Spitze belegt enthaelt den Fueller."
+  },
+  "b2": {
+   "frei_mib": 20280,
+   "geraeteweg": "cuda+auslagerung, Ladeweg ZImageControlNetPipeline + from_single_file(Z-Image-Turbo-Fun-Controlnet-Union.safetensors)",
+   "geraetekonflikt": true,
+   "wortlaut": "Kamera 's', seed 0: Render fehler — RuntimeError: Expected all tensors to be on the same device, but got mat1 is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA_addmm)",
+   "rechenzeit_s": 23,
+   "lesart": "Der Konflikt aus auf-123/131 besteht auf Stufe 2 weiter; auf Stufe 3 (alle B1-Laeufe) trat er nicht auf."
+  },
+  "b3": {
+   "betriebsart": "systemd-Benutzerdienst kosmo-abholer.service, ausgeloest vom Timer kosmo-abholer.timer mit OnUnitInactiveSec=30s (AccuracyUSec 5s)",
+   "takt_s": "30 s nach dem ENDE des vorigen Durchgangs; gemessene Abstaende der 'Finished'-Zeilen 30.26 / 30.47 / 30.27 / 30.50 s (leere Durchgaenge). Ein rechnender Durchgang verlaengert den Abstand um seine Rechenzeit."
+  },
+  "b4": {
+   "liegt_da": true,
+   "inhalt": {
+    "schema": "aiimaging.abholer-puls/v1",
+    "zuletzt": "2026-09-24T14:02:44Z",
+    "zuletzt_epoch_s": 1790258564.56,
+    "gesehen": 0,
+    "verarbeitet": 0,
+    "liegengelassen": 0,
+    "fehler": 0,
+    "waisen": 0
+   },
+   "hinweis": "geschrieben vom laufenden Dienst gegen die echte Brueckenablage, alle ~30 s erneuert"
+  },
+  "b5": {
+   "status": "done",
+   "rechenzeit_s": 1541,
+   "sonne_blender_report": {
+    "hoehe_grad": 20.0,
+    "azimut_grad": 90.0,
+    "konvention": "von_norden",
+    "weg": "bestellt",
+    "staerke": 6.0,
+    "winkel_grad": 0.62,
+    "kelvin": 4900.0,
+    "farbe_linear": [
+     1.0,
+     0.760547,
+     0.593401
+    ],
+    "licht_bestellt": [
+     "staerke",
+     "kelvin",
+     "winkelGrad"
+    ],
+    "euler": [
+     1.2217,
+     0.0,
+     1.5708
+    ]
+   },
+   "nachgerechnet": "rx 70 Grad, rz 90 Grad drehen den Strahl (0,0,-1) auf (-0.94, 0, -0.34): das Licht laeuft nach Westen und unten, kommt also von OSTEN — richtig.",
+   "je_kamera": {
+    "s": "Blick genau auf die Suedfassade: dunkel, gleichmaessig — richtig, weil das Streiflicht von Osten parallel zur Suedflaeche einfaellt. Die Ostseite ist aus Sueden nicht zu sehen.",
+    "sSE": "Suedfassade dunkel, OSTFASSADE rechts hell (elfenbeinfarben, leicht warm, fast weiss ausgebrannt bei staerke 6) — Licht von Osten, warm getoent: ja.",
+    "nNW": "Nord- und Westfassade, beide im Schatten — passend zu Licht von Osten."
+   },
+   "schatten": "Nicht beurteilbar: die beauty_.png haben keinen Boden (einheitlich grauer Hintergrund), ein Schlagschatten nach Westen ist darum nicht zu sehen."
+  }
+ },
+ "umgebung": {
+  "python": ".venv-render",
+  "AIIMAGING_MODELLE": "/mnt/data/ai-models/diffusers",
+  "gpu": "RTX 5090, 32607 MiB; parallel lief eine Playwright-Suite ohne GPU-Speicher (nvidia-smi: nur Fueller + Abholer)"
+ },
+ "fehler": [
+  "Mein Skript lief zweimal an (Abbruch fuer eine App-Probe dazwischen); die Kollisionsstufe ist deshalb zweimal mit identischem Ergebnis gemessen.",
+  "In einer Zwischenmeldung an den Owner habe ich qwen bei 6 GiB als gerechnet gemeldet, bevor ich den Status gelesen hatte — falsch, berichtigt."
+ ]
+}
