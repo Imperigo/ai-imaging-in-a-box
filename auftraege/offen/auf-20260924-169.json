@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-169",
+  "art": "frage",
+  "beschreibung": "Ansage: Wandabstand 3 m statt 10 m — die Ueber-Eck-Kameras sSE/nNW kleiner Bauten rendern jetzt. Messen: Proben mit echtem Blender gruen? Ein echter Brueckenlauf auf dem Testbau: rendern alle drei Automatik-Kameras, und steht das Bauwerk ganz im Bild?",
+  "anweisung": "=== ANSAGE UND MESSUNG: DIE DREI AUTOMATIK-KAMERAS RENDERN JETZT ALLE ===\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, bevor ihr zieht)\n\n  A1 KAMERAS KLEINER BAUTEN STEHEN NAEHER. Der Mindestabstand zur Fassade\n     (kameras.WANDABSTAND_M) steht jetzt auf 3 m statt 10 m. Der alte Wert war gesetzt,\n     nie gemessen. Folge bisher: Beim Testbau (8 x 5 x 3 m) standen die Ueber-Eck-Kameras\n     sSE und nNW auf dem Mindestabstand, das Bauwerk fuellte 63,9 % der Bildbreite, der\n     Riegel verlangt 65 % — diese zwei von drei Automatik-Kameras wurden NIE gerendert\n     (im Bericht «NICHT GERENDERT»). Ab jetzt fuellen sie rund 70 % und werden gerendert.\n     Bauten ab 12 m Kante: Standorte bitgleich wie bisher. Der Riegel (65 %) ist NICHT\n     gesenkt.\n  A2 MEHR BILDER JE AUFTRAG. Ein Bruecken-Auftrag auf einem kleinen Bau liefert jetzt drei\n     Kameras x Varianten statt einer Kamera x Varianten — also rund die dreifache\n     Rechenzeit. Das ist gewollt, kein Fehler.\n  A3 SEHR KLEINE KOERPER (Kante unter ca. 1,5 m, weit unter Augenhoehe) brachen mit dem\n     neuen Abstand mit einem TypeError ab. Behoben: Die Kamera wird dort zurueckgenommen\n     und eine Warnung sagt es («… zurueckgenommen …», «füllt nur …»). Betrifft keine\n     Gebaeude.\n  A4 tools/homeworker.py und tools/abholen.py unveraendert; nur die Rechnung dahinter.\n\n\nTEIL B — DIE PROBEN MIT ECHTEM BLENDER (CPU, ca. 3 min)\n\n  cd <ai-imaging-Klon>; git pull --ff-only\n  .venv/bin/python -m pytest -q tests/test_kameras.py tests/test_multipass.py tests/test_kettenlauf_echt.py\n\n  Erwartung: alles gruen, nichts uebersprungen ausser Proben ohne GPU. Bei uns liefen\n  die Kettentests mit Blender und .venv-ifc gruen; ihr habt dieselben Werkzeuge in\n  anderer Fassung — genau das ist die Frage.\n\n\nTEIL C — EIN ECHTER LAUF UEBER DEN BRUECKENWEG (GPU, ein Auftrag)\n\n  Fahrt EINEN Auftrag so, wie er von KosmoOrbit kaeme, auf dem synthetischen Testbau.\n  Kurzes Skript (alles in einem frischen Ordner unter eurem Arbeitsordner, NICHT /tmp):\n\n  .venv/bin/python - <<'PY'\n  import json, subprocess, sys\n  from pathlib import Path\n  from aiimaging import bruecke, knotenweg\n  from aiimaging.seams import ifc_zu_glb\n  ab = Path(\"build/auf169\"); ab.mkdir(parents=True, exist_ok=True)\n  subprocess.run([sys.executable, \"tools/make_test_ifc.py\", str(ab / \"bau.ifc\")], check=True)\n  print(ifc_zu_glb(ab / \"bau.ifc\", ab / \"model.glb\")[\"status\"])\n  szene = {\"geometry\": {\"format\": \"glb\"}, \"cameras\": \"auto\",\n           \"render\": {\"samples\": 16, \"faithful\": 0.8, \"resolution\": [1600, 1000]},\n           \"style\": {\"prompt\": \"a small residential building, overcast sky, no people\"},\n           \"vis\": {}}\n  z = knotenweg.lege_an(ab / \"store\", szene, (ab / \"model.glb\").read_bytes(), \"model.glb\")\n  knotenweg.freigeben(ab / \"store\", z[\"job_id\"], z[\"approval_token\"])\n  print(\"JOB\", z[\"job_id\"])\n  PY\n  <Render-Python> tools/abholen.py --store build/auf169/store --probe\n  <Render-Python> tools/abholen.py --store build/auf169/store --out-wurzel build/auf169/aus --hoechstens 1\n\n  <Render-Python> = das Python, mit dem euer Abholer sonst laeuft. Die Probe muss\n  «Render-Umgebung: da» und beim Auftrag «— frei» sagen; sonst STOPP und die Zeilen\n  zurueck. (Bei uns geprueft: Skript und Probe laufen, Auftrag «frei»; rendern kann\n  diese Maschine nicht.)\n\n  Der Auftrag ist von euch selbst angelegt UND freigegeben (Freigabe durch einen\n  Menschen = ihr) — --fremde-freigabe bitte NICHT setzen.\n\n\nNICHT TUN: WANDABSTAND_M, BILDBREITE_ABBRUCH oder DECKUNGSGRAD nicht anfassen, auch nicht\nzur Probe; nichts committen ausser eurer Ergebnisdatei; keine Bilder ins Repo. Laeuft etwas\nrot: STOPP, Ausgabe zurueck, nichts reparieren.\n",
+  "erstellt": "2026-09-24T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/auf169/bau.ifc"
+  },
+  "params": {
+    "kameras": "auto",
+    "auto_richtungen": [
+      "s",
+      "sSE",
+      "nNW"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Teil B reine CPU (~3 min), Teil C ein GPU-Auftrag (drei Kameras x Varianten).",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur der synthetische Testbau (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des ai-imaging-Klons.",
+    "Teil B: die letzte Zeile von pytest (passed/failed/skipped) und bei Rot die Fehlerzeilen.",
+    "Teil C: je Kamera (s, sSE, nNW): gerendert ja/nein, fuellgrad aus dem Bericht, lieferstatus, Zahl der Bilder; lieferstatus des Auftrags.",
+    "Teil C: je Kamera EIN Satz nach Ansehen eines Bildes: Steht das Bauwerk ganz im Bild (nicht angeschnitten), und wie gross wirkt es?",
+    "Teil C: Rechenzeit des Auftrags gesamt."
+  ],
+  "rang": 1
+}

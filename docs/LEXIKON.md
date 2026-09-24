@@ -5862,12 +5862,23 @@ Python des Rechners hat sie nicht. Startet man den Abholer von Hand mit dem fals
 nimmt er Aufträge an und scheitert erst beim Rendern. Seit dem 24.09.2026 sagt die Probe
 (`tools/abholen.py --probe`) vorher, ob die Render-Umgebung da ist (`render.umgebung_da`).
 
+**Wandabstand (Mindestabstand der Aussenkamera)** — Wie nah die automatisch gesetzte Kamera
+der Fassade eines Gebäudes mindestens kommen darf. Die Kamera wird sonst aus dem Bildwinkel
+gerechnet: so weit weg, dass das Gebäude den gewünschten Teil des Bildes füllt (siehe
+*Deckungsgrad*). Bei kleinen Bauten wäre das sehr nah; der Wandabstand setzt dort eine
+Untergrenze. *In diesem Projekt 3 m seit dem 24.09.2026, vorher 10 m.* Der alte Wert war
+gesetzt, nie gemessen, und schob die Kamera bei einem 8 m langen Bau so weit zurück, dass das
+Gebäude zu klein im Bild stand und die eigene Rahmungsprüfung zwei von drei Ansichten sperrte.
+Konstante `kameras.WANDABSTAND_M`. Für Innenräume gilt ein eigener, kleiner Wert
+(`raumkamera.WANDABSTAND_INNEN_M`, 0,30 m).
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus der Kamera-Berichtigung: **Wandabstand (Mindestabstand der Aussenkamera)** |
 | 2026-09-24 | Ergaenzt aus den Antworten 163/164: **Render-Umgebung** |
 | 2026-09-24 | Ergaenzt aus der Recherche Knotensysteme: **App-Modus**, **Teilgraph**, **Render-Pass (AOV)**, **Variantenachse (Wedge)**, **Übernehmen (Bake)**, **Überbrücken (Bypass)**, **Credit**, **Abwesenheitsbefund** |
 | 2026-09-24 | Ergaenzt aus dem Knotenweg: **Vorsilbe eines Wegs**, **Formular-Upload (multipart/form-data)**, **Freigabe-Marke** |

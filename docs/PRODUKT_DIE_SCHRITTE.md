@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (tief nachts) · Alle drei automatischen Kameras rendern wieder
+
+* **Die Ursache war eine gesetzte Zahl:** Die Kamera durfte der Fassade nie näher als 10 m
+  kommen. Bei einem kleinen Bau (8 m) stand sie darum zu weit weg, das Gebäude war zu klein
+  im Bild, und unsere eigene Prüfung sperrte zwei der drei Ansichten.
+* **Jetzt 3 m.** Alle drei Ansichten füllen das Bild wie verlangt; bei Gebäuden ab 12 m
+  ändert sich nichts. Die Prüfung selbst ist nicht gelockert.
+* **Nebenbei gefunden und behoben:** Sehr kleine Körper (unter etwa 1,5 m) brachten die
+  Rechnung zum Absturz. Jetzt wird die Kamera zurückgenommen und das gesagt.
+* **Offen:** Der Heim-PC bestätigt es am echten Bild (Auftrag 169).
+
 ### 24.09.2026 (nachts) · Das erste Bild über die Knotenansicht
 
 * **Die HomeStation hat es gemacht:** Knoten verbunden, «Ausführen», «Freigeben» — das Bild

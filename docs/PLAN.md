@@ -7464,8 +7464,14 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **local:** ein echtes Bild über diesen Weg (`auf-20260924-164`) — belegt 24.09.,
         Bild am Render-Knoten.
   - [x] Probe sagt, ob die Render-Umgebung da ist (`render.umgebung_da`, Befund 164 B4).
-  - [ ] **Kern:** Auto-Kameras (Schrägansichten) bleiben unter der Rahmung (63,9 % < 65 %) —
-        Ursache klären, Schwelle nicht senken.
+  - [x] **Kern:** Auto-Kameras (Schrägansichten) bleiben unter der Rahmung (63,9 % < 65 %) —
+        Ursache: `WANDABSTAND_M` 10 m, gesetzt statt gemessen. Jetzt 3 m, alle drei ≈ 70 %,
+        ab 12 m bitgleich, Schwelle unverändert (Protokoll 71 §13).
+  - [ ] **local:** die drei Auto-Kameras am Gerät rendern und ansehen (`auf-20260924-169`).
+  - [ ] **Owner:** Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
+        `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt
+        einen Einbauauftrag an ui schreiben — oder erst nach der n1-Übernahme (E27)?
+        `variante` stösst dabei an B6 (Varianten vom Cloud-Worker abgelehnt).
   - [ ] **cloud:** F7 (Feld für das gerechnete Modell im render-result), F6 dringlicher.
   - [ ] Jeden Knoten einzeln mit dem Owner durchgehen (vorgemerkt: «1 Bauteile» am Modell-Knoten).
     - [x] Render-Knoten, Vorlauf: Recherche Knotensysteme (Weave, 23 KI-Werkzeuge, 15
