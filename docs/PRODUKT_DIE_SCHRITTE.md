@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (spät) · Was andere Knotensysteme vormachen — Vorlauf für den Render-Knoten
+
+* **Recherchiert:** Figma Weave (alle Hilfe-Artikel), 23 KI-Knotenwerkzeuge, 15
+  Render- und Architekturprogramme. Weave selbst liess sich nicht anklicken: Das Figma-Konto
+  ist dort nicht verknüpft, und die App sperrt diesen Rechner.
+* **Der wichtigste Befund:** Kein Werkzeug prüft, ob das Bild zum Gebäude passt. Alle haben
+  einen Regler für Treue, keines ein Urteil. Genau das kann unser Render-Knoten zeigen.
+* **Was sich bewährt hat:** ein Knoten vorne, aufklappbar dahinter; Aufwand vor dem Klick;
+  Ergebnisse stapeln statt überschreiben; Varianten als Achsen; eine einfache Ansicht, die
+  aus dem Graphen entsteht.
+* **Offen:** sieben Fragen an den Owner, dann wird der Render-Knoten gezeichnet.
+
 ### 24.09.2026 (abends) · Die Knotenansicht bestellt jetzt bei Visbox
 
 * **Das Gebäude der Mappe erscheint in der Knotenansicht**, und der Knopf «Ausführen» ist frei.

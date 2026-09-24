@@ -5818,12 +5818,51 @@ darum zählt ein Token allein bei uns nicht. Die Marke `visbox_freigabe` entsteh
 der Knotenansicht jemand «Freigeben» drückt, und wirkt nur nach diesem Schritt. Im Projekt:
 `bruecke.FELD_FREIGABE_KNOTEN`, geschrieben von `knotenweg.freigeben`.
 
+**App-Modus (aus einem Knotengraphen)** — Eine vereinfachte Oberfläche, die aus einem
+fertigen Knotengraphen entsteht: Man markiert, welche Eingaben ein Mensch setzen darf und
+welches Ergebnis er sieht; alles andere bleibt verborgen und gesperrt. Fast jedes
+KI-Knotenwerkzeug hat das seit 2025 (bei Figma Weave «From Workflow to Tool»). Im Projekt
+eine Richtungsfrage: Die Visbox-Seite könnte einmal so ein App-Modus der Knotenansicht
+werden (`docs/RECHERCHE_KNOTENSYSTEME_2026-09-24.md`, R19).
+
+**Teilgraph (Subgraph, Knotengruppe)** — Mehrere Knoten, zusammengefasst zu einem einzigen
+Knoten, den man bei Bedarf aufklappt. Aussen sieht man nur die wichtigen Einstellungen,
+innen die ganze Kette. Vorbild für den Render-Knoten: vorne ein Knoten, dahinter Pässe →
+Bildmodell → Prüfung.
+
+**Render-Pass (AOV)** — Ein einzelnes Zwischenbild, das ein Renderprogramm neben dem
+fertigen Bild ausgibt: Tiefe, Normalen, Material-Kennung, Linien. «AOV» heisst *arbitrary
+output variable*. In Blender, Houdini und Unreal ist jeder Pass ein eigener Anschluss am
+Knoten. Bei uns sind es die Geometrie-Pässe, die das Bildmodell führen (siehe *Multipass*).
+
+**Variantenachse (Wedge)** — Statt «mach drei Varianten» sagt man, **was** sich ändern soll,
+etwa «Startwert × 3, Kamera × 4», und das Programm erzeugt alle Kombinationen, hier 12. So
+weiss man vor dem Lauf, wie viele Bilder entstehen und wie lange es dauert. Der Begriff
+kommt aus Houdini.
+
+**Übernehmen (Bake)** — Aus einer Vorschau wird ein festes Ergebnis, das nicht mehr
+mitläuft, wenn sich der Graph ändert. In Grasshopper heisst das «Bake». Für den
+Render-Knoten: Ein Bild ist erst Vorschau; erst «Übernehmen» macht es zum Projektbild der
+Mappe.
+
+**Überbrücken (Bypass)** — Einen Knoten ausschalten, ohne ihn zu löschen: Was hineinkommt,
+geht unverändert hindurch. Nützlich für den Vergleich «mit und ohne KI-Schritt».
+
+**Credit** — Eine Recheneinheit, die Cloud-Dienste wie Figma Weave je Lauf abziehen; bei
+Weave etwa ein US-Cent. Die Dienste zeigen den Preis vor dem Lauf am Knoten. Bei uns ist
+der Aufwand keine Gebühr, sondern Rechenzeit auf der HomeStation.
+
+**Abwesenheitsbefund** — Die Aussage «das gibt es nirgends». Sie ist nur so gut wie die
+Suche, die sie stützt, und wird darum so gekennzeichnet. Im Projekt: «Kein Werkzeug prüft
+das Bild gegen die Geometrie» (Recherche vom 24.09.2026).
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus der Recherche Knotensysteme: **App-Modus**, **Teilgraph**, **Render-Pass (AOV)**, **Variantenachse (Wedge)**, **Übernehmen (Bake)**, **Überbrücken (Bypass)**, **Credit**, **Abwesenheitsbefund** |
 | 2026-09-24 | Ergaenzt aus dem Knotenweg: **Vorsilbe eines Wegs**, **Formular-Upload (multipart/form-data)**, **Freigabe-Marke** |
 | 2026-09-24 | Ergaenzt aus der Übernahme des Vis-Werkzeugs (E26): **Stellvertreter**, **Wörtliche Kopie mit Herkunft**, **npm und Arbeitsbereich**, **Sperrdatei**, **Bau (Build)**, **Vite**, **Vitest**, **zod**, **woff2** |
 | 2026-09-24 | Ergaenzt aus Sitzung 71: **Knotenansicht / Knoteneditor** |
