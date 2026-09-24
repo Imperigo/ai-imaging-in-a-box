@@ -1,0 +1,618 @@
+/* App.tsx (v0.8.0B / P7, Stations-Welle Design + Shell-Rest) — der App-Rest:
+   Kopfleiste/Sync-Leiste/Zentrale-Grid/Varianten-Archiv/Projektliste als
+   Klassen statt Inline-Styles. Reiner Hüllenumbau — Screen-Routing, Sync-/
+   Projekt-/Varianten-Logik und alle testids bleiben unangetastet. */
+
+.app-wurzel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* K22 (Owner: «grauer kreis … transparenter und in der farbe des
+     jeweiligen tools ganz fein (glasig)»; Befund `docs/BEFUNDE-KORREKTUREN-
+     2026-07.md` Abschnitt 3, Token-Vorschlag) — DIE eine Quelle der
+     Orb-Glas-Rezepte. Sie leben HIER statt in aura.css' :root, weil var()-
+     Referenzen in Custom Properties am Definitions-Element substituiert
+     werden: nur auf `.app-wurzel` (wo `data-station` unten `--k-orb-tool`
+     setzt) sieht das color-mix die ECHTE Stationsfarbe; ein :root-Rezept
+     bliebe für immer beim Fallback hängen. Basisfläche `--k-orb-glas-basis`
+     (theme-abhängig) + Fallback-Tönung `--k-signal`: aura.css.
+     Verbraucher: `.isl-orb` (island.css) + `.ks-knopf` (kosmo-symbol.css). */
+  --k-orb-glas: color-mix(in srgb, var(--k-orb-tool, var(--k-signal)) 8%, var(--k-orb-glas-basis));
+  --k-orb-glas-rand: color-mix(in srgb, var(--k-orb-tool, var(--k-signal)) 35%, transparent);
+}
+/* K22 — Stations-Tönung: `App.tsx` stempelt den aktiven Screen als
+   `data-station` auf die Wurzel; jede Station tönt den Kosmo-Orb fein in
+   ihrem eigenen `--k-mod-*`-Ton (aura.css). `home` (Zentrale) bleibt
+   bewusst ohne Regel → Fallback `--k-signal` (Kosmos eigene Marken-Teal,
+   dieselbe Farbe wie Orb-Kern/Punkte). `design` deckt auch die
+   Deep-Links draw/sketch ab (ein Screen). */
+.app-wurzel[data-station='design'] {
+  --k-orb-tool: var(--k-mod-design);
+}
+.app-wurzel[data-station='data'] {
+  --k-orb-tool: var(--k-mod-data);
+}
+.app-wurzel[data-station='vis'] {
+  --k-orb-tool: var(--k-mod-vis);
+}
+.app-wurzel[data-station='publish'] {
+  --k-orb-tool: var(--k-mod-publish);
+}
+.app-wurzel[data-station='prepare'] {
+  --k-orb-tool: var(--k-mod-prepare);
+}
+.app-wurzel[data-station='doc'] {
+  --k-orb-tool: var(--k-mod-doc);
+}
+.app-wurzel[data-station='train'] {
+  --k-orb-tool: var(--k-mod-train);
+}
+.app-wurzel[data-station='asset'] {
+  --k-orb-tool: var(--k-mod-asset);
+}
+.app-wurzel[data-station='dev'] {
+  --k-orb-tool: var(--k-mod-dev);
+}
+.app-wurzel[data-station='trust'] {
+  --k-orb-tool: var(--k-mod-trust);
+}
+.app-wurzel[data-station='paket'] {
+  --k-orb-tool: var(--k-mod-paket);
+}
+
+/* v0.8.0B / W3 (Spez §4 B-48) — Shell-Header-Zone: 56px fest, `--k-sunken`
+   + subtile Trennlinie (Papier fällt auf `--k-line` zurück). */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s4);
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--k-line-subtil, var(--k-line));
+  background: var(--k-sunken, var(--k-surface));
+  z-index: 3;
+}
+
+/* Ersetzt `K_DRUCK_KNOPF_RESET` (JS-Objekt) — dieselben Werte als Klasse. */
+.app-druck-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.app-wortmarke-knopf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+}
+.app-fuell {
+  flex: 1;
+}
+.app-inline-nowrap {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.app-inline-reihe {
+  display: inline-flex;
+  gap: var(--k-s3);
+  align-items: center;
+}
+.app-inline {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* K7 (docs/OWNER-KORREKTUREN-2026-07.md, Owner wörtlich «einstellung ist
+   KosmoOrbit grundeinstellungen und fragenzeichen, die beiden dürfen
+   präsenter sein. sync aus ist daneben»): Grundfunktions-Gruppe der
+   Kopfzeile — Sync-Status + «?» (Rundgang) + ⚙ (Einstellungen) sitzen als
+   EINE Gruppe beieinander (App.tsx `kopfWerkzeuge()`). Die beiden Knöpfe
+   bekommen echte 44px-Kreise (Touch-Mindest-Trefferfläche) im bestehenden
+   Werkplan-Duktus: ruhige `--k-raised`-Fläche, feine 1px-Linie
+   (`--k-line-strong`), volle Tinte statt `--k-ink-faint` — kein Neon, keine
+   neue Farbwelt. Passt in die 56px-`.app-header`-Zone (6px Luft oben/unten)
+   und in den `.app-heim-werkzeuge`-Cluster der Zentrale (wächst dort nur in
+   der Höhe mit, kein Layout-Umbau der Zentrale-Fläche — K8-Vorrang frei). */
+.app-kopf-grundgruppe {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s3);
+}
+.app-kopf-grundknopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-raised);
+  color: var(--k-ink);
+  cursor: pointer;
+}
+.app-kopf-grundknopf:hover,
+.app-kopf-grundknopf:focus-visible {
+  background: var(--k-accent-wash);
+}
+/* Das «?» als Typografie-Zeichen: gross genug, um als Knopf-Glyphe zu lesen
+   (vorher 11px-`orbit065-kopfleiste-beschriftung`), Gewicht wie `.k-primaer`. */
+.app-kopf-grundzeichen {
+  font-size: var(--k-t-lg);
+  font-weight: var(--k-gewicht-stark);
+  line-height: var(--k-lh-eins);
+}
+
+.app-sync-leiste {
+  display: flex;
+  gap: var(--k-s3);
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--k-line);
+  background: var(--k-surface);
+  font-size: var(--k-t-sm);
+}
+.app-faint {
+  color: var(--k-ink-faint);
+}
+.app-sync-input {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-raised);
+}
+.app-sync-input--url {
+  width: 210px;
+}
+.app-sync-input--raum {
+  width: 130px;
+}
+.app-sync-input--token {
+  width: 110px;
+}
+.app-danger {
+  color: var(--k-danger);
+}
+.app-warning {
+  color: var(--k-warning);
+}
+.app-raeume-reihe {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.app-raum-chip {
+  margin: 0;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: var(--k-radius-sm);
+  border: 1px solid var(--k-line-strong);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  background: var(--k-surface);
+}
+.app-raum-chip--aktiv {
+  background: var(--k-accent-wash);
+}
+.app-koppeln-karte {
+  flex-basis: 100%;
+  display: flex;
+  gap: var(--k-s4);
+  align-items: center;
+  padding-top: var(--k-s3);
+}
+.app-qr-bild {
+  width: 164px;
+  height: 164px;
+  flex-shrink: 0;
+  border: 1px solid var(--k-line);
+}
+.app-qr-fehler {
+  width: 164px;
+  flex-shrink: 0;
+  font-size: var(--k-t-sm);
+  color: var(--k-danger);
+}
+.app-koppeln-hinweis {
+  font-size: var(--k-t-md);
+  color: var(--k-ink-soft);
+  max-width: 420px;
+  line-height: var(--k-lh-lesen);
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.app-stationsflaeche {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.app-station-huelle {
+  position: absolute;
+  inset: 0;
+  /* KEIN z-index hier: die Stations-Hülle muss UNTER der schwebenden
+     Navigations-Chrome (BodenDock 108 + darin eingebettetes KosmoSymbol)
+     bleiben, sonst fängt der Stationsinhalt (z.B. das PlanView-SVG) deren
+     Klicks ab — im W9-Release-Gate als Regression eines Fix-Versuchs
+     bewiesen (boden-dock.spec «Einzel-Instanz» wurde rot). Der Fall
+     «langes Überlaufmenü ragt in die Pille» wird stattdessen an der
+     Quelle gelöst (`design.css` .dw-dropdown: max-height + Scroll). */
+}
+
+.app-zentrale-scroll {
+  position: absolute;
+  inset: 0;
+  /* v0.8.4 PA2 (Owner-Auftrag wörtlich: «nicht scrollbar», V084-SPEZ §4.3):
+     war bis v0.8.3 `overflow-y: auto` — die Zentrale wuchs mit ihrem Inhalt
+     und scrollte auf kleineren Fenstern (genau der gemeldete Bug). Diese
+     Klasse ist ausschliesslich der Home-Screen-Container (kein anderer
+     Screen verwendet sie, geprüft per Grep) — sie ist jetzt selbst ein
+     `overflow:hidden`-Flex-Rahmen mit DEFINITER Höhe (100% via `inset:0`),
+     die Höhe reicht über `.app-zentrale-inhalt`/`.orbit065-home-grid`
+     (`flex:1; min-height:0`-Kette, s. `shell/orbit-065.css`) bis zur Kachel-
+     Reihe durch — kein Root-Scroll mehr möglich, unabhängig vom Inhalt.
+     Die linke Spalte (Begrüssung/Projekte/Varianten) bekommt dafür ihr
+     EIGENES `overflow-y:auto` (s. `.orbit065-home-links`) als
+     Sicherheitsnetz für viele gespeicherte Projekte — nur diese INNERE
+     Fläche kann scrollen, nie `document.scrollingElement`. */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 24px;
+}
+.app-zentrale-inhalt {
+  /* PA2: 1280px (war 1160px) — die rechte Spalte (Wortmarke + Kachel-Reihe,
+     `.orbit065-home-rechts`) braucht bei 1280×720 (kleinster Pflicht-
+     Viewport, V084-SPEZ §4.3) genug Breite, damit die 4 Hauptkacheln NIE
+     umbrechen (`flex-wrap` in `.k-orbit-ring-feld`, aura.css, greift NUR
+     als Sicherheitsnetz bei sehr schmalen Fenstern < 860px). */
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s7, 28px);
+}
+/* v0.8.4 PA2 (V084-SPEZ §4.2): Ersatz für den ausgeblendeten `app-header`
+   auf der Zentrale — bewusst KEIN Balken (keine volle Breite, kein Streifen
+   über die ganze Kopfzeile), sondern ein kleiner, glasiger Werkzeug-Cluster
+   oben rechts (dieselbe Bord-Optik wie `.orbit065-dock`). Trägt NUR
+   Bestands-Funktionen (Sync/Speichern/Öffnen/Kosmo/Rundgang/Einstellungen/
+   Bauphasen), die ausserhalb des PA2-Auftrags liegen, aber real erreichbar
+   bleiben müssen (s. Kommentar in `App.tsx`). */
+.app-heim-werkzeuge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  max-width: calc(100% - 32px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 6px 10px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  box-shadow: var(--k-shadow-raised);
+}
+[data-theme='orbit'] .app-heim-werkzeuge {
+  background: rgba(20, 23, 31, 0.55);
+  backdrop-filter: var(--k-glas-dicht);
+  -webkit-backdrop-filter: var(--k-glas-dicht);
+  border: 1px solid rgba(244, 246, 250, 0.12);
+}
+/* Owner-Befund 24.07.2026 («bug mit einrichtungsmenü und haupttools auf
+   startseite»): Der Wizard lag als NORMALE Grid-Zelle im Fluss der
+   Startseite — die Startseiten-Inhalte rendern daneben weiter, und die
+   Hauptwerkzeug-Fächer (`.orbit065-faecher-huelle`, z-index 5 bzw. 20 im
+   OFFENEN Zustand, orbit-065.css) legten sich mitsamt Hover-Menü ÜBER das
+   Wizard-Panel; ebenso schienen Begrüssung, Rolle-Select und Projektliste
+   durch. Der Wizard ist konzeptionell modal (er blockiert den Einstieg, bis
+   «Später einrichten» oder «Weiter» gewählt ist) — also ist er jetzt ein
+   echtes Vollbild-Overlay statt einer Zelle. Die Home-Spalten werden
+   während des Onboardings zusätzlich gar nicht erst gerendert (App.tsx),
+   damit dahinter nichts klickbar bleibt (Fokus-/Tastatur-Falle).
+   z-index-Wahl: über der gesamten Zentralen-Chrome, aber UNTER
+   dem KSelect-Portal (2147482000, select.tsx — der Rolle-Select IM Wizard
+   braucht es) und der CursorEbene (2147483000, cursor-ebene.css).
+
+   **Berichtigung 26.08.2026** (`docs/BEFUND-KOMMENTARDRIFT-2026-08-26.md`):
+   hier stand bis heute im Klammerzusatz «(höchster Bestandswert ist das
+   Einstellungs-Overlay mit 250, kosmo-symbol.css 110)». Das war schon beim
+   Schreiben dieses Kommentars (28.07.2026, Commit `3860aa45`) falsch, KEINE
+   Drift: `meldungen`/`KBestaetigung` (`packages/kosmo-ui/src/
+   meldungen.tsx:195`) trug zu diesem Zeitpunkt bereits eine Woche lang
+   **900** (seit `f8f041e0`, 21.07.2026) — höher als die hier behaupteten
+   250. Der Widerspruch steht sogar im selben Regelblock: die Zeile direkt
+   unter diesem Kommentar setzt `z-index: 900` auf `.app-onboarding-spanne`
+   selbst, ohne dass es beim Schreiben auffiel, dass damit bereits ein
+   GLEICH hoher Bestandswert existierte. */
+.app-onboarding-spanne {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  padding: var(--k-s5);
+  overflow: auto;
+  background: color-mix(in srgb, var(--k-bg) 88%, transparent);
+  backdrop-filter: var(--k-glas-duenn);
+  -webkit-backdrop-filter: var(--k-glas-duenn);
+}
+.app-onboarding-spanne > * {
+  margin: auto;
+  width: min(1180px, 100%);
+}
+.app-gruss-reihe {
+  display: flex;
+  align-items: baseline;
+  gap: var(--k-s4);
+}
+.app-gruss-titel {
+  font-size: var(--k-t-anzeige);
+}
+.app-rolle-label {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+}
+.app-gruss-sub {
+  color: var(--k-ink-soft);
+  margin-top: 6px;
+}
+.app-gruss-aktion {
+  margin-top: 12px;
+}
+.app-about-zeile {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  font-family: var(--k-font-mono);
+}
+
+/* ── Varianten-Archiv / Projektliste ────────────────────────────────────── */
+
+.app-stapel-s3 {
+  display: grid;
+  gap: var(--k-s3);
+}
+.app-stapel-s2 {
+  display: grid;
+  gap: var(--k-s2);
+}
+.app-kopf-reihe {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-kopf-reihe-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.app-titel-klein {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-md);
+}
+.app-hinweis-klein {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+.app-karten-raster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--k-s3);
+}
+.app-variante-karte {
+  padding: 10px;
+  display: grid;
+  gap: var(--k-s3);
+}
+.app-variante-bild {
+  height: 110px;
+  overflow: hidden;
+  background: var(--k-plan-paper);
+  border-radius: 6px;
+}
+.app-variante-leer {
+  height: 110px;
+  display: grid;
+  place-items: center;
+  color: var(--k-ink-faint);
+  font-size: var(--k-t-sm);
+}
+.app-variante-titelblock {
+  min-width: 0;
+}
+.app-variante-name {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-variante-datum {
+  font-size: var(--k-t-xs, 11px);
+  color: var(--k-ink-faint);
+}
+.app-kennzahlen-stack {
+  display: grid;
+  gap: 2px;
+  font-size: var(--k-t-sm);
+  font-family: var(--k-font-mono);
+}
+.app-kennzahl-zeile {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--k-s3);
+}
+.app-knopf-reihe {
+  display: flex;
+  gap: var(--k-s2);
+}
+.app-knopf-reihe-wrap {
+  display: flex;
+  gap: var(--k-s2);
+  flex-wrap: wrap;
+}
+
+/* P-F2 (Owner-Feedback 23.07. wörtlich: «neues projekt erstellen nach wie
+   vor mit scrollen … darf so nicht sein, finde neue ui darstellung»):
+   ERSETZT die frühere EINZEILIGE `overflow-x:auto`-Tableiste (P-Z,
+   docs/V0812-SPEZ.md §E-Z — «+ Neues Projekt» sass dort als LETZTER Tab
+   hinter horizontalem Scroll, sobald genug Projekte im Tresor lagen; genau
+   der gemeldete Bug). Jetzt ein KOMPAKTES, umbrechendes Grid statt einer
+   Einzelzeile: `repeat(auto-fill, minmax(150px, 1fr))` + `minmax(0,1fr)`-
+   Spalten (stehende Owner-Regel seit v0.9.1 «nichts abschneiden, nichts
+   unnötig scrollbar», Beleg `wissen/training/claude/lehren/v0.9.1.md` Nr. 9
+   — dieselbe Falle, die dort einen 49px-Fensterüberlauf verursachte). Die
+   «+»-Kachel steht laut App.tsx JETZT als ERSTES Kind vor der Projekt-Liste
+   — ohne jeden Scroll sofort erreichbar. `max-height` + eigenes
+   `overflow-y:auto` bleiben als SICHERHEITSNETZ für sehr viele Projekte
+   (zusätzliche REIHEN scrollen kontrolliert INNERHALB dieser Fläche, nie
+   die Root-Seite — dasselbe Muster wie `.orbit065-home-links`). Jeder
+   Tab/Knopf hält die iPad-Touch-Mindesthöhe 44px ein
+   (`e2e/projekt-tableiste.spec.ts`). */
+.app-projekt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  max-height: 168px;
+  overflow-y: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+.app-projekt-tab {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  min-width: 0;
+  padding-left: 12px;
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-sm);
+  background: var(--k-surface);
+}
+.app-projekt-tab-aktiv {
+  border-bottom-color: var(--k-accent);
+  background: var(--k-raised);
+}
+.app-projekt-tab-inhalt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 2px;
+  background: transparent;
+  border: none;
+  font: inherit;
+  color: var(--k-ink);
+  cursor: default;
+}
+button.app-projekt-tab-oeffnen {
+  cursor: pointer;
+}
+button.app-projekt-tab-oeffnen:hover {
+  color: var(--k-accent);
+}
+.app-projekt-tab-name {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-code);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Sekundär-Aktion je Tab (Bau-Bericht-Entscheid): EIN direkter Klick statt
+   eines ⋯-Untermenüs — Begründung im Kopfkommentar der `ProjektListe`-
+   Komponente (App.tsx). Bewusst klein/still statt der früheren
+   vollen «Löschen»-Beschriftung. */
+.app-projekt-tab-loeschen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--k-ink-faint);
+  font-size: var(--k-t-code);
+  cursor: pointer;
+  border-radius: var(--k-radius-sm);
+}
+.app-projekt-tab-loeschen:hover {
+  color: var(--k-danger);
+  background: var(--k-hover);
+}
+/* P-F2: die «+»-Kachel ist IMMER die erste Grid-Zelle (App.tsx) UND spannt
+   die volle Grid-Breite (`grid-column: 1 / -1`) — Namensfeld + Knopf
+   brauchen mehr Raum als eine einzelne ~150px-Projektkachel, und die volle
+   Breite macht «Neues Projekt» zusätzlich als die prominenteste, erste
+   Aktion erkennbar (Owner-Auftrag: sofort ohne Scrollen erreichbar). */
+.app-projekt-tab-neu {
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding-right: 8px;
+  /* B134 (11.09.2026): umbrechen duerfen, wenn Feld UND Knopf nicht
+     nebeneinander passen. Die Mobil-Regel unten tut dasselbe, fragt dafuer
+     aber das FENSTER — und dieses Feld sitzt in der Seitenspalte der
+     Zentrale, die bei jeder Fensterbreite rund 260 px schmal ist. Die Regel
+     griff darum nie, obwohl ihr Anlass immer bestand. */
+  flex-wrap: wrap;
+}
+.app-projekt-neu-feld {
+  padding: 6px 10px;
+  border-radius: var(--k-radius-sm);
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-raised);
+  font-size: var(--k-t-code);
+  /* B134: der Platzhalter «Neues Projekt — Name» braucht gemessene 136 px,
+     dazu 22 px Innenabstand und Rahmen — 158 px. Als Wunschbreite 168 px,
+     damit die Zeile lieber umbricht, als das Feld unter seinen eigenen
+     Platzhalter zu druecken. Waechst weiter, wo Platz ist. */
+  flex: 1 1 168px;
+  min-width: 0;
+  min-height: 44px;
+}
+.app-projekt-neu-knopf {
+  min-height: 44px;
+}
+.app-projekt-sekundaer-reihe {
+  display: flex;
+  gap: var(--k-s2);
+  flex-wrap: wrap;
+}
+
+/* v0.8.1 / P15 (Orbit-Hub-Vollausbau, responsives Layout, docs/V081-SPEZ.md
+   §7(f)/§9.5 C-34) — additive Mobil-Regel: die feste Feldbreite oben plus
+   der «+ Neues Projekt»-Knopf sprengen ohne Umbruch jeden Viewport
+   < ca. 420px (gemessen: horizontaler Scroll bei 375px Breite, kein
+   bestehender Media-Query deckt das ab). P-Z verschiebt diese Regel von der
+   früheren eigenen `.app-projekt-neu-reihe` auf den neuen Schluss-Tab
+   `.app-projekt-tab-neu` — dieselbe Absicht (Feld darf nicht überlaufen),
+   nur der Klassenname folgt der neuen Tableiste-Struktur. */
+@media (max-width: 700px) {
+  /* K-BP-SCHMAL (E-3) — D-6: war 480px */
+  .app-projekt-tab-neu {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .app-projekt-neu-feld {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}

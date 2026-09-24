@@ -1,0 +1,13 @@
+/* Visbox-eigen: die Bühne, auf der die Stationshülle (`position:absolute; inset:0`)
+   liegt. In KosmoOrbit ist das der Hauptbereich von `App.tsx`. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+.visbox-buehne {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@kosmo/kernel",
+  "version": "1.0.0-v1-visbox",
+  "private": true,
+  "type": "module",
+  "description": "STELLVERTRETER (E26): der duenne Kern fuer das Vis-Werkzeug — Datenmodell, Befehle, Vis-Graph, Bildnachbearbeitung. Das Original ist der KosmoDraw-BIM-Kern von KosmoOrbit.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --testTimeout=30000"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

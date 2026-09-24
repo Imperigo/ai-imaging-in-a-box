@@ -1,0 +1,321 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   skizze-motion.css — Bewegung im Skizzen-Bereich
+   Antwort auf DESIGN-BRIEF-SKIZZE.md §3.2 · 13.08.2026
+
+   HALTUNG: es gibt genau EINE Bewegung, die etwas erklaert — M3, «Strich wird
+   Bauteil». Alles andere bewegt sich, weil es kommt oder geht, und tut das so
+   kurz, dass man es nicht bemerkt. Waehrend der Stift auf dem Blatt ist,
+   bewegt sich NICHTS aussuer dem Strich selbst.
+
+   60-fps-REGEL (Brief §4): waehrend eines Zugs laufen ausschliesslich
+   transform und opacity. Kein filter, kein backdrop-filter, kein box-shadow,
+   keine Geometrie-Animation auf der Zeichenflaeche. Die eine Ausnahme —
+   stroke-dashoffset in k-skizze-zug — laeuft NACH dem Abheben (M3), nie
+   waehrend des Zeichnens, und betrifft eine einzige Linie.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Dauern ───────────────────────────────────────────────────────────── */
+
+  /* Der rohe Strich hat KEINEN Uebergang. Ein Stift, der nachfedert, ist ein
+     kaputter Stift. Als Token, damit niemand versehentlich eine Transition
+     auf die Live-Geometrie legt. */
+  --k-motion-strich: 0ms;
+
+  /* M3 in drei Phasen, zusammen 420ms. Warum 420: unter ~300ms liest man die
+     Ursache nicht mehr (es «springt»), ueber ~500ms wartet man. 420ms ist
+     lang genug, um die Drehung zu sehen, kurz genug, um zwanzig Striche
+     hintereinander zu uebergeben. */
+  --k-motion-fit-loesen: 120ms; /* Phase 1: Tinte wird blass, Achse tritt hervor */
+  --k-motion-fit-kippen: 200ms; /* Phase 2: die Achse kippt in Winkel und Raster */
+  --k-motion-fit-bauen: 100ms; /* Phase 3: aus der Achse waechst die Wandstaerke */
+  --k-motion-fit: 420ms; /* Summe — nur zum Nachlesen, nicht als Animationswert */
+
+  /* Prozentmarken der Summe, damit die Keyframes unten nachvollziehbar sind:
+     120/420 = 28.6 %  ·  320/420 = 76.2 %. */
+
+  /* Wie lange der Originalzug nach dem Fitten deutlich sichtbar bleibt
+     («Rueckschau»), bevor er auf --k-tinte-nach-ruhe zurueckgeht. 8s: eine
+     Blickpause, kein Dauerschleier. Danach holt ihn Auswahl/Hover zurueck. */
+  --k-motion-rueckschau: 8000ms;
+
+  /* Insel-Bewegung, uebernommen aus aura.css statt neu erfunden:
+     --k-motion-fenster (260ms) fuer den Eintritt, --k-motion-fast (120ms)
+     fuer den Austritt. Wer geht, geht schneller als er kommt. */
+  --k-motion-zuruf-ein: var(--k-motion-fenster, 260ms);
+  --k-motion-zuruf-aus: 120ms;
+
+  /* Der Ruhepuls der Horchmarke (M2). 6s, Amplitude 6 % Deckkraft, keine
+     Positionsaenderung — unterhalb der Schwelle, an der peripheres Sehen
+     Bewegung meldet. Er sagt «ich bin da», nicht «schau her». */
+  --k-motion-horch: 6000ms;
+
+  /* Ein Grad wechselt (vermutet → sicher, weil der Architekt bestaetigt hat):
+     200ms, die Kontur schliesst sich. Das ist der zweitwichtigste Moment nach
+     M3 und darf sichtbar sein. */
+  --k-motion-grad: 200ms;
+
+  /* ── Kurven ───────────────────────────────────────────────────────────── */
+  --k-kurve-technisch: cubic-bezier(0.3, 0, 0.2, 1); /* = --k-motion-fast/-base aus aura.css */
+  --k-kurve-setzen: cubic-bezier(0.22, 0.9, 0.28, 1); /* = --k-motion-settle: kommt an, ohne zu wippen */
+  --k-kurve-ruhe: cubic-bezier(0.4, 0, 0.6, 1); /* symmetrisch, fuer den Atem der Horchmarke */
+}
+
+/* ══ M3 · Strich wird Bauteil ═══════════════════════════════════════════════
+   Bauform: EIN Container .k-fit (z.B. ein <g>) mit vier Rollen als Kinder.
+   Der Korrekturwinkel kommt als --k-fit-winkel vom Aufrufer (der Fitter kennt
+   ihn), die Ziel-Linienlaenge als --k-fit-laenge.
+
+     <g class="k-fit" style="--k-fit-winkel:5.16deg; --k-fit-laenge:266">
+       <path data-rolle="geist"  d="…" />   Fuellpfad des rohen Zugs
+       <path data-rolle="achse"  d="…" />   Haarlinie: die Aussage im Zug
+       <path data-rolle="zug"    d="…" />   die gefittete Achse, zieht sich
+       <rect data-rolle="wand"   … />       die Wandstaerke, waechst zuletzt
+       <text data-rolle="delta"  >−5.2°</text>
+     </g>
+
+   transform-box: fill-box + transform-origin: center machen die Drehung in
+   SVG vorhersagbar (sonst dreht der Pfad um den Viewbox-Ursprung).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.k-fit [data-rolle='geist'],
+.k-fit [data-rolle='achse'] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Phase 1 + 2 in einer Animation: die Tinte tritt zurueck und kippt dann
+   MIT der Achse in die gefittete Lage — der Nutzer sieht, dass sein Zug
+   gedreht wurde, nicht dass etwas Neues erschienen ist. */
+@keyframes k-skizze-loesen {
+  0% {
+    opacity: 0.86;
+    transform: rotate(0deg);
+  }
+  28.6% {
+    opacity: 0.4;
+    transform: rotate(0deg);
+  }
+  76.2% {
+    opacity: 0.3;
+    transform: rotate(var(--k-fit-winkel, 0deg));
+  }
+  100% {
+    opacity: 0.18;
+    transform: rotate(var(--k-fit-winkel, 0deg));
+  }
+}
+
+/* Die Achse: erscheint in Phase 1, kippt in Phase 2 mit, verschwindet in
+   Phase 3 (dann uebernimmt die gebaute Wand ihre Rolle). */
+@keyframes k-skizze-kippen {
+  0% {
+    opacity: 0;
+    transform: rotate(0deg);
+  }
+  28.6% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  76.2% {
+    opacity: 1;
+    transform: rotate(var(--k-fit-winkel, 0deg));
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--k-fit-winkel, 0deg));
+  }
+}
+
+/* Die gefittete Achse zieht sich vom Anfangspunkt her ein — dieselbe
+   Richtung, in die der Architekt gezeichnet hat. EINZIGE Nicht-GPU-
+   Eigenschaft im ganzen Blatt, und sie laeuft erst nach dem Abheben. */
+@keyframes k-skizze-zug {
+  0%,
+  28.6% {
+    stroke-dashoffset: var(--k-fit-laenge, 400);
+  }
+  76.2%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Aus der Achse waechst die Bauteilstaerke. scaleY um die eigene Mitte:
+   die Wand wird dick, sie faellt nicht ein. */
+@keyframes k-skizze-bauen {
+  0%,
+  76.2% {
+    opacity: 0;
+    transform: scaleY(0.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+/* Die Delta-Marke («−5.2°», «45 mm») kommt am Ende und bleibt die
+   Rueckschau-Dauer stehen. Sie ist der Beleg dafuer, dass das Fitten kein
+   Willkuerakt war — darum Text und nicht nur Bewegung. */
+@keyframes k-skizze-delta {
+  0%,
+  76.2% {
+    opacity: 0;
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Der Geist geht nach der Rueckschau auf Ruhedeckung zurueck. Eigene, lange
+   Animation statt eines Timers im JS. */
+@keyframes k-skizze-rueckschau {
+  0%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.45;
+  }
+}
+
+.k-fit[data-lauf='1'] [data-rolle='geist'] {
+  animation: k-skizze-loesen var(--k-motion-fit) var(--k-kurve-setzen) both;
+}
+.k-fit[data-lauf='1'] [data-rolle='achse'] {
+  animation: k-skizze-kippen var(--k-motion-fit) var(--k-kurve-setzen) both;
+}
+.k-fit[data-lauf='1'] [data-rolle='zug'] {
+  stroke-dasharray: var(--k-fit-laenge, 400);
+  animation: k-skizze-zug var(--k-motion-fit) var(--k-kurve-technisch) both;
+}
+.k-fit[data-lauf='1'] [data-rolle='wand'] {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: k-skizze-bauen var(--k-motion-fit) var(--k-kurve-setzen) both;
+}
+.k-fit[data-lauf='1'] [data-rolle='delta'] {
+  animation: k-skizze-delta var(--k-motion-fit) linear both;
+}
+
+/* ══ M2 · Horchmarke ═════════════════════════════════════════════════════ */
+@keyframes k-horch {
+  0%,
+  100% {
+    opacity: 0.34;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.k-horch[data-zeichnet='1'] {
+  animation: k-horch var(--k-motion-horch) var(--k-kurve-ruhe) infinite;
+}
+
+/* ══ M5/M6 · Zuruf und Vorschlag ════════════════════════════════════════ */
+/* Kommt von unten aus der eigenen Kante — 6px Weg, nicht 40. Ein Zuruf, der
+   hereinfliegt, ist eine Werbeeinblendung. */
+@keyframes k-zuruf-ein {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes k-zuruf-aus {
+  to {
+    opacity: 0;
+    transform: translate3d(0, 2px, 0);
+  }
+}
+.k-zuruf {
+  animation: k-zuruf-ein var(--k-motion-zuruf-ein) var(--k-kurve-setzen) both;
+}
+.k-zuruf[data-austritt='1'] {
+  animation: k-zuruf-aus var(--k-motion-zuruf-aus) var(--k-kurve-technisch) forwards;
+}
+
+/* ══ M7 · Gradwechsel ═══════════════════════════════════════════════════ */
+/* vermutet → sicher: die Strichelung schliesst sich. Ein Uebergang auf
+   stroke-dasharray ist in modernen Engines interpolierbar (gleiche Anzahl
+   Werte); wo nicht, springt sie — der Endzustand ist in jedem Fall richtig. */
+.k-grad {
+  transition:
+    stroke-dasharray var(--k-motion-grad) var(--k-kurve-technisch),
+    stroke var(--k-motion-grad) var(--k-kurve-technisch),
+    opacity var(--k-motion-grad) var(--k-kurve-technisch);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   prefers-reduced-motion — PFLICHT, nicht Kuer (Brief §4)
+
+   Der entscheidende Punkt: Bewegung wird nicht einfach abgeschaltet, sondern
+   ERSETZT. M3 erklaert normalerweise durch Drehung, WAS mit dem Zug passiert
+   ist. Faellt die Drehung weg, muss dieselbe Auskunft statisch dastehen:
+   · der Geist bleibt in der gefitteten Lage sichtbar (nicht nur 8s, sondern
+     bis zur naechsten Aktion — deshalb hier keine Rueckschau-Verkuerzung),
+   · die Delta-Marke («−5.2°») ist dauerhaft eingeblendet statt kurz
+     aufzutauchen: sie ist dann der Erklaerungstraeger,
+   · der Zuruf erscheint ohne Weg, aber an derselben Stelle.
+   Nichts wird unbedienbar, nichts verschwindet ungesehen.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --k-motion-fit-loesen: 0ms;
+    --k-motion-fit-kippen: 0ms;
+    --k-motion-fit-bauen: 0ms;
+    --k-motion-fit: 0ms;
+    --k-motion-zuruf-ein: 1ms;
+    --k-motion-zuruf-aus: 1ms;
+    --k-motion-horch: 0ms;
+    --k-motion-grad: 1ms;
+    /* Die Rueckschau bleibt — sie ist Information, keine Animation. */
+  }
+
+  .k-fit [data-rolle='geist'],
+  .k-fit [data-rolle='achse'],
+  .k-fit [data-rolle='zug'],
+  .k-fit [data-rolle='wand'],
+  .k-fit [data-rolle='delta'],
+  .k-horch,
+  .k-zuruf {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Endzustand von M3, sofort und vollstaendig. */
+  .k-fit [data-rolle='geist'] {
+    opacity: 0.18;
+    transform: rotate(var(--k-fit-winkel, 0deg));
+  }
+  .k-fit [data-rolle='achse'] {
+    opacity: 0;
+  }
+  .k-fit [data-rolle='zug'] {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+  .k-fit [data-rolle='wand'] {
+    opacity: 1;
+    transform: none;
+  }
+  /* Die Erklaerung bleibt STEHEN, statt zu laufen. */
+  .k-fit [data-rolle='delta'] {
+    opacity: 1;
+  }
+
+  .k-horch {
+    opacity: 0.34;
+  }
+  .k-zuruf {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -83,3 +83,8 @@ ipad/**/.swiftpm/
 ipad/**/DerivedData/
 xcuserdata/
 *.xcuserstate
+
+# --- 8 · Die KosmoVis-Kopie: Quelle ja, Pakete und Bau nein --------------------
+# `npm install` legt `node_modules/` an, `npm run build` den Bau unter `dist/` (der steht
+# oben schon). Beides ist aus `kosmovis/package-lock.json` neu erzeugbar.
+kosmovis/**/node_modules/

@@ -105,6 +105,20 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 24.09.2026 (später) · Die Knotenansicht von KosmoOrbit ist herübergekommen — und läuft
+
+* **Neue Richtung des Owners (E26):** Statt eine eigene Knotenansicht zu zeichnen, kommt die
+  echte aus KosmoOrbit herüber — als Kopie, wird hier bis Februar weiterbearbeitet und geht
+  dann zurück.
+* **Kopiert, nicht nachgebaut:** 198 Dateien Byte für Byte, jede mit Fingerabdruck. Wo das
+  Werkzeug etwas von KosmoOrbit braucht, das nicht mitkommt (der Assistent, die
+  Plan-Blätter, der Entwurfskern), steht ein kleiner **Stellvertreter** — 19 Stück, jeder
+  sagt im Kopf, dass er einer ist. So bleibt die Rückkehr ein Austausch.
+* **Es läuft im Browser:** Knoten aus der Palette legen, der Render-Knoten mit allen
+  Einstellungen, der Bildvergleich. 722 Prüfungen des Originals laufen hier grün.
+* **Noch nicht angeschlossen:** Der Modell-Knoten sagt «0 Bauteile» — das Gebäude aus der
+  Mappe und das Rendern über unseren Server kommen als Nächstes.
+
 ### 24.09.2026 · Die Knoten sichtbar machen
 
 * **Die Oberfläche mit den verbundenen Knoten gehört zu KosmoOrbit.** Dort ist Visbox ein

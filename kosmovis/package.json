@@ -1,0 +1,20 @@
+{
+  "name": "kosmovis-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Das Vis-Werkzeug von KosmoOrbit als Kopie in Visbox (E26, 24.09.2026): woertlich uebernommen, Stellvertreter fuer alles ausserhalb, Rueckkehr im Februar. Herkunft je Datei: HERKUNFT.json.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @visbox/knoten",
+    "build": "npm run build -w @visbox/knoten",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

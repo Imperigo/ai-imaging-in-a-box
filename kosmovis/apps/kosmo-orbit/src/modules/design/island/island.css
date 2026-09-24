@@ -1,0 +1,2290 @@
+/* Island-UI — PD1 Fundament (`docs/ISLAND-UI-SPEZ.md` §1/§2/§4/§5/§6).
+   App-lokal (Fable-Entscheid, kein zweiter Ort in packages/kosmo-ui — Promotion
+   erst bei einer zweiten Verbraucher-Station). Alles hier ist scoped auf
+   `.isl-root`; kein bestehendes `--k-*`-Token wird verändert, nur referenziert
+   (`var(--k-*)`) — die zwei wirklich globalen additiven Ausnahmen
+   (`--k-motion-fenster`, `--k-insel-glas-papier`) leben additiv in
+   `packages/kosmo-ui/src/aura.css`.
+
+   ── Token-Aufteilung (§5-Tabelle, Konflikt-Entscheide) ────────────────────
+   `--f-*` ist der lokale Alias-Block (Prototyp-Namensraum `.isl-root`/
+   `.isl-root[data-world="kosmos"]`), PAPIER als Default hier unten, KOSMOS als
+   Override im bestehenden Theme-Attribut-Selektor `[data-theme='orbit']`
+   (App.tsx setzt `document.documentElement.dataset.theme` — s. `App.tsx`
+   Z.376/`packages/kosmo-ui/src/tokens.ts:303` `ThemeName='paper'|'orbit'` —
+   KEIN zweiter Farbwelt-Mechanismus, an den bestehenden gehängt). */
+
+/* PB6 (v0.8.4 Token-Sweep, `docs/V084-SPEZ.md` §5/§9 C-29) — `#f4f6fa` ist
+   exakt der `--k-ink`-Wert im orbit-Theme (aura.css `[data-theme='orbit']`),
+   wird hier aber als IMMER-heller Text auf dunklem Glas gebraucht (Pillen/
+   Toast/Logo-Kreise sind laut `--f-pill`-Kommentar oben in BEIDEN Welten
+   dunkel) — `var(--k-ink)` selbst wäre im Papier-Theme dunkel-auf-dunkel
+   (`--k-ink` dort `#1a1815`). Kein bestehendes `--k-*`-Token bildet diese
+   theme-INVARIANTE «Ink auf dunklem Glas»-Rolle ab; aura.css ist im
+   W5-Token-Sweep gesperrt — lokaler, dokumentierter `:root`-Alias statt
+   neuem globalem Token (`--isl-kopf-logo-*` liegt ausserhalb `.isl-root`,
+   ein Alias dort wäre nicht global genug — s. `App.tsx`). Kandidat für
+   aura.css (W5-Bericht): ein `--k-glass-ink`-artiges, theme-invariantes
+   Gegenstück zu `--k-glass-fill`.
+   PB4 (v0.8.5, E7 aura-Token-Nachträge, `docs/V085-SPEZ.md` §3/§7 C-21,
+   ROADMAP 471) — EINGELÖST: aura.css führt jetzt `--k-glass-ink` (identischer
+   Hex `#f4f6fa`, theme-invariant, s. dort). Dieser Alias bleibt als Brücke
+   stehen und zeigt nur noch auf das kanonische Token — 0 Konsumenten-
+   Änderung, alle bestehenden `var(--isl-pill-ink)`-Verbraucher in dieser
+   Datei bleiben unverändert. */
+:root {
+  --isl-pill-ink: var(--k-glass-ink);
+
+  /* **DIE RESERVIERTE KOPFZONE JEDES POPUPS** (B127, 09.09.2026).
+
+     `.isl-vergroessern` und `.isl-schliessen` sitzen `position: absolute` am
+     oberen Rand JEDES Popups und sind je 44 px hoch (Tap-Target). Zusammen
+     mit dem Abstand `--k-s2` darueber belegen sie eine Zone, in die kein
+     Inhalt hineinragen darf: wer seine erste Zeile ohne oberen Abstand dort
+     rendert, verliert sie an den Knopf. Der Klick meldet dabei KEINEN
+     Fehler — er trifft den Vergroessern-Knopf, und das Werkzeug tut lautlos
+     etwas anderes als das, worauf gezeigt wurde.
+
+     **Warum dieses Token existiert:** derselbe Wert stand an SIEBEN Stellen,
+     jede einzeln entdeckt, nachdem sie Schaden angerichtet hatte. Der
+     lokale Worker hat diese Sieben als den eigentlichen Befund benannt und
+     nicht die zwei neuen Faelle — zu Recht: eine Zahl, die man siebenmal
+     abschreibt, ist keine Regel, sondern eine Gewohnheit.
+
+     **Warum NICHT am Rahmen** (`.isl-popup`/`.isl-fenster`): gemessen und
+     verworfen. Der Kommentar in `inhalte/pd3a.css` haelt fest, dass genau
+     dieser Versuch einen NEUEN Fund erzeugte — die zusaetzliche Hoehe liess
+     ein anderes Popup in die untere Leiste wachsen. Die Zone gehoert an die
+     INHALTSHUELLE, nicht an den Rahmen. */
+  --isl-kopfzone-frei: calc(var(--k-s2) + 44px);
+
+  /* **DIE RESERVIERTE FUSSZONE** (B129, 09.09.2026) — dieselbe Frage wie oben,
+     an der anderen Kante.
+
+     Der Speichern-Streifen (`.isl-grundstreifen`, weiter unten) haengt fix am
+     unteren Fensterrand: 14 px Abstand, mindestens 44 px hoch. Er belegt damit
+     das Band 14 bis 58 px ueber der Fensterkante. Die Ersatzdarstellungs-
+     Legende endete bei 10 px — eine Unterkante bei 10 kann einem Band ab 14
+     nicht ausweichen. Gemessen am laufenden Stand (lokaler Worker, geometrisch
+     statt mit `elementFromPoint`, weil die Legende `pointer-events: none`
+     traegt): von drei Zeilen lag die dritte zu 74 % unter dem Streifen.
+
+     **Warum das keine Schoenheitsfrage ist:** die Legende ist der Ort, an dem
+     die Oberflaeche zugibt, etwas NICHT zu wissen («kein Sinnbild fuer
+     Material X hinterlegt»). Ihr Kopfkommentar verwirft ausdruecklich Tooltip,
+     Klick und Meldung, weil ein Vorbehalt gilt, solange die Darstellung gilt.
+     Die Entscheidung ist richtig; ihre Umsetzung endete vier Pixel zu tief.
+
+     **Warum die drei Zahlen jetzt Namen haben und der Streifen selbst
+     unveraendert bleibt:** der Auftrag warnte zu Recht davor, die Streifenhoehe
+     an einem zweiten Ort abzuschreiben — genau das Muster, das `pd3a.css` fuer
+     die Kopfzone beklagt und das B127 heute an sieben Stellen aufgeloest hat.
+     Die Werte 14 und 44 sind unveraendert; nur stehen sie einmal. Der
+     Owner-Entscheid vom 28.08.2026 («Speichern muss man sehen, ohne zu
+     suchen») ist damit nicht beruehrt: Ort, Groesse und Rang des Streifens
+     sind dieselben.
+
+     Die Zone wird bewusst NUR dort gesetzt, wo der Streifen wirklich steht
+     (Regel weiter unten, `:has(.isl-grundstreifen)`). Im Manuell-Weg gibt es
+     ihn nicht, und dort bleibt die Legende, wo sie war — der Rueckfallwert im
+     Aufrufer sorgt dafuer. Eine Luecke zu reservieren, unter der nichts liegt,
+     waere die schlechtere Antwort. */
+  --isl-grundstreifen-abstand: 14px;
+  --isl-grundstreifen-hoehe: 44px;
+  /* B155 (17.09.2026) — die LINKE KANTE als benannte Eigenschaft. Bis heute
+     stand sie zweimal da: hier als `left: var(--isl-grundstreifen-abstand)`
+     und in `vis-island.css` als hartes `left: 72px`. Zwei Orte fuer eine
+     Kante heisst, dass ein Dritter, der sie braucht, den falschen erwischt —
+     und genau das ist beim ersten Anlauf dieses Pakets passiert: die
+     Ausweichrechnung unten nahm 14, die Station stand bei 72, und die Pille
+     blieb um genau diese 58 px im Streifen stehen. */
+  --isl-grundstreifen-links: var(--isl-grundstreifen-abstand);
+  /* B155 (17.09.2026) — die BREITE des Streifens, gemessen und nicht
+     abgeleitet: er waechst mit seinem Inhalt (`max-content`), CSS kann diese
+     Breite nirgends abfragen. Gemessen ist sie an allen fuenf geprueften
+     Fenstergroessen konstant 380 px (drei Kinder: `save-project` 146,
+     `open-project` 105, `autosave-status` 95, plus Abstaende).
+
+     **Eine gemessene Zahl altert — darum bewacht sie eine Probe.**
+     `e2e/b155-*.spec.ts` misst die tatsaechliche Breite des Streifens und
+     faellt rot, sobald sie diesen Wert uebersteigt. Ohne diese Wache waere
+     die Zahl genau die Sorte stiller Annahme, an der dieses Modul schon
+     zweimal gescheitert ist. */
+  --isl-grundstreifen-breite: 380px;
+
+  /* **DIE RESERVIERTE KOPFZONE RECHTS** (B130, 09.09.2026) — die dritte
+     Kante desselben Musters, an einem Tag.
+
+     Die zweite Kopfgruppe der Insel (`.isl-kopf-zweitgruppe`, Sync/Version/
+     Rundgang) sitzt schwebend oben rechts, der Einstellungs-Kreis rechts
+     daneben. Stationsinhalt, der bis an den oberen Rand spannt, laeuft
+     darunter. Gemessen am laufenden Stand (1400x900 UND 1280x800, beide
+     identisch): die Gruppe ist 240 px breit und beginnt 306 px vor dem
+     rechten Fensterrand; die zwei Bedienelemente des Prepare-Tafelkopfs
+     («nach Art», «neu ordnen») lagen beide darin. Ein Klick auf «nach Art»
+     landete auf RUECKGAENGIG — ohne Meldung, ohne Rueckfrage.
+
+     **Warum hier eine Zahl steht und kein Ausdruck:** die Breite der Gruppe
+     ist inhaltsbestimmt (drei Knoepfe) und CSS kann sie nicht lesen. 240 ist
+     gemessen, nicht geschaetzt, und wird bewacht: `e2e/b130-kopfzone-rechts.
+     spec.ts` faellt um, sobald die Gruppe breiter wird als das, was hier
+     reserviert ist. Eine Konstante mit Wachhund ist ehrlicher als ein
+     Ausdruck, der so tut, als rechne er. */
+  --isl-zweitgruppe-rechts: 66px; /* = INSEL_ZWEITGRUPPE_RECHTS_PX (14 + 52), InselKopf.tsx */
+  --isl-zweitgruppe-breite: 240px; /* gemessen, s. oben — bewacht */
+}
+
+/* **DIE RESERVIERTE ZONE LINKS** (B130, 09.09.2026) — die vierte Kante.
+   Logo-Kreis und Stationen-Orb sitzen links oben auf dem 52px-Raster
+   (gemessen: x 11–55 und x 63–107, bei jeder Fenstergroesse gleich). Der
+   Titel des Prepare-Tafelkopfs lag zu 100 % darunter, und die zentrierte
+   Leerzustands-Angabe in KosmoPublish («180 px») ebenso — beides von der
+   Leseseiten-Probe gefunden, nicht von einem Menschen.
+
+   Damit sind es vier Zonen an einem Tag: oben (B127), unten (B129), rechts
+   und links (B130). Das ist die gemeinsame Regel, nach der B130 §4 fragt —
+   «eine schwebende Insel ueber einem Inhalt, der nichts von ihr weiss» hat
+   jetzt vier benannte Antworten statt vier Einzelreparaturen. */
+.app-wurzel:has(.isl-stationen-orb-pill) {
+  --isl-kopfzone-links-frei: calc(11px + 52px + 44px + var(--k-s3));
+}
+
+/* **DIE RESERVIERTE ZONE AM SEITENRAND** — schmaler als die Kopfzone links,
+   weil an dieser Kante nur EINE Pillenbahn haengt (gemessen: `island-projekt-
+   pill` x 1352–1386 bei 1400 Fensterbreite, also 14 px Abstand und 34 px
+   breit; 44 ist das Tap-Ziel-Mass, das die Bahn im Maximum belegt). Fuer
+   mittig gesetzte Inhalte ist die Kopfzone links (115 px) zu viel — sie
+   wuerde die Mitte sichtbar verschieben, um ein Problem zu loesen, das an
+   einer Kante liegt. */
+.app-wurzel:has(.isl-root) {
+  --isl-randzone-frei: calc(14px + 44px + var(--k-s3));
+}
+
+/* Wie bei der Fusszone: die Zone gilt nur, wo die Gruppe wirklich steht. */
+.app-wurzel:has(.isl-kopf-zweitgruppe) {
+  --isl-kopfzone-rechts-frei: calc(
+    var(--isl-zweitgruppe-rechts) + var(--isl-zweitgruppe-breite) + var(--k-s3)
+  );
+}
+
+/* Wer am Boden des Planfeldes haengt, weicht dem Streifen aus — aber nur,
+   solange es ihn gibt. Das Token ist ausserhalb dieser Bedingung NICHT
+   definiert; Aufrufer schreiben darum `var(--isl-fusszone-frei, <heutiger
+   Wert>)` und bleiben im Manuell-Weg unveraendert.
+   `:has(...)` ist hier kein neuer Handgriff — dieselbe Bauart wie die
+   Ausweich-Regel fuer die AUSTAUSCH-Insel weiter unten. */
+.app-wurzel:has(.isl-grundstreifen) {
+  --isl-fusszone-frei: calc(
+    var(--isl-grundstreifen-abstand) + var(--isl-grundstreifen-hoehe) + var(--k-s2)
+  );
+}
+
+/* Die Zone als BENANNTE Eigenschaft, nicht als abgeschriebener Wert: eine
+   Inhaltshuelle traegt diese Klasse und ist damit fertig. Kuenftige Werkzeuge
+   erben sie, statt den Fund noch einmal zu machen. */
+.isl-kopfzone-frei {
+  padding-top: var(--isl-kopfzone-frei);
+}
+
+.isl-root {
+  /* --f-field/-ink/-accent: `--k-field`/`--k-ink`/`--k-accent` themen bereits
+     automatisch (aura.css `:root,[data-theme='paper']` vs. `[data-theme=
+     'orbit']`) — kein Override hier nötig, EIN Alias reicht für beide Welten.
+     §5-Konfliktentscheid Akzent: `--k-accent` (Teal) bleibt Wahrheit, das
+     Konzept-«Tusche»-Mono wird NICHT übernommen. */
+  --f-field: var(--k-field);
+  --f-ink: var(--k-ink);
+  --f-accent: var(--k-accent);
+
+  /* --f-glass: Papier-Default = additiver, eng begrenzter Ausnahme-Token
+     (aura.css, «Papier kennt kein Glas» bleibt für Stationsflächen in Kraft —
+     s. Kopfkommentar dort); Kosmos überschreibt unten auf das bestehende
+     `--k-glass-fill`. */
+  --f-glass: var(--k-insel-glas-papier);
+  --f-blur: blur(16px) saturate(1.05);
+
+  /* --f-pill: «Pill bleibt in beiden Welten dunkles Glas» (§5 Regel 1) —
+     EIN gemeinsamer Wert, kein Theme-Override (bewusste Vereinheitlichung
+     der beiden nahe beieinanderliegenden Prototyp-Werte `#1A1815`/
+     `rgba(16,19,25,.92)`: die Regel verlangt Invarianz, nicht zwei Werte). */
+  --f-pill: rgba(16, 19, 25, 0.92);
+
+  /* --f-r-sm/-r-md: Island-lokaler Radius-Layer (§5-Konfliktentscheid —
+     rundet NICHT die globale, theme-invariante `--k-radius-*`-Skala um). */
+  --f-r-sm: 4px;
+  --f-r-md: 8px;
+
+  /* K17 (Owner-Korrekturen 2026-07, S.5/S.8 «wieso ist diese island nicht
+     gleicher abstand wie die anderen zum rand?»): EIN Token für den Abstand
+     aller vier Insel-Ränder zur Bildschirmkante — vorher trugen die vier
+     `.isl-rand-*`-Klassen den Wert je einzeln (dreimal 14px, einmal 64px,
+     s. `.isl-rand-links`-Kommentar unten). */
+  --isl-rand-abstand: 14px;
+
+  /* PB4 (`docs/V084-SPEZ.md` §3 E2 «Orb-Gesetz», Owner wörtlich «Kosmo-Orb
+     nicht gelb hinterlegen»): `--f-gold` ist damit ERSATZLOS entfallen — die
+     Hülle nutzt jetzt dieselbe `--f-glass`-Familie wie jede andere Insel-
+     Glasfläche (kein zweiter Farbwert mehr, kein toter Token ohne
+     Nicht-Orb-Verbraucher). */
+
+  position: fixed;
+  z-index: 40;
+  font-family: var(--k-font-ui);
+  color: var(--f-ink);
+}
+
+/* v0.9.2 Nachtrag (Owner-Befund 23.07., «Darstellung»-Menü landet hinter
+   anderen Inseln, s. `IslandShell.tsx`s `offen`-Kopfkommentar für die volle
+   Wurzelursachen-Analyse): jede Insel ist ihr EIGENER Stacking-Kontext
+   (`position:fixed` + `z-index` oben) — ein tief verschachtelter `z-index`
+   wie `KSelect`s `.k-menu` (`z-index:100`, aura.css) bleibt IN diesem
+   Kontext gefangen und kann nie gegen eine andere `.isl-root`-Instanz
+   antreten. `isl-root--offen` (von `IslandShell.tsx` gesetzt, sobald
+   `stufe!=='pill'`) hebt die GESAMTE offene Insel über alle vier
+   Grund-Inseln (40) UND den Bühnenkopf (41/42, s. `.isl-buehnenkopf`/
+   `.isl-kopf-logo-*`/`.isl-einstellungen-kreis` unten) — jeder verschachtelte
+   Inhalt dieser Insel (Popup/Fenster, darin wiederum jedes `KSelect`-Menü)
+   erbt die Anhebung automatisch übers Elternteil, ohne selbst einen
+   `z-index` zu brauchen. Bleibt weit unter der CursorEbene
+   (`shell/cursor-ebene.css`, `z-index:2147483000`) — einzige erlaubte Ebene
+   über allen Inseln. */
+.isl-root--offen {
+  /* W0-EBENENTAFEL OFFENE_INSEL (packages/kosmo-ui/src/tokens.ts zEbene) —
+     INNERHALB #root (kein createPortal in IslandShell.tsx, grep-geprüft).
+     Deckte den Vis-Ausführen-Knopf (ROADMAP 1148 a) — fehlende Geometrie-
+     Koordination mit der Insel, kein #root-Sprung. */
+  z-index: 100;
+}
+
+[data-theme='orbit'] .isl-root {
+  --f-glass: var(--k-glass-fill);
+  --f-blur: blur(24px) saturate(1.4);
+  --f-r-sm: 8px;
+  --f-r-md: 13px;
+  /* --f-field/-ink/-accent/-pill bleiben unverändert — s. Kopfkommentar
+     (theme-invariant bzw. bereits automatisch via `--k-field`/-ink/-accent
+     durchgereicht). */
+}
+
+/* ── Bühnenordnung (§1/§2): vier Islands, Ränder 14px, mittig zentriert ──
+   K17 (Owner-Korrekturen 2026-07, S.5/S.8): alle vier Ränder teilen sich
+   jetzt EIN Token (`--isl-rand-abstand`, `.isl-root` oben). Die frühere
+   PD2-Ausnahme `left:64px` der linken Insel wich dem `EntwurfsDock`
+   (`orbit-065.css` `.orbit065-dock`, `left:12px; top:50%`) aus — dieser
+   Grund ist seit PD3c ENTFALLEN: das EntwurfsDock rendert nur noch im
+   Modus 'manuell' (`DesignWorkspace.tsx`, `designOberflaeche === 'manuell'`-
+   Guard an seinem Render-Ort), Islands und Dock stehen also NIE mehr
+   gleichzeitig auf der Bühne. Die vertikale Kopf-Spalte links oben
+   (KosmoOrbit-Logo/Geschoss-Pille, `left:14px`, bis ~120px Höhe) bleibt
+   disjunkt: die ZEICHNEN-Leiste ist vertikal MITTIG verankert
+   (`top:50%`). */
+.isl-rand-links {
+  left: var(--isl-rand-abstand);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.isl-rand-oben {
+  top: var(--isl-rand-abstand);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.isl-rand-rechts {
+  right: var(--isl-rand-abstand);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.isl-rand-unten {
+  bottom: var(--isl-rand-abstand);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* B155 (17.09.2026) — DIE PILLE, DIE UNTER 992 px VERSCHWINDET.
+
+   Gemessen (`probe-a7-geometrie.mjs`, sieben Fenstergroessen, Station vis und
+   design): der Grundstreifen ist LINKS verankert und inhaltsbreit — er steht
+   bei jeder Fensterbreite an derselben Stelle (vis x 72..452, design 14..394).
+   Die AUSTAUSCH-Pille dagegen ist MITTIG. Beide sitzen auf derselben Zeile am
+   unteren Rand, und sie fahren aufeinander zu, sobald das Fenster schmaler
+   wird:
+   
+     1400x900   Pille x 656..744   Schnitt    0 px²   erreichbar 100 %
+     1024x768   Pille x 468..556   Schnitt    0 px²   erreichbar 100 %
+      980x768   Pille x 446..534   Schnitt  204 px²
+      900x800   Pille x 406..494   Schnitt 1564 px²   erreichbar  50 %
+      820x760   Pille x 366..454   Schnitt 2924 px²   erreichbar   3 %
+      768x1024  Pille x 340..428   Schnitt 2992 px²   erreichbar   0 %
+   
+   **Die Schwelle ist gerechnet, nicht gegriffen:** die Pille (88 breit) liegt
+   bei `(W - 88) / 2`, der Streifen endet bei 452 — sie treffen sich bei
+   `W = 2 * 452 + 88 = 992`. Deshalb ist bei 1024 noch nichts und bei 980
+   schon etwas, und deshalb hat die bisherige Messreihe (kleinste Breite 1024)
+   den Befund nicht sehen koennen: er beginnt 32 px darunter.
+   
+   **Warum das schlimmer ist als eine Ueberdeckung:** die Pille ist der einzige
+   Weg zurueck zu ihrer Insel. Unter 992 px ist die AUSTAUSCH-Insel nicht mehr
+   zu oeffnen — bei 768 px liegt sie zu 100 % unter dem Streifen.
+   
+   **Der Bau verschiebt nichts, was nicht im Weg ist.** `max()` haelt die Pille
+   mittig, solange die Mitte rechts vom Streifen liegt, und schiebt sie erst
+   dann nach rechts, wenn sie es nicht mehr tut. Bei 1400 und bei 1024 ist die
+   Lage darum BYTE-GLEICH zu vorher; erst darunter weicht sie aus.
+   
+   Keine Sprungmarke (`@media`): eine Breitenzahl in einer Bedingung waere
+   genau die Sorte Wert, die altert, wenn der Streifen einen vierten Inhalt
+   bekommt. Hier steht stattdessen die Geometrie selbst da — und die einzige
+   gemessene Zahl darin (`--isl-grundstreifen-breite`) hat eine Wache.
+   
+   Nur wo es den Streifen ueberhaupt gibt: im Manuell-Weg steht er nicht, und
+   dort bleibt die Pille unberuehrt. */
+.app-wurzel:has(.isl-grundstreifen) .isl-rand-unten {
+  left: max(
+    50%,
+    calc(
+      var(--isl-grundstreifen-links) + var(--isl-grundstreifen-breite) + var(--k-s3) + 44px
+    )
+  );
+}
+
+/* ── Stufe 0 · Pill (§2/§4.1) ── PB2 (Bauauftrag Punkt 3, C-13): kürzer
+   (lange Achse 104→88px, die 44px-Trefferfläche bleibt über das Pseudo-
+   Element unten gewahrt) + glasiger — Hintergrund wechselt von der
+   opaken `--f-pill` (bleibt für Toast/Stationen-Orb/Kosmo-Kreise unverändert,
+   §5 Regel 1 "dunkles Glas") auf dieselbe `--f-glass`/`--f-blur`-Familie wie
+   Leiste/Popup/Fenster — EIN bestehendes Token, keine neue Farbe. `color`
+   wechselt vom hartkodierten Weiss auf `--f-ink` (theme-bewusst, Papier
+   bekommt jetzt dunkle statt weisser Schrift auf hellem Glas). */
+.isl-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--f-glass);
+  backdrop-filter: var(--f-blur);
+  -webkit-backdrop-filter: var(--f-blur);
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--f-ink);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transform: scale(1);
+  transition: box-shadow var(--k-dock-schnell, 160ms) var(--k-ease-standard, ease);
+}
+/* §4.2: alle Ziele ≥44px Trefferfläche, auch wenn die visuelle Pill schmaler
+   ist — die schmale 34px-Achse wird per unsichtbarem Pseudo-Element auf 44px
+   gepolstert (Fable-Gate-Fix PD1: min-width/-height allein vergrösserten die
+   Trefferzone NICHT, weil die feste 34px-Seite gewinnt). */
+.isl-pill::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+.isl-vertikal .isl-pill {
+  width: 34px;
+  height: 88px;
+  min-height: 44px;
+}
+.isl-horizontal .isl-pill {
+  width: 88px;
+  height: 34px;
+  min-width: 44px;
+}
+.isl-pill-glyphe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Text-Fallback-Grössen (nur genutzt, solange eine Station kein
+     `ISLAND_PILL_GLYPHEN`-Icon liefert) — s. `IslandShell.tsx`. Inhalt (der
+     Fallback ist `label.slice(0,2)` eines `ISLAND_LABEL`-Eintrags) ist
+     bereits versal — D-1 (E-1): Minimalform, Sperrwert als Token. */
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: var(--k-sperrung-eng);
+}
+/* PB2 (Bauauftrag Punkt 3): Dynamic-Island-artiges Aufblühen bei Hover —
+   NUR `scale`, kein `translate`/Klammer-Vektor auf diesem Element (die
+   Insel-Randposition sitzt auf dem `.isl-root`-ELTERN-Knoten, nicht hier,
+   s. `.isl-rand-*` oben) — die Lehre v0.8.3 («Keyframes müssen die volle
+   Transform-Basis mitführen») greift nur, wenn ein Element BEREITS eine
+   Basis-Transform trägt; `.isl-pill` trägt keine, ein reines `scale`-
+   Keyframe ist hier darum sicher. */
+@keyframes islPillBluehen {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+.isl-pill:hover,
+.isl-pill:focus-visible {
+  animation: islPillBluehen 220ms var(--k-ease-standard, ease) forwards;
+  box-shadow: var(--k-shadow-xl, var(--k-shadow-lg, var(--k-shadow-overlay)));
+}
+.isl-root[data-reduziert='true'] .isl-pill:hover,
+.isl-root[data-reduziert='true'] .isl-pill:focus-visible {
+  animation: none;
+}
+
+/* ── Stufe 1 · Leiste (§4.1) ── */
+.isl-leiste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--k-s3);
+  background: var(--f-glass);
+  backdrop-filter: var(--f-blur);
+  -webkit-backdrop-filter: var(--f-blur);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--f-r-md);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+}
+/*
+ * E-10 (`docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`, Owner-Befund O-12/O-3)
+ * — HIER stand bis zum Owner-Befund vom 11.08.2026 das
+ * «Scroll-statt-Überlapp-Sicherheitsnetz»
+ * `max-height: calc(100dvh - 208px); overflow-y: auto` für die vertikalen
+ * Inseln. Es hat genau den Schaden angerichtet, den O-3 meldet: die
+ * ZEICHNEN-Leiste ist seit v0.9.7 auf 23 Werkzeuge gewachsen (≈23×46px =
+ * 1058px Werkzeugsäule) und passte damit bei KEINER üblichen Fensterhöhe
+ * mehr in den Kasten — sie wurde zur Scrollfläche, und sobald man in ihr
+ * scrollte, schob sie ihren eigenen Kopf («ZEICHNEN») aus dem Bild.
+ *
+ * E-10 Antwort (c) «die Insel wächst mit, quer zur eigenen Achse»: die
+ * Leiste scrollt NIE mehr, sondern legt ihre Werkzeuge in so viele SPALTEN,
+ * wie die verfügbare Höhe verlangt. Die Spaltenzahl kommt nicht aus einer
+ * CSS-Zahl (Media-Queries können die 208px-Reserve nicht rechnen), sondern
+ * aus `IslandShell.tsx`s `leistenZeilen()` — einer reinen Funktion über
+ * `window.innerHeight`, die `--isl-zeilen` auf die Leiste schreibt (dort
+ * auch die Herleitung der drei Konstanten). Die 208px-Reserve BLEIBT als
+ * Rechenwert erhalten: sie ist die nachgemessene Grösse, die das oberste
+ * Werkzeug unter der Geschoss-Pille (`.isl-geschoss-pille`, endet bei
+ * y=120px) freihält, wenn die Leiste vertikal mittig verankert ist
+ * (`.isl-rand-links`, `top:50%`/`translateY(-50%)`).
+ */
+/* (Die zwei Regeln, die diesen Kommentar einlösen, stehen unten direkt bei
+   `.isl-leiste-werkzeuge` — dort, wo die Grundform der Werkzeugspalte
+   definiert wird.) */
+/* D-1 (E-1): Versal+Sperrung aus `.k-label` (aura.css). */
+.isl-leiste-kopf {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  font-weight: var(--k-gewicht-betont);
+  color: var(--f-ink);
+  opacity: 0.7;
+  text-align: center;
+}
+/* B140 (11.09.2026, Owner-Entscheid «Leiste einklappbar»): derselbe Kopf,
+   jetzt als Schalter. Er behaelt Schrift, Farbe und Ruhe-Deckkraft der
+   Textfassung — eine Affordance muss auffindbar sein, nicht laut; deshalb
+   traegt er keinen Rahmen und keine eigene Farbe, sondern nur die Glyphe, die
+   die Richtung zeigt, und etwas mehr Hoehe fuer den Finger.
+
+   `min-height: 32px` ist GERECHNET, nicht geschmeckt: der Kopf geht in
+   `ISL_LEISTE_RAHMEN_PX` (IslandShell.tsx) ein, und jedes Pixel Kopf nimmt
+   der Werkzeugspalte Zeilen weg — zu viel davon, und die Leiste bricht in
+   eine zusaetzliche Spalte um und wird BREITER, statt wegklappbar zu sein.
+   36 → 56 haelt die Spaltenzahl bei 720/768/820/900 unveraendert; die 44px
+   der Fenster-Chrome haetten sie bei 768 von drei auf vier gehoben.
+
+   Die Trefferflaeche ist damit 192x32 an der ZEICHNEN-Leiste — kleiner als
+   die 44x44 der Fenster-Chrome, aber mehr als das Doppelte der Insel-Pille
+   (gemessen 34x88 = 2992 gegen 6144 Bildpunkte), die derselbe Finger heute
+   schon trifft. */
+.isl-leiste-kopf--schalter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k-s2);
+  width: 100%;
+  min-height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.isl-leiste-kopf--schalter:hover,
+.isl-leiste-kopf--schalter:focus-visible {
+  opacity: 1;
+}
+.isl-leiste-kopf-glyphe {
+  /* Die Glyphe steht ruhiger als die Versalien daneben — sie ist der Hinweis,
+     nicht die Beschriftung. */
+  opacity: 0.75;
+}
+.isl-leiste-werkzeuge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s1);
+}
+.isl-horizontal .isl-leiste-werkzeuge {
+  flex-direction: row;
+}
+/* E-10 (s. ausführlichen Kommentar oben bei `.isl-leiste`): die vertikale
+   Leiste scrollt nie, sie wächst quer — `--isl-zeilen` (gesetzt von
+   `IslandShell.tsx`s `leistenZeilen()`) sagt, wie viele Werkzeuge in eine
+   Spalte passen; alles darüber bricht in die nächste Spalte um. Bei
+   `--isl-zeilen >= Werkzeugzahl` (hohe Fenster) ergibt das exakt die
+   bisherige EINE Spalte — kein Pixel Unterschied zum Bestand. */
+.isl-vertikal .isl-leiste-werkzeuge {
+  /* Default hier deklariert (nicht nur als `var()`-Fallback) — dieselbe
+     Konvention wie `--isl-clamp-x/-y` bei `.isl-popup`: die CSS-Datei hält
+     die Grundstellung, `IslandShell.tsx` überschreibt sie per
+     `style.setProperty`. So bleibt der `var()`-Aufruf gedeckt
+     (`test/css-var-konsistenz.test.ts`) und die Leiste steht ohne JS in
+     genau einer Spalte, wie bisher. */
+  --isl-zeilen: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(var(--isl-zeilen), auto);
+  grid-auto-columns: max-content;
+  align-items: start;
+}
+/* E-10, die horizontale Schwester-Regel — ANSICHT/AUSTAUSCH wachsen in die
+   ZEILE statt in die Spalte, sobald die Werkzeuge breiter werden als das
+   Fenster. Reines `flex-wrap` genügt hier: ein Zeilen-Umbruch braucht keine
+   Höhenrechnung, die Breitengrenze steht direkt als `max-width`. */
+.isl-horizontal .isl-leiste-werkzeuge {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100vw - 2 * var(--isl-rand-abstand) - 2 * var(--k-s3));
+}
+
+.isl-werkzeug {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--k-s2);
+  background: transparent;
+  border: none;
+  border-radius: var(--f-r-sm);
+  color: var(--f-ink);
+  cursor: pointer;
+  /* PB2 (Bauauftrag Punkt 2): Anker für den absolut positionierten
+     Lang-Hover-Tooltip (`.isl-werkzeug-tooltip` unten). */
+  position: relative;
+  /* Zustands-Wechsel (Chips/Toggles, §4.3) — 160ms/standard, direkt aus
+     der bestehenden Skala referenziert, kein neuer Token. */
+  transition:
+    background var(--k-dock-schnell) var(--k-ease-standard),
+    color var(--k-dock-schnell) var(--k-ease-standard);
+}
+.isl-werkzeug:hover,
+.isl-werkzeug[aria-pressed='true'] {
+  background: var(--k-accent-wash);
+}
+/* PB2 (Bauauftrag Punkt 1, C-13): trägt jetzt ein SVG-Icon (28 von 29
+   Werkzeugen) statt eines Zweibuchstaben-Kürzels — die Mono-Textregeln
+   bleiben als Fallback-Stil für `skizze` (Text-Rest, s. `island-katalog.ts`)
+   erhalten, zusätzlich zentriert die Flex-Regel das Icon sauber. */
+/* D-1 (E-1): der frühere Text-Fallback war versal ('SK', s. Kommentar
+   oben) — Minimalform, Sperrwert als Token statt Literal. */
+.isl-werkzeug-glyphe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: var(--k-sperrung-eng);
+}
+.isl-werkzeug-titel {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  text-align: center;
+  line-height: var(--k-lh-eng);
+}
+
+/* ── Lang-Hover-Tooltip (PB2, Bauauftrag Punkt 2, D15) ──────────────────
+   Ersetzt den früheren, im Popup abschneidbaren Hinweisblock. Wiederverwendet
+   dieselbe Viewport-Klammer-Technik wie Popup/Fenster (`--isl-clamp-x/-y`,
+   `useViewportKlammer` in `IslandShell.tsx`) — «nie abgeschnitten» ist damit
+   strukturell garantiert statt neu erfunden. Bewusst OHNE Keyframe-Animation
+   (nur eine `opacity`-Transition) — die Lehre v0.8.3 gilt für `transform`-
+   Keyframes, ein reiner Opacity-Fade hat dieses Risiko gar nicht erst. */
+.isl-werkzeug-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  --isl-clamp-x: 0px;
+  --isl-clamp-y: 0px;
+  transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(var(--isl-clamp-y));
+  z-index: 5;
+  max-width: 220px;
+  padding: var(--k-s2) var(--k-s3);
+  background: var(--f-pill);
+  color: var(--isl-pill-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-micro);
+  line-height: var(--k-lh-basis);
+  text-align: left;
+  white-space: normal;
+  border-radius: var(--f-r-sm);
+  box-shadow: var(--k-shadow-md, var(--k-shadow-overlay));
+  pointer-events: none;
+  opacity: 0;
+  animation: islTooltipEin 140ms var(--k-ease-standard, ease) forwards;
+}
+@keyframes islTooltipEin {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.isl-rand-unten .isl-werkzeug-tooltip {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.isl-root[data-reduziert='true'] .isl-werkzeug-tooltip {
+  animation: none;
+  opacity: 1;
+}
+
+/* ── Stufe 2 · Mini-Popup (§4.1) — PD1: leerer Rahmen, Inhalte folgen PD3 ──
+   P8 §10.1 (`docs/V083-SPEZ.md`, Bounding-Box-Clamping analog `design.css:
+   186-198`s `.dw-dropdown`-Präzedenzfall): `--isl-clamp-x`/`-y` sind additive
+   Korrekturvektoren, die `IslandShell.tsx`s `klammereInViewport()` NUR setzt,
+   wenn das Popup den Viewport verlassen würde (Default `0px`, unverändertes
+   Verhalten) — die bestehende `translateX(-50%)`-Zentrierung bleibt exakt
+   erhalten, der Klammer-Offset wirkt additiv daneben.
+   E-10 (`docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`, Owner-Befund O-12):
+   `max-height` + `overflow-y: auto` sind hier ERSATZLOS entfallen — Stufe 2
+   ist «die Insel selbst» und scrollt nie. Das entfernte Sicherheitsnetz ist
+   Absicht: ein Stufe-2-Inhalt, der nicht auf den Bildschirm passt, ist ab
+   jetzt ein sichtbarer Fehler statt einer stillen Scrollleiste, und wird IM
+   INHALT behoben (E-10 Antwort a: Kopf der Liste + ehrliche Restzeile, der
+   volle Bestand in Stufe 3). `max-width` BLEIBT — waagrechte Begrenzung
+   erzeugt Umbruch, keinen Scroll. */
+.isl-popup {
+  position: absolute;
+  top: calc(100% + var(--k-s3));
+  left: 50%;
+  --isl-clamp-x: 0px;
+  --isl-clamp-y: 0px;
+  transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(var(--isl-clamp-y));
+  min-width: 180px;
+  min-height: 44px;
+  max-width: calc(100vw - 2 * 8px);
+  padding: var(--k-s4);
+  background: var(--f-glass);
+  backdrop-filter: var(--f-blur);
+  -webkit-backdrop-filter: var(--f-blur);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--f-r-md);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+}
+/* E-10 Antwort (a), `insel-stufe.tsx`s `<ListenRest>`: die ehrliche
+   Restzeile unter einer in Stufe 2 gekappten Liste. Stille Stimme
+   (`--k-ink-faint`), keine Fläche, kein Knopf — sie ist eine Auskunft
+   («da ist noch mehr, und zwar so viel»), keine zweite Bedienung; der Weg
+   dorthin ist der ohnehin vorhandene zweite Klick aufs Werkzeug. */
+.isl-listen-rest {
+  margin: 0;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+  line-height: var(--k-lh-knapp);
+  color: var(--k-ink-faint, var(--f-ink));
+  opacity: 0.75;
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.isl-popup-hinweis {
+  margin: 0;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  color: var(--f-ink);
+  opacity: 0.6;
+}
+
+/* ── Stufe 3 · Einstellungsfenster (§4.1) — PD1: leerer Rahmen ──
+   P8 §10.1: dieselben `--isl-clamp-x`/`-y`-Korrekturvektoren wie
+   `.isl-popup` oben (s. dortigen Kommentar) — Einstellungsfenster sind
+   grösser (min. 320×120) und darum der häufigere Klammer-Fall (z. B. die
+   hohe ZEICHNEN-Insel nahe der unteren Viewport-Kante, PROJEKT/ZEICHNEN
+   horizontal an den Seiten-Rändern).
+
+   E-10 (`docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`, AUSNAHME 1) — DIES
+   IST DIE EINE SANKTIONIERTE SCROLLFLÄCHE DER INSEL-UI. Stufe 3 heisst
+   «Fenster» und ist eines: eigener Rahmen, Schliessen-Knopf,
+   Viewport-Klammer. Sie ist zugleich der Zielort für alles, was Stufe 2
+   nicht ganz zeigen kann (E-10 Antwort a). Deshalb — und nur deshalb —
+   behält sie `max-height` + `overflow-y: auto`. Regel dazu: KEIN Scroll im
+   Scroll. Ein Stufe-3-INHALT bringt nie einen eigenen inneren Scroller mit;
+   er lässt dieses Fenster scrollen (darum sind die `overflow: auto` in
+   `inhalte/pd3b-inhalte.css` entfallen). Der Wächter
+   `packages/kosmo-ui/test/insel-scroll-waechter.test.ts` lässt genau diesen
+   einen Selektor durch. */
+.isl-fenster {
+  position: absolute;
+  top: calc(100% + var(--k-s3));
+  left: 50%;
+  --isl-clamp-x: 0px;
+  --isl-clamp-y: 0px;
+  /* G4/G1-Nachtrag (`IslandShell.tsx`s `klammereInViewport`/
+     `ermittleSperrzonenRand`): der Vorgabewert ist BYTE-IDENTISCH zur
+     bisherigen festen `calc(100dvh - 2 * 8px)` — ändert JS diese Property
+     nicht (kein Kopf/keine fremde Pille im Weg), ist das Verhalten
+     unverändert. Nur wenn ein offenes Fenster den globalen Kopf
+     (`.isl-kopf-zweitgruppe`) oder die Pille einer geschlossenen
+     Nachbarinsel (`.isl-pill`) horizontal tatsächlich überschneiden würde,
+     setzt JS hier einen ENGEREN Wert — dieselbe sanktionierte Scrollfläche
+     (E-10 AUSNAHME 1, `overflow-y:auto` unten) übernimmt den Rest, kein
+     neuer Verzicht. */
+  --isl-clamp-max-height: calc(100dvh - 2 * 8px);
+  transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(var(--isl-clamp-y));
+  min-width: 320px;
+  min-height: 120px;
+  max-width: calc(100vw - 2 * 8px);
+  max-height: var(--isl-clamp-max-height);
+  overflow-y: auto;
+  padding: var(--k-s5);
+  background: var(--f-glass);
+  backdrop-filter: var(--f-blur);
+  -webkit-backdrop-filter: var(--f-blur);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--f-r-md);
+  box-shadow: var(--k-shadow-xl, var(--k-shadow-overlay));
+}
+
+/* P8 §10.1 (Agent-Fund, `docs/V083-SPEZ.md` §10.1): AUSTAUSCH sitzt am
+   UNTEREN Rand (`.isl-rand-unten`, `bottom:14px`) — ein Popup/Fenster, das
+   wie die drei übrigen Islands NACH UNTEN aufklappt (`top:100%`), hätte fast
+   keinen Raum zum Viewport-Rand und würde strukturell überstehen. Die beiden
+   Stufen klappen für dieses EINE Rand-Paar nach OBEN auf (`bottom:100%`
+   statt `top:100%`) — derselbe Kontext-abhängige Öffnungsrichtungs-Gedanke
+   wie `.dw-dropdown--oben`/`--unten` (design.css), hier an die feste
+   Insel-Randposition gebunden statt an Laufzeit-Platzmessung. Die generische
+   `--isl-clamp-*`-Korrektur oben bleibt zusätzlich als Sicherheitsnetz aktiv
+   (z. B. falls ein sehr hohes AUSTAUSCH-Fenster trotzdem an die obere Kante
+   stösst). */
+.isl-rand-unten .isl-popup,
+.isl-rand-unten .isl-fenster {
+  top: auto;
+  bottom: calc(100% + var(--k-s3));
+}
+
+/* O-3, zweite Hälfte (Owner-Screenshot 11.08.2026: «unten überlappt das
+   Hinweis-Panel [‹KEINE WAND AUSGEWÄHLT›] die Leiste») — DIE ANKERSEITE WAR
+   FALSCH. Der Gedanke aus dem `.isl-rand-unten`-Block oben, zu Ende gedacht:
+   eine VERTIKALE Insel ist eine hohe, schmale Säule an der Seitenkante. Ein
+   Popup, das wie bei den waagrechten Inseln unter `top: 100%` aufklappt,
+   startet damit unterhalb einer 600–1000px hohen Säule — also ausserhalb des
+   Bildschirms — und musste danach JEDES MAL von der Laufzeit-Klammer
+   (`klammereInViewport`, IslandShell.tsx) zurück ins Bild und an der Leiste
+   vorbei gerettet werden. Diese Rettung ist eine Notbremse mit einem
+   Messzeitpunkt; sie greift zu spät, wenn der Inhalt nach der Messung noch
+   wächst (Aufbau-Katalog, Messrahmen-SVG) — genau dann steht das Panel auf
+   der Leiste, wie im Screenshot.
+   Die Auflösung ist dieselbe wie unten: die Öffnungsrichtung folgt der
+   Insel-Randposition. Vertikale Inseln klappen SEITLICH auf (links →
+   rechts, rechts → links) und richten sich an der OBERKANTE der Leiste aus.
+   Damit gibt es keine Überdeckung mehr, die man wegrechnen müsste — die
+   Klammer bleibt als Sicherheitsnetz aktiv, hat aber im Normalfall nichts
+   mehr zu tun. */
+.isl-rand-links .isl-popup,
+.isl-rand-links .isl-fenster {
+  top: 0;
+  left: calc(100% + var(--k-s3));
+  transform: translate(var(--isl-clamp-x), var(--isl-clamp-y));
+}
+.isl-rand-rechts .isl-popup,
+.isl-rand-rechts .isl-fenster {
+  top: 0;
+  left: auto;
+  right: calc(100% + var(--k-s3));
+  transform: translate(var(--isl-clamp-x), var(--isl-clamp-y));
+}
+
+/* P-STUFE (v0.9.33, B44 W5): der Vergroessern-Knopf teilt Form, Groesse und
+   Trefferflaeche mit `.isl-schliessen` — er sitzt in derselben Ecke und
+   gehoert zur selben Bedien-Familie. Nur die Position unterscheidet sich:
+   eine Knopfbreite weiter links, damit die gewohnte Ecke fuer «Schliessen»
+   frei bleibt. Bewusst KEINE eigene Farbe: eine Affordance muss auffindbar
+   sein, nicht laut. */
+.isl-vergroessern {
+  position: absolute;
+  top: var(--k-s2);
+  right: calc(var(--k-s2) + 44px);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--f-ink);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.isl-vergroessern:hover,
+.isl-vergroessern:focus-visible {
+  opacity: 1;
+}
+
+.isl-schliessen {
+  position: absolute;
+  top: var(--k-s2);
+  right: var(--k-s2);
+  /* PD4 Touch-Polish-Befund (island-ui.spec.ts, «Wand»-Fenster mit breitem
+     Aufbau-Katalog): `.isl-schliessen` rendert VOR dem Inhalt im DOM
+     (IslandShell.tsx) — ohne `z-index` gewinnt normal fliessender Inhalt
+     (spätere Paint-Reihenfolge) die Klickfläche, sobald er bis unter die
+     obere rechte Ecke reicht (z. B. eine volle Tabellenbreite). `z-index:1`
+     hält den Schliessen-Knopf IMMER zuoberst, unabhängig vom Inhalt jedes
+     einzelnen Werkzeugs — ein Rahmen-Fix (PD1-Eigentum), kein Eingriff in
+     eine einzelne PD3a/PD3b-Inhaltsdatei. */
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--f-ink);
+  cursor: pointer;
+}
+
+/* ── Toast «‹NAME› AKTIV» (§4.2, Werkzeuge ohne Popup, 1.7s) — Inhalt ist
+   `${werkzeugName.toUpperCase()} AKTIV`, bereits versal. D-1 (E-1):
+   Minimalform, Sperrwert als Token statt Literal. ── */
+.isl-toast {
+  position: absolute;
+  top: calc(100% + var(--k-s3));
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: var(--k-s2) var(--k-s4);
+  background: var(--f-pill);
+  color: var(--isl-pill-ink);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: var(--k-sperrung);
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-md, var(--k-shadow-overlay));
+}
+/* P8 §10.1: derselbe Öffnungsrichtungs-Tausch wie beim Popup/Fenster oben —
+   der Toast der AUSTAUSCH-Insel («MANUELL AKTIV») klappt sonst ebenfalls
+   nach unten aus knapp über der unteren Viewport-Kante auf. */
+.isl-rand-unten .isl-toast {
+  top: auto;
+  bottom: calc(100% + var(--k-s3));
+}
+
+/* ── D-8 (E-8 C): Touch-Badge «Label bei Aktivierung» ────────────────────
+   Teilt die `.isl-toast`-Anatomie (Position/Fläche/Schrift, oben) und
+   bekommt NUR eigene Motion: Eintritt `--k-motion-settle`, Austritt
+   `--k-motion-fast` (Kanon-Wortlaut). Beide Tokens sind KOMPONIERTE Werte
+   (Dauer + Kurve, aura.css) — ALLEIN im `animation`-Kurzschreibweise-Slot
+   sind sie gültig (genau EIN Easing-Token); nur die Kombination mit einer
+   ZWEITEN Kurve war der historische `islIn`-Bug (s. Motion-Kommentar oben).
+   Die Keyframes führen die volle Basis-Transformation (`translateX(-50%)`)
+   mit — eine `animation` überschreibt `transform` für ihre Laufdauer
+   (W2-Quergate-Lehre oben). Die JS-Fristen (1.5s + 120ms Austritt) leben in
+   `IslandShell.tsx` (`TOUCH_BADGE_MS`/`TOUCH_BADGE_AUSTRITT_MS`, letzterer
+   aus dem tokens.ts-Spiegel von `--k-motion-fast`). */
+@keyframes islBadgeEin {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+@keyframes islBadgeAus {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.98);
+  }
+}
+.isl-anim-badgeIn {
+  animation: islBadgeEin var(--k-motion-settle) backwards;
+}
+.isl-anim-badgeAus {
+  animation: islBadgeAus var(--k-motion-fast) forwards;
+}
+
+/* ── Motion (§4.3-Tabelle, v0.9.2 Nachtrag «Island-Öffnungsanimation») ───
+   Owner-Befund 23.07. (wörtlich «dann haben die islands aktuell keine
+   sanfte animation wenn man sie öffnet, da sollte eigendlich vom
+   animationskonzept etwas da sein.. animation dito dynamic island von
+   apple»): Wurzelursache war NICHT ein fehlendes Konzept, sondern ein
+   stiller CSS-Bug — `.isl-anim-islIn`/`.isl-anim-popIn` schrieben bis hier
+   `animation: <keyframe> var(--k-motion-settle|-base) var(--k-ease-*)`.
+   `--k-motion-settle`/`--k-motion-base` sind selbst KOMPONIERTE Werte
+   («320ms cubic-bezier(…)», aura.css) — im `animation`-Kurzschreibweise-
+   Slot eingesetzt UND von einer zweiten, eigenen Kurve gefolgt, entstehen
+   ZWEI `<easing-function>`-Token in einem Slot, der nur eines erlaubt. Das
+   macht die GESAMTE Deklaration ungültig (CSS verwirft eine ungültige
+   Kurzschreibweise komplett, keine Teilanwendung) — beide Animationen
+   liefen darum `animation:none`, live nachgemessen (`getComputedStyle(…)
+   .animationName === 'none'`) UND per Byte-Vergleich gegen den kompilierten
+   Wert bestätigt. `winIn` blieb verschont, weil `--k-motion-fenster`
+   (aura.css) eine REINE Dauer ohne eingebackene Kurve ist. Fix: die beiden
+   betroffenen Deklarationen setzen die Dauer jetzt als eigenen Rohwert
+   (unten je einzeln begründet, warum kein bestehendes Dauer-Token passt)
+   UND referenzieren weiter ausschliesslich bestehende `--k-ease-*`-Kurven —
+   `--k-ease-bounce` (`cubic-bezier(0.34, 1.4, 0.64, 1)`, aura.css) ist
+   bereits exakt die vom Owner beispielhaft genannte «überschwingende
+   Feder»-Kurve (`cubic-bezier(0.34, 1.56, 0.64, 1)`), kein neuer Wert
+   nötig. Alle drei Übergänge (Pille→Leiste, Leiste→Popup, Popup→Fenster)
+   teilen jetzt dieselbe Sprache: Feder-Kurve fürs Wachsen der FORM (scale/
+   opacity/border-radius — kein `width`/`height`, s. Kommentar bei `islIn`
+   unten, warum das hier NICHT erzwungen ist), `--k-ease-entrance` (sanftes
+   Ease-out) fürs leicht verzögerte Content-Einblenden. */
+
+/* Pille → Leiste (§4.1 Stufe 0→1). PB2 hatte hier absichtlich nur `scale`
+   ohne Basis-Transform (`.isl-pill` trägt keine, s. Kommentar bei
+   `islPillBluehen` oben) — das bleibt unverändert richtig. NEU: ein
+   `border-radius`-Morph von der Pillenform (`--k-radius-pill`, 999px) auf
+   den Leisten-Radius (`--f-r-md`) verkauft das «Aufblühen aus der Pille»
+   zusätzlich zur Skalierung (Owner: «Radius morphen aus der Pillenform»)
+   — beide Custom Properties lösen VOR der Interpolation zu echten
+   Längenwerten auf, keine `@property`-Registrierung nötig. `width`/`height`
+   bleiben bewusst UNANGETastet (hartes Auftragsverbot ausser «erzwungen»):
+   Pille und Leiste sind zwei verschiedene DOM-Knoten (React tauscht sie
+   beim Stufenwechsel aus, kein gemeinsamer Kasten), UND die Leisten-Breite
+   ist nicht konstant (variiert mit Werkzeug-Anzahl/-Beschriftung je Insel)
+   — ein `width`-Keyframe bräuchte einen festen Zielwert, den es hier nicht
+   gibt; das `scale`+`border-radius`-Paar liefert dieselbe «wächst aus der
+   Pille»-Lesbarkeit ohne Layout-Thrash. `220ms` ist ein Rohwert (kein
+   bestehendes Dauer-Token trifft: `--k-motion-base`/`-settle` sind wie oben
+   erklärt KOMPONIERT, `--k-motion-fenster` ist semantisch ans Fenster
+   gebunden) — er liegt im Auftrags-Zielband (~180–260ms) UND deckt sich mit
+   dem bereits bestehenden lokalen Präzedenzfall `islPillBluehen` (220ms,
+   oben in dieser Datei), keine neue Zeitfamilie. */
+@keyframes islIn {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+    border-radius: var(--k-radius-pill);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    border-radius: var(--f-r-md);
+  }
+}
+/* W2-Quergate-Fund (18.07.2026, ROADMAP 446): `popIn`/`winIn` müssen die
+   VOLLE Basis-Transformation (`translateX(-50%)` + `--isl-clamp-*`) mitführen
+   — eine `animation` überschreibt die `transform`-Eigenschaft der Regel für
+   ihre gesamte Laufdauer. Die alten Keyframes (nur `translateY+scale`)
+   liessen Popup/Fenster darum ~200–320ms lang UNZENTRIERT und UNGEKLAMMERT
+   aufblitzen (Messen-Fenster der hohen ZEICHNEN-Insel: Unterkante 925px im
+   768er-Viewport, live gemessen), bevor sie an die korrekte Position
+   sprangen — sichtbares Nachrücken für Nutzer, Flake für jede Box-Messung.
+   NEU (v0.9.2): Startskalierung 0.96→0.9 (deutlicheres «Wachsen aus dem
+   Ursprung», Owner Bullet 2) + `transform-origin` unten (`.isl-popup`/
+   `.isl-fenster`-Basisregeln) verankert den Ursprung an der Insel-Kante
+   statt der Boxmitte — «wächst aus dem auslösenden Werkzeug/der Pille». */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(calc(var(--isl-clamp-y) + 4px)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(var(--isl-clamp-y)) scale(1);
+  }
+}
+@keyframes winIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(calc(var(--isl-clamp-y) + 8px)) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(calc(-50% + var(--isl-clamp-x))) translateY(var(--isl-clamp-y)) scale(1);
+  }
+}
+/* `220ms`/`200ms`: Rohwerte aus demselben Grund wie bei `islIn` oben
+   (`--k-motion-base` ist komponiert, kann nicht mit einer zweiten Kurve
+   kombiniert werden) — `winIn` bleibt tokenisiert (`--k-motion-fenster` ist
+   eine reine Dauer, komponierbar), jetzt aber mit derselben Feder-Kurve wie
+   die beiden anderen Stufen («dieselbe Sprache», Owner Bullet 2) statt der
+   bisherigen `--k-ease-entrance`. */
+.isl-anim-islIn {
+  animation: islIn 220ms var(--k-ease-bounce);
+}
+/* 200ms ist eine numerische Koinzidenz mit `--k-motion-base` (ebenfalls
+   200ms, aura.css) — kein Alias: `--k-motion-base`s eigene Kurve ist
+   `cubic-bezier(0.3, 0, 0.2, 1)`, hier steht bewusst `--k-ease-bounce`
+   («dieselbe Sprache» wie islIn/winIn, s. Kommentar oben) — ein echter
+   Kurvenunterschied. Begründung nachgetragen,
+   docs/UI-2026-09-02-BEWEGUNG-SOLLWERT.md §4b. */
+.isl-anim-popIn {
+  animation: popIn 200ms var(--k-ease-bounce);
+}
+.isl-anim-winIn {
+  animation: winIn var(--k-motion-fenster) var(--k-ease-bounce);
+}
+
+/* Wachstums-Ursprung je Insel-Rand (Owner Bullet 2: «wachsen aus dem
+   Ursprung … an der Pille») — die Leiste teilt sich IMMER die vom
+   `.isl-root`-Elternteil gesetzte Randkante mit der Pille (§2: `left`/
+   `right` fix, die jeweils andere Achse zentriert/`translateY(-50%)`), ein
+   `scale`-Transform ohne passenden `transform-origin` würde optisch von der
+   BOXMITTE statt der geteilten Kante wachsen. Popup/Fenster öffnen stets
+   UNTER (bzw. bei `.isl-rand-unten` ÜBER) ihrer Insel — deren Ursprung ist
+   darum die horizontale Mitte an der oberen (bzw. unteren) Kante, unabhängig
+   von der Insel-Ausrichtung selbst. */
+.isl-rand-links .isl-anim-islIn {
+  transform-origin: left center;
+}
+.isl-rand-rechts .isl-anim-islIn {
+  transform-origin: right center;
+}
+.isl-rand-oben .isl-anim-islIn {
+  transform-origin: center top;
+}
+.isl-rand-unten .isl-anim-islIn {
+  transform-origin: center bottom;
+}
+.isl-anim-popIn,
+.isl-anim-winIn {
+  transform-origin: center top;
+}
+.isl-rand-unten .isl-anim-popIn,
+.isl-rand-unten .isl-anim-winIn {
+  transform-origin: center bottom;
+}
+
+/* P-RAND (v0.9.29, `docs/V0929-SPEZ.md` §1) — die Kehrseite der O-3-Ankerung
+   oben: seit `.isl-rand-links`/`.isl-rand-rechts .isl-popup` SEITLICH
+   verankern, tragen diese Popups/Fenster KEINE `translateX(-50%)`-Zentrierung
+   mehr (ihre Basisregel setzt `transform: translate(var(--isl-clamp-x),
+   var(--isl-clamp-y))`). Die Keyframes `popIn`/`winIn` führen aber
+   weiterhin die volle Kette der ZENTRIERTEN Variante mit (W2-Fund
+   18.07.2026, s. dortiger Kommentar) — und eine Animation überschreibt die
+   `transform`-Eigenschaft für ihre GESAMTE Laufdauer. Ein seitlich
+   verankertes Popup wurde dadurch 200ms lang um die halbe eigene Breite nach
+   links gerissen: bei der linken Insel (ZEICHNEN/GRAPH/BLATT/SONNE, deren
+   Popup bei x≈100px steht und ~300px breit ist) sichtbar AUS DEM BILD
+   heraus. Die Sonde misst die Ruhelage und sieht das nicht; das Auge sieht es
+   bei jedem Öffnen.
+   Antwort: dieselbe Bewegung, nur ohne das `-50%` — eine eigene
+   Keyframe-Familie statt einer zweiten Positionslogik. Wachstums-Ursprung ist
+   die geteilte Kante zur Insel (links → `left center`, rechts → `right
+   center`), wie bei `islIn` darüber. */
+@keyframes popInSeitlich {
+  from {
+    opacity: 0;
+    transform: translate(var(--isl-clamp-x), calc(var(--isl-clamp-y) + 4px)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(var(--isl-clamp-x), var(--isl-clamp-y)) scale(1);
+  }
+}
+@keyframes winInSeitlich {
+  from {
+    opacity: 0;
+    transform: translate(var(--isl-clamp-x), calc(var(--isl-clamp-y) + 8px)) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(var(--isl-clamp-x), var(--isl-clamp-y)) scale(1);
+  }
+}
+.isl-rand-links .isl-anim-popIn {
+  animation-name: popInSeitlich;
+  transform-origin: left center;
+}
+.isl-rand-links .isl-anim-winIn {
+  animation-name: winInSeitlich;
+  transform-origin: left center;
+}
+.isl-rand-rechts .isl-anim-popIn {
+  animation-name: popInSeitlich;
+  transform-origin: right center;
+}
+.isl-rand-rechts .isl-anim-winIn {
+  animation-name: winInSeitlich;
+  transform-origin: right center;
+}
+
+/* Gestaffeltes Content-Einblenden (Owner Bullet 1: «Inhalt … blendet leicht
+   verzögert/gestaffelt ein (opacity + kleiner translate)»). Läuft NUR auf
+   den Werkzeug-Knöpfen selbst (dieser Datei/`IslandShell.tsx` exklusiv
+   gehörend, kein Eingriff in `inhalte/*`) — jeder Knopf wird frisch
+   gemountet, sobald die Leiste öffnet (`sichtbareWerkzeuge.map`, stabile
+   `key={w.id}`), die Animation spielt darum genau einmal pro Öffnung, nicht
+   bei jedem Re-Render (z. B. `aria-pressed`-Wechsel). `animation-fill-mode:
+   backwards` hält den Knopf während seiner individuellen Verzögerung im
+   `from`-Zustand (unsichtbar) — ohne das würde er in der Lücke kurz bei
+   voller Deckkraft aufblitzen (Default-Stil ohne `opacity`), bevor die
+   Animation einsetzt. Verzögerung wächst pro Knopf um 12ms, gedeckelt bei
+   60ms (`:nth-child(n+6)`) — bei ZEICHNENs 14 Werkzeugen bleibt die
+   Gesamtzeit (60ms Versatz + 160ms eigene Dauer = 220ms) im selben Zielband
+   wie die Leisten-Form selbst, statt sich über eine lange Kette
+   aufzusummieren. Reine Zier-Animation (kein Kern-Übergang wie die drei
+   `isl-anim-*`-Container oben) — der globale `prefers-reduced-motion`-Riegel
+   (aura.css) reicht als einzige Absicherung, exakt wie beim bestehenden
+   `.isl-werkzeug-tooltip`-Fade oben (kein zweites `data-reduziert`-Gate
+   nötig für eine reine Komfort-Politur). */
+@keyframes islWerkzeugEin {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* 160ms ist eine numerische Koinzidenz mit `--k-dock-schnell` (ebenfalls
+   160ms, aura.css) — kein Alias: die Werkzeug-Staffel ist Zier-Animation
+   der Insel, keine Dock-Fläche, die `--k-dock-schnell` laut eigenem
+   Kommentar ausdrücklich meint. Begründung nachgetragen,
+   docs/UI-2026-09-02-BEWEGUNG-SOLLWERT.md §4b. */
+.isl-leiste-werkzeuge .isl-werkzeug {
+  animation: islWerkzeugEin 160ms var(--k-ease-entrance) backwards;
+}
+.isl-leiste-werkzeuge .isl-werkzeug:nth-child(1) {
+  animation-delay: 0ms;
+}
+.isl-leiste-werkzeuge .isl-werkzeug:nth-child(2) {
+  animation-delay: 12ms;
+}
+.isl-leiste-werkzeuge .isl-werkzeug:nth-child(3) {
+  animation-delay: 24ms;
+}
+.isl-leiste-werkzeuge .isl-werkzeug:nth-child(4) {
+  animation-delay: 36ms;
+}
+.isl-leiste-werkzeuge .isl-werkzeug:nth-child(5) {
+  animation-delay: 48ms;
+}
+.isl-leiste-werkzeuge .isl-werkzeug:nth-child(n + 6) {
+  animation-delay: 60ms;
+}
+
+/* Popup-/Fenster-INHALT (Owner Bullet 1, dieselbe Staffel-Idee — hier auf
+   Stufe 2/3 übertragen, Bullet 2 «dieselbe Sprache»): der eigentliche Inhalt
+   kommt aus `inhalte/*` (TABU-Dateikreis dieses Pakets), darum kein Wrapper-
+   Element und keine Änderung an jenen Dateien — die Animation sitzt direkt
+   auf den DIREKTEN Kindern von `.isl-popup`/`.isl-fenster` (`:not(.isl-
+   schliessen)` nimmt den ✕-Knopf gezielt aus, der soll sofort da sein).
+   Rendert ein Inhalt einmal mehrere Geschwister-Wurzelknoten (React-
+   Fragment), bekommt jedes einzeln dieselbe Verzögerung — unproblematisch,
+   da alle gleich zeitig einsetzen. Reine `opacity`/`transform`-Zier wie
+   oben, kein Eingriff auf Klick-Zieler (`aufPopupKlick`s `e.target !==
+   e.currentTarget`-Prüfung bleibt unberührt, da kein neuer Wrapper-Knoten
+   entsteht). */
+@keyframes islInhaltEin {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* 160ms ist eine numerische Koinzidenz mit `--k-dock-schnell` (ebenfalls
+   160ms, aura.css) — kein Alias: Popup-/Fenster-Inhalt ist eine eigene
+   Rolle, keine Dock-Fläche. Begründung nachgetragen,
+   docs/UI-2026-09-02-BEWEGUNG-SOLLWERT.md §4b. */
+.isl-popup > *:not(.isl-schliessen),
+.isl-fenster > *:not(.isl-schliessen) {
+  animation: islInhaltEin 160ms var(--k-ease-entrance) 40ms backwards;
+}
+
+/* Schliessen (Owner Bullet 2: «gleiche Kurve rückwärts, etwas schneller»):
+   BEWUSST NICHT umgesetzt als echte Austritts-Animation — Popup/Fenster/
+   Leiste werden beim Schliessen synchron aus dem DOM entfernt (`stufe`-
+   Wechsel, `IslandShell.tsx`), das ist Vertragsgegenstand mehrerer E2E-Specs
+   (`island-ui.spec.ts` u. a. prüfen `toHaveCount(0)` DIREKT nach dem
+   Schliessen-Klick, kein Wartefenster). Eine echte CSS-Austrittsanimation
+   bräuchte den Knoten während der Animation WEITERHIN im DOM (entweder
+   dauerhaft gemountet + Klassen-Toggle wie `KMenu`/`.k-menu.offen`,
+   aura.css — oder ein durch `transitionend`/`animationend` verzögertes
+   Unmount) — beides verändert entweder die harte `toHaveCount(0)`-Erwartung
+   oder führt JS-getriebenes Timing für die Animation selbst ein (Hausregel
+   dieses Auftrags: NUR CSS-Transitions/-Keyframes). Ehrlich offen gelassen
+   statt einer Attrappe, die unter `prefers-reduced-motion` ohnehin nicht
+   „einfach sofort" wäre, s. Bauagenten-Bericht. */
+
+/* ── P-RUHE-Automatik-Echo (v0.9.35, O-T2) ────────────────────────────────
+   Rein dekoratives Abbild des gerade automatisch schliessenden Popups/der
+   Leiste (`spieleSchliessEcho`, `IslandShell.tsx`) — lebt AUSSERHALB von
+   `.isl-root` direkt an `document.body`, `pointer-events:none`, exakt auf
+   das zuletzt gemessene Bildschirm-Rechteck positioniert (`left`/`top`/
+   `width`/`height` inline). Bewusst EIGENE, einfache Keyframes statt einer
+   Wiederverwendung von `islIn`/`popIn` rueckwaerts: jene fuehren
+   Positionsketten (`--isl-clamp-x/-y`, `translateX(-50%)`) mit, die ausserhalb
+   der urspruenglichen `.isl-root`/`.isl-rand-*`-Ahnenkette nicht mehr
+   aufloesen — dieselbe Feder-Kurve (`--k-ease-bounce`, Owner Bullet 2
+   «gleiche Kurve rückwärts, etwas schneller») traegt trotzdem dieselbe
+   Bewegungssprache wie das Oeffnen. `--k-radius-md` statt des lokalen
+   `--f-r-md`-Alias (`.isl-root` scoped, s. Kopfkommentar dort) — das Echo
+   haengt AUSSERHALB jeder `.isl-root`-Ahnenkette, ein scoped Token loest
+   dort nicht auf. */
+/* 160ms ist eine numerische Koinzidenz mit `--k-dock-schnell` (ebenfalls
+   160ms, aura.css) — kein Alias: das Echo lebt ausserhalb jeder
+   `.isl-root`-Ahnenkette und hat mit dem Dock-Koordinatensystem nichts zu
+   tun. Begründung nachgetragen, docs/UI-2026-09-02-BEWEGUNG-SOLLWERT.md
+   §4b. */
+.isl-echo {
+  position: fixed;
+  pointer-events: none;
+  z-index: 45;
+  overflow: hidden;
+  border-radius: var(--k-radius-md);
+  animation: islEchoAus 160ms var(--k-ease-bounce) forwards;
+}
+@keyframes islEchoAus {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+}
+
+/* ── Bühnenkopf (PD2, §1): Stationen-Orb + Ansichts-Info — beide fix
+   positioniert, teilen sich die `--f-*`-Token-Familie wie `.isl-root` oben
+   (kein zweiter Token-Layer).
+   PD5 (Owner-Korrektur 17.07.2026) → P-F2 (v0.9.2, Owner-Feedback 23.07.
+   wörtlich: «wir entfernen das kosmorbit logo … kosmodesign logo … nach
+   links verschieben»): das KosmoOrbit-Logo ist ERSATZLOS entfallen — die
+   Reihe trägt jetzt DREI statt vier Kopf-Elemente auf demselben 52px-Raster
+   (38px sichtbarer Kreis + 14px Lücke): KosmoDesign (Stations-Logo)
+   `left:14` (war 66 — rückt in die alte KosmoOrbit-Position, App.tsx
+   `.isl-kopf-logo-*`), Stationen-Orb `left:66` (war 118), Ansichts-Info
+   `left:118` (war 170) — jedes Element rückt exakt 52px nach links, der
+   +52-Abstand zwischen Stationen-Orb und Ansichts-Info bleibt dabei
+   UNVERÄNDERT.
+   PB3 (`docs/V084-SPEZ.md` §8 C-24, Owner wörtlich «Geschosseinstellung raus
+   aus der Tab-Leiste, als kleine vertikale Pille unter dem KosmoOrbit-Logo»):
+   `.isl-geschoss-pille` bleibt UNVERÄNDERT auf `left:14px` — sitzt jetzt
+   unter dem (nach links gerückten) KosmoDesign-Logo statt dem entfallenen
+   KosmoOrbit-Logo, exakt dieselbe senkrechte Spalte, kein Koordinaten-
+   Wechsel nötig. Eigene Regel weiter unten (`.isl-geschoss-pille-label`
+   analog `.isl-ansichts-info-label`). */
+.isl-buehnenkopf {
+  position: fixed;
+  top: 14px;
+  z-index: 41;
+  font-family: var(--k-font-ui);
+}
+.isl-buehnenkopf-stationen-orb {
+  left: 66px;
+}
+.isl-buehnenkopf-ansichts-info {
+  left: 118px;
+}
+.isl-geschoss-pille {
+  top: 66px;
+  left: 14px;
+}
+
+/* PD5 → P-F2: EIN gemeinsamer 38px-Glas-Kreis-Stil für alle drei Kopf-
+   Elemente (Owner, wörtlich «gleiche grösse wie einstellungsknopf») —
+   Stationen-Orb, Einstellungs-Kreis UND der verbleibende Logo-Kreis
+   (`.isl-kopf-logo-design`) teilen sich exakt dieselbe Regel. */
+.isl-stationen-orb-pill,
+.isl-einstellungen-kreis,
+.isl-kopf-logo-design {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -3px;
+  background: var(--f-pill, rgba(16, 19, 25, 0.92));
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--isl-pill-ink);
+  cursor: pointer;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  padding: 0;
+  /* D-1 (E-1): `letter-spacing` ersatzlos entfernt — alle drei Träger
+     (Stationen-Orb/Einstellungs-Kreis/Logo-Kreis) zeigen seit dem
+     Icon-Umbau (s. Kommentare in `StationenOrb.tsx`/`App.tsx`) nur noch
+     ein Icon, keinen Text mehr; die Regel war wirkungslos. */
+}
+
+/* Der verbleibende Logo-Kreis oben links — eigene `position:fixed`-
+   Koordinaten (kein `.isl-root`-Kind, analog `.isl-einstellungen-kreis`),
+   erstes Feld im gemeinsamen 52px-Raster (s. `.isl-buehnenkopf`-Kommentar
+   oben). P-F2: jetzt `cursor:pointer` (übernimmt die «Zur Zentrale»-
+   Funktion des entfernten KosmoOrbit-Logos, App.tsx) — die frühere
+   `cursor:default`-Overrideregel («dekorativ, kein zweiter Klick-Weg») ist
+   damit gegenstandslos und entfällt. */
+.isl-kopf-logo-design {
+  position: fixed;
+  top: 14px;
+  z-index: 42;
+  /* Fable-Gate-Fix (Kontrast): `OrbitMark`/`Logo6a` zeichnen ihre Ringe/
+     Quadrate mit `var(--k-ink)` (NICHT `currentColor`) — im Papier-Theme ist
+     `--k-ink` dunkel (#1a1815, korrekt für Tinte auf hellem Papier), auf
+     UNSEREM immer-dunklen Glas-Kreis (`--f-pill`, s. oben) wäre das
+     dunkel-auf-dunkel = kaum sichtbar. Lokaler, auf diese zwei Kreise
+     begrenzter Override (CSS-Custom-Properties vererben sich normal über den
+     DOM-Baum, `--k-ink` bleibt ausserhalb dieser Kreise unverändert) — exakt
+     dasselbe «dunkles Glas bleibt in beiden Welten»-Muster wie `--f-pill`.
+     PB6 (Token-Sweep): Wert kommt jetzt aus dem `:root`-Alias
+     `--isl-pill-ink` (Kopf der Datei) statt aus einem zweiten Hartwert. */
+  --k-ink: var(--isl-pill-ink);
+  /* B156: dieselbe Begruendung, ein Token weiter. Wer hier `tone="ghost"`
+     traegt, faerbt sich aus `--k-ink-soft` — im Papier-Thema ein dunkles
+     Braungrau, auf diesem dauerhaft dunklen Grund gemessen 2.14:1. */
+  --k-ink-soft: var(--k-glass-ink-soft);
+}
+/* P-F2: rückt in die alte KosmoOrbit-Position (war `left:66px`) — das
+   entfernte KosmoOrbit-Logo sass hier vorher auf `left:14px`. `cursor:
+   default` (dekorativ, «kein zweiter Klick-Weg») entfällt ERSATZLOS: der
+   Kreis ist jetzt der einzige, klickbare «Zur Zentrale»-Weg (`onClick` in
+   App.tsx), `cursor:pointer` erbt bereits aus der geteilten Regel oben. */
+.isl-kopf-logo-design {
+  left: 14px;
+}
+
+/* PD5 (Owner-Befund «einheitliche Symbole»): der Einstellungs-Kreis oben
+   rechts (`App.tsx`, `island-einstellungen-kreis`) war 44px voll sichtbar +
+   `--k-glass-fill` — eigenes, drittes Glas neben Stationen-Orb (`--f-pill`)
+   und Ansichts-Info (`--k-glass-fill`, aber 44px-Kasten statt Kreis). Teilt
+   sich jetzt exakt dieselbe Regel wie `.isl-stationen-orb-pill` (oben, s.
+   `,`-Selektor) — 38px sichtbarer Kreis, 44px-Trefferfläche (§4.2), gleiches
+   dunkles Glas, gleicher Rand, in BEIDEN Farbwelten (kein Theme-Override,
+   identisch zum Stationen-Orb). Positionierung (`position:fixed; top:14px;
+   right:14px`) wandert mit hier rein — `App.tsx` behält nur noch
+   `data-testid`/Klick-Handler/Inhalt, keine eigenen Layout-Werte mehr. */
+.isl-einstellungen-kreis {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  /* W0-EBENENTAFEL INSEL_BUEHNENKOPF (packages/kosmo-ui/src/tokens.ts
+     zEbene) — INNERHALB #root. Gewinnt gegen `.vis-chrome-topright` (36,
+     stationslokal) — Fall 7/„der bekannte Deckel" (ROADMAP 1151); kein
+     Zahlenwert von `.vis-chrome-topright` kann das umkehren, s.
+     tokens.ts-Kopfkommentar AUSGESCHLOSSEN. */
+  z-index: 42;
+  font-family: var(--k-font-ui);
+}
+/* P-F2 (Owner-Feedback 23.07., «Haupteinstellungen überdeckt Kosmos Chat»),
+   REVIDIERT durch P-SB (28.07.): das KosmoPanel ist kein 340px-Vollhöhen-
+   Balken mehr, sondern ein unten rechts schwebendes Blasen-Fenster
+   (`kosmo-panel.css` `.kp-panel`: `bottom:100px`, `max-height:
+   calc(100dvh - 172px)` → seine Oberkante liegt IMMER ≥72px unter dem
+   Fensterrand, der Kreis endet bei 14+44=58px — die Kollision, für die
+   dieser Modifier gebaut wurde, kann geometrisch nicht mehr entstehen).
+   Der Modifier bleibt als Klasse bestehen (App.tsx setzt ihn weiterhin,
+   liegt ausserhalb des P-SB-Dateikreises), wird aber neutral: der Kreis
+   bleibt an seinem Platz, statt grundlos 354px nach links zu springen. */
+.isl-einstellungen-kreis--kosmo-offen {
+  right: 14px;
+}
+
+/* D-1 (E-1): Versal+Sperrung aus `.k-label` (aura.css). */
+.isl-ansichts-info-label {
+  display: flex;
+  align-items: center;
+  /* PD4 (Owner-Nachtrag 17.07.2026, «Ansichts-Info … etwas kleiner … Schrift-
+     grad/Padding eine Stufe runter»): Schriftgrad 14→12px, horizontales
+     Padding `--k-s3`→`--k-s2` — `min-height:44px` bleibt UNVERÄNDERT (§4.2,
+     Trefferfläche ist kein «Stufe runter»-Kandidat). */
+  min-height: 44px;
+  padding: var(--k-s2) var(--k-s2);
+  background: var(--k-glass-fill, rgba(20, 23, 31, 0.62));
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-sm);
+  /* B156 — derselbe Fund, andere Ursache: `--k-glass-fill` ist NUR im
+     Kosmos-Block erklaert. Im Papier faellt der Grund darum auf den dunklen
+     Rueckfallwert oben, waehrend `--k-ink` hell→dunkel kippt: gemessen 3.03:1
+     (Entwurf) und 3.28:1 (Vis) statt 5.40 und 17.17.
+     Die Tinte folgt darum dem Grund, nicht dem Thema — dasselbe Muster wie
+     beim Grundstreifen, nur hier ohne eigenen Riegel davor. */
+  color: var(--isl-pill-ink);
+  cursor: pointer;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-betont);
+  white-space: nowrap;
+}
+
+/* PB3 (`docs/V084-SPEZ.md` §8 C-24, Owner wörtlich «gleiche Radien, gleiches
+   Grau» wie die übrigen Insel-Pillen): teilt sich `--f-pill` (dasselbe Grau
+   wie `.isl-stationen-orb-pill`/`.isl-einstellungen-kreis`) und
+   `--k-radius-pill` (volle Kapsel-Rundung, dieselbe Token-Familie wie
+   `.isl-toast`). «Vertikale Pille»: `width:38px` deckt sich mit dem
+   38px-Kreis darüber (KosmoOrbit-Logo, eine gemeinsame Spalte), die Höhe ist
+   bewusst GRÖSSER als die Breite (Hochformat-Kapsel) — im Gegensatz zur
+   breiten, horizontalen `.isl-ansichts-info-label` daneben. Kurzes
+   Geschoss-Kürzel (z. B. «EG», «1.OG») bleibt bei 9px Mono-Schrift lesbar,
+   ohne die Glyphen zu drehen. */
+.isl-geschoss-pille-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  min-height: 54px;
+  padding: var(--k-s2) var(--k-s1);
+  background: var(--f-pill, rgba(16, 19, 25, 0.92));
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--isl-pill-ink);
+  cursor: pointer;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  font-weight: var(--k-gewicht-betont);
+  /* D-1 (E-1): Inhalt (`aktiveStorey.name.toUpperCase()`, GeschossPille.tsx)
+     ist bereits versal — Minimalform, Sperrwert als Token. */
+  letter-spacing: var(--k-sperrung-eng);
+  text-align: center;
+  white-space: nowrap;
+}
+/* W-3 (Fable-Bericht 18.08.2026, F-3 Empfehlung (1) — Owner-Territorium
+   Optik bleibt UNANGETASTET, nur eine unsichtbare Trefferflächen-Erweiterung,
+   keine grössere Pille): live gemessen (`getBoundingClientRect`, 1400×900)
+   ist die Geschoss-Pille auf ihrer BREITE zu schmal (38px, Regel oben) — die
+   Höhe (54px) liegt bereits über 44px. Anders als `.isl-pill::after` (oben,
+   PD1-Gate-Fix) genügt hier darum KEIN fixer `inset` (der würde unnötig auch
+   die schon ausreichende Höhe aufblasen) — `min-width:44px` auf einem
+   zentrierten, deckungsgleichen Pseudo-Element trifft NUR die tatsächlich zu
+   knappe Achse. `position:relative` sitzt bereits inline auf dem Element
+   (`GeschossPille.tsx`) — dieselbe Voraussetzung, unter der auch
+   `.isl-pill::after` arbeitet. */
+.isl-geschoss-pille-label::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  transform: translate(-50%, -50%);
+}
+
+.isl-buehnenkopf-popover {
+  position: absolute;
+  top: calc(100% + var(--k-s3));
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  min-width: 200px;
+  padding: var(--k-s4);
+  background: var(--k-glass-fill, rgba(20, 23, 31, 0.62));
+  backdrop-filter: var(--k-glas-dicht);
+  -webkit-backdrop-filter: var(--k-glas-dicht);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-sm);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+}
+
+/* PB3: das Geschoss-Popover öffnet sich seitlich (nicht darunter, wie bei
+   Stationen-Orb/Ansichts-Info) — die Pille sitzt an der linken Viewport-
+   Kante (`left:14px`), ein `top:100%`-Popover in derselben Breite (38px)
+   wäre für die Chip-Reihe zu schmal UND liefe potentiell mit der darunter
+   liegenden ZEICHNEN-Insel-Randzone zusammen. Rechts daneben bleibt bei
+   Standard-Viewports (§4.2-Referenzbreiten) reichlich Luft (Viewport-Klammer
+   erfüllt: keine der bestehenden `--isl-clamp-*`-Fälle betrifft feste
+   Bühnenkopf-Elemente, s. deren Kommentar oben — nur Insel-Popups/Fenster,
+   die relativ zu einem beliebig positionierten Werkzeugknopf öffnen). Muss
+   NACH `.isl-buehnenkopf-popover` stehen (Kaskade: gleiche Spezifität,
+   spätere Quellreihenfolge gewinnt), s. identisches Muster bei
+   `.isl-kopf-logo-design` oben. */
+.isl-geschoss-pille-popover {
+  top: 0;
+  left: calc(100% + var(--k-s3));
+}
+
+.isl-buehnenkopf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s1);
+}
+
+.isl-buehnenkopf-chip {
+  /* PD4 Touch-Polish (§4.2 «alle Ziele ≥44px Trefferfläche»): war 32px. */
+  min-height: 44px;
+  padding: var(--k-s1) var(--k-s3);
+  background: transparent;
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-pill);
+  color: var(--k-ink);
+  cursor: pointer;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+}
+/* W-3 (Fable-Bericht 18.08.2026): PD4 deckte oben nur die HÖHE (44px). Live
+   gemessen (1400×900) rendern kurze Geschossnamen («EG») nur 31px BREIT —
+   `min-height` allein sagt nichts über die Breite. Gleiches Muster wie
+   `.isl-geschoss-pille-label::after` oben: `min-width` statt festem `inset`,
+   damit ein bereits ausreichend breiter Chip (z. B. «1.OG», 44px+) NICHT
+   zusätzlich aufgebläht wird. `position:relative` sitzt inline
+   (`GeschossPille.tsx`/`AnsichtsInfo.tsx`, beide Aufrufer dieser Klasse).
+   Ehrlich benannt (keine Politur): bei nur 2px Abstand zwischen zwei Chips
+   (`.isl-buehnenkopf-chips`s `gap: var(--k-s1)`) kann die unsichtbare
+   Erweiterung eines sehr schmalen Chips knapp in den sichtbaren Nachbarn
+   hineinreichen — dieselbe Abwägung, die jede «unsichtbare 44px-Zone in
+   dichten Reihen» kennt (vgl. iOS-Segmented-Controls), keine neue. */
+.isl-buehnenkopf-chip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  min-width: 44px;
+  transform: translate(-50%, -50%);
+}
+.isl-buehnenkopf-chip[aria-pressed='true'] {
+  background: var(--k-accent-wash);
+  border-color: var(--k-accent);
+}
+
+.isl-stationen-orb-eintrag {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  /* PD4 Touch-Polish (§4.2 «alle Ziele ≥44px Trefferfläche»): war 36px. */
+  min-height: 44px;
+  padding: var(--k-s1) var(--k-s2);
+  background: transparent;
+  border: none;
+  border-radius: var(--k-radius-xs);
+  color: var(--k-ink);
+  cursor: pointer;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-code);
+  text-align: left;
+}
+.isl-stationen-orb-eintrag:hover {
+  background: var(--k-accent-wash);
+}
+/* PB3: `kommend`-Untertools (KosmoOffice, s. `orbit-werkzeuge.ts`) sind
+   `disabled` statt klickbar — dieselbe app-weite Ehrlichkeits-Konvention wie
+   `OrbitStart.tsx`s Home-Fächer (`docs/V084-SPEZ.md` §7 Sanktion 9). Kein
+   Hover-Wash auf einem toten Ziel. */
+.isl-stationen-orb-eintrag:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.isl-stationen-orb-eintrag:disabled:hover {
+  background: transparent;
+}
+
+/* PB3 (§8 C-24): eine Gruppe je sichtbarem `ORBIT_HAUPTWERKZEUGE`-Eintrag —
+   Abstand zur vorigen Gruppe/zum «Zentrale»-Eintrag kommt bereits aus
+   `.isl-buehnenkopf-popover`s `gap` (Flex-Column); diese Regel hält nur die
+   Einträge EINER Gruppe eng zusammen (kein zusätzlicher Row-Gap zwischen
+   Gruppenkopf und den eigenen Einträgen). Frühere per-Eintrag-Rollenpunkte
+   (`STATION_FARBE`, PD2-Fassung) sind mit der Umstellung auf gruppierte
+   Untertool-Listen entfallen — jede Gruppe trägt jetzt EINE Überschrift
+   (`.isl-leiste-kopf`) statt fünf einzelner Farbpunkte. */
+.isl-stationen-orb-gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* `prefers-reduced-motion`: der globale Riegel in `aura.css` (`*,*::before,
+   *::after { animation-duration:.01ms!important; … }`) fängt diese drei
+   Animationen bereits ab (§4.2, «Repo-Analogon bereits vorhanden») — die
+   `isl-anim-*`-Klassen werden von `IslandShell.tsx` bei aktivem
+   reduced-motion zusätzlich gar nicht erst gesetzt (s. `data-reduziert`).
+   Diese Regel ist eine zweite, defensive Sicherung (JS-Fehlerfall/
+   verzögerte matchMedia-Änderung), kein Ersatz für den globalen Riegel. */
+.isl-root[data-reduziert='true'] .isl-anim-islIn,
+.isl-root[data-reduziert='true'] .isl-anim-popIn,
+.isl-root[data-reduziert='true'] .isl-anim-winIn {
+  animation: none;
+}
+
+/* ── Kosmo-Orb (PD4, §1-Tabelle/§4.3 Zeile 5 «Kosmo-Orb-Puls»; PB4
+   `docs/V084-SPEZ.md` §3 E2 «Orb-Gesetz» — Ruhe-Zeile, Owner wörtlich
+   «Kosmo-Orb nicht gelb hinterlegen») ───────────────────────────────────
+   `right:26px; bottom:24px`, Kreis 64×64px (K22: 52→64), HÜLLE seit K22
+   transparent-glasig + fein stationsgetönt (`--k-orb-glas`-Paar, `app.css`
+   — dieselbe eine Quelle wie `.ks-knopf`; vorher `--f-glass`-Familie, KEINE
+   Gold-/Farb-Fläche, das PB4-Gesetz gilt weiter), Puls `--k-insel-orb-puls` (2.4s, `aura.css`,
+   additiv) läuft in `--k-signal` (Stationsfarbe des Kerns, s.
+   `kosmo-feedback.css` `.kosmo-orb-kern`) statt Gold — Kern + 4 Punkte
+   bleiben die einzigen Farbträger (E2-Tabelle: «Kern + 4 Punkte tragen die
+   Stations-/Rollenfarbe»). Eigener `position:fixed`-Wurzelknoten statt
+   `.isl-root` (der Orb ist laut §1 AUSSERHALB der vier Islands) — teilt sich
+   darum NICHT automatisch `.isl-root`s `--f-glass`/`--f-blur`/`--f-ink`,
+   dieselben drei Variablen sind hier lokal noch einmal knapp gesetzt (exakt
+   `.isl-root`s Werte, PAPIER-Default + `[data-theme='orbit']`-Override),
+   damit dieser Knoten ohne `.isl-root`-Elternklasse auskommt. Verbraucher:
+   `island/KosmoOrb.tsx`. */
+.isl-orb-wurzel {
+  --f-glass: var(--k-insel-glas-papier);
+  --f-blur: blur(16px) saturate(1.05);
+  --f-ink: var(--k-ink);
+  position: fixed;
+  right: 26px;
+  bottom: 24px;
+  z-index: 42;
+  font-family: var(--k-font-ui);
+}
+[data-theme='orbit'] .isl-orb-wurzel {
+  --f-glass: var(--k-glass-fill);
+  --f-blur: blur(24px) saturate(1.4);
+}
+
+/* K22 (Owner wörtlich «der graue kreis … mach den transparenter und in der
+   farbe des jeweiligen tools ganz fein (glasig) … kosmo darf etwas grösser
+   sein», Befund Abschnitt 3): Hülle 52→64px, Fläche/Rand von `--f-glass`
+   (82% deckendes Weissgrau) auf das app-weite Orb-Glas-Paar `--k-orb-glas`/
+   `--k-orb-glas-rand` (app.css, EINE Quelle mit `.ks-knopf`) — transparent-
+   glasig, fein in der Stationsfarbe getönt; `backdrop-filter` bleibt.
+   `--kosmo-orb-drift` hebt die Drift-Amplitude der kleinen Punkte
+   (kosmo-feedback.css) so an, dass sie sichtbar AUSSERHALB des Kreises
+   schweben dürfen (Owner: «können auch ausserhalb dieses kreis sein»). */
+.isl-orb {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  --kosmo-orb-drift: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--k-orb-glas, var(--f-glass));
+  backdrop-filter: var(--f-blur);
+  -webkit-backdrop-filter: var(--f-blur);
+  border: 1px solid var(--k-orb-glas-rand, var(--k-glass-stroke, rgba(255, 255, 255, 0.08)));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--f-ink);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+/* PD5 (Owner-Befund «richtiges Symbol»): `.isl-orb-glyphe` (statisches
+   Mono-«K»-Glyph) ist mit dem Wechsel auf den echten, animierten
+   `shell/KosmoOrb.tsx`-Kern (`island/KosmoOrb.tsx`) verwaist — entfernt statt
+   toter CSS. */
+
+/* Puls (§4.3: «weich, zyklisch», 2.4s) — ein sich ausdehnender, verblassender
+   Ring statt einer Skalierung des Orbs selbst (bleibt so bei jeder Puls-
+   Phase exakt 64×64px antippbar (K22: 52→64), die Trefferfläche wandert
+   nie). PB4: Ring
+   trägt `--k-signal` (Kern-Farbe) statt des entfallenen `--f-gold`. */
+@keyframes islOrbPuls {
+  0% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--k-signal) 55%, transparent),
+      var(--k-shadow-lg, var(--k-shadow-overlay));
+  }
+  70% {
+    box-shadow:
+      0 0 0 14px color-mix(in srgb, var(--k-signal) 0%, transparent),
+      var(--k-shadow-lg, var(--k-shadow-overlay));
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--k-signal) 0%, transparent),
+      var(--k-shadow-lg, var(--k-shadow-overlay));
+  }
+}
+.isl-orb-anim-puls {
+  animation: islOrbPuls var(--k-insel-orb-puls) ease-in-out infinite;
+}
+/* Defensive zweite Sicherung, analog dem `.isl-root`-Block oben — der
+   globale `aura.css`-Riegel fängt `prefers-reduced-motion` bereits ab,
+   `KosmoOrb.tsx` setzt die Animationsklasse bei aktivem reduced-motion
+   zusätzlich gar nicht erst. */
+.isl-orb-wurzel[data-reduziert='true'] .isl-orb-anim-puls {
+  animation: none;
+}
+
+/* PB4 (`docs/V084-SPEZ.md` §3 E2 «Orb-Gesetz», Hover/Focus-Zeile) trug hier
+   bis P-D ein eigenes `.isl-orb-mini` («nur Text»). P-D (v0.9.25,
+   `docs/V0925-SPEZ.md` §3 P-D, C-8) lässt Hover/Fokus direkt `.isl-orb-karte`
+   öffnen (letzter Gedanke + Eingabefeld statt nur Text) — `.isl-orb-mini`
+   ist damit ersatzlos entfallen, keine zweite, magerere Fassung daneben
+   (dieselbe Begründung wie im `KosmoOrb.tsx`-Kopfkommentar: keine dritte
+   Kosmo-Ansicht). */
+
+/* Konversationskarte (§1: «Vorschlagstext + Aktions-Chips + Eingabezeile»).
+   P-D (v0.9.25, C-8): klappt seither nach LINKS statt nach OBEN auf und
+   öffnet auf Hover/Fokus statt Klick (Muster `kosmo-symbol.css` `.ks-karte`,
+   dieselbe Umstellung dort) — `right`/`bottom` sind darum vertauscht ggü.
+   dem alten Hochausklapp. `--isl-orb-clamp-x/-y` (additiv, gesetzt von
+   `useKarteViewportKlammer`, `KosmoOrb.tsx`) fängt ab, dass der Linksausklapp
+   auf schmalen Fenstern über den Rand hinausragt — dieselbe Technik wie
+   `IslandShell.tsx`s `--isl-clamp-x/-y` (§10.1), IMMER additiv zur
+   Basisposition.
+   P-SB (Owner 23./28.07., «sehr schmal … das ist mühsam aktuell so»): Breite
+   320px → min(520px, 94vw) — DERSELBE Wert wie die bereits in v0.9.2
+   verbreiterte Home-Screen-Karte (`kosmo-symbol.css` `.ks-karte`, P-F2);
+   die Island-Karte hatte den Fix nie bekommen, obwohl der Owner im
+   Island-Modus (Produktions-Default) arbeitet. Bei 13.5px Blasen-Schrift
+   ergeben ~460px Textbreite rund 60–68 Zeichen je Zeile — mitten im
+   45–75-Lesefenster. `max-height` + scrollender Verlauf unten: lange
+   Antworten scrollen IN der Karte statt still ins Panel zu springen. */
+.isl-orb-karte {
+  position: absolute;
+  right: calc(100% + var(--k-s3));
+  bottom: 0;
+  --isl-orb-clamp-x: 0px;
+  --isl-orb-clamp-y: 0px;
+  transform: translate(var(--isl-orb-clamp-x), var(--isl-orb-clamp-y));
+  width: min(520px, 94vw);
+  max-width: calc(100vw - 40px);
+  max-height: min(72vh, 680px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s3);
+  padding: var(--k-s4);
+  background: var(--k-glass-fill, rgba(20, 23, 31, 0.62));
+  backdrop-filter: var(--k-glas-dicht);
+  -webkit-backdrop-filter: var(--k-glas-dicht);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-md);
+  box-shadow: var(--k-shadow-xl, var(--k-shadow-overlay));
+  color: var(--k-ink);
+}
+/* P-SB: der Schnell-Verlauf in der Karte — Grid wie `.kp-verlauf`
+   (kosmo-panel.css), damit die geteilten `.kp-bubble--du/--kosmo`-Blasen
+   ihr `justify-self`-Links/Rechts behalten; scrollt in sich selbst. */
+.isl-orb-karte-verlauf {
+  display: grid;
+  gap: var(--k-s3);
+  align-content: start;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 0 1 auto;
+  max-height: min(44vh, 420px);
+  padding-right: 2px;
+}
+/* v0.9.5 P-MF1 (C-24) · KOPFZEILE DER INSEL-ORB-KARTE — Titel links, Motor-
+   und Kostenwort rechts. Bis hierher stand der Titel allein; das
+   `padding-right: 28px` (Platz für den Schliessen-Knopf oben rechts) wandert
+   mit auf die Zeile, weil der Knopf jetzt neben dem Motorwort läge.
+   Wert für Wert dasselbe wie `.ks-karte-kopf` (kosmo-symbol.css, ROADMAP
+   692). */
+.isl-orb-karte-kopf {
+  display: flex;
+  align-items: baseline;
+  gap: var(--k-s2);
+  padding-right: 28px; /* Platz für den Schliessen-Knopf oben rechts */
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label` (aura.css). */
+.isl-orb-karte-titel {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+  font-weight: var(--k-gewicht-betont);
+  color: var(--k-ink-soft, var(--k-ink));
+}
+/* v0.9.5 P-MF1 (C-24) · MOTOR UND KOSTEN IN DER ZWEITEN KLEINEN ANSICHT —
+   bewusst Wert für Wert dieselbe Gestaltung wie `.ks-karte-motor`
+   (kosmo-symbol.css) und `.kp-motor-kosten` (kosmo-panel.css): ein Wort Text,
+   keine Fläche, kein Rot, keine Bewegung; nur der teure Fall bekommt Farbe,
+   und die auf der SCHRIFT (Regel aus §2j). Eigener Namensraum statt eines
+   Imports — `isl-*`, `ks-*` und `kp-*` bleiben dateidisjunkt; die Gleichheit
+   hält der Test, nicht die Vererbung. */
+/* D-1 (E-1): `letter-spacing` ersatzlos entfernt — Inhalt (`motor.
+   kostenKurz`) ist nicht versaliert, Sperrung ist an VERSAL gebunden. */
+.isl-orb-karte-motor {
+  margin-left: auto;
+  font-size: var(--k-t-micro);
+  color: var(--k-ink-faint);
+  white-space: nowrap;
+  cursor: help;
+}
+.isl-orb-karte-motor[data-kosten='je-anfrage'] {
+  color: var(--k-warning);
+}
+.isl-orb-karte-motor[data-kosten='unbekannt'] {
+  color: var(--k-ink-soft);
+  font-style: italic;
+}
+.isl-orb-karte-text {
+  margin: 0;
+  font-size: var(--k-t-code);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink);
+}
+.isl-orb-karte-hinweis {
+  margin: 0;
+  font-size: var(--k-t-micro);
+  line-height: 1.45;
+  color: var(--k-ink-faint, var(--k-ink));
+  opacity: 0.75;
+}
+.isl-orb-karte-chips {
+  display: flex;
+  gap: var(--k-s2);
+  flex-wrap: wrap;
+}
+/* D-1 (E-1): `letter-spacing` ersatzlos entfernt — Inhalt («Antworten»,
+   «Später», «Vergrössern», «Leeren», KosmoOrb.tsx) ist nicht versaliert. */
+.isl-orb-karte-chip {
+  min-height: 44px;
+  padding: 0 var(--k-s3);
+  background: transparent;
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-pill);
+  color: var(--k-ink);
+  cursor: pointer;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+}
+.isl-orb-karte-chip:hover {
+  background: var(--k-accent-wash);
+  border-color: var(--k-accent);
+}
+.isl-orb-karte-eingabe-zeile {
+  display: flex;
+  gap: var(--k-s2);
+  align-items: center;
+}
+.isl-orb-karte-eingabe {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 var(--k-s3);
+  background: transparent;
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-sm);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-code);
+}
+.isl-orb-karte-senden {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-sm);
+  color: var(--k-ink);
+  cursor: pointer;
+}
+
+/* P-WERKZEUGLEISTE (v0.9.35, O-T5/O-T6): sichtbare STORE-Wahrheit eines
+   Werkzeugs (isl-werkzeug--an, via istWerkzeugAktiv — nicht «zuletzt
+   geklickt») und der Popup-Pfeil an Werkzeugen mit Einstellungen. */
+.isl-werkzeug--an {
+  background: color-mix(in srgb, var(--k-accent) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--k-accent);
+}
+.isl-werkzeug-pfeil {
+  /* E-9/D-11: kein px-Literal in der Schriftgroesse — `--k-t-xxs` IST 9px
+     (aura.css), der Wert bleibt also gleich, nur die Quelle stimmt jetzt.
+     Der Schriftgrad-Waechter (`packages/kosmo-ui/test/schriftgrad-waechter
+     .test.ts`) hatte das seit P-WERKZEUGLEISTE angemahnt — gefunden erst,
+     als das Release-Gate ALLE Workspaces fuhr statt nur der naechstliegenden. */
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-eins);
+  opacity: 0.55;
+  margin-top: 1px;
+}
+
+/* N-1 (W4-2, `docs/BEFUND-BILANZ-0935.md` §«Neue Befunde aus der dritten
+   Welle», echter Playwright-Beleg 2× reproduziert): die AUSTAUSCH-Insel ist
+   die EINZIGE design-Insel am unteren Rand (`isl-rand-unten`,
+   `DESIGN_RAND_KLASSE` in `island-katalog.ts`) — ihre Pille sitzt darum,
+   wie das Skizzen-Overlays Aktionsleiste (`SketchOverlay.tsx` `.so-leiste`,
+   `design-panels.css`, ebenfalls `bottom`+`left:50%` zentriert), am
+   waagrechten Bildschirm-Mittelpunkt der unteren Kante. Live vermessen bei
+   1400×900: Pille x656–744/y852–886 (fixed, z-index 40), «Übergeben»-Knopf
+   x679–766/y841–873 — ein echtes 64×21-px-Überlappungsrechteck, kein blosser
+   Trefferflächen-Rand. `elementFromPoint` auf dem Knopf-Mittelpunkt liefert
+   `island-austausch-pill`: die Pille malt sichtbar ÜBER dem Knopf, weil
+   `.isl-root` (fixed, z-index 40) ausserhalb jedes Stacking-Contexts liegt,
+   den der Plan-Viewport aufspannt.
+   AUSTAUSCH ist NICHT dieselbe Wurzel wie die Geschoss-Pille (ROADMAP 978,
+   W3-3): dort war eine Formel für den Freiraum ÜBER einer vertikal
+   zentrierten Leiste mit zwei falschen Konstanten die Ursache (Rechenfehler,
+   EIN Fix behob zwei Symptome). Hier gibt es keine Rechnung — zwei
+   unabhängig gebaute UI-Schichten (fixe Insel-Kante, absolut positioniertes
+   Plan-Overlay) teilen sich denselben Anker (Bildmitte, unterer Rand) ohne
+   voneinander zu wissen. Gemeinsam ist nur die KLASSE des Fehlers («ein
+   fixes Element liegt über einem Bedienelement»), nicht die Ursache.
+   FIX (reine Stapel-/Pointer-Regel, kein Layout-Eingriff in `design-panels.
+   css`/`SketchOverlay.tsx` — ausserhalb des Dateikreises): solange
+   `.so-leiste` irgendwo im Plan-Viewport steht (alle drei Overlay-Stufen —
+   Batch, Vorschlag, Zweck-Liste — teilen die Klasse, `SketchOverlay.tsx`),
+   verliert NUR die AUSTAUSCH-Pille ihre Klickbarkeit; sie bleibt sichtbar
+   (Ehrlichkeit: kein Verschwinden, keine Layoutverschiebung), zeigt sich
+   aber sichtbar gedimmt statt aktiv anklickbar. `:has()` ist im gepinnten
+   Playwright-Chromium unterstuetzt (Praezedenz: `boden-dock.css`,
+   `orbit-065.css`) — kein neuer React-State, kein Eingriff in
+   `DesignWorkspace.tsx`/`SketchOverlay.tsx` noetig, die Regel lebt komplett
+   hier. Sobald die Skizzen-Leiste verschwindet (übernommen/verworfen),
+   ist die Pille ohne weiteres Zutun wieder da. */
+.dw-viewport-container:has(.so-leiste) .isl-root.isl-rand-unten {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* ── B76 «Der Inselkopf» (docs/AUFTRAG-B76-INSELKOPF.md, docs/V0954-SPEZ.md
+   §3 P1, Abnahme C-2/C-3/C-4) ──────────────────────────────────────────────
+   Die sechs Grundfunktionen hingen am Kopfbalken, und der rendert genau dann,
+   wenn KEINE Insel laeuft (`App.tsx`, `!bodenDockAusgeblendet && screen !==
+   'home'`). Owner-Entscheid 28.08.2026 «gemischt»: Speichern/Oeffnen/
+   Auto-Save in einen schmalen, immer sichtbaren Streifen, Version/Rundgang/
+   Sync als zweite Gruppe neben den vorhandenen Einstellungs-Kreis.
+   Markup/Bedeutung: `modules/design/island/InselKopf.tsx`.
+
+   BEIDE Traeger stehen — wie `.isl-einstellungen-kreis`/`.isl-kopf-logo-
+   design` daneben — AUSSERHALB von `.isl-root`. Die dort definierten
+   `--f-*`-Aliasse (`--f-pill`, `--f-glass`, `--isl-rand-abstand`) gelten hier
+   also NICHT; genau darum tragen die Bestandsregeln oben ihre
+   `var(--f-pill, rgba(16,19,25,.92))`-Rueckfallwerte und harte 14px statt des
+   Rand-Tokens. Diese zwei Regeln folgen demselben Muster, statt ein zweites
+   zu erfinden. `--isl-pill-ink` ist dagegen ein `:root`-Alias (Kopf dieser
+   Datei) und loest ueberall auf. */
+
+/* Der Streifen unten links. WARUM DORT: die Kopf-Reihe belegt oben links
+   `left:14/66/118` und `top:66` (Geschoss-Pille), oben rechts den
+   Einstellungs-Kreis; unten rechts sitzen Kosmo-Orb (`right:26; bottom:24`)
+   und Kosmo-Fenster (`kosmo-panel.css`, `bottom:100px`). Die vier design-
+   `.isl-rand-*`-Grundinseln haengen an den Kanten-MITTEN (je `50%`) — diesen
+   Anker beruehrt der Streifen nicht.
+
+   NACHTRAG 01.09.2026 (Triage gegen den echten Chromium, `e2e/inselkopf-
+   erreichbarkeit.spec.ts` C-2, zwei Runden). RUNDE 1 — «KEIN `z-index`» oben
+   war nur HALB richtig: es stimmt, dass der Streifen ohne eigene Stufe nie
+   UEBER einem Insel-Bedienelement liegen kann, aber offengeblieben war die
+   GEGENRICHTUNG. `.isl-grundstreifen` steht im DOM VOR `<main class=
+   "app-main">` (`App.tsx`); ohne eigene Stufe verliert ein `position:fixed`-
+   Element mit `z-index:auto` seinen Platz in der root-Malreihenfolge an
+   JEDES normal fliessende Geschwister, das SPAETER im DOM steht — hier der
+   komplette Stationsinhalt. Gemessen mit `document.elementFromPoint()` auf
+   der Knopfmitte, alle fuenf Stationen, 1400×900: `save-project`/
+   `open-project`/`autosave-status` waren an JEDER Station verdeckt (`design`
+   → `<canvas data-engine="three.js …">`, `vis` → `div.vis-workspace-buehne-
+   zentriert`, `prepare` → `div.prtafel-welt`, `publish` → `div.publish-
+   workspace-buehne-zentriert`, `data` → `div.kd-scroll`/`kd-flex …`/
+   `kd-tabelle-zeile`) — 10 von 32 Faellen der Spec liefen deshalb in die
+   90-Sekunden-Zeitschranke (`page.waitForEvent` kam nie an).
+
+   RUNDE 2 — der erste Reparaturversuch (`z-index:42`, derselbe Wert wie
+   `.isl-kopf-zweitgruppe`) erzeugte SELBST einen Ueberdeckungs-Fund, und
+   zwar genau die Sorte, die `e2e/w5-1-insel-ueberdeckung.spec.ts` fangen
+   soll: «unten links ist die einzige Ecke ohne Bestand» (fruehere Fassung
+   dieses Kommentars) STIMMTE NICHT — `apps/kosmo-orbit/src/modules/vis/
+   island/vis-island.css` traegt die SONNE-Insel (`.isl-rand-sonne`, v0.8.9
+   E11), EIGENS mit `left:14px; bottom:14px`, demselben Anker wie der
+   Streifen. Reproduziert im Kausalitaets-Test: MIT `z-index:42` haengt
+   `KosmoVis @ 1400x900` zuverlaessig am eigenen 300-Sekunden-Test-Timeout
+   (`page.hover` auf die jetzt verdeckte SONNE-Pille kommt nie an); OHNE
+   `z-index` laeuft derselbe Fall in ~33 Sekunden durch — zweimal je Zustand
+   gemessen, nicht einmal vermutet.
+
+   RUNDE 3 — der naheliegende Reflex («dann eine niedrigere Stufe, unter
+   SONNEs 40») war ZU EINFACH: `z-index: 1` haengt GENAUSO zuverlaessig
+   (nochmals zweimal gemessen). Ursache, direkt mit `document.
+   elementFromPoint()` auf der SONNE-Pillen-Mitte belegt: `getComputedStyle`
+   nennt dort `zIndex:"40"`, der Treffer ist trotzdem `island-grundstreifen`.
+   Ein Vorfahre zwischen `<main>` und der SONNE-Insel (der Pan/Zoom-
+   Transform des vis-Node-Canvas) spannt einen EIGENEN Stapelkontext auf —
+   SONNEs 40 zaehlt darum nur INNERHALB dieses Vorfahren, nicht mehr gegen
+   ein Dokument-Wurzel-Geschwister wie den Streifen; der Vorfahre selbst
+   steht dort bei `z-index:auto` und verliert gegen JEDEN positiven Wert.
+   Keine Stufe am Streifen kann das beheben (0 waere wieder der C-2-Defekt,
+   jeder Wert >0 deckt SONNE) — der Hebel ist GEOMETRISCH, nicht die Stufe.
+   Der Fix lebt darum bei der SONNE-Insel selbst: `vis-island.css` reserviert
+   dem Streifen ab `data-station='vis'` `left:72px` statt `14px` — DERSELBE
+   Ausweich-Wert (14 Rand + 44 Pillen-Trefferflaeche + 14 Luecke), den
+   `.vis-island-legende-overlay` (`vis-visual.css`) fuer DIESELBE Kollision
+   schon traegt, kein zweites Muster.
+
+   JETZT `z-index: 1` — NICHT 42, und NICHT als Ausweiche vor SONNE (die
+   erledigt die Geometrie oben), sondern aus demselben Grund wie
+   `.isl-schliessen`/`.isl-vergroessern` weiter oben in dieser Datei («ohne
+   z-index gewinnt normal fliessender Inhalt die Klickflaeche … z-index:1
+   haelt den Knopf IMMER zuoberst»), nur auf der Dokument-Wurzelebene statt
+   innerhalb einer einzelnen Insel: 1 reicht, um JEDEN `z-index:auto`-
+   Stationsinhalt zu schlagen (`.app-main`/`<canvas>`/`.vis-workspace-
+   buehne-zentriert`/`.prtafel-welt`/`.publish-workspace-buehne-zentriert`/
+   `.kd-scroll` — alle fuenf nachgesehen, keins traegt einen eigenen
+   `z-index`), und bleibt unter `.isl-root--offen` (100). Fuer die VIER
+   design-Kanten-Inseln (an den Kanten-MITTEN, `z-index:40`, KEIN eigener
+   Vorfahren-Stapelkontext auf dem Pfad zu ihnen — nur `vis` hat den
+   Pan/Zoom-Transform) reicht das GROESSTENTEILS ohne Geometrie-Korrektur:
+   DREI der vier (`isl-rand-links`/`-oben`/`-rechts`) ueberlappen den
+   Streifen tatsaechlich nie (Kanten-Mitte vs. unten-links).
+
+   BERICHTIGT 01.09.2026 (Rot-vor-Gruen-Nachtrag, `e2e/w5-1-insel-
+   ueberdeckung.spec.ts`) — DIE ALTE FASSUNG DIESES SATZES WAR FALSCH: sie
+   sprach von «VIER» und behauptete «ohnehin nie» fuer ALLE. Die vierte
+   Rand-Klasse, `.isl-rand-unten` (AUSTAUSCH — `DESIGN_ISLAND_KATALOG` UND
+   `VIS_ISLAND_KATALOG` teilen dieselbe Klasse fuer denselben Insel-Namen),
+   ist NICHT an einer Kante verankert, sondern MITTIG (`left:50%;
+   transform:translateX(-50%)`, oben in dieser Datei) — sie faellt nicht
+   unter «Kanten-Mitte vs. unten-links». Bei schmalem Fenster wandert ihre
+   geoeffnete Leiste unter den Streifen. Gemessen mit `document.
+   elementFromPoint()`, EINMAL MIT und EINMAL OHNE `z-index:1` an dieser
+   Regel (sonst identischer Baum): KosmoVis @ 1180×820 (Werkzeug
+   `render-senden`, Stufe 2, Zielmitte x≈439.6) und KosmoDesign @ 1024×768
+   (Werkzeug `export`, Stufe 2, Zielmitte x≈372.3) HAENGEN MIT der Stufe
+   (5-Minuten-Test-Timeout, der Klick auf den verdeckten Knopf kommt nie an)
+   und LAUFEN OHNE sie durch (2,0 min bzw. 1,6 min, `KosmoVis @ 1180x820`/
+   `KosmoDesign @ 1024x768`) — der Fund ist also eine NEBENWIRKUNG dieses
+   Fixes, nicht vorbestehend. Bei 1400×900 trifft dieselbe Sonde sich
+   selbst (kein Fund, Insel gewinnt) — reine Fenstergroessen-Geometrie,
+   exakt dieselbe Mechanik wie beim SONNE-Fall oben, nur an einem anderen
+   Anker. Der Fix uebertraegt darum dasselbe `:has(...)`-Muster (kein neues
+   erfunden) — je EIN Eintrag fuer `design` (Regel direkt unten) und `vis`
+   (`vis-island.css`, dieselbe `.isl-rand-unten`-Klasse gilt dort fuer
+   denselben Katalog-Eintrag).
+
+   NACHGEZOGEN 01.09.2026 — der offene Punkt von oben («prepare/publish/
+   data/spez nicht gemessen») ist geschlossen, alle vier nachgeprueft:
+   `prepare` UND `publish` laufen im echten Riegel selbst mit (`STATIONEN`
+   in `e2e/w5-1-insel-ueberdeckung.spec.ts` traegt beide seit je her — nicht
+   nachgetragen, nur bisher nicht GEFAHREN). Alle drei Fenstergroessen
+   einzeln gemessen: `KosmoPrepare @ 1400x900/1180x820/1024x768` und
+   `KosmoPublish @ 1400x900/1180x820/1024x768`, alle sechs GRUEN (0,4–2,0 min
+   je Fall) — KEINE Kollision, kein Fix noetig. `data` ist ebenfalls Teil
+   des Riegels und lief bei dieser Nachmessung mit (`KosmoData @ 1180x820`
+   erneut gruen, 25,7 s) — die Sonne-Kollision, die `data` bereits traegt
+   (`.isl-kopf-zweitgruppe`, Regel weiter unten in dieser Datei), ist ein
+   ANDERER Fund an einer anderen Kante; fuer `.isl-rand-unten`/
+   `.isl-grundstreifen` selbst meldet der Riegel bei `data` nichts.
+
+   BERICHTIGT 09.09.2026 (B127): `spez` faehrt den Riegel seither MIT
+   (`STATIONEN` zaehlt sieben). Der Satz darunter beschreibt den Stand vom
+   01.09.2026 und bleibt als Messprotokoll stehen — er ist zugleich der
+   Beleg, warum eine einmalige Handsonde keinen Riegel ersetzt: sie fand am
+   01.09. nichts, und am 09.09. lagen genau in dieser Station zwei
+   Ueberdeckungen (B127, `docs/AUFTRAG-B127-...`).
+
+   Stand 01.09.2026: `spez` faehrt den Riegel NICHT (bewusst ausgelassen)
+   — dafuer eine EIGENE, temporaere Sonde
+   (`document.elementFromPoint()`, dasselbe Muster wie oben, nach der
+   Messung wieder geloescht, kein Dauer-Bestand). Bei 1400×900 und 1180×820
+   trifft jedes gemessene Bedienelement sich selbst — kein Fund. Bei
+   1024×768 UEBERLAPPEN die Bounding-Boxen tatsaechlich: `.isl-grundstreifen`
+   (x 14–394, y 710–754) und die offene `austausch`-Leiste (x 312–712,
+   y 667,5–754) teilen sich eine Zone von rund 82×44 px — ANDERS als bei
+   design/vis liegt der einzige Punkt in dieser Zone, der NICHT sich selbst
+   trifft, aber nicht auf einem Knopf: `autosave-status` (Zielmitte x≈338)
+   ist ein reiner `<span>` ohne Klick-Handler (`InselKopf.tsx`,
+   `computed cursor: auto` live gemessen) — kein Kandidat nach den eigenen
+   Kriterien des Wächters (`KANDIDAT_SELEKTOR` in `e2e/w5-1-insel-
+   ueberdeckung.spec.ts`: nur `button`/`a[href]`/`input`/`select`/
+   `textarea`/`[role="button"]` oder ein `div`/`span` MIT bedienbarem
+   Cursor). `save-project` und `open-project` (beide echte Knoepfe,
+   `cursor:pointer`) bleiben in derselben Zone bei sich selbst. Kein
+   Bedienelement wird verdeckt — darum bewusst KEIN `:has(...)`-Zusatz fuer
+   `spez` gebaut (Auftrag: das Muster nur bei einem echten Fund uebertragen,
+   nicht vorsorglich). */
+.isl-grundstreifen {
+  position: fixed;
+  left: var(--isl-grundstreifen-links);
+  bottom: var(--isl-grundstreifen-abstand);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  min-height: var(--isl-grundstreifen-hoehe);
+  padding: 0 var(--k-s3);
+  background: var(--f-pill, rgba(16, 19, 25, 0.92));
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--isl-pill-ink);
+  font-family: var(--k-font-ui);
+  /* Dasselbe «dunkles Glas bleibt in beiden Welten»-Muster wie bei
+     `.isl-kopf-logo-design`: im Papier-Thema ist `--k-ink` dunkel und stuende
+     hier dunkel auf dunkel. Der Override ist auf diesen Kasten begrenzt. */
+  --k-ink: var(--isl-pill-ink);
+  /* B156: dieselbe Begruendung, ein Token weiter. Wer hier `tone="ghost"`
+     traegt, faerbt sich aus `--k-ink-soft` — im Papier-Thema ein dunkles
+     Braungrau, auf diesem dauerhaft dunklen Grund gemessen 2.14:1. */
+  --k-ink-soft: var(--k-glass-ink-soft);
+}
+.isl-grundstreifen-hinweis {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* NACHTRAG 01.09.2026 — derselbe `:has(...)`-Handgriff wie fuer die
+   SONNE-Insel (`vis-island.css`, dort ausfuehrlich begruendet), hier fuer
+   `design`s AUSTAUSCH-Insel (`.isl-rand-unten`, mittig verankert statt an
+   einer Kante — s. Kommentar oben bei `.isl-grundstreifen`, Beleg mit
+   Rot-vor-Gruen-Zahlen). `vis` traegt denselben Eintrag additiv in seiner
+   eigenen Datei (`vis-island.css`), nicht hier — dieselbe Trennung wie bei
+   der SONNE-Ausweiche, kein zweiter Ort fuer dieselbe Regel. */
+.app-wurzel[data-station='design']:has(.isl-rand-unten.isl-root--offen) .isl-grundstreifen {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* Die zweite Gruppe, oben rechts. `right` kommt aus dem TSX
+   (`INSEL_ZWEITGRUPPE_RECHTS_PX` = 14 + 52) — das naechste Feld des
+   52px-Rasters der Kopf-Reihe, damit sie den Einstellungs-Kreis geometrisch
+   umgeht, statt ihn zu verschieben oder zu ueberlagern (Auftrag §4:
+   «geometrisch ausweichen — benannte Konstante, Wert aus dem TSX, Rang
+   unveraendert»). Der Kreis selbst bleibt in Groesse, Position, Klick-Weg
+   und `data-testid` unangetastet; `e2e/island-ui.spec.ts` misst seine Box.
+   `z-index: 42` ist DERSELBE Wert, den `.isl-einstellungen-kreis` oben schon
+   traegt (W0-Ebenentafel INSEL_BUEHNENKOPF) — kein neuer Rang und kein neuer
+   Tafel-Eintrag: `tools/z-ebenen-gate.mjs` prueft die fuenf dort governierten
+   Selektoren, dieser gehoert nicht dazu (selbst nachgelesen). Bewusst OHNE
+   `W0-EBENENTAFEL`-Marker, weil der Marker eine governierte Herkunft
+   behaupten wuerde, die es hier nicht gibt. */
+.isl-kopf-zweitgruppe {
+  position: fixed;
+  top: 14px;
+  z-index: 42;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  min-height: 44px;
+  padding: 0 var(--k-s3);
+  background: var(--f-pill, rgba(16, 19, 25, 0.92));
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--isl-pill-ink);
+  font-family: var(--k-font-ui);
+  --k-ink: var(--isl-pill-ink);
+  /* B156: dieselbe Begruendung, ein Token weiter. Wer hier `tone="ghost"`
+     traegt, faerbt sich aus `--k-ink-soft` — im Papier-Thema ein dunkles
+     Braungrau, auf diesem dauerhaft dunklen Grund gemessen 2.14:1. */
+  --k-ink-soft: var(--k-glass-ink-soft);
+}
+/* §4.2: jedes Ziel ≥44px Trefferflaeche — dieselbe Messlatte wie bei
+   `.isl-pill`/`.isl-einstellungen-kreis`. */
+.isl-kopf-zweit-knopf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+/* B82 #4: additiv — Sync/Rundgang tragen nie `disabled`, nur der neue
+   Rueckgaengig-Knopf (`InselKopf.tsx`s `IslandUndoKnopf`) kann es sein.
+   Dieselbe Abblendung wie `.k-switch input:disabled + .k-switch-strecke`
+   (`aura.css`), kein neuer Zahlenwert erfunden. */
+.isl-kopf-zweit-knopf:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.isl-kopf-zweit-zeichen {
+  font-family: var(--k-font-titel);
+  font-size: var(--k-t-md, 16px);
+  font-weight: var(--k-gewicht-betont);
+  line-height: var(--k-lh-eins);
+}
+.isl-kopf-zweit-version {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  opacity: 0.6;
+  padding-right: var(--k-s2);
+  white-space: nowrap;
+}
+
+/* DER ZWANG-RIEGEL (09.09.2026) — Ortho und Richtungssperre in der
+   AUSGELIEFERTEN Oberflaeche.
+
+   Der Anlass, gemessen: die Statusleiste mit diesen zwei Anzeigen rendert nur
+   in `manuell`, ausgeliefert wird `island`. Keine Insel trug sie (Gegenprobe
+   unter drei Woertern, alle leer). Der Owner-Entscheid PD3c lautete «alles in
+   die islands» — ein Umzug, der fuer diese zwei nie stattfand.
+
+   Platz: zweite Reihe, auf demselben 52px-Raster wie die Kopfzeile
+   (14 · 66 · 118), neben der Geschoss-Pille. Der Riegel erscheint nur,
+   solange ein Zwang wirkt — ein Loch in der Kopfreihe waere die schlechtere
+   Wahl gewesen, darum die zweite Reihe.
+
+   Offen und nur am Bildschirm zu klaeren: Rhino setzt denselben Riegel an den
+   UNTEREN Rand, naeher an der Zeichenhand. */
+.isl-zwang-riegel {
+  position: fixed;
+  top: 66px;
+  left: 66px;
+  z-index: 41;
+  display: flex;
+  gap: var(--k-s2);
+  align-items: center;
+  /* Der Riegel selbst faengt keine Klicks — nur sein Schalter tut das
+     (P-FANGSCHALTER 09.09.2026). Die Leiste liegt ueber der Zeichenflaeche;
+     waere sie als Ganzes klickbar, schluckte sie Zeichenklicks am Rand. */
+  pointer-events: none;
+}
+.isl-zwang-marke {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--k-s3);
+  border-radius: var(--k-radius-pill);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  background: var(--f-glass);
+  backdrop-filter: var(--k-glas-duenn);
+  -webkit-backdrop-filter: var(--k-glas-duenn);
+  color: var(--k-ink-soft);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  letter-spacing: var(--k-sperrung-eng);
+  line-height: var(--k-lh-eins);
+  white-space: nowrap;
+}
+
+/* Der Fang-Schalter — dieselbe Marke, aber bedienbar (P-FANGSCHALTER).
+   `pointer-events: auto` holt genau dieses eine Element aus dem
+   `pointer-events: none` der Leiste zurueck; alles andere bleibt
+   durchlaessig fuer die Zeichenhand. */
+.isl-zwang-schalter {
+  pointer-events: auto;
+  cursor: pointer;
+  appearance: none;
+  /* `<button>` bringt eigene Vorgaben mit, die die Marke sonst verformen. */
+  margin: 0;
+  font: inherit;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  letter-spacing: var(--k-sperrung-eng);
+  line-height: var(--k-lh-eins);
+}
+/* Der abgeschaltete Zustand ist der aussergewoehnliche und wird als solcher
+   gezeigt — eine stille Abschaltung waere genau der Fehler, gegen den dieser
+   Riegel ueberhaupt gebaut ist. */
+.isl-zwang-schalter-aus {
+  /* Gleiche Quelle wie `.isl-stufe3-warnung` oben in dieser Datei — ein
+     Rueckfall waere toter Code, `--k-warning` ist in `:root` definiert und
+     gilt darum in BEIDEN Themen. Offen und gemeldet: der Wert ist nur fuer
+     Papier gestimmt (#a37b22) und im dunklen Thema nicht nachgestimmt. */
+  color: var(--k-warning);
+  border-color: var(--k-warning);
+}
+.isl-zwang-schalter:hover {
+  color: var(--k-ink);
+}

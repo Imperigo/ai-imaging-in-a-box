@@ -29,5 +29,5 @@
     "K2: git log -1 und die letzten drei Zeilen beider Laeufe.",
     "K3: die «Zustellung:»-Zeile und ob der Bericht auf origin/main liegt (oder leer)."
   ],
-  "rang": 3
+  "rang": 2
 }

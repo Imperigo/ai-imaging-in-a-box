@@ -5756,12 +5756,57 @@ einer Bodenplatte, ist das Fernste der Boden und fällt nicht auf; steht ein Qua
 kleinen Grauwert an (z. B. 0,15), der Hintergrund bleibt schwarz — die Kante trennt sich ab.
 Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
+**Stellvertreter (Stand-in)** — Eine kleine, selbst geschriebene Datei, die **an der Stelle
+eines fehlenden Originals steht** und dieselben Namen anbietet, damit der Code, der sie
+aufruft, unverändert bleiben kann. Sie tut nur, was im neuen Zusammenhang Sinn ergibt, und
+sagt es, wo sie etwas nicht kann. Im Projekt seit dem 24.09.2026 in `kosmovis/`: Das
+Vis-Werkzeug von KosmoOrbit ruft zum Beispiel den Assistenten «Kosmo» auf, den es in Visbox
+nicht gibt; der Stellvertreter `KosmoOrb.tsx` zeichnet darum nichts. Jeder trägt das Wort
+STELLVERTRETER im Kopf und steht in `kosmovis/HERKUNFT.json` — *damit die Rückkehr im
+Februar weiss, welche Dateien sie durch das Original ersetzt.*
+
+**Wörtliche Kopie mit Herkunft** — Eine Datei, die Byte für Byte aus einem anderen Projekt
+übernommen ist, und neben der festgehalten wird, **woher** (Projekt, Stand) und **welchen
+Abdruck** (SHA-256) sie hatte. So lässt sich jederzeit prüfen, ob sie noch das Original ist
+oder ob jemand sie geändert hat. Im Projekt: `tools/kosmovis_uebernahme.py --pruefen`.
+
+**npm und Arbeitsbereich (Workspace)** — *npm* ist das Werkzeug, das in der
+JavaScript-Welt fremde Pakete holt und Befehle wie «prüfen» oder «bauen» ausführt, so wie
+`pip` bei Python. Ein *Arbeitsbereich* fasst mehrere eigene Pakete in einem Ordner
+zusammen, die sich gegenseitig benutzen, ohne veröffentlicht zu sein. Im Projekt:
+`kosmovis/` mit dem Kern, den Oberflächenbausteinen, den Verträgen und der App.
+
+**Sperrdatei (Lockfile)** — Eine von npm erzeugte Liste, die für **jedes** geholte Paket
+die genaue Fassung festhält. Wer später installiert, bekommt dieselben Pakete statt der
+jeweils neuesten. Im Projekt: `kosmovis/package-lock.json`.
+
+**Bau (Build)** — Das Übersetzen und Zusammenpacken des Quelltexts in die wenigen Dateien,
+die ein Browser tatsächlich lädt. Der Bau ist erzeugt, nicht geschrieben, und gehört darum
+nicht ins Repo. Im Projekt: `npm run build` in `kosmovis/` legt ihn nach
+`kosmovis/apps/visbox-knoten/dist/`.
+
+**Vite** — Das Bauwerkzeug der Knotenansicht: Es übersetzt TypeScript und React für den
+Browser und liefert während der Arbeit eine Vorschau aus. MIT-lizenziert; wird nicht
+ausgeliefert, nur benutzt.
+
+**Vitest** — Das Prüfwerkzeug der Knotenansicht, das Gegenstück zu `pytest` auf der
+Python-Seite. Die 722 übernommenen Proben des Originals laufen damit.
+
+**zod** — Eine Bibliothek, mit der ein Programm beschreibt, **wie Daten aussehen müssen**
+(welche Felder, welche Art Wert), und eingehende Daten dagegen prüft. KosmoOrbit prüft damit
+jeden Befehl und jede Antwort des Rechenwegs. MIT-lizenziert.
+
+**woff2** — Das Dateiformat für Schriften im Browser: dieselbe Schrift wie eine
+`.ttf`-Datei, aber gepackt, damit sie schnell lädt. Die drei Schriften der Knotenansicht
+(Lato, PT Sans Narrow, IBM Plex Mono) liegen so vor.
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-24 | Ergaenzt aus der Übernahme des Vis-Werkzeugs (E26): **Stellvertreter**, **Wörtliche Kopie mit Herkunft**, **npm und Arbeitsbereich**, **Sperrdatei**, **Bau (Build)**, **Vite**, **Vitest**, **zod**, **woff2** |
 | 2026-09-24 | Ergaenzt aus Sitzung 71: **Knotenansicht / Knoteneditor** |
 | 2026-09-23 | Ergaenzt aus Runde 12: **Führungsregler (`true_cfg_scale`)**, **Leer-Negativprompt**, **Guidance-destilliert (`guidance_embeds`)** |
 | 2026-09-23 | Ergaenzt aus Runde 11: **Zweite Tür**, **Freigabe-Abdruck**, **Buchprüfung (`FREIGABE_MIT_BUCH`)**, **Schrift mitliefern / registrieren** (mit CoreText), **PostScript-Name** (mit Namentabelle), **Variable Schrift** (mit Schriftschnitt), **TrueType**, **SHA-256**, **Ressource im App-Paket**, **Kreuzprobe** |

@@ -1,0 +1,217 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   skizze-tokens.css — der Skizzen-Bereich in KosmoDesign
+   Antwort auf DESIGN-BRIEF-SKIZZE.md §3.1 · 13.08.2026
+
+   AUFSETZEN, NICHT ERSETZEN. Keine dieser Farben ist ein neuer Grundton:
+   jede leitet per color-mix() aus aura.css ab (--k-ink / --k-plan-paper /
+   --k-mod-* / --k-signal / --k-rolle-*). Wer in aura.css das Thema oder den
+   Akzent dreht, dreht diese Datei mit.
+
+   EINE ENTSCHEIDUNG VORWEG, die den Rest erklärt:
+   Die Skizze liegt auf dem PLANBLATT, nicht auf der App-Fläche. --k-plan-paper
+   ist in aura.css themen-INVARIANT (#fdfcf9, :root, eine einzige Definition —
+   das Blatt bleibt Papier, auch im Kosmos-Thema). Darum leitet die Tinte hier
+   NICHT von --k-ink ab: das kippt im Kosmos-Thema auf #f4f6fa und wäre auf dem
+   Blatt unsichtbar. Bezug ist --k-skizze-tinte-basis (die Papier-Tinte
+   #1a1815). Alles, was auf dem Blatt liegt, rechnet gegen das Blatt; alles,
+   was als Insel darüber schwebt, rechnet gegen das Thema.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Das Blatt ─────────────────────────────────────────────────────────── */
+
+  /* Die Zeichenfläche selbst — ein Alias, damit der Skizzen-Code nie direkt
+     auf --k-plan-paper greift und wir das Blatt spaeter einmal separat
+     stimmen koennen, ohne 40 Fundstellen anzufassen. */
+  --k-skizze-blatt: var(--k-plan-paper, #fdfcf9);
+
+  /* Bezugston aller Tinte. Blattgebunden und darum bewusst theme-fest
+     (Begruendung im Dateikopf). */
+  --k-skizze-tinte-basis: #1a1815;
+
+  /* Das Hintergrundraster des Blatts: 0.5px-Mikro-Linie aus dem Linien-Kanon
+     — es darf nie mit einer gezeichneten Linie verwechselt werden, also
+     hoechstens 9 % Tinte. */
+  /* Literales rgba statt color-mix: dieselben 9 % der Tinte, aber ein Wert, den
+     jeder Rasterisierer (Druck, Screenshot, aeltere WebView) sicher versteht —
+     color-mix INNERHALB eines Gradienten ist die eine Stelle, an der uns das
+     schon aufgefallen ist. Ebenso das Rasterrezept selbst: das Blattraster wird
+     als repeating-linear-gradient mit VOLLEN Zweistopp-Paaren geschrieben
+     (Farbe 0 / Farbe 1px / transparent 1px / transparent Weite) — die
+     Kurzform mit Doppelposition wird nicht ueberall gleich gelesen. */
+  --k-skizze-raster: rgba(26, 24, 21, 0.07);
+  --k-skizze-raster-weite: 20px;
+
+  /* iPad-Mindesttrefferflaeche (Brief §4). Als Token, damit kein Knopf im
+     Skizzen-Bereich sie versehentlich unterschreitet. */
+  --k-skizze-treffer: 44px;
+
+  /* ── Tinte (M1) ───────────────────────────────────────────────────────── */
+
+  /* Der rohe Zug: 86 % Tinte statt 100 %. Er ist ABSICHT, nicht Bau — ein
+     Hauch heller als jede fertige Bauteilkante, damit die Hierarchie stimmt,
+     bevor irgendein Farbunterschied ins Spiel kommt. */
+  --k-tinte: color-mix(in srgb, var(--k-skizze-tinte-basis) 86%, transparent);
+
+  /* Strichbreite des Fuellpfads bei vollem Druck. 3.2px, weil der Fineliner
+     im Bestand (STIFT_ROH.size = 2.5 in SketchOverlay.tsx) bei 1.0 Druck
+     sichtbar duenner ist als eine gefittete Wand — der Stift soll fein
+     bleiben, nicht Marker werden. */
+  --k-tinte-breite: 3.2px;
+
+  /* Wie schmal die Spitze am Ansatz und beim Abheben wird (Faktor auf die
+     Breite). 0.34, damit der Zug anlaeuft und auslaeuft wie ein Bleistift,
+     ohne zum Haarstrich zu zerfallen. */
+  --k-tinte-spitze: 0.34;
+
+  /* Der Zug bleibt im Datenmodell — also bleibt er auch sichtbar, aber als
+     Geist: 18 % waehrend der Rueckschau, 8 % dauerhaft (nur bei Auswahl oder
+     Darueberfahren wieder auf 18 %). Zwei Werte statt einem, weil «immer
+     18 %» nach zwanzig Strichen ein Grauschleier ueber dem Plan waere. */
+  --k-tinte-nach: color-mix(in srgb, var(--k-skizze-tinte-basis) 18%, transparent);
+  --k-tinte-nach-ruhe: color-mix(in srgb, var(--k-skizze-tinte-basis) 8%, transparent);
+
+  /* Die Achse, die beim Fitten aus dem Zug herausgeschaelt wird: Haarlinie,
+     volle Tinte — sie ist die Aussage, die der Zug gemeint hat. */
+  --k-tinte-achse: var(--k-skizze-tinte-basis);
+  --k-tinte-achse-breite: 1px;
+
+  /* Der Zeigerpunkt an der Stiftspitze: uebernimmt --k-zeiger-mass (aura.css,
+     0.75) als Groessenbezug und bleibt reine Kontur — ein gefuellter Punkt
+     verdeckt genau die Stelle, auf die der Architekt schaut. */
+  --k-zeiger-punkt: color-mix(in srgb, var(--k-skizze-tinte-basis) 40%, transparent);
+  --k-zeiger-punkt-mass: calc(var(--k-zeiger-mass, 0.75) * 8px);
+
+  /* ── Die drei Sicherheitsgrade (M7) ───────────────────────────────────── */
+  /* Traegerkanaele sind KONTUR, FLAECHE und FUELLUNG DES GRADZEICHENS —
+     nie Farbe (Begruendung in skizze-zustaende.md). Die Toene unten sind
+     reine Leuchtdichte-Stufen desselben Tintengrundes: sie bringen
+     Hierarchie mit, tragen aber keine Information, die nicht auch ohne sie
+     ankommt. */
+
+  /* sicher — steht fest. Durchgezogen, volle Tinte, keine Flaeche. */
+  --k-grad-sicher-tinte: var(--k-skizze-tinte-basis);
+  --k-grad-sicher-strich: 1.25px;
+  --k-grad-sicher-muster: none; /* eine gesetzte Flaeche braucht kein Muster */
+
+  /* vermutet — Kosmos beste Auslegung. Gestrichelt 6/3: die Planzeichnungs-
+     Konvention fuer «angenommen / nicht in der Schnittebene», die jeder
+     Architekt seit dem ersten Semester liest — und die NICHT Fehler heisst.
+     74 % Tinte: erkennbar leichter, ohne zu fluestern. */
+  --k-grad-vermutet-tinte: color-mix(in srgb, var(--k-skizze-tinte-basis) 74%, var(--k-skizze-blatt));
+  --k-grad-vermutet-strich: 1.25px;
+  --k-grad-vermutet-linie: 6 3;
+  /* Feine 45°-Schraffur statt Farbflaeche: 8 % Deckung, 6px Teilung — bei
+     Schwarzweissdruck der zweite, unabhaengige Kanal neben der Strichelung. */
+  --k-grad-vermutet-muster: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--k-skizze-tinte-basis) 8%, transparent) 0 1px,
+    transparent 1px 6px
+  );
+
+  /* unklar — Kosmo weiss es nicht. Punktiert 1.5/3.5 UND mit Luecke in der
+     Kontur: die Kontur ist nicht geschlossen, weil die Aussage nicht
+     geschlossen ist. Keine Flaeche — ein leeres Feld ist die ehrliche
+     Darstellung von «hier steht noch nichts». */
+  --k-grad-unklar-tinte: color-mix(in srgb, var(--k-skizze-tinte-basis) 58%, var(--k-skizze-blatt));
+  --k-grad-unklar-strich: 1.25px;
+  --k-grad-unklar-linie: 1.5 3.5;
+  --k-grad-unklar-luecke: 12px; /* Laenge der offenen Ecke */
+  --k-grad-unklar-muster: none;
+
+  /* Das gepunktete Unterstreichen eines Werts heisst «korrigierbar» — es
+     sitzt an jedem vermuteten und jedem unklaren Wert und ist die einzige
+     Einladung zum Klick, die wir brauchen (kein Stift-Icon je Zeile). */
+  --k-grad-korrigierbar: color-mix(in srgb, var(--k-skizze-tinte-basis) 45%, transparent);
+
+  /* Groesse des Gradzeichens (Raute) in Text- und in Planbezug. */
+  --k-grad-zeichen: 12px;
+  --k-grad-zeichen-gross: 16px;
+
+  /* ── Herkunft: WER sagt das (Farbkanal, redundant) ────────────────────── */
+  /* Farbe traegt hier NICHT den Sicherheitsgrad, sondern die Herkunft — das
+     ist die Rollenfarben-Logik aus aura.css (--k-rolle-*), unveraendert
+     weitergedacht. So bleibt der Grad farbunabhaengig lesbar, und die Farbe
+     beantwortet die zweite Frage, die ein Architekt stellt: von wem? */
+  --k-herkunft-mensch: var(--k-rolle-manuell, #74c2a0); /* der Architekt hat es gesagt */
+  --k-herkunft-kosmo: var(--k-mod-kosmo, #b06a8c); /* Kosmo hat es ausgelegt */
+  --k-herkunft-norm: var(--k-skizze-tinte-basis); /* es steht in einer Norm — neutral, kein Ton */
+  --k-herkunft-punkt: 4px; /* Durchmesser des Herkunftspunkts */
+
+  /* ── Vorschlagsflaeche (M3/M4) ────────────────────────────────────────── */
+  /* Fuegt sich ins Glas-System: dasselbe Rezept wie --k-orb-glas (app.css,
+     8 % Werkzeugfarbe in die Glasbasis, Rand 35 %). Bewusst KEINE eigene
+     Mischung — der Vorschlag ist Teil derselben Insel-Familie. */
+  --k-vorschlag-flaeche: var(
+    --k-orb-glas,
+    color-mix(in srgb, var(--k-orb-tool, var(--k-signal)) 8%, var(--k-orb-glas-basis, rgba(20, 23, 31, 0.35)))
+  );
+  --k-vorschlag-rand: var(
+    --k-orb-glas-rand,
+    color-mix(in srgb, var(--k-orb-tool, var(--k-signal)) 35%, transparent)
+  );
+  --k-vorschlag-blur: 20px;
+
+  /* Die Vorschau-Geometrie auf dem Blatt (die noch nicht uebernommene
+     Annaeherung): Werkzeugfarbe, aber nur als Linie — nie als Flaeche, damit
+     der Plan darunter lesbar bleibt. */
+  --k-vorschlag-linie: color-mix(in srgb, var(--k-orb-tool, var(--k-signal)) 78%, var(--k-skizze-blatt));
+  --k-vorschlag-linie-breite: 2px;
+  /* Die verworfene/nicht gewaehlte Variante beim Darueberfahren. */
+  --k-vorschlag-linie-blass: color-mix(in srgb, var(--k-orb-tool, var(--k-signal)) 26%, var(--k-skizze-blatt));
+
+  /* Die Delta-Marke: was hat das Fitten geaendert (Winkel, Versatz). Mono,
+     klein, in Tinte — eine Zahl, keine Warnung. */
+  --k-vorschlag-delta: color-mix(in srgb, var(--k-skizze-tinte-basis) 62%, var(--k-skizze-blatt));
+
+  /* ── Zuruf (M5/M6) ────────────────────────────────────────────────────── */
+  /* Dieselbe Glasfamilie, aber Kosmos Ton statt Werkzeugton — der Zuruf kommt
+     nicht vom Werkzeug, sondern von der Stimme im Raum. */
+  --k-zuruf-flaeche: color-mix(
+    in srgb,
+    var(--k-mod-kosmo, #b06a8c) 7%,
+    var(--k-orb-glas-basis, rgba(20, 23, 31, 0.35))
+  );
+  --k-zuruf-rand: color-mix(in srgb, var(--k-mod-kosmo, #b06a8c) 28%, transparent);
+  /* Maximale Satzbreite des Zurufs. 480px, weil ein Befund in zwei bis drei
+     Zeilen lesbar sein muss, ohne die Zeichenflaeche zu kapern. */
+  --k-zuruf-breite: 480px;
+  /* Die Fundstelle (z.B. «PBG ZH § 302»): Mono, gepunktet unterstrichen,
+     62 % Tinte — sie kommt lesbar mit, ohne den Satz zu erschlagen. */
+  --k-zuruf-fundstelle: color-mix(in srgb, var(--k-ink, #1a1815) 62%, transparent);
+  --k-zuruf-fundstelle-linie: color-mix(in srgb, var(--k-ink, #1a1815) 30%, transparent);
+
+  /* ── Horchmarke (M2) ──────────────────────────────────────────────────── */
+  /* Waehrend des Zeichnens sagt Kosmo nichts — aber die Oberflaeche zeigt,
+     dass sie zuhoert: eine 1px-Haarlinie am unteren Blattrand, 34 % Tinte.
+     Kein Zeichen, das man wegklicken kann, und nichts, was zuckt. */
+  --k-horch-tinte: color-mix(in srgb, var(--k-skizze-tinte-basis) 34%, transparent);
+  --k-horch-hoehe: 1px;
+  --k-horch-laenge: 96px;
+
+  /* ── Der Fehlerkanal bleibt der Fehlerkanal ───────────────────────────── */
+  /* Kein Grad benutzt --k-warning oder --k-danger. Rot/Gelb bleiben
+     ausschliesslich dem echten Normverstoss vorbehalten (aura.css
+     --k-danger/--k-warning). Als Token hier nur zur Erinnerung sichtbar. */
+  --k-skizze-verstoss: var(--k-danger, #a33d31);
+}
+
+/* Im Kosmos-Thema bleibt das Blatt Papier (aura.css: --k-plan-paper ist
+   themen-invariant) — es gibt hier also NICHTS an der Tinte zu drehen. Was
+   sich dreht, ist nur, was gegen das THEMA rechnet: die Fundstelle im Zuruf
+   sitzt auf Glas, nicht auf Papier. */
+[data-theme='orbit'] {
+  --k-zuruf-fundstelle: color-mix(in srgb, var(--k-ink, #f4f6fa) 66%, transparent);
+  --k-zuruf-fundstelle-linie: color-mix(in srgb, var(--k-ink, #f4f6fa) 34%, transparent);
+}
+
+/* Hoher Kontrast: die Leuchtdichte-Abstufung der Grade wird zurueckgenommen
+   (alle drei auf volle Tinte) — die Unterscheidung traegt dann allein die
+   Kontur, und genau dafuer ist sie gebaut. */
+@media (prefers-contrast: more) {
+  :root {
+    --k-grad-vermutet-tinte: var(--k-skizze-tinte-basis);
+    --k-grad-unklar-tinte: var(--k-skizze-tinte-basis);
+    --k-tinte: var(--k-skizze-tinte-basis);
+  }
+}

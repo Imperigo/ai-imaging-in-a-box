@@ -1,0 +1,30 @@
+{
+  "name": "@kosmo/orbit-app",
+  "version": "0.1.4-visbox",
+  "private": true,
+  "type": "module",
+  "description": "STELLVERTRETER (E26): nur das Vis-Werkzeug der KosmoOrbit-App und was es braucht — kein eigenes Programm. Gestartet wird es ueber @visbox/knoten.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kosmo/ai": "*",
+    "@kosmo/contracts": "*",
+    "@kosmo/kernel": "*",
+    "@kosmo/ui": "*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.9.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.0"
+  }
+}

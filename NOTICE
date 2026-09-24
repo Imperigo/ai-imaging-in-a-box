@@ -284,3 +284,55 @@ ofl/instrumentserif/
   InstrumentSerif-OFL.txt      (dort: OFL.txt)
 
 --------------------------------------------------------------------------------
+
+================================================================================
+Die Knotenansicht im Browser (kosmovis/)
+================================================================================
+
+Unter kosmovis/ liegt das Vis-Werkzeug von KosmoOrbit als Kopie (Owner-Entscheid
+E26 vom 24.09.2026, docs/ENTSCHEIDE_VISBOX_2026-09-18.md). Der kopierte Code
+stammt vom selben Urheber wie dieses Produkt und wird mit diesem Repo unter der
+Apache License 2.0 veroeffentlicht. Herkunft je Datei (Quelle, Commit, SHA-256):
+kosmovis/HERKUNFT.json; tools/kosmovis_uebernahme.py --pruefen gleicht sie ab.
+
+Was mit der Knotenansicht an den Browser ausgeliefert wird (npm, Stand der
+Sperrdatei kosmovis/package-lock.json, am 24.09.2026 aus node_modules gelesen):
+
+  react, react-dom, scheduler      MIT    https://react.dev/
+  zod                              MIT    https://zod.dev/
+  zustand                          MIT    https://github.com/pmndrs/zustand
+
+Nur zum Bauen und Pruefen gebraucht, nicht ausgeliefert: vite, vitest,
+@vitejs/plugin-react, jsdom (MIT), typescript (Apache-2.0) und deren
+Abhaengigkeiten - gezaehlt 167 Pakete, davon MIT/ISC/BSD/Apache/MIT-0 und ein
+CC-BY-4.0-Datensatz (caniuse-lite, Browser-Tabelle fuer das Bauwerkzeug).
+Keine Copyleft-Lizenz darunter.
+
+--------------------------------------------------------------------------------
+Mitgelieferte Schriften der Knotenansicht                OFL-1.1
+
+Zugelassen nach CLAUDE.md, Regel 1, Praezisierung Schriften: ausschliesslich
+Schriften, unveraendert, deklariert. Die Dateien liegen unter
+kosmovis/apps/kosmo-orbit/public/fonts/ (woff2, latin-Ausschnitt aus den
+Fontsource-Paketen, so wie in KosmoOrbit) und gehen mit dem Bau an den Browser;
+der Lizenztext je Familie liegt daneben (<Familie>-OFL.txt).
+
+  Lato             Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic,
+                   Reserved Font Name "Lato"
+    lato-latin-400-normal.woff2
+      SHA-256 918b7dc3e2e2d015c16ce08b57bcb64d2253bafc1707658f361e72865498e537
+    lato-latin-700-normal.woff2
+      SHA-256 c447dd7677b419db7b21dbdfc6277c7816a913ffda76fd2e52702df538de0e49
+  PT Sans Narrow   Copyright (c) 2010, ParaType Ltd.,
+                   Reserved Font Names "PT Sans" and "ParaType"
+    pt-sans-narrow-latin-400-normal.woff2
+      SHA-256 4b6275c7977f0cd7698d38c7726149bbb2a9902d33e7dd48a192a889c19f5ab6
+    pt-sans-narrow-latin-700-normal.woff2
+      SHA-256 c9881931311b77f935225d7eeb7ebd0395480a7737a56d427778c98534ade38a
+  IBM Plex Mono    Copyright 2017 IBM Corp., Reserved Font Name "Plex"
+    ibm-plex-mono-latin-400-normal.woff2
+      SHA-256 08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7
+    ibm-plex-mono-latin-500-normal.woff2
+      SHA-256 01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22
+
+--------------------------------------------------------------------------------

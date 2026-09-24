@@ -1,0 +1,1259 @@
+/* v0.8.0B / P5 (Welle W5, Spez §3/§4/§9.12 B-44/B-45/B-89…B-143) — die
+ * Viz-Anatomie fürs Themenpaar (Owner-Entscheid 4: KEINE eigene Dark-Shell,
+ * jede Klasse hier bedient Papier UND Orbit über die bestehenden `--k-*`-
+ * Tokens). Eigene Datei, additiv — ersetzt die 80 `style={{…}}`-Inline-Styles
+ * in `NodeCanvas.tsx` + die Inline-Muster in `KuratierFlaeche.tsx`/
+ * `KuratierInspektor.tsx`/`VisWorkspace.tsx` durch Klassen. Kanten-/Layout-
+ * Geometrie (Node-Höhen, Port-Positionen, Kanten-Pfade) bleibt unangetastet —
+ * diese Datei ändert nur Optik (Farbe/Rand/Puls/Abstand), nie Zahlen, die
+ * `NodeCanvas.tsx` zur Positionierung berechnet. */
+
+/* ── KPipelineNode-Anatomie auf dem SVG-Node (B-44) ─────────────────────
+   Die Karte bleibt geometrisch die bestehende «geschnittene Ecke»-Form
+   (Karteikarten-Verwandter, NodeCanvas.tsx `d=…`) — nur Randfarbe/-stärke
+   und der Laufend-Puls folgen jetzt der KPipelineNode-Anatomie (1.5px
+   Rollenborder bei 55% Deckkraft, running-Puls NUR bei laufendem Status,
+   Gesetz 7: Glow ist Informationszustand). `--_rolle` kommt vom Node selbst
+   (Kategorie-Hue, dieselbe CSS-Custom-Property-Injektion wie `KPipelineNode`/
+   `KCard` in kosmo-ui). */
+.vis-node-karte {
+  stroke: color-mix(in srgb, var(--_rolle, var(--k-line-strong)) 55%, transparent);
+  stroke-width: 1.5;
+  transition: stroke var(--k-motion-base, 200ms);
+}
+.vis-node-karte--laeuft {
+  animation: vis-node-puls 2s var(--k-ease-standard, ease-in-out) infinite;
+}
+@keyframes vis-node-puls {
+  0%,
+  100% {
+    stroke: color-mix(in srgb, var(--_rolle, var(--k-line-strong)) 55%, transparent);
+  }
+  50% {
+    stroke: var(--_rolle, var(--k-line-strong));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vis-node-karte--laeuft {
+    animation: none;
+  }
+}
+.vis-node-ausgewaehlt-rahmen {
+  pointer-events: none;
+}
+
+/* ── Bild-Kachel (Bildvergleich/-Kachel, wiederverwendet) ──────────── */
+.vis-bild-kachel {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.vis-bild-kachel-qa {
+  font-size: var(--k-t-xxs);
+  font-family: var(--k-font-mono);
+}
+.vis-bild-kachel-qa--ok {
+  color: var(--k-success);
+}
+.vis-bild-kachel-qa--fehl {
+  color: var(--k-danger);
+}
+/* Auftrag auf-20260827-62 (Posten 2) — «Score besteht, Maskenweg
+   widerspricht»: `passed:true` bleibt grün, aber die Badge trägt zusätzlich
+   die Warnfarbe (kein zweites Grün, das den Vorbehalt überdeckt), und der
+   Vertragstext selbst steht sichtbar darunter — kein Klapp-Text, keine
+   Dauerwarnung: beide Regeln erscheinen nur, wenn `qa.verdict.reason` da ist. */
+.vis-bild-kachel-qa--vorbehalt {
+  color: var(--k-warning);
+}
+.vis-bild-kachel-qa-vorbehalt {
+  display: block;
+  font-size: var(--k-t-xxs);
+  color: var(--k-warning);
+  line-height: var(--k-lh-knapp);
+}
+.vis-img-full {
+  width: 100%;
+  border: 1px solid var(--k-line);
+}
+
+/* v0.9.25 P-M: die Dock-Panel-Inhalte «Node-Palette» (`.vis-palette*`) und
+   «Ausrichten-Leiste» (`.vis-ausrichten-leiste`) sind mitsamt der Vis-
+   DockFlaeche entfallen — die Insel-Fassungen tragen eigene `visisl-*`-
+   Klassen (`island/vis-island.css`). */
+
+/* ── Porttyp-Legende (Overlay unten links + Insel-Popup) ──────────── */
+.vis-legende-panel {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-sm);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+.vis-legende-zeile {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vis-legende-punkt {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--_farbe);
+}
+
+/* K35 (Owner-Korrekturen 2026-07, S.14): der frühere Minimap-Block
+   (`.vis-minimap-svg`, Dock-Panel-Inhalt) ist mitsamt der Minimap entfernt. */
+
+/* ── Canvas-Wrapper + SVG selbst ───────────────────────────────────── */
+.vis-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.vis-canvas-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  /* P-ZWEITKANTE Posten 5, Nachmessung 01.09.2026 (docs/MESSUNG-P5-
+     POINTERCANCEL-2026-09-01.md): DIES ist die eigentliche Ursache des
+     `pointercancel` beim zweiten Kanten-Zug — nicht ein Re-Render, das
+     Port-Elemente entfernt (Gegenprobe: `document.contains()` auf dem
+     Quell-Hit-Kreis blieb ueber beide Gesten hinweg `true`). Ohne
+     `user-select` markiert der erste Zug (Mousedown + Move ueber die SVG-
+     `<text>`-Labels) eine Text-Selektion (`selectstart`, gemessen ~4ms
+     nach dem ersten `pointerdown`). Die Selektion ueberlebt das
+     `pointerup`. Der ZWEITE Zug beginnt dann auf/nahe dieser stehen-
+     gebliebenen Selektion — Chromium deutet den Mousedown+Move darauf als
+     «Selektion ziehen» statt als gewoehnliche Zeiger-Geste: es feuert
+     `dragstart` (gemessen 148ms nach dem zweiten `pointerdown`) und
+     unmittelbar danach `pointercancel` auf dem SVG (8ms spaeter) — die
+     Geste ist damit dem App-Code entzogen, bevor sie den Ziel-Port je
+     erreicht. `user-select: none` verhindert, dass ueberhaupt eine
+     Selektion entsteht, und damit den ganzen Ablauf ab der Wurzel. */
+  user-select: none;
+  -webkit-user-select: none;
+  /* PC1 (`docs/V084-SPEZ.md` §5 W2, C-16 — «Node-Canvas dunkel/Nodes hell,
+     NUR über bestehende Tokens, kein Hartwert»): `--k-plan-paper` ist
+     THEME-INVARIANT (Invarianzregel D7 8c, `aura.css` Kopfkommentar zum
+     `[data-theme='orbit']`-Block — das 2D-Planblatt bleibt bewusst in
+     BEIDEN Themes hell). Der Node-Graph ist kein Planblatt, sondern ein
+     Blender-artiger Editor — `--k-field` (die "sunken"-Flächenstufe) TRÄGT
+     den Themenwechsel: orbit `#0b0d12` (fast schwarz, die geforderte dunkle
+     Kosmos-Sprache) ‖ paper `#f5f3ee` (eine eigenständige, "stimmige helle
+     Variante" statt des literalen Plan-Weiss — Owner-Auftrag §5 Punkt 3).
+     Die Node-Karten selbst bleiben `--k-raised` (unverändert, s.
+     NodeCanvas.tsx) — in JEDEM Theme eine Stufe HELLER als `--k-field`
+     (orbit `#1a1e27` vs. `#0b0d12`; paper `#ffffff` vs. `#f5f3ee`), also
+     "Nodes hell" relativ zur jetzt dunklen Fläche — dieselbe Elevations-
+     Logik, die `--k-hover`/`--k-raised` überall sonst im Repo trägt, kein
+     neuer Mechanismus. */
+  background: var(--k-field);
+  /* C-16 (PE3-Fix v0.8.4): «Node-Tree dunkel, NODES HELL» — der frühere
+     `--k-raised`-Elevations-Schritt (#1a1e27 auf #0b0d12, Kontrast 1.17:1)
+     war eine Umdeutung der Owner-Vorgabe, keine Erfüllung. Die Karten
+     kreuzen jetzt die Theme-Tokens: im orbit-Theme Fläche=`--k-ink` (hell)
+     und Tinte=`--k-field` (dunkel) — echte helle Karten auf dunklem Canvas,
+     ohne neuen Hex (PB6-Konvention). Das Papier-Theme behält seine
+     bisherige Elevations-Logik (weisse Karten, dunkle Tinte). */
+  --vis-node-flaeche: var(--k-raised);
+  --vis-node-tinte: var(--k-ink);
+}
+[data-theme='orbit'] .vis-canvas-svg {
+  --vis-node-flaeche: var(--k-ink);
+  --vis-node-tinte: var(--k-field);
+}
+
+/* ── Kanten-Interaktionsflächen (Cursor/Farb-Utilities, keine Geometrie) */
+.vis-edge-hit {
+  cursor: pointer;
+}
+.vis-edge-trennen {
+  cursor: pointer;
+  opacity: 0;
+}
+.vis-edge-trennen--sichtbar {
+  opacity: 1;
+}
+.vis-edge-trennen-icon {
+  color: var(--k-danger);
+}
+
+/* ── Node-Kopf/Knöpfe (Cursor/Farb-Utilities, keine Geometrie) ────── */
+.vis-node-kopf-griff {
+  cursor: grab;
+  --k-zeiger: grab; /* v0.9.0 Cursor-Spiegel fuer die Kosmo-Ebene (cursor selbst ist global none) */
+}
+/* D-1 (E-1): Minimalform statt `.k-label` — der Träger ist ein SVG-`<text>`
+   (NodeCanvas.tsx) mit eigenen `font-size`/`font-weight`-Presentation-
+   Attributen; eine CSS-Klasse würde diese im Cascade schlagen und Grad/
+   Gewicht ungewollt mitziehen (ausserhalb des D-1-Dateikreises). */
+.vis-node-kopf-label {
+  letter-spacing: var(--k-sperrung-eng);
+  text-transform: uppercase;
+}
+.vis-node-knopf {
+  cursor: pointer;
+}
+.vis-node-icon-soft {
+  color: var(--k-ink-soft);
+}
+.vis-node-icon-faint {
+  color: var(--k-ink-faint);
+}
+.vis-node-port-hit {
+  cursor: crosshair;
+  --k-zeiger: crosshair; /* v0.9.0 Cursor-Spiegel fuer die Kosmo-Ebene (cursor selbst ist global none) */
+}
+.vis-node-koerper--gesperrt {
+  pointer-events: none;
+}
+
+/* ── Fixe Chrome-Position (Kuratier-Knopf) ───────────────────────────
+   K35: `.vis-chrome-bottomleft` (Minimap-Toggle) ist mitsamt der Minimap
+   entfallen. v0.9.25 P-M: `.vis-chrome-topleft` (Palette-Toggle) und
+   `.vis-chrome-bottomright` (Zoom-/Snap-/Routing-Leiste) sind mit dem
+   Manuell-Codepfad entfallen — es bleibt der Kuratier-Knopf oben rechts.
+   W1 P-KURATIERDECKEL (ROADMAP «siebter Deckel»/1151): `right` steht
+   ABSICHTLICH NICHT mehr hier — der frühere Fixwert (12px) liess den
+   Knopf vollständig unter dem global-fixierten Insel-Einstellungs-Kreis
+   verschwinden (`island.css:1109`, `z-index:42`, gewinnt gegen jeden
+   z-index-Wert hier, s. `tokens.ts` zEbene AUSGESCHLOSSEN). `right`
+   kommt jetzt als Inline-Style aus `NodeCanvas.tsx`s benannter Konstante
+   `ISLAND_KREIS_RESERVE_PX` (55px Kreis-Trefferfläche + `--k-s3`
+   Abstand) — dort steht auch die volle Messung/Begründung. */
+.vis-chrome-topright {
+  position: absolute;
+  /* `top` UND `right` stehen absichtlich nicht hier — beide kommen als
+     Inline-Style aus `NodeCanvas.tsx` (`INSEL_KOPFZEILE_UNTERKANTE_PX`),
+     wo auch die Messung steht. Zweite Fassung 03.09.2026: der Knopf weicht
+     nach UNTEN statt nach links, weil die Breite von
+     `.isl-kopf-zweitgruppe` mit dem Sync-Text schwankt und ihre Hoehe
+     nicht. */
+  z-index: 36;
+}
+.vis-kuratier-zaehler {
+  font-size: var(--k-t-xs);
+  font-family: var(--k-font-mono);
+}
+
+/* PC1 (`docs/V084-SPEZ.md` §5 W2, C-15), K35-Umbenennung — die Legende im
+   Island-Modus. Bis K35 hiess der Container `.vis-island-minimap-overlay`
+   (`left:12px`) und trug Minimap + Legende gestapelt; die Minimap ist
+   entfernt (Owner S.14), die Legende bleibt (Owner K36: «legende ist gut»).
+   `left:72px` statt 12px: die SONNE-Insel-Pill (v0.8.9 E11,
+   `.isl-rand-sonne`, `left:14px; bottom:14px`, z-40) sass schon bisher ÜBER
+   der untersten Ecke dieses Stapels — mit der Legende als einzigem,
+   niedrigem Inhalt verdeckte sie deren Zeilen komplett. 72px (= 14px Rand +
+   44px Pill-Trefferfläche + 14px Lücke) stellt die Legende sichtbar NEBEN
+   die Pill, gleiche Unterkante. */
+/* B130 (09.09.2026): die Legende lag mit `bottom: 12px` genau im Band des
+   Speichern-Streifens (14–58 px ueber der Fensterkante) und deckte
+   WEITERGEBEN ab — gemessen an allen vier Fenstergroessen. Das beruehrt den
+   Owner-Entscheid vom 28.08.2026 unmittelbar («Speichern muss man sehen, ohne
+   zu suchen»): sehen konnte man es, treffen nicht.
+   Die Antwort ist dieselbe wie bei B129, an derselben Kante: die Legende
+   weicht dem Streifen aus, der Streifen bleibt unangetastet. `--isl-fusszone-
+   frei` ist nur dort definiert, wo der Streifen wirklich steht; sonst gilt
+   der Rueckfall und die Legende bleibt, wo sie war. */
+.vis-island-legende-overlay {
+  position: absolute;
+  left: 72px;
+  bottom: var(--isl-fusszone-frei, 12px);
+  z-index: 20;
+  display: grid;
+  gap: 6px;
+}
+
+/* ── Klapptext (Node-Körper) ───────────────────────────────────────── */
+.vis-klapptext {
+  display: grid;
+  gap: 2px;
+}
+.vis-klapptext-text {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-knapp);
+}
+.vis-klapptext-text--platzhalter {
+  font-style: italic;
+}
+.vis-klapptext-text--clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vis-klapptext-mehr {
+  justify-self: start;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Node-Körper je Typ (NodeKoerper) ──────────────────────────────── */
+.vis-node-info-zeile {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  font-family: var(--k-font-mono);
+}
+.vis-node-feld {
+  width: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--k-line-strong);
+  border-radius: 4px;
+  background: var(--k-surface);
+  font-size: var(--k-t-micro);
+  font-family: inherit;
+}
+.vis-node-feld--textarea {
+  resize: none;
+}
+.vis-node-stimmung-wrap {
+  display: grid;
+  gap: 4px;
+}
+.vis-node-select-voll {
+  width: 100%;
+  /* A15-Befund, 17.09.2026: ohne `min-width: 0` zieht ein Grid-Kind seine Spur
+     auf die eigene MINDESTbreite — und der breiteste Waehler nimmt den ganzen
+     Knotenkoerper mit. Gemessen: Inhalt 242 px in einem 184-px-Rahmen, alle
+     sechs Bedienelemente 50 px ueber den rechten Kartenrand hinaus. Die
+     Schwesterklasse `.vis-node-select-zelle` traegt die Klemme seit V-H4
+     laengst; hier fehlte sie. Neun Stellen nutzen diese Klasse.
+     `box-sizing` dazu, damit `width: 100%` den Rahmen einschliesst. */
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: var(--k-t-micro);
+}
+.vis-node-zahl-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.vis-node-zahl-regler {
+  flex: 1;
+}
+.vis-node-zahl-wert {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+}
+.vis-node-render-wrap {
+  display: grid;
+  gap: 6px;
+}
+.vis-node-render-formular {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.vis-node-render-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px;
+}
+.vis-node-feld-zelle {
+  min-width: 0;
+}
+.vis-node-select-zelle {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.vis-node-final-prompt {
+  font-size: var(--k-t-xxs);
+  font-family: var(--k-font-mono);
+  color: var(--k-ink-faint);
+  line-height: 1.3;
+}
+.vis-node-aktionen {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+/* Status nie nur Farbe (Gesetz 10) — die Klasse trägt NUR die Farbe, das
+   Mono-Label/Punkt-Prinzip liefert der Text selbst (STATUS_LABEL).
+   D-1 (E-1): Versal+Sperrung jetzt aus `.k-label.k-label-eng` (aura.css). */
+.vis-node-status {
+  font-size: var(--k-t-xs);
+  font-family: var(--k-font-mono);
+}
+.vis-node-status--fertig {
+  color: var(--k-success);
+}
+.vis-node-status--fehler {
+  color: var(--k-danger);
+}
+.vis-node-status--neutral {
+  color: var(--k-ink-faint);
+}
+.vis-node-status--aktiv {
+  color: var(--k-warning);
+}
+.vis-node-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+  cursor: pointer;
+}
+.vis-node-fortschritt {
+  font-size: var(--k-t-xxs);
+  font-family: var(--k-font-mono);
+  color: var(--k-ink-soft);
+}
+.vis-node-leerbild {
+  height: 110px;
+  border: 1px dashed var(--k-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+.vis-node-leerbild--fehler {
+  color: var(--k-danger);
+}
+.vis-vergleich-bilder {
+  display: flex;
+  gap: 4px;
+}
+.vis-vergleich-leer {
+  height: 110px;
+  flex: 1;
+  border: 1px dashed var(--k-line-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+.vis-node-referenz-wrap {
+  display: grid;
+  gap: 4px;
+}
+.vis-node-referenz-leer {
+  height: 46px;
+  border: 1px dashed var(--k-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+.vis-node-aufnahme-wrap {
+  display: grid;
+  gap: 4px;
+}
+.vis-node-aufnahme-info {
+  font-size: var(--k-t-xxs);
+  color: var(--k-ink-faint);
+}
+.vis-node-aufnahme-leer {
+  height: 46px;
+  border: 1px dashed var(--k-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  text-align: center;
+  padding: 4px;
+}
+.vis-node-kamera-liste {
+  display: grid;
+  gap: 3px;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+.vis-node-kamera-leer {
+  font-style: italic;
+  color: var(--k-ink-faint);
+}
+/* P-DREISTANDPUNKTE-Nachtrag (v0.9.46, ROADMAP 1074) — ein abgeleiteter
+   Standpunkt, der ueber DIESEN Weg nicht bestellt wird. Bewusst dieselbe
+   zurueckhaltende Farbe wie `-leer`: der Vorschlag ist echt und ueber den
+   IFC-Weg erreichbar, er ist hier nur nicht bestellbar. Kein Rot, keine
+   Warnung — eine benannte Grenze, kein Fehler. Ausschliesslich Token,
+   keine rohen Werte (Token-Drift-Gate, ROADMAP 969). */
+.vis-node-kamera-nicht-bestellt {
+  color: var(--k-ink-faint);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   KuratierFlaeche.tsx + KuratierInspektor.tsx — KVariantenKarte-Anatomie
+   (B-45/B-93/B-95/B-141) auf dem 3-spaltigen Raster + Kurations-Inspektor.
+   Mono-Label-Rezept zentral statt je Stelle dupliziert — D-1 (E-1): Versal+
+   Sperrung kommen jetzt aus `.k-label` (aura.css), im Markup ergänzt. */
+.vis-mono-label {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+
+.vis-kuratier-flaeche {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  background: var(--k-field);
+}
+.vis-kuratier-mitte {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.vis-kuratier-rail {
+  width: 220px;
+  flex: none;
+  border-right: 1px solid var(--k-line);
+  background: var(--k-surface);
+  padding: var(--k-s4, 16px);
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  overflow: auto;
+}
+.vis-kuratier-rail-titel {
+  margin-bottom: 8px;
+}
+.vis-kuratier-rail-leer {
+  font-size: var(--k-t-micro);
+  color: var(--k-ink-faint);
+  font-style: italic;
+}
+.vis-kuratier-rail-zeile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.vis-kuratier-rail-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--_farbe) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--_farbe) 45%, transparent);
+}
+.vis-kuratier-rail-label {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+.vis-kuratier-rail-trenner {
+  height: 1px;
+  background: var(--k-line);
+  margin: 10px 0;
+}
+.vis-kuratier-rail-fuss {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+
+.vis-kuratier-spalte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.vis-kuratier-subtoolbar {
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--k-line);
+  background: var(--k-surface);
+}
+.vis-kuratier-subtoolbar-icon {
+  color: var(--k-mod-vis);
+}
+.vis-kuratier-subtoolbar-titel {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-md);
+  color: var(--k-ink);
+}
+.vis-kuratier-subtoolbar-zahl {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+  color: var(--k-ink-faint);
+}
+.vis-kuratier-spacer {
+  flex: 1;
+}
+.vis-kuratier-segment {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--k-radius-sm);
+  background: var(--k-field);
+  border: 1px solid var(--k-line);
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.vis-kuratier-segment-eintrag {
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--k-ink-soft);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+}
+.vis-kuratier-segment-eintrag--aktiv {
+  background: var(--k-accent-wash);
+  color: var(--k-accent);
+}
+
+.vis-kuratier-inhalt {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+.vis-kuratier-raster-stapel {
+  display: grid;
+  gap: 24px;
+}
+.vis-kuratier-raster {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.vis-kuratier-ablage-stapel {
+  display: grid;
+  gap: 10px;
+}
+.vis-kuratier-leerzustand {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  padding: 40px 4px;
+  text-align: center;
+}
+.vis-kuratier-leerzustand-text {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  font-style: italic;
+  max-width: 360px;
+}
+
+/* Raster-Karte (KVariantenKarte-Anatomie: 4/3, ID-Pill-Scrim, Auswahl =
+   Accent+Glow, Favorit = Rollenfarbe `agent`) */
+.vis-raster-karte {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--k-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--k-line-strong);
+  transition: border-color var(--k-motion-fast), box-shadow var(--k-motion-fast);
+}
+/* Auswahl-Codierung (B-141): gewählt = 1.5px Accent+Glow, Favorit (ohne
+   Auswahl) = Rollenfarbe `agent` — dieselbe Zweistufigkeit wie
+   KVariantenKarte selbst. */
+.vis-raster-karte--gewaehlt {
+  border: 1.5px solid var(--k-accent);
+  box-shadow: var(--k-glow-cyan, none);
+}
+.vis-raster-karte--favorit {
+  border-color: var(--k-rolle-agent-line);
+}
+.vis-raster-karte--verworfen {
+  opacity: 0.6;
+}
+.vis-raster-karte-bild {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.vis-raster-karte-embleme {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+/* D-1 (E-1): Inhalt ist `kartenId()` («V-01»/«A-03», varianten-diff.ts),
+   bereits versal — Minimalform, Sperrwert als Token. */
+.vis-raster-karte-id {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: var(--k-sperrung-eng);
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--k-glass-ink); /* D-6: war #f4f6fa, exakter Token-Treffer */
+  background: rgba(5, 6, 8, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.vis-raster-karte-id--aktiv {
+  color: var(--k-accent);
+  border-color: var(--k-accent);
+}
+/* D-1 (E-1): Inhalt ist Literal-Versal ("FAVORIT", KuratierFlaeche.tsx) —
+   Minimalform, Sperrwert als Token. */
+.vis-raster-karte-badge {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: var(--k-sperrung);
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--k-rolle-agent);
+  background: rgba(5, 6, 8, 0.6);
+  border: 1px solid var(--k-rolle-agent-line);
+}
+.vis-raster-karte-fuss {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 9px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 6px;
+  background: linear-gradient(transparent, rgba(5, 6, 8, 0.88));
+}
+/* D-1 (E-1): `letter-spacing` ersatzlos entfernt — Inhalt (Kennung ·
+   Szene/Stimmung, KuratierFlaeche.tsx) ist nicht durchgängig versaliert. */
+.vis-raster-karte-meta {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  color: var(--k-vis-chip-ink-soft); /* D-6: war #dfe3ea */
+}
+.vis-raster-karte-aktionen {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vis-raster-karte-knopf {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgba(5, 6, 8, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--k-vis-chip-ink-mittel); /* D-6: war #c7ccd6 */
+}
+.vis-raster-karte-knopf--markiert {
+  color: var(--k-rolle-agent);
+}
+.vis-raster-karte-knopf--verworfen {
+  color: var(--k-danger);
+}
+.vis-raster-karte-vgl {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--k-t-xxs);
+  font-family: var(--k-font-mono);
+  color: var(--k-vis-chip-ink-mittel); /* D-6: war #c7ccd6 */
+  cursor: pointer;
+  padding-left: 2px;
+}
+
+/* Vergleichsansicht (A/B, Rollenfarbe generator vs. Accent) */
+.vis-vergleich-flaeche {
+  display: grid;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.vis-vergleich-paar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.vis-vergleich-karte {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--k-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--k-line-strong);
+}
+.vis-vergleich-karte--a {
+  border-color: var(--k-rolle-generator-line);
+}
+.vis-vergleich-karte--b {
+  border-color: var(--k-accent);
+  box-shadow: var(--k-glow-cyan, none);
+}
+.vis-vergleich-karte-bild {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.vis-vergleich-karte-kopf {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vis-vergleich-karte-label {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--k-radius-xs); /* D-6: war 7px, off-scale (2/4/6/999) */
+  display: grid;
+  place-items: center;
+  font-family: var(--k-font-mono);
+  font-weight: var(--k-gewicht-betont);
+  font-size: var(--k-t-sm);
+  color: var(--k-signal-tinte); /* D-6: toter Fallback #050608 entfernt, aura.css laedt immer zuerst */
+}
+.vis-vergleich-karte-label--a {
+  background: var(--k-rolle-generator);
+}
+.vis-vergleich-karte-label--b {
+  background: var(--k-accent);
+}
+.vis-vergleich-karte-id {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-vis-chip-ink-hell); /* D-6: war #e6e9ef */
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(5, 6, 8, 0.6);
+}
+.vis-vergleich-tabelle {
+  border-radius: var(--k-radius-md);
+  border: 1px solid var(--k-line);
+  overflow: hidden;
+}
+.vis-vergleich-tabelle-kopf {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 10px 16px;
+  background: var(--k-surface);
+  border-bottom: 1px solid var(--k-line);
+}
+.vis-vergleich-tabelle-kopf-a {
+  text-align: right;
+  color: var(--k-rolle-generator);
+}
+.vis-vergleich-tabelle-kopf-label {
+  padding: 0 20px;
+}
+.vis-vergleich-tabelle-kopf-b {
+  color: var(--k-accent);
+}
+.vis-vergleich-zeile {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 9px 16px;
+  background: var(--k-raised);
+  border-bottom: 1px solid var(--k-line);
+}
+.vis-vergleich-zeile-wert {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  font-weight: var(--k-gewicht-normal);
+}
+.vis-vergleich-zeile-wert--a {
+  text-align: right;
+}
+.vis-vergleich-zeile-wert--abweichend-a {
+  color: var(--k-rolle-generator);
+  font-weight: var(--k-gewicht-stark);
+}
+.vis-vergleich-zeile-wert--abweichend-b {
+  color: var(--k-accent);
+  font-weight: var(--k-gewicht-stark);
+}
+.vis-vergleich-zeile-label {
+  padding: 0 20px;
+  min-width: 130px;
+  text-align: center;
+  color: var(--k-ink-faint);
+}
+.vis-vergleich-aktionen {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.vis-kuratier-statuszeile {
+  height: 28px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  border-top: 1px solid var(--k-line);
+  background: var(--k-statusbar, var(--k-sunken, var(--k-surface)));
+}
+.vis-kuratier-statuszeile-text {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+
+/* ── Kurations-Inspektor (KKeyValue-Einsatz + Vorschau-Slot) ───────── */
+.vis-inspektor {
+  width: 340px;
+  flex: none;
+  border-left: 1px solid var(--k-line);
+  background: var(--k-surface);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.vis-inspektor--leer {
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.vis-inspektor-kopf {
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--k-line);
+}
+.vis-inspektor-kopf-id {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  padding: 2px 8px;
+  border-radius: var(--k-radius-pill);
+  color: var(--k-accent);
+  background: var(--k-accent-wash);
+}
+.vis-inspektor-inhalt {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  /* A10-Befund, 17.09.2026, am laufenden Fenster gemessen: ohne Zeilenvorgabe
+     STAUCHT dieses Raster seine Zeilen, statt zu rollen. Die Vorschau war
+     230.3 px hoch, ihre Zeile 54.1 — sie ragte 176 px in die naechste hinein,
+     ein echter Klick auf das zweite Kaestchen traf das BILD und lief in die
+     Zeitueberschreitung. Dabei meldete die Spalte `scrollHeight` 777 bei
+     `clientHeight` 777, also «passt», waehrend sich die Elemente ueberlagerten.
+
+     SECHS STILE DURCHGEMESSEN, nicht ueberlegt. Die naheliegende Vermutung
+     («das Raster streckt, also `align-content: start`») war FALSCH — gestreckt
+     wird nicht, gestaucht wird; `start` aenderte nichts. Nur eine
+     Zeilenvorgabe hilft, und `min-content` ist die kleinste von allen
+     (rollt 1015/777, Ueberlappung −16, der Klick trifft sich selbst).
+
+     WAS ES KOSTET, unbeschoenigt: bei kurzem Inhalt sammelt sich der freie
+     Platz jetzt unten, statt auf die Zeilen verteilt zu werden. Die Fuge
+     zwischen den Bloecken bleibt. */
+  grid-auto-rows: min-content;
+}
+.vis-inspektor-slot {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--k-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--k-accent);
+  box-shadow: var(--k-glow-cyan, none);
+}
+.vis-inspektor-slot-bild {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.vis-inspektor-titel {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-lg);
+  color: var(--k-ink);
+}
+.vis-inspektor-untertitel {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  margin-top: 2px;
+}
+.vis-inspektor-herkunft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.vis-inspektor-herkunft-glied {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vis-inspektor-herkunft-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-raised);
+  border: 1px solid var(--k-line-strong);
+}
+.vis-inspektor-herkunft-punkt {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--_farbe);
+}
+.vis-inspektor-herkunft-label {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+.vis-inspektor-herkunft-pfeil {
+  color: var(--k-ink-faint);
+}
+.vis-inspektor-bewertung {
+  display: flex;
+  gap: 5px;
+}
+.vis-inspektor-bewertung-stern {
+  color: var(--k-line-strong);
+}
+.vis-inspektor-bewertung-stern--aktiv {
+  color: var(--k-rolle-agent);
+}
+.vis-inspektor-bewertung-leer {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  font-style: italic;
+  margin-top: 4px;
+}
+.vis-inspektor-fuss {
+  flex: none;
+  padding: 14px;
+  border-top: 1px solid var(--k-line);
+  display: grid;
+  gap: 8px;
+}
+.vis-inspektor-fuss-zeile {
+  display: flex;
+  gap: 8px;
+}
+.vis-inspektor-fuss-knopf {
+  flex: 1;
+}
+.vis-inspektor-fuss-knopf-icon {
+  color: var(--k-rolle-agent);
+}
+.vis-inspektor-fuss-primaer {
+  width: 100%;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   VisWorkspace.tsx — v0.9.25 P-M: der Preset-Schnellzugriff
+   (`.vis-preset-*`) sass in der VisTabs-Toolbar und ist mit dem
+   Manuell-Codepfad entfallen. */
+.vis-workspace-fuellen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.vis-workspace-buehne {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.vis-workspace-buehne-zentriert {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* v0.9.25 P-M: `.vis-ansichten-buehne` (Manuell-«Ansichten»-Tab) und die
+   Toolbar-Helfer `.vis-toolbar-spacer`/`.vis-toolbar-hinweis` (VisTabs)
+   sind mit dem Manuell-Codepfad entfallen. */
+
+/* v0.9.25 P-M: der gesamte `.vis-einfach-*`-Block (lineare EinfachAnsicht,
+   «legacy Fallback-Tab») ist mitsamt seiner Komponente entfallen — der
+   Graph-Weg ist seit 0.8.4 der einzige Render-Weg. */
+
+/* v0.8.1 / P8 (0.7.5-Welle-2 «Report-Dossier/Print», Spec §6.2/§9.17,
+   B-103/B-104) — «Papier ist Papier»: der Druckbogen bleibt IMMER hell,
+   unabhängig vom aktiven App-Theme (harte Farbliterale statt --k-*-Tokens,
+   analog `derive/dossier.ts`s SVG-Kopf) — kein Glass/Glow im Druck. Additive
+   Klassen, eigene Datei-Sektion, berührt keine bestehende Regel.
+   D-1 (E-1): bewusst NICHT auf `.k-label` migriert — Export-/Dossier-
+   Typografie ist im Kanon ausdrücklich ausgenommen (`.vis-report-marke`/
+   `-meta`/`-label`/`-kachel-fuss` unten behalten ihre eigenen Literale). */
+.vis-report-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(20, 22, 28, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  padding: 32px 16px;
+}
+.vis-report-toolbar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+  max-width: 794px;
+  margin: 0 auto 10px;
+}
+.vis-report-dossier {
+  width: 100%;
+  max-width: 794px;
+  min-height: 1123px;
+  /* D-6/E-1: `.vis-report-*` bildet ein gedrucktes A4-Dossier ab (feste
+     794×1123px-Seite, eigener `@media print`-Block unten) — bleibt bewusst
+     Export-/Dossier-Typografie (Kanon-Ausnahme E-1) und darum IMMER
+     weiss/schwarz, unabhängig vom App-Theme: ein Papier-Ausdruck kippt
+     nicht mit Papier/Kosmos. Der Schatten dagegen ist Elevation (dieses
+     Blatt schwebt als Overlay über der App, `.vis-report-scrim` `position:
+     fixed`) — E-7 nennt genau diese Zeile («ein HUD-Float»): reines
+     Schwarz ist auf Papier falsch, Tusche-Schatten sind warm. */
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 2px; /* D-6: war 3px, off-scale — Geschwister-Radius wie .vis-report-kachel/-governance unten */
+  box-shadow: var(--k-shadow-overlay); /* D-6/E-7: war 0 8px 28px rgba(0,0,0,.35) */
+  padding: 48px 56px;
+  display: grid;
+  gap: 28px;
+  align-content: start;
+  font-family: var(--k-font-ui, sans-serif);
+}
+.vis-report-kopf {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 12px;
+}
+.vis-report-marke {
+  font-family: var(--k-font-mono, monospace);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: 0.16em;
+  font-size: var(--k-t-code);
+}
+.vis-report-titel {
+  font-size: var(--k-t-plakat);
+  font-weight: var(--k-gewicht-stark);
+}
+.vis-report-meta {
+  font-family: var(--k-font-mono, monospace);
+  font-size: var(--k-t-micro);
+  letter-spacing: 0.04em;
+  color: #555;
+}
+.vis-report-label {
+  font-family: var(--k-font-mono, monospace);
+  font-size: var(--k-t-micro);
+  font-weight: var(--k-gewicht-betont);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 10px;
+}
+.vis-report-kacheln {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.vis-report-kachel {
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.vis-report-kachel img {
+  width: 100%;
+  display: block;
+}
+.vis-report-kachel-bildlos {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  font-size: var(--k-t-micro);
+  color: #999;
+  background: #f4f4f4;
+}
+.vis-report-kachel-fuss {
+  padding: 6px 8px;
+  font-family: var(--k-font-mono, monospace);
+  font-size: var(--k-t-xs);
+  letter-spacing: 0.04em;
+  color: #444;
+  border-top: 1px solid #ccc;
+}
+.vis-report-governance {
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  font-size: var(--k-t-sm);
+}
+.vis-report-fuss {
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+  font-size: var(--k-t-xs);
+  color: #777;
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .vis-report-scrim,
+  .vis-report-scrim * {
+    visibility: visible;
+  }
+  .vis-report-scrim {
+    position: static;
+    background: none;
+    padding: 0;
+    overflow: visible;
+  }
+  .vis-report-toolbar {
+    display: none;
+  }
+  .vis-report-dossier {
+    box-shadow: none;
+    max-width: none;
+    width: auto;
+  }
+}

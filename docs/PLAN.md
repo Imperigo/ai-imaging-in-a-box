@@ -7438,18 +7438,27 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## Sitzung 71 — 24.09.2026 · Wo die Knoten sind
 
-> **Entschieden:** Beides — der Knoteneditor bleibt bei KosmoOrbit (gezeigt über
-> `auf-162`), und Visbox bekommt eine eigene Knotenansicht (Blatt 11, gezeichnet).
-> **Gemessen:** nichts.
-> **Offen:** zwei Owner-Entscheide an Blatt 11; Antwort auf `auf-162`.
+> **Entschieden:** E26 — das Vis-Werkzeug von KosmoOrbit kommt als wörtliche Kopie herüber
+> (ersetzt die zwei Fragen an Blatt 11).
+> **Gemessen:** Kopie übersetzt fehlerfrei, 722 Proben grün, läuft im Browser.
+> **Offen:** Mappe und Server anschliessen; dann jeden Knoten mit dem Owner; `auf-162`.
 
 - [x] Blatt 11 «Der Knotenweg am Rechner» gezeichnet (Entwurfsfläche).
 - [x] `auf-20260924-162` an ui (Bildschirmfotos, Stand E8/E7); Block vom 24.09.
-- [ ] **Owner:** Liste oder Knoten umschaltbar? Nur zeigen oder ziehen?
-- [ ] **Kern/Fläche:** Knotenansicht bauen — nach den zwei Antworten.
+- [x] ~~**Owner:** Liste oder Knoten umschaltbar? Nur zeigen oder ziehen?~~ — überholt durch E26.
+- [x] ~~**Kern/Fläche:** Knotenansicht bauen — nach den zwei Antworten.~~ — überholt durch E26.
 - [ ] **ui:** `auf-162` — und falls E8 nie ankam: Einbauauftrag für die acht Knoten.
 - [x] **Owner-Entscheid E26:** Vis-Werkzeug von KosmoOrbit übernehmen (nur Vis, öffentlich
       bis Februar, ganze Ansicht, im Browser, ergänzend zur Visbox-Fläche).
 - [ ] **Kern/Fläche (hohe Priorität):** Schnitt bestimmen → kopieren mit Herkunft →
       Stellvertreter → an unseren Server → dann jeden Knoten einzeln durchgehen.
+  - [x] Schnitt bestimmt, 198 Dateien wörtlich kopiert mit Abdruck (`kosmovis/HERKUNFT.json`).
+  - [x] 19 Stellvertreter, Wirtsseite `apps/visbox-knoten`; übersetzt fehlerfrei, 722 Proben
+        grün, läuft im Browser (Protokoll 71 §6).
+  - [x] Wächter `tests/test_kosmovis_herkunft.py`; `NOTICE`, Lexikon, README.
+  - [ ] Modell der offenen Mappe in die Knotenansicht (`setzeModellGlb` + Bauteil im Dokument).
+  - [ ] Brücken-Schnittstelle auf unserem Server (`/health`, `/jobs`, Freigabe, Abbruch,
+        Ergebnisdateien) — dieselbe, die `vis-jobs.ts` in KosmoOrbit anspricht.
+  - [ ] Schalter in der Visbox-Fläche, der die Knotenansicht öffnet.
+  - [ ] Jeden Knoten einzeln mit dem Owner durchgehen.
 

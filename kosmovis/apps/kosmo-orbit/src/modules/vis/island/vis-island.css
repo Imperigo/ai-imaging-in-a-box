@@ -1,0 +1,627 @@
+/* PC1 (`docs/V084-SPEZ.md` §5 W2, C-15) — Stufe-2/3-Innenraum-Styling der
+   Vis-Inseln (`island/inhalte/*.tsx`). Muster 1:1 aus `design/island/
+   inhalte/pd3a.css` übernommen (eigene, additive Datei — `island.css` selbst
+   bleibt unangetastet, nur importiert): reine Innenraum-Typografie/-Abstände
+   für den `.isl-popup`/`.isl-fenster`-Rahmen (PD1), NUR `var(--k-*)`-Token,
+   kein neuer Hex-Wert. */
+
+/* v0.8.9 §9 E11 (PBL2, `docs/V089-SPEZ.md`) — fünfte, eigene Rand-Position
+   für die neue SONNE-Insel (`vis-island-katalog.ts`). ADDITIV neben den vier
+   design-`.isl-rand-*`-Ankern (`design/island/island.css`, dort NICHT
+   angefasst — nur importiert/gelesen wie der Rest dieser Datei): unten-
+   links, ein eigener Anker-Punkt, überlagert weder `.isl-rand-links`
+   (seit K17 `left:var(--isl-rand-abstand)`=14px, aber `top:50%` — vertikal
+   mittig, zur Ecke unten disjunkt) noch `.isl-rand-unten` (`bottom:14px;
+   left:50%`).
+   `.isl-root` liefert bereits `position:fixed` (`design/island/island.css`
+   Z.73) — hier nur die Koordinaten, exakt wie die vier design-Anker es tun. */
+.isl-rand-sonne {
+  left: 14px;
+  bottom: 14px;
+}
+
+/* NACHTRAG 01.09.2026 (Triage `e2e/inselkopf-erreichbarkeit.spec.ts` C-2,
+   Kausalitaet mehrfach gemessen). TEIL 1 — DIE GESCHLOSSENE PILLE:
+   `InselKopf.tsx`s `.isl-grundstreifen` (`design/island/island.css`) sitzt
+   AM SELBEN Anker wie diese Insel — `left:14px; bottom:14px`, wortgleich.
+   Solange der Streifen `z-index:auto` trug, blieb das folgenlos (er malte
+   ohnehin hinter dem gesamten Stationsinhalt). Sobald er eine eigene Stufe
+   braucht, um UEBER den Stationsinhalt zu kommen (derselbe Nachtrag,
+   C-2-Fix), gewinnt er auch HIER — gemessen mit `document.
+   elementFromPoint()` auf der SONNE-Pillen-Mitte bei vis@1400×900: der
+   Treffer ist `island-grundstreifen`, nicht die Insel, OBWOHL `.isl-root`
+   hier `z-index:40` traegt (`getComputedStyle` bestaetigt `zIndex:"40"`).
+   Ursache: ein Vorfahre zwischen `<main>` und dieser Insel spannt einen
+   eigenen Stapelkontext auf (Pan/Zoom-Transform des Node-Canvas) — SONNEs
+   40 zaehlt darum nur INNERHALB dieses Vorfahren, nicht mehr gegen ein
+   Dokument-Wurzel-Geschwister wie den Streifen; der Vorfahre selbst steht
+   dort bei `z-index:auto` und verliert gegen JEDEN positiven Wert. Kein
+   Stufenwert am Streifen kann das beheben (0 waere wieder der C-2-Defekt,
+   jeder Wert >0 deckt SONNE) — der Hebel ist GEOMETRISCH, nicht die Stufe:
+   `left:72px` = 14px Rand + 44px Pillen-Trefferflaeche + 14px Luecke,
+   DERSELBE Wert, den `.vis-island-legende-overlay` (`vis-visual.css`) fuer
+   dieselbe Kollision schon traegt. Live nachgemessen: die geschlossene
+   SONNE-Pille ist nur 34px breit, 72px laesst zusaetzlich Luft.
+
+   TEIL 2 — DIE GEOEFFNETE LEISTE/DER POPUP: 72px reicht nur fuer die
+   GESCHLOSSENE Pille. Offen klappt SONNE seitlich nach RECHTS auf
+   (`.isl-rand-sonne .isl-popup`, `left: calc(100% + var(--k-s3))`,
+   Kommentar unten) — Popup-Breite `min-width:180px` (`design/island/
+   island.css` `.isl-popup`), kein Deckel nach oben ausser `100vw - 16px`.
+   Live gemessen (`e2e/w5-1-insel-ueberdeckung.spec.ts`, `KosmoVis @
+   1180x820`, zweimal reproduziert, Baseline-Gegenprobe ohne diese Datei
+   bestaetigt: derselbe Fall laeuft dort GRUEN): ein fester Reserve-Wert
+   waere hier geraten, nicht gemessen — der Popup kann je nach Inhalt breiter
+   werden als jede feste Zahl. Der robuste, breitenunabhaengige Hebel ist
+   darum NICHT eine zweite, groessere Reserve, sondern dasselbe `:has()`-
+   Muster, das `design/island/island.css` (Zeile ~1655) fuer die
+   AUSTAUSCH-Pille/Skizzen-Leiste bereits traegt: solange SONNE offen ist
+   (`.isl-root--offen`, IslandShell.tsx, gesetzt sobald `stufe!=='pill'` —
+   deckt Leiste UND Popup UND Fenster in einer Bedingung ab), verliert der
+   Streifen `pointer-events` und wird sichtbar gedimmt statt aktiv
+   anklickbar (Ehrlichkeit: kein Verschwinden, keine Layoutverschiebung) —
+   SONNE bekommt in diesem einen Moment ungeteilten Vorrang vor Speichern/
+   Oeffnen. Sobald SONNE wieder auf die Pille faellt, ist der Streifen ohne
+   weiteres Zutun wieder da. `:has()` ist im gepinnten Playwright-Chromium
+   unterstuetzt (selbes Praezedens wie beim AUSTAUSCH-Fall). Nur fuer `vis`
+   — die anderen vier Stationen kennen keine SONNE-Insel, unten links bleibt
+   dort die freie Ecke, die `InselKopf.tsx`s Kopfkommentar beschreibt. */
+/* B155 (17.09.2026): war `left: 72px` direkt auf dem Streifen. Jetzt steht
+   die Zahl auf dem benannten Token, das `island.css` dafuer fuehrt — damit
+   liest JEDER, der diese Kante braucht, denselben Wert. Die Ausweichrechnung
+   der AUSTAUSCH-Pille ist der erste solche Leser, und sie hat den Unterschied
+   sofort gefunden: mit 14 statt 72 blieb die Pille um 58 px im Streifen. Die
+   Wirkung auf den Streifen selbst ist unveraendert (72 px, byte-gleich). */
+.app-wurzel[data-station='vis'] {
+  --isl-grundstreifen-links: 72px;
+}
+.app-wurzel[data-station='vis']:has(.isl-rand-sonne.isl-root--offen) .isl-grundstreifen {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* NACHTRAG 01.09.2026 — zweiter, unabhaengiger Streifen-Deckel in `vis`,
+   diesmal nicht durch SONNE (Anker unten-links, oben behandelt), sondern
+   durch AUSTAUSCH (`.isl-rand-unten`, MITTIG verankert): dieselbe Kollision
+   wie in `design` (`design/island/island.css`, dortiger Kommentar bei
+   `.isl-grundstreifen` traegt die Rot-vor-Gruen-Zahlen). `vis` nutzt
+   `.isl-rand-unten` fuer denselben Katalog-Eintrag (`VIS_ISLAND_KATALOG`,
+   `austausch`), darum derselbe Handgriff, additiv HIER statt in der
+   design-Datei — dieselbe Trennung wie bei der SONNE-Regel oben. */
+.app-wurzel[data-station='vis']:has(.isl-rand-unten.isl-root--offen) .isl-grundstreifen {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* NACHTRAG 02.09.2026 (ROADMAP 1259 Gruppe G5, `e2e-messungen/w5-1-insel-
+   ueberdeckung-funde.json`, vier Funde, alle mit `"treffer":"open-project"`):
+   dritter, unabhaengiger Streifen-Deckel in `vis` — diesmal durch GRAPH
+   (`.isl-rand-links`, linke Kante, `vis-island-katalog.ts` `VIS_INSELN`
+   Eintrag `graph`), Stufen
+   `popup:palette` UND `fenster:palette`, je bei 1180×820 und 1024×768.
+   Getroffen wird `island-palette-eintrag-blatt` — GEMESSEN, nicht geraten,
+   warum ausgerechnet dieser Eintrag: `VIS_NODE_KATALOG` (kosmo-kernel,
+   `derive/visgraph.ts`) hat 12 Node-Typen in vier Kategorien
+   (`KATEGORIE_REIHENFOLGE` in `inhalte/graph.tsx`: quelle→wandler→render→
+   ausgabe), und `blatt` ist der ZWEITE und letzte Eintrag der letzten
+   Kategorie `ausgabe` — buchstaeblich der letzte Button der ganzen Liste.
+   E-10 Antwort (c) gilt hier wie bei `.visisl-palette`/`.visisl-legende`
+   oben: die Liste waechst mit dem Katalog, kein `max-height`, kein Scroll
+   im Popup — der letzte Eintrag sitzt darum am tiefsten Punkt einer Flaeche,
+   die an KEINE feste Hoehe gebunden ist.
+
+   GLEICHER MECHANISMUS wie bei AUSTAUSCH oben, NICHT wie bei SONNE: `.isl-
+   rand-links` sitzt bei `left:14px; top:50%; translateY(-50%)` (`design/
+   island/island.css`) — vertikal MITTIG, weit weg von der Streifen-Ecke
+   unten links. Die geschlossene Pille ist dort 34×88px (vertikale
+   Orientierung, `.isl-vertikal .isl-pill`), die GRAPH-Leiste mit ihren drei
+   Werkzeugen (`palette`/`ausrichten`/`verbinden`) bleibt auch offen deutlich
+   unter 300px hoch — bei 768–820px Fensterhoehe liegt ihr Mittelpunkt-Band
+   damit klar VOR (oberhalb) der Streifen-Zone (deren y-Band ~`Fensterhoehe
+   − 58` bis `Fensterhoehe − 14` misst, `.isl-grundstreifen` `bottom:14px`
+   + `min-height:44px`). Das Hover/Klick-Ereignis, das `isl-root--offen`
+   ueberhaupt erst setzt (`IslandShell.tsx` `aufPointerEnter`/
+   `aufWerkzeugKlick`, beide an der Insel selbst, nicht am Streifen), wird
+   vom Streifen darum NIE abgefangen — anders als bei SONNE (TEIL 1 oben),
+   wo genau dieses Ereignis an der geschlossenen Pille kollidiert und die
+   `:has()`-Regel nie ausloesen kann. Erst NACH dem Oeffnen waechst die
+   Palette-Liste (Stufe popup UND fenster, `graph.tsx` registriert
+   `Stufe2`/`Stufe3` mit derselben Komponente) so weit nach unten, dass ihr
+   letzter Eintrag in die Streifen-Zone reicht — zu diesem Zeitpunkt steht
+   `isl-root--offen` laengst. Darum reicht hier, wie bei AUSTAUSCH, dasselbe
+   `:has()`-Muster allein — keine zusaetzliche geometrische Ausweiche wie
+   bei SONNE noetig, weil kein Henne-Ei-Fall vorliegt. */
+.app-wurzel[data-station='vis']:has(.isl-rand-links.isl-root--offen) .isl-grundstreifen {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* NACHTRAG 07.09.2026 — VIERTER Ausweich-Fall in `vis`, und der erste, bei dem
+   nicht die Insel einem Streifen ausweicht, sondern der MELDUNGS-STAPEL der
+   Insel. Fund aus dem E2E-Volllauf (`EXITCODE=1`, 07.09.2026 12:37 UTC,
+   `w5-1-insel-ueberdeckung.spec.ts:1951`), reproduzierbar auch im Retry:
+
+     vis @ 1024x768 · Insel sonne · popup:sonnenstunden
+       · island-sonnenstunden-popup-vergroessern → elementFromPoint liefert meldung-erfolg
+       · island-sonnenstunden-popup-schliessen  → elementFromPoint liefert meldung-erfolg
+
+   Eine Erfolgsmeldung liegt also ueber den zwei Kopfknoepfen des Popups.
+
+   **Warum es die BREITE ist und nicht die Hoehe — gerechnet, nicht geraten.**
+   Beide Flaechen haengen an einer festen `bottom`-Konstante: das SONNE-Popup an
+   `bottom:0` der Leiste (die bei `bottom:14px` sitzt, s. `.isl-rand-sonne` oben),
+   der Meldungs-Host an `bottom:160px` (`packages/kosmo-ui/src/aura.css`
+   `.k-meldungen-host`). Bei Fensterhoehe H liegt die Popup-Oberkante damit bei
+   `H − 14 − Ph`, die Toast-Unterkante bei `H − 160`. Sie ueberlappen in y genau
+   dann, wenn `Ph > 146` — **H kuerzt sich heraus**, das Sonnenstunden-Popup ist
+   immer hoeher als 146px, also ueberlappen sie vertikal bei JEDER Fensterhoehe.
+   Was entscheidet, ist x: das Popup ist LINKS verankert (`left: calc(100% + s3)`
+   der Leiste bei `left:14px`), der Toast ist ZENTRIERT (`left:50%`, Breite
+   `min(520px, 100vw − 32px)`). Seine linke Kante liegt bei `(W − 520) / 2` —
+   bei 1024 also 252, bei 1400 schon 440. Genau darum faellt der Fall bei der
+   schmalsten geprueften Breite und bei den zwei breiteren nicht.
+
+   **Warum dieser Weg und nicht die naheliegenden zwei.** Die Ebenen umzudrehen
+   (Popup ueber den Toast) ist ausgeschlossen: `aura.css` begruendet dort
+   ausdruecklich, dass `z-index:200` die offene Insel (`OFFENE_INSEL`, 100)
+   schlagen SOLL — sonst verschwinden Fehlermeldungen hinter Popups. Und
+   `SICHTBARE_TOASTS_MAX` zu senken (P-TOASTDECKEL, `meldungen.tsx`) hilft nicht:
+   der Sweep loest ueber `renderNodeAnlegen()` genau EINEN Toast aus, der Deckel
+   greift erst ab dem dritten, und seine Pflicht-Gegenprobe verbietet jede
+   Aenderung am 1-/2-Toast-Verhalten.
+
+   Gewaehlt ist darum dasselbe `:has()`-Muster wie in den drei Regeln oben, nur
+   mit vertauschten Rollen: solange SONNE offen ist, verlaesst der Meldungs-Host
+   die Mitte und legt sich an den rechten Rand. Seine linke Kante liegt dann bei
+   `W − 16 − 520` (bei 1024: 488 statt 252) — das Popup muesste ueber 428px breit
+   sein, um noch zu kollidieren. Nichts verschwindet, nichts wird gedimmt, keine
+   Ebene wird getauscht: die Meldung bleibt vollstaendig sichtbar und lesbar, sie
+   steht nur woanders. Sobald SONNE auf die Pille faellt, ist sie ohne weiteres
+   Zutun wieder mittig.
+
+   `KMeldungen()` ruft KEIN `createPortal` auf (`packages/kosmo-ui/src/
+   meldungen.tsx`, im Gegensatz zu `KBestaetigung()`) und steht als Kind von
+   `.app-wurzel` (`App.tsx:1039` oeffnet, `:1934` rendert) — der
+   Nachfahren-Selektor greift also. Nur fuer `vis`: die anderen fuenf Stationen
+   kennen keine SONNE-Insel. */
+.app-wurzel[data-station='vis']:has(.isl-rand-sonne.isl-root--offen) .k-meldungen-host {
+  left: auto;
+  right: var(--k-s4);
+  transform: none;
+}
+
+/* P-RAND (v0.9.29, `docs/V0929-SPEZ.md` §1; Sonde 2, Rotfall «KosmoVis,
+   Popup ‹sonnenstunden› unten» bei 1400×900 / 1280×800 / 1024×768) — die
+   fünfte Rand-Position hatte ihre Öffnungsrichtung nie bekommen.
+   `design/island/island.css` regelt sie je Rand-Klasse: `.isl-rand-unten`
+   klappt nach OBEN auf, `.isl-rand-links`/`-rechts` klappen SEITLICH auf
+   (O-3, zweite Hälfte, v0.9.28). `.isl-rand-sonne` steht in keiner der
+   vier Listen und fiel darum auf die Grundregel `.isl-popup { top: calc(100%
+   + var(--k-s3)) }` zurück: eine Insel, die 14px über der Unterkante sitzt,
+   klappte ihr Popup NACH UNTEN aus dem Bild — jedes Mal, und jedes Mal
+   musste die Laufzeit-Klammer (`klammereInViewport`, IslandShell.tsx) es
+   zurückholen. Genau diese Abhängigkeit von der Notbremse benennt der
+   O-3-Kommentar in `island.css` als den eigentlichen Fehler.
+   Übernommen wird darum die dort gebaute Mechanik, nicht eine zweite
+   daneben: eine vertikale Insel klappt seitlich auf (SONNE steht links →
+   nach rechts). Ausgerichtet wird an der UNTERKANTE der Leiste (`bottom: 0`)
+   statt an der Oberkante wie bei `.isl-rand-links` — SONNE ist am unteren
+   Rand verankert, ihre Leiste wächst nach oben; ein an der Oberkante
+   ausgerichtetes Popup wüchse von dort wieder nach unten aus dem Bild.
+   Damit steht das Popup ohne jede Laufzeit-Rettung im Bild, solange es
+   nicht höher ist als das Fenster — und die Klammer ist wieder das
+   Sicherheitsnetz, das sie sein soll.
+   Die `transform`-Zeile wiederholt die der beiden design-Regeln wörtlich:
+   ohne `translateX(-50%)` (nicht mehr zentriert), aber MIT beiden
+   Klammer-Vektoren, sonst wäre das Sicherheitsnetz abgeschnitten. */
+.isl-rand-sonne .isl-popup,
+.isl-rand-sonne .isl-fenster {
+  top: auto;
+  bottom: 0;
+  left: calc(100% + var(--k-s3));
+  /* Die zwei Klammer-Vektoren werden hier lokal auf 0 gesetzt — dieselbe
+     Konvention wie in `design/island/island.css` (`.isl-popup`,
+     `.isl-werkzeug-tooltip`): die CSS-Datei hält den Ruhewert, `IslandShell`
+     schreibt nach der Messung den echten. Ohne diese zwei Zeilen wäre
+     `var(--isl-clamp-x)` vor der ersten Messung nirgends deklariert, die
+     ganze `transform`-Deklaration damit ungültig — und das Popup stünde
+     unverschoben, also ausgerechnet ohne das Sicherheitsnetz, das dieser
+     Block herstellen soll. */
+  --isl-clamp-x: 0px;
+  --isl-clamp-y: 0px;
+  transform: translate(var(--isl-clamp-x), var(--isl-clamp-y));
+}
+
+/* Dieselbe Kehrseite wie bei den zwei design-Rändern (s. `popInSeitlich` in
+   `design/island/island.css`): die zentrierenden Keyframes würden das jetzt
+   seitlich verankerte Popup während seiner 200ms um die halbe Breite nach
+   links reissen — bei einer Insel am LINKEN Rand aus dem Bild heraus. Die
+   Keyframes selbst sind dokumentweit gültig und werden hier nur benannt,
+   keine zweite Kopie. */
+.isl-rand-sonne .isl-anim-popIn {
+  animation-name: popInSeitlich;
+  transform-origin: left bottom;
+}
+.isl-rand-sonne .isl-anim-winIn {
+  animation-name: winInSeitlich;
+  transform-origin: left bottom;
+}
+
+/* P-UEBERDECKUNG Klasse 2 (ROADMAP 1000-Nachlauf, `e2e-results/w5-1-insel-
+   ueberdeckung-funde.json` vom 19.08.2026) — die STIMMUNG-Insel
+   (`.isl-rand-rechts`, geerbte Vertikal-Mitte `top:50%` aus `design/island/
+   island.css`, hier NICHT angefasst) liegt bei 1180×820 und 1024×768 unter
+   dem geöffneten Kosmo-Panel (`.kp-panel--insel-offen`, rechts-unten
+   verankert, `kosmo-panel.css`). GEMESSEN, nicht vermutet (drei Fragen aus
+   dem Auftrag, Belege im Bau-Bericht):
+   1. `.isl-root--offen` steht in diesem Zustand wirklich auf der
+      VIS-Insel — `islandIstOffen` ist wahr, `.kp-panel--insel-offen` sitzt
+      korrekt auf dem Panel.
+   2. Der TREFFER ist NICHT der Panel-Grund (der ist wie vorgesehen
+      `pointer-events:none`) — echte `document.elementFromPoint`-Messung
+      zeigt ihn auf der Kopfreihe `.kp-kopf` (ein direktes Kind, `> *` macht
+      sie bewusst klickbar) bzw. auf `kosmo-panel-schliessen` selbst, je
+      nach Panel-Höhe (Stufe M/S) im Moment der Messung. Der Schliessen-
+      Knopf ist der einzige Ausweg aus dem Panel und MUSS klickbar bleiben —
+      «Panel durchlässig machen» ist hier die falsche Antwort (die ist
+      bereits gebaut, ROADMAP 986, und wirkt genau wie vorgesehen).
+   3. Die zwei Flächen überlappen SCHON bei 1400×900 geometrisch (gemessen:
+      ~44 px X-Überlappung) — dort trifft der Klick trotzdem richtig, weil
+      an dieser Y-Position der leere, durchlässige `.kp-verlauf`-Grund
+      liegt statt der Kopfreihe. Bei den zwei kleineren Fenstern schiebt
+      sich (Panel bottom:144px fix, `top:50%` der Insel folgt der
+      Fensterhöhe) die Kopfreihe/der Schliessen-Knopf genau in die Zone,
+      die die Insel für sich beansprucht.
+   Nach der 987-Regel weicht darum das WERKZEUG aus, nicht der Knopf — sein
+   Verlust kostet weniger (die Insel bleibt eine von fünf, nach dem
+   Schliessen des Panels sofort wieder in normaler Lage erreichbar; der
+   Schliessen-Knopf ist ohne Ersatz). Nach 985 sitzt der Fix an der Insel
+   selbst — hier bewusst per `data-testid`, NICHT über die geteilte
+   `.isl-rand-rechts`-Klasse, die auch andere Stationen tragen können und
+   die dieser Dateikreis nicht mitbestimmen darf. `:has()` ist im
+   gepinnten Playwright-Chromium unterstützt (Präzedenz: `design/island/
+   island.css` `.dw-viewport-container:has(.so-leiste)`, `boden-dock.css`,
+   `orbit-065.css`) — reine CSS-Regel, kein neuer React-State, kein
+   Eingriff in `KosmoPanel.tsx`/`kosmo-panel.css` nötig, die Regel lebt
+   komplett hier. Zielposition oben rechts statt vertikal mittig: der
+   höchste in dieser Messung vorkommende Panel-Kopf (Stufe M, 1024×768)
+   beginnt bei y≈104; die Insel-Wurzel endet am oberen Anker bei y≈100 —
+   mit Marge, gegen den echten Wächter nachgemessen (Bau-Bericht). Die
+   Popup-/Fenster-Position hängt NICHT an der Vertikal-Mitte (`.isl-rand-
+   rechts .isl-popup`/`.isl-fenster` ankern bereits an `top:0` der Wurzel,
+   `island.css` Z.549) — die Verschiebung bricht daran nichts. Sobald das
+   Panel schliesst, kehrt die Insel ohne weiteres Zutun in ihre normale
+   Lage zurück.
+   14px HARTKODIERT statt `var(--isl-rand-abstand)`: der Token ist auf
+   `.isl-root` in `design/island/island.css` deklariert, einer ANDEREN
+   Datei — `test/css-var-konsistenz.test.ts` prüft Deklaration/Aufruf PRO
+   DATEI (G3 seines Kopfkommentars: Kaskade über Dateigrenzen zählt nicht
+   automatisch) und meldete den `var()`-Aufruf hier zu Recht als toten
+   Fallback-Pfad. Genau das bereits etablierte Muster dieser Datei
+   (`.isl-rand-sonne` oben, `left:14px; bottom:14px`) hartkodiert denselben
+   Wert aus demselben Grund — kein neuer Stil, nur befolgt. */
+body:has(.kp-panel--insel-offen) [data-testid="island-stimmung-root"] {
+  /* B149 (17.09.2026) — WAR 14px, und das war die Ursache eines zweiten
+     Befundes statt der Heilung des ersten.
+
+     Die Rechnung oben ging gegen den PANEL-KOPF und ging dort auf. Gegen die
+     KOPFZEILE wurde nicht gerechnet, und die steht bei y 11..60. Gemessen
+     (`probe-stimmung-lage.mjs`, drei Fenstergroessen x drei Blasenstufen,
+     neun Zustaende): die Insel stand bei y 14..100.5 und schnitt die
+     Kopfzeile mit 2569 px² — in ALLEN NEUN Zustaenden bitgleich, weil beide
+     am rechten Rand haengen und die Fenstergroesse daran nichts aendert.
+
+     Die Ausweiche hat die Ueberdeckung also nicht beseitigt, sondern
+     verlegt: aus 608 px² gegen das Panel wurden 2569 px² gegen die
+     Kopfzeile. Das VIERFACHE, und an einer Stelle, an der die Kopfzeile
+     gewinnt (sie liegt hoeher) — die Insel verschwand darunter.
+
+     74px = Unterkante Kopfzeile (60) plus derselbe 14er-Abstand, den diese
+     Datei schon zweimal hartkodiert. Die Insel steht damit bei y 74..160.5.
+     Der engste gemessene Abstand nach unten ist das Panel bei 1024x768
+     (Oberkante y 324) — 163 px Luft. Gemessen, nicht schaetzungsweise:
+     Panel-Oberkante 456 (1400x900), 376 (1280x820), 324 (1024x768), und
+     die Blasenstufe s/m/l aendert daran nichts. */
+  top: 74px;
+  transform: none;
+}
+
+/* B154 (17.09.2026) — DERSELBE AUSWEG, AM RICHTIGEN ZUSTAND AUFGEHAENGT.
+
+   B149 hat die Regel darueber repariert und einen Satz als «Befund fuer sich»
+   stehen lassen: sie haengt an `.kp-panel--insel-offen`, und diese Klasse sitzt
+   nur, solange eine Insel-LEISTE ausgeklappt ist (`KosmoPanel.tsx`, `inselOffen`).
+   Das Kosmo-Feld steht aber auch ohne jede ausgeklappte Leiste da.
+
+   **Das ist der ganze Fehler, und er ist einer der Bedingung, nicht der Zahl:
+   ausgewichen wird dem FELD, ausgeloest hat es die LEISTE.** Eine Ausweiche, die
+   an etwas anderem haengt als an dem, wovor sie ausweicht, greift genau dann
+   nicht, wenn man sie braucht.
+
+   Nachgemessen statt uebernommen (`b154-probe.mjs`, fuenf Inseln x zwei
+   Zustaende x drei Fenstergroessen, dieselben Zahlen wie im B149-Blatt):
+
+     Feld offen, keine Leiste offen — Pille auf dem Kosmo-Feld
+       1400x900    608 px²   Pille x 1352..1386 y 406..494 · Feld rechts 1368
+       1280x820   1248 px²   Pille x 1232..1266 y 366..454 · Feld rechts 1248
+       1024x768   1408 px²   Pille x  976..1010 y 340..428 · Feld rechts  992
+
+   **Warum die Ueberdeckung in x immer genau 16 px breit ist, gerechnet statt
+   geraten:** das Feld sitzt bei `right:32px` (`kosmo-panel.css` `.kp-panel`),
+   die Insel bei `right:14px` mit 34 px Pillenbreite — ihre linke Kante liegt
+   damit bei `W − 48`, die rechte Kante des Feldes bei `W − 32`. Die Differenz
+   ist 16, **W kuerzt sich heraus**. Was die drei Zahlen oben unterscheidet, ist
+   allein die Hoehe des Ueberlapps, und die folgt der Fensterhoehe: die Insel
+   haengt an `top:50%`, das Feld an `bottom:144px`.
+
+   Daraus folgt auch, warum es keine seitliche Loesung gibt: 16 px nach rechts
+   auszuweichen hiesse, die Pille auf `right:-2px` zu setzen — aus dem Bild
+   heraus. Der Weg ist derselbe wie bei B149, senkrecht nach oben.
+
+   **Warum dieselben 74 px und keine zweite Zahl.** 74 = Unterkante Kopfzeile
+   (60) plus der 14er-Abstand, den diese Datei schon dreimal hartkodiert
+   (`.isl-rand-sonne`, die B149-Regel darueber). Gemessen steht die geschlossene
+   Pille dort bei y 74..162; die Kopfzeile endet bei 60, die Oberkante des
+   Feldes liegt am engsten bei 324 (1024x768) — 162 px Luft nach unten.
+
+   **Und der stille Gewinn:** weil die Zielposition dieselbe ist wie in der
+   Regel darueber, springt die Insel beim Ausklappen nicht mehr. Bisher stand
+   sie in der Feldmitte und sprang unter dem Zeiger nach oben rechts, sobald
+   die Leiste aufging — eine Bewegung, die der Bedienung im Weg steht, weil sie
+   genau den Punkt verlaesst, auf den geklickt wurde. Jetzt steht sie bereits
+   dort, sobald das Feld offen ist, und bleibt beim Ausklappen liegen.
+
+   **Die B149-Regel wird NICHT angefasst.** Sie ist die engere Bedingung und
+   damit eine Teilmenge dieser hier; ihre Wache
+   (`e2e/b149-stimmungsinsel-unter-der-kopfzeile.spec.ts`) prueft weiter genau
+   den Zustand, fuer den sie geschrieben wurde. Sie hier einzuschmelzen hiesse,
+   eine gepruefte Regel gegen eine ungepruefte zu tauschen und die Herkunft
+   beider Befunde in einem Block zu verwischen. Gleiche Deklarationen, gleiche
+   Spezifitaet (0,2,1), diese Regel steht spaeter — im ueberlappenden Fall
+   entsteht kein Widerspruch, weil beide denselben Wert setzen.
+
+   `.kp-panel` existiert nur, solange das Kosmo-Feld offen ist (gemessen:
+   `document.querySelector('.kp-panel')` ist bei `kosmo.panelOffen=0` null) —
+   die Bedingung braucht darum keinen zweiten Zustandstraeger. Sobald das Feld
+   schliesst, kehrt die Insel ohne weiteres Zutun in ihre normale, senkrecht
+   mittige Lage zurueck.
+
+   Nur `island-stimmung-root`, wie bei B149 ueber den Testnamen statt ueber die
+   geteilte `.isl-rand-rechts`-Klasse: die anderen vier Vis-Inseln sind in
+   beiden Zustaenden an allen drei Fenstergroessen bei 0 px² gegen Feld und
+   Kopfzeile gemessen (A2 desselben Auftrags) — eine vorbeugende Verschiebung
+   waere genau die Ausweiche ohne Befund, die B149 aufgedeckt hat. Und
+   `island-stimmung-root` gibt es nur in `vis` (`vis-island-katalog.ts`; der
+   design-Katalog kennt `zeichnen|ansicht|projekt|austausch`). */
+body:has(.kp-panel) [data-testid="island-stimmung-root"] {
+  top: 74px;
+  transform: none;
+}
+
+.visisl-stufe2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  min-width: 200px;
+}
+
+.visisl-reihe {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  flex-wrap: wrap;
+}
+
+.visisl-hinweis {
+  margin: 0;
+  font-size: var(--k-t-micro);
+  line-height: var(--k-lh-basis);
+  opacity: 0.75;
+}
+
+.visisl-hinweis-klein {
+  margin: 0;
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-knapp);
+  opacity: 0.65;
+}
+
+/* ── Node-Palette ─────────────────────────────────────────────────── */
+/* E-10 (`docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`, Owner-Befund O-12),
+   Antwort (c) «die Insel wächst mit»: `max-height: 320px` + `overflow-y:
+   auto` sind entfallen. Die Länge dieser Liste bestimmt der CODE
+   (`VIS_NODE_KATALOG`, eine Quelldatei), nicht das Projekt — also gehört
+   sie ganz gezeigt, und die Fläche darf dafür wachsen. */
+.visisl-palette {
+  min-width: 220px;
+}
+.visisl-palette-kat-kopf {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: var(--k-s2);
+}
+.visisl-palette-kat-strich {
+  width: 10px;
+  height: 2px;
+  background: var(--_farbe);
+  display: inline-block;
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.visisl-palette-kat-label {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  opacity: 0.7;
+}
+.visisl-palette-kat-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.visisl-palette-eintrag {
+  text-align: left;
+  padding: 4px 6px;
+  border-radius: var(--k-radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: var(--k-t-sm);
+  cursor: pointer;
+}
+.visisl-palette-eintrag:hover {
+  background: var(--k-hover);
+  border-color: var(--k-line);
+}
+
+/* ── Legende: Node-Fähigkeits-Infos (K36, Owner-Korrekturen 2026-07 S.14
+   «erweitere sie an infos und was der jeweilige node alles kann») —
+   Akkordeon je Node-Typ in `inhalte/legende.tsx`. Kopfzeile ≥44px
+   Trefferfläche (design-`island.css` §4.2-Mass), Rest folgt der Palette
+   (`visisl-palette-eintrag`-Typografie, NUR `var(--k-*)`-Token). ──────── */
+/* E-10, Antwort (c) wie bei `.visisl-palette` oben: die Legende zeigt die
+   Node-Typen, die IM GRAPHEN vorkommen — ihre Obergrenze ist der
+   Code-Katalog, nicht die Projektgrösse; und je Typ ist nur die Kopfzeile
+   dauerhaft sichtbar (Akkordeon, `inhalte/legende.tsx`), das ist bereits
+   die Gruppierung aus Antwort (b). Kein Scroll. */
+.visisl-legende {
+  min-width: 240px;
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.visisl-legende-abschnitt {
+  margin: var(--k-s2) 0 0;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  opacity: 0.7;
+}
+.visisl-legende-node-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  width: 100%;
+  min-height: 44px; /* Touch-Ziel §4.2 */
+  padding: 4px 6px;
+  border-radius: var(--k-radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: var(--k-t-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.visisl-legende-node-kopf:hover {
+  background: var(--k-hover);
+  border-color: var(--k-line);
+}
+.visisl-legende-node-name {
+  flex: 1;
+}
+.visisl-legende-node-pfeil {
+  font-size: var(--k-t-md);
+  opacity: 0.6;
+}
+.visisl-legende-node-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  margin: 0 0 var(--k-s2) 10px;
+  padding: 2px 0 2px 8px;
+  border-left: 2px solid var(--k-line);
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.visisl-legende-info-titel {
+  margin: 0;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xxs);
+  opacity: 0.6;
+}
+
+/* ── Render-Listen (AUSTAUSCH) ────────────────────────────────────── */
+/* P-UEBERDECKUNG Klasse 1 (ROADMAP 1000-Nachlauf, `e2e-results/w5-1-insel-
+   ueberdeckung-funde.json` vom 19.08.2026, bereits als vorbestehender
+   Fremdbefund in ROADMAP 993 gemeldet, dort ausserhalb des dortigen
+   Dateikreises nicht gebaut): der «Ausführen»-Knopf der ERSTEN Render-Zeile
+   sitzt in diesem Popup unter dem Vergroessern-Kopfknopf
+   (`.isl-vergroessern`, `design/island/island.css`, `top:var(--k-s2)`,
+   44px Trefferfläche, oben rechts) — dieselbe reservierte Ecke, die schon
+   ROADMAP 980 (Export-Popup) und ROADMAP 985/W6-1 (acht design-Werkzeuge)
+   gekostet hat. GEMESSEN, nicht vermutet: ein echter `page.mouse.click`
+   auf die Knopfmitte VOR diesem Fix aendert den Status nicht (bleibt
+   „bereit") — an ALLEN drei Fenstergroessen, s. Bau-Bericht.
+   Genau dasselbe Muster wie dort, darum genau derselbe Fix — NICHT die
+   gemeinsame `.isl-popup`/`.isl-fenster`-Hülle (`island.css`, ausserhalb
+   dieses Dateikreises UND laut 985/W6-1 live als Regressionsquelle
+   nachgewiesen: derselbe Versuch dort erzeugte einen NEUEN Fund auf einer
+   bis dahin sauberen VIS-Kombination) und NICHT die geteilte
+   `.visisl-stufe2` (rendert SECHS andere Popups mit, `inhalte/{ansicht,
+   ansichten,graph,legende,sonne,stimmung}.tsx` — eine Änderung dort träfe
+   sie alle ungeprüft mit). Stattdessen eine private, additive Zusatzklasse
+   NUR auf `RenderSendenStufe2`s zwei Wurzel-Divs (`austausch.tsx`), mit
+   demselben, bereits einmal gemessenen Wert wie `design/island/inhalte/
+   pd3a.css` (`padding-top: var(--isl-kopfzone-frei)`, dort für exakt
+   dieselbe 48px-Ecke ermittelt). */
+.visisl-render-senden-stufe2 {
+  padding-top: var(--isl-kopfzone-frei);
+}
+
+/* P-DECKEL-2 (23.08.2026, e2e/blender-bridge.spec.ts:222, Screenshot
+   `e2e-results/blender-bridge-Label-Kette-*`): DIESELBE Klasse wie der
+   Kommentarblock oben — derselbe Kopfknopf (`.isl-vergroessern`,
+   `design/island/island.css`), aber ein ANDERES Popup: `AufsPlakatStufe2`
+   (`austausch.tsx`), nicht `RenderSendenStufe2`. Der Fix von ROADMAP
+   978/979 (Kommentar oben) reservierte die 48px-Ecke NUR auf
+   `.visisl-render-senden-stufe2` — `AufsPlakatStufe2`s zwei Wurzel-Divs
+   trugen bis hierhin ausschliesslich die geteilte `.visisl-stufe2` (rendert
+   sechs andere Popups mit, s. Kommentar oben — darum dort bewusst NICHT
+   angefasst) und blieben ungedeckelt: der «Aufs Blatt»-Knopf der ERSTEN
+   Render-Zeile sitzt exakt unter `.isl-vergroessern`. GEMESSEN: der
+   E2E-Fall lief 90s in die Zeitüberschreitung, Playwright-Log nennt genau
+   diesen Knopf als Interceptor. Gleiches Rezept, gleicher Wert, dritte
+   private Zusatzklasse auf den Wurzel-Divs statt eines vierten Griffs an
+   `.isl-popup`/`.isl-fenster` selbst (dort laut 985/W6-1 als
+   Regressionsquelle nachgewiesen, s.o.). */
+.visisl-aufs-plakat-stufe2 {
+  padding-top: var(--isl-kopfzone-frei);
+}
+
+.visisl-render-zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--k-s2);
+  font-size: var(--k-t-sm);
+  padding: 3px 0;
+}
+.visisl-render-titel {
+  font-weight: var(--k-gewicht-stark);
+}
+
+/* ── Stimmungs-Kacheln (E5: prozedurale Vorschau, 0 Assets) ──────── */
+.visisl-stimmung-reihe {
+  display: flex;
+  gap: var(--k-s3);
+}
+.visisl-stimmung-kachel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--k-radius-sm);
+  border: 1.5px solid transparent;
+  background: transparent;
+  cursor: pointer;
+}
+.visisl-stimmung-kachel:hover {
+  background: var(--k-hover);
+}
+.visisl-stimmung-kachel--aktiv {
+  border-color: var(--k-accent);
+}
+.visisl-stimmung-canvas {
+  display: block;
+  border-radius: 4px;
+  border: 1px solid var(--k-line);
+}
+.visisl-stimmung-label {
+  font-size: var(--k-t-xs);
+  opacity: 0.75;
+}

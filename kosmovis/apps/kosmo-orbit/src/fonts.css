@@ -1,0 +1,51 @@
+/* V0.7.2 «Visuelles Update» §1 — self-gehostete Fonts fürs orbit-Theme.
+   Lato (--k-font-ui) + PT Sans Narrow (--k-font-titel) + IBM Plex Mono
+   (Mass-/Wertangaben, ergänzt den bestehenden --k-font-mono-Stack) — nur
+   latin-Subset, woff2, self-hosted (`public/fonts/`, siehe README dort für
+   OFL-Lizenzhinweis). Kein CDN: die CSP (`index.html`) erlaubt `font-src
+   'self' data:` — das reicht bereits, es wird hier NICHTS erweitert.
+   Import in main.tsx NACH aura.css (Kaskade: die Theme-Variablen stehen
+   zuerst, die @font-face-Regeln bringen die Dateien für sie mit). */
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/lato-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/lato-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'PT Sans Narrow';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/pt-sans-narrow-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'PT Sans Narrow';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/pt-sans-narrow-latin-700-normal.woff2') format('woff2');
+}

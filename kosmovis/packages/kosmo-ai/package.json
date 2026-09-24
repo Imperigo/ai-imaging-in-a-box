@@ -1,0 +1,12 @@
+{
+  "name": "@kosmo/ai",
+  "version": "1.0.0-v1-visbox",
+  "private": true,
+  "type": "module",
+  "description": "STELLVERTRETER (E26): vom KI-Paket von KosmoOrbit braucht das Vis-Werkzeug nur die Vorgabeadresse der Bruecke.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

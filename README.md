@@ -58,6 +58,7 @@ allein. Sie unterscheidet sauber, wo der zusammengesetzte Score es nicht tut. *D
 | | Stand |
 |---|---|
 | Oberflaeche (`oberflaeche/`) | gebaut am 21.09. **Ausserhalb des Kerns** (Regel 4), ohne fremdes Paket, ohne Netz, nur auf 127.0.0.1. Zeigt Modell und jedes Bild mit seinem Urteil — *ein ungeprueftes Bild sieht weder aus wie ein bestandenes noch wie gar nichts*. Der **Knotenbaum ist bedienbar**: Einstellungen je Knoten, und die Felder kommen aus der Bibliothek statt aus einer Liste. Zwoelf Mutationsproben |
+| Knotenansicht aus KosmoOrbit (`kosmovis/`) | übernommen am 24.09. (E26): das Vis-Werkzeug **wörtlich kopiert**, 198 Dateien mit Abdruck in `kosmovis/HERKUNFT.json`, 19 Stellvertreter für alles ausserhalb. **Läuft im Browser**, Knoten legen und verbinden geht; 722 Proben des Originals in 78 Dateien grün (`npm test` in `kosmovis/`). **Noch nicht angeschlossen:** Modell aus der Mappe, Render über unseren Server |
 | Arbeitsgang — Modell herein, Kette fahren, Urteil in die Mappe | gebaut am 21.09. **Erster Aufrufer des Graphen im Produktcode.** Ein geändertes Modell hält den Lauf an (mit Öffner, der im Ergebnis steht); die Hochachse wird bei einer fremden glb **nicht geraten**. Sieben Mutationsproben, alle gefallen |
 | Projekt — Modell öffnen, arbeiten, morgen weitermachen | gebaut am 21.09. Das Modell wird **verwiesen, nicht kopiert**; ein geändertes Modell hält nichts an, es wird gemeldet. Sieben Mutationsproben, alle gefallen — zwei davon erst im dritten Anlauf |
 | 3D-Modell-Importeur (`obj`, `fbx`, `dae`, `stl`, `ply`, `usd`, `abc`, `x3d`) | gebaut am 21.09., **nur mit Attrappen geprüft** — echtes Blender hat er nie gesehen. Die Messung ist bestellt (`auf-20260921-126`). *Bis dahin gilt: gebaut, am Gerät unbestätigt.* |
@@ -78,7 +79,7 @@ darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). 
 bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **8016**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **8030**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---
