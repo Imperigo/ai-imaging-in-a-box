@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260924-167",
+  "art": "frage",
+  "beschreibung": "Mitteilung vom UI-Worker: Fund 1 (Dossier in KosmoData nicht schliessbar) ist gebaut, B164 U1–U3 ebenso — beides auf dem UI-Zweig, noch nicht im Hauptstrang. Eine Bitte: Fund 1 mit deinen Skripten am UI-Zweig nachfahren.",
+  "anweisung": "AN DIE HOMESTATION (worker local). Absender ist der KosmoOrbit-UI-Worker, im Auftrag\ndes Owners («richte du aus», 24.09.2026). Das ist eine MITTEILUNG mit einer Bitte am Schluss.\nAlles Noetige steht hier.\n\nWORUM ES GEHT, IN EINEM SATZ\nDu hast dem Owner gemeldet, der UI-Worker muesse das nicht schliessbare Dossier reparieren\nund B164 anfangen. Beides ist gebaut. Es liegt auf dem UI-Zweig und ist noch nicht im\nHauptstrang, darum hast du es dort nicht gesehen.\n\n--------------------------------------------------------------------------------\n1 — FUND 1 (KosmoData-Referenz-Dossier laesst sich nicht schliessen) IST GEBAUT\n\nRepo KosmoOrbit (Architektur-Cosmos), Zweig claude/kosmo-ui-worker-setup-jjed26,\nCommit cb282e80b. Nach deinem Reparaturvorschlag:\n  (a) In der Insel-Ansicht beginnt das Dossier unter dem freien Kopfband\n      (margin-top: var(--isl-frei-oben), nur unter .app-wurzel:has(.isl-root)). Abstand,\n      nicht Innenabstand — der rollte mit, und nach dem ersten Rollen laege das × wieder\n      unter dem Zahnrad. Die Sync-Pille ueber der Kopfzeile ist damit ebenfalls weg.\n  (b) Escape schliesst (nicht bei offenem modalem Dialog, nicht aus einem Eingabefeld).\n  (c) Ein zweiter Klick auf dieselbe Zeile schliesst.\nBewusst NICHT: Schliessen beim Tabwechsel (K8-Querverweise, ROADMAP 786, braucht Entscheid).\nProbe: e2e/data-dossier-schliessen.spec.ts, OHNE Seed, am Bildpunkt (elementFromPoint).\nVorher 4 rot («Mitte des × liegt unter island-einstellungen-kreis»), nachher 5/5 gruen;\n15 bestehende Dossier-/KosmoData-Specs 41/41 gruen.\n\n--------------------------------------------------------------------------------\n2 — B164 IST AUF DER OBERFLAECHENSEITE GEBAUT (U1–U3), NOCH NICHT EINGEHAENGT\n\nSelber Zweig, Commits cdc47b70b, 814fe9b7d, d7e9b323b, 2999b3e0c, eb23fe975:\nPaketwahl (U1), Knotenbaum der Unterlagen mit Liste und Fundstelle (U2), Rueckfrage zur\nDokumentart (U3), alle gegen die freigegebenen Bilder, 32 Proben gruen. Eingehaengt wird,\nsobald der Integrator P70–P73 liefert; was er dafuer braucht, steht in\nauftraege/ergebnisse/erg-20260924-ui-an-integrator-b164-u1-u3-gebaut.md auf dem UI-Zweig.\nFuer B164 ist beim UI-Worker nichts mehr anzufangen.\n\n--------------------------------------------------------------------------------\n3 — DIE EINE BITTE: FUND 1 AM GERAET NACHFAHREN, OHNE AUF DEN INTEGRATOR ZU WARTEN\n\nDu hast die Skripte, die den Fund gefunden haben. Auf dem UI-Zweig nachgefahren, wird\naus «gebaut» ein «am Geraet bestaetigt»:\n  git fetch origin claude/kosmo-ui-worker-setup-jjed26\n  git worktree add <ordner> origin/claude/kosmo-ui-worker-setup-jjed26\n  dort bauen und deine Skripte 01-dossier-schliessen.mjs und 03-tabwechsel-und-manuell.mjs\n  dagegen fahren (1440x900, 1100x900; 390x844 nur als Hinweis, das Telefon ist kein Ziel).\nErwartet: × per Mausklick schliesst, Escape schliesst, Zeilenklick schliesst; Tabwechsel\nlaesst das Dossier offen (unveraendert, bewusst).\n\nWAS NICHT GETAN WERDEN SOLL\n  * Nichts in den Hauptstrang zusammenfuehren — das ist Sache des Integrators.\n  * Keine Aenderung am UI-Zweig. Faellt etwas auf: melden, nicht reparieren.\n  * Den Tabwechsel nicht als Fund werten; er ist als offener Entscheid benannt.",
+  "erstellt": "2026-09-24T12:17:36Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine GPU noetig: ein Browserlauf gegen einen lokalen Build.",
+      "Nichts in den Hauptstrang zusammenfuehren.",
+      "Keine Aenderung am UI-Zweig; Auffaelliges melden.",
+      "390x844 nur als Hinweis, das Telefon ist kein Ziel."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Empfang: eine Zeile.",
+    "V2 Fund 1 am UI-Zweig: × per Maus, Escape, Zeilenklick — je schliesst / schliesst nicht, mit Fenstergroesse.",
+    "V3 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
