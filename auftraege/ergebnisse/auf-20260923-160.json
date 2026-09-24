@@ -1,0 +1,595 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-160",
+ "status": "ok",
+ "beendet": "2026-09-24T07:10:00Z",
+ "stand": "77e4a30",
+ "geprueft": "A gelesen vor dem Ziehen (Stand 5c30547). B1 12 Laeufe Kette, B2 12 Laeufe eigenes Skript (2.1), C ueber drei Wege, D 16 QA-Laeufe an den vier Bildern aus 158 ohne neuen Render, E ein Kettenlauf offline. Code unberuehrt, nichts heruntergeladen, Messschalter nur in B.",
+ "kurzantwort": "B: Die Polaritaet haengt nicht am Koerper, sondern am ControlNet und am Schaetzer: Mit 2.1 und der Register-Umkehr steht bei BEIDEN Koerpern ein freistehendes Gebaeude genau auf der Silhouette, ohne Umkehr fuellt sich der Grund; mit 1.0 macht die Umkehr beim Hochbau die «Gasse». Die QA-Zahlen dazu (spearman, rho_maske) sind hier wenig tragfaehig: 90 % der Geometrie beider Koerper liegen in einem Tiefenband von rund 0.4 m bei 11 bzw. 29 m Abstand — es gibt kaum eine Ordnung zu messen. C: Die Fuehrung kommt an (fuehrung_regler_angekommen true) und kostet das 1.82-fache (58.3 s → 106.3 s Diffusion, 20 Schritte); das Bild wird aus einer abstrakten Streifenfassade ein glaubwuerdiges Wohnhausfoto. ABER: Auf dem Produktweg laeuft das Edit-Modell heute ueber den Speicher (C3: CUDA out of memory) — vorab gemeldet. D: Eure Vermutung stimmt: Bei den sauberen 2.1-Bildern liegen unter «vorgabe» (= wie_soll) 100 % der gewaehlten Ist-Punkte im unteren Drittel und 0 % im Soll — der erfundene Boden. «ohne_randberuehrung» verwirft alles (n_ist 0). E: Die Kette laedt offline, aber nur, weil die config.json seit gestern im Zwischenspeicher liegt.",
+ "befunde": {
+  "A": "A1–A5 gelesen, vor dem Ziehen.",
+  "B1_kette_1.0": [
+   {
+    "cn": "1.0",
+    "lauf": "testbau-register-s0",
+    "score": 0.4498098352496061,
+    "spearman": -0.5824046492456221,
+    "geom_iou": 0.3474025974025974,
+    "bestanden": false,
+    "rho_maske": -0.8363770401607946,
+    "rho_maske_gerichtet": 0.8363770401607946,
+    "qa": "Score 0.450 < Schwelle 0.65 (|spearman| 0.582 über 26750 gemeinsame Punkte, geom_iou 0.347)."
+   },
+   {
+    "cn": "1.0",
+    "lauf": "testbau-register-s1",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": 0.6307795607180227,
+    "rho_maske_gerichtet": -0.6307795607180227,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Ger"
+   },
+   {
+    "cn": "1.0",
+    "lauf": "testbau-register-s2",
+    "score": 0.023823102528675758,
+    "spearman": -0.03288831047455818,
+    "geom_iou": 0.017256593783704286,
+    "bestanden": false,
+    "rho_maske": -0.3310231027486598,
+    "rho_maske_gerichtet": 0.3310231027486598,
+    "qa": "Score 0.024 < Schwelle 0.65 (|spearman| 0.033 über 1760 gemeinsame Punkte, geom_iou 0.017)."
+   },
+   {
+    "cn": "1.0",
+    "lauf": "testbau-nicht_umgedreht-s0",
+    "score": 0.2961633417861508,
+    "spearman": -0.09954950275000993,
+    "geom_iou": 0.8810965659788954,
+    "bestanden": false,
+    "rho_maske": -0.1308590945525668,
+    "rho_maske_gerichtet": 0.1308590945525668,
+    "qa": "Score 0.296 < Schwelle 0.65 (|spearman| 0.100 über 48596 gemeinsame Punkte, geom_iou 0.881)."
+   },
+   {
+    "cn": "1.0",
+    "lauf": "testbau-nicht_umgedreht-s1",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": 0.668994236437048,
+    "rho_maske_gerichtet": -0.668994236437048,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Ger"
+   },
+   {
+    "cn": "1.0",
+    "lauf": "testbau-nicht_umgedreht-s2",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": -0.18840058636364013,
+    "rho_maske_gerichtet": 0.18840058636364013,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Ger"
+   },
+   {
+    "cn": "1.0",
+    "lauf": "hochbau-register-s0",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": -0.5050327469608648,
+    "rho_maske_gerichtet": 0.5050327469608648,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Kei"
+   },
+   {
+    "cn": "1.0",
+    "lauf": "hochbau-register-s1",
+    "score": 0.0,
+    "spearman": 0.5100037648988639,
+    "geom_iou": 0.939597560530256,
+    "bestanden": false,
+    "rho_maske": 0.51884903762142,
+    "rho_maske_gerichtet": -0.51884903762142,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.510 über 51458 gemeinsame Punkte, geom_iou 0.940)."
+   },
+   {
+    "cn": "1.0",
+    "lauf": "hochbau-register-s2",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": -0.6141845814877614,
+    "rho_maske_gerichtet": 0.6141845814877614,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Kei"
+   },
+   {
+    "cn": "1.0",
+    "lauf": "hochbau-nicht_umgedreht-s0",
+    "score": 0.0,
+    "spearman": 0.5229951109072847,
+    "geom_iou": 0.5690862359301604,
+    "bestanden": false,
+    "rho_maske": 0.503847756416445,
+    "rho_maske_gerichtet": -0.503847756416445,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.523 über 38526 gemeinsame Punkte, geom_iou 0.569)."
+   },
+   {
+    "cn": "1.0",
+    "lauf": "hochbau-nicht_umgedreht-s1",
+    "score": 0.0,
+    "spearman": 0.3038776096219796,
+    "geom_iou": 0.8899049923495712,
+    "bestanden": false,
+    "rho_maske": 0.3383180149913052,
+    "rho_maske_gerichtet": -0.3383180149913052,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.304 über 50018 gemeinsame Punkte, geom_iou 0.890)."
+   },
+   {
+    "cn": "1.0",
+    "lauf": "hochbau-nicht_umgedreht-s2",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": -0.30437189447469365,
+    "rho_maske_gerichtet": 0.30437189447469365,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Kei"
+   }
+  ],
+  "B2_skript_2.1": [
+   {
+    "cn": "2.1",
+    "lauf": "testbau-register-s0",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": 0.46195503992599185,
+    "rho_maske_gerichtet": -0.46195503992599185,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Ger"
+   },
+   {
+    "cn": "2.1",
+    "lauf": "testbau-register-s1",
+    "score": 0.0,
+    "spearman": 0.08048930743837505,
+    "geom_iou": 0.15047682412951874,
+    "bestanden": false,
+    "rho_maske": 0.6544691095412164,
+    "rho_maske_gerichtet": -0.6544691095412164,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.080 über 13570 gemeinsame Punkte, geom_iou 0.150)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "testbau-register-s2",
+    "score": 0.0,
+    "spearman": 0.8786013077983299,
+    "geom_iou": 0.9175322515063025,
+    "bestanden": false,
+    "rho_maske": 0.8024296332909923,
+    "rho_maske_gerichtet": -0.8024296332909923,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.879 über 49644 gemeinsame Punkte, geom_iou 0.918)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "testbau-nicht_umgedreht-s0",
+    "score": null,
+    "spearman": -0.5408970876633784,
+    "geom_iou": 0.00017352408128639186,
+    "bestanden": false,
+    "rho_maske": 0.2842489671023109,
+    "rho_maske_gerichtet": -0.2842489671023109,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Ger"
+   },
+   {
+    "cn": "2.1",
+    "lauf": "testbau-nicht_umgedreht-s1",
+    "score": 0.0,
+    "spearman": 0.014734819625207148,
+    "geom_iou": 0.09967566192525386,
+    "bestanden": false,
+    "rho_maske": -0.11106772385633204,
+    "rho_maske_gerichtet": 0.11106772385633204,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.015 über 9404 gemeinsame Punkte, geom_iou 0.100)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "testbau-nicht_umgedreht-s2",
+    "score": 0.0,
+    "spearman": 0.13040016938784482,
+    "geom_iou": 0.32948050949537405,
+    "bestanden": false,
+    "rho_maske": 0.10493345079448824,
+    "rho_maske_gerichtet": -0.10493345079448824,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.130 über 25712 gemeinsame Punkte, geom_iou 0.329)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "hochbau-register-s0",
+    "score": 0.0,
+    "spearman": 0.042765308147303165,
+    "geom_iou": 0.04011671742046667,
+    "bestanden": false,
+    "rho_maske": -0.13566959849144533,
+    "rho_maske_gerichtet": 0.13566959849144533,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.043 über 4097 gemeinsame Punkte, geom_iou 0.040)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "hochbau-register-s1",
+    "score": 0.49178519043885877,
+    "spearman": -0.2624968964045537,
+    "geom_iou": 0.921354411605108,
+    "bestanden": false,
+    "rho_maske": -0.3128432645963749,
+    "rho_maske_gerichtet": 0.3128432645963749,
+    "qa": "Score 0.492 < Schwelle 0.65 (|spearman| 0.262 über 50938 gemeinsame Punkte, geom_iou 0.921)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "hochbau-register-s2",
+    "score": 0.08438426965750295,
+    "spearman": -0.08280793185152586,
+    "geom_iou": 0.08599061474446137,
+    "bestanden": false,
+    "rho_maske": -0.005139521734429793,
+    "rho_maske_gerichtet": 0.005139521734429793,
+    "qa": "Score 0.084 < Schwelle 0.65 (|spearman| 0.083 über 8411 gemeinsame Punkte, geom_iou 0.086)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "hochbau-nicht_umgedreht-s0",
+    "score": 0.0,
+    "spearman": 0.08625031269880744,
+    "geom_iou": 0.39827295703454085,
+    "bestanden": false,
+    "rho_maske": 0.1836538542376937,
+    "rho_maske_gerichtet": -0.1836538542376937,
+    "qa": "Score 0.000 < Schwelle 0.65 (|spearman| 0.086 über 30256 gemeinsame Punkte, geom_iou 0.398)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "hochbau-nicht_umgedreht-s1",
+    "score": 0.031762945196638845,
+    "spearman": -0.1449962475356926,
+    "geom_iou": 0.006958005498151483,
+    "bestanden": false,
+    "rho_maske": 0.09155974494432431,
+    "rho_maske_gerichtet": -0.09155974494432431,
+    "qa": "Score 0.032 < Schwelle 0.65 (|spearman| 0.145 über 734 gemeinsame Punkte, geom_iou 0.007)."
+   },
+   {
+    "cn": "2.1",
+    "lauf": "hochbau-nicht_umgedreht-s2",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske": -0.03180368807716109,
+    "rho_maske_gerichtet": 0.03180368807716109,
+    "qa": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Kei"
+   }
+  ],
+  "B_saetze_seed0_steht_das_vorne_vorn": {
+   "1.0 testbau Register": "Ja, soweit man es sieht — skizzenhafte Fassade mit Fensterreihe genau an der Stelle des Quaders; auch der Hintergrund ist bezeichnet.",
+   "1.0 testbau nicht umgedreht": "Unklar — nur eine flache, streifige Flaeche genau in der Silhouette, Hintergrund leer; keine Kante, kein Baukoerper, nichts steht vor etwas.",
+   "1.0 hochbau Register": "Nein — die «Gasse»: helle Wandscheiben links und rechts wirken nah, die dunkle Fassade in der Mitte wirkt zurueckversetzt.",
+   "1.0 hochbau nicht umgedreht": "Ja — saubere Fassadenzeichnung genau in der Silhouette vor leerem Grund, dazu ein kleiner Zusatzblock darunter, der in der Tiefe nicht vorkommt.",
+   "2.1 testbau Register": "Ja — freistehendes, fotografisches Gebaeude genau auf der Silhouette, Grund leer und hell.",
+   "2.1 testbau nicht umgedreht": "Nein — ein Turm fuellt die unteren zwei Drittel des Bildes, der Quader ist nur noch sein oberer Abschluss; der Grund wird zum Bauwerk.",
+   "2.1 hochbau Register": "Ja — Turmfassade genau auf der Silhouette, freistehend, dazu ein heller Sockel darunter, der in der Tiefe nicht vorkommt.",
+   "2.1 hochbau nicht umgedreht": "Nein — ein fotografischer Turm etwa in der Silhouette, aber der ganze Grund ist mit Stadt und Himmel gefuellt."
+  },
+  "B_tiefenspanne": {
+   "testbau": "Soll 10.90–11.37 m (Spanne 0.47 m), 5–95 %-Spanne der Geometrie 0.42 m",
+   "hochbau": "Soll 28.98–37.13 m (Spanne 8.15 m), 5–95 %-Spanne der Geometrie 0.39 m, Median 29.20 m — die grosse Gesamtspanne tragen wenige Pixel"
+  },
+  "B_lesart": "Die Polaritaet haengt nicht am Koerper: Sichtbar ist die Register-Umkehr mit 2.1 bei beiden Koerpern richtig (freistehendes Gebaeude auf der Silhouette), ohne Umkehr fuellt 2.1 den Grund; nur 1.0 macht beim Hochbau mit Umkehr die «Gasse». Die Rangzahlen widersprechen dem teils (2.1 Register: rho_maske gerichtet -0.46/-0.65/-0.80 beim Quader), aber bei 0.4 m Tiefenband auf 11–29 m misst die Rangordnung vor allem, wie der Schaetzer eine flache Front schattiert — nicht, ob vorne vorn steht.",
+  "C": {
+   "weg": "Eigenes Skript: QwenImageEditPlusPipeline, schichtweise Auslagerung (sequential_cpu_offload, wie 134), unser Adapter render._pipeline_adapter als Bibliothek; Eingaben wie 134 (testbau, Kamera s, 512 px, Startwert 0, 20 Schritte, Tiefenkarte aus der Mappe).",
+   "C1": {
+    "diffusion_s": 58.3,
+    "negativ_prompt": null,
+    "regler": null,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "rho_maske_gerichtet": -0.3523,
+    "qa": "nicht messbar",
+    "satz": "Abstrakte, blau-gelb gestreifte Fassade fuellt das ganze Bild, kein Bezug zum Prompt und keiner zur Lage des Quaders."
+   },
+   "C2": {
+    "diffusion_s": 106.3,
+    "negativ_prompt": " ",
+    "regler": "true_cfg_scale 4.0",
+    "angekommen": true,
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "rho_maske_gerichtet": -0.0245,
+    "qa": "nicht messbar",
+    "satz": "Glaubwuerdiges Wohnhausfoto (Holz, Balkone, Himmel) — genau, was der Prompt verlangt; fuellt ebenfalls das ganze Bild, die Lage des Quaders spielt keine Rolle."
+   },
+   "kostenfaktor": 1.82,
+   "spitzenlast": "hoechstens 145.8 W und 3579 MiB auf der Karte waehrend C1+C2 (Sekundentakt, 170 Proben) — die Auslagerung haelt die Karte fast leer",
+   "hinweis_beider_laeufe": "'controlnet_conditioning_scale' (0.8) kennt diese Pipeline nicht — die Tiefe geht als Eingangsbild, nicht als Steuerung (wie 134).",
+   "C3_mappe": {
+    "status": "fehler",
+    "fehler_woertlich": "OutOfMemoryError: CUDA out of memory. Tried to allocate 72.00 MiB. GPU 0 has a total capacity of 31.36 GiB of which 99.50 MiB is free. Process 12042 has 192.55 MiB memory in use. Including non-PyTorch memory, this process has 30.60 GiB memo",
+    "fuehrung_regler": "true_cfg_scale",
+    "fuehrung_regler_wert": 4.0,
+    "negativ_prompt_karte": " ",
+    "fuehrung_regler_angekommen": null,
+    "satz": "null — nicht weil der Regler nicht ankam, sondern weil der Lauf vor dem ersten Schritt am Speicher scheiterte. Bestellt war er richtig (Hinweise «FUEHRUNG ueber 'true_cfg_scale' = 4.0» und «guidance_scale … WIRKUNGSLOS» stehen im Ergebnis)."
+   },
+   "ursache_C3": "render._erwarteter_bedarf('qwen-image-edit-2511') = (51 539 607 552, 25 769 803 776), gemessen=False; 25.77 GB grosser Brocken x 1.25 = 32.2 GB bzw. 24 GiB x 1.25 = 30 GiB passt knapp unter die frei gemeldeten ~30.6 GiB → Stufe 2 (cuda+auslagerung, model_cpu_offload). Auf der Platte ist der groesste Brocken 40 861 227 537 Byte (_gewichte_byte, Summe 57 720 461 873). Stufe 2 legt den ganzen Transformer auf die Karte → OOM bei 72 bzw. 108 MiB. Mit einem Sprachmodell daneben (weniger frei) faellt die Wahl auf Stufe 3 und es liefe."
+  },
+  "D_zeilen": [
+   {
+    "cn": "1.0",
+    "karte": "ohne",
+    "strategie": "vorgabe",
+    "strategie_aufgeloest": "wie_soll",
+    "score": 0.4498098352496061,
+    "spearman": -0.5824046492456221,
+    "geom_iou": 0.3474025974025974,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.8363770401607946,
+    "n_ist": 51875,
+    "n_gemeinsam": 26750
+   },
+   {
+    "cn": "1.0",
+    "karte": "ohne",
+    "strategie": "ohne_randberuehrung",
+    "strategie_aufgeloest": "ohne_randberuehrung",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.8363770401607946,
+    "n_ist": 0,
+    "n_gemeinsam": 0
+   },
+   {
+    "cn": "1.0",
+    "karte": "ohne",
+    "strategie": "quantil",
+    "strategie_aufgeloest": "quantil",
+    "score": 0.5252125221959117,
+    "spearman": -0.8363770401607946,
+    "geom_iou": 0.3298132065155195,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.8363770401607946,
+    "n_ist": 157286,
+    "n_gemeinsam": 51875
+   },
+   {
+    "cn": "1.0",
+    "karte": "ohne",
+    "strategie": "keine",
+    "strategie_aufgeloest": "keine",
+    "score": 0.4068273530281548,
+    "spearman": -0.8363770401607946,
+    "geom_iou": 0.19788742065429688,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.8363770401607946,
+    "n_ist": 262144,
+    "n_gemeinsam": 51875
+   },
+   {
+    "cn": "1.0",
+    "karte": "0.15",
+    "strategie": "vorgabe",
+    "strategie_aufgeloest": "wie_soll",
+    "score": 0.5335270250986025,
+    "spearman": -0.31016362095108874,
+    "geom_iou": 0.9177449168207024,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.3744371951184208,
+    "n_ist": 51875,
+    "n_gemeinsam": 49650
+   },
+   {
+    "cn": "1.0",
+    "karte": "0.15",
+    "strategie": "ohne_randberuehrung",
+    "strategie_aufgeloest": "ohne_randberuehrung",
+    "score": 0.5335270250986025,
+    "spearman": -0.31016362095108874,
+    "geom_iou": 0.9177449168207024,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.3744371951184208,
+    "n_ist": 51875,
+    "n_gemeinsam": 49650
+   },
+   {
+    "cn": "1.0",
+    "karte": "0.15",
+    "strategie": "quantil",
+    "strategie_aufgeloest": "quantil",
+    "score": 0.3514176033733705,
+    "spearman": -0.3744371951184208,
+    "geom_iou": 0.3298132065155195,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.3744371951184208,
+    "n_ist": 157286,
+    "n_gemeinsam": 51875
+   },
+   {
+    "cn": "1.0",
+    "karte": "0.15",
+    "strategie": "keine",
+    "strategie_aufgeloest": "keine",
+    "score": 0.2722065589566386,
+    "spearman": -0.3744371951184208,
+    "geom_iou": 0.19788742065429688,
+    "bestanden": false,
+    "rho_maske_gerichtet": 0.3744371951184208,
+    "n_ist": 262144,
+    "n_gemeinsam": 51875
+   },
+   {
+    "cn": "2.1",
+    "karte": "ohne",
+    "strategie": "vorgabe",
+    "strategie_aufgeloest": "wie_soll",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.46195503992599185,
+    "n_ist": 51875,
+    "n_gemeinsam": 0
+   },
+   {
+    "cn": "2.1",
+    "karte": "ohne",
+    "strategie": "ohne_randberuehrung",
+    "strategie_aufgeloest": "ohne_randberuehrung",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.46195503992599185,
+    "n_ist": 0,
+    "n_gemeinsam": 0
+   },
+   {
+    "cn": "2.1",
+    "karte": "ohne",
+    "strategie": "quantil",
+    "strategie_aufgeloest": "quantil",
+    "score": 0.0,
+    "spearman": 0.482705732798345,
+    "geom_iou": 0.3275174856243415,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.46195503992599185,
+    "n_ist": 157286,
+    "n_gemeinsam": 51603
+   },
+   {
+    "cn": "2.1",
+    "karte": "ohne",
+    "strategie": "keine",
+    "strategie_aufgeloest": "keine",
+    "score": 0.0,
+    "spearman": 0.46195503992599185,
+    "geom_iou": 0.19788742065429688,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.46195503992599185,
+    "n_ist": 262144,
+    "n_gemeinsam": 51875
+   },
+   {
+    "cn": "2.1",
+    "karte": "0.15",
+    "strategie": "vorgabe",
+    "strategie_aufgeloest": "wie_soll",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.3002126923258413,
+    "n_ist": 51875,
+    "n_gemeinsam": 0
+   },
+   {
+    "cn": "2.1",
+    "karte": "0.15",
+    "strategie": "ohne_randberuehrung",
+    "strategie_aufgeloest": "ohne_randberuehrung",
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.3002126923258413,
+    "n_ist": 0,
+    "n_gemeinsam": 0
+   },
+   {
+    "cn": "2.1",
+    "karte": "0.15",
+    "strategie": "quantil",
+    "strategie_aufgeloest": "quantil",
+    "score": 0.0,
+    "spearman": 0.30920180668730535,
+    "geom_iou": 0.32880785235538895,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.3002126923258413,
+    "n_ist": 157286,
+    "n_gemeinsam": 51756
+   },
+   {
+    "cn": "2.1",
+    "karte": "0.15",
+    "strategie": "keine",
+    "strategie_aufgeloest": "keine",
+    "score": 0.0,
+    "spearman": 0.3002126923258413,
+    "geom_iou": 0.19788742065429688,
+    "bestanden": false,
+    "rho_maske_gerichtet": -0.3002126923258413,
+    "n_ist": 262144,
+    "n_gemeinsam": 51875
+   }
+  ],
+  "D_lage_der_punkte_bei_vorgabe": {
+   "1.0 ohne": {
+    "anteil_punkte_auf_randpixel": 0.0065,
+    "anteil_in_randberuehrenden_flaechen": 1.0,
+    "anteil_unteres_drittel": 0.3903,
+    "anteil_innerhalb_soll": 0.5157,
+    "soll_unteres_drittel": 0.0
+   },
+   "1.0 0.15": {
+    "anteil_punkte_auf_randpixel": 0.0,
+    "anteil_in_randberuehrenden_flaechen": 0.0,
+    "anteil_unteres_drittel": 0.0,
+    "anteil_innerhalb_soll": 0.9571,
+    "soll_unteres_drittel": 0.0
+   },
+   "2.1 ohne": {
+    "anteil_punkte_auf_randpixel": 0.0149,
+    "anteil_in_randberuehrenden_flaechen": 1.0,
+    "anteil_unteres_drittel": 1.0,
+    "anteil_innerhalb_soll": 0.0,
+    "soll_unteres_drittel": 0.0
+   },
+   "2.1 0.15": {
+    "anteil_punkte_auf_randpixel": 0.0142,
+    "anteil_in_randberuehrenden_flaechen": 1.0,
+    "anteil_unteres_drittel": 1.0,
+    "anteil_innerhalb_soll": 0.0,
+    "soll_unteres_drittel": 0.0
+   }
+  },
+  "D_saetze": [
+   "2.1 ohne Abstand und 2.1 mit 0.15: unter «vorgabe» (aufgeloest zu wie_soll) liegen 100 % der 51 875 gewaehlten Ist-Punkte im unteren Bilddrittel und in randberuehrenden Flaechen, 0 % im Soll — der Schaetzer legt in den leeren Vordergrund eine Bodenebene, die naeher ist als das Gebaeude, und genau die wird gewaehlt.",
+   "Mit «quantil» oder «keine» sind dieselben Bilder messbar (geom_iou 0.33 bzw. 0.20, n_gemeinsam 51 603–51 875), aber score 0.000, weil spearman positiv ist (+0.30 bis +0.48) — der Schaetzer ordnet die flache Front verkehrt; rho_maske gerichtet -0.46 bzw. -0.30. Beim 1.0-Bild ohne Abstand liegen unter «vorgabe» 39 % der gewaehlten Punkte im unteren Drittel und 52 % im Soll."
+  ],
+  "E": {
+   "laedt": "ja",
+   "ergebnis": "status ok, score 0.4498, spearman -0.5824, geom_iou 0.3474 — stellengleich zum Lauf ohne die Variable",
+   "wirkt_die_variable": "ja — im selben venv meldet huggingface_hub.constants.HF_HUB_OFFLINE True, und hf_hub_download auf ein nicht vorhandenes Repo wirft LocalEntryNotFoundError statt zu holen",
+   "satz": "Kein Fehlersatz. Er laedt, weil die config.json des ControlNet seit 23.09. im Hub-Zwischenspeicher liegt (Konten hlky/…-Union und hlky/…-Union-2.1). Auf einem frischen Rechner ohne diesen Zwischenspeicher wuerde derselbe Lauf offline scheitern — nicht gemessen, nur die Lesart."
+  },
+  "F": "Die Leerlauf-Auflage war zu Beginn von D verletzt: auf der Karte lag das Kosmo-Sprachmodell mit 25 GB, nicht von mir geladen. D brauchte nur den Tiefenschaetzer und lief trotzdem; alle rechnenden Teile (B, C, E) liefen erst, als die Karte unter 1 GB lag. Das ist genau die Lage, in der das Edit-Modell auf dem Produktweg zufaellig richtig laeuft (s. C3)."
+ },
+ "bemerkungen": "Mein Warte-Befehl vor B2 suchte mit pgrep -f nach dem Skriptnamen und traf sich damit selbst; er endete trotzdem korrekt ueber die zweite Bedingung (12 Zeilen). Keine Folge fuer die Messung. Den Speicherfehler aus C3 habe ich vorab gemeldet, weil er jede Bestellung ohne vis.backbone trifft.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu": "RTX 5090, Leistungsgrenze 400 W",
+  "stand": "5c30547 beim Messen",
+  "gpu_last_max_w_B_E": 320.95,
+  "gpu_speicher_max_mib_B_E": 29051,
+  "gpu_last_max_w_C": 145.78
+ },
+ "fehler": null
+}
