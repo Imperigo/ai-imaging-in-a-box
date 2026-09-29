@@ -29,5 +29,5 @@
     "A: Klon (relativ), Zweig, Commit, ob recipes.ts/render_preflight dort heute existiert, Anzahl Rezepte.",
     "B: Form des Modellpfads in projekt.json (heimrelativ/relativ/absolut, ohne Benutzernamen), Lauf durch ja/nein, bei Nein der Satz."
   ],
-  "rang": 2
+  "rang": 3
 }

@@ -295,7 +295,7 @@ _HEUTE_JE_EINTRAG = {
     "z-image-turbo": {"control_image": "TIEFE_INV", "guidance_scale": 0.0},
     "qwen-image-2512": {}, "sdxl-juggernaut": {}, "sd35-large": {},
     "flux2-klein-4b": {}, "flux1-dev": {}, "flux2-dev": {},
-    # Seit 29.09.2026 (Forschungs-Ausnahme): ohne Regler — Führung ungemessen (auf-177).
+    # Seit 29.09.2026 (Forschungs-Ausnahme): ohne Regler — Führung ungemessen (auf-178).
     "qwen-image-2.1": {},
 }
 

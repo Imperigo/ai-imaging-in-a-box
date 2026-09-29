@@ -85,7 +85,7 @@ die Forschung rechnen. Das ersetzt unsere Empfehlung (a). Es ist **nicht** euer 
 * **Vor einem Verkauf** wird es entfernt oder lizenziert (die Lizenzanfrage an Qwen liegt
   vorbereitet bei uns).
 
-**Punkt 2 und 3 werden jetzt gemessen**, bei unserem Heimrechner (`auf-20260929-177`):
+**Punkt 2 und 3 werden jetzt gemessen**, bei unserem Heimrechner (`auf-20260929-178`):
 Speicher und Sekunden bei 1024 und 2048 auf der 5090, und ob die Form des Gebaeudes ankommt —
 das Modell hat laut Modellkarte **kein ControlNet**, und genau das ist die Frage. Die
 Ergebnisse stellen wir euch zu.

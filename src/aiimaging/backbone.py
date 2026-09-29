@@ -1150,7 +1150,7 @@ _eintrag(Backbone(
     kommerziell_nutzbar=False,
     # Kein ControlNet (Modellkarte nennt keines); Erzeugen UND Bearbeiten mit bis zu zehn
     # Referenzbildern. Geladen ueber DiffusionPipeline -> QwenImage21Pipeline (diffusers aus
-    # git, laut Karte). Ob unser Bildeingang dort ankommt, ist UNGEMESSEN (auf-20260929-177).
+    # git, laut Karte). Ob unser Bildeingang dort ankommt, ist UNGEMESSEN (auf-20260929-178).
     konditionierung=KOND_INTEGRIERTES_EDIT,
     vram_gb=_vram_schaetzung(7.0),
     dateien=_DIFFUSERS_DATEIEN,

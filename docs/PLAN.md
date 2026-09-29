@@ -7504,7 +7504,7 @@ Bekannt und ausdrücklich nicht erledigt:
         nötig; der Text bleibt für den Verkauf (Protokoll 72 §9).
   - [x] **Owner (29.09.):** Qwen-Image-2.1 jetzt für die Forschung nutzen → Forschungs-Ausnahme
         zu Regel 1 in CLAUDE.md, Schalter im Register (C38).
-  - [ ] **local:** `auf-20260929-177` — Qwen-Image-2.1 an der 5090: läuft es, trägt es die
+  - [ ] **local:** `auf-20260929-178` — Qwen-Image-2.1 an der 5090: läuft es, trägt es die
         Geometrie?
   - [ ] **Kern:** A7 nach E123 — MCP-Eingang nimmt `null` für vier Felder an, mit benanntem
         Mangel (Protokoll 72 §7).
