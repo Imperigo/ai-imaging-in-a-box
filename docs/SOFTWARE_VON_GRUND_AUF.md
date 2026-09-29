@@ -6,7 +6,12 @@
 > der Text der Arbeit.
 
 **Grundlage:** keine
-**Stand:** 22.09.2026
+**Stand:** 29.09.2026 (erste Fassung 22.09.2026)
+
+> **Nachgeführt am 29.09.2026.** Die Grundgedanken sind dieselben geblieben; dazugekommen
+> sind Fälle aus den Sitzungen 67 bis 72, und an einigen Stellen stimmte eine Angabe nicht
+> mehr. Beides ist an Ort und Stelle als **Nachtrag 29.09.2026** oder **berichtigt**
+> gekennzeichnet, damit man sieht, was am 22.09. galt.
 
 ---
 
@@ -101,6 +106,14 @@ Bildmodell, das Visbox standardmässig verwendet, nimmt überhaupt kein Ausgangs
 Ausgangsbild gibt es keine Skizze, die hineingereicht werden könnte. Ohne das Kriterium wäre
 das eine Randnotiz; mit ihm ist es die wichtigste offene Frage des Projekts.
 
+**Nachtrag 29.09.2026.** Die Frage hat sich verschoben, gelöst ist sie nicht. Ein zweites,
+freies Bildmodell nimmt ein Ausgangsbild an und rechnet seit dem 24.09.2026 am echten Gerät
+durch, allerdings langsam (rund sechs Minuten je Bild) und **ohne der Geometrie zu folgen**.
+Gesucht ist also nicht mehr ein Modell, das ein Bild annimmt, sondern eines, das ein Bild
+annimmt **und** die Form des Gebäudes hält. Ein Kandidat wird seit dem 29.09. gemessen, darf
+aber nur zur Forschung rechnen (Abschnitt 4). Und das Erfolgskriterium des Projekts selbst
+ist weiter unerfüllt: **Kein Bild hat die Geometrieprüfung bisher bestanden.**
+
 ---
 
 ## 2 · Bibliothek und Oberfläche
@@ -152,6 +165,14 @@ beides zugleich sein.
 Inzwischen liegen drei Oberflächen über derselben Bibliothek: eine Webseite, die auf dem
 eigenen Rechner läuft (→ Lexikon: Die Oberfläche (von Visbox)); eine App für das iPad, die
 gerade entsteht; und KosmoOrbit.
+
+**Nachtrag 29.09.2026.** Es sind vier geworden. Seit dem 24.09.2026 liegt die Knotenansicht
+von KosmoOrbit als **wörtliche Kopie** in diesem Repo: 198 Dateien Byte für Byte, und wo sie
+etwas von KosmoOrbit braucht, das nicht mitkommt, steht ein kleiner, als solcher
+gekennzeichneter Stellvertreter. Sie bestellt über dieselbe Bibliothek wie alle anderen, und
+am 24.09. ist über sie das erste Bild am echten Gerät entstanden. Im Februar geht sie zurück
+(Entscheid E26). Die iPad-App ist inzwischen gebaut und übersetzt auf einem Mac; **auf einem
+iPad ist sie noch nie gelaufen**, die Probe liegt beim Owner.
 
 Mehrere Oberflächen haben einen Preis, und der Entscheid schreibt ihn auf: *Zwei Anzeigen
 derselben Messung sind zwei Gelegenheiten, sie falsch anzuzeigen.* Die Gegenmassnahme ist
@@ -305,6 +326,35 @@ Ausnahme entschieden und in den Regeln des Projekts festgehalten, statt die Rege
 stillschweigend zu dehnen. *Eine Ausnahme, die aufgeschrieben ist, ist eine
 Entscheidung; eine, die nicht aufgeschrieben ist, ein Versehen.*
 
+### Nachtrag 29.09.2026 · Die Ausnahme für die Forschung
+
+Eine zweite Ausnahme kam eine Woche später, und sie ist grösser. Ein neues Bildmodell,
+Qwen-Image-2.1, steht unter einer Lizenz, die nur Forschung und Erprobung erlaubt
+(→ Lexikon: Forschungslizenz). Nach Regel 1 wäre es ausgeschlossen. Die erste Empfehlung
+lautete darum am selben Tag: nicht verwenden, auch nicht hinter einem Schalter, denn der
+Schalter würde mit dem Produkt ausgeliefert.
+
+Der Owner hat anders entschieden, mit einer Begründung, die man nachprüfen kann: *«Wir sind
+noch lange nicht im Verkauf»*, und bis dahin gibt es ohnehin neue Modelle. Festgehalten ist
+das als **Forschungs-Ausnahme** mit vier Auflagen (→ Lexikon: Forschungs-Ausnahme): nur auf
+der Rechenmaschine zu Hause und nur mit einem eigens gesetzten Schalter; nie das
+Standardmodell und nie von KosmoOrbit bestellbar; jedes Bild daraus trägt den Vermerk «nur
+Forschung»; vor einem Verkauf wird das Modell entfernt oder lizenziert.
+
+Lehrreich ist, **wo** die Auflagen stehen: nicht nur in den Regeln, sondern an den Stellen im
+Programm, an denen ein Modell geladen oder bestellt wird. Ohne den Schalter lädt das Programm
+das Modell nicht, und die Liste der Modelle, die KosmoOrbit bestellen darf, kennt es gar
+nicht. *Eine Ausnahme ist nur so eng wie der Code, der sie hält.* Eine Anfrage für eine
+Verkaufslizenz ist geschrieben und liegt bereit; gebraucht wird sie erst, wenn ein Verkauf
+ansteht.
+
+**Auch Weglassen ist ein Entscheid.** Am selben Tag wurde ein anderes, freies Modell
+**stillgelegt** (→ Lexikon: Stilllegen (eines Bildmodells)): Es hätte 48 GB auf der
+Rechenmaschine gebraucht, und Herkunft und Lizenz seiner Zusatzdatei für die Formsteuerung
+waren ungeklärt. Es bleibt eingetragen, mit dem Grund, wird aber nicht mehr angeboten. Die
+Folge steht ausdrücklich dabei: Für die Formsteuerung über die Tiefenkarte bleibt **genau
+ein** freies Modell.
+
 ---
 
 ## 5 · Das Gedächtnis
@@ -341,7 +391,8 @@ darin weiss, verschwindet mit ihrem Ende (→ Lexikon: Session (Sitzung)). Für 
 dasselbe, nur langsamer.
 
 Darum gilt: **Was nicht in einer Datei steht, ist weg.** Jede Sitzung schreibt ein
-Protokoll, bis heute sechsundsechzig. Hinein gehören die Entscheidungen **mit Begründung**,
+Protokoll, bis heute zweiundsiebzig (**berichtigt 29.09.2026**; am 22.09. waren es
+sechsundsechzig). Hinein gehören die Entscheidungen **mit Begründung**,
 die korrigierten Fehlannahmen, weil sie sonst wiederkehren, die geprüften Befunde samt dem
 Prüfweg, die Fragen des Owners und was offen blieb. Kein wörtliches Gesprächsprotokoll,
 sondern die Substanz.
@@ -370,7 +421,8 @@ dadurch, dass laufend nachgewiesen wird, dass sie tut, was sie soll: automatisch
 
 Das Mittel dafür ist der **Test**, ein kleines Programm, das ein anderes prüft: Es
 beschreibt eine Erwartung und schlägt an, wenn sie verletzt ist (→ Lexikon: Test). Visbox
-hat rund siebentausend davon, und alle laufen ohne Grafikkarte. Vor jedem Commit läuft die
+hat rund siebentausend davon (**Nachtrag 29.09.2026:** 8379, eine Zahl, die selbst ein Test
+bewacht), und alle laufen ohne Grafikkarte. Vor jedem Commit läuft die
 ganze Sammlung, nicht nur der Teil, den man für betroffen hält. Am 22.09.2026 wurde das
 einmal versäumt, und ein Test blieb rot liegen.
 
@@ -419,6 +471,22 @@ gewesen.
 Stelle im Code steht. Er zählte dafür eine Zeichenkette im Quelltext und war grün, weil der
 Satz dort über zwei Zeilen umbrochen war und die gesuchte Kette gar nicht vorkam. Heute
 vergleicht er, was das Programm wirklich ausgibt.
+
+### Nachtrag 29.09.2026 · Zwei Wächter, die nur kannten, was man ihnen genannt hatte
+
+**Die Zwillinge.** Zwei Kameras, die dasselbe Bild liefern würden, soll die Software erkennen
+und nur einmal rechnen. Die Erkennung war gebaut und von Tests bewacht, und sie hat **im
+Betrieb nie gegriffen**: Die Tests reichten ihr die Tiefenkarte in einer Form, die sie selbst
+erfunden hatten, und der echte Ablauf lieferte eine andere. Aufgefallen ist es erst, als am
+Gerät zwei gleiche Bilder ankamen, für die fast acht Minuten gerechnet worden war. *Eine
+Probe, die die Datenform selbst erfindet, prüft die Erfindung.*
+
+**Das Glas.** Eine Prüfung meldet, ob ein Modell durchsichtige Materialien hat. Sie kannte
+eine Art, Durchsichtigkeit anzugeben. KosmoOrbit will Glas künftig auf eine zweite Art
+ausgeben: als deckendes Material, das Licht durchlässt (→ Lexikon: Transmission
+(Glas im Renderer)). Unsere Prüfung hätte dieses Glas als «keine durchsichtigen Materialien»
+gemeldet. Gefunden haben wir das nicht selbst, sondern weil die Gegenseite es als Bedingung
+gestellt hat. *Ein Wächter, der nur kennt, was man ihm genannt hat, fängt keine Neuigkeit.*
 
 ---
 
@@ -482,6 +550,41 @@ Bestehen klingt, neben einem Urteil, das keines ist, ist schlimmer als gar kein 
 Und sie gilt in beide Richtungen. Die Prüfung meldete bei einem Bild «vorne und hinten
 vertauscht». Gemessen war ein Zusammenhang nahe null, also gar keiner, und das ist etwas
 anderes als ein umgekehrter. Heute heisst es in diesem Fall «kein messbarer Zusammenhang».
+
+### Nachtrag 29.09.2026 · An der Aussengrenze übersetzen
+
+Die dritte Antwort muss eine Grenze überqueren, und die Gegenseite spricht andere Wörter.
+KosmoOrbit verlangt für die Prüfung ein Feld «bestanden» mit nur zwei Werten, ja oder nein,
+und daneben einen Zustand aus drei eigenen Wörtern. Hätte man die eigene Form umgebaut, wären
+die Tests verloren gegangen, die genau den Unterschied zwischen «nicht gemessen» und
+«durchgefallen» bewachen.
+
+Entschieden wurde darum: **Drinnen bleibt die eigene Form, übersetzt wird an der
+Aussengrenze** (→ Lexikon: An der Aussengrenze übersetzen), an einer einzigen Stelle, durch
+die alles geht, was hinausgeschickt wird. Ein nicht gemessenes Bild heisst drüben
+«bestanden: nein» **und** «nicht gemessen». Das Nein allein wäre falsch; die dritte Antwort
+überlebt ein zweiwertiges Feld nur, wenn ein zweites Feld sie trägt. Eine Zuordnung ist
+unser Vorschlag und liegt drüben zur Bestätigung: «gemessen, aber nicht entscheidbar» als
+«nicht zutreffend».
+
+Umgekehrt hat KosmoOrbit am 29.09.2026 für alle Beteiligten festgelegt: **Wer Daten empfängt,
+nimmt ein «nichts» an und meldet es als benannten Mangel, statt die Lieferung abzuweisen**
+(dort Entscheid E123). An einer Stelle sind wir der Empfänger, und dort ist das **noch nicht
+gebaut**: Vier Felder, die bei der Gegenseite «nichts» sein dürfen, verlangt unser Eingang
+weiterhin als Wert.
+
+### Nachtrag 29.09.2026 · Weniger Urteil, ehrlicheres Urteil
+
+Das Urteil, ob ein Bild zu seiner Geometrie passt, stand bis zum 29.09.2026 auf zwei Beinen:
+einem Rangmass, das prüft, ob im Bild und im Modell dasselbe vorne und hinten liegt
+(→ Lexikon: Rangkorrelation (Spearman)), und einer Prüfung an der Kante des Gebäudeumrisses.
+Die zweite hat an echten Bildern um ihre eigene Schwelle gestreut, mal darüber, mal darunter.
+*Ein Bein, das würfelt, macht aus dem Urteil einen Münzwurf.* Sie ist darum abgeschaltet,
+wird aber weiter gemessen und als Auskunft angezeigt.
+
+Die schlechte Nachricht gehört dazu: **Jetzt trägt eine einzige Zahl das Urteil, und ihre
+Schwelle ist nicht geeicht.** Die Messung dafür ist an die Rechenmaschine zu Hause bestellt.
+*Ein ehrlicheres Urteil ist noch kein sicheres.*
 
 ### Angabe und Messung
 
@@ -569,6 +672,44 @@ der Anmeldung über das Projekt bis zum fertigen, geprüften Bild. Die Prüfung 
 erste Bild ab, und zwar zu Recht. Auch das ist ein Ergebnis: Sie hat auf dem echten Weg
 gemeldet, wofür sie gebaut ist.
 
+**Nachtrag 29.09.2026.** Am 24.09. entstand das erste Bild über die herübergeholte
+Knotenansicht: Kästchen verbunden, «Ausführen», «Freigeben», und das Bild erschien am
+Render-Knoten. Bestanden hat die Geometrieprüfung seither kein einziges Bild.
+
+### Nachtrag 29.09.2026 · Abgelegt ist nicht zugestellt
+
+Am 24.09.2026 beantwortete Visbox eine lange Liste von Fragen aus KosmoOrbit und legte dazu
+sechs Aufträge an. Danach kam fünf Tage nichts zurück. Die Nachschau am 29.09. fand den
+Grund, und er lag bei uns: **Die Antworten lagen nur in unserem eigenen Repo.** Drüben stand
+die Liste weiter auf «offen, noch keine Antwort». Unser eigenes Zählwerkzeug hatte drei der
+Aufträge sogar als «nicht ausgeliefert» gemeldet.
+
+Der Owner entschied, die Blätter direkt in den Eingangsordner zu legen, den KosmoOrbit selbst
+dafür angeboten hatte. Weil das ein fremdes Repo ist, war die Rückfrage nötig. **Am selben
+Tag kamen alle sechs Antworten zurück.** In der Anleitung zu diesem Eingangsordner steht der
+Satz, der die Lehre trägt: *«Ein Auftrag, den sein Adressat nicht erreichen kann, ist kein
+Rückstand bei ihm — er ist einer beim Absender.»* Oder kürzer: **Ein Block, der im eigenen
+Repo liegt, ist nicht zugestellt** (→ Lexikon: Zustellweg (eines Auftrags)).
+
+### Nachtrag 29.09.2026 · Eine fremde Software wartet nicht
+
+KosmoOrbit hat am 25.09.2026 eine neue Fassung herausgegeben, «mit dem Fertigen
+geschnitten». Das erste echte Bild von der Rechenmaschine zu Hause war **nicht** darin, es ist
+auf die nächste Fassung verschoben; auch das Urteil am Render-Knoten fehlt. Das ist kein
+Versäumnis der Gegenseite, sondern ihr gutes Recht: Wer eine Fassung herausgibt, nimmt, was
+fertig ist. *Für einen Posten, der in einer fremden Software ankommen soll, ist darum nicht
+unser Datum massgebend, sondern ihres.*
+
+### Nachtrag 29.09.2026 · Verworfen ist ein Zustand
+
+Neben «erledigt», «offen» und «gebaut, am Gerät unbestätigt» führt der Einbau-Stand einen
+vierten Zustand: **verworfen**, also entschieden, etwas **nicht** zu bauen oder nicht
+einzuschalten. Am 29.09.2026 kam ein Posten dazu: Eine Prüfung, ob der Freigebende dazu
+befugt ist, ist gebaut, bleibt aber **aus**, weil KosmoOrbit dieses Freigabe-Tor gar nicht
+benutzt und der eigene Weg per Knopf freigibt. Der Grund steht an der Stelle im Programm, an
+der sie ausgeschaltet ist. *Ein Posten, den niemand mehr bauen will, gehört nicht in den
+Rückstand, sondern mit Begründung auf «verworfen».*
+
 ### Vier Pflichten
 
 Aus dem Auftrag des Owners folgen vier Pflichten. **Verteilen**: Jeder offene Posten hat
@@ -622,6 +763,17 @@ Auftrag es sagt. Eine solche Änderung wird darum **angesagt, bevor sie ankommt*
 sie drüben aus wie ein Fehler (→ Lexikon: Ansage gegen Messauftrag). Am 22.09.2026 etwa
 wurde vorweg angesagt, dass dort ab dem nächsten Abholen zwei Bildmodelle abgelehnt werden.
 
+**Nachtrag 29.09.2026 · Wer bei KosmoOrbit einbaut.** Die Stelle, die dort Aufträge in den
+Hauptstand einbaut, heisst drüben **Integrator**, und es ist der Cloud-Worker. In der
+jetzigen Runde zeichnet der Worker für die Oberfläche die Knoten und beauftragt den Einbau;
+eingebaut wird beim Integrator. Wer einen Posten dort ankommen lassen will, muss darum
+wissen, bei welchem der beiden er gerade liegt.
+
+**Und der Cloud-Worker hat unser Repo nicht.** Als KosmoOrbit am 29.09. echte Beispiele für
+die neuen Felder verlangte, gingen sie deshalb **im Text** des Ergebnisblatts mit, nicht als
+Verweis auf eine Datei bei uns. Es ist dieselbe Regel wie beim Auftrag: Was der Empfänger
+wissen muss, steht in dem Blatt, das er bekommt.
+
 ### Viele Agenten, klare Grenzen
 
 Innerhalb des Repos arbeiten oft mehrere Agenten gleichzeitig. Einer verteilt die Arbeit und
@@ -652,6 +804,15 @@ Arbeitsstand gefahren, denn wer eine Datei kurz verbiegt, lässt die Tests aller
 falsch ausschlagen. Die bauenden Agenten **nennen** ihre Proben nur; gefahren werden sie am
 Schluss von einer Stelle aus, eine nach der anderen, jede mit geleertem Zwischenspeicher
 (→ Lexikon: Stale Bytecode nach einer Mutationsprobe).
+
+**Nachtrag 29.09.2026 · Eine Nummer, zweimal vergeben.** Jeder Auftrag trägt eine laufende
+Nummer. Am 29.09.2026 zogen zwei Sitzungen, die gleichzeitig arbeiteten, dieselbe Nummer 177:
+In jedem der beiden Stände für sich war sie noch frei. Die andere Sitzung war zuerst im
+Hauptstand; unser Auftrag wurde zur 178, und die Rangfolge der Aufträge wurde nachgezogen.
+*Eine Nummer, die zwei Schreiber aus demselben Vorrat ziehen, ist erst vergeben, wenn der
+gemeinsame Stand sie zeigt.* Es ist derselbe Gedanke wie in Abschnitt 3: eine Tatsache an
+einer Stelle, und «eine Stelle» heisst hier der gemeinsame Hauptstand, nicht die eigene
+Kopie.
 
 ---
 
@@ -736,3 +897,11 @@ Auftrag.
    vollständig in sich, und jedes Ergebnis wird von einem Zweiten gegengeprüft.
 10. **Erst zeichnen, dann bauen.** Wer erst baut und dann fragt, hat die Antwort schon
     gegeben; darum wird gezeichnet, bevor gebaut wird, und entschieden wird im Repo.
+
+**Nachtrag 29.09.2026.** Die zehn Sätze bleiben. Zwei davon haben in der zweiten Woche einen
+Zusatz bekommen, der aus Fehlern stammt:
+
+* **Zu Satz 8:** Und was für eine fremde Software gebaut ist, gilt erst als zugestellt, wenn
+  es in **ihrem** Eingang liegt, nicht in unserem Repo.
+* **Zu Satz 4:** Und wo eine Regel eine Ausnahme bekommt, steht die Ausnahme mit Datum,
+  Begründung und Auflagen im Repo und wird vom Programm gehalten, nicht nur vom Text.

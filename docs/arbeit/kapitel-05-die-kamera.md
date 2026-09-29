@@ -1,9 +1,14 @@
 # 5 · Die Kamera: was die Software selbst entscheidet
 
-> **Stand 19.09.2026 — Entwurf.** Drittes geschriebenes Kapitel.
+> **Stand 29.09.2026 — Entwurf** (geschrieben 19.09.2026, nachgezogen 29.09.2026).
+> Drittes geschriebenes Kapitel.
 > **Alle Zahlen dieses Kapitels sind für das Kapitel gerechnet worden**, am 19.09.2026,
 > gegen den Quelltext in `src/aiimaging/kameras.py`. Wo eine ältere Notiz eine andere Zahl
 > nannte, steht die neu gerechnete — und der Unterschied ist vermerkt.
+> **Nachtrag 29.09.2026:** `kameras.py` hat sich am 24.09.2026 geändert (Wandabstand 10 m →
+> 3 m, Rücknahme bei zu steilem Shift). Die Zahlen vom 19.09.2026 gelten für den dort
+> gerechneten Baukörper (12 × 15 × 9 m) weiter; **für kleine Bauten waren zwei Aussagen zu
+> allgemein** — siehe 5.3 und 5.4. Dazu die Zwillinge (5.6) und die Innenansicht (5.7).
 
 ---
 
@@ -97,6 +102,21 @@ Messung noch falscher geworden.*
 vorkommende Gebäude eine korrekte Architekturdarstellung mit einem gewöhnlichen
 35-mm-Objektiv — und sie muss dafür nie kippen.
 
+> **Nachtrag 29.09.2026 — die Spanne hatte eine Untergrenze, die niemand gerechnet hatte.**
+> Die 216 Fälle beginnen bei 3 m Höhe. Am 24.09.2026 zeigte sich, dass Körper **deutlich
+> unter Augenhöhe** (Kante 0,1 bis 1,2 m) die Rechnung mit einem Absturz (`TypeError`)
+> abbrechen liessen. Die Physik dahinter ist einfach: Die Kamera steht auf 1,70 m, der
+> Körper ist 1 m hoch und nur 3 m entfernt; der Blick müsste steil nach unten, und der
+> nötige Shift (−12 bis −17 mm) übersteigt die halbe Sensorhöhe, die im Bildformat 16:9 nur
+> 10,1 mm beträgt.
+>
+> Behoben, ohne zu kippen: Die Kamera wird in diesem Fall **waagrecht zurückgenommen**, bis
+> der Shift wieder in den Rahmen passt, und eine Warnung sagt es (`kameras._shift_zu_steil`).
+> Alle Fälle, die vorher nicht abbrachen, bleiben bitgleich. *Der Satz «sie muss dafür nie
+> kippen» gilt weiter — aber «für jedes praktisch vorkommende Gebäude» war am 19.09.2026
+> nicht gerechnet, sondern angenommen.* Ein Sockel, eine Mauer oder ein Möbelstück als
+> Modell lag ausserhalb der gerechneten Spanne.
+
 ---
 
 ## 5.4 Die Rahmung, und ein Befund, der eine Annahme umgeworfen hat
@@ -118,6 +138,30 @@ Grund, warum es die Trennung von Gelände und Bauwerk überhaupt gibt.
 
 *Eine Rahmung, die das Gelände rahmt, ist keine falsche Rechnung. Sie ist die richtige
 Rechnung auf den falschen Gegenstand.*
+
+> **Berichtigt 29.09.2026 — «exakt erreicht, in allen gerechneten Fällen» galt nur für die
+> gerechneten Fälle.** Am 24.09.2026 wurden von drei automatischen Kameras am Testbau
+> (8 × 5 × 3 m) nur eine gerendert. Die zwei Über-Eck-Ansichten füllten 63,9 % des Bildes,
+> und der eigene Rahmungsriegel (`BILDBREITE_ABBRUCH`, 0,65) sperrte sie — zu Recht, denn
+> unter rund 0,65 trägt die Geometrieprüfung nicht.
+>
+> **Die Ursache war eine gesetzte Zahl.** Der Abstand wird aus drei Kandidaten gewählt; einer
+> davon ist eine Untergrenze aus halber Tiefe plus `WANDABSTAND_M`, und der stand auf
+> **10 m — gesetzt, nie gemessen.** Bei kleinen Bauten war diese Untergrenze massgebend und
+> stellte die Kamera zu weit weg:
+>
+> | Körper | Füllgrad bei 10 m | bei 3 m |
+> |---|---|---|
+> | Kiosk (klein) | 0,432 | 0,699 |
+> | Pavillon | 0,518 | 0,699 |
+> | Testbau 8 × 5 × 3 m, alle zwölf Richtungen | 0,517 – 0,699 | 0,697 – 0,700 |
+> | Bauten ab 12 m Kante | — | bitgleich |
+>
+> Seit dem 24.09.2026 gilt `WANDABSTAND_M = 3.0`. Der Baukörper dieses Kapitels (12 × 15 ×
+> 9 m) ist davon nicht betroffen; die Zahlen oben bleiben für ihn richtig. **Der Riegel ist
+> nicht gesenkt worden** — *die Schwelle zu senken hätte das Symptom zugedeckt und die
+> Ursache stehen lassen.* Am Gerät bestätigt am 24.09.2026 (`auf-20260924-169`: drei Bilder,
+> Füllgrad 0,699 / 0,70 / 0,70).
 
 ---
 
@@ -153,6 +197,34 @@ gleich gute Dreierkombinationen; die Software nimmt eine und **sagt, dass es ach
 
 *Eine Software, die aus acht gleichwertigen Möglichkeiten eine nimmt und sie als die
 richtige ausgibt, hat eine Willkür in eine Aussage verwandelt.*
+
+### Nachtrag 29.09.2026: gleichwertig heisst manchmal gleich — die Zwillinge
+
+Symmetrie hat eine zweite Folge, die im Entwurf fehlt: Zwei gewählte Standpunkte können
+**dasselbe Bild** ergeben. Seit dem 26.08.2026 gibt es dafür eine Zwillingserkennung — eine
+Kamera mit derselben Soll-Tiefenkarte wie eine andere wird nicht noch einmal gerechnet.
+
+**Sie hat im Betrieb nie gegriffen.** Am 24.09.2026 lieferte die Messmaschine für den
+punktsymmetrischen Testbau zwei byte-gleiche Bilder (`sSE` und `nNW`), beide gerechnet —
+468 s für nichts (`auf-20260924-169`). Nachgestellt mit echtem Blender, zwei Ursachen:
+
+1. Der Betrieb liefert die Tiefenkarte **flach**, die Erkennung erwartete **Zeilen**. Sie
+   stolperte an der ersten Zahl und meldete still «nicht vergleichbar». Die Proben fütterten
+   Zeilen und blieben grün.
+2. Selbst richtig gelesen, unterscheiden sich die beiden Karten um bis zu 9,5·10⁻⁶ m
+   (Rechenrauschen bei rund 10 m Abstand); ein Abgleich auf sechs Nachkommastellen kippte
+   daran.
+
+Behoben mit einer Toleranz von 1 mm, zwei Grössenordnungen über dem gemessenen Rauschen,
+und Proben in der Datenform des Betriebs. *Eine Probe, die die Datenform selbst erfindet,
+prüft die Erfindung.* Am Gerät steht die Bestätigung aus (`auf-20260924-173`, Einbau-Stand
+C22 *gebaut, am Gerät unbestätigt*).
+
+**Und am 29.09.2026 hatte die Erkennung recht, wo es zuerst nach einem Fehler aussah:** Zwei
+von Hand gesetzte Standpunkte lagen punktgespiegelt um die Gebäudemitte, und der Testbau ist
+ein Rechteck — beide Tiefenkarten waren wirklich gleich (nächster Punkt 6,030965 gegen
+6,030963 m). Nebenbefund: `tools/make_test_ifc.py` nennt den Testbau «asymmetrisch»; das
+gilt für eine Spiegelung, nicht für eine Drehung um 180 Grad.
 
 ---
 

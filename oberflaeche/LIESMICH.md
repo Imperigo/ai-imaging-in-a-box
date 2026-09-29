@@ -1,5 +1,8 @@
 # Die Oberfläche von Visbox
 
+*Stand: 29.09.2026 — Nachträge zur dritten Antwort drüben, zur iPad-App und zur
+Knotenansicht (E27).*
+
 **Sie liegt ausserhalb von `src/aiimaging/`, und das ist keine Ordnungsfrage.**
 
 Regel 4 sagt: *Der Kern ist eine Bibliothek, ohne Oberfläche aufrufbar. Die Oberfläche ist
@@ -38,6 +41,15 @@ Das ist die Auflage, um die es eigentlich geht. Aus dem Entwurf vom 26.08.2026:
 nichts. Es bekommt ein eigenes Zeichen und einen eigenen Satz. Der UI-Worker hat am
 03.09.2026 genau das an seiner eigenen Fläche gemeldet: Die Bildkachel zeigte bei fehlender
 Prüfung **kein** Abzeichen, und kein Abzeichen sieht aus wie kein Problem.
+
+> **Nachtrag 29.09.2026 — drüben ist das noch nicht behoben.** Am 24.09.2026 zeigte die
+> Bildkachel in KosmoOrbit ohne Prüfung weiterhin kein Abzeichen; der UI-Worker hat es an
+> den KosmoOrbit-Integrator weitergegeben. Dazu kommt ein zweiter Fall von der anderen
+> Seite (Antwort auf `auf-142`): Ihre Zeile je Kamera liest nur «bestanden ja/nein» und
+> zeigt eine **ungemessene** Kamera als **«durchgefallen»**. Wir senden seit dem 29.09.2026
+> den dritten Zustand ausdrücklich mit (`qa.geometry.status`); gelesen wird er dort erst,
+> wenn ihr Bauposten dazu gebaut ist. Diese Fläche hier zeigt die drei Zustände richtig —
+> betroffen ist nur die Anzeige drüben (Einbau-Stand A10 und B5).
 
 ## Warum die Bedienfelder nicht hier aufgezählt sind
 
@@ -137,6 +149,18 @@ fängt, ist kein zweiter Wächter.*
 Die Zeichenfläche ist die Eingabe des **Entwurfsmodus** (E23) und die Lieferform dafür ist
 ein **iPad mit Stift** (E24). Sie ist darum für einen Stift gebaut und nicht für eine
 Maus, die auch geht.
+
+> **Nachtrag 29.09.2026 — auf dem iPad zeichnet inzwischen eine eigene App.** Am 22.09.2026
+> hat der Owner entschieden, dass das iPad eine **native App «Visbox»** bekommt statt nur
+> dieser Webseite (`docs/ENTSCHEIDE_IPAD_2026-09-21.md`, Nr. 21; Bau in `ipad/`, siehe
+> `ipad/LIESMICH.md`). Die App rechnet nie selbst und spricht mit **diesem** Server
+> (`docs/VISBOX_PROTOKOLL.md`). Die Zeichenfläche hier bleibt für den Browser stehen. Die
+> App ist gebaut und übersetzt, aber **noch auf keinem iPad gelaufen** — das Abnahmeblatt
+> dafür liegt beim Owner (`docs/VISBOX_IPAD_ERSTE_PROBE.md`).
+>
+> **Und seit dem 21.09.2026 gilt für jede Arbeit an Bedienung und Aussehen: erst zeichnen,
+> dann bauen** — auf der **einen** Entwurfsfläche «Visbox iPad — Stift zu Bild»
+> (`CLAUDE.md`). Entscheide daraus stehen in den Entscheidblättern, nicht nur im Bild.
 
 **Zeigerereignisse und nichts daneben.** `PointerEvent` ist der einzige Weg, der `pressure`
 und `pointerType` liefert und für Maus, Finger und Stift derselbe ist. Maus- und
@@ -282,3 +306,21 @@ Ohne laufenden Abholer zeigt der Render-Knoten ehrlich «wartet — nicht abgeho
 der Vertrag mit der iPad-App. Die Knotenansicht läuft nur im Browser; ihre Wege werden über
 die Vorsilbe erkannt, hinter derselben Anmeldung wie alles andere. Was hinter `/bruecke`
 passiert, entscheidet `aiimaging.knotenweg` — hier wird nur durchgereicht.
+
+### Nachtrag 29.09.2026 — die Knoten werden drüben neu gebaut (E27)
+
+**Die Knotenansicht ist eine Kopie, und an ihren Knoten wird hier nicht gebaut.** Nach
+Owner-Entscheid **E27** (24.09.2026) baut der **UI-Worker** die Knoten-Oberfläche in
+KosmoOrbit neu. Der Owner hat seinen Entwurf **«n1 Insel-Karte»** gewählt: runde Karten,
+Fächer für Eingang, Einstellung und Ergebnis, das Bild im Ergebnis. Eingebaut wird n1 vom
+KosmoOrbit-Integrator, in zehn Teilen (KV1–KV10). Visbox übernimmt den neuen Stand **einmal,
+wenn der UI-Worker fertig meldet** (`tools/kosmovis_uebernahme.py`), nicht laufend.
+
+**Bis dahin bleibt der Render-Knoten in `kosmovis/`, wie er kopiert wurde** — zwei
+Fassungen desselben Knotens, eine hier und eine drüben, liefen auseinander.
+
+**Was das heute heisst, und es ist keine gute Nachricht:** KosmoOrbit hat seine Fassung
+0.1.5 am 25.09.2026 geschnitten, und von n1 ist nur KV1 zum Teil drin (runde Kartenecken).
+**Das Urteil am Render-Knoten** — der eine Punkt, den der Owner in E27 fest entschieden hat
+(KV7, Einbau-Stand B9) — **ist noch nicht gebaut.** Einen eigenen Ausgang «Urteil» am
+Render-Knoten hat die Knotenansicht darum noch nicht.

@@ -19,64 +19,113 @@ und eine erfundene Kubatur nachweislich durchfallen lässt.
 
 ## Stand
 
-**Stand 2026-08-26.** Die Kette läuft von einer IFC-Datei bis zum bewerteten Bild, und sie
-ist am Gerät gelaufen: Der erste echte Render mit echten Modellgewichten fand am
-18.08.2026 statt (`auf-20260818-09`, Qwen-Image-Edit-2511, 147,9 s, Score 0,359 —
-durchgefallen, und das ist ein Messwert und kein Fehlschlag).
+**Stand 2026-09-29.** Die Kette läuft von der Modelldatei bis zum bewerteten Bild — am
+Gerät und auf dem Weg, den das Produkt geht: Modell öffnen, Mappe anlegen, wieder öffnen,
+rechnen, Bild mit Urteil (`auf-20260922-137`). Seit dem 24.09. entsteht ein Bild auch aus
+der Knotenansicht heraus, nachdem ein Mensch freigegeben hat (`auf-20260924-164`). Der
+erste echte Render überhaupt war am 18.08.2026.
 
-**Was in diesem Environment messbar ist, und was nicht** — nachgesehen am 26.08.2026, weil
-die Kurzform *«hier gibt es keine GPU»* zu der falschen Folgerung verleitet, hier lasse
-sich gar nichts messen:
+**Was die Prüfung heute belegt, und was nicht.** Die schlechten Nachrichten zuerst, weil
+an ihnen die Arbeit hängt:
 
-| | |
-|---|---|
-| **Hier** | Blender (`/opt/blender/blender`) und `.venv-ifc`. Also die **ganze Geometrieseite**: IFC → glb, Multipass, Kamerastellung, Hüllboxen, Sonne, Rahmung |
-| **Nur auf der Arbeitsstation** | alles, was `torch` braucht: die **Diffusion** und der **Tiefenschätzer** — und damit die Geometrie-Treue-Zahl selbst |
+* **Auf dem Produktweg hat noch kein Bild die Geometrie-Schwelle bestanden.** Der beste
+  Lauf kam auf 0,534 gegen 0,65 (`auf-20260923-154`).
+* **Das gesuchte Bild existiert — aber an einer einfachen Schachtel.** Am 09.09. bestanden
+  zwölf von zwölf Bildern (`auf-20260909-92`). An einem gegliederten Bau misst dieselbe
+  Zahl schon bei richtiger Zuordnung nur 0,36. Es liegt an der Szene, nicht am Messweg
+  (`auf-20260921-128`).
+* **Die zusammengesetzte Zahl allein belegt wenig.** Sie besteht auch gegen die
+  Tiefenkarte eines fremden Gebäudes, weil sie zum grossen Teil den Aufbau Boden–Himmel
+  misst. Was trennt, ist **`rho_maske`**: wie gut die Tiefe des Bildes zur Geometrie passt,
+  gemessen nur auf dem Gebäude.
+* **Seit dem 29.09. urteilt über ein Bildpaar nur noch diese eine Zahl.** Das zweite Bein
+  (die Kante am Gebäudeumriss) hat an echten Bildern gewürfelt; es wird weiter angezeigt,
+  entscheidet aber nicht mehr mit. **Die Schwelle 0,80 ist nicht geeicht** — die Messung
+  liegt bei der HomeStation (`auf-20260929-175`).
+* **Ein Versuch, saubere Bilder anders zu messen, ist verworfen** (24.09.): Die «Ordnung an
+  Tiefensprüngen» stellte an echten Bildern das schlechte Bild über alle guten
+  (`auf-20260924-172`).
 
-*Der Unterschied hat an einem einzigen Tag zwei Befunde freigelegt*, die vorher als
-„braucht die Arbeitsstation" galten: dass der Deckungsgrad unter 8 m Kantenlänge gar nicht
-bindet, und dass die Bauwerksbox das Gelände nicht abtrennte.
+> **Das Messen ist gebaut und am Gerät gelaufen. Ein Bild, das auf dem Produktweg besteht,
+> gibt es noch nicht — und die Zahl, die jetzt allein urteilt, hat noch keine geeichte
+> Grenze.**
 
-Die Lücke ist **seit dem 08.09.2026 geschlossen — und die Antwort ist unbequemer als
-ein Ja.** `auf-20260909-92` hat auf der HomeStation vier Fälle mit je drei Startwerten
-gefahren: **zwölf von zwölf bestehen die Geometrie-Schwelle 0,65**, mit Werten zwischen
-0,8965 und 0,9884.
+**Die Bildmodelle.** Regel 1 entscheidet, was ins Produkt darf:
 
-**Dieselben zwölf bestehen sie aber auch gegen die Tiefenkarte eines völlig anderen
-Gebäudes** (0,8279 bis 0,8763) — und bei einer ControlNet-Stärke, bei der die Bilder
-nachweislich nichts mehr mit dem Modell zu tun haben (ρ über der Bauwerksmaske ≈ 0),
-bestehen immer noch **elf von zwölf**.
+| Modell | Lizenz | Rolle |
+|---|---|---|
+| `z-image-turbo` | Apache-2.0 | **Vorgabe** — seit dem 29.09. auch für Aufträge aus KosmoOrbit ohne Modellangabe, wie es deren Vertrag sagt. Seither das **einzige** freie Modell mit Tiefensteuerung. Knapp eine Minute je Bild |
+| `qwen-image-edit-2511`, `flux2-klein-4b` | Apache-2.0 | Bearbeitungsmodelle: nehmen ein Eingangsbild, haben aber keine Tiefensteuerung. Das Qwen-Modell rechnet mit Führung durch, knapp sechs Minuten je Bild — und folgt der Geometrie gemessen nicht |
+| `qwen-image-2512` | Apache-2.0 | **stillgelegt** (29.09.): 48 GB, und die Datei seiner Tiefensteuerung ist in Herkunft, Lizenz und Format ungeklärt |
+| `sdxl-juggernaut`, `sd35-large` | OpenRAIL-M, Stability Community | **nur zum Messen**, nie ausgeliefert (Owner, 22.09.) — keine der Lizenzen aus Regel 1 |
+| `qwen-image-2.1` | Qwen Research License | **nur Forschung** (Owner, 29.09.): lädt nur an der HomeStation und nur mit `AIIMAGING_FORSCHUNGSMODELLE=1`; nie Vorgabe, von KosmoOrbit nicht bestellbar, jeder Lauf trägt «nur Forschung». Ob es läuft und die Geometrie trägt, misst `auf-20260929-178` |
+| FLUX.1-dev, FLUX.2-dev | Non-Commercial | ausgeschlossen |
 
-> **Das gesuchte Bild existiert. Die Schwelle, die es besteht, belegt aber nicht, was sie
-> belegen sollte.** Sie misst zum grossen Teil den Boden-Himmel-Aufbau, den jedes
-> Architekturbild auf Augenhöhe hat.
+**Die Naht zu KosmoOrbit:**
 
-Was trennt, steht schon da: **`rho_maske`** — die Rangkorrelation über der Bauwerksmaske
-allein. Sie unterscheidet sauber, wo der zusammengesetzte Score es nicht tut. *Die Aussage
-`geometrietreu` ist damit nicht widerlegt, sondern an die falsche Zahl gehängt gewesen.*
+* **Die Post kommt jetzt an.** Seit dem 29.09. gehen Antworten und Aufträge direkt in den
+  Eingangsordner von KosmoOrbit. Vorher lagen sie fünf Tage nur bei uns — zugestellt war
+  nichts. Alle sechs offenen Fragen an den Cloud-Worker sind seither beantwortet.
+* **KosmoOrbit hat v0.1.5 am 25.09. ohne das erste echte Bild geschnitten.** Es ist auf
+  v0.1.6 verschoben. Das Urteil am Render-Knoten ist drüben entschieden, aber nicht gebaut.
+* **Drüben entschieden (29.09.):** E123 — wer Daten empfängt, nimmt ein leeres Feld an und
+  meldet es als Mangel. E124 — Zusatzbilder («Ebenen») kommen in zwei Schritten.
+* **Bei uns dafür gebaut:** Schritt 1 der Ebenen (Schönbild, Tiefe, Material-ID je Kamera,
+  mit Erklärung in Zahlen); die Felder, die sagen, mit welchem Modell gerechnet wurde
+  (`engine_used`, `engine_license`, `guidance_applied`); und der Prüfblock
+  `geometry_gates` in **ihren** drei Wörtern (`measured`, `not_measured`,
+  `not_applicable` — das dritte als unser Vorschlag, zur Bestätigung gestellt). Dazu
+  Beispieldateien mit echtem Blender unter
+  [`docs/vertragsbeispiele/2026-09-29/`](docs/vertragsbeispiele/2026-09-29/) — das KI-Bild
+  und die Prüfung darin sind Platzhalter, und so benannt.
+* **Ein Fehler bei uns, gefunden, weil sie nachgefragt haben:** Unsere Transparenz-Prüfung
+  sah Glas mit Durchlass nicht, sie kannte nur den älteren Weg. Behoben.
+* **Noch nicht gebaut, bei uns:** Nach E123 sind wir an der MCP-Kante der Empfänger; vier
+  Felder unseres Eingangs nehmen ein leeres Feld noch nicht an.
+* **Die Token-Prüfung am Freigabe-Tor bleibt aus — als Entscheid** (29.09.): KosmoOrbit
+  benutzt das Tor nicht, unser eigener Weg gibt per Knopf frei.
+
+**Offen, und bei wem:**
+
+* **local (HomeStation), sechs Aufträge, 173–178:** Zwillinge und Speichergrenze je Modell
+  (173), zwei Nachproben zum Einbau-Stand (174), die Eichung der Paarschwelle (175), ein
+  ganz echter Lauf für die Vertragsbeispiele (176), drei neue Blender-Knoten von
+  KosmoPrepare (177), Qwen-Image-2.1 unter der Forschungs-Ausnahme (178).
+* **cloud (KosmoOrbit):** Ebenen, Glas-Ausgabe und die neuen Vertragsfelder einbauen;
+  bestätigen, dass `not_applicable` so gemeint ist.
+* **Owner:** die App auf dem iPad ausprobieren — das Abnahmeblatt steht in
+  [`docs/VISBOX_IPAD_ERSTE_PROBE.md`](docs/VISBOX_IPAD_ERSTE_PROBE.md).
+
+**Was hier messbar ist:** Dieses Environment hat keine Grafikkarte, aber Blender und
+`.venv-ifc` — also die **ganze Geometrieseite** mit echtem Blender. Alles, was `torch`
+braucht (Bildmodell, Tiefenschätzer und damit die Geometrie-Zahl selbst), läuft nur auf
+der HomeStation und geht dorthin als Auftrag.
 
 | | Stand |
 |---|---|
-| Oberflaeche (`oberflaeche/`) | gebaut am 21.09. **Ausserhalb des Kerns** (Regel 4), ohne fremdes Paket, ohne Netz, nur auf 127.0.0.1. Zeigt Modell und jedes Bild mit seinem Urteil — *ein ungeprueftes Bild sieht weder aus wie ein bestandenes noch wie gar nichts*. Der **Knotenbaum ist bedienbar**: Einstellungen je Knoten, und die Felder kommen aus der Bibliothek statt aus einer Liste. Zwoelf Mutationsproben |
-| Knotenansicht aus KosmoOrbit (`kosmovis/`) | übernommen am 24.09. (E26): das Vis-Werkzeug **wörtlich kopiert**, 198 Dateien mit Abdruck in `kosmovis/HERKUNFT.json`, 19 Stellvertreter für alles ausserhalb. **Läuft im Browser**, Knoten legen und verbinden geht; 722 Proben des Originals in 78 Dateien grün (`npm test` in `kosmovis/`). **Seit dem Abend angeschlossen:** Modell aus der Mappe, Bestellung über unseren Server (`/bruecke`, wartet auf menschliche Freigabe), Knopf auf der Visbox-Seite. **Ein Bild ist auf diesem Weg noch nicht entstanden** (`auf-164`) |
-| Arbeitsgang — Modell herein, Kette fahren, Urteil in die Mappe | gebaut am 21.09. **Erster Aufrufer des Graphen im Produktcode.** Ein geändertes Modell hält den Lauf an (mit Öffner, der im Ergebnis steht); die Hochachse wird bei einer fremden glb **nicht geraten**. Sieben Mutationsproben, alle gefallen |
-| Projekt — Modell öffnen, arbeiten, morgen weitermachen | gebaut am 21.09. Das Modell wird **verwiesen, nicht kopiert**; ein geändertes Modell hält nichts an, es wird gemeldet. Sieben Mutationsproben, alle gefallen — zwei davon erst im dritten Anlauf |
-| 3D-Modell-Importeur (`obj`, `fbx`, `dae`, `stl`, `ply`, `usd`, `abc`, `x3d`) | gebaut am 21.09., **nur mit Attrappen geprüft** — echtes Blender hat er nie gesehen. Die Messung ist bestellt (`auf-20260921-126`). *Bis dahin gilt: gebaut, am Gerät unbestätigt.* |
-| IFC → glb, über die Prozessgrenze | läuft, an 40 echten Dateien gemessen. **Seit 26.08. trägt der Knotenname den IFC-Namen** — ohne ihn war das Gelände auf der Blender-Seite nicht abtrennbar |
-| glb → Blender-Multipass (Beauty, Material-ID, Tiefe) | läuft auf Blender 4.2 **und** 5.2 |
-| Bildmodell-Stufe (`diffusers`) | **am Gerät gelaufen** (18.08.); am 25.08. bis in die Diffusion, dort an einem Gerätekonflikt gescheitert — Ursache gefunden, Fix eingebaut, Bestätigung beauftragt |
-| Geometrie-Treue-Metrik | gebaut und kalibriert — **und seit 21.09. mit einer gemessenen Grenze**: Auf einem *gegliederten* Bau misst `geom_iou` schon bei richtiger Zuordnung 0,36 bei Schwelle 0,85. Das tragende Ergebnis gilt bis auf Weiteres nur fuer die Szenen des Datensatzes vom 09.09.2026 (`auf-20260921-128` bestellt) |
-| Prüfungen **vor** dem Bildlauf | seit 26.08.: Rahmung, Kamerahöhe, Zwischenbilder, Doppelansicht — **Massstab meldet, bricht noch nicht ab**. Die Rahmung rechnet mit dem **gemessenen** Füllgrad des Laufs, nicht mit dem Sollwert |
+| Oberfläche (`oberflaeche/`) | gebaut am 21.09. **Ausserhalb des Kerns** (Regel 4), ohne fremdes Paket; von sich aus nur auf dem eigenen Rechner, im Heimnetz nur mit Kennwort. Zeigt Modell und jedes Bild mit seinem Urteil — *ein ungeprüftes Bild sieht weder aus wie ein bestandenes noch wie gar nichts*. Der Knotenbaum ist bedienbar: Einstellungen je Knoten, die Felder kommen aus der Bibliothek |
+| iPad-App «Visbox» (`ipad/`) | gebaut am 22. und 23.09.: mit dem Stift ins Bild zeichnen, mit einer sechsstelligen Zahl an die HomeStation koppeln, dort rechnen lassen. Übersetzt auf einem Mac ohne Warnung. **Auf einem iPad ist sie noch nie gelaufen** — das Abnahmeblatt liegt beim Owner |
+| Knotenansicht aus KosmoOrbit (`kosmovis/`) | übernommen am 24.09. (E26): das Vis-Werkzeug **wörtlich kopiert**, 198 Dateien mit Abdruck in `kosmovis/HERKUNFT.json`, 19 Stellvertreter für alles ausserhalb; 722 Proben des Originals grün. Angeschlossen an Mappe und Server. **Das erste Bild auf diesem Weg ist am 24.09. entstanden** (`auf-164`). Die Knoten-Oberfläche baut der UI-Worker in KosmoOrbit um; Visbox übernimmt sie, wenn er fertig meldet (E27) |
+| Arbeitsgang — Modell herein, Kette fahren, Urteil in die Mappe | gebaut am 21.09. **Erster Aufrufer des Graphen im Produktcode.** Ein geändertes Modell hält den Lauf an; die Hochachse wird bei einer fremden glb **nicht geraten**. Am Gerät ganz durchgelaufen (`auf-137`) |
+| Projekt — Modell öffnen, arbeiten, morgen weitermachen | gebaut am 21.09. Das Modell wird **verwiesen, nicht kopiert**. Zwei Geräte an derselben Mappe löschen sich nicht mehr gegenseitig die Arbeit |
+| 3D-Modell-Importeur (`obj`, `fbx`, `dae`, `stl`, `ply`, `usd`, `abc`, `x3d`) | **am Gerät gemessen** (`auf-126`, Blender 5.2.1): Sechs Formate halten die Hüllbox auf den Millimeter. **Collada und X3D kann Blender 5.2 gar nicht mehr** — der Einlass sagt es dazu |
+| IFC → glb, über die Prozessgrenze | läuft, an 40 echten Dateien gemessen. Der Knotenname trägt den IFC-Namen — ohne ihn war das Gelände auf der Blender-Seite nicht abtrennbar |
+| glb → Blender-Multipass (Schönbild, Material-ID, Tiefe) | läuft auf Blender 4.2 **und** 5.2. Seit dem 29.09. als Ebenen je Kamera bestellbar |
+| Bildmodell-Stufe (`diffusers`) | **läuft am Gerät**, Vorgabe `z-image-turbo`. Reicht der Speicher auf der Grafikkarte nicht, wartet der Auftrag mit Grund, statt abzustürzen — die Grenze gilt seit dem 24.09. je Modell, die Bestätigung steht aus (`auf-173`) |
+| Geometrie-Treue-Metrik | gebaut und kalibriert — **an der Schachtel**. Am gegliederten Bau 0,36 schon bei richtiger Zuordnung (`auf-128`). Das Paarurteil hängt seit dem 29.09. an ρ allein, Grenze ungeeicht (`auf-175`) |
+| Prüfungen **vor** dem Bildlauf | Rahmung, Kamerahöhe, Zwischenbilder, Doppelansicht. Seit dem 24.09. rendern alle drei automatischen Kameras auch an kleinen Bauten (`auf-169`). Die Zwillingserkennung griff im Betrieb nie — repariert, am Gerät unbestätigt (`auf-173`) |
 | Stil-Gate | gebaut, Schwelle ungeprüft |
 | Kette als Graph mit Zwischenspeicher | gebaut und **gemessen** (Prompt-Änderung rechnet die Geometriestufen nicht neu) — aber **nicht am Produktivweg**: der Abholer fährt die Stufen als gerade Abfolge |
-| MCP-Anbindung an KosmoOrbit | **registriert am 18.08.** (Odysseus, `id d99fcf67`, alle Werkzeuge antworteten) — seither kamen ein viertes Werkzeug und die Ausführung dazu, beides am Gerät noch unbestätigt |
-| Ein über KosmoOrbit bestellter Render | **seit 26.08. wird er auch ausgeführt.** Bis dahin legte der MCP-Einlass ihn in einem Verzeichnis ab, das niemand las: Er ging mit Freigabe auf `queued` und blieb dort. Beide Wege gehen jetzt durch denselben Abholer und damit durch dieselben Riegel |
+| MCP-Anbindung an KosmoOrbit | registriert am 18.08., am 01.09. am Gerät mit einem echten Werkzeugaufruf nachgewiesen |
+| Ein über KosmoOrbit bestellter Render | wird seit dem 26.08. ausgeführt, durch denselben Abholer und dieselben Riegel wie jeder andere. **Ein echtes Bild aus einer KosmoOrbit-Bestellung steht aus** — drüben verschoben auf v0.1.6 |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
 **Wie weit der Einbau in KosmoOrbit ist**, Posten für Posten mit Datum und Beleg:
-[`docs/EINBAU_STAND.md`](docs/EINBAU_STAND.md). Wie die Oberfläche aussehen soll, die
-darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). Was uns
-bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
+[`docs/EINBAU_STAND.md`](docs/EINBAU_STAND.md). Was Visbox heute kann, Schritt für Schritt
+und für Laien: [`docs/PRODUKT_DIE_SCHRITTE.md`](docs/PRODUKT_DIE_SCHRITTE.md). Wie die
+Oberfläche aussehen soll, die darüber liegt:
+[`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). Was uns bei der eigenen
+Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
 Tests: **8379**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
@@ -96,7 +145,10 @@ den Text zu lesen; an einem einzigen Tag ist das achtmal passiert.*
    Non-Commercial-Grundlage ab, bevor die erste GPU-Sekunde läuft — ein LoRA erbt die
    Lizenz seines Grundmodells. Im [`NOTICE`](NOTICE) trägt jeder Copyleft-Eintrag eine
    **erklärte** Auflösung (`AUFLOESUNG: Prozessgrenze | Lizenzausnahme | KEINE`), die ein
-   Test prüft.
+   Test prüft. **Seit dem 29.09.2026 gibt es eine Forschungs-Ausnahme** für ein einzelnes
+   Modell (Qwen-Image-2.1): `backbone.ladefreigabe` lädt es nur mit gesetztem Schalter, nie
+   als Vorgabe und nie auf Bestellung von KosmoOrbit — vor einem Verkauf wird es entfernt
+   oder lizenziert.
 2. **Blender nur als externer Prozess.** Kein `import bpy`, kein bpy-Wheel, kein Add-on.
    Ein Test bewacht das Produkt-Environment.
 3. **Keine echten Projektdaten im Repo.** Testgeometrie wird erzeugt, nicht abgelegt.
@@ -139,7 +191,9 @@ eine, die nach Vollständigkeit aussieht.
 | | |
 |---|---|
 | **[`docs/SOFTWARE_VON_GRUND_AUF.md`](docs/SOFTWARE_VON_GRUND_AUF.md)** | **1 · Zuerst lesen: Wie man eine Software von Grund auf baut** — die Grundkonzepte, ohne technische Tiefe (Anhang B der Arbeit) |
-| [`docs/PLAN.md`](docs/PLAN.md) | Vorgehensplan, Phasen 0–4, **offene Wissensschulden** |
+| [`docs/README.md`](docs/README.md) | **Die Karte aller Dokumente** — welches man liest, wenn man etwas Bestimmtes sucht |
+| [`docs/PRODUKT_DIE_SCHRITTE.md`](docs/PRODUKT_DIE_SCHRITTE.md) | **Was Visbox heute kann, Schritt für Schritt** — für den Owner geschrieben, in jeder Bau-Sitzung fortgeschrieben |
+| [`docs/PLAN.md`](docs/PLAN.md) | Vorgehensplan, Phasen 0–4, **offene Wissensschulden** — in jeder Sitzung fortgeschrieben |
 | [`docs/PLAN_AB_2026-09-01.md`](docs/PLAN_AB_2026-09-01.md) | **Der Plan ab 1.9.2026: Rückstand zuerst** — zwei Wochen nichts Neues bauen |
 | [`docs/LAGEBEURTEILUNG_2026-08-14.md`](docs/LAGEBEURTEILUNG_2026-08-14.md) | Bestandsaufnahme der Bausteine mit Lizenzprüfung |
 | [`docs/LIZENZPRUEFUNG_2026-08-18.md`](docs/LIZENZPRUEFUNG_2026-08-18.md) | 38 Positionen gegen die Primärquelle |
@@ -149,6 +203,8 @@ eine, die nach Vollständigkeit aussieht.
 | **[`docs/EINBAU_CLOUDWORKER_2026-08-22.md`](docs/EINBAU_CLOUDWORKER_2026-08-22.md)** | **FÜR DEN CLOUD-WORKER:** was hier fertig ist und die KosmoOrbit-Seite **nicht erreicht** — mit dem, was dort dafür zu bauen wäre |
 | [`docs/UEBERGABE_VIS_2026-08-19.md`](docs/UEBERGABE_VIS_2026-08-19.md) | die ausführliche Fassung: 14 Fragen an die Vis-Oberfläche, mit Begründung |
 | [`docs/TOTE_KANTEN_TRIAGE_2026-08-26.md`](docs/TOTE_KANTEN_TRIAGE_2026-08-26.md) | 80 Funktionen ohne Aufrufer, jede mit einem Urteil — und drei, die eines brauchen |
+| [`docs/ENTSCHEIDE_VISBOX_2026-09-18.md`](docs/ENTSCHEIDE_VISBOX_2026-09-18.md) | die Entscheide zur eigenen Software (E1–E27) |
+| [`docs/ENTSCHEIDE_IPAD_2026-09-21.md`](docs/ENTSCHEIDE_IPAD_2026-09-21.md) | die Entscheide zur iPad-App |
 | [`docs/LEXIKON.md`](docs/LEXIKON.md) | Fachbegriffe für Leser:innen mit Architekturhintergrund |
 | [`docs/sitzungen/`](docs/sitzungen/) | Sitzungsprotokolle: Entscheidungen **mit Begründung** |
 | [`NOTICE`](NOTICE) | fremde Komponenten samt Lizenz und Prozessgrenze |
@@ -167,6 +223,13 @@ nicht an, egal wie fertig es hier ist.
 Der wichtigste Punkt daraus: **Die Geometrie-Zahlen, die der Vertrag heute trägt, haben wir
 selbst als unbrauchbar gemessen** — `geom_iou` belohnt ein Bild ohne Bauwerk, und der Score
 ist nicht monoton im Fehler. Was stattdessen trägt, ist gebaut und hat drüben kein Feld.
+
+*Stand 29.09.2026:* Das Blatt ist eine Momentaufnahme vom 22.08. Seither ist das Feld dafür
+**vereinbart**, aber noch nicht gebaut: `geometry_gates` steht in ihren Wörtern in unserem
+Ergebnis, und KosmoOrbit nimmt es in den Vertrag auf, sobald ein gemessenes Beispiel
+vorliegt. Antworten und Aufträge für den Cloud-Worker legen wir seit dem 29.09. direkt in
+seinen Eingangsordner in **ihrem** Repo — er hat unseres nicht, und ein Blatt, das nur bei
+uns liegt, ist nicht zugestellt.
 
 ---
 
@@ -228,6 +291,12 @@ Abbruch mitten in einer gesunden Rechnung — und der sieht aus wie ein Fehler, 
 die Uhr zu knapp stand. `AIIMAGING_ZEITFAKTOR=3` verdreifacht sie alle; bei `1.0` kommt
 jede Zahl typgleich und unverändert zurück, geprüft.
 
+Und eine, die eine Tür öffnet, und zwar nur für die Forschung:
+
+| Variable | wofür | ohne sie |
+|---|---|---|
+| `AIIMAGING_FORSCHUNGSMODELLE` | erlaubt, ein Modell unter Forschungslizenz zu laden (heute nur Qwen-Image-2.1) — nur an der HomeStation, nur für einen Messlauf, **nie dauerhaft**. Wirkt nur beim Wert genau `1` | Forschungsmodelle laden nicht; alles andere unverändert |
+
 ### Aufträge an eine Maschine mit GPU
 
 Dieses Environment hat keine GPU. Was eine braucht, läuft über das Repo als Übergabeort —
@@ -239,5 +308,7 @@ ein Auftrag ist eine Datei, ein Ergebnis ist eine Datei, kein Netzwerkdienst. Si
 ## Lizenz
 
 Apache-2.0 — siehe [`LICENSE`](LICENSE). Fremde Komponenten und ihre Lizenzen stehen im
-[`NOTICE`](NOTICE); keine davon wird eingebaut, alle werden über eine Prozessgrenze
-aufgerufen.
+[`NOTICE`](NOTICE). Was copyleft ist (Blender, IfcOpenShell), wird nie eingebaut, sondern
+nur über eine Prozessgrenze aufgerufen. Mitgeliefert werden nur permissive Bausteine — die
+MIT-Bibliotheken der Knotenansicht und, als einzige Ausnahme nach Regel 1, Schriften unter
+der OFL. Forschungsmodelle werden nicht ausgeliefert.
