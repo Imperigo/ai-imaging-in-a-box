@@ -7498,7 +7498,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] **local:** `auf-20260929-176` — Ansage und ganz echter Beispiel-Lauf (GPU).
   - [x] **von drüben:** `auf-vis-20260929-01` Qwen-Image-2.1 — Lizenz nur Forschung, Empfehlung
         «nicht verwenden», zugestellt (Protokoll 72 §6).
-  - [ ] **Owner:** kommerzielle Lizenz für Qwen-Image-2.1 anfragen, ja oder nein?
+  - [x] **Owner:** kommerzielle Lizenz für Qwen-Image-2.1 anfragen, ja oder nein? — «frag Lizenz
+        an» (29.09.); Text in `docs/lizenzanfragen/2026-09-29_qwen-image-2-1.md`.
+  - [ ] **Owner:** Anfrage versenden (Gmail-Zugang hier darf nicht senden) — oder Senden im
+        Connector erlauben, dann versendet Claude.
   - [ ] **Kern:** A7 nach E123 — MCP-Eingang nimmt `null` für vier Felder an, mit benanntem
         Mangel (Protokoll 72 §7).
   - [ ] **Kern → cloud:** Antwort zu 152: «INNENANSICHT BESTELLT» ist Vorbehalt oder Auskunft?
