@@ -1,6 +1,11 @@
 # 7 · Die Methode: wie in dieser Arbeit entschieden wurde
 
-> **Stand 19.09.2026 — Entwurf.** Erste geschriebene Fassung eines Kapitels dieser Arbeit.
+> **Stand 29.09.2026 — Entwurf** (geschrieben 19.09.2026, nachgezogen 29.09.2026). Erste
+> geschriebene Fassung eines Kapitels dieser Arbeit.
+> **Nachgetragen am 29.09.2026:** Der ausgeführte Fall zu 7.2 hat eine zweite Hälfte
+> bekommen, und sie ist unbequem — die dritte Antwort stand drüben im Vertrag, aber nicht
+> in der Anzeige. Der ausgeführte Fall zu 7.5 ist seit dem 21.09.2026 aufgelöst, und der
+> «Preis» dort war keiner. Zu 7.4 und 7.6 sind neue Fälle genannt.
 > Was hier steht, ist aus 29 Sitzungsprotokollen, dem Lexikon und den Auftragsergebnissen
 > zusammengetragen; jede genannte Zahl ist im Repo belegt und mit Datum auffindbar.
 > **Noch nicht enthalten:** die Kürzung auf Abgabelänge. Je Regel ist ein Fall ausgeführt
@@ -68,6 +73,35 @@ Seiten der Schnittstelle, bevor die beiden Seiten voneinander wussten.**
 bestimmbar ist; der Massstabsverdacht, der ausdrücklich ein Verdacht bleibt und keine
 Umrechnung auslöst; die Gegenprobe gegen eine fremde Geometrie, die bei unvollständiger
 Messung **nicht** als «hat getrennt» zählt.
+
+### Nachtrag 29.09.2026: im Vertrag ja, in der Anzeige nein
+
+Der Satz «die dritte Antwort stand auf beiden Seiten der Schnittstelle» stimmt für den
+**Vertrag** und hat für die **Anzeige** nicht gestimmt. Am 29.09.2026 hat KosmoOrbit auf
+die Frage geantwortet, ob ihr Werkzeug ein Urteil ohne Messung annehmen kann
+(`auf-20260922-142`):
+
+* **Das Urteilsfeld `passed` ist drüben an drei Stellen ein Wahrheitswert, nie `null`.** Ein
+  `passed: null` hätte das ganze Ergebnis ungültig gemacht, und ihr Einlesen hätte den
+  ganzen Auftrag verworfen — *nicht ehrlicher, sondern unlesbar*.
+* Das dreiwertige Statusfeld (*gemessen*, *nicht gemessen*, *nicht anwendbar*) gibt es drüben
+  seit dem 03.09.2026. **Aber ihre Anzeige liest es nicht:** Die Zeile je Kamera liest nur
+  `passed`. Ein ungeprüftes `passed: false` erschien drüben als **«durchgefallen»** —
+  genau die Verwechslung, gegen die diese Regel steht. Sie nennen es ihren Fehler und haben
+  ihn als dringlichsten Bauposten aufgenommen; gebaut ist er drüben nicht.
+
+**Was daraus bei uns wurde (29.09.2026):** Drinnen bleibt das Urteil dreiwertig — die
+Proben tragen den Unterschied zwischen «nicht gemessen» und «durchgefallen». Übersetzt wird
+**an der Aussengrenze**, an genau einer Stelle, die beide Ablagen benutzen: `passed` wird
+dort zum Wahrheitswert (ein fehlendes Urteil wird `false`), die dritte Antwort wandert ganz
+ins Statusfeld, und eine leere Zahl **fehlt**, statt als `null` zu erscheinen (auch das ist
+ihre Auflage). Für «gemessen, aber nicht entscheidbar» haben wir *nicht anwendbar*
+vorgeschlagen; die Bestätigung steht aus.
+
+*Die Regel hält, aber ihr Ort hat sich verschoben:* Die dritte Antwort steht nicht mehr im
+Urteil selbst, sondern in einem Feld daneben — und sie kommt nur an, wenn der Leser dieses
+Feld auch liest. **Eine Aussage, die im Vertrag steht und in der Anzeige nicht, ist beim
+Menschen vor dem Bildschirm nicht angekommen.**
 
 ---
 
@@ -148,6 +182,15 @@ Geometrieprogramm geeicht und auf erzeugte Bilder angewendet werden sollte — a
 weil die Herkunft der Bilder die Zahlen trägt; ein Vorschlag für einen zweiten
 Rahmungsriegel, der an einem konstruierten Fall funktionierte und an einem echten nicht.
 
+*Nachtrag 29.09.2026, ein Fall in beide Richtungen:* die **Ordnung an Tiefensprüngen**
+(24.09.2026, Kapitel 6, 6.7). Die konstruierten Fälle haben sie zweimal **widerlegt** — ein
+leeres Grundstück bekam erst 1,0, dann 0,66 — und das war ihre Aufgabe. Die dritte Fassung
+bestand sie alle, und die Regel hat gehalten: Die neue Zahl durfte **nicht mitentscheiden**,
+bis sie an echten Bildern gemessen war. Dort trennte sie nicht; eine graue Fläche bekam
+1,000. Die konstruierten Fälle hatten das Muster des Schätzers als Rampe nachgebaut, das
+echte ist eine Schüssel. *Dass eine Vorprüfung besteht, heisst nur, dass sie das nachbaut,
+was man schon wusste.*
+
 ---
 
 ## 7.5 Die vierte Regel · Eine Zahl gehört an ihre Bedingung
@@ -185,6 +228,18 @@ als *gesetzt* und nicht als *kalibriert*, und die Stelle, an der sie im eigenen 
 danebenliegt, steht seither neben ihr. Der Preis ist gezählt statt geschätzt: **Ein
 brauchbares Bild von zwölf wird abgewiesen.** Das ist die verzeihliche Richtung — ein
 Fehlalarm ist sichtbar, ein Durchlasser nicht —, aber es ist ein ungeklärter Fall.
+
+> **Berichtigt 29.09.2026 (Befund vom 21.09.2026) — es war kein Fehlalarm, und es war kein
+> brauchbares Bild.** Die bestellte Gegenprobe (`auf-20260918-115`) hat den Fall
+> entschieden: Dasselbe Bild misst gegen die **richtige** Geometrie −0,155 und gegen eine
+> **falsche** +0,300. Es folgt dem fremden Gebäude besser als dem eigenen; die Schwelle
+> hatte recht. Beim Nachzählen über alle zwölf Paare waren es zudem **zwei** solche Zellen,
+> nicht eine (Kapitel 6, 6.5).
+>
+> Für diese Regel ist das der bessere Fall als der ursprüngliche: *Die Zahlen stimmten, die
+> Begründung trug nicht, und das Urteil über das Bild war trotzdem richtig* — aber das
+> liess sich erst mit einer Gegenprobe sagen, nicht mit der Zahl allein. «Gesetzt, nicht
+> kalibriert» bleibt der richtige Name für die Schwelle.
 
 *Weitere Fälle, hier nur genannt:* eine Stil-Schwelle, die aus Läufen eines Modells stammte
 und auf ein anderes angewendet wurde; Zeitgrenzen, die auf einem schnellen Rechner gemessen
@@ -231,6 +286,25 @@ wiederholt.
 abgestürzten Lauf gesundmeldete; eine Dateigrösse als Beleg für einen Bildinhalt, der zu
 null Prozent vorhanden war; ein Zähler, der Aufträge ohne Antwort zählte und darum nie
 meldete, wenn eine Antwort längst dalag.
+
+*Nachtrag 29.09.2026 — weitere Fälle derselben Gestalt, seit dem Entwurf:*
+
+* **Die Zwillingserkennung** (Kapitel 5, 5.6) war seit dem 26.08.2026 gebaut und im Einbau-Stand
+  als *gebaut, am Gerät unbestätigt* geführt. Sie hat im Betrieb **nie gegriffen**: Der
+  Betrieb liefert die Tiefenkarte flach, die Proben fütterten Zeilen. *Eine Probe, die die
+  Datenform selbst erfindet, prüft die Erfindung.* Gebaut vor dieser Regel — und einen
+  Monat lang von keiner Probe bemerkt.
+* **Die Sonne stand um 180 Grad verdreht** (24.09.2026). Der Vertrag von KosmoOrbit zählt
+  die Himmelsrichtung ab Nord, wir zählten ab Süd. Im Code stand eine Warnung: *«ob der
+  fremde Vertrag von Norden zählt, ist NICHT geklärt»* — dabei stand die Antwort längst
+  in ihrem Vertrag. Die Warnung sah aus wie Sorgfalt und ersetzte das Nachsehen.
+* **«0 Treffer» zu Regel 3** (Kapitel 3, 3.4): ein Wächter, der Benutzernamen in Pfaden
+  sucht, in einer Tabelle mit der Zeile «Kunden-, Büro- oder Projektnamen». Ein echter
+  Projektname stand zu diesem Zeitpunkt im Repo.
+* **«Die Tiefe steuert das Bild nicht»** (23.09.2026) — gemeldet als Befund über das
+  Endbild und als «trifft den Kern des Produkts» weitergegeben; die Zahlen gehörten zum
+  **Blender-Bild** desselben Laufs. Am selben Tag berichtigt, bei einer Untersuchung des
+  ganzen Weges.
 
 ---
 
@@ -318,6 +392,10 @@ weniger, aber es ist nachprüfbar.
 | Abschnitt | Im Repo |
 |---|---|
 | 7.2 Die dritte Antwort | `src/aiimaging/kosmo_szene.py`, `docs/METHODE_2026-09-10.md` |
+| 7.2 Vertrag ja, Anzeige nein (Nachtrag) | `auftraege/ergebnisse/auf-20260922-142-antwort-geometry-gates-und-qa-je-kamera.md`, `kosmo_szene.nur_vertragsfelder`, `docs/sitzungen/2026-09-29_sitzung-72.md` §5 |
+| 7.4 Ordnung an Tiefensprüngen (Nachtrag) | `docs/sitzungen/2026-09-24_sitzung-71.md` §18 und §21, `auftraege/ergebnisse/auf-20260924-172.json` |
+| 7.5 Die Auflösung (Nachtrag) | `auftraege/ergebnisse/auf-20260918-115.json`, `docs/sitzungen/2026-09-21_sitzung-43.md` §2 |
+| 7.6 Weitere Fälle (Nachtrag) | `docs/sitzungen/2026-09-24_sitzung-71.md` §16 und §22, `docs/sitzungen/2026-09-23_sitzung-69.md` §9, Commit `9cfdf13` |
 | 7.3 Die Mutationsprobe | `tests/test_render.py`, `docs/LEXIKON.md` (Stichwort *Stale Bytecode*) |
 | 7.4 Vorprüfung | `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`, `docs/EMPFINDLICHKEIT_2026-08-20.md` |
 | 7.5 Zahl und Bedingung | `src/aiimaging/geometrie_qa.py` (Schwellenbegründungen), `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` |

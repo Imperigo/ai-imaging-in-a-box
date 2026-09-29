@@ -1,6 +1,15 @@
 # 6 · Das Messen: der Kern der Arbeit
 
-> **Stand 21.09.2026, abends — Entwurf.** Viertes geschriebenes Kapitel, und das tragende.
+> **Stand 29.09.2026 — Entwurf** (geschrieben 19.09.2026, nachgezogen 21.09. und
+> 29.09.2026). Viertes geschriebenes Kapitel, und das tragende.
+> **Nachgetragen am 29.09.2026, und nichts davon ist eine gute Nachricht für die
+> Reichweite:** (1) Der Widerspruch aus 6.7 ist aufgelöst — es liegt am **Bildanteil** des
+> Bauwerks, nicht am Messweg; dabei ist eine Verwechslung in der Auflösung selbst
+> nachgewiesen (6.7). (2) Im Betrieb urteilt das **Paarurteil seit dem 29.09.2026 allein
+> über die Rangkorrelation**, deren Schwelle 0,80 nicht kalibriert ist; das zweite Bein ist
+> abgeschaltet (6.7). (3) **Saubere Bilder sind für die Prüfung «nicht messbar»**, und der
+> erste Versuch, das zu beheben — die Ordnung an Tiefensprüngen —, hat nicht getrennt und
+> ist wieder entfernt (6.7). (4) Im Betrieb laufen die zwei Tore **ohne** Gegenprobe (6.4).
 > **Nachgezogen am Abend des 21.09.:** Der Geltungsbereich dieser Zahlen ist enger geworden,
 > ohne dass sich eine von ihnen geändert hätte — sie bedienen seit einem Owner-Entscheid
 > **eine von zwei Betriebsarten** statt der einzigen (siehe 6.1 und 6.8).
@@ -182,6 +191,18 @@ getan, wäre er am ersten Tag gefallen.
 Die Gegenprobe ist darum ein Argument der Prüffunktion selbst. Fehlt sie, gibt es kein
 Urteil, sondern eine Warnung. Besteht dieselbe Messung **auch** gegen die fremde Geometrie,
 lautet das Urteil **nicht entscheidbar** — nicht «bestanden».
+
+> **Nachtrag 29.09.2026 — im Betrieb fehlt die Gegenprobe, und das Urteil sagt es.** Auf
+> dem Weg, auf dem Bestellungen aus KosmoOrbit gerechnet werden, stehen die zwei Tore seit
+> dem 22.09.2026 je Kamera im Ergebnis (`geometry_gates`). Eine fremde Geometrie wird dort
+> aber **nicht** gerechnet. Das Urteil ist darum vorläufig und sagt es selbst
+> (`counter_check_status: fehlt`, `released: false` — auf diesem Weg immer). Der Satz
+> oben gilt also im Betrieb in seiner schwachen Form: Es gibt eine Warnung, kein Urteil.
+>
+> **Und drüben kam es bis heute nicht an.** Die Antwort von KosmoOrbit vom 29.09.2026
+> (`auf-20260922-142`): Ihr Einlesen streift ein Feld, das nicht im Vertrag steht, ab —
+> `geometry_gates` fällt dort weg und wird nur im Konsolenlog gemeldet. Sie wollen es in den
+> Vertrag nehmen, nach einem echten Beispiel von uns; gebaut ist es drüben nicht.
 
 ---
 
@@ -405,6 +426,46 @@ etwas, das keiner von uns benannt hat.* Solange das offen ist, gilt das tragende
 **für die Szenen des Datensatzes vom 09.09.2026 und nicht darüber hinaus.** Die Messung,
 die es entscheidet, ist bestellt.
 
+> **Nachtrag 29.09.2026 — aufgelöst: Es ist der Bildanteil, nicht der Messweg. Und die
+> Auflösung enthielt selbst eine Verwechslung.**
+>
+> Die Messmaschine hat den Widerspruch am 22.09.2026 ohne neuen Bildlauf beantwortet
+> (`auf-20260921-128`):
+>
+> * **Am Messweg liegt es nicht.** Zwei unabhängige Läufe mit verschiedenem Aufbau melden
+>   für dieselbe Szene `geom_iou 0,9771` und `rho_maske 0,9157`, gleich auf vier Stellen.
+> * **Es liegt am Anteil des Bildes, den das Bauwerk füllt.** Die Geländeplatte des
+>   Szenen-Erzeugers wächst mit der **grössten** Ausdehnung des Bauwerks — beim Hochbau
+>   ist das die Höhe. Mit der Vorgabe wird die Platte 38 m breit bei einem Grundriss von
+>   12 × 9,5 m: *ein kleiner Turm auf einem grossen Feld*, Bildanteil **0,1524**.
+> * **Ganz erklärt ist der Abstand damit nicht.** Ein gleichmässiger Randfehler müsste 19
+>   Bildpunkte breit sein, um den Hochbau auf 0,36 zu drücken — und bei demselben Fehler
+>   stünde die Schachtel bei 0,79 statt 0,98. Der Rest bleibt offen.
+>
+> **Die Verwechslung, beim Nachrechnen für dieses Kapitel am 29.09.2026 gefunden:** Die
+> Antwort (und ihr folgend Protokoll 59) vergleicht den **Quader** (6 Bauteile, 3,3 m) mit
+> dem Hochbau und schreibt, «12 von 12» beschreibe die Schachtel. Die Rohdaten vom
+> 09.09.2026 sagen etwas anderes: Die Szene *Gebäude* dort **ist** der fünfgeschossige
+> Hochbau (142 Bauteile, 1704 Dreiecke) — nur mit einer Platte vom **Achtfachen**
+> (`--gelaende-vielfaches=8.0`, eigens so eingestellt, damit beide Szenen vergleichbar
+> sind), gerechnet bei 512 × 512. Bildanteil dort: **0,5616**, fast gleich der Schachtel
+> (0,5569). Sechs der zwölf tragenden Bilder sind also Bilder des Hochbaus.
+>
+> Das ändert die Lesart in eine Richtung, die die Antwort stützt, und macht sie schärfer:
+> **Derselbe Hochbau** misst bei Bildanteil 0,56 gegen die richtige Karte 0,9257 … 0,9745
+> und gegen die fremde 0,7350 … 0,7566 — bei Bildanteil 0,15 dagegen 0,36, und bei einem
+> der Paare kehrt sich die Ordnung um. Die Messung, die die Antwort als nächsten Schritt vorschlug
+> (den Hochbau mit grösserer Platte), liegt damit in den eigenen Rohdaten schon vor —
+> allerdings bei anderer Auflösung. Das ist ein **Hinweis**, kein Beleg.
+>
+> **Was daraus für das tragende Ergebnis folgt:** Es gilt, solange das Bauwerk einen
+> nennenswerten Teil des Bildes füllt — in beiden Szenen vom 09.09.2026 gut die Hälfte.
+> Bei rund einem Siebtel gilt es nicht. **Wo dazwischen die Grenze liegt, ist nicht
+> gemessen.** Dass die Gliederung allein den Abstand nicht erklärt, legen dieselben Rohdaten
+> nahe — gleicher Bau, gleiche Gliederung, anderer Bildanteil, anderes Ergebnis —, mit
+> demselben Vorbehalt der Auflösung. Seit dem 22.09.2026 sagt der Szenen-Erzeuger beim
+> Erzeugen, wenn die Höhe die Platte treibt.
+
 **Zweitens: Zwölf Bilder sind zwölf Bilder.** Ein Bildmodell, eine Maschine, zwei Szenen —
 eine Schachtel und ein fünfgeschossiger Bau. Dass die Gegenprobe trennt, ist an **zwei
 offensichtlich verschiedenen** Gebäuden gezeigt. Zwei **ähnliche** Gebäude sind nicht
@@ -450,6 +511,93 @@ stehen. Alle bisher veröffentlichten Zahlen dieses Projekts sind mit ihm entsta
 müssen nachbaubar bleiben. *Die zwei Tore sind der Weg nach vorn, nicht eine Berichtigung
 nach hinten.*
 
+### Nachtrag 29.09.2026: Das Paarurteil im Betrieb ruht jetzt auf einer einzigen Zahl
+
+Neben den zwei Toren dieses Kapitels gibt es im Betrieb ein zweites, älteres Urteil: das
+**Paarurteil** des Maskenwegs, gerechnet unter dem echten Tiefenschätzer. Es sperrt nichts;
+es schreibt einen Satz in die Begründung des Ergebnisses, wenn der alte Riegel besteht und
+der Maskenweg widerspricht. Es hatte bis zum 29.09.2026 **zwei Beine**, und keines war
+kalibriert:
+
+| Bein | Grösse | Schwelle | Herkunft der Schwelle |
+|---|---|---|---|
+| 1 | gerichtete Rangkorrelation über der Maske — dieselbe Grösse, die Tor A liest | **≥ 0,80** | abgelesen an sieben Fällen aus einer Szene (`auf-20260821-27`) |
+| 2 | Anteil des Umrisses, an dem das Bild eine Tiefenkante zeigt | ≥ 0,20 | abgelesen, «beim Vierfachen des Zufalls» (`auf-20260822-30`) |
+
+**Das zweite Bein ist seit dem 29.09.2026 abgeschaltet** (Owner-Entscheid, auf Empfehlung;
+`geometrie_qa.ZWEITES_BEIN_URTEILT = False`). An erzeugten Bildern gemessen
+(`auf-20260909-98`) liegt der Kantenanteil bei **0,15 … 0,27** — er streut **um** seine
+eigene Schwelle von 0,20. Die Messmaschine nennt es «als Riegel untauglich». *Ein Bein, das
+um seine eigene Schwelle würfelt, macht aus dem Urteil einen Münzwurf.* Es wird weiter
+gemessen und steht als Auskunft in der Begründung; die alte Form bleibt auf ausdrücklichen
+Wunsch erreichbar, damit sie prüfbar bleibt.
+
+**Damit trägt die Rangkorrelation das Paarurteil allein — und ihre Schwelle ist nicht
+kalibriert.** Was über 0,80 bekannt ist, spricht eher gegen sie als für sie:
+
+* Unter dem echten Schätzer gibt es auf **frontalen** Ansichten kein fehlerfreies Fenster:
+  höchster schlechter Fall 0,9957, niedrigster guter 0,1426. Mit 0,80 würden 11 von 40
+  guten frontalen Fällen gesperrt (`auf-20260907-81`, an Blender-Bildern, darum nicht als
+  Kalibrierung verwendbar).
+* An erzeugten Bildern fand `auf-20260909-98` ein fehlerfreies Fenster von 0,865 bis
+  0,903 — bei **einer** Blickrichtung, **einem** Bautyp, **einem** Startwert. 0,80 liegt
+  darunter, und ein um 20 Bildpunkte verschobener Bau kommt teilweise durch.
+
+Die fehlende Messung — frontal und diagonal, zwei Bautypen, drei Startwerte — ist bestellt
+(`auf-20260929-175`). **Bis sie da ist, heisst das Paarurteil: eine Zahl, eine gesetzte
+Schwelle.** Das ist ehrlicher als ein zweites Bein, das würfelt, aber es ist nicht mehr.
+
+*Der Entscheid ist die Umkehrung von 6.4, und er folgt derselben Regel:* Dort wurden zwei
+Fragen, die verrechnet waren, getrennt. Hier wird ein Bein, das keine Frage beantwortet,
+aus dem Urteil genommen — nicht, weil es zu streng war, sondern weil es nicht trennt.
+
+### Nachtrag 29.09.2026: Saubere Bilder sind nicht messbar — und ein Versuch, der nicht trennte
+
+**Der Befund (23.09.2026, `auf-20260923-158` C):** Mit einer neueren Tiefensteuerung
+(ControlNet Union 2.1, Apache-2.0) zeichnet das Vorgabemodell sichtbar bessere Bilder — ein
+sauberes, fotografisches Gebäude genau auf der Silhouette. **Genau diese Bilder nennt die
+Prüfung «nicht messbar»**, während die skizzenhaften Bilder der älteren Steuerung messbar
+waren. *Die Prüfung fällt beim saubersten Bild.*
+
+Die Ursache, am Code untersucht (Protokoll 71 §17):
+
+1. Die Prüfung wertet alles ausserhalb der Soll-Silhouette als Hintergrund, obwohl das
+   Modell dort nichts behauptet. Ein sauberes Foto hat einen erfundenen Boden vor dem Haus —
+   und die Vorgabe der Hintergrundwahl greift genau ihn. *Je überzeugender der Boden, desto
+   unmessbarer das Bild.*
+2. Die Rangkorrelation wird innerhalb einer fast ebenen Fassade gemessen: 90 % der
+   Geometrie liegen in rund 0,4 m Tiefe bei 11 bzw. 29 m Abstand. Dort zeigt der Schätzer
+   vor allem sein **Ortsfeld** — ein festes Muster, das er in jedes Bild legt — und nicht
+   die Geometrie.
+
+**Der Versuch: die Ordnung an Tiefensprüngen** (`geometrie_qa.sprungordnung`, 24.09.2026).
+Statt über die ganze Fläche wird nur dort gemessen, wo das Soll einen Sprung hat — an der
+Kontur und an inneren Stufen —, und gezählt, wie viele Paare richtig geordnet sind. Er
+urteilte ausdrücklich **nicht** mit, bis gemessen ist, ob er trennt. Und er ist beim Bauen
+zweimal an den eigenen Proben gefallen: Die erste Fassung gab einem **leeren Grundstück
+1,0**, die zweite noch 0,66; erst die dritte stimmte — auf synthetischen Bildern.
+
+**Am echten Gerät hat er nicht getrennt** (`auf-20260924-172`, 24.09.2026):
+
+* Das einzige Nein-Bild (vorne und hinten vertauscht) lag mit 0,705 **über jedem** Ja-Bild
+  (0,094 … 0,657).
+* Gegen ein fremdes oder verschobenes Soll gewann das eigene nur in 4 bis 8 von 17 Bildern.
+* Eine **graue Fläche** bekam gegen das Soll des Testbaus **1,000** — so viel wie das
+  perfekte Blender-Bild.
+
+Die Ursache: Die Rechnung zog nur die **Neigung** des Ortsfelds ab, nicht seine
+**Krümmung**; auf Grau ist die Schätzkarte eine Schüssel. Die synthetischen Proben hatten
+eine Rampe nachgebaut statt einer Schüssel — obwohl die Schüssel im Code längst beschrieben
+stand. **Die Zahl ist aus dem Maskenweg entfernt**, die Funktion bleibt mit ihrem Befund
+(Einbau-Stand C31: verworfen). *Eine angezeigte Zahl, die schlechtere Bilder höher stellt,
+führt in die Irre.* Merksatz für den nächsten Kandidaten: **zuerst gegen die graue
+Nullprobe mit dem echten Ortsfeld.**
+
+**Stand am 29.09.2026:** Die Frage «Wie misst man ein sauberes Bild?» ist offen. Nächster
+Kandidat wäre der Umriss aus den sichtbaren Kanten des Bildes, ohne Schätzer — nicht
+angefangen. Für dieses Kapitel heisst das: *Das Verfahren ist an Bildern belegt, die
+sichtbar schlechter sind als die, die das Projekt heute erzeugen kann.*
+
 ---
 
 ---
@@ -494,6 +642,25 @@ Entscheidung negativ, bleibt dieser Abschnitt als **Ausblick** stehen — mit de
 Punkten, die ihn heute unmöglich machen, und das ist mehr als die meisten Ausblicke
 mitbringen.
 
+> **Nachtrag 29.09.2026 zu Punkt 1 — drei Kandidaten, keiner trägt schon:**
+>
+> * **Das Bearbeitungsmodell** `qwen-image-edit-2511` nimmt ein Eingangsbild an, und seit
+>   dem 23.09.2026 kommt auch seine Führung an (sie lief vorher wegen eines leeren
+>   Gegentextes still ohne). Aber die Tiefe geht bei ihm **nur als Eingangsbild** hinein:
+>   Beide gemessenen Bilder ignorieren die Lage des Baukörpers (`auf-20260923-160` C). *Für
+>   Geometrietreue ist es das falsche Modell.*
+> * **Die Ausbesserungs-Variante des Vorgabemodells** mit der neueren Tiefensteuerung
+>   (Union 2.1) nimmt Tiefe, Bild und Maske und läuft (`auf-20260923-158` C) — verändert
+>   aber auch **ausserhalb** der Maske (mittlere Abweichung 10 Helligkeitsstufen). Für das
+>   Hineinskizzieren müsste das Original dort zurückkopiert werden; nicht gebaut.
+> * **Qwen-Image-2.1**, seit dem 29.09.2026 unter der Forschungs-Ausnahme zu Regel 1
+>   (Kapitel 3), ohne eigene Tiefensteuerung. Ob die Geometrie über das Eingangsbild
+>   ankommt, ist bestellt (`auf-20260929-178`).
+>
+> Auf dem Vorgabemodell selbst rechnet das Hineinskizzieren seit dem 22.09.2026 weiter
+> (Owner-Entscheid), mit einem Hinweis am Bild, dass die Skizze dort gemessen nicht
+> ankommt. Punkte 2 und 3 sind unverändert offen. Der 15.10.2026 steht.
+
 ---
 
 ## Belegstellen
@@ -511,3 +678,8 @@ mitbringen.
 | 6.7 Die Messung unter Schätzerrauschen | `auftraege/ergebnisse/auf-20260907-81.json` |
 | 6.1 und 6.8 Der zweite Gebrauch | Entscheid E23 in `docs/ENTSCHEIDE_VISBOX_2026-09-18.md` |
 | 6.8 Warum es kein Modell dafür gibt | `auftraege/ergebnisse/auf-20260919-123.json` |
+| 6.4 Die Tore im Betrieb, ohne Gegenprobe (Nachtrag) | `abholer._zwei_tore_dieser_kamera`, `docs/sitzungen/2026-09-22_sitzung-65.md` §4, `auftraege/ergebnisse/auf-20260922-142-antwort-geometry-gates-und-qa-je-kamera.md` |
+| 6.7 Der aufgelöste Widerspruch (Nachtrag) | `auftraege/ergebnisse/auf-20260921-128.json`, `docs/sitzungen/2026-09-22_sitzung-59.md`; die Szene *Gebäude* vom 09.09.: `auftraege/ergebnisse/auf-20260909-92-tabelle.json` (`szenen.gebaeude`), `auftraege/ergebnisse/auf-20260909-92-befund.md` (3) |
+| 6.7 Das Paarurteil auf einer Zahl (Nachtrag) | `geometrie_qa.PAAR_RHO_SCHWELLE`, `geometrie_qa.ZWEITES_BEIN_URTEILT`, `auftraege/ergebnisse/auf-20260909-98.json`, `auftraege/offen/auf-20260929-175.json`, `docs/sitzungen/2026-09-29_sitzung-72.md` §4, `docs/EINBAU_STAND.md` (C9) |
+| 6.7 Saubere Bilder, Ordnung an Tiefensprüngen (Nachtrag) | `auftraege/ergebnisse/auf-20260923-158.json`, `geometrie_qa.sprungordnung`, `auftraege/ergebnisse/auf-20260924-172.json`, `docs/sitzungen/2026-09-24_sitzung-71.md` §17, §18, §21, `docs/EINBAU_STAND.md` (C31) |
+| 6.8 Drei Kandidaten (Nachtrag) | `auftraege/ergebnisse/auf-20260923-160.json`, `auftraege/ergebnisse/auf-20260923-158.json`, `auftraege/offen/auf-20260929-178.json` |

@@ -102,7 +102,7 @@ nicht über Modelle, hier nur das, was die Form der Kette berührt:
    Qwen-Image-2.1 am Heimrechner rechnen, nur mit Schalter und nie als Vorgabe (Kapitel 3,
    3.2). Laut Modellkarte hat es **kein** ControlNet. Ob die Geometrie über das
    Eingangsbild überhaupt ankommt, ist die eigentliche Frage — bei `qwen-image-edit-2511`
-   kam sie nicht an (`auf-20260818-09/-10`). Bestellt als `auf-20260929-178`.
+   kam sie nicht an (`auf-20260818-09` und `auf-20260818-10`). Bestellt als `auf-20260929-178`.
 4. **Die Ebenen, Schritt 1** (Entscheid E124 von KosmoOrbit, bei uns gebaut am
    29.09.2026, C36). Eine Bestellung kann mit `render.passes` die Bildebenen anfordern, die
    der Knoten `multipass` ohnehin rechnet — `schoenbild`, `tiefe`, `material-id` oder
