@@ -220,8 +220,10 @@ und Proben in der Datenform des Betriebs. *Eine Probe, die die Datenform selbst 
 prüft die Erfindung.* Am Gerät steht die Bestätigung aus (`auf-20260924-173`, Einbau-Stand
 C22 *gebaut, am Gerät unbestätigt*).
 
-**Und am 29.09.2026 hatte die Erkennung recht, wo es zuerst nach einem Fehler aussah:** Zwei
-von Hand gesetzte Standpunkte lagen punktgespiegelt um die Gebäudemitte, und der Testbau ist
+**Und am 29.09.2026 hatte die Erkennung recht, wo es zuerst nach einem Fehler aussah:** Beim
+Erzeugen der Vertragsbeispiele für KosmoOrbit hielt der Abholer die zweite von zwei eigens
+gesetzten Kameras für einen Zwilling der ersten. Die beiden Standpunkte lagen
+punktgespiegelt um die Gebäudemitte, und der Testbau ist
 ein Rechteck — beide Tiefenkarten waren wirklich gleich (nächster Punkt 6,030965 gegen
 6,030963 m). Nebenbefund: `tools/make_test_ifc.py` nennt den Testbau «asymmetrisch»; das
 gilt für eine Spiegelung, nicht für eine Drehung um 180 Grad.
@@ -246,9 +248,35 @@ zum 11.09.2026 unbedingt auf die Dreiecksdatei zurückgebogen hat. **Der Weg war
 ungenutzt, sondern blockiert** — und seit dem 11.09. ist er es nicht mehr, ohne dass es
 jemand wusste. Die Frage ist damit neu gefasst und erneut gestellt.
 
+> **Nachtrag 29.09.2026 — über die Mappe lieferbar, über KosmoOrbit gebaut und
+> unbestätigt.** Die strukturelle Lücke ist auf dem eigenen Weg geschlossen: Seit dem
+> 22.09.2026 liest die Mappe die Räume einer IFC-Datei **einmal beim Anlegen**, vor der
+> Umwandlung, und hängt sie bei einer Innenbestellung an die Kette. Am 23.09.2026 auf der
+> Messmaschine belegt (`auf-20260922-141`): Kamera im Raum (Brennweite 24 mm), das
+> Blender-Bild zeigt innen — Boden, Seitenwand, Rückwand. Die Räume aus der IFC passen
+> damit zur umgewandelten Dreiecksdatei (Einbau-Stand C18, erledigt).
+>
+> **Drei Vorbehalte stehen daneben:** Ohne Prompt bricht der Lauf ab; in der Tiefenkarte ist
+> die ganze Rückwand schwarz, obwohl sie im Bild steht (nicht gemessen, vermutlich die
+> Normierung, bei der das fernste Geometriepixel den Wert des Hintergrunds bekommt); und
+> beurteilt ist nur das Blender-Bild, kein erzeugtes.
+>
+> Der Weg über KosmoOrbit ist ein eigener Posten: Innenbestellungen von dort kommen durch,
+> gebaut, **am Gerät unbestätigt** (C19). Eine echte Innenbestellung aus KosmoOrbit hatte
+> es laut Messmaschine bis zum 23.09.2026 nicht gegeben; seither ist keine bekannt.
+
 **Zweitens: Die Standpunkte sind gerechnet, nicht beurteilt.** Dass alle acht Ecken im
 Bild sind und der Deckungsgrad stimmt, ist geometrisch nachgewiesen. Ob das Bild *gut
 aussieht*, ist damit nicht gezeigt und wird in dieser Arbeit auch nicht behauptet.
+
+*Nachtrag 29.09.2026 — ein Beispiel, wie weit das auseinanderliegen kann:* Am 24.09.2026
+rechnete die Messmaschine alle drei automatischen Kameras am Testbau richtig gerahmt. Das
+Bild der Kamera `s` zeigte trotzdem **kein Bauwerk**, sondern Himmel und ein erfundenes
+Haus mit Satteldach (Score 0,159, nicht bestanden) — und es wurde **geliefert**. Das ist so
+gewollt: Der Lieferstatus sagt, ob ein Bild da ist, das Urteil, ob es stimmt. Die Ursache
+lag nicht an der Kamera, sondern am Bildmodell, das damals für Bestellungen ohne
+Modellangabe rechnete (Kapitel 4, 4.2). *Lieferung ist nicht Abnahme — und eine richtig
+gestellte Kamera ist kein richtiges Bild.*
 
 **Drittens: Das Gütemass ist gesetzt.** Die Abwägung zwischen Flächenanteil und zweiter
 Fassade folgt keiner Messung, sondern einer Setzung darüber, was eine brauchbare
@@ -267,3 +295,7 @@ nicht kalibriert, und eine andere Gewichtung ergäbe andere Standpunkte.
 | 5.4 Rahmung und Bauwerksbox | `src/aiimaging/glbbox.py`, `docs/BODENANTEIL_2026-08-26.md` |
 | 5.5 Innenansichten | `src/aiimaging/raumkamera.py`, `docs/INNENANSICHT_2026-09-09.md` |
 | 5.7 Die offene Zuständigkeit | `auftraege/offen/auf-20260909-91.json` |
+| 5.3 Kleine Körper, zu steiler Shift (Nachtrag) | `kameras._shift_zu_steil`, `tests/test_kameras.py`, `docs/sitzungen/2026-09-24_sitzung-71.md` §13 |
+| 5.4 Wandabstand 10 m → 3 m (Nachtrag) | `kameras.WANDABSTAND_M`, `kameras.BILDBREITE_ABBRUCH`, `docs/sitzungen/2026-09-24_sitzung-71.md` §13 und §22, `auftraege/ergebnisse/auf-20260924-169.json` |
+| 5.6 Zwillinge (Nachtrag) | `docs/sitzungen/2026-09-24_sitzung-71.md` §22, `docs/sitzungen/2026-09-29_sitzung-72.md` §5, `docs/EINBAU_STAND.md` (C22) |
+| 5.7 Innenansicht über die Mappe (Nachtrag) | `auftraege/ergebnisse/auf-20260922-141.json`, `tests/test_innenansicht_mappe.py`, `docs/EINBAU_STAND.md` (C18, C19) |

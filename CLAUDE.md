@@ -123,6 +123,12 @@ erweitert 2026-08-26):
   prüft. Liest `auftraege/offen/` und legt Ergebnisse daneben.
 * **`cloud` — der Worker an KosmoOrbit.** Hat unser Repo **nicht**; er hält **ihren
   Vertrag** und ihre Warteschlange. Was er tun soll, betrifft nie unseren Code.
+  **Name seit 29.09.2026 (Owner-Hinweis):** «KosmoOrbit Int 1» — der Integrator, Zweig
+  `claude/kosmo-orbit-v1-build-pzxkbj`. Er arbeitet mit Hilfs-Sitzungen «KosmoOrbit Int 2–5»
+  auf Zweigen `claude/v016-*`; die spielen **nicht** selbst ein, eingespielt wird immer bei
+  Int 1. Blätter und Rückmeldungen gehen weiter an «Integrator» bzw. «KosmoOrbit Int 1» (in
+  ihren Eingang `kosmo-orbit/docs/auftraege-kosmovis/`). Ihre Liste:
+  `kosmo-orbit/docs/AUFTRAEGE-AN-WORKER.md`.
 * **`ui` — der Kosmo-UI-Worker.** Seit dem 26.08.2026 zuständig für die **ganze
   Oberfläche** von KosmoOrbit. Er hat unser Repo **als Quelle** — ein Auftrag in
   `auftraege/offen/` erreicht ihn also über git.

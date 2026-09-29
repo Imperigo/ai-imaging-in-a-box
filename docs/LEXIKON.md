@@ -5853,6 +5853,17 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Integrator (KosmoOrbit Int 1)** — Die Sitzung bei KosmoOrbit, die alle Beiträge in deren
+Hauptstand einspielt: Vertrag, Brücke und fremde Lieferungen wie die Knoten des UI-Workers.
+Seit dem 29.09.2026 heisst sie «KosmoOrbit Int 1»; Hilfs-Sitzungen «Int 2–5» bereiten zu,
+spielen aber nie selbst ein. Für uns heisst das: Antworten und Aufträge gehen immer an Int 1,
+und etwas gilt erst als eingebaut, wenn es dort eingespielt ist.
+
+**Insel-Karte (n1)** — Der Entwurf des UI-Workers für die Knoten der Bildstation: jeder Knoten
+als freistehende Karte mit runden Ecken und klaren Anschlüssen. Der Owner hat ihn am 24.09.2026
+gewählt; eingebaut wird er vom Integrator in Posten KV1–KV10, von denen in v0.1.5 nur KV1 zum
+Teil steckt.
+
 **Forschungslizenz** — Eine Lizenz, die ein Modell nur zum Forschen und Ausprobieren
 freigibt, nicht zum Verkaufen. Qwen-Image-2.1 steht unter einer solchen («research or
 evaluation purposes only»). Wer das Modell in einem verkauften Programm laufen lässt, bricht
@@ -5949,6 +5960,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
 | 2026-09-29 | Ergaenzt aus den Owner-Entscheiden, Sitzung 72: **Stilllegen (eines Bildmodells)**; **Paarurteil** nachgetragen |
