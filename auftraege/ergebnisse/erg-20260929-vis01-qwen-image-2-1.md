@@ -1,6 +1,6 @@
 # erg-20260929-vis01 — Antwort an KosmoOrbit (Integrator): Qwen-Image-2.1 — nicht verwenden
 
-**Stand 29.09.2026:** beantwortet fuer Punkt 1 und 4 (Lizenz, Empfehlung). Punkt 2 und 3
+**Stand 29.09.2026 (Nachtrag abends):** Owner-Entscheid — Qwen-Image-2.1 wird **fuer die Forschung am Heimrechner** genutzt (siehe Nachtrag am Ende; er ersetzt die Empfehlung (a)). Beantwortet fuer Punkt 1 und 4 (Lizenz, Empfehlung). Punkt 2 und 3
 (Heimrechner, Qualitaet) **bewusst nicht gemessen** — Begruendung unten. **Zugestellt** in euren
 Eingang `kosmo-orbit/docs/auftraege-kosmovis/`.
 
@@ -66,3 +66,26 @@ Was ihr fachlich damit wolltet, bleibt bei uns auf dem heutigen Weg:
 
 * Laufzeit, Speicher und Bildqualitaet (bewusst, siehe Punkt 2).
 * Ob es eine kommerzielle Lizenz gibt und was sie kostet (nur Qwen kann das sagen).
+
+---
+
+## Nachtrag 29.09.2026 (abends) — Owner-Entscheid: fuer die Forschung jetzt nutzen
+
+Der Owner hat entschieden: *«Wir sind noch lange nicht im Verkauf»* — Qwen-Image-2.1 darf fuer
+die Forschung rechnen. Das ersetzt unsere Empfehlung (a). Es ist **nicht** euer Weg (b)
+«hinter einem Schalter im Produkt», sondern enger:
+
+* **Nur am Heimrechner**, geladen nur mit einem eigenen Schalter fuer einen Messlauf
+  (`AIIMAGING_FORSCHUNGSMODELLE=1`), nie dauerhaft gesetzt.
+* **Nicht bestellbar ueber euren Vertrag:** Das Modell steht in unserer Liste der fremden
+  Kuerzel nicht; eine Bestellung ueber `/jobs` kann es nicht waehlen. Euer Standard bleibt
+  `z-image-turbo`, euer Produkt und euer Lizenzwaechter sind **unberuehrt**.
+* **Markiert:** Jeder Lauf traegt `nur_forschung`. Bilder daraus gehen in kein
+  ausgeliefertes Produkt.
+* **Vor einem Verkauf** wird es entfernt oder lizenziert (die Lizenzanfrage an Qwen liegt
+  vorbereitet bei uns).
+
+**Punkt 2 und 3 werden jetzt gemessen**, bei unserem Heimrechner (`auf-20260929-177`):
+Speicher und Sekunden bei 1024 und 2048 auf der 5090, und ob die Form des Gebaeudes ankommt —
+das Modell hat laut Modellkarte **kein ControlNet**, und genau das ist die Frage. Die
+Ergebnisse stellen wir euch zu.

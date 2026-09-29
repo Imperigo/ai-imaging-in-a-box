@@ -666,11 +666,14 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
         eintrag = None
 
     if eintrag is not None:
-        lizenz = backbone.pruefe_lizenz(eintrag.name)
-        if not lizenz["zulaessig"]:
+        # Nicht `pruefe_lizenz` direkt: Die Forschungs-Ausnahme (Owner-Entscheid
+        # 29.09.2026, `backbone.ladefreigabe`) laesst ein nicht verkaufbares Modell mit
+        # gesetztem Schalter rechnen. Ohne Schalter ist die Antwort dieselbe wie bisher.
+        freigabe = backbone.ladefreigabe(eintrag.name)
+        if not freigabe["darf"]:
             maengel.append(
                 f"Backbone {eintrag.name!r} ist unter Regel 1 ausgeschlossen: "
-                f"{lizenz['begruendung']}"
+                f"{freigabe['begruendung']}"
             )
         if eintrag.konditionierung not in KONDITIONIERUNGEN:
             maengel.append(
@@ -814,10 +817,10 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
     """
     eintrag = _hole_oder_wirf(backbone_name)
 
-    lizenz = backbone.pruefe_lizenz(eintrag.name)
-    if not lizenz["zulaessig"]:
+    freigabe = backbone.ladefreigabe(eintrag.name)
+    if not freigabe["darf"]:
         raise RenderError(
-            f"Backbone {eintrag.name!r} wird nicht geladen: {lizenz['begruendung']}"
+            f"Backbone {eintrag.name!r} wird nicht geladen: {freigabe['begruendung']}"
         )
     if eintrag.konditionierung not in KONDITIONIERUNGEN:
         raise RenderError(
@@ -2416,6 +2419,12 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
     lizenz = backbone.pruefe_lizenz(eintrag.name)
     parameter = _baue_parameter(a, eintrag, tiefe_invertieren=tiefe_invertieren)
     hinweise = _hinweise(a, parameter, lizenz)
+    freigabe = backbone.ladefreigabe(eintrag.name)
+    if freigabe["forschung"]:
+        # Steht am Lauf, nicht nur im Register: Wer ein Bild dieses Laufs findet, soll
+        # sehen, dass es nicht verkaufbar ist.
+        parameter["nur_forschung"] = True
+        hinweise = (freigabe["begruendung"], *hinweise)
 
     if maengel:
         # Kein Laden, kein Rechnen, keine GPU. Die Ablehnung ist das Ergebnis.

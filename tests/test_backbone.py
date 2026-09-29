@@ -54,7 +54,7 @@ from aiimaging.backbone import (
 
 #: Die unter Regel 1 ausgeschlossenen Gewichte. Namentlich, nicht als Suchmuster —
 #: der Ausschluss soll auch dann auffallen, wenn jemand den Lizenznamen umformuliert.
-NON_COMMERCIAL = ("flux1-dev", "flux2-dev")
+NON_COMMERCIAL = ("flux1-dev", "flux2-dev", "qwen-image-2.1")
 
 
 # --------------------------------------------------------------------------------------
@@ -103,7 +103,10 @@ def test_flag_und_lizenzname_widersprechen_sich_nie(name):
     die Auswahl steuert — und das ist genau der Zustand, in dem Regel 1 lautlos kippt.
     """
     backbone = BACKBONES[name]
-    non_commercial_im_namen = "non-commercial" in backbone.lizenz.lower()
+    # Seit dem 29.09.2026 zwei Merkmale: Qwen nennt seine nicht-kommerzielle Lizenz
+    # «Research License» — «nur Forschung oder Evaluation» ist dasselbe Verbot.
+    non_commercial_im_namen = any(m in backbone.lizenz.lower()
+                                  for m in ("non-commercial", "research license"))
     assert backbone.kommerziell_nutzbar is not non_commercial_im_namen
 
 
@@ -611,8 +614,10 @@ def test_backbone_importiert_nur_stdlib():
     # ``re`` kam am 18.09.2026 dazu: Der Grössenriegel liest die Grössenangabe aus Name
     # und Kennung (``_groessen_behauptungen``). Stdlib, keine Fremdabhängigkeit — die
     # Tabelle bleibt überall lesbar, worum es diesem Test geht.
+    # ``os`` kam am 29.09.2026 dazu: `ladefreigabe` liest den Schalter der
+    # Forschungs-Ausnahme aus der Umgebung. Stdlib, aus demselben Grund unbedenklich.
     assert _importierte_wurzelmodule(modul) <= {
-        "__future__", "dataclasses", "pathlib", "re", "aiimaging",
+        "__future__", "dataclasses", "os", "pathlib", "re", "aiimaging",
     }
 
 

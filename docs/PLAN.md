@@ -7500,8 +7500,12 @@ Bekannt und ausdrücklich nicht erledigt:
         «nicht verwenden», zugestellt (Protokoll 72 §6).
   - [x] **Owner:** kommerzielle Lizenz für Qwen-Image-2.1 anfragen, ja oder nein? — «frag Lizenz
         an» (29.09.); Text in `docs/lizenzanfragen/2026-09-29_qwen-image-2-1.md`.
-  - [ ] **Owner:** Anfrage versenden (Gmail-Zugang hier darf nicht senden) — oder Senden im
-        Connector erlauben, dann versendet Claude.
+  - [x] ~~**Owner:** Anfrage versenden~~ — zurückgestellt (29.09.): für die Forschung nicht
+        nötig; der Text bleibt für den Verkauf (Protokoll 72 §9).
+  - [x] **Owner (29.09.):** Qwen-Image-2.1 jetzt für die Forschung nutzen → Forschungs-Ausnahme
+        zu Regel 1 in CLAUDE.md, Schalter im Register (C38).
+  - [ ] **local:** `auf-20260929-177` — Qwen-Image-2.1 an der 5090: läuft es, trägt es die
+        Geometrie?
   - [ ] **Kern:** A7 nach E123 — MCP-Eingang nimmt `null` für vier Felder an, mit benanntem
         Mangel (Protokoll 72 §7).
   - [ ] **Kern → cloud:** Antwort zu 152: «INNENANSICHT BESTELLT» ist Vorbehalt oder Auskunft?

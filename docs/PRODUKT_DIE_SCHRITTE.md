@@ -105,6 +105,16 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 29.09.2026 (abends) · Ein neues Bildmodell, nur für die Forschung
+
+* **Qwen-Image-2.1 darf jetzt rechnen — aber nur zum Forschen.** Seine Lizenz verbietet den
+  Verkauf. Weil ein Verkauf noch fern ist, hat der Owner eine Ausnahme erlaubt.
+* **Die Grenzen sind eingebaut, nicht nur aufgeschrieben:** Das Modell lädt nur am Heim-PC
+  mit einem eigenen Schalter, ist nie Standard und kann von KosmoOrbit nicht bestellt werden.
+  Jedes Bild daraus trägt den Vermerk «nur Forschung».
+* **Offen:** Ob es auf der Grafikkarte läuft und ob es die Form des Gebäudes übernimmt. Es
+  hat keine eigene Formsteuerung — das ist die eigentliche Frage. Der Heim-PC misst es.
+
 ### 29.09.2026 (später) · KosmoOrbit hat geantwortet — und bekommt echte Beispiele
 
 * **Alle sechs offenen Fragen an KosmoOrbit sind beantwortet.** Sie nehmen die vier

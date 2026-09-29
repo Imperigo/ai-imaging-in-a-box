@@ -223,6 +223,25 @@ null Laufzeitabhaengigkeiten auskommt.
 --------------------------------------------------------------------------------
 
 ================================================================================
+Forschungsmodelle - NICHT ausgeliefert, nicht verkaufbar
+================================================================================
+
+Nach CLAUDE.md, Regel 1, Praezisierung Forschungsmodelle (Owner-Entscheid
+29.09.2026). Diese Gewichte liegen NICHT im Repo und gehen in KEIN Produkt ein.
+Sie werden nur am Heimrechner fuer die Forschung geladen, und nur mit gesetztem
+Schalter AIIMAGING_FORSCHUNGSMODELLE=1 (aiimaging.backbone.ladefreigabe).
+
+Qwen/Qwen-Image-2.1     Qwen Research License Agreement (20.09.2026)
+  "Non-Commercial shall mean for research or evaluation purposes only."
+  Kommerzielle Nutzung nur mit eigener Lizenz von Qwen.
+  Gelesen am Original 2026-09-29:
+  https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE
+  Vor einem Verkauf: entfernen oder lizenzieren. Ein darauf trainiertes LoRA
+  erbt dieselbe Lage.
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Mitgelieferte Schriften (iPad-App)
 ================================================================================
 

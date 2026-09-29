@@ -5853,6 +5853,17 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Forschungslizenz** — Eine Lizenz, die ein Modell nur zum Forschen und Ausprobieren
+freigibt, nicht zum Verkaufen. Qwen-Image-2.1 steht unter einer solchen («research or
+evaluation purposes only»). Wer das Modell in einem verkauften Programm laufen lässt, bricht
+sie, auch wenn die Bilder selbst nicht ausdrücklich eingeschränkt sind.
+
+**Forschungs-Ausnahme** — Die Erlaubnis des Owners vom 29.09.2026, ein Modell mit
+Forschungslizenz für die Vertiefungsarbeit trotzdem rechnen zu lassen. Sie hat enge Grenzen:
+nur am Heimrechner, nur mit einem ausdrücklich gesetzten Schalter, nie als Standard, nie von
+KosmoOrbit bestellbar, und vor einem Verkauf wird das Modell entfernt oder lizenziert. Im
+Projekt: `backbone.ladefreigabe`, Regel 1 in `CLAUDE.md`.
+
 **Variantenachse (Wedge)** — Statt «mach drei Varianten» sagt man, **was** sich ändern soll,
 etwa «Startwert × 3, Kamera × 4», und das Programm erzeugt alle Kombinationen, hier 12. So
 weiss man vor dem Lauf, wie viele Bilder entstehen und wie lange es dauert. Der Begriff
@@ -5938,6 +5949,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
 | 2026-09-29 | Ergaenzt aus den Owner-Entscheiden, Sitzung 72: **Stilllegen (eines Bildmodells)**; **Paarurteil** nachgetragen |
 | 2026-09-24 | Ergaenzt aus B161: **Abholer-Puls**, **Farbtemperatur (Kelvin)**, **Speicher-Riegel**, **Konvention (einer Himmelsrichtung)**, **Transmission** |

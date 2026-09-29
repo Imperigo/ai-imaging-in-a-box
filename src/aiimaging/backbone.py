@@ -410,6 +410,53 @@ class Backbone:
     #: Eingeführt am 29.09.2026 für den ersten Fall (Owner-Entscheid, Sitzung 72).
     stillgelegt: str | None = None
 
+    #: Ein Satz, WARUM dieser nicht verkaufbare Eintrag trotzdem geladen werden darf —
+    #: ``None`` heisst: keine Ausnahme.
+    #:
+    #: **Die Forschungs-Ausnahme zu Regel 1 (Owner-Entscheid 29.09.2026).** Ein Modell mit
+    #: Forschungslizenz darf fuer die Vertiefungsarbeit gerechnet werden, aber nur unter
+    #: vier Auflagen: am Heimrechner, nur mit gesetztem :data:`FORSCHUNG_SCHALTER`, nie
+    #: als Vorgabe und nie ueber den Bestellweg von KosmoOrbit. Vor jedem Verkauf wird es
+    #: entfernt oder lizenziert. ``kommerziell_nutzbar`` bleibt ``False`` — :func:`pruefe_lizenz`
+    #: sagt weiter «nicht im Produkt»; nur :func:`ladefreigabe` kennt die Ausnahme.
+    nur_forschung: str | None = None
+
+
+#: Die Umgebungsvariable, die ein Modell mit :attr:`Backbone.nur_forschung` ladbar macht.
+#: Nur am Heimrechner und nur fuer einen Messlauf zu setzen — im Produkt nie.
+FORSCHUNG_SCHALTER = "AIIMAGING_FORSCHUNGSMODELLE"
+
+
+def ladefreigabe(name: str, *, umgebung=None) -> dict:
+    """Darf dieser Backbone **jetzt, auf dieser Maschine** geladen werden?
+
+    Die Antwort auf eine andere Frage als :func:`pruefe_lizenz`: Jene fragt, ob ein Modell
+    ins Produkt darf; diese, ob ein Lauf es laden darf. Beide sind gleich, ausser fuer
+    einen Eintrag mit :attr:`Backbone.nur_forschung` — der wird geladen, wenn
+    :data:`FORSCHUNG_SCHALTER` auf ``"1"`` steht, und traegt dann ``forschung: True``.
+
+    Returns:
+        ``{darf, forschung, begruendung}``.
+    """
+    import os
+
+    eintrag = hole(name)
+    lizenz = pruefe_lizenz(name)
+    if lizenz["zulaessig"]:
+        return {"darf": True, "forschung": False, "begruendung": lizenz["begruendung"]}
+    if not eintrag.nur_forschung:
+        return {"darf": False, "forschung": False, "begruendung": lizenz["begruendung"]}
+    umgebung = os.environ if umgebung is None else umgebung
+    if umgebung.get(FORSCHUNG_SCHALTER) != "1":
+        return {"darf": False, "forschung": False, "begruendung": (
+            f"{lizenz['begruendung']} Forschungs-Ausnahme: {eintrag.nur_forschung} "
+            f"Geladen wird es nur mit {FORSCHUNG_SCHALTER}=1 (am Heimrechner, fuer einen "
+            f"Messlauf) — der Schalter ist hier nicht gesetzt.")}
+    return {"darf": True, "forschung": True, "begruendung": (
+        f"NUR FORSCHUNG: {eintrag.name} steht unter '{eintrag.lizenz}' und ist nicht "
+        f"verkaufbar. Geladen unter der Forschungs-Ausnahme ({eintrag.nur_forschung}). "
+        f"Bilder aus diesem Lauf gehoeren nicht in ein ausgeliefertes Produkt.")}
+
 
 def _vram_schaetzung(parameter_b: float) -> float:
     """Grobe VRAM-Schätzung in GB aus der Parameterzahl.
@@ -677,6 +724,15 @@ def _eintrag(backbone: Backbone) -> None:
         )
     if riegel["zulaessig"] is True and riegel["auflagen"]:
         raise BackboneError(f"{backbone.name}: {riegel['auflagen'][0]}")
+
+    # Die Forschungs-Ausnahme gilt nur fuer, was wirklich nicht verkaufbar ist: Ein
+    # verkaufbarer Eintrag braucht sie nicht, und dort stuende sie als leere Erlaubnis.
+    if backbone.nur_forschung is not None and (
+            backbone.kommerziell_nutzbar or not str(backbone.nur_forschung).strip()):
+        raise BackboneError(
+            f"{backbone.name}: nur_forschung={backbone.nur_forschung!r} passt nicht zu "
+            f"kommerziell_nutzbar={backbone.kommerziell_nutzbar} — die Ausnahme braucht "
+            f"einen Satz, und sie gilt nur fuer nicht verkaufbare Gewichte.")
 
     # Ein Urteil über den Bildeingang ohne Auftragskennung ist eine Behauptung, und ein
     # Beleg ohne Urteil ist eine Messung, die niemand liest (Befund 22.09.2026, siehe
@@ -1078,6 +1134,29 @@ _eintrag(Backbone(
     vram_gb=_vram_schaetzung(32.0),
     dateien=_DIFFUSERS_DATEIEN,
     lizenz_quelle=QUELLE_SEKUNDAER,
+))
+
+
+_eintrag(Backbone(
+    name="qwen-image-2.1",
+    modell_id="Qwen/Qwen-Image-2.1",
+    # 7 Mrd. Parameter im Bildteil (Modellkarte). Den Textkodierer nennt die Karte nicht;
+    # die Speicherschaetzung ist darum eine Untergrenze und ungemessen.
+    parameter_b=7.0,
+    lizenz="Qwen Research License Agreement",
+    # Gelesen am 29.09.2026 an LICENSE und Modellkarte (license_name: qwen-research):
+    # «Non-Commercial shall mean for research or evaluation purposes only»; kommerziell
+    # nur mit eigener Lizenz auf Anfrage.
+    kommerziell_nutzbar=False,
+    # Kein ControlNet (Modellkarte nennt keines); Erzeugen UND Bearbeiten mit bis zu zehn
+    # Referenzbildern. Geladen ueber DiffusionPipeline -> QwenImage21Pipeline (diffusers aus
+    # git, laut Karte). Ob unser Bildeingang dort ankommt, ist UNGEMESSEN (auf-20260929-177).
+    konditionierung=KOND_INTEGRIERTES_EDIT,
+    vram_gb=_vram_schaetzung(7.0),
+    dateien=_DIFFUSERS_DATEIEN,
+    lizenz_quelle=QUELLE_MODELLKARTE,
+    nur_forschung=("Owner-Entscheid 29.09.2026: fuer die Forschung jetzt nutzen, weil ein "
+                   "Verkauf noch fern ist; vor einem Verkauf entfernen oder lizenzieren."),
 ))
 
 

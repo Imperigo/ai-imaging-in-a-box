@@ -40,6 +40,21 @@ und Instrument Serif für die Oberflächen), unverändert und mit ihrer Lizenz i
 deklariert. Die OFL ist permissiv, stand aber nicht in der Liste oben; sie gilt nur für
 Schriften, nicht für Code.
 
+**Präzisierung Forschungsmodelle (Owner-Entscheid 2026-09-29):** Modellgewichte unter einer
+Forschungslizenz (heute Qwen-Image-2.1, «research or evaluation purposes only») dürfen für die
+Vertiefungsarbeit **rechnen**, weil ein Verkauf noch fern ist — ausschliesslich unter vier Auflagen:
+
+1. **Nur am Heimrechner und nur mit Schalter** — geladen wird nur mit
+   `AIIMAGING_FORSCHUNGSMODELLE=1`, gesetzt für einen Messlauf, nie dauerhaft.
+2. **Nie Vorgabe, nie bestellbar** — kein Vorgabe-, Vorschau- oder Rückfallmodell, nicht in
+   `waehle(kommerziell=True)`, nicht über den Bestellweg von KosmoOrbit.
+3. **Markiert** — jeder Lauf trägt `nur_forschung`; `pruefe_lizenz` sagt weiter «nicht im
+   Produkt». Die Gewichte liegen nicht im Repo und stehen als «nicht ausgeliefert» im `NOTICE`.
+4. **Vor einem Verkauf entfernt oder lizenziert** — das gilt auch für darauf trainierte LoRAs.
+
+Die Ausnahme gilt je Registereintrag (`Backbone.nur_forschung` mit Begründung), nicht für alles
+Nicht-Kommerzielle: FLUX.1-dev und FLUX.2-dev bleiben ausgeschlossen.
+
 **Plattform-Bausteine:** Die Apple-Frameworks der iPad-App (SwiftUI, PencilKit, Network,
 Security) gehören zur Plattform wie das Betriebssystem und werden nicht mitgeliefert. Sie
 stehen als Vermerk im `NOTICE`, nicht als Abhängigkeit.
