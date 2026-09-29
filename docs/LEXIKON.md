@@ -5853,6 +5853,22 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Bildanteil (Geometrieanteil)** — Wie viel des Bildes überhaupt Geometrie zeigt, statt
+Himmel oder Leere: 0,56 heisst, gut die Hälfte der Pixel trägt Gebäude oder Gelände. Er
+entscheidet mit, ob eine Messung trennen kann — derselbe Hochbau misst mit grosser
+Geländeplatte (Anteil 0,56) ganz anders als mit kleiner (0,15). Wer zwei Zahlen vergleicht,
+muss darum ihren Bildanteil mitlesen.
+
+**Ordnung an Tiefensprüngen** — Ein Versuch vom 24.09.2026, auch saubere, gut gemachte Bilder
+zu prüfen: Stimmt die Reihenfolge «vorne – hinten» an den Stellen, wo die Tiefe springt? Am
+Heim-PC trennte sie nicht — eine graue Fläche bekam die Bestnote 1,0. Sie ist darum wieder
+entfernt (`auf-20260924-172`) und steht nur noch als Befund da.
+
+**Eingangswächter (bei KosmoOrbit)** — Ein Prüfprogramm im KosmoOrbit-Repo
+(`auftrags-eingang-gate`), das jedes neue Blatt in ihrem Eingangsordner meldet, solange es
+unbeantwortet ist. Als wir am 29.09.2026 sechs Blätter direkt hineinlegten, meldete er sie
+sofort — dafür ist er da. Ob ein Blatt als «gesehen» gilt, entscheidet ihr Integrator, nicht wir.
+
 **Laufnummer (eines Auftrags)** — Die fortlaufende Zahl am Ende eines Auftragsnamens, etwa
 178 in `auf-20260929-178`. Sie gilt über alle Worker und alle Tage und darf nur einmal vergeben
 werden; `tools/einbau.py` nennt die nächste freie. Nicht zu verwechseln mit dem *Rang*, der nur
@@ -5985,7 +6001,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)** |
+| 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
 | 2026-09-29 | Ergaenzt aus den Owner-Entscheiden, Sitzung 72: **Stilllegen (eines Bildmodells)**; **Paarurteil** nachgetragen |
