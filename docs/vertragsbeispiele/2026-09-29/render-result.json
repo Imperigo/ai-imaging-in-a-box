@@ -1,0 +1,273 @@
+{
+  "schema": "kosmovis.render-result/v2",
+  "job_id": "vis-1790000000-e124a1",
+  "images": [
+    "Suedost.png",
+    "Suedwest.png"
+  ],
+  "qa": {
+    "geometry": {
+      "geometry_fidelity": 0.9,
+      "spearman": null,
+      "geom_iou": null,
+      "threshold": 0.65,
+      "passed": true,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+      "status": "measured"
+    },
+    "verdict": {
+      "passed": true,
+      "reason": "Geometrie 0.9 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+    }
+  },
+  "timings": {
+    "Suedost": 2.6,
+    "Suedwest": 2.6,
+    "gesamt": 5.1
+  },
+  "geometry_gates": {
+    "status": "not_measured",
+    "released": false,
+    "passed": false,
+    "counter_check_status": "not_measured",
+    "rho_mask_threshold": 0.1,
+    "rho_mask_status": "not_measured",
+    "rho_mask_passed": false,
+    "geom_iou_threshold": 0.85,
+    "geom_iou_status": "not_measured",
+    "geom_iou_passed": false,
+    "fail_reasons": [
+      "rho_mask_nicht_gemessen",
+      "geom_iou_nicht_gemessen",
+      "gegenprobe_fehlt"
+    ],
+    "reason": "NICHT BESTANDEN — rho_maske: NICHT GEMESSEN, damit nicht bestanden. Das ist kein Urteil über das Bild, sondern über die Messung.; geom_iou: NICHT GEMESSEN, damit nicht bestanden. Das ist kein Urteil über das Bild, sondern über die Messung.. OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das Urteil ist damit so viel wert wie das alte.",
+    "warnings": [
+      "OHNE GEGENPROBE. Es wurde nicht geprueft, ob dieselbe Messung auch gegen eine fremde Geometrie besteht. Das Urteil ist damit so viel wert wie das alte — und das alte liess elf von zwoelf Muellbildern durch.",
+      "Mindestens ein Tor ist NICHT GEMESSEN und gilt darum als nicht bestanden. Fail-closed wie der Torwaechter: Was ungeprueft ist, wird nicht durchgelassen."
+    ],
+    "camera": "Suedost"
+  },
+  "qa_je_kamera": [
+    {
+      "kamera": "Suedost",
+      "geometry": {
+        "geometry_fidelity": 0.9,
+        "spearman": null,
+        "geom_iou": null,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1
+    },
+    {
+      "kamera": "Suedwest",
+      "geometry": {
+        "geometry_fidelity": 0.9,
+        "spearman": null,
+        "geom_iou": null,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1
+    }
+  ],
+  "ebenen": [
+    {
+      "kamera": "Suedost",
+      "art": "schoenbild",
+      "datei": "Suedost__schoenbild.png",
+      "bedeutung": {
+        "renderer": "cycles",
+        "samples": 8
+      }
+    },
+    {
+      "kamera": "Suedost",
+      "art": "tiefe",
+      "datei": "Suedost__tiefe.png",
+      "bedeutung": {
+        "einheit": "m",
+        "min_m": 6.030965328216553,
+        "max_m": 27.657093048095703,
+        "nah": "hell",
+        "hintergrund_grauwert": 0.0,
+        "bittiefe": 8,
+        "rueckrechnung": "meter = max_m - grau * (max_m - min_m), grau in 0..1"
+      }
+    },
+    {
+      "kamera": "Suedost",
+      "art": "material-id",
+      "datei": "Suedost__material-id.png",
+      "bedeutung": {
+        "nullfarbe_srgb_8bit": [
+          0,
+          0,
+          0
+        ],
+        "tabelle": [
+          {
+            "index": 0,
+            "name": "IfcSlab_Bodenplatte_0QOeb014HIhArHZBIoEr7x",
+            "farbe_srgb_8bit": [
+              255,
+              38,
+              38
+            ]
+          },
+          {
+            "index": 1,
+            "name": "IfcSlab_Gelaende_2eYuY4S81HqRN8GZ4SZVcP",
+            "farbe_srgb_8bit": [
+              38,
+              101,
+              255
+            ]
+          },
+          {
+            "index": 2,
+            "name": "IfcWall_Wand-Nord_3mjgw8w9HGohobry3OS3oX",
+            "farbe_srgb_8bit": [
+              165,
+              255,
+              38
+            ]
+          },
+          {
+            "index": 3,
+            "name": "IfcWall_Wand-Ost_1Bl7KKqkzR1hrNY6$pmwAA",
+            "farbe_srgb_8bit": [
+              255,
+              38,
+              228
+            ]
+          },
+          {
+            "index": 4,
+            "name": "IfcWall_Wand-Sued_1FMjVFy01IOxjjEoyOZm1b",
+            "farbe_srgb_8bit": [
+              38,
+              255,
+              219
+            ]
+          },
+          {
+            "index": 5,
+            "name": "IfcWall_Wand-West_2NzZv_nR5PDeSTjZLs5cMG",
+            "farbe_srgb_8bit": [
+              255,
+              156,
+              38
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "kamera": "Suedwest",
+      "art": "schoenbild",
+      "datei": "Suedwest__schoenbild.png",
+      "bedeutung": {
+        "renderer": "cycles",
+        "samples": 8
+      }
+    },
+    {
+      "kamera": "Suedwest",
+      "art": "tiefe",
+      "datei": "Suedwest__tiefe.png",
+      "bedeutung": {
+        "einheit": "m",
+        "min_m": 5.874084949493408,
+        "max_m": 26.561948776245117,
+        "nah": "hell",
+        "hintergrund_grauwert": 0.0,
+        "bittiefe": 8,
+        "rueckrechnung": "meter = max_m - grau * (max_m - min_m), grau in 0..1"
+      }
+    },
+    {
+      "kamera": "Suedwest",
+      "art": "material-id",
+      "datei": "Suedwest__material-id.png",
+      "bedeutung": {
+        "nullfarbe_srgb_8bit": [
+          0,
+          0,
+          0
+        ],
+        "tabelle": [
+          {
+            "index": 0,
+            "name": "IfcSlab_Bodenplatte_0QOeb014HIhArHZBIoEr7x",
+            "farbe_srgb_8bit": [
+              255,
+              38,
+              38
+            ]
+          },
+          {
+            "index": 1,
+            "name": "IfcSlab_Gelaende_2eYuY4S81HqRN8GZ4SZVcP",
+            "farbe_srgb_8bit": [
+              38,
+              101,
+              255
+            ]
+          },
+          {
+            "index": 2,
+            "name": "IfcWall_Wand-Nord_3mjgw8w9HGohobry3OS3oX",
+            "farbe_srgb_8bit": [
+              165,
+              255,
+              38
+            ]
+          },
+          {
+            "index": 3,
+            "name": "IfcWall_Wand-Ost_1Bl7KKqkzR1hrNY6$pmwAA",
+            "farbe_srgb_8bit": [
+              255,
+              38,
+              228
+            ]
+          },
+          {
+            "index": 4,
+            "name": "IfcWall_Wand-Sued_1FMjVFy01IOxjjEoyOZm1b",
+            "farbe_srgb_8bit": [
+              38,
+              255,
+              219
+            ]
+          },
+          {
+            "index": 5,
+            "name": "IfcWall_Wand-West_2NzZv_nR5PDeSTjZLs5cMG",
+            "farbe_srgb_8bit": [
+              255,
+              156,
+              38
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "lieferstatus": "geliefert",
+  "lieferstatus_grund": "",
+  "engine_used": "z-image-turbo",
+  "engine_license": "Apache-2.0"
+}

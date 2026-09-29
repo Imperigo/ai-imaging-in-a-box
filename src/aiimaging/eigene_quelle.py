@@ -38,7 +38,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from aiimaging import jobs, kosmo_naht, kosmo_szene
+from aiimaging import bruecke, jobs, kosmo_naht, kosmo_szene
 
 #: Die Statuswerte, die der Abholer setzt. Sie kommen aus ``jobs`` und heissen dort
 #: gleich wie im fremden Vertrag — eine der wenigen Stellen, an denen sich die beiden
@@ -286,7 +286,8 @@ def vermerke_grund(verzeichnis, grund: str) -> dict:
 def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
-                      status: str = STATUS_DONE, uebersprungen: bool = False) -> dict:
+                      status: str = STATUS_DONE, uebersprungen: bool = False,
+                      engine=None, ebenen=None) -> dict:
     """Das Vertragsergebnis danebenlegen und den Auftrag fortschreiben — in dieser Reihenfolge.
 
     Die Reihenfolge ist dieselbe Sorgfalt wie bei der Brücke: Wer den Status zuerst setzt,
@@ -310,7 +311,9 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
     ergebnis = kosmo_szene.als_ergebnis(
         kennung, namen, geometrie_urteil=geometrie_urteil,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
-        nicht_gerendert=nicht_gerendert, je_kamera=je_kamera)
+        nicht_gerendert=nicht_gerendert, je_kamera=je_kamera, engine=engine,
+        # Dieselbe flache Ablage wie bei der Bruecke — ein Ergebnis, zwei Wege, eine Form.
+        ebenen=bruecke.ebenen_bereitstellen(ordner, ebenen))
 
     # ZUERST das Ergebnis, DANN der Status — siehe Docstring.
     _schreibe_atomar(ordner / DATEI_ERGEBNIS, kosmo_szene.nur_vertragsfelder(ergebnis))

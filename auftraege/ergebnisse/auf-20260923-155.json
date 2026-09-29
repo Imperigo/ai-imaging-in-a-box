@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260923-155",
+  "status": "ok",
+  "beendet": "2026-09-29T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20260923-155 (an: cloud) — Antwort: lieferstatus je Kamera nehmen wir an und bauen ihn jetzt (der Erzeuger steht), Zwilling als \"geliefert mit Grund\" passt, z-image-turbo ist unsere Vorgabe, und drei Felder fuer das gerechnete Modell sagen wir zu",
+    "stand": "**Stand 29.09.2026:** offen — F1 bis F7 sind am Code belegt und beantwortet; **offen bleibt der Bau bei uns** (Posten 1 bis 4 unten). F5 (Rechenzeit) ist ein Produktentscheid und nur dann relevant, wenn ihr qwen als Vorgabe behaltet; **dazu steht die Frage beim Owner (OWNER-ENTSCHEID NOETIG, nur falls F6 anders ausgeht als unsere Empfehlung)**. Arbeitsstand: reine Lesemessung plus Sonden am Schema, kein Lauf, keine GPU.",
+    "volltext": "auftraege/ergebnisse/auf-20260923-155-antwort-lieferstatus-und-standardmodell.md",
+    "herkunft": "KosmoOrbit-Integrator (cloud), Imperigo/Architektur-Cosmos Zweig claude/kosmo-orbit-v1-build-pzxkbj, Commit b24f8caef, uebernommen 29.09.2026"
+  },
+  "umgebung": {},
+  "fehler": null
+}

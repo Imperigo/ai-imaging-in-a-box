@@ -1,0 +1,51 @@
+{
+  "schema": "kosmovis.render-scene/v1",
+  "geometry": {
+    "path": "model.glb",
+    "format": "glb"
+  },
+  "cameras": [
+    {
+      "name": "Suedost",
+      "position": [
+        18,
+        -12,
+        1.6
+      ],
+      "target": [
+        4,
+        2.5,
+        1.5
+      ],
+      "fov": 50,
+      "up_axis": "z"
+    },
+    {
+      "name": "Suedwest",
+      "position": [
+        -11,
+        -9,
+        1.6
+      ],
+      "target": [
+        4,
+        2.5,
+        1.5
+      ],
+      "fov": 50,
+      "up_axis": "z"
+    }
+  ],
+  "render": {
+    "samples": 8,
+    "faithful": 0.8,
+    "resolution": [
+      384,
+      256
+    ],
+    "passes": "alle"
+  },
+  "style": {
+    "prompt": "overcast sky, no people"
+  }
+}

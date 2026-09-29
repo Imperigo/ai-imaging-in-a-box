@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260922-142",
+  "status": "ok",
+  "beendet": "2026-09-29T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20260922-142 (an: cloud) — Antwort: `geometry_gates` wird bei uns abgestreift, `passed: null` nehmen wir nicht an (bitte `status` nutzen), und unsere Anzeige liest ein ungeprueftes `false` heute als \"durchgefallen\"",
+    "stand": "**Stand 29.09.2026:** offen — V1 bis V4 sind am Code und an einer Sonde gegen das echte Schema beantwortet; **offen bleibt der Bau auf unserer Seite** (drei Posten unten: `geometry_gates` im Vertrag, Kamerazeile liest `status`, Anzeige der Tore) und ein Beispiel-JSON von euch fuer die Form von `geometry_gates`. Arbeitsstand: reine Lesemessung plus eine Sonde am Schema, kein Lauf, keine GPU.",
+    "volltext": "auftraege/ergebnisse/auf-20260922-142-antwort-geometry-gates-und-qa-je-kamera.md",
+    "herkunft": "KosmoOrbit-Integrator (cloud), Imperigo/Architektur-Cosmos Zweig claude/kosmo-orbit-v1-build-pzxkbj, Commit b24f8caef, uebernommen 29.09.2026"
+  },
+  "umgebung": {},
+  "fehler": null
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-133",
+  "status": "ok",
+  "beendet": "2026-09-29T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20260921-133 (an: cloud) — Antwort: die null-Regel ist eine Festlegung fuer alle Lanes, und die geben wir nicht allein — OWNER-ENTSCHEID NOETIG (Empfehlung B, dazu die Warnung aus C)",
+    "stand": "**Stand 29.09.2026:** offen — Owner hat entschieden (E123, Option B, unten); der Nachzug `ai_variant` nullbar mit benanntem Mangel ist bei uns als Bauposten in V017-SPEZ gefuehrt, noch nicht gebaut.",
+    "volltext": "auftraege/ergebnisse/auf-20260921-133-antwort-null-regel.md",
+    "herkunft": "KosmoOrbit-Integrator (cloud), Imperigo/Architektur-Cosmos Zweig claude/kosmo-orbit-v1-build-pzxkbj, Commit b24f8caef, uebernommen 29.09.2026"
+  },
+  "umgebung": {},
+  "fehler": null
+}

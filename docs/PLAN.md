@@ -7486,8 +7486,22 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Owner (29.09., «alle drei»):** C16 Qwen-Weg stillgelegt, C9 zweites Bein
         abgeschaltet, A12 Token-Prüfung bleibt aus (Protokoll 72 §4).
   - [ ] **local:** `auf-20260929-175` — ρ-Schwelle frontal und diagonal, zwei Bautypen.
-  - [ ] **cloud:** `auf-20260924-171` — komposition nicht senden, Puls lesen, Glas OPAQUE,
-        Pässe zu- oder absagen.
+  - [x] **cloud:** `auf-20260924-171` — beantwortet 29.09.: K1–K3 angenommen, K4 nach E124
+        in zwei Schritten (Protokoll 72 §5). Dazu 129/133/142/152/155 beantwortet.
+  - [x] **Kern:** Glas mit Durchlass zählt als durchsichtig (C33), Vorgabemodell
+        z-image-turbo (C34), engine-Felder (C35), Ebenen Schritt 1 (C36), Tor-Block in
+        ihren Wörtern (C37) — Protokoll 72 §5.
+  - [x] **cloud:** Beispiele (Ebenen, Puls, /health), Glas-Bestätigung und Tor-Zuordnung
+        zugestellt: `erg-20260929-e124-beispiele-und-glas.md`.
+  - [ ] **cloud:** Zuordnung «gemessen, trennt nicht» → `not_applicable` bestätigen;
+        `fehlgeschlagen` bei voller Bilderzahl (fehlende Ebene) im Schema zulassen.
+  - [ ] **local:** `auf-20260929-176` — Ansage und ganz echter Beispiel-Lauf (GPU).
+  - [x] **von drüben:** `auf-vis-20260929-01` Qwen-Image-2.1 — Lizenz nur Forschung, Empfehlung
+        «nicht verwenden», zugestellt (Protokoll 72 §6).
+  - [ ] **Owner:** kommerzielle Lizenz für Qwen-Image-2.1 anfragen, ja oder nein?
+  - [ ] **Kern:** A7 nach E123 — MCP-Eingang nimmt `null` für vier Felder an, mit benanntem
+        Mangel (Protokoll 72 §7).
+  - [ ] **Kern → cloud:** Antwort zu 152: «INNENANSICHT BESTELLT» ist Vorbehalt oder Auskunft?
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut
         (`geometrie_qa.sprungordnung`, Ortsfeld abgezogen), urteilt nicht mit (Protokoll
         71 §18).
@@ -7502,7 +7516,8 @@ Bekannt und ausdrücklich nicht erledigt:
         `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt
         einen Einbauauftrag an ui schreiben — oder erst nach der n1-Übernahme (E27)?
         `variante` stösst dabei an B6 (Varianten vom Cloud-Worker abgelehnt).
-  - [ ] **cloud:** F7 (Feld für das gerechnete Modell im render-result), F6 dringlicher.
+  - [x] **cloud:** F7 (Feld für das gerechnete Modell im render-result), F6 dringlicher —
+        beide beantwortet 29.09. (auf-155), bei uns gebaut (C34, C35).
   - [ ] Jeden Knoten einzeln mit dem Owner durchgehen (vorgemerkt: «1 Bauteile» am Modell-Knoten).
     - [x] Render-Knoten, Vorlauf: Recherche Knotensysteme (Weave, 23 KI-Werkzeuge, 15
           Render-Familien) → `docs/RECHERCHE_KNOTENSYSTEME_2026-09-24.md`.

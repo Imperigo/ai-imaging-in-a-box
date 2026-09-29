@@ -555,15 +555,19 @@ def test_ein_leerprompt_ohne_regler_kommt_nicht_ins_register(monkeypatch):
 # 7 · Die beiden Wege der HomeStation: Homeworker und Abholer
 # ======================================================================================
 
-def test_der_abholer_waehlt_qwen_edit_ohne_backbone_angabe_und_fuehrt(tmp_path, pil):
-    """**Warum diese Änderung die HomeStation im Alltag trifft:** Eine Bestellung aus
-    KosmoOrbit ohne ``vis.backbone`` gilt als ``"qwen"`` (``kosmo_szene``), und ``"qwen"``
-    ist ``qwen-image-edit-2511``. Der Abholer schickt nie einen Negativprompt — also rechnete
-    bis zum 23.09.2026 jeder dieser Läufe ohne Führung, und ab jetzt jeder mit."""
+def test_der_abholer_fuehrt_qwen_edit_wenn_es_bestellt_ist(tmp_path, pil):
+    """Eine Bestellung mit ``vis.backbone: "qwen"`` ist ``qwen-image-edit-2511``. Der Abholer
+    schickt nie einen Negativprompt — also rechnete bis zum 23.09.2026 jeder dieser Läufe
+    ohne Führung, und ab dann jeder mit.
+
+    *Bis zum 29.09.2026 hiess diese Probe «…ohne Backbone-Angabe»: Ohne Angabe galt
+    ``"qwen"``. Seit der Antwort auf auf-155 (F6) gilt ohne Angabe ihr Vertragswert
+    ``z-image-turbo`` — siehe die Probe darunter.*"""
     szene = {"schema": kosmo_szene.SCHEMA_SZENE,
              "geometry": {"path": "model.glb", "format": "glb"}, "cameras": "auto",
              "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
-             "style": {"prompt": "ein Haus", "mode": "none"}}
+             "style": {"prompt": "ein Haus", "mode": "none"},
+             "vis": {"backbone": "qwen"}}
     ordner = _auftrag(tmp_path, szene=szene)
     protokoll, attrappen = _kette()
     pipeline = QwenEditPlus()
@@ -582,6 +586,20 @@ def test_der_abholer_waehlt_qwen_edit_ohne_backbone_angabe_und_fuehrt(tmp_path, 
     assert pipeline.aufrufe and all(
         (kw["true_cfg_scale"], kw["negative_prompt"], kw["do_true_cfg"]) == (4.0, " ", True)
         for kw in pipeline.aufrufe)
+
+
+@pytest.mark.parametrize("vis", [None, {}, {"backbone": None}])
+def test_ohne_backbone_angabe_gilt_ihr_vertragswert(vis):
+    """Antwort auf auf-155, F6 (29.09.2026): ohne ``vis.backbone`` das Vorgabemodell ihres
+    Vertrags, ``z-image-turbo`` — nicht das Bearbeitungsmodell."""
+    szene = {"schema": kosmo_szene.SCHEMA_SZENE,
+             "geometry": {"path": "model.glb", "format": "glb"}, "cameras": "auto",
+             "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
+             "style": {"prompt": "ein Haus", "mode": "none"}}
+    if vis is not None:
+        szene["vis"] = vis
+    gelesen = kosmo_szene.lies_szene(szene)
+    assert gelesen["backbone"] == "z-image-turbo", gelesen.get("maengel")
 
 
 @pytest.mark.filterwarnings("ignore::aiimaging.bildlesen.SilhouettenVerlust")

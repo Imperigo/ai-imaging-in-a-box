@@ -608,7 +608,7 @@ BEKANNTE_FELDER = {
          "interior", "gelaende", "komposition", "innenansichten"),
     "geometry": ("path", "format", "up_axis"),
     "render": ("resolution", "faithful", "samples", "sun",
-               "environment", "himmel", "belichtung", "rauschschwelle"),
+               "environment", "himmel", "belichtung", "rauschschwelle", "passes"),
     "style": ("prompt", "mode", "refs"),
     "vis": ("backbone", "skip", "upscale", "research_only"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
@@ -1260,7 +1260,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
 
     stil = _block(fremd, "style", maengel)
     vis = _block(fremd, "vis", maengel)
-    fremd_bb = vis.get("backbone", "qwen")
+    # OHNE ANGABE DAS VORGABEMODELL IHRES VERTRAGS (29.09.2026, Antwort auf-155 F6):
+    # `vis.backbone` hat drüben die Vorgabe 'z-image-turbo' (render-scene.ts). Hier stand
+    # 'qwen' — das Bearbeitungsmodell, das die Tiefe nicht als Steuerung nimmt, 349 s statt
+    # 47 s je Bild braucht und auf dem Testbau ein erfundenes Haus statt des Quaders
+    # zeichnete (auf-169, Kamera s). Ihre App schickt das Feld immer; betroffen waren
+    # Bestellungen ohne Angabe, etwa über den MCP-Einlass. `wert_oder`: null = fehlt.
+    fremd_bb = wert_oder(vis, "backbone", "z-image-turbo")
     if not isinstance(fremd_bb, str):
         # Eine Liste als Kuerzel warf TypeError aus dem Nachschlagen (23.09.2026).
         bb = {"name": None, "bekannt": False, "zulaessig": False, "begruendung": (
@@ -1300,6 +1306,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             f"oder null, auf-67); ein anderer Wert laesst sich nicht deuten, und ein "
             f"geratener Gelaendebefund macht die Bauwerksmaske falsch.")
         gelaende = None
+
+    ebenen = _lies_passes(render.get("passes"), maengel)
 
     sonne = render.get("sun")
     if sonne is not None and not isinstance(sonne, dict):
@@ -1437,6 +1445,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "ueberspringen": schalter["skip"],
         "hochskalieren": schalter["upscale"],
         "sonne": sonne,
+        # Bestellte Ebenen (E124, Schritt 1, 29.09.2026): Tupel aus EBENEN_ARTEN, leer =
+        # keine bestellt.
+        "ebenen": ebenen,
         "innenraum": innenraum,
         "innen_bestellt": innen_bestellt,
         "gelaende_erwartet": gelaende,
@@ -1475,6 +1486,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
 
 #: Felder, die unsere Kette wirklich erreichen — mit der Stelle, an der sie ankommen.
 DURCHGEREICHT = {
+    "ebenen": "abholer → bruecke.schreibe_ergebnis(ebenen=…) → render-result 'ebenen'",
     "geometrie": "abholer: Pfad der glb",
     "format": "lies_szene selbst — unbekannte Formate werden als Mangel abgelehnt; "
               "'ifc' waehlt seit 22.09.2026 in bruecke.lies_auftrag model.ifc und in "
@@ -2410,10 +2422,57 @@ def _andere_kameras_einrechnen(block: dict, je_kamera, eigene) -> None:
         f"Kamera {str(eigene)!r}: {block.get('reason', '')}").strip()
 
 
+#: Die Ebenen, die eine Bestellung verlangen kann (E124, Schritt 1, Owner-Entscheid drüben
+#: 29.09.2026). Namen aus unserem Vorschlag im Ergebnisblatt B161 §2 (Blatt -03).
+EBENEN_ARTEN = ("schoenbild", "tiefe", "material-id")
+EBENEN_ALLE = "alle"
+
+
+def _lies_passes(wert, maengel: list) -> tuple:
+    """``render.passes`` → Tupel aus :data:`EBENEN_ARTEN`. ``None``/``[]`` heisst keine."""
+    if wert is None:
+        return ()
+    if wert == EBENEN_ALLE:
+        return EBENEN_ARTEN
+    if not isinstance(wert, list) or not all(isinstance(w, str) for w in wert):
+        maengel.append(f"'render.passes' ist {wert!r}. Erwartet: eine Liste aus "
+                       f"{', '.join(EBENEN_ARTEN)} oder \"{EBENEN_ALLE}\".")
+        return ()
+    fremd = [w for w in wert if w not in EBENEN_ARTEN]
+    if fremd:
+        maengel.append(f"'render.passes' nennt {', '.join(map(repr, fremd))} — bekannt sind "
+                       f"{', '.join(EBENEN_ARTEN)}. Eine unbekannte Ebene raten wir nicht.")
+        return ()
+    return tuple(dict.fromkeys(wert))
+
+
+def _ebenen_mit_lieferung(saetze, ebenen) -> None:
+    """Eine bestellte, aber fehlende Ebene macht die Kamera «fehlgeschlagen», mit Grund.
+
+    Ihre Bedingung (c) aus der Antwort auf auf-171: **eine** Auskunft über Lieferung, nicht
+    zwei — darum am Kamera-Lieferstatus, den sie schon lesen.
+    """
+    if not saetze or not ebenen:
+        return
+    fehlend: dict = {}
+    for e in ebenen:
+        if not e.get("datei"):
+            fehlend.setdefault(e.get("kamera"), []).append(
+                f"{e.get('art')} ({e.get('grund') or 'nicht erzeugt'})")
+    for satz in saetze:
+        luecken = fehlend.get(satz.get("kamera"))
+        if not luecken:
+            continue
+        satz["lieferstatus"] = "fehlgeschlagen"
+        zusatz = f"BESTELLTE EBENE FEHLT: {', '.join(luecken)}"
+        grund = satz.get("lieferstatus_grund") or ""
+        satz["lieferstatus_grund"] = f"{grund}; {zusatz}" if grund else zusatz
+
+
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
                  zeiten=None, uebersprungen: bool = False,
                  nicht_gerendert=(), je_kamera=None,
-                 zwei_tore_urteil=None) -> dict:
+                 zwei_tore_urteil=None, engine=None, ebenen=None) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -2824,13 +2883,40 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     saetze = _qa_je_kamera(job_id, je_kamera) if je_kamera else None
     if saetze:
         ergebnis["qa_je_kamera"] = saetze
+    # DIE EBENEN (E124, Schritt 1) — eigenes Feld, nicht `images`; nur, wenn bestellt.
+    # Ein fehlendes Feld heisst «nichts gesagt», nicht «keine Ebenen» (ihre Bedingung b).
+    if ebenen:
+        ergebnis["ebenen"] = [{k: v for k, v in e.items() if k != "grund" or not e.get("datei")}
+                              for e in ebenen]
+        _ebenen_mit_lieferung(saetze, ebenen)
     # DER LIEFERSTATUS DES AUFTRAGS — immer gesetzt (23.09.2026). Fehlt das Feld, greift
     # drueben die Vorgabe 'geliefert', und die galt bis heute fuer jedes unserer
     # Ergebnisse, auch fuer eines ohne Bild. Siehe `_lieferstatus_des_auftrags`.
     ergebnis["lieferstatus"], ergebnis["lieferstatus_grund"] = (
         _lieferstatus_des_auftrags(saetze, uebersprungen=uebersprungen,
                                    anzahl_bilder=len(ergebnis["images"])))
+    ergebnis.update(engine_felder(engine))
     return ergebnis
+
+
+def engine_felder(engine) -> dict:
+    """``engine_used``, ``engine_license``, ``guidance_applied`` — oberste Ebene, alle optional.
+
+    Zugesagt vom Integrator in der Antwort auf ``auf-20260923-155`` (F7, 29.09.2026), mit
+    ihren Namen und zwei Bedingungen: oberste Ebene, und ``guidance_applied`` ist ein
+    Boolean und **nie** ``null`` — weiss es der Lauf nicht, fehlt das Feld. Dasselbe gilt
+    hier für alle drei: Was nicht bekannt ist, wird weggelassen, nicht geraten.
+    """
+    if not isinstance(engine, dict):
+        return {}
+    felder = {}
+    if isinstance(engine.get("name"), str) and engine["name"]:
+        felder["engine_used"] = engine["name"]
+    if isinstance(engine.get("lizenz"), str) and engine["lizenz"]:
+        felder["engine_license"] = engine["lizenz"]
+    if isinstance(engine.get("fuehrung"), bool):
+        felder["guidance_applied"] = engine["fuehrung"]
+    return felder
 
 
 def nur_vertragsfelder(ergebnis: dict) -> dict:
@@ -2840,7 +2926,62 @@ def nur_vertragsfelder(ergebnis: dict) -> dict:
     „in der Regel" ist keine Zusage. Wer strikt senden will, nimmt diese Fassung; wer
     die Hinweise braucht, das volle Wörterbuch.
     """
-    return {k: v for k, v in (ergebnis or {}).items() if k != "hinweise"}
+    aus = {k: v for k, v in (ergebnis or {}).items() if k != "hinweise"}
+    # IHRE WOERTER AN DER AUSSENGRENZE (Antwort auf auf-142, 29.09.2026). Drinnen bleibt
+    # die dreiwertige Form — ihre Proben tragen den Unterschied zwischen «nicht gemessen»
+    # und «durchgefallen»; hinaus geht, was ihr Vertrag lesen kann.
+    if isinstance(aus.get(FELD_ZWEI_TORE), dict):
+        aus[FELD_ZWEI_TORE] = tore_in_ihren_worten(aus[FELD_ZWEI_TORE])
+    if isinstance(aus.get("qa"), dict):
+        aus["qa"] = _qa_mit_status(aus["qa"])
+    if isinstance(aus.get("qa_je_kamera"), list):
+        aus["qa_je_kamera"] = [_qa_mit_status(s) if isinstance(s, dict) else s
+                               for s in aus["qa_je_kamera"]]
+    return aus
+
+
+#: Unsere Tor-Woerter → ihre drei (``render-result.ts:218``). Ihre Bedingung aus der Antwort
+#: auf auf-142 (V2): «keine vierte Schreibweise». ``degeneriert`` (gerechnet, aber die Zahl
+#: traegt nichts) ist fuer sie ``not_measured``; das Wort steht weiter in ``fail_reasons``.
+TOR_STATUS_IHRE = {STATUS_OK: "measured", STATUS_FEHLT: "not_measured",
+                   STATUS_DEGENERIERT: "not_measured"}
+TOR_STATUSFELDER = ("status", "rho_mask_status", "geom_iou_status", "counter_check_status")
+
+
+def tore_in_ihren_worten(block: dict) -> dict:
+    """``geometry_gates`` in ihrer Form: drei Statuswoerter, ``passed`` immer Boolean.
+
+    * Leere Werte (``None``) werden **weggelassen**, nicht als ``null`` gesendet — bei ihnen
+      ist ``null`` in einem optionalen Feld ungueltig, Weglassen richtig (E123).
+    * ``passed: None`` («nicht entscheidbar») wird ``false`` — ihr ``passed`` ist Boolean
+      (V3). Damit das ``false`` nicht als «durchgefallen» gelesen wird, sagt ``status`` es:
+      ``not_measured``, wenn nichts gemessen ist; ``not_applicable``, wenn gemessen wurde,
+      die Gegenprobe aber zeigt, dass die Messung hier nicht trennt. **Diese zweite
+      Zuordnung ist unser Vorschlag, nicht ihre Angabe** — im Ergebnisblatt zur Bestaetigung
+      gestellt.
+    """
+    aus = {k: v for k, v in block.items() if v is not None}
+    for feld in TOR_STATUSFELDER:
+        if feld in aus:
+            aus[feld] = TOR_STATUS_IHRE.get(aus[feld], "not_measured")
+    if block.get("passed") is None:
+        aus["passed"] = False
+        if aus.get("status") == "measured":
+            aus["status"] = "not_applicable"
+    return aus
+
+
+def _qa_mit_status(block: dict) -> dict:
+    """``geometry.status`` setzen, das ihr Vertrag seit dem 03.09.2026 fuehrt (V3).
+
+    Ohne das Feld liest ihre Kamerazeile ein ungeprueftes ``passed: false`` als
+    «durchgefallen». ``measured`` nur, wenn eine Zahl da ist.
+    """
+    geo = block.get("geometry")
+    if not isinstance(geo, dict) or "status" in geo:
+        return block
+    gemessen = geo.get("geometry_fidelity") is not None
+    return dict(block, geometry=dict(geo, status="measured" if gemessen else "not_measured"))
 
 
 def pruefe_job_id(job_id) -> dict:

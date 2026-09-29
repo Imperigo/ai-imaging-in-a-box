@@ -131,10 +131,18 @@ MERKMAL_MESSUNG: dict[str, Messvorschrift] = {
         "n_disziplin_layer",
         "Der Erzeuger schreibt einen Node je Disziplin, die Datei trägt "
         "keinen. Der Viewer kann dann nichts ein- und ausblenden."),
+    # SEIT DEM 29.09.2026 ZÄHLT DER DURCHLASS MIT (Rückfrage des Integrators, auf-171 K3):
+    # KosmoOrbit stellt Glas auf `OPAQUE`, Alpha 1, `KHR_materials_transmission` 1 um —
+    # auf unsere eigene Empfehlung (B161 §3). Diese Vorschrift zählte bis dahin NUR
+    # `alphaMode: BLEND` und hätte nach der Umstellung jede Scheibe als «deckend»
+    # beanstandet: ein Fehlalarm, den wir selbst verursacht hätten. Durchsichtig ist
+    # jetzt, was BLEND ist ODER einen Durchlass > 0 trägt — dieselbe Regel wie ihr
+    # eigener Riegel (`pruefeGlasnaht`, `nDurchlass`).
     "transparenz": Messvorschrift(
-        "n_materialien_blend",
-        "Die Quelle trägt Fenster, die Datei führt kein einziges Material mit "
-        "`alphaMode: BLEND`. Jede Scheibe wird dann deckend gerendert — der Befund, "
+        "n_materialien_durchsichtig",
+        "Die Quelle trägt Fenster, die Datei führt kein einziges durchsichtiges "
+        "Material — weder `alphaMode: BLEND` noch `KHR_materials_transmission` mit "
+        "einem Durchlass über 0. Jede Scheibe wird dann deckend gerendert — der Befund, "
         "der drei Demoläufen am 01./02.09.2026 unbemerkt geblieben ist.",
         nur_wenn_klasse="IfcWindow"),
 }
@@ -151,6 +159,13 @@ VERDAECHTIG_LEER: dict[str, str] = {
                 "messen (Türblatt und Öffnungsbogen). Ein Plan ohne Türen ist denkbar — "
                 "darum eine Warnung und kein Mangel."),
 }
+
+
+def _durchlass(material: dict) -> float:
+    """``KHR_materials_transmission.transmissionFactor`` — 0, wenn Block oder Faktor fehlt."""
+    block = ((material.get("extensions") or {}).get("KHR_materials_transmission") or {})
+    wert = block.get("transmissionFactor", 0.0)
+    return float(wert) if isinstance(wert, (int, float)) and not isinstance(wert, bool) else 0.0
 
 
 def _messe_glb(pfad) -> dict:
@@ -175,6 +190,13 @@ def _messe_glb(pfad) -> dict:
         # die die Behauptung gegen sich selbst hält, ist keine.
         "n_materialien_blend": sum(
             1 for m in (js.get("materials") or []) if m.get("alphaMode") == "BLEND"),
+        # Durchlass (29.09.2026): ein Faktor > 0, nicht das blosse Vorhandensein des
+        # Blocks — `transmissionFactor` darf fehlen, dann gilt 0 (glTF-Vorgabe).
+        "n_materialien_durchlass": sum(
+            1 for m in (js.get("materials") or []) if _durchlass(m) > 0),
+        "n_materialien_durchsichtig": sum(
+            1 for m in (js.get("materials") or [])
+            if m.get("alphaMode") == "BLEND" or _durchlass(m) > 0),
         "n_disziplin_layer": len(js.get("nodes") or []),
         "generator": asset.get("generator"),
         "extras": asset.get("extras") or {},

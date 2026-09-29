@@ -168,11 +168,11 @@ def test_geometry_gates_ist_auf_dem_produktweg_gefuellt(tmp_path):
 
     tore = erg["geometry_gates"]
     assert tore["camera"] == "Eingang"
-    assert tore["rho_mask"] == 0.60 and tore["rho_mask_status"] == "ok"
+    assert tore["rho_mask"] == 0.60 and tore["rho_mask_status"] == "measured"
     assert tore["geom_iou"] == erg["qa"]["geometry"]["geom_iou"] == 0.93
     assert tore["passed"] is True
     # Ohne Gegenprobe wird nichts freigegeben, und der Block sagt es selbst.
-    assert tore["counter_check_status"] == "fehlt"
+    assert tore["counter_check_status"] == "not_measured"
     assert tore["released"] is False
     assert "geom_iou_widerspruch" not in tore["fail_reasons"]
 
@@ -195,10 +195,12 @@ def test_geometry_gates_meldet_eine_ungemessene_kamera_ausdruecklich(tmp_path):
     erg = _vertragsdatei(tmp_path, eingang=FEHLER, uebersicht=SAUBER)
 
     tore = erg["geometry_gates"]
-    assert tore["status"] == "fehlt"
-    assert tore["passed"] is None
+    # In IHREN Woertern (auf-142, 29.09.2026): `passed` ist Boolean, `status` sagt, dass
+    # das `false` ungeprueft heisst; leere Zahlen fehlen, statt null zu sein.
+    assert tore["status"] == "not_measured"
+    assert tore["passed"] is False
     assert tore["released"] is False
-    assert tore["rho_mask"] is None and tore["geom_iou"] is None
+    assert "rho_mask" not in tore and "geom_iou" not in tore
     assert tore["reason"].startswith("NICHT GEMESSEN")
     assert "kamera_nicht_gemessen" in tore["fail_reasons"]
 
@@ -215,7 +217,7 @@ def test_der_grund_widerspricht_dem_feld_nicht_wenn_die_eigene_fehlt_und_eine_an
     erg = _vertragsdatei(tmp_path, eingang=FEHLER, uebersicht=WIDERSPRUCH)
 
     tore = erg["geometry_gates"]
-    assert tore["camera"] == "Eingang" and tore["status"] == "fehlt"
+    assert tore["camera"] == "Eingang" and tore["status"] == "not_measured"
     assert tore["passed"] is False
     assert "kamera_nicht_bestanden:Uebersicht" in tore["fail_reasons"]
     assert "'passed: null'" not in tore["reason"], tore["reason"]
@@ -306,11 +308,13 @@ def test_ohne_gemeinsame_silhouette_ist_geom_iou_auch_in_den_toren_nicht_gemesse
     assert "FEHLENDE MESSUNG" in grund, grund
     tore = erg["geometry_gates"]
     assert tore["camera"] == "Eingang"
-    assert tore["geom_iou"] is None
-    assert tore["geom_iou_status"] != "ok"
+    assert "geom_iou" not in tore
+    assert tore["geom_iou_status"] == "not_measured"
     assert "geom_iou_nicht_gemessen" in tore["fail_reasons"]
     # Der `qa`-Block bleibt byte-identisch: Dort steht die 0.0 weiter, der Satz ordnet sie.
     assert erg["qa"]["geometry"]["geom_iou"] == 0.0
+    # …und `status` sagt ihrer Kamerazeile, dass das `false` ungeprueft heisst (auf-142 V3).
+    assert erg["qa"]["geometry"]["status"] == "not_measured"
     assert "geom_iou_widerspruch" not in tore["fail_reasons"]
 
 

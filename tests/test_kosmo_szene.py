@@ -954,8 +954,10 @@ def test_ohne_gegenprobe_steht_es_im_ergebnis_und_nicht_in_einem_logbuch():
                         zwei_tore_urteil=_tore(rho_maske_fremd=None, geom_iou_fremd=None))
     b = ks.nur_vertragsfelder(e)[ks.FELD_ZWEI_TORE]
 
-    assert b["separates"] is None, "keine erfundene Trennung"
-    assert b["counter_check_status"] == ks.STATUS_FEHLT
+    # In der geschriebenen Fassung in IHREN Woertern (29.09.2026, auf-142): kein null,
+    # sondern kein Feld; «fehlt» heisst dort `not_measured`.
+    assert "separates" not in b, "keine erfundene Trennung"
+    assert b["counter_check_status"] == "not_measured"
     assert "gegenprobe_fehlt" in b["fail_reasons"]
     assert b["released"] is False, "ohne Gegenprobe wird nichts freigegeben"
     assert b["passed"] is True, "das Torurteil selbst bleibt lesbar"

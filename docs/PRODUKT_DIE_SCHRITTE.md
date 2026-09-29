@@ -105,6 +105,23 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 29.09.2026 (später) · KosmoOrbit hat geantwortet — und bekommt echte Beispiele
+
+* **Alle sechs offenen Fragen an KosmoOrbit sind beantwortet.** Sie nehmen die vier
+  Vorschläge aus der Bildstrecke an, zwei davon mit Bedingungen.
+* **Glas:** KosmoOrbit will Glas künftig «deckend mit Durchlass» ausgeben. Unsere Prüfung
+  hätte das bis heute als Fehler gemeldet, weil sie nur den alten Weg kannte. Jetzt zählt
+  sie beides. **Das war ein echter Fehler bei uns**, gefunden, weil sie nachgefragt haben.
+* **Zusatzbilder je Ansicht (Tiefe, Material, Schönbild):** Man kann sie jetzt bestellen,
+  und sie kommen mit einer Erklärung in Zahlen. Fehlt eines, steht die Ansicht als «nicht
+  geliefert» da. Angezeigt werden sie drüben erst nach einem echten Lauf.
+* **Ohne Modellangabe rechnet jetzt das schnelle Modell** — so steht es in ihrem Vertrag.
+  Das Ergebnis sagt neu, mit welchem Modell gerechnet wurde.
+* **Die Prüf-Auskunft spricht jetzt ihre Wörter** («gemessen», «nicht gemessen»), damit ihre
+  Anzeige ein ungeprüftes Bild nicht mehr als «durchgefallen» liest.
+* **Offen:** Die Beispiele sind mit echtem Blender erzeugt, das KI-Bild und die Prüfung
+  darin sind Platzhalter. Den ganz echten Lauf macht der Heim-PC.
+
 ### 29.09.2026 · Drei Aufräum-Entscheide, und die Post ist endlich angekommen
 
 * **KosmoOrbit hat unsere Antworten jetzt.** Sie lagen fünf Tage nur bei uns, weil der

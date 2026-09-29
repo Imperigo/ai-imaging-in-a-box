@@ -67,8 +67,15 @@ def _material(eintrag) -> dict:
     unverändert gelten.
     """
     if isinstance(eintrag, (tuple, list)):
-        name, alpha_mode = eintrag
-        return {"name": str(name), "alphaMode": str(alpha_mode)}
+        # Seit dem 29.09.2026 optional ein dritter Wert: der Durchlass
+        # (`KHR_materials_transmission.transmissionFactor`) — die Form, in der KosmoOrbit
+        # Glas künftig ausführt (OPAQUE, Alpha 1, Durchlass 1; auf-171 K3).
+        name, alpha_mode, *rest = eintrag
+        material = {"name": str(name), "alphaMode": str(alpha_mode)}
+        if rest:
+            material["extensions"] = {
+                "KHR_materials_transmission": {"transmissionFactor": float(rest[0])}}
+        return material
     return {"name": str(eintrag)}
 
 

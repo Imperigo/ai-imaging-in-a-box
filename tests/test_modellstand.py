@@ -461,3 +461,33 @@ def test_die_blend_zahl_wird_an_der_datei_gemessen_nicht_im_vermerk_gelesen(tmp_
 
     assert befund["urteil"] == modellstand.ZURUECK, befund
     assert befund["gemessen"]["n_materialien_blend"] == 0
+
+
+
+# ======================================================================================
+# 6 · Durchlass zählt mit (29.09.2026, Rückfrage des Integrators zu auf-171 K3)
+# ======================================================================================
+
+def test_deckend_ausgefuehrtes_glas_mit_durchlass_ist_durchsichtig(tmp_path):
+    """Die Form, auf die KosmoOrbit umstellt: OPAQUE, Alpha 1, Durchlass 1.
+
+    Bis zum 29.09.2026 zählte diese Prüfung nur BLEND und hätte genau diese Datei — die
+    wir selbst empfohlen haben (B161 §3) — als «jede Scheibe deckend» beanstandet.
+    """
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "durchlass.glb",
+             materialien=("Aussenputz", ("Glas", "OPAQUE", 1.0)),
+             vermerk=_mit_transparenz(IfcWindow=700, IfcDoor=1016)))
+    assert befund["urteil"] == modellstand.TRAEGT, befund
+    assert befund["gemessen"]["n_materialien_blend"] == 0
+    assert befund["gemessen"]["n_materialien_durchlass"] == 1
+
+
+@pytest.mark.parametrize("glas", [("Glas", "OPAQUE", 0.0), ("Glas", "OPAQUE")])
+def test_deckendes_glas_ohne_durchlass_bleibt_ein_mangel(tmp_path, glas):
+    """Die Gegenprobe: Ein Durchlass-Block mit 0 oder gar keiner ist keine Scheibe."""
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "deckend2.glb", materialien=("Aussenputz", glas),
+             vermerk=_mit_transparenz(IfcWindow=700, IfcDoor=1016)))
+    assert befund["urteil"] == modellstand.ZURUECK, befund
+    assert befund["gemessen"]["n_materialien_durchsichtig"] == 0

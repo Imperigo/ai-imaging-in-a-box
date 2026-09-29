@@ -1,0 +1,45 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260929-176",
+  "art": "frage",
+  "beschreibung": "Ansage (Vorgabemodell z-image-turbo, engine-Felder, Tor-Block in ihren Woertern, Ebenen nach E124, Glas mit Durchlass) und ein echter GPU-Lauf von tools/vertragsbeispiele.py --echt, dessen JSON als gemessenes Beispiel an KosmoOrbit geht.",
+  "anweisung": "=== ANSAGE (29.09., ZWEITE HAELFTE) UND EIN ECHTER BEISPIEL-LAUF FUER KOSMOORBIT ===\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, bevor ihr zieht)\n\n  A1 VORGABEMODELL DER BRUECKE. Ein Brueckenauftrag OHNE vis.backbone rechnet ab jetzt mit\n     z-image-turbo (ihr Vertragswert, Antwort auf auf-155 F6). Bisher war es\n     qwen-image-edit-2511. Wer qwen-edit will, muss vis.backbone: \"qwen\" senden.\n     Erwartete Folge bei euch: Auftraege ohne Angabe laufen schneller und brauchen die\n     kleinere Speichergrenze (4102 statt 7992 MiB).\n  A2 DREI NEUE FELDER IN render-result.json (oberste Ebene, nur wenn bekannt):\n     engine_used, engine_license, guidance_applied (Boolean, sonst weggelassen).\n  A3 geometry_gates UND qa.geometry IN IHREN WOERTERN. In der geschriebenen Datei heisst\n     status jetzt measured | not_measured | not_applicable (statt ok | fehlt | degeneriert),\n     passed ist immer true/false (nie null), und leere Zahlen fehlen statt null zu sein.\n     qa.geometry und qa_je_kamera[].geometry tragen neu ein Feld status. Drinnen (Bibliothek,\n     Proben) aendert sich nichts. Wer eure Auswertungen auf \"fehlt\" sucht: jetzt \"not_measured\".\n  A4 EBENEN (E124, Schritt 1). Eine Bestellung mit render.passes (Liste aus schoenbild,\n     tiefe, material-id, oder \"alle\") legt je Kamera flache PNG in den Auftragsordner\n     (<kamera>__<art>.png) und schreibt ein Feld ebenen mit bedeutung. Fehlt eine bestellte\n     Ebene, heisst die Kamera lieferstatus: fehlgeschlagen. Ohne passes aendert sich nichts.\n  A5 TRANSPARENZ-PRUEFUNG DES MODELLSTANDS zaehlt jetzt auch Glas mit\n     KHR_materials_transmission > 0 (nicht nur BLEND). Folge: Ein deckend exportiertes Glas\n     mit Durchlass gilt nicht mehr als Mangel.\n\nTEIL B — EIN ECHTER LAUF, DER ALS BEISPIEL-JSON AN KOSMOORBIT GEHT (GPU)\n\n  KosmoOrbit schreibt sein Schema fuer geometry_gates und ebenen nach einem echten\n  Beispiel, «gemessen, nicht gebaut». Unser Beispiel vom 29.09. (docs/vertragsbeispiele/\n  2026-09-29/) hat echtes Blender, aber eine ATTRAPPE fuer Bild und Geometrie-QA. Bitte den\n  ganzen Weg einmal echt:\n\n    1. git pull --ff-only; git log -1 notieren.\n    2. python3 tools/vertragsbeispiele.py build/beispiel-echt --echt\n       (--echt: dieselben zwei Kameras, aber wirklich gerechnet — Vorgabemodell\n       z-image-turbo, echter Tiefenschaetzer, Nullprobe an).\n    3. Zurueck: render-result.json, abholer-puls.json, health-abholer-je-zustand.json aus\n       build/beispiel-echt als Ergebnisdatei (JSON-Text in die Rueckgabe, KEINE Bilder\n       ins Repo). Dazu ein Satz je Kamera: Zeigt Suedost__tiefe.png das Gebaeude, nah hell?\n       Stimmt die Farbe in Suedost__material-id.png mit der Tabelle in ebenen ueberein\n       (eine Wand stichprobenhaft)?\n    4. Ob geometry_gates.status «measured» wurde und ob released true/false ist, mit dem\n       reason-Satz woertlich.\n\n  «Der Tiefenschaetzer lief nicht, darum not_measured» ist ein vollstaendiges Ergebnis —\n  dann bitte den Grund woertlich.\n\nNICHT TUN: nichts an Schwellen aendern; nichts committen ausser eurer Ergebnisdatei; keine\nBilder ins Repo; nicht in das KosmoOrbit-Repo schreiben (das stellen wir zu).\n",
+  "erstellt": "2026-09-29T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/vertragsbeispiele.py erzeugt den Testbau selbst (tools/make_test_ifc.py --gelaende)"
+  },
+  "params": {
+    "werkzeug": "tools/vertragsbeispiele.py",
+    "schalter": [
+      "--echt"
+    ],
+    "kameras": [
+      "Suedost",
+      "Suedwest"
+    ],
+    "passes": "alle",
+    "backbone": "z-image-turbo"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: zwei Kameras, ein Startwert je Kamera (dazu die Nullprobe).",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des ai-imaging-Klons.",
+    "render-result.json, abholer-puls.json und health-abholer-je-zustand.json aus dem echten Lauf, als JSON-Text.",
+    "Je Kamera ein Satz: Tiefe zeigt das Gebaeude nah hell? Material-ID-Farbe einer Wand passt zur Tabelle?",
+    "geometry_gates.status, released und reason woertlich."
+  ],
+  "rang": 4
+}

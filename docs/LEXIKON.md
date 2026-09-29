@@ -5839,6 +5839,20 @@ fertigen Bild ausgibt: Tiefe, Normalen, Material-Kennung, Linien. «AOV» heisst
 output variable*. In Blender, Houdini und Unreal ist jeder Pass ein eigener Anschluss am
 Knoten. Bei uns sind es die Geometrie-Pässe, die das Bildmodell führen (siehe *Multipass*).
 
+**Ebene (im Ergebnis)** — Unser Wort für einen *Render-Pass*, der mit dem Bild ausgeliefert
+wird: das Schönbild aus Blender, die Tiefenkarte oder die Material-Kennung, je Kamera eine
+eigene Datei. Jede Ebene kommt mit ihrer **Bedeutung** in Zahlen — bei der Tiefe etwa, wie
+viele Meter «ganz hell» und «ganz dunkel» sind —, damit niemand raten muss, was ein Pixel
+heisst. Bestellt wird sie mit `render.passes`; eingeführt am 29.09.2026 nach dem
+KosmoOrbit-Entscheid E124.
+
+**An der Aussengrenze übersetzen** — Drinnen spricht der Code seine eigenen Wörter
+(«fehlt», «nicht entscheidbar»), hinaus geht die Datei in den Wörtern des Empfängers
+(«not_measured», `false`). Die Übersetzung steht an genau einer Stelle, dort, wo die Datei
+geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfungen
+erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
+`kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
+
 **Variantenachse (Wedge)** — Statt «mach drei Varianten» sagt man, **was** sich ändern soll,
 etwa «Startwert × 3, Kamera × 4», und das Programm erzeugt alle Kombinationen, hier 12. So
 weiss man vor dem Lauf, wie viele Bilder entstehen und wie lange es dauert. Der Begriff
@@ -5907,7 +5921,9 @@ ihr Vertrag zählt ab Norden (`sonne.KOSMO_KONVENTION`).
 lässt und dabei bricht, wie eine Glasscheibe. Nicht zu verwechseln mit dem *Alphakanal*:
 Alpha lässt einen Teil der Strahlen am Material vorbei, als wäre an der Stelle nichts.
 Trägt ein Glas beides (so kam es aus KosmoOrbit), laufen die meisten Strahlen ungebrochen
-durch — die Scheibe wirkt wie Luft. Befund vom 24.09.2026 zu B161.
+durch — die Scheibe wirkt wie Luft. Befund vom 24.09.2026 zu B161. Seit dem 29.09.2026 zählt
+unsere Modellstand-Prüfung ein Material mit Transmission als durchsichtig, auch wenn es als
+deckend (OPAQUE) exportiert ist — vorher zählte nur der Alpha-Weg.
 
 **Stilllegen (eines Bildmodells)** — Ein Modell bleibt im Register des Projekts
 eingetragen, mit Lizenz und Befunden, wird aber nicht mehr angeboten und nicht mehr
@@ -5922,6 +5938,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
 | 2026-09-29 | Ergaenzt aus den Owner-Entscheiden, Sitzung 72: **Stilllegen (eines Bildmodells)**; **Paarurteil** nachgetragen |
 | 2026-09-24 | Ergaenzt aus B161: **Abholer-Puls**, **Farbtemperatur (Kelvin)**, **Speicher-Riegel**, **Konvention (einer Himmelsrichtung)**, **Transmission** |
 | 2026-09-24 | Ergaenzt aus der Kamera-Berichtigung: **Wandabstand (Mindestabstand der Aussenkamera)** |

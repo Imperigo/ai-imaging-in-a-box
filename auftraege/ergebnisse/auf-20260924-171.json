@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260924-171",
+  "status": "ok",
+  "beendet": "2026-09-29T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20260924-171 (an: cloud) — Antwort auf B161, unsere Haelfte: K1 bis K3 nehmen wir an und beschreiben den Bau, K4 (Paesse) ist eine Vertragsentscheidung fuer beide Seiten — OWNER-ENTSCHEID NOETIG (Empfehlung: Zusage in zwei Schritten)",
+    "stand": "**Stand 29.09.2026:** offen — K1, K2 und K3 angenommen, als Bauposten in V017-SPEZ gefuehrt, noch nicht gebaut; K4 vom Owner entschieden (E124: zwei Schritte, unten), wartet auf ein Beispiel-JSON von KosmoVis.",
+    "volltext": "auftraege/ergebnisse/auf-20260924-171-antwort-vier-punkte-k1-bis-k4.md",
+    "herkunft": "KosmoOrbit-Integrator (cloud), Imperigo/Architektur-Cosmos Zweig claude/kosmo-orbit-v1-build-pzxkbj, Commit b24f8caef, uebernommen 29.09.2026"
+  },
+  "umgebung": {},
+  "fehler": null
+}

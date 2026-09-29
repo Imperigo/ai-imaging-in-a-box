@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-129",
+  "status": "ok",
+  "beendet": "2026-09-29T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20260921-129 (an: cloud) — Antwort: Ausbesserung bleibt ungebaut, wir senden heute weder Maske noch Rechteck, und das Geometrie-Urteil bleibt getrennt",
+    "stand": "**Stand 29.09.2026:** erledigt — beide Rueckfragen (V1 Empfang, V2 Rechteck oder Maske) sind beantwortet und am Code belegt; es gibt bei uns nichts zu bauen, solange V1 auf eurer Seite \"nein\" bleibt. Arbeitsstand: reine Lesemessung am Baum, kein Lauf.",
+    "volltext": "auftraege/ergebnisse/auf-20260921-129-antwort-bearbeitungsbereich.md",
+    "herkunft": "KosmoOrbit-Integrator (cloud), Imperigo/Architektur-Cosmos Zweig claude/kosmo-orbit-v1-build-pzxkbj, Commit b24f8caef, uebernommen 29.09.2026"
+  },
+  "umgebung": {},
+  "fehler": null
+}

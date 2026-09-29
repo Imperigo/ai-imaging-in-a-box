@@ -502,7 +502,8 @@ def vermerke_grund(verzeichnis, grund: str) -> dict:
 def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
-                      status: str = STATUS_DONE, uebersprungen: bool = False) -> dict:
+                      status: str = STATUS_DONE, uebersprungen: bool = False,
+                      engine=None, ebenen=None) -> dict:
     """Das Ergebnis danebenlegen und den Laufzettel fortschreiben — in dieser Reihenfolge.
 
     **Die Reihenfolge ist die ganze Sorgfalt dieser Funktion.** Die fremde Oberfläche
@@ -540,12 +541,39 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
     ergebnis = kosmo_szene.als_ergebnis(
         kennung, namen, geometrie_urteil=geometrie_urteil,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
-        nicht_gerendert=nicht_gerendert, je_kamera=je_kamera)
+        nicht_gerendert=nicht_gerendert, je_kamera=je_kamera, engine=engine,
+        ebenen=ebenen_bereitstellen(ordner, ebenen))
 
     # ZUERST das Ergebnis, DANN der Laufzettel — siehe Docstring.
     _schreibe_atomar(ordner / DATEI_ERGEBNIS, kosmo_szene.nur_vertragsfelder(ergebnis))
     setze_status(ordner, status)
     return ergebnis
+
+
+def ebenen_bereitstellen(ordner, ebenen) -> list[dict] | None:
+    """Die bestellten Ebenen flach in den Auftragsordner kopieren (E124, Schritt 1).
+
+    Dieselbe Naht wie bei den Bildern (siehe :func:`_bereitgestellte_namen`): Der Empfaenger
+    holt über den blossen Namen, also muss die Datei unter diesem Namen im Ordner liegen.
+    Das Feld ``quelle`` — ein Pfad dieser Maschine — wird gestrichen (Regel 3). Eine Ebene,
+    deren Quelle beim Kopieren fehlt, bekommt ``datei: None`` und einen Grund, statt einen
+    Namen zu nennen, der ins Leere zeigt.
+    """
+    if not ebenen:
+        return None
+    ordner = Path(ordner)
+    aus: list[dict] = []
+    for e in ebenen:
+        e = dict(e)
+        quelle = e.pop("quelle", None)
+        if e.get("datei"):
+            if not quelle or not Path(quelle).is_file():
+                e.update(datei=None, bedeutung=None,
+                         grund="Die Datei war beim Zustellen nicht mehr da.")
+            elif Path(quelle).resolve() != (ordner / e["datei"]).resolve():
+                shutil.copyfile(quelle, ordner / e["datei"])
+        aus.append(e)
+    return aus
 
 
 def _bereitgestellte_namen(ordner: Path, bilder) -> list[str]:

@@ -342,6 +342,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         # Gefunden am 26.08.2026 vom Kettenlauf-Test, nicht von den Bausteintests: Die
         # vierte Lage war gebaut, gepruft und an der NAHT nicht angeschlossen.
         uebersprungen=uebersprungen,
+        **({"engine": ergebnis["engine"]} if ergebnis.get("engine") else {}),
+        **({"ebenen": ergebnis["ebenen"]} if ergebnis.get("ebenen") else {}),
     )
     antwort.update(
         tat=TAT_VERARBEITET, ergebnis=geschrieben,
@@ -1487,6 +1489,91 @@ def mindest_frei_mib(backbone_name) -> tuple[int, str]:
     return eintrag.mindest_frei_mib, f"gemessen für {name} ({eintrag.mindest_frei_beleg})"
 
 
+def _engine_aus(render_ergebnis) -> dict | None:
+    """``{name, lizenz, fuehrung}`` aus dem Ergebnis des Bildmodells — oder ``None``.
+
+    ``fuehrung`` bleibt ``None``, wenn der Adapter es nicht weiss; der Vertrag laesst das
+    Feld dann weg (auf-155 F7: ``guidance_applied`` ist Boolean und nie null).
+    """
+    if not isinstance(render_ergebnis, dict) or not render_ergebnis.get("backbone"):
+        return None
+    lizenz = render_ergebnis.get("lizenz")
+    fuehrung = (render_ergebnis.get("parameter") or {}).get("fuehrung_regler_angekommen")
+    return {"name": str(render_ergebnis["backbone"]),
+            "lizenz": (lizenz.get("lizenz") if isinstance(lizenz, dict) else None),
+            "fuehrung": fuehrung if isinstance(fuehrung, bool) else None}
+
+
+#: Welches Feld des Multipass-Berichts welche bestellte Ebene traegt (E124, Schritt 1).
+EBENE_AUS_BERICHT = {"schoenbild": "beauty_png", "tiefe": "depth_png",
+                     "material-id": "material_id_png"}
+
+
+def ebenen_dieser_kamera(bericht: dict, kamera, bestellt) -> list[dict]:
+    """Je bestellte Ebene ein Eintrag ``{kamera, art, datei, bedeutung, quelle}``.
+
+    ``datei`` ist der **flache** Name ``<kamera>__<art>.png`` — ihr ``get_artifact`` nimmt
+    nur ein Segment (Antwort auf auf-171, K4). ``quelle`` ist der Pfad auf dieser Maschine;
+    die Bruecke kopiert von dort und streicht das Feld, bevor es hinausgeht (Regel 3).
+
+    ``bedeutung`` ist **strukturiert, nicht Freitext** (ihre Bedingung a): Die Tiefe traegt
+    ihre Grenzen in Metern und die Richtung, die Material-ID die Tabelle samt Nullfarbe.
+    Fehlt die Datei, bleibt ``datei`` ``None`` und ``grund`` sagt warum — daraus wird die
+    Kamera «fehlgeschlagen» (ihre Bedingung c, :func:`kosmo_szene._ebenen_mit_lieferung`).
+    """
+    bericht = bericht or {}
+    aus: list[dict] = []
+    for art in bestellt or ():
+        feld = EBENE_AUS_BERICHT[art]
+        quelle = bericht.get(feld)
+        eintrag = {"kamera": str(kamera), "art": art, "datei": None, "bedeutung": None}
+        if not quelle or not Path(quelle).is_file():
+            fehler = bericht.get(feld + "_fehler")
+            eintrag["grund"] = (f"Der Multipass hat kein {feld} geschrieben"
+                                + (f" ({fehler})" if fehler else "") + ".")
+            aus.append(eintrag)
+            continue
+        eintrag.update(datei=f"{kamera}__{art}.png", quelle=str(quelle),
+                       bedeutung=_bedeutung_der_ebene(art, bericht))
+        aus.append(eintrag)
+    return aus
+
+
+def _bedeutung_der_ebene(art: str, bericht: dict) -> dict:
+    """Was ein Pixel dieser Ebene heisst — in Zahlen, nicht in Worten."""
+    if art == "tiefe":
+        n = bericht.get("depth_normalisierung") or {}
+        return {"einheit": "m", "min_m": n.get("min_m"), "max_m": n.get("max_m"),
+                "nah": "hell", "hintergrund_grauwert": n.get("hintergrund_grauwert", 0),
+                "bittiefe": 8, "rueckrechnung": n.get("rueckrechnung")}
+    if art == "material-id":
+        return {"nullfarbe_srgb_8bit": [0, 0, 0],
+                "tabelle": [{"index": e.get("index"), "name": e.get("name"),
+                             "farbe_srgb_8bit": e.get("farbe_srgb_8bit")}
+                            for e in (bericht.get("material_id_tabelle") or [])]}
+    return {"renderer": "cycles", "samples": bericht.get("samples")}
+
+
+def _ebenen_des_auftrags(urteile) -> list[dict]:
+    """Die Ebenen aller Kameras, in der Reihenfolge der Kameras."""
+    return [e for u in (urteile or ()) if isinstance(u, dict) for e in (u.get("ebenen") or ())]
+
+
+def _engine_des_auftrags(urteile) -> dict | None:
+    """Die Engine des Auftrags: die erste Kamera, die gerechnet hat.
+
+    Ein Auftrag rechnet alle Kameras mit demselben Modell (``szene['backbone']``); stuenden
+    doch zwei verschiedene da, faellt das Feld weg — eine Angabe fuer den ganzen Auftrag,
+    die nur fuer einen Teil stimmt, ist schlechter als keine.
+    """
+    gesehen = [u.get("engine") for u in (urteile or ()) if isinstance(u, dict)
+               and isinstance(u.get("engine"), dict)]
+    if not gesehen:
+        return None
+    namen = {e["name"] for e in gesehen}
+    return gesehen[0] if len(namen) == 1 else None
+
+
 def _speicher_reicht(speicher_frei, backbone_name=None) -> tuple[bool, str]:
     """Reicht der freie Grafikspeicher, um überhaupt zu laden? — B161/B1.
 
@@ -2375,6 +2462,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # darunter: Rahmung und Kamerahoehe sind Eigenschaften der KAMERA, die eine
             # andere Blickrichtung heilen kann. Der Massstab ist eine Eigenschaft der
             # GEOMETRIE und bei jeder Kamera derselbe.
+            # DIE BESTELLTEN EBENEN (E124, Schritt 1) — hier, weil der Multipass jetzt ganz
+            # da ist; auch eine Kamera, die spaeter ausgesetzt wird, hat sie.
+            ebenen = ebenen_dieser_kamera(bericht, kuerzel, szene.get("ebenen"))
             massstab = _massstab_gemeldet(bericht)
             rahmung = _rahmung_vor_dem_render(bericht)
             if not rahmung_pruefen and rahmung.get("abbruch"):
@@ -2389,7 +2479,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, lage),
                                     massstab=massstab, rahmung=rahmung,
                                     komposition=komposition, blickfeld=blickfeld,
-                                    modellstand=modellstand, **innen))
+                                    modellstand=modellstand, ebenen=ebenen, **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -2454,7 +2544,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # 23.09.2026). Bewacht ist die WIRKUNG: Ein Zwilling einer mitgesandten
                 # Innenkamera traegt den Vermerk (tests/test_interior_bestellung.py).
                 urteile.append(dict(zwilling["urteil"], kamera=kuerzel,
-                                    doppelt_von=zwilling["kamera"], **innen))
+                                    doppelt_von=zwilling["kamera"],
+                                    # Die EIGENEN Ebenen — der Multipass lief auch hier;
+                                    # die des Vorbilds truegen dessen Kameranamen.
+                                    ebenen=ebenen, **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -2519,6 +2612,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # sah ein Lauf, der am freien Kartenspeicher scheiterte, wie
                           # ein Rueckfall im Code aus (auf-vis-20260825-15, Posten 4).
                           geraeteweg=ergebnis.get("geraeteweg"),
+                          # WOMIT GERECHNET WURDE (auf-155 F7, zugesagt 29.09.2026):
+                          # Modell, Lizenz, ob die Fuehrung ankam — aus dem Ergebnis des
+                          # Bildmodells, nicht aus der Bestellung.
+                          engine=_engine_aus(ergebnis),
                           # Die Kompositionsprüfung — bis zum 23.08.2026 rief SIE
                           # niemand, obwohl `komposition.py` 1400 Zeilen gerechnetes
                           # Fachwissen trägt. Ein Regelwerk, das nur seine eigenen Tests
@@ -2569,6 +2666,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # der Befund jeden Fehler einer spaeteren Kamera. Dieselbe Ueberlegung wie
             # bei `blickfeld` und `zwischenspeicher` eine Zeile darueber.
             urteil["modellstand"] = modellstand
+            urteil["ebenen"] = ebenen
             urteil.update(innen)
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
@@ -2614,6 +2712,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # `uebersprungen` — ein Ergebnissatz mit wechselnden Schluesseln zwingt jeden
             # Auswerter, vor dem Lesen zu verzweigen (dieselbe Regel wie bei `status`).
             "modellstand": modellstand,
+            # Womit gerechnet wurde, fuer den ganzen Auftrag (auf-155 F7). `None`, wenn keine
+            # Kamera gerechnet hat — dann fehlen die Felder im Vertrag, statt zu raten.
+            "engine": _engine_des_auftrags(urteile),
+            # Die bestellten Ebenen aller Kameras (E124, Schritt 1); leer, wenn keine bestellt.
+            "ebenen": _ebenen_des_auftrags(urteile),
             # WAS AUS DER IFC WURDE — `None`, wenn keine umgewandelt wurde (glb-Auftrag).
             # Traegt das Urteil des Tors auch dann, wenn es nichts gesperrt hat.
             "umwandlung": umwandlung,

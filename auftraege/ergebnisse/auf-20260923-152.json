@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260923-152",
+  "status": "ok",
+  "beendet": "2026-09-29T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20260923-152 (an: cloud) — Antwort: (a) heute JA, jedes Preset traegt `komposition`, auch bei `interior` — und wir beenden das, indem `komposition` nicht mehr an /jobs geht",
+    "stand": "**Stand 29.09.2026:** offen — V1 und V2 sind beantwortet und am Code belegt; **offen bleibt der Bau bei uns** (Posten K1, beschrieben in der Antwort auf `auf-20260924-171`, dieselbe Aenderung). Bis er gebaut ist, bleibt jede Innenraum-Bestellung mit Preset bei euch liegen. Arbeitsstand: reine Lesemessung, kein Lauf.",
+    "volltext": "auftraege/ergebnisse/auf-20260923-152-antwort-komposition-bei-interior.md",
+    "herkunft": "KosmoOrbit-Integrator (cloud), Imperigo/Architektur-Cosmos Zweig claude/kosmo-orbit-v1-build-pzxkbj, Commit b24f8caef, uebernommen 29.09.2026"
+  },
+  "umgebung": {},
+  "fehler": null
+}
