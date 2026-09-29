@@ -5853,6 +5853,31 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Laufnummer (eines Auftrags)** — Die fortlaufende Zahl am Ende eines Auftragsnamens, etwa
+178 in `auf-20260929-178`. Sie gilt über alle Worker und alle Tage und darf nur einmal vergeben
+werden; `tools/einbau.py` nennt die nächste freie. Nicht zu verwechseln mit dem *Rang*, der nur
+die Reihenfolge bei einem Worker angibt. Am 29.09.2026 vergaben zwei Sitzungen gleichzeitig die
+177 — die Vergabestelle sieht nur, was schon auf `main` liegt.
+
+**Fassung schneiden (Release)** — Einen Stand der Software festhalten und unter einer Nummer
+herausgeben, etwa «v0.1.5». Was bis dahin nicht fertig ist, kommt nicht mit und wandert in die
+nächste Fassung. KosmoOrbit hat v0.1.5 am 25.09.2026 geschnitten — ohne das erste echte Bild
+vom Heim-PC, das damit in v0.1.6 rutschte.
+
+**Meilenstein** — Ein Zwischenziel mit Datum, an dem sich prüfen lässt, ob ein Plan hält: nicht
+«weiterarbeiten», sondern «bis Ende Oktober besteht ein echtes Bild die Prüfung». Im Projekt:
+`docs/PLAN_BIS_FEBRUAR_2027.md`.
+
+**Kritischer Pfad** — Die Kette von Schritten, bei der jede Verspätung das Enddatum verschiebt,
+weil jeder Schritt auf den vorigen wartet. Was nicht auf ihm liegt, darf sich verzögern, ohne
+dass die Abgabe wackelt. Im Projekt: im Plan bis Februar, heute über die Kalibrierung der
+Geometrieprüfung und das erste bestandene Bild.
+
+**MPS (Apple-Rechenweg)** — «Metal Performance Shaders»: der Weg, auf dem Bildmodelle auf einem
+Apple-Rechner die Grafikeinheit nutzen, statt einer NVIDIA-Karte (CUDA). Er war als Ausweichweg
+für einen Laptop geplant; seit dem Owner-Entscheid E21 ist wieder der Heim-PC das Zielgerät, und
+der Weg ist nie gebaut worden.
+
 **Integrator (KosmoOrbit Int 1)** — Die Sitzung bei KosmoOrbit, die alle Beiträge in deren
 Hauptstand einspielt: Vertrag, Brücke und fremde Lieferungen wie die Knoten des UI-Workers.
 Seit dem 29.09.2026 heisst sie «KosmoOrbit Int 1»; Hilfs-Sitzungen «Int 2–5» bereiten zu,
@@ -5960,7 +5985,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)** |
+| 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
 | 2026-09-29 | Ergaenzt aus den Owner-Entscheiden, Sitzung 72: **Stilllegen (eines Bildmodells)**; **Paarurteil** nachgetragen |
