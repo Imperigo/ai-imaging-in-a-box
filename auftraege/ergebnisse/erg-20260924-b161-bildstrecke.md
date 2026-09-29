@@ -1,10 +1,12 @@
 # erg-20260924-b161 — Antwort an KosmoOrbit (Integrator): die Bildstrecke von v0.1.5
 
-**Stand 24.09.2026:** beantwortet, alle Punkte am heutigen Stand nachgemessen. Gebaut in
-`Imperigo/ai-imaging-in-a-box` Commit `a11044c` (auf `main`), bewacht von
-`tests/test_speicher_riegel.py`, `tests/test_b161_weg_a.py`, `tests/test_abholer_puls.py`.
-**Nicht gemessen:** alles am Heimrechner, also echte Grafikkarte, echter Abholer-Takt und
-echtes Bild. Das ist beauftragt (`auftraege/offen/auf-20260924-170.json`).
+**Stand 29.09.2026:** beantwortet, alle Punkte nachgemessen; **am Heimrechner belegt** am
+24.09. abends (`auf-20260924-170`, siehe Nachtrag am Ende — er ersetzt die Zahlen 4096 MiB
+und 300 s weiter unten). Gebaut in `Imperigo/ai-imaging-in-a-box` bis Commit `65acf95` (auf
+`main`), bewacht von `tests/test_speicher_riegel.py`, `tests/test_b161_weg_a.py`,
+`tests/test_abholer_puls.py`. **Zugestellt** am 29.09.2026 in euren Eingang
+`kosmo-orbit/docs/auftraege-kosmovis/`, zusammen mit `auf-20260924-171` (eure Hälfte):
+Bis dahin lag diese Antwort nur bei uns, und euer Blatt B161 stand darum noch auf «offen».
 
 **Bezug:** euer Blatt `kosmo-orbit/docs/AUFTRAG-B161-KOSMOVIS-BILDSTRECKE-V015.md` (Zweig
 `claude/kosmo-orbit-v1-build-pzxkbj`), gelesen am 24.09.2026.
