@@ -1,0 +1,53 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260929-175",
+  "art": "frage",
+  "beschreibung": "Ansage der Owner-Entscheide vom 29.09. (Paarurteil nur noch rho, qwen-image-2512 stillgelegt, Token-Pruefung bleibt aus) und die fehlende C9-Messung: gibt es fuer rho ueber die Maske an erzeugten Bildern FRONTAL ein fehlerfreies Fenster, zwei Gebaeudetypen, drei Startwerte?",
+  "anweisung": "=== ANSAGE (DREI OWNER-ENTSCHEIDE VOM 29.09.) UND DIE MESSUNG, DIE C9 NOCH FEHLT ===\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, bevor ihr zieht)\n\n  A1 PAARURTEIL NUR NOCH MIT RHO. Das zweite Bein (Kante bzw. Anteil der Grenze mit Kante)\n     urteilt nicht mehr mit — euer Befund aus 98: an erzeugten Bildern 0,15 ... 0,27 um die\n     Schwelle 0,20 gestreut, «als Riegel untauglich». Es wird weiter gemessen und steht in\n     der Begruendung als «nur Auskunft». Folge: Der Satz «SCORE BESTEHT, MASKENWEG\n     WIDERSPRICHT» in verdict.reason kommt seltener; «nicht zustaendig» (kein Himmel hinter\n     dem Umriss) entfaellt, weil es nur das zweite Bein betraf. Die Seed-Auswahl aendert sich\n     NICHT (sie waehlt nach rho). Schalter zurueck: geometrie_qa.ZWEITES_BEIN_URTEILT.\n  A2 qwen-image-2512 (mit eigenem ControlNet) ist STILLGELEGT: wird nicht angeboten, ein\n     Auftrag damit wird vor dem Laden abgelehnt. Ihr muesst das Grundmodell (48 GB) nicht\n     herunterladen, und die unklare ControlNet-Datei bleibt liegen.\n  A3 Die Token-Pruefung des Freigabetors bleibt aus — jetzt als Entscheid. Fuer euch aendert\n     sich nichts.\n\nTEIL B — DIE MESSUNG, DIE C9 NOCH FEHLT (GPU)\n\n  Euer Ergebnis 98: fuer rho ueber die Maske gibt es an erzeugten Bildern ein fehlerfreies\n  Fenster 0,8651 ... 0,9031 — aber nur DIAGONAL, ein Gebaeudetyp, ein Startwert je Szene.\n  Frontal fand 81 (an Blender-Bildern) gar kein Fenster. Jetzt, wo rho allein urteilt,\n  haengt alles an dieser einen Schwelle (heute 0,80, unter eurem Fenster).\n\n  Bitte dieselbe Methode wie in 98 (tools/studie_echtschaetzer.py-Etiketten gut/schlecht,\n  erzeugte Bilder, Vorgabemodell z-image-turbo), aber:\n    - Blickrichtungen: FRONTAL (Kamera s) UND diagonal (sSE) zum Vergleich;\n    - zwei Gebaeudetypen: Testbau (python3 tools/make_test_ifc.py) und Hochbau\n      (… --hochbau);\n    - Startwerte 0, 1, 2 je Fall;\n    - die Stoerungen wie in 98, mindestens: richtig, Maske um 20 px verschoben, fremdes\n      Soll (Testbau <-> Hochbau).\n  Reihenfolge wie immer: erst OB ein fehlerfreies Fenster fuer rho existiert (je\n  Blickrichtung getrennt), dann WO.\n\n  «Es gibt frontal kein tragendes Fenster» ist ein vollstaendiges Ergebnis.\n\nNICHT TUN: keine Schwelle aendern (PAAR_RHO_SCHWELLE bleibt 0,80, bis ihr gemessen habt);\nnichts committen ausser eurer Ergebnisdatei; keine Bilder ins Repo.\n",
+  "erstellt": "2026-09-29T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau"
+  },
+  "params": {
+    "blick": [
+      "s",
+      "sSE"
+    ],
+    "koerper": [
+      "testbau",
+      "hochbau"
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "stoerungen_mindestens": [
+      "richtig",
+      "maske_20px_verschoben",
+      "fremdes_soll"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: 2 Blicke x 2 Koerper x 3 Startwerte = 12 erzeugte Bilder, dazu die Stoerungen auf der Messseite (CPU).",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des ai-imaging-Klons.",
+    "Je Blickrichtung getrennt: gibt es ein fehlerfreies Fenster fuer rho_maske (hoechster schlechter Wert, niedrigster guter Wert)?",
+    "Je Fall eine Zeile: Koerper, Blick, Startwert, Stoerung, Etikett gut/schlecht, rho_maske.gerichtet.",
+    "Ein Satz: traegt 0,80 frontal, diagonal, oder nirgends?"
+  ],
+  "rang": 3
+}

@@ -2879,6 +2879,10 @@ Nullwert ist keine Nulllinie, sondern eine Ziehung.*
 **Paarurteil** — Ein Urteil, das **zwei Messwerte nebeneinander stehen lässt**, statt sie
 zu einer Zahl zu verrechnen. Es besteht nur, wenn beide bestehen, und es sagt dazu,
 welcher der beiden ein Nein trägt.
+*Seit dem 29.09.2026 urteilt nur noch der erste der beiden Werte (ρ, die Tiefenordnung).
+Der zweite (die Kante am Gebäudeumriss) wird weiter gemessen und angezeigt, entscheidet
+aber nicht mehr mit: An echten, erzeugten Bildern streute er um seine eigene Grenze herum.
+Owner-Entscheid, Sitzung 72.*
 *Warum das eine eigene Bauform ist: Der frühere Geometrie-Score multiplizierte zwei Masse
 zu einer Zahl und verschmolz damit zwei verschiedene Fragen — «steht dort etwas» und
 «stimmt, was dort steht». Der Faktor, der die erste beantworten sollte, belohnte am Ende
@@ -5905,12 +5909,20 @@ Alpha lässt einen Teil der Strahlen am Material vorbei, als wäre an der Stelle
 Trägt ein Glas beides (so kam es aus KosmoOrbit), laufen die meisten Strahlen ungebrochen
 durch — die Scheibe wirkt wie Luft. Befund vom 24.09.2026 zu B161.
 
+**Stilllegen (eines Bildmodells)** — Ein Modell bleibt im Register des Projekts
+eingetragen, mit Lizenz und Befunden, wird aber nicht mehr angeboten und nicht mehr
+geladen. Ein Auftrag, der es trotzdem verlangt, wird abgelehnt, bevor etwas geladen wird,
+und nennt den Grund. Der Unterschied zum Löschen: Man sieht später noch, dass es geprüft
+wurde und warum es draussen ist. Im Projekt seit dem 29.09.2026 für das Qwen-Modell mit
+eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-29 | Ergaenzt aus den Owner-Entscheiden, Sitzung 72: **Stilllegen (eines Bildmodells)**; **Paarurteil** nachgetragen |
 | 2026-09-24 | Ergaenzt aus B161: **Abholer-Puls**, **Farbtemperatur (Kelvin)**, **Speicher-Riegel**, **Konvention (einer Himmelsrichtung)**, **Transmission** |
 | 2026-09-24 | Ergaenzt aus der Kamera-Berichtigung: **Wandabstand (Mindestabstand der Aussenkamera)** |
 | 2026-09-24 | Ergaenzt aus den Antworten 163/164: **Render-Umgebung** |

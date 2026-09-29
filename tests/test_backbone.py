@@ -90,7 +90,8 @@ def test_der_regel_1_test_ist_nicht_vakuos():
 def test_kommerziell_false_lockert_die_anforderung_statt_sie_umzukehren():
     """``kommerziell=False`` heisst „egal", nicht „nur Non-Commercial"."""
     gelockert = {b.name for b in waehle(kommerziell=False)}
-    assert gelockert == set(BACKBONES)
+    # Stillgelegte Einträge bleiben draussen, auch gelockert (29.09.2026).
+    assert gelockert == {n for n, b in BACKBONES.items() if not b.stillgelegt}
     assert VORGABE_BACKBONE in gelockert
 
 
@@ -402,11 +403,33 @@ def test_die_meldung_folgt_dem_zustand_des_eintrags(name):
     )
 
 
-def test_es_gibt_mindestens_zwei_apache_modelle_an_der_depth_naht():
-    """Die Lage ist günstig: Der Verzicht auf FLUX-dev lässt echte Wahl übrig."""
+def test_an_der_depth_naht_bleibt_ein_apache_modell():
+    """Hier stand bis zum 29.09.2026 «mindestens zwei» — «echte Wahl übrig».
+
+    **Das gilt nicht mehr, und es ist eine Einschränkung, keine Kleinigkeit:** Mit
+    ``qwen-image-2512`` stillgelegt (Owner-Entscheid, Sitzung 72) bleibt an der
+    Tiefen-Naht genau ein freies Modell, das Vorgabemodell. Fällt es aus, gibt es keinen
+    Ersatz im Register. Die Probe hält die Untergrenze fest, damit auch das nicht still
+    verschwindet.
+    """
     apache = [b for b in waehle(kommerziell=True, konditionierung=KOND_DEPTH_CONTROLNET)
               if b.lizenz == "Apache-2.0"]
-    assert len(apache) >= 2
+    assert [b.name for b in apache] == [VORGABE_BACKBONE]
+
+
+def test_ein_stillgelegter_backbone_wird_nicht_angeboten_und_nicht_geladen(tmp_path):
+    from aiimaging import render
+    assert BACKBONES["qwen-image-2512"].stillgelegt
+    assert "qwen-image-2512" not in {b.name for b in waehle(kommerziell=False)}
+    gerufen = []
+    ergebnis = render.rendere(
+        render.RenderAuftrag(depth_png=str(tmp_path / "t.png"), prompt="a house",
+                             backbone="qwen-image-2512",
+                             ausgabe_png=str(tmp_path / "b.png")),
+        modell=lambda p: gerufen.append(p))
+    assert ergebnis["status"] == render.STATUS_ABGELEHNT
+    assert any("stillgelegt" in m for m in ergebnis["maengel"])
+    assert gerufen == []
 
 
 # --------------------------------------------------------------------------------------

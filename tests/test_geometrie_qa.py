@@ -1789,9 +1789,11 @@ def test_die_kante_trennt_die_abwesenheit_und_rho_die_falsche_form():
     assert perfekt_rho > boden
 
 
-def test_eine_halbe_messung_ergibt_kein_urteil():
+def test_eine_halbe_messung_ergibt_kein_urteil(monkeypatch):
     """Ein Urteil aus der halben Messung wäre eine Behauptung über die Hälfte, die
     niemand angesehen hat — und die beiden Masse beantworten verschiedene Fragen."""
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     u = geometrie_qa.paarurteil({"gerichtet": 0.99}, None)
 
     assert u["bestanden"] is None
@@ -1799,8 +1801,10 @@ def test_eine_halbe_messung_ergibt_kein_urteil():
     assert "NICHT GEMESSEN" in u["begruendung"]
 
 
-def test_das_urteil_nennt_welches_mass_es_traegt():
+def test_das_urteil_nennt_welches_mass_es_traegt(monkeypatch):
     """„ρ in Ordnung, Kante fehlt" ist eine andere Diagnose als umgekehrt."""
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     nur_kante_fehlt = geometrie_qa.paarurteil({"gerichtet": 0.99}, {"gerichtet": 0.001})
     nur_rho_fehlt = geometrie_qa.paarurteil({"gerichtet": 0.10}, {"gerichtet": 0.20})
 
@@ -2013,8 +2017,10 @@ def test_EIN_ORDENTLICHES_RHO_IST_OHNE_JEDE_UMRISSTREUE_ERREICHBAR():
                                    anteil_ergebnis={"anteil": anteil})["bestanden"] is False
 
 
-def test_ohne_anteil_faellt_der_paartest_auf_die_alte_form_zurueck_UND_SAGT_ES():
+def test_ohne_anteil_faellt_der_paartest_auf_die_alte_form_zurueck_UND_SAGT_ES(monkeypatch):
     """Die Median-Kante kippt, statt zu trennen — ein Urteil darauf ist schwächer."""
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     u = geometrie_qa.paarurteil({"gerichtet": 0.9}, {"gerichtet": 0.2})
 
     assert u["zweites_bein"] == "kante"

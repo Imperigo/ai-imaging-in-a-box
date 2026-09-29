@@ -7483,8 +7483,9 @@ Bekannt und ausdrücklich nicht erledigt:
         zugestellt (Owner «b», `eef69ede0` drüben); neun Einbau-Posten nachgeführt
         (Protokoll 72).
   - [ ] **local:** `auf-20260929-174` — Herkunft der «17 Rezepte», Mappenpfad am Gerät.
-  - [ ] **Owner:** C16 (Qwen-Grundmodell laden?), C9 (zweites Bein abschalten?), A12
-        (Token-Prüfung einschalten, wer gibt aus?).
+  - [x] **Owner (29.09., «alle drei»):** C16 Qwen-Weg stillgelegt, C9 zweites Bein
+        abgeschaltet, A12 Token-Prüfung bleibt aus (Protokoll 72 §4).
+  - [ ] **local:** `auf-20260929-175` — ρ-Schwelle frontal und diagonal, zwei Bautypen.
   - [ ] **cloud:** `auf-20260924-171` — komposition nicht senden, Puls lesen, Glas OPAQUE,
         Pässe zu- oder absagen.
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut

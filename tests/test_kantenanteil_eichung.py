@@ -95,13 +95,15 @@ def test_das_perfekte_bild_ist_messbar_und_besteht():
 # Was daraus für das Paarurteil folgt
 # ======================================================================================
 
-def test_ein_unmessbarer_anteil_faellt_auf_die_kante_zurueck():
+def test_ein_unmessbarer_anteil_faellt_auf_die_kante_zurueck(monkeypatch):
     """`anteil = None` heisst „kein zweites Bein aus dem Anteil" — und der Test sagt es.
 
     Vorher lieferte der Verlauf eine 1.0, `paarurteil` verglich sie mit der Schwelle
     0.20, und ein reiner Verlauf bestand das zweite Bein. Eine Zahl mit Fussnote wird
     ohne die Fussnote weitergereicht.
     """
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     anteil = _anteil(VERLAUF)
     kante = geometrie_qa.kante_an_maskengrenze(VERLAUF, MASKE, breite=BREITE,
                                                polaritaet=1)

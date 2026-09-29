@@ -143,7 +143,7 @@ TRAEGT = {"anteil": 0.633, "traegt": True}
 TRAEGT_NICHT = {"anteil": 0.0, "traegt": False}
 
 
-def test_der_paartest_schweigt_wo_er_nichts_messen_kann():
+def test_der_paartest_schweigt_wo_er_nichts_messen_kann(monkeypatch):
     """**Der Kern des Befunds.** Zwei bestehende Zahlen — und trotzdem kein „bestanden".
 
     Nicht messbar ist nicht dasselbe wie schlecht, aber es ist auch nicht dasselbe wie
@@ -151,6 +151,8 @@ def test_der_paartest_schweigt_wo_er_nichts_messen_kann():
     Existenz und Lage des Bauwerks aufgrund einer Zahl, die in dieser Szene ein perfektes
     Bild nicht von weissem Rauschen trennt.
     """
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     stumm = geometrie_qa.paarurteil(BESTEHT_RHO, BESTEHT_KANTE,
                                     anteil_ergebnis=BESTEHT_ANTEIL,
                                     himmel_ergebnis=TRAEGT_NICHT)
@@ -171,13 +173,15 @@ def test_gegenprobe_dieselben_zahlen_bestehen_wo_himmel_dahintersteht():
     assert laut["bestanden"] is True
 
 
-def test_das_schweigen_ist_etwas_anderes_als_eine_fehlende_messung():
+def test_das_schweigen_ist_etwas_anderes_als_eine_fehlende_messung(monkeypatch):
     """Zwei Wege zu ``bestanden is None`` — und sie meinen Verschiedenes.
 
     *„Niemand hat gemessen"* verlangt einen Lauf. *„Hier ist nichts zu messen"* verlangt
     eine andere Szene oder einen anderen Schätzer. Wer beides gleich meldet, schickt
     jemanden auf die falsche Suche.
     """
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     fehlt = geometrie_qa.paarurteil(BESTEHT_RHO, None)
     stumm = geometrie_qa.paarurteil(BESTEHT_RHO, BESTEHT_KANTE,
                                     anteil_ergebnis=BESTEHT_ANTEIL,
@@ -244,7 +248,9 @@ def _urteil(hinter, bild):
                             breite=BREITE, hoehe=BREITE, maske=_maske())
 
 
-def test_der_maskenweg_fragt_nach_dem_himmel_bevor_er_urteilt(bild):
+def test_der_maskenweg_fragt_nach_dem_himmel_bevor_er_urteilt(bild, monkeypatch):
+    # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
+    monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
     verbaut = _urteil(NACHBAR_M, bild)
 
     assert verbaut["himmel"]["traegt"] is False
@@ -300,3 +306,36 @@ def test_gegenprobe_wo_alles_messbar_ist_steht_die_zeile_nicht_da():
     befund = {"kameras": [{"kamera": "s", "paarurteil": {"zustaendig": True}}]}
 
     assert not [z for z in abholer.befund_kurz(befund) if "NICHT messbar" in z]
+
+
+# ======================================================================================
+# Seit dem 29.09.2026: Das zweite Bein urteilt nicht mehr (Owner-Entscheid, Sitzung 72)
+# ======================================================================================
+
+def test_ohne_zweites_bein_urteilt_rho_auch_wo_kein_himmel_ist():
+    """Die Himmelsfrage betraf nur das zweite Bein. Urteilt es nicht mehr, ist ρ überall
+    zuständig — und das zweite Bein steht als Auskunft in der Begründung."""
+    assert geometrie_qa.ZWEITES_BEIN_URTEILT is False
+    urteil = geometrie_qa.paarurteil(BESTEHT_RHO, BESTEHT_KANTE,
+                                     himmel_ergebnis={"anteil": 0.05, "traegt": False})
+    assert urteil["zustaendig"] is True and urteil["bestanden"] is True
+    assert "nur Auskunft" in urteil["begruendung"]
+
+
+def test_ein_schwaches_zweites_bein_laesst_ein_gutes_rho_bestehen():
+    """Der Kern des Entscheids: Der Anteil streut an erzeugten Bildern um seine Schwelle
+    (auf-20260909-98) — er darf ein gutes ρ nicht mehr kippen."""
+    urteil = geometrie_qa.paarurteil({"gerichtet": 0.9}, None,
+                                     anteil_ergebnis={"anteil": 0.15})
+    assert urteil["bestanden"] is True and urteil["traeger"] is None
+
+
+def test_ein_schwaches_rho_faellt_weiter_durch():
+    urteil = geometrie_qa.paarurteil({"gerichtet": 0.4}, None,
+                                     anteil_ergebnis={"anteil": 0.9})
+    assert urteil["bestanden"] is False and urteil["traeger"] == "rho"
+
+
+def test_ohne_rho_gibt_es_kein_urteil():
+    urteil = geometrie_qa.paarurteil(None, None, anteil_ergebnis={"anteil": 0.9})
+    assert urteil["bestanden"] is None and "NICHT GEMESSEN" in urteil["begruendung"]

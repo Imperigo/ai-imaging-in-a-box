@@ -2793,6 +2793,20 @@ PAAR_KANTE_SCHWELLE = 0.05
 #: keine Messung.
 PAAR_KANTENANTEIL_SCHWELLE = 0.20
 
+#: Urteilt das zweite Bein (Kante bzw. Anteil der Grenze mit Kante) im Paarurteil mit?
+#:
+#: **Nein, seit dem 29.09.2026 — Owner-Entscheid** (Sitzung 72, auf Empfehlung): abschalten
+#: statt kalibrieren. Die HomeStation hat es an erzeugten Bildern gemessen
+#: (``auf-20260909-98``): Die Kante an der Maskengrenze liegt bei +0,005 … +0,012, der
+#: Anteil der Grenze mit Kante bei 0,15 … 0,27 — er streut **um** die Schwelle 0,20 herum.
+#: Ihr Urteil: *als Riegel untauglich.* Ein Bein, das um seine eigene Schwelle würfelt,
+#: macht aus dem Paarurteil einen Münzwurf.
+#:
+#: Gemessen und angezeigt wird es weiter — als Auskunft neben ρ, nicht als Urteil. Die
+#: alte Form bleibt mit ``zweites_bein_urteilt=True`` erreichbar, damit sie prüfbar bleibt
+#: und wieder eingeschaltet werden kann, wenn ein Mass kommt, das trennt.
+ZWEITES_BEIN_URTEILT = False
+
 
 def rho_gegen_gemessenen_boden(rho_gerichtet: float | None, maskenanker: dict | None, *,
                                schwelle: float = PAAR_RHO_SCHWELLE) -> dict:
@@ -2886,8 +2900,14 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
                himmel_ergebnis: dict | None = None,
                rho_schwelle: float = PAAR_RHO_SCHWELLE,
                kante_schwelle: float = PAAR_KANTE_SCHWELLE,
-               anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE) -> dict:
+               anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE,
+               zweites_bein_urteilt: bool | None = None) -> dict:
     """Beide Messungen zusammen — **ohne sie zu verrechnen**.
+
+    **Seit dem 29.09.2026 urteilt nur noch ρ** (:data:`ZWEITES_BEIN_URTEILT`, Owner-Entscheid):
+    Das zweite Bein wird gemessen und steht in der Begründung, entscheidet aber weder
+    ``bestanden`` noch ``zustaendig``. Mit ``zweites_bein_urteilt=True`` gilt die alte Form
+    unten unverändert.
 
     Args:
         rho_ergebnis: Antwort von :func:`rho_ueber_maske`, oder ``None``.
@@ -2987,15 +3007,21 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     # Bein nichts — dann darf hier kein Urteil stehen, auch kein schlechtes.
     himmel_anteil = (himmel_ergebnis or {}).get("anteil")
     zustaendig = True if himmel_ergebnis is None else bool(himmel_ergebnis.get("traegt"))
+    urteilt_zwei = ZWEITES_BEIN_URTEILT if zweites_bein_urteilt is None \
+        else bool(zweites_bein_urteilt)
     antwort = {
         "bestanden": None, "gemessen": False, "zustaendig": zustaendig,
         "rho": rho, "kante": kante,
         "anteil": anteil, "himmel": himmel_anteil,
         "zweites_bein": zweites_bein, "traeger": None,
+        "zweites_bein_urteilt": urteilt_zwei,
         "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle,
                       "anteil": anteil_schwelle, "himmel": MIN_HIMMELANTEIL},
         "begruendung": "",
     }
+    if not urteilt_zwei:
+        return _paarurteil_nur_rho(antwort, rho, rho_schwelle, zweites_bein, kante, anteil,
+                                   anteil_schwelle, kante_schwelle, himmel_anteil)
 
     if not zustaendig:
         rho_wort = "liegt nicht vor" if rho is None else f"steht bei {rho:+.4f}"
@@ -3059,6 +3085,41 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     antwort["begruendung"] = " · ".join(teile) + " · " + schluss + (
         "  [Schwellen ABGELESEN an sieben Fällen aus einer Szene (auf-20260821-27), "
         "nicht kalibriert.]")
+    return antwort
+
+
+def _paarurteil_nur_rho(antwort: dict, rho, rho_schwelle, zweites_bein, kante, anteil,
+                        anteil_schwelle, kante_schwelle, himmel_anteil) -> dict:
+    """Das Paarurteil nach dem Owner-Entscheid vom 29.09.2026: ρ urteilt, das zweite Bein
+    steht als Auskunft daneben (:data:`ZWEITES_BEIN_URTEILT`)."""
+    # Zuständig ist ρ überall: Die Himmelsfrage betraf nur das zweite Bein.
+    antwort["zustaendig"] = True
+    zweiter_wert = anteil if zweites_bein == "anteil" else kante
+    zweiter_name = ("Anteil der Grenze mit Kante" if zweites_bein == "anteil"
+                    else "Tiefenkante (Median)")
+    schwelle_zwei = anteil_schwelle if zweites_bein == "anteil" else kante_schwelle
+    auskunft = (f"{zweiter_name} {zweiter_wert:+.4f} (Schwelle wäre {schwelle_zwei:.2f})"
+                if zweiter_wert is not None else f"{zweiter_name} nicht gemessen")
+    if himmel_anteil is not None:
+        auskunft += f", Himmel hinter dem Umriss {himmel_anteil:.1%}"
+    auskunft += (" — nur Auskunft, urteilt nicht mit (Owner-Entscheid 29.09.2026: an "
+                 "erzeugten Bildern um die eigene Schwelle gestreut, auf-20260909-98)")
+    if rho is None:
+        antwort["begruendung"] = ("NICHT GEMESSEN: ρ über der Maske liegt nicht vor. "
+                                  + auskunft + ".")
+        return antwort
+    rho_ok = rho >= rho_schwelle
+    antwort["gemessen"] = True
+    antwort["bestanden"] = rho_ok
+    antwort["traeger"] = None if rho_ok else "rho"
+    antwort["begruendung"] = (
+        f"ρ (gerichtet) {rho:+.4f} gegen {rho_schwelle:.2f} — "
+        f"{'in Ordnung' if rho_ok else 'ZU NIEDRIG'} · {auskunft} · "
+        + ("ρ trägt." if rho_ok else
+           "Die Tiefen hinter dem Umriss stimmen nicht — falsche Kubatur, oder das "
+           "Bauwerk steht anderswo.")
+        + "  [Schwelle ABGELESEN an sieben Fällen aus einer Szene (auf-20260821-27), "
+          "nicht kalibriert.]")
     return antwort
 
 

@@ -440,7 +440,15 @@ def _tiefenkarte(tmp_path):
     ("qwen-image-2512", True, True),        # ueberschrieben
 ])
 def test_tiefe_invertieren_kommt_als_control_image_an(tmp_path, adapter, name, schalter,
-                                                      gedreht):
+                                                      gedreht, monkeypatch):
+    # qwen-image-2512 ist seit dem 29.09.2026 stillgelegt (Owner-Entscheid, Sitzung 72).
+    # Er steht hier weiter als einziger Eintrag mit UNGEMESSENER Polarität — geprüft wird
+    # der Zweig «nicht gemessen, nicht gedreht», darum für diese Probe wieder in Betrieb.
+    import dataclasses
+    from aiimaging import backbone as _bb
+    if _bb.BACKBONES[name].stillgelegt:
+        monkeypatch.setitem(_bb.BACKBONES, name,
+                            dataclasses.replace(_bb.BACKBONES[name], stillgelegt=None))
     tiefe = _tiefenkarte(tmp_path)
     auftrag = render.RenderAuftrag(depth_png=str(tiefe), prompt="a house", backbone=name,
                                    schritte=2, ausgabe_png=str(tmp_path / "b.png"))

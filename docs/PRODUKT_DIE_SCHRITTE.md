@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 29.09.2026 · Drei Aufräum-Entscheide, und die Post ist endlich angekommen
+
+* **KosmoOrbit hat unsere Antworten jetzt.** Sie lagen fünf Tage nur bei uns, weil der
+  Botengang fehlte. Jetzt stehen sie direkt in deren Eingangsordner.
+* **Ein Bildmodell weniger:** Das grosse Qwen-Modell mit eigener Formsteuerung wird nicht
+  mehr angeboten. Es hätte 48 GB gebraucht und war nicht sauber geklärt. Damit bleibt ein
+  einziges freies Modell mit Formsteuerung, das schnelle Vorgabemodell.
+* **Eine Warnung weniger, die grundlos kam:** Die Prüfung am Gebäudeumriss entscheidet nicht
+  mehr mit. An echten Bildern hat sie gewürfelt. Sie wird weiter angezeigt.
+* **Offen:** Jetzt hängt die Geometrieprüfung an einer einzigen Zahl, und deren Grenze ist
+  nicht geeicht. Der Heim-PC misst das.
+
 ### 24.09.2026 (abends) · Berichtigt: Die neue Prüfung trennt nicht — sie ist wieder draussen
 
 * **Am Heim-PC gemessen:** An echten Bildern stellt sie das schlechte Bild über alle guten,

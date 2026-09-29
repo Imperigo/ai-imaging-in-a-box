@@ -402,6 +402,14 @@ class Backbone:
     mindest_frei_mib: int | None = None
     mindest_frei_beleg: str | None = None
 
+    #: Ein Satz, WARUM dieser Eintrag stillgelegt ist — ``None`` heisst: in Betrieb.
+    #:
+    #: Ein stillgelegter Eintrag bleibt im Register, damit sein Befund und seine Lizenz
+    #: nachlesbar bleiben, aber :func:`waehle` bietet ihn nicht an, und
+    #: ``render.rendere`` lehnt einen Auftrag damit ab, bevor etwas geladen wird.
+    #: Eingeführt am 29.09.2026 für den ersten Fall (Owner-Entscheid, Sitzung 72).
+    stillgelegt: str | None = None
+
 
 def _vram_schaetzung(parameter_b: float) -> float:
     """Grobe VRAM-Schätzung in GB aus der Parameterzahl.
@@ -905,6 +913,13 @@ _eintrag(Backbone(
     controlnet_familie="qwen-image",
     controlnet_lizenz="Apache-2.0",
     controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
+    # STILLGELEGT AM 29.09.2026 — Owner-Entscheid auf Empfehlung (Sitzung 72, Posten C16).
+    stillgelegt=("Owner-Entscheid 29.09.2026: nicht geladen. Das Grundmodell (rund 48 GB) "
+                 "liegt nicht auf der HomeStation, dem ControlNet dort fehlt die "
+                 "config.json, und die vorhandene Datei ist nicht im Format des "
+                 "eingetragenen Modells — Herkunft und Lizenz ungeprüft (auf-20260922-139). "
+                 "Der Vorgabeweg z-image-turbo trägt; 48 GB für ein ungeprüftes Modell "
+                 "lohnen nicht."),
 ))
 
 
@@ -1165,6 +1180,9 @@ def waehle(*, kommerziell: bool = True, max_vram_gb: float | None = None,
 
     treffer = []
     for backbone in BACKBONES.values():
+        # Stillgelegt ist stillgelegt — auch für Forschung (29.09.2026, Sitzung 72).
+        if backbone.stillgelegt:
+            continue
         if kommerziell and not backbone.kommerziell_nutzbar:
             continue
         # Der zweite Standort des Grössenriegels, und der unumgehbare: `waehle` liest

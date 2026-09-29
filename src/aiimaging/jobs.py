@@ -750,6 +750,13 @@ def token_entwerten(token, verzeichnis, *, job_id=None) -> dict:
 #: **AUS**, aus demselben Grund wie seit dem 09.09.2026: Es gibt niemanden, der Token
 #: ausgibt (ui-Auftrag ``auf-20260909-99``). Eingeschaltet wiese sie über Nacht jede
 #: bestehende Freigabe ab.
+#:
+#: **Seit dem 29.09.2026 ist «aus» ein Entscheid und kein Warten mehr** (Owner, Sitzung 72,
+#: Posten A12): Die Antwort auf ``auf-20260909-99`` hat gezeigt, dass KosmoOrbit dieses Tor
+#: gar nicht benutzt — ihre Brücke vergibt je Auftrag ein eigenes Freigabe-Zeichen, und
+#: auf unserem eigenen Weg gibt ein Mensch per Knopf frei (``bruecke.FELD_FREIGABE_KNOTEN``).
+#: Einen Token-Ausgeber wird es darum nicht geben. Wer die Prüfung einschalten will, braucht
+#: zuerst einen neuen Owner-Entscheid und jemanden, der Token ausgibt.
 FREIGABE_MIT_BUCH = False
 
 #: Das Feld, in dem ein freigegebener Auftrag den Abdruck seines Tokens trägt

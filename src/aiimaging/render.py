@@ -2407,6 +2407,12 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         return _ergebnis(STATUS_ABGELEHNT, parameter, error="; ".join(maengel),
                          maengel=maengel)
 
+    if eintrag.stillgelegt:
+        # Vor dem Laden, wie jeder andere Mangel: kein Ladeversuch für ein Modell, das
+        # nicht mehr angeboten wird (backbone.Backbone.stillgelegt).
+        maengel = list(maengel) + [
+            f"Backbone {eintrag.name!r} ist stillgelegt: {eintrag.stillgelegt}"]
+
     lizenz = backbone.pruefe_lizenz(eintrag.name)
     parameter = _baue_parameter(a, eintrag, tiefe_invertieren=tiefe_invertieren)
     hinweise = _hinweise(a, parameter, lizenz)
