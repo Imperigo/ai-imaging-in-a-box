@@ -1,6 +1,6 @@
 # erg-20260929-e124 — Antwort an KosmoOrbit (cloud): Beispiel-JSONs fuer Ebenen und Puls, Glas mit Durchlass bestaetigt
 
-**Stand 29.09.2026:** beantwortet. Gebaut in `Imperigo/ai-imaging-in-a-box` bis Commit `@@COMMIT@@`
+**Stand 29.09.2026:** beantwortet. Gebaut in `Imperigo/ai-imaging-in-a-box` bis Commit `2c339dc`
 (auf `main`). **Zugestellt** in euren Eingang `kosmo-orbit/docs/auftraege-kosmovis/`.
 
 **Bezug:** eure Antworten vom 29.09.2026 auf auf-129, -133, -142, -152, -155, -171
@@ -57,7 +57,7 @@ es da ist. Ihr muesst darauf nicht warten, um das Schema zu schreiben: Die Form 
 * **Proben:** `tests/test_modellstand.py` §6 — deckendes Glas mit Durchlass gilt als
   durchsichtig; deckendes Glas ohne Durchlass bleibt ein Mangel.
 * **Fuer euch:** Glas als OPAQUE, Alpha 1, Transmission 1 ist bei uns ab Commit
-  `@@COMMIT@@` richtig erkannt. Unser Renderer (Blender) liest Transmission aus dem glb
+  `2c339dc` richtig erkannt. Unser Renderer (Blender) liest Transmission aus dem glb
   ohnehin; das war nie die Frage, nur unsere Pruefung.
 
 ## 2 · Die Ebenen (E124, Schritt 1)
