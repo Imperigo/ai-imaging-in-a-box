@@ -7479,6 +7479,12 @@ Bekannt und ausdrücklich nicht erledigt:
         Folgen: Grenze je Modell (4102 / 7992 MiB), Stufe 2 mit ControlNet gesperrt,
         Puls-Frist 120 s (Protokoll 71 §23).
   - [ ] **local:** `auf-20260924-173` — Zwillinge, Grenze je Modell, Stufe 3 statt 2.
+  - [x] **29.09.:** Antwort B161 und sechs Cloud-Aufträge direkt in den KosmoOrbit-Eingang
+        zugestellt (Owner «b», `eef69ede0` drüben); neun Einbau-Posten nachgeführt
+        (Protokoll 72).
+  - [ ] **local:** `auf-20260929-174` — Herkunft der «17 Rezepte», Mappenpfad am Gerät.
+  - [ ] **Owner:** C16 (Qwen-Grundmodell laden?), C9 (zweites Bein abschalten?), A12
+        (Token-Prüfung einschalten, wer gibt aus?).
   - [ ] **cloud:** `auf-20260924-171` — komposition nicht senden, Puls lesen, Glas OPAQUE,
         Pässe zu- oder absagen.
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut

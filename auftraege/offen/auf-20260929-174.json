@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260929-174",
+  "art": "frage",
+  "beschreibung": "Zwei Nachproben aus dem Einbau-Abgleich vom 29.09.: woher die «17 Rezepte»/render_preflight vom 07.09. stammen (A6), und der Mappenpfad ausserhalb des Heimatordners am Geraet (C17, Fix f18b880).",
+  "anweisung": "=== ZWEI KLEINE NACHPROBEN AUS DEM ABGLEICH VOM 29.09. — NACH 173 ===\n\nBeim Nachfuehren unseres Einbau-Stands sind zwei Punkte aufgefallen, die nur bei euch zu\nklaeren sind. Kein Render noetig ausser in Teil B.\n\nTEIL A — WOHER STAMMEN DIE «17 REZEPTE»? (Posten A6)\n  Am 07.09. (auf-20260826-48, R6) habt ihr in einer KosmoOrbit-Kopie auf der HomeStation\n  «17 Rezepte in recipes.ts, keines fuer aiimaging» und render_preflight gezaehlt. Im\n  heutigen KosmoOrbit-Repo (Imperigo/Architektur-Cosmos, Zweig\n  claude/kosmo-orbit-v1-build-pzxkbj) finden wir weder recipes.ts mit 17 Rezepten noch\n  render_preflight. Bitte nur nachsehen und melden:\n    - In welchem Klon lag das (Pfad OHNE Benutzernamen, also relativ zu eurem Arbeitsordner),\n      welcher Zweig, welcher Commit (git log -1)?\n    - Gibt es diese Datei dort heute noch? Wenn ja: Anzahl Rezepte heute.\n  Nichts aendern, nichts committen in diesem Klon.\n\nTEIL B — MAPPENPFAD AUSSERHALB DES HEIMATORDNERS (Posten C17, Fix f18b880)\n  Seit dem 23.09. steht der Modellpfad einer Mappe ausserhalb des Heimatordners heimrelativ\n  («~/…») in projekt.json. Einmal pruefen, mit dem synthetischen Testbau:\n    1. Mappe AUSSERHALB des Heimatordners anlegen (z. B. unter eurem Datenlaufwerk),\n       Modell in einem anderen Ordner:\n         arbeitsgang.lege_an(<mappe>, <testbau.ifc>, name='Pfadprobe',\n                             einstellungen={'prompt': 'a small house', 'kamera': 's'})\n    2. projekt.json ansehen: Wie steht der Modellpfad dort (heimrelativ, relativ, absolut)?\n    3. arbeitsgang.rechne(<mappe>) — laeuft es durch, findet es das Modell?\n\nNICHT TUN: keine Pfade mit Benutzernamen in die Rueckgabe; nichts committen ausser eurer\nErgebnisdatei; keine Bilder ins Repo.\n",
+  "erstellt": "2026-09-29T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Teil A nur Lesen; Teil B ein kurzer Lauf mit dem Vorgabemodell.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur der synthetische Testbau (Regel 3).",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des ai-imaging-Klons.",
+    "A: Klon (relativ), Zweig, Commit, ob recipes.ts/render_preflight dort heute existiert, Anzahl Rezepte.",
+    "B: Form des Modellpfads in projekt.json (heimrelativ/relativ/absolut, ohne Benutzernamen), Lauf durch ja/nein, bei Nein der Satz."
+  ],
+  "rang": 2
+}
