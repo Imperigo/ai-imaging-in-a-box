@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-182",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare: (A) Knoten «Plan einpassen» einmal mit dem echten Reader-PDF in Blender fahren; (B) auf Owner-Go den Altordner libs.darwin-bak-2026-06-10 nach Pruefung entfernen.",
+  "anweisung": "=== ZWEI DINGE AUF OWNER-GO VOM 30.09.2026: (A) «PLAN EINPASSEN» EINMAL ECHT IN BLENDER, (B) ALTORDNER libs.darwin-bak-2026-06-10 ENTFERNEN\n\nDer Owner hat am 30.09.2026 auf beide Fragen mit «Ja» geantwortet. Grundlage: eure Antwort auf auf-20260930-179 (gruen) mit den zwei offenen Punkten «ein echter Einpass-Lauf mit PDF» und «libs.darwin-bak-2026-06-10 nicht angefasst».\n\n--- TEIL A: PLAN EINPASSEN MIT EINEM ECHTEN PDF ---\n\n1. KosmoPrepare-Klon: `git pull --ff-only`, `git log -1` muss `16d3a16` oder juenger zeigen (sonst STOPP und melden).\n2. Das PDF ist der Semesterreader HS26 des Owners (Doppelseiten, «Online_Spreads»). Er liegt NICHT in einem Repo und darf in keines. Sucht ihn an dieser Maschine, z.B. `find ~ /mnt -iname '*Semesterreader*HS26*.pdf' 2>/dev/null`. Findet ihr ihn nicht: STOPP, Teil A mit «PDF nicht auf der Maschine» zurueckgeben und direkt mit Teil B weitermachen. Den Pfad NICHT zurueckgeben (REGEL 3), nur «gefunden: ja/nein».\n3. Blender 5.1.2 wie in 179. Knoten «Plan einpassen (PDF → LV95)» anlegen und genau so fuellen:\n   - «PDF»: der Reader aus Schritt 2\n   - «Seite (0-basiert)»: 6  (die Doppelseite mit der Ballenberg-Karte, Reader-Seite 11)\n   - Knopf «Stile lesen». Erwartet: in der Auswahl u.a. `malart=F fuell=cmyk(0,0,0,0.376)  (116)` und `malart=F fuell=cmyk(0,0,0,0.224)  (1)`.\n   - «Balken m»: 500, «Balken pt»: 216.85\n   - «Gebäude-Stil»: `malart=F fuell=cmyk(0,0,0,0.376)`\n   - «Anker»: Stil; «Anker-Stil»: `malart=F fuell=cmyk(0,0,0,0.224)` (der Weiher — genau eine Flaeche)\n   - «Anker E»: 2649076.0, «Anker N»: 1177814.3  (Schwerpunkt des Weihers in der amtlichen Vermessung)\n   - «GeoJSON-Ordner»: ein leerer Ordner unter /tmp\n   - Knopf «Einpassen».\n4. Zurueckgeben:\n   - Status und Zeile im Knoten. Erwartet (hier in der Wolke mit derselben Kernfunktion gemessen): «eingepasst», 111/117 Gebaeude gepaart, Median 0.76 m, P90 2.57 m, Massstab 1.0119, Drehung 0.47°, 7 Stilgruppen.\n   - Laufzeit, und ob Blender dabei bedienbar blieb (ja/nein).\n   - Anzahl .geojson-Dateien im Ausgabeordner (erwartet 7).\n   - Kam irgendwo «No module named»? ja/nein (erwartet nein — das ist der Beleg, den Punkt 5 in 179 nicht liefern konnte).\n   - Weicht eine Zahl ab: die Zeile woertlich.\n\n--- TEIL B: ALTORDNER libs.darwin-bak-2026-06-10 ENTFERNEN ---\n\nEr liegt im KosmoPrepare-Klon an eurer Maschine (nicht im Repo) und loest bei `./run_tests.sh` den Verbotstest aus, wie ihr in 177 gemeldet habt. Der Owner hat das Entfernen freigegeben.\n\n1. VORHER nachsehen und zurueckgeben:\n   a) Groesse (`du -sh libs.darwin-bak-2026-06-10`) und Zahl der Eintraege auf oberster Ebene.\n   b) `git status --porcelain libs.darwin-bak-2026-06-10` — ist er unversioniert (erwartet: ja, «??» oder ignoriert)? Ist er VERSIONIERT: STOPP, nichts loeschen, melden.\n   c) Zeigt irgendetwas auf ihn? `grep -rn \"darwin-bak\" --include=*.py --include=*.sh --include=*.toml .` im Klon, und `find . -maxdepth 2 -type l -lname '*darwin-bak*'`. Ein Treffer ausserhalb von Protokoll-/Doku-Dateien: STOPP, nichts loeschen, melden.\n   d) `./run_tests.sh` einmal und die Schlusszeile zurueckgeben (ihr kennt: Ran 1537, failures=4, errors=43 — die meisten wegen cp313 gegen Python 3.14).\n2. Nur wenn a)–c) sauber sind: `rm -rf libs.darwin-bak-2026-06-10` (NUR dieser Ordner; `libs/` selbst NICHT anfassen).\n3. NACHHER: `./run_tests.sh` noch einmal, Schlusszeile zurueckgeben, und sagen, ob der Verbotstest-Befund zum Altordner weg ist. Dass danach noch Fehler wegen cp313 gegen 3.14 bleiben, ist erwartet und nicht Teil dieses Auftrags.\n\nNICHT TUN: nichts committen, keinen Code aendern, `libs/` nicht anfassen, keinen anderen Ordner loeschen, den Reader nirgends ablegen oder hochladen, keine Plaene/Bilder zurueckgeben (nur Zahlen, Meldungen, ja/nein). Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+  "erstellt": "2026-09-30T08:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU-Last; Netzabruf geodienste.ch fuer die amtliche Vermessung, wenige Sekunden.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Loeschen NUR libs.darwin-bak-2026-06-10 und nur nach den Pruefungen B1 a–c.",
+      "Nichts committen, keinen Code aendern; Reader nirgends ablegen.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des KosmoPrepare-Klons.",
+    "Teil A: gefunden ja/nein, Status, Zahlen, Laufzeit, bedienbar, Zahl GeoJSON, 'No module named' ja/nein.",
+    "Teil B: Befunde a–d, geloescht ja/nein, run_tests-Schlusszeile vorher und nachher."
+  ],
+  "rang": 4
+}
