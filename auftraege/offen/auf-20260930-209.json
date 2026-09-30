@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-209",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare: der schmal geschnittene Knoten «IFC-Übergabe (Raumprogramm)» (Owner-Entscheid 9b) in Blender — schreibt er die Uebergabe, warnt er ohne Hoehe, findet KosmoPublish die Datei, und finden alte .blend den Knoten?",
+  "anweisung": "=== KOSMOPREPARE: DER UMGEBAUTE KNOTEN «IFC-ÜBERGABE (RAUMPROGRAMM)» IN BLENDER ===\n\nWORUM ES GEHT\n  Owner-Entscheid Nr. 9b (30.09.2026): der Knoten «ArchiCAD-Native-Export» ist schmal geschnitten\n  (KosmoPrepare 4a7645a). Er heisst jetzt «IFC-Übergabe (Raumprogramm)» und schreibt nur noch die Uebergabe:\n  georeferenziert Raumprogramm_Volumen.ifc, Volumen_Design.ifc, Raumprogramm_Beschriftung.ifc (Unterordner\n  02_ArchiCAD_Export/), lokal Raumprogramm_Volumen.ifc, Raumprogramm_Zonen.ifc, Raumprogramm.csv.\n  Kontext-Decken, Terrain, Kataster, DWG, ArchiCAD-Ebenen und Anleitung.md sind weg. Die KENNUNGEN sind\n  gleich geblieben (Knoten ArchiCADNativeExportNodeType, Operatoren wettbewerb.archicad_native_export und\n  wettbewerb.archicad_single_ifc), damit gespeicherte Dateien den Knoten weiter finden.\n  Neu: die Hoehe der Georeferenz wird aus der Szene gelesen (wettbewerb_z_origin_local, dann\n  wettbewerb_parcel_centroid_z, dann wettbewerb_lv95_elevation); bisher stand 414.0 als Vorgabe im Knoten.\n  Fehlt jede Hoehe, steht 0 in der Datei UND eine Warnung auf der Konsole. Hier laeuft kein Blender.\n\nWAS ZU TUN IST\n  0. KosmoPrepare-Klon: git pull --ff-only, Stand 4a7645a oder juenger. KosmoPublish-Klon: 512667a oder juenger.\n\n  A. ERFUNDENE SZENE (nichts Echtes), Blender im Hintergrund, Add-on aktiv. Python in Blender:\n       - Collection «AB_Raumprogramm_3D» anlegen, darin drei Wuerfel als Mesh:\n           RP_Marktgerecht_3.5er_01  (10 x 8 x 3 m, Boden z=0)\n           RP_Preisguenstig_2.5er_01 (8 x 6 x 3 m, Boden z=3)\n           RP_LEGEND_Marktgerecht    (1 x 1 x 1 m)       <- darf NICHT ins IFC\n       - Szenenwerte wettbewerb_lv95_easting = 2600000, wettbewerb_lv95_northing = 1200000 (erfundener Punkt),\n         KEINE Hoehe setzen.\n       - Einen Baum vom Typ WettbewerbsTreeType anlegen, darin den Knoten ArchiCADNativeExportNodeType;\n         output_dir = ein Wegwerfordner <tmp>/proj/03_Output.\n     1. Zeigt der Knoten als Titel «IFC-Übergabe (Raumprogramm)»? Welche Einstellungen hat er (Namen)?\n     2. bpy.ops.wettbewerb.archicad_native_export(node_name=<node.get_uid() bzw. node.name>):\n        Rueckgabe, Meldungszeile woertlich, Konsolenzeilen mit «[IFC-Übergabe]» woertlich. Erwartet: eine\n        Warnung «LV95-Hoehe unbekannt — OrthogonalHeight 0 m ü. M. geschrieben». Welche Dateien liegen in\n        02_ArchiCAD_Export/? Liegt dort NICHTS von ArchiCAD_Kontext.ifc / Anleitung.md?\n     3. Dasselbe nochmals mit wettbewerb_lv95_elevation = 501.5: Warnung weg? Mit .venv-ifc oder ifcopenshell\n        ausserhalb des Produkts: OrthogonalHeight der IfcMapConversion in Raumprogramm_Volumen.ifc? Erwartet 501.5.\n        Zahl der IfcSpace in dieser Datei? Erwartet 2 (die Legende nicht; Konsole nennt sie mit Grund).\n     4. bpy.ops.wettbewerb.archicad_single_ifc(node_name=...): Meldung woertlich. Welche Dateien liegen in\n        03_Output/? Erwartet Raumprogramm_Volumen.ifc und Raumprogramm_Zonen.ifc, KEIN Gesamtmodell_Kontext.ifc.\n        (Raumprogramm.csv nur, wenn die Szene kp_stack_items_json traegt — hier nicht; das ist erwartet.)\n  B. GESPEICHERTE DATEI MIT DEM ALTEN KNOTEN: falls an der Maschine eine .blend liegt, die den Knoten\n     «ArchiCAD-Native-Export» enthaelt — eine WEGWERFKOPIE oeffnen. Erscheint der Knoten (neuer Titel) oder als\n     unbekannt/rot? ja/nein + ein Satz. Keine solche Datei: «keine» schreiben.\n  C. KosmoPublish findet die Datei:\n       python -c \"from nodes.kosmoprepare_autodetect import detect_kp_outputs, detect_summary_text; \\\n         from pathlib import Path; print(detect_summary_text(detect_kp_outputs(extra_search_roots=[Path('<tmp>')])))\"\n     (im KosmoPublish-Klon, sein .venv). Ausgabe woertlich (Pfade kuerzen auf <tmp>/…).\n\nRUECKGABE\n  - Staende beider Klone, Blender-Fassung.\n  - A1–A4, B, C wie oben, Meldungen woertlich.\n  - Traceback, «No module named» oder «unbekannter Knoten» irgendwo? ja/nein.\n\nNICHT TUN: keine echten Daten verwenden; keine Dateien zurueckgeben oder committen ausser der Antwortdatei;\nnichts installieren; keinen Code aendern. Keine absoluten Pfade mit Benutzernamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T23:55:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "drei Wuerfel in Blender-Python, s. Anweisung A"
+  },
+  "params": {
+    "kosmoprepare_stand_min": "4a7645a",
+    "kosmopublish_stand_min": "512667a",
+    "daten_bleiben_lokal": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell, kein Render — nur --background.",
+    "hinweise": [
+      "Erfundene Szene; einzig B beruehrt eine Wegwerfkopie einer vorhandenen .blend.",
+      "Nichts installieren."
+    ]
+  },
+  "rueckgabe": [
+    "Staende, Blender-Fassung.",
+    "A1-A4 Meldungen und Dateilisten woertlich.",
+    "B ja/nein + Satz.",
+    "C Ausgabe woertlich.",
+    "Fehler ja/nein."
+  ],
+  "rang": 6
+}
