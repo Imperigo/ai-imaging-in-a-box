@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-187",
+ "status": "ok",
+ "beendet": "2026-09-30T09:38:44Z",
+ "stand": "Desktop-App (Release-Bau, npx tauri build --no-bundle) aus Architektur-Cosmos 3e8387ab4 (ROADMAP 1633); enthaelt ebee68c1f (ROADMAP 1630): git merge-base --is-ancestor ebee68c1f 3e8387ab4 = 0.",
+ "geprueft": "Xvfb 1600x1000, Insel-Ansicht; Wegwerf-Projekt «Wegwerf 187» angelegt, Paket «Wettbewerbs-Vorbereitung» gewaehlt, Kosmo-Seitenfenster rechts offen. Fenstergroessen 1440x900 (Startgroesse der App), 1280x800 und 1600x1000 (per xdotool windowsize). Umschalter Tafel -> Knotenbaum -> Liste -> Tafel je Groesse, Kopfzeile je Stellung abgezogen und pixelweise verglichen. Abzuege nur auf der HomeStation (enthalten Bibliotheksnamen, darum nicht ins Repo).",
+ "kurzantwort": "Punkt 3 ja: die Kopfzeile ist frei vom Buch-Knopf in allen drei Groessen, kein Text mit Auslassungspunkten. Punkt 4 ja: der Umschalter bleibt je Groesse an seiner Stelle, nichts ragt unter die Sync-Gruppe.",
+ "befunde": {
+  "punkt_3_kopfzeile": {
+   "ja_nein": "ja",
+   "1440x900": "«nach Art» x≈350–440, «Neu ordnen» x≈460–525, Buch-Knopf x≈540–630 (Bildschirmkoordinaten, Fenster ab x=80) — kein Ueberlapp; der Dokumentzaehler neben INFOTAFEL ist bei offenem Seitenfenster ausgeblendet (kein abgeschnittener Text).",
+   "1280x800": "«Neu ordnen» wird zum Kreis-Zeichen (x≈357), Buch-Knopf x≈382–468 — frei; «Wettbewerbs-Vorbereitung» schrumpft zum Pokal-Zeichen, ohne Auslassungspunkte.",
+   "1600x1000": "frei; im Streifen erscheint zusaetzlich «Paket aendern»."
+  },
+  "punkt_4_umschalter": {
+   "ja_nein": "ja",
+   "messung": "1440x900: Differenz der Kopfzeile (obere 45 px) zwischen Tafel/Knotenbaum/Liste nur im Bereich x 938–944 (Hover-Zustand des Wiederholen-Pfeils) bzw. bei Liste 540–944 ohne sichtbare Verschiebung; Augenvergleich der drei Abzuege untereinander: Umschalter, «nach Art», Buch-Knopf und Sync-Gruppe stehen still. 1280x800: dasselbe mit vier Stellungen (zurueck auf Tafel).",
+   "sync_gruppe": "Umschalter endet bei x≈675 (1440) bzw. x≈330 (1280), Sync-Gruppe beginnt bei x≈815 bzw. x≈575 — nichts darunter."
+  },
+  "nebenbefunde": [
+   "Die Lage des Umschalters haengt von der Fensterbreite ab (1440: x≈395–580, 1600: x≈490–675) — innerhalb einer Breite bleibt er stehen; kein Fehler, nur zur Einordnung.",
+   "Das neue Wegwerf-Projekt zeigt in der Infotafel dieselben 41 Dokumente wie «Projekt 1» (Bibliothek). Ob die Infotafel projektuebergreifend sein soll, ist nicht Teil dieses Auftrags — nur beobachtet.",
+   "Loeschen des Wegwerf-Projekts in «Alle Projekte» fragt nach («Projekt … loeschen? Der Autosave-Stand wird endgueltig aus dem Tresor entfernt.») — E125 wirkt; danach «Alle Projekte (2)»."
+  ],
+  "aufraeumen": "Wegwerf-Projekt geloescht (nur dieses), «Projekt 1» wieder aktiv und unveraendert, App und Xvfb per gemerkter PID beendet."
+ },
+ "umgebung": {
+  "gpu": "nicht benutzt (parallel lief auf-188 auf der Karte)",
+  "fenster": [
+   "1440x900",
+   "1280x800",
+   "1600x1000"
+  ]
+ },
+ "fehler": null
+}
