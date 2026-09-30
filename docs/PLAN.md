@@ -7572,9 +7572,13 @@ Bekannt und ausdrücklich nicht erledigt:
           — «1»: Ursache angehen (Protokoll 73 §21).
   - [ ] **Hochbau öfter stehend (Owner «1», 30.09.):**
     - [x] **Kern:** Registereintrag `z-image-turbo-union21` (Union-2.1, nicht Vorgabe).
-    - [ ] **local:** `auf-20260930-199` — einrichten, Speicherspitze messen, ein Produktlauf.
-    - [ ] **Kern, nach 199:** gemessene Spitze eintragen; Vergleich 1.0 gegen 2.1 als Auftrag
-          (Regel steht: Hochbau +20 Punkte «steht», Testbau höchstens −10, Zeit höchstens ×2).
+    - [x] **local:** `auf-20260930-199` — einrichten, Speicherspitze messen, ein Produktlauf.
+          — Spitze 26,9/29,1 GiB (Tensoren), 30,6/31,9 GiB (Karte); Produktweg fand die Basis
+          nicht (unser Fehler); erster Blick: 2.1 Turm auf der Silhouette, 1.0 «Gasse».
+    - [x] **Kern, nach 199:** `gewichte_ordner` + `render.wurzel_fuer`; Spitze eingetragen
+          (31,1 GiB gemessen → Schichtauslagerung auf 32 GB).
+    - [ ] **local:** `auf-20260930-201` — Vergleich 1.0 gegen 2.1, 96 Bilder, Auge blind
+          (Regel: Hochbau +20 Punkte «steht», Testbau höchstens −10).
     - [ ] **Danach:** 2.1 Vorgabe? — nach Regel; Ansage an local und cloud (engine_used ändert
           sich).
     - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst

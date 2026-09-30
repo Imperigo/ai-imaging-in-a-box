@@ -1,0 +1,69 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20260930-201",
+ "art": "frage",
+ "beschreibung": "Hochbau oefter stehend: ControlNet 1.0 gegen Union-2.1 an 96 Bildern (Hochbau/Testbau, s/sSE/sSW, Startwerte 26–33), Auge blind. Regel vorab: Hochbau +20 Punkte «steht», Testbau hoechstens −10. Dazu Ansage: gewichte_ordner behoben, Speicher eingetragen (2.1 lagert aus).",
+ "anweisung": "=== HOCHBAU OEFTER STEHEND: 1.0 GEGEN UNION-2.1, BLIND BEURTEILT ===\n\nDanke fuer 199 — und fuer den Fehler im Registerweg. Er ist behoben (siehe A1).\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 BEHOBEN: Neues Registerfeld «gewichte_ordner». z-image-turbo-union21 findet seine Basis\n     jetzt im Ordner «z-image-turbo» (render.wurzel_fuer). Ohne modell_wurzel im Auftrag muss\n     der Lauf jetzt durchgehen — bitte beim ersten Lauf bestaetigen. Alle uebrigen Eintraege:\n     unveraendert (Ordner = Name).\n  A2 SPEICHER EINGETRAGEN: vram_gb 31.1 (eure groesste Spitze, nvidia-smi bei 1024 px),\n     gemessen. Folge, gewollt: Auf eurer Karte waehlt der Ladeweg die SCHICHTAUSLAGERUNG (wie in\n     C3, ~17 s je Bild). Voll geladen blieben bei 1024 px nur ~260 MiB — zu knapp fuer einen\n     Dienst, neben dem ein Sprachmodell liegen kann.\n  A3 Vorgabe unveraendert z-image-turbo mit 1.0. Kein anderer Weg aendert sich.\n\nTEIL B — DIE REIHE\n  Ueber den Produktweg (arbeitsgang wie 196: Prompt «a residential building, architectural\n  photograph», 8 Schritte, 512 px, Rahmung nach dem Bauwerk, controlnet_staerke 1.0).\n  Hochbau (--hochbau --gelaende) und Testbau (--gelaende); Blick s, sSE, sSW; Startwerte\n  26–33 (NEU). Je Fall und Startwert ZWEI Bilder:\n    - backbone «z-image-turbo»          (ControlNet 1.0)\n    - backbone «z-image-turbo-union21»  (ControlNet 2.1)\n  Das sind 2 x 3 x 8 x 2 = 96 Bilder.\n  1. AUGE ZUERST, BLIND: alle 96 gemischt unter Decknamen (Praefix 201-), OHNE zu wissen,\n     welches ControlNet. «steht» / «steht nicht» / «unklar» plus Halbsatz. Festschreiben,\n     ERST DANN Schluessel und Zahlen.\n  2. Je Bild: Zeit (Wand-Uhr je Bild auf dem Produktweg, Laden getrennt ausweisen, falls\n     moeglich), gewaehlter Ladeweg, umriss_abhebung (Auswahlbericht «formpruefung» oder\n     formkandidaten_messen.py), rho_maske_gerichtet.\n\nDIE ENTSCHEIDUNGSREGEL — FESTGELEGT VOR DIESER MESSUNG (Protokoll 73 §21, hier praezisiert)\n  Anteil «steht» je Koerper und ControlNet, «unklar» zaehlt NICHT als «steht».\n    (a) Hochbau: Anteil «steht» mit 2.1 minus mit 1.0 >= +20 Prozentpunkte (24 Bilder je Arm).\n    (b) Testbau: Anteil «steht» mit 2.1 minus mit 1.0 >= −10 Prozentpunkte.\n    (c) Rechenzeit des MODELLS: bei gleicher Ladung hoechstens doppelt so lang. Gemessen in\n        199 bei voller Ladung: 1.7 s gegen 1.5 s (512 px) — erfuellt. Die Zeit auf dem\n        PRODUKTWEG (2.1 lagert aus) berichtet ihr je Bild; sie entscheidet nicht die Regel,\n        sondern geht als eigene Frage an den Owner, falls 2.1 gewinnt.\n  Folge: (a) und (b) erfuellt → 2.1 wird Vorgabe (wir stellen um und sagen es vorher an).\n  Sonst bleibt 1.0 Vorgabe.\n  Dazu bitte berichten (zaehlt nicht): Anteil «steht» nur Blick s (frontal) je Arm; wie oft\n  die «Gasse»/«Oeffnung in einer Wand» im Halbsatz vorkommt je Arm; Anteil «steht nicht».\n\nZURUECK (auftraege/ergebnisse/auf-20260930-201.json)\n  - git log -1; A1 bestaetigt (Lauf ohne modell_wurzel ging durch?).\n  - bilder: je Bild {serie, koerper, blick, startwert, backbone, controlnet_staerke, rahmung,\n    augenetikett, halbsatz, blind_id, sekunden, ladeweg, umriss_abhebung,\n    rho_maske_gerichtet, bauwerk_anteil}\n  - Auszaehlung (a), (b) mit den Zaehlungen dahinter; die Berichtszahlen; ein Satz: wird 2.1\n    Vorgabe — ja/nein.\n  - Tabelle von python3 tools/formpruefung_auswertung.py --rahmung bauwerk\n    auftraege/ergebnisse/auf-20260930-201.json (nur zur Info).\n\nNICHT TUN: Register oder Vorgabe nicht aendern; keine Schwelle setzen; keine Bilder ins Repo;\nkeine absoluten Pfade; nichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-09-30T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+ },
+ "params": {
+  "koerper": [
+   "hochbau",
+   "testbau"
+  ],
+  "blick": [
+   "s",
+   "sSE",
+   "sSW"
+  ],
+  "seeds": [
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33
+  ],
+  "backbone": [
+   "z-image-turbo",
+   "z-image-turbo-union21"
+  ],
+  "controlnet_staerke": 1.0,
+  "aufloesung": 512,
+  "rahmung": "bauwerk",
+  "regel": {
+   "hochbau_steht_plus_min": 0.2,
+   "testbau_steht_minus_max": 0.1,
+   "unklar_zaehlt_als": "nicht steht",
+   "zeit": "Modellzeit bei gleicher Ladung <= 2x (199: 1.7 gegen 1.5 s, erfuellt)"
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: 96 Bilder, davon 48 mit Schichtauslagerung (~17 s je Bild).",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+   "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+   "Augenetikett VOR den Zahlen vergeben, blind, ohne das ControlNet zu kennen."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; A1 bestaetigt: Lauf ohne modell_wurzel ging durch?",
+  "Je Bild eine Zeile im Format oben, mit Augenetikett, Halbsatz, Zeit und Ladeweg.",
+  "Auszaehlung (a) und (b) mit den Zaehlungen; Berichtszahlen (frontal, «Gasse», steht nicht).",
+  "Ein Satz: wird 2.1 Vorgabe — ja/nein.",
+  "Tabelle von tools/formpruefung_auswertung.py (nur Info)."
+ ],
+ "rang": 4
+}

@@ -280,6 +280,16 @@ class Backbone:
     #: Eintrag mit einem Satz ab, statt eine fremde Klasse zu nehmen.
     controlnet_familie: str | None = None
 
+    #: Der Ordner der **Basisgewichte** unter der Modellwurzel, wenn er anders heisst als der
+    #: Eintrag. ``None`` heisst: wie der Name (so bei allen Einträgen bis zum 30.09.2026).
+    #:
+    #: **BEFUND 30.09.2026 (`auf-20260930-199`, HomeStation):** ``z-image-turbo-union21`` ist
+    #: dieselbe Basis wie ``z-image-turbo`` mit einem anderen ControlNet. Der Ladeweg leitete
+    #: den Ordner aus dem Namen ab und suchte «z-image-turbo-union21» — den gibt es nicht, und
+    #: der Lauf wurde abgewiesen, auch auf dem Abholer-Weg. Eine Kopie der Basis wäre 30 GB
+    #: für nichts; ein Feld sagt, wo sie liegt.
+    gewichte_ordner: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -918,18 +928,30 @@ _eintrag(Backbone(
 # Modellwurzel — der Ladeweg nimmt die erste ``.safetensors`` im Ordner, zwei Dateien in
 # einem Ordner wären eine stille Wahl.
 #
-# Speicher GESCHÄTZT, nicht gemessen: 25,1 GiB (gemessen mit 1.0, darin 4,24 GiB ControlNet)
-# plus 2,0 GiB, um die die 2.1-Datei grösser ist. Als Schätzung wählt der Ladeweg damit die
-# langsame Schichtauslagerung; die Spitze misst auf-199, dann wird sie hier eingetragen.
+# SPEICHER GEMESSEN (`auf-20260930-199`, HomeStation, volle Ladung, Hochbau-Tiefe, 8 Schritte,
+# je drei Läufe, alle gleich):
+#                     max_memory_allocated   Spitze laut nvidia-smi   Zeit je Bild
+#   2.1,  512 px          26 930 MiB              30 581 MiB             1,7 s
+#   2.1, 1024 px          29 095 MiB              31 878 MiB             5,9 s
+#   1.0,  512 px          23 391 MiB                  —                  1,5 s
+#   1.0, 1024 px          25 352 MiB                  —                  4,8 s
+# Eingetragen ist die GRÖSSTE Spitze (31 878 MiB = 31,1 GiB), wie bei z-image-turbo die
+# Spitze im Betrieb und nicht der Tensorbedarf — von den beiden Irrtümern ist der zu grosse
+# der billigere. **Folge, und sie ist gewollt:** Auf der 32-GB-Karte der HomeStation passt das
+# nicht mit Zuschlag; der Ladeweg wählt die Schichtauslagerung. Gemessen dort: 17 s je Bild
+# statt 1,7 s (C3). Voll geladen blieben bei 1024 px nur ~260 MiB frei — für einen Dienst,
+# neben dem ein Sprachmodell auf derselben Karte liegen kann, zu knapp.
 _eintrag(replace(
     BACKBONES["z-image-turbo"],
     name="z-image-turbo-union21",
+    # Die Basis liegt dort, wo sie für z-image-turbo liegt (Befund auf-199).
+    gewichte_ordner="z-image-turbo",
     controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1",
     controlnet_ordner="z-image-controlnet-union-2.1",
     controlnet_lizenz="Apache-2.0",
     controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
-    vram_gb=27.1,
-    vram_gemessen=False,
+    vram_gb=31.1,
+    vram_gemessen=True,
     mindest_frei_mib=None,
     mindest_frei_beleg=None,
 ))

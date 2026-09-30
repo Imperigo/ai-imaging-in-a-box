@@ -447,7 +447,7 @@ def baue_kommando(a: LoraAuftrag, *, modell_wurzel=None) -> list[str]:
     from aiimaging import render
 
     wurzel = Path(modell_wurzel) if modell_wurzel is not None \
-        else render.standard_modell_wurzel(a.basis)
+        else render.wurzel_fuer(a.basis)
     f = trainer.flaggen
     return [
         finde_trainer_python(), str(finde_trainer_wurzel(trainer) / trainer.skript),

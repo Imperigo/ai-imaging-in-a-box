@@ -470,6 +470,20 @@ def standard_modell_wurzel(backbone_name: str) -> Path:
     return modellwurzel()[0] / backbone_name
 
 
+def wurzel_fuer(name: str) -> Path:
+    """Die Standard-Modellwurzel eines **Registereintrags** — samt ``gewichte_ordner``.
+
+    Anlass (`auf-20260930-199`): ``z-image-turbo-union21`` teilt die Basis mit
+    ``z-image-turbo``; aus dem Namen allein fand der Ladeweg sie nicht. Ein Name, den das
+    Register nicht kennt, bleibt sein eigener Ordner (so bisher).
+    """
+    try:
+        eintrag = backbone.hole(name)
+    except backbone.BackboneError:
+        return standard_modell_wurzel(name)
+    return standard_modell_wurzel(getattr(eintrag, "gewichte_ordner", None) or eintrag.name)
+
+
 def schreibprobe(pfad) -> dict:
     """Dürfte dort etwas angelegt werden? — gefragt am nächsten vorhandenen Elternordner.
 
@@ -833,7 +847,7 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
             f"{eintrag.konditionierung!r}. Bekannt: {', '.join(KONDITIONIERUNGEN)}."
         )
 
-    wurzel = Path(modell_wurzel) if modell_wurzel is not None else standard_modell_wurzel(eintrag.name)
+    wurzel = Path(modell_wurzel) if modell_wurzel is not None else wurzel_fuer(eintrag.name)
     bestand = backbone.vorhandene_dateien(eintrag.name, wurzel)
     if not bestand["vollstaendig"]:
         raise RenderError(
@@ -1898,7 +1912,7 @@ def _baue_parameter(a: RenderAuftrag, eintrag, *,
     """
     modus = MODUS_IMAGE_EDIT if a.beauty_png else MODUS_TXT2IMG
     wurzel = a.modell_wurzel if a.modell_wurzel is not None else str(
-        standard_modell_wurzel(eintrag.name)
+        wurzel_fuer(eintrag.name)
     )
     return {
         "backbone": eintrag.name,
@@ -2570,5 +2584,5 @@ __all__ = [
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "lade_modell", "modellwurzel", "modellwurzel_lage",
-    "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel",
+    "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel", "wurzel_fuer",
 ]

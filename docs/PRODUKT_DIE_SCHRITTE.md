@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (Nachtrag) · Die neue Steuerung läuft — erster Blick ermutigend
+
+* **Eingerichtet:** Der Heim-PC hat die neue Fassung geprüft und ihren Speicher gemessen.
+* **Mein Fehler, behoben:** Das Programm fand die gemeinsamen Grundgewichte nicht, weil es sie
+  unter dem neuen Namen suchte.
+* **Speicher:** Die neue Fassung füllt die Grafikkarte fast ganz. Damit daneben noch etwas
+  Platz hat, lagert das Programm Teile aus — ein Bild dauert dann etwa 17 statt 2 Sekunden.
+* **Erster Blick (zählt noch nicht):** Mit der alten Fassung wieder die «Gasse», mit der
+  neuen ein freistehender Turm genau auf dem Umriss.
+* **Weiter:** Der eigentliche Vergleich — 96 Bilder, blind beurteilt, Regel vorher fest.
+
 ### 30.09.2026 (spät) · Statt besser prüfen: besser erzeugen
 
 * **Entscheid des Owners:** die Ursache angehen — das Hochhaus soll öfter richtig stehen, statt
