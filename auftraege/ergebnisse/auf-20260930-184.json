@@ -1,0 +1,289 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-184",
+ "status": "ok",
+ "beendet": "2026-09-30T11:10+02:00",
+ "stand": "f164b54 (Klon vom Integrator gepullt, sauber; enthaelt aa31bbb = 183 Teil A)",
+ "git_log_1": "f164b5475b5875cf13770852c582b4b7cc6e060f 2026-09-30 10:16:33 +0200 Ergebnis 183: umriss_treue hat kein fehlerfreies Fenster, stellt aber im selben Bild die richtige Karte oefter vorn als rho (9 gegen 6 von 12)",
+ "geprueft": [
+  "Weg: tools/homeworker.fuehre_aus aus einem Skript (art render; Testbau make_test_ifc.py --gelaende; kamera sSE; aufloesung 1024; mit_beauty true; sonst homeworker-Vorgaben: 20 Schritte, controlnet_staerke 0.8, denoise 0.6). Ergebnis nicht nach auftraege/ergebnisse geschrieben.",
+  "umriss.umriss_aus_dateien(render.png, soll, 1024, 1024) mit Soll aus bildlesen.tiefen_aus_report des eigenen Multipass (Vorgaben des Moduls, toleranz 2 px); homeworker selbst rechnet umriss nicht.",
+  "modus_gerechnet aus dem Rueckgabewert von render.rendere mitgeschrieben (homeworker kopiert das Feld nicht nach messwerte.render); dafuer fuenf Laeufe wiederholt — alle fuenf sha256 bitgleich zum ersten Lauf.",
+  "qwen-image-2.1 im eigenen venv (diffusers 0.41.0.dev0, git 031b2798); die beiden anderen im Betriebs-venv .venv-render (unveraendert), AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers. AIIMAGING_FORSCHUNGSMODELLE nirgends gesetzt.",
+  "vor jedem Lauf nvidia-smi 706 MiB belegt (nur Desktop) und ollama /api/ps leer; nichts verdraengt.",
+  "alle 12 Bilder und das Schoenbild angesehen; Bilder nur unter ~/kosmo-probe/auf184."
+ ],
+ "registereintrag_behelfe": {
+  "tokenizer": "NICHT mehr noetig — processor/ wird erkannt, der Lauf kommt bis zum Laden.",
+  "speicher": "WEITER NOETIG. Ohne Behelf wortlich: 'Grafikspeicher reichte nicht (Weg unbekannt) — OutOfMemoryError: CUDA out of memory. Tried to allocate 24.00 MiB. GPU 0 has a total capacity of 31.36 GiB of which 55.94 MiB is free. … 29.93 GiB is allocated by PyTorch'. Grund: vram_gb 19.5 mit vram_gemessen=True ist die Spitze MIT Auslagerung (178); der Lader liest sie als Bedarf des vollen Wegs: 19.5 GiB x 1.10 = 21.5 GiB < 30.9 GiB frei -> pipeline.to('cuda') mit 30.9 GiB Gewichten. Behelf nur im Speicher des Messskripts: vram_gb=None -> Entscheid an der Platte (31600 MiB x 1.25 > frei) -> cuda+auslagerung. Vorschlag: den Eintrag so fuehren, dass der volle Weg ausgeschlossen ist (z. B. vram_gb = Plattengroesse 30.9 und die 19.5 als Spitze der Auslagerung getrennt), oder ein Riegel 'nur Auslagerung'."
+ },
+ "vergleich_schoenbild": {
+  "umriss_treue_schoenbild_selbst": {
+   "abhebung": 81.946,
+   "trefferquote": 1.0
+  },
+  "lesart": "Das Schoenbild selbst erreicht 81.9 / 1.00 — die Obergrenze fuer 'Form gehalten'. Nur qwen-image-2.1 P2 s0 kommt nahe (51.9 / 0.92); alle anderen liegen bei 0.8 ... 4.3, auch die Edit-2511-Bilder, deren Quader sichtbar an seiner Stelle steht — die umgebende Textur (Holzlatten, Putz) erzeugt so viele Kanten, dass die Abhebung faellt. Abhebung trennt 'Quader steht' von 'Quader weg' hier nicht (Edit-2511 1.07 ... 2.97 gegen z-image 0.80 ... 1.91), die Trefferquote nur grob (Edit-2511 0.50 ... 0.94, z-image 0.29 ... 0.78)."
+ },
+ "bilder": [
+  {
+   "modell": "qwen-image-2.1",
+   "prompt": "P1",
+   "startwert": 0,
+   "status": "ok",
+   "sekunden_render": 30.5,
+   "sekunden_gesamt_lauf": 38.1,
+   "geraeteweg": "cuda+auslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": true,
+   "umriss_treue": {
+    "abhebung": 1.349,
+    "trefferquote": 0.395,
+    "praezision": 0.009,
+    "n_bild_kanten": 79567
+   },
+   "sha256": "1d6a0bb1eacd2cdd04d7b2288249e79837f1b260463c448ac0db33ce8cd3ddf0",
+   "satz": "Nahaufnahme einer warmen Holzfassade im Streiflicht; der Quader ist zu einer kleinen weissen Bank am Fuss der Wand geschrumpft, die Platte verschwunden — Lage und Form NICHT gehalten, der Prompt traegt voll (Holz, Abendlicht)."
+  },
+  {
+   "modell": "qwen-image-2.1",
+   "prompt": "P1",
+   "startwert": 1,
+   "status": "ok",
+   "sekunden_render": 21.9,
+   "sekunden_gesamt_lauf": 33.4,
+   "geraeteweg": "cuda+auslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": true,
+   "umriss_treue": {
+    "abhebung": 1.458,
+    "trefferquote": 0.594,
+    "praezision": 0.011,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "f5e16dcbb64857bbdf1da31d36df083cdd4c5c694ee0edc9548711dc3b080009",
+   "satz": "Ein neues Holzhaus mit Glasfront und Wasserbecken fuellt das Bild; vom Quader auf der Platte ist nichts mehr zu sehen — Lage und Form NICHT gehalten, Prompt traegt voll."
+  },
+  {
+   "modell": "qwen-image-2.1",
+   "prompt": "P2",
+   "startwert": 0,
+   "status": "ok",
+   "sekunden_render": 21.4,
+   "sekunden_gesamt_lauf": 28.7,
+   "geraeteweg": "cuda+auslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": true,
+   "umriss_treue": {
+    "abhebung": 51.95,
+    "trefferquote": 0.916,
+    "praezision": 0.657,
+    "n_bild_kanten": 6603
+   },
+   "sha256": "05e3c8ffb5f38e883f5576add6679038205ad93d493b68a70976211a01334706",
+   "satz": "Quader und Platte stehen pixelgenau wie im Schoenbild, nur der graue Grund ist zu bewoelktem Himmel geworden (auch unter der Platte, das Haus schwebt) — Lage und Form gehalten, Prompt nur beim Himmel, die Fassade bleibt glatt weiss statt Putz."
+  },
+  {
+   "modell": "qwen-image-2.1",
+   "prompt": "P2",
+   "startwert": 1,
+   "status": "ok",
+   "sekunden_render": 21.3,
+   "sekunden_gesamt_lauf": 30.7,
+   "geraeteweg": "cuda+auslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": true,
+   "umriss_treue": {
+    "abhebung": 4.251,
+    "trefferquote": 0.172,
+    "praezision": 0.058,
+    "n_bild_kanten": 13995
+   },
+   "sha256": "f7afc88c2763db82bcb3d259a54a7603dd5098f06ac67e5631bb4bb1618d9e1d",
+   "satz": "Ein hoeherer weisser Putzwuerfel mit kleiner Oeffnung auf einem weissen Sockel vor Wolken, ungefaehr in der Bildmitte — Lage grob, Form NICHT (hoeher, Platte weg), Prompt traegt (Putz, bedeckt)."
+  },
+  {
+   "modell": "qwen-image-edit-2511",
+   "prompt": "P1",
+   "startwert": 0,
+   "status": "ok",
+   "sekunden_render": 156.6,
+   "sekunden_gesamt_lauf": 165.2,
+   "geraeteweg": "cuda+schichtauslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 1.07,
+    "trefferquote": 0.499,
+    "praezision": 0.008,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "42481f625df6b28213d9570f4fc3d7cffcff02a2c6420d65e8741f41b44180a9",
+   "satz": "Quader und Platte stehen an genau ihrer Stelle, aber der Hintergrund ist zu einer bildfuellenden Holzlattenwand geworden — der Bau wirkt wie ein Holzkasten auf einem Wandregal; Lage und Form gehalten, Prompt traegt (Holz, warmes Licht), Massstab kippt."
+  },
+  {
+   "modell": "qwen-image-edit-2511",
+   "prompt": "P1",
+   "startwert": 1,
+   "status": "ok",
+   "sekunden_render": 136.3,
+   "sekunden_gesamt_lauf": 148.1,
+   "geraeteweg": "cuda+schichtauslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 1.381,
+    "trefferquote": 0.688,
+    "praezision": 0.009,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "f772d61824e0a09579f74a9fd7f4dfefc324b092d15bb7e838269cca948c57ca",
+   "satz": "Wie s0: Quader als Holzkiste auf der Platte an richtiger Stelle vor einer diagonal verschalten Holzfassade — Lage und Form gehalten, Prompt traegt, Szene als Regal missverstanden."
+  },
+  {
+   "modell": "qwen-image-edit-2511",
+   "prompt": "P2",
+   "startwert": 0,
+   "status": "ok",
+   "sekunden_render": 132.1,
+   "sekunden_gesamt_lauf": 139.6,
+   "geraeteweg": "cuda+schichtauslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 1.497,
+    "trefferquote": 0.832,
+    "praezision": 0.028,
+    "n_bild_kanten": 129932
+   },
+   "sha256": "ba4e721f9906093da698f246fe8e6f9a1bf67e4337909a57ca08356374523b3a",
+   "satz": "Weisser Quader auf Platte an genau der Stelle vor einer bildfuellenden weissen Putzwand — Lage und Form gehalten, Putz ja, bedeckter Himmel fehlt (Wand statt Himmel)."
+  },
+  {
+   "modell": "qwen-image-edit-2511",
+   "prompt": "P2",
+   "startwert": 1,
+   "status": "ok",
+   "sekunden_render": 131.9,
+   "sekunden_gesamt_lauf": 139.3,
+   "geraeteweg": "cuda+schichtauslagerung",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "image_edit",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 2.972,
+    "trefferquote": 0.944,
+    "praezision": 0.028,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "4ef62b7260265b5b9883beb296af9ddf9fc483b541fac9edf4d0a4a22c92cc8c",
+   "satz": "Der Quader steht an seiner Stelle als Dachaufbau auf einem grossen weissen Putzbau unter bedecktem Himmel; ein zweiter Aufbau links dazuerfunden — Lage und Form des Quaders gehalten, Prompt traegt voll, das Umfeld ist neu erfunden."
+  },
+  {
+   "modell": "z-image-turbo",
+   "prompt": "P1",
+   "startwert": 0,
+   "status": "ok",
+   "sekunden_render": 23.4,
+   "sekunden_gesamt_lauf": 31.0,
+   "geraeteweg": "cuda",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "txt2img",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 1.255,
+    "trefferquote": 0.463,
+    "praezision": 0.009,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "214cfb95b4797f6188f002ac55e7ef6d0b37485ac81b6da3f1e6d3e7d0ef7536",
+   "satz": "Bildfuellende Holzlamellenfassade mit Phantasie-Schriftzug und Holztoren; kein Quader, keine Platte — Lage und Form NICHT, Prompt traegt beim Material."
+  },
+  {
+   "modell": "z-image-turbo",
+   "prompt": "P1",
+   "startwert": 1,
+   "status": "ok",
+   "sekunden_render": 15.2,
+   "sekunden_gesamt_lauf": 22.7,
+   "geraeteweg": "cuda",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "txt2img",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 0.801,
+    "trefferquote": 0.287,
+    "praezision": 0.005,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "081521e50bb19d8044253c30a26f83488408a18536ab3d5ee1bab97e52c3c72b",
+   "satz": "Verzerrte, wellige Holzstruktur ohne erkennbares Gebaeude — Lage und Form NICHT, Prompt nur als Holzfarbe."
+  },
+  {
+   "modell": "z-image-turbo",
+   "prompt": "P2",
+   "startwert": 0,
+   "status": "ok",
+   "sekunden_render": 15.2,
+   "sekunden_gesamt_lauf": 22.7,
+   "geraeteweg": "cuda",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "txt2img",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 1.914,
+    "trefferquote": 0.775,
+    "praezision": 0.017,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "eea61ca53211f470bab8ef4c66f70527eeed83d6003e633a1e9e774f2c54c679",
+   "satz": "Bildfuellende weisse Backstein-/Putzwand mit Treppengelaender — Lage und Form NICHT, Prompt teils (weiss, kein Himmel)."
+  },
+  {
+   "modell": "z-image-turbo",
+   "prompt": "P2",
+   "startwert": 1,
+   "status": "ok",
+   "sekunden_render": 15.1,
+   "sekunden_gesamt_lauf": 22.6,
+   "geraeteweg": "cuda",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "txt2img",
+   "lizenz_offen": null,
+   "umriss_treue": {
+    "abhebung": 1.413,
+    "trefferquote": 0.466,
+    "praezision": 0.01,
+    "n_bild_kanten": 157286
+   },
+   "sha256": "0a6f0ee0265245d546a2c2b1cbe5b2a6c883fcf5e3aa606abe3dfcef63467c1f",
+   "satz": "Bildfuellende weisse Stuckfassade mit Spitzbogenfenstern — Lage und Form NICHT, Prompt teils (weiss, kein Himmel)."
+  }
+ ],
+ "zusammenfassung": {
+  "qwen-image-2.1": "~21-30 s je Bild bei 1024 (cuda+auslagerung), modus_gerechnet image_edit (Schoenbild kommt an), lizenz_offen true. Haelt Lage und Form in 1 von 4 Bildern (P2 s0), aber dort ohne echten Stilwechsel; wo der Prompt kraeftig traegt (P1), ersetzt es den Bau ganz.",
+  "qwen-image-edit-2511": "~130-160 s je Bild (cuda+schichtauslagerung), image_edit. Haelt Lage und Form des Quaders in 4 von 4 Bildern und traegt den Prompt, versteht die freistehende Platte aber als Regal vor einer Wand (Massstab) bzw. erfindet das Umfeld.",
+  "z-image-turbo": "~15-23 s je Bild (cuda, ControlNet), modus_gerechnet txt2img (Schoenbild kommt nicht an). Haelt Lage und Form in 0 von 4 Bildern, auf dieser Szene (Quader fuellt ~3 % des Bildes) wird nur Material gezeigt."
+ },
+ "empfehlung": "Qwen-Image-2.1 lohnt als Stil-Bearbeiter nicht weiter: es haelt die Form nur, wenn es fast nichts aendert, und verwirft sie, sobald der Prompt traegt — qwen-image-edit-2511 (Apache-2.0) haelt Lage und Form in 4 von 4 Bildern bei getragenem Prompt und ist darum der Kandidat; was dort fehlt, ist eine Maske (nur Fassade umfaerben, Platte/Umfeld schuetzen) und ein Massstabshinweis im Prompt, nicht ein Referenzbild.",
+ "unklar": [
+  "homeworker kopiert modus_gerechnet und umriss nicht nach messwerte — beides musste im Skript mitgeschrieben werden.",
+  "umriss_treue trennt auf dieser Szene 'Quader steht' (Edit-2511) nicht sauber von 'Quader weg' (z-image); Kantenreiche Texturen druecken die Abhebung.",
+  "qwen-image-2.1 rechnet ohne Fuehrung (true_cfg_scale 1.0, kein Regler im Register); 20 statt 40 Schritte (Pipeline-Vorgabe)."
+ ],
+ "abschluss": {
+  "karte_danach": "706 MiB belegt, ollama /api/ps leer",
+  "nicht_im_repo": "Bilder, Skripte, Protokolle unter ~/kosmo-probe/auf184; build/ im Repo gitignored"
+ },
+ "skripte": [
+  "a184_lauf.py",
+  "a184_ergebnis.py"
+ ],
+ "gegenprobe_hauptworker": "Bilder P1 s0 aller drei Modelle neben dem Schoenbild angesehen: qwen-image-2.1 setzt den Quader als kleine Bank vor eine Holzfassade (Form ja, Massstab nein); qwen-image-edit-2511 behaelt ihn als Regal vor einer Holzwand; z-image-turbo zeigt nur eine Holzfassade mit erfundener Schrift, KEIN Quader — Beschreibungen des Unter-Agenten bestaetigt. ZUSATZBEFUND: im z-image-Lauf steht in ergebnis.json _render_rueckgabe: modus_bestellt image_edit, modus_gerechnet txt2img, modus_abweichung true — obwohl parameter.konditionierung depth_controlnet und controlnet_staerke 0.8. Zusammen mit 178 (z-image hielt dort ueber den homeworker-Weg die Geometrie ebenfalls nicht, geom_iou 0.0) spricht das dafuer, dass auf dem homeworker-Pfad die Tiefen-ControlNet-Fuehrung von z-image NICHT greift; ueber arbeitsgang (175) standen diagonal drei Bilder richtig. Ungeprueft, wo es abreisst."
+}
