@@ -5919,6 +5919,18 @@ abschneiden. Am 30.09.2026 (Auftrag 195) stand er vorab fest — «die höhere H
 Fall» —, ergab aber exakten Gleichstand (57 von 59 Paaren bei beiden). Die Wahl der
 Umrisstreue fiel darum **nach** der Messung und ist im Protokoll so benannt.
 
+**Nachmessung (Replikation)** — Dieselbe Frage noch einmal an neuen Fällen gestellt, um zu
+sehen, ob ein Ergebnis hält oder Glück war. Am 30.09.2026 lehrreich: In Auftrag 195 trennte
+die Umrisstreue fast perfekt (0,96), an 96 neuen Bildern in Auftrag 196 nur noch mässig (0,81),
+und beim Hochbau unter voller Steuerung gar nicht. Ein einzelnes gutes Ergebnis an wenigen
+Bildern ist ein Hinweis, kein Befund.
+
+**Grauzone (des Augenurteils)** — Die Bilder, bei denen auch das Auge «unklar» sagt: beim
+Hochbau etwa eine Fassade, die sich wie eine Öffnung in einer Wand liest. Keine der geprüften
+Zahlen trennt sie von den stehenden Bildern. Das ist weniger überraschend, als es klingt: Eine
+Zahl, die nur Kanten und Helligkeit liest, kann nicht sicherer sein als ein Beurteiler, der
+das ganze Bild versteht und trotzdem zögert.
+
 **Richtungstreue (der Kanten)** — Ein Kandidat für die Formprüfung: Laufen die Kanten im Bild
 **parallel** zu den Kanten des Gebäudes? Eine Holzfassade hat viele Kanten, aber in alle
 Richtungen — sie zählt hier wenig, anders als bei der Umrisstreue. Zufall ergibt 1.
@@ -6097,7 +6109,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

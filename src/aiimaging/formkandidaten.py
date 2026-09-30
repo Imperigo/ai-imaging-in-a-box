@@ -45,6 +45,16 @@ trennt die Umrisstreue «steht» von «unklar» besser (im Fall 0,83 gegen 0,78,
 gegen 0,83), und die Startwert-Auswahl benutzt sie schon. **Vorbehalt:** «steht nicht» kam fast
 nur aus halber Stärke; im Betrieb ist die Frage «steht oder unklar», und dort ist die Trennung
 schwächer. Eine Schwelle gibt es erst nach einer eigenen Reihe (``auf-20260930-196``).
+
+Nachmessung (``auf-20260930-196``, 96 frische Bilder, Schwelle 2,0 vorab)
+------------------------------------------------------------------------
+**Die Schwelle trägt nicht.** Testbau knapp (ausgewogen 0,81, falsch «steht» 0), Hochbau nicht
+(0,66 / 0,23). Und schwerer: **Der Befund aus 195 hat sich nicht wiederholt.** Die AUC der
+Umrisstreue fiel von 0,96/1,00 auf 0,81/0,88; bei voller Tiefensteuerung trennt am Hochbau
+**keine** Zahl «steht» von «unklar» besser als der Zufall (im Fall 0,49–0,64). Was die Zahlen
+verlässlich trennen, sind deutliche Fehlbilder (halbe Steuerstärke) von gesteuerten — die
+Grauzone, in der auch das Auge «unklar» sagt, erreichen sie nicht. Die Formprüfung bleibt darum
+Auskunft; die Startwert-Auswahl nach ihr bleibt, weil sie deutliche Fehlwürfe aussortiert.
 """
 from __future__ import annotations
 
@@ -64,7 +74,10 @@ FORMPRUEFUNG_URTEILT = False
 
 #: Woher der Befund kommt — reist mit jeder Auskunft.
 FORMPRUEFUNG_GRUNDLAGE = ("auf-20260930-195: folgt dem blinden Augenurteil (Hochbau AUC im "
-                          "Fall 0.97, Testbau 1.00, Kreuzprobe 1.00); keine Schwelle")
+                          "Fall 0.97, Testbau 1.00, Kreuzprobe 1.00). auf-20260930-196: "
+                          "Schwelle 2.0 traegt NICHT; bei voller Tiefensteuerung trennt die "
+                          "Zahl am Hochbau «steht» nicht von «unklar» (im Fall 0.64). "
+                          "Nur Auskunft, kein Urteil")
 
 #: Hintergrundmarke für die Soll-Tiefe (wie ``umriss.HINTERGRUND_AB_M``).
 HINTERGRUND_AB_M = umriss.HINTERGRUND_AB_M

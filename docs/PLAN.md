@@ -7560,10 +7560,15 @@ Bekannt und ausdrücklich nicht erledigt:
           Silhouette folgen dem Auge**; Stichentscheid Gleichstand (Protokoll 73 §19).
     - [x] **Kern:** Formprüfung = Umrisstreue als Auskunft im Auswahlbericht
           (`formkandidaten.formpruefung`, `auswahl["formpruefung"]`), urteilt nicht.
-    - [ ] **local:** `auf-20260930-196` — trägt die vorab gesetzte Schwelle 2,0 an 96 frischen
-          Bildern? «unklar» zählt als nicht stehend.
-    - [ ] **Owner, nach 196:** Soll die Formprüfung urteilen (bei bestätigter Schwelle)?
-    - [ ] **cloud (Int 1), nach 196:** Vertragsfrage — Formprüfung je Kamera in `qa`.
+    - [x] **local:** `auf-20260930-196` — trägt die vorab gesetzte Schwelle 2,0 an 96 frischen
+          Bildern? «unklar» zählt als nicht stehend. — **nein** (Hochbau 0,66 / falsch 0,23);
+          195 hat sich nicht wiederholt (Protokoll 73 §20).
+    - [x] ~~**Owner, nach 196:** Soll die Formprüfung urteilen (bei bestätigter Schwelle)?~~ —
+          entfällt, die Schwelle trägt nicht.
+    - [x] ~~**cloud (Int 1), nach 196:** Vertragsfrage — Formprüfung je Kamera in `qa`.~~ —
+          entfällt vorerst; eine Zahl ohne Schwelle geht nicht in ihre Kachel.
+    - [ ] **Owner:** Wie weiter mit der Formprüfung — Ursache angehen (Hochbau frontal öfter
+          stehend erzeugen), ein bildverstehendes Modell prüfen (Lizenzfrage), oder ruhen lassen?
     - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
           ein Segmentierungsansatz (Lizenzfrage). — erfüllt (195), Bestätigungsreihe ist 196.
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit

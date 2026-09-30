@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (Nachtrag) · Die Grenze trägt nicht — und der gute Befund hielt nicht
+
+* **Ergebnis:** An 96 neuen Bildern trägt die vorher festgelegte Grenze nicht. Beim niedrigen
+  Testbau knapp ja, beim Hochbau nein.
+* **Schwerer:** Das sehr gute Ergebnis der Runde davor hat sich nicht wiederholt. Bei voller
+  Steuerung — dem Normalfall — unterscheidet keine Zahl ein stehendes Hochhaus von einem, bei
+  dem auch das Auge unsicher ist.
+* **Was bleibt:** Deutliche Fehlbilder erkennt die Umrisstreue. Sie bleibt darum Auskunft und
+  sortiert weiter unter mehreren Versuchen aus. Ein Urteil «Form steht» gibt es nicht.
+* **Offen:** Welcher Weg jetzt — Entscheid des Owners.
+
 ### 30.09.2026 (zuletzt) · Eine Zahl folgt dem Auge: die Umrisstreue
 
 * **Ergebnis:** Die Gegenprobe war tauglich — das perfekte Bild besteht sie überall. Mit ihr
