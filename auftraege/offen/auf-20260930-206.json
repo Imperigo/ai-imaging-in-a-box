@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-206",
+  "art": "frage",
+  "beschreibung": "KosmoPublish in Blender: das neue Werkzeug tools/hauptgebaeude_zeichnen.py (nur Hauptgebaeude, Nachbarn als Silhouette) an derselben Szene wie in 103 fahren — ohne Marker, mit --dichte, mit Marker.",
+  "anweisung": "=== KOSMOPUBLISH: «NUR DAS HAUPTGEBAEUDE» IN BLENDER BESTAETIGEN (OWNER-ENTSCHEID NR. 12) ===\n\nWORUM ES GEHT\n  Eure Messung auf-20260922-103 hat gezeigt: die Faehigkeit wird gebraucht, aber ohne Marker ist sie ein\n  Glueckstreffer, die Silhouetten ziehen den Rahmen auf, und Blender endet bei einer Ausnahme mit 0. Owner-Entscheid\n  30.09.2026: behalten und anschliessen. Gebaut in KosmoPublish 959c6f0 als tools/hauptgebaeude_zeichnen.py:\n  ohne Marker Rueckgabe 2, Dichte-Weg nur mit --dichte (Bericht sagt GERATEN), Kontext 40 m um das Gebaeude,\n  Bericht als bericht.json im Ausgabeordner. Hier steht kein Blender — nur ihr koennt es fahren.\n\nWAS ZU TUN IST\n  0. KosmoPublish-Klon: git pull --ff-only; git log -1 muss 959c6f0 oder juenger zeigen.\n     Dieselbe echte Szene wie in 103, als WEGWERFKOPIE (nichts am Original speichern). Denselben Leihpfad fuer\n     lxml/shapely wie in 103 (nur zur Laufzeit auf sys.path, nichts installieren) — z.B. ueber PYTHONPATH.\n  1. OHNE Marker:\n       blender --background --python-exit-code 1 <kopie.blend> --python tools/hauptgebaeude_zeichnen.py -- --out /tmp/hg206-a\n     Erwartet: Rueckgabewert 2 (echter Exitcode des Prozesses, nicht nur der Text), Satz mit «BuildingOBB» und\n     «--dichte», bericht.json mit status «kein_marker».\n  2. MIT --dichte (Ausgabe /tmp/hg206-b): erwartet Rueckgabe 0, in bericht.json «GERATEN» unter warnungen,\n     obb.quelle density_cluster_fallback. Zahlen aus bericht.json: obb breite/tiefe, objekte.szene /\n     objekte.hauptgebaeude, grundriss.silhouette_lines_added, axonometrie.linien, kontext_ab_mitte_m.\n     Vergleich mit 103: dort 1856 Silhouettenlinien bei 200 m — wie viele jetzt?\n  3. MIT Marker: in der Kopie einen Quader «BuildingOBB» um das Gebaeude legen, das ihr zeichnen wollt (von Hand,\n     ungefaehr). Ausgabe /tmp/hg206-c. Dieselben Zahlen wie in 2, obb.quelle explicit_marker.\n  4. Die zwei SVG aus 3 rastern und ANSEHEN (nur ansehen, nicht zurueckgeben): fuellt das Hauptgebaeude jetzt das\n     Blatt besser als in 103? Stehen die Nachbarn als feine Silhouette daneben, ohne den Rahmen aufzuziehen?\n     Ist die Axonometrie ein brauchbares Schema? Je ja/nein + ein Satz.\n  5. Ohne den Leihpfad (nur Schritt 3 wiederholen): erwartet Rueckgabe 3 und «Im Python von Blender fehlt: lxml…».\n\nRUECKGABE\n  - Stand KosmoPublish, Blender-Fassung, ob der Leihpfad noch vorlag.\n  - Je Schritt: echter Exitcode, Meldungszeile woertlich, die Zahlen aus bericht.json (Namen durch <X> ersetzt).\n  - Schritt 4: drei ja/nein mit je einem Satz.\n  - Traceback oder «No module named»? ja/nein, woertlich (Namen ersetzt).\n\nNICHT TUN: keine Bilder, SVG oder Szenendaten zurueckgeben oder committen; das Original der Szene nicht veraendern;\nnichts installieren; keinen Code aendern; nichts committen ausser der Antwortdatei. Keine absoluten Pfade mit\nBenutzernamen, keine Projekt-, Orts- oder Bueronamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T21:10:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "dieselbe echte Blender-Szene wie auf-20260922-103 (nur am Heimrechner, Wegwerfkopie)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmopublish_stand_min": "959c6f0",
+    "owner_entscheid": "2026-09-30 Nr. 12, Chat: «Ja, behalten und anschliessen»",
+    "daten_bleiben_lokal": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell, kein Render — nur --background.",
+    "hinweise": [
+      "ECHTE Szene: nur Zahlen zurueck (REGEL 3).",
+      "Nichts installieren; Leihpfad nur zur Laufzeit."
+    ]
+  },
+  "rueckgabe": [
+    "Stand, Blender-Fassung, Leihpfad ja/nein.",
+    "Exitcode + Meldung + bericht.json-Zahlen je Schritt.",
+    "Sichtprobe drei ja/nein.",
+    "Fehler ja/nein woertlich."
+  ],
+  "rang": 3
+}
