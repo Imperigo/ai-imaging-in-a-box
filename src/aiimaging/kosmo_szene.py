@@ -2189,6 +2189,43 @@ def _pruefe_ein_name_eine_zahl(block: dict, geometrie_urteil) -> None:
     block["released"] = False
 
 
+def _grund_verbinden(teile) -> str:
+    """Die Teilsaetze fuer ``verdict.reason`` zu EINEM lesbaren Satz verbinden.
+
+    **Anlass (Durchsicht 30.09.2026):** Der Grund eines abgebrochenen Laufs las sich
+    drueben so: *«… ein Lauf fehlt.; Geometrie None gegen 0.65»*. Die Teilsaetze sind
+    ganze Saetze mit Punkt, verbunden wurde mit ``"; "`` — daraus wurde ein «.;», das in
+    ihrer Kachel wie ein Tippfehler aussieht. Wer die Zeile neben einem Warnzeichen liest,
+    soll sie lesen koennen und nicht erst entziffern muessen.
+
+    Gestrichen wird darum der EINE Schlusspunkt jedes Teils, dem noch ein Teil folgt. Der
+    letzte behaelt seinen Punkt, und ein Auslassungszeichen («...») bleibt eines, weil nur
+    ein einzelner Punkt faellt. Am Inhalt aendert sich nichts: Jeder Teil steht weiter da,
+    in derselben Reihenfolge — `reason` wird nicht kuerzer, und nie leer, wo es Inhalt
+    hatte (ihre Oberflaeche zeigt bei jedem nicht leeren `reason` ein Warnzeichen).
+    """
+    teile = [str(t) for t in teile]
+    verbunden = []
+    for i, teil in enumerate(teile):
+        if i < len(teile) - 1:
+            teil = teil.rstrip()
+            if teil.endswith(".") and not teil.endswith(".."):
+                teil = teil[:-1]
+        verbunden.append(teil)
+    return "; ".join(verbunden)
+
+
+def _gegen_schwelle(schwelle) -> str:
+    """Der Vergleichsteil eines Satzes in ``verdict.reason``: «gegen 0.65» — oder, wenn
+    keine Schwelle da ist, «ohne Schwelle».
+
+    Ein ``None`` gehoert in ein Zahlenfeld (dort steht es als ``null`` und ist
+    Vertrag), aber nicht in einen Satz: *«… gegen None»* liest sich drueben wie ein
+    Programmfehler und nicht wie eine fehlende Angabe (Durchsicht 30.09.2026).
+    """
+    return "ohne Schwelle" if schwelle is None else f"gegen {schwelle}"
+
+
 def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
     """WARUM ein Geometrieurteil ``bestanden: None`` traegt — der Satz fuer ``reason``.
 
@@ -2659,8 +2696,20 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
 
     teile = []
     if qa.get("geometry"):
-        teile.append(f"Geometrie {qa['geometry']['geometry_fidelity']} "
-                     f"gegen {qa['geometry']['threshold']}")
+        # Fehlt die Zahl, sagt der Satz es in Worten — «Geometrie None gegen 0.65» las
+        # sich drueben wie ein Programmfehler (Durchsicht 30.09.2026). Die Schwelle
+        # bleibt genannt, weil sie auch ohne Zahl sagt, WOGEGEN geprueft worden waere.
+        # «Geometrie-SCORE nicht gemessen» und nicht «Geometrie nicht gemessen»: Ohne
+        # gemeinsame Silhouette fehlt der Score, der Maskenweg kann aber gemessen haben
+        # (siehe «KEIN SCORE, ABER MASKENWEG» unten) — der Satz darf ihm nicht
+        # widersprechen.
+        _fid = qa["geometry"]["geometry_fidelity"]
+        _schw = qa["geometry"]["threshold"]
+        if _fid is None:
+            teile.append("Geometrie-Score nicht gemessen"
+                         + (f" (Schwelle {_schw})" if _schw is not None else ""))
+        else:
+            teile.append(f"Geometrie {_fid} {_gegen_schwelle(_schw)}")
     if qa.get("style"):
         if qa["style"]["style_score"] is None:
             # Kein Skalar, also auch kein "x gegen y" — der Satz muss sagen, WOMIT
@@ -2668,8 +2717,9 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             teile.append(f"Stil gegen den Belichtungsrahmen ({qa['style']['method']}), "
                          f"ohne Ähnlichkeitszahl")
         else:
-            teile.append(f"Stil {qa['style']['style_score']} gegen "
-                         f"{qa['style']['threshold']} ({qa['style']['method']})")
+            teile.append(f"Stil {qa['style']['style_score']} "
+                         f"{_gegen_schwelle(qa['style']['threshold'])} "
+                         f"({qa['style']['method']})")
     # ── Die dritte Antwort an der Vertragsgrenze ──────────────────────────────────────
     #
     # `passed` ist im fremden Vertrag ein Wahrheitswert und kann kein Drittes tragen. Ein
@@ -2825,7 +2875,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         # Es IST etwas gemessen worden — nur eben vor dem Bild, und mit dem Ergebnis,
         # dass kein Bild entstehen soll. Der Satz «keine QA gelaufen» wäre hier eine
         # Untertreibung, die wie ein Fehler aussieht.
-        grund = "; ".join(teile)
+        grund = _grund_verbinden(teile)
     elif not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")
@@ -2834,10 +2884,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         # Übergabeblatt, das niemand aufschlägt, während er auf ein Häkchen sieht.
         teile.append("Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, "
                      "siehe hinweise)")
-        grund = "; ".join(teile)
+        grund = _grund_verbinden(teile)
         hinweise.append(grund)
     else:
-        grund = "; ".join(teile)
+        grund = _grund_verbinden(teile)
 
     # DIE INNENANSICHT, wenn `interior` bestellt war (22.09.2026). Nach allen Zweigen
     # oben angehaengt, weil sie keinen davon ersetzt: Sie sagt, WOHER der Standpunkt kam,

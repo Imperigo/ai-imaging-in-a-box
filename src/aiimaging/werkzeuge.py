@@ -280,6 +280,17 @@ def enqueue_render(args: dict) -> dict:
         "out_dir": out_dir,
         "torwaechter": urteil,
         "nicht_bekannt": unbekannt,
+        # WARUM DER AUFTRAG WARTET, wenn ein mitgegebenes Token abgewiesen wurde
+        # (Durchsicht 30.09.2026). `baue_job` schrieb den Grund seit dem 23.09.2026 in
+        # den Auftragssatz — dort las ihn aber niemand, der gefragt hatte: Die Antwort
+        # sagte nur `awaiting_approval`, und ein Aufrufer mit untauglichem Token konnte
+        # nicht unterscheiden, ob er keine Freigabe geschickt hatte oder eine, die nicht
+        # galt. Der Satz nennt das Token nie (so sind die Meldungen der Tür gebaut).
+        #
+        # Ein eigenes Feld und NICHT `error`: `error` heisst in dieser Antwort «es ist
+        # kein Auftrag entstanden» (`status: null`, siehe `_fehler`). Hier IST einer
+        # entstanden, er wartet nur — wer `error` als Abbruch liest, laege sonst falsch.
+        "meldung": satz.get("meldung"),
         "error": None,
     }
 
@@ -289,7 +300,7 @@ def query_render(args: dict) -> dict:
     job_id = (args or {}).get("job_id")
     if not job_id:
         return {"job_id": None, "status": None, "geometry_ref": None, "depth_exr": None,
-                "images": [], "erstellt": None, "geaendert": None,
+                "images": [], "erstellt": None, "geaendert": None, "meldung": None,
                 "error": "Pflichtfeld 'job_id' fehlt."}
     if not isinstance(job_id, str):
         # NICHT `str(job_id)` zurückgeben. Eine 42 als "42" zu spiegeln sähe aus, als
@@ -298,14 +309,15 @@ def query_render(args: dict) -> dict:
         # eindeutig. (Aufgefallen an der Schemaprüfung, die dieser Fall verletzte:
         # `job_id: 42 passt nicht zu type='string'`.)
         return {"job_id": None, "status": None, "geometry_ref": None, "depth_exr": None,
-                "images": [], "erstellt": None, "geaendert": None,
+                "images": [], "erstellt": None, "geaendert": None, "meldung": None,
                 "error": f"'job_id' muss eine Zeichenkette sein, war "
                          f"{type(job_id).__name__}: {job_id!r}."}
     try:
         satz = jobs.lies_job(job_id, auftrags_ordner(job_id))
     except (jobs.JobError, FileNotFoundError) as e:
         return {"job_id": job_id, "status": None, "geometry_ref": None, "depth_exr": None,
-                "images": [], "erstellt": None, "geaendert": None, "error": str(e)}
+                "images": [], "erstellt": None, "geaendert": None, "meldung": None,
+                "error": str(e)}
 
     params = satz.get("params") or {}
     ergebnis = satz.get("ergebnis") or {}
@@ -317,6 +329,13 @@ def query_render(args: dict) -> dict:
         "images": ergebnis.get("images") or [],
         "erstellt": satz.get("erstellt"),
         "geaendert": satz.get("geaendert"),
+        # Der Klartext am Auftrag, WARUM er liegt — ein beim Einstellen abgewiesenes
+        # Token (`jobs.baue_job`) oder ein Wartegrund des Abholers (`eigene_quelle.
+        # vermerke_grund`, etwa ein Token, das das Tokenbuch nicht fuehrt). Bis zum
+        # 30.09.2026 stand er nur in der Auftragsdatei, und wer nachfragte, sah einen
+        # Auftrag, der wortlos nicht losging. Getrennt von `error` (= `fehler`, ein
+        # gescheiterter Lauf): Ein Wartegrund ist kein Fehler.
+        "meldung": satz.get("meldung"),
         "error": satz.get("fehler"),
     }
 
@@ -333,7 +352,7 @@ def _fehler(text: str, *, torwaechter_urteil: dict | None = None,
         "job_id": None, "status": None, "geometry_ref": None, "glb_path": None,
         "up_axis": None, "bbox": None, "out_dir": None,
         "torwaechter": torwaechter_urteil or {},
-        "nicht_bekannt": list(nicht_bekannt or ()), "error": text,
+        "nicht_bekannt": list(nicht_bekannt or ()), "meldung": None, "error": text,
     }
 
 
