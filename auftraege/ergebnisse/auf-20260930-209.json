@@ -1,0 +1,116 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-209",
+ "status": "ok",
+ "beendet": "2026-09-30T20:49:29Z",
+ "stand": {
+  "kosmoprepare": "4a7645a (2026-09-30T20:40:05Z, «IFC-Uebergabe statt ArchiCAD-Export: der Knoten ist schmal geschnitten (Owner-Entscheid 9b)»), git pull --ff-only von 482c9dc aus, Arbeitsbaum danach sauber",
+  "kosmopublish": "512667a (2026-09-30T20:40:18Z, «Entscheid 9b im Stand nachgezogen: in KosmoPrepare gebaut»), git pull --ff-only, Arbeitsbaum sauber",
+  "blender": "KosmoDesign-Fork 5.1.2 (hash ec6e62d40fa9, gebaut 2026-06-23), Python 3.13.9, --background ohne Xvfb (alle Operatoren liefen dort); Add-on per Symlink in eigenem BLENDER_USER_RESOURCES, Modul bl_ext.user_default.wettbewerbsvorbereitung, enable -> True ohne Fehler",
+  "ifc_grenze": "Der KosmoPrepare-Klon hat KEIN .venv-ifc. Fuer die Laeufe KOSMOPREPARE_IFC_PYTHON auf den vorhandenen Interpreter des .venv-ifc im KosmoPublish-Klon gesetzt (ifcopenshell 0.8.5, eigener sys.prefix, also nicht der Produkt-Interpreter) — nichts installiert. Dieselbe Umgehung war schon bei auf-20260901-69 der Weg."
+ },
+ "A1": {
+  "titel_im_knoten": "IFC-Übergabe (Raumprogramm)",
+  "hinweis": "bl_label = «IFC-Übergabe (Raumprogramm)»; node.name des neu angelegten Knotens ebenfalls «IFC-Übergabe (Raumprogramm)»; node.label leer (also zeigt der Kopf das bl_label). bl_idname ArchiCADNativeExportNodeType.",
+  "einstellungen": [
+   "output_dir — «Ausgabe-Ordner»",
+   "include_raumprogramm — «Raumprogramm-Volumen» (Vorgabe an)",
+   "include_labels — «Beschriftung (IfcAnnotation)» (Vorgabe an)",
+   "raumprogramm_collection — «Raumprogramm-Collection» (Vorgabe AB_Raumprogramm_3D)",
+   "dazu verborgen/intern: node_uid, last_summary"
+  ],
+  "keine_hoehen_einstellung_mehr": true
+ },
+ "A2": {
+  "aufruf": "bpy.ops.wettbewerb.archicad_native_export(node_name=node.name) — node.get_uid() gibt es nicht (Basis hat uid_key()); beim ersten Lauf war node_uid leer, also ging der Name hinein; danach war die UID gestempelt",
+  "rueckgabe": "{'FINISHED'}",
+  "meldungszeile": "Warning: IFC-Übergabe: Raumprogramm 2 → <tmp>/proj/03_Output/02_ArchiCAD_Export · 1 Warnung(en), s. Konsole",
+  "konsolenzeilen_ifc_uebergabe": [
+   "[IFC-Übergabe] LV95-Hoehe unbekannt — OrthogonalHeight 0 m ü. M. geschrieben"
+  ],
+  "weitere_konsolenzeile": "[KosmoPrepare] RP_LEGEND_Marktgerecht nicht im Raumprogramm-IFC: Legendenblock — reine Zeichenhilfe. Wuerde drueben als Wohnung ankommen und seine Flaeche als HNF zaehlen.",
+  "last_summary": "Raumprogramm 2",
+  "dateien_02_ArchiCAD_Export": [
+   "Raumprogramm_Volumen.ifc"
+  ],
+  "kein_ArchiCAD_Kontext_ifc_kein_Anleitung_md": true,
+  "orthogonalheight_lauf1_nachgemessen": 0.0,
+  "hinweis": "Volumen_Design.ifc und Raumprogramm_Beschriftung.ifc fehlen erwartungsgemaess: die Szene hat keine Collection Volumen_Design und keine Textobjekte."
+ },
+ "A3": {
+  "aufruf": "wettbewerb_lv95_elevation = 501.5, dann derselbe Operator (node_name = gestempelte UID)",
+  "rueckgabe": "{'FINISHED'}",
+  "meldungszeile": "Info: IFC-Übergabe: Raumprogramm 2 → <tmp>/proj/03_Output/02_ArchiCAD_Export",
+  "konsolenzeilen_ifc_uebergabe": [],
+  "warnung_weg": true,
+  "weitere_konsolenzeile": "[KosmoPrepare] RP_LEGEND_Marktgerecht nicht im Raumprogramm-IFC: Legendenblock — reine Zeichenhilfe. Wuerde drueben als Wohnung ankommen und seine Flaeche als HNF zaehlen.",
+  "dateien_02_ArchiCAD_Export": [
+   "Raumprogramm_Volumen.ifc"
+  ],
+  "ifc_pruefung": "mit ifcopenshell 0.8.5 aus dem .venv-ifc des KosmoPublish-Klons (ausserhalb des Produkts)",
+  "Raumprogramm_Volumen_ifc": {
+   "schema": "IFC4",
+   "IfcMapConversion": {
+    "Eastings": 2600000.0,
+    "Northings": 1200000.0,
+    "OrthogonalHeight": 501.5
+   },
+   "IfcSpace_zahl": 2,
+   "IfcSpace_namen": [
+    "Marktgerecht_3.5er_01",
+    "Preisguenstig_2.5er_01"
+   ],
+   "IfcSlab_zahl": 0,
+   "geschosse": [
+    "EG",
+    "1. OG"
+   ],
+   "legende_drin": false
+  }
+ },
+ "A4": {
+  "aufruf": "bpy.ops.wettbewerb.archicad_single_ifc(node_name=<UID>)",
+  "rueckgabe": "{'FINISHED'}",
+  "meldungszeile": "Info: IFC-Übergabe (lokal, am Nullpunkt): Volumen 2 · Zonen 2",
+  "last_summary": "IFC: Volumen 2 · Zonen 2",
+  "dateien_03_Output": [
+   "02_ArchiCAD_Export",
+   "Raumprogramm_Volumen.ifc",
+   "Raumprogramm_Zonen.ifc"
+  ],
+  "kein_Gesamtmodell_Kontext_ifc": true,
+  "kein_Raumprogramm_csv": "richtig, die Szene traegt kein kp_stack_items_json (erwartet)",
+  "nachgemessen": {
+   "Raumprogramm_Volumen.ifc (lokal)": "IFC4, keine IfcMapConversion, 2 IfcSlab, 0 IfcSpace, Geschosse EG / 1. OG",
+   "Raumprogramm_Zonen.ifc": "IFC4, keine IfcMapConversion, 2 IfcSpace (Marktgerecht_3.5er_01, Preisguenstig_2.5er_01), Geschosse EG / 1. OG"
+  },
+  "gesamter_baum": [
+   "proj/03_Output/Raumprogramm_Zonen.ifc",
+   "proj/03_Output/Raumprogramm_Volumen.ifc",
+   "proj/03_Output/02_ArchiCAD_Export/Raumprogramm_Volumen.ifc"
+  ]
+ },
+ "B": {
+  "antwort": "keine",
+  "satz": "Keine .blend an der Maschine traegt einen Knoten ArchiCADNativeExportNodeType; darum liess sich das Wiederfinden des alten Knotens nicht an einer echten Datei pruefen.",
+  "wie_geprueft": "2024 .blend-Dateien unter ~ und /mnt/data (322 unkomprimiert, 1545 zstd, 157 gzip) vollstaendig entpackt und nach den Zeichenketten «ArchiCADNativeExportNodeType» und «WettbewerbsTreeType» durchsucht, 0 Lesefehler: 0 Treffer fuer den Knoten, 8 Dateien mit «WettbewerbsTreeType». Diese 8 als Wegwerfkopien (Scratch) in Blender --background --disable-autoexec mit aktivem Add-on geoeffnet, nur gelesen, nie gespeichert: 6 davon tragen echte Wettbewerbs-Baeume (7 Baeume, 146 Knoten), 0 Knoten ArchiCADNativeExportNodeType, 0 undefinierte Knoten; 2 (eine Demo-Datei unter …/KosmoDraw und ihre Kopie in einem Import-Ordner) haben keinen Knotenbaum.",
+  "fundorte_ohne_namen": "je eine Datei unter …/KosmoDraw, …/KosmoPrepare/02_Sandbox, einem Archivordner unter …/KosmoPrepare, einem Import-Ordner der KosmoZentrale; vier in einem Projektordner unter ~/kosmo-projekte/…/01_Blender bzw. …/03_Output"
+ },
+ "C": {
+  "befehl": "im KosmoPublish-Klon: .venv/bin/python -c \"from nodes.kosmoprepare_autodetect import detect_kp_outputs, detect_summary_text; from pathlib import Path; print(detect_summary_text(detect_kp_outputs(extra_search_roots=[Path('<tmp>')])))\"",
+  "ausgabe": "KosmoPrepare-Auto-Detection:\n  ✓ IFC: Raumprogramm_Volumen.ifc",
+  "gewaehlte_datei": "<tmp>/proj/03_Output/Raumprogramm_Volumen.ifc (aus detect_kp_outputs: csv_path=None, bridge_json_path=None, notes=('extra: <tmp>',))",
+  "befund": "KosmoPublish nimmt die JUENGSTE Datei (Sortierung nach mtime). Weil A4 nach A2/A3 lief, fand es die LOKALE Datei am Nullpunkt (ohne Georeferenz, 2 IfcSlab, 0 IfcSpace) — nicht die georeferenzierte in 02_ArchiCAD_Export/ (2 IfcSpace, OrthogonalHeight 501.5). Nur gemeldet, nichts geaendert."
+ },
+ "fehler_ja_nein": {
+  "Traceback": "nein",
+  "No module named": "nein",
+  "unbekannter Knoten": "nein"
+ },
+ "weitere_befunde": [
+  "KosmoPrepare-Klon ohne .venv-ifc: ohne KOSMOPREPARE_IFC_PYTHON waere der Georeferenz-Operator an der Prozessgrenze gescheitert (GrenzeFehler «Kein Interpreter fuer ifcopenshell gefunden»). Nicht angelegt (waere eine Installation).",
+  "draw_buttons des Knotens setzt node_name ueber hasattr(self, 'get_uid') — die Basis hat aber uid_key(), nicht get_uid(); die Knoepfe geben also immer den Anzeigenamen weiter. resolve_node loest den Namen trotzdem auf (Rueckfall), im Lauf kein Fehler."
+ ],
+ "nicht_getan": "Nichts installiert, kein Code geaendert, nichts committet, kein Render, keine echte .blend gespeichert (Teil B nur an Wegwerfkopien). Die Pruefung, ob ein alter Knoten mit neuem Titel erscheint, entfiel mangels Datei (B = keine). Wegwerfordner <tmp>, Kopien und bres am Ende geloescht.",
+ "fehler": null
+}
