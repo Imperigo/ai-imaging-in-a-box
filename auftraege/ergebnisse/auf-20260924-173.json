@@ -1,0 +1,65 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260924-173",
+ "status": "ok",
+ "beendet": "2026-09-30T07:47+02:00",
+ "stand": "4d5e6d7 Dokumente auf den 29.09. nachgezogen; Sitzung 59 hatte zwei Szenen falsch gepaart",
+ "geprueft": [
+  "169 Teil C woertlich (Testbau, cameras auto, 1600x1000, 16 Samples, faithful 0.8), ohne --fremde-freigabe; Vorgabemodell jetzt z-image-turbo",
+  "Zusatz A4: z-image-turbo mit Fueller auf 19974 MiB frei, eigener Probe-Auftrag mit idle_window_only=false (Auflage nur_bei_leerlauf=false)",
+  "render-result.json und job.json je Auftrag ausgelesen, Abholer-Protokoll gelesen"
+ ],
+ "kurzantwort": "Die Zwillingserkennung greift: s und sSE gerechnet, nNW 'uebersprungen' mit dem Vermerk vorn im verdict.reason; Auftrag 'geliefert', gesamt 197 s (statt 1452 s in 169). A4: z-image-turbo bei ~20 GiB frei geht direkt auf cuda+schichtauslagerung, kein Geraetekonflikt, 300 s; bedarf.grund im Blender-Bericht ist allerdings LEER.",
+ "befunde": {
+  "probe": {
+   "job": "vis-1790746729-274088",
+   "je_kamera": {
+    "s": {
+     "gerendert": true,
+     "lieferstatus": "geliefert",
+     "lieferstatus_grund": "",
+     "rechenzeit_s": 100.4
+    },
+    "sSE": {
+     "gerendert": true,
+     "lieferstatus": "geliefert",
+     "lieferstatus_grund": "",
+     "rechenzeit_s": 90.4
+    },
+    "nNW": {
+     "gerendert": false,
+     "lieferstatus": "uebersprungen",
+     "lieferstatus_grund": "Nicht neu gerendert (identische Soll-Karte), nNW: dieselbe Ansicht wie Kamera 'sSE', deren Bild sie zeigt — kein eigenes Bild",
+     "rechenzeit_s": 6.6
+    }
+   },
+   "lieferstatus_auftrag": "geliefert",
+   "verdict_reason": "Nicht neu gerendert (identische Soll-Karte), nNW; Geometrie 0.14534492791045017 gegen 0.65",
+   "zwillingsvermerk_vorn": true,
+   "gesamtzeit_s": 197.4,
+   "engine_used": "z-image-turbo"
+  },
+  "zusatz_a4": {
+   "job": "vis-1790746941-6297a5",
+   "frei_mib_vorher": 19974,
+   "geraeteweg": "cuda+schichtauslagerung, Ladeweg ZImageControlNetPipeline + from_single_file(Z-Image-Turbo-Fun-Controlnet-Union.safetensors), Entflechtung noetig",
+   "erfolg": true,
+   "lieferstatus": "geliefert",
+   "rechenzeit_s": {
+    "s": 147.6,
+    "sSE": 146.3,
+    "nNW": 6.6,
+    "gesamt": 300.5,
+    "stillstand_s": 42.006098145999886
+   },
+   "geraetekonflikt": false,
+   "bedarf_grund": "LEER — in blender-report.json steht je Kamera \"grund\": \"\"; den Grund nennt nur das Abholer-Protokoll: «Bildmodell lief auf cuda+schichtauslagerung … Entschieden an gemessene Spitze (Registry): 25702 MiB x 1.1 = 28273 MiB verlangt, 19470 MiB [frei]»"
+  }
+ },
+ "umgebung": {
+  "python": ".venv-render (3.14.4)",
+  "AIIMAGING_MODELLE": "/mnt/data/ai-models/diffusers",
+  "gpu": "RTX 5090, 400 W, vor dem Lauf 706 MiB belegt"
+ },
+ "fehler": []
+}

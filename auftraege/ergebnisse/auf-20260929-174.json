@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260929-174",
+ "status": "ok",
+ "beendet": "2026-09-30T07:48+02:00",
+ "stand": "4d5e6d7 Dokumente auf den 29.09. nachgezogen; Sitzung 59 hatte zwei Szenen falsch gepaart",
+ "geprueft": [
+  "A: nur gelesen (find nach recipes.ts/render_preflight ueber Heimatordner und Datenlaufwerk, git log im Fundklon)",
+  "B: Mappe ausserhalb des Heimatordners unter dem Datenlaufwerk, Modell in einem Geschwisterordner; arbeitsgang.lege_an + projekt.json + arbeitsgang.rechne mit dem Vorgabemodell"
+ ],
+ "kurzantwort": "A: Die «17 Rezepte» stammen aus dem alten, archivierten KosmoOrbit-Klon (Code/KosmoOrbit, Zweig main, 145eae8); recipes.ts ist dort seit 02.07.2026 unveraendert und traegt heute 18 key-Eintraege inkl. render_preflight, keinen fuer aiimaging. B: Modellpfad steht RELATIV in projekt.json («../../modelle/testbau.ifc»), rechne laeuft durch.",
+ "befunde": {
+  "A": {
+   "klon_relativ": "Datenlaufwerk …/ArchitekturKosmos/Code/KosmoOrbit (NICHT das heutige Architektur-Cosmos-Repo)",
+   "zweig": "main",
+   "commit": "145eae8 (24.09.2026, B109-Kennwort-Bereinigung); recipes.ts zuletzt geaendert 1176c5e am 02.07.2026",
+   "recipes_ts_heute": true,
+   "render_preflight_heute": true,
+   "anzahl_rezepte_heute": 18,
+   "schluessel": "inspect plan review_gate versions variants gewissen publish wettbewerb entwurf plan_aus_ifc render_preflight koordination vorform vorform_bauteil vorform_mengen gen_varianten bim_viewer bim_3d",
+   "abweichung": "Am 07.09. wurden 17 gemeldet, heute 18 bei unveraenderter Datei — vermutlich damals anders gezaehlt; keines davon fuer aiimaging.",
+   "hinweis": "Das Repo Imperigo/KosmoOrbit ist archiviert (Owner-Entscheid), darum findet ihr es im heutigen KosmoOrbit-Strang nicht."
+  },
+  "B": {
+   "modellpfad_form": "relativ",
+   "modellpfad_wert": "../../modelle/testbau.ifc",
+   "lauf_durch": true,
+   "hinweis": "Mappe und Modell lagen ausserhalb des Heimatordners in Geschwisterordnern; der Pfad wurde relativ zur Mappe geschrieben (weder heimrelativ noch absolut)."
+  }
+ },
+ "umgebung": {
+  "python": ".venv-render (3.14.4)",
+  "AIIMAGING_MODELLE": "/mnt/data/ai-models/diffusers",
+  "gpu": "RTX 5090, 400 W, vor dem Lauf 706 MiB belegt"
+ },
+ "fehler": []
+}

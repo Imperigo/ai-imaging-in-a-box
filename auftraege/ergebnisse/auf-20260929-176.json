@@ -1,0 +1,437 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260929-176",
+ "status": "ok",
+ "beendet": "2026-09-30T07:48+02:00",
+ "stand": "4d5e6d7 Dokumente auf den 29.09. nachgezogen; Sitzung 59 hatte zwei Szenen falsch gepaart",
+ "geprueft": [
+  "python tools/vertragsbeispiele.py build/beispiel-echt --echt mit .venv-render (python3 des Systems hat kein torch), rc 0, 37 s",
+  "Tiefe und Material-ID beider Kameras angesehen; eine Wand per Pixel gegen die Tabelle in ebenen geprueft"
+ ],
+ "kurzantwort": "Echt gelaufen (z-image-turbo, Apache-2.0): geometry_gates.status «measured», released false. Tiefe zeigt das Gebaeude, nah hell; Material-ID passt zur Tabelle. Befund: render-result.images nennt Suedost.png/Suedwest.png, die im Beispielordner FEHLEN (das Werkzeug kopiert nur die Ebenen).",
+ "befunde": {
+  "geometry_gates": {
+   "status": "measured",
+   "released": false,
+   "reason": "NICHT BESTANDEN wegen Kamera 'Suedost'. Kamera 'Suedwest': NICHT BESTANDEN — rho_maske: 0.8864 ≥ 0.10; geom_iou: 0.6050 < 0.85. OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das Urteil ist damit so viel wert wie das alte."
+  },
+  "je_kamera": {
+   "Suedost": "Tiefe: der Quader steht klar im Bild, der Boden vorn ist am hellsten (nah hell), der Hintergrund schwarz (Grauwert 0). Material-ID: die grosse linke Flaeche hat (38,255,219) = IfcWall_Wand-Sued laut Tabelle — passt zur Blickrichtung Suedost; Gelaende (38,101,255) und Bodenplatte (255,38,38) ebenfalls wie in der Tabelle.",
+   "Suedwest": "Tiefe: Gebaeude im Bild, nah hell. Material-ID: Sued- und Westwand in zwei Farben, Gelaende blau, Bodenplatte als roter Streifen — optisch wie die Tabelle, nicht pixelweise nachgemessen."
+  },
+  "befund_fehlende_bilder": "render-result.json listet images ['Suedost.png','Suedwest.png'], im Ordner build/beispiel-echt liegen aber nur die sechs Ebenen-PNG; tools/vertragsbeispiele.py kopiert nur die Ebenen (Zeile 124). Fuer ein Schema-Beispiel an KosmoOrbit verweist das Beispiel damit auf Dateien, die nicht dabei sind.",
+  "render_result_json": {
+   "schema": "kosmovis.render-result/v2",
+   "job_id": "vis-1790000000-e124a1",
+   "images": [
+    "Suedost.png",
+    "Suedwest.png"
+   ],
+   "qa": {
+    "geometry": {
+     "geometry_fidelity": 0.5025194207925594,
+     "spearman": -0.4174303228820576,
+     "geom_iou": 0.6049531009874406,
+     "threshold": 0.65,
+     "passed": false,
+     "method": "sqrt(max(0, polaritaet * spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v2 (gerichtet)",
+     "status": "measured"
+    },
+    "verdict": {
+     "passed": false,
+     "reason": "Geometrie 0.5025194207925594 gegen 0.65"
+    }
+   },
+   "timings": {
+    "Suedost": 18.9,
+    "Suedwest": 16.9,
+    "gesamt": 35.8
+   },
+   "geometry_gates": {
+    "status": "measured",
+    "released": false,
+    "passed": false,
+    "counter_check_status": "not_measured",
+    "rho_mask": 0.8864338907905339,
+    "rho_mask_threshold": 0.1,
+    "rho_mask_status": "measured",
+    "rho_mask_passed": true,
+    "geom_iou": 0.6049531009874406,
+    "geom_iou_threshold": 0.85,
+    "geom_iou_status": "measured",
+    "geom_iou_passed": false,
+    "fail_reasons": [
+     "geom_iou_unter_schwelle",
+     "gegenprobe_fehlt",
+     "kamera_nicht_bestanden:Suedost"
+    ],
+    "reason": "NICHT BESTANDEN wegen Kamera 'Suedost'. Kamera 'Suedwest': NICHT BESTANDEN — rho_maske: 0.8864 ≥ 0.10; geom_iou: 0.6050 < 0.85. OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das Urteil ist damit so viel wert wie das alte.",
+    "warnings": [
+     "OHNE GEGENPROBE. Es wurde nicht geprueft, ob dieselbe Messung auch gegen eine fremde Geometrie besteht. Das Urteil ist damit so viel wert wie das alte — und das alte liess elf von zwoelf Muellbildern durch.",
+     "ANDERE KAMERA FAELLT DURCH: 'Suedost' besteht die zwei Tore nicht. Die Zahlen hier gehoeren zur Kamera 'Suedwest' (der mit dem schlechtesten Score); der Auftrag ist so gut wie sein schwaechstes Bild."
+    ],
+    "camera": "Suedwest"
+   },
+   "qa_je_kamera": [
+    {
+     "kamera": "Suedost",
+     "geometry": {
+      "geometry_fidelity": 0.6311216884146199,
+      "spearman": -0.9880868293797612,
+      "geom_iou": 0.4031169870337704,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(max(0, polaritaet * spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v2 (gerichtet)",
+      "status": "measured"
+     },
+     "lieferstatus": "geliefert",
+     "lieferstatus_grund": "",
+     "bilder_soll": 1,
+     "bilder_ist": 1
+    },
+    {
+     "kamera": "Suedwest",
+     "geometry": {
+      "geometry_fidelity": 0.5025194207925594,
+      "spearman": -0.4174303228820576,
+      "geom_iou": 0.6049531009874406,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(max(0, polaritaet * spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v2 (gerichtet)",
+      "status": "measured"
+     },
+     "lieferstatus": "geliefert",
+     "lieferstatus_grund": "",
+     "bilder_soll": 1,
+     "bilder_ist": 1
+    }
+   ],
+   "ebenen": [
+    {
+     "kamera": "Suedost",
+     "art": "schoenbild",
+     "datei": "Suedost__schoenbild.png",
+     "bedeutung": {
+      "renderer": "cycles",
+      "samples": 8
+     }
+    },
+    {
+     "kamera": "Suedost",
+     "art": "tiefe",
+     "datei": "Suedost__tiefe.png",
+     "bedeutung": {
+      "einheit": "m",
+      "min_m": 6.030965328216553,
+      "max_m": 27.657093048095703,
+      "nah": "hell",
+      "hintergrund_grauwert": 0.0,
+      "bittiefe": 8,
+      "rueckrechnung": "meter = max_m - grau * (max_m - min_m), grau in 0..1"
+     }
+    },
+    {
+     "kamera": "Suedost",
+     "art": "material-id",
+     "datei": "Suedost__material-id.png",
+     "bedeutung": {
+      "nullfarbe_srgb_8bit": [
+       0,
+       0,
+       0
+      ],
+      "tabelle": [
+       {
+        "index": 0,
+        "name": "IfcSlab_Bodenplatte_0QOeb014HIhArHZBIoEr7x",
+        "farbe_srgb_8bit": [
+         255,
+         38,
+         38
+        ]
+       },
+       {
+        "index": 1,
+        "name": "IfcSlab_Gelaende_2eYuY4S81HqRN8GZ4SZVcP",
+        "farbe_srgb_8bit": [
+         38,
+         101,
+         255
+        ]
+       },
+       {
+        "index": 2,
+        "name": "IfcWall_Wand-Nord_3mjgw8w9HGohobry3OS3oX",
+        "farbe_srgb_8bit": [
+         165,
+         255,
+         38
+        ]
+       },
+       {
+        "index": 3,
+        "name": "IfcWall_Wand-Ost_1Bl7KKqkzR1hrNY6$pmwAA",
+        "farbe_srgb_8bit": [
+         255,
+         38,
+         228
+        ]
+       },
+       {
+        "index": 4,
+        "name": "IfcWall_Wand-Sued_1FMjVFy01IOxjjEoyOZm1b",
+        "farbe_srgb_8bit": [
+         38,
+         255,
+         219
+        ]
+       },
+       {
+        "index": 5,
+        "name": "IfcWall_Wand-West_2NzZv_nR5PDeSTjZLs5cMG",
+        "farbe_srgb_8bit": [
+         255,
+         156,
+         38
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "kamera": "Suedwest",
+     "art": "schoenbild",
+     "datei": "Suedwest__schoenbild.png",
+     "bedeutung": {
+      "renderer": "cycles",
+      "samples": 8
+     }
+    },
+    {
+     "kamera": "Suedwest",
+     "art": "tiefe",
+     "datei": "Suedwest__tiefe.png",
+     "bedeutung": {
+      "einheit": "m",
+      "min_m": 5.87408447265625,
+      "max_m": 26.561948776245117,
+      "nah": "hell",
+      "hintergrund_grauwert": 0.0,
+      "bittiefe": 8,
+      "rueckrechnung": "meter = max_m - grau * (max_m - min_m), grau in 0..1"
+     }
+    },
+    {
+     "kamera": "Suedwest",
+     "art": "material-id",
+     "datei": "Suedwest__material-id.png",
+     "bedeutung": {
+      "nullfarbe_srgb_8bit": [
+       0,
+       0,
+       0
+      ],
+      "tabelle": [
+       {
+        "index": 0,
+        "name": "IfcSlab_Bodenplatte_0QOeb014HIhArHZBIoEr7x",
+        "farbe_srgb_8bit": [
+         255,
+         38,
+         38
+        ]
+       },
+       {
+        "index": 1,
+        "name": "IfcSlab_Gelaende_2eYuY4S81HqRN8GZ4SZVcP",
+        "farbe_srgb_8bit": [
+         38,
+         101,
+         255
+        ]
+       },
+       {
+        "index": 2,
+        "name": "IfcWall_Wand-Nord_3mjgw8w9HGohobry3OS3oX",
+        "farbe_srgb_8bit": [
+         165,
+         255,
+         38
+        ]
+       },
+       {
+        "index": 3,
+        "name": "IfcWall_Wand-Ost_1Bl7KKqkzR1hrNY6$pmwAA",
+        "farbe_srgb_8bit": [
+         255,
+         38,
+         228
+        ]
+       },
+       {
+        "index": 4,
+        "name": "IfcWall_Wand-Sued_1FMjVFy01IOxjjEoyOZm1b",
+        "farbe_srgb_8bit": [
+         38,
+         255,
+         219
+        ]
+       },
+       {
+        "index": 5,
+        "name": "IfcWall_Wand-West_2NzZv_nR5PDeSTjZLs5cMG",
+        "farbe_srgb_8bit": [
+         255,
+         156,
+         38
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "lieferstatus": "geliefert",
+   "lieferstatus_grund": "",
+   "engine_used": "z-image-turbo",
+   "engine_license": "Apache-2.0"
+  },
+  "abholer_puls_json": {
+   "schema": "aiimaging.abholer-puls/v1",
+   "zuletzt": "2026-09-29T12:00:00Z",
+   "zuletzt_epoch_s": 1790683200.0,
+   "gesehen": 1,
+   "verarbeitet": 1,
+   "liegengelassen": 0,
+   "fehler": 0,
+   "waisen": 0
+  },
+  "health_abholer_je_zustand_json": {
+   "nie_gesehen": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+     "jobstore": true,
+     "ollama": false,
+     "stt": false,
+     "tts": false,
+     "embed": false
+    },
+    "abholer": {
+     "zustand": "nie_gesehen",
+     "zuletzt": null,
+     "alter_s": null,
+     "frist_s": 120,
+     "grund": "Kein Lebenszeichen des Abholers in dieser Ablage. Entweder läuft er nicht, oder er schaut in eine andere Ablage."
+    }
+   },
+   "laeuft_leer": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+     "jobstore": true,
+     "ollama": false,
+     "stt": false,
+     "tts": false,
+     "embed": false
+    },
+    "abholer": {
+     "zustand": "laeuft_leer",
+     "zuletzt": "2026-09-29T12:00:00Z",
+     "alter_s": 31.0,
+     "frist_s": 120,
+     "letzter_durchgang": {
+      "gesehen": 1,
+      "verarbeitet": 1,
+      "liegengelassen": 0,
+      "fehler": 0,
+      "waisen": 0
+     },
+     "grund": ""
+    }
+   },
+   "steht": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+     "jobstore": true,
+     "ollama": false,
+     "stt": false,
+     "tts": false,
+     "embed": false
+    },
+    "abholer": {
+     "zustand": "steht",
+     "zuletzt": "2026-09-29T12:00:00Z",
+     "alter_s": 165.0,
+     "frist_s": 120,
+     "letzter_durchgang": {
+      "gesehen": 1,
+      "verarbeitet": 1,
+      "liegengelassen": 0,
+      "fehler": 0,
+      "waisen": 0
+     },
+     "grund": ""
+    }
+   },
+   "wartet": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+     "jobstore": true,
+     "ollama": false,
+     "stt": false,
+     "tts": false,
+     "embed": false
+    },
+    "abholer": {
+     "zustand": "wartet",
+     "zuletzt": "2026-09-29T12:00:00Z",
+     "alter_s": 31.0,
+     "frist_s": 120,
+     "letzter_durchgang": {
+      "gesehen": 1,
+      "verarbeitet": 1,
+      "liegengelassen": 1,
+      "fehler": 0,
+      "waisen": 0
+     },
+     "grund": ""
+    }
+   },
+   "arbeitet": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+     "jobstore": true,
+     "ollama": false,
+     "stt": false,
+     "tts": false,
+     "embed": false
+    },
+    "abholer": {
+     "zustand": "arbeitet",
+     "zuletzt": "2026-09-29T12:00:00Z",
+     "alter_s": 31.0,
+     "frist_s": 120,
+     "letzter_durchgang": {
+      "gesehen": 1,
+      "verarbeitet": 1,
+      "liegengelassen": 1,
+      "fehler": 0,
+      "waisen": 0
+     },
+     "grund": ""
+    }
+   }
+  }
+ },
+ "umgebung": {
+  "python": ".venv-render (3.14.4)",
+  "AIIMAGING_MODELLE": "/mnt/data/ai-models/diffusers",
+  "gpu": "RTX 5090, 400 W, vor dem Lauf 706 MiB belegt"
+ },
+ "fehler": [
+  "Der erste Aufruf nach Auftrag (python3 …) haette ohne torch nicht gerechnet; gefahren mit dem Render-Python."
+ ]
+}
