@@ -781,6 +781,19 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         "lizenz": r.get("lizenz"), "maengel": r.get("maengel"),
         "hinweise": r.get("hinweise"),
         "bild": Path(r["bild_png"]).name if r.get("bild_png") else None,
+        # WELCHER MODUS WIRKLICH GERECHNET WURDE (30.09.2026, PLAN «homeworker-Ergebnis
+        # mit modus_gerechnet»). `render.rendere` fuehrt die drei Felder seit dem
+        # 21.09.2026 — hier wurden sie bis heute nicht abgeschrieben. Ein Lauf, der
+        # `image_edit` bestellt und `txt2img` gerechnet hat, sah darum im Ergebnis genau
+        # so aus wie einer, der bekam, was er bestellte. `modus_gerechnet: None` heisst:
+        # die Naht hat nichts gemeldet — NICHT «wie bestellt».
+        "modus_bestellt": r.get("modus_bestellt"),
+        "modus_gerechnet": r.get("modus_gerechnet"),
+        "modus_abweichung": r.get("modus_abweichung"),
+        # Auf welchem Weg das Bildmodell lief und WARUM (`geraeteweg.bedarf.grund`) — auf
+        # dem Abholer-Weg seit dem 26.08.2026 am Kameraurteil, auf diesem Weg fehlte es
+        # (auf-20260924-173, Zusatz A4: den Grund nannte nur das Abholer-Protokoll).
+        "geraeteweg": _nur_dateinamen(r.get("geraeteweg")),
     }
     if r["status"] != "ok":
         return auf.baue_ergebnis(
@@ -833,6 +846,11 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         maske=maskenbefund.get("maske"),
     )
     messwerte["geometrie_qa"] = _nur_dateinamen(qa)
+    # DIE UMRISSTREUE ALS AUSKUNFT (`formkandidaten.formpruefung`, auf-20260930-195/196).
+    # Der Abholer fuehrt sie je Seed und am Sieger (`auswahl["formpruefung"]`); dieser
+    # Weg — der, auf dem die HomeStation ihre eigenen Messreihen faehrt — hatte sie
+    # nicht. Sie urteilt nicht (`urteilt: False`) und entscheidet darum nichts am Status.
+    messwerte["formpruefung"] = _formpruefung(r["bild_png"], soll, breite, hoehe)
 
     # `status` des Auftrags bildet ab, ob **gemessen** wurde — nicht, ob das Bild besteht.
     # Ein Render, der die Schwelle reisst, ist ein gelungener Auftrag mit einem klaren
@@ -847,9 +865,54 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
             "bestanden": qa.get("bestanden"),
             "score": qa.get("score"),
             "begruendung": qa.get("begruendung"),
+            # Die zwei Auskuenfte, nach denen eine Messreihe zuerst fragt — hier vorn,
+            # damit niemand sie in `messwerte` suchen muss. Beide URTEILEN NICHT: Die
+            # Umrisstreue ist Auskunft ohne Schwelle, der Modus ein Befund ueber den Lauf.
+            "modus_gerechnet": r.get("modus_gerechnet"),
+            "umrisstreue": messwerte["formpruefung"].get("wert"),
         },
         fehler=qa.get("error"),
         dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+
+def _formpruefung(bild_png, soll, breite: int, hoehe: int) -> dict:
+    """Die Formpruefung (Umrisstreue) fuer ein Bild — und wenn nicht messbar, warum.
+
+    Dieselbe Rechnung wie ``abholer._formpruefung``: Luminanz des Bildes gegen die
+    Soll-Karte, :func:`aiimaging.formkandidaten.formpruefung`. **Ein Unterschied mit
+    Absicht:** Der Abholer gibt ``None`` zurueck, wenn nicht gemessen werden kann — er
+    schreibt es an eine Auswahl, in der ein fehlender Wert bloss nicht mitzaehlt. Dieses
+    Ergebnis dagegen reist zu jemandem, der nicht danebensteht; ein ``None`` ohne Satz
+    liesse ihn raten, ob die Zahl vergessen oder nicht messbar war. Darum steht hier
+    immer ein Block, und ``wert: None`` hat ``status`` und ``grund`` neben sich.
+
+    Nur Zahlen und Worte — kein Pfad, keine Bilddaten (Regel 3).
+    """
+    from aiimaging import bildlesen, formkandidaten
+
+    def nicht_gemessen(status: str, grund: str) -> dict:
+        return {"mass": formkandidaten.FORMPRUEFUNG_MASS, "wert": None,
+                "silhouette_abhebung": None, "status": status,
+                "urteilt": formkandidaten.FORMPRUEFUNG_URTEILT, "schwelle": None,
+                "grundlage": formkandidaten.FORMPRUEFUNG_GRUNDLAGE, "grund": grund}
+
+    if soll is None or not breite or not hoehe:
+        return nicht_gemessen("keine_soll_karte",
+                              "Keine Soll-Tiefenkarte — ohne sie gibt es keinen Umriss.")
+    try:
+        luminanz, b, h = bildlesen.lies_png_luminanz(bild_png)
+    except Exception as e:                                # noqa: BLE001 — Auskunft
+        return nicht_gemessen("bild_nicht_lesbar",
+                              f"Das Bild liess sich nicht lesen ({type(e).__name__}).")
+    if (b, h) != (breite, hoehe):
+        return nicht_gemessen("groesse_passt_nicht",
+                              f"Bild {b}x{h}, Soll {breite}x{hoehe} — ein Umriss auf "
+                              f"verschiedenen Rastern waere eine erfundene Zahl.")
+    try:
+        return dict(formkandidaten.formpruefung(luminanz, soll, breite, hoehe), grund="")
+    except Exception as e:                                # noqa: BLE001 — Auskunft
+        return nicht_gemessen("fehler", f"Formpruefung gescheitert: "
+                                        f"{type(e).__name__}: {e}")
 
 
 def geometrie_schwelle() -> float:
