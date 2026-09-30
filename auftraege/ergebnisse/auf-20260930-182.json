@@ -1,0 +1,73 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-182",
+ "status": "ok",
+ "beendet": "2026-09-30T10:40+02:00",
+ "stand": "KosmoPrepare 16d3a16 Karten-Knoten am Geraet gruen: der Import-Fix traegt in Blender ohne Behelf",
+ "geprueft": [
+  "Teil A in Blender-Fork 5.1.2 ohne Behelf (Repo-Stamm nicht in sys.path, kein Modul core vorgeladen), Knoten per Operator wie der Knopf",
+  "Teil B: Groesse, git-Status, Verweise, run_tests vorher/nachher"
+ ],
+ "kurzantwort": "Teil A bestanden: «Plan eingepasst: 111/117 Gebäude gepaart, Abweichung Median 0.76 m / P90 2.57 m · Massstab 1.0119, Drehung 0.47° · 7 Stilgruppen in LV95» — genau wie erwartet, 7 GeoJSON, kein «No module named». Teil B: Altordner nicht versioniert, nur in Ausschlussmustern genannt; mit Owner-Ja AUSSERHALB des Klons verschoben (nicht geloescht, zurueckholbar); der Verbotstest-Befund ist weg (failures 4 → 3), die restlichen 3+43 sind alle numpy/shapely cp313 gegen Python 3.14.",
+ "befunde": {
+  "teil_a": {
+   "schema": "aiimaging.homeworker-ergebnis/v1",
+   "auftrag_id": "auf-20260930-182",
+   "teil": "A",
+   "status": "ok",
+   "beendet": "2026-09-30T07:30:00Z",
+   "stand": "16d3a16",
+   "git_log_1": "16d3a16 Karten-Knoten am Geraet gruen: der Import-Fix traegt in Blender ohne Behelf",
+   "pdf_gefunden": "ja (aus dem OneDrive des Owners geholt)",
+   "geprueft": "Blender-Fork KosmoDesign 5.1.2 frisch, Xvfb :97, WAYLAND_DISPLAY=kein-wayland, OHNE Behelf (Repo-Stamm nicht in sys.path, kein Modul «core» geladen, vorher und nachher). Add-on per Symlink in eigenem, danach geloeschtem Ressourcenordner. Knoten «Plan einpassen» ueber den Operator seiner Knoepfe (stile_lesen True = «Stile lesen», False = «Einpassen»). Keine GPU/CUDA genutzt (Software-Zeichnung auf Xvfb, CUDA_VISIBLE_DEVICES leer). Nichts committet, kein Code geaendert.",
+   "kurzantwort": "Gruen: eingepasst, alle Zahlen wie erwartet (111/117, Median 0.76 m, P90 2.57 m, Massstab 1.0119, Drehung 0.47°, 7 Stilgruppen), 7 GeoJSON, kein «No module named».",
+   "befunde": {
+    "stile_lesen": {
+     "status": "angaben_fehlen (gewollt: liefert die Stilliste)",
+     "zeile": "Seite 6: 154 Pfade in 7 Stilen — fuer das Einpassen braucht es 'gebaeude_stil' (Schluessel aus 'stile'), 'anker' {pdf_pt|stil, lv95} und 'm_pro_pt' oder 'massstabsbalken' — hier die Stile der Seite",
+     "erwartete_eintraege": "ja — «malart=F fuell=cmyk(0,0,0,0.376)» (116) und «malart=F fuell=cmyk(0,0,0,0.224)» (1) in der Auswahl; beide liessen sich in Gebaeude-Stil bzw. Anker-Stil waehlen",
+     "stile_anzahl": 7
+    },
+    "einpassen": {
+     "eingaben": "Seite 6, Balken 500 m / 216.85 pt, Gebaeude-Stil malart=F fuell=cmyk(0,0,0,0.376), Anker = Stil malart=F fuell=cmyk(0,0,0,0.224), Anker E 2649076.0 / N 1177814.3, GeoJSON-Ordner neu und leer unter /tmp",
+     "status": "eingepasst",
+     "zeile": "Plan eingepasst: 111/117 Gebäude gepaart, Abweichung Median 0.76 m / P90 2.57 m · Massstab 1.0119, Drehung 0.47° · 7 Stilgruppen in LV95",
+     "gegen_erwartung": {
+      "gepaart": "111/117 = erwartet",
+      "median_m": "0.76 = erwartet",
+      "p90_m": "2.57 = erwartet",
+      "massstab": "1.0119 = erwartet",
+      "drehung_grad": "0.47 = erwartet",
+      "stilgruppen": "7 = erwartet"
+     },
+     "warnungen": [],
+     "laufzeit_s": "ca. 1.0 (Stile lesen ca. 1.0) — Aufloesung durch 1-s-Timer des Operators",
+     "bedienbar": "ja — Timer-Takt 0.2 s im Hauptfaden (aendert frame_current) lief weiter, groesste Luecke 0.218 s; bei ca. 1 s Laufzeit nur ein schwacher Beleg",
+     "geojson_anzahl": 7
+    },
+    "no_module_named": "nein (weder im Knoten noch in der Konsole; Konsole ohne Traceback)"
+   },
+   "umgebung": {
+    "geraet": "HomeStation",
+    "gpu_last": "keine (Grafikkarte war von Lauf 184 belegt, nicht angefasst)",
+    "aufgeraeumt": "Blender und Xvfb per PID beendet, GeoJSON-Ordner unter /tmp geloescht"
+   },
+   "fehler": null
+  },
+  "teil_b": {
+   "a_groesse": "324 MB, 112 Eintraege auf oberster Ebene",
+   "b_git_status": "unversioniert und ignoriert (.gitignore:28 «libs.darwin-bak*/»)",
+   "c_verweise": "Nur als Ausschlussmuster: blender_manifest.toml:63/67 und tests/test_paket_ausschluesse.py:86/209/253 — kein Code, der den Ordner benutzt; keine Symlinks (find -lname: 0)",
+   "d_run_tests_vorher": "auf 520ddca (Lauf zu 177): Ran 1537, FAILED (failures=4, errors=43, skipped=92) — auf 1322431 vor dem Verschieben NICHT separat gefahren (ich hatte nach dem Owner-Ja zuerst verschoben)",
+   "geloescht": "nein — verschoben ausserhalb des Klons (Datenlaufwerk, Archivordner); kann auf Wunsch endgueltig geloescht werden",
+   "run_tests_nachher": "16d3a16: Ran 1542, FAILED (failures=3, errors=43, skipped=93); kein Befund mehr zu darwin-bak; die 3 FAIL (test_karten_knoten…themenkarte_offline, test_themenkarte…saison/haltestelle) und 43 ERROR alle «numpy._core._multiarray_umath» bzw. «shapely.lib» (libs/ fuer cp313, Tests mit 3.14)"
+  }
+ },
+ "umgebung": {
+  "blender": "KosmoDesign-Fork 5.1.2 (Python 3.13.9), Xvfb, WAYLAND_DISPLAY auf nicht vorhandenen Namen",
+  "pdf": "gefunden: ja (aus dem OneDrive des Owners geholt, liegt in keinem Repo)"
+ },
+ "fehler": [
+  "Teil B: vorher-Lauf auf dem aktuellen Stand fehlt (siehe d_run_tests_vorher)."
+ ]
+}
