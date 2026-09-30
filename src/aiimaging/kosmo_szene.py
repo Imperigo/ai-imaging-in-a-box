@@ -102,6 +102,10 @@ BACKBONE_VON_FREMD = {
     # trotzdem ausgeschrieben da: Ein Eintrag, der fehlt, sieht von aussen genauso aus
     # wie ein Name, den es nicht gibt.
     "z-image-turbo": "z-image-turbo",
+    # E128 (30.09.2026): regulär bestellbar, Lizenz offen. Ihr Vertrag kennt den Namen
+    # noch nicht — gestellt als Vertragsfrage (erg-20260930-e128-vertragsfrage-qwen21.md).
+    # Bis sie ihn einbauen, weist ihr eigenes Schema eine solche Bestellung vorher ab.
+    "qwen-image-2.1": "qwen-image-2.1",
 }
 
 #: Die Auftragskennung der fremden Warteschlange — wörtlich aus ihrem Schema.
@@ -502,8 +506,10 @@ def backbone_von_fremd(fremd: str) -> dict:
                     f"Bekannt sind: {', '.join(sorted(BACKBONE_VON_FREMD))}. Es wird NICHT "
                     f"auf die Vorgabe zurückgefallen — ein stillschweigend ersetztes "
                     f"Modell wäre ein anderes Bild unter demselben Auftrag.")}
-    urteil = _backbone.pruefe_lizenz(unser)
-    return {"name": unser, "bekannt": True, "zulaessig": urteil["zulaessig"],
+    # `ladefreigabe`, nicht `pruefe_lizenz`: Ein Eintrag mit offener Lizenz (E128) ist
+    # bestellbar, obwohl er nicht verkaufbar ist. Fuer alle anderen dieselbe Antwort.
+    urteil = _backbone.ladefreigabe(unser, umgebung={})
+    return {"name": unser, "bekannt": True, "zulaessig": urteil["darf"],
             "begruendung": urteil["begruendung"]}
 
 
@@ -2923,6 +2929,10 @@ def engine_felder(engine) -> dict:
         felder["engine_license"] = engine["lizenz"]
     if isinstance(engine.get("fuehrung"), bool):
         felder["guidance_applied"] = engine["fuehrung"]
+    # E128: nur wenn wahr — ein `false` hiesse «geprüft und frei», und das sagt hier
+    # niemand. Vorgeschlagener Name, Vertragsfrage gestellt am 30.09.2026.
+    if engine.get("lizenz_offen") is True:
+        felder["engine_license_open"] = True
     return felder
 
 

@@ -421,6 +421,18 @@ class Backbone:
     #: sagt weiter «nicht im Produkt»; nur :func:`ladefreigabe` kennt die Ausnahme.
     nur_forschung: str | None = None
 
+    #: Ein Satz, WARUM dieser nicht verkaufbare Eintrag regulär bestellt werden darf —
+    #: ``None`` heisst: keine solche Freigabe.
+    #:
+    #: **Einbau mit offener Lizenz (Owner-Entscheid E128, 30.09.2026).** Strenger als
+    #: «frei», lockerer als :attr:`nur_forschung`: Der Eintrag ist bestellbar (auch über
+    #: KosmoOrbit) und braucht keinen Schalter, bleibt aber **nie Vorgabe** (``waehle(
+    #: kommerziell=True)`` bietet ihn nicht an, weil ``kommerziell_nutzbar`` ``False``
+    #: bleibt), und **jeder Lauf trägt die Marke** ``lizenz_offen`` bis ins Ergebnis. Die
+    #: Marke ist die Bedingung für den Lizenzwächter drüben: Eine Veröffentlichung wird
+    #: gesperrt, bis die Lizenz gelöst oder das Modell entfernt ist.
+    lizenz_offen: str | None = None
+
 
 #: Die Umgebungsvariable, die ein Modell mit :attr:`Backbone.nur_forschung` ladbar macht.
 #: Nur am Heimrechner und nur fuer einen Messlauf zu setzen — im Produkt nie.
@@ -435,24 +447,35 @@ def ladefreigabe(name: str, *, umgebung=None) -> dict:
     einen Eintrag mit :attr:`Backbone.nur_forschung` — der wird geladen, wenn
     :data:`FORSCHUNG_SCHALTER` auf ``"1"`` steht, und traegt dann ``forschung: True``.
 
+    Seit E128 (30.09.2026) dazu ein Eintrag mit :attr:`Backbone.lizenz_offen`: geladen
+    **ohne** Schalter, mit ``lizenz_offen: True``.
+
     Returns:
-        ``{darf, forschung, begruendung}``.
+        ``{darf, forschung, lizenz_offen, begruendung}``.
     """
     import os
 
     eintrag = hole(name)
     lizenz = pruefe_lizenz(name)
     if lizenz["zulaessig"]:
-        return {"darf": True, "forschung": False, "begruendung": lizenz["begruendung"]}
+        return {"darf": True, "forschung": False, "lizenz_offen": False,
+                "begruendung": lizenz["begruendung"]}
+    if eintrag.lizenz_offen:
+        return {"darf": True, "forschung": False, "lizenz_offen": True, "begruendung": (
+            f"LIZENZ OFFEN: {eintrag.name} steht unter '{eintrag.lizenz}' und ist heute "
+            f"nicht verkaufbar. Eingebaut nach {eintrag.lizenz_offen} Jedes Ergebnis traegt "
+            f"die Marke; eine Veroeffentlichung ist gesperrt, bis die Lizenz geloest oder "
+            f"das Modell entfernt ist.")}
     if not eintrag.nur_forschung:
-        return {"darf": False, "forschung": False, "begruendung": lizenz["begruendung"]}
+        return {"darf": False, "forschung": False, "lizenz_offen": False,
+                "begruendung": lizenz["begruendung"]}
     umgebung = os.environ if umgebung is None else umgebung
     if umgebung.get(FORSCHUNG_SCHALTER) != "1":
-        return {"darf": False, "forschung": False, "begruendung": (
+        return {"darf": False, "forschung": False, "lizenz_offen": False, "begruendung": (
             f"{lizenz['begruendung']} Forschungs-Ausnahme: {eintrag.nur_forschung} "
             f"Geladen wird es nur mit {FORSCHUNG_SCHALTER}=1 (am Heimrechner, fuer einen "
             f"Messlauf) — der Schalter ist hier nicht gesetzt.")}
-    return {"darf": True, "forschung": True, "begruendung": (
+    return {"darf": True, "forschung": True, "lizenz_offen": False, "begruendung": (
         f"NUR FORSCHUNG: {eintrag.name} steht unter '{eintrag.lizenz}' und ist nicht "
         f"verkaufbar. Geladen unter der Forschungs-Ausnahme ({eintrag.nur_forschung}). "
         f"Bilder aus diesem Lauf gehoeren nicht in ein ausgeliefertes Produkt.")}
@@ -733,6 +756,13 @@ def _eintrag(backbone: Backbone) -> None:
             f"{backbone.name}: nur_forschung={backbone.nur_forschung!r} passt nicht zu "
             f"kommerziell_nutzbar={backbone.kommerziell_nutzbar} — die Ausnahme braucht "
             f"einen Satz, und sie gilt nur fuer nicht verkaufbare Gewichte.")
+    if backbone.lizenz_offen is not None and (
+            backbone.kommerziell_nutzbar or not str(backbone.lizenz_offen).strip()
+            or backbone.nur_forschung is not None):
+        raise BackboneError(
+            f"{backbone.name}: lizenz_offen={backbone.lizenz_offen!r} passt nicht — die "
+            f"Freigabe braucht einen Satz, gilt nur fuer nicht verkaufbare Gewichte und "
+            f"nicht zusammen mit nur_forschung (eines von beiden).")
 
     # Ein Urteil über den Bildeingang ohne Auftragskennung ist eine Behauptung, und ein
     # Beleg ohne Urteil ist eine Messung, die niemand liest (Befund 22.09.2026, siehe
@@ -1155,8 +1185,11 @@ _eintrag(Backbone(
     vram_gb=_vram_schaetzung(7.0),
     dateien=_DIFFUSERS_DATEIEN,
     lizenz_quelle=QUELLE_MODELLKARTE,
-    nur_forschung=("Owner-Entscheid 29.09.2026: fuer die Forschung jetzt nutzen, weil ein "
-                   "Verkauf noch fern ist; vor einem Verkauf entfernen oder lizenzieren."),
+    # 29.09.2026 als Forschungs-Ausnahme eingetragen (nur mit Schalter); am 30.09.2026
+    # durch E128 ersetzt: regulär bestellbar, Lizenz vor der Veröffentlichung lösen.
+    lizenz_offen=("Owner-Entscheid E128 (30.09.2026): regulaer eingebaut; die Lizenz wird "
+                  "vor einer Veroeffentlichung geloest (kommerzielle Lizenz oder Tausch), "
+                  "sonst wird das Modell entfernt."),
 ))
 
 

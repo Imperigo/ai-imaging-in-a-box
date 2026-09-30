@@ -1,0 +1,23 @@
+{
+  "schema": "kosmovis.render-scene/v1",
+  "geometry": {
+    "path": "model.glb",
+    "format": "glb"
+  },
+  "cameras": "auto",
+  "render": {
+    "resolution": [
+      1600,
+      1000
+    ],
+    "samples": 128,
+    "faithful": 0.8
+  },
+  "style": {
+    "prompt": "overcast sky, no people",
+    "mode": "none"
+  },
+  "vis": {
+    "backbone": "qwen-image-2.1"
+  }
+}

@@ -105,6 +105,16 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (mittags) · Qwen-Image-2.1 kommt ins Produkt — mit offener Lizenz
+
+* **Entschieden (E128):** Das neue Qwen-Bildmodell wird regulär eingebaut, nicht nur zum
+  Forschen. Die Lizenz wird vor einer Veröffentlichung gekauft oder das Modell ersetzt.
+* **Eingebaut bei uns:** KosmoOrbit kann es bestellen; es ist nie Standard, und jedes Ergebnis
+  sagt «Lizenz offen», damit niemand es aus Versehen veröffentlicht.
+* **Offen:** KosmoOrbit muss den Namen und den Vermerk in seinen Vertrag aufnehmen (Frage ist
+  gestellt). Und die eigentliche Frage bleibt: Übernimmt das Modell die Gebäudeform? Der
+  Heim-PC misst es gerade.
+
 ### 30.09.2026 · Keine Dauerwarnung mehr an Innenbildern, und leere Angaben werden benannt
 
 * **Innenbilder tragen drüben kein Warnzeichen mehr.** Der Satz «Innenansicht bestellt» ist

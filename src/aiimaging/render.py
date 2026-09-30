@@ -2425,6 +2425,11 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         # sehen, dass es nicht verkaufbar ist.
         parameter["nur_forschung"] = True
         hinweise = (freigabe["begruendung"], *hinweise)
+    if freigabe["lizenz_offen"]:
+        # E128: Die Marke reist mit dem Lauf bis ins Ergebnis (`engine_license_open`), wo
+        # der Lizenzwaechter von KosmoOrbit sie liest.
+        parameter["lizenz_offen"] = True
+        hinweise = (freigabe["begruendung"], *hinweise)
 
     if maengel:
         # Kein Laden, kein Rechnen, keine GPU. Die Ablehnung ist das Ergebnis.

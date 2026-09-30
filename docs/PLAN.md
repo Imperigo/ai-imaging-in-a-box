@@ -7516,6 +7516,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] **Owner:** 175 — ρ trennt weder frontal noch diagonal; das Paarurteil hängt allein
         daran. Was tun? (Protokoll 73 §4)
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
+  - [x] **Owner (E128):** Qwen-Image-2.1 regulär, Lizenz offen → gebaut (Protokoll 73 §6).
+  - [ ] **cloud (Int 1):** Vertragsfrage F1/F2 (`vis.backbone: "qwen-image-2.1"`,
+        `engine_license_open`) annehmen und einbauen.
+  - [ ] **Nach 178:** entscheiden, ob Masken/Referenzbilder/RGBA (F3) gefragt werden.
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut
         (`geometrie_qa.sprungordnung`, Ortsfeld abgezogen), urteilt nicht mit (Protokoll
         71 §18).

@@ -55,6 +55,21 @@ Vertiefungsarbeit **rechnen**, weil ein Verkauf noch fern ist — ausschliesslic
 Die Ausnahme gilt je Registereintrag (`Backbone.nur_forschung` mit Begründung), nicht für alles
 Nicht-Kommerzielle: FLUX.1-dev und FLUX.2-dev bleiben ausgeschlossen.
 
+**Präzisierung Einbau mit offener Lizenz (Owner-Entscheid E128, 2026-09-30):** Qwen-Image-2.1
+wird **regulär eingebaut**, nicht nur für die Forschung; die Lizenz wird **vor einer
+Veröffentlichung** gelöst (kommerzielle Lizenz oder Tausch). Das ersetzt für dieses Modell die
+Forschungs-Ausnahme, unter drei Auflagen:
+
+1. **Bestellbar, aber nie Vorgabe** — auch über KosmoOrbit, ohne Schalter; nie Vorgabe-,
+   Vorschau- oder Rückfallmodell, nicht in `waehle(kommerziell=True)`.
+2. **Markiert bis ins Ergebnis** — jeder Lauf trägt `lizenz_offen`, jedes Ergebnis
+   `engine_license_open: true`; `pruefe_lizenz` sagt weiter «nicht im Produkt». Der
+   Lizenzwächter von KosmoOrbit sperrt damit eine Veröffentlichung.
+3. **Vor einer Veröffentlichung gelöst oder entfernt** — gilt auch für darauf trainierte LoRAs.
+
+Die Freigabe gilt je Registereintrag (`Backbone.lizenz_offen` mit Begründung). Die
+Forschungs-Ausnahme bleibt als Mechanismus für künftige Forschungsmodelle bestehen.
+
 **Plattform-Bausteine:** Die Apple-Frameworks der iPad-App (SwiftUI, PencilKit, Network,
 Security) gehören zur Plattform wie das Betriebssystem und werden nicht mitgeliefert. Sie
 stehen als Vermerk im `NOTICE`, nicht als Abhängigkeit.

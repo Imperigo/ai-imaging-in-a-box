@@ -1498,10 +1498,13 @@ def _engine_aus(render_ergebnis) -> dict | None:
     if not isinstance(render_ergebnis, dict) or not render_ergebnis.get("backbone"):
         return None
     lizenz = render_ergebnis.get("lizenz")
-    fuehrung = (render_ergebnis.get("parameter") or {}).get("fuehrung_regler_angekommen")
+    parameter = render_ergebnis.get("parameter") or {}
+    fuehrung = parameter.get("fuehrung_regler_angekommen")
     return {"name": str(render_ergebnis["backbone"]),
             "lizenz": (lizenz.get("lizenz") if isinstance(lizenz, dict) else None),
-            "fuehrung": fuehrung if isinstance(fuehrung, bool) else None}
+            "fuehrung": fuehrung if isinstance(fuehrung, bool) else None,
+            # E128: nicht verkaufbar, Lizenz offen — nur wenn der Lauf es sagt.
+            "lizenz_offen": parameter.get("lizenz_offen") is True}
 
 
 #: Welches Feld des Multipass-Berichts welche bestellte Ebene traegt (E124, Schritt 1).

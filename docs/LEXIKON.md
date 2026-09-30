@@ -5920,6 +5920,13 @@ freigibt, nicht zum Verkaufen. Qwen-Image-2.1 steht unter einer solchen («resea
 evaluation purposes only»). Wer das Modell in einem verkauften Programm laufen lässt, bricht
 sie, auch wenn die Bilder selbst nicht ausdrücklich eingeschränkt sind.
 
+**Lizenz offen (Einbau mit offener Lizenz)** — Die Regel vom 30.09.2026 (Owner-Entscheid
+E128) für Qwen-Image-2.1: Das Modell ist regulär bestellbar, obwohl seine Lizenz heute keinen
+Verkauf erlaubt. Dafür trägt jedes Ergebnis den Vermerk `engine_license_open`, und bevor die
+Software veröffentlicht wird, muss die Lizenz gekauft oder das Modell ersetzt sein. Strenger als
+ein freies Modell (nie Standard, immer markiert), lockerer als die Forschungs-Ausnahme (kein
+Schalter, auch über KosmoOrbit bestellbar).
+
 **Forschungs-Ausnahme** — Die Erlaubnis des Owners vom 29.09.2026, ein Modell mit
 Forschungslizenz für die Vertiefungsarbeit trotzdem rechnen zu lassen. Sie hat enge Grenzen:
 nur am Heimrechner, nur mit einem ausdrücklich gesetzten Schalter, nie als Standard, nie von
@@ -6011,7 +6018,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

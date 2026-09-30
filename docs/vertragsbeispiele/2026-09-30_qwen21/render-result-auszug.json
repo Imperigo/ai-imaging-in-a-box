@@ -1,0 +1,18 @@
+{
+  "schema": "kosmovis.render-result/v2",
+  "job_id": "vis-1790000000-e128a1",
+  "images": [
+    "sSE.png"
+  ],
+  "qa": {
+    "verdict": {
+      "passed": false,
+      "reason": "Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. 'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft."
+    }
+  },
+  "lieferstatus": null,
+  "lieferstatus_grund": "NICHT FESTGESTELLT: 0 von 0 Kameras melden eine Lieferung, 1 Bild(er) in der Liste — ohne eine Meldung je Kamera ist nicht zu sagen, ob alles Bestellte da ist.",
+  "engine_used": "qwen-image-2.1",
+  "engine_license": "Qwen Research License Agreement",
+  "engine_license_open": true
+}

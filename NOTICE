@@ -238,6 +238,11 @@ Qwen/Qwen-Image-2.1     Qwen Research License Agreement (20.09.2026)
   https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE
   Vor einem Verkauf: entfernen oder lizenzieren. Ein darauf trainiertes LoRA
   erbt dieselbe Lage.
+  NACHTRAG 30.09.2026 (Owner-Entscheid E128): regulaer eingebaut, LIZENZ OFFEN.
+  Bestellbar ohne Schalter (aiimaging.backbone: Backbone.lizenz_offen), nie
+  Vorgabe; jedes Ergebnis traegt engine_license_open: true. Die Gewichte liegen
+  weiter nicht im Repo. Vor einer Veroeffentlichung wird die Lizenz geloest
+  (kommerzielle Lizenz oder Tausch) oder das Modell entfernt.
 
 --------------------------------------------------------------------------------
 
