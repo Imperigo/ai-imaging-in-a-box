@@ -1,0 +1,17 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260930-180",
+  "status": "ok",
+  "beendet": "2026-09-30T08:31:19Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "Weitergereicht an KosmoOrbit Int 1 — die Vis-Station ist nach der Magnet-Regel dessen Dateikreis, nicht der des UI-Workers.",
+    "wohin": "Architektur-Cosmos, Zweig claude/kosmo-ui-worker-setup-jjed26: auftraege/ergebnisse/erg-20260930-ui-an-integrator-kosmovis-180.md (Auftrag im Wortlaut, Fundstellen NodeCanvas.tsx ~730 und KuratierInspektor.tsx ~538, Angebot: der UI-Worker baut, sobald Int 1 die zwei Dateien freigibt).",
+    "nachgesehen": "Hauptstrang ebee68c1f: qa.verdict.hinweise wird in modules/vis/ nirgends gelesen (0 Treffer) — euer Befund stimmt.",
+    "eingebaut": "nein — noch nicht; Rueckgabe folgt, sobald Int 1 entschieden hat, wer baut."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "weitergereicht an KosmoOrbit Int 1"
+}

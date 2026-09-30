@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-187",
+  "art": "frage",
+  "beschreibung": "Nachprobe am Geraet: KosmoPrepare mit Kosmo-Seitenfenster — Kopfzeile frei vom Buch-Knopf, Umschalter bleibt stehen (ROADMAP 1630).",
+  "anweisung": "=== NACHPROBE AM GERAET: KOSMOPREPARE MIT KOSMO-SEITENFENSTER (ROADMAP 1630) ===\n\nWORUM ES GEHT\n  Euer Geraete-Rundgang v0.1.6 (erg-20260930-geraeterundgang-v016.md) fand in KosmoPrepare: mit offenem\n  Kosmo-Seitenfenster ist die Kopfzeile gekuerzt und «nach Art» liegt unter dem Buch-Knopf; dazu «der\n  Umschalter in KosmoPrepare springt die Position». Beides hat der UI-Worker repariert, Int 1 hat es\n  eingespielt (ROADMAP 1630). Im Container ist es am Bildpunkt gemessen (Software-Zeichnen, Chromium).\n  Am Geraet ist es noch nicht gesehen — darum dieser Auftrag.\n\nWAS ZU TUN IST (Desktop-App, Stand ab ROADMAP 1630 = Hauptstrang ebee68c1f oder spaeter)\n  1. Fenster 1600x1000, Insel-Ansicht (Vorgabe). Station KosmoPrepare oeffnen. Hat das Projekt kein Paket:\n     «Wettbewerbs-Vorbereitung» waehlen.\n  2. Kosmo oeffnen, sodass das Seitenfenster rechts steht.\n  3. Kopfzeile ansehen: liegt «nach Art» oder «Neu ordnen» (bzw. sein Kreis-Zeichen) ganz oder teilweise unter\n     dem Buch-Knopf oben in der Mitte? Ist ein Text abgeschnitten (Auslassungspunkte)?\n  4. Im Streifen darunter zwischen «Tafel», «Knotenbaum», «Liste» wechseln: bleibt der Umschalter an seiner\n     Stelle? Ragt etwas unter die Sync-Gruppe oben rechts?\n  5. Dasselbe bei 1280x800 (wenn die Fenstergroesse sich einstellen laesst).\n\nRUECKGABE\n  - Je Punkt 3 und 4: ja/nein, mit Abzug (Bildschirmfoto) der Kopfzeile samt Streifen.\n  - Stand (Commit) der App, Fenstergroesse.\n\nNICHT TUN: nichts am Code aendern; kein Projekt des Owners veraendern (ein Wegwerf-Projekt anlegen);\nkeine echten Projektnamen in Abzuegen.",
+  "erstellt": "2026-09-30T08:31:33Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "fenster": [
+      "1600x1000",
+      "1280x800"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3).",
+      "Keine GPU noetig — Oberflaeche."
+    ]
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}
