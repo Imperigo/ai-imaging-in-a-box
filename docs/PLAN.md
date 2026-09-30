@@ -7512,6 +7512,10 @@ Bekannt und ausdrücklich nicht erledigt:
         Owner: Auskunft; nach `verdict.hinweise`, zugestellt (Protokoll 73 §2).
   - [ ] **ui:** `auf-20260930-180` — `verdict.hinweise` in der Vis-Station zeigen, ohne Warnzeichen.
   - [ ] **local:** `auf-20260930-181` — Ansage Innenraum-Satz und Regel B lesen.
+  - [x] **local:** 173, 174, 175, 176 beantwortet (Protokoll 73 §4).
+  - [ ] **Owner:** 175 — ρ trennt weder frontal noch diagonal; das Paarurteil hängt allein
+        daran. Was tun? (Protokoll 73 §4)
+  - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut
         (`geometrie_qa.sprungordnung`, Ortsfeld abgezogen), urteilt nicht mit (Protokoll
         71 §18).

@@ -1,0 +1,10 @@
+{
+  "schema": "aiimaging.abholer-puls/v1",
+  "zuletzt": "2026-09-29T12:00:00Z",
+  "zuletzt_epoch_s": 1790683200.0,
+  "gesehen": 1,
+  "verarbeitet": 1,
+  "liegengelassen": 0,
+  "fehler": 0,
+  "waisen": 0
+}

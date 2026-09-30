@@ -1,0 +1,120 @@
+{
+  "nie_gesehen": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+      "jobstore": true,
+      "ollama": false,
+      "stt": false,
+      "tts": false,
+      "embed": false
+    },
+    "abholer": {
+      "zustand": "nie_gesehen",
+      "zuletzt": null,
+      "alter_s": null,
+      "frist_s": 120,
+      "grund": "Kein Lebenszeichen des Abholers in dieser Ablage. Entweder läuft er nicht, oder er schaut in eine andere Ablage."
+    }
+  },
+  "laeuft_leer": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+      "jobstore": true,
+      "ollama": false,
+      "stt": false,
+      "tts": false,
+      "embed": false
+    },
+    "abholer": {
+      "zustand": "laeuft_leer",
+      "zuletzt": "2026-09-29T12:00:00Z",
+      "alter_s": 31.0,
+      "frist_s": 120,
+      "letzter_durchgang": {
+        "gesehen": 1,
+        "verarbeitet": 1,
+        "liegengelassen": 0,
+        "fehler": 0,
+        "waisen": 0
+      },
+      "grund": ""
+    }
+  },
+  "steht": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+      "jobstore": true,
+      "ollama": false,
+      "stt": false,
+      "tts": false,
+      "embed": false
+    },
+    "abholer": {
+      "zustand": "steht",
+      "zuletzt": "2026-09-29T12:00:00Z",
+      "alter_s": 165.0,
+      "frist_s": 120,
+      "letzter_durchgang": {
+        "gesehen": 1,
+        "verarbeitet": 1,
+        "liegengelassen": 0,
+        "fehler": 0,
+        "waisen": 0
+      },
+      "grund": ""
+    }
+  },
+  "wartet": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+      "jobstore": true,
+      "ollama": false,
+      "stt": false,
+      "tts": false,
+      "embed": false
+    },
+    "abholer": {
+      "zustand": "wartet",
+      "zuletzt": "2026-09-29T12:00:00Z",
+      "alter_s": 31.0,
+      "frist_s": 120,
+      "letzter_durchgang": {
+        "gesehen": 1,
+        "verarbeitet": 1,
+        "liegengelassen": 1,
+        "fehler": 0,
+        "waisen": 0
+      },
+      "grund": ""
+    }
+  },
+  "arbeitet": {
+    "ok": true,
+    "version": "1.0.0-visbox",
+    "services": {
+      "jobstore": true,
+      "ollama": false,
+      "stt": false,
+      "tts": false,
+      "embed": false
+    },
+    "abholer": {
+      "zustand": "arbeitet",
+      "zuletzt": "2026-09-29T12:00:00Z",
+      "alter_s": 31.0,
+      "frist_s": 120,
+      "letzter_durchgang": {
+        "gesehen": 1,
+        "verarbeitet": 1,
+        "liegengelassen": 1,
+        "fehler": 0,
+        "waisen": 0
+      },
+      "grund": ""
+    }
+  }
+}

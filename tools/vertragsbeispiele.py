@@ -119,9 +119,12 @@ def main(ziel: Path, echt: bool = False) -> int:
         _schreibe(ziel, "render-result.json", ergebnis)
         _schreibe(ziel, "render-scene.json",
                   json.loads((ordner / bruecke.DATEI_SZENE).read_text(encoding="utf-8")))
-        for e in ergebnis.get("ebenen") or ():
-            if e.get("datei"):
-                shutil.copy(ordner / e["datei"], ziel / e["datei"])
+        # Die Bilder UND die Ebenen: `images` nennt Dateien, und ein Beispiel, das auf
+        # fehlende Dateien zeigt, ist keines (Befund der HomeStation, auf-176, 30.09.2026).
+        namen = list(ergebnis.get("images") or ()) + [
+            e["datei"] for e in ergebnis.get("ebenen") or () if e.get("datei")]
+        for name in namen:
+            shutil.copy(ordner / name, ziel / name)
         _schreibe(ziel, "abholer-puls.json",
                   json.loads((ablage / abholer.DATEI_PULS).read_text(encoding="utf-8")))
 
