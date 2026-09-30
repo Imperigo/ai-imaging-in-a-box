@@ -1,0 +1,45 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-185",
+ "status": "ok",
+ "beendet": "2026-09-30T09:25:13Z",
+ "stand": "KosmoPrepare-Klon 3c15907 (2026-09-30 08:27 UTC, «Plan einpassen am Geraet gruen …»), enthaelt aef35fd (git merge-base --is-ancestor aef35fd HEAD = 0).",
+ "geprueft": "./run_tests.sh zweimal aus dem Klon-Stamm gestartet (das Skript wechselt selbst nach tests/); nichts committet, nichts installiert, libs/ unberuehrt.",
+ "kurzantwort": "Riegel wirkt: kein numpy/shapely-Fehler mehr. Lauf 1 (Vorgabe, 3.14): Ran 1549, FAILED (failures=1, skipped=140) — die eine Probe test_die_probe_kann_ueberhaupt_etwas_sehen verlangt ifcopenshell aus libs/, obwohl der neue Riegel libs/ bei 3.14 absichtlich draussen laesst. Lauf 2 (Blender-Python 3.13): Ran 1549, OK (skipped=88).",
+ "befunde": {
+  "lauf_1_vorgabe": {
+   "befehl": "./run_tests.sh",
+   "exit": 1,
+   "run_tests_zeilen": [
+    "[run_tests] kein Python gefunden, zu dem libs/ passt — libs/ bleibt draussen, Proben dazu springen (Abhilfe: KOSMOPREPARE_TEST_PYTHON auf ein passendes Python setzen)",
+    "[run_tests] pytest nicht gefunden — Fallback auf stdlib unittest (/usr/bin/python3)"
+   ],
+   "libs_pfad_zeile": "[libs_pfad] libs/ ist fuer Python 3.13 gebaut, dieser Lauf ist Python 3.14 — libs/ bleibt ausserhalb des Suchpfads",
+   "schlusszeile": "Ran 1549 tests in 15.381s · FAILED (failures=1, skipped=140)",
+   "fail_error_zeilen": [
+    "FAIL: test_die_probe_kann_ueberhaupt_etwas_sehen (test_lizenzriegel.TestLazyBleibtLazy.test_die_probe_kann_ueberhaupt_etwas_sehen)"
+   ],
+   "fehlertext": "AssertionError: Lists differ: [] != ['ifcopenshell'] (tests/test_lizenzriegel.py:583)",
+   "deutung": "Die Probe leitet «erwartet» daraus ab, was in libs/ LIEGT (ifcopenshell ist da), fragt aber nicht, ob libs/ zum laufenden Python passt. Unter 3.14 bleibt libs/ nun absichtlich draussen, darum sieht die Probe nichts. Sie muesste in diesem Fall springen (wie die anderen libs/-Proben) statt zu scheitern. Kein Codefehler im Riegel selbst."
+  },
+  "lauf_2_blender_python_3_13": {
+   "befehl": "KOSMOPREPARE_TEST_PYTHON=<Blender-Python 3.13> ./run_tests.sh",
+   "python": "Blender-Python 3.13 (KosmoDesign-Fork 5.1.2, dasselbe wie beim Befund «0 Tests»)",
+   "exit": 0,
+   "run_tests_zeilen": [
+    "[run_tests] libs/ passt zu <Blender-Python 3.13> (3.13)",
+    "[run_tests] pytest nicht gefunden — Fallback auf stdlib unittest (<Blender-Python 3.13>)"
+   ],
+   "libs_pfad_zeile": null,
+   "libs_pfad_hinweis": "Keine [libs_pfad]-Zeile in der Ausgabe (grep -c libs_pfad = 0) — passt: libs/ passt, also nichts zu melden.",
+   "schlusszeile": "Ran 1549 tests in 19.820s · OK (skipped=88)",
+   "fail_error_zeilen": []
+  },
+  "vergleich_zur_meldung_1322431": "vorher Ran 1542, failures=3, errors=43 (alle aus libs/ fuer 3.13 unter 3.14) → jetzt 1 failure unter 3.14 und 0 unter 3.13; die 43 errors sind weg."
+ },
+ "umgebung": {
+  "gpu": "nicht benutzt",
+  "netz": "nur git pull"
+ },
+ "fehler": null
+}
