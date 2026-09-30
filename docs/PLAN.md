@@ -7511,7 +7511,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Kern → cloud:** Antwort zu 152: «INNENANSICHT BESTELLT» ist Vorbehalt oder Auskunft? —
         Owner: Auskunft; nach `verdict.hinweise`, zugestellt (Protokoll 73 §2).
   - [ ] **ui:** `auf-20260930-180` — `verdict.hinweise` in der Vis-Station zeigen, ohne Warnzeichen.
-  - [ ] **local:** `auf-20260930-179` — Ansage Innenraum-Satz und Regel B lesen.
+  - [ ] **local:** `auf-20260930-181` — Ansage Innenraum-Satz und Regel B lesen.
   - [x] **Kern:** QA für saubere Bilder — Ordnung an Soll-Tiefensprüngen gebaut
         (`geometrie_qa.sprungordnung`, Ortsfeld abgezogen), urteilt nicht mit (Protokoll
         71 §18).
