@@ -5853,6 +5853,17 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Umrisstreue (aus den Bildkanten)** — Ein Mass vom 30.09.2026: Hat das erzeugte Bild dort
+Kanten, wo das Gebäude seinen Umriss und seine Stufen hat? Gelesen wird nur das Bild selbst und
+die Tiefenkarte aus Blender — kein Hilfsmodell, das Tiefe schätzt und dabei täuschen kann. Die
+Zahl «Abhebung» sagt, wie viel besser das Bild den Umriss trifft als ein Bild mit gleich vielen
+zufälligen Kanten: eine graue Fläche bekommt 0, Rauschen 1. Im Projekt: `aiimaging.umriss`;
+es urteilt noch nicht, bis der Heim-PC gemessen hat, ob es trennt.
+
+**Sobel-Filter** — Ein kleines Rechenverfahren, das in einem Bild findet, wo die Helligkeit von
+einem Pixel zum nächsten stark springt — also Kanten. Es ist alt, einfach und hat keine
+Vorlieben: Es sieht nur, was im Bild ist. Im Projekt: in der Umrisstreue.
+
 **Regel B (null-Regel, E123)** — Die Abmachung zwischen allen Teilen von KosmoOrbit vom
 29.09.2026: Kommt ein Wert als «unbekannt» (`null`) an, nimmt der Empfänger ihn an und meldet
 mit Namen, was fehlt — statt die ganze Lieferung abzuweisen. So steht die Ursache da, wo man sie
@@ -6018,7 +6029,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

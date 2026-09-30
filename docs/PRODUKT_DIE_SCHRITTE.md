@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (abends) · Ein neuer Versuch, die Gebäudeform zu prüfen — ohne Hilfsmodell
+
+* **Neue Messung gebaut:** Sie schaut, ob das erzeugte Bild dort Kanten hat, wo das Gebäude
+  seinen Umriss hat. Sie braucht kein Hilfsmodell, das Tiefe schätzt — genau das hatte die
+  alten Messungen getäuscht.
+* **Die Pflichtproben bestanden:** Eine graue Fläche bekommt 0 (die alte Messung gab ihr
+  die Bestnote), Rauschen den Zufallswert. An echten Blender-Bildern passt das richtige Bild
+  fast doppelt so gut wie ein falsches.
+* **Offen:** Ob das auch an KI-Bildern trennt. Der Heim-PC misst es.
+* **Nebenbei repariert:** Die Bearbeitungsmodelle bekommen jetzt das Blender-Bild als
+  Vorlage statt der Tiefenkarte — so steht das Haus wenigstens an der richtigen Stelle.
+
 ### 30.09.2026 (nachmittags) · Eine Prüfung, die würfelt, entscheidet nicht mehr
 
 * **Schlechte Nachricht vom Heim-PC:** Die Zahl, die seit gestern allein das «Paarurteil»

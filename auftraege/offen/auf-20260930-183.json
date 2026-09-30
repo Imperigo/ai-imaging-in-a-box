@@ -1,0 +1,60 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-183",
+  "art": "frage",
+  "beschreibung": "Ansage (Paarurteil urteilt nicht mehr; Editiermodelle bekommen das Schoenbild statt der Tiefenkarte) und die Messung des neuen Masses umriss.umriss_treue an erzeugten Bildern: trennt es, wo rho nicht trennte (175)?",
+  "anweisung": "=== ANSAGE (30.09. NACHMITTAG) UND DIE MESSUNG EINES NEUEN MASSES OHNE TIEFENSCHAETZER ===\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, bevor ihr zieht)\n\n  A1 DAS PAARURTEIL URTEILT NICHT MEHR (Owner-Entscheid «a» auf euer 175).\n     geometrie_qa.PAARURTEIL_URTEILT = False: rho wird gemessen und gemeldet, bestanden\n     bleibt None, die Begruendung beginnt mit «NICHT GEEICHT, NUR AUSKUNFT». Saetze wie\n     «MASKENWEG … DURCHGEFALLEN» und «SCORE BESTEHT, MASKENWEG WIDERSPRICHT» entfallen;\n     wo kein Score vorliegt, heisst es jetzt «ungeprueft». Die Startwert-Auswahl waehlt\n     WEITER nach rho (unveraendert). Alte Form: paarurteil(..., urteilt=True).\n  A2 EDITIERMODELLE BEKOMMEN DAS SCHOENBILD (euer Befund aus 178).\n     Hat eine Pipeline kein control_image und kein ControlNet (qwen-image-edit-2511,\n     qwen-image-2.1) und liegt ein Schoenbild vor, geht JETZT das Schoenbild als image hin,\n     nicht mehr die Tiefenkarte. modus_gerechnet heisst dann image_edit. Ohne Schoenbild\n     geht weiter die Tiefenkarte hin; modus_gerechnet heisst dann NEU «tiefe_als_bild»\n     statt faelschlich «txt2img». Wer ueber KosmoOrbit «qwen» bestellt, bekommt damit andere\n     Bilder als bisher — gewollt.\n  A3 Registereintrag qwen-image-2.1 nach eurem 178: Dateiliste mit processor/ statt\n     tokenizer/, vram_gb 19,5 (gemessen, mit Auslagerung).\n\nTEIL B — MISST DAS NEUE MASS, WAS RHO NICHT MASS?\n\n  Neu: src/aiimaging/umriss.py, Funktion umriss_treue(luminanz, soll, breite, hoehe) bzw.\n  umriss_aus_dateien(bild_png, soll, breite, hoehe). Es liest KEINEN Tiefenschaetzer:\n  Es fragt, ob das erzeugte Bild Kanten (Sobel auf der Helligkeit) dort hat, wo die\n  Soll-Tiefenkarte Spruenge hat (Umriss, Tiefenstufen). Kenngroessen: trefferquote,\n  abhebung (= trefferquote geteilt durch die Zufallserwartung bei derselben Kantendichte;\n  um 1 heisst Zufall), praezision. Graue Flaeche = 0, Rauschen = 1. An zwei Blender-\n  Schoenbildern bei uns: richtige Soll-Karte Abhebung 10,5 und 12,3, fremde Kamera 6,2\n  und 6,4. An ERZEUGTEN Bildern ist es ungemessen — das ist die Frage.\n\n  Bitte mit derselben Methode wie 175 (Testbau und Hochbau, Blick s und sSE, Startwerte\n  0–2, z-image-turbo; wenn die zwoelf Bilder aus 175 noch liegen, auf DENSELBEN messen):\n    - je Bild die Faelle: richtig (eigene Soll-Karte), versatz 20 px (Soll-Karte um 20 px\n      waagrecht verschoben, frei werdende Spalten Hintergrund 1e10), fremdes Soll\n      (Testbau <-> Hochbau, gleiche Kamera);\n    - dazu je Soll-Karte die graue Flaeche und ein Rauschbild als Nullproben;\n    - je Fall: abhebung, trefferquote, praezision, und rho_maske.gerichtet daneben.\n\n  Zurueck, in dieser Reihenfolge:\n    1. JE BLICK getrennt: gibt es fuer abhebung ein fehlerfreies Fenster (hoechster\n       schlechter Wert, niedrigster guter Wert)? Dasselbe fuer trefferquote.\n    2. PAARWEISE: In wie vielen der zwoelf Bilder liegt «richtig» UEBER beiden Stoerungen?\n       (Das ist die Frage, die euer 175 nahelegt: gleiches Bild, richtige gegen falsche\n       Referenz.)\n    3. GEGEN EUER AUGE: In 175 standen nur drei der zwoelf Bilder richtig (Testbau sSE s0,\n       s1; Hochbau sSE s0). Liegen diese drei in «abhebung gegen die richtige Karte» ueber\n       den neun anderen?\n    4. Die Nullproben: grau und Rauschen je Soll-Karte.\n\n  «Es trennt auch nicht» ist ein vollstaendiges Ergebnis.\n\nNICHT TUN: keine Schwelle setzen oder aendern; nichts committen ausser eurer\nErgebnisdatei; keine Bilder ins Repo.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau"
+  },
+  "params": {
+    "blick": [
+      "s",
+      "sSE"
+    ],
+    "koerper": [
+      "testbau",
+      "hochbau"
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "faelle": [
+      "richtig",
+      "versatz_20px",
+      "fremdes_soll"
+    ],
+    "nullproben": [
+      "grau",
+      "rauschen"
+    ],
+    "mass": "umriss.umriss_treue"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ],
+    "hinweis": "GPU nur, falls die Bilder aus 175 nicht mehr liegen (12 Bilder); die Messung selbst ist CPU."
+  },
+  "rueckgabe": [
+    "git log -1.",
+    "Je Blick: Fenster fuer abhebung und trefferquote (hoechster schlechter, niedrigster guter Wert).",
+    "Paarweise: in wie vielen Bildern liegt richtig ueber beiden Stoerungen.",
+    "Liegen die drei richtig stehenden Bilder aus 175 in abhebung ueber den neun anderen?",
+    "Nullproben grau und Rauschen je Soll-Karte.",
+    "Je Fall eine Zeile: Koerper, Blick, Startwert, Fall, abhebung, trefferquote, praezision, rho_maske.gerichtet."
+  ],
+  "rang": 4
+}

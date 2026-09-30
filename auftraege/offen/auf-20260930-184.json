@@ -1,0 +1,48 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-184",
+  "art": "frage",
+  "beschreibung": "Kleiner Test: Qwen-Image-2.1 als Bildbearbeiter mit dem Blender-Schoenbild als Vorlage (Stil darueberlegen) — bleibt das Gebaeude stehen, und wie sieht es aus, gegen z-image-turbo und qwen-image-edit-2511?",
+  "anweisung": "=== QWEN-IMAGE-2.1 ALS BILDBEARBEITER — EIN KLEINER TEST (Owner: «nach deinen Empfehlungen») ===\n\nWORUM ES GEHT\n  Euer 178: Fuer die Gebaeudeform taugt Qwen-Image-2.1 nicht (kein ControlNet). Mit dem\n  Schoenbild als Vorlage stand aber ein Haus an der richtigen Stelle. Der Owner will wissen,\n  ob es als BILDBEARBEITER taugt: Stil auf das Blender-Bild legen, ohne die Form zu\n  verlieren. Seit Auftrag 183 Teil A2 reicht unser Adapter das Schoenbild als image (vorher\n  die Tiefenkarte) — bitte 183 Teil A zuerst lesen und ziehen.\n\n  Qwen-Image-2.1 laedt seit E128 OHNE Schalter (Lizenz offen, jeder Lauf traegt\n  parameter.lizenz_offen). Euer eigenes venv mit diffusers aus git bleibt dafuer noetig.\n\nLAUF\n  Testbau (make_test_ifc.py --gelaende), Kamera sSE, 1024 px, mit Schoenbild (mit_beauty\n  true), zwei Prompts, Startwerte 0 und 1:\n    P1 «warm timber facade, late afternoon light, photorealistic architecture photo»\n    P2 «white plaster facade, overcast sky, photorealistic architecture photo»\n  Je Prompt und Startwert drei Modelle: qwen-image-2.1, qwen-image-edit-2511,\n  z-image-turbo (Vorgabe, mit ControlNet). Also 2 x 2 x 3 = 12 Bilder.\n\nZURUECK\n  - git log -1.\n  - Je Bild: Modell, Prompt, Startwert, Sekunden, modus_gerechnet, und\n    umriss.umriss_treue (abhebung, trefferquote) gegen die eigene Soll-Karte.\n  - Je Bild ein Satz: Steht das Gebaeude in Lage UND Form wie im Schoenbild? Traegt der\n    Prompt (Holz/Putz, Licht) an?\n  - Ein Satz Empfehlung: Lohnt Qwen-Image-2.1 als Bearbeiter (Stil) weiter — und wenn ja,\n    was fehlt (Masken, Referenzbilder)?\n\nNICHT TUN: keine Bilder ins Repo; das Betriebs-venv nicht aendern; nichts committen\nausser eurer Ergebnisdatei.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende"
+  },
+  "params": {
+    "backbone": [
+      "qwen-image-2.1",
+      "qwen-image-edit-2511",
+      "z-image-turbo"
+    ],
+    "prompts": 2,
+    "seeds": [
+      0,
+      1
+    ],
+    "kamera": "sSE",
+    "aufloesung": 1024,
+    "mit_beauty": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ],
+    "hinweis": "GPU: 12 Bilder, Qwen-Image-2.1 nur mit Auslagerung (~20 s je Bild). Nach 183."
+  },
+  "rueckgabe": [
+    "git log -1.",
+    "Je Bild: Modell, Prompt, Startwert, Sekunden, modus_gerechnet, abhebung/trefferquote.",
+    "Je Bild ein Satz: Lage und Form wie im Schoenbild? Traegt der Prompt?",
+    "Ein Satz Empfehlung."
+  ],
+  "rang": 5
+}

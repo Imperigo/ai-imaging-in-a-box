@@ -7515,14 +7515,17 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **local:** 173, 174, 175, 176 beantwortet (Protokoll 73 §4).
   - [x] **Owner:** 175 — ρ trennt weder frontal noch diagonal; das Paarurteil hängt allein
         daran. Was tun? (Protokoll 73 §4) — «a sofort, b danach»: urteilt nicht mehr (§7).
-  - [ ] **Kern (b):** ein Mass suchen, das trennt (Kandidat: Umriss aus den Bildkanten, ohne
-        Schätzer), dann Messauftrag an local. Mitbetroffen: Startwert-Auswahl und Tor A.
+  - [x] **Kern (b):** ein Mass suchen, das trennt (Kandidat: Umriss aus den Bildkanten, ohne
+        Schätzer), dann Messauftrag an local. Mitbetroffen: Startwert-Auswahl und Tor A. —
+        `aiimaging.umriss` gebaut, Nullproben bestanden (Protokoll 73 §9).
+  - [ ] **local:** `auf-20260930-183` — trennt `umriss` an erzeugten Bildern?
   - [x] **local:** 178 beantwortet — Qwen-Image-2.1 läuft nur mit Auslagerung, Geometrie
         kommt nicht an (§8); Registerfehler behoben.
-  - [ ] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;
-        `render.py` meldet dabei «txt2img» (178).
-  - [ ] **Owner:** Qwen-Image-2.1 als Bildbearbeiter (Stil, Masken) weiterverfolgen — oder
-        nicht? (178, Punkt 3 aus vis-01)
+  - [x] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;
+        `render.py` meldet dabei «txt2img» (178). — umgedreht (Protokoll 73 §9).
+  - [x] **Owner:** Qwen-Image-2.1 als Bildbearbeiter (Stil, Masken) weiterverfolgen — oder
+        nicht? (178, Punkt 3 aus vis-01) — «klein testen».
+  - [ ] **local:** `auf-20260930-184` — Qwen-Image-2.1 als Bearbeiter, gegen die beiden anderen.
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
   - [x] **Owner (E128):** Qwen-Image-2.1 regulär, Lizenz offen → gebaut (Protokoll 73 §6).
   - [ ] **cloud (Int 1):** Vertragsfrage F1/F2 (`vis.backbone: "qwen-image-2.1"`,

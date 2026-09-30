@@ -1923,14 +1923,14 @@ def _bildedit_parameter(tmp_path, tiefe, eingang):
             "ausgabe_png": str(tmp_path / "b.png")}
 
 
-def test_eine_pipeline_mit_einem_bildeingang_verliert_das_ausgangsbild(tmp_path,
-                                                                       pillow_attrappe):
-    """**Der gemessene Verlust, hier als Probe.**
+def test_eine_pipeline_mit_einem_bildeingang_behaelt_das_ausgangsbild(tmp_path,
+                                                                      pillow_attrappe):
+    """**Umgedreht am 30.09.2026** (auf-20260929-178, gemessen an Qwen-Image-2.1).
 
-    Die Tiefenkarte gewinnt den einen Bildeingang — das ist richtig so, sie ist der
-    Geometrietraeger. Entscheidend ist, dass es **gesagt** wird: Der Lauf gelingt, ein
-    Bild liegt da, und ohne den Hinweis haette niemand einen Grund, nach der verlorenen
-    Zeichnung zu suchen.
+    Bis dahin gewann die Tiefenkarte den einen Bildeingang, «sie ist der Geometrietraeger».
+    Am Geraet war es umgekehrt: Die Tiefenkarte als Bild ergab ein zufaelliges Hochhaus,
+    das Schoenbild ein Haus an der richtigen Stelle. Jetzt bleibt das Ausgangsbild der
+    Bildeingang — und es wird **gesagt**, dass die Tiefenkarte das Modell nicht erreicht.
     """
     tiefe = _schreibe_graustufen_png(tmp_path / "TIEFE.png")
     eingang = _schreibe_graustufen_png(tmp_path / "EINGANG.png")
@@ -1939,10 +1939,27 @@ def test_eine_pipeline_mit_einem_bildeingang_verliert_das_ausgangsbild(tmp_path,
     ergebnis = _adapter(pipeline)(_bildedit_parameter(tmp_path, tiefe, eingang))
 
     hinweise = " ".join(ergebnis["hinweise"])
-    assert "ersetzt dabei den Beauty-Pass" in hinweise
+    assert "Tiefenkarte erreicht das Modell NICHT" in hinweise
+    assert ergebnis["modus_gerechnet"] == "image_edit"
     assert "'strength' (0.35)" in hinweise, (
         "auch der Regler ist wirkungslos, und eine Vergleichsreihe darueber saehe wie "
         "ein Befund aus")
+
+
+def test_ohne_schoenbild_geht_die_tiefenkarte_als_bild_und_heisst_nicht_txt2img(
+        tmp_path, pillow_attrappe):
+    """Bestellt txt2img, gerechnet eine Bearbeitung der Tiefenkarte — bis zum 30.09.2026
+    stand dafür 'txt2img' im Ergebnis (auf-20260929-178)."""
+    tiefe = _schreibe_graustufen_png(tmp_path / "TIEFE.png")
+    pipeline = _NurEinBildeingang()
+    parameter = dict(_bildedit_parameter(tmp_path, tiefe, tiefe), beauty_png=None,
+                     modus=render.MODUS_TXT2IMG)
+
+    ergebnis = _adapter(pipeline)(parameter)
+
+    assert pipeline.gesehen["image"] is not None
+    assert ergebnis["modus_gerechnet"] == render.MODUS_TIEFE_ALS_BILD
+    assert "zufaelliges Gebaeude" in " ".join(ergebnis["hinweise"])
 
 
 def test_eine_pipeline_mit_zwei_bildeingaengen_bekommt_beide(tmp_path, pillow_attrappe):

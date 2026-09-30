@@ -317,6 +317,11 @@ STATUSSE = (STATUS_OK, STATUS_ABGELEHNT, STATUS_FEHLER)
 #: darin, ob es ein Ausgangsbild gibt, das überschrieben wird.
 MODUS_TXT2IMG = "txt2img"
 MODUS_IMAGE_EDIT = "image_edit"
+#: Nur als ``modus_gerechnet``: Bestellt war ``txt2img``, die Pipeline hat aber keinen
+#: Steuereingang, und die Tiefenkarte ging als Eingangsbild hin. Bis zum 30.09.2026 stand
+#: dort ``txt2img`` — eine Bearbeitung der Tiefenkarte ist aber kein Text-zu-Bild-Lauf
+#: (Befund auf-20260929-178).
+MODUS_TIEFE_ALS_BILD = "tiefe_als_bild"
 
 
 class RenderError(RuntimeError):
@@ -1717,11 +1722,17 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 f"Führung läuft, ist UNBEKANNT — nicht nein."
             )
 
+        schoenbild_bleibt = False
         if "control_image" in verworfen:
-            # Ohne eigenen Steuereingang ist die Tiefenkarte das Bild selbst — sie ist
-            # der Geometrieträger, und Geometrietreue ist der Zweck des Ganzen. Ein
-            # Beauty-Pass, der hier vorlag, tritt dahinter zurück: Es gibt nur einen
-            # Bildeingang, und die Geometrie hat ihn nötiger als die Farbe.
+            # BIS ZUM 30.09.2026 GALT HIER: «Ohne eigenen Steuereingang ist die Tiefenkarte
+            # das Bild selbst — ein Beauty-Pass tritt dahinter zurück.» Gemessen ist das
+            # Gegenteil (auf-20260929-178, Qwen-Image-2.1, 1024 px, angesehen): Mit der
+            # Tiefenkarte als Eingangsbild entsteht ein ZUFAELLIGES Hochhaus; mit dem
+            # Blender-Schoenbild steht ein Haus an der richtigen Stelle (Form falsch). Die
+            # Tiefenkarte als Bild traegt die Geometrie also NICHT — das Schoenbild traegt
+            # wenigstens die Lage. Seither: Liegt ein Schoenbild vor (Modus image_edit),
+            # bleibt ES der Bildeingang, und die Tiefenkarte erreicht das Modell nicht.
+            # Nur ohne Schoenbild geht die Tiefenkarte als Bild hin (Modus tiefe_als_bild).
             #
             # ABER: Ein fehlendes `control_image` ist NICHT gleichbedeutend mit „kein
             # ControlNet". `StableDiffusionXLControlNetPipeline` nennt ihr Steuerbild
@@ -1741,14 +1752,26 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                     "kein 'control_image' (so hält es die SDXL-ControlNet-Familie). Die "
                     "Tiefenkarte wurde dorthin übergeben — die ControlNet-Naht trägt."
                 )
-            elif "image" in genommen:
+            elif "image" in genommen and parameter["modus"] == MODUS_IMAGE_EDIT:
+                schoenbild_bleibt = True
                 hinweise.append(
                     "Diese Pipeline hat keinen 'control_image'-Eingang und kein "
-                    "erkennbares ControlNet. Die Tiefenkarte wurde als 'image' übergeben "
-                    "und ersetzt dabei den Beauty-Pass — die Konditionierung ist damit "
-                    "Bildbearbeitung, nicht ControlNet."
+                    "erkennbares ControlNet. Das Schoenbild geht als 'image' hin; die "
+                    "Tiefenkarte erreicht das Modell NICHT. Gemessen (auf-20260929-178): "
+                    "Das Schoenbild traegt die Lage des Gebaeudes, die Tiefenkarte als Bild "
+                    "nicht einmal die. Die Geometrietreue dieses Laufs ist darum nicht "
+                    "gesteuert, nur angelehnt."
                 )
-            genommen["image"] = tiefe
+            else:
+                hinweise.append(
+                    "Diese Pipeline hat keinen 'control_image'-Eingang und kein "
+                    "erkennbares ControlNet, und ein Schoenbild lag nicht vor. Die "
+                    "Tiefenkarte wurde als 'image' übergeben — die Konditionierung ist "
+                    "damit Bildbearbeitung einer Tiefenkarte, nicht ControlNet. Gemessen "
+                    "(auf-20260929-178): So entsteht ein zufaelliges Gebaeude."
+                )
+            if not schoenbild_bleibt:
+                genommen["image"] = tiefe
 
         for name, wert in (("controlnet_conditioning_scale", parameter["controlnet_staerke"]),
                            ("guidance_scale", parameter["fuehrung"]),
@@ -1809,7 +1832,7 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
             # Fall, der am 18.08.2026 an Qwen-Image-Edit gemessen wurde.
             anker_kam_an = ("image" in genommen
                             and "image" not in verworfen
-                            and "control_image" not in verworfen)
+                            and ("control_image" not in verworfen or schoenbild_bleibt))
             if not anker_kam_an:
                 modus_gerechnet = MODUS_TXT2IMG
                 hinweise.append(
@@ -1819,6 +1842,11 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                     f"bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier "
                     f"bitgleiche Bilder."
                 )
+        elif ("control_image" in verworfen and "image" in genommen
+              and "image" not in verworfen and not ist_controlnet_naht(pipeline, genommen)):
+            # Bestellt war txt2img, gerechnet wurde eine Bearbeitung der Tiefenkarte. Bis
+            # zum 30.09.2026 stand hier weiter 'txt2img' (auf-178).
+            modus_gerechnet = MODUS_TIEFE_ALS_BILD
 
         bild = pipeline(**genommen).images[0]
 
@@ -2536,7 +2564,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
 
 
 __all__ = [
-    "MAX_SCHRITTE", "MAX_SEED", "MODUS_IMAGE_EDIT", "MODUS_TXT2IMG",
+    "MAX_SCHRITTE", "MAX_SEED", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",

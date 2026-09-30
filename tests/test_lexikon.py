@@ -38,6 +38,11 @@ GEWOLLTE_TRENNUNGEN = {
     # sie darf widerlegen und nichts zusagen. Wer die zweite für die erste hält, baut
     # auf einem Ergebnis, das nur in eine Richtung gilt.
     "vorprüfung",    # Abbruch vor dem teuren Schritt / gegen tragende Messung
+    # Zwei Masse fuer dieselbe Frage, und das Wort gehoert beiden: das alte zweite Bein des
+    # Paarurteils (Anteil der Grenze mit Kante, ueber den Tiefenschaetzer) und das neue
+    # vom 30.09.2026 (Kanten im Bild selbst, ohne Schaetzer). Wer sie verwechselt, liest
+    # einer Zahl aus dem Ortsfeld des Schaetzers eine Aussage ueber das Bild zu.
+    "umrisstreue",   # Anteil der Grenze mit Kante / aus den Bildkanten
 }
 
 
