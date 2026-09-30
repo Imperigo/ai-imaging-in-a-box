@@ -1,0 +1,12 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-201",
+ "status": "gestoppt",
+ "beendet": "2026-09-30T18:55:46Z",
+ "stand": "git log -1 beim Lauf: 387f382 bzw. c16adb4 («Union-2.1 findet seine Basis …») enthalten; Teil A gelesen.",
+ "a1_bestaetigt": false,
+ "kurzantwort": "STOPP nach 4 Laeufen: A1 traegt auf dem Produktweg NICHT. Die beiden 1.0-Laeufe (hochbau-s, Startwerte 26/27) rechneten (cuda, 6.4 s), die beiden 2.1-Laeufe wurden ABGELEHNT: «AIIMAGING_MODELLE zeigt auf '<modellwurzel>', und dort liegt kein Ordner 'z-image-turbo-union21'. Der Pfad ist gesetzt und trifft nicht. …». Kette per PID angehalten, damit nicht 48 Fehllaeufe entstehen; Karte frei.",
+ "ursache": "render.rendere prueft VOR dem Laden die Wurzel mit modellwurzel_lage(eintrag.name) (render.py:2489, Zweig «modell is None and _lader is None and a.modell_wurzel is None»). modellwurzel_lage baut wurzel = basis / backbone_name (render.py ~574) und kennt gewichte_ordner nicht — die neue Funktion wurzel_fuer (render.py:473) wird nur im Ladeweg (render.py:850) und bei 1915 benutzt. Vorschlag: in modellwurzel_lage bzw. an der Aufrufstelle den Ordner aus wurzel_fuer(eintrag.name) nehmen. tests/test_union21.py deckt diese Vorpruefung offenbar nicht ab (sie greift nur ohne modell/_lader/modell_wurzel).",
+ "nicht_getan": "keinen Ordner «z-image-turbo-union21» im Modellspeicher angelegt (waere ein Umweg, der den Fehler verdeckt), Register und Vorgabe nicht geaendert, nichts am Code geaendert, keine Augenurteile vergeben (Reihe unvollstaendig). Die 2 fertigen 1.0-Bilder bleiben auf der HomeStation; beim Neustart der Reihe werden sie wiederverwendet.",
+ "fehler": "Vorpruefung modellwurzel_lage ignoriert gewichte_ordner"
+}
