@@ -1,0 +1,51 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-179",
+ "status": "ok",
+ "beendet": "2026-09-30T06:30:00Z",
+ "stand": "1322431",
+ "geprueft": "Klon sauber, pull --ff-only = «Bereits aktuell» (1322431). Kein ./run_tests.sh (wie verlangt). Blender = Fork KosmoDesign 5.1.2, frisch gestartet, Add-on per Symlink in einem eigenen, danach geloeschten Benutzer-Ressourcenordner (wie 177). GUI auf eigenem Xvfb :97, WAYLAND_DISPLAY=kein-wayland (Fenster nachweislich auf :97). OHNE Behelf: kein sys.path-Eintrag im Pruefskript; beim Start geprueft: Repo-Stamm NICHT in sys.path, kein Modul «core» geladen. Knoten ueber den Operator ihres Knopfs gestartet (EXEC_DEFAULT, node_name = uid_key, Kontext Knoteneditor). Nichts committet, kein Code geaendert, libs/ und libs.darwin-bak-2026-06-10 unberuehrt. Blender und Xvfb per gemerkter PID beendet.",
+ "kurzantwort": "Gruen ohne Behelf: kein «No module named» mehr. Grundlageplan geschrieben, 261 / 155+974 / 565 (283+282) wie erwartet. Themenkarte mit den drei Knotenfeldern und dem neuen Textblock geschrieben, 0 Warnungen, 52 von 155 aktiv, Gehwege 806.1 m / 344.7 m wie erwartet. Plan einpassen ohne PDF: Meldung «PDF fehlt» im Knoten, beide Knoepfe.",
+ "befunde": {
+  "git_log_1": "1322431 Kern relativ importieren, weil Blender kein Paket «core» kennt",
+  "blender": "KosmoDesign 5.1.2 (eigener Fork), Python 3.13.9",
+  "ohne_behelf": {"repo_stamm_in_sys_path": false, "modul_core_top_level_geladen": false, "add_on_enable_fehler": []},
+  "3_grundlageplan": {
+   "ja_nein": "ja",
+   "status": "geschrieben",
+   "zeile": "Grundlageplan 1:5000 A2 quer (2820 × 1790 m) · 261 Höhenkurven · 1129 Gebäude · SVG + DXF + PDF",
+   "laufzeit_s": 6.1,
+   "hoehenkurven": {"gemessen": 261, "erwartet": 261, "aufteilung": "203 + 58 Zaehlkurven"},
+   "gebaeude": {"gemessen": "155 + 974", "erwartet": "155+974"},
+   "strassen": {"gemessen": 565, "erwartet": 565, "aufteilung": "283 Strassen + 282 Wege"},
+   "warnungen": [],
+   "bedienbar": "ja — Timer-Takt 0.2 s im Hauptfaden (aendert frame_current) lief weiter: 30 Takte, groesste Luecke 0.207 s",
+   "netz": "erster Abruf gelungen"
+  },
+  "4_themenkarte": {
+   "ja_nein": "ja",
+   "eingaben": "Art Saison, Perimeter-Zonen «Sport und Freizeit; Zone für öffentliche Nutzungen», Mindestflaeche 10000, Zentrum von Hand 2649525/1177780, 1:5000, A2 quer, Parameter-Textblock GENAU mit dem Inhalt aus der Anweisung",
+   "status": "geschrieben",
+   "zeile": "Themenkarte saison 1:5000 A2: 52 von 155 Gebäuden aktiv · 0 Warnung(en) · SVG + DXF + PDF",
+   "warnungen": [],
+   "laufzeit_s": 6.1,
+   "aktive_gebaeude": {"gemessen": "52 von 155", "erwartet": "52 von 155"},
+   "gehwege_m": {"gemessen": [806.1, 344.7], "erwartet": [806.1, 344.7], "routen": "Dorf West → West 806.1 m; Dorf Ost → Ost 344.7 m"},
+   "bedienbar": "ja — 30 Takte, groesste Luecke 0.209 s"
+  },
+  "5_plan_einpassen_ohne_pdf": {
+   "ja_nein": "ja",
+   "meldung": "PDF fehlt",
+   "detail": "Beide Knoepfe ohne PDF gestartet («Stile lesen» = stile_lesen True, «Einpassen» = False): jeweils Status «fehler», Zeile im Knoten «PDF fehlt», Operator-Meldung «Error: PDF fehlt». Kein «No module named».",
+   "grenze": "Die PDF-Pruefung greift im Hauptfaden, BEVOR core/plan_einpassen geladen wird. Deshalb zusaetzlich in einem Blender --background (gleicher Fork, gleiches Add-on, ohne Pfad-Behelf) die Kernmodule ueber den Add-on-Paketnamen importiert: karten_knoten, grundlageplan, plan_einpassen, themenkarte, wegnetz, grundlage_quellen, gehirn_db, praezedenz_rag, praezedenz_chroma, kosmodraw_aufruf — alle ok, «core» danach nicht top-level geladen. Ein echter Einpass-Lauf mit PDF war nicht verlangt und ist nicht gemacht."
+  },
+  "rot": "keine"
+ },
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine",
+  "anzeige": "Xvfb :97 mit WAYLAND_DISPLAY=kein-wayland; nichts auf dem echten Desktop",
+  "ausgaben": "/tmp/kp179-grundlageplan, /tmp/kp179-themenkarte (je SVG, DXF, PDF, JSON; liegen noch dort)"
+ },
+ "fehler": null
+}
