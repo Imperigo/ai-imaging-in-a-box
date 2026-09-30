@@ -297,6 +297,8 @@ _HEUTE_JE_EINTRAG = {
     "flux2-klein-4b": {}, "flux1-dev": {}, "flux2-dev": {},
     # Seit 29.09.2026 (Forschungs-Ausnahme): ohne Regler — Führung ungemessen (auf-178).
     "qwen-image-2.1": {},
+    # Seit 30.09.2026: dieselbe Basis mit Union-2.1 — dieselben Aufrufargumente.
+    "z-image-turbo-union21": {"control_image": "TIEFE_INV", "guidance_scale": 0.0},
 }
 
 

@@ -4315,6 +4315,13 @@ zu erfinden?*
 Speicher. Für dieses Projekt zählt nur der Tiefenzweig, aber die verfügbaren Modelle
 kommen fast alle in dieser gebündelten Form.*
 
+**Union-2.1 (die neuere Fassung des ControlNet)** — Die zweite Fassung des Steuermodells, das
+bei uns die Tiefenkarte ins Bild bringt. Die HomeStation hat im September gesehen, dass sie
+ein sauberes, freistehendes Gebäude genau auf den Umriss setzt, wo die ältere Fassung beim
+Hochhaus eher eine «Gasse» malt. Im Projekt seit dem 30.09.2026 als eigener Registereintrag
+`z-image-turbo-union21` — bestellbar, aber nicht Vorgabe, bis ein Vergleich mit vorab
+festgelegter Regel es trägt.
+
 **Blockwise-ControlNet** — Bauart, bei der die Steuerung nicht auf einmal, sondern in
 jede Schicht des Bildmodells einzeln eingespeist wird. *Für die Benutzung unerheblich —
 wichtig nur, weil solche Modelle einen eigenen Ladeweg brauchen und nicht auf jede
@@ -6109,7 +6116,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

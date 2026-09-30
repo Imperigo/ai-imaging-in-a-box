@@ -414,10 +414,15 @@ def test_an_der_depth_naht_bleibt_ein_apache_modell():
     Tiefen-Naht genau ein freies Modell, das Vorgabemodell. Fällt es aus, gibt es keinen
     Ersatz im Register. Die Probe hält die Untergrenze fest, damit auch das nicht still
     verschwindet.
+
+    **Seit dem 30.09.2026 steht ein zweiter Name da, aber kein zweites Modell:**
+    ``z-image-turbo-union21`` ist dieselbe Basis mit dem neueren ControlNet (Sitzung 73
+    §21). Fällt die Basis aus, fallen beide — ein Ersatz ist das nicht.
     """
     apache = [b for b in waehle(kommerziell=True, konditionierung=KOND_DEPTH_CONTROLNET)
               if b.lizenz == "Apache-2.0"]
-    assert [b.name for b in apache] == [VORGABE_BACKBONE]
+    assert [b.name for b in apache] == [VORGABE_BACKBONE, "z-image-turbo-union21"]
+    assert len({b.modell_id for b in apache}) == 1, "zwei Namen, eine Basis"
 
 
 def test_ein_stillgelegter_backbone_wird_nicht_angeboten_und_nicht_geladen(tmp_path):

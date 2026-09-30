@@ -1,0 +1,47 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20260930-199",
+ "art": "frage",
+ "beschreibung": "Hochbau oefter stehend: ControlNet Union-2.1 als eigenen Registereintrag «z-image-turbo-union21» einrichten (Ordner neben der Modellwurzel, SHA-256), die Speicherspitze bei voller Ladung messen (512/1024 px) und einen Lauf ueber den Produktweg fahren. Der Vergleich 1.0 gegen 2.1 folgt als eigener Auftrag.",
+ "anweisung": "=== HOCHBAU OEFTER STEHEND: DAS NEUERE CONTROLNET (UNION-2.1) EINRICHTEN UND MESSEN ===\n\nHintergrund: 196 hat gezeigt, dass keine Zahl die Grauzone am Hochbau trennt («Fassade liest sich\nals Oeffnung in einer Wand»). Owner-Entscheid 30.09.: die URSACHE angehen — das Hochhaus oefter\nstehend erzeugen. Die staerkste Spur ist euer Befund aus 158 C und 160 B: Union-2.1 zeichnete\n«ein sauberes, fotografisches Gebaeude genau auf der Silhouette», und die «Gasse» beim Hochbau\nmachte nur 1.0. Damals blieb es offen, weil die QA saubere Bilder nicht messen konnte. Heute\nurteilt euer blindes Auge.\n\nDieser Auftrag RICHTET EIN UND MISST DEN SPEICHER. Der Vergleich 1.0 gegen 2.1 folgt als\neigener Auftrag, sobald die gemessene Spitze im Register steht — mit Schaetzung waehlt der\nLadeweg die langsame Schichtauslagerung (~7 Minuten je Bild), das waere fuer eine Reihe zu\nlangsam.\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 Neuer Registereintrag «z-image-turbo-union21»: dieselbe Basis wie z-image-turbo, aber das\n     ControlNet Union-2.1 aus dem Ordner «z-image-controlnet-union-2.1» neben der Modellwurzel\n     (Geschwister von «z-image-controlnet-union»). Gleiche Polaritaet (nah_dunkel), gleiche\n     Fuehrung (0.0), 8 Schritte. Lizenz Apache-2.0.\n  A2 NICHT Vorgabe. Alles, was heute laeuft (Abholer, homeworker, Kette), rechnet unveraendert\n     mit z-image-turbo und dem 1.0-ControlNet.\n  A3 Speicher im Register GESCHAETZT: 27.1 GiB (25.1 gemessen mit 1.0 + 2.0 GiB groessere Datei).\n\nTEIL B — EINRICHTEN\n  B1 Ordner «z-image-controlnet-union-2.1» neben «z-image-controlnet-union» anlegen und die\n     Datei Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors hineinlegen (harter\n     Link oder Kopie; die 1.0-Datei und ihr Ordner bleiben UNBERUEHRT, genau EINE .safetensors\n     im neuen Ordner — der Ladeweg nimmt die erste, zwei waeren eine stille Wahl).\n  B2 SHA-256 der Datei: d1251cc7bc3486bc61d25c3be498ef394c31c85ddf4ee9137d2e933411f4a689.\n     SHA-256 der 1.0-Datei vorher/nachher gleich?\n\nTEIL C — SPEICHER UND ZEIT MESSEN\n  C1 VOLLE LADUNG (alles auf der Karte), wie in 158 C mit eurem Skript: Spitze\n     (torch.cuda.max_memory_allocated UND die Spitze laut nvidia-smi im 1-s-Raster) fuer\n     z-image-turbo + Union-2.1, 8 Schritte, controlnet_staerke 1.0, bei 512 x 512 und bei\n     1024 x 1024. Je drei Laeufe. Zeit je Bild. Frei vor dem Lauf (MiB).\n  C2 Dasselbe fuer z-image-turbo + 1.0 zum Vergleich (je ein Lauf je Groesse reicht).\n  C3 Ueber den Produktweg: EIN Lauf render.rendere mit backbone «z-image-turbo-union21» (512 px,\n     Tiefenkarte aus einem Hochbau-Multipass, Rahmung bauwerk). Welchen Ladeweg waehlte er\n     (bericht «bedarf»: quelle, zuschlag, grund)? Zeit? Kommt ein Bild? Steht im Ergebnis\n     engine/backbone = z-image-turbo-union21?\n\nTEIL D — EIN ERSTER BLICK (klein, zaehlt fuer nichts)\n  Das Bild aus C3 und ein 1.0-Bild mit demselben Startwert, Hochbau Blick s: ein Halbsatz je\n  Bild. Kein Etikett, keine Regel — nur, ob die «Gasse» wieder auftaucht.\n\nVORSCHAU AUF DEN VERGLEICH (damit ihr wisst, wofuer; die Regel steht schon fest):\n  Hochbau und Testbau, Blick s/sSE/sSW, Startwerte 26–33, 1.0 gegen 2.1 bei Staerke 1.0,\n  Auge blind. 2.1 wird Vorgabe, wenn (a) am Hochbau der Anteil «steht» um mindestens 20\n  Prozentpunkte steigt, (b) am Testbau um hoechstens 10 Punkte faellt, (c) die Zeit je Bild\n  hoechstens doppelt so lang ist.\n\nZURUECK (auftraege/ergebnisse/auf-20260930-199.json)\n  - git log -1; Teil A gelesen.\n  - B: Ordner angelegt, SHA-256 beider Dateien, 1.0 unberuehrt.\n  - C1/C2: Spitzen (MiB) je Groesse und Lauf, frei vorher, Zeit je Bild.\n  - C3: Ladeweg samt bedarf-Bericht, Zeit, engine im Ergebnis.\n  - D: zwei Halbsaetze.\n\nNICHT TUN: das Register nicht aendern; die Vorgabe nicht umstellen; die 1.0-Datei nicht\nverschieben; keine Bilder ins Repo; keine absoluten Pfade (Ordnernamen relativ zur\nModellwurzel angeben); nichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-09-30T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+ },
+ "params": {
+  "backbone": "z-image-turbo-union21",
+  "vergleich": "z-image-turbo",
+  "aufloesung": [
+   512,
+   1024
+  ],
+  "controlnet_staerke": 1.0,
+  "schritte": 8,
+  "controlnet_ordner": "z-image-controlnet-union-2.1",
+  "sha256": "d1251cc7bc3486bc61d25c3be498ef394c31c85ddf4ee9137d2e933411f4a689"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: wenige Laeufe; C3 ueber den Produktweg kann ~7 Minuten dauern (Schichtauslagerung).",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+   "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+   "Die 1.0-Datei bleibt unberuehrt."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; Teil A gelesen.",
+  "B: Ordner angelegt, SHA-256 beider Dateien, 1.0 unberuehrt.",
+  "C1/C2: Speicherspitzen (MiB) je Groesse und Lauf, frei vorher, Zeit je Bild — 2.1 und 1.0.",
+  "C3: Ladeweg samt bedarf-Bericht, Zeit, engine im Ergebnis.",
+  "D: je ein Halbsatz zu den zwei Bildern."
+ ],
+ "rang": 4
+}

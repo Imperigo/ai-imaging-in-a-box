@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (spät) · Statt besser prüfen: besser erzeugen
+
+* **Entscheid des Owners:** die Ursache angehen — das Hochhaus soll öfter richtig stehen, statt
+  dass eine Prüfung die unklaren Bilder finden muss.
+* **Der Hebel:** eine neuere Fassung des Steuermodells, das die Gebäudeform ins Bild bringt.
+  Der Heim-PC hatte im September gesehen, dass sie sauberere, freistehende Gebäude zeichnet;
+  entschieden wurde damals nicht, weil es keinen Massstab gab. Jetzt gibt es ihn: das blinde
+  Auge.
+* **Gebaut:** Die neue Fassung ist bestellbar, aber nicht Vorgabe. Der Heim-PC richtet sie ein
+  und misst den Speicher; danach folgt der Vergleich mit einer Regel, die schon feststeht.
+
 ### 30.09.2026 (Nachtrag) · Die Grenze trägt nicht — und der gute Befund hielt nicht
 
 * **Ergebnis:** An 96 neuen Bildern trägt die vorher festgelegte Grenze nicht. Beim niedrigen

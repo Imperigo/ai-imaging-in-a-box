@@ -7567,8 +7567,16 @@ Bekannt und ausdrücklich nicht erledigt:
           entfällt, die Schwelle trägt nicht.
     - [x] ~~**cloud (Int 1), nach 196:** Vertragsfrage — Formprüfung je Kamera in `qa`.~~ —
           entfällt vorerst; eine Zahl ohne Schwelle geht nicht in ihre Kachel.
-    - [ ] **Owner:** Wie weiter mit der Formprüfung — Ursache angehen (Hochbau frontal öfter
+    - [x] **Owner:** Wie weiter mit der Formprüfung — Ursache angehen (Hochbau frontal öfter
           stehend erzeugen), ein bildverstehendes Modell prüfen (Lizenzfrage), oder ruhen lassen?
+          — «1»: Ursache angehen (Protokoll 73 §21).
+  - [ ] **Hochbau öfter stehend (Owner «1», 30.09.):**
+    - [x] **Kern:** Registereintrag `z-image-turbo-union21` (Union-2.1, nicht Vorgabe).
+    - [ ] **local:** `auf-20260930-199` — einrichten, Speicherspitze messen, ein Produktlauf.
+    - [ ] **Kern, nach 199:** gemessene Spitze eintragen; Vergleich 1.0 gegen 2.1 als Auftrag
+          (Regel steht: Hochbau +20 Punkte «steht», Testbau höchstens −10, Zeit höchstens ×2).
+    - [ ] **Danach:** 2.1 Vorgabe? — nach Regel; Ansage an local und cloud (engine_used ändert
+          sich).
     - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
           ein Segmentierungsansatz (Lizenzfrage). — erfüllt (195), Bestätigungsreihe ist 196.
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit

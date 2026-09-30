@@ -53,7 +53,7 @@ ebenfalls nur stdlib benutzt) — kein ``torch``, kein ``diffusers``, kein ``bpy
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 # Die Herkunfts-Vokabel liegt seit dem 18.08.2026 in einem eigenen Modul, weil sie drei
@@ -895,6 +895,43 @@ _eintrag(Backbone(
                        "dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und "
                        "gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete "
                        "erreicht das Modell nicht."),
+))
+
+# ── DIESELBE BASIS MIT DEM NEUEREN CONTROLNET (Union-2.1), zum Vergleich ──────────────
+#
+# **Anlass (Owner «1», 30.09.2026, Sitzung 73 §21):** Die Formprüfung kann am Hochbau die
+# Grauzone nicht trennen (auf-196) — also die Ursache angehen: das Hochhaus öfter stehend
+# erzeugen. Die stärkste Spur dafür ist dieses ControlNet: In auf-158 C zeichnete es «ein
+# sauberes, fotografisches Gebäude genau auf der Silhouette», in auf-160 B stand bei beiden
+# Körpern ein freistehendes Gebäude, und die «Gasse» beim Hochbau machte nur 1.0. Entschieden
+# wurde damals nicht, weil die QA saubere Bilder nicht messen konnte — heute urteilt das
+# blinde Auge der HomeStation.
+#
+# **Ein eigener Eintrag statt eines Schalters**, damit der Name im Ergebnis sagt, womit
+# gerechnet wurde (``engine_used``). Nie Vorgabe, bis ein Vergleich mit vorab festgelegter
+# Regel es trägt.
+#
+# Lizenz: Front-Matter «license: apache-2.0», cardData.license apache-2.0, nicht gated —
+# geprüft von uns am 23.09.2026 (Sitzung 70) und von der HomeStation in auf-158 C.
+# Datei: Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors, 6 712 485 600 Byte,
+# SHA-256 d1251cc7…f4a689 (auf-158 C, nachgerechnet). Sie liegt im eigenen Ordner neben der
+# Modellwurzel — der Ladeweg nimmt die erste ``.safetensors`` im Ordner, zwei Dateien in
+# einem Ordner wären eine stille Wahl.
+#
+# Speicher GESCHÄTZT, nicht gemessen: 25,1 GiB (gemessen mit 1.0, darin 4,24 GiB ControlNet)
+# plus 2,0 GiB, um die die 2.1-Datei grösser ist. Als Schätzung wählt der Ladeweg damit die
+# langsame Schichtauslagerung; die Spitze misst auf-199, dann wird sie hier eingetragen.
+_eintrag(replace(
+    BACKBONES["z-image-turbo"],
+    name="z-image-turbo-union21",
+    controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1",
+    controlnet_ordner="z-image-controlnet-union-2.1",
+    controlnet_lizenz="Apache-2.0",
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
+    vram_gb=27.1,
+    vram_gemessen=False,
+    mindest_frei_mib=None,
+    mindest_frei_beleg=None,
 ))
 
 _eintrag(Backbone(
