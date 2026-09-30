@@ -1,0 +1,91 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-198",
+ "status": "teilweise",
+ "beendet": "2026-09-30T13:51:35Z",
+ "stand": {
+  "kosmoprepare": "da8d03d (enthaelt e6d803a)",
+  "app": "Desktop-App aus Architektur-Cosmos 7581b1c6b (Bau von 193)",
+  "venv_server_python": "Python 3.14.4 (aus /usr/bin/python3 — pip lief ohne Ausweichen)",
+  "modell": "qwen3-coder:30b lokal (App-Vorgabe, nichts umgestellt)"
+ },
+ "schritt_2_setup_server": {
+  "befehl": "python3 tools/setup_server.py",
+  "rueckgabe": 0,
+  "letzte_zeilen": [
+   "[setup_server] lege .venv-server an (aus /usr/bin/python3) …",
+   "[setup_server] numpy, shapely, pypdf, Pillow, ezdxf und mcp stehen.",
+   "[setup_server] Der Server laedt dort mit 18 Werkzeugen. Fertig — die App braucht keine Umstellung."
+  ]
+ },
+ "schritt_3_wire_qa": {
+  "befehl": ".venv-server/bin/python integrations/odysseus/wire_qa_kosmoprepare_mcp.py",
+  "rueckgabe": 0,
+  "letzte_zeilen": [
+   "Werkzeuge real beruehrt: 18/18",
+   "WIRE-QA: PASS"
+  ]
+ },
+ "schritt_4_in_der_app": {
+  "ergebnis": "NICHT erreicht — in der App kam in 5 Versuchen KEINE Vorschlagskarte. Das Modell antwortete jedes Mal nur «Ich rufe das Werkzeug kosmoprepare_themenkarte [bzw. _grundlageplan] auf … Dazu benötige ich die erforderlichen Parameter, die Sie bereits bereitgestellt haben.», ohne den Aufruf abzusetzen; kein Kindprozess (Waechter blieb leer).",
+  "versuche": [
+   "4a Themenkarte, Wortlaut mit /tmp/probe198-a (Verlauf geleert): nur Ankuendigung",
+   "4a Nachstoss «Ja, rufe es jetzt auf.»: Kosmo las stattdessen das Gebaeudemodell («zwei Geschosse … keine Waende») und kuendigte erneut nur an",
+   "4a zweiter Versuch mit geleertem Verlauf: nur Ankuendigung",
+   "4b Grundlageplan mit /tmp/probe198-b: nur Ankuendigung",
+   "4b Wortlaut aus 193 («Ausgabe in einen neuen Ordner unter /tmp»), einmal im laufenden und einmal als ERSTE Nachricht nach Leeren: nur Ankuendigung — derselbe Wortlaut brachte in 193 sofort eine Karte"
+  ],
+  "deutung": "Befund ueber das Modell/den Chatweg, nicht ueber die Server-Umgebung: die App startet den Server gar nicht erst. Gleiche App, gleiches Modell, gleiche Zeile «Mit 72 von 219 Werkzeugen»; der Unterschied zu 193 ist aus der Oberflaeche nicht zu sehen (kein Protokoll der rohen Modellantwort in der App). Nach dem Leeren zeigte die Zeile weiterhin «der bisherige Verlauf braucht bereits rund 4k Token» — ob das Leeren den an das Modell gesendeten Verlauf wirklich leert, waere zu pruefen.",
+  "4c": "in der App nicht erreicht (nach 4a/4b nicht mehr versucht)"
+ },
+ "zusatz_direkt_ueber_den_server": {
+  "was": "Weil die App den Server nicht startete: dieselben drei Werkzeuge direkt ueber stdio, Server gestartet mit /usr/bin/python3 aus dem Klon — genau so, wie die App ihn startet (eigenes Pruefskript, Client aus .venv-server). Kein Ersatz fuer den App-Weg, nur Beleg fuer die Umgebung.",
+  "a_themenkarte": {
+   "status": "ok (isError false)",
+   "laufzeit_s": 6.5,
+   "zeile": "Themenkarte gebaeude 1:5000 A2: 3 von 4 Einträgen eingefärbt (a 2 von 2, b 1 von 2) · 1 Warnung(en) · SVG + DXF (kein PDF: weasyprint nicht verfuegbar (ModuleNotFoundError) — SVG und DXF sind geschrieben)",
+   "zaehlung": {
+    "eintraege": 4,
+    "zugeordnet": 3,
+    "ohne_zuordnung": 1,
+    "grundrisse_eingefaerbt": 3,
+    "eingefaerbt_je_klasse": {
+     "a": 2,
+     "b": 1
+    }
+   },
+   "warnung_p4": "nicht eingefaerbt (keine Lage oder kein Grundriss ≤ 15 m): P4"
+  },
+  "b_grundlageplan": {
+   "status": "ok",
+   "laufzeit_s": 3.9,
+   "zeile": "Grundlageplan 1:5000 A2 quer (2820 × 1790 m) · 261 Höhenkurven · 1129 Gebäude · SVG + DXF (kein PDF: weasyprint nicht verfuegbar …)",
+   "ebenen": {
+    "kurven": 203,
+    "zaehlkurven": 58,
+    "hoehenkurven_gesamt": 261,
+    "gebaeude_umgebung": 1129,
+    "strassen": 283,
+    "wege": 282,
+    "strassenstuecke_gesamt": 565,
+    "wald": 92,
+    "gewaesser": 59,
+    "rinnsale": 4
+   },
+   "gegen_179": "261 / 1129 / 565 — alle wie erwartet"
+  },
+  "c_plan_einpassen": {
+   "reader": "privat vorhanden (nicht im Repo, nicht in dieser Rueckgabe)",
+   "argumente": "seite 6, massstabsbalken {m 500, pt 216.85}, gebaeude_stil und anker.stil wie in 182, anker.lv95 wie in 182",
+   "status": "ok",
+   "laufzeit_s": 0.7,
+   "zeile": "Plan eingepasst: 111/117 Gebäude gepaart, Abweichung Median 0.76 m / P90 2.57 m · Massstab 1.0119, Drehung 0.47° · 7 Stilgruppen in LV95",
+   "gegen_erwartung": "111/117, Median 0.76 m — wie erwartet"
+  }
+ },
+ "schritt_5_wechsel_meldung": "ja — bei jedem direkten Start auf stderr: «[kosmoprepare] wechsle nach <klon>/.venv-server/bin/python (es fehlt: shapely, pypdf)». In der App nicht beobachtbar, weil sie den Server nicht startete.",
+ "neuer_befund_pdf": "Kein PDF bei Themenkarte und Grundlageplan: weasyprint fehlt in .venv-server (steht nicht in requirements-server.txt). SVG und DXF entstehen. In 179/190 (Blender) gab es PDF.",
+ "no_module_traceback_unbekannter_befehl": "nein im Sinne des Auftrags — kein Traceback, kein «unbekannter Befehl»; «ModuleNotFoundError» nur fuer weasyprint, als Hinweis in der Ergebniszeile (PDF faellt weg), nicht als Abbruch.",
+ "nicht_getan": "nichts committet ausser dieser Datei, kein Code geaendert, keine App-Einstellung umgestellt, nichts systemweit installiert, libs/ und .venv-ifc unberuehrt, .venv-server bleibt (git check-ignore: ignoriert, Klon sauber), Wegwerf-Projekt mit Rueckfrage geloescht, Projekt 1 unveraendert, keine Plaene/Bilder/PDF zurueckgegeben.",
+ "fehler": null
+}
