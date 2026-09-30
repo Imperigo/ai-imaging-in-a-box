@@ -112,6 +112,10 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Umgestellt:** Am Heim-PC rahmt die Kamera jetzt das Gebäude (21 % des Bildes). Für
   KosmoOrbit-Bestellungen ist es vorbereitet und wird eingeschaltet, sobald ein Beweislauf
   zeigt, dass die Form dann wirklich hält.
+* **Nachtrag, Beweislauf bestanden:** Mit Gebäude-Rahmung stand die Form in 6 von 8 Bildern,
+  mit Grundstücks-Rahmung in keinem. Jetzt gilt es auch für KosmoOrbit-Bestellungen.
+  **Schlechte Nachricht dazu:** Keine unserer Zahlen erkennt zuverlässig, ob die Form steht —
+  das hat das Auge entschieden.
 * **Qwen-Image-2.1** taugt auch als Bildbearbeiter nicht; das freie Qwen-Bearbeitungsmodell
   schon eher (hält die Form, erfindet aber die Umgebung).
 

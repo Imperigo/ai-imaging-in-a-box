@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-189",
+  "art": "frage",
+  "beschreibung": "Ansage: Der Abholer (KosmoOrbit-Bestellungen) rahmt ab dem naechsten Pull nach dem Bauwerk — euer Beweislauf 188 hat die Regel erfuellt. Dazu zwei Berichtigungen an 186. Nur lesen, keine GPU.",
+  "anweisung": "=== ANSAGE: DER ABHOLER RAHMT JETZT NACH DEM BAUWERK ===\n\nBitte VOR dem naechsten git pull lesen, und bevor der Abholer-Timer den neuen Stand zieht.\n\nA1 abholer.RAHMUNG_NACH_BAUWERK = True. Eine Richtungskamera einer KosmoOrbit-Bestellung\n   (cameras: \"auto\" oder mit Richtungskuerzel) rahmt ab jetzt nach der Bauwerksbox\n   (glbbox.rahmungsbox), nicht mehr nach der ganzen Szene. Grundlage: euer 188 — Form steht\n   nach dem Bauwerk in 6 von 8 Bildern, nach der Szene in 0 von 8; Regel vorab festgelegt\n   und erfuellt. Nicht betroffen: Bestellungen mit eigener kamera_huellbox, Kameras mit\n   Standort und Blickziel, und Modelle, in denen die Namensregel kein Gelaende findet (dann\n   bleibt es bei der Szene).\n   Was ihr sehen werdet: Das Gebaeude fuellt deutlich mehr Bild; der Rahmungsriegel vor dem\n   Render rechnet auf der neuen Kamera.\n\nA2 BERICHTIGUNG an 186: «wSW» gibt es in kameras.RICHTUNGEN nicht — mein Fehler. Eure Wahl\n   sSW ist richtig so. Und «wie 175» stimmte fuer die Aufloesung nicht (175: 512 px); 1024 px\n   wie im Auftrag ist gut, bitte im Ergebnis vermerken, wie ihr es angekuendigt habt.\n\nA3 Offen, nicht jetzt: Alle 16 Laeufe aus 188 melden modus_gerechnet txt2img — richtig so,\n   z-image-turbo nimmt das Schoenbild nicht an, die Tiefe traegt ueber control_image. Kein\n   Fehler, nur zur Einordnung.\n\nRUECKGABE: git log -1 nach dem Pull und ein Satz: gelesen; ob der Abholer-Timer den Stand\nschon gezogen hat.\n\nNICHT TUN: keine Messung; nichts committen ausser eurer Ergebnisdatei.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "keine — reine Ansage"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU. Vor dem naechsten Pull lesen.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 nach dem Pull.",
+    "Ein Satz: gelesen; ob der Abholer-Timer den Stand schon gezogen hat."
+  ],
+  "rang": 1
+}

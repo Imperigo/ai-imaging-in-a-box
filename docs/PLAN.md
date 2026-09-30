@@ -7535,9 +7535,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Owner:** Bauwerksrahmung als Vorgabe auf homeworker- und Abholer-Weg (Gebäude 2 % statt
         21 % des Bildes bei grossem Grundstück; auf-41 G3 seit August offen). — «ja»: homeworker
         umgestellt, Abholer nach Beweislauf (Protokoll 73 §13).
-  - [ ] **local:** `auf-20260930-188` — Beweislauf Bauwerk- gegen Szenenrahmung, Regel vorab.
-  - [ ] **Kern → cloud:** Nach bestandenem Beweislauf den Abholer umschalten und KosmoOrbit
-        ansagen (ihre Bilder zeigen dann mehr Gebäude).
+  - [x] **local:** `auf-20260930-188` — Beweislauf Bauwerk- gegen Szenenrahmung, Regel vorab. — 6/8 gegen 0/8, erfüllt.
+  - [x] **Kern → cloud:** Nach bestandenem Beweislauf den Abholer umschalten und KosmoOrbit
+        ansagen (ihre Bilder zeigen dann mehr Gebäude). — umgeschaltet, angesagt (Protokoll 73 §14).
+  - [ ] **local:** `auf-20260930-189` — Ansage lesen, bevor der Abholer den Stand zieht.
+  - [ ] **Kern:** eine Zahl, die «Form steht» erkennt — keine der vier trennt (188).
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit
         Führung und 40 Schritten nach Modellkarte.
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).

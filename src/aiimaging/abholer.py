@@ -1500,12 +1500,13 @@ def mindest_frei_mib(backbone_name) -> tuple[int, str]:
 
 #: Rahmt eine Richtungskamera des Abholers nach dem BAUWERK statt nach der Szene?
 #:
-#: **Noch nicht — Owner-Entscheid 30.09.2026 (Sitzung 73 §13):** erst ein Beweislauf am
-#: Heimrechner (gleiche Szene, beide Rahmungen, ``auf-20260930-188``), dann für KosmoOrbit
-#: umschalten. Der Messweg (``tools/homeworker.py``) rahmt schon nach dem Bauwerk. Gemessen:
-#: Testbau mit Geländeplatte, Gebäude 2,0 % des Bildes nach der Szene, 21,0 % nach dem
-#: Bauwerk. Ein Auftrag mit eigener ``kamera_huellbox`` ist davon nicht betroffen.
-RAHMUNG_NACH_BAUWERK = False
+#: **Ja, seit dem 30.09.2026 abends** — Owner-Entscheid (Sitzung 73 §13) mit Beweislauf
+#: vorab: ``auf-20260930-188``, 16 Bilder, Augenurteil blind, Regel vor der Messung
+#: festgelegt. Nach dem Bauwerk stand die Form in 6 von 8 Bildern, nach der Szene in 0 von 8
+#: (dort erfand das Modell jedes Mal ein eigenes Motiv). Bauwerk-Anteil im Bild 17,9–21,0 %
+#: gegen 2,0–4,0 %. Ein Auftrag mit eigener ``kamera_huellbox`` und Standpunkte von Hand
+#: sind nicht betroffen; findet die Namensregel kein Gelände, bleibt es bei der Szene.
+RAHMUNG_NACH_BAUWERK = True
 
 
 def _rahmung_fuer(kamera_huellbox, modell, hochachse, richtung):

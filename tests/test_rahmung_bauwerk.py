@@ -49,9 +49,11 @@ def test_eine_unlesbare_datei_rahmt_nach_der_szene_ohne_pfad(tmp_path):
     assert str(tmp_path) not in aus["grund"]
 
 
-def test_der_abholer_rahmt_erst_nach_dem_beweislauf():
-    assert abholer.RAHMUNG_NACH_BAUWERK is False
-    assert abholer._rahmung_fuer(None, "x.glb", "Y", "sSE") is None
+def test_der_abholer_rahmt_nach_dem_bauwerk_seit_dem_beweislauf():
+    """auf-20260930-188: Form steht in 6 von 8 (Bauwerk) gegen 0 von 8 (Szene)."""
+    assert abholer.RAHMUNG_NACH_BAUWERK is True
+    # Eine unlesbare Datei rahmt weiter nach der Szene — kein Bild geht dadurch verloren.
+    assert abholer._rahmung_fuer(None, "gibt-es-nicht.glb", "Y", "sSE") is None
     eigene = [[0, 0, 0], [1, 1, 1]]
     assert abholer._rahmung_fuer(eigene, "x.glb", "Y", "sSE") is eigene
 
