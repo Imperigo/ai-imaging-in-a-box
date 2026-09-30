@@ -1,0 +1,79 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-200",
+ "status": "erledigt",
+ "beendet": "2026-09-30T18:51:53Z",
+ "stand": {
+  "app_commit": "e40a606ac",
+  "enthaelt": "419e40bfa (merge-base --is-ancestor geprueft: DRIN)",
+  "fenster": "1440x900",
+  "app_version_anzeige": "v0.1.6"
+ },
+ "geprueft": "Desktop-App (Release-Build, WebKitGTK) auf eigenem Xvfb :95, 1440x900, bedient mit xdotool, Abzuege mit ImageMagick import. Projekt 1 nur angesehen; Punkte 2, 3, 3b in einem Wegwerf-Projekt, das am Ende ueber die Projektliste mit Rueckfrage geloescht wurde. Dateiablage ueber den GTK-Dateidialog (Ctrl+L, Pfad).",
+ "punkte": {
+  "1a": {
+   "ja_nein": "ja",
+   "befund": "Spalte «GRUNDLAGEN 41» mit genau zwei Stapelkarten («Golden Rules Andrin» 17 Dokumente, «lehrhefte» 24 Dokumente), je «Grundlage · in allen Projekten», drei Titel + «+ 14 weitere» bzw. «+ 21 weitere», Knopf «Aufklappen». Keine Einzelkarten. In Projekt 1 kam zuerst die Paketfrage; mit Escape geschlossen, kein Paket gewaehlt. Die Spalte steht rechts neben dem Ablagefeld (Mitte des Bildes), nicht am rechten Bildrand.",
+   "abzug": "s04-p1-nach-escape.png"
+  },
+  "1b": {
+   "ja_nein": "ja",
+   "befund": "«Aufklappen» bei «Golden Rules Andrin»: die 17 Karten erscheinen (01.–17., Spalten «GRUNDLAGEN (FORTSETZUNG)»), jede traegt «UNBEKANNT · Grundlage · …», nirgends «Bibliothek». Knopf wird zu «Zuklappen»; danach wieder nur die zwei Stapel. Beim Aufklappen rutscht der Stapel an den linken Rand und das Ablagefeld steht zwischen den Fortsetzungsspalten, rechts laufen Spalten aus dem Bild.",
+   "abzug": "s05-p1-aufgeklappt.png"
+  },
+  "2a": {
+   "ja_nein": "ja",
+   "befund": "Paketfrage «Womit soll KosmoPrepare die Unterlagen verarbeiten?» erscheint im neuen Projekt. Escape: weg, Tafel frei (Ablagefeld + 2 Stapel). Station verlassen (Zentrale) und KosmoPrepare wieder oeffnen: Frage kommt wieder. «Später»: weg, Tafel frei.",
+   "abzug": "s12-w-spaeter.png"
+  },
+  "2b": {
+   "ja_nein": "ja",
+   "befund": "Textdatei ueber Antippen des Ablagefelds (Dialog «Dateien auswählen») abgelegt: Karte «01. …tafel.txt», Kopf «1 Dokument · 2 Stapel Grundlagen · 0 Gruppen · nach Art geordnet». In Projekt 1: «Noch keine Dokumente · 2 Stapel Grundlagen» – nicht zu sehen. Zurueck im Wegwerf-Projekt: wieder da («1 Dokument»).",
+   "abzug": "s15-w-tafel-datei.png"
+  },
+  "2c": {
+   "ja_nein": "ja",
+   "befund": "Insel «Aufnahme» › «Dateien» › «Dateien wählen»: «1 Datei aufgenommen. …insel.txt ✓ 1 Abschnitt». Auf der offenen Tafel erscheint sie NICHT sofort (Kopf blieb «1 Dokument»); erst nach Verlassen und Wiederoeffnen von KosmoPrepare «2 Dokumente», Karte in Spalte «NOTIZ». In Projekt 1 weiterhin «Noch keine Dokumente», die Aufnahme-Insel dort zeigt keine Liste.",
+   "abzug": "s26-w-neu-geoeffnet.png"
+  },
+  "3": {
+   "ja_nein": "ja",
+   "befund": "Teilweise pruefbar. Paket «Wettbewerbs-Vorbereitung» gewaehlt, Leiste «1 Unterlagen 2 Standort 3 Grundlagen 4 Baurecht 5 Volumen», Umschalter Tafel/Knotenbaum/Liste. «Knotenbaum»: zeigt nur «Noch keine Unterlagen erfasst … Zur Tafel» (trotz 2 Dokumenten auf der Tafel); erster Abzug zeigt die Karte halb durchsichtig einblendend, danach voll – Linien und nacheinander kommende Karten waren mangels Knoten NICHT zu sehen. «Paket ändern»: Dialog mittig, voll sichtbar, «Abbrechen» schliesst. Art-Auswahl auf einer Karte («Notiz ▾»): Liste Norm…Unbekannt direkt unter dem Knopf, richtige Stelle, lesbar, aber leicht durchscheinend (Rand und Nummer der Nachbarkarte schimmern durch). KosmoDoc und KosmoTrain: oeffnen sauber, Endzustand voll deckend, nichts haengt oder bleibt halb durchsichtig; das weiche Einblenden selbst ist bei ca. 200 ms Abzugsabstand nicht aufzuloesen.",
+   "abzug": "s38-art-auswahl.png"
+  },
+  "3b": {
+   "ja_nein": "nicht pruefbar",
+   "befund": "Kein Dokument-Knoten vorhanden. Kosmo (qwen3-coder:30b) auf «Lege im Knotenbaum eine Dokument-Quelle an»: schlug zuerst nur «Knotenbaum … anlegen» (prepareGraph.graphErstellen) vor – einmal erlaubt, Meldung «✓ Knotenbaum … · zurückgängig», die Ansicht Knotenbaum blieb aber «Noch keine Unterlagen erfasst». Danach schlug Kosmo denselben Knotenbaum erneut vor (abgelehnt). Einmal nachgefasst («… einen Knoten vom Typ Dokument-Quelle an, ohne Art»): Kosmo kuendigt es an, schlaegt dann aber «kosmoprepare_grundlageplan schreibt Dateien … ausgabe_dir: /tmp» aus einem alten Gespraech vor – zweimal abgelehnt, jedes Mal kam derselbe Vorschlag wieder. Kein Dokument-Knoten, darum «Art bestimmen» nicht erreichbar.",
+   "abzug": "s52b.png"
+  },
+  "4": {
+   "ja_nein": "nein",
+   "befund": "Kein Absturz, kein Einfrieren ueber den ganzen Durchgang (Projektwechsel, Paketfrage, Auf-/Zuklappen, Dateidialoge, Knotenbaum, KosmoDoc, KosmoTrain, Kosmo-Panel, Loeschen). Prozess lebte bis zum Beenden per PID; app.log ohne panic/crash.",
+   "abzug": "s57-nach-loeschen.png"
+  }
+ },
+ "kopfzeile_wortlaut": "INFOTAFEL  Noch keine Dokumente · 2 Stapel Grundlagen",
+ "nebenbefunde": [
+  "Kopfzeile im Wegwerf-Projekt mit Dokumenten: «INFOTAFEL 2 Dokumente · 2 Stapel Grundlagen · 1 Gruppe · nach Art geordnet»; «1 Gruppe» mit Spalte «NOTIZ 1», obwohl beide Dateien Notizen sind – die per Ablagefeld abgelegte Karte steht ausserhalb der Spalte.",
+  "Diese frei stehende Karte liegt ueber dem Ablagefeld und schneidet dessen Text ab («…ABLEGEN», «…XF, IFC oder Text»). Mit offenem Kosmo-Panel ueberdeckt sie zusaetzlich den Stapel «lehrhefte» (Tafel ordnet sich nicht neu).",
+  "Datei aus der Aufnahme-Insel erscheint erst nach Wiederoeffnen von KosmoPrepare auf der Tafel (kein Nachladen).",
+  "Knotenbaum bleibt «Noch keine Unterlagen erfasst», obwohl 2 Dokumente auf der Tafel liegen und ein Knotenbaum angelegt wurde.",
+  "«Paket ändern» zeigt die Ueberschrift «DIESES PROJEKT HAT NOCH KEIN PAKET», obwohl ein Paket gewaehlt ist.",
+  "Aufnahme-Insel «Dateien»: das Schliessen-× liegt auf dem Text «…hierher ziehen», der Kurzhinweis «Dateien» scheint hinter der Tafel durch.",
+  "KosmoTrain «Lernstand»: «43 Grundlagen-Dokumente», Tafel sagt 41 – offenbar zaehlen die 2 Probe-Dateien mit (laut ROADMAP bewusst ueber alle Projekte; die Bezeichnung «Grundlagen» passt dann nicht).",
+  "Zentrale: «1 Offene Aufträge / 6 Befunde ungesendet» im Wegwerf-Projekt gleich wie in Projekt 1 (nicht je Projekt).",
+  "Schon das Wechseln auf Projekt 1 setzt dort «Auto-gesichert <Uhrzeit>» und in der Liste «gerade eben» – ohne Aenderung.",
+  "Aufgeklappte Grundlagen-Karten tragen «UNBEKANNT» und eine Art-Auswahl «Unbekannt ▾», keine Vorschau.",
+  "Kosmo: trotz Hinweis «Gesprächsverlauf beginnt neu» greift es eine Grundlageplan-Anfrage aus einem frueheren Gespraech wieder auf und schlaegt sie nach jeder Ablehnung erneut vor (Schleife). Die Vorschlagskarte ist so hoch, dass «Ablehnen» nur halb im Bild steht.",
+  "Der von Kosmo angelegte Knotenbaum traegt einen Namen aus einem frueheren Wettbewerb (echter Ortsname) statt des Projektnamens.",
+  "Nachtrag Home-PC-Worker (nur lesend an einer Kopie der Wissens-Datenbank der App): Nach dem Loeschen des Wegwerf-Projekts liegen die zwei Probe-Dokumente (Ablagefeld und Aufnahme-Insel) weiter im Speicher — 43 statt 41 Dokumente, beide Herkunft «lokal» und mit einer Projekt-Id, deren Projekt es nicht mehr gibt. Loeschen eines Projekts raeumt seine Dokumente nicht mit ab (verwaiste Dokumente). Nicht von Hand entfernt. Das erklaert auch KosmoTrains «43 Grundlagen-Dokumente»."
+ ],
+ "nicht_getan": [
+  "Nichts am Code geaendert, nichts gebaut, nichts committet oder gepusht.",
+  "In Projekt 1 kein Paket gewaehlt, nichts abgelegt; das geschlossene Beispielprojekt nicht angefasst; keine Grundlagen geloescht.",
+  "Drag-and-drop nicht versucht (Xvfb); Ablage nur ueber den Dateidialog.",
+  "Nicht geprueft, ob die zwei Probe-Dateien nach dem Loeschen des Wegwerf-Projekts noch im Wissensspeicher liegen."
+ ],
+ "aufgeraeumt": "Wegwerf-Projekt ueber «Alle Projekte» mit Rueckfrage geloescht (Liste danach «Alle Projekte (2)»), Projekt 1 aktiv, App und Xvfb per PID beendet, qwen3-coder:30b entladen (api/ps leer).",
+ "fehler": null
+}
