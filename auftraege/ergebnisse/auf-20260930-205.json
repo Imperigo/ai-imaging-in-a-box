@@ -1,0 +1,132 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-205",
+ "status": "ok",
+ "beendet": "2026-09-30T19:50:00Z",
+ "stand": {
+  "kosmoprepare": "de796a2 Karten-Knoten: «In Szene laden» — die Karte kommt um den Szenenursprung an (pull --ff-only: «Bereits aktuell»)",
+  "blender": "KosmoDesign-Fork 5.1.2, Python 3.13.9"
+ },
+ "geprueft": "Blender frisch auf eigenem Xvfb :97 (WAYLAND_DISPLAY=kein-wayland, CUDA_VISIBLE_DEVICES leer), nichts auf dem Owner-Desktop, kein ydotool. Add-on per Symlink in eigenem, danach geloeschtem Ressourcenordner (bl_ext.user_default.wettbewerbsvorbereitung); Repo-Stamm NICHT in sys.path, kein Modul «core» geladen (vorher und nachher). Wegwerf-Datei = Blender-Startszene. Knoten per Operator ihrer Knoepfe (EXEC_DEFAULT, node_name = uid_key, Kontext Knoteneditor). Zwei vollstaendige Laeufe, alle Zahlen und Meldungen in beiden gleich; im zweiten Lauf Bildschirmfotos nur zur eigenen Sichtkontrolle (danach geloescht).",
+ "kurzantwort": "Gruen. Der Knopf «In Szene laden» steht an beiden Knoten und zeichnet. Grundlageplan: 9 Objekte, 2820 × 1790 m = blatt.ausschnitt_m genau, zentriert auf den Szenenursprung; ohne Z-Ursprung flach mit Warnung, mit Z-Ursprung Kurven in der Hoehe (Vielfache von 25), Gebaeude auf 0, neu laden ersetzt (9 bleibt 9). Plan einpassen: 7 Objekte (eine je Stilgruppe), Gebaeude decken sich mit dem Grundlageplan (Median 0.88 m). Kein Fehler, kein Traceback.",
+ "befunde": {
+  "szene": {
+   "wettbewerb_lv95_easting": 2649525.0,
+   "wettbewerb_lv95_northing": 1177780.0,
+   "operator_knopf": "wettbewerb.karte_in_szene (liest wettbewerb_lv95_easting/_northing und fuer Z der Reihe nach wettbewerb_z_origin_local, wettbewerb_parcel_centroid_z, wettbewerb_lv95_elevation)"
+  },
+  "schritt_3_grundlageplan": {
+   "knoten_lauf": {
+    "status": "geschrieben",
+    "lauf_zeile": "Grundlageplan 1:5000 A2 quer (2820 × 1790 m) · 261 Höhenkurven · 1129 Gebäude · SVG + DXF + PDF",
+    "operator_meldung": "INFO: Grundlageplan 1:5000 A2 quer (2820 × 1790 m) · 261 Höhenkurven · 1129 Gebäude · SVG + DXF + PDF",
+    "warnungen": [],
+    "annahmen": [
+     "Strasse/Weg nach swissTLM3D-objektart: 15/16 = Weg, alles andere Strasse (Einteilung aus dem Prototyp, nicht gegen den Objektkatalog geprueft)."
+    ],
+    "laufzeit_s": 6.1
+   },
+   "knopf_sichtbar": "ja — «In Szene laden» unter dem Ergebnis (Sichtkontrolle am Bildschirmfoto)",
+   "in_szene_laden_meldung": {
+    "stufe": "WARNING",
+    "text": "2161 Linienzuege in 9 Ebenen, 2820 × 1790 m um den Szenenursprung (flach — Z-Ursprung fehlt) · Der Z-Ursprung der Szene ist nicht bekannt (wettbewerb_z_origin_local / wettbewerb_parcel_centroid_z / wettbewerb_lv95_elevation) — Linien mit Hoehe sind FLACH auf 0 gelegt, keine Ersatzhoehe. · Nicht gezeichnet: HATCH 1129, TEXT 120"
+   },
+   "flach_warnung": "ja, in der Meldung enthalten (siehe Text)",
+   "sammlung": "Karte Grundlageplan (öffentliche Geodaten)",
+   "objekte": 9,
+   "ebenen": [
+    "GEBAEUDE_UMGEBUNG",
+    "GEWAESSER",
+    "KOORDINATENNETZ",
+    "KURVEN_25M",
+    "KURVEN_5M",
+    "RAHMEN",
+    "STRASSEN_TLM",
+    "WALD",
+    "WEGE_TLM"
+   ],
+   "groesse_m": "2820.0 × 1790.0 (BBox lokal -1410/-895 bis 1410/895, Mitte 0.0/0.0)",
+   "ausschnitt_m_json": [
+    2820.0,
+    1790.0
+   ],
+   "groesse_stimmt": "ja, genau (die Ebene RAHMEN spannt den Ausschnitt; Inhalt liegt darin)",
+   "z_stichprobe": "alle 9 Ebenen z = 0 (flach), wie gemeldet",
+   "hinweis": "GEBAEUDE_PERIMETER fehlt, weil keine Perimeter-Zonen eingegeben waren; alle 1129 Gebaeude in GEBAEUDE_UMGEBUNG. Die Gebaeude-Fuellungen (HATCH 1129) und Kurvenbeschriftungen (TEXT 120) werden nicht gezeichnet, nur gezaehlt."
+  },
+  "schritt_4_mit_z_ursprung": {
+   "z_ursprung": 570.0,
+   "z_herkunft": "Annahme: das Quellen-JSON nennt keine Hoehe am Zentrum (nur Hoehenbezug LN02 und Aequidistanz); genommen = kleinste Hoehenkurve im DXF (570 m, groesste 950 m). Gesetzt als wettbewerb_lv95_elevation.",
+   "in_szene_laden_meldung": {
+    "stufe": "WARNING",
+    "text": "2161 Linienzuege in 9 Ebenen, 2820 × 1790 m um den Szenenursprung · Nicht gezeichnet: HATCH 1129, TEXT 120"
+   },
+   "flach_warnung": "nein — weg. Die Meldung bleibt aber auf Stufe WARNING, weil «Nicht gezeichnet: HATCH 1129, TEXT 120» als Warnung zaehlt.",
+   "objekte": 9,
+   "objekte_alle_karten_in_datei": 9,
+   "neu_laden_ersetzt": "ja — 9 bleibt 9, keine doppelten Objekte",
+   "hoehen": {
+    "KURVEN_25M": "z lokal 5 bis 380 m",
+    "KURVEN_5M": "z lokal 0 bis 375 m",
+    "GEBAEUDE_UMGEBUNG": "0",
+    "alle anderen Ebenen": "0"
+   },
+   "gebaeude_auf_0": "ja",
+   "z_stichprobe_KURVEN_25M": "16 verschiedene Hoehen; Proben z lokal + 570: 5→575, 80→650, 155→725, 230→800, 305→875, 380→950 — alle Vielfache von 25: ja",
+   "z_stichprobe_KURVEN_5M": "0→570, 75→645, 150→720 … (Vielfache von 5, wie erwartet nicht von 25)"
+  },
+  "schritt_5_lage_auf_modell": "kein Modell in der Szene, nicht pruefbar (Wegwerf-Datei: nur Standard-Wuerfel, Kamera, Licht)",
+  "schritt_6_plan_einpassen": {
+   "gemacht": "ja (privater Reader lag vor; nicht ins Repo, nicht in die Rueckgabe)",
+   "stile_lesen": {
+    "status": "angaben_fehlen (gewollt)",
+    "lauf_zeile": "Seite 6: 154 Pfade in 7 Stilen — fuer das Einpassen braucht es 'gebaeude_stil' (Schluessel aus 'stile'), 'anker' {pdf_pt|stil, lv95} und 'm_pro_pt' oder 'massstabsbalken' — hier die Stile der Seite"
+   },
+   "einpassen": {
+    "status": "eingepasst",
+    "lauf_zeile": "Plan eingepasst: 111/117 Gebäude gepaart, Abweichung Median 0.76 m / P90 2.57 m · Massstab 1.0119, Drehung 0.47° · 7 Stilgruppen in LV95",
+    "operator_meldung": "INFO: Plan eingepasst: 111/117 Gebäude gepaart, Abweichung Median 0.76 m / P90 2.57 m · Massstab 1.0119, Drehung 0.47° · 7 Stilgruppen in LV95",
+    "laufzeit_s": 1.0
+   },
+   "knopf_sichtbar": "ja",
+   "in_szene_laden_meldung": {
+    "stufe": "INFO",
+    "text": "155 Linienzuege in 7 Ebenen, 1726 × 903 m um den Szenenursprung"
+   },
+   "sammlung": "Karte Plan einpassen (PDF → LV95)",
+   "objekte": 7,
+   "erwartet": 7,
+   "ebenen": "eine je Stilgruppe (Gebaeude-Stil 635 Punkte / 117 Flaechen, Anker-Stil 1 Flaeche, 5 Linienstile)",
+   "groesse_m": "1726.2 × 902.9 (liegt innerhalb des Grundlageplans), alle z = 0",
+   "deckungsgleich_mit_grundlageplan": "ja",
+   "vergleich": "Je Gebaeude des eingepassten Plans (117 Flaechenschwerpunkte) der naechste Gebaeude-Schwerpunkt des Grundlageplans in der Szene: Abstand Median 0.88 m, P90 3.24 m, 104 von 117 unter 3 m. Mittlerer Versatz (Median) dx +0.05 m / dy +0.24 m (Grundlageplan liegt 0.05 m oestlich, 0.24 m noerdlich). Die ~13 groesseren Abstaende passen zu den 6 nicht gepaarten Gebaeuden des Einpassens und zu Gebaeuden, die in den Datenstaenden unterschiedlich zugeschnitten sind.",
+   "versatz_m": 0.88
+  },
+  "laufzeit_knopf_s": {
+   "grundlageplan_flach": 0.365,
+   "grundlageplan_mit_z": 0.366,
+   "plan_einpassen": 0.007,
+   "hinweis": "Der Knopf laeuft synchron im Hauptfaden (kein Netz)."
+  },
+  "bedienbarkeit": "ja — Herzschlag-Timer 0.2 s lief weiter; waehrend des Knopfs groesste Luecke 0.38 s (Grundlageplan), 0.20 s (Plan einpassen); Knoten-Laeufe im Hintergrund 6.1 s / 1.4 s / 1.0 s mit groesster Luecke 0.21 s; nie ueber 1 s.",
+  "fehler_ja_nein": {
+   "no_module_named": "nein",
+   "traceback": "nein",
+   "fehlender_knopf": "nein"
+  },
+  "meldungen_herkunft": "Die Meldungen der Knoten-Laeufe stehen wortwoertlich in der Konsole und im Info-Editor. Die Meldung von «In Szene laden» erscheint bei einem Aufruf aus einem Skript NICHT im Info-Editor/der Konsole (Blender legt Berichte skriptgerufener Operatoren dort nicht ab); ihr Text oben ist mit derselben Kernfunktion und derselben Verkettung wie im Operator nachgerechnet (karten_knoten.szenen_ladung + « · »-Verbindung von zeile und warnungen), Rueckgabe des Operators jeweils {'FINISHED'}."
+ },
+ "nicht_getan": [
+  "Schritt 5: kein Modell in der Wegwerf-Datei — Lage auf Gelaende/Modell nicht pruefbar.",
+  "Der Z-Ursprung ist eine Annahme (kleinste Hoehenkurve), kein amtlicher Wert am Zentrum.",
+  "Knopf nicht per Mausklick im Info-Editor gegengelesen (nur Skriptaufruf + Bildschirmfoto der Knoten)."
+ ],
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine",
+  "anzeige": "Xvfb :97, nichts auf dem echten Desktop",
+  "aufgeraeumt": "Blender und Xvfb per gemerkter PID beendet; Ressourcenordner, Ausgaben (DXF/SVG/PDF/GeoJSON) und Bildschirmfotos geloescht; nichts committet, kein Code geaendert"
+ },
+ "fehler": null,
+ "randnotiz": "Nach dem Abschalten des Add-ons am Skriptende meldet Blender in der Konsole mehrfach «bpy.rna WARNING current value '-1' matches no enum in 'SpaceNodeEditor', '(null)', 'tree_type'» — Folge davon, dass der Knoteneditor noch den Baumtyp des abgeschalteten Add-ons zeigte; kommt vom Pruefskript, nicht vom Knopf."
+}
