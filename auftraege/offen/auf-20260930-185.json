@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-185",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare aef35fd: ./run_tests.sh nach dem libs/-Riegel nachmessen, einmal mit Vorgabe-Python, einmal mit Blenders Python 3.13.",
+  "anweisung": "=== NACHMESSEN: ./run_tests.sh IN KOSMOPREPARE NACH DEM libs/-RIEGEL (aef35fd)\n\nEure Meldung vom 30.09.2026: ./run_tests.sh auf 1322431 → Ran 1542, failures=3, errors=43, alle aus EINER Ursache (libs/ fuer Blenders Python 3.13 gebaut, Lauf mit /usr/bin/python3 = 3.14). Euer Vorschlag ist umgesetzt: libs/ kommt nur noch in den Suchpfad, wenn es zum laufenden Python passt (core/libs_pfad.py), und run_tests.sh sucht zuerst ein passendes Python ($KOSMOPREPARE_TEST_PYTHON geht vor) und sagt, welches es nimmt.\n\n1. KosmoPrepare-Klon: `git pull --ff-only`, `git log -1` muss `aef35fd` oder juenger zeigen (sonst STOPP und melden).\n2. `./run_tests.sh` OHNE Umgebungsvariable. Zurueckgeben: die Zeile «[run_tests] …» (welches Python gewaehlt wurde bzw. dass keines passt), eine allfaellige Zeile «[libs_pfad] …», und die Schlusszeile (Ran …, OK/FAILED …). Erwartet: kein Fehler mehr aus numpy/shapely; was libs/ braucht, springt mit Grund.\n3. `KOSMOPREPARE_TEST_PYTHON=<Blenders python3.13> ./run_tests.sh` — dasselbe Python, mit dem ihr «0 Tests» gefunden habt. Wichtig: das Skript selbst starten (es wechselt nach tests/), NICHT `-m unittest discover -s .` aus dem Repo-Stamm. Zurueckgeben: dieselben drei Zeilen. Den Pfad zu Blenders Python NICHT zurueckgeben (REGEL 3), nur «Blender-Python 3.13».\n4. Scheitert in 2 oder 3 noch etwas: die ersten fuenf «FAIL:»/«ERROR:»-Zeilen woertlich.\n\nNICHT TUN: nichts committen, keinen Code aendern, libs/ nicht anfassen, nichts installieren. Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+  "erstellt": "2026-09-30T08:40:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU-Last, kein Netz; zwei Testlaeufe je unter einer Minute.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nichts committen, nichts installieren, libs/ nicht anfassen.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des KosmoPrepare-Klons.",
+    "Je Lauf: [run_tests]-Zeile, [libs_pfad]-Zeile, Schlusszeile; bei Fehlern die ersten fuenf FAIL/ERROR-Zeilen."
+  ],
+  "rang": 2
+}
