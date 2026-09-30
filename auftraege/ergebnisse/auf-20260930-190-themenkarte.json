@@ -1,0 +1,53 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-190 (KosmoPrepare, Themenkarte — Datei in f6af380 durch den KosmoVis-Auftrag 190 ersetzt)",
+ "status": "ok",
+ "beendet": "2026-09-30T10:28:33Z",
+ "stand": "KosmoPrepare-Klon d219eb6 («Themenkarte kann Gebaeude nach einer Liste einfaerben»), pull --ff-only sauber; Anweisung gelesen aus 669a3b9:auftraege/offen/auf-20260930-190.json.",
+ "geprueft": "Blender 5.1.2 (eigener Fork, Python 3.13.9) frisch gestartet, Add-on in eigenem Benutzer-Ressourcenordner (danach geloescht), GUI auf eigenem Xvfb. Ausgeloest ueber ein --python-Startskript mit bpy.app.timers, genau der Operator des Knopfs (wettbewerb.themenkarte_erzeugen, EXEC_DEFAULT). Herzschlag alle 0.2 s im Hauptfaden (Bildnummer umschalten) als Mass fuer Bedienbarkeit. Werte wie im Auftrag (Zentrum E 2649525 / N 1177780, 1:5000, A2 quer, Perimeter-Zonen und Mindestflaeche 10000, Titel «Probe Gebaeude», Textblock woertlich). Blender und Xvfb per gemerkter PID beendet.",
+ "kurzantwort": "Dritte Art erscheint: ja. Status «geschrieben», Zeile «Themenkarte gebaeude 1:5000 A2: 3 von 4 Einträgen eingefärbt (a 2, b 2) · 1 Warnung(en) · SVG + DXF + PDF», 6.5 s, Blender bedienbar (groesste Luecke 0.28 s). Gegenprobe ohne quelle bei P1: Status fehler, Meldung nennt P1. Kein «No module named», kein Traceback.",
+ "befunde": {
+  "3_dritte_art": {
+   "ja_nein": "ja",
+   "arten": [
+    "Anreise",
+    "Saison",
+    "Gebäude nach Liste"
+   ]
+  },
+  "4_lauf": {
+   "status": "geschrieben",
+   "zeile": "Themenkarte gebaeude 1:5000 A2: 3 von 4 Einträgen eingefärbt (a 2, b 2) · 1 Warnung(en) · SVG + DXF + PDF",
+   "laufzeit_s": 6.5,
+   "blender_bedienbar": "ja — 32 Herzschlaege, groesste Luecke 0.28 s, keine ueber 1 s",
+   "dateien": [
+    "…_quer.svg",
+    "…_quer_LV95.dxf",
+    "…_quer.pdf",
+    "…_quer_quellen.json"
+   ],
+   "quellen_zaehlung": {
+    "eintraege": 4,
+    "zugeordnet": 3,
+    "ohne_zuordnung": 1,
+    "grundrisse_eingefaerbt": 3,
+    "grundrisse_perimeter_ohne_eintrag": 152,
+    "je_klasse": {
+     "a": 2,
+     "b": 2
+    }
+   },
+   "warnung_p4": "nicht eingefaerbt (keine Lage oder kein Grundriss ≤ 15 m): P4",
+   "no_module_named_oder_traceback": "nein (Log und Blender-Konsole: 0 Treffer)"
+  },
+  "5_gegenprobe": {
+   "status": "fehler",
+   "meldung_woertlich": "Eintraege P1 haben keine 'quelle' — eine Einfaerbung ohne Quelle wird nicht gezeichnet",
+   "dateien": "keine geschrieben",
+   "laufzeit_s": 4.4
+  },
+  "beobachtung": "je_klasse zaehlt die Eintraege der Liste (b 2 inkl. P4 ohne Lage), nicht die eingefaerbten Grundrisse (b waere 1). Die Zeile «(a 2, b 2)» neben «3 von 4 eingefaerbt» kann darum missverstanden werden — nur Hinweis, kein Fehler im Sinne des Auftrags."
+ },
+ "nicht_getan": "nichts committet im KosmoPrepare-Klon, kein Code geaendert, libs/ nicht angefasst; keine Plaene/Bilder zurueckgegeben.",
+ "fehler": null
+}
