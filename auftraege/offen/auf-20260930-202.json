@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-202",
+  "art": "frage",
+  "beschreibung": "KosmoPublish-Bildtest: erst gegen die alten Vergleichsbilder messen, dann alle drei aus der ERFUNDENEN Kette neu setzen und committen (Owner-Entscheid Nr. 7).",
+  "anweisung": "=== KOSMOPUBLISH: VERGLEICHSBILDER DES BILDTESTS ERNEUERN (OWNER-ENTSCHEID NR. 7) ===\n\nWORUM ES GEHT\n  Der Nachtlauf meldet seit Wochen 0 pass / 3 fail (docs/visual_tests/2026-09-30.md). Zwei Ursachen, keine davon\n  ein Code-Fehler:\n  (a) Plakat: der Nachtlauf zeichnete aus output/planraw/ (reale Plaene), das Vergleichsbild ist aus der\n      erfundenen Kette -> 27 % «Verwechslung». Behoben in KosmoPublish 45c4b46: das Nachtskript faehrt jetzt\n      --plan-quelle erfunden.\n  (b) massing-demo und bridge-grundriss: Vergleichsbilder 27 Tage alt, «BASIS VERALTET».\n  Owner-Entscheid 30.09.2026 Nr. 7: «Ja, Auftrag an Heimrechner» — die Vergleichsbilder neu setzen.\n  Regel aus dem Befund vom 27.08.: ZUERST messen, DANN erneuern — wer zuerst erneuert, loescht den Beweis.\n\nWAS ZU TUN IST (im KosmoPublish-Klon, mit dessen .venv)\n  1. git pull --ff-only; git log -1 muss 45c4b46 oder juenger zeigen (sonst STOPP).\n  2. MESSEN gegen die alten Bilder (schreibt nichts in golden/):\n       .venv/bin/python tools/kosmopublish_cli.py visual-test --tier1-only --plan-quelle erfunden \\\n         --golden output/visual_tests/golden --out /tmp/bildtest202-vorher\n     Je Fall notieren: Pixel-Diff in %, «BASIS VERALTET» ja/nein, Werkzeug-Hinweise, Planquelle-Zeile.\n  3. ERNEUERN, alle drei Faelle, aus der erfundenen Kette:\n       .venv/bin/python tools/kosmopublish_cli.py visual-test --tier1-only --plan-quelle erfunden \\\n         --golden output/visual_tests/golden --update-golden --out /tmp/bildtest202-neu\n     Erwartet je Fall «golden aktualisiert -> <name>.png» und beim Plakat «Planquelle gesichert: erfunden».\n     Steht beim Plakat «golden NICHT aktualisiert», STOPP und woertlich melden.\n  4. GEGENPROBE (schreibt nichts):\n       .venv/bin/python tools/kosmopublish_cli.py visual-test --tier1-only --plan-quelle erfunden \\\n         --golden output/visual_tests/golden --out /tmp/bildtest202-nachher\n     Erwartet 3 pass, Diff je Fall 0.00 %, kein «BASIS VERALTET».\n  5. Schau dir die drei neuen PNG einmal an (Plakat, Massenmodell, Grundriss): erkennbar ein erfundenes\n     Haus, kein Name, keine reale Geometrie? ja/nein.\n  6. .venv/bin/python -m unittest tests.test_kein_plakat_golden_im_repo tests.test_nacht_vergleicht_dieselbe_quelle\n     muss OK sein.\n  7. COMMIT in KosmoPublish, NUR diese Dateien: output/visual_tests/golden/*.png und die zugehoerigen\n     *.werkzeuge.json / *.herkunft.json. git status vorher: nichts anderes staged. Meldung z. B.\n     «Vergleichsbilder aus der erfundenen Kette neu gesetzt (auf-20260930-202)» mit den Zahlen aus Schritt 2\n     und 4. Push nach main.\n\nRUECKGABE\n  - Stand KosmoPublish vorher/nachher (Commit-Kennung des Golden-Commits).\n  - Schritt 2: je Fall Diff und Hinweise woertlich. Schritt 3: die «golden …»-Zeilen woertlich.\n  - Schritt 4: pass/fail und Diff je Fall. Schritt 5: ja/nein. Schritt 6: Ergebniszeile.\n  - Lief Blender (massing-demo) und rsvg-convert (bridge-grundriss)? Fassungen aus der Werkzeugmarke.\n\nNICHT TUN: kein --plan-quelle auto, nichts aus output/planraw/ in ein Vergleichsbild, keinen Code aendern,\nkein Vision-Modell starten (--tier1-only reicht), nichts ausser den Golden-Dateien committen, nichts\nsystemweit installieren. Keine absoluten Pfade mit Benutzernamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T19:40:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoPublish: erfundene Kette (fixture_generator --only haus_ifc)"
+  },
+  "params": {
+    "kosmopublish_stand_min": "45c4b46",
+    "owner_entscheid": "2026-09-30 Nr. 7, Chat: «Ja, Auftrag an Heimrechner»"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell noetig (--tier1-only).",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3).",
+      "Nur Golden-Dateien committen.",
+      "Nur aus der erfundenen Kette."
+    ]
+  },
+  "rueckgabe": [
+    "Stand vorher/nachher, Golden-Commit.",
+    "Diff je Fall vorher (Schritt 2) und nachher (Schritt 4).",
+    "golden-Zeilen woertlich; Sichtprobe ja/nein; Unittest-Ergebnis.",
+    "Werkzeugfassungen Blender/rsvg."
+  ],
+  "rang": 3
+}

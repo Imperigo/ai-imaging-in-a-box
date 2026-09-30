@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-203",
+  "art": "frage",
+  "beschreibung": "KosmoPublish: die Kette IFC -> Bruecke -> Plaene -> A0-Plakat einmal an einem ECHTEN Projekt fahren; Daten bleiben am Heimrechner, zurueck kommen nur Zahlen (Owner-Entscheid Nr. 8).",
+  "anweisung": "=== KOSMOPUBLISH: PLAKAT-KETTE AN EINEM ECHTEN PROJEKT (OWNER-ENTSCHEID NR. 8) ===\n\nWORUM ES GEHT\n  Die Kette IFC -> ifc-bridge -> materialize --sia-full -> generate-poster ist an einem ERFUNDENEN Haus\n  belegt (tests_slow/test_kette_erfundenes_haus.py: 2 Geschosse, 3 Raeume, 9 SVG, A0 mit 12 Elementen). An\n  echten Dateien ist nur die Bruecke gemessen (CLAUDE.md: 2420/2445 Waende, 355/358 Raeume), das BLATT nie.\n  Owner-Entscheid 30.09.2026 Nr. 8: «Ja, auf dem Heimrechner» — die Daten bleiben dort, zurueck kommen Zahlen.\n\nWAS ZU TUN IST (im KosmoPublish-Klon, mit dessen .venv und .venv-ifc)\n  1. git pull --ff-only; git log -1 muss 45c4b46 oder juenger zeigen.\n  2. Eine echte IFC des Owners waehlen: die, die Wire-QA und test_mcp_server finden\n     (corpus/owner_references/**/*.ifc). Gibt es mehrere, die kleinere. In der Rueckgabe NUR Groesse in MB\n     und IFC-Schema, NIE Datei-, Projekt-, Orts- oder Bueronamen.\n  3. Arbeitsordner ausserhalb jedes Repos, z. B. /tmp/kette203 (Unterordner proj/).\n       .venv/bin/python tools/kosmopublish_cli.py ifc-bridge --ifc <IFC> --out /tmp/kette203/proj/bridge_export_v015_echt.json\n       .venv/bin/python tools/kosmopublish_cli.py materialize --project /tmp/kette203/proj --sia-full\n       .venv/bin/python tools/kosmopublish_cli.py generate-poster --planraw /tmp/kette203/proj/output/planraw \\\n         --out /tmp/kette203/blatt\n     Je Schritt Laufzeit messen (time).\n  4. Aus den Ausgaben ZAHLEN notieren:\n     ifc-bridge: Geschosse, Raeume, Waende, Oeffnungen, Warnungen (Anzahl je Art, ohne Namen), n_annotationen.\n     materialize: Anzahl SVG, «N Fehler», Linterbefunde gesamt und je Regel (R001 …).\n     generate-poster: Rueckgabewert, platzierte Elemente, Ueberlauf ja/nein und WELCHE Elementarten\n       (konzept_text/programm_tabelle/material_legende/Plan), gewaehlter oder gemeldeter Massstab, Blattformat,\n       PDF-Groesse in KB.\n  5. Das Blatt EINMAL ansehen (PDF oder typst-PNG) und in Worten ohne Namen beantworten: stehen alle Plaene\n     lesbar? Ueberdeckt sich etwas? Ist die Schraffur (Poche bzw. Muster) sichtbar? Fehlt Text?\n  6. /tmp/kette203 danach loeschen.\n\nRUECKGABE\n  - Stand KosmoPublish; IFC: Groesse MB, Schema.\n  - Schritt 3: Rueckgabewerte und Laufzeiten; bei Fehler die letzten 20 Zeilen woertlich, Namen durch <X> ersetzt.\n  - Schritt 4: alle Zahlen. Schritt 5: vier kurze Antworten.\n  - Was an diesem Blatt auffiel und am erfundenen Haus nie auffallen konnte (in Worten, ohne Namen).\n\nNICHT TUN: KEIN Bild, PDF, SVG oder JSON aus diesem Lauf in ein Repo oder in die Rueckgabe; keine Datei-,\nProjekt-, Orts-, Kunden- oder Bueronamen in der Rueckgabe; keinen Code aendern; nichts committen ausser der\nAntwortdatei; nichts installieren. Keine absoluten Pfade mit Benutzernamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T19:41:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "KosmoPublish-Klon: corpus/owner_references/**/*.ifc (nur am Heimrechner, in keinem Repo)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmopublish_stand_min": "45c4b46",
+    "owner_entscheid": "2026-09-30 Nr. 8, Chat: «Ja, auf dem Heimrechner»",
+    "daten_bleiben_lokal": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell noetig.",
+    "hinweise": [
+      "ECHTE Daten: nur Zahlen zurueck, keine Namen, keine Bilder (REGEL 3).",
+      "Arbeitsordner danach loeschen."
+    ]
+  },
+  "rueckgabe": [
+    "Stand, IFC-Groesse/Schema.",
+    "Rueckgabewerte und Laufzeiten je Schritt.",
+    "Zahlen aus Bruecke, materialize, generate-poster.",
+    "Sichtprobe in vier Antworten; was am echten Blatt auffiel."
+  ],
+  "rang": 3
+}
