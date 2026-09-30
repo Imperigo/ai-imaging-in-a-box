@@ -16,6 +16,17 @@ je Bild ein ``augenetikett`` und Zahlen trägt, und sagt je Zahl:
 * **Kreuzpaare** — steht in der Ergebnisdatei eine Liste ``kreuzpaare`` (dasselbe Bild einmal
   gegen die eigene, einmal gegen eine fremde Soll-Karte), sagt ``kreuz`` je Zahl, bei welchem
   Anteil der Bilder die eigene Soll-Karte höher liegt als jede fremde. Das braucht kein Auge.
+  Getrennt nach Art der fremden Karte (``fremd_art``: ``nachbarblick`` — derselbe Körper aus
+  einem anderen Blick, die Vorgabe für ältere Zeilen — oder ``anderer_koerper``).
+* **Decke der Kreuzprobe** — dieselbe Frage an das Blender-Schönbild (``anker`` mit
+  ``probe: schoenbild``). Verliert schon das vollkommene Bild gegen die fremde Karte, misst die
+  Kreuzprobe die Ähnlichkeit der Soll-Karten, nicht die Zahl. **Befund 194 (30.09.):** Die
+  Kreuzprobe gegen Nachbarblicke scheiterte bei allen Zahlen — ohne Decke war nicht zu sagen,
+  an wem es lag.
+* **Doppelte Bilder** — derselbe Startwert mit denselben Einstellungen liefert dasselbe Bild.
+  ``doppelte`` nennt Gruppen mit identischen Zahlen; ``--ohne-doppelte`` behält je Gruppe nur
+  das aus der jüngsten Serie. **Befund 194:** 18 Bilder waren Wiederholungen aus 190 — ein
+  Fehler im Auftrag, der sie doppelt zählte.
 * **Treffer ohne eigenen Fall** — eine Schwelle wird an allen anderen Fällen (Serie × Körper ×
   Blick) gewählt und am ausgelassenen geprüft. Das ist die ehrliche Frage: Trägt eine Schwelle,
   die nicht an denselben Bildern gefunden wurde?
@@ -56,6 +67,13 @@ def auge(etikett: str) -> bool | None:
         return ETIKETTEN[etikett.strip().lower()]
     except KeyError:
         raise ValueError(f"Unbekanntes Augenetikett: {etikett!r}") from None
+
+
+def anker_aus(pfade) -> list[dict]:
+    aus = []
+    for pfad in pfade:
+        aus += json.loads(Path(pfad).read_text(encoding="utf-8")).get("anker") or []
+    return aus
 
 
 def kreuzpaare_aus(pfade) -> list[dict]:
@@ -172,11 +190,20 @@ def auc_im_fall(zeilen, mass, unklar_als_falsch=False) -> float | None:
     return s / n if n else None
 
 
-def kreuz(kreuzpaare, mass, zeilen=None) -> float | None:
+#: Die Arten einer fremden Soll-Karte. Zeilen ohne Angabe stammen aus 194 und sind Nachbarblicke.
+FREMD_ARTEN = ("nachbarblick", "anderer_koerper")
+
+
+def _art(k) -> str:
+    return k.get("fremd_art") or "nachbarblick"
+
+
+def kreuz(kreuzpaare, mass, zeilen=None, *, art: str | None = None) -> float | None:
     """Anteil der Bilder, deren eigene Soll-Karte höher liegt als jede fremde.
 
     Mit ``zeilen`` zählen nur Bilder, die das Auge «steht» nennt (über ``blind_id``) — bei
-    einem Bild ohne Form muss die eigene Soll-Karte nicht gewinnen.
+    einem Bild ohne Form muss die eigene Soll-Karte nicht gewinnen. ``art`` beschränkt die
+    fremden Karten auf eine Art aus :data:`FREMD_ARTEN`.
     """
     stehen = None if zeilen is None else {z.get("blind_id") for z in zeilen if z["auge"] is True}
     je_bild: dict = {}
@@ -189,11 +216,50 @@ def kreuz(kreuzpaare, mass, zeilen=None) -> float | None:
         e = je_bild.setdefault(k["bild"], {"eigen": None, "fremd": []})
         if k.get("eigen"):
             e["eigen"] = v
-        else:
+        elif art is None or _art(k) == art:
             e["fremd"].append(v)
     gezaehlt = [e["eigen"] > max(e["fremd"]) for e in je_bild.values()
                 if e["eigen"] is not None and e["fremd"]]
     return sum(gezaehlt) / len(gezaehlt) if gezaehlt else None
+
+
+def decke(anker, mass, *, art: str | None = None) -> float | None:
+    """Die Kreuzprobe am Blender-Schönbild — was die Probe höchstens hergeben kann."""
+    schoen = [a for a in anker or () if a.get("probe") == "schoenbild"]
+    return kreuz(schoen, mass, art=art)
+
+
+def _fingerabdruck(z, masse):
+    # Drei Stellen: ältere Serien runden rho auf drei Stellen (190: 0.585 statt 0.58472…).
+    werte = tuple(round(v, 3) if (v := _wert(z, m)) is not None else None for m in masse)
+    return (z["koerper"], z["blick"], werte)
+
+
+def doppelte(zeilen, masse=None) -> list[list[str]]:
+    """Gruppen von Bildern mit identischen Zahlen (dasselbe Bild in zwei Serien)."""
+    masse = masse or masse_in(zeilen)
+    gruppen: dict = {}
+    for z in zeilen:
+        fp = _fingerabdruck(z, masse)
+        if all(v is None for v in fp[2]):
+            continue
+        gruppen.setdefault(fp, []).append(z)
+    return [[z.get("blind_id") for z in g] for g in gruppen.values() if len(g) > 1]
+
+
+def ohne_doppelte(zeilen, masse=None) -> list[dict]:
+    """Je Gruppe identischer Bilder nur das aus der jüngsten Serie."""
+    masse = masse or masse_in(zeilen)
+    gesehen = set()
+    behalten = []
+    for z in sorted(zeilen, key=lambda z: str(z["serie"]), reverse=True):
+        fp = _fingerabdruck(z, masse)
+        if fp in gesehen and not all(v is None for v in fp[2]):
+            continue
+        gesehen.add(fp)
+        behalten.append(z)
+    reihenfolge = {id(z): i for i, z in enumerate(zeilen)}
+    return sorted(behalten, key=lambda z: reihenfolge[id(z)])
 
 
 def ohne_eigenen_fall(zeilen, mass) -> float | None:
@@ -214,10 +280,10 @@ def ohne_eigenen_fall(zeilen, mass) -> float | None:
     return richtig / gesamt if gesamt else None
 
 
-def auswerten(zeilen, masse=None, kreuzpaare=None) -> dict:
+def auswerten(zeilen, masse=None, kreuzpaare=None, anker=None) -> dict:
     masse = masse or masse_in(zeilen)
     koerper = sorted({z["koerper"] for z in zeilen})
-    aus = {"n_bilder": len(zeilen), "masse": {}}
+    aus = {"n_bilder": len(zeilen), "masse": {}, "doppelte": doppelte(zeilen, masse)}
     aus["augen"] = {
         k: {"steht": sum(1 for z in zeilen if z["koerper"] == k and z["auge"] is True),
             "steht_nicht": sum(1 for z in zeilen if z["koerper"] == k and z["auge"] is False),
@@ -230,6 +296,8 @@ def auswerten(zeilen, masse=None, kreuzpaare=None) -> dict:
                    "auc_im_fall_unklar_als_falsch": auc_im_fall(zeilen, m, True),
                    "ohne_eigenen_fall": ohne_eigenen_fall(zeilen, m),
                    "kreuz": kreuz(kreuzpaare, m, zeilen),
+                   **{f"kreuz_{a}": kreuz(kreuzpaare, m, zeilen, art=a) for a in FREMD_ARTEN},
+                   **{f"decke_{a}": decke(anker, m, art=a) for a in FREMD_ARTEN},
                    "je_koerper": {}}
         for k in koerper:
             teil = [z for z in zeilen if z["koerper"] == k]
@@ -264,6 +332,16 @@ def als_text(ergebnis) -> str:
         zeilen.append(f"{m[:26].ljust(26)}" + " ".join(_f(e[f]) for f in (
             "auc", "auc_unklar_als_falsch", "auc_im_fall", "auc_im_fall_unklar_als_falsch",
             "ohne_eigenen_fall", "kreuz")) + teil)
+    zweit = "Kreuzprobe je Art".ljust(26) + "  Nachbarblick: Bild Decke   anderer Körper: Bild Decke"
+    zeilen += ["", zweit, "-" * len(zweit)]
+    for m, e in sorted(ergebnis["masse"].items()):
+        zeilen.append(f"{m[:26].ljust(26)}                {_f(e['kreuz_nachbarblick'])} "
+                      f"{_f(e['decke_nachbarblick'])}                  "
+                      f"{_f(e['kreuz_anderer_koerper'])} {_f(e['decke_anderer_koerper'])}")
+    if ergebnis["doppelte"]:
+        zeilen += ["", f"DOPPELT: {len(ergebnis['doppelte'])} Gruppen identischer Bilder, z. B. "
+                   + ", ".join("=".join(map(str, g)) for g in ergebnis["doppelte"][:3])
+                   + " — mit --ohne-doppelte nur das jüngste."]
     return "\n".join(zeilen)
 
 
@@ -273,9 +351,16 @@ def main(argv=None) -> int:
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--rahmung", choices=("bauwerk", "szene"),
                     help="nur Bilder mit dieser Rahmung (Zeilen ohne Angabe fallen weg)")
+    ap.add_argument("--ohne-doppelte", action="store_true",
+                    help="je Gruppe identischer Bilder nur das aus der jüngsten Serie")
     a = ap.parse_args(argv)
-    ergebnis = auswerten(zeilen_aus(a.dateien, rahmung=a.rahmung),
-                         kreuzpaare=kreuzpaare_aus(a.dateien))
+    zeilen = zeilen_aus(a.dateien, rahmung=a.rahmung)
+    kreuzpaare = kreuzpaare_aus(a.dateien)
+    if a.ohne_doppelte:
+        zeilen = ohne_doppelte(zeilen)
+        bleiben = {z.get("blind_id") for z in zeilen}
+        kreuzpaare = [k for k in kreuzpaare if k.get("bild") in bleiben]
+    ergebnis = auswerten(zeilen, kreuzpaare=kreuzpaare, anker=anker_aus(a.dateien))
     print(json.dumps(ergebnis, ensure_ascii=False, indent=1) if a.json else als_text(ergebnis))
     return 0
 

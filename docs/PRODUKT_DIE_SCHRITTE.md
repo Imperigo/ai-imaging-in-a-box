@@ -105,6 +105,19 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (tief in der Nacht) · Erste Messung gegen das Auge: noch keine Zahl besteht
+
+* **Ergebnis:** Nach der Regel, die vorher feststand, folgt keine Zahl dem Auge.
+* **Knapp daneben:** Zwei der neuen Messungen (Richtung der Kanten, Ruhe in den Flächen)
+  bestehen alles ausser einer Gegenprobe. Diese Gegenprobe war selbst ungeprüft — womöglich
+  hätte sie auch ein perfektes Bild nicht bestanden.
+* **Eigener Fehler:** Der Auftrag liess 18 Bilder aus der Vorserie wiederholen; sie zählten
+  doppelt. Am Urteil ändert das nichts. Nebenbei zeigte sich: Das Auge urteilte bei allen 18
+  Wiederholungen gleich.
+* **Weiter:** Zuerst wird die Gegenprobe am perfekten Bild geprüft, dann eine frische Reihe
+  mit einer neuen, wieder vorher festgelegten Regel gerechnet. Die alten Bilder werden nicht
+  nachträglich umbewertet.
+
 ### 30.09.2026 (spätnachts) · Das Auge des Heim-PC wird zum Massstab für die Form
 
 * **Warum:** Ob die Gebäudeform im Bild steht, erkennt bisher nur ein Mensch. Keine Zahl konnte

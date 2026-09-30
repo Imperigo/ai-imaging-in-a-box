@@ -7550,8 +7550,13 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] **Kern:** Kandidaten `aiimaging.formkandidaten` (Silhouette, Richtungstreue,
           Flächentrennung), Messwerkzeug, Auswertung (AUC, AUC im Fall, Kreuzpaare);
           Nullproben bestanden (Protokoll 73 §17).
-    - [ ] **local:** `auf-20260930-194` — 54 Bilder mit echten Fehlbildern (ControlNet-Stärke
-          1,0/0,5/0,0) unter Bauwerksrahmung, dazu die alten; Regel vorab.
+    - [x] **local:** `auf-20260930-194` — 54 Bilder mit echten Fehlbildern (ControlNet-Stärke
+          1,0/0,5/0,0) unter Bauwerksrahmung, dazu die alten; Regel vorab. — **keine Zahl folgt
+          dem Auge**; Richtungstreue und Flächentrennung fallen nur an der Kreuzprobe
+          (Protokoll 73 §18). 18 Doppelte durch unseren Auftrag.
+    - [x] **Kern:** Auswertung mit Kreuzprobe je Art, Decke, Doppelten-Erkennung.
+    - [ ] **local:** `auf-20260930-195` — Decke der Kreuzprobe, dann 72 frische Bilder mit neuer
+          Regel (Kreuz gegen den anderen Körper, nur mit Decke 1,00).
     - [ ] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
           ein Segmentierungsansatz (Lizenzfrage).
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit

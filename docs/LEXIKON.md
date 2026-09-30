@@ -5889,6 +5889,25 @@ Bilder desselben Falls (gleicher Körper, gleicher Blick, gleiche Rahmung) werde
 gegen die eines anderen Blicks. Bei einem Bild, dessen Form steht, muss die eigene gewinnen.
 Das braucht kein Auge, weil man weiss, welche Karte die richtige ist.
 
+**Decke (einer Probe)** — Der beste Wert, den eine Probe überhaupt hergeben kann, gemessen an
+einem Bild, das sicher richtig ist — bei uns dem Schönbild aus Blender. Verliert schon dieses
+vollkommene Bild die Probe, taugt die Probe nichts, nicht die geprüfte Zahl. Am 30.09.2026
+fehlte sie bei der Kreuzprobe (Auftrag 194): Alle Zahlen fielen durch, und niemand konnte
+sagen, ob es an ihnen lag oder an der Probe. Im Projekt: `decke` in
+`tools/formpruefung_auswertung.py`, gemessen in `auf-20260930-195`.
+
+**Vorab festgelegte Regel** — Eine Entscheidungsregel, die aufgeschrieben wird, **bevor**
+gemessen wird: ab welchem Wert eine Zahl als tauglich gilt und was dann folgt. Sie schützt
+davor, die Regel nachträglich so zu biegen, dass das gewünschte Ergebnis herauskommt. Fällt
+eine Messung durch, bleibt das Urteil stehen; eine bessere Regel gilt nur für **neue** Bilder.
+Im Projekt: in jedem Messauftrag an den Heim-PC seit dem 30.09.2026.
+
+**Wiederholbarkeit (des Augenurteils)** — Ob derselbe Beurteiler dasselbe Bild beim zweiten
+Mal gleich einordnet, ohne zu wissen, dass er es schon gesehen hat. Am 30.09.2026 zufällig
+gemessen: 18 Bilder kamen in zwei Serien doppelt vor, und das blinde Auge des Heim-PC gab
+18-mal dasselbe Etikett. Das stützt das Auge als Massstab — es ist aber derselbe Beurteiler,
+kein zweiter.
+
 **Richtungstreue (der Kanten)** — Ein Kandidat für die Formprüfung: Laufen die Kanten im Bild
 **parallel** zu den Kanten des Gebäudes? Eine Holzfassade hat viele Kanten, aber in alle
 Richtungen — sie zählt hier wenig, anders als bei der Umrisstreue. Zufall ergibt 1.
@@ -6067,7 +6086,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

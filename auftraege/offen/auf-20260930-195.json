@@ -1,0 +1,87 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20260930-195",
+ "art": "frage",
+ "beschreibung": "Formpruefung, zweiter Anlauf: erst die Decke der Kreuzprobe (Schoenbild gegen Nachbarblick und anderen Koerper), dann 72 frische Bilder (Startwerte 6–13 bei 1.0, 6–9 bei 0.5) mit neuer, vorab festgelegter Regel — Kreuzprobe gegen den anderen Koerper, nur gueltig mit Decke 1.00.",
+ "anweisung": "=== FORMPRUEFUNG, ZWEITER ANLAUF: TAUGT DIE KREUZPROBE — UND FOLGT DANN EINE ZAHL? ===\n\nEuer Ergebnis 194 gilt: Nach der vorab festgelegten Regel folgt KEINE Zahl dem Auge. Das\nbleibt so stehen. Zwei Befunde von uns dazu:\n  - richtung_abhebung und flaechentrennung bestanden (1), (2), (4) und fielen NUR an der\n    Kreuzprobe gegen Nachbarblicke. Ob diese Probe ueberhaupt bestehen kann, war nicht\n    geprueft: Das Blender-Schoenbild wurde nur gegen die eigene Soll-Karte gemessen. Wenn\n    schon das vollkommene Bild gegen einen Nachbarblick verliert, misst die Probe die\n    Aehnlichkeit der Soll-Karten, nicht die Zahl — euer Verdacht.\n  - UNSER FEHLER: 194 hat bei Staerke 1.0 die Startwerte 0–2 aus 190 wiederholt. 18 Bilder\n    sind identisch mit 190 und zaehlten doppelt. Die Auswertung erkennt das jetzt\n    (--ohne-doppelte). Am Urteil aendert es nichts. Schoener Nebenbefund: Eure blinden\n    Etiketten fuer die 18 Paare stimmen 18 von 18 ueberein.\n\nDieser Auftrag misst darum zuerst die DECKE der Kreuzprobe und dann eine FRISCHE Reihe mit\neiner neuen, vorab festgelegten Regel. Die alten Bilder werden NICHT nach der neuen Regel\nbewertet — das hiesse, die Regel an das Ergebnis anzupassen.\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 tools/formkandidaten_messen.py kennt neu --fremd-koerper (Soll-Karte des ANDEREN Koerpers,\n     gleicher Blick). --fremd heisst jetzt ausdruecklich «derselbe Koerper, anderer Blick».\n     Jede fremde Zeile traegt fremd_art = nachbarblick bzw. anderer_koerper.\n  A2 tools/formpruefung_auswertung.py: Kreuzprobe je Art, Decke aus den Ankern (probe =\n     schoenbild), Doppelte-Erkennung, --ohne-doppelte.\n  A3 Keine Verhaltensaenderung an Abholer, homeworker, Kette, arbeitsgang.\n\nTEIL B — DIE DECKE DER KREUZPROBE (keine GPU)\n  Fuer jeden der 6 Faelle (Hochbau/Testbau x s/sSE/sSW) das Blender-Schoenbild:\n    python3 tools/formkandidaten_messen.py --bild <beauty_png> --bericht <eigener report> \\\n        --fremd <Nachbarblick 1> --fremd <Nachbarblick 2> \\\n        --fremd-koerper <report des ANDEREN Koerpers, gleicher Blick> --bild-id anker-<fall>\n  Jede Ausgabezeile in die Liste «anker», ergaenzt um fall und probe = \"schoenbild\".\n  Nehmt die Berichte aus 194 (gleiche Szene, gleiche Rahmung); sind sie weg, neu rechnen.\n\nTEIL C — DIE FRISCHE REIHE\n  arbeitsgang wie 194 (Prompt «a residential building, architectural photograph», 8 Schritte,\n  z-image-turbo, 512 px, Rahmung nach dem Bauwerk). Hochbau (--hochbau --gelaende) und\n  Testbau (--gelaende); Blick s, sSE, sSW.\n    - controlnet_staerke 1.0 mit Startwerten 6–13 (NEU — nicht 0–5, die gibt es schon);\n    - controlnet_staerke 0.5 mit Startwerten 6–9.\n  Keine Staerke 0.0: Sie liefert je Startwert fuer jeden Fall dasselbe Bild (euer Befund).\n  Das sind 2 x 3 x 12 = 72 Bilder.\n  1. AUGE ZUERST, BLIND: alle 72 unter gemischten Decknamen (Praefix 195-), ohne Staerke und\n     ohne Zahlen. Etikett genau eines von «steht» / «steht nicht» / «unklar», dazu ein\n     Halbsatz. Etiketten festschreiben, ERST DANN Schluessel und Zahlen.\n  2. Je Bild: rho_maske_gerichtet (qa-Knoten) und formkandidaten_messen.py mit\n     --fremd (beide Nachbarblicke) UND --fremd-koerper (anderer Koerper, gleicher Blick).\n  3. Nullproben (grau 128, Rauschen Startwert 7) fuer EINEN Fall reichen (hochbau-s) — sie\n     haben in 194 ueberall bestanden.\n\nDIE NEUE ENTSCHEIDUNGSREGEL — FEST VOR DER MESSUNG, NUR AN DEN 72 NEUEN BILDERN\n  Ausgewertet mit:\n    python3 tools/formpruefung_auswertung.py --rahmung bauwerk auftraege/ergebnisse/auf-20260930-195.json\n  (1) und (2) bleiben wie in 194, (4) auch. Nur (3) ist neu:\n  Eine Zahl «folgt dem Auge», wenn ALLE vier gelten:\n    (1) Hochbau: AUC (ohne unklar) >= 0.85 UND AUC im Fall >= 0.80.\n    (2) Testbau: dasselbe.\n    (3) Kreuz gegen den ANDEREN KOERPER >= 0.90 — und nur gueltig, wenn die Decke dieser Zahl\n        gegen den anderen Koerper 1.00 ist (das Schoenbild gewinnt in allen 6 Faellen). Ist\n        die Decke kleiner, ist (3) fuer diese Zahl «nicht pruefbar» und sie besteht NICHT.\n        Die Kreuzprobe gegen Nachbarblicke und ihre Decke berichtet ihr nur.\n    (4) Nullproben: grau 0; Rauschen *_abhebung 0.75–1.25; flaechentrennung < 0.05.\n  Folge: Erfuellt eine Zahl die Regel, wird sie die Formpruefung als AUSKUNFT; eine Schwelle\n  kommt erst aus einer weiteren Reihe. Erfuellen mehrere sie: die mit der hoeheren\n  Hochbau-AUC im Fall. Erfuellt keine sie: das ist das Ergebnis, und wir wechseln den Weg.\n  Kann keine Zeile «steht» sein (z. B. Hochbau ohne ein einziges «steht»), sagt das — dann ist\n  (1) nicht messbar, und die Zahl besteht NICHT.\n\nFORMAT DER ERGEBNISDATEI (wie 194)\n  bilder: je Bild {serie, koerper, blick, startwert, controlnet_staerke, rahmung,\n    augenetikett, halbsatz, blind_id, rho_maske_gerichtet, umriss_abhebung,\n    silhouette_abhebung, richtung_abhebung, flaechentrennung, bauwerk_anteil}\n  kreuzpaare: alle JSON-Zeilen von formkandidaten_messen.py (mit fremd_art).\n  anker: Teil B plus Nullproben.\n  auswertung_tabelle: die Ausgabe des Aufrufs oben, woertlich.\n  regel: je Zahl (1)–(4) ausgezaehlt, mit Decke, und ein Satz.\n\nNICHT TUN: nichts an Auswahl, Abholer oder Kandidaten aendern; keine Schwelle setzen; 194\nnicht nachtraeglich nach der neuen Regel bewerten; keine Bilder ins Repo; keine absoluten\nPfade; nichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-09-30T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+ },
+ "params": {
+  "koerper": [
+   "hochbau",
+   "testbau"
+  ],
+  "blick": [
+   "s",
+   "sSE",
+   "sSW"
+  ],
+  "reihe": [
+   {
+    "controlnet_staerke": 1.0,
+    "seeds": [
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13
+    ]
+   },
+   {
+    "controlnet_staerke": 0.5,
+    "seeds": [
+     6,
+     7,
+     8,
+     9
+    ]
+   }
+  ],
+  "aufloesung": 512,
+  "rahmung": "bauwerk",
+  "backbone": "z-image-turbo",
+  "regel": {
+   "auc_min": 0.85,
+   "auc_im_fall_min": 0.8,
+   "kreuz_anderer_koerper_min": 0.9,
+   "decke_anderer_koerper_muss": 1.0,
+   "rauschen_abhebung": [
+    0.75,
+    1.25
+   ],
+   "rauschen_flaechentrennung_max": 0.05,
+   "nur_rahmung": "bauwerk",
+   "nur_neue_bilder": true
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: 72 Bilder mit z-image-turbo bei 512 px; Teil B ohne GPU.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+   "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+   "Augenetikett VOR den Zahlen vergeben, blind."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; rahmung aus dem Bericht.",
+  "Teil B: die Decke je Zahl gegen Nachbarblick und gegen anderen Koerper (6 Faelle).",
+  "Je neues Bild eine Zeile im Format oben, mit Augenetikett und Halbsatz.",
+  "Kreuzpaare mit fremd_art; Nullproben fuer hochbau-s.",
+  "Die Tabelle von tools/formpruefung_auswertung.py woertlich.",
+  "Je Zahl die Auszaehlung (1)–(4) mit Decke, und ein Satz: welche Zahl folgt dem Auge — oder keine."
+ ],
+ "rang": 2
+}

@@ -182,3 +182,59 @@ def test_die_auswertung_filtert_nach_rahmung(tmp_path, capsys):
     assert aw.main(["--rahmung", "bauwerk", "--json", str(datei)]) == 0
     erg = json.loads(capsys.readouterr().out)
     assert erg["n_bilder"] == 2 and erg["masse"]["z"]["auc"] == 1.0
+
+
+def test_kreuzprobe_je_art_und_ihre_decke():
+    """194: Gegen Nachbarblicke verlor jede Zahl — ob die Probe taugt, sagt erst das Schönbild."""
+    aw = _werkzeug("formpruefung_auswertung")
+    paare = [{"bild": "B1", "eigen": True, "z": 0.6},
+             {"bild": "B1", "eigen": False, "z": 0.7},                      # alt: Nachbarblick
+             {"bild": "B1", "eigen": False, "fremd_art": "anderer_koerper", "z": 0.1}]
+    assert aw.kreuz(paare, "z", art="nachbarblick") == 0.0
+    assert aw.kreuz(paare, "z", art="anderer_koerper") == 1.0
+    assert aw.kreuz(paare, "z") == 0.0
+    anker = [dict(p, probe="schoenbild") for p in paare] + [
+        {"bild": "G", "eigen": True, "probe": "grau", "z": 0.0},
+        {"bild": "G", "eigen": False, "probe": "grau", "z": 0.0}]
+    assert aw.decke(anker, "z", art="anderer_koerper") == 1.0
+    assert aw.decke(anker, "z", art="nachbarblick") == 0.0
+
+
+def test_doppelte_bilder_werden_erkannt_und_das_juengste_bleibt():
+    """194 wiederholte Startwerte aus 190 — dasselbe Bild zählte zweimal."""
+    aw = _werkzeug("formpruefung_auswertung")
+    zeilen = [
+        {"serie": "auf-190", "blind_id": "190-B1", "koerper": "h", "blick": "s", "auge": True,
+         "z": 0.585, "y": 1.0},
+        {"serie": "auf-194", "blind_id": "194-B7", "koerper": "h", "blick": "s", "auge": True,
+         "z": 0.58472, "y": 1.0},
+        {"serie": "auf-194", "blind_id": "194-B8", "koerper": "h", "blick": "s", "auge": False,
+         "z": 0.1, "y": 1.0}]
+    assert aw.doppelte(zeilen) == [["190-B1", "194-B7"]]
+    assert [z["blind_id"] for z in aw.ohne_doppelte(zeilen)] == ["194-B7", "194-B8"]
+
+
+def test_das_messwerkzeug_trennt_nachbarblick_und_anderen_koerper(tmp_path, monkeypatch,
+                                                                    capsys):
+    import json
+    werkzeug = _werkzeug("formkandidaten_messen")
+    for ordner in ("eigen", "nachbar", "koerper"):
+        (tmp_path / ordner).mkdir()
+        (tmp_path / ordner / "blender-report.json").write_text("{}")
+    monkeypatch.setattr(fk, "alle_aus_bericht", lambda bild, bericht: {"status": "ok"})
+    werkzeug.main(["--bild", "b.png", "--bericht", str(tmp_path / "eigen/blender-report.json"),
+                   "--fremd", str(tmp_path / "nachbar/blender-report.json"),
+                   "--fremd-koerper", str(tmp_path / "koerper/blender-report.json")])
+    zeilen = [json.loads(z) for z in capsys.readouterr().out.splitlines()]
+    assert [z.get("fremd_art") for z in zeilen] == [None, "nachbarblick", "anderer_koerper"]
+
+
+def test_die_auswertung_ohne_doppelte_ueber_die_kommandozeile(tmp_path, capsys):
+    import json
+    datei = tmp_path / "e.json"
+    datei.write_text(json.dumps({"auftrag_id": "auf-x", "bilder": [
+        {"koerper": "h", "blick": "s", "blind_id": b, "augenetikett": e, "z": v}
+        for b, e, v in (("A", "steht", 1.0), ("B", "steht", 1.0), ("C", "steht nicht", 0.0))]}))
+    aw = _werkzeug("formpruefung_auswertung")
+    aw.main(["--json", "--ohne-doppelte", str(datei)])
+    assert json.loads(capsys.readouterr().out)["n_bilder"] == 2
