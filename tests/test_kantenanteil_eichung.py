@@ -95,6 +95,7 @@ def test_das_perfekte_bild_ist_messbar_und_besteht():
 # Was daraus für das Paarurteil folgt
 # ======================================================================================
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_ein_unmessbarer_anteil_faellt_auf_die_kante_zurueck(monkeypatch):
     """`anteil = None` heisst „kein zweites Bein aus dem Anteil" — und der Test sagt es.
 

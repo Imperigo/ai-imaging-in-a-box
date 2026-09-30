@@ -910,7 +910,16 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     if spanne and not spanne.get("n_gemessen"):
         gemessen = [k for k in kameras
                     if (k.get("paarurteil") or {}).get("gemessen") is True]
-        if gemessen:
+        urteilend = [k for k in gemessen
+                     if (k.get("paarurteil") or {}).get("urteilt") is not False]
+        if gemessen and not urteilend:
+            # 30.09.2026: Das Paarurteil urteilt nicht mehr (auf-175) — gemessen ist ρ,
+            # geprüft im Sinne eines Urteils ist nichts.
+            zeilen.append(
+                f"MASKENWEG GEMESSEN, URTEILT NICHT: {' · '.join(_paarzeile(k) for k in gemessen)}"
+                f" — rho ist nur Auskunft, die Schwelle trennt an erzeugten Bildern nicht "
+                f"(auf-20260929-175). Der Lauf ist UNGEPRUEFT, nicht durchgefallen.")
+        elif gemessen:
             gefallen = [k for k in gemessen
                         if (k.get("paarurteil") or {}).get("bestanden") is False]
             schwellen = (gemessen[0].get("paarurteil") or {}).get("schwellen") or {}
@@ -4533,7 +4542,13 @@ def _kameraspanne(urteile: list[dict]) -> dict:
         paare = [(u.get("paarurteil") or {}) for u in eigen]
         gemessene_paare = [p for p in paare if p.get("gemessen") is True]
         gefallene_paare = [p for p in gemessene_paare if p.get("bestanden") is False]
-        if gemessene_paare:
+        if gemessene_paare and all(p.get("urteilt") is False for p in gemessene_paare):
+            hinweis = (
+                f"Keine der {n} Kameras hat einen SCORE. Der Maskenweg hat an "
+                f"{len(gemessene_paare)} von {len(eigen)} rho gemessen, URTEILT aber nicht "
+                f"(Schwelle nicht geeicht, auf-20260929-175) — das gemeldete Urteil ist "
+                f"UNGEPRUEFT, nicht durchgefallen.")
+        elif gemessene_paare:
             hinweis = (
                 f"Keine der {n} Kameras hat einen SCORE. Der Maskenweg hat aber an "
                 f"{len(gemessene_paare)} von {len(eigen)} gemessen, davon "

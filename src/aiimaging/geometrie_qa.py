@@ -2807,6 +2807,20 @@ PAAR_KANTENANTEIL_SCHWELLE = 0.20
 #: und wieder eingeschaltet werden kann, wenn ein Mass kommt, das trennt.
 ZWEITES_BEIN_URTEILT = False
 
+#: Urteilt das Paarurteil überhaupt — oder steht ρ nur als Auskunft da?
+#:
+#: **Nein, seit dem 30.09.2026 — Owner-Entscheid «a sofort»** (Sitzung 73), auf den Befund
+#: der HomeStation (``auf-20260929-175``): Für ρ über der Maske gibt es an erzeugten
+#: Bildern **weder frontal noch diagonal ein fehlerfreies Fenster**; bei 0,80 werden frontal
+#: 25 von 30 guten gesperrt, diagonal kommen 3 schlechte durch. Seit dem 29.09. trug ρ das
+#: Paarurteil allein — ein Urteil aus einer Zahl, die nicht trennt, ist ein Münzwurf mit
+#: Abzeichen. *Lieber kein Urteil als eines, das würfelt.*
+#:
+#: Gemessen und angezeigt wird ρ weiter, mit dem Satz «nicht geeicht»; ``bestanden`` bleibt
+#: ``None``. Der Owner-Entscheid «b danach»: ein anderes Mass suchen, das trennt, und es
+#: an der HomeStation prüfen lassen. Die alte Form bleibt mit ``urteilt=True`` erreichbar.
+PAARURTEIL_URTEILT = False
+
 
 def rho_gegen_gemessenen_boden(rho_gerichtet: float | None, maskenanker: dict | None, *,
                                schwelle: float = PAAR_RHO_SCHWELLE) -> dict:
@@ -2901,8 +2915,13 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
                rho_schwelle: float = PAAR_RHO_SCHWELLE,
                kante_schwelle: float = PAAR_KANTE_SCHWELLE,
                anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE,
-               zweites_bein_urteilt: bool | None = None) -> dict:
+               zweites_bein_urteilt: bool | None = None,
+               urteilt: bool | None = None) -> dict:
     """Beide Messungen zusammen — **ohne sie zu verrechnen**.
+
+    **Seit dem 30.09.2026 urteilt das Paarurteil gar nicht mehr** (:data:`PAARURTEIL_URTEILT`,
+    Owner-Entscheid): ρ wird gemessen und gemeldet, ``bestanden`` bleibt ``None``, und die
+    Begründung beginnt mit «NICHT GEEICHT». Mit ``urteilt=True`` gilt die Form darunter.
 
     **Seit dem 29.09.2026 urteilt nur noch ρ** (:data:`ZWEITES_BEIN_URTEILT`, Owner-Entscheid):
     Das zweite Bein wird gemessen und steht in der Begründung, entscheidet aber weder
@@ -3009,16 +3028,22 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     zustaendig = True if himmel_ergebnis is None else bool(himmel_ergebnis.get("traegt"))
     urteilt_zwei = ZWEITES_BEIN_URTEILT if zweites_bein_urteilt is None \
         else bool(zweites_bein_urteilt)
+    urteilt_ueberhaupt = PAARURTEIL_URTEILT if urteilt is None else bool(urteilt)
     antwort = {
         "bestanden": None, "gemessen": False, "zustaendig": zustaendig,
         "rho": rho, "kante": kante,
         "anteil": anteil, "himmel": himmel_anteil,
         "zweites_bein": zweites_bein, "traeger": None,
         "zweites_bein_urteilt": urteilt_zwei,
+        "urteilt": urteilt_ueberhaupt,
         "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle,
                       "anteil": anteil_schwelle, "himmel": MIN_HIMMELANTEIL},
         "begruendung": "",
     }
+    if not urteilt_ueberhaupt:
+        return _paarurteil_als_auskunft(antwort, rho, rho_schwelle, zweites_bein, kante,
+                                        anteil, anteil_schwelle, kante_schwelle,
+                                        himmel_anteil)
     if not urteilt_zwei:
         return _paarurteil_nur_rho(antwort, rho, rho_schwelle, zweites_bein, kante, anteil,
                                    anteil_schwelle, kante_schwelle, himmel_anteil)
@@ -3085,6 +3110,36 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     antwort["begruendung"] = " · ".join(teile) + " · " + schluss + (
         "  [Schwellen ABGELESEN an sieben Fällen aus einer Szene (auf-20260821-27), "
         "nicht kalibriert.]")
+    return antwort
+
+
+def _paarurteil_als_auskunft(antwort: dict, rho, rho_schwelle, zweites_bein, kante, anteil,
+                             anteil_schwelle, kante_schwelle, himmel_anteil) -> dict:
+    """Das Paarurteil nach dem Owner-Entscheid vom 30.09.2026: kein Urteil, nur Auskunft.
+
+    ``gemessen`` sagt weiter, ob ρ vorliegt; ``bestanden`` und ``traeger`` bleiben ``None``
+    — auch wenn ρ über der Schwelle liegt. Ein «bestanden» aus einer Zahl, die nicht
+    trennt, wäre dieselbe Behauptung wie ein «durchgefallen».
+    """
+    antwort["zustaendig"] = True
+    zweiter_wert = anteil if zweites_bein == "anteil" else kante
+    zweiter_name = ("Anteil der Grenze mit Kante" if zweites_bein == "anteil"
+                    else "Tiefenkante (Median)")
+    zweites = (f"{zweiter_name} {zweiter_wert:+.4f}" if zweiter_wert is not None
+               else f"{zweiter_name} nicht gemessen")
+    if himmel_anteil is not None:
+        zweites += f", Himmel hinter dem Umriss {himmel_anteil:.1%}"
+    grund = ("die Schwelle trennt an erzeugten Bildern weder frontal noch diagonal "
+             "(auf-20260929-175); Owner-Entscheid 30.09.2026: nur Auskunft")
+    if rho is None:
+        antwort["begruendung"] = (f"NICHT GEMESSEN: ρ über der Maske liegt nicht vor · "
+                                  f"{zweites}. Das Paarurteil urteilt ohnehin nicht — {grund}.")
+        return antwort
+    antwort["gemessen"] = True
+    antwort["begruendung"] = (
+        f"NICHT GEEICHT, NUR AUSKUNFT: ρ (gerichtet) {rho:+.4f} (die frühere Schwelle "
+        f"{rho_schwelle:.2f} urteilt nicht mehr) · {zweites} — {grund}. Kein bestanden, "
+        f"kein durchgefallen.")
     return antwort
 
 

@@ -196,3 +196,16 @@ def mini_png() -> bytes:
 def ohne_zeitfaktor_ueberall(monkeypatch):
     """Alle Proben messen den Code, nicht die Maschine, auf der sie laufen."""
     monkeypatch.delenv("AIIMAGING_ZEITFAKTOR", raising=False)
+
+
+@pytest.fixture
+def paarurteil_urteilt(monkeypatch):
+    """Die alte Form des Paarurteils einschalten: ρ URTEILT (bis 30.09.2026 die Vorgabe).
+
+    Seit dem Owner-Entscheid vom 30.09.2026 (``geometrie_qa.PAARURTEIL_URTEILT = False``)
+    ist das Paarurteil nur noch Auskunft. Die Proben, die das Urteilen selbst prüfen,
+    schalten es hiermit ausdrücklich ein — damit die Form prüfbar bleibt, bis ein Mass
+    kommt, das trennt.
+    """
+    from aiimaging import geometrie_qa
+    monkeypatch.setattr(geometrie_qa, "PAARURTEIL_URTEILT", True)

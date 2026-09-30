@@ -2751,7 +2751,16 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # SELBSTLOESCHEND: nur wenn der Score fehlt UND das Paarurteil gemessen hat. Steht
     # ein Score da, traegt er das Urteil und diese Zeile schweigt.
     _paar = (_geo.get("paarurteil") or {})
-    if _geo.get("score") is None and _paar.get("gemessen") is True:
+    if _geo.get("score") is None and _paar.get("gemessen") is True \
+            and _paar.get("urteilt") is False:
+        # SEIT DEM 30.09.2026 URTEILT DER MASKENWEG NICHT (Owner-Entscheid auf auf-175): ρ
+        # steht da, aber «durchgefallen» waere ein Urteil aus einer Zahl, die nicht trennt.
+        teile.insert(0, (
+            f"KEIN SCORE; DER MASKENWEG URTEILT NICHT: Ohne gemeinsame Silhouette gibt es "
+            f"keine Tiefenordnung zu vergleichen — 'geom_iou: 0.0' und 'spearman: null' "
+            f"sind eine FEHLENDE MESSUNG. rho {_paar.get('rho')} ist nur Auskunft (Schwelle "
+            f"nicht geeicht, auf-20260929-175). 'passed: false' heisst hier ungeprueft."))
+    elif _geo.get("score") is None and _paar.get("gemessen") is True:
         teile.insert(0, (
             f"KEIN SCORE, ABER MASKENWEG: Ohne gemeinsame Silhouette gibt es keine "
             f"Tiefenordnung zu vergleichen — 'geom_iou: 0.0' und 'spearman: null' sind "

@@ -1182,8 +1182,16 @@ _eintrag(Backbone(
     # Referenzbildern. Geladen ueber DiffusionPipeline -> QwenImage21Pipeline (diffusers aus
     # git, laut Karte). Ob unser Bildeingang dort ankommt, ist UNGEMESSEN (auf-20260929-178).
     konditionierung=KOND_INTEGRIERTES_EDIT,
-    vram_gb=_vram_schaetzung(7.0),
-    dateien=_DIFFUSERS_DATEIEN,
+    # GEMESSEN (auf-20260929-178, 30.09.2026): Die Schaetzung 16,8 GB lag daneben — ohne
+    # Auslagerung schon beim Laden «out of memory» auf 32 GB. Mit enable_model_cpu_offload
+    # Spitze 19,5 GiB bei 1024 px (~19 s) und 29,6 GiB bei 2048 px (59 s, nur mit
+    # expandable_segments). Eingetragen ist die Spitze bei 1024 px mit Auslagerung.
+    vram_gb=19.5,
+    vram_gemessen=True,
+    # Der Ordner hat `processor/`, nicht `tokenizer/` (auf-178): Mit der Standardliste
+    # meldete die Vollstaendigkeitspruefung «Es fehlen: tokenizer» bei vollstaendigen
+    # Gewichten (31 GB: Transformer 14, Textkodierer 17, VAE 1,3).
+    dateien=("model_index.json", "transformer", "vae", "text_encoder", "processor"),
     lizenz_quelle=QUELLE_MODELLKARTE,
     # 29.09.2026 als Forschungs-Ausnahme eingetragen (nur mit Schalter); am 30.09.2026
     # durch E128 ersetzt: regulär bestellbar, Lizenz vor der Veröffentlichung lösen.

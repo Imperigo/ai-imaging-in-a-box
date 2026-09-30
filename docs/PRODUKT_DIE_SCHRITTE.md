@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (nachmittags) · Eine Prüfung, die würfelt, entscheidet nicht mehr
+
+* **Schlechte Nachricht vom Heim-PC:** Die Zahl, die seit gestern allein das «Paarurteil»
+  trug (ob das Bild das Gebäude an der richtigen Stelle zeigt), trennt gute von schlechten
+  Bildern nicht — weder von vorne noch schräg.
+* **Entschieden und gebaut:** Sie wird nur noch angezeigt, mit dem Vermerk «nicht geeicht».
+  Kein Bild heisst mehr «durchgefallen» oder «bestanden» wegen ihr.
+* **Als Nächstes:** eine andere Messung suchen, die wirklich trennt.
+* **Qwen-Image-2.1 gemessen:** Es läuft auf der Grafikkarte, aber nur mit Auslagerung, und
+  die Gebäudeform kommt nicht an. Als Bildbearbeiter (Stil, Masken) vielleicht brauchbar —
+  offen.
+
 ### 30.09.2026 (mittags) · Qwen-Image-2.1 kommt ins Produkt — mit offener Lizenz
 
 * **Entschieden (E128):** Das neue Qwen-Bildmodell wird regulär eingebaut, nicht nur zum

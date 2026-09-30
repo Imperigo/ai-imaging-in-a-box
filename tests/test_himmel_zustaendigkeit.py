@@ -143,6 +143,7 @@ TRAEGT = {"anteil": 0.633, "traegt": True}
 TRAEGT_NICHT = {"anteil": 0.0, "traegt": False}
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_der_paartest_schweigt_wo_er_nichts_messen_kann(monkeypatch):
     """**Der Kern des Befunds.** Zwei bestehende Zahlen — und trotzdem kein „bestanden".
 
@@ -163,6 +164,7 @@ def test_der_paartest_schweigt_wo_er_nichts_messen_kann(monkeypatch):
     assert stumm["traeger"] is None
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_gegenprobe_dieselben_zahlen_bestehen_wo_himmel_dahintersteht():
     """Ohne diese Gegenprobe bewiese der Test darüber nur, dass der Paartest nie besteht."""
     laut = geometrie_qa.paarurteil(BESTEHT_RHO, BESTEHT_KANTE,
@@ -173,6 +175,7 @@ def test_gegenprobe_dieselben_zahlen_bestehen_wo_himmel_dahintersteht():
     assert laut["bestanden"] is True
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_das_schweigen_ist_etwas_anderes_als_eine_fehlende_messung(monkeypatch):
     """Zwei Wege zu ``bestanden is None`` — und sie meinen Verschiedenes.
 
@@ -208,6 +211,7 @@ def test_die_begruendung_reicht_rho_weiter_statt_es_zu_verschweigen():
     assert stumm["himmel"] == pytest.approx(0.0)
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_ohne_himmelspruefung_urteilt_der_paartest_wie_bisher():
     """Die alte Form bleibt erreichbar — als Rückfall, nicht als Empfehlung.
 
@@ -248,6 +252,7 @@ def _urteil(hinter, bild):
                             breite=BREITE, hoehe=BREITE, maske=_maske())
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_der_maskenweg_fragt_nach_dem_himmel_bevor_er_urteilt(bild, monkeypatch):
     # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
     monkeypatch.setattr(geometrie_qa, "ZWEITES_BEIN_URTEILT", True)
@@ -258,6 +263,7 @@ def test_der_maskenweg_fragt_nach_dem_himmel_bevor_er_urteilt(bild, monkeypatch)
     assert verbaut["paarurteil"]["bestanden"] is None
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_gegenprobe_am_selben_weg_urteilt_die_freistehende_szene_weiterhin(bild):
     """Sonst hiesse der Test darüber nur, dass der Maskenweg gar nichts mehr sagt."""
     frei = _urteil(HIMMEL, bild)
@@ -312,6 +318,7 @@ def test_gegenprobe_wo_alles_messbar_ist_steht_die_zeile_nicht_da():
 # Seit dem 29.09.2026: Das zweite Bein urteilt nicht mehr (Owner-Entscheid, Sitzung 72)
 # ======================================================================================
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_ohne_zweites_bein_urteilt_rho_auch_wo_kein_himmel_ist():
     """Die Himmelsfrage betraf nur das zweite Bein. Urteilt es nicht mehr, ist ρ überall
     zuständig — und das zweite Bein steht als Auskunft in der Begründung."""
@@ -322,6 +329,7 @@ def test_ohne_zweites_bein_urteilt_rho_auch_wo_kein_himmel_ist():
     assert "nur Auskunft" in urteil["begruendung"]
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_ein_schwaches_zweites_bein_laesst_ein_gutes_rho_bestehen():
     """Der Kern des Entscheids: Der Anteil streut an erzeugten Bildern um seine Schwelle
     (auf-20260909-98) — er darf ein gutes ρ nicht mehr kippen."""
@@ -330,6 +338,7 @@ def test_ein_schwaches_zweites_bein_laesst_ein_gutes_rho_bestehen():
     assert urteil["bestanden"] is True and urteil["traeger"] is None
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_ein_schwaches_rho_faellt_weiter_durch():
     urteil = geometrie_qa.paarurteil({"gerichtet": 0.4}, None,
                                      anteil_ergebnis={"anteil": 0.9})

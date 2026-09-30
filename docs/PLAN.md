@@ -7513,8 +7513,16 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] **ui:** `auf-20260930-180` — `verdict.hinweise` in der Vis-Station zeigen, ohne Warnzeichen.
   - [ ] **local:** `auf-20260930-181` — Ansage Innenraum-Satz und Regel B lesen.
   - [x] **local:** 173, 174, 175, 176 beantwortet (Protokoll 73 §4).
-  - [ ] **Owner:** 175 — ρ trennt weder frontal noch diagonal; das Paarurteil hängt allein
-        daran. Was tun? (Protokoll 73 §4)
+  - [x] **Owner:** 175 — ρ trennt weder frontal noch diagonal; das Paarurteil hängt allein
+        daran. Was tun? (Protokoll 73 §4) — «a sofort, b danach»: urteilt nicht mehr (§7).
+  - [ ] **Kern (b):** ein Mass suchen, das trennt (Kandidat: Umriss aus den Bildkanten, ohne
+        Schätzer), dann Messauftrag an local. Mitbetroffen: Startwert-Auswahl und Tor A.
+  - [x] **local:** 178 beantwortet — Qwen-Image-2.1 läuft nur mit Auslagerung, Geometrie
+        kommt nicht an (§8); Registerfehler behoben.
+  - [ ] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;
+        `render.py` meldet dabei «txt2img» (178).
+  - [ ] **Owner:** Qwen-Image-2.1 als Bildbearbeiter (Stil, Masken) weiterverfolgen — oder
+        nicht? (178, Punkt 3 aus vis-01)
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
   - [x] **Owner (E128):** Qwen-Image-2.1 regulär, Lizenz offen → gebaut (Protokoll 73 §6).
   - [ ] **cloud (Int 1):** Vertragsfrage F1/F2 (`vis.backbone: "qwen-image-2.1"`,

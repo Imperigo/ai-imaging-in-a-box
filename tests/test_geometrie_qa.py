@@ -1756,6 +1756,7 @@ GEMESSENE_FAELLE = {
 }
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_nur_das_perfekte_bild_besteht_den_paartest():
     """Die gemessene Tabelle, nachgerechnet — sie ist eine Messung und keine Erfindung."""
     ergebnisse = {
@@ -1789,6 +1790,7 @@ def test_die_kante_trennt_die_abwesenheit_und_rho_die_falsche_form():
     assert perfekt_rho > boden
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_eine_halbe_messung_ergibt_kein_urteil(monkeypatch):
     """Ein Urteil aus der halben Messung wäre eine Behauptung über die Hälfte, die
     niemand angesehen hat — und die beiden Masse beantworten verschiedene Fragen."""
@@ -1801,6 +1803,7 @@ def test_eine_halbe_messung_ergibt_kein_urteil(monkeypatch):
     assert "NICHT GEMESSEN" in u["begruendung"]
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_das_urteil_nennt_welches_mass_es_traegt(monkeypatch):
     """„ρ in Ordnung, Kante fehlt" ist eine andere Diagnose als umgekehrt."""
     # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
@@ -1814,6 +1817,7 @@ def test_das_urteil_nennt_welches_mass_es_traegt(monkeypatch):
     assert "FALSCHEN Kubatur" in nur_rho_fehlt["begruendung"]
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_das_paarurteil_rechnet_die_beiden_zahlen_NICHT_zusammen():
     """**Der ganze Punkt.** `sqrt(|ρ| · geom_iou)` ist daran gescheitert, zwei Fragen zu
     einer Zahl zu verschmelzen.
@@ -1830,6 +1834,7 @@ def test_das_paarurteil_rechnet_die_beiden_zahlen_NICHT_zusammen():
     assert "score" not in a and "score" not in b
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_die_schwellen_sind_als_abgelesen_gekennzeichnet():
     """Sieben Fälle aus einer Szene sind eine Ablesung und keine Kalibrierung — und wer
     die Zahl später liest, muss das erfahren, ohne den Quelltext zu öffnen."""
@@ -1988,6 +1993,7 @@ def test_unter_zufall_wird_ausdruecklich_gemeldet():
     assert [w for w in e["warnungen"] if "NICHT MEHR als Zufall" in w]
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_der_paartest_trennt_die_gemessenen_faelle():
     """Die Tabelle aus `auf-28` und `auf-30`, nachgerechnet."""
     ergebnisse = {
@@ -2002,6 +2008,7 @@ def test_der_paartest_trennt_die_gemessenen_faelle():
     assert ergebnisse["A_qwen"] is False
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_EIN_ORDENTLICHES_RHO_IST_OHNE_JEDE_UMRISSTREUE_ERREICHBAR():
     """**Die Warnung, wegen der der Paartest ein zweites Bein braucht.**
 
@@ -2017,6 +2024,7 @@ def test_EIN_ORDENTLICHES_RHO_IST_OHNE_JEDE_UMRISSTREUE_ERREICHBAR():
                                    anteil_ergebnis={"anteil": anteil})["bestanden"] is False
 
 
+@pytest.mark.usefixtures("paarurteil_urteilt")
 def test_ohne_anteil_faellt_der_paartest_auf_die_alte_form_zurueck_UND_SAGT_ES(monkeypatch):
     """Die Median-Kante kippt, statt zu trennen — ein Urteil darauf ist schwächer."""
     # Die alte Zwei-Bein-Form, ausdrücklich (seit 29.09.2026 aus, ZWEITES_BEIN_URTEILT).
