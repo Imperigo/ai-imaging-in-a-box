@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260930-204",
+  "art": "frage",
+  "beschreibung": "Prepare-Station: die Raumliste aus kosmoprepare_raumprogramm_lesen und kosmoprepare_programmstand als Tabelle zeigen (Ampel, Fundstelle, Annahmen) — und die neuen Baurecht-Felder (limite_ebene, belege, nicht_belegt). Owner-Entscheid Nr. 13.",
+  "anweisung": "=== EINBAUAUFTRAG AN DEN UI-WORKER: RAUMLISTE ALS TABELLE, BAURECHT MIT BELEGEN ===\n(Absender: der Cloud-Worker fuer KosmoPrepare/KosmoPublish. Owner-Entscheid 30.09.2026 Nr. 13: «Ja, Auftrag an UI».)\n\nWORUM ES GEHT\n  Zwei KosmoPrepare-Werkzeuge liefern eine Raumliste, und in der App kommt sie heute nur als generischer\n  Text an (prepare-werkbank-anzeige.ts, «Alles Übrige aus dem Vertrag generisch mitgeben»):\n    - kosmoprepare_raumprogramm_lesen (Raumprogramm-PDF -> Eintraege), Rueckgabe:\n        status (\"ok\"|\"nicht_gelesen\"|\"fehler\"), zusammenfassung {eintraege, gruen, gelb, rot},\n        eintraege[] {id, bezeichnung, kategorie, flaeche_m2, anzahl, total_m2, ampel (\"gruen\"|\"gelb\"|\"rot\"),\n                     nicht_bestanden[] (Namen der Gegenproben), fundstelle {dokumentId, seite, stelle, auszug} | null},\n        skalare {name: {wert, annahme (bool), fundstelle | null, rechnung?}}, warnungen[], fehler[].\n    - kosmoprepare_programmstand (Programm + Fragenbeantwortung), Rueckgabe stand.positionen[] mit\n        name, anzahl, flaeche, flaecheEinheit, fundstelle, geaendert, vermerk («geändert durch\n        Fragenbeantwortung Nr. …»), ursprung/alt/neu; dazu stand.nichtZugeordnet[], summePositionen,\n        summenImProgramm.\n  Eine Liste von 30 Raeumen als Fliesstext ist nicht pruefbar — der Architekt muss sie SEHEN, Zeile fuer Zeile,\n  mit der Ampel daneben. Das ist die Liste, die spaeter als Seed an KosmoDesign geht.\n\nWAS EINGEBAUT WERDEN SOLL\n  1. Tabelle fuer kosmoprepare_raumprogramm_lesen (Chat-Ergebnis UND, falls es dort erscheint, Werkbank):\n     Spalten Bezeichnung · Kategorie · Anzahl · Flaeche m2 · Total m2 · Ampel · Fundstelle.\n     - Ampel als Punkt MIT Wort (gruen/gelb/rot), nicht nur Farbe. Bei gelb/rot die nicht_bestanden-Namen\n       in derselben Zeile (oder als Tooltip mit sichtbarem Hinweis).\n     - Fundstelle: «S. <seite>» sichtbar, der auszug beim Aufklappen/Hover. fundstelle null -> «ohne Fundstelle»,\n       nie leer lassen.\n     - Kopfzeile aus zusammenfassung: «N Eintraege: g gruen · y gelb · r rot».\n     - Unter der Tabelle die skalare. annahme:true heisst sichtbar «ANNAHME», mit rechnung, falls da.\n     - status nicht_gelesen oder fehler: die Meldung (fehler[] / warnungen[]) statt einer leeren Tabelle.\n  2. Dieselbe Tabelle fuer kosmoprepare_programmstand.positionen, Spalten Name · Anzahl · Flaeche (mit\n     flaecheEinheit) · Fundstelle · Vermerk. geaendert:true -> Zeile markiert, alt und neu beide sichtbar.\n     nichtZugeordnet[] als eigene Liste darunter («nicht zugeordnet, mit Fundstelle»).\n     summePositionen und summenImProgramm nebeneinander, wenn beide da sind — weichen sie ab, beide zeigen,\n     keine waehlen.\n  3. kosmoprepare_baugesetz hat seit KosmoPrepare 72a24a1 drei neue Felder (zwoelf Kantone statt vier):\n     - limite_ebene: Zeile «festgelegt: …» (beginnt mit «kommunal» oder «kantonal» — in BS und GE steht die\n       Zahl im kantonalen Recht, sonst kommunal). Direkt unter der Metrik.\n     - nicht_belegt[]: Zeile «nicht belegt: …», nie weglassen, wenn die Liste nicht leer ist — gleiche Regel\n       wie konfidenz (Regel 6 in prepare-werkbank-anzeige.ts).\n     - belege[] {aussage, url, zitat}: aufklappbar, Zitat woertlich, url als Link.\n  4. Tests (vitest), je mit einem von Hand gebrochenen Zustand:\n     ampel rot ohne Wort -> rot; fundstelle null wird nicht leer gezeigt; annahme:true ohne «ANNAHME» -> rot;\n     nicht_belegt nicht leer, aber nicht angezeigt -> rot.\n\nRUECKGABE\n  Commit-Kennung auf eurem Zweig, die Namen der neuen Tests, und je Punkt 1–3 ein Satz, wo es sitzt.\n  Wird es bei Int 1 eingespielt, dessen Commit-Kennung.\n\nNICHT TUN: keine Zahl umrechnen, runden (ausser zur Anzeige mit sichtbarer Einheit) oder summieren, die das\nWerkzeug nicht liefert; keine Zeile nach Ampel wegfiltern oder rot nach unten sortieren; keine Werkzeugdefinition\noder Server-Schnittstelle aendern (Aenderungen dort bei uns bestellen); keine echten Projektnamen in Tests —\nerfundene Raeume («Gruppenraum», «Mehrzweckhalle»).\n",
+  "erstellt": "2026-09-30T19:55:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmoprepare_stand_min": "72a24a1",
+    "owner_entscheid": "2026-09-30 Nr. 13, Chat: «Ja, Auftrag an UI»"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Reiner Oberflaechenbau, keine Rechnung.",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Commit-Kennung und Testnamen.",
+    "Je Punkt 1–3 ein Satz, wo es sitzt.",
+    "Commit bei Int 1, falls eingespielt."
+  ],
+  "rang": 3
+}
