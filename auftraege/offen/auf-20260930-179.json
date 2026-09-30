@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-179",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare 1322431: die drei Karten-Knoten nach dem Import-Fix nochmal in Blender fahren, diesmal ohne Behelf; Themenkarte mit korrigiertem Textblock.",
+  "anweisung": "=== NACHPRUEFUNG ZU auf-20260929-177: DIE DREI KARTEN-KNOTEN OHNE BEHELF\n\nEure Antwort auf 177 war ROT fuer den Nutzerweg: jeder Lauf brach in Blender mit «No module named 'core'» ab. Behoben auf KosmoPrepare `main` in `1322431`: 22 Zeilen in acht Kerndateien importieren den Kern jetzt relativ (`from . import …`). Dabei kamen zwei AELTERE Stellen derselben Art dazu, die ihr nicht nennen konntet, weil die Knoten sie nicht beruehren: `praezedenz_rag`/`praezedenz_chroma` und `kosmodraw_aufruf`. Neue Probe `tests/test_blender_findet_den_kern.py` stellt eure Lage nach (Kern unter fremdem Paketnamen, Repo-Stamm nicht im Pfad).\n\nDiesmal OHNE den Behelf aus 177 (kein zusaetzlicher Pfad im Pruefskript) — genau das ist die Frage.\n\n1. KosmoPrepare-Klon: `git pull --ff-only`, danach muss `git log -1` `1322431` oder juenger zeigen (bei unerwartetem Zustand STOPP und melden). `./run_tests.sh` NICHT noetig — ihr habt gemeldet, dass es an eurer Maschine wegen libs/ (cp313) gegen Python 3.14 rot ist; das ist die Maschine, nicht der Code.\n2. Blender 5.1.2 wie in 177, Add-on neu laden (Blender neu starten, damit kein alter Modulstand im Speicher liegt).\n3. Grundlageplan-Knoten wie in 177, Punkt 3 (E 2649525, N 1177780, 1:5000, A2 quer, Perimeter-Zonen «Sport und Freizeit; Zone für öffentliche Nutzungen», Mindestflaeche 10000). Starten. Zurueckgeben: Status im Knoten, und ob die Zahlen wieder 261 / 155+974 / 565 sind.\n4. Themenkarte-Knoten. **Der Textblock aus 177 war falsch — mein Fehler, nicht eurer.** `art`, `perimeter_zonen` und `perimeter_min_flaeche_m2` sind im Knoten EIGENE Felder, und der Knoten lehnt sie im Textblock zu Recht ab. Also:\n   - Feld «Art»: Saison\n   - Feld «Perimeter-Zonen»: Sport und Freizeit; Zone für öffentliche Nutzungen\n   - Feld «Mindestfläche m²»: 10000\n   - Zentrum, Massstab, Format wie in 3.\n   - Feld «Parameter (Textblock, JSON)», Textblock mit GENAU diesem Inhalt:\n{\"eingaenge\": [{\"name\": \"West\", \"lv95\": [2648915, 1177971]}, {\"name\": \"Ost\", \"lv95\": [2650260, 1177812]}], \"anker\": [{\"name\": \"Dorf West\", \"lv95\": [2648649, 1178301]}, {\"name\": \"Dorf Ost\", \"lv95\": [2650592, 1177934]}], \"anteil_aktiv\": 0.3333}\n   Zurueckgeben: Status, Warnungen, aktive Gebaeude (erwartet 52 von 155), die zwei Gehweglaengen (erwartet 806.1 m und 344.7 m).\n5. Plan-einpassen-Knoten: nur starten OHNE PDF — erwartet eine Fehlermeldung im Knoten, die das fehlende PDF nennt, und KEIN «No module named». ja/nein + Meldung woertlich.\n\nNICHT TUN: nichts committen, keinen Code aendern, nichts in libs/ loeschen (auch nicht den Altordner libs.darwin-bak-2026-06-10 — das entscheidet der Owner). Keine Plaene/Bilder zurueckgeben, nur Zahlen, Meldungen, ja/nein. Keine absoluten Pfade mit Benutzernamen (REGEL 3).\nBricht wieder etwas mit «No module named» ab: die Meldung woertlich samt Datei und Zeile zurueckgeben und STOPP.",
+  "erstellt": "2026-09-30T06:10:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU-Last; Netzabruf swisstopo/geodienste, ca. 10 s je Lauf.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nichts committen, keinen Code aendern, nichts in libs/ loeschen.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des KosmoPrepare-Klons.",
+    "Punkte 3, 4, 5 je ja/nein mit Meldung und Zahlen."
+  ],
+  "rang": 2
+}

@@ -1,0 +1,83 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260929-177",
+ "status": "rot",
+ "beendet": "2026-09-30T05:45:00Z",
+ "stand": "520ddca",
+ "geprueft": "KosmoPrepare-Klon sauber, pull --ff-only = «Bereits aktuell» (520ddca). ./run_tests.sh einmal. Blender = eigener Fork KosmoDesign 5.1.2 (einzige 5.1-Fassung; /snap/bin/blender ist inzwischen 5.2.2 LTS, Snap-Revisionen 7740/7803 = 5.2.x). Add-on geladen wie in docs/DEPLOYMENT_AI_HOMESTATION.md (Symlink nach extensions/user_default/wettbewerbsvorbereitung), aber in einem EIGENEN Benutzer-Ressourcenordner (BLENDER_USER_RESOURCES im Arbeitsordner, nachher geloescht) — nichts in ~/.config/blender, nichts systemweit. GUI auf eigenem Xvfb :97 (1920x1080x24). Zwei Laeufe: (A) STRENG wie ausgeliefert; (B) mit einem Behelf NUR im Pruefskript (Add-on-Ordner zusaetzlich in sys.path), um den Rest (Faden, Timer, Rueckschreiben, Zahlen) trotzdem zu sehen. Ausgeloest ueber ein --python-Startskript mit bpy.app.timers-Schrittfolge; Knoten ueber genau den Operator gestartet, den der Knopf ruft (wettbewerb.grundlageplan_erzeugen / wettbewerb.themenkarte_erzeugen, EXEC_DEFAULT, node_name = node.uid_key(), Kontext = Knoteneditor-Fenster). Nichts committet, kein Code geaendert. Blender und Xvfb per gemerkter PID beendet.",
+ "kurzantwort": "ROT fuer den Nutzerweg: in Blender bricht JEDER Lauf der neuen Knoten beim Start ab — ModuleNotFoundError: No module named 'core' (absoluter Import `from core…` in core/karten_knoten.py; das Add-on heisst in Blender bl_ext.user_default.wettbewerbsvorbereitung, ein Paket `core` gibt es dort nicht). Registrierung, Menue und Oberflaeche sind gruen. Mit Behelf (Add-on-Ordner in sys.path, nur im Pruefskript) laeuft alles und trifft die Zahlen genau: 261 Kurven, 155+974 Gebaeude, 565 Strassen/Wege, 52 von 155 aktiv, Gehwege 806.1 m / 344.7 m; Blender bleibt bedienbar. Der Textblock aus Punkt 4 wird wortgetreu ABGELEHNT (Schluessel art, perimeter_zonen, perimeter_min_flaeche_m2 gehoeren in Knotenfelder). run_tests hier ROT: 43 errors + 4 failures, Ursache Umgebung (gitignorierte libs/ mit cp313-Raedern unter Python 3.14; Altordner libs.darwin-bak-2026-06-10).",
+ "befunde": {
+  "git_log_1": "520ddca Grundlageplan, Plan einpassen und Themenkarte als Blender-Knoten — duenne Schicht ueber denselben Kernfunktionen",
+  "run_tests": {
+   "rc": 1,
+   "ergebnis": "Ran 1537 tests in 20.800s / FAILED (failures=4, errors=43, skipped=92)",
+   "runner": "stdlib-unittest-Fallback, /usr/bin/python3 = Python 3.14.4",
+   "ursache": "Umgebung, nicht 520ddca: (1) 29 errors «No module named 'numpy._core._multiarray_umath'» und 14 errors «No module named 'shapely.lib'» — der gitignorierte Ordner libs/ (am 23.09. fuer Blender gebaut, *.cpython-313-*.so) liegt im sys.path; importlib.util.find_spec findet numpy/shapely dort, die skipUnless-Waechter springen also nicht an, der echte Import scheitert unter 3.14. Betroffen: test_grundlageplan, test_plan_einpassen, test_themenkarte, test_karten_knoten.Lauf.test_themenkarte_offline_wie_der_knoten_sie_ruft (Meldung «Themenkarte braucht numpy und shapely: … Importing the numpy C-extensions failed»). (2) FAIL test_grundlageplan.KeinMatplotlibScipyRasterio.test_kein_produktmodul_importiert_die_verbotenen: findet Dateien unter libs.darwin-bak-2026-06-10/shapely/plotting… — gitignorierter Altordner vom 09.06., AUSGESCHLOSSEN nennt nur «libs». Auf einem Klon ohne diese zwei Ordner waere das vermutlich gruen (nicht geprueft, nichts geloescht).",
+   "letzte_zeile": "Dashboard geschrieben: <tmp> (4 Varianten, 5 Profile)"
+  },
+  "blender": "KosmoDesign 5.1.2 (eigener Fork, build 2026-06-23), Python 3.13.9",
+  "2a_registrierung": {
+   "ja_nein": "ja",
+   "meldung": "addon_utils.enable → Modul da, keine Fehler; disable → NODE_MT_wettbewerb_add_grundlagen verschwindet, keine Fehler; enable erneut → ok; disable am Ende → ok. Konsole ohne Traceback aus Registrierung/Abmeldung (Operator-Mixin HintergrundLauf + Operator registriert, Basis-Eigenschaften lauf_status/lauf_zeile/lauf_json/node_uid an allen drei Knoten vererbt)."
+  },
+  "2b_menue": {
+   "ja_nein": "ja",
+   "meldung": "Menue-Klasse NODE_MT_wettbewerb_add_grundlagen, bl_label «Grundlagen & Themenkarten», im Add-Menue (Anhang _add_node_menu) als 4. von 6 Untermenues. Eintraege: «Grundlageplan (öffentliche Geodaten)» → GrundlageplanNodeType; «Plan einpassen (PDF → LV95)» → PlanEinpassenNodeType; «Themenkarte (Anreise / Saison)» → ThemenkarteNodeType. Als Popup geoeffnet und im Bildschirmabzug angesehen: drei Eintraege sichtbar."
+  },
+  "2c_oberflaeche": {
+   "ja_nein": "ja",
+   "meldung": "Alle drei Knoten im Knoteneditor gezeichnet, Bildschirmabzug angesehen, kein Zeichenfehler in der Konsole. Grundlageplan: Zentrum-Auswahl (bei «Von Hand» E/N), Massstab/Format/Ausrichtung, Aequidistanz/Zaehlkurve, Perimeter-Zonen, Mindestflaeche, Titel, Ausgabeordner, PDF, Knopf, Status. Plan einpassen: PDF, Seite, «Stile lesen», Balken m/pt, Gebaeude-Stil und Anker-Stil als Auswahl mit «— erst «Stile lesen» —» (ohne PDF keine weiteren Stile — mit echter PDF nicht geprueft), Anker-Modus, Anker E/N, GeoJSON-Ordner, «Einpassen». Themenkarte: Anreise/Saison als Knopfleiste, Zentrum, Blatt, Perimeter, Farbe, Titel/Untertitel, Kennzahlen- und Parameter-Textblock als Textblock-Auswahl (prop_search, zeigt gewaehlten Block), Wege, Ausgabeordner, PDF. Nach dem Lauf zeigt der Knoten Status, Zeile, Annahmen, Dateien (nur Dateinamen)."
+  },
+  "3_grundlageplan": {
+   "ja_nein": "nein (wie ausgeliefert) / ja (mit Behelf)",
+   "streng": "Knopf-Operator bricht sofort ab, Knoten bleibt ohne Status. Konsole woertlich: «File \"<add-on>/core/karten_knoten.py\", line 44, in _zahl: from core.gehirn_db import zahl_oder_leer — ModuleNotFoundError: No module named 'core'» / «bpy.rna | ERROR Python script error in WETTBEWERB_OT_grundlageplan_erzeugen.execute». Kein Netzabruf, keine Datei.",
+   "mit_behelf": {
+    "status": "geschrieben",
+    "zeile": "Grundlageplan 1:5000 A2 quer (2820 × 1790 m) · 261 Höhenkurven · 1129 Gebäude · SVG + DXF + PDF",
+    "laufzeit_s": 8.1,
+    "hoehenkurven": {"gemessen": 261, "erwartet": 261, "aufteilung": "203 Kurven + 58 Zaehlkurven"},
+    "gebaeude": {"gemessen": "155 im Perimeter + 974 ausserhalb", "erwartet": "155+974"},
+    "strassen": {"gemessen": 565, "erwartet": 565, "aufteilung": "283 Strassen + 282 Wege (JSON trennt die Ebenen)"},
+    "weitere": "Wald 92, Gewaesser 59, Rinnsale 4, Perimeter 3 Flaechen (Zonen «Zone für Sport und Freizeit», «Zone für öffentliche Nutzungen»), Warnungen keine, 1 Annahme (objektart 15/16 = Weg).",
+    "netz": "erster Abruf gelungen, keine Wiederholung noetig"
+   },
+   "bedienbar": {
+    "ja_nein": "ja (mit Behelf gemessen)",
+    "verfahren": "Waehrend des Laufs ein bpy.app.timers-Takt alle 0.2 s im Hauptfaden, der jedes Mal eine Szenen-Eigenschaft aendert (frame_current +1) — also eine echte Bedienhandlung, die nur laeuft, wenn die Ereignisschleife frei ist. Grundlageplan: 40 Takte in 8.1 s, groesste Luecke 0.208 s, keine Luecke > 1 s. Themenkarte: 35 Takte in 7.1 s, groesste Luecke 0.206 s. Dazu zwei Bildschirmabzuege mitten im Lauf angesehen: Knoten zeigt «laeuft / läuft im Hintergrund …», die Zeitleiste ist weitergelaufen (Bild 16), Oberflaeche neu gezeichnet."
+   }
+  },
+  "4_themenkarte": {
+   "ja_nein": "nein (Textblock wortgetreu abgelehnt; Import-Fehler wie 3) / ja (Werte getrennt, mit Behelf)",
+   "streng": "Wie 3: «ModuleNotFoundError: No module named 'core'» in WETTBEWERB_OT_themenkarte_erzeugen.execute (ueber karten_knoten.zentrum → _zahl).",
+   "textblock_genau": "Mit Behelf und GENAU dem Textblock aus Punkt 4: Status «fehler», Meldung woertlich: «Parameter-Text: unbekannte Schluessel art, perimeter_min_flaeche_m2, perimeter_zonen (erlaubt: eingaenge, linien, fusswege, autorouten, parkierung, anker, verbindungen, anteil_aktiv, gewicht_gestrichelt, fang_m, farbe_dunkel)». Das ist die gewollte Ablehnung (THEMEN_JSON), der Auftragstext passt nicht zum Knoten: art, perimeter_zonen, perimeter_min_flaeche_m2 sind Knotenfelder.",
+   "mit_behelf_getrennt": {
+    "vorgehen": "art=saison, Perimeter-Zonen «Sport und Freizeit; Zone für öffentliche Nutzungen», Mindestflaeche 10000 in die Knotenfelder; eingaenge, anker, anteil_aktiv unveraendert in einem zweiten Textblock. Zentrum von Hand 2649525/1177780, 1:5000, A2 quer.",
+    "status": "geschrieben",
+    "zeile": "Themenkarte saison 1:5000 A2: 52 von 155 Gebäuden aktiv · 0 Warnung(en) · SVG + DXF + PDF",
+    "warnungen": [],
+    "laufzeit_s": 7.1,
+    "aktive_gebaeude": {"gemessen": "52 von 155", "erwartet": "52 von 155"},
+    "gehwege_m": {"gemessen": [806.1, 344.7], "erwartet": [806, 345], "routen": "Dorf West → West 806.1 m; Dorf Ost → Ost 344.7 m"},
+    "weitere": "gebaeude_geschlossen 103, wegkanten aktiv 284 / geschlossen 969, wege_aktiv_m 2364.0, Veloland 1, Wanderwege 21; 5 Annahmen (u. a. Wegnetz: 7 Verbinder ≤ 4 m)."
+   }
+  },
+  "5_szenenursprung": {
+   "ja_nein": "ja (mit Behelf) / nein (wie ausgeliefert, Import-Fehler wie 3)",
+   "meldung": "Die frische Szene trug KEINEN Ursprung; «INFO Metadata» wurde nicht gefahren (braucht eine INFO-PDF). Deshalb zuerst ohne Ursprung gestartet (Zentrum = Szene): Ablehnung woertlich «Die Szene hat keinen LV95-Ursprung (wettbewerb_lv95_easting / wettbewerb_lv95_northing) — zuerst «INFO Metadata» lesen oder das Zentrum von Hand eingeben» — keine erfundene Vorgabe, richtig. Dann die zwei Szenen-Schluessel so gesetzt, wie nodes/info_metadata.py sie schreibt (scene[\"wettbewerb_lv95_easting\"]=2649525.0, scene[\"wettbewerb_lv95_northing\"]=1177780.0), neuer Grundlageplan-Knoten ohne Hand-Zentrum: Status geschrieben in 5.4 s, JSON blatt.zentrum_lv95 = [2649525.0, 1177780.0], gleiche Zahlen wie 3 (261 / 155+974 / 283+282). Er nimmt den Ursprung der Szene."
+  },
+  "rot": [
+   "Nutzerweg in Blender kaputt: absolute Importe `from core …` greifen im Add-on nicht (Paket heisst bl_ext.user_default.wettbewerbsvorbereitung, sys.path enthaelt nur libs/). Gesehen: core/karten_knoten.py Z. 44 (_zahl) und die Importe in laufe()/kennzahlen(); dieselbe Form auch in core/themenkarte.py Z. 39–40 und 926, core/grundlageplan.py Z. 1149 u. a. Die Proben sehen das nicht, weil die Tests den Repo-Stamm in sys.path legen.",
+   "Textblock aus Punkt 4 passt nicht zum Knoten (drei Schluessel abgelehnt).",
+   "run_tests auf dieser Maschine rot aus Umgebungsgruenden (siehe run_tests.ursache)."
+  ]
+ },
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine",
+  "blender": "Fork KosmoDesign 5.1.2 (/mnt/data/kosmo-blender-fork/install/blender); Snap ist 5.2.2 LTS",
+  "anzeige": "Xvfb :97, eigene Instanz, am Ende per PID beendet",
+  "hinweis_wayland": "Der erste Start mit nur `-u WAYLAND_DISPLAY` landete NICHT auf :97: libwayland faellt auf den Standard-Socket wayland-0 zurueck, Blender oeffnete vermutlich auf dem Wayland-Desktop (kein Fenster auf :97, Bildschirmabzuege schwarz; ca. 35 s, dann per PID beendet). Abhilfe: WAYLAND_DISPLAY auf einen nicht vorhandenen Namen setzen (hier kein-wayland-177) — dann faellt Blender auf X11/:97.",
+  "ausgaben": "/tmp/kp177-grundlageplan, /tmp/kp177-themenkarte, /tmp/kp177-szene (je SVG, DXF, PDF, JSON; liegen noch dort)"
+ },
+ "fehler": "ModuleNotFoundError: No module named 'core' (core/karten_knoten.py, line 44, in _zahl) — bei allen drei Knotenstarts im ausgelieferten Zustand"
+}
