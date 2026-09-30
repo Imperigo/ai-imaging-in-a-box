@@ -28,9 +28,10 @@
       "Keine GPU noetig — Oberflaeche."
     ]
   },
-  "rueckgabe": {
-    "verzeichnis": "auftraege/ergebnisse",
-    "nur_zahlen": true,
-    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
-  }
+  "rueckgabe": [
+    "Punkt 3 (Kopfzeile frei vom Buch-Knopf, kein Text abgeschnitten): ja/nein, mit Abzug der Kopfzeile samt Streifen.",
+    "Punkt 4 (Umschalter bleibt stehen, nichts unter der Sync-Gruppe): ja/nein, mit Abzug.",
+    "Stand (Commit) der App und Fenstergroesse(n)."
+  ],
+  "rang": 4
 }
