@@ -1,0 +1,60 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-193",
+ "status": "ok",
+ "beendet": "2026-09-30T12:35:29Z",
+ "stand": {
+  "app": "Desktop-App neu gebaut auf Architektur-Cosmos 7581b1c6b (ROADMAP 1635); git merge-base --is-ancestor 3fe39db24 HEAD = 0",
+  "kosmoprepare": "405caab (main)",
+  "modell": "qwen3-coder:30b ueber Ollama DIESER HomeStation (Betriebsart in der App: «Remote» = eigene HomeStation per VPN-Adresse, kein Cloud-Anbieter; «Standard» nicht umgestellt, weil der Auftrag «nichts umstellen» sagt). Unter jeder Antwort: «Mit 72 von 219 Werkzeugen — dein Modell fasst 64k».",
+  "python_des_servers": "python3 im PATH = Python 3.14.4 (Feld «Python-Interpreter» in den Einstellungen leer)"
+ },
+ "geprueft": "Zwei Durchgaenge in je einem Wegwerf-Projekt (Paket Wettbewerbs-Vorbereitung, Kosmo-Seitenfenster offen), Kindprozess-Waechter ueber /proc/<app-pid>/task/*/children alle 0.2 s. Durchgang 1 (14:06, Chatverlauf NICHT geleert) nach Schritt 2 abgebrochen, weil 194 vorging; Durchgang 2 (14:22) mit geleertem Chatverlauf, Schritte 2–5. Beide Wegwerf-Projekte danach mit Rueckfrage geloescht, Projekt 1 unveraendert, App/Waechter/Xvfb per PID beendet, Modell entladen.",
+ "kurzantwort": "Der WEG traegt: Kosmo schlaegt die drei Kartenwerkzeuge als Vorschlagskarte vor (kein sofortiges Laufen), «Einmal erlauben» startet den Server als Kindprozess, «Ablehnen» startet nichts und schreibt nichts. Aber ALLE DREI Werkzeuge scheitern beim Anwenden: «No module named 'shapely'» bzw. «'pypdf'» — die App startet den Server mit dem System-Python 3.14, und libs/ (fuer Blenders 3.13 gebaut) bleibt dort seit dem libs/-Riegel aef35fd absichtlich draussen. Keine Zaehlung/Anzahl moeglich.",
+ "schritte": {
+  "2_themenkarte_gebaeude": {
+   "vorschlagskarte": "ja (Durchgang 2). Durchgang 1 mit altem Chatverlauf: NEIN — Kosmo antwortete woertlich «Allerdings ist das Werkzeug `kosmoprepare_themenkarte` nicht in der Liste der verfügbaren Werkzeuge enthalten. Daher kann ich diese Anfrage nicht direkt erfüllen.» (gleiche Zeile «72 von 219 Werkzeugen»; ob das Werkzeug damals fehlte oder das Modell es uebersah, ist aus der App nicht zu sehen)",
+   "argumente_auf_der_karte": "«kosmoprepare_themenkarte schreibt Dateien — art: gebaeude, zentrum_lv95: [2649525,1177780], ausgabe_dir: /tmp, massstab: 5000». klassen und gebaeude sind NICHT abzuschreiben: die Karte zeigt nur die ersten vier Argumente (packages/kosmo-ai/src/chat.ts beschreibeWerkzeugAufruf, slice(0, 4)). Ob das Modell klassen/gebaeude richtig uebergab (P4 ohne Lage, quelle), ist darum und wegen des Fehlers unten NICHT pruefbar.",
+   "modellbefund": "ausgabe_dir = «/tmp» selbst statt eines neuen Ordners darunter.",
+   "anwenden": {
+    "status": "fehler",
+    "kindprozess": "14:24:01 kosmoprepare_mcp_server.py",
+    "meldung_woertlich": "KosmoPrepare «kosmoprepare_themenkarte»: KosmoPrepare error: Themenkarte braucht numpy und shapely: No module named 'shapely'",
+    "laufzeit_bis_meldung_s": "unter 120 (Meldung erschien waehrend der 120-s-Wartezeit; genauer nicht gemessen)",
+    "dateien": "keine",
+    "zaehlung": "nicht moeglich"
+   }
+  },
+  "3_grundlageplan": {
+   "vorschlagskarte": "ja",
+   "argumente_auf_der_karte": "«kosmoprepare_grundlageplan schreibt Dateien — zentrum_lv95: [2649525,1177780], ausgabe_dir: /tmp, massstab: 5000, format: A2» (Ausrichtung nicht unter den ersten vier)",
+   "anwenden": {
+    "status": "fehler",
+    "kindprozess": "14:27:17 kosmoprepare_mcp_server.py",
+    "meldung_woertlich": "KosmoPrepare «kosmoprepare_grundlageplan»: KosmoPrepare error: Grundlageplan braucht numpy und shapely: No module named 'shapely'",
+    "dateien": "keine",
+    "anzahlen_je_ebene": "nicht moeglich"
+   }
+  },
+  "4_ablehnen": {
+   "vorschlagskarte": "ja (dieselbe wie 3)",
+   "ablehnen": "«Ablehnen» oeffnet ein optionales Grund-Feld, danach «Ablehnen»; Chat zeigt «Vorschlag verworfen», Kosmo: «Ich verstehe. Da der Architekt den Befehl abgelehnt hat, werde ich ihn nicht erneut versuchen.»",
+   "kein_ordner_keine_datei": "ja — Inhaltsliste von /tmp vor und nach identisch (diff leer); kein neuer Kindprozess (Waechter blieb bei 2 Eintraegen)"
+  },
+  "5_plan_einpassen": {
+   "reader_vorhanden": "ja (privat, nicht im Repo, Pfad nicht in dieser Rueckgabe)",
+   "vorschlagskarte": "ja",
+   "seite_auf_der_karte": "seite: 6 — richtig (Index ab 0)",
+   "anwenden": {
+    "status": "fehler",
+    "kindprozess": "14:33:17 kosmoprepare_mcp_server.py",
+    "meldung_woertlich": "KosmoPrepare «kosmoprepare_plan_einpassen»: KosmoPrepare error: Plan einpassen braucht pypdf, numpy und shapely: No module named 'pypdf'",
+    "gepaart_median": "nicht moeglich"
+   }
+  }
+ },
+ "unbekannter_befehl_schemafehler_traceback": "nein — kein «unbekannter Befehl», kein Schemafehler (perimeter_zonen nicht gesetzt, seite richtig 6), kein Traceback in der Anzeige. Einziger Fehler: die fehlenden Module oben.",
+ "ursache_und_vorschlag": "System-Python 3.14.4 hat numpy 2.5.1, aber weder shapely noch pypdf; libs/ ist fuer 3.13 gebaut und wird seit aef35fd unter 3.14 nicht eingehaengt (richtig so, vorher waeren die cp313-Module unter 3.14 ohnehin gebrochen). Damit die Kartenwerkzeuge in der App laufen, braucht der Server ein passendes Python — z. B. das Feld «Python-Interpreter» in den Kosmo-Einstellungen auf ein 3.13 mit libs/ oder ein eigenes venv mit shapely/pypdf. Das ist ein Entscheid fuer euch/den Owner; ich habe nichts installiert und nichts umgestellt.",
+ "nicht_getan": "nichts committet ausser dieser Datei, kein Code geaendert, keine Einstellung umgestellt, nichts installiert, kein Projekt des Owners veraendert, keine Plaene/Bilder/PDF zurueckgegeben.",
+ "fehler": null
+}
