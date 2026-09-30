@@ -6961,13 +6961,15 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] **Owner:** zwanzig Bedienfragen zum Entwurf (Stiftgesten, Hand, Ebenen, Rückgängig,
       Verhalten ohne Netz, Abbruch, Varianten, Benennung, Export, Schriften).
-- [ ] **Kern (wir):** Das Rot für «durchgefallen» (`#c2554f`) erreicht auf dem dunklen
+- [x] **Kern (wir):** Das Rot für «durchgefallen» (`#c2554f`) erreicht auf dem dunklen
       Grund nur 4.06 zu 1 statt der nötigen 4.5 zu 1. Im iPad-Entwurf auf `#e2776f`
       gehoben, **in `oberflaeche/seite.html` noch nicht**. Eigene Sitzung mit Gegenprobe,
       weil es die geprüfte Oberfläche anfasst.
-- [ ] **Kern (wir):** Schriftfrage — mitliefern oder bei der Systemschrift bleiben. Hängt
+      *(nachgesehen 30.09.2026, Sitzung 73: `seite.html` trägt `#e2776f`, nachgerechnet von `tests/test_kontrast.py` — erledigt)*
+- [x] **Kern (wir):** Schriftfrage — mitliefern oder bei der Systemschrift bleiben. Hängt
       an der Antwort des Owners und an der Auflage, dass zum Start keine Netzverbindung
       nötig sein darf.
+      *(entschieden 22./23.09.2026: OFL-Ausnahme, Schriften mitgeliefert in der iPad-App, im `NOTICE` — erledigt)*
 
 ## Sitzung 54, zweiter Teil — 21.09.2026 · Zwanzig Antworten und die Verbindung
 
@@ -7000,6 +7002,10 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## Sitzung 54, dritter Teil — 21.09.2026 · Sechs Antworten der HomeStation
 
+> **Entschieden:** Kettenweg entsperrt; Rot auf `#e2776f`; Schriften mitgeliefert (OFL).
+> **Gemessen:** sechs Antworten der HomeStation (siehe unten).
+> **Offen:** Token-Meldung an den MCP-Werkzeugen, Zwischenspeicher und Codestand — in Arbeit seit 30.09.2026 (Sitzung 73 §25).
+
 **Erledigt**
 
 - [x] **Der Kettenweg ist entsperrt.** `_fuehre_geometrie` liest die Szenenbox aus der
@@ -7029,12 +7035,14 @@ Bekannt und ausdrücklich nicht erledigt:
       Bauform, bei der `control_image` die Tiefe nimmt und `image` frei bleibt. Als
       `auf-20260922-138` abgelegt; Teil 1 kostet keinen Rechenschritt.
 - [ ] **local:** `auf-137` (Gegenprobe) und `auf-128` (Schwellenmessreihe, Frist 15.10.).
-- [ ] **Kern (wir):** Führung (`guidance_scale`) ist bei destillierten Modellen nicht
+- [x] **Kern (wir):** Führung (`guidance_scale`) ist bei destillierten Modellen nicht
       gesetzt und übernimmt die Vorgabe von diffusers — eine fremde Entscheidung, und bei
       solchen Modellen der Unterschied zwischen einem Bild und Matsch (`auf-134`).
       *(Sitzung 70: nachgefragt in `auf-20260923-157` — vermutlich heisst der Regler dort `true_cfg_scale`, und den setzen wir nirgends)*
-- [ ] **Kern (wir):** Die Tiefenkonvention von `qwen-image-edit-2511` ist nicht gemessen.
+      *(erledigt in Runde 12: `true_cfg_scale` für qwen-image-edit-2511 aus der Modellkarte; z-image-turbo 0.0 belegt)*
+- [x] **Kern (wir):** Die Tiefenkonvention von `qwen-image-edit-2511` ist nicht gemessen.
       Selbst wenn die Tiefenkarte ankommt, ist ungeprüft, ob sie richtig herum ankommt.
+      *(entfällt: Bei diesem Modell geht die Tiefe nur als Eingangsbild hinein, eine Konvention gibt es nicht — `auf-160` C, `auf-178`; seit C40 bekommt es das Schönbild)*
 
 ## Sitzung 55 — 22.09.2026 · Eine eigene Aussage zurückgenommen
 
@@ -7054,9 +7062,10 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] **local:** `auf-137` (Gegenprobe, Rang 1), `auf-138` (Signaturen, Rang 2),
       `auf-128` (Schwellenreihe, Rang 3, Frist 15.10.).
-- [ ] **Kern (wir):** Die Führung (`guidance_scale`) bleibt für sieben von acht Einträgen
+- [x] **Kern (wir):** Die Führung (`guidance_scale`) bleibt für sieben von acht Einträgen
       ungesetzt. Sie hier zu setzen hiesse raten — darum Teil 3 des Auftrags.
       *(Sitzung 70: → `auf-20260923-157`)*
+      *(bewusst so belassen: belegt sind z-image-turbo (0.0) und qwen-image-edit (true_cfg_scale); die übrigen sind nicht Vorgabe und werden nicht geraten)*
 
 ## Sitzung 56 — 22.09.2026 · Der Kontrast wird gerechnet
 
@@ -7141,9 +7150,10 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (wir):** Anteil und Gliederung erklären den Abstand **nicht ganz**. Ein
+- [x] **Kern (wir):** Anteil und Gliederung erklären den Abstand **nicht ganz**. Ein
       gleichmässiger Randfehler müsste 19 Bildpunkte breit sein, um den Hochbau auf 0,36
       zu drücken — und der Quader stünde dann bei 0,79 statt 0,93. Der Rest ist unerklärt.
+      *(überholt: Die Ursache war die Rahmung nach der Szene — Gebäude 2 % des Bildes; seit C42 nach dem Bauwerk, Sitzung 73 §13–16)*
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
 
 ## Sitzung 60 — 22.09.2026 · Die Warnung kam bei niemandem an
@@ -7168,8 +7178,9 @@ Bekannt und ausdrücklich nicht erledigt:
       *(erledigt: `a64bea3`, Protokoll 64 §5 — Widerspruch abgewiesen, echte Adresse über `heimnetz_adresse()`)*
 - [ ] **Kern (wir):** `pruefe_verdrahtbarkeit` wird nur von der Testsuite gerufen; der
       echte Bestellweg trägt eine dritte Kopie der vier Feldnamen (A7).
-- [ ] **Kern (wir):** Der Läufer prüft kein Token mehr, nur noch den Status im File; die
+- [x] **Kern (wir):** Der Läufer prüft kein Token mehr, nur noch den Status im File; die
       Befugnisprüfung hängt an einem Schalter ohne Ausgeber (A12).
+      *(A12 ist auf dem Einbau-Stand «verworfen» mit Begründung — kein eigener Posten mehr)*
 - [x] **Kern (wir):** Einbau-Stand nachziehen — C8 und C10 sind seit dem 21.09. am Gerät
       bestätigt, die Tabelle sagt weiter «unbestätigt». Vor dem Abhaken selbst nachsehen.
       *(nachgesehen Sitzung 70: bewusst «unbestätigt» gelassen — bestätigt war unsere Anzeige, nicht der Vertrag; Vertragsfrage in `auf-142`)*
@@ -7424,8 +7435,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **local:** `auf-160` (Rang 1) — Hochbau-Polarität (1.0/2.1), Führung am
       Bearbeitungsmodell, QA an sauberen Bildern, Laden ohne Netz.
 - [ ] **cloud:** `auf-155` mit Nachtrag 2 (F5 Rechenzeit).
-- [ ] **Kern:** QA für saubere Bilder ohne Boden (nach `auf-160` D) — erst dann 1.0 gegen 2.1
+- [x] **Kern:** QA für saubere Bilder ohne Boden (nach `auf-160` D) — erst dann 1.0 gegen 2.1
       in Zahlen.
+      *(erledigt anders: Massstab ist das blinde Auge; 1.0 gegen 2.1 gemessen in `auf-201`, Sitzung 73 §24)*
 - [ ] **Kern (später):** Inpaint — Original ausserhalb der Maske zurückkopieren.
 - [ ] **Kern:** Zwischenspeicher der Mappe kennt den Codestand nicht.
 - [ ] **Andere Sitzung (KosmoPublish):** KosmoPrepare-Suite rot (3), nächtlicher Push ohne
@@ -7544,7 +7556,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Kern → cloud:** Nach bestandenem Beweislauf den Abholer umschalten und KosmoOrbit
         ansagen (ihre Bilder zeigen dann mehr Gebäude). — umgeschaltet, angesagt (Protokoll 73 §14).
   - [ ] **local:** `auf-20260930-189` — Ansage lesen, bevor der Abholer den Stand zieht.
-  - [ ] **Kern:** eine Zahl, die «Form steht» erkennt — keine der vier trennt (188).
+  - [x] **Kern:** eine Zahl, die «Form steht» erkennt — keine der vier trennt (188).
+          *(abgeschlossen: Umrisstreue als Auskunft, kein Urteil — `auf-194`–`196`, Sitzung 73 §17–20)*
     - [x] **Owner (30.09., «ja nach deiner Empfehlung»):** das blinde Augenurteil des Heim-PC als
           Referenz, Kandidaten dagegen prüfen, zuerst Hochbau.
     - [x] **Kern:** Kandidaten `aiimaging.formkandidaten` (Silhouette, Richtungstreue,
@@ -7599,10 +7612,11 @@ Bekannt und ausdrücklich nicht erledigt:
         71 §18).
   - [x] **local:** `auf-20260924-172` — **trennt nicht, verworfen** (Nein-Bild über allen
         Ja-Bildern, graue Fläche 1,0). Aus dem Maskenweg genommen (Protokoll 71 §21).
-  - [ ] **Kern, offen:** QA für saubere Bilder neu ansetzen — nächster Kandidat Option C
+  - [x] **Kern, offen:** QA für saubere Bilder neu ansetzen — nächster Kandidat Option C
         (Umriss aus den RGB-Kanten, kein Schätzer, kein Ortsfeld); Option A braucht ein
         Segmentierungsmodell (Lizenzfrage). Jeder Kandidat zuerst gegen die graue
         Nullprobe.
+        *(Option C gebaut als `aiimaging.umriss`, Nullproben bestanden; Ergebnis: Auskunft, kein Urteil — Sitzung 73 §9–20)*
   - [x] **Owner (24.09., «gut wir warten»):** E8-Knoten erst nach der n1-Übernahme beauftragen.
   - [ ] **Nach n1:** Einbauauftrag an ui für die sechs neuen Knoten aus E8 — Frage war: Die sechs neuen Knoten aus E8 (`import`, `tiefe`, `skizze`, `maske`,
         `variante`, `export`) sind drüben nie beauftragt worden (Antwort `auf-162`, B2). Jetzt
@@ -7627,4 +7641,19 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] Dann: `tools/kosmovis_uebernahme.py` vom gemeldeten Commit, Stellvertreter
           nachziehen, Proben, Bau, Durchklicken.
     - [ ] **Owner:** Figma-Konto mit Weave verknüpfen, dann Beispiel-Abläufe auslesen.
+
+## Vorführfassung Mac + iPad (Owner-Wunsch 30.09.2026, Sitzung 73 §25)
+
+> Entscheide: auswärts präsentieren (Tunnel), kein Apple-Entwicklerkonto, Sprachmodell wie Kosmo.
+> Schätzung: erste Fassung ohne Assistent ~3 Wochen, vollständig ~5–6 Wochen (Mitte November).
+
+- [ ] **Kern/Fläche:** Blätter auf der Entwurfsfläche — Start am Mac (was baut sich auf, was
+      sieht man dabei), Verbindung zum Heim-PC (auswärts), iPad über den Mac, Assistent.
+- [ ] **Owner:** die Blätter ansehen und entscheiden.
+- [ ] **Kern:** Tunnel wählen und belegen (Lizenz, Betrieb, Kosten) — Vorschlag mit Varianten.
+- [ ] **Kern:** Mac-Hülle, die beim Öffnen Heim-PC, Sprachmodell und iPad-Dienst selbst aufbaut.
+- [ ] **Kern:** iPad findet den Mac statt des Heim-PC, wenn es auswärts ist.
+- [ ] **Kern:** Assistent (Sprachmodell am Heim-PC, Lizenz nach Regel 1 geprüft).
+- [ ] **Kern:** Vorführmodus, falls der Heim-PC nicht erreichbar ist.
+- [ ] **local:** Tunnel und Sprachmodell am Heim-PC einrichten und messen (Auftrag folgt nach den Blättern).
 

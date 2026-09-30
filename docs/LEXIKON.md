@@ -4328,6 +4328,21 @@ Gewichte eines Modells liegen. Bis zum 30.09.2026 hiess er immer wie der Eintrag
 Steuermodell —, sagt ein eigenes Feld, wo die Basis liegt. Ohne es suchte das Programm einen
 Ordner, den es nicht gibt, und wies den Lauf ab (Befund des Heim-PC, Auftrag 199).
 
+**Tunnel (verschlüsselte Verbindung übers Internet)** — Eine Leitung, die zwei Geräte an
+verschiedenen Orten so verbindet, als stünden sie im selben Heimnetz — verschlüsselt, damit
+unterwegs niemand mitliest. Für Visbox nötig, weil der Heim-PC rechnet (Grafikkarte, Blender),
+präsentiert aber auswärts wird (Owner-Entscheid 30.09.2026). Welcher Tunnel, ist noch offen.
+
+**Vorführmodus** — Eine Betriebsart für Präsentationen: Ist der Heim-PC nicht erreichbar, zeigt
+die App vorher gerechnete Bilder statt eines Fehlers — und sagt, dass es vorher gerechnete sind.
+Geplant für die Vorführfassung.
+
+**TestFlight und Apple-Entwicklerkonto** — Das Konto (99 USD im Jahr) erlaubt, eigene Apps über
+Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
+signieren, dass der Mac beim Öffnen nicht warnt. Ohne Konto (Owner-Entscheid 30.09.2026) läuft
+die iPad-App über Swift Playgrounds oder per Kabel vom Mac (sieben Tage gültig), und die Mac-App
+wird beim ersten Mal mit Rechtsklick → Öffnen gestartet.
+
 **Blockwise-ControlNet** — Bauart, bei der die Steuerung nicht auf einmal, sondern in
 jede Schicht des Bildmodells einzeln eingespeist wird. *Für die Benutzung unerheblich —
 wichtig nur, weil solche Modelle einen eigenen Ladeweg brauchen und nicht auf jede
@@ -6122,7 +6137,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
