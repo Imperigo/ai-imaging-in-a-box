@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-205",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare in Blender 5.1.2: der neue Knopf «In Szene laden» an Grundlageplan und Plan einpassen — liegt die Karte richtig um den Szenenursprung?",
+  "anweisung": "=== KOSMOPREPARE: «IN SZENE LADEN» AN DEN KARTEN-KNOTEN IN BLENDER BESTAETIGEN ===\n\nWORUM ES GEHT\n  Owner-Entscheid 30.09.2026 Nr. 5: die Karten-Knoten legen ihr Ergebnis jetzt selbst in die Szene\n  (KosmoPrepare de796a2). Nach einem Lauf mit Status «geschrieben»/«eingepasst» steht unter dem Ergebnis ein\n  Knopf «In Szene laden». Er liest DXF (Grundlageplan/Themenkarte) bzw. GeoJSON (Plan einpassen), rechnet um den\n  LV95-Ursprung der Szene um und legt je Ebene ein Kantennetz in die Sammlung «Karte <Knotenname>».\n  In der Wolke gemessen (ohne Blender): Grundlageplan A3 1:2000 -> 597 Linienzuege in 9 Ebenen, 780 × 422 m.\n  Ob der Knopf in Blender zeichnet und die Netze richtig liegen, kann nur ihr sehen.\n\nWAS ZU TUN IST\n  1. KosmoPrepare-Klon: git pull --ff-only; git log -1 muss de796a2 oder juenger zeigen. Blender 5.1.2 frisch\n     starten, Add-on neu laden (wie in 179: Repo-Stamm NICHT im Pfad).\n  2. Wegwerf-Datei. Szene: LV95-Ursprung setzen wie in 179 (INFO Metadata oder die Szenenschluessel\n     wettbewerb_lv95_easting / _northing; dieselben Werte wie dort). Z-Ursprung ZUERST NICHT setzen.\n  3. Grundlageplan-Knoten, 1:5000 A2 quer (wie 179), laufen lassen -> «geschrieben». Dann «In Szene laden».\n     Erwartet: INFO/WARNUNG-Zeile «N Linienzuege in M Ebenen, … m um den Szenenursprung (flach — Z-Ursprung\n     fehlt)» und eine Warnung zum fehlenden Z-Ursprung. Sammlung «Karte …» mit einem Objekt je Ebene.\n     Zahlen woertlich. Stimmt die Groesse (Breite × Hoehe in m) mit dem Kartenausschnitt aus dem JSON\n     (blatt.ausschnitt_m) ueberein?\n  4. Z-Ursprung setzen (wettbewerb_lv95_elevation, gleicher Wert wie in 179 bzw. aus INFO Metadata) und\n     NOCHMALS «In Szene laden». Erwartet: keine Flach-Warnung; die Objektanzahl in der Sammlung bleibt gleich\n     (neu laden ersetzt, doppelt nicht). Hoehenkurven liegen jetzt in der Hoehe, Gebaeude auf 0?\n     Eine Stichprobe: Z-Wert einer Kurve der Ebene KURVEN_25M (N-Panel) + Z-Ursprung = ein Vielfaches von 25?\n  5. Liegt die Karte auf dem Gelaende bzw. dem Modell, das schon in der Szene ist (falls vorhanden)? ja/nein,\n     und bei nein: wie weit und in welche Richtung daneben.\n  6. Plan einpassen (nur wenn der private Reader aus 182 noch vorliegt; nicht ins Repo, nicht in die\n     Rueckgabe): einpassen -> «eingepasst», dann «In Szene laden». Erwartet 7 Ebenen (eine je Stilgruppe).\n     Liegen die Gebaeude des eingepassten Plans auf denen des Grundlageplans? ja/nein.\n  7. Blender bedienbar geblieben? Laufzeit des Knopfs (Sekunden).\n\nRUECKGABE\n  - Stand KosmoPrepare, Blender-Fassung.\n  - Schritt 3/4/6: die Meldungszeilen woertlich, Anzahl Objekte je Sammlung, Groesse, Stichprobe.\n  - Schritt 5 und 6: ja/nein (+ Versatz in m).\n  - «No module named», Traceback, fehlender Knopf? ja/nein, woertlich.\n\nNICHT TUN: keinen Code aendern, nichts committen ausser der Antwortdatei, keine Plaene/Bilder/Dateien aus dem\nLauf zurueckgeben, kein Projekt des Owners veraendern (Wegwerf-Datei). Keine absoluten Pfade mit Benutzernamen,\nkeine Orts- oder Projektnamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T20:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "oeffentliche Geodaten (swisstopo/geodienste) am Ausschnitt aus 179"
+  },
+  "params": {
+    "kosmoprepare_stand_min": "de796a2",
+    "blender": "5.1.2",
+    "owner_entscheid": "2026-09-30 Nr. 5, Chat: «Ja, bauen»"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell noetig.",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3).",
+      "Netz noetig (Geodaten)."
+    ]
+  },
+  "rueckgabe": [
+    "Stand, Blender-Fassung.",
+    "Meldungen woertlich, Objekte je Sammlung, Groesse, Z-Stichprobe.",
+    "Lage auf dem Modell ja/nein; Plan einpassen deckungsgleich ja/nein.",
+    "Fehler ja/nein woertlich."
+  ],
+  "rang": 3
+}
