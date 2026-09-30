@@ -1,7 +1,7 @@
 # erg-20260930-rahmung — Ansage an KosmoOrbit (Integrator, KosmoOrbit Int 1): eure Bilder zeigen ab jetzt das Gebaeude, nicht das Grundstueck
 
 **Stand 30.09.2026:** Ansage, keine Frage. Gebaut in `Imperigo/ai-imaging-in-a-box` bis Commit
-`@@COMMIT@@` (auf `main`). Wirksam, sobald unser Heimrechner den Stand zieht.
+`09af74c` (auf `main`). Wirksam, sobald unser Heimrechner den Stand zieht.
 **Zugestellt** in euren Eingang `kosmo-orbit/docs/auftraege-kosmovis/`.
 
 ---
