@@ -7176,8 +7176,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (wir):** `--im-heimnetz` zeigt `http://0.0.0.0:8799` — eine Adresse, die es
       im Netz nicht gibt — und wirft eine getippte `--adresse` bedingungslos weg.
       *(erledigt: `a64bea3`, Protokoll 64 §5 — Widerspruch abgewiesen, echte Adresse über `heimnetz_adresse()`)*
-- [ ] **Kern (wir):** `pruefe_verdrahtbarkeit` wird nur von der Testsuite gerufen; der
+- [x] **Kern (wir):** `pruefe_verdrahtbarkeit` wird nur von der Testsuite gerufen; der
       echte Bestellweg trägt eine dritte Kopie der vier Feldnamen (A7).
+      *(erledigt: die vier Namen seit ee39f8a aus `contracts.LANE_FIELDS`; das letzte Paar jetzt aus `contracts.GEOMETRIE_QUELLEN`, bewacht per Syntaxbaum-Suche — Sitzung 73 §26)*
 - [x] **Kern (wir):** Der Läufer prüft kein Token mehr, nur noch den Status im File; die
       Befugnisprüfung hängt an einem Schalter ohne Ausgeber (A12).
       *(A12 ist auf dem Einbau-Stand «verworfen» mit Begründung — kein eigener Posten mehr)*
@@ -7441,7 +7442,8 @@ Bekannt und ausdrücklich nicht erledigt:
       in Zahlen.
       *(erledigt anders: Massstab ist das blinde Auge; 1.0 gegen 2.1 gemessen in `auf-201`, Sitzung 73 §24)*
 - [ ] **Kern (später):** Inpaint — Original ausserhalb der Maske zurückkopieren.
-- [ ] **Kern:** Zwischenspeicher der Mappe kennt den Codestand nicht.
+- [x] **Kern:** Zwischenspeicher der Mappe kennt den Codestand nicht.
+      *(erledigt 30.09.2026: `kette.FASSUNGEN` je Knotenart geht in den Schlüssel, sobald über 1 — bestehende Schlüssel bitgleich, festgeschrieben in `tests/test_knotenfassung.py`; Sitzung 73 §26)*
 - [ ] **Andere Sitzung (KosmoPublish):** KosmoPrepare-Suite rot (3), nächtlicher Push ohne
       vorher zu holen (`auf-159` K4) — nicht unser Repo, dem Owner gemeldet.
 - [x] **Rundgang** für den Owner (Rechner echt, iPad als Zeichnungen, drei Zustände).

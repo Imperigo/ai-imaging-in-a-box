@@ -1,0 +1,39 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20260930-208",
+ "art": "frage",
+ "beschreibung": "Ansage von sechs Kernaenderungen (homeworker-Felder modus_gerechnet/formpruefung, bedarf im Blender-Bericht, geraeteweg.grund, meldung an MCP, reason-Text, Fassung je Knotenart) und die Modellkarte von Qwen-Image-2.1 bei den Gewichten lesen (Fuehrung, Schritte, Negativprompt).",
+ "anweisung": "=== ANSAGE: SECHS KERNAENDERUNGEN — UND DIE MODELLKARTE VON QWEN-IMAGE-2.1 LESEN ===\n\nTEIL A — ANSAGE (vor dem Pull lesen; der homeworker und der Abholer laufen aus dem Klon)\n  A1 tools/homeworker.py: Render-Ergebnisse tragen NEU\n       messwerte.render.{modus_bestellt, modus_gerechnet, modus_abweichung, geraeteweg},\n       messwerte.formpruefung (Umrisstreue + Silhouette, urteilt=false; wenn nicht messbar:\n       wert null + status + grund), urteil.modus_gerechnet, urteil.umrisstreue.\n     Nur hinzugefuegt, nichts entfernt; die status-Logik ist unveraendert. Kosten: ~1.7 s je\n     512-px-Bild fuer die Umrisstreue (mehr bei groesseren Bildern).\n  A2 Jeder blender-report.json traegt NEU einen Block «bedarf» mit Satz (Blender rechnet auf\n     der CPU, nichts zu entscheiden) — euer Befund aus 173. Auch auf dem Abholer-Weg.\n  A3 geraeteweg.grund ist nie mehr leer, sondern «Weg <geraet>. <bedarf.grund>».\n  A4 MCP: enqueue_render und query_render geben NEU «meldung» zurueck (Grund einer Abweisung\n     oder Wartegrund), nullbar.\n  A5 verdict.reason im Abbruchfall liest sich anders: kein «.;», kein «None» — «Geometrie-Score\n     nicht gemessen (Schwelle 0.65)». Bedeutung unveraendert.\n  A6 Zwischenspeicher: NEU «kette.FASSUNGEN» je Knotenart geht in den Schluessel, sobald eine\n     Zahl ueber 1 steigt. Heute steht alles auf 1 — JEDER bestehende Schluessel ist bitgleich,\n     nichts wird verworfen. Die erste Erhoehung kommt mit Ansage.\n\nTEIL B — MODELLKARTE VON QWEN-IMAGE-2.1 LESEN (keine GPU)\n  Euer Befund aus 178/184: qwen-image-2.1 rechnet bei uns OHNE Fuehrung (true_cfg_scale 1.0,\n  kein Regler im Register) und mit 20 statt der Pipeline-Vorgabe 40 Schritte. Seit E128 ist das\n  Modell ueber KosmoOrbit bestellbar — Bestellungen bekaemen heute also schwaechere Bilder.\n  Bitte aus der Modellkarte BEI DEN GEWICHTEN (README.md im Modellordner, wie in 157 fuer das\n  Edit-Modell) woertlich abschreiben, mit Zeilennummern:\n    B1 empfohlener Wert fuer true_cfg_scale (oder wie der Regler dort heisst);\n    B2 empfohlene Schrittzahl (num_inference_steps);\n    B3 empfohlener negativer Prompt (auch ein Leerzeichen « » ist eine Angabe);\n    B4 was die Karte zu Bildbearbeitung/Eingangsbild sagt, falls etwas.\n  Steht etwas davon NICHT in der Karte: das sagen, nicht aus anderen Quellen ergaenzen.\n\nZURUECK (auftraege/ergebnisse/auf-20260930-208.json)\n  - git log -1; A1–A6 gelesen; falls ein Lauf anfiel: ob die neuen Felder erscheinen.\n  - B1–B4 woertlich mit Zeilennummern und dem Dateinamen (relativ zur Modellwurzel).\n\nNICHT TUN: nichts am Register oder Code aendern; keine Werte raten; keine absoluten Pfade;\nnichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-09-30T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie noetig"
+ },
+ "params": {
+  "backbone": "qwen-image-2.1",
+  "lesen": [
+   "true_cfg_scale",
+   "num_inference_steps",
+   "negative_prompt",
+   "bildeingang"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Keine GPU; nur lesen.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; A1–A6 gelesen; ob die neuen Felder in einem Lauf erscheinen (falls einer anfiel).",
+  "B1–B4 woertlich mit Zeilennummern und Dateiname relativ zur Modellwurzel; Fehlendes als fehlend."
+ ],
+ "rang": 2
+}
