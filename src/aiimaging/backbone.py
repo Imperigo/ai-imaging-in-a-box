@@ -290,6 +290,16 @@ class Backbone:
     #: für nichts; ein Feld sagt, wo sie liegt.
     gewichte_ordner: str | None = None
 
+    #: Die Schrittzahl, die die **Modellkarte** empfiehlt — gilt, wo eine Bestellung keine
+    #: nennt (Abholer, homeworker). ``None`` heisst: nicht belegt, es bleibt bei 20.
+    #:
+    #: **Anlass (`auf-20260930-208`):** qwen-image-2.1 rechnete mit 20 Schritten; die
+    #: Modellkarte bei den Gewichten nennt in allen drei Beispielen 40. Der Abholer führte die
+    #: Lücke seit August als «ein Feld `schritte` am Backbone-Eintrag nötig». Gesetzt wird
+    #: nur, was eine Karte belegt — ``schritte_beleg`` sagt wo.
+    schritte_vorgabe: int | None = None
+    schritte_beleg: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -1228,6 +1238,10 @@ _eintrag(Backbone(
 
 _eintrag(Backbone(
     name="qwen-image-2.1",
+    schritte_vorgabe=40,
+    schritte_beleg=("auf-20260930-208 B2: Modellkarte bei den Gewichten (README.md, Z. 67, 90, "
+                    "105) — num_inference_steps=40 in allen drei Beispielen. Führung und "
+                    "Negativprompt nennt die Karte NICHT (B1, B3): kein Regler gesetzt."),
     modell_id="Qwen/Qwen-Image-2.1",
     # 7 Mrd. Parameter im Bildteil (Modellkarte). Den Textkodierer nennt die Karte nicht;
     # die Speicherschaetzung ist darum eine Untergrenze und ungemessen.
@@ -1306,6 +1320,17 @@ VORSCHAU_BACKBONE = "z-image-turbo"
 #: Der Rückfall: riesiges ControlNet-Ökosystem. Wenn für einen neueren Backbone kein
 #: passendes Depth-ControlNet existiert, trägt SDXL die Naht sicher.
 RUECKFALL_BACKBONE = "sdxl-juggernaut"
+
+
+#: Schrittzahl, wenn weder Bestellung noch Registereintrag eine nennen.
+SCHRITTE_STANDARD = 20
+
+
+def schritte_fuer(name: str | None, standard: int = SCHRITTE_STANDARD) -> int:
+    """Die Schrittzahl eines Eintrags nach seiner Modellkarte, sonst ``standard``."""
+    eintrag = BACKBONES.get(name or "")
+    wert = getattr(eintrag, "schritte_vorgabe", None) if eintrag else None
+    return wert if wert else standard
 
 
 def hole(name: str) -> Backbone:

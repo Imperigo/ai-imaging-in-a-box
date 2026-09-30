@@ -715,7 +715,7 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
     Regel 3: Zurück reisen nur Zahlen, Urteile und **Dateinamen**. Die Bilder bleiben auf
     der HomeStation.
     """
-    from aiimaging import bildlesen, maske, render, tiefenschaetzer
+    from aiimaging import backbone, bildlesen, maske, render, tiefenschaetzer
 
     messwerte = {
         "bbox_size_m": blender_bericht.get("bbox_size_m"),
@@ -764,7 +764,9 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         negativ_prompt=params.get("negativ_prompt", ""),
         backbone=params.get("backbone", render.VORGABE_BACKBONE),
         seed=params.get("seed", 0),
-        schritte=params.get("schritte", 20),
+        # Ohne Angabe gilt die Modellkarte des Eintrags, sonst 20 (auf-20260930-208).
+        schritte=params.get("schritte", backbone.schritte_fuer(
+            params.get("backbone", render.VORGABE_BACKBONE))),
         controlnet_staerke=params.get("controlnet_staerke", 0.8),
         denoise=params.get("denoise", 0.6),
         # Der Beauty-Pass als Anker macht daraus echtes Image-Edit statt txt2img. Er ist

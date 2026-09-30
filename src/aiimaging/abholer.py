@@ -2591,6 +2591,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         prompt=szene.get("prompt", ""),
                         controlnet_staerke=szene.get("controlnet_staerke", 0.8),
                         backbone=szene.get("backbone") or render.VORGABE_BACKBONE,
+                        # Die Bestellung kennt kein Schrittfeld; es gilt die Modellkarte
+                        # des Eintrags, sonst 20 (auf-20260930-208).
+                        schritte=render.backbone.schritte_fuer(
+                            szene.get("backbone") or render.VORGABE_BACKBONE),
                         beauty_png=bericht.get("beauty_png"),
                         seed=seed,
                         ausgabe_png=ziel_png,
@@ -2911,6 +2915,9 @@ RENDER_STEHENGEBLIEBEN = {
     "schritte": {
         "vorgabe": 20,
         "absicht": False,
+        # SEIT 30.09.2026 TEILWEISE GESCHLOSSEN: `Backbone.schritte_vorgabe` gibt es; belegt
+        # ist es für qwen-image-2.1 (40, Modellkarte, auf-208). Für z-image-turbo nicht
+        # gesetzt — die 8 aus der Registry-Notiz sind nicht gegen 20 gemessen.
         "grund": "Eine LÜCKE gegen die eigene Registry: `backbone.py` sagt zu "
                  "`z-image-turbo` wörtlich «destilliert, auf 8 Schritte OHNE "
                  "klassifikatorfreie Führung trainiert». Der Vorgabewert ist 20, und es "

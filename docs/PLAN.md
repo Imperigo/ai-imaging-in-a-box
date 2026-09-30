@@ -7606,9 +7606,12 @@ Bekannt und ausdrücklich nicht erledigt:
           ein Segmentierungsansatz (Lizenzfrage). — erfüllt (195), Bestätigungsreihe ist 196.
   - [x] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue. *(erledigt
         30.09.2026, Sitzung 73 §26; angesagt an local)*
-  - [ ] **local → Kern:** qwen-image-2.1 mit Führung und 40 Schritten nach Modellkarte — die
+  - [x] **local → Kern:** qwen-image-2.1 mit Führung und 40 Schritten nach Modellkarte — die
         Werte liest die HomeStation aus der Modellkarte bei den Gewichten (Auftrag folgt mit der
         Ansage), dann trägt der Kern sie ein.
+        *(erledigt 30.09.2026: Karte nennt 40 Schritte, KEINE Führung, keinen Negativprompt
+        (auf-208). `Backbone.schritte_vorgabe` = 40 für qwen-image-2.1, gilt im Abholer und im
+        homeworker, wo die Bestellung schweigt; kein Regler gesetzt — Sitzung 73 §27)*
   - [x] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
         *(erledigt 30.09.2026: Blender-Bericht trägt `bedarf` mit Satz, `geraeteweg.grund` nie leer — Sitzung 73 §26)*
   - [x] **Owner (E128):** Qwen-Image-2.1 regulär, Lizenz offen → gebaut (Protokoll 73 §6).
