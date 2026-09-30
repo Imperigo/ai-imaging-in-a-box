@@ -1,7 +1,7 @@
 {
  "schema": "aiimaging.homeworker-auftrag/v1",
  "worker": "local",
- "auftrag_id": "auf-20260930-209",
+ "auftrag_id": "auf-20260930-210",
  "art": "frage",
  "beschreibung": "Ansage: qwen-image-2.1 rechnet im Abholer und homeworker mit 40 Schritten (Modellkarte, auf-208), weiter ohne Fuehrung; Kette unveraendert.",
  "anweisung": "=== ANSAGE: QWEN-IMAGE-2.1 RECHNET JETZT MIT 40 SCHRITTEN (EURE MODELLKARTE) ===\n\nDanke fuer 208. Umgesetzt nach eurer Abschrift:\n\nA1 NEU: Registerfeld «schritte_vorgabe». qwen-image-2.1 = 40 (Modellkarte Z. 67, 90, 105).\n   Es gilt im ABHOLER (die Bestellung von KosmoOrbit kennt kein Schrittfeld) und im homeworker,\n   wo «schritte» fehlt. Eine genannte Zahl gewinnt immer.\n   FOLGE: Eine Bestellung mit qwen-image-2.1 rechnet doppelt so viele Schritte — rund doppelte\n   Zeit. Alle anderen Modelle unveraendert (20, bzw. was die Bestellung nennt).\nA2 Fuehrung: KEIN Regler gesetzt — die Karte nennt keine (euer B1). Unsere Annahme «ohne\n   Fuehrung ist ein Mangel» war falsch; sie ist so vorgesehen.\nA3 Die Kette (arbeitsgang) ist NICHT betroffen: dort steht die Schrittzahl im Knoten und damit\n   im Zwischenspeicher-Schluessel; eure Mappen rechnen wie bisher.\n\nZURUECK: git log -1; A1–A3 gelesen. Falls ein Abholer-Lauf mit qwen-image-2.1 anfaellt: stehen\ndort schritte 40 und die Zeit? Sonst nichts zu messen.\n\nNICHT TUN: nichts aendern; keine absoluten Pfade; nichts committen ausser eurer Ergebnisdatei.\n",
