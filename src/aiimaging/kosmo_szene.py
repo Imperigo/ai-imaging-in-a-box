@@ -1869,12 +1869,14 @@ INNEN_STANDPUNKT_MITGESANDT = "mitgesandt"
 
 
 def innenansicht_satz(vermerk, *, gerendert: bool) -> str:
-    """Der Satz fuer ``verdict.reason`` zu einem :data:`URTEIL_INNENANSICHT`-Vermerk — oder ``""``.
+    """Der Satz fuer ``verdict.hinweise`` zu einem :data:`URTEIL_INNENANSICHT`-Vermerk — oder ``""``.
 
-    In ``verdict.reason`` und nicht in einem eigenen Feld: Ein Zusatzfeld in
-    ``qa_je_kamera`` wuerde drueben beim Einlesen still abgestreift (``z.object``, nicht
-    strikt — erg-20260917-49, render-result.ts 366-393), ``reason`` ist ein Vertragsfeld
-    und wird angezeigt.
+    **Seit dem 30.09.2026 in ``verdict.hinweise``, nicht mehr in ``verdict.reason``**
+    (Owner-Entscheid «Auskunft» auf ihre Frage in der Antwort auf auf-152): ``reason``
+    zeigt ihre Kachel mit Warnzeichen, ``hinweise`` ist ihr Vertragsfeld fuer Angaben.
+    Bis dahin stand er in ``reason``, weil ein Zusatzfeld in ``qa_je_kamera`` drueben still
+    abgestreift wuerde (erg-20260917-49) — ``verdict.hinweise`` ist keines, es steht in
+    ihrem Vertrag.
 
     **Der Satz sagt nur, was stimmt** (Durchsicht 23.09.2026). Bis dahin stand «Das Bild
     zeigt den Raum von innen» auch unter einem Ergebnis ohne Bild — nachgestellt: Auge
@@ -2832,11 +2834,16 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     _vermerk_urteil = geometrie_urteil or {}
     innen = innenansicht_satz(_vermerk_urteil.get(URTEIL_INNENANSICHT),
                               gerendert=bool(_vermerk_urteil.get("bild_png")))
-    if innen and not uebersprungen:
-        grund = f"{grund}; {innen}" if grund else innen
-        hinweise.append(innen)
-
     qa["verdict"] = {"passed": bestanden, "reason": grund}
+    # AUSKUNFT, NICHT VORBEHALT (Owner-Entscheid 30.09.2026, Antwort auf auf-152): Der Satz
+    # sagt, woher der Standpunkt kam, nicht was an der Aussage fehlt. In `verdict.reason`
+    # trug ihre Kachel bei JEDEM Innenbild ein Warnzeichen — eine Dauerwarnung, die sie
+    # ausdruecklich vermeiden. Er steht darum in `verdict.hinweise` (Liste, ihr Vertrag
+    # render-result.ts:465), dem Ort, den sie selbst dafuer genannt haben. Bis zum
+    # 29.09.2026 stand er in `reason`.
+    if innen and not uebersprungen:
+        qa["verdict"]["hinweise"] = [innen]
+        hinweise.append(innen)
 
     ergebnis = {
         "schema": SCHEMA_ERGEBNIS,

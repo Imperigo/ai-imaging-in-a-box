@@ -181,7 +181,10 @@ def test_die_innenansicht_steht_im_urteil_im_befund_und_im_vertragsgrund(
     assert befund["innenansicht"] == erwartet
 
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
-    grund = ergebnis["qa"]["verdict"]["reason"]
+    # Seit 30.09.2026 eine AUSKUNFT in `verdict.hinweise`, nicht mehr im Grund
+    # (Owner-Entscheid; ihre Kachel warnt bei jedem `reason`).
+    assert "INNENANSICHT" not in ergebnis["qa"]["verdict"]["reason"]
+    grund = " ".join(ergebnis["qa"]["verdict"].get("hinweise") or [])
     assert "INNENANSICHT" in grund and repr(RAUM["name"]) in grund
     # Es gibt ein Bild — nur dann darf der Satz über das Bild stehen.
     assert ergebnis["images"], "Vorbedingung: gerendert"
@@ -197,6 +200,7 @@ def test_eine_aussenansicht_traegt_keinen_innenvermerk(tmp_path):
 
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     assert "INNENANSICHT" not in ergebnis["qa"]["verdict"]["reason"]
+    assert "hinweise" not in ergebnis["qa"]["verdict"]
     befund = abholer.lies_befund(ordner)
     assert befund["innenansicht"] is None
     assert all(k[kosmo_szene.URTEIL_INNENANSICHT] is None for k in befund["kameras"])
@@ -541,7 +545,10 @@ def test_die_reale_form_traegt_den_innenvermerk_bis_ins_ergebnis(tmp_path, ifc_n
         assert urteil[kosmo_szene.URTEIL_INNENANSICHT] == VERMERK_MITGESANDT
     assert abholer.lies_befund(ordner)["innenansicht"] == VERMERK_MITGESANDT
 
-    grund = _vertrag(ordner)["qa"]["verdict"]["reason"]
+    # Seit 30.09.2026 eine AUSKUNFT in `verdict.hinweise`, nicht mehr im Grund
+    # (Owner-Entscheid; ihre Kachel warnt bei jedem `reason`).
+    assert "INNENANSICHT" not in _vertrag(ordner)["qa"]["verdict"]["reason"]
+    grund = " ".join(_vertrag(ordner)["qa"]["verdict"].get("hinweise") or [])
     assert "INNENANSICHT BESTELLT" in grund and "von KosmoOrbit" in grund
     assert "nicht von uns gewaehlt" in grund
     assert "Das Bild zeigt den Raum" not in grund, (
@@ -560,6 +567,7 @@ def test_mitgesandte_aussenkameras_tragen_keinen_innenvermerk(tmp_path):
     assert befund["innenansicht"] is None
     assert [k[kosmo_szene.URTEIL_INNENANSICHT] for k in befund["kameras"]] == [None, None]
     assert "INNENANSICHT" not in _vertrag(ordner)["qa"]["verdict"]["reason"]
+    assert "hinweise" not in _vertrag(ordner)["qa"]["verdict"]
 
 
 def test_ohne_bild_steht_kein_satz_ueber_das_bild(tmp_path, ifc_naht):
@@ -576,7 +584,10 @@ def test_ohne_bild_steht_kein_satz_ueber_das_bild(tmp_path, ifc_naht):
 
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
     vertrag = _vertrag(ordner)
-    grund = vertrag["qa"]["verdict"]["reason"]
+    # Seit 30.09.2026 eine AUSKUNFT in `verdict.hinweise`, nicht mehr im Grund
+    # (Owner-Entscheid; ihre Kachel warnt bei jedem `reason`).
+    assert "INNENANSICHT" not in vertrag["qa"]["verdict"]["reason"]
+    grund = " ".join(vertrag["qa"]["verdict"].get("hinweise") or [])
     assert vertrag["images"] == [], "Vorbedingung: nicht gerendert"
     assert "Das Bild zeigt den Raum" not in grund
     assert "gerechnet, nicht gerendert" in grund and repr(RAUM["name"]) in grund
@@ -601,7 +612,10 @@ def test_der_innenvermerk_steht_am_urteil_eines_kompositionsabbruchs(tmp_path, i
     urteil = _urteil_der_kamera(tmp_path, ordner, "innen")
     assert urteil["komposition"]["abbruch"] is True, "Vorbedingung: der Kompositionszweig"
     assert urteil[kosmo_szene.URTEIL_INNENANSICHT]["raum"] == RAUM["name"]
-    grund = _vertrag(ordner)["qa"]["verdict"]["reason"]
+    # Seit 30.09.2026 eine AUSKUNFT in `verdict.hinweise`, nicht mehr im Grund
+    # (Owner-Entscheid; ihre Kachel warnt bei jedem `reason`).
+    assert "INNENANSICHT" not in _vertrag(ordner)["qa"]["verdict"]["reason"]
+    grund = " ".join(_vertrag(ordner)["qa"]["verdict"].get("hinweise") or [])
     assert "gerechnet, nicht gerendert" in grund
     assert "Das Bild zeigt den Raum" not in grund
 

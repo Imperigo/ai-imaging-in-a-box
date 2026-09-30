@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260930-180",
+  "art": "frage",
+  "beschreibung": "qa.verdict.hinweise in der Vis-Station zeigen — als ruhige Auskunft ohne Warnzeichen. Seit 30.09. steht dort der Innenraum-Satz (vorher in verdict.reason, mit Dauer-Warnzeichen).",
+  "anweisung": "=== EINBAUAUFTRAG AN DEN UI-WORKER: qa.verdict.hinweise ANZEIGEN, OHNE WARNZEICHEN ===\n\nWORUM ES GEHT\n  KosmoOrbit hat uns gefragt (Antwort auf auf-20260923-152, an den Integrator): Ist der Satz\n  «INNENANSICHT BESTELLT …» in qa.verdict.reason ein Vorbehalt oder eine Auskunft? Eure\n  Bildkachel zeigt bei JEDEM reason ein Warnzeichen (NodeCanvas.tsx 731-750, «U10, keine\n  Dauerwarnung»). Ein Innenbild trug damit immer ein Warnzeichen.\n  Owner-Entscheid 30.09.2026: AUSKUNFT. Wir senden den Satz seit heute in\n  qa.verdict.hinweise (Liste von Texten; in eurem Vertrag render-result.ts:465 vorhanden),\n  nicht mehr in reason. KosmoOrbit hat selbst festgestellt: Eure Oberflaeche zeigt\n  verdict.hinweise heute gar nicht (Suche in apps/kosmo-orbit/src/modules/vis/: 0 Treffer).\n  Ohne diesen Einbau verschwindet die Angabe also aus der Anzeige.\n\nWAS EINGEBAUT WERDEN SOLL\n  1. Kachel und Inspektor der Vis-Station zeigen qa.verdict.hinweise, wenn die Liste nicht\n     leer ist — als ruhige Zeile(n) OHNE Warnzeichen und ohne Warnfarbe, klar getrennt von\n     reason. Ungekuerzt im Inspektor (wie reason heute, «ungekuerzt (Auflage)»).\n  2. Kein Warnzeichen allein wegen hinweise. Das Warnzeichen bleibt an reason gebunden.\n  3. Ist die Liste leer oder fehlt sie: nichts anzeigen, kein Platzhalter.\n  Beispiel eines echten Eintrags: «INNENANSICHT: Standpunkt im Raum 'Raum-Sued' (frontal),\n  aus 'interior' {'rooms': 'auto'} aus den Raeumen der IFC gerechnet. Das Bild zeigt den\n  Raum von innen, nicht das Gebaeude von aussen.»\n\nRUECKGABE (der Einbau, nicht ein Entwurf)\n  - Commit(s) und Zweig, geaenderte Dateien.\n  - Ein Test, der zeigt: hinweise wird angezeigt, und ein Ergebnis mit hinweise, aber ohne\n    reason traegt KEIN Warnzeichen.\n  - Ob es beim Integrator (KosmoOrbit Int 1) eingespielt ist, oder bis wann.\n\nNICHT TUN: am Vertrag nichts aendern (verdict.hinweise steht schon drin); reason nicht\numdeuten; keine anderen Felder in dieselbe Zeile mischen.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "keine — Oberflaechenauftrag"
+  },
+  "params": {
+    "feld": "qa.verdict.hinweise"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Oberflaeche, keine GPU.",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Commit(s), Zweig, geaenderte Dateien.",
+    "Test: hinweise angezeigt, kein Warnzeichen ohne reason.",
+    "Eingespielt bei KosmoOrbit Int 1: ja/nein, bis wann."
+  ],
+  "rang": 1
+}

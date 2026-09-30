@@ -105,6 +105,16 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 · Keine Dauerwarnung mehr an Innenbildern, und leere Angaben werden benannt
+
+* **Innenbilder tragen drüben kein Warnzeichen mehr.** Der Satz «Innenansicht bestellt» ist
+  eine Auskunft, kein Vorbehalt (Entscheid des Owners). Er steht jetzt in einem Feld für
+  Hinweise. **Offen:** KosmoOrbit zeigt dieses Feld noch gar nicht an — der Auftrag dafür
+  liegt beim UI-Worker.
+* **Unser Eingang nimmt leere Angaben an und sagt, welche.** Schickt ein Vorgänger zum Beispiel
+  «Geometrie: unbekannt», kommt keine unverständliche Fehlermeldung mehr, sondern der Satz, was
+  gefehlt hat. Ohne Geometrie entsteht trotzdem kein Auftrag.
+
 ### 29.09.2026 (abends) · Ein neues Bildmodell, nur für die Forschung
 
 * **Qwen-Image-2.1 darf jetzt rechnen — aber nur zum Forschen.** Seine Lizenz verbietet den

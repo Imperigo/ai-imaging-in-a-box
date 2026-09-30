@@ -78,17 +78,17 @@ GEOMETRIE_FELDER = LANE_FIELDS
 #: im Schema fehlt und die Kante still nicht entsteht.
 _GEOMETRIE_BESCHREIBUNG = {
     "ifc_path": {
-        "type": "string",
+        "type": ["string", "null"],
         "description": "Quell-IFC (IFC4 oder IFC2X3; ArchiCAD liefert IFC2X3). "
                        "Eigener Pfad — wir konvertieren selbst und erzeugen "
                        "glTF-konformes Y-up. Kommt üblicherweise aus kosmodraw_export_ifc.",
     },
     "glb_path": {
-        "type": "string",
+        "type": ["string", "null"],
         "description": "Fertige glb statt IFC. Dann ist up_axis PFLICHT — siehe dort.",
     },
     "up_axis": {
-        "type": "string",
+        "type": ["string", "null"],
         "description": "Up-Achse der glb: 'Y' (glTF-Standard) oder 'Z' (rohe "
                        "IFC-Koordinaten, z.B. aus kosmodraw_export_glb). Pflicht bei "
                        "glb_path. Wird NICHT geraten: glTF kennt kein Up-Achsen-Feld, "
@@ -96,14 +96,33 @@ _GEOMETRIE_BESCHREIBUNG = {
                        "Tiefenkarte und Geometrie-QA wären still verdreht.",
     },
     "bbox": {
-        "type": "array",
+        "type": ["array", "null"],
         "description": "Optionale Bounding-Box [[xmin,ymin,zmin],[xmax,ymax,zmax]] in "
                        "Metern. Erlaubt die Massstabs- und Georeferenzprüfung, bevor "
                        "GPU-Zeit verbraucht wird.",
     },
 }
 
-_GEOMETRIE_EINGANG = {feld: _GEOMETRIE_BESCHREIBUNG[feld] for feld in LANE_FIELDS}
+#: NULLBAR NACH REGEL B (KosmoOrbit E123, Owner-Entscheid drüben 29.09.2026): «Wer Daten
+#: empfängt, nimmt null an und meldet einen benannten Mangel, statt abzuweisen.» An der
+#: Kante von KosmoDraw zu uns sind wir der Empfänger — der Erzeuger deklariert alle vier
+#: Felder nullbar (`auf-20260910-101`). Bis zum 30.09.2026 stand hier nur der Grundtyp;
+#: ein null des Vorgängers wäre im Cockpit als Schemafehler erschienen statt als Ursache.
+#: Den Mangel meldet `werkzeuge.nicht_bekannt` im Ausgabefeld `nicht_bekannt`.
+_NULL_SATZ = (" null heisst: vom Vorgänger nicht bekannt — wird angenommen und im "
+              "Ausgabefeld 'nicht_bekannt' mit Namen gemeldet (Regel B, E123).")
+_GEOMETRIE_EINGANG = {feld: dict(_GEOMETRIE_BESCHREIBUNG[feld],
+                                 description=_GEOMETRIE_BESCHREIBUNG[feld]["description"]
+                                 + _NULL_SATZ)
+                      for feld in LANE_FIELDS}
+
+#: Das Ausgabefeld für den benannten Mangel nach Regel B — in jeder Antwort, auch der
+#: fehlerhaften, damit ein Leser nicht verzweigen muss.
+_NICHT_BEKANNT_AUSGANG = {
+    "type": "array", "items": {"type": "string"},
+    "description": "Geometriefelder, die der Vorgänger als null geliefert hat (nicht "
+                   "bekannt). Leer heisst: keines. Regel B aus E123.",
+}
 
 
 def _eingang_enqueue() -> dict:
@@ -178,6 +197,7 @@ def _ausgang_enqueue() -> dict:
             "out_dir": {"type": ["string", "null"]},
             "torwaechter": {"type": "object",
                             "description": "Urteil der Massstabs-/Georeferenzprüfung."},
+            "nicht_bekannt": _NICHT_BEKANNT_AUSGANG,
             "error": {"type": ["string", "null"]},
         },
     }
@@ -243,6 +263,7 @@ def _ausgang_pruefe() -> dict:
             "bbox": {"type": ["array", "null"]},
             "up_axis": {"type": ["string", "null"]},
             "empfiehlt_neuzentrierung": {"type": "boolean"},
+            "nicht_bekannt": _NICHT_BEKANNT_AUSGANG,
             "error": {"type": ["string", "null"]},
         },
     }
@@ -445,6 +466,16 @@ def _typbefunde(erzeuger: dict, verbraucher: dict) -> list[dict]:
         if typen_aus is None or typen_ein is None:
             continue
         if typen_aus <= typen_ein:
+            # REGEL B STILL MACHEN WÄRE DER RÜCKFALL (E123, Teil 3 der Empfehlung drüben):
+            # Nimmt der Verbraucher null nur an, weil er Regel B folgt, bleibt die Stelle
+            # sichtbar — als Auskunft, nicht als Warnung.
+            if "null" in typen_aus and "null" in typen_ein and len(typen_ein) > 1:
+                befunde.append({
+                    "art": "nullable-regel-b", "schwere": "info",
+                    "detail": (f"{name}: Erzeuger kann null liefern; der Verbraucher "
+                               f"nimmt es nach Regel B an und meldet es als 'nicht "
+                               f"bekannt'."),
+                })
             continue
 
         zuviel = typen_aus - typen_ein

@@ -386,15 +386,30 @@ def test_unbekanntes_werkzeug_wird_gemeldet_und_stuerzt_nicht():
 def test_die_vier_gemessenen_nullbarkeiten_werden_jetzt_gemeldet():
     """Die vier Treffer aus `auf-20260910-101`, an denselben zwei Erzeugern.
 
-    Alle vier sind derselbe Fall: KosmoDraw erlaubt ausdruecklich ``null``, wir nicht.
+    Alle vier sind derselbe Fall: KosmoDraw erlaubt ausdruecklich ``null``. **Seit dem
+    30.09.2026 nehmen wir es an** (Regel B, KosmoOrbit E123) — die Stelle bleibt trotzdem
+    sichtbar, jetzt als Auskunft ``nullable-regel-b`` statt als Warnung. Still wird sie
+    nicht: *Schweigen sähe aus wie ein Freispruch.*
     """
-    gemeldet = []
+    gemeldet, gewarnt = [], []
     for erzeuger in (KOSMODRAW_EXPORT_IFC, KOSMODRAW_EXPORT_GLB):
         for b in pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_ENQUEUE]):
-            if b["art"] == "nullable-mismatch":
+            if b["art"] == "nullable-regel-b":
+                assert b["schwere"] == "info"
                 gemeldet.append(b["detail"].split(":", 1)[0])
+            if b["art"] == "nullable-mismatch":
+                gewarnt.append(b["detail"])
 
     assert sorted(gemeldet) == ["bbox", "glb_path", "ifc_path", "up_axis"], gemeldet
+    assert gewarnt == [], "nach Regel B nehmen wir null an — keine Warnung mehr"
+
+
+def test_ein_verbraucher_ohne_null_wird_weiter_gewarnt():
+    """Die alte Warnung lebt: Ein Verbraucher, der null NICHT annimmt, bekommt sie."""
+    verbraucher = {"name": "ohne-regel-b", "inputSchema": {"type": "object", "properties": {
+        "glb_path": {"type": "string"}, "up_axis": {"type": "string"}}}}
+    befunde = pruefe_verdrahtbarkeit(KOSMODRAW_EXPORT_GLB, verbraucher)
+    assert any(b["art"] == "nullable-mismatch" and b["schwere"] == "warn" for b in befunde)
 
 
 def test_ein_echter_typkonflikt_ist_ein_fehler_keine_warnung():

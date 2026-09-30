@@ -5853,6 +5853,16 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Regel B (null-Regel, E123)** — Die Abmachung zwischen allen Teilen von KosmoOrbit vom
+29.09.2026: Kommt ein Wert als «unbekannt» (`null`) an, nimmt der Empfänger ihn an und meldet
+mit Namen, was fehlt — statt die ganze Lieferung abzuweisen. So steht die Ursache da, wo man sie
+lesen kann. Bei uns seit dem 30.09.2026 am Eingang für Aufträge, im Feld `nicht_bekannt`.
+
+**Hinweis gegen Vorbehalt** — Zwei Arten von Zusatzsätzen an einem Ergebnis. Ein *Vorbehalt*
+schränkt die Aussage ein («die Schwelle ist nicht geeicht») und verdient ein Warnzeichen. Ein
+*Hinweis* sagt nur, woher etwas kommt («der Standpunkt steht im Raum Süd») und soll nicht
+warnen. Wer beides gleich zeigt, gewöhnt die Leser daran, Warnzeichen zu übersehen.
+
 **Bildanteil (Geometrieanteil)** — Wie viel des Bildes überhaupt Geometrie zeigt, statt
 Himmel oder Leere: 0,56 heisst, gut die Hälfte der Pixel trägt Gebäude oder Gelände. Er
 entscheidet mit, ob eine Messung trennen kann — derselbe Hochbau misst mit grosser
@@ -6001,6 +6011,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

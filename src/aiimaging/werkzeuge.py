@@ -88,6 +88,22 @@ def _geometrie_aus_argumenten(args: dict) -> dict:
     return geom
 
 
+def nicht_bekannt(args: dict) -> list[str]:
+    """Die Geometriefelder, die der Aufruf ausdrücklich als ``null`` bringt.
+
+    **Regel B** (KosmoOrbit E123, 29.09.2026): Wer empfängt, nimmt ``null`` an und meldet
+    einen benannten Mangel. Ein fehlender Schlüssel ist keiner — «nichts gesagt» und
+    «nicht bekannt» sind zwei Aussagen, und nur die zweite kam vom Vorgänger.
+    """
+    return [feld for feld in contracts.LANE_FIELDS
+            if isinstance(args, dict) and feld in args and args[feld] is None]
+
+
+def _mangelsatz(unbekannt: list[str]) -> str:
+    return (f" Vom Vorgänger als null geliefert (nicht bekannt): {', '.join(unbekannt)}."
+            if unbekannt else "")
+
+
 def check_geometry(args: dict) -> dict:
     """Massstab und Georeferenz prüfen, ohne einen Auftrag anzulegen.
 
@@ -96,11 +112,14 @@ def check_geometry(args: dict) -> dict:
     verbraucht wird.
     """
     geom = _geometrie_aus_argumenten(args)
+    unbekannt = nicht_bekannt(args)
     if not geom:
         return {"entscheidung": torwaechter.ENTSCHEIDUNG_ABLEHNEN_KONVERSION,
-                "begruendung": "Weder ifc_path noch glb_path noch bbox übergeben.",
+                "begruendung": ("Weder ifc_path noch glb_path noch bbox übergeben."
+                                + _mangelsatz(unbekannt)),
                 "bbox": None, "up_axis": None,
-                "empfiehlt_neuzentrierung": False, "error": None}
+                "empfiehlt_neuzentrierung": False, "nicht_bekannt": unbekannt,
+                "error": None}
 
     urteil = torwaechter.torwaechter({"status": "ok", "bbox": geom.get("bbox")})
     return {
@@ -109,6 +128,7 @@ def check_geometry(args: dict) -> dict:
         "bbox": geom.get("bbox"),
         "up_axis": geom.get("up_axis"),
         "empfiehlt_neuzentrierung": urteil.get("empfiehlt_neuzentrierung", False),
+        "nicht_bekannt": unbekannt,
         "error": None,
     }
 
@@ -123,6 +143,7 @@ def enqueue_render(args: dict) -> dict:
     würde später GPU-Zeit verbrennen, um dann doch zu scheitern.
     """
     geom = _geometrie_aus_argumenten(args)
+    unbekannt = nicht_bekannt(args)
     out_dir = args.get("out_dir") or str(Path(tempfile.gettempdir()) / "aiimaging-out")
 
     # 0) WAS ANGENOMMEN WIRD, MUSS WIRKEN (Durchsicht der Runde 7, 23.09.2026). Bis
@@ -174,14 +195,18 @@ def enqueue_render(args: dict) -> dict:
             f"offene Richtung zu raten. Wer die Treue bestellen will, schickt 'faithful' "
             f"(0 bis 1, wird zur ControlNet-Staerke).")
     if saetze:
-        return _fehler("Angabe abgewiesen, es entsteht kein Auftrag: " + " ".join(saetze))
+        return _fehler("Angabe abgewiesen, es entsteht kein Auftrag: " + " ".join(saetze)
+                       + _mangelsatz(unbekannt), nicht_bekannt=unbekannt)
 
     # 1) Vertrag. Hier fällt insbesondere ein fehlendes `up_axis` bei glb-Eingang auf —
     #    der Phase-0-Befund, und zwar bevor irgendetwas Teures passiert.
     try:
         szene = contracts.validate_render_scene({"geometry": geom, "out_dir": out_dir})
     except contracts.ContractError as e:
-        return _fehler(f"Vertrag verletzt: {e}")
+        # Der benannte Mangel steht IM Satz: Fehlt die Geometrie, weil der Vorgänger null
+        # schickte, soll das die Ursache sein, die man liest — nicht «keine Quelle».
+        return _fehler(f"Vertrag verletzt: {e}" + _mangelsatz(unbekannt),
+                       nicht_bekannt=unbekannt)
 
     g = szene["geometry"]
     bbox = g.get("bbox")
@@ -193,9 +218,10 @@ def enqueue_render(args: dict) -> dict:
             Path(out_dir).mkdir(parents=True, exist_ok=True)
             bericht = seams.ifc_zu_glb(g["ifc_path"], glb_ziel)
         except (seams.SeamError, contracts.ContractError) as e:
-            return _fehler(f"IFC→glb fehlgeschlagen: {e}")
+            return _fehler(f"IFC→glb fehlgeschlagen: {e}", nicht_bekannt=unbekannt)
         if bericht.get("status") != "ok":
-            return _fehler(f"IFC→glb meldete {bericht.get('status')!r}: {bericht.get('error')}")
+            return _fehler(f"IFC→glb meldete {bericht.get('status')!r}: {bericht.get('error')}",
+                           nicht_bekannt=unbekannt)
         g["glb_path"] = bericht.get("glb_path")
         g["up_axis"] = bericht.get("up_axis", "Y")
         bbox = bericht.get("bbox", bbox)
@@ -203,7 +229,8 @@ def enqueue_render(args: dict) -> dict:
     # 3) Torwächter — Massstab lehnt ab, Georeferenz empfiehlt nur.
     urteil = torwaechter.torwaechter({"status": "ok", "bbox": bbox})
     if urteil["entscheidung"] != torwaechter.ENTSCHEIDUNG_ANNEHMEN:
-        return _fehler(f"Torwächter: {urteil['begruendung']}", torwaechter_urteil=urteil)
+        return _fehler(f"Torwächter: {urteil['begruendung']}", torwaechter_urteil=urteil,
+                       nicht_bekannt=unbekannt)
 
     # 4) Auftrag ablegen. Der Status folgt ALLEIN dem Token — dieses Werkzeug kann
     #    `queued` nicht selbst setzen, und das ist der Freeze-Schutz.
@@ -252,6 +279,7 @@ def enqueue_render(args: dict) -> dict:
         "bbox": bbox,
         "out_dir": out_dir,
         "torwaechter": urteil,
+        "nicht_bekannt": unbekannt,
         "error": None,
     }
 
@@ -293,7 +321,8 @@ def query_render(args: dict) -> dict:
     }
 
 
-def _fehler(text: str, *, torwaechter_urteil: dict | None = None) -> dict:
+def _fehler(text: str, *, torwaechter_urteil: dict | None = None,
+            nicht_bekannt: list[str] | None = None) -> dict:
     """Fehlerantwort im Schema von `enqueue_render`.
 
     Auch im Fehlerfall wird die volle Feldliste geliefert: KosmoOrbit prüft die Ausgabe
@@ -303,7 +332,8 @@ def _fehler(text: str, *, torwaechter_urteil: dict | None = None) -> dict:
     return {
         "job_id": None, "status": None, "geometry_ref": None, "glb_path": None,
         "up_axis": None, "bbox": None, "out_dir": None,
-        "torwaechter": torwaechter_urteil or {}, "error": text,
+        "torwaechter": torwaechter_urteil or {},
+        "nicht_bekannt": list(nicht_bekannt or ()), "error": text,
     }
 
 

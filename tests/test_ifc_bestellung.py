@@ -481,7 +481,10 @@ def test_die_reale_innenbestellung_laeuft_durch_den_echten_umwandler(tmp_path):
     assert raumkamera.ist_innen([6.35, 0.8], sued)
     befund = abholer.lies_befund(ordner)
     assert befund["innenansicht"]["standpunkt"] == kosmo_szene.INNEN_STANDPUNKT_MITGESANDT
-    grund = antwort["ergebnis"]["qa"]["verdict"]["reason"]
+    # Seit 30.09.2026 eine AUSKUNFT in `verdict.hinweise`, nicht mehr im Grund
+    # (Owner-Entscheid; ihre Kachel warnt bei jedem `reason`).
+    assert "INNENANSICHT" not in antwort["ergebnis"]["qa"]["verdict"]["reason"]
+    grund = " ".join(antwort["ergebnis"]["qa"]["verdict"].get("hinweise") or [])
     assert "INNENANSICHT BESTELLT" in grund
 
 
