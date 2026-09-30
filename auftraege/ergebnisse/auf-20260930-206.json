@@ -1,0 +1,147 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-206",
+ "status": "ok",
+ "beendet": "2026-09-30T19:58:00Z",
+ "stand": {
+  "kosmopublish": "f3a74e2 (main, nach git pull --ff-only; 959c6f0 ist Vorfahre — geprueft mit git merge-base --is-ancestor)",
+  "blender": "Blender 5.2.2 LTS (hash d13f752e3b9c, gebaut 2026-09-15), Snap-Revision 7803, Binary direkt aus /snap/blender/current/ (nicht der Snap-Starter), Env-Scrub wie bei GUI-Starts, nur --background",
+  "leihpfad": "ja — lag noch vor (derselbe Hilfsordner wie in 103, ausserhalb aller Repos): lxml 6.1.1 und shapely 2.1.2 (je cp313). Nur zur Laufzeit per PYTHONPATH, nichts installiert.",
+  "szene": "dieselbe echte Szene wie in 103 (408 MB, 40'240 Objekte), als Wegwerfkopie; Original per SHA-256 vor und nach allen Laeufen geprueft: unveraendert."
+ },
+ "aufruf": "blender --background --python-use-system-env --python-exit-code 1 <kopie.blend> --python tools/hauptgebaeude_zeichnen.py -- --out <ordner> [--dichte]; Exitcode direkt per $? im Skript abgegriffen, keine Pipe, stdout+stderr in eine Logdatei.",
+ "schritte": {
+  "1_ohne_marker": {
+   "exitcode": 2,
+   "meldung": "Kein Marker. Der Dichte-Ausweichweg waere GERATEN (gemessen: er waehlt einen Streifen des Ensembles, nicht zwingend das Gebaeude). Entweder ein Quader «BuildingOBB» um das Hauptgebaeude legen, --marker-aus-sammlung NAME angeben oder bewusst --dichte.",
+   "bericht": {
+    "status": "kein_marker",
+    "grund": "wie Meldung",
+    "warnungen": [],
+    "dateien": {}
+   },
+   "erwartung_erfuellt": "ja (2, Satz mit «BuildingOBB» und «--dichte», status kein_marker)"
+  },
+  "2_dichte": {
+   "exitcode": 0,
+   "meldung": "stdout: eine Zeile, der ganze Bericht als JSON (identisch mit bericht.json); keine Zeile auf stderr ausser Blenders eigener Kopf-/Fusszeile.",
+   "bericht": {
+    "status": "ok",
+    "warnungen": [
+     "GERATEN: Hauptgebaeude ueber den Dichte-Ausweichweg bestimmt (--dichte)."
+    ],
+    "obb": {
+     "quelle": "density_cluster_fallback",
+     "breite_m": 156.4,
+     "tiefe_m": 31.47,
+     "hoehe_m": 30.16
+    },
+    "objekte": {
+     "szene": 40240,
+     "hauptgebaeude": 34180
+    },
+    "kontext_m": 40.0,
+    "kontext_ab_mitte_m": 119.8,
+    "grundriss": {
+     "main_objects_count": 34180,
+     "obb_source": "density_cluster_fallback",
+     "silhouette_lines_added": 1600,
+     "file_size_bytes": 910221
+    },
+    "axonometrie": {
+     "linien": 16815,
+     "geschosse": 11
+    }
+   },
+   "vergleich_103": "Silhouettenlinien 1600 statt 1856 (bei 119.8 m ab OBB-Mitte statt 200 m); OBB und Hauptgebaeude-Objekte (34'180) identisch mit 103; Axo-Linien 16'815 wie in 103 V3. Laufzeit ~10 s Wand inkl. Laden.",
+   "erwartung_erfuellt": "ja (0, GERATEN unter warnungen, density_cluster_fallback)"
+  },
+  "3_mit_marker": {
+   "marker": "Quader «BuildingOBB» per Blender-Python in die Wegwerfkopie gelegt und als eigene Wegwerfdatei gesichert. ABGELEITET AUS DER DICHTE-OBB von Schritt 2 (dieselbe Funktion, Grenzen auf ganze Meter nach aussen gerundet: 158 × 33 × 31 m statt 156.4 × 31.47 × 30.16 m), NICHT von Hand am Gebaeude gesetzt. Anzeige als Drahtgitter, hide_render nicht gesetzt (wie ein Nutzer es tun wuerde).",
+   "exitcode": 0,
+   "meldung": "stdout: eine Zeile, der ganze Bericht als JSON (identisch mit bericht.json).",
+   "bericht": {
+    "status": "ok",
+    "warnungen": [],
+    "hauptgebaeude": "Hauptgebaeude aus Marker (explicit_marker).",
+    "obb": {
+     "quelle": "explicit_marker",
+     "breite_m": 158.0,
+     "tiefe_m": 33.0,
+     "hoehe_m": 31.0
+    },
+    "objekte": {
+     "szene": 40241,
+     "hauptgebaeude": 34189
+    },
+    "kontext_m": 40.0,
+    "kontext_ab_mitte_m": 120.7,
+    "grundriss": {
+     "main_objects_count": 34189,
+     "obb_source": "explicit_marker",
+     "silhouette_lines_added": 1624,
+     "file_size_bytes": 911589
+    },
+    "axonometrie": {
+     "linien": 16815,
+     "geschosse": 11
+    }
+   },
+   "nebenbefunde": [
+    "Der Marker selbst erscheint weder im Grundriss noch in der Axonometrie (per Name ausgeschlossen); szene zaehlt ihn mit (40'241).",
+    "Die Axonometrie-SVG aus Schritt 2 und 3 ist byte-gleich (952'572 B) — erwartbar, weil der Marker fast die Dichte-OBB ist; eine Aussage, ob die Axo einem ABWEICHENDEN Marker folgt, ist damit nicht gemacht."
+   ],
+   "erwartung_erfuellt": "ja (0, explicit_marker)"
+  },
+  "4_sichtprobe": {
+   "gemacht": "Beide SVG aus Schritt 3 mit rsvg-convert (1600 px breit, weiss hinterlegt) gerastert, angesehen, PNG sofort geloescht. Zusaetzlich die Ausdehnung je SVG-Ebene aus den Koordinaten gemessen.",
+   "messung_rahmen": "Grundriss-Rahmen jetzt 418.9 × 321.3 m (in 103, gefiltert: 577.3 × 500.2 m, also rund halbe Blattflaeche). Gezeichnetes Hauptgebaeude bei z 1.2 m: 136 × 25 m. Den Rahmen setzt ALLEIN die Ebene ContextSilhouette (x-Spanne 418.9, y-Spanne 321.3 m); alle anderen Ebenen liegen innerhalb 136 × 25 m.",
+   "q1_fuellt_besser_als_103": {
+    "antwort": "ja",
+    "satz": "Besser, aber nicht gut: das Hauptgebaeude nimmt rund ein Drittel der Blattbreite ein (103: rund ein Viertel) und bleibt ein schmaler Balken im unteren Blattdrittel, der Rest ist Kontext."
+   },
+   "q2_nachbarn_fein_ohne_rahmen_aufzuziehen": {
+    "antwort": "nein",
+    "satz": "Fein und grau ja, als Rechteck-Umrisse sauber lesbar — aber sie ziehen den Rahmen weiter auf, weil der Abstand am Objektmittelpunkt gemessen wird (<= 120.7 m) und dann die GANZE Bounding-Box gezeichnet wird: grosse gelaendeweite Platten, deren Mitte nahe liegt, spannen das Blatt auf 419 × 321 m."
+   },
+   "q3_axo_brauchbares_schema": {
+    "antwort": "ja",
+    "satz": "Ein ruhiges, klar lesbares Geschossschema (11 gestapelte Platten, Stuetzen als kleine Quader/Ringe je Geschoss), das nur das Hauptgebaeude zeigt; eher zu fein als zu grob, wie schon in 103."
+   }
+  },
+  "5_ohne_leihpfad": {
+   "exitcode": 3,
+   "meldung": "Im Python von Blender fehlt: lxml, shapely — dieselbe Voraussetzung wie fuer alle SVG-Zeichner des Add-ons.",
+   "bericht": {
+    "status": "umgebung",
+    "grund": "Im Python von Blender fehlt: lxml, shapely — dieselbe Voraussetzung wie fuer alle SVG-Zeichner des Add-ons.",
+    "dateien": {}
+   },
+   "erwartung_erfuellt": "ja (3, «Im Python von Blender fehlt: lxml…»)"
+  }
+ },
+ "fehler_traceback_oder_no_module": {
+  "antwort": "nein",
+  "woertlich": "In keinem der Laeufe (1, 2, 3, 5, Markerlauf, Fehlstart) ein «Traceback» oder «No module named» — geprueft per grep ueber alle Logs."
+ },
+ "bemerkungen": [
+  "Eigener Fehlstart, benannt: der erste Lauf von Schritt 1 gab Exitcode 3 statt 2 mit derselben Meldung wie Schritt 5 — Blender ignoriert PYTHONPATH, solange --python-use-system-env fehlt. Mit dieser Fahne liefen alle gezaehlten Laeufe (1, 2, 3, 5). Fuer den Auftraggeber: «Leihpfad ueber PYTHONPATH» geht nur zusammen mit --python-use-system-env.",
+  "Folge aus demselben Fehlstart: die Umgebungspruefung kommt VOR der Markerpruefung. Ohne lxml/shapely meldet das Werkzeug also 3, auch wenn der Marker fehlt — die Rueckgabe 2 sieht nur, wer die Umgebung schon hat.",
+  "Die Silhouetten sind Bounding-Box-Rechtecke je Kontextobjekt (min_object_size 5 m). Der Kontext-Radius begrenzt nur, WELCHE Objekte kommen, nicht wie WEIT sie reichen; darum hilft --kontext-m allein nicht gegen den aufgezogenen Rahmen (Beobachtung, kein Code geaendert).",
+  "Ein Teil des Kontexts ist ein Nachbarbau mit vielen einzelnen Objekten ueber 5 m; der erscheint als dichteres Rechteck-Geflecht und liest sich auf den ersten Blick fast wie ein zweiter geschnittener Bau."
+ ],
+ "nicht_getan": [
+  "Kein Marker von Hand am Gebaeude gesetzt — der Marker ist aus der Dichte-OBB abgeleitet (Vorgabe des Auftraggebers).",
+  "Kein weiterer Lauf mit kleinerem --kontext-m oder abweichendem Marker.",
+  "Nichts installiert, kein Code geaendert, nichts committet, kein Render, kein Sprachmodell; Original der Szene nicht veraendert.",
+  "Keine Bilder, SVG oder Szenendaten zurueckgegeben."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull --ff-only (KosmoPublish)",
+  "dauer_min": 12
+ },
+ "aufraeumen": "Ausgaben /tmp/hg206-*, PNG und beide Wegwerfkopien geloescht; Prueflogs (ohne Bilder) bleiben im Probe-Ordner der HomeStation.",
+ "fehler": null
+}
