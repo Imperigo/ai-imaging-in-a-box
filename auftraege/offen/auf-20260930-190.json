@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-190",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare d219eb6: Blender-Knoten Themenkarte mit der neuen Art «Gebaeude nach Liste» einmal fahren (erfundene Liste) — dritte Art sichtbar, 3 von 4 eingefaerbt, Eintrag ohne Quelle abgelehnt.",
+  "anweisung": "=== BLENDER-KNOTEN «THEMENKARTE», NEUE ART «GEBAEUDE NACH LISTE» EINMAL FAHREN\n\nNeu auf KosmoPrepare `main` (d219eb6): die Themenkarte kann Gebaeude nach einer Liste einfaerben (Owner-Auftrag 30.09.2026 «alles bauen», nach der Karte «Jahreslauf»). Hier ohne Blender geprueft (1562 Proben gruen, Wire-QA 18/18, an der echten Museumsliste 106 von 113 eingefaerbt). Was NUR Blender zeigen kann, ist unten gefragt. Die Liste unten ist ERFUNDEN (drei Punkte auf Grundrissen der amtlichen Vermessung, einer ohne Lage) — keine Recherche.\n\n1. KosmoPrepare-Klon: `git pull --ff-only`, `git log -1` muss `d219eb6` oder juenger zeigen (sonst STOPP und melden).\n2. Blender 5.1.2 frisch starten, Add-on neu laden.\n3. Knoten «Themenkarte (Anreise / Saison / Gebäude)»:\n   - Feld «Art»: «Gebäude nach Liste» — erscheint die dritte Art? ja/nein\n   - Zentrum von Hand: E 2649525, N 1177780; Massstab 5000; A2 quer\n   - Perimeter-Zonen: Sport und Freizeit; Zone für öffentliche Nutzungen · Mindestfläche 10000\n   - Titel: Probe Gebaeude\n   - «Parameter (Textblock, JSON)»: ein Textblock mit GENAU diesem Inhalt:\n{\"klassen\": [{\"id\": \"a\", \"text\": \"Klasse A (Probe)\", \"farbe\": \"#B4532A\"}, {\"id\": \"b\", \"text\": \"Klasse B (Probe)\"}], \"gebaeude\": [{\"nr\": \"P1\", \"klasse\": \"a\", \"quelle\": \"Probe\", \"lv95\": [2650513.5, 1177995.6]}, {\"nr\": \"P2\", \"klasse\": \"b\", \"quelle\": \"Probe\", \"lv95\": [2650270.9, 1177861.9]}, {\"nr\": \"P3\", \"klasse\": \"a\", \"quelle\": \"Probe\", \"lv95\": [2649234.6, 1177466.4]}, {\"nr\": \"P4\", \"klasse\": \"b\", \"quelle\": \"Probe\"}]}\n   - Ausgabeordner: leerer Ordner unter /tmp\n   - Starten.\n4. Zurueckgeben: Status und Zeile im Knoten (erwartet: «geschrieben» und «3 von 4 Einträgen eingefärbt»), Laufzeit, ob Blender bedienbar blieb, und aus der erzeugten `…_quellen.json`: `zaehlung` und die Warnung, die P4 nennt. Kam irgendwo «No module named» oder ein Traceback? ja/nein.\n5. Gegenprobe: denselben Textblock, aber bei P1 das Feld \"quelle\" entfernen. Erwartet: Status fehler, Meldung nennt P1 und «keine 'quelle'». Meldung woertlich.\n\nNICHT TUN: nichts committen, keinen Code aendern, libs/ nicht anfassen. Keine Plaene/Bilder zurueckgeben, nur Zahlen, Meldungen, ja/nein. Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+  "erstellt": "2026-09-30T11:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU-Last; Netzabruf geodienste/swisstopo, ca. 10 s.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nichts committen, keinen Code aendern, libs/ nicht anfassen.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 des KosmoPrepare-Klons.",
+    "Punkte 3–5: ja/nein, Status, Zeile, Zaehlung, Meldungen woertlich."
+  ],
+  "rang": 3
+}
