@@ -132,3 +132,13 @@ def test_eine_leere_forschungsausnahme_kommt_nicht_ins_register(monkeypatch):
                                 lizenz_offen=None, nur_forschung="   ")
     with pytest.raises(backbone.BackboneError, match="nur_forschung"):
         backbone._eintrag(kopie)
+
+
+def test_qwen_waehlt_auf_32_gb_nicht_den_vollen_weg():
+    """auf-184: Mit 19,5 im Register verlangte der Lader 21,5 GiB, nahm den vollen Weg und
+    starb. Die ganzen Gewichte (30,9 GiB) mal Zuschlag passen auf keine 32-GB-Karte."""
+    from aiimaging import render
+    summe, groesster = render._erwarteter_bedarf(backbone.hole(QWEN))
+    frei = 31 * 2**30
+    assert frei < summe * render.MESSUNG_ZUSCHLAG, "voller Weg darf nicht gewählt werden"
+    assert frei >= groesster * render.MESSUNG_ZUSCHLAG, "Auslagerung je Komponente passt"

@@ -7530,7 +7530,12 @@ Bekannt und ausdrücklich nicht erledigt:
         `render.py` meldet dabei «txt2img» (178). — umgedreht (Protokoll 73 §9).
   - [x] **Owner:** Qwen-Image-2.1 als Bildbearbeiter (Stil, Masken) weiterverfolgen — oder
         nicht? (178, Punkt 3 aus vis-01) — «klein testen».
-  - [ ] **local:** `auf-20260930-184` — Qwen-Image-2.1 als Bearbeiter, gegen die beiden anderen.
+  - [x] **local:** `auf-20260930-184` — Qwen-Image-2.1 als Bearbeiter, gegen die beiden anderen.
+        — 2.1 taugt nicht; edit-2511 hält Form, braucht Maske und Massstab (Protokoll 73 §12).
+  - [ ] **Owner:** Bauwerksrahmung als Vorgabe auf homeworker- und Abholer-Weg (Gebäude 2 % statt
+        21 % des Bildes bei grossem Grundstück; auf-41 G3 seit August offen).
+  - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit
+        Führung und 40 Schritten nach Modellkarte.
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
   - [x] **Owner (E128):** Qwen-Image-2.1 regulär, Lizenz offen → gebaut (Protokoll 73 §6).
   - [ ] **cloud (Int 1):** Vertragsfrage F1/F2 (`vis.backbone: "qwen-image-2.1"`,

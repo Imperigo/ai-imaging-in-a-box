@@ -1185,8 +1185,15 @@ _eintrag(Backbone(
     # GEMESSEN (auf-20260929-178, 30.09.2026): Die Schaetzung 16,8 GB lag daneben — ohne
     # Auslagerung schon beim Laden «out of memory» auf 32 GB. Mit enable_model_cpu_offload
     # Spitze 19,5 GiB bei 1024 px (~19 s) und 29,6 GiB bei 2048 px (59 s, nur mit
-    # expandable_segments). Eingetragen ist die Spitze bei 1024 px mit Auslagerung.
-    vram_gb=19.5,
+    # expandable_segments).
+    #
+    # BERICHTIGT NACH auf-20260930-184: Hier stand 19,5 — die Spitze MIT Auslagerung. Der
+    # Lader liest das Feld aber als Bedarf fuer den VOLLEN Weg (`render._erwarteter_bedarf`,
+    # mal 1,1): 21,5 GiB passten auf die Karte, er waehlte den vollen Weg und starb mit
+    # «out of memory» (Gewichte 30,9 GiB). Eingetragen ist darum der Bedarf fuer den vollen
+    # Weg: die ganzen Gewichte in bfloat16. Damit waehlt der Lader auf der 5090 die
+    # Auslagerung je Komponente — genau den Weg, der gemessen traegt.
+    vram_gb=30.9,
     vram_gemessen=True,
     # Der Ordner hat `processor/`, nicht `tokenizer/` (auf-178): Mit der Standardliste
     # meldete die Vollstaendigkeitspruefung «Es fehlen: tokenizer» bei vollstaendigen
