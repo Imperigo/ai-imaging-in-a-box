@@ -7523,7 +7523,10 @@ Bekannt und ausdrücklich nicht erledigt:
         paarweise). Protokoll 73 §10.
   - [x] **Owner:** Startwert-Auswahl künftig nach `umriss` statt ρ — erst nach einer
         grösseren Bestätigungsreihe? — «1»: erst bestätigen (Protokoll 73 §11).
-  - [ ] **local:** `auf-20260930-186` — Bestätigungsreihe, Regel vorab festgelegt.
+  - [x] **local:** `auf-20260930-186` — Bestätigungsreihe, Regel vorab festgelegt. — nicht
+        erfüllt; ρ wählte besser (Protokoll 73 §15).
+  - [x] **Kern:** Kette/arbeitsgang rahmt nach dem Bauwerk (alle drei Wege gleich).
+  - [ ] **local:** `auf-20260930-190` — 186 wiederholt mit Bauwerksrahmung.
   - [x] **local:** 178 beantwortet — Qwen-Image-2.1 läuft nur mit Auslagerung, Geometrie
         kommt nicht an (§8); Registerfehler behoben.
   - [x] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;

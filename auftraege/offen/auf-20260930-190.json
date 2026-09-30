@@ -3,30 +3,56 @@
   "worker": "local",
   "auftrag_id": "auf-20260930-190",
   "art": "frage",
-  "beschreibung": "KosmoPrepare d219eb6: Blender-Knoten Themenkarte mit der neuen Art «Gebaeude nach Liste» einmal fahren (erfundene Liste) — dritte Art sichtbar, 3 von 4 eingefaerbt, Eintrag ohne Quelle abgelehnt.",
-  "anweisung": "=== BLENDER-KNOTEN «THEMENKARTE», NEUE ART «GEBAEUDE NACH LISTE» EINMAL FAHREN\n\nNeu auf KosmoPrepare `main` (d219eb6): die Themenkarte kann Gebaeude nach einer Liste einfaerben (Owner-Auftrag 30.09.2026 «alles bauen», nach der Karte «Jahreslauf»). Hier ohne Blender geprueft (1562 Proben gruen, Wire-QA 18/18, an der echten Museumsliste 106 von 113 eingefaerbt). Was NUR Blender zeigen kann, ist unten gefragt. Die Liste unten ist ERFUNDEN (drei Punkte auf Grundrissen der amtlichen Vermessung, einer ohne Lage) — keine Recherche.\n\n1. KosmoPrepare-Klon: `git pull --ff-only`, `git log -1` muss `d219eb6` oder juenger zeigen (sonst STOPP und melden).\n2. Blender 5.1.2 frisch starten, Add-on neu laden.\n3. Knoten «Themenkarte (Anreise / Saison / Gebäude)»:\n   - Feld «Art»: «Gebäude nach Liste» — erscheint die dritte Art? ja/nein\n   - Zentrum von Hand: E 2649525, N 1177780; Massstab 5000; A2 quer\n   - Perimeter-Zonen: Sport und Freizeit; Zone für öffentliche Nutzungen · Mindestfläche 10000\n   - Titel: Probe Gebaeude\n   - «Parameter (Textblock, JSON)»: ein Textblock mit GENAU diesem Inhalt:\n{\"klassen\": [{\"id\": \"a\", \"text\": \"Klasse A (Probe)\", \"farbe\": \"#B4532A\"}, {\"id\": \"b\", \"text\": \"Klasse B (Probe)\"}], \"gebaeude\": [{\"nr\": \"P1\", \"klasse\": \"a\", \"quelle\": \"Probe\", \"lv95\": [2650513.5, 1177995.6]}, {\"nr\": \"P2\", \"klasse\": \"b\", \"quelle\": \"Probe\", \"lv95\": [2650270.9, 1177861.9]}, {\"nr\": \"P3\", \"klasse\": \"a\", \"quelle\": \"Probe\", \"lv95\": [2649234.6, 1177466.4]}, {\"nr\": \"P4\", \"klasse\": \"b\", \"quelle\": \"Probe\"}]}\n   - Ausgabeordner: leerer Ordner unter /tmp\n   - Starten.\n4. Zurueckgeben: Status und Zeile im Knoten (erwartet: «geschrieben» und «3 von 4 Einträgen eingefärbt»), Laufzeit, ob Blender bedienbar blieb, und aus der erzeugten `…_quellen.json`: `zaehlung` und die Warnung, die P4 nennt. Kam irgendwo «No module named» oder ein Traceback? ja/nein.\n5. Gegenprobe: denselben Textblock, aber bei P1 das Feld \"quelle\" entfernen. Erwartet: Status fehler, Meldung nennt P1 und «keine 'quelle'». Meldung woertlich.\n\nNICHT TUN: nichts committen, keinen Code aendern, libs/ nicht anfassen. Keine Plaene/Bilder zurueckgeben, nur Zahlen, Meldungen, ja/nein. Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
-  "erstellt": "2026-09-30T11:30:00Z",
+  "beschreibung": "Wiederholung von 186 mit Rahmung nach dem Bauwerk (euer Vorschlag): waehlt umriss.umriss_treue unter sechs Startwerten oefter ein richtig stehendes Bild als rho? Dazu Ansage: arbeitsgang/kette rahmt jetzt ebenfalls nach dem Bauwerk.",
+  "anweisung": "=== WIEDERHOLUNG VON 186 — DIESMAL NACH DEM BAUWERK GERAHMT ===\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 kette.baue_kette (und damit arbeitsgang) rahmt eine Richtungskamera jetzt nach dem\n     BAUWERK (neuer Knotenparameter rahmung = \"bauwerk\", im Hash; \"szene\" stellt das Alte her).\n     Der Bericht des Multipass-Knotens traegt rahmung = {nach, grund}. Damit rahmen alle drei\n     Wege gleich: homeworker, Abholer, Kette.\n  A2 Euer Vorschlag aus 186 ist richtig: In 186 rahmte arbeitsgang nach der Szene, und nur 2 von\n     36 Bildern standen richtig — die Frage «welches Mass waehlt besser» konnte so kaum\n     trennen.\n\nTEIL B — DIE REIHE\n  DIE ENTSCHEIDUNGSREGEL — UNVERAENDERT AUS 186, VOR DER MESSUNG:\n    Umgestellt wird, wenn (a) abhebung in mindestens 5 der 6 Faelle (Koerper x Blick) ein\n    richtig stehendes Bild auf Platz 1 setzt — gezaehlt nur Faelle, in denen es eines gibt —\n    und (b) das in mehr Faellen tut als rho_maske.gerichtet.\n\n  Wie 186, aber: Rahmung nach dem Bauwerk (Vorgabe nach dem Pull), 512 px wie 175 (euer\n  Hinweis: 1024 px mit 8 Schritten war stark verrauscht). Koerper Testbau und Hochbau (je\n  --gelaende), Blick s, sSE, sSW, Startwerte 0–5 = 36 Bilder, z-image-turbo.\n  1. Auge zuerst, blind (wie in 186/188).\n  2. Je Bild: abhebung, trefferquote, praezision, rho_maske.gerichtet, Bauwerk-Anteil.\n  3. Je Fall: Platz 1 nach abhebung, nach rho, nach heutiger Auswahl (0–2 nach rho).\n  4. Nullproben grau und Rauschen.\n\nZURUECK\n  - git log -1; die Rahmung aus dem Bericht (nach = bauwerk?).\n  - Je Bild eine Zeile wie in 186, mit Bauwerk-Anteil.\n  - Je Fall Platz 1 nach abhebung / rho / heutiger Auswahl, mit Augenetikett.\n  - Auszaehlung der Regel und ein Satz: umstellen ja/nein.\n\nNICHT TUN: die Auswahl nicht umbauen; keine Schwelle setzen; keine Bilder ins Repo; nichts\ncommitten ausser eurer Ergebnisdatei.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
   "geometrie": {
     "synthetisch": true,
     "pfad": null,
-    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
   },
-  "params": {},
+  "params": {
+    "koerper": [
+      "testbau",
+      "hochbau"
+    ],
+    "blick": [
+      "s",
+      "sSE",
+      "sSW"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "aufloesung": 512,
+    "rahmung": "bauwerk",
+    "backbone": "z-image-turbo",
+    "regel": "wie 186"
+  },
   "auflagen": {
     "leistungsgrenze_w": 0,
     "nur_bei_leerlauf": false,
     "leerlauf_schwelle_w": 120,
     "leerlauf_schwelle_mem_gb": 8,
-    "hinweis": "Keine GPU-Last; Netzabruf geodienste/swisstopo, ca. 10 s.",
+    "hinweis": "GPU: 36 Bilder mit z-image-turbo bei 512 px.",
     "hinweise": [
       "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
-      "Nichts committen, keinen Code aendern, libs/ nicht anfassen.",
-      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "Augenetikett VOR den Zahlen vergeben."
     ]
   },
   "rueckgabe": [
-    "git log -1 des KosmoPrepare-Klons.",
-    "Punkte 3–5: ja/nein, Status, Zeile, Zaehlung, Meldungen woertlich."
+    "git log -1 und die Rahmung aus dem Bericht.",
+    "Je Bild: Koerper, Blick, Startwert, Augenetikett, abhebung, trefferquote, praezision, rho_maske.gerichtet, Bauwerk-Anteil.",
+    "Je Fall: Platz 1 nach abhebung / rho / heutiger Auswahl, mit Augenetikett.",
+    "Auszaehlung der Regel und ein Satz: umstellen ja/nein.",
+    "Nullproben."
   ],
   "rang": 3
 }

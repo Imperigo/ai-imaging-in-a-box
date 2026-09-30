@@ -436,6 +436,7 @@ def baue_kette(
     kamera=None,
     kamera_modus: str | None = None,
     kamera_huellbox=None,
+    rahmung: str = "bauwerk",
     sonne=None,
     gelaende_z: float | None = None,
     hoehe: float | None = None,
@@ -663,6 +664,13 @@ def baue_kette(
                     "kamera": kamera,
                     "kamera_modus": kamera_modus,
                     "kamera_huellbox": kamera_huellbox,
+                    # SEIT DEM 30.09.2026 IM KNOTEN (Owner-Entscheid, Sitzung 73 §13/§15):
+                    # Eine Richtungskamera rahmt nach dem BAUWERK. Es steht im Hash, damit
+                    # ein nach der Szene gerahmtes Bild aus dem Zwischenspeicher nicht als
+                    # Treffer fuer die neue Rahmung gilt.
+                    # Immer im Knoten (auch ohne Kamera), damit die Oberflaeche das Feld
+                    # seinem Knoten zuordnet; wirken tut es nur mit Richtungskamera.
+                    "rahmung": rahmung,
                     "sonne": sonne,
                     "gelaende_z": gelaende_z,
                     "hoehe": hoehe,
@@ -1310,6 +1318,15 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
               if name in p}
     if "multipass_timeout" in p:
         weiter["timeout"] = p["multipass_timeout"]
+    # DIE RAHMUNG NACH DEM BAUWERK (30.09.2026) — nur mit Richtungskamera, ohne eigene Box und
+    # ohne Standpunkt von Hand. Beweislauf auf-20260930-188: Form 6/8 gegen 0/8.
+    rahmung_vermerk = None
+    if (p.get("rahmung") == "bauwerk" and "kamera" in weiter
+            and "kamera_huellbox" not in weiter and auge is None):
+        urteil = glbbox.rahmungsbox(glb_path, up_axis=geometrie.get("up_axis") or "Y")
+        if urteil["box"] is not None:
+            weiter["kamera_huellbox"] = urteil["box"]
+        rahmung_vermerk = {"nach": urteil["nach"], "grund": urteil["grund"]}
 
     bericht = seams.glb_zu_multipass(
         glb_path, out_dir,
@@ -1320,6 +1337,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
         **weiter,
     )
     bericht.setdefault("status", STATUS_OK)
+    if rahmung_vermerk is not None:
+        bericht["rahmung"] = rahmung_vermerk
 
     # DAS PNG MIT ABSTAND NEU AUS DER EXR. `glb_zu_multipass` hat es schon ohne Abstand
     # geschrieben; hier wird es ersetzt, samt Normierung. Warum nicht als Angabe an

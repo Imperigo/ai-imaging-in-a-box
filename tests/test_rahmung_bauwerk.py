@@ -63,3 +63,17 @@ def test_eingeschaltet_rahmt_der_abholer_das_bauwerk(monkeypatch, glb_mit_gelaen
     monkeypatch.setattr(abholer, "RAHMUNG_NACH_BAUWERK", True)
     assert abholer._rahmung_fuer(None, glb, achse, "sSE") is not None
     assert abholer._rahmung_fuer(None, glb, achse, None) is None, "Standpunkt von Hand"
+
+
+def test_die_eigene_bildkette_rahmt_nach_dem_bauwerk_und_hasht_es_mit(tmp_path):
+    """Die dritte Strecke (Visbox, arbeitsgang) — seit dem 30.09.2026 abends (auf-186)."""
+    from aiimaging import kette
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(b"glTF")
+    graph = kette.baue_kette(glb_path=glb, up_axis="Y", kamera="sSE", prompt="ein Haus")
+    multipass = [k for k in graph.knoten.values() if k.art == "multipass"]
+    assert multipass and all(k.params.get("rahmung") == "bauwerk" for k in multipass)
+    alt = kette.baue_kette(glb_path=glb, up_axis="Y", kamera="sSE", prompt="ein Haus",
+                            rahmung="szene")
+    assert [k.params.get("rahmung") for k in alt.knoten.values() if k.art == "multipass"] \
+        == ["szene"]
