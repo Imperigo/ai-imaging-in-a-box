@@ -1,0 +1,153 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-203",
+ "status": "teilweise",
+ "status_kurz": "Auftragsweg bricht bei materialize ab (Rueckgabe 1, 0 SVG): die Bruecke laesst bei allen 11 Decken ohne PredefinedType die role weg (gewollt, «statt floor zu behaupten»), der Konsument verlangt role in {floor, ceiling, roof} und verwirft den ganzen Payload. Blatt darum nur ueber einen gekennzeichneten BEHELFSLAUF (gleiche Bruecken-Datei, Decken-Liste geleert, kein Code geaendert) gesehen.",
+ "beendet": "2026-09-30T19:50:00Z",
+ "stand": "KosmoPublish 2cd0696 beim Lauf (45c4b46 ist Vorfahre); danach nur der Golden-Commit aus 202 (5f0832e) dazu",
+ "ifc": {
+  "groesse_mb": 1.08,
+  "schema": "IFC4",
+  "anzahl_kandidaten": 1,
+  "im_repo": false
+ },
+ "schritt3": {
+  "ifc_bridge": {
+   "rueckgabe": 0,
+   "laufzeit_s": 0.63
+  },
+  "materialize": {
+   "rueckgabe": 1,
+   "laufzeit_s": 0.05,
+   "letzte_zeilen_woertlich": [
+    "HINWEIS: Planfeld ohne Projekt, Bauherrschaft, Verfasser, Plan-Nr., Datum. Diese Felder stehen in keinem IFC; leere Zeilen laesst das Blatt weg (--planfeld-leerzeilen bietet sie als Schreiblinie an, --planfeld-json fuellt sie).",
+    "  ⚠ Bridge-Payload nicht valide: ['Slab <X>: ungültige role=None', 'Slab <X>: ungültige role=None', 'Slab <X>: ungültige role=None']",
+    "",
+    "0 Datei(en), 1 Fehler.",
+    "Plan-Linter: 0 Zeichnung(en) geprueft, kein Befund."
+   ],
+   "ursache": "nodes/ifc_bridge_reader.py (~Z. 1025): role nur aus PredefinedType, sonst weggelassen. nodes/bridge_consumer.py Z. 564-566: role muss in VALID_SLAB_ROLES = {floor, ceiling, roof} liegen, sonst Fehler. In der IFC haben alle 11 IfcSlab PredefinedType $ -> alle 11 Decken role=None (Meldung zeigt nur 3). Vertragsluecke Produzent/Konsument; das erfundene Haus setzt PredefinedType und trifft sie nie."
+  },
+  "generate_poster": {
+   "rueckgabe": 1,
+   "laufzeit_s": 0.05,
+   "letzte_zeilen_woertlich": [
+    "ERROR: keine Plan-SVGs in /tmp/kette203/proj/output/planraw"
+   ]
+  }
+ },
+ "behelfslauf": {
+  "was": "Kopie der Bruecken-Datei mit slabs=[] (keine Rolle erfunden, Decken nur weggelassen), sonst dieselben Befehle. Nur zur Sichtprobe; ersetzt den Auftragsweg nicht.",
+  "materialize": {
+   "rueckgabe": 0,
+   "laufzeit_s": 0.66
+  },
+  "generate_poster": {
+   "rueckgabe": 0,
+   "laufzeit_s": 0.17,
+   "laufzeit_intern_ms": 76
+  }
+ },
+ "schritt4": {
+  "ifc_bridge": {
+   "geschosse": 11,
+   "geschosse_mit_kote": 11,
+   "raeume": "205 von 205 im IFC",
+   "waende": "855 von 855 im IFC (855 Eintraege, je begrenztem Raum einer)",
+   "stuetzen": "0 von 0",
+   "decken": 11,
+   "treppen": "0 (11 IfcStair ohne auslesbaren Umriss)",
+   "oeffnungen": "0 von 0 im IFC (keine IfcDoor/IfcWindow/IfcOpeningElement in der Datei)",
+   "n_annotationen": 0,
+   "n_bemassungs_annotationen": 0,
+   "kategorie_ausfaelle": 2,
+   "unbekannte_klassen": {
+    "IfcStairFlight": 132,
+    "IfcTransportElement": 1
+   },
+   "warnungen_gesamt": 875,
+   "warnungen_je_art": {
+    "Wand <X>: keine Dicke im IFC (weder Materialschichten noch Mengen noch benanntes Pset-Feld)": 855,
+    "Treppe <X>: kein auslesbarer Umriss — wird nicht gezeichnet statt geraten": 11,
+    "KLASSE UNBEKANNT (IfcStairFlight 132, IfcTransportElement 1)": 2,
+    "KATEGORIE FEHLT (stairs: 11 IfcStair -> 0; gelaende: 1 IfcSite -> 0)": 2,
+    "Gelaende <X>: die IfcSite fuehrt keine Darstellung — keine Gelaendelinie": 1,
+    "Sammel: 205 Raumflaeche(n) aus dem Umriss gerechnet (IFC ohne Mengenangabe)": 1,
+    "Sammel: 855 Wand/Waende ohne Dicke im IFC": 1,
+    "Sammel: 855 Wand/Waende ohne Raumbezug, alle trotzdem uebernommen (Fussabdruck)": 1,
+    "Sammel: 11 Treppe(n) ohne auslesbaren Umriss": 1
+   },
+   "zahlen_weiter": {
+    "waende_ohne_raum": 855,
+    "raumflaechen_gerechnet": 205,
+    "waende_ueber_achse": 0
+   }
+  },
+  "materialize_auftragsweg": {
+   "svg": 0,
+   "fehler": "0 Datei(en), 1 Fehler.",
+   "linter": "Plan-Linter: 0 Zeichnung(en) geprueft, kein Befund."
+  },
+  "materialize_behelf": {
+   "svg": 18,
+   "fehler": "18 Datei(en), 0 Fehler.",
+   "svg_arten": "11 Grundrisse (je Geschoss), 2 Schnitte, 4 Fassaden, 1 Lageplan",
+   "linter_gesamt": "Plan-Linter: 175 Befund(e) auf 18 Zeichnung(en).",
+   "linter_je_regel": {
+    "R001 (Text ausserhalb der Zeichnung)": 10,
+    "R002 (Text doppelt an gleicher Stelle)": 165
+   },
+   "R002_verteilung": {
+    "Fassaden": 108,
+    "Schnitte": 56,
+    "Grundrisse": 1
+   },
+   "R002_bild": "Hoehenkoten wie «+ 0.01 m», «+ 0.02 m» vielfach an derselben Stelle: die Kotenliste stapelt fast gleiche Geschosshoehen uebereinander",
+   "R001_bild": "Schnittmarke «B» liegt in 5 Grundrissen ausserhalb des Blattausschnitts (je 2x)",
+   "verlorene_beschriftungen": "Verlorene Beschriftungen: 4 auf 2 Zeichnung(en). (1 Raum ganz ohne Beschriftung, 3 Raumnamen ohne Platz)"
+  },
+  "generate_poster_behelf": {
+   "rueckgabe": 0,
+   "platziert": 4,
+   "platziert_arten": "1 Plan (ein Obergeschoss-Grundriss) + programm_tabelle + konzept_text + material_legende",
+   "ueberlauf": true,
+   "ueberlauf_anzahl": 17,
+   "ueberlauf_arten": "nur Plan (10 Grundrisse, 2 Schnitte, 4 Fassaden, 1 Lageplan); keine Textelemente",
+   "massstab": "gewaehlt 1:100 fuer 17 Plaene, 1:500 Lageplan; Meldung «→ bei 1:1000 passt alles. Neu zeichnen mit: materialize --project <projekt> --sia-full --scale 1:1000»",
+   "massstabstreue": "Massstabstreue: 1 von 1 Zeichnungen stehen im gedruckten Massstab.",
+   "blattformat": "A0 quer (3370 x 2384 pt), 1 Seite",
+   "pdf_kb": 199,
+   "bedeckung": "Blatt zu 44 % von Kaesten bedeckt; unter dem untersten Kasten bleiben 50 mm frei, rechts vom rechtesten 50 mm.",
+   "warnungen_woertlich": [
+    "⚠ BEISPIELINHALT auf dem Blatt: Konzepttext, Materialleiste, Projektkopf. Diese Bloecke stammen nicht aus dem Modell, sondern aus dem Demo-Inhalt (kein --config angegeben). Auf einem Abgabeblatt widersprechen sie den Plaenen daneben.",
+    "⚠ Der Konzepttext nennt 2800 m², die Programmtabelle daneben 22218 m² — Faktor 8. Beide stehen auf demselben Blatt.",
+    "Programmtabelle aus <X>: 205 Zeile(n), 22217 m² (vorher 7 Zeile(n) Beispiel)"
+   ]
+  }
+ },
+ "schritt5_sichtprobe": {
+  "hinweis": "am Behelfsblatt (einmal als PNG angesehen, danach geloescht)",
+  "plaene_lesbar": "Nein im Sinn des Auftrags: nur 1 von 18 Plaenen steht auf dem Blatt (ein Obergeschoss, 1:100, fuellt die linke Blatthaelfte); der steht lesbar, Raumnamen und Masszahlen klein aber lesbar. Die anderen 17 fehlen ganz (Ueberlauf).",
+  "ueberdeckung": "Ja: die Programmtabelle laeuft nach unten in den Konzepttext; die erste Zeile des Konzepttexts ist vom Tabellenrand angeschnitten. Im Plan kreuzen Masslinien ihre eigenen Masszahlen (senkrechte Ketten links).",
+  "schraffur_sichtbar": "Nein: Planfeld sagt «Schnittflächen: Poche», sichtbar sind aber nur duenne Umrisslinien - die Waende haben im IFC keine Dicke/Materialschicht, also keine Poche und kein Muster.",
+  "text_fehlt": "Ja: Programmtabelle hat 205 Zeilen, auf dem Blatt stehen rund 60, dann mitten in einer Zeile abgeschnitten, ohne Hinweis und ohne Summe. Planfeld ohne Projekt/Bauherrschaft/Verfasser/Plan-Nr./Datum. Kopf und Konzepttext sind Demo-Inhalt (MUSTERBAU/Musterberg), nicht aus dem Modell."
+ },
+ "auffaellig_am_echten_blatt": [
+  "Die Kette bricht schon vor dem Blatt: echte Decken ohne PredefinedType -> Bruecke laesst role weg -> materialize verwirft den ganzen Payload. Am erfundenen Haus ist PredefinedType immer gesetzt.",
+  "Volumenmodell statt Bauteilmodell: 0 Oeffnungen, 855/855 Waende ohne Dicke und ohne Raumbezug, 205/205 Raumflaechen nur gerechnet, Treppen/Gelaende fallen weg - der Plan zeigt Umrisse ohne Poche.",
+  "Massstab: 11 Geschosse, Baukoerper ~50 m tief - bei 1:100 passt auf A0 genau ein Plan, 17 laufen ueber; die Kette waehlt nicht selbst kleiner, sie schlaegt 1:1000 nur vor.",
+  "Programmtabelle mit 205 Zeilen sprengt ihren Kasten, wird stumm abgeschnitten und schiebt sich in den Konzepttext.",
+  "Demo-Konzepttext (2800 m2) neben echten 22217 m2 - das Werkzeug warnt selbst (Faktor 8).",
+  "Linter: 165 doppelte Hoehenkoten in Schnitten/Fassaden (fast gleiche Geschosshoehen, «+ 0.01 m»/«+ 0.02 m»), Schnittmarke ausserhalb in 5 Grundrissen, 4 verlorene Raumbeschriftungen."
+ ],
+ "nicht_getan": [
+  "keine Namen, keine Bilder/PDF/SVG/JSON aus dem Lauf in ein Repo oder in diese Datei",
+  "kein Code geaendert, nichts installiert, kein Sprachmodell",
+  "materialize nicht mit --scale 1:1000 wiederholt (nicht im Auftrag)",
+  "/tmp/kette203 samt Sicht-PNG geloescht"
+ ],
+ "fehler": [
+  "materialize (Auftragsweg) Rueckgabe 1: Bridge-Payload nicht valide, Slab role=None bei 11/11 Decken",
+  "generate-poster (Auftragsweg) Rueckgabe 1: keine Plan-SVGs (Folgefehler)"
+ ]
+}

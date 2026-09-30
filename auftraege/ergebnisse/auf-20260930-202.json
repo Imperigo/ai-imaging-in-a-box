@@ -1,0 +1,116 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-202",
+ "status": "ok",
+ "beendet": "2026-09-30T19:48:30Z",
+ "stand": "KosmoPublish vorher 2cd0696 (45c4b46 ist Vorfahre, git pull --ff-only: bereits aktuell); nachher 5f0832e (Golden-Commit, auf main gepusht, 959c6f0..5f0832e)",
+ "stand_vorher": "2cd0696",
+ "stand_nachher": "5f0832e",
+ "golden_commit": "5f0832e",
+ "gepusht": true,
+ "push_hinweis": "Erster Push abgelehnt: zwischen Pull und Push kam auf origin/main 959c6f0 dazu (Szenen-Zeichner-Einstieg; beruehrt nur CLAUDE.md, NOTICE, docs/, zwei tests/-Dateien und ein neues tools/-Skript - nichts am Bildtest). Golden-Commit (lokal 08e5be3) darauf rebased -> 5f0832e, Gegenprobe auf dem rebasten Stand erneut 3 pass / 0 fail / 0.00 %, dann gepusht.",
+ "commit_dateien": [
+  "output/visual_tests/golden/bridge-grundriss.png",
+  "output/visual_tests/golden/generativ-poster.png",
+  "output/visual_tests/golden/generativ-poster.werkzeuge.json",
+  "output/visual_tests/golden/massing-demo.png",
+  "output/visual_tests/golden/massing-demo.werkzeuge.json"
+ ],
+ "commit_dateien_hinweis": "bridge-grundriss.werkzeuge.json und generativ-poster.herkunft.json wurden neu geschrieben, aber inhaltsgleich - darum nicht im Commit. git status vor dem Commit: nur diese 5 Dateien geaendert, nichts anderes staged.",
+ "schritt2_vorher": {
+  "gesamt": "Visual-Test-Report — 2 pass / 1 fail",
+  "vorwarnung_basis": "⚠ 3 von 3 Vergleichsbild(ern) sind AELTER als der Code, den sie beurteilen",
+  "vorwarnung_werkzeug": "⚠ 2 von 3 Fall/Faellen zeichnen heute mit einem ANDEREN WERKZEUG als das Vergleichsbild",
+  "faelle": {
+   "generativ-poster": {
+    "ergebnis": "pass",
+    "diff_pct": 0.01,
+    "basis_veraltet": true,
+    "kopfzeile": "✅ generativ-poster (score –, diff 0.01%, Basis 2026-09-23 (6 Tage alt, VERALTET))",
+    "planquelle": "Planquelle: erfundene Kette (haus_ifc), Programm aus bridge_export_v015_haus.json, 9 Plan-SVG",
+    "hinweise": [
+     "Layout-Strategie: reserve — seit 07.09.2026 dieselbe wie die Befehlszeile; davor fuhr der Bildtest binary und zeigte damit ein Blatt, das so niemand erzeugt",
+     "Hinweis: Werkzeug gewechselt, Bild unverändert — schrift:Helvetica: LiberationSans-Regular.ttf: \"Liberation Sans\" \"Regular\" → NimbusSans-Regular.otf: \"Nimbus Sans\" \"Regular\"; typst: typst-py 0.15.0 → typst-py 0.14.9",
+     "Hinweis: Vergleichsbild älter als der Code — Diff 0.01% liegt zwar unter 2.0%, beweist aber nichts über die Änderungen dazwischen"
+    ]
+   },
+   "massing-demo": {
+    "ergebnis": "pass",
+    "diff_pct": 0.0,
+    "basis_veraltet": true,
+    "kopfzeile": "✅ massing-demo (score –, diff 0.00%, Basis 2026-09-02 (28 Tage alt, VERALTET))",
+    "planquelle": null,
+    "hinweise": [
+     "Hinweis: Werkzeug gewechselt, Bild unverändert — blender: Blender 5.2.1 LTS · snap 7740 → Blender 5.2.2 LTS · snap 7803",
+     "Hinweis: Vergleichsbild älter als der Code — Diff 0.00% liegt zwar unter 2.0%, beweist aber nichts über die Änderungen dazwischen"
+    ]
+   },
+   "bridge-grundriss": {
+    "ergebnis": "fail",
+    "diff_pct": 100.0,
+    "basis_veraltet": true,
+    "kopfzeile": "❌ bridge-grundriss (score –, diff 100.00%, Basis 2026-09-02 (28 Tage alt, VERALTET))",
+    "planquelle": null,
+    "hinweise": [
+     "Pixel-Diff 100.00% > 2.0% — BASIS VERALTET (Code jünger als das Vergleichsbild; kein Regressionsurteil möglich, erst Basis erneuern)"
+    ],
+    "eigene_beobachtung": "Bildgroesse gewechselt: altes Vergleichsbild 1200x840, heutiges Bild 1200x800 -> daher 100 %."
+   }
+  },
+  "abweichung_vom_auftrag": "Der Auftrag erwartete aus dem Nachtlauf 0 pass / 3 fail. Mit --plan-quelle erfunden war es 2 pass / 1 fail: das Plakat lag schon bei 0.01 % (die 27 % kamen nur aus der Planquelle planraw), massing-demo bei 0.00 %; nur bridge-grundriss fiel durch."
+ },
+ "schritt3_golden_zeilen": [
+  "golden aktualisiert → generativ-poster.png",
+  "Werkzeugmarke gesichert: schrift:Helvetica=NimbusSans-Regular.otf: \"Nimbus Sans\" \"Regular\"; typst=typst-py 0.14.9",
+  "Planquelle gesichert: erfunden",
+  "golden aktualisiert → massing-demo.png",
+  "Werkzeugmarke gesichert: blender=Blender 5.2.2 LTS · snap 7803",
+  "golden aktualisiert → bridge-grundriss.png",
+  "Werkzeugmarke gesichert: rsvg-convert=rsvg-convert version 2.61.3; schrift:Helvetica=NimbusSans-Regular.otf: \"Nimbus Sans\" \"Regular\""
+ ],
+ "schritt3_kopf": "Visual-Test-Report — 0 pass / 0 fail — 3 Vergleichsbild(er) neu gesetzt (nicht verglichen)",
+ "schritt3_golden_nicht_aktualisiert": false,
+ "schritt4_nachher": {
+  "gesamt": "Visual-Test-Report — 3 pass / 0 fail",
+  "faelle": {
+   "generativ-poster": {
+    "ergebnis": "pass",
+    "diff_pct": 0.0,
+    "basis_veraltet": false,
+    "kopfzeile": "✅ generativ-poster (score –, diff 0.00%, Basis 2026-09-30 (0 Tage alt))"
+   },
+   "massing-demo": {
+    "ergebnis": "pass",
+    "diff_pct": 0.0,
+    "basis_veraltet": false,
+    "kopfzeile": "✅ massing-demo (score –, diff 0.00%, Basis 2026-09-30 (0 Tage alt))"
+   },
+   "bridge-grundriss": {
+    "ergebnis": "pass",
+    "diff_pct": 0.0,
+    "basis_veraltet": false,
+    "kopfzeile": "✅ bridge-grundriss (score –, diff 0.00%, Basis 2026-09-30 (0 Tage alt))"
+   }
+  },
+  "werkzeug_warnung": false
+ },
+ "schritt5_sichtprobe": "ja",
+ "schritt5_worte": "Alle drei zeigen erkennbar ein erfundenes Haus: Plakat mit Kopf «MUSTERBAU / Bibliothek Musterberg — Wettbewerb Q4-2026», 2 Geschosse, Raeume Wohnen/Kueche/Zimmer, 9 Plaene; Massenmodell = 5 gestapelte weisse Platten auf grauem Grund; Grundriss = Wohnzimmer 20 m2 + Kueche 10 m2, 5.00/3.00 x 4.00 m. Kein realer Name, keine reale Geometrie. Nebenbefund Plakat: Konzepttext (Demo, 2800 m2 BGF Bibliothek) passt nicht zum 3-Raum-Haus; untere ~40 % des Blatts leer. Grundriss-Bild traegt «Schnittflächen: ohne Füllung», Waende als Doppellinien.",
+ "schritt6_unittest": "Ran 6 tests in 0.012s — OK",
+ "werkzeuge": {
+  "blender_lief": true,
+  "blender_fassung": "Blender 5.2.2 LTS · snap 7803 (Werkzeugmarke; vorher 5.2.1 LTS · snap 7740)",
+  "rsvg_lief": true,
+  "rsvg_fassung": "rsvg-convert version 2.61.3 (Werkzeugmarke, unveraendert)",
+  "typst_fassung": "typst-py 0.14.9 (vorher in der Marke 0.15.0 - also aelter als die alte Marke)",
+  "schrift_helvetica": "NimbusSans-Regular.otf (Plakat vorher LiberationSans-Regular.ttf)"
+ },
+ "laufzeit": "Schritt 2 real 3.3 s; Schritte 3 und 4 je wenige Sekunden",
+ "nicht_getan": [
+  "kein --plan-quelle auto, nichts aus output/planraw/",
+  "kein Code geaendert, kein Vision-/Sprachmodell gestartet, nichts installiert",
+  "nichts ausser den 5 Golden-Dateien committet",
+  "Temp-Ordner /tmp/bildtest202-* geloescht"
+ ],
+ "fehler": []
+}
