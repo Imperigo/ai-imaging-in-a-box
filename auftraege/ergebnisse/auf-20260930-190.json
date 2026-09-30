@@ -1,0 +1,758 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-190",
+ "status": "ok",
+ "beendet": "2026-09-30T10:33:01Z",
+ "stand": "ai-imaging f6af380 beim Lauf (jetzt 3fdadf8); Rahmung aus dem Bericht des Multipass-Knotens: nach = bauwerk in allen 36 Laeufen («Gerahmt nach dem Bauwerk (Grundriss 67% schmaler als die Szene)» u. ae.).",
+ "geprueft": "36 Bilder ueber arbeitsgang.lege_an/rechne wie 186 (Prompt «a residential building, architectural photograph», controlnet_staerke 1.0, 8 Schritte), z-image-turbo, 512 px wie 175, Rahmung nach dem Bauwerk (Vorgabe nach dem Pull). Testbau --gelaende, Hochbau --hochbau --gelaende; Blicke s, sSE, sSW; Startwerte 0–5. 12:26–12:31, einzeln nacheinander. Augenurteil BLIND (gemischte Decknamen B01–B36, Etiketten festgeschrieben, erst dann Schluessel und Zahlen). Messung je Bild gegen die eigene Soll-Karte; rho aus dem qa-Knoten; Bauwerk-Anteil = rho_maske.anteil_maske. Bilder nur auf der HomeStation.",
+ "kurzantwort": "Umstellen JA nach der festgelegten Regel (streng gezaehlt): 5 der 6 Faelle haben ein richtig stehendes Bild; abhebung setzt in allen 5 ein richtiges auf Platz 1, rho in 3, die heutige Auswahl in 3. (a) 5 von 5 erfuellt, (b) 5 > 3 erfuellt. ABER: das Ergebnis haengt am Umgang mit «unklar» — zaehlt man «unklar» als richtig, kommen abhebung UND rho auf 6 von 6 und (b) faellt. Die Regel spricht von «richtig stehend», darum gilt die strenge Zaehlung; der Entscheid bleibt bei euch.",
+ "auszaehlung": {
+  "augenlage": {
+   "steht_richtig": 19,
+   "unklar": 16,
+   "steht_falsch": 1
+  },
+  "faelle_mit_richtigem_bild": 5,
+  "abhebung_platz1_richtig": 5,
+  "rho_platz1_richtig": 3,
+  "heutige_auswahl_platz1_richtig": 3,
+  "a_erfuellt": true,
+  "b_erfuellt": true,
+  "umstellen_nach_regel": true,
+  "gegenprobe_unklar_als_richtig": {
+   "faelle_mit_kandidat": 6,
+   "abhebung": 6,
+   "rho": 6,
+   "heutige_auswahl": 6,
+   "b_erfuellt": false
+  },
+  "wo_rho_verliert": "testbau-s: rho waehlt Startwert 4 (unklar, Oeffnung in Glaswand) — frontal ist rho bekanntlich schwach; testbau-sSE: rho waehlt Startwert 3 (unklar, Glaskoerper in einer Fassade, rho 0.978) statt eines der 5 richtigen."
+ },
+ "faelle": [
+  {
+   "fall": "hochbau-s",
+   "richtige_von_6": 0,
+   "platz1_abhebung": {
+    "startwert": 4,
+    "auge": "unklar"
+   },
+   "platz1_rho": {
+    "startwert": 3,
+    "auge": "unklar"
+   },
+   "heutige_auswahl": {
+    "startwert": 0,
+    "auge": "unklar"
+   }
+  },
+  {
+   "fall": "hochbau-sSE",
+   "richtige_von_6": 5,
+   "platz1_abhebung": {
+    "startwert": 5,
+    "auge": "steht richtig"
+   },
+   "platz1_rho": {
+    "startwert": 5,
+    "auge": "steht richtig"
+   },
+   "heutige_auswahl": {
+    "startwert": 0,
+    "auge": "steht richtig"
+   }
+  },
+  {
+   "fall": "hochbau-sSW",
+   "richtige_von_6": 3,
+   "platz1_abhebung": {
+    "startwert": 0,
+    "auge": "steht richtig"
+   },
+   "platz1_rho": {
+    "startwert": 5,
+    "auge": "steht richtig"
+   },
+   "heutige_auswahl": {
+    "startwert": 0,
+    "auge": "steht richtig"
+   }
+  },
+  {
+   "fall": "testbau-s",
+   "richtige_von_6": 2,
+   "platz1_abhebung": {
+    "startwert": 0,
+    "auge": "steht richtig"
+   },
+   "platz1_rho": {
+    "startwert": 4,
+    "auge": "unklar"
+   },
+   "heutige_auswahl": {
+    "startwert": 2,
+    "auge": "unklar"
+   }
+  },
+  {
+   "fall": "testbau-sSE",
+   "richtige_von_6": 5,
+   "platz1_abhebung": {
+    "startwert": 4,
+    "auge": "steht richtig"
+   },
+   "platz1_rho": {
+    "startwert": 3,
+    "auge": "unklar"
+   },
+   "heutige_auswahl": {
+    "startwert": 2,
+    "auge": "steht richtig"
+   }
+  },
+  {
+   "fall": "testbau-sSW",
+   "richtige_von_6": 4,
+   "platz1_abhebung": {
+    "startwert": 0,
+    "auge": "steht richtig"
+   },
+   "platz1_rho": {
+    "startwert": 5,
+    "auge": "steht richtig"
+   },
+   "heutige_auswahl": {
+    "startwert": 2,
+    "auge": "unklar"
+   }
+  }
+ ],
+ "bilder": [
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 0,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Fenster in einer Wand",
+   "blind_id": "B14",
+   "abhebung": 1.627,
+   "trefferquote": 0.605,
+   "praezision": 0.0895,
+   "rho_maske_gerichtet": 0.585,
+   "bauwerk_anteil": 0.203,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 1,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Glasfeld in einer Fassade",
+   "blind_id": "B23",
+   "abhebung": 1.636,
+   "trefferquote": 0.763,
+   "praezision": 0.117,
+   "rho_maske_gerichtet": 0.07,
+   "bauwerk_anteil": 0.203,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 2,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Fensterraster in einer Wand",
+   "blind_id": "B28",
+   "abhebung": 1.598,
+   "trefferquote": 0.839,
+   "praezision": 0.0782,
+   "rho_maske_gerichtet": 0.136,
+   "bauwerk_anteil": 0.203,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 3,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Oeffnung in einer Wand",
+   "blind_id": "B10",
+   "abhebung": 1.25,
+   "trefferquote": 0.643,
+   "praezision": 0.097,
+   "rho_maske_gerichtet": 0.606,
+   "bauwerk_anteil": 0.203,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Glasfeld in einer Fassade",
+   "blind_id": "B36",
+   "abhebung": 1.957,
+   "trefferquote": 0.697,
+   "praezision": 0.1364,
+   "rho_maske_gerichtet": 0.141,
+   "bauwerk_anteil": 0.203,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Fassadenraster ueber das ganze Bild",
+   "blind_id": "B11",
+   "abhebung": 1.935,
+   "trefferquote": 0.924,
+   "praezision": 0.1388,
+   "rho_maske_gerichtet": -0.015,
+   "bauwerk_anteil": 0.203,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 0,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm im Eckblick, Lage, Hoehe und beide Fassaden wie Schoenbild",
+   "blind_id": "B09",
+   "abhebung": 1.704,
+   "trefferquote": 0.562,
+   "praezision": 0.0553,
+   "rho_maske_gerichtet": 0.921,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 1,
+   "augenetikett": "unklar",
+   "halbsatz": "Mittelrisalit an richtiger Stelle, aber Teil einer Hauszeile",
+   "blind_id": "B31",
+   "abhebung": 1.406,
+   "trefferquote": 0.588,
+   "praezision": 0.052,
+   "rho_maske_gerichtet": -0.098,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 2,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm an richtiger Stelle, Proportion stimmt, Dach gerundet, unscharf",
+   "blind_id": "B07",
+   "abhebung": 0.944,
+   "trefferquote": 0.448,
+   "praezision": 0.021,
+   "rho_maske_gerichtet": 0.332,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 3,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm im Eckblick, Lage und Form getroffen",
+   "blind_id": "B17",
+   "abhebung": 1.459,
+   "trefferquote": 0.677,
+   "praezision": 0.0587,
+   "rho_maske_gerichtet": 0.963,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 4,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm im Eckblick, Lage und Form getroffen, erfundener Vorbau",
+   "blind_id": "B35",
+   "abhebung": 1.275,
+   "trefferquote": 0.371,
+   "praezision": 0.0586,
+   "rho_maske_gerichtet": 0.944,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 5,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm im Eckblick, Lage und Form getroffen",
+   "blind_id": "B18",
+   "abhebung": 2.308,
+   "trefferquote": 0.934,
+   "praezision": 0.0988,
+   "rho_maske_gerichtet": 0.979,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 0,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm, kurze Seite links, Lage und Form getroffen",
+   "blind_id": "B29",
+   "abhebung": 2.733,
+   "trefferquote": 0.775,
+   "praezision": 0.1293,
+   "rho_maske_gerichtet": 0.954,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 1,
+   "augenetikett": "unklar",
+   "halbsatz": "Mittelrisalit an richtiger Stelle, aber Teil einer Hauszeile",
+   "blind_id": "B32",
+   "abhebung": 1.328,
+   "trefferquote": 0.556,
+   "praezision": 0.0529,
+   "rho_maske_gerichtet": 0.004,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 2,
+   "augenetikett": "unklar",
+   "halbsatz": "Koerper an richtiger Stelle, aber mit erfundenem Giebel",
+   "blind_id": "B02",
+   "abhebung": 1.399,
+   "trefferquote": 0.67,
+   "praezision": 0.0523,
+   "rho_maske_gerichtet": 0.483,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 3,
+   "augenetikett": "unklar",
+   "halbsatz": "Turm an richtiger Stelle, aber mit Giebel und vor einer Wand",
+   "blind_id": "B30",
+   "abhebung": 1.102,
+   "trefferquote": 0.525,
+   "praezision": 0.0558,
+   "rho_maske_gerichtet": 0.927,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 4,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm, kurze Seite links, Lage und Form getroffen",
+   "blind_id": "B24",
+   "abhebung": 1.538,
+   "trefferquote": 0.454,
+   "praezision": 0.0718,
+   "rho_maske_gerichtet": 0.896,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 5,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Turm, kurze Seite links, Lage und Form getroffen",
+   "blind_id": "B21",
+   "abhebung": 2.158,
+   "trefferquote": 0.877,
+   "praezision": 0.08,
+   "rho_maske_gerichtet": 0.964,
+   "bauwerk_anteil": 0.179,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 0,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader frontal, Lage und Umriss getroffen",
+   "blind_id": "B22",
+   "abhebung": 2.632,
+   "trefferquote": 0.983,
+   "praezision": 0.1017,
+   "rho_maske_gerichtet": 0.075,
+   "bauwerk_anteil": 0.198,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 1,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss richtig, aber als Fenster in einer Wand gelesen",
+   "blind_id": "B04",
+   "abhebung": 1.979,
+   "trefferquote": 0.935,
+   "praezision": 0.0678,
+   "rho_maske_gerichtet": -0.504,
+   "bauwerk_anteil": 0.198,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 2,
+   "augenetikett": "unklar",
+   "halbsatz": "dunkles Rechteck an richtiger Stelle, verschwommen in einer Wand",
+   "blind_id": "B13",
+   "abhebung": 1.427,
+   "trefferquote": 0.733,
+   "praezision": 0.0418,
+   "rho_maske_gerichtet": 0.329,
+   "bauwerk_anteil": 0.198,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 3,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Glasfeld in einer Wand",
+   "blind_id": "B34",
+   "abhebung": 1.998,
+   "trefferquote": 0.882,
+   "praezision": 0.0657,
+   "rho_maske_gerichtet": -0.362,
+   "bauwerk_anteil": 0.198,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Umriss als Oeffnung in einer Glaswand",
+   "blind_id": "B25",
+   "abhebung": 1.576,
+   "trefferquote": 0.65,
+   "praezision": 0.0388,
+   "rho_maske_gerichtet": 0.36,
+   "bauwerk_anteil": 0.198,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 5,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader frontal, Lage und Umriss getroffen, erfundene Kulisse",
+   "blind_id": "B33",
+   "abhebung": 1.472,
+   "trefferquote": 0.759,
+   "praezision": 0.0452,
+   "rho_maske_gerichtet": -0.34,
+   "bauwerk_anteil": 0.198,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 0,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, Lage und Umriss getroffen",
+   "blind_id": "B08",
+   "abhebung": 2.813,
+   "trefferquote": 0.951,
+   "praezision": 0.0612,
+   "rho_maske_gerichtet": 0.96,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 1,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, Lage und Umriss getroffen",
+   "blind_id": "B20",
+   "abhebung": 1.779,
+   "trefferquote": 0.9,
+   "praezision": 0.0326,
+   "rho_maske_gerichtet": 0.918,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 2,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, Lage und Umriss getroffen",
+   "blind_id": "B03",
+   "abhebung": 1.673,
+   "trefferquote": 0.801,
+   "praezision": 0.0279,
+   "rho_maske_gerichtet": 0.967,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 3,
+   "augenetikett": "unklar",
+   "halbsatz": "Glaskoerper an richtiger Stelle, vor bzw. in einer Fassade",
+   "blind_id": "B26",
+   "abhebung": 1.495,
+   "trefferquote": 0.713,
+   "praezision": 0.0257,
+   "rho_maske_gerichtet": 0.978,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 4,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, Lage und Umriss getroffen, Vordergrund erfunden",
+   "blind_id": "B16",
+   "abhebung": 3.02,
+   "trefferquote": 0.953,
+   "praezision": 0.0459,
+   "rho_maske_gerichtet": 0.957,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 5,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, Lage und Umriss getroffen",
+   "blind_id": "B05",
+   "abhebung": 2.324,
+   "trefferquote": 0.938,
+   "praezision": 0.0459,
+   "rho_maske_gerichtet": 0.974,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 0,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, kurze Seite links, Lage und Umriss wie Schoenbild",
+   "blind_id": "B01",
+   "abhebung": 2.393,
+   "trefferquote": 0.946,
+   "praezision": 0.0445,
+   "rho_maske_gerichtet": 0.939,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 1,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader im Eckblick, kurze Seite links, Lage und Umriss getroffen",
+   "blind_id": "B15",
+   "abhebung": 1.598,
+   "trefferquote": 0.756,
+   "praezision": 0.034,
+   "rho_maske_gerichtet": 0.758,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 2,
+   "augenetikett": "unklar",
+   "halbsatz": "Quader erahnbar an richtiger Stelle, stark verwischt",
+   "blind_id": "B19",
+   "abhebung": 1.541,
+   "trefferquote": 0.7,
+   "praezision": 0.0269,
+   "rho_maske_gerichtet": 0.971,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 3,
+   "augenetikett": "unklar",
+   "halbsatz": "Glaskoerper an richtiger Stelle, aber in eine Fassade eingebaut",
+   "blind_id": "B06",
+   "abhebung": 2.016,
+   "trefferquote": 0.868,
+   "praezision": 0.0322,
+   "rho_maske_gerichtet": -0.155,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 4,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader an richtiger Stelle, darunter erfundener Sockelbau",
+   "blind_id": "B12",
+   "abhebung": 1.662,
+   "trefferquote": 0.557,
+   "praezision": 0.0251,
+   "rho_maske_gerichtet": 0.895,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 5,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Glasquader, kurze Seite links, Lage und Umriss getroffen",
+   "blind_id": "B27",
+   "abhebung": 2.389,
+   "trefferquote": 0.965,
+   "praezision": 0.0453,
+   "rho_maske_gerichtet": 0.992,
+   "bauwerk_anteil": 0.21,
+   "rahmung": "bauwerk",
+   "modus_gerechnet": "txt2img"
+  }
+ ],
+ "nullproben": [
+  {
+   "soll_von": "hochbau-s",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "hochbau-s",
+   "probe": "null_rauschen",
+   "abhebung": 0.999213143831586,
+   "status": "ok"
+  },
+  {
+   "soll_von": "hochbau-sSE",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "hochbau-sSE",
+   "probe": "null_rauschen",
+   "abhebung": 0.9838651441902948,
+   "status": "ok"
+  },
+  {
+   "soll_von": "hochbau-sSW",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "hochbau-sSW",
+   "probe": "null_rauschen",
+   "abhebung": 0.9828958189250826,
+   "status": "ok"
+  },
+  {
+   "soll_von": "testbau-s",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "testbau-s",
+   "probe": "null_rauschen",
+   "abhebung": 1.0164361637850239,
+   "status": "ok"
+  },
+  {
+   "soll_von": "testbau-sSE",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "testbau-sSE",
+   "probe": "null_rauschen",
+   "abhebung": 0.9965289493323887,
+   "status": "ok"
+  },
+  {
+   "soll_von": "testbau-sSW",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "testbau-sSW",
+   "probe": "null_rauschen",
+   "abhebung": 0.9992442870689892,
+   "status": "ok"
+  }
+ ],
+ "befunde": [
+  "Rahmung nach dem Bauwerk wirkt auch auf dem Kettenweg: Bauwerk-Anteil 17.9–21.0 % (186: wenige Prozent), richtig stehend 19 von 36 (186: 2 von 36).",
+  "Hochbau frontal (s) bleibt schwierig: 0 von 6 richtig, 5 unklar — der Umriss wird fast immer als Oeffnung/Glasfeld in einer Wand gelesen (wie 188 B07/B14).",
+  "abhebung bleibt ohne feste Schwelle: richtige Bilder reichen von 0.944 bis 3.02, unklare von 1.10 bis 2.02 — es ordnet innerhalb eines Falls, trennt aber nicht absolut.",
+  "Nullproben je Soll-Karte: grau 0.0 (keine_bildkanten), Rauschen 0.98–1.02.",
+  "Alle 36: modus_gerechnet txt2img (erwartet laut 189 A3)."
+ ],
+ "nicht_getan": "Startwert-Auswahl nicht umgebaut, keine Schwelle gesetzt, keine Bilder ins Repo.",
+ "umgebung": {
+  "gpu": "RTX 5090, eine Messung zur Zeit",
+  "venv": ".venv-render"
+ },
+ "fehler": null
+}
