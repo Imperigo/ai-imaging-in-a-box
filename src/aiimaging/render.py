@@ -2274,6 +2274,7 @@ def _geraeteweg(modell) -> dict:
                 "grund": ("Das Modell fuehrt keine Geraeteangabe. So sieht eine Attrappe "
                           "aus, und so saehe auch ein fremder Lader aus — UNBEKANNT ist "
                           "hier nicht dasselbe wie 'auf der CPU'.")}
+    bedarf = getattr(modell, "bedarf", None)
     return {"geraet": str(geraet), "ladeweg": getattr(modell, "ladeweg", None),
             # Ob dem ControlNet vor dem Auslagern eigene Kopien gegeben wurden. `None`
             # auf den Wegen, die nicht auslagern — siehe `_lege_auf_geraet`.
@@ -2281,8 +2282,28 @@ def _geraeteweg(modell) -> dict:
             # Mit welcher Zahl und mit wie viel Spielraum der Weg gewaehlt wurde. Ohne
             # dieses Feld sieht eine Rechnung von aussen aus wie eine Eigenschaft der
             # Maschine — genau der Irrtum von `auf-20260919-123`.
-            "bedarf": getattr(modell, "bedarf", None),
-            "gemeldet": True, "grund": ""}
+            "bedarf": bedarf,
+            "gemeldet": True, "grund": _geraeteweg_grund(geraet, bedarf)}
+
+
+def _geraeteweg_grund(geraet, bedarf) -> str:
+    """Der Satz zu einem **gemeldeten** Weg — nie leer.
+
+    **Bis zum 30.09.2026 stand hier ``""``**, und die HomeStation las es so, wie es
+    aussah (`auf-20260924-173`, Zusatz A4): je Kamera ``"grund": ""``, also LEER — obwohl
+    eine Zeile tiefer, unter ``bedarf.grund``, die ganze Rechnung stand. Ein leeres Feld
+    neben einem gefüllten sagt dem Leser nicht «siehe nebenan», sondern «nichts».
+
+    Darum trägt ``grund`` jetzt den Satz, mit dem entschieden wurde — denselben wie
+    ``bedarf.grund``, vorn der gewählte Weg. Führt der Lader keine Rechnung (ein fremder
+    Lader, eine Attrappe), sagt der Satz genau das: gemeldet ist der Weg, **nicht** wie
+    er gewählt wurde. Die dritte Antwort, wieder: *nicht gesagt* ist nicht *nichts*.
+    """
+    satz = bedarf.get("grund") if isinstance(bedarf, dict) else None
+    if isinstance(satz, str) and satz.strip():
+        return f"Weg {geraet}. {satz.strip()}"
+    return (f"Weg {geraet}, vom Lader gemeldet. Wie er gewaehlt wurde, sagt der Lader "
+            f"nicht (kein bedarf mit Grund) — UNBEKANNT, nicht «ohne Entscheidung».")
 
 
 def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0.0,

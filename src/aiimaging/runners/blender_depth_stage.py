@@ -1526,6 +1526,39 @@ def _renderparameter_setzen(a) -> None:
     szene.view_settings.look = "None"
 
 
+def _bedarf_befund() -> dict:
+    """Der Block ``bedarf`` im Blender-Bericht — mit einem Satz, warum es nichts zu entscheiden gab.
+
+    **Der Anlass ist eine leere Stelle, an der ein Satz angesagt war** (HomeStation,
+    `auf-20260924-173`, Zusatz A4). Die Ansage zu Stufe 3 versprach den Satz «im Blender-/
+    Render-Bericht unter bedarf.grund». Wer den Blender-Bericht öffnete, fand dort keinen
+    ``bedarf`` — nur die leeren ``grund``-Felder von Sonne und Sichtlinie, die «nichts zu
+    melden» heissen. Die Antwort war darum «LEER», und den Grund nannte allein das
+    Abholer-Protokoll.
+
+    **Warum der Blender-Lauf selbst keine Rechnung hat:** Cycles rechnet auf der CPU, und
+    das ist gemessen, nicht erzwungen (siehe :func:`_renderparameter_setzen`). Über
+    Grafikspeicher wird in dieser Stufe also nicht entschieden — es gibt keine Zahl, die
+    gegen den freien Kartenspeicher gestellt würde. Das ist die dritte Antwort und keine
+    Lücke: *nichts zu entscheiden* ist etwas anderes als *nicht gemeldet*, und nur ein
+    Satz macht die beiden unterscheidbar.
+
+    Dieselbe Form wie ``render._bedarfsbericht`` — alle Zahlenfelder ``None`` heisst
+    **nicht bestimmt**, nie null —, damit ein Leser beide Berichte gleich liest. Der Satz
+    sagt auch, wo die Entscheidung steht, die es wirklich gab: beim Bildmodell.
+
+    Rein und ohne ``bpy``, damit eine Probe ihn diesseits der Prozessgrenze rufen kann.
+    """
+    return {"quelle": "nichts zu entscheiden", "summe_byte": None, "groesster_byte": None,
+            "zuschlag": None, "verlangt_byte": None, "frei_byte": None,
+            "spielraum_byte": None, "geraet": "cpu",
+            "grund": ("Blender rechnet auf der CPU (Cycles; gemessen am 06.09.2026: auf der "
+                      "Karte langsamer und mit verschobenen Kantenpixeln der Material-ID). "
+                      "In dieser Stufe wird darum kein Grafikspeicher verteilt, und es gab "
+                      "nichts zu entscheiden. Wie das BILDMODELL auf die Karte gelegt wurde, "
+                      "steht im Ergebnis des Bildlaufs unter geraeteweg.bedarf.grund.")}
+
+
 def _frisch(pfad: Path, seit: float) -> bool:
     """Wurde diese Datei in DIESEM Lauf geschrieben?
 
@@ -1772,6 +1805,10 @@ def main() -> int:
         "material_id_quelle": sorted({e["quelle"] for e in tabelle}) or None,
         "depth_normalisierung": None,           # siehe `depth_png`
         "samples": a.samples,
+        # WARUM ES HIER NICHTS ZU ENTSCHEIDEN GAB (auf-20260924-173, Zusatz A4): Der Satz
+        # war «unter bedarf.grund» angesagt, und der Bericht hatte keinen `bedarf`. Siehe
+        # `_bedarf_befund`.
+        "bedarf": _bedarf_befund(),
         # Diagnose fuer den externen Leser: Multilayer-EXR benennt Kanaele anders als eine
         # einkanalige Datei ("tiefe_.V" statt "V"), und `aiimaging.bildlesen` sucht nach
         # Namen. Ohne diese Angabe kostete jede Formataenderung einen weiteren Rundlauf.
