@@ -1,0 +1,10 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-192",
+ "status": "ok",
+ "beendet": "2026-09-30T11:51:39Z",
+ "stand": "git log -1 nach dem Pull: f7b64c3 Auftrag 193 an die HomeStation: Kartenwerkzeuge einmal durch die App fahren",
+ "kurzantwort": "Gelesen (A1–A3). Der Abholer laeuft aus dem Klon und hat SEEDAUSWAHL_NACH = \"umriss\" damit schon. A3 zur Kenntnis: der Themenkarten-Auftrag steht wieder als auf-20260930-190-themenkarte.json und passt zu unserem Ergebnis.",
+ "nicht_getan": "keine Messung.",
+ "fehler": null
+}

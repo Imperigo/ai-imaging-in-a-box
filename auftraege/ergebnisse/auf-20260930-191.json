@@ -1,0 +1,52 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-191",
+ "status": "ok",
+ "beendet": "2026-09-30T11:51:39Z",
+ "stand": "Desktop-App (Release-Bau) aus Architektur-Cosmos 3e8387ab4 (ROADMAP 1633), kein neuer Build; Fenster 1600x1000.",
+ "geprueft": "Projekt 1 (bestehend) und ein Wegwerf-Projekt «Wegwerf 191» (danach geloescht). Ordnung der Infotafel auf «nach Herkunft» gestellt und abgelesen, danach auf «nach Art» zurueckgestellt. In Projekt 1 deckt die Paketwahl («Dieses Projekt hat noch kein Paket») die Tafel zu; um Projekt 1 nicht zu veraendern, wurde dort KEIN Paket gewaehlt — abgelesen ist die Kopfzeile. Im Wegwerf-Projekt «Ohne Paket» gewaehlt, dort die Tafel selbst. Zusaetzlich nur lesend: eine Kopie der Wissens-Datenbank der App (IndexedDB «docs», 41 Eintraege) nach Herkunft, Sammlung, Projektbindung und Aufnahmedatum ausgezaehlt.",
+ "kurzantwort": "Alle 41 sind «Bibliothek» (source basis), keines ist «Lokal aufgenommen», «OneDrive» oder «SIA-Normenwerk», keines traegt eine Projekt-Id. Es sind zwei per Knopf geladene Basis-Sammlungen: 24 aus «lehrhefte» (aufgenommen 04.08.2026) und 17 aus «persona» (11.08.2026). Beide Projekte zeigen dasselbe: 41 Dokumente, 1 Gruppe «Bibliothek».",
+ "tabelle": {
+  "Projekt 1 (bestehend)": {
+   "Lokal aufgenommen": 0,
+   "OneDrive": 0,
+   "Bibliothek": 41,
+   "SIA-Normenwerk": 0,
+   "quelle": "Kopfzeile «41 Dokumente · 1 Gruppe · nach Herkunft geordnet» (Tafel von der Paketwahl verdeckt)"
+  },
+  "Wegwerf 191 (neu)": {
+   "Lokal aufgenommen": 0,
+   "OneDrive": 0,
+   "Bibliothek": 41,
+   "SIA-Normenwerk": 0,
+   "quelle": "Tafel: eine Spalte «Bibliothek», Kopfzeile «41 Dokumente · 1 Gruppe»"
+  }
+ },
+ "lokal_aufgenommen": "keine — die Gruppe gibt es auf diesem Geraet nicht.",
+ "bibliothek_genauer": {
+  "lehrhefte": {
+   "anzahl": 24,
+   "aufgenommen": "2026-08-04",
+   "arten": [
+    "Lehrhefte/Skripte Baukonstruktion (Wandbelaege, Verputze, Wandkonstruktionen, Umgebungsarbeiten)",
+    "Buch- und Kapitelauszuege Architekturtheorie/-geschichte",
+    "ein Wettbewerbs-/Raumprogramm-Auszug",
+    "ein Glossar"
+   ],
+   "hinweis": "Die Sammlung «lehrhefte» steht nicht mehr im mitgelieferten Wissens-Index (public/wissen/ enthaelt sie nicht; der Index wurde am 11.08. auf das Vorhandene bereinigt, 999271240). Die 24 sind also ein Altbestand aus einer frueheren Auslieferung, der in der Geraete-Datenbank liegen blieb."
+  },
+  "persona": {
+   "anzahl": 17,
+   "aufgenommen": "2026-08-11",
+   "arten": [
+    "persoenliche Entwurfs-Leitsaetze des Owners (eine Reihe in 17 Teilen)"
+   ],
+   "hinweis": "entspricht public/wissen/persona.json (17 Quellen)."
+  },
+  "wie_hereingekommen": "Beide per «Sammlung laden» (Basis-Sammlung aus public/wissen/ in die Wissensbasis, knowledge.ts: source 'basis', ohne projektId) — nicht ueber Tafel oder Aufnahme-Insel. Wer den Knopf gedrueckt hat (Owner oder ein Pruefdurchgang), ist aus den Daten nicht zu sehen."
+ },
+ "folgerung_fuer_den_owner": "Nach der Tafel-Reparatur bleiben alle 41 in jedem Projekt sichtbar, weil sie Bibliothek sind (Entscheid 14). Verschwinden wuerden sie nur, wenn die Bibliothek aus der Tafel herausgenommen oder die Altsammlung «lehrhefte» von diesem Geraet entfernt wird — beides Owner-Entscheid; ich habe nichts geloescht.",
+ "nebenbefund": "In Projekt 1 zeigt KosmoPrepare bei jedem Oeffnen die Paketwahl und laesst sich nicht ohne Wahl schliessen (Esc wirkungslos) — die Tafel ist dahinter nicht einsehbar.",
+ "nicht_getan": "nichts geloescht (ausser dem eigenen Wegwerf-Projekt, mit Rueckfrage der App), nichts neu geordnet (Ordnung zurueck auf «nach Art»), kein Code geaendert, kein Paket in Projekt 1 gewaehlt, keine Datei- oder Projektnamen zurueckgegeben.",
+ "fehler": null
+}
