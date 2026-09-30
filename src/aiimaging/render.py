@@ -477,11 +477,16 @@ def wurzel_fuer(name: str) -> Path:
     ``z-image-turbo``; aus dem Namen allein fand der Ladeweg sie nicht. Ein Name, den das
     Register nicht kennt, bleibt sein eigener Ordner (so bisher).
     """
+    return standard_modell_wurzel(_gewichte_ordner(name))
+
+
+def _gewichte_ordner(name: str) -> str:
+    """Der Ordnername der Gewichte eines Eintrags — ``gewichte_ordner`` oder der Name."""
     try:
         eintrag = backbone.hole(name)
     except backbone.BackboneError:
-        return standard_modell_wurzel(name)
-    return standard_modell_wurzel(getattr(eintrag, "gewichte_ordner", None) or eintrag.name)
+        return name
+    return getattr(eintrag, "gewichte_ordner", None) or eintrag.name
 
 
 def schreibprobe(pfad) -> dict:
@@ -571,7 +576,11 @@ def modellwurzel_lage(backbone_name: str) -> dict:
     bleibt die Funktion dort prüfbar, wo kein einziges Gewicht liegt — also hier.
     """
     basis, herkunft = modellwurzel()
-    wurzel = basis / backbone_name
+    # Der ORDNER, nicht der Name (auf-20260930-201: Die Vorpruefung suchte
+    # «z-image-turbo-union21», der Ladeweg haette die Basis unter «z-image-turbo» gefunden —
+    # zwei Stellen, zwei Antworten. Beide gehen jetzt ueber das Register.)
+    ordner = _gewichte_ordner(backbone_name)
+    wurzel = basis / ordner
     existiert = wurzel.is_dir()
 
     if existiert:
@@ -586,16 +595,16 @@ def modellwurzel_lage(backbone_name: str) -> dict:
     probe = schreibprobe(wurzel)
     if herkunft == HERKUNFT_UMGEBUNG:
         grund = (f"{UMGEBUNG_MODELLE} zeigt auf {str(wurzel.parent)!r}, und dort liegt "
-                 f"kein Ordner {backbone_name!r}. Der Pfad ist gesetzt und trifft nicht.")
+                 f"kein Ordner {ordner!r}. Der Pfad ist gesetzt und trifft nicht.")
     elif herkunft == HERKUNFT_ALTWURZEL:
         grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt die vorhandene Ablage "
                  f"{ALTWURZEL_HOMESTATION!r}, und dort liegt kein Ordner "
-                 f"{backbone_name!r}. Das ist keine Aussage ueber das Modell, sondern "
+                 f"{ordner!r}. Das ist keine Aussage ueber das Modell, sondern "
                  f"ueber die Umgebung (auf-vis-20260826-16).")
     else:
         grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt der Vorgabeort dieses "
                  f"Betriebssystems {str(wurzel.parent)!r}, und dort liegt kein Ordner "
-                 f"{backbone_name!r}. Das ist keine Aussage ueber das Modell, sondern "
+                 f"{ordner!r}. Das ist keine Aussage ueber das Modell, sondern "
                  f"ueber die Umgebung — wer hier das Modell prueft, sucht am falschen "
                  f"Ort (auf-vis-20260826-16).")
     grund += _wegweiser(wurzel, probe)

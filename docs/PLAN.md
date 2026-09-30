@@ -7579,6 +7579,8 @@ Bekannt und ausdrücklich nicht erledigt:
           (31,1 GiB gemessen → Schichtauslagerung auf 32 GB).
     - [ ] **local:** `auf-20260930-201` — Vergleich 1.0 gegen 2.1, 96 Bilder, Auge blind
           (Regel: Hochbau +20 Punkte «steht», Testbau höchstens −10).
+    - [x] **Owner (vorab):** Läuft 2.1 sicher (~17 s, Auslagerung) oder schnell (~2 s, 260 MiB
+          Luft)? — «Sicher» (Protokoll 73 §22).
     - [ ] **Danach:** 2.1 Vorgabe? — nach Regel; Ansage an local und cloud (engine_used ändert
           sich).
     - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst

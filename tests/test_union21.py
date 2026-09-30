@@ -48,3 +48,25 @@ def test_die_gemessene_spitze_laesst_auf_32_gb_auslagern():
 def test_nie_vorgabe():
     assert NAME not in {backbone.VORGABE_BACKBONE, backbone.VORSCHAU_BACKBONE,
                         backbone.RUECKFALL_BACKBONE}
+
+
+def test_die_vorpruefung_sucht_im_selben_ordner_wie_der_ladeweg(tmp_path, monkeypatch):
+    """auf-201: `rendere` prüft VOR dem Laden mit `modellwurzel_lage` — die suchte den Namen
+    als Ordner und wies ab, obwohl der Ladeweg die Basis gefunden hätte."""
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path))
+    (tmp_path / "z-image-turbo").mkdir()
+    lage = render.modellwurzel_lage(NAME)
+    assert lage["existiert"] is True
+    assert lage["wurzel"] == str(tmp_path / "z-image-turbo") == str(render.wurzel_fuer(NAME))
+
+
+def test_rendere_weist_union21_nicht_mehr_wegen_des_ordners_ab(tmp_path, monkeypatch):
+    """Der Weg, den die HomeStation fuhr: ohne modell, ohne _lader, ohne modell_wurzel."""
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path))
+    (tmp_path / "z-image-turbo").mkdir()
+    tiefe = tmp_path / "tiefe.png"
+    tiefe.write_bytes(b"x")
+    a = render.RenderAuftrag(backbone=NAME, depth_png=str(tiefe), prompt="a house",
+                             ausgabe_png=str(tmp_path / "aus.png"))
+    erg = render.rendere(a)
+    assert "kein Ordner" not in (erg.get("error") or ""), erg.get("error")
