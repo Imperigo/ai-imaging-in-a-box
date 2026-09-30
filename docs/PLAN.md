@@ -7518,7 +7518,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Kern (b):** ein Mass suchen, das trennt (Kandidat: Umriss aus den Bildkanten, ohne
         Schätzer), dann Messauftrag an local. Mitbetroffen: Startwert-Auswahl und Tor A. —
         `aiimaging.umriss` gebaut, Nullproben bestanden (Protokoll 73 §9).
-  - [ ] **local:** `auf-20260930-183` — trennt `umriss` an erzeugten Bildern?
+  - [x] **local:** `auf-20260930-183` — trennt `umriss` an erzeugten Bildern? — absolut
+        nein; als Rangfolge besser als ρ (richtig stehende Bilder oben, 9 statt 6 von 12
+        paarweise). Protokoll 73 §10.
+  - [ ] **Owner:** Startwert-Auswahl künftig nach `umriss` statt ρ — erst nach einer
+        grösseren Bestätigungsreihe?
   - [x] **local:** 178 beantwortet — Qwen-Image-2.1 läuft nur mit Auslagerung, Geometrie
         kommt nicht an (§8); Registerfehler behoben.
   - [x] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;
