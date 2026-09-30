@@ -7658,8 +7658,9 @@ Bekannt und ausdrücklich nicht erledigt:
 > Entscheide: auswärts präsentieren (Tunnel), kein Apple-Entwicklerkonto, Sprachmodell wie Kosmo.
 > Schätzung: erste Fassung ohne Assistent ~3 Wochen, vollständig ~5–6 Wochen (Mitte November).
 
-- [ ] **Kern/Fläche:** Blätter auf der Entwurfsfläche — Start am Mac (was baut sich auf, was
+- [x] **Kern/Fläche:** Blätter auf der Entwurfsfläche — Start am Mac (was baut sich auf, was
       sieht man dabei), Verbindung zum Heim-PC (auswärts), iPad über den Mac, Assistent.
+      *(gezeichnet 30.09.2026: Blätter 13, 13b, 14 auf der Entwurfsfläche, mit fünf Fragen an den Owner — Sitzung 73 §28)*
 - [ ] **Owner:** die Blätter ansehen und entscheiden.
 - [ ] **Kern:** Tunnel wählen und belegen (Lizenz, Betrieb, Kosten) — Vorschlag mit Varianten.
 - [ ] **Kern:** Mac-Hülle, die beim Öffnen Heim-PC, Sprachmodell und iPad-Dienst selbst aufbaut.
