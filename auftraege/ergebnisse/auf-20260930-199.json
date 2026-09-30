@@ -1,0 +1,144 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-199",
+ "status": "ok",
+ "beendet": "2026-09-30T18:34:27Z",
+ "stand": "git log -1: d2af54f «Union-2.1 als eigener Registereintrag …»; Teil A gelesen.",
+ "B": {
+  "ordner": "z-image-controlnet-union-2.1 (neben z-image-controlnet-union, relativ zur Modellwurzel)",
+  "angelegt": "lag BEREITS vor (Ordner und Datei vom 23.09.2026, aus auf-158 C) — nicht neu angelegt; genau EINE .safetensors darin (Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors, 6 712 485 600 Byte, eigene Datei, 1 Link)",
+  "sha256_2_1": "d1251cc7bc3486bc61d25c3be498ef394c31c85ddf4ee9137d2e933411f4a689 — stimmt",
+  "sha256_1_0": "86c085c0d7853f12ce5183499934b54d08371c60f549c5a6b20615cd23989388 — gleich wie am 23.09. (auf-158) und unveraendert; Datei und Ordner nicht angefasst"
+ },
+ "C1_C2": {
+  "methode": "eigenes Skript wie 158 C: ZImageControlNetModel.from_single_file + ZImageControlNetPipeline.from_pretrained(z-image-turbo), .to('cuda') = volle Ladung; 8 Schritte, Staerke 1.0, Fuehrung 0.0, Hochbau-Tiefenkarte Blick s (Rahmung bauwerk, aus 194), Polaritaet wie Register; je Lauf reset_peak_memory_stats; nvidia-smi im 1-s-Raster daneben. Laeufe direkt nacheinander in einem Prozess, Startwerte 0,1,2.",
+  "2_1": {
+   "laden": {
+    "frei_vor_laden_mib": 30949,
+    "gesamt_mib": 32107,
+    "laden_s": 4.2,
+    "nach_laden_allocated_mib": 26194
+   },
+   "laeufe": [
+    {
+     "px": 512,
+     "lauf": 1,
+     "frei_vor_lauf_mib": 4334,
+     "max_memory_allocated_mib": 26930,
+     "max_memory_reserved_mib": 27744,
+     "sekunden": 1.83
+    },
+    {
+     "px": 512,
+     "lauf": 2,
+     "frei_vor_lauf_mib": 3078,
+     "max_memory_allocated_mib": 26930,
+     "max_memory_reserved_mib": 27744,
+     "sekunden": 1.68
+    },
+    {
+     "px": 512,
+     "lauf": 3,
+     "frei_vor_lauf_mib": 3081,
+     "max_memory_allocated_mib": 26930,
+     "max_memory_reserved_mib": 27744,
+     "sekunden": 1.67
+    },
+    {
+     "px": 1024,
+     "lauf": 1,
+     "frei_vor_lauf_mib": 3081,
+     "max_memory_allocated_mib": 29095,
+     "max_memory_reserved_mib": 30498,
+     "sekunden": 5.96
+    },
+    {
+     "px": 1024,
+     "lauf": 2,
+     "frei_vor_lauf_mib": 328,
+     "max_memory_allocated_mib": 29095,
+     "max_memory_reserved_mib": 30568,
+     "sekunden": 5.93
+    },
+    {
+     "px": 1024,
+     "lauf": 3,
+     "frei_vor_lauf_mib": 259,
+     "max_memory_allocated_mib": 29095,
+     "max_memory_reserved_mib": 30568,
+     "sekunden": 5.95
+    }
+   ],
+   "nvidia_smi_spitze_mib": {
+    "512": 30581,
+    "1024": 31878
+   }
+  },
+  "1_0": {
+   "laden": {
+    "frei_vor_laden_mib": 30930,
+    "gesamt_mib": 32107,
+    "laden_s": 3.6,
+    "nach_laden_allocated_mib": 22724
+   },
+   "laeufe": [
+    {
+     "px": 512,
+     "lauf": 1,
+     "frei_vor_lauf_mib": 7893,
+     "max_memory_allocated_mib": 23391,
+     "max_memory_reserved_mib": 24190,
+     "sekunden": 1.53
+    },
+    {
+     "px": 1024,
+     "lauf": 1,
+     "frei_vor_lauf_mib": 6624,
+     "max_memory_allocated_mib": 25352,
+     "max_memory_reserved_mib": 26772,
+     "sekunden": 4.81
+    }
+   ],
+   "nvidia_smi_spitze_mib": {
+    "512": 27040,
+    "1024": 28064
+   }
+  },
+  "zusammenfassung": "2.1 voll geladen: Spitze allocated 26 930 MiB (512) / 29 095 MiB (1024), nvidia-smi 30 581 / 31 878 MiB bei 32 607 MiB Karte; bei 1024 bleiben nur ~260 MiB frei. Zeit je Bild 1.7 s (512) / 5.9 s (1024). 1.0 zum Vergleich: 23 391 / 25 352 MiB, 1.5 / 4.8 s. 2.1 braucht also +3.5 bis +3.7 GiB und ~20 % mehr Zeit; volle Ladung GEHT auf der 5090, aber bei 1024 knapp.",
+  "sonst_auf_der_karte": "vor dem Lauf 651 MiB belegt, Ollama leer; Leistung maximal 340 W"
+ },
+ "C3": {
+  "erster_lauf_ohne_modell_wurzel": {
+   "status": "abgelehnt",
+   "error_woertlich": "AIIMAGING_MODELLE zeigt auf '<modellwurzel>', und dort liegt kein Ordner 'z-image-turbo-union21'. Der Pfad ist gesetzt und trifft nicht. …",
+   "befund": "FEHLER IM REGISTER-WEG: render.standard_modell_wurzel(backbone_name) nimmt den Registry-Namen als Unterordner (render.py:470). Der Eintrag z-image-turbo-union21 (backbone.py:924, replace(BACKBONES['z-image-turbo'], …)) sagt nicht, dass die Basisgewichte im Ordner «z-image-turbo» liegen — also sucht der Produktweg «<modellwurzel>/z-image-turbo-union21». Ohne Ausweg rechnet der Eintrag nie; der Abholer wuerde ablehnen. Nicht behoben (Register nicht aendern)."
+  },
+  "zweiter_lauf_mit_modell_wurzel": {
+   "wie": "derselbe RenderAuftrag, nur modell_wurzel = standard_modell_wurzel('z-image-turbo') gesetzt (dokumentiertes Feld des Auftrags, keine Code-Aenderung). Hochbau-Tiefenkarte Blick s aus 194 (Rahmung bauwerk), 512 px, Startwert 0.",
+   "status": "ok",
+   "bild": "ja",
+   "zeit_s": 17.0,
+   "engine_im_ergebnis": "backbone = z-image-turbo-union21 (parameter.backbone ebenso); lizenz.controlnet.id alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1, Apache-2.0",
+   "ladeweg": {
+    "geraet": "cuda+schichtauslagerung",
+    "ladeweg": "ZImageControlNetPipeline + from_single_file(Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors)",
+    "bedarf": {
+     "quelle": "Schaetzung aus der Parameterzahl (Registry)",
+     "zuschlag": 1.25,
+     "verlangt_mib": 34688,
+     "frei_mib": 30938,
+     "grund_woertlich": "Entschieden an Schaetzung aus der Parameterzahl (Registry): 27750 MiB x 1.25 = 34688 MiB verlangt, 30938 MiB frei. Groesster Einzelteil nach der Platte: 23479 MiB (die Schaetzung sagte 13875 MiB). Stufe 2 (Auslagerung je Komponente) übersprungen: Mit ControlNet endet sie im Gerätekonflikt (gemessen auf-123, auf-20260924-170 B2); Stufe 3 läuft durch."
+    },
+    "entflechtung": "noetig; 5 Untermodule kopiert, 67 → 2 geteilte Parameter; woertlich «NICHT DURCHGEGRIFFEN: 2 von 67 Parametern sind weiter geteilt … Das Auslagern wird voraussichtlich scheitern.» — lief trotzdem durch"
+   },
+   "beobachtung": "Schichtauslagerung, aber nur 17 s (nicht ~7 min wie angekuendigt); nvidia-smi-Spitze waehrend C3 nur 1 828 MiB. Mit der gemessenen Spitze aus C1 (26 930 MiB bei 512) und Zuschlag 1.25 = 33 663 MiB > 30 938 frei wuerde der Ladeweg auch mit Messwert NICHT voll laden — dafuer braeuchte es einen kleineren Zuschlag oder mindest_frei_mib wie bei z-image-turbo."
+  }
+ },
+ "D": {
+  "vergleich": "gleiche Tiefenkarte (Hochbau, Blick s), Startwert 0, 512 px; 1.0 aus C2 (direkte Pipeline), 2.1 aus C3 (Produktweg). Zaehlt fuer nichts.",
+  "1_0": "die «Gasse» kommt wieder: der Umriss wird als hohe Fensteroeffnung in einer hellen Wand gelesen, darunter erfundene Fassadenreste",
+  "2_1": "freistehender Turm genau auf der Silhouette, Raster aus Lisenen, vor hellem Grund auf einer Platte — steht, wirkt aber eher wie ein graues Modell als wie ein Foto"
+ },
+ "nicht_getan": "Register nicht geaendert, Vorgabe nicht umgestellt, 1.0-Datei nicht verschoben, keine Bilder ins Repo, nur diese Ergebnisdatei committet.",
+ "fehler": null
+}
