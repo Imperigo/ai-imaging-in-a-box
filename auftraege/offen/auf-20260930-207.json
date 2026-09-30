@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-207",
+  "art": "frage",
+  "beschreibung": "KosmoPublish/KosmoPrepare: Nachmessung nach 203/206 am echten IFC und der echten Szene (Decken, Programmtabelle, Kote gegen Platzierung, Nachbarumrisse) und der Knoten «Sun Position» in Blender.",
+  "anweisung": "=== KOSMOPUBLISH + KOSMOPREPARE: NACHMESSUNG NACH 203 / 206 UND DER SONNEN-KNOTEN ===\n\nWORUM ES GEHT\n  Eure Antworten 203 und 206 haben vier Befunde geliefert; sie sind jetzt in KosmoPublish gebaut:\n    - 7093124  eine Decke ohne Rolle verwirft nicht mehr den ganzen Plansatz (EINE Sammelwarnung)\n    - f0c74bd  die Programmtabelle kuerzt sichtbar: «… N weitere Zeilen» mit Flaeche, darunter die Summe\n    - 0c168f7  widersprechen sich Elevation und Platzierung der Geschosse, sagt es ifc-bridge\n               («KOTE WIDERSPRICHT DER PLATZIERUNG …») — Verdacht fuer die 165 Koten, NICHT bestaetigt\n    - a4ee3d2  die Nachbarumrisse werden auf das Fenster «Hauptgebaeude + --kontext-m» beschnitten\n  Dazu KosmoPrepare e503271: der Knoten «Sun Position» rechnet die Sommerzeit nach EU-Regel und lehnt ohne\n  Standort ab. Hier stehen weder das echte IFC noch Blender — nur ihr koennt es fahren.\n\nWAS ZU TUN IST\n  0. Beide Klone: git pull --ff-only. KosmoPublish muss a4ee3d2 oder juenger zeigen, KosmoPrepare f601088\n     oder juenger.\n\n  A. DASSELBE ECHTE IFC WIE IN 203 (Wegwerfordner, wie dort):\n     1. ifc-bridge wie in 203. Steht in den Warnungen eine Zeile «KOTE WIDERSPRICHT DER PLATZIERUNG»? ja/nein,\n        woertlich (Namen durch <X>). Ausserdem aus der Bruecken-JSON: die elevation_m der 11 Geschosse als\n        Zahlenliste (ohne Namen).\n     2. materialize --sia-full wie in 203, OHNE Behelf (Decken NICHT leeren). Erwartet: Rueckgabe 0, SVG > 0,\n        eine Zeile zu den Decken ohne Rolle. Rueckgabe, Zahl der SVG, Linter-Zeile, R002 je Zeichnungsart.\n     3. generate-poster wie in 203. Die Zeile «Programmtabelle gekuerzt: …» woertlich. Blatt einmal ANSEHEN:\n        steht unter der Tabelle «… N weitere Zeilen» und «Summe»? Laeuft die Tabelle noch in den Konzepttext?\n        je ja/nein + ein Satz.\n\n  B. HAUPTGEBAEUDE, dieselbe Szene wie in 206, Schritt 3 (mit Marker) wiederholen:\n       blender --background --python-use-system-env --python-exit-code 1 <kopie.blend> \\\n         --python tools/hauptgebaeude_zeichnen.py -- --out /tmp/hg207\n     Zahlen aus bericht.json wie in 206 und der Grundriss-Rahmen (x-/y-Spanne der Ebene ContextSilhouette).\n     Erwartet: deutlich kleiner als 418.9 × 321.3 m. Einmal ansehen: fuellt das Hauptgebaeude das Blatt jetzt?\n     ja/nein + ein Satz.\n\n  C. KOSMOPREPARE-KNOTEN «Sun Position» in Blender (frische Szene, Add-on aktiv):\n     1. Szenenwerte wettbewerb_lv95_easting = 2600000, wettbewerb_lv95_northing = 1200000 setzen\n        (erfundener Punkt), Knoten anlegen, Szenen-Ursprung an, Datum 21.3.2026, 12:00, «Sonne setzen».\n        Meldungszeile woertlich. Erwartet: CET+1 und Alt ≈ 42.7°, Az ≈ 167° (das Werkzeug kosmoprepare_sonne\n        liefert fuer denselben Punkt 42.67° / 167.24°).\n     2. Dasselbe am 30.3.2026 12:00 — erwartet CET+2.\n     3. Szenenwerte loeschen, Szenen-Ursprung an, «Sonne setzen»: erwartet eine Fehlermeldung statt einer Sonne.\n     Je Schritt: Meldung woertlich, Traceback ja/nein.\n\nRUECKGABE\n  - Staende beider Klone, Blender-Fassung.\n  - A1–A3, B, C1–C3 wie oben, Zahlen und Meldungen woertlich (Namen durch <X> ersetzt).\n  - Traceback oder «No module named» irgendwo? ja/nein.\n\nNICHT TUN: keine Bilder, SVG, PDF, IFC- oder Szenendaten zurueckgeben oder committen; Originale nicht\nveraendern; nichts installieren; keinen Code aendern; nichts committen ausser der Antwortdatei. Keine absoluten\nPfade mit Benutzernamen, keine Projekt-, Orts- oder Bueronamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T23:30:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "dasselbe echte IFC wie auf-20260930-203 und dieselbe echte Blender-Szene wie auf-20260930-206 (nur am Heimrechner, Wegwerfkopien)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmopublish_stand_min": "a4ee3d2",
+    "kosmoprepare_stand_min": "f601088",
+    "daten_bleiben_lokal": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell, kein Render — nur --background.",
+    "hinweise": [
+      "ECHTE Daten: nur Zahlen zurueck (REGEL 3).",
+      "Nichts installieren; Leihpfad nur zur Laufzeit."
+    ]
+  },
+  "rueckgabe": [
+    "Staende, Blender-Fassung.",
+    "A1-A3 Meldungen und Zahlen woertlich.",
+    "B bericht.json-Zahlen, Rahmen, Sichtprobe ja/nein.",
+    "C1-C3 Meldungen woertlich.",
+    "Fehler ja/nein woertlich."
+  ],
+  "rang": 4
+}
