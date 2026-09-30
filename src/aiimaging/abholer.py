@@ -2609,7 +2609,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 lambda png: messen(png, soll, breite=breite, hoehe=hoch,
                                    modell=_tiefen_modell, schwelle=grenze,
                                    maske=maskenbefund.get("maske")),
-                maske_da=maskenbefund.get("maske") is not None)
+                maske_da=maskenbefund.get("maske") is not None,
+                soll=soll, breite=breite, hoehe=hoch)
             bilder.append(ergebnis["bild_png"])
             anker = None
             maskenanker = None
@@ -4209,7 +4210,33 @@ def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:
 VERFAHREN_BELICHTUNG = "belichtungsrahmen"
 
 
-def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
+#: Wonach unter mehreren Startwerten ausgewählt wird: ``"umriss"`` oder ``"rho"``.
+#:
+#: **«umriss» seit dem 30.09.2026 abends** (Owner-Entscheid «1», Regel vor der Messung
+#: festgelegt, Sitzung 73 §11/§16). Bestätigungsreihe ``auf-20260930-190`` (36 Bilder,
+#: Bauwerksrahmung, Auge blind): In 5 von 5 Fällen mit einem richtig stehenden Bild setzte
+#: die Umrisstreue ein solches auf Platz 1, ρ nur in 3 — ρ wählte einmal eine Öffnung in
+#: einer Glaswand, einmal einen Glaskörper in einer Fassade. **Vorbehalt, ausdrücklich:**
+#: Zählt man «unklar» als richtig, liegen beide gleichauf (6 von 6); und in ``auf-186``
+#: (nach der Szene gerahmt) war es umgekehrt. Mit ``"rho"`` gilt die alte Auswahl.
+SEEDAUSWAHL_NACH = "umriss"
+
+
+def _umriss_abhebung(bild_png, soll, breite, hoehe):
+    """Die Abhebung der Umrisstreue — oder ``None``, wenn sie nicht messbar ist."""
+    if soll is None or not breite or not hoehe:
+        return None
+    from aiimaging import umriss
+    try:
+        aus = umriss.umriss_aus_dateien(bild_png, soll, breite, hoehe)
+    except Exception:                                    # noqa: BLE001
+        return None
+    wert = aus.get("abhebung")
+    return float(wert) if isinstance(wert, (int, float)) else None
+
+
+def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool,
+                 soll=None, breite=None, hoehe=None):
     """Mehrere Seeds rendern und den besten behalten — oder begründet nur einen.
 
     **Warum es das gibt (gemessen am 22.08.2026, `docs/POLARITAET_UND_STAERKE_2026-08-22.md`):**
@@ -4272,10 +4299,24 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
         gerichtet = rm.get("gerichtet") if isinstance(rm, dict) else None
         paar = urteil.get("paarurteil")
         kandidaten.append({"seed": seed, "gerichtet": gerichtet, "paarurteil": paar,
+                           "abhebung": _umriss_abhebung(erg["bild_png"], soll, breite, hoehe),
                            "bild": erg["bild_png"], "_erg": erg, "_urteil": urteil})
 
+    nach_umriss = [k for k in kandidaten if k["abhebung"] is not None]
     messbar = [k for k in kandidaten if k["gerichtet"] is not None]
-    if not messbar:
+    if SEEDAUSWAHL_NACH == "umriss" and nach_umriss:
+        sieger = max(nach_umriss, key=lambda k: k["abhebung"])
+        werte = sorted((k["abhebung"] for k in nach_umriss), reverse=True)
+        # Kein belegter Vorsprung: Den Boden der Umrisstreue zwischen zwei Wuerfen hat
+        # niemand gemessen — ihn am Boden von rho zu pruefen, verglich zwei Masse.
+        vorsprung = None
+        grund = (f"Bester von {len(nach_umriss)} Seeds nach der UMRISSTREUE (abhebung, "
+                 f"Kanten im Bild an den Soll-Spruengen; um 1 heisst Zufall). Spanne "
+                 f"{min(werte):.3f} bis {max(werte):.3f}. Seit 30.09.2026 (auf-190); "
+                 f"rho steht als Auskunft daneben. Ob der Vorsprung ueber dem Rauschen "
+                 f"liegt, ist UNGEMESSEN.")
+        ausgewaehlt = True
+    elif not messbar:
         # Alle ungemessen: dann ist der erste so gut wie jeder andere, und das gehoert
         # gesagt statt kaschiert.
         sieger = kandidaten[0]
@@ -4315,7 +4356,10 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
     erg = dict(sieger["_erg"], bild_png=ziel_png)
     auswahl = {"gewaehlt": sieger["seed"], "ausgewaehlt": ausgewaehlt, "grund": grund,
                "vorsprung": vorsprung,
+               "nach": SEEDAUSWAHL_NACH if any(k.get("abhebung") is not None
+                                                for k in kandidaten) else "rho",
                "kandidaten": [{"seed": k["seed"], "gerichtet": k["gerichtet"],
+                               "abhebung": k.get("abhebung"),
                                "paarurteil": k.get("paarurteil")} for k in kandidaten]}
     _auswahl_ablegen(aus, kuerzel, auswahl)
     return erg, sieger["_urteil"], auswahl

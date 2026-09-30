@@ -105,6 +105,15 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (nachts) · Unter mehreren Versuchen wird jetzt nach dem Umriss ausgewählt
+
+* **Bestätigt:** Mit der neuen Rahmung standen am Heim-PC 19 von 36 Bildern richtig (vorher 2).
+  Unter den Versuchen eines Bildes wählt die neue Umriss-Messung öfter das richtige als die
+  alte Zahl — nach der Regel, die vorher feststand.
+* **Umgestellt:** Das behaltene Bild wird jetzt nach dem Umriss gewählt.
+* **Vorbehalt:** Der Vorsprung ist knapp und hängt daran, wie man unklare Bilder zählt. Ein Ja
+  oder Nein für ein einzelnes Bild liefert auch diese Messung nicht.
+
 ### 30.09.2026 (spätabends) · Die Kamera schaut aufs Gebäude, nicht aufs Grundstück
 
 * **Gefunden:** Am Heim-PC füllte das Gebäude oft nur 2 % des Bildes, weil die Kamera das

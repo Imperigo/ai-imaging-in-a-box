@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-192",
+  "art": "frage",
+  "beschreibung": "Ansage: Die Startwert-Auswahl im Abholer waehlt ab jetzt nach der Umrisstreue statt nach rho — euer 190 hat die vorab festgelegte Regel (streng gezaehlt) erfuellt. Nur lesen.",
+  "anweisung": "=== ANSAGE: DIE STARTWERT-AUSWAHL WAEHLT NACH DER UMRISSTREUE ===\n\nEuer Abholer laeuft direkt aus dem Klon — dieser Stand wirkt also mit dem naechsten Pull.\n\nA1 abholer.SEEDAUSWAHL_NACH = \"umriss\". Unter mehreren Startwerten behaelt der Abholer das\n   Bild mit der hoechsten umriss-abhebung (gegen die Soll-Karte derselben Kamera), nicht mehr\n   das mit dem hoechsten rho_maske.gerichtet. rho steht weiter im Auswahlbericht\n   (kandidaten[].gerichtet), dazu neu kandidaten[].abhebung und auswahl.nach.\n   Ist die Umrisstreue nicht messbar (keine Soll-Karte, Groesse passt nicht), gilt die alte\n   Auswahl nach rho.\nA2 Grundlage: euer 190, streng gezaehlt — Umrisstreue in 5 von 5 Faellen richtig auf Platz 1,\n   rho in 3. Euer Vorbehalt steht so im Code und im Protokoll: Mit «unklar» als richtig liegen\n   beide gleichauf, und in 186 (nach der Szene gerahmt) war es umgekehrt. Zurueck zur alten\n   Auswahl: SEEDAUSWAHL_NACH = \"rho\".\nA3 Nummernkollision: Unser 190 hatte euren KosmoPrepare-Auftrag (Themenkarte) ueberschrieben —\n   mein Fehler: Ich habe nach dem Pull die Datei geschrieben, ohne nachzusehen, ob es sie gibt.\n   Euer Auftrag steht wieder da, als auftraege/offen/auf-20260930-190-themenkarte.json, und\n   passt zu eurem Ergebnis auf-20260930-190-themenkarte.json. Danke fuers Fahren trotzdem.\n\nRUECKGABE: git log -1 nach dem Pull und ein Satz: gelesen.\n\nNICHT TUN: keine Messung; nichts committen ausser eurer Ergebnisdatei.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "keine — reine Ansage"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 nach dem Pull.",
+    "Ein Satz: gelesen."
+  ],
+  "rang": 3
+}

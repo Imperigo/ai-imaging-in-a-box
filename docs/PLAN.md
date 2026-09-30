@@ -7526,7 +7526,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **local:** `auf-20260930-186` — Bestätigungsreihe, Regel vorab festgelegt. — nicht
         erfüllt; ρ wählte besser (Protokoll 73 §15).
   - [x] **Kern:** Kette/arbeitsgang rahmt nach dem Bauwerk (alle drei Wege gleich).
-  - [ ] **local:** `auf-20260930-190` — 186 wiederholt mit Bauwerksrahmung.
+  - [x] **local:** `auf-20260930-190` — 186 wiederholt mit Bauwerksrahmung. — Regel streng
+        erfüllt; Startwert-Auswahl nach der Umrisstreue (Protokoll 73 §16).
+  - [ ] **local:** `auf-20260930-192` — Ansage der neuen Auswahl lesen.
   - [x] **local:** 178 beantwortet — Qwen-Image-2.1 läuft nur mit Auslagerung, Geometrie
         kommt nicht an (§8); Registerfehler behoben.
   - [x] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;
