@@ -1,0 +1,15 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-181",
+ "status": "ok",
+ "beendet": "2026-09-30T09:40+02:00",
+ "stand": "aa31bbb Editiermodelle bekommen das Schönbild; ein neues Geometriemass ohne Tiefenschätzer",
+ "geprueft": [
+  "git pull --ff-only sauber; Ansage A1–A3 gelesen",
+  "grep nach 'INNENANSICHT' ueber alle eigenen Auswertungsskripte unter ~/kosmo-probe (*.py, *.sh, *.mts, *.mjs): kein Treffer"
+ ],
+ "kurzantwort": "Gelesen. Keine unserer Auswertungen durchsucht verdict.reason nach «INNENANSICHT» — nichts umzustellen. A2 (null im MCP-Eingang) und A3 (Qwen-Image-2.1 ohne Schalter, lizenz_offen) zur Kenntnis; 184 faehrt ohne Schalter.",
+ "befunde": {},
+ "umgebung": {},
+ "fehler": []
+}
