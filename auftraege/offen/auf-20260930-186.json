@@ -1,0 +1,58 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-186",
+  "art": "frage",
+  "beschreibung": "Bestaetigungsreihe vor einem Umbau der Startwert-Auswahl: waehlt umriss.umriss_treue (abhebung) unter sechs Startwerten oefter ein richtig stehendes Bild als rho_maske? 36 Bilder, Augenurteil blind vor den Zahlen.",
+  "anweisung": "=== BESTAETIGUNGSREIHE: SOLL DIE UMRISSTREUE DIE STARTWERT-AUSWAHL UEBERNEHMEN? ===\n\nWORUM ES GEHT\n  Euer 183: umriss.umriss_treue traegt keine feste Schwelle, ordnet aber Bilder derselben\n  Szene besser als rho (die drei richtig stehenden oben, paarweise 9 statt 6 von 12). Die\n  Startwert-Auswahl im Abholer (abholer._bester_seed, VORGABE_SEEDS = (0, 1, 2)) waehlt heute\n  nach rho_maske.gerichtet — nach der Zahl, die nachweislich nicht trennt (175). Der Owner\n  will vor einem Umbau eine groessere Reihe (Entscheid 30.09.: «1 nach deiner Empfehlung»).\n\nDIE ENTSCHEIDUNGSREGEL — VOR DER MESSUNG FESTGELEGT (bitte nicht nachtraeglich anpassen)\n  Umgestellt wird, wenn BEIDES gilt:\n    (a) abhebung setzt in mindestens 5 der 6 Faelle (Koerper x Blick) ein richtig stehendes\n        Bild auf Platz 1 — gezaehlt nur Faelle, in denen es ueberhaupt eines gibt;\n    (b) abhebung tut das in mehr Faellen als rho_maske.gerichtet.\n  Sonst bleibt die Auswahl, wie sie ist, und das ist ein vollstaendiges Ergebnis.\n\nLAUF\n  Methode wie 175/183 (arbeitsgang, z-image-turbo, 1024 px wie dort):\n    Koerper: Testbau (make_test_ifc.py --gelaende) und Hochbau (… --hochbau --gelaende)\n    Blick: s (frontal), sSE (diagonal), wSW (diagonal, die andere Seite)\n    Startwerte: 0, 1, 2, 3, 4, 5\n  = 2 x 3 x 6 = 36 Bilder.\n\n  1. ZUERST DAS AUGE, BLIND: Bevor ihr eine Zahl anseht, je Bild ein Etikett\n     «steht richtig» / «steht falsch» / «unklar» (steht das Gebaeude in Lage UND Form wie im\n     Blender-Schoenbild derselben Kamera?), mit einem Halbsatz. Erst danach rechnen.\n  2. Je Bild gegen die EIGENE Soll-Karte: umriss.umriss_treue (abhebung, trefferquote,\n     praezision) und rho_maske.gerichtet.\n  3. Je Fall (Koerper x Blick): welches Bild setzt abhebung auf Platz 1, welches rho? Ist es\n     ein richtig stehendes?\n  4. Dazu je Fall, was die HEUTIGE Auswahl (nur Startwerte 0–2, nach rho) genommen haette.\n  5. Nullproben je Soll-Karte: graue Flaeche und Rauschen (abhebung).\n\nZURUECK\n  - git log -1.\n  - Je Bild eine Zeile: Koerper, Blick, Startwert, Augenetikett (+ Halbsatz), abhebung,\n    trefferquote, praezision, rho_maske.gerichtet.\n  - Je Fall: Platz 1 nach abhebung, nach rho, und nach der heutigen Auswahl — je mit\n    Augenetikett.\n  - Die Auszaehlung der Regel oben: (a) erfuellt? (b) erfuellt? Und ein Satz: umstellen ja/nein.\n  - Die Nullproben.\n\nNICHT TUN: die Auswahl selbst nicht umbauen (das machen wir nach eurem Ergebnis); keine\nSchwelle setzen; keine Bilder ins Repo; nichts committen ausser eurer Ergebnisdatei.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+  },
+  "params": {
+    "koerper": [
+      "testbau",
+      "hochbau"
+    ],
+    "blick": [
+      "s",
+      "sSE",
+      "wSW"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "backbone": "z-image-turbo",
+    "mass": "umriss.umriss_treue",
+    "vergleich": "rho_maske.gerichtet",
+    "regel": "(a) Platz 1 richtig in >=5 von 6 Faellen, (b) oefter als rho"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: 36 Bilder mit z-image-turbo (~10 s je Bild). Nach 184.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "Augenetikett VOR den Zahlen vergeben."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1.",
+    "Je Bild: Koerper, Blick, Startwert, Augenetikett, abhebung, trefferquote, praezision, rho_maske.gerichtet.",
+    "Je Fall: Platz 1 nach abhebung, nach rho, nach heutiger Auswahl — mit Augenetikett.",
+    "Auszaehlung der Regel (a)/(b) und ein Satz: umstellen ja/nein.",
+    "Nullproben grau und Rauschen."
+  ],
+  "rang": 5
+}
