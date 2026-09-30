@@ -7418,10 +7418,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **local:** `auf-157` (Rang 2) — welche Führung will das Edit-Modell?
 - [ ] **cloud:** `auf-155` mit Nachtrag (Zwillingssatz, F4); dazu 142, 133, 129, 152.
 - [ ] **ui:** `auf-99` mit Nachtrag; dazu die übrigen acht.
-- [ ] **Kern (klein):** `meldung` eines abgewiesenen Tokens an `enqueue_render`/`query_render`
+- [x] **Kern (klein):** `meldung` eines abgewiesenen Tokens an `enqueue_render`/`query_render`
       zurückgeben — vor dem Einschalten der Buchprüfung.
-- [ ] **Kern (klein):** Abbruchfall in `verdict.reason` — «… fehlt.; Geometrie None gegen
+      *(erledigt 30.09.2026: beide Werkzeuge geben `meldung` zurück, im Ausgabeschema zugesagt — Sitzung 73 §26)*
+- [x] **Kern (klein):** Abbruchfall in `verdict.reason` — «… fehlt.; Geometrie None gegen
       0.65» (doppelte Satzzeichen, «None» sichtbar), schon vorher so.
+      *(erledigt 30.09.2026: `_grund_verbinden`, «Geometrie-Score nicht gemessen» — Sitzung 73 §26)*
 - [ ] **Owner:** Abnahmeblatt am iPad (A4/A5 neu); ~~zwei Entscheide aus `auf-156`~~ (von der KosmoPublish-Sitzung gelöst, `auf-159`)
       (Kennwort-Änderung im KosmoPrepare-Klon, Bildtest-Commits bei KosmoPublish); nach
       `auf-158`: wird der Abstand zur Vorgabe?
@@ -7600,9 +7602,13 @@ Bekannt und ausdrücklich nicht erledigt:
           sich).~~ — entfällt, Regel nicht erfüllt.
     - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
           ein Segmentierungsansatz (Lizenzfrage). — erfüllt (195), Bestätigungsreihe ist 196.
-  - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit
-        Führung und 40 Schritten nach Modellkarte.
-  - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
+  - [x] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue. *(erledigt
+        30.09.2026, Sitzung 73 §26; angesagt an local)*
+  - [ ] **local → Kern:** qwen-image-2.1 mit Führung und 40 Schritten nach Modellkarte — die
+        Werte liest die HomeStation aus der Modellkarte bei den Gewichten (Auftrag folgt mit der
+        Ansage), dann trägt der Kern sie ein.
+  - [x] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
+        *(erledigt 30.09.2026: Blender-Bericht trägt `bedarf` mit Satz, `geraeteweg.grund` nie leer — Sitzung 73 §26)*
   - [x] **Owner (E128):** Qwen-Image-2.1 regulär, Lizenz offen → gebaut (Protokoll 73 §6).
   - [ ] **cloud (Int 1):** Vertragsfrage F1/F2 (`vis.backbone: "qwen-image-2.1"`,
         `engine_license_open`) annehmen und einbauen.
