@@ -5853,6 +5853,12 @@ geschrieben wird. So bleibt die feinere innere Unterscheidung für unsere Prüfu
 erhalten, und der Empfänger bekommt nur, was sein Vertrag lesen kann. Im Projekt:
 `kosmo_szene.nur_vertragsfelder`, seit dem 29.09.2026.
 
+**Rahmung (nach dem Bauwerk)** — Worauf die Kamera ihren Bildausschnitt einstellt: auf die
+ganze Szene mit Grundstück, oder nur auf das Gebäude. Nach der Szene gerahmt, füllte der Testbau
+mit grosser Bodenplatte nur 2 % des Bildes — für das Bildmodell ein Detail, das es übermalt.
+Nach dem Bauwerk sind es 21 %. Seit dem 30.09.2026 die Vorgabe am Heim-PC; für KosmoOrbit nach
+einem Beweislauf.
+
 **Umrisstreue (aus den Bildkanten)** — Ein Mass vom 30.09.2026: Hat das erzeugte Bild dort
 Kanten, wo das Gebäude seinen Umriss und seine Stufen hat? Gelesen wird nur das Bild selbst und
 die Tiefenkarte aus Blender — kein Hilfsmodell, das Tiefe schätzt und dabei täuschen kann. Die
@@ -6029,7 +6035,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

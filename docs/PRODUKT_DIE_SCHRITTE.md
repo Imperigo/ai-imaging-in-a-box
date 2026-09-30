@@ -105,6 +105,16 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (spätabends) · Die Kamera schaut aufs Gebäude, nicht aufs Grundstück
+
+* **Gefunden:** Am Heim-PC füllte das Gebäude oft nur 2 % des Bildes, weil die Kamera das
+  ganze Grundstück einrahmte. Das Bildmodell hat so ein Gebäude einfach übermalt.
+* **Umgestellt:** Am Heim-PC rahmt die Kamera jetzt das Gebäude (21 % des Bildes). Für
+  KosmoOrbit-Bestellungen ist es vorbereitet und wird eingeschaltet, sobald ein Beweislauf
+  zeigt, dass die Form dann wirklich hält.
+* **Qwen-Image-2.1** taugt auch als Bildbearbeiter nicht; das freie Qwen-Bearbeitungsmodell
+  schon eher (hält die Form, erfindet aber die Umgebung).
+
 ### 30.09.2026 (abends) · Ein neuer Versuch, die Gebäudeform zu prüfen — ohne Hilfsmodell
 
 * **Neue Messung gebaut:** Sie schaut, ob das erzeugte Bild dort Kanten hat, wo das Gebäude

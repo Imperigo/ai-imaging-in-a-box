@@ -347,6 +347,8 @@ _GENUTZTE_PARAMS = {
     "prompt", "negativ_prompt", "backbone", "seed", "schritte",
     "controlnet_staerke", "denoise", "mit_beauty", "modell_wurzel",
     "schaetzer", "schwelle", "gelaende_erwartet",
+    # «bauwerk» (Vorgabe seit 30.09.2026) oder «szene» — siehe `_rahmung_setzen`.
+    "rahmung",
 } | set(_KAMERA_PARAMS)
 
 
@@ -377,6 +379,37 @@ def _unverstandene_params(_art: str, params: dict) -> list[str]:
     ist. Die Grenze läuft zwischen „hier ungenutzt" und „hier unbekannt".
     """
     return sorted(set(params) - _GENUTZTE_PARAMS)
+
+
+#: Wonach eine Kamera aus einer Richtung rahmt, wenn der Auftrag nichts sagt.
+#:
+#: **«bauwerk» seit dem 30.09.2026** (Owner-Entscheid, Sitzung 73 §13). Bis dahin rahmte
+#: dieser Weg nach der ganzen SZENE: Beim Testbau mit Geländeplatte füllte das Gebäude
+#: 2,0 % des Bildes (die HomeStation meldete in auf-178 und auf-184 genau diese 3,1 %
+#: Geometrie), nach dem Bauwerk 21,0 %. «szene» bleibt bestellbar — für Messungen, die mit
+#: älteren vergleichen wollen.
+VORGABE_RAHMUNG = "bauwerk"
+
+
+def _rahmung_setzen(kamera_gaben: dict, kamerabestellung: dict, params: dict,
+                    glb_bericht: dict) -> None:
+    """Die Bauwerksbox als ``kamera_huellbox`` setzen — nur bei einer Richtungskamera,
+    nur wenn der Auftrag keine eigene Box nennt, und mit einem Vermerk im Ergebnis."""
+    from aiimaging import glbbox
+
+    nach = params.get("rahmung") or VORGABE_RAHMUNG
+    if kamera_gaben.get("kamera") is None or "kamera_huellbox" in kamera_gaben:
+        kamerabestellung["rahmung"] = {"nach": "vorgegeben", "grund": (
+            "Standpunkt von Hand oder eigene kamera_huellbox — keine Rahmung gesetzt.")}
+        return
+    if nach != "bauwerk":
+        kamerabestellung["rahmung"] = {"nach": "szene", "grund": "So bestellt (rahmung)."}
+        return
+    urteil = glbbox.rahmungsbox(glb_bericht["glb_path"],
+                                up_axis=glb_bericht.get("up_axis") or "Y")
+    if urteil["box"] is not None:
+        kamera_gaben["kamera_huellbox"] = urteil["box"]
+    kamerabestellung["rahmung"] = {"nach": urteil["nach"], "grund": urteil["grund"]}
 
 
 def _kamerabestellung(params: dict) -> tuple[dict, dict, tuple[str, str] | None]:
@@ -551,6 +584,8 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
             auftrag_id=satz["auftrag_id"], status="fehler",
             fehler=f"IFC→glb: {glb_bericht.get('error')}",
             dauer_s=round(time.monotonic() - beginn, 1))
+
+    _rahmung_setzen(kamera_gaben, kamerabestellung, params, glb_bericht)
 
     # DIE KAMERA WIRD ANGEFORDERT — bis zum 28.08.2026 stand hier keine, und der Runner
     # stellte darum seine Notkamera. Ein Demolauf zeigte dann Blenders 50-mm-Optik von

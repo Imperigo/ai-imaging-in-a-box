@@ -411,7 +411,11 @@ def test_homeworker_gegenprobe_ohne_auge_bleibt_alles_wie_bisher(tmp_path, blend
     assert kommando[kommando.index("--kamera") + 1] == hw.VORGABE_KAMERA
     assert "--augenhoehe=1.3" in kommando and "--deckungsgrad=0.55" in kommando
     assert "--bias=20.0" in kommando and "--kamera-modus=gekippt" in kommando
-    befund = ergebnis["messwerte"]["kamerabestellung"]
+    befund = dict(ergebnis["messwerte"]["kamerabestellung"])
+    # Seit dem 30.09.2026 steht dazu, wonach gerahmt wurde (Sitzung 73 §13). Die Attrappe
+    # hat keine lesbare glb — dann wie bisher nach der Szene, ohne Pfad im Grund (Regel 3).
+    rahmung = befund.pop("rahmung")
+    assert rahmung["nach"] == "szene" and "/" not in rahmung["grund"], rahmung
     assert befund == {"kamera": hw.VORGABE_KAMERA, "kamera_quelle": "vorgabe",
                       "wirkungslos": {}}
 

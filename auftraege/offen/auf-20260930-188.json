@@ -1,0 +1,53 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-188",
+  "art": "frage",
+  "beschreibung": "Ansage (homeworker rahmt jetzt nach dem Bauwerk) und der Beweislauf vor dem Umschalten fuer KosmoOrbit: haelt z-image-turbo die Gebaeudeform, wenn die Kamera das Bauwerk statt das ganze Grundstueck rahmt?",
+  "anweisung": "=== ANSAGE UND BEWEISLAUF: DIE KAMERA RAHMT DAS BAUWERK, NICHT DAS GRUNDSTUECK ===\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT (lesen, bevor ihr zieht)\n\n  A1 tools/homeworker.py RAHMT JETZT NACH DEM BAUWERK. Eine Richtungskamera (kamera, z. B.\n     sSE) bekommt ohne eigene kamera_huellbox die Bauwerksbox aus glbbox.rahmungsbox\n     (Gelaende nach Namensregel weggelassen). Bisher rahmte sie die ganze Szene. Neu im\n     Ergebnis: messwerte.kamerabestellung.rahmung = {nach, grund}. Wer vergleichen will:\n     params.rahmung = \"szene\" stellt das alte Verhalten her. Standpunkte von Hand\n     (auge/blick_auf) und eine eigene kamera_huellbox sind nicht betroffen.\n     Der ABHOLER (KosmoOrbit-Bestellungen) rahmt NOCH nach der Szene — umgeschaltet wird er\n     erst nach diesem Beweislauf (abholer.RAHMUNG_NACH_BAUWERK).\n  A2 Warum: Euer 178 und 184 meldeten 3,1 % Geometrie im Bild. Bei uns mit echtem Blender\n     nachgemessen (Testbau --gelaende, sSE, 512 px): Gebaeude 2,0 % des Bildes nach der\n     Szene, 21,0 % nach dem Bauwerk. Vermutung: Die Tiefensteuerung von z-image-turbo\n     greift, hatte aber fast nichts zu steuern. Nicht bewiesen — das misst Teil B.\n  A3 qwen-image-2.1: vram_gb jetzt 30,9 (die ganzen Gewichte); der Lader waehlt auf der 5090\n     die Auslagerung je Komponente statt des vollen Wegs (euer Befund aus 184).\n\nTEIL B — DER BEWEISLAUF\n\n  DIE ENTSCHEIDUNGSREGEL — VOR DER MESSUNG FESTGELEGT:\n    Der Abholer wird umgeschaltet, wenn nach dem Bauwerk die Form in MINDESTENS DER HAELFTE\n    der Bilder steht UND in mindestens doppelt so vielen wie nach der Szene.\n\n  Lauf ueber tools/homeworker.py (art render), z-image-turbo, 1024 px, mit_beauty true:\n    Koerper: Testbau (--gelaende) und Hochbau (--hochbau --gelaende)\n    Blick: sSE und s\n    Startwerte: 0 und 1\n    Rahmung: params.rahmung = \"bauwerk\" und = \"szene\"\n    Prompt: «photorealistic architecture photo, overcast sky»\n  = 2 x 2 x 2 x 2 = 16 Bilder.\n\n  1. ZUERST DAS AUGE, BLIND: je Bild «Form steht» / «Form steht nicht» / «unklar», mit\n     Halbsatz (Lage UND Form wie im Blender-Schoenbild?). Erst danach die Zahlen.\n  2. Je Bild: Bauwerk-Anteil im Bild (aus der Material-ID), rho_maske.gerichtet, geom_iou,\n     umriss abhebung, Sekunden.\n\nZURUECK\n  - git log -1.\n  - Je Bild: Koerper, Blick, Startwert, Rahmung, Augenetikett (+ Halbsatz), Bauwerk-Anteil,\n    rho_maske.gerichtet, geom_iou, abhebung.\n  - Auszaehlung der Regel: Form steht nach Bauwerk x von 8, nach Szene y von 8; Regel\n    erfuellt ja/nein.\n\nNICHT TUN: den Abholer nicht selbst umschalten; keine Schwelle aendern; keine Bilder ins\nRepo; nichts committen ausser eurer Ergebnisdatei.\n",
+  "erstellt": "2026-09-30T00:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+  },
+  "params": {
+    "koerper": [
+      "testbau",
+      "hochbau"
+    ],
+    "blick": [
+      "sSE",
+      "s"
+    ],
+    "seeds": [
+      0,
+      1
+    ],
+    "rahmung": [
+      "bauwerk",
+      "szene"
+    ],
+    "backbone": "z-image-turbo",
+    "regel": "umschalten, wenn nach Bauwerk >= 4 von 8 und >= 2x so viele wie nach Szene"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: 16 Bilder mit z-image-turbo. Vor 186 fahren, wenn moeglich — das Ergebnis entscheidet, ob auch 186 nach dem Bauwerk rahmen sollte.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "Augenetikett VOR den Zahlen vergeben."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1.",
+    "Je Bild: Koerper, Blick, Startwert, Rahmung, Augenetikett, Bauwerk-Anteil, rho_maske.gerichtet, geom_iou, abhebung.",
+    "Auszaehlung: Form steht nach Bauwerk x/8, nach Szene y/8; Regel erfuellt ja/nein."
+  ],
+  "rang": 3
+}

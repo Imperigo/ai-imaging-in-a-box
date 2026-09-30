@@ -1498,6 +1498,24 @@ def mindest_frei_mib(backbone_name) -> tuple[int, str]:
     return eintrag.mindest_frei_mib, f"gemessen für {name} ({eintrag.mindest_frei_beleg})"
 
 
+#: Rahmt eine Richtungskamera des Abholers nach dem BAUWERK statt nach der Szene?
+#:
+#: **Noch nicht — Owner-Entscheid 30.09.2026 (Sitzung 73 §13):** erst ein Beweislauf am
+#: Heimrechner (gleiche Szene, beide Rahmungen, ``auf-20260930-188``), dann für KosmoOrbit
+#: umschalten. Der Messweg (``tools/homeworker.py``) rahmt schon nach dem Bauwerk. Gemessen:
+#: Testbau mit Geländeplatte, Gebäude 2,0 % des Bildes nach der Szene, 21,0 % nach dem
+#: Bauwerk. Ein Auftrag mit eigener ``kamera_huellbox`` ist davon nicht betroffen.
+RAHMUNG_NACH_BAUWERK = False
+
+
+def _rahmung_fuer(kamera_huellbox, modell, hochachse, richtung):
+    """Die Box für die Kamera — gegeben, nach dem Bauwerk (wenn eingeschaltet), oder None."""
+    if kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None:
+        return kamera_huellbox
+    from aiimaging import glbbox
+    return glbbox.rahmungsbox(modell, up_axis=hochachse or "Y")["box"]
+
+
 def _engine_aus(render_ergebnis) -> dict | None:
     """``{name, lizenz, fuehrung}`` aus dem Ergebnis des Bildmodells — oder ``None``.
 
@@ -2346,7 +2364,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 #
                 # Der Entscheid liegt bei `auf-41` (G3). Bis dahin: wer die Box hat,
                 # reicht sie; wer nicht, rahmt nach der Szene wie bisher.
-                kamera_huellbox=kamera_huellbox,
+                kamera_huellbox=_rahmung_fuer(kamera_huellbox, modell, hochachse,
+                                              aufgabe.get("richtung")),
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),

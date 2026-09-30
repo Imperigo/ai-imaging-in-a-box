@@ -7532,8 +7532,12 @@ Bekannt und ausdrücklich nicht erledigt:
         nicht? (178, Punkt 3 aus vis-01) — «klein testen».
   - [x] **local:** `auf-20260930-184` — Qwen-Image-2.1 als Bearbeiter, gegen die beiden anderen.
         — 2.1 taugt nicht; edit-2511 hält Form, braucht Maske und Massstab (Protokoll 73 §12).
-  - [ ] **Owner:** Bauwerksrahmung als Vorgabe auf homeworker- und Abholer-Weg (Gebäude 2 % statt
-        21 % des Bildes bei grossem Grundstück; auf-41 G3 seit August offen).
+  - [x] **Owner:** Bauwerksrahmung als Vorgabe auf homeworker- und Abholer-Weg (Gebäude 2 % statt
+        21 % des Bildes bei grossem Grundstück; auf-41 G3 seit August offen). — «ja»: homeworker
+        umgestellt, Abholer nach Beweislauf (Protokoll 73 §13).
+  - [ ] **local:** `auf-20260930-188` — Beweislauf Bauwerk- gegen Szenenrahmung, Regel vorab.
+  - [ ] **Kern → cloud:** Nach bestandenem Beweislauf den Abholer umschalten und KosmoOrbit
+        ansagen (ihre Bilder zeigen dann mehr Gebäude).
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit
         Führung und 40 Schritten nach Modellkarte.
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).

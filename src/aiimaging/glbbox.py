@@ -585,6 +585,46 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     return ergebnis
 
 
+#: Unter diesem Schrumpf gilt die Bauwerksbox als nicht verschieden von der Szene: Die
+#: Namensregel hat kein Gelände gefunden, und eine Rahmung danach änderte nichts.
+MINDEST_SCHRUMPFUNG = 0.02
+
+
+def rahmungsbox(pfad, *, up_axis: str = "Y") -> dict:
+    """Die Box, nach der eine Kamera rahmen soll: das **Bauwerk**, wo es erkennbar ist.
+
+    **Anlass (Owner-Entscheid 30.09.2026, Sitzung 73 §12/§13).** Gerahmt nach der Szene
+    füllte der Testbau mit Geländeplatte 2,0 % des Bildes, nach dem Bauwerk 21,0 % (echtes
+    Blender, Material-ID gezählt). Ein Gebäude auf 2 % ist für das Bildmodell ein Detail —
+    die Tiefensteuerung hatte kaum etwas zu steuern.
+
+    Returns:
+        ``{box, nach, grund}`` — ``box`` ist die Bauwerksbox oder ``None`` (dann rahmt
+        der Aufrufer nach der Szene wie bisher), ``nach`` ist ``"bauwerk"`` oder
+        ``"szene"``, ``grund`` sagt warum. Nie eine Ausnahme: Eine unlesbare Datei heisst
+        «nach der Szene», nicht «kein Bild».
+    """
+    try:
+        aus = bauwerksbox(pfad, up_axis=up_axis)
+    except Exception as fehler:                          # noqa: BLE001
+        # Nur die Art des Fehlers, nicht sein Text: Der nennt den Pfad, und ein Pfad
+        # dieser Maschine gehoert nicht in ein Ergebnis (Regel 3).
+        return {"box": None, "nach": "szene",
+                "grund": f"Bauwerksbox nicht lesbar ({type(fehler).__name__}) — nach der "
+                         f"Szene gerahmt."}
+    box = aus.get("bbox_bauwerk")
+    schrumpf = aus.get("schrumpfung")
+    if box is None:
+        return {"box": None, "nach": "szene",
+                "grund": f"Kein Bauwerk erkennbar: {aus.get('note') or 'ohne Angabe'}."}
+    if not isinstance(schrumpf, (int, float)) or schrumpf < MINDEST_SCHRUMPFUNG:
+        return {"box": None, "nach": "szene",
+                "grund": (f"Die Bauwerksbox ist praktisch die Szene (Schrumpfung "
+                          f"{schrumpf!r}) — die Namensregel fand kein Gelände.")}
+    return {"box": box, "nach": "bauwerk",
+            "grund": f"Gerahmt nach dem Bauwerk (Grundriss {schrumpf:.0%} schmaler als die Szene)."}
+
+
 def _main(argv=None) -> int:                              # pragma: no cover
     import argparse
 
