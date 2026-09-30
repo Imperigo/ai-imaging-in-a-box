@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-193",
+  "art": "frage",
+  "beschreibung": "Kartenwerkzeuge in der App: Kosmo schlaegt vor, «Anwenden» startet — Themenkarte gebaeude, Grundlageplan, Ablehnen-Gegenprobe (ROADMAP 1635).",
+  "anweisung": "=== KARTENWERKZEUGE IN DER APP: EINMAL UEBER KOSMO VORSCHLAGEN LASSEN UND ANWENDEN ===\n\nWORUM ES GEHT\n  KosmoOrbit Int 1 hat am 30.09.2026 eingespielt, dass die App die drei KosmoPrepare-Kartenwerkzeuge\n  (Grundlageplan, Plan einpassen, Themenkarte) mit den Feldern anspricht, die der Server liest\n  (Architektur-Cosmos 3fe39db24, ROADMAP 1635; davor die Anwenden-Weiche c729fe8c4). In Blender laufen\n  alle drei schon (auf-20260930-179, -182, -190). In der App ist dieser Weg noch nie gefahren worden:\n  Kosmo schlaegt einen Aufruf vor, es entsteht eine Vorschlagskarte, erst «Anwenden» startet das Werkzeug.\n  Genau diese Kette ist hier gefragt — nicht die Karte selbst, die ist belegt.\n\nKOSTEN\n  Nur das LOKALE Modell (Betriebsart «standard», Ollama), ein kleines, wie es die App vorgibt. Ist Kosmo auf\n  einen Cloud-Anbieter gestellt oder waere einer noetig: STOPP und melden, nichts umstellen. Kein grosses\n  Modell laden (VRAM-Regel).\n\nWAS ZU TUN IST (Desktop-App, Stand 7581b1c6b oder juenger vom Zweig claude/kosmo-orbit-v1-build-pzxkbj\nbzw. Hauptstrang, der 3fe39db24 enthaelt — pruefen mit git merge-base --is-ancestor 3fe39db24 HEAD;\nKosmoPrepare-Klon auf main 405caab oder juenger)\n  1. Wegwerf-Projekt anlegen, Station KosmoPrepare, Paket «Wettbewerbs-Vorbereitung». Kosmo-Seitenfenster oeffnen.\n  2. Themenkarte «gebaeude» — an Kosmo, woertlich:\n       «Zeichne eine Themenkarte der Art gebaeude, Zentrum E 2649525 N 1177780, Massstab 5000, A2 quer,\n        Titel Probe App, Ausgabe in einen neuen Ordner unter /tmp. Klassen: a = Klasse A (Probe) Farbe #B4532A,\n        b = Klasse B (Probe). Gebaeude: P1 Klasse a Quelle Probe LV95 2650513.5 1177995.6; P2 Klasse b Quelle\n        Probe LV95 2650270.9 1177861.9; P3 Klasse a Quelle Probe LV95 2649234.6 1177466.4; P4 Klasse b Quelle\n        Probe ohne Lage.»\n     a) Erscheint eine Vorschlagskarte (nicht sofortiges Laufen)? ja/nein\n     b) Was stehen in der Karte fuer Argumente (klassen, gebaeude, zentrum_lv95) — abschreiben, nicht fotografieren.\n     c) «Anwenden». Status, und aus der erzeugten …_quellen.json: zaehlung (erwartet eintraege 4, zugeordnet 3,\n        eingefaerbt_je_klasse a 2 / b 1) und die Warnung zu P4.\n     d) Hat das Modell die Liste falsch abgeschrieben (z.B. P4 mit erfundener Lage, fehlende quelle)? Dann\n        ist das ein Befund ueber das Modell, nicht ueber den Weg — trotzdem genau so melden.\n  3. Grundlageplan — an Kosmo: «Erstelle einen Grundlageplan, Zentrum E 2649525 N 1177780, Massstab 5000,\n     A2 quer, Ausgabe in einen neuen Ordner unter /tmp.» Vorschlagskarte ja/nein, «Anwenden», Status, und aus\n     der JSON die Anzahlen je Ebene (erwartet wie in auf-20260930-179: 261 Hoehenkurven, 155 + 974 Gebaeude,\n     565 Strassenstuecke — ohne Perimeter kann die Aufteilung 155/974 fehlen, dann die Gesamtzahl).\n  4. Gegenprobe «Ablehnen»: dieselbe Bitte wie in 3 noch einmal, diesmal «Ablehnen». Entsteht KEIN Ordner und\n     KEINE Datei? ja/nein.\n  5. Plan einpassen nur, wenn der echte Reader von auf-20260930-182 noch privat vorliegt (nicht ins Repo!):\n     an Kosmo «Passe die Seite mit Index 6 (ab 0 gezaehlt; im PDF-Betrachter heisst sie Seite 11) dieser PDF auf die amtliche Vermessung ein: <Pfad>». In der Vorschlagskarte nachsehen: steht dort seite 6? Erwartet 111/117 gepaart,\n     Median 0.76 m. Liegt er nicht vor: ueberspringen und sagen.\n\nRUECKGABE\n  - Stand (Commit) der App und des KosmoPrepare-Klons; welches Modell Kosmo benutzt hat.\n  - Je Schritt 2–5: ja/nein, Status, Zahlen, Meldungen woertlich; Laufzeit von «Anwenden» bis Ergebnis.\n  - Kam irgendwo «unbekannter Befehl», ein Schemafehler (z.B. «perimeter_zonen» als true, «seite» falsch\n    gezaehlt) oder ein Traceback? ja/nein, woertlich.\n\nNICHT TUN: nichts committen, keinen Code aendern, kein Projekt des Owners veraendern (Wegwerf-Projekt),\nkeine Plaene/Bilder/PDF zurueckgeben, nur Zahlen und Meldungen. Keine absoluten Pfade mit Benutzernamen\n(REGEL 3). Den Reader aus Schritt 5 nicht ins Repo und nicht in die Rueckgabe.\n",
+  "erstellt": "2026-09-30T11:55:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null
+  },
+  "params": {
+    "app_stand_min": "3fe39db24",
+    "kosmoprepare_stand_min": "405caab"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nur das lokale kleine Modell; kein Cloud-Anbieter, kein grosses Modell.",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3).",
+      "Netz noetig (swisstopo, geodienste.ch)."
+    ]
+  },
+  "rueckgabe": [
+    "Stand App + KosmoPrepare, Modell.",
+    "Schritte 2–5: ja/nein, Status, Zaehlung/Anzahlen, Meldungen woertlich, Laufzeit.",
+    "Unbekannter Befehl / Schemafehler / Traceback: ja/nein, woertlich."
+  ],
+  "rang": 3
+}
