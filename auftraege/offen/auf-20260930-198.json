@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-198",
+  "art": "frage",
+  "beschreibung": "Mit Owner-Go: .venv-server im KosmoPrepare-Klon einrichten (tools/setup_server.py) und die drei Kartenwerkzeuge in der App nochmals anwenden.",
+  "anweisung": "=== SERVER-UMGEBUNG EINRICHTEN (OWNER-GO) UND DIE DREI KARTEN NOCHMALS IN DER APP ANWENDEN ===\n\nWORUM ES GEHT\n  Eure Antwort auf auf-20260930-193: der Weg in der App traegt, aber alle drei Kartenwerkzeuge scheiterten\n  beim Anwenden («No module named 'shapely'» / «'pypdf'»), weil die App den Server mit dem Python im PATH\n  (3.14) startet. Behoben in KosmoPrepare e6d803a: tools/setup_server.py legt im Klon den Ordner\n  .venv-server an (requirements-server.txt: mcp<2, numpy, shapely, pypdf, Pillow, ezdxf, openpyxl,\n  pdfplumber — alle MIT/BSD/Apache), und der Server wechselt beim Start selbst dorthin, wenn ihm ein\n  Paket fehlt. In der App muss NICHTS umgestellt werden.\n  **Owner-Go liegt vor** (30.09.2026, im Chat: «ja, Heimrechner darf die Umgebung einrichten»). Das Go\n  gilt NUR fuer diesen einen Ordner im KosmoPrepare-Klon — nichts systemweit, kein sudo, kein pip in ein\n  anderes Python, libs/ und .venv-ifc nicht anfassen.\n\nWAS ZU TUN IST\n  1. KosmoPrepare-Klon: git pull --ff-only; git log -1 muss e6d803a oder juenger zeigen (sonst STOPP).\n  2. Im Klon-Stamm: python3 tools/setup_server.py\n     Erwartet am Ende: «numpy, shapely, pypdf, Pillow, ezdxf und mcp stehen.» und «Der Server laedt dort\n     mit 18 Werkzeugen.» Rueckgabe 0.\n     Scheitert pip unter 3.14 (fehlendes Rad fuer diese Fassung): mit einem anderen vorhandenen\n     System-Python wiederholen, z. B. python3 tools/setup_server.py --neu --python python3.13 (oder\n     3.12) — nur ein Python, das schon da ist, nichts nachinstallieren. Welches, melden.\n  3. Wire-QA im neuen Interpreter: .venv-server/bin/python integrations/odysseus/wire_qa_kosmoprepare_mcp.py\n     Erwartet «Werkzeuge real beruehrt: 18/18» und «WIRE-QA: PASS».\n  4. App (Stand 7581b1c6b oder juenger), Wegwerf-Projekt, Paket «Wettbewerbs-Vorbereitung», Kosmo lokal wie\n     in 193, Chatverlauf vorher leeren. Dieselben Bitten wie in 193, diesmal jeweils «Einmal erlauben»:\n     a) Themenkarte gebaeude — Wortlaut aus 193 Schritt 2, ABER «Ausgabe in den neuen Ordner /tmp/probe198-a».\n        Erwartet Status geschrieben; aus …_quellen.json: zaehlung.eintraege 4, zugeordnet 3,\n        eingefaerbt_je_klasse a 2 / b 1, Warnung zu P4.\n     b) Grundlageplan — Wortlaut aus 193 Schritt 3, Ausgabe /tmp/probe198-b. Erwartet geschrieben;\n        Anzahlen je Ebene (vgl. 179: 261 Hoehenkurven, Gebaeude gesamt 1129, 565 Strassenstuecke).\n     c) Plan einpassen — nur wenn der echte Reader von 182 privat noch vorliegt (nicht ins Repo, nicht in die\n        Rueckgabe), Wortlaut aus 193 Schritt 5. Erwartet 111/117 gepaart, Median 0.76 m.\n  5. Beim ersten «Einmal erlauben»: steht im Protokoll/stderr des Kindprozesses\n     «[kosmoprepare] wechsle nach …/.venv-server/bin/python (es fehlt: …)»? ja/nein (Pfad in der Rueckgabe\n     nur relativ zum Klon, REGEL 3).\n  6. Gegenprobe ohne Netz noetig? nein — die drei Werkzeuge holen ihre Daten live; laeuft eines in eine\n     Zeitueberschreitung, woertlich melden, nicht wiederholen als 3.\n\nRUECKGABE\n  - Stand KosmoPrepare und App; mit welchem Python .venv-server gebaut wurde (Fassung).\n  - Schritt 2 und 3: Rueckgabewert und letzte Zeilen woertlich.\n  - Schritt 4 a–c: Status, Zahlen, Meldungen woertlich, Laufzeit von «Einmal erlauben» bis Ergebnis.\n  - Schritt 5: ja/nein.\n  - Kam irgendwo «No module named», ein Traceback oder «unbekannter Befehl»? ja/nein, woertlich.\n\nNICHT TUN: nichts committen ausser der Antwortdatei, keinen Code aendern, keine App-Einstellung umstellen,\nnichts systemweit installieren, libs/ und .venv-ifc nicht anfassen, kein Projekt des Owners veraendern,\nkeine Plaene/Bilder/PDF zurueckgeben. .venv-server NICHT wieder loeschen — er bleibt fuer den Alltag.\nKeine absoluten Pfade mit Benutzernamen (REGEL 3).\n",
+  "erstellt": "2026-09-30T13:22:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmoprepare_stand_min": "e6d803a",
+    "app_stand_min": "7581b1c6b",
+    "owner_go": "2026-09-30, Chat: «ja, Heimrechner darf die Umgebung einrichten»"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nur das lokale kleine Modell; kein Cloud-Anbieter, kein grosses Modell.",
+    "hinweise": [
+      "Keine echten Projektnamen (REGEL 3).",
+      "Netz noetig (pip, swisstopo, geodienste.ch).",
+      "Installation NUR in .venv-server im Klon."
+    ]
+  },
+  "rueckgabe": [
+    "Stand KosmoPrepare/App, Python-Fassung von .venv-server.",
+    "setup_server und Wire-QA: Rueckgabewert und letzte Zeilen woertlich.",
+    "Karten a–c: Status, Zahlen, Meldungen woertlich, Laufzeit.",
+    "Wechsel-Meldung ja/nein; No module/Traceback/unbekannter Befehl ja/nein."
+  ],
+  "rang": 3
+}
