@@ -1,0 +1,229 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260929-178",
+ "status": "ok",
+ "beendet": "2026-09-30T09:05+02:00",
+ "stand": "8ae4d1e (git pull --ff-only sauber)",
+ "git_log_1": "8ae4d1e94a0b070a35d1cc3bf72ceb5407bc2163 2026-09-30 06:22:43 +0000 Sitzung 73: der Qwen-Lauf ist vom Owner freigegeben und läuft",
+ "geprueft": [
+  "Owner-Freigabe 30.09.2026 fuer genau dieses Modell und diesen Auftrag (Forschungs-Ausnahme); AIIMAGING_FORSCHUNGSMODELLE=1 nur als Umgebung des jeweiligen Befehls gesetzt",
+  "Betriebs-venv .venv-render unberuehrt (danach weiter diffusers 0.39.0, huggingface_hub 1.28.0); eigenes venv = echte Kopie (cp -a) unter ~/kosmo-probe/auf178/venv-forschung",
+  "vor jedem GPU-Schritt nvidia-smi (706 MiB belegt, nur Desktop 179 MiB) und ollama /api/ps leer; kein fremdes Modell verdraengt, kein Fueller",
+  "alle Bilder angesehen (Punkt-3-Laeufe, sha256-Probe, Nebenlaeufe); Bilder liegen nur unter ~/kosmo-probe/auf178, nicht im Repo",
+  "kein Code in ai-imaging geaendert, nichts committet; zwei Behelfe NUR im Speicher des Messskripts (siehe punkt_3.behelfe)"
+ ],
+ "kurzantwort": "Qwen-Image-2.1 laeuft auf der 5090 nur mit Auslagerung (enable_model_cpu_offload): 30,9 GiB bf16-Gewichte passen nicht ganz auf die Karte (OOM schon beim Laden). Mit Auslagerung ~19 s je Bild bei 1024x1024 (20 Schritte, Spitze 19,5 GiB) und 59 s bei 2048x2048 (Spitze 29,6 GiB, nur mit expandable_segments, sonst OOM). Der homeworker-Weg scheitert ohne Behelf zweimal (Register verlangt 'tokenizer', Qwen liefert 'processor'; dann OOM, weil die Registry-Schaetzung 16,8 GB den vollen Weg waehlt). Der Bildeingang KOMMT AN (drei verschiedene sha256 fuer Tiefe/Beauty/ohne Bild) — aber der Adapter reicht die Tiefenkarte als image, und die traegt die Lage nicht. Geometrie: kommt nicht an — geom_iou 0.004 und 0.0 (Qwen) gegen 0.0 und 0.0 (z-image-turbo); auf dieser Szene (Testbau, sSE, 512 px, 3,1 % Geometrie) haelt allerdings auch z-image die Geometrie nicht, der Vergleich trennt also nicht.",
+ "diffusers": {
+  "betriebs_venv": "0.39.0, hasattr(diffusers, 'QwenImage21Pipeline') = False — unveraendert",
+  "eigenes_venv": true,
+  "venv": "~/kosmo-probe/auf178/venv-forschung (cp -a von .venv-render; sys.prefix und Importpfade zeigen auf die Kopie, torch 2.11.0+cu128, CUDA ok)",
+  "fassung": "diffusers 0.41.0.dev0 aus git, Commit 031b2798addadd1652db7cfba50eacc1079245cf (github.com/huggingface/diffusers, Apache-2.0), installiert mit --no-deps",
+  "zusatz": "huggingface_hub 1.28.0 -> 1.33.0 im EIGENEN venv (diffusers-git verlangt >=1.32; mit 1.28 ImportError 'cannot import name httpx from huggingface_hub.utils'). transformers 5.15.0 unveraendert."
+ },
+ "gewichte": {
+  "modell": "Qwen/Qwen-Image-2.1",
+  "ablage": "/mnt/data/ai-models/diffusers/qwen-image-2.1 (= render.standard_modell_wurzel('qwen-image-2.1') mit AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers)",
+  "zugang": "nicht gated, ohne Konto/Token geladen (API: gated false, license_name qwen-research); keine Zustimmung verlangt",
+  "groesse_byte": 33134957950,
+  "groesse": "33,1 GB (30,9 GiB): transformer 14 GB, text_encoder 17 GB (Qwen3VLForConditionalGeneration, 4 Teile), vae 1,3 GB, processor 16 MB",
+  "download_s": 490,
+  "aufbau": "model_index.json: QwenImage21Pipeline; processor = Qwen3VLProcessor (KEIN Ordner 'tokenizer'); transformer QwenImage21Transformer2DModel; vae AutoencoderKLQwenImage21; scheduler FlowMatchEulerDiscreteScheduler"
+ },
+ "punkt_3_erster_lauf": {
+  "weg": "tools/homeworker.fuehre_aus(satz) direkt aus einem Skript (Satz wie auftraege/offen: art render, geometrie synthetisch 'make_test_ifc.py build/testbau.ifc --gelaende'), params backbone qwen-image-2.1, seed 0, prompt 'a residential building, architectural photograph' (wie auf-175), mit_beauty true; sonst homeworker-Vorgaben: Kamera sSE (VORGABE_KAMERA), aufloesung 512, schritte 20, controlnet_staerke 0.8, denoise 0.6. Ergebnis NICHT nach auftraege/ergebnisse geschrieben.",
+  "lauf_1_ohne_behelf": {
+   "status": "fehler",
+   "wortlaut": "RenderError: Gewichte für 'qwen-image-2.1' unvollständig unter '/mnt/data/ai-models/diffusers/qwen-image-2.1' (Verzeichnis existiert: True). Es fehlen: tokenizer.",
+   "ursache": "Registereintrag nutzt _DIFFUSERS_DATEIEN (model_index.json, transformer, vae, text_encoder, tokenizer); Qwen-Image-2.1 liefert 'processor' statt 'tokenizer'."
+  },
+  "lauf_2_behelf_processor": {
+   "status": "fehler",
+   "wortlaut": "Grafikspeicher reichte nicht (Weg unbekannt) — OutOfMemoryError: CUDA out of memory. Tried to allocate 24.00 MiB. GPU 0 has a total capacity of 31.36 GiB of which 55.94 MiB is free. Process 13824 has 179.74 MiB memory in use. Including non-PyTorch memory, this process has 30.60 GiB memory in use. Of the allocated memory 29.93 GiB is allocated by PyTorch, and 188.38 MiB is reserved by PyTorch but unallocated.",
+   "ursache": "vram_gb = _vram_schaetzung(7.0) = 16,8 GB x 1,25 = 21 GB < 30,9 GiB frei -> _lege_auf_geraet waehlt 'cuda' (voll) und laedt 30,9 GiB Gewichte; Textkodierer (17 GB) fehlt in der Schaetzung, wie der Registerkommentar schon vermutet."
+  },
+  "lauf_3_beide_behelfe": {
+   "status": "ok",
+   "render_dauer_s": 16.0,
+   "wand_s": 21.1,
+   "spitze_belegt_mib": 22000,
+   "geraeteweg": "cuda+auslagerung (enable_model_cpu_offload; Plattengroesse entscheidet)",
+   "parameter_nur_forschung": true,
+   "hinweis_nur_forschung_im_ergebnis": true,
+   "sha256_render_s0": "2337c49e42896cb99047f07d8c47ecff3bbdc4193bab228df6514aaca75cbd8d"
+  },
+  "behelfe": [
+   "A: nur im Speicher des Messskripts BACKBONES['qwen-image-2.1'].dateien mit 'processor' statt 'tokenizer' (dataclasses.replace). Kein Code, keine Datei im Modellordner geaendert.",
+   "B: nur im Speicher vram_gb=None, damit der Lader an der Plattengroesse entscheidet (-> Auslagerung). Vorschlag fuer den Registereintrag: dateien mit 'processor', vram_gb aus Messung (Spitze 19,5 GiB bei 1024 mit Auslagerung) bzw. Plattengroesse 30,9 GiB."
+  ],
+  "signatur_call": "QwenImage21Pipeline.__call__(prompt, image, negative_prompt, true_cfg_scale=1.0, height, width, num_inference_steps=40, sigmas, num_images_per_prompt, generator, latents, prompt_embeds, prompt_embeds_mask, negative_prompt_embeds, negative_prompt_embeds_mask, output_type, return_dict, attention_kwargs, callback_on_step_end, callback_on_step_end_tensor_inputs, output_resolution=1024, use_kv_cache=True)",
+  "angenommen": [
+   "prompt",
+   "negative_prompt (None, weil leer)",
+   "image (= Tiefenkarte, siehe unten)",
+   "num_inference_steps",
+   "generator",
+   "height",
+   "width",
+   "callback_on_step_end"
+  ],
+  "verworfen": [
+   "control_image",
+   "controlnet_conditioning_scale",
+   "guidance_scale",
+   "strength"
+  ],
+  "adapter_satz_woertlich": "Diese Pipeline hat keinen 'control_image'-Eingang und kein erkennbares ControlNet. Die Tiefenkarte wurde als 'image' übergeben und ersetzt dabei den Beauty-Pass — die Konditionierung ist damit Bildbearbeitung, nicht ControlNet.",
+  "modus_befund": "Der Adapter meldet 'BESTELLT WAR image_edit, GERECHNET WURDE txt2img' — das stimmt hier NICHT ganz: Die Pipeline nimmt image, und die Tiefenkarte kommt an (sha256-Probe). Die Regel in render.py wertet 'control_image verworfen' pauschal als 'Anker nicht angekommen'; richtig ist: der BEAUTY-Anker kommt nicht an, die TIEFENKARTE schon. true_cfg_scale bleibt 1.0 (kein Regler im Register) — also ohne Fuehrung gerechnet; die Pipeline-Vorgabe waere 40 Schritte, gerechnet wurden 20.",
+  "bildeingang_sha256_probe": {
+   "aufbau": "gleiche Pipeline (eigenes venv, Auslagerung), gleicher Prompt, Startwert 0, 20 Schritte, 1024x1024; nur image verschieden",
+   "image_tiefenkarte": "23c01bab2809d11889f915c99958b4389d6a85898d055562e85cf7b758da5177",
+   "image_beauty": "cb920122e5802402c3789dcf34fbb1cabc4c2b369953bcbc078ce5384c37896e",
+   "ohne_image": "3872a7994df6a9a7b3b1888a8be6bc89d90399d67957cd4566f3a6a97d8a31ff",
+   "wiederholt_tiefenkarte": "23c01bab... in einem zweiten Aufruf bitgleich (Rechnung deterministisch)",
+   "urteil": "Der Bildeingang KOMMT AN: drei Eingaben, drei verschiedene sha256; die Wiederholung ist bitgleich.",
+   "angesehen": "Mit Beauty-Pass als image steht ein dreigeschossiges Haus mit Baeumen genau auf der Platte an der Stelle des Quaders, der graue Hintergrund bleibt — echtes Bearbeiten. Mit der Tiefenkarte als image entsteht ein Wohnblock-Foto mit Himmel; die Lage folgt der Karte nicht. Ohne image ein anderes Hochhaus-Foto."
+  }
+ },
+ "punkt_4_rechner": {
+  "frei_vorher_mib": 30895,
+  "belegt_vorher_mib": 706,
+  "schritte": 20,
+  "ohne_auslagerung": {
+   "1024": "nicht messbar — OOM schon beim pipe.to('cuda'): 'CUDA out of memory. Tried to allocate 24.00 MiB. GPU 0 has a total capacity of 31.36 GiB of which 55.94 MiB is free … 29.93 GiB is allocated by PyTorch'",
+   "2048": "nicht messbar (Laden scheitert, s. o.)",
+   "spitze_belegt_mib": 31684,
+   "lesart": "30,9 GiB bf16-Gewichte plus CUDA-Kontext passen nicht in 31,36 GiB. Ohne Quantisierung gibt es auf der 5090 keinen vollen Weg."
+  },
+  "mit_model_cpu_offload": {
+   "1024": {
+    "s_je_bild": [
+     22.2,
+     18.9
+    ],
+    "s_typisch": 19,
+    "torch_spitze_mib": 19540,
+    "anmerkung": "22,2 s erster Aufruf, 18,9 s zweiter; Beauty als image 19,1 s, ohne image 17,2 s"
+   },
+   "2048": {
+    "s_je_bild": 59.4,
+    "torch_spitze_mib": 29595,
+    "belegt_spitze_mib": 30118,
+    "anmerkung": "mit Vorgabe-Allocator OOM: 'CUDA out of memory. Tried to allocate 4.50 GiB. GPU 0 has a total capacity of 31.36 GiB of which 4.55 GiB is free … 19.92 GiB is allocated by PyTorch, and 5.57 GiB is reserved by PyTorch but unallocated'; erst mit PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True (nur fuer diesen Befehl) durch. Rand: rund 1,2 GiB."
+   },
+   "laden_s": 0.4,
+   "homeworker_512": {
+    "render_dauer_s": 16.0,
+    "spitze_belegt_mib": 22000
+   }
+  },
+  "leistung": "Power-Cap 400 W unveraendert"
+ },
+ "punkt_5_geometrie": {
+  "aufbau": "homeworker-Pfad, Testbau mit Gelaende, Kamera sSE, 512 px, 20 Schritte, Prompt wie auf-175, mit_beauty true; z-image-turbo aus dem Betriebs-venv (ControlNet 0.8, Tiefe umgedreht), Qwen aus dem eigenen venv mit Behelf A+B. Maske maske_aus_bericht(gelaende_erwartet=True), Schaetzer depth-anything-v2-small. Soll-Silhouette 8138 Punkte = 3,1 % des Bildes.",
+  "laeufe": [
+   {
+    "backbone": "qwen-image-2.1",
+    "startwert": 0,
+    "rho_maske_gerichtet": 0.7891,
+    "geom_iou": 0.0038,
+    "score": 0.0258,
+    "bild": "Ein beiges zweigeschossiges Wohnhaus fuellt die rechte untere Bildhaelfte, Himmel oben; nur sein kleiner Dachaufbau sitzt ungefaehr, wo die Tiefenkarte den Quader hat — Lage und Form (flacher 20x20x3,3-m-Quader auf Platte) stimmen nicht."
+   },
+   {
+    "backbone": "qwen-image-2.1",
+    "startwert": 1,
+    "rho_maske_gerichtet": 0.1495,
+    "geom_iou": 0.0,
+    "score": null,
+    "bild": "Eine historistische Backsteinfassade mit Giebel fuellt das ganze Bild; vom Quader auf der Platte ist nichts zu sehen — Lage und Form stimmen nicht."
+   },
+   {
+    "backbone": "z-image-turbo",
+    "startwert": 0,
+    "rho_maske_gerichtet": -0.3593,
+    "geom_iou": 0.0,
+    "score": null,
+    "bild": "Ein graues Hochhaus mit Turmspitze steht in der unteren Bildmitte vor grauem Himmel, viel hoeher und breiter als der Quader — Lage nur grob, Form nicht."
+   },
+   {
+    "backbone": "z-image-turbo",
+    "startwert": 1,
+    "rho_maske_gerichtet": 0.045,
+    "geom_iou": 0.0,
+    "score": null,
+    "bild": "Eine bildfuellende Glasfassade mit Buero-Geschossen, kein Himmel, kein Boden — Lage und Form stimmen nicht."
+   }
+  ],
+  "score_satz": "Qwen s0: 'Score 0.026 < Schwelle 0.65 (|spearman| 0.175 über 62 gemeinsame Punkte, geom_iou 0.004)'; alle anderen: 'Nicht messbar, damit nicht bestanden … Geringer Geometrieanteil: nur 3.1% der Bildpunkte tragen Geometrie'.",
+  "nebenlaeufe": {
+   "z-image-turbo_cn1.0_8_schritte": [
+    {
+     "startwert": 0,
+     "rho_maske_gerichtet": -0.1506,
+     "geom_iou": 0.0,
+     "bild": "Skizzenhafter Turm mit Masten, grauer Grund — Geometrie nicht getroffen."
+    },
+    {
+     "startwert": 1,
+     "rho_maske_gerichtet": -0.0563,
+     "geom_iou": 0.0,
+     "bild": "Verrauschte, bildfuellende Streifenfassade — kein Gebaeude an der Stelle des Quaders."
+    }
+   ],
+   "qwen_mit_beauty_als_image_512": [
+    {
+     "startwert": 0,
+     "rho_maske_gerichtet": -0.4903,
+     "geom_iou": 0.0,
+     "bild": "Freigestelltes dreigeschossiges Backsteinhaus mit Garten auf grauem Grund, viel groesser und nach links oben versetzt — Stil vom Beauty-Pass uebernommen, Lage nicht."
+    },
+    {
+     "startwert": 1,
+     "rho_maske_gerichtet": 0.6635,
+     "geom_iou": 0.0,
+     "bild": "Der weisse Quader auf der Platte bleibt unveraendert stehen, dahinter wird ein klassizistisches Gebaeude eingesetzt — Lage des Quaders erhalten, aber kein Umbau."
+    }
+   ],
+   "qwen_1024_probe_auf_512_verkleinert": [
+    {
+     "image": "tiefenkarte",
+     "rho_maske_gerichtet": 0.8868,
+     "geom_iou": 0.0136
+    },
+    {
+     "image": "beauty",
+     "rho_maske_gerichtet": 0.4905,
+     "geom_iou": 0.0,
+     "bild": "Haus steht auf der Platte an der Quaderstelle, aber als dreigeschossiger Bau — Lage ja, Form nein; geom_iou misst 0.0."
+    },
+    {
+     "image": "ohne",
+     "rho_maske_gerichtet": 0.911,
+     "geom_iou": 0.0
+    }
+   ],
+   "lesart_rho_maske": "rho_maske.gerichtet trennt hier nicht: das Bild OHNE jeden Eingang bekommt 0.911, das bestbesetzte (Beauty, Lage richtig) 0.490. Die Maske umfasst nur ~2 % des Bildes; derselbe Befund wie auf-175 (kein fehlerfreies Fenster)."
+  },
+  "urteil": "Die Geometrie kommt nicht an: kein Qwen-Lauf auf dem homeworker-Weg setzt den Quader an seine Stelle oder in seine Form (geom_iou 0.004 / 0.0). Einschraenkung: Auf dieser Szene haelt auch z-image-turbo die Geometrie nicht (geom_iou 0.0 in allen vier Laeufen, auch mit ControlNet 1.0/8 Schritten), und der Geometrieanteil von 3,1 % laesst die Metrik meist 'nicht messbar' melden — der Vergleich gegen die Vorgabe ist darum auf dieser Szene nicht trennscharf. Belegt ist: Tiefenkarte als image steuert Qwen nicht; Beauty-Pass als image steuert es bei 1024 sichtbar (Lage), bei 512 nicht verlaesslich."
+ },
+ "punkt_6_empfehlung": "Fuer die Geometrie nicht weiter (kein ControlNet, die Tiefenkarte als image steuert nichts, und es passt nur mit Auslagerung auf die Karte); fuer die Forschung lohnt hoechstens ein eng begrenzter Versuch als Bild-Bearbeiter mit dem Beauty-Pass als Eingang bei 1024 px (Stil, Masken/Einsetzen), dafuer muesste der Adapter den Beauty-Pass statt der Tiefenkarte reichen.",
+ "unklar": [
+  "Warum z-image-turbo auf dieser Szene (Testbau, sSE, 512 px, homeworker-Vorgaben) die Geometrie ebenfalls verfehlt — nicht untersucht; auf-175 lief ueber arbeitsgang.",
+  "render.py wertet 'control_image verworfen' als 'Anker nicht angekommen' und meldet txt2img, obwohl die Tiefenkarte als image ankommt — die Meldung ist fuer diesen Backbone irrefuehrend.",
+  "Registereintrag qwen-image-2.1: dateien ('tokenizer' fehlt, 'processor' da) und vram_gb (16,8 GB geschaetzt, Gewichte 30,9 GiB) halten den homeworker-Weg ohne Behelf an; nicht geaendert.",
+  "Ohne Fuehrung gerechnet (true_cfg_scale 1.0, kein Regler im Register); ob Fuehrung die Lage verbessert, ist ungemessen."
+ ],
+ "abschluss": {
+  "forschungs_variable_dauerhaft": "nirgends: systemctl --user show kosmo-abholer -p Environment -> nur AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers; grep -r AIIMAGING_FORSCHUNGSMODELLE ~/.bashrc ~/.profile -> nichts (rc 1); nicht in ~/.config/systemd/user",
+  "karte_danach": "706 MiB belegt (nur Desktop 179 MiB), ollama /api/ps leer",
+  "liegen_gelassen": "Gewichte 33,1 GB unter /mnt/data/ai-models/diffusers/qwen-image-2.1; eigenes venv (7 GB) und alle Bilder/Skripte unter ~/kosmo-probe/auf178 (ausserhalb des Repos); build/testbau.ifc im Repo ist gitignored"
+ },
+ "skripte": [
+  "a178_download.py",
+  "a178_lauf_homeworker.py",
+  "a178_rechner.py",
+  "a178_neben_beauty.py",
+  "a178_qa_probe1024.py"
+ ],
+ "gegenprobe_hauptworker": "Nachgeprueft 30.09.: Modellordner enthaelt processor/ statt tokenizer/ (backbone.py:681 verlangt fuer jeden Diffusers-Eintrag 'tokenizer'), Groesse 31 GB; Registereintrag backbone.py:1141 schaetzt vram_gb=_vram_schaetzung(7.0), im Kommentar selbst 'ungemessen'; AIIMAGING_FORSCHUNGSMODELLE weder im Dienst kosmo-abholer noch in ~/.bashrc/~/.profile. Bilder angesehen (1024 px): mit Beauty-Pass steht ein dreigeschossiges Haus genau auf der Platte des Quaders (Lage ja, Form nein); mit Tiefenkarte und ohne Bild je ein zufaelliges Hochhaus — die Tiefenkarte fuehrt nicht. Hinweis: Owner-Entscheid E128 (30.09.) — Qwen-Image-2.1 kommt regulaer ins Produkt, Lizenz vor Veroeffentlichung; die Forschungs-Auflagen galten fuer diesen Lauf noch."
+}
