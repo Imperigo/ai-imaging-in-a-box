@@ -1,0 +1,15 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-189",
+ "status": "ok",
+ "beendet": "2026-09-30T10:26:21Z",
+ "stand": "git log -1 nach dem Pull: f6af380 (2026-09-30 10:06 UTC) «Startwert-Auswahl bleibt bei ρ; die eigene Bildkette rahmt jetzt auch nach dem Bauwerk»; Pull ff-only ohne Auffaelligkeit, Arbeitsbaum sauber.",
+ "kurzantwort": "Gelesen (A1–A3). Der Abholer-Timer HAT den Stand schon gezogen: der Dienst laeuft direkt aus diesem Klon (WorkingDirectory = Klon, alle 30 s), und der Pull kam vor dem Lesen — ehrlich vermerkt, weil der Auftrag «vor dem Pull lesen» verlangt. src/aiimaging/abholer.py:1509 RAHMUNG_NACH_BAUWERK = True; letzter Durchgang 12:25:52 MESZ ohne Bestellung (0 Modelle geladen).",
+ "befunde": [
+  "A2 zur Kenntnis: sSW und 1024 px stehen in auf-20260930-186.json (abweichung_vom_auftrag).",
+  "A3 zur Kenntnis: txt2img-Meldung ist erwartet (Anker nicht angenommen, Tiefe ueber control_image).",
+  "Nummernkollision: auftraege/offen/auf-20260930-190.json wurde in 669a3b9 als KosmoPrepare-Auftrag (Themenkarte «Gebaeude nach Liste») angelegt und in f6af380 durch die Wiederholung von 186 ersetzt. Beide werden gefahren; das Ergebnis der Themenkarte liegt als auf-20260930-190-themenkarte.json daneben."
+ ],
+ "nicht_getan": "keine Messung.",
+ "fehler": null
+}
