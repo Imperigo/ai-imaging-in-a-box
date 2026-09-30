@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260930-211",
+  "art": "frage",
+  "beschreibung": "Kontrolllauf zu 207 und 209: Kote gegen Waende, Leserwarnungen, bester Massstab, Hauptgebaeude im Massstab (KosmoPublish de4ac22) und die lokale IFC mit eigenem Namen (KosmoPrepare fe6ccae).",
+  "anweisung": "=== KOSMOPUBLISH + KOSMOPREPARE: KONTROLLLAUF ZU DEN BEFUNDEN AUS 207 UND 209 ===\n\nWORUM ES GEHT\n  Eure Laeufe auf-20260930-207 und -209 haben sechs Stellen gezeigt. Alle sind in der Wolke behoben,\n  aber das echte Modell (205 Raeume, 11 Geschosse) und Blender gibt es nur bei euch. Bitte dieselben\n  Schritte wie in 207 noch einmal fahren und nachsehen, ob die neuen Zeilen kommen.\n  KosmoPublish mindestens de4ac22, KosmoPrepare mindestens fe6ccae (je git pull --ff-only auf main).\n\nA · KOSMOPUBLISH, DIESELBE KETTE WIE 207 (echtes Modell, Arbeitsordner wie dort)\n  A1  ifc-bridge wie in 207.\n      Erwartet: im Kopf des Berichts, VOR «Warnungen: …», eine Zeile\n      «KOTE WIDERSPRICHT DER LAGE DER WAENDE bei … von 11 Geschoss(en) … 1000-fache …».\n      Zurueck: die Zeile woertlich, oder «keine Zeile» und die Wandsohlen je Geschoss (Median),\n      falls ihr sie lesen koennt.\n  A2  materialize --project <arbeitsordner> --sia-full wie in 207 (ohne --scale).\n      Erwartet:\n        (a) auf stderr «Bruecke: N Warnung(en) des Lesers:» und darunter als ERSTE Zeile\n            «11 Decke(n) ohne Rolle …»;\n        (b) die Massstabszeile nennt 1:2000 als besten Versuch (vorher 1:5000), mit dem Hinweis\n            auf generate-set.\n      Zurueck: beide Stellen woertlich, dazu «N Datei(en), M Fehler», die Linterzeile und die Zeile\n      «Verlorene Beschriftungen: …».\n  A3  generate-poster wie in 207. Zurueck: die Zeilen «Überlauf», «Massstabstreue», «Blatt zu … %».\n      Sichtprobe (rastern, ansehen, loeschen): wie gross ist ein Grundriss jetzt auf dem Blatt,\n      in cm, ungefaehr?\n\nB · HAUPTGEBAEUDE (wie Teil B in 207, dieselbe Wegwerfkopie mit Marker)\n  Erwartet: der Grundriss-SVG ist NICHT mehr 1000 x 700 mm, sondern Ausschnitt x 1000 / 200 —\n  bei 238 x 113 m also 1190 x 565 mm —, und der Wurzelknoten traegt data-kosmo-massstab=\"1:200\".\n  Zurueck: width, height, viewBox und die Marke aus der Wurzel des SVG, dazu «papier_mm» aus\n  bericht.json.\n\nC · KOSMOPREPARE, DER KNOTEN «IFC-ÜBERGABE (RAUMPROGRAMM)» (wie 209, erfundene Szene, --background)\n  C1  Beide Operatoren nacheinander in denselben Ausgabeordner: zuerst georeferenziert, dann lokal.\n      Erwartet: lokal entsteht Raumprogramm_Volumen_lokal.ifc (nicht mehr Raumprogramm_Volumen.ifc).\n      Zurueck: die Dateiliste beider Ordner.\n  C2  Danach KosmoPublish detect_kp_outputs(extra_search_roots=[<ausgabeordner>]).\n      Erwartet: ifc_path zeigt auf 02_ArchiCAD_Export/Raumprogramm_Volumen.ifc (die georeferenzierte).\n      Zurueck: die Ausgabe woertlich.\n  C3  Knopfe des Knotens: kein Fehler beim Zeichnen des Knotens (draw_buttons ruft jetzt uid_key()).\n      Zurueck: ja/nein.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren (auch kein .venv-ifc fuer KosmoPrepare anlegen — das ist ein\n  offener Owner-Entscheid; wie in 209 den .venv-ifc von KosmoPublish ueber KOSMOPREPARE_IFC_PYTHON\n  nehmen), nichts committen, kein Render, kein Sprachmodell. Keine Bilder, SVG, IFC oder Projektdaten\n  zurueckgeben — nur Zeilen und Zahlen. Originale per Pruefsumme vor und nach vergleichen.\n",
+  "erstellt": "2026-09-30T23:59:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "dasselbe echte IFC und dieselbe Szenenkopie mit Marker wie in auf-20260930-207 (nur am Heimrechner, Wegwerfkopien); Teil C erfundene Szene wie in auf-20260930-209",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmopublish_stand_min": "de4ac22",
+    "kosmoprepare_stand_min": "fe6ccae",
+    "daten_bleiben_lokal": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Kein Sprachmodell, kein Render — nur --background.",
+    "hinweise": [
+      "Echtes Modell nur lesen, Pruefsumme vor und nach.",
+      "Nichts installieren."
+    ]
+  },
+  "rueckgabe": [
+    "Staende, Blender-Fassung.",
+    "A1-A3 Zeilen woertlich, Sichtprobe als Satz.",
+    "B width/height/viewBox/Marke und papier_mm.",
+    "C1-C3 Dateilisten, Ausgabe, ja/nein.",
+    "Fehler ja/nein."
+  ],
+  "rang": 5
+}
