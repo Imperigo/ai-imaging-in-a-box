@@ -1,0 +1,678 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-186",
+ "status": "ok",
+ "beendet": "2026-09-30T09:53:56Z",
+ "stand": "ai-imaging d63352e (Lauf auf 9d0c92e/c6851e1)",
+ "geprueft": "36 Bilder ueber arbeitsgang.lege_an/rechne (Methode 175: Prompt «a residential building, architectural photograph», controlnet_staerke 1.0, 8 Schritte), z-image-turbo, ABER 1024 px wie im Auftrag verlangt (175 lief mit 512 px — «1024 px wie dort» stimmt nicht). Testbau --gelaende, Hochbau --hochbau --gelaende; Blicke s, sSE und sSW; Startwerte 0–5. 11:42–11:51, einzeln nacheinander. Augenurteil BLIND (Schoenbild|Rechenbild unter gemischten Decknamen, Etiketten festgeschrieben, dann Schluessel und Zahlen). Messung je Bild gegen die eigene Soll-Karte (umriss.umriss_aus_dateien), rho aus dem qa-Knoten. Bilder nur auf der HomeStation.",
+ "abweichung_vom_auftrag": [
+  "Blick «wSW» gibt es nicht (kameras.RICHTUNGEN kennt sSW und wWS); gefahren wurde sSW — die andere Suedseite des sSE-Eckblicks. Wer wWS meinte: bitte melden, 12 Bilder nachzufahren dauern ~3.5 min.",
+  "1024 px statt der 512 px von 175 (der Auftrag nennt 1024; bei 8 Schritten sind die Bilder stark verrauscht — kann die Reihe gegenueber 175 verschlechtert haben)."
+ ],
+ "kurzantwort": "Umstellen NEIN. Nur 2 der 6 Faelle haben ueberhaupt ein richtig stehendes Bild (hochbau-s Startwert 4, testbau-sSE Startwert 1). In beiden setzt rho_maske.gerichtet das richtige auf Platz 1, abhebung in keinem (0 von 2). (a) nicht erfuellt, (b) nicht erfuellt.",
+ "auszaehlung": {
+  "faelle_mit_richtigem_bild": 2,
+  "abhebung_platz1_richtig": 0,
+  "rho_platz1_richtig": 2,
+  "heutige_auswahl_platz1_richtig": 1,
+  "a_erfuellt": false,
+  "b_erfuellt": false,
+  "umstellen": false,
+  "gegenprobe_unklar_als_richtig": "Zaehlt man «unklar» als richtig, haben alle 6 Faelle ein Kandidatenbild; dann abhebung 3 von 6 Platz 1, rho 5 von 6 — das Ergebnis kippt nicht."
+ },
+ "faelle": [
+  {
+   "fall": "hochbau-s",
+   "gibt_richtiges": true,
+   "platz1_abhebung": {
+    "startwert": 5,
+    "auge": "steht falsch"
+   },
+   "platz1_rho": {
+    "startwert": 4,
+    "auge": "steht richtig"
+   },
+   "heutige_auswahl": {
+    "startwert": 1,
+    "auge": "steht falsch"
+   }
+  },
+  {
+   "fall": "hochbau-sSE",
+   "gibt_richtiges": false,
+   "platz1_abhebung": {
+    "startwert": 5,
+    "auge": "steht falsch"
+   },
+   "platz1_rho": {
+    "startwert": 4,
+    "auge": "unklar"
+   },
+   "heutige_auswahl": {
+    "startwert": 0,
+    "auge": "steht falsch"
+   }
+  },
+  {
+   "fall": "hochbau-sSW",
+   "gibt_richtiges": false,
+   "platz1_abhebung": {
+    "startwert": 5,
+    "auge": "steht falsch"
+   },
+   "platz1_rho": {
+    "startwert": 0,
+    "auge": "unklar"
+   },
+   "heutige_auswahl": {
+    "startwert": 0,
+    "auge": "unklar"
+   }
+  },
+  {
+   "fall": "testbau-s",
+   "gibt_richtiges": false,
+   "platz1_abhebung": {
+    "startwert": 4,
+    "auge": "unklar"
+   },
+   "platz1_rho": {
+    "startwert": 5,
+    "auge": "steht falsch"
+   },
+   "heutige_auswahl": {
+    "startwert": 0,
+    "auge": "steht falsch"
+   }
+  },
+  {
+   "fall": "testbau-sSE",
+   "gibt_richtiges": true,
+   "platz1_abhebung": {
+    "startwert": 4,
+    "auge": "unklar"
+   },
+   "platz1_rho": {
+    "startwert": 1,
+    "auge": "steht richtig"
+   },
+   "heutige_auswahl": {
+    "startwert": 1,
+    "auge": "steht richtig"
+   }
+  },
+  {
+   "fall": "testbau-sSW",
+   "gibt_richtiges": false,
+   "platz1_abhebung": {
+    "startwert": 4,
+    "auge": "unklar"
+   },
+   "platz1_rho": {
+    "startwert": 1,
+    "auge": "unklar"
+   },
+   "heutige_auswahl": {
+    "startwert": 1,
+    "auge": "unklar"
+   }
+  }
+ ],
+ "bilder": [
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 0,
+   "augenetikett": "unklar",
+   "halbsatz": "Rechteckfeld mit Lisenen an richtiger Stelle, aber als Teil einer Fassade",
+   "blind_id": "B29",
+   "abhebung": 1.193,
+   "trefferquote": 0.561,
+   "praezision": 0.0202,
+   "rho_maske_gerichtet": -0.363,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 1,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Wand mit Fenster",
+   "blind_id": "B21",
+   "abhebung": 1.289,
+   "trefferquote": 0.695,
+   "praezision": 0.0171,
+   "rho_maske_gerichtet": -0.052,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 2,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Fassadenwand fuellt das Bild, kein schlanker Turm",
+   "blind_id": "B03",
+   "abhebung": 1.633,
+   "trefferquote": 0.635,
+   "praezision": 0.0199,
+   "rho_maske_gerichtet": -0.498,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 3,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Villa, erfunden",
+   "blind_id": "B30",
+   "abhebung": 1.661,
+   "trefferquote": 0.752,
+   "praezision": 0.0245,
+   "rho_maske_gerichtet": -0.042,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 4,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Rasterkoerper frontal auf Platte, Lage und Umriss wie Schoenbild, Umgebung verrauscht",
+   "blind_id": "B16",
+   "abhebung": 1.404,
+   "trefferquote": 0.616,
+   "praezision": 0.0142,
+   "rho_maske_gerichtet": 0.023,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "s",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Collage, Tor an der Stelle",
+   "blind_id": "B10",
+   "abhebung": 1.918,
+   "trefferquote": 0.803,
+   "praezision": 0.0291,
+   "rho_maske_gerichtet": -0.242,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 0,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Aufsatz zu tief und zu klein in einer Fassade",
+   "blind_id": "B33",
+   "abhebung": 1.192,
+   "trefferquote": 0.558,
+   "praezision": 0.0159,
+   "rho_maske_gerichtet": 0.149,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 1,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Wandtextur ueber das ganze Bild",
+   "blind_id": "B04",
+   "abhebung": 1.065,
+   "trefferquote": 0.575,
+   "praezision": 0.0117,
+   "rho_maske_gerichtet": 0.016,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 2,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Hochhausfront ueber das ganze Bild",
+   "blind_id": "B11",
+   "abhebung": 1.177,
+   "trefferquote": 0.521,
+   "praezision": 0.0124,
+   "rho_maske_gerichtet": -0.087,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 3,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Villa, erfunden",
+   "blind_id": "B13",
+   "abhebung": 1.418,
+   "trefferquote": 0.684,
+   "praezision": 0.0155,
+   "rho_maske_gerichtet": 0.128,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Turmkoerper im Eckblick an richtiger Stelle, sitzt auf erfundenem Glasgeruest",
+   "blind_id": "B26",
+   "abhebung": 1.085,
+   "trefferquote": 0.433,
+   "praezision": 0.0093,
+   "rho_maske_gerichtet": 0.879,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSE",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Collage, Rundbau",
+   "blind_id": "B22",
+   "abhebung": 1.924,
+   "trefferquote": 0.735,
+   "praezision": 0.0203,
+   "rho_maske_gerichtet": 0.49,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 0,
+   "augenetikett": "unklar",
+   "halbsatz": "heller Block an richtiger Stelle, aber in eine erfundene Fassade eingebettet",
+   "blind_id": "B19",
+   "abhebung": 1.198,
+   "trefferquote": 0.566,
+   "praezision": 0.0158,
+   "rho_maske_gerichtet": 0.231,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 1,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Wand mit Fenster",
+   "blind_id": "B14",
+   "abhebung": 0.974,
+   "trefferquote": 0.531,
+   "praezision": 0.0093,
+   "rho_maske_gerichtet": -0.025,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 2,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Hochhausfront ueber das ganze Bild",
+   "blind_id": "B23",
+   "abhebung": 1.246,
+   "trefferquote": 0.547,
+   "praezision": 0.0126,
+   "rho_maske_gerichtet": -0.097,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 3,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Villa, erfunden",
+   "blind_id": "B18",
+   "abhebung": 1.156,
+   "trefferquote": 0.55,
+   "praezision": 0.0112,
+   "rho_maske_gerichtet": -0.467,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Turmkopf an richtiger Stelle und Form, sitzt aber auf erfundenem Glassockel",
+   "blind_id": "B06",
+   "abhebung": 1.074,
+   "trefferquote": 0.458,
+   "praezision": 0.0096,
+   "rho_maske_gerichtet": 0.015,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "hochbau",
+   "blick": "sSW",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Collage",
+   "blind_id": "B25",
+   "abhebung": 1.846,
+   "trefferquote": 0.759,
+   "praezision": 0.0198,
+   "rho_maske_gerichtet": 0.176,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 0,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Fassadenwand",
+   "blind_id": "B15",
+   "abhebung": 1.207,
+   "trefferquote": 0.564,
+   "praezision": 0.0104,
+   "rho_maske_gerichtet": 0.102,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 1,
+   "augenetikett": "unklar",
+   "halbsatz": "dunkles Rechteck auf Platte an richtiger Stelle, sehr schwach",
+   "blind_id": "B17",
+   "abhebung": 0.847,
+   "trefferquote": 0.433,
+   "praezision": 0.0069,
+   "rho_maske_gerichtet": 0.088,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 2,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Hochhausfront ueber das ganze Bild",
+   "blind_id": "B12",
+   "abhebung": 1.588,
+   "trefferquote": 0.71,
+   "praezision": 0.0131,
+   "rho_maske_gerichtet": -0.409,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 3,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Villa, erfunden",
+   "blind_id": "B36",
+   "abhebung": 1.711,
+   "trefferquote": 0.82,
+   "praezision": 0.0158,
+   "rho_maske_gerichtet": 0.147,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Quader an richtiger Stelle als Dachaufbau auf erfundener Glasfassade",
+   "blind_id": "B20",
+   "abhebung": 2.257,
+   "trefferquote": 0.909,
+   "praezision": 0.0291,
+   "rho_maske_gerichtet": -0.086,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "s",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Stadtcollage, an der Stelle nur ein winziger Fremdbau",
+   "blind_id": "B02",
+   "abhebung": 1.858,
+   "trefferquote": 0.803,
+   "praezision": 0.0179,
+   "rho_maske_gerichtet": 0.765,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 0,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Fassadenwand ohne Koerper",
+   "blind_id": "B08",
+   "abhebung": 1.431,
+   "trefferquote": 0.661,
+   "praezision": 0.0098,
+   "rho_maske_gerichtet": 0.233,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 1,
+   "augenetikett": "steht richtig",
+   "halbsatz": "Quader auf Platte an richtiger Stelle, Kanten weich, Umgebung verrauscht",
+   "blind_id": "B27",
+   "abhebung": 0.779,
+   "trefferquote": 0.418,
+   "praezision": 0.0059,
+   "rho_maske_gerichtet": 0.55,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 2,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Hochhausfront",
+   "blind_id": "B35",
+   "abhebung": 1.657,
+   "trefferquote": 0.789,
+   "praezision": 0.016,
+   "rho_maske_gerichtet": 0.505,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 3,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Villa mit Balkon, erfunden",
+   "blind_id": "B05",
+   "abhebung": 2.073,
+   "trefferquote": 0.946,
+   "praezision": 0.0257,
+   "rho_maske_gerichtet": 0.225,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Quader an richtiger Stelle als Dachaufbau auf erfundenem Hochhaus",
+   "blind_id": "B34",
+   "abhebung": 2.127,
+   "trefferquote": 0.898,
+   "praezision": 0.0247,
+   "rho_maske_gerichtet": 0.334,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSE",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Collage",
+   "blind_id": "B24",
+   "abhebung": 1.19,
+   "trefferquote": 0.523,
+   "praezision": 0.0108,
+   "rho_maske_gerichtet": 0.388,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 0,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Fassadenwand",
+   "blind_id": "B32",
+   "abhebung": 1.163,
+   "trefferquote": 0.538,
+   "praezision": 0.0085,
+   "rho_maske_gerichtet": 0.339,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 1,
+   "augenetikett": "unklar",
+   "halbsatz": "flacher Koerper auf Platte an richtiger Stelle, aber gerundet statt Quader",
+   "blind_id": "B09",
+   "abhebung": 1.531,
+   "trefferquote": 0.798,
+   "praezision": 0.0136,
+   "rho_maske_gerichtet": 0.675,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 2,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Hochhausfront",
+   "blind_id": "B28",
+   "abhebung": 1.561,
+   "trefferquote": 0.739,
+   "praezision": 0.0137,
+   "rho_maske_gerichtet": -0.308,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 3,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Villa mit Balkon, erfunden",
+   "blind_id": "B07",
+   "abhebung": 1.776,
+   "trefferquote": 0.825,
+   "praezision": 0.018,
+   "rho_maske_gerichtet": -0.694,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 4,
+   "augenetikett": "unklar",
+   "halbsatz": "Quader an richtiger Stelle und in richtiger Form, aber als Dachaufbau auf erfundenem Hochhaus",
+   "blind_id": "B01",
+   "abhebung": 2.178,
+   "trefferquote": 0.874,
+   "praezision": 0.0252,
+   "rho_maske_gerichtet": 0.568,
+   "modus_gerechnet": "txt2img"
+  },
+  {
+   "koerper": "testbau",
+   "blick": "sSW",
+   "startwert": 5,
+   "augenetikett": "steht falsch",
+   "halbsatz": "Collage",
+   "blind_id": "B31",
+   "abhebung": 1.126,
+   "trefferquote": 0.484,
+   "praezision": 0.0094,
+   "rho_maske_gerichtet": 0.267,
+   "modus_gerechnet": "txt2img"
+  }
+ ],
+ "nullproben": [
+  {
+   "soll_von": "hochbau-s",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "hochbau-s",
+   "probe": "null_rauschen",
+   "abhebung": 0.9954168954864765,
+   "status": "ok"
+  },
+  {
+   "soll_von": "hochbau-sSE",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "hochbau-sSE",
+   "probe": "null_rauschen",
+   "abhebung": 0.9928675240102106,
+   "status": "ok"
+  },
+  {
+   "soll_von": "hochbau-sSW",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "hochbau-sSW",
+   "probe": "null_rauschen",
+   "abhebung": 0.9928675240102106,
+   "status": "ok"
+  },
+  {
+   "soll_von": "testbau-s",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "testbau-s",
+   "probe": "null_rauschen",
+   "abhebung": 0.9964027908039745,
+   "status": "ok"
+  },
+  {
+   "soll_von": "testbau-sSE",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "testbau-sSE",
+   "probe": "null_rauschen",
+   "abhebung": 1.012709764929381,
+   "status": "ok"
+  },
+  {
+   "soll_von": "testbau-sSW",
+   "probe": "null_grau",
+   "abhebung": 0.0,
+   "status": "keine_bildkanten"
+  },
+  {
+   "soll_von": "testbau-sSW",
+   "probe": "null_rauschen",
+   "abhebung": 1.0153942175865829,
+   "status": "ok"
+  }
+ ],
+ "befunde": [
+  "Augenlage: 2 richtig, 9 unklar, 25 falsch von 36. Das Modell erfindet meist ein eigenes Motiv; wo die Form ankommt, oft als Dachaufbau oder Feld auf einem erfundenen Grossbau (unklar).",
+  "abhebung bevorzugt bilderreiche Faelschungen: die hoechsten Werte (1.9–2.3) haben Hochhausfronten und Dachaufbau-Bilder; die zwei richtigen Bilder liegen mit 1.404 (hochbau-s: Rang 4 von 6) und 0.779 (testbau-sSE: niedrigster Wert der sechs) nicht vorn.",
+  "Nullproben: grau 0.0 (keine_bildkanten) je Soll-Karte, Rauschen 0.99–1.02 — mehrere Rechenbilder liegen unter oder nahe der Rausch-Nullprobe (0.78–1.1).",
+  "Alle 36 Laeufe: modus_gerechnet txt2img statt bestelltem image_edit (Anker kommt nicht an, Tiefe traegt ueber control_image) — wie 188.",
+  "arbeitsgang rahmt hier nach der Szene (Bauwerk wenige Prozent des Bildes); nach 188 ist zu erwarten, dass eine Reihe nach dem Bauwerk viel mehr richtige Bilder liefert und die Frage (a)/(b) erst dann trennscharf wird. Vorschlag: 186 nach dem Umschalten der Rahmung wiederholen."
+ ],
+ "nicht_getan": "Auswahl nicht umgebaut, keine Schwelle gesetzt, keine Bilder ins Repo.",
+ "umgebung": {
+  "gpu": "RTX 5090, eine Messung zur Zeit",
+  "venv": ".venv-render"
+ },
+ "fehler": null
+}
