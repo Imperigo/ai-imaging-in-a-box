@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (zuletzt) · Eine Zahl folgt dem Auge: die Umrisstreue
+
+* **Ergebnis:** Die Gegenprobe war tauglich — das perfekte Bild besteht sie überall. Mit ihr
+  und 72 frischen Bildern folgen zwei Zahlen dem Augenurteil: die Umrisstreue und ihr
+  Ausschnitt an der Silhouette. Auch beim hohen Gebäude von vorne, wo die alte Zahl versagte.
+* **Eingebaut:** Die Umrisstreue steht jetzt als «Formprüfung» im Bericht jedes gewählten
+  Bildes — als Auskunft, ohne Urteil.
+* **Vorbehalt:** Die schlechten Bilder der Messung kamen fast alle aus halber Steuerstärke. Im
+  Betrieb läuft volle Stärke, und dort ist die Frage «steht oder unklar» schwerer.
+* **Weiter:** Eine Grenze (2,0) ist jetzt vorab festgelegt und wird an 96 neuen Bildern
+  geprüft. Erst wenn sie trägt, stellt sich die Frage, ob die Prüfung urteilen darf.
+
 ### 30.09.2026 (tief in der Nacht) · Erste Messung gegen das Auge: noch keine Zahl besteht
 
 * **Ergebnis:** Nach der Regel, die vorher feststand, folgt keine Zahl dem Auge.

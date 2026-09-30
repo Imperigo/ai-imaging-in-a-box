@@ -32,6 +32,19 @@ Die Kandidaten
 
 Alle drei sind **Auskunft**, keine Urteile: ``urteilt`` ist ``False``, bis die Auswertung eine
 Schwelle trägt. Reine stdlib (Regel 4).
+
+Ergebnis (``auf-20260930-195``, 72 frische Bilder, Regel vorab)
+----------------------------------------------------------------
+**Umrisstreue und Silhouette folgen dem Auge**: Hochbau AUC 0,96/0,97 und im Fall 0,97,
+Testbau 1,00, Kreuz gegen den anderen Körper 1,00 bei Decke 1,00, Nullproben bestanden.
+Richtungstreue (Kreuz 0,84) und Flächentrennung (Hochbau 0,69) fallen durch. Der Stichentscheid
+der Regel (höhere Hochbau-AUC im Fall) ergab Gleichstand. **Die Formprüfung ist darum die
+Umrisstreue** (:data:`FORMPRUEFUNG_MASS`), die Silhouette steht als Auskunft daneben —
+Begründung nach der Messung, nicht vorab: Bei voller Tiefensteuerung, dem Fall im Betrieb,
+trennt die Umrisstreue «steht» von «unklar» besser (im Fall 0,83 gegen 0,78, Hochbau 0,88
+gegen 0,83), und die Startwert-Auswahl benutzt sie schon. **Vorbehalt:** «steht nicht» kam fast
+nur aus halber Stärke; im Betrieb ist die Frage «steht oder unklar», und dort ist die Trennung
+schwächer. Eine Schwelle gibt es erst nach einer eigenen Reihe (``auf-20260930-196``).
 """
 from __future__ import annotations
 
@@ -43,6 +56,16 @@ from aiimaging import umriss
 #: Erwartungswert von ``|cos|`` bei gleichverteilten Winkeln — der Zufall für ``richtung``.
 ZUFALL_RICHTUNG = 2.0 / math.pi
 
+#: Die Zahl, die die Formprüfung trägt (``auf-20260930-195``, siehe Moduldocstring).
+FORMPRUEFUNG_MASS = "umriss_abhebung"
+
+#: Urteilt die Formprüfung? Nein, bis eine eigene Reihe eine Schwelle bestätigt.
+FORMPRUEFUNG_URTEILT = False
+
+#: Woher der Befund kommt — reist mit jeder Auskunft.
+FORMPRUEFUNG_GRUNDLAGE = ("auf-20260930-195: folgt dem blinden Augenurteil (Hochbau AUC im "
+                          "Fall 0.97, Testbau 1.00, Kreuzprobe 1.00); keine Schwelle")
+
 #: Hintergrundmarke für die Soll-Tiefe (wie ``umriss.HINTERGRUND_AB_M``).
 HINTERGRUND_AB_M = umriss.HINTERGRUND_AB_M
 
@@ -51,6 +74,23 @@ def _silhouette_soll(soll: Sequence[float]) -> list[float]:
     """Eine Soll-Karte, die nur noch Bauwerk gegen Hintergrund kennt — keine Tiefenstufen."""
     return [1.0 if (math.isfinite(w) and w < HINTERGRUND_AB_M) else HINTERGRUND_AB_M * 10
             for w in soll]
+
+
+def silhouette_treue(luminanz: Sequence[float], soll: Sequence[float], breite: int,
+                     hoehe: int) -> dict:
+    """Die Umrisstreue nur an der Silhouette (Bauwerk gegen Hintergrund)."""
+    return umriss.umriss_treue(luminanz, _silhouette_soll(soll), breite, hoehe)
+
+
+def formpruefung(luminanz: Sequence[float], soll: Sequence[float], breite: int,
+                 hoehe: int) -> dict:
+    """Die Formprüfung als Auskunft: Umrisstreue, daneben die Silhouette, ohne Urteil."""
+    voll = umriss.umriss_treue(luminanz, soll, breite, hoehe)
+    sil = silhouette_treue(luminanz, soll, breite, hoehe)
+    return {"mass": FORMPRUEFUNG_MASS, "wert": voll.get("abhebung"),
+            "silhouette_abhebung": sil.get("abhebung"), "status": voll.get("status"),
+            "urteilt": FORMPRUEFUNG_URTEILT, "schwelle": None,
+            "grundlage": FORMPRUEFUNG_GRUNDLAGE}
 
 
 def _sobel(werte: Sequence[float], breite: int, hoehe: int):
@@ -147,7 +187,7 @@ def alle(luminanz: Sequence[float], soll: Sequence[float], breite: int, hoehe: i
          flaechen: Sequence[int] | None = None) -> dict:
     """Alle Kandidaten für ein Bild. Fehlt die Flächenkarte, fehlt ``flaechentrennung``."""
     voll = umriss.umriss_treue(luminanz, soll, breite, hoehe)
-    sil = umriss.umriss_treue(luminanz, _silhouette_soll(soll), breite, hoehe)
+    sil = silhouette_treue(luminanz, soll, breite, hoehe)
     rich = richtung(luminanz, soll, breite, hoehe)
     aus = {
         "umriss_abhebung": voll.get("abhebung"),
@@ -187,5 +227,6 @@ def alle_aus_bericht(bild_png, bericht: dict) -> dict:
     return dict(alle(luminanz, soll, breite, hoehe, flaechen=flaechen), status="ok")
 
 
-__all__ = ["ZUFALL_RICHTUNG", "alle", "alle_aus_bericht", "flaechen_aus_farben",
-           "flaechentrennung", "richtung"]
+__all__ = ["FORMPRUEFUNG_GRUNDLAGE", "FORMPRUEFUNG_MASS", "FORMPRUEFUNG_URTEILT",
+           "ZUFALL_RICHTUNG", "alle", "alle_aus_bericht", "flaechen_aus_farben",
+           "flaechentrennung", "formpruefung", "richtung", "silhouette_treue"]

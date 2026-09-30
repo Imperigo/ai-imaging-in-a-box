@@ -238,3 +238,13 @@ def test_die_auswertung_ohne_doppelte_ueber_die_kommandozeile(tmp_path, capsys):
     aw = _werkzeug("formpruefung_auswertung")
     aw.main(["--json", "--ohne-doppelte", str(datei)])
     assert json.loads(capsys.readouterr().out)["n_bilder"] == 2
+
+
+def test_die_formpruefung_ist_die_umrisstreue_und_urteilt_nicht():
+    """auf-195: Umrisstreue und Silhouette folgen dem Auge; Gleichstand, Umrisstreue trägt."""
+    aus = fk.formpruefung(_passend(), _soll(), B, H)
+    assert aus["mass"] == fk.FORMPRUEFUNG_MASS == "umriss_abhebung"
+    assert aus["urteilt"] is False and aus["schwelle"] is None
+    assert aus["wert"] > 3 and aus["silhouette_abhebung"] > 3
+    grau = fk.formpruefung([0.5] * (B * H), _soll(), B, H)
+    assert grau["wert"] == 0.0 and grau["silhouette_abhebung"] == 0.0

@@ -62,3 +62,28 @@ def test_der_schalter_stellt_rho_wieder_her(tmp_path, monkeypatch):
     monkeypatch.setattr(abholer, "SEEDAUSWAHL_NACH", "rho")
     _, _, auswahl = _lauf(tmp_path, soll=_soll())
     assert auswahl["gewaehlt"] == 0
+
+
+def test_die_auswahl_traegt_die_formpruefung_als_auskunft(tmp_path):
+    """auf-195: Die Umrisstreue folgt dem Auge — sie steht im Bericht, urteilt aber nicht."""
+    _, _, auswahl = _lauf(tmp_path, soll=_soll())
+    fp = auswahl["formpruefung"]
+    assert fp["mass"] == "umriss_abhebung" and fp["urteilt"] is False and fp["schwelle"] is None
+    assert fp["wert"] > 3 and fp["silhouette_abhebung"] > 3
+    assert "auf-20260930-195" in fp["grundlage"]
+
+
+def test_die_formpruefung_auch_bei_einem_startwert(tmp_path):
+    def rendere_seed(seed, ziel):
+        _passend(ziel)
+        return {"status": "ok", "bild_png": ziel}
+
+    _, _, auswahl = abholer._bester_seed([0], tmp_path, "s", rendere_seed,
+                                         lambda png: {}, maske_da=True, soll=_soll(),
+                                         breite=B, hoehe=H)
+    assert auswahl["formpruefung"]["wert"] > 3
+
+
+def test_ohne_soll_keine_formpruefung(tmp_path):
+    _, _, auswahl = _lauf(tmp_path, soll=None)
+    assert auswahl["formpruefung"] is None

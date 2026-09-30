@@ -1,0 +1,86 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20260930-196",
+ "art": "frage",
+ "beschreibung": "Formpruefung, dritter Schritt: traegt die vorab gesetzte Schwelle umriss_abhebung >= 2.0 an 96 frischen Bildern (Startwerte 14–25 bei 1.0, 10–13 bei 0.5)? Unklar zaehlt als nicht stehend. Dazu Ansage: der Auswahlbericht des Abholers traegt jetzt «formpruefung» als Auskunft.",
+ "anweisung": "=== FORMPRUEFUNG, DRITTER SCHRITT: TRAEGT EINE FESTE SCHWELLE? ===\n\nEuer Ergebnis 195: Umrisstreue und Silhouette folgen dem Auge (Decke 1.00, Kreuz gegen den\nanderen Koerper 1.00, Hochbau im Fall 0.97). Danke — und danke fuer das Offenlassen des\nStichentscheids.\n\nUNSER ENTSCHEID ZUM GLEICHSTAND (nach der Messung, darum ausdruecklich so benannt):\n  Die Formpruefung ist die UMRISSTREUE (umriss_abhebung), die Silhouette steht als Auskunft\n  daneben. Grund: Bei voller Tiefensteuerung — dem Fall im Betrieb — trennt die Umrisstreue\n  «steht» von «unklar» besser (im Fall 0.83 gegen 0.78, Hochbau 0.88 gegen 0.83), und die\n  Startwert-Auswahl benutzt sie schon.\n  VORBEHALT, den wir in euren Zahlen gefunden haben: 24 der 25 «steht nicht» kamen aus\n  Staerke 0.5. Im Betrieb (Staerke 1.0) heisst die Frage «steht oder unklar», und dort ist die\n  Trennung schwaecher. Genau das prueft dieser Auftrag.\n\nTEIL A — ANSAGE (vor dem Pull lesen; betrifft den Abholer, der aus dem Klon laeuft)\n  A1 abholer._bester_seed: Der Auswahlbericht (auswahl) traegt neu das Feld «formpruefung»\n     = {mass: \"umriss_abhebung\", wert, silhouette_abhebung, status, urteilt: false,\n     schwelle: null, grundlage}. Auch bei nur einem Startwert. Ohne Soll-Karte: null.\n  A2 Die AUSWAHL selbst ist unveraendert (weiter nach der Umrisstreue). Mehraufwand: je\n     behaltenes Bild ein zusaetzliches Lesen des PNG und eine zweite Kantenrechnung.\n  A3 Nichts davon geht an KosmoOrbit; ihr Vertrag kennt das Feld nicht.\n  A4 Neu in der Bibliothek: formkandidaten.formpruefung(...) und FORMPRUEFUNG_MASS.\n\nTEIL B — DIE FRISCHE REIHE\n  arbeitsgang wie 195 (Prompt «a residential building, architectural photograph», 8 Schritte,\n  z-image-turbo, 512 px, Rahmung nach dem Bauwerk). Hochbau (--hochbau --gelaende) und\n  Testbau (--gelaende); Blick s, sSE, sSW.\n    - controlnet_staerke 1.0 mit Startwerten 14–25 (NEU, 12 je Fall);\n    - controlnet_staerke 0.5 mit Startwerten 10–13 (NEU, 4 je Fall).\n  Das sind 2 x 3 x 16 = 96 Bilder.\n  1. AUGE ZUERST, BLIND: alle 96 unter gemischten Decknamen (Praefix 196-), ohne Staerke\n     und ohne Zahlen. «steht» / «steht nicht» / «unklar» plus Halbsatz. Festschreiben, dann\n     erst Schluessel und Zahlen.\n  2. Je Bild formkandidaten_messen.py (nur eigene Soll-Karte noetig; --fremd-koerper gern\n     dazu) und rho_maske_gerichtet.\n\nDIE ENTSCHEIDUNGSREGEL — FEST VOR DER MESSUNG\n  Die Schwelle steht VORHER fest und wird NICHT an diesen Bildern gesucht:\n    SCHWELLE: umriss_abhebung >= 2.0 heisst «Form steht».\n    (Aus 195 gewaehlt: beste ausgewogene Trefferquote ueber alle 72 Bilder bei 1.988, gerundet.)\n  «unklar» zaehlt als «steht NICHT» — ein Urteil «steht» muss das Auge ueberzeugen.\n  Je Koerper (Hochbau, Testbau) getrennt, ueber alle 48 Bilder des Koerpers:\n    (1) Ausgewogene Trefferquote >= 0.80\n        (Mittel aus: Anteil der «steht»-Bilder mit Wert >= 2.0, und Anteil der\n        «unklar»/«steht nicht»-Bilder mit Wert < 2.0).\n    (2) Falsch «steht» <= 0.20: Anteil der «unklar»/«steht nicht»-Bilder mit Wert >= 2.0.\n    (3) Dasselbe NUR fuer Staerke 1.0 (36 Bilder je Koerper) berichten — zaehlt nicht fuer die\n        Regel, ist aber die Betriebsfrage.\n  Folge: Erfuellen BEIDE Koerper (1) und (2), ist die Schwelle bestaetigt — ob die\n  Formpruefung dann urteilt, entscheidet der Owner. Sonst bleibt sie Auskunft ohne Schwelle.\n  Silhouette bitte mit derselben Schwelle 2.0 mitrechnen und berichten (zaehlt nicht).\n\nZURUECK (auftraege/ergebnisse/auf-20260930-196.json)\n  bilder: je Bild {serie, koerper, blick, startwert, controlnet_staerke, rahmung,\n    augenetikett, halbsatz, blind_id, rho_maske_gerichtet, umriss_abhebung,\n    silhouette_abhebung, richtung_abhebung, flaechentrennung, bauwerk_anteil}\n  kreuzpaare: die Zeilen von formkandidaten_messen.py.\n  regel: je Koerper (1), (2) und die Betriebsfrage (3), mit den Zaehlungen dahinter\n    (steht >= 2.0 / steht < 2.0 / nicht-steht >= 2.0 / nicht-steht < 2.0).\n  auswertung_tabelle: python3 tools/formpruefung_auswertung.py --rahmung bauwerk \\\n    auftraege/ergebnisse/auf-20260930-196.json — woertlich.\n  Ein Satz: traegt die Schwelle 2.0 — ja/nein.\n  Ausserdem: ein Abholer-Lauf (falls einer anfaellt) zeigt «formpruefung» im Auswahlbericht?\n\nNICHT TUN: die Schwelle nicht verschieben oder neu suchen; nichts an Auswahl, Abholer oder\nKandidaten aendern; 194/195 nicht neu bewerten; keine Bilder ins Repo; keine absoluten Pfade;\nnichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-09-30T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+ },
+ "params": {
+  "koerper": [
+   "hochbau",
+   "testbau"
+  ],
+  "blick": [
+   "s",
+   "sSE",
+   "sSW"
+  ],
+  "reihe": [
+   {
+    "controlnet_staerke": 1.0,
+    "seeds": [
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25
+    ]
+   },
+   {
+    "controlnet_staerke": 0.5,
+    "seeds": [
+     10,
+     11,
+     12,
+     13
+    ]
+   }
+  ],
+  "aufloesung": 512,
+  "rahmung": "bauwerk",
+  "backbone": "z-image-turbo",
+  "regel": {
+   "mass": "umriss_abhebung",
+   "schwelle": 2.0,
+   "unklar_zaehlt_als": "steht nicht",
+   "ausgewogen_min": 0.8,
+   "falsch_steht_max": 0.2,
+   "je_koerper": true
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: 96 Bilder mit z-image-turbo bei 512 px.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+   "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+   "Augenetikett VOR den Zahlen vergeben, blind."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; Teil A gelesen.",
+  "Je Bild eine Zeile im Format oben, mit Augenetikett und Halbsatz.",
+  "Je Koerper die Regel (1) und (2) mit den vier Zaehlungen; die Betriebsfrage (3) nur Staerke 1.0.",
+  "Silhouette mit derselben Schwelle, nur berichtet.",
+  "Die Tabelle von tools/formpruefung_auswertung.py woertlich.",
+  "Ein Satz: traegt die Schwelle 2.0 — ja/nein."
+ ],
+ "rang": 2
+}

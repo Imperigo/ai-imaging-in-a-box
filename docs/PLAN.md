@@ -7555,10 +7555,17 @@ Bekannt und ausdrücklich nicht erledigt:
           dem Auge**; Richtungstreue und Flächentrennung fallen nur an der Kreuzprobe
           (Protokoll 73 §18). 18 Doppelte durch unseren Auftrag.
     - [x] **Kern:** Auswertung mit Kreuzprobe je Art, Decke, Doppelten-Erkennung.
-    - [ ] **local:** `auf-20260930-195` — Decke der Kreuzprobe, dann 72 frische Bilder mit neuer
-          Regel (Kreuz gegen den anderen Körper, nur mit Decke 1,00).
-    - [ ] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
-          ein Segmentierungsansatz (Lizenzfrage).
+    - [x] **local:** `auf-20260930-195` — Decke der Kreuzprobe, dann 72 frische Bilder mit neuer
+          Regel (Kreuz gegen den anderen Körper, nur mit Decke 1,00). — **Umrisstreue und
+          Silhouette folgen dem Auge**; Stichentscheid Gleichstand (Protokoll 73 §19).
+    - [x] **Kern:** Formprüfung = Umrisstreue als Auskunft im Auswahlbericht
+          (`formkandidaten.formpruefung`, `auswahl["formpruefung"]`), urteilt nicht.
+    - [ ] **local:** `auf-20260930-196` — trägt die vorab gesetzte Schwelle 2,0 an 96 frischen
+          Bildern? «unklar» zählt als nicht stehend.
+    - [ ] **Owner, nach 196:** Soll die Formprüfung urteilen (bei bestätigter Schwelle)?
+    - [ ] **cloud (Int 1), nach 196:** Vertragsfrage — Formprüfung je Kamera in `qa`.
+    - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
+          ein Segmentierungsansatz (Lizenzfrage). — erfüllt (195), Bestätigungsreihe ist 196.
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit
         Führung und 40 Schritten nach Modellkarte.
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).

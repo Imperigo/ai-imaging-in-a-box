@@ -4235,6 +4235,20 @@ def _umriss_abhebung(bild_png, soll, breite, hoehe):
     return float(wert) if isinstance(wert, (int, float)) else None
 
 
+def _formpruefung(bild_png, soll, breite, hoehe):
+    """Die Formprüfung als Auskunft (``auf-20260930-195``) — oder ``None``, wenn nicht messbar."""
+    if soll is None or not breite or not hoehe:
+        return None
+    from aiimaging import bildlesen, formkandidaten
+    try:
+        luminanz, b, h = bildlesen.lies_png_luminanz(bild_png)
+        if (b, h) != (breite, hoehe):
+            return None
+        return formkandidaten.formpruefung(luminanz, soll, breite, hoehe)
+    except Exception:                                    # noqa: BLE001
+        return None
+
+
 def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool,
                  soll=None, breite=None, hoehe=None):
     """Mehrere Seeds rendern und den besten behalten — oder begründet nur einen.
@@ -4283,7 +4297,9 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool,
         # Frage, ob „nicht da" nun „kein Vorsprung" heisst oder „nicht geprüft". Es
         # heisst: nicht geprüft, denn es gab nichts zu vergleichen.
         return erg, urteil, {"gewaehlt": seeds[0], "kandidaten": [seeds[0]],
-                             "ausgewaehlt": False, "vorsprung": None, "grund": grund}
+                             "ausgewaehlt": False, "vorsprung": None, "grund": grund,
+                             "formpruefung": _formpruefung(erg["bild_png"], soll, breite,
+                                                           hoehe)}
 
     kandidaten = []
     for seed in seeds:
@@ -4356,6 +4372,8 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool,
     erg = dict(sieger["_erg"], bild_png=ziel_png)
     auswahl = {"gewaehlt": sieger["seed"], "ausgewaehlt": ausgewaehlt, "grund": grund,
                "vorsprung": vorsprung,
+               # Auskunft seit auf-195, urteilt nicht: die Umrisstreue folgt dem Auge.
+               "formpruefung": _formpruefung(sieger["bild"], soll, breite, hoehe),
                "nach": SEEDAUSWAHL_NACH if any(k.get("abhebung") is not None
                                                 for k in kandidaten) else "rho",
                "kandidaten": [{"seed": k["seed"], "gerichtet": k["gerichtet"],
