@@ -37,7 +37,17 @@ SCHEMA_ID = "aiimaging.render-scene/v1"
 #: **Die eine Quelle dieser Namen** (seit 23.09.2026): ``mcp_schemas`` baut das
 #: Eingangsschema daraus, ``werkzeuge`` nimmt genau diese Felder am Einlass an. Bis dahin
 #: standen sie dort je ein weiteres Mal von Hand.
-LANE_FIELDS = ("ifc_path", "glb_path", "up_axis", "bbox")
+#:
+#: **Die zwei, die die Geometrie selbst tragen**, stehen als eigenes Tupel davor
+#: (``GEOMETRIE_QUELLEN``) und ``LANE_FIELDS`` wird daraus zusammengesetzt (A7,
+#: 30.09.2026). Bis dahin stand das Paar ``("ifc_path", "glb_path")`` noch zweimal von Hand da: in
+#: :func:`validate_render_scene` und als ``mcp_schemas.TRAGENDE_GEOMETRIE_FELDER`` — der
+#: Wächter, der «Kante trägt keine Geometrie» meldet. Ein umbenanntes Quellfeld hätte den
+#: Einlass umgestellt und den Wächter auf dem alten Namen stehen lassen; er hätte dann
+#: bei jeder Kante mit dem neuen Namen «keine Geometrie» gerufen — oder, schlimmer, bei
+#: einer mit dem alten geschwiegen. Der Wert ist bitgleich mit dem vorherigen.
+GEOMETRIE_QUELLEN = ("ifc_path", "glb_path")
+LANE_FIELDS = GEOMETRIE_QUELLEN + ("up_axis", "bbox")
 
 
 class ContractError(ValueError):
@@ -233,7 +243,7 @@ def validate_render_scene(scene: dict) -> dict:
     out = copy.deepcopy(scene)
     out["schema"] = SCHEMA_ID
     g = out["geometry"]
-    for feld in ("ifc_path", "glb_path"):
+    for feld in GEOMETRIE_QUELLEN:
         if isinstance(g.get(feld), os.PathLike):
             g[feld] = os.fspath(g[feld])
 

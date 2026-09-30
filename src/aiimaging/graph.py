@@ -57,6 +57,28 @@ GRAPH_SCHEMA_ID = "aiimaging.graph/v1"
 #: still als gültig ausgeben — der teuerste Fehler, den ein Cache machen kann.
 HASH_SCHEMA_ID = "aiimaging.inhalts-hash/v1"
 
+#: Die Anfangsfassung jeder Knotenart — der Stand, den der Code einer Art hat, solange
+#: niemand ihn als verhaltensändernd markiert hat.
+#:
+#: **Warum es eine Fassung je Art braucht** (Sitzung 70, 23.09.2026): Der Hash kennt,
+#: *was* gerechnet wird, aber nicht, *mit welchem Code*. Nach der Führungs-Reparatur des
+#: Bearbeitungsmodells kam ein alter Knoten weiter **ohne** Führung aus dem
+#: Zwischenspeicher der Mappe — gleiche Parameter, gleiche Vorgänger, also derselbe
+#: Schlüssel, also ein Treffer. Der Speicher hat nicht gelogen, er wusste es nicht besser.
+#:
+#: ``HASH_SCHEMA_ID`` zu erhöhen hülfe, verwürfe aber den **ganzen** Speicher, auch die
+#: teuren Multipass-Einträge, an deren Code sich nichts geändert hat. Den Quelltext
+#: mitzuhashen verwürfe ihn bei jedem Tippfehler in einem Kommentar. Die Fassung je Art
+#: liegt dazwischen: ein bewusster Schritt, der genau eine Art trifft (und über die
+#: Vorgänger-Hashes alles, was auf ihr aufbaut — das ist richtig, denn deren Eingang hat
+#: sich ja geändert).
+#:
+#: **Die Anfangsfassung fliesst nicht in den Hash ein.** Nur eine höhere steht im
+#: gehashten Rumpf. So bleibt jeder Schlüssel, der vor Einführung der Fassung entstand,
+#: bitgleich — ein bestehender Zwischenspeicher bleibt gültig, solange niemand eine Art
+#: hochzählt.
+FASSUNG_ANFANG = 1
+
 #: Erlaubte Gestalt eines Cache-Schlüssels. Der Schlüssel wird zum Dateinamen, also darf
 #: er weder Pfadtrenner noch ``..`` enthalten — sonst schriebe ``lege_ab`` ausserhalb der
 #: Cache-Wurzel.
@@ -736,6 +758,7 @@ def inhalts_hash(
     dateien: Sequence[str | Path] = (),
     *,
     param_dateien: Sequence[str] = (),
+    fassung: int = FASSUNG_ANFANG,
 ) -> str:
     """Stabiler Hash aus Knotenart, Parametern, Vorgänger-Hashes und Dateiinhalten.
 
@@ -756,6 +779,11 @@ def inhalts_hash(
       wäre bequemer und in einer Kette aus Subprozessen fast immer falsch.
     * ``HASH_SCHEMA_ID`` — damit ein geändertes Verfahren alte Einträge nicht
       weiterverwendet.
+    * ``fassung`` — der Codestand der Knotenart (siehe ``FASSUNG_ANFANG``), **aber nur,
+      wenn sie über der Anfangsfassung liegt.** Bei der Anfangsfassung fehlt das Feld im
+      Rumpf ganz, und der Hash ist bitgleich mit dem vor Einführung der Fassung. Welche
+      Art welche Fassung hat, weiss dieses Modul nicht — es bekommt sie gesagt, wie
+      ``param_dateien``.
 
     Was **nicht** einfliesst:
 
@@ -808,6 +836,15 @@ def inhalts_hash(
             f"Gemeint war vermutlich [{dateien!r}]."
         )
 
+    # `bool` ist in Python ein `int`; `fassung=True` wäre aber ein Tippfehler und keine
+    # Fassung 1. Darum ausdrücklich ausgeschlossen, statt still als 1 gelesen.
+    if isinstance(fassung, bool) or not isinstance(fassung, int) or fassung < FASSUNG_ANFANG:
+        raise GraphError(
+            f"fassung ist eine ganze Zahl ab {FASSUNG_ANFANG}, war {fassung!r}. Eine "
+            f"Fassung wird nur hochgezählt, nie zurück — ein Rückschritt träfe sonst "
+            f"alte Einträge wieder, die ein neuerer Code schon verworfen hatte."
+        )
+
     felder = _feldnamen(param_dateien, "param_dateien")
     gesetzt = [feld for feld in felder if knoten.params.get(feld)]
     params = knoten.params
@@ -829,6 +866,11 @@ def inhalts_hash(
         "dateien": [_datei_hash(p)
                     for p in list(dateien) + [knoten.params[f] for f in gesetzt]],
     }
+    # NUR ÜBER DER ANFANGSFASSUNG. Stünde das Feld immer im Rumpf, änderte sich mit
+    # dieser Zeile jeder Schlüssel, und der ganze bestehende Zwischenspeicher wäre auf
+    # einen Schlag verworfen — genau das, was die Fassung je Art vermeiden soll.
+    if fassung > FASSUNG_ANFANG:
+        rumpf["fassung"] = fassung
     # `separators` und `ensure_ascii`: feste, von den Vorgabewerten unabhängige
     # Textform. `sort_keys` wirkt rekursiv, auch auf verschachtelte params.
     text = json.dumps(
@@ -1050,6 +1092,7 @@ class ArtefaktCache:
 __all__ = [
     "ArtefaktCache",
     "Bedarf",
+    "FASSUNG_ANFANG",
     "GRAPH_SCHEMA_ID",
     "Graph",
     "GraphError",

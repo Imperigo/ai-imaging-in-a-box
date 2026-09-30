@@ -108,7 +108,8 @@ from aiimaging import (
     raumkamera, render, seams, tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
-    ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash, pruefe_bedarf,
+    FASSUNG_ANFANG, ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash,
+    pruefe_bedarf,
 )
 
 # --------------------------------------------------------------------------------------
@@ -269,6 +270,59 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
     # Zeichnung wäre verschwunden, und zwar lautlos.
     ART_BILDQUELLE: ("bild_png",),
 }
+
+#: Der **Codestand** jeder Knotenart, soweit er den Zwischenspeicher betrifft.
+#:
+#: **Warum es diese Tabelle gibt** (Sitzung 70, 23.09.2026, local A4): Der Schlüssel des
+#: Zwischenspeichers kennt Art, Parameter, Vorgänger und Dateiinhalte — aber nicht den
+#: Code, der rechnet. Nach der Führungs-Reparatur des Bearbeitungsmodells kam ein alter
+#: Knoten darum weiter **ohne** Führung aus dem Speicher: Für den Schlüssel hatte sich
+#: nichts geändert. *Ein Treffer, der auf altem Code beruht, ist ein falscher Treffer —
+#: nur einer, den niemand sieht.*
+#:
+#: **Wann hochzählen:** Wenn eine Änderung am Code einer Art bei **gleichen** Parametern
+#: und **gleichen** Eingängen ein **anderes** Ergebnis liefert — ein reparierter Adapter,
+#: ein neuer Vorgabewert, ein anderer Aufrufweg zum Modell. **Nicht** hochzählen bei
+#: Umbenennungen, Kommentaren, schnellerem Code mit gleichem Ergebnis: Jeder Schritt
+#: verwirft Rechenzeit an der HomeStation.
+#:
+#: **Wie hochzählen:** Die Zahl der betroffenen Art um eins erhöhen, im Commit sagen,
+#: warum, und die Änderung der HomeStation **ansagen** — sie rechnet aus ihrem eigenen
+#: Klon, ein Nachziehen dort genügt, und ohne Ansage sieht das Neurechnen drüben wie ein
+#: Fehler aus. Getroffen werden alle Einträge dieser Art und über die Vorgänger-Hashes
+#: alles, was auf ihr aufbaut (richtig so: deren Eingang hat sich ja geändert). Andere
+#: Arten behalten ihre Schlüssel. Der Multipass-Speicher des Abholers
+#: (``abholer.multipass_schluessel``) liest dieselbe Zeile für ``multipass``.
+#:
+#: **Nie herunterzählen.** Eine alte Zahl träfe wieder die Einträge, die der neuere Code
+#: schon verworfen hatte. ``graph.inhalts_hash`` lehnt nur Werte unter der
+#: Anfangsfassung ab; einen Rückschritt auf eine frühere, höhere Zahl verhindert allein
+#: diese Regel.
+#:
+#: **Die Anfangsfassung zählt nicht mit** (``graph.FASSUNG_ANFANG``): Bei ihr ist der
+#: Schlüssel bitgleich mit dem vor Einführung dieser Tabelle. Ein bestehender
+#: Zwischenspeicher bleibt gültig, bis jemand eine Art bewusst hochzählt. Eine Art, die
+#: hier fehlt, gilt als Anfangsfassung — die Tabelle zählt trotzdem jede Art der Kette
+#: auf, damit der Ort zum Hochzählen nicht erst gesucht werden muss.
+FASSUNGEN: dict[str, int] = {
+    ART_GEOMETRIE: FASSUNG_ANFANG,
+    ART_MULTIPASS: FASSUNG_ANFANG,
+    ART_RENDER: FASSUNG_ANFANG,
+    ART_QA: FASSUNG_ANFANG,
+    ART_BILDQUELLE: FASSUNG_ANFANG,
+    ART_NACHRENDER: FASSUNG_ANFANG,
+}
+
+
+def fassung_von(art: str) -> int:
+    """Der Codestand einer Knotenart (``FASSUNGEN``); unbekannte Arten: Anfangsfassung.
+
+    Eine fremde Art (ein Test, eine künftige Stufe) bekommt die Anfangsfassung und damit
+    denselben Schlüssel wie bisher — eine fehlende Zeile in der Tabelle darf keinen
+    Zwischenspeicher verwerfen.
+    """
+    return FASSUNGEN.get(art, FASSUNG_ANFANG)
+
 
 #: Endungen von Ausgabefeldern, die auf eine Datei zeigen. Gebraucht beim Cache-Treffer:
 #: siehe ``_fehlende_ausgabedateien``.
@@ -1891,9 +1945,14 @@ def _knoten_hash(knoten: Knoten, vorgaenger_hashes: list[str]) -> str:
 
     Die Hashes sind dieselben wie vorher — die Marke und die Reihenfolge der gehashten
     Dateien haben sich nicht geändert. Ein bestehender Zwischenspeicher bleibt gültig.
+
+    Dazu kommt der **Codestand der Art** (``FASSUNGEN``) — aber erst, wenn er über der
+    Anfangsfassung liegt. Bis jemand eine Art hochzählt, bleiben alle Schlüssel
+    bitgleich.
     """
     return inhalts_hash(knoten, vorgaenger_hashes,
-                        param_dateien=EINGABEDATEIEN.get(knoten.art, ()))
+                        param_dateien=EINGABEDATEIEN.get(knoten.art, ()),
+                        fassung=fassung_von(knoten.art))
 
 
 def _fehlende_ausgabedateien(ausgaben: dict) -> list[str]:

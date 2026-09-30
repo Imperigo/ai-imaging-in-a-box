@@ -446,3 +446,74 @@ def test_ein_in_lane_fields_ergaenztes_feld_wird_am_einlass_angenommen(monkeypat
 def test_das_schema_fuehrt_die_quelle_und_kein_eigenes_tupel():
     assert mcp_schemas.GEOMETRIE_FELDER is contracts.LANE_FIELDS
     assert tuple(mcp_schemas._GEOMETRIE_EINGANG) == contracts.LANE_FIELDS
+
+
+# ── A7 · Auch das tragende Paar kommt aus der Quelle (30.09.2026) ───────────────────
+#
+# Die vier Felder lesen seit Runde 11 dieselbe Quelle; das Paar, das die Geometrie
+# selbst trägt, stand noch zweimal von Hand da — im Wächter
+# (``mcp_schemas.TRAGENDE_GEOMETRIE_FELDER``, gerufen von ``pruefe_verdrahtbarkeit``, nur
+# in der Testsuite) und im Vertrag (``validate_render_scene``). Ein Wächter mit eigener
+# Liste bewacht nach einer Umbenennung den alten Namen: grün, und über nichts.
+
+def test_waechter_und_vertrag_lesen_dasselbe_tragende_paar():
+    """Dasselbe Objekt, nicht bloss derselbe Wert: Gleichheit hielte auch zwei Kopien aus,
+    die heute zufällig übereinstimmen."""
+    assert mcp_schemas.TRAGENDE_GEOMETRIE_FELDER is contracts.GEOMETRIE_QUELLEN
+    assert mcp_schemas.GEOMETRIE_FELDER is contracts.LANE_FIELDS
+    assert (contracts.LANE_FIELDS[:len(contracts.GEOMETRIE_QUELLEN)]
+            == contracts.GEOMETRIE_QUELLEN)
+
+
+def test_die_werte_sind_bitgleich_mit_dem_bisherigen_stand():
+    """Verhalten unverändert: gleiche Namen, gleiche Reihenfolge. Die Reihenfolge zählt,
+    weil das Eingangsschema daraus gebaut wird und KosmoOrbit es so ausliefert."""
+    assert contracts.GEOMETRIE_QUELLEN == ("ifc_path", "glb_path")
+    assert contracts.LANE_FIELDS == ("ifc_path", "glb_path", "up_axis", "bbox")
+
+
+#: Wo das Paar ``ifc_path``/``glb_path`` von Hand stehen darf: (Datei, zugewiesener Name).
+#:
+#: ``kette.EINGABEDATEIEN`` ist **ein anderer Gegenstand**: Es nennt die Parameter des
+#: Geometrieknotens, deren Dateiinhalt in den Hash des Zwischenspeichers geht. Sie heissen
+#: heute wie die Lane-Felder, folgen aber ``baue_kette`` und nicht dem Vertrag mit
+#: KosmoOrbit — an die Lane-Quelle gebunden, verschöbe eine Umbenennung dort still die
+#: Schlüssel des Zwischenspeichers.
+_ERLAUBTE_HANDKOPIEN = {("contracts.py", "GEOMETRIE_QUELLEN"), ("kette.py", "EINGABEDATEIEN")}
+
+
+def _zugewiesene_namen(zuweisung) -> list[str]:
+    import ast
+    if isinstance(zuweisung, ast.Assign):
+        return [z.id for z in zuweisung.targets if isinstance(z, ast.Name)]
+    if isinstance(zuweisung, ast.AnnAssign) and isinstance(zuweisung.target, ast.Name):
+        return [zuweisung.target.id]
+    return []
+
+
+def test_keine_weitere_handkopie_der_feldnamen_im_paket():
+    """Der Wächter über die Wächter: Kein Tupel, keine Liste, keine Menge im Paket nennt
+    ``ifc_path`` und ``glb_path`` zusammen von Hand — ausser der Quelle selbst und der
+    einen begründeten Ausnahme (``_ERLAUBTE_HANDKOPIEN``). Gelesen wird der Syntaxbaum,
+    nicht der Text: Ein Satz in einem Kommentar ist keine Kopie."""
+    import ast
+
+    from conftest import PAKET
+
+    funde = []
+    for datei in sorted(PAKET.rglob("*.py")):
+        baum = ast.parse(datei.read_text(encoding="utf-8"))
+        erlaubt = {id(k)
+                   for z in ast.walk(baum)
+                   if any((datei.name, n) in _ERLAUBTE_HANDKOPIEN
+                          for n in _zugewiesene_namen(z))
+                   for k in ast.walk(z)}
+        for knoten in ast.walk(baum):
+            if not isinstance(knoten, (ast.Tuple, ast.List, ast.Set)) or id(knoten) in erlaubt:
+                continue
+            namen = {e.value for e in knoten.elts
+                     if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+            if {"ifc_path", "glb_path"} <= namen:
+                funde.append(f"{datei.relative_to(PAKET)}:{knoten.lineno}")
+    assert not funde, ("Handkopie der Geometriefelder — aus contracts.GEOMETRIE_QUELLEN "
+                       f"bzw. contracts.LANE_FIELDS lesen: {funde}")

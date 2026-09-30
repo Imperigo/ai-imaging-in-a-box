@@ -43,7 +43,7 @@ Fehler nicht vorab sehen.
 """
 from __future__ import annotations
 
-from aiimaging.contracts import LANE_FIELDS
+from aiimaging.contracts import GEOMETRIE_QUELLEN, LANE_FIELDS
 
 LANE = "aiimaging"
 
@@ -410,7 +410,12 @@ def schema_felder(schema) -> list[str]:
 #: das Ökosystem kein *entweder-oder* kennt (siehe Modul-Docstring). Die Regel «eines von
 #: beiden» steht darum hier, wo sie prüfbar ist, statt in einer Beschreibung, die niemand
 #: auswertet.
-TRAGENDE_GEOMETRIE_FELDER = ("ifc_path", "glb_path")
+#:
+#: **Kein eigenes Tupel mehr, sondern** ``contracts.GEOMETRIE_QUELLEN`` (A7, 30.09.2026):
+#: dieselbe Lehre wie bei ``GEOMETRIE_FELDER`` oben. Dieser Wächter läuft nur in der
+#: Testsuite (siehe :func:`pruefe_verdrahtbarkeit`); ein eigenes Paar hier hätte nach
+#: einer Umbenennung am Einlass weiter den alten Namen bewacht — grün, und über nichts.
+TRAGENDE_GEOMETRIE_FELDER = GEOMETRIE_QUELLEN
 
 
 def _typmenge(eigenschaft) -> set[str] | None:
