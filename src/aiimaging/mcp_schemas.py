@@ -124,6 +124,17 @@ _NICHT_BEKANNT_AUSGANG = {
                    "bekannt). Leer heisst: keines. Regel B aus E123.",
 }
 
+#: Warum ein angelegter Auftrag wartet — in `enqueue_render` und `query_render` (seit
+#: dem 30.09.2026). Bis dahin stand der Grund eines abgewiesenen Tokens nur in der
+#: Auftragsdatei, und die Antwort sagte allein `awaiting_approval`. Nullbar und NICHT
+#: `error`: Der Auftrag ist entstanden, er ist nur nicht freigegeben.
+_MELDUNG_AUSGANG = {
+    "type": ["string", "null"],
+    "description": "Klartext, warum der Auftrag wartet — etwa ein abgewiesenes "
+                   "approval_token (nennt das Token nie). null heisst: kein Grund "
+                   "vermerkt. Kein Fehler: der Auftrag besteht.",
+}
+
 
 def _eingang_enqueue() -> dict:
     return {
@@ -198,6 +209,7 @@ def _ausgang_enqueue() -> dict:
             "torwaechter": {"type": "object",
                             "description": "Urteil der Massstabs-/Georeferenzprüfung."},
             "nicht_bekannt": _NICHT_BEKANNT_AUSGANG,
+            "meldung": _MELDUNG_AUSGANG,
             "error": {"type": ["string", "null"]},
         },
     }
@@ -240,6 +252,7 @@ def _ausgang_query() -> dict:
             "images": {"type": "array"},
             "erstellt": {"type": ["string", "null"]},
             "geaendert": {"type": ["string", "null"]},
+            "meldung": _MELDUNG_AUSGANG,
             "error": {"type": ["string", "null"]},
         },
     }

@@ -154,6 +154,61 @@ def test_ohne_token_keine_meldung(store, glb):
     assert "meldung" not in _satz(store, antwort["job_id"])
 
 
+def test_abgewiesenes_token_kommt_als_meldung_in_der_antwort_von_enqueue_render_an(
+        store, glb):
+    """Der Grund stand seit dem 23.09.2026 in der Auftragsdatei — beim Aufrufer kam er
+    nicht an (Durchsicht 30.09.2026). Er muss in DERSELBEN Antwort stehen, die
+    ``awaiting_approval`` sagt, sonst sieht ein untaugliches Token aus wie keines.
+
+    Und er steht in ``meldung``, nicht in ``error``: Der Auftrag IST entstanden.
+    """
+    antwort = _bestelle(glb, approval_token="bitte-rechnen")
+
+    assert antwort["status"] == jobs.STATUS_AWAITING
+    assert antwort["error"] is None
+    assert antwort["meldung"] == _satz(store, antwort["job_id"])["meldung"]
+    assert "abgewiesen" in antwort["meldung"]
+    assert "bitte-rechnen" not in antwort["meldung"], "die Antwort nennt das Token nie"
+
+
+def test_abgewiesenes_token_kommt_als_meldung_in_der_antwort_von_query_render_an(
+        store, glb, monkeypatch):
+    """Wer spaeter nachfragt, bekommt denselben Grund — hier der Fall mit Buchpruefung."""
+    monkeypatch.setattr(jobs, "FREIGABE_MIT_BUCH", True)
+    jobs.token_ausgeben(store)                     # ein Buch gibt es, dieses Token nicht
+    job_id = _bestelle(glb)["job_id"]
+
+    antwort = werkzeuge.query_render({"job_id": job_id})
+
+    assert antwort["status"] == jobs.STATUS_AWAITING
+    assert antwort["error"] is None
+    assert "nie" in antwort["meldung"] and "ausgegeben" in antwort["meldung"]
+    assert MUSTER not in antwort["meldung"]
+
+
+def test_ohne_abweisung_ist_die_meldung_leer_und_nicht_erfunden(store, glb):
+    """Ein angenommenes Token und gar keines: ``meldung`` ist ``None`` — in beiden Antworten."""
+    for token in (MUSTER, None):
+        antwort = _bestelle(glb, approval_token=token)
+        assert antwort["meldung"] is None
+        assert werkzeuge.query_render({"job_id": antwort["job_id"]})["meldung"] is None
+
+
+def test_meldung_steht_auch_in_jeder_fehlerantwort(store, glb):
+    """Volle Feldliste auch im Fehlerfall — wie ``error`` und ``nicht_bekannt``."""
+    assert werkzeuge.enqueue_render({})["meldung"] is None
+    assert werkzeuge.query_render({})["meldung"] is None
+    assert werkzeuge.query_render({"job_id": 42})["meldung"] is None
+    assert werkzeuge.query_render({"job_id": "gibt-es-nicht"})["meldung"] is None
+
+
+def test_meldung_ist_im_ausgabeschema_beider_werkzeuge_zugesagt():
+    """Ein Feld, das die Antwort traegt und das Schema nicht zusagt, ist drueben unsichtbar."""
+    for name in (mcp_schemas.WERKZEUG_ENQUEUE, mcp_schemas.WERKZEUG_QUERY):
+        feld = mcp_schemas.werkzeug(name)["outputSchema"]["properties"]["meldung"]
+        assert feld["type"] == ["string", "null"]
+
+
 # ── A · Die Tür: mit Buchprüfung geschlossen, an EINER Stelle geschaltet ───────────────
 
 def test_mit_buch_kommt_ein_nie_ausgegebenes_token_nicht_ueber_freigeben(tmp_path,

@@ -540,6 +540,54 @@ def test_die_begruendung_verspricht_keine_aehnlichkeitszahl():
     assert "None" not in grund
 
 
+@pytest.mark.parametrize("nullanker", [None, {"rauschen": 0.1}],
+                         ids=["ohne_nullprobe", "mit_nullprobe"])
+def test_der_abbruchgrund_liest_sich_ohne_none_und_ohne_doppelte_satzzeichen(nullanker):
+    """Der Abbruchfall, wie er drueben ankam: *«… ein Lauf fehlt.; Geometrie None gegen
+    0.65»* (Durchsicht 30.09.2026).
+
+    Keine Kamera bekam ein Bild, das Geometrieurteil traegt weder Zahl noch Urteil. Der
+    Grund muss sich lesen lassen — kein «.;» aus Satzpunkt plus Trennzeichen, kein
+    wörtliches ``None`` —, darf dabei aber nichts VERLIEREN: Ihre Kachel zeigt bei jedem
+    nicht leeren ``reason`` ein Warnzeichen, und jeder Teilsatz bleibt stehen.
+    """
+    e = ks.als_ergebnis(
+        "vis-1787123048-098c6e", [],
+        geometrie_urteil={"score": None, "bestanden": None, "nullanker": nullanker},
+        nicht_gerendert=("NICHT GERENDERT (Rahmung): s, sSE — das Bauwerk fuellt 28 % "
+                         "der Bildbreite.",))
+    grund = e["qa"]["verdict"]["reason"]
+
+    assert grund, "ein Abbruch ohne Grund saehe drueben aus wie ein sauberer Lauf"
+    assert "None" not in grund
+    assert ".;" not in grund
+    assert "NICHT GERENDERT (Rahmung)" in grund
+    assert "NICHT GEMESSEN" in grund
+    assert f"Geometrie-Score nicht gemessen (Schwelle {geometrie_qa.SCHWELLE_GEOMETRIE})" \
+        in grund
+    # Die Zahlenfelder bleiben, wie der Vertrag sie will: null, nicht ein Wort.
+    assert e["qa"]["geometry"]["geometry_fidelity"] is None
+
+
+def test_ein_gemessener_score_steht_weiter_als_zahl_gegen_die_schwelle():
+    """Die Wortfassung gilt nur fuer die FEHLENDE Zahl — eine gemessene bleibt, wie sie war."""
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                        geometrie_urteil={"score": 0.7, "schwelle": 0.65,
+                                          "bestanden": True, "rho_maske": 0.5,
+                                          "nullanker": {"rauschen": 0.1}})
+
+    assert "Geometrie 0.7 gegen 0.65" in e["qa"]["verdict"]["reason"]
+
+
+def test_grund_verbinden_streicht_nur_den_einen_punkt_vor_dem_trennzeichen():
+    """Nur der Schlusspunkt VOR einem weiteren Teil faellt; der letzte Teil behaelt seinen,
+    ein Auslassungszeichen bleibt eines, und kein Teil geht verloren."""
+    assert ks._grund_verbinden(["Erster Satz.", "Zweiter...", "Dritter."]) == \
+        "Erster Satz; Zweiter...; Dritter."
+    assert ks._grund_verbinden(["ohne Punkt", "auch ohne"]) == "ohne Punkt; auch ohne"
+    assert ks._grund_verbinden([]) == ""
+
+
 def test_der_alte_weg_ueber_einbettungen_bleibt_unveraendert():
     """Additiv, nicht ersetzend: Ein Stil-Urteil aus `stil_qa` rechnet weiter wie bisher.
 
@@ -670,8 +718,6 @@ def test_die_obergrenzen_eigenschaft_gilt_wirklich():
     Ohne sie stünde die Begründung nur im Kommentar, und wer die Zeile später anfasst,
     fände kein Argument, sondern eine Meinung.
     """
-    import math
-
     for rho in (-0.9, -0.4, 0.0, 0.4, 0.9):
         for polaritaet in (-1.0, 1.0):
             ungerichtet = math.sqrt(abs(rho) * 0.8)
