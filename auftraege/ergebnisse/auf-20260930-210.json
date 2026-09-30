@@ -1,0 +1,10 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-210",
+ "status": "ok",
+ "beendet": "2026-09-30T20:45:05Z",
+ "stand": "git log -1: 2d64918 auf-207: Nachmessung — Tabelle kuerzt sichtbar, Rahmen 238x113 m, Sonne gruen; KOTE- und D",
+ "kurzantwort": "A1–A3 gelesen. Kein Abholer-Lauf mit qwen-image-2.1 angefallen — schritte 40 und Zeit darum noch nicht am Geraet gesehen; beim naechsten Lauf nachgereicht.",
+ "nicht_getan": "nichts geaendert, nichts gemessen.",
+ "fehler": null
+}
