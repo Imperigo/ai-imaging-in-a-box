@@ -1,0 +1,404 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-183",
+ "status": "ok",
+ "beendet": "2026-09-30T08:40:00Z",
+ "stand": "ff765f8",
+ "git_log_1": "ff765f814f3f7386fc3d64e7b787df24380587b1 2026-09-30 10:02:32 +0200 Ergebnis 181: Ansage gelesen, keine Auswertung sucht INNENANSICHT in verdict.reason",
+ "geprueft": "Klon sauber, git pull --ff-only: «Bereits aktuell» (ff765f8, enthaelt aa31bbb mit src/aiimaging/umriss.py und PAARURTEIL_URTEILT = False). Kein Render, keine GPU: gemessen auf DENSELBEN zwoelf Bildern aus 175 (z-image-turbo, CN 1.0, 8 Schritte, 512 px, Kamera s/sSE, Startwerte 0-2, Testbau/Hochbau) mit denselben Soll-Karten (bildlesen.tiefen_aus_report aus dem multipass-Knoten der Mappe). Aufruf: umriss.umriss_aus_dateien(bild_png, soll, 512, 512) mit den Vorgaben des Moduls (toleranz 2 px). Faelle: richtig (eigene Soll-Karte); versatz_20px (Soll-Karte 20 px waagrecht nach rechts, frei werdende Spalten 1e10); fremdes_soll (Soll-Karte des anderen Koerpers, gleiche Kamera). Nullproben je Soll-Karte: graue Flaeche (RGB 128) und gleichverteiltes Rauschen (numpy default_rng(0)), je 512x512. rho_maske.gerichtet daneben ist der 175-Wert (treu / versatz_20px / fremdes_soll). Keine Schwelle gesetzt, kein Code geaendert, nichts im Repo ausser dieser Datei.",
+ "kurzantwort": {
+  "1_fenster_je_blick": "NEIN, weder fuer abhebung noch fuer trefferquote, frontal wie diagonal. Abhebung: frontal hoechster schlechter 2.5661 (testbau s s1, versatz_20px) gegen niedrigsten guten 1.2205 (testbau s s2); diagonal 3.3861 (testbau sSE s0, versatz_20px) gegen 1.0050 (hochbau sSE s2). Trefferquote: frontal 0.7962 gegen 0.6683; diagonal 0.7942 gegen 0.5131. Mit dem Rauschbild als schlechtem Fall wird es bei der Trefferquote noch deutlicher (Rauschen 0.91 ... 0.95, hoeher als fast jedes richtige Bild) — dort hilft nur die Abhebung.",
+  "2_paarweise": "abhebung: richtig ueber beiden Stoerungen in 9 von 12 Bildern (rho aus 175: 6 von 12). Die drei Ausnahmen sind genau die drei Bilder mit Startwert 2 an testbau s, testbau sSE, hochbau sSE — dort liegt versatz_20px knapp ueber richtig (1.2789 > 1.2205; 1.4899 > 1.4681; 1.2364 > 1.0050). trefferquote: ebenfalls 9 von 12, dieselben drei. praezision: 7 von 12. Gegen fremdes Soll allein liegt richtig in 11 von 12 vorn (Ausnahme hochbau sSE s2, 1.0050 < 1.0424).",
+  "3_gegen_das_auge": "Fast, aber nicht ganz. Die drei stehenden Bilder haben Abhebung 3.8825 / 2.8006 / 2.5103; von den neun anderen liegen acht darunter (hoechstes 2.4835), eines darueber: testbau s s1 mit 3.2229 — das frontale Bild, bei dem in 175 der Umriss stimmte, der Riegel aber ohne Boden auf Schwarz schwebte. Das Mass fragt nach dem Umriss, und der stimmt dort; rho sah dasselbe Bild mit -0.63.",
+  "4_nullproben": "Grau: an allen vier Soll-Karten status keine_bildkanten, Abhebung 0, Trefferquote 0, Praezision 0. Rauschen: Abhebung 0.974 ... 1.018 (Zufall), Trefferquote 0.908 ... 0.949, Praezision 0.015 ... 0.037. Das Mass verhaelt sich an beiden Nullproben so, wie das Modul es verspricht — anders als die Sprungordnung in 172, wo Grau die Bestnote bekam.",
+  "satz": "Es trennt auch nicht — kein Fenster je Blick, weil zwischen den Bildern mehr streut als zwischen richtiger und falscher Karte; es ordnet aber innerhalb eines Bildes besser als rho (9 statt 6 von 12), und die Nullproben stehen richtig."
+ },
+ "befunde": {
+  "fenster_je_blick": {
+   "s": {
+    "abhebung": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 2.5661,
+     "hoechster_schlechter_fall": "testbau-s-s1/versatz_20px",
+     "niedrigster_guter": 1.2205,
+     "niedrigster_guter_fall": "testbau-s-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 12
+    },
+    "trefferquote": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.7962,
+     "hoechster_schlechter_fall": "testbau-s-s1/versatz_20px",
+     "niedrigster_guter": 0.6683,
+     "niedrigster_guter_fall": "testbau-s-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 3,
+     "n_gut": 6,
+     "n_schlecht": 12
+    },
+    "praezision": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.0987,
+     "hoechster_schlechter_fall": "testbau-s-s1/fremdes_soll",
+     "niedrigster_guter": 0.0253,
+     "niedrigster_guter_fall": "testbau-s-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 12
+    },
+    "rho_maske_gerichtet_175": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.637,
+     "hoechster_schlechter_fall": "hochbau-s-s0/versatz_20px",
+     "niedrigster_guter": -0.6308,
+     "niedrigster_guter_fall": "testbau-s-s1/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 12
+    }
+   },
+   "sSE": {
+    "abhebung": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 3.3861,
+     "hoechster_schlechter_fall": "testbau-sSE-s0/versatz_20px",
+     "niedrigster_guter": 1.005,
+     "niedrigster_guter_fall": "hochbau-sSE-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 12
+    },
+    "trefferquote": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.7942,
+     "hoechster_schlechter_fall": "testbau-sSE-s0/versatz_20px",
+     "niedrigster_guter": 0.5131,
+     "niedrigster_guter_fall": "hochbau-sSE-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 2,
+     "n_gut": 6,
+     "n_schlecht": 12
+    },
+    "praezision": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.0673,
+     "hoechster_schlechter_fall": "testbau-sSE-s0/versatz_20px",
+     "niedrigster_guter": 0.0124,
+     "niedrigster_guter_fall": "hochbau-sSE-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 4,
+     "n_gut": 6,
+     "n_schlecht": 12
+    },
+    "rho_maske_gerichtet_175": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.9472,
+     "hoechster_schlechter_fall": "testbau-sSE-s0/versatz_20px",
+     "niedrigster_guter": -0.1212,
+     "niedrigster_guter_fall": "hochbau-sSE-s1/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 12
+    }
+   }
+  },
+  "fenster_je_blick_mit_nullproben_als_schlecht": {
+   "s": {
+    "abhebung": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 2.5661,
+     "hoechster_schlechter_fall": "testbau-s-s1/versatz_20px",
+     "niedrigster_guter": 1.2205,
+     "niedrigster_guter_fall": "testbau-s-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 16
+    },
+    "trefferquote": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.9371,
+     "hoechster_schlechter_fall": "null-rauschen-testbau-s/null_rauschen",
+     "niedrigster_guter": 0.6683,
+     "niedrigster_guter_fall": "testbau-s-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 16
+    },
+    "praezision": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.0987,
+     "hoechster_schlechter_fall": "testbau-s-s1/fremdes_soll",
+     "niedrigster_guter": 0.0253,
+     "niedrigster_guter_fall": "testbau-s-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 16
+    }
+   },
+   "sSE": {
+    "abhebung": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 3.3861,
+     "hoechster_schlechter_fall": "testbau-sSE-s0/versatz_20px",
+     "niedrigster_guter": 1.005,
+     "niedrigster_guter_fall": "hochbau-sSE-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 5,
+     "n_gut": 6,
+     "n_schlecht": 16
+    },
+    "trefferquote": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.9491,
+     "hoechster_schlechter_fall": "null-rauschen-testbau-sSE/null_rauschen",
+     "niedrigster_guter": 0.5131,
+     "niedrigster_guter_fall": "hochbau-sSE-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 6,
+     "n_gut": 6,
+     "n_schlecht": 16
+    },
+    "praezision": {
+     "fenster": "NEIN",
+     "hoechster_schlechter": 0.0673,
+     "hoechster_schlechter_fall": "testbau-sSE-s0/versatz_20px",
+     "niedrigster_guter": 0.0124,
+     "niedrigster_guter_fall": "hochbau-sSE-s2/richtig",
+     "gute_unter_dem_hoechsten_schlechten": 4,
+     "n_gut": 6,
+     "n_schlecht": 16
+    }
+   }
+  },
+  "paarweise": {
+   "abhebung": {
+    "richtig_ueber_beiden": "9 von 12",
+    "ausnahmen": [
+     "hochbau-sSE-s2: richtig +1.0050, versatz +1.2364, fremd +1.0424",
+     "testbau-s-s2: richtig +1.2205, versatz +1.2789, fremd +1.0153",
+     "testbau-sSE-s2: richtig +1.4681, versatz +1.4899, fremd +1.2296"
+    ]
+   },
+   "trefferquote": {
+    "richtig_ueber_beiden": "9 von 12",
+    "ausnahmen": [
+     "hochbau-sSE-s2: richtig +0.5131, versatz +0.6313, fremd +0.5322",
+     "testbau-s-s2: richtig +0.6683, versatz +0.7003, fremd +0.5560",
+     "testbau-sSE-s2: richtig +0.6996, versatz +0.7100, fremd +0.5859"
+    ]
+   },
+   "praezision": {
+    "richtig_ueber_beiden": "7 von 12",
+    "ausnahmen": [
+     "hochbau-s-s2: richtig +0.0482, versatz +0.0681, fremd +0.0262",
+     "hochbau-sSE-s2: richtig +0.0124, versatz +0.0231, fremd +0.0229",
+     "testbau-s-s0: richtig +0.0468, versatz +0.0389, fremd +0.0570",
+     "testbau-s-s1: richtig +0.0912, versatz +0.0718, fremd +0.0987",
+     "testbau-s-s2: richtig +0.0253, versatz +0.0258, fremd +0.0367"
+    ]
+   },
+   "rho_maske_gerichtet_175": {
+    "richtig_ueber_beiden": "6 von 12",
+    "ausnahmen": [
+     "hochbau-s-s0: richtig +0.5050, versatz +0.6370, fremd +0.1496",
+     "hochbau-s-s1: richtig -0.5188, versatz -0.0637, fremd -0.3223",
+     "testbau-s-s1: richtig -0.6308, versatz -0.7273, fremd -0.0994",
+     "testbau-s-s2: richtig +0.3310, versatz +0.1141, fremd +0.3632",
+     "testbau-sSE-s1: richtig +0.8142, versatz +0.8925, fremd +0.2664",
+     "testbau-sSE-s2: richtig +0.8149, versatz +0.8692, fremd +0.2068"
+    ]
+   }
+  },
+  "gegen_das_auge": {
+   "die_drei_stehenden_abhebung_richtig": [
+    [
+     "testbau-sSE-s0",
+     3.8825
+    ],
+    [
+     "testbau-sSE-s1",
+     2.8006
+    ],
+    [
+     "hochbau-sSE-s0",
+     2.5103
+    ]
+   ],
+   "die_neun_anderen_abhebung_richtig": [
+    [
+     "testbau-s-s1",
+     3.2229
+    ],
+    [
+     "testbau-s-s0",
+     2.4835
+    ],
+    [
+     "hochbau-s-s0",
+     2.1316
+    ],
+    [
+     "hochbau-s-s1",
+     1.8064
+    ],
+    [
+     "hochbau-sSE-s1",
+     1.7442
+    ],
+    [
+     "testbau-sSE-s2",
+     1.4681
+    ],
+    [
+     "hochbau-s-s2",
+     1.3052
+    ],
+    [
+     "testbau-s-s2",
+     1.2205
+    ],
+    [
+     "hochbau-sSE-s2",
+     1.005
+    ]
+   ]
+  },
+  "nullproben": [
+   {
+    "soll_karte": "hochbau-s",
+    "probe": "null_grau",
+    "status": "keine_bildkanten",
+    "abhebung": 0.0,
+    "trefferquote": 0.0,
+    "praezision": 0.0,
+    "kantendichte": 0.0
+   },
+   {
+    "soll_karte": "hochbau-s",
+    "probe": "null_rauschen",
+    "status": "ok",
+    "abhebung": 0.9971,
+    "trefferquote": 0.9297,
+    "praezision": 0.0366,
+    "kantendichte": 0.15
+   },
+   {
+    "soll_karte": "hochbau-sSE",
+    "probe": "null_grau",
+    "status": "keine_bildkanten",
+    "abhebung": 0.0,
+    "trefferquote": 0.0,
+    "praezision": 0.0,
+    "kantendichte": 0.0
+   },
+   {
+    "soll_karte": "hochbau-sSE",
+    "probe": "null_rauschen",
+    "status": "ok",
+    "abhebung": 0.974,
+    "trefferquote": 0.9081,
+    "praezision": 0.0152,
+    "kantendichte": 0.15
+   },
+   {
+    "soll_karte": "testbau-s",
+    "probe": "null_grau",
+    "status": "keine_bildkanten",
+    "abhebung": 0.0,
+    "trefferquote": 0.0,
+    "praezision": 0.0,
+    "kantendichte": 0.0
+   },
+   {
+    "soll_karte": "testbau-s",
+    "probe": "null_rauschen",
+    "status": "ok",
+    "abhebung": 1.0051,
+    "trefferquote": 0.9371,
+    "praezision": 0.0194,
+    "kantendichte": 0.15
+   },
+   {
+    "soll_karte": "testbau-sSE",
+    "probe": "null_grau",
+    "status": "keine_bildkanten",
+    "abhebung": 0.0,
+    "trefferquote": 0.0,
+    "praezision": 0.0,
+    "kantendichte": 0.0
+   },
+   {
+    "soll_karte": "testbau-sSE",
+    "probe": "null_rauschen",
+    "status": "ok",
+    "abhebung": 1.0179,
+    "trefferquote": 0.9491,
+    "praezision": 0.0213,
+    "kantendichte": 0.15
+   }
+  ]
+ },
+ "falltabelle": {
+  "spalten": "koerper | blick | startwert | fall | abhebung | trefferquote | praezision | rho_maske.gerichtet (175)",
+  "zeilen": [
+   "testbau | s | 0 | richtig | 2.4835 | 0.9111 | 0.0468 | 0.8364",
+   "testbau | s | 0 | versatz_20px | 1.9334 | 0.7093 | 0.0389 | 0.6097",
+   "testbau | s | 0 | fremdes_soll | 1.2215 | 0.4481 | 0.0570 | 0.3770",
+   "testbau | s | 1 | richtig | 3.2229 | 1.0000 | 0.0912 | -0.6308",
+   "testbau | s | 1 | versatz_20px | 2.5661 | 0.7962 | 0.0718 | -0.7273",
+   "testbau | s | 1 | fremdes_soll | 1.9687 | 0.6108 | 0.0987 | -0.0994",
+   "testbau | s | 2 | richtig | 1.2205 | 0.6683 | 0.0253 | 0.3310",
+   "testbau | s | 2 | versatz_20px | 1.2789 | 0.7003 | 0.0258 | 0.1141",
+   "testbau | s | 2 | fremdes_soll | 1.0153 | 0.5560 | 0.0367 | 0.3632",
+   "hochbau | s | 0 | richtig | 2.1316 | 0.7843 | 0.0895 | 0.5050",
+   "hochbau | s | 0 | versatz_20px | 2.0785 | 0.7647 | 0.0840 | 0.6370",
+   "hochbau | s | 0 | fremdes_soll | 1.0861 | 0.3996 | 0.0277 | 0.1496",
+   "hochbau | s | 1 | richtig | 1.8064 | 0.8575 | 0.0994 | -0.5188",
+   "hochbau | s | 1 | versatz_20px | 1.5924 | 0.7559 | 0.0667 | -0.0637",
+   "hochbau | s | 1 | fremdes_soll | 0.9534 | 0.4525 | 0.0262 | -0.3223",
+   "hochbau | s | 2 | richtig | 1.3052 | 0.7420 | 0.0482 | 0.6142",
+   "hochbau | s | 2 | versatz_20px | 1.2104 | 0.6881 | 0.0681 | 0.2441",
+   "hochbau | s | 2 | fremdes_soll | 1.2424 | 0.7063 | 0.0262 | 0.3703",
+   "testbau | sSE | 0 | richtig | 3.8825 | 0.9106 | 0.0737 | 0.9698",
+   "testbau | sSE | 0 | versatz_20px | 3.3861 | 0.7942 | 0.0673 | 0.9472",
+   "testbau | sSE | 0 | fremdes_soll | 2.0046 | 0.4702 | 0.0299 | 0.1980",
+   "testbau | sSE | 1 | richtig | 2.8006 | 0.9033 | 0.0780 | 0.8142",
+   "testbau | sSE | 1 | versatz_20px | 2.1270 | 0.6861 | 0.0446 | 0.8925",
+   "testbau | sSE | 1 | fremdes_soll | 2.0237 | 0.6527 | 0.0430 | 0.2664",
+   "testbau | sSE | 2 | richtig | 1.4681 | 0.6996 | 0.0334 | 0.8149",
+   "testbau | sSE | 2 | versatz_20px | 1.4899 | 0.7100 | 0.0319 | 0.8692",
+   "testbau | sSE | 2 | fremdes_soll | 1.2296 | 0.5859 | 0.0178 | 0.2068",
+   "hochbau | sSE | 0 | richtig | 2.5103 | 0.8353 | 0.0601 | 0.9203",
+   "hochbau | sSE | 0 | versatz_20px | 1.9580 | 0.6516 | 0.0437 | 0.6764",
+   "hochbau | sSE | 0 | fremdes_soll | 0.9653 | 0.3212 | 0.0206 | 0.4701",
+   "hochbau | sSE | 1 | richtig | 1.7442 | 0.8437 | 0.0475 | -0.1212",
+   "hochbau | sSE | 1 | versatz_20px | 1.1694 | 0.5656 | 0.0297 | -0.3153",
+   "hochbau | sSE | 1 | fremdes_soll | 1.0273 | 0.4969 | 0.0211 | -0.3108",
+   "hochbau | sSE | 2 | richtig | 1.0050 | 0.5131 | 0.0124 | 0.2860",
+   "hochbau | sSE | 2 | versatz_20px | 1.2364 | 0.6313 | 0.0231 | -0.0388",
+   "hochbau | sSE | 2 | fremdes_soll | 1.0424 | 0.5322 | 0.0229 | 0.1372",
+   "hochbau | s | - | null_grau | 0.0000 | 0.0000 | 0.0000 | None",
+   "hochbau | s | - | null_rauschen | 0.9971 | 0.9297 | 0.0366 | None",
+   "hochbau | sSE | - | null_grau | 0.0000 | 0.0000 | 0.0000 | None",
+   "hochbau | sSE | - | null_rauschen | 0.9740 | 0.9081 | 0.0152 | None",
+   "testbau | s | - | null_grau | 0.0000 | 0.0000 | 0.0000 | None",
+   "testbau | s | - | null_rauschen | 1.0051 | 0.9371 | 0.0194 | None",
+   "testbau | sSE | - | null_grau | 0.0000 | 0.0000 | 0.0000 | None",
+   "testbau | sSE | - | null_rauschen | 1.0179 | 0.9491 | 0.0213 | None"
+  ]
+ },
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": false,
+  "dauer_s": {
+   "messung_44_faelle": 1.3
+  },
+  "bilder": "aus auf-20260929-175 (nicht neu erzeugt)",
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null,
+ "bemerkungen": [
+  "Die Abhebung der richtigen Karte liegt bei erzeugten Bildern bei 1.0 ... 3.9, deutlich unter den 10.5 / 12.3 der Blender-Schoenbilder aus der Ansage. Das schlechteste Bild (hochbau sSE s2, verrauscht) liegt mit 1.005 auf Zufallsniveau.",
+  "versatz_20px ist der harte Fall: die Kantendichte bleibt gleich, und ein um 20 px verschobener Umriss liegt bei Fensterrastern und Stuetzen oft wieder auf einer Bildkante. Er schlaegt richtig nur dort, wo das Bild selbst schwach ist (Startwert 2).",
+  "Die Kantendichte ist in allen echten Bildern und im Rauschen 0.150 — das 0.85-Quantil setzt sie fest; die Abhebung vergleicht darum im Grunde nur die Lage der Kanten.",
+  "Zwischen Koerpern ist die Zahl der Soll-Kanten sehr verschieden (Testbau s 1001, Hochbau s 3171, sSE 962 / 838); fremdes_soll misst also auch gegen eine andere Kantenmenge.",
+  "Skripte und Rohdaten: ~/kosmo-probe/auf183/ (a183_umriss_messen.py, a183_ergebnis_schreiben.py, a183_ergebnis_fertig.py, messung.json, null_grau.png, null_rauschen.png). Bilder und Soll-Karten aus ~/kosmo-probe/auf175/L/."
+ ],
+ "gegenprobe_hauptworker": "Aus messung.json unabhaengig nachgerechnet: 12 Bilder; richtig ueber beiden Stoerungen (abhebung) 9 von 12; frontal hoechster schlechter 2.5661 / niedrigster guter 1.2205, diagonal 3.3861 / 1.005 — kein Fenster, deckungsgleich."
+}
