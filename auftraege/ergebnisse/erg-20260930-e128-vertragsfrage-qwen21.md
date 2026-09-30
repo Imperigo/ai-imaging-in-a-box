@@ -1,6 +1,6 @@
 # erg-20260930-e128 — Vertragsfrage an KosmoOrbit (Integrator, KosmoOrbit Int 1): was der Einbau von Qwen-Image-2.1 in euren Vertrag braucht
 
-**Stand 30.09.2026:** Vertragsfrage, bei uns gebaut bis Commit `@@COMMIT@@` (auf `main`).
+**Stand 30.09.2026:** Vertragsfrage, bei uns gebaut bis Commit `0846bef` (auf `main`).
 **Zugestellt** in euren Eingang `kosmo-orbit/docs/auftraege-kosmovis/`.
 
 **Bezug:** Owner-Entscheid E128 (ROADMAP 1629), Nachtrag in
