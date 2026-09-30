@@ -1,0 +1,72 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20260930-194",
+ "art": "frage",
+ "beschreibung": "Formpruefung: Welche Zahl folgt dem blinden Augenurteil? Drei neue Kandidaten plus rho an 54 neuen Bildern mit echten Fehlbildern (ControlNet-Staerke 1.0/0.5/0.0) unter Bauwerksrahmung, dazu die alten Bilder aus 188/190, Kreuzpaare und Nullproben. Entscheidungsregel vor der Messung festgelegt.",
+ "anweisung": "=== FORMPRUEFUNG: WELCHE ZAHL FOLGT EUREM AUGE? ===\n\nHintergrund: In 186, 188 und 190 hat jedes Mal euer blindes Augenurteil entschieden, ob die\nForm steht — keine Zahl konnte es verlaesslich. Owner-Entscheid 30.09.: Euer Auge wird jetzt\ndie REFERENZ, und wir suchen eine Zahl, die ihm folgt. Zuerst fuer den Hochbau, dort ist es\nam schwaechsten.\n\nUnser Befund an euren 88 Bildern (tools/formpruefung_auswertung.py): Fast alle «steht nicht»\nstammen aus der alten Szenenrahmung. Nach dem Bauwerk gerahmt gibt es EIN «steht nicht»\n(190, hochbau). Jede Zahl lernt daran vor allem «welche Rahmung» — darum braucht diese Reihe\nECHTE Fehlbilder unter der Bauwerksrahmung.\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 Neu: src/aiimaging/formkandidaten.py (drei Kandidaten, reine Auskunft, urteilt=false),\n     tools/formkandidaten_messen.py (rechnet sie fuer ein Bild) und\n     tools/formpruefung_auswertung.py (AUC je Zahl gegen euer Auge).\n  A2 KEINE Verhaltensaenderung: abholer, homeworker, kette und arbeitsgang rechnen nach dem\n     Pull genau wie vorher. Nichts davon ruft die neuen Kandidaten auf.\n\nDIE KANDIDATEN (was ihr messt, damit ihr die Zahlen lesen koennt)\n  umriss_abhebung / silhouette_abhebung — Umrisstreue wie bisher, einmal an allen Tiefen-\n     spruengen, einmal nur an der Silhouette (Bau gegen Hintergrund). Zufall = 1.\n  richtung_abhebung — laufen die Bildkanten PARALLEL zu den Soll-Kanten? Eine Textur hat\n     viele Kanten, aber in alle Richtungen. Zufall = 1.\n  flaechentrennung — ist die Helligkeit innerhalb jeder Flaeche der Material-ID ruhig und\n     springt an ihren Grenzen? 0 bis 1; graue Flaeche und Rauschen ~0.\n  Dazu wie immer rho_maske_gerichtet aus dem qa-Knoten.\n\nDIE ENTSCHEIDUNGSREGEL — FEST VOR DER MESSUNG\n  Gewertet werden NUR Bilder mit rahmung = bauwerk (diese Reihe + die Bauwerks-Bilder aus 188\n  und 190). Eine Zahl «folgt dem Auge», wenn ALLE vier gelten:\n    (1) Hochbau: AUC (steht gegen steht nicht, ohne unklar) >= 0.85\n        UND AUC im Fall (nur Bilder desselben Blicks verglichen) >= 0.80.\n    (2) Testbau: dasselbe.\n    (3) Kreuz >= 0.90: bei Bildern, die ihr «steht» nennt, liegt die eigene Soll-Karte hoeher\n        als beide fremden.\n    (4) Nullproben: graue Flaeche 0 (oder «keine_bildkanten»); Rauschen bei *_abhebung\n        zwischen 0.75 und 1.25, flaechentrennung < 0.05.\n  Folge: Erfuellt eine Zahl die Regel, wird sie die Formpruefung als AUSKUNFT — eine Schwelle\n  kommt erst aus einer zweiten, neuen Reihe, nie aus denselben Bildern. Erfuellt keine sie,\n  ist das das Ergebnis; ihr baut nichts um. Erfuellen mehrere sie: die mit der hoeheren\n  Hochbau-AUC im Fall.\n\nTEIL B — DIE ALTEN BILDER (falls noch auf der HomeStation)\n  Die 36 Bilder aus 190 und die 8 Bauwerks-Bilder aus 188: je Bild\n    python3 tools/formkandidaten_messen.py --bild <png> --bericht <eigener blender-report.json> \\\n        --fremd <report Blick 2 desselben Koerpers> --fremd <report Blick 3> --bild-id 190-B14\n  Die Bild-Kennung ist Serie und alter Deckname (190-B14, 188-B03), weil sich die Decknamen\n  zwischen den Serien wiederholen; dieselbe Kennung als blind_id in der Zeile.\n  Die Etiketten bleiben, wie ihr sie vergeben habt — NICHT neu anschauen. Sind die Bilder\n  weg: das sagen, nicht neu rechnen (Teil C reicht).\n\nTEIL C — DIE NEUE REIHE MIT ECHTEN FEHLBILDERN\n  arbeitsgang wie 190 (Prompt «a residential building, architectural photograph», 8 Schritte,\n  z-image-turbo, 512 px, Rahmung nach dem Bauwerk = Vorgabe). Hochbau (--hochbau --gelaende)\n  und Testbau (--gelaende); Blick s, sSE, sSW; controlnet_staerke 1.0, 0.5 und 0.0;\n  Startwerte 0, 1, 2. Das sind 2 x 3 x 3 x 3 = 54 Bilder.\n  1. AUGE ZUERST, BLIND: alle 54 unter gemischten Decknamen, ohne Staerke und ohne Zahlen.\n     Etikett genau eines von «steht» / «steht nicht» / «unklar», dazu ein Halbsatz.\n     Etiketten festschreiben, ERST DANN Schluessel und Zahlen.\n  2. Je Bild: rho_maske_gerichtet (qa-Knoten) und die Kandidaten mit formkandidaten_messen.py,\n     --fremd = die beiden anderen Blicke desselben Koerpers.\n\nTEIL D — ANKER UND NULLPROBEN (je Koerper x Blick, also 6 Faelle)\n  - das Blender-Schoenbild (beauty_png) gegen die eigene Soll-Karte — sollte oben liegen;\n  - eine graue Flaeche (8 bit, Grauwert 128) und gleichverteiltes Rauschen (Startwert 7),\n    beide 512 x 512 als PNG, gegen die eigene Soll-Karte.\n\nTEIL E — AUSWERTUNG\n  Stehen die Teil-B-Zeilen in eurer Ergebnisdatei (Normalfall):\n    python3 tools/formpruefung_auswertung.py --rahmung bauwerk auftraege/ergebnisse/auf-20260930-194.json\n  Waren die alten Bilder weg, zusaetzlich 188 und 190 angeben (dann nur mit rho):\n    python3 tools/formpruefung_auswertung.py --rahmung bauwerk \\\n        auftraege/ergebnisse/auf-20260930-188.json auftraege/ergebnisse/auf-20260930-190.json \\\n        auftraege/ergebnisse/auf-20260930-194.json\n  Die Tabelle woertlich ins Ergebnis, dazu die Auszaehlung der Regel je Zahl.\n\nFORMAT DER ERGEBNISDATEI\n  bilder: je Bild {serie, koerper, blick, startwert, controlnet_staerke, rahmung,\n    augenetikett, halbsatz, blind_id, rho_maske_gerichtet, umriss_abhebung,\n    silhouette_abhebung, richtung_abhebung, flaechentrennung, bauwerk_anteil} — Teil B\n    ebenfalls hier, mit serie = auf-20260930-188 bzw. -190 und ihrem alten Etikett.\n    ACHTUNG: 188 und 190 bleiben unveraendert — ein Bild darf in der Auswertung nicht\n    doppelt stehen.\n  kreuzpaare: die JSON-Zeilen von formkandidaten_messen.py (bild = blind_id).\n  anker: je Fall Schoenbild, grau, Rauschen mit allen Kandidaten.\n\nNICHT TUN: nichts an Auswahl, Abholer oder Kandidaten aendern; keine Schwelle setzen; keine\nBilder ins Repo; keine absoluten Pfade; nichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-09-30T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende; python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+ },
+ "params": {
+  "koerper": [
+   "hochbau",
+   "testbau"
+  ],
+  "blick": [
+   "s",
+   "sSE",
+   "sSW"
+  ],
+  "controlnet_staerke": [
+   1.0,
+   0.5,
+   0.0
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "aufloesung": 512,
+  "rahmung": "bauwerk",
+  "backbone": "z-image-turbo",
+  "regel": {
+   "auc_min": 0.85,
+   "auc_im_fall_min": 0.8,
+   "kreuz_min": 0.9,
+   "rauschen_abhebung": [
+    0.75,
+    1.25
+   ],
+   "rauschen_flaechentrennung_max": 0.05,
+   "nur_rahmung": "bauwerk"
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: 54 Bilder mit z-image-turbo bei 512 px, etwa eine halbe Stunde.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Nur synthetische Koerper (Regel 3); keine Bilder ins Repo.",
+   "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+   "Augenetikett VOR den Zahlen vergeben, blind."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; rahmung aus dem Bericht (nach = bauwerk?).",
+  "Teil B: ob die alten Bilder noch da waren; wenn ja, ihre Kandidatenwerte.",
+  "Je neues Bild eine Zeile im Format oben, mit Augenetikett und Halbsatz.",
+  "Kreuzpaare aus formkandidaten_messen.py.",
+  "Anker und Nullproben je Fall.",
+  "Die Tabelle von tools/formpruefung_auswertung.py --rahmung bauwerk woertlich.",
+  "Je Zahl die Auszaehlung der Regel (1)-(4) und ein Satz: welche Zahl folgt dem Auge — oder keine."
+ ],
+ "rang": 2
+}

@@ -105,6 +105,19 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (spätnachts) · Das Auge des Heim-PC wird zum Massstab für die Form
+
+* **Warum:** Ob die Gebäudeform im Bild steht, erkennt bisher nur ein Mensch. Keine Zahl konnte
+  es verlässlich. Jetzt wird umgekehrt gefragt: Welche Zahl folgt dem Auge?
+* **Gebaut:** Drei neue Messungen, die ohne Hilfsmodell nur Bild und Blender-Ebenen lesen: der
+  Umriss allein, die Richtung der Kanten und die Ruhe innerhalb jeder Fläche des Gebäudes. Dazu
+  ein Werkzeug, das jede Zahl gegen das Augenurteil stellt.
+* **Befund dabei, und er ist unangenehm:** An den 88 schon beurteilten Bildern kamen fast alle
+  schlechten aus der alten, falschen Rahmung. Jede Zahl sah darum gut aus, weil sie die Rahmung
+  erkannte, nicht die Form. Der Heim-PC erzeugt jetzt gezielt schlechte Bilder unter der neuen
+  Rahmung (54 Bilder, Regel vorher festgelegt).
+* **Noch nicht:** Keine Zahl urteilt. Erst die Messung, dann eine zweite Reihe für eine Schwelle.
+
 ### 30.09.2026 (nachts) · Unter mehreren Versuchen wird jetzt nach dem Umriss ausgewählt
 
 * **Bestätigt:** Mit der neuen Rahmung standen am Heim-PC 19 von 36 Bildern richtig (vorher 2).

@@ -5866,6 +5866,38 @@ Zahl «Abhebung» sagt, wie viel besser das Bild den Umriss trifft als ein Bild 
 zufälligen Kanten: eine graue Fläche bekommt 0, Rauschen 1. Im Projekt: `aiimaging.umriss`;
 es urteilt noch nicht, bis der Heim-PC gemessen hat, ob es trennt.
 
+**Formprüfung (Augenurteil als Referenz)** — Die Frage, ob die Gebäudeform im erzeugten Bild
+steht, beantwortet bisher nur ein Mensch, der das Bild ansieht. Seit dem 30.09.2026 ist dieses
+Augenurteil der Massstab, an dem Zahlen geprüft werden: Eine Zahl taugt als Formprüfung erst,
+wenn sie dem Auge folgt. Das Auge urteilt dabei **blind** — es sieht das Bild unter einem
+Decknamen, bevor es irgendeine Zahl kennt. Im Projekt: `aiimaging.formkandidaten`, Auftrag
+`auf-20260930-194`.
+
+**AUC (Fläche unter der Kurve)** — Eine Zahl zwischen 0 und 1, die sagt, wie gut ein Mass zwei
+Gruppen trennt. Man nimmt ein Bild, das das Auge «steht» nennt, und eines, das es «steht nicht»
+nennt, und fragt: Hat das gute die höhere Zahl? Die AUC ist der Anteil aller solcher Paare, bei
+denen das stimmt. 0,5 heisst Münzwurf, 1,0 heisst: trennt immer. Sie braucht keine Schwelle,
+darum eignet sie sich, bevor eine festgelegt ist. Im Projekt: `tools/formpruefung_auswertung.py`.
+
+**Störfaktor** — Etwas, das gleichzeitig mit dem Gesuchten schwankt und darum eine Zahl gut
+aussehen lässt, ohne dass sie das Gesuchte misst. Am 30.09.2026 gefunden: Fast alle Bilder,
+die das Auge «steht nicht» nannte, stammten aus der alten Rahmung. Eine Zahl, die nur die
+Rahmung erkennt, sah darum wie eine Formprüfung aus. Die Abhilfe ist die **AUC im Fall**: nur
+Bilder desselben Falls (gleicher Körper, gleicher Blick, gleiche Rahmung) werden verglichen.
+
+**Kreuzpaar** — Dasselbe Bild zweimal gemessen: einmal gegen die eigene Soll-Karte, einmal
+gegen die eines anderen Blicks. Bei einem Bild, dessen Form steht, muss die eigene gewinnen.
+Das braucht kein Auge, weil man weiss, welche Karte die richtige ist.
+
+**Richtungstreue (der Kanten)** — Ein Kandidat für die Formprüfung: Laufen die Kanten im Bild
+**parallel** zu den Kanten des Gebäudes? Eine Holzfassade hat viele Kanten, aber in alle
+Richtungen — sie zählt hier wenig, anders als bei der Umrisstreue. Zufall ergibt 1.
+
+**Flächentrennung** — Ein Kandidat für die Formprüfung: Ist das Bild innerhalb jeder Fläche des
+Gebäudes (Wand Süd, Wand West, Platte) ruhig und springt es an deren Grenzen? Gemessen als
+Anteil der Helligkeitsunterschiede, der **zwischen** den Flächen liegt statt innerhalb (0 bis 1).
+Die Flächen kommen aus dem Material-ID-Bild von Blender. Graue Fläche und Rauschen ergeben 0.
+
 **Sobel-Filter** — Ein kleines Rechenverfahren, das in einem Bild findet, wo die Helligkeit von
 einem Pixel zum nächsten stark springt — also Kanten. Es ist alt, einfach und hat keine
 Vorlieben: Es sieht nur, was im Bild ist. Im Projekt: in der Umrisstreue.
@@ -6035,7 +6067,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

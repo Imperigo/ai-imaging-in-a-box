@@ -7528,7 +7528,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] **Kern:** Kette/arbeitsgang rahmt nach dem Bauwerk (alle drei Wege gleich).
   - [x] **local:** `auf-20260930-190` — 186 wiederholt mit Bauwerksrahmung. — Regel streng
         erfüllt; Startwert-Auswahl nach der Umrisstreue (Protokoll 73 §16).
-  - [ ] **local:** `auf-20260930-192` — Ansage der neuen Auswahl lesen.
+  - [x] **local:** `auf-20260930-192` — Ansage der neuen Auswahl lesen. — gelesen, Abholer hat sie (0a7bb30).
   - [x] **local:** 178 beantwortet — Qwen-Image-2.1 läuft nur mit Auslagerung, Geometrie
         kommt nicht an (§8); Registerfehler behoben.
   - [x] **Kern:** Adapter reicht bei `integriertes_edit` die Tiefenkarte statt des Schönbilds;
@@ -7545,6 +7545,15 @@ Bekannt und ausdrücklich nicht erledigt:
         ansagen (ihre Bilder zeigen dann mehr Gebäude). — umgeschaltet, angesagt (Protokoll 73 §14).
   - [ ] **local:** `auf-20260930-189` — Ansage lesen, bevor der Abholer den Stand zieht.
   - [ ] **Kern:** eine Zahl, die «Form steht» erkennt — keine der vier trennt (188).
+    - [x] **Owner (30.09., «ja nach deiner Empfehlung»):** das blinde Augenurteil des Heim-PC als
+          Referenz, Kandidaten dagegen prüfen, zuerst Hochbau.
+    - [x] **Kern:** Kandidaten `aiimaging.formkandidaten` (Silhouette, Richtungstreue,
+          Flächentrennung), Messwerkzeug, Auswertung (AUC, AUC im Fall, Kreuzpaare);
+          Nullproben bestanden (Protokoll 73 §17).
+    - [ ] **local:** `auf-20260930-194` — 54 Bilder mit echten Fehlbildern (ControlNet-Stärke
+          1,0/0,5/0,0) unter Bauwerksrahmung, dazu die alten; Regel vorab.
+    - [ ] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
+          ein Segmentierungsansatz (Lizenzfrage).
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit
         Führung und 40 Schritten nach Modellkarte.
   - [ ] **Kern:** `bedarf.grund` im Blender-Bericht ist leer (173).
