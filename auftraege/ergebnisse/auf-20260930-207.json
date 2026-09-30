@@ -1,0 +1,215 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-207",
+ "status": "ok",
+ "status_kurz": "Alle Schritte gefahren. C1-C3 wie erwartet. B: Rahmen 238.0 x 113.0 m statt 418.9 x 321.3 m. Zwei Erwartungen NICHT erfuellt: A1 keine KOTE-Zeile (die Pruefung vergleicht mit der Geschoss-Platzierung, und die ist in dieser Datei ueberall 0) und A2 keine Decken-Zeile in der Ausgabe von materialize (die Sammelwarnung entsteht, wird aber nicht ausgegeben).",
+ "beendet": "2026-09-30T20:45:00Z",
+ "stand": {
+  "kosmopublish": "ca68cd3 (main, nach git pull --ff-only; a4ee3d2 ist Vorfahre, geprueft mit git merge-base --is-ancestor). Achtung: ca68cd3 «materialize waehlt den Massstab selbst, wenn keiner genannt ist» ist NEUER als a4ee3d2 und veraendert A2/A3 (1:5000 statt 1:100).",
+  "kosmoprepare": "482c9dc (main, nach git pull --ff-only; f601088 und e503271 sind Vorfahren)",
+  "blender_teil_b": "Blender 5.2.2 LTS (hash d13f752e3b9c, gebaut 2026-09-15), Snap-Revision 7803, Binary direkt aus /snap/blender/current/, Env-Scrub, nur --background, Leihpfad lxml/shapely per PYTHONPATH mit --python-use-system-env",
+  "blender_teil_c": "KosmoDesign-Fork 5.1.2 (gebaut 2026-06-23), Python 3.13.9, eigenes Xvfb :97, eigener Ressourcenordner (BLENDER_USER_RESOURCES) mit Add-on per Symlink (bl_ext.user_default.wettbewerbsvorbereitung), Startszene, kein Owner-Desktop",
+  "python_kette_a": "KosmoPublish .venv (CLI tools/kosmopublish_cli.py), ifc-bridge ueber .venv-ifc"
+ },
+ "A1_ifc_bridge": {
+  "rueckgabe": 0,
+  "laufzeit_s": 0.58,
+  "kote_zeile": "nein",
+  "kote_zeile_woertlich": null,
+  "elevation_m_11_geschosse": [
+   0.005,
+   0.008,
+   0.008,
+   0.011,
+   0.011,
+   0.014,
+   0.014,
+   0.017,
+   0.017,
+   0.02,
+   0.023
+  ],
+  "warnungen": 875,
+  "sonst_gleich_wie_203": "Geschosse 11 (mit Hoehenkote: 11), Raeume 205 von 205, Waende 855 von 855, Stuetzen 0, Oeffnungen 0, 2 ganze Kategorien ohne Eintrag, 875 Warnungen (dieselbe Verteilung wie in 203).",
+  "warum_keine_zeile_nachgemessen": "Nur gelesen (ifcopenshell in .venv-ifc, kein Code geaendert): Laengeneinheit der Datei mm (Faktor 0.001). Die Geschosse tragen Elevation 5.0 / 8.0 / 11.0 / 14.0 / 17.0 / 20.0 / 23.0 (Rohwert) -> 0.005 ... 0.023 m. Ihre EIGENE Platzierung hat bei allen 11 Geschossen z = 0. Die Bauteile dagegen liegen bei z = 5000 ... 23000 mm (IfcSpace, IfcWall, IfcSlab je Geschoss, z. B. Waende 45/209/177/173/165/73/13 auf 5000/8000/.../23000). kote_gegen_platzierung vergleicht Elevation mit der Geschoss-Platzierung: Versatz schwankt nur zwischen -0.005 und -0.023 m, das ist unter KOTE_TOLERANZ_M 0.05 -> keine Meldung; der Einheiten-Hinweis braucht ein Spannweitenverhaeltnis 500-2000, die Platzierungen spannen aber 0. Befund: die Elevation ist in Metern geschrieben (5 m, 8 m, ... Geschosshoehe 3 m) in einer mm-Datei; sichtbar waere das am Vergleich mit der Lage der BAUTEILE (Verhaeltnis 1000), nicht mit der Geschoss-Platzierung. Damit ist der Verdacht fuer die 165 Koten gestuetzt, aber die neue Pruefung faengt diesen Fall nicht."
+ },
+ "A2_materialize_sia_full": {
+  "aufruf": "materialize --project <arbeitsordner> --sia-full, OHNE Behelf (Decken nicht geleert)",
+  "rueckgabe": 0,
+  "laufzeit_s": 36.6,
+  "svg": 18,
+  "svg_arten": "11 Grundrisse, 2 Schnitte, 4 Fassaden, 1 Lageplan",
+  "fehlerzeile_woertlich": "18 Datei(en), 0 Fehler.",
+  "decken_zeile": "nein — in stdout und stderr steht KEINE Zeile zu Decken ohne Rolle",
+  "decken_zeile_nachgemessen": "Die Sammelwarnung entsteht: load_and_consume auf dieselbe Bruecken-Datei liefert ok=True, 0 Fehler, 12 Warnungen, darunter woertlich «11 Decke(n) ohne Rolle — die Quelle nennt keinen PredefinedType; gezeichnet, aber nicht als Boden/Decke/Dach eingeordnet: <id>, <id>, <id>, <id>, <id> … (+6)» (dazu 11x «Slab <id>: ohne room_id — zeichenbar ueber den eigenen Umriss, aber keinem Raum zugeordnet.»). materialize (nodes/bridge_to_svg.py, ~Z. 4672) prueft nur report.ok/report.errors und gibt report.warnings nicht weiter — darum sieht der Nutzer die Zeile nicht. Beobachtung, kein Code geaendert.",
+  "linter_zeile_woertlich": "Plan-Linter: 164 Befund(e) auf 18 Zeichnung(en).",
+  "R002_je_zeichnungsart": {
+   "Fassaden": 108,
+   "Schnitte": 56,
+   "Grundrisse": 0,
+   "Lageplan": 0
+  },
+  "R002_texte": "Fassaden: 84x «+ 0.01 m», 24x «+ 0.02 m»; Schnitte: 42x «+0.01», 12x «+0.02», 2x ein Raumname (<X>) doppelt",
+  "R001": 0,
+  "neue_zeilen_woertlich": [
+   "⚠ Kein Normmassstab bringt alle Zeichnungen aufs A0-Blatt (ueberlaufend je Versuch: 1:20: 17, 1:25: 17, 1:50: 17, 1:100: 17, 1:200: 16, 1:250: 13, 1:500: 13, 1:1000: 4, 1:2000: 2, 1:5000: 2). Gezeichnet wird 1:5000 als bester Versuch — das ist keine Zusicherung.",
+   "HINWEIS: --sia-full bei 1:5000 OHNE Massketten. Ein Blatt in 1:200 und kleiner fuehrt keine; mit --dimensions/--interior-dims kommen sie trotzdem.",
+   "Verlorene Beschriftungen: 199 auf 11 Zeichnung(en)."
+  ],
+  "verlorene_beschriftungen_je_grundriss": "9, 42, 8, 32, 10, 34, 7, 31, 8, 16, 2 Raeume «ganz ohne Beschriftung (kein Platz auf dem Blatt)» — Folge von 1:5000",
+  "bemerkung": "Die Laufzeit (36.6 s statt 0.66 s im Behelfslauf 203) kommt vom Massstab-Suchlauf aus ca68cd3 (zehn Massstaebe probiert)."
+ },
+ "A3_generate_poster": {
+  "rueckgabe": 0,
+  "laufzeit_s": 0.18,
+  "gekuerzt_zeile_woertlich": "⚠ Programmtabelle gekuerzt: 39 von 205 Zeilen stehen einzeln auf dem Blatt, 166 sind in einer Zeile zusammengefasst (17187 m²); darunter steht die Summe aller 205 Zeilen (22218 m²).",
+  "weitere_zeilen_woertlich": [
+   "Programmtabelle aus <bruecke>.json: 205 Zeile(n), 22217 m² (vorher 7 Zeile(n) Beispiel)",
+   "⚠ BEISPIELINHALT auf dem Blatt: Konzepttext, Materialleiste, Projektkopf. Diese Bloecke stammen nicht aus dem Modell, sondern aus dem Demo-Inhalt (kein --config angegeben). Auf einem Abgabeblatt widersprechen sie den Plaenen daneben.",
+   "⚠ Der Konzepttext nennt 2800 m², die Programmtabelle daneben 22218 m² — Faktor 8. Beide stehen auf demselben Blatt.",
+   "⚠ Überlauf (nicht platziert): SE_A-A_FINAL, SE_B-B_FINAL",
+   "→ auch der kleinste Normmassstab reicht nicht — es sind zu viele Pläne für ein Blatt (generate-set fährt mehrere).",
+   "Blatt zu 47 % von Kaesten bedeckt; unter dem untersten Kasten bleiben 50 mm frei, rechts vom rechtesten 50 mm.",
+   "Massstabstreue: 16 von 16 Zeichnungen stehen im gedruckten Massstab."
+  ],
+  "platziert": "16 Plaene (11 Grundrisse 1:5000, 4 Fassaden 1:5000, Lageplan 1:500) + programm_tabelle + konzept_text + material_legende; nicht platziert: beide Schnitte",
+  "sichtprobe": {
+   "gemacht": "PDF mit pdftoppm gerastert (ganzes Blatt 30 dpi, Tabellenausschnitt 60 dpi, ein Grundriss 150 dpi), angesehen, PNG sofort geloescht",
+   "weitere_zeilen_unter_tabelle": {
+    "antwort": "ja",
+    "satz": "Unter der Tabelle stehen als vorletzte Zeile «… | 166 weitere Zeilen | 17187 m²» und als letzte «Summe | 22218 m²», mit sauberem Tabellenabschluss."
+   },
+   "summe_unter_tabelle": {
+    "antwort": "ja",
+    "satz": "Die Summenzeile steht als letzte Tabellenzeile (22218 m²)."
+   },
+   "tabelle_laeuft_in_konzepttext": {
+    "antwort": "nein",
+    "satz": "Zwischen Tabellenende und erster Zeile des Konzepttexts bleibt rund 10 cm Weissraum; der Konzepttext ist vollstaendig und nicht mehr angeschnitten."
+   },
+   "nebenbefund": "Bei 1:5000 sind die Grundrisse Briefmarken: das Gebaeude ist auf dem Blatt rund 3 cm gross, Schnittmarken, Nordpfeil und Masstabsbalken sind groesser als der Plan, ein Raumname laeuft weit ueber den Umriss hinaus. Der Lageplan 1:500 ist dagegen gross und zeigt gefuellte schwarze Bloecke. Kopf und Konzepttext bleiben Demo-Inhalt."
+  }
+ },
+ "B_hauptgebaeude": {
+  "aufruf": "blender --background --python-use-system-env --python-exit-code 1 <kopie-marker.blend> --python tools/hauptgebaeude_zeichnen.py -- --out /tmp/hg207 ; Exitcode per $? ohne Pipe",
+  "marker": "Wie in 206: frische Wegwerfkopie der Szene, Quader «BuildingOBB» per Blender-Python aus der Dichte-OBB abgeleitet (156.4 x 31.47 x 30.16 m -> auf ganze Meter nach aussen: 158 x 33 x 31 m), nicht von Hand gesetzt.",
+  "exitcode": 0,
+  "bericht": {
+   "status": "ok",
+   "massstab": "1:200",
+   "z_m": 1.2,
+   "kontext_m": 40.0,
+   "warnungen": [],
+   "hauptgebaeude": "Hauptgebaeude aus Marker (explicit_marker).",
+   "obb": {
+    "quelle": "explicit_marker",
+    "breite_m": 158.0,
+    "tiefe_m": 33.0,
+    "hoehe_m": 31.0
+   },
+   "objekte": {
+    "szene": 40241,
+    "hauptgebaeude": 34189
+   },
+   "kontext_ab_mitte_m": 120.7,
+   "grundriss": {
+    "main_objects_count": 34189,
+    "obb_source": "explicit_marker",
+    "silhouette_lines_added": 1141,
+    "file_size_bytes": 884402
+   },
+   "axonometrie": {
+    "linien": 16815,
+    "geschosse": 11
+   }
+  },
+  "vergleich_206": "Silhouettenlinien 1141 statt 1624, Grundriss-SVG 884402 statt 911589 B; alles andere gleich; Axonometrie-SVG wieder 952572 B (wie 206).",
+  "rahmen_vorher_m": "418.9 x 321.3",
+  "rahmen_jetzt_m": "238.0 x 113.0",
+  "rahmen_detail": "Ebene ContextSilhouette: x -34.0 .. 204.0 (Spanne 238.0), y 9.0 .. 122.0 (Spanne 113.0); gleich dem viewBox des SVG. Alle Ebenen des Hauptgebaeudes liegen in x 19.6 .. 155.8, y 52.5 .. 77.5 (rund 136 x 25 m).",
+  "erwartung_deutlich_kleiner": "ja (Flaeche rund 20 % von vorher)",
+  "sichtprobe": {
+   "gemacht": "Grundriss-SVG mit rsvg-convert (1600 px, weiss) gerastert, angesehen, PNG sofort geloescht",
+   "fuellt_das_blatt": "ja",
+   "satz": "Das Hauptgebaeude nimmt jetzt rund 57 % der Blattbreite ein (206: rund ein Drittel) und steht mittig; die Nachbarumrisse enden sauber am Fensterrand, bleiben aber eher ein Rahmen aus grauen Rechtecken, und oben/unten bleiben weisse Streifen, weil der Rahmen (238:113) flacher ist als das Blatt."
+  },
+  "beobachtung": "Das SVG ist 1000 x 700 mm gross bei einem viewBox von 238 m Breite — rechnerisch rund 1:238, nicht die im Bericht genannte 1:200 (nur aus Kopfzeile und viewBox abgeleitet, nicht auf Papier nachgemessen). In 206 waere es entsprechend rund 1:419 gewesen."
+ },
+ "C_sun_position": {
+  "knoten": {
+   "bl_idname": "SunPositionNodeType",
+   "bl_label": "Sun Position",
+   "szenen_ursprung": "use_scene_origin (Anzeige «Origin aus Scene»), an",
+   "datum": "date_preset = custom, year/month/day, hour = 12.0",
+   "operator": "wettbewerb.set_sun (Knopf «Sonne setzen»), per EXEC_DEFAULT mit node_name = uid_key() im Kontext des Knoteneditors"
+  },
+  "meldungskanal": "Die Operator-Meldungen stehen auf Blenders stdout («Info: …» / «Error: …»); der Info-Editor (per report_copy gelesen) blieb bei allen drei Schritten leer, weil Meldungen aus Python-Aufrufen dort nicht landen. Die Fehlermeldung von C3 kam zusaetzlich als RuntimeError aus bpy.ops. Der Knoten hat keine Meldungsfelder (kein lauf_status/lauf_zeile).",
+  "C1": {
+   "szene": "wettbewerb_lv95_easting = 2600000.0, wettbewerb_lv95_northing = 1200000.0",
+   "datum": "21.3.2026 12:00",
+   "operator": "FINISHED",
+   "meldung_woertlich": "Info: Sonne 21.03.2026 12:00 CET+1 (Lat 46.9511/Lon 7.4386) → Alt 42.7° Az 167.2°",
+   "sonne_aus_rotation": {
+    "alt_deg": 42.67,
+    "az_deg": 167.24,
+    "energy": 5.0,
+    "objekt": "AB_Sun (SUN)"
+   },
+   "werkzeugweg_core_sonnenstand": {
+    "zone": "MEZ",
+    "hoehe_deg": 42.67,
+    "azimut_deg": 167.24
+   },
+   "erwartung_erfuellt": "ja (CET+1, Alt 42.7°, Az 167.2°; aus der Lampenrotation 42.67° / 167.24° = Werkzeugwert)",
+   "traceback": "nein"
+  },
+  "C2": {
+   "datum": "30.3.2026 12:00",
+   "operator": "FINISHED",
+   "meldung_woertlich": "Info: Sonne 30.03.2026 12:00 CET+2 (Lat 46.9511/Lon 7.4386) → Alt 42.3° Az 147.2°",
+   "sonne_aus_rotation": {
+    "alt_deg": 42.29,
+    "az_deg": 147.21,
+    "energy": 5.0
+   },
+   "werkzeugweg_core_sonnenstand": {
+    "zone": "MESZ",
+    "hoehe_deg": 42.29,
+    "azimut_deg": 147.21
+   },
+   "erwartung_erfuellt": "ja (CET+2)",
+   "traceback": "nein"
+  },
+  "C3": {
+   "vorbereitung": "beide Szenenwerte geloescht (danach None), Szenen-Ursprung an; die Sonnenlampe aus C2 vorher entfernt, damit sichtbar ist, ob eine neue entsteht",
+   "operator": "RuntimeError aus bpy.ops (Operator CANCELLED)",
+   "meldung_woertlich": "Error: Standort fehlt: LV95 [E, N] angeben (z. B. aus «INFO Metadata») — ohne Standort wird kein Sonnenstand gerechnet.",
+   "sonne_danach": "keine (AB_Sun nicht neu angelegt)",
+   "erwartung_erfuellt": "ja (Fehlermeldung statt Sonne)",
+   "traceback": "nein (die RuntimeError-Meldung enthaelt nur die Error-Zeile, kein Traceback)"
+  },
+  "sonstige_zeilen": "11x Blender-eigene Warnung «WARNING current value '-1' matches no enum in 'SpaceNodeEditor', '(null)', 'tree_type'» beim Umschalten der Flaeche auf den Knoteneditor (wie in 205); Blender beendete sich mit 0."
+ },
+ "fehler_traceback": {
+  "antwort": "nein",
+  "woertlich": "Kein «Traceback» und kein «No module named» in den Ausgaben von ifc-bridge, materialize, generate-poster, hauptgebaeude_zeichnen, Markerlauf und Blender-Fork — geprueft per grep ueber alle Logs. (Einmal warf eine EIGENE Auswertezeile beim Lesen der Bruecken-JSON einen TypeError wegen eines falschen Schluesselnamens; das war mein Hilfsskript, nicht das Werkzeug.)"
+ },
+ "originale": "Szene per SHA-256 vor und nach unveraendert; IFC per SHA-256 vor und nach unveraendert; beide Klone ohne Aenderung im Arbeitsbaum (git status leer).",
+ "nicht_getan": [
+  "Kein Code geaendert, nichts installiert, nichts committet, kein Render, kein Sprachmodell.",
+  "Keine Bilder, SVG, PDF, IFC- oder Szenendaten zurueckgegeben; Ansichten gerastert, angesehen, geloescht.",
+  "materialize nicht mit festem Massstab wiederholt (nicht im Auftrag); generate-set nicht gefahren.",
+  "Kein Marker von Hand gesetzt; kein abweichender --kontext-m."
+ ],
+ "aufraeumen": "Arbeitsordner der Kette, Ausgabe von Teil B, Ressourcen- und Ausgabeordner von Teil C, beide Szenenkopien und Blenders Sitzungs-Wiederherstellungsdatei aus dem Teil-C-Lauf in /tmp geloescht; Xvfb und Blender per gemerkter PID beendet bzw. selbst beendet. Pruefskripte und Logs (ohne Bilder) bleiben im Probe-Ordner der HomeStation (auf207).",
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull --ff-only (beide Klone)",
+  "dauer_min": 15
+ },
+ "fehler": [
+  "A1: erwartete Zeile «KOTE WIDERSPRICHT DER PLATZIERUNG» fehlt — die Pruefung vergleicht mit der Geschoss-Platzierung (hier ueberall 0) statt mit der Lage der Bauteile.",
+  "A2: erwartete Zeile zu den Decken ohne Rolle fehlt in der Ausgabe — die Warnung entsteht im Konsumenten, materialize gibt sie nicht aus."
+ ]
+}
