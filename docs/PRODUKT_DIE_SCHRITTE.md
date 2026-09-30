@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 30.09.2026 (Abschluss) · Die neue Steuerung wird nicht Vorgabe — sie tauscht ein Problem gegen ein anderes
+
+* **Ergebnis (96 Bilder, blind):** Beim Hochhaus stehen mit der neuen Fassung 18 von 24 statt
+  15 von 24 — besser, aber nicht um die vorher verlangten 20 Punkte. Also bleibt die alte
+  Vorgabe.
+* **Was sich zeigt:** Die «Gasse» verschwindet ganz, und die unklaren Bilder werden viel
+  seltener (15 → 5). Dafür entstehen echte Fehler: Häuser zu hoch oder zu schlank, der flache
+  Testbau von vorne oft zu hoch.
+* **Bleibt:** Die neue Fassung ist bestellbar, etwa für Hochhäuser. Wie es weitergeht,
+  entscheidet der Owner.
+
 ### 30.09.2026 (Nachtrag) · Die neue Steuerung läuft — erster Blick ermutigend
 
 * **Eingerichtet:** Der Heim-PC hat die neue Fassung geprüft und ihren Speicher gemessen.

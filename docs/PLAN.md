@@ -7577,12 +7577,14 @@ Bekannt und ausdrücklich nicht erledigt:
           nicht (unser Fehler); erster Blick: 2.1 Turm auf der Silhouette, 1.0 «Gasse».
     - [x] **Kern, nach 199:** `gewichte_ordner` + `render.wurzel_fuer`; Spitze eingetragen
           (31,1 GiB gemessen → Schichtauslagerung auf 32 GB).
-    - [ ] **local:** `auf-20260930-201` — Vergleich 1.0 gegen 2.1, 96 Bilder, Auge blind
-          (Regel: Hochbau +20 Punkte «steht», Testbau höchstens −10).
+    - [x] **local:** `auf-20260930-201` — Vergleich 1.0 gegen 2.1, 96 Bilder, Auge blind
+          (Regel: Hochbau +20 Punkte «steht», Testbau höchstens −10). — **nicht erfüllt**
+          (+12,5 / −8,3); 2.1 bleibt bestellbar, nicht Vorgabe (Protokoll 73 §24).
+    - [ ] **Owner:** Nächster Hebel für den Hochbau — 2.1 mit geringerer Stärke, oder ruhen?
     - [x] **Owner (vorab):** Läuft 2.1 sicher (~17 s, Auslagerung) oder schnell (~2 s, 260 MiB
           Luft)? — «Sicher» (Protokoll 73 §22).
-    - [ ] **Danach:** 2.1 Vorgabe? — nach Regel; Ansage an local und cloud (engine_used ändert
-          sich).
+    - [x] ~~**Danach:** 2.1 Vorgabe? — nach Regel; Ansage an local und cloud (engine_used ändert
+          sich).~~ — entfällt, Regel nicht erfüllt.
     - [x] **Danach:** erfüllt eine Zahl die Regel → Bestätigungsreihe für eine Schwelle; sonst
           ein Segmentierungsansatz (Lizenzfrage). — erfüllt (195), Bestätigungsreihe ist 196.
   - [ ] **Kern:** homeworker-Ergebnis mit `modus_gerechnet` und Umrisstreue; qwen-image-2.1 mit

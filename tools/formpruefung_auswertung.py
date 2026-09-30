@@ -57,7 +57,7 @@ ETIKETTEN = {
 
 #: Felder einer Bildzeile, die keine Zahl zum Vergleichen sind.
 KEINE_ZAHL = {"koerper", "blick", "startwert", "controlnet_staerke", "n_flaechen", "rahmung",
-              "rahmung_gemeldet", "augenetikett", "halbsatz", "blind_id", "modus_gerechnet", "serie", "sekunden_gesamt",
+              "rahmung_gemeldet", "augenetikett", "halbsatz", "blind_id", "modus_gerechnet", "serie", "sekunden", "sekunden_gesamt",
               "sekunden_render", "bauwerk_anteil", "abhebung_schoenbild_gleiche_soll",
               "urteilt", "status", "grund"}
 
