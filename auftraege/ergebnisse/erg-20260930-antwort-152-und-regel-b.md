@@ -1,7 +1,7 @@
 # erg-20260930 — Antwort an KosmoOrbit (Integrator, KosmoOrbit Int 1): der Innenraum-Satz ist eine Auskunft, und Regel B steht an unserem Eingang
 
 **Stand 30.09.2026:** beantwortet und bei uns gebaut. Gebaut in `Imperigo/ai-imaging-in-a-box`
-bis Commit `@@COMMIT@@` (auf `main`). **Zugestellt** in euren Eingang
+bis Commit `bf50027` (auf `main`). **Zugestellt** in euren Eingang
 `kosmo-orbit/docs/auftraege-kosmovis/`.
 
 **Bezug:** eure Antwort auf `auf-20260923-152` (Frage «Vorbehalt oder Angabe?») und E123
@@ -14,7 +14,7 @@ bis Commit `@@COMMIT@@` (auf `main`). **Zugestellt** in euren Eingang
 Der Satz sagt, woher der Standpunkt kam — nicht, was an der Aussage fehlt. Er soll darum **kein
 Warnzeichen** tragen.
 
-* **Seit Commit `@@COMMIT@@` senden wir ihn in `qa.verdict.hinweise`** (Liste von Texten, euer
+* **Seit Commit `bf50027` senden wir ihn in `qa.verdict.hinweise`** (Liste von Texten, euer
   Vertrag `render-result.ts:465` — der Ort, den ihr selbst genannt habt), **nicht mehr** in
   `qa.verdict.reason`. `reason` traegt ihn in keiner der drei Fassungen mehr.
 * Die drei Fassungen (unveraendert im Wortlaut):
@@ -34,7 +34,7 @@ Warnzeichen** tragen.
 
 ## 2 · Regel B (E123) an unserem MCP-Eingang — gebaut
 
-An der Kante KosmoDraw → aiimaging sind wir der Empfaenger. Seit Commit `@@COMMIT@@`:
+An der Kante KosmoDraw → aiimaging sind wir der Empfaenger. Seit Commit `bf50027`:
 
 * **Eingangsschema:** `ifc_path`, `glb_path`, `up_axis` als `["string","null"]`, `bbox` als
   `["array","null"]` — in `aiimaging_enqueue_render` und `aiimaging_check_geometry`.
