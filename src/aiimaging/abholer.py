@@ -3036,7 +3036,11 @@ def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
               if k not in MULTIPASS_NICHT_IM_SCHLUESSEL}
     params["_blender"] = blender
     knoten = _graph.Knoten(id="multipass", art="multipass", params=params)
-    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path",))
+    # Der Codestand kommt aus derselben Zeile wie im Zwischenspeicher der Mappe
+    # (`kette.FASSUNGEN`): Wer den Multipass hochzählt, verwirft beide Speicher, nicht
+    # nur einen. Bei der Anfangsfassung bleibt der Schlüssel bitgleich mit dem bisherigen.
+    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path",),
+                               fassung=_kette.fassung_von(_kette.ART_MULTIPASS))
 
 
 def _aus_dem_zwischenspeicher(cache, schluessel: str) -> dict | None:
