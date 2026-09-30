@@ -1,0 +1,26 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-208",
+ "status": "ok",
+ "beendet": "2026-09-30T20:35:46Z",
+ "stand": "git log -1: 3c2afb0 «Sechs eigene Kernpunkte erledigt und der HomeStation angesagt (auf-208)»",
+ "teil_a": "A1–A6 gelesen. Seit dem Pull fiel kein Lauf an (Abholer: kein verarbeiteter Auftrag in den letzten 30 min, kein homeworker-Lauf) — ob die neuen Felder erscheinen, ist darum noch nicht am Geraet gesehen; beim naechsten Lauf pruefe ich messwerte.render.modus_*, messwerte.formpruefung, urteil.*, bedarf im blender-report.json und geraeteweg.grund.",
+ "teil_b": {
+  "datei": "qwen-image-2.1/README.md (relativ zur Modellwurzel; 166 Zeilen; Kopf: «license: other», «license_name: qwen-research», «pipeline_tag: text-to-image», Tag «image-editing»)",
+  "B1_true_cfg_scale": "FEHLT. Die Karte nennt weder true_cfg_scale noch guidance_scale noch eine andere Fuehrung (grep -n -i «cfg|guidance» ohne Treffer). Alle drei Beispielaufrufe (Z. 64–69, 87–92, 102–107) uebergeben keinen solchen Wert.",
+  "B2_schritte": "num_inference_steps=40 — woertlich in Z. 67 (Text-to-Image), Z. 90 (Image Editing), Z. 105 (Transparent). Nicht als «empfohlen» bezeichnet, aber in jedem Beispiel gleich.",
+  "B3_negativer_prompt": "FEHLT. Kein negative_prompt in der Karte (grep -n -i «negative» ohne Treffer), auch kein Leerzeichen.",
+  "B4_eingangsbild": [
+   "Z. 28: «Qwen-Image-2.1, a unified text-to-image generation and image editing model in the Qwen family. With just **7B parameters in its visual generation component** (32 Single-Stream DiT layers)…»",
+   "Z. 33: «**Native Transparency, Unified Creation and Editing** — Generate regular or transparent (RGBA) images from text, edit transparent layers, and extract subjects from photographs—all in one model.»",
+   "Z. 34: «**Versatile Editing** — Support up to **10 reference images**, specify local edits via circles, painted annotations, or separate masks, and preserve identity for people and products.»",
+   "Z. 74–95 «### Image Editing»: dieselbe Pipeline-Klasse QwenImage21Pipeline (Z. 79, 81), Eingangsbild als «image=input_image,» (Z. 89) mit «input_image = Image.open(\"input.png\")» (Z. 85), Prompt «Change the background to a sunset beach» (Z. 88), num_inference_steps=40 (Z. 90). Keine Angabe zu Staerke/denoise, Aufloesung oder Maskenform im Aufruf."
+  ],
+  "zusatz_ohne_wertung": [
+   "Z. 66 und 104: width=2048, height=2048; Z. 114–123 «Supported Aspect Ratios» nur Groessen um 2048 (1:1 2048×2048 … 16:9 2752×1536) — keine 512- oder 1024-Angaben.",
+   "Z. 99/103: Fuer Transparenz ein empfohlenes Prompt-Format («This is an RGBA image with transparency. … The image has alpha channel and the background is transparent.»)."
+  ]
+ },
+ "nicht_getan": "nichts am Register oder Code geaendert, keine Werte ergaenzt oder geraten, keine GPU benutzt.",
+ "fehler": null
+}
