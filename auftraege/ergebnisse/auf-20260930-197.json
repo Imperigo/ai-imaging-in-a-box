@@ -1,0 +1,11 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-197",
+ "status": "noch nicht eingespielt",
+ "beendet": "2026-09-30T13:22:46Z",
+ "stand": "origin/claude/kosmo-orbit-v1-build-pzxkbj = 7581b1c6b (2026-09-30 10:47 UTC, «ROADMAP 1635: Kartenwerkzeuge-Schema wie Server … eingespielt»), nach git fetch.",
+ "geprueft": "git merge-base --is-ancestor <commit> origin/claude/kosmo-orbit-v1-build-pzxkbj fuer 2cedeeb29, 81ccfbb36, 8524edeed, 6f8cd652f, 08e8f4f99: alle fuenf NICHT enthalten. ROADMAP.md des Hauptstrangs: kein Eintrag zu «Lieferung 9» und keiner zum Grundlagen-Stapel (grep «Lieferung 9», «Grundlagen-Stapel», «Grundlagen»: nur alte, sachfremde Treffer).",
+ "kurzantwort": "Noch nicht eingespielt — darum wie verlangt nichts gemessen. Sobald Int 1 die Lieferungen 7–9 eingespielt hat, fahre ich die Nachprobe.",
+ "nicht_getan": "keine App gestartet, nichts gemessen, nichts geaendert.",
+ "fehler": null
+}
