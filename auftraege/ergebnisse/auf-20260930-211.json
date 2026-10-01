@@ -1,0 +1,170 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260930-211",
+ "status": "ok",
+ "status_kurz": "Alle Schritte gefahren, alle erwarteten Zeilen kamen. Abweichungen: A1 meldet «9 von 11» statt aller 11 Geschosse (Messweise der Pruefung, s. A1); A3 schlaegt beim Ueberlauf 1:5000 vor, obwohl materialize fuer 1:5000 ebenfalls 2 Ueberlaeufe nennt.",
+ "beendet": "2026-10-01T05:49:30Z",
+ "stand": {
+  "kosmopublish": "1fb2c08 (main, gleich origin/main, Arbeitsbaum sauber; de4ac22 ist Vorfahre, geprueft mit git merge-base --is-ancestor). Vorgeschichte: der erste Versuch hielt an, weil ein lokaler Zeitgeber-Commit das Vorspulen blockierte; der Integrator hat das bereinigt.",
+  "kosmoprepare": "d416b59 (main, git pull --ff-only: bereits aktuell; fe6ccae ist Vorfahre), Arbeitsbaum sauber",
+  "blender_teil_b": "Blender 5.2.2 LTS (hash d13f752e3b9c, gebaut 2026-09-15), Snap-Revision 7803, Binary direkt, Env-Scrub, --background, Leihpfad lxml/shapely per PYTHONPATH mit --python-use-system-env",
+  "blender_teil_c": "KosmoDesign-Fork 5.1.2 (hash ec6e62d40fa9, gebaut 2026-06-23), Python 3.13.9; C1/C2 mit --background, C3 einmal zusaetzlich mit Oberflaeche auf eigenem Xvfb :96 (kein Owner-Bildschirm, kein ydotool); Add-on per Symlink in eigenem BLENDER_USER_RESOURCES, enable -> True ohne Fehler; KOSMOPREPARE_IFC_PYTHON = .venv-ifc des KosmoPublish-Klons (wie 209, nichts angelegt)",
+  "python_kette_a": "KosmoPublish .venv (tools/kosmopublish_cli.py), Wegwerfordner wie in 207"
+ },
+ "A1_ifc_bridge": {
+  "rueckgabe": 0,
+  "laufzeit_s": 0.72,
+  "erwartet": "Zeile «KOTE WIDERSPRICHT DER LAGE DER WAENDE bei … von 11 Geschoss(en) … 1000-fache …» im Kopf, VOR «Warnungen: …»",
+  "gekommen": "ja",
+  "zeile_woertlich": "KOTE WIDERSPRICHT DER LAGE DER WAENDE bei 9 von 11 Geschoss(en), z.B. «<X>»: Elevation 0.005 m, Wandsohle 5.000 m (Median). Die Hoehenkoten folgen der Elevation und stehen damit neben den Raeumen falsch; welche Zahl stimmt, sagt die Datei nicht. Die Waende spannen das 1000-fache der Elevationen — das sieht nach einer Einheit aus (Elevation in Metern geschrieben, Laengeneinheit mm).",
+  "stelle": "im Kopf, direkt nach «GANZE KATEGORIEN OHNE EINEN EINTRAG: 2» und direkt vor «Warnungen: 876»",
+  "warnungen": 876,
+  "warnungen_hinweis": "876 statt 875 in 207: die KOTE-Zeile steht zusaetzlich auch in der Warnungsliste der Bruecken-JSON",
+  "elevation_m_11_geschosse": [
+   0.005,
+   0.008,
+   0.008,
+   0.011,
+   0.011,
+   0.014,
+   0.014,
+   0.017,
+   0.017,
+   0.02,
+   0.023
+  ],
+  "wandsohlen_median_mm_je_geschoss": [
+   5000,
+   8000,
+   11000,
+   14000,
+   17000,
+   20000,
+   23000,
+   8000,
+   11000,
+   14000,
+   17000
+  ],
+  "abweichung_9_von_11": "Alle 11 Geschosse haben Waende mit Faktor 1000 (Median gelesen mit ifcopenshell, nur gelesen). Die Pruefung zieht den Median-Versatz (Wandsohle minus Elevation, hier rund 13.99 m) ab und meldet nur, was mehr als 0.5 m davon abweicht; die zwei Geschosse auf 14000 mm liegen genau auf diesem Median und fallen darum heraus. Die Aussage stimmt, die Zahl 9 untertreibt (eigentlich 11 von 11). Beobachtung, kein Code geaendert."
+ },
+ "A2_materialize_sia_full": {
+  "aufruf": "materialize --project <arbeitsordner> --sia-full (ohne --scale, ohne Behelf)",
+  "rueckgabe": 0,
+  "laufzeit_s": 36.0,
+  "svg": 18,
+  "a_leserwarnungen": {
+   "erwartet": "auf stderr «Bruecke: N Warnung(en) des Lesers:» und als ERSTE Zeile «11 Decke(n) ohne Rolle …»",
+   "gekommen": "ja",
+   "woertlich": [
+    "Bruecke: 12 Warnung(en) des Lesers:",
+    "  ⚠ 11 Decke(n) ohne Rolle — die Quelle nennt keinen PredefinedType; gezeichnet, aber nicht als Boden/Decke/Dach eingeordnet: <id>, <id>, <id>, <id>, <id> … (+6)"
+   ],
+   "danach": "7x «⚠ Slab <id>: ohne room_id — zeichenbar ueber den eigenen Umriss, aber keinem Raum zugeordnet.», dann «⚠ … und 4 weitere Warnung(en) des Lesers»"
+  },
+  "b_massstab": {
+   "erwartet": "1:2000 als bester Versuch (vorher 1:5000), mit Hinweis auf generate-set",
+   "gekommen": "ja",
+   "woertlich": "⚠ Kein Normmassstab bringt alle Zeichnungen aufs A0-Blatt (ueberlaufend je Versuch: 1:20: 17, 1:25: 17, 1:50: 17, 1:100: 17, 1:200: 16, 1:250: 13, 1:500: 13, 1:1000: 4, 1:2000: 2, 1:5000: 2). Gezeichnet wird 1:2000 als bester Versuch (am wenigsten Ueberlauf, unter gleich guten der groesste) — das ist keine Zusicherung. Zu viele Plaene fuer EIN Blatt: generate-set verteilt sie auf mehrere.",
+   "folgezeile": "HINWEIS: --sia-full bei 1:2000 OHNE Massketten. Ein Blatt in 1:200 und kleiner fuehrt keine; mit --dimensions/--interior-dims kommen sie trotzdem."
+  },
+  "dateien_fehler_woertlich": "18 Datei(en), 0 Fehler.",
+  "linter_woertlich": "Plan-Linter: 164 Befund(e) auf 18 Zeichnung(en).",
+  "linter_regeln": {
+   "R002": 164
+  },
+  "verlorene_beschriftungen_woertlich": "Verlorene Beschriftungen: 181 auf 11 Zeichnung(en).",
+  "vergleich_207": "Verlorene Beschriftungen 181 statt 199 (1:2000 statt 1:5000); Linter unveraendert 164."
+ },
+ "A3_generate_poster": {
+  "rueckgabe": 0,
+  "laufzeit_s": 0.31,
+  "ueberlauf_woertlich": [
+   "⚠ Überlauf (nicht platziert): SE_A-A_FINAL, SE_B-B_FINAL",
+   "→ bei 1:5000 passt alles. Neu zeichnen mit: materialize --project <projekt> --sia-full --scale 1:5000"
+  ],
+  "ueberlauf_abweichung": "Der Vorschlag 1:5000 widerspricht materialize, das fuer 1:5000 ebenfalls 2 Ueberlaeufe nennt (in 207 lautete die Zeile «auch der kleinste Normmassstab reicht nicht … generate-set»).",
+  "massstabstreue_woertlich": "Massstabstreue: 16 von 16 Zeichnungen stehen im gedruckten Massstab.",
+  "blatt_woertlich": "Blatt zu 50 % von Kaesten bedeckt; unter dem untersten Kasten bleiben 50 mm frei, rechts vom rechtesten 50 mm.",
+  "weitere_zeilen_woertlich": [
+   "Programmtabelle aus <bruecke>.json: 205 Zeile(n), 22217 m² (vorher 7 Zeile(n) Beispiel)",
+   "⚠ Programmtabelle gekuerzt: 39 von 205 Zeilen stehen einzeln auf dem Blatt, 166 sind in einer Zeile zusammengefasst (17187 m²); darunter steht die Summe aller 205 Zeilen (22218 m²).",
+   "⚠ BEISPIELINHALT auf dem Blatt: … (wie 207)",
+   "⚠ Der Konzepttext nennt 2800 m², die Programmtabelle daneben 22218 m² — Faktor 8. Beide stehen auf demselben Blatt."
+  ],
+  "platziert": "16 Plaene (11 Grundrisse und 4 Fassaden 1:2000, Lageplan 1:500) + Programmtabelle, Konzepttext, Materiallegende; nicht platziert: beide Schnitte",
+  "sichtprobe": {
+   "gemacht": "PDF mit pdftoppm gerastert (ganzes Blatt 20 dpi, ein Grundriss 60 dpi), angesehen, PNG sofort geloescht",
+   "satz": "Ein Grundriss misst auf dem Blatt jetzt rund 4 x 3 cm (Gebaeudeumriss; der Massstabsbalken 0–100 m ist rund 5 cm lang), in 207 waren es rund 3 cm; Raumnamen, Schnittmarken und Nordpfeil sind weiterhin groesser als der Plan, die Grundrisse bleiben kleine Bildchen in grossen Kaesten."
+  }
+ },
+ "B_hauptgebaeude": {
+  "aufruf": "wie 207: frische Wegwerfkopie der Szene, Marker «BuildingOBB» aus der Dichte-OBB (158 x 33 x 31 m), dann blender --background --python-use-system-env --python-exit-code 1 <kopie-marker.blend> --python tools/hauptgebaeude_zeichnen.py -- --out <ordner>",
+  "exitcode": 0,
+  "erwartet": "1190 x 565 mm, data-kosmo-massstab=\"1:200\"",
+  "gekommen": "ja",
+  "svg_wurzel": {
+   "width": "1190.00mm",
+   "height": "565.00mm",
+   "viewBox": "-34.0 9.0 238.0 113.0",
+   "data-kosmo-massstab": "1:200"
+  },
+  "papier_mm": [
+   1190.0,
+   565.0
+  ],
+  "bericht_sonst": "status ok, massstab 1:200, warnungen [], obb explicit_marker 158 x 33 x 31, Objekte 40241/34189, Silhouettenlinien 1141 — gleich wie 207",
+  "nebenbefund": "file_size_bytes im Bericht 884402, die Datei hat 884432 B (die Marke kommt offenbar nach dem Messen dazu). Axonometrie-SVG unveraendert 1000.0mm x 700.0mm ohne Massstabsmarke (nicht Gegenstand des Auftrags)."
+ },
+ "C_kosmoprepare": {
+  "C1": {
+   "ablauf": "erfundene Szene wie 209 (2 Raumprogramm-Quader + Legendenblock), LV95 2600000/1200000, Hoehe 501.5; Ausgabeordner <tmp>/proj/03_Output; zuerst archicad_native_export, dann archicad_single_ifc, beide {'FINISHED'}",
+   "meldungen_woertlich": [
+    "Info: IFC-Übergabe: Raumprogramm 2 → <tmp>/proj/03_Output/02_ArchiCAD_Export",
+    "Info: IFC-Übergabe (lokal, am Nullpunkt): Volumen 2 · Zonen 2"
+   ],
+   "erwartet": "lokal entsteht Raumprogramm_Volumen_lokal.ifc",
+   "gekommen": "ja",
+   "dateien_03_Output": [
+    "02_ArchiCAD_Export",
+    "Raumprogramm_Volumen_lokal.ifc",
+    "Raumprogramm_Zonen.ifc"
+   ],
+   "dateien_02_ArchiCAD_Export": [
+    "Raumprogramm_Volumen.ifc"
+   ]
+  },
+  "C2": {
+   "erwartet": "ifc_path zeigt auf 02_ArchiCAD_Export/Raumprogramm_Volumen.ifc",
+   "gekommen": "ja",
+   "ausgabe_woertlich": "KosmoPrepare-Auto-Detection:\n  ✓ IFC: Raumprogramm_Volumen.ifc",
+   "ifc_path": "<tmp>/proj/03_Output/02_ArchiCAD_Export/Raumprogramm_Volumen.ifc",
+   "ergebnis_woertlich": "KPDetectionResult(ifc_path=PosixPath('<tmp>/proj/03_Output/02_ArchiCAD_Export/Raumprogramm_Volumen.ifc'), csv_path=None, bridge_json_path=None, search_roots=(PosixPath('<tmp>'),), notes=('extra: <tmp>',))"
+  },
+  "C3": {
+   "erwartet": "kein Fehler beim Zeichnen des Knotens",
+   "antwort": "ja, kein Fehler",
+   "wie_geprueft": "(1) Mit Oberflaeche auf eigenem Xvfb: Knoten im Knoteneditor angezeigt, draw_buttons 7-mal von Blender aufgerufen (Zaehler im Pruefskript, nicht im Code), 0 Fehler, kein Traceback. (2) Ohne Bildschirm draw_buttons mit mitschreibendem Layout: beide Knoepfe (archicad_native_export, archicad_single_ifc) bekommen node_name = die gestempelte UID (= uid_key()), nicht mehr den Anzeigenamen."
+  }
+ },
+ "fehler_traceback": {
+  "antwort": "nein",
+  "woertlich": "Kein «Traceback» und kein «No module named» in allen Logs (ifc-bridge, materialize, generate-poster, Marker, hauptgebaeude_zeichnen, beide Fork-Laeufe) — geprueft per grep."
+ },
+ "pruefsummen_gleich": {
+  "antwort": "ja",
+  "satz": "Szene und IFC per SHA-256 vor und nach gleich (Szene auch gleich wie in 207); beide Klone danach mit leerem git status."
+ },
+ "nicht_getan": [
+  "Kein Code geaendert, nichts installiert (kein .venv-ifc fuer KosmoPrepare), nichts committet, kein Render, kein Sprachmodell, keine GPU.",
+  "Keine Bilder, SVG, PDF, IFC oder Szenendaten zurueckgegeben; Sichtproben gerastert, angesehen, geloescht."
+ ],
+ "aufraeumen": "Arbeitsordner der Kette, Ausgabe B, Ausgabeordner C, Ressourcenordner, beide Szenenkopien und Blenders Sitzungs-Wiederherstellungsdatei geloescht; Xvfb per gemerkter PID beendet. Pruefskripte und Logs (ohne Bilder) bleiben im Probe-Ordner der HomeStation (auf211).",
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull/fetch",
+  "dauer_min": 12
+ },
+ "fehler": null
+}
