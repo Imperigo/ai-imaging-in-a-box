@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261001-212",
+  "art": "frage",
+  "beschreibung": "Gaussian-Splat-Kette (KosmoPrepare d416b59) erstmals mit den echten Werkzeugen an der HomeStation: Bestand ffmpeg/COLMAP/brush, dann normales und 360°-Video einer erfundenen Szene, Verortung gegen den bekannten Kameraweg.",
+  "anweisung": "=== KOSMOPREPARE: GAUSSIAN-SPLAT-KETTE AN DER HOMESTATION (LINUX, CUDA) — ERSTER ECHTER LAUF ===\n\nWORUM ES GEHT\n  Der Owner will ein normales oder 360°-Video zu einem Gaussian Splat machen und ihn in der App als\n  Ebene einblenden. Die Kette (ffmpeg → COLMAP → brush → splat.ply) ist in der Wolke gehaertet und\n  mit ERFUNDENEN Werkzeugen geprueft (KosmoPrepare d416b59, tests/test_splat_kette.py). Mit den\n  echten Werkzeugen lief sie nie, und an eurer Maschine noch gar nicht. Dieser Auftrag misst das —\n  an einer ERFUNDENEN Szene, damit nichts Echtes ins Spiel kommt.\n  KosmoPrepare mindestens d416b59 (git pull --ff-only auf main). Python fuer die Leser: der\n  .venv-server im KosmoPrepare-Klon (numpy ist dort).\n  Arbeitsordner: ein frischer Ordner AUSSERHALB jedes Repos, am Ende geloescht.\n\nA · WAS LIEGT DA (nur nachsehen, nichts installieren)\n  A1  ffmpeg -version: die erste Zeile und ob in «configuration:» --enable-gpl steht (ja/nein).\n      ffmpeg -hide_banner -filters | grep v360 → vorhanden ja/nein.\n  A2  colmap: Fassung (colmap -h, erste Zeilen), «with CUDA» ja/nein, und ob die Unterbefehle\n      global_mapper und view_graph_calibrator existieren (colmap global_mapper -h → Rueckgabe).\n  A3  brush_app: wo (which brush_app, sonst ~/brush/*/brush_app), Fassung, und ob «--help» die\n      Schalter --total-steps, --export-every, --export-path, --export-name, --max-resolution nennt.\n      Was in core/splat_pipeline.get_pipeline_tools() fuer ffmpeg/colmap/brush herauskommt.\n  Fehlt ein Werkzeug: STOPP fuer B und C, nur A zurueck — NICHT installieren (Owner-Entscheid).\n\nB · NORMALES VIDEO, ERFUNDENE SZENE\n  B1  Szene erfinden und rendern (blender --background, Wegwerfdatei, kein Repo):\n      Boden 30 x 30 m mit einer Schachbrett- oder Rauschtextur (COLMAP braucht Merkmale), darauf\n      sechs bis acht Quader verschiedener Groesse und Farbe, jeder mit einer Rauschtextur. Kamera\n      auf einem Kreis, Radius 12 m, Hoehe 3 m, Blick auf die Mitte, 96 Bilder (Bild 1..96, eine\n      Umrundung), 960 x 540, EEVEE (oder Cycles mit wenigen Samples). Als Video mit 12 Bildern je\n      Sekunde (mp4). Die Kameraposition JE BILD als JSON neben das Video schreiben\n      ({\"1\": [x,y,z], \"2\": …}) — sie ist die Wahrheit fuer B3.\n  B2  Kette fahren, aus dem KosmoPrepare-Klon mit .venv-server/bin/python:\n        from core.splat_pipeline import get_pipeline_tools, write_pipeline_script\n        s = write_pipeline_script(<arbeit>/b, <video>, get_pipeline_tools(), fps=12, max_frames=96,\n                                  steps=3000, max_res=960, profile=\"rtx5090\", video_source=\"standard\")\n      dann bash <s>. Zurueck: DONE oder FAIL; die STAGE-Zeilen von pipeline.log mit Uhrzeit (daraus\n      die Dauer je Stufe); bei FAIL die letzten 25 Zeilen von pipeline.log woertlich.\n      Bei DONE mit core.colmap_reader: Zahl der Kameras und deren model_id, Zahl der registrierten\n      Bilder von 96; mit core.gaussian_splat_reader.read_splat_ply: count, bbox, Dateigroesse.\n  B3  Verortung an der Wahrheit: je registriertem Bild frame_NNNN ein Paar\n        {\"name\": \"frame_NNNN\", \"splat\": <Kamerazentrum aus COLMAP via colmap_reader.camera_to_world>,\n         \"ziel\": <Blender-Kameraposition zu Bild NNNN aus B1>, \"quelle\": \"Kameraweg der erfundenen Szene\"}\n      und core.splat_verortung.verorte(paare). Zurueck: paare, massstab, rmse_m, max_m, das schlechteste\n      Paar beim Namen, und satz(fit) woertlich. Dann seitenwagen(<ply>, fit[\"matrix\"], fit, None) und\n      schreibe_seitenwagen → der Inhalt von \"lv95\" und \"lv95_grund\" (erwartet: null + Grund).\n      Erwartet: rmse_m im Bereich weniger Zentimeter. Wenn die Bildnummern nicht 1:1 zu den\n      Renderbildern passen (ffmpeg verschiebt um eins?), das sagen und mit dem besseren Versatz rechnen.\n\nC · 360°-VIDEO, DIESELBE SZENE\n  C1  Dieselbe Szene, Kamera Cycles «Panoramic / Equirectangular», 48 Bilder auf demselben Kreis,\n      1920 x 960, 12 Bilder je Sekunde, Positionen wieder als JSON.\n  C2  Kette mit video_source=\"insta360\", fps=12, max_frames=48, steps=3000, max_res=960 (also bis\n      288 Einzelbilder). Zurueck wie B2, dazu: die ersten acht Dateinamen in images/ (erwartet\n      0001_back.jpg, 0001_down.jpg, … zeitlich zuerst) und die Seitenlaenge eines Bildes\n      (erwartet 960 x 960); wie viele Bilder je Seite (front/back/left/right/up/down) registriert wurden.\n  C3  Verortung wie B3, ein Paar je Zeitpunkt aus dem Bild NNNN_front.\n\nWAS NICHT GETAN WERDEN SOLL\n  Nichts installieren, kein Code aendern, nichts committen. Kein echtes Video und keine echten\n  Daten — auch wenn ein Video des Owners an der Maschine liegt, ist das ein eigener spaeterer\n  Auftrag. Keine Bilder, Videos, .ply oder Szenen zurueckgeben — nur Zeilen und Zahlen. Den\n  Arbeitsordner am Ende loeschen. GPU-Grenze 400 W, nur bei Leerlauf (brush trainiert auf der GPU).\n",
+  "erstellt": "2026-10-01T06:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "erfundene Szene vor Ort in Blender --background (Teil B1/C1), nichts reist"
+  },
+  "params": {
+    "kosmoprepare_stand_min": "d416b59",
+    "daten_bleiben_lokal": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "brush trainiert auf der GPU; Render der erfundenen Szene klein halten.",
+    "hinweise": [
+      "Nichts installieren — fehlt ein Werkzeug, nur Teil A zurueck.",
+      "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+    ]
+  },
+  "rueckgabe": [
+    "Staende, Blender-Fassung.",
+    "A1-A3 Fassungen, ja/nein, get_pipeline_tools().",
+    "B2/C2 DONE/FAIL, Stufendauern, Zahlen der Leser; bei FAIL Logzeilen woertlich.",
+    "B3/C3 massstab, rmse_m, max_m, schlechtestes Paar, satz() woertlich, lv95/lv95_grund.",
+    "C2 erste acht Dateinamen, Bildgroesse, registriert je Seite.",
+    "Fehler ja/nein."
+  ],
+  "rang": 3
+}
