@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-225",
+ "art": "frage",
+ "beschreibung": "Schlusslauf v0.1.7 (Z1): KosmoPublish (mehrere A0-Blaetter, Symbole) und KosmoPrepare (Wettbewerbs-Vorbereitung) am echten Projekt; nur Zahlen zurueck.",
+ "anweisung": "=== SCHLUSSLAUF v0.1.7 (Z1): DIE GANZE KETTE AM ECHTEN PROJEKT ===\n\nWORUM ES GEHT\n  Version 0.1.7 von KosmoPublish und KosmoPrepare ist in der Wolke gebaut. Ob sie am echten Projekt\n  traegt, sieht man nur bei euch. Bitte die Kette einmal von vorne nach hinten fahren und NUR Zahlen\n  und woertliche Zeilen zurueckgeben. KosmoPublish mindestens e551197, KosmoPrepare mindestens 3f2adc4\n  (je git pull --ff-only auf main). Arbeitsordner ausserhalb der Repos, am Ende loeschen.\n  Der Splat (echtes Video) ist NICHT Teil dieses Auftrags — er steht in auf-20261001-223 Teil C.\n\nA · KOSMOPUBLISH: PLAENE UND A0-BLAETTER (dasselbe echte IFC wie in 207/211, Wegwerfkopie)\n  Neu seit 211: passt bei hoechstens 1:500 kein Massstab auf EIN Blatt, verteilen materialize,\n  handoff und generate-poster die Zeichnungen auf mehrere A0-Blaetter (Grenze 1:500, die wenigsten\n  Blaetter). Symbole neben einem kleinen Bauwerk werden kleiner bis lesbar, sonst entfallen sie\n  und der Lauf nennt es.\n  A1  ifc-bridge wie in 211. Zurueck: «N Datei(en)», die Kotenzeile woertlich (falls da).\n  A2  materialize --project <arbeitsordner> --sia-full (OHNE --scale).\n      Zurueck woertlich: die Massstabszeile (erwartet: 1:500 oder groesser, mit Zahl der Blaetter),\n      «N Datei(en), M Fehler», die Linterzeile, «Verlorene Beschriftungen: …», jede Zeile zu\n      Nordpfeil/Schnittmarke (kleiner gesetzt / entfallen).\n  A3  generate-poster wie in 211 (ohne --mehrblatt).\n      Zurueck woertlich: «Überlauf», «Massstabstreue», «Blatt zu … %»; ob ein Ordner Satz/ entstand,\n      wie viele Blatt_NN_A0.pdf darin liegen, und ob Abgabe_Set_A0.pdf entstand.\n  A4  handoff auf ein Paket mit derselben Bruecke (wie in 203, falls dort gebaut; sonst «nicht\n      gefahren»). Zurueck aus publish/kosmopublish-result.json: mehrblatt, Zahl der blaetter,\n      massstab_denom, ueberlauf (Zahl), Zahl der Felder.\n  A5  Sichtprobe (rastern, ansehen, loeschen): wie gross steht ein Grundriss auf dem Blatt, in cm,\n      ungefaehr? Ist ein Text groesser als die Zeichnung, neben der er steht? ja/nein.\n\nB · KOSMOPREPARE: WETTBEWERBS-VORBEREITUNG (nur mit Unterlagen, die bei euch liegen)\n  Ueber den Werkzeugserver mit .venv-server (wie in 198), je Werkzeug einmal. Liegt eine Unterlage\n  nicht vor, «nicht da» melden und weiter.\n  B1  kosmoprepare_raumprogramm_lesen mit dem Programm-PDF des Wettbewerbs.\n      Zurueck: status, zusammenfassung (eintraege, gruen, gelb, rot, nf_total_m2), wie viele\n      Eintraege summe=true tragen, wie viele einen hinweis tragen (zwei davon woertlich, ohne\n      Raumnamen), Laufzeit.\n      Gegenprobe von Hand: steht im PDF eine Gesamt-Nutzflaeche? Wenn ja: weicht nf_total_m2 davon\n      ab, um wie viel? (Nur die zwei Zahlen.)\n  B2  kosmoprepare_erfassen je Unterlage (Pflichtenheft, Baugesetz/BZO): je Art die Zahl der Werte\n      mit Fundstelle, die Zahl unter nichtAbgedeckt, und ob nach der Art gefragt wurde (Rueckgabe 3).\n  B3  kosmoprepare_programmstand, falls eine Fragenbeantwortung vorliegt: Positionen, geaendert,\n      nicht zugeordnet, summePositionen gegen summenImProgramm.\n  B4  kosmoprepare_baugesetz mit dem Kanton des Projekts: kamen belege (Zahl) und nicht_belegt\n      (Zahl)? Den KANTON NICHT nennen.\n  B5  kosmoprepare_info mit dem INFO-Blatt, falls da: welche Felder gefunden (nur die Feldnamen),\n      Warnungen woertlich ohne Zahlen.\n  B6  kosmoprepare_grundlageplan am LV95-Zentrum aus B5 (A3, 1:2000): Anzahlen je Ebene, Laufzeit,\n      ob PDF entstand. KEINE Koordinaten zurueck.\n  B7  kosmoprepare_bauvolumen mit den Raeumen aus B1 (Quelle = Fundstelle aus B1) und einer\n      Huelle aus kosmoprepare_standort, falls die Huelle dort gelesen wird; sonst «nicht gefahren»\n      und warum. Zurueck: passt ja/nein, Geschosse, ohne_flaeche (Zahl), annahmen (Zahl).\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts committen ausser der Antwort, kein Sprachmodell.\n  Keine Bilder, SVG, PDF, IFC oder Projektdaten zurueckgeben — nur Zahlen und Zeilen. Keine Raum-,\n  Orts-, Kantons- oder Projektnamen, keine Koordinaten. Originale per Pruefsumme vor und nach\n  vergleichen.\n",
+ "erstellt": "2026-10-01T22:30:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "dasselbe echte IFC wie in auf-20260930-207/211 und die Wettbewerbsunterlagen, die am Heimrechner liegen (nur dort, Wegwerfkopien)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmopublish_stand_min": "e551197",
+  "kosmoprepare_stand_min": "3f2adc4",
+  "daten_bleiben_lokal": true,
+  "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 7, 18, 20"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Nach auf-20261001-223 fahren.",
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Staende (KosmoPublish-, KosmoPrepare-Commit).",
+  "A1-A5 die genannten Zeilen woertlich und Zahlen.",
+  "B1-B7 Zahlen oder «nicht da» / «nicht gefahren» mit Grund.",
+  "Pruefsummen der Originale vorher = nachher ja/nein."
+ ],
+ "rang": 4
+}
