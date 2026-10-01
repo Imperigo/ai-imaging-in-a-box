@@ -28,7 +28,10 @@ final class WegeTests: XCTestCase {
         // Umbenennen, Abbrechen und Skizze-Rechnen aendern die Mappe oder den Lauf. Ein
         // `ohneAnmeldung: true` hier liesse die App ohne Kopfzeile schicken — und drueben
         // kaeme 401.
-        for weg in [Wege.benennen, Wege.abbrechen, Wege.rechneSkizze] {
+        // Seit dem 01.10.2026 auch der Assistent: «Anwenden» startet einen Lauf, und eine
+        // Frage belegt die Grafikkarte drueben.
+        for weg in [Wege.benennen, Wege.abbrechen, Wege.rechneSkizze, Wege.assistent,
+                    Wege.assistentAnwenden] {
             XCTAssertFalse(weg.ohneAnmeldung, weg.pfad)
             XCTAssertEqual(weg.methode, .post, weg.pfad)
         }

@@ -247,6 +247,26 @@ Qwen/Qwen-Image-2.1     Qwen Research License Agreement (20.09.2026)
 --------------------------------------------------------------------------------
 
 ================================================================================
+Der Assistent - externes Programm am Heim-PC, NICHT ausgeliefert
+================================================================================
+
+Der Assistent (aiimaging.assistent, Plan v0.1.7) spricht ueber HTTP mit Ollama am
+Heim-PC, nur mit der Python-Standardbibliothek. Ollama und die Gewichte des
+Sprachmodells liegen NICHT im Repo und gehen in KEIN Produkt ein; der Owner hat
+sie am Heim-PC eingerichtet.
+
+Ollama                  MIT          https://github.com/ollama/ollama
+Zugelassene Sprachmodelle (aiimaging.assistent.ERLAUBTE_MODELLE), je Apache-2.0:
+  qwen3:30b   (Qwen/Qwen3-30B-A3B, Vorgabe)
+  qwen3:14b   (Qwen/Qwen3-14B)
+  gpt-oss:20b (openai/gpt-oss-20b)
+  Gelesen 01.10.2026, docs/VORFUEHRFASSUNG_2026-10-01.md.
+Ausgeschlossen und abgewiesen: Llama (Llama Community License), Gemma (Gemma
+Terms of Use), Qwen2.5-3B/-72B (Qwen-Lizenzen).
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Mitgelieferte Schriften (iPad-App)
 ================================================================================
 
