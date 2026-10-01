@@ -2,7 +2,7 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-226",
  "worker": "local",
- "status": "erledigt (Abholer steht) — wartet auf den Vertrag von KosmoVis",
+ "status": "erledigt — Abholer steht, Vertrag nimmt «local-prepare» an",
  "git_log_1": "3741714 Auftragsvertrag: Adressat local-prepare, eng gefasst — nur Fragen, nur ausdrücklich erlaubte Rechte",
  "worker_wert": "local-prepare",
  "rechte_beispiel": {
@@ -21,12 +21,8 @@
   "befehle: Praefixe ohne ; & | $ ` > < ; git nur lesend; Interpreter nur mit Skriptpfad",
   "ergebnis: genau auftraege/ergebnisse/<auftrag_id>.json"
  ],
- "pruefe_auftrag_nimmt_an": false,
- "pruefe_auftrag_maengel_heute": [
-  "Pflichtfeld 'auflagen' fehlt",
-  "Pflichtfeld 'rechte' fehlt oder ist kein Objekt (lesen, befehle, ergebnis)."
- ],
- "warum_noch_nicht": "Der Vertrag (aiimaging.auftrag) gehoert KosmoVis; «local-prepare» und «rechte» sind dort am 01.10. erbeten. Bis dahin nimmt der Abholer korrekt nichts an.",
+ "pruefe_auftrag_nimmt_an": true,
+ "pruefe_auftrag_maengel_heute": [],
  "abholer": {
   "ort": "KosmoBetrieb/pruefhelfer (Zeitgeber alle 10 min)",
   "modell": "kosmo-qwen3.6:35b-a3b (lokal, ueber claude-code-router)",
@@ -46,5 +42,5 @@
   }
  },
  "hinweis_fuer_den_ersten_auftrag": "«letzte Zeile» eindeutig fassen, z.B. «die Zeile, die mit OK oder FAILED beginnt». Den Rueckgabewert kann der Helfer nicht mit eigener Belegzeile zeigen ($? ist gesperrt); er schliesst ihn aus dem Fehlen einer Exit-code-Meldung.",
- "pruefe_auftrag_probe": "vollstaendiger Probeauftrag (Schema, art frage, worker local-prepare) gegen pruefe_auftrag im Stand dieses Commits"
+ "pruefe_auftrag_probe": "vollstaendiger Probeauftrag mit rechte und auflagen gegen pruefe_auftrag (KosmoVis hat «local-prepare» und «rechte» bereits aufgenommen)"
 }
