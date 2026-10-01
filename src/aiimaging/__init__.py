@@ -44,7 +44,7 @@ Aufbau
 ``mcp_schemas``  die Werkzeugverträge als reine Daten
 ``mcp_server``   optionaler Zusatz, braucht das MIT-lizenzierte MCP-SDK
 """
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 from aiimaging import (  # noqa: F401
     arbeitsgang, auftrag, auftragspost, backbone, bildlesen, bildschreiben, contracts,

@@ -35,7 +35,7 @@ let package = Package(
             name: "Visbox",
             targets: ["AppModule"],
             bundleIdentifier: "org.example.visbox",
-            displayVersion: "0.1",
+            displayVersion: "0.1.0",
             bundleVersion: "1",
             appIcon: .placeholder(icon: .leaf),
             accentColor: .presetColor(.blue),

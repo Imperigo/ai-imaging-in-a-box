@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 # (`pip install pillow` → `import PIL`). Umbenannt wird er, wenn die Produktflaeche
 # steht und der Schnitt ohnehin faellt — nicht heute, mitten im Bau.
 name = "visbox"
-version = "0.0.1"
+version = "0.1.0"
 description = "Visbox — geometrie-treue KI-Architektur-Visualisierung: Modell hinein, geprueftes Bild heraus."
 readme = "README.md"
 requires-python = ">=3.11"
