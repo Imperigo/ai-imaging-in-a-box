@@ -1,0 +1,50 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-214",
+ "worker": "local",
+ "status": "erledigt",
+ "git_log_1": "f892bfc Schrittblatt: der erste Vollbau-Nachmittag, mit dem, was noch niemand gesehen hat",
+ "owner_go": "ja — Entscheid 50 (Sitzung 74); dazu am 01.10.2026 vormittags vom Owner im Chat ausdruecklich beauftragt",
+ "B1_dienst": {
+  "erledigt": true,
+  "unit": "visbox-flaeche.service (Benutzerdienst, enabled, active)",
+  "hoert_auf": "nur 127.0.0.1:8731",
+  "kennwortdatei": "beim ersten Start angelegt, Rechte 600, ausserhalb jedes Repos"
+ },
+ "B2_weiterleitung": {
+  "erledigt": true,
+  "zeile": "https 8443 / -> 127.0.0.1:8731 (nur im eigenen Netz)",
+  "hinweis": "braucht root (tailscale serve auf Port); mit sudo gesetzt"
+ },
+ "B3_bestehende_unveraendert": {
+  "erledigt": true,
+  "pfade": [
+   "/ -> 5183",
+   "/llm -> 11434",
+   "/sync -> 8700",
+   "/bruecke -> 8600",
+   "/updates/ -> Ordner"
+  ]
+ },
+ "neustart_nach_pull": "ja (218 A4), Dienst wieder active",
+ "C1_weiterleitung_ohne_anmeldung": {
+  "status": 401,
+  "erwartet": 403,
+  "satz": "Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, in dem Visbox gestartet wurde.",
+  "deutung": "Abgewiesen — aber mit 401 statt 403, weil ein Kennwort gesetzt ist: der 403-Weg (Weiterleitung OHNE eingerichtetes Kennwort) greift nur, wenn gar keines gesetzt ist; nicht gesondert geprueft (Dienst haette ohne Kennwortdatei laufen muessen).",
+  "befund_satz": "Der Satz passt nicht zum Dienst: Es gibt kein «Fenster, in dem Visbox gestartet wurde» — das Kennwort steht in der Kennwortdatei. Vorschlag: im Dienstbetrieb auf die Kennwortdatei verweisen (ohne Pfad im Satz, falls Regel 3 das verlangt)."
+ },
+ "C2_weiterleitung_mit_anmeldung": {
+  "status": 200,
+  "gegenprobe_falsches_kennwort": 401,
+  "api_heim_ueber_leitung": 200
+ },
+ "C3_direkt_ohne_anmeldung": {
+  "status": 401,
+  "richtig": true,
+  "mit_anmeldung": 200
+ },
+ "C4_neustart_kennwort_gleich": true,
+ "C5_kennwort_im_systemprotokoll": "nein (0 Treffer in journalctl --user -u visbox-flaeche)",
+ "messzeit": "2026-10-01 ~09:40"
+}
