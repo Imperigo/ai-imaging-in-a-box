@@ -105,6 +105,20 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 01.10.2026 (Abend) · Zwei Durchsichten, ein Umentscheid, und es trägt am Heim-PC
+
+* **Durchgesehen, bevor es hinausging:** Zwei Prüfungen fanden echte Fehler — der Server war
+  blockiert, solange der Assistent nachdachte; aus dem Vorführmodus kam man nicht zum
+  Einrichten; über den Mac gab es einen Umweg zum Kennwort des Heim-PC; und zwischen iPad und
+  Mac wäre die Leitung im fremden WLAN unverschlüsselt gewesen. Alles behoben.
+* **Umentschieden (Entscheid 63):** Das iPad geht unterwegs selbst über Tailscale zum Heim-PC,
+  verschlüsselt. Der Mac holt nur die Zahl zum ersten Koppeln.
+* **Am Heim-PC nachgemessen:** Nach dem Rechnen gibt der Server die Grafikkarte frei; während
+  der Assistent nachdenkt, antwortet er weiter sofort. Der Assistent versteht 9 von 10 Sätzen.
+* **Die Vorführmappe** hat jetzt 9 echte, verschiedene Bilder — eines davon durchgefallen, und
+  das bleibt so (Entscheid 64): Die Mappe zeigt, dass die Prüfung ein falsches Bild erkennt.
+* **Ehrlich dazu:** Gestartet hat die Apps noch niemand.
+
 ### 01.10.2026 (Nachmittag) · Die Mac-App steht — gebaut, übersetzt, noch nie gestartet
 
 * **Gebaut, in vier Teilen gleichzeitig:** die Mac-App mit den vier Startzeilen; der Mac als

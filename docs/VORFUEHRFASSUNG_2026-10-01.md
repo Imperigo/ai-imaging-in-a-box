@@ -91,6 +91,17 @@ Das Bildmodell braucht beim Rechnen fast alles (gemessen: 25 GB, mit Union-2.1 b
 Sprachmodell muss darum vor einem Bild entladen werden und danach neu laden — wie lange das
 dauert, ist **nicht gemessen** (Auftrag an local).
 
+## Der Aufbau, wie er gebaut ist (Entscheid 63, 01.10.2026)
+
+```
+iPad ──(Tailscale, https 8443)──────────────────────> Heim-PC
+Mac-App ──(Tailscale, https 8443)───────────────────> Heim-PC
+          «iPad koppeln»: der Mac holt eine Zahl, das iPad tauscht sie selbst
+```
+
+Der Weg über den Mac (unten, wie geplant) ist gebaut, aber **aus**: Zwischen iPad und Mac wäre
+er im fremden WLAN unverschlüsselt (Sicherheitsdurchsicht, Protokoll 74 §8).
+
 ## Der Aufbau, wie geplant
 
 ```

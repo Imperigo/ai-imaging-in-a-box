@@ -100,15 +100,12 @@ ist die App nie gestartet worden (Entscheid 60). Insbesondere ungeprüft:
 * ob die Schriften erscheinen,
 * ob die Leitung über Tailscale steht (Anschluss 8443, Zertifikat von Tailscale Serve).
 
-**Was noch fehlt, und bei wem:**
-
-* `GET /api/heim` am Visbox-Server und `Wege.heim` im Kern — **Strom D**. Bis dahin sagen
-  «Rechner» und «Assistent» ehrlich «wartet — der Heim-PC kennt diese Frage noch nicht».
-* Die iPad-Zeile mit echtem Signal (`Heimleitung.setzeIpad`) — **Strom B**.
-* Der Vorführmodus, wenn der Heim-PC nicht antwortet — **Strom C**; das Signal liefert
-  `Heimleitung.erreichbarkeit` («erreichbar seit / nicht erreichbar seit»).
-* Die Seitenleiste des Assistenten — **Strom D**; der Platz ist in `Start/Arbeitsansicht.swift`
-  markiert («VERDRAHTEN»).
+**Was seit dem Gerüst dazukam (01.10.2026, alles am Gerät unbestätigt):** `GET /api/heim`
+(Zeilen «Rechner» und «Assistent»), der Vorführmodus (Blatt 13b), die Seitenleiste des
+Assistenten (Blatt 14), «Einrichten» immer in der Werkzeugleiste, und das Menü «iPad» mit
+**«iPad koppeln»**: Der Mac holt beim Heim-PC eine Zahl, und das iPad koppelt sich damit über
+Tailscale selbst (Entscheid 63). Die Vermittlung über den Mac steht im selben Menü, **aus**,
+bis man sie einschaltet — sie ist im fremden WLAN unverschlüsselt.
 
 ## Was wo liegt
 
