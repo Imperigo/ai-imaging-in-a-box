@@ -101,7 +101,12 @@ ipad/
 │   │   ├── Parkfach.swift       Skizzen, die (noch) nicht drüben sind
 │   │   ├── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
 │   │   ├── Startzeilen.swift    die vier Startzeilen der Mac-App (Blatt 13), aus den Antworten
-│   │   └── Heimadresse.swift    die Adresse des Heim-PC für die Mac-App: https, 8443, kein Pfad
+│   │   ├── Heimadresse.swift    die Adresse des Heim-PC für die Mac-App: https, 8443, kein Pfad
+│   │   ├── Leitung.swift        eine HTTP-Anfrage lesen, eine Antwort schreiben (für den Mac)
+│   │   ├── Vermittlung.swift    der Mac als Vermittler: Tür, Weiterreichen, Zeile «iPad»
+│   │   └── Vermittlerkopplung.swift  die Kopplung iPad ↔ Mac und der Zugang des Mac
+│   │                            (Protokoll §8b; die Mac-Seite liegt in
+│   │                            `VisboxMac/Sources/VisboxMac/Vermittlung/`)
 │   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand,
 │   │                            Unterlagenbild
 │   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt,

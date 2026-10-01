@@ -13,6 +13,7 @@ import VisboxKern
 struct Hauptfenster: View {
     @ObservedObject var leitung: Heimleitung
     @StateObject private var vorfuehrung: Vorfuehrsteuerung
+    @StateObject private var vermittlung = Vermittlungsanschluss()
 
     init(leitung: Heimleitung) {
         self.leitung = leitung
@@ -37,6 +38,21 @@ struct Hauptfenster: View {
                              einrichten: { einrichtenOffen = true })
             }
         }
+        .background {
+            if let dienst = vermittlung.dienst {
+                Vermittlungsmelder(dienst: dienst, leitung: leitung)
+            }
+        }
+        .toolbar {
+            // DIE ZAHL FUERS IPAD GILT ZEHN MINUTEN (Protokoll §8b). Danach, oder fuer ein
+            // zweites iPad, gibt es hier eine neue — und hier vergisst der Mac ein iPad.
+            if let dienst = vermittlung.dienst {
+                Menu("iPad") {
+                    Button("Neue Zahl zum Koppeln") { dienst.neueZahl() }
+                    Button("iPad vergessen") { dienst.vergissIPad() }
+                }
+            }
+        }
         .frame(minWidth: 1100, minHeight: 700)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $einrichtenOffen) {
@@ -49,7 +65,20 @@ struct Hauptfenster: View {
             einrichtenOffen = leitung.braucheEinrichten
             leitung.starte()
             vorfuehrung.starte()
+            vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
-        .onDisappear { vorfuehrung.halte() }
+        .onChange(of: leitung.adresse) { _, _ in
+            vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+        }
+        .onChange(of: einrichtenOffen) { _, offen in
+            // NACH DEM EINRICHTEN kann das Kennwort neu sein, bei gleicher Adresse.
+            if !offen {
+                vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+            }
+        }
+        .onDisappear {
+            vorfuehrung.halte()
+            vermittlung.halte()
+        }
     }
 }

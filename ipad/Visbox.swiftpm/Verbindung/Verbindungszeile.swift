@@ -84,16 +84,22 @@ struct Verbindungszeile: View {
         stand.stationsname ?? stand.adresse.map(Koppelbildschirm.text) ?? "HomeStation"
     }
 
+    /// «über den Mac», wenn unterwegs der Mac vermittelt (Protokoll §8b) — klein, im Satz,
+    /// ohne eigenen Zustand: Für das iPad ist der Mac eine HomeStation wie jede andere.
+    private var vermittelt: String {
+        stand.ueberDenMac ? " · über den Mac" : ""
+    }
+
     /// Der Satz unter dem Zustand.
     private var detail: String {
         switch stand.zustand {
         case .aus:
             return "Nicht gekoppelt. Skizzen warten auf dem iPad."
         case .suche:
-            return stand.gekoppelt ? "\(zielname) hat noch nicht geantwortet …"
+            return stand.gekoppelt ? "\(zielname)\(vermittelt) hat noch nicht geantwortet …"
                                    : "Sucht im Heimnetz …"
         case .gekoppelt:
-            return "\(zielname) · antwortet"
+            return "\(zielname)\(vermittelt) · antwortet"
         case .getrennt(let grund):
             return grund
         }

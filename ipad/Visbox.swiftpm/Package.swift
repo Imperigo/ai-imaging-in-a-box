@@ -49,9 +49,11 @@ let package = Package(
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
             capabilities: [
-                // Erzeugt NSLocalNetworkUsageDescription und NSBonjourServices.
+                // Erzeugt NSLocalNetworkUsageDescription und NSBonjourServices. Der Satz nennt
+                // seit dem 01.10.2026 auch den Mac: Unterwegs ist ER es, den die App im WLAN
+                // findet und der die Skizzen an die HomeStation weiterreicht (Protokoll §8b).
                 .localNetwork(
-                    purposeString: "Findet die HomeStation im Heimnetz und schickt ihr die Skizzen zum Rechnen.",
+                    purposeString: "Findet die HomeStation im Heimnetz oder unterwegs den Mac, der für sie vermittelt, und schickt ihr die Skizzen zum Rechnen.",
                     bonjourServiceTypes: ["_visbox._tcp"]
                 )
             ],

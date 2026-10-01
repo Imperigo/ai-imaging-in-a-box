@@ -809,3 +809,109 @@ def test_die_pruefstrecke_baut_die_mac_app_aus_diesen_angaben():
     assert mit["name"] == f"{_plist()['CFBundleName']}-mac", mit["name"]
     assert mit["retention-days"] == 14
     assert mit["path"].endswith("-mac.zip"), mit["path"]
+
+
+# ================================================= 8 · Der Mac als Vermittler (01.10.2026)
+#
+# Unterwegs gibt sich der Mac dem iPad gegenueber als Server aus und reicht an den Heim-PC
+# weiter (Entscheide 42/47, Protokoll §8b). Die Regeln stehen im Kern (`Kern/Leitung.swift`,
+# `Kern/Vermittlung.swift`, `Kern/Vermittlerkopplung.swift`) und sind dort mit Proben
+# bewacht. Was hier bewacht wird, sind wieder die ABSCHRIFTEN: Der Mac laesst kein Python
+# laufen und muss Fassung, Kopplungsregeln, Saetze und die Groesse einer Skizze kennen.
+
+VERMITTLUNG = KERN_QUELLEN / "Vermittlung.swift"
+VERMITTLERKOPPLUNG = KERN_QUELLEN / "Vermittlerkopplung.swift"
+LEITUNG = KERN_QUELLEN / "Leitung.swift"
+INFOZUSATZ = APP / "InfoZusatz.plist"
+MAC_VERMITTLUNG = IPAD / "VisboxMac" / "Sources" / "VisboxMac" / "Vermittlung"
+
+
+def _swift_konstante(datei: Path, name: str) -> str:
+    """Der Wert hinter ``static let <name> … = `` bis zum Zeilenende."""
+    text = _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+    treffer = re.search(rf"static let {name}(?:\s*:\s*[\w.]+)?\s*=\s*(.+)", text)
+    assert treffer, f"{name} fehlt in {datei.name}"
+    return treffer.group(1).strip()
+
+
+def _swift_text(datei: Path, name: str) -> str:
+    """Eine Zeichenkette hinter ``static let <name> =`` — auch über ``+``-Zeilen gefügt."""
+    text = _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+    treffer = re.search(rf'static let {name}\s*=\s*((?:\s*\+?\s*"(?:[^"\\\n]|\\.)*")+)', text)
+    assert treffer, f"{name} fehlt in {datei.name}"
+    return "".join(re.findall(r'"((?:[^"\\\n]|\\.)*)"', treffer.group(1)))
+
+
+def test_der_mac_bietet_die_fassung_des_rundrufs_an():
+    sys.path.insert(0, str(FLAECHE))
+    try:
+        import rundruf
+    finally:
+        sys.path.remove(str(FLAECHE))
+    assert _swift_konstante(VERMITTLUNG, "fassung") == f'"{rundruf.FASSUNG}"'
+
+
+def test_die_kopplung_am_mac_hat_die_regeln_der_homestation(server):
+    """Frist, Versuche, Stellen und der Satz bei Erfolg — eine Abschrift von
+    ``aiimaging.kopplung`` und ``server.py``. Läuft eine Seite weg, gälten am Mac andere
+    Regeln als zuhause, und niemand sähe es."""
+    from aiimaging import kopplung
+
+    assert float(_swift_konstante(VERMITTLERKOPPLUNG, "frist")) == kopplung.FRIST_S
+    assert int(_swift_konstante(VERMITTLERKOPPLUNG, "versuche")) == kopplung.VERSUCHE
+    assert int(_swift_konstante(VERMITTLERKOPPLUNG, "stellen")) == kopplung.PIN_STELLEN
+    assert int(_swift_konstante(VERMITTLERKOPPLUNG, "laenge")) == server.KENNWORTLAENGE
+    assert _swift_text(VERMITTLERKOPPLUNG, "grundFalsch") == kopplung.GRUND_FALSCH
+    assert _swift_text(VERMITTLERKOPPLUNG, "grundVerbraucht") == kopplung.GRUND_VERBRAUCHT
+    assert _swift_text(VERMITTLUNG, "satzVerbunden") == server.SATZ_VERBUNDEN
+    # Der Benutzername kommt aus der Marke (klein) — derselbe wie beim Server.
+    assert _marke()["name"].lower() == server.BENUTZER
+
+
+def test_die_tuer_des_mac_spricht_den_satz_des_servers(server):
+    """Die 401 des Mac hat denselben Satz wie die des Servers, mit dem Namen aus der Marke.
+    Gelesen an der Tür des Servers selbst, nicht aus seinem Quelltext."""
+    a = _Anfrage(server, befehl="GET", weg="/api/fortschritt", angemeldet=False).stelle()
+    assert a.codes == [401]
+    satz = json.loads(a.text)["fehler"].replace(server.NAME, r"\(Marke.name)")
+    text = _ohne_kommentarzeilen(VERMITTLUNG.read_text(encoding="utf-8"))
+    block = re.search(r"public static var tuer: Leitungsantwort \{(.*?)\n    \}", text, re.S)
+    assert block, "die Tür des Mac fehlt in Vermittlung.swift"
+    assert satz in "".join(re.findall(r'"((?:[^"\\\n]|\\.)*)"', block.group(1)))
+
+
+def test_die_grenze_des_mac_fasst_die_groesste_skizze_des_servers(server):
+    """Der Mac weist einen Rumpf über ``rumpfGrenze`` ab, bevor er ihn liest. Die grösste
+    Anfrage der App ist eine Skizze bis ``SKIZZE_GROESSENRIEGEL`` — als Base64 im JSON um
+    ein Drittel grösser. Wächst der Riegel des Servers, muss die Grenze des Mac mitwachsen."""
+    ausdruck = _swift_konstante(LEITUNG, "rumpfGrenze")
+    assert re.fullmatch(r"[\d\s*]+", ausdruck), ausdruck
+    grenze = eval(ausdruck)  # nur Ziffern und «*», geprüft in der Zeile darüber
+    base64 = (server.SKIZZE_GROESSENRIEGEL + 2) // 3 * 4
+    assert grenze >= base64 + 64 * 1024, (grenze, base64)
+
+
+def test_die_app_bittet_um_das_lokale_netzwerk_mit_einem_satz():
+    """Die Erlaubnis «Lokales Netzwerk» steht **einmal**, im Manifest (`.localNetwork`), mit
+    einem Satz, warum — und er nennt seit dem 01.10.2026 auch den Mac, weil die App ihn
+    unterwegs im WLAN sucht. ``InfoZusatz.plist`` wiederholt sie nicht: Zwei Quellen für
+    denselben Schlüssel hiessen, dass eine die andere still überschreibt."""
+    manifest = _ohne_kommentarzeilen(APP_MANIFEST.read_text(encoding="utf-8"))
+    saetze = re.findall(r'\.localNetwork\(\s*purposeString:\s*"([^"]+)"', manifest)
+    assert len(saetze) == 1, saetze
+    satz = saetze[0]
+    assert satz.endswith(".") and ". " not in satz, f"ein Satz, nicht mehrere: {satz!r}"
+    assert "Mac" in satz and "HomeStation" in satz, satz
+    zusatz = INFOZUSATZ.read_text(encoding="utf-8")
+    for schluessel in ("NSLocalNetworkUsageDescription", "NSBonjourServices"):
+        assert schluessel not in zusatz, f"{schluessel} steht doppelt (Manifest und InfoZusatz)"
+
+
+def test_der_mac_teil_bleibt_duenn_und_bei_der_plattform():
+    """Regel 1 und 4: Der Mac-Teil der Vermittlung benutzt nur Apple-Plattform und den Kern
+    — keine neue Abhängigkeit, keine Oberfläche (die Zeile «iPad» zeichnet die Mac-App)."""
+    dateien = sorted(MAC_VERMITTLUNG.glob("*.swift"))
+    assert dateien, "keine Dateien unter VisboxMac/…/Vermittlung"
+    for datei in dateien:
+        assert set(_importe(datei)) <= {"Foundation", "Network", "Security", "VisboxKern"}, (
+            datei.name, _importe(datei))
