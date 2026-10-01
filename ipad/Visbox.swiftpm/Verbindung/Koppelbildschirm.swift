@@ -2,12 +2,15 @@ import SwiftUI
 
 /// Das erste Verbinden: eine HomeStation wählen (oder ihre Adresse eintippen) und die
 /// **sechsstellige Zahl** eingeben, die sie in ihrem Fenster zeigt (Entscheid Nr. 26,
-/// Protokoll §7).
+/// Protokoll §7) — oder, unterwegs, die der Mac unter «iPad koppeln» zeigt (Entscheid 63).
 ///
 /// * **Genau eine gefunden → die** (vorausgefüllt). **Mehrere → ein Mensch wählt**, keine
 ///   wird vorgezogen (`Suche.waehle`).
-/// * **Heute findet die Suche nichts** — der Server kündigt sich noch nicht an (Protokoll §8).
-///   Darum steht das Eintippen gleichwertig daneben und nicht in einem Untermenü.
+/// * **Unterwegs findet die Suche nichts** — dort gibt es kein Heimnetz. Die App spricht
+///   dann direkt über Tailscale mit dem Heim-PC (`https://<rechner>.<netz>.ts.net:8443`,
+///   Entscheid 63, Protokoll §8), und diese Adresse wird eingetippt oder eingefügt. Darum
+///   steht das Eintippen gleichwertig daneben und nicht in einem Untermenü. Geprüft wird
+///   sie im Kern (`Suche.pruefe(eingabe:)`, für https mit `Heimadresse.pruefe` der Mac-App).
 /// * Die Zahl wird **vor** dem Senden geprüft (sechs Ziffern): Ein Tippfehler soll keinen der
 ///   wenigen Versuche verbrauchen, die die HomeStation zulässt.
 ///
@@ -25,7 +28,12 @@ struct Koppelbildschirm: View {
     @State private var geklappt = false
     @State private var laeuft = false
 
-    private var ziel: URL? { Suche.adresse(ausEingabe: adresseText) }
+    /// Was die Prüfung im Kern zur Eingabe sagt — die Adresse, oder der Satz, warum nicht.
+    private var pruefung: Heimadresse.Pruefung { Suche.pruefe(eingabe: adresseText) }
+    private var ziel: URL? {
+        if case .gut(let url, _) = pruefung { return url }
+        return nil
+    }
     private var bereit: Bool { ziel != nil && Kopplungszahl(zahl) != nil && !laeuft }
 
     var body: some View {
@@ -54,7 +62,7 @@ struct Koppelbildschirm: View {
         }
         .onAppear {
             stand.starteSuche()
-            if adresseText.isEmpty, let a = stand.adresse { adresseText = Koppelbildschirm.text(a) }
+            if adresseText.isEmpty, let a = stand.adresse { adresseText = Suche.eingabetext(a) }
         }
         // NUR DIE SUCHE DIESES BILDSCHIRMS endet hier. Sucht das Pruefen die gekoppelte
         // HomeStation unter ihrem Namen, sucht es weiter (`Suchwunsch`, Durchsicht 22.09.2026).
@@ -75,10 +83,12 @@ struct Koppelbildschirm: View {
             switch Suche.waehle(stand.gefunden) {
             case .keiner:
                 // BERICHTIGT 01.10.2026: Seit dem 22.09. kündigt sich die HomeStation selbst an
-                // (Protokoll §8), und unterwegs vermittelt der Mac (§8b). Der alte Satz sagte,
-                // sie tue es nicht — und schickte die Nutzerin an ein Fenster, das sie nicht sieht.
+                // (Protokoll §8). Unterwegs ist seit Entscheid 63 nicht mehr der Mac der Weg,
+                // sondern Tailscale direkt zum Heim-PC — dort findet die Suche nichts, und der
+                // Satz schickt darum zum Eintippen, nicht zur Mac-App.
                 Text("Noch keine gefunden. Zu Hause: läuft die HomeStation im Heimnetz? "
-                     + "Unterwegs: ist die Mac-App offen, im selben WLAN oder am Hotspot des Mac?")
+                     + "Unterwegs: Tailscale am iPad einschalten und unten die Adresse des "
+                     + "Heim-PC eintippen.")
                     .font(Schrift.text(14))
                     .foregroundStyle(Zeichenblatt.leise)
             case .einer(let d):
@@ -112,7 +122,7 @@ struct Koppelbildschirm: View {
                         .foregroundStyle(Zeichenblatt.leise)
                 }
                 Spacer()
-                Text(d.adresse.map(Koppelbildschirm.text) ?? "wird aufgelöst …")
+                Text(d.adresse.map(Suche.eingabetext) ?? "wird aufgelöst …")
                     .font(Schrift.zahl(13))
             }
             .padding(.horizontal, 16)
@@ -125,7 +135,7 @@ struct Koppelbildschirm: View {
     private var adressteil: some View {
         VStack(alignment: .leading, spacing: 10) {
             Abschnittstitel(text: "Oder die Adresse eintippen")
-            TextField("192.168.1.20:8731", text: $adresseText)
+            TextField(Heimadresse.beispiel, text: $adresseText)
                 .font(Schrift.zahl(18))
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
@@ -134,12 +144,25 @@ struct Koppelbildschirm: View {
                 .background(RoundedRectangle(cornerRadius: 10).fill(Zeichenblatt.feld))
                 .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Zeichenblatt.linie))
                 .frame(minHeight: Zeichenblatt.tippziel)
-            if !adresseText.isEmpty && ziel == nil {
-                Text("So lässt sich die HomeStation nicht ansprechen. Gemeint ist die Adresse "
-                     + "aus ihrem Fenster, z. B. 192.168.1.20:8731 — nur http, ohne Pfad.")
+            // DER SATZ KOMMT AUS DER PRUEFUNG IM KERN — er sagt, WAS an der Eingabe nicht
+            // geht (Schema, Pfad, Kennwort in der Adresse …), statt einer Regel fuer alle Faelle.
+            switch pruefung {
+            case .schlecht(let grund) where !adresseText.isEmpty:
+                Text(grund)
+                    .font(Schrift.text(13))
+                    .foregroundStyle(Zeichenblatt.schrift)
+            case .gut(_, let hinweis?):
+                Text(hinweis)
                     .font(Schrift.text(13))
                     .foregroundStyle(Zeichenblatt.leise)
+            default:
+                EmptyView()
             }
+            Text("Zu Hause: die Adresse aus dem Fenster der HomeStation, z. B. "
+                 + "192.168.1.20:8731. Unterwegs: die Adresse des Heim-PC aus Tailscale, "
+                 + "\(Heimadresse.beispiel) — dafür muss Tailscale am iPad an sein.")
+                .font(Schrift.text(13))
+                .foregroundStyle(Zeichenblatt.leise)
         }
     }
 
@@ -163,8 +186,10 @@ struct Koppelbildschirm: View {
                         .prefix(6))
                     if sauber != neu { zahl = sauber }
                 }
-            Text("Sie steht im Fenster der HomeStation, wenn sie mit --kopplung gestartet "
-                 + "wurde. Sie gilt nur kurz und nur für wenige Versuche.")
+            // UNTERWEGS ZEIGT SIE DER MAC (Entscheid 63): Er fragt den Heim-PC danach.
+            // Gekoppelt wird trotzdem direkt mit dem Heim-PC — der Mac reicht nur die Zahl.
+            Text("Zu Hause steht sie im Fenster der HomeStation. Unterwegs zeigt sie der Mac "
+                 + "unter «iPad koppeln». Sie gilt nur zehn Minuten und nur für wenige Versuche.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
         }
@@ -223,7 +248,7 @@ struct Koppelbildschirm: View {
 
     private func waehle(_ d: GefundenerDienst, _ a: URL) {
         gewaehlt = d
-        adresseText = Koppelbildschirm.text(a)
+        adresseText = Suche.eingabetext(a)
     }
 
     private func koppeln() async {
@@ -240,12 +265,5 @@ struct Koppelbildschirm: View {
         // DIE ZAHL IST NACH JEDEM VERSUCH WEG: Drueben ist sie entweder verbraucht oder hat
         // einen Versuch gekostet. Stehen lassen hiesse, zum zweiten Mal dasselbe zu senden.
         zahl = ""
-    }
-
-    /// Eine Adresse, wie ein Mensch sie tippt: ohne `http://`.
-    nonisolated static func text(_ adresse: URL) -> String {
-        var t = adresse.absoluteString
-        if t.hasPrefix("http://") { t.removeFirst("http://".count) }
-        return t
     }
 }

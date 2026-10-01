@@ -81,13 +81,15 @@ struct Verbindungszeile: View {
     }
 
     private var zielname: String {
-        stand.stationsname ?? stand.adresse.map(Koppelbildschirm.text) ?? "HomeStation"
+        stand.stationsname ?? stand.adresse.map(Suche.anzeigename) ?? "HomeStation"
     }
 
-    /// «über den Mac», wenn unterwegs der Mac vermittelt (Protokoll §8b) — klein, im Satz,
-    /// ohne eigenen Zustand: Für das iPad ist der Mac eine HomeStation wie jede andere.
+    /// «über den Mac», wenn der Mac vermittelt (Protokoll §8b), «über Tailscale», wenn die App
+    /// unterwegs direkt über Tailscale spricht (Entscheid 63) — klein, im Satz, ohne eigenen
+    /// Zustand: Für die Zeile ist beides eine HomeStation wie jede andere.
     private var vermittelt: String {
-        stand.ueberDenMac ? " · über den Mac" : ""
+        if stand.ueberDenMac { return " · über den Mac" }
+        return stand.strecke?.zusatz ?? ""
     }
 
     /// Der Satz unter dem Zustand.

@@ -133,6 +133,10 @@ final class Verbindungsstand: ObservableObject {
 
     var gekoppelt: Bool { adresse != nil }
 
+    /// Über welche Strecke die gekoppelte HomeStation erreicht wird — Heimnetz (http) oder
+    /// Tailscale (https, Entscheid 63); abgelesen an der gemerkten Adresse, nie geraten.
+    var strecke: Strecke? { adresse.map(Strecke.init(basis:)) }
+
     /// Was der Knopf zum Parkfach zählt — geparkt, ungewiss, unterwegs und offen **getrennt**
     /// (Kern: `Fachzaehlung`). Bis zur Durchsicht vom 22.09.2026 stand hier `wartend`, und
     /// der Knopf nannte auch ungewisse Skizzen «geparkt».
@@ -245,8 +249,12 @@ final class Verbindungsstand: ObservableObject {
                 if let fehler = Schluesselbund.speichere(neu) {
                     // DIE ZAHL IST DRUEBEN SCHON VERBRAUCHT. Das zu verschweigen hiesse, den
                     // naechsten Versuch mit derselben Zahl scheitern zu lassen, ohne Grund.
-                    return (false, fehler + " Die Zahl ist damit verbraucht — an der "
-                            + "HomeStation eine neue holen.")
+                    // WO ES DIE NEUE GIBT, haengt an der Strecke: Unterwegs zeigt sie der
+                    // Mac («iPad koppeln», Entscheid 63), zuhause die HomeStation.
+                    let wo = Strecke(basis: ziel) == .tailscale
+                        ? "am Mac unter «iPad koppeln»" : "an der HomeStation"
+                    return (false, fehler + " Die Zahl ist damit verbraucht — \(wo) eine neue "
+                            + "holen.")
                 }
             } else {
                 Schluesselbund.loesche()

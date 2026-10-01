@@ -1,8 +1,9 @@
 # Die iPad-App «Visbox»
 
 Native App für das iPad (SwiftUI und PencilKit, iOS 17), Zielgerät iPad Pro 11 (1. Gen.) mit
-Apple Pencil 2. Sie spricht per HTTP mit dem Server `oberflaeche/server.py` auf der
-HomeStation im Heimnetz. **Sie rechnet nie selbst** — jedes Bild, jedes Urteil, jede Zahl
+Apple Pencil 2. Sie spricht mit dem Server `oberflaeche/server.py` auf der HomeStation —
+zuhause per HTTP im Heimnetz, unterwegs **direkt über Tailscale per https**
+(`https://<rechner>.<netz>.ts.net:8443`, Entscheid 63, 01.10.2026). **Sie rechnet nie selbst** — jedes Bild, jedes Urteil, jede Zahl
 kommt vom Server. Was über die Leitung geht, steht in `docs/VISBOX_PROTOKOLL.md`.
 
 Nach der Abgabe (Januar 2027) wird die App in KosmoOrbit eingebaut und heisst dann
@@ -53,6 +54,16 @@ kein Befund am Code.
   mit der sechsstelligen Zahl, Anmeldung im Schlüsselbund, das Parkfach für Skizzen, die
   (noch) nicht drüben sind, mit Schlüssel gegen Doppelsendung und samt `ueber`, und die
   Übergabe als Bewegung.
+* **Unterwegs über Tailscale** (01.10.2026, Entscheid 63): Im Koppelbildschirm darf die
+  eingetippte Adresse `https://<rechner>.<netz>.ts.net:8443` sein — geprüft im Kern
+  (`Suche.pruefe(eingabe:)`, für https mit `Heimadresse.pruefe` der Mac-App), gemerkt samt
+  Schema. Alle Anfragen bauen ihre Adresse aus dieser Basis. Kommt keine Antwort, sagt die
+  Verbindungszeile «Tailscale am iPad an? …» (`Kern/Strecke.swift`), und Skizzen parken.
+  Die Zahl zum Koppeln zeigt unterwegs der Mac («iPad koppeln»). Keine neue Ausnahme in App
+  Transport Security. Der Weg über den Mac (§8b) bleibt im Code, ist aber nicht mehr der Weg:
+  Zwischen iPad und Mac wäre die Leitung im fremden WLAN unverschlüsselt. Der Kern ist unter
+  Linux geprüft; die geänderten Ansichten (`Verbindung/`) sind **noch nicht übersetzt** — das
+  tut erst der nächste Lauf der Prüfstrecke auf dem Mac.
 * **Schriften** (23.09.2026, Entscheide 20 und 25): IBM Plex Sans (Text), IBM Plex Mono
   (Zahlen, Dateinamen) und Instrument Serif (Titel) liegen **mitgeliefert** in
   `Visbox.swiftpm/Schriften/` — unverändert aus der Verteilung von Google Fonts, SIL OFL 1.1,
@@ -83,7 +94,8 @@ kein Befund am Code.
 ipad/
 ├── Visbox.swiftpm/              das App-Paket — öffnet sich in Xcode und in Swift Playgrounds
 │   ├── Package.swift            Manifest in der Form, die Swift Playgrounds selbst schreibt
-│   ├── InfoZusatz.plist         nur: App Transport Security für lokale Netze
+│   ├── InfoZusatz.plist         nur: App Transport Security für lokale Netze (https über
+│   │                            Tailscale braucht keine Ausnahme — bewacht)
 │   ├── VisboxApp.swift          der Einstieg (@main)
 │   ├── Startansicht.swift       ordnet die Einheiten an, sonst nichts
 │   ├── Platzhalter.swift        aus Welle 0; keine Einheit benutzt ihn mehr
@@ -99,9 +111,13 @@ ipad/
 │   │   ├── Blattunterlage.swift die Unterlage unter dem Blatt: gestreckt, was mitgeht
 │   │   ├── Stiftfarben.swift    Grund des Blattes und Stiftfarben, gegen das Blatt geprüft
 │   │   ├── Parkfach.swift       Skizzen, die (noch) nicht drüben sind
-│   │   ├── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
+│   │   ├── Suche.swift          was gefunden wurde, welche HomeStation genommen wird, und
+│   │   │                        die eingetippte Adresse (http im Heimnetz, https über Tailscale)
+│   │   ├── Strecke.swift        Heimnetz oder Tailscale, und der Satz am iPad, wenn keine
+│   │   │                        Antwort kommt («Tailscale am iPad an?»)
 │   │   ├── Startzeilen.swift    die vier Startzeilen der Mac-App (Blatt 13), aus den Antworten
-│   │   ├── Heimadresse.swift    die Adresse des Heim-PC für die Mac-App: https, 8443, kein Pfad
+│   │   ├── Heimadresse.swift    die Adresse des Heim-PC: https, 8443, kein Pfad — für die
+│   │   │                        Mac-App und die https-Adresse am iPad
 │   │   ├── Leitung.swift        eine HTTP-Anfrage lesen, eine Antwort schreiben (für den Mac)
 │   │   ├── Vermittlung.swift    der Mac als Vermittler: Tür, Weiterreichen, Zeile «iPad»
 │   │   └── Vermittlerkopplung.swift  die Kopplung iPad ↔ Mac und der Zugang des Mac
@@ -236,6 +252,13 @@ diesem Zertifikat trauen (`--cacert`); die Verbindung ungeprüft zu lassen ist k
 * **Ob iOS die Verbindung zur HomeStation zulässt** — lokale Netzwerkfreigabe
   (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) und die ATS-Ausnahme
   `NSAllowsLocalNetworking` sind eingetragen, am Gerät nicht erprobt.
+* **Unterwegs über Tailscale** (Entscheid 63) — am Gerät unbestätigt: dass die App den
+  `.ts.net`-Namen über die Tailscale-App auflöst, dass `URLSession` das Zertifikat von
+  Tailscale Serve ohne Ausnahme annimmt, welcher Fehler bei ausgeschaltetem Tailscale
+  wirklich kommt (erwartet: Name unbekannt, dann «Tailscale am iPad an?») und ob das
+  Einschalten von Tailscale sofort ein neues Prüfen auslöst. Der Weg `POST /api/kopplung`,
+  mit dem der Mac unterwegs die Zahl holt, ist im Server dieses Stands noch nicht vorhanden.
+  Siehe `docs/VISBOX_PROTOKOLL.md`, §8, «Unterwegs».
 * **Finden im Heimnetz.** Der Server kündigt sich seit dem 22.09.2026 an, wenn er mit
   `--im-heimnetz` läuft (`oberflaeche/rundruf.py`, geprüft über einen lokalen UDP-Socket);
   ob ein echtes iPad ihn über die Bonjour-Suche findet, ist **am Gerät unbestätigt**. Siehe

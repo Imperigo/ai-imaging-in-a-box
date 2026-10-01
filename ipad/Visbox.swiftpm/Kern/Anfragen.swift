@@ -230,6 +230,10 @@ public struct Anfrage: Equatable, Sendable {
     }
 
     /// Pfad samt kodierter Frage, z. B. `/bild?name=a%2Bb.png`.
+    ///
+    /// Die Basis darunter ist **nur ein Gerüst**, um an Pfad und Frage zu kommen; ihr Schema
+    /// geht nirgends hin. Gesendet wird immer an `adresse(basis:)` mit der gemerkten Basis —
+    /// `http` im Heimnetz, `https` über Tailscale (Entscheid 63).
     public var pfad: String {
         guard let basis = URL(string: "http://homestation.invalid"),
               let url = adresse(basis: basis),

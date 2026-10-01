@@ -8,8 +8,9 @@ import Foundation
 // ein Mensch waehlt. Geraten wird nicht (22.09.2026): *Eine geratene HomeStation bekaeme
 // die Skizzen — und das Kennwort — einer anderen.*
 //
-// Stand 22.09.2026: Der Server kuendigt sich noch NICHT an. Bis er es tut, findet die
-// Suche nichts, und die Adresse wird eingetippt (`Suche.adresse(ausEingabe:)`).
+// Seit dem 22.09.2026 kuendigt sich der Server im Heimnetz an (Protokoll §8). Unterwegs
+// findet die Suche nichts — dann wird die Adresse des Heim-PC ueber Tailscale eingetippt
+// (`Suche.pruefe(eingabe:)`, Entscheid 63, 01.10.2026).
 
 /// Eine HomeStation, die die Suche gemeldet hat.
 public struct GefundenerDienst: Equatable, Hashable, Sendable, Identifiable {
@@ -138,29 +139,141 @@ public enum Suche {
         }
     }
 
-    /// Eine eingetippte Adresse — `192.168.1.20`, `192.168.1.20:8731`,
-    /// `http://homestation.local:8731` — als Adresse für die Anfragen, oder `nil`.
-    ///
-    /// **Nur `http`.** Der Server spricht kein HTTPS (Protokoll §1); eine `https`-Adresse
-    /// scheiterte erst am Gerät und mit einer Meldung, die nichts erklärt. Ein Pfad, eine
-    /// Frage oder Anmeldedaten in der Adresse werden abgelehnt, nicht still weggeworfen.
+    /// Eine eingetippte Adresse als Adresse für die Anfragen — oder `nil`. Kurzform von
+    /// `pruefe(eingabe:)` für alle, die den Satz nicht brauchen.
     public static func adresse(ausEingabe eingabe: String) -> URL? {
-        var text = eingabe.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, !text.contains(" ") else { return nil }
-        if !text.contains("://") { text = "http://" + text }
-        guard let teile = URLComponents(string: text),
-              teile.scheme?.lowercased() == "http",
-              let rechner = teile.host, !rechner.isEmpty,
-              teile.user == nil, teile.password == nil,
-              teile.query == nil, teile.fragment == nil,
-              teile.path.isEmpty || teile.path == "/" else { return nil }
+        if case .gut(let url, _) = pruefe(eingabe: eingabe) { return url }
+        return nil
+    }
+
+    /// Prüft eine eingetippte (oder eingefügte) Adresse — **zwei Formen, und nur diese:**
+    ///
+    /// * **Im Heimnetz `http`** — `192.168.1.20`, `192.168.1.20:8731`,
+    ///   `http://homestation.local:8731`. Ohne Anschluss gilt `vorgabeAnschluss` (8731), der
+    ///   des Servers.
+    /// * **Unterwegs `https` über Tailscale** (Entscheid 63, 01.10.2026) —
+    ///   `https://<rechner>.<netz>.ts.net:8443`. Geprüft von **`Heimadresse.pruefe`**, der
+    ///   Prüfung, mit der die Mac-App dieselbe Adresse nimmt: ohne Anschluss 8443, kein Pfad.
+    ///   Zwei Prüfungen für dieselbe Adresse hiessen, dass iPad und Mac sie eines Tages
+    ///   verschieden lesen.
+    ///
+    /// **Ohne Schema** gilt `http` — ausser der Name endet auf `.ts.net`: Dann ist es ein Name
+    /// aus Tailscale, und dort spricht Tailscale Serve nur `https`. Ein ausdrückliches
+    /// `http://` vor einem `.ts.net`-Namen wird abgelehnt, mit Satz: Es scheiterte sonst erst
+    /// beim Koppeln, mit einer Meldung, die nichts erklärt.
+    ///
+    /// **Benutzer und Kennwort in der Adresse** werden in beiden Formen abgelehnt, nicht still
+    /// weggeworfen: Die App bekommt sie beim Koppeln und legt sie in den Schlüsselbund; die
+    /// Adresse dagegen merkt sie sich offen (`Verbindungsgedaechtnis`). Ebenso abgelehnt: ein
+    /// Pfad, eine Frage, ein Anker.
+    public static func pruefe(eingabe: String) -> Heimadresse.Pruefung {
+        let text = eingabe.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            return .schlecht("Die Adresse fehlt. Zuhause sieht sie so aus: 192.168.1.20:8731, "
+                             + "unterwegs so: \(Heimadresse.beispiel)")
+        }
+        guard text.rangeOfCharacter(from: .whitespacesAndNewlines) == nil else {
+            return .schlecht("In der Adresse steht ein Leerzeichen.")
+        }
+        // DIE PLATZHALTER DES BEISPIELS: Den Satz dazu hat die Pruefung des Heim-PC.
+        if text.contains("<") || text.contains(">") { return Heimadresse.pruefe(text) }
+
+        let mitSchema: String
+        if text.contains("://") {
+            mitSchema = text
+        } else {
+            // OHNE «://» liest `URLComponents` «name:8731» als Schema «name» — darum erst mit
+            // `http://` lesen, nur um den Namen zu finden.
+            let rechner = URLComponents(string: "http://" + text)?.host ?? ""
+            mitSchema = (Strecke.istTailscaleName(rechner) ? "https://" : "http://") + text
+        }
+        guard let teile = URLComponents(string: mitSchema) else {
+            return .schlecht("Das ist keine Adresse. Zuhause sieht sie so aus: "
+                             + "192.168.1.20:8731, unterwegs so: \(Heimadresse.beispiel)")
+        }
+        guard teile.user == nil, teile.password == nil else {
+            return .schlecht("Benutzer und Kennwort gehören nicht in die Adresse — die App "
+                             + "bekommt sie beim Koppeln und legt sie in den Schlüsselbund.")
+        }
+        switch teile.scheme?.lowercased() {
+        case "https":
+            return Heimadresse.pruefe(mitSchema)
+        case "http":
+            return heimnetzadresse(teile)
+        default:
+            return .schlecht("Nur http (zuhause im Heimnetz) oder https (unterwegs über "
+                             + "Tailscale).")
+        }
+    }
+
+    /// Die Form im Heimnetz: `http`, ein Rechner, ein Anschluss (ohne Angabe 8731), nichts sonst.
+    private static func heimnetzadresse(_ teile: URLComponents) -> Heimadresse.Pruefung {
+        guard let rechner = teile.host, !rechner.isEmpty else {
+            return .schlecht("Der Name oder die Adresse der HomeStation fehlt.")
+        }
+        guard !Strecke.istTailscaleName(rechner) else {
+            return .schlecht("Ein Name aus Tailscale (…ts.net) geht nur mit https: "
+                             + "\(Heimadresse.beispiel)")
+        }
+        guard teile.path.isEmpty || teile.path == "/" else {
+            return .schlecht("Ohne Pfad: Die Adresse endet nach dem Anschluss (\(teile.path) "
+                             + "weglassen).")
+        }
+        guard teile.query == nil, teile.fragment == nil else {
+            return .schlecht("Ohne «?» und «#»: Die Adresse endet nach dem Anschluss.")
+        }
         let anschluss = teile.port ?? vorgabeAnschluss
-        guard (1...65535).contains(anschluss) else { return nil }
+        guard (1...65535).contains(anschluss) else {
+            return .schlecht("Den Anschluss \(anschluss) gibt es nicht (1 bis 65535).")
+        }
         var aus = URLComponents()
         aus.scheme = "http"
         aus.host = rechner
         aus.port = anschluss
-        return aus.url
+        guard let url = aus.url else {
+            return .schlecht("Aus «\(rechner)» liess sich keine Adresse bauen.")
+        }
+        return .gut(url, hinweis: nil)
+    }
+
+    /// Eine Adresse, wie ein Mensch sie ins Feld tippt: im Heimnetz **ohne** `http://`, über
+    /// Tailscale **mit** `https://` — weil das Schema dort zählt und sichtbar bleiben soll.
+    /// `pruefe(eingabe:)` liest beide Formen wieder zur selben Adresse.
+    public static func eingabetext(_ adresse: URL) -> String {
+        var t = adresse.absoluteString
+        if t.lowercased().hasPrefix("http://") { t.removeFirst("http://".count) }
+        return t
+    }
+
+    /// Ein kurzer Name für die Verbindungszeile: im Heimnetz die Adresse (wie eingetippt),
+    /// über Tailscale nur der Rechner — `<rechner>` statt der ganzen `https://…ts.net:8443`;
+    /// «über Tailscale» setzt die Zeile dazu (`Strecke.zusatz`).
+    public static func anzeigename(_ adresse: URL) -> String {
+        guard Strecke(basis: adresse) == .tailscale,
+              let rechner = URLComponents(url: adresse, resolvingAgainstBaseURL: false)?.host,
+              let erster = rechner.split(separator: ".").first, !erster.isEmpty else {
+            return eingabetext(adresse)
+        }
+        return String(erster)
+    }
+
+    /// Liest eine **gemerkte** Adresse (`Verbindungsgedaechtnis`) zurück — samt Schema,
+    /// Rechner und Anschluss, **unverändert**: `http://…:8731` bleibt http, `https://…:8443`
+    /// bleibt https. Abgelehnt (`nil`) wird nur, was keine Adresse der App sein kann: ein
+    /// anderes Schema, kein Rechner, kein Anschluss, Benutzer oder Kennwort, ein Pfad.
+    ///
+    /// **Nicht neu gebaut**, nur geprüft: Eine über Bonjour gefundene IPv6-Adresse
+    /// (`http://[fe80::1%25en0]:8731`) soll genau so wiederkommen, wie sie gemerkt wurde.
+    public static func gemerkt(_ text: String?) -> URL? {
+        guard let text, let url = URL(string: text),
+              let teile = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let schema = teile.scheme?.lowercased(), schema == "http" || schema == "https",
+              let rechner = teile.host, !rechner.isEmpty,
+              let anschluss = teile.port, (1...65535).contains(anschluss),
+              teile.user == nil, teile.password == nil,
+              teile.query == nil, teile.fragment == nil,
+              teile.path.isEmpty || teile.path == "/" else { return nil }
+        return url
     }
 }
 
