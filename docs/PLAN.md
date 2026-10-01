@@ -7696,7 +7696,8 @@ Bekannt und ausdrücklich nicht erledigt:
       *(abgelegt schon am 01.10.2026 als `auf-20261001-218`, weil der Code fertig war)*
 - [x] **local:** `auf-20261001-218` beantworten.
       *(01.10.2026: Mappe 8 bestanden + 1 Entwurf; Assistent 9/10; 10,7 s je Variante — Protokoll 74 §8)*
-- [ ] **local:** `auf-20261001-220` — Beispielmappe mit eigenem Startwert je Blick (218: gegenüberliegende Blicke bitgleich).
+- [x] **local:** `auf-20261001-220` — Beispielmappe mit eigenem Startwert je Blick (218: gegenüberliegende Blicke bitgleich).
+      *(01.10.2026: 9 verschiedene, 7 bestanden, West durchgefallen, Entwurf — als Vorführmappe übernommen, Protokoll 74 §10)*
 - [x] **Kern:** Befunde der zwei Durchsichten und der Messung 218 beheben (drei Agenten, Protokoll 74 §8).
       *(01.10.2026, Protokoll 74 §9; am Gerät nachgemessen in `auf-20261001-221`)*
 - [x] **Owner:** Verschlüsselung iPad ↔ Mac entscheiden (Protokoll 74 §8).

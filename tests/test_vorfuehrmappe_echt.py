@@ -1,4 +1,4 @@
-"""Die echte Vorführmappe der Mac-App — gerechnet am Heim-PC (`auf-20261001-218`).
+"""Die echte Vorführmappe der Mac-App — gerechnet am Heim-PC (`auf-20261001-218`, neu mit eigenem Startwert je Blick in `auf-20261001-220`).
 
 Sie liegt neben den Platzhaltern (`ipad/VisboxMac/Beispielmappe/`, auf die die Proben des
 Werkzeugs bauen), nicht an ihrer Stelle; die Prüfstrecke legt **diese** ins Bündel, wenn es sie
