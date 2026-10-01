@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-220",
+ "art": "frage",
+ "beschreibung": "Beispielmappe fuer den Vorfuehrmodus neu rechnen, je Blick ein eigener Startwert (Befund 218: gegenueberliegende Blicke waren bitgleich); Pruefsummen belegen 9 verschiedene Bilder.",
+ "anweisung": "=== V0.1.7: BEISPIELMAPPE NOCH EINMAL — JEDER BLICK MIT EIGENEM STARTWERT ===\n\nDanke fuer 218. Euer Befund 3 stimmt: Gegenueberliegende Blicke waren bitgleich (Sued = Nord,\nSO = NW, O = W), weil der Testbau von gegenueber dieselbe Tiefenkarte gibt und der Startwert\ngleich war. Die Mappe zeigte damit 6 statt 9 verschiedene Bilder. Eure Mappe aus 218 liegt\njetzt als Vorfuehrmappe in ipad/VisboxMac/Vorfuehrmappe/ — diese hier ersetzt sie.\n\nTEIL A — ANSAGE\n  A1 Der Server sagt bei 401 im Dienstbetrieb jetzt, dass das Kennwort in der Kennwortdatei\n     steht (euer Befund aus 214). Wirkt nach einem Neustart des Dienstes.\n\nTEIL B — RECHNEN (nur synthetisch, REGEL 3; wie 218 Teil B, mit zwei Unterschieden)\n  B1 git pull --ff-only; derselbe Testbau MIT Gelaende (build/vorfuehr/testbau.ifc aus 218,\n     sonst neu: python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende).\n  B2 Neue Mappe (nicht die aus 218 weiterverwenden), in der Render-Umgebung:\n       from aiimaging import arbeitsgang\n       m = \"build/vorfuehr/mappe220\"\n       arbeitsgang.lege_an(m, \"build/vorfuehr/testbau.ifc\", name=\"Testbau\",\n           einstellungen={\"prompt\": \"a small house on a gentle slope, overcast daylight, photorealistic\",\n                          \"aufloesung\": 768, \"hoehe\": 512})\n       blicke = {}\n       for i, (k, text) in enumerate([(\"s\",\"Blick von Süden\"),(\"sSE\",\"Blick von Südost\"),\n               (\"e\",\"Blick von Osten\"),(\"eEN\",\"Blick von Nordost\"),(\"n\",\"Blick von Norden\"),\n               (\"nNW\",\"Blick von Nordwest\"),(\"w\",\"Blick von Westen\"),(\"sSW\",\"Blick von Südwest\")]):\n           for b in arbeitsgang.rechne(m, kamera=k, seed=i)[\"bilder\"]: blicke[b] = text\n       for b in arbeitsgang.rechne(m, kamera=\"wWS\", seed=8, entwurf=True)[\"bilder\"]:\n           blicke[b] = \"Entwurf, Blick von Westsüdwest\"\n     UNTERSCHIED 1: je Blick ein eigener Startwert (seed=i). Wird seed so nicht angenommen,\n     STOPP und melden — nicht anders loesen.\n  B3 python3 tools/vorfuehrmappe.py --ordner build/vorfuehr/mappe220 --nach build/vorfuehr/Beispielmappe220 \\\n       --titel \"Testbau am Hang\" --blick <bild>=<text> ...\n  B4 UNTERSCHIED 2: pruefen, dass keine zwei Bilder bitgleich sind (sha256 je Datei) — die\n     Pruefsummen gehoeren ins Ergebnis.\n  B5 Ordner als ZIP neben die Ergebnisdatei: auftraege/ergebnisse/auf-20261001-220-beispielmappe.zip\n\nZURUECK (auftraege/ergebnisse/auf-20261001-220.json)\n  - git log -1; je Bild Zeichen, Score/Schwelle, Startwert, sha256; Zahl verschiedener Bilder;\n    Ausgabe des Werkzeugs; ZIP ja/nein; Sekunden gesamt.\n  - KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n\nNICHT TUN: ipad/VisboxMac/ selbst nicht anfassen (das legt KosmoVis aus dem ZIP ab); kein\nanderes Bildmodell als die Vorgabe; nichts committen ausser Ergebnisdatei und ZIP.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende"
+ },
+ "params": {
+  "backbone": "z-image-turbo",
+  "startwerte": "0-8 je Blick"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU, rund 2 Minuten.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3).",
+   "Nur synthetische Geometrie (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1.",
+  "Je Bild Zeichen, Score/Schwelle, Startwert, sha256; Zahl verschiedener Bilder.",
+  "Werkzeugausgabe; ZIP ja/nein; Sekunden gesamt."
+ ],
+ "rang": 13
+}

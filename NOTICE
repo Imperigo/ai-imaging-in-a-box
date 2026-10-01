@@ -267,11 +267,31 @@ Terms of Use), Qwen2.5-3B/-72B (Qwen-Lizenzen).
 --------------------------------------------------------------------------------
 
 ================================================================================
-Mitgelieferte Schriften (iPad-App)
+Tailscale - externer Dienst, nicht ausgeliefert
+================================================================================
+
+Die Mac-App erreicht den Heim-PC unterwegs ueber Tailscale (Plan v0.1.7,
+docs/VORFUEHRFASSUNG_2026-10-01.md). Weder Programm noch Bibliothek von Tailscale
+geht in Visbox ein: Der Owner hat Tailscale am Mac und am Heim-PC selbst
+installiert; die Mac-App spricht nur gewoehnliches HTTPS an eine Adresse im
+eigenen Tailscale-Netz, und am Heim-PC leitet "tailscale serve" (betrieb/README.md)
+auf die Flaeche weiter.
+
+Tailscale (tailscaled)  BSD-3-Clause  https://github.com/tailscale/tailscale
+Die Koordination ist ein gehosteter, proprietaerer Dienst (privat kostenlos);
+die Mac-Apps mit Oberflaeche sind nicht quelloffen. Beides wird nicht
+mitgeliefert. Gelesen 01.10.2026. Der Lizenzvergleich der Wege nach Hause
+(darunter ein ausdruecklich gemeldeter Fund, der nicht benutzt wird) steht in
+docs/VORFUEHRFASSUNG_2026-10-01.md.
+
+================================================================================
+Mitgelieferte Schriften (iPad-App und Mac-App)
 ================================================================================
 
 Die folgenden Schriftdateien werden MIT der iPad-App ausgeliefert (sie liegen im
-App-Paket unter ipad/Visbox.swiftpm/Schriften/ und gehen in die App ein). Sie
+App-Paket unter ipad/Visbox.swiftpm/Schriften/ und gehen in die App ein) - und
+seit dem 01.10.2026 dieselben Dateien, unveraendert samt Lizenztexten, mit der
+Mac-App (die Pruefstrecke kopiert den Ordner ins Buendel, .github/workflows/ipad.yml). Sie
 stehen unter der SIL Open Font License 1.1 - zugelassen nach CLAUDE.md, Regel 1,
 Praezisierung Schriften (Owner-Entscheid 2026-09-22): ausschliesslich Schriften,
 unveraendert, mit ihrer Lizenz deklariert. Der Lizenztext liegt je Familie neben
@@ -289,7 +309,8 @@ Pruefsummen (SHA-256) belegen, dass die Dateien im Repo die abgerufenen sind;
 tests/test_ipad_geruest.py vergleicht sie mit den Dateien.
 
 Registriert werden die Schriften zur Laufzeit ueber CoreText (Apple-Plattform,
-nicht mitgeliefert - wie SwiftUI, PencilKit, Network und Security).
+nicht mitgeliefert - wie SwiftUI, PencilKit, Network und Security; in der Mac-App
+dazu WebKit fuer die Flaeche des Heim-PC).
 
 --------------------------------------------------------------------------------
 IBM Plex Sans                                      OFL-1.1

@@ -146,7 +146,14 @@ jobs:
           ditto ../Visbox.swiftpm/Schriften "$BUENDEL/Contents/Resources/Schriften"
           # DIE BEISPIELMAPPE FUER DEN VORFUEHRMODUS (Strom C, Entscheid 49): gelesen wird sie
           # ueber `Bundle.main`, also muss sie im Buendel liegen, nicht im SwiftPM-Ausgabeordner.
-          ditto Beispielmappe "$BUENDEL/Contents/Resources/Beispielmappe"
+          # DIE ECHTE, WENN ES SIE GIBT (`Vorfuehrmappe/`, am Heim-PC gerechnet, auf-218), sonst
+          # die Platzhalter (`Beispielmappe/`). Die Platzhalter bleiben im Repo, weil die Proben
+          # des Werkzeugs auf sie bauen; unter dem Namen im Buendel aendert sich nichts.
+          if [ -f Vorfuehrmappe/vorfuehrmappe.json ]; then
+            ditto Vorfuehrmappe "$BUENDEL/Contents/Resources/Beispielmappe"
+          else
+            ditto Beispielmappe "$BUENDEL/Contents/Resources/Beispielmappe"
+          fi
           plutil -lint "$BUENDEL/Contents/Info.plist"
           echo "BUENDEL=$BUENDEL" >> "$GITHUB_ENV"
           echo "NAME=$NAME" >> "$GITHUB_ENV"

@@ -7694,7 +7694,11 @@ Bekannt und ausdrücklich nicht erledigt:
       *(01.10.2026: `tools/vorfuehrmappe.py`, Kern `Vorfuehrmappe`/`Vorfuehrschalter`, verdrahtet; Platzhalter-Mappe im Bündel; am Gerät unbestätigt)*
 - [x] **local (C3+D4):** Beispielmappe rechnen (synthetisch) und Assistent messen — ein Auftrag, Donnerstag.
       *(abgelegt schon am 01.10.2026 als `auf-20261001-218`, weil der Code fertig war)*
-- [ ] **local:** `auf-20261001-218` beantworten.
+- [x] **local:** `auf-20261001-218` beantworten.
+      *(01.10.2026: Mappe 8 bestanden + 1 Entwurf; Assistent 9/10; 10,7 s je Variante — Protokoll 74 §8)*
+- [ ] **local:** `auf-20261001-220` — Beispielmappe mit eigenem Startwert je Blick (218: gegenüberliegende Blicke bitgleich).
+- [ ] **Kern:** Befunde der zwei Durchsichten und der Messung 218 beheben (drei Agenten, Protokoll 74 §8).
+- [ ] **Owner:** Verschlüsselung iPad ↔ Mac entscheiden (Protokoll 74 §8).
 - [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
       *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
 - [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.

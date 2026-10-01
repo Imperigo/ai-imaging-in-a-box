@@ -1,0 +1,263 @@
+{
+  "schema": "visbox.vorfuehrmappe/v1",
+  "titel": "Testbau am Hang",
+  "art": "Beispielmappe",
+  "platzhalter": false,
+  "gerechnet_am": "2026-10-01",
+  "erstellt_am": "2026-10-01",
+  "satz": "Vorher gerechnete Bilder aus einem synthetischen Projekt (Regel 3). Jedes trägt das Zeichen vom Tag, an dem es gerechnet wurde.",
+  "bilder": [
+    {
+      "datei": "bild.png",
+      "blick": "Blick von Süden",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:28:14Z",
+        "score": 0.9117224906618661,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-2.png",
+      "blick": "Blick von Südost",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-2.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:28:31Z",
+        "score": 0.9639182466154855,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-3.png",
+      "blick": "Blick von Osten",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-3.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:28:44Z",
+        "score": 0.8126543087658877,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-4.png",
+      "blick": "Blick von Nordost",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-4.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:28:56Z",
+        "score": 0.9658649860768093,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-5.png",
+      "blick": "Blick von Norden",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-5.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:29:09Z",
+        "score": 0.9117432303101896,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-6.png",
+      "blick": "Blick von Nordwest",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-6.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:29:22Z",
+        "score": 0.9638628765458396,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-7.png",
+      "blick": "Blick von Westen",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-7.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:29:35Z",
+        "score": 0.8126567374647984,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-8.png",
+      "blick": "Blick von Südwest",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-8.png",
+        "schicht": "geometrielayer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T08:29:48Z",
+        "score": 0.9398976052979108,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "bild-9.png",
+      "blick": "Entwurf, Blick von Westsüdwest",
+      "gerechnet_am": "2026-10-01",
+      "satz": "Am Heim-PC gerechnet am 01.10.2026. Das Zeichen ist das vom Tag des Rechnens; heute ist nichts daran neu gemessen.",
+      "flaeche": {
+        "bild": "bild-9.png",
+        "schicht": "geometrielayer",
+        "zeichen": "nicht-gemessen",
+        "satz": "Entwurf — nicht geprüft: schnell gerechnet, ohne Geometrieprüfung (Entscheid 30). NICHT GEMESSEN — weder bestanden noch durchgefallen.",
+        "erzeugt": "2026-10-01T08:29:57Z",
+        "score": null,
+        "schwelle": null,
+        "titel": null,
+        "entwurf": true,
+        "variantengruppe": null,
+        "hinweise": [
+          "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+          "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+          "Nicht übergeben, weil unbekannt: image."
+        ],
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    }
+  ]
+}
