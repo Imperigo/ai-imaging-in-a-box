@@ -69,6 +69,12 @@ final class AnfragenTests: XCTestCase {
             try Anfragen.benennen(bild: "a.png", titel: "Nord", anmeldung: anmeldung),
             try Anfragen.abbrechen(anmeldung: anmeldung),
             try Anfragen.rechneSkizze(["s.png"], anmeldung: anmeldung),
+            Anfragen.heim(anmeldung: anmeldung),
+            try Anfragen.assistent(Assistentenbitte(nachricht: "x", verlauf: []),
+                                   anmeldung: anmeldung),
+            try Anfragen.assistentAnwenden(
+                Assistentenvorschlag(einstellungen: [:], varianten: 2, saetze: [],
+                                     rechenzeit: nil), anmeldung: anmeldung),
         ]
     }
 

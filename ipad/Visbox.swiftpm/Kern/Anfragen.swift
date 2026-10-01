@@ -303,8 +303,10 @@ public enum Anfragen {
     ///
     /// Eigens, damit ein Leser (`projekt`, `fortschritt`, `bild`) nicht `try` verlangt,
     /// obwohl er nicht scheitern kann — ein `try`, das nie wirft, lehrt, `try?` zu schreiben.
-    private static func baueLesen(_ weg: Weg, frage: [Frageteil] = [],
-                                  anmeldung: Anmeldung?) -> Anfrage {
+    ///
+    /// Nicht `private` (seit dem 01.10.2026): `Assistent.swift` baut `GET /api/heim` damit.
+    static func baueLesen(_ weg: Weg, frage: [Frageteil] = [],
+                          anmeldung: Anmeldung?) -> Anfrage {
         Anfrage(weg: weg, frage: frage, kopfzeilen: kopfzeilen(weg, anmeldung: anmeldung),
                 rumpf: nil)
     }

@@ -1001,10 +1001,16 @@ def test_die_seite_sagt_beim_unbelegten_fall_dass_sie_es_nicht_weiss():
 
 def test_zwei_gleichzeitige_laeufe_werden_abgewiesen():
     """Sie schrieben beide in dieselbe Projektdatei, und der zweite ueberschriebe die
-    Bilder des ersten."""
-    baustein = SERVER_PY.read_text(encoding="utf-8") \
-                        .split("def _rechne(self, wunsch", 1)[1] \
-                        .split("\n    def ", 1)[0]
+    Bilder des ersten.
+
+    Seit dem 01.10.2026 steht der Start in ``_starte_modelllauf`` — ``_rechne`` und
+    ``_assistent_anwenden`` (Plan v0.1.7, Strom D) teilen ihn sich; beide müssen ihn rufen.
+    """
+    quelle = SERVER_PY.read_text(encoding="utf-8")
+    for weg in ("def _rechne(self, wunsch", "def _assistent_anwenden(self, wunsch"):
+        assert "self._starte_modelllauf(" in quelle.split(weg, 1)[1].split("\n    def ", 1)[0]
+    baustein = quelle.split("def _starte_modelllauf(self, wunsch", 1)[1] \
+                     .split("\n    def ", 1)[0]
 
     assert 'LAUFSTAND.sicht()["laeuft"]' in baustein
     assert baustein.index("laeuft") < baustein.index("Thread")

@@ -54,6 +54,9 @@ public enum Wege {
     /// `verbinden` ruft. Die App braucht sie nicht — sie ruft `verbinden` selbst. Ohne
     /// Anmeldung erreichbar, und nur, solange drüben eine Zahl gilt.
     public static let koppeln = Weg(pfad: "/koppeln", methode: .get, ohneAnmeldung: true)
+    /// Die Startzeilen der Mac-App (Plan v0.1.7): Blender, Grafikspeicher, Assistent — je
+    /// mit Satz. Ohne Pfade und ohne Rechnernamen. Form: `docs/VISBOX_PROTOKOLL.md`, §3.
+    public static let heim = Weg(pfad: "/api/heim", methode: .get)
 
     // ---------------------------------------------------------------- handeln (POST)
 
@@ -72,12 +75,19 @@ public enum Wege {
     /// Eine abgelegte Skizze rechnen lassen: `skizze` (Name oder Liste für Ebenen),
     /// `anweisung`, `entwurf` (freiwillig).
     public static let rechneSkizze = Weg(pfad: "/api/rechne-skizze", methode: .post)
+    /// Eine Bitte an den Assistenten: `nachricht`, `verlauf` (freiwillig) → `antwort`,
+    /// `vorschlag` (freiwillig). **Rechnet nie** (Entscheid 41).
+    public static let assistent = Weg(pfad: "/api/assistent", methode: .post)
+    /// «Anwenden» auf der Karte: `vorschlag`, `ordner` (freiwillig) → wie `rechne`.
+    /// Drüben wird erst das Sprachmodell entladen, dann gerechnet.
+    public static let assistentAnwenden = Weg(pfad: "/api/assistent/anwenden",
+                                              methode: .post)
 
     /// Alle Wege, die der Server heute bedient.
     public static let alle: [Weg] = [
-        seite, seiteLang, projekt, fortschritt, bild, koppeln,
+        seite, seiteLang, projekt, fortschritt, bild, koppeln, heim,
         anlegen, einstellungen, skizze, rechne, verbinden,
-        benennen, abbrechen, rechneSkizze,
+        benennen, abbrechen, rechneSkizze, assistent, assistentAnwenden,
     ]
 
     /// Die Adresse für einen Weg auf einer HomeStation — oder `nil`, wenn sich aus

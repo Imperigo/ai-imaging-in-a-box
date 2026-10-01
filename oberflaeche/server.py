@@ -62,8 +62,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import inspect                                                  # noqa: E402
 
-from aiimaging import (arbeitsgang, glbbox, importeur, kette, knotenweg,  # noqa: E402
-                       kopplung, projekt)
+from aiimaging import (arbeitsgang, assistent, glbbox, heimstand, importeur,  # noqa: E402
+                       kette, knotenweg, kopplung, projekt)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -409,6 +409,12 @@ WEG_RECHNE_SKIZZE = "/api/rechne-skizze"
 #: Die Koppelseite (Entscheid 26) — neben ``WEG_VERBINDEN`` der einzige Weg, der ohne
 #: Anmeldung durchkommt, und nur, solange eine Kopplung offen ist. Siehe ``_darf_herein``.
 WEG_KOPPELN = "/koppeln"
+# SEIT DEM 01.10.2026 (Plan v0.1.7, Strom D) — der Assistent und die Startzeilen der
+# Mac-App. Jeder ruft genau eine Funktion aus `aiimaging.assistent` bzw.
+# `aiimaging.heimstand`; der Mac spricht nur mit diesem Server, nie direkt mit Ollama.
+WEG_HEIM = "/api/heim"
+WEG_ASSISTENT = "/api/assistent"
+WEG_ASSISTENT_ANWENDEN = "/api/assistent/anwenden"
 
 # DIE KNOTENANSICHT (E26, 24.09.2026) — und warum ihre Wege NICHT in den Tafeln stehen.
 #
@@ -1342,6 +1348,8 @@ WEGTAFEL = {
     WEG_BENENNEN: "_benennen",
     WEG_ABBRECHEN: "_abbrechen",
     WEG_RECHNE_SKIZZE: "_rechne_skizze",
+    WEG_ASSISTENT: "_assistent",
+    WEG_ASSISTENT_ANWENDEN: "_assistent_anwenden",
 }
 
 #: Dasselbe fuer die lesenden Wege (GET). Jede Methode bekommt den zerlegten Weg
@@ -1353,6 +1361,7 @@ WEGTAFEL_LESEN = {
     WEG_FORTSCHRITT: "_fortschritt",
     WEG_BILD: "_bild_anfrage",
     WEG_KOPPELN: "_koppelseite",
+    WEG_HEIM: "_heim",
 }
 
 
@@ -1422,6 +1431,10 @@ class Flaeche(BaseHTTPRequestHandler):
     #: sich, und genau das ist gewollt — der Versuchszaehler ist nur dann eine Schranke,
     #: wenn er fuer alle derselbe ist. *Ein Zaehler je Verbindung zaehlt nichts.*
     kopplung_offen = None
+    #: Das Sprachmodell des Assistenten (``aiimaging.assistent.Ollama``), gesetzt mit
+    #: ``--assistent-adresse``/``--sprachmodell`` — oder ``None``: dann nimmt der Kern
+    #: Adresse und Modell bei jeder Anfrage aus der Umgebung (oder die Vorgaben).
+    sprachmodell = None
     sys_version = ""
 
     @property
@@ -2088,20 +2101,28 @@ class Flaeche(BaseHTTPRequestHandler):
         **Reihe von Startwerten** (``varianten``, Entscheid 32). Ebenen-Varianten entstehen
         aus Skizzen und gehen über ``WEG_RECHNE_SKIZZE``.
         """
+        nutzlast, code = self._starte_modelllauf(wunsch)
+        self._sende(nutzlast, code)
+
+    def _starte_modelllauf(self, wunsch: dict) -> tuple[dict, int]:
+        """Der Weg von ``POST /api/rechne`` — ``(antwort, code)``, ohne zu senden.
+
+        **Eine Methode für zwei Wege** (01.10.2026): ``POST /api/assistent/anwenden``
+        startet über genau diese, damit ein Vorschlag des Assistenten dieselben Prüfungen,
+        dieselbe Laufsperre und dieselben Sätze bekommt wie ein Knopfdruck auf «Rechnen».
+        *Ein zweiter Startweg wäre ein zweiter Ort, an dem eine Prüfung fehlen kann.*
+        """
         ordner = wunsch.get("ordner") or self.ordner
         if not ordner:
-            self._fehler("Kein Projektordner angegeben.")
-            return
+            return {"fehler": "Kein Projektordner angegeben."}, 400
         if LAUFSTAND.sicht()["laeuft"]:
-            self._fehler("Es läuft schon einer. Zwei Läufe auf derselben Mappe schrieben "
-                         "beide in dieselbe Projektdatei — der zweite überschriebe die "
-                         "Bilder des ersten.")
-            return
+            return {"fehler": "Es läuft schon einer. Zwei Läufe auf derselben Mappe "
+                              "schrieben beide in dieselbe Projektdatei — der zweite "
+                              "überschriebe die Bilder des ersten."}, 400
         try:
             b = _lies_bestellung(wunsch, skizzenlauf=False)
         except FlaechenError as fehler:
-            self._fehler(str(fehler))
-            return
+            return {"fehler": str(fehler)}, 400
 
         # WIE VIELE SCHRITTE ES INSGESAMT WERDEN, muss VOR dem Lauf feststehen — sonst
         # gibt es einen Zaehler ohne Nenner, und ein Zaehler ohne Nenner ist eine Zahl
@@ -2121,8 +2142,59 @@ class Flaeche(BaseHTTPRequestHandler):
         # SOFORT ANTWORTEN. Bis zum 21.09.2026 blieb diese Anfrage offen, bis der ganze
         # Lauf fertig war — Minuten. Ein Browser zeigt in der Zeit nichts an und laeuft
         # irgendwann in seine eigene Frist.
-        self._sende({"gestartet": True, "schritte_gesamt": gesamt,
-                     "entwurf": b["entwurf"], "varianten": b["varianten"]})
+        return {"gestartet": True, "schritte_gesamt": gesamt,
+                "entwurf": b["entwurf"], "varianten": b["varianten"]}, 200
+
+    # ------------------------------------------------- der Assistent (Plan v0.1.7, D2)
+    def _heim(self, weg) -> None:
+        """Die Startzeilen der Mac-App: Blender, Grafikkarte, Assistent — aus
+        :func:`aiimaging.heimstand.heimstand`. Ohne Pfade und ohne Rechnernamen."""
+        self._sende(heimstand.heimstand(sprachmodell=type(self).sprachmodell,
+                                        bild_rechnet=LAUFSTAND.sicht()["laeuft"]))
+
+    def _assistent(self, wunsch: dict) -> None:
+        """Eine Bitte an den Assistenten → ``{antwort, vorschlag?}``. **Rechnet nie** —
+        :func:`aiimaging.assistent.frage` kennt keinen Weg dorthin.
+
+        Während ein Bild rechnet, antwortet er nicht: Sein Modell passte nicht neben das
+        Bildmodell auf die Grafikkarte (der Satz kommt aus dem Kern).
+        """
+        try:
+            ergebnis = assistent.frage(
+                wunsch.get("nachricht"), wunsch.get("verlauf") or (),
+                sprachmodell=type(self).sprachmodell,
+                bild_rechnet=LAUFSTAND.sicht()["laeuft"])
+        except assistent.NichtErreichbar as fehler:
+            self._fehler(str(fehler), 503)
+            return
+        except assistent.AssistentError as fehler:
+            self._fehler(str(fehler))
+            return
+        self._sende(ergebnis)
+
+    def _assistent_anwenden(self, wunsch: dict) -> None:
+        """«Anwenden» auf der Karte: erst das Sprachmodell entladen, dann **derselbe
+        Start wie** ``POST /api/rechne`` (:meth:`_starte_modelllauf`) — dieselbe Antwort,
+        dieselben Fehler («Es läuft schon einer» …).
+
+        Der Vorschlag kommt über das Netz zurück; der Kern prüft ihn neu
+        (:func:`aiimaging.assistent.pruefe_vorschlag`), bevor etwas entladen wird.
+        """
+        ordner = wunsch.get("ordner")
+
+        def starte(einstellungen, varianten):
+            return self._starte_modelllauf({"ordner": ordner, "einstellungen": einstellungen,
+                                            "varianten": varianten})
+
+        modell = type(self).sprachmodell
+        try:
+            nutzlast, code = assistent.anwenden(
+                wunsch.get("vorschlag"), starte=starte,
+                entlade=None if modell is None else modell.entlade)
+        except assistent.AssistentError as fehler:
+            self._fehler(str(fehler))
+            return
+        self._sende(nutzlast, code)
 
     def _rechne_skizze(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.rechne_skizze` — eine abgelegte Skizze
@@ -2315,7 +2387,7 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
 
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                 anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
-                kopplung_offen=None, ablage=None) -> HTTPServer:
+                kopplung_offen=None, ablage=None, sprachmodell=None) -> HTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -2356,7 +2428,8 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                   {"ordner": Path(ordner) if ordner else None,
                    "kennwort": kennwort or None,
                    "kopplung_offen": kopplung_offen,
-                   "ablage": Path(ablage) if ablage else None})
+                   "ablage": Path(ablage) if ablage else None,
+                   "sprachmodell": sprachmodell})
     return HTTPServer((adresse, anschluss), klasse)
 
 
@@ -2511,6 +2584,14 @@ def main(argv=None) -> int:
     ap.add_argument("--im-heimnetz", action="store_true",
                     help="Auf allen Adressen hören, damit ein iPad herankommt. Verlangt "
                          "ein Kennwort — und zeigt an, was das bedeutet.")
+    ap.add_argument("--assistent-adresse", default=None,
+                    help="Wo Ollama für den Assistenten antwortet. Vorgabe: "
+                         f"{assistent.VORGABE_ADRESSE} (oder die Umgebungsvariable "
+                         f"{assistent.UMGEBUNG_ADRESSE}).")
+    ap.add_argument("--sprachmodell", default=None,
+                    help="Das Sprachmodell des Assistenten, nur eines der nach Regel 1 "
+                         f"geprüften: {', '.join(assistent.ERLAUBTE_MODELLE)}. Vorgabe: "
+                         f"{assistent.VORGABE_MODELL}.")
     a = ap.parse_args(argv)
 
     # ZWEI ANGABEN FUER DIESELBE SACHE WERDEN ABGEWIESEN, nicht still geordnet (Befund
@@ -2542,12 +2623,25 @@ def main(argv=None) -> int:
     if getattr(a, "kennwort_erzeugen", False) and not kennwort:
         kennwort = erzeuge_kennwort()
 
+    # DER ASSISTENT WIRD BEIM START GEPRUEFT, nicht erst bei der ersten Frage: Ein Modell,
+    # das Regel 1 nicht besteht, oder eine Adresse, die keine ist, soll den Start
+    # aufhalten — mit Satz —, statt spaeter am Mac als «Assistent fehlt» zu erscheinen.
+    # Ohne die zwei Schalter bleibt es bei `None`: Dann liest der Kern die Umgebung.
+    sprachmodell = None
+    if a.assistent_adresse is not None or a.sprachmodell is not None:
+        try:
+            sprachmodell = assistent.Ollama(adresse=a.assistent_adresse,
+                                            modell=a.sprachmodell)
+        except assistent.AssistentError as fehler:
+            print(str(fehler))
+            return 2
+
     offen = kopplung.eroeffne() if a.kopplung else None
 
     try:
         server = baue_server(ordner=a.ordner, adresse=adresse, anschluss=a.anschluss,
                              kennwort=kennwort, kopplung_offen=offen,
-                             ablage=a.auftragsablage)
+                             ablage=a.auftragsablage, sprachmodell=sprachmodell)
     except FlaechenError as fehler:
         # KEIN STACKTRACE. Das ist der eine Fehler, den ein Mensch beim Start wirklich
         # sieht, und er ist fuer ihn geschrieben.

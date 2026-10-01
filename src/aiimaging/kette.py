@@ -1220,21 +1220,22 @@ def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     return ausgaben
 
 
-def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
-    """glb → Beauty, Tiefe (EXR + PNG), Material-ID über ``blender --background``.
+def standpunkt_widerspruch(p: dict) -> str | None:
+    """Ist der Standpunkt in diesen Angaben **zweimal oder ohne Weg** bestellt? Der Satz,
+    oder ``None``.
 
-    Die teuerste Stufe der Kette und darum der eigentliche Grund für den
-    Zwischenspeicher: Sie darf bei einer blossen Prompt-Änderung nicht wieder anlaufen.
+    ``p`` sind die Angaben, wie sie am Multipass-Knoten stehen (oder wie
+    :func:`baue_kette` sie nimmt); ``None`` heisst wie dort **nicht angefasst** und zählt
+    nicht als Angabe.
+
+    **Öffentlich seit dem 01.10.2026** (Plan v0.1.7, Strom D): Der Assistent
+    (:mod:`aiimaging.assistent`) prüft einen Vorschlag gegen **dieselben** Regeln, bevor er
+    ihn zeigt — sonst schlüge er einen Standpunkt vor, den der Lauf danach abweist. Die
+    Regeln standen bis dahin nur im Rumpf von ``_fuehre_multipass``; dort werden sie
+    weiter gefragt (über diese Funktion), damit es sie **einmal** gibt.
+
+        *Eine Regel an zwei Stellen ist eine Regel, die an einer davon veraltet.*
     """
-    if not eingaben:
-        return {"status": STATUS_FEHLER, "error": "Multipass ohne Vorgänger — keine glb."}
-    geometrie = eingaben[0]
-    glb_path = geometrie.get("glb_path")
-    if not glb_path:
-        return {"status": STATUS_FEHLER,
-                "error": f"Vorgänger lieferte kein 'glb_path': {sorted(geometrie)}"}
-
-    p = knoten.params
     # Innenansicht: NUR auf ausdrückliche Bestellung. Ein Auftrag, der nicht danach
     # gefragt hat, soll keine Innenaufnahme bekommen — und ein Auftrag, der danach
     # gefragt hat und sie nicht bekommen kann, soll scheitern statt aussen zu rendern.
@@ -1261,10 +1262,9 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # nicht an.
     von_hand = [n for n in ("auge", "blick_auf", "brennweite") if p.get(n) is not None]
     if von_hand and p.get("innenraum"):
-        return {"status": STATUS_FEHLER,
-                "error": (f"Standpunkt zweimal bestellt: `innenraum` rechnet ihn aus, und "
-                          f"{', '.join(von_hand)} gibt ihn vor. Welcher gilt, entscheidet "
-                          f"dieses Modul nicht.")}
+        return (f"Standpunkt zweimal bestellt: `innenraum` rechnet ihn aus, und "
+                f"{', '.join(von_hand)} gibt ihn vor. Welcher gilt, entscheidet "
+                f"dieses Modul nicht.")
 
     # DIESELBE REGEL FUER DAS RICHTUNGSKUERZEL (Befund 22.09.2026, Anlass
     # auf-20260922-137). `kamera` laesst den Standpunkt aus der Huellbox rechnen, `auge`
@@ -1277,10 +1277,9 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     if p.get("innenraum"):
         vorgegeben.append("innenraum")
     if p.get("kamera") is not None and vorgegeben:
-        return {"status": STATUS_FEHLER,
-                "error": (f"Standpunkt zweimal bestellt: `kamera` {p['kamera']!r} rechnet "
-                          f"ihn aus der Huellbox, und {', '.join(vorgegeben)} gibt ihn "
-                          f"vor. Welcher gilt, entscheidet dieses Modul nicht.")}
+        return (f"Standpunkt zweimal bestellt: `kamera` {p['kamera']!r} rechnet "
+                f"ihn aus der Huellbox, und {', '.join(vorgegeben)} gibt ihn "
+                f"vor. Welcher gilt, entscheidet dieses Modul nicht.")
 
     # RAHMUNG OHNE DEN WEG, AUF DEM SIE WIRKT (Befund 22.09.2026). Der Runner liest
     # `deckungsgrad` nur, wenn er die Kamera aus dem Richtungskuerzel rechnet. Ohne
@@ -1289,11 +1288,10 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # dieselbe Tiefenkarte. Eine Bestellung, die angenommen und nicht ausgefuehrt wird,
     # ist schlimmer als eine abgelehnte.
     if p.get("deckungsgrad") is not None and p.get("kamera") is None:
-        return {"status": STATUS_FEHLER,
-                "error": (f"Rahmung bestellt, aber kein Kameraweg, auf dem sie wirkt: "
-                          f"`deckungsgrad` {p['deckungsgrad']!r} wirkt nur zusammen mit "
-                          f"`kamera` (Richtungskuerzel, Standpunkt aus der Huellbox "
-                          f"gerechnet). Ohne `kamera` wuerde er still uebergangen.")}
+        return (f"Rahmung bestellt, aber kein Kameraweg, auf dem sie wirkt: "
+                f"`deckungsgrad` {p['deckungsgrad']!r} wirkt nur zusammen mit "
+                f"`kamera` (Richtungskuerzel, Standpunkt aus der Huellbox "
+                f"gerechnet). Ohne `kamera` wuerde er still uebergangen.")
 
     # DIESELBE LUECKE BEI DREI WEITEREN ANGABEN (Befund 23.09.2026, im Runner
     # nachgelesen): `augenhoehe`, `bias_grad` und `kamera_modus` gehen nur in
@@ -1305,13 +1303,38 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     ohne_weg = [n for n in ("augenhoehe", "bias_grad", "kamera_modus")
                 if p.get(n) is not None]
     if ohne_weg and p.get("kamera") is None:
+        return ("Kameraangaben bestellt, aber kein Kameraweg, auf dem sie "
+                "wirken: "
+                + ", ".join(f"`{n}` {p[n]!r}" for n in ohne_weg)
+                + " wirken nur zusammen mit `kamera` (Richtungskuerzel, "
+                  "Standpunkt aus der Huellbox gerechnet). Ohne `kamera` "
+                  "wuerden sie still uebergangen.")
+
+    return None
+
+
+def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+    """glb → Beauty, Tiefe (EXR + PNG), Material-ID über ``blender --background``.
+
+    Die teuerste Stufe der Kette und darum der eigentliche Grund für den
+    Zwischenspeicher: Sie darf bei einer blossen Prompt-Änderung nicht wieder anlaufen.
+    """
+    if not eingaben:
+        return {"status": STATUS_FEHLER, "error": "Multipass ohne Vorgänger — keine glb."}
+    geometrie = eingaben[0]
+    glb_path = geometrie.get("glb_path")
+    if not glb_path:
         return {"status": STATUS_FEHLER,
-                "error": ("Kameraangaben bestellt, aber kein Kameraweg, auf dem sie "
-                          "wirken: "
-                          + ", ".join(f"`{n}` {p[n]!r}" for n in ohne_weg)
-                          + " wirken nur zusammen mit `kamera` (Richtungskuerzel, "
-                            "Standpunkt aus der Huellbox gerechnet). Ohne `kamera` "
-                            "wuerden sie still uebergangen.")}
+                "error": f"Vorgänger lieferte kein 'glb_path': {sorted(geometrie)}"}
+
+    p = knoten.params
+    # DIE STANDPUNKTREGELN STEHEN SEIT DEM 01.10.2026 IN `standpunkt_widerspruch` — dort
+    # mit ihren Begruendungen. Gefragt werden sie weiter HIER, vor dem Blender-Lauf: Ein
+    # Multipass-Knoten muss nicht aus `baue_kette` stammen, und an dieser Stelle kommt
+    # niemand vorbei. Der Assistent fragt dieselbe Funktion, bevor er vorschlaegt.
+    widerspruch = standpunkt_widerspruch(p)
+    if widerspruch is not None:
+        return {"status": STATUS_FEHLER, "error": widerspruch}
 
     # DER MESSSCHALTER `ferne_abstand` (23.09.2026) — geprueft VOR dem Blender-Lauf. Ein
     # Knoten muss nicht aus `baue_kette` stammen (siehe oben); ein unbrauchbarer Wert soll
@@ -2736,6 +2759,7 @@ __all__ = [
     "HINWEIS_SKIZZE_NICHT_ANGEKOMMEN",
     "ART_BILDQUELLE", "ART_GEOMETRIE", "ART_MULTIPASS", "ART_NACHRENDER", "ART_QA",
     "MESSSCHALTER",
+    "standpunkt_widerspruch",
     "ART_RENDER",
     "AUSFUEHRER", "BEDARF", "EINGABEDATEIEN",
     "BASIS_BESTANDEN", "BASIS_BILD", "BASIS_GRUND", "BASIS_HERKUNFT", "BASIS_KNOTEN",
