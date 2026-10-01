@@ -1,0 +1,32 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "params": {},
+ "worker": "cloud",
+ "auftrag_id": "auf-20261001-231",
+ "art": "frage",
+ "beschreibung": "Lieferblatt v0.1.7: Lieferstatus null zulassen (L1), qa.verdict.hinweise anzeigen (180), Raumliste in der Prepare-Station (204) — je mit Abnahme; Quittungen zu L2–L4 und zur eigenen Mac-App.",
+ "anweisung": "=== LIEFERBLATT V0.1.7 — WAS KOSMOVIS FUER V0.1.7 VON EUCH EINGEBAUT HABEN MOECHTE ===\n\nAn KosmoOrbit Int 1 (Integrator). Danke fuer die Antwort auf 216 (erg-20261001-216-kosmovis-v017.md):\nL2 und L3 sind in v0.1.6 (d2debe84c), L4 quittiert. Dieses Blatt ist das angekuendigte Lieferblatt —\nEIN Blatt, Abnahme je Punkt. Was schon erledigt ist, steht nur noch als Quittung darin.\n\nPUNKT 1 · LIEFERSTATUS «NICHT FESTGESTELLT» (L1, unser Entscheid 51) — BAUEN\n  Form wie von euch zugesagt:\n    - render-result.ts, oberste Ebene: lieferstatus: Lieferstatus.nullable().default('geliefert')\n    - je Kamera (heute Lieferstatus.optional()): ebenfalls null zulassen\n    - lieferstatus_grund Pflicht, sobald nicht 'geliefert' — auch bei null (wir senden ihn immer)\n    - renderResultMaengel: Zeile «Lieferstatus nicht festgestellt: <lieferstatus_grund>»\n    - Anzeige: als Vorbehalt, nie als «geliefert»; alle Bilder bleiben\n  Beispiel (so schreibt es unser echter Schreiber, aiimaging.kosmo_szene, gekuerzt):\n    {\"lieferstatus\": null,\n     \"lieferstatus_grund\": \"Nicht festgestellt: die Bilderzahl der Kameras passt nicht zur Bildliste.\",\n     \"qa\": {\"verdict\": {\"passed\": true, \"reason\": \"\", \"hinweise\": []}}, …}\n  ABNAHME:\n    a) Rot vor gruen: euer F2-Beispiel mit lieferstatus: null wird vorher von parseJob verworfen,\n       nachher angenommen — mit Mangelzeile und allen Bildern.\n    b) Eine Kamera mit lieferstatus: null verwirft das Ergebnis nicht.\n    c) Fehlt das Feld, bleibt es 'geliefert' (alte Ergebnisse unveraendert).\n    d) Die Anzeige zeigt «nicht festgestellt» als Vorbehalt, nicht als «geliefert».\n\nPUNKT 2 · qa.verdict.hinweise ANZEIGEN (unser ui-Auftrag 180, vom UI-Worker an euch weitergereicht) — BAUEN\n  Seit 30.09.2026 senden wir den Innenraum-Satz als Auskunft in qa.verdict.hinweise (Liste von\n  Texten, in eurem Vertrag vorhanden), nicht mehr in reason. Eure Vis-Station zeigt hinweise heute\n  nirgends (0 Treffer in modules/vis/); ohne Einbau verschwindet die Angabe aus der Anzeige.\n    - Kachel und Inspektor zeigen hinweise, wenn die Liste nicht leer ist — ruhig, OHNE Warnzeichen\n      und ohne Warnfarbe, getrennt von reason; im Inspektor ungekuerzt.\n    - Kein Warnzeichen allein wegen hinweise; das Warnzeichen bleibt an reason gebunden.\n    - Leer oder fehlend: nichts anzeigen.\n  Beispiel: «INNENANSICHT: Standpunkt im Raum 'Raum-Sued' (frontal), aus 'interior' {'rooms': 'auto'}\n  aus den Raeumen der IFC gerechnet. Das Bild zeigt den Raum von innen, nicht das Gebaeude von aussen.»\n  ABNAHME: ein Test, der zeigt: hinweise wird angezeigt, und ein Ergebnis mit hinweise, aber ohne\n  reason traegt KEIN Warnzeichen.\n\nPUNKT 3 · RAUMLISTE IN DER PREPARE-STATION (ui-Auftrag 204, Absender KosmoPrepare-Lane) — BAUEN\n  Ihr nennt ihn in eurer Antwort zusammen mit L1 und 180. Der Auftrag liegt vollstaendig in unserem\n  oeffentlichen Repo: auftraege/offen/auf-20260930-204.json (Feld «anweisung»): Tabelle fuer\n  kosmoprepare_raumprogramm_lesen und kosmoprepare_programmstand (Ampel mit Wort, Fundstelle,\n  Annahmen) und die Baurecht-Felder limite_ebene, belege, nicht_belegt.\n  ABNAHME wie dort unter «RUECKGABE».\n\nPUNKT 4 · QUITTUNGEN, KEIN BAU\n  - L2/L3 (engine_license_open, qwen-image-2.1 bestellbar) — in v0.1.6, d2debe84c. Danke. Ein echtes\n    Ergebnis eines qwen-image-2.1-Laufs ueber eure Bruecke rechnet unser Heim-PC in der\n    Sammel-Nachprobe (auf-20261001-230) und legt es dort ab; ihr bekommt die Datei mit.\n  - Union-2.1 und Formpruefung: bleiben bei uns.\n  - Visbox hat eine EIGENE Mac-App (Vorfuehrfassung). Sie spricht nur mit unserem Visbox-Dienst am\n    Heim-PC ueber einen eigenen Tailscale-Anschluss (https 8443) und beruehrt eure Weiterleitungen\n    (/ /llm /sync /bruecke) nicht. Bei euch nichts zu tun.\n  - Zur Info, nichts zu tun: Unser Assistent nutzt qwen3:30b (Apache-2.0) am Heim-PC; euer E145\n    (Standard kosmo-qwen3.6:35b-a3b) beruehrt ihn nicht. Sollen beide dasselbe Modell nutzen, ist\n    das eine Frage fuer v0.1.8.\n\nWAS WIR NICHT VON EUCH WOLLEN\n  Union-2.1 bestellbar machen; die Formpruefung anzeigen; eine Lizenzsperre in v0.1.7 bauen; ein\n  null in lieferstatus still zu «geliefert» machen; ein Warnzeichen fuer hinweise.\n\nWIE GEANTWORTET WIRD\n  Wie bisher als Datei in eurem Repo unter auftraege/ergebnisse/, Name\n  erg-<JJJJMMTT>-231-<stichwort>.md, mit den Punkten P1–P4 aus der Rueckgabe.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie noetig"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Keine Rechenlast; Vertrag und Oberflaeche bei euch.",
+  "hinweise": [
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "P1: Commit, Test rot vor gruen (a–d).",
+  "P2: Commit, Test hinweise ohne Warnzeichen.",
+  "P3: Commit und Testnamen, je Punkt ein Satz.",
+  "P4: Quittung; wann eingespielt (v0.1.7)."
+ ],
+ "rang": 1
+}

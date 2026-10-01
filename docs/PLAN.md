@@ -7715,8 +7715,12 @@ Bekannt und ausdrücklich nicht erledigt:
       *(01.10.2026: iPad im Netz, aber offline seit 22.09.; Weiterleitung steht — vor der Probe am iPad das VPN einschalten)*
 - [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
       *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
-- [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
-- [ ] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
+- [x] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
+      *(schon am 01.10.2026 abends als `auf-20261001-231` — der Integrator baut v0.1.7 jetzt)*
+- [ ] **cloud:** `auf-20261001-231` beantworten (P1–P4).
+- [x] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
+      *(abgelegt 01.10.2026 als `auf-20261001-230`, 17 Posten, wartet auf den Tag v0.1.6)*
+- [ ] **local:** `auf-20261001-230` beantworten.
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.

@@ -1,0 +1,34 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "params": {},
+ "worker": "local",
+ "auftrag_id": "auf-20261001-230",
+ "art": "frage",
+ "beschreibung": "Sammel-Nachprobe nach dem Schnitt v0.1.6: 17 Posten, die bei uns gebaut und drueben am Geraet unbestaetigt sind, am echten KosmoOrbit pruefen; dazu ein echtes qwen-image-2.1-Ergebnis fuer den Integrator.",
+ "anweisung": "=== V0.1.7 SAMMEL-NACHPROBE: WAS BEI UNS GEBAUT IST, AM ECHTEN KOSMOORBIT V0.1.6 PRUEFEN ===\n\nUnser Einbau-Stand fuehrt Posten als «gebaut, am Geraet unbestaetigt»: bei uns fertig, drueben nie\nam laufenden KosmoOrbit gesehen. Owner-Entscheid 55: EINE Sammel-Nachprobe nach dem Schnitt v0.1.6.\n\nVORAUSSETZUNG: KosmoOrbit v0.1.6 ist geschnitten (Tag v0.1.6 gesetzt, E143) und bei euch so\ninstalliert/laufend, wie ein Nutzer es haette. Ist der Tag noch nicht da: Teil A lesen, sonst nichts,\nund «wartet auf v0.1.6» zurueckmelden. Rechnen erst, wenn die Karte frei ist.\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 betrieb/visbox-flaeche.service traegt jetzt Environment=PYTHONUNBUFFERED=1 (euer Befund 221).\n     Wirkt erst, wenn ihr die Unit neu kopiert: cp betrieb/visbox-flaeche.service ~/.config/systemd/user/ ;\n     systemctl --user daemon-reload ; systemctl --user restart visbox-flaeche.service\n  A2 POST /api/verbinden liest ohne Anmeldung hoechstens 1024 Bytes (sonst 413).\n  A3 Kam die Koppelzahl ueber POST /api/kopplung (vom Mac), sagt eine Ablehnung «Am Mac unter\n     «iPad koppeln» eine neue Zahl holen.»\n  A4 Der Assistent soll bei unklaren Orten nachfragen; die Karte nennt die Rechenzeit in Sekunden\n     unter einer Minute (10 s je Variante + 4,6 s).\n\nTEIL B — DREI BESTELLUNGEN UEBER DIE VIS-STATION VON KOSMOORBIT (nur synthetisch, REGEL 3)\n  B1 Das Demohaus (oder ein anderer synthetischer Bau mit Raeumen und Glas) mit drei Kameras: zwei\n     aussen, eine innen (interior, rooms auto), dazu render.passes (Schoenbild, Tiefe, Material-ID),\n     OHNE vis.backbone. Eine Kamera, wenn moeglich, als Zwilling einer anderen (dieselbe Soll-Karte).\n  B2 Dieselbe Szene, eine Kamera, vis.backbone = qwen-image-2.1. Das Ergebnis (render-result JSON,\n     ohne Bilder) als auftraege/ergebnisse/auf-20261001-230-qwen21-ergebnis.json ablegen — der\n     Integrator hat darum gebeten. Pfade und Namen vorher entfernen (REGEL 3).\n  B3 Eine Bestellung mit einem fremden Schluessel in cameras[] (z. B. \"unbekannt\": 1) — sie soll mit\n     Satz aufhalten (C30).\n\nTEIL C — JE POSTEN: BESTAETIGT / NICHT BESTAETIGT (WARUM) / NICHT PRUEFBAR (WARUM)\n  Je Posten: was im Ergebnis-JSON steht (Feldname, Wert gekuerzt) UND was KosmoOrbit davon zeigt\n  (Kachel, Inspektor, Kuratierflaeche) — ein Satz, gern ein Bildschirmfoto ohne Namen.\n  B5   qa_je_kamera kommt an und steht je Kamera in der Kuratierflaeche (eine Zeile je Kamera).\n  C21  lieferstatus/lieferstatus_grund/bilder_soll/bilder_ist je Kamera kommen an (nicht abgestreift); am Auftrag lieferstatus.\n  C8   Widerspricht der Maskenweg dem Score, steht der Satz je Kamera in verdict.reason und ungekuerzt in Kachel/Inspektor.\n  C10  geometry_gates traegt geom_iou je Kamera und kommt an (seit v0.1.6 nicht mehr abgestreift).\n  C37  geometry_gates/qa.geometry in ihren Woertern: status measured/not_measured/not_applicable, passed immer Boolean.\n  C19  Eine Innenraum-Bestellung (interior) aus KosmoOrbit kommt durch und wird gerechnet.\n  C39  Der Innenraum-Satz steht in qa.verdict.hinweise, nicht in verdict.reason (Anzeige kommt erst mit v0.1.7, P2 des Lieferblatts — hier nur das Feld im Ergebnis pruefen).\n  C22  Zwillinge: eine Kamera mit derselben Soll-Karte wie eine andere steht vorn in verdict.reason («Nicht neu gerendert …»).\n  C30  Fremde Schluessel in cameras[] und render.sun halten auf (Satz), referenzpunkt wird gelesen.\n  C34  Ein Brueckenauftrag ohne vis.backbone rechnet mit z-image-turbo.\n  C35  engine_used, engine_license, guidance_applied stehen an der obersten Ebene des Ergebnisses.\n  C36  render.passes bestellt Schoenbild, Tiefe, Material-ID je Kamera; flach abgelegt (<kamera>__<art>.png).\n  C33  Glas mit Durchlass (KHR_materials_transmission > 0) zaehlt in der Transparenz-Pruefung als durchsichtig.\n  C40  Ein Editiermodell bekommt das Schoenbild, nicht die Tiefenkarte (nur pruefen, wenn eines bestellbar ist; sonst «nicht pruefbar»).\n  C42  Die Kamera rahmt das Bauwerk, nicht das Grundstueck (Gebaeude deutlich gross im Bild).\n  C32  Passt das Modell nicht ganz auf die Karte, geht es direkt auf Stufe 3 (ohne Stufe 2 mit ControlNet) — nur pruefen, wenn es sich ohne Aufwand zeigt.\n  C47  qwen-image-2.1 ist in KosmoOrbit bestellbar (nie Vorgabe); das Ergebnis traegt engine_license_open: true, und KosmoOrbit fuehrt es mit.\n\nZURUECK (auftraege/ergebnisse/auf-20261001-230.json)\n  - git log -1 bei uns; KosmoOrbit-Fassung (Tag/Commit); Unit neu kopiert ja/nein.\n  - B1–B3: Auftragskennungen, Dauer, Status.\n  - C: je Posten ein Eintrag {posten, urteil: bestaetigt|nicht_bestaetigt|nicht_pruefbar, satz, feld}.\n  - Die Datei aus B2.\n  - KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n\nNICHT TUN: nichts an KosmoOrbit aendern; keine echten Projekte (nur synthetisch); kein anderes\nBildmodell als die drei genannten Wege; nichts committen ausser Ergebnisdatei und B2-Datei.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "das Demohaus von KosmoOrbit oder python3 tools/make_test_ifc.py build/sammel/testbau.ifc --gelaende --raeume"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU; erst nach dem Schnitt v0.1.6 und wenn die Karte frei ist.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3).",
+   "Nur synthetische Geometrie (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; KosmoOrbit-Fassung; Unit neu kopiert.",
+  "B1–B3: Kennungen, Dauer, Status.",
+  "C: je Posten Urteil, Satz, Feld.",
+  "Datei auf-20261001-230-qwen21-ergebnis.json."
+ ],
+ "rang": 3
+}
