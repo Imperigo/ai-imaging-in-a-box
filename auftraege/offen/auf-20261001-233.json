@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-233",
+ "art": "frage",
+ "beschreibung": "Nachmessung B3/B7 am echten Projekt (KosmoPrepare c98df7a); nur Zahlen.",
+ "anweisung": "=== NACHMESSUNG ZU 232: NUR B3 UND B7 ===\n\nWORUM ES GEHT\n  Danke fuer 232 — B1 und B5 sind gruen und brauchen keinen Lauf mehr. Die zwei Reste sind\n  behoben in KosmoPrepare c98df7a (git pull --ff-only auf main):\n  * B7: `in_summe` gilt jetzt fuer jede Zeile einer Tabelle mit Summenzeile, und neu sagt\n    `anteil_ohne_stueckzahl`, ob eine Zeile ihre Flaeche selbst traegt. Traegt sie sie, bleiben\n    die Raeume und der Unterschied zur Summenzeile kommt als «Rest von …» dazu.\n  * B3: Mindest-/Hoechstmasse, Spannen und «davon» stehen unter `anforderungen`; das Hochkomma ‘\n    trennt Tausender; der Kennwert wird auch weiter vorn in der Zeile gesucht.\n  Bitte DIESELBEN Schritte wie in 232, dieselben Unterlagen, ueber den Werkzeugserver.\n\nB1' kosmoprepare_raumprogramm_lesen nur als Vorstufe fuer B7. Zurueck: Zahl der in_summe=true und\n    der anteil_ohne_stueckzahl=true (erwartet: die zwei Tabellen auf S. 14 jetzt mit in_summe).\nB7  kosmoprepare_bauvolumen mit ALLEN Eintraegen aus B1' so wie sie kommen, Huelle und Parameter wie\n    in 232. Erwartet: Programm 19500 m² (plus, was in keiner Summenzeile steht); zwei «Rest von …»-\n    Annahmen fuer die Tabellen auf S. 14 (700 und 300 m²); keine Tabellen-Warnung mehr; der Satz\n    nennt «Annahmen (N)». Zurueck: Programm m², passt, Platzierungen, die Geschosse der zwei\n    Rest-Bloecke, alle Annahmen und Warnungen woertlich (geschwaerzt), der Satz (geschwaerzt).\nB3  kosmoprepare_programmstand (Programm + Fragenbeantwortung). Zurueck: Positionen,\n    summePositionen, Zahl der kennwerte und der anforderungen, alle Hinweise woertlich (ohne Namen),\n    und wieder die geschwaerzte Liste ALLER verbleibenden Positionen {seite, zeile, wert_m2, etikett}.\n    Eine glatte Summe ist hier nicht zu erwarten — gesucht ist, was noch als Raum zaehlt und keiner ist.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts committen ausser der Antwort, kein Sprachmodell.\n  Keine Bilder, PDF oder Projektdaten zurueckgeben; keine Raum-, Orts-, Kantons- oder\n  Projektnamen, keine Koordinaten. Pruefsummen der Originale vorher = nachher.\n",
+ "erstellt": "2026-10-02T02:00:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "dasselbe echte IFC und dieselben Unterlagen wie in auf-20261001-225 (nur am Heimrechner, Wegwerfkopien)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "c98df7a",
+  "daten_bleiben_lokal": true,
+  "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 20",
+  "folgt_auf": "auf-20261001-232"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B1' Zahlen.",
+  "B7 Zahlen, Annahmen, Warnungen, Satz (geschwaerzt).",
+  "B3 Zahlen, Hinweise, geschwaerzte Positionsliste.",
+  "Pruefsummen vorher = nachher ja/nein."
+ ],
+ "rang": 6
+}
