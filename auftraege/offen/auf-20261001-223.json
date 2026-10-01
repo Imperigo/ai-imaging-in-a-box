@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-223",
+ "art": "frage",
+ "beschreibung": "KosmoPrepare: 360° mit fester Kamera und schrittweisem Mapper zuerst nachmessen (Antwort auf 222); Satz der Textur pruefen; echtes Video falls da.",
+ "anweisung": "=== KOSMOPREPARE: 360° MIT FESTER KAMERA, SCHRITTWEISE ZUERST — NACHMESSEN (Antwort auf 222) ===\n\nWORUM ES GEHT\n  Eure Befunde aus 222 sind in KosmoPrepare b102b0d umgesetzt:\n  (1) Im 360-Zweig bleiben Brennweite, Bildmitte, Zusatzparameter und Rig FEST — fuer global_mapper\n      (--GlobalMapper.ba_refine_focal_length 0, …_principal_point 0, …_extra_params 0,\n      refine_sensor_from_rig 0, ba_refine_sensor_from_rig 0) und fuer mapper (--Mapper.… dieselben\n      vier ohne refine_sensor_from_rig). Gesetzt wird nur, was `colmap <befehl> -h` nennt; ein\n      fehlender Schalter steht als «kennt … nicht — bleibt verstellbar» im pipeline.log.\n  (2) Im 360-Zweig laeuft ZUERST der schrittweise `mapper`, global_mapper nur noch als Rueckfall.\n      Grund: euer Lauf (fest gehalten global 10.5 m, schrittweise 4.6 m) und hier eine erfundene\n      schwache 360-Szene (global 4.1–9.7 m, schrittweise 0.8 m). Global liefert dort ein Modell, nur\n      ein falsches — als Rueckfall griffe der schrittweise Weg nie. Das gewoehnliche Video bleibt\n      bei global zuerst.\n  (3) tools/flaechen_textur.py: der Satz am Ende sagt jetzt, ob die Verdeckung geprueft wurde (euer\n      Befund C: er sagte immer «NICHT geprueft»).\n\nVORAUSSETZUNG\n  KosmoPrepare auf mindestens b102b0d (git pull im Klon). Nichts installieren. Arbeitsordner\n  ausserhalb der Repos, am Ende loeschen. Daten bleiben vor Ort.\n\nTEIL A — 360° (dieselbe erfundene 360°-Szene wie in 222 A)\n  A1. Die Kette im 360-Zweig fahren (Profil rtx5090).\n  A2. Aus pipeline.log woertlich: die Zeile «fest gehalten: …», jede Zeile «kennt … nicht», und\n      welcher Mapper das Modell geliefert hat («mapper (schrittweise)» bzw. «Rueckfall auf\n      global_mapper»).\n  A3. Registriert je Ansicht, Zahl der Modelle, count der .ply, brush durch ja/nein.\n  A4. Verortung wie in 222 A4: rmse_m, max_m, Massstab, schlechtestes Paar, groesste Streuung der\n      vier Kamerazentren eines Augenblicks; dazu fx/fy der vier Kameras im Modell (sollten\n      unveraendert sein).\n  A5. Zur Einordnung, NUR falls A4 ueber 1 m liegt: dieselbe Szene einmal mit dem normalen Zweig auf\n      dem Equirect-Video ist NICHT gemeint — statt dessen bitte melden, wie viele Merkmale je Bild\n      COLMAP fand (Mittel und Minimum, aus der Datenbank oder dem Log). Die Frage ist, ob die Szene\n      zu wenig Struktur hat oder die Kette etwas falsch macht.\n\nTEIL B — Textur (dieselbe Szene wie 222 C)\n  B1. tools/flaechen_textur.py einmal so, einmal mit --ohne-verdeckung: je Lauf die letzte Zeile\n      (der Satz) woertlich.\n\nTEIL C — echtes Video (nur falls der Owner es geliefert hat; sonst «nicht da» melden)\n  C1. Zahlen wie A3/A4; KEINE Bilder, keine Ortsangaben, keine Dateinamen des Videos in die Antwort.\n\nWAS NICHT GETAN WERDEN SOLL\n  - Nichts installieren, kein Vokabular fuer loop_detection holen (Owner-Entscheid offen).\n  - Am Skript oder an KosmoPrepare nichts aendern; ein Fehler wird gemeldet, nicht geflickt.\n  - Keine Bilder, Ortsnamen oder Koordinaten des echten Videos in die Antwort.\n",
+ "erstellt": "2026-10-01T21:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "erfundene Szenen aus 222 (A, C) vor Ort; echtes Video nur in Teil C und nur vor Ort"
+ },
+ "params": {
+  "kosmoprepare_stand_min": "b102b0d",
+  "daten_bleiben_lokal": true,
+  "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 1, 2, 3"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Teil A zuerst zurueckmelden — dort steht die offene Frage.",
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Staende (KosmoPrepare-Commit, COLMAP-, brush-, ffmpeg-Fassung).",
+  "A2 «fest gehalten»-Zeile, «kennt … nicht»-Zeilen und liefernder Mapper woertlich.",
+  "A3 registriert je Ansicht, Modelle, count, brush durch ja/nein.",
+  "A4 rmse_m, max_m, Massstab, schlechtestes Paar, groesste Streuung je Augenblick, fx/fy je Kamera.",
+  "A5 Merkmale je Bild (Mittel, Minimum) — nur falls A4 ueber 1 m.",
+  "B1 der Satz je Lauf woertlich.",
+  "C1 Zahlen oder «nicht da»."
+ ],
+ "rang": 3
+}
