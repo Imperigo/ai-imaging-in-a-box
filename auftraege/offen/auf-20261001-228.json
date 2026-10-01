@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-228",
+ "art": "frage",
+ "beschreibung": "Schlusslauf Z2: die Befunde aus 225 am echten Projekt nachmessen (KosmoPrepare cbb247a, KosmoPublish 7d4ceab); nur Zahlen.",
+ "anweisung": "=== SCHLUSSLAUF Z2: DIE BEFUNDE AUS 225 AM ECHTEN PROJEKT NACHMESSEN ===\n\nWORUM ES GEHT\n  Eure Befunde aus auf-20261001-225 sind behoben: KosmoPrepare cbb247a, KosmoPublish 7d4ceab\n  (je git pull --ff-only auf main). Bitte DIESELBEN Schritte wie in 225 noch einmal, mit\n  denselben Unterlagen und demselben IFC, nur die genannten Teile. Nur Zahlen und Zeilen zurueck.\n\nA · KOSMOPUBLISH (wie 225 A2/A3)\n  A2  materialize wie in 225. Erwartet: R001 = 0 (vorher 8); auf stderr eine Zeile zu\n      «Schnittachsen, die dieses Geschoss nicht treffen» mit einer Zahl. Zurueck: die Linterzeile,\n      die Regelzahlen, die Zeile «Verlorene Beschriftungen: …» und die Schnittachsen-Zeile woertlich.\n  A3  generate-poster wie in 225. Erwartet: die Ueberlauf-Zeile sagt «die Plaene SIND in 1:500\n      gezeichnet … Neu zeichnen ist nicht noetig» statt «--scale 1:500». Zurueck: beide\n      Ueberlauf-Zeilen woertlich.\n\nB · KOSMOPREPARE (wie 225 B, ueber den Werkzeugserver mit .venv-server)\n  B1  kosmoprepare_raumprogramm_lesen: Erwartet nf_total_m2 19500 (vorher 19700).\n      Zurueck: zusammenfassung, Zahl der summe=true.\n  B3  kosmoprepare_programmstand (Programm + Fragenbeantwortung): Erwartet deutlich weniger\n      Positionen und eine Summe, die eine Summe des Programms trifft oder nahe liegt; Hinweise\n      «… als Zwischensumme gezaehlt …». Zurueck: Positionen, summePositionen, die groesste Zahl in\n      summenImProgramm, die Zahl der Hinweise und zwei davon woertlich OHNE Raumnamen\n      (Namen durch «<X>» ersetzen).\n  B5  kosmoprepare_info: Erwartet kanton gefunden (das Kuerzel NICHT zurueckgeben, nur «gefunden»).\n  B7  kosmoprepare_bauvolumen mit ALLEN Eintraegen aus B1 (auch summe=true, mit total_m2 —\n      das Werkzeug soll sie selbst aussortieren), Huelle wie in 225. Erwartet: das Programm\n      liegt nahe 19500 m² statt 5242; Gewerbe/Gemeinschaft im EG; keine «✓ passt» bei passt=false.\n      Zurueck: der Satz (Raumnamen geschwaerzt), passt, Programm m², Geschosse der\n      Gewerbe-Raeume (nur die Zahlen), Zahl der Annahmen, jede Warnung woertlich ohne Namen.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts committen ausser der Antwort, kein Sprachmodell.\n  Keine Bilder, SVG, PDF, IFC oder Projektdaten zurueckgeben; keine Raum-, Orts-, Kantons- oder\n  Projektnamen, keine Koordinaten. Pruefsummen der Originale vorher = nachher.\n",
+ "erstellt": "2026-10-02T00:00:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "dasselbe echte IFC und dieselben Unterlagen wie in auf-20261001-225 (nur am Heimrechner, Wegwerfkopien)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmopublish_stand_min": "7d4ceab",
+  "kosmoprepare_stand_min": "cbb247a",
+  "daten_bleiben_lokal": true,
+  "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 20"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Staende.",
+  "A2/A3 die genannten Zeilen woertlich.",
+  "B1/B3/B5/B7 Zahlen und Zeilen ohne Namen.",
+  "Pruefsummen vorher = nachher ja/nein."
+ ],
+ "rang": 3
+}
