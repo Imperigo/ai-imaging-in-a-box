@@ -144,6 +144,9 @@ jobs:
           cp "$AUSGABE/$PROGRAMM" "$BUENDEL/Contents/MacOS/$PROGRAMM"
           cp App/Info.plist "$BUENDEL/Contents/Info.plist"
           ditto ../Visbox.swiftpm/Schriften "$BUENDEL/Contents/Resources/Schriften"
+          # DIE BEISPIELMAPPE FUER DEN VORFUEHRMODUS (Strom C, Entscheid 49): gelesen wird sie
+          # ueber `Bundle.main`, also muss sie im Buendel liegen, nicht im SwiftPM-Ausgabeordner.
+          ditto Beispielmappe "$BUENDEL/Contents/Resources/Beispielmappe"
           plutil -lint "$BUENDEL/Contents/Info.plist"
           echo "BUENDEL=$BUENDEL" >> "$GITHUB_ENV"
           echo "NAME=$NAME" >> "$GITHUB_ENV"

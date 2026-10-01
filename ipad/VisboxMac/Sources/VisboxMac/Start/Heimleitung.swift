@@ -151,6 +151,26 @@ final class Heimleitung: ObservableObject {
         return naechster
     }
 
+    // ------------------------------------------------------- für den Vorführmodus
+
+    /// Ein Versuch für den Vorführschalter (Strom C): `GET /api/fortschritt` mit dessen Frist.
+    /// Über **diese** Leitung, damit Adresse, Kennwort und Zertifikatsregeln an einer Stelle
+    /// bleiben; ob die Antwort die bestätigte ist, entscheidet der Kern
+    /// (`Versuchsausgang.aus`), nicht diese Klasse.
+    @MainActor
+    func versuch() async -> Versuchsausgang {
+        guard let basis = adresse else {
+            return .keineAntwort(grund: "Auf diesem Mac ist noch kein Heim-PC eingerichtet.")
+        }
+        switch await hole(Anfragen.fortschritt(anmeldung: anmeldung), basis: basis,
+                          frist: Vorfuehrschalter.versuchsfrist) {
+        case .antwort(let status, let daten, _):
+            return Versuchsausgang.aus(status: status, daten: daten)
+        case .keine(let fehler):
+            return .keineAntwort(grund: fehler.satz)
+        }
+    }
+
     // ------------------------------------------------------------- von aussen
 
     /// Die iPad-Zeile, wie die Vermittlung (Strom B) sie meldet. `nil` nimmt die Meldung
@@ -228,12 +248,14 @@ final class Heimleitung: ObservableObject {
     }
 
     /// Führt eine Anfrage des Kerns aus und misst die Zeit bis zur Antwort.
-    private func hole(_ anfrage: Anfrage, basis: URL) async -> Ergebnis {
+    private func hole(_ anfrage: Anfrage, basis: URL,
+                      frist: TimeInterval? = nil) async -> Ergebnis {
         guard let ziel = anfrage.adresse(basis: basis) else {
             return .keine(.sonstig(code: 0))
         }
         var auftrag = URLRequest(url: ziel)
         auftrag.httpMethod = anfrage.methode.rawValue
+        if let frist { auftrag.timeoutInterval = frist }
         for (name, wert) in anfrage.kopfzeilen {
             auftrag.setValue(wert, forHTTPHeaderField: name)
         }

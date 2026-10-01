@@ -74,15 +74,20 @@ struct Arbeitsansicht: View {
         }
     }
 
-    // ================================================================= VERDRAHTEN
+    // ================================================================= der Assistent
     //
-    // HIER KOMMT DIE SEITENLEISTE DES ASSISTENTEN HIN (Strom D, Blatt 14: Vorschlag, «Anwenden
-    // · Ablehnen · Aendern»). Strom D liefert die Ansicht; verdrahtet wird beim Zusammenfuehren
-    // an GENAU DIESER STELLE — `Assistentenplatzhalter` faellt dann weg. Bis dahin zeigt der
-    // Platz den Zustand der Zeile «Assistent», damit er nicht leer aussieht wie ein Fehler.
+    // DIE SEITENLEISTE (Strom D, Blatt 14), verdrahtet am 01.10.2026. Ohne eingerichteten
+    // Heim-PC gibt es niemanden, den sie fragen könnte — dann bleibt der Platzhalter mit dem
+    // Zustand der Startzeile stehen. Den Ordner wählt die Fläche, nicht die Leiste: `nil`
+    // heisst «der Projektordner, mit dem der Server läuft» (Protokoll §3).
     @ViewBuilder
     private var assistentenPlatz: some View {
-        Assistentenplatzhalter(stand: leitung.bild.assistent)
+        if let basis = leitung.adresse {
+            Assistentenleiste(anschluss: AssistentAnschluss(basis: basis,
+                                                            anmeldung: leitung.anmeldung))
+        } else {
+            Assistentenplatzhalter(stand: leitung.bild.assistent)
+        }
     }
 }
 
