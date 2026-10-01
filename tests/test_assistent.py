@@ -16,6 +16,7 @@ Grenzen des Assistenten aufweicht:
 from __future__ import annotations
 
 import ast
+import http.client
 import inspect
 import io
 import json
@@ -109,14 +110,25 @@ def test_blatt14_wird_ein_vorschlag_und_nichts_wird_gerechnet():
 
 
 def test_die_rechenzeit_steht_nur_mit_messung_da(monkeypatch):
+    monkeypatch.setattr(assistent, "RECHENZEIT_JE_VARIANTE_S", None)
     r = assistent.frage(BLATT14, sprachmodell=Ersatz(_blatt14_botschaften()))
     zeit = r["vorschlag"]["rechenzeit"]
     assert zeit["sekunden"] is None
     assert not any(ch.isdigit() for ch in zeit["satz"]), zeit["satz"]
     monkeypatch.setattr(assistent, "RECHENZEIT_JE_VARIANTE_S", 20.0)
     r = assistent.frage(BLATT14, sprachmodell=Ersatz(_blatt14_botschaften()))
-    assert r["vorschlag"]["rechenzeit"]["sekunden"] == 64
+    assert r["vorschlag"]["rechenzeit"]["sekunden"] == round(3 * 20.0 + assistent.WECHSEL_S)
     assert "1 Minute" in r["vorschlag"]["rechenzeit"]["satz"]
+
+
+def test_die_rechenzeit_ist_seit_auftrag_218_angesetzt():
+    """``auf-20261001-218`` C2/C3: 10,7 s je Variante im Mittel, die erste 14,7 s —
+    angesetzt 15 s, Wechsel 0,16 s + 4,4 s. Drei Varianten: etwa eine Minute."""
+    assert assistent.RECHENZEIT_JE_VARIANTE_S == 15.0
+    assert assistent.WECHSEL_S == pytest.approx(0.16 + 4.4, abs=0.05)
+    r = assistent.frage(BLATT14, sprachmodell=Ersatz(_blatt14_botschaften()))
+    zeit = r["vorschlag"]["rechenzeit"]
+    assert zeit["sekunden"] == 50 and "etwa 1 Minute" in zeit["satz"]
 
 
 def test_ohne_werkzeug_kommt_nur_eine_antwort():
@@ -236,6 +248,12 @@ def _ein_aufruf(name, **argumente):
     e = Ersatz([{"content": "", "tool_calls": [_aufruf(name, **argumente)]},
                 {"content": "Antwort."}])
     return assistent.frage("x", sprachmodell=e), e
+
+
+def _ein_aufruf_mit_mappe(mappe, name, **argumente):
+    e = Ersatz([{"content": "", "tool_calls": [_aufruf(name, **argumente)]},
+                {"content": "Antwort."}])
+    return assistent.frage("x", sprachmodell=e, mappe=mappe), e
 
 
 def test_auge_mit_kamera_modus_ist_ein_satz_und_kein_vorschlag():
@@ -440,15 +458,160 @@ def test_entladen_ohne_ollama_haelt_nicht_auf(monkeypatch):
     assert assistent.Ollama().entlade()["entladen"] is None
 
 
-def test_eine_abweisung_von_ollama_traegt_ihren_satz(monkeypatch):
-    fehler = urllib.error.HTTPError("http://x/api/chat", 404, "nf", {},
-                                    io.BytesIO(b'{"error": "model not found"}'))
+def test_eine_abweisung_von_ollama_nennt_nur_den_zustand(monkeypatch):
+    """**N3** (Durchsicht 01.10.2026): Der Satz von Ollama ging bis zur Mac-App durch — und
+    Fehler zu Modelldateien nennen Pfade unter ``~/.ollama`` mit dem Benutzernamen
+    (Regel 3). Durch geht nur der Zustandscode."""
+    fehler = urllib.error.HTTPError(
+        "http://x/api/chat", 500, "ie", {},
+        io.BytesIO(b'{"error": "open /usr/share/ollama/.ollama/models/blobs/sha256-1: '
+                   b'no such file"}'))
     monkeypatch.setattr(assistent, "_oeffne", _Leitung(fehler=fehler))
     with pytest.raises(assistent.AssistentError) as f:
         assistent.Ollama().chat([], [])
-    assert "model not found" in str(f.value) and "404" in str(f.value)
+    satz = str(f.value)
+    assert "500" in satz and ".ollama" not in satz and "/usr/share" not in satz
+    assert "/home" not in satz and "no such file" not in satz
     with pytest.raises(assistent.AssistentError):
         assistent.Ollama().entlade()
+
+
+@pytest.mark.parametrize("fehler", [http.client.IncompleteRead(b'{"mess'),
+                                    http.client.BadStatusLine("x")])
+def test_eine_abgebrochene_antwort_ist_nicht_erreichbar_mit_satz(monkeypatch, fehler):
+    """**N4**: ``IncompleteRead`` und ``BadStatusLine`` fielen durch alle Fänge und kamen
+    als Absturz der Anfrage. Jetzt «nicht erreichbar» mit Satz — beim Entladen aber nicht
+    «nichts zu entladen»: Wer halb antwortet, läuft, und ob er entladen hat, ist offen."""
+    monkeypatch.setattr(assistent, "_oeffne", _Leitung(fehler=fehler))
+    with pytest.raises(assistent.NichtErreichbar) as f:
+        assistent.Ollama().chat([], [])
+    assert "Ollama" in str(f.value)
+    with pytest.raises(assistent.AssistentError) as f:
+        assistent.Ollama().entlade()
+    assert "nicht bekannt" in str(f.value)
+
+
+# ======================================================== 7b · die Gesamtfrist einer Frage
+
+def test_die_gesamtfrist_liegt_deutlich_unter_der_frist_der_mac_app():
+    """Die Mac-App gibt nach ``AssistentAnschluss.frist`` auf — abgelesen an der Quelle,
+    nicht abgeschrieben. Darunter muss Platz für Leitung und Antwort bleiben."""
+    import re
+    quelle = (WURZEL / "ipad" / "VisboxMac" / "Sources" / "VisboxMac" / "Assistent"
+              / "Assistentenleiste.swift").read_text(encoding="utf-8")
+    funde = re.findall(r"static let frist:\s*TimeInterval\s*=\s*(\d+)", quelle)
+    assert len(funde) == 1, funde
+    assert assistent.FRIST_FRAGE_GESAMT_S <= int(funde[0]) - 60
+
+
+def test_ollama_bekommt_nur_den_rest_der_gesamtfrist(monkeypatch):
+    """**Rot vor dem 01.10.2026:** Jede Runde bekam 300 s, drei Runden also bis 900 s."""
+    leitung = _Leitung({"/api/chat": {"message": {"content": "Hallo"}}})
+    monkeypatch.setattr(assistent, "_oeffne", leitung)
+    assistent.frage("Hallo", sprachmodell=assistent.Ollama(modell="qwen3:30b"))
+    frist = leitung.anfragen[0][3]
+    assert 0 < frist <= assistent.FRIST_FRAGE_GESAMT_S
+
+
+def test_eine_abgelaufene_gesamtfrist_ist_ein_satz_statt_eines_haengers(monkeypatch):
+    monkeypatch.setattr(assistent, "_oeffne", _Leitung(fehler=socket.timeout()))
+    with pytest.raises(assistent.AssistentError) as f:
+        assistent.frage("Hallo", sprachmodell=assistent.Ollama(modell="qwen3:30b"))
+    assert str(f.value) == assistent.SATZ_FRIST_ABGELAUFEN
+    assert not isinstance(f.value, assistent.NichtErreichbar)
+
+
+def test_nach_abgelaufener_frist_bleibt_der_gepruefte_vorschlag(monkeypatch):
+    """Die erste Runde schlug vor und brauchte die ganze Frist — die zweite beginnt nicht
+    mehr. Der Vorschlag ist geprüft; er kommt mit einem Satz zurück."""
+    import time as _zeit
+    monkeypatch.setattr(assistent, "FRIST_FRAGE_GESAMT_S", 0.05)
+
+    class Langsam(Ersatz):
+        def chat(self, nachrichten, werkzeuge):
+            _zeit.sleep(0.1)
+            return super().chat(nachrichten, werkzeuge)
+    e = Langsam(_blatt14_botschaften())
+    r = assistent.frage(BLATT14, sprachmodell=e)
+    assert e.protokoll == ["chat"], "nach Ablauf der Frist keine zweite Runde"
+    assert r["vorschlag"]["varianten"] == 3
+    assert "Frist" in r["antwort"]
+
+
+# ================================================= 7c · gegen die Einstellungen der Mappe
+
+def test_augenhoehe_allein_gilt_bei_einer_mappe_mit_richtung():
+    """**M3, Fall 1:** «1,6 m Augenhöhe» bei einer Mappe, die schon eine Richtung trägt —
+    allein geprüft abgewiesen («ohne Kameraweg»), obwohl der Lauf sie mit der Richtung der
+    Mappe rechnet."""
+    mappe = {"kamera": "sSE", "prompt": "house on a slope"}
+    r, _ = _ein_aufruf_mit_mappe(mappe, "standpunkt_vorschlagen", augenhoehe=1.6)
+    assert r["vorschlag"]["einstellungen"] == {"augenhoehe": 1.6}
+    # OHNE MAPPE bleibt es abgewiesen — dort gibt es wirklich keinen Kameraweg.
+    r, _ = _ein_aufruf("standpunkt_vorschlagen", augenhoehe=1.6)
+    assert "vorschlag" not in r and "Kameraweg" in r["antwort"]
+
+
+def test_brennweite_allein_faellt_bei_einer_mappe_mit_innenraum():
+    """**M3, Fall 2:** «Brennweite 24» bei einer Mappe mit Innenraum ging durch und
+    scheiterte erst am Blender-Knoten («Standpunkt zweimal bestellt»)."""
+    mappe = {"innenraum": {"raum": "r1"}}
+    r, _ = _ein_aufruf_mit_mappe(mappe, "standpunkt_vorschlagen", brennweite=24)
+    assert "vorschlag" not in r and "zweimal" in r["antwort"]
+    # EIN GANZER NEUER STANDPUNKT ersetzt den Innenraum (er wird geleert) und gilt.
+    r, _ = _ein_aufruf_mit_mappe(mappe, "standpunkt_vorschlagen", kamera="n")
+    assert r["vorschlag"]["einstellungen"]["innenraum"] is None
+
+
+def test_anwenden_prueft_ebenso_gegen_die_mappe():
+    starts = []
+    vorschlag = {"einstellungen": {"brennweite": 24}, "varianten": None}
+    with pytest.raises(assistent.AssistentError) as f:
+        assistent.anwenden(vorschlag, starte=lambda e, v: starts.append(e),
+                           entlade=lambda: None, mappe={"innenraum": {"raum": "r1"}})
+    assert "zweimal" in str(f.value) and starts == []
+    vorschlag = {"einstellungen": {"augenhoehe": 1.6}, "varianten": None}
+    assistent.anwenden(vorschlag, starte=lambda e, v: starts.append(e),
+                       entlade=lambda: None, mappe={"kamera": "n"})
+    assert starts == [{"augenhoehe": 1.6}]
+
+
+def test_das_modell_erfaehrt_was_die_mappe_traegt_ohne_pfade():
+    """Geprüft wird nur die **Übergabe** — dass Standpunkt und bisheriger Bildauftrag der
+    Mappe im Systemtext stehen. Ob das Modell den Gegenstand dann behält, kann ein Ersatz
+    nicht zeigen; das sagt erst eine Messung am Heim-PC."""
+    mappe = {"kamera": "sSE", "augenhoehe": 1.7, "innenraum": {"raum": "Raum Sued"},
+             "prompt": "Haus am Hang, Abendlicht", "ifc_path": "/srv/mappen/probe.ifc",
+             "glb_path": "/srv/mappen/probe.glb"}
+    e = Ersatz([{"content": "Gut."}])
+    assistent.frage("x", sprachmodell=e, mappe=mappe)
+    system = e.gesehen[0][0]
+    assert system["role"] == "system" and system["content"].startswith(assistent.SYSTEMTEXT)
+    text = system["content"]
+    assert "kamera «sSE»" in text and "augenhoehe 1.7" in text and "innenraum" in text
+    assert "«Haus am Hang, Abendlicht»" in text and "behalte seinen Gegenstand" in text
+    assert "/srv" not in text and "probe." not in text and "Raum Sued" not in text
+    # UND DIE WERKZEUGBESCHREIBUNG sagt es auch.
+    beschreibung = next(w["function"]["description"] for w in assistent.WERKZEUGE
+                        if w["function"]["name"] == "bildauftrag_vorschlagen")
+    assert "ERSETZT" in beschreibung and "Gegenstand" in beschreibung
+    # OHNE MAPPE der Systemtext wie bisher.
+    e = Ersatz([{"content": "Gut."}])
+    assistent.frage("x", sprachmodell=e)
+    assert e.gesehen[0][0]["content"] == assistent.SYSTEMTEXT
+
+
+def test_ein_liegengebliebenes_bildmodell_sperrt_die_frage_mit_eigenem_satz():
+    """``auf-20261001-218``: Nach einem Lauf lag das Bildmodell noch auf der Karte, und der
+    Stand hiess «bereit»."""
+    e = Ersatz([{"content": "nie"}])
+    with pytest.raises(assistent.AssistentError) as f:
+        assistent.frage("x", sprachmodell=e, bildmodell_geladen=True)
+    assert str(f.value) == assistent.SATZ_BILDMODELL_GELADEN and e.protokoll == []
+    s = assistent.stand(sprachmodell=Ersatz(), bildmodell_geladen=True)
+    assert s["stand"] == "laedt" and s["satz"] == assistent.SATZ_BILDMODELL_GELADEN
+    h = heimstand.heimstand(sprachmodell=Ersatz(), bildmodell_geladen=True)
+    assert h["assistent"]["stand"] == "laedt" and "bereit" not in h["satz"]
 
 
 def test_eine_frist_ist_kein_nicht_erreichbar(monkeypatch):
@@ -546,6 +709,71 @@ def test_blender_wird_nachgesehen_und_der_pfad_bleibt_draussen(monkeypatch, tmp_
     monkeypatch.setattr(seams, "finde_blender", nicht_gefunden)
     b = heimstand.blender()
     assert b["da"] is False and "nicht gefunden" in b["satz"]
+
+
+def test_blender_nur_als_name_wird_im_suchpfad_gefunden(monkeypatch, tmp_path):
+    """**N5**: Steht in ``AIIMAGING_BLENDER`` nur ``blender``, ruft die Kette es über den
+    Suchpfad auf. ``/api/heim`` sagte trotzdem «Datei fehlt»."""
+    programm = tmp_path / "blender"
+    programm.write_text("#!/bin/sh\n")
+    programm.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv("AIIMAGING_BLENDER", "blender")
+    b = heimstand.blender()
+    assert b == {"da": True, "satz": "Blender ist da."}
+    monkeypatch.setenv("PATH", str(tmp_path / "leer"))
+    assert heimstand.blender()["da"] is False
+
+
+class _Torch:
+    """Ein Ersatz für ``torch`` in ``sys.modules`` — nur, was der Grafikspeicher fragt."""
+
+    def __init__(self, belegt_mib, *, frei_nach_leeren=None, karte=True):
+        self.belegt = belegt_mib * 1024 * 1024
+        self.nach = None if frei_nach_leeren is None else frei_nach_leeren * 1024 * 1024
+        self.geleert = 0
+        aussen = self
+
+        class _Cuda:
+            @staticmethod
+            def is_available():
+                return karte
+
+            @staticmethod
+            def memory_reserved():
+                return aussen.belegt
+
+            @staticmethod
+            def empty_cache():
+                aussen.geleert += 1
+                if aussen.nach is not None:
+                    aussen.belegt = aussen.nach
+        self.cuda = _Cuda
+
+
+def test_der_grafikspeicher_des_prozesses_laedt_torch_nicht(monkeypatch):
+    from aiimaging import render
+    import sys
+    monkeypatch.delitem(sys.modules, "torch", raising=False)
+    assert render.grafikspeicher_des_prozesses()["haelt_bildmodell"] is False
+    assert render.gib_grafikspeicher_frei()["belegt_mib"] == 0
+    assert "torch" not in sys.modules, "nur gefragt, nie geladen"
+
+
+def test_freigeben_leert_den_zwischenspeicher_und_misst_danach(monkeypatch):
+    """``auf-20261001-218``: 25,3 GB im Prozess nach dem Lauf. Freigeben → frei."""
+    from aiimaging import render
+    import sys
+    t = _Torch(25_900, frei_nach_leeren=0)
+    monkeypatch.setitem(sys.modules, "torch", t)
+    vorher = render.grafikspeicher_des_prozesses()
+    assert vorher["haelt_bildmodell"] is True and "25.3 GB" in vorher["satz"]
+    nachher = render.gib_grafikspeicher_frei()
+    assert t.geleert == 1 and nachher == {"belegt_mib": 0, "haelt_bildmodell": False,
+                                          "satz": nachher["satz"]}
+    # HAELT ETWAS DAS MODELL FEST, bleibt es gesagt — kein «frei» aus Hoffnung.
+    monkeypatch.setitem(sys.modules, "torch", _Torch(25_900))
+    assert render.gib_grafikspeicher_frei()["haelt_bildmodell"] is True
 
 
 class _Lauf:
