@@ -1,0 +1,207 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261001-230",
+  "worker": "local",
+  "status": "ok",
+  "beendet": "2026-10-01T16:53:34+00:00",
+  "dauer_s": null,
+  "staende": {
+    "ai_imaging_git_log_1": "b56d280 2026-10-01T16:17:21Z Entscheid 65: Visbox baut drüben selbst auf eigenem Zweig, der Integrator spielt nur ein",
+    "pull": "git pull --ff-only: Bereits aktuell",
+    "kosmoorbit": "v0.1.6 (Tag auf bdac6a1f2), installiert als .deb 0.1.6, App-Kopf zeigt v0.1.6",
+    "unit_neu_kopiert": "ja — betrieb/visbox-flaeche.service kopiert, daemon-reload, restart; Dienst aktiv, Environment traegt PYTHONUNBUFFERED=1"
+  },
+  "weg": "GEMISCHT. App: installierte Desktop-App auf eigenem Xvfb mit eigenem Wegwerf-Profil (Owner-Profil und seine Projekte unberuehrt), Demohaus geladen, Graph Modell + Auto-Kamera + Prompt -> Render, gesendet ueber die AUSTAUSCH-Insel («Render senden»), bedient mit xdotool und Abzuegen. Bruecke: POST /jobs wie die App (scene + model.ifc aus dem App-Auftrag) fuer alles, was die App nicht bestellen kann (render.passes, Zwilling, ohne vis.backbone, fremde Schluessel, eine Kamera).",
+  "messwerte": {
+    "B1": {
+      "app": {
+        "job": "vis-1790872543-598864",
+        "status": "done",
+        "lieferstatus": "fehlgeschlagen (2 von 3)",
+        "dauer_s": 277,
+        "timings_gesamt_s": 268.4,
+        "kameras": "Eingang (aussen), Übersicht (aussen), Innenraum (interior, rooms auto)",
+        "backbone": "z-image-turbo (App sendet es ausdruecklich)",
+        "erster_versuch": "vis-1790872400-7ef86d — error nach 17 s: «Render abgelehnt — Prompt ist leer» (frischer Graph ohne Prompt-Knoten); KosmoOrbit zeigte den Satz rot am Knoten"
+      },
+      "bruecke": {
+        "job": "vis-1790872939-90ee84",
+        "status": "done",
+        "lieferstatus": "fehlgeschlagen (2 von 4: Übersicht nicht gerendert, Zwilling uebersprungen)",
+        "timings_gesamt_s": 278.5,
+        "kameras": "Eingang, Übersicht, Innenraum, Eingang-Zwilling",
+        "render_passes": [
+          "schoenbild",
+          "tiefe",
+          "material-id"
+        ],
+        "vis_backbone": "nicht gesetzt"
+      }
+    },
+    "B2": {
+      "bruecke": {
+        "job": "vis-1790872940-f88863",
+        "status": "error",
+        "dauer_s": "ca. 45 (nach B1-Bruecke abgeholt)",
+        "kameras": "Eingang",
+        "fehler": "Kamera 'Eingang', seed 0: Render fehler — AttributeError: module diffusers has no attribute QwenImage21Pipeline"
+      },
+      "app": {
+        "job": "vis-1790873387-2d361a",
+        "status": "error",
+        "dauer_s": 18,
+        "kameras": "Eingang, Übersicht, Innenraum",
+        "fehler": "derselbe Satz; KosmoOrbit zeigt ihn am Render-Knoten (FEHLER)"
+      },
+      "datei": "auftraege/ergebnisse/auf-20261001-230-qwen21-ergebnis.json (Fehler-Ergebnis, kein render-result: es gibt keines)"
+    },
+    "B3": {
+      "cameras": {
+        "job": "vis-1790872557-41b731",
+        "status": "queued + message (liegengelassen), danach von mir per /cancel abgebrochen",
+        "satz": "Vom Nutzer abgebrochen."
+      },
+      "render_sun": {
+        "job": "vis-1790872558-d183cb",
+        "status": "queued + message (liegengelassen), danach per /cancel abgebrochen",
+        "satz": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- Unbekannte Felder in der Bestellung: render.sun.unbekannt. Wir wissen nicht, was sie verlangen, und wuerden sie stillschweigend uebergehen — das Bild waere dann nicht d…"
+      }
+    },
+    "gpu": {
+      "spitze_w": 352,
+      "grenze_w": 400,
+      "karte_am_ende": "leer (Ollama ohne Modell, ca. 14 W)",
+      "sprachmodell_gleichzeitig": "nein"
+    }
+  },
+  "urteil": {
+    "C": [
+      {
+        "posten": "B5",
+        "urteil": "bestaetigt",
+        "satz": "qa_je_kamera kommt mit einem Eintrag je Kamera an; die Kuratierflaeche zeigt auf der Kachel V-01 eine Zeile je Kamera («Eingang: durchgefallen», «Übersicht: ohne QA», «Innenraum: durchgefallen»).",
+        "feld": "qa_je_kamera[0..2].kamera = Eingang | Übersicht | Innenraum (B1-App vis-1790872543-598864)"
+      },
+      {
+        "posten": "C21",
+        "urteil": "bestaetigt",
+        "satz": "lieferstatus, lieferstatus_grund, bilder_soll, bilder_ist stehen je Kamera und lieferstatus am Auftrag; der Vertrag von v0.1.6 traegt die Felder (nicht abgestreift). ANZEIGE-LUECKE: der Render-Knoten zeigt gruen «FERTIG», obwohl der Auftrag «fehlgeschlagen» ist, und die Kachel nennt die nicht gerenderte Übersicht nur «ohne QA» — lieferstatus erscheint nirgends (nur bei null Bildern als Fehlertext).",
+        "feld": "qa_je_kamera[1] = {lieferstatus: fehlgeschlagen, bilder_soll: 1, bilder_ist: 0}; lieferstatus = fehlgeschlagen, lieferstatus_grund = «2 von 3 Kameras geliefert, 2 von 3 Bildern — Übersicht fehlgeschlagen: …»"
+      },
+      {
+        "posten": "C8",
+        "urteil": "nicht_pruefbar",
+        "satz": "Der Fall (Score besteht, Maskenweg widerspricht) trat nicht auf; bei Eingang (B1-App) war es umgekehrt: Score 0.648 knapp unter 0.65, rho_maske gerichtet +0.754 — dazu steht kein Satz, und das ist so gebaut. Belegt ist nur der Anzeigeteil: verdict.reason steht ungekuerzt im Inspektor unter «QA-VORBEHALT».",
+        "feld": "qa_je_kamera[0].geometry = {geometry_fidelity: 0.648, passed: false}; befund kameras[0].rho_maske.gerichtet = 0.754"
+      },
+      {
+        "posten": "C10",
+        "urteil": "nicht_pruefbar",
+        "satz": "geometry_gates kommt an (oberste Ebene, nicht abgestreift), traegt aber KEIN geom_iou: es beschreibt die massgebliche Kamera «Übersicht», und die wurde nicht gemessen (nicht gerendert). geom_iou je Kamera steht in qa_je_kamera[].geometry. Der Inspektor zeigt «GEOMETRIE-STATUS nicht gemessen».",
+        "feld": "geometry_gates = {camera: Übersicht, status: not_measured, geom_iou_status: not_measured, geom_iou: fehlt}; qa_je_kamera[].geometry.geom_iou = 0.606 | — | 1.0 (B1-App), 0.602 | — | 1.0 | 0.602 (B1-Bruecke)"
+      },
+      {
+        "posten": "C37",
+        "urteil": "bestaetigt",
+        "satz": "Alle Status sprechen measured/not_measured, passed und released sind Boolean (false), nie null; not_applicable kam in keinem Lauf vor. KosmoOrbit zeigt «GEOMETRIE-STATUS nicht gemessen».",
+        "feld": "geometry_gates.status/rho_mask_status/geom_iou_status/counter_check_status = not_measured, released = false, passed = false; qa_je_kamera[0].geometry.status = measured; qa.geometry.status = not_measured"
+      },
+      {
+        "posten": "C19",
+        "urteil": "bestaetigt",
+        "satz": "Die Bestellung aus der Vis-Station (Demohaus mit Raeumen) ging als IFC mit interior {rooms: auto} und drei Kameras ab und wurde gerechnet; die Innenkamera lieferte ein Bild. Die Kachel fuehrt «Innenraum: durchgefallen». Vorbehalt: das KI-Bild der Innenkamera zeigt eine Fassade mit Himmel, das Cycles-Schoenbild ist ein Innenraum (Prompt enthielt «klarer Himmel»).",
+        "feld": "Szene: interior = {rooms: auto}, geometry.format = ifc; qa_je_kamera[2] = {kamera: Innenraum, lieferstatus: geliefert, bilder_ist: 1}; timings.Innenraum = 135.6"
+      },
+      {
+        "posten": "C39",
+        "urteil": "bestaetigt",
+        "satz": "Der Innenraum-Satz steht in qa.verdict.hinweise, nicht in verdict.reason. (v0.1.6 zeigt ihn bereits im Inspektor als «QA-HINWEIS».)",
+        "feld": "qa.verdict.hinweise[0] = «INNENANSICHT BESTELLT: 'interior' {'rooms': 'auto'} kam mit benannten Kameras; …»; verdict.reason ohne diesen Satz"
+      },
+      {
+        "posten": "C22",
+        "urteil": "bestaetigt",
+        "satz": "Die Zwillingskamera (gleiche Position, gleiches Ziel und gleiches FOV wie «Eingang») wurde nicht neu gerendert; der Satz steht in verdict.reason vor den allgemeinen Saetzen, allerdings an zweiter Stelle hinter dem Satz zur Übersicht. Nur ueber die Bruecke bestellbar: aus der App nicht moeglich, darum keine Anzeige.",
+        "feld": "verdict.reason = «NICHT GERENDERT …, Übersicht: …; Nicht neu gerendert (identische Soll-Karte), Eingang-Zwilling; NICHT GEMESSEN …»; qa_je_kamera[3].lieferstatus = uebersprungen (B1-Bruecke vis-1790872939-90ee84)"
+      },
+      {
+        "posten": "C30",
+        "urteil": "bestaetigt",
+        "satz": "Ein fremder Schluessel in cameras[] und einer in render.sun halten je mit Satz auf; referenzpunkt «okff» wurde ohne Mangel gelesen (geprueft, nicht im Ergebnis berichtet). AUFFAELLIG: Der aufgehaltene Auftrag bleibt «queued» und blockiert die Schlange (siehe Auffaelligkeiten).",
+        "feld": "message = «Der Auftrag hat Mängel, die einen Lauf verbieten: - Unbekannte Felder in der Bestellung: cameras[0].unbekannt. …» bzw. «… render.sun.unbekannt. …»"
+      },
+      {
+        "posten": "C34",
+        "urteil": "bestaetigt",
+        "satz": "Der Brueckenauftrag ohne vis.backbone (B1-Bruecke) rechnete mit z-image-turbo. Die App sendet vis.backbone immer ausdruecklich mit (Vorgabe z-image-turbo).",
+        "feld": "engine_used = z-image-turbo, engine_license = Apache-2.0 (Szene: vis = {skip: false, upscale: false})"
+      },
+      {
+        "posten": "C35",
+        "urteil": "nicht_bestaetigt",
+        "satz": "engine_used und engine_license stehen oben, guidance_applied fehlt in beiden fertigen Ergebnissen (B1-App und B1-Bruecke).",
+        "feld": "oberste Schluessel = ebenen, engine_license, engine_used, geometry_gates, images, job_id, lieferstatus, lieferstatus_grund, qa, qa_je_kamera, schema, timings — kein guidance_applied"
+      },
+      {
+        "posten": "C36",
+        "urteil": "bestaetigt",
+        "satz": "render.passes [schoenbild, tiefe, material-id] ergab je Kamera drei Ebenen, flach abgelegt als <kamera>__<art>.png (12 Dateien, auch fuer die nicht gerenderte Übersicht und den Zwilling). Aus KosmoOrbit nicht bestellbar: der Sender setzt render.passes nicht, und die Kuratierflaeche sagt «5 Bildwünsche heute nicht bestellbar (… Ebenen …)».",
+        "feld": "ebenen[] = 12 Eintraege, z. B. {kamera: Eingang, art: tiefe, datei: Eingang__tiefe.png, bedeutung.einheit: m}"
+      },
+      {
+        "posten": "C33",
+        "urteil": "nicht_pruefbar",
+        "satz": "Der Innenraum-Weg schickt IFC; die daraus gewandelte glb hat 0 Materialien, darum erreicht kein Glas mit Durchlass die Pruefung (modellstand «zurueck», soll_durchsichtig 0). Auf dem glb-Weg nicht gefahren, weil das Demohaus Raeume hat und die App dann IFC sendet.",
+        "feld": "befund.modellstand.urteil = zurueck («Kein Materialblock: 35 Primitiv(e) in 35 Netz(en), 0 Materialien»); kameras[0].soll_durchsichtig.n_durchsicht = 0"
+      },
+      {
+        "posten": "C40",
+        "urteil": "nicht_pruefbar",
+        "satz": "Das einzige getestete Editiermodell (qwen-image-2.1, integriertes Edit) scheiterte schon beim Laden, bevor ein Bild ankam. Qwen-Image-Edit steht in der Liste, ist aber nach «NICHT TUN» (nur die drei Wege) nicht bestellt worden.",
+        "feld": "error = «… AttributeError: module diffusers has no attribute QwenImage21Pipeline»"
+      },
+      {
+        "posten": "C42",
+        "urteil": "bestaetigt",
+        "satz": "Die Eingangskamera rahmt das Bauwerk, nicht das Grundstueck: die Fassade fuellt das Bild (Maske 59 %). Die Übersicht aus KosmoOrbit (Kamera 16,3 m hoch, Gebaeude 6 m) weist die Visbox aber in jedem Lauf als «ueber dem Dach» ab — kein Bild.",
+        "feld": "befund kameras[0].maskenbefund.anteil_bauwerk = 0.590; qa_je_kamera[1].lieferstatus_grund = «NICHT GERENDERT (Aufnahme nicht beurteilbar), Übersicht: Die Kamera steht ueber dem Dach …»"
+      },
+      {
+        "posten": "C32",
+        "urteil": "nicht_pruefbar",
+        "satz": "Zeigte sich nicht ohne Aufwand: keine Stufe-2/Stufe-3-Meldung im Protokoll der Laeufe; die Kameras sind vorgegeben, eine Huellbox-Rahmung wirkte nicht.",
+        "feld": "befund kameras[].rahmung.abbruch_grund = «Die Kamera kam auf dem Weg 'vorgegeben' zustande, nicht aus der Huellbox …»"
+      },
+      {
+        "posten": "C47",
+        "urteil": "nicht_bestaetigt",
+        "satz": "In KosmoOrbit bestellbar und nicht die Vorgabe: Bildwerkzeug-Liste mit «Qwen-Image 2.1», Vorgabe bleibt «Z-Image Turbo — Vorgabe»; die Szene ging ohne research_only ab. Der Lauf scheitert aber am Laden im Betriebs-venv (diffusers 0.39.0 kennt QwenImage21Pipeline nicht): kein Ergebnis, kein engine_license_open. Die App zeigt «FEHLER» mit diesem Satz.",
+        "feld": "Szene vis = {backbone: qwen-image-2.1, skip: false, upscale: false}; status = error; error = «Kamera 'Eingang', seed 0: Render fehler — AttributeError: module diffusers has no attribute QwenImage21Pipeline»"
+      }
+    ]
+  },
+  "auffaelligkeiten": [
+    "Warteschlange blockiert: Ein mit Maengeln aufgehaltener Auftrag bleibt «queued»; der Abholer (--hoechstens 1) nimmt bei jedem Durchgang wieder ihn und laesst ihn liegen — alle spaeteren Auftraege (hier B1-Bruecke, B2) warteten, bis ich die beiden B3-Auftraege per POST /jobs/<id>/cancel abbrach.",
+    "qwen-image-2.1 laeuft im Betrieb nicht: .venv-render hat diffusers 0.39.0 ohne QwenImage21Pipeline (die Messungen 178/208 liefen in einem eigenen Forschungs-venv). Bestellbar ja, rechenbar nein.",
+    "Die Auto-Kamera «Übersicht» von KosmoOrbit (16,3 m hoch, Gebaeude 6 m) wird von der Visbox jedes Mal als «ueber dem Dach» abgewiesen; damit ist jeder Auto-Auftrag «fehlgeschlagen», waehrend der Render-Knoten gruen «FERTIG» zeigt.",
+    "KosmoOrbit-Bedienung: Im Prompt-Knoten wird die Leertaste verschluckt (der Tasten-Handler des Knotens fuer Enter/Leertaste ruft preventDefault auch fuer Tasten aus der Textarea); Text mit Leerzeichen nur per geschuetztem Leerzeichen moeglich.",
+    "KosmoOrbit-Darstellung (WebKitGTK auf Xvfb, ohne Grafikbeschleunigung — nicht an echtem Bildschirm gegengeprueft): Die Bedienelemente des Render-Knotens und die Kamera-Liste der Auto-Kamera erscheinen oben links ausserhalb der Knoten; «Ausführen» am Knoten reagiert nicht (Trefferflaeche oben links). Weg ueber die AUSTAUSCH-Insel funktionierte.",
+    "Ein frischer Graph hat keinen Prompt — der erste Auftrag wird mit «Prompt ist leer» abgelehnt.",
+    "IFC-Weg (Innenraum): die gewandelte glb hat keine Materialien («gleich grau»), Glas- und Materialpruefung laufen damit leer.",
+    "Innenkamera: KI-Bild zeigt Fassade mit Himmel, das Cycles-Schoenbild einen Innenraum (Prompt enthielt «klarer Himmel»); QA geom_iou 1.0 bei Innenkamera (Maske = ganzes Bild).",
+    "A2: lokal ohne Anmeldung antwortet POST /api/verbinden mit 401 vor der Groessenpruefung (ohne offene Kopplung) — 413 hier nicht beobachtbar.",
+    "Desktop-App des Owner-Profils hat keinen Bruecken-Token gespeichert (nur die Adresse); ein Auftrag von dort bekaeme 401. Im Wegwerf-Profil von Hand eingetragen; Profil am Ende geloescht."
+  ],
+  "nicht_getan": [
+    "Kein Code geaendert, nichts installiert, nichts committet.",
+    "Kein Forschungs-venv fuer qwen-image-2.1 benutzt (waere ein Weg ausserhalb des Produkts).",
+    "Qwen-Image-Edit nicht bestellt (C40), weil nur die drei genannten Wege erlaubt sind."
+  ],
+  "aufraeumen": "Beide Wegwerf-Projekte ueber «Alle Projekte» mit Rueckfrage geloescht (danach «Alle Projekte (0)»); App, Xvfb, Leistungsprotokoll per gemerkter PID beendet; Wegwerf-Profil und alle Abzuege geloescht; Sperrdatei der Karte entfernt.",
+  "umgebung": {
+    "gpu_grenze_w": 400,
+    "display": "eigener Xvfb",
+    "app": "installiertes Paket 0.1.6"
+  },
+  "fehler": null
+}

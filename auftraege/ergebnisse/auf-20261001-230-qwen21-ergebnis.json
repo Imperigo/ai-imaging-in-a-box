@@ -1,0 +1,63 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261001-230",
+  "teil": "B2 — qwen-image-2.1, fuer den Integrator",
+  "status": "fehler",
+  "kurz": "Es gibt kein render-result: der Lauf scheitert im Betriebs-venv beim Laden der Pipeline (diffusers 0.39.0 ohne QwenImage21Pipeline). Abgelegt ist darum der Auftragsdatensatz der Bruecke mit dem Fehler, ohne Pfade und Freigabetoken.",
+  "bestellung": {
+    "vis": {
+      "skip": false,
+      "backbone": "qwen-image-2.1",
+      "upscale": false
+    },
+    "research_only": "nicht gesetzt",
+    "cameras": [
+      "Eingang"
+    ],
+    "render": {
+      "resolution": [
+        1600,
+        1000
+      ],
+      "samples": 128,
+      "faithful": 0.8
+    },
+    "interior": {
+      "rooms": "auto"
+    },
+    "geometry": {
+      "format": "ifc"
+    },
+    "style": {
+      "mode": "none",
+      "prompt": "Wohnhaus, heller Putz, Holzfenster, Tageslicht, klarer Himmel"
+    }
+  },
+  "bruecke": {
+    "job_id": "vis-1790872940-f88863",
+    "status": "error",
+    "idle_window_only": true,
+    "requested_engine": "ki",
+    "requested_style": "none",
+    "created_at": "2026-10-01T16:42:20.575082+00:00",
+    "updated_at": "2026-10-01T16:48:50Z",
+    "error": "Kamera 'Eingang', seed 0: Render fehler — AttributeError: module diffusers has no attribute QwenImage21Pipeline"
+  },
+  "dieselbe_bestellung_aus_kosmoorbit": {
+    "job_id": "vis-1790873387-2d361a",
+    "status": "error",
+    "idle_window_only": true,
+    "requested_engine": "ki",
+    "requested_style": "none",
+    "created_at": "2026-10-01T16:49:47.535641+00:00",
+    "updated_at": "2026-10-01T16:50:05Z",
+    "error": "Kamera 'Eingang', seed 0: Render fehler — AttributeError: module diffusers has no attribute QwenImage21Pipeline",
+    "cameras": [
+      "Eingang",
+      "Übersicht",
+      "Innenraum"
+    ]
+  },
+  "render_result": null,
+  "engine_license_open": "nicht geliefert (kein Ergebnis)"
+}
