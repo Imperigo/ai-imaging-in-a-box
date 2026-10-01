@@ -4468,6 +4468,38 @@ Heim-PC, damit keine Antwort von dort auf dem Mac liegen bleibt.
 **Fensterinhalt** — Was das eine Fenster der Mac-App gerade zeigt: Start, Arbeit oder
 Vorführmodus. Entschieden im Kern aus dem Stand der Leitung, nicht in der Oberfläche.
 
+**ASCII** — Der Grundvorrat von 128 Zeichen (lateinische Buchstaben, Ziffern 0–9, Satzzeichen),
+den jeder Rechner gleich liest. Die Koppelzahl muss aus diesen Ziffern bestehen; Ziffern anderer
+Schriften zählen als falscher Versuch, statt den Server stolpern zu lassen.
+
+**Prozentschreibung** — Eine Art, ein Zeichen in einer Webadresse als `%` plus Code zu
+schreiben (`%6E` steht für «n»). Wer Wege vergleicht, muss sie vorher gleich lesen — sonst
+sieht derselbe Weg in zwei Schreibweisen wie zwei verschiedene aus.
+
+**Gegenstelle** — Das Gerät am anderen Ende einer Verbindung, erkannt an seiner Adresse. Der
+Mac lässt je Gegenstelle nur wenige Verbindungen zu, damit ein Gerät nicht alle Plätze belegt.
+
+**Uhr mit Ruhezustand** — Eine Uhr, die weiterläuft, während der Laptop zugeklappt ist. Mit ihr
+läuft die Frist einer Koppelzahl auch im Schlaf ab, statt nach dem Aufklappen weiterzugelten.
+
+**TLS mit festgehaltenem Schlüssel** — Verschlüsselung, bei der sich das iPad beim Koppeln den
+Schlüssel der Gegenseite merkt und danach nur noch mit genau ihr spricht. Für den Weg
+iPad ↔ Mac geprüft und nicht gebaut; der Owner wählte stattdessen Tailscale direkt (Entscheid 63).
+
+**MagicDNS** — Der Teil von Tailscale, der Namen wie `<rechner>.<netz>.ts.net` in eine Adresse
+übersetzt. Ist Tailscale am Gerät aus, kennt es den Namen nicht — die App sagt dann «Tailscale am
+iPad an?».
+
+**Zertifikat** — Ein digitaler Ausweis eines Servers. Damit prüft das Gerät, dass es wirklich
+mit dem eigenen Heim-PC spricht und nicht mit einem Fremden. Tailscale Serve liefert dem Heim-PC
+ein gültiges, darum braucht die App keine Ausnahme.
+
+**Schema (einer Adresse)** — Der Anfang einer Adresse wie `http://` oder `https://`; er sagt, ob
+unverschlüsselt oder verschlüsselt gesprochen wird. Unterwegs nimmt die iPad-App nur `https`.
+
+**Strecke** — Der Weg, über den die App den Heim-PC erreicht: zuhause durchs Heimnetz, unterwegs
+über Tailscale. Danach richtet sich, welcher Satz bei einem Fehler erscheint.
+
 **Fassung (je Knotenart)** — Eine Zahl je Rechenschritt der Bildkette (Geometrie, Blender,
 Bild, Prüfung …), die in den Schlüssel des Zwischenspeichers eingeht. Ändert sich, was ein
 Schritt bei gleichen Eingaben herausgibt — etwa weil ein Fehler behoben wurde —, wird seine
@@ -6291,7 +6323,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
+| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
