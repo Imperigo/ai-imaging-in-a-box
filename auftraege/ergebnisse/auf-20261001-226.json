@@ -23,7 +23,8 @@
  ],
  "pruefe_auftrag_nimmt_an": false,
  "pruefe_auftrag_maengel_heute": [
-  "Falsches Schema: None statt 'aiimaging.homeworker-auftrag/v1'"
+  "Pflichtfeld 'auflagen' fehlt",
+  "Pflichtfeld 'rechte' fehlt oder ist kein Objekt (lesen, befehle, ergebnis)."
  ],
  "warum_noch_nicht": "Der Vertrag (aiimaging.auftrag) gehoert KosmoVis; «local-prepare» und «rechte» sind dort am 01.10. erbeten. Bis dahin nimmt der Abholer korrekt nichts an.",
  "abholer": {
@@ -44,5 +45,6 @@
    "rechteprobe": "15/15"
   }
  },
- "hinweis_fuer_den_ersten_auftrag": "«letzte Zeile» eindeutig fassen, z.B. «die Zeile, die mit OK oder FAILED beginnt». Den Rueckgabewert kann der Helfer nicht mit eigener Belegzeile zeigen ($? ist gesperrt); er schliesst ihn aus dem Fehlen einer Exit-code-Meldung."
+ "hinweis_fuer_den_ersten_auftrag": "«letzte Zeile» eindeutig fassen, z.B. «die Zeile, die mit OK oder FAILED beginnt». Den Rueckgabewert kann der Helfer nicht mit eigener Belegzeile zeigen ($? ist gesperrt); er schliesst ihn aus dem Fehlen einer Exit-code-Meldung.",
+ "pruefe_auftrag_probe": "vollstaendiger Probeauftrag (Schema, art frage, worker local-prepare) gegen pruefe_auftrag im Stand dieses Commits"
 }
