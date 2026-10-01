@@ -1,6 +1,6 @@
 # Die Vorführfassung am Mac — Grundlagen und Plan
 
-**Grundlage:** KosmoOrbit-Repo, Zweig des Integrators, read-only gelesen am 01.10.2026; Lizenzdateien und Modellkarten der genannten Projekte. Am Heim-PC noch nichts gemessen (`auf-20261001-212`)
+**Grundlage:** KosmoOrbit-Repo, Zweig des Integrators, read-only gelesen am 01.10.2026; Lizenzdateien und Modellkarten der genannten Projekte. Am Heim-PC noch nichts gemessen (`auf-20261001-213`)
 **Codestand:** `53073a7`
 
 > **Stand 01.10.2026, Sitzung 74.** Entscheide 35–42 (`docs/ENTSCHEIDE_IPAD_2026-09-21.md`),

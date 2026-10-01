@@ -7669,5 +7669,5 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern:** iPad findet den Mac statt des Heim-PC, wenn es auswärts ist.
 - [ ] **Kern:** Assistent (Sprachmodell am Heim-PC, Lizenz nach Regel 1 geprüft).
 - [ ] **Kern:** Vorführmodus, falls der Heim-PC nicht erreichbar ist.
-- [ ] **local:** `auf-20261001-212` — messen, was am Heim-PC schon steht (Leitung, Ollama, Wechsel, Werkzeugaufrufe).
+- [ ] **local:** `auf-20261001-213` — messen, was am Heim-PC schon steht (Leitung, Ollama, Wechsel, Werkzeugaufrufe).
 

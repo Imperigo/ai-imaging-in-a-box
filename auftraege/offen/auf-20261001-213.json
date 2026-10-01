@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-213",
+ "art": "frage",
+ "beschreibung": "Vorfuehrfassung am Mac: messen, was am Heim-PC schon steht — Tailscale-Leitung und Weiterleitungen (ohne Namen), Ollama-Modelle, qwen3:30b laden/entladen neben z-image-turbo, deutsche Werkzeugaufrufe. Nichts einrichten.",
+ "anweisung": "=== VORFUEHRFASSUNG AM MAC: WAS AM HEIM-PC SCHON STEHT — MESSEN, NICHTS EINRICHTEN ===\n\nHintergrund: Der Owner will Visbox auswaerts (z. B. ETH) praesentieren: Mac-App oeffnen, und\nLeitung zum Heim-PC, Sprachmodell und iPad bauen sich selbst auf (Entscheide 35–42). KosmoOrbit\nmacht das schon: Leitung ueber Tailscale, Kosmo ueber Ollama am Heim-PC mit qwen3:30b. Visbox\nsoll DIESELBEN zwei Dinge benutzen. Bevor wir bauen, brauchen wir Zahlen von euch.\nPlanungsblatt: docs/VORFUEHRFASSUNG_2026-10-01.md.\n\nTEIL A — DIE LEITUNG (nur lesen, nichts aendern)\n  A1 Laeuft tailscaled am Heim-PC? `tailscale status` — nur ob verbunden und die Zahl der Geraete;\n     KEINE Geraetenamen, KEINE Netznamen, KEINE IP-Adressen ins Ergebnis (oeffentliches Repo).\n  A2 Welche Weiterleitungen gibt es (`tailscale serve status`)? Nur Pfade und Ports nennen\n     (z. B. «/bruecke → 127.0.0.1:8600»), keine Hostnamen.\n  A3 Der Visbox-Server (`python3 oberflaeche/server.py`) hoert auf 127.0.0.1:8731. Waere er ueber\n     eine Weiterleitung wie die von KosmoOrbit erreichbar, OHNE ihn auf 0.0.0.0 zu stellen? Nur\n     pruefen, ob das ginge und was dafuer noetig waere — NICHT einrichten.\n\nTEIL B — DAS SPRACHMODELL\n  B1 `ollama list`: welche Modelle liegen da (Name, Groesse)? Ollama-Version?\n  B2 qwen3:30b laden und eine kurze deutsche Frage stellen; Zeit bis zur ersten Antwort (kalt)\n     und Spitze im Grafikspeicher (nvidia-smi, 1-s-Raster).\n  B3 Entladen mit keep_alive 0: wie lange, bis der Speicher frei ist? Dann EIN Bild mit\n     z-image-turbo (512 px, 8 Schritte, Hochbau, Rahmung bauwerk) — passt es danach wie sonst?\n     Dann qwen3:30b wieder laden: Zeit (warm aus dem Plattencache).\n  B4 Werkzeugaufrufe auf Deutsch: drei Anfragen mit einem einfachen Werkzeugschema (siehe\n     unten), je Anfrage: ruft das Modell das Werkzeug mit plausiblen Argumenten auf (ja/nein), Zeit.\n       Werkzeug «kamera_setzen»: {blick: s|sSE|sSW|e|w|n, augenhoehe_m: Zahl}\n       Werkzeug «varianten»: {anzahl: 1–4, bildauftrag: Text}\n       Anfragen: «Zeig das Haus von Süd-Ost auf Augenhöhe.» · «Mach drei Varianten bei\n       Abendlicht.» · «Schau frontal von Süden, etwas erhöht, 3 Meter.»\n\nZURUECK (auftraege/ergebnisse/auf-20261001-213.json)\n  - git log -1.\n  - A1–A3 ohne Namen und Adressen.\n  - B1–B4 mit Zeiten und Speicherspitzen.\n  - Ein Satz: koennen Bildmodell und Sprachmodell nacheinander auf der Karte leben, und was\n    kostet der Wechsel in Sekunden?\n\nNICHT TUN: nichts einrichten oder umstellen (keine neue Weiterleitung, Server nicht auf 0.0.0.0,\nkeine Modelle herunterladen); keine Geraete-, Netz- oder Hostnamen und keine IP-Adressen ins\nErgebnis (REGEL 3, oeffentliches Repo); nichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/hochbau.ifc --hochbau --gelaende"
+ },
+ "params": {
+  "sprachmodell": "qwen3:30b",
+  "bildmodell": "z-image-turbo",
+  "aufloesung": 512,
+  "schritte": 8,
+  "rahmung": "bauwerk"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: ein Bild und einige Sprachmodell-Antworten.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen und keine IP-Adressen ins Ergebnis (REGEL 3).",
+   "Nichts einrichten, nichts herunterladen."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1.",
+  "A1–A3: Leitung und Weiterleitungen ohne Namen und Adressen; ob der Visbox-Server ohne 0.0.0.0 erreichbar waere.",
+  "B1–B4: Modelle, Zeiten, Speicherspitzen, Werkzeugaufrufe ja/nein.",
+  "Ein Satz zum Wechsel Bildmodell ↔ Sprachmodell in Sekunden."
+ ],
+ "rang": 2
+}
