@@ -4511,6 +4511,26 @@ seit dem 01.10.2026 selbst, ab 0.1.0 (Entscheid 66), an allen Stellen gleich —
 iPad-App, Mac-App. KosmoOrbit zählt eigen (0.1.6, 0.1.7 …); das KosmoVis-Werkzeug darin ist Teil
 dieser Fassung und trägt keine eigene Nummer.
 
+**Aufsicht** — Eine Kamera, die höher als das Gebäude steht und von oben darauf schaut, etwa
+KosmoOrbits Auto-Kamera «Übersicht». Seit Entscheid 67 wird sie gerechnet, aber nicht nach den
+Regeln für Architekturfotos in Augenhöhe beurteilt; das steht als Auskunft am Bild.
+
+**Pipeline-Klasse** — Der Bauplan in der Bildmodell-Bibliothek (diffusers), mit dem ein
+bestimmtes Bildmodell geladen wird. Fehlt er in der installierten Fassung, lässt sich das Modell
+gar nicht starten — Visbox sagt das seit dem 01.10.2026 vorher, statt beim Laden abzustürzen.
+
+**Randlose Silhouette** — Das Gebäude füllt jeden Bildpunkt; es gibt keinen Himmel und keinen
+Hintergrund, typisch für eine Kamera im Raum. Ein Mass, das Gebäude und Hintergrund vergleicht,
+sagt dann nichts mehr.
+
+**Nicht anwendbar (not_applicable)** — Eine Zahl, die sich zwar ausrechnen lässt, in dieser
+Lage aber nichts misst — darum weggelassen und so benannt, statt als Ergebnis gezeigt. Die dritte
+Antwort neben «bestanden» und «durchgefallen».
+
+**Bildauftrag der Innenkamera** — Der Text an das Bildmodell für eine Kamera im Raum: um Wörter
+wie «Himmel» oder «Fassade» bereinigt und mit «Innenansicht» eingeleitet, damit das Bild nicht
+nach draussen zeigt.
+
 **Fassung (je Knotenart)** — Eine Zahl je Rechenschritt der Bildkette (Geometrie, Blender,
 Bild, Prüfung …), die in den Schlüssel des Zwischenspeichers eingeht. Ändert sich, was ein
 Schritt bei gleichen Eingaben herausgibt — etwa weil ein Fehler behoben wurde —, wird seine
@@ -6334,7 +6354,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
+| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |

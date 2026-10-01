@@ -7722,7 +7722,10 @@ Bekannt und ausdrücklich nicht erledigt:
       *(abgelegt 01.10.2026 als `auf-20261001-230`, 17 Posten, wartet auf den Tag v0.1.6)*
 - [x] **local:** `auf-20261001-230` beantworten.
       *(01.10.2026: 10 bestätigt, 2 nicht, 5 nicht prüfbar — Protokoll 74 §20)*
-- [ ] **Kern:** Befunde aus 230 beheben (Schlange, Aufsicht E67, Qwen-2.1 früh abweisen, guidance_applied, Innenkamera).
+- [x] **Kern:** Befunde aus 230 beheben (Schlange, Aufsicht E67, Qwen-2.1 früh abweisen, guidance_applied, Innenkamera).
+      *(01.10.2026, `8294422`; 20 Proben, 18 davon vorher rot — Protokoll 74 §22)*
+- [ ] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
+- [ ] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt.
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.

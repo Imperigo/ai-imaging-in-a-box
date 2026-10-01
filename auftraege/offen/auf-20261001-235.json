@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-235",
+ "art": "frage",
+ "beschreibung": "Nach 230: Ansage der sechs Behebungen (Schlange, Aufsicht E67, Qwen-2.1 frueh abweisen, guidance_applied, Innenkamera, geom_iou nicht anwendbar); pruefen, wie die Render-Umgebung fuer Qwen-2.1 nachgeruestet wuerde; Innenkamera und Aufsicht messen.",
+ "anweisung": "=== NACH 230: ANSAGE DER BEHEBUNGEN, QWEN-2.1 NACHRUESTEN PRUEFEN, INNENKAMERA MESSEN ===\n\nDanke fuer 230 — sechs Befunde an unserem Code sind behoben. Weil ihr abholer/homeworker aus diesem\nRepo ausfuehrt, kommt zuerst die Ansage, dann zwei kleine Messungen.\n\nTEIL A — ANSAGE (vor dem Pull lesen; das aendert sich bei euch)\n  A1 Der Abholer zaehlt --hoechstens N jetzt als N LAEUFE. Ein aufgehaltener Auftrag (Maengel, Karte\n     belegt, zu wenig Speicher) bleibt queued mit Grund, verbraucht aber keinen Platz mehr — ein\n     spaeterer Auftrag kann im selben Durchgang rechnen. (Euer Befund: die Schlange verstopfte.)\n  A2 Eine Kamera ueber dem Dach (z. B. KosmoOrbits «Uebersicht») wird jetzt GERECHNET statt abgewiesen\n     (Owner-Entscheid 67). Sie ist «geliefert»; qa.verdict.hinweise traegt «AUFSICHT: Die Kamera …\n     steht ueber dem Dach — gerechnet, aber nicht nach den Regeln fuer Architekturaufnahmen in\n     Augenhoehe beurteilt.» Auto-Auftraege brauchen damit eine Kamera mehr Rechenzeit.\n  A3 Ein Bildmodell, dessen Pipeline-Klasse die installierte diffusers nicht kennt (heute\n     qwen-image-2.1 in .venv-render), endet OHNE Blender- und Ladeversuch: Auftrag done,\n     lieferstatus «fehlgeschlagen», Satz «In der Render-Umgebung fehlt … — dieses Bildmodell ist hier\n     nicht rechenbar.» Bisher status error mit AttributeError.\n  A4 render-result.json traegt guidance_applied, wo es belegt ist: z-image-turbo false, qwen-edit mit\n     true_cfg true; sonst fehlt das Feld weiterhin, nie null.\n  A5 Bei bestelltem interior bekommt eine Kamera mit Geometrie in jedem Bildpunkt einen angepassten\n     Bildauftrag: «interior view, inside the room» vorn, Himmel-, Fassaden- und Aussenwoerter\n     gestrichen; vermerkt in qa.verdict.hinweise («INNENKAMERA …»).\n  A6 Deckt die Soll-Silhouette einer Kamera das ganze Bild, ist ihr geom_iou null statt 1.0;\n     geometry_gates geom_iou_status not_applicable; verdict.reason «GEOM_IOU NICHT ANWENDBAR, …».\n  A7 Nach dem Pull den Dienst neu starten (systemctl --user restart visbox-flaeche.service) und den\n     Abholer neu starten, falls er als Dienst laeuft.\n\nTEIL B — QWEN-IMAGE-2.1 NACHRUESTEN: NUR PRUEFEN, NICHTS AN .venv-render AENDERN\n  B1 In .venv-render: python -c \"import diffusers; print(diffusers.__version__, 'QwenImage21Pipeline' in dir(diffusers))\"\n     (erwartet 0.39.0, False).\n  B2 Im Forschungs-venv der Messungen 178/208: pip show diffusers (Fassung, Herkunft; bei Installation\n     aus dem Quellstand den Commit-Hash) und ob QwenImage21Pipeline in dir(diffusers) steht.\n  B3 Welche erste VEROEFFENTLICHTE diffusers-Fassung die Klasse fuehrt (pip index versions diffusers,\n     Probe je Kandidat in einem Wegwerf-venv, oder das Release-Changelog). Ist keine veroeffentlicht:\n     melden — Nachruesten hiesse dann Installation aus dem Quellstand.\n  B4 Lizenz: diffusers Apache-2.0 fuer die genannte Fassung bestaetigen, ebenso alles, was sie neu\n     nachzieht (vor allem transformers: Fassung und Lizenz).\n  B5 Rueckwaerts im Wegwerf-venv: z-image-turbo laedt nach dem Upgrade weiter (ZImageControlNetPipeline,\n     from_single_file) — ein Lauf vorher/nachher.\n  B6 Im Wegwerf-venv: render.pipeline_lage(\"qwen-image-2.1\") → rechenbar True? (Nur pruefen.)\n  Das eigentliche Nachruesten von .venv-render ist ein eigener Schritt mit Owner-Go — hier nur die\n  Grundlage dafuer.\n\nTEIL C — INNENKAMERA (A5) MESSEN (nur synthetisch, REGEL 3)\n  C1 Dieselbe Innenkamera wie in 230 (Demohaus/IFC mit interior rooms auto, Prompt mit «klarer Himmel»)\n     einmal rechnen. Zeigt das KI-Bild jetzt einen Innenraum? Steht «INNENKAMERA …» in hinweise?\n     geom_iou null und geom_iou_status not_applicable?\n  C2 Eine Uebersicht ueber dem Dach (A2): gerechnet, «AUFSICHT …» in hinweise, lieferstatus geliefert?\n\nZURUECK (auftraege/ergebnisse/auf-20261001-235.json)\n  - git log -1; Dienst/Abholer neu gestartet ja/nein.\n  - B1–B6 je Antwort (Fassungen, ja/nein, Lizenz).\n  - C1–C2 je ja/nein und ein Satz; Bilder nur beschrieben, nicht abgelegt.\n  - KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n\nNICHT TUN: .venv-render veraendern; KosmoOrbit veraendern; nichts committen ausser der Ergebnisdatei.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "das Demohaus von KosmoOrbit oder python3 tools/make_test_ifc.py build/n235/testbau.ifc --gelaende --raeume"
+ },
+ "params": {
+  "nach": "auf-20261001-230"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU nur fuer Teil C; Teil B in Wegwerf-venvs, .venv-render unberuehrt.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3).",
+   "Nur synthetische Geometrie (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; Neustarts.",
+  "B1–B6 je Antwort mit Fassung und Lizenz.",
+  "C1–C2 je ja/nein und Satz."
+ ],
+ "rang": 3
+}

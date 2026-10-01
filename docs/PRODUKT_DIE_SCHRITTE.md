@@ -1272,3 +1272,11 @@ und es ist das, worüber die Arbeit handelt.
 | Der Bau, Sitzung für Sitzung | `docs/sitzungen/`, `docs/PLAN.md` |
 | Die Oberfläche und ihre Auflagen | `oberflaeche/LIESMICH.md` |
 | Der Bildweg und seine Sperren | `oberflaeche/server.py`, `tests/test_oberflaeche.py` |
+
+**01.10.2026, abends — Befunde aus der Nachprobe 230 an unserem Code behoben.** Die
+Warteschlange zählt nur noch Läufe; eine Kamera über dem Dach wird gerechnet und als Aufsicht
+markiert; ein Bildmodell, das die installierte Bibliothek nicht kennt, wird vorher abgewiesen;
+die Innenkamera bekommt einen eigenen Bildauftrag, und ein Mass, das dort nichts misst, heisst
+«nicht anwendbar». Ein Befund blieb offen: Die IFC-Materialien gehen schon bei uns verloren
+(Arbeit für v0.1.8). Die HomeStation prüft das mit `auf-20261001-235`. Zwischenstand von 234:
+Visbox für den Mac baut am echten Mac in Xcode, alle 401 Proben grün.
