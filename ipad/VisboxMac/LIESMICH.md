@@ -42,7 +42,15 @@ macOS, ob «Visbox» an den Schlüsselbund darf → **«Immer erlauben»**.
 
 ## Einrichten
 
-Beim ersten Start geht das Blatt **«Einrichten»** auf (später über «Einrichten» oben rechts):
+Beim ersten Start geht das Blatt **«Einrichten»** auf. Später ist es **immer** erreichbar: über
+«Einrichten» in der Werkzeugleiste des Fensters, in der Startansicht oben rechts und im Band des
+Vorführmodus.
+
+**Stimmt das Kennwort nicht** (oder ist der Server ohne Kennwort hinter der Weiterleitung), weist
+die Tür des Heim-PC ab (401/403). Das ist **kein Vorführmodus** — der Heim-PC antwortet ja: Die
+App bleibt in der Startansicht (oder kehrt aus der Arbeit dorthin zurück), und die Zeile
+«Leitung» sagt, was zu tun ist. Ein Neustart hilft dabei nicht, weil das Kennwort im
+Schlüsselbund bleibt — nur «Einrichten».
 
 * **Adresse des Heim-PC** — `https://<rechner>.<netz>.ts.net:8443`. `<rechner>` und `<netz>`
   stehen in der Tailscale-App am Heim-PC (der volle Name des Rechners im eigenen

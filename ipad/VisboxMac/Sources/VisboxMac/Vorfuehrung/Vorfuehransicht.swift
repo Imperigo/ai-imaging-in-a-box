@@ -29,17 +29,28 @@ public struct Vorfuehransicht: View {
     public let seit: Date
     /// Wann zuletzt ein Versuch zurückkam (`Vorfuehrschalter.letzterVersuch`).
     public let letzterVersuch: Date?
+    /// Warum der letzte Versuch scheiterte (`Vorfuehrschalter.letzterGrund`) — als kleiner
+    /// Satz unter dem Band. Das Band sagt nur «antwortet nicht»; ob Tailscale am Mac aus ist
+    /// oder drüben kein Server läuft, steht erst hier.
+    public let letzterGrund: String?
     public let ipadVerbunden: Bool
     public let erneutVerbinden: () -> Void
+    /// Öffnet das Blatt «Einrichten». **Im Band, nicht nur in der Werkzeugleiste**: Stimmt
+    /// die Adresse nicht (vertippt, falscher Anschluss), antwortet niemand, und dann ist
+    /// das der Weg hinaus, den man vor Publikum sucht. `nil`: kein Knopf.
+    public let einrichten: (() -> Void)?
 
     public init(mappe: Vorfuehrmappe, ordner: URL, seit: Date, letzterVersuch: Date?,
-                ipadVerbunden: Bool, erneutVerbinden: @escaping () -> Void) {
+                letzterGrund: String? = nil, ipadVerbunden: Bool,
+                erneutVerbinden: @escaping () -> Void, einrichten: (() -> Void)? = nil) {
         self.mappe = mappe
         self.ordner = ordner
         self.seit = seit
         self.letzterVersuch = letzterVersuch
+        self.letzterGrund = letzterGrund
         self.ipadVerbunden = ipadVerbunden
         self.erneutVerbinden = erneutVerbinden
+        self.einrichten = einrichten
     }
 
     public var body: some View {
@@ -94,10 +105,23 @@ public struct Vorfuehransicht: View {
             Text(Vorfuehrsaetze.bandWort)
                 .font(Vorfuehrschrift.zahl(13, .semibold))
                 .foregroundStyle(Color(vorfuehr: Vorfuehrfarbe.violett))
-            Text(Vorfuehrsaetze.band(seit: seit, zone: zone))
-                .font(Vorfuehrschrift.text(14))
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(Vorfuehrsaetze.band(seit: seit, zone: zone))
+                    .font(Vorfuehrschrift.text(14))
+                    .fixedSize(horizontal: false, vertical: true)
+                if let grund = Vorfuehrsaetze.grund(letzterGrund) {
+                    Text(grund)
+                        .font(Vorfuehrschrift.text(12))
+                        .foregroundStyle(Color(vorfuehr: Blattfarbe.leise))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                }
+            }
             Spacer(minLength: 12)
+            if let einrichten {
+                Button(Vorfuehrsaetze.einrichten, action: einrichten)
+                    .buttonStyle(.bordered)
+            }
             Button(Vorfuehrsaetze.erneutVerbinden, action: erneutVerbinden)
                 .buttonStyle(.bordered)
                 .tint(Color(vorfuehr: Vorfuehrfarbe.violett))

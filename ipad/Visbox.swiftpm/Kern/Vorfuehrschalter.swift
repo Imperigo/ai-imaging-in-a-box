@@ -8,13 +8,22 @@ import Foundation
 // sie selbst vorruecken. Gesendet wird hier nichts (wie in `Anfragen.swift`): Der Schalter
 // sagt, WANN der naechste Versuch faellig ist, und bekommt gemeldet, wie er ausging.
 //
-// Vier Lagen:
+// Fuenf Lagen:
 //
 //   startet ──Antwort──> verbunden ──Fehlschlag──> getrennt ──Schwelle──> vorfuehrung
 //      │                    ^                         │                       │
 //      └──Schwelle──────────┼─────────────────────────┼──────> vorfuehrung    │
 //                           └────────── bestaetigte Antwort ──────────────────┘
 //
+//   aus jeder Lage ──Absage der Tuer (401/403)──> abgewiesen ──Fehlschlag──> getrennt
+//
+// * EINE ABSAGE DER TUER IST KEINE STILLE (Durchsicht 01.10.2026, H2). Bei falschem Kennwort
+//   oder vertippter Adresse antwortet der Heim-PC ja — nur nicht diesem Kennwort. Zaehlte
+//   die Absage wie ein Fehlschlag, stuende nach zwei Versuchen der Vorfuehrmodus da, mit dem
+//   Band «Der Heim-PC antwortet nicht» (falsch) und ohne Weg zu «Einrichten» (der Knopf
+//   stand nur in der verdeckten Startansicht); ein Neustart half nicht, weil das falsche
+//   Kennwort im Schluesselbund bleibt. `abgewiesen` loest den Modus darum nie aus und holt
+//   aus ihm heraus — gerechnet wird trotzdem nicht (`rechnenMoeglich` nur bei `verbunden`).
 // * NIE SOFORT. Ein einzelner Fehlschlag ist ein Ruckler (WLAN-Wechsel, Tailscale nach dem
 //   Aufwachen), kein Zustand. Erst die Schwelle schaltet um — auch beim Start ohne Leitung.
 // * ZURUECK NUR MIT BESTAETIGUNG. Eine Antwort, die nicht die des Heim-PC ist (unlesbar,
@@ -35,6 +44,10 @@ public enum Versuchsausgang: Equatable, Sendable {
     /// Etwas kam zurück, aber **nicht die bestätigte Antwort des Heim-PC** (unlesbar, eine
     /// Fehlerseite der Weiterleitung, ein anderer Dienst). Zählt wie ein Fehlschlag.
     case unbestaetigt(grund: String)
+    /// **Die Tür hat abgewiesen** — 401 (Kennwort oder Benutzer stimmt nicht) oder 403
+    /// (über die Weiterleitung ohne Kennwort). Der Heim-PC antwortet also; was fehlt, ist
+    /// das Einrichten. Zählt **nicht** als Fehlschlag und löst den Vorführmodus nie aus.
+    case abgewiesen(grund: String)
 }
 
 extension Versuchsausgang {
@@ -43,12 +56,17 @@ extension Versuchsausgang {
     /// dem `laeuft` ein Wahrheitswert ist (Protokoll §5). Eine 200 von etwas anderem (eine
     /// Seite der Weiterleitung, ein anderer Dienst am selben Anschluss) ist keine Rückkehr.
     ///
-    /// Eine Absage des Servers (401, falsches Kennwort) ist ebenfalls **unbestätigt**: Der
-    /// Heim-PC lebt, aber rechnen lässt er so nicht — und darum geht es hier. Welcher Satz
-    /// dazu am Mac steht, sagt die Startzeile «Heim-PC», nicht dieser Schalter.
+    /// Eine Absage der Tür (401, 403) ist **abgewiesen**, nicht unbestätigt: Der Heim-PC
+    /// lebt, und der Vorführmodus («antwortet nicht») wäre die falsche Auskunft. Der Grund
+    /// ist derselbe Satz wie in der Startzeile «Leitung» (`Startzeilen.satzZumStatus`) —
+    /// er sagt, was zu tun ist —, dahinter der Satz des Servers, der sagt, wo das Kennwort
+    /// steht.
     ///
     /// Kam gar keine Antwort (Frist, keine Leitung), meldet der Sender `.keineAntwort`.
     public static func aus(status: Int, daten: Data) -> Versuchsausgang {
+        if status == 401 || status == 403 {
+            return .abgewiesen(grund: absage(status: status, daten: daten))
+        }
         do {
             let o = try liesAntwort(status: status, daten: daten)
             guard o["laeuft"]?.alsWahrheit != nil else {
@@ -62,6 +80,15 @@ extension Versuchsausgang {
             return .unbestaetigt(grund: "Die Antwort des Heim-PC war nicht lesbar.")
         }
     }
+
+    /// Der Satz zu einer Absage: was am Mac zu tun ist, und — wenn der Server einen
+    /// lesbaren Satz mitschickte — was er selbst sagt.
+    static func absage(status: Int, daten: Data) -> String {
+        let mac = Startzeilen.satzZumStatus(status)
+        let server = Serverfehler.aus(status: status, daten: daten)
+        guard server.satzVomServer else { return mac }
+        return mac + " Der Heim-PC sagt: «\(server.satz)»"
+    }
 }
 
 /// Wo die Leitung zum Heim-PC steht.
@@ -73,6 +100,19 @@ public enum Leitungslage: String, Equatable, Sendable {
     /// Zuletzt kam keine Antwort; die Schwelle ist nicht erreicht.
     case getrennt
     /// **Der Vorführmodus** — vorher gerechnete Bilder, Rechnen gesperrt.
+    case vorfuehrung
+    /// Der Heim-PC antwortet, aber **seine Tür weist ab** (401/403). Kein Vorführmodus,
+    /// sondern die Startansicht mit dem Grund und «Einrichten».
+    case abgewiesen
+}
+
+/// Was das Fenster der Mac-App zeigt.
+public enum Fensterinhalt: String, Equatable, Sendable {
+    /// Die Startzeilen (Blatt 13) — mit «Einrichten» und dem Grund, warum etwas fehlt.
+    case start
+    /// Die Fläche des Heim-PC nach «Schon anfangen».
+    case arbeit
+    /// Der Vorführmodus (Blatt 13b).
     case vorfuehrung
 }
 
@@ -105,7 +145,7 @@ public struct Vorfuehrschalter: Equatable, Sendable {
     public private(set) var lage: Leitungslage
     /// **Seit wann** die Lage gilt: bei `startet` der Start, bei `getrennt` und
     /// `vorfuehrung` der erste Fehlschlag («antwortet nicht seit 14:02»), bei `verbunden`
-    /// die erste bestätigte Antwort.
+    /// die erste bestätigte Antwort, bei `abgewiesen` die erste Absage.
     public private(set) var seit: Date
     /// Fehlschläge in Folge seit der letzten bestätigten Antwort (oder dem Start).
     public private(set) var fehlschlaege: Int
@@ -150,9 +190,24 @@ public struct Vorfuehrschalter: Equatable, Sendable {
             letzterGrund = nil
             abstand = Vorfuehrschalter.lebenszeichenAbstand
             naechsterVersuch = jetzt.addingTimeInterval(abstand)
+        case .abgewiesen(let grund):
+            if lage != .abgewiesen {
+                seit = jetzt
+                stufe = 0
+            }
+            lage = .abgewiesen
+            // KEIN FEHLSCHLAG: Der Zaehler gilt der Stille, und die Tuer hat gesprochen. Der
+            // Abstand waechst trotzdem — an der Absage aendert erst das Einrichten etwas, und
+            // danach setzt `neuEingerichtet` ohnehin von vorn an.
+            fehlschlaege = 0
+            letzterGrund = grund
+            abstand = Vorfuehrschalter.abstand(stufe: stufe)
+            stufe += 1
+            naechsterVersuch = jetzt.addingTimeInterval(abstand)
         case .keineAntwort(let grund), .unbestaetigt(let grund):
-            if lage == .verbunden {
-                // DER ERSTE FEHLSCHLAG NACH EINER ANTWORT: «getrennt seit» beginnt hier.
+            if lage == .verbunden || lage == .abgewiesen {
+                // DER ERSTE FEHLSCHLAG NACH EINER ANTWORT (auch einer Absage — auch sie kam
+                // vom Heim-PC): «getrennt seit» beginnt hier.
                 lage = .getrennt
                 seit = jetzt
                 stufe = 0
@@ -179,6 +234,41 @@ public struct Vorfuehrschalter: Equatable, Sendable {
         naechsterVersuch = jetzt
     }
 
+    /// **Neu eingerichtet** (Adresse oder Kennwort): von vorn, als wäre die App eben
+    /// gestartet — der erste Versuch sofort fällig.
+    ///
+    /// Die bisherigen Fehlschläge galten einer anderen Adresse oder einem anderen Kennwort,
+    /// oft gar keiner Adresse (solange das Blatt «Einrichten» offen ist, scheitert jeder
+    /// Versuch). Blieben sie stehen, zeigte der Mac nach dem ersten Einrichten bis zum
+    /// nächsten Versuch — bis zu 60 s — den Vorführmodus, obwohl alles stimmt
+    /// (Durchsicht 01.10.2026, M1).
+    public mutating func neuEingerichtet(jetzt: Date) {
+        self = Vorfuehrschalter(start: jetzt)
+    }
+
+    /// Die **Heimleitung** (die Startzeilen, ein eigener Takt) hat gefragt und `befund`
+    /// bekommen. Sagt er etwas anderes, als dieser Schalter glaubt, ist der nächste Versuch
+    /// **jetzt** fällig — zwei unabhängige Takte sollen nicht bis zu einer Minute lang
+    /// Verschiedenes zeigen (Durchsicht 01.10.2026, M1):
+    ///
+    /// * 200, und der Schalter ist nicht `verbunden` → neu versuchen (die Leitung steht).
+    /// * 401/403, und der Schalter ist nicht `abgewiesen` → neu versuchen (die Tür spricht —
+    ///   das holt auch aus dem Vorführmodus, etwa wenn der Heim-PC mit neuem Kennwort
+    ///   wiederkommt).
+    ///
+    /// **Die Lage ändert sich hier nie.** Entschieden wird weiter nur am eigenen Versuch mit
+    /// der eigenen Frist; ein Befund der Heimleitung verkürzt nur das Warten darauf. Und ein
+    /// Fehlschlag der Heimleitung beschleunigt nichts: Er soll den Vorführmodus nicht früher
+    /// bringen, als die Schwelle es tut.
+    public mutating func heimleitungFand(_ befund: Leitungsbefund, jetzt: Date) {
+        guard case .antwort(let status, _) = befund else { return }
+        let stehtDort = status == 200 && lage != .verbunden
+        let sprichtDort = (status == 401 || status == 403) && lage != .abgewiesen
+        if stehtDort || sprichtDort {
+            erneutVerbinden(jetzt: jetzt)
+        }
+    }
+
     // ---------------------------------------------------------------- die Fragen
 
     /// Ob jetzt ein Versuch fällig ist.
@@ -191,6 +281,24 @@ public struct Vorfuehrschalter: Equatable, Sendable {
 
     /// Ob neu gerechnet werden kann: **nur bei stehender Leitung.**
     public var rechnenMoeglich: Bool { lage == .verbunden }
+
+    /// Was das Fenster zeigt — **entschieden hier, nicht in der Ansicht**, damit die Regel
+    /// unter Linux geprüft wird:
+    ///
+    /// 1. Noch nicht eingerichtet → die Startansicht (das Blatt «Einrichten» liegt darüber).
+    ///    Ohne Adresse ist «der Heim-PC antwortet nicht» keine Aussage über den Heim-PC.
+    /// 2. Im Vorführmodus → der Vorführmodus.
+    /// 3. Die Tür weist ab → **die Startansicht**, auch mitten in der Arbeit: Dort steht in
+    ///    der Zeile «Leitung», warum, und daneben «Einrichten». Die Fläche des Heim-PC
+    ///    bekäme ohnehin nur Absagen.
+    /// 4. Sonst die Fläche, wenn «Schon anfangen» gedrückt ist, und die Startansicht, wenn
+    ///    nicht.
+    public func fensterinhalt(eingerichtet: Bool, arbeitet: Bool) -> Fensterinhalt {
+        guard eingerichtet else { return .start }
+        if imVorfuehrmodus { return .vorfuehrung }
+        if lage == .abgewiesen { return .start }
+        return arbeitet ? .arbeit : .start
+    }
 
     /// Der Abstand nach `stufe` Fehlschlägen: 5, 10, 20, 40, dann 60 s.
     public static func abstand(stufe: Int) -> TimeInterval {
@@ -235,6 +343,9 @@ public enum Vorfuehrsaetze {
     public static let plakette = "Vorführmodus"
     public static let bandWort = "VORFÜHRMODUS"
     public static let erneutVerbinden = "Erneut verbinden"
+    /// Der Knopf zum Blatt «Einrichten» — **auch im Vorführmodus**: Stimmen Adresse oder
+    /// Kennwort nicht, ist das der einzige Weg hinaus.
+    public static let einrichten = "Einrichten"
     public static let rechnenTitel = "Neu rechnen"
     public static let rechnenKnopf = "Rechnen, gesperrt"
     public static let rechnenSatz = "geht erst wieder, wenn der Heim-PC antwortet. Zeichnen "
@@ -264,6 +375,17 @@ public enum Vorfuehrsaetze {
     public static func band(seit: Date, zone: TimeZone) -> String {
         "Der Heim-PC antwortet nicht (seit \(uhrzeit(seit, zone: zone))). Gezeigt werden "
             + "Bilder, die vorher gerechnet wurden — neue Läufe sind nicht möglich."
+    }
+
+    /// Der kleine Satz unter dem Band: **warum** der letzte Versuch scheiterte
+    /// (`Vorfuehrschalter.letzterGrund`) — «Zuletzt: Heim-PC antwortet nicht — in der Frist
+    /// kam nichts zurück. Läuft er?». Das Band sagt nur, dass er nicht antwortet; ob Tailscale
+    /// am Mac aus ist oder der Server drüben, steht erst hier. `nil`, wenn es keinen gibt.
+    public static func grund(_ grund: String?) -> String? {
+        guard let g = grund?.trimmingCharacters(in: .whitespacesAndNewlines), !g.isEmpty else {
+            return nil
+        }
+        return "Zuletzt: \(g)"
     }
 
     /// «vor 20 s», «vor 3 min», «um 13:40» — wie lange ein Zeitpunkt zurückliegt.

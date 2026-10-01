@@ -3,11 +3,19 @@ import VisboxKern
 
 /// Das eine Fenster: Startzeilen oder Arbeit, und beim ersten Start das Blatt «Einrichten».
 ///
-/// **Ordnet an, entscheidet nichts.** Ob der Mac bei stummem Heim-PC in den Vorführmodus
-/// geht (Blatt 13b, Strom C, Entscheid 40), entscheidet `Vorfuehrschalter` im Kern; seine
-/// Versuche gehen über dieselbe Leitung (`Heimleitung.versuch`). Solange der Mac noch
-/// eingerichtet wird, zeigt er keinen Vorführmodus — ohne Adresse ist «der Heim-PC antwortet
-/// nicht» keine Aussage über den Heim-PC.
+/// **Ordnet an, entscheidet nichts.** Was das Fenster zeigt — Start, Arbeit oder
+/// Vorführmodus (Blatt 13b, Strom C, Entscheid 40) —, entscheidet `Vorfuehrschalter` im Kern
+/// (`fensterinhalt`); seine Versuche gehen über dieselbe Leitung (`Heimleitung.versuch`).
+/// Solange der Mac noch eingerichtet wird, zeigt er keinen Vorführmodus, und weist die Tür
+/// des Heim-PC ab (401/403), die Startansicht mit dem Grund — nie den Vorführmodus.
+///
+/// **«Einrichten» ist immer erreichbar** (Durchsicht 01.10.2026, H2): in der Werkzeugleiste
+/// und im Band des Vorführmodus. Vorher stand der Knopf nur in der Startansicht, und die war
+/// im Vorführmodus verdeckt — bei vertippter Adresse gab es keinen Weg hinaus.
+///
+/// **Zwei Takte, ein Bild** (M1): Heimleitung und Vorführschalter fragen je für sich. Nach
+/// dem Einrichten beginnt der Schalter von vorn, und jede Frage der Heimleitung meldet ihren
+/// Befund an ihn; was daraus folgt, sagt der Kern (`heimleitungFand`).
 ///
 /// *Gebaut, am Gerät unbestätigt (01.10.2026).*
 struct Hauptfenster: View {
@@ -27,12 +35,15 @@ struct Hauptfenster: View {
 
     var body: some View {
         Group {
-            if vorfuehrung.schalter.imVorfuehrmodus && !leitung.braucheEinrichten {
+            switch vorfuehrung.schalter.fensterinhalt(eingerichtet: !leitung.braucheEinrichten,
+                                                      arbeitet: arbeitet) {
+            case .vorfuehrung:
                 Vorfuehrbereich(steuerung: vorfuehrung,
-                                ipadVerbunden: leitung.bild.ipad.steht)
-            } else if arbeitet {
+                                ipadVerbunden: leitung.bild.ipad.steht,
+                                einrichten: { einrichtenOffen = true })
+            case .arbeit:
                 Arbeitsansicht(leitung: leitung, zurueck: { arbeitet = false })
-            } else {
+            case .start:
                 Startansicht(leitung: leitung,
                              anfangen: { arbeitet = true },
                              einrichten: { einrichtenOffen = true })
@@ -44,6 +55,10 @@ struct Hauptfenster: View {
             }
         }
         .toolbar {
+            // IMMER DA, in jeder Ansicht: Falsches Kennwort und vertippte Adresse behebt nur
+            // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
+            Button(Vorfuehrsaetze.einrichten) { einrichtenOffen = true }
+                .help("Adresse des Heim-PC, Benutzer und Kennwort")
             // DIE ZAHL FUERS IPAD GILT ZEHN MINUTEN (Protokoll §8b). Danach, oder fuer ein
             // zweites iPad, gibt es hier eine neue — und hier vergisst der Mac ein iPad.
             if let dienst = vermittlung.dienst {
@@ -74,7 +89,25 @@ struct Hauptfenster: View {
             // NACH DEM EINRICHTEN kann das Kennwort neu sein, bei gleicher Adresse.
             if !offen {
                 vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+                // AUCH NACH «ABBRECHEN» gleich nachsehen statt bis zu 60 s zu warten; die Lage
+                // bleibt, bis die Antwort da ist.
+                vorfuehrung.erneutVerbinden()
             }
+        }
+        .onChange(of: leitung.eingerichtetUm) { _, _ in
+            // NEU EINGERICHTET: Die Fehlschlaege von vorher galten einer anderen Adresse
+            // oder keiner — der Schalter beginnt von vorn, statt den Vorfuehrmodus zu zeigen.
+            vorfuehrung.neuEingerichtet()
+        }
+        .onChange(of: leitung.letzteFrage) { _, frage in
+            if let frage { vorfuehrung.heimleitungFand(frage.befund) }
+        }
+        .onChange(of: vorfuehrung.schalter.lage) { _, lage in
+            guard lage == .abgewiesen else { return }
+            // DIE TUER WEIST AB: zurueck zum Start, wo der Grund steht — und die Startzeile
+            // gleich neu gefragt, damit sie dasselbe sagt wie der Schalter.
+            arbeitet = false
+            leitung.pruefeJetzt()
         }
         .onDisappear {
             vorfuehrung.halte()

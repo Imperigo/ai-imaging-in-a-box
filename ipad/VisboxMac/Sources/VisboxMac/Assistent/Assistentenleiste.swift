@@ -25,13 +25,31 @@ import VisboxKern
 ///
 /// Gesendet wird über eine `URLSession`, die von aussen kommt — so kann die App dieselbe
 /// Sitzung einsetzen wie für die anderen Wege (etwa mit eigener Prüfung des Zertifikats).
+/// Die Vorgabe ist **flüchtig** wie die der Heimleitung, nicht `URLSession.shared`
+/// (Durchsicht 01.10.2026, N2).
 struct AssistentAnschluss: @unchecked Sendable {
     let basis: URL
     let anmeldung: Anmeldung?
-    var sitzung: URLSession = .shared
+    var sitzung: URLSession = AssistentAnschluss.fluechtig
 
     /// Eine Frage an den Assistenten darf dauern: Der Kern wartet bis zu 300 s auf Ollama.
     static let frist: TimeInterval = 330
+
+    /// FLUECHTIG, wie `Heimleitung`: nichts zwischenspeichern, keine Kekse, nichts auf der
+    /// Platte. `URLSession.shared` legte Antworten — das Gespräch, die Vorschläge — in den
+    /// Zwischenspeicher auf der Platte und nähme Kekse an; beides hat auf einem Vorführ-Mac
+    /// nichts zu suchen. Eine Sitzung für alle Leisten, angelegt beim ersten Gebrauch.
+    static let fluechtig: URLSession = {
+        let art = URLSessionConfiguration.ephemeral
+        art.urlCache = nil
+        art.requestCachePolicy = .reloadIgnoringLocalCacheData
+        art.httpShouldSetCookies = false
+        art.httpCookieAcceptPolicy = .never
+        // DIE FRIST DER ANFRAGE GILT (`schicke` setzt sie); die der Sitzung darf ihr nicht
+        // zuvorkommen — ihre Vorgabe ist 60 s, eine Antwort des Modells dauert länger.
+        art.timeoutIntervalForRequest = frist
+        return URLSession(configuration: art)
+    }()
 
     func schicke(_ anfrage: Anfrage) async throws -> (status: Int, daten: Data) {
         guard let url = anfrage.adresse(basis: basis) else { throw URLError(.badURL) }
@@ -86,6 +104,8 @@ final class Assistentenmodell: ObservableObject {
     }
 
     func sende() async {
+        // ZU LANG ODER LEER: nichts geht hinaus, der Text bleibt im Feld, der Satz steht im
+        // Hinweis (der Kern entscheidet, `Assistentengespraech.sende`).
         guard let bitte = gespraech.sende(eingabe) else { return }
         eingabe = ""
         do {
@@ -93,7 +113,11 @@ final class Assistentenmodell: ObservableObject {
             let (status, daten) = try await anschluss.schicke(anfrage)
             gespraech.empfange(try Assistentenantwort.lies(status: status, daten: daten))
         } catch {
-            gespraech.scheitert(Self.satz(zu: error))
+            // DIE NACHRICHT ZURUECK INS FELD — sie kam nicht in den Verlauf. Nur, wenn das
+            // Feld noch leer ist: Was inzwischen getippt wurde, wird nicht ueberschrieben.
+            if let zurueck = gespraech.scheitert(Self.satz(zu: error)), eingabe.isEmpty {
+                eingabe = zurueck
+            }
         }
     }
 
@@ -146,7 +170,9 @@ struct Assistentenleiste: View {
                 .font(.headline)
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    ForEach(Array(modell.gespraech.beitraege.enumerated()), id: \.offset) {
+                    // `angezeigt`, nicht `beitraege`: Die Nachricht, die gerade unterwegs ist,
+                    // steht noch nicht im Verlauf, soll aber zu sehen sein.
+                    ForEach(Array(modell.gespraech.angezeigt.enumerated()), id: \.offset) {
                         _, beitrag in
                         Beitragsblase(beitrag: beitrag)
                     }
