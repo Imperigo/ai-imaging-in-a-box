@@ -50,7 +50,9 @@ struct Hauptfenster: View {
             }
         }
         .background {
-            if let dienst = vermittlung.dienst {
+            // DIE VERMITTLUNG MELDET NUR, WENN SIE AN IST (Entscheid 63): Sonst gehört die
+            // Zeile «iPad» dem direkten Weg über Tailscale und der Zahl aus «iPad koppeln».
+            if let dienst = vermittlung.dienst, vermittlung.angeboten {
                 Vermittlungsmelder(dienst: dienst, leitung: leitung)
             }
         }
@@ -59,12 +61,24 @@ struct Hauptfenster: View {
             // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
             Button(Vorfuehrsaetze.einrichten) { einrichtenOffen = true }
                 .help("Adresse des Heim-PC, Benutzer und Kennwort")
-            // DIE ZAHL FUERS IPAD GILT ZEHN MINUTEN (Protokoll §8b). Danach, oder fuer ein
-            // zweites iPad, gibt es hier eine neue — und hier vergisst der Mac ein iPad.
-            if let dienst = vermittlung.dienst {
+            // DAS IPAD (Entscheid 63): Unterwegs spricht es selbst über Tailscale mit dem
+            // Heim-PC. Der Mac holt dort nur die Zahl zum ersten Koppeln (`POST /api/kopplung`,
+            // zehn Minuten gültig) und zeigt sie in der Zeile «iPad». Die Vermittlung über den
+            // Mac (§8b) steht darunter, ausgeschaltet, bis man sie einschaltet — sie ist im
+            // fremden WLAN unverschlüsselt.
+            if leitung.adresse != nil {
                 Menu("iPad") {
-                    Button("Neue Zahl zum Koppeln") { dienst.neueZahl() }
-                    Button("iPad vergessen") { dienst.vergissIPad() }
+                    Button("iPad koppeln") { Task { await leitung.koppleIPad() } }
+                    if let dienst = vermittlung.dienst {
+                        Divider()
+                        Toggle("iPad über diesen Mac anbieten (unverschlüsselt)",
+                               isOn: Binding(get: { vermittlung.angeboten },
+                                             set: { vermittlung.schalteAnbieten($0) }))
+                        Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
+                            .disabled(!vermittlung.angeboten)
+                        Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }
+                            .disabled(!vermittlung.angeboten)
+                    }
                 }
             }
         }

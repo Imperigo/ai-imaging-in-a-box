@@ -422,7 +422,10 @@ public struct Startbild: Equatable, Sendable {
     /// die Vermittlung (Strom B); bis dahin wartet die Zeile — **nie «steht»**, weil kein
     /// iPad gesehen wurde.
     public static var ipadVorgabe: Zeilenstand {
-        .wartet(satz: "\(Marke.name) auf dem iPad öffnen, gleiches WLAN wie dieser Mac")
+        // ENTSCHEID 63 (01.10.2026): Das iPad spricht unterwegs selbst über Tailscale mit
+        // dem Heim-PC. Der Mac hat nur eine Aufgabe dabei — die Zahl zum ersten Koppeln.
+        .wartet(satz: "\(Marke.name) auf dem iPad öffnen — es verbindet sich selbst über "
+                + "Tailscale. Beim ersten Mal: Menü «iPad» → «iPad koppeln», die Zahl am iPad eingeben.")
     }
 
     public init(leitung: Zeilenstand, rechner: Zeilenstand, assistent: Zeilenstand,
@@ -550,3 +553,34 @@ public enum Heimerreichbarkeit: Equatable, Sendable {
         return false
     }
 }
+
+// ============================================================ die Zahl fürs iPad
+
+/// Die Antwort auf `POST /api/kopplung` (Entscheid 63): der Heim-PC öffnet eine Zahl, die das
+/// iPad über Tailscale gegen die Anmeldung tauscht. Die Mac-App zeigt sie in der Zeile «iPad».
+public enum Koppelzahl {
+    /// Die Zeile «iPad» aus der Antwort — oder ein Satz, warum es keine Zahl gibt. **Nie die
+    /// Zahl ohne die Adresse:** Am iPad braucht man beides, und die Adresse steht nur am Mac.
+    public static func zeile(status: Int, daten: Data, adresse: URL) -> Zeilenstand {
+        do {
+            let o = try liesAntwort(status: status, daten: daten)
+            guard let zahl = o["zahl"]?.alsText, zahl.count == 6,
+                  zahl.allSatisfy({ $0.isASCII && $0.isNumber }) else {
+                return .fehlt(grund: "Der Heim-PC hat keine Zahl geschickt.")
+            }
+            let minuten = max(1, Int(((o["gilt_noch_s"]?.alsZahl ?? 600) / 60).rounded()))
+            return .wartet(satz: "Zahl fürs iPad: \(gruppiert(zahl)) — gilt \(minuten) min. Am iPad "
+                + "im Koppelbildschirm die Adresse \(adresse.absoluteString) und diese Zahl eingeben.")
+        } catch let f as Serverfehler {
+            return .fehlt(grund: "Keine Zahl fürs iPad: \(f.satz)")
+        } catch {
+            return .fehlt(grund: "Keine Zahl fürs iPad: die Antwort war nicht lesbar.")
+        }
+    }
+
+    /// «123 456» — drei und drei, wie man sie abliest.
+    static func gruppiert(_ zahl: String) -> String {
+        String(zahl.prefix(3)) + " " + String(zahl.suffix(3))
+    }
+}
+

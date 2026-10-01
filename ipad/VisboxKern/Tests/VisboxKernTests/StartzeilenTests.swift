@@ -276,7 +276,8 @@ final class StartzeilenTests: XCTestCase {
                              assistent: .steht(satz: "c"))
         XCTAssertEqual(bild.ipad.wort, "wartet")
         XCTAssertTrue(bild.ipad.satz.hasPrefix(Marke.name + " auf dem iPad öffnen"), bild.ipad.satz)
-        XCTAssertTrue(bild.ipad.satz.contains("gleiches WLAN"), bild.ipad.satz)
+        XCTAssertTrue(bild.ipad.satz.contains("Tailscale"), bild.ipad.satz)
+        XCTAssertTrue(bild.ipad.satz.contains("iPad koppeln"), bild.ipad.satz)
         // VON AUSSEN GEMELDET, gilt das Gemeldete.
         let gemeldet = Startbild.aus(leitung: nil, heim: nil, adresseDa: true,
                                      ipad: .steht(satz: "verbunden"), vorher: nil, jetzt: t0)
@@ -353,5 +354,33 @@ final class StartzeilenTests: XCTestCase {
         e = e.nach(.wartet(satz: "keine Adresse"), jetzt: t2)
         XCTAssertEqual(e, .nichtErreichbar(seit: t1))
         XCTAssertFalse(e.erreichbar)
+    }
+
+    // ------------------------------------------------- die Zahl fürs iPad (Entscheid 63)
+
+    private let heimAdresse = URL(string: "https://rechner.netz.ts.net:8443")!
+
+    func testDieZahlFuersIPadStehtMitDerAdresseInDerZeile() {
+        let daten = Data(#"{"zahl": "123456", "gilt_noch_s": 600, "satz": "x"}"#.utf8)
+        let zeile = Koppelzahl.zeile(status: 200, daten: daten, adresse: heimAdresse)
+        XCTAssertEqual(zeile.wort, "wartet")
+        XCTAssertTrue(zeile.satz.contains("123 456"), zeile.satz)
+        XCTAssertTrue(zeile.satz.contains("10 min"), zeile.satz)
+        XCTAssertTrue(zeile.satz.contains(heimAdresse.absoluteString),
+                      "ohne die Adresse kann das iPad mit der Zahl nichts anfangen")
+    }
+
+    func testOhneZahlOderMitFehlerSagtDieZeileWarum() {
+        let ohne = Koppelzahl.zeile(status: 200, daten: Data(#"{"satz": "x"}"#.utf8),
+                                    adresse: heimAdresse)
+        XCTAssertEqual(ohne.wort, "fehlt")
+        let falsch = Koppelzahl.zeile(status: 200, daten: Data(#"{"zahl": "12a456"}"#.utf8),
+                                      adresse: heimAdresse)
+        XCTAssertEqual(falsch.wort, "fehlt")
+        let abgelehnt = Koppelzahl.zeile(
+            status: 400, daten: Data(#"{"fehler": "Ohne Kennwort gibt es nichts zu koppeln."}"#.utf8),
+            adresse: heimAdresse)
+        XCTAssertEqual(abgelehnt.wort, "fehlt")
+        XCTAssertTrue(abgelehnt.satz.contains("Ohne Kennwort"), abgelehnt.satz)
     }
 }

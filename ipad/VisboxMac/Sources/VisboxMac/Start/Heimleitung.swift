@@ -164,6 +164,30 @@ final class Heimleitung: ObservableObject {
         return naechster
     }
 
+    // ------------------------------------------------------------- die Zahl fürs iPad
+
+    /// «iPad koppeln» (Entscheid 63): fragt den Heim-PC nach einer neuen Zahl und zeigt sie
+    /// samt Adresse in der Zeile «iPad». Die Zahl tauscht das iPad über Tailscale selbst gegen
+    /// die Anmeldung; der Mac reicht dabei nichts weiter. Was der Kern daraus macht
+    /// (`Koppelzahl.zeile`), steht dort mit Proben.
+    @MainActor
+    func koppleIPad() async {
+        guard let basis = adresse else { return }
+        let anfrage: Anfrage
+        do {
+            anfrage = try Anfragen.kopplung(anmeldung: anmeldung)
+        } catch {
+            setzeIpad(.fehlt(grund: "Keine Zahl fürs iPad: die Anfrage liess sich nicht bauen."))
+            return
+        }
+        switch await hole(anfrage, basis: basis) {
+        case .antwort(let status, let daten, _):
+            setzeIpad(Koppelzahl.zeile(status: status, daten: daten, adresse: basis))
+        case .keine(let fehler):
+            setzeIpad(.fehlt(grund: "Keine Zahl fürs iPad: \(fehler.satz)"))
+        }
+    }
+
     // ------------------------------------------------------- für den Vorführmodus
 
     /// Ein Versuch für den Vorführschalter (Strom C): `GET /api/fortschritt` mit dessen Frist.
@@ -271,6 +295,8 @@ final class Heimleitung: ObservableObject {
         }
         var auftrag = URLRequest(url: ziel)
         auftrag.httpMethod = anfrage.methode.rawValue
+        // SEIT «iPad koppeln» GEHT HIER AUCH EIN POST HINAUS: Der Rumpf muss mit.
+        auftrag.httpBody = anfrage.rumpf
         if let frist { auftrag.timeoutInterval = frist }
         for (name, wert) in anfrage.kopfzeilen {
             auftrag.setValue(wert, forHTTPHeaderField: name)
