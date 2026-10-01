@@ -1,0 +1,30 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-226",
+ "art": "frage",
+ "beschreibung": "Antwort auf die Frage nach dem lokalen Pruef-Helfer: Owner-Entscheid Nr. 21 «ja, als Versuch» samt Bedingungen; bitte Abholer und Adresse bauen und den Wert melden.",
+ "anweisung": "=== OWNER-ENTSCHEID NR. 21: LOKALER PRUEF-HELFER ALS VERSUCH — ANTWORT AUF EURE FRAGE ===\n\nWORUM ES GEHT\n  Ihr habt gefragt (nach dem Pilot an 212 Teil A, Blatt erg-20261001-v017-h10-prepare-pilot.md),\n  ob KosmoPrepare/KosmoPublish einfache Pruefauftraege an einen lokalen Helfer adressieren will.\n  Der Owner hat am 01.10.2026 abends geantwortet: JA, ALS VERSUCH. Festgehalten in KosmoPrepare\n  docs/ENTSCHEIDE-2026-10-01.md Nr. 21 (Commit 6c8fd0c), mit diesen Bedingungen:\n  * Nur einfache Pruefungen: Staende nachsehen, Proben laufen lassen, Zeilen abschreiben.\n    Messungen mit Grafikkarte, Blender oder echten Projektdaten bleiben bei «local».\n  * Nur art «frage», mit einer Liste der Rechte je Auftrag (Ordner zum Lesen, erlaubte Befehle,\n    Ergebnisdatei).\n  * Belegpflicht: zu jeder Angabe die gesehene Ausgabezeile.\n  * Ihr prueft Ergebnis und Mitschnitt, bevor es hochgeht.\n\nWAS WIR VON EUCH BRAUCHEN\n  1. Den Abholer und die Adresse im Vertrag (euer Vorschlag «local-prepare» und das Feld «rechte»\n     sind uns recht). Der Vertrag gehoert der Bildkette — wir bauen daran nichts.\n  2. Eine Zeile in der Antwort, sobald es steht: der genaue Wert fuer «worker», die Form von\n     «rechte» (ein Beispiel), und ob aiimaging.auftrag.pruefe_auftrag ihn annimmt.\n  Danach legen wir den ersten kleinen Pruefauftrag ab: KosmoPrepare ./run_tests.sh und\n  tools/libs_pruefen.py auf main, je die letzte Zeile und der Rueckgabewert.\n\nWAS NICHT GETAN WERDEN SOLL\n  Nichts an KosmoPrepare oder KosmoPublish aendern. Keine Messungen mit Grafikkarte oder echten\n  Daten an den lokalen Helfer geben.\n",
+ "erstellt": "2026-10-01T23:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie"
+ },
+ "params": {
+  "owner_freigabe": "KosmoPrepare docs/ENTSCHEIDE-2026-10-01.md Nr. 21",
+  "kosmoprepare_stand_min": "6c8fd0c"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": []
+ },
+ "rueckgabe": [
+  "Wert fuer «worker», Beispiel fuer «rechte», ob pruefe_auftrag ihn annimmt."
+ ],
+ "rang": 5
+}

@@ -1,0 +1,212 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-223",
+ "worker": "local",
+ "status": "erledigt — A DONE: fest gehalten wie verlangt (fx/fy 336.1 unveraendert, Rig-Streuung 0), schrittweiser mapper lieferte (kein Rueckfall), aber 3 Modelle (176/28/28) und Verortung 11.61 m; A5: Merkmale je Bild Mittel 338, Minimum 15 (Rueckansicht Mittel 112). B: Satz unterscheidet jetzt «geprueft, nichts verdeckt» / «NICHT geprueft (ausgeschaltet)». C nicht da. Kein Code geaendert.",
+ "staende": {
+  "kosmoprepare": "f9cf677 (git pull --ff-only von 28ac92a; b102b0d und 3f2adc4 sind Vorfahren)",
+  "colmap": "COLMAP 4.2.1 «(Commit Unknown on Unknown with CUDA, std hash maps)»",
+  "brush": "brush-cli 0.3.0",
+  "ffmpeg": "8.0.1-3ubuntu2"
+ },
+ "szene": "neu gerendert mit szene.py aus 215 (unveraendert, Cycles auf der GPU) — dieselbe erfundene Szene wie 222: B 96 Bilder 960 x 540, C 48 Bilder 1920 x 960 equirect; Video libx264 crf 14, 12 Bilder/s (ffprobe 96 bzw. 48). Kette mit kette.py aus 217/222 (fps 12, 3000 Schritte, max_res 960, Profil rtx5090): A insta360 mit 48, B standard mit 96 Bildern.",
+ "A": {
+  "A1": "DONE (rc 0, DONE-Marke, splat.ply), 13:18:10–13:18:51 (41 s)",
+  "A2": {
+   "fest_gehalten_woertlich": "[13:18:20] fest gehalten: --GlobalMapper.ba_refine_focal_length 0 --GlobalMapper.ba_refine_principal_point 0 --GlobalMapper.ba_refine_extra_params 0 --GlobalMapper.refine_sensor_from_rig 0 --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_principal_point 0 --Mapper.ba_refine_extra_params 0 --Mapper.ba_refine_sensor_from_rig 0",
+   "kennt_nicht_woertlich": [
+    "[13:18:20] global_mapper kennt --GlobalMapper.ba_refine_sensor_from_rig nicht — bleibt verstellbar"
+   ],
+   "kennt_nicht_anzahl": 1,
+   "mapper_woertlich": "[13:18:20] mapper (schrittweise)",
+   "rueckfall": "nein — keine Zeile «Rueckfall auf global_mapper»; der schrittweise mapper lieferte das Modell, global_mapper lief nicht",
+   "stage_zeilen": [
+    "[13:18:10] STAGE: frame_extraction",
+    "[13:18:11] extracted 192 frames (Quelle: insta360)",
+    "[13:18:11] STAGE: colmap_feature_extraction",
+    "[13:18:13] STAGE: colmap_rig",
+    "[13:18:13] STAGE: colmap_matching",
+    "[13:18:19] STAGE: colmap_mapping",
+    "[13:18:36] COLMAP sparse model erstellt",
+    "[13:18:36] STAGE: brush_training (3000 steps)",
+    "[13:18:51] DONE: splat.ply erstellt"
+   ],
+   "mapper_protokoll": "5x «Discarding reconstruction» (3x «due to no initial pair», 2x «due to bad initial pair»), 3x «Keeping successful reconstruction», 23 Warnungen «Linear solver failure. Failed to compute a step: Eigen failure. Unable to perform dense Cholesky factorization.» (Ceres, laeuft durch); mapper 13:18:20–13:18:36 (16 s)"
+  },
+  "A3": {
+   "registriert_je_ansicht_modell_0": {
+    "back": 44,
+    "front": 44,
+    "left": 44,
+    "right": 44
+   },
+   "registriert_modell_0": "176 von 192",
+   "modelle": 3,
+   "registriert_je_modell": {
+    "0": 176,
+    "1": 28,
+    "2": 28
+   },
+   "registriert_je_ansicht_je_modell": {
+    "0": {
+     "back": 44,
+     "front": 44,
+     "left": 44,
+     "right": 44
+    },
+    "1": {
+     "back": 7,
+     "front": 7,
+     "left": 7,
+     "right": 7
+    },
+    "2": {
+     "back": 7,
+     "front": 7,
+     "left": 7,
+     "right": 7
+    }
+   },
+   "augenblicke_je_modell": {
+    "0": "5 bis 48 (44 Augenblicke)",
+    "1": "3 bis 9 (7)",
+    "2": "1 bis 7 (7)"
+   },
+   "deutung_modelle": "Modell 0 fehlen die Augenblicke 1–4; die Modelle 1 und 2 sind kleine Stuecke am Kreisanfang, die sich mit Modell 0 (5–9) und untereinander (3–7) ueberschneiden — 232 Eintraege fuer 192 Bilder.",
+   "count": 1256,
+   "ply_bytes": 297965,
+   "brush_durch": "ja (DONE, kein «early eof», kein «not found», keine Fehlerzeile im Protokoll)",
+   "vergleich_222": "222 (global_mapper, nicht fest): 1 Modell, 192/192, count 834"
+  },
+  "A4": {
+   "verortung_front": {
+    "paare": 44,
+    "massstab": 0.22629,
+    "rmse_m": 11.6055,
+    "max_m": 16.99928,
+    "schlechtestes": "front/0005",
+    "schlechtestes_rest_m": 16.9993,
+    "satz": "Verortet aus 44 Paaren: Massstab 0.2263, Restfehler 11.605 m (groesster 16.999 m bei «front/0005»)"
+   },
+   "verortung_alle_ansichten": {
+    "paare": 176,
+    "massstab": 0.22629,
+    "rmse_m": 11.6055,
+    "max_m": 16.99928,
+    "schlechtestes": "back/0005",
+    "schlechtestes_rest_m": 16.9993,
+    "satz": "Verortet aus 176 Paaren: Massstab 0.2263, Restfehler 11.605 m (groesster 16.999 m bei «back/0005»)"
+   },
+   "groesste_streuung_je_augenblick": {
+    "max_m": 9.409947828898294e-15,
+    "max_einheiten": 4.1583447479068616e-14,
+    "augenblicke_mit_4_ansichten": 44,
+    "deutung": "praktisch 0 (Rechengenauigkeit) — das Rig bleibt fest, die vier Zentren eines Augenblicks fallen zusammen"
+   },
+   "fx_fy_je_kamera": {
+    "kamera 1 (back)": [
+     336.1,
+     336.1
+    ],
+    "kamera 2 (front)": [
+     336.1,
+     336.1
+    ],
+    "kamera 3 (left)": [
+     336.1,
+     336.1
+    ],
+    "kamera 4 (right)": [
+     336.1,
+     336.1
+    ]
+   },
+   "fx_fy_vorgabe": [
+    336.1,
+    336.1
+   ],
+   "fx_fy_unveraendert": "ja — alle vier PINHOLE 336.1/336.1/480/480 nach dem mapper (222: bis fy 3.4)",
+   "weg_front_m": 36.96,
+   "weg_wahr_m_44_augenblicke": "67.5 (Kreis 12 m Radius, Augenblicke 5–48; voller Kreis 75.4)",
+   "grundlage": "Modell sparse/0 (das groesste); Wahrheit = kamera.json der Szene; Verortung mit core.splat_verortung.verorte (wie 222)",
+   "vergleich": "222 global nicht fest 11.865 m; 222 Diagnose global fest 10.510 m, schrittweise fest 4.640 m — jetzt in der Kette schrittweise fest 11.606 m"
+  },
+  "A5": {
+   "warum": "A4 ueber 1 m",
+   "merkmale_je_bild": {
+    "mittel": 338.2,
+    "minimum": 15,
+    "median": 344.5,
+    "maximum": 626,
+    "bilder": 192
+   },
+   "merkmale_je_ansicht": {
+    "back": {
+     "mittel": 112.0,
+     "minimum": 15
+    },
+    "front": {
+     "mittel": 547.9,
+     "minimum": 473
+    },
+    "left": {
+     "mittel": 346.9,
+     "minimum": 299
+    },
+    "right": {
+     "mittel": 346.0,
+     "minimum": 302
+    }
+   },
+   "bilder_unter_100_merkmalen": 20,
+   "paare_geometrisch_bestaetigt": 1970,
+   "inlier_median_je_paar": 19.0,
+   "quelle": "Datenbank db.db der Kette (Tabellen keypoints, two_view_geometries)",
+   "deutung": "Die Rueckansicht ist schwach (Mittel 112, Minimum 15, 20 Bilder unter 100 Merkmalen — dort fast nur Himmel und wiederholter Schachbrett-Boden); die drei anderen tragen 300–550 je Bild. Paare mit Median 19 Inliern sind wenig. Kamera und Rig bleiben jetzt fest (fx/fy 336.1, Streuung 0), die Befehlszeile tut also, was sie soll — der Fehler liegt in der Struktur der Szene, nicht erkennbar in der Kette. Gemessen, nicht bewiesen."
+  }
+ },
+ "gpu": {
+  "grenze_w": 400,
+  "limit_gesetzt_w": 400,
+  "proben_1s": 231,
+  "spitze_w": 221.65,
+  "um": "13:18:50",
+  "hinweis": "Cycles-Render beider Szenen, COLMAP-Merkmalssuche/Abgleich und brush auf der Karte; Buendelausgleich (mapper) auf der CPU. Karte erst nach h10-fertig und leerem Ollama-ps genommen (13:15:28, 38.6 W); GPU-Teile 13:15:28–13:19:19."
+ },
+ "fehler": null,
+ "B1": {
+  "grundlage": "splat.ply und Verortung aus dem Normalzweig dieses Auftrags (B: 96/96 registriert, f 641.59 px, 5153 Splats, Verortet aus 96 Paaren: Massstab 3.2277, Restfehler 0.128 m (groesster 0.240 m bei «frame_0010»)); Volumen mit den Schwellen aus 222 C Zusatz A (--parameter hoehe_min_m=0.8 flaeche_min_m2=0.8), Textur --px-pro-m 50. Neue Wolke, darum andere Volumen als 222.",
+  "volumen_satz_woertlich": "3 Volumen aus 1555 Punkten · 11 kleine Gruppen verworfen.",
+  "lauf_mit_verdeckung": {
+   "aufruf": "flaechen_textur.py --volumen … --colmap … --verortung … --aus … --px-pro-m 50",
+   "rc": 0,
+   "satz_woertlich": "13 Flaechen mit Bild, Atlas 766 × 191 px · 2 ohne Bild (V2_dach, V3_dach) · 2 hochgerechnet. Verdeckung gegen das Modell geprueft, nichts verdeckt.",
+   "bericht_verdeckung_geprueft": true
+  },
+  "lauf_ohne_verdeckung": {
+   "aufruf": "dasselbe mit --ohne-verdeckung",
+   "rc": 0,
+   "satz_woertlich": "13 Flaechen mit Bild, Atlas 766 × 191 px · 2 ohne Bild (V2_dach, V3_dach) · 2 hochgerechnet. Verdeckung NICHT geprueft (ausgeschaltet).",
+   "bericht_verdeckung_geprueft": false
+  },
+  "befund": "Der Satz unterscheidet jetzt beide Laeufe (222: immer «Verdeckung nicht geprueft.»). Der Satz steht auf stderr als einzige Zeile; stdout traegt nur die JSON-Zeile mit den Dateipfaden.",
+  "beobachtung": "1 von 13 Flaechen (eine Wand) bekommt mit Pruefung ein anderes Bild als ohne (Nachbarbild, 65 statt 66); im Bericht steht bei allen 13 «verdeckt» 0.0. Ursache nicht geprueft — nur beobachtet."
+ },
+ "C1": "nicht da — der Video-Ordner ist leer (0 Eintraege)",
+ "target_im_klon": "find target vor und nach: 9 Zeilen, identisch (Pfade und mtime) — nichts Neues; target/ entstand im Arbeitsordner (a/target, b/target)",
+ "aufgeraeumt": {
+  "arbeitsordner": "Arbeitsordner der Kette (Szenen, Videos, a, b, c) am Ende geloescht",
+  "skripte": "Pruef- und Auswerteskripte bleiben im Probe-Ordner der HomeStation (auf223)",
+  "nichts_committet": true,
+  "kein_code_geaendert": true,
+  "nichts_installiert": true,
+  "kein_vokabular_geholt": true
+ },
+ "abweichungen": [
+  "A: die Kette tut, was b102b0d verspricht (Kamera und Rig fest, fx/fy unveraendert 336.1, Streuung je Augenblick 0, schrittweise zuerst, kein Rueckfall) — aber die Verortung bleibt schlecht: rmse 11.606 m, max 17.0 m; Weg 37 m statt 67.5 m.",
+  "A: der schrittweise mapper liefert 3 Modelle (176 / 28 / 28 Bilder), Modell 0 ohne die Augenblicke 1–4; die zwei kleinen Modelle ueberschneiden sich mit Modell 0. In 222 (global) war es 1 Modell mit 192/192.",
+  "A: die Diagnose aus 222 (schrittweise, fest, von Hand: 192/192, 4.64 m) wiederholt sich in der Kette nicht (11.6 m). Unterschiede: neu gerenderte Szene und neue GPU-Merkmale; dazu haelt die Kette zusaetzlich die Bildmitte fest. Nicht weiter zerlegt.",
+  "A2: global_mapper kennt --GlobalMapper.ba_refine_sensor_from_rig nicht (die Zeile steht im Protokoll, wie vorgesehen) — ohne Folgen, weil global_mapper nicht lief.",
+  "A5: Rueckansicht schwach (Mittel 112, Minimum 15 Merkmale je Bild, 20 Bilder unter 100); median 19 Inlier je Paar."
+ ]
+}
