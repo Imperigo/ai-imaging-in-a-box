@@ -7693,5 +7693,6 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
 - [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
 - [ ] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
-- [ ] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
+- [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
+      *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
