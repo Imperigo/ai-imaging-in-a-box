@@ -1,0 +1,111 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-220",
+ "worker": "local",
+ "status": "erledigt",
+ "git_log_1": "72b2094 auf-217/219: B gruen (rmse 6 cm), 360° brush-FAIL (Huffman) und Lagen falsch; Volumen 0 mit Vorgabe-Schwellen, Farben vertauscht ohne Verdeckungspruefung",
+ "dienst_neu_gestartet_A1": "ja — 401 sagt jetzt: «Nicht angemeldet. Visbox läuft am Heim-PC als Dienst; Benutzername «visbox», das Kennwort steht dort in der Kennwortdatei (siehe betrieb/README.md).»",
+ "seed_angenommen": true,
+ "bilder": [
+  {
+   "datei": "bild.png",
+   "blick": "Blick von Süden",
+   "startwert": 0,
+   "zeichen": "bestanden",
+   "score": 0.912,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "172db46ac96b476d4314e252e678be8948356d1dabb2eaa3ae64f489562d0037"
+  },
+  {
+   "datei": "bild-2.png",
+   "blick": "Blick von Südost",
+   "startwert": 1,
+   "zeichen": "bestanden",
+   "score": 0.955,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "bfd6187a5074850a834ecbe8d69015607f429cb7f4ff380f2c1409c800f3c62c"
+  },
+  {
+   "datei": "bild-3.png",
+   "blick": "Blick von Osten",
+   "startwert": 2,
+   "zeichen": "bestanden",
+   "score": 0.754,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "dcc18f56c5b2d2f5cfb727895ed1b3a0a0a515dc778f96ee5143b73b4420a20c"
+  },
+  {
+   "datei": "bild-4.png",
+   "blick": "Blick von Nordost",
+   "startwert": 3,
+   "zeichen": "bestanden",
+   "score": 0.962,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "8f27e67ff17493f8453af4a9e5b59ca64365349be3601e9ee4d1185039ee05b8"
+  },
+  {
+   "datei": "bild-5.png",
+   "blick": "Blick von Norden",
+   "startwert": 4,
+   "zeichen": "bestanden",
+   "score": 0.882,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "6074b979787069c9deb515e1ccee8ba426e87a4d1fe2819d0a5634cad29fbaed"
+  },
+  {
+   "datei": "bild-6.png",
+   "blick": "Blick von Nordwest",
+   "startwert": 5,
+   "zeichen": "bestanden",
+   "score": 0.982,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "f46d0554f5d62923807ca85faf9f9c07c9f03eb586bb49d6b1fcb9cae7b2be1f"
+  },
+  {
+   "datei": "bild-7.png",
+   "blick": "Blick von Westen",
+   "startwert": 6,
+   "zeichen": "durchgefallen",
+   "score": 0.482,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "395010c9ce1a1797a183812b9f50502d68754943c0f0255b55fb3f0d90760921"
+  },
+  {
+   "datei": "bild-8.png",
+   "blick": "Blick von Südwest",
+   "startwert": 7,
+   "zeichen": "bestanden",
+   "score": 0.975,
+   "schwelle": 0.65,
+   "tag": "2026-10-01",
+   "sha256": "f37ae87511fb33b6ea1fd89269196e62ca695ab95f1033100f99df6266d9d52d"
+  },
+  {
+   "datei": "bild-9.png",
+   "blick": "Entwurf, Blick von Westsüdwest",
+   "startwert": 8,
+   "zeichen": "nicht-gemessen",
+   "score": null,
+   "schwelle": null,
+   "tag": "2026-10-01",
+   "sha256": "2df633d54b0c4a0e9982ca8b1f9ea44c5b8e92615be4673d7d835db5a5dcf7b5"
+  }
+ ],
+ "verschiedene_bilder": 9,
+ "bilder_gesamt": 9,
+ "werkzeug_ausgabe": "9 Bilder in Beispielmappe220/vorfuehrmappe.json",
+ "uebersprungen": "keine",
+ "ordner_bytes": 2904548,
+ "zip": true,
+ "zip_bytes": 2892307,
+ "sekunden_gesamt": 114.1,
+ "hinweis": "Testbau aus 218 wiederverwendet (build/vorfuehr/testbau.ifc, mit Gelaende); neue Mappe mappe220.",
+ "befund_westen": "Blick von Westen (Startwert 6) ist durchgefallen (0.482 < 0.65) — zu Recht: Augenurteil (vor dem Blick auf die Zahl festgehalten wurde nur dieses eine Bild angesehen): das Modell malt ein Bild im Bild mit schwarzem Rahmen, das Haus steht winzig am rechten Rand und folgt der Tiefenkarte nicht. Die Mappe zeigt es als «durchgefallen». Fuer eine Vorfuehrmappe mit lauter bestandenen Bildern: Westen mit anderem Startwert nachrechnen (nicht gemacht — der Auftrag gibt seed=i vor)."
+}
