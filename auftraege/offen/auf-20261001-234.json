@@ -1,0 +1,34 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-234",
+ "art": "frage",
+ "beschreibung": "Visbox 0.1.0 fuer den Mac am echten Mac mit Xcode bauen, starten und probieren — die erste Probe am Geraet (Startzeilen, Einrichten, Kennwort falsch, Flaeche, Assistent, iPad koppeln, Vorfuehrmodus).",
+ "anweisung": "=== VISBOX 0.1.0 FUER DEN MAC: AM ECHTEN MAC BAUEN, STARTEN, PROBIEREN ===\n\nDer Owner sagt, ihr habt Verbindung zu einem Mac mit Xcode. Die Mac-App von Visbox ist bisher nur in\nder Pruefstrecke uebersetzt worden — GESTARTET hat sie noch niemand. Dieser Auftrag ist die erste\nProbe am Geraet. Nur ansehen und berichten; nichts am Code aendern.\n\nTEIL A — BAUEN (am Mac, im Repo ai-imaging-in-a-box, Stand main)\n  A1 git pull --ff-only; xcodebuild -version und swift --version notieren.\n  A2 cd ipad/VisboxKern && swift test  → Anzahl Proben, Ergebnis.\n  A3 Die App bauen wie die Pruefstrecke (.github/workflows/ipad.yml, Job «mac»): in ipad/VisboxMac\n     swift build -c release --arch arm64; Buendel Visbox.app zusammensetzen (Contents/MacOS, Info.plist\n     aus App/Info.plist, Resources/Schriften aus ../Visbox.swiftpm/Schriften, Resources/Beispielmappe\n     aus Vorfuehrmappe/); codesign --force --deep --sign - Visbox.app. (Oder das ZIP «Visbox-mac» aus\n     dem letzten gruenen Lauf der Pruefstrecke nehmen — dann sagen, welcher.)\n  A4 Warnungen des Uebersetzers: Anzahl und die ersten zehn wortlich (ohne Pfade).\n\nTEIL B — STARTEN UND PROBIEREN\n  B1 Erster Start: Haelt Gatekeeper die App an? Weg ueber «Trotzdem oeffnen» noetig? (Bei lokal\n     gebauter App evtl. nicht — dann sagen.) Startet sie? Absturz? (Absturzbericht ohne Pfade.)\n  B2 Startansicht: erscheinen die vier Zeilen (Leitung, Rechner am Heim-PC, Assistent, iPad) und das\n     Blatt «Einrichten»? Schriften IBM Plex / Instrument Serif oder Systemschrift?\n  B3 Einrichten mit der Adresse eurer Visbox-Flaeche ueber Tailscale (https …ts.net:8443) und dem\n     Kennwort aus der Kennwortdatei (NIE ins Ergebnis). Danach: Was sagen die vier Zeilen (Wort +\n     Satz)? Kopfzeile «… · n von 4»?\n  B4 Falsches Kennwort einmal einrichten: Zeile «Leitung» sagt «Kennwort stimmt nicht»? KEIN\n     Vorfuehrmodus? «Einrichten» in der Werkzeugleiste erreichbar? Danach wieder richtig einrichten.\n  B5 «Schon anfangen»: Erscheint die Visbox-Flaeche (Webseite) mit Anmeldung, ohne nochmal nach dem\n     Kennwort zu fragen? Rechts die Seitenleiste «Assistent»?\n  B6 Assistent: «Zeig das Haus von Norden, Abendlicht, drei Varianten.» → Vorschlagskarte mit Saetzen\n     und Rechenzeit? «Anwenden» → laeuft ein Lauf an (Fortschritt in der Flaeche)? (Nur wenn die\n     Karte frei ist; sonst «nicht gerechnet».)\n  B7 Menue «iPad» → «iPad koppeln»: Zeile «iPad» zeigt sechs Ziffern und die Adresse? (Die ZAHL NICHT\n     ins Ergebnis, nur ja/nein.)\n  B8 Vorfuehrmodus: Adresse einmal absichtlich auf einen nicht erreichbaren Rechner einrichten\n     (z. B. https://nicht-da.invalid:8443) — kommt nach etwa 10 s der violette Vorfuehrmodus mit den\n     9 Bildern (7 bestanden, 1 durchgefallen, 1 Entwurf), Datum an jedem Bild? «Einrichten» im Band?\n     Danach wieder richtig einrichten → zurueck?\n  B9 Was ist anders als erwartet, haesslich, abgeschnitten, unlesbar? Je ein Satz.\n\nZURUECK (auftraege/ergebnisse/auf-20261001-234.json)\n  - Fassungen, git log -1, A2–A4.\n  - B1–B9 je: ja/nein + ein Satz, was zu sehen war.\n  - Bildschirmfotos NUR, wenn weder Adresse noch Rechner-, Benutzer- oder Netzname zu sehen ist; sonst\n    nur Worte. Ablage als auftraege/ergebnisse/auf-20261001-234-<stichwort>.png (klein halten).\n  - KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter, Koppelzahlen.\n\nNICHT TUN: Code aendern; die App ausserhalb dieses Macs verteilen; die richtige Koppelzahl verwenden;\nnichts committen ausser Ergebnisdatei und Bildschirmfotos.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie noetig (Mappe der Visbox-Flaeche)"
+ },
+ "params": {
+  "version": "0.1.0"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Am Mac; GPU am Heim-PC nur fuer B6, und nur wenn frei.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie Kennwort oder Koppelzahl ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Fassungen, git log -1, Kern-Proben, Bau, Warnungen.",
+  "B1–B9 je ja/nein und ein Satz.",
+  "Bildschirmfotos nur ohne Namen/Adressen."
+ ],
+ "rang": 2
+}
