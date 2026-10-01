@@ -260,6 +260,12 @@ def test_der_faden_antwortet_ueber_einen_echten_socket(rundruf, angabe):
         assert srv["anschluss"] == 8731
         assert "fassung=1" in txt["texte"]
         assert _nach_typ(a, rundruf.TYP_PTR)[0]["ziel"] == angabe.instanz
+        # DER ZAEHLER STEIGT NACH DEM SENDEN, im Faden des Rundrufs — die Antwort kann also
+        # schon hier sein, bevor er zaehlt. Gelesen wurde bis zum 01.10.2026 sofort; auf einem
+        # schnellen Rechner fiel die Probe darum regelmaessig, ohne dass etwas falsch war.
+        frist = time.monotonic() + 2.0
+        while r.beantwortet < 1 and time.monotonic() < frist:
+            time.sleep(0.01)
         assert r.beantwortet == 1
     finally:
         r.beende()

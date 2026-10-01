@@ -4372,6 +4372,76 @@ erste: v0.1.7, 01.–03.10.2026 (`docs/PLAN_V017_2026-10-01.md`).
 gebaut, am echten Gerät aber noch nicht bestätigt sind, auf einmal am laufenden KosmoOrbit prüft
 (Entscheid 55).
 
+**Vorführmappe** — Ein Ordner mit vorher gerechneten Bildern und einer Beschreibungsdatei
+(`vorfuehrmappe.json`). Die Mac-App bringt ihn mit, damit sie ohne Heim-PC etwas zeigen kann;
+jedes Bild trägt sein Prüfzeichen und den Tag, an dem es gerechnet wurde. Erzeugt mit
+`tools/vorfuehrmappe.py` (Plan v0.1.7, Strom C).
+
+**Platzhalter (Beispielmappe)** — Graue Ersatzbilder mit von Hand gesetzten Prüfzeichen. Sie
+zeigen, wie die Vorführmappe aussieht, bis der Heim-PC echte Bilder gerechnet hat — und sagen
+das an jedem Bild.
+
+**Wachsender Abstand (Backoff)** — Nach jedem erfolglosen Versuch wartet das Programm länger
+bis zum nächsten, in Visbox 5, 10, 20, 40, dann 60 Sekunden, damit es den Heim-PC nicht
+ständig anklopft. «Erneut verbinden» setzt den Abstand zurück.
+
+**Bestätigte Antwort** — Eine Antwort, an der das Programm sicher erkennt, dass wirklich der
+Heim-PC geantwortet hat und nicht eine Zwischenstation. Nur sie holt die Mac-App aus dem
+Vorführmodus zurück.
+
+**Begleitdaten (eines Bildes)** — Unsichtbare Zusatztexte in einer Bilddatei, etwa Pfad,
+Rechnername oder der Bildauftrag. Sie werden vor dem Weitergeben entfernt (Regel 3).
+
+**Formatkennung** — Der feste Name eines Dateiformats samt Fassung, etwa
+`visbox.vorfuehrmappe/v1`. Daran erkennt ein Programm, ob es eine Datei lesen kann; der Name
+soll eine Umbenennung der App überleben.
+
+**Bündel (.app)** — Der Ordner, den der Mac als *ein* Programm zeigt. Darin liegen das
+Programm selbst, seine Angaben (*Info.plist*) und Beigaben wie Schriften und die
+Beispielmappe.
+
+**Info.plist** — Die Angabenliste einer App — Name, Kennung, nötige Mac-Fassung, Erlaubnisse
+wie «lokales Netzwerk» —, die das System liest, bevor es die App startet.
+
+**«Trotzdem öffnen»** — Der Knopf in den Systemeinstellungen (Datenschutz & Sicherheit), mit
+dem man auf macOS 15 eine nicht von Apple beglaubigte App einmal freigibt (siehe
+*Gatekeeper*).
+
+**Startzeile** — Eine der vier Zeilen beim Öffnen der Mac-App (Leitung, Rechner am Heim-PC,
+Assistent, iPad). Jede sagt, ob ihr Teil steht, lädt, wartet oder fehlt — und warum
+(Entscheid 38).
+
+**Anschluss (Port)** — Die Nummer hinter einer Adresse, mit der ein Rechner mehrere Dienste
+auseinanderhält. Die Visbox-Fläche hört am Heim-PC auf 8731, von unterwegs erreichbar über die
+Tailscale-Weiterleitung auf 8443.
+
+**Basic-Anmeldung (Herausforderung)** — Die einfachste Anmeldung im Web: Der Server fragt nach
+Benutzer und Kennwort, bevor er etwas herausgibt, und das Programm schickt beides bei jeder
+Anfrage mit. Die Leitung muss darum verschlüsselt sein — bei Visbox unterwegs über Tailscale.
+
+**WKWebView** — Apples eingebautes Browserfenster für Apps. Die Mac-App zeigt darin die
+Visbox-Fläche des Heim-PC, statt sie nachzubauen.
+
+**Gedankentext (thinking)** — Was ein Sprachmodell wie Qwen3 vor der Antwort für sich
+«überlegt». Visbox liest ihn getrennt mit (`think: true`) und zeigt ihn nie an.
+
+**Entladen (des Sprachmodells)** — Das Sprachmodell von der Grafikkarte nehmen
+(`keep_alive: 0`), damit das Bildmodell dort Platz hat. Geschieht bei jedem «Anwenden», bevor
+gerechnet wird; der Wechsel kostet am Heim-PC rund 4 Sekunden.
+
+**Werkzeugbeschreibung** — Der Text, mit dem dem Sprachmodell gesagt wird, welche Handgriffe
+es vorschlagen darf und mit welchen Angaben. Der Assistent von Visbox hat drei: Standpunkt,
+Bildauftrag, Varianten.
+
+**Vorschlagskarte** — Der violett gerahmte Kasten in der Seitenleiste, der zeigt, was der
+Assistent einstellen würde. Gerechnet wird erst nach «Anwenden» (Entscheid 41).
+
+**Verlauf (eines Gesprächs)** — Die früheren Beiträge, die bei jeder Frage mitgeschickt werden,
+damit der Assistent weiss, worum es ging. Das Sprachmodell selbst behält nichts.
+
+**nvidia-smi** — Ein Programm des Grafikkartentreibers, das sagt, wie viel Grafikspeicher frei
+ist. Der Heim-PC liest damit die Zeile «Rechner am Heim-PC» der Mac-App.
+
 **Fassung (je Knotenart)** — Eine Zahl je Rechenschritt der Bildkette (Geometrie, Blender,
 Bild, Prüfung …), die in den Schlüssel des Zwischenspeichers eingeht. Ändert sich, was ein
 Schritt bei gleichen Eingaben herausgibt — etwa weil ein Fehler behoben wurde —, wird seine
@@ -6195,7 +6265,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
+| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |

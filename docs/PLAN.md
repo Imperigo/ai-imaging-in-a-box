@@ -7686,11 +7686,16 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Owner:** zwanzig Fragen zu v0.1.7 beantwortet. *(01.10.2026, Entscheide 43–62)*
 - [x] **Kern:** Bauplan `docs/PLAN_V017_2026-10-01.md`.
 - [x] **cloud:** `auf-20261001-216` — Antwort an Int 1: Lieferstatus null zulassen, Lizenzmarke lesen (bis v1.0 offen), Union-2.1 und Formprüfung nicht bauen.
-- [ ] **Kern (A):** Mac-App `ipad/VisboxMac` — Startzeilen, Kennwort im Schlüsselbund, «Schon anfangen», ZIP aus der Prüfstrecke.
+- [x] **Kern (A):** Mac-App `ipad/VisboxMac` — Startzeilen, Kennwort im Schlüsselbund, «Schon anfangen», ZIP aus der Prüfstrecke.
+      *(01.10.2026: gebaut, in der Mac-Prüfstrecke beim ersten Lauf übersetzt und als ZIP abgelegt; am Gerät unbestätigt)*
 - [ ] **Kern (B):** iPad über den Mac — Bonjour, Vermittler, Erlaubnis «lokales Netzwerk».
-- [ ] **Kern (C):** Vorführmodus — Mappenformat, Umschalten von selbst (Blatt 13b).
-- [ ] **local (C3+D4):** Beispielmappe rechnen (synthetisch) und Assistent messen — ein Auftrag, Donnerstag.
-- [ ] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
+- [x] **Kern (C):** Vorführmodus — Mappenformat, Umschalten von selbst (Blatt 13b).
+      *(01.10.2026: `tools/vorfuehrmappe.py`, Kern `Vorfuehrmappe`/`Vorfuehrschalter`, verdrahtet; Platzhalter-Mappe im Bündel; am Gerät unbestätigt)*
+- [x] **local (C3+D4):** Beispielmappe rechnen (synthetisch) und Assistent messen — ein Auftrag, Donnerstag.
+      *(abgelegt schon am 01.10.2026 als `auf-20261001-218`, weil der Code fertig war)*
+- [ ] **local:** `auf-20261001-218` beantworten.
+- [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
+      *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
 - [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
 - [ ] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
