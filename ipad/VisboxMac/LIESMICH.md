@@ -74,7 +74,7 @@ App bringt Tailscale nicht selbst mit.
 | Leitung zum Heim-PC | `GET /api/fortschritt` | **steht** (mit Antwortzeit) · **fehlt**: Kennwort stimmt nicht (401), über die Weiterleitung ohne Kennwort (403), Heim-PC antwortet nicht, «Tailscale am Mac an?» (Name oder Zertifikat) · **wartet**: noch keine Adresse |
 | Rechner am Heim-PC | `GET /api/heim` | **steht**: Blender da, Grafikkarte frei · **fehlt**: Blender fehlt · **wartet**: Leitung steht nicht, oder der Heim-PC kennt die Frage noch nicht (älterer Server) |
 | Assistent | `GET /api/heim` | **steht** (Modell geladen) · **lädt** (seit …) · **wartet** (entladen, solange ein Bild rechnet) · **fehlt** |
-| iPad | Vermittlung (Strom B) | bis dahin **wartet** — «Visbox auf dem iPad öffnen, gleiches WLAN wie dieser Mac» |
+| iPad | Vermittlung (Strom B) | **Vorgabe aus** (Owner-Entscheid 01.10.2026: unterwegs spricht das iPad über Tailscale direkt mit dem Heim-PC): **wartet** — «Aus — im Menü «iPad» einschalten, wenn ein iPad mitkommt.» Eingeschaltet: **wartet** auf das iPad oder mit der Zahl zum Koppeln · **steht** (letzte Anfrage vor höchstens 30 s) · **fehlt** mit Grund. Warum aus: Die Strecke iPad ↔ Mac ist unverschlüsselt (Protokoll §8b, «Übertragung») |
 
 Die Kopfzeile ist gezählt («baut auf · 2 von 4»). Gefragt wird beim Start und dann alle 5 bis
 60 Sekunden, mit wachsendem Abstand; ändert sich etwas oder lädt eine Zeile, wieder nach 5.

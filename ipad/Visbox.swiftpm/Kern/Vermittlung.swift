@@ -91,12 +91,18 @@ public enum Heimergebnis: Equatable, Sendable {
     case ungewiss(grund: String)
 
     /// Wenn keine Antwort kam. Ein `GET` ändert drüben nichts: Dann ist es gleich, ob er
-    /// ankam, und es heisst «nicht erreicht». Bei einem `POST` entscheidet, ob schon Bytes
-    /// hinaus waren (`bytesHinaus`) — dieselbe Regel wie im Parkfach des iPad.
-    public static func ohneAntwort(grund: String, methode: String,
-                                   bytesHinaus: Int64) -> Heimergebnis {
-        if methode == "GET" || bytesHinaus <= 0 { return .nichtErreicht(grund: grund) }
-        return .ungewiss(grund: grund)
+    /// ankam, und es heisst «nicht erreicht». Ein `POST` ist **ungewiss**, sobald Rumpf-Bytes
+    /// hinaus waren (`bytesHinaus`, dieselbe Regel wie im Parkfach des iPad) **oder die
+    /// Leitung zum Heim-PC stand** (`leitungStand`: die Anfrage begann hinauszugehen).
+    ///
+    /// *Warum beides (Sicherheitsdurchsicht vom 01.10.2026):* `POST /api/abbrechen` hat
+    /// keinen Rumpf. Gezählt wurden nur Rumpf-Bytes — er galt darum immer als «nicht
+    /// erreicht», auch wenn sein Kopf drüben angekommen war und der Lauf schon anhielt.
+    public static func ohneAntwort(grund: String, methode: String, bytesHinaus: Int64,
+                                   leitungStand: Bool) -> Heimergebnis {
+        if methode == "GET" { return .nichtErreicht(grund: grund) }
+        if bytesHinaus > 0 || leitungStand { return .ungewiss(grund: grund) }
+        return .nichtErreicht(grund: grund)
     }
 }
 
@@ -133,9 +139,70 @@ public enum Vermittlungsregel {
                                           "Basic realm=\"\(bereich)\", charset=\"UTF-8\"")])
     }
 
-    /// Der Pfad, wie er verglichen wird: **dekodiert.** Der Server dekodiert nicht — aber
-    /// ein `/api/verbinde%6E` soll nicht am Mac vorbei zum Heim-PC gehen, nur weil zwei
-    /// Leser es verschieden lesen.
+    /// **Die Positivliste: nur diese Wege reicht der Mac weiter** — genau die, die die
+    /// iPad-App ruft, verglichen **wörtlich** an Art und Pfad (Sicherheitsdurchsicht vom
+    /// 01.10.2026).
+    ///
+    /// *Warum eine Liste der erlaubten und nicht der verbotenen:* Bis dahin ging alles
+    /// weiter, was nicht `verbinden` oder `koppeln` hiess — und `POST /api/verbinden;x` hiess
+    /// am Mac nicht so. Python liest den Pfad mit `urlparse` ohne `;x`, prüfte die Zahl
+    /// gegen **seine** Kopplung und gab bei richtiger Zahl das Kennwort **des Heim-PC**
+    /// heraus. Zwei Leser lesen denselben Pfad verschieden; eine Liste, die nur wörtlich
+    /// vergleicht, lässt dazwischen nichts durch — kein `;`, kein `%`, kein `//`, keine
+    /// andere Schreibweise. *Was der Mac nicht kennt, reicht er nicht weiter.*
+    ///
+    /// Was die App ruft (gesucht in `ipad/Visbox.swiftpm`, 01.10.2026): die Mappe, den
+    /// Laufstand und die Bilder lesen; Skizzen ablegen; rechnen lassen (Startwert-Reihe aus
+    /// `Rechenbestellung`, Skizzen und Ebenen-Reihen); benennen; abbrechen. Ruft die App
+    /// einen weiteren Weg, gehört er hierher — sonst sagt der Mac 404, und die Probe
+    /// `VermittlungTests.testJederWegIstWeitergereichtOderBewusstNicht` verlangt den Entscheid.
+    public static let weiterreichbar: [Weg] = [
+        Wege.projekt, Wege.fortschritt, Wege.bild,
+        Wege.skizze, Wege.rechne, Wege.rechneSkizze, Wege.benennen, Wege.abbrechen,
+    ]
+
+    /// Die Wege des Servers, die **bewusst nicht** weitergehen — mit Grund:
+    ///
+    /// * `verbinden`, `koppeln` — beantwortet der Mac selbst; drüben gäbe es das Kennwort
+    ///   des Heim-PC.
+    /// * `seite`, `seiteLang` — die Webseite des Heim-PC gehört dem Browser zuhause, und sie
+    ///   lädt die Knotenansicht und alle übrigen Wege nach.
+    /// * `anlegen` — nimmt **Pfade auf dem Heim-PC** (`ordner`, `modell`): Wer den Mac hat,
+    ///   soll dort nicht Dateien benennen können. Die App ruft es nicht.
+    /// * `einstellungen` — schreibt Einstellungen in die Mappe; die App ruft es nicht.
+    /// * `heim` — die Startzeilen fragt die Mac-App selbst ab, direkt; das iPad nicht.
+    /// * `assistent`, `assistentAnwenden` — der Assistent sitzt in der Mac-App, die direkt
+    ///   zum Heim-PC spricht; das iPad ruft ihn nicht.
+    ///
+    /// Knotenansicht (`/knoten…`) und Brücke (`/bruecke…`) stehen nicht einmal in `Wege`.
+    public static let nichtWeitergereicht: [Weg] = [
+        Wege.verbinden, Wege.koppeln, Wege.seite, Wege.seiteLang, Wege.anlegen,
+        Wege.einstellungen, Wege.heim, Wege.assistent, Wege.assistentAnwenden,
+    ]
+
+    /// Ob diese Anfrage **wörtlich** auf der Positivliste steht.
+    static func istWeiterreichbar(_ kopf: Anfragekopf) -> Bool {
+        weiterreichbar.contains { $0.methode.rawValue == kopf.methode && $0.pfad == kopf.pfad }
+    }
+
+    /// **Wie gross der Rumpf der zwei Koppelwege höchstens ist: 1 KiB.** Die App schickt
+    /// `{"pin":"123456"}`, 16 Bytes; die Koppelseite dasselbe. Begrenzt **am Kopf**, denn
+    /// diese zwei Wege erreicht auch, wer nicht angemeldet ist — vorher durfte ein Fremder
+    /// dort 4 MiB JSON abladen, die der Mac auf dem Hauptfaden las (Sicherheitsdurchsicht
+    /// vom 01.10.2026).
+    public static let koppelRumpfGrenze = 1024
+
+    /// Die Ablehnung einer Zahl, die nicht mehr gilt — derselbe Satz wie bei jeder
+    /// Ablehnung (Protokoll §7), **ohne den Rumpf zu lesen.**
+    public static var koppelAblehnung: Leitungsantwort {
+        .json(.objekt(["verbunden": .wahrheit(false),
+                       "satz": .text(Vermittlerkopplung.satzFuerDasGeraet)]), status: 403)
+    }
+
+    /// Der Pfad, wie er für die zwei Koppelwege verglichen wird: **dekodiert.** Der Server
+    /// dekodiert nicht — aber ein `/api/verbinde%6E` soll der Mac als das erkennen, was ein
+    /// anderer Leser darin sehen könnte. (Weiter ginge es ohnehin nicht: Die Positivliste
+    /// vergleicht wörtlich.)
     static func vergleichspfad(_ kopf: Anfragekopf) -> String {
         kopf.pfad.removingPercentEncoding ?? kopf.pfad
     }
@@ -165,19 +232,40 @@ public enum Vermittlungsregel {
     /// * `POST /api/verbinden`, solange am Mac eine Kopplung **besteht** (auch eine
     ///   verbrauchte oder abgelaufene: dann folgt der gleichbleibende Ablehnungssatz);
     /// * `GET /koppeln`, nur solange die Zahl **gilt**.
+    ///
+    /// **Die zwei Koppelwege entscheidet der Kopf ganz** (Sicherheitsdurchsicht vom
+    /// 01.10.2026): mehr als `koppelRumpfGrenze` angekündigt — 413; eine Zahl, die nicht mehr
+    /// gilt — gleich der Ablehnungssatz, ohne dass ein Byte des Rumpfs gelesen ist. Beides
+    /// auch angemeldet: Diese Wege beantwortet immer der Mac, und mehr als eine Zahl gehört
+    /// nicht hinein.
     public static func vorab(_ kopf: Anfragekopf, zugang: Vermittlerzugang,
                              kopplung: Kopplungsstand?) -> Vermittlung? {
-        if angemeldet(kopf, zugang: zugang) { return nil }
-        if istVerbinden(kopf), kopplung != nil { return nil }
-        if istKoppelseite(kopf), kopplung == .offen { return nil }
-        return .abweisen(tuer)
+        let drin = angemeldet(kopf, zugang: zugang)
+        if istVerbinden(kopf) {
+            guard drin || kopplung != nil else { return .abweisen(tuer) }
+            if kopf.laenge > koppelRumpfGrenze { return .abweisen(koppelZuGross) }
+            if let kopplung, kopplung != .offen { return .abweisen(koppelAblehnung) }
+            return nil
+        }
+        if istKoppelseite(kopf) {
+            guard drin || kopplung == .offen else { return .abweisen(tuer) }
+            if kopf.laenge > koppelRumpfGrenze { return .abweisen(koppelZuGross) }
+            return nil
+        }
+        return drin ? nil : .abweisen(tuer)
+    }
+
+    static var koppelZuGross: Leitungsantwort {
+        .fehler("Zum Koppeln genügt die Zahl — höchstens \(koppelRumpfGrenze / 1024) KiB.",
+                status: 413)
     }
 
     /// Entscheidet über eine ganz gelesene Anfrage.
     ///
     /// Die zwei Koppelwege beantwortet **immer der Mac**, auch angemeldet. Alles andere
     /// geht nur nach der Tür weiter, nur als `GET` oder `POST` (mehr bedient der Server
-    /// nicht), und ohne die Köpfe, die am Mac bleiben.
+    /// nicht), **nur, was wörtlich auf der Positivliste steht** (`weiterreichbar`; sonst
+    /// 404 vom Mac selbst), und ohne die Köpfe, die am Mac bleiben.
     public static func entscheide(_ anfrage: RoheAnfrage, zugang: Vermittlerzugang,
                                   kopplung: Kopplungsstand?) -> Vermittlung {
         if let abweisung = vorab(anfrage.kopf, zugang: zugang, kopplung: kopplung) {
@@ -189,6 +277,10 @@ public enum Vermittlungsregel {
         guard kopf.methode == "GET" || kopf.methode == "POST" else {
             return .abweisen(.fehler("Diese Art Anfrage reicht der Mac nicht weiter: "
                                      + "\(kopf.methode).", status: 501))
+        }
+        guard istWeiterreichbar(kopf) else {
+            return .abweisen(.fehler("Diesen Weg reicht der Mac nicht zum Heim-PC weiter: "
+                                     + "\(kopf.methode) \(kopf.pfad)", status: 404))
         }
         let koepfe = kopf.koepfe.filter { erlaubteKoepfe.contains($0.name.lowercased()) }
         return .weiterreichen(Weiterreichung(
@@ -291,12 +383,29 @@ public struct Vermittlerstand: Sendable {
     }
 
     /// Die Tür am Kopf allein (siehe `Vermittlungsregel.vorab`) — `nil`: weiterlesen.
-    public func vorab(_ kopf: Anfragekopf, jetzt: TimeInterval) -> Leitungsantwort? {
-        if case .abweisen(let a)? = Vermittlungsregel.vorab(
-            kopf, zugang: zugang, kopplung: kopplung?.stand(jetzt: jetzt)) {
-            return a
-        }
-        return nil
+    ///
+    /// `mutating`, weil eine tote Zahl schon hier abgelehnt wird, ohne den Rumpf zu lesen —
+    /// und der Mensch am Mac trotzdem erfahren soll, woran es lag (`letzterKoppelgrund`).
+    public mutating func vorab(_ kopf: Anfragekopf, jetzt: TimeInterval) -> Leitungsantwort? {
+        guard case .abweisen(let a)? = Vermittlungsregel.vorab(
+            kopf, zugang: zugang, kopplung: kopplung?.stand(jetzt: jetzt)) else { return nil }
+        merkeToteZahl(kopf, jetzt: jetzt)
+        return a
+    }
+
+    /// Ein Versuch an einer Zahl, die nicht mehr gilt, **zählt nicht** (wie in
+    /// `kopplung.pruefe`) — aber sein Grund gehört an den Bildschirm des Mac.
+    private mutating func merkeToteZahl(_ kopf: Anfragekopf, jetzt: TimeInterval) {
+        guard Vermittlungsregel.istVerbinden(kopf), var k = kopplung,
+              k.stand(jetzt: jetzt) != .offen else { return }
+        let versuch = k.pruefe(nil, jetzt: jetzt)
+        letzterKoppelgrund = versuch.grund + " (noch \(versuch.versucheUebrig) Versuche)"
+    }
+
+    /// Ob dieser Kopf die Zugangsdaten **des Mac** trägt — für den Mac-Teil, der eine
+    /// angemeldete Verbindung bei vollem Haus nicht als erste schliesst.
+    public func angemeldet(_ kopf: Anfragekopf) -> Bool {
+        Vermittlungsregel.angemeldet(kopf, zugang: zugang)
     }
 
     /// Beantwortet eine ganz gelesene Anfrage — oder sagt, was weitergeht.
@@ -309,6 +418,7 @@ public struct Vermittlerstand: Sendable {
         }
         switch entscheid {
         case .abweisen(let a):
+            merkeToteZahl(anfrage.kopf, jetzt: jetzt)
             return .antworte(a)
         case .weiterreichen(let w):
             return .weiterreichen(w)
@@ -360,12 +470,95 @@ public struct Vermittlerstand: Sendable {
     }
 }
 
+// ============================================================ die Plätze am Mac
+
+/// Wie viele Verbindungen der Mac zugleich hält — und **welche er schliesst, wenn das Haus
+/// voll ist** (Sicherheitsdurchsicht vom 01.10.2026).
+///
+/// Bis dahin wurde bei 16 offenen Verbindungen jede neue gleich wieder geschlossen. Wer im
+/// selben WLAN 16 stumme Verbindungen öffnete, sperrte damit das iPad aus, ohne ein Byte zu
+/// schicken. Jetzt gilt:
+///
+/// * **Je Gegenstelle höchstens `jeGegenstelle`.** Wer von einer Adresse aus flutet,
+///   verdrängt seine eigenen ältesten — nicht die des iPad.
+/// * **Volles Haus: die älteste noch unangemeldete geht**, nicht die neue. Eine angemeldete
+///   (die Zugangsdaten des Mac im Kopf) wird nie verdrängt; sind alle angemeldet, bleibt die
+///   neue draussen.
+/// * **Der Kopf muss in `kopffrist` da sein**, sonst schliesst der Mac-Teil die Verbindung.
+///   Die App schickt ihn sofort, in einem Paket.
+///
+/// Hier nur die Regel, ohne Netz — der Mac-Teil (`Leitungsregister`) hält genau eine davon.
+public struct Leitungsplaetze<ID: Hashable & Sendable>: Sendable {
+    /// Wie viele zugleich. Die App öffnet wenige (Prüfen, Mappe, ein paar Bilder).
+    public static var hoechstens: Int { 16 }
+    /// Wie viele von einer Gegenstelle. `URLSession` öffnet je Rechner höchstens sechs.
+    public static var jeGegenstelle: Int { 8 }
+    /// Wie lange eine neue Verbindung Zeit hat, bis ihr Kopf ganz da ist.
+    public static var kopffrist: TimeInterval { 5 }
+
+    /// Was mit einer neuen Verbindung geschieht.
+    public enum Entscheid: Equatable, Sendable {
+        /// Herein — und vorher diese ältere schliessen (oder keine).
+        case annehmen(schliesse: ID?)
+        /// Draussen bleiben: Jede, die man verdrängen dürfte, ist angemeldet.
+        case ablehnen
+    }
+
+    private struct Platz: Sendable {
+        let id: ID
+        let gegenstelle: String
+        var angemeldet = false
+    }
+
+    private let grenze: Int
+    private let grenzeJeGegenstelle: Int
+    /// In der Reihenfolge des Ankommens — vorn die älteste.
+    private var plaetze: [Platz] = []
+
+    public init(hoechstens: Int = Leitungsplaetze.hoechstens,
+                jeGegenstelle: Int = Leitungsplaetze.jeGegenstelle) {
+        grenze = max(1, hoechstens)
+        grenzeJeGegenstelle = max(1, jeGegenstelle)
+    }
+
+    public var anzahl: Int { plaetze.count }
+
+    /// Eine neue Verbindung von `gegenstelle` (Adresse, ohne Anschluss).
+    public mutating func nimm(_ id: ID, gegenstelle: String) -> Entscheid {
+        var weg: ID?
+        if plaetze.filter({ $0.gegenstelle == gegenstelle }).count >= grenzeJeGegenstelle {
+            guard let i = plaetze.firstIndex(where: { $0.gegenstelle == gegenstelle && !$0.angemeldet })
+            else { return .ablehnen }
+            weg = plaetze.remove(at: i).id
+        }
+        if plaetze.count >= grenze {
+            guard let i = plaetze.firstIndex(where: { !$0.angemeldet }) else {
+                return .ablehnen
+            }
+            weg = plaetze.remove(at: i).id
+        }
+        plaetze.append(Platz(id: id, gegenstelle: gegenstelle))
+        return .annehmen(schliesse: weg)
+    }
+
+    /// Diese Verbindung trägt die Zugangsdaten des Mac — sie wird nicht mehr verdrängt.
+    public mutating func angemeldet(_ id: ID) {
+        if let i = plaetze.firstIndex(where: { $0.id == id }) { plaetze[i].angemeldet = true }
+    }
+
+    public mutating func entferne(_ id: ID) {
+        plaetze.removeAll { $0.id == id }
+    }
+}
+
 // ============================================================ die Zeile «iPad» am Mac
 
 /// Was die Startzeile «iPad» am Mac sagt (Blatt 13) — **mit echtem Signal**: «verbunden»
 /// steht erst, wenn eine angemeldete Anfrage kam, und nur so lange, wie das iPad sich
 /// meldet (es fragt alle zehn Sekunden, `Verbindungsstand.pruefabstand`).
 public enum Vermittlerlage: Equatable, Sendable {
+    /// «iPad über diesen Mac anbieten» ist aus — der Mac bietet sich nicht an.
+    case aus
     /// Der Mac richtet sich ein (das Anbieten im WLAN steht noch nicht).
     case startet
     /// Er bietet sich an; kein iPad meldet sich. Mit der Zeit seit der letzten Anfrage,
@@ -381,10 +574,12 @@ public enum Vermittlerlage: Equatable, Sendable {
     /// Wie lange nach der letzten Anfrage «verbunden» noch gilt: drei Fragerunden des iPad.
     public static let verbundenHoechstens: TimeInterval = 30
 
-    /// Leitet die Lage ab. **Eine geltende Zahl geht vor «verbunden»**: Wer sie zeigen
+    /// Leitet die Lage ab. **Aus geht vor allem** — eine Zahl, die niemand erreicht, gehört
+    /// nicht an den Bildschirm. **Eine geltende Zahl geht vor «verbunden»**: Wer sie zeigen
     /// lässt, will ein (weiteres) iPad koppeln und muss sie sehen.
-    public static func bestimme(bereit: Bool, fehler: String?, stand: Vermittlerstand,
-                                jetzt: TimeInterval) -> Vermittlerlage {
+    public static func bestimme(angeboten: Bool = true, bereit: Bool, fehler: String?,
+                                stand: Vermittlerstand, jetzt: TimeInterval) -> Vermittlerlage {
+        guard angeboten else { return .aus }
         if let fehler { return .fehlt(grund: fehler) }
         guard bereit else { return .startet }
         if let zahl = stand.koppelzahl(jetzt: jetzt), let k = stand.kopplung {
@@ -402,7 +597,7 @@ public enum Vermittlerlage: Equatable, Sendable {
     public var wort: String {
         switch self {
         case .startet: return "lädt"
-        case .wartet, .koppeln: return "wartet"
+        case .aus, .wartet, .koppeln: return "wartet"
         case .verbunden: return "steht"
         case .fehlt: return "fehlt"
         }
@@ -411,6 +606,8 @@ public enum Vermittlerlage: Equatable, Sendable {
     /// Der Satz daneben.
     public var satz: String {
         switch self {
+        case .aus:
+            return "Aus — im Menü «iPad» einschalten, wenn ein iPad mitkommt."
         case .startet:
             return "Der Mac bietet sich dem iPad im WLAN an …"
         case .wartet(nil):
@@ -459,7 +656,7 @@ extension Vermittlerlage {
     /// («seit 12 s»), und das Anbieten im WLAN hat keine, die etwas sagte.
     public func alsZeilenstand() -> Zeilenstand {
         switch self {
-        case .startet, .wartet, .koppeln: return .wartet(satz: satz)
+        case .aus, .startet, .wartet, .koppeln: return .wartet(satz: satz)
         case .verbunden: return .steht(satz: satz)
         case .fehlt(let grund): return .fehlt(grund: grund)
         }

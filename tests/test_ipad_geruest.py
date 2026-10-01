@@ -940,3 +940,109 @@ def test_die_grenzen_des_assistenten_am_mac_sind_die_des_servers():
     text = _ohne_kommentarzeilen(ASSISTENT_KERN.read_text(encoding="utf-8"))
     assert re.search(r"func laenge\(_ text: String\) -> Int \{ text\.unicodeScalars\.count \}",
                      text), "Assistentengespraech.laenge zählt nicht mehr wie Python"
+
+
+# ------------------------------------- 8b · Sicherheitsdurchsicht des Vermittlers (01.10.2026)
+#
+# Der Mac laeuft unterwegs in fremden WLANs. Die Durchsicht vom 01.10.2026 fand dort, was
+# zwei Leser verschieden lesen (`;` im Pfad), was ein Fremder billig belegen kann, und
+# Abschriften, die niemand bewachte. Bewacht wird hier, was der Kern unter Linux nicht
+# sehen kann: die Gegenseite in Python und der Mac-Teil als Text.
+
+SENDER = APP / "Verbindung" / "Sender.swift"
+HEIMSTRECKE = MAC_VERMITTLUNG / "Heimstrecke.swift"
+VERMITTLUNGSANSCHLUSS = MAC_QUELLEN / "Start" / "Vermittlungsanschluss.swift"
+
+
+def _swift_wegliste(datei: Path, name: str) -> list[str]:
+    """Die Namen in ``static let <name>: [Weg] = [Wege.a, Wege.b, …]``."""
+    text = _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+    treffer = re.search(rf"static let {name}:\s*\[Weg\]\s*=\s*\[(.*?)\]", text, re.S)
+    assert treffer, f"{name} fehlt in {datei.name}"
+    return re.findall(r"Wege\.(\w+)", treffer.group(1))
+
+
+def test_die_positivliste_des_mac_ist_eine_teilmenge_der_serverwege(server):
+    """**Nur, was die App ruft, geht über den Mac** — und es sind Wege, die der Server
+    wirklich bedient, mit derselben Art. ``verbinden`` und ``koppeln`` stehen nie darin:
+    Ginge `POST /api/verbinden` weiter, gäbe der Heim-PC bei offener Kopplung **sein**
+    Kennwort heraus (Befund `;` im Pfad, 01.10.2026)."""
+    wege = _swift_wege()
+    liste = _swift_wegliste(VERMITTLUNG, "weiterreichbar")
+    assert liste, "die Positivliste ist leer"
+    for name in liste:
+        assert name in wege, f"Wege.{name} gibt es nicht"
+        methode, pfad, ohne_anmeldung = wege[name]
+        tafel = server.WEGTAFEL if methode == "POST" else server.WEGTAFEL_LESEN
+        assert pfad in tafel, f"{methode} {pfad} bedient der Server nicht"
+        assert not ohne_anmeldung, f"{pfad}: ein Weg ohne Anmeldung geht nie weiter"
+        assert pfad not in (server.WEG_VERBINDEN, server.WEG_KOPPELN), pfad
+        assert ";" not in pfad and "%" not in pfad and "//" not in pfad, pfad
+    assert "verbinden" not in liste and "koppeln" not in liste
+
+
+def test_die_koppelsaetze_des_mac_sind_die_der_homestation():
+    """Die Sätze der Kopplung am Mac sind die von ``aiimaging.kopplung`` — nur steht «am Mac»,
+    wo dort «an der HomeStation» steht: Der Satz sagt, **wo** es eine neue Zahl gibt."""
+    from aiimaging import kopplung
+
+    def am_mac(satz: str) -> str:
+        return satz.replace("An der HomeStation", "Am Mac").replace("an der HomeStation",
+                                                                    "am Mac")
+
+    assert _swift_text(VERMITTLERKOPPLUNG, "grundAbgelaufen") == am_mac(kopplung.GRUND_ABGELAUFEN)
+    assert _swift_text(VERMITTLERKOPPLUNG, "grundAufgebraucht") == am_mac(
+        kopplung.GRUND_AUFGEBRAUCHT)
+    assert _swift_text(VERMITTLERKOPPLUNG, "satzFuerDasGeraet") == am_mac(
+        kopplung.SATZ_FUER_DAS_GERAET)
+    # UND ES IST WIRKLICH ETWAS ERSETZT WORDEN — sonst prüfte die Zeile darüber nichts.
+    assert "HomeStation" in kopplung.SATZ_FUER_DAS_GERAET
+
+
+def test_der_mac_gibt_auf_bevor_das_ipad_aufgibt():
+    """``Heimstrecke.wartezeit`` < Frist des ``Sender`` der App: So sagt der Mac «nicht
+    erreicht», bevor das iPad selbst aufgibt und nur «keine Antwort» weiss (Protokoll §8b)."""
+    mac = float(_swift_konstante(HEIMSTRECKE, "wartezeit"))
+    text = _ohne_kommentarzeilen(SENDER.read_text(encoding="utf-8"))
+    treffer = re.findall(r"timeoutIntervalForRequest\s*=\s*([\d.]+)", text)
+    assert len(treffer) == 1, treffer
+    assert mac < float(treffer[0]), (mac, treffer[0])
+
+
+def test_die_uhr_der_kopplung_zaehlt_den_ruhezustand():
+    """``systemUptime`` steht im Ruhezustand still — eine Zahl gälte nach zugeklapptem Deckel
+    weiter. Der Kern liest keine Uhr (sie wird hineingereicht), der Mac-Teil reicht eine, die
+    den Schlaf mitzählt (``ContinuousClock``)."""
+    for datei in (VERMITTLUNG, VERMITTLERKOPPLUNG, LEITUNG, *MAC_VERMITTLUNG.glob("*.swift")):
+        code = _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+        assert "systemUptime" not in code, datei.name
+        assert "SuspendingClock" not in code, datei.name
+    uhr = _ohne_kommentarzeilen((MAC_VERMITTLUNG / "Vermittlungsuhr.swift")
+                                .read_text(encoding="utf-8"))
+    assert "ContinuousClock" in uhr
+    dienst = _ohne_kommentarzeilen((MAC_VERMITTLUNG / "Vermittlungsdienst.swift")
+                                   .read_text(encoding="utf-8"))
+    assert "jetzt: Vermittlungsuhr.jetzt" in dienst
+
+
+def test_die_leitung_nach_hause_nimmt_keinen_proxy_des_systems():
+    """Ein fremdes WLAN kann per automatischer Konfiguration einen Proxy setzen. Die Leitung
+    zum Heim-PC geht direkt durch Tailscale: ``connectionProxyDictionary = [:]``."""
+    code = _ohne_kommentarzeilen(HEIMSTRECKE.read_text(encoding="utf-8"))
+    assert re.search(r"connectionProxyDictionary\s*=\s*\[:\]", code)
+
+
+def test_der_mac_bietet_sich_nur_an_wenn_eingeschaltet():
+    """**Vorgabe aus** (Owner-Entscheid 01.10.2026): ``Vermittlungsanschluss`` startet den
+    Dienst nur hinter dem Merker, und der Merker ist ``false``, solange niemand ihn setzt
+    (``UserDefaults.bool`` ohne Eintrag)."""
+    code = _ohne_kommentarzeilen(VERMITTLUNGSANSCHLUSS.read_text(encoding="utf-8"))
+    aufrufe = [z.strip() for z in code.splitlines() if ".starte()" in z]
+    assert aufrufe, "der Dienst wird nirgends gestartet"
+    for zeile in aufrufe:
+        assert zeile.startswith(("if angeboten", "if an ")), zeile
+    assert "angeboten = Vermittlergedaechtnis.angeboten" in code
+    gedaechtnis = _ohne_kommentarzeilen((MAC_VERMITTLUNG / "Vermittlergedaechtnis.swift")
+                                        .read_text(encoding="utf-8"))
+    assert re.search(r"static var angeboten: Bool \{\s*get \{ UserDefaults\.standard\.bool\(",
+                     gedaechtnis)

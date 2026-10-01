@@ -34,6 +34,12 @@ final class Heimstrecke: Sendable {
         art.httpCookieStorage = nil
         art.httpShouldSetCookies = false
         art.waitsForConnectivity = false
+        // KEIN PROXY DES SYSTEMS (Sicherheitsdurchsicht vom 01.10.2026): Ein leeres
+        // Woerterbuch heisst «keiner», `nil` hiesse «der des Systems». Die Leitung nach Hause
+        // geht direkt durch Tailscale — nicht ueber einen Proxy, den ein fremdes WLAN per
+        // automatischer Konfiguration setzt und der dann Adresse und Zeitpunkt jeder Anfrage
+        // saehe.
+        art.connectionProxyDictionary = [:]
         sitzung = URLSession(configuration: art)
     }
 
@@ -59,7 +65,7 @@ final class Heimstrecke: Sendable {
             guard let http = antwort as? HTTPURLResponse else {
                 return Heimergebnis.ohneAntwort(
                     grund: "Was vom Heim-PC zurückkam, war keine Antwort.",
-                    methode: w.methode, bytesHinaus: zaehler.gesendet)
+                    methode: w.methode, bytesHinaus: zaehler.gesendet, leitungStand: true)
             }
             var koepfe: [Kopfzeile] = []
             for (name, wert) in http.allHeaderFields {
@@ -70,8 +76,14 @@ final class Heimstrecke: Sendable {
             // SICHER NICHT GESENDET, wenn die Leitung gar nicht zustande kam — dann zaehlt
             // auch ein Zaehlerstand nicht (bei TLS-Fehlern meldet das System manchmal Bytes).
             let nie = (error as? URLError).map { Heimstrecke.vorDemSenden.contains($0.code) } ?? false
+            // STAND DIE LEITUNG, kann auch ein POST ohne Rumpf angekommen sein (`abbrechen`).
+            // Das sagen die Messwerte der Sitzung (die Anfrage begann hinauszugehen); kamen
+            // keine, entscheidet die Art des Fehlers — im Zweifel «stand», denn «ungewiss»
+            // ist bei einem POST die vorsichtige Antwort.
+            let stand = !nie && (zaehler.anfrageBegonnen ?? true)
             return Heimergebnis.ohneAntwort(grund: Heimstrecke.satz(error), methode: w.methode,
-                                            bytesHinaus: nie ? 0 : zaehler.gesendet)
+                                            bytesHinaus: nie ? 0 : zaehler.gesendet,
+                                            leitungStand: stand)
         }
     }
 
@@ -115,11 +127,28 @@ final class Heimstrecke: Sendable {
 final class Heimzaehler: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private let sperre = NSLock()
     private var bisher: Int64 = 0
+    private var begonnen: Bool?
 
     var gesendet: Int64 {
         sperre.lock()
         defer { sperre.unlock() }
         return bisher
+    }
+
+    /// Ob die Anfrage zum Heim-PC **hinauszugehen begann** (die Leitung stand) — `nil`, wenn
+    /// die Sitzung keine Messwerte lieferte.
+    var anfrageBegonnen: Bool? {
+        sperre.lock()
+        defer { sperre.unlock() }
+        return begonnen
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask,
+                    didFinishCollecting metrics: URLSessionTaskMetrics) {
+        let ja = metrics.transactionMetrics.contains { $0.requestStartDate != nil }
+        sperre.lock()
+        begonnen = ja
+        sperre.unlock()
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64,
