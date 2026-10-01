@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261001-219",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare: Volumenmodell (D5) und Oberflaechenbilder (D4) an der erfundenen Splat-Szene aus 215 B1 messen — gegen die wahren 7 Quader.",
+  "anweisung": "=== KOSMOPREPARE: VOLUMENMODELL (D5) UND OBERFLAECHENBILDER (D4) AN DER ERFUNDENEN SZENE MESSEN ===\n\nWORUM ES GEHT\n  Zwei neue Stufen der Splat-Kette, in der Wolke nur an einer selbst gerenderten Szene gemessen:\n  * D5 `tools/splat_volumen.py` (KosmoPrepare c162e08): aus der verorteten .ply Quader mit Hoehe,\n    Unsicherheit und Fuellgrad; Boden aus den flachen freien Zellen rundum.\n  * D4 `tools/flaechen_textur.py` (KosmoPrepare e8b96b9): aus den Quadern, dem COLMAP-Ordner und der\n    Verortung ein Bildatlas je Flaeche (PNG + OBJ + MTL + Bericht).\n  Hier soll beides an EURER erfundenen Szene aus 215 B1 laufen (7 Quader mit bekannten Massen) —\n  das ist der erste Lauf an einem Splat, der wirklich aus Bildern trainiert wurde.\n  KosmoPrepare mindestens e8b96b9 (git pull --ff-only auf main). Nichts installieren.\n  Rechnen mit `.venv-server/bin/python` (hat numpy und Pillow); fehlt eines: melden, nicht installieren.\n\nREIHENFOLGE\n  Nach auf-20261001-217 Teil B — am besten im SELBEN Arbeitsordner, bevor er geloescht wird. Ist er\n  schon weg: die Kette wie 217 B2 einmal neu fahren (profile=\"rtx5090\", das Skript geht selbst auf\n  die CPU).\n\nE1 · DIE VERORTUNG ALS DATEI\n  Die Paare wie 215/217 B3 (COLMAP-Kamerazentrum ↔ wahre Kameraposition aus kamera.json, Quelle\n  «kamera.json Bild N»). Dann im KosmoPrepare-Klon:\n      from core.splat_verortung import verorte, seitenwagen, schreibe_seitenwagen\n      fit = verorte(paare)\n      schreibe_seitenwagen(PLY, seitenwagen(PLY, fit[\"matrix\"], fit, None))\n  Das legt <name>.verortung.json neben die .ply (ohne LV95 — die Szene hat keinen Ursprung).\n  Zurueck: rmse_m, max_m, massstab.\n\nE2 · VOLUMEN (D5)\n      .venv-server/bin/python tools/splat_volumen.py PLY --aus vol.json\n  Zurueck: die stderr-Zeile woertlich, Laufzeit. Dann gegen die WAHREN 7 Quader aus eurem\n  Szenenskript (Mitte x/y, Laenge, Breite, Hoehe, Drehung) eine Tabelle, je wahrer Quader:\n  gefunden ja/nein (Mitte innerhalb der halben kuerzeren Seite), Abweichung Mitte (m), Laenge (m),\n  Breite (m), Hoehe (m), Drehung (Grad), dazu die GEMELDETE Unsicherheit (grundriss_m, hoehe_m),\n  fuellgrad und hinweise woertlich. Dazu: wie viele Volumen ohne wahren Quader (mit Mitte und Groesse),\n  wie viele «verworfen». Liegt ein Abweichungswert UEBER der gemeldeten Unsicherheit: ausdruecklich\n  sagen, welcher — das ist der wichtigste Befund dieses Auftrags.\n  Falls 0 oder offensichtlich unsinnige Volumen: einmal mit «--parameter zelle_m=0.25» und einmal mit\n  «--parameter deckkraft_min=0.2» wiederholen und dieselben Zahlen melden. Nichts am Code aendern.\n\nE3 · OBERFLAECHENBILDER (D4)\n      .venv-server/bin/python tools/flaechen_textur.py --volumen vol.json --colmap ARBEITSORDNER \\\n          --verortung PLY_STAMM.verortung.json --aus tex --px-pro-m 50\n  Zurueck: Rueckgabewert, die stderr-Zeilen woertlich, Laufzeit, Atlasgroesse (px), je Flaeche:\n  Name, Kamera, abdeckung, bild_px_pro_m, hinweise. Und EINE Zahl je wahrem Quader: mittlere\n  Farbe seiner Wandkacheln (nur Bildpunkte mit Alpha > 0) gegen seine wahre Grundfarbe aus dem\n  Szenenskript (mittlere absolute Differenz 0..1 je Kanal). Erwartet ist Rauschen, aber keine\n  vertauschte Farbe — eine Kachel mit der Farbe eines ANDEREN Quaders heisst Verdeckung oder\n  falsche Projektion: dann sagen, welche Kachel und welche Farbe.\n\nWAS NICHT GETAN WERDEN SOLL\n  Nichts installieren, keinen Code aendern, nichts committen. Keine Bilder, keine .ply, kein OBJ\n  zurueckgeben — nur Zeilen und Zahlen. Arbeitsordner am Ende loeschen. GPU-Grenze 400 W.\n",
+  "erstellt": "2026-10-01T08:45:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "erfundene Szene aus 215 B1 vor Ort"
+  },
+  "params": {
+    "kosmoprepare_stand_min": "e8b96b9",
+    "daten_bleiben_lokal": true,
+    "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 1, 2"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nichts installieren.",
+    "hinweise": [
+      "Nach 217 Teil B, im selben Arbeitsordner, wenn moeglich.",
+      "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+    ]
+  },
+  "rueckgabe": [
+    "Staende.",
+    "E1 rmse_m, max_m, massstab.",
+    "E2 stderr-Zeile, Laufzeit, Tabelle je wahrem Quader samt gemeldeter Unsicherheit, Ueberzaehlige, verworfen; jede Abweichung ueber der Unsicherheit ausdruecklich.",
+    "E3 Rueckgabewert, stderr woertlich, Laufzeit, Atlasgroesse, je Flaeche Kamera/abdeckung/bild_px_pro_m/hinweise, Farbabweichung je Quader.",
+    "Fehler ja/nein."
+  ],
+  "rang": 3
+}
