@@ -1505,6 +1505,9 @@ class Flaeche(BaseHTTPRequestHandler):
     #: ``POST /api/kopplung`` (seit 01.10.2026) — dann auf der Klasse des Servers und
     #: **nur unter der Reihe**, wie jeder Weg, der sie liest.
     kopplung_offen = None
+    #: Ob die offene Zahl über ``POST /api/kopplung`` (Mac-App) kam — dann sagt die
+    #: Ablehnung, dass es eine neue am Mac gibt, nicht an der HomeStation.
+    kopplung_vom_mac = False
     #: Das Sprachmodell des Assistenten (``aiimaging.assistent.Ollama``), gesetzt mit
     #: ``--assistent-adresse``/``--sprachmodell`` — oder ``None``: dann nimmt der Kern
     #: Adresse und Modell bei jeder Anfrage aus der Umgebung (oder die Vorgaben).
@@ -1934,8 +1937,10 @@ class Flaeche(BaseHTTPRequestHandler):
             # HomeStation, also in das Fenster, in dem die Flaeche gestartet wurde.
             print(f"  Verbinden abgelehnt: {antwort['grund']} "
                   f"(noch {antwort['versuche_uebrig']} Versuche)")
-            self._sende({"verbunden": False,
-                         "satz": antwort["satz_fuer_das_geraet"]}, 403)
+            satz = antwort["satz_fuer_das_geraet"]
+            if type(self).kopplung_vom_mac:
+                satz = kopplung.SATZ_FUER_DAS_GERAET_VOM_MAC
+            self._sende({"verbunden": False, "satz": satz}, 403)
             return
 
         print("  Ein Gerät hat sich verbunden. Die Zahl ist damit verbraucht.")
@@ -1980,6 +1985,7 @@ class Flaeche(BaseHTTPRequestHandler):
             kopplung.schliesse(alt)
         neu = kopplung.eroeffne()
         type(self).kopplung_offen = neu
+        type(self).kopplung_vom_mac = True
         minuten = int(kopplung.FRIST_S // 60)
         self._sende({"zahl": neu.pin, "gilt_noch_s": int(kopplung.FRIST_S),
                      "satz": f"Diese Zahl gilt {minuten} Minuten für EIN Gerät: auf dem "

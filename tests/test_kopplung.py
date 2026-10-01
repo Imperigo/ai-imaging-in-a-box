@@ -494,3 +494,11 @@ def test_der_weg_haengt_wirklich_in_der_wegtafel(flaechenmodul, capsys):
     nutzlast = a.nutzlast()
     assert nutzlast["verbunden"] is True
     assert nutzlast["kennwort"] == "das-lange-kennwort"
+
+
+def test_kam_die_zahl_vom_mac_schickt_die_ablehnung_an_den_mac():
+    """``auf-20261001-221`` B3: Mit einer Zahl aus ``POST /api/kopplung`` sagte die Ablehnung
+    «An der HomeStation eine neue Zahl holen» — unterwegs steht die zuhause (Entscheid 63)."""
+    assert "Am Mac" in kopplung.SATZ_FUER_DAS_GERAET_VOM_MAC
+    assert "HomeStation" not in kopplung.SATZ_FUER_DAS_GERAET_VOM_MAC
+    assert kopplung.SATZ_FUER_DAS_GERAET_VOM_MAC.startswith("Das hat nicht geklappt.")

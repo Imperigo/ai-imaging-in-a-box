@@ -393,6 +393,7 @@ Antwort an den Mac, nicht im Fenster des Dienstes.
 | Verbrauch | Nach dem ersten Erfolg ist die Zahl verbraucht; ein zweites Gerät braucht einen Neustart mit `--kopplung` oder eine neue Zahl über `POST /api/kopplung` |
 | Zustände (an der HomeStation) | `offen`, `abgelaufen`, `aufgebraucht`, `verbraucht` |
 | Was das Gerät erfährt | Bei jeder Ablehnung **denselben** Satz: «Das hat nicht geklappt. An der HomeStation eine neue Zahl holen.» — absichtlich ohne Grund; der genaue Grund erscheint nur im Fenster der HomeStation |
+| … wenn die Zahl vom Mac kam | Seit dem 01.10.2026 (Befund `auf-20261001-221`): Kam die offene Zahl über `POST /api/kopplung`, lautet der Satz «Das hat nicht geklappt. Am Mac unter «iPad koppeln» eine neue Zahl holen.» — unterwegs steht die HomeStation zuhause. |
 | Erfolg | `{"verbunden": true, "benutzer": …, "kennwort": …, "satz": "Verbunden. Benutzer und Kennwort kommen nur dieses eine Mal über die Leitung."}` — seit dem 22.09.2026. Vorher hiess der Satz «Dieses Gerät merkt sich die Anmeldung»; das stimmt für die App (Schlüsselbund), nicht für einen Browser auf der Koppelseite, und der Server kann es für keines der beiden wissen. Ob und wo die Anmeldung aufbewahrt wird, sagt die App selbst. |
 
 Ein Weg, eine erteilte Anmeldung zurückzuziehen oder ein Gerät zu vergessen: **nicht vorhanden.**

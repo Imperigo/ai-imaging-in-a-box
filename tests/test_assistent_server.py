@@ -585,6 +585,9 @@ def test_kopplung_gibt_eine_zahl_und_das_verbinden_damit_das_kennwort(server, ca
     code, v = _an(server, klasse, befehl="POST", weg=server.WEG_VERBINDEN,
                   rumpf={"pin": falsch}, angemeldet=False)
     assert code == 403 and v["verbunden"] is False
+    # DIE ZAHL KAM VOM MAC (Entscheid 63, Befund 221 B3): Die Ablehnung schickt dorthin.
+    from aiimaging import kopplung as _k
+    assert v["satz"] == _k.SATZ_FUER_DAS_GERAET_VOM_MAC
     assert klasse.kopplung_offen.versuche_uebrig == 4
     code, v = _an(server, klasse, befehl="POST", weg=server.WEG_VERBINDEN,
                   rumpf={"pin": a["zahl"]}, angemeldet=False)

@@ -516,7 +516,9 @@ SYSTEMTEXT = (
     "auf Deutsch, in Schweizer Schreibung (ss statt ß). Behaupte nie, ein Bild sei gerechnet "
     "oder geprüft. Ein Urteil über ein Bild änderst du nicht, und keine Prüfung lässt du "
     "aus — das kannst und darfst du nicht. Antwortet ein Werkzeug mit «Abgewiesen:», "
-    "korrigiere den Vorschlag oder sage kurz, warum es nicht geht.")
+    "korrigiere den Vorschlag oder sage kurz, warum es nicht geht. Ist ein Ort unklar "
+    "(etwa «von der Strasse her»), frage kurz nach, auf welcher Seite sie liegt, statt eine "
+    "Himmelsrichtung zu raten.")
 
 
 def _zahl(feld: str, wert, *, positiv: bool = True) -> float:
@@ -685,7 +687,11 @@ _PRUEFER = {"standpunkt_vorschlagen": _standpunkt, "bildauftrag_vorschlagen": _b
 #: Gewichte im Plattencache. Angesetzt ist die langsamere erste, aufgerundet auf 15 s —
 #: so der Vorschlag des Heim-PC; kalt dauert es länger (Bild allein kalt 15,0 s,
 #: ``auf-20261001-213``). ``None`` hiesse wieder «nicht gemessen», und die Karte sagte es.
-RECHENZEIT_JE_VARIANTE_S: float | None = 15.0
+#:
+#: **Nachgezogen nach ``auf-20261001-221`` B1 (01.10.2026):** drei Varianten über «Anwenden» am
+#: Dienst in 29,3 s, also knapp 10 s je Variante samt Laden — die 15 s waren zu vorsichtig, und
+#: die Karte sagte für 20 s wie für 50 s «etwa 1 Minute». Jetzt 10 s.
+RECHENZEIT_JE_VARIANTE_S: float | None = 10.0
 
 #: Wechsel Sprachmodell → Bildmodell und zurück, gemessen ``auf-20261001-218`` C2:
 #: entladen 0,16 s, wieder antworten nach 4,4 s. Er kommt zur Rechenzeit dazu.
@@ -743,10 +749,15 @@ def _rechenzeit(varianten: int | None) -> dict:
         return {"sekunden": None,
                 "satz": "Rechenzeit am Heim-PC: noch nicht gemessen."}
     sekunden = RECHENZEIT_JE_VARIANTE_S * (varianten or 1) + WECHSEL_S
-    minuten = max(1, round(sekunden / 60))
-    return {"sekunden": round(sekunden),
-            "satz": f"Rechenzeit etwa {minuten} Minute{'n' if minuten != 1 else ''} am "
-                    f"Heim-PC."}
+    # UNTER EINER MINUTE IN SEKUNDEN (Befund 221): «etwa 1 Minute» für 20 s wie für 50 s sagt
+    # nichts. Aufgerundet auf zehn — lieber früher fertig als später als gesagt.
+    if sekunden < 60:
+        zehner = max(10, math.ceil(sekunden / 10) * 10)
+        satz = f"Rechenzeit etwa {zehner} Sekunden am Heim-PC."
+    else:
+        minuten = max(1, round(sekunden / 60))
+        satz = f"Rechenzeit etwa {minuten} Minute{'n' if minuten != 1 else ''} am Heim-PC."
+    return {"sekunden": round(sekunden), "satz": satz}
 
 
 def _vorschlag(e: dict, varianten: int | None) -> dict:

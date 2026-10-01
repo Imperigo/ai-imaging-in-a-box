@@ -21,6 +21,9 @@ After=network-online.target
 Type=simple
 WorkingDirectory=%h/ai-imaging-in-a-box
 Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
+# UNGEPUFFERT (Befund auf-20261001-221): Sonst fehlen Zeilen wie «Verbinden abgelehnt» im
+# Systemprotokoll, bis der Puffer voll ist — gerade die, nach denen man sucht.
+Environment=PYTHONUNBUFFERED=1
 ExecStart=%h/ai-imaging-in-a-box/.venv-render/bin/python \
     oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort
 Restart=on-failure

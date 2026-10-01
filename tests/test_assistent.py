@@ -118,17 +118,27 @@ def test_die_rechenzeit_steht_nur_mit_messung_da(monkeypatch):
     monkeypatch.setattr(assistent, "RECHENZEIT_JE_VARIANTE_S", 20.0)
     r = assistent.frage(BLATT14, sprachmodell=Ersatz(_blatt14_botschaften()))
     assert r["vorschlag"]["rechenzeit"]["sekunden"] == round(3 * 20.0 + assistent.WECHSEL_S)
-    assert "1 Minute" in r["vorschlag"]["rechenzeit"]["satz"]
+    assert "etwa 70 Sekunden" not in r["vorschlag"]["rechenzeit"]["satz"]
+    assert "1 Minute" in r["vorschlag"]["rechenzeit"]["satz"]   # 64,6 s
 
 
-def test_die_rechenzeit_ist_seit_auftrag_218_angesetzt():
-    """``auf-20261001-218`` C2/C3: 10,7 s je Variante im Mittel, die erste 14,7 s —
-    angesetzt 15 s, Wechsel 0,16 s + 4,4 s. Drei Varianten: etwa eine Minute."""
-    assert assistent.RECHENZEIT_JE_VARIANTE_S == 15.0
+def test_die_rechenzeit_ist_seit_auftrag_221_angesetzt():
+    """``auf-20261001-221`` B1: drei Varianten am Dienst in 29,3 s — angesetzt 10 s je
+    Variante, Wechsel 0,16 s + 4,4 s (218 C2). Drei Varianten: 34,6 s, gesagt «etwa 40
+    Sekunden» — nicht mehr «etwa 1 Minute» für alles unter anderthalb Minuten."""
+    assert assistent.RECHENZEIT_JE_VARIANTE_S == 10.0
     assert assistent.WECHSEL_S == pytest.approx(0.16 + 4.4, abs=0.05)
     r = assistent.frage(BLATT14, sprachmodell=Ersatz(_blatt14_botschaften()))
     zeit = r["vorschlag"]["rechenzeit"]
-    assert zeit["sekunden"] == 50 and "etwa 1 Minute" in zeit["satz"]
+    assert zeit["sekunden"] == 35 and "etwa 40 Sekunden" in zeit["satz"], zeit
+
+
+def test_der_systemtext_verlangt_eine_rueckfrage_statt_einer_geratenen_richtung():
+    """``auf-20261001-221``: «von der Strasse her» ergab dreimal drei verschiedene Standpunkte
+    und nie eine Rückfrage. Ob das Modell jetzt nachfragt, zeigt nur die Messung am Heim-PC;
+    hier steht nur, dass es darum gebeten wird."""
+    assert "frage kurz nach" in assistent.SYSTEMTEXT
+    assert "statt eine Himmelsrichtung zu raten" in assistent.SYSTEMTEXT
 
 
 def test_ohne_werkzeug_kommt_nur_eine_antwort():

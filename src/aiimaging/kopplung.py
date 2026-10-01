@@ -77,6 +77,7 @@ __all__ = [
     "FRIST_S", "PIN_STELLEN", "VERSUCHE",
     "GRUND_ABGELAUFEN", "GRUND_AUFGEBRAUCHT", "GRUND_FALSCH", "GRUND_VERBRAUCHT",
     "SATZ_FUER_DAS_GERAET",
+    "SATZ_FUER_DAS_GERAET_VOM_MAC",
     "STAND_ABGELAUFEN", "STAND_AUFGEBRAUCHT", "STAND_OFFEN", "STAND_VERBRAUCHT",
     "Kopplung", "KopplungError", "eroeffne", "pruefe", "schliesse", "stand",
 ]
@@ -120,6 +121,12 @@ GRUND_VERBRAUCHT = ("Diese Zahl hat schon ein Gerät verbunden. Für ein zweites
 
 #: Was das Gerät zu hören bekommt — **immer dasselbe, egal woran es lag.**
 SATZ_FUER_DAS_GERAET = "Das hat nicht geklappt. An der HomeStation eine neue Zahl holen."
+
+#: Derselbe Satz, wenn die Zahl über ``POST /api/kopplung`` von der Mac-App kam (Entscheid 63,
+#: 01.10.2026): Dann gibt es sie am Mac, nicht an der HomeStation — der alte Satz schickte das
+#: iPad unterwegs an einen Rechner, der zuhause steht (Befund ``auf-20261001-221`` B3).
+SATZ_FUER_DAS_GERAET_VOM_MAC = (
+    "Das hat nicht geklappt. Am Mac unter «iPad koppeln» eine neue Zahl holen.")
 
 
 @dataclass

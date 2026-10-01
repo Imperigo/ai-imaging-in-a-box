@@ -7704,7 +7704,10 @@ Bekannt und ausdrücklich nicht erledigt:
       *(01.10.2026, Entscheid 63: iPad direkt über Tailscale; Blatt 13 nachgezeichnet, Fassung 20)*
 - [x] **Kern:** iPad direkt über Tailscale (https-Adresse, Koppeln mit Zahl vom Mac), Server `POST /api/kopplung`, Mac-Menü «iPad koppeln».
       *(01.10.2026, am Gerät unbestätigt)*
-- [ ] **local:** `auf-20261001-221` — Server-Behebungen an der echten Grafikkarte nachmessen.
+- [x] **local:** `auf-20261001-221` — Server-Behebungen an der echten Grafikkarte nachmessen.
+      *(01.10.2026: tragen am Gerät — 654 MiB bleiben, zweite Frage ohne Fehler, Fortschritt < 2 ms während einer Frage; Protokoll 74 §11)*
+- [ ] **Kern (v0.1.8):** Bildmodell wird je Variante neu geladen (1–2 s je Variante) — einmal laden für die ganze Reihe.
+- [ ] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
 - [ ] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
 - [ ] **Owner:** Tailscale-App aufs iPad, mit dem eigenen Konto anmelden (vor der Probe).
 - [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
