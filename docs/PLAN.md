@@ -7661,11 +7661,13 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern/Fläche:** Blätter auf der Entwurfsfläche — Start am Mac (was baut sich auf, was
       sieht man dabei), Verbindung zum Heim-PC (auswärts), iPad über den Mac, Assistent.
       *(gezeichnet 30.09.2026: Blätter 13, 13b, 14 auf der Entwurfsfläche, mit fünf Fragen an den Owner — Sitzung 73 §28)*
-- [ ] **Owner:** die Blätter ansehen und entscheiden.
-- [ ] **Kern:** Tunnel wählen und belegen (Lizenz, Betrieb, Kosten) — Vorschlag mit Varianten.
+- [x] **Owner:** die Blätter ansehen und entscheiden.
+      *(01.10.2026: sichtbar, ja, von selbst, Anwenden, ja — Entscheide 35–42, Sitzung 74)*
+- [x] **Kern:** Tunnel wählen und belegen (Lizenz, Betrieb, Kosten) — Vorschlag mit Varianten.
+      *(01.10.2026: Tailscale wie bei KosmoOrbit, Sprachmodell Qwen3 über Ollama — `docs/VORFUEHRFASSUNG_2026-10-01.md`; GPL-Fund wireguard-tools gemeldet)*
 - [ ] **Kern:** Mac-Hülle, die beim Öffnen Heim-PC, Sprachmodell und iPad-Dienst selbst aufbaut.
 - [ ] **Kern:** iPad findet den Mac statt des Heim-PC, wenn es auswärts ist.
 - [ ] **Kern:** Assistent (Sprachmodell am Heim-PC, Lizenz nach Regel 1 geprüft).
 - [ ] **Kern:** Vorführmodus, falls der Heim-PC nicht erreichbar ist.
-- [ ] **local:** Tunnel und Sprachmodell am Heim-PC einrichten und messen (Auftrag folgt nach den Blättern).
+- [ ] **local:** `auf-20261001-212` — messen, was am Heim-PC schon steht (Leitung, Ollama, Wechsel, Werkzeugaufrufe).
 

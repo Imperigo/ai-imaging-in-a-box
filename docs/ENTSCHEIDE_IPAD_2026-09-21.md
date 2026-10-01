@@ -209,3 +209,20 @@ belegt, jeder neue Zustand einmal durchgeschaltet. Gesehen ist davon nichts — 
 keinen Browser. **Veröffentlicht am 23.09.2026** (Fassung 6 der Entwurfsfläche), mit zwei
 Berichtigungen auf «Verbindung»: «offen» im Knopf auch nach fünf Versuchen, und «Main» in
 der Liste der Blätter, auf denen «offen» in der Mappe steht.
+
+## Nachtrag 30.09./01.10.2026 — die Vorführfassung am Mac
+
+Owner-Wunsch: ein herunterladbarer Stand für Mac und iPad zum Präsentieren; beim Öffnen am Mac
+baut sich alles selbst auf. Gezeichnet auf der Entwurfsfläche, Blätter 13, 13b und 14
+(Sitzung 73 §25, §28; Sitzung 74).
+
+| Nr. | Frage | Entscheid |
+|---|---|---|
+| 35 | Wo wird präsentiert? | **Auswärts** (z. B. ETH) — der Mac erreicht den Heim-PC über das Internet, verschlüsselt |
+| 36 | Apple-Entwicklerkonto? | **Nein** — iPad über Swift Playgrounds oder per Kabel vom Mac; Mac-App beim ersten Öffnen mit Rechtsklick → Öffnen |
+| 37 | Sprachmodell? | **Ein Assistent wie Kosmo in KosmoOrbit** — stellt Kamera, Bildauftrag und Varianten ein; das Modell läuft am Heim-PC und muss Regel 1 bestehen |
+| 38 | Start am Mac | **Die vier Zeilen sichtbar** (Leitung, Heim-PC, Assistent, iPad), jede mit Satz (Blatt 13) |
+| 39 | Anfangen, bevor alles steht | **Ja** — «Schon anfangen», bevor der Assistent geladen ist |
+| 40 | Vorführmodus | **Von selbst**, wenn der Heim-PC nicht antwortet — mit eigener Farbe und Datum an jedem vorher gerechneten Bild (Blatt 13b) |
+| 41 | Was der Assistent darf | **Vorschlagen und auf «Anwenden» warten**, wie Kosmo — gerechnet wird nie ohne (Blatt 14) |
+| 42 | iPad unterwegs | **Über den Mac** — gleiches WLAN oder Hotspot des Mac, nicht ins Heimnetz |

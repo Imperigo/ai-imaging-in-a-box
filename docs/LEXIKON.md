@@ -4350,6 +4350,22 @@ Zahl um eins erhöht; dann rechnet genau dieser Schritt und was darauf aufbaut n
 kommt weiter aus dem Speicher. Anlass: Sitzung 70, ein alter Bildschritt kam nach einer
 Reparatur unverändert aus dem Speicher. Im Projekt: `kette.FASSUNGEN`, seit 30.09.2026.
 
+**Tailscale (und das eigene Tailscale-Netz)** — Ein Dienst, der eigene Geräte über das
+Internet so verbindet, als stünden sie in einem gemeinsamen, verschlüsselten Netz — ohne dass am
+Router zuhause ein Tor geöffnet werden muss; im Uni-Netz weicht er auf den gewöhnlichen
+Web-Anschluss aus. Das Kernprogramm ist frei (BSD-3-Clause), die Vermittlung ein gehosteter
+Dienst. KosmoOrbit erreicht den Heim-PC schon so; Visbox benutzt denselben Weg. Im Projekt:
+`docs/VORFUEHRFASSUNG_2026-10-01.md`. Nicht mitgeliefert, sondern vom Owner installiert.
+
+**Ollama** — Ein Programm (MIT-Lizenz), das Sprachmodelle auf dem eigenen Rechner bereitstellt
+und über eine einfache Schnittstelle ansprechbar macht. Es kann ein Modell nach einer Antwort
+sofort aus der Grafikkarte entladen — wichtig, weil am Heim-PC Bildmodell und Sprachmodell
+dieselbe Karte teilen. Kosmo in KosmoOrbit benutzt es schon.
+
+**Qwen3** — Eine Familie freier Sprachmodelle (Apache-2.0) von Alibaba; `qwen3:30b` ist das
+Modell, mit dem Kosmo am Heim-PC arbeitet, und der Vorschlag für den Visbox-Assistenten. Nicht zu
+verwechseln mit den Bildmodellen derselben Firma (Qwen-Image).
+
 **Blockwise-ControlNet** — Bauart, bei der die Steuerung nicht auf einmal, sondern in
 jede Schicht des Bildmodells einzeln eingespeist wird. *Für die Benutzung unerheblich —
 wichtig nur, weil solche Modelle einen eigenen Ladeweg brauchen und nicht auf jede
@@ -6144,7 +6160,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |
