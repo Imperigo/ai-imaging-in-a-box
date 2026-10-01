@@ -265,3 +265,4 @@ auf Blatt 13.
 | Nr. | Frage | Entscheid |
 |---|---|---|
 | 63 | Wie kommt das iPad unterwegs zum Heim-PC, nachdem die Durchsicht gezeigt hat, dass iPad ↔ Mac im fremden WLAN unverschlüsselt wäre? | **Direkt über Tailscale** — Tailscale-App auch aufs iPad, die App spricht https mit dem Heim-PC. Der Mac gibt dem iPad beim ersten Mal nur die Zahl zum Koppeln (er fragt sie am Heim-PC ab). **Ersetzt Entscheide 42/47** für die Vorführung; die Vermittlung über den Mac bleibt im Code, aber ausgeschaltet, bis man sie einschaltet. Verworfen: «eigener Hotspot, später verschlüsseln» (empfohlen gewesen) und «jetzt verschlüsseln» (ein Tag, gefährdet die Abgabe). |
+| 64 | Soll die Vorführmappe ein durchgefallenes Bild zeigen (Westblick, «Bild im Bild», `auf-20261001-220`)? | **Ja, es bleibt drin** — die Mappe zeigt, dass Visbox ein falsches Bild erkennt und benennt. Verworfen: nur bestandene Bilder; beide Fassungen umschaltbar. |
