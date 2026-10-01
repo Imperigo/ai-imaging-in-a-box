@@ -8,6 +8,10 @@
   und ohne diese Ausnahme wuerde iOS die Verbindung zu einem Namen wie
   `homestation.local` verweigern. Ein pauschales NSAllowsArbitraryLoads stuende hier
   falsch: Es oeffnete jede Adresse im Internet, nicht nur das eigene Heimnetz.
+
+  Unterwegs (Entscheid 63, 01.10.2026) spricht die App ueber Tailscale mit dem Heim-PC,
+  per https mit gueltigem Zertifikat (Tailscale Serve) — dafuer braucht es KEINE Ausnahme.
+  `tests/test_ipad_geruest.py` faellt, sobald hier mehr steht als die eine fuers Heimnetz.
 -->
 <plist version="1.0">
 <dict>

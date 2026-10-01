@@ -30,6 +30,7 @@ import base64
 import io
 import json
 import os
+import plistlib
 import re
 import hashlib
 import shutil
@@ -1046,3 +1047,21 @@ def test_der_mac_bietet_sich_nur_an_wenn_eingeschaltet():
                                         .read_text(encoding="utf-8"))
     assert re.search(r"static var angeboten: Bool \{\s*get \{ UserDefaults\.standard\.bool\(",
                      gedaechtnis)
+
+
+# =========================================== 10 · Unterwegs über Tailscale (Entscheid 63)
+#
+# Seit dem 01.10.2026 spricht die App unterwegs DIREKT mit dem Heim-PC, über Tailscale und
+# https (`https://<rechner>.<netz>.ts.net:8443`, Protokoll §8). Tailscale Serve hat ein
+# gueltiges Zertifikat — App Transport Security braucht dafuer KEINE Ausnahme. Die Versuchung
+# liegt nahe, beim ersten Zertifikatsfehler am Geraet `NSAllowsArbitraryLoads` zu setzen:
+# Das oeffnete jede Adresse im Internet fuer unverschluesseltes HTTP, und die App merkte
+# einen falschen Heim-PC nicht mehr. Die Wache steht hier, weil der Kern die Plist nicht liest.
+
+def test_ats_kennt_nur_die_ausnahme_fuers_heimnetz():
+    with INFOZUSATZ.open("rb") as f:
+        zusatz = plistlib.load(f)
+    ats = zusatz.get("NSAppTransportSecurity")
+    assert ats == {"NSAllowsLocalNetworking": True}, (
+        "App Transport Security darf nur lokale Netze ausnehmen — https über Tailscale "
+        f"braucht keine Ausnahme. Gefunden: {ats!r}")

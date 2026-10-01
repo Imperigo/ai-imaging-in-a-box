@@ -25,7 +25,7 @@ die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift` ab; `tests/test_ipad_geruest.p
 
 | | |
 |---|---|
-| Übertragung | Gewöhnliches **HTTP/1.0** (die Vorgabe von `http.server`; nach jeder Antwort schliesst der Server die Verbindung), unverschlüsselt. Kennwort und Bilder gehen lesbar durch das Netz. HTTPS: **nicht vorhanden.** |
+| Übertragung | Gewöhnliches **HTTP/1.0** (die Vorgabe von `http.server`; nach jeder Antwort schliesst der Server die Verbindung), unverschlüsselt. Kennwort und Bilder gehen lesbar durch das Netz. HTTPS: **nicht vorhanden** — am Server selbst; unterwegs verschlüsselt Tailscale Serve davor (§8, «Unterwegs», Entscheid 63). |
 | Adresse | Vorgabe `127.0.0.1` (nur der Rechner selbst). Mit `--im-heimnetz` hört der Server auf allen Adressen (`0.0.0.0`) und druckt beim Start die erreichbare Adresse im Heimnetz — oder den Satz «Adresse im Heimnetz nicht ermittelt — am Rechner nachsehen». |
 | Anschluss | Vorgabe **8731** (`--anschluss`). |
 | Inhalt | Anfragen und Antworten sind **JSON in UTF-8** (`Content-Type: application/json; charset=utf-8`). Ausnahmen: `GET /` und `GET /koppeln` (HTML) und `GET /bild` (Bildbytes). |
@@ -425,10 +425,39 @@ Seite damit nicht nötig. Ob das am echten iPad trägt, prüft der Owner beim er
 selbstgebaute DNS-Frage über einen lokalen UDP-Socket die richtige Antwort bekommt
 (`tests/test_rundruf.py`), nicht, dass iOS sie genauso stellt.
 
+### Unterwegs: direkt über Tailscale (Entscheid 63)
+
+**App-Seite gebaut am 01.10.2026, am Gerät unbestätigt.** Unterwegs gibt es kein Heimnetz, und
+die Suche findet nichts. Die App spricht dann **direkt mit dem Heim-PC**, über Tailscale und
+**verschlüsselt**: `https://<rechner>.<netz>.ts.net:8443` — Tailscale Serve am Heim-PC, mit
+gültigem Zertifikat, leitet auf die Fläche weiter. Auf dem iPad läuft dafür die Tailscale-App.
+**Nicht mehr über den Mac** (§8b): Zwischen iPad und Mac ginge die Leitung im fremden WLAN
+unverschlüsselt — Zugangsdaten und Bilder lesbar für jeden im selben Netz (Befund einer
+Sicherheitsdurchsicht, «Grenzen» in §8b). Über Tailscale ist sie es auf der ganzen Strecke.
+
+| | |
+|---|---|
+| Wege, Felder, Sätze | **dieselben** wie §1–§7. Nur die Basis der Adresse ist eine andere; jede Anfrage baut ihre Adresse aus der gemerkten Basis samt Schema (`Wege.adresse`), ein festes `http://` gibt es dazwischen nicht (bewacht: `StreckeTests.testKeinFestesHttpAusserhalbDerHeimnetzregeln`) |
+| Koppeln | wie §7: Adresse eintippen oder einfügen, die **sechsstellige Zahl** eingeben → `POST /api/verbinden` über https → Benutzer und Kennwort in den Schlüsselbund. **Die Zahl** zeigt unterwegs der Mac («iPad koppeln»); er holt sie beim Heim-PC mit `POST /api/kopplung`. **Dieser Weg ist im Server dieses Stands nicht vorhanden** — er entsteht in einem eigenen Strang. Bis dahin gilt die Zahl, die der Heim-PC beim Start mit `--kopplung` zeigt. |
+| Adresse eintippen | `Suche.pruefe(eingabe:)` im Kern: **http** im Heimnetz (ohne Anschluss 8731) **oder https** über Tailscale. https prüft **`Heimadresse.pruefe`**, dieselbe Prüfung wie in der Mac-App: ohne Anschluss **8443** (mit Hinweis), kein Pfad, keine Frage. Ohne Schema gilt http — ausser der Name endet auf `.ts.net`, dann https. Abgelehnt, jeweils mit Satz: `http://` vor einem `.ts.net`-Namen, Benutzer oder Kennwort in der Adresse, jedes andere Schema. |
+| Gemerkt | die Adresse **samt Schema** (`Verbindungsgedaechtnis`, zurückgelesen über `Suche.gemerkt`); das Geheimnis wie bisher nur im Schlüsselbund |
+| Zeile | «`<rechner>` · über Tailscale · antwortet» (`Suche.anzeigename`, `Strecke.zusatz`) |
+| Keine Antwort | Die Einteilung der Fehlercodes ist die der Mac-App (`Leitungsfehler(urlFehlercode:)`), der Satz der des iPad (`Leitungsfehler.satzAmIPad`): über Tailscale beginnen **Name unbekannt, keine Verbindung, keine Antwort in der Frist und Zertifikat** mit «Tailscale am iPad an?». Die Zeile zeigt «Getrennt» mit diesem Satz, und **Skizzen parken** (§3, Parkfach), bis der Heim-PC wieder antwortet. Im Heimnetz bleiben die Sätze wortgleich die alten. |
+| App Transport Security | **keine neue Ausnahme.** https mit gültigem Zertifikat braucht keine; `InfoZusatz.plist` nimmt weiter nur lokale Netze aus (`NSAllowsLocalNetworking`), bewacht in `tests/test_ipad_geruest.py` |
+| Wechsel Heimnetz ↔ unterwegs | Die App merkt sich **eine** Adresse (§8b, «Grenzen»). Wer am iPad Tailscale hat, nimmt die Tailscale-Adresse **auch zuhause** — Tailscale verbindet im selben WLAN direkt, und die Leitung bleibt verschlüsselt. Wer zuhause die Heimnetz-Adresse nimmt, koppelt beim Wechsel neu. |
+
+Der Server selbst spricht weiter nur HTTP (§1); verschlüsselt wird zwischen iPad und Tailscale
+Serve am Heim-PC. **Am Gerät unbestätigt:** dass die App den `.ts.net`-Namen über die
+Tailscale-App auflöst, dass `URLSession` das Zertifikat ohne Ausnahme annimmt, welcher Fehler
+bei ausgeschaltetem Tailscale wirklich kommt (erwartet: Name unbekannt) und dass die
+Netzänderung beim Einschalten von Tailscale sofort ein neues Prüfen auslöst (`NWPathMonitor`).
+
 ## 8b · Über den Mac (Vermittler)
 
-**Nicht der Weg für die Vorführung (Owner-Entscheid 01.10.2026): unterwegs spricht das iPad über
-Tailscale direkt mit dem Heim-PC; die Vermittlung ist aus, bis man sie einschaltet.**
+**Nicht der Weg für die Vorführung (Owner-Entscheid 63, 01.10.2026): unterwegs spricht das
+iPad über Tailscale direkt mit dem Heim-PC (§8, «Unterwegs: direkt über Tailscale»), weil diese
+Strecke iPad ↔ Mac unverschlüsselt ist (siehe «Grenzen»); die Vermittlung ist aus, bis man sie
+einschaltet.** Der Code bleibt; bietet ein Mac sie an, zeigt die App ihn weiter «über den Mac».
 
 **Gebaut am 01.10.2026 (Plan v0.1.7, Strom B; Entscheide 42 und 47), am Gerät unbestätigt;
 nachgeführt nach der Sicherheitsdurchsicht vom selben Tag.** Gedacht für den Fall, dass das iPad

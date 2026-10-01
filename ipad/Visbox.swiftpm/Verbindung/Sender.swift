@@ -63,31 +63,24 @@ final class Sender {
             }
             return .antwort(status: http.statusCode, daten: daten)
         } catch {
-            return .keineAntwort(grund: Sender.satz(error), gesendeteBytes: zaehler.gesendet)
+            return .keineAntwort(grund: Sender.satz(error, strecke: Strecke(basis: basis)),
+                                 gesendeteBytes: zaehler.gesendet)
         }
     }
 
     /// Ein Satz für einen Menschen — nicht die Programmmeldung des Systems.
-    static func satz(_ fehler: Error) -> String {
+    ///
+    /// **Welcher Satz, entscheidet der Kern** (`Leitungsfehler.satzAmIPad`, mit Proben): die
+    /// Einteilung der Codes dieselbe wie in der Mac-App, der Satz je Strecke. Über Tailscale
+    /// (Entscheid 63) heisst ein unbekannter Name fast immer «Tailscale am iPad ist aus»; die
+    /// Verbindungszeile sagt dann genau das, und Skizzen bleiben im Parkfach. Bis zum
+    /// 01.10.2026 standen die Sätze hier, nur fürs Heimnetz und ungeprüft.
+    static func satz(_ fehler: Error, strecke: Strecke) -> String {
         guard let f = fehler as? URLError else {
             return "Die Verbindung kam nicht zustande (\(fehler.localizedDescription))."
         }
-        switch f.code {
-        case .cannotConnectToHost:
-            return "Die HomeStation nimmt keine Verbindung an — läuft der Server dort?"
-        case .cannotFindHost, .dnsLookupFailed:
-            return "Die Adresse der HomeStation ist im Netz nicht zu finden."
-        case .timedOut:
-            return "Die HomeStation hat nicht rechtzeitig geantwortet."
-        case .notConnectedToInternet:
-            return "Das iPad ist mit keinem Netz verbunden."
-        case .networkConnectionLost:
-            return "Die Verbindung ist unterwegs abgerissen."
-        case .cancelled:
-            return "Das Senden wurde abgebrochen."
-        default:
-            return "Die Verbindung kam nicht zustande (\(f.localizedDescription))."
-        }
+        return Leitungsfehler(urlFehlercode: f.code.rawValue)
+            .satzAmIPad(strecke, beschreibung: f.localizedDescription)
     }
 }
 

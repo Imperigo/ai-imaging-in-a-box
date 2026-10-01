@@ -84,10 +84,18 @@ final class SucheTests: XCTestCase {
     }
 
     func testWasDerServerNichtSprichtWirdAbgelehnt() {
-        for falsch in ["", "   ", "https://192.0.2.10", "192.0.2.10/api/projekt",
+        // BIS ZUM 01.10.2026 STAND HIER AUCH «https://192.0.2.10»: Die App sprach nur http.
+        // Seit Entscheid 63 ist https der Weg unterwegs (über Tailscale) — die Proben dazu
+        // stehen in `StreckeTests`.
+        for falsch in ["", "   ", "192.0.2.10/api/projekt",
                        "http://a:b@192.0.2.10", "192.0.2.10?x=1", "192.0.2.10:99999",
                        "ftp://192.0.2.10", "192.0 .2.10"] {
             XCTAssertNil(Suche.adresse(ausEingabe: falsch), falsch)
+            // UND MIT SATZ, nicht nur `nil`: Der Koppelbildschirm zeigt ihn.
+            guard case .schlecht(let satz) = Suche.pruefe(eingabe: falsch) else {
+                return XCTFail("angenommen: \(falsch)")
+            }
+            XCTAssertFalse(satz.isEmpty, falsch)
         }
     }
 
