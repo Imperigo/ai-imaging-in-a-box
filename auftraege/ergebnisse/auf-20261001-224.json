@@ -1,0 +1,41 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-224",
+ "worker": "local",
+ "status": "erledigt — iPad offline",
+ "git_log_1": "b944edc auf-225: Schlusslauf v0.1.7 (Z1) am echten Projekt, nur Zahlen zurueck",
+ "A1": {
+  "ipad_gefunden": true,
+  "online": false,
+  "betriebssystem": "iOS (iPadOS)",
+  "zuletzt_gesehen": "2026-09-22 (vor 9 Tagen)",
+  "hinweis": "Das iPad steht im eigenen Netz, war aber seit dem 22.09. nicht mehr verbunden. Der Owner muss die Tailscale-App am iPad oeffnen und angemeldet sein (VPN an)."
+ },
+ "A2": {
+  "antwort": false,
+  "weg": null,
+  "ms": null,
+  "zeile": "5 Versuche je 5 s: «timed out», am Ende «no reply»"
+ },
+ "A3": {
+  "weiterleitung_8443_steht": true,
+  "8443": {
+   "/": "127.0.0.1:8731"
+  },
+  "kosmoorbit_unveraendert": true,
+  "443": [
+   "/ -> 5183",
+   "/bruecke -> 8600",
+   "/llm -> 11434",
+   "/sync -> 8700",
+   "/updates/ -> Ordner"
+  ]
+ },
+ "A4": {
+  "code": 401,
+  "satz": "Nicht angemeldet. Visbox läuft am Heim-PC als Dienst; Benutzername «visbox», das Kennwort steht dort in der Kennwortdatei (siehe betrieb/README.md).",
+  "nennt_kennwortdatei": true
+ },
+ "nebenbei": "Im Netz stehen vier weitere Geraete; zur Messzeit ist nur eines online (Windows). Der Mac war zuletzt heute frueh verbunden.",
+ "messzeit": "2026-10-01 ~13:15"
+}
