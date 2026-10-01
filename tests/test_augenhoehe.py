@@ -131,7 +131,9 @@ def test_der_abholer_fuehrt_die_augenhoehe_im_urteil_mit():
     bericht = {"kamera": dict(_kamera(54.35, -0.437, "Übersicht"),
                               gebaeudehoehe_m=30.437)}
     urteil = abholer._komposition_vor_dem_render(bericht)
-    assert urteil["abbruch"] is True, "der Dachriegel greift weiterhin"
+    # Seit dem Owner-Entscheid 67 (01.10.2026) haelt der Dachriegel nicht mehr an, er
+    # vermerkt die Aufsicht. Die Augenhoehe-Auskunft steht weiter daneben.
+    assert urteil["abbruch"] is False and urteil["aufsicht"], "der Dachriegel vermerkt"
     assert urteil["augenhoehe"]["augenhoch"] is False, (
         "und die Augenhoehe steht daneben — beide Fragen, nicht nur eine")
 

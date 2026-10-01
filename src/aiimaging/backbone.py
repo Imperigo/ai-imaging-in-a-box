@@ -290,6 +290,18 @@ class Backbone:
     #: für nichts; ein Feld sagt, wo sie liegt.
     gewichte_ordner: str | None = None
 
+    #: Die ``diffusers``-Klasse, über die :func:`aiimaging.render.lade_modell` die Basis
+    #: lädt, wenn sie **kein** getrenntes ControlNet hat (dort gilt
+    #: ``render.CONTROLNET_KLASSEN``). ``None`` heisst: nicht im Register — dann liest
+    #: ``render.pipeline_lage`` ``_class_name`` aus der ``model_index.json`` der Gewichte,
+    #: und fehlt auch die, ist die Frage NICHT GEPRUEFT, nicht «da».
+    #:
+    #: **Anlass (`auf-20261001-230`, Sammel-Nachprobe):** qwen-image-2.1 war bestellbar und
+    #: scheiterte erst beim Laden — nach dem Blender-Lauf — mit «module diffusers has no
+    #: attribute QwenImage21Pipeline»: diffusers 0.39.0 in ``.venv-render`` kennt die Klasse
+    #: nicht. Die Klasse vorher zu kennen heisst, vorher fragen zu können.
+    pipeline_klasse: str | None = None
+
     #: Die Schrittzahl, die die **Modellkarte** empfiehlt — gilt, wo eine Bestellung keine
     #: nennt (Abholer, homeworker). ``None`` heisst: nicht belegt, es bleibt bei 20.
     #:
@@ -968,6 +980,9 @@ _eintrag(replace(
 
 _eintrag(Backbone(
     name="qwen-image-edit-2511",
+    # Am Geraet geladen (auf-20260818-09; Signatur gelesen in auf-20260923-157, diffusers
+    # 0.39.0) — siehe die Korrektur der Konditionierung weiter unten.
+    pipeline_klasse="QwenImageEditPlusPipeline",
     # Stufe 3 gemessen: bei 7992 MiB frei durch (1469 s), bei 5944 und 4102 MiB nach
     # 164 bzw. 193 s CUDA out of memory. Der Bedarf liegt zwischen 6 und 8 GiB, nicht
     # feiner gemessen — die Grenze ist der kleinste Wert, der gemessen trug.
@@ -1238,6 +1253,11 @@ _eintrag(Backbone(
 
 _eintrag(Backbone(
     name="qwen-image-2.1",
+    # Die Klasse, die `DiffusionPipeline.from_pretrained` fuer diese Gewichte sucht —
+    # woertlich aus dem Fehler der Nachprobe (auf-20261001-230: «module diffusers has no
+    # attribute QwenImage21Pipeline»). Die Modellkarte verlangt dafuer eine diffusers aus
+    # dem Quellstand, nicht aus einer Freigabe (Kommentar unten).
+    pipeline_klasse="QwenImage21Pipeline",
     schritte_vorgabe=40,
     schritte_beleg=("auf-20260930-208 B2: Modellkarte bei den Gewichten (README.md, Z. 67, 90, "
                     "105) — num_inference_steps=40 in allen drei Beispielen. Führung und "

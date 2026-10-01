@@ -534,19 +534,25 @@ def _kamerablock(*, augenhoehe, gebaeudehoehe):
             "gebaeudehoehe_m": gebaeudehoehe}
 
 
-def test_eine_kamera_ueber_dem_dach_fuehrt_zu_keinem_bild(tmp_path):
+def test_eine_kamera_ueber_dem_dach_wird_gerechnet_und_als_aufsicht_vermerkt(tmp_path):
     """**Der gemessene Fall.** 77 m Kamerahöhe über einem 21,3 m hohen Bau: Die Kamera
-    schaut auf das Dach herab, und «Dach und Fuss im Bild» ist die falsche Frage. Das war
-    bekannt, bevor irgendetwas gerechnet wurde."""
+    schaut auf das Dach herab, und «Dach und Fuss im Bild» ist die falsche Frage.
+
+    Bis zum 01.10.2026 hiess das: kein Bild. Seit dem Owner-Entscheid 67 («Rechnen, mit
+    Vorbehalt») wird gerechnet; das Regelwerk der Augenhöhe wird nicht angelegt, und der
+    Grund steht am Urteil (`auf-20261001-230`, KosmoOrbits Auto-Kamera «Übersicht»)."""
     ergebnis, n_render = _lauf_mit_kamerablock(
         tmp_path, _kamerablock(augenhoehe=77.023, gebaeudehoehe=21.3))
 
-    assert n_render == 0, "die Diffusion darf hier gar nicht anlaufen"
-    assert ergebnis["bilder"] == [], "und es darf keine Bilddatei zurueckbleiben"
+    assert n_render == 1, "eine Aufsicht wird gerechnet"
+    assert len(ergebnis["bilder"]) == 1
     urteil = ergebnis["kameras"][0]
-    assert urteil["komposition"]["abbruch"] is True
+    assert urteil["komposition"]["abbruch"] is False
+    assert urteil["komposition"]["beurteilt"] is False
     assert "kamerahoehe_m" in urteil["komposition"]["grund"]
-    assert urteil["score"] is None and urteil["gemessen"] is False
+    assert "AUFSICHT" in urteil["komposition"]["grund"]
+    assert urteil[abholer._kosmo_szene.URTEIL_AUFSICHT]["kamerahoehe_m"] == pytest.approx(
+        77.023)
 
 
 def test_eine_gewoehnliche_kamera_laeuft_durch(tmp_path):
@@ -623,16 +629,18 @@ def test_ein_eingabefehler_des_regelwerks_ist_kein_abbruchgrund(tmp_path):
     assert "NICHT GEMESSEN" in komposition["grund"]
 
 
-def test_dieselbe_eingabe_bricht_sehr_wohl_ab_wenn_die_kamera_ueber_dem_dach_steht(tmp_path):
+def test_dieselbe_eingabe_wird_sehr_wohl_als_aufsicht_erkannt(tmp_path):
     """Die Gegenprobe zum Test darüber: Der Eingabefehler entschärft die benannte
     Bedingung **nicht**. Sie wird aus dem Bericht gerechnet und nicht aus dem Regelwerk
-    geholt — sonst hinge der Abbruch daran, dass alles andere in Ordnung ist."""
+    geholt — sonst hinge die Erkennung daran, dass alles andere in Ordnung ist. Seit dem
+    Owner-Entscheid 67 heisst die Bedingung «Aufsicht» statt «Abbruch»."""
     kaputt = dict(_kamerablock(augenhoehe=77.023, gebaeudehoehe=21.3),
                   gelaende_bezug="gibt-es-nicht")
     ergebnis, n_render = _lauf_mit_kamerablock(tmp_path, kaputt)
 
-    assert n_render == 0
-    assert ergebnis["kameras"][0]["komposition"]["abbruch"] is True
+    assert n_render == 1
+    assert ergebnis["kameras"][0]["komposition"]["aufsicht"]
+    assert ergebnis["kameras"][0]["komposition"]["abbruch"] is False
 
 
 @pytest.mark.parametrize("kamera", [

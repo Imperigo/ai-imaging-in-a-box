@@ -55,6 +55,7 @@ Abhängigkeiten: :mod:`aiimaging.bruecke` und stdlib. Kein ``bpy``, keine Oberfl
 from __future__ import annotations
 
 import math
+import re
 import time
 from pathlib import Path
 
@@ -675,8 +676,16 @@ def _kompositionszeilen(kameras: list) -> list:
     beurteilt = [k for k in kameras if (k.get("komposition") or {}).get("beurteilt")]
     zeilen: list = []
 
+    # Eine Aufsicht ist nicht «nicht beurteilbar», sondern mit Absicht nicht nach diesen
+    # Regeln beurteilt (Owner-Entscheid 67) — eigene Zeile, damit niemand einen Fehler sucht.
+    aufsicht = [k.get("kamera") for k in kameras
+                if (k.get("komposition") or {}).get("aufsicht")]
+    if aufsicht:
+        zeilen.append(f"Komposition nicht angewandt (Aufsicht ueber dem Dach, gerechnet): "
+                      f"{', '.join(str(k) for k in aufsicht)}")
     unbeurteilt = [k.get("kamera") for k in kameras
-                   if (k.get("komposition") or {}).get("beurteilt") is False]
+                   if (k.get("komposition") or {}).get("beurteilt") is False
+                   and not (k.get("komposition") or {}).get("aufsicht")]
     if unbeurteilt:
         zeilen.append(f"Komposition NICHT beurteilbar: "
                       f"{', '.join(str(k) for k in unbeurteilt)}")
@@ -1132,7 +1141,9 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
              and (k.get("maskenbefund") or {}).get("maske") is None
              and not k.get("doppelt_von")
              and not (k.get("rahmung") or {}).get("abbruch")
-             and not (k.get("komposition") or {}).get("abbruch")]
+             and not (k.get("komposition") or {}).get("abbruch")
+             # Ein nicht rechenbares Bildmodell erklaert den fehlenden Lauf schon selbst.
+             and _art_ohne_bild(k) != "umgebung"]
     if stumm:
         # OB `bestanden` HIER RICHTIG STEHT — gemessen und nicht behauptet.
         #
@@ -1522,12 +1533,18 @@ def _engine_aus(render_ergebnis) -> dict | None:
 
     ``fuehrung`` bleibt ``None``, wenn der Adapter es nicht weiss; der Vertrag laesst das
     Feld dann weg (auf-155 F7: ``guidance_applied`` ist Boolean und nie null).
+
+    **Seit dem 01.10.2026 aus** ``fuehrung_angewandt`` (C35, auf-20261001-230). Hier stand
+    ``fuehrung_regler_angekommen`` — ob ein EIGENER Regler ankam. Das ist eine andere Frage,
+    und fuer die Vorgabe ``z-image-turbo`` (kein eigener Regler) war sie immer ``None``:
+    ``guidance_applied`` fehlte in jedem Ergebnis, obwohl dort belegt ist, dass ohne Fuehrung
+    gerechnet wird (``render.fuehrung_angewandt``).
     """
     if not isinstance(render_ergebnis, dict) or not render_ergebnis.get("backbone"):
         return None
     lizenz = render_ergebnis.get("lizenz")
     parameter = render_ergebnis.get("parameter") or {}
-    fuehrung = parameter.get("fuehrung_regler_angekommen")
+    fuehrung = parameter.get("fuehrung_angewandt")
     return {"name": str(render_ergebnis["backbone"]),
             "lizenz": (lizenz.get("lizenz") if isinstance(lizenz, dict) else None),
             "fuehrung": fuehrung if isinstance(fuehrung, bool) else None,
@@ -1653,8 +1670,24 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
     bedient; alles andere wäre für den Wartenden nicht nachvollziehbar.
 
     Args:
-        hoechstens: höchstens so viele Aufträge in diesem Durchgang. ``None`` heisst alle.
-            Nützlich für einen Rechner, der zwischendurch etwas anderes tun soll.
+        hoechstens: höchstens so viele **Läufe** in diesem Durchgang — Aufträge, die
+            wirklich angefangen wurden (``verarbeitet`` oder ``fehler``). ``None`` heisst
+            alle. Nützlich für einen Rechner, der zwischendurch etwas anderes tun soll.
+
+            **Ein liegengelassener Auftrag zählt nicht mit** (Sammel-Nachprobe
+            ``auf-20261001-230``, 01.10.2026). Bis dahin wurde die Liste vor dem Lauf auf
+            ``hoechstens`` gekürzt. Ein Auftrag, den die Feldkarte mit Mängeln aufhielt,
+            blieb ``queued`` — richtig, so will es ihr Vertrag —, stand damit aber bei
+            jedem Durchgang wieder vorn, wurde geprüft, aufgehalten, und mit
+            ``--hoechstens 1`` war der Durchgang damit verbraucht. Alle späteren
+            Aufträge warteten, bis jemand ``/cancel`` rief. *Ein Auftrag, der nicht
+            rechnet, darf den Platz eines Auftrags, der rechnen könnte, nicht belegen.*
+            Wofür ``hoechstens`` da ist — die Karte zwischendurch freizugeben —, kostet
+            ein Aufhalten nicht: Es lädt nichts und rechnet nichts.
+
+            Die Reihenfolge des Eingangs bleibt: Der aufgehaltene Auftrag wird weiter
+            zuerst angesehen, sein Grund bleibt am Laufzettel, und sobald er rechnen darf,
+            ist er wieder der erste. Nur sein Warten hält niemanden mehr auf.
 
     Jeder Auftrag bekommt seine **eigene** Wache: ``wache_bauen`` wird je Auftrag
     gerufen. Eine geteilte Wache trüge die Stillstandsuhr des Vorgängers in den nächsten
@@ -1662,6 +1695,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
 
     Returns:
         ``{gesehen, verarbeitet, fehler, liegengelassen, waisen, ergebnisse, gestanden}``.
+        ``gesehen`` zählt die Aufträge, die in diesem Durchgang angesehen wurden.
         ``gestanden`` zählt die Läufe, bei denen die Wache einen Stillstand sah.
         ``ergebnisse`` sind die Antworten von :func:`hole_einen` in Bearbeitungsreihenfolge.
     """
@@ -1671,19 +1705,25 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
             raise AbholerError(f"hoechstens muss eine ganze Zahl sein: {hoechstens!r}")
         if hoechstens < 0:
             raise AbholerError(f"hoechstens darf nicht negativ sein: {hoechstens}")
-        offen = offen[:hoechstens]
 
-    ergebnisse = [
-        hole_einen(ordner, verarbeite=verarbeite,
-                   fremde_freigabe_gilt=fremde_freigabe_gilt, darf_rechnen=darf_rechnen,
-                   wache_bauen=wache_bauen, beobachtungs_takt_s=beobachtungs_takt_s,
-                   quelle=quelle, speicher_frei=speicher_frei)
-        for ordner in offen
-    ]
+    ergebnisse = []
+    gestartet = 0
+    for ordner in offen:
+        if hoechstens is not None and gestartet >= hoechstens:
+            break
+        antwort = hole_einen(ordner, verarbeite=verarbeite,
+                             fremde_freigabe_gilt=fremde_freigabe_gilt,
+                             darf_rechnen=darf_rechnen, wache_bauen=wache_bauen,
+                             beobachtungs_takt_s=beobachtungs_takt_s,
+                             quelle=quelle, speicher_frei=speicher_frei)
+        ergebnisse.append(antwort)
+        # Nur ein Lauf zaehlt gegen `hoechstens` — siehe Docstring (auf-20261001-230).
+        if antwort["tat"] != TAT_LIEGENGELASSEN:
+            gestartet += 1
     verwaist = waisen(store, frist_s=waisenfrist_s, quelle=quelle, _uhr=_uhr)
 
     bericht = {
-        "gesehen": len(offen),
+        "gesehen": len(ergebnisse),
         "verarbeitet": sum(1 for e in ergebnisse if e["tat"] == TAT_VERARBEITET),
         "fehler": sum(1 for e in ergebnisse if e["tat"] == TAT_FEHLER),
         "liegengelassen": sum(1 for e in ergebnisse if e["tat"] == TAT_LIEGENGELASSEN),
@@ -2074,7 +2114,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 kamera_huellbox=None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None,
-                _raeume=None):
+                _raeume=None, _pipeline_lage=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
 
     Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
@@ -2135,6 +2175,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     raeume_lesen = _raeume or _raeume_des_modells
     grenze = geometrie_qa.SCHWELLE_GEOMETRIE if schwelle is None else schwelle
     rahmen = _bel.rahmen_fuer(stil) if stil else None
+    # Ob das bestellte Bildmodell in DIESER diffusers rechenbar ist (auf-20261001-230). Nur
+    # gefragt, wenn auch mit ihr gerechnet wird: Ein hereingereichtes `_rendere` ist nicht
+    # diffusers, und deren Klassenliste sagte ueber es nichts. `_pipeline_lage` ist die
+    # Naht fuer Proben mit einem Ersatzmodul.
+    pipeline_lage = (_pipeline_lage if _pipeline_lage is not None
+                     else (render.pipeline_lage if _rendere is None else None))
 
     def verarbeite(auftrag: dict) -> dict:
         szene = auftrag["szene"]
@@ -2266,6 +2312,39 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 f"Richtungskuerzel (`richtung`) UND einen Standort (`auge`/`blick_auf`). "
                 f"Welcher gilt, entscheidet dieses Modul nicht — der Runner liesse den "
                 f"Standort still vorgehen, und das Kuerzel stuende nur noch im Auftrag.")
+
+        # IST DAS BESTELLTE BILDMODELL HIER UEBERHAUPT RECHENBAR? — vor Blender, vor dem
+        # Laden (Sammel-Nachprobe auf-20261001-230). qwen-image-2.1 war bestellbar und
+        # scheiterte erst an der ersten Kamera, NACH dem Blender-Lauf, mit
+        # «AttributeError: module diffusers has no attribute QwenImage21Pipeline». Fehlt
+        # die Klasse, gibt es ein Ergebnis mit `lieferstatus: fehlgeschlagen` und dem Satz
+        # je Kamera — eine Antwort, die drueben lesbar ist, statt eines Absturzes.
+        # `None` («nicht geprueft») haelt nichts an: Ungeprueft ist nicht dasselbe wie
+        # fehlend, und der Ladeweg fragt dieselbe Frage noch einmal (`render.lade_modell`).
+        backbone_name = szene.get("backbone") or render.VORGABE_BACKBONE
+        lage_modell = (pipeline_lage(backbone_name) if pipeline_lage is not None
+                       else {"rechenbar": None})
+        if lage_modell.get("rechenbar") is False:
+            urteile_ohne = []
+            for aufgabe in aufgaben:
+                kuerzel = aufgabe["kuerzel"]
+                urteile_ohne.append(dict(
+                    _uebersprungenes_urteil(kuerzel, {"abbruch": True,
+                                                      "abbruch_grund": lage_modell["satz"]}),
+                    rahmung=None, komposition=None, blickfeld=None,
+                    modellstand=modellstand, umgebung=dict(lage_modell),
+                    **{_kosmo_szene.URTEIL_INNENANSICHT: aufgabe.get("innenraum")}))
+                _urteil_ablegen(ziel / str(kuerzel), urteile_ohne[-1])
+            return {
+                "bilder": [], "geometrie_urteil": None, "stil_urteil": None,
+                "kameras": urteile_ohne, "zeiten": {"gesamt": 0.0},
+                "uebersprungen": False, "grund": lage_modell["satz"],
+                "hochachse": {"wert": hochachse, "quelle": hochachse_quelle},
+                "modellstand": modellstand, "engine": None, "ebenen": [],
+                "umwandlung": umwandlung,
+                "innenansicht": next((a.get("innenraum") for a in aufgaben
+                                      if a.get("innenraum")), None),
+            }
 
         # DIE BLENDER-FASSUNG, EINMAL JE AUFTRAG. Sie gehoert in den Cache-Schluessel
         # (4.2 und 5.2 sind zwei Renderer) und kostet 0,22 s — je Kamera abgefragt waere
@@ -2579,16 +2658,29 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                     doppelt_von=zwilling["kamera"],
                                     # Die EIGENEN Ebenen — der Multipass lief auch hier;
                                     # die des Vorbilds truegen dessen Kameranamen.
-                                    ebenen=ebenen, **innen))
+                                    ebenen=ebenen, **innen,
+                                    # Der Zwilling ist nicht gerechnet worden; die
+                                    # Saetze zu Aufsicht und Bildauftrag traegt sein
+                                    # Vorbild.
+                                    **{_kosmo_szene.URTEIL_AUFSICHT: None,
+                                       _kosmo_szene.URTEIL_BILDAUFTRAG: None}))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
+
+            # DER BILDAUFTRAG EINER INNENKAMERA (Sammel-Nachprobe auf-20261001-230): KosmoOrbit
+            # schickt EINEN Prompt fuer alle Kameras, und der war «… Tageslicht, klarer
+            # Himmel». Die Innenkamera bekam darum eine Fassade mit Himmel — das
+            # Cycles-Schoenbild derselben Kamera zeigte den Raum. Siehe `_bildauftrag_innen`.
+            bildauftrag = _bildauftrag_innen(szene.get("prompt", ""), aufgabe.get("innenraum"),
+                                             soll)
+            prompt_kamera = bildauftrag["gerechnet"] if bildauftrag else szene.get("prompt", "")
 
             def _rendere_seed(seed, ziel_png):
                 erg = rendern(
                     render.RenderAuftrag(
                         depth_png=tiefe,
-                        prompt=szene.get("prompt", ""),
+                        prompt=prompt_kamera,
                         controlnet_staerke=szene.get("controlnet_staerke", 0.8),
                         backbone=szene.get("backbone") or render.VORGABE_BACKBONE,
                         # Die Bestellung kennt kein Schrittfeld; es gilt die Modellkarte
@@ -2705,6 +2797,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             urteil["modellstand"] = modellstand
             urteil["ebenen"] = ebenen
             urteil.update(innen)
+            # DIE AUFSICHT AM URTEIL (Owner-Entscheid 67, 01.10.2026): nur an einer Kamera,
+            # die wirklich gerechnet wurde — der Satz dazu sagt «gerechnet», und das soll
+            # stimmen. Am Urteil und nicht als eigener Uebergabewert, aus demselben Grund
+            # wie `URTEIL_INNENANSICHT`: Das Kameraurteil reist schon durch beide Quellen.
+            urteil[_kosmo_szene.URTEIL_AUFSICHT] = (
+                dict(komposition["aufsicht"], kamera=str(kuerzel))
+                if komposition.get("aufsicht") else None)
+            urteil[_kosmo_szene.URTEIL_BILDAUFTRAG] = (
+                dict(bildauftrag, kamera=str(kuerzel)) if bildauftrag else None)
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -3480,6 +3581,8 @@ def _nicht_gerendert_kurz(kameras) -> tuple[str, ...]:
             wert = (eintrag["rahmung"] or {}).get("wirksame_bildbreite")
             if isinstance(wert, float):
                 anteile.setdefault(art, []).append(wert)
+        if art == "umgebung":
+            anteile.setdefault(art, []).append(str(eintrag["umgebung"].get("satz") or ""))
         nach_art.setdefault(art, []).append(str(eintrag.get("kamera")))
 
     return tuple(_satz_ohne_bild(art, ", ".join(kuerzel), anteile.get(art))
@@ -3495,6 +3598,10 @@ def _art_ohne_bild(eintrag: dict) -> str | None:
     lesen. Zwei Einteilungen derselben Frage laufen auseinander, sobald eine gepflegt
     wird.
     """
+    if (eintrag.get("umgebung") or {}).get("rechenbar") is False:
+        # ZUERST: Ein Bildmodell, das hier gar nicht rechnen kann, ist kein Befund ueber
+        # die Kamera — keine ihrer Fragen wurde gestellt (auf-20261001-230).
+        return "umgebung"
     if eintrag.get("doppelt_von"):
         return "doppelt"
     if (eintrag.get("blickfeld") or {}).get("abbruch"):
@@ -3514,8 +3621,12 @@ def _satz_ohne_bild(art: str, namen: str, werte=None) -> str:
     """Der Satz zu :func:`_art_ohne_bild` — fuer eine Kamera oder eine Gruppe.
 
     ``werte`` sind die wirksamen Bildbreiten der Rahmungsfaelle; ohne sie steht «zu
-    wenig» und keine erfundene Zahl.
+    wenig» und keine erfundene Zahl. Bei ``umgebung`` ist es der Satz aus
+    :func:`aiimaging.render.pipeline_lage` — fuer alle Kameras derselbe.
     """
+    if art == "umgebung":
+        satz = (werte or ["Das Bildmodell ist in dieser Render-Umgebung nicht rechenbar."])[0]
+        return f"NICHT GERECHNET (Bildmodell), {namen}: {satz}"
     if art == "rahmung":
         werte = werte or []
         spanne = (f"{min(werte):.1%}" if len(set(round(w, 3) for w in werte)) <= 1
@@ -3770,6 +3881,8 @@ def _kamera_ueber_dach(kamera: dict) -> dict:
     Returns:
         ``{abbruch, grund}``. ``abbruch`` ist ``False``, wenn sich die Frage nicht stellen
         lässt — eine fehlende Zahl ist **kein** Abbruchgrund, sondern eine fehlende Zahl.
+        Der Name ``abbruch`` ist geblieben; seit dem Owner-Entscheid 67 (01.10.2026)
+        heisst ``True`` «Aufsicht» und hält nichts mehr an (:func:`_komposition_vor_dem_render`).
     """
     if not isinstance(kamera, dict):
         return {"abbruch": False, "grund": ""}
@@ -3787,6 +3900,75 @@ def _kamera_ueber_dach(kamera: dict) -> dict:
         f"kamerahoehe_m ({kamerahoehe:.3f}) liegt ueber gebaeudehoehe_m ({gebaeude:.3f}). "
         f"Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die "
         f"falsche Frage.")}
+
+
+#: Wörter, mit denen ein Bildauftrag eine AUSSENANSICHT bestellt — englisch, denn der
+#: Prompt ist an dieser Stelle schon übersetzt (`kosmo_szene.lies_szene`, «klarer Himmel»
+#: wird «clear sky»). Bewusst kurz: gestrichen wird nur, was von innen nicht zu sehen sein
+#: KANN (Himmel, Wolken, Horizont, die Fassade, «aussen»). Material und Licht bleiben —
+#: «heller Putz» und «Tageslicht» gibt es auch im Raum.
+AUSSENWOERTER = ("sky", "skies", "cloud", "clouds", "cloudy", "horizon", "facade", "façade",
+                 "facades", "exterior", "outdoor", "outdoors", "outside")
+
+#: Was einer Innenkamera vorangestellt wird.
+INNEN_VORSATZ = "interior view, inside the room"
+
+
+def _bildauftrag_innen(prompt: str, innenvermerk, soll) -> dict | None:
+    """Der Bildauftrag einer **Innenkamera** — ohne Aussenwörter, mit «interior view» vorn.
+
+    **Der Befund (Sammel-Nachprobe ``auf-20261001-230``, C19):** KosmoOrbit schickt einen
+    Prompt für alle Kameras eines Auftrags — dort «Wohnhaus, heller Putz, Holzfenster,
+    Tageslicht, klarer Himmel». Die Innenkamera bekam damit ein KI-Bild mit Fassade und
+    Himmel, während das Cycles-Schönbild derselben Kamera den Raum zeigte. Die Tiefenkarte
+    sagte «Raum», der Text «Himmel», und der Text gewann.
+
+    **Das Kleinste, das trägt:** Segmente des Prompts (durch Komma getrennt), die ein Wort
+    aus :data:`AUSSENWOERTER` tragen, fallen weg, und :data:`INNEN_VORSATZ` kommt vorn
+    dazu. Sonst bleibt der Text, wie bestellt; was geändert wurde, steht am Urteil und als
+    Auskunft in ``verdict.hinweise`` — ein still umgeschriebener Auftrag wäre ein anderes
+    Bild unter demselben Namen.
+
+    **Wann eine Kamera innen steht**, entscheidet nicht der Name, sondern der Beleg:
+
+    * ``interior`` muss bestellt sein (``innenvermerk`` gesetzt) — ohne Bestellung wird
+      nichts umgeschrieben, auch nicht bei einer Kamera dicht vor einer Wand;
+    * und dann entweder ein Standpunkt, den WIR aus den Räumen gerechnet haben
+      (``aus_raeumen``), oder — bei mitgesandten Kameras, deren Raum wir nicht kennen —
+      eine **randlose Soll-Karte**: Geometrie in jedem Bildpunkt, kein Hintergrund. Von
+      aussen sieht eine Kamera Himmel oder Leere neben dem Bauwerk; von innen nicht.
+      Die Grenze dieser Regel: Eine Aussenkamera desselben Auftrags, deren Bild ganz von
+      einer Wand gefüllt ist, gälte auch als innen. Ihr Himmel wäre dann ohnehin nicht
+      im Bild.
+
+    Ob das am Gerät wirkt, ist **ungemessen** (kein GPU-Lauf hier) — die HomeStation muss
+    dieselbe Innenkamera einmal mit und ohne diese Anpassung rechnen.
+
+    Returns:
+        ``{bestellt, gerechnet, entfernt, vorsatz, grund}`` oder ``None``, wenn nichts
+        angepasst wird.
+    """
+    if not isinstance(innenvermerk, dict) or not isinstance(prompt, str):
+        return None
+    if innenvermerk.get("standpunkt") == _kosmo_szene.INNEN_STANDPUNKT_AUS_RAEUMEN:
+        grund = "Standpunkt aus den Raeumen der IFC gerechnet"
+    else:
+        flach = _flache_karte(soll)
+        if not flach:
+            return None
+        from . import geometrie_qa
+        if not all(geometrie_qa.silhouette(flach)):
+            return None
+        grund = ("interior bestellt und die Soll-Karte traegt in jedem Bildpunkt Geometrie "
+                 "(kein Himmel, keine Leere: die Kamera steht innen)")
+    muster = re.compile(r"\b(" + "|".join(re.escape(w) for w in AUSSENWOERTER) + r")\b",
+                        re.IGNORECASE)
+    teile = [t.strip() for t in prompt.split(",")]
+    entfernt = [t for t in teile if t and muster.search(t)]
+    bleibt = [t for t in teile if t and not muster.search(t)]
+    gerechnet = ", ".join([INNEN_VORSATZ, *bleibt])
+    return {"bestellt": prompt, "gerechnet": gerechnet, "entfernt": entfernt,
+            "vorsatz": INNEN_VORSATZ, "grund": grund}
 
 
 def _blick_trifft_szene(bericht: dict) -> dict:
@@ -3898,11 +4080,18 @@ def _komposition_vor_dem_render(bericht: dict) -> dict:
 
     Returns:
         Das Urteil von :func:`aiimaging.komposition.beurteile_bericht`, ergänzt um
-        ``abbruch`` und ``abbruch_grund``.
+        ``abbruch``, ``abbruch_grund`` und ``aufsicht`` (``None``, oder bei einer Kamera
+        über dem Dach ``{kamerahoehe_m, gebaeudehoehe_m, grund}``).
 
     .. important::
-       **Abgebrochen wird nur bei einer benannten Bedingung** (:func:`_kamera_ueber_dach`),
-       nicht bei jeder Ausnahme des Regelwerks. Der Unterschied ist gemessen worden, und
+       **Seit dem Owner-Entscheid 67 (01.10.2026) bricht hier nichts mehr ab.** Die eine
+       benannte Bedingung (:func:`_kamera_ueber_dach`) hielt eine Kamera über dem Dach
+       vor dem Render an; jetzt wird sie gerechnet und als ``aufsicht`` vermerkt — siehe
+       den Kommentar am Ende. ``abbruch`` bleibt im Urteil, immer ``False``, damit jeder
+       Leser dieselben Schlüssel findet.
+
+       **Abgebrochen wurde nur bei einer benannten Bedingung**, nicht bei jeder Ausnahme
+       des Regelwerks. Der Unterschied ist gemessen worden, und
        zwar beim Bauen dieser Funktion: ``KompositionError`` trägt auch
        *«Unbekannter bezugspunkt»* — ein **Eingabefehler**, kein Befund über die Aufnahme.
        Jede Ausnahme zum Abbruch zu machen hiesse, aus «wir konnten nicht prüfen» ein
@@ -3933,11 +4122,40 @@ def _komposition_vor_dem_render(bericht: dict) -> dict:
                             f"ist etwas anderes als 'die Aufnahme taugt nicht'.")}
 
     if not ueber_dach["abbruch"]:
-        return dict(urteil, augenhoehe=auge, abbruch=False, abbruch_grund="")
-    return dict(urteil, augenhoehe=auge, abbruch=True, grund=ueber_dach["grund"], abbruch_grund=(
-        f"NICHT RENDERN: {ueber_dach['grund']} Diese Pruefung braucht KEIN Bild; sie "
-        f"stand bis zum 26.08.2026 hinter der Diffusion und hat dort eine fertige "
-        f"Bilddatei kommentiert, statt sie zu verhindern (auf-vis-20260826-16)."))
+        return dict(urteil, augenhoehe=auge, abbruch=False, abbruch_grund="",
+                    aufsicht=None)
+    # ÜBER DEM DACH WIRD GERECHNET, MIT VORBEHALT (Owner-Entscheid 67, 01.10.2026).
+    #
+    # Bis dahin stand hier ein Abbruch: «NICHT RENDERN … nach HABS/NPS keine
+    # Architekturaufnahme». Die Sammel-Nachprobe am echten KosmoOrbit (auf-20261001-230)
+    # zeigte die Folge: Seine Auto-Kamera «Übersicht» steht 16,3 m hoch bei 6 m Gebaeude,
+    # und damit war JEDER Auto-Auftrag `lieferstatus: fehlgeschlagen`. Eine Aufsicht ist
+    # eine gewollte Ansicht, keine missratene Augenhoehe.
+    #
+    # Was fuer sie GILT und was nicht — die Trennung ist die der Frage, nicht der Kamera:
+    #   * NICHT: das Regelwerk in `komposition` (Dach und Fuss im Bild, Horizont am
+    #     Baukoerper, Neigung/Shift, Bodenanteil). Es beschreibt die Aufnahme in
+    #     Augenhoehe nach HABS/NPS und wirft bei einer Kamera ueber dem Dach selbst
+    #     (`mindestabstand`). Darum `beurteilt: False` mit einem Satz, der das sagt —
+    #     nicht «durchgefallen», sondern «nicht diese Frage».
+    #   * WEITER: alles, was vom Standpunkt nicht abhaengt — Blickfeld (trifft der
+    #     Sehstrahl die Szene), Rahmungsbefund, Zwillingsabgleich, Geometrie-QA (Tiefe
+    #     gegen Bild, Maskenweg, zwei Tore) und Belichtung. Die Tiefenkarte einer
+    #     Aufsicht ist so gut ein Massstab wie die einer Augenhoehe.
+    #   * AUSKUNFT: der Augenhoehe-Befund bleibt stehen («zu hoch») — er zaehlt, wieviele
+    #     bestellte augenhohe Perspektiven es WAREN, und eine Aufsicht ist keine.
+    # Augenhoehe-Kameras bleiben unveraendert streng: Fuer sie aendert sich hier nichts.
+    hoehe_kamera = _zahl_oder_none(
+        (auge or {}).get("kamerahoehe_m") if isinstance(auge, dict) else None)
+    return dict(
+        urteil, augenhoehe=auge, abbruch=False, abbruch_grund="", beurteilt=False,
+        grund=(f"AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT "
+               f"angewandt: {ueber_dach['grund']} Gerechnet wird trotzdem (Owner-Entscheid "
+               f"67); das ist weder bestanden noch durchgefallen, sondern nicht diese "
+               f"Frage."),
+        aufsicht={"kamerahoehe_m": hoehe_kamera,
+                  "gebaeudehoehe_m": _zahl_oder_none((kamera or {}).get("gebaeudehoehe_m")),
+                  "grund": ueber_dach["grund"]})
 
 
 def _qa_je_kamera_eintraege(kameras) -> list[dict]:
@@ -3959,6 +4177,13 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         satz = {"kamera": str(name)}
         if _kamera_gemessen(k):
             satz["geometrie_urteil"] = k
+        # Aufsicht und angepasster Bildauftrag reisen auch an einer Kamera, deren Messung
+        # nicht lief: Gerechnet ist sie trotzdem, und `als_ergebnis` sammelt die Saetze von
+        # hier (E67 / auf-20261001-230). Kein Vertragsfeld — `kosmo_szene._qa_je_kamera`
+        # liest es nicht hinaus.
+        for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG):
+            if k.get(schluessel):
+                satz[schluessel] = k[schluessel]
         aus.append(satz)
     return aus
 
@@ -3989,10 +4214,13 @@ def _lieferung_der_kamera(urteil: dict) -> dict:
     * **Zwilling** (``doppelt_von``): ``uebersprungen``, 0 von 1. Die Ansicht ist
       geliefert — als Bild der anderen Kamera —, und niemand muss etwas tun. Ein
       eigenes Bild gibt es nicht; ``bilder_ist`` zaehlt Bilder, nicht Ansichten.
-    * **Abbruch vor dem Render** (Blickfeld, Rahmung, Kamerahoehe):
-      ``fehlgeschlagen``, 0 von 1. Absichtlich von UNS, aber nicht von der Bestellung:
-      Wer das Bild will, muss die Kamera aendern. Unter ``uebersprungen`` saehe das
-      aus wie ein Zustand, in dem nichts zu tun ist.
+    * **Abbruch vor dem Render** (Blickfeld, Rahmung; bis zum 01.10.2026 auch die
+      Kamerahoehe, seit E67 gerechnet): ``fehlgeschlagen``, 0 von 1. Absichtlich von
+      UNS, aber nicht von der Bestellung: Wer das Bild will, muss die Kamera aendern.
+      Unter ``uebersprungen`` saehe das aus wie ein Zustand, in dem nichts zu tun ist.
+    * **Bildmodell hier nicht rechenbar** (``umgebung``, auf-20261001-230):
+      ``fehlgeschlagen``, 0 von 1, mit dem Satz aus ``render.pipeline_lage``. Wer das
+      Bild will, muss ein anderes Modell bestellen — oder wir die Umgebung nachruesten.
     * **Kein Bild ohne benannten Grund**: ``fehlgeschlagen`` mit dem Grund des Urteils.
       Auf dem Produktweg heute nicht erreichbar; steht da, damit ein kuenftiger Weg ohne
       Bild nicht still als geliefert durchgeht.
@@ -4017,7 +4245,9 @@ def _lieferung_der_kamera(urteil: dict) -> dict:
     if urteil.get("bild_png"):
         return {"lieferstatus": _kosmo_szene.LIEFERSTATUS_GELIEFERT,
                 "lieferstatus_grund": "", "bilder_soll": soll, "bilder_ist": soll}
-    if art is not None:
+    if art == "umgebung":
+        grund = _satz_ohne_bild(art, str(name), [urteil["umgebung"].get("satz")])
+    elif art is not None:
         breite = (urteil.get("rahmung") or {}).get("wirksame_bildbreite")
         grund = _satz_ohne_bild(art, str(name),
                                 [breite] if isinstance(breite, float) else None)
@@ -4099,9 +4329,18 @@ def _zwei_tore_dieser_kamera(urteil: dict) -> dict | None:
     # OHNE GEMEINSAME SILHOUETTE ist `geom_iou` 0.0 eine FEHLENDE MESSUNG (Durchsicht
     # 22.09.2026): So nennt es `verdict.reason` im selben Ergebnis, und Tor B darf dieselbe
     # Zahl nicht als gemessen fuehren. Siehe `kosmo_szene.keine_gemeinsame_silhouette`.
-    iou = (None if _kosmo_szene.keine_gemeinsame_silhouette(urteil)
+    # RANDLOSE SOLL-SILHOUETTE (Sammel-Nachprobe auf-20261001-230, Innenkamera mit
+    # geom_iou 1.0): Die Zahl misst nichts, Tor B bekommt sie nicht — und das Tor sagt,
+    # dass sie NICHT ANWENDBAR ist, nicht bloss «nicht gemessen».
+    randlos = _kosmo_szene.soll_silhouette_randlos(urteil)
+    iou = (None if randlos or _kosmo_szene.keine_gemeinsame_silhouette(urteil)
            else _zahl_oder_none(urteil.get("geom_iou")))
-    return geometrie_qa.zwei_tore(rho, iou)
+    tore = geometrie_qa.zwei_tore(rho, iou)
+    if randlos:
+        grund = f"geom_iou NICHT ANWENDBAR: {_kosmo_szene.SATZ_GEOM_IOU_RANDLOS}."
+        tore["tor_dieses"] = dict(tore["tor_dieses"], nicht_anwendbar=grund)
+        tore["warnungen"] = [*(tore.get("warnungen") or ()), grund]
+    return tore
 
 
 def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:

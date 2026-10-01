@@ -1915,6 +1915,76 @@ def innenansicht_satz(vermerk, *, gerendert: bool) -> str:
             f"Raeumen der IFC gerechnet. Das Bild zeigt den Raum von innen, nicht das "
             f"Gebaeude von aussen.")
 
+
+#: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass die Kamera ueber dem Dach
+#: steht und trotzdem gerechnet wurde — ``{kamera, kamerahoehe_m, gebaeudehoehe_m, grund}``
+#: oder ``None`` (gesetzt in ``abholer.verarbeiter``, nur an gerechneten Kameras).
+#:
+#: **Owner-Entscheid 67 (01.10.2026), «Rechnen, mit Vorbehalt».** Bis dahin wurde eine
+#: solche Kamera vor dem Render abgewiesen; KosmoOrbits Auto-Kamera «Übersicht» (16,3 m
+#: bei 6 m Gebaeude) machte damit jeden Auto-Auftrag ``fehlgeschlagen`` (auf-20261001-230).
+URTEIL_AUFSICHT = "aufsicht"
+
+
+def aufsicht_satz(vermerk) -> str:
+    """Der Satz fuer ``verdict.hinweise`` zu einem :data:`URTEIL_AUFSICHT`-Vermerk — oder ``""``.
+
+    **In ``hinweise`` und nicht in ``reason``**, aus demselben Grund wie
+    :func:`innenansicht_satz` (Owner-Entscheid 30.09.2026): ``reason`` zeigt ihre Kachel
+    mit Warnzeichen. Eine Aufsicht ist bestellt, nicht missraten — der Satz ist eine
+    Auskunft darueber, welche Regeln NICHT angelegt wurden, kein Vorbehalt gegen das Bild.
+    Der Wortlaut ist der des Auftrags zu E67.
+    """
+    if not isinstance(vermerk, dict) or not vermerk.get("kamera"):
+        return ""
+    return (f"AUFSICHT: Die Kamera {vermerk['kamera']} steht über dem Dach — gerechnet, "
+            f"aber nicht nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt.")
+
+
+#: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass sein Bildauftrag fuer eine
+#: Innenkamera angepasst wurde — ``{kamera, bestellt, gerechnet, entfernt, vorsatz, grund}``
+#: oder ``None`` (gesetzt in ``abholer.verarbeiter``, siehe ``abholer._bildauftrag_innen``).
+#:
+#: **Anlass (auf-20261001-230, C19):** Ein Prompt fuer alle Kameras mit «klarer Himmel» gab
+#: der Innenkamera ein KI-Bild mit Fassade und Himmel.
+URTEIL_BILDAUFTRAG = "bildauftrag_innen"
+
+
+def bildauftrag_satz(vermerk) -> str:
+    """Der Satz fuer ``verdict.hinweise`` zu einem :data:`URTEIL_BILDAUFTRAG`-Vermerk — oder ``""``.
+
+    Eine Auskunft, kein Vorbehalt: Sie sagt, mit welchem Text DIESE Kamera gerechnet
+    wurde, weil er nicht der bestellte ist. Ein still geaenderter Auftrag waere ein anderes
+    Bild unter demselben Namen.
+    """
+    if not isinstance(vermerk, dict) or not vermerk.get("kamera"):
+        return ""
+    weg = ", ".join(repr(t) for t in vermerk.get("entfernt") or ()) or "nichts"
+    return (f"INNENKAMERA {vermerk['kamera']}: Bildauftrag angepasst — "
+            f"{vermerk.get('vorsatz')!r} vorangestellt, gestrichen: {weg}. Grund: "
+            f"{vermerk.get('grund')}.")
+
+
+def _aufsicht_saetze(geometrie_urteil, je_kamera) -> list[str]:
+    """Die Saetze zu Aufsicht und Innen-Bildauftrag aller Kameras, je Kamera einmal.
+
+    Gelesen wird am Eintrag selbst (dort steht der Vermerk auch ohne Messung) und an
+    seinem Urteil; ohne ``je_kamera`` — ein Aufrufer mit nur einem Urteil — am
+    ``geometrie_urteil``. Reihenfolge: je Kamera, in der Folge der Kameras.
+    """
+    quellen = [e for e in (je_kamera or ()) if isinstance(e, dict)]
+    if not je_kamera and isinstance(geometrie_urteil, dict):
+        quellen = [geometrie_urteil]
+    saetze: list[str] = []
+    for eintrag in quellen:
+        urteil = eintrag.get("geometrie_urteil") or {}
+        for schluessel, bilde in ((URTEIL_AUFSICHT, aufsicht_satz),
+                                  (URTEIL_BILDAUFTRAG, bildauftrag_satz)):
+            satz = bilde(eintrag.get(schluessel) or urteil.get(schluessel))
+            if satz and satz not in saetze:
+                saetze.append(satz)
+    return saetze
+
 #: Die drei Zustandswoerter, woertlich aus :mod:`aiimaging.gate` uebernommen.
 #:
 #: **Warum uebernommen und nicht neu erfunden:** `gate.als_kosmovis_verdikt` bringt den
@@ -1925,6 +1995,13 @@ def innenansicht_satz(vermerk, *, gerendert: bool) -> str:
 STATUS_OK = _gate.STATUS_OK
 STATUS_FEHLT = _gate.STATUS_FEHLT
 STATUS_DEGENERIERT = _gate.STATUS_DEGENERIERT
+
+#: Das vierte Wort, nur fuer ein einzelnes Tor (Sammel-Nachprobe auf-20261001-230): die
+#: Zahl gibt es, aber sie MISST hier nichts — ``geom_iou`` bei einer Soll-Silhouette, die
+#: das ganze Bild ist (siehe :func:`soll_silhouette_randlos`). Nach aussen ihr
+#: ``not_applicable`` (:data:`TOR_STATUS_IHRE`) — ein Wort ihres Vertrags, keine vierte
+#: Schreibweise.
+STATUS_NICHT_ANWENDBAR = "nicht_anwendbar"
 
 
 def _tor_felder(tor, praefix: str, gruende: list[str]) -> dict:
@@ -1969,13 +2046,20 @@ def _tor_felder(tor, praefix: str, gruende: list[str]) -> dict:
                 and math.isfinite(wert))
     gemessen = tor.get("gemessen") is True and ist_zahl
     bestanden = gemessen and tor.get("bestanden") is True
-    if not gemessen:
+    # NICHT ANWENDBAR ist etwas anderes als nicht gemessen (auf-20261001-230): Die Zahl lag
+    # vor und wurde weggelassen, weil sie hier nichts misst. Nur ohne Wert anerkannt — ein
+    # Tor mit Zahl und diesem Vermerk waere ein Widerspruch, und dann gilt die Zahl.
+    nicht_anwendbar = not gemessen and bool(tor.get("nicht_anwendbar"))
+    if nicht_anwendbar:
+        gruende.append(f"{praefix}_nicht_anwendbar")
+    elif not gemessen:
         gruende.append(f"{praefix}_nicht_gemessen")
     elif not bestanden:
         gruende.append(f"{praefix}_unter_schwelle")
     return {praefix: wert if ist_zahl else None,
             f"{praefix}_threshold": tor.get("schwelle"),
-            f"{praefix}_status": STATUS_OK if gemessen else STATUS_DEGENERIERT,
+            f"{praefix}_status": (STATUS_OK if gemessen else STATUS_NICHT_ANWENDBAR
+                                  if nicht_anwendbar else STATUS_DEGENERIERT),
             f"{praefix}_passed": bestanden}
 
 
@@ -2292,6 +2376,48 @@ def _vorbehalte_je_kamera(je_kamera, gesamt) -> list[str]:
     return saetze
 
 
+def _randlose_kameras(geometrie_urteil, je_kamera) -> list[str]:
+    """Die Namen der gemessenen Kameras mit randloser Soll-Silhouette, je Bild einmal."""
+    urteile = [e.get("geometrie_urteil") for e in (je_kamera or ()) if isinstance(e, dict)]
+    if not je_kamera:
+        urteile = [geometrie_urteil]
+    namen: list[str] = []
+    for urteil in urteile:
+        if (soll_silhouette_randlos(urteil) and not urteil.get("doppelt_von")
+                and str(urteil.get("kamera")) not in namen):
+            namen.append(str(urteil.get("kamera")))
+    return namen
+
+
+def soll_silhouette_randlos(urteil) -> bool:
+    """Deckt die Soll-Silhouette dieses Kameraurteils das GANZE Bild? Dann misst ``geom_iou`` nichts.
+
+    **Der Anlass (Sammel-Nachprobe auf-20261001-230):** Die Innenkamera meldete
+    ``geom_iou`` 1.0 — von innen ist in jedem Bildpunkt Wand, Boden oder Decke, die
+    Soll-Silhouette ist das ganze Bild. Dann gilt eine Rechenidentitaet, keine Beobachtung:
+    ``|soll ∩ ist| / |soll ∪ ist| = |ist| / |Bild|`` — die Zahl zaehlt, wieviel des Bildes
+    der Schaetzer fuer Vordergrund haelt, und ein graues Bild erreicht 1.0. Gemessen schon am
+    19.08.2026 an einer Bodenebene bis zum Horizont (auf-20260819-15: «geom_iou exakt
+    1.0000»); ``geometrie_qa.geometrie_score`` warnt seitdem («Randlose Silhouette»), aber
+    der Vertrag fuehrte die 1.0 weiter als gemessen.
+
+    Gelesen wird ``anteil_soll`` (aus ``geometrie_score``, am Urteil). Fehlt es, ist die
+    Antwort ``False`` — nicht feststellbar heisst nicht randlos.
+    """
+    if not isinstance(urteil, dict):
+        return False
+    anteil = urteil.get("anteil_soll")
+    return (isinstance(anteil, (int, float)) and not isinstance(anteil, bool)
+            and math.isfinite(anteil) and anteil >= 1.0)
+
+
+#: Der Satz zu :func:`soll_silhouette_randlos` — einmal, fuer ``verdict.reason`` und das Tor.
+SATZ_GEOM_IOU_RANDLOS = (
+    "die Soll-Silhouette deckt das ganze Bild (Innenansicht oder bildfuellende Wand) — eine "
+    "Ueberdeckung misst dann nichts, jedes Bild erreichte 1.0. 'geom_iou' ist darum leer; "
+    "der Score ruht hier allein auf der Rangkorrelation")
+
+
 def keine_gemeinsame_silhouette(urteil) -> bool:
     """Ist ``geom_iou`` dieses Kameraurteils eine FEHLENDE MESSUNG und kein Nullwert?
 
@@ -2594,7 +2720,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         qa["geometry"] = {
             "geometry_fidelity": geometrie_urteil.get("score"),
             "spearman": geometrie_urteil.get("spearman"),
-            "geom_iou": geometrie_urteil.get("geom_iou"),
+            # LEER, WENN DIE SOLL-SILHOUETTE DAS GANZE BILD IST (auf-20261001-230): Dann
+            # stuende hier 1.0 fuer jedes Bild — siehe `soll_silhouette_randlos`.
+            "geom_iou": (None if soll_silhouette_randlos(geometrie_urteil)
+                         else geometrie_urteil.get("geom_iou")),
             "threshold": geometrie_urteil.get("schwelle", geometrie_qa.SCHWELLE_GEOMETRIE),
             "passed": bool(geometrie_urteil.get("bestanden")),
             # DAS VERFAHREN, DAS WIRKLICH LIEF — nicht die Konstante.
@@ -2780,6 +2909,12 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # UND DER VORBEHALT JE KAMERA, deren `passed: false` kein Durchfallen ist — siehe
     # `_vorbehalte_je_kamera`. Die Kamera des Gesamtsatzes hat ihren Satz schon (`lage`).
     saetze += _vorbehalte_je_kamera(je_kamera, _geo if lage is not None else None)
+    # UND DIE KAMERAS, DEREN geom_iou NICHTS MISST (auf-20261001-230) — ein Vorbehalt an
+    # der Zahl, darum in `reason`: Er sagt, warum `geom_iou` leer ist, wo es sonst stuende.
+    randlos = _randlose_kameras(geometrie_urteil, je_kamera)
+    if randlos:
+        saetze.append(f"GEOM_IOU NICHT ANWENDBAR, {', '.join(randlos)}: "
+                      f"{SATZ_GEOM_IOU_RANDLOS}")
     if saetze:
         # Hinter den Satz der schlechtesten Kamera, nicht davor: Er ordnet den Auftrag ein.
         stelle = 1 if (gesamt_widerspricht or lage is not None) else 0
@@ -2909,6 +3044,14 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     if innen and not uebersprungen:
         qa["verdict"]["hinweise"] = [innen]
         hinweise.append(innen)
+    # DIE AUFSICHT (Owner-Entscheid 67, 01.10.2026) UND DER BILDAUFTRAG EINER INNENKAMERA
+    # (auf-20261001-230) — dieselbe Art Auskunft am selben Ort. Je Kamera, nicht nur fuer
+    # die schlechteste: Die betroffene ist meist NICHT die Kamera, deren Urteil oben steht,
+    # und ihr Satz gehoert trotzdem zum Auftrag.
+    if not uebersprungen:
+        for satz in _aufsicht_saetze(geometrie_urteil, je_kamera):
+            qa["verdict"].setdefault("hinweise", []).append(satz)
+            hinweise.append(satz)
 
     ergebnis = {
         "schema": SCHEMA_ERGEBNIS,
@@ -3020,7 +3163,8 @@ def nur_vertragsfelder(ergebnis: dict) -> dict:
 #: auf auf-142 (V2): «keine vierte Schreibweise». ``degeneriert`` (gerechnet, aber die Zahl
 #: traegt nichts) ist fuer sie ``not_measured``; das Wort steht weiter in ``fail_reasons``.
 TOR_STATUS_IHRE = {STATUS_OK: "measured", STATUS_FEHLT: "not_measured",
-                   STATUS_DEGENERIERT: "not_measured"}
+                   STATUS_DEGENERIERT: "not_measured",
+                   STATUS_NICHT_ANWENDBAR: "not_applicable"}
 TOR_STATUSFELDER = ("status", "rho_mask_status", "geom_iou_status", "counter_check_status")
 
 
