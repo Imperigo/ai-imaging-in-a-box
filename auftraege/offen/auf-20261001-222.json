@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-222",
+ "art": "frage",
+ "beschreibung": "KosmoPrepare: 360° als Rig, Huffman und Verdeckung nach 217/219 am Geraet nachmessen (COLMAP-Befehlszeile und brush mit Unterordnern sind hier ungemessen); echtes Video falls da.",
+ "anweisung": "=== KOSMOPREPARE: 360° ALS RIG, VERDECKUNG, HUFFMAN — NACHMESSEN (Antwort auf 217/219) ===\n\nWORUM ES GEHT\n  Eure Befunde aus 217 und 219 sind in KosmoPrepare 28ac92a umgesetzt:\n  (1) 360°: die vier Ansichten eines Augenblicks sind jetzt ein RIG. Jede Ansicht liegt in ihrem\n      Ordner (images/front/0001.jpg, images/right/0001.jpg …, gleicher Dateiname je Augenblick), hat\n      eine bekannte Lochkamera (PINHOLE, f = (MAX_RES/2)/tan(55°), Mitte MAX_RES/2) und eine bekannte\n      Drehung (rig.json im Arbeitsordner). Das Skript ruft neu `colmap rig_configurator`, fuettert den\n      Merkmalsauszug mit `--ImageReader.single_camera_per_folder 1 --ImageReader.camera_model PINHOLE\n      --ImageReader.camera_params …`, gleicht mit `--SequentialMatching.expand_rig_images 1` ab und\n      kalibriert im 360-Zweig NICHT mehr (view_graph_calibrator entfaellt dort).\n      Hier gemessen mit pycolmap 4.2.1 an einer erfundenen 360°-Strasse: lose 11.7 m Restfehler, als\n      Rig 0.004 m, mit absichtlich falsch gedrehtem Rig 13.1 m.\n      NICHT gemessen: die COLMAP-BEFEHLSZEILE (Namen der Schalter in 4.2.1) und brush mit Bildnamen\n      in Unterordnern. Genau das ist die Frage dieses Auftrags.\n  (2) `-huffman default` in beiden ffmpeg-Zweigen (euer Befund C2).\n  (3) Die Textur (tools/flaechen_textur.py) prueft Verdeckung gegen die Flaechen des eigenen Modells\n      (euer Befund E3). Schalter zum Vergleich: --ohne-verdeckung.\n  (4) tools/splat_volumen.py: ein wiederholtes --parameter gibt jetzt alle Werte weiter; derselbe Name\n      mit zwei Werten endet mit 2.\n\nVORAUSSETZUNG\n  KosmoPrepare auf mindestens 28ac92a (git pull im Klon). Nichts installieren. Arbeitsordner\n  ausserhalb der Repos, am Ende loeschen. Daten bleiben vor Ort.\n\nTEIL A — 360° mit Rig (dieselbe erfundene 360°-Szene wie in 217 C)\n  A1. Die Kette im 360-Zweig fahren (Profil rtx5090), wie in 217 C1/C2.\n  A2. Melden: DONE/FAIL; die Zeile(n) von rig_configurator aus pipeline.log woertlich; falls ein\n      COLMAP-Schalter unbekannt ist, die Fehlermeldung woertlich (dann hier STOPP und melden —\n      nichts am Skript aendern).\n  A3. Registriert je Ansicht (front/right/back/left), Zahl der Modelle, count der .ply; laeuft brush\n      durch (Bildnamen mit Unterordner)? Bei «early eof» oder «not found» die Zeile woertlich.\n  A4. Verortung wie in 217 C3: rmse_m, max_m, Massstab, schlechtestes Paar; dazu die groesste\n      Streuung der vier Kamerazentren eines Augenblicks (sollte ~0 sein).\n\nTEIL B — normaler Zweig (Gegenprobe, dass nichts kaputt ist)\n  B1. Dieselbe Szene wie 217 B, Profil rtx5090: DONE/FAIL, registriert, count, rmse_m. Steht in jeder\n      ffmpeg-Zeile «-huffman default»?\n\nTEIL C — Verdeckung (dieselbe Szene wie 219 E3)\n  C1. tools/flaechen_textur.py wie in 219 E3 — einmal so, einmal mit --ohne-verdeckung.\n  C2. Je Lauf fuer V1_wand3, V3_wand4, V2_wand1: gewaehlte Kamera, abdeckung, verdeckt, hinweise\n      woertlich, Farbabstand zur gerenderten Erscheinung wie in 219.\n\nTEIL D — echtes Video (nur falls der Owner es geliefert hat; sonst «nicht da» melden)\n  D1. Normaler bzw. 360-Zweig je nach Video. Zahlen wie A3/A4; KEINE Bilder, keine Ortsangaben, keine\n      Dateinamen des Videos in die Antwort.\n\nWAS NICHT GETAN WERDEN SOLL\n  - Nichts installieren, kein Vokabular fuer loop_detection holen (Owner-Entscheid offen).\n  - Am Skript oder an KosmoPrepare nichts aendern; ein Fehler wird gemeldet, nicht geflickt.\n  - Keine Bilder, Ortsnamen oder Koordinaten des echten Videos in die Antwort.\n",
+ "erstellt": "2026-10-01T18:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "erfundene Szenen aus 217 (B, C) und 219 (E) vor Ort; echtes Video nur in Teil D und nur vor Ort"
+ },
+ "params": {
+  "kosmoprepare_stand_min": "28ac92a",
+  "daten_bleiben_lokal": true,
+  "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 1, 2, 3"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Teil A zuerst zurueckmelden — dort steht die offene Frage.",
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Staende (KosmoPrepare-Commit, COLMAP-, brush-, ffmpeg-Fassung).",
+  "A2 DONE/FAIL, rig_configurator-Zeilen woertlich, unbekannte Schalter woertlich.",
+  "A3 registriert je Ansicht, Modelle, count, brush durch ja/nein samt Fehlerzeile.",
+  "A4 rmse_m, max_m, Massstab, schlechtestes Paar, groesste Streuung je Augenblick.",
+  "B1 DONE/FAIL, registriert, count, rmse_m, -huffman in jeder ffmpeg-Zeile ja/nein.",
+  "C2 je Wand und Lauf: Kamera, abdeckung, verdeckt, hinweise, Farbabstand.",
+  "D1 Zahlen oder «nicht da»."
+ ],
+ "rang": 3
+}
