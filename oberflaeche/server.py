@@ -53,7 +53,7 @@ import threading
 import time
 import urllib.parse
 from collections import OrderedDict
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from pathlib import Path
 
 # DER KERN WIRD IMPORTIERT, NICHT UMGEKEHRT. Diese Richtung ist die ganze Regel 4: Die
@@ -63,7 +63,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import inspect                                                  # noqa: E402
 
 from aiimaging import (arbeitsgang, assistent, glbbox, heimstand, importeur,  # noqa: E402
-                       kette, knotenweg, kopplung, projekt)
+                       kette, knotenweg, kopplung, projekt, render)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -415,6 +415,10 @@ WEG_KOPPELN = "/koppeln"
 WEG_HEIM = "/api/heim"
 WEG_ASSISTENT = "/api/assistent"
 WEG_ASSISTENT_ANWENDEN = "/api/assistent/anwenden"
+# SEIT DEM 01.10.2026 (Owner-Entscheid 63) — eine Zahl zum Koppeln, zur Laufzeit geholt.
+# Unterwegs spricht das iPad ueber Tailscale direkt mit dem Heim-PC; der Dienst dort laeuft
+# dauerhaft ohne `--kopplung`, und die Zahl holt der angemeldete Mac auf diesem Weg.
+WEG_KOPPLUNG = "/api/kopplung"
 
 # DIE KNOTENANSICHT (E26, 24.09.2026) — und warum ihre Wege NICHT in den Tafeln stehen.
 #
@@ -601,17 +605,37 @@ class Laufstand:
     # ------------------------------------------------------------------ schreiben
     def beginne(self, ordner, schritte_gesamt=None, bestellung=None) -> None:
         with self.sperre:
-            sperre = self.sperre
-            self.__init__()
-            # DIESELBE SPERRE BEHALTEN. `__init__` legte eine neue an — und wer die alte
-            # gerade haelt (dieser Aufruf), gaebe danach eine Sperre frei, die niemand mehr
-            # benutzt.
-            self.sperre = sperre
-            self.laeuft = True
-            self.ordner = str(ordner)
-            self.begonnen = time.time()
-            self.schritte_gesamt = schritte_gesamt
-            self.bestellung = dict(bestellung) if bestellung else None
+            self._setze_beginn(ordner, schritte_gesamt, bestellung)
+
+    def _setze_beginn(self, ordner, schritte_gesamt, bestellung) -> None:
+        """Nur unter ``self.sperre`` zu rufen."""
+        sperre = self.sperre
+        self.__init__()
+        # DIESELBE SPERRE BEHALTEN. `__init__` legte eine neue an — und wer die alte
+        # gerade haelt (dieser Aufruf), gaebe danach eine Sperre frei, die niemand mehr
+        # benutzt.
+        self.sperre = sperre
+        self.laeuft = True
+        self.ordner = str(ordner)
+        self.begonnen = time.time()
+        self.schritte_gesamt = schritte_gesamt
+        self.bestellung = dict(bestellung) if bestellung else None
+
+    def beginne_wenn_frei(self, ordner, schritte_gesamt=None, bestellung=None) -> bool:
+        """:meth:`beginne`, **nur wenn gerade nichts läuft** — Prüfen und Beginnen in einem
+        Griff unter der Sperre. ``False``: Es lief schon einer, und nichts wurde geändert.
+
+        **Der Anlass** (Durchsicht 01.10.2026): Die Startwege fragten ``sicht()["laeuft"]``
+        und riefen danach ``beginne`` — zwei Griffe. Seit der Server Anfragen nebeneinander
+        bedient, laege zwischen beiden Platz für einen zweiten Start; die Reihe des Servers
+        (``Flaeche.reihe``) schliesst ihn heute aus, und diese Methode schliesst ihn auch
+        dann aus, wenn einmal ein Weg ausserhalb der Reihe startet.
+        """
+        with self.sperre:
+            if self.laeuft:
+                return False
+            self._setze_beginn(ordner, schritte_gesamt, bestellung)
+            return True
 
     def verlange_abbruch(self) -> bool:
         """Den Abbruch verlangen. ``False``, wenn gar nichts läuft."""
@@ -1350,6 +1374,7 @@ WEGTAFEL = {
     WEG_RECHNE_SKIZZE: "_rechne_skizze",
     WEG_ASSISTENT: "_assistent",
     WEG_ASSISTENT_ANWENDEN: "_assistent_anwenden",
+    WEG_KOPPLUNG: "_kopplung_oeffnen",
 }
 
 #: Dasselbe fuer die lesenden Wege (GET). Jede Methode bekommt den zerlegten Weg
@@ -1363,6 +1388,51 @@ WEGTAFEL_LESEN = {
     WEG_KOPPELN: "_koppelseite",
     WEG_HEIM: "_heim",
 }
+
+#: Die zwei Wege, die **neben** den anderen laufen — alle übrigen gehen hintereinander
+#: (``Flaeche.reihe``). Siehe :meth:`Flaeche._bediene`.
+#:
+#: * ``POST /api/assistent`` wartet auf das Sprachmodell, gemessen 4 bis 30 s, im
+#:   schlimmsten Fall bis :data:`aiimaging.assistent.FRIST_FRAGE_GESAMT_S`. Bis zum
+#:   01.10.2026 hielt er in dieser Zeit den ganzen Server fest: ``/api/fortschritt``, die
+#:   Webfläche und die Vermittlung zum iPad hingen, und die Mac-App fiel nach etwa 18 s in
+#:   den Vorführmodus. Er hat eine eigene Sperre — eine Frage zur Zeit.
+#: * ``GET /api/heim`` **liest nur** (geprüft 01.10.2026): ob Blender daliegt, was
+#:   ``nvidia-smi`` sagt, was Ollama meldet, den Laufstand (eigene Sperre) und den
+#:   Grafikspeicher dieses Prozesses — nichts davon schreibt, und nichts davon teilt er
+#:   mit einem anderen Weg ausser über Sperren. Er darf nebenher laufen, und er soll es:
+#:   ``nvidia-smi`` und Ollama dürfen zusammen bis etwa 9 s brauchen.
+WEGE_NEBENHER = frozenset({("POST", WEG_ASSISTENT), ("GET", WEG_HEIM)})
+
+#: Der Satz, wenn schon eine Frage läuft. **Abgewiesen, nicht gewartet:** Eine zweite
+#: Frage, die wartet, hielte einen Faden und die Leitung der Mac-App bis zu vier Minuten
+#: fest — und wer zweimal fragt, hat meist einmal zu oft gedrückt.
+SATZ_FRAGE_LAEUFT = (
+    "Der Assistent beantwortet gerade eine andere Frage — eine zur Zeit. Bitte warten, bis "
+    "die Antwort da ist, dann noch einmal fragen.")
+
+#: Der Satz, wenn während einer Frage gerechnet werden soll.
+SATZ_RECHNEN_WAEHREND_FRAGE = (
+    "Gerade beantwortet der Assistent eine Frage. Sprachmodell und Bildmodell passen nicht "
+    "zugleich auf die Grafikkarte — gerechnet werden kann, sobald die Antwort da ist.")
+
+SATZ_SCHON_EIN_LAUF = ("Es läuft schon einer. Zwei Läufe auf derselben Mappe schrieben "
+                       "beide in dieselbe Projektdatei — der zweite überschriebe die Bilder "
+                       "des ersten.")
+
+
+def _einstellungen_der_mappe(ordner) -> dict:
+    """Die Einstellungen der Mappe, über die sich ein Lauf legt — ``{}``, wenn keine da ist.
+
+    Aus :func:`aiimaging.projekt.oeffne`, wie :func:`_schritte_gesamt` und wie
+    :func:`aiimaging.arbeitsgang.rechne` sie liest (``{**mappe, **lauf}``).
+    """
+    if not ordner:
+        return {}
+    try:
+        return dict(projekt.oeffne(Path(ordner))["projekt"].get("einstellungen") or {})
+    except projekt.ProjektError:
+        return {}
 
 
 def _ist_knotenweg(pfad: str) -> bool:
@@ -1430,6 +1500,10 @@ class Flaeche(BaseHTTPRequestHandler):
     #: Sie liegt auf der KLASSE und nicht in einer Anfrage: Alle Anfragen teilen sie
     #: sich, und genau das ist gewollt — der Versuchszaehler ist nur dann eine Schranke,
     #: wenn er fuer alle derselbe ist. *Ein Zaehler je Verbindung zaehlt nichts.*
+    #:
+    #: Gesetzt beim Start (``--kopplung``) **oder zur Laufzeit** ueber
+    #: ``POST /api/kopplung`` (seit 01.10.2026) — dann auf der Klasse des Servers und
+    #: **nur unter der Reihe**, wie jeder Weg, der sie liest.
     kopplung_offen = None
     #: Das Sprachmodell des Assistenten (``aiimaging.assistent.Ollama``), gesetzt mit
     #: ``--assistent-adresse``/``--sprachmodell`` — oder ``None``: dann nimmt der Kern
@@ -1439,6 +1513,18 @@ class Flaeche(BaseHTTPRequestHandler):
     #: dass es dort steht, und nicht «im Fenster» (siehe :func:`satz_nicht_angemeldet`).
     kennwort_in_datei: bool = False
     sys_version = ""
+    #: **Die Reihe** (01.10.2026): Seit der Server Anfragen in eigenen Fäden bedient
+    #: (``ThreadingHTTPServer``), gehen alle Wege ausser :data:`WEGE_NEBENHER` trotzdem
+    #: **hintereinander** — unter dieser einen Sperre. Kopplungszähler, Eingangsbuch,
+    #: Laufstart und Projektdatei waren für einen Server gebaut, der eine Anfrage nach der
+    #: anderen nimmt; unter der Reihe bleibt das wahr, und keiner davon muss neu gedacht
+    #: werden. *Was nebeneinander laufen darf, wird einzeln freigegeben, nicht alles auf
+    #: einmal.* Sie liegt auf der Klasse, damit alle Anfragen dieselbe teilen.
+    reihe = threading.Lock()
+    #: Eine Frage an den Assistenten zur Zeit. Genommen wird sie **unter der Reihe**,
+    #: zusammen mit dem Blick auf den Laufstand — so kann zwischen «läuft ein Lauf?» und
+    #: «die Frage beginnt» kein Lauf starten, und umgekehrt.
+    frage_laeuft = threading.Lock()
 
     @property
     def server_version(self) -> str:
@@ -1544,10 +1630,29 @@ class Flaeche(BaseHTTPRequestHandler):
         """Still. Eine Oberfläche, die bei jedem Klick eine Zeile ins Terminal schreibt,
         macht das Terminal unbrauchbar für das, wofür man es offen hat."""
 
+    # ------------------------------------------------------------------- die Reihe
+    def _bediene(self, handeln) -> None:
+        """Tür, dann Weg — **in der Reihe**, ausser für :data:`WEGE_NEBENHER`.
+
+        Für die zwei Wege nebenher läuft auch die Tür ausserhalb der Reihe. Das ist
+        sicher, weil sie für sie nichts Geteiltes anfasst: Die Kopplung fragt sie nur auf
+        ``POST /api/verbinden`` und ``GET /koppeln``; für alle anderen Wege vergleicht sie
+        nur Kopfzeile und Kennwort.
+        """
+        weg = urllib.parse.urlparse(self.path).path
+        if (self.command, weg) in WEGE_NEBENHER:
+            if self._darf_herein():
+                handeln()
+            return
+        with Flaeche.reihe:
+            if self._darf_herein():
+                handeln()
+
     # -------------------------------------------------------------------------- lesen
     def do_GET(self) -> None:                        # noqa: N802 — Name der Basisklasse
-        if not self._darf_herein():
-            return
+        self._bediene(self._lies)
+
+    def _lies(self) -> None:
         weg = urllib.parse.urlparse(self.path)
         if _ist_knotenweg(weg.path):
             self._knotenweg_lesen(weg.path, urllib.parse.parse_qs(weg.query))
@@ -1777,8 +1882,9 @@ class Flaeche(BaseHTTPRequestHandler):
 
     # ------------------------------------------------------------------------ handeln
     def do_POST(self) -> None:                       # noqa: N802 — Name der Basisklasse
-        if not self._darf_herein():
-            return
+        self._bediene(self._handeln)
+
+    def _handeln(self) -> None:
         laenge = int(self.headers.get("Content-Length") or 0)
         # DER KNOTENWEG ZUERST: Sein Auftrag kommt als Formular mit einer Modelldatei, nicht
         # als JSON — die Zeile darunter wuerde ihn als unlesbar abweisen.
@@ -1841,6 +1947,45 @@ class Flaeche(BaseHTTPRequestHandler):
         self._sende({"verbunden": True, "benutzer": BENUTZER,
                      "kennwort": self.kennwort,
                      "satz": SATZ_VERBUNDEN})
+
+    def _kopplung_oeffnen(self, wunsch: dict) -> None:
+        """Eine neue Zahl zum Koppeln — **nur angemeldet**, nur mit Kennwort am Server.
+
+        **Der Anlass** (Owner-Entscheid 63, 01.10.2026): Unterwegs spricht das iPad über
+        Tailscale direkt mit dem Heim-PC. Der Dienst dort läuft dauerhaft mit
+        ``--kennwort-datei`` und ohne ``--kopplung`` — eine offene Zahl gab es also nie.
+        Der Mac, der angemeldet ist, holt sie hier und zeigt sie; das iPad tippt sie ein
+        und bekommt über ``POST /api/verbinden`` Benutzer und Kennwort, wie beim Start mit
+        ``--kopplung``.
+
+        **Dieselben Regeln wie** ``--kopplung``: :func:`aiimaging.kopplung.eroeffne`, also
+        600 s, fünf Versuche, verbraucht nach dem ersten Erfolg. Eine noch offene Zahl wird
+        **ersetzt** und vorher geschlossen — sonst gälten zwei Zahlen zugleich, und wer die
+        alte abgelesen hat, käme damit noch herein.
+
+        **Keine Ausnahme an der Tür**: Wer die Zahl holen will, ist schon angemeldet.
+        **Die Zahl geht nur in diese Antwort** — kein ``print``, kein Protokoll. Sie ist
+        ein Geheimnis von zehn Minuten, und das Fenster des Dienstes ist ein Protokoll.
+
+        Ohne Kennwort am Server gäbe es nichts zu übergeben (wie in :func:`baue_server`):
+        Satz statt Kopplung.
+        """
+        if not self.kennwort:
+            self._fehler(f"{NAME} läuft ohne Kennwort — es gibt nichts, was eine Zahl "
+                         f"übergeben könnte. Mit --kennwort-datei oder --kennwort-erzeugen "
+                         f"starten, dann gibt es hier eine Zahl.")
+            return
+        alt = type(self).kopplung_offen
+        if alt is not None:
+            kopplung.schliesse(alt)
+        neu = kopplung.eroeffne()
+        type(self).kopplung_offen = neu
+        minuten = int(kopplung.FRIST_S // 60)
+        self._sende({"zahl": neu.pin, "gilt_noch_s": int(kopplung.FRIST_S),
+                     "satz": f"Diese Zahl gilt {minuten} Minuten für EIN Gerät: auf dem "
+                             f"iPad eintippen. Danach ist sie verbraucht, nach "
+                             f"{kopplung.VERSUCHE} Fehlversuchen tot; eine neue Zahl "
+                             f"ersetzt sie."})
 
     def _anlegen(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.lege_an` — und sonst nichts."""
@@ -2116,10 +2261,13 @@ class Flaeche(BaseHTTPRequestHandler):
         ordner = wunsch.get("ordner") or self.ordner
         if not ordner:
             return {"fehler": "Kein Projektordner angegeben."}, 400
+        # NICHT NEBEN EINER FRAGE (01.10.2026): Der Lauf laedt das Bildmodell, die Frage
+        # haelt das Sprachmodell — beide passen nicht zugleich auf die Karte. Gefragt
+        # unter der Reihe; die Frage nimmt ihre Sperre ebenfalls nur unter der Reihe.
+        if Flaeche.frage_laeuft.locked():
+            return {"fehler": SATZ_RECHNEN_WAEHREND_FRAGE}, 400
         if LAUFSTAND.sicht()["laeuft"]:
-            return {"fehler": "Es läuft schon einer. Zwei Läufe auf derselben Mappe "
-                              "schrieben beide in dieselbe Projektdatei — der zweite "
-                              "überschriebe die Bilder des ersten."}, 400
+            return {"fehler": SATZ_SCHON_EIN_LAUF}, 400
         try:
             b = _lies_bestellung(wunsch, skizzenlauf=False)
         except FlaechenError as fehler:
@@ -2130,9 +2278,12 @@ class Flaeche(BaseHTTPRequestHandler):
         # ohne Auskunft. Bei einer Reihe: je Variante, denn jede zaehlt von vorn.
         gesamt = _schritte_gesamt(Path(ordner), b["einstellungen"], entwurf=b["entwurf"])
 
-        LAUFSTAND.beginne(ordner, schritte_gesamt=gesamt, bestellung={
-            "art": "modell", "entwurf": b["entwurf"], "varianten": b["varianten"],
-            "skizzen": None})
+        # PRUEFEN UND BEGINNEN IN EINEM GRIFF — der Blick oben war nur fuer den Satz vor
+        # den Formfehlern. Zwischen ihm und hier vergeht Zeit (die Mappe wird gelesen).
+        if not LAUFSTAND.beginne_wenn_frei(ordner, schritte_gesamt=gesamt, bestellung={
+                "art": "modell", "entwurf": b["entwurf"], "varianten": b["varianten"],
+                "skizzen": None}):
+            return {"fehler": SATZ_SCHON_EIN_LAUF}, 400
         faden = threading.Thread(
             target=_rechne_im_hintergrund,
             args=(Path(ordner), b["trotz_aenderung"], b["einstellungen"]),
@@ -2150,26 +2301,57 @@ class Flaeche(BaseHTTPRequestHandler):
     def _heim(self, weg) -> None:
         """Die Startzeilen der Mac-App: Blender, Grafikkarte, Assistent — aus
         :func:`aiimaging.heimstand.heimstand`. Ohne Pfade und ohne Rechnernamen."""
+        laeuft = LAUFSTAND.sicht()["laeuft"]
+        # NUR GEMESSEN, NICHT FREIGEGEBEN: Dieser Weg liest nur (er laeuft nebenher).
+        # Freigegeben wird nach jedem Lauf und vor jeder Frage.
+        geladen = (not laeuft
+                   and render.grafikspeicher_des_prozesses()["haelt_bildmodell"])
         self._sende(heimstand.heimstand(sprachmodell=type(self).sprachmodell,
-                                        bild_rechnet=LAUFSTAND.sicht()["laeuft"]))
+                                        bild_rechnet=laeuft, bildmodell_geladen=geladen))
 
     def _assistent(self, wunsch: dict) -> None:
         """Eine Bitte an den Assistenten → ``{antwort, vorschlag?}``. **Rechnet nie** —
         :func:`aiimaging.assistent.frage` kennt keinen Weg dorthin.
 
         Während ein Bild rechnet, antwortet er nicht: Sein Modell passte nicht neben das
-        Bildmodell auf die Grafikkarte (der Satz kommt aus dem Kern).
+        Bildmodell auf die Grafikkarte (der Satz kommt aus dem Kern). Ebenso nicht, wenn
+        das Bildmodell nach einem Lauf noch auf der Karte liegt und sich nicht freigeben
+        lässt (``auf-20261001-218``).
+
+        **Läuft nebenher** (:data:`WEGE_NEBENHER`), unter der eigenen Sperre
+        ``frage_laeuft``: eine Frage zur Zeit, eine zweite wird mit Satz abgewiesen. Die
+        Sperre wird **vor** dem Senden der Antwort zurückgegeben — wer die Antwort hat und
+        sofort «Anwenden» drückt, soll nicht an der eigenen, schon beantworteten Frage
+        scheitern.
         """
+        ordner = wunsch.get("ordner") or self.ordner
+        with Flaeche.reihe:
+            if not Flaeche.frage_laeuft.acquire(blocking=False):
+                self._fehler(SATZ_FRAGE_LAEUFT)
+                return
+            bild_rechnet = LAUFSTAND.sicht()["laeuft"]
+            # DIE MAPPE UNTER DER REIHE GELESEN: Ein Weg in der Reihe koennte sie gerade
+            # schreiben (`/api/einstellungen`).
+            mappe = _einstellungen_der_mappe(ordner)
+        ergebnis = satz = None
+        code = 400
         try:
+            # WAS EIN FRUEHERER LAUF AUF DER KARTE LIESS, ZUERST FREIGEBEN. Liegt das
+            # Bildmodell danach noch da, fragt der Kern nicht (eigener Satz).
+            geladen = (not bild_rechnet
+                       and render.gib_grafikspeicher_frei()["haelt_bildmodell"])
             ergebnis = assistent.frage(
                 wunsch.get("nachricht"), wunsch.get("verlauf") or (),
-                sprachmodell=type(self).sprachmodell,
-                bild_rechnet=LAUFSTAND.sicht()["laeuft"])
+                sprachmodell=type(self).sprachmodell, bild_rechnet=bild_rechnet,
+                bildmodell_geladen=geladen, mappe=mappe)
         except assistent.NichtErreichbar as fehler:
-            self._fehler(str(fehler), 503)
-            return
+            satz, code = str(fehler), 503
         except assistent.AssistentError as fehler:
-            self._fehler(str(fehler))
+            satz = str(fehler)
+        finally:
+            Flaeche.frage_laeuft.release()
+        if ergebnis is None:
+            self._fehler(satz, code)
             return
         self._sende(ergebnis)
 
@@ -2179,9 +2361,15 @@ class Flaeche(BaseHTTPRequestHandler):
         dieselben Fehler («Es läuft schon einer» …).
 
         Der Vorschlag kommt über das Netz zurück; der Kern prüft ihn neu
-        (:func:`aiimaging.assistent.pruefe_vorschlag`), bevor etwas entladen wird.
+        (:func:`aiimaging.assistent.pruefe_vorschlag`), **gegen die Einstellungen der
+        Mappe**, über die er sich legt, bevor etwas entladen wird.
         """
         ordner = wunsch.get("ordner")
+        # VOR DEM ENTLADEN: Laeuft eine Frage, naehme das Entladen ihr das Modell weg —
+        # und der Start danach wiese ohnehin ab.
+        if Flaeche.frage_laeuft.locked():
+            self._fehler(SATZ_RECHNEN_WAEHREND_FRAGE)
+            return
 
         def starte(einstellungen, varianten):
             return self._starte_modelllauf({"ordner": ordner, "einstellungen": einstellungen,
@@ -2191,7 +2379,8 @@ class Flaeche(BaseHTTPRequestHandler):
         try:
             nutzlast, code = assistent.anwenden(
                 wunsch.get("vorschlag"), starte=starte,
-                entlade=None if modell is None else modell.entlade)
+                entlade=None if modell is None else modell.entlade,
+                mappe=_einstellungen_der_mappe(ordner or self.ordner))
         except assistent.AssistentError as fehler:
             self._fehler(str(fehler))
             return
@@ -2211,10 +2400,11 @@ class Flaeche(BaseHTTPRequestHandler):
         if not ordner:
             self._fehler("Kein Projektordner angegeben.")
             return
+        if Flaeche.frage_laeuft.locked():
+            self._fehler(SATZ_RECHNEN_WAEHREND_FRAGE)
+            return
         if LAUFSTAND.sicht()["laeuft"]:
-            self._fehler("Es läuft schon einer. Zwei Läufe auf derselben Mappe schrieben "
-                         "beide in dieselbe Projektdatei — der zweite überschriebe die "
-                         "Bilder des ersten.")
+            self._fehler(SATZ_SCHON_EIN_LAUF)
             return
         try:
             b = _lies_bestellung(wunsch, skizzenlauf=True)
@@ -2224,9 +2414,12 @@ class Flaeche(BaseHTTPRequestHandler):
 
         gesamt = _schritte_gesamt(Path(ordner), b["einstellungen"], entwurf=b["entwurf"])
         skizzen = b["skizze"] if isinstance(b["skizze"], list) else [b["skizze"]]
-        LAUFSTAND.beginne(ordner, schritte_gesamt=gesamt, bestellung={
-            "art": "skizze", "entwurf": b["entwurf"],
-            "varianten": len(skizzen) if len(skizzen) > 1 else None, "skizzen": skizzen})
+        if not LAUFSTAND.beginne_wenn_frei(ordner, schritte_gesamt=gesamt, bestellung={
+                "art": "skizze", "entwurf": b["entwurf"],
+                "varianten": len(skizzen) if len(skizzen) > 1 else None,
+                "skizzen": skizzen}):
+            self._fehler(SATZ_SCHON_EIN_LAUF)
+            return
         faden = threading.Thread(
             target=_rechne_im_hintergrund,
             args=(Path(ordner), b["trotz_aenderung"], b["einstellungen"]),
@@ -2325,18 +2518,23 @@ def _schritte_gesamt(ordner, einstellungen: dict, *, entwurf: bool = False):
 
     ``None`` heisst **unbekannt** und nicht null: Ohne Nenner zeigt die Fläche keinen
     Anteil an. *Ein Zähler ohne Nenner ist eine Zahl ohne Auskunft.*
+
+    **Nennt weder Mappe noch Aufruf eine Schrittzahl, gilt die Vorgabe der Kette**
+    (Befund ``auf-20261001-218``): Bis zum 01.10.2026 hiess das hier ``None``, obwohl der
+    Lauf mit der Vorgabe von :func:`aiimaging.kette.baue_kette` rechnet. «Anwenden» (ein
+    Vorschlag nennt nie Schritte) meldete darum keinen Nenner, ``/api/rechne`` mit Schritten
+    in den Einstellungen einen. Die Vorgabe wird an derselben Stelle geholt wie in
+    :func:`aiimaging.arbeitsgang.entwurfsargumente` — an der Kette, nicht hier.
     """
-    try:
-        aus_mappe = (projekt.oeffne(ordner)["projekt"].get("einstellungen") or {})
-    except projekt.ProjektError:
-        aus_mappe = {}
-    zusammen = {**aus_mappe, **einstellungen}
+    zusammen = {**_einstellungen_der_mappe(ordner), **einstellungen}
     if entwurf:
         try:
             zusammen = arbeitsgang.entwurfsargumente(zusammen, einstellungen)
         except arbeitsgang.ArbeitsgangError:
             return None
     wert = zusammen.get("schritte")
+    if wert is None:
+        wert = inspect.signature(kette.baue_kette).parameters["schritte"].default
     return wert if isinstance(wert, int) and not isinstance(wert, bool) and wert > 0 else None
 
 
@@ -2354,7 +2552,14 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
     zeigte bis zum Neustart einen Lauf, den es nicht mehr gibt.
 
         *Ein Fehler, den niemand sieht, ist schlimmer als einer, der eine Meldung macht.*
+
+    **Und er gibt die Grafikkarte frei, bevor er «fertig» meldet** (Befund
+    ``auf-20261001-218``): Nach einem Lauf hielt der Dienst das Bildmodell weiter auf der
+    Karte (25,3 GB), und der Assistent hielt sich für bereit. Freigegeben wird **vor**
+    ``beende`` — sonst sähe eine Frage für einen Augenblick «kein Lauf» und eine noch
+    volle Karte.
     """
+    ergebnis_fuer_den_stand = fehler_fuer_den_stand = None
     try:
         gemeinsam = {"trotz_aenderung": trotz_aenderung, "melder": LAUFSTAND.melde,
                      "abbrechen": LAUFSTAND.abbruch_verlangt, "entwurf": entwurf}
@@ -2364,7 +2569,7 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
         else:
             ergebnis = arbeitsgang.rechne(
                 ordner, varianten=varianten, **gemeinsam, **einstellungen)
-        LAUFSTAND.beende(ergebnis={
+        ergebnis_fuer_den_stand = {
             "status": ergebnis["lauf"].get("status"),
             "vermerkt": ergebnis["vermerkt"],
             "modell_stand": ergebnis["modell_stand"],
@@ -2376,14 +2581,17 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
             "bilder": list(ergebnis.get("bilder") or []),
             "variantengruppe": ergebnis.get("variantengruppe"),
             "varianten_nicht_begonnen": ergebnis.get("varianten_nicht_begonnen"),
-        })
+        }
     except (arbeitsgang.ArbeitsgangError, projekt.ProjektError,
             kette.KettenError) as fehler:
         # DIE FEHLER DER BIBLIOTHEK OHNE TYPNAMEN — sie sind fuer einen Menschen
         # geschrieben.
-        LAUFSTAND.beende(fehler=str(fehler))
+        fehler_fuer_den_stand = str(fehler)
     except Exception as fehler:                    # noqa: BLE001 — siehe Docstring
-        LAUFSTAND.beende(fehler=f"{type(fehler).__name__}: {fehler}")
+        fehler_fuer_den_stand = f"{type(fehler).__name__}: {fehler}"
+    finally:
+        render.gib_grafikspeicher_frei()           # wirft nie
+        LAUFSTAND.beende(ergebnis=ergebnis_fuer_den_stand, fehler=fehler_fuer_den_stand)
 
 
 def satz_nicht_angemeldet(kennwort_in_datei: bool = False) -> str:
@@ -2405,7 +2613,7 @@ def satz_nicht_angemeldet(kennwort_in_datei: bool = False) -> str:
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                 anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
                 kopplung_offen=None, ablage=None, sprachmodell=None,
-                kennwort_in_datei: bool = False) -> HTTPServer:
+                kennwort_in_datei: bool = False) -> ThreadingHTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -2449,7 +2657,13 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                    "ablage": Path(ablage) if ablage else None,
                    "sprachmodell": sprachmodell,
                    "kennwort_in_datei": bool(kennwort_in_datei)})
-    return HTTPServer((adresse, anschluss), klasse)
+    # JEDE ANFRAGE IN EINEM EIGENEN FADEN (01.10.2026) — damit eine Frage an den
+    # Assistenten den Server nicht festhaelt. Hintereinander laeuft trotzdem alles ausser
+    # `WEGE_NEBENHER`, unter `Flaeche.reihe`. Die Faeden sind Daemonen: Ein Strg-C wartet
+    # nicht auf eine Frage, die noch Minuten denken koennte.
+    server = ThreadingHTTPServer((adresse, anschluss), klasse)
+    server.daemon_threads = True
+    return server
 
 
 # ALLE ADRESSEN DIESES RECHNERS. Man kann auf ihr hoeren, aber sie nicht eintippen: Ein

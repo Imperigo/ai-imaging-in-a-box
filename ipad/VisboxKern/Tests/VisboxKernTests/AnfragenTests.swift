@@ -75,6 +75,7 @@ final class AnfragenTests: XCTestCase {
             try Anfragen.assistentAnwenden(
                 Assistentenvorschlag(einstellungen: [:], varianten: 2, saetze: [],
                                      rechenzeit: nil), anmeldung: anmeldung),
+            try Anfragen.kopplung(anmeldung: anmeldung),
         ]
     }
 

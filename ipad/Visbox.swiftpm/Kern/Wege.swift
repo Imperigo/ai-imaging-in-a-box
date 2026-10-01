@@ -82,12 +82,16 @@ public enum Wege {
     /// Drüben wird erst das Sprachmodell entladen, dann gerechnet.
     public static let assistentAnwenden = Weg(pfad: "/api/assistent/anwenden",
                                               methode: .post)
+    /// Eine neue Zahl zum Koppeln holen (Owner-Entscheid 63): **mit Anmeldung** — der Mac
+    /// holt sie und zeigt sie, das iPad tippt sie an `verbinden` ein. → `zahl`,
+    /// `gilt_noch_s`, `satz`. Eine noch offene Zahl wird drüben ersetzt.
+    public static let kopplung = Weg(pfad: "/api/kopplung", methode: .post)
 
     /// Alle Wege, die der Server heute bedient.
     public static let alle: [Weg] = [
         seite, seiteLang, projekt, fortschritt, bild, koppeln, heim,
         anlegen, einstellungen, skizze, rechne, verbinden,
-        benennen, abbrechen, rechneSkizze, assistent, assistentAnwenden,
+        benennen, abbrechen, rechneSkizze, assistent, assistentAnwenden, kopplung,
     ]
 
     /// Die Adresse für einen Weg auf einer HomeStation — oder `nil`, wenn sich aus

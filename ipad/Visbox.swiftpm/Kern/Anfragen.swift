@@ -997,4 +997,10 @@ extension Anfragen {
         rumpf["entwurf"] = .wahrheit(entwurf)
         return try baue(Wege.rechneSkizze, rumpf: rumpf, anmeldung: anmeldung)
     }
+
+    /// `POST /api/kopplung` — eine neue Zahl zum Koppeln (Owner-Entscheid 63), mit
+    /// Anmeldung. Antwort: `zahl`, `gilt_noch_s`, `satz`.
+    public static func kopplung(anmeldung: Anmeldung?) throws -> Anfrage {
+        try baue(Wege.kopplung, rumpf: [:], anmeldung: anmeldung)
+    }
 }

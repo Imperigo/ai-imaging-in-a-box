@@ -12,6 +12,10 @@ import base64
 import io
 import json
 import sys
+import threading
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -293,3 +297,315 @@ def test_ein_unzulaessiger_schalter_haelt_den_start_auf(server, gebaut, capsys, 
     assert server.main(["--anschluss", "0", *schalter]) == 2
     assert stichwort in capsys.readouterr().out
     assert gebaut == [], "es wurde nichts gebaut"
+
+
+# =========================================== H1 · eine Frage hält den Server nicht mehr fest
+
+class _Langsam(Ersatz):
+    """Ein Sprachmodell, das denkt — und meldet, wann es angefangen hat."""
+
+    def __init__(self, sekunden=2.0):
+        super().__init__([{"content": "fertig"}] * 4)
+        self.sekunden = sekunden
+        self.denkt = threading.Event()
+
+    def chat(self, nachrichten, werkzeuge):
+        self.denkt.set()
+        time.sleep(self.sekunden)
+        return super().chat(nachrichten, werkzeuge)
+
+
+@pytest.fixture
+def laufender_server(server, lauf, tmp_path):
+    """Der echte Server über ``baue_server``, auf einem freien Anschluss, ohne Kennwort."""
+    gebaute = []
+
+    def baue(sprachmodell):
+        srv = server.baue_server(anschluss=0, ordner=tmp_path, sprachmodell=sprachmodell)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        gebaute.append(srv)
+        return f"http://127.0.0.1:{srv.server_address[1]}"
+    yield baue
+    for srv in gebaute:
+        srv.shutdown()
+        srv.server_close()
+
+
+def _hole(adresse, weg, rumpf=None, frist=10.0):
+    """``(code, antwort, sekunden)`` — GET ohne Rumpf, sonst POST mit JSON."""
+    daten = None if rumpf is None else json.dumps(rumpf).encode()
+    anfrage = urllib.request.Request(adresse + weg, data=daten,
+                                     method="GET" if rumpf is None else "POST")
+    beginn = time.monotonic()
+    try:
+        with urllib.request.urlopen(anfrage, timeout=frist) as a:
+            code, roh = a.status, a.read()
+    except urllib.error.HTTPError as fehler:
+        code, roh = fehler.code, fehler.read()
+    return code, json.loads(roh or b"null"), time.monotonic() - beginn
+
+
+def _frage_im_hintergrund(adresse, weg, modell, ergebnis):
+    faden = threading.Thread(
+        target=lambda: ergebnis.append(_hole(adresse, weg, {"nachricht": "Hallo"})),
+        daemon=True)
+    faden.start()
+    assert modell.denkt.wait(5), "die Frage kam nie beim Sprachmodell an"
+    return faden
+
+
+def test_waehrend_einer_frage_antwortet_der_fortschritt_sofort(server, laufender_server):
+    """**Rot vor dem 01.10.2026:** ``HTTPServer`` nahm eine Anfrage nach der anderen; der
+    Fortschritt wartete, bis das Sprachmodell fertig war."""
+    modell = _Langsam(2.0)
+    adresse = laufender_server(modell)
+    erste = []
+    faden = _frage_im_hintergrund(adresse, server.WEG_ASSISTENT, modell, erste)
+    code, stand, dauer = _hole(adresse, server.WEG_FORTSCHRITT)
+    assert code == 200 and stand["laeuft"] is False
+    assert dauer < 1.0, f"der Fortschritt wartete {dauer:.1f} s auf die Frage"
+    faden.join(10)
+    assert erste and erste[0][0] == 200 and erste[0][1]["antwort"] == "fertig"
+
+
+def test_eine_zweite_gleichzeitige_frage_wird_mit_satz_abgewiesen(server, laufender_server):
+    modell = _Langsam(2.0)
+    adresse = laufender_server(modell)
+    erste = []
+    faden = _frage_im_hintergrund(adresse, server.WEG_ASSISTENT, modell, erste)
+    code, antwort, dauer = _hole(adresse, server.WEG_ASSISTENT, {"nachricht": "Noch eine"})
+    assert code == 400 and antwort == {"fehler": server.SATZ_FRAGE_LAEUFT}
+    assert dauer < 1.0, "abgewiesen, nicht gewartet"
+    faden.join(10)
+    assert erste[0][0] == 200
+    # DANACH GEHT DIE NAECHSTE wieder — die Sperre ist zurueckgegeben.
+    modell.sekunden = 0.0
+    assert _hole(adresse, server.WEG_ASSISTENT, {"nachricht": "Jetzt"})[0] == 200
+
+
+def test_waehrend_einer_frage_wird_nicht_gerechnet(server, laufender_server, lauf):
+    """Bildmodell und Sprachmodell passen nicht zugleich auf die Karte — ``/api/rechne``
+    und «Anwenden» weisen ab, statt das Bildmodell neben das Sprachmodell zu laden."""
+    modell = _Langsam(2.0)
+    adresse = laufender_server(modell)
+    erste = []
+    faden = _frage_im_hintergrund(adresse, server.WEG_ASSISTENT, modell, erste)
+    code, antwort, _ = _hole(adresse, server.WEG_RECHNE, {})
+    assert code == 400 and antwort == {"fehler": server.SATZ_RECHNEN_WAEHREND_FRAGE}
+    code, antwort, _ = _hole(adresse, server.WEG_ASSISTENT_ANWENDEN,
+                             {"vorschlag": {"einstellungen": {"kamera": "n"},
+                                            "varianten": None}})
+    assert code == 400 and antwort == {"fehler": server.SATZ_RECHNEN_WAEHREND_FRAGE}
+    assert "entlade" not in modell.protokoll, "eine laufende Frage wird nicht entladen"
+    faden.join(10)
+    assert lauf == [] and server.LAUFSTAND.sicht()["laeuft"] is False
+
+
+def test_zwei_gleichzeitige_rechenauftraege_starten_hoechstens_einen_lauf(server, lauf,
+                                                                          monkeypatch,
+                                                                          tmp_path):
+    """**Rot vor dem 01.10.2026:** «läuft schon einer?» und «beginnen» waren zwei Griffe;
+    zwischen ihnen lag das Lesen der Mappe. Zwei Anfragen zugleich starteten beide."""
+    echt = server._schritte_gesamt
+
+    def langsam(*a, **kw):
+        time.sleep(0.3)
+        return echt(*a, **kw)
+    monkeypatch.setattr(server, "_schritte_gesamt", langsam)
+    codes = []
+    faeden = [threading.Thread(target=lambda: codes.append(_frage(
+        server, befehl="POST", weg=server.WEG_RECHNE, ordner=tmp_path)[0]))
+        for _ in range(2)]
+    for f in faeden:
+        f.start()
+    for f in faeden:
+        f.join(5)
+    assert sorted(codes) == [200, 400], codes
+    assert len(lauf) == 1
+
+
+# ================================================================ M3 · die Mappe am Server
+
+def _mappe(tmp_path, einstellungen):
+    from aiimaging import projekt
+    modell = tmp_path / "probe.glb"
+    modell.write_bytes(b"glTF")
+    projekt.speichere(projekt.neu(tmp_path, modell, einstellungen=einstellungen), tmp_path)
+    return tmp_path
+
+
+class _Merkt(Ersatz):
+    def __init__(self, botschaften=()):
+        super().__init__(botschaften)
+        self.gesehen = []
+
+    def chat(self, nachrichten, werkzeuge):
+        self.gesehen.append(json.loads(json.dumps(nachrichten)))
+        return super().chat(nachrichten, werkzeuge)
+
+
+def test_der_assistent_prueft_gegen_die_mappe_und_sagt_dem_modell_was_sie_traegt(
+        server, lauf, tmp_path):
+    ordner = _mappe(tmp_path, {"kamera": "sSE", "prompt": "Haus am Hang"})
+    e = _Merkt([{"content": "", "tool_calls": [
+        {"function": {"name": "standpunkt_vorschlagen", "arguments": {"augenhoehe": 1.6}}}]},
+        {"content": "Gut."}])
+    code, antwort = _frage(server, befehl="POST", weg=server.WEG_ASSISTENT, sprachmodell=e,
+                           ordner=ordner, rumpf={"nachricht": "Augenhöhe 1,6 m"})
+    assert code == 200, antwort
+    assert antwort["vorschlag"]["einstellungen"] == {"augenhoehe": 1.6}
+    system = e.gesehen[0][0]["content"]
+    assert "«Haus am Hang»" in system and "kamera «sSE»" in system
+    assert str(tmp_path) not in system and "probe.glb" not in system
+    # «ANWENDEN» PRUEFT EBENSO gegen die Mappe — und startet.
+    code, antwort = _frage(server, befehl="POST", weg=server.WEG_ASSISTENT_ANWENDEN,
+                           sprachmodell=Ersatz(), ordner=ordner,
+                           rumpf={"vorschlag": antwort["vorschlag"]})
+    assert code == 200, antwort
+    assert lauf and lauf[0]["einstellungen"] == {"augenhoehe": 1.6}
+
+
+def test_anwenden_weist_einen_standpunkt_ab_der_sich_mit_der_mappe_widerspricht(
+        server, lauf, tmp_path):
+    ordner = _mappe(tmp_path, {"innenraum": {"raum": "r1"}})
+    e = Ersatz()
+    code, antwort = _frage(server, befehl="POST", weg=server.WEG_ASSISTENT_ANWENDEN,
+                           sprachmodell=e, ordner=ordner,
+                           rumpf={"vorschlag": {"einstellungen": {"brennweite": 24},
+                                                "varianten": None}})
+    assert code == 400 and "zweimal" in antwort["fehler"]
+    assert e.protokoll == [] and lauf == []
+
+
+# ================================================ Auftrag 218 · Grafikkarte und Schrittzahl
+
+def test_anwenden_und_rechne_nennen_dieselbe_schrittzahl(server, lauf, tmp_path):
+    """``auf-20261001-218``: «Anwenden» meldete ``schritte_gesamt: null``. Ohne Angabe gilt
+    die Vorgabe der Kette — und beide Wege nennen sie."""
+    import inspect
+    from aiimaging import kette
+    ordner = _mappe(tmp_path, {"prompt": "Haus am Hang"})
+    vorgabe = inspect.signature(kette.baue_kette).parameters["schritte"].default
+    code, a = _frage(server, befehl="POST", weg=server.WEG_ASSISTENT_ANWENDEN,
+                     sprachmodell=Ersatz(), ordner=ordner,
+                     rumpf={"vorschlag": {"einstellungen": {"kamera": "n"},
+                                          "varianten": None}})
+    assert code == 200 and a["schritte_gesamt"] == vorgabe
+    server.LAUFSTAND.beende()
+    code, r = _frage(server, befehl="POST", weg=server.WEG_RECHNE, ordner=ordner)
+    assert code == 200 and r["schritte_gesamt"] == vorgabe
+
+
+def test_vor_der_frage_wird_die_grafikkarte_freigegeben(server, monkeypatch):
+    from aiimaging import render
+    gesehen = []
+
+    def haelt_fest():
+        gesehen.append("frei")
+        return {"belegt_mib": 25_900, "haelt_bildmodell": True, "satz": "x"}
+    monkeypatch.setattr(render, "gib_grafikspeicher_frei", haelt_fest)
+    e = Ersatz([{"content": "nie"}])
+    code, antwort = _frage(server, befehl="POST", weg=server.WEG_ASSISTENT, sprachmodell=e,
+                           rumpf={"nachricht": "Hallo"})
+    assert gesehen == ["frei"]
+    assert code == 400 and antwort["fehler"] == assistent.SATZ_BILDMODELL_GELADEN
+    assert e.protokoll == []
+
+
+def test_heim_sagt_nicht_bereit_solange_das_bildmodell_liegt(server, monkeypatch):
+    from aiimaging import render
+    monkeypatch.setattr(heimstand, "grafikkarte", lambda: {"frei_gb": 6.1, "satz": "x"})
+    monkeypatch.setattr(render, "grafikspeicher_des_prozesses",
+                        lambda: {"belegt_mib": 25_900, "haelt_bildmodell": True, "satz": "x"})
+    _, h = _frage(server, befehl="GET", weg=server.WEG_HEIM, sprachmodell=Ersatz())
+    assert h["assistent"]["stand"] == "laedt"
+    assert h["assistent"]["satz"] == assistent.SATZ_BILDMODELL_GELADEN
+
+
+def test_nach_dem_lauf_wird_die_grafikkarte_vor_dem_fertig_freigegeben(server, monkeypatch,
+                                                                       tmp_path):
+    from aiimaging import arbeitsgang, render
+    reihenfolge = []
+
+    def frei():
+        reihenfolge.append(("frei", server.LAUFSTAND.sicht()["laeuft"]))
+        return {}
+    monkeypatch.setattr(render, "gib_grafikspeicher_frei", frei)
+
+    def scheitert(*_a, **_k):
+        raise arbeitsgang.ArbeitsgangError("kaputt")
+    monkeypatch.setattr(arbeitsgang, "rechne", scheitert)
+    server.LAUFSTAND.beginne(tmp_path)
+    server._rechne_im_hintergrund(tmp_path, False, {})
+    assert reihenfolge == [("frei", True)], "freigegeben, solange der Lauf noch läuft"
+    assert server.LAUFSTAND.sicht()["fehler"] == "kaputt"
+
+
+# ======================================== POST /api/kopplung (Owner-Entscheid 63, 01.10.2026)
+
+def _koppel_klasse(server, kennwort="geheim"):
+    return type("FlaecheKopplung", (server.Flaeche,),
+                {"kennwort": kennwort, "ordner": None, "kopplung_offen": None,
+                 "sprachmodell": None})
+
+
+def _an(server, klasse, *, befehl, weg, rumpf=None, angemeldet=True):
+    """Wie ``_frage``, aber auf **einer** Klasse für mehrere Anfragen — die Kopplung liegt
+    auf der Klasse und soll von Anfrage zu Anfrage dieselbe sein."""
+    roh = json.dumps(rumpf if rumpf is not None else {}).encode()
+    selbst = klasse.__new__(klasse)
+    selbst.command, selbst.path = befehl, weg
+    kopf = ("Basic " + base64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+            if angemeldet else None)
+    selbst.headers = {"Authorization": kopf, "Content-Length": str(len(roh))}
+    selbst.rfile, selbst.wfile = io.BytesIO(roh), io.BytesIO()
+    codes = []
+    selbst.send_response = lambda code, *a, **k: codes.append(code)
+    selbst.send_header = lambda *a: None
+    selbst.end_headers = lambda: None
+    (selbst.do_GET if befehl == "GET" else selbst.do_POST)()
+    return codes[0], json.loads(selbst.wfile.getvalue() or b"null")
+
+
+def test_kopplung_ohne_anmeldung_ist_401(server):
+    klasse = _koppel_klasse(server)
+    code, _ = _an(server, klasse, befehl="POST", weg=server.WEG_KOPPLUNG, angemeldet=False)
+    assert code == 401 and klasse.kopplung_offen is None
+
+
+def test_kopplung_gibt_eine_zahl_und_das_verbinden_damit_das_kennwort(server, capsys):
+    klasse = _koppel_klasse(server)
+    code, a = _an(server, klasse, befehl="POST", weg=server.WEG_KOPPLUNG)
+    assert code == 200 and set(a) == {"zahl", "gilt_noch_s", "satz"}
+    assert len(a["zahl"]) == 6 and a["zahl"].isdigit() and a["gilt_noch_s"] == 600
+    # DIE ZAHL NIE INS FENSTER: Im Dienstbetrieb ist es das Systemprotokoll.
+    assert a["zahl"] not in capsys.readouterr().out
+    # EINE FALSCHE ZAHL zaehlt einen Versuch, mit dem gleichbleibenden Satz.
+    falsch = "000000" if a["zahl"] != "000000" else "111111"
+    code, v = _an(server, klasse, befehl="POST", weg=server.WEG_VERBINDEN,
+                  rumpf={"pin": falsch}, angemeldet=False)
+    assert code == 403 and v["verbunden"] is False
+    assert klasse.kopplung_offen.versuche_uebrig == 4
+    code, v = _an(server, klasse, befehl="POST", weg=server.WEG_VERBINDEN,
+                  rumpf={"pin": a["zahl"]}, angemeldet=False)
+    assert code == 200 and v["verbunden"] is True
+    assert (v["benutzer"], v["kennwort"]) == (server.BENUTZER, "geheim")
+    assert a["zahl"] not in capsys.readouterr().out
+
+
+def test_eine_neue_zahl_ersetzt_die_alte(server):
+    from aiimaging import kopplung
+    klasse = _koppel_klasse(server)
+    _an(server, klasse, befehl="POST", weg=server.WEG_KOPPLUNG)
+    alt = klasse.kopplung_offen
+    _an(server, klasse, befehl="POST", weg=server.WEG_KOPPLUNG)
+    assert klasse.kopplung_offen is not alt
+    assert kopplung.stand(alt) != kopplung.STAND_OFFEN, "die alte Zahl gilt nicht mehr"
+    assert kopplung.stand(klasse.kopplung_offen) == kopplung.STAND_OFFEN
+
+
+def test_ohne_kennwort_am_server_gibt_es_keine_zahl(server):
+    klasse = _koppel_klasse(server, kennwort=None)
+    code, a = _an(server, klasse, befehl="POST", weg=server.WEG_KOPPLUNG, angemeldet=False)
+    assert code == 400 and "ohne Kennwort" in a["fehler"] and "zahl" not in a
+    assert klasse.kopplung_offen is None

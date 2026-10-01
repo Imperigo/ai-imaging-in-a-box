@@ -23,7 +23,6 @@ heimstand.heimstand()``.
 """
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -40,12 +39,17 @@ FRIST_NVIDIA_SMI_S = 5.0
 def blender() -> dict:
     """``{"da", "satz"}`` — liegt das Blender-Programm da, das die Kette aufriefe?"""
     try:
-        pfad = Path(seams.finde_blender())
+        eingestellt = seams.finde_blender()
     except seams.SeamError:
         return {"da": False,
                 "satz": "Blender nicht gefunden — am Heim-PC AIIMAGING_BLENDER setzen oder "
                         "blender in den Suchpfad legen."}
-    if pfad.is_file() and os.access(pfad, os.X_OK):
+    # UEBER DEN SUCHPFAD, WIE DIE KETTE (Durchsicht 01.10.2026). Steht in AIIMAGING_BLENDER
+    # nur «blender», ruft die Kette es ueber den Suchpfad auf und findet es; als Pfad
+    # gelesen hiess es hier «Datei fehlt». `shutil.which` loest einen Namen ueber den
+    # Suchpfad auf und prueft einen Pfad direkt — beides mit «ausfuehrbar».
+    gefunden = shutil.which(eingestellt)
+    if gefunden is not None and Path(gefunden).is_file():
         return {"da": True, "satz": "Blender ist da."}
     # DER PFAD BLEIBT DRAUSSEN, auch hier: Er nennt den Benutzer des Heim-PC.
     return {"da": False,
@@ -95,20 +99,29 @@ _ASSISTENT_WORT = {
 }
 
 
-def heimstand(*, sprachmodell=None, bild_rechnet: bool = False) -> dict:
+def heimstand(*, sprachmodell=None, bild_rechnet: bool = False,
+              bildmodell_geladen: bool = False) -> dict:
     """Die Antwort von ``GET /api/heim`` — siehe Modulkopf für die Form.
 
     Args:
         sprachmodell: wie bei :func:`aiimaging.assistent.stand` (Vorgabe: Ollama aus der
             Umgebung).
         bild_rechnet: Rechnet gerade ein Bild? Dann steht der Assistent auf ``laedt``.
+        bildmodell_geladen: Liegt das Bildmodell nach einem Lauf noch auf der Karte? Dann
+            ebenso — mit eigenem Satz (:data:`aiimaging.assistent.SATZ_BILDMODELL_GELADEN`).
+            Wissen kann das nur der Prozess, der gerechnet hat; der Server fragt es bei
+            :func:`aiimaging.render.grafikspeicher_des_prozesses`.
     """
     b = blender()
     g = grafikkarte()
-    a = assistent.stand(sprachmodell=sprachmodell, bild_rechnet=bild_rechnet)
+    a = assistent.stand(sprachmodell=sprachmodell, bild_rechnet=bild_rechnet,
+                        bildmodell_geladen=bildmodell_geladen)
+    wort = _ASSISTENT_WORT[a["stand"]]
+    if a["stand"] == assistent.STAND_LAEDT and not bild_rechnet:
+        wort = "Assistent wartet, bis das Bildmodell die Grafikkarte freigibt"
     teile = ["Blender da" if b["da"] else "Blender fehlt",
              f"{g['frei_gb']:.1f} GB Grafikspeicher frei" if g["frei_gb"] is not None
              else "Grafikspeicher nicht gemessen",
-             _ASSISTENT_WORT[a["stand"]]]
+             wort]
     return {"blender": b, "grafikkarte": g, "assistent": a,
             "satz": "Heim-PC antwortet: " + ", ".join(teile) + "."}

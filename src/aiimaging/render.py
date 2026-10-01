@@ -102,10 +102,12 @@ die halbe Bildkette an Hardware, die es hier nicht gibt.
 """
 from __future__ import annotations
 
+import gc
 import math
 import os
 import platform
 import re
+import sys
 import tempfile
 import time
 from dataclasses import dataclass
@@ -2373,6 +2375,71 @@ def _leere_grafikspeicher() -> None:
     except Exception:                                   # noqa: BLE001 — Aufräumen, kein Urteil
         pass
 
+#: Ab wie viel Grafikspeicher **dieses Prozesses** ein Bildmodell als geladen gilt —
+#: **gesetzt, nicht gemessen**: Ein Bildmodell belegt zweistellige GB (z-image-turbo
+#: gemessen 25,3 GB, ``auf-20261001-218``), der Rest eines Tiefenschätzers oder ein
+#: leerer torch-Zwischenspeicher bleibt weit darunter. Was darunter liegt, soll den
+#: Assistenten nicht sperren.
+BILDMODELL_GELADEN_AB_MIB = 1024
+
+
+def grafikspeicher_des_prozesses() -> dict:
+    """Wie viel Grafikspeicher **dieser Prozess** über torch hält — **liest nur**.
+
+    ``{"belegt_mib": int | None, "haelt_bildmodell": bool, "satz"}``. Gefragt wird
+    ``torch.cuda.memory_reserved`` — **nur, wenn torch schon geladen ist**: Ein Prozess,
+    der nie ein Bild gerechnet hat, hält nichts, und torch zu laden, nur um das zu
+    erfahren, kostete Sekunden und eben den Speicher, nach dem gefragt wird. ``None``
+    heisst **nicht gemessen** (torch antwortete nicht), nicht null.
+
+    **Der Anlass** (``auf-20261001-218``): Nach einem Lauf hielt der Dienst das Bildmodell
+    weiter auf der Karte (25,3 GB laut ``nvidia-smi`` je Prozess). Der Assistent hielt das
+    für «bereit», und seine nächste Frage hätte das Sprachmodell daneben geladen.
+    """
+    torch = sys.modules.get("torch")
+    if torch is None:
+        return {"belegt_mib": 0, "haelt_bildmodell": False,
+                "satz": "Dieser Prozess hat kein Bildmodell geladen."}
+    try:
+        if not torch.cuda.is_available():
+            return {"belegt_mib": 0, "haelt_bildmodell": False,
+                    "satz": "Dieser Prozess rechnet ohne Grafikkarte."}
+        belegt = int(round(torch.cuda.memory_reserved() / (1024 * 1024)))
+    except Exception:                                   # noqa: BLE001 — Auskunft, kein Urteil
+        return {"belegt_mib": None, "haelt_bildmodell": False,
+                "satz": "Der Grafikspeicher dieses Prozesses liess sich nicht messen."}
+    if belegt >= BILDMODELL_GELADEN_AB_MIB:
+        return {"belegt_mib": belegt, "haelt_bildmodell": True,
+                "satz": f"Das Bildmodell liegt noch auf der Grafikkarte "
+                        f"({belegt / 1024:.1f} GB in diesem Prozess)."}
+    return {"belegt_mib": belegt, "haelt_bildmodell": False,
+            "satz": "Die Grafikkarte ist von diesem Prozess frei."}
+
+
+def gib_grafikspeicher_frei() -> dict:
+    """Was ein fertiger Lauf auf der Karte liegen liess, freigeben — dann messen.
+
+    ``gc.collect()`` zuerst: Eine Pipeline mit Auslagerungshaken hängt in Zyklen, die
+    der Referenzzähler allein nicht auflöst — sie bliebe nach ``rendere`` liegen, obwohl
+    niemand sie mehr hält. Danach ``torch.cuda.empty_cache()``: Was torch freigegeben,
+    aber für sich zurückbehalten hat, geht an den Treiber zurück, und erst dann kann ein
+    anderes Programm (Ollama) es nehmen. **torch wird dafür nicht geladen** — siehe
+    :func:`grafikspeicher_des_prozesses`.
+
+    Gibt dieselbe Form zurück wie :func:`grafikspeicher_des_prozesses`, gemessen
+    **nach** dem Freigeben. Wirft nie: Aufräumen ist kein Urteil, und ein Fehler hier darf
+    weder einen Lauf noch eine Frage zum Absturz bringen.
+    """
+    try:
+        gc.collect()
+        torch = sys.modules.get("torch")
+        if torch is not None and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:                                   # noqa: BLE001 — Aufräumen, kein Urteil
+        pass
+    return grafikspeicher_des_prozesses()
+
+
 def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             schrittzaehler=None, tiefe_invertieren: bool | None = None) -> dict:
     """Einen Bildauftrag ausführen — oder begründet ablehnen.
@@ -2611,6 +2678,7 @@ __all__ = [
     "MAX_SCHRITTE", "MAX_SEED", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
+    "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "lade_modell", "modellwurzel", "modellwurzel_lage",
