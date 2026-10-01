@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-221",
+ "art": "frage",
+ "beschreibung": "Behebungen am Server nachmessen: Grafikspeicher nach Anwenden frei, Fragen und Laufstand nebeneinander, POST /api/kopplung, Bildauftrag behaelt die Mappe, Rechenzeit auf der Karte.",
+ "anweisung": "=== V0.1.7: DIE BEHEBUNGEN AM SERVER AM ECHTEN HEIM-PC NACHMESSEN ===\n\nDanke fuer 218 — eure fuenf Befunde sind behoben, aber nur mit Ersatzteilen geprueft. Was die\nGrafikkarte wirklich tut, sieht nur ihr. Erst NACH 220 (die Beispielmappe), wenn die Karte frei ist.\n\nTEIL A — ANSAGE (vor dem Pull lesen; das aendert sich bei euch)\n  A1 Der Server bedient Anfragen jetzt NEBENEINANDER (ThreadingHTTPServer). Alle bisherigen Wege\n     laufen weiter nacheinander unter einer Sperre; nur POST /api/assistent und GET /api/heim\n     laufen daneben. Eine zweite gleichzeitige Frage an den Assistenten → 400 mit Satz;\n     /api/rechne waehrend einer Frage → 400 mit Satz.\n  A2 Nach jedem Lauf und vor jeder Frage gibt der Prozess den Grafikspeicher frei\n     (render.gib_grafikspeicher_frei: gc.collect + torch.cuda.empty_cache). Bleibt mehr als\n     1024 MiB liegen, sagt /api/heim beim Assistenten «laedt» mit eigenem Satz, und eine Frage\n     wird abgewiesen.\n  A3 Gesamtfrist fuer eine Frage an den Assistenten: 240 s (alle Runden zusammen).\n  A4 Der Assistent kennt jetzt die Einstellungen der Mappe (Standpunkt, Bildauftrag) und soll den\n     Gegenstand des Bildauftrags behalten. Die Karte nennt eine Rechenzeit (15 s je Variante +\n     4,6 s Wechsel, aus eurer 218).\n  A5 NEU: POST /api/kopplung (nur angemeldet) oeffnet eine Koppelzahl fuer 10 min und gibt sie\n     zurueck — damit holt die Mac-App die Zahl fuers iPad (Entscheid 63: das iPad spricht\n     unterwegs ueber Tailscale direkt mit euch). Die Zahl steht nie im Protokoll.\n  A6 Nach dem Pull den Dienst neu starten (systemctl --user restart visbox-flaeche.service).\n\nTEIL B — MESSEN (nur synthetisch, REGEL 3; Mappe aus 218 oder 220 nehmen)\n  B1 Bildmodell bleibt nicht liegen: «ollama ps» leer. Eine Frage stellen, Vorschlag aus Satz 1\n     von 218 ueber POST /api/assistent/anwenden anwenden, warten bis fertig. Dann: nvidia-smi\n     (Speicher des Dienst-Prozesses) und GET /api/heim. ERWARTET: Prozess weit unter 25 GB,\n     /api/heim beim Assistenten «bereit». Danach eine zweite Frage: kommt sie, und wie viel\n     Speicher ist dabei hoechstens belegt? (Kein Absturz, keine Ueberlastung der Karte.)\n     Falls der Prozess doch > 1 GB behaelt: /api/heim-Antwort und Satz einer Frage festhalten.\n  B2 Nebeneinander: Eine Frage an den Assistenten starten (Satz 1), und WAEHREND sie laeuft\n     zehnmal GET /api/fortschritt (je Antwortzeit) und einmal POST /api/rechne. ERWARTET:\n     /api/fortschritt antwortet jeweils unter 1 s; /api/rechne → 400 mit Satz.\n  B3 Kopplung auf Abruf: POST /api/kopplung ohne Anmeldung → 401; mit Anmeldung → 200 mit Zahl\n     (ZAHL NICHT INS ERGEBNIS, nur «sechs Ziffern ja/nein»); danach POST /api/verbinden mit einer\n     FALSCHEN Zahl → 403 und Satz. Die richtige NICHT verwenden (sonst ist sie verbraucht und ein\n     Kennwort ginge ueber die Leitung — das prueft der Owner am iPad).\n  B4 Satz 1 aus 218 noch einmal: Behaelt der Bildauftrag jetzt den Gegenstand der Mappe\n     («a small house on a gentle slope …»)? Den vorgeschlagenen Bildauftrag woertlich.\n  B5 Zeigt die Karte eine Rechenzeit? Den Satz woertlich.\n\nZURUECK (auftraege/ergebnisse/auf-20261001-221.json)\n  - git log -1; Dienst neu gestartet ja/nein.\n  - B1: Speicher des Prozesses nach dem Lauf, /api/heim-Antwort, zweite Frage ja/nein, Spitze.\n  - B2: zehn Antwortzeiten, Code und Satz von /api/rechne.\n  - B3: Codes, «sechs Ziffern» ja/nein — NIE die Zahl, NIE ein Kennwort.\n  - B4/B5: die Saetze woertlich.\n  - KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen.\n\nNICHT TUN: die richtige Koppelzahl eingeben; ein anderes Sprachmodell als qwen3:30b laden;\nKosmoOrbits Dienste oder Weiterleitungen aendern; nichts committen ausser der Ergebnisdatei.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende"
+ },
+ "params": {
+  "sprachmodell": "qwen3:30b",
+  "nach": "auf-20261001-220"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU: Bildmodell und Sprachmodell nacheinander; erst nach 220.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie eine Koppelzahl oder ein Kennwort ins Ergebnis (REGEL 3).",
+   "Nur synthetische Geometrie (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; Dienst neu gestartet.",
+  "B1: Speicher nach Lauf, /api/heim, zweite Frage, Spitze.",
+  "B2: zehn Antwortzeiten, /api/rechne Code und Satz.",
+  "B3: Codes, sechs Ziffern ja/nein.",
+  "B4/B5: Saetze woertlich."
+ ],
+ "rang": 14
+}

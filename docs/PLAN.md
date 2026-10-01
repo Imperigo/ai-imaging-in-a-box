@@ -7697,10 +7697,15 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **local:** `auf-20261001-218` beantworten.
       *(01.10.2026: Mappe 8 bestanden + 1 Entwurf; Assistent 9/10; 10,7 s je Variante — Protokoll 74 §8)*
 - [ ] **local:** `auf-20261001-220` — Beispielmappe mit eigenem Startwert je Blick (218: gegenüberliegende Blicke bitgleich).
-- [ ] **Kern:** Befunde der zwei Durchsichten und der Messung 218 beheben (drei Agenten, Protokoll 74 §8).
+- [x] **Kern:** Befunde der zwei Durchsichten und der Messung 218 beheben (drei Agenten, Protokoll 74 §8).
+      *(01.10.2026, Protokoll 74 §9; am Gerät nachgemessen in `auf-20261001-221`)*
 - [x] **Owner:** Verschlüsselung iPad ↔ Mac entscheiden (Protokoll 74 §8).
       *(01.10.2026, Entscheid 63: iPad direkt über Tailscale; Blatt 13 nachgezeichnet, Fassung 20)*
-- [ ] **Kern:** iPad direkt über Tailscale (https-Adresse, Koppeln mit Zahl vom Mac), Server `POST /api/kopplung`, Mac-Menü «iPad koppeln».
+- [x] **Kern:** iPad direkt über Tailscale (https-Adresse, Koppeln mit Zahl vom Mac), Server `POST /api/kopplung`, Mac-Menü «iPad koppeln».
+      *(01.10.2026, am Gerät unbestätigt)*
+- [ ] **local:** `auf-20261001-221` — Server-Behebungen an der echten Grafikkarte nachmessen.
+- [ ] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
+- [ ] **Owner:** Tailscale-App aufs iPad, mit dem eigenen Konto anmelden (vor der Probe).
 - [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
       *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
 - [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
