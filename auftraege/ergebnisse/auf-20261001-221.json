@@ -1,0 +1,206 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261001-221",
+  "worker": "local",
+  "status": "erledigt",
+  "git_log_1": "45a4569 auf-220: Beispielmappe mit eigenem Startwert je Blick — 9 verschiedene Bilder, Westen durchgefallen (Bild im Bild)",
+  "pull": "ff-only, «Bereits aktuell» (Stand enthaelt 59693b1 mit Auftrag 221 und den Behebungen: ThreadingHTTPServer, /api/kopplung, gib_grafikspeicher_frei); kein Code geaendert, nichts installiert",
+  "dienst_neu_gestartet": "ja — systemctl --user restart visbox-flaeche.service; nach 2 s hoerte der Anschluss 8731; Dienst nicht umkonfiguriert (startet ohne --ordner, die Mappe geht je Anfrage als «ordner» mit)",
+  "mappe": "die Mappe aus 218 (synthetischer Testbau am Hang, Bildauftrag der Mappe «a small house on a gentle slope, overcast daylight, photorealistic», 768x512); die Beispielmappe aus 220 blieb unberuehrt",
+  "gpu_vorher": {
+    "ollama_ps": "leer",
+    "belegt_mib": 626,
+    "leistung_w": 14.1,
+    "dienst_prozess_mib": 0
+  },
+  "B1": {
+    "ollama_ps_vorher": "leer",
+    "frage1": {
+      "satz": "Zeig das Haus mehr von der Strasse her, Abendlicht, und mach mir drei Varianten.",
+      "code": 200,
+      "sekunden": 11.14,
+      "vorschlag_einstellungen": {
+        "prompt": "small house on gentle slope, street view, evening light, photorealistic"
+      },
+      "varianten": 3
+    },
+    "anwenden": {
+      "code": 200,
+      "antwort": {
+        "gestartet": true,
+        "schritte_gesamt": 20,
+        "entwurf": false,
+        "varianten": 3
+      },
+      "ollama_ps_kurz_nach_start": "leer (Sprachmodell vor dem Lauf entladen)",
+      "lauf_bis_fertig_s": 29.3,
+      "render_s_je_variante": [
+        9.11,
+        7.45,
+        7.42
+      ],
+      "ergebnis": "ok, 3 Bilder vermerkt, 0 nicht begonnen",
+      "spitze_waehrend_lauf_mib": {
+        "karte_gesamt": 25912,
+        "dienst_prozess": 25278
+      }
+    },
+    "speicher_dienst_prozess_nach_lauf_mib": 654,
+    "karte_gesamt_nach_lauf_mib": 1288,
+    "heim_nach_lauf": {
+      "blender": {
+        "da": true,
+        "satz": "Blender ist da."
+      },
+      "grafikkarte": {
+        "frei_gb": 30.1,
+        "satz": "30.1 GB Grafikspeicher frei."
+      },
+      "assistent": {
+        "stand": "bereit",
+        "modell": "qwen3:30b",
+        "satz": "Der Assistent ist bereit (qwen3:30b); die erste Antwort dauert einige Sekunden länger, weil das Modell erst geladen wird."
+      },
+      "satz": "Heim-PC antwortet: Blender da, 30.1 GB Grafikspeicher frei, Assistent bereit."
+    },
+    "erwartung": "erfuellt — Prozess 654 MiB (weit unter 25 GB, unter der 1024-MiB-Schwelle), /api/heim beim Assistenten «bereit»",
+    "zweite_frage": {
+      "kam": "ja",
+      "satz": "Ich möchte das Gebäude von Norden sehen.",
+      "code": 200,
+      "sekunden": 7.014,
+      "antwort": "Vorschlag notiert. Die Kamera zeigt nun von Norden auf das Gebäude.",
+      "vorschlag_einstellungen": {
+        "kamera": "n",
+        "auge": null,
+        "blick_auf": null,
+        "innenraum": null
+      },
+      "ollama_ps_danach": "qwen3:30b, 25.1 GB"
+    },
+    "spitze_bei_zweiter_frage_mib": {
+      "karte_gesamt": 25863,
+      "dienst_prozess": 654,
+      "leistung_w_max": 266.91
+    },
+    "heim_nach_zweiter_frage": {
+      "blender": {
+        "da": true,
+        "satz": "Blender ist da."
+      },
+      "grafikkarte": {
+        "frei_gb": 6.1,
+        "satz": "6.1 GB Grafikspeicher frei."
+      },
+      "assistent": {
+        "stand": "bereit",
+        "modell": "qwen3:30b",
+        "satz": "Der Assistent ist bereit (qwen3:30b)."
+      },
+      "satz": "Heim-PC antwortet: Blender da, 6.1 GB Grafikspeicher frei, Assistent bereit."
+    },
+    "absturz_ueberlastung": "nein — Karte hoechstens 25863 von 32607 MiB, kein Fehler im Dienstprotokoll"
+  },
+  "B2": {
+    "frage": {
+      "satz": "Zeig das Haus mehr von der Strasse her, Abendlicht, und mach mir drei Varianten.",
+      "code": 200,
+      "sekunden": 12.838
+    },
+    "fortschritt_antwortzeiten_s": [
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.001,
+      0.0,
+      0.0
+    ],
+    "fortschritt_codes": "10x 200",
+    "fortschritt_max_s": 0.001,
+    "rechne": {
+      "code": 400,
+      "satz": "Gerade beantwortet der Assistent eine Frage. Sprachmodell und Bildmodell passen nicht zugleich auf die Grafikkarte — gerechnet werden kann, sobald die Antwort da ist.",
+      "antwortzeit_s": 0.001
+    },
+    "frage_lief_noch": "ja — die Frage lief vor und nach /api/rechne, noch 10.0 s danach bis zur Antwort",
+    "messweise": "Frage in eigenem Faden, 0.8 s spaeter zehnmal GET /api/fortschritt im Abstand 0.2 s, dann einmal POST /api/rechne. Zur Sicherheit trug /api/rechne ein unbekanntes Einstellungsfeld: Die Frage-Sperre wird im Server vor der Bestellung geprueft, ihr Satz kam also; haette sie nicht gegriffen, waere der Start an der Form gescheitert statt ein Bildlauf neben dem Sprachmodell zu starten.",
+    "erwartung": "erfuellt — alle zehn unter 1 s (gemessen <= 1 ms), /api/rechne 400 mit Satz"
+  },
+  "B3": {
+    "kopplung_ohne_anmeldung": {
+      "code": 401,
+      "satz": "Nicht angemeldet. Visbox läuft am Heim-PC als Dienst; Benutzername «visbox», das Kennwort steht dort in der Kennwortdatei (siehe betrieb/README.md)."
+    },
+    "kopplung_mit_anmeldung": {
+      "code": 200,
+      "sechs_ziffern": "ja",
+      "gilt_noch_s": 600,
+      "satz": "Diese Zahl gilt 10 Minuten für EIN Gerät: auf dem iPad eintippen. Danach ist sie verbraucht, nach 5 Fehlversuchen tot; eine neue Zahl ersetzt sie."
+    },
+    "verbinden_mit_falscher_zahl": {
+      "code": 403,
+      "antwort": {
+        "verbunden": false,
+        "satz": "Das hat nicht geklappt. An der HomeStation eine neue Zahl holen."
+      },
+      "kennwort_in_antwort": "nein"
+    },
+    "richtige_zahl": "nicht verwendet, nicht gespeichert, nicht ausgegeben; nur im Pruefprozess auf sechs Ziffern geprueft und verworfen",
+    "dienstprotokoll": "seit dem Neustart keine sechsstellige Zahl im Protokoll"
+  },
+  "B4": {
+    "satz": "Zeig das Haus mehr von der Strasse her, Abendlicht, und mach mir drei Varianten.",
+    "code": 200,
+    "sekunden": 20.098,
+    "gegenstand_behalten": "ja — «a small house on a gentle slope» bleibt wortgleich, «overcast daylight» wird durch «evening light» ersetzt",
+    "bildauftrag_woertlich": "a small house on a gentle slope, evening light, photorealistic",
+    "karte_saetze": [
+      "Standpunkt von Osten (e)",
+      "Bildauftrag: «a small house on a gentle slope, evening light, photorealistic»",
+      "3 Varianten, Startwerte fortlaufend ab dem der Mappe"
+    ],
+    "antwort": "Vorschläge notiert. Drücke «Anwenden», um die Bilder zu berechnen.",
+    "weitere_fassungen_desselben_satzes": [
+      {
+        "lauf": "B1 Frage 1",
+        "bildauftrag": "small house on gentle slope, street view, evening light, photorealistic",
+        "standpunkt": "keiner vorgeschlagen"
+      },
+      {
+        "lauf": "B2",
+        "bildauftrag": "small house on gentle slope, street view, evening light, photorealistic",
+        "standpunkt": "s, kamera_modus shift"
+      }
+    ],
+    "vergleich_218": "218: «evening light, street view, house» (Gegenstand verloren). Jetzt in 3 von 3 Fassungen behalten (zweimal ohne die Artikel «a»), «photorealistic» ebenfalls."
+  },
+  "B5": {
+    "karte_zeigt_rechenzeit": "ja",
+    "satz_woertlich": "Rechenzeit etwa 1 Minute am Heim-PC.",
+    "sekunden_feld": 50,
+    "bei_einem_bild": {
+      "sekunden": 20,
+      "satz": "Rechenzeit etwa 1 Minute am Heim-PC."
+    },
+    "gemessen_zum_vergleich": "3 Varianten liefen in 29.3 s bis fertig (Karte nennt 50 s)"
+  },
+  "gpu_nachher": {
+    "qwen3_30b_entladen": "ja (keep_alive 0, done_reason unload)",
+    "ollama_ps": "leer",
+    "belegt_mib": 1288,
+    "dienst_prozess_mib": 654,
+    "leistung_w": 18.9
+  },
+  "auffaellig": [
+    "Stand des Standpunkts wechselt beim selben Satz 1: keiner (B1), Sueden mit shift (B2), Osten (B4); 218 sagte Osten. Die «Strasse» bleibt ungeklaert, eine Rueckfrage kommt nicht.",
+    "Rechenzeit-Satz rundet grob: 20 s (ein Bild) und 50 s (drei Varianten) heissen beide «etwa 1 Minute»; gemessen waren drei Varianten in 29.3 s, also schneller als 15 s je Variante + 4.6 s.",
+    "Das Bildmodell wird im Lauf je Variante neu geladen (Dienstprotokoll: dreimal «Loading pipeline components», je ca. 1–2 s) — Folge des Freigebens? Kostet wenig, aber messbar.",
+    "Nach dem Lauf behaelt der Dienst-Prozess 654 MiB (CUDA-Grundlast des Prozesses), auch nach Entladen von qwen3:30b; Karte damit 1288 statt 626 MiB im Leerlauf.",
+    "/api/heim meldet bei geladenem qwen3:30b «bereit» und 6.1 GB frei — stimmig.",
+    "Die Zeile «Verbinden abgelehnt» des Servers erscheint nicht im Dienstprotokoll (vermutlich gepufferte Ausgabe); unschaedlich, nur zur Kenntnis."
+  ]
+}
