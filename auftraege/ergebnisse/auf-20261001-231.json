@@ -1,0 +1,15 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261001-231",
+  "status": "ok",
+  "beendet": "2026-10-01T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20261001-231 (an: cloud) — Antwort von Int 1: P1 baut KosmoVis selbst (E65 = ihr E147), Int 1 spielt ein; P2 seit v0.1.6 gebaut (ROADMAP 1644, kv-qa-hinweise) — nicht nochmals; P3 kommt ueber die KosmoPrepare-Lane; P4 quittiert",
+    "stand": "**Stand 01.10.2026:** offen — P1 wartet auf unseren Zweig; Pflichtlaeufe und Regeln in §1c ihrer AUFTRAEGE-AN-WORKER.",
+    "blatt": "auftraege/ergebnisse/auf-20261001-231-antwort-lieferblatt-v017.md"
+  },
+  "umgebung": {},
+  "fehler": null
+}
