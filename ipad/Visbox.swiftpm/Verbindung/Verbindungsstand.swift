@@ -41,6 +41,9 @@ final class Verbindungsstand: ObservableObject {
     @Published private(set) var zustand: Verbindungszustand = .aus
     /// Der Name der gekoppelten HomeStation im Heimnetz — `nil`, wenn eingetippt.
     @Published private(set) var stationsname: String?
+    /// Ob unterwegs **der Mac** vermittelt (Protokoll §8b) — nur für die Anzeige; gekoppelt,
+    /// angemeldet und gesendet wird genau wie bei der HomeStation.
+    @Published private(set) var ueberDenMac: Bool
     @Published private(set) var adresse: URL?
     @Published private(set) var gefunden: [GefundenerDienst] = []
     /// Warum die Suche nicht läuft — `nil`, wenn sie läuft oder nicht gefragt ist.
@@ -82,6 +85,7 @@ final class Verbindungsstand: ObservableObject {
         ordner = Verbindungsgedaechtnis.ordner
         adresse = Verbindungsgedaechtnis.adresse
         stationsname = Verbindungsgedaechtnis.name
+        ueberDenMac = Verbindungsgedaechtnis.ueberDenMac
 
         do {
             parkfach = try Parkfach(ordner: Verbindungsstand.fachordner())
@@ -190,8 +194,12 @@ final class Verbindungsstand: ObservableObject {
         // DIE GEKOPPELTE HOMESTATION HAT EINE NEUE ADRESSE BEKOMMEN (der Router vergibt sie
         // neu): Sie wird am NAMEN wiedererkannt, den sie im Heimnetz traegt — nicht geraten.
         guard let name = stationsname,
-              let wieder = liste.first(where: { $0.name == name && $0.aufgeloest }),
-              let neu = wieder.adresse, neu != adresse else { return }
+              let wieder = liste.first(where: { $0.name == name && $0.aufgeloest }) else { return }
+        if wieder.ueberDenMac != ueberDenMac {
+            ueberDenMac = wieder.ueberDenMac
+            Verbindungsgedaechtnis.ueberDenMac = wieder.ueberDenMac
+        }
+        guard let neu = wieder.adresse, neu != adresse else { return }
         adresse = neu
         Verbindungsgedaechtnis.adresse = neu
         Task { @MainActor [weak self] in await self?.pruefe() }
@@ -202,7 +210,8 @@ final class Verbindungsstand: ObservableObject {
     /// Koppelt mit der sechsstelligen Zahl. Gibt zurück, ob es geklappt hat, und den Satz,
     /// der gezeigt wird.
     @MainActor
-    func koppele(adresse ziel: URL, name: String?, zahl eingabe: String) async -> (Bool, String) {
+    func koppele(adresse ziel: URL, name: String?, ueberDenMac mac: Bool = false,
+                 zahl eingabe: String) async -> (Bool, String) {
         guard let zahl = Kopplungszahl(eingabe) else {
             return (false, "Die Zahl hat genau sechs Ziffern.")
         }
@@ -245,8 +254,10 @@ final class Verbindungsstand: ObservableObject {
             anmeldung = neu
             adresse = ziel
             stationsname = name
+            ueberDenMac = mac
             Verbindungsgedaechtnis.adresse = ziel
             Verbindungsgedaechtnis.name = name
+            Verbindungsgedaechtnis.ueberDenMac = mac
             erreichbar = true
             grund = nil
             bestimmeZustand()
@@ -272,6 +283,7 @@ final class Verbindungsstand: ObservableObject {
         anmeldung = nil
         adresse = nil
         stationsname = nil
+        ueberDenMac = false
         erreichbar = nil
         grund = nil
         laufstand = nil

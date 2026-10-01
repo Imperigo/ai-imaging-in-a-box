@@ -40,6 +40,14 @@ public struct GefundenerDienst: Equatable, Hashable, Sendable, Identifiable {
     /// nennt. **Nicht** «die richtige».
     public var fassung: String? { eintraege["fassung"] }
 
+    /// Wer vermittelt (TXT `vermittler`) — `nil`: niemand, der Dienst ist der Server selbst.
+    public var vermittler: String? { eintraege["vermittler"] }
+
+    /// Ob unterwegs **der Mac** vermittelt (Protokoll §8b, seit dem 01.10.2026). Nur für die
+    /// Anzeige: Gekoppelt und angemeldet wird genau wie bei der HomeStation — der Mac
+    /// beantwortet dieselben Wege und reicht sie an den Heim-PC weiter.
+    public var ueberDenMac: Bool { vermittler?.lowercased() == Vermittlerangebot.vermittler }
+
     /// Ob Rechner und Anschluss bekannt sind.
     public var aufgeloest: Bool { adresse != nil }
 

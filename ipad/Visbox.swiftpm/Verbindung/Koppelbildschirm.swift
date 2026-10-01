@@ -101,6 +101,13 @@ struct Koppelbildschirm: View {
         } label: {
             HStack {
                 Text(d.name)
+                // UNTERWEGS VERMITTELT DER MAC (Protokoll §8b): klein und ruhig dazu, damit
+                // klar ist, wer antwortet. Gekoppelt wird genau gleich.
+                if d.ueberDenMac {
+                    Text("über den Mac")
+                        .font(Schrift.text(12))
+                        .foregroundStyle(Zeichenblatt.leise)
+                }
                 Spacer()
                 Text(d.adresse.map(Koppelbildschirm.text) ?? "wird aufgelöst …")
                     .font(Schrift.zahl(13))
@@ -221,7 +228,9 @@ struct Koppelbildschirm: View {
         laeuft = true
         // DER NAME GILT NUR, WENN DIE ADRESSE NOCH SEINE IST — sonst ist sie eingetippt.
         let name = (gewaehlt?.adresse == ziel) ? gewaehlt?.name : nil
-        let (ok, text) = await stand.koppele(adresse: ziel, name: name, zahl: zahl)
+        let mac = (gewaehlt?.adresse == ziel) && gewaehlt?.ueberDenMac == true
+        let (ok, text) = await stand.koppele(adresse: ziel, name: name, ueberDenMac: mac,
+                                             zahl: zahl)
         laeuft = false
         geklappt = ok
         satz = text

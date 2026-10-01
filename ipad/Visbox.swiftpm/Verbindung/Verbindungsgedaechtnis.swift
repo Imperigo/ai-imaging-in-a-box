@@ -1,7 +1,7 @@
 import Foundation
 
 /// Was sich die App über die gekoppelte HomeStation merkt — **nur, was kein Geheimnis ist:**
-/// ihre Adresse, ihren Namen im Heimnetz und den Projektordner auf ihr.
+/// ihre Adresse, ihren Namen im Heimnetz, ob der Mac vermittelt, und den Projektordner auf ihr.
 ///
 /// Das Geheimnis für die Tür liegt **nicht** hier, sondern in `Schluesselbund.swift`. Eine
 /// Probe (`AnfragenTests`) fällt, sobald eine Datei dieser Einheit, die `UserDefaults`
@@ -10,6 +10,7 @@ enum Verbindungsgedaechtnis {
     private static let adresseSchluessel = "verbindung.adresse"
     private static let nameSchluessel = "verbindung.name"
     private static let ordnerSchluessel = "verbindung.ordner"
+    private static let macSchluessel = "verbindung.ueberDenMac"
 
     /// Wo die HomeStation zuletzt antwortete.
     static var adresse: URL? {
@@ -21,6 +22,13 @@ enum Verbindungsgedaechtnis {
     static var name: String? {
         get { UserDefaults.standard.string(forKey: nameSchluessel) }
         set { UserDefaults.standard.set(newValue, forKey: nameSchluessel) }
+    }
+
+    /// Ob unterwegs der Mac vermittelt (TXT `vermittler=mac`, Protokoll §8b) — nur für die
+    /// Anzeige «über den Mac».
+    static var ueberDenMac: Bool {
+        get { UserDefaults.standard.bool(forKey: macSchluessel) }
+        set { UserDefaults.standard.set(newValue, forKey: macSchluessel) }
     }
 
     /// Der Projektordner **auf der HomeStation**; leer heisst: der, mit dem sie gestartet
@@ -35,5 +43,6 @@ enum Verbindungsgedaechtnis {
     static func vergiss() {
         UserDefaults.standard.removeObject(forKey: adresseSchluessel)
         UserDefaults.standard.removeObject(forKey: nameSchluessel)
+        UserDefaults.standard.removeObject(forKey: macSchluessel)
     }
 }

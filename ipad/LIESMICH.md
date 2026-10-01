@@ -99,7 +99,12 @@ ipad/
 │   │   ├── Blattunterlage.swift die Unterlage unter dem Blatt: gestreckt, was mitgeht
 │   │   ├── Stiftfarben.swift    Grund des Blattes und Stiftfarben, gegen das Blatt geprüft
 │   │   ├── Parkfach.swift       Skizzen, die (noch) nicht drüben sind
-│   │   └── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
+│   │   ├── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
+│   │   ├── Leitung.swift        eine HTTP-Anfrage lesen, eine Antwort schreiben (für den Mac)
+│   │   ├── Vermittlung.swift    der Mac als Vermittler: Tür, Weiterreichen, Zeile «iPad»
+│   │   └── Vermittlerkopplung.swift  die Kopplung iPad ↔ Mac und der Zugang des Mac
+│   │                            (Protokoll §8b; die Mac-Seite liegt in
+│   │                            `VisboxMac/Sources/VisboxMac/Vermittlung/`)
 │   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand,
 │   │                            Unterlagenbild
 │   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt,

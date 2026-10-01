@@ -417,6 +417,137 @@ Seite damit nicht nötig. Ob das am echten iPad trägt, prüft der Owner beim er
 selbstgebaute DNS-Frage über einen lokalen UDP-Socket die richtige Antwort bekommt
 (`tests/test_rundruf.py`), nicht, dass iOS sie genauso stellt.
 
+## 8b · Über den Mac (Vermittler)
+
+**Gebaut am 01.10.2026 (Plan v0.1.7, Strom B; Entscheide 42 und 47), am Gerät unbestätigt.**
+Unterwegs (an der ETH, am Hotspot des Mac) erreicht das iPad den Heim-PC nicht: Der ist nur über
+Tailscale erreichbar, und das läuft auf dem iPad nicht. Der Mac schon. **Er gibt sich dem iPad
+gegenüber als Server aus** und reicht weiter. Für die App ist er eine HomeStation wie jede
+andere — sie findet, koppelt und fragt ihn mit denselben Wegen, Feldern und Sätzen wie in §1–§8.
+
+```
+iPad ──(WLAN / Hotspot, HTTP, Anschluss 8731)──> Mac ──(Tailscale, HTTPS, 8443)──> Heim-PC
+      Anmeldung: Zugangsdaten DES MAC                Anmeldung: Kennwort DES HEIM-PC
+```
+
+Gelesen aus: `ipad/Visbox.swiftpm/Kern/Leitung.swift` (Lesen und Schreiben einer Anfrage),
+`Kern/Vermittlung.swift` (Tür, Weiterreichen, Antworten, Zeile «iPad», Anbieten),
+`Kern/Vermittlerkopplung.swift` (Kopplung und Zugang am Mac),
+`ipad/VisboxMac/Sources/VisboxMac/Vermittlung/` (Anbieten, Verbindungen, Leitung zum Heim-PC,
+Schlüsselbund des Mac).
+
+### Finden
+
+| | |
+|---|---|
+| Dienst | derselbe wie der Heim-PC (`Marke.dienst`, §8), angeboten mit `NWListener` (Bonjour des Systems) |
+| TXT | `fassung=1` (wie §8) **und** `vermittler=mac` |
+| Name | «`<Name der App>` über `<Name des Mac>`», höchstens 63 Bytes (`Vermittlerangebot.dienstname`) |
+| Anschluss | 8731 wie der Server (`Suche.vorgabeAnschluss`); ist er belegt, ein freier — das iPad findet den Mac über den Namen, nicht über die Zahl |
+| Am iPad | Die Suche (§8) findet den Mac wie eine HomeStation. Trägt der Eintrag `vermittler=mac`, steht im Koppelbildschirm neben dem Namen **«über den Mac»**, und die Verbindungszeile sagt «… · über den Mac» (`GefundenerDienst.ueberDenMac`, gemerkt in `Verbindungsgedaechtnis`). Sonst ändert sich an der App nichts. |
+| Erlaubnis | Der Satz für «Lokales Netzwerk» im Manifest nennt seit dem 01.10.2026 auch den Mac (`Package.swift`, `.localNetwork`; bewacht in `tests/test_ipad_geruest.py`) |
+
+### Die Anmeldung: zwei Strecken, zwei Geheimnisse
+
+* **iPad ↔ Mac — eine eigene Kopplung am Mac.** Der Mac zeigt eine sechsstellige Zahl; das iPad
+  schickt sie an `POST /api/verbinden` **des Mac** und bekommt dafür **Zugangsdaten des Mac**:
+  Benutzer wie beim Server (der Name der App, klein), Kennwort aus 32 zufälligen Zeichen
+  (`Vermittlerzugang`). Dieselben Regeln wie §7 (Abschrift von `aiimaging.kopplung`, bewacht):
+  Frist **600 s** auf der stetigen Uhr, **5** Versuche, nach Erfolg **verbraucht**, Zustände
+  `offen`/`abgelaufen`/`aufgebraucht`/`verbraucht` in derselben Reihenfolge, Vergleich in
+  gleichbleibender Zeit. **Die Sätze** sind die von §7, nur steht «am Mac», wo dort «an der
+  HomeStation» steht — der Satz sagt, *wo* es eine neue Zahl gibt: Das Gerät hört bei jeder
+  Ablehnung «Das hat nicht geklappt. Am Mac eine neue Zahl holen.», der genaue Grund steht nur
+  am Mac. Erfolg: `{"verbunden": true, "benutzer", "kennwort", "satz"}` mit dem Satz von §7.
+* **Mac ↔ Heim-PC — das Kennwort des Heim-PC**, aus dem Schlüsselbund des Mac, HTTP-Basic über
+  HTTPS (`https://<rechner>.<netz>.ts.net:8443`). **Es geht nie zum iPad.**
+* **Der `Authorization`-Kopf des iPad wird nie weitergereicht**, sondern **ersetzt**
+  (`Weiterreichung.koepfe(mit:)`). Zwei `Authorization`-Köpfe sind keine Anmeldung (Tür).
+* Wann der Mac eine Zahl zeigt: beim Start, solange noch nie ein iPad gekoppelt hat, und auf
+  Wunsch (`Vermittlungsdienst.neueZahl()`). Die Zugangsdaten des Mac liegen in **seinem
+  Schlüsselbund** und überleben einen Neustart. **«Das iPad vergessen»**
+  (`vergissIPad()`) erzeugt neue — ein gekoppeltes iPad bekommt danach 401 und muss neu
+  koppeln; am Heim-PC ändert sich nichts. *Das ist der Weg, eine erteilte Anmeldung
+  zurückzuziehen, den es am Server nicht gibt (§7) — für die Strecke iPad ↔ Mac.*
+
+### Die Tür am Mac
+
+Dieselbe Form wie §2: **401** mit dem Satz «Nicht angemeldet. Benutzername und Kennwort stehen
+im Fenster, in dem `<Name>` gestartet wurde.» und `WWW-Authenticate: Basic realm="<Name>",
+charset="UTF-8"`. Ohne die Zugangsdaten des Mac kommen nur die zwei Ausnahmen durch, unter
+denselben Bedingungen wie beim Server: `POST /api/verbinden`, solange am Mac eine Kopplung
+**besteht**, und `GET /koppeln`, solange die Zahl **gilt**. Die Tür entscheidet **am Kopf**,
+bevor der Rumpf gelesen ist (`Vermittlungsregel.vorab`).
+
+**Die zwei Koppelwege beantwortet immer der Mac selbst** — auch angemeldet, auch
+prozentkodiert geschrieben (`/api/verbinde%6E`). Ginge `POST /api/verbinden` weiter, bekäme das
+iPad bei offener Kopplung am Heim-PC **dessen** Kennwort. `GET /koppeln` des Mac ist eine
+eigene, schlichte Seite (ein Zahlenfeld, das `POST /api/verbinden` ruft); angemeldet ohne
+geltende Zahl: **404** «Auf diesem Mac ist gerade kein Verbinden offen. …»; angemeldet
+`POST /api/verbinden` ohne Kopplung: **403** «Auf diesem Mac ist gerade kein Verbinden offen.»
+
+### Was weitergereicht wird — und was nie
+
+| Geht weiter | Bleibt am Mac |
+|---|---|
+| Art (`GET`, `POST`) — jede andere: **501** «Diese Art Anfrage reicht der Mac nicht weiter: …» | der `Authorization`-Kopf des iPad (ersetzt durch den des Mac), `Proxy-Authorization` |
+| Pfad und Frage **unverändert**, nur in der Form `/pfad?frage` | `POST /api/verbinden`, `GET /koppeln` |
+| die Köpfe `Accept`, `Accept-Language`, `Content-Type` — **nur diese** | jeder andere Kopf: die der Verbindung (`Connection`, `Keep-Alive`, `Host`, `Content-Length`, `Transfer-Encoding`, `Upgrade`, `Expect`), Kekse, und die einer Weiterleitung (`X-Forwarded-*`, `Forwarded`, `Tailscale-User-*`) — der Heim-PC erkennt daran Weiterleitungen (`_darf_herein` in `server.py`), und keiner soll sie ihm vortäuschen oder verbergen |
+| bei `POST` der Rumpf, wie er kam (auch leer); bei `GET` keiner | — |
+
+**Zurück zum iPad** geht der Zustandscode des Heim-PC und sein Rumpf, mit den Köpfen
+`Content-Type`, `Cache-Control`, `Content-Disposition`, `Last-Modified`, `ETag` und `Location`
+(nur als Pfad `/…`). **Umleitungen folgt der Mac nicht** — sie gehen als Antwort zurück. Drei
+Ausnahmen, und sie gehören hierher, weil sie die Lesart der App betreffen:
+
+| Was geschah | Was das iPad bekommt | Warum |
+|---|---|---|
+| Der Heim-PC antwortet **401** | **403** «Der Heim-PC nimmt das Kennwort des Mac nicht an. Am Mac das Kennwort des Heim-PC neu eingeben.» | Eine 401 hiesse am iPad «die gemerkte Anmeldung gilt nicht mehr, neu koppeln» — neu koppeln hülfe nichts. |
+| Der Heim-PC ist **nicht erreicht** (kein Byte ging hinüber; bei `GET` immer) | **403** «Der Mac antwortet, erreicht aber den Heim-PC nicht: …» | **Nicht 502:** Die App legt eine Skizze bei 401/403 zurück ins Parkfach und schickt sie wieder; bei jedem anderen Code gälte sie als abgewiesen und wartete auf einen Menschen (`Sendeergebnis.aus`). Drüben kam nichts an — sie gehört zurück ins Fach. Das Prüfen der App zeigt den Satz als «Getrennt». |
+| Bei einem `POST` waren **Bytes unterwegs**, eine Antwort kam nicht | **keine Antwort** — die Verbindung wird abgebrochen | Ob es drüben ankam, weiss auch der Mac nicht. Die abgebrochene Verbindung sagt der App genau das (`ohneAntwort`, «ungewiss»); eine Skizze geht mit ihrem Schlüssel noch einmal, und drüben entsteht keine zweite Datei (§3, mit der dortigen Grenze). |
+
+### Grenzen
+
+| | |
+|---|---|
+| Rumpf | höchstens **4 MiB**, abgewiesen **am Kopf** (`Content-Length`), bevor ein Byte des Rumpfs gelesen ist: **413**. Begründung: Die grösste Anfrage der App ist eine Skizze bis 2 MiB PNG (Riegel des Servers, §3), als Base64 im JSON 2,67 MiB plus wenige Kilobyte Felder. Bewacht gegen `SKIZZE_GROESSENRIEGEL`. Der Auftrag der Knotenansicht mit einem ganzen Modell geht so **nicht** durch — der gehört dem Browser am Heim-PC. |
+| Köpfe | höchstens 32 KiB (**431**) |
+| Form | HTTP/1.0 und 1.1 (sonst **505**); Ziel nur `/pfad?frage` — eine ganze Adresse, `//…`, `#` oder Rückstrich: **400**; gestückelt (`Transfer-Encoding`): **411**, zusammen mit `Content-Length`: **400**; zwei verschiedene Längen, eine fortgesetzte Kopfzeile: **400**. `Expect: 100-continue` bekommt nach der Tür ein `100 Continue`. |
+| Verbindung | **eine Anfrage je Verbindung**, danach schliesst der Mac (wie §1); höchstens 16 zugleich; das Lesen einer Anfrage darf 30 s dauern, eine Verbindung lebt höchstens 120 s |
+| Heim-PC | wartet höchstens **25 s** ohne ein Byte — kürzer als die 30 s der App, damit der Mac «nicht erreicht» sagt, bevor das iPad selbst aufgibt |
+| Übertragung | iPad ↔ Mac **unverschlüsselt** wie §1 — wer im selben WLAN mitliest, liest Zugangsdaten des Mac und Bilder. Die Zugangsdaten des Mac öffnen aber nur den Mac, und «Das iPad vergessen» zieht sie zurück. Mac ↔ Heim-PC: HTTPS über Tailscale. |
+| Eine HomeStation | Die App merkt sich **eine** gekoppelte Gegenstelle (§7, Schlüsselbund). Zwischen Heim-PC (zuhause) und Mac (unterwegs) zu wechseln heisst heute: neu koppeln. Wer das nicht will, koppelt nur mit dem Mac und nimmt ihn auch zuhause. |
+| Gedächtnis | **Keine Bilder zwischengespeichert** (flüchtige Sitzung, ohne Ablage und Kekse), **keine Anfrage protokolliert** — weder Kopf noch Rumpf noch Pfad. Am Mac bleiben: die Zugangsdaten (Schlüsselbund), dass schon ein iPad gekoppelt hat (eine Ja/Nein-Angabe), und im Arbeitsspeicher die Zeit der letzten Anfrage. |
+
+### Die Zeile «iPad» am Mac
+
+`Vermittlerlage` (Kern) mit `wort` aus **steht / lädt / wartet / fehlt** und einem Satz:
+*lädt* — er bietet sich noch nicht an; *wartet* — kein iPad meldet sich (mit «Letzte Anfrage vor
+…», wenn es je eine gab) **oder** eine Zahl gilt («Am iPad koppeln und diese Zahl eingeben: 123 456
+(gilt noch 10 min).» — eine geltende Zahl geht vor «verbunden»); *steht* — eine angemeldete
+Anfrage kam vor höchstens 30 s («Verbunden, letzte Anfrage vor 4 s.»; das iPad fragt alle 10 s);
+*fehlt* — mit Grund, z. B. «Lokales Netzwerk nicht erlaubt: Systemeinstellungen → Datenschutz &
+Sicherheit → Lokales Netzwerk.»
+
+### Was geprüft ist, und was nicht
+
+**Geprüft unter Linux** (`swift test` im Kern: `LeitungTests`, `VermittlungTests`,
+`VermittlerkopplungTests`): Lesen in beliebigen Stücken, jede Abweisung, die Grenze am Kopf; der
+Kopf des iPad geht nie weiter; ohne Anmeldung geht nichts weiter; genau die zwei Ausnahmen, und
+es sind die, die die App als `ohneAnmeldung` führt; Fristen und Versuche; **die App koppelt mit
+ihren eigenen Bauformen und Lesern mit dem Mac** und bekommt dessen Zugangsdaten, nicht die des
+Heim-PC; «nicht erreicht» legt die Skizze im Parkfach der App zurück ins Fach. In
+`tests/test_ipad_geruest.py`: Fassung, Kopplungsregeln, Sätze, Benutzername und die Grenze des
+Rumpfs gegen Python; der Satz «Lokales Netzwerk»; die Importe des Mac-Teils.
+
+**Am Gerät unbestätigt — alles, was Netz ist:** dass der Mac sich anbietet und das iPad ihn
+findet (`NWListener` mit Dienst und TXT, Bonjour über Hotspot), dass macOS nach «Lokales Netzwerk»
+fragt und die Zeile die Ablehnung erkennt, dass die Firewall des Mac die Verbindung durchlässt,
+dass `URLSession` den gesetzten `Authorization`-Kopf so hinausgibt, dass der Schlüsselbund des Mac
+den Zugang ohne Rückfrage hergibt, und ob die Anzeige «über den Mac» am iPad erscheint. Der
+Mac-Teil ist hier **nicht übersetzt** (Linux kennt `Network` nicht); übersetzt wird er erst in
+der Prüfstrecke der Mac-App.
+
 ## 9 · Was dieses Blatt nicht ist
 
 Keine Beschreibung der Webseite (`oberflaeche/seite.html`) und keine der Bibliothek. Es
