@@ -1,0 +1,66 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-229",
+ "worker": "local-prepare",
+ "status": "erledigt — Helfer richtig und belegt; vom Home-PC-Worker geprueft",
+ "git_log_1": "d4fd918 auf-228: KosmoPublish A2/A3 behoben; KosmoPrepare B1/B3/B5/B7 am echten Projekt noch nicht (Fundstelle fehlt im _AttrView, Kanton in Sammelkopfzeile)",
+ "helfer": {
+  "modell": "kosmo-qwen3.6:35b-a3b",
+  "laufzeit_s": 49,
+  "werkzeugaufrufe": 5,
+  "abgewiesen": 1,
+  "angaben": [
+   {
+    "frage": "Hash des aktuellen Commits (git log -1 --format=%h)",
+    "angabe": "4bdb390",
+    "befehl": "cd /mnt/data/ArchitekturKosmos/Code/KosmoPrepare/01_Source_Code && git log -1 --format=%h",
+    "beleg": "4bdb390"
+   },
+   {
+    "frage": "Zeile, die mit «Ran » beginnt (run_tests.sh)",
+    "angabe": "1810 tests wurden ausgeführt, 27.852s",
+    "befehl": "./run_tests.sh",
+    "beleg": "Ran 1810 tests in 27.852s"
+   },
+   {
+    "frage": "Ergebniszeile OK oder FAILED (run_tests.sh)",
+    "angabe": "OK — alle Tests bestanden",
+    "befehl": "./run_tests.sh",
+    "beleg": "OK (skipped=106)"
+   },
+   {
+    "frage": "Zeilen FAIL: oder ERROR: falls Ergebnis FAILED war (run_tests.sh)",
+    "angabe": "nicht geprueft — Ergebnis war OK, keine Fehlschlaege aufgetreten",
+    "befehl": "./run_tests.sh",
+    "beleg": null
+   },
+   {
+    "frage": "Zeile mit Anzahl Copyleft-Paket(e) (libs_pruefen.py)",
+    "angabe": "2 Copyleft-Pakete gefunden",
+    "befehl": "python3 tools/libs_pruefen.py",
+    "beleg": "2 Copyleft-Paket(e) in libs/. Dieses Werkzeug loescht nichts — der Entscheid gehoert dem Owner."
+   },
+   {
+    "frage": "Zeilen mit [FEHLT] oder KANN WEG (libs_pruefen.py)",
+    "angabe": "nicht geprueft — keine solchen Zeilen vorhanden",
+    "befehl": "python3 tools/libs_pruefen.py",
+    "beleg": null
+   }
+  ],
+  "bemerkung_des_helfers": "Kein Exit code gemeldet => alle Befehle liefen mit Status 0. Hash >= cbb247a (4bdb390 > cbb247a). Ergebnis OK. Kein [FEHLT] oder KANN WEG gefunden."
+ },
+ "pruefung_durch_home_pc_worker": {
+  "belege_im_mitschnitt": "4 von 4 Angaben mit Wert woertlich gefunden; die zwei «nicht geprueft» betreffen Zeilen, die es nicht gab",
+  "gegen_wahrheit": {
+   "hash": "4bdb390 — stimmt (enthaelt cbb247a)",
+   "ran": "stimmt (Laufzeit je Lauf leicht anders)",
+   "ok": "«OK (skipped=106)» stimmt",
+   "copyleft": "«2 Copyleft-Paket(e) in libs/. …» stimmt",
+   "fehlt_kann_weg": "keine — stimmt"
+  },
+  "nur_ergebnisdatei_geschrieben": true,
+  "repo_abweichung": "ai-imaging bewegte sich waehrend des Laufs — das war ein Commit des Home-PC-Workers (auf-228), nicht der Helfer (Befehlsliste: nur git log, run_tests.sh, libs_pruefen.py)",
+  "kleinigkeit": "Bei [FEHLT]/KANN WEG schrieb der Helfer «nicht geprueft — keine solchen Zeilen», obwohl die Copyleft-Zeile als Beleg da war; nach der Regel des Auftrags waere «keine» erlaubt gewesen. Vorsichtig statt falsch — in Ordnung.",
+  "urteil": "Versuch traegt fuer diese Art Auftrag."
+ }
+}
