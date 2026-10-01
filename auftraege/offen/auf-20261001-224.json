@@ -1,0 +1,34 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-224",
+ "art": "frage",
+ "beschreibung": "Pruefen, ob das iPad im eigenen Tailscale-Netz sichtbar und erreichbar ist (Entscheid 63) und die Weiterleitung 8443 steht — ohne Namen und Adressen im Ergebnis.",
+ "anweisung": "=== IPAD IM EIGENEN TAILSCALE-NETZ: SICHTBAR UND ERREICHBAR? (KURZ, OHNE GPU) ===\n\nDer Owner hat Tailscale auf dem iPad installiert (Entscheid 63: das iPad spricht unterwegs\ndirekt ueber Tailscale mit eurer Visbox-Flaeche, https 8443). Bitte nur pruefen, nichts aendern.\n\nTEIL A — PRUEFEN\n  A1 tailscale status: Steht ein iPad (Betriebssystem iOS/iPadOS) im eigenen Netz? Ist es\n     online (nicht «offline», nicht «idle» seit Tagen)?\n  A2 tailscale ping <das iPad> (hoechstens 5 Versuche): Antwortet es? Direkt oder ueber DERP\n     (Vermittlungsserver von Tailscale)? Laufzeit in ms.\n  A3 Die Weiterleitung steht noch: tailscale serve status zeigt https 8443 → 127.0.0.1:8731\n     (KosmoOrbits Pfade unveraendert).\n  A4 Von euch selbst ueber den Tailscale-Namen: GET https://<euer-name>:8443/api/fortschritt\n     ohne Anmeldung → 401 erwartet (Satz nennt die Kennwortdatei).\n  Ist das iPad offline: nur das melden — der Owner muss die Tailscale-App am iPad oeffnen und\n  angemeldet sein.\n\nZURUECK (auftraege/ergebnisse/auf-20261001-224.json)\n  - A1: iPad gefunden ja/nein, online ja/nein, Betriebssystem.\n  - A2: Antwort ja/nein, direkt/DERP, ms.\n  - A3: Weiterleitung 8443 steht ja/nein. A4: Code.\n  - KEINE Geraete-, Host- oder Netznamen, KEINE IP-Adressen, KEINE Benutzernamen — nur ja/nein\n    und Zahlen (REGEL 3).\n\nNICHT TUN: nichts an Tailscale, Weiterleitungen oder Diensten aendern; nichts committen ausser\nder Ergebnisdatei.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie noetig"
+ },
+ "params": {
+  "weiterleitung_https": 8443
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Keine GPU, nur lesen.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Host- oder Netznamen, keine IP-Adressen, keine Benutzernamen ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "A1: iPad gefunden/online, Betriebssystem.",
+  "A2: Ping ja/nein, direkt/DERP, ms.",
+  "A3: Weiterleitung 8443 ja/nein; A4: Code."
+ ],
+ "rang": 2
+}

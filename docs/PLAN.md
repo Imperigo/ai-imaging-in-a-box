@@ -7709,7 +7709,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern (v0.1.8):** Bildmodell wird je Variante neu geladen (1–2 s je Variante) — einmal laden für die ganze Reihe.
 - [ ] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
 - [ ] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
-- [ ] **Owner:** Tailscale-App aufs iPad, mit dem eigenen Konto anmelden (vor der Probe).
+- [x] **Owner:** Tailscale-App aufs iPad, mit dem eigenen Konto anmelden (vor der Probe).
+      *(01.10.2026, Owner: installiert)*
+- [ ] **local:** `auf-20261001-224` — iPad im Tailscale-Netz sichtbar und erreichbar? Weiterleitung 8443 steht?
 - [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
       *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
 - [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
