@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261001-217",
+  "art": "frage",
+  "beschreibung": "KosmoPrepare: Splat-Kette nach den Korrekturen aus 215 nachmessen (GPU-Rueckfall, JPEG-Guete, 360° mit vier Ansichten), Schleifenschluss diagnostizieren, echtes Video falls vorhanden.",
+  "anweisung": "=== KOSMOPREPARE: SPLAT-KETTE NACHMESSEN NACH DEN KORREKTUREN AUS 215 ===\n\nWORUM ES GEHT\n  auf-20261001-215 hat drei Fehler der Kette gemessen; sie sind in KosmoPrepare 6bcd88b behoben:\n  (1) Profil «rtx5090» erzwang GPU-SIFT — jetzt fragt das Skript `colmap -h` nach «with CUDA» und\n  rechnet sonst auf der CPU; (2) JPEG-Guete jetzt -q:v 2 in beiden Zweigen; (3) 360°: vier waagrechte\n  Ansichten zu 110° (front, right, back, left; oben und unten fallen weg), Abgleich mit overlap 24 und\n  quadratic_overlap 0; dazu arbeitet brush im Arbeitsordner (kein target/ mehr im Klon).\n  Ob (3) die 42 von 288 hebt, ist NICHT gemessen — das ist der Kern dieses Auftrags.\n  KosmoPrepare mindestens 6bcd88b (git pull --ff-only auf main). Nichts installieren.\n\nB · NORMALES VIDEO (dieselbe erfundene Szene wie 215 B1; neu rendern, falls geloescht)\n  B2  Wie 215 B2, mit profile=\"rtx5090\" (NICHT m1_local) — das Skript soll selbst auf die CPU\n      gehen. Zurueck: DONE/FAIL, die Zeile «COLMAP meldet kein «with CUDA» …» aus pipeline.log\n      woertlich (oder dass sie fehlt), die STAGE-Zeilen mit Uhrzeit, registriert von 96, count.\n      Und: liegt nach dem Lauf ein Ordner target/ im KosmoPrepare-Klon? (ja/nein; erwartet nein)\n  B3  Verortung wie 215 B3: paare, massstab, rmse_m, max_m, schlechtestes Paar, satz(fit) woertlich.\n  B4  NUR ZUR DIAGNOSE, von Hand und ohne Code zu aendern: dieselbe Kette einmal mit\n      «--SequentialMatching.loop_detection 1» im sequential_matcher-Aufruf (run_pipeline.sh in einer\n      Kopie des Arbeitsordners von Hand ergaenzen). Kennt COLMAP 4.2.1 den Schalter ohne eigene\n      Vokabular-Datei, oder verlangt er vocab_tree_path / laedt er etwas herunter? Meldung woertlich.\n      Wenn er laeuft: rmse_m und max_m wie B3. Es geht darum, ob das Schliessen der Schleife den\n      Restfehler von 10-18 cm auf Zentimeter bringt. Laedt er etwas aus dem Netz: NICHT fortfahren,\n      nur melden.\n\nC · 360°-VIDEO (dieselbe Szene wie 215 C1)\n  C2  Wie 215 C2 (video_source=\"insta360\", fps=12, max_frames=48, steps=3000, max_res=960).\n      Zurueck: DONE/FAIL, die ersten acht Dateinamen in images/ (erwartet 0001_back.jpg, 0001_front.jpg,\n      0001_left.jpg, 0001_right.jpg, 0002_back.jpg …), Zahl der Bilder (erwartet 192), Seitenlaenge\n      (erwartet 960 x 960), REGISTRIERT JE SEITE (front/right/back/left) und gesamt, Merkmale je Bild\n      im Mittel je Seite. Bei FAIL die letzten 25 Zeilen von pipeline.log woertlich.\n  C3  Verortung wie 215 C3 (ein Paar je Zeitpunkt aus NNNN_front).\n\nD · DAS ECHTE VIDEO (Owner-Entscheid 01.10.2026, Nr. 2 und 3) — NUR WENN ES SCHON DA LIEGT\n  Liegt in ~/KosmoSplat/videos/ mindestens eine Videodatei: die Kette einmal damit fahren\n  (video_source passend: «insta360» nur bei einem 2:1-Equirect-Video, sonst «standard»; fps=2,\n  max_frames=240, steps=7000, max_res=1600, profile=\"rtx5090\"). Zurueck NUR Zahlen: Dauer, Aufloesung\n  und Seitenverhaeltnis des Videos, DONE/FAIL, Stufendauern, registriert von N, count, Dateigroesse\n  der .ply. KEIN Name, KEIN Bild, KEIN Ort, keine Datei verlaesst die Maschine. Liegt keines da:\n  «kein Video» melden und D auslassen.\n\nWAS NICHT GETAN WERDEN SOLL\n  Nichts installieren (auch kein CUDA — das ist ein offener Owner-Entscheid), keinen Code aendern,\n  nichts committen. Keine Bilder, Videos, .ply oder Szenen zurueckgeben — nur Zeilen und Zahlen.\n  Arbeitsordner von B/C/D am Ende loeschen (die .ply aus D darf im Videoordner bleiben).\n  GPU-Grenze 400 W.",
+  "erstellt": "2026-10-01T09:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "erfundene Szene aus 215 B1/C1 vor Ort; echtes Video nur in Teil D und nur vor Ort"
+  },
+  "params": {
+    "kosmoprepare_stand_min": "6bcd88b",
+    "daten_bleiben_lokal": true,
+    "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 1, 2, 3"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nichts installieren.",
+    "hinweise": [
+      "Teil C zuerst zurueckmelden, wenn es schnell geht — dort steht die offene Frage.",
+      "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+    ]
+  },
+  "rueckgabe": [
+    "Staende.",
+    "B2 DONE/FAIL, CPU-Zeile woertlich, Stufendauern, registriert, count, target/ ja/nein.",
+    "B3 und (falls gelaufen) B4: paare, massstab, rmse_m, max_m, schlechtestes Paar, satz() woertlich; B4-Meldung zum Schalter woertlich.",
+    "C2 Dateinamen, Zahl, Seitenlaenge, registriert je Seite, Merkmale je Seite; bei FAIL Log woertlich.",
+    "C3 wie B3.",
+    "D nur Zahlen oder «kein Video».",
+    "Fehler ja/nein."
+  ],
+  "rang": 2
+}
