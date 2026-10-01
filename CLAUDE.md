@@ -300,13 +300,24 @@ verschwindet nicht.
 *Die ausführliche Fassung steht weiterhin im Sitzungsprotokoll und in den Dokumenten unter
 `docs/` — dort ändert sich nichts. Was sich ändert, ist allein die Antwort im Chat.*
 
+### Eigene Zweige im KosmoOrbit-Repo (Owner-Entscheid 65, 01.10.2026)
+
+Bis zum 01.10.2026 ging alles, was Visbox drüben brauchte, als Auftrag an den Integrator oder
+den UI-Worker — und wartete dort. **Seither bauen wir es selbst:** alles für Visbox und das
+KosmoVis-Werkzeug (Vis-Station, Vertrag Bild/Ergebnis, ihre Proben) im Repo
+`Imperigo/architektur-cosmos`, **auf eigenem Zweig** `claude/kosmovis-*`, mit ihren Proben und
+Toren grün. Fertig ist es erst, wenn **KosmoOrbit Int 1** es eingespielt hat: Wir melden den
+Zweig mit einem Blatt in seinem Eingang (`kosmo-orbit/docs/auftraege-kosmovis/`) und führen
+**nie selbst** in seinen Zweig zusammen. Was nicht Visbox ist, fassen wir dort nicht an; ihre
+Regeln (dortige `CLAUDE.md`) gelten auf dem Zweig wie hier unsere.
+
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen
 (Owner-Freigabe 2026-08-14). Gearbeitet wird auf Themenzweigen; ist ein Stand in sich
 schlüssig und geprüft, wird nach `main` zusammengeführt. Ein Pull Request wird nur
 angelegt, wenn wirklich etwas zu besprechen ist. Ausserhalb dieses Repos wird nichts
-ohne Rückfrage geändert.
+ohne Rückfrage geändert — ausgenommen die eigenen Zweige im KosmoOrbit-Repo (oben).
 
 Commit-Messages tragen das *Warum*, nicht das *Was*.
 

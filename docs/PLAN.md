@@ -7726,3 +7726,5 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
 - [ ] **Owner:** Probe am iPad (Tailscale, «iPad koppeln») — nächste Woche (Owner, 01.10.2026).
 - [x] **Kern:** Worker `local-prepare` im Auftragsvertrag, eng gefasst (nur `frage`, Pflichtfeld `rechte`). *(01.10.2026, Owner-Ja, Protokoll 74 §14)*
+- [x] **Owner:** Entscheid 65 — wir bauen Visbox/KosmoVis drüben selbst auf eigenem Zweig, Int 1 spielt ein. *(01.10.2026)*
+- [ ] **Kern (drüben):** P1 Lieferstatus null und P2 qa.verdict.hinweise auf `claude/kosmovis-v017-lieferstatus-hinweise`, Tore grün, Blatt an Int 1.
