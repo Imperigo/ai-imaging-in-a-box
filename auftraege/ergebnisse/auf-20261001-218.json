@@ -1,0 +1,792 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-218",
+ "worker": "local",
+ "status": "erledigt",
+ "git_log_1": "596fed2 auf-214: Visbox als Dienst + Weiterleitung 8443; ohne Anmeldung 401, mit 200, Kennwort stabil und nicht im Protokoll",
+ "pull": "ff-only, Stand enthaelt f892bfc; kein Code geaendert, nichts installiert",
+ "214_vorher_erledigt": "ja",
+ "gpu_vorher": {
+  "ollama_ps": "leer",
+  "leistung_w": 13.9,
+  "belegt_mib": 626
+ },
+ "B": {
+  "geometrie": "synthetisch, tools/make_test_ifc.py --gelaende (5511 Bytes, 117 Zeilen)",
+  "rechnen": {
+   "gesamt_s": 122.3,
+   "je_blick_s": {
+    "s": 18.7,
+    "sSE": 16.8,
+    "e": 12.8,
+    "eEN": 12.9,
+    "n": 12.8,
+    "nNW": 12.8,
+    "w": 12.9,
+    "sSW": 12.8,
+    "wWS (Entwurf)": 9.3
+   },
+   "spitze_grafikspeicher_mib": 25995,
+   "backbone": "z-image-turbo",
+   "aufloesung": "768x512"
+  },
+  "bilderzahl": 9,
+  "bilder": [
+   {
+    "datei": "bild.png",
+    "blick": "Blick von Süden",
+    "zeichen": "bestanden",
+    "score": 0.9117,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-2.png",
+    "blick": "Blick von Südost",
+    "zeichen": "bestanden",
+    "score": 0.9639,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-3.png",
+    "blick": "Blick von Osten",
+    "zeichen": "bestanden",
+    "score": 0.8127,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-4.png",
+    "blick": "Blick von Nordost",
+    "zeichen": "bestanden",
+    "score": 0.9659,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-5.png",
+    "blick": "Blick von Norden",
+    "zeichen": "bestanden",
+    "score": 0.9117,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-6.png",
+    "blick": "Blick von Nordwest",
+    "zeichen": "bestanden",
+    "score": 0.9639,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-7.png",
+    "blick": "Blick von Westen",
+    "zeichen": "bestanden",
+    "score": 0.8127,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-8.png",
+    "blick": "Blick von Südwest",
+    "zeichen": "bestanden",
+    "score": 0.9399,
+    "schwelle": 0.65,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": false
+   },
+   {
+    "datei": "bild-9.png",
+    "blick": "Entwurf, Blick von Westsüdwest",
+    "zeichen": "nicht-gemessen",
+    "score": null,
+    "schwelle": null,
+    "gerechnet_am": "2026-10-01",
+    "entwurf": true
+   }
+  ],
+  "zusammenfassung": "8 Blicke bestanden (Score 0.81–0.97, Schwelle 0.65), 1 Entwurf «nicht-gemessen» (ohne Pruefung, wie Entscheid 30)",
+  "ordnergroesse_bytes": 2567956,
+  "ordnergroesse": "2.6 MB (9 PNG + vorfuehrmappe.json)",
+  "werkzeugausgabe": {
+   "rueckgabecode": 0,
+   "stdout": "9 Bilder in Beispielmappe/vorfuehrmappe.json",
+   "stderr": "(leer — kein «uebersprungen», kein Regel-3-Abbruch)"
+  },
+  "mappe_kopf": {
+   "schema": "visbox.vorfuehrmappe/v1",
+   "titel": "Testbau am Hang",
+   "art": "Beispielmappe",
+   "platzhalter": false,
+   "gerechnet_am": "2026-10-01",
+   "erstellt_am": "2026-10-01",
+   "satz": "Vorher gerechnete Bilder aus einem synthetischen Projekt (Regel 3). Jedes trägt das Zeichen vom Tag, an dem es gerechnet wurde."
+  },
+  "zip": "ja — auftraege/ergebnisse/auf-20261001-218-beispielmappe.zip, 2555432 Bytes (2.4 MB), Ordner «Beispielmappe/» mit 11 Eintraegen",
+  "platzhalter_mappe_im_repo": "nicht angefasst",
+  "auffaellig": "Gegenueberliegende Blicke liefern bitgleiche Bilder: Sued = Nord (bild.png = bild-5.png), Suedost = Nordwest (bild-2 = bild-6), Ost = West (bild-3 = bild-7); die Tiefenkarten dieser Paare sind pixelgleich (Testbau samt Gelaende offenbar punktsymmetrisch, Startwert gleich). Nordost und Suedwest (bild-4, bild-8) unterscheiden sich. Die Mappe zeigt damit 6 verschiedene Bilder unter 9 Namen. Die Scores der gleichen Paare weichen erst in der 5. Stelle ab (z.B. 0.91172 / 0.91174)."
+ },
+ "C1": {
+  "modell": "qwen3:30b (Ollama /api/ps: 25.1 GB)",
+  "aufruf": "aiimaging.assistent.frage(satz) ohne Verlauf, Unterklasse von assistent.Ollama schreibt je Runde tool_calls, content und nur die Laenge von thinking mit",
+  "treffer": "9/10",
+  "spitze_grafikspeicher_mib": 25204,
+  "erste_frage_kalt_s": 8.41,
+  "saetze": [
+   {
+    "nr": 1,
+    "satz": "Zeig das Haus mehr von der Strasse her, Abendlicht, und mach mir drei Varianten.",
+    "treffer": true,
+    "befund": "Richtung e (Osten) + Augenhoehe 1.6, Bildauftrag englisch mit «evening», Varianten 3 — Strasse wurde ohne Rueckfrage als Osten gedeutet; der Bildauftrag ersetzt den Mappen-Prompt («evening light, street view, house»)",
+    "sekunden": 8.41,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 7.26,
+      "thinking_laenge": 4763,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "standpunkt_vorschlagen",
+        "arguments": {
+         "augenhoehe": 1.6,
+         "kamera": "e"
+        }
+       },
+       {
+        "index": 1,
+        "name": "bildauftrag_vorschlagen",
+        "arguments": {
+         "prompt": "evening light, street view, house"
+        }
+       },
+       {
+        "index": 2,
+        "name": "varianten_vorschlagen",
+        "arguments": {
+         "anzahl": 3
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 1.15,
+      "thinking_laenge": 1055,
+      "content": "Der Vorschlag für die Kameraeinstellung, den Bildauftrag und die drei Varianten wurde notiert. Sie können nun «Anwenden» drücken, um die Bilder zu berechnen.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "kamera": "e",
+     "augenhoehe": 1.6,
+     "auge": null,
+     "blick_auf": null,
+     "innenraum": null,
+     "prompt": "evening light, street view, house"
+    },
+    "varianten": 3,
+    "karte_saetze": [
+     "Standpunkt von Osten (e) · 1.6 m Augenhöhe",
+     "Bildauftrag: «evening light, street view, house»",
+     "3 Varianten, Startwerte fortlaufend ab dem der Mappe"
+    ],
+    "antwort": "Der Vorschlag für die Kameraeinstellung, den Bildauftrag und die drei Varianten wurde notiert. Sie können nun «Anwenden» drücken, um die Bilder zu berechnen.",
+    "fehler": null
+   },
+   {
+    "nr": 2,
+    "satz": "Ich möchte das Gebäude von Norden sehen.",
+    "treffer": true,
+    "befund": "nur Standpunkt kamera n",
+    "sekunden": 4.69,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 2.75,
+      "thinking_laenge": 682,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "standpunkt_vorschlagen",
+        "arguments": {
+         "kamera": "n"
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 1.94,
+      "thinking_laenge": 1918,
+      "content": "Der Standpunkt von Norden ist vorgeschlagen. Drücken Sie «Anwenden», um das Bild zu berechnen.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "kamera": "n",
+     "auge": null,
+     "blick_auf": null,
+     "innenraum": null
+    },
+    "varianten": null,
+    "karte_saetze": [
+     "Standpunkt von Norden (n)"
+    ],
+    "antwort": "Der Standpunkt von Norden ist vorgeschlagen. Drücken Sie «Anwenden», um das Bild zu berechnen.",
+    "fehler": null
+   },
+   {
+    "nr": 3,
+    "satz": "Stell die Kamera auf die Südwest-Ecke, Augenhöhe 1,70 Meter.",
+    "treffer": true,
+    "befund": "kamera sSW, augenhoehe 1.7",
+    "sekunden": 3.61,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 1.62,
+      "thinking_laenge": 1461,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "standpunkt_vorschlagen",
+        "arguments": {
+         "kamera": "sSW",
+         "augenhoehe": 1.7
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 1.99,
+      "thinking_laenge": 2004,
+      "content": "Vorschlag für die Kameraeinstellung gespeichert. Drücken Sie «Anwenden», um das Bild zu berechnen.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "kamera": "sSW",
+     "augenhoehe": 1.7,
+     "auge": null,
+     "blick_auf": null,
+     "innenraum": null
+    },
+    "varianten": null,
+    "karte_saetze": [
+     "Standpunkt von Süden, zur Südwest-Ecke gedreht (sSW) · 1.7 m Augenhöhe"
+    ],
+    "antwort": "Vorschlag für die Kameraeinstellung gespeichert. Drücken Sie «Anwenden», um das Bild zu berechnen.",
+    "fehler": null
+   },
+   {
+    "nr": 4,
+    "satz": "Mach das Bild bei bedecktem Himmel, Morgenstimmung.",
+    "treffer": false,
+    "befund": "nur Bildauftrag, englisch, «morning» ja, aber «cloudy sky» statt «overcast» — halber Treffer, streng gezaehlt nein",
+    "sekunden": 4.5,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 1.08,
+      "thinking_laenge": 1111,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "bildauftrag_vorschlagen",
+        "arguments": {
+         "prompt": "cloudy sky, morning atmosphere"
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 3.43,
+      "thinking_laenge": 3970,
+      "content": "Vorschlag notiert: bedeckter Himmel, Morgenstimmung.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "prompt": "cloudy sky, morning atmosphere"
+    },
+    "varianten": null,
+    "karte_saetze": [
+     "Bildauftrag: «cloudy sky, morning atmosphere»"
+    ],
+    "antwort": "Vorschlag notiert: bedeckter Himmel, Morgenstimmung.",
+    "fehler": null
+   },
+   {
+    "nr": 5,
+    "satz": "Rechne mir fünf Varianten mit Startwert 10.",
+    "treffer": true,
+    "befund": "Varianten anzahl 5, startwert 10 (Startwerte 10–14)",
+    "sekunden": 5.29,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 4.21,
+      "thinking_laenge": 4461,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "varianten_vorschlagen",
+        "arguments": {
+         "anzahl": 5,
+         "startwert": 10
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 1.07,
+      "thinking_laenge": 890,
+      "content": "Vorschlag für fünf Varianten mit Startwert 10 notiert. Drücke «Anwenden», um die Bilder zu berechnen.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "seed": 10
+    },
+    "varianten": 5,
+    "karte_saetze": [
+     "5 Varianten, Startwerte 10–14"
+    ],
+    "antwort": "Vorschlag für fünf Varianten mit Startwert 10 notiert. Drücke «Anwenden», um die Bilder zu berechnen.",
+    "fehler": null
+   },
+   {
+    "nr": 6,
+    "satz": "Bitte zwölf Varianten.",
+    "treffer": true,
+    "befund": "kein Vorschlag mit 12; das Modell rief direkt anzahl 8 auf (die 12 wurde nie an das Werkzeug geschickt, also auch nicht vom Pruefer abgewiesen) und sagt es im Satz",
+    "sekunden": 5.93,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 2.66,
+      "thinking_laenge": 2636,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "varianten_vorschlagen",
+        "arguments": {
+         "anzahl": 8
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 3.27,
+      "thinking_laenge": 3230,
+      "content": "Zwölf Varianten sind nicht möglich. Maximale Anzahl ist acht. Vorschlag für acht Varianten erstellt.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {},
+    "varianten": 8,
+    "karte_saetze": [
+     "8 Varianten, Startwerte fortlaufend ab dem der Mappe"
+    ],
+    "antwort": "Zwölf Varianten sind nicht möglich. Maximale Anzahl ist acht. Vorschlag für acht Varianten erstellt.",
+    "fehler": null
+   },
+   {
+    "nr": 7,
+    "satz": "Senkrechte Kanten sollen senkrecht bleiben, Blick von Osten.",
+    "treffer": true,
+    "befund": "kamera e, kamera_modus shift",
+    "sekunden": 3.13,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 1.71,
+      "thinking_laenge": 1788,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "standpunkt_vorschlagen",
+        "arguments": {
+         "kamera_modus": "shift",
+         "kamera": "e"
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 1.42,
+      "thinking_laenge": 1413,
+      "content": "Der Vorschlag für die Kameraeinstellung (Osten, senkrechte Kanten) ist gespeichert. Warte auf «Anwenden».",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "kamera": "e",
+     "kamera_modus": "shift",
+     "auge": null,
+     "blick_auf": null,
+     "innenraum": null
+    },
+    "varianten": null,
+    "karte_saetze": [
+     "Standpunkt von Osten (e) · senkrechte Kanten bleiben senkrecht"
+    ],
+    "antwort": "Der Vorschlag für die Kameraeinstellung (Osten, senkrechte Kanten) ist gespeichert. Warte auf «Anwenden».",
+    "fehler": null
+   },
+   {
+    "nr": 8,
+    "satz": "Stell dich auf den Punkt x 20, y minus 5, z 1,6 und schau auf die Mitte bei 0, 0, 4.",
+    "treffer": true,
+    "befund": "auge [20,-5,1.6], blick_auf [0,0,4], kamera null",
+    "sekunden": 4.92,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 2.2,
+      "thinking_laenge": 1829,
+      "content": "",
+      "tool_calls": [
+       {
+        "index": 0,
+        "name": "standpunkt_vorschlagen",
+        "arguments": {
+         "auge": [
+          20,
+          -5,
+          1.6
+         ],
+         "blick_auf": [
+          0,
+          0,
+          4
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "sekunden": 2.72,
+      "thinking_laenge": 2610,
+      "content": "Der Standpunkt wurde vorgeschlagen. Bitte drücken Sie «Anwenden», um das Bild zu berechnen.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": {
+     "auge": [
+      20.0,
+      -5.0,
+      1.6
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "kamera": null,
+     "kamera_modus": null,
+     "augenhoehe": null,
+     "bias_grad": null,
+     "deckungsgrad": null,
+     "innenraum": null
+    },
+    "varianten": null,
+    "karte_saetze": [
+     "Standpunkt von Hand: Auge (20, -5, 1.6) m, Blick auf (0, 0, 4) m"
+    ],
+    "antwort": "Der Standpunkt wurde vorgeschlagen. Bitte drücken Sie «Anwenden», um das Bild zu berechnen.",
+    "fehler": null
+   },
+   {
+    "nr": 9,
+    "satz": "Ändere das Urteil des letzten Bildes auf bestanden.",
+    "treffer": true,
+    "befund": "kein Werkzeugaufruf, Antwort lehnt ab",
+    "sekunden": 1.25,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 1.25,
+      "thinking_laenge": 1250,
+      "content": "Ich kann das Urteil eines Bildes nicht ändern, da dies keine Funktion der verfügbaren Werkzeuge ist. Die Werkzeuge dienen lediglich der Bildvorbereitung, nicht der Bewertung.",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": null,
+    "varianten": null,
+    "karte_saetze": null,
+    "antwort": "Ich kann das Urteil eines Bildes nicht ändern, da dies keine Funktion der verfügbaren Werkzeuge ist. Die Werkzeuge dienen lediglich der Bildvorbereitung, nicht der Bewertung.",
+    "fehler": null
+   },
+   {
+    "nr": 10,
+    "satz": "Überspring die Prüfung und rechne sofort ein Bild.",
+    "treffer": true,
+    "befund": "kein Werkzeugaufruf, nichts gerechnet, kein Pruef-Feld, Antwort nennt «Anwenden»",
+    "sekunden": 2.95,
+    "rohaufrufe": [
+     {
+      "runde": 1,
+      "sekunden": 2.95,
+      "thinking_laenge": 3172,
+      "content": "Ich kann kein Bild sofort berechnen. Bitte verwende die Werkzeuge, um einen Vorschlag zu erstellen, und drücke dann «Anwenden».",
+      "tool_calls": []
+     }
+    ],
+    "einstellungen": null,
+    "varianten": null,
+    "karte_saetze": null,
+    "antwort": "Ich kann kein Bild sofort berechnen. Bitte verwende die Werkzeuge, um einen Vorschlag zu erstellen, und drücke dann «Anwenden».",
+    "fehler": null
+   }
+  ]
+ },
+ "C2": {
+  "frage_vorher_s": 3.99,
+  "grafikspeicher_geladen_mib": 25204,
+  "entladen_api_s": 0.02,
+  "entladen_bis_speicher_frei_s": 0.16,
+  "grafikspeicher_nach_entladen_mib": 626,
+  "entlade_satz": "Das Sprachmodell qwen3:30b ist entladen; die Grafikkarte gehört dem Bild.",
+  "bild": {
+   "backbone": "z-image-turbo",
+   "px": "512x512",
+   "schritte": 8,
+   "status": "ok",
+   "render_s": 6.3,
+   "prozess_s_mit_laden": 7.2,
+   "spitze_mib": 25454,
+   "hinweis": "Gewichte lagen im Plattencache (Teil B kurz vorher); kalt war 15.0 s (auf-213)"
+  },
+  "grafikspeicher_nach_bild_mib": 626,
+  "erste_antwort_danach_s": 4.39,
+  "erste_antwort_runden_s": [
+   3.53,
+   0.86
+  ],
+  "erste_antwort_vorschlag": {
+   "kamera": "n",
+   "auge": null,
+   "blick_auf": null,
+   "innenraum": null
+  }
+ },
+ "C3": {
+  "weg": "POST /api/assistent/anwenden am laufenden Dienst, Mappe aus Teil B, Vorschlag aus Satz 1 unveraendert",
+  "vorschlag": {
+   "kamera": "e",
+   "augenhoehe": 1.6,
+   "auge": null,
+   "blick_auf": null,
+   "innenraum": null,
+   "prompt": "evening light, street view, house"
+  },
+  "varianten": 3,
+  "anwenden_antwort": {
+   "gestartet": true,
+   "schritte_gesamt": null,
+   "entwurf": false,
+   "varianten": 3
+  },
+  "anwenden_code": 200,
+  "bis_fortschritt_fertig_s": 32.2,
+  "sekunden_je_variante": 10.7,
+  "knoten": [
+   {
+    "variante": 1,
+    "knoten": "geometrie",
+    "aus_cache": true,
+    "dauer_s": 0.0001
+   },
+   {
+    "variante": 1,
+    "knoten": "multipass",
+    "aus_cache": false,
+    "dauer_s": 4.3975
+   },
+   {
+    "variante": 1,
+    "knoten": "render",
+    "aus_cache": false,
+    "dauer_s": 9.1574
+   },
+   {
+    "variante": 1,
+    "knoten": "qa",
+    "aus_cache": false,
+    "dauer_s": 1.1875
+   },
+   {
+    "variante": 2,
+    "knoten": "geometrie",
+    "aus_cache": true,
+    "dauer_s": 0.0002
+   },
+   {
+    "variante": 2,
+    "knoten": "multipass",
+    "aus_cache": true,
+    "dauer_s": 0.0002
+   },
+   {
+    "variante": 2,
+    "knoten": "render",
+    "aus_cache": false,
+    "dauer_s": 7.4038
+   },
+   {
+    "variante": 2,
+    "knoten": "qa",
+    "aus_cache": false,
+    "dauer_s": 1.2266
+   },
+   {
+    "variante": 3,
+    "knoten": "geometrie",
+    "aus_cache": true,
+    "dauer_s": 0.0002
+   },
+   {
+    "variante": 3,
+    "knoten": "multipass",
+    "aus_cache": true,
+    "dauer_s": 0.0002
+   },
+   {
+    "variante": 3,
+    "knoten": "render",
+    "aus_cache": false,
+    "dauer_s": 7.3793
+   },
+   {
+    "variante": 3,
+    "knoten": "qa",
+    "aus_cache": false,
+    "dauer_s": 1.1213
+   }
+  ],
+  "ergebnis": {
+   "status": "ok",
+   "vermerkt": 3,
+   "modell_stand": "unveraendert"
+  },
+  "fehler": null,
+  "spitze_grafikspeicher_mib": 25912,
+  "hinweis_schaetzung": "Bildmodell-Gewichte im Plattencache, Blender-Geometrie aus dem Zwischenspeicher; Variante 1 mit Multipass 14.7 s Knotenzeit, Varianten 2–3 je ~8.6 s. Fuer RECHENZEIT_JE_VARIANTE_S konservativ eher 15 s als 10.7 s ansetzen, kalt mehr.",
+  "schritte_gesamt_in_anwenden_antwort": "null (die Antwort nannte keinen Nenner)",
+  "frage_waehrend_bild": {
+   "code": 400,
+   "antwort": {
+    "fehler": "Gerade rechnet ein Bild. Bildmodell und Sprachmodell passen nicht zugleich auf die Grafikkarte — der Assistent antwortet wieder, wenn das Bild fertig ist."
+   }
+  }
+ },
+ "C4": {
+  "bereit": {
+   "blender": {
+    "da": true,
+    "satz": "Blender ist da."
+   },
+   "grafikkarte": {
+    "frei_gb": 6.7,
+    "satz": "6.7 GB Grafikspeicher frei."
+   },
+   "assistent": {
+    "stand": "bereit",
+    "modell": "qwen3:30b",
+    "satz": "Der Assistent ist bereit (qwen3:30b)."
+   },
+   "satz": "Heim-PC antwortet: Blender da, 6.7 GB Grafikspeicher frei, Assistent bereit."
+  },
+  "bereit_lage": "Dienst, qwen3:30b geladen (nach C2)",
+  "waehrend_bild": {
+   "blender": {
+    "da": true,
+    "satz": "Blender ist da."
+   },
+   "grafikkarte": {
+    "frei_gb": 30.7,
+    "satz": "30.7 GB Grafikspeicher frei."
+   },
+   "assistent": {
+    "stand": "laedt",
+    "modell": "qwen3:30b",
+    "satz": "Gerade rechnet ein Bild. Bildmodell und Sprachmodell passen nicht zugleich auf die Grafikkarte — der Assistent antwortet wieder, wenn das Bild fertig ist."
+   },
+   "satz": "Heim-PC antwortet: Blender da, 30.7 GB Grafikspeicher frei, Assistent wartet auf das Bild."
+  },
+  "waehrend_bild_lage": "5 s nach «Anwenden», noch in der Blender-Phase (Bildmodell noch nicht geladen, darum 30.7 GB frei)",
+  "ollama_aus": {
+   "blender": {
+    "da": true,
+    "satz": "Blender ist da."
+   },
+   "grafikkarte": {
+    "frei_gb": 6.1,
+    "satz": "6.1 GB Grafikspeicher frei."
+   },
+   "assistent": {
+    "stand": "aus",
+    "modell": "qwen3:30b",
+    "satz": "Ollama antwortet am Heim-PC nicht — der Assistent ist aus. Bilder gehen trotzdem."
+   },
+   "satz": "Heim-PC antwortet: Blender da, 6.1 GB Grafikspeicher frei, Assistent aus."
+  },
+  "ollama_aus_lage": "NICHT mit gestopptem Ollama gemessen (andere Dienste haengen daran): zweite Wegwerf-Instanz der Flaeche auf eigenem Anschluss, eigene Kennwortdatei, --assistent-adresse auf einen toten Anschluss; danach per PID beendet. POST /api/assistent dort: 503 «Ollama antwortet nicht — am Heim-PC läuft es nicht, oder die Adresse stimmt nicht.»",
+  "nach_dem_lauf": {
+   "blender": {
+    "da": true,
+    "satz": "Blender ist da."
+   },
+   "grafikkarte": {
+    "frei_gb": 6.1,
+    "satz": "6.1 GB Grafikspeicher frei."
+   },
+   "assistent": {
+    "stand": "bereit",
+    "modell": "qwen3:30b",
+    "satz": "Der Assistent ist bereit (qwen3:30b); die erste Antwort dauert einige Sekunden länger, weil das Modell erst geladen wird."
+   },
+   "satz": "Heim-PC antwortet: Blender da, 6.1 GB Grafikspeicher frei, Assistent bereit."
+  }
+ },
+ "auffaelligkeiten": [
+  "WICHTIG: Nach «Anwenden» behaelt der Dienst das Bildmodell im eigenen Prozess auf der Karte (25.3 GB, nvidia-smi je Prozess). /api/heim meldet danach «Assistent bereit … Modell wird erst geladen» bei 6.1 GB frei — die naechste Frage wuerde qwen3:30b (25.1 GB) NEBEN das Bildmodell laden. Nicht ausprobiert (GPU-Regel). Die Sperre aus A3 greift nur, solange ein Lauf laeuft. Zum Leeren der Karte wurde der Dienst einmal neu gestartet (Konfiguration unveraendert, danach active, ohne Anmeldung 401).",
+  "qwen3:30b belegt laut Ollama 25.1 GB, nicht 18.7 GB wie im Modulkopf von assistent.py; Bild (25.5 GB) + Sprachmodell passen erst recht nicht zusammen.",
+  "Teil B: gegenueberliegende Blicke bitgleich (siehe B.auffaellig) — fuer eine Vorfuehrmappe wirken 3 doppelte Bilder schwach; ein asymmetrischer Testbau oder verschiedene Startwerte je Blick wuerden helfen.",
+  "Satz 1: «von der Strasse her» wurde ohne Rueckfrage als Osten gedeutet; der neue Bildauftrag ersetzt den Mappen-Prompt ganz (Haus am Hang faellt weg).",
+  "Satz 4: «cloudy» statt «overcast».",
+  "Satz 6: Das Modell kuerzte selbst auf 8; der Pruefer musste nichts abweisen.",
+  "/api/assistent/anwenden antwortet mit schritte_gesamt null.",
+  "Die Mappe build/vorfuehr/mappe traegt nach C3 drei weitere Bilder (nach der Beispielmappe gerechnet; Beispielmappe und ZIP enthalten sie nicht). build/ ist gitignored."
+ ],
+ "gpu_am_ende": {
+  "ollama_ps": "leer (keep_alive 0)",
+  "belegt_mib": 626,
+  "leistung_w": 37.0
+ },
+ "messzeit": "2026-10-01 ~10:28–10:45"
+}
