@@ -2,7 +2,7 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-215",
  "worker": "local",
- "status": "Teil 0 fertig — B/C laeuft (diese Datei wird danach ergaenzt)",
+ "status": "erledigt — Teil 0 fertig; B2/C2 mit der Kette wie geliefert FAIL (drei Ursachen, Logzeilen woertlich); B3/C3 aus Diagnose-Laeufen in Wegwerf-Kopien des erzeugten Skripts gerechnet; kein Code geaendert",
  "owner_ja": "ja — KosmoPrepare ENTSCHEIDE-2026-10-01 Nr. 1, 3, 10; am 01.10. im Chat nochmals ausdruecklich bestaetigt",
  "staende": {
   "kosmoprepare": "a23805c (enthaelt c5fdb82)"
@@ -47,5 +47,264 @@
   "tests": "Ran 1666 tests in 24.373s",
   "grenze_bereit": true
  },
- "0_6_videoordner": "~/KosmoSplat/videos/ (ausserhalb jedes Repos, leer)"
+ "0_6_videoordner": "~/KosmoSplat/videos/ (ausserhalb jedes Repos, leer)",
+ "B1": {
+  "szene": "Boden 30 x 30 m (Schachbrett 2 m + Rauschen), 7 Quader verschiedener Groesse/Farbe mit Rauschtextur; Sonne + Himmel",
+  "kamera": "Kreis r = 12 m, z = 3 m, Blick auf (0,0,0.8), Bild f bei Winkel 2*pi*(f-1)/96, Brennweite 24 mm (f = 640 px)",
+  "bilder": 96,
+  "aufloesung": "960 x 540",
+  "renderer": "Cycles, 32 Samples, GPU, Entrauschen",
+  "video": "mp4 (libx264, crf 14), 12 Bilder/s, 96 Bilder geprueft mit ffprobe",
+  "renderzeit_s": 70,
+  "positionen": "kamera.json {\"1\": [12,0,3], …} neben dem Video"
+ },
+ "B2": {
+  "ergebnis": "FAIL",
+  "lauf_1_profil_rtx5090": {
+   "ergebnis": "FAIL in colmap_feature_extraction (Sekunde 0)",
+   "stage_zeilen": [
+    "[09:06:31] STAGE: frame_extraction",
+    "[09:06:31] extracted 96 frames (Quelle: standard)",
+    "[09:06:31] STAGE: colmap_feature_extraction"
+   ],
+   "log_woertlich": [
+    "E20261001 09:06:31.535254 298350 extractor.cc:156] Cannot use GPU feature extraction without CUDA or OpenGL support. Consider setting use_gpu to false.",
+    "E20261001 09:06:31.535540 298350 base_option_manager.cc:273] Invalid options provided."
+   ],
+   "ursache": "profile=rtx5090 setzt --FeatureExtraction.use_gpu 1 und --FeatureMatching.use_gpu 1; das COLMAP hier ist ohne CUDA (Teil 0.3)."
+  },
+  "lauf_2_profil_m1_local": {
+   "warum": "einziger Unterschied: profile='m1_local' (use_gpu 0) — ein Parameter, kein Code",
+   "ergebnis": "FAIL in brush_training (COLMAP vollstaendig: 96/96 registriert)",
+   "stage_zeilen": [
+    "[09:06:45] STAGE: frame_extraction",
+    "[09:06:45] STAGE: colmap_feature_extraction",
+    "[09:06:48] STAGE: colmap_matching",
+    "[09:07:25] STAGE: colmap_calibration",
+    "[09:07:26] STAGE: colmap_mapping",
+    "[09:07:31] STAGE: brush_training (3000 steps)"
+   ],
+   "dauer_s": {
+    "frame_extraction": 0,
+    "colmap_feature_extraction": 3,
+    "colmap_matching": 37,
+    "colmap_calibration": 1,
+    "colmap_mapping": 5,
+    "brush_training": "0 (Abbruch)"
+   },
+   "log_woertlich": [
+    "[09:07:31] STAGE: brush_training (3000 steps)",
+    "Error: Failed to load format.",
+    "",
+    "Caused by:",
+    "    0: IO error while loading dataset.",
+    "    1: early eof"
+   ],
+   "ursache_eingegrenzt": "brush v0.3.0 liest die JPEGs nicht, die ffmpeg 8.0.1 mit Standardqualitaet schreibt (q=24.8, ~20 KB je Bild). Belege: (a) dieselben Bilder mit Pillow neu gespeichert -> brush laeuft; (b) EIN ffmpeg-JPEG zurueckgelegt -> wieder «early eof»; (c) mit «-q:v 2» im ffmpeg-Aufruf -> brush laeuft. Das COLMAP-4.2.1-Modell (mit rigs.bin/frames.bin) liest brush problemlos, .bin wie .txt. Vermutung: bei hohem q werden die Quantisierungstabellen 16-bittig, das kann brush' JPEG-Leser nicht."
+  },
+  "colmap_reader": {
+   "kameras": 1,
+   "model_id": 2,
+   "modell": "SIMPLE_RADIAL",
+   "f_px": 632.56,
+   "f_wahr_px": 640,
+   "registriert": "96 von 96"
+  },
+  "gaussian_splat_reader": {
+   "quelle": "brush von Hand auf dem Modell der Kette, Bilder mit Pillow neu gespeichert, 3000 Schritte, 13 s",
+   "count": 4694,
+   "bbox": [
+    -8.316,
+    -5.125,
+    -7.934,
+    7.473,
+    8.922,
+    5.897
+   ],
+   "bytes": 1109333
+  },
+  "diagnose_q2": {
+   "aenderung": "nur im erzeugten Skript (Wegwerf-Kopie): ffmpeg «-q:v 2»",
+   "ergebnis": "DONE",
+   "dauer_s": {
+    "frame_extraction": 0,
+    "colmap_feature_extraction": 2,
+    "colmap_matching": 17,
+    "colmap_calibration": 1,
+    "colmap_mapping": 2,
+    "brush_training": "~10"
+   },
+   "registriert": "96 von 96",
+   "splat": {
+    "count": 4779,
+    "bytes": 1129393
+   }
+  }
+ },
+ "B3": {
+  "paare": 96,
+  "aus_modell_der_kette": {
+   "massstab": 3.2301,
+   "rmse_m": 0.1817,
+   "max_m": 0.4263,
+   "schlechtestes": "frame_0092",
+   "satz": "Verortet aus 96 Paaren: Massstab 3.2301, Restfehler 0.182 m (groesster 0.426 m bei «frame_0092»)"
+  },
+  "aus_diagnose_q2": {
+   "massstab": 3.2256,
+   "rmse_m": 0.1022,
+   "max_m": 0.1592,
+   "schlechtestes": "frame_0001",
+   "satz": "Verortet aus 96 Paaren: Massstab 3.2256, Restfehler 0.102 m (groesster 0.159 m bei «frame_0001»)"
+  },
+  "seitenwagen": {
+   "lv95": null,
+   "lv95_grund": "Die Szene nennt keinen LV95-Ursprung — die Matrix fuehrt nur in Szenenkoordinaten."
+  },
+  "bildnummern": "ffmpeg zieht 96 aus 96 (fps gleich); frame_NNNN = Renderbild NNNN. Ein Versatz um eins ist auf dem gleichmaessigen Kreis eine reine Drehung und daher NICHT messbar (rmse -1/0/+1: 0.181/0.182/0.178 m) — gerechnet mit Versatz 0.",
+  "befund": "rmse im Dezimeter-, nicht im Zentimeterbereich. Muster: ~1 Grad Winkelschwanken und +-15 cm radial; die groessten Reste liegen am Anfang/Ende der Umrundung (frame_0001, frame_0089..0092) — die Schleife wird nicht geschlossen (sequential_matcher ohne loop_detection, s. Auffaelligkeiten). Massstab ~3.23 = COLMAP-Einheit zu Meter."
+ },
+ "C1": {
+  "bilder": 48,
+  "aufloesung": "1920 x 960",
+  "kamera": "Cycles Panoramic/Equirectangular, Kreis r = 12 m, z = 3 m, waagrecht auf (0,0,3)",
+  "video": "mp4 (libx264, crf 14), 12 Bilder/s, 48 Bilder",
+  "renderzeit_s": "~60",
+  "positionen": "kamera.json"
+ },
+ "C2": {
+  "ergebnis": "FAIL",
+  "lauf_1_profil_rtx5090": {
+   "ergebnis": "FAIL in colmap_feature_extraction, gleiche zwei E-Zeilen wie B2 Lauf 1",
+   "log_woertlich": [
+    "E20261001 09:08:53.970892 300577 extractor.cc:156] Cannot use GPU feature extraction without CUDA or OpenGL support. Consider setting use_gpu to false.",
+    "E20261001 09:08:53.971067 300577 base_option_manager.cc:273] Invalid options provided."
+   ]
+  },
+  "lauf_2_profil_m1_local": {
+   "ergebnis": "FAIL in colmap_mapping (kein sparse/0)",
+   "stage_zeilen": [
+    "[09:08:54] STAGE: frame_extraction",
+    "[09:08:54] extracted 288 frames (Quelle: insta360)",
+    "[09:08:54] STAGE: colmap_feature_extraction",
+    "[09:09:02] STAGE: colmap_matching",
+    "[09:09:20] STAGE: colmap_calibration",
+    "[09:09:21] STAGE: colmap_mapping"
+   ],
+   "dauer_s": {
+    "frame_extraction": 0,
+    "colmap_feature_extraction": 8,
+    "colmap_matching": 18,
+    "colmap_calibration": 1,
+    "colmap_mapping": "0 (Abbruch)"
+   },
+   "log_woertlich_auszug": [
+    "I20261001 09:09:21.273531 301502 database_cache.cc:268]  288 in 0.000s (connected 8, loaded 8)",
+    "I20261001 09:09:21.273880 301502 global_pipeline.cc:302] Found 0 connected component(s) after rotation filtering",
+    "I20261001 09:09:21.273885 301502 global_pipeline.cc:260] Kept 0 reconstruction(s), discarded 4 with fewer than 3 registered frames, and failed to reconstruct 0",
+    "E20261001 09:09:21.273890 301502 sfm.cc:409] Failed to create sparse model",
+    "global_mapper ohne Erfolg (Code 1)",
+    "I20261001 09:09:21.384877 301575 incremental_pipeline.cc:472] => No good initial image pair found.",
+    "E20261001 09:09:21.384922 301575 sfm.cc:310] Failed to create any sparse model"
+   ],
+   "ursache_eingegrenzt": "Der sequential_matcher paart in COLMAP 4.2.1 mit quadratic_overlap 1 nur Bild i mit i+2^k in Namensreihenfolge (gemessen: frame_0010 nur mit 0011/0012/0014/0018/0026/0042/0074). Bei sechs Seiten je Zeitpunkt ist der Abstand zur GLEICHEN Seite im naechsten Zeitpunkt 6 — keine Zweierpotenz: 0010_front wird nie mit 0011_front gepaart. Folge: 2081 Paare versucht, nur 22 geometrisch bestaetigt, 8 Bilder verbunden."
+  },
+  "erste_acht": [
+   "0001_back.jpg",
+   "0001_down.jpg",
+   "0001_front.jpg",
+   "0001_left.jpg",
+   "0001_right.jpg",
+   "0001_up.jpg",
+   "0002_back.jpg",
+   "0002_down.jpg"
+  ],
+  "bildgroesse": "960 x 960",
+  "bilder_gesamt": 288,
+  "merkmale_je_seite_mittel": {
+   "front": 849,
+   "left": 496,
+   "right": 495,
+   "down": 411,
+   "back": 110,
+   "up": 0
+  },
+  "registriert_je_seite": "Kette: 0 (kein Modell)",
+  "diagnose_q2o": {
+   "aenderung": "nur in einer Wegwerf-Kopie des erzeugten Skripts: ffmpeg «-q:v 2» und «--SequentialMatching.quadratic_overlap 0»",
+   "ergebnis": "DONE",
+   "dauer_s": {
+    "frame_extraction": 1,
+    "colmap_feature_extraction": 7,
+    "colmap_matching": 15,
+    "colmap_calibration": 0,
+    "colmap_mapping": 1,
+    "brush_training": 15
+   },
+   "colmap_reader": {
+    "kameras": 1,
+    "model_id": 2,
+    "f_px": 485.4,
+    "f_wahr_px": 480,
+    "modelle": 6,
+    "registriert_modell_0": "42 von 288"
+   },
+   "registriert_je_seite": {
+    "front": 25,
+    "left": 9,
+    "right": 8,
+    "back": 0,
+    "up": 0,
+    "down": 0
+   },
+   "front_zeitpunkte": "17..41 (25 von 48, zusammenhaengend)",
+   "splat": {
+    "count": 539,
+    "bbox": [
+     -21.993,
+     -6.199,
+     -9.908,
+     7.814,
+     9.492,
+     19.176
+    ],
+    "bytes": 128752
+   }
+  }
+ },
+ "C3": {
+  "quelle": "Diagnose q2o (die Kette selbst liefert kein Modell)",
+  "paare": 25,
+  "massstab": 2.291,
+  "rmse_m": 0.1901,
+  "max_m": 0.3576,
+  "schlechtestes": "0017_front",
+  "satz": "Verortet aus 25 Paaren: Massstab 2.2910, Restfehler 0.190 m (groesster 0.358 m bei «0017_front»)",
+  "seitenwagen": {
+   "lv95": null,
+   "lv95_grund": "Die Szene nennt keinen LV95-Ursprung — die Matrix fuehrt nur in Szenenkoordinaten."
+  }
+ },
+ "gpu": {
+  "grenze_w": 400,
+  "spitze_w": 214.12,
+  "proben_1s": 622,
+  "hinweis": "Cycles-Render und brush; COLMAP lief auf dem Prozessor"
+ },
+ "fehler": {
+  "ja": true,
+  "liste": [
+   "1. profile='rtx5090' erzwingt GPU-SIFT; COLMAP ohne CUDA bricht sofort ab (erwartet nach Teil 0.3).",
+   "2. brush v0.3.0 liest ffmpeg-JPEGs mit Standardqualitaet nicht («early eof»); mit «-q:v 2» im ffmpeg-Aufruf geht es (beide Zweige betroffen).",
+   "3. 360°-Zweig: sequential_matcher mit quadratic_overlap 1 paart nie dieselbe Seite ueber die Zeit (Abstand 6 ist keine Zweierpotenz) -> kein Modell.",
+   "4. Auch mit 2+3 behoben: 360° registriert nur 42/288 (up 0 Merkmale, back ~110 — Himmel/leere Flaeche); Restfehler B ~0.10-0.18 m statt Zentimeter, Schleife nicht geschlossen (keine loop_detection)."
+  ],
+  "code_geaendert": false
+ },
+ "aufgeraeumt": {
+  "arbeitsordner": "~/KosmoSplat/arbeit-215/ geloescht",
+  "skripte": "~/kosmo-probe/auf215/ (szene.py, kette.py, auswertung.py) bleiben",
+  "nichts_committet": true,
+  "offen": "Im KosmoPrepare-Klon liegt ein unversionierter Ordner target/autotune/ (Zwischenspeicher, den brush beim Diagnoselauf in sein Arbeitsverzeichnis schrieb, 01.10. 09:08). Loeschen wurde von der Rechtepruefung gestoppt — bitte von Hand entfernen. Hinweis: brush legt target/autotune im aktuellen Ordner an; die Kette startet brush aus dem Ordner, in dem bash laeuft."
+ }
 }
