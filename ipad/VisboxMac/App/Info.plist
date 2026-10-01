@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  DAS BUENDEL DER MAC-APP — von der Pruefstrecke nach Contents/Info.plist gelegt.
+
+  Name, Kennung und Dienst stammen aus Kern/Marke.swift und stehen hier ein zweites Mal,
+  weil eine plist die Quellen nicht lesen kann. tests/test_ipad_geruest.py haelt sie
+  gegeneinander: Name und Dienst wortgleich, die Kennung als die des iPad mit einer
+  eigenen Endung (.mac) — zwei Apps unter einer Kennung verwechselt macOS.
+
+  CFBundleExecutable ist der Name des Programms, das `swift build` aus dem Ziel in
+  Package.swift macht; die Pruefstrecke liest ihn von hier.
+
+  Keine Sandbox und keine Berechtigungsdatei: Die App kommt nicht aus dem App Store,
+  sondern als ZIP aus der Pruefstrecke, mit Behelfs-Unterschrift.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>de</string>
+	<key>CFBundleExecutable</key>
+	<string>VisboxMac</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.example.visbox.mac</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Visbox</string>
+	<key>CFBundleDisplayName</key>
+	<string>Visbox</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.7</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.graphics-design</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Der Mac bietet sich dem iPad im selben WLAN an und reicht es zum Heim-PC durch — so braucht das iPad keinen eigenen Weg nach Hause.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_visbox._tcp</string>
+	</array>
+</dict>
+</plist>

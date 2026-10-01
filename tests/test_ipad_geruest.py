@@ -19,6 +19,10 @@ Geprüft wird darum:
 6. **Die mitgelieferten Schriften** (seit dem 23.09.2026): Sie liegen im App-Paket, sind
    echte TrueType-Dateien, tragen je Familie ihre Lizenz daneben, stehen mit Prüfsumme im
    ``NOTICE``, und jeder Name, unter dem die App sie verlangt, steht in der Datei selbst.
+7. **Die Mac-App** (seit dem 01.10.2026, v0.1.7): Ihre ``Info.plist`` wiederholt die Marke,
+   ihr Manifest bindet nur den Kern ein, sie importiert nur Apples Plattform und den Kern,
+   das Kennwort liegt in keiner Datei mit ``UserDefaults`` und in keinem Protokoll, und die
+   Prüfstrecke setzt das Bündel aus genau diesen Angaben zusammen.
 """
 from __future__ import annotations
 
@@ -52,6 +56,10 @@ FLAECHE = WURZEL / "oberflaeche"
 SCHRIFTEN = APP / "Schriften"
 ZEICHENBLATT = APP / "Leiste" / "Zeichenblatt.swift"
 NOTICE = WURZEL / "NOTICE"
+MAC = IPAD / "VisboxMac"
+MAC_MANIFEST = MAC / "Package.swift"
+MAC_PLIST = MAC / "App" / "Info.plist"
+MAC_QUELLEN = MAC / "Sources" / "VisboxMac"
 
 
 @pytest.fixture(scope="module")
@@ -272,7 +280,11 @@ def test_name_kennung_und_dienst_stehen_nur_in_der_marke():
     derselben Zeichenkette bleibt geprüft.
     """
     marke = _marke()
-    ausnahmen = {MARKE.resolve(), APP_MANIFEST.resolve(), KERN_MANIFEST.resolve()}
+    # DAS MANIFEST DER MAC-APP nennt Paket- und Zielnamen («VisboxMac», «../VisboxKern»):
+    # Quelltext, der nie angezeigt wird. Dass dort NUR solche stehen, prüft
+    # `test_das_mac_manifest_bindet_nur_den_kern_ein` — die Ausnahme ist bewacht, nicht offen.
+    ausnahmen = {MARKE.resolve(), APP_MANIFEST.resolve(), KERN_MANIFEST.resolve(),
+                 MAC_MANIFEST.resolve()}
     formatkennung = re.compile(re.escape(marke["name"].lower()) + r"\.[a-z]+/v\d+")
     funde = []
     for datei in _swift_dateien(IPAD):
@@ -627,3 +639,173 @@ def test_die_app_sucht_ihre_schriften_nicht_in_bundle_module():
         and not zeile.lstrip().startswith("//")
     ]
     assert not fundstellen, f"Bundle.module im App-Paket: {fundstellen}"
+
+
+# ============================================================ 7 · Die Mac-App (01.10.2026)
+#
+# v0.1.7, Strom A: eine eigene App für den Mac, die den Kern mitbenutzt (Entscheid 44). Sie
+# wird nur in der Prüfstrecke übersetzt — was hier steht, ist das, was ohne Übersetzer
+# auseinanderlaufen kann: die Abschrift der Marke in der plist, die Angaben, aus denen die
+# Prüfstrecke das Bündel zusammensetzt, und die Regel, dass das Kennwort nur im Schlüsselbund
+# liegt.
+
+def _plist() -> dict:
+    import plistlib
+    with MAC_PLIST.open("rb") as f:
+        return plistlib.load(f)
+
+
+def _mac_ziel() -> str:
+    """Der Name des ausführbaren Ziels im Manifest der Mac-App."""
+    manifest = _ohne_kommentarzeilen(MAC_MANIFEST.read_text(encoding="utf-8"))
+    ziele = re.findall(r'\.executableTarget\(\s*name:\s*"([^"]+)"', manifest)
+    assert len(ziele) == 1, ziele
+    return ziele[0]
+
+
+def _mac_code(datei: Path) -> str:
+    """Der Quelltext ohne ganze Kommentarzeilen — ein Kommentar darf erklären, warum etwas
+    NICHT in ``UserDefaults`` liegt."""
+    return _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+
+
+def test_die_mac_plist_wiederholt_die_marke():
+    """Name und Dienst wortgleich, die Kennung als die des iPad **mit eigener Endung** — zwei
+    Apps unter einer Kennung verwechselt macOS (Schlüsselbund, Einstellungen, Erlaubnisse)."""
+    marke = _marke()
+    plist = _plist()
+    assert plist["CFBundleName"] == marke["name"], plist["CFBundleName"]
+    assert plist["CFBundleDisplayName"] == marke["name"], plist["CFBundleDisplayName"]
+    assert re.fullmatch(re.escape(marke["kennung"]) + r"\.[a-z0-9-]+",
+                        plist["CFBundleIdentifier"]), (
+        f"{plist['CFBundleIdentifier']!r} ist nicht {marke['kennung']!r} mit einer Endung")
+    assert plist["NSBonjourServices"] == [marke["dienst"]], plist["NSBonjourServices"]
+    satz = plist["NSLocalNetworkUsageDescription"]
+    assert "iPad" in satz and "WLAN" in satz and "Heim-PC" in satz, satz
+    assert plist["CFBundlePackageType"] == "APPL"
+
+
+def test_die_mac_plist_und_das_manifest_sagen_dasselbe():
+    """Das Programm, das ``swift build`` erzeugt, ist das, das die plist startet — und die
+    Mindestfassung von macOS steht an beiden Stellen gleich."""
+    plist = _plist()
+    assert plist["CFBundleExecutable"] == _mac_ziel(), (plist["CFBundleExecutable"], _mac_ziel())
+    manifest = _ohne_kommentarzeilen(MAC_MANIFEST.read_text(encoding="utf-8"))
+    fassung = re.findall(r"\.macOS\(\.v(\d+)\)", manifest)
+    assert fassung == ["14"], fassung
+    assert plist["LSMinimumSystemVersion"] == "14.0", plist["LSMinimumSystemVersion"]
+
+
+def test_das_mac_manifest_bindet_nur_den_kern_ein():
+    """**Keine neue Abhängigkeit** (Regel 1): genau eine, der Kern per Pfad — und keine
+    Adresse, von der SwiftPM etwas herunterlädt. Und weil das Manifest aus der Namensprobe
+    ausgenommen ist: Es nennt nur Paket-, Ziel- und Pfadnamen, nichts, was angezeigt würde."""
+    manifest = _ohne_kommentarzeilen(MAC_MANIFEST.read_text(encoding="utf-8"))
+    assert ".package(url:" not in manifest
+    assert re.findall(r'\.package\(\s*path:\s*"([^"]+)"\s*\)', manifest) == ["../VisboxKern"]
+    assert (MAC / "../VisboxKern").resolve() == KERNPAKET.resolve()
+    ziel = _mac_ziel()
+    erlaubt = {"VisboxMac", ziel, "../VisboxKern", "VisboxKern", f"Sources/{ziel}"}
+    fremd = sorted(set(_zeichenketten(manifest)) - erlaubt)
+    assert not fremd, f"im Manifest der Mac-App: {fremd}"
+    assert MAC_QUELLEN.is_dir()
+
+
+def test_die_mac_app_importiert_nur_apples_plattform_und_den_kern():
+    """Regel 1 an der Stelle, an der eine Abhängigkeit hereinkäme: an den Importen. Erlaubt
+    sind Apples Bausteine (sie gehören zur Plattform, ``NOTICE``) und der Kern."""
+    erlaubt = {"Foundation", "SwiftUI", "AppKit", "WebKit", "Network", "Security", "CoreText",
+               "Combine", "Dispatch", "OSLog", "VisboxKern"}
+    dateien = _swift_dateien(MAC_QUELLEN)
+    assert dateien, "keine Quellen der Mac-App gefunden"
+    for datei in dateien:
+        fremd = set(_importe(datei)) - erlaubt
+        assert not fremd, f"{datei.relative_to(WURZEL)} importiert {sorted(fremd)}"
+
+
+def test_keine_datei_der_mac_app_mit_userdefaults_nennt_das_kennwort():
+    """**Die Lehre aus dem früheren Mac-Client**, der das Kennwort in ``UserDefaults`` ablegte
+    (22.09.2026) — für die neue Mac-App dieselbe Abwesenheitsprobe wie für die Verbindung des
+    iPad (``AnfragenTests.testKeineDateiMitUserDefaultsNenntDasKennwort``), über **alle**
+    Ordner der Mac-App."""
+    mit = 0
+    for datei in _swift_dateien(MAC_QUELLEN):
+        code = _mac_code(datei)
+        if "UserDefaults" not in code:
+            continue
+        mit += 1
+        for verboten in ("kennwort", "anmeldung", "passw"):
+            assert verboten not in code.lower(), (
+                f"{datei.relative_to(WURZEL)} benutzt UserDefaults und nennt «{verboten}»")
+    assert mit > 0, "keine Datei der Mac-App benutzt UserDefaults — hat sich der Ort geändert?"
+
+
+def test_die_mac_app_schreibt_das_kennwort_in_kein_protokoll():
+    """Nie in ``print``/Protokoll: Keine Zeile, die etwas ausgibt, nennt Kennwort oder
+    Anmeldung. (Die ``Anmeldung`` des Kerns verdeckt ihr Kennwort zudem in jeder
+    Beschreibung.)"""
+    ausgabe = re.compile(r"\b(print|debugPrint|dump|NSLog|os_log)\s*\(|\b(logger|Logger)\b")
+    funde = []
+    for datei in _swift_dateien(MAC_QUELLEN):
+        for nr, zeile in enumerate(_mac_code(datei).splitlines(), 1):
+            if ausgabe.search(zeile) and re.search(r"kennwort|anmeldung|passw", zeile, re.I):
+                funde.append(f"{datei.relative_to(WURZEL)}:{nr}: {zeile.strip()}")
+    assert not funde, "Ausgabe mit Kennwort:\n  " + "\n  ".join(funde)
+
+
+def test_der_vorgeschlagene_benutzer_ist_der_des_servers(server):
+    """Beim Einrichten schlägt die Mac-App einen Benutzer vor — aus der Marke, nicht fest
+    (Protokoll §2). Der Vorschlag stimmt nur, solange der Server ihn ebenso nennt."""
+    text = _ohne_kommentarzeilen((KERN_QUELLEN / "Heimadresse.swift").read_text(encoding="utf-8"))
+    assert re.search(r"static var vorgabeBenutzer: String \{ Marke\.name\.lowercased\(\) \}", text)
+    assert server.BENUTZER == _marke()["name"].lower(), (server.BENUTZER, _marke()["name"])
+
+
+def test_die_mac_schriftfamilien_stehen_in_den_dateien():
+    """Die Mac-App fragt nach **Familien**, nicht nach Schnitten (``Start/Macschriften.swift``).
+    Eine Familie, die keine Datei trägt, gäbe am Gerät still die Systemschrift."""
+    text = _mac_code(MAC_QUELLEN / "Start" / "Macschriften.swift")
+    familien = set(re.findall(r'\.(?:text|zahl|titel):\s*"([^"]+)"', text))
+    assert len(familien) == 3, familien
+    in_dateien = {_sfnt_familie(_sfnt_tabellen(d.read_bytes())) for d in _schriftdateien()}
+    assert familien <= in_dateien, (
+        f"{sorted(familien - in_dateien)} — in den Dateien: {sorted(in_dateien)}")
+    # UND DORT, WO DIE PRUEFSTRECKE SIE HINLEGT: `Contents/Resources/Schriften`.
+    assert 'appendingPathComponent("Schriften"' in text
+
+
+def test_die_pruefstrecke_baut_die_mac_app_aus_diesen_angaben():
+    """Der Job ``mac`` in ``ipad.yml``: übersetzt für Apple-Chip, nimmt Programm und Namen aus
+    der plist, legt die Schriften unverändert dorthin, wo die App sie sucht, unterschreibt
+    behelfsweise, packt mit ``ditto`` und legt das ZIP 14 Tage ab."""
+    import yaml
+
+    ablauf = yaml.safe_load(ARBEITSABLAUF.read_text(encoding="utf-8"))
+    job = ablauf["jobs"]["mac"]
+    assert job["runs-on"] == "macos-15"
+    assert job["timeout-minutes"] == 30
+    schritte = job["steps"]
+    befehle = "\n".join(s.get("run", "") for s in schritte)
+    orte = {s.get("working-directory") for s in schritte if "run" in s} - {None}
+    assert orte == {"ipad/VisboxMac"}, orte
+    assert (WURZEL / "ipad" / "VisboxMac").resolve() == MAC.resolve()
+
+    assert "swift build -c release --arch arm64" in befehle
+    assert "Print :CFBundleExecutable' App/Info.plist" in befehle
+    assert "Print :CFBundleName' App/Info.plist" in befehle
+    assert 'cp App/Info.plist "$BUENDEL/Contents/Info.plist"' in befehle
+    # DIE SCHRIFTEN: der ganze Ordner des iPad-Pakets, samt Lizenztexten, an den Ort, den
+    # `Macschriften` liest.
+    kopie = re.search(r'ditto (\S+) "\$BUENDEL/Contents/Resources/Schriften"', befehle)
+    assert kopie, befehle
+    assert (MAC / kopie.group(1)).resolve() == SCHRIFTEN.resolve(), kopie.group(1)
+    assert re.search(r'codesign --force --deep --sign - "\$BUENDEL"', befehle)
+    assert re.search(r'ditto -c -k --keepParent "\$BUENDEL" "\$NAME-mac\.zip"', befehle)
+
+    ablage = [s for s in schritte if str(s.get("uses", "")).startswith("actions/upload-artifact")]
+    assert len(ablage) == 1, ablage
+    assert ablage[0]["uses"] == "actions/upload-artifact@v4"
+    mit = ablage[0]["with"]
+    assert mit["name"] == f"{_plist()['CFBundleName']}-mac", mit["name"]
+    assert mit["retention-days"] == 14
+    assert mit["path"].endswith("-mac.zip"), mit["path"]
