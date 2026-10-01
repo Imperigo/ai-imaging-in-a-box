@@ -99,7 +99,9 @@ ipad/
 │   │   ├── Blattunterlage.swift die Unterlage unter dem Blatt: gestreckt, was mitgeht
 │   │   ├── Stiftfarben.swift    Grund des Blattes und Stiftfarben, gegen das Blatt geprüft
 │   │   ├── Parkfach.swift       Skizzen, die (noch) nicht drüben sind
-│   │   └── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
+│   │   ├── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
+│   │   ├── Startzeilen.swift    die vier Startzeilen der Mac-App (Blatt 13), aus den Antworten
+│   │   └── Heimadresse.swift    die Adresse des Heim-PC für die Mac-App: https, 8443, kein Pfad
 │   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand,
 │   │                            Unterlagenbild
 │   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt,
@@ -110,10 +112,12 @@ ipad/
 │   │                            Unterlage, «Darauf skizzieren»
 │   └── Verbindung/              Verbindungszeile, Koppelbildschirm, Sucher, Sender,
 │                                Schlüsselbund, Parkfachliste, Mappenabgleich, Übergabe
-└── VisboxKern/                  der Kern als eigenes Swift-Paket, zum Prüfen
-    ├── Package.swift
-    ├── Sources/VisboxKern  →  ../../Visbox.swiftpm/Kern   (ein Verweis, keine Kopie)
-    └── Tests/VisboxKernTests/   XCTest-Proben des Kerns, eine Datei je Kerndatei
+├── VisboxKern/                  der Kern als eigenes Swift-Paket, zum Prüfen
+│   ├── Package.swift
+│   ├── Sources/VisboxKern  →  ../../Visbox.swiftpm/Kern   (ein Verweis, keine Kopie)
+│   └── Tests/VisboxKernTests/   XCTest-Proben des Kerns, eine Datei je Kerndatei
+└── VisboxMac/                   die Mac-App (v0.1.7), bindet VisboxKern als Paket ein —
+                                 siehe VisboxMac/LIESMICH.md
 ```
 
 **Für weitere Arbeit:** Neue Dateien kommen in den Ordner ihrer Einheit — so stossen zwei

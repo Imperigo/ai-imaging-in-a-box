@@ -13,10 +13,16 @@
 #      beide fahren.
 #   2. Die App fuer den iOS-Simulator uebersetzen — ohne Signatur, ohne Geraet.
 #
+# Seit dem 01.10.2026 (v0.1.7) ein drittes, im eigenen Job `mac`: die Mac-App, gebaut als
+# `.app` mit Behelfs-Unterschrift und als ZIP zum Herunterladen abgelegt — der Owner holt sie
+# von hier (Entscheid 58). Gestartet ist sie damit noch nicht.
+#
 # WAS HIER BEWUSST NICHT STEHT
 #
-# Kein Aufspielen, keine Signatur, kein Simulatorlauf mit Klicks. Ob die App auf dem iPad
-# startet, zeichnet und die HomeStation findet, zeigt nur das Geraet — bis dahin heisst
+# Kein Aufspielen, keine Signatur mit Apple-Konto (die Mac-App traegt nur die Behelfs-
+# Unterschrift, ohne die ein Mac mit Apple-Chip nichts startet), kein Simulatorlauf mit
+# Klicks. Ob die App auf dem iPad startet, zeichnet und die HomeStation findet, und ob die
+# Mac-App die Leitung nach Hause aufbaut, zeigt nur das Geraet — bis dahin heisst
 # sie im Einbau-Stand «gebaut, am Geraet unbestaetigt». Und ob Swift Playgrounds auf dem
 # iPad das Paket oeffnet, kann kein Mac-Lauf beantworten.
 #
@@ -89,3 +95,82 @@ jobs:
             -scheme Visbox \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
+
+  mac:
+    name: Mac-App bauen, als ZIP ablegen
+    # DIE MAC-APP (v0.1.7, Strom A) ist zum HERUNTERLADEN gedacht (Owner-Entscheid 58): Der
+    # Owner holt sie als ZIP aus diesem Lauf, ohne Xcode und ohne Apple-Konto. Darum endet
+    # dieser Job nicht beim Uebersetzen, sondern bei einem Buendel, das ein Mac oeffnet.
+    #
+    # Ein eigener Job und nicht ein Schritt mehr in `app`: Faellt die iOS-App, soll die
+    # Mac-App trotzdem gebaut werden — und umgekehrt. Zwei Dinge, die nichts voneinander
+    # wissen, sollen nicht aneinander scheitern.
+    runs-on: macos-15
+    # GESETZT, nicht gemessen — dieselbe Ueberlegung wie bei `app`.
+    timeout-minutes: 30
+
+    steps:
+      - name: Stand holen
+        uses: actions/checkout@v4
+
+      - name: Fassungen, zum Mitlesen
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Uebersetzen (nur Apple-Chip)
+        # NUR ARM64: Der eine Mac bis zur Abgabe hat einen Apple-Chip (Owner-Entscheid 59).
+        # Ein Buendel fuer beide Chips kostete die doppelte Uebersetzung fuer einen Rechner,
+        # den es nicht gibt.
+        working-directory: ipad/VisboxMac
+        run: swift build -c release --arch arm64
+
+      - name: Das Buendel zusammensetzen
+        # NAME UND PROGRAMM AUS DER PLIST, nicht hier ein zweites Mal: `App/Info.plist` ist
+        # gegen `Kern/Marke.swift` bewacht (`tests/test_ipad_geruest.py`), diese Datei nicht.
+        #
+        # DIE SCHRIFTEN UNVERAENDERT, SAMT LIZENZTEXTEN: Die OFL verlangt, dass der Lizenztext
+        # mit der Schrift geht. Kopiert wird der ganze Ordner des iPad-Pakets, nicht eine
+        # Auswahl — dieselben Dateien, deren Pruefsummen im `NOTICE` stehen.
+        working-directory: ipad/VisboxMac
+        run: |
+          set -euo pipefail
+          PROGRAMM=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' App/Info.plist)
+          NAME=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' App/Info.plist)
+          AUSGABE=$(swift build -c release --arch arm64 --show-bin-path)
+          BUENDEL="$NAME.app"
+          rm -rf "$BUENDEL"
+          mkdir -p "$BUENDEL/Contents/MacOS" "$BUENDEL/Contents/Resources"
+          cp "$AUSGABE/$PROGRAMM" "$BUENDEL/Contents/MacOS/$PROGRAMM"
+          cp App/Info.plist "$BUENDEL/Contents/Info.plist"
+          ditto ../Visbox.swiftpm/Schriften "$BUENDEL/Contents/Resources/Schriften"
+          plutil -lint "$BUENDEL/Contents/Info.plist"
+          echo "BUENDEL=$BUENDEL" >> "$GITHUB_ENV"
+          echo "NAME=$NAME" >> "$GITHUB_ENV"
+
+      - name: Behelfs-Unterschrift
+        # OHNE JEDE UNTERSCHRIFT STARTET EIN MAC MIT APPLE-CHIP NICHTS. Die Behelfs-Unterschrift
+        # (`-`, «ad hoc») ist keine Beglaubigung durch Apple — der Mac haelt die App beim ersten
+        # Oeffnen trotzdem an, und der Weg daran vorbei steht im LIESMICH der Mac-App. Sie
+        # versiegelt aber das Buendel: Wer danach eine Datei darin aendert, bricht das Siegel.
+        working-directory: ipad/VisboxMac
+        run: |
+          codesign --force --deep --sign - "$BUENDEL"
+          codesign --verify --deep --strict --verbose=2 "$BUENDEL"
+
+      - name: Als ZIP packen
+        # `ditto`, nicht `zip`: Es behaelt, was ein Buendel braucht (Rechte, die Unterschrift
+        # in den erweiterten Merkmalen), und `--keepParent` legt den Ordner `.app` selbst ins
+        # Archiv, nicht nur seinen Inhalt.
+        working-directory: ipad/VisboxMac
+        run: ditto -c -k --keepParent "$BUENDEL" "$NAME-mac.zip"
+
+      - name: Zum Herunterladen ablegen
+        # VIERZEHN TAGE: lang genug, um sie nach der Abgabe am Mac zu probieren; kurz genug,
+        # dass kein alter Stand liegen bleibt und wie der aktuelle aussieht.
+        uses: actions/upload-artifact@v4
+        with:
+          name: Visbox-mac
+          path: ipad/VisboxMac/${{ env.NAME }}-mac.zip
+          retention-days: 14
+          if-no-files-found: error
