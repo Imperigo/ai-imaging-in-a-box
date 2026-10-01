@@ -105,6 +105,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 01.10.2026 (Nachmittag) · Die Mac-App steht — gebaut, übersetzt, noch nie gestartet
+
+* **Gebaut, in vier Teilen gleichzeitig:** die Mac-App mit den vier Startzeilen; der Mac als
+  Vermittler fürs iPad (das iPad koppelt sich mit einer eigenen Zahl am Mac, das Kennwort des
+  Heim-PC bleibt auf dem Mac); der Vorführmodus mit einer Beispielmappe; der Assistent, der nur
+  vorschlägt und erst nach «Anwenden» rechnen lässt.
+* **Geprüft:** Alle Proben grün. Die Mac-App lässt sich auf GitHub übersetzen und liegt dort als
+  ZIP zum Herunterladen.
+* **Ehrlich dazu:** Gestartet hat sie noch niemand. Ob sie am Mac öffnet, sich verbindet und das
+  iPad findet, zeigt erst die Probe nach der Abgabe. Die Bilder im Vorführmodus sind noch graue
+  Platzhalter; die echten rechnet der Heim-PC (Auftrag 218).
+
 ### 01.10.2026 (Mittag) · Der Plan für v0.1.7: zwei Tage Vollbau, dann Abgabe
 
 * **Ziel:** Bis Freitagabend eine Visbox-App für den Mac zum Herunterladen — sie baut beim
