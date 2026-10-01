@@ -1,0 +1,979 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-219",
+ "worker": "local",
+ "status": "erledigt — E1 ok; E2 mit Vorgabe und beiden verlangten Wiederholungen 0 Volumen (Schwellen fuer Gebaeude: hoehe_min 2 m, flaeche_min 4 m²); als Zusatz mit kleineren Schwellen 3 bzw. 4 Volumen, gemessen gegen die wahren Quader; E3 mit dem leeren Modell abgelehnt (rc 2), mit den Zusatz-Modellen gelaufen; kein Code geaendert",
+ "staende": {
+  "kosmoprepare": "1b2d624 (enthaelt c162e08 und e8b96b9)",
+  "python": ".venv-server/bin/python, numpy 2.4.6, Pillow 12.2.0 (beide vorhanden)"
+ },
+ "reihenfolge": "nach 217 Teil B im selben Arbeitsordner; PLY = splat.ply aus 217 B2 (Profil rtx5090, CPU-Rueckfall, 3000 Schritte, 4659 Splats)",
+ "wahre_quader": "aus szene.py (215): Q1 rot (-3,-2) 2x2 h3 · Q2 gruen (3,2) 1.5x3 h2 · Q3 blau (0,4) 3x1.5 h1.2 · Q4 gelb (-4,3) 1x1 h4 · Q5 violett (4,-3) 2.5x2 h1.5 · Q6 tuerkis (0,-4) 1.2x1.2 h2.5 · Q7 orange (1,0) 1.5x1.5 h1; Drehung = random.uniform(0,1.2) mit seed 215 (3.0/63.2/6.8/19.7/5.9/2.7/25.9°); in der Tabelle als Richtung der LANGEN Seite (bei Quadraten modulo 90°)",
+ "E1": {
+  "paare": 96,
+  "quelle_je_paar": "kamera.json Bild N",
+  "rmse_m": 0.06162,
+  "max_m": 0.12049,
+  "massstab": 3.22438,
+  "satz": "Verortet aus 96 Paaren: Massstab 3.2244, Restfehler 0.062 m (groesster 0.120 m bei «frame_0055»)",
+  "datei": "splat.verortung.json neben der .ply, lv95 null (kein Ursprung)"
+ },
+ "E2": {
+  "vorgabe": {
+   "aufruf": ".venv-server/bin/python tools/splat_volumen.py PLY --aus vol.json",
+   "rc": 0,
+   "stderr_woertlich": "Keine Volumen gefunden (1535 Punkte).",
+   "laufzeit_s": 0.09,
+   "volumen": 0,
+   "verworfen": 8,
+   "verworfen_groesste_m2": 2.0,
+   "grund_woertlich": "kleiner als 4.0 m² — Streuung, kein Gebaeude"
+  },
+  "zelle_m_0_25": {
+   "stderr_woertlich": "Keine Volumen gefunden (1535 Punkte).",
+   "laufzeit_s": 0.09,
+   "volumen": 0,
+   "verworfen": 19
+  },
+  "deckkraft_min_0_2": {
+   "stderr_woertlich": "Keine Volumen gefunden (2946 Punkte).",
+   "laufzeit_s": 0.09,
+   "volumen": 0,
+   "verworfen": 7
+  },
+  "warum_null": "Nicht die Wolke ist schlecht, sondern die Szene liegt unter den Gebaeude-Schwellen: hoehe_min_m 2.0 und flaeche_min_m2 4.0. Nur Q1 (4 m²) und Q2 (4.5 m²) waeren gross genug, und die BELEGTE Grundflaeche ist kleiner als die wahre (Q1: 2.0-2.75 m² belegt). Eigene Gegenprobe an der verorteten Wolke (Punkte im wahren Grundriss, Deckkraft > 0.5): das 90%-Quantil der Hoehe trifft jeden der 7 Quader auf 0.03-0.08 m (z.B. Q1 3.00 gegen 3, Q4 3.99 gegen 4, Q6 2.48 gegen 2.5).",
+  "zusatz_hinweis": "NICHT verlangt, aber ohne Volumen haette E2/E3 nichts zu messen: zwei Zusatzlaeufe mit kleineren Schwellen (nur Parameter, kein Code). Achtung Bedienung: «--parameter a=1 --parameter b=2» nimmt still NUR den letzten Wert (gemessen: hoehe_min_m blieb 2.0); richtig ist «--parameter a=1 b=2».",
+  "zusatz_A": {
+   "parameter": "hoehe_min_m=0.8 flaeche_min_m2=0.8 (deckkraft_min 0.5)",
+   "stderr_woertlich": "3 Volumen aus 1535 Punkten · 1 ohne gelesenen Boden · 8 kleine Gruppen verworfen.",
+   "laufzeit_s": 0.1,
+   "volumen": 3,
+   "verworfen": 8,
+   "je_wahrem_quader": [
+    {
+     "quader": "Q1",
+     "wahr": {
+      "mitte": [
+       -3,
+       -2
+      ],
+      "laenge_m": 2,
+      "breite_m": 2,
+      "hoehe_m": 3,
+      "drehung_grad": 3.0
+     },
+     "gefunden": true,
+     "volumen": "V1",
+     "gemessen": {
+      "mitte": [
+       -2.912,
+       -2.018
+      ],
+      "laenge_m": 2.113,
+      "breite_m": 2.01,
+      "hoehe_m": 2.93,
+      "drehung_grad": 93.94
+     },
+     "abweichung": {
+      "mitte_m": 0.09,
+      "laenge_m": 0.113,
+      "breite_m": 0.01,
+      "hoehe_m": -0.07,
+      "drehung_grad": 0.9
+     },
+     "unsicherheit": {
+      "grundriss_m": 0.312,
+      "hoehe_m": 0.21
+     },
+     "fuellgrad": 0.65,
+     "hinweise": [
+      "Fuellgrad 0.65 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+     ],
+     "ueber_unsicherheit": []
+    },
+    {
+     "quader": "Q2",
+     "wahr": {
+      "mitte": [
+       3,
+       2
+      ],
+      "laenge_m": 3,
+      "breite_m": 1.5,
+      "hoehe_m": 2,
+      "drehung_grad": 153.2
+     },
+     "gefunden": false
+    },
+    {
+     "quader": "Q3",
+     "wahr": {
+      "mitte": [
+       0,
+       4
+      ],
+      "laenge_m": 3,
+      "breite_m": 1.5,
+      "hoehe_m": 1.2,
+      "drehung_grad": 6.8
+     },
+     "gefunden": false
+    },
+    {
+     "quader": "Q4",
+     "wahr": {
+      "mitte": [
+       -4,
+       3
+      ],
+      "laenge_m": 1,
+      "breite_m": 1,
+      "hoehe_m": 4,
+      "drehung_grad": 19.7
+     },
+     "gefunden": true,
+     "volumen": "V2",
+     "gemessen": {
+      "mitte": [
+       -3.96,
+       3.029
+      ],
+      "laenge_m": 1.046,
+      "breite_m": 0.995,
+      "hoehe_m": 3.85,
+      "drehung_grad": 20.96
+     },
+     "abweichung": {
+      "mitte_m": 0.049,
+      "laenge_m": 0.046,
+      "breite_m": -0.005,
+      "hoehe_m": -0.15,
+      "drehung_grad": 1.3
+     },
+     "unsicherheit": {
+      "grundriss_m": 0.312,
+      "hoehe_m": 1.08
+     },
+     "fuellgrad": 1.0,
+     "hinweise": [],
+     "ueber_unsicherheit": []
+    },
+    {
+     "quader": "Q5",
+     "wahr": {
+      "mitte": [
+       4,
+       -3
+      ],
+      "laenge_m": 2.5,
+      "breite_m": 2,
+      "hoehe_m": 1.5,
+      "drehung_grad": 5.9
+     },
+     "gefunden": false
+    },
+    {
+     "quader": "Q6",
+     "wahr": {
+      "mitte": [
+       0,
+       -4
+      ],
+      "laenge_m": 1.2,
+      "breite_m": 1.2,
+      "hoehe_m": 2.5,
+      "drehung_grad": 2.7
+     },
+     "gefunden": true,
+     "volumen": "V3",
+     "gemessen": {
+      "mitte": [
+       0.014,
+       -3.955
+      ],
+      "laenge_m": 1.295,
+      "breite_m": 1.232,
+      "hoehe_m": null,
+      "drehung_grad": 92.98
+     },
+     "abweichung": {
+      "mitte_m": 0.047,
+      "laenge_m": 0.095,
+      "breite_m": 0.032,
+      "hoehe_m": null,
+      "drehung_grad": 0.2
+     },
+     "unsicherheit": {
+      "grundriss_m": 0.312,
+      "hoehe_m": null
+     },
+     "fuellgrad": 0.78,
+     "hinweise": [
+      "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht"
+     ],
+     "ueber_unsicherheit": []
+    },
+    {
+     "quader": "Q7",
+     "wahr": {
+      "mitte": [
+       1,
+       0
+      ],
+      "laenge_m": 1.5,
+      "breite_m": 1.5,
+      "hoehe_m": 1,
+      "drehung_grad": 25.9
+     },
+     "gefunden": false
+    }
+   ],
+   "ohne_wahren_quader": [],
+   "ueber_unsicherheit": "keine Abweichung ueber der gemeldeten Unsicherheit; aber die Hoehen-Unsicherheit von Q4 ist mit 1.08 m sehr weit (Abweichung -0.15 m), und Q6 hat keine Hoehe (kein Boden gelesen)"
+  },
+  "zusatz_B": {
+   "parameter": "hoehe_min_m=0.8 flaeche_min_m2=0.8 deckkraft_min=0.2",
+   "stderr_woertlich": "4 Volumen aus 2946 Punkten · 15 kleine Gruppen verworfen.",
+   "laufzeit_s": 0.1,
+   "volumen": 4,
+   "verworfen": 15,
+   "je_wahrem_quader": [
+    {
+     "quader": "Q1",
+     "wahr": {
+      "mitte": [
+       -3,
+       -2
+      ],
+      "laenge_m": 2,
+      "breite_m": 2,
+      "hoehe_m": 3,
+      "drehung_grad": 3.0
+     },
+     "gefunden": true,
+     "volumen": "V1",
+     "gemessen": {
+      "mitte": [
+       -2.982,
+       -1.765
+      ],
+      "laenge_m": 2.32,
+      "breite_m": 1.967,
+      "hoehe_m": 2.88,
+      "drehung_grad": 0.6
+     },
+     "abweichung": {
+      "mitte_m": 0.236,
+      "laenge_m": 0.32,
+      "breite_m": -0.033,
+      "hoehe_m": -0.12,
+      "drehung_grad": 2.4
+     },
+     "unsicherheit": {
+      "grundriss_m": 0.312,
+      "hoehe_m": 0.33
+     },
+     "fuellgrad": 0.66,
+     "hinweise": [
+      "Fuellgrad 0.66 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+     ],
+     "ueber_unsicherheit": [
+      "laenge_m +0.320 > grundriss_m 0.312"
+     ]
+    },
+    {
+     "quader": "Q2",
+     "wahr": {
+      "mitte": [
+       3,
+       2
+      ],
+      "laenge_m": 3,
+      "breite_m": 1.5,
+      "hoehe_m": 2,
+      "drehung_grad": 153.2
+     },
+     "gefunden": false
+    },
+    {
+     "quader": "Q3",
+     "wahr": {
+      "mitte": [
+       0,
+       4
+      ],
+      "laenge_m": 3,
+      "breite_m": 1.5,
+      "hoehe_m": 1.2,
+      "drehung_grad": 6.8
+     },
+     "gefunden": false
+    },
+    {
+     "quader": "Q4",
+     "wahr": {
+      "mitte": [
+       -4,
+       3
+      ],
+      "laenge_m": 1,
+      "breite_m": 1,
+      "hoehe_m": 4,
+      "drehung_grad": 19.7
+     },
+     "gefunden": true,
+     "volumen": "V3",
+     "gemessen": {
+      "mitte": [
+       -3.997,
+       3.03
+      ],
+      "laenge_m": 1.245,
+      "breite_m": 1.164,
+      "hoehe_m": 3.37,
+      "drehung_grad": 121.04
+     },
+     "abweichung": {
+      "mitte_m": 0.03,
+      "laenge_m": 0.245,
+      "breite_m": 0.164,
+      "hoehe_m": -0.63,
+      "drehung_grad": 11.3
+     },
+     "unsicherheit": {
+      "grundriss_m": 0.312,
+      "hoehe_m": 0.99
+     },
+     "fuellgrad": 1.0,
+     "hinweise": [],
+     "ueber_unsicherheit": []
+    },
+    {
+     "quader": "Q5",
+     "wahr": {
+      "mitte": [
+       4,
+       -3
+      ],
+      "laenge_m": 2.5,
+      "breite_m": 2,
+      "hoehe_m": 1.5,
+      "drehung_grad": 5.9
+     },
+     "gefunden": false
+    },
+    {
+     "quader": "Q6",
+     "wahr": {
+      "mitte": [
+       0,
+       -4
+      ],
+      "laenge_m": 1.2,
+      "breite_m": 1.2,
+      "hoehe_m": 2.5,
+      "drehung_grad": 2.7
+     },
+     "gefunden": true,
+     "volumen": "V4",
+     "gemessen": {
+      "mitte": [
+       0.069,
+       -3.721
+      ],
+      "laenge_m": 1.362,
+      "breite_m": 0.871,
+      "hoehe_m": 2.38,
+      "drehung_grad": 5.79
+     },
+     "abweichung": {
+      "mitte_m": 0.287,
+      "laenge_m": 0.162,
+      "breite_m": -0.329,
+      "hoehe_m": -0.12,
+      "drehung_grad": 3.0
+     },
+     "unsicherheit": {
+      "grundriss_m": 0.312,
+      "hoehe_m": 0.09
+     },
+     "fuellgrad": 1.0,
+     "hinweise": [],
+     "ueber_unsicherheit": [
+      "breite_m -0.329 > grundriss_m 0.312",
+      "hoehe_m -0.120 > hoehe_m 0.09"
+     ]
+    },
+    {
+     "quader": "Q7",
+     "wahr": {
+      "mitte": [
+       1,
+       0
+      ],
+      "laenge_m": 1.5,
+      "breite_m": 1.5,
+      "hoehe_m": 1,
+      "drehung_grad": 25.9
+     },
+     "gefunden": false
+    }
+   ],
+   "ohne_wahren_quader": [
+    {
+     "id": "V2",
+     "mitte": [
+      1.544,
+      3.252
+     ],
+     "laenge_m": 2.599,
+     "breite_m": 1.613,
+     "hoehe_m": 1.67
+    }
+   ],
+   "ohne_wahren_quader_deutung": "V2 liegt zwischen Q2 gruen (3,2) und Q3 blau (0,4) — beide zu einem Volumen verschmolzen (Fuellgrad 0.66, Hinweis «Huelle»)",
+   "ueber_unsicherheit": [
+    "Q1: Laenge +0.320 m > grundriss_m 0.312 (knapp)",
+    "Q6: Breite -0.329 m > grundriss_m 0.312",
+    "Q6: Hoehe -0.120 m > hoehe_m 0.09"
+   ]
+  },
+  "nie_gefunden": "Q2 gruen, Q3 blau (in B verschmolzen), Q5 violett (2.5x2 h1.5), Q7 orange (1.5x1.5 h1) in keinem Lauf"
+ },
+ "E3": {
+  "vorgabe": {
+   "aufruf": "flaechen_textur.py --volumen vol.json --colmap ARBEITSORDNER --verortung splat.verortung.json --aus tex --px-pro-m 50",
+   "rc": 2,
+   "stderr_woertlich": "abgelehnt: keine Flaechen — das Modell ist leer",
+   "laufzeit_s": 0.03
+  },
+  "zusatz_A": {
+   "rc": 0,
+   "stderr_woertlich": [
+    "8 Flaechen mit Bild, Atlas 627 × 193 px · 2 ohne Bild (V1_dach, V2_dach) · 2 hochgerechnet. Verdeckung nicht geprueft.",
+    "ohne Waende: V3 (kein gelesener Boden — Wandhoehe unbekannt)"
+   ],
+   "laufzeit_s": 0.18,
+   "atlas_px": [
+    627,
+    193
+   ],
+   "kameras": 96,
+   "ohne_bild": "V1_dach, V2_dach («keine Kamera sieht sie» — Kameras auf 3 m Hoehe)",
+   "je_flaeche": [
+    {
+     "name": "V1_wand1",
+     "kamera": "frame_0035.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 57.9,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.53,
+      0.408,
+      0.277
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V1_wand2",
+     "kamera": "frame_0053.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 81.6,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.534,
+      0.322,
+      0.33
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V1_wand3",
+     "kamera": "frame_0068.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 77.3,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.693,
+      0.478,
+      0.474
+     ],
+     "naechste_renderfarbe": "rot",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V1_wand4",
+     "kamera": "frame_0092.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 48.5,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 48.5 px/m, die Kachel 50"
+     ],
+     "mittel_rgb": [
+      0.698,
+      0.498,
+      0.523
+     ],
+     "naechste_renderfarbe": "boden",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V2_wand1",
+     "kamera": "frame_0067.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 49.9,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 49.9 px/m, die Kachel 50"
+     ],
+     "mittel_rgb": [
+      0.658,
+      0.576,
+      0.42
+     ],
+     "naechste_renderfarbe": "gelb",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V2_wand2",
+     "kamera": "frame_0019.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 61.6,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.651,
+      0.651,
+      0.376
+     ],
+     "naechste_renderfarbe": "gelb",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V2_wand3",
+     "kamera": "frame_0035.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 93.9,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.539,
+      0.55,
+      0.258
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V2_wand4",
+     "kamera": "frame_0047.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 87.6,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.536,
+      0.544,
+      0.246
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q4 (gelb)"
+    }
+   ]
+  },
+  "zusatz_B": {
+   "rc": 0,
+   "stderr_woertlich": [
+    "17 Flaechen mit Bild, Atlas 1472 × 169 px · 3 ohne Bild (V1_dach, V3_dach, V4_dach) · 4 hochgerechnet. Verdeckung nicht geprueft."
+   ],
+   "laufzeit_s": 0.24,
+   "atlas_px": [
+    1472,
+    169
+   ],
+   "kameras": 96,
+   "ohne_bild": "V1_dach, V3_dach, V4_dach",
+   "je_flaeche": [
+    {
+     "name": "V1_wand1",
+     "kamera": "frame_0067.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 76.0,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.684,
+      0.465,
+      0.459
+     ],
+     "naechste_renderfarbe": "rot",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V1_wand2",
+     "kamera": "frame_0091.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 49.0,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 49.0 px/m, die Kachel 50"
+     ],
+     "mittel_rgb": [
+      0.694,
+      0.507,
+      0.535
+     ],
+     "naechste_renderfarbe": "boden",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V1_wand3",
+     "kamera": "frame_0033.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 56.6,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.536,
+      0.515,
+      0.296
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V1_wand4",
+     "kamera": "frame_0052.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 82.6,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.526,
+      0.348,
+      0.345
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q1 (rot)"
+    },
+    {
+     "name": "V2_wand1",
+     "kamera": "frame_0013.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 79.1,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.362,
+      0.497,
+      0.483
+     ],
+     "naechste_renderfarbe": "gruen",
+     "quader": null
+    },
+    {
+     "name": "V2_wand2",
+     "kamera": "frame_0028.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 77.8,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.33,
+      0.446,
+      0.571
+     ],
+     "naechste_renderfarbe": "blau",
+     "quader": null
+    },
+    {
+     "name": "V2_wand3",
+     "kamera": "frame_0051.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 47.7,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 47.7 px/m, die Kachel 50"
+     ],
+     "mittel_rgb": [
+      0.368,
+      0.503,
+      0.458
+     ],
+     "naechste_renderfarbe": "gruen",
+     "quader": null
+    },
+    {
+     "name": "V2_wand4",
+     "kamera": "frame_0090.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 57.6,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.472,
+      0.641,
+      0.479
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "quader": null
+    },
+    {
+     "name": "V2_dach",
+     "kamera": "frame_0018.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 75.3,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.498,
+      0.475,
+      0.402
+     ],
+     "naechste_renderfarbe": "rot",
+     "quader": null
+    },
+    {
+     "name": "V3_wand1",
+     "kamera": "frame_0022.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 67.1,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.627,
+      0.631,
+      0.374
+     ],
+     "naechste_renderfarbe": "gelb",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V3_wand2",
+     "kamera": "frame_0036.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 96.7,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.526,
+      0.532,
+      0.26
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V3_wand3",
+     "kamera": "frame_0048.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 85.7,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.536,
+      0.548,
+      0.307
+     ],
+     "naechste_renderfarbe": "orange",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V3_wand4",
+     "kamera": "frame_0072.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 45.1,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 45.1 px/m, die Kachel 50"
+     ],
+     "mittel_rgb": [
+      0.714,
+      0.507,
+      0.479
+     ],
+     "naechste_renderfarbe": "gelb",
+     "quader": "Q4 (gelb)"
+    },
+    {
+     "name": "V4_wand1",
+     "kamera": "frame_0027.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 41.6,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 41.6 px/m, die Kachel 50"
+     ],
+     "mittel_rgb": [
+      0.277,
+      0.529,
+      0.532
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "quader": "Q6 (tuerkis)"
+    },
+    {
+     "name": "V4_wand2",
+     "kamera": "frame_0059.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 68.2,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.284,
+      0.526,
+      0.543
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "quader": "Q6 (tuerkis)"
+    },
+    {
+     "name": "V4_wand3",
+     "kamera": "frame_0074.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 79.8,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.498,
+      0.695,
+      0.695
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "quader": "Q6 (tuerkis)"
+    },
+    {
+     "name": "V4_wand4",
+     "kamera": "frame_0090.jpg",
+     "abdeckung": 1.0,
+     "bild_px_pro_m": 64.9,
+     "hinweise": [],
+     "mittel_rgb": [
+      0.536,
+      0.655,
+      0.695
+     ],
+     "naechste_renderfarbe": "violett",
+     "quader": "Q6 (tuerkis)"
+    }
+   ]
+  },
+  "farbe_je_quader": {
+   "methode": "mittlere Farbe aller Wandkachel-Bildpunkte mit Alpha > 0 (sRGB 0..1) gegen die Grundfarbe aus szene.py; mittlere absolute Differenz je Kanal. Weil Cycles/Farbtransform die Farben stark entsaettigt, zusaetzlich gegen die GERENDERTE Erscheinung (Median ueber 96 Bilder am Bildpunkt der Quadermitte): {\"rot\": [0.574, 0.439, 0.434], \"gruen\": [0.379, 0.572, 0.367], \"blau\": [0.424, 0.517, 0.631], \"gelb\": [0.684, 0.626, 0.419], \"violett\": [0.542, 0.528, 0.587], \"tuerkis\": [0.466, 0.553, 0.568], \"orange\": [0.544, 0.518, 0.321], \"boden\": [0.525, 0.537, 0.539]}",
+   "zusatz_A": {
+    "Q1 (rot)": {
+     "mad": 0.238,
+     "mad_je_kanal": [
+      0.286,
+      0.226,
+      0.202
+     ],
+     "mittel_rgb": [
+      0.614,
+      0.426,
+      0.402
+     ],
+     "wahr_rgb": [
+      0.9,
+      0.2,
+      0.2
+     ],
+     "mad_gegen_render": 0.028
+    },
+    "Q4 (gelb)": {
+     "mad": 0.25,
+     "mad_je_kanal": [
+      0.304,
+      0.22,
+      0.225
+     ],
+     "mittel_rgb": [
+      0.596,
+      0.58,
+      0.325
+     ],
+     "wahr_rgb": [
+      0.9,
+      0.8,
+      0.1
+     ],
+     "mad_gegen_render": 0.076
+    }
+   },
+   "zusatz_B": {
+    "Q1 (rot)": {
+     "mad": 0.252,
+     "mad_je_kanal": [
+      0.29,
+      0.261,
+      0.206
+     ],
+     "mittel_rgb": [
+      0.61,
+      0.461,
+      0.406
+     ],
+     "wahr_rgb": [
+      0.9,
+      0.2,
+      0.2
+     ],
+     "mad_gegen_render": 0.029
+    },
+    "Q4 (gelb)": {
+     "mad": 0.266,
+     "mad_je_kanal": [
+      0.3,
+      0.244,
+      0.255
+     ],
+     "mittel_rgb": [
+      0.6,
+      0.556,
+      0.355
+     ],
+     "wahr_rgb": [
+      0.9,
+      0.8,
+      0.1
+     ],
+     "mad_gegen_render": 0.073
+    },
+    "Q6 (tuerkis)": {
+     "mad": 0.226,
+     "mad_je_kanal": [
+      0.296,
+      0.197,
+      0.184
+     ],
+     "mittel_rgb": [
+      0.396,
+      0.603,
+      0.616
+     ],
+     "wahr_rgb": [
+      0.1,
+      0.8,
+      0.8
+     ],
+     "mad_gegen_render": 0.056
+    }
+   },
+   "deutung": "gegen die Grundfarbe 0.23-0.27 (Entsaettigung durch Licht und Farbtransform, kein Fehler der Stufe); gegen die gerenderte Erscheinung 0.03-0.08 — im Mittel die eigene Farbe"
+  },
+  "vertauschte_farben": {
+   "ja": true,
+   "methode": "Strahl von der gewaehlten Kamera (kamera.json Bild N) zur Kachelmitte gegen die wahren, gedrehten Quader; dazu Kachelfarbe",
+   "befunde": [
+    "Zusatz A, V2_wand1 (= Q4 gelb), Kamera frame_0067: der Strahl geht durch Q1 rot — Verdeckung (Kachelmittel 0.658/0.576/0.420, gelb mit rotem Anteil)",
+    "Zusatz B, V1_wand3 (= Q1 rot), Kamera frame_0033: Strahl durch Q4 gelb — Kachel GELBLICH (0.536/0.515/0.296) statt rot",
+    "Zusatz B, V3_wand4 (= Q4 gelb), Kamera frame_0072: Strahl durch Q1 rot — Kachel ROETLICH (0.714/0.507/0.479) statt gelb",
+    "Zusatz B, V2 (Phantom aus Q2+Q3): wand2 via frame_0028 durch Q3 blau (blaue Kachel), wand4 via frame_0090 durch Q2 gruen (gruene Kachel)"
+   ],
+   "ursache": "die Stufe meldet selbst «Verdeckung nicht geprueft»: sie waehlt die Kamera nach Blickwinkel/Aufloesung, nicht danach, ob die Wand frei sichtbar ist. Bei Q1/Q4 (2.4 m auseinander) trifft das in beiden Laeufen zu.",
+   "sonst": "V1_wand1 in A (0.530/0.408/0.277, braeunlich) ohne fremden Quader im Strahl — vermutlich Boden im unteren Kachelteil (Wandflaeche 0.3 m neben der wahren Wand)"
+  }
+ },
+ "gpu": {
+  "grenze_w": 400,
+  "spitze_w": 89.54,
+  "hinweis": "E1-E3 laufen nur auf dem Prozessor; Spitze stammt aus 217"
+ },
+ "fehler": {
+  "ja": true,
+  "liste": [
+   "1. D5 findet an der erfundenen Szene mit Vorgabe-Schwellen (und mit zelle_m=0.25 bzw. deckkraft_min=0.2) 0 Volumen — die Quader (1-4 m) liegen unter hoehe_min 2 m / flaeche_min 4 m²; die Wolke selbst traegt die Hoehen auf wenige cm.",
+   "2. Mit kleineren Schwellen: 3 von 7 (A) bzw. 3 von 7 + 1 Phantom (B) gefunden; Mitte 0.03-0.29 m, Masse meist innerhalb der gemeldeten Unsicherheit; ueber der Unsicherheit nur in B: Q1 Laenge +0.32 > 0.312, Q6 Breite -0.329 > 0.312, Q6 Hoehe -0.12 > 0.09.",
+   "3. D4 legt in 3-4 Kacheln die Farbe eines ANDEREN Quaders auf (rot auf gelb, gelb auf rot) — Verdeckung wird nicht geprueft (so gemeldet).",
+   "4. Bedienung: wiederholtes «--parameter» nimmt still nur den letzten Wert."
+  ],
+  "code_geaendert": false
+ },
+ "aufgeraeumt": {
+  "arbeitsordner": "~/KosmoSplat/arbeit-217/ geloescht (gemeinsam mit 217)",
+  "skripte": "~/kosmo-probe/auf219/ (e1.py, vergleich.py, farbe.py, renderfarbe.py, verdeckung.py, punkte.py, ergebnis.py)",
+  "nichts_committet": true
+ }
+}
