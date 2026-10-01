@@ -284,7 +284,7 @@ def test_es_gibt_eine_adresse_fuer_diese_sitzung():
     """Drei Empfänger und kein Absender: Die Vokabel kannte nur eine Richtung."""
     from aiimaging import auftrag as auf
     assert auf.WORKER_KERN in auf.WORKER
-    assert len(set(auf.WORKER)) == 4
+    assert len(set(auf.WORKER)) == 5   # seit 01.10.2026 mit local-prepare
 
 
 def test_zustaende_zaehlt_jeden_auftrag(tmp_path):

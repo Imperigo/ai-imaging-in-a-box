@@ -7721,3 +7721,4 @@ Bekannt und ausdrücklich nicht erledigt:
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
 - [ ] **Owner:** Probe am iPad (Tailscale, «iPad koppeln») — nächste Woche (Owner, 01.10.2026).
+- [x] **Kern:** Worker `local-prepare` im Auftragsvertrag, eng gefasst (nur `frage`, Pflichtfeld `rechte`). *(01.10.2026, Owner-Ja, Protokoll 74 §14)*

@@ -136,7 +136,8 @@ def test_der_rueckstand_trennt_nach_worker(tmp_path):
     stand = einbau.rueckstand(tmp_path, heute=date(2026, 8, 26))
 
     assert stand["n"] == 3
-    assert stand["je_worker"] == {"local": 1, "cloud": 1, "ui": 1, "kern": 0}, (
+    assert stand["je_worker"] == {"local": 1, "cloud": 1, "ui": 1, "kern": 0,
+                                  "local-prepare": 0}, (
         "seit dem 28.08.2026 gibt es einen vierten Empfaenger — diese Sitzung selbst")
     assert stand["aelteste_tage"] == 6
     assert [e["auftrag_id"] for e in stand["eintraege"]][0] == "auf-20260820-01", (

@@ -153,7 +153,7 @@ def test_jeder_worker_hat_einen_eigenen_namen():
     musste den Auftrag an `cloud` schicken, weil es für uns keine Adresse gab. *Drei
     Empfänger und kein Absender: Die Vokabel kannte nur eine Richtung.*
     """
-    assert len(set(auftrag.WORKER)) == len(auftrag.WORKER) == 4
+    assert len(set(auftrag.WORKER)) == len(auftrag.WORKER) == 5   # + local-prepare
     assert auftrag.WORKER_KERN == "kern"
 
 

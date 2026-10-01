@@ -81,11 +81,25 @@ from pathlib import Path
 #:
 #:   *Drei Empfänger und kein Absender: Die Vokabel kannte nur eine Richtung. Ein Auftrag
 #:   ohne Adresse wird erfunden, und eine erfundene Adresse führt irgendwohin.*
+#: * :data:`WORKER_LOCAL_PREPARE` — **ein lokales Sprachmodell am Heim-PC, als Versuch**
+#:   (Owner-Entscheid Nr. 21 der KosmoPrepare-Lane und Owner-Ja in Sitzung 74, 01.10.2026).
+#:   Es arbeitet einfache Prüfaufträge für KosmoPrepare **lesend** ab. Es hat **keine Karte**
+#:   (nur Art ``frage``) und darf nur, was der Auftrag ausdrücklich erlaubt: das Feld
+#:   ``rechte`` (Ordner nur lesen, Befehle nur aus einer festen Liste, genau eine
+#:   Ergebnisdatei) ist Pflicht und wird hier geprüft — :func:`pruefe_rechte`.
+#:
+#:   *Ein Helfer, der alles darf, was er nicht ausdrücklich nicht darf, darf alles.*
 WORKER_LOCAL = "local"
 WORKER_CLOUD = "cloud"
 WORKER_UI = "ui"
 WORKER_KERN = "kern"
-WORKER = (WORKER_LOCAL, WORKER_CLOUD, WORKER_UI, WORKER_KERN)
+WORKER_LOCAL_PREPARE = "local-prepare"
+WORKER = (WORKER_LOCAL, WORKER_CLOUD, WORKER_UI, WORKER_KERN, WORKER_LOCAL_PREPARE)
+
+#: Zeichen, die in einem erlaubten Befehl nie stehen dürfen: Verkettung, Leitung,
+#: Umleitung, Einsetzung, Zeilenumbruch. Ein Präfix wie ``git log -1`` soll nicht zu
+#: ``git log -1; rm -rf …`` verlängert werden können.
+VERBOTEN_IN_BEFEHLEN = (";", "&", "|", "$", "`", ">", "<", "\n", "\r")
 
 SCHEMA_AUFTRAG = "aiimaging.homeworker-auftrag/v1"
 SCHEMA_ERGEBNIS = "aiimaging.homeworker-ergebnis/v1"
@@ -429,9 +443,77 @@ def pruefe_auftrag(satz: dict) -> list[str]:
             maengel.append(
                 "Auflage 'nur_bei_leerlauf' fehlt oder ist kein Wahrheitswert. Ohne sie "
                 "steht nicht im Auftrag, ob er die Karte teilen darf.")
+    if satz.get("worker") == WORKER_LOCAL_PREPARE:
+        if satz.get("art") != ART_FRAGE:
+            maengel.append(
+                f"'local-prepare' hat keine Karte: nur Art {ART_FRAGE!r}, nicht "
+                f"{satz.get('art')!r}.")
+        maengel.extend(pruefe_rechte(satz.get("rechte"), satz.get("auftrag_id")))
+        if "belege" in satz and not isinstance(satz["belege"], bool):
+            maengel.append("'belege' ist ein Wahrheitswert (true/false).")
     geom = satz.get("geometrie") or {}
     if isinstance(geom, dict) and not geom.get("synthetisch") and not geom.get("pfad"):
         maengel.append("Geometriequelle fehlt: weder synthetisch noch Pfad")
+    return maengel
+
+
+def pruefe_rechte(rechte, auftrag_id=None) -> list[str]:
+    """Das Pflichtfeld ``rechte`` eines Auftrags an :data:`WORKER_LOCAL_PREPARE`.
+
+    Form: ``{"lesen": [Ordner, …], "befehle": [Präfix, …], "ergebnis": Pfad}``.
+
+    * ``lesen`` — mindestens ein Ordner, relativ oder mit ``~/`` (Regel 3: kein
+      ``/home/<name>``, kein ``/Users/<name>``), ohne ``..``.
+    * ``befehle`` — mindestens einer; jeder ein Präfix ohne
+      :data:`VERBOTEN_IN_BEFEHLEN` und ohne ``..``.
+    * ``ergebnis`` — genau eine Datei unter ``auftraege/ergebnisse/``, ohne Unterordner,
+      ``.json``; wenn die Kennung des Auftrags bekannt ist, genau
+      ``auftraege/ergebnisse/<auftrag_id>.json``.
+
+    Weitere Schlüssel sind ein Mangel: Ein Recht, das hier niemand prüft, gilt drüben
+    womöglich trotzdem.
+    """
+    if not isinstance(rechte, dict):
+        return ["Pflichtfeld 'rechte' fehlt oder ist kein Objekt (lesen, befehle, ergebnis)."]
+    maengel = []
+    fremd = sorted(set(rechte) - {"lesen", "befehle", "ergebnis"})
+    if fremd:
+        maengel.append(f"'rechte' kennt nur lesen, befehle, ergebnis — nicht {fremd}.")
+    lesen = rechte.get("lesen")
+    if not isinstance(lesen, list) or not lesen or not all(isinstance(o, str) and o.strip()
+                                                           for o in lesen):
+        maengel.append("'rechte.lesen' ist eine nicht leere Liste von Ordnern.")
+    else:
+        for ordner in lesen:
+            if ordner.startswith(("/home/", "/Users/", "/root")):
+                maengel.append(f"'rechte.lesen' {ordner!r}: kein Heimatpfad mit Namen — "
+                               f"'~/…' oder relativ (Regel 3).")
+            if ".." in ordner.replace("\\", "/").split("/"):
+                maengel.append(f"'rechte.lesen' {ordner!r}: kein '..'.")
+    befehle = rechte.get("befehle")
+    if not isinstance(befehle, list) or not befehle or not all(
+            isinstance(b, str) and b.strip() for b in befehle):
+        maengel.append("'rechte.befehle' ist eine nicht leere Liste von Befehlen.")
+    else:
+        for befehl in befehle:
+            boese = [z for z in VERBOTEN_IN_BEFEHLEN if z in befehl]
+            if boese:
+                maengel.append(f"'rechte.befehle' {befehl!r}: keine Verkettung, Leitung, "
+                               f"Umleitung oder Einsetzung ({''.join(boese)!r}).")
+            if ".." in befehl.split("/") or " .." in befehl:
+                maengel.append(f"'rechte.befehle' {befehl!r}: kein '..'.")
+    ergebnis = rechte.get("ergebnis")
+    if not isinstance(ergebnis, str):
+        maengel.append("'rechte.ergebnis' ist genau ein Pfad unter auftraege/ergebnisse/.")
+    else:
+        teile = ergebnis.split("/")
+        if (len(teile) != 3 or teile[:2] != ["auftraege", "ergebnisse"]
+                or not teile[2].endswith(".json") or teile[2].startswith(".")):
+            maengel.append(f"'rechte.ergebnis' {ergebnis!r}: genau eine .json-Datei direkt "
+                           f"unter auftraege/ergebnisse/.")
+        elif auftrag_id and teile[2] != f"{auftrag_id}.json":
+            maengel.append(f"'rechte.ergebnis' {ergebnis!r}: erwartet "
+                           f"auftraege/ergebnisse/{auftrag_id}.json.")
     return maengel
 
 
