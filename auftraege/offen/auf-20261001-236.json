@@ -1,0 +1,34 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-236",
+ "art": "frage",
+ "beschreibung": "Befund B5 aus 230 am echten Bildschirm nachmessen: erscheinen Knotenfelder und Auto-Kamera-Liste der Vis-Station nur unter Xvfb oben links, und reagiert «Ausfuehren» am Knoten?",
+ "anweisung": "=== KOSMOORBIT VIS-STATION AM ECHTEN BILDSCHIRM: BEFUND B5 NACHMESSEN ===\n\nWorum es geht: In eurer Nachprobe 230 lief die Desktop-App KosmoOrbit v0.1.6 (installiertes .deb)\nunter Xvfb, also ohne echten Bildschirm und ohne Grafikbeschleunigung. Dort erschienen die Felder des\nRender-Knotens und die Auto-Kamera-Liste oben links statt am Knoten, und «Ausfuehren» am Knoten\nreagierte nicht; der Weg ueber die AUSTAUSCH-Insel ging. Der Integrator bittet, das ERST am echten\nBildschirm nachzumessen, bevor jemand etwas baut. Niemand hat dafuer Code geaendert.\n\nSCHRITTE (am Heim-PC, an einem echten Bildschirm mit Grafikbeschleunigung, dieselbe v0.1.6 wie in 230)\n  1 Fassung der App notieren (Ueber-Dialog oder Paketversion) und ob die Grafikbeschleunigung laeuft\n    (z. B. ja/nein aus der App oder dem Treiber; keine Geraetenamen).\n  2 Ein synthetisches Projekt oeffnen (wie in 230), Vis-Station, einen Render-Knoten anlegen.\n  3 Wo erscheinen die Felder des Knotens (Prompt, Modell, Kameras)? Am Knoten oder oben links?\n  4 Wo erscheint die Auto-Kamera-Liste?\n  5 «Ausfuehren» am Knoten druecken: Reagiert er (Lauf startet, Fortschritt)? Wenn die GPU belegt\n    ist: nur bis zum Absenden pruefen und sagen.\n  6 Zum Vergleich einmal derselbe Ablauf unter Xvfb wie in 230: Tritt es dort wieder auf?\n\nZURUECK (auftraege/ergebnisse/auf-20261001-236.json)\n  - Fassung, Grafikbeschleunigung ja/nein.\n  - Schritte 3–6 je: ja/nein + ein Satz, was zu sehen war — am Bildschirm UND unter Xvfb.\n  - Urteil in einem Satz: tritt B5 nur unter Xvfb auf (dann kein App-Fehler) oder auch am Bildschirm?\n  - Bildschirmfotos nur, wenn weder Adresse, Projekt-, Rechner-, Benutzer- noch Netzname zu sehen ist;\n    sonst nur Worte. Ablage als auftraege/ergebnisse/auf-20261001-236-<stichwort>.png (klein halten).\n\nNICHT TUN: KosmoOrbit-Code aendern oder bauen; eine neuere Fassung installieren (die Messung gilt fuer\nv0.1.6); echte Projektdaten oeffnen; nichts committen ausser Ergebnisdatei und Bildschirmfotos.\nKEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt wie in auf-20261001-230"
+ },
+ "params": {
+  "kosmoorbit": "0.1.6"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nur Bedienung ansehen; ein Lauf nur, wenn die GPU frei ist.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Fassung, Grafikbeschleunigung ja/nein.",
+  "Schritte 3–6 am Bildschirm und unter Xvfb, je ja/nein und ein Satz.",
+  "Urteil: nur Xvfb oder auch am Bildschirm."
+ ],
+ "rang": 25
+}
