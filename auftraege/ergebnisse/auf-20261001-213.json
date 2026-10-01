@@ -1,0 +1,143 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-213",
+ "worker": "local",
+ "status": "erledigt",
+ "git_log_1": "e317cf1 Nach dem Zusammenführen mit ihrem auf-212: Ränge lückenlos",
+ "A1_leitung": {
+  "tailscaled": "laeuft (nativer Dienst), Zustand Running",
+  "geraete_im_netz_ausser_heim_pc": 4,
+  "davon_gerade_online": 0,
+  "hinweis": "Zum Messzeitpunkt (01.10. ~07:45) war keines der anderen Geraete online; das sagt nichts ueber die Leitung selbst."
+ },
+ "A2_weiterleitungen": {
+  "art": "tailscale serve, https, nur im eigenen Netz (kein Funnel)",
+  "pfade": [
+   "/ -> 127.0.0.1:5183 (KosmoOrbit-Web)",
+   "/llm -> 127.0.0.1:11434 (Ollama)",
+   "/sync -> 127.0.0.1:8700",
+   "/bruecke -> 127.0.0.1:8600",
+   "/updates/ -> Ordner (Aktualisierungen)"
+  ],
+  "firewall": "die Ports 5183/8600/8700/11434 sind zusaetzlich nur auf der Tailscale-Schnittstelle offen; Serve selbst braucht das nicht (es spricht 127.0.0.1)"
+ },
+ "A3_visbox_ueber_weiterleitung": {
+  "ginge_ohne_0000": true,
+  "wie": "Tailscale Serve spricht den Dienst auf 127.0.0.1 an; der Visbox-Server muss dafuer NICHT auf 0.0.0.0. Zum Messzeitpunkt lief er nicht (8731 hoert nicht) — nichts gestartet, nichts eingerichtet.",
+  "hindernis_unterpfad": "oberflaeche/seite.html ruft absolute Pfade auf (fetch(\"/api/…\"), 9 Stellen). Unter einem Unterpfad wie /visbox (Serve schneidet den Pfad ab) wuerden diese Aufrufe auf / landen = KosmoOrbit. Also entweder einen EIGENEN https-Port fuer Visbox (Serve kann neben 443 z. B. 8443 oder 10000 bedienen, dort Wurzel / -> 127.0.0.1:8731) ODER die Seite auf relative Pfade (fetch(\"api/…\")) umstellen.",
+  "hindernis_anmeldung": "server.py verlangt auf 127.0.0.1 KEIN Kennwort (pruefe_anmeldung: kennwort None). Ueber Serve kommen alle Anfragen von 127.0.0.1 an — jedes Geraet im eigenen Tailnet kaeme damit ohne Anmeldung herein. Tragbar, solange das Tailnet nur eigene Geraete hat; sonst Kennwort auch hinter Serve verlangen (z. B. Tailscale-Identitaetskopf Tailscale-User-Login pruefen).",
+  "was_noetig_waere": [
+   "eine Serve-Zeile (eigener Port oder Pfad)",
+   "relative Pfade in seite.html, falls Unterpfad",
+   "Entscheid Anmeldung hinter Serve",
+   "Dienst-Unit, damit der Server beim Start laeuft (heute nur von Hand)"
+  ]
+ },
+ "B1_ollama": {
+  "version": "0.32.14",
+  "qwen3_30b": "vorhanden, 18.6 GB, Q4_K_M, Faehigkeiten completion/tools/thinking",
+  "modelle": [
+   "qwen3.6:27b 17.8 GB",
+   "qwen3.6:35b-a3b 22.6 GB",
+   "qwen3.8:27b 17.7 GB",
+   "qwen3.8:latest 17.7 GB",
+   "qwen3:30b 18.6 GB",
+   "qwen3:32b 20.2 GB",
+   "qwen3-coder:30b 18.6 GB",
+   "kosmo-qwen3-coder:30b-a3b-q4km 18.6 GB",
+   "qwen3-30b-vor-pin 18.6 GB",
+   "qwen3-coder-30b-vor-b31 18.6 GB",
+   "qwen3-vl:32b 20.9 GB",
+   "qwen3-vl:8b 6.1 GB",
+   "qwen2.5vl:7b 6.0 GB",
+   "qwen2.5:7b 4.7 GB",
+   "gpt-oss:20b 13.8 GB",
+   "apertus:8b-instruct q4_k_m 5.1 GB",
+   "llama3.2 2.0 GB",
+   "glm-ocr 2.2 GB",
+   "bge-m3 1.2 GB",
+   "all-minilm:l6-v2 0.0 GB"
+  ]
+ },
+ "B2_kalt": {
+  "zeit_bis_erste_antwort_s": 2.5,
+  "ladezeit_s": 2.41,
+  "spitze_grafikspeicher_mib": 18659,
+  "grundlast_mib": 626,
+  "ollama_ps_size_vram_gb": 25.1,
+  "einschraenkung": "«kalt» = nicht im Grafikspeicher, aber sehr wahrscheinlich im Plattencache (Plattencache leeren braucht root, nicht gemacht). Ein Kaltstart direkt nach dem Hochfahren dauert laenger; nicht gemessen.",
+  "befund_denken": "think:false schaltet das Nachdenken bei qwen3:30b (Ollama 0.32.14) NICHT ab: die Antwort beginnt mit englischem Gedankentext («Okay, the user is asking …») im content-Feld, bei 80 Token kam der deutsche Satz gar nicht. Mit think:true landet das Denken sauber im thinking-Feld (1227 Zeichen, bei 300 Token noch keine Antwort). Fuer Visbox: think:true setzen und nur content zeigen, Tokengrenze grosszuegig, oder ein Modell ohne Denkmodus waehlen."
+ },
+ "B3_wechsel": {
+  "entladen_keep_alive_0": {
+   "api_s": 0.02,
+   "bis_speicher_frei_s": 0.14,
+   "mib_danach": 626
+  },
+  "bild_z_image_turbo": {
+   "aufloesung": 512,
+   "schritte": 8,
+   "vorlage": "Hochbau, Blick s, Rahmung bauwerk (Tiefenkarte aus Lauf 194)",
+   "status": "ok",
+   "prozess_inkl_laden_s": 17.3,
+   "render_wand_s": 15.1,
+   "spitze_grafikspeicher_mib": 25455,
+   "passt_wie_sonst": "ja, was Speicher und Laufzeit angeht (gleiche Rechnung wie nach einem Leerlauf, Speicher danach wieder 626 MiB). Augenurteil: Kubatur folgt der Tiefe, das Bild ist blass und kontrastarm (nur Grundprompt «a residential building, architectural photograph», Seed 0) — kein Vergleich mit einem Bild ohne vorheriges Sprachmodell gefahren.",
+   "mib_nach_bild": 626
+  },
+  "wieder_laden_warm": {
+   "zeit_bis_erste_antwort_s": 3.76,
+   "ladezeit_s": 3.62,
+   "spitze_grafikspeicher_mib": 18659
+  },
+  "gleichzeitig": "nein: 18.7 GB (Sprache) + 25.5 GB (Bild-Spitze) > 32 GB Karte"
+ },
+ "B4_werkzeugaufrufe": [
+  {
+   "anfrage": "Zeig das Haus von Süd-Ost auf Augenhöhe.",
+   "richtig": true,
+   "aufruf": [
+    {
+     "name": "kamera_setzen",
+     "argumente": {
+      "augenhoehe_m": 1.7,
+      "blick": "sSE"
+     }
+    }
+   ],
+   "zeit_s": 2.3
+  },
+  {
+   "anfrage": "Mach drei Varianten bei Abendlicht.",
+   "richtig": true,
+   "aufruf": [
+    {
+     "name": "varianten",
+     "argumente": {
+      "anzahl": 3,
+      "bildauftrag": "Abendlicht"
+     }
+    }
+   ],
+   "zeit_s": 1.02
+  },
+  {
+   "anfrage": "Schau frontal von Süden, etwas erhöht, 3 Meter.",
+   "richtig": true,
+   "aufruf": [
+    {
+     "name": "kamera_setzen",
+     "argumente": {
+      "blick": "s",
+      "augenhoehe_m": 3
+     }
+    }
+   ],
+   "zeit_s": 3.65
+  }
+ ],
+ "B4_urteil": "3 von 3 richtig: sSE/1.7 m, varianten 3/«Abendlicht», s/3 m. Schema mit enum und Beschreibung der Kuerzel (sSE = Sued-Ost) mitgegeben; ohne Beschreibung nicht geprueft.",
+ "satz": "Ja, Bild- und Sprachmodell koennen sich die Karte nacheinander teilen (gleichzeitig nicht): Entladen dauert 0.14 s, ein erstes Bild samt Laden 17.3 s (davon Rechnen 15.1 s), und das Sprachmodell ist danach in 3.76 s wieder antwortbereit — der Wechsel kostet also rund 4 s fuer die Sprache zurueck plus das Laden des Bildmodells.",
+ "aufgeraeumt": "qwen3:30b entladen (keep_alive 0), Karte wieder 626 MiB; Probebild nur unter ~/kosmo-probe (nicht im Repo); nichts eingerichtet.",
+ "messzeit": "2026-10-01 ~07:45–07:55"
+}
