@@ -1,0 +1,58 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-212",
+ "worker": "local",
+ "status": "gestoppt nach Teil A — Werkzeuge fehlen (laut Auftrag nichts installiert)",
+ "staende": {
+  "kosmoprepare": "d416b59 (git pull --ff-only, Kopf = d416b59)",
+  "blender": "Blender 5.2.2 LTS (Snap) — fuer B/C nicht gebraucht",
+  "grafikkarte": "RTX 5090, Treiber 595.91.07"
+ },
+ "A1_ffmpeg": {
+  "im_PATH": false,
+  "an_den_Suchorten_von_get_pipeline_tools": false,
+  "liegt_aber_als_beipack": [
+   {
+    "herkunft": "imageio-ffmpeg im uv-Zwischenspeicher (statischer Bau 7.0.2)",
+    "erste_zeile": "ffmpeg version 7.0.2-static https://johnvansickle.com/ffmpeg/",
+    "enable_gpl": true,
+    "v360": true
+   },
+   {
+    "herkunft": "Playwright-Beipack",
+    "erste_zeile": "ffmpeg version n7.0.1-playwright-build-1011",
+    "enable_gpl": false,
+    "v360": false
+   }
+  ],
+  "hinweis": "Der statische 7.0.2 koennte die Kette tragen (v360 da), liegt aber in einem Zwischenspeicher, der jederzeit geleert werden kann, und ist GPL — fuer die HomeStation als Werkzeug gleichgueltig, fuer Auslieferung nicht. Nicht benutzt, weil der Auftrag bei fehlendem Werkzeug STOPP sagt."
+ },
+ "A2_colmap": {
+  "vorhanden": false,
+  "fassung": null,
+  "cuda": null,
+  "global_mapper": null,
+  "view_graph_calibrator": null,
+  "gesucht": "PATH, /usr/local/bin, /opt, ganze Systemplatte und /mnt/data"
+ },
+ "A3_brush_app": {
+  "vorhanden": false,
+  "gesucht": "PATH, ~/brush/*, ganze Systemplatte und /mnt/data",
+  "schalter": null
+ },
+ "get_pipeline_tools": {
+  "ffmpeg": null,
+  "colmap": null,
+  "brush": null
+ },
+ "B": "nicht gefahren (STOPP: Werkzeuge fehlen)",
+ "C": "nicht gefahren (STOPP: Werkzeuge fehlen)",
+ "fehler": "nein (keine Ausnahme; die Kette ist schlicht nicht ausfuehrbar)",
+ "was_es_braeuchte": [
+  "ffmpeg mit v360 (Ubuntu-Paket ffmpeg reicht; systemweit = Owner-Ja)",
+  "COLMAP mit CUDA (Ubuntu-Paket ist ohne CUDA und zu alt fuer global_mapper; eigener Bau oder Conda — Owner-Entscheid)",
+  "brush_app (Linux-x86_64-Freigabe nach ~/brush/brush-app-x86_64-unknown-linux-gnu/, Apache-2.0)"
+ ],
+ "aufgeraeumt": "kein Arbeitsordner angelegt, nichts installiert, nichts geaendert",
+ "messzeit": "2026-10-01 ~08:05"
+}
