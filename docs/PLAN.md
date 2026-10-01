@@ -7719,3 +7719,4 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
+- [ ] **Owner:** Probe am iPad (Tailscale, «iPad koppeln») — nächste Woche (Owner, 01.10.2026).
