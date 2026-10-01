@@ -8,7 +8,7 @@ import VisboxKern
 /// Was die Bytes heissen, sagt der Kern (`Anfrageleser`); was mit der Anfrage geschieht,
 /// der `Vermittlungsdienst` (und dahinter wieder der Kern). Hier steht nur die Reihenfolge:
 ///
-/// 1. Lesen, bis der **Kopf** da ist.
+/// 1. Lesen, bis der **Kopf** da ist — höchstens `Leitungsplaetze.kopffrist` (5 s).
 /// 2. Die **Tür** fragen, bevor der Rumpf gelesen wird — wer nicht angemeldet ist, bekommt
 ///    seine 401, ohne vier Megabyte geschickt zu haben. Bis die Antwort da ist, wird nicht
 ///    weitergelesen.
@@ -36,6 +36,7 @@ final class Vermittlungsleitung: @unchecked Sendable {
     private var kopfGefragt = false
     private var gelesen = false
     private var vorbei = false
+    private var kopfwache: DispatchWorkItem?
     private var lesewache: DispatchWorkItem?
     private var lebenswache: DispatchWorkItem?
 
@@ -58,10 +59,16 @@ final class Vermittlungsleitung: @unchecked Sendable {
             }
         }
         verbindung.start(queue: schlange)
+        // DER KOPF IN FUENF SEKUNDEN (Sicherheitsdurchsicht vom 01.10.2026): Die App schickt
+        // ihn sofort, in einem Paket. Wer schweigt, haelt nur einen Platz besetzt — und 16
+        // Schweigende sperrten frueher das iPad aus.
+        let kopf = DispatchWorkItem { [weak self] in self?.beende(abrupt: true) }
         let lesen = DispatchWorkItem { [weak self] in self?.beende(abrupt: true) }
         let leben = DispatchWorkItem { [weak self] in self?.beende(abrupt: true) }
+        kopfwache = kopf
         lesewache = lesen
         lebenswache = leben
+        schlange.asyncAfter(deadline: .now() + Leitungsplaetze<Int>.kopffrist, execute: kopf)
         schlange.asyncAfter(deadline: .now() + Vermittlungsleitung.lesefrist, execute: lesen)
         schlange.asyncAfter(deadline: .now() + Vermittlungsleitung.lebensfrist, execute: leben)
         lies()
@@ -72,6 +79,7 @@ final class Vermittlungsleitung: @unchecked Sendable {
         schlange.async { [self] in
             guard !vorbei else { return }
             vorbei = true
+            kopfwache?.cancel()
             lesewache?.cancel()
             lebenswache?.cancel()
             // ABRUPT HEISST: ohne geordnetes Ende. Das iPad sieht dann eine abgerissene
@@ -95,9 +103,12 @@ final class Vermittlungsleitung: @unchecked Sendable {
     private func empfangen(_ daten: Data?, fertig: Bool, fehler: NWError?) {
         guard !vorbei, !gelesen else { return }
         if let daten, !daten.isEmpty {
-            switch leser.nimm(daten) {
+            let stand = leser.nimm(daten)
+            if leser.kopf != nil { kopfwache?.cancel() }
+            switch stand {
             case .kaputt(let antwort):
                 gelesen = true
+                kopfwache?.cancel()
                 sende(antwort)
                 return
             case .fertig(let anfrage):
@@ -129,8 +140,10 @@ final class Vermittlungsleitung: @unchecked Sendable {
     private func frageTuer(_ kopf: Anfragekopf) {
         let dienst = self.dienst
         Task { @MainActor [weak self] in
-            let abweisung = dienst?.vorab(kopf)
+            let bescheid = dienst?.vorab(kopf)
+            let abweisung = bescheid?.abweisung
             let fehlt = dienst == nil
+            if let self, bescheid?.angemeldet == true { self.register.angemeldet(self) }
             self?.schlange.async {
                 guard let self, !self.vorbei else { return }
                 if fehlt {
@@ -151,6 +164,10 @@ final class Vermittlungsleitung: @unchecked Sendable {
     private func bearbeite(_ anfrage: RoheAnfrage) {
         let dienst = self.dienst
         Task { @MainActor [weak self] in
+            // KAM SIE IN EINEM STUECK, stand sie nie an der Tuer am Kopf — angemeldet ist sie
+            // trotzdem, und eine Anfrage, die auf den Heim-PC wartet, soll nicht verdraengt
+            // werden.
+            if let self, dienst?.angemeldet(anfrage.kopf) == true { self.register.angemeldet(self) }
             let antwort = await dienst?.bearbeite(anfrage)
             self?.schlange.async {
                 guard let self, !self.vorbei else { return }

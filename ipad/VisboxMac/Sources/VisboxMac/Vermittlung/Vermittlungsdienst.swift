@@ -21,23 +21,25 @@ import VisboxKern
 /// Rumpf, auch nicht den Pfad. *Ein Protokoll, das niemand liest, liest irgendwann jemand
 /// anderes.*
 ///
+/// **Nur, wenn ausdrücklich eingeschaltet** (Sicherheitsdurchsicht und Owner-Entscheid vom
+/// 01.10.2026): Unterwegs spricht das iPad über Tailscale direkt mit dem Heim-PC; die
+/// Vermittlung ist die Ausnahme. Angelegt wird der Dienst, sobald der Heim-PC eingerichtet
+/// ist, **anbieten** tut er sich erst nach `starte()` — und das ruft `Vermittlungsanschluss`
+/// nur, wenn «iPad über diesen Mac anbieten» an ist. Bis dahin sagt die Zeile «aus».
+///
 /// *Gebaut, am Gerät unbestätigt (01.10.2026)* — hier nicht übersetzt (Linux kennt
 /// `Network` nicht).
 @MainActor
 final class Vermittlungsdienst: ObservableObject {
 
     /// Was die Startzeile «iPad» sagt (`wort`: steht / lädt / wartet / fehlt, und `satz`).
-    @Published private(set) var zeile: Vermittlerlage = .startet
+    @Published private(set) var zeile: Vermittlerlage = .aus
     /// Die Zahl zum Koppeln, solange sie gilt — für den Bildschirm des Mac, nirgends sonst.
     @Published private(set) var koppelzahl: String?
     /// Der genaue Grund des letzten abgelehnten Koppelversuchs — nur für den Menschen am Mac.
     @Published private(set) var koppelgrund: String?
     /// Ein Hinweis zum Zugang des iPad (der Schlüsselbund nahm ihn nicht) — `nil`: alles gut.
     @Published private(set) var hinweis: String?
-
-    /// Wie viele Verbindungen zugleich offen sein dürfen. Die App öffnet wenige (Prüfen,
-    /// Mappe, ein paar Bilder); mehr ist kein iPad, sondern ein Fremder im WLAN.
-    nonisolated static let hoechstensLeitungen = 16
 
     private let heim: Heimstrecke
     private var stand: Vermittlerstand
@@ -46,6 +48,8 @@ final class Vermittlungsdienst: ObservableObject {
     private var hoerer: NWListener?
     private var uhr: Task<Void, Never>?
     private var bereit = false
+    /// Ob er sich anbietet — erst nach `starte()`, bis `schalteAus()`.
+    private var angeboten = false
     private var fehler: String?
     /// Ob der feste Anschluss schon versucht wurde — belegt, dann ein freier.
     private var aufFestemAnschluss = true
@@ -66,14 +70,16 @@ final class Vermittlungsdienst: ObservableObject {
 
     // ------------------------------------------------------------------- Handgriffe
 
-    /// Bietet sich im WLAN an. Hat noch nie ein iPad gekoppelt, zeigt er gleich eine Zahl.
+    /// Bietet sich im WLAN an. Hat noch nie ein iPad gekoppelt, zeigt er gleich eine Zahl —
+    /// wer einschaltet, will ein iPad koppeln.
     func starte() {
         guard hoerer == nil else { return }
+        angeboten = true
         fehler = nil
         bereit = false
         aufFestemAnschluss = true
         if !Vermittlergedaechtnis.gekoppelt {
-            stand.oeffneKopplung(jetzt: Vermittlerkopplung.stetigeUhr)
+            stand.oeffneKopplung(jetzt: Vermittlungsuhr.jetzt)
         }
         biete()
         uhr?.cancel()
@@ -99,9 +105,27 @@ final class Vermittlungsdienst: ObservableObject {
         aktualisiere()
     }
 
-    /// Eine neue Zahl zum Koppeln zeigen (die alte ist damit tot).
+    /// **Ausgeschaltet:** bietet sich nicht mehr an, schliesst jede Verbindung, und eine
+    /// geltende Zahl ist tot — eine Zahl, die niemand erreicht, soll auch später niemand
+    /// mehr eingeben können. Die Zeile sagt «aus».
+    func schalteAus() {
+        hoerer?.cancel()
+        hoerer = nil
+        register.alleBeenden()
+        uhr?.cancel()
+        uhr = nil
+        bereit = false
+        angeboten = false
+        fehler = nil
+        stand.schliesseKopplung()
+        aktualisiere()
+    }
+
+    /// Eine neue Zahl zum Koppeln zeigen (die alte ist damit tot). Ausgeschaltet nicht: Die
+    /// Zahl erreichte niemand.
     func neueZahl() {
-        stand.oeffneKopplung(jetzt: Vermittlerkopplung.stetigeUhr)
+        guard angeboten else { return }
+        stand.oeffneKopplung(jetzt: Vermittlungsuhr.jetzt)
         aktualisiere()
     }
 
@@ -117,9 +141,16 @@ final class Vermittlungsdienst: ObservableObject {
 
     // ------------------------------------------------------- für die Leitungen
 
-    /// Die Tür am Kopf allein — `nil`: weiterlesen.
-    func vorab(_ kopf: Anfragekopf) -> Leitungsantwort? {
-        stand.vorab(kopf, jetzt: Vermittlerkopplung.stetigeUhr)
+    /// Die Tür am Kopf allein — `abweisung` `nil`: weiterlesen. `angemeldet`: Der Kopf trägt
+    /// die Zugangsdaten des Mac; die Verbindung wird bei vollem Haus nicht verdrängt.
+    func vorab(_ kopf: Anfragekopf) -> (abweisung: Leitungsantwort?, angemeldet: Bool) {
+        (stand.vorab(kopf, jetzt: Vermittlungsuhr.jetzt), stand.angemeldet(kopf))
+    }
+
+    /// Ob ein Kopf die Zugangsdaten des Mac trägt (für eine Anfrage, die in einem Stück kam
+    /// und darum nicht erst an der Tür am Kopf stand).
+    func angemeldet(_ kopf: Anfragekopf) -> Bool {
+        stand.angemeldet(kopf)
     }
 
     /// Eine ganz gelesene Anfrage: selbst beantworten oder weiterreichen. `nil` heisst:
@@ -127,7 +158,7 @@ final class Vermittlungsdienst: ObservableObject {
     /// Verbindung sagt dem iPad genau das.
     func bearbeite(_ anfrage: RoheAnfrage) async -> Leitungsantwort? {
         let vorher = stand.erfolgreicheKopplungen
-        let schritt = stand.beantworte(anfrage, jetzt: Vermittlerkopplung.stetigeUhr)
+        let schritt = stand.beantworte(anfrage, jetzt: Vermittlungsuhr.jetzt)
         if stand.erfolgreicheKopplungen > vorher {
             Vermittlergedaechtnis.gekoppelt = true
         }
@@ -144,8 +175,9 @@ final class Vermittlungsdienst: ObservableObject {
     // ------------------------------------------------------------------- intern
 
     private func aktualisiere() {
-        let jetzt = Vermittlerkopplung.stetigeUhr
-        let neu = Vermittlerlage.bestimme(bereit: bereit, fehler: fehler, stand: stand, jetzt: jetzt)
+        let jetzt = Vermittlungsuhr.jetzt
+        let neu = Vermittlerlage.bestimme(angeboten: angeboten, bereit: bereit, fehler: fehler,
+                                          stand: stand, jetzt: jetzt)
         if neu != zeile { zeile = neu }
         let zahl = stand.koppelzahl(jetzt: jetzt)
         if zahl != koppelzahl { koppelzahl = zahl }
@@ -219,18 +251,31 @@ final class Vermittlungsdienst: ObservableObject {
             melde(Hoererzustand(zustand))
         }
         hoerer.newConnectionHandler = { [weak dienst] verbindung in
-            // ZU VIELE ZUGLEICH: gleich wieder zu, ohne ein Byte zu lesen.
-            guard register.anzahl < Vermittlungsdienst.hoechstensLeitungen else {
+            let leitung = Vermittlungsleitung(verbindung: verbindung, schlange: schlange,
+                                              dienst: dienst, register: register)
+            // VOLLES HAUS: nicht die neue abweisen, sondern die aelteste, die sich noch nicht
+            // angemeldet hat — und je Gegenstelle nur so viele (`Leitungsplaetze`). Sonst
+            // sperrten 16 stumme Verbindungen eines Fremden das iPad aus.
+            guard register.nimm(leitung, gegenstelle: Vermittlungsdienst.gegenstelle(verbindung))
+            else {
                 verbindung.cancel()
                 return
             }
-            let leitung = Vermittlungsleitung(verbindung: verbindung, schlange: schlange,
-                                              dienst: dienst, register: register)
-            register.nimm(leitung)
             leitung.starte()
         }
         hoerer.start(queue: schlange)
         return hoerer
+    }
+}
+
+extension Vermittlungsdienst {
+    /// Die Adresse der Gegenstelle, **ohne Anschluss** — jede neue Verbindung hat einen
+    /// anderen, und gezählt wird je Gerät. Was keine Adresse hat, zählt unter einem Namen.
+    nonisolated static func gegenstelle(_ verbindung: NWConnection) -> String {
+        if case .hostPort(let rechner, _) = verbindung.endpoint {
+            return String(describing: rechner)
+        }
+        return "unbekannt"
     }
 }
 
@@ -274,27 +319,46 @@ enum Hoererzustand: Sendable {
     }
 }
 
-/// Die offenen Verbindungen — damit `halte()` sie schliessen kann und keine zu viel offen
-/// ist. Eine Sperre, weil `Network` von seiner Schlange ruft und `halte()` vom Hauptfaden.
+/// Die offenen Verbindungen — damit `halte()` sie schliessen kann und bei vollem Haus die
+/// richtige geht. **Welche** das ist, entscheidet der Kern (`Leitungsplaetze`, mit Proben);
+/// hier nur die Sperre, weil `Network` von seiner Schlange ruft und `halte()` vom Hauptfaden.
 final class Leitungsregister: @unchecked Sendable {
     private let sperre = NSLock()
+    private var plaetze = Leitungsplaetze<ObjectIdentifier>()
     private var leitungen: [ObjectIdentifier: Vermittlungsleitung] = [:]
 
-    var anzahl: Int {
+    /// Nimmt eine neue Verbindung auf — `false`: Sie bleibt draussen. Muss dafür eine ältere,
+    /// noch unangemeldete gehen, wird die hier geschlossen.
+    func nimm(_ leitung: Vermittlungsleitung, gegenstelle: String) -> Bool {
+        let id = ObjectIdentifier(leitung)
         sperre.lock()
-        defer { sperre.unlock() }
-        return leitungen.count
+        let entscheid = plaetze.nimm(id, gegenstelle: gegenstelle)
+        var weg: Vermittlungsleitung?
+        switch entscheid {
+        case .ablehnen:
+            sperre.unlock()
+            return false
+        case .annehmen(let alt):
+            if let alt { weg = leitungen.removeValue(forKey: alt) }
+            leitungen[id] = leitung
+        }
+        sperre.unlock()
+        weg?.beende(abrupt: true)
+        return true
     }
 
-    func nimm(_ leitung: Vermittlungsleitung) {
+    /// Diese Verbindung trägt die Zugangsdaten des Mac — sie wird nicht mehr verdrängt.
+    func angemeldet(_ leitung: Vermittlungsleitung) {
         sperre.lock()
-        leitungen[ObjectIdentifier(leitung)] = leitung
+        plaetze.angemeldet(ObjectIdentifier(leitung))
         sperre.unlock()
     }
 
     func entferne(_ leitung: Vermittlungsleitung) {
+        let id = ObjectIdentifier(leitung)
         sperre.lock()
-        leitungen[ObjectIdentifier(leitung)] = nil
+        leitungen[id] = nil
+        plaetze.entferne(id)
         sperre.unlock()
     }
 
@@ -302,6 +366,7 @@ final class Leitungsregister: @unchecked Sendable {
         sperre.lock()
         let alle = Array(leitungen.values)
         leitungen = [:]
+        plaetze = Leitungsplaetze<ObjectIdentifier>()
         sperre.unlock()
         alle.forEach { $0.beende() }
     }

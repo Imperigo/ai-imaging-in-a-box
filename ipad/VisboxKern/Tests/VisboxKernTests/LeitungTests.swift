@@ -156,6 +156,45 @@ final class LeitungTests: XCTestCase {
         XCTAssertLessThan(runden, 40, "abgewiesen kurz nach der Grenze, nicht am Ende")
     }
 
+    /// **Byte für Byte bis an die Grenze — in linearer Zeit** (Sicherheitsdurchsicht vom
+    /// 01.10.2026). Bis dahin kopierte der Leser bei jedem Stück den ganzen Puffer und
+    /// suchte das Kopfende von vorn: 32 KiB in Einzelbytes waren gut 500 Millionen
+    /// Vergleiche, und ein Fremder im WLAN hielt damit den Mac beschäftigt, ohne je eine
+    /// Anfrage zu stellen. Die Schranke ist grosszügig — gemessen wird nur, ob es quadratisch
+    /// ist, nicht, wie schnell der Rechner ist (unter Linux, Debug: vorher 4,6 s, nachher
+    /// 0,02 s).
+    func testEinKopfInEinzelbytesKostetNichtQuadratischVielZeit() {
+        var leser = Anfrageleser()
+        var stand = leser.nimm(Data("GET / HTTP/1.1\r\nX-Lang: ".utf8))
+        let beginn = Date()
+        var runden = 0
+        while stand == .mehr && runden < Anfrageleser.kopfGrenze + 10 {
+            stand = leser.nimm(Data([0x61]))
+            runden += 1
+        }
+        XCTAssertEqual(code(stand), 431)
+        XCTAssertLessThan(Date().timeIntervalSince(beginn), 1.0, "quadratisch gesucht")
+    }
+
+    /// Das Kopfende, über Stückgrenzen zerschnitten, wird gefunden — an jeder Stelle. Die
+    /// Suche setzt dort fort, wo sie aufgehört hat; drei Bytes davor muss sie noch einmal
+    /// ansehen, sonst entginge ihr ein `\r\n\r\n`, das über die Grenze reicht.
+    func testDasKopfendeWirdAuchZerschnittenGefunden() {
+        let roh = Data("GET /api/fortschritt HTTP/1.1\r\nHost: m\r\n\r\n".utf8)
+        for schnitt1 in 1..<roh.count {
+            for schnitt2 in schnitt1..<roh.count {
+                var leser = Anfrageleser()
+                var stand = leser.nimm(roh.prefix(schnitt1))
+                if stand == .mehr { stand = leser.nimm(roh.subdata(in: schnitt1..<schnitt2)) }
+                if stand == .mehr { stand = leser.nimm(roh.suffix(from: schnitt2)) }
+                guard case .fertig(let a) = stand else {
+                    return XCTFail("\(schnitt1)/\(schnitt2): \(stand)")
+                }
+                XCTAssertEqual(a.kopf.ziel, "/api/fortschritt")
+            }
+        }
+    }
+
     // ---------------------------------------------------------- 100 Continue
 
     func testWerFragtBevorErSchicktBekommtEinmalWeiter() {

@@ -61,10 +61,19 @@ public struct Anfragekopf: Equatable, Sendable {
         self.koepfe = koepfe
     }
 
-    /// Der Pfad ohne Frage — so, wie der Server ihn vergleicht (`urlparse(...).path`).
+    /// Der Pfad ohne Frage, **wörtlich** — ohne Dekodieren und ohne `;…` abzutrennen.
+    /// `urlparse(...).path` des Servers trennt `;…` ab; darum geht nur weiter, was wörtlich
+    /// auf der Positivliste steht (`Vermittlungsregel.weiterreichbar`), und dort steht
+    /// kein `;`.
     public var pfad: String {
         if let frage = ziel.firstIndex(of: "?") { return String(ziel[..<frage]) }
         return ziel
+    }
+
+    /// Wie lang der Rumpf wird, nach `Content-Length` — 0, wenn keine Länge steht. Der
+    /// Leser hat sie schon geprüft (eine Zahl, höchstens `Anfrageleser.rumpfGrenze`).
+    public var laenge: Int {
+        Int(koepfe.wert("Content-Length") ?? "") ?? 0
     }
 }
 
@@ -192,6 +201,9 @@ public struct Anfrageleser: Sendable {
     public static let kopfGrenze = 32 * 1024
 
     private var puffer = Data()
+    /// Bis wohin der Puffer schon nach dem Kopfende abgesucht ist — die Suche setzt hier fort
+    /// (drei Bytes davor), statt bei jedem Stück von vorn zu beginnen.
+    private var gesucht = 0
     /// Der gelesene Kopf und wie lang der Rumpf wird — sobald der Kopf ganz ist.
     public private(set) var kopf: Anfragekopf?
     private var rumpfLaenge = 0
@@ -206,7 +218,10 @@ public struct Anfrageleser: Sendable {
         if let ende { return ende }
         puffer.append(stueck)
         if kopf == nil {
-            guard let grenze = Anfrageleser.kopfende(puffer) else {
+            // DREI BYTES ZURUECK: Ein `\r\n\r\n` kann ueber die Grenze zweier Stuecke reichen.
+            let ab = max(0, gesucht - 3)
+            gesucht = puffer.count
+            guard let grenze = Anfrageleser.kopfende(puffer, ab: ab) else {
                 // NOCH KEIN KOPFENDE — aber schon mehr, als ein Kopf sein darf. Nicht weiter
                 // sammeln: Wer 32 KiB ohne Leerzeile schickt, schickt keinen Kopf.
                 if puffer.count > Anfrageleser.kopfGrenze {
@@ -262,18 +277,25 @@ public struct Anfrageleser: Sendable {
 
     // ---------------------------------------------------------------- Handgriffe
 
-    /// Wo der Kopf endet: die erste Leerzeile (`\r\n\r\n`).
-    static func kopfende(_ daten: Data) -> (kopfLaenge: Int, rumpfAnfang: Int)? {
-        let b = [UInt8](daten)
-        guard b.count >= 4 else { return nil }
-        var i = 0
-        while i + 3 < b.count {
-            if b[i] == 13, b[i + 1] == 10, b[i + 2] == 13, b[i + 3] == 10 {
-                return (i, i + 4)
+    /// Wo der Kopf endet: die erste Leerzeile (`\r\n\r\n`) ab der Stelle `ab`.
+    ///
+    /// **Ohne Kopie und nur ab `ab`** (Sicherheitsdurchsicht vom 01.10.2026): Bis dahin wurde
+    /// der Puffer bei jedem Stück in eine Liste kopiert und von vorn durchsucht. Wer seinen
+    /// Kopf Byte für Byte schickt, liess den Mac so für 32 KiB rund eine halbe Milliarde
+    /// Bytes ansehen — *eine Suche, die bei jedem Byte von vorn beginnt, bezahlt der Leser,
+    /// nicht der Schreiber.*
+    static func kopfende(_ daten: Data, ab: Int = 0) -> (kopfLaenge: Int, rumpfAnfang: Int)? {
+        daten.withUnsafeBytes { (b: UnsafeRawBufferPointer) -> (Int, Int)? in
+            guard b.count >= 4 else { return nil }
+            var i = max(0, ab)
+            while i + 3 < b.count {
+                if b[i] == 13, b[i + 1] == 10, b[i + 2] == 13, b[i + 3] == 10 {
+                    return (i, i + 4)
+                }
+                i += 1
             }
-            i += 1
+            return nil
         }
-        return nil
     }
 
     /// Liest Anfragezeile und Köpfe — und wie lang der Rumpf wird.

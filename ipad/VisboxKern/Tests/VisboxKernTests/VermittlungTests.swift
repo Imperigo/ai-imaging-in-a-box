@@ -80,11 +80,12 @@ final class VermittlungTests: XCTestCase {
                                              kopplung: .offen))
         istTuer(Vermittlungsregel.entscheide(anfrage("GET", "/koppeln/"), zugang: zugang,
                                              kopplung: .offen))
-        // ABGELAUFEN: das Verbinden kommt durch (und hoert dann den Ablehnungssatz), die
-        // Koppelseite nicht mehr — wie beim Server.
+        // ABGELAUFEN: das Verbinden kommt an der Tuer vorbei und hoert den Ablehnungssatz —
+        // seit dem 01.10.2026 schon am Kopf, ohne Lesen —, die Koppelseite nicht mehr, wie
+        // beim Server.
         XCTAssertEqual(Vermittlungsregel.entscheide(anfrage("POST", "/api/verbinden"),
                                                     zugang: zugang, kopplung: .abgelaufen),
-                       .selbstKoppeln(.verbinden))
+                       .abweisen(Vermittlungsregel.koppelAblehnung))
         istTuer(Vermittlungsregel.entscheide(anfrage("GET", "/koppeln"), zugang: zugang,
                                              kopplung: .abgelaufen))
         istTuer(Vermittlungsregel.entscheide(anfrage("POST", "/api/verbinden"), zugang: zugang,
@@ -190,12 +191,16 @@ final class VermittlungTests: XCTestCase {
     func testDieKoppelwegeBeantwortetImmerDerMac() {
         let auth = zugang.anmeldung.kopfzeile
         for kopplung: Kopplungsstand? in [nil, .offen, .verbraucht] {
+            // EINE VERBRAUCHTE ZAHL lehnt der Mac schon am Kopf ab — auch das ist «selbst».
+            let erwartet: Vermittlung = kopplung == .verbraucht
+                ? .abweisen(Vermittlungsregel.koppelAblehnung)
+                : .selbstKoppeln(.verbinden)
             XCTAssertEqual(Vermittlungsregel.entscheide(anfrage("POST", "/api/verbinden", auth: auth),
                                                         zugang: zugang, kopplung: kopplung),
-                           .selbstKoppeln(.verbinden))
+                           erwartet)
             XCTAssertEqual(Vermittlungsregel.entscheide(anfrage("POST", "/api/verbinde%6E", auth: auth),
                                                         zugang: zugang, kopplung: kopplung),
-                           .selbstKoppeln(.verbinden))
+                           erwartet)
             XCTAssertEqual(Vermittlungsregel.entscheide(anfrage("GET", "/koppeln?x=1", auth: auth),
                                                         zugang: zugang, kopplung: kopplung),
                            .selbstKoppeln(.koppelseite))
@@ -213,6 +218,143 @@ final class VermittlungTests: XCTestCase {
             istTuer(Vermittlungsregel.entscheide(anfrage(art, "/api/projekt"), zugang: zugang,
                                                  kopplung: nil))
         }
+    }
+
+    // ------------------------------------------- nur die Wege, die die App ruft
+
+    /// **`;` im Pfad** (Sicherheitsdurchsicht vom 01.10.2026, belegt): `POST
+    /// /api/verbinden;x` hielt der Mac nicht für das Verbinden und reichte es mit dem
+    /// Kennwort des Heim-PC weiter. Python liest den Pfad mit `urlparse` **ohne** `;x`, prüft
+    /// die Zahl gegen seine eigene Kopplung — und gibt bei richtiger Zahl das Kennwort des
+    /// Heim-PC zurück. Jetzt geht nur weiter, was **wörtlich** auf der Positivliste steht.
+    func testEinStrichpunktImPfadGehtNichtZumHeimPc() {
+        let auth = zugang.anmeldung.kopfzeile
+        for ziel in ["/api/verbinden;x", "/api/verbinden;", "/api/verbinden/;x", "/koppeln;x",
+                     "/api/projekt;x", "/api/skizze;a=b", "/bild;x?name=a.png",
+                     "/api/verbinde%6E;x", "/api/proj%65kt", "/api/projekt%3Bx", "/API/projekt",
+                     "/api/projekt/", "/api//projekt", "/api/./projekt", "/api/x/../projekt"] {
+            for art in ["GET", "POST"] {
+                for kopplung: Kopplungsstand? in [nil, .offen] {
+                    let v = Vermittlungsregel.entscheide(
+                        anfrage(art, ziel, auth: auth, rumpf: Data(#"{"pin":"042917"}"#.utf8)),
+                        zugang: zugang, kopplung: kopplung)
+                    if case .weiterreichen = v { XCTFail("weitergereicht: \(art) \(ziel)") }
+                }
+            }
+        }
+        guard case .abweisen(let a) = Vermittlungsregel.entscheide(
+            anfrage("POST", "/api/verbinden;x", auth: auth), zugang: zugang, kopplung: .offen) else {
+            return XCTFail()
+        }
+        XCTAssertEqual(a.status, 404, "der Mac antwortet selbst, und zwar mit «gibt es nicht»")
+    }
+
+    /// Weiter geht **genau** die Positivliste, mit Frage und ohne; alles andere aus
+    /// `Wege.alle` beantwortet der Mac mit 404 (oder selbst, die zwei Koppelwege).
+    func testNurDiePositivlisteGehtWeiter() {
+        let auth = zugang.anmeldung.kopfzeile
+        var weiter: Set<Weg> = []
+        for weg in Wege.alle {
+            for ziel in [weg.pfad, weg.pfad + "?ordner=x"] {
+                switch Vermittlungsregel.entscheide(anfrage(weg.methode.rawValue, ziel, auth: auth),
+                                                    zugang: zugang, kopplung: nil) {
+                case .weiterreichen(let w):
+                    XCTAssertEqual(w.ziel, ziel)
+                    weiter.insert(weg)
+                case .abweisen(let a):
+                    XCTAssertEqual(a.status, weg.ohneAnmeldung ? 403 : 404, ziel)
+                case .selbstKoppeln:
+                    XCTAssertTrue(weg.ohneAnmeldung, ziel)
+                }
+            }
+        }
+        XCTAssertEqual(weiter, Set(Vermittlungsregel.weiterreichbar))
+        XCTAssertEqual(weiter, [Wege.projekt, Wege.fortschritt, Wege.bild, Wege.skizze,
+                                Wege.rechne, Wege.rechneSkizze, Wege.benennen, Wege.abbrechen])
+        // DIE ART GEHOERT DAZU: `GET /api/skizze` ist nicht `POST /api/skizze`.
+        guard case .abweisen(let a) = Vermittlungsregel.entscheide(
+            anfrage("GET", "/api/skizze", auth: auth), zugang: zugang, kopplung: nil) else {
+            return XCTFail()
+        }
+        XCTAssertEqual(a.status, 404)
+        // UND WEGE, DIE DIE APP GAR NICHT KENNT: die Knotenansicht, die Brücke.
+        for ziel in ["/knoten", "/knoten/mappe", "/bruecke/jobs", "/favicon.ico"] {
+            for art in ["GET", "POST"] {
+                if case .weiterreichen = Vermittlungsregel.entscheide(
+                    anfrage(art, ziel, auth: auth), zugang: zugang, kopplung: nil) {
+                    XCTFail("\(art) \(ziel)")
+                }
+            }
+        }
+    }
+
+    /// **Jeder Weg ist entschieden:** weitergereicht oder bewusst nicht. Kommt in `Wege.alle`
+    /// ein neuer dazu, fällt diese Probe, bis jemand ihn einer der zwei Listen zuordnet.
+    func testJederWegIstWeitergereichtOderBewusstNicht() {
+        let weiter = Set(Vermittlungsregel.weiterreichbar)
+        let nicht = Set(Vermittlungsregel.nichtWeitergereicht)
+        XCTAssertTrue(weiter.isDisjoint(with: nicht))
+        XCTAssertEqual(weiter.union(nicht), Set(Wege.alle))
+        XCTAssertFalse(weiter.contains(Wege.verbinden))
+        XCTAssertFalse(weiter.contains(Wege.koppeln))
+        XCTAssertTrue(weiter.allSatisfy { !$0.ohneAnmeldung })
+    }
+
+    // ------------------------------------------------- die Koppelwege, klein und kurz
+
+    /// **Ein Fremder schickt keine vier Megabyte an das Verbinden** (Sicherheitsdurchsicht
+    /// vom 01.10.2026, belegt): Unangemeldet kam `POST /api/verbinden` bis 4 MiB durch, auch
+    /// bei toter Zahl, und das JSON wurde auf dem Hauptfaden gelesen. Jetzt sagt schon der
+    /// Kopf: mehr als 1 KiB ist kein Koppeln.
+    func testDieKoppelwegeNehmenAmKopfHoechstensEinKiB() throws {
+        let gross = String(Vermittlungsregel.koppelRumpfGrenze + 1)
+        let auth = zugang.anmeldung.kopfzeile
+        for (art, pfad) in [("POST", "/api/verbinden"), ("GET", "/koppeln")] {
+            for a in [nil, auth] {
+                var k = [Kopfzeile("Content-Length", gross)]
+                if let a { k.append(Kopfzeile("Authorization", a)) }
+                let v = Vermittlungsregel.vorab(Anfragekopf(methode: art, ziel: pfad, koepfe: k),
+                                                zugang: zugang, kopplung: .offen)
+                guard case .abweisen(let antwort)? = v else { return XCTFail("\(art) \(pfad)") }
+                XCTAssertEqual(antwort.status, 413, "\(art) \(pfad)")
+            }
+        }
+        let genug = Anfragekopf(methode: "POST", ziel: "/api/verbinden", koepfe: [
+            Kopfzeile("Content-Length", String(Vermittlungsregel.koppelRumpfGrenze))])
+        XCTAssertNil(Vermittlungsregel.vorab(genug, zugang: zugang, kopplung: .offen))
+        // DIE BAUFORM DER APP PASST LOCKER HINEIN.
+        let app = try Anfragen.verbinden(XCTUnwrap(Kopplungszahl("042917")))
+        XCTAssertLessThan(app.rumpf?.count ?? 0, Vermittlungsregel.koppelRumpfGrenze / 8)
+        // ANDERE WEGE BEHALTEN IHRE GRENZE: Eine Skizze geht angemeldet weiter.
+        let skizze = Anfragekopf(methode: "POST", ziel: "/api/skizze", koepfe: [
+            Kopfzeile("Content-Length", "3000000"), Kopfzeile("Authorization", auth)])
+        XCTAssertNil(Vermittlungsregel.vorab(skizze, zugang: zugang, kopplung: nil))
+    }
+
+    /// **Eine tote Zahl wird am Kopf abgelehnt**, ohne dass ein Byte des Rumpfs gelesen ist —
+    /// mit dem gleichbleibenden Satz, den das Gerät auch sonst hört (Protokoll §7).
+    func testEineToteZahlWirdAmKopfAbgelehntOhneLesen() throws {
+        for tot: Kopplungsstand in [.abgelaufen, .aufgebraucht, .verbraucht] {
+            for a in [nil, zugang.anmeldung.kopfzeile] {
+                var k = [Kopfzeile("Content-Length", "16")]
+                if let a { k.append(Kopfzeile("Authorization", a)) }
+                let v = Vermittlungsregel.vorab(Anfragekopf(methode: "POST", ziel: "/api/verbinden",
+                                                            koepfe: k),
+                                                zugang: zugang, kopplung: tot)
+                guard case .abweisen(let antwort)? = v else { return XCTFail("\(tot)") }
+                XCTAssertEqual(antwort.status, 403)
+                XCTAssertEqual(try Kopplungsergebnis.lies(status: antwort.status, daten: antwort.rumpf),
+                               .abgelehnt(satz: Vermittlerkopplung.satzFuerDasGeraet))
+            }
+        }
+        // AM STAND: Der Mensch am Mac erfährt trotzdem, woran es lag.
+        var stand = Vermittlerstand(zugang: zugang)
+        stand.oeffneKopplung(jetzt: 0, zahl: "042917")
+        XCTAssertEqual(stand.vorab(Anfragekopf(methode: "POST", ziel: "/api/verbinden",
+                                               koepfe: [Kopfzeile("Content-Length", "16")]),
+                                   jetzt: 700)?.status, 403)
+        XCTAssertEqual(stand.letzterKoppelgrund,
+                       Vermittlerkopplung.grundAbgelaufen + " (noch 5 Versuche)")
     }
 
     // --------------------------------------------------------- die Adresse drüben
@@ -288,12 +430,28 @@ final class VermittlungTests: XCTestCase {
     }
 
     func testOhneAntwortEntscheidenArtUndBytes() {
-        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "GET", bytesHinaus: 99),
+        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "GET", bytesHinaus: 99,
+                                                leitungStand: true),
                        .nichtErreicht(grund: "g"), "ein GET ändert drüben nichts")
-        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "POST", bytesHinaus: 0),
+        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "POST", bytesHinaus: 0,
+                                                leitungStand: false),
                        .nichtErreicht(grund: "g"))
-        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "POST", bytesHinaus: 1),
+        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "POST", bytesHinaus: 1,
+                                                leitungStand: false),
                        .ungewiss(grund: "g"))
+    }
+
+    /// **Ein POST ohne Rumpf kann angekommen sein** (Sicherheitsdurchsicht vom 01.10.2026):
+    /// `POST /api/abbrechen` hat keinen Rumpf, und gezählt wurden nur Rumpf-Bytes — er galt
+    /// darum immer als «nicht erreicht», auch wenn der Kopf drüben angekommen war und der
+    /// Lauf schon anhielt. Stand die Leitung, ist es ungewiss.
+    func testEinLeererPostIstUngewissSobaldDieLeitungStand() {
+        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "POST", bytesHinaus: 0,
+                                                leitungStand: true),
+                       .ungewiss(grund: "g"))
+        XCTAssertEqual(Heimergebnis.ohneAntwort(grund: "g", methode: "GET", bytesHinaus: 0,
+                                                leitungStand: true),
+                       .nichtErreicht(grund: "g"))
     }
 
     // ------------------------------------------- die App von heute, gegen den Mac
@@ -460,6 +618,23 @@ final class VermittlungTests: XCTestCase {
         XCTAssertEqual(still.satz, "Wartet auf das iPad. Letzte Anfrage vor 3 min.")
     }
 
+    /// **Ausdrücklich eingeschaltet** (Sicherheitsdurchsicht vom 01.10.2026): Ist «iPad über
+    /// diesen Mac anbieten» aus, sagt die Zeile das — vor jedem anderen Zustand, auch vor
+    /// einer geltenden Zahl, weil dann niemand sie erreicht.
+    func testAusgeschaltetSagtDieZeileWieManEinschaltet() {
+        var stand = Vermittlerstand(zugang: zugang)
+        stand.oeffneKopplung(jetzt: 0, zahl: "123456")
+        let aus = Vermittlerlage.bestimme(angeboten: false, bereit: true, fehler: "x",
+                                          stand: stand, jetzt: 1)
+        XCTAssertEqual(aus, .aus)
+        XCTAssertEqual(aus.satz, "Aus — im Menü «iPad» einschalten, wenn ein iPad mitkommt.")
+        XCTAssertEqual(aus.alsZeilenstand(), .wartet(satz: aus.satz))
+        XCTAssertFalse(aus.satz.contains("123"), "eine Zahl, die niemand erreicht, steht nicht da")
+        XCTAssertEqual(Vermittlerlage.bestimme(angeboten: true, bereit: true, fehler: nil,
+                                               stand: stand, jetzt: 1),
+                       .koppeln(zahl: "123456", nochSekunden: 599))
+    }
+
     func testEineGeltendeZahlGehtVorVerbunden() {
         var stand = Vermittlerstand(zugang: zugang)
         _ = stand.beantworte(anfrage("GET", "/api/fortschritt", auth: zugang.anmeldung.kopfzeile),
@@ -492,17 +667,6 @@ final class VermittlungTests: XCTestCase {
         XCTAssertTrue(lang.hasPrefix(Marke.name + " über "))
         XCTAssertEqual(Vermittlerangebot.dienstname(rechner: "Mac"), Marke.name + " über Mac")
     }
-}
-
-private extension Serverfehler {
-    static func aus(_ a: Leitungsantwort) -> Serverfehler {
-        do {
-            _ = try liesAntwort(status: a.status, daten: a.rumpf)
-        } catch let f as Serverfehler {
-            return f
-        } catch {}
-        return Serverfehler(code: a.status, satz: "", satzVomServer: false)
-    }
 
     // ------------------------------------------------------ in die Startzeile
 
@@ -520,5 +684,16 @@ private extension Serverfehler {
         XCTAssertTrue(Vermittlerlage.koppeln(zahl: "123456", nochSekunden: 90)
                         .alsZeilenstand().satz.contains("123 456"),
                       "die Zahl muss am Mac zu lesen sein")
+    }
+}
+
+private extension Serverfehler {
+    static func aus(_ a: Leitungsantwort) -> Serverfehler {
+        do {
+            _ = try liesAntwort(status: a.status, daten: a.rumpf)
+        } catch let f as Serverfehler {
+            return f
+        } catch {}
+        return Serverfehler(code: a.status, satz: "", satzVomServer: false)
     }
 }

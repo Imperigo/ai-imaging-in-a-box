@@ -43,10 +43,14 @@ public struct Kopplungsversuch: Equatable, Sendable {
 /// Eine offene Kopplung am Mac: die Zahl, ihre Frist und was von ihr übrig ist.
 ///
 /// **Die Uhr wird hineingereicht** (`jetzt`), nicht gelesen: Die Proben stellen sie, der Mac
-/// gibt die stetige Uhr (`Vermittlerkopplung.stetigeUhr`), die nicht zurückspringen kann —
-/// wer die Wanduhr zurückstellt, verlängerte sonst die Frist (dieselbe Überlegung wie in
-/// `kopplung.py`). Der Zustand liegt **nur im Arbeitsspeicher**: Eine Zahl, die einen
-/// Neustart überlebte, wäre eine, die jemand vor drei Wochen abgelesen hat.
+/// gibt seine Vermittlungsuhr (`Vermittlungsuhr` im Mac-Teil), die nicht zurückspringen kann
+/// — wer die Wanduhr zurückstellt, verlängerte sonst die Frist (dieselbe Überlegung wie in
+/// `kopplung.py`) — **und die im Ruhezustand weiterläuft**: Eine Uhr, die bei zugeklapptem
+/// Deckel stillsteht, liesse eine Zahl über Nacht gelten. Welche Uhr das auf welchem System
+/// ist, weiss nur der Mac-Teil; der Kern bleibt ohne sie (Sicherheitsdurchsicht vom
+/// 01.10.2026: hier stand `systemUptime`, und die steht im Ruhezustand still). Der Zustand
+/// liegt **nur im Arbeitsspeicher**: Eine Zahl, die einen Neustart überlebte, wäre eine, die
+/// jemand vor drei Wochen abgelesen hat.
 public struct Vermittlerkopplung: Sendable {
 
     /// Wie lange eine Zahl gilt — Abschrift von `kopplung.FRIST_S`.
@@ -71,13 +75,10 @@ public struct Vermittlerkopplung: Sendable {
     /// Die Zahl mit führenden Nullen. Sie gehört an den Bildschirm des Mac und in **kein
     /// Protokoll**.
     public let zahl: String
-    /// Ab wann sie nicht mehr gilt, auf der stetigen Uhr.
+    /// Ab wann sie nicht mehr gilt, auf der hineingereichten Uhr.
     public let faellig: TimeInterval
     public private(set) var versucheUebrig: Int
     public private(set) var verbraucht = false
-
-    /// Die stetige Uhr des Rechners (Sekunden seit dem Start) — sie springt nicht zurück.
-    public static var stetigeUhr: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
     /// Eine neue Zahl, ab `jetzt` für `frist` Sekunden und `versuche` Versuche.
     ///

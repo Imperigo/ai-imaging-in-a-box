@@ -199,6 +199,27 @@ def test_etwas_das_keine_zeichenkette_ist_stuerzt_nicht_ab():
     assert kopplung.pruefe(p, 123456, jetzt=1.0)["angenommen"] is False
 
 
+@pytest.mark.parametrize("eingabe", ["١٢٣٤٥٦", "１２３４５６", "12345٦", "ä", "123456é"])
+def test_ziffern_anderer_schriften_zaehlen_als_falscher_versuch(eingabe):
+    """Arabisch-indische oder breite Ziffern sind keine Zahl der HomeStation — und sie
+    dürfen den Vergleich nicht zum Absturz bringen (Sicherheitsdurchsicht vom 01.10.2026).
+
+    ``hmac.compare_digest`` wirft bei Text mit Zeichen ausserhalb von ASCII einen
+    ``TypeError``; die Anfrage brach dann ohne Antwort ab, und der Versuch war gezählt, ohne
+    dass das Gerät es erfuhr. Jetzt ist es ein gewöhnlicher falscher Versuch, mit dem Satz
+    für das Gerät.
+    """
+    p = kopplung.eroeffne(jetzt=0.0, _pin="123456")
+
+    antwort = kopplung.pruefe(p, eingabe, jetzt=1.0)
+
+    assert antwort["angenommen"] is False
+    assert antwort["grund"] == kopplung.GRUND_FALSCH
+    assert antwort["satz_fuer_das_geraet"] == kopplung.SATZ_FUER_DAS_GERAET
+    assert antwort["versuche_uebrig"] == kopplung.VERSUCHE - 1
+    assert kopplung.pruefe(p, "123456", jetzt=2.0)["angenommen"] is True
+
+
 def test_der_vergleich_laeuft_ueber_compare_digest():
     """Ein gewöhnlicher Vergleich bricht bei der ersten abweichenden Stelle ab.
 

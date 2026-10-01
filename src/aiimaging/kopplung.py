@@ -247,7 +247,13 @@ def pruefe(kopplung: Kopplung, eingabe, *, jetzt=None) -> dict:
     # Vor dem Vergleich wird Leerraum weggenommen — ein Tablet haengt beim Einfuegen gern
     # ein Leerzeichen an, und daran soll niemand scheitern. Mehr NICHT: Wer «1 2 3 4 5 6»
     # zusammenzoege, machte aus zwei verschiedenen Eingaben dieselbe.
-    stimmt = hmac.compare_digest(gegeben.strip(), kopplung.pin)
+    gegeben = gegeben.strip()
+    # NUR ASCII KOMMT IN DEN VERGLEICH (Sicherheitsdurchsicht vom 01.10.2026): Mit einem
+    # Zeichen ausserhalb von ASCII («١٢٣٤٥٦», breite Ziffern) wirft `compare_digest` einen
+    # TypeError — die Anfrage brach dann ohne Antwort ab, und der Versuch war schon gezaehlt.
+    # Die Zahl der HomeStation ist reines ASCII; was es nicht ist, ist ein falscher Versuch.
+    # Dass hier frueher entschieden wird, verraet nichts: Es haengt nur an der Eingabe.
+    stimmt = gegeben.isascii() and hmac.compare_digest(gegeben, kopplung.pin)
 
     if not stimmt:
         rest = kopplung.versuche_uebrig
