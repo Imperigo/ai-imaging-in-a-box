@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local-prepare",
+ "auftrag_id": "auf-20261001-229",
+ "art": "frage",
+ "beschreibung": "Wiederholung von 227 mit dem richtigen Ordner: KosmoPrepare-Stand, run_tests.sh und libs_pruefen.py, je mit Belegzeile.",
+ "anweisung": "=== PRUEFAUFTRAG AN DEN LOKALEN HELFER, ZWEITER ANLAUF (Owner-Entscheid Nr. 21, Versuch) ===\n\nWARUM NOCH EINMAL\n  Auftrag 227 nannte den falschen Ordner (den Elternordner statt des Klons). Der Fehler lag im\n  Auftrag, nicht beim Helfer. Derselbe Auftrag, jetzt mit dem Klon selbst in «rechte.lesen».\n\nWORUM ES GEHT\n  Nachsehen, ob KosmoPrepare auf dem Heimrechner auf dem neuesten Stand ist und seine Proben\n  gruen laufen. Nur lesen und die drei erlaubten Befehle ausfuehren. Nichts aendern.\n\nSCHRITTE (im KosmoPrepare-Klon, Ordner aus «rechte.lesen»)\n  1. git log -1 --format=%h\n     Zurueck: der Hash (die eine Ausgabezeile).\n  2. ./run_tests.sh\n     Zurueck, je woertlich:\n       (a) die Zeile, die mit «Ran » beginnt;\n       (b) die Zeile, die mit «OK» oder mit «FAILED» beginnt — NICHT die letzte Zeile der\n           Ausgabe (danach kommen noch andere Zeilen, z.B. «Dashboard geschrieben …»);\n       (c) falls (b) mit «FAILED» beginnt: jede Zeile, die mit «FAIL:» oder «ERROR:» beginnt.\n  3. python3 tools/libs_pruefen.py\n     Zurueck, je woertlich: die Zeile, die mit einer Zahl und «Copyleft-Paket(e) in libs/»\n     beginnt, und jede Zeile, die «[FEHLT]» oder «KANN WEG» enthaelt.\n     «keine» darf NUR stehen, wenn der Befehl gelaufen ist und die Copyleft-Zeile als Beleg\n     dabeisteht. Ohne Copyleft-Zeile heisst der ganze Schritt «nicht geprueft» — in 227 stand\n     dort «keine», ohne dass der Befehl je lief.\n\nWAS ZURUECKKOMMT\n  Je Angabe die gesehene Ausgabezeile (Belegpflicht). Was nicht gesehen wurde, heisst\n  «nicht geprueft» — keine Zahl, die nicht in einer Zeile stand.\n  Erwartet (zur Gegenprobe, nicht zum Abschreiben): Hash mindestens cbb247a, (b) beginnt mit\n  «OK», bei libs_pruefen kein «[FEHLT]».\n\nWAS NICHT GETAN WERDEN SOLL\n  Keinen anderen Befehl als die drei. Nichts schreiben ausser der Ergebnisdatei. Nichts\n  installieren, nichts loeschen, nichts committen — auch nicht, wenn libs_pruefen etwas als\n  «KANN WEG» nennt.\n",
+ "erstellt": "2026-10-02T00:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie"
+ },
+ "rechte": {
+  "lesen": [
+   "/mnt/data/ArchitekturKosmos/Code/KosmoPrepare/01_Source_Code"
+  ],
+  "befehle": [
+   "git log -1 --format=%h",
+   "./run_tests.sh",
+   "python3 tools/libs_pruefen.py"
+  ],
+  "ergebnis": "auftraege/ergebnisse/auf-20261001-229.json"
+ },
+ "params": {
+  "owner_freigabe": "KosmoPrepare docs/ENTSCHEIDE-2026-10-01.md Nr. 21",
+  "kosmoprepare_stand_min": "4bdb390",
+  "wiederholt": "auf-20261001-227"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren, nichts loeschen.",
+  "hinweise": [
+   "Liegt der Klon nicht im genannten Ordner, ist das ein Mangel des Auftrags — melden, nicht suchen."
+  ]
+ },
+ "rueckgabe": [
+  "1 Hash mit Belegzeile.",
+  "2 (a) «Ran …», (b) «OK…»/«FAILED…», (c) FAIL/ERROR-Zeilen — woertlich.",
+  "3 Copyleft-Zeile woertlich, dazu [FEHLT]/KANN WEG-Zeilen oder «keine» — «keine» nur mit Copyleft-Zeile als Beleg."
+ ],
+ "rang": 5
+}
