@@ -7720,7 +7720,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **cloud:** `auf-20261001-231` beantworten (P1–P4).
 - [x] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
       *(abgelegt 01.10.2026 als `auf-20261001-230`, 17 Posten, wartet auf den Tag v0.1.6)*
-- [ ] **local:** `auf-20261001-230` beantworten.
+- [x] **local:** `auf-20261001-230` beantworten.
+      *(01.10.2026: 10 bestätigt, 2 nicht, 5 nicht prüfbar — Protokoll 74 §20)*
+- [ ] **Kern:** Befunde aus 230 beheben (Schlange, Aufsicht E67, Qwen-2.1 früh abweisen, guidance_applied, Innenkamera).
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
