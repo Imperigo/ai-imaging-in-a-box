@@ -1,0 +1,30 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-234",
+ "worker": "local",
+ "status": "offen — Teil A erledigt; Teil B wartet (Mac offline, Freigabe «Bildschirmaufnahme» fuer die Fernsteuerung noch nicht aktiv)",
+ "git_log_1": "86b847c Protokoll: fünf App-Befunde aus 230 bauen wir selbst, auf dem P1-Zweig",
+ "weg": "Quellstand per git archive (ipad/, dazu die von den Proben gelesenen src/aiimaging/kette.py und oberflaeche/seite.html) ueber SSH auf den Mac des Owners; gebaut dort mit Xcode. Owner-Ja zur Fernsteuerung liegt vor.",
+ "A1_fassungen": {
+  "xcode": "Xcode 26.6 (Build 17F113)",
+  "swift": "Apple Swift 6.3.3 (swiftlang-6.3.3.1.3)",
+  "macos": "26.5.2, Apple-Chip (arm64)"
+ },
+ "A2_swift_test": {
+  "proben": 401,
+  "fehlschlaege": 0,
+  "zeile": "Executed 401 tests, with 0 failures (0 unexpected) in 1.350 (1.366) seconds",
+  "hinweis": "Im ersten Lauf 2 rot (PruefzeichenTests: testDerAnfangIstDerDesServers, testDieGemeinsamenToeneSindDieDerWebseite), weil die Proben src/aiimaging/kette.py und oberflaeche/seite.html aus dem Repo lesen und ich zuerst nur ipad/ uebertragen hatte — kein Fehler der App. Mit den beiden Dateien 401/0."
+ },
+ "A3_bau": {
+  "befehl": "swift build -c release --arch arm64 (ipad/VisboxMac), Buendel wie .github/workflows/ipad.yml Job «mac», codesign --force --deep --sign -",
+  "ergebnis": "Build complete! (18.18s); Visbox.app 6,6 MB; Info.plist plutil OK; Signatur adhoc",
+  "beispielmappe": "Vorfuehrmappe (die echte aus 218/220), 9 Bilder + vorfuehrmappe.json",
+  "befund": "CFBundleIdentifier ist noch der Platzhalter «org.example.visbox.mac» — vor einer Weitergabe ersetzen (macOS ordnet Einstellungen, Freigaben und Schluesselbund-Eintraege dieser Kennung zu)."
+ },
+ "A4_warnungen": {
+  "anzahl": 0
+ },
+ "B": "noch nicht gefahren — zuerst wurde am selben Mac KosmoOrbit v0.1.6 gebaut und vom Owner benutzt; danach fehlte die Freigabe «Bildschirmaufnahme» fuer die SSH-Sitzung (screencapture: «could not create image from display»), und seit ~19:20 ist der Mac offline. Bedienungshilfen (System Events) gingen ueber SSH.",
+ "messzeit": "2026-10-01 18:50–19:25"
+}
