@@ -263,9 +263,17 @@ def test_name_kennung_und_dienst_stehen_nur_in_der_marke():
     unverwechselbar). Der Name darf in keiner **Zeichenkette** stehen: In einem
     Typnamen wie ``VisboxApp`` ist er Quelltext und wird nie angezeigt; in einer
     Zeichenkette erscheint er am Bildschirm und bliebe nach der Umbenennung stehen.
+
+    **Eine Ausnahme, und sie ist eng** (01.10.2026, Vorführmappe): die Kennung eines
+    Dateiformats, ``<name>.<wort>/v<n>`` (``visbox.vorfuehrmappe/v1``, wie
+    ``visbox.projekt/v1`` auf der Python-Seite). Sie ist kein Text am Bildschirm, sondern
+    der Name eines Formats — und der soll eine Umbenennung **überleben**: Eine Mappe, die vor
+    der Umbenennung geschrieben wurde, muss danach noch lesbar sein. Alles andere in
+    derselben Zeichenkette bleibt geprüft.
     """
     marke = _marke()
     ausnahmen = {MARKE.resolve(), APP_MANIFEST.resolve(), KERN_MANIFEST.resolve()}
+    formatkennung = re.compile(re.escape(marke["name"].lower()) + r"\.[a-z]+/v\d+")
     funde = []
     for datei in _swift_dateien(IPAD):
         if datei.resolve() in ausnahmen:
@@ -275,7 +283,7 @@ def test_name_kennung_und_dienst_stehen_nur_in_der_marke():
             if marke[schluessel] in text:
                 funde.append(f"{datei.relative_to(WURZEL)}: {schluessel} {marke[schluessel]!r}")
         for kette in _zeichenketten(text):
-            if marke["name"].lower() in kette.lower():
+            if marke["name"].lower() in formatkennung.sub("", kette.lower()):
                 funde.append(f"{datei.relative_to(WURZEL)}: Name in {kette!r}")
     assert not funde, "Ausserhalb von Marke.swift:\n  " + "\n  ".join(funde)
 

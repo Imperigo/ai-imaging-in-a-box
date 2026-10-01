@@ -1,0 +1,151 @@
+{
+  "schema": "visbox.vorfuehrmappe/v1",
+  "titel": "Testbau",
+  "art": "Beispielmappe",
+  "platzhalter": true,
+  "gerechnet_am": null,
+  "erstellt_am": "2026-10-01",
+  "satz": "Platzhalter: graue Flächen statt gerechneter Bilder, die Zeichen von Hand gesetzt und nicht gemessen. Die echte Beispielmappe rechnet der Heim-PC aus einem synthetischen Testbau.",
+  "bilder": [
+    {
+      "datei": "blick-sued-ost.png",
+      "blick": "Blick Süd-Ost",
+      "gerechnet_am": null,
+      "satz": "Platzhalter: graue Fläche, das Zeichen von Hand gesetzt — weder gerechnet noch gemessen.",
+      "flaeche": {
+        "bild": "blick-sued-ost.png",
+        "schicht": "ai-imaging-layer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T09:00:00Z",
+        "score": 0.84,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": null,
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "blick-nord-west.png",
+      "blick": "Blick Nord-West",
+      "gerechnet_am": null,
+      "satz": "Platzhalter: graue Fläche, das Zeichen von Hand gesetzt — weder gerechnet noch gemessen.",
+      "flaeche": {
+        "bild": "blick-nord-west.png",
+        "schicht": "ai-imaging-layer",
+        "zeichen": "durchgefallen",
+        "satz": "Die Geometrieprüfung ist nicht bestanden.",
+        "erzeugt": "2026-10-01T09:00:00Z",
+        "score": 0.52,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": null,
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "skizze-ueber-den-hof.png",
+      "blick": "Skizze über den Hof",
+      "gerechnet_am": null,
+      "satz": "Platzhalter: graue Fläche, das Zeichen von Hand gesetzt — weder gerechnet noch gemessen.",
+      "flaeche": {
+        "bild": "skizze-ueber-den-hof.png",
+        "schicht": "ai-imaging-layer",
+        "zeichen": "nicht-gemessen",
+        "satz": "NICHT GEMESSEN: Die Geometrieprüfung lief in diesem Lauf nicht.",
+        "erzeugt": "2026-10-01T09:00:00Z",
+        "score": null,
+        "schwelle": null,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": [
+          "SKIZZE NICHT ANGEKOMMEN: Das Vorgabemodell nimmt gemessen kein Ausgangsbild an (Befund auf-20260919-123). Das Bild ist aus Tiefenkarte und Text gerechnet — was hineingezeichnet war, steckt nicht darin."
+        ],
+        "skizze_nicht_angekommen": true,
+        "skizze_hinweis": "SKIZZE NICHT ANGEKOMMEN: Das Vorgabemodell nimmt gemessen kein Ausgangsbild an (Befund auf-20260919-123). Das Bild ist aus Tiefenkarte und Text gerechnet — was hineingezeichnet war, steckt nicht darin.",
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "blick-von-der-strasse.png",
+      "blick": "Blick von der Strasse",
+      "gerechnet_am": null,
+      "satz": "Platzhalter: graue Fläche, das Zeichen von Hand gesetzt — weder gerechnet noch gemessen.",
+      "flaeche": {
+        "bild": "blick-von-der-strasse.png",
+        "schicht": "ai-imaging-layer",
+        "zeichen": "nicht-gemessen",
+        "satz": "Entwurf — nicht geprüft: schnell gerechnet, ohne Geometrieprüfung (Entscheid 30). NICHT GEMESSEN — weder bestanden noch durchgefallen.",
+        "erzeugt": "2026-10-01T09:00:00Z",
+        "score": null,
+        "schwelle": null,
+        "titel": null,
+        "entwurf": true,
+        "variantengruppe": null,
+        "hinweise": null,
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "blick-sued.png",
+      "blick": "Blick Süd",
+      "gerechnet_am": null,
+      "satz": "Platzhalter: graue Fläche, das Zeichen von Hand gesetzt — weder gerechnet noch gemessen.",
+      "flaeche": {
+        "bild": "blick-sued.png",
+        "schicht": "ai-imaging-layer",
+        "zeichen": "bestanden",
+        "satz": "Die Geometrieprüfung ist bestanden.",
+        "erzeugt": "2026-10-01T09:00:00Z",
+        "score": 0.91,
+        "schwelle": 0.65,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": null,
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    },
+    {
+      "datei": "blick-ost.png",
+      "blick": "Blick Ost",
+      "gerechnet_am": null,
+      "satz": "Platzhalter: graue Fläche, das Zeichen von Hand gesetzt — weder gerechnet noch gemessen.",
+      "flaeche": {
+        "bild": "blick-ost.png",
+        "schicht": "ai-imaging-layer",
+        "zeichen": "nicht-gemessen",
+        "satz": "NICHT GEMESSEN: Die Geometrieprüfung lief in diesem Lauf nicht.",
+        "erzeugt": "2026-10-01T09:00:00Z",
+        "score": null,
+        "schwelle": null,
+        "titel": null,
+        "entwurf": false,
+        "variantengruppe": null,
+        "hinweise": null,
+        "skizze_nicht_angekommen": null,
+        "skizze_hinweis": null,
+        "vorher": null,
+        "unterlage_hinweis": null
+      }
+    }
+  ]
+}
