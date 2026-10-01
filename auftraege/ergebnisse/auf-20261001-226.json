@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-226",
+ "worker": "local",
+ "status": "erledigt (Abholer steht) — wartet auf den Vertrag von KosmoVis",
+ "git_log_1": "3741714 Auftragsvertrag: Adressat local-prepare, eng gefasst — nur Fragen, nur ausdrücklich erlaubte Rechte",
+ "worker_wert": "local-prepare",
+ "rechte_beispiel": {
+  "lesen": [
+   "<KosmoPrepare-Klon am Heimrechner>"
+  ],
+  "befehle": [
+   "git log -1",
+   "./run_tests.sh",
+   "python3 tools/libs_pruefen.py"
+  ],
+  "ergebnis": "auftraege/ergebnisse/<auftrag_id>.json"
+ },
+ "rechte_regeln": [
+  "lesen: Ordner unter dem Heimverzeichnis oder dem Datenlaufwerk; versteckte Ordner, Einstellungen, Schluessel und /etc gesperrt",
+  "befehle: Praefixe ohne ; & | $ ` > < ; git nur lesend; Interpreter nur mit Skriptpfad",
+  "ergebnis: genau auftraege/ergebnisse/<auftrag_id>.json"
+ ],
+ "pruefe_auftrag_nimmt_an": false,
+ "pruefe_auftrag_maengel_heute": [
+  "Falsches Schema: None statt 'aiimaging.homeworker-auftrag/v1'"
+ ],
+ "warum_noch_nicht": "Der Vertrag (aiimaging.auftrag) gehoert KosmoVis; «local-prepare» und «rechte» sind dort am 01.10. erbeten. Bis dahin nimmt der Abholer korrekt nichts an.",
+ "abholer": {
+  "ort": "KosmoBetrieb/pruefhelfer (Zeitgeber alle 10 min)",
+  "modell": "kosmo-qwen3.6:35b-a3b (lokal, ueber claude-code-router)",
+  "bedingungen": [
+   "nur art «frage» und worker «local-prepare», pruefe_auftrag ohne Mangel",
+   "nur bei leerer Grafikkarte, nie zwei zugleich",
+   "Rechte nur ueber die Befehlszeile; schreiben darf er genau eine Datei im eigenen Arbeitsordner",
+   "Belegpflicht: je Angabe die gesehene Ausgabezeile; sonst «nicht geprueft»",
+   "Der Home-PC-Worker prueft Ergebnis und Mitschnitt und laedt hoch; der Helfer committet nie"
+  ],
+  "probe": {
+   "auftrag": "git log -1 --format=%h und ./run_tests.sh im KosmoPrepare-Klon",
+   "ergebnis": "Hash richtig, Rueckgabewert 0 richtig; als «letzte Zeile» nannte er die letzte Zeile von stdout+stderr («Dashboard geschrieben: …») statt «OK (skipped=106)» — beide Lesarten stimmen",
+   "laufzeit_s": 38,
+   "selbsttest": "26/26",
+   "rechteprobe": "15/15"
+  }
+ },
+ "hinweis_fuer_den_ersten_auftrag": "«letzte Zeile» eindeutig fassen, z.B. «die Zeile, die mit OK oder FAILED beginnt». Den Rueckgabewert kann der Helfer nicht mit eigener Belegzeile zeigen ($? ist gesperrt); er schliesst ihn aus dem Fehlen einer Exit-code-Meldung."
+}
