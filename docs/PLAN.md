@@ -7669,5 +7669,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern:** iPad findet den Mac statt des Heim-PC, wenn es auswärts ist.
 - [ ] **Kern:** Assistent (Sprachmodell am Heim-PC, Lizenz nach Regel 1 geprüft).
 - [ ] **Kern:** Vorführmodus, falls der Heim-PC nicht erreichbar ist.
-- [ ] **local:** `auf-20261001-213` — messen, was am Heim-PC schon steht (Leitung, Ollama, Wechsel, Werkzeugaufrufe).
+- [x] **local:** `auf-20261001-213` — messen, was am Heim-PC schon steht (Leitung, Ollama, Wechsel, Werkzeugaufrufe).
+      *(Leitung steht; zwei Haken behoben; Wechsel ~4 s; Werkzeugaufrufe 3/3 — Sitzung 74 §3)*
+- [x] **Kern:** Weitergeleitete Anfragen nur mit Kennwort; `--kennwort-datei`; Dienst `betrieb/visbox-flaeche.service`.
+- [ ] **Owner:** Go für `auf-20261001-214` (Dienst und Weiterleitung am Heim-PC einrichten).
+- [ ] **local:** `auf-20261001-214` — einrichten und prüfen (nur mit Owner-Go).
 

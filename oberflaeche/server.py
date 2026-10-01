@@ -46,6 +46,7 @@ import importlib.util
 import json
 import re
 import secrets
+import os
 import socket
 import sys
 import threading
@@ -465,6 +466,30 @@ def erzeuge_kennwort() -> str:
     fortrechnen. *Ein Zufall, der sich fortrechnen lässt, ist keiner.*
     """
     return secrets.token_urlsafe(KENNWORTLAENGE)[:KENNWORTLAENGE]
+
+
+def kennwort_aus(datei) -> tuple[str, bool]:
+    """Das Kennwort aus ``datei`` — oder ein neues, dort abgelegt (``(kennwort, neu)``).
+
+    Für den Dauerbetrieb hinter einer Weiterleitung (``auf-20261001-213``): Ein bei jedem
+    Start neu erzeugtes Kennwort hiesse, jedes Gerät nach jedem Neustart neu zu koppeln.
+    Die Datei liegt beim Betreiber, **nie im Repo**; angelegt wird sie nur für den eigenen
+    Benutzer lesbar (0600). Eine leere Datei ist ein Fehler, kein «ohne Kennwort».
+    """
+    pfad = Path(datei)
+    if pfad.exists():
+        wert = pfad.read_text(encoding="utf-8").strip()
+        if not wert:
+            raise FlaechenError(
+                f"Die Kennwortdatei {pfad.name!r} ist leer. Ein leeres Kennwort ist kein "
+                f"Kennwort — Datei löschen, dann legt {NAME} ein neues an.")
+        return wert, False
+    wert = erzeuge_kennwort()
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(pfad, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(wert + "\n")
+    return wert, True
 
 
 def pruefe_anmeldung(kopfzeile, kennwort: str | None) -> bool:
@@ -1366,6 +1391,24 @@ def lies_formular(inhaltstyp: str, rumpf: bytes) -> dict:
     return felder
 
 
+#: Die Koepfe, an denen eine weitergeleitete Anfrage erkennbar bleibt. Tailscale Serve setzt
+#: ``X-Forwarded-For`` und die ``Tailscale-User-*``-Koepfe; die uebrigen setzen gewoehnliche
+#: Weiterleitungen. Ein einziger genuegt.
+WEITERLEITUNGS_KOEPFE = ("X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto",
+                         "Forwarded", "Tailscale-User-Login", "Tailscale-User-Name")
+
+
+def _ueber_weiterleitung(koepfe) -> bool:
+    """Trägt die Anfrage einen Kopf, den eine Weiterleitung setzt?"""
+    for name in WEITERLEITUNGS_KOEPFE:
+        wert = koepfe.get(name) if koepfe is not None else None
+        if wert is None and isinstance(koepfe, dict):
+            wert = next((v for k, v in koepfe.items() if k.lower() == name.lower()), None)
+        if wert:
+            return True
+    return False
+
+
 class Flaeche(BaseHTTPRequestHandler):
     """Übersetzt Anfragen in Bibliotheksaufrufe. Mehr tut sie nicht."""
 
@@ -1396,6 +1439,22 @@ class Flaeche(BaseHTTPRequestHandler):
         Die Seite fragt die Daten ja gerade ab. *Eine Tür, die nur einen von zwei Wegen
         bewacht, ist keine Tür.*
         """
+        # UEBER EINE WEITERLEITUNG NIE OHNE KENNWORT (Befund auf-20261001-213, 01.10.2026).
+        #
+        # Ohne Kennwort laesst die Tuer jeden herein — das war fuer `127.0.0.1` gedacht, wo
+        # nur diese Maschine fragt. Hinter einer Weiterleitung (Tailscale Serve, wie sie
+        # KosmoOrbit benutzt) kommt aber JEDE Anfrage von `127.0.0.1`, auch die eines
+        # fremden Geraets im eigenen Tailscale-Netz. Woran sie erkennbar bleibt: an den
+        # Koepfen, die eine Weiterleitung setzt. Traegt eine Anfrage einen davon und ist
+        # kein Kennwort verlangt, bleibt die Tuer zu — mit dem Satz, was zu tun ist.
+        #
+        #     *Eine Adresse sagt, woher die Leitung kommt, nicht wer am anderen Ende sitzt.*
+        if self.kennwort is None and _ueber_weiterleitung(self.headers):
+            self._fehler(
+                f"Diese Anfrage kam über eine Weiterleitung (z. B. Tailscale Serve). So ist "
+                f"{NAME} nur mit Kennwort erreichbar — den Server mit --kennwort-erzeugen "
+                f"starten und Benutzer und Kennwort aus seinem Fenster nehmen.", 403)
+            return False
         if pruefe_anmeldung(self.headers.get("Authorization"), self.kennwort):
             return True
 
@@ -2441,6 +2500,11 @@ def main(argv=None) -> int:
                          "127.0.0.1 ist.")
     ap.add_argument("--kennwort-erzeugen", action="store_true",
                     help="Ein zufälliges Kennwort erzeugen und anzeigen.")
+    ap.add_argument("--kennwort-datei", default=None,
+                    help="Kennwort aus dieser Datei lesen; fehlt sie, wird eines erzeugt "
+                         "und dort abgelegt (nur für den eigenen Benutzer lesbar). Für den "
+                         "Dauerbetrieb hinter einer Weiterleitung — das Kennwort übersteht "
+                         "einen Neustart.")
     ap.add_argument("--kopplung", action="store_true",
                     help="Eine sechsstellige Zahl anzeigen, mit der sich ein Gerät "
                          "EINMAL verbinden darf. Sie gilt zehn Minuten.")
@@ -2464,6 +2528,17 @@ def main(argv=None) -> int:
     else:
         adresse = a.adresse if a.adresse is not None else VORGABE_ADRESSE
     kennwort = a.kennwort
+    kennwort_aus_datei = None
+    if getattr(a, "kennwort_datei", None):
+        if kennwort:
+            print("--kennwort und --kennwort-datei widersprechen sich: bitte nur eines.")
+            return 2
+        try:
+            kennwort, neu = kennwort_aus(a.kennwort_datei)
+        except FlaechenError as fehler:
+            print(str(fehler))
+            return 2
+        kennwort_aus_datei = (a.kennwort_datei, neu)
     if getattr(a, "kennwort_erzeugen", False) and not kennwort:
         kennwort = erzeuge_kennwort()
 
@@ -2482,7 +2557,14 @@ def main(argv=None) -> int:
     # DER WIRKLICHE ANSCHLUSS, nicht der verlangte: Bei `--anschluss 0` waehlt das
     # Betriebssystem einen, und die Zeile nannte bisher die 0.
     print(startzeile(adresse, server.server_address[1]))
-    if kennwort:
+    if kennwort_aus_datei is not None:
+        # DAS KENNWORT NICHT INS PROTOKOLL. Im Dauerbetrieb landet diese Ausgabe im
+        # Systemprotokoll; dort hat ein Kennwort nichts zu suchen. Wer es braucht, liest die
+        # Datei — oder koppelt ein Gerät mit --kopplung.
+        datei, neu = kennwort_aus_datei
+        print(f"  Anmeldung:  Benutzer {BENUTZER!r}   Kennwort in der Datei "
+              f"{'(eben neu angelegt)' if neu else '(vorhanden)'}: {Path(datei).name}")
+    elif kennwort:
         print(f"  Anmeldung:  Benutzer {BENUTZER!r}   Kennwort {kennwort}")
     if offen is not None:
         minuten = int(kopplung.FRIST_S // 60)

@@ -4357,6 +4357,12 @@ Web-Anschluss aus. Das Kernprogramm ist frei (BSD-3-Clause), die Vermittlung ein
 Dienst. KosmoOrbit erreicht den Heim-PC schon so; Visbox benutzt denselben Weg. Im Projekt:
 `docs/VORFUEHRFASSUNG_2026-10-01.md`. Nicht mitgeliefert, sondern vom Owner installiert.
 
+**Tailscale Serve (Weiterleitung)** — Eine Funktion von Tailscale, die einen Dienst, der nur
+auf dem eigenen Rechner lauscht (`127.0.0.1`), im eigenen Tailscale-Netz unter einer Adresse
+mit Verschlüsselung (https) anbietet — ohne ihn dem ganzen Netz zu öffnen. Die Kehrseite: Für
+den Dienst sieht jede Anfrage aus, als käme sie vom eigenen Rechner. Visbox verlangt darum bei
+weitergeleiteten Anfragen immer ein Kennwort (Befund `auf-20261001-213`).
+
 **Ollama** — Ein Programm (MIT-Lizenz), das Sprachmodelle auf dem eigenen Rechner bereitstellt
 und über eine einfache Schnittstelle ansprechbar macht. Es kann ein Modell nach einer Antwort
 sofort aus der Grafikkarte entladen — wichtig, weil am Heim-PC Bildmodell und Sprachmodell
@@ -6160,7 +6166,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Ollama**, **Qwen3** |
+| 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |
 | 2026-09-29 | Ergaenzt aus E124 und der Antwort auf-142: **Ebene (im Ergebnis)**, **An der Aussengrenze übersetzen** |

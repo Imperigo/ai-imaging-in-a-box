@@ -59,3 +59,19 @@ Auftrag abgelegt, nichts angefasst:
 * **Er startet nichts nach.** Ein Auftrag, der scheitert, steht danach auf `error` mit
   Begründung und wird nicht wiederholt. Ein stiller Wiederholungsversuch wäre genau die
   Sorte Automatik, die einen Fehler unsichtbar macht.
+
+## Die Visbox-Fläche als Dienst (Vorführfassung, 01.10.2026)
+
+Für die Mac-App unterwegs (Entscheide 35–42, `docs/VORFUEHRFASSUNG_2026-10-01.md`). Die Fläche
+hört weiter nur auf `127.0.0.1`; erreichbar wird sie über eine Weiterleitung im eigenen
+Tailscale-Netz auf einem **eigenen** Anschluss, damit ihre Pfade (`/api/…`) nicht mit denen von
+KosmoOrbit unter `/` zusammenstossen (Befund `auf-20261001-213`).
+
+    cp betrieb/visbox-flaeche.service ~/.config/systemd/user/
+    systemctl --user daemon-reload
+    systemctl --user enable --now visbox-flaeche.service
+    tailscale serve --bg --https=8443 http://127.0.0.1:8731
+
+Das Kennwort legt der erste Start in `~/.config/visbox/kennwort` an (0600). **Ohne Kennwort weist
+die Fläche jede weitergeleitete Anfrage ab** (403) — hinter einer Weiterleitung kommt jede
+Anfrage von `127.0.0.1`, und die Adresse allein sagt nicht mehr, wer fragt.

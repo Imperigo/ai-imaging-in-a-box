@@ -1,0 +1,30 @@
+# Die Visbox-Fläche als Dienst — für die Vorführfassung am Mac (Entscheide 35–42).
+#
+# Sie hört NUR auf 127.0.0.1. Erreichbar wird sie von aussen allein über eine Weiterleitung im
+# eigenen Tailscale-Netz (`tailscale serve`, eigener https-Anschluss 8443 → 127.0.0.1:8731),
+# wie KosmoOrbit seine Brücke erreicht. Nie auf 0.0.0.0.
+#
+# --kennwort-datei: Hinter einer Weiterleitung kommt jede Anfrage von 127.0.0.1; ohne
+# Kennwort käme jedes Gerät im eigenen Netz herein (Befund auf-20261001-213). Die Fläche weist
+# weitergeleitete Anfragen ohne Kennwort darum ab — und braucht hier eines, das einen Neustart
+# übersteht. Die Datei liegt beim Betreiber, nie im Repo; angelegt wird sie beim ersten Start,
+# nur für den eigenen Benutzer lesbar. Das Kennwort selbst steht nicht im Systemprotokoll.
+#
+# `%h` ist systemds Platzhalter fürs Heimatverzeichnis (Regel 3: kein Name im Repo).
+
+[Unit]
+Description=Visbox-Fläche (nur 127.0.0.1, für Tailscale Serve)
+Documentation=file:%h/ai-imaging-in-a-box/docs/VORFUEHRFASSUNG_2026-10-01.md
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/ai-imaging-in-a-box
+Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
+ExecStart=%h/ai-imaging-in-a-box/.venv-render/bin/python \
+    oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

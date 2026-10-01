@@ -15,6 +15,25 @@ Woche: **etwa zwei Wochen** für Mac-Hülle, Verbindung, iPad über den Mac und 
 der Assistent danach, **gesamt vier bis fünf Wochen** (vorher geschätzt: drei bzw. fünf bis
 sechs).
 
+## Gemessen am Heim-PC (`auf-20261001-213`, 01.10.2026)
+
+* **Leitung:** Tailscale läuft; KosmoOrbit leitet `/` → 5183, `/llm` → 11434, `/sync` → 8700,
+  `/bruecke` → 8600 weiter, alles nur im eigenen Netz. Visbox ginge ohne `0.0.0.0` — **zwei
+  Haken:** die Seite ruft feste Pfade (`/api/…`, 9 Stellen), die unter `/visbox` bei KosmoOrbit
+  landeten; und über die Weiterleitung kommt jede Anfrage von `127.0.0.1`, also verlangte die
+  Fläche kein Kennwort. **Behoben (Sitzung 74 §3):** eigener https-Anschluss 8443 statt eines
+  Unterpfads; weitergeleitete Anfragen ohne Kennwort werden abgewiesen; `--kennwort-datei` für
+  ein Kennwort, das einen Neustart übersteht; `betrieb/visbox-flaeche.service`.
+* **Sprachmodell:** Ollama 0.32.14, `qwen3:30b` liegt da (18,6 GB). Kalt laden 2,4 s, erste
+  Antwort 2,5 s, Spitze 18,7 GB. **Entladen 0,14 s.** Danach ein z-image-turbo-Bild (512 px,
+  8 Schritte) in 17,3 s, Spitze 25,5 GB. Wieder laden: Antwort nach 3,8 s. **Deutsche
+  Werkzeugaufrufe 3 von 3 richtig.**
+* **Befund für den Bau des Assistenten:** `think:false` schaltet das Denken bei `qwen3:30b`
+  **nicht** ab — englischer Gedankentext landet in `content`. Mit `think:true` liegt er sauber
+  im Feld `thinking`. Der Assistent liest darum mit `think:true` und zeigt nur `content`.
+* **Folge:** Bildmodell und Sprachmodell gehen **nacheinander**, nicht gleichzeitig
+  (18,7 + 25,5 GB > 32 GB). Der Wechsel kostet rund 4 s.
+
 ## Wie KosmoOrbit es macht — nachgelesen im Code
 
 Gelesen am 01.10.2026 im KosmoOrbit-Repo, Zweig `claude/kosmo-orbit-v1-build-pzxkbj`

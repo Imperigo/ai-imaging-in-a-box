@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-214",
+ "art": "frage",
+ "beschreibung": "Mit Owner-Go: Visbox-Flaeche als Dienst (nur 127.0.0.1, Kennwortdatei) und ueber eine eigene Tailscale-Weiterleitung (https 8443) anbieten; pruefen, dass weitergeleitete Anfragen ohne Kennwort abgewiesen werden.",
+ "anweisung": "=== VISBOX UEBER DIE LEITUNG ANBIETEN — NUR MIT OWNER-GO ===\n\nVORAUSSETZUNG: Dieser Auftrag RICHTET etwas ein (einen Dienst und eine Weiterleitung im eigenen\nTailscale-Netz). Erst ausfuehren, wenn der Owner «Go fuer 214» gesagt hat. Ohne Go: Teil A\nlesen, sonst nichts, und «wartet auf Owner-Go» zurueckmelden.\n\nDanke fuer 213 — beide Haken sind behoben:\n\nTEIL A — ANSAGE (vor dem Pull lesen)\n  A1 oberflaeche/server.py weist eine Anfrage, die ueber eine Weiterleitung kommt (Koepfe\n     X-Forwarded-For, Forwarded, Tailscale-User-*), OHNE Kennwort ab (403, mit Satz). Am Rechner\n     selbst ohne Weiterleitung bleibt alles wie bisher.\n  A2 NEU: --kennwort-datei PFAD. Liest das Kennwort aus der Datei; fehlt sie, wird eines erzeugt\n     und dort abgelegt (0600). Das Kennwort steht dann NICHT in der Ausgabe.\n  A3 NEU: betrieb/visbox-flaeche.service — die Flaeche als Benutzerdienst, nur 127.0.0.1, mit\n     --kennwort-datei ~/.config/visbox/kennwort.\n  A4 Euer Befund zu den Pfaden: Wir nehmen den EIGENEN https-Anschluss (8443), nicht /visbox —\n     so stossen Visbox und KosmoOrbit unter «/» nicht zusammen, und an KosmoOrbits Weiterleitungen\n     aendert sich nichts.\n\nTEIL B — EINRICHTEN (nur mit Owner-Go), genau wie in betrieb/README.md\n  B1 cp betrieb/visbox-flaeche.service ~/.config/systemd/user/ ;\n     systemctl --user daemon-reload ; systemctl --user enable --now visbox-flaeche.service\n  B2 tailscale serve --bg --https=8443 http://127.0.0.1:8731\n  B3 Die bestehenden Weiterleitungen (/ /llm /sync /bruecke /updates/) NICHT anfassen.\n\nTEIL C — PRUEFEN\n  C1 Ueber die Weiterleitung OHNE Anmeldung: GET /api/fortschritt → 403 mit dem Satz?\n  C2 Ueber die Weiterleitung MIT Benutzer und Kennwort aus der Datei: → 200?\n  C3 Direkt am Rechner (127.0.0.1:8731) ohne Anmeldung: → 401 (es ist jetzt ein Kennwort\n     verlangt) — richtig so?\n  C4 Dienst neu starten: dasselbe Kennwort wie vorher (Datei unveraendert, Pruefsumme)?\n  C5 Steht das Kennwort irgendwo im Systemprotokoll (journalctl --user -u visbox-flaeche)?\n\nZURUECK (auftraege/ergebnisse/auf-20261001-214.json)\n  - git log -1; Owner-Go ja/nein (mit Zeitpunkt).\n  - B1–B3 erledigt ja/nein; C1–C5 mit Statuscodes.\n  - KEINE Geraete-, Netz- oder Hostnamen, KEINE IP-Adressen, NIE das Kennwort.\n\nNICHT TUN: ohne Owner-Go nichts einrichten; die Flaeche nie auf 0.0.0.0; KosmoOrbits\nWeiterleitungen nicht aendern; nichts committen ausser eurer Ergebnisdatei.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie noetig"
+ },
+ "params": {
+  "anschluss_lokal": 8731,
+  "weiterleitung_https": 8443,
+  "owner_go_noetig": true
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Keine GPU. Richtet einen Dienst und eine Weiterleitung ein — nur mit Owner-Go.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, nie das Kennwort ins Ergebnis (REGEL 3).",
+   "Ohne Owner-Go nichts einrichten."
+  ]
+ },
+ "rueckgabe": [
+  "git log -1; Owner-Go ja/nein.",
+  "B1–B3 erledigt ja/nein.",
+  "C1–C5 mit Statuscodes; Kennwort nicht im Protokoll?"
+ ],
+ "rang": 2
+}

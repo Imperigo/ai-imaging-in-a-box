@@ -1514,3 +1514,64 @@ def test_ohne_bauwerksbox_wird_NICHT_auf_die_szenenbox_ausgewichen(server, monke
 
     assert g["bbox"] is None, "die Szenenbox ist hier keine Antwort"
     assert g["grund"], "und das Schweigen darueber waere schlimmer als die falsche Box"
+
+
+# ======================================================================================
+# Über eine Weiterleitung nie ohne Kennwort — Befund auf-20261001-213
+# ======================================================================================
+
+@pytest.mark.parametrize("kopf", ["X-Forwarded-For", "x-forwarded-for", "Forwarded",
+                                  "Tailscale-User-Login", "X-Forwarded-Proto"])
+@pytest.mark.parametrize("befehl,weg", [("GET", "/"), ("GET", "/api/projekt"),
+                                        ("POST", "/api/einstellungen")])
+def test_ueber_eine_weiterleitung_kommt_ohne_kennwort_niemand_herein(server, kopf, befehl,
+                                                                      weg):
+    """Hinter Tailscale Serve kommt jede Anfrage von 127.0.0.1 — auch die eines fremden
+    Geräts im eigenen Netz. Ohne Kennwort hiess das bisher: jeder herein."""
+    a = _Anfrage(server, befehl=befehl, weg=weg, kennwort=None, rumpf=b"{}")
+    a.selbst.headers[kopf] = "100.64.0.7"
+    a.stelle()
+    assert a.codes == [403], a.codes
+    satz = json.loads(a.rumpf.decode("utf-8"))["fehler"]
+    assert "Weiterleitung" in satz and "--kennwort-erzeugen" in satz
+
+
+def test_ohne_weiterleitung_bleibt_die_eigene_maschine_wie_sie_war(server):
+    """Die Gegenprobe: am Rechner selbst, ohne Kennwort, kein Weiterleitungskopf — herein."""
+    a = _Anfrage(server, befehl="GET", weg="/api/fortschritt", kennwort=None).stelle()
+    assert a.codes == [200]
+
+
+def test_ueber_eine_weiterleitung_mit_kennwort_kommt_man_herein(server):
+    import base64 as b64
+
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+    a = _Anfrage(server, befehl="GET", weg="/api/fortschritt", kennwort="geheim", kopf=kopf)
+    a.selbst.headers["X-Forwarded-For"] = "100.64.0.7"
+    a.stelle()
+    assert a.codes == [200]
+
+
+def test_die_kennwortdatei_entsteht_einmal_und_bleibt(server, tmp_path):
+    """Dauerbetrieb hinter einer Weiterleitung: Das Kennwort übersteht einen Neustart."""
+    import os
+    import stat
+
+    datei = tmp_path / "geheim" / "visbox-kennwort"
+    erstes, neu = server.kennwort_aus(datei)
+    assert neu and len(erstes) >= 20
+    assert stat.S_IMODE(os.stat(datei).st_mode) == 0o600, "nur für den eigenen Benutzer"
+    zweites, neu2 = server.kennwort_aus(datei)
+    assert zweites == erstes and not neu2
+
+
+def test_eine_leere_kennwortdatei_ist_kein_ohne_kennwort(server, tmp_path):
+    datei = tmp_path / "leer"
+    datei.write_text("  \n")
+    with pytest.raises(server.FlaechenError, match="leer"):
+        server.kennwort_aus(datei)
+
+
+def test_kennwort_und_kennwortdatei_zugleich_werden_abgewiesen(server, tmp_path, capsys):
+    assert server.main(["--kennwort", "x", "--kennwort-datei", str(tmp_path / "k")]) == 2
+    assert "widersprechen sich" in capsys.readouterr().out
