@@ -1581,3 +1581,32 @@ def test_eine_leere_kennwortdatei_ist_kein_ohne_kennwort(server, tmp_path):
 def test_kennwort_und_kennwortdatei_zugleich_werden_abgewiesen(server, tmp_path, capsys):
     assert server.main(["--kennwort", "x", "--kennwort-datei", str(tmp_path / "k")]) == 2
     assert "widersprechen sich" in capsys.readouterr().out
+
+
+def test_im_dienstbetrieb_sagt_die_tuer_wo_das_kennwort_steht():
+    """Befund `auf-214` (01.10.2026): Als Dienst gibt es kein Fenster, in dem das Kennwort
+    stünde — der Satz bei 401 schickte ins Leere. Ohne Datei bleibt er wortgleich, weil die
+    Mac-App ihn als Abschrift führt."""
+    import base64
+    import json as _json
+    import threading
+    import urllib.error
+    import urllib.request
+    from oberflaeche import server as srv
+    assert "Fenster" in srv.satz_nicht_angemeldet(False)
+    assert "Kennwortdatei" in srv.satz_nicht_angemeldet(True)
+    assert "Fenster" not in srv.satz_nicht_angemeldet(True)
+    for in_datei, erwartet in ((True, "Kennwortdatei"), (False, "Fenster")):
+        s = srv.baue_server(anschluss=0, kennwort="k" * 32, kennwort_in_datei=in_datei)
+        faden = threading.Thread(target=s.handle_request, daemon=True)
+        faden.start()
+        try:
+            urllib.request.urlopen(f"http://127.0.0.1:{s.server_address[1]}/api/fortschritt",
+                                   timeout=5)
+            raise AssertionError("ohne Anmeldung durchgelassen")
+        except urllib.error.HTTPError as fehler:
+            assert fehler.code == 401
+            assert erwartet in _json.loads(fehler.read().decode("utf-8"))["fehler"]
+        finally:
+            faden.join(5)
+            s.server_close()

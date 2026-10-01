@@ -271,23 +271,20 @@ extension Color {
     }
 }
 
-/// Die Schriften des Vorführmodus — **eine Stelle**, und vorerst die des Systems.
-///
-/// Das Blatt verlangt IBM Plex Sans, IBM Plex Mono und Instrument Serif. Die Namen stehen in
-/// der iPad-App an genau einer Stelle (`Schrift.schnitte` in `Leiste/Zeichenblatt.swift`),
-/// und die Mac-App bekommt ihr Schriftregister mit Strom A. Bis dahin hier die Formen des
-/// Systems (Serife, gleichbreit, Text) statt zweiter Schriftnamen — beim Zusammenführen diese
-/// drei Funktionen auf das Register der Mac-App umstellen, sonst nichts.
+/// Die Schriften des Vorführmodus — **eine Stelle**, und sie fragt das Register der Mac-App
+/// (`Macschriften`, Strom A): IBM Plex Sans, IBM Plex Mono und Instrument Serif, wenn sie im
+/// Bündel liegen und registriert sind, sonst die Formen des Systems. Umgestellt beim
+/// Zusammenführen am 01.10.2026; bis dahin standen hier nur die Systemformen.
 enum Vorfuehrschrift {
     static func titel(_ groesse: CGFloat) -> Font {
-        .system(size: groesse, weight: .regular, design: .serif)
+        Macschriften.schrift(.titel, groesse)
     }
 
     static func text(_ groesse: CGFloat, _ gewicht: Font.Weight = .regular) -> Font {
-        .system(size: groesse, weight: gewicht, design: .default)
+        Macschriften.schrift(.text, groesse, gewicht)
     }
 
     static func zahl(_ groesse: CGFloat, _ gewicht: Font.Weight = .regular) -> Font {
-        .system(size: groesse, weight: gewicht, design: .monospaced)
+        Macschriften.schrift(.zahl, groesse, gewicht)
     }
 }

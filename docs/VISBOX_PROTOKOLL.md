@@ -55,6 +55,11 @@ Konstante `NAME`, ein `"` darin wird im Bereich maskiert) — seit dem 23.09.202
 im Kopf `Server` jeder Antwort; vorher stand an diesen Stellen «Visbox» fest. **Die App soll
 den Bereich nicht auswerten**: Er ändert sich mit dem Namen.
 
+**Im Dienstbetrieb** (`--kennwort-datei`, seit 01.10.2026, Befund `auf-214`) lautet der Satz
+stattdessen «Nicht angemeldet. <Name> läuft am Heim-PC als Dienst; Benutzername «visbox», das
+Kennwort steht dort in der Kennwortdatei (siehe betrieb/README.md).» — ein Fenster gibt es dann
+nicht. Die App soll keinen der beiden Sätze auswerten, nur anzeigen.
+
 **Die zwei Ausnahmen, beide nur bei offener Kopplung (`--kopplung`):**
 
 * `POST /api/verbinden` kommt ohne Anmeldung durch, solange an der HomeStation eine Kopplung

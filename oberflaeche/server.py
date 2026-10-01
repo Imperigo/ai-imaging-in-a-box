@@ -1435,6 +1435,9 @@ class Flaeche(BaseHTTPRequestHandler):
     #: ``--assistent-adresse``/``--sprachmodell`` — oder ``None``: dann nimmt der Kern
     #: Adresse und Modell bei jeder Anfrage aus der Umgebung (oder die Vorgaben).
     sprachmodell = None
+    #: Ob das Kennwort aus `--kennwort-datei` kommt (Dienstbetrieb) — dann sagt die Tür,
+    #: dass es dort steht, und nicht «im Fenster» (siehe :func:`satz_nicht_angemeldet`).
+    kennwort_in_datei: bool = False
     sys_version = ""
 
     @property
@@ -1503,10 +1506,8 @@ class Flaeche(BaseHTTPRequestHandler):
             return True
         # DER NAME AUS `NAME`, in Satz und Bereich (Durchsicht der Welle 2, 22.09.2026):
         # Hier stand «Visbox» fest — die Stelle, die beim Umbenennen niemand findet.
-        roh = json.dumps(
-            {"fehler": f"Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
-                       f"in dem {NAME} gestartet wurde."},
-            ensure_ascii=False).encode("utf-8")
+        roh = json.dumps({"fehler": satz_nicht_angemeldet(self.kennwort_in_datei)},
+                         ensure_ascii=False).encode("utf-8")
         self.send_response(401)
         # DER BROWSER FRAGT ERST, WENN ER DAS HIER SIEHT. Ohne diesen Kopf bekaeme der
         # Benutzer eine Fehlermeldung statt eines Anmeldefensters.
@@ -2385,9 +2386,26 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
         LAUFSTAND.beende(fehler=f"{type(fehler).__name__}: {fehler}")
 
 
+def satz_nicht_angemeldet(kennwort_in_datei: bool = False) -> str:
+    """Der Satz der Tür bei 401 — **er sagt, wo das Kennwort steht.**
+
+    Im Dienstbetrieb (`--kennwort-datei`, `betrieb/visbox-flaeche.service`) gibt es kein
+    Fenster, in dem es stünde; der alte Satz schickte dort ins Leere (Befund `auf-214`,
+    01.10.2026). Ohne Datei bleibt der Satz wortgleich — die Mac-App führt ihn als Abschrift
+    (`Kern/Vermittlung.swift`, bewacht in `tests/test_ipad_geruest.py`).
+    """
+    if kennwort_in_datei:
+        return (f"Nicht angemeldet. {NAME} läuft am Heim-PC als Dienst; Benutzername "
+                f"«{BENUTZER}», das Kennwort steht dort in der Kennwortdatei "
+                f"(siehe betrieb/README.md).")
+    return (f"Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
+            f"in dem {NAME} gestartet wurde.")
+
+
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                 anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
-                kopplung_offen=None, ablage=None, sprachmodell=None) -> HTTPServer:
+                kopplung_offen=None, ablage=None, sprachmodell=None,
+                kennwort_in_datei: bool = False) -> HTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -2429,7 +2447,8 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                    "kennwort": kennwort or None,
                    "kopplung_offen": kopplung_offen,
                    "ablage": Path(ablage) if ablage else None,
-                   "sprachmodell": sprachmodell})
+                   "sprachmodell": sprachmodell,
+                   "kennwort_in_datei": bool(kennwort_in_datei)})
     return HTTPServer((adresse, anschluss), klasse)
 
 
@@ -2641,7 +2660,8 @@ def main(argv=None) -> int:
     try:
         server = baue_server(ordner=a.ordner, adresse=adresse, anschluss=a.anschluss,
                              kennwort=kennwort, kopplung_offen=offen,
-                             ablage=a.auftragsablage, sprachmodell=sprachmodell)
+                             ablage=a.auftragsablage, sprachmodell=sprachmodell,
+                             kennwort_in_datei=kennwort_aus_datei is not None)
     except FlaechenError as fehler:
         # KEIN STACKTRACE. Das ist der eine Fehler, den ein Mensch beim Start wirklich
         # sieht, und er ist fuer ihn geschrieben.
