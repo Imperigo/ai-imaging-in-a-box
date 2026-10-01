@@ -105,6 +105,31 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 01.10.2026 (Mittag) · Der Plan für v0.1.7: zwei Tage Vollbau, dann Abgabe
+
+* **Ziel:** Bis Freitagabend eine Visbox-App für den Mac zum Herunterladen — sie baut beim
+  Öffnen die Leitung nach Hause selbst auf, reicht das iPad durch, zeigt vorher gerechnete
+  Bilder, wenn der Heim-PC fehlt, und hat einen ersten Assistenten. Dazu ein Lieferblatt an den
+  Integrator.
+* **Wie entschieden:** Zwanzig Fragen an den Owner, zwanzig Antworten (Entscheide 43–62). Drei
+  davon gehen sofort an KosmoOrbit: «nicht festgestellt» beim Lieferstatus soll drüben erlaubt
+  sein; die Lizenz von Qwen-2.1 gilt bis v1.0 als offen; Union-2.1 und die Formprüfung bleiben
+  bei uns.
+* **Bleibt bewusst draussen:** Entwurfsmodus (Entscheid bis 15.10.), Probe am Gerät (erst nach
+  der Abgabe, bis Freitag gibt es kein iPad).
+* **Plan:** `docs/PLAN_V017_2026-10-01.md`.
+
+### 01.10.2026 (Vormittag) · Die Vorführfassung: was es schon gibt, wird mitbenutzt
+
+* **Befund:** Die Leitung nach Hause (Tailscale) und das Sprachmodell (Qwen3 über Ollama) laufen
+  am Heim-PC schon für KosmoOrbit. Visbox benutzt sie mit, statt eigene zu bauen.
+* **Gemessen am Heim-PC:** Sprachmodell und Bildmodell passen nicht gleichzeitig auf die
+  Grafikkarte; der Wechsel kostet rund 4 Sekunden. Deutsche Werkzeugaufrufe 3 von 3 richtig.
+* **Behoben:** Über die Weiterleitung kam jede Anfrage ohne Kennwort durch. Jetzt wird sie ohne
+  Kennwort abgewiesen, und das Kennwort übersteht einen Neustart.
+* **Lizenz:** Ein GPL-Fund (wireguard-tools) ausdrücklich gemeldet; der gewählte Weg braucht ihn
+  nicht.
+
 ### 30.09.2026 (Abschluss) · Die neue Steuerung wird nicht Vorgabe — sie tauscht ein Problem gegen ein anderes
 
 * **Ergebnis (96 Bilder, blind):** Beim Hochhaus stehen mit der neuen Fassung 18 von 24 statt

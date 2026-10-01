@@ -226,3 +226,36 @@ baut sich alles selbst auf. Gezeichnet auf der Entwurfsfläche, Blätter 13, 13b
 | 40 | Vorführmodus | **Von selbst**, wenn der Heim-PC nicht antwortet — mit eigener Farbe und Datum an jedem vorher gerechneten Bild (Blatt 13b) |
 | 41 | Was der Assistent darf | **Vorschlagen und auf «Anwenden» warten**, wie Kosmo — gerechnet wird nie ohne (Blatt 14) |
 | 42 | iPad unterwegs | **Über den Mac** — gleiches WLAN oder Hotspot des Mac, nicht ins Heimnetz |
+
+## Nachtrag 01.10.2026 — zwanzig Antworten für v0.1.7
+
+Vor dem Vollbau 01.–03.10.2026 gefragt, nach dem Owner-Wunsch «stelle mir 20 Fragen». Der Plan
+dazu: `docs/PLAN_V017_2026-10-01.md` (Sitzung 74 §4).
+
+| Nr. | Frage | Entscheid |
+|---|---|---|
+| 43 | Was liefert Visbox mit v0.1.7? | **Beides** — Mac-Vorführfassung und die offenen Vertragsposten beim Integrator |
+| 44 | Form der Mac-App | **Eigene Visbox-App**, teilt den Kern mit der iPad-App; nicht Teil der Mac-Fassung von KosmoOrbit |
+| 45 | Abgabe an den Integrator | **Freitag, 03.10.2026, abends** |
+| 46 | Wie parallel | **Claude + Hilfsagenten** in getrennten Arbeitskopien, zentral geprüft |
+| 47 | iPad unterwegs | **Über den Mac** (bestätigt Entscheid 42) |
+| 48 | Assistent in v0.1.7 | **Erste Fassung** — Chat, drei Werkzeuge, Vorschlag + «Anwenden» |
+| 49 | Bilder im Vorführmodus | **Synthetische Beispiele**, am Heim-PC vorher gerechnet |
+| 50 | Auftrag 214 | **Go** am 01.10.2026 |
+| 51 | `lieferstatus: null` («nicht festgestellt») | **KosmoOrbit lässt es zu**, als Vorbehalt; die Bilder bleiben |
+| 52 | Lizenzmarke Qwen-2.1 | **«Lizenz wie offen behandeln bis v1.0»** — gelesen als: Marke mitführen, nicht verwerfen; Anzeige und Sperre bis v1.0 entscheiden; E128 gilt vor jeder Veröffentlichung |
+| 53 | Union-2.1 drüben bestellbar | **Nein**, bleibt Messschalter bei uns |
+| 54 | Formprüfung drüben sichtbar | **Nein**, nur intern |
+| 55 | Sammel-Nachprobe am Gerät | **Ja**, alle «gebaut, am Gerät unbestätigt» |
+| 56 | Entwurfsmodus in v0.1.7 | **Nein** — Entscheid bis 15.10., Bau in v0.1.8 |
+| 57 | Freigabe-Taste | **«Anwenden» bleibt** (Entscheid 41); angeglichen beim Einbau in KosmoOrbit |
+| 58 | Mac-App auf den Mac | **Fertige App zum Herunterladen** aus der Prüfstrecke |
+| 59 | Geräte bis Freitag | **Ein Mac mit Apple-Chip**, kein iPad |
+| 60 | Probe am Gerät | **Erst nach der Abgabe** |
+| 61 | Meldungen im Vollbau | **Morgens und abends kurz** |
+| 62 | Abgabeform | **Ein Lieferblatt v0.1.7** im Eingang des Integrators |
+
+**Korrektur zu Entscheid 36:** «Rechtsklick → Öffnen» öffnet auf macOS 15 eine App ohne
+Apple-Unterschrift nicht mehr. Der Weg ist: einmal öffnen, dann *Systemeinstellungen →
+Datenschutz & Sicherheit → «Trotzdem öffnen»*. Am Entscheid ändert das nichts, nur am Satz
+auf Blatt 13.

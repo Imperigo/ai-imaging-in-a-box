@@ -4341,7 +4341,36 @@ Geplant für die Vorführfassung.
 Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
 signieren, dass der Mac beim Öffnen nicht warnt. Ohne Konto (Owner-Entscheid 30.09.2026) läuft
 die iPad-App über Swift Playgrounds oder per Kabel vom Mac (sieben Tage gültig), und die Mac-App
-wird beim ersten Mal mit Rechtsklick → Öffnen gestartet.
+wird beim ersten Mal über *Systemeinstellungen → Datenschutz & Sicherheit → «Trotzdem öffnen»*
+freigegeben (siehe *Gatekeeper*; «Rechtsklick → Öffnen» reicht seit macOS 15 nicht mehr).
+
+**Gatekeeper** — Die Schranke des Mac, die beim ersten Öffnen prüft, ob eine App von Apple
+beglaubigt ist. Eine App ohne Apple-Konto ist es nicht; der Mac öffnet sie erst, wenn man sie
+einmal in den Systemeinstellungen (Datenschutz & Sicherheit → «Trotzdem öffnen») freigibt.
+Betrifft die Mac-App von Visbox (Entscheide 36 und 58).
+
+**Behelfs-Unterschrift (ad-hoc)** — Eine Unterschrift, die der Rechner beim Bauen selbst unter
+eine App setzt, ohne Apple-Konto. Macs mit Apple-Chip starten gar keine App ohne irgendeine
+Unterschrift; diese genügt dafür, ersetzt aber nicht die Freigabe durch Gatekeeper. Die
+Prüfstrecke setzt sie beim Bau der Visbox-Mac-App.
+
+**Vermittler (Relay)** — Ein Gerät, das Anfragen eines anderen entgegennimmt und weiterreicht.
+In Visbox ist der Mac der Vermittler: Das iPad findet ihn im selben WLAN und schickt seine
+Anfragen an ihn; der Mac reicht sie über die Leitung nach Hause zum Heim-PC weiter, mit seinem
+eigenen Kennwort (Entscheid 42, Plan v0.1.7 Strom B).
+
+**Lieferblatt** — Ein einziges Blatt, mit dem eine Bauetappe an den Integrator übergeben wird:
+was neu ist, was er einbauen soll, und woran er erkennt, dass es eingebaut ist (Abnahme je
+Punkt). Ersetzt viele Einzelaufträge, damit der Owner nur einen Satz weiterleiten muss
+(Entscheid 62).
+
+**Vollbau** — Eine kurze Etappe (ein bis zwei Tage), in der alle geplanten Teile einer Fassung
+gleichzeitig gebaut werden, statt einer nach dem anderen — danach Abgabe an den Integrator. Der
+erste: v0.1.7, 01.–03.10.2026 (`docs/PLAN_V017_2026-10-01.md`).
+
+**Sammel-Nachprobe** — Ein einziger Prüfauftrag an den Heim-PC, der alle Posten, die bei uns
+gebaut, am echten Gerät aber noch nicht bestätigt sind, auf einmal am laufenden KosmoOrbit prüft
+(Entscheid 55).
 
 **Fassung (je Knotenart)** — Eine Zahl je Rechenschritt der Bildkette (Geometrie, Blender,
 Bild, Prüfung …), die in den Schlüssel des Zwischenspeichers eingeht. Ändert sich, was ein
@@ -6166,6 +6195,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |

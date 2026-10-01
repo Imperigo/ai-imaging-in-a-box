@@ -7672,6 +7672,26 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **local:** `auf-20261001-213` — messen, was am Heim-PC schon steht (Leitung, Ollama, Wechsel, Werkzeugaufrufe).
       *(Leitung steht; zwei Haken behoben; Wechsel ~4 s; Werkzeugaufrufe 3/3 — Sitzung 74 §3)*
 - [x] **Kern:** Weitergeleitete Anfragen nur mit Kennwort; `--kennwort-datei`; Dienst `betrieb/visbox-flaeche.service`.
-- [ ] **Owner:** Go für `auf-20261001-214` (Dienst und Weiterleitung am Heim-PC einrichten).
+- [x] **Owner:** Go für `auf-20261001-214` (Dienst und Weiterleitung am Heim-PC einrichten).
+      *(01.10.2026, Entscheid 50)*
 - [ ] **local:** `auf-20261001-214` — einrichten und prüfen (nur mit Owner-Go).
 
+## Vollbau v0.1.7 — 01.–03.10.2026 (Sitzung 74 §4)
+
+> **Entschieden:** Entscheide 43–62 — Mac-App + Vertragsposten, eigene Visbox-App, Abgabe Fr 03.10. abends,
+> Assistent erste Fassung, Vorführbilder synthetisch, Lieferstatus null drüben zulassen, Lizenz bis v1.0 offen.
+> **Gemessen:** nichts — Plan, nicht Bau. Grundlage `docs/PLAN_V017_2026-10-01.md`.
+> **Offen:** alle Bauströme A–F; Gerätprobe erst nach der Abgabe (kein iPad bis Freitag).
+
+- [x] **Owner:** zwanzig Fragen zu v0.1.7 beantwortet. *(01.10.2026, Entscheide 43–62)*
+- [x] **Kern:** Bauplan `docs/PLAN_V017_2026-10-01.md`.
+- [x] **cloud:** `auf-20261001-216` — Antwort an Int 1: Lieferstatus null zulassen, Lizenzmarke lesen (bis v1.0 offen), Union-2.1 und Formprüfung nicht bauen.
+- [ ] **Kern (A):** Mac-App `ipad/VisboxMac` — Startzeilen, Kennwort im Schlüsselbund, «Schon anfangen», ZIP aus der Prüfstrecke.
+- [ ] **Kern (B):** iPad über den Mac — Bonjour, Vermittler, Erlaubnis «lokales Netzwerk».
+- [ ] **Kern (C):** Vorführmodus — Mappenformat, Umschalten von selbst (Blatt 13b).
+- [ ] **local (C3+D4):** Beispielmappe rechnen (synthetisch) und Assistent messen — ein Auftrag, Donnerstag.
+- [ ] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
+- [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
+- [ ] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
+- [ ] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
+- [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.

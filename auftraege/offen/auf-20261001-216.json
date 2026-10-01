@@ -1,0 +1,32 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "cloud",
+ "auftrag_id": "auf-20261001-216",
+ "art": "frage",
+ "beschreibung": "Antwort auf das v0.1.6-Antwortblatt von Int 17: lieferstatus null kommt aus unserem echten Schreiber und soll bei euch zugelassen werden (Vorbehalt, Bilder bleiben); Lizenzmarke bis v1.0 offen (lesen, nicht sperren); Union-2.1 und Formpruefung nicht bauen.",
+ "anweisung": "=== ANTWORT AN KOSMOORBIT INT 1 AUF EUER V0.1.6-ANTWORTBLATT (INT 17) — DREI OWNER-ENTSCHEIDE FUER V0.1.7 ===\n\nDanke fuer das Antwortblatt antwort-20260930-int1-an-kosmovis.md und erg-20260930-v016-antwort-kosmovis.md.\nDer Owner hat am 01.10.2026 entschieden (unsere Entscheide 51–54). Diese Antwort kommt jetzt, damit\nihr v0.1.7 planen koennt; das Lieferblatt v0.1.7 mit allem Weiteren folgt Freitag, 03.10.2026.\n\n1 · EURE NACHFRAGE: «lieferstatus: null» IM F2-BEISPIEL\n  Antwort: JA, das kommt aus unserem ECHTEN Schreiber, nicht nur aus dem Auszug.\n  Bei uns: aiimaging.kosmo_szene, Funktion _lieferstatus_des_auftrags. Der Auftrag heisst dort\n  None («nicht festgestellt»), wenn keine Kamera eine Lieferung meldet, eine Kamera selbst\n  lieferstatus None traegt, oder die Bilderzahlen der Kameras nicht zur Bildliste passen. Das ist\n  Absicht: lieber «nicht festgestellt» als still «geliefert».\n  OWNER-ENTSCHEID (51): IHR LASST null ZU — als Vorbehalt, nicht als Fehler. Die Bilder bleiben.\n  Vorschlag zur Form (eure Wahl, ihr kennt den Vertrag):\n    - render-result.ts:592  lieferstatus: Lieferstatus.nullable().default('geliefert')\n      (fehlend bleibt 'geliefert' wie heute; null bleibt null)\n    - in renderResultMaengel eine Zeile «Lieferstatus nicht festgestellt: <lieferstatus_grund>»\n    - die Anzeige zeigt es als Vorbehalt, nie als «geliefert»\n  Rot vor gruen: ein Ergebnis mit lieferstatus null wird heute verworfen (parseJob wirft),\n  danach angenommen, mit Mangelzeile und allen Bildern.\n  lieferstatus_grund schicken wir bei null IMMER mit (bei uns Pflicht, sobald nicht «geliefert»).\n  Zu «qa fehlt im Auszug»: richtig vermutet, nur fuer den Auszug weggelassen; echte Ergebnisse\n  tragen qa.verdict.passed immer (Boolean).\n\n2 · LIZENZMARKE engine_license_open (euer P-LIZENZMARKE)\n  OWNER-ENTSCHEID (52): «Lizenz wie offen behandeln bis v1.0.»\n  Fuer v0.1.7 heisst das: euer Schritt 1 so, wie Int 17 ihn empfiehlt —\n    z.boolean().optional(), true wird gelesen und mitgefuehrt (nicht mehr als [E76] abgestreift),\n    false wird eine Mangelzeile, das Ergebnis bleibt.\n  Euer Schritt 2 (wo die Marke sichtbar wird, was sie sperrt): NICHT in v0.1.7. Entschieden wird\n  er bis v1.0. Vor jeder oeffentlichen Veroeffentlichung gilt E128 unveraendert.\n  P-QWEN21 (qwen-image-2.1 bestellbar, nie Vorgabe, nicht hinter einem Schalter) wie von Int 17\n  beschrieben — von uns aus gern zusammen mit P-LIZENZMARKE.\n  Ein echtes Ergebnis eines qwen-image-2.1-Laufs schicken wir, sobald unser Heim-PC es geliefert hat.\n\n3 · ZWEI DINGE, DIE IHR NICHT BAUEN MUESST\n  - Union-2.1 (z-image-turbo-union21): bleibt ein Messschalter bei uns, NICHT bestellbar bei euch\n    (Entscheid 53). Euer «quittiert, keine Handlung» passt genau.\n  - Die Formpruefung (auswahl.formpruefung, urteilt: false) bleibt intern und wird bei euch\n    NICHT angezeigt (Entscheid 54). Kommt das Feld an, darf es abgestreift werden.\n\n4 · VORSCHAU AUF DAS LIEFERBLATT V0.1.7 (FREITAG)\n  Visbox baut in den naechsten zwei Tagen eine EIGENE Mac-App zum Praesentieren (nicht Teil eurer\n  Mac-Fassung) — sie spricht nur mit unserem Visbox-Server am Heim-PC ueber einen eigenen\n  Tailscale-Anschluss (https 8443) und beruehrt eure Weiterleitungen (/ /llm /sync /bruecke) nicht.\n  Fuer euch kommt Freitag ein Lieferblatt mit Abnahme je Punkt: obige Vertragsposten, dazu die\n  ui-Posten 180 (qa.verdict.hinweise anzeigen) und 204 (Raumliste in der Prepare-Station).\n\nNICHT TUN: Union-2.1 bestellbar machen; die Formpruefung anzeigen; eine Lizenzsperre in v0.1.7\nbauen; ein null in lieferstatus still zu «geliefert» machen.\n",
+ "erstellt": "2026-10-01T00:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "keine Geometrie noetig"
+ },
+ "params": {},
+ "auflagen": {
+  "leistungsgrenze_w": 0,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Keine Rechenlast; Vertrag und Code bei euch.",
+  "hinweise": [
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "L1: lieferstatus null zugelassen (Commit, Form) / abgelehnt mit Grund.",
+  "L2: engine_license_open als boolean optional gelesen (Commit) / zurueckgestellt mit Grund.",
+  "L3: P-QWEN21 vergeben oder gebaut (Commit) / zurueckgestellt.",
+  "L4: Quittung zu Union-2.1 und Formpruefung (nicht bauen)."
+ ],
+ "rang": 1
+}
