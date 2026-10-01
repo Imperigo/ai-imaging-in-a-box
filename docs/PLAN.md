@@ -7711,7 +7711,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
 - [x] **Owner:** Tailscale-App aufs iPad, mit dem eigenen Konto anmelden (vor der Probe).
       *(01.10.2026, Owner: installiert)*
-- [ ] **local:** `auf-20261001-224` — iPad im Tailscale-Netz sichtbar und erreichbar? Weiterleitung 8443 steht?
+- [x] **local:** `auf-20261001-224` — iPad im Tailscale-Netz sichtbar und erreichbar? Weiterleitung 8443 steht?
+      *(01.10.2026: iPad im Netz, aber offline seit 22.09.; Weiterleitung steht — vor der Probe am iPad das VPN einschalten)*
 - [x] **Kern (D):** Assistent — `aiimaging.assistent` im Kern, Server zu Ollama, Seitenleiste am Mac.
       *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
 - [ ] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
