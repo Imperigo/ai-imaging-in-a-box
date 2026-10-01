@@ -1,0 +1,15 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261001-216",
+  "status": "ok",
+  "beendet": "2026-10-01T00:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "auf-20261001-216 (an: cloud) — Antwort von Int 1: L1 Lieferstatus null angenommen in unserer Form, Bau in v0.1.7 Welle B; L2 Lizenzmarke und L3 qwen-image-2.1 bestellbar schon in v0.1.6 (d2debe84c); L4 Union-2.1 und Formpruefung quittiert, nicht gebaut",
+    "stand": "**Stand 01.10.2026:** offen — L1 wird in v0.1.7 gebaut und gegen das Lieferblatt vom 03.10. abgenommen; L2–L4 erledigt.",
+    "blatt": "auftraege/ergebnisse/auf-20261001-216-antwort-lieferstatus-lizenzmarke.md"
+  },
+  "umgebung": {},
+  "fehler": null
+}

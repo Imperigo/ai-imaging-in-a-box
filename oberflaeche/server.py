@@ -419,6 +419,9 @@ WEG_ASSISTENT_ANWENDEN = "/api/assistent/anwenden"
 # Unterwegs spricht das iPad ueber Tailscale direkt mit dem Heim-PC; der Dienst dort laeuft
 # dauerhaft ohne `--kopplung`, und die Zahl holt der angemeldete Mac auf diesem Weg.
 WEG_KOPPLUNG = "/api/kopplung"
+#: Höchstens so viele Bytes liest `POST /api/verbinden` — der einzige Weg, der ohne Anmeldung
+#: einen Rumpf annimmt. Gleich der Grenze der Vermittlung am Mac (`koppelRumpfGrenze`).
+VERBINDEN_HOECHSTENS = 1024
 
 # DIE KNOTENANSICHT (E26, 24.09.2026) — und warum ihre Wege NICHT in den Tafeln stehen.
 #
@@ -1888,7 +1891,21 @@ class Flaeche(BaseHTTPRequestHandler):
         self._bediene(self._handeln)
 
     def _handeln(self) -> None:
-        laenge = int(self.headers.get("Content-Length") or 0)
+        try:
+            laenge = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            laenge = -1
+        if laenge < 0:
+            self._fehler("Die Anfrage war nicht lesbar: Content-Length ist keine Länge.")
+            return
+        # DAS ERSTE VERBINDEN KOMMT OHNE ANMELDUNG herein (§2) — also liest es höchstens, was
+        # eine Zahl braucht. Bis zum 01.10.2026 las der Server hier jeden Rumpf ganz, auch von
+        # einem Gerät, das noch nichts darf (Befund der Vermittler-Durchsicht; die Mac-Seite
+        # begrenzt schon seit `c61fe3c` am Kopf auf 1 KiB).
+        if (urllib.parse.urlparse(self.path).path == WEG_VERBINDEN
+                and laenge > VERBINDEN_HOECHSTENS):
+            self._fehler("Zum Verbinden genügt eine Zahl — die Anfrage ist zu gross.", 413)
+            return
         # DER KNOTENWEG ZUERST: Sein Auftrag kommt als Formular mit einer Modelldatei, nicht
         # als JSON — die Zeile darunter wuerde ihn als unlesbar abweisen.
         weg_knoten = urllib.parse.urlparse(self.path).path

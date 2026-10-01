@@ -1610,3 +1610,34 @@ def test_im_dienstbetrieb_sagt_die_tuer_wo_das_kennwort_steht():
         finally:
             faden.join(5)
             s.server_close()
+
+
+def test_das_erste_verbinden_liest_hoechstens_eine_handvoll_bytes():
+    """Befund der Vermittler-Durchsicht (01.10.2026): ``POST /api/verbinden`` kommt ohne
+    Anmeldung herein und las jeden Rumpf ganz. Jetzt 413, bevor gelesen wird — gleich der
+    Grenze, die der Mac als Vermittler am Kopf zieht (Abschrift bewacht)."""
+    import http.client
+    import json as _json
+    import re as _re
+    import threading
+    from pathlib import Path as _Pfad
+    from aiimaging import kopplung
+    from oberflaeche import server as srv
+    swift = (_Pfad(__file__).resolve().parents[1] / "ipad" / "Visbox.swiftpm" / "Kern"
+             / "Vermittlung.swift").read_text(encoding="utf-8")
+    assert int(_re.search(r"koppelRumpfGrenze = (\d+)", swift).group(1)) \
+        == srv.VERBINDEN_HOECHSTENS
+    for laenge, erwartet in ((srv.VERBINDEN_HOECHSTENS + 1, 413), (20, 403)):
+        s = srv.baue_server(anschluss=0, kennwort="k" * 32, kopplung_offen=kopplung.eroeffne())
+        faden = threading.Thread(target=s.handle_request, daemon=True)
+        faden.start()
+        try:
+            v = http.client.HTTPConnection("127.0.0.1", s.server_address[1], timeout=5)
+            rumpf = _json.dumps({"pin": "000000"}).encode().ljust(laenge, b" ")
+            v.request("POST", srv.WEG_VERBINDEN, body=rumpf,
+                      headers={"Content-Type": "application/json"})
+            antwort = v.getresponse()
+            assert antwort.status == erwartet, (laenge, antwort.status, antwort.read())
+        finally:
+            faden.join(5)
+            s.server_close()
