@@ -7707,8 +7707,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **local:** `auf-20261001-221` — Server-Behebungen an der echten Grafikkarte nachmessen.
       *(01.10.2026: tragen am Gerät — 654 MiB bleiben, zweite Frage ohne Fehler, Fortschritt < 2 ms während einer Frage; Protokoll 74 §11)*
 - [ ] **Kern (v0.1.8):** Bildmodell wird je Variante neu geladen (1–2 s je Variante) — einmal laden für die ganze Reihe.
-- [ ] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
-- [ ] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
+- [x] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
+      *(01.10.2026: als Schritt A7 in `auf-20261001-235` gelegt)*
+- [x] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
+      *(`VERBINDEN_HOECHSTENS` = 1 KiB, sonst 413 — `oberflaeche/server.py`; seit 01.10.2026 auf `main`)*
 - [x] **Owner:** Tailscale-App aufs iPad, mit dem eigenen Konto anmelden (vor der Probe).
       *(01.10.2026, Owner: installiert)*
 - [x] **local:** `auf-20261001-224` — iPad im Tailscale-Netz sichtbar und erreichbar? Weiterleitung 8443 steht?
@@ -7717,7 +7719,7 @@ Bekannt und ausdrücklich nicht erledigt:
       *(01.10.2026: dazu `/api/heim`; Rechenzeit auf der Karte erst nach der Messung 218)*
 - [x] **cloud (E5):** Lieferblatt v0.1.7 an Int 1, Freitag, inkl. ui-Posten 180 und 204.
       *(schon am 01.10.2026 abends als `auf-20261001-231` — der Integrator baut v0.1.7 jetzt)*
-- [ ] **cloud:** `auf-20261001-231` beantworten (P1–P4).
+- [x] **cloud:** `auf-20261001-231` beantworten (P1–P4). *(01.10.2026, `erg-20261001-231-lieferblatt-v017.md`)*
 - [x] **local (F):** Sammel-Nachprobe aller «gebaut, am Gerät unbestätigt» nach dem v0.1.6-Schnitt.
       *(abgelegt 01.10.2026 als `auf-20261001-230`, 17 Posten, wartet auf den Tag v0.1.6)*
 - [x] **local:** `auf-20261001-230` beantworten.
@@ -7735,5 +7737,6 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Owner:** Probe am iPad (Tailscale, «iPad koppeln») — nächste Woche (Owner, 01.10.2026).
 - [x] **Kern:** Worker `local-prepare` im Auftragsvertrag, eng gefasst (nur `frage`, Pflichtfeld `rechte`). *(01.10.2026, Owner-Ja, Protokoll 74 §14)*
 - [x] **Owner:** Entscheid 65 — wir bauen Visbox/KosmoVis drüben selbst auf eigenem Zweig, Int 1 spielt ein. *(01.10.2026)*
-- [ ] **Kern (drüben):** P1 Lieferstatus null und P2 qa.verdict.hinweise auf `claude/kosmovis-v017-lieferstatus-hinweise`, Tore grün, Blatt an Int 1.
+- [x] **Kern (drüben):** P1 Lieferstatus null und P2 qa.verdict.hinweise auf `claude/kosmovis-v017-lieferstatus-hinweise`, Tore grün, Blatt an Int 1.
+      *(01.10.2026: P1 gebaut bis `9022ece05`, dazu B1–B4; P2 nicht nochmals — seit v0.1.6, ROADMAP 1644)*
 - [ ] **local (Mac):** `auf-20261001-234` — Visbox 0.1.0 am echten Mac bauen, starten, probieren (Owner-Hinweis: der Heim-PC-Worker erreicht einen Mac mit Xcode).
