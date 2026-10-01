@@ -74,8 +74,11 @@ struct Koppelbildschirm: View {
             Abschnittstitel(text: "Im Heimnetz gefunden")
             switch Suche.waehle(stand.gefunden) {
             case .keiner:
-                Text("Noch keine gefunden. Die HomeStation kündigt sich heute nicht selbst an — "
-                     + "ihre Adresse steht in ihrem Fenster (Start mit --im-heimnetz).")
+                // BERICHTIGT 01.10.2026: Seit dem 22.09. kündigt sich die HomeStation selbst an
+                // (Protokoll §8), und unterwegs vermittelt der Mac (§8b). Der alte Satz sagte,
+                // sie tue es nicht — und schickte die Nutzerin an ein Fenster, das sie nicht sieht.
+                Text("Noch keine gefunden. Zu Hause: läuft die HomeStation im Heimnetz? "
+                     + "Unterwegs: ist die Mac-App offen, im selben WLAN oder am Hotspot des Mac?")
                     .font(Schrift.text(14))
                     .foregroundStyle(Zeichenblatt.leise)
             case .einer(let d):

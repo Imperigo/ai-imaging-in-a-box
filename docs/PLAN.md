@@ -7688,7 +7688,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **cloud:** `auf-20261001-216` — Antwort an Int 1: Lieferstatus null zulassen, Lizenzmarke lesen (bis v1.0 offen), Union-2.1 und Formprüfung nicht bauen.
 - [x] **Kern (A):** Mac-App `ipad/VisboxMac` — Startzeilen, Kennwort im Schlüsselbund, «Schon anfangen», ZIP aus der Prüfstrecke.
       *(01.10.2026: gebaut, in der Mac-Prüfstrecke beim ersten Lauf übersetzt und als ZIP abgelegt; am Gerät unbestätigt)*
-- [ ] **Kern (B):** iPad über den Mac — Bonjour, Vermittler, Erlaubnis «lokales Netzwerk».
+- [x] **Kern (B):** iPad über den Mac — Bonjour, Vermittler, Erlaubnis «lokales Netzwerk».
+      *(01.10.2026: Kern `Leitung`/`Vermittlung`/`Vermittlerkopplung`, Mac `Vermittlungsdienst`, Protokoll §8b; am Gerät unbestätigt — sieben Prüfschritte im Protokoll 74 §6)*
 - [x] **Kern (C):** Vorführmodus — Mappenformat, Umschalten von selbst (Blatt 13b).
       *(01.10.2026: `tools/vorfuehrmappe.py`, Kern `Vorfuehrmappe`/`Vorfuehrschalter`, verdrahtet; Platzhalter-Mappe im Bündel; am Gerät unbestätigt)*
 - [x] **local (C3+D4):** Beispielmappe rechnen (synthetisch) und Assistent messen — ein Auftrag, Donnerstag.
