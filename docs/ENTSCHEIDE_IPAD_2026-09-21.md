@@ -259,3 +259,9 @@ dazu: `docs/PLAN_V017_2026-10-01.md` (Sitzung 74 §4).
 Apple-Unterschrift nicht mehr. Der Weg ist: einmal öffnen, dann *Systemeinstellungen →
 Datenschutz & Sicherheit → «Trotzdem öffnen»*. Am Entscheid ändert das nichts, nur am Satz
 auf Blatt 13.
+
+## Nachtrag 01.10.2026, abends — das iPad unterwegs
+
+| Nr. | Frage | Entscheid |
+|---|---|---|
+| 63 | Wie kommt das iPad unterwegs zum Heim-PC, nachdem die Durchsicht gezeigt hat, dass iPad ↔ Mac im fremden WLAN unverschlüsselt wäre? | **Direkt über Tailscale** — Tailscale-App auch aufs iPad, die App spricht https mit dem Heim-PC. Der Mac gibt dem iPad beim ersten Mal nur die Zahl zum Koppeln (er fragt sie am Heim-PC ab). **Ersetzt Entscheide 42/47** für die Vorführung; die Vermittlung über den Mac bleibt im Code, aber ausgeschaltet, bis man sie einschaltet. Verworfen: «eigener Hotspot, später verschlüsseln» (empfohlen gewesen) und «jetzt verschlüsseln» (ein Tag, gefährdet die Abgabe). |
