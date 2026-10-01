@@ -18,7 +18,9 @@ Die WIRKUNG in der Datei, die die fremde Warteschlange liest — ``bruecke.lies_
 (aus ``tests/test_kettenlauf_26august.py``) → ``bruecke.schreibe_ergebnis``:
 
 1. ganz geliefert: drei Kameras, drei Bilder, alles ``geliefert``;
-2. eine Kamera abgebrochen (über dem Dach): sie ``fehlgeschlagen``, der Auftrag auch;
+2. eine Kamera abgebrochen (schaut vorbei; bis zum Owner-Entscheid 67 vom 01.10.2026
+   stand hier «über dem Dach», das seither gerechnet wird): sie ``fehlgeschlagen``, der
+   Auftrag auch;
 3. alle abgebrochen (Rahmung): kein Bild, jede Kamera ``fehlgeschlagen`` mit dem Satz,
    den ``verdict.reason`` schon trägt;
 4. Zwilling: ``uebersprungen``, 0 von 1 — ein Bild zählt nicht zweimal;
@@ -87,19 +89,24 @@ def test_ganz_geliefert_heisst_jede_kamera_ein_bild_von_einem(tmp_path):
 
 
 def test_eine_abgebrochene_kamera_macht_den_auftrag_nicht_geliefert(tmp_path):
-    """Die Kamera ``sSE`` steht über dem Dach — abgebrochen VOR dem Render. Zwei Bilder
-    kommen, eines nicht: Der Auftrag darf nicht «geliefert» heissen."""
-    def hoch(kuerzel):
-        block = _kamerablock(kuerzel)
-        return dict(block, auge=[0.0, -30.0, 77.0]) if kuerzel == "sSE" else block
+    """Die Kamera ``sSE`` schaut an der Szene vorbei — abgebrochen VOR dem Render. Zwei
+    Bilder kommen, eines nicht: Der Auftrag darf nicht «geliefert» heissen.
 
-    vertrag = _vertrag(tmp_path, kamerablock=hoch)
+    Bis zum 01.10.2026 stand hier eine Kamera ueber dem Dach; die wird seit dem
+    Owner-Entscheid 67 gerechnet (bewacht in ``tests/test_sammelnachprobe_230.py``). Die
+    Frage dieser Probe — eine abgebrochene Kamera macht den Auftrag fehlgeschlagen —
+    braucht einen Abbruch, und der Blickfeldriegel ist einer."""
+    def weg(kuerzel):
+        block = _kamerablock(kuerzel)
+        return dict(block, blick_auf=[0.0, -60.0, 1.70]) if kuerzel == "sSE" else block
+
+    vertrag = _vertrag(tmp_path, kamerablock=weg)
     je = _je(vertrag)
 
     assert len(vertrag["images"]) == 2, "Vorbedingung: eine Kamera nicht gerendert"
     assert (je["sSE"]["lieferstatus"], je["sSE"]["bilder_soll"],
             je["sSE"]["bilder_ist"]) == (FEHLGESCHLAGEN, 1, 0)
-    assert "ueber dem Dach" in je["sSE"]["lieferstatus_grund"]
+    assert "schaut an der Szene vorbei" in je["sSE"]["lieferstatus_grund"]
     assert je["s"]["lieferstatus"] == je["nNW"]["lieferstatus"] == GELIEFERT
     assert vertrag["lieferstatus"] == FEHLGESCHLAGEN
     grund = vertrag["lieferstatus_grund"]

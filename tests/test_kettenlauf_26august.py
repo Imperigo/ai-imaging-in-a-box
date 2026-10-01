@@ -218,8 +218,11 @@ def test_eine_zu_weite_rahmung_haelt_die_ganze_kette_auf(tmp_path):
     assert [z for z in zeilen if "NICHT GERENDERT (Rahmung)" in z]
 
 
-def test_eine_kamera_ueber_dem_dach_haelt_die_ganze_kette_auf(tmp_path):
-    """Derselbe Owner-Einwand an der zweiten Stelle, an der ganzen Kette geprüft."""
+def test_eine_kamera_ueber_dem_dach_wird_an_der_ganzen_kette_gerechnet(tmp_path):
+    """Die zweite Stelle, an der ganzen Kette geprüft. Bis zum 01.10.2026 hielt eine
+    Kamera über dem Dach die Kette auf; seit dem Owner-Entscheid 67 («Rechnen, mit
+    Vorbehalt») wird gerechnet, und der Kurzbefund sagt, dass das Regelwerk der Augenhöhe
+    nicht angelegt wurde."""
     def hoch(kuerzel):
         return dict(_kamerablock(kuerzel), auge=[0.0, -30.0, 77.023])
 
@@ -228,9 +231,9 @@ def test_eine_kamera_ueber_dem_dach_haelt_die_ganze_kette_auf(tmp_path):
 
     _lauf(tmp_path, ordner, attrappen)
 
-    assert protokoll["render"] == []
+    assert len(protokoll["render"]) == 3
     zeilen = abholer.befund_kurz(abholer.lies_befund(ordner))
-    assert [z for z in zeilen if "nicht beurteilbar" in z]
+    assert [z for z in zeilen if "Komposition nicht angewandt (Aufsicht" in z]
 
 
 def test_ein_abbestellter_auftrag_beruehrt_weder_blender_noch_gpu(tmp_path):

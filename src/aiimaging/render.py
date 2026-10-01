@@ -103,6 +103,7 @@ die halbe Bildkette an Hardware, die es hier nicht gibt.
 from __future__ import annotations
 
 import gc
+import json
 import math
 import os
 import platform
@@ -812,6 +813,119 @@ def umgebung_da(*, finde=None) -> dict:
                      f"läuft).")}
 
 
+def _diffusers_ohne_gewichte():
+    """Das ``diffusers``-Modul, wenn es da ist — sonst ``None``. Lädt kein Modell.
+
+    Zuerst ``sys.modules`` (dort steht es, sobald einmal geladen wurde, und dort setzt eine
+    Probe ihr Ersatzmodul ein), dann ``find_spec``: Ist es nicht auffindbar, wird es auch
+    nicht importiert — dieselbe Zurückhaltung wie :func:`umgebung_da`. ``diffusers`` selbst
+    lädt seine Pipelines erst beim Zugriff; der Import kostet keine Gewichte.
+    """
+    import importlib
+    import importlib.util
+
+    modul = sys.modules.get("diffusers")
+    if modul is not None:
+        return modul
+    try:
+        if importlib.util.find_spec("diffusers") is None:
+            return None
+        return importlib.import_module("diffusers")
+    except Exception:                      # noqa: BLE001 — eine Auskunft, kein Lauf
+        return None
+
+
+def _pipeline_klassen(eintrag, modell_wurzel=None) -> tuple[tuple[str, ...], str]:
+    """Welche ``diffusers``-Klassen das Laden dieses Eintrags braucht — und woher das kommt.
+
+    Dieselbe Wahl wie :func:`lade_modell`: getrenntes ControlNet → die beiden Klassen
+    seiner Familie; sonst die Klasse am Register-Eintrag; sonst ``_class_name`` aus der
+    ``model_index.json`` der Gewichte — genau die Angabe, nach der
+    ``DiffusionPipeline.from_pretrained`` sucht. Leer heisst: nicht bekannt.
+    """
+    if eintrag.konditionierung == KOND_DEPTH_CONTROLNET and eintrag.controlnet_id:
+        klassen = CONTROLNET_KLASSEN.get(eintrag.controlnet_familie)
+        return (tuple(klassen) if klassen else ()), "controlnet_familie"
+    if getattr(eintrag, "pipeline_klasse", None):
+        return (eintrag.pipeline_klasse,), "register"
+    try:
+        wurzel = (Path(modell_wurzel) if modell_wurzel is not None
+                  else wurzel_fuer(eintrag.name))
+        index = json.loads((wurzel / "model_index.json").read_text(encoding="utf-8"))
+        name = index.get("_class_name")
+    except Exception:                      # noqa: BLE001 — fehlt, unlesbar: nicht bekannt
+        return (), "unbekannt"
+    return ((str(name),) if isinstance(name, str) and name else ()), "model_index.json"
+
+
+def pipeline_lage(backbone_name: str, *, diffusers_modul=None, modell_wurzel=None) -> dict:
+    """Kennt die installierte ``diffusers`` die Pipeline-Klasse dieses Bildmodells?
+
+    **Der Befund (`auf-20261001-230`, Sammel-Nachprobe am echten KosmoOrbit v0.1.6):**
+    qwen-image-2.1 ist bestellbar (E128), aber ``.venv-render`` führt diffusers 0.39.0,
+    und die kennt ``QwenImage21Pipeline`` nicht — die Messungen 178/208 liefen in einem
+    eigenen Forschungs-venv. Der Auftrag scheiterte darum erst beim Laden, nach dem
+    Blender-Lauf, mit «AttributeError: module diffusers has no attribute …». Die Frage ist
+    vorher zu beantworten, und zwar ohne Gewichte: ein Name in einem Modul.
+
+    Gefragt wird zuerst mit ``dir()``: ``diffusers`` lädt seine Klassen erst beim Zugriff,
+    ``hasattr`` würde eine vorhandene Pipeline samt ``torch`` laden. Nur ein Name, den
+    ``dir()`` nicht nennt, wird danach mit ``hasattr`` nachgefragt — bei einer echten
+    diffusers ist das genau ein fehlender, und der lädt nichts; ein Modul, das seine Namen
+    erst auf Anfrage bildet, kommt so trotzdem richtig an.
+
+    Args:
+        diffusers_modul: das Modul, das gefragt wird; ``None`` heisst das installierte
+            (:func:`_diffusers_ohne_gewichte`). Für Proben ein Ersatzmodul.
+
+    Returns:
+        ``{rechenbar, klassen, fehlend, fassung, quelle, satz}``. ``rechenbar`` ist
+        ``None`` — NICHT GEPRUEFT, nicht «ja» —, wenn diffusers nicht auffindbar ist (das
+        meldet :func:`umgebung_da`) oder keine Klasse bekannt ist. Abgewiesen wird nur
+        bei ``False``.
+    """
+    eintrag = backbone.BACKBONES.get(backbone_name)
+    if eintrag is None:
+        return {"rechenbar": None, "klassen": (), "fehlend": (), "fassung": None,
+                "quelle": "unbekannt",
+                "satz": f"NICHT GEPRUEFT: Backbone {backbone_name!r} ist unbekannt."}
+    klassen, quelle = _pipeline_klassen(eintrag, modell_wurzel)
+    modul = diffusers_modul if diffusers_modul is not None else _diffusers_ohne_gewichte()
+    fassung = (str(getattr(modul, "__version__", "") or "unbekannt")
+               if modul is not None else None)
+    if not klassen:
+        return {"rechenbar": None, "klassen": (), "fehlend": (), "fassung": fassung,
+                "quelle": quelle,
+                "satz": (f"NICHT GEPRUEFT: Fuer {eintrag.name!r} ist keine Pipeline-Klasse "
+                         f"bekannt (weder im Register noch in einer model_index.json).")}
+    if modul is None:
+        return {"rechenbar": None, "klassen": klassen, "fehlend": (), "fassung": None,
+                "quelle": quelle,
+                "satz": "NICHT GEPRUEFT: diffusers ist mit diesem Python nicht auffindbar."}
+    try:
+        namen = set(dir(modul))
+    except Exception:                      # noqa: BLE001 — ein kaputtes Modul ist ungeprüft
+        namen = None
+    if namen is None:
+        return {"rechenbar": None, "klassen": klassen, "fehlend": (), "fassung": fassung,
+                "quelle": quelle, "satz": "NICHT GEPRUEFT: diffusers gibt keine Namen her."}
+    def _hat(name: str) -> bool:
+        try:
+            return hasattr(modul, name)
+        except Exception:                  # noqa: BLE001 — wer beim Fragen wirft, hat sie nicht
+            return False
+
+    fehlend = tuple(k for k in klassen if k not in namen and not _hat(k))
+    if not fehlend:
+        return {"rechenbar": True, "klassen": klassen, "fehlend": (), "fassung": fassung,
+                "quelle": quelle,
+                "satz": f"da ({', '.join(klassen)}, diffusers {fassung})"}
+    return {"rechenbar": False, "klassen": klassen, "fehlend": fehlend, "fassung": fassung,
+            "quelle": quelle,
+            "satz": (f"In der Render-Umgebung fehlt {', '.join(fehlend)} (diffusers "
+                     f"{fassung}) — dieses Bildmodell ist hier nicht rechenbar.")}
+
+
 def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
     """Ein Bildmodell laden — die einzige Stelle, die ``torch`` und ``diffusers`` kennt.
 
@@ -879,6 +993,14 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
             f"dort, wo der GPU-Stack installiert ist — im Entwicklungscontainer gibt es "
             f"ihn nicht. Für Tests und Trockenläufe 'modell=' oder '_lader=' übergeben."
         ) from fehler
+
+    # DIE KLASSE VOR DEN GEWICHTEN (auf-20261001-230): Kennt diese diffusers die Pipeline
+    # nicht, gibt es den Satz jetzt — nicht als `AttributeError` aus `from_pretrained`,
+    # nachdem die Gewichte schon gelesen werden.
+    lage = pipeline_lage(eintrag.name, diffusers_modul=sys.modules.get("diffusers"),
+                         modell_wurzel=wurzel)
+    if lage["rechenbar"] is False:
+        raise RenderError(lage["satz"])
 
     if eintrag.konditionierung == KOND_DEPTH_CONTROLNET and eintrag.controlnet_id:
         pipeline, weg = _lade_mit_controlnet(eintrag, wurzel, torch)
@@ -1570,6 +1692,49 @@ def ist_controlnet_naht(pipeline, genommene_argumente) -> bool:
     return getattr(pipeline, "controlnet", None) is not None
 
 
+def fuehrung_angewandt(eintrag, parameter: dict, genommen: dict) -> bool | None:
+    """Lief in diesem Aufruf klassifikatorfreie Führung — ``True``, ``False`` oder ``None``.
+
+    **Der Anlass (C35, Sammel-Nachprobe ``auf-20261001-230``):** ``guidance_applied`` fehlte
+    in jedem Ergebnis. Es stand nur, wenn ``fuehrung_regler_angekommen`` ein Wahrheitswert
+    war — und das ist es nur bei einem Eintrag mit eigenem Regler, also nie bei der
+    Vorgabe ``z-image-turbo``. Ihr Vertrag will einen Wahrheitswert und nie ``null``;
+    ``None`` heisst hier darum: **nicht belegt**, und dann fehlt das Feld weiter.
+
+    Belegt ist es an zwei Stellen, und nur dort wird geantwortet:
+
+    * **Eigener Regler** (``fuehrung_regler``, heute ``true_cfg_scale`` bei
+      ``qwen-image-edit-2511``): Die Pipeline führt genau dann, wenn der Regler über
+      :data:`FUEHRUNG_MINDESTENS` liegt UND ein Negativprompt da ist, der nicht ``None``
+      ist (``pipeline_qwenimage_edit_plus.py`` Z.708/719, gelesen in auf-20260923-157).
+      Nahm die Pipeline den Regler nicht, ist es unbekannt — nicht «nein».
+    * **``guidance_scale`` genommen, mit einem Wert bis** :data:`FUEHRUNG_MINDESTENS`:
+      ``False``. Ohne zweiten, ungeführten Durchlauf gibt es keine klassifikatorfreie
+      Führung — die Bauart des Verfahrens, nicht eine Setzung. So läuft ``z-image-turbo``
+      (``fuehrung=0.0``, «auf 8 Schritte OHNE klassifikatorfreie Führung trainiert»).
+
+    Nicht beantwortet wird: ``guidance_scale`` über 1.0 (ob daraus echte Führung wird oder
+    ein eingebetteter Wert, hängt an der Pipeline — destillierte Modelle lesen ihn als
+    Eingabe), ein ``None`` (dann gilt die Vorgabe der Pipeline, die wir nicht kennen), und
+    ein Eintrag, dessen ``guidance_scale`` belegt wirkungslos ist.
+    """
+    regler = parameter.get("fuehrung_regler")
+    regler_wert = parameter.get("fuehrung_regler_wert")
+    if regler is not None and regler_wert is not None:
+        if regler not in genommen:
+            return None
+        return (float(genommen[regler]) > FUEHRUNG_MINDESTENS
+                and genommen.get("negative_prompt") is not None)
+    if getattr(eintrag, "guidance_scale_wirkungslos", None) is True:
+        return None
+    wert = genommen.get("guidance_scale")
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        return None
+    if float(wert) <= FUEHRUNG_MINDESTENS:
+        return False
+    return None
+
+
 def _tiefe_als_rgb(bild):
     """Tiefenkarte nach RGB — **skaliert, nicht geklippt**.
 
@@ -1898,6 +2063,9 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 # nur diese Stelle. None: kein Regler bestellt.
                 "fuehrung_regler_angekommen": (None if regler is None or regler_wert is None
                                                else regler in genommen),
+                # LIEF KLASSIFIKATORFREIE FUEHRUNG? — `guidance_applied` im Vertrag (C35).
+                # Erst hier bekannt: Es haengt daran, was die Pipeline GENOMMEN hat.
+                "fuehrung_angewandt": fuehrung_angewandt(eintrag, parameter, genommen),
                 # ZWEI FELDER, NICHT EINES. Sie sind meistens gleich, und genau darum
                 # faellt der Fall auf, in dem sie es nicht sind.
                 "modus_bestellt": modus_bestellt,
@@ -1983,6 +2151,9 @@ def _baue_parameter(a: RenderAuftrag, eintrag, *,
         # heisst: kein Regler bestellt, oder die Naht meldet es nicht (Attrappe, fremdes
         # Modell) — nicht «nein».
         "fuehrung_regler_angekommen": None,
+        # Ob klassifikatorfreie Fuehrung LIEF (`guidance_applied`, C35) — wie
+        # `fuehrung_regler_angekommen` erst nach dem Lauf bekannt. `None`: nicht belegt.
+        "fuehrung_angewandt": None,
         "modell_wurzel": str(wurzel),
     }
 
@@ -2646,6 +2817,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         hinweise = vorn + tuple(hinweise) + tuple(h for h in eigene if h not in vorn)
         gerechnet = antwort.get("schritte_gerechnet")
         parameter["fuehrung_regler_angekommen"] = antwort.get("fuehrung_regler_angekommen")
+        parameter["fuehrung_angewandt"] = antwort.get("fuehrung_angewandt")
         modus_bestellt = antwort.get("modus_bestellt")
         modus_gerechnet = antwort.get("modus_gerechnet")
     else:
@@ -2681,6 +2853,6 @@ __all__ = [
     "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
-    "anwendungsdaten_wurzel", "lade_modell", "modellwurzel", "modellwurzel_lage",
-    "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel", "wurzel_fuer",
+    "anwendungsdaten_wurzel", "fuehrung_angewandt", "lade_modell", "modellwurzel",
+    "modellwurzel_lage", "pipeline_lage", "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel", "wurzel_fuer",
 ]

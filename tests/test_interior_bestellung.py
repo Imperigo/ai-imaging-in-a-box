@@ -599,10 +599,12 @@ def test_ohne_bild_steht_kein_satz_ueber_das_bild(tmp_path, ifc_naht):
             == kosmo_szene.INNEN_STANDPUNKT_AUS_RAEUMEN)
 
 
-def test_der_innenvermerk_steht_am_urteil_eines_kompositionsabbruchs(tmp_path, ifc_naht):
-    """Mangel 3: Der zweite Abbruch vor dem Bild — die Kamera steht höher als das
-    Bauwerk (``_kamera_ueber_dach``). Keine Hüllbox im Bericht, damit das Blickfeld nicht
-    vorher greift."""
+def test_der_innenvermerk_steht_auch_an_einer_aufsicht(tmp_path, ifc_naht):
+    """Mangel 3 — bis zum 01.10.2026 der zweite Abbruch vor dem Bild: Die Kamera steht
+    höher als das Bauwerk (``_kamera_ueber_dach``). Seit dem Owner-Entscheid 67 wird sie
+    gerechnet; der Innenvermerk steht dann am GERENDERTEN Urteil, und neben ihm die
+    Auskunft zur Aufsicht. Keine Hüllbox im Bericht, damit das Blickfeld nicht vorher
+    greift."""
     _, multipass = _multipass_mit(lambda kw: {
         "kamera": {"weg": "vorgegeben", "auge": kw["auge"], "blick_auf": kw["blick_auf"],
                    "gebaeudehoehe_m": 0.5, "gelaende_z": 0.0}})
@@ -610,14 +612,17 @@ def test_der_innenvermerk_steht_am_urteil_eines_kompositionsabbruchs(tmp_path, i
 
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
     urteil = _urteil_der_kamera(tmp_path, ordner, "innen")
-    assert urteil["komposition"]["abbruch"] is True, "Vorbedingung: der Kompositionszweig"
+    assert urteil["komposition"]["abbruch"] is False
+    assert urteil["komposition"]["aufsicht"], "Vorbedingung: die Kamera steht ueber dem Dach"
     assert urteil[kosmo_szene.URTEIL_INNENANSICHT]["raum"] == RAUM["name"]
     # Seit 30.09.2026 eine AUSKUNFT in `verdict.hinweise`, nicht mehr im Grund
     # (Owner-Entscheid; ihre Kachel warnt bei jedem `reason`).
-    assert "INNENANSICHT" not in _vertrag(ordner)["qa"]["verdict"]["reason"]
-    grund = " ".join(_vertrag(ordner)["qa"]["verdict"].get("hinweise") or [])
-    assert "gerechnet, nicht gerendert" in grund
-    assert "Das Bild zeigt den Raum" not in grund
+    verdict = _vertrag(ordner)["qa"]["verdict"]
+    assert "INNENANSICHT" not in verdict["reason"]
+    assert "AUFSICHT" not in verdict["reason"]
+    hinweise = " ".join(verdict.get("hinweise") or [])
+    assert "Das Bild zeigt den Raum" in hinweise
+    assert "AUFSICHT: Die Kamera innen steht über dem Dach" in hinweise
 
 
 def test_der_zwilling_einer_mitgesandten_innenkamera_traegt_den_vermerk(

@@ -344,7 +344,9 @@ def main(argv=None) -> int:
     ap.add_argument("--fremde-freigabe", action="store_true",
                     help="Die Freigabe der fremden Bruecke gelten lassen. Betreiber-Entscheid.")
     ap.add_argument("--hoechstens", type=int, default=None,
-                    help="Hoechstens so viele Auftraege in diesem Durchgang.")
+                    help="Hoechstens so viele LAEUFE in diesem Durchgang. Ein aufgehaltener "
+                         "Auftrag (Maengel, Karte belegt, zu wenig Speicher) zaehlt nicht "
+                         "mit — er blockierte sonst jeden spaeteren (auf-20261001-230).")
     ap.add_argument("--stil", default=None, help="Stil fuer die Belichtungspruefung.")
     ap.add_argument("--seeds",
                     default=",".join(str(s) for s in abholer.VORGABE_SEEDS),

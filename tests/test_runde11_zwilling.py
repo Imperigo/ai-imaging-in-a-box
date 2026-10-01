@@ -96,10 +96,14 @@ def _grund(vertrag: dict) -> str:
     return vertrag["qa"]["verdict"]["reason"]
 
 
-def _hoch(kuerzel):
-    """``sSE`` steht ueber dem Dach — abgebrochen vor dem Render (Kamerahoehe)."""
+def _vorbei(kuerzel):
+    """``sSE`` schaut an der Szene vorbei — abgebrochen vor dem Render (Blickfeld).
+
+    Bis zum 01.10.2026 stand hier eine Kamera ueber dem Dach; die wird seit dem
+    Owner-Entscheid 67 gerechnet. Gebraucht wird hier nur IRGENDEIN Abbruch vor dem
+    Render, und der Blickfeldriegel ist einer."""
     block = _kamerablock(kuerzel)
-    return dict(block, auge=[0.0, -30.0, 77.0]) if kuerzel == "sSE" else block
+    return dict(block, blick_auf=[0.0, -60.0, 1.70]) if kuerzel == "sSE" else block
 
 
 # ======================================================================================
@@ -145,15 +149,16 @@ def test_zwei_zwillinge_stehen_in_einer_zeile(tmp_path, monkeypatch):
 
 
 def test_der_zwilling_steht_hinter_einem_abbruch_in_kamerafolge(tmp_path, monkeypatch):
-    """``sSE`` bricht ueber dem Dach ab (verbraucht keine Karte), ``nNW`` ist Zwilling
+    """``sSE`` bricht am Blickfeld ab (verbraucht keine Karte), ``nNW`` ist Zwilling
     von ``s``. Der Zwillingssatz steht an der Stelle der nicht gerenderten Kameras und
     in ihrer Reihenfolge: nach dem Abbruch von ``sSE``, vor allem Uebrigen."""
-    vorher, nachher = _vorher_nachher(tmp_path, monkeypatch, kamerablock=_hoch,
+    vorher, nachher = _vorher_nachher(tmp_path, monkeypatch, kamerablock=_vorbei,
                                       karten=[[[1.0]], [[1.0]]])
 
     assert nachher["images"] == ["s.png"], "Vorbedingung: nur s gerendert"
     teile_vorher = _grund(vorher).split("; ")
-    assert teile_vorher[0].startswith("NICHT GERENDERT (Aufnahme nicht beurteilbar), sSE")
+    assert teile_vorher[0].startswith(
+        "NICHT GERENDERT (Kamera schaut an der Szene vorbei), sSE")
     assert _grund(nachher).split("; ") == [teile_vorher[0], ZWILLING_NNW,
                                            *teile_vorher[1:]]
     assert _ohne(nachher, grund=True) == _ohne(vorher, grund=True)
@@ -165,7 +170,7 @@ def test_der_zwilling_steht_hinter_einem_abbruch_in_kamerafolge(tmp_path, monkey
 
 @pytest.mark.parametrize("kette", [
     pytest.param({}, id="alle-gerendert"),
-    pytest.param({"kamerablock": _hoch}, id="einer-ueber-dem-dach"),
+    pytest.param({"kamerablock": _vorbei}, id="einer-schaut-vorbei"),
     pytest.param({"bbox_bauwerk": [[0, 0, 0], [1.0, 1.0, 1.0]]}, id="alle-rahmung"),
 ])
 def test_ohne_zwilling_ist_die_datei_bitgleich_zu_vorher(tmp_path, monkeypatch, kette):
