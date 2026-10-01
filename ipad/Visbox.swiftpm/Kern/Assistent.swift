@@ -227,11 +227,30 @@ public struct Assistentenbitte: Equatable, Sendable {
 /// Eine Regel trägt ihn: **Es liegt höchstens eine Karte da, und solange eine Anfrage
 /// unterwegs ist, geht keine zweite hinaus.** Zwei «Anwenden» hintereinander hiessen zwei
 /// Läufe; der zweite bekäme drüben «Es läuft schon einer» — besser, er entsteht gar nicht.
+///
+/// Und eine zweite (Durchsicht 01.10.2026, M2): **In den Verlauf kommt nur, was der Server
+/// angenommen hat.** Hing eine Nachricht schon vor der Antwort darin, blieb eine abgewiesene
+/// (zu lang, Heim-PC weg) für immer stehen — und weil der Server jeden Verlaufsbeitrag über
+/// seiner Grenze abweist, scheiterte danach jede weitere Frage, bis die Leiste neu entstand.
 public struct Assistentengespraech: Equatable, Sendable {
-    /// So viele Beiträge gehen höchstens als Verlauf mit — der Server nimmt 40.
+    /// So viele Beiträge gehen höchstens als Verlauf mit — **Abschrift** von
+    /// `VERLAUF_HOECHSTENS` in `src/aiimaging/assistent.py`, bewacht in
+    /// `tests/test_ipad_geruest.py`.
     public static let verlaufHoechstens = 40
+    /// So lang darf eine Nachricht sein, in Zeichen — **Abschrift** von
+    /// `NACHRICHT_HOECHSTENS`. Gezählt wie Python zählt: Unicode-Zeichen
+    /// (`unicodeScalars`), nicht Swifts zusammengesetzte Zeichen — ein Emoji mit Hautton ist
+    /// für Python zwei.
+    public static let nachrichtHoechstens = 2000
+    /// So lang darf ein Beitrag im Verlauf sein — **Abschrift** von
+    /// `VERLAUF_TEXT_HOECHSTENS`. Die eigenen Nachrichten bleiben darunter (sie sind höchstens
+    /// `nachrichtHoechstens` lang); eine lange Antwort des Modells nicht.
+    public static let verlaufTextHoechstens = 4000
 
     public private(set) var beitraege: [Gespraechsbeitrag] = []
+    /// Die Nachricht, die gerade unterwegs ist — **noch nicht im Verlauf.** Gezeigt wird sie
+    /// trotzdem (`angezeigt`), damit niemand meint, sie sei verloren.
+    public private(set) var unterwegs: String?
     public private(set) var vorschlag: Assistentenvorschlag?
     public private(set) var wartet = false
     /// Der letzte Satz, der kein Beitrag ist (ein Fehler, «gestartet»).
@@ -241,13 +260,35 @@ public struct Assistentengespraech: Equatable, Sendable {
 
     public var karte: Assistentenkarte? { vorschlag.map(Assistentenkarte.init) }
 
-    /// Die Nutzerin schickt `text` ab. `nil`, wenn nichts hinausgeht (leer, oder es wartet
-    /// schon eine Anfrage).
+    /// Was die Leiste zeigt: der Verlauf und, solange sie unterwegs ist, die neue Nachricht.
+    public var angezeigt: [Gespraechsbeitrag] {
+        beitraege + (unterwegs.map { [Gespraechsbeitrag(von: .mensch, text: $0)] } ?? [])
+    }
+
+    /// Wie Python die Länge zählt (`len(str)`): in Unicode-Zeichen.
+    public static func laenge(_ text: String) -> Int { text.unicodeScalars.count }
+
+    /// Der Satz, wenn eine Nachricht zu lang ist — **statt** sie zu senden.
+    public static func satzZuLang(_ laenge: Int) -> String {
+        "Die Nachricht ist länger als \(nachrichtHoechstens) Zeichen (jetzt \(laenge)) — "
+            + "bitte kürzen. Gesendet wurde nichts."
+    }
+
+    /// Die Nutzerin schickt `text` ab. `nil`, wenn nichts hinausgeht: leer, es wartet schon
+    /// eine Anfrage, oder die Nachricht ist zu lang — dann steht der Satz in `hinweis`, und
+    /// der Text bleibt im Eingabefeld (die Leiste leert es nur, wenn etwas hinausgeht).
     public mutating func sende(_ text: String) -> Assistentenbitte? {
         let nachricht = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !nachricht.isEmpty, !wartet else { return nil }
-        let verlauf = Array(beitraege.suffix(Self.verlaufHoechstens))
-        beitraege.append(Gespraechsbeitrag(von: .mensch, text: nachricht))
+        // VOR DEM SENDEN GEPRUEFT, nicht erst drueben: Der Server weist sie ohnehin ab, und
+        // hier kann der Satz sagen, um wie viel zu lang — der Text steht ja noch da.
+        let laenge = Self.laenge(nachricht)
+        guard laenge <= Self.nachrichtHoechstens else {
+            hinweis = Self.satzZuLang(laenge)
+            return nil
+        }
+        let verlauf = Self.alsVerlauf(beitraege)
+        unterwegs = nachricht
         // EINE NEUE BITTE ERSETZT DIE ALTE KARTE: Sie stand fuer eine andere Frage.
         vorschlag = nil
         hinweis = nil
@@ -255,16 +296,45 @@ public struct Assistentengespraech: Equatable, Sendable {
         return Assistentenbitte(nachricht: nachricht, verlauf: verlauf)
     }
 
+    /// Der Verlauf, wie er hinausgeht: **die letzten `verlaufHoechstens`**, und jeder Beitrag
+    /// über `verlaufTextHoechstens` **gekürzt**, mit «…» am Ende.
+    ///
+    /// Gekürzt, nicht weggelassen: Ohne die lange Antwort stünden zwei Fragen der Nutzerin
+    /// hintereinander, und das Modell läse ein Gespräch, das so nicht stattfand. Ihr Anfang
+    /// trägt meist das Wesentliche (die Antwort, dann die Begründung). Im Verlauf der Leiste
+    /// selbst bleibt sie ganz — gekürzt wird nur, was hinausgeht.
+    public static func alsVerlauf(_ beitraege: [Gespraechsbeitrag]) -> [Gespraechsbeitrag] {
+        beitraege.suffix(verlaufHoechstens).map { b in
+            guard laenge(b.text) > verlaufTextHoechstens else { return b }
+            let kopf = b.text.unicodeScalars.prefix(verlaufTextHoechstens - 1)
+            return Gespraechsbeitrag(von: b.von,
+                                     text: String(String.UnicodeScalarView(kopf)) + "…")
+        }
+    }
+
+    /// Der Server hat geantwortet: **jetzt erst** kommen Frage und Antwort in den Verlauf.
     public mutating func empfange(_ antwort: Assistentenantwort) {
+        if let frage = unterwegs {
+            beitraege.append(Gespraechsbeitrag(von: .mensch, text: frage))
+        }
+        unterwegs = nil
         beitraege.append(Gespraechsbeitrag(von: .assistent, text: antwort.antwort))
         vorschlag = antwort.vorschlag
         wartet = false
     }
 
     /// Eine Anfrage scheiterte; der Satz wird gezeigt. Eine liegende Karte bleibt liegen.
-    public mutating func scheitert(_ satz: String) {
+    ///
+    /// Gibt die Nachricht zurück, die unterwegs war (`nil` beim Anwenden): Sie kommt **nicht**
+    /// in den Verlauf, und die Leiste legt sie zurück ins Eingabefeld, damit sie nicht
+    /// verloren ist.
+    @discardableResult
+    public mutating func scheitert(_ satz: String) -> String? {
+        let zurueck = unterwegs
+        unterwegs = nil
         hinweis = satz
         wartet = false
+        return zurueck
     }
 
     /// «Ablehnen»: die Karte verwerfen. Gerechnet wird nichts.

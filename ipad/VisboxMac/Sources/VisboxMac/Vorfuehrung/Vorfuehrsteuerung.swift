@@ -28,6 +28,9 @@ public final class Vorfuehrsteuerung: ObservableObject {
     /// Ob ein Versuch unterwegs ist — **nie zwei zugleich**: Ein hängender Versuch und ein
     /// zweiter, der ihn überholt, meldeten ihre Ausgänge in falscher Reihenfolge.
     private var versuchUnterwegs = false
+    /// Zählt jedes Neu-Einrichten. Ein Versuch, der davor losging, galt der alten Adresse
+    /// oder dem alten Kennwort; sein Ausgang wird verworfen statt gemeldet.
+    private var runde = 0
 
     public init(uhr: @escaping @Sendable () -> Date = { Date() },
                 pruefe: @escaping @Sendable () async -> Versuchsausgang) {
@@ -61,6 +64,25 @@ public final class Vorfuehrsteuerung: ObservableObject {
         schritt()
     }
 
+    /// Adresse oder Kennwort sind neu: der Schalter von vorn (`Vorfuehrschalter.neuEingerichtet`),
+    /// der erste Versuch gleich.
+    public func neuEingerichtet() {
+        runde += 1
+        // EIN VERSUCH DER ALTEN RUNDE darf den neuen nicht aufhalten: Er laeuft zu Ende, sein
+        // Ausgang wird verworfen (`schritt`), und der neue geht sofort los.
+        versuchUnterwegs = false
+        schalter.neuEingerichtet(jetzt: uhr())
+        schritt()
+    }
+
+    /// Die Heimleitung hat gefragt (`Heimleitung.letzteFrage`) — steht die Leitung dort oder
+    /// spricht die Tür, ist der nächste Versuch hier gleich fällig. Die Regel steht im Kern
+    /// (`Vorfuehrschalter.heimleitungFand`).
+    public func heimleitungFand(_ befund: Leitungsbefund) {
+        schalter.heimleitungFand(befund, jetzt: uhr())
+        schritt()
+    }
+
     /// Ein Takt: die Zeitschwelle prüfen, und wenn ein Versuch fällig ist, ihn losschicken.
     private func schritt() {
         let jetzt = uhr()
@@ -68,11 +90,14 @@ public final class Vorfuehrsteuerung: ObservableObject {
         guard !versuchUnterwegs, schalter.faellig(jetzt: jetzt) else { return }
         versuchUnterwegs = true
         let pruefe = self.pruefe
+        let runde = self.runde
         // DER VERSUCH LAEUFT NEBENHER, der Takt weiter: Haengt er bis zu seiner Frist, greift
         // die Zeitschwelle trotzdem.
         Task { [weak self] in
             let ausgang = await pruefe()
             guard let self else { return }
+            // AUS EINER ALTEN RUNDE: Die Antwort gehoert zur Adresse von vorher.
+            guard runde == self.runde else { return }
             self.versuchUnterwegs = false
             self.schalter.melde(ausgang, jetzt: self.uhr())
         }
@@ -107,11 +132,15 @@ extension Vorfuehrmappe {
 public struct Vorfuehrbereich: View {
     @ObservedObject public var steuerung: Vorfuehrsteuerung
     public let ipadVerbunden: Bool
+    /// Öffnet das Blatt «Einrichten» (siehe `Vorfuehransicht.einrichten`).
+    public let einrichten: (() -> Void)?
     @State private var geladen: Result<GeladeneMappe, Vorfuehrmappenfehler>?
 
-    public init(steuerung: Vorfuehrsteuerung, ipadVerbunden: Bool) {
+    public init(steuerung: Vorfuehrsteuerung, ipadVerbunden: Bool,
+                einrichten: (() -> Void)? = nil) {
         self.steuerung = steuerung
         self.ipadVerbunden = ipadVerbunden
+        self.einrichten = einrichten
     }
 
     public var body: some View {
@@ -120,11 +149,15 @@ public struct Vorfuehrbereich: View {
             case .success(let g):
                 Vorfuehransicht(mappe: g.mappe, ordner: g.ordner, seit: steuerung.schalter.seit,
                                 letzterVersuch: steuerung.schalter.letzterVersuch,
+                                letzterGrund: steuerung.schalter.letzterGrund,
                                 ipadVerbunden: ipadVerbunden,
-                                erneutVerbinden: { steuerung.erneutVerbinden() })
+                                erneutVerbinden: { steuerung.erneutVerbinden() },
+                                einrichten: einrichten)
             case .failure(let fehler):
-                Text(Vorfuehrsaetze.band(seit: steuerung.schalter.seit, zone: .current)
-                     + "\n\n" + fehler.satz)
+                // AUCH OHNE MAPPE der Grund: Er sagt, was zu tun ist; die Mappe nicht.
+                Text(([Vorfuehrsaetze.band(seit: steuerung.schalter.seit, zone: .current),
+                        Vorfuehrsaetze.grund(steuerung.schalter.letzterGrund), fehler.satz]
+                       as [String?]).compactMap { $0 }.joined(separator: "\n\n"))
                     .font(Vorfuehrschrift.text(14))
                     .padding(24)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

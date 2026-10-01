@@ -168,6 +168,84 @@ final class AssistentTests: XCTestCase {
         XCTAssertEqual(bitte.verlauf.last?.text, "Antwort 29")
     }
 
+    // ------------------------------------- in den Verlauf nur, was angenommen ist (M2)
+
+    /// Der Befund der Durchsicht vom 01.10.2026: Eine gescheiterte Nachricht blieb im
+    /// Verlauf, und jede weitere Frage trug sie mit.
+    func testEineGescheiterteNachrichtKommtNichtInDenVerlauf() throws {
+        var g = Assistentengespraech()
+        _ = try XCTUnwrap(g.sende("Erste Frage"))
+        XCTAssertEqual(g.beitraege, [], "unterwegs ist noch nicht im Verlauf")
+        XCTAssertEqual(g.angezeigt, [Gespraechsbeitrag(von: .mensch, text: "Erste Frage")],
+                       "gezeigt wird sie trotzdem")
+        let zurueck = g.scheitert("Der Heim-PC antwortete nicht.")
+        XCTAssertEqual(zurueck, "Erste Frage", "die Nachricht geht zurück ins Eingabefeld")
+        XCTAssertEqual(g.beitraege, [])
+        XCTAssertEqual(g.angezeigt, [])
+        XCTAssertNil(g.unterwegs)
+        XCTAssertFalse(g.wartet)
+
+        let bitte = try XCTUnwrap(g.sende("Erste Frage"))
+        XCTAssertEqual(bitte.verlauf, [], "die gescheiterte steht nicht im Verlauf der nächsten")
+        g.empfange(Assistentenantwort(antwort: "Gern.", vorschlag: nil))
+        XCTAssertEqual(g.beitraege, [Gespraechsbeitrag(von: .mensch, text: "Erste Frage"),
+                                     Gespraechsbeitrag(von: .assistent, text: "Gern.")])
+        XCTAssertNil(g.unterwegs)
+    }
+
+    func testEineZuLangeNachrichtGehtNichtHinausUndSagtWarum() throws {
+        var g = Assistentengespraech()
+        let grenze = Assistentengespraech.nachrichtHoechstens
+        XCTAssertNotNil(g.sende(String(repeating: "a", count: grenze)), "genau an der Grenze geht")
+        g.empfange(Assistentenantwort(antwort: "ok", vorschlag: nil))
+
+        XCTAssertNil(g.sende(String(repeating: "a", count: grenze + 1)))
+        XCTAssertFalse(g.wartet, "nichts unterwegs")
+        XCTAssertEqual(g.beitraege.count, 2, "nichts in den Verlauf")
+        XCTAssertEqual(g.hinweis, Assistentengespraech.satzZuLang(grenze + 1))
+        XCTAssertTrue(g.hinweis?.contains("\(grenze)") ?? false)
+        XCTAssertFalse(g.hinweis?.contains("ß") ?? true, "Schweizer Schreibung")
+
+        // DER RAND ZAEHLT NICHT MIT — gesendet wird ohne ihn.
+        XCTAssertNotNil(g.sende("  " + String(repeating: "b", count: grenze) + "\n"))
+    }
+
+    /// Python zählt Unicode-Zeichen, Swift zusammengesetzte: «👍🏽» ist für Swift eins, für
+    /// den Server zwei. Gezählt wird wie drüben.
+    func testDieLaengeZaehltWiePython() {
+        XCTAssertEqual(Assistentengespraech.laenge("👍🏽"), 2)
+        XCTAssertEqual(Assistentengespraech.laenge("Grün"), 4)
+        var g = Assistentengespraech()
+        let knapp = String(repeating: "👍🏽", count: Assistentengespraech.nachrichtHoechstens / 2)
+        XCTAssertNotNil(g.sende(knapp))
+        _ = g.scheitert("x")
+        XCTAssertNil(g.sende(knapp + "a"), "eins über der Grenze, so wie Python zählt")
+    }
+
+    /// Eine Antwort des Modells über der Verlaufsgrenze des Servers würde jede weitere Frage
+    /// scheitern lassen — sie geht gekürzt hinaus, bleibt aber in der Leiste ganz.
+    func testEineLangeAntwortGehtGekuerztInDenVerlauf() throws {
+        var g = Assistentengespraech()
+        let grenze = Assistentengespraech.verlaufTextHoechstens
+        let lang = String(repeating: "é", count: grenze + 500)
+        _ = g.sende("Erzähl mir alles.")
+        g.empfange(Assistentenantwort(antwort: lang, vorschlag: nil))
+        XCTAssertEqual(g.beitraege.last?.text, lang, "in der Leiste bleibt sie ganz")
+
+        let bitte = try XCTUnwrap(g.sende("Kürzer, bitte."))
+        let gesendet = try XCTUnwrap(bitte.verlauf.last)
+        XCTAssertEqual(gesendet.von, .assistent, "gekürzt, nicht weggelassen")
+        XCTAssertEqual(Assistentengespraech.laenge(gesendet.text), grenze)
+        XCTAssertTrue(gesendet.text.hasSuffix("…"))
+        XCTAssertTrue(lang.hasPrefix(String(gesendet.text.dropLast())))
+        // GENAU AN DER GRENZE bleibt er, wie er ist.
+        let genau = Gespraechsbeitrag(von: .assistent, text: String(repeating: "x", count: grenze))
+        XCTAssertEqual(Assistentengespraech.alsVerlauf([genau]), [genau])
+        for b in bitte.verlauf {
+            XCTAssertLessThanOrEqual(Assistentengespraech.laenge(b.text), grenze)
+        }
+    }
+
     // ------------------------------------------------------------------ der Stand
 
     func testNurBereitNimmtEingabe() {

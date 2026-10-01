@@ -16,7 +16,10 @@ import VisboxKern
 /// stehen nur das Senden und die Uhr.
 ///
 /// **Das Signal nach aussen** ist `erreichbarkeit` («erreichbar seit / nicht erreichbar
-/// seit»). Ob die App dann in den Vorführmodus geht, entscheidet nicht diese Klasse.
+/// seit»). Ob die App dann in den Vorführmodus geht, entscheidet nicht diese Klasse. Für den
+/// Vorführschalter, der einen eigenen Takt hat, meldet sie dazu jede Frage (`letzteFrage`)
+/// und jedes Einrichten (`eingerichtetUm`) — sonst zeigten die beiden Takte bis zu einer
+/// Minute lang Verschiedenes.
 ///
 /// **Kein `@MainActor` an der Klasse**, sondern an den Methoden, die den Zustand ändern —
 /// wie `Verbindungsstand` in der iPad-App: So lässt sie sich als `@StateObject` anlegen,
@@ -33,6 +36,13 @@ final class Heimleitung: ObservableObject {
     @Published private(set) var benutzer: String?
     /// Warum der Schlüsselbund nichts hergab — `nil`, wenn er es tat oder leer ist.
     @Published private(set) var schluesselbundSatz: String?
+    /// Was die letzte Frage nach `/api/fortschritt` ergab, und wann — für den
+    /// Vorführschalter (`Vorfuehrschalter.heimleitungFand`), der einen eigenen Takt hat.
+    /// `nil`, solange ohne Adresse nicht gefragt wurde.
+    @Published private(set) var letzteFrage: Leitungsfrage?
+    /// Wann zuletzt erfolgreich eingerichtet wurde — der Vorführschalter beginnt dann von
+    /// vorn (`Vorfuehrschalter.neuEingerichtet`). `nil`: in diesem Lauf noch nie.
+    @Published private(set) var eingerichtetUm: Date?
 
     /// Für die Fläche (`Arbeitsansicht`) — nicht veröffentlicht, nicht gedruckt.
     private(set) var anmeldung: Anmeldung?
@@ -143,6 +153,9 @@ final class Heimleitung: ObservableObject {
                                 jetzt: jetzt)
         bild = neu
         erreichbarkeit = erreichbarkeit.nach(neu.leitung, jetzt: jetzt)
+        if let befund = leitungsbefund {
+            letzteFrage = Leitungsfrage(befund: befund, um: jetzt)
+        }
 
         let geaendert = neu.zeilen.map(\.stand.wort) != vorher.zeilen.map(\.stand.wort)
         let laedt = neu.zeilen.contains { $0.stand.laedt }
@@ -211,8 +224,11 @@ final class Heimleitung: ObservableObject {
         benutzer = name
         schluesselbundSatz = nil
         erreichbarkeit = .unbekannt
+        letzteFrage = nil
+        let jetzt = Date()
         bild = Startbild.aus(leitung: nil, heim: nil, adresseDa: true, ipad: ipadStand,
-                             vorher: nil, jetzt: Date())
+                             vorher: nil, jetzt: jetzt)
+        eingerichtetUm = jetzt
         starte()
         return nil
     }
@@ -274,4 +290,12 @@ final class Heimleitung: ObservableObject {
             return .keine(Leitungsfehler(urlFehlercode: ns.domain == NSURLErrorDomain ? ns.code : 0))
         }
     }
+}
+
+/// Eine Frage der Heimleitung nach `/api/fortschritt`: was herauskam, und wann. **Mit der
+/// Zeit**, damit zwei gleiche Befunde hintereinander zwei Meldungen sind — `onChange` meldet
+/// nur, was sich ändert.
+struct Leitungsfrage: Equatable {
+    let befund: Leitungsbefund
+    let um: Date
 }

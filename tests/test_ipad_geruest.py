@@ -915,3 +915,28 @@ def test_der_mac_teil_bleibt_duenn_und_bei_der_plattform():
     for datei in dateien:
         assert set(_importe(datei)) <= {"Foundation", "Network", "Security", "VisboxKern"}, (
             datei.name, _importe(datei))
+
+
+# ======================================================= 9 · Der Assistent am Mac (01.10.2026)
+#
+# Die Leiste des Assistenten prueft eine Nachricht, bevor sie hinausgeht, und kuerzt lange
+# Beitraege im Verlauf (Durchsicht 01.10.2026, M2) — gegen die Grenzen, die der Server
+# setzt. Sie sind ABSCHRIFTEN: Wird drueben eine Grenze enger, wiese der Server ab, was der
+# Mac fuer zulaessig haelt, und jede weitere Frage scheiterte am selben Verlaufsbeitrag.
+
+ASSISTENT_KERN = KERN_QUELLEN / "Assistent.swift"
+
+
+def test_die_grenzen_des_assistenten_am_mac_sind_die_des_servers():
+    from aiimaging import assistent
+
+    assert int(_swift_konstante(ASSISTENT_KERN, "nachrichtHoechstens")) == (
+        assistent.NACHRICHT_HOECHSTENS)
+    assert int(_swift_konstante(ASSISTENT_KERN, "verlaufHoechstens")) == (
+        assistent.VERLAUF_HOECHSTENS)
+    assert int(_swift_konstante(ASSISTENT_KERN, "verlaufTextHoechstens")) == (
+        assistent.VERLAUF_TEXT_HOECHSTENS)
+    # GEZAEHLT WIE PYTHON: `len(str)` zaehlt Unicode-Zeichen, Swift `count` zusammengesetzte.
+    text = _ohne_kommentarzeilen(ASSISTENT_KERN.read_text(encoding="utf-8"))
+    assert re.search(r"func laenge\(_ text: String\) -> Int \{ text\.unicodeScalars\.count \}",
+                     text), "Assistentengespraech.laenge zählt nicht mehr wie Python"
