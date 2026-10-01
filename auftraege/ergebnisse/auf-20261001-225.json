@@ -1,0 +1,250 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-225",
+ "worker": "local",
+ "status": "erledigt — A1–A3 und A5 gefahren, A4 nicht gefahren (in 203 kein Paket gebaut); B1–B7 alle gefahren (B2 mit Rueckfrage); Pruefsummen vorher = nachher; kein Code geaendert",
+ "staende": {
+  "kosmopublish": "e551197 (git pull --ff-only von 1fb2c08; kein lokaler Zeitgeber-Commit im Weg; Arbeitsbaum vorher und nachher sauber)",
+  "kosmoprepare": "f9cf677 (git pull --ff-only von 28ac92a; 3f2adc4 ist Vorfahre); einziger unversionierter Eintrag der alte target/, vorher = nachher",
+  "python": "KosmoPublish .venv (tools/kosmopublish_cli.py) wie 207/211; KosmoPrepare-Werkzeuge ueber stdio, Server mit /usr/bin/python3 wie die App, der Server wechselt selbst nach .venv-server («[kosmoprepare] wechsle nach <klon>/.venv-server/bin/python (es fehlt: shapely, pypdf)»)"
+ },
+ "A": {
+  "A1_ifc_bridge": {
+   "rueckgabe": 0,
+   "laufzeit_s": 0.75,
+   "dateien": "keine Zeile «N Datei(en)» in der Ausgabe von ifc-bridge; geschrieben wurde 1 Datei (Zeile «✓ <arbeitsordner>/proj/bridge_export_v015_ifc.json»)",
+   "kotenzeile_woertlich": "KOTE WIDERSPRICHT DER LAGE DER WAENDE bei 11 von 11 Geschoss(en), z.B. «<X>»: Elevation 0.005 m, Wandsohle 5.000 m (Median). Die Hoehenkoten folgen der Elevation und stehen damit neben den Raeumen falsch; welche Zahl stimmt, sagt die Datei nicht. Die Waende spannen das 1000-fache der Elevationen — das sieht nach einer Einheit aus (Elevation in Metern geschrieben, Laengeneinheit mm).",
+   "geschwaerzt": "«<X>» = ein Geschossname",
+   "vergleich_211": "11 von 11 statt 9 von 11 (Befund 211 behoben); Warnungen 876 wie 211; Geschosse 11, Raeume 205/205, Waende 855/855, Oeffnungen 0"
+  },
+  "A2_materialize": {
+   "aufruf": "materialize --project <arbeitsordner> --sia-full (ohne --scale)",
+   "rueckgabe": 0,
+   "laufzeit_s": 35.8,
+   "massstabszeile_woertlich": "Massstab gewaehlt: 1:500 — bis 1:500 passen die Zeichnungen nicht auf EIN A0-Blatt, bei 1:500 auf 2 Blaetter (ueberlaufend auf einem Blatt je Versuch: 1:20: 17, 1:25: 17, 1:50: 17, 1:100: 17, 1:200: 16, 1:250: 13, 1:500: 13, 1:1000: 4, 1:2000: 2, 1:5000: 0). generate-poster setzt sie auf mehrere Blaetter. Mit --scale 1:NNN bindet ein genannter.",
+   "folgezeile_woertlich": "HINWEIS: --sia-full bei 1:500 OHNE Massketten. Ein Blatt in 1:200 und kleiner fuehrt keine; mit --dimensions/--interior-dims kommen sie trotzdem.",
+   "dateien_fehler_woertlich": "18 Datei(en), 0 Fehler.",
+   "linter_woertlich": "Plan-Linter: 172 Befund(e) auf 18 Zeichnung(en).",
+   "linter_regeln": {
+    "R001": 8,
+    "R002": 164
+   },
+   "R001_bild": "Schnittmarke «B» liegt in 4 Grundrissen (Obergeschosse des kleineren Baukoerpers) ausserhalb des Blattausschnitts, je 2x — in 211 war R001 = 0",
+   "verlorene_beschriftungen_woertlich": "Verlorene Beschriftungen: 73 auf 10 Zeichnung(en).",
+   "verlorene_je_zeichnung": "3, 1+20, 1, 13, 3, 15, 1, 13, 1, 2 (Raeume ohne Platz fuer den Namen bzw. ganz ohne Beschriftung)",
+   "nordpfeil_schnittmarke_zeilen": "keine — weder «kleiner gesetzt» noch «entfallen» in stdout oder stderr (das Bauwerk ist bei 1:500 nicht «klein»: Grundriss rund 6–14 cm, s. A5)",
+   "leserwarnungen": "«Bruecke: 12 Warnung(en) des Lesers:», erste «⚠ 11 Decke(n) ohne Rolle …» (wie 211)",
+   "vergleich_211": "1:500 auf 2 Blaetter statt 1:2000 als bester Versuch; Verlorene Beschriftungen 73 statt 181; Linter 172 statt 164 (+8 R001)"
+  },
+  "A3_generate_poster": {
+   "aufruf": "generate-poster --planraw <arbeitsordner>/proj/output/planraw --out <arbeitsordner>/poster (ohne --mehrblatt, also Vorgabe auto)",
+   "rueckgabe": 0,
+   "laufzeit_s": 31.1,
+   "ueberlauf_woertlich": [
+    "⚠ Überlauf (nicht platziert): FP_A_2.OG_FINAL, FP_A_EG_FINAL, FP_A_6.OG_FINAL, FP_B_3.OG_FINAL, FP_B_2.OG_FINAL, FP_B_1.OG_FINAL, FP_B_4.OG_FINAL, SE_A-A_FINAL, FA_S_FINAL, FA_N_FINAL, FA_E_FINAL, SE_B-B_FINAL, FA_W_FINAL",
+    "→ bis 1:500 passt nichts auf EIN Blatt; bei 1:500 kommen die Plaene auf 2 Blaetter (gemessen wie materialize). Neu zeichnen mit: materialize --project <projekt> --sia-full --scale 1:500"
+   ],
+   "massstabstreue_woertlich": "Massstabstreue: 5 von 5 Zeichnungen stehen im gedruckten Massstab.",
+   "blatt_woertlich": "Blatt zu 50 % von Kaesten bedeckt; unter dem untersten Kasten bleiben 50 mm frei, rechts vom rechtesten 50 mm.",
+   "mehrblatt_woertlich": "✓ Mehrere Blaetter, weil 13 Zeichnung(en) nicht auf EIN Blatt passen: 2 A0-Blaetter, Set-PDF <arbeitsordner>/poster/Satz/Abgabe_Set_A0.pdf",
+   "satz_ordner": "ja — <out>/Satz/ entstand",
+   "blatt_nn_a0_pdf": 2,
+   "abgabe_set_a0_pdf": "ja (2 Seiten A0)",
+   "einzelblatt": "daneben entsteht weiter das Einzelblatt Plakat_generativ_A0.pdf (Lageplan + 4 Grundrisse + Tabelle/Text/Legende)",
+   "weitere_zeilen_woertlich": [
+    "Programmtabelle aus <bruecke>.json: 205 Zeile(n), 22217 m² (vorher 7 Zeile(n) Beispiel)",
+    "⚠ BEISPIELINHALT auf dem Blatt: Konzepttext, Materialleiste, Projektkopf. Diese Bloecke stammen nicht aus dem Modell, sondern aus dem Demo-Inhalt (kein --config angegeben). Auf einem Abgabeblatt widersprechen sie den Plaenen daneben.",
+    "⚠ Der Konzepttext nennt 2800 m², die Programmtabelle daneben 22218 m² — Faktor 8. Beide stehen auf demselben Blatt.",
+    "⚠ Programmtabelle gekuerzt: 39 von 205 Zeilen stehen einzeln auf dem Blatt, 166 sind in einer Zeile zusammengefasst (17187 m²); darunter steht die Summe aller 205 Zeilen (22218 m²)."
+   ],
+   "auffaellig": "Die Ueberlauf-Zeile empfiehlt «--scale 1:500», obwohl schon in 1:500 gezeichnet ist; ihr Zweck (Satz statt Einzelblatt) erfuellt der Lauf trotzdem. Laufzeit 31 s statt 0.3 s in 211 (Satz)."
+  },
+  "A4_handoff": "nicht gefahren — in 203 wurde kein KosmoDesign-Paket (publish/publish-handoff.json) gebaut (Ergebnis 203 und Probe-Ordner: kein handoff); keines an der HomeStation vorhanden fuer dieselbe Bruecke",
+  "A5_sichtprobe": {
+   "gemacht": "Blatt_01 und Blatt_02 mit pdftoppm gerastert (ganzes Blatt 25 dpi, Ausschnitte 60 dpi), angesehen, PNG sofort geloescht",
+   "verteilung": "Blatt 1: Lageplan + 9 Grundrisse; Blatt 2: 2 Grundrisse, 2 Schnitte, 4 Fassaden, Programmtabelle, Konzepttext, Materiallegende (rund die Haelfte von Blatt 2 bleibt leer)",
+   "grundriss_cm": "Grundrisse des grossen Baukoerpers rund 14 x 13 cm, des kleinen rund 6 x 8 cm (1:500; 211 bei 1:2000: rund 4 x 3 cm)",
+   "text_groesser_als_zeichnung": "ja",
+   "satz": "Das Planfeld (rund 9 x 2.7 cm) ist breiter als die kleinen Grundrisse (rund 6 cm) und viel hoeher als Fassaden (rund 0.6 cm hoch) und Schnitte (rund 0.3 cm); Raumnamenzeilen um die kleinen Grundrisse sind bis rund 5 cm lang, so breit wie der Plan. An den grossen Grundrissen ist kein Text groesser als die Zeichnung; Nordpfeil rund 1 cm."
+  }
+ },
+ "B": {
+  "unterlagen": "Wettbewerbsunterlagen des Beispielprojekts aus den lokalen Projektordnern (wie im Prepare-Paket genannt); je als Wegwerfkopie mit neutralem Namen (programm.pdf, fragen.pdf, bzo.pdf, pbg.pdf, info.pdf) im Arbeitsordner",
+  "B1_raumprogramm_lesen": {
+   "status": "gelesen",
+   "isError": false,
+   "laufzeit_s": 1.3,
+   "text_woertlich": "programm.pdf: 28 Eintraege — 28 gruen, 0 gelb, 0 rot",
+   "zusammenfassung": {
+    "eintraege": 28,
+    "gruen": 28,
+    "gelb": 0,
+    "rot": 0,
+    "nf_total_m2": 19700.0
+   },
+   "summe_true": 5,
+   "mit_hinweis": 0,
+   "hinweise_woertlich": "keine — kein Eintrag traegt einen hinweis",
+   "warnungen": 0,
+   "fehler": 0,
+   "gegenprobe_von_hand": {
+    "pdf_nennt_gesamt_nutzflaeche": "ja",
+    "pdf_m2": 19500,
+    "nf_total_m2": 19700,
+    "abweichung_m2": 200
+   },
+   "deutung": "Die fuenf Sammelzeilen tragen summe=true und ergeben 19500; die 200 kommen von einer Gemeinschaftsflaechen-Zeile, die im PDF in einer Sammelzeile «inkl.» steckt und hier zusaetzlich gezaehlt wird (summe=false, flaeche_m2 leer, total_m2 200)."
+  },
+  "B2_erfassen": {
+   "programm_als_pflichtenheft": {
+    "erster_lauf": "art_unklar, 0 Werte, Rueckfrage (3 Kandidaten)",
+    "gefragt": "ja",
+    "nach_rueckfrage_art": "programm",
+    "werte_mit_fundstelle": 73,
+    "nicht_abgedeckt": 0,
+    "laufzeit_s": 1.2,
+    "nebenbefund": "die Feldnamen der 73 Werte sind Zeilenanfaenge (abgeschnittene Satzteile), keine Feldbezeichnungen"
+   },
+   "bzo": {
+    "erster_lauf": "art_unklar, 0 Werte, Rueckfrage (3 Kandidaten, Punkte 45/45/44)",
+    "gefragt": "ja",
+    "nach_rueckfrage_art": "bzo",
+    "werte_mit_fundstelle": 13,
+    "nicht_abgedeckt": 1,
+    "laufzeit_s": 1.0,
+    "felder": {
+     "grenzabstand": 5,
+     "gebaeudehoehe": 4,
+     "vollgeschosse": 2,
+     "baumassenziffer": 1,
+     "ausnuetzungsziffer": 1
+    }
+   },
+   "pbg": {
+    "erster_lauf": "erfasst (Art erkannt, 71 Punkte)",
+    "gefragt": "nein",
+    "werte_mit_fundstelle": 1,
+    "nicht_abgedeckt": 1,
+    "laufzeit_s": 1.5
+   },
+   "nicht_abgedeckt_woertlich": "Tabellen, deren Kennzahl nur im Spaltenkopf steht (Zonentabelle), liest diese Stufe nicht.",
+   "hinweis": "«Pflichtenheft» als das Programm-PDF gelesen (eine eigene Datei dieses Namens liegt nicht vor)"
+  },
+  "B3_programmstand": {
+   "eingaben": "programm.pdf + 1 Fragenbeantwortung",
+   "text_woertlich": "Programmstand: 62 Position(en), 0 geaendert durch Fragenbeantwortung, 0 nicht zugeordnet · Summe 102594 m²",
+   "positionen": 62,
+   "geaendert": 0,
+   "nicht_zugeordnet": 0,
+   "summe_positionen_m2": 102594,
+   "summen_im_programm": {
+    "anzahl": 10,
+    "werte_m2": [
+     34647,
+     24875,
+     19500,
+     14000,
+     2500,
+     3000,
+     5600,
+     6000,
+     2400,
+     5762
+    ]
+   },
+   "hinweise": 20,
+   "deutung": "Keine Summe im Programm trifft die Summe der Positionen; die Positionen enthalten auch die Total- und aGF-Zeilen (Doppelzaehlung). Alle 62 Positionen stammen aus dem Programm, die Fragenbeantwortung aendert keine; der Stand meldet die Abweichung 10x vor und 10x nach der Fragenbeantwortung.",
+   "laufzeit_s": 1.7
+  },
+  "B4_baugesetz": {
+   "belege_feld_kam": "ja",
+   "belege": 0,
+   "nicht_belegt_feld_kam": "ja",
+   "nicht_belegt": 0,
+   "gesetz_eintraege": 6,
+   "quellen": 3,
+   "laufzeit_s": 0.0
+  },
+  "B5_info": {
+   "felder_gefunden": [
+    "lv95_e",
+    "lv95_n",
+    "hoehe_m_ue_m",
+    "perimeter_b_m",
+    "perimeter_h_m",
+    "datum"
+   ],
+   "nicht_gefunden": [
+    "kanton"
+   ],
+   "vollstaendig": false,
+   "warnungen_woertlich_ohne_zahlen": [
+    "Nicht im INFO-Blatt gefunden: kanton."
+   ],
+   "befund": "Der Kanton steht im Blatt (Ueberschrift «KANTON», das Kuerzel allein auf der naechsten Zeile) — gelesen wurde er nicht."
+  },
+  "B6_grundlageplan": {
+   "aufruf": "zentrum_lv95 aus B5, massstab 2000, format A3, pdf true, ausgabe_dir im Arbeitsordner",
+   "text_woertlich_ohne_zahlen_des_ortes": "Grundlageplan 1:2000 A3 quer (780 × 422 m) · 49 Höhenkurven · 132 Gebäude · SVG + DXF + PDF",
+   "status": "geschrieben",
+   "daten_herkunft": "live",
+   "anzahlen": {
+    "kurven": 46,
+    "zaehlkurven": 3,
+    "gebaeude_umgebung": 132,
+    "gebaeude_perimeter": null,
+    "strassen": 133,
+    "wege": 62,
+    "wald": 0,
+    "gewaesser": 11,
+    "rinnsale": 0,
+    "perimeter": null
+   },
+   "hoehenmodell": "gelesen",
+   "warnungen": 0,
+   "annahmen": 1,
+   "pdf_entstand": "ja (dazu SVG, DXF, Quellen-JSON)",
+   "laufzeit_s": 3.0
+  },
+  "B7_bauvolumen": {
+   "huelle": "aus kosmoprepare_standort (lv95 aus B5): Huelle gelesen («methode» exakt, 1 BZO-Volumen, Hoehe 18 m, Grenzabstand ohne Abzug — Rueckfrage des Werkzeugs), Parzelle nicht konvex",
+   "raeume": "die 23 Eintraege aus B1 mit summe=false (name, flaeche_m2, anzahl, kategorie, quelle = Fundstelle aus B1)",
+   "parameter": "geschosshoehe_m 2.80 (Annahme Owner-Entscheid 45), nutzflaechenfaktor 0.7839 (= HNF/aGF des Programms aus B1)",
+   "text_woertlich_anfang": "⚠ unvollständig — 2 Raum/Räume ohne Fläche nicht gepackt; ✓ passt: Programm 5242 m² / Kapazität 84412 m² (6.2% Auslastung, 6 Geschosse) · Annahmen: Geschoss-Band OG angenommen (Kategorie unbekannt, kein 'band' genannt): <…13 Raumbezeichnungen geschwaerzt…>",
+   "passt": "nein (Feld passt = false wegen der 2 Raeume ohne Flaeche; bericht.fits = true, 21 von 21 Raeumen mit Flaeche gepackt, Auslastung 6.2 %)",
+   "geschosse": 6,
+   "ohne_flaeche": 2,
+   "annahmen": 1,
+   "befund": "Alle 21 gepackten Raeume liegen im ersten Obergeschoss (z 2.8 m), auch Gewerbe — die Kategorien aus B1 (Gewerbe, Buero, Wohnen, Gemeinschaft, Service) kennt die Bandregel des Packers nicht (sie kennt andere Kategorienamen), darum «Kategorie unbekannt» → OG fuer alle. Naht zwischen raumprogramm_lesen und bauvolumen; nur gemeldet.",
+   "laufzeit_s": 0.0
+  }
+ },
+ "pruefsummen_gleich": {
+  "antwort": "ja",
+  "satz": "IFC (gleich wie 211) und die sechs genutzten Unterlagen per SHA-256 vorher = nachher; beide Klone danach ohne Aenderung (git status leer bzw. nur der alte target/)"
+ },
+ "fehler_traceback": "nein — kein «Traceback», kein «No module named» in allen Ausgaben",
+ "nicht_getan": [
+  "Kein Code geaendert, nichts installiert, nichts committet, kein Sprachmodell, keine GPU.",
+  "Keine Bilder, SVG, PDF, IFC oder Projektdaten zurueckgegeben; Sichtprobe gerastert, angesehen, geloescht."
+ ],
+ "aufraeumen": "Arbeitsordner (IFC-Kopie, Bruecke, Plaene, Blaetter, Unterlagen-Kopien, Werkzeugausgaben samt Grundlageplan) am Ende geloescht; Pruefskripte und Logs ohne Projektdaten im Probe-Ordner der HomeStation (auf225)",
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull; Geodaten live fuer B6 (Grundlageplan) und B7 (Standort)"
+ },
+ "abweichungen": [
+  "A2: neu 8x R001 — Schnittmarke «B» ausserhalb des Blattausschnitts in 4 Grundrissen.",
+  "A2: keine Zeile zu Nordpfeil/Schnittmarke (kleiner gesetzt/entfallen) — bei diesem Bauwerk nicht ausgeloest.",
+  "A3: Ueberlauf-Zeile rät «--scale 1:500», obwohl schon 1:500.",
+  "A5: Planfeld breiter als die kleinen Grundrisse, hoeher als Fassaden und Schnitte; Blatt 2 halb leer.",
+  "B1: nf_total_m2 19700 gegen 19500 im PDF (+200, eine Gemeinschaftsflaechen-Zeile doppelt).",
+  "B2: Programm und BZO zuerst art_unklar (Rueckfrage), erst mit art erfasst; Feldnamen im Programm sind abgeschnittene Zeilenanfaenge.",
+  "B3: Summe der Positionen 102594 m² (Total- und aGF-Zeilen mitgezaehlt); Fragenbeantwortung aendert 0 Positionen.",
+  "B4: belege und nicht_belegt kamen, beide leer (0/0).",
+  "B5: Kanton steht im Blatt, wurde nicht gelesen.",
+  "B7: alle Raeume ins OG, weil die Kategorien aus B1 der Bandregel unbekannt sind; passt=false nur wegen 2 Raeumen ohne Flaeche."
+ ],
+ "fehler": null
+}
