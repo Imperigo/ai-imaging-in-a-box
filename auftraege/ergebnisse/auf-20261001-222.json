@@ -1,0 +1,677 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-222",
+ "worker": "local",
+ "status": "erledigt — A DONE (alle Schalter bekannt, 192/192 registriert, 1 Modell, brush laeuft mit Unterordnern), aber Verortung 11.86 m (schlechter als lose in 217); B DONE 0.113 m, -huffman default in jeder ffmpeg-Zeile; GPU-Merkmalssuche laeuft; C Verdeckung greift (siehe C2); D nicht da; kein Code geaendert",
+ "staende": {
+  "kosmoprepare": "28ac92a (git pull --ff-only von 1b2d624; HEAD = 28ac92a)",
+  "colmap": "COLMAP 4.2.1, Kopf von «colmap -h»: «(Commit Unknown on Unknown with CUDA, std hash maps)»",
+  "brush": "brush-cli 0.3.0",
+  "ffmpeg": "8.0.1-3ubuntu2"
+ },
+ "szene": "neu gerendert mit szene.py aus 215 (unveraendert, Cycles auf der GPU): B 96 Bilder 960 x 540, C 48 Bilder 1920 x 960 equirect; Video je libx264 crf 14, 12 Bilder/s (ffprobe: 96 bzw. 48 Bilder). Kette mit kette.py aus 217 (fps 12, 3000 Schritte, max_res 960, Profil rtx5090), A mit 48, B mit 96 Bildern.",
+ "A": {
+  "A2": {
+   "ergebnis": "DONE (rc 0, DONE-Marke, splat.ply)",
+   "unbekannte_schalter": "keine — alle COLMAP-Schalter angenommen (feature_extractor mit --ImageReader.single_camera_per_folder 1 / camera_model PINHOLE / camera_params, rig_configurator --rig_config_path, sequential_matcher --SequentialMatching.expand_rig_images 1)",
+   "rig_configurator_zeilen_woertlich": [
+    "[12:12:10] STAGE: colmap_rig",
+    "I20261001 12:12:10.196798 389807 rig.cc:414] Configured: Rig(rig_id=5, ref_sensor_id=(CAMERA, 2), sensors=[(CAMERA, 1), (CAMERA, 3), (CAMERA, 4)])",
+    "I20261001 12:12:10.196940 389807 rig.cc:429] Configured: Frame(frame_id=193, rig_id=5, has_pose=0, data_ids=[(CAMERA, 1, 1), (CAMERA, 2, 49), (CAMERA, 3, 97), (CAMERA, 4, 145)])",
+    "… (48 solche Frame-Zeilen, eine je Augenblick) …",
+    "I20261001 12:12:10.198846 389807 rig.cc:429] Configured: Frame(frame_id=240, rig_id=5, has_pose=0, data_ids=[(CAMERA, 1, 48), (CAMERA, 2, 96), (CAMERA, 3, 144), (CAMERA, 4, 192)])"
+   ],
+   "zuordnung": "Kamera 1 = back, 2 = front (ref_sensor), 3 = left, 4 = right (Ordner alphabetisch); Datenbank danach: 1 Rig, 3 rig_sensors, 48 frames, 192 frame_data; Kameras in der Datenbank PINHOLE 336.0996/336.0996/480/480, prior_focal_length 1",
+   "stage_zeilen": [
+    "[12:12:07] STAGE: frame_extraction",
+    "[12:12:08] extracted 192 frames (Quelle: insta360)",
+    "[12:12:08] STAGE: colmap_feature_extraction",
+    "[12:12:10] STAGE: colmap_rig",
+    "[12:12:10] STAGE: colmap_matching",
+    "[12:12:16] STAGE: colmap_mapping",
+    "[12:12:18] COLMAP sparse model erstellt",
+    "[12:12:18] STAGE: brush_training (3000 steps)",
+    "[12:12:32] DONE: splat.ply erstellt"
+   ],
+   "kein_calibration_stage": "richtig — im 360-Zweig keine Zeile «STAGE: colmap_calibration»",
+   "weitere_log_zeilen_woertlich": [
+    "W20261001 12:12:17.040555 390189 global_positioning.cc:375] Requested to use GPU for bundle adjustment, but Ceres was compiled without CUDA support. Falling back to CPU-based dense solvers.",
+    "W20261001 12:12:17.040611 390189 global_positioning.cc:394] Requested to use GPU for bundle adjustment, but Ceres was compiled without cuDSS support. Falling back to CPU-based sparse solvers.",
+    "I20261001 12:12:17.003477 390189 rotation_averaging.cc:274] Marked 1740 image pairs as invalid with relative rotation error > 10 degrees",
+    "I20261001 12:12:18.038964 390189 global_pipeline.cc:260] Kept 1 reconstruction(s), discarded 0 with fewer than 3 registered frames, and failed to reconstruct 0"
+   ]
+  },
+  "A3": {
+   "registriert_je_ansicht": {
+    "back": 48,
+    "front": 48,
+    "left": 48,
+    "right": 48
+   },
+   "registriert": "192 von 192",
+   "modelle": 1,
+   "sparse_0_dateien": [
+    "cameras.bin",
+    "frames.bin",
+    "images.bin",
+    "points3D.bin",
+    "rigs.bin"
+   ],
+   "count": 834,
+   "ply_bytes": 198372,
+   "brush_durch": "ja — Bildnamen mit Unterordner («front/0001.jpg» …) gelesen, kein «early eof», kein «not found»; brush schreibt zwischen STAGE und DONE nichts ins Protokoll",
+   "merkmale_je_ansicht_mittel": {
+    "back": 112,
+    "front": 550,
+    "left": 344,
+    "right": 348
+   },
+   "paare_geometrisch_bestaetigt": 1990,
+   "vergleich_217": "217 lose: 3 Modelle, 64/192 in Modell 0 (back 2, front 24, left 18, right 20), brush FAIL «early eof»; jetzt 1 Modell mit 192/192, brush durch"
+  },
+  "A4": {
+   "verortung_front": {
+    "paare": 48,
+    "massstab": 0.02193,
+    "rmse_m": 11.8649,
+    "max_m": 12.26171,
+    "schlechtestes": "front/0013",
+    "schlechtestes_rest_m": 12.2617,
+    "satz": "Verortet aus 48 Paaren: Massstab 0.0219, Restfehler 11.865 m (groesster 12.262 m bei «front/0013»)"
+   },
+   "verortung_alle_192": {
+    "paare": 192,
+    "massstab": 0.0223,
+    "rmse_m": 11.86001,
+    "max_m": 12.40727,
+    "schlechtestes": "left/0013",
+    "schlechtestes_rest_m": 12.4073,
+    "satz": "Verortet aus 192 Paaren: Massstab 0.0223, Restfehler 11.860 m (groesster 12.407 m bei «left/0013»)"
+   },
+   "streuung_zentren_je_augenblick": {
+    "max_einheiten": 8.912,
+    "max_m": 0.1955,
+    "median_m": 0.1955,
+    "augenblicke": 48,
+    "deutung": "nicht ~0: in JEDEM Augenblick dieselben 8.91 Einheiten (0.195 m ueber den Massstab 0.0219) — das Rig hat sich im Buendelausgleich verschoben (s. kalibrierung_nach_mapper), die Zentren liegen also starr, aber nicht zusammen"
+   },
+   "weg_front_m": 25.59,
+   "weg_wahr_m": 75.4,
+   "vergleich_217": "217 C3 lose (24 front-Paare): rmse 4.159 m, max 9.261 m — jetzt 11.865 m, also SCHLECHTER; Massstab 0.0219 heisst: der rekonstruierte Weg ist auf ~26 m statt 75 m Kreisumfang zusammengefallen, rmse ~ Kreisradius 12 m",
+   "kalibrierung_nach_mapper": {
+    "kameras_sparse_0": {
+     "1": [
+      218.893,
+      271.906,
+      480.0,
+      480.0
+     ],
+     "2": [
+      334.813,
+      87.713,
+      480.0,
+      480.0
+     ],
+     "3": [
+      527.812,
+      3.374,
+      480.0,
+      480.0
+     ],
+     "4": [
+      352.114,
+      14.769,
+      480.0,
+      480.0
+     ]
+    },
+    "befund": "global_mapper verfeinert die bekannte Lochkamera trotzdem (Vorgabe --GlobalMapper.ba_refine_focal_length 1): fx/fy aus 336.1/336.1 wurden 218.9/271.9 (back), 334.8/87.7 (front), 527.8/3.4 (left), 352.1/14.8 (right). Ebenso das Rig (Vorgabe --GlobalMapper.refine_sensor_from_rig 1): rigs.bin danach (Quaternion als w,x,y,z gelesen) back 19.6°, left 18.9°, right 6.1° neben der Vorgabe; Versatz left 8.91, right 1.46, back 0.03 Einheiten (Vorgabe 0)."
+   },
+   "diagnose_wegwerfkopien": {
+    "hinweis": "nicht verlangt; Kopien der Datenbank im Arbeitsordner, COLMAP von Hand, nichts am Skript/Klon geaendert",
+    "rig_und_brennweite_fest": "global_mapper --GlobalMapper.refine_sensor_from_rig 0 --GlobalMapper.ba_refine_focal_length 0: 192/192, Kameras bleiben 336.1, Streuung 0.000 m, aber Verortet aus 48 Paaren: Massstab 0.8730, Restfehler 10.510 m (groesster 13.513 m bei «front/0048»)",
+    "nur_brennweite_fest": "Verortet aus 48 Paaren: Massstab 1.8992, Restfehler 10.327 m (groesster 20.690 m bei «front/0030») (Streuung 12.29 m)",
+    "nur_rig_fest": "Verortung abgelehnt: «Quellepunkte liegen (fast) auf einer Linie oder auf einem Punkt — die Drehung ist damit nicht bestimmt.»",
+    "rig_gespiegelt": "Drehungen invertiert (rechts/links getauscht), rig_configurator + global_mapper: «Marked 1784 image pairs as invalid …», Verortet aus 48 Paaren: Massstab 0.0057, Restfehler 11.866 m (groesster 12.288 m bei «front/0039») — also nicht die Drehrichtung",
+    "inkrementell_mapper_rig_fest": "colmap mapper mit --Mapper.ba_refine_focal_length 0 --Mapper.ba_refine_extra_params 0 --Mapper.ba_refine_sensor_from_rig 0: 192/192, Verortet aus 48 Paaren: Massstab 2.7797, Restfehler 4.640 m (groesster 14.058 m bei «front/0001») (Median-Rest 2.03 m)",
+    "paare": "1990 geometrisch bestaetigte Paare: 679 gleiche Ansicht/anderer Augenblick (Median 23 Inlier), 1159 andere Ansicht/anderer Augenblick (18), 152 andere Ansicht/gleicher Augenblick (19); davon verwirft die Drehungsmittelung 1740 (> 10°)",
+    "deutung": "Die Befehlszeile ist in Ordnung, die Rig-Bindung wirkt (alle 192 in einem Modell, Streuung 0 bei festem Rig) — aber an DIESER Szene liefern die Paare zu wenig verlaessliche Drehungen (Schachbrett-Boden wiederholt sich, Rueckseite fast nur Himmel, wenig Inlier); die 0.004 m aus pycolmap an der eigenen 360°-Strasse wiederholen sich hier nicht. Zwei Dinge sind aber sicher Skript-Themen: (1) global_mapper verfeinert Brennweite und Rig, obwohl beide bekannt sind — vermutlich --GlobalMapper.ba_refine_focal_length 0 und --GlobalMapper.refine_sensor_from_rig 0 noetig; (2) auch fest bleibt es hier bei 10.5 m."
+   }
+  },
+  "dauer_s": {
+   "frame_extraction": 1,
+   "colmap_feature_extraction": 2,
+   "colmap_rig": 0,
+   "colmap_matching": 6,
+   "colmap_mapping": 2,
+   "brush_training": 14,
+   "gesamt": 25,
+   "colmap_eigene_zeiten": "feature_extractor «Elapsed time: 0.029 [minutes]» (1.7 s), sequential_matcher «Elapsed time: 0.109 [minutes]» (6.5 s), global_mapper «Reconstruction done in 0.962818 seconds»",
+   "vergleich_217_cpu": {
+    "frame_extraction": 1,
+    "colmap_feature_extraction": 5,
+    "colmap_matching": 37,
+    "colmap_calibration": 1,
+    "colmap_mapping": 2
+   }
+  }
+ },
+ "B1": {
+  "ergebnis": "DONE",
+  "registriert": "96 von 96",
+  "kamera": {
+   "modell_id": 2,
+   "f_px": 642.51,
+   "f_wahr_px": 640
+  },
+  "count": 5295,
+  "ply_bytes": 1251169,
+  "merkmale_je_bild_mittel": 734,
+  "paare_geometrisch_bestaetigt": 225,
+  "verortung": {
+   "paare": 96,
+   "massstab": 3.22617,
+   "rmse_m": 0.11307,
+   "max_m": 0.2972,
+   "schlechtestes": "frame_0001",
+   "schlechtestes_rest_m": 0.2972,
+   "satz": "Verortet aus 96 Paaren: Massstab 3.2262, Restfehler 0.113 m (groesster 0.297 m bei «frame_0001»)"
+  },
+  "vergleich_217": "217 B3 (CPU-SIFT): rmse 0.062 m, max 0.120 m, 4659 Splats — jetzt 0.113/0.297 m (groesster Rest am Kreisanfang frame_0001)",
+  "huffman": "ja — in JEDER ffmpeg-Zeile: «-q:v 2 -huffman default» (Normalzweig und die v360-Zeile des 360-Zweigs; beide Skripte geprueft)",
+  "stage_zeilen": [
+   "[12:12:32] STAGE: frame_extraction",
+   "[12:12:32] extracted 96 frames (Quelle: standard)",
+   "[12:12:32] STAGE: colmap_feature_extraction",
+   "[12:12:34] STAGE: colmap_matching",
+   "[12:12:46] STAGE: colmap_calibration",
+   "[12:12:47] STAGE: colmap_mapping",
+   "[12:12:49] COLMAP sparse model erstellt",
+   "[12:12:49] STAGE: brush_training (3000 steps)",
+   "[12:13:01] DONE: splat.ply erstellt"
+  ],
+  "dauer_s": {
+   "frame_extraction": 0,
+   "colmap_feature_extraction": 2,
+   "colmap_matching": 12,
+   "colmap_calibration": 1,
+   "colmap_mapping": 2,
+   "brush_training": 12,
+   "gesamt": 29,
+   "colmap_eigene_zeiten": "feature_extractor 0.014 min (0.85 s), sequential_matcher 0.207 min (12.4 s)",
+   "vergleich_217_cpu": {
+    "frame_extraction": 0,
+    "colmap_feature_extraction": 2,
+    "colmap_matching": 18,
+    "colmap_calibration": 0,
+    "colmap_mapping": 2,
+    "brush_training": 12,
+    "gesamt": 34
+   }
+  },
+  "keine_cpu_zeile": "die Zeile «COLMAP meldet kein «with CUDA» …» fehlt jetzt in beiden Laeufen (richtig)"
+ },
+ "gpu_sift": {
+  "laeuft": "ja",
+  "log_zeilen_woertlich": [
+   "I20261001 12:12:08.344192 389753 sift.cc:758] Creating SIFT GPU feature extractor",
+   "I20261001 12:12:10.380856 389950 feature_matching_utils.cc:79] Bind FeatureMatcherWorker to GPU device 0",
+   "I20261001 12:12:10.381055 389950 sift.cc:1679] Creating SIFT GPU feature matcher"
+  ],
+  "nvidia_smi": "Rechenprozesse auf der Karte (Probe alle 0.3 s): A feature_extractor 12:12:08–12:12:09 colmap mit 1262 MiB, A sequential_matcher 12:12:10–12:12:16 colmap 504 MiB; B feature_extractor 12:12:33 colmap 936 MiB, B matcher 12:12:34–12:12:46 colmap 508 MiB",
+  "zeiten_gegen_217": "Merkmalssuche A 2 s statt 5 s, B 2 s wie 217 (0.85 s laut COLMAP); Abgleich A 6 s statt 37 s, B 12 s statt 18 s",
+  "buendelausgleich": "weiter CPU: «Ceres was compiled without CUDA support» / «without cuDSS support» (Warnung, laeuft durch)"
+ },
+ "D": "nicht da — der Video-Ordner ist leer (0 Eintraege)",
+ "target_im_klon": "find target vor und nach A/B: 9 Zeilen, identisch (Pfade und mtime) — nichts Neues; target/ entsteht jetzt im Arbeitsordner (a/target, b/target)",
+ "C": {
+  "grundlage": "splat.ply und Verortung aus B1 dieses Auftrags (GPU-SIFT, 5295 Splats, rmse 0.113 m) — NICHT dieselbe Wolke wie 219; darum andere Volumen und andere Namen. Volumen wie 219 mit kleineren Schwellen (Zusatz A: hoehe_min_m=0.8 flaeche_min_m2=0.8; Zusatz B: dazu deckkraft_min=0.2), Textur je mit und ohne --ohne-verdeckung, --px-pro-m 50.",
+  "volumen": {
+   "vorgabe": "Keine Volumen gefunden (1734 Punkte). (rc 0)",
+   "zusatz_A": "4 Volumen aus 1734 Punkten · 10 kleine Gruppen verworfen.; V1=Q1, V2=Q4, V3=Q6; V4 ohne wahren Quader (Bruchstueck neben Q1 rot bei -3.58/-1.24)",
+   "zusatz_B": "5 Volumen aus 3454 Punkten · 15 kleine Gruppen verworfen.; V1=Q1, V4=Q4, V3=Q6; V2 = Q2+Q3 verschmolzen (wie 219), V5 Phantom bei 3.73/0.85 zwischen Q2 und Q5",
+   "parameter_wiederholt": "«--parameter hoehe_min_m=0.8 --parameter flaeche_min_m2=0.8» rc=0: «4 Volumen aus 1734 Punkten · 10 kleine Gruppen verworfen.» = gleich wie die Einzelform (Befund 219 behoben)",
+   "parameter_doppelt": "«--parameter hoehe_min_m=0.8 --parameter hoehe_min_m=1» rc=2: «Parameter hoehe_min_m zweimal genannt (0.8 und 1)»"
+  },
+  "C2_verlangte_kacheln": {
+   "hinweis": "Die Namen aus 219 zeigen hier auf andere Waende (neue Wolke). V1_wand3 = Q1 rot, V3_wand4 = Q6 tuerkis, V2_wand1 = Q4 gelb (A) bzw. Phantom Q2+Q3 (B). An keiner dieser drei geht der Strahl durch einen fremden Quader — die verdeckten Faelle stehen unter C2_verdeckte_faelle.",
+   "klein_mit": {
+    "V1_wand3": {
+     "kamera": "frame_0074.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q1 (rot)",
+     "mittel_rgb": [
+      0.658,
+      0.513,
+      0.512
+     ],
+     "naechste_renderfarbe": "boden",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.079,
+     "strahl_durch_fremden_quader": []
+    },
+    "V3_wand4": {
+     "kamera": "frame_0091.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q6 (tuerkis)",
+     "mittel_rgb": [
+      0.604,
+      0.623,
+      0.684
+     ],
+     "naechste_renderfarbe": "violett",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.108,
+     "strahl_durch_fremden_quader": []
+    },
+    "V2_wand1": {
+     "kamera": "frame_0036.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q4 (gelb)",
+     "mittel_rgb": [
+      0.545,
+      0.557,
+      0.296
+     ],
+     "naechste_renderfarbe": "orange",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.11,
+     "strahl_durch_fremden_quader": []
+    }
+   },
+   "klein_ohne": {
+    "V1_wand3": {
+     "kamera": "frame_0078.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q1 (rot)",
+     "mittel_rgb": [
+      0.618,
+      0.556,
+      0.549
+     ],
+     "naechste_renderfarbe": "boden",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.092,
+     "strahl_durch_fremden_quader": []
+    },
+    "V3_wand4": {
+     "kamera": "frame_0091.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q6 (tuerkis)",
+     "mittel_rgb": [
+      0.604,
+      0.623,
+      0.684
+     ],
+     "naechste_renderfarbe": "violett",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.108,
+     "strahl_durch_fremden_quader": []
+    },
+    "V2_wand1": {
+     "kamera": "frame_0036.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q4 (gelb)",
+     "mittel_rgb": [
+      0.545,
+      0.557,
+      0.296
+     ],
+     "naechste_renderfarbe": "orange",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.11,
+     "strahl_durch_fremden_quader": []
+    }
+   },
+   "klein02_mit": {
+    "V1_wand3": {
+     "kamera": "frame_0067.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q1 (rot)",
+     "mittel_rgb": [
+      0.666,
+      0.478,
+      0.468
+     ],
+     "naechste_renderfarbe": "rot",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.055,
+     "strahl_durch_fremden_quader": []
+    },
+    "V3_wand4": {
+     "kamera": "frame_0065.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q6 (tuerkis)",
+     "mittel_rgb": [
+      0.36,
+      0.552,
+      0.537
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.046,
+     "strahl_durch_fremden_quader": []
+    },
+    "V2_wand1": {
+     "kamera": "frame_0016.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": null,
+     "mittel_rgb": [
+      0.349,
+      0.482,
+      0.445
+     ],
+     "naechste_renderfarbe": "gruen",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": null,
+     "strahl_durch_fremden_quader": []
+    }
+   },
+   "klein02_ohne": {
+    "V1_wand3": {
+     "kamera": "frame_0067.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q1 (rot)",
+     "mittel_rgb": [
+      0.666,
+      0.478,
+      0.468
+     ],
+     "naechste_renderfarbe": "rot",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.055,
+     "strahl_durch_fremden_quader": []
+    },
+    "V3_wand4": {
+     "kamera": "frame_0065.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q6 (tuerkis)",
+     "mittel_rgb": [
+      0.36,
+      0.552,
+      0.537
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.046,
+     "strahl_durch_fremden_quader": []
+    },
+    "V2_wand1": {
+     "kamera": "frame_0016.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": null,
+     "mittel_rgb": [
+      0.349,
+      0.482,
+      0.445
+     ],
+     "naechste_renderfarbe": "gruen",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": null,
+     "strahl_durch_fremden_quader": []
+    }
+   }
+  },
+  "C2_verdeckte_faelle": {
+   "methode": "wie 219: Strahl von der gewaehlten Kamera (kamera.json) zur Kachelmitte gegen die WAHREN gedrehten Quader; «fremd» = ein anderer als der eigene Quader",
+   "zusatz_A_ohne": {
+    "V2_wand3 (Q4 gelb)": {
+     "kamera": "frame_0070.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 46.4 px/m, die Kachel 50"
+     ],
+     "quader": "Q4 (gelb)",
+     "mittel_rgb": [
+      0.71,
+      0.518,
+      0.477
+     ],
+     "naechste_renderfarbe": "gelb",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.064,
+     "strahl_durch_fremden_quader": [
+      "Q1 (rot)"
+     ]
+    }
+   },
+   "zusatz_A_mit": {
+    "V2_wand3 (Q4 gelb)": {
+     "kamera": "frame_0063.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q4 (gelb)",
+     "mittel_rgb": [
+      0.701,
+      0.696,
+      0.471
+     ],
+     "naechste_renderfarbe": "gelb",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.046,
+     "strahl_durch_fremden_quader": []
+    }
+   },
+   "zusatz_B_ohne": {
+    "V1_wand1": {
+     "kamera": "frame_0033.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q1 (rot)",
+     "mittel_rgb": [
+      0.541,
+      0.512,
+      0.3
+     ],
+     "naechste_renderfarbe": "orange",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.08,
+     "strahl_durch_fremden_quader": [
+      "Q4 (gelb)"
+     ]
+    },
+    "V3_wand3": {
+     "kamera": "frame_0046.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q6 (tuerkis)",
+     "mittel_rgb": [
+      0.539,
+      0.316,
+      0.326
+     ],
+     "naechste_renderfarbe": "orange",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.184,
+     "strahl_durch_fremden_quader": [
+      "Q1 (rot)"
+     ]
+    },
+    "V4_wand1": {
+     "kamera": "frame_0069.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 47.8 px/m, die Kachel 50"
+     ],
+     "quader": "Q4 (gelb)",
+     "mittel_rgb": [
+      0.713,
+      0.516,
+      0.483
+     ],
+     "naechste_renderfarbe": "gelb",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.068,
+     "strahl_durch_fremden_quader": [
+      "Q1 (rot)"
+     ]
+    }
+   },
+   "zusatz_B_mit": {
+    "V1_wand1": {
+     "kamera": "frame_0039.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q1 (rot)",
+     "mittel_rgb": [
+      0.509,
+      0.327,
+      0.323
+     ],
+     "naechste_renderfarbe": "orange",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.096,
+     "strahl_durch_fremden_quader": []
+    },
+    "V3_wand3": {
+     "kamera": "frame_0030.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [
+      "hochgerechnet: die Kamera hatte 43.0 px/m, die Kachel 50"
+     ],
+     "quader": "Q6 (tuerkis)",
+     "mittel_rgb": [
+      0.422,
+      0.574,
+      0.585
+     ],
+     "naechste_renderfarbe": "tuerkis",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.027,
+     "strahl_durch_fremden_quader": []
+    },
+    "V4_wand1": {
+     "kamera": "frame_0063.jpg",
+     "abdeckung": 1.0,
+     "verdeckt": 0.0,
+     "hinweise": [],
+     "quader": "Q4 (gelb)",
+     "mittel_rgb": [
+      0.676,
+      0.676,
+      0.482
+     ],
+     "naechste_renderfarbe": "gelb",
+     "farbabstand_zur_renderfarbe_des_eigenen_quaders": 0.04,
+     "strahl_durch_fremden_quader": []
+    }
+   },
+   "zaehlung": "Kacheln eines echten Quaders mit fremdem Quader im Strahl: Zusatz A ohne 1 / mit 0; Zusatz B ohne 3 / mit 0. Farbe: V3_wand3 (tuerkis) ohne ROT 0.539/0.316/0.326 (Abstand 0.184), mit tuerkis 0.422/0.574/0.585 (0.027); V4_wand1 (gelb) ohne roetlich 0.713/0.516/0.483 (0.068), mit gelb 0.676/0.676/0.482 (0.040); V1_wand1 (rot) ohne gelblich 0.541/0.512/0.300, mit rot-braun 0.509/0.327/0.323 (Schattenseite; der mittlere Kanalabstand sagt hier 0.080 gegen 0.096 — er misst den Farbton schlecht, der Farbton ist mit Pruefung der richtige); klein V2_wand3 (gelb) ohne 0.710/0.518/0.477 (0.064), mit 0.701/0.696/0.471 (0.046).",
+   "verdeckt_feld": "in allen Kacheln beider mit-Laeufe verdeckt 0.0 und abdeckung 1.0 — die Pruefung waehlt jeweils eine andere, ganz freie Kamera, statt Teile leer zu lassen"
+  },
+  "je_quader_farbabstand_zur_renderfarbe": {
+   "klein_mit": {
+    "Q1 (rot)": 0.02,
+    "Q4 (gelb)": 0.053,
+    "Q6 (tuerkis)": 0.053
+   },
+   "klein_ohne": {
+    "Q1 (rot)": 0.01,
+    "Q4 (gelb)": 0.067,
+    "Q6 (tuerkis)": 0.052
+   },
+   "klein02_mit": {
+    "Q1 (rot)": 0.023,
+    "Q4 (gelb)": 0.046,
+    "Q6 (tuerkis)": 0.037
+   },
+   "klein02_ohne": {
+    "Q1 (rot)": 0.022,
+    "Q4 (gelb)": 0.057,
+    "Q6 (tuerkis)": 0.027
+   }
+  },
+  "stderr_woertlich": {
+   "klein_mit": "16 Flaechen mit Bild, Atlas 1087 × 184 px · 4 ohne Bild (V1_dach, V2_dach, V3_dach, V4_dach) · 3 hochgerechnet. Verdeckung nicht geprueft.",
+   "klein_ohne": "16 Flaechen mit Bild, Atlas 1087 × 184 px · 4 ohne Bild (V1_dach, V2_dach, V3_dach, V4_dach) · 4 hochgerechnet. Verdeckung nicht geprueft.",
+   "klein02_mit": "23 Flaechen mit Bild, Atlas 1988 × 173 px · 2 ohne Bild (V1_dach, V4_dach) · 4 hochgerechnet. Verdeckung nicht geprueft.",
+   "klein02_ohne": "23 Flaechen mit Bild, Atlas 1988 × 173 px · 2 ohne Bild (V1_dach, V4_dach) · 3 hochgerechnet. Verdeckung nicht geprueft."
+  },
+  "bericht_feld": {
+   "klein_mit": {
+    "verdeckung_geprueft": true,
+    "annahme_1": "Verdeckung nur gegen die Flaechen des Modells geprueft — was nicht im Modell steht (Baum, Bau ohne gelesenen Boden), liegt weiterhin auf der Kachel"
+   },
+   "klein_ohne": {
+    "verdeckung_geprueft": false,
+    "annahme_1": "Verdeckung NICHT geprueft (ausgeschaltet)"
+   },
+   "klein02_mit": {
+    "verdeckung_geprueft": true,
+    "annahme_1": "Verdeckung nur gegen die Flaechen des Modells geprueft — was nicht im Modell steht (Baum, Bau ohne gelesenen Boden), liegt weiterhin auf der Kachel"
+   },
+   "klein02_ohne": {
+    "verdeckung_geprueft": false,
+    "annahme_1": "Verdeckung NICHT geprueft (ausgeschaltet)"
+   }
+  },
+  "befund_satz": "Der Kurzsatz auf stderr endet IMMER mit «Verdeckung nicht geprueft.», auch wenn sie geprueft wurde (core/flaechen_textur.py satz(): fester Text am Ende) — der Bericht (verdeckung_geprueft true, Annahmen) stimmt, nur der Satz nicht. Nicht geaendert.",
+  "laufzeit_s": {
+   "vol_vorgabe": 0.103174571,
+   "vol_klein": 0.123973669,
+   "vol_klein02": 0.125883701,
+   "vol_klein_wdh": 0.123382761,
+   "vol_doppelt": 0.023918275,
+   "tex_klein_mit": 0.383224062,
+   "tex_klein_ohne": 0.24769159,
+   "tex_klein02_mit": 0.484328942,
+   "tex_klein02_ohne": 0.279752312
+  }
+ },
+ "gpu": {
+  "grenze_w": 400,
+  "proben_1s": 216,
+  "gesamt": {
+   "spitze_w": 222.09,
+   "um": "12:12:33",
+   "proben": 216
+  },
+  "render": {
+   "spitze_w": 85.48,
+   "um": "12:11:19",
+   "proben": 161
+  },
+  "kette_A": {
+   "spitze_w": 220.85,
+   "um": "12:12:32",
+   "proben": 26
+  },
+  "kette_B": {
+   "spitze_w": 222.09,
+   "um": "12:12:33",
+   "proben": 30
+  },
+  "hinweis": "Cycles-Render beider Szenen, COLMAP-Merkmalssuche/Abgleich und brush auf der Karte; Buendelausgleich auf der CPU. Diagnosen und Teil C nur CPU. Karte erst nach h9-pausiert und leerem Ollama-ps genommen (12:09:26, 15 W), h9-weiter um 12:13:01 angelegt."
+ },
+ "fehler": {
+  "ja": true,
+  "liste": [
+   "1. A: Die Befehlszeile laeuft (kein unbekannter Schalter, rig_configurator konfiguriert 1 Rig mit 48 Frames, 192/192 registriert in 1 Modell, brush liest Unterordner) — aber die Verortung ist SCHLECHTER als lose: rmse 11.865 m (217 lose 4.159 m), Weg auf ~26 m statt 75 m zusammengefallen.",
+   "2. A: global_mapper verfeinert die bekannte Lochkamera und das bekannte Rig (Vorgaben ba_refine_focal_length 1, refine_sensor_from_rig 1): fy bis 3.4 statt 336.1, Rig bis 19.6° und 8.9 Einheiten daneben; darum Zentren-Streuung 0.195 m statt 0. Vermutlich gehoeren --GlobalMapper.ba_refine_focal_length 0 und --GlobalMapper.refine_sensor_from_rig 0 ins Skript — nicht geaendert.",
+   "3. A: auch mit beidem fest (Wegwerfkopie) 10.5 m; Rig gespiegelt 11.9 m; inkrementeller mapper mit festem Rig 4.6 m. Die Drehungsmittelung verwirft 1740 von 1990 Paaren (> 10°). An dieser erfundenen Szene (Schachbrett-Boden, Rueckseite Himmel, wenige Inlier) traegt das Rig nicht; die 0.004 m der pycolmap-Probe wiederholen sich hier nicht.",
+   "4. B: DONE, aber rmse 0.113 m statt 0.062 m in 217 (andere Merkmale durch GPU-SIFT, groesster Rest am Kreisanfang).",
+   "5. C: Verdeckung greift — ohne Pruefung 1 (A) bzw. 3 (B) Waende mit fremdem Quader im Strahl, mit Pruefung 0; die Wand bekommt wieder ihre eigene Farbe. Aber der stderr-Satz sagt auch mit Pruefung «Verdeckung nicht geprueft.» (fester Text in satz()).",
+   "6. GPU-SIFT laeuft (Log «Creating SIFT GPU feature extractor», colmap auf der Karte); Abgleich A 6 s statt 37 s, B 12 s statt 18 s. Buendelausgleich bleibt CPU (Ceres ohne CUDA)."
+  ],
+  "code_geaendert": false
+ },
+ "aufgeraeumt": {
+  "arbeitsordner": "~/KosmoSplat/arbeit-222/ (Szenen, Videos, a, b, Diagnose-Kopien) am Ende geloescht",
+  "skripte": "~/kosmo-probe/auf222/ (kette.py, auswertung_a.py, gpuwache.sh, lauf_gpu.sh, teil_c.sh, c_auswertung.py, ergebnis.py; farbe/renderfarbe/verdeckung/vergleich aus 219) bleiben",
+  "target_im_klon": "vor/nach identisch (9 Zeilen, Pfade und mtime); Altbestand aus 215 nicht angefasst",
+  "h9": "h9-weiter um 12:13:01 angelegt, direkt nach den GPU-Teilen (Diagnosen und C danach nur CPU)",
+  "nichts_committet": true
+ }
+}
