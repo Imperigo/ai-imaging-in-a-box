@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261001-237",
+ "art": "frage",
+ "beschreibung": "Nachmessung B3 am echten Projekt (KosmoPrepare aa7b635); nur Zahlen.",
+ "anweisung": "=== NACHMESSUNG ZU 233: NUR B3 ===\n\nWORUM ES GEHT\n  Danke fuer 233 — B1' und B7 sind gruen und brauchen keinen Lauf mehr. B3 ist behoben in\n  KosmoPrepare aa7b635 (git pull --ff-only auf main): der Programmstand nimmt seine Positionen\n  jetzt aus der Raumtabelle (derselbe Leser wie kosmoprepare_raumprogramm_lesen, dieselbe Regel\n  wie das Bauvolumen — Summenzeile als Block, Rest als benannter Block). Die Flaechen des\n  Fliesstexts stehen neu unter `textFlaechen`, nicht mehr in der Summe; das Feld `positionenAus`\n  sagt, woher die Positionen kommen.\n\nB3  kosmoprepare_programmstand (Programm + dieselbe Fragenbeantwortung wie 233), ueber den\n    Werkzeugserver, dieselben Unterlagen. Erwartet: positionenAus = \"raumtabelle\"; summePositionen\n    19500 m² (dieselbe Zahl wie B7 in 233, ohne die eine Zeile ohne Flaeche); das Wohnen als drei\n    Bloecke 5600 / 6000 / 2400; die zwei Rest-Bloecke 700 / 300; die 21 Nicht-Raeume aus 233 unter\n    textFlaechen statt in den Positionen.\n    Zurueck: positionenAus, Positionen, summePositionen, Zahl der textFlaechen, kennwerte und\n    anforderungen, alle Hinweise woertlich (ohne Namen), die geschwaerzte Liste ALLER Positionen\n    {seite, zeile, wert_m2, etikett} und die geschwaerzte Liste der textFlaechen {seite, zeile,\n    wert_m2, etikett}. Gesucht ist weiter: was als Raum zaehlt und keiner ist — und umgekehrt.\n    Bitte ausdruecklich: steht noch ein Vergleich «… nennt N m², die Positionen ergeben …» da, und\n    mit welcher Zahl?\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts committen ausser der Antwort, kein Sprachmodell.\n  Keine Bilder, PDF oder Projektdaten zurueckgeben; keine Raum-, Orts-, Kantons- oder\n  Projektnamen, keine Koordinaten. Pruefsummen der Originale vorher = nachher.\n",
+ "erstellt": "2026-10-02T06:00:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "dieselben Unterlagen wie in auf-20261001-225/233 (nur am Heimrechner, Wegwerfkopien)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "aa7b635",
+  "daten_bleiben_lokal": true,
+  "owner_freigabe": "docs/ENTSCHEIDE-2026-10-01.md Nr. 20",
+  "folgt_auf": "auf-20261001-233"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B3 Zahlen, Hinweise, geschwaerzte Positions- und textFlaechen-Liste.",
+  "Pruefsummen vorher = nachher ja/nein."
+ ],
+ "rang": 8
+}
