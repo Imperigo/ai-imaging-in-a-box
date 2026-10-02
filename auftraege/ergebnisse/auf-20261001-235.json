@@ -1,0 +1,131 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-235",
+ "worker": "local",
+ "status": "ok",
+ "beendet": "2026-10-02T05:15:23+00:00",
+ "dauer_s": null,
+ "staende": {
+  "ai_imaging_git_log_1": "c340719 2026-10-02T00:31:01Z Lieferstatus «nicht festgestellt» ist bei KosmoOrbit eingespielt (Stand beim Pull und waehrend aller Messungen; danach kam ein fremder Ergebnis-Commit auf-233 dazu, 74ae2dc, ohne Code)",
+  "pull": "git pull --ff-only: Bereits aktuell — der Klon war um 02:40 schon selbst auf c340719 vorgespult (enthaelt 8294422 «Befunde der Sammel-Nachprobe 230 … beheben»).",
+  "A7_unit_neu_kopiert": "ja — betrieb/visbox-flaeche.service kopiert, daemon-reload. Sie unterschied sich NICHT (diff leer): die Fassung mit PYTHONUNBUFFERED=1 war schon in 230 eingespielt.",
+  "visbox_flaeche_neu_gestartet": "ja — lief seit 01.10. 18:25, also vor dem Pull der Behebungen; nach dem Neustart aktiv, Environment traegt PYTHONUNBUFFERED=1, Startmeldung steht sofort im Journal.",
+  "abholer_neu_gestartet": "nein, nicht noetig — der Abholer ist kein Dauerdienst, sondern ein oneshot-Dienst hinter einem Timer (alle 30 s ein Durchgang, je ein frischer Python-Prozess aus diesem Klon mit .venv-render). Jeder Durchgang seit dem Pull lief bereits mit dem neuen Code; der C-Lauf unten belegt das (AUFSICHT, INNENKAMERA, guidance_applied).",
+  "bruecke_neu_gestartet": "nein — die Bruecke ist ein Systemdienst aus dem KosmoOrbit-Repo und fuehrt keinen Code aus ai-imaging-in-a-box aus; die Ansage betrifft sie nicht."
+ },
+ "weg": "A: Klon, Unit, systemctl --user. B: nur lesen in .venv-render und im Forschungs-venv von 178; Pruefungen in Wegwerf-venvs (eigene site-packages mit diffusers aus dem Quellstand + huggingface_hub, darunter die Pakete von .venv-render nur lesend eingehaengt); pip install --dry-run gegen den Bestand von .venv-render. C: die Demohaus-Szene der App aus 230 (Eingang, Übersicht, Innenraum; interior rooms auto; Prompt «Wohnhaus, heller Putz, Holzfenster, Tageslicht, klarer Himmel»; z-image-turbo) unveraendert per POST /jobs an die Bruecke, gerechnet vom Abholer-Dienst. GPU-Teil unter der geteilten Kartensperre, Leerlauf vorher geprueft (14 W, 0.6 GB).",
+ "messwerte": {
+  "B1": {
+   "antwort": "0.39.0 False",
+   "satz": "In .venv-render: diffusers 0.39.0, QwenImage21Pipeline fehlt — wie erwartet. Unveraendert (pip list nach allen Proben: diffusers 0.39.0, huggingface_hub 1.28.0)."
+  },
+  "B2": {
+   "antwort": "diffusers 0.41.0.dev0 aus dem Quellstand, Commit 031b2798addadd1652db7cfba50eacc1079245cf; QwenImage21Pipeline in dir(diffusers): True",
+   "satz": "Das Forschungs-venv der Messung 178 existiert noch (Kopie von .venv-render, Python 3.14.4). Gegenueber .venv-render unterscheiden sich genau zwei Pakete: diffusers (git @031b279 statt 0.39.0) und huggingface_hub 1.33.0 statt 1.28.0; transformers 5.15.0, torch 2.11.0+cu128, accelerate 1.14.0 gleich.",
+   "lizenz": "diffusers Apache-2.0, huggingface_hub Apache-2.0"
+  },
+  "B3": {
+   "antwort": "keine veroeffentlichte Fassung",
+   "satz": "PyPI fuehrt heute (02.10.2026) als neueste diffusers 0.40.0; deren Rad hat keine QwenImage21Pipeline (nur QwenImage-, -Edit, -EditPlus, -Layered, -ControlNet, -Inpaint, Modular-Varianten). Die Klasse kam am 18.09.2026 mit «Add Qwen-Image 2.1 (#14804)», Commit 6256aa766, in den Hauptzweig — nach dem Tag v0.40.0 (20.08.2026), der sie nicht enthaelt. Nachruesten heisst also Installation aus dem Quellstand. Vorschlag: auf den hier schon gelaufenen Commit 031b2798 pinnen (der aktuelle Hauptzweig 578c9b2 vom 01.10. fuehrt die Klasse ebenfalls und zieht dasselbe nach).",
+   "befehl_fuer_spaeter": "pip install \"diffusers @ git+https://github.com/huggingface/diffusers@031b2798addadd1652db7cfba50eacc1079245cf\" (nur mit Owner-Go, NICHT ausgefuehrt)"
+  },
+  "B4": {
+   "antwort": "Apache-2.0 bestaetigt",
+   "satz": "diffusers 0.41.0.dev0 (@031b279): License «Apache 2.0 License», LICENSE-Datei Apache 2.0. pip install --dry-run gegen den Bestand von .venv-render: «Would install diffusers-0.41.0.dev0 huggingface_hub-1.33.0» — sonst nichts (Anforderung huggingface-hub>=1.32,<2.0). huggingface_hub 1.33.0: Apache-2.0. transformers wird NICHT angehoben, bleibt 5.15.0 (Apache 2.0). pip check im Wegwerf-venv: keine gebrochenen Anforderungen.",
+   "modell_hinweis": "Die Bibliotheken sind Apache-2.0; das Bildmodell qwen-image-2.1 selbst steht laut Register unter «Qwen Research License Agreement» (E128: Lizenz offen, Marke im Ergebnis) — daran aendert das Nachruesten nichts."
+  },
+  "B5": {
+   "antwort": "ja, laedt und rechnet weiter — Bild bitgleich",
+   "vorher": {
+    "umgebung": ".venv-render, diffusers 0.39.0",
+    "status": "ok",
+    "ladeweg": "ZImageControlNetPipeline + from_single_file(Z-Image-Turbo-Fun-Controlnet-Union.safetensors)",
+    "render_dauer_s": 8.0,
+    "wand_s": 13.9
+   },
+   "nachher": {
+    "umgebung": "Wegwerf-venv, diffusers 0.41.0.dev0 @031b279 + huggingface_hub 1.33.0",
+    "status": "ok",
+    "ladeweg": "ZImageControlNetPipeline + from_single_file(Z-Image-Turbo-Fun-Controlnet-Union.safetensors)",
+    "render_dauer_s": 7.1,
+    "wand_s": 12.8
+   },
+   "satz": "Derselbe homeworker-Renderweg (synthetischer Testbau, seed 0, 20 Schritte) ergab vorher und nachher dieselbe SHA-256 des Bildes (dfe480d7…). Neu nur zwei Warnungen: FutureWarning «torch_dtype is deprecated … use dtype» (diffusers) und die bekannte local_dir_use_symlinks-Warnung.",
+   "gpu": {
+    "spitze_mib": 30210,
+    "spitze_w": 94.7
+   }
+  },
+  "B6": {
+   "antwort": "rechenbar True",
+   "satz": "Im Wegwerf-venv: pipeline_lage('qwen-image-2.1') = rechenbar True, fassung 0.41.0.dev0, klassen (QwenImage21Pipeline), fehlend (), quelle register; z-image-turbo ebenfalls True. Gegenprobe in .venv-render: rechenbar False mit genau dem A3-Satz «In der Render-Umgebung fehlt QwenImage21Pipeline (diffusers 0.39.0) — dieses Bildmodell ist hier nicht rechenbar.» Die beiden Behelfe aus 178 (processor statt tokenizer, vram_gb 30.9) stehen inzwischen im Register; vorhandene_dateien meldet die Gewichte vollstaendig. Ein Qwen-Lauf wurde NICHT gemacht (nur pruefen)."
+  }
+ },
+ "urteil": {
+  "C": [
+   {
+    "posten": "C1",
+    "urteil": "teilweise",
+    "job": "vis-1790917610-6c8949",
+    "status": "done",
+    "innenraum_im_bild": "ja",
+    "innenkamera_hinweis": "ja",
+    "geom_iou_null_not_applicable": "nein",
+    "satz": "Das KI-Bild der Innenkamera zeigt jetzt einen Innenraum (helle Waende, Holzdecke, Wandschrank, Fenster mit Gegenlicht — kein Himmel, keine Fassade), und qa.verdict.hinweise traegt «INNENKAMERA Innenraum: Bildauftrag angepasst — 'interior view, inside the room' vorangestellt, gestrichen: 'klarer\\xa0sky'. …». ABER A6 greift nicht: qa_je_kamera[Innenraum].geometry.geom_iou = 1.0, status measured, passed true (Score 0.766), und verdict.reason hat keinen Satz «GEOM_IOU NICHT ANWENDBAR».",
+    "ursache_a6": "Die Kameraurteile tragen kein Feld anteil_soll: geometrie_qa.geometrie_score liefert es, aber tiefenschaetzer.py (Urteil je Kamera, um Zeile 1462) kopiert n_soll/n_ist/geom_iou_norm und NICHT anteil_soll. kosmo_szene.soll_silhouette_randlos liest nur anteil_soll und antwortet bei Fehlen False. Am echten Lauf: befund kameras[Innenraum] = {breite 1600, hoehe 992, n_soll 1587200, n_ist 1587200, n_gemeinsam 1587200} und die Warnung «Randlose Silhouette: Soll (1587200 von 1587200) …» — der Fall liegt also vor, nur das Feld fehlt. Die Proben in test_sammelnachprobe_230 setzen anteil_soll von Hand, darum gruen.",
+    "feld": "qa_je_kamera[2] = {kamera: Innenraum, geometry: {geom_iou: 1.0, status: measured, passed: true, geometry_fidelity: 0.766}, lieferstatus: geliefert}; geometry_gates beschreibt die Kamera Übersicht (geom_iou_status measured)"
+   },
+   {
+    "posten": "C2",
+    "urteil": "bestaetigt",
+    "gerechnet": "ja",
+    "aufsicht_hinweis": "ja",
+    "lieferstatus_geliefert": "ja",
+    "satz": "Die Auto-Kamera «Übersicht» (16,3 m hoch, Gebaeude 6 m) wurde gerechnet (104.6 s) und geliefert; hinweise traegt «AUFSICHT: Die Kamera Übersicht steht über dem Dach — gerechnet, aber nicht nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt.» Der Auftrag ist «geliefert» (3 von 3), lieferstatus_grund leer. Das Bild zeigt das Demohaus schraeg von oben vor blassblauem Himmel; man sieht von oben in das Obergeschoss hinein (kein geschlossenes Dach, Lamellen ueber Teilen). Ihre Geometrie-QA lief trotzdem (geom_iou 0.329, Score 0.545) und sie ist die massgebliche Kamera in geometry_gates.",
+    "feld": "lieferstatus = geliefert; qa_je_kamera[1] = {kamera: Übersicht, lieferstatus: geliefert, bilder_ist: 1}; qa.verdict.hinweise[1] = «AUFSICHT: …»"
+   }
+  ],
+  "A_nebenbei": {
+   "A4": "guidance_applied = false steht oben im render-result (z-image-turbo) — C35 aus 230 damit am echten Lauf erfuellt.",
+   "A3": "Nur ohne Lauf geprueft: pipeline_lage in .venv-render liefert fuer qwen-image-2.1 rechenbar False mit dem Satz der Ansage.",
+   "A1": "nicht gesondert geprueft (Schlange war leer)."
+  }
+ },
+ "c_lauf": {
+  "dauer_s": 370.9,
+  "timings_s": {
+   "Eingang": 114.9,
+   "Übersicht": 104.6,
+   "Innenraum": 134.2,
+   "gesamt": 353.7
+  },
+  "engine_used": "z-image-turbo",
+  "engine_license": "Apache-2.0",
+  "gpu": {
+   "spitze_mib": 30301,
+   "spitze_w": 351.5,
+   "grenze_w": 400
+  }
+ },
+ "auffaelligkeiten": [
+  "A6 wirkt am echten Lauf nicht: anteil_soll erreicht das Kameraurteil nicht (siehe C1, ursache_a6). Innenkamera weiter geom_iou 1.0 «measured» und «passed: true».",
+  "Hinweis-Text zeigt eine Python-Darstellung: «gestrichen: 'klarer\\xa0sky'» — der Prompt aus 230 enthaelt geschuetzte Leerzeichen (Umgehung des Leertasten-Fehlers in KosmoOrbit), und der Satz gibt das Gestrichene mit repr() aus. Zudem blieb «klarer» unuebersetzt (Glossar-Luecke, Warnung im Befund), daher das Mischwort «klarer sky».",
+  "Zwei Hinweise widersprechen sich im Ton: «INNENANSICHT BESTELLT … ob eine Kamera innen steht, prueft diese Seite nicht» und direkt danach «INNENKAMERA … die Kamera steht innen».",
+  "geometry_gates beschreibt die Übersicht (schlechtester Score), obwohl sie laut AUFSICHT nicht nach Augenhoehen-Regeln beurteilt wird; reason beginnt mit «NICHT BESTANDEN wegen Kamera 'Eingang'. Kamera 'Übersicht': NICHT BESTANDEN …».",
+  "Forschungs-venv von 178 ist eine Kopie von .venv-render: seine Skripte (bin/pip u. a.) tragen noch die Shebang-Zeile von .venv-render. Ein Aufruf von dessen bin/pip installiert in .venv-render! Nur «<venv>/bin/python -m pip» ist sicher. (Hier nur mit python -m pip gelesen.)",
+  "Die Bilder kommen 1600x992 statt bestellt 1600x1000 (Rundung auf Vielfache von 16)."
+ ],
+ "nicht_getan": [
+  "Kein Code geaendert, nichts systemweit installiert, nichts committet.",
+  ".venv-render nicht veraendert (vorher/nachher diffusers 0.39.0, huggingface_hub 1.28.0).",
+  "Kein qwen-image-2.1-Lauf (B6 nur pruefen); kein Ollama-Modell geladen.",
+  "Bruecke nicht neu gestartet; KosmoOrbit nicht angefasst."
+ ],
+ "aufraeumen": "Kartensperre per trap freigegeben; Karte am Ende leer (0.6 GB, 15 W, kein Ollama-Modell). Wegwerf-venvs und Probeskripte liegen ausserhalb des Repos im Probe-Ordner von 235; Vorschaubilder geloescht.",
+ "umgebung": {
+  "gpu_grenze_w": 400,
+  "python": "3.14.4",
+  "torch": "2.11.0+cu128"
+ },
+ "fehler": null
+}
