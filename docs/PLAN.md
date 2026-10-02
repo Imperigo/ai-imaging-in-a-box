@@ -7727,7 +7727,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern:** Befunde aus 230 beheben (Schlange, Aufsicht E67, Qwen-2.1 früh abweisen, guidance_applied, Innenkamera).
       *(01.10.2026, `8294422`; 20 Proben, 18 davon vorher rot — Protokoll 74 §22)*
 - [x] **KosmoOrbit-Zweig (Entscheid 65):** P1 Lieferstatus «nicht festgestellt» und App-Befunde B1–B4 aus 230 gebaut, Zweig «kosmovis-v017-lieferstatus-hinweise» bis `9022ece05`, Meldeblatt bei Int 1. *(01.10.2026; Einspielen liegt bei Int 1)*
-- [ ] **cloud (Int 1):** diesen Zweig in v0.1.7 Welle B einspielen; entscheiden, ob ein leerer Prompt gesperrt wird (18 ihrer Proben hängen daran).
+- [x] **cloud (Int 1):** diesen Zweig in v0.1.7 Welle B einspielen; entscheiden, ob ein leerer Prompt gesperrt wird (18 ihrer Proben hängen daran).
+      *(02.10.2026: ROADMAP 1671, `ac23e4e36`; leerer Prompt bleibt ohne Sperre — Integrator)*
+- [ ] **local:** nach dem v0.1.7-Schnitt an der installierten App nachprüfen: Ergebnis mit `lieferstatus: null` wird angenommen und als Vorbehalt gezeigt; B1–B4 am Knoten.
 - [ ] **local:** `auf-20261001-236` — B5 (Vis-Station unter Xvfb) am echten Bildschirm nachmessen.
 - [ ] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
 - [ ] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt.

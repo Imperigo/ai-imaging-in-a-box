@@ -1280,3 +1280,8 @@ die Innenkamera bekommt einen eigenen Bildauftrag, und ein Mass, das dort nichts
 «nicht anwendbar». Ein Befund blieb offen: Die IFC-Materialien gehen schon bei uns verloren
 (Arbeit für v0.1.8). Die HomeStation prüft das mit `auf-20261001-235`. Zwischenstand von 234:
 Visbox für den Mac baut am echten Mac in Xcode, alle 401 Proben grün.
+
+**02.10.2026, früh — der erste selbst gebaute Teil ist drüben eingespielt.** Der Integrator hat unseren
+Zweig mit dem Lieferstatus «nicht festgestellt» und den vier App-Befunden in KosmoOrbit v0.1.7
+übernommen (ROADMAP 1671), ohne Rückfrage. Die neue Arbeitsteilung (wir bauen, er spielt ein) hat
+damit einmal vollständig funktioniert. Am Gerät bestätigt ist es noch nicht.
