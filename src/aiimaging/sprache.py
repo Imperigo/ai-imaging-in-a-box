@@ -1406,10 +1406,17 @@ def _glossar_muster() -> re.Pattern:
     Die Reihenfolge ist der ganze Trick: Stünde ``himmel`` vor ``bedeckter himmel``,
     ergäbe „bedeckter Himmel" ein „bedeckter sky" — halb übersetzt, und genau die
     Zwischensprache, die das Modell am wenigsten versteht.
+
+    Der Zwischenraum einer Wendung ist **jeder Leerraum**, nicht nur die Leertaste
+    (auf-20261001-235): KosmoOrbit schickte «klarer Himmel» mit geschütztem Leerzeichen
+    (Umgehung ihres Leertasten-Fehlers), die Wendung griff nicht, und übrig blieb «klarer
+    sky» — dieselbe halbe Übersetzung, die die Reihenfolge verhindern soll.
     """
     schluessel = sorted(GLOSSAR, key=lambda s: (-len(s), s))
     return re.compile(
-        r"(?<![\w-])(" + "|".join(re.escape(s) for s in schluessel) + r")(?![\w-])",
+        r"(?<![\w-])("
+        + "|".join(r"\s+".join(re.escape(t) for t in s.split(" ")) for s in schluessel)
+        + r")(?![\w-])",
         re.IGNORECASE,
     )
 
@@ -1439,7 +1446,7 @@ def glossar_uebersetzung(text: str) -> dict:
 
     def _tausch(fund: re.Match) -> str:
         wort = fund.group(1)
-        schluessel = wort.lower()
+        schluessel = " ".join(wort.lower().split())
         if schluessel not in ersetzt:
             ersetzt.append(schluessel)
         # Immer kleingeschrieben — auch wenn das deutsche Wort gross war.

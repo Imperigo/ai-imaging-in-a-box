@@ -1285,3 +1285,9 @@ Visbox für den Mac baut am echten Mac in Xcode, alle 401 Proben grün.
 Zweig mit dem Lieferstatus «nicht festgestellt» und den vier App-Befunden in KosmoOrbit v0.1.7
 übernommen (ROADMAP 1671), ohne Rückfrage. Die neue Arbeitsteilung (wir bauen, er spielt ein) hat
 damit einmal vollständig funktioniert. Am Gerät bestätigt ist es noch nicht.
+
+**02.10.2026, morgens — Nachmessung 235.** Die Korrektur für die Innenkamera wirkte im echten Lauf
+nicht: Eine Zahl kam unterwegs nicht an, und unsere Proben hatten sie von Hand eingesetzt. Behoben,
+mit einer Probe, die den echten Weg geht. Dazu drei Textfehler in den Hinweisen. Bestätigt am Gerät:
+Das Ergebnis sagt jetzt, ob die Bildführung wirkte. Qwen-2.1 wird am Heim-PC mit dem
+Entwicklungsstand der Bildbibliothek nachgerüstet (Auftrag 238).

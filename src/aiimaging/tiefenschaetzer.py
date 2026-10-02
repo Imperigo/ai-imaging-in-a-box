@@ -1469,6 +1469,12 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # 28.08.2026). NICHT im Score — 0.65 behaelt seine Bedeutung. 0 heisst hier: so
         # gut wie ein konstantes Bild; negativ heisst: schlechter als das.
         "geom_iou_norm": urteil.get("geom_iou_norm"),
+        # Wieviel des Bildes die Soll-Silhouette deckt. Ohne dieses Feld kann der Vertrag
+        # eine randlose Silhouette (Innenkamera: jeder Bildpunkt ist Wand, Boden oder Decke)
+        # nicht erkennen und meldet geom_iou 1.0 als gemessen — so geschehen in
+        # auf-20261001-235: Die Regel in `kosmo_szene.soll_silhouette_randlos` stand, aber
+        # das Feld kam hier nie an; die Proben setzten es von Hand.
+        "anteil_soll": urteil.get("anteil_soll"),
         "n_gemeinsam": urteil["n_gemeinsam"],
         "n_soll": urteil["n_soll"],
         "n_ist": urteil["n_ist"],
@@ -1523,6 +1529,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "spearman": None,
         "geom_iou": None,
         "geom_iou_norm": None,
+        "anteil_soll": None,
         "n_gemeinsam": None,
         "n_soll": None,
         "n_ist": None,

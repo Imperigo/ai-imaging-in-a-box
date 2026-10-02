@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261002-238",
+ "art": "frage",
+ "beschreibung": "Nachgang zu 235: Innenkamera (anteil_soll) berichtigt nachmessen; Qwen-Image-2.1 in .venv-render auf diffusers @031b279 nachruesten (mit Sicherung und Rueckweg) und einen echten Qwen-2.1-Lauf ueber die Bruecke liefern.",
+ "anweisung": "=== NACHGANG ZU 235: INNENKAMERA BERICHTIGT, QWEN-IMAGE-2.1 NACHRUESTEN UND EINMAL ECHT RECHNEN ===\n\nDanke fuer 235 — der Befund zu A6 war richtig: Das Kameraurteil reichte `anteil_soll` nicht weiter,\ndie Regel fuer die randlose Silhouette sah das Feld nie. Behoben auf main (siehe Ansage).\n\nTEIL A — ANSAGE (was sich nach dem Pull aendert; erst lesen, dann ziehen)\n  A1 Innenkamera: geom_iou kommt bei randloser Silhouette jetzt wirklich leer (null), im Tor\n     geom_iou_status «not_applicable», in verdict.reason «GEOM_IOU NICHT ANWENDBAR, <Kamera>: …».\n     Das Kameraurteil (tiefenschaetzer.qa_gegen_soll) traegt neu das Feld `anteil_soll`.\n  A2 Hinweis INNENKAMERA: Woerter in «…», ohne Programmschreibweise (kein 'klarer\\xa0sky' mehr).\n  A3 Uebersetzung: Wendungen greifen auch mit geschuetztem Leerzeichen — «klarer Himmel» wird\n     «clear sky», nicht mehr «klarer sky».\n  A4 Hinweis INNENANSICHT BESTELLT (mitgesandte Kameras) endet jetzt mit «Raum: nicht von uns\n     gewaehlt.» — der widersprechende Halbsatz «prueft diese Seite nicht» ist weg.\n  A5 Hinweis AUFSICHT hat einen zweiten Satz: «Die Pruefung gegen die Geometrie gilt fuer sie\n     weiter.» So ist es gewollt (Entscheid 67): Nur die Regeln fuer Aufnahmen in Augenhoehe\n     entfallen; geometry_gates darf die Uebersicht darum weiter als schlechteste Kamera nennen.\n  A6 1600x992 statt 1600x1000 ist bekannt und gewollt: Breite und Hoehe muessen Vielfache von 16\n     sein; der Rundungshinweis steht im Ergebnis. Kein Befund.\n  A7 Kein Dienst-Neustart noetig ausser visbox-flaeche, falls sie vor dem Pull lief.\n\nTEIL B — QWEN-IMAGE-2.1 IN .venv-render NACHRUESTEN (Entscheid: ja, auf euren Vorschlag)\n  Grund: Qwen-2.1 ist nach Owner-Entscheid E128 regulaer bestellbar (nie Vorgabe); KosmoOrbit braucht\n  ein echtes Ergebnis mit `engine_license_open: true` fuer seine Lizenzmarke. Ihr habt in 235 gezeigt:\n  nur diffusers und huggingface_hub aendern sich, beide Apache-2.0, z-image-turbo bleibt bitgleich.\n  B1 Sicherung: <.venv-render>/bin/python -m pip freeze > ~/venv-render-vor-238.txt (NICHT ins Repo).\n  B2 Einbau, IMMER ueber «<venv>/bin/python -m pip» (euer Hinweis: bin/pip zeigt im Forschungs-venv auf\n     ein fremdes Python):\n       <.venv-render>/bin/python -m pip install \\\n         \"diffusers @ git+https://github.com/huggingface/diffusers@031b2798addadd1652db7cfba50eacc1079245cf\" \\\n         \"huggingface_hub==1.33.0\"\n     Danach pip check (sauber?) und pip freeze-Differenz zu B1: es duerfen sich NUR diese zwei Pakete\n     aendern. Aendert sich etwas anderes: STOPP, mit B3 zurueck, melden.\n  B3 Rueckweg (nur wenn noetig): <.venv-render>/bin/python -m pip install \"diffusers==0.39.0\"\n     \"huggingface_hub==1.28.0\" — und sagen, dass es noetig war.\n  B4 Gegenprobe z-image-turbo wie in 235 B5 (derselbe synthetische Testbau, derselbe Startwert):\n     SHA-256 des Bildes gleich wie vorher? Nur bei «gleich» weiter.\n  B5 pipeline_lage('qwen-image-2.1') in .venv-render: rechenbar True?\n\nTEIL C — MESSEN\n  C1 Dieselbe Demohaus-Szene wie 235 C (Eingang, Uebersicht, Innenraum; interior auto; z-image-turbo;\n     Prompt wie in 230/235) noch einmal ueber die Bruecke. Zurueck: qa_je_kamera[Innenraum].geometry\n     (geom_iou, status), geometry_gates.geom_iou_status, der Satz in verdict.reason, die Hinweise\n     INNENKAMERA / INNENANSICHT / AUFSICHT wortlich.\n  C2 EIN Lauf mit engine «qwen-image-2.1» ueber die Bruecke (Bestellweg von KosmoOrbit), dieselbe Szene,\n     nur Kamera Eingang, ein Startwert. Zurueck: lieferstatus, engine_used, engine_license,\n     engine_license_open (muss true sein), guidance_applied, Rechenzeit, QA-Kurzurteil, und ob das Bild\n     ein Haus zeigt (ein Satz). Die vollstaendige render-result.json dieses Laufs als\n     auftraege/ergebnisse/auf-20261002-238-qwen21-render-result.json (ohne Pfade, Hostnamen; Bilddaten\n     nicht einbetten) — KosmoOrbit braucht genau diese Datei fuer seine Lizenzmarke.\n  C3 Ist die GPU belegt: C1 vor C2; C2 darf warten. Nichts ueber die Leistungsgrenze.\n\nZURUECK (auftraege/ergebnisse/auf-20261002-238.json)\n  - git log -1; A gelesen ja/nein.\n  - B1–B5 je ja/nein + Satz; die freeze-Differenz (nur Paketnamen und Fassungen).\n  - C1, C2 wie oben; die render-result.json aus C2 als eigene Datei.\n\nNICHT TUN: torch, transformers, accelerate oder andere Pakete anheben; Code aendern; Qwen-2.1 zur\nVorgabe machen; echte Projektdaten; das Forschungs-venv aus 178 loeschen (bleibt als Rueckfall, bis\nwir es sagen). KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-02T06:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "Demohaus-Szene der App wie in auf-20261001-230/235"
+ },
+ "params": {
+  "diffusers_commit": "031b2798addadd1652db7cfba50eacc1079245cf",
+  "huggingface_hub": "1.33.0"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU nur bei Leerlauf, unter der geteilten Kartensperre.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Pip nur als «<venv>/bin/python -m pip».",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "A gelesen; git log -1.",
+  "B1–B5 je ja/nein und Satz, freeze-Differenz.",
+  "C1 Innenkamera-Felder und Hinweise woertlich.",
+  "C2 Kennzahlen des Qwen-2.1-Laufs und dessen render-result.json als eigene Datei."
+ ],
+ "rang": 26
+}

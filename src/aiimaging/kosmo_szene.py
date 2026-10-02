@@ -1905,7 +1905,7 @@ def innenansicht_satz(vermerk, *, gerendert: bool) -> str:
         return (f"INNENANSICHT BESTELLT: 'interior' {vermerk.get('bestellt')!r} kam mit "
                 f"benannten Kameras; die Standpunkte sind die von KosmoOrbit, einen "
                 f"eigenen Innenstandpunkt haben wir nicht gerechnet. Raum: nicht von uns "
-                f"gewaehlt — ob eine Kamera innen steht, prueft diese Seite nicht.")
+                f"gewaehlt.")
     if not gerendert:
         return (f"INNENANSICHT BESTELLT: Standpunkt im Raum {vermerk.get('raum')!r} "
                 f"({vermerk.get('art')}) aus 'interior' {vermerk.get('bestellt')!r} "
@@ -1938,7 +1938,8 @@ def aufsicht_satz(vermerk) -> str:
     if not isinstance(vermerk, dict) or not vermerk.get("kamera"):
         return ""
     return (f"AUFSICHT: Die Kamera {vermerk['kamera']} steht über dem Dach — gerechnet, "
-            f"aber nicht nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt.")
+            f"aber nicht nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt. "
+            f"Die Prüfung gegen die Geometrie gilt für sie weiter.")
 
 
 #: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass sein Bildauftrag fuer eine
@@ -1959,9 +1960,14 @@ def bildauftrag_satz(vermerk) -> str:
     """
     if not isinstance(vermerk, dict) or not vermerk.get("kamera"):
         return ""
-    weg = ", ".join(repr(t) for t in vermerk.get("entfernt") or ()) or "nichts"
+    # «…» und normaler Leerraum statt repr(): Ein Prompt mit geschuetztem Leerzeichen
+    # stand sonst als 'klarer\xa0sky' im Hinweis (auf-20261001-235) — Programmschrift in
+    # einem Satz fuer Menschen.
+    def _wort(t) -> str:
+        return f"«{' '.join(str(t).split())}»"
+    weg = ", ".join(_wort(t) for t in vermerk.get("entfernt") or ()) or "nichts"
     return (f"INNENKAMERA {vermerk['kamera']}: Bildauftrag angepasst — "
-            f"{vermerk.get('vorsatz')!r} vorangestellt, gestrichen: {weg}. Grund: "
+            f"{_wort(vermerk.get('vorsatz'))} vorangestellt, gestrichen: {weg}. Grund: "
             f"{vermerk.get('grund')}.")
 
 

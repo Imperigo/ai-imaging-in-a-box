@@ -7731,7 +7731,10 @@ Bekannt und ausdrücklich nicht erledigt:
       *(02.10.2026: ROADMAP 1671, `ac23e4e36`; leerer Prompt bleibt ohne Sperre — Integrator)*
 - [ ] **local:** nach dem v0.1.7-Schnitt an der installierten App nachprüfen: Ergebnis mit `lieferstatus: null` wird angenommen und als Vorbehalt gezeigt; B1–B4 am Knoten.
 - [ ] **local:** `auf-20261001-236` — B5 (Vis-Station unter Xvfb) am echten Bildschirm nachmessen.
-- [ ] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
+- [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
+      *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
+- [ ] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.
+- [ ] **cloud (Int 1):** das render-result des Qwen-2.1-Laufs aus 238 für P-LIZENZMARKE Schritt 1 übergeben (E4).
 - [ ] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt.
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*

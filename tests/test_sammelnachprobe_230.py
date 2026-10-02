@@ -174,7 +174,8 @@ def test_ein_auto_auftrag_mit_uebersicht_ueber_dem_dach_wird_gerechnet(tmp_path)
     je = {e["kamera"]: e for e in vertrag["qa_je_kamera"]}
     assert je["Übersicht"]["lieferstatus"] == kosmo_szene.LIEFERSTATUS_GELIEFERT
     satz = ("AUFSICHT: Die Kamera Übersicht steht über dem Dach — gerechnet, aber nicht "
-            "nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt.")
+            "nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt. "
+            "Die Prüfung gegen die Geometrie gilt für sie weiter.")
     assert satz in vertrag["qa"]["verdict"]["hinweise"]
     assert "AUFSICHT" not in vertrag["qa"]["verdict"]["reason"]
     assert "ueber dem Dach" not in vertrag["qa"]["verdict"]["reason"]
@@ -452,3 +453,72 @@ def test_die_randlos_regel_an_der_funktion():
     assert kosmo_szene.soll_silhouette_randlos({"anteil_soll": 0.999}) is False
     assert kosmo_szene.soll_silhouette_randlos({}) is False
     assert kosmo_szene.soll_silhouette_randlos({"anteil_soll": True}) is False
+
+
+# --------------------------------------------------------------------------------------
+# Nachgang auf-20261001-235: A6 griff am echten Lauf nicht
+# --------------------------------------------------------------------------------------
+#
+# Die Proben oben setzen ``anteil_soll`` von Hand ins Kameraurteil. Am Heim-PC kam das Feld
+# nie an: ``tiefenschaetzer.qa_gegen_soll`` reichte es aus ``geometrie_score`` nicht
+# weiter, und die Innenkamera meldete weiter geom_iou 1.0 «measured». Diese Probe geht den
+# echten Weg — Urteil aus dem Schätzer, dann die Regel — und setzt nichts von Hand.
+
+def _qa_echt(tmp_path, soll, ist):
+    from aiimaging import tiefenschaetzer as ts
+
+    bild = tmp_path / "innen.png"
+    bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+    return ts.qa_gegen_soll(bild, soll, modell=lambda _p: list(ist), breite=4, hoehe=4,
+                            hintergrund_strategie=ts.HG_KEINE)
+
+
+def test_das_kameraurteil_traegt_anteil_soll_bis_zur_randlos_regel(tmp_path):
+    soll = [float(1 + i % 5) for i in range(16)]           # jeder Bildpunkt Geometrie
+    urteil = _qa_echt(tmp_path, soll, [1.0 / x for x in soll])
+
+    assert urteil["anteil_soll"] == 1.0
+    assert kosmo_szene.soll_silhouette_randlos(urteil) is True
+
+
+def test_gegenprobe_eine_aussenkamera_bleibt_nicht_randlos(tmp_path):
+    soll = [10.0, 10.0, 1e10, 1e10] * 4                     # halb Himmel
+    urteil = _qa_echt(tmp_path, soll, [1.0, 1.0, 0.01, 0.01] * 4)
+
+    assert urteil["anteil_soll"] == 0.5
+    assert kosmo_szene.soll_silhouette_randlos(urteil) is False
+
+
+def test_ein_urteil_ohne_messung_fuehrt_das_feld_leer():
+    from aiimaging import tiefenschaetzer as ts
+
+    leer = ts._qa_ohne_messung(ts.STATUS_FEHLER, {}, error="x", dauer_s=0.0)
+    assert "anteil_soll" in leer and leer["anteil_soll"] is None
+
+
+# Die kleineren Befunde aus 235 ---------------------------------------------------------
+
+def test_eine_wendung_mit_geschuetztem_leerzeichen_wird_ganz_uebersetzt():
+    """«klarer\xa0Himmel» (so schickte es KosmoOrbit) ergab «klarer sky»."""
+    from aiimaging import sprache
+
+    for zwischen in (" ", "\xa0", "  ", "\u202f"):
+        aus = sprache.glossar_uebersetzung(f"Wohnhaus, klarer{zwischen}Himmel")
+        assert aus["text"] == "residential building, clear sky", (repr(zwischen), aus)
+
+
+def test_der_innenkamera_satz_ist_ein_satz_fuer_menschen():
+    satz = kosmo_szene.bildauftrag_satz({
+        "kamera": "Innenraum", "vorsatz": abholer.INNEN_VORSATZ,
+        "entfernt": ("klarer\xa0sky",), "grund": "die Kamera steht innen"})
+    assert "\\xa0" not in satz and "\xa0" not in satz
+    assert "«klarer sky»" in satz
+    assert f"«{abholer.INNEN_VORSATZ}»" in satz
+
+
+def test_die_mitgesandte_innenansicht_widerspricht_der_innenkamera_nicht():
+    satz = kosmo_szene.innenansicht_satz(
+        {"standpunkt": kosmo_szene.INNEN_STANDPUNKT_MITGESANDT, "bestellt": "auto"},
+        gerendert=True)
+    assert satz.startswith("INNENANSICHT BESTELLT")
+    assert "prueft diese Seite nicht" not in satz
