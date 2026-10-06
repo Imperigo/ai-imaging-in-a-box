@@ -7730,7 +7730,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **cloud (Int 1):** diesen Zweig in v0.1.7 Welle B einspielen; entscheiden, ob ein leerer Prompt gesperrt wird (18 ihrer Proben hängen daran).
       *(02.10.2026: ROADMAP 1671, `ac23e4e36`; leerer Prompt bleibt ohne Sperre — Integrator)*
 - [ ] **local:** nach dem v0.1.7-Schnitt an der installierten App nachprüfen: Ergebnis mit `lieferstatus: null` wird angenommen und als Vorbehalt gezeigt; B1–B4 am Knoten.
-- [ ] **local:** `auf-20261001-236` — B5 (Vis-Station unter Xvfb) am echten Bildschirm nachmessen.
+- [x] **local:** `auf-20261001-236` — B5 (Vis-Station unter Xvfb) am echten Bildschirm nachmessen.
+      *(06.10.2026: unter Xvfb wiederholt; am Bildschirm ohne Zeiger nicht prüfbar — teilweise)*
+- [ ] **local:** `auf-20261006-239` — B5 unter Xvfb mit und ohne Software-GL: Zeichenweg ohne Beschleunigung oder App-Fehler?
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
 - [x] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.

@@ -1,0 +1,34 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-239",
+ "art": "frage",
+ "beschreibung": "B5 eingrenzen: Vis-Station unter Xvfb mit und ohne Software-GL — liegen Knotenfelder und Trefferflaeche nur ohne Beschleunigung oben links (WebKitGTK, foreignObject)?",
+ "anweisung": "=== B5 EINGRENZEN: LIEGT ES AM ZEICHENWEG DER WEBANSICHT OHNE GRAFIKBESCHLEUNIGUNG? ===\n\nDanke fuer 236. Unsere Vermutung nach Lesen des Codes von KosmoOrbit: Die Felder des Render-Knotens\nsind HTML in einem SVG-«foreignObject» innerhalb einer verschobenen SVG-Gruppe. Die Linux-Webansicht\n(WebKitGTK, die KosmoOrbit als Desktop-App nutzt) zeichnet so etwas auf ihrem Weg OHNE Beschleunigung\nbekanntermassen am Ursprung (oben links) — und die Trefferflaeche gleich mit. Genau das habt ihr\ngesehen. Mit Beschleunigung (auch Software-GL) stimmt die Lage. Das laesst sich ohne Zeiger am echten\nBildschirm pruefen: unter Xvfb, einmal mit und einmal ohne GL.\n\nSCHRITTE (v0.1.6, dasselbe frische Profil und synthetische Projekt wie in 236; nur Xvfb, kein fremder\nBildschirm)\n  1 Wie in 236 (Xvfb ohne GL) — nur als Bezug, ein Bildschirmfoto der Vis-Station mit Render-Knoten.\n  2 Xvfb MIT GL-Erweiterung und Software-GL:\n      Xvfb :<n> -screen 0 1920x1080x24 +extension GLX   und die App mit LIBGL_ALWAYS_SOFTWARE=1\n    Sagt die App unter Einstellungen «Webview rendert in Software»? (nur notieren)\n    Wo stehen jetzt die Felder des Render-Knotens und die Auto-Kamera-Liste — am Knoten oder oben links?\n    Loest «Ausfuehren» am Knoten (Klick mit xdotool auf die Mitte des Knopfs AM KNOTEN) einen Lauf aus?\n    Wenn die GPU belegt ist: nur bis «Auftrag abgesandt» pruefen, nicht rechnen lassen.\n  3 Gegenprobe: wie 2, aber zusaetzlich WEBKIT_DISABLE_COMPOSITING_MODE=1 — kehrt der Fehler zurueck?\n  4 Je Schritt ein Bildschirmfoto (nur, wenn weder Projekt-, Rechner-, Benutzer- noch Netzname zu sehen\n    ist), als auftraege/ergebnisse/auf-20261006-239-<1|2|3>.png, klein halten.\n\nURTEIL (ein Satz): Steht in 2 alles am Knoten und kehrt es in 3 zurueck, ist B5 ein Effekt des\nZeichenwegs ohne Beschleunigung — dann kein App-Fehler fuer Rechner mit GPU, aber ein Befund fuer\nRechner ohne (wir melden es KosmoOrbit so). Bleibt es in 2 oben links, ist es ein App-Fehler.\n\nZURUECK (auftraege/ergebnisse/auf-20261006-239.json): je Schritt Lage der Felder (am Knoten / oben\nlinks), Ausfuehren wirkt ja/nein, der Satz aus den Einstellungen, das Urteil.\n\nNICHT TUN: KosmoOrbit-Code aendern oder bauen; fremde Bildschirme bedienen; eine andere Fassung\ninstallieren; echte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen,\nBenutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-06T07:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt wie in auf-20261001-236"
+ },
+ "params": {
+  "kosmoorbit": "0.1.6"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nur Bedienung unter Xvfb; kein Rechenlauf noetig.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Je Schritt 1–3: Lage der Felder, Ausfuehren wirkt ja/nein.",
+  "Satz aus den Einstellungen zum Software-Rendering.",
+  "Urteil in einem Satz."
+ ],
+ "rang": 26
+}
