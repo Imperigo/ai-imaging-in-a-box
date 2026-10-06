@@ -2,24 +2,183 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-243",
  "worker": "local",
- "status": "gestoppt — wie im Auftrag verlangt: Der COLMAP-Arbeitsordner aus 241 ist geloescht (241 verlangte «am Ende loeschen»). Nichts neu gerechnet.",
+ "status": "erledigt — Kette wie 241 neu gefahren (Owner-Ja), B und C gelaufen, alle Rueckgaben 0. lot_grad jetzt 1.13 (241: 8.89); der Lauf meldet einen Knick von 2.21° (Hinweis «der Boden ist nicht eben»); 5 Kameras verworfen. Boden: je Kamera waagrecht (mittlere Normale 0.36° gegen z), die 241-Messung mit EINER Ebene durch alle Bodenpunkte kippt dagegen quer auf 10.75°. Kein Code geaendert, nichts installiert, nichts committet.",
+ "vorher": "gestoppt (Arbeitsordner fehlte), Owner-Ja zum Neurechnen",
+ "owner_entscheid": "laut Home-PC-Worker: Owner am 06.10.2026 im Chat «Ja, neu rechnen», Zwischendaten bis zum Ende der Verortungs-Reihe behalten. Diese Hilfs-Sitzung hat den Entscheid vom Home-PC-Worker uebernommen, nicht selbst vom Owner.",
  "A_stand": {
-  "kosmoprepare": "74969a7 (nach git pull --ff-only; enthaelt f784f23)",
-  "git_status": "unveraendert"
+  "kosmoprepare": "74969a7 (git pull --ff-only: «Bereits aktuell»; f784f23 ist Vorfahr von HEAD, geprueft mit git merge-base --is-ancestor)",
+  "log_oneline": "74969a7 CLAUDE.md: die Auftragsnummer wurde geprueft und nicht gelesen",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server/bin/python"
+ },
+ "neu_gefahren": {
+  "linsen": {
+   "aufruf": "insv_linsen.py --insv Rohdatei.insv --aus <absoluter ordner>/linsen_insv.json --stroeme 1,0",
+   "rueckgabe": 0,
+   "dauer_s": 42,
+   "ih_fov": 194.4,
+   "fehler": 0.5468,
+   "mulde": 0.585,
+   "satz": "neu gemessen, identisch mit 240 A und 241"
+  },
+  "aufruf": "splat_kette.py --video Rohdatei.insv --quelle insv --linsen <absoluter ordner>/linsen_insv.json --aus <absoluter ordner> --fps 2 --max-frames 240 --schritte 7000 --profil rtx5090 --vokabular <vokabular-ordner>",
+  "gpu_sperre": "vor den Linsen genommen (until mkdir … ; sleep 30), nach der Kette per trap geloest; Sperre existiert danach nicht mehr",
+  "rueckgabe": 0,
+  "stderr_woertlich": [
+   "max-res 1600 → 1086: mehr Bildpunkte traegt eine Ansicht dieser Quelle nicht, darueber wuerde nur hochgerechnet",
+   "Abdeckung: --max-frames 240 bei 2 Bildern/s deckt 120 von 187 s ab (die Grenze gilt je Ansicht) — der Rest des Videos wird nicht gerechnet",
+   "Splat entstanden: 960 von 960 Bildern registriert, 297993 Punkte, 1 Teilmodell(e)"
+  ],
+  "bericht_json": {
+   "status": "fertig",
+   "bilder": 960,
+   "registriert": 960,
+   "modelle": 1,
+   "punkte": 297993,
+   "schleifenschluss": true,
+   "dauer_s": 1378.2,
+   "max_res": 1086,
+   "vokabular": "bereit"
+  },
+  "schleifenschluss_im_protokoll": "ja — «Schleifenschluss mit lokalem Vokabular» 1× in pipeline.log",
+  "splats": 3171915,
+  "ply_mb": 749,
+  "stufen_dauer_s": {
+   "bilder": 156,
+   "merkmale": 15,
+   "rig": 2,
+   "abgleich": 447,
+   "mapper": 496,
+   "brush_und_rest": 262,
+   "gesamt": 1378
+  },
+  "gpu_spitze_w": 225.0,
+  "gpu_grenze_w": 400,
+  "vergleich_241": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 297993 statt 297354, Splats 3171915 statt 3194756 (−0.7 %), gesamt 1378 s statt 1331 s"
  },
  "B_behelf": {
-  "gelaufen": false,
-  "grund": "tools/splat_behelf.py verlangt --colmap <Arbeitsordner> (sparse/0/). Von 241 ist nur ein Ordner «behalten» mit splat.ply, splat.verortung.json und bericht.json geblieben — keine sparse/0/."
+  "aufruf": "splat_behelf.py --colmap <arbeitsordner> --ply <arbeitsordner>/splat.ply --quelle \"Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m\" --kamerahoehe 1.75 --unsicherheit 0.1 --ersetzen",
+  "anmerkung_ersetzen": "--ersetzen wie verlangt gesetzt; im neu gerechneten Arbeitsordner lag vorher keine Begleitdatei",
+  "rueckgabe": 0,
+  "dauer_s": 2.4,
+  "satz_woertlich": "BEHELF — Kamerahoehe 1.75 m ueber dem Boden, gelesen unter 119 Kameras (Streuung ±1.1 %); Massstab ±5.8 %, Lot aus Boden unter 119 Kameras (Ebene durch die Splat-Punkte) (±1.13°, Kameras 1.41° daneben); Lage und Nordrichtung unbekannt",
+  "hinweise_woertlich": [
+   "Hinweis: der Boden ist nicht eben — die Ebenen von Anfang, Mitte und Ende des Wegs weichen um 2.2° voneinander ab; das Lot ist ihre Mitte (Gelaende, Rampe oder Stufen)"
+  ],
+  "stdout_json": {
+   "datei": "splat.verortung.json",
+   "unsicherheit": {
+    "massstab_rel": 0.0582,
+    "lot_grad": 1.13,
+    "angabe_genannt": true
+   }
+  },
+  "behelf_lot": {
+   "quelle": "Boden unter 119 Kameras (Ebene durch die Splat-Punkte)",
+   "abweichung_kameras_grad": 1.41,
+   "streuung_kameras_grad": 4.62,
+   "boden": {
+    "kameras": 119,
+    "flachheit": 0.0691,
+    "kameras_verworfen": 5,
+    "lot_95_grad": 0.24,
+    "knick_grad": 2.21
+   }
+  },
+  "unsicherheit": {
+   "massstab_rel": 0.0582,
+   "lot_grad": 1.13,
+   "angabe_genannt": true
+  },
+  "fit_massstab": 6.216044210733494,
+  "antwort": "lot_grad 1.13 (241: 8.89). Ja, der Lauf meldet einen Knick: 2.21° (> 2.0° Schwelle), lot_grad = hypot(0.24, 2.21/2). Kameras 1.41° daneben (241: 12.59°) — die Hochachsen dieser neuen Rekonstruktion liegen anders im Raum als in 241; Streuung der Kameras 4.62° (241: 4.66°). Massstab 6.216 m je Einheit (241: 5.995), Kamerahoehe-Streuung ±1.1 % (241: ±5.6 %)."
  },
  "C_boden_volumen": {
-  "gelaufen": false,
-  "grund": "haengt an B"
+  "boden_waagrecht": {
+   "pruefung": "dasselbe Wegwerf-Skript wie 241 (ausserhalb der Repos): Bodenpunkte unter den Kameras mit dem Leser des Werkzeugs (boden_unter_kameras, entlang des Lots der Verortung), EINE Ebene durch alle, vor und nach Anwenden der Matrix; dazu ergaenzt je Kamera eine Ebene durch ihren Ausschnitt",
+   "kameras_mit_boden": 117,
+   "bodenpunkte": 56826,
+   "vorher_grad": {
+    "bodennormale_gegen_mittel_der_kamera_hochachsen": 10.83,
+    "bodennormale_gegen_splat_achse_minus_y_colmap_oben": 14.74
+   },
+   "nachher_grad_eine_ebene_wie_241": {
+    "bodennormale_gegen_z": 10.75,
+    "steigung_seitenansicht_x": 1.09,
+    "steigung_seitenansicht_y": -10.17
+   },
+   "nachher_hoehen_m": {
+    "boden_z_median_aller_punkte": -0.837,
+    "kamera_z_median": 1.587
+   },
+   "eine_ebene_form": {
+    "flachheit_s3_s2": 0.2215,
+    "breite_zu_laenge_s2_s1": 0.0402
+   },
+   "nachher_je_kamera": {
+    "kameras": 117,
+    "neigung_median_grad": 1.22,
+    "neigung_p90_grad": 2.16,
+    "mittlere_normale_gegen_z_grad": 0.36,
+    "bodenhoehe_je_kamera_median_m": -0.012,
+    "bodenhoehe_p10_p90_m": [-0.887, 0.235]
+   },
+   "satz": "Ja, je Kamera: der Boden unter den Kameras liegt nach der Verortung waagrecht (mittlere Normale 0.36° gegen die Senkrechte, Median je Kamera 1.22°); die Messung aus 241 mit EINER Ebene durch alle Bodenpunkte zeigt dagegen 10.75° — quer zum Weg (Seitenansicht y −10.17°, x 1.09°), weil der Weg 25-mal laenger als breit ist und die Bodenhoehe entlang des Wegs von −0.89 m bis +0.24 m wechselt (p10–p90).",
+   "anmerkung": "Die 241-Zahl 0.31° und die 10.75° hier sind nicht vergleichbar: die eine Ebene durch alle Punkte ist auf diesem Weg genau der Fall, den f784f23 beschreibt (kippt quer). Je Kamera gemessen ist der Boden waagrecht."
+  },
+  "volumen": {
+   "aufruf": "splat_volumen.py <arbeitsordner>/splat.ply --aus <datei>",
+   "rueckgabe": 0,
+   "dauer_s": 0.8,
+   "satz_woertlich": "8 Volumen aus 273020 Punkten · 5 ohne gelesenen Boden · 120 kleine Gruppen verworfen · Restfehler der Verortung unbekannt.",
+   "hinweise_woertlich": [
+    "BEHELFSVERORTUNG (Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m): Massstab ±5.8 %, Lot ±1.13°, Lage und Nordrichtung unbekannt — keine Passpunkte"
+   ],
+   "zahl": 8,
+   "hauptbau": {
+    "id": "V1",
+    "laenge_m": 65.187,
+    "breite_m": 10.167,
+    "hoehe_m": 3.45,
+    "fuellgrad": 0.28,
+    "punkte": 134050,
+    "unsicherheit": {
+     "grundriss_m": 2.147,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": 2.03,
+     "hoehe_aus": "Streuung der Zellen (p90-p50) + Streuung des Bodens (IQR)"
+    },
+    "hinweise": ["Fuellgrad 0.28 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]
+   },
+   "uebrige": [
+    {"id": "V2", "laenge_m": 6.249, "breite_m": 3.304, "hoehe_m": null, "fuellgrad": 0.56},
+    {"id": "V3", "laenge_m": 4.727, "breite_m": 3.772, "hoehe_m": null, "fuellgrad": 0.59},
+    {"id": "V4", "laenge_m": 4.202, "breite_m": 3.325, "hoehe_m": null, "fuellgrad": 0.61},
+    {"id": "V5", "laenge_m": 3.872, "breite_m": 3.661, "hoehe_m": null, "fuellgrad": 0.58},
+    {"id": "V6", "laenge_m": 3.599, "breite_m": 3.041, "hoehe_m": 6.64, "fuellgrad": 0.69},
+    {"id": "V7", "laenge_m": 3.37, "breite_m": 2.216, "hoehe_m": null, "fuellgrad": 0.74},
+    {"id": "V8", "laenge_m": 2.838, "breite_m": 2.383, "hoehe_m": 6.97, "fuellgrad": 0.7}
+   ],
+   "ohne_boden_hinweis_woertlich": "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht",
+   "vergleich_241": "241: 11 Volumen, 1 ohne Boden, Hauptbau 59.3 × 4.9 m, H 2.91 m (±1.94), Fuellgrad 0.54. Jetzt: 8 Volumen, 5 ohne Boden, Hauptbau 65.2 × 10.2 m, H 3.45 m (±2.03), Fuellgrad 0.28."
+  }
  },
- "vorschlag": "Fuer 243 bitte erlauben, 241 B neu zu fahren (Kette wie 240 D mit Vokabular, ~22 min GPU, absoluter --aus); dann den Arbeitsordner (mindestens sparse/0/) bis zum Ende der Behelf-Reihe behalten. Alternativ: KosmoPrepare schreibt die Kamerastandorte in die verortung.json, damit B ohne Arbeitsordner geht.",
  "nicht_getan": [
   "kein Code geaendert",
   "nichts installiert",
-  "nichts neu gerechnet"
+  "nichts committet",
+  "Video nur gelesen, nicht kopiert"
+ ],
+ "aufraeumen": "Arbeitsordner NICHT geloescht (Owner: bis zum Ende der Verortungs-Reihe behalten), liegt ausserhalb der Repos mit sparse/0/, splat.ply, splat.verortung.json, volumen.json, Linsendatei.",
+ "umgebung": {
+  "gpu_benutzt": true,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull"
+ },
+ "abweichungen": [
+  "Arbeitsordner behalten statt geloescht (Owner-Entscheid).",
+  "Kameras 1.41° neben dem Boden-Lot statt 12.59° in 241 — neue Rekonstruktion, andere Lage der Hochachsen.",
+  "Bodenmessung wie 241 (eine Ebene) ergibt 10.75° quer; je Kamera 0.36°. Die 241-Methode ist auf diesem Weg nicht tragfaehig."
  ],
  "fehler": null
 }
