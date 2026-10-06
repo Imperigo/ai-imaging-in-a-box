@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-247",
+ "art": "frage",
+ "beschreibung": "Maske fuer die filmende Person am echten 360-Video, die Kette ueber das neue Werkzeug (Linsen selbst gemessen), danach Volumen und Punkte am Weg vorher/nachher (KosmoPrepare 3382da6).",
+ "anweisung": "=== DIE FILMENDE PERSON AUSBLENDEN, UND DIE KETTE UEBER DAS NEUE WERKZEUG (KosmoPrepare 3382da6) ===\n\nWORUM ES GEHT\n  Danke fuer 245 — Innenaufnahme an V1 erkannt, die fuenf Quader ohne Boden liegen zu Recht abseits.\n  Neu seit heute Abend:\n  (1) Maske: je 360-Ansicht wird maskiert, was sich MIT der Kamera bewegt (ruhig, mit Struktur, am\n      unteren Bildrand haengend) — die filmende Person. Masken in masks/<ansicht>/<bild>.jpg.png;\n      COLMAP bekommt sie, wenn seine Hilfe --ImageReader.mask_path nennt; brush soll masks/ selbst\n      lesen (Hauptzweig von brush tut es — ob 0.3.0 auch, ist UNGEMESSEN). Die Schwellen sind gesetzt,\n      nicht gemessen; genau das soll dieser Lauf zeigen.\n  (2) Die Kette als Werkzeug fuer die App: kosmoprepare_splat_kette (starten/abbrechen) und\n      kosmoprepare_splat_stand (liest). Bei insv misst die Kette die Linsen selbst (--linsen-messen).\n\nA  Stand: git -C <KosmoPrepare> log --oneline -1 (mindestens 3382da6). Rechnen mit .venv-server.\n\nB  NUR die Maske, auf den Bildern aus 243 — in einen NEUEN Ordner, der Arbeitsordner aus 243 bleibt\n   unberuehrt:\n     .venv-server/bin/python tools/splat_maske.py --bilder <ORDNER_243>/images --aus <NEU_B>/masks \\\n        --bericht <NEU_B>/maske.json --vorschau <NEU_B>/vorschau\n   Zurueck: die Zeile «Maske: …» woertlich; je Ansicht anteil, gebiete, grund, kennzahlen\n   (mit_struktur, wechselnd). Dann die vier Bilder in <NEU_B>/vorschau ANSEHEN (rot = maskiert) und\n   je Ansicht EIN Satz: deckt das Rot die filmende Person (ganz / teilweise / gar nicht)? Ist etwas\n   ANDERES rot, das zur Szene gehoert (Boden, Wand, Himmel)? Beobachtung, keine Messung.\n   Die Bilder NICHT zurueckgeben (echtes Video).\n\nC  Die Kette neu, mit Maske und ueber das WERKZEUG (nicht die Befehlszeile), dieselben Einstellungen\n   wie 243 (fps, max_frames, profil; Vokabular ueber $KOSMOPREPARE_COLMAP_VOKABULAR wie dort), neuer\n   Arbeitsordner <NEU_C>, und diesmal OHNE Linsendatei — die Kette misst sie selbst:\n     cd <KosmoPrepare> && .venv-server/bin/python - <<'PY'\n     import sys, time, json; sys.path.insert(0, \"integrations/odysseus\")\n     import kosmoprepare_mcp_tools as t\n     a = {\"aktion\": \"starten\", \"arbeitsordner\": \"<NEU_C>\", \"video\": \"<ROHDATEI.insv>\", \"quelle\": \"insv\",\n          \"linsen_messen\": True, \"fps\": <wie 243>, \"max_frames\": <wie 243>, \"profil\": \"rtx5090\"}\n     r = t.tool_splat_kette(a); print(r[\"text\"])\n     while True:\n         s = t.tool_splat_stand({\"arbeitsordner\": \"<NEU_C>\"})[\"structured\"]\n         print(time.strftime(\"%H:%M:%S\"), s[\"status\"], s.get(\"stufe\"), flush=True)\n         if s[\"status\"] != \"laeuft\": break\n         time.sleep(60)\n     print(json.dumps(s, ensure_ascii=False, indent=1))\n     PY\n   Zurueck: der Text von «starten» (laeuft oder sofort abgelehnt?), die Folge der Stufen aus den\n   Standzeilen, der letzte Stand woertlich (ohne Pfade), und daraus bericht.maske (status, maskiert,\n   colmap, je Ansicht anteil/grund) und registriert/bilder/modelle. Die gemessenen Linsen aus\n   <NEU_C>/linsen.json (ih_fov). Dazu: grep -n -i \"mask\" <NEU_C>/pipeline.log | head -20 — sagt\n   brush etwas ueber Masken? (woertlich, ohne Pfade)\n   Gegenprobe Abbrechen (kurz): einen zweiten Auftrag in <NEU_C2> starten, nach ~30 s\n   t.tool_splat_kette({\"aktion\": \"abbrechen\", \"arbeitsordner\": \"<NEU_C2>\"}) — Status danach?\n   Laeuft ausser C noch ein Prozess von C2 (ps)? <NEU_C2> danach loeschen.\n\nD  Behelf und Volumen auf dem neuen Splat (Mass wie 241: kamerahoehe 1.75 m ± 0.1 m), dann:\n     .venv-server/bin/python tools/splat_volumen.py --ply <NEU_C>/splat.ply\n   Zurueck wie 245: Zahl der Volumen, je Volumen laenge/breite/hoehe_m/boden_quelle/fuellgrad und\n   die Hinweise woertlich. Und die eine Zahl, um die es geht — Splat-Punkte nahe am Weg, vorher\n   (Splat aus 243) und nachher (<NEU_C>), je mit seiner eigenen Begleitdatei:\n     .venv-server/bin/python - <SPLAT.ply> <SPLAT.ply.verortung.json> <<'PY'\n     import json, sys, numpy as np; sys.path.insert(0, \".\")\n     from core.gaussian_splat_reader import read_splat_ply\n     v = json.load(open(sys.argv[2])); m = np.asarray(v[\"szene\"][\"matrix\"])\n     d = read_splat_ply(sys.argv[1], opacity_threshold=0.2)\n     p = (np.c_[d.positions, np.ones(d.count)] @ m.T)[:, :3]\n     k = np.asarray(v[\"behelf\"][\"fusspunkte\"]) + [0, 0, 1.75]\n     nah = np.zeros(len(p), bool)\n     for c in k: nah |= np.linalg.norm(p - c, axis=1) < 1.0\n     print(len(p), int(nah.sum()), round(float(nah.mean()) * 100, 2), \"%\")\n     PY\n   (Punkte mit Deckkraft >= 0.2, die naeher als 1.0 m an einer Kamera liegen.)\n\nURTEIL: drei Saetze — (1) traf die Maske die Person und nur sie? (2) kam die Kette ueber das\nWerkzeug durch, mit gemessenen Linsen? (3) wurden die Punkte am Weg weniger?\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts aus dem Netz laden, nichts committen ausser der\n  Antwort. Keine Bilder, Videos, Splats, Masken oder Projektdaten zurueckgeben; keine Orts- oder\n  Projektnamen, keine Koordinaten, keine Pfade. Die Arbeitsordner aus 243 und <NEU_C> behalten.\n",
+ "erstellt": "2026-10-06T20:30:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "Rohdatei und Arbeitsordner aus 243 (nur am Heimrechner)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "3382da6",
+  "daten_bleiben_lokal": true,
+  "folgt_auf": "auf-20261006-245"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren; gerechnet wird nur B, C (Kette neu) und D.",
+  "hinweise": [
+   "Arbeitsordner aus 243 nicht veraendern.",
+   "C2 nach dem Abbrechen loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B Maske je Ansicht + je ein Satz zur Vorschau.",
+  "C Start, Stufen, letzter Stand, bericht.maske, Linsen, brush zu Masken; Abbrechen-Gegenprobe.",
+  "D Volumen wie 245 und Punkte am Weg vorher/nachher.",
+  "Drei Urteilssaetze."
+ ],
+ "rang": 10
+}
