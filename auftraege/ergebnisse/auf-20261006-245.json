@@ -1,0 +1,183 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-245",
+ "worker": "local",
+ "status": "erledigt — B und C gelaufen (Rueckgabe 0). 119 Fusspunkte in der Begleitdatei; Volumen weiter 8, davon 5 ohne Boden: die fuenf liegen 8–22 m vom naechsten Fusspunkt (Mitte), also ausserhalb der 5-m-Grenze — die Fusspunkte greifen dort richtigerweise nicht. Der Hauptbau traegt jetzt den Hinweis «Innenaufnahme» (115 Kameras im Grundriss).",
+ "A_stand": {
+  "kosmoprepare": "85f8cae (enthaelt 35f2ac9 und fa78d0d)",
+  "git_status": "unveraendert"
+ },
+ "B_behelf": {
+  "rueckgabe": 0,
+  "satz": "BEHELF — Kamerahoehe 1.75 m ueber dem Boden, gelesen unter 119 Kameras (Streuung ±1.1 %); Massstab ±5.8 %, Lot aus Boden unter 119 Kameras (Ebene durch die Splat-Punkte) (±1.13°, Kameras 1.41° daneben); Lage und Nordrichtung unbekannt",
+  "hinweise": [
+   "Hinweis: der Boden ist nicht eben — die Ebenen von Anfang, Mitte und Ende des Wegs weichen um 2.2° voneinander ab; das Lot ist ihre Mitte (Gelaende, Rampe oder Stufen)"
+  ],
+  "fusspunkte_anzahl": 119,
+  "fusspunkte_z_spanne_m": [
+   -0.963,
+   0.285
+  ],
+  "fusspunkte_quelle": "dichteste Schicht unter jeder Kamera, entlang des Lots",
+  "fit_art": "behelf",
+  "mass": "1.75 m ± 0.1 m, Quelle wie in 241/243 (Angabe Owner)"
+ },
+ "C_volumen": {
+  "rueckgabe": 0,
+  "satz": "8 Volumen aus 273020 Punkten · 5 ohne gelesenen Boden · 120 kleine Gruppen verworfen · Restfehler der Verortung unbekannt.",
+  "hinweise_gesamt": [
+   "BEHELFSVERORTUNG (Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m): Massstab ±5.8 %, Lot ±1.13°, Lage und Nordrichtung unbekannt — keine Passpunkte"
+  ],
+  "volumen": [
+   {
+    "id": "V1",
+    "laenge_m": 65.187,
+    "breite_m": 10.167,
+    "hoehe_m": 3.45,
+    "boden_quelle": "Median von 41 flachen freien Zellen rundum",
+    "fuellgrad": 0.28,
+    "unsicherheit": {
+     "grundriss_m": 2.147,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": 2.03,
+     "hoehe_aus": "Streuung der Zellen (p90-p50) + Streuung des Bodens (IQR)"
+    },
+    "hinweise": [
+     "115 Kameras standen IN diesem Grundriss — eine Innenaufnahme oder ein gedeckter Gang; die Oberkante kann die Decke sein, nicht das Dach",
+     "Fuellgrad 0.28 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   },
+   {
+    "id": "V2",
+    "laenge_m": 6.249,
+    "breite_m": 3.304,
+    "hoehe_m": null,
+    "boden_quelle": null,
+    "fuellgrad": 0.56,
+    "unsicherheit": {
+     "grundriss_m": 0.432,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": null,
+     "hoehe_aus": null
+    },
+    "hinweise": [
+     "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht",
+     "Fuellgrad 0.56 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   },
+   {
+    "id": "V3",
+    "laenge_m": 4.727,
+    "breite_m": 3.772,
+    "hoehe_m": null,
+    "boden_quelle": null,
+    "fuellgrad": 0.59,
+    "unsicherheit": {
+     "grundriss_m": 0.388,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": null,
+     "hoehe_aus": null
+    },
+    "hinweise": [
+     "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht",
+     "Fuellgrad 0.59 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   },
+   {
+    "id": "V4",
+    "laenge_m": 4.202,
+    "breite_m": 3.325,
+    "hoehe_m": null,
+    "boden_quelle": null,
+    "fuellgrad": 0.61,
+    "unsicherheit": {
+     "grundriss_m": 0.372,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": null,
+     "hoehe_aus": null
+    },
+    "hinweise": [
+     "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht",
+     "Fuellgrad 0.61 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   },
+   {
+    "id": "V5",
+    "laenge_m": 3.872,
+    "breite_m": 3.661,
+    "hoehe_m": null,
+    "boden_quelle": null,
+    "fuellgrad": 0.58,
+    "unsicherheit": {
+     "grundriss_m": 0.363,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": null,
+     "hoehe_aus": null
+    },
+    "hinweise": [
+     "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht",
+     "Fuellgrad 0.58 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   },
+   {
+    "id": "V6",
+    "laenge_m": 3.599,
+    "breite_m": 3.041,
+    "hoehe_m": 6.64,
+    "boden_quelle": "Median von 3 flachen freien Zellen rundum",
+    "fuellgrad": 0.69,
+    "unsicherheit": {
+     "grundriss_m": 0.355,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": 4.95,
+     "hoehe_aus": "Streuung der Zellen (p90-p50) + Streuung des Bodens (IQR)"
+    },
+    "hinweise": [
+     "Fuellgrad 0.69 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   },
+   {
+    "id": "V7",
+    "laenge_m": 3.37,
+    "breite_m": 2.216,
+    "hoehe_m": null,
+    "boden_quelle": null,
+    "fuellgrad": 0.74,
+    "unsicherheit": {
+     "grundriss_m": 0.348,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": null,
+     "hoehe_aus": null
+    },
+    "hinweise": [
+     "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht"
+    ]
+   },
+   {
+    "id": "V8",
+    "laenge_m": 2.838,
+    "breite_m": 2.383,
+    "hoehe_m": 6.97,
+    "boden_quelle": "Median von 7 flachen freien Zellen rundum",
+    "fuellgrad": 0.7,
+    "unsicherheit": {
+     "grundriss_m": 0.333,
+     "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±5.8 %",
+     "hoehe_m": 6.03,
+     "hoehe_aus": "Streuung der Zellen (p90-p50) + Streuung des Bodens (IQR)"
+    },
+    "hinweise": []
+   }
+  ],
+  "vergleich_243": "243: 8 Volumen, 5 ohne Boden — jetzt gleich viele. Boden_quelle ist bei allen dreien mit Boden «freie Zellen rundum»; keiner nimmt Fusspunkte. Abstand Volumenmitte zum naechsten Fusspunkt: V2 9.9, V3 12.8, V4 21.6, V5 21.6, V7 13.0 m (alle ohne Boden), V6 8.6, V8 8.0 m — die Fusspunkte liegen nur entlang des Wegs (x 0–59 m, y −2.5–0.9 m).",
+  "innenaufnahme": "ja, bei V1: «115 Kameras standen IN diesem Grundriss — eine Innenaufnahme oder ein gedeckter Gang; die Oberkante kann die Decke sein, nicht das Dach»"
+ },
+ "D_beobachtung": "Der Hauptbau V1 (65.2 × 10.2 m) liegt genau entlang des gegangenen Wegs (115 von 119 Kameras darin, Mitte 0.7 m vom naechsten Fusspunkt) — er ist das langgestreckte Gebaeude bzw. der gedeckte Gang, durch den gefilmt wurde, nicht Gelaende oder Bewuchs (Beobachtung aus Lage und Kameras, keine Messung).",
+ "nicht_getan": [
+  "kein Code geaendert",
+  "nichts installiert",
+  "nichts geladen"
+ ],
+ "aufraeumen": "Arbeitsordner mit sparse/ behalten; neue Begleitdatei ersetzt die aus 243 (Sicherung nicht noetig, --ersetzen schreibt sie neu).",
+ "fehler": null
+}
