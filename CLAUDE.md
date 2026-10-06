@@ -311,6 +311,29 @@ Zweig mit einem Blatt in seinem Eingang (`kosmo-orbit/docs/auftraege-kosmovis/`)
 **nie selbst** in seinen Zweig zusammen. Was nicht Visbox ist, fassen wir dort nicht an; ihre
 Regeln (dortige `CLAUDE.md`) gelten auf dem Zweig wie hier unsere.
 
+### Nachrichten über die Zentrale (Owner-Entscheid 06.10.2026, abends)
+
+Bis dahin konnte diese Cloud-Sitzung andere Sitzungen nicht erreichen; der Owner leitete jede Zeile
+von Hand weiter. **Seither laufen alle Nachrichten zwischen den Workern über die «Zentrale»** — die
+Sitzung des Home-PC-Workers. Der Owner leitet nichts mehr weiter.
+
+* **Senden:** eine Datei `eingang/<JJJJMMTT-HHMMSS>-kosmovis-an-<an>-<stichwort>.json` (Zeit UTC,
+  Schema `kosmo.zentrale/v1`: `von`, `an`, `art` auftrag/meldung/frage/antwort, `betreff`, `text`
+  vollständig, `bezug`, `antwort_erwartet`, `dringend`) auf den Zweig `zentrale` im KosmoOrbit-Repo,
+  über eine eigene Arbeitskopie, **nur diese eine Datei**, `git push origin HEAD:zentrale` (bei
+  Zusammenstoss `pull --rebase`). Das Protokoll steht in `README.md` auf diesem Zweig.
+* **Nie** andere Dateien auf `zentrale` ändern; `stand/` und `erledigt/` schreibt nur die Zentrale.
+  Der Stand jeder Nachricht steht in `stand/STAND.md`.
+* **Adressen:** `integrator`, `ui`, `prepare`, `homestation`, `owner`; mehrere als Liste.
+* **Aufträge an die HomeStation** liegen weiter als Datei in `auftraege/offen/`; dazu eine kurze
+  Zentrale-Nachricht an `homestation` mit dem Verweis.
+* Was uns zugestellt wird und eine Antwort erwartet, beantworten wir ebenso (`art: antwort`,
+  `bezug` = Kennung).
+* Keine Kennwörter, Tokens, Hosts, IPs oder privaten Namen in Nachrichten (Regel 3 gilt).
+
+Die Antwort im Chat an den Owner nennt darum keine «bitte weitergeben»-Zeilen mehr, sondern sagt,
+was über die Zentrale gesendet wurde.
+
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen
