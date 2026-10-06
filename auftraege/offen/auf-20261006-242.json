@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-242",
+ "art": "frage",
+ "beschreibung": "B5 in WebKitGTK nachmessen: Felder und «Ausfuehren» am Render-Knoten vorher (Integrator-Kopf) und nachher (unser Zweig claude/kosmovis-v017-b5-render-knoten, 7f87d6ef2) — Vorbedingung fuers Einspielen.",
+ "anweisung": "=== B5 IN WEBKITGTK NACHMESSEN: VORHER (INTEGRATOR) UND NACHHER (UNSER ZWEIG) ===\n\nWorum es geht: Die Felder am Render-Knoten der Vis-Station standen in der Desktop-App (WebKitGTK) oben\nlinks bzw. leer (euer 239, der Owner am eigenen Bildschirm). Wir haben das auf dem KosmoOrbit-Zweig\nclaude/kosmovis-v017-b5-render-knoten behoben (Kopf 7f87d6ef2): Kein Knoten steht mehr in einem SVG-\nforeignObject; jeder Knoten ist ein HTML-Kasten in einer Ebene ueber dem Kanten-SVG. Dazu: Enter und\nLeertaste auf «Ausfuehren» gehen jetzt an den Knopf (vorher fing der Knoten sie ab — auch in Chromium).\nIn der Cloud lief nur Chromium; dort war der Fehler nie sichtbar. WebKitGTK kann nur ihr pruefen.\nDer Integrator spielt den Zweig erst ein, wenn diese Messung vorliegt.\n\nWEG (in dieser Reihenfolge, der erste, der geht; KEINE Systempakete installieren):\n  W1 Die Desktop-App aus dem Zweig selbst bauen und starten (wie ihr Desktop-Workflow, z. B. Tauri im\n     Debug-Modus), falls Rust/Tauri-Werkzeuge bei euch schon da sind.\n  W2 Sonst ein WebKitGTK-Browser, der bei euch schon installiert ist (MiniBrowser aus libwebkit2gtk,\n     GNOME Web/Epiphany), gegen die Vorschau des Zweigs (npm run build, dann vite preview auf einem\n     Port aus 5250–5274, Attrappen-Bruecke wie in ihren E2E-Specs).\n  W3 Sonst Playwright mit Browser «webkit» in einem eigenen PLAYWRIGHT_BROWSERS_PATH.\n  Geht keiner ohne neue Systempakete: STOPP, sagen was fehlt.\n  Sagen, welcher Weg lief. Unter Xvfb ist ok (wie 239); Klicks mit xdotool.\n\nSCHRITTE — je einmal VORHER (origin/claude/kosmo-orbit-v1-build-pzxkbj) und NACHHER (unser Zweig),\nsynthetisches Projekt, Vis-Station, ein Render-Knoten:\n  1 Stehen die Felder (Aufloesung, Qualitaet gegen Zeit, Himmel, Umgebung drehen, Bildwerkzeug) und\n    «Ausfuehren» AM Knoten und sind sie sichtbar? Bildschirmfoto.\n  2 Knoten ziehen und zoomen (Mausrad): bleiben die Felder am Knoten?\n  3 Klick auf «Bildwerkzeug» am Knoten: oeffnet die Auswahl am Knoten?\n  4 Prompt am Prompt-Knoten setzen, Klick auf «Ausfuehren» am Knoten: geht ein Auftrag ab? (Bruecke mit\n    Waechter wie in 239, der ihn sofort abbricht — kein Rechnen noetig.) Dann dasselbe per Tab + Enter.\n  5 Einstellungsfenster oeffnen: scheint der Knoten noch hindurch?\n  Bildschirmfotos nur ohne Projekt-, Rechner-, Benutzer- oder Netznamen:\n  auftraege/ergebnisse/auf-20261006-242-<vorher|nachher>-<1|5>.png, klein.\n\nURTEIL (ein Satz): Ist B5 nachher in WebKitGTK behoben?\n\nZURUECK (auftraege/ergebnisse/auf-20261006-242.json): Weg (W1/W2/W3) und Fassungen; beide git-Koepfe;\nSchritte 1–5 je vorher/nachher: ja/nein + ein Satz; das Urteil; was auffiel.\n\nNICHT TUN: KosmoOrbit-Code aendern, committen oder pushen; die installierte App ersetzen; Systempakete\ninstallieren; echte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen,\nBenutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-06T10:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt der App wie in auf-20261006-239"
+ },
+ "params": {
+  "zweig": "claude/kosmovis-v017-b5-render-knoten",
+  "kopf": "7f87d6ef2"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nur Bedienung; kein Rechenlauf noetig.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Weg und Fassungen, beide Koepfe.",
+  "Schritte 1–5 vorher/nachher, je ja/nein und Satz.",
+  "Urteil in einem Satz."
+ ],
+ "rang": 29
+}
