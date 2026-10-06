@@ -1,0 +1,39 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-240",
+ "art": "frage",
+ "beschreibung": "B6 am Geraet: insv-Zweig, Linsen messen, Eingabepruefung (KosmoPrepare 4267a8e); nur Zahlen.",
+ "anweisung": "=== B6 AM GERAET: INSV-ZWEIG, LINSEN MESSEN, EINGABEPRUEFUNG ===\n\nWORUM ES GEHT\n  Danke fuer den Lauf mit dem echten 360°-Video. KosmoPrepare 4267a8e (git pull --ff-only auf main)\n  baut B6 und nimmt eure Befunde auf:\n  * tools/splat_kette.py — die Kette ohne Blender, Rueckgabe 0/1/2, bericht.json im Arbeitsordner.\n  * Quelle «insv» — zwei Fischaugen direkt mit v360 dfisheye in die vier Ansichten des Rigs. Der\n    Sichtwinkel kommt aus einer Linsendatei, die tools/insv_linsen.py am Video MISST (an den Naehten).\n    Hier gegen ein von ffmpeg geschriebenes Doppelbild geprueft (201° geschrieben → 200.8° gemessen,\n    und genau 200.8° trifft dfisheye beim Lesen am besten). An einer echten Kamera NICHT gemessen.\n  * Eingabepruefung: bei «insta360» wird eine Datei mit zwei Videostroemen oder mit zwei Bildkreisen\n    (eure .lrv) abgelehnt, statt DONE zu melden. max_res wird auf die echte Aufloesung gedeckelt; die\n    Abdeckung von max_frames wird genannt; deckkraft_min 0.5 → 0.2 mit Anteil im Ergebnis.\n\nA  Linsen messen, zweimal:\n     .venv-server/bin/python tools/insv_linsen.py --insv <ROHDATEI.insv> --aus linsen_insv.json --stroeme 1,0\n     .venv-server/bin/python tools/insv_linsen.py --insv <VORSCHAU.lrv> --aus linsen_lrv.json --nebeneinander\n   Zurueck: Rueckgabe, ih_fov, mulde, fehler, Dauer, die Kurve (messung.kurve). Erwartet um 200°;\n   die zwei Werte sollten sich decken. Ist die Mulde flach (Rueckgabe 2), bitte den Satz woertlich.\n\nB  Eingabepruefung: tools/splat_kette.py --video <VORSCHAU.lrv> --quelle insta360 --aus <ordner>\n   Erwartet Rueckgabe 2 mit «zwei Bildkreise», ohne dass gerechnet wird. Dasselbe mit der .insv\n   (erwartet «2 Videostroeme»).\n\nC  Die Kette mit der Rohdatei, dieselben Einstellungen wie euer bester Lauf:\n     tools/splat_kette.py --video <ROHDATEI.insv> --quelle insv --linsen linsen_insv.json\n       --aus <ordner> --fps 2 --max-frames 240 --schritte 7000 --profil rtx5090\n   (max-res nicht angeben — der Lauf deckelt selbst und sagt auf welchen Wert.)\n   Zurueck: bericht.json ganz (ohne Pfade), die Meldungen auf stderr woertlich, GPU-Spitze.\n   Vergleich mit eurem Lauf «.insv → equirect» (960/960, 1 Modell, 2'653'428 Splats, 1257 s):\n   registriert, modelle, punkte, Splats, Dauer je Stufe.\n\nD  Nur mit Owner-Freigabe fuer das Laden des Vokabulars (ihr meldet, sie liege vor — hier ist sie\n   nicht vom Owner bestaetigt; bitte im Antwortblatt nennen, woher sie kommt): C noch einmal mit\n     --vokabular <ordner ausserhalb der Repos> --vokabular-laden\n   Zurueck: Status des Vokabulars, ob «Schleifenschluss mit lokalem Vokabular» im Protokoll steht,\n   und dieselben Zahlen wie C. Gesucht: biegt der Gang weniger?\n\nE  Werkzeuge ueber den Server (kosmoprepare_splat_verorten, _splat_volumen, _flaechen_textur) mit\n   dem Splat aus C — nur wenn Passpunkte mit Quelle da sind; eure Behelfsverortung bitte als solche\n   kennzeichnen (quelle «Behelf: …»). Zurueck: der Satz jedes Werkzeugs und die Zahl der Volumen,\n   Flaechen mit Bild und ohne Bild.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren ausser dem Vokabular in D, nichts committen ausser der\n  Antwort. Keine Bilder, Videos, Splats oder Projektdaten zurueckgeben; keine Orts- oder\n  Projektnamen, keine Koordinaten. Alles bleibt am Heimrechner; Arbeitsordner ausserhalb der Repos.\n",
+ "erstellt": "2026-10-06T09:30:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "das 360°-Video des Owners (nur am Heimrechner)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "4267a8e",
+  "daten_bleiben_lokal": true,
+  "folgt_auf": "Lauf 360°-Video 06.10.2026 (KosmoOrbit Local)"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren ausser dem Vokabular in D (nur mit Owner-Freigabe).",
+  "hinweise": [
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen.",
+   "Video nur verweisen, nicht kopieren."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "A Linsenmessung beider Dateien.",
+  "B Rueckgaben und Saetze.",
+  "C bericht.json und Vergleich mit dem equirect-Lauf.",
+  "D nur mit Owner-Freigabe.",
+  "E Saetze der Werkzeuge."
+ ],
+ "rang": 8
+}
