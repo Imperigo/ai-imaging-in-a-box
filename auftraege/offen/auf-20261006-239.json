@@ -3,13 +3,13 @@
  "worker": "local",
  "auftrag_id": "auf-20261006-239",
  "art": "frage",
- "beschreibung": "B5 eingrenzen: Vis-Station unter Xvfb mit und ohne Software-GL — liegen Knotenfelder und Trefferflaeche nur ohne Beschleunigung oben links (WebKitGTK, foreignObject)?",
- "anweisung": "=== B5 EINGRENZEN: LIEGT ES AM ZEICHENWEG DER WEBANSICHT OHNE GRAFIKBESCHLEUNIGUNG? ===\n\nDanke fuer 236. Unsere Vermutung nach Lesen des Codes von KosmoOrbit: Die Felder des Render-Knotens\nsind HTML in einem SVG-«foreignObject» innerhalb einer verschobenen SVG-Gruppe. Die Linux-Webansicht\n(WebKitGTK, die KosmoOrbit als Desktop-App nutzt) zeichnet so etwas auf ihrem Weg OHNE Beschleunigung\nbekanntermassen am Ursprung (oben links) — und die Trefferflaeche gleich mit. Genau das habt ihr\ngesehen. Mit Beschleunigung (auch Software-GL) stimmt die Lage. Das laesst sich ohne Zeiger am echten\nBildschirm pruefen: unter Xvfb, einmal mit und einmal ohne GL.\n\nSCHRITTE (v0.1.6, dasselbe frische Profil und synthetische Projekt wie in 236; nur Xvfb, kein fremder\nBildschirm)\n  1 Wie in 236 (Xvfb ohne GL) — nur als Bezug, ein Bildschirmfoto der Vis-Station mit Render-Knoten.\n  2 Xvfb MIT GL-Erweiterung und Software-GL:\n      Xvfb :<n> -screen 0 1920x1080x24 +extension GLX   und die App mit LIBGL_ALWAYS_SOFTWARE=1\n    Sagt die App unter Einstellungen «Webview rendert in Software»? (nur notieren)\n    Wo stehen jetzt die Felder des Render-Knotens und die Auto-Kamera-Liste — am Knoten oder oben links?\n    Loest «Ausfuehren» am Knoten (Klick mit xdotool auf die Mitte des Knopfs AM KNOTEN) einen Lauf aus?\n    Wenn die GPU belegt ist: nur bis «Auftrag abgesandt» pruefen, nicht rechnen lassen.\n  3 Gegenprobe: wie 2, aber zusaetzlich WEBKIT_DISABLE_COMPOSITING_MODE=1 — kehrt der Fehler zurueck?\n  4 Je Schritt ein Bildschirmfoto (nur, wenn weder Projekt-, Rechner-, Benutzer- noch Netzname zu sehen\n    ist), als auftraege/ergebnisse/auf-20261006-239-<1|2|3>.png, klein halten.\n\nURTEIL (ein Satz): Steht in 2 alles am Knoten und kehrt es in 3 zurueck, ist B5 ein Effekt des\nZeichenwegs ohne Beschleunigung — dann kein App-Fehler fuer Rechner mit GPU, aber ein Befund fuer\nRechner ohne (wir melden es KosmoOrbit so). Bleibt es in 2 oben links, ist es ein App-Fehler.\n\nZURUECK (auftraege/ergebnisse/auf-20261006-239.json): je Schritt Lage der Felder (am Knoten / oben\nlinks), Ausfuehren wirkt ja/nein, der Satz aus den Einstellungen, das Urteil.\n\nNICHT TUN: KosmoOrbit-Code aendern oder bauen; fremde Bildschirme bedienen; eine andere Fassung\ninstallieren; echte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen,\nBenutzernamen, Kennwoerter.\n",
+ "beschreibung": "B5 in WebKit (der Engine der Desktop-App) messen: Felder am Render-Knoten vorher auf dem Integrator-Kopf und nachher auf unserem Zweig claude/kosmovis-v017-b5-render-knoten — liegen sie im Knoten, wirkt Ausfuehren?",
+ "anweisung": "=== B5 IN DER WEBANSICHT DER ECHTEN APP MESSEN — VORHER (INTEGRATOR) UND NACHHER (UNSER ZWEIG) ===\n\nNEU GEFASST 06.10.2026, ERSETZT DIE ERSTE FASSUNG DIESES AUFTRAGS (Xvfb mit/ohne Software-GL). Grund:\nDer Owner hat B5 am eigenen Bildschirm MIT Grafikbeschleunigung gesehen — die Felder am Render-Knoten\nsind dort leer. Damit ist B5 ein App-Fehler, nicht nur einer des Zeichenwegs ohne Beschleunigung. Der\nIntegrator hat ihn uns zum Bauen gegeben (sein Auftrag auf-vis-20261006-01-render-knoten-felder-leer.md).\nWir bauen ihn im KosmoOrbit-Repo auf dem Zweig claude/kosmovis-v017-b5-render-knoten. In der Cloud gibt\nes nur Chromium; die Desktop-App zeigt ihre Oberflaeche unter Linux aber mit WebKitGTK. Eure Messung in\nWebKit ist darum die Gegenprobe, die wir selbst nicht machen koennen.\n\nVORAUSSETZUNG: euer Klon des KosmoOrbit-Repos (Architektur-Cosmos); git fetch origin. Playwright mit dem\nBrowser «webkit» (unter Linux die WebKitGTK-Familie). Fehlt webkit fuer Playwright: in einem eigenen\nOrdner nachladen (PLAYWRIGHT_BROWSERS_PATH=<eigener Ordner> npx playwright install webkit) — keine\nSystempakete aendern; geht es nicht ohne, STOPP und sagen, was fehlt.\nPorts fuer den Dev-Server bzw. die Vorschau: nur 5250–5274.\n\nTEIL A — VORHER, auf dem Kopf des Integrators (origin/claude/kosmo-orbit-v1-build-pzxkbj)\n  A1 App im Browser starten (wie ihre E2E-Specs, mit der Attrappen-Bruecke), Vis-Station oeffnen, einen\n     Render-Knoten anlegen.\n  A2 In webkit UND in chromium je: getBoundingClientRect() des Knotens und jedes Feldes am Knoten\n     (Aufloesung, Qualitaet gegen Zeit, Himmel, Umgebung drehen, Bildwerkzeug) und des Knopfs\n     «Ausfuehren». Liegt jedes Feld innerhalb des Knotens? Sind die Felder sichtbar (Breite/Hoehe > 0,\n     nicht durchsichtig)?\n  A3 Klick auf «Ausfuehren» am Knoten (Mitte des Knopfs am Knoten): geht ein Auftrag an die Attrappe?\n  A4 Ein Bildschirmfoto je Engine (nur synthetisches Projekt, keine Namen), klein:\n     auftraege/ergebnisse/auf-20261006-239-a-<webkit|chromium>.png\n\nTEIL B — NACHHER, auf unserem Zweig origin/claude/kosmovis-v017-b5-render-knoten\n  Gibt es den Zweig noch nicht: nur Teil A abgeben und das sagen — wir legen dann nach.\n  B1–B4 wie A1–A4, Bildschirmfotos auf-20261006-239-b-<engine>.png.\n  B5 Die E2E-Spec, die unser Zweig dafuer mitbringt (im Meldeblatt\n     docs/auftraege-kosmovis/meldung-20261006-kosmovis-b5-render-knoten.md genannt), einmal mit\n     --project bzw. Browser webkit laufen lassen: gruen/rot, Zahl der Proben.\n\nURTEIL (ein Satz): Zeigt webkit in A den Fehler (Felder ausserhalb oder unsichtbar, Klick wirkungslos)\nund in B nicht, ist die Behebung in der richtigen Engine belegt.\n\nZURUECK (auftraege/ergebnisse/auf-20261006-239.json): git-Koepfe beider Staende; je Teil und Engine die\nRechtecke (Knoten und Felder, gerundet), sichtbar ja/nein, Klick wirkt ja/nein; B5; das Urteil.\n\nNICHT TUN: KosmoOrbit-Code aendern, committen oder pushen (nur messen); die Desktop-App neu installieren;\nfremde Bildschirme bedienen; echte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen,\nIP-Adressen, Benutzernamen, Kennwoerter.\n",
  "erstellt": "2026-10-06T07:30:00Z",
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
-  "erzeugen_mit": "synthetisches Projekt wie in auf-20261001-236"
+  "erzeugen_mit": "synthetisches Projekt der App (Attrappen-Bruecke wie in ihren E2E-Specs)"
  },
  "params": {
   "kosmoorbit": "0.1.6"
@@ -19,15 +19,16 @@
   "nur_bei_leerlauf": false,
   "leerlauf_schwelle_w": 120,
   "leerlauf_schwelle_mem_gb": 8,
-  "hinweis": "Nur Bedienung unter Xvfb; kein Rechenlauf noetig.",
+  "hinweis": "Nur Browser-Messung; kein Rechenlauf, keine GPU.",
   "hinweise": [
    "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
    "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
   ]
  },
  "rueckgabe": [
-  "Je Schritt 1–3: Lage der Felder, Ausfuehren wirkt ja/nein.",
-  "Satz aus den Einstellungen zum Software-Rendering.",
+  "Koepfe beider Staende.",
+  "Je Teil und Engine: Rechtecke, sichtbar, Klick wirkt.",
+  "B5 E2E-Spec in webkit.",
   "Urteil in einem Satz."
  ],
  "rang": 26
