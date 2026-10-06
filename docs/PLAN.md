@@ -7741,7 +7741,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben, Nachgang B5 — Zweig «kosmovis-v017-b5-nachgang», Kopf `c37aed3a3`; Zustimmung Int 1, Basis `4cabe9b71`; in Chromium gemessen, WebKitGTK folgt):** Schiene «Umgebung drehen» sichtbar machen; Render-Knoten überdeckt beim Anlegen den Modell-Knoten; Knoten wächst nach Abbruch über den Rand.
 - [x] **Kern (drüben, E154 (4), P-LIZENZMARKE Schritt 2):** Hinweis «Lizenz offen» am Bild (und beim Veröffentlichen, falls in `modules/vis`), nichts sperren — Zweig «kosmovis-v017-lizenzmarke-hinweis» — gebaut `45072c3b9`; Veröffentlichen liegt ausserhalb, im Blatt benannt.
 - [ ] **local:** `auf-20261006-246` — Nachgang und «Lizenz offen» in WebKitGTK prüfen (App aus beiden Zweigen gebaut, ein Qwen-2.1-Lauf).
-- [ ] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen (nach 246); Veröffentlichungsweg verteilen (Lizenzfeld am Blatt-Bild, Hinweis an den Export-Stufen).
+- [ ] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir).
+- [ ] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang.
+- [ ] **Kern (drüben):** Publish Schritt 2 — `bildAufsBlatt` gibt das Feld mit (nach Schritt 1). Schritt 3 (Anzeige im Publish) verteilt Int 1 an Publish/Prepare.
+- [ ] **Owner:** «Marke ‹Lizenz offen› auch im Druck?» — legt Int 1 vor.
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
 - [x] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.
