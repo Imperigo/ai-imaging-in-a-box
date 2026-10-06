@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-243",
+ "art": "frage",
+ "beschreibung": "Behelf nachrechnen mit Lot je Kamera (KosmoPrepare f784f23); nur Zahlen, eine Minute.",
+ "anweisung": "=== BEHELF NACHRECHNEN: LOT JE KAMERA (KosmoPrepare f784f23) ===\n\nWORUM ES GEHT\n  Danke fuer 241 — der Boden liegt auf 0.31°, die Behelfsverortung traegt. Eure Beobachtung zu den\n  ±8.89° war richtig: die Zahl war atan(flachheit), auf einem langen, schmalen Weg also die\n  Wegbreite. Beim Nachmessen kam Schlimmeres dazu: EINE Ebene durch alle Bodenpunkte kippt auf so\n  einem Weg quer, sobald der Boden nicht eben ist (erfunden: 1.7° oder 53° je nach Keim). Neu\n  (f784f23, euer Vorschlag «engerer Kreis»): je Kamera eine Normale, robuster Mittelwert, schiefe\n  Kameras verworfen; Unsicherheit = Neu-Auszaehlen der Kameras + halber Knick zwischen Anfang,\n  Mitte und Ende des Wegs.\n\nA  Stand: git -C <KosmoPrepare> log --oneline -1 (mindestens f784f23).\n\nB  241 B noch einmal, derselbe Arbeitsordner und Splat, dasselbe Mass (1.75 m ± 0.1 m, Quelle wie\n   in 241), mit --ersetzen (die Begleitdatei aus 241 ist ein Behelf und wird ersetzt).\n   Zurueck: die Zeile «BEHELF — …» und alle «Hinweis:» woertlich; aus <splat>.verortung.json\n   behelf.lot (quelle, abweichung_kameras_grad, boden mit kameras, flachheit, kameras_verworfen,\n   lot_95_grad, knick_grad), unsicherheit, fit.massstab. Gesucht: wie gross ist lot_grad jetzt,\n   und meldet der Lauf einen Knick?\n   Ist der Arbeitsordner aus 241 geloescht: STOPP, nicht neu rechnen, nur das melden.\n\nC  Ist der Boden weiterhin waagrecht? Dieselbe Messung wie in 241 C (ein Satz und die Zahl), und\n   splat_volumen.py: Zahl der Volumen, Hauptbau laenge/breite/hoehe und unsicherheit.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts committen ausser der Antwort. Keine Bilder,\n  Videos, Splats oder Projektdaten zurueckgeben; keine Orts- oder Projektnamen, keine Koordinaten.\n  Arbeitsordner ausserhalb der Repos, am Ende loeschen.\n",
+ "erstellt": "2026-10-06T15:00:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "Arbeitsordner und Splat aus 241 (nur am Heimrechner)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "f784f23",
+  "daten_bleiben_lokal": true,
+  "folgt_auf": "auf-20261006-241"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren, nichts neu rechnen ausser dem Behelf.",
+  "hinweise": [
+   "Ohne Arbeitsordner aus 241: STOPP.",
+   "Arbeitsordner am Ende loeschen."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B Satz, Hinweise, lot, unsicherheit.",
+  "C Boden waagrecht? Volumen."
+ ],
+ "rang": 9
+}
