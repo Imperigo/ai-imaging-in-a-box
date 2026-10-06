@@ -7744,7 +7744,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben, Nachgang 2 — auf «kosmovis-v017-publish-schritt2»; Kuratier-Fläche frei, Stimmungs-Popup nur Glas ohne Weichzeichner = UI-Bausteine):** Stimmungs-Popup — Felder ragen links über den Rand; Schwebeknöpfe über der Kuratier-Fläche (falls Vis).
 - [ ] **local:** `auf-20261006-248` — Publish Schritt 2 und Nachgang 2 in WebKitGTK prüfen; danach Freigabe an Int 1 über die Zentrale.
 - [ ] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen.
-- [ ] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir).
+- [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
 - [x] **Kern (drüben):** Publish Schritt 2 — `bildAufsBlatt` gibt das Feld mit (nach Schritt 1). *(06.10.2026: Zweig «kosmovis-v017-publish-schritt2», Kopf `d4dc55c7f`, Chromium grün)* Schritt 3 (Anzeige im Publish) verteilt Int 1 an Publish/Prepare.
 - [ ] **Owner:** «Marke ‹Lizenz offen› auch im Druck?» — legt Int 1 vor.
