@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-245",
+ "art": "frage",
+ "beschreibung": "Behelf neu schreiben, dann Volumen mit dem Boden unter den Kameras (KosmoPrepare 35f2ac9); nur Zahlen, eine Minute.",
+ "anweisung": "=== BEHELF NEU SCHREIBEN, DANN VOLUMEN MIT DEN FUSSPUNKTEN (KosmoPrepare 35f2ac9) ===\n\nWORUM ES GEHT\n  Danke fuer 243 — Lot ±1.13°, die Kameras 1.41° daneben. Euer Hinweis zum Volumen war richtig: der\n  Boden kam nur aus flachen FREIEN Zellen rundum, und zwischen Bauten gibt es die oft nicht. Neu\n  (35f2ac9): der Behelf legt den gelesenen Boden unter jeder Kamera als behelf.fusspunkte in die\n  Begleitdatei, und das Volumen nimmt ihn, wo rundum nichts zu lesen ist (bis 5 m vom Grundriss,\n  Quelle genannt). Stehen drei Kameras IM Grundriss, heisst der Quader «Innenaufnahme».\n  244 ist durch euer 243 erledigt und entfaellt.\n\nA  Stand: git -C <KosmoPrepare> log --oneline -1 (mindestens 35f2ac9).\n\nB  Behelf neu schreiben (der Arbeitsordner aus 243, dasselbe Mass 1.75 m ± 0.1 m, --ersetzen) —\n   die Begleitdatei aus 243 traegt die Fusspunkte noch nicht.\n   Zurueck: die Zeile «BEHELF — …», Zahl der Eintraege in behelf.fusspunkte, Spanne ihrer z.\n\nC  .venv-server/bin/python tools/splat_volumen.py --ply <SPLAT.ply>\n   Zurueck je Volumen: laenge/breite, hoehe_m, boden_quelle (welche: freie Zellen oder Fusspunkte),\n   fuellgrad, unsicherheit, und alle Hinweise woertlich (gesucht: «Innenaufnahme»).\n   Vergleich mit 243: dort 8 Volumen, 5 ohne Boden. Wie viele sind es jetzt?\n\nD  Ein Satz: ist der Hauptbau (in 243 65.2 × 10.2 m, Fuellgrad 0.28) das Gebaeude, durch oder an\n   dem ihr gegangen seid — oder ist er Gelaende/Bewuchs? Beobachtung, keine Messung.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts aus dem Netz laden, nichts committen ausser der\n  Antwort. Keine Bilder, Videos, Splats oder Projektdaten zurueckgeben; keine Orts- oder\n  Projektnamen, keine Koordinaten. Den Arbeitsordner mit sparse/ weiter behalten.\n",
+ "erstellt": "2026-10-06T18:00:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "Arbeitsordner und Splat aus 243 (nur am Heimrechner)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "35f2ac9",
+  "daten_bleiben_lokal": true,
+  "folgt_auf": "auf-20261006-243; 244 entfaellt"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren, nichts neu rechnen ausser Behelf und Volumen.",
+  "hinweise": [
+   "Arbeitsordner mit sparse/ weiter behalten."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B Behelf, Fusspunkte.",
+  "C Volumen je Quader mit boden_quelle und Hinweisen.",
+  "D ein Satz zum Hauptbau."
+ ],
+ "rang": 9
+}
