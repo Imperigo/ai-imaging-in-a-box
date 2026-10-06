@@ -7738,7 +7738,7 @@ Bekannt und ausdrücklich nicht erledigt:
       *(06.10.2026: `7f87d6ef2`, Tore grün; in WebKitGTK noch ungeprüft)*
 - [x] **local:** `auf-20261006-242` — B5 in WebKitGTK vorher/nachher; danach Zeile an Int 1 zum Einspielen. *(06.10.2026: behoben bestätigt, Desktop-App aus beiden Ständen gebaut)*
 - [x] **cloud (Int 1):** B5-Zweig in v0.1.7 einspielen. *(06.10.2026, ROADMAP 1685)*
-- [ ] **Kern (drüben, Nachgang B5 — in Arbeit 06.10., Zweig «kosmovis-v017-b5-nachgang»; Zustimmung Int 1, Basis ihr Hauptstrang `4cabe9b71`):** Schiene «Umgebung drehen» sichtbar machen; Render-Knoten überdeckt beim Anlegen den Modell-Knoten; Knoten wächst nach Abbruch über den Rand.
+- [x] **Kern (drüben, Nachgang B5 — Zweig «kosmovis-v017-b5-nachgang», Kopf `c37aed3a3`; Zustimmung Int 1, Basis `4cabe9b71`; in Chromium gemessen, WebKitGTK folgt):** Schiene «Umgebung drehen» sichtbar machen; Render-Knoten überdeckt beim Anlegen den Modell-Knoten; Knoten wächst nach Abbruch über den Rand.
 - [ ] **Kern (drüben, E154 (4), P-LIZENZMARKE Schritt 2):** Hinweis «Lizenz offen» am Bild (und beim Veröffentlichen, falls in `modules/vis`), nichts sperren — Zweig «kosmovis-v017-lizenzmarke-hinweis», in Arbeit.
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
