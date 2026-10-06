@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-246",
+ "art": "frage",
+ "beschreibung": "Vor dem Einspielen in WebKitGTK pruefen: B5-Nachgang (Schiene, Ueberdeckung, Wachstum nach Abbruch) und Hinweis «Lizenz offen» (E154 (4)) — Desktop-App aus Integrator-Kopf + beiden Zweigen gebaut, ein echter Qwen-2.1-Lauf.",
+ "anweisung": "=== IN WEBKITGTK PRUEFEN: B5-NACHGANG UND HINWEIS «LIZENZ OFFEN» — VOR DEM EINSPIELEN ===\n\nZwei Zweige von uns im KosmoOrbit-Repo warten auf eure Gegenprobe in der echten Engine (WebKitGTK).\nDie Cloud hat nur Chromium; dort ist beides gruen.\n  N  claude/kosmovis-v017-b5-nachgang       (Kopf c37aed3a3) — drei Fehler am Knoten aus eurem 242:\n     Schiene «Umgebung drehen» kaum sichtbar; neue Knoten ueberdecken bestehende; Knoten waechst nach\n     einem Abbruch ueber den Rand (unter den ⇄-Knopf).\n  L  claude/kosmovis-v017-lizenzmarke-hinweis (Kopf 45072c3b9) — Owner-Entscheid E154 (4): ein Ergebnis\n     mit engine_license_open: true zeigt «⚠ Lizenz offen» am Bild (Render-Knoten, Kachel, Kuratier-Karte,\n     Vergleich, Inspektor) und vor dem Uebernehmen («Ins Projekt», «Aufs Blatt», Austausch-Insel).\n     NICHTS wird gesperrt.\nBeide lassen sich nacheinander sauber auf den Integrator-Kopf zusammenfuehren (geprueft).\n\nAUFBAU (wie in 242, Weg W1): In einer eigenen Arbeitskopie den Integrator-Kopf\n(origin/claude/kosmo-orbit-v1-build-pzxkbj) auschecken, N und dann L per git merge LOKAL hereinholen\n(nicht pushen, nicht committen ueber diese Wegwerf-Merges hinaus), die Desktop-App bauen (tauri build\n--no-bundle), eigener Xvfb, Wegwerf-Profil, Klicks per xdotool. Die installierte App nicht ersetzen.\nHead-Hash des gebauten Stands notieren. Keine Systempakete installieren.\n\nTEIL N — Nachgang (frischer Graph, NICHT das Profil aus 242 kopieren)\n  N1 Render-Knoten anlegen: Ist die Schiene «Umgebung drehen» mit Bahn und Griff deutlich zu sehen?\n     (helles und dunkles Thema, falls umschaltbar)\n  N2 Modell-Knoten anlegen, dann Render-Knoten, dann «Kamera vorschlagen»: ueberdeckt ein Knoten einen\n     anderen? Dasselbe einmal mit «Drei Stimmungen», wenn vorhanden.\n  N3 Einen Auftrag starten und abbrechen (Waechter an der Bruecke wie in 242): Bleibt der Knoten danach\n     innerhalb seines Rands und ueber dem ⇄-Knopf?\nTEIL L — Lizenz offen (braucht EIN echtes Ergebnis mit der Marke)\n  L1 Im Render-Knoten «Bildwerkzeug» = Qwen-Image 2.1 waehlen, Prompt setzen, «Ausfuehren». Diesmal\n     NICHT abbrechen: Der Abholer rechnet (wie 238 C2, ~200 s, nur bei freier Karte; sonst warten).\n  L2 Steht am Bild im Render-Knoten «Lizenz offen»? Beim Darueberfahren der Grund (Modell + Lizenz)?\n  L3 Im Inspektor bzw. auf der Kuratier-Karte: Hinweis da? Vor «Ins Projekt übernehmen» die Zeile mit\n     Grund? Uebernehmen geht trotzdem (nichts gesperrt)?\n  L4 «Aufs Blatt»: Marke neben dem Knopf, Meldung nach dem Ablegen nennt den Hinweis? Ablegen geht?\n  L5 Gegenprobe: derselbe Ablauf mit Z-Image Turbo (Vorgabe) — KEIN Lizenz-Hinweis.\n  Bildschirmfotos (nur synthetisches Projekt, keine Namen), klein:\n  auftraege/ergebnisse/auf-20261006-246-<n1|n3|l2|l3>.png\n\nURTEIL: je Teil ein Satz — N in WebKitGTK behoben? L in WebKitGTK sichtbar und nichts gesperrt?\n\nZURUECK (auftraege/ergebnisse/auf-20261006-246.json): gebauter Kopf; N1–N3, L1–L5 je ja/nein + Satz;\nRechenzeit und engine_license_open des L1-Laufs; die Urteile; was auffiel.\n\nNICHT TUN: etwas pushen; KosmoOrbit-Code aendern; die installierte App ersetzen; Systempakete\ninstallieren; echte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen,\nBenutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-06T16:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt der App wie in auf-20261006-242"
+ },
+ "params": {
+  "zweige": [
+   "claude/kosmovis-v017-b5-nachgang@c37aed3a3",
+   "claude/kosmovis-v017-lizenzmarke-hinweis@45072c3b9"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU nur fuer L1 (ein Qwen-2.1-Lauf), nur bei freier Karte.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Gebauter Kopf.",
+  "N1–N3 und L1–L5 je ja/nein und Satz.",
+  "Rechenzeit und Marke des L1-Laufs.",
+  "Urteil je Teil."
+ ],
+ "rang": 33
+}
