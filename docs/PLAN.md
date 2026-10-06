@@ -7738,7 +7738,7 @@ Bekannt und ausdrücklich nicht erledigt:
       *(06.10.2026: `7f87d6ef2`, Tore grün; in WebKitGTK noch ungeprüft)*
 - [x] **local:** `auf-20261006-242` — B5 in WebKitGTK vorher/nachher; danach Zeile an Int 1 zum Einspielen. *(06.10.2026: behoben bestätigt, Desktop-App aus beiden Ständen gebaut)*
 - [ ] **cloud (Int 1):** B5-Zweig in v0.1.7 einspielen.
-- [ ] **Kern (drüben, Nachgang B5, nach Zustimmung Int 1):** Schiene «Umgebung drehen» sichtbar machen; Render-Knoten überdeckt beim Anlegen den Modell-Knoten; Knoten wächst nach Abbruch über den Rand.
+- [ ] **Kern (drüben, Nachgang B5 — in Arbeit 06.10., Zweig «kosmovis-v017-b5-nachgang» auf B5 aufgesetzt; Entscheid 65 deckt es, Int 1 spielt nach B5 ein):** Schiene «Umgebung drehen» sichtbar machen; Render-Knoten überdeckt beim Anlegen den Modell-Knoten; Knoten wächst nach Abbruch über den Rand.
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
 - [x] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.
