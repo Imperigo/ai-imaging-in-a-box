@@ -1,0 +1,387 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-241",
+ "worker": "local",
+ "status": "erledigt — A bis D gelaufen, alle Rueckgaben 0. Lot aus dem Boden (124 Kameras), Kameras 12.59° daneben; Massstab aus der Owner-Angabe Kamerahoehe 1.75 m ±0.1 m; Boden nach der Verortung 0.31° gegen die Waagrechte. Gegenprobe: Massstab genau doppelt, Lot unveraendert. Kein Code geaendert, nichts installiert, nichts committet.",
+ "A_stand": {
+  "kosmoprepare": "e7ab173 (HEAD nach git pull --ff-only auf main, vorher 4267a8e; dazwischen c6e89a6). git status vorher = nachher (nur der alte target/)",
+  "log_oneline": "e7ab173 Behelfsverortung: Lot aus dem Boden, Massstab aus einem genannten Mass",
+  "python": ".venv-server/bin/python"
+ },
+ "mass": {
+  "art": "kamerahoehe",
+  "m": 1.75,
+  "unsicherheit_m": 0.1,
+  "quelle": "Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m",
+  "begruendung_unsicherheit": "halbe Spanne der Angabe 0.05 m (1.7–1.8 m) plus etwa 0.05 m fuer die Haltung (Kamera ueber oder unter Kopfhoehe, Schritt, Gelaende) — zusammen 0.1 m, also ±5.7 % der Angabe",
+  "herkunft": "vom Owner heute im Chat an den Home-PC-Worker genannt; diese Hilfs-Sitzung hat die Angabe vom Home-PC-Worker uebernommen, nicht selbst vom Owner"
+ },
+ "neu_gefahren": {
+  "grund": "Arbeitsordner aus 240 geloescht; behalten war nur der Splat aus 240 D. Darum 240 D neu gefahren (mit Vokabular), dieselben Einstellungen.",
+  "linsen": {
+   "aufruf": "insv_linsen.py --insv Rohdatei.insv --aus <absoluter ordner>/linsen_insv.json --stroeme 1,0",
+   "rueckgabe": 0,
+   "dauer_s": 42.2,
+   "ih_fov": 194.4,
+   "fehler": 0.5468,
+   "mulde": 0.585,
+   "satz": "identisch mit 240 A (Linsendatei war mit dem Arbeitsordner geloescht, darum neu gemessen)"
+  },
+  "aufruf": "splat_kette.py --video Rohdatei.insv --quelle insv --linsen linsen_insv.json --aus <absoluter ordner> --fps 2 --max-frames 240 --schritte 7000 --profil rtx5090 --vokabular <vokabular-ordner>",
+  "rueckgabe": 0,
+  "stderr_woertlich": [
+   "max-res 1600 → 1086: mehr Bildpunkte traegt eine Ansicht dieser Quelle nicht, darueber wuerde nur hochgerechnet",
+   "Abdeckung: --max-frames 240 bei 2 Bildern/s deckt 120 von 187 s ab (die Grenze gilt je Ansicht) — der Rest des Videos wird nicht gerechnet",
+   "Splat entstanden: 960 von 960 Bildern registriert, 297354 Punkte, 1 Teilmodell(e)"
+  ],
+  "bericht_json": {
+   "status": "fertig",
+   "bilder": 960,
+   "registriert": 960,
+   "modelle": 1,
+   "punkte": 297354,
+   "schleifenschluss": true,
+   "dauer_s": 1330.7,
+   "max_res": 1086,
+   "vokabular": "bereit"
+  },
+  "splats": 3194756,
+  "ply_mb": 719,
+  "stufen_dauer_s": {
+   "bilder": 156,
+   "merkmale": 15,
+   "rig": 3,
+   "abgleich": 441,
+   "mapper": 467,
+   "brush": 249,
+   "gesamt": 1331
+  },
+  "schleifenschluss_im_protokoll": "ja — «Schleifenschluss mit lokalem Vokabular» 1× in pipeline.log",
+  "vergleich_240_D": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 297354 statt 297424, Splats 3194756 statt 3158696 (+1.1 %), gesamt 1331 s statt 1440 s"
+ },
+ "B_behelf": {
+  "aufruf": "splat_behelf.py --colmap <arbeitsordner> --ply <arbeitsordner>/splat.ply --quelle \"Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m\" --kamerahoehe 1.75 --unsicherheit 0.1",
+  "ersetzen_noetig": false,
+  "rueckgabe": 0,
+  "dauer_s": 2.4,
+  "satz_woertlich": "BEHELF — Kamerahoehe 1.75 m ueber dem Boden, gelesen unter 128 Kameras (Streuung ±5.6 %); Massstab ±8.0 %, Lot aus Boden unter 124 Kameras (Ebene durch die Splat-Punkte) (±8.89°, Kameras 12.59° daneben); Lage und Nordrichtung unbekannt",
+  "hinweise_woertlich": [
+   "Hinweis: die Kameras waren um 12.6° geneigt gehalten — das Lot kommt aus dem Boden, nicht aus den Kameras"
+  ],
+  "stdout_json": {
+   "datei": "splat.verortung.json",
+   "unsicherheit": {
+    "massstab_rel": 0.08,
+    "lot_grad": 8.89,
+    "angabe_genannt": true
+   }
+  },
+  "verortung": {
+   "lot": {
+    "quelle": "Boden unter 124 Kameras (Ebene durch die Splat-Punkte)",
+    "abweichung_kameras_grad": 12.59,
+    "streuung_kameras_grad": 4.66,
+    "boden": {
+     "kameras": 124,
+     "flachheit": 0.1565
+    }
+   },
+   "unsicherheit": {
+    "massstab_rel": 0.08,
+    "lot_grad": 8.89,
+    "angabe_genannt": true
+   },
+   "fit_massstab": 5.994623708740747,
+   "lv95": null,
+   "mass_satz": "Kamerahoehe 1.75 m ueber dem Boden, gelesen unter 128 Kameras (Streuung ±5.6 %)"
+  },
+  "befund": "Lot aus dem Boden wie erwartet. Die Kameras liegen 12.59° daneben, nicht 16° (die 16° in 240 waren die Kippung der Hochachse vom Anfang zum Ende des Wegs, nicht gegen den Boden). Lot-Unsicherheit 8.89° ist gross: der Boden ist nicht flach (Flachheit 0.1565). Massstab 5.995 m je Einheit; zum Vergleich der Behelf aus 240 E an 240 D: 5.4504 bei angenommenen 1.60 m, auf 1.75 m umgerechnet 5.96."
+ },
+ "C_volumen_textur": {
+  "volumen": {
+   "aufruf": "splat_volumen.py <arbeitsordner>/splat.ply --aus <datei>",
+   "rueckgabe": 0,
+   "dauer_s": 0.9,
+   "satz_woertlich": "11 Volumen aus 281942 Punkten · 1 ohne gelesenen Boden · 199 kleine Gruppen verworfen · Restfehler der Verortung unbekannt.",
+   "hinweise_woertlich": [
+    "BEHELFSVERORTUNG (Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m): Massstab ±8.0 %, Lot ±8.89°, Lage und Nordrichtung unbekannt — keine Passpunkte"
+   ],
+   "behelf": true,
+   "koordinaten": "szene",
+   "parameter": {
+    "zelle_m": 0.5,
+    "block_m": 2.0,
+    "boden_radius_m": 15.0,
+    "hoehe_min_m": 2.0,
+    "punkte_min": 3,
+    "flaeche_min_m2": 4.0,
+    "deckkraft_min": 0.2
+   },
+   "zahl": 11,
+   "liste": [
+    {
+     "id": "V1",
+     "laenge_m": 59.326,
+     "breite_m": 4.913,
+     "hoehe_m": 2.91,
+     "fuellgrad": 0.54,
+     "punkte": 137915,
+     "unsicherheit": {
+      "grundriss_m": 2.623,
+      "hoehe_m": 1.94,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V2",
+     "laenge_m": 6.588,
+     "breite_m": 4.982,
+     "hoehe_m": 3.35,
+     "fuellgrad": 0.5,
+     "punkte": 993,
+     "unsicherheit": {
+      "grundriss_m": 0.514,
+      "hoehe_m": 2.74,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V3",
+     "laenge_m": 5.64,
+     "breite_m": 4.868,
+     "hoehe_m": 5.53,
+     "fuellgrad": 0.51,
+     "punkte": 993,
+     "unsicherheit": {
+      "grundriss_m": 0.476,
+      "hoehe_m": 4.81,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V4",
+     "laenge_m": 5.764,
+     "breite_m": 3.113,
+     "hoehe_m": 10.82,
+     "fuellgrad": 0.59,
+     "punkte": 315,
+     "unsicherheit": {
+      "grundriss_m": 0.481,
+      "hoehe_m": 3.63,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V5",
+     "laenge_m": 5.368,
+     "breite_m": 3.072,
+     "hoehe_m": null,
+     "fuellgrad": 0.64,
+     "punkte": 320,
+     "unsicherheit": {
+      "grundriss_m": 0.465,
+      "hoehe_m": null,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V6",
+     "laenge_m": 3.343,
+     "breite_m": 3.222,
+     "hoehe_m": 6.13,
+     "fuellgrad": 0.77,
+     "punkte": 271,
+     "unsicherheit": {
+      "grundriss_m": 0.384,
+      "hoehe_m": 2.57,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V7",
+     "laenge_m": 4.311,
+     "breite_m": 2.553,
+     "hoehe_m": 8.17,
+     "fuellgrad": 0.75,
+     "punkte": 583,
+     "unsicherheit": {
+      "grundriss_m": 0.422,
+      "hoehe_m": 1.72,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V8",
+     "laenge_m": 3.327,
+     "breite_m": 3.18,
+     "hoehe_m": 5.02,
+     "fuellgrad": 0.64,
+     "punkte": 709,
+     "unsicherheit": {
+      "grundriss_m": 0.383,
+      "hoehe_m": 2.21,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V9",
+     "laenge_m": 4.269,
+     "breite_m": 2.414,
+     "hoehe_m": 6.8,
+     "fuellgrad": 0.61,
+     "punkte": 177,
+     "unsicherheit": {
+      "grundriss_m": 0.421,
+      "hoehe_m": 5.08,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V10",
+     "laenge_m": 3.734,
+     "breite_m": 3.054,
+     "hoehe_m": 9.85,
+     "fuellgrad": 0.53,
+     "punkte": 188,
+     "unsicherheit": {
+      "grundriss_m": 0.399,
+      "hoehe_m": 3.41,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    },
+    {
+     "id": "V11",
+     "laenge_m": 2.797,
+     "breite_m": 2.232,
+     "hoehe_m": 4.94,
+     "fuellgrad": 0.76,
+     "punkte": 151,
+     "unsicherheit": {
+      "grundriss_m": 0.362,
+      "hoehe_m": 1.72,
+      "grundriss_aus": "halbe Zelle — Restfehler der Verortung nicht bekannt + Massstab ±8.0 %"
+     }
+    }
+   ],
+   "hinweise_je_volumen": {
+    "V1": [
+     "Fuellgrad 0.54 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V2": [
+     "Fuellgrad 0.50 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V3": [
+     "Fuellgrad 0.51 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V4": [
+     "Fuellgrad 0.59 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V5": [
+     "rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht",
+     "Fuellgrad 0.64 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V8": [
+     "Fuellgrad 0.64 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V9": [
+     "Fuellgrad 0.61 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ],
+    "V10": [
+     "Fuellgrad 0.53 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"
+    ]
+   }
+  },
+  "textur": {
+   "aufruf": "flaechen_textur.py --volumen <volumen.json> --colmap <arbeitsordner> --verortung <splat.verortung.json> --aus <ordner>",
+   "rueckgabe": 0,
+   "dauer_s": 5.8,
+   "stderr_woertlich": [
+    "21 Flaechen mit Bild, Atlas 3917 × 689 px · 29 ohne Bild (V1_wand1, V1_wand3, V1_dach, V2_wand1, V2_dach, V3_wand2) · 12 nur teilweise gesehen · 11 hochgerechnet. Verdeckung gegen das Modell geprueft, 11 Flaeche(n) teilweise verdeckt.",
+    "ohne Waende: V5 (kein gelesener Boden — Wandhoehe unbekannt)"
+   ],
+   "flaechen_mit_bild": 21,
+   "flaechen_ohne_bild": 29,
+   "ohne_bild_grund": [
+    "die Kameras, die zu ihr blicken, haben sie nicht im Bild",
+    "keine Kamera sieht sie"
+   ],
+   "nicht_moeglich": [
+    {
+     "id": "V5",
+     "grund": "kein gelesener Boden — Wandhoehe unbekannt"
+    }
+   ],
+   "kameras": 960,
+   "px_pro_m": 50.0,
+   "annahmen": [
+    "Verdeckung nur gegen die Flaechen des Modells geprueft — was nicht im Modell steht (Baum, Bau ohne gelesenen Boden), liegt weiterhin auf der Kachel",
+    "Lochkamera ohne Verzerrung — fuer entzerrte Bilder exakt, sonst eine Naeherung"
+   ]
+  },
+  "boden_waagrecht": {
+   "pruefung": "kurzes Python-Skript (Wegwerf, ausserhalb der Repos): Ebene durch die Bodenpunkte unter den Kameras (Leser des Werkzeugs), vor und nach Anwenden der Matrix",
+   "vorher_grad": {
+    "bodennormale_gegen_mittel_der_kamera_hochachsen": 10.46,
+    "bodennormale_gegen_splat_achse_minus_y_colmap_oben": 14.39
+   },
+   "nachher_grad": {
+    "bodennormale_gegen_z": 0.31,
+    "steigung_seitenansicht_x": -0.03,
+    "steigung_seitenansicht_y": -0.3
+   },
+   "nachher_hoehen_m": {
+    "boden_z_median": -0.024,
+    "kamera_z_median": 1.772
+   },
+   "satz": "Ja: in der Seitenansicht liegt der Boden nach der Verortung waagrecht (Neigung 0.31°, vorher 14.39° gegen die Splat-Hochachse), die Kameras stehen im Median 1.77 m darueber.",
+   "anmerkung": "vorher-Wert gegen die Kameras 10.46° aus einem Durchgang des Skripts; das Werkzeug liest zweimal und kommt auf 12.59°"
+  },
+  "vergleich_240_E_an_D": "240 (Lot aus Kamera-Hochachsen, angenommene 1.60 m): 7 Volumen, Hauptbau 53.5 × 4.7 m, H 3.13 m, Fuellgrad 0.50, 2 ohne Boden; Textur 10 mit / 15 ohne Bild. Jetzt (Lot aus Boden, 1.75 m): 11 Volumen, Hauptbau 59.3 × 4.9 m, H 2.91 m (±1.94), Fuellgrad 0.54, 1 ohne Boden; Textur 21 mit / 29 ohne Bild."
+ },
+ "D_gegenprobe": {
+  "aufruf": "splat_behelf.py --colmap <arbeitsordner> --ply <wegwerf>/splat.ply --quelle \"Gegenprobe: doppelte Angabe Owner 06.10.2026 (2 × 1.75 m)\" --kamerahoehe 3.5 --unsicherheit 0.2",
+  "rueckgabe": 0,
+  "satz_woertlich": "BEHELF — Kamerahoehe 3.5 m ueber dem Boden, gelesen unter 128 Kameras (Streuung ±5.6 %); Massstab ±8.0 %, Lot aus Boden unter 124 Kameras (Ebene durch die Splat-Punkte) (±8.89°, Kameras 12.59° daneben); Lage und Nordrichtung unbekannt",
+  "massstab": {
+   "einfach": 5.994623708740747,
+   "doppelt": 11.989247417481494,
+   "verhaeltnis": 2.0
+  },
+  "lot_unveraendert": true,
+  "drehteil_der_matrix_max_differenz": 0.0,
+  "verschiebung_verhaeltnis": [
+   2.0,
+   2.0,
+   2.0
+  ],
+  "unsicherheit_unveraendert": {
+   "massstab_rel": 0.08,
+   "lot_grad": 8.89
+  },
+  "aufgeraeumt": "Wegwerf-Ordner mit der Kopie geloescht"
+ },
+ "gpu": {
+  "sperre": "vor der Kette genommen, nach dem Lauf per trap geloest",
+  "grenze_w": 400,
+  "spitze_w": null,
+  "spitze_grund": "nicht gemessen in diesem Lauf",
+  "B_C_D": "ohne GPU"
+ },
+ "nicht_getan": [
+  "Kein Code geaendert, nichts installiert, nichts committet.",
+  "Video nur verwiesen (gelesen), nicht kopiert.",
+  "Keine Bilder, Videos, Splats oder Projektdaten zurueckgegeben; keine Orts-, Personen- oder Projektnamen, keine Koordinaten, keine echten Dateinamen."
+ ],
+ "aufraeumen": "Arbeitsordner geloescht; behalten nur ein Unterordner «behalten» mit splat.ply, splat.verortung.json und bericht.json, ausserhalb der Repos. Wegwerf-Ordner aus D geloescht.",
+ "umgebung": {
+  "gpu_benutzt": true,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull"
+ },
+ "abweichungen": [
+  "Kameras 12.59° neben dem Boden-Lot statt der erwarteten 16°.",
+  "Lot-Unsicherheit 8.89° (unebener Boden, Flachheit 0.1565).",
+  "Linsendatei neu gemessen (mit dem Arbeitsordner geloescht); Ergebnis identisch."
+ ],
+ "fehler": null
+}
