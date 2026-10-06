@@ -1,0 +1,61 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-239",
+ "worker": "local",
+ "status": "erledigt — B5 haengt NICHT am Zeichenweg: Felder in allen vier Varianten oben links, auch mit Software-GL",
+ "beendet": "2026-10-06T07:39:00Z",
+ "dauer_s": 1000,
+ "staende": {
+  "kosmoorbit": "v0.1.6 (installiertes Paket, App-Kopf zeigt v0.1.6)",
+  "code_geaendert": "nein",
+  "neu_installiert": "nein"
+ },
+ "weg": "Je Schritt eigener Xvfb (1920x1080x24) und frisches Wegwerf-Profil mit eigener Sitzungs-DBus (Einzelinstanz-Sperre der App so getrennt), Einrichtung durchgeklickt, Projekt «Probe», Beispielprojekt Demohaus ueber Ctrl+K geladen, Vis-Station (Taste 5), GRAPH-Insel, Graph mit Render + Auto-Kamera + Modell (Modell-Szene an Render-Szene verbunden), bedient mit xdotool. Bruecke waehrend aller Schritte von einem Waechter ueberwacht, der jeden neuen Auftrag sofort per POST /jobs/<id>/cancel abgebrochen haette — es kam keiner an. Hinweis: der Standard-Xvfb hat GLX bereits eingebaut (xdpyinfo zeigt GLX); Schritt 1 entspricht damit genau 236, nicht einem Xvfb ganz ohne GLX.",
+ "schritte": {
+  "1_xvfb_wie_236": {
+   "start": "Xvfb Standard, keine zusaetzlichen Variablen",
+   "umgebung_webkit_kinder": "WEBKIT_DISABLE_DMABUF_RENDERER=1 (von der App selbst gesetzt; im Startprozess nicht vorhanden)",
+   "zeichenweg": "libEGL meldet «DRI3 error: Could not get DRI3 device / Ensure your X server supports DRI3 to get accelerated rendering»",
+   "lage_felder": "oben links (Preset, 1600 × 1000, 128 — Vorgabe, Himmel keiner + Regler, Bildwerkzeug, Ausfuehren, nur Cycles / Strichzeichnung); am Knoten nur blasse Beschriftungen ueber leeren Flaechen",
+   "auto_kamera_liste": "ohne Geometrie nicht vorhanden (Knoten zeigt am Knoten «Keine Geometrie im Modell — nichts abzuleiten.»); in diesem Schritt kein Demohaus geladen",
+   "ausfuehren_wirkt": "nicht geprueft (ohne Geometrie ist der Knopf laut Code gesperrt); nur Bezugsbild",
+   "bild": "auf-20261006-239-1.png"
+  },
+  "2_xvfb_glx_software_gl": {
+   "start": "Xvfb +extension GLX, App mit LIBGL_ALWAYS_SOFTWARE=1",
+   "umgebung_webkit_kinder": "LIBGL_ALWAYS_SOFTWARE=1, WEBKIT_DISABLE_DMABUF_RENDERER=1 (letzteres von der App gesetzt)",
+   "zeichenweg": "keine DRI3-Warnung mehr; WebKit-Webprozesse haben die Mesa-Software-GL-Bibliothek (gallium/llvmpipe) und EGL geladen — Software-GL also aktiv",
+   "lage_felder": "oben links — unveraendert wie Schritt 1",
+   "auto_kamera_liste": "oben links («Eingang / Übersicht / Innenraum — Vorschlag aus dem Modell» ueber den Kopfknoepfen), Auto-Kamera-Knoten leer bis auf seinen Ausgang",
+   "ausfuehren_wirkt": "nein — Auftrag abgesandt: nein. «Ausfuehren» ist am Knoten neben «BEREIT» gezeichnet; Klick auf dessen Mitte (mit Modell-Szene verbunden, Demohaus mit 39 Bauteilen) loest nichts aus: keine Meldung, Knoten bleibt BEREIT, kein Auftrag an der Bruecke. Beim Ueberfahren/Klicken springt das Bild des Knopfs nach oben links.",
+   "zusatzbefund_trefferflaeche": "Ein Klick auf die Hoehe der Bildwerkzeug-Beschriftung AM KNOTEN oeffnete die Bildwerkzeug-Auswahlliste — die Liste erschien am Knoten, der Fokusrahmen danach aber am Feld oben links. Mindestens fuer diese Auswahlliste liegt die Trefferflaeche also am Knoten und nur das Bild oben links. Tab vom Bildwerkzeug aus fokussiert «Ausfuehren» (Fokusrahmen am Knoten gezeichnet), Enter waehlt aber nur den Knoten aus (Tastatur-Handler des Knotens) und sendet nicht.",
+   "einstellungen_satz": "Der Satz «Webview rendert in Software» erscheint NICHT, auch nicht nach Zustimmung + «Systemleistung jetzt prüfen». Wortlich angezeigt: Grafiktreiber «Apple GPU (Herkunft unsicher — meldet eine Apple-GPU, die Plattform zeigt kein Apple-Gerät; vermutlich WebKit-Maskierung, HANDOFF §4.4)», Stufe «hoch», Render-Qualitaet «Automatisch (hoch)». Laut Code (state/leistung.ts) kann der Hinweis in der WebKitGTK-App gar nie anschlagen, weil WebKit den Renderer-Namen maskiert.",
+   "zusatzbefund_ueberlagerung": "Bei offenem Einstellungsfenster wird der Render-Knoten DURCH das Fenster hindurch gezeichnet (liegt sichtbar darueber) — die Ebenenreihenfolge des Knotens ist ebenfalls falsch.",
+   "bild": "auf-20261006-239-2.png"
+  },
+  "3_wie_2_plus_compositing_aus": {
+   "start": "wie 2, zusaetzlich WEBKIT_DISABLE_COMPOSITING_MODE=1",
+   "umgebung_webkit_kinder": "LIBGL_ALWAYS_SOFTWARE=1, WEBKIT_DISABLE_COMPOSITING_MODE=1, WEBKIT_DISABLE_DMABUF_RENDERER=1",
+   "lage_felder": "oben links — identisch zu 1 und 2",
+   "auto_kamera_liste": "oben links",
+   "ausfuehren_wirkt": "nein — Auftrag abgesandt: nein (Knoten bleibt BEREIT, keine Meldung)",
+   "bild": "auf-20261006-239-3.png"
+  },
+  "2b_variante_dmabuf_an": {
+   "warum": "2b wie verlangt (DMABUF aus) ist auf diesem Rechner bereits in jedem Schritt der Fall, weil die App bei geladenem NVIDIA-Treiber WEBKIT_DISABLE_DMABUF_RENDERER=1 selbst setzt. Stattdessen die Gegenprobe: WEBKIT_DISABLE_DMABUF_RENDERER=0 (die App ueberschreibt eine gesetzte Variable nicht).",
+   "start": "Xvfb +extension GLX, LIBGL_ALWAYS_SOFTWARE=1, WEBKIT_DISABLE_DMABUF_RENDERER=0",
+   "umgebung_webkit_kinder": "LIBGL_ALWAYS_SOFTWARE=1, WEBKIT_DISABLE_DMABUF_RENDERER=0",
+   "lage_felder": "oben links — identisch",
+   "auto_kamera_liste": "oben links",
+   "ausfuehren_wirkt": "nein — Auftrag abgesandt: nein",
+   "bild": "keins"
+  }
+ },
+ "code_hinweis": "src-tauri/src/main.rs: setze_webkit_umgebung_gegen_nvidia_wayland_artefakte() setzt WEBKIT_DISABLE_DMABUF_RENDERER=1, wenn ein NVIDIA-Treiber geladen ist und die Variable noch nicht gesetzt ist (v0.1.6 Massnahme 10). WEBKIT_DISABLE_COMPOSITING_MODE setzt die App nirgends. Der Satz «Webview rendert in Software — Stufe begrenzt …» steht in src/shell/Einstellungen.tsx und erscheint nur, wenn leistungsStufeIstGedeckelt() wahr ist (state/leistung.ts); dort ist dokumentiert, dass dies in der WebKitGTK-App wegen der Renderer-Maskierung («Apple GPU») nie eintritt.",
+ "urteil": "B5 ist kein Effekt des Zeichenwegs ohne Beschleunigung: die Felder des Render-Knotens und die Auto-Kamera-Liste liegen mit Software-GL (2), mit abgeschaltetem Compositing (3) und mit eingeschaltetem DMABUF (Gegenprobe) genauso oben links wie ohne (1), «Ausfuehren» am Knoten sendet nie — zusammen mit dem Owner-Befund am echten NVIDIA-Bildschirm (dort ebenfalls DMABUF aus, gesetzt von der App) ist es ein App-Fehler (bzw. eine WebKitGTK-Schwaeche bei HTML in foreignObject, die die App umgehen muss), kein Befund nur fuer Rechner ohne GPU.",
+ "gpu": {
+  "lauf": "keiner; kein Auftrag an der Bruecke angekommen, nichts abgebrochen",
+  "hinweis": "Karte am Ende um 150 W durch einen fremden Verbraucher, nicht durch diese Probe (zu Beginn 42 W)"
+ },
+ "aufraeumen": "App-Instanzen, eigene Xvfb-Displays und Bruecken-Waechter per gemerkter PID beendet (fremder Xvfb-Dienst unberuehrt); Wegwerf-Profile samt Beispielprojekt, Abzuege und Hilfsskripte geloescht; nur die drei PNGs abgelegt; nichts committet."
+}
