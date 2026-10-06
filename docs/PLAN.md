@@ -7732,7 +7732,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **local:** nach dem v0.1.7-Schnitt an der installierten App nachprüfen: Ergebnis mit `lieferstatus: null` wird angenommen und als Vorbehalt gezeigt; B1–B4 am Knoten.
 - [x] **local:** `auf-20261001-236` — B5 (Vis-Station unter Xvfb) am echten Bildschirm nachmessen.
       *(06.10.2026: unter Xvfb wiederholt; am Bildschirm ohne Zeiger nicht prüfbar — teilweise)*
-- [ ] **local:** `auf-20261006-239` — *neu gefasst 06.10.:* B5 in WebKit messen, vorher (Integrator-Kopf) und nachher (unser Zweig).
+- [x] **local:** `auf-20261006-239` — *neu gefasst 06.10.:* B5 in WebKit messen, vorher (Integrator-Kopf) und nachher (unser Zweig).
+      *(06.10.2026: in der echten App v0.1.6 gemessen, vier Zeichenwege — B5 überall; Trefferfläche am Knoten, Bild oben links. Nachher-Messung folgt als eigener Auftrag, sobald der Zweig steht)*
 - [ ] **Kern (drüben):** B5 beheben — Zweig «kosmovis-v017-b5-render-knoten», messen vor Ursache, Probe rot→grün, Meldeblatt an Int 1.
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
