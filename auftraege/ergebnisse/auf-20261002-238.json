@@ -1,0 +1,116 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261002-238",
+ "worker": "local",
+ "status": "ok",
+ "beendet": "2026-10-06T05:40:51+00:00",
+ "dauer_s": null,
+ "staende": {
+  "ai_imaging_git_log_1": "e384ae8 2026-10-02T05:27:12Z Innenkamera: anteil_soll erreicht die Regel jetzt wirklich (Stand beim Pull und waehrend aller Messungen; danach kam ein fremder Ergebnis-Commit auf-237, 62c1790, nur auftraege/ergebnisse, ohne Code)",
+  "pull": "git pull --ff-only: Bereits aktuell — der Klon stand schon auf e384ae8, Arbeitsbaum sauber.",
+  "A_gelesen": "ja",
+  "visbox_flaeche_neu_gestartet": "nein, nicht noetig (A7) — sie laeuft seit 06.10. 07:20, also nach dem Commit e384ae8 vom 02.10.; kein Pull hat heute etwas geaendert."
+ },
+ "weg": "B: nur .venv-render, immer ueber «<venv>/bin/python -m pip»; Sicherung als pip freeze ausserhalb des Repos (Heimverzeichnis, wie verlangt). B4: derselbe homeworker-Renderweg wie 235 B5 (synthetischer Testbau, seed 0, z-image-turbo). C: die Demohaus-Szene aus 230/235 unveraendert (C1) bzw. nur Kamera Eingang mit vis.backbone «qwen-image-2.1» (C2) per POST /jobs an die Bruecke, gerechnet vom Abholer-Dienst. Alles GPU-Seitige unter der geteilten Kartensperre, Leerlauf vorher geprueft (841 MiB, 36 W; Grenze 400 W), Reihenfolge B4 → C1 → C2.",
+ "messwerte": {
+  "B1": {
+   "antwort": "ja",
+   "satz": "pip freeze von .venv-render (96 Zeilen) gesichert, ausserhalb des Repos; pip check vorher: keine gebrochenen Anforderungen."
+  },
+  "B2": {
+   "antwort": "ja",
+   "satz": "Einbau ueber «<venv>/bin/python -m pip install» genau mit den zwei Angaben des Auftrags: «Successfully installed diffusers-0.41.0.dev0 huggingface_hub-1.33.0», sonst nichts. pip check danach: «No broken requirements found.» Die freeze-Differenz zu B1 enthaelt genau die zwei erlaubten Pakete; torch 2.11.0+cu128, transformers 5.15.0, accelerate 1.14.0 unveraendert.",
+   "freeze_differenz": [
+    {
+     "paket": "diffusers",
+     "vorher": "0.39.0",
+     "nachher": "0.41.0.dev0 (git @031b2798addadd1652db7cfba50eacc1079245cf)"
+    },
+    {
+     "paket": "huggingface_hub",
+     "vorher": "1.28.0",
+     "nachher": "1.33.0"
+    }
+   ]
+  },
+  "B3": {
+   "antwort": "nein",
+   "satz": "Rueckweg nicht noetig — nichts wich ab. Die Sicherung bleibt liegen."
+  },
+  "B4": {
+   "antwort": "ja, gleich",
+   "satz": "Gegenprobe z-image-turbo in .venv-render nach dem Einbau (synthetischer Testbau, seed 0, wie 235 B5): Status ok, SHA-256 des Bildes dfe480d71988bc34b87274bfc1e30a279cec6e8b98b35196839c6953dd5af822 — bitgleich mit 235 vorher und nachher. Wand 21.4 s.",
+   "sha256": "dfe480d71988bc34b87274bfc1e30a279cec6e8b98b35196839c6953dd5af822"
+  },
+  "B5": {
+   "antwort": "ja, rechenbar True",
+   "satz": "pipeline_lage('qwen-image-2.1') in .venv-render: rechenbar True, fassung 0.41.0.dev0, klassen (QwenImage21Pipeline), fehlend (), quelle register; z-image-turbo ebenfalls rechenbar True (ZImageControlNetModel, ZImageControlNetPipeline)."
+  }
+ },
+ "urteil": {
+  "C": [
+   {
+    "posten": "C1",
+    "urteil": "bestaetigt (mit einer Anmerkung)",
+    "job": "vis-1791264561-7fad1b",
+    "status": "done",
+    "lieferstatus": "geliefert",
+    "geom_iou_null_not_applicable": "geom_iou null: ja; geom_iou_status «not_applicable» im Tor: nein, das Tor beschreibt die Kamera Übersicht (A5 so gewollt)",
+    "innenraum_geometry": {
+     "geom_iou": null,
+     "status": "measured",
+     "passed": true,
+     "geometry_fidelity": 0.765717046533505,
+     "spearman": -0.5863225953519939
+    },
+    "geometry_gates": {
+     "camera": "Übersicht",
+     "geom_iou": 0.3996066042796686,
+     "geom_iou_status": "measured",
+     "passed": false
+    },
+    "verdict_reason": "GEOM_IOU NICHT ANWENDBAR, Innenraum: die Soll-Silhouette deckt das ganze Bild (Innenansicht oder bildfuellende Wand) — eine Ueberdeckung misst dann nichts, jedes Bild erreichte 1.0. 'geom_iou' ist darum leer; der Score ruht hier allein auf der Rangkorrelation; Geometrie 0.5322600310200967 gegen 0.65",
+    "hinweis_innenkamera": "INNENKAMERA Innenraum: Bildauftrag angepasst — «interior view, inside the room» vorangestellt, gestrichen: «clear sky». Grund: interior bestellt und die Soll-Karte traegt in jedem Bildpunkt Geometrie (kein Himmel, keine Leere: die Kamera steht innen).",
+    "hinweis_innenansicht": "INNENANSICHT BESTELLT: 'interior' {'rooms': 'auto'} kam mit benannten Kameras; die Standpunkte sind die von KosmoOrbit, einen eigenen Innenstandpunkt haben wir nicht gerechnet. Raum: nicht von uns gewaehlt.",
+    "hinweis_aufsicht": "AUFSICHT: Die Kamera Übersicht steht über dem Dach — gerechnet, aber nicht nach den Regeln für Architekturaufnahmen in Augenhöhe beurteilt. Die Prüfung gegen die Geometrie gilt für sie weiter.",
+    "satz": "A1–A5 tragen am echten Lauf: qa_je_kamera[Innenraum].geometry.geom_iou ist null, verdict.reason beginnt mit «GEOM_IOU NICHT ANWENDBAR, Innenraum: …»; INNENKAMERA nennt die Woerter in «…» und streicht «clear sky» (nicht mehr «klarer\\xa0sky»); INNENANSICHT endet mit «Raum: nicht von uns gewaehlt.»; AUFSICHT traegt den zweiten Satz. geometry_gates nennt die Übersicht als schlechteste Kamera (geom_iou_status measured) — darum erscheint «not_applicable» im ganzen Ergebnis nirgends. Das Innenbild zeigt einen Innenraum (Holzdecke, Wandschrank, Fenster), kein Himmel. Lieferstatus geliefert (3 von 3), Wand 395.6 s, Spitze 30590 MiB / 335 W.",
+    "anmerkung": "In qa_je_kamera[Innenraum].geometry steht bei geom_iou null weiterhin status «measured» (und passed true, Score 0.766 allein aus der Rangkorrelation). Ob das Kamerafeld status selbst «not_applicable» tragen soll, sagt A1 nicht eindeutig («im Tor») — falls ja, fehlt es dort.",
+    "gpu": {
+     "wand_s": 395.6,
+     "spitze_mib": 30590,
+     "spitze_w": 335.41,
+     "n": 388
+    }
+   },
+   {
+    "posten": "C2",
+    "urteil": "bestaetigt",
+    "job": "vis-1791264962-04c6fa",
+    "status": "done",
+    "lieferstatus": "geliefert",
+    "engine_used": "qwen-image-2.1",
+    "engine_license": "Qwen Research License Agreement",
+    "engine_license_open": true,
+    "guidance_applied": "fehlt im Ergebnis (Feld weggelassen, nicht null)",
+    "rechenzeit_s": 193.4,
+    "wand_s": 225.2,
+    "stillstand_s": 54.0,
+    "qa_kurz": "verdict bestanden (Geometrie 0.738 gegen 0.65; geom_iou 0.609, spearman -0.894); geometry_gates nicht bestanden (geom_iou 0.609 < 0.85, ohne Gegenprobe) — wie bei z-image-turbo ueblich.",
+    "haus_im_bild": "ja — das Bild zeigt das Demohaus frontal als weissen Putzbau mit zwei Geschossen, Holzfenstern in den Loggien und Eingangsnische vor blauem Himmel, die Kubatur folgt der Szene.",
+    "datei": "auftraege/ergebnisse/auf-20261002-238-qwen21-render-result.json (render-result.json des Laufs unveraendert; enthaelt weder Pfade noch Hostnamen noch Bilddaten, nur Bildnamen)",
+    "gpu": {
+     "wand_s": 225.2,
+     "spitze_mib": 22286,
+     "spitze_w": 347.83,
+     "n": 221
+    }
+   }
+  ]
+ },
+ "auffaelligkeiten": [
+  "guidance_applied fehlt im Qwen-2.1-Ergebnis ganz (bei z-image-turbo false). Laut engine_felder heisst das «unbekannt»; falls KosmoOrbit fuer Qwen-2.1 ein Boolean erwartet, muesste die Engine-Angabe es liefern.",
+  "C1 Innenraum: geometry.status bleibt «measured» bei geom_iou null (siehe Anmerkung C1).",
+  "Nach dem Einbau neu nur bekannte Warnungen (torch_dtype deprecated) — keine Fehler.",
+  "Das Forschungs-venv aus 178 blieb unangetastet."
+ ]
+}
