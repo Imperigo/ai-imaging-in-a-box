@@ -331,13 +331,19 @@ def test_qwen_edit_mit_true_cfg_meldet_guidance_applied_true(tmp_path, pil):
 
 
 def test_unbelegt_bleibt_das_feld_weg_und_nie_null(tmp_path, pil):
-    """Nahm die Pipeline den Regler nicht, oder setzt das Register keine Führung
-    (qwen-image-2.1: Vorgabe der Pipeline), ist es nicht belegt — das Feld fehlt."""
+    """Nahm die Pipeline den Regler nicht, ist es nicht belegt — das Feld fehlt.
+
+    Bis zum 06.10.2026 stand hier auch qwen-image-2.1 (keine Führung im Register). Seit
+    auf-238 ist sie belegt — Signatur und Bedingung im Quellstand gelesen — und das
+    Ergebnis sagt ``false`` (Probe darunter)."""
     _e, felder = _engine_felder_nach_lauf(tmp_path, _r12.QWEN_EDIT, _r12.OhneTrueCfg())
     assert "guidance_applied" not in felder
+
+
+def test_qwen21_sagt_ohne_fuehrung(tmp_path, pil):
     _e, felder = _engine_felder_nach_lauf(tmp_path / "q21", "qwen-image-2.1",
                                           _r12.NimmtAlles())
-    assert "guidance_applied" not in felder
+    assert felder["guidance_applied"] is False
 
 
 def test_die_regel_an_der_funktion():

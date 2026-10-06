@@ -1291,3 +1291,9 @@ nicht: Eine Zahl kam unterwegs nicht an, und unsere Proben hatten sie von Hand e
 mit einer Probe, die den echten Weg geht. Dazu drei Textfehler in den Hinweisen. Bestätigt am Gerät:
 Das Ergebnis sagt jetzt, ob die Bildführung wirkte. Qwen-2.1 wird am Heim-PC mit dem
 Entwicklungsstand der Bildbibliothek nachgerüstet (Auftrag 238).
+
+**06.10.2026 — Qwen-2.1 rechnet am Heim-PC.** Die Bildbibliothek wurde auf ihren Entwicklungsstand
+gehoben (nur zwei Pakete, das Standardmodell liefert bitgleiche Bilder). Ein echter Qwen-2.1-Lauf über
+den Bestellweg von KosmoOrbit kam geliefert zurück, mit der Marke «Lizenz offen». Diese Datei liegt
+beim Integrator, damit er seine Lizenzmarke an einem echten Ergebnis prüfen kann. Die Innenkamera-
+Korrektur ist am echten Lauf bestätigt.

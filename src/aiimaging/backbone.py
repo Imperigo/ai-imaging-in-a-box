@@ -1258,6 +1258,19 @@ _eintrag(Backbone(
     # attribute QwenImage21Pipeline»). Die Modellkarte verlangt dafuer eine diffusers aus
     # dem Quellstand, nicht aus einer Freigabe (Kommentar unten).
     pipeline_klasse="QwenImage21Pipeline",
+    # DIE FÜHRUNG, NACHGELESEN AM 06.10.2026 im Quellstand, mit dem der Heim-PC rechnet
+    # (diffusers @031b279, pipeline_qwenimage21.py): Signatur `true_cfg_scale: float = 1.0`
+    # (Z.510), Führung nur mit `true_cfg_scale > 1` UND Negativprompt (Z.669). Die
+    # Modellkarte nennt keinen Regler (auf-208 B1/B3) — gerechnet wird also OHNE Führung.
+    # Der Regler steht hier mit genau dem Wert der Signatur: Die Rechnung bleibt dieselbe,
+    # aber das Ergebnis kann jetzt `guidance_applied: false` sagen statt zu schweigen
+    # (auf-20261002-238, Auffälligkeit 1).
+    fuehrung_regler="true_cfg_scale",
+    fuehrung_regler_wert=1.0,
+    fuehrung_regler_beleg=("auf-20261002-238: QwenImage21Pipeline, diffusers @031b279 "
+                           "(pipeline_qwenimage21.py Z.510 true_cfg_scale=1.0, Z.669 "
+                           "Fuehrung nur mit >1 und Negativprompt); Modellkarte ohne Regler "
+                           "(auf-20260930-208 B1/B3)"),
     schritte_vorgabe=40,
     schritte_beleg=("auf-20260930-208 B2: Modellkarte bei den Gewichten (README.md, Z. 67, 90, "
                     "105) — num_inference_steps=40 in allen drei Beispielen. Führung und "

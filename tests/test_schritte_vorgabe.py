@@ -16,10 +16,13 @@ import test_homeworker as th
 from test_homeworker import GLB_BERICHT, Tiefenattrappe, hw, satz, treue_ist_karte
 
 
-def test_qwen_21_hat_die_40_schritte_der_karte_und_keinen_regler():
+def test_qwen_21_hat_die_40_schritte_der_karte_und_den_regler_der_signatur():
     e = backbone.hole("qwen-image-2.1")
     assert e.schritte_vorgabe == 40 and "Z. 67, 90, 105" in e.schritte_beleg
-    assert e.fuehrung_regler is None, "die Karte nennt keine Führung — nicht raten"
+    # Die Karte nennt keine Führung — darum NICHT geraten, sondern der Wert der Signatur
+    # (1.0, also keine Führung), gelesen im Quellstand des Heim-PC (auf-20261002-238).
+    assert (e.fuehrung_regler, e.fuehrung_regler_wert) == ("true_cfg_scale", 1.0)
+    assert "auf-20261002-238" in e.fuehrung_regler_beleg
     assert backbone.schritte_fuer("qwen-image-2.1") == 40
 
 

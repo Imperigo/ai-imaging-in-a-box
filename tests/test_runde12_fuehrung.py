@@ -296,7 +296,9 @@ _HEUTE_JE_EINTRAG = {
     "qwen-image-2512": {}, "sdxl-juggernaut": {}, "sd35-large": {},
     "flux2-klein-4b": {}, "flux1-dev": {}, "flux2-dev": {},
     # Seit 29.09.2026 (Forschungs-Ausnahme): ohne Regler — Führung ungemessen (auf-178).
-    "qwen-image-2.1": {},
+    # Seit 06.10.2026 (auf-238) geht der Regler ausdrücklich mit — mit genau dem Wert der
+    # Signatur (1.0), also ohne Führung wie vorher; nur das Ergebnis kann es jetzt sagen.
+    "qwen-image-2.1": {"true_cfg_scale": 1.0},
     # Seit 30.09.2026: dieselbe Basis mit Union-2.1 — dieselben Aufrufargumente.
     "z-image-turbo-union21": {"control_image": "TIEFE_INV", "guidance_scale": 0.0},
 }
@@ -328,8 +330,10 @@ def test_der_schnappschuss_deckt_alle_eintraege_ausser_qwen_edit():
     """Kommt ein Eintrag dazu, muss er hier eingetragen werden — sonst wäre «alle
     übrigen» eine Behauptung über eine Liste, die niemand nachgeführt hat."""
     assert set(_HEUTE_JE_EINTRAG) == set(backbone.BACKBONES) - {QWEN_EDIT}
-    mit_regler = [n for n, e in backbone.BACKBONES.items() if e.fuehrung_regler]
-    assert mit_regler == [QWEN_EDIT]
+    mit_regler = sorted(n for n, e in backbone.BACKBONES.items() if e.fuehrung_regler)
+    assert mit_regler == sorted([QWEN_EDIT, "qwen-image-2.1"])
+    assert backbone.hole("qwen-image-2.1").fuehrung_regler_wert == 1.0, (
+        "1.0 ist die Vorgabe der Signatur — ein anderer Wert hiesse, die Rechnung zu ändern")
 
 
 @pytest.mark.parametrize("fall", sorted(_HEUTE_JE_FALL))
@@ -692,3 +696,14 @@ def test_an_der_schwelle_urteilt_negativ_wirksam_wie_die_pipeline(monkeypatch, w
     """Die Pipeline führt erst bei ``true_cfg_scale > 1`` — genau 1.0 führt nicht."""
     _eintrag_mit_wert(monkeypatch, wert)
     assert render.negativ_wirksam(QWEN_EDIT)["wirksam"] is wirksam
+
+
+def test_qwen21_sagt_ohne_fuehrung_gerechnet_statt_zu_schweigen():
+    """auf-20261002-238: Im Qwen-2.1-Ergebnis fehlte ``guidance_applied``. Die Pipeline führt
+    nur mit ``true_cfg_scale > 1`` und Negativprompt; wir schicken 1.0."""
+    e = backbone.hole("qwen-image-2.1")
+    parameter = {"fuehrung_regler": e.fuehrung_regler,
+                 "fuehrung_regler_wert": e.fuehrung_regler_wert}
+    for negativ in (None, "blurry"):
+        genommen = {"true_cfg_scale": 1.0, "negative_prompt": negativ}
+        assert render.fuehrung_angewandt(e, parameter, genommen) is False

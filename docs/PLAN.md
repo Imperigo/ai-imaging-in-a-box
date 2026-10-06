@@ -7733,8 +7733,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **local:** `auf-20261001-236` — B5 (Vis-Station unter Xvfb) am echten Bildschirm nachmessen.
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
-- [ ] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.
-- [ ] **cloud (Int 1):** das render-result des Qwen-2.1-Laufs aus 238 für P-LIZENZMARKE Schritt 1 übergeben (E4).
+- [x] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.
+      *(06.10.2026: Innenkamera geom_iou null bestätigt; Qwen-2.1 rechnet, geliefert, engine_license_open true)*
+- [x] **cloud (Int 1):** das render-result des Qwen-2.1-Laufs aus 238 für P-LIZENZMARKE Schritt 1 übergeben (E4).
+      *(06.10.2026: Zweig «kosmovis-v017-qwen21-ergebnis», `d17c6c185`, Blatt in ihrem Eingang)*
+- [ ] **cloud (Int 1):** P-LIZENZMARKE Schritt 1 gegen die echte Datei prüfen, Antwort abwarten.
+- [x] **Kern:** `guidance_applied` auch für Qwen-2.1 — Regler `true_cfg_scale` 1.0 aus der Signatur (Rechnung unverändert). *(06.10.2026)*
 - [ ] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt.
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
