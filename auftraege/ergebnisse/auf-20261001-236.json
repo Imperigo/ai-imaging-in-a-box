@@ -2,7 +2,7 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-236",
  "worker": "local",
- "status": "teilweise",
+ "status": "erledigt — B5 ist ein App-Fehler, auch am echten Bildschirm",
  "beendet": "2026-10-06T06:31:00Z",
  "dauer_s": 480,
  "staende": {
@@ -36,5 +36,10 @@
   "lauf": "keiner (Klick auf «Ausfuehren» unter GPU-Sperre, nichts abgesendet)",
   "karte_am_ende": "Leerlauf, ca. 42 W"
  },
- "aufraeumen": "App, eigener Compositor und eigener Xvfb per gemerkter PID beendet (fremder Xvfb-Dienst unberuehrt); Wegwerf-Profile samt darin angelegtem Beispielprojekt und alle Abzuege geloescht; GPU-Sperre entfernt; nichts committet."
+ "aufraeumen": "App, eigener Compositor und eigener Xvfb per gemerkter PID beendet (fremder Xvfb-Dienst unberuehrt); Wegwerf-Profile samt darin angelegtem Beispielprojekt und alle Abzuege geloescht; GPU-Sperre entfernt; nichts committet.",
+ "nachtrag_owner_bildschirm_2026_10_06": {
+  "quelle": "Bildschirmfoto des Owners an seinem echten Bildschirm (Grafikbeschleunigung, Maus), KosmoOrbit v0.1.6, Vis-Station, Render-Knoten",
+  "gesehen": "Am Knoten stehen nur blasse Beschriftungen («Auflösung», «Qualität gegen Zeit», «Himmel», «Umgebung drehen», «Bildwerkzeug») ueber LEEREN Flaechen; keine Eingabefelder am Knoten. «Ausführen» wirkt blass, daneben «BEREIT»; unten «kein Prompt — verbinde Stimmung/Stil oder fülle das…» und «Bild erscheint hier». Eingaenge Szene, Prompt, Geometrie-Treue, Samples, Kamera-Standpunkte; Ausgang Bild.",
+  "urteil": "B5 tritt auch am echten Bildschirm auf — derselbe leere Knoten wie unter Xvfb. Kein Xvfb-Effekt, sondern ein Fehler der App (die Feld-Bedienelemente werden nicht am Knoten gezeichnet; unter Xvfb lagen sie oben links)."
+ }
 }
