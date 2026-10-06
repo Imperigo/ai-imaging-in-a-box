@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-248",
+ "art": "frage",
+ "beschreibung": "Vor dem Einspielen in WebKitGTK pruefen: Lizenzmarke geht mit aufs Blatt (Publish Schritt 2), Kuratier-Flaeche frei, Stimmungs-Popup — Desktop-App aus claude/kosmovis-v017-publish-schritt2 gebaut.",
+ "anweisung": "=== IN WEBKITGTK PRUEFEN: LIZENZMARKE GEHT MIT AUFS BLATT, KURATIER-FLAECHE FREI, STIMMUNGS-POPUP ===\n\nUnser Zweig im KosmoOrbit-Repo: claude/kosmovis-v017-publish-schritt2 (Kopf d4dc55c7f; enthaelt den\nIntegrator-Kopf 9658dc7b2 mit Nachgang und Lizenz-Hinweis). In Chromium gruen; WebKitGTK kann nur ihr.\n  A  Publish Schritt 2: Ein Bild mit «Lizenz offen» nimmt die Marke (Modell, Lizenz) mit aufs Blatt\n     (Feld lizenzOffen am Blatt-Bild, das Int 1 mit ROADMAP 1691 eingebaut hat). Anzeigen tut das Blatt\n     sie noch NICHT — das ist Schritt 3 bei Publish/Prepare. Geprueft wird also, ob das Feld ankommt.\n  B2 Die Kuratier-Flaeche hat einen Innenrand, damit Shell-Knoepfe, Vis-Inseln und Kosmo-Orb nichts\n     Bedienbares mehr verdecken (Chromium: vorher 10–16 verdeckte Elemente, nachher 0).\n  B1 Im Stimmungs-Popup ragte nichts Eigenes ueber den Rand (Chromium); vermutet: das Glas des Popups hat\n     in WebKitGTK keinen Weichzeichner, darum scheinen Knotenfelder durch (nicht unser Kreis).\n\nAUFBAU wie 246 (Weg W1): eigene Arbeitskopie, Zweig auschecken, Desktop-App bauen (tauri build\n--no-bundle), eigener Xvfb, Wegwerf-Profil, xdotool. Nichts pushen, installierte App nicht ersetzen,\nkeine Systempakete.\n\nSCHRITTE\n  A1 Synthetisches Projekt, Render-Knoten mit Bildwerkzeug Qwen-Image 2.1, ein Lauf (wie 246 L1; nur bei\n     freier Karte). Bild mit «Lizenz offen» ueber die Kuratier-Karte «Aufs Blatt» legen. Geht es?\n  A2 Projekt speichern und in der gespeicherten Projektdatei (oder ueber die Entwicklerwerkzeuge der App,\n     falls offen) nachsehen: traegt das Blatt-Bild lizenzOffen mit modell «qwen-image-2.1» und der Lizenz?\n     Nur ja/nein und die zwei Werte, keine Pfade.\n  A3 Gegenprobe: ein Z-Image-Turbo-Bild auf denselben Platz legen — ist lizenzOffen danach weg?\n  B2 Kuratier-Flaeche bei 1400x900 und 1024x768: verdeckt ein Shell-Knopf, eine Insel oder der Kosmo-Orb\n     noch eine Karte, einen Knopf oder eine Zeile? Bildschirmfoto je Groesse.\n  B1 Stimmungs-Popup ueber einem Render-Knoten oeffnen: Ragen Felder des POPUPS ueber seinen Rand, oder\n     scheinen nur Knotenfelder durch das Glas? Bildschirmfoto.\n  Bildschirmfotos nur ohne Projekt-, Rechner-, Benutzer- oder Netznamen, klein:\n  auftraege/ergebnisse/auf-20261006-248-<b2-1400|b2-1024|b1>.png\n\nURTEIL je Teil in einem Satz (A, B2, B1).\n\nZURUECK (auftraege/ergebnisse/auf-20261006-248.json): gebauter Kopf; A1–A3, B2, B1 je ja/nein + Satz;\ndie Urteile; was auffiel.\n\nNICHT TUN: etwas pushen; KosmoOrbit-Code aendern; die installierte App ersetzen; Systempakete\ninstallieren; echte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen,\nBenutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-06T23:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt der App wie in auf-20261006-246"
+ },
+ "params": {
+  "zweig": "claude/kosmovis-v017-publish-schritt2",
+  "kopf": "d4dc55c7f"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU nur fuer A1 (ein Qwen-2.1-Lauf), nur bei freier Karte.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Gebauter Kopf.",
+  "A1–A3, B2, B1 je ja/nein und Satz.",
+  "Urteil je Teil."
+ ],
+ "rang": 35
+}
