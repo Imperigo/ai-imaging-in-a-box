@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-244",
+ "art": "frage",
+ "beschreibung": "Behelf am echten Video mit Lot je Kamera: Kette wie 240 D neu fahren, Behelf und Volumen darauf (KosmoPrepare 74969a7); sparse/ behalten.",
+ "anweisung": "=== BEHELF AM ECHTEN VIDEO, MIT LOT JE KAMERA (KosmoPrepare 74969a7) ===\n\nWORUM ES GEHT\n  243 ist zu Recht gestoppt: der Arbeitsordner aus 241 ist weg, weil MEIN Auftrag 241 «am Ende\n  loeschen» verlangte. Fehler im Auftrag, nicht bei euch. Ja zu eurem ersten Vorschlag: die Kette neu\n  fahren und den Behelf mit der neuen Rechnung (Lot je Kamera, f784f23) sofort darauf rechnen.\n  Euer zweiter Vorschlag (Kamerastandorte in die Begleitdatei) hilft heute nicht — die Datei aus 241\n  ist mit dem alten Stand geschrieben und traegt sie nicht.\n\nA  Stand: git -C <KosmoPrepare> log --oneline -1 (mindestens 74969a7).\n\nB  Die Kette wie 240 D: Rohdatei, --quelle insv, eure gemessene Linsendatei, --fps 2 --max-frames 240\n   --schritte 7000 --profil rtx5090. Das Vokabular NUR, wenn es schon lokal liegt (--vokabular <pfad>,\n   OHNE --vokabular-laden — es wird nichts aus dem Netz geholt); liegt es nicht da, ohne.\n   Zurueck: bericht.json (ohne Pfade), Dauer, ob mit oder ohne Vokabular.\n\nC  Behelf mit dem Mass aus 241 (1.75 m ± 0.1 m, Quelle wie dort):\n     .venv-server/bin/python tools/splat_behelf.py --colmap <ARBEITSORDNER> --ply <SPLAT.ply>\n       --quelle \"<wie 241>\" --kamerahoehe 1.75 --unsicherheit 0.1\n   Zurueck: die Zeile «BEHELF — …» und alle «Hinweis:» woertlich; aus <splat>.verortung.json\n   behelf.lot (quelle, abweichung_kameras_grad, annahme, boden mit kameras, flachheit,\n   kameras_verworfen, lot_95_grad, knick_grad), unsicherheit, fit.massstab.\n   Vergleich mit 241: dort ±8.89° (die alte Zahl). Gesucht: wie gross ist lot_grad jetzt, meldet der\n   Lauf einen Knick, und wie viele Kameras fallen heraus?\n\nD  Ist der Boden waagrecht? Dieselbe Messung wie 241 C (ein Satz und die Zahl). Dann splat_volumen.py:\n   Zahl der Volumen, Hauptbau laenge/breite/hoehe, fuellgrad, unsicherheit (grundriss_m, hoehe_m).\n\nAUFBEWAHREN\n  Den Ordner <ARBEITSORDNER>/sparse/ (die Kamerastandorte, klein) bis auf Weiteres BEHALTEN, ausserhalb\n  der Repos — er traegt die Behelf-Reihe. Bilder, Zwischenstaende und den Rest am Ende loeschen.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts aus dem Netz laden, nichts committen ausser der\n  Antwort. Keine Bilder, Videos, Splats oder Projektdaten zurueckgeben; keine Orts- oder\n  Projektnamen, keine Koordinaten.\n",
+ "erstellt": "2026-10-06T16:30:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "das 360°-Video des Owners (nur am Heimrechner)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "74969a7",
+  "daten_bleiben_lokal": true,
+  "folgt_auf": "auf-20261006-243 (gestoppt)"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren, nichts aus dem Netz laden.",
+  "hinweise": [
+   "sparse/ behalten, den Rest am Ende loeschen.",
+   "Video nur verweisen, nicht kopieren.",
+   "Vokabular nur, wenn es schon lokal liegt."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B bericht.json, mit/ohne Vokabular.",
+  "C Behelf: Satz, Hinweise, lot, unsicherheit.",
+  "D Boden waagrecht? Volumen."
+ ],
+ "rang": 9
+}

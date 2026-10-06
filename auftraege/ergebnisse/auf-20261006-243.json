@@ -1,0 +1,25 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-243",
+ "worker": "local",
+ "status": "gestoppt — wie im Auftrag verlangt: Der COLMAP-Arbeitsordner aus 241 ist geloescht (241 verlangte «am Ende loeschen»). Nichts neu gerechnet.",
+ "A_stand": {
+  "kosmoprepare": "74969a7 (nach git pull --ff-only; enthaelt f784f23)",
+  "git_status": "unveraendert"
+ },
+ "B_behelf": {
+  "gelaufen": false,
+  "grund": "tools/splat_behelf.py verlangt --colmap <Arbeitsordner> (sparse/0/). Von 241 ist nur ein Ordner «behalten» mit splat.ply, splat.verortung.json und bericht.json geblieben — keine sparse/0/."
+ },
+ "C_boden_volumen": {
+  "gelaufen": false,
+  "grund": "haengt an B"
+ },
+ "vorschlag": "Fuer 243 bitte erlauben, 241 B neu zu fahren (Kette wie 240 D mit Vokabular, ~22 min GPU, absoluter --aus); dann den Arbeitsordner (mindestens sparse/0/) bis zum Ende der Behelf-Reihe behalten. Alternativ: KosmoPrepare schreibt die Kamerastandorte in die verortung.json, damit B ohne Arbeitsordner geht.",
+ "nicht_getan": [
+  "kein Code geaendert",
+  "nichts installiert",
+  "nichts neu gerechnet"
+ ],
+ "fehler": null
+}
