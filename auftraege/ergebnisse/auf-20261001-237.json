@@ -1,0 +1,583 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-237",
+ "worker": "local",
+ "status": "erledigt — nur B3 wie 233 (kosmoprepare_programmstand, Programm + dieselbe Fragenbeantwortung), ueber den Werkzeugserver (.venv-server, Skript direkt2.py aus 233 unveraendert); Pruefsummen vorher = nachher; kein Code geaendert",
+ "staende": {
+  "kosmoprepare": "aa7b635 (HEAD nach git pull --ff-only auf main; aa7b635 = HEAD); einziger unversionierter Eintrag der alte target/, git status vorher = nachher",
+  "python": "Server mit /usr/bin/python3 (wechselt selbst nach .venv-server), Aufrufer .venv-server/bin/python"
+ },
+ "uebersicht": {
+  "positionenAus_raumtabelle": {
+   "erwartet": "raumtabelle",
+   "gekommen": "ja",
+   "zahl": "positionenAus = \"raumtabelle\""
+  },
+  "summePositionen_19500": {
+   "erwartet": "19500 m²",
+   "gekommen": "ja",
+   "zahl": "summePositionen 19500 m² bei 16 Positionen (233: 32615 bei 30); ohne die eine Zeile ohne Flaeche (Hinweis «… ohne Fläche — keine Position»)"
+  },
+  "wohnen_drei_bloecke": {
+   "erwartet": "5600 / 6000 / 2400",
+   "gekommen": "ja",
+   "zahl": "5600 (S. 16 Tab. 1 Z. 4), 6000 (S. 17 Tab. 1 Z. 5), 2400 (S. 18 Tab. 1 Z. 5), je als Summenzeilen-Block"
+  },
+  "rest_bloecke": {
+   "erwartet": "700 / 300",
+   "gekommen": "ja",
+   "zahl": "700 (S. 14 Tab. 1: 2500 − 1800) und 300 (S. 14 Tab. 2: 3000 − 2700)"
+  },
+  "textFlaechen_21": {
+   "erwartet": "die 21 Nicht-Raeume aus 233 unter textFlaechen",
+   "gekommen": "ja (Zahl 21), Menge nicht ganz dieselbe",
+   "zahl": "21 textFlaechen, 29365 m², keine davon in der Summe. Gegenueber den 21 Nicht-Raeumen aus 233: 20 gleich; S. 18 Z. 16 (Gemeinschaft 200, Tabellenzeile Wohnen) fehlt — zu Recht, sie ist jetzt Aufteilung der Summenzeile 2400; neu dabei S. 14 Z. 33 (1000, Fliesstext-Lesung derselben Tabellenzeile, die auch als Position 1000 zaehlt — doppelt gelesen, aber nicht doppelt summiert)"
+  },
+  "vergleichszeile": {
+   "erwartet": "(Frage) steht noch «… nennt N m², die Positionen ergeben …» da?",
+   "gekommen": "ja, steht noch da — zweimal",
+   "zahl": "N = 34647 m² (S. 3 Z. 3), «die Positionen ergeben 19500 m²»; einmal fuer das Programm, einmal «Nach fragen.pdf». 34647 ist keine Programmsumme, sondern die Areal-/anzurechnende Landflaeche (steht gleichzeitig unter kennwerte S. 32 Z. 5). Die passende Vergleichszahl stuende auf S. 13 Z. 37 (Summenliste «Total <X>» 24875 m² ≈ 19500 m²): deren «≈»-Wert 19500 trifft die Positionen genau"
+  }
+ },
+ "B3_programmstand": {
+  "unterlagen": "Programm und Fragenbeantwortung als Wegwerfkopien mit neutralem Namen (programm.pdf, fragen.pdf) im Arbeitsordner",
+  "isError": false,
+  "laufzeit_s": 3.0,
+  "text_woertlich": "Programmstand: 16 Position(en) aus der Raumtabelle, 0 geaendert durch Fragenbeantwortung, 0 nicht zugeordnet · Summe 19500 m²",
+  "positionenAus": "raumtabelle",
+  "positionen": 16,
+  "summe_positionen_m2": 19500.0,
+  "summe_herleitung": "S. 14 Tab. 1: 1000+150+150+150+350 = 1800 + Rest 700 = 2500; S. 14 Tab. 2: 1000+250+200+1000+200+50 = 2700 + Rest 300 = 3000; Wohnen 5600+6000+2400 = 14000; zusammen 19500",
+  "textFlaechen": 21,
+  "textFlaechen_m2": 29365.0,
+  "summenImProgramm": {
+   "anzahl": 4,
+   "werte_m2": [
+    34647.0,
+    24875.0,
+    20.0,
+    5762.0
+   ],
+   "vergleich_233": "9 → 4 (die Wohnen-Totals 5600/6000/2400 und die Totals 2500/3000 sind jetzt Positionen bzw. Rest-Bloecke)",
+   "liste_geschwaerzt": [
+    {
+     "seite": 3,
+     "zeile": 3,
+     "wert_m2": 34647.0,
+     "etikett": "<X> Fläche von <X>"
+    },
+    {
+     "seite": 13,
+     "zeile": 37,
+     "wert_m2": 24875.0,
+     "etikett": "Total <X>"
+    },
+    {
+     "seite": 20,
+     "zeile": 10,
+     "wert_m2": 20.0,
+     "etikett": "…<X> mit <X> und <X> inkl. <X>, total"
+    },
+    {
+     "seite": 32,
+     "zeile": 4,
+     "wert_m2": 5762.0,
+     "etikett": "<X>) <X> Fläche von total"
+    }
+   ]
+  },
+  "kennwerte": 4,
+  "kennwerte_werte_m2": [
+   8400.0,
+   3190.0,
+   590.0,
+   34647.0
+  ],
+  "kennwerte_art": "1 Grundstuecksflaeche, 2 maximale Gebaeudegrundflaechen (Gebaeude <X>), 1 anzurechnende Landflaeche — wie 233",
+  "kennwerte_geschwaerzt": [
+   {
+    "seite": 28,
+    "zeile": 2,
+    "wert_m2": 8400.0,
+    "etikett": "<X>: <X>: <X>"
+   },
+   {
+    "seite": 28,
+    "zeile": 5,
+    "wert_m2": 3190.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 28,
+    "zeile": 6,
+    "wert_m2": 590.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 32,
+    "zeile": 5,
+    "wert_m2": 34647.0,
+    "etikett": "<X> von"
+   }
+  ],
+  "anforderungen": 27,
+  "anforderungen_art": "wie 233 (gleiche 27 Fundstellen): 2 «davon» (S. 13 Z. 38/39: 5500, 14000); 4 Cluster-Spannen S. 14 Z. 10/26 (je 150 und 1000); 3 Spannen-Obergrenzen S. 14 Z. 31–33 (300, 250, 300); 5 Zimmer-Mindestmasse S. 15; 10 Wohnungstyp-Spannen S. 16–18; 1 Aussenraum 20 (S. 19 Z. 39); 2 Freiraum 1730 (S. 28, S. 31)",
+  "anforderungen_liste": [
+   {
+    "seite": 13,
+    "zeile": 38,
+    "wert_m2": 5500.0
+   },
+   {
+    "seite": 13,
+    "zeile": 39,
+    "wert_m2": 14000.0
+   },
+   {
+    "seite": 14,
+    "zeile": 10,
+    "wert_m2": 150.0
+   },
+   {
+    "seite": 14,
+    "zeile": 10,
+    "wert_m2": 1000.0
+   },
+   {
+    "seite": 14,
+    "zeile": 26,
+    "wert_m2": 150.0
+   },
+   {
+    "seite": 14,
+    "zeile": 26,
+    "wert_m2": 1000.0
+   },
+   {
+    "seite": 14,
+    "zeile": 31,
+    "wert_m2": 300.0
+   },
+   {
+    "seite": 14,
+    "zeile": 32,
+    "wert_m2": 250.0
+   },
+   {
+    "seite": 14,
+    "zeile": 33,
+    "wert_m2": 300.0
+   },
+   {
+    "seite": 15,
+    "zeile": 17,
+    "wert_m2": 25.0
+   },
+   {
+    "seite": 15,
+    "zeile": 17,
+    "wert_m2": 40.0
+   },
+   {
+    "seite": 15,
+    "zeile": 19,
+    "wert_m2": 16.0
+   },
+   {
+    "seite": 15,
+    "zeile": 20,
+    "wert_m2": 14.0
+   },
+   {
+    "seite": 15,
+    "zeile": 21,
+    "wert_m2": 12.0
+   },
+   {
+    "seite": 16,
+    "zeile": 8,
+    "wert_m2": 60.0
+   },
+   {
+    "seite": 16,
+    "zeile": 9,
+    "wert_m2": 80.0
+   },
+   {
+    "seite": 16,
+    "zeile": 10,
+    "wert_m2": 100.0
+   },
+   {
+    "seite": 17,
+    "zeile": 9,
+    "wert_m2": 50.0
+   },
+   {
+    "seite": 17,
+    "zeile": 10,
+    "wert_m2": 65.0
+   },
+   {
+    "seite": 17,
+    "zeile": 11,
+    "wert_m2": 90.0
+   },
+   {
+    "seite": 17,
+    "zeile": 12,
+    "wert_m2": 115.0
+   },
+   {
+    "seite": 18,
+    "zeile": 13,
+    "wert_m2": 60.0
+   },
+   {
+    "seite": 18,
+    "zeile": 14,
+    "wert_m2": 80.0
+   },
+   {
+    "seite": 18,
+    "zeile": 15,
+    "wert_m2": 95.0
+   },
+   {
+    "seite": 19,
+    "zeile": 39,
+    "wert_m2": 20.0
+   },
+   {
+    "seite": 28,
+    "zeile": 7,
+    "wert_m2": 1730.0
+   },
+   {
+    "seite": 31,
+    "zeile": 15,
+    "wert_m2": 1730.0
+   }
+  ],
+  "nicht_zugeordnet": 0,
+  "hinweise": 12,
+  "hinweise_woertlich": [
+   "«<X>» steht in der Raumtabelle ohne Fläche — keine Position.",
+   "Raumtabelle: «Total min. 40% von Total Wohnen (programm.pdf: Tabelle 1, S. 16)»: Summenzeile als ein Block von 5600 m² gepackt — die Zeilen darüber sind ihre Aufteilung (Anteile, keine Stückzahl)",
+   "Raumtabelle: «Total (programm.pdf: Tabelle 1, S. 17)»: Summenzeile als ein Block von 6000 m² gepackt — die Zeilen darüber sind ihre Aufteilung (Anteile, keine Stückzahl)",
+   "Raumtabelle: «Total (programm.pdf: Tabelle 1, S. 18)»: Summenzeile als ein Block von 2400 m² gepackt — die Zeilen darüber sind ihre Aufteilung (Anteile, keine Stückzahl)",
+   "Raumtabelle: Rest von «Total» (programm.pdf: Tabelle 1, S. 14): 700 m² als ein Block gepackt — die Summenzeile nennt 2500 m², die Zeilen darüber zusammen 1800 m²",
+   "Raumtabelle: Rest von «Total» (programm.pdf: Tabelle 2, S. 14): 300 m² als ein Block gepackt — die Summenzeile nennt 3000 m², die Zeilen darüber zusammen 2700 m²",
+   "11 Zeile(n) der Raumtabelle sind die Aufteilung einer Summenzeile — gezählt über die Summenzeile, nicht einzeln.",
+   "27 Angabe(n) als Anforderung gelesen (Mindest-/Höchstmass, Spanne oder «davon»), nicht als Raum — unter 'anforderungen'.",
+   "3 Angabe(n) «≈ …» hinter einer Fläche derselben Zeile als Näherung dieser Fläche gelesen, nicht als eigene Position.",
+   "21 Fläche(n) im Fliesstext nicht als Position gezählt — die Raumtabelle trägt das Programm; sie stehen unter 'textFlaechen'.",
+   "Programm: «ches eine Fläche von insgesamt» nennt 34647 m² (S. 3), die Positionen ergeben 19500 m².",
+   "Nach fragen.pdf: «ches eine Fläche von insgesamt» nennt 34647 m² (S. 3), die Positionen ergeben 19500 m²."
+  ],
+  "hinweise_schwaerzung": "woertlich; nur der Raumname im ersten Hinweis durch <X> ersetzt; programm.pdf/fragen.pdf sind die neutralen Kopienamen",
+  "positionsliste_hinweis": "ALLE 16 Positionen in Werkzeug-Reihenfolge; zeile = Zeile der Tabelle laut Fundstelle (tabelle dazu); wert_m2 = flaeche (anzahl ueberall 1); Etiketten streng per Positivliste geschwaerzt (Skript aus 233, Positivliste nur um Werkzeug-Woerter rest/tabelle/s./inkl./gesamthaft/programm.pdf erweitert); jedes Etikett einzeln nachgesehen",
+  "positionen_liste": [
+   {
+    "seite": 14,
+    "zeile": 1,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 1000.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 2,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 150.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 3,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 150.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 4,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 150.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 5,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 350.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 1,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 1000.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 2,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 250.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 3,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 200.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 4,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 1000.0,
+    "etikett": "<X> gesamthaft ca. <X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 5,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 200.0,
+    "etikett": "<X> inkl. <X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 6,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 50.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 16,
+    "zeile": 4,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 5600.0,
+    "etikett": "Total min. 40% von Total Wohnen (programm.pdf: Tabelle 1, S. 16)"
+   },
+   {
+    "seite": 17,
+    "zeile": 5,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 6000.0,
+    "etikett": "Total (programm.pdf: Tabelle 1, S. 17)"
+   },
+   {
+    "seite": 18,
+    "zeile": 5,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 2400.0,
+    "etikett": "Total (programm.pdf: Tabelle 1, S. 18)"
+   },
+   {
+    "seite": 14,
+    "zeile": 7,
+    "tabelle": "Tabelle 1",
+    "wert_m2": 700.0,
+    "etikett": "Rest von «Total» (programm.pdf: Tabelle 1, S. 14)"
+   },
+   {
+    "seite": 14,
+    "zeile": 7,
+    "tabelle": "Tabelle 2",
+    "wert_m2": 300.0,
+    "etikett": "Rest von «Total» (programm.pdf: Tabelle 2, S. 14)"
+   }
+  ],
+  "textFlaechen_liste": [
+   {
+    "seite": 13,
+    "zeile": 35,
+    "wert_m2": 20797.0,
+    "etikett": "Flächen Gebäude <X>"
+   },
+   {
+    "seite": 13,
+    "zeile": 36,
+    "wert_m2": 4078.0,
+    "etikett": "Flächen Gebäude <X>"
+   },
+   {
+    "seite": 14,
+    "zeile": 33,
+    "wert_m2": 1000.0,
+    "etikett": "<X> gesamthaft ca"
+   },
+   {
+    "seite": 14,
+    "zeile": 38,
+    "wert_m2": 1100.0,
+    "etikett": "…, <X> ca. 20% <X> (plus ca"
+   },
+   {
+    "seite": 16,
+    "zeile": 25,
+    "wert_m2": 4.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 16,
+    "zeile": 28,
+    "wert_m2": 14.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 17,
+    "zeile": 27,
+    "wert_m2": 4.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 18,
+    "zeile": 31,
+    "wert_m2": 4.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 10,
+    "wert_m2": 200.0,
+    "etikett": "<X> von etwa"
+   },
+   {
+    "seite": 19,
+    "zeile": 20,
+    "wert_m2": 60.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 25,
+    "wert_m2": 4.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 27,
+    "wert_m2": 40.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 30,
+    "wert_m2": 30.0,
+    "etikett": "<X> (<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 32,
+    "wert_m2": 4.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 34,
+    "wert_m2": 10.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 36,
+    "wert_m2": 8.0,
+    "etikett": "<X>"
+   },
+   {
+    "seite": 19,
+    "zeile": 41,
+    "wert_m2": 20.0,
+    "etikett": "<X>: <X>"
+   },
+   {
+    "seite": 20,
+    "zeile": 11,
+    "wert_m2": 15.0,
+    "etikett": "• Pro <X> mit <X>, ca"
+   },
+   {
+    "seite": 20,
+    "zeile": 12,
+    "wert_m2": 6.0,
+    "etikett": "…<X> pro <X> ("
+   },
+   {
+    "seite": 20,
+    "zeile": 12,
+    "wert_m2": 8.0,
+    "etikett": "…<X> (6 m² bzw"
+   },
+   {
+    "seite": 32,
+    "zeile": 7,
+    "wert_m2": 1959.0,
+    "etikett": "<X> und <X>) <X>. <X> Fläche von"
+   }
+  ],
+  "was_als_raum_zaehlt_und_keiner_ist": [
+   {
+    "was": "die zwei Rest-Bloecke 700/300 sind Annahmen (Differenz Summenzeile − Einzelzeilen), keine Raeume — so erwartet und im Hinweis benannt",
+    "m2": 1000
+   },
+   {
+    "was": "S. 14 Tab. 2 Z. 4: Wert 1000 kommt aus dem Etikett («<X> gesamthaft ca. <X>»), die Zeile selbst nennt ≈ 150–300 (Obergrenze 300 unter anforderungen S. 14 Z. 33). Lesart «Gesamtblock 1000» ist mit dem Total 3000 stimmig; mit 150–300 waere der Rest 1050–1200 statt 300",
+    "m2": 1000
+   },
+   {
+    "was": "moegliche Doppelzaehlung: Position S. 14 Tab. 2 Z. 5 (200, «<X> inkl. <X>») und Block S. 18 Total 2400 «inkl. Gemeinschaftsflächen» (darin die Gemeinschaftszeile 200, vgl. 233 S. 18 Z. 16); beide Totals des Dokuments tragen sie, die Summenliste S. 13 (≈ 19500) offenbar auch — also Dokument-Lesart, nicht Werkzeugfehler; nur zur Pruefung",
+    "m2": 200
+   }
+  ],
+  "umgekehrt_raeume_die_fehlen": [
+   {
+    "was": "Zeile ohne Flaeche in der Raumtabelle S. 14 Tab. 1 (Hinweis 1) — keine Position, wie erwartet",
+    "m2": 0
+   },
+   {
+    "was": "Lager im UG «plus ca. 1100 m²» (S. 14 Z. 38): die Totals 2500/3000 sagen ausdruecklich «ohne Lager im UG» — echte Programmflaeche, steht nur unter textFlaechen, nicht in der Summe",
+    "m2": 1100
+   },
+   {
+    "was": "Hauswartraum 20 m² (S. 20 Z. 10) steht unter summenImProgramm (wegen «total»), weder Position noch textFlaeche",
+    "m2": 20
+   },
+   {
+    "was": "Nebenraeume je Wohnung/Treppenhaus ohne Stueckzahl (Reduit 4 ×3, Waschkueche 14, Trockenraum 15, Keller 6 bzw. 8) nur unter textFlaechen — ohne Stueckzahl nicht summierbar, vertretbar",
+    "m2": 55
+   }
+  ],
+  "was_noch_falsch_zaehlt": [
+   "Vergleichszeile: vergleicht mit 34647 (Areal-/Landflaeche S. 3, auch kennwert S. 32), nicht mit der Programmsumme; richtige Gegenzahl waere S. 13 Z. 37 ≈ 19500 (passt genau).",
+   "summenImProgramm enthaelt weiter Nicht-Programmsummen: 34647 (Landflaeche), 5762 (Freiraum S. 32 Z. 4), 20 (Hauswartraum) — nur 24875 (S. 13 Z. 37) ist eine Programmsumme, und deren «≈ 19500» wird nicht gelesen.",
+   "S. 14 Z. 33: dieselbe Zeile zweimal gelesen (Position 1000 und textFlaeche 1000) — nicht doppelt summiert.",
+   "Lager UG 1100 m² ausserhalb jeder Summe (nur textFlaeche)."
+  ]
+ },
+ "pruefsummen_gleich": {
+  "antwort": "ja",
+  "satz": "Programm und Fragenbeantwortung per SHA-256 vorher = nachher (gleich wie 233); Klon danach ohne Aenderung (git status vorher = nachher, nur der alte target/)"
+ },
+ "fehler_traceback": "nein — kein «Traceback», kein «No module named» in Ausgabe und stderr",
+ "schwaerzung": "45 Etiketten (16 Positionen, 21 textFlaechen, 4 summenImProgramm, 4 kennwerte), davon 40 mit <X>; jedes Etikett einzeln nachgesehen; Hinweise woertlich mit 1 Raumname geschwaerzt",
+ "nicht_getan": [
+  "Kein Code geaendert, nichts installiert, nichts committet, kein Sprachmodell, keine GPU.",
+  "Keine Bilder, PDF oder Projektdaten zurueckgegeben; keine Raum-, Orts-, Kantons- oder Projektnamen, keine Koordinaten, keine echten Dateinamen."
+ ],
+ "aufraeumen": "Arbeitsordner (Unterlagen-Kopien, Werkzeugausgabe) am Ende geloescht; Pruefskripte, Pruefsummen und nur geschwaerzte Listen im Probe-Ordner der HomeStation (auf237)",
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": true,
+  "netz_zweck": "nur git pull"
+ },
+ "abweichungen": [
+  "Alle erwarteten Punkte gekommen (raumtabelle, 19500, 5600/6000/2400, 700/300, 21 textFlaechen).",
+  "Vergleichszeile steht noch da, mit 34647 m² (Landflaeche) statt der Programmsumme.",
+  "textFlaechen-Menge gegenueber 233: S. 18 Z. 16 raus (richtig), S. 14 Z. 33 rein (Doppellesung einer Tabellenzeile)."
+ ],
+ "fehler": null
+}
