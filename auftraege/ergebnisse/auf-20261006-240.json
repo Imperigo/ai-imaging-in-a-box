@@ -1,0 +1,898 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-240",
+ "worker": "local",
+ "status": "erledigt — A bis E gelaufen; C und D rc 0, je 960/960 und 1 Modell; D (mit Schleifenschluss) biegt im Grundriss deutlich weniger. Kein Code geaendert, nichts committet, nur das Vokabular geladen.",
+ "staende": {
+  "kosmoprepare": "4267a8e (HEAD nach git pull --ff-only auf main, enthaelt 4267a8e); git status vorher = nachher (nur der alte target/)",
+  "python": ".venv-server/bin/python; Werkzeugserver mit /usr/bin/python3 (wechselt selbst nach .venv-server)",
+  "werkzeuge": "ffmpeg 8.0.1, COLMAP 4.2.1 mit CUDA, brush 0.3.0 (unveraendert seit dem Lauf vom 06.10. frueh)"
+ },
+ "A_linsen": {
+  "rohdatei_insv": {
+   "aufruf": "insv_linsen.py --insv Rohdatei.insv --aus linsen_insv.json --stroeme 1,0",
+   "rueckgabe": 0,
+   "ih_fov": 194.4,
+   "iv_fov": 194.4,
+   "mulde": 0.585,
+   "fehler": 0.5468,
+   "bilder": 5,
+   "dauer_s": 49.2,
+   "stderr_woertlich": "gemessen mit tools/insv_linsen.py an Rohdatei.insv am 2026-10-06: Nahtfehler 0.5468 bei 194.4°, Mulde 0.585 des Medians, 5 Bilder",
+   "kurve": [
+    [
+     184.0,
+     1.007
+    ],
+    [
+     185.0,
+     0.9342
+    ],
+    [
+     186.0,
+     0.8687
+    ],
+    [
+     187.0,
+     0.8077
+    ],
+    [
+     188.0,
+     0.7541
+    ],
+    [
+     189.0,
+     0.7041
+    ],
+    [
+     190.0,
+     0.6501
+    ],
+    [
+     191.0,
+     0.6049
+    ],
+    [
+     192.0,
+     0.5848
+    ],
+    [
+     193.0,
+     0.5704
+    ],
+    [
+     194.0,
+     0.5492
+    ],
+    [
+     195.0,
+     0.5557
+    ],
+    [
+     196.0,
+     0.5954
+    ],
+    [
+     197.0,
+     0.6366
+    ],
+    [
+     198.0,
+     0.6717
+    ],
+    [
+     199.0,
+     0.7066
+    ],
+    [
+     200.0,
+     0.7377
+    ],
+    [
+     201.0,
+     0.7639
+    ],
+    [
+     202.0,
+     0.7893
+    ],
+    [
+     203.0,
+     0.8153
+    ],
+    [
+     204.0,
+     0.8407
+    ],
+    [
+     205.0,
+     0.8634
+    ],
+    [
+     206.0,
+     0.8857
+    ],
+    [
+     207.0,
+     0.9082
+    ],
+    [
+     208.0,
+     0.9261
+    ],
+    [
+     209.0,
+     0.9474
+    ],
+    [
+     210.0,
+     0.9669
+    ],
+    [
+     211.0,
+     0.9875
+    ],
+    [
+     212.0,
+     1.0056
+    ],
+    [
+     213.0,
+     1.0237
+    ],
+    [
+     214.0,
+     1.041
+    ],
+    [
+     215.0,
+     1.0569
+    ],
+    [
+     216.0,
+     1.0699
+    ],
+    [
+     217.0,
+     1.0804
+    ],
+    [
+     218.0,
+     1.0871
+    ],
+    [
+     219.0,
+     1.0933
+    ],
+    [
+     220.0,
+     1.0992
+    ],
+    [
+     221.0,
+     1.1079
+    ],
+    [
+     222.0,
+     1.1107
+    ],
+    [
+     223.0,
+     1.1163
+    ],
+    [
+     224.0,
+     1.1214
+    ],
+    [
+     225.0,
+     1.1252
+    ],
+    [
+     226.0,
+     1.1323
+    ],
+    [
+     227.0,
+     1.1365
+    ],
+    [
+     228.0,
+     1.1406
+    ],
+    [
+     229.0,
+     1.1429
+    ],
+    [
+     230.0,
+     1.1491
+    ]
+   ]
+  },
+  "vorschau_lrv": {
+   "aufruf": "insv_linsen.py --insv Vorschau.lrv --aus linsen_lrv.json --nebeneinander",
+   "rueckgabe": 0,
+   "ih_fov": 194.1,
+   "iv_fov": 194.1,
+   "mulde": 0.567,
+   "fehler": 0.5241,
+   "bilder": 5,
+   "dauer_s": 35.3,
+   "stderr_woertlich": "gemessen mit tools/insv_linsen.py an Vorschau.lrv am 2026-10-06: Nahtfehler 0.5241 bei 194.1°, Mulde 0.567 des Medians, 5 Bilder",
+   "kurve": [
+    [
+     184.0,
+     1.0028
+    ],
+    [
+     185.0,
+     0.925
+    ],
+    [
+     186.0,
+     0.8555
+    ],
+    [
+     187.0,
+     0.7916
+    ],
+    [
+     188.0,
+     0.738
+    ],
+    [
+     189.0,
+     0.6869
+    ],
+    [
+     190.0,
+     0.6328
+    ],
+    [
+     191.0,
+     0.5875
+    ],
+    [
+     192.0,
+     0.5673
+    ],
+    [
+     193.0,
+     0.55
+    ],
+    [
+     194.0,
+     0.5246
+    ],
+    [
+     195.0,
+     0.5343
+    ],
+    [
+     196.0,
+     0.5762
+    ],
+    [
+     197.0,
+     0.62
+    ],
+    [
+     198.0,
+     0.6576
+    ],
+    [
+     199.0,
+     0.6929
+    ],
+    [
+     200.0,
+     0.7257
+    ],
+    [
+     201.0,
+     0.7525
+    ],
+    [
+     202.0,
+     0.7788
+    ],
+    [
+     203.0,
+     0.8051
+    ],
+    [
+     204.0,
+     0.8308
+    ],
+    [
+     205.0,
+     0.8527
+    ],
+    [
+     206.0,
+     0.8754
+    ],
+    [
+     207.0,
+     0.8977
+    ],
+    [
+     208.0,
+     0.9156
+    ],
+    [
+     209.0,
+     0.9366
+    ],
+    [
+     210.0,
+     0.9576
+    ],
+    [
+     211.0,
+     0.979
+    ],
+    [
+     212.0,
+     0.9987
+    ],
+    [
+     213.0,
+     1.0172
+    ],
+    [
+     214.0,
+     1.034
+    ],
+    [
+     215.0,
+     1.0485
+    ],
+    [
+     216.0,
+     1.0623
+    ],
+    [
+     217.0,
+     1.0737
+    ],
+    [
+     218.0,
+     1.0821
+    ],
+    [
+     219.0,
+     1.0875
+    ],
+    [
+     220.0,
+     1.0939
+    ],
+    [
+     221.0,
+     1.1023
+    ],
+    [
+     222.0,
+     1.1051
+    ],
+    [
+     223.0,
+     1.1091
+    ],
+    [
+     224.0,
+     1.1139
+    ],
+    [
+     225.0,
+     1.1186
+    ],
+    [
+     226.0,
+     1.1251
+    ],
+    [
+     227.0,
+     1.1295
+    ],
+    [
+     228.0,
+     1.1334
+    ],
+    [
+     229.0,
+     1.1362
+    ],
+    [
+     230.0,
+     1.1412
+    ]
+   ]
+  },
+  "befund": "Beide Messungen decken sich (194.4° / 194.1°, 0.3° auseinander), aber NICHT um 200°: das Minimum liegt bei 194°, die Kurve steigt nach beiden Seiten klar an (bei 200°: 0.738 bzw. 0.726, also rund 35 % ueber dem Minimum). Mulde 0.585 / 0.567 des Medians — nicht flach, darum Rueckgabe 0, kein Satz «flach». Das fruehere 200° war also geschaetzt und um etwa 6° zu gross."
+ },
+ "B_eingabepruefung": {
+  "vorschau_lrv": {
+   "aufruf": "splat_kette.py --video Vorschau.lrv --quelle insta360 --aus <ordner>",
+   "rueckgabe": 2,
+   "dauer_s": 0.26,
+   "stderr_woertlich": "abgelehnt: das Bild zeigt zwei Bildkreise nebeneinander (z.B. die Vorschau .lrv), kein equirektangulaeres Video: --quelle insv mit einer Linsendatei «nebeneinander» (tools/insv_linsen.py --nebeneinander)",
+   "gerechnet": "nein — Arbeitsordner nicht einmal angelegt"
+  },
+  "rohdatei_insv": {
+   "aufruf": "splat_kette.py --video Rohdatei.insv --quelle insta360 --aus <ordner>",
+   "rueckgabe": 2,
+   "dauer_s": 0.05,
+   "stderr_woertlich": "abgelehnt: die Datei traegt 2 Videostroeme — das ist eine Rohdatei (zwei Fischaugen), kein equirektangulaeres Video: --quelle insv --linsen (tools/insv_linsen.py)",
+   "gerechnet": "nein — Arbeitsordner nicht angelegt"
+  },
+  "befund": "beide wie erwartet («zwei Bildkreise» bzw. «2 Videostroeme»)"
+ },
+ "C_kette_insv": {
+  "aufruf": "splat_kette.py --video Rohdatei.insv --quelle insv --linsen linsen_insv.json --aus <absoluter ordner> --fps 2 --max-frames 240 --schritte 7000 --profil rtx5090 (ohne --max-res)",
+  "rueckgabe": 0,
+  "stderr_woertlich": [
+   "max-res 1600 → 1086: mehr Bildpunkte traegt eine Ansicht dieser Quelle nicht, darueber wuerde nur hochgerechnet",
+   "Abdeckung: --max-frames 240 bei 2 Bildern/s deckt 120 von 187 s ab (die Grenze gilt je Ansicht) — der Rest des Videos wird nicht gerechnet",
+   "Schleifenschluss aus: kein Ablageort genannt (KOSMOPREPARE_COLMAP_VOKABULAR oder --vokabular)",
+   "Splat entstanden: 960 von 960 Bildern registriert, 293354 Punkte, 1 Teilmodell(e)"
+  ],
+  "bericht_json": {
+   "schema": "kosmoprepare.splat-kette/0.1",
+   "status": "fertig",
+   "bilder": 960,
+   "registriert": 960,
+   "modelle": 1,
+   "punkte": 293354,
+   "schleifenschluss": false,
+   "splat": "splat.ply",
+   "dauer_s": 1196.3,
+   "stufen": [
+    {
+     "stufe": "frame_extraction",
+     "zeit": "11:03:47"
+    },
+    {
+     "stufe": "colmap_feature_extraction",
+     "zeit": "11:06:56"
+    },
+    {
+     "stufe": "colmap_rig",
+     "zeit": "11:07:11"
+    },
+    {
+     "stufe": "colmap_matching",
+     "zeit": "11:07:13"
+    },
+    {
+     "stufe": "colmap_mapping",
+     "zeit": "11:09:22"
+    },
+    {
+     "stufe": "brush_training",
+     "zeit": "11:19:14"
+    }
+   ],
+   "video": "Rohdatei.insv",
+   "quelle": "insv",
+   "profil": "rtx5090",
+   "video_dauer_s": 187.4,
+   "abgedeckt_s": 120.0,
+   "max_res": 1086,
+   "max_res_verlangt": 1600,
+   "linsen": {
+    "quelle": "gemessen mit tools/insv_linsen.py an Rohdatei.insv am 2026-10-06: Nahtfehler 0.5468 bei 194.4°, Mulde 0.585 des Medians, 5 Bilder",
+    "ih_fov": 194.4,
+    "iv_fov": 194.4,
+    "yaw": 0.0,
+    "stroeme": [
+     1,
+     0
+    ],
+    "nebeneinander": false
+   },
+   "vokabular": "aus"
+  },
+  "splats": 3026763,
+  "ply_mb": 714,
+  "stufen_dauer_s": {
+   "bilder": 189,
+   "merkmale": 15,
+   "rig": 2,
+   "abgleich": 129,
+   "mapper": 592,
+   "brush": 269,
+   "gesamt": 1196
+  },
+  "gpu_spitze_w": 234.9,
+  "mapper_log": "1× «Discarding reconstruction due to bad initial pair», 1× «Keeping successful reconstruction»; 235 Zeilen Cholesky/CHOLMOD-Warnungen (wie frueher, Lauf ging durch)",
+  "vergleich_mit_frueher_equirect": {
+   "frueher": {
+    "registriert": "960/960",
+    "modelle": 1,
+    "punkte": 292922,
+    "splats": 2653428,
+    "max_res": 1600,
+    "stufen_dauer_s": {
+     "umwandlung_equirect_ausserhalb": 65,
+     "bilder": 13,
+     "merkmale": 17,
+     "rig": 2,
+     "abgleich": 118,
+     "mapper": 862,
+     "brush": 245,
+     "gesamt_kette": 1257
+    }
+   },
+   "jetzt_C": {
+    "registriert": "960/960",
+    "modelle": 1,
+    "punkte": 293354,
+    "splats": 3026763,
+    "max_res": 1086,
+    "stufen_dauer_s": {
+     "bilder": 189,
+     "merkmale": 15,
+     "rig": 2,
+     "abgleich": 129,
+     "mapper": 592,
+     "brush": 269,
+     "gesamt": 1196
+    }
+   },
+   "satz": "Gleich viele registrierte Bilder und praktisch gleich viele Punkte (+0.1 %), 14 % mehr Splats, Mapper 270 s schneller, gesamt 61 s schneller (frueher plus 65 s Umwandlung ausserhalb, also 126 s). Die Bildstufe ist 176 s langsamer (dfisheye je Ansicht direkt aus dem Rohvideo, ~40 s je Ansicht). max-res wird von 1600 auf 1086 gedeckelt — frueher wurde 1.5-fach hochgerechnet."
+  },
+  "biegung_kamerapfad": {
+   "was": "nur front-Kameras (240), einheitenfrei relativ zur Weglaenge; keine Wahrheit vorhanden — Vergleich der Laeufe untereinander",
+   "frueher_equirect": {
+    "weg_zu_sehne": 1.121,
+    "seitlich_max_rel_weg": 0.081,
+    "richtung_erstes_zu_letztes_viertel_grad": 42.2,
+    "hochachse_anfang_zu_ende_grad": 21.17
+   },
+   "C": {
+    "weg_zu_sehne": 1.084,
+    "seitlich_max_rel_weg": 0.0862,
+    "richtung_erstes_zu_letztes_viertel_grad": 38.6,
+    "hochachse_anfang_zu_ende_grad": 16.37
+   }
+  },
+  "befund_werkzeug": "Mit RELATIVEM --aus scheitert die Kette sofort: splat_kette.py ruft «bash <aus>/run_pipeline.sh» mit cwd=<aus> auf, der relative Skriptpfad zeigt dann ins Leere («bash: C/run_pipeline.sh: Datei oder Verzeichnis nicht gefunden»). Rueckgabe 1, bericht.json mit status «unbekannt», Meldung «gescheitert — siehe pipeline.log im Arbeitsordner», es gibt aber keine pipeline.log. Mit absolutem --aus laeuft es. Vorschlag: os.path.abspath(a.aus) frueh setzen. Nicht geaendert."
+ },
+ "D_vokabular": {
+  "freigabe": "Owner-Freigabe laut Home-PC-Worker: am 06.10.2026 im Chat mit dem Home-PC-Worker auf die Frage «COLMAP-Schleifenschluss braucht ein Vokabular, das COLMAP einmal aus dem Netz laedt — erlauben?» mit «Ja, einmal laden» geantwortet. Diese Hilfs-Sitzung hat die Freigabe nicht selbst vom Owner erhalten, sondern vom Home-PC-Worker uebernommen.",
+  "vokabular": {
+   "status": "bereit",
+   "stderr_woertlich": "Vokabular: einmal geladen, ab jetzt lokal",
+   "datei": "vocab_tree_faiss_flickr100K_words256K.bin, 72.4 MB, Pruefsumme vom Werkzeug geprueft",
+   "ablage": "Ordner ausserhalb der Repos (KosmoSplat/vokabular), bleibt fuer spaetere Laeufe"
+  },
+  "schleifenschluss_im_protokoll": "ja — «Schleifenschluss mit lokalem Vokabular» steht in pipeline.log (Stufe Abgleich); bericht.json schleifenschluss: true",
+  "rueckgabe": 0,
+  "stderr_woertlich": [
+   "max-res 1600 → 1086: mehr Bildpunkte traegt eine Ansicht dieser Quelle nicht, darueber wuerde nur hochgerechnet",
+   "Abdeckung: --max-frames 240 bei 2 Bildern/s deckt 120 von 187 s ab (die Grenze gilt je Ansicht) — der Rest des Videos wird nicht gerechnet",
+   "Vokabular: einmal geladen, ab jetzt lokal",
+   "Splat entstanden: 960 von 960 Bildern registriert, 297424 Punkte, 1 Teilmodell(e)"
+  ],
+  "bericht_json": {
+   "schema": "kosmoprepare.splat-kette/0.1",
+   "status": "fertig",
+   "bilder": 960,
+   "registriert": 960,
+   "modelle": 1,
+   "punkte": 297424,
+   "schleifenschluss": true,
+   "splat": "splat.ply",
+   "dauer_s": 1439.8,
+   "stufen": [
+    {
+     "stufe": "frame_extraction",
+     "zeit": "11:24:03"
+    },
+    {
+     "stufe": "colmap_feature_extraction",
+     "zeit": "11:26:42"
+    },
+    {
+     "stufe": "colmap_rig",
+     "zeit": "11:26:57"
+    },
+    {
+     "stufe": "colmap_matching",
+     "zeit": "11:27:00"
+    },
+    {
+     "stufe": "colmap_mapping",
+     "zeit": "11:34:43"
+    },
+    {
+     "stufe": "brush_training",
+     "zeit": "11:43:28"
+    }
+   ],
+   "video": "Rohdatei.insv",
+   "quelle": "insv",
+   "profil": "rtx5090",
+   "video_dauer_s": 187.4,
+   "abgedeckt_s": 120.0,
+   "max_res": 1086,
+   "max_res_verlangt": 1600,
+   "linsen": {
+    "quelle": "gemessen mit tools/insv_linsen.py an Rohdatei.insv am 2026-10-06: Nahtfehler 0.5468 bei 194.4°, Mulde 0.585 des Medians, 5 Bilder",
+    "ih_fov": 194.4,
+    "iv_fov": 194.4,
+    "yaw": 0.0,
+    "stroeme": [
+     1,
+     0
+    ],
+    "nebeneinander": false
+   },
+   "vokabular": "bereit"
+  },
+  "splats": 3158696,
+  "stufen_dauer_s": {
+   "bilder": 159,
+   "merkmale": 15,
+   "rig": 3,
+   "abgleich": 463,
+   "mapper": 525,
+   "brush": 275,
+   "gesamt": 1440
+  },
+  "gpu_spitze_w": 243.9,
+  "mapper_log": "1× «bad initial pair», 1× «Keeping successful reconstruction»; 159 Zeilen Cholesky/CHOLMOD-Warnungen (C: 235)",
+  "vergleich_mit_C": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 297424 statt 293354 (+1.4 %), Splats 3158696 statt 3026763 (+4.4 %); Abgleich 463 s statt 129 s (+334 s), Mapper 525 s statt 592 s, gesamt 1440 s statt 1196 s (+244 s)",
+  "biegt_weniger": "ja, im Grundriss deutlich: Weg/Sehne 1.046 (C 1.084, frueher 1.121); groesste seitliche Abweichung von der Sehne 4.9 % der Weglaenge (C 8.6 %, frueher 8.1 %); Richtungsaenderung erstes→letztes Viertel 26.6° (C 38.6°, frueher 42.2°). In der Hoehe NICHT: Kippung der Hochachse Anfang→Ende 16.33° (C 16.37°), Hoehenabweichung von der Geraden 1.38 % (C 1.44 %). Gegenprobe ueber die Volumen (Behelf-Verortung, nur zum Vergleich): der Hauptbau wird mit D ein langer schmaler Quader 53.5 × 4.7 m, H 3.13 m, Fuellgrad 0.50 — mit C ein verschmierter 60.0 × 17.4 m, H 12.75 m, Fuellgrad 0.20.",
+  "biegung_kamerapfad": {
+   "weg_zu_sehne": 1.046,
+   "seitlich_max_rel_weg": 0.0489,
+   "richtung_erstes_zu_letztes_viertel_grad": 26.6,
+   "hochachse_anfang_zu_ende_grad": 16.33
+  }
+ },
+ "E_werkzeuge": {
+  "verortung": "Keine Passpunkte mit Quelle vorhanden. Behelf (Skript aus dem frueheren Lauf, nur Paar-Bildung): Lot aus dem Mittel der Kamera-Hochachsen, Massstab aus angenommener Kamerahoehe 1.60 m ueber dem Boden, 6 Kamerazentren als Paare, jedes Paar mit quelle «Behelf: Lot aus Kamera-Hochachsen, Massstab aus angenommener Kamerahoehe 1.60 m». Restfehler 0 ist trivial (Paare aus der Annahme selbst).",
+  "splat": "aus C (wie verlangt)",
+  "behelf_kennzahlen_C": {
+   "massstab_m_je_einheit": 5.308,
+   "spanne_aus_iqr": [
+    5.186,
+    5.479
+   ],
+   "weg_m": 62.2,
+   "lot_streuung_median_grad": 4.77,
+   "lot_streuung_p90_grad": 9.01
+  },
+  "kosmoprepare_splat_verorten": {
+   "isError": false,
+   "dauer_s": 0.1,
+   "satz_woertlich": "Verortet aus 6 Paaren: Massstab 5.3082, Restfehler 0.000 m (groesster 0.000 m bei «Kamera 1»)",
+   "zweiter_satz": "Die Szene nennt keinen LV95-Ursprung — die Matrix fuehrt nur in Szenenkoordinaten."
+  },
+  "kosmoprepare_splat_volumen": {
+   "isError": false,
+   "dauer_s": 1.2,
+   "satz_woertlich": "12 Volumen aus 260724 Punkten · 7 ohne gelesenen Boden · 355 kleine Gruppen verworfen.",
+   "volumen": 12,
+   "parameter": {
+    "zelle_m": 0.5,
+    "block_m": 2.0,
+    "boden_radius_m": 15.0,
+    "hoehe_min_m": 2.0,
+    "punkte_min": 3,
+    "flaeche_min_m2": 4.0,
+    "deckkraft_min": 0.2
+   },
+   "deckkraft_anteil": {
+    "punkte_ueber_deckkraft": 260724,
+    "punkte_gesamt": 3026763,
+    "anteil": 0.086
+   },
+   "liste": [
+    {
+     "id": "V1",
+     "laenge_m": 60.0,
+     "breite_m": 17.4,
+     "hoehe_m": 12.75,
+     "fuellgrad": 0.2,
+     "punkte": 181865
+    },
+    {
+     "id": "V2",
+     "laenge_m": 8.8,
+     "breite_m": 2.7,
+     "hoehe_m": 10.81,
+     "fuellgrad": 0.7,
+     "punkte": 1166
+    },
+    {
+     "id": "V3",
+     "laenge_m": 5.4,
+     "breite_m": 3.4,
+     "hoehe_m": 8.43,
+     "fuellgrad": 0.67,
+     "punkte": 402
+    },
+    {
+     "id": "V4",
+     "laenge_m": 4.5,
+     "breite_m": 2.3,
+     "hoehe_m": null,
+     "fuellgrad": 0.69,
+     "punkte": 126
+    },
+    {
+     "id": "V5",
+     "laenge_m": 4.7,
+     "breite_m": 2.5,
+     "hoehe_m": null,
+     "fuellgrad": 0.52,
+     "punkte": 168
+    },
+    {
+     "id": "V6",
+     "laenge_m": 5.9,
+     "breite_m": 1.9,
+     "hoehe_m": 3.3,
+     "fuellgrad": 0.49,
+     "punkte": 131
+    },
+    {
+     "id": "V7",
+     "laenge_m": 3.8,
+     "breite_m": 2.3,
+     "hoehe_m": null,
+     "fuellgrad": 0.6,
+     "punkte": 100
+    },
+    {
+     "id": "V8",
+     "laenge_m": 4.6,
+     "breite_m": 2.8,
+     "hoehe_m": null,
+     "fuellgrad": 0.4,
+     "punkte": 96
+    },
+    {
+     "id": "V9",
+     "laenge_m": 3.6,
+     "breite_m": 2.1,
+     "hoehe_m": null,
+     "fuellgrad": 0.65,
+     "punkte": 102
+    },
+    {
+     "id": "V10",
+     "laenge_m": 3.8,
+     "breite_m": 2.6,
+     "hoehe_m": 19.09,
+     "fuellgrad": 0.49,
+     "punkte": 115
+    },
+    {
+     "id": "V11",
+     "laenge_m": 4.4,
+     "breite_m": 2.2,
+     "hoehe_m": null,
+     "fuellgrad": 0.45,
+     "punkte": 83
+    },
+    {
+     "id": "V12",
+     "laenge_m": 2.9,
+     "breite_m": 2.6,
+     "hoehe_m": null,
+     "fuellgrad": 0.58,
+     "punkte": 107
+    }
+   ],
+   "befund": "V1 (Hauptbau) 60.0 × 17.4 m, H 12.75 m, Fuellgrad 0.20 — Bau und Umgebung verschmolzen (frueher mit deckkraft_min 0.2: zwei Quader 28.5 × 5.0 und 26.5 × 4.2 m). Der biegende Pfad in C verschmiert den Grundriss."
+  },
+  "kosmoprepare_flaechen_textur": {
+   "isError": false,
+   "dauer_s": 3.1,
+   "satz_woertlich": "9 Flaechen mit Bild, Atlas 2171 × 955 px · 16 ohne Bild (V1_wand1, V1_wand2, V1_wand3, V1_wand4, V1_dach, V2_wand4) · 8 nur teilweise gesehen · 9 hochgerechnet. Verdeckung gegen das Modell geprueft, 8 Flaeche(n) teilweise verdeckt.",
+   "flaechen_mit_bild": 9,
+   "flaechen_ohne_bild": 16,
+   "volumen_nicht_moeglich": 7,
+   "nicht_moeglich_grund": "alle 7: «kein gelesener Boden — Wandhoehe unbekannt»",
+   "kameras": 960,
+   "px_pro_m": 50.0,
+   "annahmen": [
+    "Verdeckung nur gegen die Flaechen des Modells geprueft — was nicht im Modell steht (Baum, Bau ohne gelesenen Boden), liegt weiterhin auf der Kachel",
+    "Lochkamera ohne Verzerrung — fuer entzerrte Bilder exakt, sonst eine Naeherung"
+   ]
+  },
+  "zum_vergleich_mit_D": {
+   "verorten": "Verortet aus 6 Paaren: Massstab 5.4504, Restfehler 0.000 m (groesster 0.000 m bei «Kamera 1»)",
+   "volumen": "7 Volumen aus 265243 Punkten · 2 ohne gelesenen Boden · 97 kleine Gruppen verworfen.",
+   "volumen_liste": [
+    {
+     "id": "V1",
+     "laenge_m": 53.5,
+     "breite_m": 4.7,
+     "hoehe_m": 3.13,
+     "fuellgrad": 0.5,
+     "punkte": 116802
+    },
+    {
+     "id": "V2",
+     "laenge_m": 5.8,
+     "breite_m": 3.0,
+     "hoehe_m": 4.62,
+     "fuellgrad": 0.62,
+     "punkte": 917
+    },
+    {
+     "id": "V3",
+     "laenge_m": 5.2,
+     "breite_m": 3.3,
+     "hoehe_m": null,
+     "fuellgrad": 0.6,
+     "punkte": 305
+    },
+    {
+     "id": "V4",
+     "laenge_m": 5.0,
+     "breite_m": 4.0,
+     "hoehe_m": 3.92,
+     "fuellgrad": 0.49,
+     "punkte": 871
+    },
+    {
+     "id": "V5",
+     "laenge_m": 5.4,
+     "breite_m": 2.9,
+     "hoehe_m": null,
+     "fuellgrad": 0.62,
+     "punkte": 235
+    },
+    {
+     "id": "V6",
+     "laenge_m": 3.8,
+     "breite_m": 3.0,
+     "hoehe_m": 6.12,
+     "fuellgrad": 0.57,
+     "punkte": 268
+    },
+    {
+     "id": "V7",
+     "laenge_m": 2.8,
+     "breite_m": 1.8,
+     "hoehe_m": 8.26,
+     "fuellgrad": 0.81,
+     "punkte": 89
+    }
+   ],
+   "textur": "10 Flaechen mit Bild, Atlas 1955 × 414 px · 15 ohne Bild (V1_wand1, V1_wand3, V1_dach, V2_wand1, V2_wand4, V2_dach) · 5 nur teilweise gesehen · 1 hochgerechnet. Verdeckung gegen das Modell geprueft, 4 Flaeche(n) teilweise verdeckt."
+  }
+ },
+ "gpu": {
+  "spitze_w": 243.9,
+  "grenze_w": 400,
+  "grenze_erreicht": false,
+  "sperre": "vor C und D genommen, nach jedem Lauf per trap geloest; Ollama nicht angefasst",
+  "A_B_E": "ohne GPU"
+ },
+ "nicht_getan": [
+  "Kein Code geaendert, nichts installiert ausser dem Vokabular (D), nichts committet.",
+  "Video nur verwiesen (gelesen), nicht kopiert.",
+  "Keine Bilder, Videos, Splats oder Projektdaten zurueckgegeben; keine Orts-, Personen- oder Projektnamen, keine Koordinaten, keine echten Dateinamen."
+ ],
+ "aufraeumen": "Arbeitsordner geloescht; behalten fuer den naechsten Szenario-Durchgang nur die beste .ply (aus D, mit Schleifenschluss) und deren bericht.json in einem Unterordner «behalten» ausserhalb der Repos; das Vokabular bleibt in seinem Ordner.",
+ "umgebung": {
+  "gpu_benutzt": true,
+  "netz_benutzt": true,
+  "netz_zweck": "git pull und einmal das COLMAP-Vokabular (D)"
+ },
+ "abweichungen": [
+  "Linsen: gemessen 194.4° / 194.1°, nicht um 200°; beide Dateien decken sich.",
+  "splat_kette.py scheitert mit relativem --aus (Rueckgabe 1, Hinweis auf eine pipeline.log, die es nicht gibt); mit absolutem Pfad gelaufen.",
+  "Volumen aus C schlechter als frueher (Hauptbau verschmolzen); aus D wieder ein langer schmaler Quader."
+ ],
+ "fehler": null
+}
