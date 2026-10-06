@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261001-236",
+ "worker": "local",
+ "status": "teilweise",
+ "beendet": "2026-10-06T06:31:00Z",
+ "dauer_s": 480,
+ "staende": {
+  "kosmoorbit": "v0.1.6 (installiertes .deb, Paketversion 0.1.6, App-Kopf zeigt v0.1.6)",
+  "code_geaendert": "nein",
+  "neu_installiert": "nein"
+ },
+ "weg": "Kein Owner-Bildschirm (stehende Regel). Statt dessen GPU-Desktop: eigener kopfloser Wayland-Compositor mit GL-Renderer auf der Grafikkarte und Xwayland, App darauf mit Wegwerf-Profil. Vergleich: eigener Xvfb mit frischem Wegwerf-Profil, Beispielprojekt Demohaus, Vis-Station (Taste 5), Graph mit Render + Auto-Kamera, bedient mit xdotool und Abzuegen. Bildschirmfotos keine abgelegt (nur Worte).",
+ "fassung": "v0.1.6",
+ "grafikbeschleunigung": {
+  "gpu_desktop": "wahrscheinlich ja: Compositor rendert mit GL auf der Grafikkarte; der WebKit-Prozess der App laedt den Herstellertreiber fuer EGL, die Meldung «DRI3 error / ensure your X server supports DRI3 to get accelerated rendering» fehlt. Der WebKit-Prozess erscheint aber nicht in der Prozessliste des Treibers — beschleunigtes Zeichnen der Seite selbst nicht sicher belegt.",
+  "xvfb": "nein: WebKit meldet beim Start «DRI3 error … accelerated rendering» (Software-Zeichnen), wie in 230."
+ },
+ "schritte": {
+  "gpu_desktop": {
+   "2_projekt_vis_knoten": "nein — App startet und zeichnet die Zentrale sauber (Projektkarte, Stationen, Kosmo-Chat), aber Tastatureingaben kommen nicht an: der Compositor gibt dem Xwayland-Fenster ohne Zeiger-Klick keinen Tastaturfokus (X-Fokus bleibt «keiner», auch nach windowfocus/windowactivate; Tab, Ctrl+K, «?», «2» ohne Wirkung). Ohne Zeiger kein Weg zur Vis-Station.",
+   "3_knotenfelder": "nicht pruefbar ohne Zeiger am GPU-Desktop",
+   "4_auto_kamera_liste": "nicht pruefbar ohne Zeiger am GPU-Desktop",
+   "5_ausfuehren": "nicht pruefbar ohne Zeiger am GPU-Desktop"
+  },
+  "xvfb": {
+   "3_knotenfelder": "ja, oben links — die Bedienelemente des Render-Knotens (Preset «kein Preset (Default 1…»), «1600 × 1000», «128 — Vorgabe», Himmel «keiner» mit Regler, Bildwerkzeug «Z-Image Turbo — Vorg…», Auswahl «nur Cycles / Strichzeichnung») stehen links oben ueber der GRAPH-Leiste; am Knoten stehen nur die blassen Beschriftungen (Aufloesung, Qualitaet gegen Zeit, Himmel …) mit leeren Flaechen.",
+   "4_auto_kamera_liste": "ja, oben links — «Eingang / Übersicht / Innenraum — Vorschlag aus dem Modell» steht links oben ueber den Kopfknoepfen, der Auto-Kamera-Knoten selbst ist leer bis auf seinen Ausgang.",
+   "5_ausfuehren": "nein — «Ausfuehren» war nach dem Anlegen zuerst am Knoten zu sehen; ein Klick dort startete nichts (23 s beobachtet, Knoten blieb «BEREIT», keine Meldung, Karte im Leerlauf um 42 W), und der Knopf erschien danach links oben unter den verschobenen Feldern. Klick unter GPU-Sperre; da nichts abging, kein Lauf.",
+   "6_wieder_aufgetreten": "ja — derselbe Befund wie in 230, heute zweimal mit je eigenem Wegwerf-Profil nachgestellt (auch ein frueherer Helferlauf heute zeigte dasselbe Bild)."
+  }
+ },
+ "beobachtung": "Unter Xvfb sprang «Ausfuehren» nach dem Klick vom Knoten nach links oben — das spricht dafuer, dass die Bedienelemente tatsaechlich links oben LIEGEN (Trefferflaeche dort) und am Knoten nur ein veraltetes Bild stand, nicht umgekehrt. Ob das am Software-Zeichnen von WebKit unter Xvfb haengt, entscheidet erst ein Durchgang mit Zeiger an einem beschleunigten Bildschirm.",
+ "urteil": "Offen: B5 tritt unter Xvfb sicher wieder auf (Felder und Kamera-Liste oben links, «Ausfuehren» am Knoten wirkungslos), am GPU-Desktop war es ohne Zeiger nicht pruefbar — ob es nur ein Xvfb-Effekt ist, bleibt unbelegt; naechster Schritt waere ein Durchgang mit Zeiger an einem beschleunigten Bildschirm (Owner am eigenen Bildschirm oder ein Compositor mit fernsteuerbarem Zeiger).",
+ "gpu": {
+  "lauf": "keiner (Klick auf «Ausfuehren» unter GPU-Sperre, nichts abgesendet)",
+  "karte_am_ende": "Leerlauf, ca. 42 W"
+ },
+ "aufraeumen": "App, eigener Compositor und eigener Xvfb per gemerkter PID beendet (fremder Xvfb-Dienst unberuehrt); Wegwerf-Profile samt darin angelegtem Beispielprojekt und alle Abzuege geloescht; GPU-Sperre entfernt; nichts committet."
+}
