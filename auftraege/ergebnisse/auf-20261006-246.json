@@ -1,0 +1,82 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-246",
+ "worker": "local",
+ "status": "erledigt — N in WebKitGTK behoben, L in WebKitGTK sichtbar und nichts gesperrt",
+ "beendet": "2026-10-06T19:25:00Z",
+ "dauer_s": null,
+ "weg": "W1 wie in 242 — eigene Arbeitskopie: Integrator-Kopf origin/claude/kosmo-orbit-v1-build-pzxkbj (10af19c64), darauf N (c37aed3a3) und dann L (45072c3b9) per git merge lokal hereingeholt, beide ohne Konflikt; Desktop-App mit «npx tauri build --no-bundle» gebaut (Release-Binaerdatei, nichts installiert). Ein abgebrochener Vorgaenger hatte einen aelteren Integrator-Kopf (d8c8415bd) zusammengefuehrt; weil der Integrator seither weitergegangen war, neu zusammengefuehrt und neu gebaut. Eigener Xvfb (1920x1080x24, freie Displaynummer), eigene Sitzungs-DBus, Wegwerf-Profil (XDG_DATA/CONFIG/CACHE/RUNTIME), App-Start mit env -i und nur den noetigen Variablen, cwd im Wegwerf-Ordner; Klicks mit xdotool nur auf diesem Xvfb. Installierte App unberuehrt. Synthetisches Projekt: Einrichtung durchgeklickt, «Beispielprojekt laden — Demohaus», Vis-Station, GRAPH-Insel, «+ Graph erstellen» (frischer Graph, kein Profil aus 242). Bruecke: eigene Bruecke aus der Arbeitskopie (nur 127.0.0.1, freier Port, eigene Job-Ablage, CORS fuer die Tauri-Herkunft); im Wegwerf-Profil Betriebsart «Cloud» und die eigene Bruecken-Adresse gesetzt (wie 242). Teil N mit Waechter (bricht jeden neuen Auftrag sofort per POST /jobs/<id>/cancel ab); Teil L ohne Waechter, gerechnet vom Abholer (tools/abholen.py --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render) gegen diese Bruecke, nur unter der geteilten GPU-Sperre. Der Dienst auf 8600 wurde nicht angefasst.",
+ "koepfe": {
+  "integrator": "10af19c6443435050bfd2b179980541b5c3afe32",
+  "n": "c37aed3a3c8fa22a69ed592fecf47499c5e37e08",
+  "l": "45072c3b989b481a88b3cd6acbb6b73ba03ce152",
+  "gebaut": "3844cd899fc1f1874a8fc0a42e488276d689324f",
+  "hinweis": "Gebauter Kopf = lokaler Wegwerf-Merge (Integrator + N + L), App-Kopf zeigt v0.1.7; nichts gepusht, nichts committet ausser den beiden lokalen Merges in der Wegwerf-Arbeitskopie (inzwischen entfernt)."
+ },
+ "schritte": {
+  "N1": {
+   "antwort": "ja",
+   "satz": "Die Schiene «Umgebung drehen» ist im Render-Knoten deutlich zu sehen: dunkle gestrichelte Bahn ueber die Feldbreite mit Ring-Griff am Anfang, im dunklen Thema «Kosmos» (heller Knoten, schwarze Felder) und im hellen Thema «Papier» (hellgraue Felder) gleich gut; nur die Beschriftung «Umgebung drehen» selbst ist sehr blass.",
+   "bild": "auf-20261006-246-n1.png"
+  },
+  "N2": {
+   "antwort": "nein (keine Ueberdeckung)",
+   "satz": "Modell-Knoten, dann Render-Knoten: der Render-Knoten kommt rechts daneben, ohne den Modell-Knoten zu beruehren; «Kamera vorschlagen» (AUSTAUSCH-Insel) setzt einen Auto-Kamera-Knoten oben links frei hin und verbindet ihn; «+ Drei-Stimmungen-Kette einfuegen» (STIMMUNG-Insel) legt die ganze Kette (Material-Bausteine, je drei Stimmung/Prompt-Kombinierer/Render, Bildvergleich) unterhalb des Bestands ab — kein Knoten ueberdeckt einen anderen."
+  },
+  "N3": {
+   "antwort": "ja",
+   "satz": "Render-Knoten in die Bildmitte direkt ueber den ⇄-Knopf gezogen, «Ausfuehren»: der Auftrag kam an der Bruecke an und wurde vom Waechter sofort abgebrochen, der Knoten zeigt ABGEBROCHEN und «abgebrochen» im Bildfeld, behaelt genau seine Hoehe, bleibt innerhalb seines Rands und endet ueber dem ⇄-Knopf; auch der laengere Fehlertext (s. Auffaelliges) blieb im Rand.",
+   "bild": "auf-20261006-246-n3.png"
+  },
+  "L1": {
+   "antwort": "ja",
+   "satz": "Bildwerkzeug am Knoten auf «Qwen-Image 2.1», Prompt aus der Abendstimmungs-Kette («Abendstimmung, warmes Licht, leuchtende Fenster, mineralisch verputzte Fassade …»), «Ausfuehren»: der Abholer rechnete den Auftrag ohne Abbruch durch, Status done, lieferstatus geliefert, engine_used qwen-image-2.1, engine_license «Qwen Research License Agreement», engine_license_open true; der Knoten zeigt FERTIG und das Bild.",
+   "rechenzeit_s": 226.0,
+   "auftrag_wand_s": 231,
+   "stillstand_s": 52.0,
+   "engine_used": "qwen-image-2.1",
+   "engine_license": "Qwen Research License Agreement",
+   "engine_license_open": true,
+   "gpu": {"spitze_mib": 22649, "spitze_w": 347.7}
+  },
+  "L2": {
+   "antwort": "ja",
+   "satz": "Unter dem Bild im Render-Knoten steht «⚠ Lizenz offen» (orange); beim Darueberfahren erscheint «Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären.» Der Bildvergleich-Knoten zeigt das Bild ebenfalls.",
+   "bild": "auf-20261006-246-l2.png"
+  },
+  "L3": {
+   "antwort": "ja",
+   "satz": "Kuratier-Flaeche (Stern oben rechts): die Karte V-01 traegt oben rechts «⚠ Lizenz offen», der Inspektor zeigt «⚠ Lizenz offen» unter dem Bild und direkt ueber «Ins Projekt übernehmen» die Zeile «⚠ Lizenz offen — Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären.»; Uebernehmen geht trotzdem, Meldung «‹Variante V-01› liegt auf ‹Renderblatt› — im KosmoPublish weiterschieben. Lizenz offen: Gerechnet mit qwen-image-2.1 (…)».",
+   "bild": "auf-20261006-246-l3.png"
+  },
+  "L4": {
+   "antwort": "ja",
+   "satz": "AUSTAUSCH-Insel, «Aufs Plakat»: neben «Render (fertig)» steht «⚠ Lizenz offen» links vom Knopf «Aufs Blatt»; Ablegen geht, Meldung «Render liegt auf ‹Renderblatt› — im KosmoPublish weiterschieben. Lizenz offen: Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären.»"
+  },
+  "L5": {
+   "antwort": "ja (kein Hinweis)",
+   "satz": "Gegenprobe am selben Knoten mit «Z-Image Turbo — Vorgabe»: gerechnet (done, geliefert, engine_used z-image-turbo, engine_license Apache-2.0, engine_license_open fehlt im Ergebnis), Rechenzeit 163.5 s; keine Marke am Bild im Knoten, keine auf Karte und Inspektor, keine Zeile vor «Ins Projekt übernehmen», Meldung danach ohne Lizenz-Zusatz.",
+   "rechenzeit_s": 163.5,
+   "gpu": {"spitze_mib": 30852, "spitze_w": 339.1}
+  }
+ },
+ "urteil": {
+  "N": "Ja — in WebKitGTK behoben: die Schiene «Umgebung drehen» ist in beiden Themen deutlich, neue Knoten (Render, Auto-Kamera, Drei-Stimmungen-Kette) ueberdecken keine bestehenden, und nach einem Abbruch bleibt der Knoten in seinem Rand ueber dem ⇄-Knopf.",
+  "L": "Ja — «⚠ Lizenz offen» ist in WebKitGTK am Render-Knoten (mit Grund beim Darueberfahren), auf Kuratier-Karte und Inspektor, vor «Ins Projekt übernehmen» und neben «Aufs Blatt» sichtbar, die Meldungen nennen den Grund, nichts wird gesperrt; mit Z-Image Turbo erscheint kein Hinweis."
+ },
+ "auffaelliges": [
+  "Claude-Anschluss: Die Test-App verband sich beim ersten Start mit dem lokalen Claude-Anschluss (Standardadresse) und hat dort die App des Owners verdraengt. Sofort behoben: App per PID beendet, im Wegwerf-Profil kosmo.claude.anschluss = «aus» (und die Anschluss-Adresse auf einen toten Port) gesetzt, neu gestartet; danach keine Verbindung der Test-App mehr zum Anschluss, der Chip «Claude verbunden» fehlt. Folge: Proben mit Wegwerf-Profil muessen den Schalter vor dem Start setzen. Die danach noch bestehende Verbindung zum Anschluss stammt von einer anderen, nicht von dieser Probe gestarteten Test-App (andere Arbeitskopie) — nicht angefasst.",
+  "Durch den Neustart ging der laufende erste Qwen-Lauf in der App verloren (Knoten wieder BEREIT, der Auftrag selbst rechnete an der Bruecke fertig); L1 wurde darum ein zweites Mal gestartet und dieser Lauf ausgewertet. Es liefen also zwei Qwen-2.1-Laeufe statt einem (226 s ausgewertet; der erste ~230 s, ebenfalls engine_license_open true).",
+  "Ohne CORS-Freigabe fuer die Tauri-Herkunft an der eigenen Bruecke meldet der Render-Knoten nach dem Senden FEHLER «Bridge nicht erreichbar — auch die Health-Probe antwortet nicht», obwohl der Auftrag angekommen ist (POST 200) — die Meldung ist irrefuehrend; mit KOSMO_BRIDGE_ORIGIN wie im Betrieb laeuft alles.",
+  "Das Einstellungsfenster bot beim Einrichten «Betriebsart und Modell wählen …» und «Kosmo-Einstellungen öffnen …» an, beide Knoepfe taten in WebKitGTK waehrend der Einrichtung sichtbar nichts.",
+  "Kuratier-Flaeche: die festen Schwebeknoepfe der Station (3D·PLAN, EG, Auge, SYNC-Leiste, ⇄, Seitenpillen) liegen ueber der Flaeche und verdecken Teile davon (Herkunft-Liste links, Filter «Alle», unterer Rand).",
+  "Glas ohne Weichzeichner wie in 242: Insel-Popups (Aufs Plakat, Stimmung) und Meldungen sind halbdurchsichtig, Knoteninhalt scheint durch; im Stimmungs-Popup ragen die Felder des Render-Knotens an der linken Kante ueber das Popup.",
+  "Der Render-Knoten haelt nur seinen letzten Lauf: nach der Z-Image-Gegenprobe zeigt die Kuratier-Flaeche nur noch die Z-Image-Variante, die Qwen-Variante mit Marke ist dort nicht mehr.",
+  "guidance_applied ist im Qwen-2.1-Ergebnis jetzt false (in 238 fehlte das Feld); engine_license_open fehlt bei Z-Image Turbo (nicht false)."
+ ],
+ "gpu": {
+  "laeufe": "drei Rechenlaeufe unter der geteilten GPU-Sperre, je bei freier Karte (vorher ~1.3 GB, ~40 W, Grenze 400 W eingehalten): Qwen-Image 2.1 zweimal (der erste durch den Neustart in der App verloren), Z-Image Turbo einmal; je eine Kamera (Innenansicht).",
+  "spitze": "Qwen 22649 MiB / 348 W; Z-Image 30852 MiB / 339 W"
+ },
+ "aufraeumen": "App, eigener Xvfb, Sitzungs-DBus, eigene Bruecke und Waechter per gemerkter PID beendet (Dienst auf 8600, fremde Xvfb und fremde Test-Apps unberuehrt); zwei eigene Absturzberichte von WebKitWebProcess (beim Beenden der App) aus dem Absturzordner geloescht; Arbeitskopie per git worktree remove --force entfernt; Wegwerf-Profile, Job-Ablagen, Rohabzuege, Hilfsskripte und die Reste des abgebrochenen Vorgaengers geloescht; GPU-Sperre frei; nur die vier PNGs und dieses Ergebnis abgelegt; nichts committet, nichts gepusht."
+}
