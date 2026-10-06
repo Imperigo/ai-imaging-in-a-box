@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261006-241",
+ "art": "frage",
+ "beschreibung": "Behelfsverortung am echten 360°-Video (KosmoPrepare e7ab173): Lot aus dem Boden, Massstab aus einem genannten Mass; nur Zahlen.",
+ "anweisung": "=== BEHELFSVERORTUNG AM ECHTEN 360°-VIDEO (KosmoPrepare e7ab173) ===\n\nWORUM ES GEHT\n  Danke fuer 240. Dort blieb die Hochachse um 16° gekippt, weil es keine Passpunkte gab und die\n  Kamera schief gehalten war. KosmoPrepare e7ab173 (git pull --ff-only auf main) baut die\n  gekennzeichnete Behelfsverortung (Owner-Entscheid 06.10.2026):\n  * Lot aus dem BODEN unter den Kameras (Ebene durch die Splat-Punkte); nur ohne lesbaren Boden aus\n    den Hochachsen der Kameras.\n  * Massstab aus EINEM genannten Mass mit Quelle: Kamerahoehe ueber dem Boden ODER eine Strecke\n    zwischen zwei Splat-Punkten.\n  * Unsicherheit je Zahl, Lage und Nordrichtung unbekannt (lv95: null), Volumen als Behelf markiert.\n  Hier an einer erfundenen, 16° geneigt gefilmten Szene geprueft (Lot aus dem Boden, 15.85° neben\n  den Kameras). Am echten Video NICHT gemessen — darum dieser Auftrag.\n\nDAS MASS — bitte nicht erfinden\n  Die Kamerahoehe beim Filmen kennt nur, wer gefilmt hat. Nennt der Owner sie (z.B. «Stick auf\n  Brusthoehe, etwa 1.5 m»), dann mit dieser Quelle und einer ehrlichen Unsicherheit (z.B. 0.1 m).\n  Nennt er sie nicht, aber es gibt eine im Splat erkennbare Strecke mit GEMESSENER Laenge (z.B. eine\n  Tuerbreite, mit dem Meter gemessen), dann diese. Gibt es keines von beiden: STOPP, nichts rechnen,\n  und das im Antwortblatt so sagen.\n\nA  Stand: git -C <KosmoPrepare> log --oneline -1 (mindestens e7ab173).\n\nB  Behelf rechnen, mit dem Arbeitsordner und Splat aus 240 C (oder D, falls dort mit Vokabular).\n   Ist der Arbeitsordner geloescht: 240 C neu fahren, dieselben Einstellungen.\n     .venv-server/bin/python tools/splat_behelf.py --colmap <ARBEITSORDNER> --ply <SPLAT.ply>\n       --quelle \"<woher das Mass kommt>\" --kamerahoehe <M> --unsicherheit <M>\n   (oder --strecke AX,AY,AZ BX,BY,BZ M statt --kamerahoehe; Punkte in Splat-Einheiten)\n   Liegt neben der .ply noch eure eigene Behelfs-Verortung aus 240, haelt das Werkzeug sie fuer eine\n   Passpunkt-Verortung und lehnt ab — dann einmal mit --ersetzen (sie ist ein Behelf ohne Kennzeichen).\n   Zurueck: Rueckgabe, die Zeile «BEHELF — …» und alle «Hinweis:» woertlich, die JSON-Zeile auf\n   stdout, und aus <splat>.verortung.json: behelf.lot (quelle, abweichung_kameras_grad,\n   streuung_kameras_grad, boden), unsicherheit, fit.massstab. Erwartet: Lot aus dem Boden, Kameras\n   um 16° daneben. Kommt das Lot aus den Hochachsen der Kameras, bitte sagen, unter wie vielen\n   Kameras ein Boden gelesen wurde (steht im Hinweis bzw. in boden).\n\nC  Ist das Modell jetzt gerade? Volumen und Oberflaechenbilder mit dieser Verortung:\n     .venv-server/bin/python tools/splat_volumen.py --ply <SPLAT.ply>\n     .venv-server/bin/python tools/flaechen_textur.py ... (wie in 240 E)\n   Zurueck: Zahl der Volumen, je Volumen laenge_m/breite_m/hoehe_m/fuellgrad und unsicherheit\n   (grundriss_m, hoehe_m, grundriss_aus), die Hinweise woertlich (gesucht: «BEHELFSVERORTUNG …»),\n   Flaechen mit Bild / ohne Bild. Und eine Beobachtung: steht der Boden des Splats in Blender (oder\n   in einer Seitenansicht) jetzt waagrecht? Ein Satz genuegt.\n\nD  Gegenprobe, eine Minute: B mit der DOPPELTEN Kamerahoehe in einem Wegwerf-Ordner (Kopie der .ply\n   dort hinein). Erwartet: fit.massstab genau doppelt, Lot unveraendert. Danach Kopie loeschen.\n\nWAS NICHT GETAN WERDEN SOLL\n  Kein Code aendern, nichts installieren, nichts committen ausser der Antwort. Keine Bilder, Videos,\n  Splats oder Projektdaten zurueckgeben; keine Orts- oder Projektnamen, keine Koordinaten. Alles\n  bleibt am Heimrechner; Arbeitsordner ausserhalb der Repos, am Ende loeschen.\n",
+ "erstellt": "2026-10-06T12:00:00Z",
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "das 360°-Video des Owners und der Splat aus 240 (nur am Heimrechner)",
+  "erzeugen_mit": null
+ },
+ "params": {
+  "kosmoprepare_stand_min": "e7ab173",
+  "daten_bleiben_lokal": true,
+  "folgt_auf": "auf-20261006-240"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nichts installieren.",
+  "hinweise": [
+   "Das Mass nicht erfinden — ohne Mass mit Quelle STOPP.",
+   "Arbeitsordner ausserhalb der Repos, am Ende loeschen.",
+   "Video nur verweisen, nicht kopieren."
+  ]
+ },
+ "rueckgabe": [
+  "Stand KosmoPrepare.",
+  "B Behelf: Satz, Hinweise, lot, unsicherheit, massstab.",
+  "C Volumen und Textur mit Behelf, Boden waagrecht?",
+  "D Gegenprobe doppelte Hoehe."
+ ],
+ "rang": 9
+}
