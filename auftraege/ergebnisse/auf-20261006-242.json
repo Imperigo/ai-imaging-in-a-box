@@ -1,0 +1,59 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-242",
+ "worker": "local",
+ "status": "erledigt — B5 ist nachher in WebKitGTK behoben: Felder und «Ausfuehren» stehen am Knoten, Maus und Tab+Enter senden je einen Auftrag",
+ "beendet": "2026-10-06T12:12:00Z",
+ "dauer_s": 1500,
+ "weg": "W1 — Desktop-App aus beiden Staenden selbst gebaut (je eigener git worktree, npm ci, Lizenz-Paket gebaut, dann «npx tauri build --no-bundle», Release-Binaerdatei, kein Paket installiert) und unter eigenem Xvfb (1920x1080x24, freie Displaynummer) mit eigener Sitzungs-DBus und Wegwerf-Profil (XDG_DATA_HOME/XDG_CONFIG_HOME/XDG_CACHE_HOME/XDG_RUNTIME_DIR) gestartet; bedient mit xdotool. Installierte App lief nicht und blieb unberuehrt; keine andere Instanz lief. Bruecke: eigene Bruecke aus dem Zweig (ohne Fake-Worker, eigener Job-Ablageordner, nur 127.0.0.1, freier Port) plus Waechter, der jeden neuen Auftrag sofort per POST /jobs/<id>/cancel abbrach. Der Dienst auf 8600 wurde nicht angefasst. Synthetisches Projekt: Einrichtung durchgeklickt, «Beispielprojekt laden — Demohaus», Vis-Station (Taste 5), GRAPH-Insel, «+ Graph erstellen», Knoten Modell + Prompt + Render, Modell.Szene→Render.Szene und Prompt→Render.Prompt verbunden, Prompt «Abendlicht, warme Fassade». Das Profil von VORHER (nach Einrichtung, mit demselben Graphen) wurde fuer NACHHER kopiert, damit beide Staende denselben Zustand zeigen.",
+ "fassungen": {
+  "vorher": "Integrator-Kopf origin/claude/kosmo-orbit-v1-build-pzxkbj, App-Kopf zeigt v0.1.7",
+  "nachher": "origin/claude/kosmovis-v017-b5-render-knoten, App-Kopf zeigt v0.1.7",
+  "code_geaendert": "nein",
+  "neu_installiert": "nein (keine Systempakete; Node-Module nur in den Wegwerf-Worktrees)"
+ },
+ "koepfe": {
+  "vorher": "7d10ed88033793fa0cf297be2bdc1e6b4b043f81",
+  "nachher": "7f87d6ef230731ee06b72c0ccf4af20f3f06dea8",
+  "hinweis": "Der Integrator-Kopf (7d10ed880) ist NEUER als der in den Zweig hereingeholte Stand 0df73d9dd; der Zweig ist kein Nachfahre des heutigen Integrator-Kopfs. Erwartung 7f87d6ef2 fuer NACHHER stimmt."
+ },
+ "schritte": {
+  "1_felder_am_knoten": {
+   "vorher": "nein — Preset, 1600 × 1000, 128 — Vorgabe, Himmel «keiner» + Regler, Bildwerkzeug, nur Cycles / Strichzeichnung stehen oben links im Fenster; am Knoten nur blasse Beschriftungen ueber leeren Flaechen, «Ausfuehren» ist am Knoten gezeichnet.",
+   "nachher": "ja — alle Felder (Preset, Aufloesung, Qualitaet gegen Zeit, Himmel, Umgebung drehen, Bildwerkzeug, nur Cycles, Strichzeichnung) und «Ausfuehren» stehen sichtbar im Knoten unter ihren Beschriftungen; oben links steht nichts mehr.",
+   "bilder": ["auf-20261006-242-vorher-1.png", "auf-20261006-242-nachher-1.png"]
+  },
+  "2_ziehen_und_zoomen": {
+   "vorher": "nein — Knoten am Kopf gezogen und mit dem Mausrad gezoomt: die Karte wandert und waechst, die Felder bleiben unveraendert gross oben links stehen.",
+   "nachher": "ja — beim Ziehen (auch waehrend die Maustaste noch gedrueckt ist) und nach drei Rad-Schritten Zoom wandern und skalieren die Felder mit der Karte und bleiben im Knoten."
+  },
+  "3_bildwerkzeug_am_knoten": {
+   "vorher": "ja, aber nur halb — ein Klick auf die Stelle unter der Beschriftung «Bildwerkzeug» am Knoten oeffnet die Auswahlliste am Knoten (Trefferflaeche dort), das geschlossene Feld selbst ist aber oben links gezeichnet.",
+   "nachher": "ja — Klick auf das sichtbare Feld am Knoten oeffnet die Liste direkt darunter am Knoten (Z-Image Turbo — Vorgabe, Z-Image Turbo, SDXL / Juggernaut, FLUX.2 [klein], Qwen-Image-Edit, FLUX.1-Krea-dev, Qwen-Image 2.1)."
+  },
+  "4_ausfuehren": {
+   "vorher": "nein — Mausklick auf «Ausfuehren» am Knoten: das Bild des Knopfs springt nach oben links, Knoten bleibt BEREIT, kein Auftrag an der Bruecke; Tab vom Bildwerkzeug fokussiert «Ausfuehren» (Fokusrahmen am Knoten), Enter sendet ebenfalls nichts.",
+   "nachher": "ja — Mausklick am Knoten: Auftrag kam an der Bruecke an (queued), der Waechter brach ihn sofort ab, der Knoten zeigt ABGEBROCHEN; danach Tab vom Bildwerkzeug auf «Ausfuehren» + Enter: zweiter Auftrag kam an und wurde abgebrochen. Zwei Auftraege, beide in unter einer Sekunde abgebrochen, nichts gerechnet."
+  },
+  "5_einstellungsfenster": {
+   "vorher": "ja — die nach oben links verschobenen Felder liegen ungedimmt UEBER dem Abdunkler des Fensters; der Knoten selbst ist durch das Fenster hindurch zu sehen.",
+   "nachher": "nein (im Sinne von B5) — keine Felder liegen mehr ueber dem Abdunkler; der Knoten ist gedimmt wie alles andere und nur durch die halbdurchsichtige Glasflaeche des Fensters zu sehen, genau wie der Prompt-Knoten, der Modell-Knoten und der Augen-Knopf oben; ein Klick ins Fenster an der Stelle eines darunterliegenden Knotenfeldes trifft das Fenster, nicht das Feld.",
+   "bilder": ["auf-20261006-242-vorher-5.png", "auf-20261006-242-nachher-5.png"]
+  }
+ },
+ "urteil": "Ja — B5 ist auf dem Zweig claude/kosmovis-v017-b5-render-knoten (7f87d6ef2) in WebKitGTK behoben: die Felder stehen am Knoten, folgen Ziehen und Zoom, das Bildwerkzeug oeffnet am Knoten, und «Ausfuehren» sendet per Klick und per Tab+Enter einen Auftrag, waehrend der Integrator-Kopf denselben Fehler wie in 239 zeigt.",
+ "auffaelliges": [
+  "Das Einstellungsfenster ist in beiden Staenden halbdurchsichtig, aber nicht unscharf: WebKitGTK zeichnet hier den Hintergrund-Weichzeichner (backdrop-filter von .k-dialog-box) offenbar nicht, deshalb sind alle hellen Flaechen dahinter (Knoten, Augen-Knopf) gestochen scharf lesbar. Kein B5-Befund mehr, aber ein Glas-Thema fuer WebKitGTK.",
+  "Auch die geoeffnete Auswahlliste des Bildwerkzeugs ist halbdurchsichtig (der Knoteninhalt scheint durch die Liste) — in beiden Staenden.",
+  "Der Regler «Umgebung drehen» zeigt am Knoten nur den Knopf, die Laufschiene ist kaum zu sehen (nachher).",
+  "Der Render-Knoten ueberdeckt den Modell-Knoten (Titel nur als «…DELL» sichtbar) — Folge der Palette-Platzierung, in beiden Staenden gleich.",
+  "Nach dem abgebrochenen Auftrag waechst der Render-Knoten nach unten ueber den Fensterrand; der untere Wechsel-Knopf (⇄) liegt dann ueber dem Knoten.",
+  "Die Desktop-App stellt beim Start die Bruecken-Adresse selbst auf die lokale Standard-Bruecke um, sobald dort eine antwortet (Verbindungswaechter, Heimrechner-Suche) — eine eigene Bruecken-Adresse haelt nur in der Betriebsart «Cloud». Fuer diese Probe wurde darum im Wegwerf-Profil Betriebsart «Cloud» und die eigene Adresse gesetzt (die Vis-Station haengt nicht von der Betriebsart ab); vorher wurde geprueft, dass kein Auftrag an die Standard-Bruecke ging.",
+  "Projektname-Feld im Einstellungsfenster ist auf den Bildern abgedeckt (synthetisches Beispielprojekt, trotzdem entfernt)."
+ ],
+ "gpu": {
+  "lauf": "keiner; zwei Auftraege an der eigenen Bruecke, beide sofort abgebrochen, nichts gerechnet",
+  "hinweis": "Kein Rechenlauf, keine GPU-Last durch diese Probe."
+ },
+ "aufraeumen": "App-Instanzen, eigener Xvfb, eigene Bruecke und Waechter per gemerkter PID beendet (Dienst auf 8600 und fremde Xvfb unberuehrt); beide Worktrees per git worktree remove --force entfernt; Wegwerf-Profile, Bau-Zielordner, Binaerdateien, Job-Ablage, Rohabzuege und Hilfsskripte geloescht; nur die vier PNGs und dieses Ergebnis abgelegt; nichts committet."
+}
