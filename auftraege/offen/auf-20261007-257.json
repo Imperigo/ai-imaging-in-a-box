@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-257",
+  "art": "frage",
+  "beschreibung": "E169: Schleier um den Kopf — brush dreimal auf dem Eingang aus 256 mit verschiedener Deckkraft-Strafe, Vergleich und Deckkraft/Groesse der nahen Splats.",
+  "anweisung": "=== DER SCHLEIER UM DEN KOPF: ECHT ODER FUELLUNG? (E169, nur brush, kein COLMAP) ===\n\nWORUM ES GEHT\n  Danke fuer 256 — brush liest die Maske (Some 313/313), die Koerperzone ist 40 % leerer.\n  Offen ist der duenne Schleier im 1-m-Kreis um den Kopf (22.7 → 41.9 je Kopfpunkt, Median\n  0.36 m ueber dem Kopf). Zwei Erklaerungen: echte Decke/Balken des gedeckten Gangs — oder\n  Fuellung an Stellen, die keine Ansicht unmaskiert sieht, wo brush beliebig fuellen darf.\n  brush 0.3.0 hat dafuer eine eigene Deckkraft-Strafe (--opac-loss-weight, Vorgabe 1e-9;\n  Quelltext crates/brush-train/src/config.rs). Wir bauen nichts, bevor gemessen ist, ob sie\n  den Schleier nimmt UND die Szene laesst.\n  (Nebenbei: die Kette startet brush seit KosmoPrepare 0cccbbc mit RUST_LOG=info, damit\n  bericht.json -> maske.brush die mask_path-Zeilen zaehlen kann.)\n\nWAS DU TUST\n  Nur brush, auf dem brush_eingang/ aus 256 (NICHT veraendern; brush liest ihn nur), mit\n  denselben Schaltern wie die Kette (--total-steps 7000, --max-resolution wie in 256,\n  --export-path in einen NEUEN Wegwerfordner je Lauf, RUST_LOG=info), aus einem leeren\n  Arbeitsverzeichnis gestartet (brush legt dort target/autotune/ an). Drei Laeufe:\n    L1  --opac-loss-weight 1e-9   (Vorgabe; muss 256 nachstellen)\n    L2  --opac-loss-weight 1e-7\n    L3  --opac-loss-weight 1e-6\n  Je Lauf messen, mit DEINEM Messverfahren aus 254/256 (dieselben Kopfpunkte):\n    Splats >0.2, innert 1 m, Koerperzone, ueber Kopf, Boden unter Weg; Dauer;\n    mask_path Some/None.\n  Zusaetzlich je Lauf, um «echt» von «Fuellung» zu trennen: fuer die Splats innert 1 m und\n  zum Vergleich fuer alle Splats den Median und das 90%-Quantil von Deckkraft (sigmoid der\n  opacity) und Groesse (exp der groessten scale). Fuellung waere eher blass und gross.\n  Ansehen: Draufsicht/Seitenansicht und ein Querschnitt durch den Gang — fehlt in L2/L3\n  irgendwo Szene (Decke, Balken, Waende, Boden), die in L1 da ist?\n\nWAS DU NICHT TUST\n  Nichts installieren, COLMAP nicht neu fahren, KosmoPrepare-Code nicht aendern, Arbeitsordner\n  aus 249/254/256 nicht veraendern. Keine Bilder, Masken oder Splats ins Repo; keine Pfade mit\n  Benutzernamen, keine Host- oder Netznamen. Die drei Wegwerfordner danach loeschen (sag, wie\n  gross sie waren).\n\nRUECKGABE\n  Tabelle L1/L2/L3 (und 256 zum Abgleich) mit den Kennzahlen; Deckkraft/Groesse innert 1 m und\n  gesamt; was beim Ansehen auffiel.\n  Urteil in zwei Saetzen: ist der Schleier echte Geometrie oder Fuellung? Welcher Wert nimmt\n  ihn, ohne Szene zu verlieren (oder keiner)?",
+  "erstellt": "2026-10-07T22:00:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 256 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-256",
+    "kosmoprepare_mindestens": "0cccbbc",
+    "owner_entscheid": "E169",
+    "opac_loss_weight": [
+      1e-09,
+      1e-07,
+      1e-06
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nichts installieren; brush nur in neue Wegwerfordner exportieren lassen.",
+    "hinweise": [
+      "Arbeitsordner aus 249, 254, 256 nicht veraendern.",
+      "Keine Bilder, Masken oder Splats ins Repo."
+    ]
+  },
+  "rueckgabe": [
+    "Tabelle L1/L2/L3 und 256 mit den Kennzahlen aus 256.",
+    "Deckkraft und Groesse der Splats innert 1 m und gesamt (Median, 90 %).",
+    "Was beim Ansehen fehlt oder auffaellt.",
+    "Urteil in zwei Saetzen."
+  ],
+  "rang": 44
+}
