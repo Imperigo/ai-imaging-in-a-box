@@ -1297,3 +1297,10 @@ gehoben (nur zwei Pakete, das Standardmodell liefert bitgleiche Bilder). Ein ech
 den Bestellweg von KosmoOrbit kam geliefert zurück, mit der Marke «Lizenz offen». Diese Datei liegt
 beim Integrator, damit er seine Lizenzmarke an einem echten Ergebnis prüfen kann. Die Innenkamera-
 Korrektur ist am echten Lauf bestätigt.
+
+**07.10.2026 — Materialien aus dem Modell: geprüft und bewusst nicht gebaut.** Bevor Farben und Materialien aus
+der IFC in unsere 3D-Datei übernommen werden, wurde gezählt, ob das Demohaus überhaupt welche trägt. Es trägt
+keine: Die Materialnamen haben keine Farbe, und was ein Lesewerkzeug dafür einsetzt, sind seine eigenen Grautöne.
+Diese zu übernehmen hiesse, Erfundenes als Modellinformation auszugeben. Dabei fiel auf, dass der Export von
+KosmoOrbit Dächer, Treppe und Geländer weglässt — für die Prüfung gegen die Geometrie wichtiger als jede Farbe.
+Das liegt beim Integrator.

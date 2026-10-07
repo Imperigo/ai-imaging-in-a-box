@@ -7768,6 +7768,13 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **cloud (Int 1):** P-LIZENZMARKE Schritt 1 gegen die echte Datei prüfen, Antwort abwarten. *(06.10.2026: ROADMAP 1681, Fixture + Probe bei ihnen, passt ohne Rückbau)*
 - [x] **Kern:** `guidance_applied` auch für Qwen-2.1 — Regler `true_cfg_scale` 1.0 aus der Signatur (Rechnung unverändert). *(06.10.2026)*
 - [ ] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt. *Zählung beauftragt: `auf-20261007-259` (07.10.2026).*
+  *Zurückgestellt (07.10.2026), nicht gebaut:* `auf-20261007-259` — das Demohaus trägt **null** Oberflächenstile;
+  «beton» und «kalksandstein» haben keine Farbe. In der glb kämen höchstens drei Grautöne an, und die stammen aus
+  den Vorgaben des Lesewerkzeugs, nicht aus dem Modell. Wieder aufnehmen, sobald der Kernel-Export Stile schreibt.
+- [ ] **Integrator (Kernel-Export, nicht unser Code):** Dächer, Treppe und Geländer fehlen in der IFC; Fenster und
+  Türen kommen nur als Ausschnitte (`auf-20261007-259`). Für Visbox heisst das: Die Soll-Tiefenkarte hat dort kein
+  Dach, wo das Bild eines zeichnet — die Prüfung gegen die Geometrie urteilt dann gegen ein unvollständiges Haus.
+  Gemeldet von der HomeStation und von uns über die Zentrale (07.10.2026).
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
