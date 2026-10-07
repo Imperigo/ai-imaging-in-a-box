@@ -1324,3 +1324,9 @@ hatte keinen Standpunkt, und ohne Standpunkt nahm die Software einen alten Notbl
 Haus nur ein Sechstel des Bildes füllte. Mit Blick von Süden bestand dieselbe Mappe wie am 01.10. Jetzt rechnet
 «Anwenden» ohne Angabe frontal von Süden — genau wie der Weg, auf dem KosmoOrbit bestellt — und sagt dazu, dass
 es diese Vorgabe genommen hat. Das langsamere erste Qwen-Bild war Zufall der Reihenfolge, nicht der Umbau.
+
+**07.10.2026 — der Verlauf am Render-Knoten ist gebaut.** Wie auf Blatt 15 gezeichnet und vom Owner abgenommen:
+Unter dem Bild stehen die letzten vier Läufe, das neueste links, jeder mit seinem Urteilspunkt; ein Klick zeigt ein
+Bild gross, ohne das Hauptbild zu ersetzen; gelöscht wird nichts. Beim Bau zeigte sich, dass die Software frühere
+Läufe bisher wirklich vergass — jetzt hält sie die letzten vier fest. Ein Satz der Zeichnung war falsch und wurde
+berichtigt. Geprüft ist es im Browser; die Probe in der Engine der Desktop-App macht der Heim-PC.

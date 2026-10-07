@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-263",
+  "art": "frage",
+  "beschreibung": "WebKitGTK-Gegenprobe vor dem Einspielen: Verlauf am Render-Knoten (E174) — Reihe, Abzeichen, grosse Ansicht, Hoehe.",
+  "anweisung": "=== IN WEBKITGTK PRUEFEN: DER VERLAUF AM RENDER-KNOTEN (E174) — VOR DEM EINSPIELEN ===\n\nWORUM ES GEHT\n  Owner-Entscheid E174 (bei uns 68): Der Render-Knoten der Vis-Station zeigt unter dem Hauptbild die\n  letzten 4 Laeufe als Daumenbilder, das neueste links, je mit Urteilspunkt; ein Klick zeigt das Bild\n  nur gross (Hauptbild bleibt der letzte Lauf), geloescht wird nichts. Auf dem Hauptbild stehen ab dem\n  zweiten Lauf «LAUF n · hh:mm» (oben links) und das Urteil (oben rechts), ohne Klicks zu schlucken.\n  Die Cloud hat nur Chromium; dort ist alles gruen (App-Proben 6722, 101 E2E der Vis-Specs).\n  Zweig: claude/kosmovis-v018-render-verlauf (Kopf 5fdf523be, Integrator-Kopf f91360caf schon drin).\n\nAUFBAU\n  In einer eigenen Arbeitskopie den Zweig auschecken (origin/claude/kosmovis-v018-render-verlauf),\n  die Desktop-App bauen (tauri build --no-bundle), eigener Xvfb, Wegwerf-Profil, Klicks per xdotool —\n  derselbe Weg wie bei den WebKitGTK-Gegenproben 242/246. Die installierte App NICHT ersetzen. Gebauten\n  Kopf notieren. Keine Systempakete installieren. Frischer Graph, synthetisches Projekt.\n  Laeufe: Z-Image Turbo (Vorgabe), Entwurf/kleine Schrittzahl genuegt; je Lauf «Ausfuehren» am selben\n  Render-Knoten und abwarten, bis das Bild da ist. Fuenf Laeufe insgesamt.\n\nWAS DU PRUEFST\n  V1 Nach Lauf 1: KEINE Reihe, KEINE Abzeichen am Hauptbild?\n  V2 Nach Lauf 2, 3 und 5: Reihe mit 2, 3 bzw. 4 Daumenbildern, neuestes links (das erste traegt den\n     Rahmen = aktuelles Hauptbild)? Urteilspunkt je Bild sichtbar? Uhrzeit darunter?\n  V3 Abzeichen am Hauptbild: «LAUF n · hh:mm» oben links und Urteil oben rechts, beide INNERHALB des\n     Bildes, nicht ueberlappend? Ein Klick auf das Laufschild verhaelt sich wie ein Klick aufs Bild?\n  V4 Klick auf ein aelteres Daumenbild: grosse Ansicht erscheint UEBER der Leinwand, mittig, nicht oben\n     links und nicht abgeschnitten (WebKitGTK-Fehlerbild aus 242)? Darin Urteil, Grund, Treue,\n     Bildwerkzeug, Herkunft, Hinweis-Satz unten. Vor/zurueck (Knoepfe UND Pfeiltasten), Escape schliesst,\n     der Fokus kehrt zum Daumenbild zurueck. Hauptbild danach UNVERAENDERT, Knoten NICHT verschoben,\n     nichts ausgewaehlt, nichts aufs Blatt gelegt?\n  V5 Ziehen und Zoomen der Leinwand bei sichtbarer Reihe: wandern Reihe und Abzeichen mit dem Knoten\n     (nichts bleibt am Ursprung stehen, nichts scheint durch)?\n  V6 Hoehe: Der Knoten waechst mit Reihe um 84 px. Ragt er unten in den ⇄-Knopf in der Mitte oder ueber\n     den Rand (Befund aus dem B5-Nachgang)? Ist «Ausfuehren» noch erreichbar?\n  V7 Helles Thema (falls umschaltbar): grosse Ansicht und Reihe lesbar?\n  V8 Gegenprobe: der installierte Stand (ohne den Zweig) zeigt nach mehreren Laeufen KEINE Reihe — nur\n     ein Blick, kein voller Durchlauf.\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Namen, Pfade mit\n  Benutzernamen, Host- oder Netznamen in Bildern oder Text. Wegwerf-Arbeitskopie und Profil danach\n  loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261007-263.json)\n  Gebauter Kopf; V1–V8 je ja/nein + ein Satz; bei einem Fehler: was genau, wo, Bildschirmfoto.\n  Bildschirmfotos klein, nur synthetisches Projekt: auftraege/ergebnisse/auf-20261007-263-<v2|v3|v4|v6>.png\n  Urteil in einem Satz: Kann der Zweig zum Einspielen an Int 1?",
+  "erstellt": "2026-10-07T23:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "synthetisches Projekt in der Desktop-App (Modell-Knoten mit Beispielgeometrie)"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-render-verlauf@5fdf523be"
+    ],
+    "owner_entscheid": "E174",
+    "entscheid_hier": 68
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: fuenf kurze Z-Image-Turbo-Laeufe ueber die Bruecke; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Gebauter Kopf.",
+    "V1–V8 je ja/nein und ein Satz.",
+    "Bildschirmfotos v2, v3, v4, v6 (klein, synthetisch).",
+    "Urteil: kann der Zweig zu Int 1?"
+  ],
+  "rang": 50
+}

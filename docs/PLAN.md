@@ -7761,7 +7761,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen. *(07.10.2026, Entscheid 68: B, kleiner Verlauf am Knoten, v0.1.8)*
 - [x] **v0.1.8 (Entwurf):** Blatt 15 «Verlauf am Render-Knoten» auf der Entwurfsfläche gezeichnet (4 Läufe, neuestes links, Urteilspunkt, Klick = gross). *(07.10.2026)*
 - [x] **Owner:** Blatt 15 am Bild abnehmen (oder ändern). *(07.10.2026, über die Zentrale: «so abnehmen»; KosmoOrbit E174, gebaut in v0.1.8)*
-- [ ] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten bauen, nach Abnahme des Blatts, auf eigenem Zweig.
+- [x] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten bauen, nach Abnahme des Blatts, auf eigenem Zweig.
+      *(07.10.2026: Zweig «claude/kosmovis-v018-render-verlauf», Kopf 5fdf523be; nur in Chromium geprüft — Protokoll 74 §62)*
+- [ ] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
+- [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
 - [x] **Kern (drüben):** Publish Schritt 2 — `bildAufsBlatt` gibt das Feld mit (nach Schritt 1). *(06.10.2026: Zweig «kosmovis-v017-publish-schritt2», Kopf `d4dc55c7f`, Chromium grün)* Schritt 3 (Anzeige im Publish) verteilt Int 1 an Publish/Prepare.
