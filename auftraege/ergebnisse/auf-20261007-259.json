@@ -1,0 +1,74 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-259",
+ "worker": "local",
+ "rang": 46,
+ "status": "erledigt: Demohaus ohne GUI aus dem Kernel als IFC4 erzeugt (derselbe Exporter wie «Modell als IFC» in der App), mit ifcopenshell gezaehlt, Runner unveraendert laufen lassen. Die IFC traegt 0 IfcSurfaceStyle / 0 IfcStyledItem; 2 IfcMaterial (beton, kalksandstein) ohne Farbe. Die Farben, die ifcopenshell je Bauteil liefert, sind seine eingebauten Vorgaben je IFC-Typ, nicht aus der Datei. Heutige glb: 0 Materialien. Nur CPU, kein Code geaendert, nichts installiert, nichts committet.",
+ "quelle_ifc": {
+  "art": "Demohaus-Export (nicht synthetisch aus ai-imaging)",
+  "weg": "Kernel-Befehl haus.demohausBauen in ein leeres Dokument, dann exportIfc des Kernels — dieselbe Funktion, die der App-Export «Modell als IFC» aufruft; ohne GUI, mit einem Wegwerf-Skript (tsx) ausserhalb jedes Repos. Die laufende Desktop-App wurde nicht beruehrt.",
+  "stand_kernel": "Orbit-Zweig, Stand v0.1.7-Vorlauf; ifc/export.ts und commands/haus.ts gleich wie die aktuelle Zweigspitze (git diff leer)",
+  "stand_ai_imaging": "7f65974 (Runner unveraendert)",
+  "schema": "IFC4",
+  "groesse_kb": 71,
+  "inhalt_dokument": "2 Geschosse, 32 Waende, 39 Oeffnungen, 2 Decken, 2 Daecher, 1 Treppe, 1 Gelaender, 1 Moebel, 26 Raeume, 5 Aufbauten",
+  "nebenbefund_export": "Der Kernel-Export schreibt Daecher (2), Treppe (1) und Gelaender (1) NICHT; Fenster und Tueren nur als IfcOpeningElement (Ausschnitt), kein IfcWindow/IfcDoor. In der IFC stehen darum an gebauter Substanz nur 32 IfcWall, 2 IfcSlab, 1 IfcFurnishingElement."
+ },
+ "zaehlung_entitaeten": {
+  "IfcSurfaceStyle": 0,
+  "IfcSurfaceStyleRendering": 0,
+  "IfcStyledItem": 0,
+  "IfcMaterial": 2,
+  "IfcMaterialLayerSet": 0,
+  "IfcMaterialLayerSetUsage": 0,
+  "IfcRelAssociatesMaterial": 32
+ },
+ "zaehlung_je_typ": {
+  "einstellungen": "ifcopenshell.geom.create_shape mit use-world-coords = True (wie im Runner); ifcopenshell 0.8.5",
+  "kopf": ["typ", "anzahl", "im_runner", "mit_geometrie", "materials_nicht_leer", "materialien_je_bauteil", "verschiedene_material_ids_je_bauteil", "IfcMaterial_zugeordnet"],
+  "zeilen": [
+   ["IfcWall", 32, true, 32, 32, 1, 1, "8 beton, 24 kalksandstein"],
+   ["IfcSlab", 2, true, 2, 2, 1, 1, "keins"],
+   ["IfcFurnishingElement", 1, true, 1, 1, 1, 1, "keins"],
+   ["IfcOpeningElement", 39, false, 39, 39, 1, 1, "keins"],
+   ["IfcSpace", 26, false, 26, 26, 1, 1, "keins"],
+   ["IfcWindow / IfcDoor / IfcRoof / IfcStair / IfcRailing", 0, null, 0, 0, null, null, "nicht exportiert"]
+  ]
+ },
+ "materialliste": {
+  "hinweis": "So liefert ifcopenshell form.geometry.materials. Da die Datei keinen einzigen Oberflaechenstil traegt, sind das die eingebauten Vorgabe-Materialien von ifcopenshell je IFC-Typ (Name = Typname bzw. DefaultMaterial). Die IfcMaterial-Namen beton/kalksandstein erscheinen dort NICHT.",
+  "kopf": ["name", "diffuse_rgb", "transparenz", "bauteile", "typ"],
+  "zeilen": [
+   ["IfcWall", [0.9, 0.9, 0.9], null, 32, "IfcWall"],
+   ["IfcSlab", [0.4, 0.4, 0.4], null, 2, "IfcSlab"],
+   ["DefaultMaterial", [0.7, 0.7, 0.7], null, 1, "IfcFurnishingElement"],
+   ["DefaultMaterial", [0.7, 0.7, 0.7], null, 39, "IfcOpeningElement (im Runner uebersprungen)"],
+   ["IfcSpace", [0.65, 0.75, 0.8], 0.8, 26, "IfcSpace (im Runner uebersprungen)"]
+  ],
+  "ifcmaterial_ohne_farbe": ["beton", "kalksandstein"]
+ },
+ "runner_heute": {
+  "aufruf": "ifc_to_glb_runner.py <demohaus.ifc> <demohaus.glb> --report, in .venv-ifc, unveraendert",
+  "status": "ok",
+  "n_elements": 35,
+  "n_triangles": 1096,
+  "uebersprungen": {"IfcOpeningElement": 39, "IfcSpace": 26},
+  "glb_materialien": 0,
+  "glb_primitive_mit_material": "0 von 35",
+  "trimesh_sicht": "35 Geometrien, alle ColorVisuals ohne Material",
+  "erwartung_erfuellt": true
+ },
+ "urteil": [
+  "Fuer das Demohaus lohnt es sich heute nur knapp: in der glb kaemen hoechstens drei Grautoene an (Wand 0.9, Decke 0.4, Moebel 0.7), und die stammen aus den Vorgaben von ifcopenshell je IFC-Typ, nicht aus dem Modell — die IFC selbst traegt keinen einzigen Oberflaechenstil, und ihre zwei IfcMaterial (beton, kalksandstein) haben keine Farbe.",
+  "Der groessere Hebel liegt vor dem Runner: Der Kernel-Export muesste Oberflaechenstile (oder wenigstens farbige IfcMaterial-Darstellungen) schreiben und Daecher, Treppe, Gelaender, Fenster und Tueren ueberhaupt ausgeben; bei IFC aus ArchiCAD koennte das Bild anders aussehen (hier nicht gemessen)."
+ ],
+ "nicht_getan": [
+  "kein Code geaendert, nichts installiert, GPU nicht benutzt",
+  "Desktop-App des Owners nicht beruehrt",
+  "keine echten Projektdaten; die IFC liegt nicht im Repo",
+  "nichts committet"
+ ],
+ "aufraeumen": "Wegwerfordner (IFC, glb, Report, Zaehl- und Erzeugungsskripte) geloescht; kein worktree angelegt.",
+ "umgebung": {"gpu_benutzt": false, "netz_benutzt": "nur ein git fetch des Orbit-Zweigs zum Standvergleich"},
+ "fehler": null
+}
