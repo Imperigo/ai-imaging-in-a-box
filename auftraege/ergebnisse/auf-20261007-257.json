@@ -1,0 +1,92 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-257",
+ "worker": "local",
+ "rang": 44,
+ "folgt_auf": "auf-20261007-256",
+ "owner_entscheid": "E169",
+ "status": "erledigt. Drei brush-Laeufe (0.3.0) auf dem brush_eingang/ aus 256 (nur gelesen), je rc 0, mask_path Some in allen Ladezeilen, None 0. L1 (1e-9) stellt 256 nach. L2 (1e-7) und L3 (1e-6) nehmen nicht den Schleier gezielt, sondern die ganze Szene: L2 behaelt 7 % der Splats ueber 0.2, L3 0.02 % (Szene praktisch leer). Kein Code geaendert, nichts installiert, nichts committet, COLMAP nicht gefahren.",
+ "aufbau": {
+  "eingang": "<auf256>/D/brush_eingang (nur gelesen; 960 Bilder + 960 Masken, sparse/0)",
+  "befehl": "RUST_LOG=info brush_app <brush_eingang> --total-steps 7000 --export-every 7000 --export-path <auf257>/Ln/aus --export-name splat.ply --max-resolution 1086 --opac-loss-weight W",
+  "schalter_herkunft": "aus run_pipeline.sh der Kette 256 (STEPS 7000, MAX_RES 1086, export-every = STEPS); einzige Aenderung --opac-loss-weight und RUST_LOG=info",
+  "arbeitsverzeichnis": "je Lauf ein leeres <auf257>/Ln/arbeit (brush legte dort target/ an)",
+  "reihenfolge": "nacheinander in einem Skript, GPU-Sperre einmal vor L1 genommen (until mkdir …; sleep 30), per trap geloest; danach geprueft: frei",
+  "messung": "Verfahren aus 254/256 unveraendert: Verortungsmatrix und die 127 Kopfpunkte aus <auf256>/messung/256 (dieselbe sparse/0, darum dieselben Kopfpunkte); 256 damit auf die Zahl genau wiederholt (auch Boden unter Weg 12310 und Seiten 935/4381). Deckkraft = sigmoid(opacity), Groesse = exp(groesste scale) x Massstab der Behelfsverortung (6.22), in m."
+ },
+ "kopf": ["lauf", "opac_loss_weight", "splats_gesamt", "splats_op02", "nah_1m", "nah_anteil", "<0.25m", "0.25-0.5m", "0.5-0.75m", "0.75-1.0m", "nah_dz_median_m", "koerperzone", "ueber_kopf", "boden_unter_weg", "nah_seite_a", "nah_seite_b", "training_s", "mask_path_some", "mask_path_none"],
+ "zeilen": [
+  ["256 (Kette)", "1e-9", 3044702, 272708, 5316, "1.95 %", 9, 249, 1318, 3740, 0.36, 501, 12466, 12310, 935, 4381, "ca. 260 (Kette)", "313 (Gegenprobe)", 0],
+  ["L1", "1e-9", 3054843, 271469, 5512, "2.03 %", 21, 333, 1381, 3777, 0.37, 583, 12524, 12553, 1106, 4406, 258, 962, 0],
+  ["L2", "1e-7", 672908, 18792, 313, "1.67 %", 0, 6, 57, 250, 0.30, 59, 414, 689, 90, 223, 142, 962, 0],
+  ["L3", "1e-6", 8821, 57, 0, "0.00 %", 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 70, 963, 0]
+ ],
+ "je_kopfpunkt_kopf": ["lauf", "nah_1m", "koerperzone", "ueber_kopf", "boden_unter_weg"],
+ "je_kopfpunkt": [
+  ["256", 41.9, 3.94, 98.2, 96.9],
+  ["L1", 43.4, 4.59, 98.6, 98.8],
+  ["L2", 2.46, 0.46, 3.26, 5.43],
+  ["L3", 0.0, 0.0, 0.0, 0.0]
+ ],
+ "dauer_wand_s": {"L1": 264, "L2": 146, "L3": 73, "hinweis": "Laden + Training + Export; reines Training laut brush 258 / 142 / 70 s"},
+ "deckkraft_groesse": {
+  "kopf": ["lauf", "menge", "anzahl", "deckkraft_median", "deckkraft_q90", "groesse_median_m", "groesse_q90_m"],
+  "zeilen": [
+   ["256", "innert 1 m, op>0.2", 5316, 0.251, 0.373, 0.023, 0.064],
+   ["256", "innert 1 m, alle", 124638, 0.044, 0.141, 0.033, 0.083],
+   ["256", "gesamt, op>0.2", 272708, 0.260, 0.406, 0.025, 0.072],
+   ["256", "gesamt, alle", 3044702, 0.065, 0.191, 0.032, 0.096],
+   ["L1", "innert 1 m, op>0.2", 5512, 0.251, 0.377, 0.023, 0.064],
+   ["L1", "innert 1 m, alle", 124811, 0.044, 0.142, 0.033, 0.084],
+   ["L1", "gesamt, op>0.2", 271469, 0.260, 0.406, 0.025, 0.073],
+   ["L1", "gesamt, alle", 3054843, 0.065, 0.190, 0.032, 0.096],
+   ["L2", "innert 1 m, op>0.2", 313, 0.236, 0.339, 0.074, 0.200],
+   ["L2", "innert 1 m, alle", 22951, 0.033, 0.101, 0.070, 0.171],
+   ["L2", "gesamt, op>0.2", 18792, 0.244, 0.348, 0.055, 0.162],
+   ["L2", "gesamt, alle", 672908, 0.045, 0.126, 0.077, 0.219],
+   ["L3", "innert 1 m, op>0.2", 0, null, null, null, null],
+   ["L3", "innert 1 m, alle", 59, 0.017, 0.042, 0.931, 3.307],
+   ["L3", "gesamt, op>0.2", 57, 0.251, 0.437, 0.318, 1.663],
+   ["L3", "gesamt, alle", 8821, 0.020, 0.057, 1.276, 25.5]
+  ],
+  "lesart": "In L1/256 sind die Splats innert 1 m NICHT blasser oder groesser als der Rest: ueber 0.2 gleich (Median 0.25 vs 0.26, Groesse 2.3 vs 2.5 cm), ohne Schwelle sogar etwas kleiner/blasser (0.044 vs 0.065; 3.3 vs 3.2 cm). Das Muster «blass und gross» der Fuellung zeigt sich nicht. Auffaellig ist nur die Menge: innert 1 m liegen ~125 000 Splats, davon nur 4 % ueber 0.2."
+ },
+ "deckkraftsumme_ohne_schwelle": {
+  "zweck": "schwellenfreier Vergleich: Summe der Deckkraft aller Splats je Zone; Verhaeltnis Schleier zu Boden zeigt, ob die Strafe gezielt den Schleier nimmt",
+  "kopf": ["lauf", "nah_1m", "koerperzone", "ueber_kopf", "boden_unter_weg", "gang_waagrecht_<3m", "nah/boden", "koerper/boden"],
+  "zeilen": [
+   ["256", 8067.6, 943.7, 14671.9, 14337.1, 257876.2, 0.563, 0.066],
+   ["L1", 8124.6, 1005.0, 14744.5, 14600.0, 257947.4, 0.556, 0.069],
+   ["L2", 1080.0, 209.8, 1462.1, 2135.5, 38217.8, 0.506, 0.098],
+   ["L3", 1.3, 0.4, 2.4, 6.4, 116.7, 0.203, 0.062]
+  ],
+  "lesart": "L2 nimmt den Gang insgesamt auf 15 % der Deckkraft, den Schleier (nah) auf 13 % — fast im gleichen Mass; die Koerperzone sinkt sogar weniger als der Boden. Keine gezielte Wirkung auf den Schleier."
+ },
+ "ansehen": {
+  "gerendert": "je Lauf (256, L1, L2, L3) Draufsicht, Seitenansicht (Band +-1.5 m um die Bahn) und Querschnitt (Splats >0.2 relativ zum naechsten Kopfpunkt, +-0.5 m laengs), Dichte logarithmisch, je Bild eigen normiert; alle angesehen",
+  "L1": "wie 256: Gang mit beiden Waenden, Dach mit Brettraster, Boden durchgehend, Vorplatz und Ausgang; im Querschnitt im 1-m-Kreis zwei schraege duenne Streifen auf und knapp ueber Kopfhoehe (der Schleier aus 256), Koerperzone darunter fast leer",
+  "L2": "Grundform noch erkennbar (Querschnitt: Dachkante, linke Wand, Boden, rechte Wand als duenne Spur), aber stark ausgeduennt: in der Draufsicht fehlt das Dachbrett-Raster fast ganz, die obere Wand ist in der Mitte nur noch eine Punktreihe, die Seitenansicht ist ueberall licht, Vorplatz fast weg; der Kreis um den Kopf ist leer, aber die Waende ausserhalb sind ebenso leer geworden",
+  "L3": "Szene weg: 57 Splats ueber 0.2 im ganzen Modell, ein paar Punkte am Vorplatz; Draufsicht, Seite und Querschnitt praktisch weiss; die restlichen 8821 Splats sind blass und riesig (Median 1.3 m, Q90 25 m)",
+  "fehlt_in_L2_L3": "L2: Dach (Brettraster), Teile der Waende, Vorplatz deutlich duenner — Szene verloren, nicht nur Schleier. L3: alles."
+ },
+ "urteil": [
+  "(1) Der Schleier verhaelt sich wie Geometrie, nicht wie Fuellung: seine Splats sind so deckend und so klein wie der Rest der Szene (Median 0.25 / 2.3 cm gegen 0.26 / 2.5 cm), und die Deckkraft-Strafe nimmt ihn nur im gleichen Mass wie Dach, Waende und Boden (nah/Boden 0.56 -> 0.51); ob es die Decke/Balken des Gangs ist oder ein schmaler, von allen Ansichten konsistent gesehener Rest, laesst sich mit der Strafe nicht trennen.",
+  "(2) Kein Wert nimmt ihn ohne Szenenverlust: 1e-9 laesst alles wie 256, 1e-7 duennt die ganze Szene auf 7 % der Splats ueber 0.2 aus (Boden unter Weg 98.8 -> 5.4 je Kopfpunkt), 1e-6 loescht sie fast ganz — --opac-loss-weight ist fuer dieses Ziel das falsche Werkzeug."
+ ],
+ "gpu": {"sperre": "vor L1 genommen, nach L3 per trap geloest, danach frei", "vorher": "Leerlauf (67 W, 1.3 GB, keine fremde Rechenlast)", "grenze_w": 400, "spitze_w": 254},
+ "nicht_getan": [
+  "kein Code geaendert, nichts installiert, COLMAP nicht gefahren",
+  "brush_eingang/ und Arbeitsordner aus 249/254/256 nicht veraendert (nur gelesen)",
+  "nichts committet; keine Bilder, Masken, Splats ins Repo oder Ergebnis; keine Benutzer- oder Hostnamen",
+  "Prozesse nicht per Muster beendet (es musste keiner beendet werden)"
+ ],
+ "aufraeumen": "Wegwerfordner L1, L2, L3 geloescht: 789 MB, 253 MB, 103 MB (zusammen 1.1 GB, je splat.ply + brush-Protokoll + target/). Liegen bleibt <auf257> mit Laufskript, Messskripten und 16 PNG: 1 MB.",
+ "groesse_wegwerf_gb": 1.1,
+ "umgebung": {"gpu_benutzt": true, "netz_benutzt": false},
+ "abweichungen": [
+  "Kopfpunkte und Verortung aus <auf256>/messung/256 uebernommen statt je Lauf neu verortet — gleiche sparse/0, darum gleich; so sind die Laeufe direkt vergleichbar (256 wiederholt sich damit exakt).",
+  "mask_path-Zahl ueber das ganze Training (962/962/963 Ladezeilen) statt 313 der 300-Schritte-Gegenprobe.",
+  "Zusaetzlich Deckkraft/Groesse auch ohne Schwelle 0.2 und eine schwellenfreie Deckkraftsumme je Zone, weil die Strafe die Deckkraft selbst verschiebt und die Zaehlung ueber 0.2 sonst allein die Ausduennung misst."
+ ],
+ "fehler": null
+}
