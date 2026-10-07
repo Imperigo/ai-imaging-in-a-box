@@ -7742,7 +7742,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben, E154 (4), P-LIZENZMARKE Schritt 2):** Hinweis «Lizenz offen» am Bild (und beim Veröffentlichen, falls in `modules/vis`), nichts sperren — Zweig «kosmovis-v017-lizenzmarke-hinweis» — gebaut `45072c3b9`; Veröffentlichen liegt ausserhalb, im Blatt benannt.
 - [x] **local:** `auf-20261006-246` — Nachgang und «Lizenz offen» in WebKitGTK prüfen (App aus beiden Zweigen gebaut, ein Qwen-2.1-Lauf). *(06.10.2026: beides bestätigt; über die Zentrale an Int 1 freigegeben)*
 - [x] **Kern (drüben, Nachgang 2 — auf «kosmovis-v017-publish-schritt2»; Kuratier-Fläche frei, Stimmungs-Popup nur Glas ohne Weichzeichner = UI-Bausteine):** Stimmungs-Popup — Felder ragen links über den Rand; Schwebeknöpfe über der Kuratier-Fläche (falls Vis).
-- [ ] **local:** `auf-20261006-248` — Publish Schritt 2 und Nachgang 2 in WebKitGTK prüfen; danach Freigabe an Int 1 über die Zentrale.
+- [x] **local:** `auf-20261006-248` — Publish Schritt 2 und Nachgang 2 in WebKitGTK prüfen; danach Freigabe an Int 1 über die Zentrale. *(07.10.2026: A1, A2, B1, B2 bestätigt; A3 keine Bedingung; freigegeben, Kopf `2bc5bb34c`)*
+- [ ] **cloud (Int 1):** Zweig «kosmovis-v017-publish-schritt2» einspielen.
+- [ ] **Kern (drüben, Nachgang 3, nach dem Einspielen):** Hinweis am «Aufs Blatt»-Knopf der Kuratier-Karte abgeschnitten; Herkunftszeile beim Ablegen fällt auf `engine_used` zurück, solange die Brücke kein `worker` liefert.
 - [ ] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen.
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
