@@ -1,0 +1,95 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-256",
+ "worker": "local",
+ "rang": 43,
+ "folgt_auf": "auf-20261007-255",
+ "owner_entscheid": "E169",
+ "status": "erledigt (A, B). Kette lief durch: 960/960, 1 Modell, Maske fuer COLMAP (960x «Mask: Yes») und brush_eingang/ mit 960 Masken. Die Kette selbst zeigt keine mask_path-Zeile (brush laeuft dort ohne RUST_LOG=info, bericht.json maske.brush = «ungemessen»); eine Gegenprobe mit RUST_LOG=info auf demselben brush_eingang/ ergibt 313 von 313 «mask_path: Some», 0 «None». Kein Code geaendert, nichts installiert, nichts committet.",
+ "stand": {
+  "kosmoprepare": "b137709 (git pull --ff-only: 1ccc00c -> b137709); b137709 ist HEAD",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server/bin/python fuer Werkzeug und Messung; Erkennung wie 254/255"
+ },
+ "A_kette": {
+  "werkzeug": "kosmoprepare_mcp_tools.tool_splat_kette / tool_splat_stand, Befehlszeile wie 254 B (quelle insv, linsen_messen true, fps 2, max_frames 240, schritte 7000, profil rtx5090, ohne ohne_maske; Vokabular ueber $KOSMOPREPARE_COLMAP_VOKABULAR); neuer Arbeitsordner <KosmoSplat>/auf256/D",
+  "rueckgabe": 0,
+  "letzter_stand_status": "fertig",
+  "stufen": ["frame_extraction", "maske", "colmap_feature_extraction", "colmap_rig", "colmap_matching", "colmap_mapping", "brush_training"],
+  "stufen_zeit": {"frame_extraction": "18:47:38", "maske": "18:50:18", "colmap_feature_extraction": "18:51:19", "colmap_rig": "18:51:34", "colmap_matching": "18:51:36", "colmap_mapping": "18:58:40", "brush_training": "19:06:31", "fertig": "19:10:50"},
+  "maske_dauer_s": 61,
+  "bericht": {"status": "fertig", "bilder": 960, "registriert": 960, "modelle": 1, "punkte": 291757, "schleifenschluss": true, "dauer_s": 1392.4, "max_res": 1086, "vokabular": "bereit"},
+  "splats": 3044702,
+  "bericht_maske_woertlich": {
+   "status": "gerechnet",
+   "verfahren": "person",
+   "verfahren_grund": null,
+   "maskiert": 4,
+   "ansichten": [
+    {"ansicht": "back", "anteil": 0.0092, "grund": "die Person beruehrt den unteren Rand in 11 von 240 Bildern, nirgends in 20% — keine Handzone"},
+    {"ansicht": "front", "anteil": 0.0961, "grund": null},
+    {"ansicht": "left", "anteil": 0.0122, "grund": "die Person beruehrt den unteren Rand in 17 von 240 Bildern, nirgends in 20% — keine Handzone"},
+    {"ansicht": "right", "anteil": 0.2668, "grund": "Handzone waere 16% der Ansicht — mehr als 10%, ein Koerper und keine Hand mehr; nicht gesetzt, dort traegt die Erkennung selbst"}
+   ],
+   "colmap": true,
+   "brush": "ungemessen — brush meldete keine Zeile «mask_path»",
+   "parameter_herkunft": "Schwelle und Saum gemessen (253), hand_haeufigkeit (254, 255); hand_band und hand_anteil_max nach 254 gesetzt, in 255 bestaetigt (right ohne Person 0 %)"
+  },
+  "zeile_brush_liest_woertlich": "[19:06:31] brush liest die Maske aus brush_eingang/ (960 Masken, Ablage nach brush 0.3.0)",
+  "splat_maske_satz_woertlich": "Maske (Personenerkennung): back 28/240 erkannt, Mittel 0.9%; front 96/240 erkannt, Mittel 9.6%, Handzone 3.7%; left 36/240 erkannt, Mittel 1.2%; right 220/240 erkannt, Mittel 26.7%",
+  "maske_kurz": "front hat wieder die Handzone aus 254 (3.7 %), right ohne Zone (nur Erkennung, 26.7 % statt 38.8 % in 254), back/left ohne Zone wie 254",
+  "colmap_mask_path": "ja — feature_extractor meldet 960x «Mask: Yes», kein «nicht angewandt», kein MASK_ERROR",
+  "brush_eingang": "brush_eingang/<ansicht>/<ansicht>/0001.jpg und brush_eingang/<ansicht>/masks/0001.png als harte Verweise (Linkzahl 2 geprueft), dazu sparse/0; 240 Masken je Ansicht",
+  "mask_path_in_der_kette": {"some": 0, "none": 0, "grund": "die Kette ruft brush ohne RUST_LOG=info auf; im Protokoll steht keine einzige mask_path-Zeile — darum bericht.json maske.brush «ungemessen»"},
+  "mask_path_gegenprobe": {
+   "aufbau": "derselbe brush (0.3.0) auf <auf256>/D/brush_eingang (nur gelesen), RUST_LOG=info, 300 Schritte, --max-resolution 1086, Ausgabe in einen Wegwerfordner (danach geloescht), GPU-Sperre genommen",
+   "ergebnis": "rc 0, 5 s Training; 313 Ladezeilen: «mask_path: Some» 313 (back 81, front 81, left 81, right 70), «mask_path: None» 0; Beispiel «mask_path: Some(\"right/masks/0019.png\")»; Bildart weiter «color: Rgb8»; einzige WARN die Vulkan-Erweiterung",
+   "vergleich_255": "255 (alte Ablage): None 313/313 -> jetzt Some 313/313"
+  },
+  "vergleich_254B": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 291757 statt 279035 (+5 %), Splats 3044702 statt 3030515 (+0.5 %), gesamt 1392.4 s statt 1339.6 s",
+  "gpu_spitze_w": 275,
+  "gpu_grenze_w": 400
+ },
+ "B_vergleich": {
+  "methode": "wie 254: Wegwerfkopie von sparse/0 + Verweis auf splat.ply je Lauf (in <auf256>/messung, 249- und 254-Ordner unveraendert), Behelfsverortung Kamerahoehe 1.75 m, Splats mit Deckkraft > 0.2; nah = innert 1.0 m um einen Kopfpunkt; Koerperzone = waagrecht < 0.6 m zum naechsten Kopfpunkt und 0.1-1.6 m darunter; ueber_kopf = waagrecht < 0.6 m und hoeher als 0.1 m unter Kopf. Die 254-Werte (249 und 254 B) wurden damit auf die Zahl genau wiederholt. Zusaetzlich: Boden unter dem Weg (waagrecht < 1.0 m, 1.4-2.1 m unter Kopf) und nahe Punkte je Seite der Bahn.",
+  "achtung_kopfpunkte": "die Behelfsverortung liefert je Lauf eine andere Zahl Kopfpunkte (249: 120, 254 B: 119, neu: 127) — darum zusaetzlich je Kopfpunkt",
+  "kopf": ["lauf", "kopfpunkte", "splats_op02", "nah_1m", "nah_anteil", "<0.25m", "0.25-0.5m", "0.5-0.75m", "0.75-1.0m", "nah_dz_median_m", "koerperzone", "ueber_kopf", "boden_unter_weg", "nah_seite_a", "nah_seite_b"],
+  "zeilen": [
+   ["249 (ohne wirksame Maske)", 120, 268148, 2722, "1.02 %", 0, 19, 622, 2081, 0.55, 819, 11301, 10210, 635, 2087],
+   ["254 B (Maske nur COLMAP)", 119, 260419, 4180, "1.61 %", 0, 103, 1173, 2904, 0.43, 749, 9222, 10305, 799, 3381],
+   ["256 (Maske COLMAP + brush)", 127, 272708, 5316, "1.95 %", 9, 249, 1318, 3740, 0.36, 501, 12466, 12310, 935, 4381]
+  ],
+  "je_kopfpunkt_kopf": ["lauf", "nah_1m", "koerperzone", "ueber_kopf", "boden_unter_weg"],
+  "je_kopfpunkt": [
+   ["249", 22.7, 6.83, 94.2, 85.1],
+   ["254 B", 35.1, 6.29, 77.5, 86.6],
+   ["256", 41.9, 3.94, 98.2, 96.9]
+  ],
+  "augenmass": "Draufsicht, Seitenansicht (Band +-1.5 m um die Bahn) und Querschnitt (alle Punkte relativ zum naechsten Kopfpunkt) fuer alle drei Laeufe gerendert und angesehen. Draufsicht und Seitenansicht: in allen drei praktisch gleich — Gang mit beiden Waenden, Dach, Boden durchgehend, Vorplatz und Ausgang an den Enden; keine sichtbare Wolke entlang der Bahn. Querschnitt: unter dem Kopf (Koerperzone) ist 256 am leersten (249 zeigt dort einen schwachen Schleier, 254 B weniger, 256 kaum); dafuer liegt bei 256 ein gleichmaessiger duenner Schleier im ganzen 1-m-Kreis, vor allem auf Kopfhoehe und darueber — daher mehr nahe Punkte (9 sogar < 0.25 m) und Median naeher am Kopf (0.36 m ueber Kopf statt 0.43/0.55).",
+  "szene_verschwunden": "nein — Boden unter dem Weg ist da (je Kopfpunkt 97 statt 85-87), die Seite, auf der die Person in right stand, ist im Querschnitt und in der Draufsicht so voll wie vorher (nahe Punkte dort 935 statt 635/799), Vorplatz und Ende unveraendert; kein Loch gefunden.",
+  "wolke_kleiner": "nicht entlang des Wegs sichtbar (war schon in 249/254 B nicht deutlich); in der Koerperzone klar kleiner (-39 % zu 254 B, -42 % zu 249 je Kopfpunkt), im 1-m-Kreis insgesamt aber mehr (+19 % zu 254 B je Kopfpunkt), fast alles ueber Kopfhoehe",
+  "bilder": "nur im Arbeitsordner (<auf256>/messung/bilder, 9 PNG), nicht ins Repo oder Ergebnis"
+ },
+ "urteil": [
+  "(1) Ja, brush liest die Maske jetzt: in der Gegenprobe auf dem brush_eingang/ der Kette meldet jede geladene Ansicht «mask_path: Some(…/masks/….png)» (313/313, 255: None 313/313) — die Kette selbst zeigt das nicht, weil brush dort ohne RUST_LOG=info laeuft und bericht.json maske.brush deshalb «ungemessen» bleibt.",
+  "(2) Der Splat wird unter dem Kopf sauberer (Koerperzone je Kopfpunkt 3.9 statt 6.3/6.8, ohne Szenenverlust, Boden unter dem Weg eher voller), aber nicht insgesamt: im 1-m-Kreis um den Kopf liegt mehr duenner Schleier (vor allem auf und ueber Kopfhoehe), und Draufsicht/Seitenansicht sehen gleich aus wie 249 und 254 B."
+ ],
+ "gpu": {"sperre": "Kette und Gegenprobe je vor dem Lauf genommen (until mkdir …; sleep 30), per trap geloest; danach geprueft: Sperre frei", "vorher": "Leerlauf (68 W, 1.5 GB, keine fremde Rechenlast)", "grenze_w": 400, "spitze_w": 275},
+ "nicht_getan": [
+  "kein Code geaendert, keine Schwelle, kein --parameter benutzt",
+  "nichts installiert, nichts aus dem Netz geladen ausser git pull",
+  "nichts committet",
+  "Arbeitsordner aus 243, 247, 249, 254 nicht veraendert (nur gelesen; Verortung nur an Wegwerfkopien im neuen Ordner)",
+  "anderer Helfer (App-Bau, Xvfb) nicht angefasst",
+  "keine Bilder, Masken, Splats oder Gewichte ins Repo oder Ergebnis; keine Benutzer- oder Hostnamen"
+ ],
+ "aufraeumen": "Gegenprobe-Splat geloescht (nur Protokoll bleibt). Liegen bleibt der Arbeitsordner auf256: 3.3 GB (Kette D 2.6 GB samt splat.ply, Messkopien und Bilder 0.7 GB).",
+ "groesse_ordner_gb": 3.3,
+ "umgebung": {"gpu_benutzt": true, "netz_benutzt": true, "netz_zweck": "git pull"},
+ "abweichungen": [
+  "mask_path-Zahl aus einer kurzen Gegenprobe (300 Schritte, RUST_LOG=info) auf dem brush_eingang/ der Kette, weil das Kettenprotokoll keine mask_path-Zeilen enthaelt.",
+  "Vergleich zusaetzlich je Kopfpunkt, weil die Behelfsverortung je Lauf 119-127 Kopfpunkte liefert.",
+  "Zusaetzliche Zaehlungen Boden unter dem Weg und Seiten der Bahn, fuer die Frage nach verschwundener Szene."
+ ],
+ "fehler": null
+}
