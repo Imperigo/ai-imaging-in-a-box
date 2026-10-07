@@ -87,6 +87,13 @@ STATUS_RUNNING = "running"
 STATUS_DONE = "done"
 STATUS_ERROR = "error"
 STATUS_CANCELLED = "cancelled"
+#: Wer einen Auftrag rechnet und seit wann — die Felder der Brücke dafür (ihr Zweig
+#: `claude/lw-bruecke-worker-feld`, 07.10.2026). Unser Wert ist der Name, den die Brücke für
+#: uns selbst ableitet, damit «gemeldet» und «abgeleitet» dasselbe Wort tragen.
+FELD_WORKER = "worker"
+FELD_WORKER_SEIT = "worker_seit"
+WORKER_ABHOLER = "abholer"
+
 STATUSSE = (STATUS_AWAITING, STATUS_QUEUED, STATUS_RUNNING, STATUS_DONE,
             STATUS_ERROR, STATUS_CANCELLED)
 
@@ -452,6 +459,14 @@ def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict
     laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
     laufzettel["status"] = status
     laufzettel["updated_at"] = _jetzt()
+    # WER RECHNET, steht seit dem 07.10.2026 im Laufzettel. Die Brücke führt dafür `worker`
+    # und `worker_seit` (Zeitpunkt der Übernahme); ohne sie leitete sie für unsere Aufträge
+    # «abholer» nur ab, und die Oberfläche schrieb unter das Bild «HERKUNFT UNBEKANNT»
+    # (Befund der HomeStation in auf-20261006-248). `setdefault`: Hat ein anderer Weg die
+    # Übernahme schon vermerkt, bleibt sie stehen — überschrieben wird nie.
+    if status == STATUS_RUNNING:
+        laufzettel.setdefault(FELD_WORKER, WORKER_ABHOLER)
+        laufzettel.setdefault(FELD_WORKER_SEIT, laufzettel["updated_at"])
     if fehler is not None:
         laufzettel["error"] = fehler
     _schreibe_atomar(ziel, laufzettel)

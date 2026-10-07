@@ -483,3 +483,34 @@ def test_der_sichtgang_haelt_die_bruecke_nicht_auf_wenn_er_selbst_scheitert(tmp_
         "ein Werkzeugfehler darf den Auftrag nicht abweisen"
     assert any("nicht ansehen" in w for w in gelesen["warnungen"]), \
         "aber er muss dastehen — sonst ist die Pruefung still ausgefallen"
+
+
+def test_wer_rechnet_steht_ab_running_im_laufzettel(tmp_path):
+    """auf-20261006-248: ohne `worker` schrieb die Oberfläche «HERKUNFT UNBEKANNT»."""
+    d = auftrag(tmp_path)
+    vorher = json.loads((d / bruecke.DATEI_LAUFZETTEL).read_text())
+    assert bruecke.FELD_WORKER not in vorher
+
+    zettel = bruecke.setze_status(d, bruecke.STATUS_RUNNING)
+    assert zettel[bruecke.FELD_WORKER] == "abholer"
+    assert zettel[bruecke.FELD_WORKER_SEIT] == zettel["updated_at"]
+    seit = zettel[bruecke.FELD_WORKER_SEIT]
+
+    fertig = bruecke.setze_status(d, bruecke.STATUS_DONE)
+    assert fertig[bruecke.FELD_WORKER] == "abholer"
+    assert fertig[bruecke.FELD_WORKER_SEIT] == seit, "die Übernahme behält ihren Zeitpunkt"
+
+
+def test_ein_schon_vermerkter_worker_wird_nicht_ueberschrieben(tmp_path):
+    d = auftrag(tmp_path)
+    zettel = json.loads((d / bruecke.DATEI_LAUFZETTEL).read_text())
+    zettel.update({"worker": "comfyui-worker", "worker_seit": "2026-10-07T00:00:00Z"})
+    (d / bruecke.DATEI_LAUFZETTEL).write_text(json.dumps(zettel))
+    neu = bruecke.setze_status(d, bruecke.STATUS_RUNNING)
+    assert (neu["worker"], neu["worker_seit"]) == ("comfyui-worker", "2026-10-07T00:00:00Z")
+
+
+def test_vor_running_wird_kein_worker_behauptet(tmp_path):
+    d = auftrag(tmp_path)
+    zettel = bruecke.setze_status(d, bruecke.STATUS_QUEUED)
+    assert bruecke.FELD_WORKER not in zettel
