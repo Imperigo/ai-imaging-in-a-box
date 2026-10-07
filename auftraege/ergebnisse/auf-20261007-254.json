@@ -1,0 +1,135 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-254",
+ "worker": "local",
+ "rang": 41,
+ "folgt_auf": "auf-20261007-253",
+ "owner_entscheid": "E169",
+ "status": "erledigt (A, B). A traegt fuer die Person (39 von 41 Bildern ganz/teilweise unter der Maske, alle 10 Hand-Bilder in front jetzt gedeckt), mit zwei Befunden: left bekommt keine Handzone (2 Hand-Bilder bleiben offen), und die Handzone in right ist in Wahrheit die Koerperhuelle (36 % jeder right-Ansicht, auch ohne Person). B lief durch: 960/960, 1 Modell, verfahren person, COLMAP mit mask_path, brush lief. Kein Code geaendert, nichts installiert, nichts committet.",
+ "stand": {
+  "kosmoprepare": "29d96b8 (git pull --ff-only: aeabb4b -> 29d96b8); 29d96b8 ist HEAD",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server/bin/python fuer das Werkzeug; Erkennung in .venv-person (aus 253), Gewichte aus 253 an der Pruefsumme erkannt"
+ },
+ "A_maske": {
+  "bilder": "Arbeitsordner C aus 249 (images/<ansicht>/, je 240 Bilder, 1086 x 1086), nur gelesen",
+  "aufruf": "<server-python> tools/splat_maske.py --bilder <249>/images --aus <weg>/masks --bericht <weg>/maske.json --vorschau <weg>/vorschau (ohne --verfahren, ohne --parameter)",
+  "rueckgabe": 0,
+  "satz_woertlich": "Maske (Personenerkennung): back 28/240 erkannt, Mittel 0.9%; front 96/240 erkannt, Mittel 9.6%, Handzone 3.7%; left 36/240 erkannt, Mittel 1.2%; right 220/240 erkannt, Mittel 38.8%, Handzone 36.0%",
+  "stderr": "leer",
+  "laufzeit_s": 59.7,
+  "verfahren": "person",
+  "verfahren_grund": null,
+  "erkennung": {"geraet": "cuda", "torch": "2.11.0+cu128", "schwelle": 0.5, "overlap": 0.8, "bilder": 960, "sekunden_median": 0.051, "speicher_gib": 4.7},
+  "parameter": {"schwelle": 0.5, "overlap": 0.8, "saum_anteil": 0.025, "hand_haeufigkeit": 0.2, "anteil_max": 0.4},
+  "parameter_herkunft_woertlich": "gemessen an der echten Aufnahme (auf-20261007-253)",
+  "tabelle_kopf": ["ansicht", "erkannt/bilder", "am_unteren_rand", "handzone_anteil", "anteil_mittel", "anteil_max", "grund"],
+  "tabelle": [
+   ["back", "28/240", 11, 0.0, 0.0092, 0.2557, "die Person beruehrt den unteren Rand in 11 von 240 Bildern, nirgends in 20% — keine Handzone"],
+   ["front", "96/240", 77, 0.0368, 0.0961, 0.8092, null],
+   ["left", "36/240", 17, 0.0, 0.0122, 0.1973, "die Person beruehrt den unteren Rand in 17 von 240 Bildern, nirgends in 20% — keine Handzone"],
+   ["right", "220/240", 217, 0.3601, 0.3878, 0.7201, null]
+  ],
+  "handzone_lage": {
+   "front": "Ecke unten rechts, etwa x 0.63-1.00, y 0.85-1.00 — deckt sich mit der Hand-Ecke aus 251 (0.65-1.00 x 0.80-1.00)",
+   "right": "keine Hand, sondern die Koerperhuelle der filmenden Person: x 0.00-0.76, y 0.22-1.00 (36.0 %, knapp unter anteil_max 0.40); wird in ALLEN 240 right-Bildern maskiert"
+  },
+  "gegenprobe_251": {
+   "methode": "dieselben 80 Bilder (je Ansicht 1, 13, ..., 229); deckung = Anteil des 251-Kastens unter der geschriebenen Maske (Kasten ist Huelle inkl. Luft, ~0.5 bei vollem Treffer normal); Urteil ganz/teilweise/nicht nach deckung und Augenmass auf Ueberlagerungen von 24 Bildern",
+   "kopf": ["ansicht", "251_ja", "ganz", "teilweise", "nicht", "deckung_min", "deckung_median"],
+   "zeilen": [
+    ["back", 1, 1, 0, 0, 0.559, 0.559],
+    ["front", 18, 17, 1, 0, 0.402, 0.71],
+    ["left", 4, 2, 0, 2, 0.0, 0.225],
+    ["right", 18, 18, 0, 0, 0.62, 0.71]
+   ],
+   "summe": "41 Bilder mit filmender Person: 38 ganz, 1 teilweise, 2 nicht (253 roh: 29 getroffen, 12 verfehlt)",
+   "deckung_je_bild": {
+    "back": [[229, 0.559]],
+    "front": [[1, 0.572], [13, 0.58], [25, 0.611], [37, 0.913], [49, 0.834], [61, 0.834], [97, 0.934], [109, 0.615], [121, 0.823], [133, 0.823], [145, 0.402], [157, 0.615], [169, 0.569], [181, 0.891], [193, 0.743], [205, 0.456], [217, 0.702], [229, 0.723]],
+    "left": [[1, 0.532], [13, 0.45], [25, 0.0], [217, 0.0]],
+    "right": [[25, 0.842], [37, 0.74], [49, 0.702], [61, 0.735], [73, 0.793], [85, 0.756], [97, 0.732], [109, 0.693], [121, 0.715], [133, 0.688], [145, 0.768], [157, 0.705], [169, 0.688], [181, 0.657], [193, 0.669], [205, 0.652], [217, 0.827], [229, 0.62]]
+   },
+   "hand_bilder_front": "Alle 10, die 253 verfehlt hat (37, 49, 61, 97, 109, 121, 133, 157, 169, 205), liegen jetzt unter der Handzone, deckung 0.46-0.93. Angesehen: Hand in 37, 49, 61, 97, 109, 157 ganz rot; in 205 ragt die Handkante links knapp aus der Zone (teilweise).",
+   "hand_bilder_left": "13 gedeckt (Erkennung, 0.45, Hand rot). 25 und 217 NICHT gedeckt (deckung 0.0): left bekommt keine Handzone, weil die Person dort nur in 17 von 240 Bildern den unteren Rand beruehrt (7 %, Schwelle 20 %); die Hand in 25 liegt zudem unten Mitte. In 25 ist nur ein Passant maskiert.",
+   "right": "Person in allen 18 Bildern unter Rot (Erkennung + Zone). In 25 und 217 steht die Person weiter links als sonst: die Erkennung deckt sie, die Zone liegt zusaetzlich als leere Silhouette auf der Szene (28-30 % ausserhalb des 251-Kastens).",
+   "nicht_gedeckt_bleibt": "Schatten der filmenden Person auf dem Boden (back 1, left 13/25, front 37) — wie erwartet nicht Klasse person"
+  },
+  "szene_unter_maske": {
+   "bilder_ohne_filmende_person": 39,
+   "mittel": 0.0221,
+   "maximum": 0.3602,
+   "je_ansicht_kopf": ["ansicht", "bilder", "mittel", "max"],
+   "je_ansicht": [["back", 19, 0.0031, 0.0502], ["front", 2, 0.0368, 0.0368], ["left", 16, 0.0006, 0.0098], ["right", 2, 0.3602, 0.3602]],
+   "deutung": "Ohne die zwei right-Bilder im Mittel 0.4 %: back 1 = Passant 5.0 % (mit Saum), Tafel-Figuren 0.8-1.0 %, front 73/85 nur die Handzone 3.7 %. In right 1 und 13 (keine filmende Person) liegen 36 % Szene (Weg, Tor, Wand) unter der Zone; das gilt fuer jedes right-Bild, in dem die Person fehlt oder woanders steht (20 von 240 ohne Erkennung).",
+   "ausserhalb_251_kasten_mittel_bei_person": 0.041
+  },
+  "vorschau": "vier Vorschaubilder und drei eigene Ueberlagerungsblaetter (24 Bilder) mit dem Read-Werkzeug angesehen; nicht ins Repo, Wegwerfordner geloescht",
+  "traegt": "ja fuer die Person samt Hand in front/right/back; Einschraenkungen: left-Hand (2 von 4) offen, right verliert 36 % jeder Ansicht"
+ },
+ "B_kette": {
+  "werkzeug": "kosmoprepare_mcp_tools.tool_splat_kette / tool_splat_stand wie 249: quelle insv, linsen_messen true, fps 2, max_frames 240, schritte 7000, profil rtx5090, ohne ohne_maske; Vokabular ueber $KOSMOPREPARE_COLMAP_VOKABULAR; neuer Arbeitsordner",
+  "rueckgabe": 0,
+  "letzter_stand_satz_woertlich": "Splat entstanden: 960 von 960 Bildern registriert, 1 Teilmodell(e); Maske in 4 Ansicht(en)",
+  "stufen": ["frame_extraction", "maske", "colmap_feature_extraction", "colmap_rig", "colmap_matching", "colmap_mapping", "brush_training"],
+  "stufen_zeit": {"frame_extraction": "17:59:13", "maske": "18:01:53", "colmap_feature_extraction": "18:02:52", "colmap_rig": "18:03:07", "colmap_matching": "18:03:10", "colmap_mapping": "18:10:01", "brush_training": "18:17:15", "fertig": "18:21:32"},
+  "maske_dauer_s": 59,
+  "bericht": {"status": "fertig", "bilder": 960, "registriert": 960, "modelle": 1, "punkte": 279035, "schleifenschluss": true, "dauer_s": 1339.6, "max_res": 1086, "vokabular": "bereit"},
+  "splats": 3030515,
+  "bericht_maske": {
+   "status": "gerechnet",
+   "verfahren": "person",
+   "verfahren_grund": null,
+   "maskiert": 4,
+   "ansichten": [
+    {"ansicht": "back", "anteil": 0.0092, "grund": "die Person beruehrt den unteren Rand in 11 von 240 Bildern, nirgends in 20% — keine Handzone"},
+    {"ansicht": "front", "anteil": 0.0961, "grund": null},
+    {"ansicht": "left", "anteil": 0.0122, "grund": "die Person beruehrt den unteren Rand in 17 von 240 Bildern, nirgends in 20% — keine Handzone"},
+    {"ansicht": "right", "anteil": 0.3878, "grund": null}
+   ],
+   "colmap": true,
+   "brush": "ungemessen",
+   "parameter_herkunft": "gemessen an der echten Aufnahme (auf-20261007-253)",
+   "gleich_wie_A": true
+  },
+  "colmap_mask_path": "ja — kein «nicht angewandt»-Satz im Protokoll, kein MASK_ERROR; feature_extractor meldet je Bild «Mask: Yes»",
+  "brush": "lief (7000 Schritte, 18:17:15-18:21:32, splat.ply erstellt); im Protokoll keine Zeile, ob brush masks/ gelesen hat — bleibt ungemessen",
+  "vergleich_249_ohne_wirksame_maske": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 279035 statt 297068 (-6 %), Splats 3030515 statt 3184908 (-5 %), gesamt 1339.6 s statt 1382.7 s",
+  "gpu_spitze_w": 275,
+  "gpu_grenze_w": 400,
+  "wolke": {
+   "methode": "Wegwerfkopien von sparse/0 und Verweis auf splat.ply, je Behelfsverortung (Kamera 1.75 m, wie 247) und das Zaehlskript aus 247 (Splats Deckkraft > 0.2 innert 1.0 m um 120 Kopfpunkte); dazu Abstandsbaender, eine Koerperzone (waagrecht < 0.6 m, 0.1-1.6 m unter Kopf) und ein Querschnitt quer zur Bahn (alle Kopfpunkte uebereinander) als Bild angesehen; 249-Ordner unveraendert",
+   "kopf": ["lauf", "splats_op02", "nah_1m", "nah_anteil", "0.25-0.5m", "0.5-0.75m", "0.75-1.0m", "koerperzone", "ueber_kopf_0.6m"],
+   "zeilen": [
+    ["249 (ohne wirksame Maske)", 268148, 2722, "1.02 %", 19, 622, 2081, 819, 11301],
+    ["254 B (Personenmaske)", 260419, 4180, "1.61 %", 103, 1173, 2904, 749, 9222]
+   ],
+   "innert_0.25m": "0 in beiden",
+   "hoehe_der_nahen_punkte": "Median 0.4-0.55 m UEBER Kopf (Decke/Balken des gedeckten Gangs), nicht auf Koerperhoehe",
+   "augenmass": "Draufsicht und Seitenansicht in beiden fast gleich, keine sichtbare Wolke entlang der Bahn. Im Querschnitt ist bei B die Zone unter und neben dem Kopf (Koerper) leerer als bei 249, dafuer laeuft bei B ein neuer schraeger Streifen oberhalb einer Seite bis etwa 0.3 m an den Kopf heran (dort mehr Punkte 0.5-1.0 m, Seite 1815 -> 3024).",
+   "wolke_ja_nein": "nein (in keinem der beiden Splats eine deutliche Wolke entlang des Wegs); Koerperzone -9 %, 1-m-Zaehlung aber +54 %"
+  },
+  "groesse_ordner_gb": 2.5
+ },
+ "urteil": [
+  "(1) Die Maske deckt die filmende Person samt Hand weitgehend: 39 von 41 Bildern, alle Hand-Bilder in front jetzt unter der gelesenen Handzone; offen bleiben die Hand in left (keine Zone, 7 % < 20 %), und in right ist die «Handzone» die ganze Koerperhuelle, die 36 % jeder right-Ansicht auch ohne Person wegnimmt.",
+  "(2) Der Splat wird nicht messbar besser: Registrierung und Modell gleich, 5-6 % weniger Punkte und Splats, unter Kopfhoehe etwas leerer, aber mehr Punkte innert 1 m (ueber Kopf, neuer Streifen) — eine Wolke entlang des Wegs war schon in 249 nicht deutlich, und ob brush die Masken liest, ist weiter ungemessen."
+ ],
+ "gpu": {"sperre": "A und B je vor dem Lauf genommen (until mkdir …; sleep 30), per trap geloest; danach geprueft: Sperre weg", "grenze_w": 400, "spitze_w": 275},
+ "nicht_getan": [
+  "kein Code geaendert, keine Schwelle, kein --parameter benutzt",
+  "nichts installiert, kein anderes Modell",
+  "nichts aus dem Netz geladen ausser git pull",
+  "nichts committet",
+  "Arbeitsordner aus 243, 247, 249 nicht veraendert (nur gelesen; Verortung nur an Wegwerfkopien)",
+  "Bruecke und anderer Helfer nicht angefasst",
+  "keine Bilder, Masken, Vorschauen, Splats oder Gewichte ins Repo oder Ergebnis; keine Orts-, Personen- oder Projektnamen, keine Benutzer- oder Hostnamen, keine echten Dateinamen"
+ ],
+ "aufraeumen": "Wegwerfordner A (Masken, Vorschau, Ueberlagerungsblaetter, Verortungskopien, Querschnitte) geloescht. Behalten ausserhalb der Repos: Arbeitsordner B (2.5 GB mit splat.ply).",
+ "umgebung": {"gpu_benutzt": true, "netz_benutzt": true, "netz_zweck": "git pull"},
+ "abweichungen": [
+  "Wolke zusaetzlich mit Behelfsverortung an Wegwerfkopien gezaehlt (wie 247), nicht nur Augenmass.",
+  "Urteil ganz/teilweise/nicht fuer nicht angesehene Bilder aus der deckung (>= 0.55 ganz), fuer 24 Bilder per Augenmass."
+ ],
+ "fehler": null
+}
