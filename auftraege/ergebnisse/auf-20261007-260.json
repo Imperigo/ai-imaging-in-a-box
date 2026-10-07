@@ -1,0 +1,381 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-260",
+ "worker": "local",
+ "status": "erledigt",
+ "git_log_1_vorher": "7a569fd Materialien aus der IFC zurückgestellt: das Demohaus trägt keine Stile",
+ "git_log_1_nachher": "0f07031 Bildmodell einmal je Auftrag übernommen; Blatt 15 trägt drüben E174",
+ "pull": "Der Klon stand beim Start schon auf 0f07031 (enthaelt 1a4973c). git fetch + git pull --ff-only: «Bereits aktuell». B1 darum in einem eigenen git worktree auf 7a569fd (1a4973c nachweislich nicht enthalten: merge-base --is-ancestor nein, render.py ohne Modellvorrat/ein_modell_je_auftrag), gerechnet mit PYTHONPATH=<worktree>/src, aber derselben .venv-render und AIIMAGING_MODELLE wie der Dienst; B2 im Klon selbst. Worktree danach entfernt. Kein Code geaendert, nichts installiert.",
+ "umgebung": "wie betrieb/visbox-flaeche.service: .venv-render, AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers; Messskript woertlich aus der Anweisung, stderr in Logdatei; nvidia-smi alle 0,5 s.",
+ "mappe": "Wegwerf-Kopien der Mappe aus 218/221 (build/vorfuehr/mappe samt testbau.ifc daneben, synthetischer Testbau am Hang, 768x512, Bildauftrag «a small house on a gentle slope, overcast daylight, photorealistic»); je Lauf eine frische Kopie (strenger als verlangt: auch die beiden B1-Laeufe je eine eigene). Original unberuehrt.",
+ "gpu_vor_den_laeufen": "Sprachmodell nicht geladen (ollama ps leer), Karte 1211–1251 MiB, 39–44 W (nur Desktop/Fernzugriff); GPU-Sperre vor jedem Lauf genommen.",
+ "B1_vorher": {
+  "z-image-turbo": {
+   "stand": "7a569fd",
+   "loading_pipeline_components_grep_c": 7,
+   "ladungen_bildmodell": 3,
+   "ladungen_hinweis": "grep -c zaehlt Zeilen; der tqdm-Balken bricht an Warnungen um. Echte Ladungen = Zahl der Balkenanfaenge «0/5» (bzw. der Abschluesse «5/5»).",
+   "tiefenschaetzer_ladungen": 3,
+   "gesamt_s": 64.7,
+   "spitze_nvidia_smi_mib": 26596,
+   "torch_spitze_mib": 24646,
+   "varianten": [
+    {
+     "seed": 7,
+     "render_status": "ok",
+     "render_s": 18.39,
+     "weg": "cuda",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0623,
+     "qa_fehler": null,
+     "sha256": "87476b273f2ed63dd7e23bdca180e373afd91560798af60f7ecc989d6eebd9e0"
+    },
+    {
+     "seed": 8,
+     "render_status": "ok",
+     "render_s": 8.23,
+     "weg": "cuda",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0345,
+     "qa_fehler": null,
+     "sha256": "8c1f38e89957d2c056ebe84e45832aeb3d3557b4e0f8a5b2001e3f9168480c35"
+    },
+    {
+     "seed": 9,
+     "render_status": "ok",
+     "render_s": 7.86,
+     "weg": "cuda",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.186,
+     "qa_fehler": null,
+     "sha256": "136189e5affcdb18ab2c56ec2c38f5e078dce7ac2fe13aeb490e01fc1e88e047"
+    }
+   ]
+  },
+  "qwen-image-2.1": {
+   "stand": "7a569fd",
+   "loading_pipeline_components_grep_c": 6,
+   "ladungen_bildmodell": 3,
+   "ladungen_hinweis": "grep -c zaehlt Zeilen; der tqdm-Balken bricht an Warnungen um. Echte Ladungen = Zahl der Balkenanfaenge «0/5» (bzw. der Abschluesse «5/5»).",
+   "tiefenschaetzer_ladungen": 3,
+   "gesamt_s": 84.0,
+   "spitze_nvidia_smi_mib": 22470,
+   "torch_spitze_mib": 20610,
+   "varianten": [
+    {
+     "seed": 7,
+     "render_status": "ok",
+     "render_s": 21.5,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0177,
+     "qa_fehler": null,
+     "sha256": "21aa321bfbacdf245a2742c63b60ef7c5da48d90487ab9be33b8d9817ba0ae6d"
+    },
+    {
+     "seed": 8,
+     "render_status": "ok",
+     "render_s": 19.25,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0388,
+     "qa_fehler": null,
+     "sha256": "334711b930f588cedc25fd59000817848f2d160b3b8d9eb99fa77a60d380e0ed"
+    },
+    {
+     "seed": 9,
+     "render_status": "ok",
+     "render_s": 19.37,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0186,
+     "qa_fehler": null,
+     "sha256": "256d44913a6f6608be37f2b9fe43f60e6065f9decaecd005994f4da08eacb7e7"
+    }
+   ]
+  }
+ },
+ "B2_nachher": {
+  "z-image-turbo": {
+   "stand": "0f07031",
+   "loading_pipeline_components_grep_c": 3,
+   "ladungen_bildmodell": 1,
+   "ladungen_hinweis": "grep -c zaehlt Zeilen; der tqdm-Balken bricht an Warnungen um. Echte Ladungen = Zahl der Balkenanfaenge «0/5» (bzw. der Abschluesse «5/5»).",
+   "tiefenschaetzer_ladungen": 3,
+   "gesamt_s": 54.2,
+   "spitze_nvidia_smi_mib": 26584,
+   "torch_spitze_mib": 24648,
+   "varianten": [
+    {
+     "seed": 7,
+     "render_status": "ok",
+     "render_s": 17.41,
+     "weg": "cuda",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0623,
+     "qa_fehler": null,
+     "sha256": "87476b273f2ed63dd7e23bdca180e373afd91560798af60f7ecc989d6eebd9e0"
+    },
+    {
+     "seed": 8,
+     "render_status": "ok",
+     "render_s": 4.64,
+     "weg": "cuda",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0345,
+     "qa_fehler": null,
+     "sha256": "8c1f38e89957d2c056ebe84e45832aeb3d3557b4e0f8a5b2001e3f9168480c35"
+    },
+    {
+     "seed": 9,
+     "render_status": "ok",
+     "render_s": 5.11,
+     "weg": "cuda",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.186,
+     "qa_fehler": null,
+     "sha256": "136189e5affcdb18ab2c56ec2c38f5e078dce7ac2fe13aeb490e01fc1e88e047"
+    }
+   ]
+  },
+  "qwen-image-2.1": {
+   "stand": "0f07031",
+   "loading_pipeline_components_grep_c": 3,
+   "ladungen_bildmodell": 1,
+   "ladungen_hinweis": "grep -c zaehlt Zeilen; der tqdm-Balken bricht an Warnungen um. Echte Ladungen = Zahl der Balkenanfaenge «0/5» (bzw. der Abschluesse «5/5»).",
+   "tiefenschaetzer_ladungen": 3,
+   "gesamt_s": 87.5,
+   "spitze_nvidia_smi_mib": 22490,
+   "torch_spitze_mib": 20624,
+   "varianten": [
+    {
+     "seed": 7,
+     "render_status": "ok",
+     "render_s": 33.54,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0177,
+     "qa_fehler": null,
+     "sha256": "21aa321bfbacdf245a2742c63b60ef7c5da48d90487ab9be33b8d9817ba0ae6d"
+    },
+    {
+     "seed": 8,
+     "render_status": "ok",
+     "render_s": 14.39,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0388,
+     "qa_fehler": null,
+     "sha256": "334711b930f588cedc25fd59000817848f2d160b3b8d9eb99fa77a60d380e0ed"
+    },
+    {
+     "seed": 9,
+     "render_status": "ok",
+     "render_s": 14.23,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0186,
+     "qa_fehler": null,
+     "sha256": "256d44913a6f6608be37f2b9fe43f60e6065f9decaecd005994f4da08eacb7e7"
+    }
+   ]
+  }
+ },
+ "zusatz_wiederholung_qwen": {
+  "grund": "qwen nachher war insgesamt NICHT schneller (Variante 1 deutlich langsamer); je ein zweiter Lauf vorher und nachher, um Streuung von Wirkung zu trennen.",
+  "vorher2": {
+   "stand": "7a569fd",
+   "loading_pipeline_components_grep_c": 9,
+   "ladungen_bildmodell": 3,
+   "ladungen_hinweis": "grep -c zaehlt Zeilen; der tqdm-Balken bricht an Warnungen um. Echte Ladungen = Zahl der Balkenanfaenge «0/5» (bzw. der Abschluesse «5/5»).",
+   "tiefenschaetzer_ladungen": 3,
+   "gesamt_s": 61.1,
+   "spitze_nvidia_smi_mib": 22468,
+   "torch_spitze_mib": 20610,
+   "varianten": [
+    {
+     "seed": 7,
+     "render_status": "ok",
+     "render_s": 16.49,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0177,
+     "qa_fehler": null,
+     "sha256": "21aa321bfbacdf245a2742c63b60ef7c5da48d90487ab9be33b8d9817ba0ae6d"
+    },
+    {
+     "seed": 8,
+     "render_status": "ok",
+     "render_s": 14.5,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0388,
+     "qa_fehler": null,
+     "sha256": "334711b930f588cedc25fd59000817848f2d160b3b8d9eb99fa77a60d380e0ed"
+    },
+    {
+     "seed": 9,
+     "render_status": "ok",
+     "render_s": 14.12,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0186,
+     "qa_fehler": null,
+     "sha256": "256d44913a6f6608be37f2b9fe43f60e6065f9decaecd005994f4da08eacb7e7"
+    }
+   ]
+  },
+  "nachher2": {
+   "stand": "0f07031",
+   "loading_pipeline_components_grep_c": 3,
+   "ladungen_bildmodell": 1,
+   "ladungen_hinweis": "grep -c zaehlt Zeilen; der tqdm-Balken bricht an Warnungen um. Echte Ladungen = Zahl der Balkenanfaenge «0/5» (bzw. der Abschluesse «5/5»).",
+   "tiefenschaetzer_ladungen": 3,
+   "gesamt_s": 73.8,
+   "spitze_nvidia_smi_mib": 22480,
+   "torch_spitze_mib": 20624,
+   "varianten": [
+    {
+     "seed": 7,
+     "render_status": "ok",
+     "render_s": 25.45,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0177,
+     "qa_fehler": null,
+     "sha256": "21aa321bfbacdf245a2742c63b60ef7c5da48d90487ab9be33b8d9817ba0ae6d"
+    },
+    {
+     "seed": 8,
+     "render_status": "ok",
+     "render_s": 13.87,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0388,
+     "qa_fehler": null,
+     "sha256": "334711b930f588cedc25fd59000817848f2d160b3b8d9eb99fa77a60d380e0ed"
+    },
+    {
+     "seed": 9,
+     "render_status": "ok",
+     "render_s": 13.74,
+     "weg": "cuda+auslagerung",
+     "qa_status": "ok",
+     "qa_bestanden": false,
+     "qa_score": 0.0186,
+     "qa_fehler": null,
+     "sha256": "256d44913a6f6608be37f2b9fe43f60e6065f9decaecd005994f4da08eacb7e7"
+    }
+   ]
+  },
+  "vorher2_bitgleich_mit_vorher": {
+   "7": "ja",
+   "8": "ja",
+   "9": "ja"
+  },
+  "nachher2_bitgleich_mit_vorher": {
+   "7": "ja",
+   "8": "ja",
+   "9": "ja"
+  }
+ },
+ "B3_dienst": {
+  "neustart": "systemctl --user restart visbox-flaeche.service; Anschluss nach 2 s offen; sonst nichts am Dienst geaendert",
+  "anfrage": "POST /api/rechne {ordner: frische Wegwerf-Kopie, varianten: 3, einstellungen: {backbone: z-image-turbo, seed: 7}} (seed 7, damit kein Bild aus dem Zwischenspeicher der Mappe kommt und die Bilder mit B1/B2 vergleichbar sind)",
+  "antwort": {
+   "code": 200,
+   "antwort": {
+    "gestartet": true,
+    "schritte_gesamt": 20,
+    "entwurf": false,
+    "varianten": 3
+   }
+  },
+  "lauf_bis_fertig_s": 31.1,
+  "ergebnis": "ok",
+  "vermerkt": 3,
+  "loading_pipeline_components_grep_c": 5,
+  "ladungen_bildmodell": 1,
+  "dienstprotokoll": "eine Ladung (ein Balkenanfang 0/5, 4 s), danach drei Entrauschungen zu je 4 s und dreimal der Tiefenschaetzer (Loading weights 287/287) neben dem gehaltenen Bildmodell",
+  "zeit_je_variante_s": [
+   19.0,
+   5.77,
+   5.68
+  ],
+  "zeit_je_variante_hinweis": "dauer_s der drei Laufeintraege der Mappe (ganze Variante; je 2 Knoten aus dem Zwischenspeicher, Render und Pruefung gerechnet). 221 zum Vergleich: render 9.11 / 7.45 / 7.42 s.",
+  "spitze_mib": {
+   "karte_gesamt": 27304,
+   "dienst_prozess": 25280
+  },
+  "speicher_dienst_prozess_nach_lauf_mib": 654,
+  "karte_gesamt_nach_lauf_mib": 2142,
+  "unter_1024_mib": "ja (654 MiB, wie in 221)",
+  "qa": [
+   {
+    "seed": 7,
+    "score": 0.0623,
+    "bestanden": false
+   },
+   {
+    "seed": 8,
+    "score": 0.0345,
+    "bestanden": false
+   },
+   {
+    "seed": 9,
+    "score": 0.186,
+    "bestanden": false
+   }
+  ],
+  "bilder_bitgleich_mit_B1_B2_z-image-turbo": "ja, alle drei Startwerte"
+ },
+ "B4_bitgleich": {
+  "z-image-turbo": {
+   "7": "ja",
+   "8": "ja",
+   "9": "ja"
+  },
+  "qwen-image-2.1": {
+   "7": "ja",
+   "8": "ja",
+   "9": "ja"
+  }
+ },
+ "B4_vorher2_noetig": "nein (alles gleich); qwen vorher2 trotzdem gerechnet (Zeitstreuung): mit sich selbst bitgleich",
+ "erwartung_vs_messung": {
+  "ladungen": "erfuellt: vorher 3 je Backbone, nachher 1 (B2 beide, B3)",
+  "variante_2_3_kuerzer": "z-image-turbo erfuellt (8.23/7.86 -> 4.64/5.11 s, also um die Ladezeit plus Verschieben auf die Karte, rund 3 s); qwen-image-2.1 kaum (Paar 1: 19.25/19.37 -> 14.39/14.23; Paar 2: 14.50/14.12 -> 13.87/13.74 s; die qwen-Ladung selbst dauert nur rund 1 s, der Weg ist cuda+auslagerung)",
+  "spitze": "erfuellt, nicht hoeher: smi z 26596 -> 26584, qwen 22470/22468 -> 22490/22480; torch z 24646 -> 24648, qwen 20610 -> 20624 MiB",
+  "pruefung": "jede Pruefung Status ok mit Score (Tiefenschaetzer lief neben dem gehaltenen Modell durch, kein Fehler)",
+  "bitgleich": "erfuellt, 6 von 6",
+  "weg": "erfuellt: in allen drei Varianten gleich (z cuda, qwen cuda+auslagerung), vorher wie nachher",
+  "blender_daneben": "ja, Blender-Multipass lief in Varianten 2 und 3 neben dem geladenen Bildmodell durch (cache=None, alle Render ok)"
+ },
+ "urteil": "Die Aenderung tut, was sie verspricht — eine Ladung je Auftrag statt drei, bitgleiche Bilder, gleicher Weg, keine hoehere Spitze, Dienst danach wieder bei 654 MiB —, spart aber nur bei z-image-turbo merklich Zeit (64.7 -> 54.2 s); bei qwen-image-2.1 wurde die erste Variante nachher in zwei von zwei Paaren um 9–12 s langsamer, sodass der Auftrag insgesamt nicht schneller war (84.0 -> 87.5, 61.1 -> 73.8 s).",
+ "auffaellig": [
+  "qwen-image-2.1 nachher: Variante 1 render 33.54 s (vorher 21.50) und 25.45 s (vorher2 16.49). Die Ladung selbst laut Balken nur ~1 s, die Entrauschung 13 s wie vorher. Im nvidia-smi-Verlauf fuellt sich die Karte nachher bei Variante 1 langsam (2-s-Schritte: 4.3 -> 8.3 -> 12.7 -> 17.0 -> 22.4 GB), vorher springt sie innert 2 s auf 19.2 GB. Ursache nicht gesucht (kein Code); Spur fuer den Cloud-Worker: was bei der ersten Ladung im Vorrat auf dem Auslagerungsweg anders laeuft.",
+  "Zeitstreuung vorher bei qwen gross: 84.0 s und 61.1 s fuer denselben Stand; Varianten 2/3 vorher 19.3 s im ersten, 14.3 s im zweiten Lauf. Ein einzelnes Paar haette fuer qwen nichts entschieden.",
+  "grep -c «Loading pipeline components» zaehlt Zeilen, nicht Ladungen: der Fortschrittsbalken wird von Warnungen (ZImageControlNetModel float32) umgebrochen; vorher z ergab grep 7 bei 3 Ladungen, nachher 3 bei 1 Ladung, im Dienst 5 bei 1 Ladung. Gezaehlt sind darum die Balkenanfaenge.",
+  "Alle Pruefungen fallen durch (Score 0.02–0.19, geom_iou 0.004–0.035, Schwelle 0.65) — vorher genauso, also nicht von dieser Aenderung. Jeder Lauf meldet «BESTELLT WAR image_edit, GERECHNET WURDE txt2img» und 'strength' wirkungslos; in 218 hatte dieselbe Mappe ohne Startwert 0.81–0.97. Gehoert vermutlich zu Startwert/Kamera dieser Reihe, nicht zum Laden.",
+  "transformers schreibt bei qwen zwei «[ERROR] min_frames/max_frames ... not documented» auf stdout (nicht stderr) — harmlos, stoert aber jede Auswertung, die stdout als JSON liest.",
+  "Der Dienst lief seit dem Morgen auf altem Stand (A7): ohne den Neustart haette B3 alt gerechnet."
+ ],
+ "aufgeraeumt": "Wegwerf-Kopien, Bilder, Logdateien und der worktree geloescht; keine Bilder im Repo, nur sha256."
+}
