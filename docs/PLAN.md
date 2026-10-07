@@ -7745,7 +7745,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **local:** `auf-20261006-248` — Publish Schritt 2 und Nachgang 2 in WebKitGTK prüfen; danach Freigabe an Int 1 über die Zentrale. *(07.10.2026: A1, A2, B1, B2 bestätigt; A3 keine Bedingung; freigegeben, Kopf `2bc5bb34c`)*
 - [x] **cloud (Int 1):** Zweig «kosmovis-v017-publish-schritt2» einspielen. *(07.10.2026, ROADMAP 1704, `202ba8043`)*
 - [x] **Kern (Abholer):** Beim Übergang auf «running» trägt der Laufzettel `worker: abholer` und `worker_seit` (nur `setdefault`) — Bitte der Zentrale vom 07.10.2026, damit die Brücke «gemeldet» statt «abgeleitet» liest. *(07.10.2026)*
-- [ ] **Kern (drüben, Nachgang 3 — Int 1 einverstanden 07.10., in Arbeit auf «kosmovis-v017-nachgang3»):** Hinweis am «Aufs Blatt»-Knopf der Kuratier-Karte abgeschnitten; Herkunftszeile beim Ablegen fällt auf `engine_used` zurück, solange die Brücke kein `worker` liefert.
+- [x] **Kern (drüben, Nachgang 3 — Int 1 einverstanden 07.10., Zweig «kosmovis-v017-nachgang3», Kopf `c371d9667`, Chromium grün; wartet auf L26 im Hauptstrang):** Hinweis am «Aufs Blatt»-Knopf der Kuratier-Karte abgeschnitten; Herkunftszeile beim Ablegen fällt auf `engine_used` zurück, solange die Brücke kein `worker` liefert.
+- [ ] **local:** `auf-20261007-250` — Nachgang 3 in WebKitGTK prüfen.
+- [ ] **Kern (drüben):** nach L26 dessen Kopf in Nachgang 3 hereinholen, Läufe wiederholen, Stand-Zeile setzen, über die Zentrale freigeben.
 - [ ] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen.
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*

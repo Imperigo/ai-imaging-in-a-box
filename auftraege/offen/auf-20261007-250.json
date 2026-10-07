@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261007-250",
+ "art": "frage",
+ "beschreibung": "Nachgang 3 in WebKitGTK pruefen: Kurzhilfe/Abzeichen an der Kuratier-Karte nicht mehr abgeschnitten; Herkunftszeile auf dem Blatt aus worker bzw. engine_used.",
+ "anweisung": "=== IN WEBKITGTK PRUEFEN: NACHGANG 3 (KURZHILFE AN DER KARTE, HERKUNFTSZEILE AUF DEM BLATT) ===\n\nUnser KosmoOrbit-Zweig claude/kosmovis-v017-nachgang3 (Kopf c371d9667; enthaelt den Integrator-Kopf 202ba8043\nmit Publish Schritt 2). Er behebt zwei Befunde aus eurem 248; in Chromium gruen, WebKitGTK kann nur ihr.\n  1  Die Kurzhilfe (Tooltip) an den Knoepfen der Kuratier-Karte — v. a. «Aufs Blatt» mit «Lizenz offen» — und das\n     Abzeichen «Lizenz offen» wurden vom Kartenrand abgeschnitten (Chromium: 14 von 20 Messungen). Jetzt\n     richten sie sich nach der Fusszeile bzw. der Embleme-Zeile, hoechstens kartenbreit, mit Umbruch.\n  2  Unter dem Bild auf dem Blatt stand «HERKUNFT UNBEKANNT». Die Herkunftszeile nimmt jetzt: worker der\n     Bruecke (gemeldet → «echter Render · <Worker>, seit <Zeit> UTC»; abgeleitet → «… (abgeleitet)»), sonst\n     engine_used aus dem Ergebnis («Gerechnet mit qwen-image-2.1»), sonst weiter «Herkunft unbekannt».\nDer Zweig wartet beim Integrator noch auf die UI-Lieferung 26 (anderer Teil von NodeCanvas, beruehrt uns nicht).\n\nAUFBAU wie 248 (W1): eigene Arbeitskopie, Zweig auschecken, Desktop-App bauen (tauri build --no-bundle),\neigener Xvfb, Wegwerf-Profil, xdotool. Nichts pushen, installierte App nicht ersetzen, keine Systempakete.\nEure Bruecke mit dem worker-Feld (claude/lw-bruecke-worker-feld) darf laufen, wenn sie schon laeuft;\nsonst die bisherige — dann gilt Fall «engine_used».\n\nSCHRITTE\n  1a Ein Ergebnis mit «Lizenz offen» in der Kuratier-Flaeche (ein Qwen-2.1-Lauf nur bei freier Karte; ein\n     schon vorhandenes Ergebnis aus 248 genuegt, wenn das Profil es noch hat). Ueber «Aufs Blatt» fahren:\n     Ist die Kurzhilfe ganz lesbar, nichts abgeschnitten? Dasselbe fuer das Abzeichen und «Verwerfen».\n     Bei 1400x900 und 1024x768. Bildschirmfoto je Groesse.\n  1b Im Vergleich (zwei Karten): Abzeichen und Kurzhilfe ganz lesbar?\n  2a Bild «Aufs Blatt» legen: Was steht unter dem Bild auf dem Blatt (woertlich)?\n  2b Sagen, welche Bruecke lief (mit oder ohne worker-Feld) und ob der Abholer schon den Stand mit\n     worker im Laufzettel hatte (ai-imaging main ab 3295bed).\n  Bildschirmfotos nur ohne Projekt-, Rechner-, Benutzer- oder Netznamen, klein:\n  auftraege/ergebnisse/auf-20261007-250-<1a-1400|1a-1024|2a>.png\n\nURTEIL je Punkt in einem Satz.\n\nZURUECK (auftraege/ergebnisse/auf-20261007-250.json): gebauter Kopf; 1a, 1b, 2a, 2b je ja/nein + Satz;\ndie Urteile; was auffiel.\n\nNICHT TUN: etwas pushen; KosmoOrbit-Code aendern; installierte App ersetzen; Systempakete installieren;\nechte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-07T08:45:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt der App wie in auf-20261006-248"
+ },
+ "params": {
+  "zweig": "claude/kosmovis-v017-nachgang3",
+  "kopf": "c371d9667"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU nur, falls ein neuer Qwen-2.1-Lauf noetig ist, und nur bei freier Karte.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Gebauter Kopf.",
+  "1a, 1b, 2a, 2b je ja/nein und Satz.",
+  "Urteil je Punkt."
+ ],
+ "rang": 37
+}
