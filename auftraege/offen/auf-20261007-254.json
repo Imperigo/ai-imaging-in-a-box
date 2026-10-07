@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-254",
+  "art": "frage",
+  "beschreibung": "E169: erste Fahrt der eingebauten Personenerkennung — Maske auf den Bildern aus 249 (A), dann die Kette mit Maske (B).",
+  "anweisung": "=== PERSONENERKENNUNG IN DER KETTE: ERSTER LAUF AM GERAET (E169) ===\n\nWORUM ES GEHT\n  Danke fuer 253. Daraus ist gebaut (KosmoPrepare main 29d96b8, core/person_maske.py):\n    - jede Person maskiert (Schwelle 0.5), Saum 2.5 % der Bildbreite;\n    - eine HANDZONE je Ansicht, aus der Aufnahme gelesen statt fest gesetzt: wo ein\n      Personensegment am unteren Rand in mindestens 20 % der Bilder liegt, gilt das Gebiet\n      in allen Bildern der Ansicht;\n    - die Erkennung laeuft als Programm in .venv-person (tools/person_erkennung_impl.py),\n      Gewichte an ihrer Pruefsumme erkannt (die aus 253);\n    - tools/splat_maske.py --verfahren auto (Vorgabe) nimmt die Erkennung, wo sie verfuegbar\n      ist, sonst die Ruhe-Regel, und schreibt verfahren_grund in den Bericht.\n  Hier lief das Modell nie (kein torch in der Wolke); dieser Lauf ist der erste echte.\n\nAUFBAU\n  KosmoPrepare-Klon auf main ziehen (mindestens 29d96b8). .venv-person aus 253 bleibt;\n  die Gewichte liegen unter ~/.kosmoprepare/modelle/detr-resnet-50-panoptic/.\n\nA) NUR DIE MASKE, auf den Bildern aus 249 (Arbeitsordner NICHT veraendern — Ausgabe in\n   einen NEUEN Wegwerfordner):\n     <server-python> tools/splat_maske.py --bilder <249>/images --aus <weg>/masks \\\n        --bericht <weg>/maske.json --vorschau <weg>/vorschau\n   (<server-python> = .venv-server, also der Interpreter, den die Kette dafuer nimmt.)\n   Melden: Rueckgabe, Satz der letzten Zeile, Laufzeit, aus maske.json je Ansicht:\n   erkannt/bilder, am_unteren_rand, handzone_anteil, anteil_mittel, anteil_max, grund;\n   dazu verfahren und erkennung (geraet, sekunden_median, speicher_gib).\n   Gegenprobe gegen deine Tabelle aus 251 an denselben 80 Bildern: liegt der 251-Kasten\n   jetzt unter der Maske (ganz / teilweise / nicht)? Besonders die Hand-Bilder in front und left,\n   die 253 verfehlt hat. Und: wieviel Szene steht in Bildern OHNE filmende Person unter der Maske?\n   Die vier Vorschaubilder nur ansehen, nicht ins Repo.\n\nB) WENN A traegt: die Kette einmal mit Maske fahren (wie 247/249, Quelle insv, mit Vokabular),\n   in einen NEUEN Arbeitsordner. Melden: Stufen, registrierte Bilder, Teilmodelle, Punkte, Dauer;\n   aus bericht.json den Block «maske» (verfahren, colmap); ob COLMAP mask_path bekam; ob brush\n   lief. Wenn moeglich: steht im Splat noch eine Wolke entlang des Wegs (ja/nein, Augenmass)?\n   Traegt A nicht, B weglassen und sagen warum.\n\nWAS DU NICHT TUST\n  Nichts installieren, kein anderes Modell, keine Schwelle im Code aendern (zum Probieren gibt\n  es --parameter saum_anteil=… / hand_haeufigkeit=…, dann den Wert nennen). Arbeitsordner aus\n  243/247/249 nicht veraendern. Keine Bilder, Masken oder Gewichte ins Repo; keine Pfade mit\n  Benutzernamen, keine Host- oder Netznamen.\n\nRUECKGABE\n  A: Rueckgabe, Satz, Laufzeit, Tabelle je Ansicht, Gegenprobe zu 251, Szene unter der Maske.\n  B: Kennzahlen der Kette, Block maske, COLMAP/brush, Wolke ja/nein.\n  Urteil in zwei Saetzen: deckt die Maske die filmende Person samt Hand? Wird der Splat besser?",
+  "erstellt": "2026-10-07T16:30:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 249 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-253",
+    "kosmoprepare_mindestens": "29d96b8",
+    "owner_entscheid": "E169"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nichts installieren; nur in neue Wegwerf- bzw. Arbeitsordner schreiben.",
+    "hinweise": [
+      "Arbeitsordner aus 243, 247, 249 nicht veraendern.",
+      "Keine Bilder, Masken oder Gewichte ins Repo."
+    ]
+  },
+  "rueckgabe": [
+    "A Maske: Rueckgabe, Satz, Laufzeit, je Ansicht die Kennzahlen, Gegenprobe zu 251.",
+    "B Kette mit Maske: Kennzahlen, Block maske, COLMAP/brush, Wolke ja/nein (oder warum weggelassen).",
+    "Urteil in zwei Saetzen."
+  ],
+  "rang": 41
+}
