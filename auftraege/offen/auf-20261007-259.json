@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261007-259",
+ "art": "frage",
+ "beschreibung": "Zaehlen, ob das Demohaus IFC-Oberflaechenstile traegt und was davon im ifc_to_glb_runner ankommt (Vorbereitung F6, v0.1.8).",
+ "anweisung": "=== ZAEHLEN: TRAEGT DAS DEMOHAUS IFC-OBERFLAECHENSTILE — UND WAS KOMMT DAVON BEI UNS AN? ===\n\nWorum es geht (v0.1.8, Befund F6 aus 230): Unser Umwandler src/aiimaging/runners/ifc_to_glb_runner.py\nnimmt aus jedem IFC-Bauteil nur Ecken und Flaechen (form.geometry.verts/faces). Die Materialien und\nOberflaechenstile (form.geometry.materials, material_ids) liest er nie — die glb fuer Blender ist darum\neinfarbig. Bevor wir das bauen, wollen wir wissen, ob es sich lohnt: Traegt ein typisches Modell ueberhaupt\nStile, und wie viele?\n\nWEG (nur lesen und zaehlen, nichts bauen):\n  1 Das Demohaus als IFC: aus der Desktop-App KosmoOrbit (Beispielprojekt Demohaus, Export IFC) in einen\n    Wegwerf-Ordner. Geht der Export nicht: ein synthetisches IFC aus unserem Repo nehmen, das ihr schon\n    habt, und das sagen.\n  2 In .venv-ifc mit ifcopenshell zaehlen (ein kleines Skript im Wegwerf-Ordner, nicht ins Repo):\n      - Anzahl IfcSurfaceStyle, IfcStyledItem, IfcMaterial, IfcMaterialLayerSet;\n      - je Bauteiltyp (IfcWall, IfcSlab, IfcWindow, IfcDoor, IfcRoof …): wie viele Bauteile haben nach\n        ifcopenshell.geom.create_shape (Einstellungen wie in unserem Runner) eine nicht leere\n        form.geometry.materials-Liste, und wie viele verschiedene Materialien je Bauteil;\n      - je Material: Name und Farbe (diffuse RGB, Transparenz), wie ifcopenshell sie liefert — nur die\n        Werte, keine Pfade.\n  3 Unseren Runner wie heute laufen lassen (python -m oder direkt in .venv-ifc mit derselben IFC) und in\n    der entstandenen glb nachsehen: wie viele Materialien hat sie (z. B. mit trimesh)? Erwartung: keine\n    bzw. eines.\n\nZURUECK (auftraege/ergebnisse/auf-20261007-259.json): Quelle der IFC (Demohaus-Export oder synthetisch),\ndie Zaehlungen aus 2 als Tabelle, die Material-Liste (Name, Farbe, Transparenz), das Ergebnis aus 3, und\nein Satz: lohnt es sich (gibt es mehr als ein Material mit unterscheidbarer Farbe)?\n\nNICHT TUN: Code aendern oder committen ausser der Ergebnisdatei; echte Projektdaten verwenden; die IFC\nins Repo legen. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-07T19:30:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "Demohaus-Beispielprojekt der App als IFC-Export, sonst synthetisches IFC"
+ },
+ "params": {
+  "runner": "src/aiimaging/runners/ifc_to_glb_runner.py"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Nur CPU; keine GPU noetig.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Quelle der IFC.",
+  "Zaehlungen je Typ und Material-Liste.",
+  "Materialien in der heutigen glb.",
+  "Satz: lohnt es sich?"
+ ],
+ "rang": 46
+}
