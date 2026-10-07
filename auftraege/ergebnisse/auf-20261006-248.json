@@ -1,0 +1,65 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-248",
+ "worker": "local",
+ "status": "erledigt bis auf A3 — A und B2 in WebKitGTK gruen, B1 bestaetigt (nur Glas ohne Weichzeichner); A3 ohne zweiten GPU-Lauf nicht am Geraet geprueft",
+ "beendet": "2026-10-07T06:30:00Z",
+ "dauer_s": null,
+ "weg": "W1 wie in 246 — eigene Arbeitskopie detached auf origin/claude/kosmovis-v017-publish-schritt2 (d4dc55c7f), npm ci (package-lock wich von der vorhandenen Arbeitskopie ab, darum kein Hardlink), Desktop-App mit «npx tauri build --no-bundle» gebaut (Release-Binaerdatei, nichts installiert). Eigener Xvfb (1920x1080x24, freie Displaynummer), eigene Sitzungs-DBus, Wegwerf-Profil (XDG_DATA/CONFIG/CACHE/RUNTIME), App-Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1 und KOSMO_MCP_PORT auf einem freien Port (die App meldete ihren Anschluss dort, nicht auf dem Standard-Port); nach der Einrichtung im Wegwerf-Profil kosmo.claude.anschluss = «aus», die Claude-Adresse auf einen toten Port, Betriebsart «Cloud» und die eigene Bruecken-Adresse gesetzt und neu gestartet. Danach hatte die Test-App nur noch Verbindungen zur eigenen Bruecke. Klicks mit xdotool nur auf diesem Xvfb. Eigene Bruecke aus der Arbeitskopie (nur lokal gebunden, freier Port, eigene Job-Ablage, CORS fuer die Tauri-Herkunft); der Dienst auf 8600 wurde nicht angefasst. Synthetisches Projekt: Einrichtung durchgeklickt, «Beispielprojekt laden — Demohaus», Vis-Station, «+ Graph erstellen», Knoten Modell + Prompt + Render verbunden. Ein Qwen-Image-2.1-Lauf, gerechnet vom Abholer (tools/abholen.py --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render) gegen die eigene Ablage, nur unter der geteilten GPU-Sperre und bei freier Karte. Kein Waechter noetig (es gab keinen Abbruch-Teil).",
+ "koepfe": {
+  "gebaut": "d4dc55c7f5716c7774cc106e2228b3b24fb29384",
+  "hinweis": "Zweigkopf unveraendert gebaut (kein lokaler Merge), App-Kopf zeigt v0.1.7; nichts committet, nichts gepusht."
+ },
+ "schritte": {
+  "A1": {
+   "antwort": "ja",
+   "satz": "Render-Knoten mit «Qwen-Image 2.1» und Abendstimmungs-Prompt gerechnet (done, engine_used qwen-image-2.1, engine_license «Qwen Research License Agreement», engine_license_open true); Kuratier-Karte V-01 mit «⚠ Lizenz offen», der Karten-Knopf «Aufs Blatt» (Ordner-Symbol) legte das Bild ab, Meldung «‹Variante V-01› liegt auf ‹Renderblatt› — im KosmoPublish weiterschieben. Lizenz offen: Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). …».",
+   "rechenzeit_s": 218.9,
+   "auftrag_wand_s": 224,
+   "stillstand_s": 52.0,
+   "engine_used": "qwen-image-2.1",
+   "engine_license": "Qwen Research License Agreement",
+   "engine_license_open": true,
+   "gpu": {"spitze_mib": 22198, "spitze_w": 76.4, "geraeteweg": "cuda+auslagerung"}
+  },
+  "A2": {
+   "antwort": "ja",
+   "satz": "Projekt ueber «Sichern (.kosmo)» gespeichert; in der gespeicherten Projektdatei traegt das einzige Blatt-Bild des Renderblatts lizenzOffen mit modell «qwen-image-2.1» und lizenz «Qwen Research License Agreement» (dieselbe Angabe steht auch im Journal der Datei). Das Blatt in KosmoPublish zeigt die Marke wie erwartet noch nicht (Schritt 3).",
+   "modell": "qwen-image-2.1",
+   "lizenz": "Qwen Research License Agreement"
+  },
+  "A3": {
+   "antwort": "nicht geprueft",
+   "satz": "Kein Z-Image-Turbo-Lauf gemacht, weil die Auflage die GPU nur fuer den einen Qwen-Lauf (A1) freigibt; zudem kommt man ueber «Aufs Blatt» gar nicht auf denselben Platz: platziereBildAufsBlatt fuellt nur einen LEEREN Slot, sonst legt es einen neuen an (x 40/y 40) — ein zweites Bild haette die Qwen-Marke also nicht ersetzt, sondern daneben gelegen. Der einzige Weg auf denselben Slot ist in KosmoPublish «Bild bearbeiten → Bild laden…» (bildFuellen ohne Marke, entfernt laut Code die alte); dort liess sich das Blatt-Bild in WebKitGTK per Klick nicht anwaehlen (Inselfenster blieb bei «Kein Bild ausgewaehlt»), darum auch dieser Weg ungeprueft."
+  },
+  "B2": {
+   "antwort": "nein (nichts verdeckt)",
+   "satz": "Bei 1400x900 liegt die Kuratier-Flaeche zwischen den Schwebeknoepfen (links ab Leiste EG, oben unter 3D·PLAN/Auge/SYNC, rechts vor ×-Knopf und Inseln, unten ueber ⇄ und Kosmo-Orb); bei 1024x768 ebenso — kein Shell-Knopf, keine Insel und nicht der Orb ueber Karte, Knopf, Herkunft-Liste, Filter oder Fusszeile; einzig eine AUFGEKLAPPTE GRAPH-Insel ragt links ~35 px in den leeren Teil der Herkunft-Spalte, ohne dort etwas zu verdecken.",
+   "bilder": ["auf-20261006-248-b2-1400.png", "auf-20261006-248-b2-1024.png"]
+  },
+  "B1": {
+   "antwort": "nein (nur Durchscheinen)",
+   "satz": "Stimmungs-Popup ueber dem Render-Knoten geoeffnet: alle eigenen Felder (drei Stimmungs-Kacheln, Hinweistext, «+ Drei-Stimmungen-Kette einfuegen») bleiben innerhalb des Popup-Rands; die Knotenfelder dahinter («kein Preset», «1600 × 1000», «128 — Vorgabe», «keiner», Umgebungs-Schiene) scheinen nur scharf durch das Glas, weil WebKitGTK den Weichzeichner nicht zeichnet. Ein «Stimmung»-Schild im Popup war nur der Hover-Hinweis des Insel-Knopfs und verschwand mit der Maus.",
+   "bild": "auf-20261006-248-b1.png"
+  }
+ },
+ "urteil": {
+  "A": "Ja fuer A1/A2 — in WebKitGTK geht ein «Lizenz offen»-Bild ueber die Kuratier-Karte aufs Blatt und das Blatt-Bild traegt lizenzOffen {modell qwen-image-2.1, lizenz Qwen Research License Agreement} in der gespeicherten Projektdatei; die Gegenprobe A3 ist offen (zweites Bild landet ueber «Aufs Blatt» ohnehin auf einem neuen Platz).",
+  "B2": "Ja — der Innenrand haelt in WebKitGTK bei 1400x900 und 1024x768: kein Shell-Knopf, keine Insel und nicht der Kosmo-Orb verdeckt Bedienbares der Kuratier-Flaeche.",
+  "B1": "Bestaetigt — im Stimmungs-Popup ragt nichts Eigenes ueber den Rand; was stoert, sind nur die durchscheinenden Knotenfelder, weil das Glas in WebKitGTK keinen Weichzeichner hat."
+ },
+ "auffaelliges": [
+  "Blatt-Bild-Titel «Herkunft unbekannt»: der Job-Record der Bruecke traegt kein Feld worker (nur requested_engine «ki»), darum faellt bildLabel auf «Herkunft unbekannt» zurueck — obwohl das Ergebnis engine_used/engine_license kennt. Auf dem Blatt steht unter dem Qwen-Bild HERKUNFT UNBEKANNT.",
+  "KosmoPublish: das abgelegte Blatt-Bild liess sich in der Insel-Oberflaeche per Klick nicht anwaehlen (kein Auswahlrahmen, «Bild bearbeiten» blieb bei «Kein Bild ausgewaehlt»), auch nach «Einpassen»; das Blatt sass dabei nach rechts unten versetzt in der Buehne. Ursache nicht geklaert (Overlay-Lage oder Ereignisfolge), in Chromium gegenpruefen.",
+  "Kuratier-Karte: der Hinweis am Knopf «Aufs Blatt» («(KosmoPublish) — Lizenz offen: vor einer V…») wird vom Kartenrand abgeschnitten.",
+  "Rechts neben dem ×-Knopf der Kuratier-Flaeche erscheint unter Xvfb ein schwarzes Rechteck (etwa 80x50 px) — vermutlich ein leeres Hinweisfenster ohne Compositor, kein App-Inhalt; verdeckt nichts.",
+  "Qwen-Lauf auf cuda+auslagerung (31.6 GB verlangt, 30.8 GB frei), darum nur ~76 W Spitze; Rechenzeit trotzdem 219 s wie in 246.",
+  "KOSMO_MCP_AUS kennt dieser Stand nicht (kein Treffer im Code); geschuetzt hat KOSMO_MCP_PORT auf einem freien Port plus der Schalter «aus» im Profil.",
+  "Beim Beenden der App schrieb WebKitWebProcess je einen Absturzbericht (zweimal) — eigene, sofort geloescht."
+ ],
+ "gpu": {
+  "laeufe": "ein Rechenlauf (Qwen-Image 2.1, eine Innenkamera) unter der geteilten GPU-Sperre, nach ~25 min Warten auf die Sperre; vorher Karte frei (~0.8 GB, ~40 W), Grenze 400 W eingehalten.",
+  "spitze": "Qwen 22198 MiB / 76 W"
+ },
+ "aufraeumen": "App, eigener Xvfb, Sitzungs-DBus, eigene Bruecke, Sperr-Halter und GPU-Messung per gemerkter PID beendet (Dienst auf 8600, fremde Xvfb und Test-Apps unberuehrt); zwei eigene Absturzberichte von WebKitWebProcess geloescht; Arbeitskopie per git worktree remove --force entfernt; Wegwerf-Profil, Job-Ablage, Bilder, Rohabzuege, gespeicherte .kosmo-Datei und Bau-Logs geloescht; GPU-Sperre frei; nur die drei PNGs und dieses Ergebnis abgelegt; nichts committet, nichts gepusht."
+}
