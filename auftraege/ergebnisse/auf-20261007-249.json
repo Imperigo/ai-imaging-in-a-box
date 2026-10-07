@@ -1,0 +1,118 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-249",
+ "worker": "local",
+ "status": "erledigt — B: keiner der vier Werte (0.025, 0.05, 0.08, 0.12) maskiert irgendetwas, in keiner Ansicht; es gibt darum keine Vorschau und kein Rot. C (Fall «kein Wert»): Kette ueber das Werkzeug MIT Maske laeuft seit 26080c0 durch, ohne mask_path: 960/960 registriert, 1 Modell, colmap false. Kein Code geaendert, nichts installiert, nichts committet.",
+ "A_stand": {
+  "kosmoprepare": "26080c0 (git pull --ff-only: af46dae → 26080c0); 26080c0 ist HEAD",
+  "log_oneline": "26080c0 Maske: COLMAP bekommt den Ordner nur, wenn eine Maske entstand (auf-20261006-247)",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server/bin/python"
+ },
+ "B_schwelle": {
+  "bilder": "Arbeitsordner C_ohne aus 247 (images/<ansicht>/*.jpg, je 240 Bilder, 1086 × 1086), nur gelesen; Verzeichnisliste vorher = nachher",
+  "aufruf": "tools/splat_maske.py --bilder <C_ohne>/images --aus <TMP>/m_<wert> --bericht <TMP>/m_<wert>.json --vorschau <TMP>/v_<wert> --parameter ruhe_max=<wert>",
+  "rueckgabe": {"0.025": 0, "0.05": 0, "0.08": 0, "0.12": 0},
+  "zeile_woertlich_alle_vier_werte": "Maske: back nichts Mitfahrendes; front nichts Mitfahrendes; left nichts Mitfahrendes; right nichts Mitfahrendes",
+  "parameter_herkunft_woertlich": "fuer diesen Lauf von Hand geaendert: ruhe_max=<wert>",
+  "maskiert_je_wert": {"0.025": 0, "0.05": 0, "0.08": 0, "0.12": 0},
+  "fuer_alle_werte_gleich": "maskiert false, anteil 0.0, gebiete 0, grund null in allen 16 Faellen; mit_struktur, aenderung_quantile und aenderung_unten_p05 haengen nicht von ruhe_max ab und sind in allen vier Laeufen gleich",
+  "ansichten_kennzahlen": [
+   {"ansicht": "back",  "mit_struktur": 0.9826, "aenderung_quantile": {"p01": 0.0878, "p05": 0.1046, "p25": 0.1354, "p50": 0.1612}, "aenderung_unten_p05": 0.106},
+   {"ansicht": "front", "mit_struktur": 0.9758, "aenderung_quantile": {"p01": 0.08,   "p05": 0.0957, "p25": 0.1242, "p50": 0.1484}, "aenderung_unten_p05": 0.1128},
+   {"ansicht": "left",  "mit_struktur": 0.9839, "aenderung_quantile": {"p01": 0.0792, "p05": 0.0951, "p25": 0.1219, "p50": 0.1442}, "aenderung_unten_p05": 0.1007},
+   {"ansicht": "right", "mit_struktur": 0.951,  "aenderung_quantile": {"p01": 0.0811, "p05": 0.0986, "p25": 0.1257, "p50": 0.1474}, "aenderung_unten_p05": 0.0991}
+  ],
+  "tabelle_wechselnd": {
+   "kopf": ["ruhe_max", "back", "front", "left", "right"],
+   "zeilen": [
+    [0.025, 1.0, 1.0, 1.0, 1.0],
+    [0.05, 1.0, 1.0, 1.0, 1.0],
+    [0.08, 0.9965, 0.99, 0.9892, 0.9915],
+    [0.12, 0.873, 0.7873, 0.7694, 0.8086]
+   ]
+  },
+  "tabelle_maskiert_anteil_gebiete_grund": "alle 16 Felder: nein · 0.0 · 0 · null",
+  "vorschau": "keine — das Werkzeug schreibt Vorschau und Maskendateien nur fuer maskierte Ansichten; m_<wert>/ blieben leer, v_<wert>/ entstanden nicht. Angesehen wurden darum die Bilder selbst (je Ansicht 5 Bilder ueber die Aufnahme verteilt, Nr. 10, 60, 120, 180, 230).",
+  "satz_je_wert_und_ansicht": {
+   "alle_werte": "Bei 0.025, 0.05, 0.08 und 0.12 ist in keiner Ansicht etwas rot — weder die Person noch etwas aus der Szene.",
+   "back": "Kein Rot; die Person erscheint nur am Rand (im spaeten Bild Kopf/Gesicht angeschnitten oben links), sonst Szene.",
+   "front": "Kein Rot; die Person steht in einem Bild (Nr. 60) gross im Bild, in anderen nur Hand/Arm am unteren rechten Rand.",
+   "left": "Kein Rot; Szene, eine Hand/ein Arm am unteren rechten Rand in einigen Bildern; die kleine Figur in der Ferne im fruehen Bild gehoert zur Szene.",
+   "right": "Kein Rot, obwohl die filmende Person hier in 4 von 5 Bildern gross und mittig steht (Kopf bis Brust, Arm zum Stab unten links, haengt am unteren Rand); sie dreht Kopf und Oberkoerper und rueckt im Bild."
+  },
+  "person_gross_in_ansicht": "right (Ketten-Namen; = 243-«left»), wie in 247 festgestellt; zeitweise auch gross in front",
+  "deutung": "Auch die 1 % ruhigsten strukturierten Bildpunkte aendern sich um 0.079–0.088 (p01), im unteren Drittel die 5 % ruhigsten um 0.099–0.113. Bei 0.12 sind 13–23 % der Punkte ruhig, aber sie bilden kein zusammenhaengendes Gebiet am unteren Bildrand von mindestens gebiet_min 0.003 (nach der Nachbar-Bedingung). Die Person bewegt sich im Bild etwa so stark wie die Szene; zwischen ihr und der Szene liegt in diesen Kennzahlen keine Luecke, die eine Schwelle trennen koennte. Beobachtung, kein Vorschlag fuer den Code."
+ },
+ "B_wert_der_die_person_trifft": "keiner",
+ "C_kette": {
+  "fall": "B gab keinen Wert → C einmal mit Maske (ruhe_max 0.025 der Kette), nur um zu belegen, dass die Kette ohne Maskendatei durchlaeuft",
+  "werkzeug": "kosmoprepare_mcp_tools.tool_splat_kette / tool_splat_stand, Optionen linsen_messen true, fps 2, max_frames 240, schritte 7000, profil rtx5090, ohne ohne_maske; Vokabular ueber $KOSMOPREPARE_COLMAP_VOKABULAR; Stand alle 60 s",
+  "start_text_woertlich": "Splat-Kette laeuft — startet …",
+  "standzeilen": ["laeuft startet … (1×)", "laeuft Frames extrahieren (ffmpeg) (3×)", "laeuft COLMAP Matching (7×)", "laeuft COLMAP Posen-Rekonstruktion (GLOMAP) (9×)", "laeuft brush_training (7000 steps) (4×)", "fertig None"],
+  "laeuft_durch": true,
+  "rueckgabe": 0,
+  "stufen": ["frame_extraction", "maske", "colmap_feature_extraction", "colmap_rig", "colmap_matching", "colmap_mapping", "brush_training"],
+  "stufen_zeit": {"frame_extraction": "08:45:19", "maske": "08:47:59", "colmap_feature_extraction": "08:48:00", "colmap_rig": "08:48:15", "colmap_matching": "08:48:17", "colmap_mapping": "08:55:36", "brush_training": "09:04:03"},
+  "letzter_stand_satz_woertlich": "Splat entstanden: 960 von 960 Bildern registriert, 1 Teilmodell(e); Maske in 0 Ansicht(en)",
+  "pipeline_log_woertlich": [
+   "[08:47:59] STAGE: maske",
+   "Maske: back nichts Mitfahrendes; front nichts Mitfahrendes; left nichts Mitfahrendes; right nichts Mitfahrendes",
+   "[08:48:00] Maske: nichts maskiert — COLMAP ohne mask_path",
+   "[08:48:00] STAGE: colmap_feature_extraction"
+  ],
+  "mask_error_zeilen": 0,
+  "masks_ordner": "leer",
+  "kette_log_woertlich": [
+   "Linsen werden gemessen (2 Videostrom/-stroeme → --stroeme 0,1)",
+   "max-res 1600 → 1086: mehr Bildpunkte traegt eine Ansicht dieser Quelle nicht, darueber wuerde nur hochgerechnet",
+   "Abdeckung: --max-frames 240 bei 2 Bildern/s deckt 120 von 187 s ab (die Grenze gilt je Ansicht) — der Rest des Videos wird nicht gerechnet",
+   "Splat entstanden: 960 von 960 Bildern registriert, 297068 Punkte, 1 Teilmodell(e)"
+  ],
+  "bericht": {"status": "fertig", "bilder": 960, "registriert": 960, "modelle": 1, "punkte": 297068, "schleifenschluss": true, "dauer_s": 1382.7, "max_res": 1086, "vokabular": "bereit"},
+  "bericht_maske": {
+   "status": "gerechnet",
+   "maskiert": 0,
+   "colmap": false,
+   "brush": "ungemessen",
+   "parameter_herkunft": "gesetzt, nicht am Geraet gemessen",
+   "ansichten": [
+    {"ansicht": "back", "anteil": 0.0, "grund": null},
+    {"ansicht": "front", "anteil": 0.0, "grund": null},
+    {"ansicht": "left", "anteil": 0.0, "grund": null},
+    {"ansicht": "right", "anteil": 0.0, "grund": null}
+   ],
+   "kennzahlen_gleich_wie_B_0.025": true
+  },
+  "linsen": {"ih_fov": 194.4, "iv_fov": 194.4, "yaw": 0.0, "stroeme": [0, 1], "fehler": 0.5468, "mulde": 0.585, "bilder": 5},
+  "splats": 3184908,
+  "groesse_ordner_gb": 2.7,
+  "vergleich_247_ohne_maske": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 297068 statt 297038, Splats 3184908 statt 3205629, gesamt 1382.7 s statt 1412 s",
+  "splat_weiterverarbeitet": false,
+  "gpu_spitze_w": 226,
+  "gpu_grenze_w": 400
+ },
+ "urteil": [
+  "(1) Keiner der vier Werte trifft die Person: bis ruhe_max 0.12 bleibt jede Ansicht ohne Maske, auch die, in der die filmende Person gross und mittig steht — und nichts aus der Szene wird falsch rot.",
+  "(2) Die Kennzahlen zeigen, warum: selbst die ruhigsten 1 % der Bildpunkte aendern sich um 0.08–0.09, die Person bewegt sich im Bild etwa so wie die Szene; eine reine Ruhe-Schwelle trennt an dieser frei gehaltenen Aufnahme Person und Szene nicht.",
+  "(3) Der Fehler aus 247 ist behoben: mit Maske laeuft die Kette ueber das Werkzeug durch (maskiert 0, colmap false, kein MASK_ERROR, 960/960, 1 Modell), mit gleichem Ergebnis wie der Lauf ohne Maske."
+ ],
+ "gpu": {"sperre": "vor dem Lauf genommen (until mkdir …; sleep 30), per trap geloest; danach geprueft: Sperre weg", "grenze_w": 400, "spitze_w": 226},
+ "nicht_getan": [
+  "kein Code geaendert",
+  "nichts installiert",
+  "nichts aus dem Netz geladen ausser git pull",
+  "nichts committet",
+  "Video nur gelesen, nicht kopiert",
+  "Arbeitsordner aus 243 und 247 nicht veraendert (nur gelesen)",
+  "kein Wert in den Code eingetragen",
+  "Splat aus C nicht weiterverarbeitet",
+  "keine Bilder, Masken, Splats oder Projektdaten zurueckgegeben; keine Orts-, Personen- oder Projektnamen, keine Koordinaten, keine echten Dateinamen"
+ ],
+ "aufraeumen": "Wegwerfordner von B geloescht (darin auch ein Kontaktbogen zum Ansehen). Behalten ausserhalb der Repos: C (2.7 GB mit splat.ply).",
+ "umgebung": {"gpu_benutzt": true, "netz_benutzt": true, "netz_zweck": "git pull"},
+ "abweichungen": [
+  "Es gab keine Vorschau (nichts maskiert); die Saetze je Ansicht stuetzen sich auf die Bilder selbst, und weil kein Rot entstand, gilt fuer alle vier Werte derselbe Satz je Ansicht."
+ ],
+ "fehler": null
+}
