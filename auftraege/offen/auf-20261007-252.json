@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261007-252",
+ "art": "frage",
+ "beschreibung": "Letzte Geraeteprobe Nachgang 3 in WebKitGTK: freier Platz fuer neue Blatt-Bilder (P3) und Vergleich bei 1024x768 (P4).",
+ "anweisung": "=== LETZTE GERAETEPROBE NACHGANG 3: PLATZSUCHE FUERS BLATT UND VERGLEICH BEI 1024 (WEBKITGTK) ===\n\nUnser KosmoOrbit-Zweig claude/kosmovis-v017-nachgang3, Kopf 08df9f567 (enthaelt 202ba8043). Seit eurem 250\nneu dazugekommen, in Chromium gruen, in WebKitGTK ungeprueft:\n  P3  Neue Bilder «Aufs Blatt» bekommen den naechsten freien Platz statt fest (40, 40) — zwei Bilder liegen\n      nebeneinander, nicht aufeinander.\n  P4  Der Vergleich (zwei Karten) stellt die Karten bei schmaler Mitte untereinander (CSS-Container-Abfrage\n      auf die Flaechenbreite); nichts laeuft unter den Inspektor; Abzeichen und Kennung einzeilig; Kurzhilfe\n      in der Karte. Offen ist, ob WebKitGTK die Container-Abfrage (@container) dabei anwendet.\nDie Freigabe an Int 1 folgt nach dieser Probe und nach seiner UI-Lieferung 26 (sie beruehrt diese Stellen nicht).\n\nAUFBAU wie 250 (W1): eigene Arbeitskopie, Zweig auschecken, Desktop-App bauen (tauri build --no-bundle),\nXvfb, Wegwerf-Profil, xdotool. Nichts pushen, installierte App nicht ersetzen, keine Systempakete.\nVorhandene Qwen-Ergebnisse genuegen; ein neuer GPU-Lauf nur, wenn keines mehr da ist.\n\nSCHRITTE\n  P3a Zwei Bilder nacheinander «Aufs Blatt» (Kuratier-Karte). In KosmoPublish: liegen sie nebeneinander, ohne\n      Ueberlappung? Beide Herkunftszeilen einzeln lesbar? Bildschirmfoto.\n  P3b Ein drittes Bild: wieder ein freier Platz?\n  P4a Vergleich zweier Karten bei 1024x768: Karten untereinander? Etwas unter dem Inspektor? Abzeichen\n      «Lizenz offen» und Kennung «V-01» einzeilig? Kurzhilfe am Abzeichen ganz sichtbar? Bildschirmfoto.\n  P4b Dasselbe bei 1400x900: Karten nebeneinander, nichts abgeschnitten? Bildschirmfoto.\n  Bildschirmfotos nur ohne Projekt-, Rechner-, Benutzer- oder Netznamen, klein:\n  auftraege/ergebnisse/auf-20261007-252-<p3|p4-1024|p4-1400>.png\n\nURTEIL je Punkt (P3, P4) in einem Satz.\n\nZURUECK (auftraege/ergebnisse/auf-20261007-252.json): gebauter Kopf; P3a, P3b, P4a, P4b je ja/nein + Satz;\ndie Urteile; was auffiel.\n\nNICHT TUN: etwas pushen; KosmoOrbit-Code aendern; installierte App ersetzen; Systempakete installieren;\nechte Projektdaten. KEINE Pfade, Geraete-, Netz- oder Hostnamen, IP-Adressen, Benutzernamen, Kennwoerter.\n",
+ "erstellt": "2026-10-07T12:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "synthetisches Projekt der App wie in auf-20261007-250"
+ },
+ "params": {
+  "zweig": "claude/kosmovis-v017-nachgang3",
+  "kopf": "08df9f567"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "GPU nur, falls kein Qwen-Ergebnis mehr da ist, und nur bei freier Karte.",
+  "hinweise": [
+   "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+   "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen, nie ein Kennwort ins Ergebnis (REGEL 3)."
+  ]
+ },
+ "rueckgabe": [
+  "Gebauter Kopf.",
+  "P3a, P3b, P4a, P4b je ja/nein und Satz.",
+  "Urteil je Punkt."
+ ],
+ "rang": 39
+}
