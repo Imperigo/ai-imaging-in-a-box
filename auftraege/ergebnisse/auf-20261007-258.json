@@ -1,0 +1,65 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-258",
+ "worker": "local",
+ "rang": 45,
+ "folgt_auf": "auf-20261007-257",
+ "owner_entscheid": "E168",
+ "roadmap": "1696",
+ "status": "Teil A erledigt (Rueckgabe 0, 1.1 s): genau ein Block «gedeckt», G1 59.5 x 5.6 m, Decke 2.77 / Boden 0.11 / Hoehe 2.66 m, 82 von 119 Kameras darunter, liegt_in V1 — er deckt den gefilmten Gang auf ganzer Laenge, am offenen Vorplatz (Start) steht kein Block. `volumen` gegenueber 245 Zahl fuer Zahl unveraendert (8 Volumen, alle 8 Felder je Volumen gleich). Teil B folgt (App, nach Installation). Kein Code geaendert, nichts installiert, nichts committet.",
+ "A_stand": {
+  "kosmoprepare": "e93bf90 (git pull --ff-only von b137709; e93bf90 und aeabb4b sind Vorfahren von HEAD, geprueft mit git merge-base --is-ancestor)",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server/bin/python"
+ },
+ "A_gedeckt": {
+  "eingang": "<arbeitsordner 243/245>/splat.ply + splat.verortung.json (Behelfsverortung aus 245 mit 119 Fusspunkten; nur gelesen — sha256 der Begleitdatei und Groesse/Zeit der .ply vorher = nachher)",
+  "aufruf": "splat_volumen.py <arbeitsordner>/splat.ply --aus <auf258A>/volumen.json (wie 243/245, Parameter Vorgabe; gedeckt_abstand_m 3.0)",
+  "rueckgabe": 0,
+  "dauer_s": 1.1,
+  "speicher_spitze_gb": 1.3,
+  "gpu_benutzt": false,
+  "satz_woertlich": "8 Volumen aus 273020 Punkten · 1 Block/Bloecke «gedeckt» ueber dem gefilmten Weg (kein Gebaeude-Nachweis) · 5 ohne gelesenen Boden · 131 kleine Gruppen verworfen · Restfehler der Verortung unbekannt.",
+  "kopf": ["id", "laenge_m", "breite_m", "drehung_grad", "flaeche_m2", "fuellgrad", "boden_z", "decke_z", "hoehe_m", "u_grundriss_m", "u_hoehe_m", "kameras", "zellen", "punkte", "liegt_in"],
+  "zeilen": [
+   ["G1", 59.506, 5.621, 178.68, 169.75, 0.51, 0.112, 2.767, 2.66, 1.982, 1.08, 82, 679, 68035, "V1"]
+  ],
+  "quellen_woertlich": {
+   "boden_quelle": "Median von 82 Fusspunkten der Kameras unter der Decke",
+   "decke_quelle": "Median der flachen Schicht ueber Kopfhoehe in 679 Zellen"
+  },
+  "hinweise_woertlich": [
+   "Block «gedeckt» (Owner-Entscheid E168, 07.10.2026): Boden bis Decke ueber dem gefilmten Weg. Ob es ein Raum, ein gedeckter Gang, ein Vordach oder ein dichtes Laubdach ist, sagt der Splat nicht — kein Nachweis eines Gebaeudes.",
+   "Grundriss nur bis 3 m neben dem Weg gesucht — der Raum kann groesser sein",
+   "liegt in V1: dessen Oberkante kann das Dach sein, diese die Decke"
+  ],
+  "verworfen_gedeckt": "11 Deckenstuecke «Decke ueber weniger als 4.0 m²» (1–7 Zellen), keines mit drei Kameras darunter; sie stehen in derselben Liste `verworfen` wie die 120 aus 245 — darum meldet der Satz jetzt 131 statt 120 «kleine Gruppen». Lage (nachgerechnet): 4 am Start (x −0.4…2.1, z. T. seitlich y −4…−3, Decke 1.2–2.3 m), 4 am Ausgang (x 60–62), 3 Einzelstuecke am Gangrand (y 0, x 25/32/38, Decke 3.7–4.0 m).",
+  "passt_zum_gang": {
+   "liegt_in_V1": "ja (liegt_in «V1»; Mitte 30.6/−1.4 m, V1-Mitte 28.2/−1.7 m)",
+   "laenge": "ja — G1 59.5 m gegen den gefilmten Weg x −0.6…59.3 m (59.9 m) und G1-Zellen x 1.1…60.1 m; V1 ist mit 65.2 m laenger (Huelle samt Umgebung).",
+   "lichte_hoehe_je_6_m": "Decke-Median minus Fusspunkt-Median je Abschnitt: 3.01 · 2.84 · 2.82 · 2.76 · 2.82 · 2.85 · 2.79 · 2.73 · 2.66 · 2.85 m (x 0…60) — durchgehend 2.7–3.0 m; der Boden steigt dabei von −0.89 auf +0.25 m und wieder ab (Rampe aus 243/245), die Decke laeuft mit. Die Blockhoehe 2.66 m ist Median Decke minus Median Boden ueber den ganzen Gang.",
+   "breite": "der Rechteck-Grundriss ist 5.6 m breit, weil der Weg leicht abknickt (y −1.3 am Start, −2.4 in der Mitte, −0.5 am Ende); je 6-m-Abschnitt ist die Decke nur etwa 3 m breit (meist y −4.0…−1.0) und liegt damit innerhalb der 3-m-Suchgrenze — die Breite kommt aus den Daten, nicht aus der Grenze.",
+   "kameras_nicht_darunter": "37 von 119: 28 davon am Startpunkt (x −0.6…2, die Kamera stand dort laenger), 9 einzeln entlang des Gangs, wo die flache Schicht eine Luecke hat (z. B. x 6–8: 11 flache von 27 Zellen mit Punkten ueber Kopf)."
+  },
+  "bloecke_ohne_dach": "keine gefunden — es gibt nur G1, und der deckt den Gang, dessen Dach mit Brettraster 256/257 im Splat zeigen. Am Start (x −2…0, Vorplatz) liegt ueber Kopfhoehe in 55 Suchzellen nur 1 Zelle mit Punkten: dort entsteht richtigerweise nichts; die Deckenstuecke am Start und am Ausgang sind zu klein und ohne drei Kameras verworfen. Einschraenkung: das Video hat kein Laubdach und kein freistehendes Vordach, an dem man das Gegenteil pruefen koennte.",
+  "volumen_gegen_245": {
+   "unveraendert": true,
+   "verglichen": "alle 8 Volumen, je die 8 in 245 gemeldeten Felder (id, laenge_m, breite_m, hoehe_m, boden_quelle, fuellgrad, unsicherheit, hinweise): 0 Abweichungen; Punkte 273020 und Hinweis BEHELFSVERORTUNG gleich.",
+   "einzige_aenderung_am_satz": "«131 kleine Gruppen verworfen» statt 120 — die 11 neuen sind die verworfenen Deckenstuecke (s. verworfen_gedeckt), nicht Volumen."
+  },
+  "nachrechnung": "Die Zellmaske von G1 wurde mit einem Wegwerf-Skript aus derselben Rechnung (core.splat_volumen, nur gelesen) nachgebaut: 12 Gruppen, die groesste 679 Zellen mit 82 Kameras = G1, die anderen 11 = die verworfenen — deckt sich mit der Ausgabe."
+ },
+ "B_app": "folgt (App, nach Installation)",
+ "urteil": [
+  "(A) E168 traegt am echten Video: genau ein Block «gedeckt» (59.5 m lang, lichte Hoehe ueberall 2.7–3.0 m, 82 Kameras darunter) liegt in V1 und deckt den gefilmten Gang auf ganzer Laenge, am offenen Vorplatz steht keiner, und `volumen` ist gegenueber 245 Zahl fuer Zahl unveraendert.",
+  "(B) folgt (App, nach Installation)."
+ ],
+ "nicht_getan": [
+  "kein Code geaendert, nichts installiert, nichts geladen, GPU nicht benutzt",
+  "Arbeitsordner aus 243/245/249/254/256 nicht veraendert (nur gelesen)",
+  "nichts committet; keine Bilder, Masken, Splats ins Repo oder Ergebnis; keine Benutzer- oder Hostnamen"
+ ],
+ "aufraeumen": "Wegwerfordner <auf258A> (volumen.json, Ausgaben, Nachrechen-Skript) geloescht.",
+ "umgebung": {"gpu_benutzt": false, "netz_benutzt": false},
+ "fehler": null
+}
