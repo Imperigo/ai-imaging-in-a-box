@@ -1,0 +1,44 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-249",
+  "art": "frage",
+  "beschreibung": "Masken-Schwelle ruhe_max an der echten 360-Aufnahme messen (vier Werte, nur an den Bildern), dann die Kette mit Maske einmal durchlaufen lassen (KosmoPrepare 26080c0).",
+  "anweisung": "=== DIE MASKEN-SCHWELLE AN DER ECHTEN AUFNAHME EINSTELLEN, DANN C MIT MASKE NOCHMALS (KosmoPrepare 26080c0) ===\n\nWORUM ES GEHT\n  Danke fuer 247. Dein Befund war richtig, und die Ursache lag bei uns: die Kette gab COLMAP den\n  Maskenordner auch dann, wenn keine Maske entstand — darum MASK_ERROR an allen 960 Bildern und der\n  Abbruch im Rig. Seit 26080c0:\n  (1) mask_path nur, wenn unter masks/ wirklich eine .png liegt (dein Vorschlag).\n  (2) Sobald EINE Ansicht maskiert ist, bekommt jede andere eine WEISSE Maske (weiss = alles\n      benutzen) — sonst verwirft COLMAP die Bilder der unmaskierten Ansichten aus demselben Grund.\n  (3) Der Maskenbericht fuehrt die Verteilung der Aenderung: kennzahlen.aenderung_quantile (p01,\n      p05, p25, p50) und kennzahlen.aenderung_unten_p05 (unteres Drittel, wo die Person haengt).\n  (4) tools/splat_maske.py nimmt --parameter NAME=WERT (z.B. ruhe_max=0.05) fuer EINEN Lauf.\n  Die Schwelle ruhe_max (0.025) ist NICHT geaendert. Wir stellen sie erst ein, wenn du sie an der\n  echten Aufnahme gemessen hast.\n\nA  STAND\n   KosmoPrepare auf 26080c0 oder spaeter.\n\nB  SCHWELLE MESSEN — nur an den BILDERN des Arbeitsordners aus 247 (images/<ansicht>/*.jpg),\n   nichts neu extrahieren, nichts an der Kette fahren. Je Lauf ein EIGENER Ausgabeordner, nie\n   masks/ im Arbeitsordner:\n     python3 tools/splat_maske.py --bilder <ARBEIT>/images --aus <TMP>/m_<wert> \\\n        --bericht <TMP>/m_<wert>.json --vorschau <TMP>/v_<wert> --parameter ruhe_max=<wert>\n   mit ruhe_max = 0.025, 0.05, 0.08, 0.12.\n   Ein Python mit numpy und Pillow (z.B. .venv-server).\n   Je Wert und Ansicht melden: maskiert ja/nein, anteil, gebiete, grund, wechselnd,\n   aenderung_quantile, aenderung_unten_p05.\n   Je Wert und Ansicht EIN Satz aus der Vorschau: Ist die Person rot? Ist etwas aus der SZENE rot\n   (Boden, Fassade, Himmel)? Wenn ja, was?\n   Achtung: die Ansichtsnamen sind seit linsen_messen vertauscht (front<->back, left<->right\n   gegenueber 243) — bitte sagen, in WELCHER Ansicht die Person gross steht.\n\nC  NUR WENN EIN WERT IN B DIE PERSON ROT MACHT UND NICHTS AUS DER SZENE:\n   C mit Maske nochmals, ueber das Werkzeug wie in 247, aber zuerst die Maske des Arbeitsordners\n   mit genau diesem Wert rechnen lassen — die Kette kennt --parameter NICHT. Darum: Kette wie 247\n   mit Maske starten (sie rechnet mit 0.025, findet nichts, und laeuft seit 26080c0 ohne mask_path\n   DURCH). Melde: laeuft sie durch? Stufen, Rueckgabe, bericht.maske (colmap muss false sein),\n   registrierte Bilder, Modelle.\n   Gibt B keinen solchen Wert: C trotzdem einmal mit Maske, nur um zu belegen, dass die Kette\n   ohne Maskendatei durchlaeuft. Den Splat danach NICHT weiterverarbeiten.\n\nWAS DU NICHT TUN SOLLST\n  Nichts installieren. Die Arbeitsordner aus 243 und 247 nicht veraendern (B schreibt nur in\n  <TMP>). Keinen Wert in den Code eintragen. Keine Bilder aus der Aufnahme ins Repo.\n\nRUECKGABE\n  Stand; B als Tabelle Wert x Ansicht mit den Kennzahlen und je einem Satz; welcher Wert (wenn\n  einer) die Person trifft und die Szene nicht; C wie oben; drei Urteilssaetze.",
+  "erstellt": "2026-10-07T06:40:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 247 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "kosmoprepare_stand_min": "26080c0",
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261006-247",
+    "ruhe_max_werte": [
+      0.025,
+      0.05,
+      0.08,
+      0.12
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nichts installieren; B rechnet nur Masken an vorhandenen Bildern, C einmal die Kette.",
+    "hinweise": [
+      "Arbeitsordner aus 243 und 247 nicht veraendern.",
+      "B schreibt nur in einen Wegwerfordner."
+    ]
+  },
+  "rueckgabe": [
+    "Stand KosmoPrepare.",
+    "B Tabelle ruhe_max x Ansicht mit Kennzahlen und je einem Satz zur Vorschau.",
+    "Welcher Wert die Person trifft und die Szene nicht (oder keiner).",
+    "C laeuft die Kette ohne Maskendatei durch? Stufen, Rueckgabe, bericht.maske.",
+    "Drei Urteilssaetze."
+  ],
+  "rang": 11
+}
