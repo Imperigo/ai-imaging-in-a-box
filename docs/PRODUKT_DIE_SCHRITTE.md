@@ -1318,3 +1318,9 @@ Das liegt beim Integrator.
 noch einmal geladen; die Bilder bleiben bitgleich, das Standardmodell wird rund ein Sechstel schneller. Bei der
 Messung fiel auf, dass die Prüfung an der Vorführmappe jetzt durchfällt, die am 01.10. noch bestand — schon vor
 dem Umbau. Woran das liegt, wird gerade getrennt gemessen.
+
+**07.10.2026 — warum die Vorführmappe durchfiel, und die Behebung.** Die Nachmessung fand den Grund: Die Mappe
+hatte keinen Standpunkt, und ohne Standpunkt nahm die Software einen alten Notblick schräg von oben, in dem das
+Haus nur ein Sechstel des Bildes füllte. Mit Blick von Süden bestand dieselbe Mappe wie am 01.10. Jetzt rechnet
+«Anwenden» ohne Angabe frontal von Süden — genau wie der Weg, auf dem KosmoOrbit bestellt — und sagt dazu, dass
+es diese Vorgabe genommen hat. Das langsamere erste Qwen-Bild war Zufall der Reihenfolge, nicht der Umbau.

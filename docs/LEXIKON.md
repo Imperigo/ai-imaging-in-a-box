@@ -5280,6 +5280,20 @@ Kamerawegen «vorgegeben» und «Rückfall» steht dort keine Zahl mehr, sondern
 Unterschied: Dort steht der Grund nur, wenn der Wert **bestellt** war; ein Vorgabewert, den
 niemand verlangt hat, ist nicht «wirkungslos bestellt».
 
+**Standpunkt-Vorgabe** — Der Blick auf das Gebäude, den die Software nimmt, wenn niemand einen
+bestellt hat. Seit dem 07.10.2026 ist das auf beiden Wegen «frontal von Süden» (Kürzel `s`): beim
+Abholer (Bestellungen aus KosmoOrbit) schon seit August, beim Weg über die Mappe («Anwenden») neu.
+Vorher fiel die Mappe auf die alte Schrägsicht von oben zurück, in der das Haus klein und schief im
+Bild stand — und die Prüfung gegen die Geometrie fiel durch. Das Ergebnis sagt in einem Satz, dass
+die Vorgabe galt.
+*Im Projekt:* `arbeitsgang.STANDPUNKT_VORGABE`; Befund in `auf-20261007-261`.
+
+**Komponiert (eine Ansicht)** — Eine Kameraeinstellung, die nach dem Gebäude ausgerichtet ist: aus
+einer bestimmten Richtung, auf Augenhöhe, so nah, dass das Gebäude das Bild füllt. Das Gegenteil ist
+ein Notblick, der nur «irgendwie» auf die Szene zeigt.
+*Im Projekt:* Die Richtungskameras (`s`, `sSE`, `nNW` …) sind komponiert, der Rückfall des
+Blender-Schritts nicht.
+
 **Standpunkt zweimal bestellt** — Eine Bestellung, die den Blick auf das Gebäude auf
 zwei Arten zugleich festlegt: mit einer Himmelsrichtung (daraus rechnet die Bibliothek
 einen Standpunkt) **und** mit einem Standpunkt von Hand. Bis Runde 6/7 gewann still der
@@ -6448,7 +6462,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)** |
+| 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |

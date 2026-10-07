@@ -527,6 +527,28 @@ VARIANTEN_ARTEN = (VARIANTEN_STARTWERTE, VARIANTEN_EBENEN)
 #: tausend über das Netz hielte die HomeStation nicht für Stunden fest.
 VARIANTEN_HOECHSTENS = 8
 
+#: Der Standpunkt, wenn die Mappe und der Aufruf **keinen** bestellen: frontal von Süden.
+#:
+#: **Der Befund (HomeStation, ``auf-20261007-261``, 07.10.2026):** Ohne Standpunkt fiel
+#: dieser Weg bis in den Runner durch und rechnete dort dessen Rückfall — «diagonal von
+#: vorn-oben, brauchbar, aber nicht komponiert», 50 mm aus 51 m. Das Haus füllte 16,7 %
+#: des Bildes, und die Prüfung fiel bei jedem Startwert durch (Score 0,02–0,19). Dieselbe
+#: Mappe mit ``kamera="s"`` bestand mit 0,91 — auf die Stelle der Wert aus 218.
+#:
+#: **Warum ``s``:** Es ist die erste Richtung, die der Abholer ohne mitgesandte Kamera
+#: rechnet (:data:`aiimaging.abholer.AUTO_RICHTUNGEN`, Owner-Entscheid 23.08.2026: frontal
+#: auf eine Fassade). Zwei Wege derselben Software sollen ohne Angabe nicht zwei
+#: verschiedene Bilder vom selben Haus machen. Eine Probe hält die beiden gleich.
+#:
+#: **Was bleibt:** Der Rückfall des Runners selbst ist nicht angefasst — er ist die
+#: Bezugsgrösse aller bisher gemessenen Tiefenkarten. Geändert ist nur, dass dieser Weg
+#: ihn nicht mehr still erreicht.
+STANDPUNKT_VORGABE = "s"
+
+#: Die Angaben, von denen jede einen Standpunkt bestellt. Steht keine davon da, gilt
+#: :data:`STANDPUNKT_VORGABE`.
+STANDPUNKT_ANGABEN = ("kamera", "auge", "blick_auf", "innenraum")
+
 
 def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
            cache=SPEICHER_IN_DER_MAPPE, melder=None, abbrechen=None,
@@ -1208,6 +1230,19 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
                 "trägt die Angabe selbst — der Weg über IFC beantwortet die Frage, statt "
                 "sie zu stellen.")
 
+    # KEIN STANDPUNKT BESTELLT → FRONTAL VON SUEDEN, WIE DER ABHOLER (07.10.2026,
+    # auf-20261007-261). Siehe `STANDPUNKT_VORGABE`. Der Satz geht mit dem Ergebnis zurueck:
+    # Ein Standpunkt, den niemand bestellt hat, soll man dem Ergebnis ansehen.
+    standpunkt_vorgabe = None
+    if not any(args.get(n) for n in STANDPUNKT_ANGABEN):
+        args["kamera"] = STANDPUNKT_VORGABE
+        standpunkt_vorgabe = {
+            "kamera": STANDPUNKT_VORGABE,
+            "satz": ("Kein Standpunkt bestellt — gerechnet frontal von Süden, wie der "
+                     "Abholer ohne mitgesandte Kamera. Ein anderer Blick: «kamera» in den "
+                     "Einstellungen der Mappe oder im Aufruf setzen."),
+        }
+
     if entwurf:
         args = entwurfsargumente(args, kettenargumente)
 
@@ -1301,7 +1336,8 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
             "bilder": bilder, "modell_stand": stand, "pfad": pfad,
             "abgebrochen": (laeufe[-1].get("status") == kette.STATUS_ABGEBROCHEN
                             or zwischen_angehalten),
-            "variantengruppe": gruppe_id, "varianten_nicht_begonnen": nicht_begonnen}
+            "variantengruppe": gruppe_id, "varianten_nicht_begonnen": nicht_begonnen,
+            "standpunkt_vorgabe": standpunkt_vorgabe}
 
 
 def _haelt_an(abbrechen) -> bool:

@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-262",
+  "art": "qa",
+  "beschreibung": "Ansage und Bestaetigung: «Anwenden» ohne Standpunkt rechnet frontal von Sueden wie der Abholer; besteht die Vorfuehrmappe jetzt ohne Kamera?",
+  "anweisung": "=== ANSAGE + KURZE BESTAETIGUNG: «ANWENDEN» OHNE STANDPUNKT RECHNET JETZT FRONTAL VON SUEDEN ===\n\nWORUM ES GEHT\n  Danke fuer 261 — der Befund war eindeutig: Ohne Standpunkt griff der unkomponierte Rueckfall\n  (diagonal von oben), mit kamera=\"s\" bestand dieselbe Mappe mit 0.91.\n  ANSAGE (Verhaltensaenderung nach dem naechsten git pull): Der Weg ueber die Mappe\n  (arbeitsgang.rechne, «Anwenden» an der Flaeche, POST /api/rechne) rechnet OHNE bestellten\n  Standpunkt (keine kamera, kein auge/blick_auf, kein innenraum) jetzt kamera=\"s\" — dieselbe erste\n  Richtung wie der Abholer. Der Rueckgabewert traegt dann «standpunkt_vorgabe» mit einem Satz.\n  Unveraendert: jede bestellte Kamera, der Abholer, tools/abholen.py, tools/homeworker.py und der\n  Rueckfall im Blender-Runner selbst. Folge: Mappen ohne Standpunkt rechnen beim naechsten Lauf neu\n  (die Kamera steht im Hash), alte Bilder bleiben liegen.\n  Der Dienst der Flaeche muss nach dem Pull neu gestartet werden, sonst rechnet er alt.\n\nWAS DU TUST\n  1. git pull --ff-only auf main (mindestens den Stand, der diese Datei bringt), Dienst neu starten.\n  2. Auf einer frischen Wegwerf-Kopie der Vorfuehrmappe (wie in 260/261), z-image-turbo, OHNE Kamera\n     und ohne Startwert, ueber den Dienst: POST /api/rechne mit varianten=None (ein Bild).\n  3. Dasselbe einmal direkt: arbeitsgang.rechne(mappe, cache=None) — Rueckgabe standpunkt_vorgabe lesen.\n\nWAS DU NICHT TUST\n  Nichts installieren, keinen Code aendern, die Original-Mappe nicht veraendern. Keine Bilder ins\n  Repo, nur Pruefsummen. Keine Pfade mit Benutzernamen, keine Host- oder Netznamen. Wegwerf-Kopien\n  danach loeschen.\n\nRUECKGABE\n  Je Lauf (Dienst / direkt): Kamera laut Bericht des Multipass (weg, kuerzel), Score, geom_iou,\n  bestanden ja/nein, Satz aus standpunkt_vorgabe woertlich (direkt), sha256 des Bildes; ist das Bild\n  bitgleich mit A1 aus 261 (dort kamera=\"s\", ohne Startwert)? Urteil in einem Satz.",
+  "erstellt": "2026-10-07T22:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende"
+  },
+  "params": {
+    "folgt_auf": "auf-20261007-261",
+    "backbone": "z-image-turbo",
+    "erwartet_bitgleich_mit": "auf-20261007-261 A1"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: z-image-turbo, zwei Bilder; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); keine Bilder ins Repo, nur Pruefsummen."
+    ]
+  },
+  "rueckgabe": [
+    "Je Lauf (Dienst/direkt): Kamera laut Multipass-Bericht, Score, geom_iou, bestanden, sha256.",
+    "Satz aus standpunkt_vorgabe woertlich.",
+    "Bitgleich mit 261 A1 ja/nein.",
+    "Urteil in einem Satz."
+  ],
+  "rang": 49
+}
