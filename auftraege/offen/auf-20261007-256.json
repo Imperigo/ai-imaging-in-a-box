@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-256",
+  "art": "frage",
+  "beschreibung": "E169: Kette mit Maske, die brush jetzt liest — Vergleich mit 249 (ohne Maske) und 254 B (Maske nur fuer COLMAP).",
+  "anweisung": "=== DIE KETTE MIT MASKE, DIESMAL LIEST BRUSH SIE (E169) ===\n\nWORUM ES GEHT\n  Danke fuer 255 — beide Befunde sind umgesetzt (KosmoPrepare main b137709):\n    1. brush 0.3.0 sucht zu <ordner>/<name>.jpg die Maske als <ordner>/../masks/<name>.*\n       (Quelltext v0.3.0, find_mask_path). Die Kette baut brush darum jetzt einen eigenen\n       Eingang aus harten Verweisen: brush_eingang/<ansicht>/<ansicht>/0001.jpg und\n       brush_eingang/<ansicht>/masks/0001.png. Im Protokoll steht dann «brush liest die Maske\n       aus brush_eingang/ (N Masken …)», und bericht.json → maske.brush sagt, wie viele Bilder\n       brush MIT Maske geladen hat (gelesen aus seinen «mask_path»-Zeilen).\n    2. Die Handzone ist zurueck auf 20 % (wie in 254), mit Streifen und Deckel aus 255.\n  Erst jetzt wirkt die Maske auch auf den Splat. Dieser Lauf misst, ob er besser wird.\n\nAUFBAU\n  KosmoPrepare-Klon auf main ziehen (mindestens b137709). Nichts installieren.\n\nA) DIE KETTE EINMAL, genau wie 254 B (insv, mit Vokabular, ueber das Werkzeug bzw. dieselbe\n   Befehlszeile), in einen NEUEN Arbeitsordner.\n   Melden: Rueckgabe; Stufen; registrierte Bilder, Teilmodelle, Punkte, Splats, Dauer;\n   aus bericht.json den Block «maske» (verfahren, colmap, brush); die Protokollzeile\n   «brush liest die Maske …»; wie viele «mask_path: Some» / «mask_path: None» brush meldet.\n   Kurz zur Maske selbst: der Satz von splat_maske (je Ansicht erkannt, Mittel, Handzone).\n\nB) VERGLEICH MIT 249 (ohne Maske) und 254 B (Maske nur fuer COLMAP), mit DEINEN Messungen\n   aus 254: Punkte innert 1 m um die Kopfpunkte, Punkte in der Koerperzone unter dem Kopf,\n   Draufsicht und Seitenansicht (nur ansehen): ist die Wolke entlang des Wegs jetzt sichtbar\n   kleiner? Ist irgendwo Szene verschwunden, die vorher da war (z.B. Boden unter dem Weg,\n   rechts wo die Person stand)?\n\nWAS DU NICHT TUST\n  Nichts installieren, keine Schwelle im Code aendern, Arbeitsordner aus 243/247/249/254\n  nicht veraendern. Keine Bilder, Masken, Splats oder Gewichte ins Repo; keine Pfade mit\n  Benutzernamen, keine Host- oder Netznamen. Nach dem Messen darf der neue Arbeitsordner\n  liegen bleiben; sag, wie gross er ist.\n\nRUECKGABE\n  A: Kennzahlen der Kette, Block maske, Zeile «brush liest …», mask_path Some/None.\n  B: die Vergleichszahlen 249 / 254 B / neu, und was beim Ansehen auffiel.\n  Urteil in zwei Saetzen: liest brush jetzt die Maske? Wird der Splat sauberer?",
+  "erstellt": "2026-10-07T20:30:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Video aus 247/249 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-255",
+    "kosmoprepare_mindestens": "b137709",
+    "owner_entscheid": "E169"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nichts installieren; nur in einen neuen Arbeitsordner schreiben.",
+    "hinweise": [
+      "Arbeitsordner aus 243, 247, 249, 254 nicht veraendern.",
+      "Keine Bilder, Masken, Splats oder Gewichte ins Repo."
+    ]
+  },
+  "rueckgabe": [
+    "A Kette: Kennzahlen, Block maske, Zeile «brush liest …», mask_path Some/None.",
+    "B Vergleich 249 / 254 B / neu: Punkte um die Kopfpunkte, Koerperzone, Ansehen.",
+    "Urteil in zwei Saetzen."
+  ],
+  "rang": 43
+}
