@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-260",
+  "art": "frage",
+  "beschreibung": "v0.1.8: Bildmodell einmal je Auftrag statt je Variante — Ansage und Messung vorher/nachher auf z-image-turbo und qwen-image-2.1.",
+  "anweisung": "=== V0.1.8: DAS BILDMODELL WIRD JE AUFTRAG EINMAL GELADEN — ANSAGE UND MESSUNG ===\n\nDanke fuer 221 — dort stand: «Das Bildmodell wird im Lauf je Variante neu geladen\n(Dienstprotokoll: dreimal ‹Loading pipeline components›, je ca. 1–2 s)». Das ist behoben, aber\nnur mit Attrappen geprueft. Was die Grafikkarte dabei tut, sieht nur ihr. Erst NACH den\nGPU-Auftraegen mit kleinerem Rang, und nur bei freier Karte.\n\nTEIL A — ANSAGE (vor dem Pull lesen; das aendert sich bei euch nach dem Pull)\n  A1 Innerhalb EINES Auftrags bleibt das Bildmodell geladen: alle Varianten einer Reihe\n     (arbeitsgang.rechne mit varianten=n, also «Anwenden» an der Flaeche mit drei Varianten)\n     und alle Kameras und Startwerte einer Bestellung im Abholer (abholer.verarbeiter, wenn ihm\n     kein fertiges Modell uebergeben wird). Neu: render.ein_modell_je_auftrag() und\n     render.Modellvorrat.\n  A2 Am Ende des Auftrags wird das Modell losgelassen und render.gib_grafikspeicher_frei()\n     gerufen (gc.collect + torch.cuda.empty_cache) — auch nach einem Fehler oder Abbruch.\n     Zwischen zwei Auftraegen ist alles wie bisher: der naechste Auftrag laedt neu.\n  A3 Wechselt innerhalb eines Auftrags das Backbone, der Gewichtsort oder der Schrittzaehler,\n     wird das alte Modell ZUERST losgelassen und freigegeben, dann das neue geladen. Nie zwei\n     Bildmodelle zugleich.\n  A4 Scheitert eine Variante im Modell (Ausnahme, auch Speicherfehler), wird das Modell\n     verworfen; die naechste Variante laedt frisch (wie bisher jede).\n  A5 Die Ladeentscheidung (voller Weg / Auslagerung je Komponente / schichtweise) ist\n     unveraendert — dieselbe Funktion, dieselben Argumente, nur seltener gerufen. Die\n     Varianten 2 und 3 laufen jetzt auf dem Weg der Variante 1.\n  A6 UNVERAENDERT: tools/abholen.py (EinmalGeladen haelt sein Modell wie bisher ueber den ganzen\n     Prozess), tools/homeworker.py (ein Bild je Auftrag), der Tiefenschaetzer der Pruefung\n     (laedt weiter je Aufruf). Der Tiefenschaetzer laeuft jetzt NEBEN dem geladenen Bildmodell\n     — so wie im Abholer seit dem 01.09.2026. Darum Messpunkt «Pruefung laeuft weiter» unten.\n  A7 Der Dienst visbox-flaeche muss nach dem Pull neu gestartet werden, sonst rechnet er mit\n     dem alten Stand.\n\nTEIL B — MESSUNG (Reihenfolge einhalten: B1 VOR dem Pull, B2 und B3 danach)\n  Mappe: eine WEGWERF-KOPIE der synthetischen Mappe aus 218/221 (Testbau am Hang, erzeugt mit\n  python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende). Die Original-Mappe nicht\n  anfassen. Neben der Rechnung im Abstand von 0,5 s nvidia-smi --query-gpu=memory.used\n  --format=csv,noheader,nounits mitschreiben (Spitze = groesster Wert waehrend des Laufs).\n\n  Das Messskript — in DERSELBEN Umgebung wie der Dienst (betrieb/visbox-flaeche.service:\n  .venv-render und dessen AIIMAGING_MODELLE), aus der Repo-Wurzel; stderr in eine Logdatei, weil\n  diffusers «Loading pipeline components» dorthin schreibt:\n\n    AIIMAGING_MODELLE=<wie im Dienst> PYTHONPATH=src \\\n      .venv-render/bin/python - <MAPPE> <BACKBONE> <ETIKETT> <AUSORDNER> 2> <LOG> <<'SKRIPT'\n    import hashlib, json, shutil, sys, time\n    from pathlib import Path\n    from aiimaging import arbeitsgang\n    mappe, backbone, etikett, aus = sys.argv[1], sys.argv[2], sys.argv[3], Path(sys.argv[4])\n    aus.mkdir(parents=True, exist_ok=True)\n    t = time.perf_counter()\n    e = arbeitsgang.rechne(mappe, varianten=3, cache=None, backbone=backbone, seed=7)\n    zeilen = []\n    for lauf in e[\"laeufe\"]:\n        k = lauf.get(\"knoten\", {})\n        r = k.get(\"render\", {}).get(\"ausgaben\", {})\n        q = k.get(\"qa\", {})\n        bild = r.get(\"bild_png\"); seed = r.get(\"seed\"); sha = None\n        if bild and Path(bild).is_file():\n            kopie = aus / f\"{etikett}-{backbone}-{seed}.png\"\n            shutil.copyfile(bild, kopie)\n            sha = hashlib.sha256(kopie.read_bytes()).hexdigest()\n        zeilen.append({\"seed\": seed, \"render_status\": r.get(\"status\"),\n                       \"render_s\": r.get(\"dauer_s\"),\n                       \"weg\": (r.get(\"geraeteweg\") or {}).get(\"geraet\"),\n                       \"qa_status\": q.get(\"status\"),\n                       \"qa_bestanden\": (q.get(\"ausgaben\") or {}).get(\"bestanden\"),\n                       \"qa_score\": (q.get(\"ausgaben\") or {}).get(\"score\"),\n                       \"qa_fehler\": q.get(\"error\"), \"sha256\": sha})\n    spitze = None\n    try:\n        import torch\n        spitze = round(torch.cuda.max_memory_reserved() / 2**20)\n    except Exception:\n        pass\n    print(json.dumps({\"etikett\": etikett, \"backbone\": backbone,\n                      \"gesamt_s\": round(time.perf_counter() - t, 1),\n                      \"torch_spitze_mib\": spitze, \"varianten\": zeilen}, indent=1))\n    SKRIPT\n\n  Danach: grep -c \"Loading pipeline components\" <LOG>\n  cache=None ist Absicht: Sonst kaeme das Bild beim zweiten Lauf aus dem Zwischenspeicher und es\n  wuerde gar nichts geladen. Folge: Blender (Multipass) laeuft je Variante — nachher NEBEN dem\n  geladenen Bildmodell. Auch das ist ein Messpunkt: Laeuft Blender daneben durch?\n\n  B1 VORHER (jetziger Stand, git log -1 notieren): das Skript zweimal, je einmal mit\n     BACKBONE=z-image-turbo und BACKBONE=qwen-image-2.1, ETIKETT=vorher. Zwischen den Laeufen\n     warten, bis die Karte wieder im Leerlauf ist.\n  B2 NACHHER: git pull --ff-only, git log -1 notieren, dann dieselben zwei Laeufe mit\n     ETIKETT=nachher, in eine NEUE Wegwerf-Kopie der Mappe.\n  B3 DIENST: systemctl --user restart visbox-flaeche.service, dann an der Flaeche (oder mit\n     POST /api/rechne, varianten 3, wie in 221 B1) einen Lauf mit drei Varianten auf\n     z-image-turbo; aus dem Dienstprotokoll (journalctl --user -u visbox-flaeche seit dem\n     Neustart) die Zahl der Zeilen «Loading pipeline components» und die Zeit je Variante; danach\n     den Grafikspeicher des Dienst-Prozesses (nvidia-smi je Prozess) — er soll wie in 221 unter\n     1024 MiB fallen.\n  B4 BITGLEICH: je Backbone und Startwert (7, 8, 9) die sha256 von vorher und nachher\n     vergleichen. Sind sie NICHT gleich: B1 fuer dieses Backbone einmal wiederholen (ETIKETT=\n     vorher2) und melden, ob der alte Stand mit sich selbst bitgleich ist. Dann liegt es an der\n     Karte und nicht an dieser Aenderung.\n\n  Was wir erwarten (zum Vergleich, nicht zum Hinbiegen): vorher 3 Zeilen «Loading pipeline\n  components» je Backbone, nachher 1; Variante 2 und 3 nachher um die Ladezeit kuerzer; die\n  Spitze nachher nicht hoeher als vorher plus der Tiefenschaetzer (rund 1–2 GB); jede Pruefung\n  mit Status ok und einem Score; die Bilder bitgleich; der Weg (weg) in allen drei Varianten\n  gleich.\n\nWAS DU NICHT TUST\n  Nichts installieren, kein Code aendern, keine Einstellungen am Dienst aendern ausser dem\n  Neustart. Die Original-Mappe nicht anfassen; Wegwerf-Kopien und Bilder danach loeschen —\n  KEINE Bilder ins Repo, nur die sha256. Keine Pfade mit Benutzernamen, keine Geraete-, Netz-\n  oder Hostnamen, keine IP-Adressen ins Ergebnis. Faellt ein Lauf mit einem Speicherfehler um,\n  NICHT wiederholen, sondern den Satz woertlich melden.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261007-260.json)\n  git log -1 vorher und nachher; je Lauf (B1 z-image-turbo, B1 qwen-image-2.1, B2 beide, B3):\n  Zahl «Loading pipeline components», gesamt_s, render_s je Variante, weg je Variante, Spitze\n  nvidia-smi und torch_spitze_mib, QA-Status und Score je Variante; B3 Speicher des\n  Dienst-Prozesses nach dem Lauf; B4 je Backbone und Startwert gleich ja/nein (und ggf. vorher2);\n  ein Urteil in einem Satz; was auffiel.",
+  "erstellt": "2026-10-07T23:45:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende"
+  },
+  "params": {
+    "folgt_auf": "auf-20261001-221",
+    "backbones": [
+      "z-image-turbo",
+      "qwen-image-2.1"
+    ],
+    "varianten": 3,
+    "seeds": [
+      7,
+      8,
+      9
+    ],
+    "plan": "v0.1.8 Bildmodell wird je Variante neu geladen"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: Bildmodell, je Lauf ein Backbone; Sprachmodell vorher entladen. qwen-image-2.1 traegt lizenz_offen (E128) — nur messen.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); keine Bilder ins Repo, nur Pruefsummen."
+    ]
+  },
+  "rueckgabe": [
+    "git log -1 vorher und nachher.",
+    "Je Lauf: Zahl «Loading pipeline components», gesamt_s, render_s und weg je Variante.",
+    "Je Lauf: Spitze nvidia-smi und torch_spitze_mib; QA-Status und Score je Variante.",
+    "B3: Zeilen im Dienstprotokoll, Zeit je Variante, Speicher des Dienst-Prozesses danach.",
+    "B4: bitgleich je Backbone und Startwert ja/nein.",
+    "Urteil in einem Satz; was auffiel."
+  ],
+  "rang": 47
+}

@@ -1254,35 +1254,42 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
     laeufe, gerechnet = [], []
     nicht_begonnen = 0
     zwischen_angehalten = False
-    for nummer, plan in enumerate(plaene, start=1):
-        if laeufe and laeufe[-1].get("status") == kette.STATUS_ABGEBROCHEN:
-            # ANGEHALTEN HEISST: AUCH KEINE WEITERE VARIANTE. Sonst liefe nach dem Klick
-            # die naechste Reihe an und wuerde erst an ihrem ersten Knoten gestoppt.
-            nicht_begonnen = len(plaene) - nummer + 1
-            break
-        if laeufe and _haelt_an(abbrechen):
-            # UND AUCH NICHT, WENN DER KLICK WAEHREND DES LETZTEN KNOTENS KAM (Befund der
-            # Durchsicht D-KERN, 22.09.2026, nachgestellt): Dann lief die Variante davor
-            # regulaer zu Ende, ihr Status ist `ok`, und die naechste begann trotzdem —
-            # angehalten erst vor ihrem ersten Knoten, mit einem leeren Lauf in der
-            # Mappe. Gefragt wird darum auch ZWISCHEN den Varianten.
-            nicht_begonnen = len(plaene) - nummer + 1
-            zwischen_angehalten = True
-            break
-        gruppe = None
-        if gruppe_id is not None:
-            gruppe = {"id": gruppe_id, "art": art, "nummer": nummer, "von": len(plaene)}
-            if art == VARIANTEN_STARTWERTE:
-                gruppe["seed"] = plan["args"].get("seed")
-            if art == VARIANTEN_EBENEN:
-                gruppe["skizze"] = plan["skizze"]
-            _melde_sicher(melder, {"art": "variante_beginnt", "nummer": nummer,
-                                   "von": len(plaene), "gruppe": gruppe_id})
-        lauf = kette.fuehre_aus(plan["graph"], ausfuehrer=tabelle, cache=cache,
-                                melder=melder, abbrechen=abbrechen,
-                                out_dir=str(wurzel / "laeufe"))
-        laeufe.append(lauf)
-        gerechnet.append((plan, lauf, gruppe))
+    # EIN BILDMODELL FUER DIE GANZE REIHE (07.10.2026, auf-20261001-221). Bis dahin lud
+    # `render.rendere` je Variante neu — dreimal «Loading pipeline components» fuer drei
+    # Startwerte. Der Block haelt das Modell, solange Backbone und Ladeweg gleich bleiben,
+    # und gibt es am Ende frei — auch, wenn eine Variante mit einer Ausnahme endet. Der
+    # Tiefenschaetzer der Pruefung laeuft daneben wie auf dem Abholer-Weg seit dem
+    # 01.09.2026 (`tools/abholen.py`, EinmalGeladen haelt dort beide Modelle).
+    with render.ein_modell_je_auftrag():
+        for nummer, plan in enumerate(plaene, start=1):
+            if laeufe and laeufe[-1].get("status") == kette.STATUS_ABGEBROCHEN:
+                # ANGEHALTEN HEISST: AUCH KEINE WEITERE VARIANTE. Sonst liefe nach dem Klick
+                # die naechste Reihe an und wuerde erst an ihrem ersten Knoten gestoppt.
+                nicht_begonnen = len(plaene) - nummer + 1
+                break
+            if laeufe and _haelt_an(abbrechen):
+                # UND AUCH NICHT, WENN DER KLICK WAEHREND DES LETZTEN KNOTENS KAM (Befund der
+                # Durchsicht D-KERN, 22.09.2026, nachgestellt): Dann lief die Variante davor
+                # regulaer zu Ende, ihr Status ist `ok`, und die naechste begann trotzdem —
+                # angehalten erst vor ihrem ersten Knoten, mit einem leeren Lauf in der
+                # Mappe. Gefragt wird darum auch ZWISCHEN den Varianten.
+                nicht_begonnen = len(plaene) - nummer + 1
+                zwischen_angehalten = True
+                break
+            gruppe = None
+            if gruppe_id is not None:
+                gruppe = {"id": gruppe_id, "art": art, "nummer": nummer, "von": len(plaene)}
+                if art == VARIANTEN_STARTWERTE:
+                    gruppe["seed"] = plan["args"].get("seed")
+                if art == VARIANTEN_EBENEN:
+                    gruppe["skizze"] = plan["skizze"]
+                _melde_sicher(melder, {"art": "variante_beginnt", "nummer": nummer,
+                                       "von": len(plaene), "gruppe": gruppe_id})
+            lauf = kette.fuehre_aus(plan["graph"], ausfuehrer=tabelle, cache=cache,
+                                    melder=melder, abbrechen=abbrechen,
+                                    out_dir=str(wurzel / "laeufe"))
+            laeufe.append(lauf)
+            gerechnet.append((plan, lauf, gruppe))
 
     # WAS NICHT BEGANN, STEHT AM LETZTEN LAUF DER REIHE — in der Mappe, nicht nur im
     # Rueckgabewert. Sonst saehe eine Reihe, die nach zwei von drei Varianten angehalten

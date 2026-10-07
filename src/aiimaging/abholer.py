@@ -2182,7 +2182,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     pipeline_lage = (_pipeline_lage if _pipeline_lage is not None
                      else (render.pipeline_lage if _rendere is None else None))
 
-    def verarbeite(auftrag: dict) -> dict:
+    def _verarbeite_einen(auftrag: dict) -> dict:
         szene = auftrag["szene"]
         ordner = Path(auftrag["verzeichnis"])
         # DER GELAENDEBEFUND DER SZENE SCHLAEGT DEN SCHALTER DES PROZESSES (22.09.2026).
@@ -2863,6 +2863,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             "innenansicht": next((a.get("innenraum") for a in aufgaben
                                   if a.get("innenraum")), None),
         }
+
+    def verarbeite(auftrag: dict) -> dict:
+        # EIN BILDMODELL JE AUFTRAG (07.10.2026, auf-20261001-221): alle Kameras und
+        # Startwerte dieser Bestellung rechnen mit EINEM geladenen Modell; am Ende wird es
+        # freigegeben, auch nach einem Fehler. Wirkt nur, wenn `rendere` selbst laedt —
+        # `tools/abholen.py` uebergibt sein EinmalGeladen als `_render_modell`, und fuer
+        # diesen Weg aendert sich nichts.
+        with render.ein_modell_je_auftrag():
+            return _verarbeite_einen(auftrag)
 
     return verarbeite
 
