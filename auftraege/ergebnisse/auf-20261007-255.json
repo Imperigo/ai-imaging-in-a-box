@@ -1,0 +1,119 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-255",
+ "worker": "local",
+ "rang": 42,
+ "folgt_auf": "auf-20261007-254",
+ "owner_entscheid": "E169",
+ "status": "erledigt (A, B samt Schwarz-Versuch). A: die neue Zonenregel verwirft jetzt die Zone in right (gewollt) UND in front (nicht gewollt) — alle 10 Hand-Bilder in front sind wieder offen; left bekommt eine Zone, die aber neben den Haenden liegt. B: brush 0.3.0 liest die Masken in unserer Ablage NICHT (mask_path: None fuer jedes geladene Bild). Kein Code geaendert, nichts installiert, nichts committet.",
+ "stand": {
+  "kosmoprepare": "1ccc00c (git pull --ff-only: 29d96b8 -> 1ccc00c); 1ccc00c ist HEAD",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server fuer das Werkzeug, Erkennung in .venv-person (aus 253), Gewichte aus 253"
+ },
+ "A_maske": {
+  "bilder": "Arbeitsordner C aus 249 (images/<ansicht>/, je 240 Bilder, 1086 x 1086), nur gelesen",
+  "aufruf": "<server-python> tools/splat_maske.py --bilder <249>/images --aus <weg>/masks --bericht <weg>/maske.json --vorschau <weg>/vorschau (ohne --verfahren, ohne --parameter)",
+  "rueckgabe": 0,
+  "satz_woertlich": "Maske (Personenerkennung): back 28/240 erkannt, Mittel 0.9%; front 96/240 erkannt, Mittel 6.7%; left 36/240 erkannt, Mittel 3.3%, Handzone 2.3%; right 220/240 erkannt, Mittel 26.7%",
+  "stderr": "leer",
+  "laufzeit_s": 60.1,
+  "verfahren": "person",
+  "verfahren_grund": null,
+  "erkennung": {"geraet": "cuda", "torch": "2.11.0+cu128", "schwelle": 0.5, "overlap": 0.8, "bilder": 960, "sekunden_median": 0.051, "speicher_gib": 4.7},
+  "parameter": {"schwelle": 0.5, "overlap": 0.8, "saum_anteil": 0.025, "hand_haeufigkeit": 0.05, "hand_band": 0.2, "hand_anteil_max": 0.1},
+  "parameter_herkunft_woertlich": "Schwelle und Saum gemessen (auf-20261007-253); hand_band, hand_anteil_max und hand_haeufigkeit nach 254 gesetzt, nicht gemessen",
+  "tabelle_kopf": ["ansicht", "erkannt/bilder", "am_unteren_rand", "handzone_anteil", "anteil_mittel", "anteil_max", "grund"],
+  "tabelle": [
+   ["back", "28/240", 11, 0.0, 0.0092, 0.2557, "die Person beruehrt den unteren Rand in 11 von 240 Bildern, nirgends in 5% — keine Handzone"],
+   ["front", "96/240", 77, 0.0, 0.0674, 0.8092, "Handzone waere 19% der Ansicht — mehr als 10%, ein Koerper und keine Hand mehr; nicht gesetzt, dort traegt die Erkennung selbst"],
+   ["left", "36/240", 17, 0.0226, 0.0334, 0.1973, null],
+   ["right", "220/240", 217, 0.0, 0.2668, 0.6537, "Handzone waere 20% der Ansicht — mehr als 10%, ein Koerper und keine Hand mehr; nicht gesetzt, dort traegt die Erkennung selbst"]
+  ],
+  "vergleich_254": "back gleich; front Handzone 3.7 % -> 0 (verworfen), Mittel 9.6 -> 6.7 %; left Handzone 0 -> 2.3 %, Mittel 1.2 -> 3.3 %; right Handzone 36.0 % -> 0 (verworfen), Mittel 38.8 -> 26.7 %, Max 72.0 -> 65.4 %",
+  "handzone_lage": {
+   "left": "Ecke unten rechts, x 0.71-1.00, y 0.89-1.00 (2.3 %), in jedem left-Bild gesetzt",
+   "front": "verworfen: bei 5 % Haeufigkeit fuellt die Zone fast das ganze unterste Fuenftel (19 %, das Band selbst ist 20 %) — in 254 lag sie bei 20 % Haeufigkeit in x 0.63-1.00, y 0.85-1.00 (3.7 %), also ganz im Band und unter 10 %. Die Senkung 20 % -> 5 % (fuer left gedacht) bringt front ueber die 10-%-Grenze.",
+   "right": "verworfen wie gewollt (20 %); die Person traegt jetzt allein die Erkennung"
+  },
+  "gegenprobe_251": {
+   "methode": "wie 254: dieselben 80 Bilder (je Ansicht 1, 13, ..., 229); deckung = Anteil des 251-Kastens unter der Maske (Kasten ist Huelle inkl. Luft, ~0.5-0.6 bei vollem Treffer normal); Urteil aus deckung und Augenmass auf Ueberlagerungen von 24 Bildern (alle 10 front-Hand-Bilder, front 25/145, left 13/25/97/217, right 1/13/25/37/97/145/217/229)",
+   "kopf": ["ansicht", "251_ja", "ganz", "teilweise", "nicht", "deckung_min", "deckung_median"],
+   "zeilen": [
+    ["back", 1, 1, 0, 0, 0.559, 0.559],
+    ["front", 18, 7, 1, 10, 0.0, 0.0],
+    ["left", 4, 2, 0, 2, 0.0, 0.241],
+    ["right", 18, 18, 0, 0, 0.538, 0.601]
+   ],
+   "summe": "41 Bilder mit filmender Person: 28 ganz, 1 teilweise, 12 nicht (254: 38/1/2; 253 roh: 29 getroffen, 12 verfehlt) — gleich wie die nackte Erkennung",
+   "deckung_je_bild": {
+    "back": [[229, 0.559]],
+    "front": [[1, 0.572], [13, 0.58], [25, 0.596], [37, 0.0], [49, 0.0], [61, 0.0], [97, 0.0], [109, 0.0], [121, 0.0], [133, 0.0], [145, 0.402], [157, 0.0], [169, 0.0], [181, 0.891], [193, 0.743], [205, 0.0], [217, 0.702], [229, 0.717]],
+    "left": [[1, 0.532], [13, 0.451], [25, 0.0], [217, 0.031]],
+    "right": [[25, 0.787], [37, 0.632], [49, 0.587], [61, 0.591], [73, 0.649], [85, 0.607], [97, 0.636], [109, 0.598], [121, 0.604], [133, 0.566], [145, 0.685], [157, 0.6], [169, 0.569], [181, 0.592], [193, 0.587], [205, 0.538], [217, 0.814], [229, 0.572]]
+   },
+   "hand_bilder_front": "Alle 10 (37, 49, 61, 97, 109, 121, 133, 157, 169, 205) wieder NICHT gedeckt, deckung 0.0: Hand unten rechts sichtbar, kein Rot (angesehen). Gedeckt bleiben nur die Bilder, in denen die Erkennung die Person selbst findet (1, 13, 25, 181, 193, 217, 229; 145 Schulter teilweise).",
+   "hand_bilder_left": "13 gedeckt (Erkennung + Zone, 0.45). 25 und 217 NICHT gedeckt: die neue Zone liegt unten rechts (x 0.71-1.00), die Hand in 25 unten Mitte (Kasten x 0.50-0.60) — 0.0; in 217 endet die Zone knapp rechts neben der Hand (Kasten x 0.50-0.75) — 0.031, im Bild sichtbar daneben. In 25 ist wieder nur der Passant maskiert.",
+   "right": "Person in allen 18 Bildern unter Rot, allein durch die Erkennung (deckung 0.54-0.81); die leere Koerper-Silhouette aus 254 ist weg, auch in 25 und 217 (ausserhalb Kasten 1.4 % statt 28-30 %).",
+   "nicht_gedeckt_bleibt": "Schatten der filmenden Person (wie 254, nicht Klasse person)"
+  },
+  "szene_unter_maske": {
+   "bilder_ohne_filmende_person": 39,
+   "mittel": 0.0111,
+   "maximum": 0.0502,
+   "maximum_woher": "back 1: Passant samt Saum (wie 254); naechste: left 49 3.3 % (Zone 2.3 % + Tafel-Figur), dann left 2.3 % in jedem Bild ohne Person (nur die Zone, liegt auf Boden)",
+   "je_ansicht_kopf": ["ansicht", "bilder", "mittel", "max"],
+   "je_ansicht": [["back", 19, 0.0031, 0.0502], ["front", 2, 0.0, 0.0], ["left", 16, 0.0233, 0.0325], ["right", 2, 0.0, 0.0]],
+   "deutung": "Die 36 % Szene in right ohne Person sind weg (right 1 und 13 jetzt 0 %). Neu kostet left in jedem Bild 2.3 % Boden unten rechts, ohne dort eine Hand zu treffen.",
+   "ausserhalb_251_kasten_mittel_bei_person": 0.0114
+  },
+  "vorschau": "vier Vorschaubilder und drei eigene Ueberlagerungsblaetter (24 Bilder) mit dem Read-Werkzeug angesehen; nicht ins Repo, Wegwerfordner geloescht",
+  "gpu_spitze_w": 278,
+  "traegt": "nein fuer die Hand: right ist jetzt sauber (Person gedeckt, keine Szene verloren), aber front hat seine Handzone verloren (10 Hand-Bilder offen) und die left-Zone trifft die Hand nicht"
+ },
+ "B_brush_masks": {
+  "programm": "brush-cli 0.3.0 (Pfad wie 249/254)",
+  "help": "--help (199 Zeilen) enthaelt «mask» nicht; naechste Zeilen woertlich: «--match-alpha-weight <MATCH_ALPHA_WEIGHT>» / «Weight of l1 loss on alpha if input view has transparency»",
+  "strings_treffer": 400,
+  "strings_zeilen_auswahl": [
+   "_ZN13brush_dataset7formats14find_mask_path17ha6d1026e04870858E",
+   "_ZN13brush_dataset7formats6colmap17find_mask_and_img17hfe00827ead459eb7E",
+   "...Unknownrgbrgb, maskedrgb + alpha transparency",
+   "...Mismatch between definition and access of ``. masksIO error while loading dataset...",
+   "`mask` has too many elements`masks` has too many elements",
+   "Prune mask must have same number of elements as splats",
+   "(uebrige Treffer: Teddy-Suchmasken, glStencilMask, xkb, arrow bit_mask — fremde Bibliotheken)"
+  ],
+  "strings_urteil": "Masken-Code ist eingebaut (find_mask_path, colmap::find_mask_and_img, Bildart «rgb, masked»), aber ob er unsere Ablage findet, sagt das nicht — darum Schritt 3 gefahren",
+  "schwarz_versuch": {
+   "aufbau": "Kopie von images/, masks/, sparse/ aus 254 B in einen Wegwerfordner; alle 240 Masken von front ganz schwarz (L, 1086x1086, 0); brush wie in der Kette (Ordner als Quelle, --max-resolution 1086), 300 Schritte, RUST_LOG=info",
+   "ergebnis": "rc 0, 5 s Training, 960 Trainings-, 0 Eval-Ansichten, Refine iter 201 299741 Splats; keine Warnung zu Masken (einzige WARN: Vulkan-Erweiterung), kein Abbruch, kein Verlust je Ansicht im Protokoll",
+   "entscheidend": "brush mountet die Masken (VFS mit 1927 Dateien, die Maskendateien stehen in der lookup-Tabelle), aber jede geladene Ansicht meldet «mask_path: None» — 313 von 313 Ladezeilen (back 81, front 83, left 81, right 68), auch alle front-Bilder mit schwarzer Maske; die Bildart ist «color: Rgb8», nicht «rgb, masked»",
+   "namensprobe": "zusaetzlich (selbe Kopie, 300 Schritte): front-Masken umbenannt von 0001.jpg.png auf 0001.png — wieder 312/312 «mask_path: None». Welche Ablage brush erwartet, ist damit nicht gefunden.",
+   "kopie": "danach geloescht"
+  },
+  "urteil": "nein — brush 0.3.0 liest masks/ in der heutigen Ablage (masks/<ansicht>/<bild>.jpg.png) nicht; belegt durch mask_path: None fuer jede Ansicht im Schwarz-Versuch. Der Masken-Code existiert, findet die Dateien aber nicht."
+ },
+ "urteil": [
+  "(1) Nein: die Maske verliert jetzt kaum Szene (39 Bilder ohne Person im Mittel 1.1 %, Max 5.0 % Passant; right ohne Person 0 % statt 36 %), deckt die Person aber nur noch wie die nackte Erkennung (28 ganz, 1 teilweise, 12 nicht von 41) — die Senkung auf 5 % macht die front-Zone 19 % gross und laesst sie verwerfen (10 Hand-Bilder offen), und die neue left-Zone liegt unten rechts neben den Haenden in 25/217.",
+  "(2) Brush liest die Masken nicht: im Schwarz-Versuch meldet jede geladene Ansicht «mask_path: None» (313/313, auch die 83 ganz schwarzen front-Bilder), ohne Warnung — die Maske wirkt bis jetzt nur in COLMAP."
+ ],
+ "gpu": {"sperre": "A, Schwarz-Versuch und Namensprobe je vor dem Lauf ueber die gemeinsame GPU-Sperre genommen, per trap geloest; danach geprueft: Sperre frei", "grenze_w": 400, "spitze_w": 278, "vorher": "Leerlauf (67 W, keine grosse Last)"},
+ "nicht_getan": [
+  "kein Code geaendert, keine Schwelle, kein --parameter benutzt",
+  "nichts installiert",
+  "nichts aus dem Netz geladen ausser git pull",
+  "nichts committet",
+  "Arbeitsordner aus 243, 247, 249, 254 nicht veraendert (nur gelesen; Schwarz-Versuch an einer Kopie)",
+  "Kette nicht neu gefahren",
+  "keine Bilder, Masken, Vorschauen, Splats oder Gewichte ins Repo oder Ergebnis; keine Benutzer- oder Hostnamen"
+ ],
+ "aufraeumen": "Wegwerfordner (A: Masken, Vorschau, Ueberlagerungen; B-Kopie samt Splat und Protokollen) geloescht.",
+ "umgebung": {"gpu_benutzt": true, "netz_benutzt": true, "netz_zweck": "git pull"},
+ "abweichungen": [
+  "Schritt 3 gefahren, weil 1 und 2 nur zeigen, dass Masken-Code eingebaut ist, nicht ob er unsere Ablage findet.",
+  "Zusaetzliche Namensprobe (Masken 0001.png statt 0001.jpg.png) an derselben Kopie, 300 Schritte — ebenfalls kein Treffer.",
+  "Urteil ganz/teilweise/nicht fuer nicht angesehene Bilder aus der deckung (wie 254), fuer 24 Bilder per Augenmass."
+ ],
+ "fehler": null
+}
