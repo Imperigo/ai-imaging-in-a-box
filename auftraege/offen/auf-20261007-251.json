@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-251",
+  "art": "frage",
+  "beschreibung": "Wo steht die filmende Person in den vier Ansichten der echten 360-Aufnahme (fester Bereich relativ zur Kamera oder wandernd)? Nur ansehen, nichts installieren.",
+  "anweisung": "=== WO STEHT DIE FILMENDE PERSON IM BILD? (nur ansehen und messen, nichts installieren) ===\n\nWORUM ES GEHT\n  Danke fuer 249. Ergebnis dort: keine Ruhe-Schwelle trennt die filmende Person von der Szene\n  (bei 0.025 bis 0.12 wird in keiner Ansicht etwas maskiert, die ruhigsten 1 % aendern sich um\n  0.079-0.088). Die Ruhe-Regel ist damit an dieser Aufnahme wirkungslos.\n  Bevor wir einen anderen Weg bauen, brauchen wir EINE Zahl: steht die Person immer an derselben\n  Stelle RELATIV ZUR KAMERA (dann reicht ein fester Ausschnitt je Ansicht, ohne Modell und ohne\n  Lizenzfrage) - oder wandert sie durchs Bild (dann braucht es eine Personenerkennung mit Modell,\n  und das ist ein Owner-Entscheid wegen Lizenz und Grafikkarte)?\n\nWAS DU TUST (nur lesen, nichts aendern)\n  A) Im Arbeitsordner aus 247/249: je Ansicht (die vier Ordner unter images/) 20 Bilder\n     gleichmaessig ueber die Aufnahme verteilt ansehen (Bild 1, dann jedes N-te).\n     Je Bild notieren: ist die Person (oder Stock/Hand) sichtbar? Wenn ja, ungefaehr der Kasten,\n     den sie einnimmt, als Anteil der Bildbreite und -hoehe (x0, x1, y0, y1 zwischen 0 und 1,\n     y nach unten). Augenmass genuegt, auf 0.05 genau.\n  B) An der Rohdatei (.insv) selbst, falls ohne Aufwand moeglich: in welcher Richtung zur Kamera\n     steht die Person (vorne/hinten/unten, ungefaehrer Winkel unter dem Horizont)?\n  C) Zwei Fragen zur Aufnahme, wenn du sie beantworten kannst (sonst «unbekannt»):\n     - Wie wurde gehalten: Selfie-Stock ueber Kopf, auf Kopfhoehe, vor der Brust?\n     - War die Horizontstabilisierung der Kamera an (die Ansichten bleiben dann waagrecht)?\n\nWAS DU NICHT TUST\n  Nichts installieren, kein Modell laden, die Kette nicht neu fahren, im Klon nichts aendern.\n  Keine Bilder ins Repo (Regel 3: echte Aufnahme); nur Zahlen und Saetze zurueck.\n\nRUECKGABE\n  Tabelle Ansicht x Bild mit sichtbar ja/nein und Kasten; je Ansicht die Spanne der Kaesten\n  (kleinstes x0/y0, groesstes x1/y1) und in wie vielen von 20 Bildern sie sichtbar ist;\n  B und C; drei Urteilssaetze: liegt die Person je Ansicht in einem festen Bereich? Wie gross\n  waere dieser Bereich (Anteil der Bildflaeche)? Was ginge dabei an Szene verloren?",
+  "erstellt": "2026-10-07T08:30:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 247/249 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-249",
+    "bilder_je_ansicht": 20
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nur ansehen; nichts installieren, nichts rechnen.",
+    "hinweise": [
+      "Arbeitsordner aus 243, 247, 249 nicht veraendern.",
+      "Keine Bilder ins Repo."
+    ]
+  },
+  "rueckgabe": [
+    "Tabelle Ansicht x Bild: sichtbar ja/nein, Kasten (x0,x1,y0,y1).",
+    "Je Ansicht Spanne der Kaesten und Anzahl sichtbar von 20.",
+    "B Richtung zur Kamera an der Rohdatei (oder: nicht ohne Aufwand).",
+    "C Haltung und Horizontstabilisierung (oder: unbekannt).",
+    "Drei Urteilssaetze."
+  ],
+  "rang": 38
+}
