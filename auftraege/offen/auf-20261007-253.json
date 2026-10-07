@@ -1,0 +1,41 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-253",
+  "art": "frage",
+  "beschreibung": "E169: Personenerkennung DETR ResNet-50 panoptic in eigener Umgebung einrichten, Lizenzen und Pruefsumme melden, an den Bildern aus 249/251 proben.",
+  "anweisung": "=== PERSONENERKENNUNG EINRICHTEN UND AN DER ECHTEN 360-AUFNAHME PROBEN (E169) ===\n\nWORUM ES GEHT\n  Owner-Entscheid E169 (07.10.2026): die filmende Person wird mit einer Personenerkennung\n  ausgeblendet; bestaetigt ist das Modell «DETR ResNet-50 panoptic»\n  (Hugging Face: facebook/detr-resnet-50-panoptic, Gewichte Apache-2.0). Dein 251 hat gezeigt,\n  warum: die Person wandert (front 18/20, right ~18/20, left 5/20, back 1/20), ein fester\n  Ausschnitt waere rund die Haelfte des Bildes.\n  Dieser Auftrag RICHTET NUR EIN UND MISST. Eingebaut wird erst, wenn die Probe traegt —\n  das baut KosmoPrepare danach selbst (core/splat_maske.py).\n\nA) EIGENE UMGEBUNG (Owner-Go fuer genau diese, E169)\n  Im KosmoPrepare-Klon NEBEN .venv-server eine neue Umgebung .venv-person (nicht .venv-server\n  erweitern, keine Systempakete, kein sudo):\n    python3 -m venv .venv-person\n    .venv-person/bin/pip install torch torchvision  (Wheel mit CUDA fuer die RTX 5090, also cu128\n                                                    oder neuer; torchvision nur, falls transformers\n                                                    es fuer DETR verlangt — sonst weglassen)\n    .venv-person/bin/pip install transformers timm Pillow numpy\n  Pruefen: torch.cuda.is_available() True und torch.cuda.get_device_capability() nennt (12, 0).\n  Ist .venv-person durch .gitignore NICHT abgedeckt, nichts committen — nur melden.\n\nB) LIZENZEN NACHLESEN (beim Einrichten, nicht aus dem Gedaechtnis)\n  Fuer JEDES Paket, das in .venv-person landet (auch die nachgezogenen: huggingface_hub,\n  tokenizers, safetensors, filelock, nvidia-*, triton, sympy, networkx, jinja2 …): Name, Fassung\n  und Lizenz aus den Paket-Metadaten, z.B.\n    .venv-person/bin/python -c \"import importlib.metadata as m\n    for d in sorted(m.distributions(), key=lambda d: d.metadata['Name'].lower()):\n        md=d.metadata; print(md['Name'], d.version, '|', md.get('License-Expression') or md.get('License','')[:60], '|', [c for c in md.get_all('Classifier') or [] if c.startswith('License')])\"\n  Besonders: torch, transformers, timm. Melde jedes Paket, dessen Lizenz NICHT MIT, Apache-2.0,\n  BSD, MPL-2.0, PSF-2.0, MIT-CMU, 0BSD, Zlib oder CC0-1.0 ist, ausdruecklich (auch «unklar»,\n  auch die proprietaeren NVIDIA-Laufzeitpakete) — nicht deinstallieren, nur melden.\n\nC) GEWICHTE: ABLAGE UND PRUEFSUMME\n  Ablageort ausserhalb jedes Repos: ~/.kosmoprepare/modelle/detr-resnet-50-panoptic/\n  (im Ergebnis nur so, mit «~», keinen ausgeschriebenen Pfad). Laden mit fester Revision:\n    huggingface_hub.snapshot_download(\"facebook/detr-resnet-50-panoptic\",\n        local_dir=<obiger Ordner>, allow_patterns=[\"*.json\",\"*.safetensors\",\"*.txt\",\"*.md\"])\n  Liegt keine .safetensors vor, auch pytorch_model.bin zulassen und das sagen.\n  Melden: die Commit-Kennung der geladenen Revision (snapshot_download / Modellseite), die Liste\n  der Dateien mit Groesse und SHA-256 je Datei (sha256sum), und die Lizenzzeile aus README.md\n  bzw. der Modellkarte woertlich.\n  Laeuft das Backbone-Gewicht (ResNet-50 aus timm) beim ersten Laden NOCHMALS aus dem Netz nach,\n  dann ebenfalls: welche Datei, woher, Lizenz laut Modellkarte, SHA-256. Wenn moeglich\n  use_pretrained_backbone=False setzen (die DETR-Gewichte enthalten das Backbone schon) und sagen,\n  ob es dann ohne Nachladen geht.\n\nD) PROBE AN DEN BILDERN AUS 249/251 (nur lesen, Arbeitsordner nicht veraendern)\n  Dieselben 80 Bilder wie in 251 (je Ansicht back/front/left/right: Bild 1, dann jedes 12.).\n  Je Bild mit DetrForSegmentation + DetrImageProcessor (Vorgaben des Prozessors), Ausgabe mit\n  post_process_panoptic_segmentation (Vorgabe-Schwelle; die Schwelle nennen). Gezaehlt werden\n  nur Segmente der Klasse «person».\n  Je Bild melden: Person gefunden ja/nein, Anzahl person-Segmente, deren hoechster Score,\n  Anteil der Bildflaeche unter der person-Maske, Kasten der Maske (x0,x1,y0,y1 als Anteil,\n  y nach unten).\n  Dann gegen deine Tabelle aus 251 vergleichen:\n    - getroffen: 251 «ja» und Maske gefunden; Kasten der Maske deckt den 251-Kasten\n      (Anteil des 251-Kastens, der unter einem person-Segment liegt, grob genuegt)\n    - verfehlt: 251 «ja», keine Maske\n    - Fehlalarm: 251 «nein», aber Maske — dann ansehen: ist es eine ANDERE Person in der Szene\n      (Passant — das waere kein Fehler, aber zu nennen) oder gar keine (Statue, Plakat, Spiegelung)?\n    - Szene bleibt: mittlerer und groesster maskierter Anteil in Bildern OHNE filmende Person\n  Ausdruecklich ansehen: werden Hand und Stock (Selfie-Stock) mit erfasst, oder nur Kopf/Rumpf?\n  Laufzeit je Bild auf der Grafikkarte und hoechster Speicherbedarf (torch.cuda.max_memory_allocated).\n  Masken nur im Wegwerfordner ansehen, danach loeschen.\n\nWAS DU NICHT TUST\n  Kein anderes Modell laden (kein YOLO/Ultralytics — AGPL). Die Kette nicht neu fahren,\n  core/splat_maske.py nicht aendern, im Klon nichts committen. Keine Bilder, Masken oder Gewichte\n  ins Repo (Regel 3: echte Aufnahme). Keine Pfade mit Benutzernamen, keine Host- oder Netznamen,\n  keine Tokens im Ergebnis. Leistungsgrenze 400 W.\n\nRUECKGABE\n  A Fassungen von Python, torch (samt CUDA), transformers, timm; cuda verfuegbar + Faehigkeit.\n  B Lizenztabelle aller Pakete in .venv-person; ausserhalb der Liste ausdruecklich genannt.\n  C Ablageort (mit ~), Revision, Dateien mit Groesse und SHA-256, Lizenzzeile woertlich;\n    Nachladen des Backbones ja/nein (mit Angaben).\n  D Tabelle Ansicht x Bild (gefunden, Segmente, Score, Flaechenanteil, Kasten); je Ansicht\n    getroffen/verfehlt/Fehlalarm; Szene bleibt (Mittel/Maximum); Hand/Stock; Laufzeit, Speicher.\n  Drei Urteilssaetze: trifft das Modell die filmende Person? Bleibt die Szene stehen?\n  Taugt es fuer den Einbau (ja / nein / nur mit Saum oder anderer Schwelle — welche)?",
+  "erstellt": "2026-10-07T14:00:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 247/249 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-251",
+    "modell": "facebook/detr-resnet-50-panoptic",
+    "bilder_je_ansicht": 20,
+    "owner_entscheid": "E169"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nur .venv-person anlegen und die Gewichte unter ~/.kosmoprepare/modelle/ laden; sonst nichts installieren.",
+    "hinweise": [
+      "Arbeitsordner aus 243, 247, 249 nicht veraendern.",
+      "Keine Bilder, Masken oder Gewichte ins Repo.",
+      "Kein YOLO/Ultralytics (AGPL)."
+    ]
+  },
+  "rueckgabe": [
+    "A Fassungen und CUDA.",
+    "B Lizenztabelle .venv-person, Abweichungen ausdruecklich.",
+    "C Ablageort, Revision, Dateien mit SHA-256, Lizenzzeile, Backbone-Nachladen.",
+    "D Probe je Bild und je Ansicht: getroffen/verfehlt/Fehlalarm, Szene bleibt, Hand/Stock, Laufzeit, Speicher.",
+    "Drei Urteilssaetze."
+  ],
+  "rang": 40
+}
