@@ -1298,6 +1298,15 @@ den Bestellweg von KosmoOrbit kam geliefert zurück, mit der Marke «Lizenz offe
 beim Integrator, damit er seine Lizenzmarke an einem echten Ergebnis prüfen kann. Die Innenkamera-
 Korrektur ist am echten Lauf bestätigt.
 
+**07.10.2026 — das Bildmodell wird je Auftrag nur noch einmal geladen (v0.1.8).** Die Messung 221
+hatte gezeigt, dass bei drei Varianten das Bildmodell dreimal geladen wurde, je 1–2 Sekunden. Jetzt
+bleibt es für den ganzen Auftrag liegen — alle Varianten einer Reihe, alle Kameras einer Bestellung —
+und wird am Ende freigegeben, auch wenn eine Variante scheitert. Zwischen zwei Aufträgen bleibt alles
+wie bisher, damit das Sprachmodell des Assistenten danach wieder Platz hat. Wechselt mitten im Auftrag
+das Modell, wird das alte zuerst abgebaut, nie zwei zugleich. Geprüft mit Attrappen (drei Varianten:
+vorher drei Ladevorgänge, jetzt einer); am Heim-PC gemessen wird es mit Auftrag 260 — dort auch, ob
+die Geometrieprüfung neben dem liegenden Modell weiter Platz hat und ob die Bilder bitgleich bleiben.
+
 **07.10.2026 — Materialien aus dem Modell: geprüft und bewusst nicht gebaut.** Bevor Farben und Materialien aus
 der IFC in unsere 3D-Datei übernommen werden, wurde gezählt, ob das Demohaus überhaupt welche trägt. Es trägt
 keine: Die Materialnamen haben keine Farbe, und was ein Lesewerkzeug dafür einsetzt, sind seine eigenen Grautöne.

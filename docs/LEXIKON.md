@@ -868,6 +868,21 @@ war dadurch um ein Drittel zu hoch, und wer ihr folgte, wurde ein zweites Mal ab
 Wenn zwei Zahlen in einem Satz stehen, müssen sie dieselbe Einheit haben — sonst ist die
 Meldung eine Falle und keine Hilfe.*
 
+**Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)** — Eine Schreibweise in Python,
+die garantiert, dass ein Schlussschritt läuft, egal wie ein Abschnitt endet: regulär, mit
+einem Fehler oder durch einen Abbruch von aussen. Vergleichbar mit der Regel «wer die Baustelle
+verlässt, schliesst das Tor» — auch wer wegen eines Unfalls weggeht. Ein **Kontextmanager**
+ist dieselbe Garantie, in einen wiederverwendbaren Baustein verpackt (`with …:`).
+*In diesem Projekt seit dem 07.10.2026 für das Bildmodell: `render.ein_modell_je_auftrag()`
+gibt am Ende eines Auftrags den Grafikspeicher frei, auch wenn eine Variante mit einem Fehler
+endet.*
+
+**Kontextvariable** — Ein Wert, den ein Programmteil für «die gerade laufende Arbeit» ablegt,
+ohne ihn durch jede Funktion einzeln weiterreichen zu müssen — und den ein zweiter, gleichzeitig
+laufender Arbeitsstrang (ein *Faden*) nicht sieht. Wie ein Laufzettel, der an genau einem
+Auftrag klebt. *Hier trägt sie den Modellvorrat des laufenden Auftrags: Die Fläche rechnet jeden
+Lauf in einem eigenen Faden, und ein Lauf soll das Modell eines anderen nie zu fassen bekommen.*
+
 ---
 
 ## 4 · Qualität und Absicherung
@@ -4429,6 +4444,29 @@ Visbox-Fläche des Heim-PC, statt sie nachzubauen.
 (`keep_alive: 0`), damit das Bildmodell dort Platz hat. Geschieht bei jedem «Anwenden», bevor
 gerechnet wird; der Wechsel kostet am Heim-PC rund 4 Sekunden.
 
+**Laden (eines Bildmodells)** — Die Gewichte eines Bildmodells von der Platte lesen,
+zusammensetzen und auf die Grafikkarte legen. Im Protokoll des Dienstes erscheint dafür die
+Zeile «Loading pipeline components». Kostet am Heim-PC beim Schnellmodell rund 1–2 Sekunden,
+bei grossen Modellen deutlich mehr — und die Entscheidung, ob das Modell ganz oder nur stückweise
+auf der Karte liegt (siehe *Auslagerung*), fällt genau in diesem Moment.
+
+**Ein Modell je Auftrag (Modellvorrat)** — Ein Bildmodell wird für einen ganzen Auftrag
+**einmal** geladen und für alle seine Bilder benutzt — alle Varianten einer Reihe, alle
+Kameras einer Bestellung — und am Ende des Auftrags wieder freigegeben. Wie ein Gerüst, das
+für die ganze Fassade stehen bleibt, statt für jedes Fenster neu aufgestellt zu werden, und
+nach der Fassade abgebaut wird. Wechselt mitten im Auftrag das Modell, wird das alte zuerst
+abgebaut: nie zwei Bildmodelle zugleich, sonst hält das erste die Karte, und das zweite muss
+auf den langsamen, stückweisen Weg ausweichen.
+*Anlass (Messung `auf-20261001-221`): Drei Varianten luden das Modell dreimal. Seit dem
+07.10.2026 `render.ein_modell_je_auftrag()`; zwischen zwei Aufträgen bleibt es beim Freigeben.*
+
+**Freigeben (des Grafikspeichers)** — Nach einem Lauf den Speicher der Grafikkarte, den das
+Bildmodell belegt hat, wirklich zurückgeben, damit ein anderes Programm (etwa das Sprachmodell
+des Assistenten) ihn nehmen kann. Zwei Schritte: Erst werden Reste eingesammelt, die niemand
+mehr benutzt (`gc.collect`), dann gibt die Rechenbibliothek den Platz, den sie sich für später
+zurückgelegt hatte, an die Karte zurück (`torch.cuda.empty_cache`). *Ohne den zweiten Schritt
+sieht die Karte von aussen voll aus, obwohl das Programm nichts mehr darauf rechnet.*
+
 **Werkzeugbeschreibung** — Der Text, mit dem dem Sprachmodell gesagt wird, welche Handgriffe
 es vorschlagen darf und mit welchen Angaben. Der Assistent von Visbox hat drei: Standpunkt,
 Bildauftrag, Varianten.
@@ -6410,7 +6448,8 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**, **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
+| 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)** |
+| 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |
 | 2026-09-29 | Ergaenzt aus dem Dokumentabgleich: **Integrator (KosmoOrbit Int 1)**, **Insel-Karte (n1)**, **Laufnummer**, **Fassung schneiden (Release)**, **Meilenstein**, **Kritischer Pfad**, **MPS (Apple-Rechenweg)**, **Bildanteil**, **Ordnung an Tiefensprüngen**, **Eingangswächter** |
 | 2026-09-29 | Ergaenzt aus dem Owner-Entscheid zu Qwen-Image-2.1: **Forschungslizenz**, **Forschungs-Ausnahme** |

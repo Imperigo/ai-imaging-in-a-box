@@ -7706,7 +7706,9 @@ Bekannt und ausdrücklich nicht erledigt:
       *(01.10.2026, am Gerät unbestätigt)*
 - [x] **local:** `auf-20261001-221` — Server-Behebungen an der echten Grafikkarte nachmessen.
       *(01.10.2026: tragen am Gerät — 654 MiB bleiben, zweite Frage ohne Fehler, Fortschritt < 2 ms während einer Frage; Protokoll 74 §11)*
-- [ ] **Kern (v0.1.8):** Bildmodell wird je Variante neu geladen (1–2 s je Variante) — einmal laden für die ganze Reihe.
+- [x] **Kern (v0.1.8):** Bildmodell wird je Variante neu geladen (1–2 s je Variante) — einmal laden für die ganze Reihe.
+      *(07.10.2026, `1a4973c`: `render.ein_modell_je_auftrag` in `arbeitsgang.rechne` und `abholer.verarbeiter`; mit Attrappen 3 → 1 Ladung; Protokoll 74 §58; am Gerät unbestätigt)*
+- [ ] **local:** `auf-20261007-260` — Modell je Auftrag am Heim-PC messen (Ladezeilen, Zeit, Spitze, Prüfung läuft, bitgleich), z-image-turbo und Qwen-2.1.
 - [x] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
       *(01.10.2026: als Schritt A7 in `auf-20261001-235` gelegt)*
 - [x] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
@@ -7753,7 +7755,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **cloud (Int 1):** Nachgang 3 einspielen. *(07.10.2026, ROADMAP 1715, Kopf `88b271267`; Int 1 zog eine Rundung nach)*
 - [x] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen. *(07.10.2026, Entscheid 68: B, kleiner Verlauf am Knoten, v0.1.8)*
 - [x] **v0.1.8 (Entwurf):** Blatt 15 «Verlauf am Render-Knoten» auf der Entwurfsfläche gezeichnet (4 Läufe, neuestes links, Urteilspunkt, Klick = gross). *(07.10.2026)*
-- [x] **Owner:** Blatt 15 am Bild abnehmen (oder ändern). *(07.10.2026, über die Zentrale: «so abnehmen»)*
+- [x] **Owner:** Blatt 15 am Bild abnehmen (oder ändern). *(07.10.2026, über die Zentrale: «so abnehmen»; KosmoOrbit E174, gebaut in v0.1.8)*
 - [ ] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten bauen, nach Abnahme des Blatts, auf eigenem Zweig.
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*

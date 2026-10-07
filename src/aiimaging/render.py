@@ -102,6 +102,8 @@ die halbe Bildkette an Hardware, die es hier nicht gibt.
 """
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import gc
 import json
 import math
@@ -2611,6 +2613,130 @@ def gib_grafikspeicher_frei() -> dict:
     return grafikspeicher_des_prozesses()
 
 
+class Modellvorrat:
+    """Ein Bildmodell für die Dauer **eines** Auftrags — und danach nicht mehr.
+
+    **Der Befund** (HomeStation, ``auf-20261001-221``, 01.10.2026): Drei Varianten über
+    «Anwenden» an der Fläche, im Dienstprotokoll dreimal «Loading pipeline components», je
+    rund 1–2 s. :func:`rendere` lädt sein Modell, wenn ihm keines übergeben wird, und auf
+    dem Weg über die Mappe (:func:`aiimaging.arbeitsgang.rechne`) übergibt ihm niemand eines.
+    Also lud es **je Variante** — dieselben Gewichte, dreimal hintereinander.
+
+    **Was der Vorrat hält:** höchstens **ein** Modell, unter dem Schlüssel
+    ``(backbone, modell_wurzel, lader, schrittzaehler)``. Ist der Schlüssel derselbe, kommt
+    dasselbe Modell zurück. Ist er ein anderer, wird das alte **zuerst losgelassen und der
+    Grafikspeicher freigegeben** (:func:`gib_grafikspeicher_frei`), dann erst geladen.
+
+    Warum nie zwei zugleich: Die Stufenwahl in :func:`_lege_auf_geraet` entscheidet an dem,
+    was die Karte **jetzt** frei hat. Hielte der Vorrat das alte Modell noch fest, sähe der
+    zweite Ladevorgang eine volle Karte und wählte die Auslagerung — der Renderer
+    konkurrierte mit sich selbst. Genau das ist am 01.09.2026 auf dem Abholer-Weg gemessen
+    worden (``tools/abholen.py``, ``EinmalGeladen``: 30 476 MiB frei vor der ersten Ladung,
+    7 464 vor der zweiten, Weg ``cuda+schichtauslagerung``).
+
+    **Was er nicht ändert:** die Ladeentscheidung selbst. Geladen wird mit derselben
+    Funktion und denselben Argumenten wie ohne Vorrat — nur seltener. Die erste Ladung
+    eines Auftrags findet die Karte so vor wie bisher.
+
+    **Ein Fehler im Modellaufruf verwirft das Modell** (:meth:`verwirf`): Die nächste
+    Variante bekommt ein frisch geladenes, wie vor dem 07.10.2026 jede Variante. Was nach
+    einem Speicherfehler oder einer Ausnahme mitten in der Pipeline an Zustand übrig ist,
+    weiss niemand — und das Laden kostet Sekunden, ein zweiter Fehler den nächsten Lauf.
+
+    Geöffnet wird ein Vorrat mit :func:`ein_modell_je_auftrag`; von Hand nur in Proben.
+    """
+
+    def __init__(self) -> None:
+        self._schluessel = None
+        self._modell = None
+        #: Liegt seit dem letzten Freigeben etwas Losgelassenes auf der Karte?
+        self._frei_vor_dem_laden = False
+        #: Wie oft in diesem Auftrag wirklich geladen wurde.
+        self.ladungen = 0
+        #: Wie oft der Freigabe-Pfad gerufen wurde (Wechsel und Ende).
+        self.freigaben = 0
+
+    @property
+    def haelt_modell(self) -> bool:
+        return self._modell is not None
+
+    def hole(self, schluessel, laden):
+        """Das Modell zu ``schluessel`` — gehalten, oder mit ``laden()`` frisch geladen."""
+        if self._modell is not None and self._schluessel == schluessel:
+            return self._modell
+        if self._modell is not None:
+            self._modell = self._schluessel = None
+            self._frei_vor_dem_laden = True
+        if self._frei_vor_dem_laden:
+            self._frei_vor_dem_laden = False
+            self.freigaben += 1
+            gib_grafikspeicher_frei()                       # wirft nie
+        modell = laden()
+        self._modell, self._schluessel = modell, schluessel
+        self.ladungen += 1
+        return modell
+
+    def verwirf(self) -> None:
+        """Nach einem Fehler im Modellaufruf: nicht behalten, vor dem nächsten Laden
+        freigeben."""
+        if self._modell is not None:
+            self._modell = self._schluessel = None
+            self._frei_vor_dem_laden = True
+
+    def gib_frei(self) -> dict | None:
+        """Das Ende des Auftrags: loslassen und freigeben — **nur, wenn hier geladen
+        wurde.** Ein Auftrag, der nichts geladen hat (fertiges ``modell=`` übergeben, alles
+        aus dem Zwischenspeicher, abgelehnt), ruft den Freigabe-Pfad nicht: Für ihn soll
+        sich nichts ändern, auch nicht ein ``gc.collect`` mehr."""
+        geladen = self.ladungen > 0
+        self._modell = self._schluessel = None
+        self._frei_vor_dem_laden = False
+        if not geladen:
+            return None
+        self.freigaben += 1
+        return gib_grafikspeicher_frei()
+
+
+#: Der Vorrat des laufenden Auftrags — oder ``None``. Eine Kontextvariable und kein
+#: Modulattribut: Der Dienst der Fläche rechnet jeden Lauf in einem eigenen Faden,
+#: und ein zweiter Faden soll den Vorrat des ersten nicht sehen.
+_VORRAT: contextvars.ContextVar = contextvars.ContextVar("aiimaging_render_vorrat",
+                                                         default=None)
+
+
+@contextlib.contextmanager
+def ein_modell_je_auftrag():
+    """Innerhalb dieses Blocks lädt :func:`rendere` ein Bildmodell **einmal** und behält es.
+
+    Am Ende des Blocks wird es losgelassen und :func:`gib_grafikspeicher_frei` gerufen —
+    **auch nach einer Ausnahme oder einem Abbruch** (``finally``). Ausserhalb eines Blocks
+    lädt :func:`rendere` wie bisher bei jedem Aufruf.
+
+    Benutzt von :func:`aiimaging.arbeitsgang.rechne` (eine Variantenreihe ist ein Auftrag)
+    und vom Abholer (``abholer.verarbeiter``: alle Kameras und Startwerte einer Bestellung).
+
+    **Verschachtelt** gibt erst der äussere Block frei; der innere bekommt denselben Vorrat.
+    Ein Auftrag, der innerhalb eines anderen läuft, ist ein Teil von ihm.
+
+    **Ein übergebenes ``modell=`` geht am Vorrat vorbei.** ``tools/abholen.py`` hält mit
+    ``EinmalGeladen`` sein Modell über den ganzen Prozess; daran ändert dieser Block nichts.
+
+    Yields:
+        Den :class:`Modellvorrat` — für Proben, die ``ladungen`` zählen wollen.
+    """
+    offen = _VORRAT.get()
+    if offen is not None:
+        yield offen
+        return
+    vorrat = Modellvorrat()
+    marke = _VORRAT.set(vorrat)
+    try:
+        yield vorrat
+    finally:
+        _VORRAT.reset(marke)
+        vorrat.gib_frei()
+
+
 def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             schrittzaehler=None, tiefe_invertieren: bool | None = None) -> dict:
     """Einen Bildauftrag ausführen — oder begründet ablehnen.
@@ -2762,20 +2888,39 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
                 error=lage["grund"], maengel=(lage["grund"],))
 
     beginn = time.perf_counter()
+    # EIN MODELL JE AUFTRAG (07.10.2026, auf-20261001-221): Läuft ein Auftrag
+    # (`ein_modell_je_auftrag`), kommt das Modell aus seinem Vorrat. Ausserhalb wird wie
+    # bisher je Aufruf geladen. Ein übergebenes `modell` geht am Vorrat vorbei.
+    vorrat = _VORRAT.get() if modell is None else None
+    aus_dem_vorrat = False
     try:
         if modell is None:
             lader = _lader or lade_modell
-            # Der Zähler geht NUR an den echten Lader. Ein Test-Lader mit fester
-            # Signatur soll nicht daran scheitern, dass wir hier ein Argument mehr
-            # durchreichen — und ein Test, der den Zähler beobachten will, übergibt ein
-            # `modell` und braucht den Lader gar nicht.
-            if _lader is None and schrittzaehler is not None:
-                modell = lader(eintrag.name, a.modell_wurzel,
-                               schrittzaehler=schrittzaehler)
+
+            def laden():
+                # Der Zähler geht NUR an den echten Lader. Ein Test-Lader mit fester
+                # Signatur soll nicht daran scheitern, dass wir hier ein Argument mehr
+                # durchreichen — und ein Test, der den Zähler beobachten will, übergibt
+                # ein `modell` und braucht den Lader gar nicht.
+                if _lader is None and schrittzaehler is not None:
+                    return lader(eintrag.name, a.modell_wurzel,
+                                 schrittzaehler=schrittzaehler)
+                return lader(eintrag.name, a.modell_wurzel)
+
+            if vorrat is None:
+                modell = laden()
             else:
-                modell = lader(eintrag.name, a.modell_wurzel)
+                # Der Schrittzähler gehört zum Schlüssel: Er wird beim Laden in das
+                # Modell gebunden, und ein Modell mit fremdem Zähler meldete fremde
+                # Schritte.
+                modell = vorrat.hole((eintrag.name, a.modell_wurzel, lader, schrittzaehler),
+                                     laden)
+                aus_dem_vorrat = True
         antwort = modell(parameter)
     except Exception as fehler:                       # noqa: BLE001 — bewusst breit
+        if aus_dem_vorrat:
+            # Nicht behalten, was gerade gescheitert ist — siehe `Modellvorrat`.
+            vorrat.verwirf()
         # Bewusst jede Ausnahme: Was ein fremdes Modell wirft, ist nicht vorhersagbar
         # (CUDA-OOM, kaputte Gewichte, ein Fehler in unserem eigenen Adapter). Ein
         # Stapelabbruch mitten in einer Serie kostet die ganze Serie; ein
@@ -2851,6 +2996,7 @@ __all__ = [
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
     "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",
+    "Modellvorrat", "ein_modell_je_auftrag",
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "fuehrung_angewandt", "lade_modell", "modellwurzel",
