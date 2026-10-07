@@ -1,0 +1,58 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-252",
+ "worker": "local",
+ "status": "erledigt — P3a, P3b, P4a, P4b in WebKitGTK geprueft; neue Blatt-Bilder liegen nebeneinander, der Vergleich stellt die Karten bei 1024x768 untereinander (Container-Abfrage greift)",
+ "beendet": "2026-10-07T12:52:00Z",
+ "dauer_s": null,
+ "weg": "W1 wie in 250 — eigene Arbeitskopie detached auf origin/claude/kosmovis-v017-nachgang3 (08df9f567, enthaelt 202ba8043), npm ci, Desktop-App mit «npx tauri build --no-bundle» gebaut (Release-Binaerdatei, nichts installiert). Eigener Xvfb (1920x1080x24, freie Displaynummer), eigene Sitzungs-DBus, Wegwerf-Profil (XDG_DATA/CONFIG/CACHE/RUNTIME), App-Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1, KOSMO_MCP_PORT auf einem freien Port. Im Wegwerf-Profil kosmo.claude.anschluss = «aus», Claude-Adresse auf einen toten Port, Betriebsart «Cloud», Sync-Adresse auf einen toten Port und die eigene Bruecken-Adresse gesetzt. Eigene Bruecke aus derselben Arbeitskopie (Zweigstand), venv des Hauptbaums, nur lokal gebunden, freier Port, eigene Job-Ablage, Fehlerbericht-/Feedback-/Lernjournal-/Ablage-Pfade ins Wegwerf-Verzeichnis; der Dienst auf 8600 wurde nicht angefasst. Kein Qwen-Ergebnis mehr vorhanden (Profil aus 250 geloescht), darum EIN neuer Qwen-Lauf: Abholer aus ai-imaging-in-a-box main (c485226) gegen die eigene Ablage, tools/abholen.py --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst, unter der geteilten GPU-Sperre bei freier Karte. Synthetisches Projekt: «Beispielprojekt laden — Demohaus», KosmoVis, «+ Graph erstellen», Modell + Prompt + Render (Qwen-Image 2.1); zweite Karte als Viewport-Aufnahme («Fuer Vis aufnehmen» aus der AUSTAUSCH-Insel, kein Rendering). Klicks mit xdotool nur auf dem eigenen Xvfb.",
+ "koepfe": {
+  "gebaut": "08df9f567aeb256f0f9bc048232a3bc9de155623",
+  "bruecke": "08df9f567 (Bruecke des Zweigs, worker-Feld vorhanden)",
+  "abholer": "c485226 (main)",
+  "hinweis": "Zweigkopf unveraendert gebaut (kein lokaler Merge), App-Kopf zeigt v0.1.7; nichts committet, nichts gepusht."
+ },
+ "schritte": {
+  "P3a": {
+   "antwort": "ja",
+   "satz": "V-01 (Qwen) und A-02 (Viewport-Aufnahme) nacheinander per Ordner-Knopf der Kuratier-Karte «Aufs Blatt»: in KosmoPublish liegen sie auf «Renderblatt» nebeneinander ohne Ueberlappung, die Herkunftszeilen «ECHTER RENDER · ABHOLER, SEIT 07.10.2026 12:38 UTC» und «AUFNAHME (VIEWPORT)» stehen je unter ihrem Bild und sind einzeln lesbar.",
+   "bild": "auf-20261007-252-p3.png",
+   "rechenzeit_auftrag_s": 212,
+   "engine_used": "qwen-image-2.1",
+   "engine_license": "Qwen Research License Agreement",
+   "engine_license_open": true,
+   "gpu": {"spitze_mib": 22890, "spitze_w": 345.6, "geraeteweg": "cuda+auslagerung"}
+  },
+  "P3b": {
+   "antwort": "ja",
+   "satz": "Ein drittes «Aufs Blatt» (V-01 nochmals) bekam wieder einen freien Platz rechts neben den beiden ersten — drei Bilder in einer Reihe, keine Ueberlappung, drei getrennte Herkunftszeilen (unterer Teil des Bildschirmfotos p3).",
+   "bild": "auf-20261007-252-p3.png"
+  },
+  "P4a": {
+   "antwort": "ja",
+   "satz": "Bei 1024x768 stellt der Vergleich die Karten A (V-01) und B (A-02) untereinander, nichts laeuft unter den Kurations-Inspektor (auch die Tabelle «Variante A · Parameter · Variante B» bleibt in der Mitte); Abzeichen «⚠ Lizenz offen» und Kennung «V-01» sind einzeilig, und die Kurzhilfe am Abzeichen («Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären.») steht ganz sichtbar in der Karte.",
+   "bild": "auf-20261007-252-p4-1024.png"
+  },
+  "P4b": {
+   "antwort": "ja",
+   "satz": "Bei 1400x900 stehen die beiden Vergleichskarten nebeneinander, beide Bilder, Abzeichen, Kennungen und die Kurzhilfe sind ganz sichtbar, nichts abgeschnitten.",
+   "bild": "auf-20261007-252-p4-1400.png"
+  }
+ },
+ "urteil": {
+  "P3": "Ja — in WebKitGTK bekommt jedes neue Blatt-Bild den naechsten freien Platz (zwei und drei Bilder nebeneinander, Herkunftszeilen einzeln lesbar); der Befund aus 250 (deckungsgleich auf 40/40) ist behoben.",
+  "P4": "Ja — WebKitGTK wendet die Container-Abfrage an: bei 1024x768 stehen die Vergleichskarten untereinander, nichts unter dem Inspektor, Abzeichen und Kennung einzeilig, Kurzhilfe in der Karte; bei 1400x900 nebeneinander ohne Anschnitt."
+ },
+ "auffaelliges": [
+  "Probeaufbau: Beim ersten Start mit Betriebsart «Standard · HomePC» fand der Verbindungswaechter der Test-App den Heimrechner und stellte Bruecke und Sync von selbst auf die lokalen Dienst-Adressen um («Beim Start: Heimrechner gefunden und umgestellt»); der Render-Ruf ging so an den Dienst und wurde dort abgewiesen (kein Job angelegt, Meldung «Bridge ANTWORTET … abgewiesen»). Erst mit Betriebsart «Cloud» und toter Sync-Adresse im Profil blieb die App bei der eigenen Bruecke — wie in 250. Kein App-Befund, aber eine Falle fuer jede Test-App im Heimnetz.",
+  "Das Herauszoomen des Blatts in KosmoPublish verankert nicht in der Mitte: das Blatt wandert nach rechts unten aus dem Fenster; fuer das Bildschirmfoto reichte es, ganz sichtbar war das Blatt so nicht.",
+  "Die Navigation per Stationen-Orb ordnet die Unter-Orbs je nach aktueller Station anders an (in Publish liegt an der Vis-Stelle ein anderes Werkzeug) — ein Fehlklick landete einmal in KosmoDesign.",
+  "Beim Beenden der App schrieb WebKitWebProcess zweimal einen Absturzbericht (eigener, am Arbeitsordner erkannt) — jeweils sofort geloescht.",
+  "Die Startseite meldete «2 Befunde ungesendet» (aus dem abgewiesenen ersten Render-Ruf); sie gingen nur an die eigene Bruecke."
+ ],
+ "gpu": {
+  "laeufe": "ein Qwen-Image-2.1-Rechenlauf (eine Innenkamera) unter der geteilten GPU-Sperre, Sperre sofort frei; vorher Karte frei (~1.5 GB, ~68 W), Grenze 400 W eingehalten.",
+  "spitze": "Qwen 22890 MiB / 346 W"
+ },
+ "aufraeumen": "App samt WebKit-Prozessen, eigener Xvfb, Sitzungs-DBus, eigene Bruecke und GPU-Mitschrieb per gemerkter PID beendet (Dienst auf 8600, fremde Xvfb und Apps unberuehrt); zwei eigene Absturzberichte von WebKitWebProcess geloescht; Arbeitskopie per git worktree remove --force entfernt; Wegwerf-Profil, Job-Ablage, Bilder, Rohabzuege und Bau-Logs geloescht; GPU-Sperre frei; nur die drei PNGs und dieses Ergebnis abgelegt; nichts committet, nichts gepusht."
+}
