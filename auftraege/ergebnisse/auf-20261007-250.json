@@ -1,0 +1,65 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-250",
+ "worker": "local",
+ "status": "erledigt — 1a, 1b, 2a, 2b in WebKitGTK geprueft; Kurzhilfen und Abzeichen ganz lesbar, Herkunftszeile nennt den gemeldeten Abholer samt Uebernahmezeit",
+ "beendet": "2026-10-07T09:02:00Z",
+ "dauer_s": null,
+ "weg": "W1 wie in 248 — eigene Arbeitskopie detached auf origin/claude/kosmovis-v017-nachgang3 (c371d9667), npm ci, Desktop-App mit «npx tauri build --no-bundle» gebaut (Release-Binaerdatei, nichts installiert). Eigener Xvfb (1920x1080x24, freie Displaynummer), eigene Sitzungs-DBus, Wegwerf-Profil (XDG_DATA/CONFIG/CACHE/RUNTIME), App-Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1 und KOSMO_MCP_PORT auf einem freien Port; VOR dem zweiten Start im Wegwerf-Profil kosmo.claude.anschluss = «aus», Claude-Adresse auf einen toten Port, Betriebsart «Cloud» und die eigene Bruecken-Adresse gesetzt — danach hatte die Test-App nur Verbindungen zur eigenen Bruecke. Klicks mit xdotool nur auf diesem Xvfb. Eigene Bruecke aus einer zweiten Arbeitskopie auf origin/claude/lw-bruecke-worker-feld (a866ac937, MIT worker-Feld), mit der venv des Hauptbaums, nur lokal gebunden, freier Port, eigene Job-Ablage, Fehlerbericht-/Feedback-/Lernjournal-/Ablage-Pfade ins Wegwerf-Verzeichnis; der Dienst auf 8600 wurde nicht angefasst. Abholer aus ai-imaging-in-a-box main (Stand d32b808, enthaelt 3295bed) gegen diese Ablage: tools/abholen.py --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst, unter der geteilten GPU-Sperre bei freier Karte. Synthetisches Projekt: Einrichtung durchgeklickt, «Beispielprojekt laden — Demohaus», KosmoVis, «+ Graph erstellen», Modell + Prompt + Render (Qwen-Image 2.1) verbunden; fuer 1b zusaetzlich ein Knoten Viewport-Aufnahme («Fuer Vis aufnehmen» aus der AUSTAUSCH-Insel, kein Rendering).",
+ "koepfe": {
+  "gebaut": "c371d96675b9d2dbd59e5f01ad31219a7b54195e",
+  "bruecke": "a866ac937bf311b871e71cde38e70d825e4ab903",
+  "abholer": "d32b808 (enthaelt 3295bed)",
+  "hinweis": "Zweigkoepfe unveraendert gebaut bzw. gestartet (kein lokaler Merge), App-Kopf zeigt v0.1.7; nichts committet, nichts gepusht."
+ },
+ "schritte": {
+  "1a": {
+   "antwort": "ja",
+   "satz": "Bei 1400x900 und 1024x768 sind alle drei Kurzhilfen der Kuratier-Karte V-01 ganz lesbar und innerhalb der Karte umbrochen — «Aufs Blatt»: «Ins Projekt (KosmoPublish) — Lizenz offen: vor einer Veröffentlichung klären», Abzeichen «⚠ Lizenz offen»: «Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären.», «Verwerfen»: «Verwerfen (in die Ablage — nicht gelöscht)»; nichts abgeschnitten.",
+   "bilder": ["auf-20261007-250-1a-1400.png", "auf-20261007-250-1a-1024.png"],
+   "rechenzeit_s": 209.3,
+   "auftrag_wand_s": 213,
+   "stillstand_s": 46.7,
+   "engine_used": "qwen-image-2.1",
+   "engine_license": "Qwen Research License Agreement",
+   "engine_license_open": true,
+   "gpu": {"spitze_mib": 22884, "spitze_w": 345.4, "geraeteweg": "cuda+auslagerung"}
+  },
+  "1b": {
+   "antwort": "ja",
+   "satz": "Im Vergleich (V-01 Qwen mit «Lizenz offen» gegen A-02 Viewport-Aufnahme) sind Abzeichen und Kurzhilfe bei 1400x900 und 1024x768 ganz lesbar; bei 1024x768 bricht das Abzeichen in der schmalen Vergleichskarte auf drei Zeilen («⚠ / Lizenz / offen», auch «V- / 01») und die Kurzhilfe ragt unten ueber die niedrige Karte in die Tabelle hinaus — lesbar, aber nicht mehr kartenbegrenzt."
+  },
+  "2a": {
+   "antwort": "ja",
+   "satz": "Unter dem Bild auf dem Renderblatt steht woertlich «echter Render · Abholer, seit 07.10.2026 08:50 UTC» (angezeigt in Grossbuchstaben: «ECHTER RENDER · ABHOLER, SEIT 07.10.2026 08:50 UTC»); Gegenprobe ohne worker im Laufzettel: «echter Render · Abholer (abgeleitet)».",
+   "wortlaut": "echter Render · Abholer, seit 07.10.2026 08:50 UTC",
+   "wortlaut_abgeleitet": "echter Render · Abholer (abgeleitet)",
+   "gegenprobe": "Nach dem ersten «Aufs Blatt» aus job.json desselben Auftrags worker und worker_seit entfernt (nachgestellter alter Abholer-Stand, kein eigener Rechenlauf); die Bruecke antwortete mit worker «abholer», worker_quelle «abgeleitet»; zweites «Aufs Blatt» ergab das Label ohne Zeit mit «(abgeleitet)». Wortlaut beider Labels zusaetzlich im gespeicherten Projektstand der App gefunden.",
+   "bild": "auf-20261007-250-2a.png"
+  },
+  "2b": {
+   "antwort": "ja",
+   "satz": "Es lief die eigene Bruecke MIT worker-Feld (lw-bruecke-worker-feld, a866ac937), und der Abholer hatte den Stand mit worker im Laufzettel (main d32b808 ⊇ 3295bed): job.json trug nach der Uebernahme worker «abholer» und worker_seit, die Bruecke gab beides ohne worker_quelle weiter («gemeldet»)."
+  }
+ },
+ "urteil": {
+  "1a": "Ja — in WebKitGTK sind Kurzhilfe von «Aufs Blatt», Abzeichen «Lizenz offen» und «Verwerfen» bei 1400x900 und 1024x768 ganz lesbar und innerhalb der Karte umbrochen; der Befund aus 248 ist behoben.",
+  "1b": "Ja — im Vergleich bleiben Abzeichen und Kurzhilfe ganz lesbar; bei 1024x768 nur gedraengt (Abzeichen dreizeilig, Kurzhilfe ueberragt die niedrige Vergleichskarte nach unten).",
+  "2a": "Ja — statt «HERKUNFT UNBEKANNT» steht «echter Render · Abholer, seit 07.10.2026 08:50 UTC», ohne gemeldeten worker «echter Render · Abholer (abgeleitet)».",
+  "2b": "Bruecke mit worker-Feld und Abholer mit worker im Laufzettel — der Fall «gemeldet» ist am Geraet gezeigt; der Rueckfall «Gerechnet mit <Modell>» (alte Bruecke ohne worker) wurde nicht geprueft."
+ },
+ "auffaelliges": [
+  "Erster Rechenlauf scheiterte, weil der von Hand gestartete Abholer ohne AIIMAGING_MODELLE die Qwen-Gewichte im Vorgabeordner suchte (dort nicht vorhanden); mit dem Wert aus der Diensteinheit lief der zweite Lauf durch. Bedienfehler des Probeaufbaus, kein App-Befund — kostete 37 s Sperrzeit ohne Rechnen.",
+  "Ein erneutes «Ausfuehren» am selben Render-Knoten ersetzt dessen Kuratier-Karte (waehrend des Laufs «0 Varianten»); fuer zwei Karten im Vergleich braucht es zwei Knoten — darum fuer 1b die Viewport-Aufnahme statt eines dritten GPU-Laufs. Insgesamt zwei Qwen-Laeufe (der erste fiel auf die neue Karte), beide mit 209–216 s Rechenzeit.",
+  "Vergleich bei 1024x768: die zweite Vergleichskarte (B) und die Spalte «Variante B» der Tabelle laufen rechts unter den Kurations-Inspektor und sind angeschnitten.",
+  "KosmoPublish: das zweite «Aufs Blatt» (Gegenprobe) landete deckungsgleich auf dem ersten Bild, die beiden Herkunftszeilen lagen uebereinander und waren nur nach Rueckgaengig einzeln lesbar (in 248 hiess es, ein zweites Bild komme auf einen neuen Platz).",
+  "Die Herkunftszeile wird im Blatt per Schrift in Grossbuchstaben gesetzt; der gespeicherte Wortlaut ist gemischt geschrieben.",
+  "Viewport-Aufnahme unter Xvfb: das Bild der Aufnahme-Karte zeigt das Modell; im Knoten selbst erschien nur das Raster — fuer die Probe ohne Belang.",
+  "Beim Beenden der App schrieb WebKitWebProcess einen Absturzbericht (eigener, am Arbeitsordner erkannt) — sofort geloescht."
+ ],
+ "gpu": {
+  "laeufe": "zwei Qwen-Image-2.1-Rechenlaeufe (je eine Innenkamera) plus ein abgebrochener Start ohne Rechnen, alle unter der geteilten GPU-Sperre, Sperre jeweils sofort frei; vorher Karte frei (~1.5 GB, ~67 W), Grenze 400 W eingehalten.",
+  "spitze": "Qwen 22884 MiB / 345 W"
+ },
+ "aufraeumen": "App samt WebKit-Prozessen, eigener Xvfb, Sitzungs-DBus, eigene Bruecke per gemerkter PID beendet (Dienst auf 8600, fremde Xvfb und Apps unberuehrt); ein eigener Absturzbericht von WebKitWebProcess geloescht; beide Arbeitskopien per git worktree remove --force entfernt; Wegwerf-Profil, Job-Ablage, Bilder, Rohabzuege und Bau-Logs geloescht; GPU-Sperre frei; nur die drei PNGs und dieses Ergebnis abgelegt; nichts committet, nichts gepusht."
+}
