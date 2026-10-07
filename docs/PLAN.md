@@ -7750,7 +7750,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben, Nachgang 3 Punkt 4):** Vergleich bei 1024×768 — Karten untereinander per Container-Abfrage, nichts unter dem Inspektor, Abzeichen einzeilig *(07.10.2026, Kopf `08df9f567`, Chromium grün)*
 - [x] **local:** `auf-20261007-252` — Nachgang 3 Punkte 3 und 4 in WebKitGTK. *(07.10.2026: P3a/b, P4a/b bestanden)*
 - [x] **Kern (drüben):** nach L26 dessen Kopf in Nachgang 3 hereinholen, Läufe wiederholen, Stand-Zeile setzen, über die Zentrale freigeben. Dabei die Blatt-Platzsuche in WebKitGTK mitprüfen lassen (local). *(07.10.2026: L26 herein, Kopf `457b2f76c`, freigegeben)*
-- [ ] **cloud (Int 1):** Nachgang 3 einspielen.
+- [x] **cloud (Int 1):** Nachgang 3 einspielen. *(07.10.2026, ROADMAP 1715, Kopf `88b271267`; Int 1 zog eine Rundung nach)*
 - [x] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen. *(07.10.2026, Entscheid 68: B, kleiner Verlauf am Knoten, v0.1.8)*
 - [ ] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten (Entscheid 68) — zuerst ein Blatt auf der Entwurfsfläche, dann Bau auf eigenem Zweig.
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
