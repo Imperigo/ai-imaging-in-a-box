@@ -1,0 +1,205 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261006-247",
+ "worker": "local",
+ "status": "teilweise — B gelaufen, maskiert aber in keiner Ansicht etwas, obwohl die filmende Person in einer Ansicht gross im Bild steht. C ueber das Werkzeug mit Maske ist zweimal gleich gescheitert (gestern Abend und heute frisch): die Maske schreibt keine Maskendateien, COLMAP bekommt trotzdem --ImageReader.mask_path, verwirft alle 960 Bilder (MASK_ERROR), und rig_configurator bricht ab. Als Ersatz lief die Kette ueber das Werkzeug mit ohne_maske (sonst gleich, Linsen selbst gemessen) durch: 960/960, 1 Modell. Darauf D. Kein Code geaendert, nichts installiert, nichts committet.",
+ "A_stand": {
+  "kosmoprepare": "af46dae (git pull --ff-only: 3382da6 → af46dae; dazwischen nur CLAUDE.md und docs/PLAN-v0.1.7.md). 3382da6 ist Vorfahr von HEAD.",
+  "log_oneline": "af46dae CLAUDE.md/Plan: Splat-Werkzeuge in der App freigegeben (aec89046b)",
+  "git_status": "vorher = nachher (nur das alte target/)",
+  "python": ".venv-server/bin/python"
+ },
+ "vorlauf_gestern": {
+  "was": "Ein Vorgaenger-Helfer hatte am 06.10. abends B fertig, C gescheitert und einen dritten Versuch (C3, ohne_maske) bis brush_training gebracht, als der Rechner herunterfuhr.",
+  "B_vollstaendig": "ja — maske.json vollstaendig (4 Ansichten), masks/ enthaelt nur die Marke; ein Ordner vorschau fehlt, und das ist richtig so: das Werkzeug schreibt Maskendateien und Vorschau nur fuer Ansichten, die maskiert werden (core/splat_maske.py masken_schreiben), und maskiert wurde keine. Uebernommen, nicht neu gerechnet.",
+  "C_grund_woertlich": [
+   "Maske: back nichts Mitfahrendes; front nichts Mitfahrendes; left nichts Mitfahrendes; right nichts Mitfahrendes",
+   "Mask at \"<pfad>/masks/back/0001.jpg.png\" does not exist.",
+   "back/0001.jpg MASK_ERROR: Failed to read the mask file.",
+   "[rig.cc:399] Check failed: camera_id.has_value() At least one image must exist for each camera in the rig"
+  ],
+  "C_grund": "Die Maske fand in keiner Ansicht etwas und legte darum keine Maskendatei an. Die Kette gab COLMAP trotzdem --ImageReader.mask_path (es haengt nur davon ab, ob die Hilfe die Option nennt, nicht davon, ob Masken geschrieben wurden). feature_extractor verwarf alle 960 Bilder mit MASK_ERROR (960 Zeilen), die Datenbank blieb ohne Bilder, und colmap rig_configurator brach mit SIGABRT ab. Rueckgabe 1, bericht.status «gescheitert», Stufen frame_extraction → maske → colmap_feature_extraction → colmap_rig, dauer_s 161.5. Der gestrige Abbruch des ganzen Vorgaengers kam danach durch das Herunterfahren waehrend C3 (brush_training lief seit 22:38, letzte Standzeile 22:41).",
+  "C3": "geloescht (2.0 GB, unfertig, ohne splat.ply)"
+ },
+ "B_maske": {
+  "aufruf": "nicht neu gerufen — Bericht aus dem Vorlauf uebernommen (splat_maske.py --bilder <ordner_243>/images --aus <neu_B>/masks --bericht <neu_B>/maske.json --vorschau <neu_B>/vorschau)",
+  "zeile_woertlich": "Maske: back nichts Mitfahrendes; front nichts Mitfahrendes; left nichts Mitfahrendes; right nichts Mitfahrendes",
+  "zeile_herkunft": "aus maske.json mit core.splat_maske.satz() gebildet (dieselbe Funktion, die das Werkzeug fuer seine Zeile nutzt)",
+  "maskiert": 0,
+  "ansichten": [
+   {"ansicht": "back", "bilder": 240, "abgetastet": 40, "anteil": 0.0, "gebiete": 0, "grund": null, "kennzahlen": {"mit_struktur": 0.9757, "wechselnd": 1.0}},
+   {"ansicht": "front", "bilder": 240, "abgetastet": 40, "anteil": 0.0, "gebiete": 0, "grund": null, "kennzahlen": {"mit_struktur": 0.9828, "wechselnd": 1.0}},
+   {"ansicht": "left", "bilder": 240, "abgetastet": 40, "anteil": 0.0, "gebiete": 0, "grund": null, "kennzahlen": {"mit_struktur": 0.9514, "wechselnd": 1.0}},
+   {"ansicht": "right", "bilder": 240, "abgetastet": 40, "anteil": 0.0, "gebiete": 0, "grund": null, "kennzahlen": {"mit_struktur": 0.9838, "wechselnd": 1.0}}
+  ],
+  "parameter": {"ruhe_max": 0.025, "struktur_min": 0.02, "bilder_min": 8, "wechsel_min": 0.3, "gebiet_min": 0.003, "anteil_max": 0.4, "rand_px": 3},
+  "vorschau": "keine — es gibt kein Rot. Angesehen wurden darum die Bilder aus 243 selbst (je Ansicht das mittlere Bild, dazu je 4 weitere aus left und back).",
+  "beobachtung_je_ansicht": {
+   "back": "Rot gar nicht; die Person ist hier nur am Rand: eine Hand bzw. ein Arm unten rechts in einem Teil der Bilder (Mitte und spaet), sonst Szene.",
+   "front": "Rot gar nicht; die Person ist im mittleren Bild nicht zu sehen.",
+   "left": "Rot gar nicht, obwohl die filmende Person hier in den meisten Bildern gross und mittig steht (Kopf bis Huefte, Arm zum Stab unten links); sie dreht Kopf und Oberkoerper und rueckt im Bild — sie ist also nicht «ruhig» im Sinn der Schwelle. Im fruehen Bild (Nr. 10) fehlt sie in dieser Ansicht.",
+   "right": "Rot gar nicht; die Person ist im mittleren Bild nicht zu sehen.",
+   "anderes_rot": "nichts — nichts ist rot."
+  },
+  "deutung": "wechselnd = 1.0 in allen vier Ansichten: ALLE Bildpunkte mit Struktur galten als sich aendernd, auch die Person. Mit ruhe_max 0.025 (median der Bild-zu-Bild-Aenderung bei 40 Abtastungen ueber 120 s, also ~3 s Abstand) ist die frei gehaltene, sich bewegende Person nicht ruhig genug. Beobachtung, keine Messung der Schwelle.",
+  "ansichten_vertauscht": "Die Ansichtsnamen der neuen Kette passen NICHT zu denen aus 243: die Kette misst die Linsen mit --stroeme 0,1, 243 lief mit --stroeme 1,0. Die Kennzahlen zeigen die Vertauschung: B front 0.9828 ≈ Kette back 0.9826, B back 0.9757 ≈ Kette front 0.9758, B left 0.9514 ≈ Kette right 0.951, B right 0.9838 ≈ Kette left 0.9839. Die Person steht in 243-«left» = Ketten-«right»."
+ },
+ "C_kette": {
+  "C_mit_maske_frisch": {
+   "werkzeug": "kosmoprepare_mcp_tools.tool_splat_kette / tool_splat_stand (wie im Auftrag), Optionen linsen_messen true, fps 2, max_frames 240, schritte 7000, profil rtx5090, ohne Linsendatei; Vokabular ueber $KOSMOPREPARE_COLMAP_VOKABULAR",
+   "start_text_woertlich": "Splat-Kette laeuft — startet …",
+   "start": "laeuft (nicht abgelehnt)",
+   "standzeilen": ["laeuft startet … (1×)", "laeuft Frames extrahieren (ffmpeg) (3×)", "gescheitert None"],
+   "stufen": ["frame_extraction", "maske", "colmap_feature_extraction", "colmap_rig"],
+   "letzter_stand_satz_woertlich": "Splat-Kette gescheitert: — siehe <pfad>/pipeline.log",
+   "rueckgabe": 1,
+   "bericht": {"status": "gescheitert", "bilder": 960, "registriert": null, "modelle": null, "punkte": null, "dauer_s": 164.4},
+   "bericht_maske": {
+    "status": "gerechnet",
+    "maskiert": 0,
+    "colmap": true,
+    "brush": "ungemessen",
+    "parameter_herkunft": "gesetzt, nicht am Geraet gemessen",
+    "ansichten": [
+     {"ansicht": "back", "anteil": 0.0, "grund": null, "kennzahlen": {"mit_struktur": 0.9826, "wechselnd": 1.0}},
+     {"ansicht": "front", "anteil": 0.0, "grund": null, "kennzahlen": {"mit_struktur": 0.9758, "wechselnd": 1.0}},
+     {"ansicht": "left", "anteil": 0.0, "grund": null, "kennzahlen": {"mit_struktur": 0.9839, "wechselnd": 1.0}},
+     {"ansicht": "right", "anteil": 0.0, "grund": null, "kennzahlen": {"mit_struktur": 0.951, "wechselnd": 1.0}}
+    ]
+   },
+   "grund": "genau wie gestern: keine Maskendatei geschrieben, mask_path trotzdem gesetzt, 960 × MASK_ERROR, rig_configurator: «[rig.cc:399] Check failed: camera_id.has_value() At least one image must exist for each camera in the rig». Reproduzierbar; liegt im Code (Kette), nicht an Daten oder Last.",
+   "mask_grep_woertlich_ohne_pfade": [
+    "19:[07:48:39] STAGE: maske",
+    "20:Maske: back nichts Mitfahrendes; front nichts Mitfahrendes; left nichts Mitfahrendes; right nichts Mitfahrendes",
+    "24:E20261007 07:48:40.959192 197777 image_reader.cc:164] Mask at <pfad> does not exist.",
+    "27:W20261007 07:48:40.959406 197811 feature_extraction.cc:277] back/0001.jpg MASK_ERROR: Failed to read the mask file."
+   ],
+   "brush_zu_masken": "brush lief nicht (Kette vorher gescheitert) — ungemessen."
+  },
+  "C_ersatz_ohne_maske": {
+   "warum": "Weil die Maske nichts maskiert, ist ein Lauf mit ohne_maske im Ergebnis das, was der Maskenlauf ohne den Fehler geliefert haette (nur die Stufe maske fehlt). Damit sind Werkzeugweg, gemessene Linsen und D pruefbar. Abweichung vom Auftrag.",
+   "optionen": {"linsen_messen": true, "ohne_maske": true, "fps": 2, "max_frames": 240, "schritte": 7000, "profil": "rtx5090"},
+   "start_text_woertlich": "Splat-Kette laeuft — startet …",
+   "standzeilen": ["laeuft startet … (1×)", "laeuft Frames extrahieren (ffmpeg) (3×)", "laeuft COLMAP Matching (8×)", "laeuft COLMAP Posen-Rekonstruktion (GLOMAP) (8×)", "laeuft brush_training (7000 steps) (5×)", "fertig None"],
+   "stufen": ["frame_extraction", "colmap_feature_extraction", "colmap_rig", "colmap_matching", "colmap_mapping", "brush_training"],
+   "stufen_dauer_s": {"bilder": 157, "merkmale": 15, "rig": 2, "abgleich": 463, "mapper": 515, "brush_und_rest": 260, "gesamt": 1412},
+   "letzter_stand": {"status": "fertig", "rueckgabe": 0, "stufe": null, "satz_woertlich": "Splat entstanden: 960 von 960 Bildern registriert, 1 Teilmodell(e)"},
+   "kette_log_woertlich": [
+    "Linsen werden gemessen (2 Videostrom/-stroeme → --stroeme 0,1)",
+    "gemessen mit tools/insv_linsen.py an Rohdatei.insv am 2026-10-07: Nahtfehler 0.5468 bei 194.4°, Mulde 0.585 des Medians, 5 Bilder",
+    "max-res 1600 → 1086: mehr Bildpunkte traegt eine Ansicht dieser Quelle nicht, darueber wuerde nur hochgerechnet",
+    "Abdeckung: --max-frames 240 bei 2 Bildern/s deckt 120 von 187 s ab (die Grenze gilt je Ansicht) — der Rest des Videos wird nicht gerechnet",
+    "Splat entstanden: 960 von 960 Bildern registriert, 297038 Punkte, 1 Teilmodell(e)"
+   ],
+   "bericht": {"status": "fertig", "bilder": 960, "registriert": 960, "modelle": 1, "punkte": 297038, "schleifenschluss": true, "dauer_s": 1412.0, "max_res": 1086, "vokabular": "bereit"},
+   "bericht_maske": {"status": "aus", "grund": "abgeschaltet (--ohne-maske)"},
+   "splats": 3205629,
+   "ply_mb": 757,
+   "mask_grep_woertlich": ["19:[07:53:11] Maske aus"],
+   "vergleich_243": "registriert 960/960 = 960/960, Modelle 1 = 1, Punkte 297038 statt 297993, Splats 3205629 statt 3171915 (+1.1 %), gesamt 1412 s statt 1378 s",
+   "gpu_spitze_w": 227,
+   "gpu_grenze_w": 400
+  },
+  "linsen_gemessen": {
+   "ih_fov": 194.4,
+   "iv_fov": 194.4,
+   "yaw": 0.0,
+   "stroeme": [0, 1],
+   "fehler": 0.5468,
+   "mulde": 0.585,
+   "bilder": 5,
+   "satz": "gleich wie 240 A, 241 und 243 (194.4°, 0.5468, 0.585) — in allen drei Werkzeuglaeufen (gestern C, heute C frisch und Ersatz) identisch; nur die Stromfolge ist 0,1 statt 1,0"
+  },
+  "brush_liest_masken": "UNGEMESSEN — brush lief nie mit Masken (Maskenlauf scheiterte vor brush, Ersatzlauf ohne Masken). Hinweis, keine Messung: die brush-0.3.0-Datei traegt die Zeichenketten «mask_path» und «brush_dataset::formats::find_mask_path» (strings), der Code zum Finden von Masken ist also eingebaut; --help nennt nur «--match-alpha-weight».",
+  "abbrechen_gegenprobe": {
+   "ablauf": "zweiter Auftrag in <neu_C2> gestartet (gleiche Optionen, mit Maske), nach 30 s abbrechen, waehrend C frisch noch lief",
+   "start_text_woertlich": "Splat-Kette laeuft — startet …",
+   "stand_vor_abbruch": "laeuft startet …",
+   "abbrechen_text_woertlich": "Splat-Kette abgebrochen: der Prozess ist weg, ohne eine Rueckgabe zu schreiben (abgebrochen oder Rechner neu gestartet)",
+   "status_danach": "abgebrochen (stufe null, rueckgabe null), auch 3 s spaeter",
+   "prozesse_von_C2_danach": 0,
+   "ps": "Prozessgruppe von C2 leer; uebrig nur die Prozesse von C (eine Prozessgruppe: splat_kette.py, run_pipeline.sh, ffmpeg)",
+   "C2": "geloescht"
+  }
+ },
+ "D_volumen_punkte": {
+  "auf_welchem_splat": "Ersatzlauf ohne Maske (C_ersatz_ohne_maske) — es gibt keinen Splat mit Maske",
+  "behelf": {
+   "aufruf": "splat_behelf.py --colmap <neu_C> --ply <neu_C>/splat.ply --quelle \"Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m\" --kamerahoehe 1.75 --unsicherheit 0.1",
+   "rueckgabe": 0,
+   "satz_woertlich": "BEHELF — Kamerahoehe 1.75 m ueber dem Boden, gelesen unter 120 Kameras (Streuung ±2.4 %); Massstab ±6.2 %, Lot aus Boden unter 118 Kameras (Ebene durch die Splat-Punkte) (±1.52°, Kameras 1.63° daneben); Lage und Nordrichtung unbekannt",
+   "hinweise_woertlich": ["Hinweis: der Boden ist nicht eben — die Ebenen von Anfang, Mitte und Ende des Wegs weichen um 3.0° voneinander ab; das Lot ist ihre Mitte (Gelaende, Rampe oder Stufen)"],
+   "unsicherheit": {"massstab_rel": 0.0619, "lot_grad": 1.52},
+   "boden": {"kameras": 118, "flachheit": 0.0701, "kameras_verworfen": 0, "lot_95_grad": 0.3, "knick_grad": 2.98},
+   "fusspunkte_anzahl": 120,
+   "vergleich_245": "245: Massstab ±5.8 %, Lot ±1.13°, Knick 2.21°, 119 Fusspunkte"
+  },
+  "volumen": {
+   "aufruf": "splat_volumen.py <neu_C>/splat.ply --aus <neu_C>/volumen.json (die Option --ply aus dem Auftrag kennt das Werkzeug nicht; ply ist positionell)",
+   "rueckgabe": 0,
+   "satz_woertlich": "9 Volumen aus 272798 Punkten · 3 ohne gelesenen Boden · 173 kleine Gruppen verworfen · Restfehler der Verortung unbekannt.",
+   "hinweise_gesamt": ["BEHELFSVERORTUNG (Angabe Owner 06.10.2026: Kamera auf Kopfhöhe, etwa 1.7–1.8 m): Massstab ±6.2 %, Lot ±1.52°, Lage und Nordrichtung unbekannt — keine Passpunkte"],
+   "zahl": 9,
+   "volumen": [
+    {"id": "V1", "laenge_m": 61.157, "breite_m": 6.295, "hoehe_m": 3.6, "boden_quelle": "Median von 47 flachen freien Zellen rundum", "fuellgrad": 0.44, "unsicherheit": {"grundriss_m": 2.143, "hoehe_m": 2.35},
+     "hinweise": ["92 Kameras standen IN diesem Grundriss — eine Innenaufnahme oder ein gedeckter Gang; die Oberkante kann die Decke sein, nicht das Dach", "Fuellgrad 0.44 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V2", "laenge_m": 8.055, "breite_m": 4.455, "hoehe_m": null, "boden_quelle": null, "fuellgrad": 0.5, "unsicherheit": {"grundriss_m": 0.499, "hoehe_m": null},
+     "hinweise": ["rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht", "Fuellgrad 0.50 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V3", "laenge_m": 8.792, "breite_m": 3.884, "hoehe_m": 6.2, "boden_quelle": "Median von 8 flachen freien Zellen rundum", "fuellgrad": 0.5, "unsicherheit": {"grundriss_m": 0.522, "hoehe_m": 3.97},
+     "hinweise": ["Fuellgrad 0.50 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V4", "laenge_m": 5.035, "breite_m": 4.869, "hoehe_m": 4.6, "boden_quelle": "Median von 3 flachen freien Zellen rundum", "fuellgrad": 0.5, "unsicherheit": {"grundriss_m": 0.406, "hoehe_m": 2.0},
+     "hinweise": ["Fuellgrad 0.50 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V5", "laenge_m": 5.44, "breite_m": 3.104, "hoehe_m": 7.57, "boden_quelle": "Median von 11 flachen freien Zellen rundum", "fuellgrad": 0.67, "unsicherheit": {"grundriss_m": 0.418, "hoehe_m": 4.48},
+     "hinweise": ["Fuellgrad 0.67 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V6", "laenge_m": 6.253, "breite_m": 2.754, "hoehe_m": null, "boden_quelle": null, "fuellgrad": 0.58, "unsicherheit": {"grundriss_m": 0.444, "hoehe_m": null},
+     "hinweise": ["rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht", "Fuellgrad 0.58 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V7", "laenge_m": 5.272, "breite_m": 2.265, "hoehe_m": null, "boden_quelle": null, "fuellgrad": 0.65, "unsicherheit": {"grundriss_m": 0.413, "hoehe_m": null},
+     "hinweise": ["rundum keine flachen freien Zellen mit Punkten — Boden und Hoehe nicht gelesen, die Oberkante steht", "Fuellgrad 0.65 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V8", "laenge_m": 8.481, "breite_m": 0.842, "hoehe_m": 3.21, "boden_quelle": "Median von 29 Fusspunkten der Kameras (Behelfsverortung) bis 5 m vom Grundriss — rundum kein flacher freier Boden", "fuellgrad": 0.63, "unsicherheit": {"grundriss_m": 0.512, "hoehe_m": 0.57},
+     "hinweise": ["Fuellgrad 0.63 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]},
+    {"id": "V9", "laenge_m": 3.178, "breite_m": 1.955, "hoehe_m": 8.04, "boden_quelle": "Median von 11 flachen freien Zellen rundum", "fuellgrad": 0.68, "unsicherheit": {"grundriss_m": 0.348, "hoehe_m": 7.03},
+     "hinweise": ["Fuellgrad 0.68 — der Quader ist nur eine Huelle (Winkelbau, Hof oder zwei Bauten)"]}
+   ],
+   "vergleich_245": "245: 8 Volumen, 5 ohne Boden, Hauptbau 65.2 × 10.2 m, H 3.45 m, Fuellgrad 0.28, 115 Kameras im Grundriss. Jetzt: 9 Volumen, 3 ohne Boden, Hauptbau 61.2 × 6.3 m, H 3.6 m (±2.35), Fuellgrad 0.44, 92 Kameras im Grundriss. Erstmals nimmt ein Volumen (V8, 8.5 × 0.8 m) den Boden aus Fusspunkten."
+  },
+  "punkte_am_weg": {
+   "methode": "Skript aus dem Auftrag (Wegwerf, ausserhalb der Repos): Punkte mit Deckkraft >= 0.2, naeher als 1.0 m an einer Kamera (Fusspunkt + 1.75 m), je Splat mit seiner eigenen Begleitdatei",
+   "vorher_243": {"zeile_woertlich": "273020 5035 1.84 %", "punkte": 273020, "nah": 5035, "anteil_prozent": 1.84, "begleitdatei": "die aus 245 (119 Fusspunkte)"},
+   "nachher_ersatzlauf": {"zeile_woertlich": "272798 3421 1.25 %", "punkte": 272798, "nah": 3421, "anteil_prozent": 1.25, "begleitdatei": "neu aus D (120 Fusspunkte)"},
+   "deutung": "−1614 Punkte (−32 %), aber OHNE Maske: das ist Lauf-zu-Lauf-Streuung (andere Stromfolge, neue Rekonstruktion, neue Verortung), nicht die Wirkung einer Maske."
+  }
+ },
+ "urteil": [
+  "(1) Nein: die Maske traf nichts — in allen vier Ansichten anteil 0.0 bei wechselnd 1.0, obwohl die filmende Person in einer Ansicht gross und mittig im Bild steht; ihre Bewegung im Bild (Kopf, Oberkoerper, Arm) ueberschreitet ruhe_max 0.025. Falsch rot ist dafuer auch nichts.",
+  "(2) Ueber das Werkzeug mit Maske kam die Kette NICHT durch (zweimal gleich: mask_path ohne Maskendateien → 960 × MASK_ERROR → rig_configurator bricht ab); mit ohne_maske kam sie ueber dasselbe Werkzeug durch (960/960, 1 Modell, 3205629 Splats), mit selbst gemessenen Linsen 194.4° (Nahtfehler 0.5468), gleich wie 240–243.",
+  "(3) Die Punkte am Weg wurden weniger (1.84 % → 1.25 %, 5035 → 3421), aber in einem Lauf ohne Maske — das sagt nichts ueber die Maske; die Frage bleibt offen, bis die Maske die Person findet."
+ ],
+ "fuer_den_code_beobachtet": [
+  "Kette: --ImageReader.mask_path nur setzen, wenn mindestens eine Ansicht maskiert wurde (maske.json maskiert > 0) — sonst scheitert jede 360-Kette, in der nichts Mitfahrendes gefunden wird. Und auch dann nur fuer vollstaendige Ansichten: COLMAP verwirft jedes Bild ohne Maskendatei.",
+  "Maske: ruhe_max 0.025 fasst eine frei gehaltene, sich bewegende Person nicht (wechselnd 1.0 ueberall).",
+  "Stromfolge: --linsen-messen waehlt --stroeme 0,1, 241/243 liefen mit 1,0 — die Ansichtsnamen vertauschen sich (front↔back, left↔right).",
+  "splat_volumen.py kennt --ply nicht (positionell)."
+ ],
+ "gpu": {
+  "sperre": "je Lauf vor dem Start genommen (until mkdir …; sleep 30), per trap geloest; danach geprueft: Sperre weg",
+  "grenze_w": 400,
+  "spitze_w": 227
+ },
+ "nicht_getan": [
+  "kein Code geaendert",
+  "nichts installiert",
+  "nichts aus dem Netz geladen ausser git pull",
+  "nichts committet",
+  "Video nur gelesen, nicht kopiert",
+  "Arbeitsordner aus 243 nicht veraendert (nur gelesen)",
+  "keine Bilder, Masken, Splats oder Projektdaten zurueckgegeben; keine Orts-, Personen- oder Projektnamen, keine Koordinaten, keine echten Dateinamen"
+ ],
+ "aufraeumen": "C3 und C2 geloescht. Behalten ausserhalb der Repos: B (Maske), C (gestriger Fehlschlag), C frisch (heutiger Fehlschlag, 271 MB) und der Ersatzlauf (2.7 GB mit splat.ply, splat.verortung.json, volumen.json). Eine Kontaktbild-Hilfsdatei im Arbeitsbereich der Sitzung wurde nach dem Ansehen geloescht.",
+ "umgebung": {"gpu_benutzt": true, "netz_benutzt": true, "netz_zweck": "git pull"},
+ "abweichungen": [
+  "B nicht neu gerechnet, sondern aus dem Vorlauf uebernommen (vollstaendig); die Vorschau gibt es nicht, weil nichts maskiert wurde.",
+  "C mit Maske scheitert reproduzierbar; D lief auf einem Ersatzlauf mit ohne_maske.",
+  "splat_volumen.py positionell statt mit --ply."
+ ],
+ "fehler": "Kette mit Maske: mask_path ohne Maskendateien → colmap rig_configurator «At least one image must exist for each camera in the rig»"
+}
