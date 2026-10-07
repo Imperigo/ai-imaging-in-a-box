@@ -7750,7 +7750,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben, Nachgang 3 Punkt 4):** Vergleich bei 1024×768 — Karten untereinander per Container-Abfrage, nichts unter dem Inspektor, Abzeichen einzeilig *(07.10.2026, Kopf `08df9f567`, Chromium grün)*
 - [ ] **local:** `auf-20261007-252` — Nachgang 3 Punkte 3 und 4 in WebKitGTK.
 - [ ] **Kern (drüben):** nach L26 dessen Kopf in Nachgang 3 hereinholen, Läufe wiederholen, Stand-Zeile setzen, über die Zentrale freigeben. Dabei die Blatt-Platzsuche in WebKitGTK mitprüfen lassen (local).
-- [ ] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen.
+- [x] **Owner:** Soll der Render-Knoten mehr als den letzten Lauf zeigen (Verlauf)? — Gestaltungsfrage, erst zeichnen. *(07.10.2026, Entscheid 68: B, kleiner Verlauf am Knoten, v0.1.8)*
+- [ ] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten (Entscheid 68) — zuerst ein Blatt auf der Entwurfsfläche, dann Bau auf eigenem Zweig.
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
 - [x] **Kern (drüben):** Publish Schritt 2 — `bildAufsBlatt` gibt das Feld mit (nach Schritt 1). *(06.10.2026: Zweig «kosmovis-v017-publish-schritt2», Kopf `d4dc55c7f`, Chromium grün)* Schritt 3 (Anzeige im Publish) verteilt Int 1 an Publish/Prepare.
