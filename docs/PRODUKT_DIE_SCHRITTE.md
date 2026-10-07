@@ -1313,3 +1313,8 @@ keine: Die Materialnamen haben keine Farbe, und was ein Lesewerkzeug dafür eins
 Diese zu übernehmen hiesse, Erfundenes als Modellinformation auszugeben. Dabei fiel auf, dass der Export von
 KosmoOrbit Dächer, Treppe und Geländer weglässt — für die Prüfung gegen die Geometrie wichtiger als jede Farbe.
 Das liegt beim Integrator.
+
+**07.10.2026 — einmal laden: am Heim-PC bestätigt, und ein Fund nebenbei.** Das Bildmodell wird je Auftrag nur
+noch einmal geladen; die Bilder bleiben bitgleich, das Standardmodell wird rund ein Sechstel schneller. Bei der
+Messung fiel auf, dass die Prüfung an der Vorführmappe jetzt durchfällt, die am 01.10. noch bestand — schon vor
+dem Umbau. Woran das liegt, wird gerade getrennt gemessen.

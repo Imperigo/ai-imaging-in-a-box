@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261007-261",
+  "art": "frage",
+  "beschreibung": "Nachgang zu 260: Warum faellt die Pruefung an der Vorfuehrmappe jetzt durch (218 bestand), und ist das erste Qwen-Bild nach dem Umbau wirklich langsamer?",
+  "anweisung": "=== WARUM FAELLT DIE PRUEFUNG AN DER VORFUEHRMAPPE JETZT DURCH? (und: das langsamere erste Qwen-Bild) ===\n\nWORUM ES GEHT\n  Danke fuer 260 — das einmalige Laden ist damit bestaetigt (eine Ladung, bitgleich, Speicher nicht hoeher).\n  Zwei Dinge aus deiner Liste «was auffiel» klaeren wir jetzt, weil sie mehr wiegen als die Messung:\n  (A) Alle Pruefungen in 260 fielen durch (Score 0.02-0.19, geom_iou 0.004-0.035), vorher wie nachher,\n      ueber die Mappe UND ueber den Dienst. In 218 bestand dieselbe Vorfuehrmappe mit z-image-turbo\n      0.81-0.97. Am Rechenweg fuer z-image-turbo hat sich seit dem 01.10. im Code nichts geaendert\n      (render.py: nur Qwen-Register und das einmalige Laden). Wir wissen nicht, ob es am Startwert, am\n      Weg (Mappe/«Anwenden» statt dem Weg aus 218), an der Kamera oder an etwas anderem liegt.\n      Wenn die Vorfuehrung beim Owner so durchfaellt, ist das ein echtes Problem — darum diese Trennung.\n  (B) Bei qwen-image-2.1 war Variante 1 nachher in zwei von zwei Paaren langsamer (33.5 statt 21.5 s,\n      25.4 statt 16.5 s), und die Karte fuellte sich langsam statt in einem Sprung. Ist das echt oder\n      die Streuung von qwen bzw. die Reihenfolge der Laeufe?\n\nWAS DU TUST\n  Stand: git pull --ff-only auf main (mindestens 0f07031). Dienst NICHT noetig, ausser in A4.\n  Jeder Lauf auf einer frischen Wegwerf-Kopie der Vorfuehrmappe aus 218/221/260 (Original unberuehrt),\n  Sprachmodell vorher entladen, cache=None.\n\n  (A) Nur z-image-turbo, je EIN Bild, Kamera wie in 218 «Blick von Sueden», falls die Mappe sie fuehrt:\n    A1  Genau der Weg aus 218 (derselbe Aufruf/dasselbe Werkzeug wie damals), ohne Startwert.\n    A2  arbeitsgang.rechne(mappe, varianten=1, cache=None) ohne Startwert (Weg «Anwenden»).\n    A3  Wie A2, aber mit Startwert 7 (wie 260).\n    A4  Nur falls A1 besteht und A2 nicht: A2 auf dem Stand, mit dem 218 lief (git log 218; wenn\n        unbekannt: 62ca214, letzter main-Stand vom 01.10.) in einem eigenen worktree.\n    Je Lauf melden: QA-Status, Score, geom_iou, Urteil; welche Kamera (Name/Blick) gerechnet wurde;\n    modus_bestellt / modus_gerechnet; die hinweise des Laufs WOERTLICH; ob control_image an die\n    Pipeline ging (steht in parameter/genommen bzw. den hinweisen); der verwendete Bildauftrag (Prompt)\n    woertlich; und EIN Satz, was das Bild zeigt (Haus ja/nein, Blickrichtung passt zur Tiefenkarte ja/nein).\n  (B) Nur qwen-image-2.1, je EINE Variante (Startwert 7), in DIESER Reihenfolge, je Lauf frischer Prozess:\n    nachher, vorher, nachher, vorher  (vorher = eigener worktree auf 7a569fd wie in 260).\n    Je Lauf: render_s, geraeteweg, Dauer der Ladung und der Entrauschung (aus dem Balken), und der\n    nvidia-smi-Verlauf in 1-s-Schritten bis zur Spitze (nur die MiB-Zahlen).\n\nWAS DU NICHT TUST\n  Nichts installieren, keinen Code aendern, keine Mappe im Repo veraendern. Keine Bilder ins Repo,\n  nur Pruefsummen. Keine Pfade mit Benutzernamen, keine Host- oder Netznamen. Worktrees und\n  Wegwerf-Kopien danach loeschen.\n\nRUECKGABE\n  (A) Tabelle A1-A4: Weg / Startwert / Kamera / modus_bestellt / modus_gerechnet / Score / geom_iou /\n      Urteil / Satz zum Bild; darunter die hinweise und der Prompt woertlich (einmal, wenn gleich).\n      Urteil in einem Satz: woran liegt das Durchfallen (Startwert, Weg, Kamera, Stand, unklar)?\n  (B) Tabelle der vier Laeufe; Urteil in einem Satz: ist Variante 1 nachher reproduzierbar langsamer?",
+  "erstellt": "2026-10-07T21:10:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/vorfuehr/testbau.ifc --gelaende"
+  },
+  "params": {
+    "folgt_auf": "auf-20261007-260",
+    "vergleich_mit": "auf-20261001-218",
+    "backbones": [
+      "z-image-turbo",
+      "qwen-image-2.1"
+    ],
+    "stand_vorher": "7a569fd"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: je Lauf ein Backbone; Sprachmodell vorher entladen. qwen-image-2.1 traegt lizenz_offen (E128) — nur messen.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); keine Bilder ins Repo, nur Pruefsummen."
+    ]
+  },
+  "rueckgabe": [
+    "(A) Tabelle A1-A4 mit Weg, Startwert, Kamera, modus_bestellt/gerechnet, Score, geom_iou, Urteil, Satz zum Bild; hinweise und Prompt woertlich.",
+    "(A) Urteil in einem Satz: woran liegt das Durchfallen.",
+    "(B) Tabelle der vier Qwen-Laeufe mit render_s, Weg, Ladung/Entrauschung, nvidia-smi-Verlauf.",
+    "(B) Urteil in einem Satz: ist Variante 1 nachher reproduzierbar langsamer."
+  ],
+  "rang": 48
+}
