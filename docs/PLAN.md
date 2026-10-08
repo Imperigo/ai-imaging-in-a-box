@@ -7767,7 +7767,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **local:** `auf-20261008-264` — F6 am vollständigen Demohaus: Stile in der glb, Tiefe gleich, sieht die Soll-Tiefe das Dach? Danach Antwort an den Integrator.
       *(08.10.2026: Stile ja (7 Materialien, 47/47 mit Stil), Tiefe byte- und pixelgleich, Dach in der Soll-Tiefe sichtbar; offene Giebel = dachId-Grenze des Exports; Türen ohne Körper. **Befund:** Maskenweg fiel weg — von F6 verursacht, behoben (Protokoll 74 §65). Antwort an den Integrator gesendet.)*
 - [x] **Kern (Blender-Stufe):** Material-ID eines IFC-Bauteils bleibt objektweise, damit die Bauwerksmaske greift (Befund nach F6). *(08.10.2026, `runners/blender_depth_stage.py` `_ist_ifc_knoten`; Probe in `tests/test_ifc_stile.py`)*
-- [ ] **local:** `auf-20261008-265` — Maskenweg am Demohaus nach der Behebung; drei geprüfte Bilder (s/sSE/nNW).
+- [x] **local:** `auf-20261008-265` — Maskenweg am Demohaus nach der Behebung; drei geprüfte Bilder (s/sSE/nNW).
+      *(08.10.2026: Maskenweg läuft wieder — 55 × «objekt», Maske gemessen, Anteil 17–20 %, Katalog-Nullbefund. Bilder: rho_maske gerichtet +0,39 / +0,77 / +0,81 (s/sSE/nNW), aber «nicht messbar» am alten Gesamt-Score — Gebäudeanteil unter 20 %, dort ist er rechnerisch unerreichbar. Protokoll 74 §66)*
+- [ ] **Owner:** Wie urteilt die Prüfung, wenn das Haus weniger als 20 % des Bildes füllt (Modelle ohne Gelände, z. B. das Demohaus)? Frage über die Zentrale (08.10.2026), Empfehlung: dann entscheidet allein die Gebäude-Prüfung mit der geeichten Schwelle 0,80 — wie KosmoOrbit schon anzeigt.
 - [x] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
       *(08.10.2026: V1–V8 alle ja auf 5fdf523be, 6 echte Läufe; Zweig an Int 1 gemeldet. Nachgang: Ortszeit, fortlaufende Laufnummer, «nicht anwendbar» bei Innenansicht, undurchsichtige grosse Ansicht — Zweig «claude/kosmovis-v018-verlauf-nachgang», Protokoll 74 §64)*
 - [ ] **KosmoVis drüben:** Verlauf-Nachgang bauen, in WebKitGTK kurz nachprüfen lassen, an Int 1 melden.
