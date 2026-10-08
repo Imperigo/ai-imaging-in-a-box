@@ -2328,7 +2328,9 @@ def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
         # der Gesamtwert nicht anwendbar. `passed` bleibt im fremden Vertrag ein
         # Wahrheitswert — der Satz sagt, dass `false` hier nicht durchgefallen heisst.
         anteil = geometrie_urteil.get("anteil_soll")
-        wieviel = f"nur {anteil:.0%}" if isinstance(anteil, (int, float)) else "weniger"
+        # Eine Stelle nach dem Komma: 0,199 hiess mit {:.0%} «nur 20 % … weniger als 20 %»
+        # (HomeStation, auf-20261008-267).
+        wieviel = f"nur {anteil:.1%}" if isinstance(anteil, (int, float)) else "weniger"
         return (f"NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt {wieviel} des "
                 f"Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. "
                 f"'passed: false' heisst hier nicht durchgefallen, sondern nicht "

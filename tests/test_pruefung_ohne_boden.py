@@ -139,6 +139,15 @@ def test_der_grund_sagt_nicht_beurteilbar_und_nicht_durchgefallen():
     e = ks.als_ergebnis("vis-20261008120000-abc123", ["a.png"],
                         geometrie_urteil=_urteil_unter_zwanzig())
     grund = ks.nur_vertragsfelder(e)["qa"]["verdict"]["reason"]
-    assert grund.startswith("NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18%")
+    assert grund.startswith("NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 17.9%")
     assert "nicht durchgefallen, sondern nicht beurteilbar" in grund
     assert "NICHT GEMESSEN" not in grund
+
+
+def test_knapp_unter_zwanzig_wird_nicht_auf_zwanzig_gerundet():
+    """0,199 stand am Gerät als «nur 20 % … weniger als 20 %» (``auf-20261008-267``)."""
+    from aiimaging import kosmo_szene as ks
+    urteil = dict(_urteil_unter_zwanzig(), anteil_soll=0.199)
+    grund = ks.nur_vertragsfelder(ks.als_ergebnis(
+        "vis-20261008120000-abc123", ["a.png"], geometrie_urteil=urteil))["qa"]["verdict"]["reason"]
+    assert "nur 19.9%" in grund
