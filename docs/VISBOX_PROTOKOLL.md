@@ -240,7 +240,10 @@ Lauf in der Mappe.
 die Mappe noch der Aufruf `kamera`, `auge`/`blick_auf` oder `innenraum`, rechnet der Lauf frontal von
 Süden (`kamera: "s"`, wie der Abholer). Dann steht im Ergebnis `standpunkt_vorgabe: {kamera, satz}` —
 der Satz ist für einen Menschen geschrieben und kann so gezeigt werden. War ein Standpunkt bestellt,
-ist das Feld `null`.
+ist das Feld `null`. Seit dem 08.10.2026 trägt es zusätzlich `zeile` — die kurze Zeile unter dem
+Bild («Kein Standpunkt bestellt — von Süden gerechnet.», Entscheid 73) —, und dasselbe steht **am
+Bildeintrag in der Mappe** (`herkunft.standpunkt_vorgabe`); die Sicht gibt die Zeile je Bild als
+`standpunkt_vorgabe` aus (§4).
 
 **Zum Pfad `ordner`:** Er ist ein Pfad **auf der HomeStation**. Die App kennt ihn nur, wenn sie
 ihn gesagt bekommt; wurde der Server mit `--ordner` gestartet, kann sie ihn weglassen. Ein Weg,
@@ -267,14 +270,35 @@ auf dem die App die Projekte der HomeStation auflisten könnte: **nicht vorhande
 
 **Je Bild** (`bilder[]`): `{bild, schicht, zeichen, satz, erzeugt, herkunft, vorhanden, basis,
 score, schwelle, titel, entwurf, variantengruppe, vorher, hinweise, skizze_nicht_angekommen,
-skizze_hinweis, unterlage_hinweis}` (`score` bis `skizze_hinweis` ohne `vorher` seit dem
-22.09.2026; `vorher` und `unterlage_hinweis` seit dem 23.09.2026).
+skizze_hinweis, unterlage_hinweis, standpunkt_vorgabe}` (`score` bis `skizze_hinweis` ohne
+`vorher` seit dem 22.09.2026; `vorher` und `unterlage_hinweis` seit dem 23.09.2026;
+`standpunkt_vorgabe` seit dem 08.10.2026).
 
-* `zeichen` ist **einer von drei** Werten: `bestanden`, `durchgefallen`, `nicht-gemessen`. In der
-  Mappe steht dasselbe als `geometrie_bestanden: true | false | null`. **`null` heisst nicht
-  gemessen — nie «in Ordnung» und nie «nicht bestanden».** Die App führt es als eigenen Fall
+* `zeichen` ist **einer von vier** Werten: `bestanden`, `durchgefallen`, `nicht-gemessen` und
+  (seit dem 08.10.2026) `nicht-beurteilbar`. In der Mappe steht dasselbe als
+  `geometrie_bestanden: true | false | null`. **`null` heisst nicht gemessen — nie «in Ordnung»
+  und nie «nicht bestanden».** Die App führt es als eigenen Fall
   (`Urteil.nichtGemessen`, `ipad/Visbox.swiftpm/Kern/Urteil.swift`); ein unbekanntes Zeichen wird
   dort **nicht** geraten.
+* `nicht-beurteilbar` (Entscheid 70, Blatt 16): **gemessen, aber ohne Urteil**, weil das Haus
+  weniger als 20 % des Bildes füllt und der Gesamtwert dort nicht anwendbar ist. Der Server setzt
+  es, wenn `geometrie_bestanden` `null` ist **und** `herkunft.messung.gesamtwert_anwendbar`
+  ausdrücklich `false` (nie bei einem fehlenden Feld, nie bei einem Entwurf); sonst bleibt es
+  `nicht-gemessen`. Kein viertes Urteil: In der Mappe steht `null`, und die App liest es als
+  `Urteil.nichtGemessen` mit eigenem Wort (`Zeichenart.nichtBeurteilbar`, «NICHT BEURTEILBAR»,
+  Ton und Strich wie «nicht gemessen»). `satz` ist die Begründung der Prüfung («Nicht beurteilbar
+  — das Haus füllt nur …»). Ein älterer Server schickt es nie; eine ältere App zeigt es als
+  «ZEICHEN UNBEKANNT», ebenfalls gestrichelt in Gelb.
+* `herkunft.messung.gesamtwert_anwendbar` (seit dem 08.10.2026): `true`, `false` oder `null` —
+  aus der Prüfung, die das Urteil fällte (oder die gerechnet, aber nicht geurteilt hat). `null`:
+  keine Prüfung (Entwurf), oder eine, die das Feld nicht meldet; ältere Einträge führen es nicht.
+* `standpunkt_vorgabe` (seit dem 08.10.2026, Entscheid 73): die Zeile «Kein Standpunkt bestellt —
+  von Süden gerechnet.», gelesen aus `herkunft.standpunkt_vorgabe.zeile` (dort `{kamera, satz,
+  zeile}` wie im Ergebnis von `POST /api/rechnen`, §3). **`null`**, wenn ein Standpunkt bestellt
+  war, bei älteren Einträgen ohne das Feld und bei allem, was keine Zeile ist — dann steht unter
+  dem Bild nichts. Eine Auskunft, kein Vorbehalt: Webseite und App zeigen sie direkt unter dem
+  Bild, ohne Warnzeichen und ohne Urteilsfarbe; die Webseite mit dem Verweis «Standpunkt setzen»
+  zum Abschnitt «Standpunkt» (Grundriss), die App ohne Verweis (sie hat noch keine Ansicht dafür).
 * `satz` ist der Satz zum Zeichen; bei «nicht gemessen» der Grund aus der Herkunft des Bildes.
 * `schicht` ist `geometrielayer` oder `ai-imaging-layer`.
 * `vorhanden` ist `true`, `false` (die Mappe nennt das Bild, die Datei fehlt) oder `null`

@@ -4572,7 +4572,10 @@ auf dem Haus misst.
 **Nicht beurteilbar** — Die dritte Antwort einer Prüfung neben «bestanden» und «durchgefallen»:
 Wir wissen es nicht, und wir sagen das, statt zu raten. Im Ergebnis steht dann `bestanden: null`
 und ein Satz, warum.
-*Im Projekt:* ohne Maskenweg; ein Haus unter 20 % des Bildes (Visbox-Entscheid 70).
+*Im Projekt:* ohne Maskenweg; ein Haus unter 20 % des Bildes (Visbox-Entscheid 70). Für den
+zweiten Fall zeigen Fläche und iPad seit dem 08.10.2026 ein eigenes Zeichen «NICHT BEURTEILBAR» —
+gelb und gestrichelt wie «nicht gemessen», getrennt nur durch das Wort, denn gemessen *wurde*
+(Server-Zeichen `nicht-beurteilbar`, App `Zeichenart.nichtBeurteilbar`, Blatt 16).
 
 **Nicht anwendbar (not_applicable)** — Eine Zahl, die sich zwar ausrechnen lässt, in dieser
 Lage aber nichts misst — darum weggelassen und so benannt, statt als Ergebnis gezeigt. Die dritte
@@ -5309,8 +5312,17 @@ bestellt hat. Seit dem 07.10.2026 ist das auf beiden Wegen «frontal von Süden�
 Abholer (Bestellungen aus KosmoOrbit) schon seit August, beim Weg über die Mappe («Anwenden») neu.
 Vorher fiel die Mappe auf die alte Schrägsicht von oben zurück, in der das Haus klein und schief im
 Bild stand — und die Prüfung gegen die Geometrie fiel durch. Das Ergebnis sagt in einem Satz, dass
-die Vorgabe galt.
-*Im Projekt:* `arbeitsgang.STANDPUNKT_VORGABE`; Befund in `auf-20261007-261`.
+die Vorgabe galt — und seit dem 08.10.2026 steht dieser Satz auch **am Bild in der Mappe**, so dass
+Fläche und iPad unter dem Bild «Kein Standpunkt bestellt — von Süden gerechnet.» zeigen, auch nach
+dem Neuladen (Entscheid 73, Blatt 16).
+*Im Projekt:* `arbeitsgang.STANDPUNKT_VORGABE`, `STANDPUNKT_VORGABE_ZEILE`, am Bild
+`herkunft.standpunkt_vorgabe`; Befund in `auf-20261007-261`.
+
+**Sprungmarke (Anker)** — Eine benannte Stelle auf einer Webseite, zu der ein Verweis springt,
+statt eine neue Seite zu öffnen — wie ein Lesezeichen im selben Dokument. Geschrieben wird sie als
+`#name` hinter der Adresse.
+*Im Projekt:* «Standpunkt setzen» unter einem Bild auf der Fläche springt zur Sprungmarke
+`#standpunkt`, dem Abschnitt mit dem Grundriss, in dem man den Standpunkt bestellt (Entscheid 73).
 
 **Komponiert (eine Ansicht)** — Eine Kameraeinstellung, die nach dem Gebäude ausgerichtet ist: aus
 einer bestimmten Richtung, auf Augenhöhe, so nah, dass das Gebäude das Bild füllt. Das Gegenteil ist
@@ -6486,6 +6498,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §75 (Entscheide 70 und 73 am Bild): **Sprungmarke (Anker)**; nachgefuehrt: **Nicht beurteilbar** (eigenes Zeichen), **Standpunkt-Vorgabe** (steht am Bild) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |

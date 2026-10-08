@@ -7788,7 +7788,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Int 1:** die drei Verlauf-Zweige einspielen (e6f775995) — nach seinem Zeitplan.
 - [ ] **KosmoVis drüben (Entscheid 72):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe — erst zeichnen (Blatt 16), dann bauen.
 - [ ] **KosmoVis drüben (Entscheid 71):** Uhrzeitzeile unter den Daumenbildern weglassen (Knoten 14 px niedriger).
-- [ ] **Fläche/iPad (Entscheid 73):** Satz `standpunkt_vorgabe` sichtbar unter dem Bild — erst zeichnen (Blatt 16), dann bauen.
+- [x] **Fläche/iPad (Entscheid 73):** Satz `standpunkt_vorgabe` sichtbar unter dem Bild — erst zeichnen (Blatt 16), dann bauen.
+      *(08.10.2026, `9595fef`: Zeile am Bildeintrag der Mappe (`herkunft.standpunkt_vorgabe`), Sicht-Feld `standpunkt_vorgabe`, Fläche mit «Standpunkt setzen» → Grundriss, iPad ohne Verweis (keine Ansicht dafür); `tests/test_saetze_am_bild.py` — Protokoll 74 §75; **am Gerät unbestätigt**, iPad-Teil erst nach der Mac-CI)*
+- [x] **Fläche/iPad (Entscheid 70, Zeichen):** eigenes Zeichen «NICHT BEURTEILBAR» bei Haus unter 20 % — Ton und Strich wie «nicht gemessen», getrennt durch das Wort (Blatt 16).
+      *(08.10.2026, `9595fef`: `gesamtwert_anwendbar` am Bild (`herkunft.messung`), Server-Zeichen `nicht-beurteilbar`, Seite und `Zeichenart.nichtBeurteilbar`; Vorsatz «NICHT GEMESSEN» fällt in diesem Fall weg — Protokoll 74 §75; **am Gerät unbestätigt**)*
 - [ ] **Integrator, nach v0.1.8 (Entscheid 74):** «nicht beurteilbar» als eigener Zustand im Vertrag — ruhig vorschlagen.
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*

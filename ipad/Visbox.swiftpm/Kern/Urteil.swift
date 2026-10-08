@@ -33,11 +33,16 @@ public enum Urteil: Equatable, Hashable, Sendable {
     /// Ein **unbekanntes** Zeichen gibt `nil` — und nicht «nicht gemessen». Ein Zeichen,
     /// das diese App nicht kennt, kommt von einem neueren Server; es als «nicht gemessen»
     /// zu lesen wäre geraten, und geraten sieht in der Anzeige genauso aus wie gewusst.
+    ///
+    /// **`nicht-beurteilbar` ist kein viertes Urteil** (Entscheid 70, 08.10.2026): In der
+    /// Mappe steht dazu `geometrie_bestanden: null`, also der dritte Fall. Das eigene Wort
+    /// am Bild macht `Pruefzeichen` (`Zeichenart.nichtBeurteilbar`); hier ist es gewusst,
+    /// nicht geraten — der Server schreibt es seit diesem Tag.
     public init?(zeichen: String) {
         switch zeichen {
         case "bestanden": self = .bestanden
         case "durchgefallen": self = .durchgefallen
-        case "nicht-gemessen": self = .nichtGemessen
+        case "nicht-gemessen", "nicht-beurteilbar": self = .nichtGemessen
         default: return nil
         }
     }

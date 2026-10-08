@@ -1057,7 +1057,14 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None, *, bilder_der_mappe=None)
     elif urteil is False:
         zeichen, satz = "durchgefallen", "Die Geometrieprüfung ist nicht bestanden."
     else:
-        zeichen = "nicht-gemessen"
+        # NICHT BEURTEILBAR IST NICHT «NICHT GEMESSEN» (Entscheid 70, Blatt 16, 08.10.2026):
+        # Unter 20 % Gebaeudeanteil hat die Pruefung gemessen, aber der Gesamtwert durfte
+        # nicht urteilen. Erkannt an der Angabe der Pruefung am Bild
+        # (`herkunft.messung.gesamtwert_anwendbar`), nicht am Satz — und nur bei `False`,
+        # nie bei einem fehlenden Feld. Ein Entwurf hat keine Pruefung; er bleibt, was er ist.
+        zeichen = ("nicht-beurteilbar"
+                   if _gesamtwert_nicht_anwendbar(eintrag) and eintrag.get("entwurf") is not True
+                   else "nicht-gemessen")
         # DER GRUND KOMMT AUS DEM EINTRAG, nicht aus einem Satz hier. Ein allgemeiner
         # Satz an dieser Stelle waere bequem und in der Haelfte der Faelle falsch.
         satz = (eintrag.get("herkunft") or {}).get("grund") or "NICHT GEMESSEN."
@@ -1097,8 +1104,30 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None, *, bilder_der_mappe=None)
         # DAS VORHER ZUM VERGLEICH (Entscheid 17): das Bild, ueber das skizziert wurde.
         # Seit dem 23.09.2026; die App liest das Feld (`Mappenbild.vorher`).
         "vorher": _vorher(eintrag, ordner, bilder_der_mappe),
+        # VON WO GERECHNET, WENN NIEMAND ES SAGTE (Entscheid 73, Blatt 16, 08.10.2026): die
+        # Zeile der Bibliothek, oder `None` — dann steht unter dem Bild nichts. Ein eigenes
+        # Feld, damit Seite und App nicht in der Herkunft suchen muessen.
+        "standpunkt_vorgabe": _standpunkt_zeile(eintrag),
         **_hinweise_zum_bild(eintrag),
     }
+
+
+def _gesamtwert_nicht_anwendbar(eintrag: dict) -> bool:
+    """Ob die Prüfung am Bild sagte, dass ihr Gesamtwert **nicht** urteilen durfte —
+    ``herkunft.messung.gesamtwert_anwendbar`` ist ``False``, genau das und nichts anderes."""
+    herkunft = eintrag.get("herkunft") or {}
+    messung = herkunft.get("messung") if isinstance(herkunft, dict) else None
+    return isinstance(messung, dict) and messung.get("gesamtwert_anwendbar") is False
+
+
+def _standpunkt_zeile(eintrag: dict):
+    """Die Zeile «Kein Standpunkt bestellt — …» aus ``herkunft.standpunkt_vorgabe.zeile`` —
+    oder ``None``: Standpunkt bestellt, ein älterer Eintrag ohne das Feld, oder keine Zeile
+    darin. **Kein Satz von hier:** Steht keine Zeile da, wird keine erfunden."""
+    herkunft = eintrag.get("herkunft") or {}
+    vorgabe = herkunft.get("standpunkt_vorgabe") if isinstance(herkunft, dict) else None
+    zeile = vorgabe.get("zeile") if isinstance(vorgabe, dict) else None
+    return zeile if isinstance(zeile, str) and zeile.strip() else None
 
 
 def _vorher(eintrag: dict, ordner, bilder_der_mappe):
