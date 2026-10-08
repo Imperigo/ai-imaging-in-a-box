@@ -7787,7 +7787,7 @@ Bekannt und ausdrücklich nicht erledigt:
       *(08.10.2026: K1–K5 ja — Kachel und Verlauf in allen vier echten Läufen gleich; die drei Zweige als e6f775995 an Int 1 gemeldet. Offen: ein Bestehen von aussen ungeprüft; Inspektor beim echten Durchfallen «verfehlt» + «zurückgezogen» → Feinschliff-Zweig; «18.1%» ohne Leerzeichen → bei uns behoben, jetzt «18.1 %»)*
 - [ ] **Int 1:** die drei Verlauf-Zweige einspielen (e6f775995) — nach seinem Zeitplan.
 - [ ] **KosmoVis drüben (Entscheid 72):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe — erst zeichnen (Blatt 16), dann bauen.
-- [ ] **KosmoVis drüben (Entscheid 71):** Uhrzeitzeile unter den Daumenbildern weglassen (Knoten 14 px niedriger).
+- [x] **KosmoVis drüben (Entscheid 71):** Uhrzeitzeile unter den Daumenbildern weglassen (Knoten 14 px niedriger). *(08.10.2026, Zweig «claude/kosmovis-v018-verlauf-feinschliff», 7024bb557: Reihe 70 statt 84 px, Knoten mit Verlauf 734 statt 748 px; Chromium grün)*
 - [x] **Fläche/iPad (Entscheid 73):** Satz `standpunkt_vorgabe` sichtbar unter dem Bild — erst zeichnen (Blatt 16), dann bauen.
       *(08.10.2026, `9595fef`: Zeile am Bildeintrag der Mappe (`herkunft.standpunkt_vorgabe`), Sicht-Feld `standpunkt_vorgabe`, Fläche mit «Standpunkt setzen» → Grundriss, iPad ohne Verweis (keine Ansicht dafür); `tests/test_saetze_am_bild.py` — Protokoll 74 §75; **am Gerät unbestätigt**, iPad-Teil erst nach der Mac-CI)*
 - [x] **Fläche/iPad (Entscheid 70, Zeichen):** eigenes Zeichen «NICHT BEURTEILBAR» bei Haus unter 20 % — Ton und Strich wie «nicht gemessen», getrennt durch das Wort (Blatt 16).
