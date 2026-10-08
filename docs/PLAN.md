@@ -7772,7 +7772,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Owner:** Wie urteilt die Prüfung, wenn das Haus weniger als 20 % des Bildes füllt (Modelle ohne Gelände, z. B. das Demohaus)? Frage über die Zentrale (08.10.2026), Empfehlung: dann entscheidet allein die Gebäude-Prüfung mit der geeichten Schwelle 0,80 — wie KosmoOrbit schon anzeigt.
 - [x] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
       *(08.10.2026: V1–V8 alle ja auf 5fdf523be, 6 echte Läufe; Zweig an Int 1 gemeldet. Nachgang: Ortszeit, fortlaufende Laufnummer, «nicht anwendbar» bei Innenansicht, undurchsichtige grosse Ansicht — Zweig «claude/kosmovis-v018-verlauf-nachgang», Protokoll 74 §64)*
-- [ ] **KosmoVis drüben:** Verlauf-Nachgang bauen, in WebKitGTK kurz nachprüfen lassen, an Int 1 melden.
+- [x] **KosmoVis drüben:** Verlauf-Nachgang bauen. *(08.10.2026, Zweig «claude/kosmovis-v018-verlauf-nachgang», Kopf 0f9789ece; Chromium grün; fremdes elevations-gate rot aus dem Integrator-Kopf — Protokoll 74 §67)*
+- [ ] **local:** `auf-20261008-266` — Nachgang in WebKitGTK; danach an Int 1 melden.
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*

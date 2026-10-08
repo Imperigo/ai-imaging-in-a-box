@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-266",
+  "art": "frage",
+  "beschreibung": "WebKitGTK-Nachprobe des Verlauf-Nachgangs (Ortszeit, fortlaufende Laufnummer, «nicht anwendbar», deckende grosse Ansicht).",
+  "anweisung": "=== KURZE WEBKITGTK-NACHPROBE: VERLAUF-NACHGANG (Ortszeit, Laufnummer, «nicht anwendbar», deckende Ansicht) ===\n\nWORUM ES GEHT\n  Danke fuer 263. Deine Punkte a) bis d) sind gebaut, auf einem eigenen Zweig, der auf dem Verlauf-Zweig\n  aufbaut: claude/kosmovis-v018-verlauf-nachgang, Kopf 0f9789ece (Integrator-Kopf ed63ed71f\n  hereingeholt). In Chromium alles gruen (App 6776, @kosmo/ui 435, 101 Vis-E2E). Ein FREMDES Tor ist dort\n  rot (elevations-gate, agent-figur.css aus der UI-Lieferung 31, kam mit dem Integrator-Kopf) — nicht\n  unser Bereich, nicht pruefen.\n\nAUFBAU\n  Wie in 263: eigene Arbeitskopie, den Zweig auschecken, Desktop-App bauen (tauri build --no-bundle),\n  eigener Xvfb, Wegwerf-Profil, xdotool; installierte App nicht ersetzen. Gebauten Kopf notieren.\n  Fuenf Laeufe Z-Image Turbo am selben Render-Knoten (Entwurf genuegt), dazu wenn moeglich ein Lauf\n  einer Aussenansicht und einer Innenansicht.\n\nWAS DU PRUEFST\n  N1 Uhrzeit an Daumenbildern, Laufschild und Kopf der grossen Ansicht = Ortszeit der Maschine (nicht UTC)?\n  N2 Nach dem 5. Lauf: Hauptbild «LAUF 5»; grosse Ansicht eines aelteren Bildes «LAUF n · k von 4 im\n     Verlauf» mit stimmigem n?\n  N3 Innenansicht: «Treue zur Geometrie: nicht anwendbar — …» statt «nicht gemessen»; Aussenansicht mit\n     Pruefung: Zahl / Schwelle wie bisher?\n  N4 Dunkles Thema: Scheint durch die grosse Ansicht noch etwas durch (Knoten, Linien)? Helles Thema\n     lesbar?\n  N5 Alles aus 263 (V1–V5) unveraendert: Reihe, Abzeichen innerhalb des Bildes, Klick gross, Escape,\n     Hauptbild unveraendert, Ziehen/Zoomen.\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Namen, Pfade mit\n  Benutzernamen, Host- oder Netznamen in Bildern oder Text. Arbeitskopie und Profil danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-266.json)\n  Gebauter Kopf; N1–N5 je ja/nein + Satz; Bildschirmfotos klein: auftraege/ergebnisse/auf-20261008-266-<n2|n4>.png.\n  Urteil in einem Satz: Kann der Nachgang zu Int 1?",
+  "erstellt": "2026-10-08T10:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "synthetisches Projekt in der Desktop-App (Modell-Knoten mit Beispielgeometrie)"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-verlauf-nachgang@0f9789ece"
+    ],
+    "folgt_auf": "auf-20261007-263",
+    "owner_entscheid": "E174"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: einige kurze Z-Image-Turbo-Laeufe ueber die Bruecke; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Gebauter Kopf.",
+    "N1–N5 je ja/nein und ein Satz.",
+    "Bildschirmfotos n2, n4 (klein, synthetisch).",
+    "Urteil: kann der Nachgang zu Int 1?"
+  ],
+  "rang": 53
+}
