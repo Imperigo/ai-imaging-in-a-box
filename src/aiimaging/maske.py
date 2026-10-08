@@ -378,6 +378,21 @@ METHODE = ("Bauwerk = Material-ID-Pass ohne Hintergrundfarbe und ohne Geländeei
            "Zuordnung Byte-genau über material_id_tabelle, v1")
 
 
+#: Die ``quelle`` eines Tabelleneintrags, der **nicht zum Modell** gehört: die Umgebung,
+#: heute ein Splat (Owner-Entscheid 76, 08.10.2026; geschrieben vom Runner in
+#: ``_material_id_zuweisen``).
+#:
+#: **Warum er vor jeder Regel herausgenommen wird und nicht wie Gelände zählt.** Die
+#: Geländeregel und der Katalog-Nullbefund urteilen über die Namen des MODELLS. Ein
+#: Eintrag «Kontext_Splat» darin bräche den Katalog — am Testbau gemessen: Mit ihm war
+#: «kein Gelände belegt» kein Beweis mehr («die Namen sind keine IFC-Klassen»), und die
+#: Maske fiel aus, obwohl sich am Modell nichts geändert hatte. Als Gelände gezählt, stünde
+#: er im Befund als Boden, und das ist er nicht. Er ist etwas Drittes: sichtbar, gemessen
+#: wird er nicht. Seine Bildpunkte zählen nicht zum Bauwerk (``n_kontext``), und wo er das
+#: Bauwerk nicht verdeckt, ist die Maske Punkt für Punkt die ohne ihn.
+QUELLE_KONTEXT = "kontext"
+
+
 class MaskeError(ValueError):
     """Aus dieser Eingabe lässt sich keine Maske machen — und ein Ersatzwert wäre schlimmer.
 
@@ -686,6 +701,22 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             "Bild namenlos, und eine Geländeregel über namenlose Flächen ist keine Regel."
         )
 
+    # DER KONTEXT ZUERST HINAUS — vor jeder Regel. Siehe `QUELLE_KONTEXT`. Alles darunter
+    # sieht damit dieselbe Tabelle wie ohne Splat.
+    kontext_farben: dict[tuple[int, int, int], str] = {}
+    modell_tabelle = []
+    for stelle, eintrag in enumerate(tabelle):
+        if (isinstance(eintrag, dict)
+                and str(eintrag.get("quelle", "")).strip().lower() == QUELLE_KONTEXT):
+            kontext_farben[_farbe_aus_eintrag(eintrag, stelle)] = str(eintrag.get("name", ""))
+        else:
+            modell_tabelle.append(eintrag)
+    if kontext_farben and not modell_tabelle:
+        raise MaskeError(
+            "Die material_id_tabelle trägt nur Kontext (Splat) und keinen einzigen Eintrag "
+            "des Modells. Ohne Modell gibt es kein Bauwerk zu maskieren.")
+    tabelle = modell_tabelle
+
     # ── Tabelle in eine Farbzuordnung übersetzen ──────────────────────────────────────
     nach_farbe: dict[tuple[int, int, int], dict] = {}
     gelaende_namen: list[str] = []
@@ -742,6 +773,11 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             )
         else:
             nach_farbe[farbe] = {"name": name, "gelaende": gelaende}
+        if farbe in kontext_farben:
+            raise MaskeError(
+                f"Farbkollision: '{name}' (Modell) und '{kontext_farben[farbe]}' (Kontext) "
+                f"tragen beide {farbe}. Dann ist nicht zu trennen, was Bauwerk und was "
+                f"Umgebung ist.")
         if umfeld:
             umfeld_namen.append(name)
         elif gelaende:
@@ -809,7 +845,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                 "ist das nicht.")
 
     # ── Bildpunkte einsortieren ───────────────────────────────────────────────────────
-    n_gelaende = n_hintergrund = n_unbekannt = 0
+    n_gelaende = n_hintergrund = n_unbekannt = n_kontext = 0
     roh_maske: list[bool] = []
     unbekannte_farben: set[tuple[int, int, int]] = set()
 
@@ -822,6 +858,10 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         farbe = (int(punkt[0]), int(punkt[1]), int(punkt[2]))
         if farbe == HINTERGRUND_FARBE:
             n_hintergrund += 1
+            roh_maske.append(False)
+            continue
+        if farbe in kontext_farben:
+            n_kontext += 1
             roh_maske.append(False)
             continue
         eintrag = nach_farbe.get(farbe)
@@ -984,6 +1024,10 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         "n_gelaende": n_gelaende,
         "n_hintergrund": n_hintergrund,
         "n_unbekannt": n_unbekannt,
+        # DIE UMGEBUNG (Splat, Entscheid 76): Bildpunkte, die sie zeigt, und ihr Name.
+        # Immer da, 0 und leer ohne Splat — sie zaehlen nie zum Bauwerk.
+        "n_kontext": n_kontext,
+        "kontext_namen": sorted(set(kontext_farben.values())),
         "anteil_bauwerk": n_bauwerk / n_bildpunkte,
         "gelaende_erkannt": gelaende_erkannt,
         # WOHER DAS GELAENDE STAMMT. `"name+form"` erst dann, wenn ein uebertragener
@@ -1108,7 +1152,7 @@ def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,
 
 
 __all__ = [
-    "GELAENDE_MUSTER", "HINTERGRUND_FARBE", "METHODE", "MaskeError",
+    "GELAENDE_MUSTER", "HINTERGRUND_FARBE", "METHODE", "MaskeError", "QUELLE_KONTEXT",
     "maske_aus_bericht",
     "bauwerksmaske", "bauwerksmaske_aus_lauf", "ist_gelaende", "tabelle_aus_report",
 ]

@@ -370,7 +370,15 @@ def test_runner_rendert_genau_zweimal():
         return list(reversed(teile)) == ["bpy", "ops", "render", "render"]
 
     aufrufe = [k for k in ast.walk(ast.parse(RUNNER_QUELLE)) if ist_render_aufruf(k)]
-    assert len(aufrufe) == 2, [k.lineno for k in aufrufe]
+    # DREI seit dem 08.10.2026 (Owner-Entscheid 76): Mit Splat rechnet der Material-ID-Pass
+    # sein Kennbild einmal OHNE die Umgebung mit (`material_id_ohne_kontext.png`) — die
+    # Gegenprobe und die Grundlage der Verdeckung. Er steht unter `if kontext is not None`,
+    # ohne Splat bleibt es bei zwei Durchgängen.
+    assert len(aufrufe) == 3, [k.lineno for k in aufrufe]
+    zeilen = RUNNER_QUELLE.splitlines()
+    bedingt = [k for k in aufrufe
+               if "MATERIAL_ID_OHNE_KONTEXT" in zeilen[k.lineno - 2]]
+    assert len(bedingt) == 1, "der dritte Aufruf gehört zum Kontext und nur zu ihm"
 
 
 def test_runner_verteilt_die_farben_ueber_den_goldenen_winkel():

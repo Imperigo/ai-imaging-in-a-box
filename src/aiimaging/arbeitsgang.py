@@ -73,7 +73,7 @@ from aiimaging.graph import ArtefaktCache, Graph, Knoten
 from aiimaging.varianten import VariantenError, saatreihe
 
 __all__ = ["ANGABEFELDER", "ArbeitsgangError", "EINGANGSORDNER", "ENTWURF_SCHRITTE",
-           "ENTWURF_VERMERK", "MESSFELDER", "NACHHOLEN_HOECHSTENS", "NEUTRALER_GRUND",
+           "ENTWURF_VERMERK", "KONTEXT_EINSTELLUNG", "MESSFELDER", "NACHHOLEN_HOECHSTENS", "NEUTRALER_GRUND",
            "SKIZZEN_VORSATZ", "VARIANTEN_ARTEN", "VARIANTEN_EBENEN",
            "VARIANTEN_HOECHSTENS", "VARIANTEN_STARTWERTE", "entwurfsargumente",
            "lege_an", "pruefe_varianten", "rechne", "rechne_skizze",
@@ -118,7 +118,8 @@ def lege_an(wurzel, modell, *, name: str | None = None,
     entsteht hier, sie ist hier reproduzierbar, und sie hat ausserhalb keinen Ort.
     """
     wurzel = Path(wurzel)
-    p = projekt.neu(wurzel, modell, name=name, einstellungen=einstellungen)
+    p = projekt.neu(wurzel, modell, name=name,
+                    einstellungen=_kontext_fuer_die_mappe(einstellungen, wurzel))
 
     zusatz = {}
     if timeout is not None:
@@ -168,6 +169,50 @@ def lege_an(wurzel, modell, *, name: str | None = None,
     }
     pfad = projekt.speichere(p, wurzel)
     return {"projekt": p, "import_bericht": bericht, "pfad": pfad}
+
+
+#: Die Einstellung, unter der eine Mappe ihren **Splat** führt (Owner-Entscheid 76,
+#: 08.10.2026) — dieselbe wie die Angabe an :func:`kette.baue_kette`.
+KONTEXT_EINSTELLUNG = "kontext_ply"
+
+
+def _kontext_fuer_die_mappe(einstellungen: dict | None, wurzel: Path) -> dict | None:
+    """Den Splat-Pfad so in die Einstellungen schreiben, wie die Mappe Pfade hält.
+
+    **Regel 3:** Ein absoluter Pfad trägt einen Benutzernamen und überlebt die Säuberung
+    der Mappe nicht — derselbe Befund wie bei der glb (Beweis 31, 21.09.2026). Darum
+    :func:`projekt.pfad_fuer_die_mappe`: relativ zur Mappe, wo es geht, sonst heimrelativ.
+    Ein schon relativer Pfad bleibt, wie er ist — er gilt ab der Mappe.
+    """
+    if not einstellungen or not einstellungen.get(KONTEXT_EINSTELLUNG):
+        return einstellungen
+    pfad = Path(str(einstellungen[KONTEXT_EINSTELLUNG]))
+    if not pfad.is_absolute():
+        return dict(einstellungen)
+    return {**einstellungen,
+            KONTEXT_EINSTELLUNG: projekt.pfad_fuer_die_mappe(pfad, wurzel)}
+
+
+def _kontext_aus_der_mappe(args: dict, wurzel: Path) -> dict:
+    """Die Splat-Angabe der Mappe wieder zu einem Pfad auf dieser Platte machen.
+
+    Relativ heisst: ab der Mappe (wie die glb und die Bilder). Fehlt die Datei, wird
+    **vor** dem Lauf abgewiesen — ein Bild ohne die bestellte Umgebung sähe aus wie eines
+    mit, und gemerkt würde es erst am fertigen Bild.
+
+    Raises:
+        ArbeitsgangError: Die Datei gibt es nicht.
+    """
+    angabe = args.get(KONTEXT_EINSTELLUNG)
+    if not angabe:
+        return args
+    pfad = Path(projekt.loese_pfad(angabe, wurzel))
+    if not pfad.is_file():
+        raise ArbeitsgangError(
+            f"Die Mappe nennt als Umgebung den Splat {Path(str(angabe)).name!r}, aber an "
+            f"dieser Stelle liegt keine Datei. Gerechnet wird ohne ihn nicht still — die "
+            f"Einstellung '{KONTEXT_EINSTELLUNG}' der Mappe berichtigen oder entfernen.")
+    return {**args, KONTEXT_EINSTELLUNG: str(pfad)}
 
 
 def _raeume_beim_anlegen(modell, bericht: dict, _starte) -> dict | None:
@@ -1225,6 +1270,8 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
     # niemandem auf — er sieht aus wie eine Entscheidung.
     args = {**(p.get("einstellungen") or {}), **kettenargumente}
     args.pop("ifc_path", None)
+    # DER SPLAT DER MAPPE (Entscheid 76): relativ zur Mappe gespeichert, hier aufgeloest.
+    args = _kontext_aus_der_mappe(args, Path(wurzel))
 
     # DIE HOCHACHSE WIRD NICHT GERATEN, und das ist die einzige Stelle, an der dieses
     # Modul den Aufrufer wirklich um etwas bittet.

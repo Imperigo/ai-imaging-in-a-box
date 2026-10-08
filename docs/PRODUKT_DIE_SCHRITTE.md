@@ -1359,3 +1359,13 @@ Warnung, darum ohne Warnfarbe. Und füllt das Haus weniger als ein Fünftel des 
 eigenes Zeichen «NICHT BEURTEILBAR» — gelb und gestrichelt wie «nicht gemessen», aber mit dem richtigen Wort, denn
 gemessen wurde. Beides steht jetzt im Projekt beim Bild selbst und bleibt darum auch nach dem Neuladen erhalten.
 Auf dem Gerät ist es noch nicht geprüft.
+
+**08.10.2026 — die Umgebung kommt ins Bild (Entscheid 76).** Eine Aufnahme des Ortes — ein «Splat», eine Wolke aus
+Hunderttausenden farbiger Punkte — kann jetzt mit ins Bild. Visbox setzt sie um das Gebäude herum, sie erscheint im
+Schönbild und in der Tiefenkarte, und das Bildmodell sieht damit, wo das Haus steht. Gemessen wird aber weiterhin
+nur das Gebäude: Die Kamera richtet sich nach ihm, und die Prüfung, ob das Bild zur Form passt, sieht die Umgebung
+nicht. Steht ein Baum der Aufnahme vor dem Haus, verdeckt er es — so wie ihn auch die Kamera sähe —, und der
+Bericht sagt, wieviel. KosmoOrbit kann die Umgebung jetzt mitschicken; wo sie liegt, sagt eine Lageangabe. Geprüft
+ist das an einem künstlichen Splat; wie gut es mit einem echten aussieht, misst der Heim-PC. Eine Frage ist dabei
+aufgetaucht: Mit weiter Umgebung bekommt das Haus in der Tiefenkarte weniger Kontrast — ob das stört, zeigt erst
+die Messung.

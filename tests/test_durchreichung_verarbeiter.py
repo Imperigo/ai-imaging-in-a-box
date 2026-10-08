@@ -30,6 +30,7 @@ from pathlib import Path
 import pytest
 
 from aiimaging import abholer, render, seams
+from aiimaging import kosmo_szene as _kosmo_szene
 from conftest import MINI_PNG
 
 
@@ -87,11 +88,14 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     der Naht nicht gibt.* Aufgefallen ist es erst beim Abgleich der 23 argparse-Schalter
     des Runners gegen den Text von `seams.py` — eine Zählung von der **anderen** Seite.
     """
-    assert len(_multipass_einstellungen()) == 21
+    # 23 seit dem 08.10.2026 (Owner-Entscheid 76): `kontext_ply` und `kontext_matrix`, der
+    # Splat als Umgebung — beide durchgereicht, aus `RenderScene.context`.
+    assert len(_multipass_einstellungen()) == 23
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 17
+    # 19 seit dem 08.10.2026: die beiden Kontextangaben.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 19
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 4
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
@@ -200,11 +204,19 @@ def _lauf(tmp_path):
         _qa=lambda *a, **k: {"score": 0.9, "bestanden": True},
         _soll=lambda *a, **k: ([[0.0]], 1, 1))
 
+    # MIT UMGEBUNG (Entscheid 76, 08.10.2026): `kontext_ply`/`kontext_matrix` gehen nur
+    # mit, wenn bestellt — ohne Bestellung saehe die Probe sie nie.
+    splat = Path(tmp_path) / "umgebung.ply"
+    splat.write_bytes(b"ply")
+    kontext = _kosmo_szene.kontext_aus_szene(
+        {"kind": "splat", "ply": str(splat), "transform": [1, 0, 0, 0, 0, 1, 0, 0,
+                                                           0, 0, 1, 0, 0, 0, 0, 1],
+         "fit": "behelf"})
     verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
                 "verzeichnis": tmp_path,
                 "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"}],
                           "aufloesung": 64, "hoehe": 64, "samples": 1,
-                          "prompt": "a house"}})
+                          "prompt": "a house", "kontext": kontext}})
     return protokoll
 
 

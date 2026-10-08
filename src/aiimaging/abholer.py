@@ -537,6 +537,8 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # abbestellten Auftrag gibt es kein Kameraurteil, und bis dahin erreichte er
         # keine Datei — gebaut fuer «jeder Ergebnissatz», gelesen von niemandem.
         "modellstand": ergebnis.get("modellstand"),
+        # Die Umgebung, wenn bestellt (Entscheid 76) — ohne Pfad, Regel 3.
+        "kontext": _kosmo_szene.kontext_vermerk(szene.get("kontext")),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
@@ -2194,6 +2196,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         gelaende_der_szene = szene.get("gelaende_erwartet")
         if gelaende_der_szene is None:
             gelaende_der_szene = gelaende_erwartet
+        # DIE UMGEBUNG (Owner-Entscheid 76, 08.10.2026): `RenderScene.context`, gelesen
+        # in `kosmo_szene.kontext_aus_szene`. Auf dem Produktweg haelt ein Mangel den
+        # Auftrag schon vorher an (`auftrag["maengel"]`); hier steht die Abweisung fuer
+        # eine von Hand gebaute Szene — ohne Umgebung zu rechnen saehe aus wie geliefert.
+        kontext = szene.get("kontext")
+        if kontext is not None and (kontext.get("maengel") or not kontext.get("ply")):
+            raise AbholerError(
+                "Umgebung (Splat) bestellt, aber nicht verwendbar: "
+                + ("; ".join(kontext.get("maengel") or ()) or "keine Datei genannt"))
         # DIE HOCHACHSE DES AUFTRAGS SCHLAEGT DIE ANNAHME.
         #
         # `kosmovis.render-scene/v1` hat kein Feld dafuer, also gilt hier sonst
@@ -2478,6 +2489,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # dritte Moeglichkeit sind sie gebaut.
                 timeout=ZEITDECKEL_S if zeitdeckel_s is None else zeitdeckel_s,
             )
+            # DER SPLAT ALS UMGEBUNG — nur, wenn bestellt. Ohne ihn bleiben Einstellungen
+            # und Speicherschluessel Wort fuer Wort die bisherigen.
+            if kontext is not None:
+                einstellungen["kontext_ply"] = kontext["ply"]
+                if kontext.get("matrix") is not None:
+                    einstellungen["kontext_matrix"] = list(kontext["matrix"])
 
             # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
             # Gedaechtnis, das niemand bestellt hat, ist die unangenehmste Art von
@@ -2806,6 +2823,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 if komposition.get("aufsicht") else None)
             urteil[_kosmo_szene.URTEIL_BILDAUFTRAG] = (
                 dict(bildauftrag, kamera=str(kuerzel)) if bildauftrag else None)
+            # DIE UMGEBUNG AM URTEIL (Entscheid 76) — ohne Pfad, mit dem verdeckten Anteil
+            # DIESER Kamera. Von hier erreicht sie `verdict.hinweise`.
+            urteil[_kosmo_szene.URTEIL_KONTEXT] = _kosmo_szene.kontext_vermerk(kontext, bericht)
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -2934,6 +2954,11 @@ MULTIPASS_DURCHGEREICHT = {
     "blick_auf": "je Kameraaufgabe: aufgabe['blick_auf']",
     "brennweite": "je Kameraaufgabe: aufgabe['brennweite_mm']",
     "stillstand_frist_s": "verarbeiter(stillstand_frist_s=…)",
+    # Seit 08.10.2026 (Owner-Entscheid 76), Feldnamen vom Integrator.
+    "kontext_ply": "szene['kontext']['ply'] aus RenderScene.context.ply "
+                   "(kosmo_szene.kontext_aus_szene); nur wenn bestellt",
+    "kontext_matrix": "szene['kontext']['matrix'] aus RenderScene.context.transform "
+                      "(16 Zahlen zeilenweise, glTF-Welt); fehlt sie, die Einheit",
 }
 
 #: Einstellungen, die `verarbeiter` **nicht** setzt — mit dem Grund und dem, was fehlt.
@@ -3156,7 +3181,10 @@ def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
     # Der Codestand kommt aus derselben Zeile wie im Zwischenspeicher der Mappe
     # (`kette.FASSUNGEN`): Wer den Multipass hochzählt, verwirft beide Speicher, nicht
     # nur einen. Bei der Anfangsfassung bleibt der Schlüssel bitgleich mit dem bisherigen.
-    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path",),
+    # `kontext_ply` (Entscheid 76): Der INHALT des Splats zaehlt, sein Pfad nicht —
+    # ein neu aufgenommener Splat unter altem Namen ist kein Treffer. Ohne ihn in den
+    # Einstellungen bleibt der Schluessel bitgleich.
+    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path", "kontext_ply"),
                                fassung=_kette.fassung_von(_kette.ART_MULTIPASS))
 
 

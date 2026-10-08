@@ -104,7 +104,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    backbone, bildlesen, bildschreiben, contracts, geometrie_qa, glbbox, maske,
+    backbone, bildlesen, bildschreiben, contracts, geometrie_qa, glbbox, kontext, maske,
     raumkamera, render, seams, tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
@@ -269,6 +269,12 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
     # und der Zwischenspeicher lieferte das Bild von vor der Zeichnung zurück. Die
     # Zeichnung wäre verschwunden, und zwar lautlos.
     ART_BILDQUELLE: ("bild_png",),
+    # DER SPLAT (Entscheid 76, 08.10.2026). Er kommt von AUSSEN in den Multipass, nicht aus
+    # der Kette — sein Inhalt steckt in keinem Vorgaenger-Hash. Stuende er nicht hier,
+    # waere ein neu aufgenommener Splat unter demselben Namen ein Treffer, und das Bild
+    # zeigte die alte Umgebung. Ohne `kontext_ply` im Knoten zaehlt nichts davon, und der
+    # Schluessel bleibt bitgleich (`graph.inhalts_hash` hasht nur gesetzte Felder).
+    ART_MULTIPASS: ("kontext_ply",),
 }
 
 #: Der **Codestand** jeder Knotenart, soweit er den Zwischenspeicher betrifft.
@@ -568,6 +574,12 @@ def baue_kette(
     # der alte, und jeder gemessene Lauf bleibt ein Zwischenspeicher-Treffer.
     ferne_abstand: float | None = None,
     tiefe_invertieren: bool | None = None,
+    # ── DIE UMGEBUNG ALS SPLAT (Owner-Entscheid 76, 08.10.2026) ──────────────────────
+    #
+    # `None` heisst wie oben NICHT ANGEFASST: Dann steht nichts im Knoten, der Hash ist
+    # der alte, und jeder gerechnete Lauf bleibt ein Treffer.
+    kontext_ply: str | Path | None = None,
+    kontext_matrix=None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -643,6 +655,12 @@ def baue_kette(
             ``parameter['tiefe_invertiert_ueberschrieben']``, ob und womit überschrieben
             wurde (``None`` = nicht). Kein Bedienelement für den Alltag: Wer es gegen
             das Register setzt, kehrt für das Modell nah und fern um.
+        kontext_ply: Ein **Splat** (3DGS-PLY) als Umgebung (Owner-Entscheid 76): sichtbar
+            in Beauty und Tiefe, nicht in Hüllbox, Rahmung und Bauwerksmaske. Sein
+            **Inhalt** geht in den Hash (``EINGABEDATEIEN``), sein Pfad nicht. Siehe
+            ``seams.glb_zu_multipass``.
+        kontext_matrix: 16 Zahlen, zeilenweise 4×4, Lage des Splats in der **glTF-Welt**
+            (Meter, Y oben). Nur mit ``kontext_ply``; geprüft beim Bau.
 
     Returns:
         Ein ``Graph`` mit drei bzw. vier Knoten. Er wird **nicht** ausgeführt — Bau und
@@ -683,6 +701,18 @@ def baue_kette(
             f"tiefe_invertieren muss None (Register entscheidet), True oder False sein, "
             f"war {tiefe_invertieren!r}. Eine andere Angabe wuerde als wahr oder falsch "
             f"GEDEUTET — und welche Karte das Modell sah, waere geraten.")
+
+    # DER KONTEXT BEIM BAU GEPRUEFT — eine Lage, die drueben abgewiesen wuerde, kostete
+    # sonst einen Blender-Start.
+    matrix = None
+    if kontext_matrix is not None:
+        if not kontext_ply:
+            raise KettenError("kontext_matrix ohne kontext_ply: eine Lage fuer einen Splat, "
+                              "den es nicht gibt.")
+        try:
+            matrix = list(kontext.pruefe_matrix(kontext_matrix))
+        except kontext.KontextError as fehler:
+            raise KettenError(f"kontext_matrix: {fehler}") from fehler
 
     geometrie_params: dict = {"bbox": _als_bbox(bbox)}
     if ifc_path:
@@ -745,6 +775,8 @@ def baue_kette(
                     # Geprueft und auf «aus» gebracht: 0 kommt hier als None an und
                     # laesst den Hash stehen — 0 heisst «wie heute».
                     "ferne_abstand": abstand,
+                    "kontext_ply": str(kontext_ply) if kontext_ply else None,
+                    "kontext_matrix": matrix,
                 }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
@@ -1396,7 +1428,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # unten als eigene Argumente mit, und zweimal uebergeben waere ein TypeError.
     weiter = {name: p[name] for name in
               ("kamera", "kamera_modus", "kamera_huellbox", "sonne", "gelaende_z",
-               "hoehe", "deckungsgrad", "augenhoehe", "bias_grad", "stillstand_frist_s")
+               "hoehe", "deckungsgrad", "augenhoehe", "bias_grad", "stillstand_frist_s",
+               "kontext_ply", "kontext_matrix")
               if name in p}
     if "multipass_timeout" in p:
         weiter["timeout"] = p["multipass_timeout"]

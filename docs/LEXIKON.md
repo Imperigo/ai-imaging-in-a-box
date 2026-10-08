@@ -3772,6 +3772,62 @@ Geländerstäbe sind oft nur einen Bildpunkt breit. Der nächste Nachbar lässt 
 Raster ganz verschwinden oder springen; das Kastenmittel graut sie ab, und die Ansicht
 behält ihre Struktur.*
 
+**Splat (3D Gaussian Splatting)** — Eine Aufnahme eines Ortes, die nicht aus Flächen
+besteht wie ein Modell, sondern aus Hunderttausenden kleiner, weicher, farbiger Wölkchen
+(«Gaussians»). Jedes hat eine Lage, eine Grösse in drei Richtungen, eine Farbe und eine
+Deckkraft; zusammen ergeben sie aus der Nähe ein Bild wie ein Foto, das man umrunden kann.
+Entsteht meist aus vielen Fotos oder einem Video des Ortes.
+*In diesem Projekt seit dem 08.10.2026 (Owner-Entscheid 76) die Umgebung neben dem
+Bauwerk: Er läuft im Bild mit, gemessen wird er nicht. Testdaten erzeugt
+`tools/make_test_splat.py` — ein Boden, eine Wand, ein Quader; ein echter Splat ist eine
+Aufnahme eines echten Ortes und darf nach Regel 3 nicht ins Repo.*
+
+**PLY (Dateiformat)** — Ein einfaches Dateiformat für Punkte: oben eine Textzeile je
+Spalte («x», «y», «z», «opacity» …), darunter die Zahlen. Splats werden fast immer so
+gespeichert. *Unser Erzeuger schreibt es mit der Standardbibliothek, Blender liest es mit
+einem eingebauten Befehl.*
+
+**Punktwolke** — Eine Menge einzelner Punkte im Raum, ohne Flächen dazwischen. Ein
+Laserscan ist eine, ein Splat ist eine mit zusätzlichen Angaben je Punkt.
+*Im Bild wird jeder Punkt des Splats zu einer kleinen Kugel — so kann der Renderer sie
+zeichnen und ihren Abstand in die Tiefenkarte schreiben.*
+
+**Geometry Nodes, «Mesh to Points»** — Blenders Baukasten, um Geometrie mit verbundenen
+Bausteinen umzuformen, statt sie von Hand zu bearbeiten. Der Baustein «Mesh to Points»
+macht aus jedem Eckpunkt eines Netzes einen Punkt mit eigenem Radius.
+*Damit wird der eingelesene Splat (in Blender zuerst ein Netz ohne Flächen) zur
+Punktwolke, die Cycles als Kugeln zeichnet.*
+
+**SH-Grad 0 (Grundfarbe eines Gaussians)** — Die Farbe eines Splat-Wölkchens ist als
+Formel gespeichert, die je nach Blickrichtung etwas anders ausfällt («Kugelflächen­
+funktionen», englisch *spherical harmonics*, SH). Grad 0 ist der Teil, der aus jeder
+Richtung gleich ist — die Grundfarbe. Gerechnet: `0,5 + 0,2821 · f_dc`, auf 0 bis 1
+begrenzt. *Wir lesen nur ihn: Ein Bild aus einer Richtung braucht den Glanz je Richtung
+nicht, und Kugeln im Renderer könnten ihn nicht tragen.*
+
+**Deckkraft eines Gaussians (Opazität, Sigmoid)** — Wie undurchsichtig ein Wölkchen ist,
+von 0 (unsichtbar) bis 1 (dicht). In der Datei steht sie verschlüsselt als beliebige Zahl;
+die **Sigmoid**-Funktion `1 / (1 + e^−x)` macht daraus den Wert zwischen 0 und 1.
+*Unter 0,10 werfen wir ein Wölkchen weg (gesetzt, nicht gemessen): Im Bild wird jedes zu
+einer festen Kugel, und ein Hauch Rauschen in der Luft würde sonst zur Wand vor dem
+Bauwerk.*
+
+**Transformationsmatrix (4×4, zeilenweise)** — Sechzehn Zahlen in vier Zeilen, die sagen,
+wie ein Ding gedreht, vergrössert und verschoben wird, um an seinen Platz zu kommen. Die
+Verschiebung steht in der letzten Spalte, die letzte Zeile ist immer `0 0 0 1`.
+«Zeilenweise» heisst: Die ersten vier Zahlen sind die erste Zeile.
+*Sie legt den Splat zum Modell (Feld `transform` im Vertrag mit KosmoOrbit). Gemeint ist
+die Welt der glb-Datei — Meter, Y oben —, und in Blender bekommt der Splat danach dieselbe
+Drehung wie das Modell (Y oben → Z oben). Eine Probe mit Verschiebung und Drehung um die
+Hochachse prüft das am echten Lauf.*
+
+**Umgebung im Bild (Kontext)** — Was im Bild um das Bauwerk herum steht, aber nicht
+bewertet wird: heute ein Splat. Er ist in Schönbild und Tiefenkarte zu sehen; die
+Hüllbox, nach der die Kamera rahmt, und die Bauwerksmaske, auf der gemessen wird, kennen
+ihn nicht. In der Material-ID-Tabelle trägt er die Herkunft `kontext`, und die Maske nimmt
+ihn vor jeder Regel heraus. *Ohne diese Herausnahme kippte er am Testbau den
+Katalog-Nullbefund, und die Maske fiel aus — obwohl sich am Modell nichts geändert hatte.*
+
 ---
 
 ## 6 · KI-Bildmodelle
@@ -5161,6 +5217,11 @@ Grund dafür steht nirgends. *In diesem Projekt heute unbehandelt: Die Funktion,
 Kamera aus einer verdeckten Stellung herauszieht, hat keinen Aufrufer, und an der
 synthetischen Testgeometrie — einem freistehenden Quader — verdeckt nichts. Gemessen wird
 es mit `auf-20260826-46`.*
+*Seit dem 08.10.2026 auch durch die **Umgebung im Bild** (Splat): Steht sie vor dem
+Bauwerk, verdeckt sie es in Tiefe, Bild und Maske — richtig so, die Kamera sähe es genauso.
+Der Bericht meldet den verdeckten Anteil der Bildpunkte des Modells; dafür rechnet der
+Blender-Schritt das Kennbild einmal mit und einmal ohne Splat (billig, ein Strahl je
+Bildpunkt).*
 
 **Triage** — Aus der Notfallmedizin entlehnt: eine Menge von Meldungen so sortieren, dass
 sichtbar wird, welche sofort behandelt werden müssen und welche warten können. Wichtig ist
@@ -6504,6 +6565,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §78 (Entscheid 76, Splat als Umgebung): **Splat (3D Gaussian Splatting)**, **PLY (Dateiformat)**, **Punktwolke**, **Geometry Nodes, «Mesh to Points»**, **SH-Grad 0 (Grundfarbe eines Gaussians)**, **Deckkraft eines Gaussians (Opazität, Sigmoid)**, **Transformationsmatrix (4×4, zeilenweise)**, **Umgebung im Bild (Kontext)**; nachgefuehrt: **Verdeckung** (durch die Umgebung) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §75 (Entscheide 70 und 73 am Bild): **Sprungmarke (Anker)**; nachgefuehrt: **Nicht beurteilbar** (eigenes Zeichen), **Standpunkt-Vorgabe** (steht am Bild) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §79: **Ausschnitt (Kamera)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
