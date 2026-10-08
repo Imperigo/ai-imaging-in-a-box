@@ -26,6 +26,7 @@ GEWOLLTE_TRENNUNGEN = {
     "parameter",     # Aufrufargument / Modellgewichte
     "prädiktor",     # Kompression / Byte-Entflechtung
     "schema",        # Form einer Datenstruktur / Anfang einer Adresse (http, https)
+    "ausschnitt",    # Loch in der Wand (Öffnungselement) / Kamera nah am langen Bau (Entscheid 75)
     # Zwei Gegenstaende, und sie liegen naeher beieinander, als es aussieht: Der eine ist
     # der Wert, den eine Kennzahl OHNE Geometrie schon erreicht (ein Mindestwert des
     # MESSENS), der andere der Wert, den echter Bildinhalt nicht unterschreiten darf,

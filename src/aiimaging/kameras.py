@@ -1041,6 +1041,119 @@ def _huellen_flaeche(punkte) -> float:
     return abs(flaeche) / 2.0
 
 
+#: Ab welchem Verhältnis von sichtbarer Breite zu Höhe ein Bauwerk «lang und flach» ist
+#: (Entscheid 75, 08.10.2026). **GESETZT, nicht gemessen:** Der Anlass war eine Halle von
+#: 66 × 10 × 3,45 m (Splat-Demo der HomeStation, Verhältnis rund 19); der Testbau (8 × 5 ×
+#: 3,25 m, rund 2,5) und ein Wohnhaus bleiben weit darunter und unberührt.
+LANG_FLACH_VERHAELTNIS = 4.0
+
+#: Unter welchem sichtbaren Bildanteil der Hüllbox die ganze Ansicht eines langen, flachen
+#: Bauwerks zu klein ist (Entscheid 75). An die Grenze der Prüfung angelehnt: Unter 20 %
+#: Bauwerksanteil ist das Urteil «nicht beurteilbar» (Entscheid 70); die Hüllbox ist voller
+#: als der Bau, darum liegt diese Schwelle etwas darüber. **GESETZT, nicht gemessen.**
+AUSSCHNITT_SCHWELLE = 0.25
+
+#: Welchen sichtbaren Bildanteil der Hüllbox der Ausschnitt anstrebt. Der Owner sagte
+#: «mindestens rund ein Viertel des Bildes» für das Bauwerk; die Hüllbox ist eine
+#: Obergrenze der Silhouette, darum hier 0,35. **GESETZT, nicht gemessen** — die Messung am
+#: Splat-Demo steht als Auftrag an.
+AUSSCHNITT_ZIEL = 0.35
+
+
+def _beschnitten(polygon, *, grenze: float = 0.5):
+    """Ein konvexes Polygon auf das Bildquadrat ``[-grenze, grenze]²`` geschnitten
+    (Sutherland–Hodgman). Die Koordinaten sind die normierten Bildkoordinaten aus
+    :func:`flaechenanteil`, in denen der Bildrand bei ±0,5 liegt."""
+    def schneide(punkte, innen, schnitt):
+        aus = []
+        for i, p in enumerate(punkte):
+            q = punkte[i - 1]
+            if innen(p):
+                if not innen(q):
+                    aus.append(schnitt(q, p))
+                aus.append(p)
+            elif innen(q):
+                aus.append(schnitt(q, p))
+        return aus
+
+    def an_x(wert):
+        return lambda a, b: (wert, a[1] + (b[1] - a[1]) * (wert - a[0]) / (b[0] - a[0]))
+
+    def an_y(wert):
+        return lambda a, b: (a[0] + (b[0] - a[0]) * (wert - a[1]) / (b[1] - a[1]), wert)
+
+    punkte = list(polygon)
+    for innen, schnitt in ((lambda p: p[0] <= grenze, an_x(grenze)),
+                           (lambda p: p[0] >= -grenze, an_x(-grenze)),
+                           (lambda p: p[1] <= grenze, an_y(grenze)),
+                           (lambda p: p[1] >= -grenze, an_y(-grenze))):
+        if not punkte:
+            break
+        punkte = schneide(punkte, innen, schnitt)
+    return punkte
+
+
+def sichtbarer_flaechenanteil(auge, blick_auf, bbox, *,
+                              brennweite_mm: float = BRENNWEITE_MM,
+                              seitenverhaeltnis: float = 16 / 9,
+                              shift_mm: float = 0.0) -> float:
+    """Wie :func:`flaechenanteil`, aber nur der Teil **innerhalb des Bildes**.
+
+    :func:`flaechenanteil` kappt bei 1,0 und zählt sonst auch, was über den Bildrand
+    hinausragt — für die ganze Ansicht ist das gleichgültig, weil dort alles im Bild liegt.
+    Beim Ausschnitt eines langen Bauwerks (Entscheid 75) laufen die Enden absichtlich
+    hinaus, und gezählt werden darf nur, was man sieht.
+    """
+    gelesen = _lies_bbox(bbox)
+    basis = _kamerabasis(auge, blick_auf)
+    if gelesen is None or basis is None:
+        return 0.0
+    vorwaerts, rechts, oben = basis
+    hfov, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+    grenze_h, grenze_v = math.tan(hfov / 2.0), math.tan(vfov / 2.0)
+    versatz = float(shift_mm) / float(brennweite_mm)
+    unten, obenecke = gelesen
+    flach = []
+    for x in (unten[0], obenecke[0]):
+        for y in (unten[1], obenecke[1]):
+            for z in (unten[2], obenecke[2]):
+                v = _minus((x, y, z), auge)
+                tiefe = _punkt(v, vorwaerts)
+                if tiefe < MIN_TIEFE_M:
+                    return 0.0
+                flach.append((_punkt(v, rechts) / tiefe / grenze_h / 2.0,
+                              (_punkt(v, oben) / tiefe - versatz) / grenze_v / 2.0))
+    huelle = _konvexe_huelle(flach)
+    beschnitten = _beschnitten(huelle)
+    return min(1.0, _polygonflaeche(beschnitten)) if len(beschnitten) >= 3 else 0.0
+
+
+def _konvexe_huelle(punkte):
+    """Konvexe Hülle (Andrew), gegen den Uhrzeigersinn."""
+    pts = sorted(set(punkte))
+    if len(pts) <= 2:
+        return pts
+
+    def kreuz(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    untere, obere = [], []
+    for p in pts:
+        while len(untere) >= 2 and kreuz(untere[-2], untere[-1], p) <= 0:
+            untere.pop()
+        untere.append(p)
+    for p in reversed(pts):
+        while len(obere) >= 2 and kreuz(obere[-2], obere[-1], p) <= 0:
+            obere.pop()
+        obere.append(p)
+    return untere[:-1] + obere[:-1]
+
+
+def _polygonflaeche(punkte) -> float:
+    return abs(sum(punkte[i - 1][0] * punkte[i][1] - punkte[i][0] * punkte[i - 1][1]
+                   for i in range(len(punkte)))) / 2.0
+
+
 def flaechenanteil(auge, blick_auf, bbox, *,
                    brennweite_mm: float = BRENNWEITE_MM,
                    seitenverhaeltnis: float = 16 / 9,
@@ -1960,8 +2073,16 @@ def kamerasatz(bbox, *,
                bias_grad: float = BIAS_GRAD,
                bildrand: float = BILDRAND,
                modus: str = MODUS_SHIFT,
-               kuerzel=None) -> dict:
+               kuerzel=None,
+               ausschnitt: bool = False) -> dict:
     """Aus einer Hüllbox die zwölf Kameras — mit Begründung je Kamera.
+
+    **Lange, flache Bauwerke** (Entscheid 75, 08.10.2026; ``ausschnitt=True``): Ist
+    die sichtbare Breite mindestens :data:`LANG_FLACH_VERHAELTNIS`-mal die Höhe und füllt die
+    ganze Ansicht weniger als :data:`AUSSCHNITT_SCHWELLE` des Bildes, rückt die Kamera auf
+    :data:`AUSSCHNITT_ZIEL` heran; die Enden dürfen hinauslaufen, der Eckentest entfällt
+    für diese Kamera (``ausschnitt: True``, ``vollstaendig: False``, aber NICHT unter
+    ``unvollstaendig`` — es ist gewollt, kein gescheiterter Eckentest).
 
     Der Ablauf je Richtung: analytischer Abstand aus dem Bildwinkel, Standort auf
     Augenhöhe, Blickziel angehoben, dann der Eckentest mit Rückschub. Der Verdeckungstest
@@ -2128,12 +2249,80 @@ def kamerasatz(bbox, *,
         else:
             blick, shift_mm = ziel, 0.0
 
-        geschoben = schiebe_bis_im_bild(auge, blick, bbox, shift_mm=shift_mm,
-                                        brennweite_mm=brennweite_mm,
-                                        seitenverhaeltnis=seitenverhaeltnis,
-                                        bildrand=bildrand)
-        if not geschoben["vollstaendig"]:
-            unvollstaendig.append(k)
+        ausgeschnitten = False
+        sichtbar = None
+        if ausschnitt and masse[2] > 0.0 and \
+                rechnung["breite_m"] / masse[2] >= LANG_FLACH_VERHAELTNIS:
+            # LANG UND FLACH (Entscheid 75): Die ganze Ansicht — Breite auf 70 % — liess
+            # an einer 66 m langen, 3,45 m hohen Halle 3,8–4,5 % des Bildes Bauwerk
+            # (Splat-Demo, HomeStation 08.10.2026); das Urteil ist dort «nicht
+            # beurteilbar». Dann naeher heran, bis die SICHTBARE Huellbox das Ziel fuellt.
+            # OHNE den seitlichen Versatz der Frontalen: Er komponiert die GANZE Ansicht;
+            # nah an einem langen Bau schoebe er eine Ecke hinter die Kamera (nachgerechnet
+            # an der Halle: sichtbarer Anteil 0 bei 10,4 m).
+            def _gestellt(abstand):
+                augen = (mitte[0] + standort[0] * abstand,
+                         mitte[1] + standort[1] * abstand, auge_z)
+                if modus == MODUS_SHIFT:
+                    s = shift_aus_ziel(augen, ziel, brennweite_mm=brennweite_mm)
+                    return augen, s["waagrechtes_ziel"], s["shift_mm"]
+                return augen, ziel, 0.0
+
+            def _anteil(abstand):
+                augen, ziel_b, sh = _gestellt(abstand)
+                return sichtbarer_flaechenanteil(
+                    augen, ziel_b, bbox, brennweite_mm=brennweite_mm,
+                    seitenverhaeltnis=seitenverhaeltnis, shift_mm=sh)
+
+            fern = _laenge((blick[0] - auge[0], blick[1] - auge[1], 0.0))
+            if _anteil(fern) < AUSSCHNITT_SCHWELLE:
+                nah = rechnung["tiefe_m"] / 2.0 + WANDABSTAND_M
+                # VON FERN NACH NAH, nicht halbiert: Der sichtbare Anteil waechst mit der
+                # Naehe nur, solange keine Ecke hinter die Kamera geraet — danach meldet die
+                # Projektion 0. Genommen wird der FERNSTE Abstand, der das Ziel erreicht
+                # (moeglichst viel Bauwerk im Bild), sonst der mit dem groessten Anteil.
+                stufen = 64
+                bester_d, bester_a = fern, _anteil(fern)
+                vorher_d = fern
+                gewaehlt_d = None
+                for i in range(1, stufen + 1):
+                    d = fern * (nah / fern) ** (i / stufen)
+                    a_d = _anteil(d)
+                    if a_d > bester_a:
+                        bester_d, bester_a = d, a_d
+                    if a_d >= AUSSCHNITT_ZIEL:
+                        lo, hi = d, vorher_d
+                        for _ in range(32):
+                            m = (lo + hi) / 2.0
+                            if _anteil(m) >= AUSSCHNITT_ZIEL:
+                                lo = m
+                            else:
+                                hi = m
+                        gewaehlt_d = lo
+                        break
+                    vorher_d = d
+                if gewaehlt_d is None:
+                    gewaehlt_d = bester_d
+                auge, blick, shift_mm = _gestellt(gewaehlt_d)
+                ausgeschnitten = True
+                sichtbar = _anteil(gewaehlt_d)
+        if ausgeschnitten:
+            geschoben = {
+                "auge": auge, "vollstaendig": False, "durchlaeufe": 0,
+                "begruendung": (
+                    f"AUSSCHNITT (Entscheid 75): Das Bauwerk ist "
+                    f"{rechnung['breite_m'] / masse[2]:.0f}-mal so breit wie hoch; ganz im "
+                    f"Bild hätte es weniger als {AUSSCHNITT_SCHWELLE:.0%} gefüllt. Die "
+                    f"Kamera steht näher, die sichtbare Hüllbox füllt {sichtbar:.0%}, die "
+                    f"Enden laufen aus dem Bild — gewollt, kein gescheiterter Eckentest."),
+            }
+        else:
+            geschoben = schiebe_bis_im_bild(auge, blick, bbox, shift_mm=shift_mm,
+                                            brennweite_mm=brennweite_mm,
+                                            seitenverhaeltnis=seitenverhaeltnis,
+                                            bildrand=bildrand)
+            if not geschoben["vollstaendig"]:
+                unvollstaendig.append(k)
 
         # Wie viel des Bildes das Bauwerk am ENDGÜLTIGEN Standort füllt — nicht am
         # analytisch gerechneten. Der Eckentest kann die Kamera noch zurückgeschoben
@@ -2222,6 +2411,10 @@ def kamerasatz(bbox, *,
             # zwölf gemessene Kameras praktisch konstant, während diese Zahl um den
             # Faktor drei schwankte.
             "flaechenanteil": flaeche,
+            # Entscheid 75: gewollter Ausschnitt eines langen, flachen Bauwerks — und was
+            # davon im Bild SICHTBAR ist (``flaechenanteil`` zaehlt auch, was hinausragt).
+            "ausschnitt": ausgeschnitten,
+            "flaechenanteil_sichtbar": sichtbar,
             "warnungen": tuple(warnungen),
             "begruendung": geschoben["begruendung"],
         })

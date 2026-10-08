@@ -7829,3 +7829,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben):** P1 Lieferstatus null und P2 qa.verdict.hinweise auf `claude/kosmovis-v017-lieferstatus-hinweise`, Tore grün, Blatt an Int 1.
       *(01.10.2026: P1 gebaut bis `9022ece05`, dazu B1–B4; P2 nicht nochmals — seit v0.1.6, ROADMAP 1644)*
 - [ ] **local (Mac):** `auf-20261001-234` — Visbox 0.1.0 am echten Mac bauen, starten, probieren (Owner-Hinweis: der Heim-PC-Worker erreicht einen Mac mit Xcode).
+
+
+## Splat-Demo: Bestand, lange Bauten, Splat im Bild (Entscheide 75 und 76, 08.10.2026)
+
+- [x] **Kern (Entscheid 75):** Lange, flache Bauwerke als Ausschnitt — `kameras.kamerasatz(ausschnitt=True)`, eingeschaltet im Blender-Schritt nur bei Rahmung nach dem Bauwerk. *(08.10.2026; Halle 66 × 10 × 3,45 m: Maske 35 % statt ~4 %, mit Blender nachgerechnet; `tests/test_kamera_ausschnitt.py`; am Gerät unbestätigt — Protokoll 74 §79)*
+- [x] **Vertrag (mit Integrator, prepare, HomeStation):** `RenderScene.context = {kind: "splat", ply, verortung, transform (glTF-Welt, m, Y oben), fit, crs_note}`; Bestand als `extras.role = "existing"` am glb-Knoten (Integrator, Runde 14). *(08.10.2026, über die Zentrale festgelegt)*
+- [ ] **Kern (Entscheid 76):** Splat als farbige Punktwolke im Multipass, Abholer liest `context` — Hilfsagent im Bau.
+- [ ] **Kern:** Bestand lesen (`extras.role`) → Bildanweisung «bestehendes Gebäude, Volumenstudie, ohne Schrift», Negativ «Schrift, Beschriftung, Schild».
+- [ ] **HomeStation:** App-Seite für `context` (Pfad und `splatAnsichtsMatrix`), danach Messauftrag am echten Splat.

@@ -844,6 +844,12 @@ def _kamera_setzen(lo, hi, a=None):
                 augenhoehe_m=_vorgabe(a, "augenhoehe", kameras.AUGENHOEHE_M),
                 deckungsgrad=deckungsgrad,
                 gelaende_z=getattr(a, "gelaende_z", None),
+                # LANGE, FLACHE BAUWERKE ALS AUSSCHNITT (Entscheid 75, 08.10.2026) — nur,
+                # wenn nach dem BAUWERK gerahmt wird (`--kamera-huellbox`). Auf der
+                # Szenenbox waere eine grosse Gelaendeplatte «lang und flach», und der
+                # Ausschnitt hebelte den Rahmungsriegel aus, der genau dieses Bild nicht
+                # rendern soll (`test_kettenlauf_echt`, Grundstueck).
+                ausschnitt=bool(getattr(a, "kamera_huellbox", None)),
                 # Das TATSÄCHLICHE Seitenverhältnis dieses Laufs, nicht eine Annahme.
                 # Bis zum 19.08.2026 stand hier fest 1.0 mit dem Kommentar „der Runner
                 # rendert quadratisch" — was stimmte, aber `prompts.Stil.seitenverhaeltnis`
@@ -897,6 +903,9 @@ def _kamera_setzen(lo, hi, a=None):
                 # Wenn der Eckentest nicht aufging, steht das hier — und nicht nur in
                 # einem Bild, das jemand später schief findet.
                 "vollstaendig": k["vollstaendig"],
+                # Gewollter Ausschnitt eines langen, flachen Bauwerks (Entscheid 75) —
+                # dann ist `vollstaendig` False ohne gescheiterten Eckentest.
+                "ausschnitt": bool(k.get("ausschnitt")),
                 # Der Füllgrad sagt, was der Eckentest nicht sagt: ob das Bauwerk das
                 # Bild auch AUSFÜLLT. Zu klein fällt keiner Prüfung auf, die nur nach
                 # "passt es hinein" fragt.
