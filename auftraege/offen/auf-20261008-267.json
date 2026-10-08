@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-267",
+  "art": "frage",
+  "beschreibung": "WebKitGTK-Probe: «nicht beurteilbar» statt ✗ in modules/vis (E189/Entscheid 70), am echten Demohaus-Fall.",
+  "anweisung": "=== KURZE WEBKITGTK-PROBE: «NICHT BEURTEILBAR» STATT ✗ (Owner-Entscheid E189, bei uns 70) ===\n\nWORUM ES GEHT\n  Fuellt das Haus weniger als 20 % des Bildes, liefert unsere Pruefung «nicht beurteilbar» (im Vertrag:\n  passed false, und in verdict.reason der Satz «NICHT BEURTEILBAR (Gebaeudeanteil): …»). Bisher zeigte\n  KosmoOrbit dafuer ein rotes ✗. Neu zeigt modules/vis dann neutral «nicht beurteilbar»: Kachel «QA nicht\n  beurteilbar ⚠», Inspektor/Vergleich «nicht beurteilbar», keine Sterne, im Verlauf hohler Punkt und\n  Abzeichen «nicht beurteilbar». Zweig claude/kosmovis-v018-nicht-beurteilbar, Kopf 81d4dcc50 — er baut\n  auf dem Verlauf-Nachgang (0f9789ece) auf, enthaelt ihn also. In Chromium gruen (App 6781, @kosmo/ui\n  435, Vis-E2E 100 von 101, der eine Ausfall eine fremde Datei, einzeln zweimal gruen).\n  Falls du 266 noch nicht begonnen hast: Baue gleich DIESEN Kopf und pruefe 266 (N1–N5) und 267 (B1–B4)\n  in einem Durchgang — das spart einen Bau. Sonst 266 wie gehabt und 267 danach.\n\nAUFBAU\n  Wie 263/266: eigene Arbeitskopie, Desktop-App bauen (tauri build --no-bundle), Xvfb, Wegwerf-Profil,\n  xdotool; installierte App nicht ersetzen. Gebauten Kopf notieren. Den Ausloesefall echt erzeugen: ein\n  Bild vom Demohaus aus dem Kernel (wie 264/265, Haus ~18 % des Bildes) mit Pruefung ueber die Bruecke;\n  der Heim-PC muss dazu auf ai-imaging main ab d24be39 stehen (Dienst/Abholer neu gestartet).\n\nWAS DU PRUEFST\n  B1 Am Render-Knoten: Abzeichen «nicht beurteilbar» (neutral, nicht rot), hohler Punkt im Verlauf?\n  B2 Kachel im Vergleich-/Bild-Knoten: «QA nicht beurteilbar ⚠» statt «QA ✗», der Satz darunter wörtlich?\n  B3 Inspektor / Kuratierflaeche: «nicht beurteilbar» statt «verfehlt», keine Sterne, Satz dabei?\n  B4 Gegenprobe: ein Bild mit echtem Durchfallen (Testbau mit Gelaende, z. B. schlechter Prompt oder\n     Bildwerkzeug ohne Fuehrung) zeigt weiter ✗ / «durchgefallen».\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Namen, Pfade mit\n  Benutzernamen, Host- oder Netznamen in Bildern oder Text. Arbeitskopie und Profil danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-267.json)\n  Gebauter Kopf; B1–B4 je ja/nein + Satz; Bildschirmfotos klein: auftraege/ergebnisse/auf-20261008-267-<b1|b2>.png.\n  Urteil in einem Satz: Kann der Zweig (mit dem Nachgang darin) zu Int 1?",
+  "erstellt": "2026-10-08T11:20:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel: haus.demohausBauen + exportIfc; Testbau aus tools/make_test_ifc.py --gelaende"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-nicht-beurteilbar@81d4dcc50"
+    ],
+    "enthaelt": "claude/kosmovis-v018-verlauf-nachgang@0f9789ece",
+    "ai_imaging_mindestens": "d24be39",
+    "owner_entscheid": "E189",
+    "entscheid_hier": 70
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: zwei bis drei kurze Z-Image-Turbo-Laeufe ueber die Bruecke; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); das Demohaus ist synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "Gebauter Kopf.",
+    "B1–B4 je ja/nein und ein Satz.",
+    "Bildschirmfotos b1, b2 (klein, synthetisch).",
+    "Urteil: kann der Zweig zu Int 1?"
+  ],
+  "rang": 54
+}
