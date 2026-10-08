@@ -1,0 +1,44 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-271",
+  "art": "frage",
+  "beschreibung": "Splat im Bild (E76) am echten Splat, Ausschnitt an der Halle (E75), Bestand ohne Schrift — mit/ohne.",
+  "anweisung": "=== MESSAUFTRAG: SPLAT IM BILD (E76), AUSSCHNITT AN DER HALLE (E75), BESTAND OHNE SCHRIFT ===\n\nWORUM ES GEHT\n  Seit main (ai-imaging, nach diesem Auftrag) rechnet der Abholer RenderScene.context mit: der Splat geht\n  als farbige Punktwolke in den Multipass (Bild UND Tiefe), gemessen wird weiter nur das Bauwerk. Neu\n  ausserdem: (1) lange flache Bauten bekommen eine naehere Kamera als Ausschnitt (nur mit Huellbox, E75);\n  (2) Knoten mit glTF extras.role = \"existing\" (Bestand) bekommen am Bildauftrag den Zusatz\n  \"existing building shown as a plain massing volume, blank facade without lettering or signage\".\n  Ob das am ECHTEN Splat traegt, ist ungemessen — das misst dieser Auftrag.\n\nAUFBAU\n  ai-imaging: git pull auf main. KosmoOrbit-Seite: eure Test-App auf claude/lw-splat-context, darin den\n  Vertragszweig claude/kosmovis-v018-splat-context (cf839597c, RenderScene.context) gemergt — in einer\n  WEGWERF-Arbeitskopie, nicht pushen. Sonst wie im Splat-Demolauf vom 08.10. (Xvfb, Wegwerf-Profil).\n  Der private Splat des Owners bleibt LOKAL: Bilder davon NICHT ins Repo, nur Zahlen und Saetze.\n  Fuer Bilder im Repo den synthetischen Splat nehmen: python3 tools/make_test_splat.py <ziel.ply>.\n\nWAS DU MISST\n  M1 Splat im Bild: derselbe Auftrag (3 Bestandsquader, Halle ~66x10x3.45 m) mit und ohne context.\n     Je Kamera: punkte_gerendert, verworfen_deckkraft, verdeckt_anteil (befund.json → kontext),\n     Laufzeit Multipass und gesamt. Sieht der Splat im Bild richtig aus (Lage, Farbe, Loecher)? Satz.\n  M2 Tiefe: Tiefenspanne auf dem Bauwerk mit und ohne Splat (tiefe_norm.png bzw. Bericht). BEKANNTER\n     VERDACHT: mit Splat wird die Normierung ueber die ganze Szene gestreckt, das Haus verliert Kontrast\n     (synthetisch 10.9–11.4 m → 4.8–27.6 m). Wie stark am echten Splat? Score/rho mit und ohne.\n  M3 Ausschnitt: Auto-Kameras an der Halle — anteil_soll je Kamera (vorher 3.8–4.5 %), Feld ausschnitt\n     und flaechenanteil_sichtbar im Kamerablock. Urteil jetzt beurteilbar (≥ 20 %)?\n  M4 Bestand ohne Schrift: Startwerte 0,1,2 je mit Zusatz (Bestand markiert) und ohne (Rolle entfernt,\n     sonst gleich). Je Bild: Schrift/Schriftzug sichtbar ja/nein. Zaehlung x von 3 mit, y von 3 ohne.\n  M5 Hinweise: stehen in verdict.hinweise die Saetze «UMGEBUNG: …», «Lage des Splats von Hand gesetzt,\n     nicht vermessen.» (bei fit behelf) und «BESTAND: …»? Woertlich zurueck.\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Bilder des echten Splats\n  ins Repo. Keine Namen, Pfade mit Benutzernamen, Host- oder Netznamen, IPs in Text oder Bildern.\n  Arbeitskopie und Profil danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-271.json)\n  Gebaute Koepfe; M1–M5 je Zahlen + ein Satz; optional synthetische Bilder klein:\n  auftraege/ergebnisse/auf-20261008-271-<m1|m4>.png. Urteil je Punkt: traegt es, ja/nein.",
+  "erstellt": "2026-10-08T18:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Bestand aus dem Splat) und tools/make_test_splat.py; der echte Splat bleibt lokal"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-splat-context@cf839597c",
+      "claude/lw-splat-context"
+    ],
+    "folgt_auf": "Zentrale 20261008-135749-homestation-an-kosmovis-splat-render-luecken",
+    "entscheide": [
+      "75",
+      "76"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: etwa 12 Z-Image-Turbo-Laeufe; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Bilder des echten Splats bleiben lokal (REGEL 3); im Repo nur synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "Gebaute Koepfe.",
+    "M1–M5 je Zahlen und ein Satz.",
+    "Optional synthetische Bilder m1, m4 (klein).",
+    "Urteil je Punkt: traegt es?"
+  ],
+  "rang": 58
+}

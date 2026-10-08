@@ -7836,7 +7836,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (Entscheid 75):** Lange, flache Bauwerke als Ausschnitt — `kameras.kamerasatz(ausschnitt=True)`, eingeschaltet im Blender-Schritt nur bei Rahmung nach dem Bauwerk. *(08.10.2026; Halle 66 × 10 × 3,45 m: Maske 35 % statt ~4 %, mit Blender nachgerechnet; `tests/test_kamera_ausschnitt.py`; am Gerät unbestätigt — Protokoll 74 §79)*
 - [x] **Vertrag (mit Integrator, prepare, HomeStation):** `RenderScene.context = {kind: "splat", ply, verortung, transform (glTF-Welt, m, Y oben), fit, crs_note}`; Bestand als `extras.role = "existing"` am glb-Knoten (Integrator, Runde 14). *(08.10.2026, über die Zentrale festgelegt)*
 - [x] **Kern (Entscheid 76):** Splat als farbige Punktwolke im Multipass, Abholer liest `context`. *(08.10.2026, siehe Abschnitt «Splat als Umgebung» unten, Protokoll 74 §78)*
-- [ ] **Kern:** Bestand lesen (`extras.role`) → Bildanweisung «bestehendes Gebäude, Volumenstudie, ohne Schrift», Negativ «Schrift, Beschriftung, Schild».
+- [x] **Kern:** Bestand lesen (`extras.role`) → Bildanweisung «ohne Schrift» (positiv, `kosmo_szene.BESTAND_ZUSATZ`). Den negativen Prompt **nicht** angeschlossen: Er wirkt auf `z-image-turbo` nicht. *(08.10.2026, Protokoll 74 §80; Wirkung misst `auf-20261008-271`)*
 - [ ] **HomeStation:** App-Seite für `context` (Pfad und `splatAnsichtsMatrix`), danach Messauftrag am echten Splat.
 
 ## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)

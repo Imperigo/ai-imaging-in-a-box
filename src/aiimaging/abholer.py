@@ -2237,6 +2237,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # Umwandler geschrieben und gemeldet. Eine Angabe des Auftrags spraeche
                 # ueber die IFC, und die sieht Blender nicht.
                 hochachse, hochachse_quelle = umwandlung["up_axis"], "umwandlung"
+        # Bestand liest nur die glb, die KosmoOrbit schickt; unsere IFC-Umwandlung kennt
+        # keine Rolle. `None` heisst: kein Bestand, der Bildauftrag bleibt, wie er kam.
+        bestand = None if umwandlung else _kosmo_szene.bestand_in_glb(modell)
 
         # DER MODELLSTAND, EINMAL JE AUFTRAG UND VOR ALLEM ANDEREN. Er ist eine Eigenschaft
         # der DATEI, nicht der Kamera, er kostet einen glb-Kopf und keine GPU-Sekunde — und
@@ -2692,6 +2695,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             bildauftrag = _bildauftrag_innen(szene.get("prompt", ""), aufgabe.get("innenraum"),
                                              soll)
             prompt_kamera = bildauftrag["gerechnet"] if bildauftrag else szene.get("prompt", "")
+            # DER BESTAND (Splat-Demo 08.10.2026): Koerper mit `extras.role = "existing"`
+            # bekommen den Zusatz «ohne Schrift» — siehe `kosmo_szene.BESTAND_ZUSATZ`.
+            bestand_auftrag = _kosmo_szene.bildauftrag_bestand(prompt_kamera, bestand)
+            if bestand_auftrag:
+                prompt_kamera = bestand_auftrag["gerechnet"]
 
             def _rendere_seed(seed, ziel_png):
                 erg = rendern(
@@ -2826,6 +2834,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DIE UMGEBUNG AM URTEIL (Entscheid 76) — ohne Pfad, mit dem verdeckten Anteil
             # DIESER Kamera. Von hier erreicht sie `verdict.hinweise`.
             urteil[_kosmo_szene.URTEIL_KONTEXT] = _kosmo_szene.kontext_vermerk(kontext, bericht)
+            urteil[_kosmo_szene.URTEIL_BESTAND] = bestand_auftrag
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.

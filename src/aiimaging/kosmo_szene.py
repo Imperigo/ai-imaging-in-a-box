@@ -928,6 +928,81 @@ def kontext_saetze(vermerk) -> list[str]:
             *[s for s in vermerk.get("hinweise") or () if s]]
 
 
+#: Der Wert von glTF ``extras.role``, mit dem KosmoOrbit einen **Bestandskörper** markiert
+#: (Integrator, Runde 14, 08.10.2026) — ein Körper aus dem Splat, kein Entwurf.
+BESTAND_ROLLE = "existing"
+
+#: Was dem Bildauftrag angehängt wird, wenn die glb Bestand trägt (Splat-Demolauf
+#: 08.10.2026: das Modell erfand an der Halle Fassade und Fantasie-Schriftzug).
+#:
+#: **Positiv formuliert, nicht als negativer Prompt.** Der negative Prompt wirkt auf dem
+#: Vorgabe-Backbone nicht (``z-image-turbo``, Führung 0 — siehe
+#: ``abholer.RENDER_STEHENGEBLIEBEN``); er stünde im Protokoll und änderte keinen
+#: Bildpunkt. Ob der Zusatz die Schrift wirklich verhindert, ist **ungemessen**
+#: (Messauftrag ``auf-20261008-271``).
+BESTAND_ZUSATZ = ("existing building shown as a plain massing volume, "
+                  "blank facade without lettering or signage")
+
+#: Der Schluessel, unter dem ein Kameraurteil den Bestand des Laufs vermerkt.
+URTEIL_BESTAND = "bestand"
+
+
+def bestand_in_glb(pfad) -> dict | None:
+    """Wie viele Knoten der glb als Bestand markiert sind (``extras.role == "existing"``).
+
+    Gelesen wird nur der JSON-Block der Datei — ohne trimesh, ohne Blender. ``None``, wenn
+    kein Knoten Bestand ist, die Datei keine glb/gltf ist oder sich nicht lesen lässt:
+    Dann bleibt der Bildauftrag, wie er kam. Ein unlesbarer Kopf ist hier kein Mangel —
+    den meldet der Multipass, der dieselbe Datei gleich danach öffnet.
+    """
+    import json as _json
+    import struct as _struct
+    from pathlib import Path as _Path
+    try:
+        pfad = _Path(pfad)
+        daten = pfad.read_bytes()
+        if pfad.suffix.lower() == ".gltf":
+            js = _json.loads(daten)
+        else:
+            laenge, art = _struct.unpack_from("<II", daten, 12)
+            if art != 0x4E4F534A:
+                return None
+            js = _json.loads(daten[20:20 + laenge])
+    except (OSError, ValueError, _struct.error, TypeError):
+        return None
+    knoten = [k for k in js.get("nodes") or () if isinstance(k, dict)]
+    mit_mesh = [k for k in knoten if "mesh" in k]
+    bestand = [k for k in knoten
+               if isinstance(k.get("extras"), dict)
+               and k["extras"].get("role") == BESTAND_ROLLE]
+    if not bestand:
+        return None
+    return {"n_bestand": len(bestand), "n_knoten": len(mit_mesh),
+            "namen": [str(k.get("name") or "") for k in bestand][:20]}
+
+
+def bildauftrag_bestand(prompt: str, bestand: dict | None) -> dict | None:
+    """Den Bildauftrag um :data:`BESTAND_ZUSATZ` ergänzen — nur, wenn Bestand da ist.
+
+    Returns:
+        ``None`` ohne Bestand, sonst ``{bestellt, gerechnet, zusatz, n_bestand, n_knoten}``.
+    """
+    if not bestand or not isinstance(prompt, str):
+        return None
+    gerechnet = f"{prompt.rstrip(' ,')}, {BESTAND_ZUSATZ}" if prompt.strip() else BESTAND_ZUSATZ
+    return {"bestellt": prompt, "gerechnet": gerechnet, "zusatz": BESTAND_ZUSATZ,
+            "n_bestand": bestand.get("n_bestand"), "n_knoten": bestand.get("n_knoten")}
+
+
+def bestand_satz(vermerk) -> str | None:
+    """Der Satz für ``verdict.hinweise`` zu einem :data:`URTEIL_BESTAND`-Vermerk."""
+    if not isinstance(vermerk, dict) or not vermerk.get("n_bestand"):
+        return None
+    return (f"BESTAND: {vermerk['n_bestand']} Körper als bestehend markiert; dem Bildauftrag "
+            f"wurde «{vermerk['zusatz']}» angehängt (ohne Schrift). Ob das Bild ohne "
+            f"Schrift bleibt, ist ungemessen.")
+
+
 def wert_oder(quelle: dict, schluessel: str, ersatz):
     """Ein Feld der fremden Bestellung lesen — und ein ausdrückliches ``null`` wie ein
     fehlendes Feld behandeln.
@@ -2151,7 +2226,8 @@ def _aufsicht_saetze(geometrie_urteil, je_kamera) -> list[str]:
     for eintrag in quellen:
         urteil = eintrag.get("geometrie_urteil") or {}
         for schluessel, bilde in ((URTEIL_AUFSICHT, aufsicht_satz),
-                                  (URTEIL_BILDAUFTRAG, bildauftrag_satz)):
+                                  (URTEIL_BILDAUFTRAG, bildauftrag_satz),
+                                  (URTEIL_BESTAND, bestand_satz)):
             satz = bilde(eintrag.get(schluessel) or urteil.get(schluessel))
             if satz and satz not in saetze:
                 saetze.append(satz)

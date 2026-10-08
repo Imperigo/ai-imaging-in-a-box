@@ -1369,3 +1369,9 @@ Bericht sagt, wieviel. KosmoOrbit kann die Umgebung jetzt mitschicken; wo sie li
 ist das an einem künstlichen Splat; wie gut es mit einem echten aussieht, misst der Heim-PC. Eine Frage ist dabei
 aufgetaucht: Mit weiter Umgebung bekommt das Haus in der Tiefenkarte weniger Kontrast — ob das stört, zeigt erst
 die Messung.
+
+**Bestand ohne Schrift (08.10.2026).** Übernimmt KosmoOrbit bestehende Gebäude aus der Punktaufnahme, markiert es
+sie in der Modelldatei. Visbox erkennt die Markierung und sagt dem Bildmodell dazu, dass diese Gebäude schlicht und
+ohne Schrift erscheinen sollen — im Demolauf hatte es einen erfundenen Schriftzug an die Halle gemalt. Ob der Satz
+wirkt, ist noch nicht gemessen; das macht der Heim-PC mit und ohne Zusatz.
+
