@@ -4561,6 +4561,19 @@ gar nicht starten — Visbox sagt das seit dem 01.10.2026 vorher, statt beim Lad
 Hintergrund, typisch für eine Kamera im Raum. Ein Mass, das Gebäude und Hintergrund vergleicht,
 sagt dann nichts mehr.
 
+**Gesamtwert (der Prüfung)** — Die ältere der beiden Zahlen, mit denen wir ein Bild gegen die
+Geometrie prüfen: wie gut die geschätzte Tiefe des ganzen Bildes zur Soll-Tiefe passt, mit
+Bestehensgrenze 0,65. Er ist nur aussagekräftig, wenn das Haus einen genügenden Teil des Bildes
+füllt; unter 20 % kann er rechnerisch nicht bestehen. Daneben steht die Gebäude-Prüfung, die nur
+auf dem Haus misst.
+*Im Projekt:* `geometrie_qa.geometrie_gate`; seit dem 08.10.2026 unter 20 % «nicht anwendbar»
+(`tiefenschaetzer.qa_gegen_soll`, Feld `gesamtwert_anwendbar`, Visbox-Entscheid 70).
+
+**Nicht beurteilbar** — Die dritte Antwort einer Prüfung neben «bestanden» und «durchgefallen»:
+Wir wissen es nicht, und wir sagen das, statt zu raten. Im Ergebnis steht dann `bestanden: null`
+und ein Satz, warum.
+*Im Projekt:* ohne Maskenweg; ein Haus unter 20 % des Bildes (Visbox-Entscheid 70).
+
 **Nicht anwendbar (not_applicable)** — Eine Zahl, die sich zwar ausrechnen lässt, in dieser
 Lage aber nichts misst — darum weggelassen und so benannt, statt als Ergebnis gezeigt. Die dritte
 Antwort neben «bestanden» und «durchgefallen».
@@ -6473,7 +6486,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)** |
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |

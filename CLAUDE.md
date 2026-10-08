@@ -297,6 +297,13 @@ geschönt — ein Befund, der eine Annahme umwirft, gehört unter **Erledigt** o
 in einfachen Worten und ohne Beschönigung. Die Genauigkeit wandert in die Dokumente; sie
 verschwindet nicht.
 
+**Fragen an den Owner immer als Auswahlfrage (Owner-Vorgabe 08.10.2026):** *«frag immer mit
+asquestion».* Eine Entscheidung, die beim Owner liegt, wird im Chat mit dem Auswahl-Werkzeug
+(AskUserQuestion) gestellt — mit Empfehlung als erste Option —, nicht als Fliesstext und nicht nur
+über die Zentrale. Was über die Zentrale an den Owner geht, wird zusätzlich so gefragt.
+**Und jede Angabe in der Frage wird vorher gegen den eigenen Kern geprüft** (Lehre vom 08.10.2026,
+Protokoll 74 §68): Eine Frage ist so gut wie die Zahlen darin.
+
 *Die ausführliche Fassung steht weiterhin im Sitzungsprotokoll und in den Dokumenten unter
 `docs/` — dort ändert sich nichts. Was sich ändert, ist allein die Antwort im Chat.*
 

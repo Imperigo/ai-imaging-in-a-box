@@ -370,7 +370,12 @@ BEDARF: dict[str, Bedarf] = {
         # Slot 0 ist das Soll (Multipass), Slot 1 das Ist (Render) — die Reihenfolge ist
         # Bedeutung, und genau darum ist ``braucht`` je Slot aufgeschrieben.
         braucht=(("depth_png",), ("bild_png",)),
-        liefert=("bestanden",),
+        # `status`, nicht `bestanden` (08.10.2026): `bestanden` darf None sein — «nicht
+        # beurteilbar», die dritte Antwort (ohne Maskenweg; unter 20 % Gebaeudeanteil,
+        # Owner-Entscheid 08.10.2026). Als Pflichtfeld galt es dann als LEER, und der
+        # Zwischenspeicher verwarf jedes solche Urteil und rechnete es neu. `status` steht
+        # in jedem Pruefergebnis.
+        liefert=("status",),
     ),
     # --- Der Bild-Eingang ------------------------------------------------------------
     ART_BILDQUELLE: Bedarf(

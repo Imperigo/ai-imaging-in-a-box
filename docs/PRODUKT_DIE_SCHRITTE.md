@@ -1343,3 +1343,10 @@ dass die Übernahme der Farben eine wichtige Prüfung still ausgeschaltet hatte 
 überhaupt ein Gebäude steht. Am Testhaus fiel das nicht auf, weil es ein Gelände hatte; am Demohaus ohne Gelände
 schon. Die Ursache war eindeutig, die Behebung klein, und ein neuer Test fängt den Fall künftig ab. Die Nachmessung
 am Demohaus läuft.
+
+**08.10.2026 — ehrlich «nicht beurteilbar», wenn das Haus zu klein im Bild ist.** Modelle ohne Boden, wie das
+Demohaus aus KosmoOrbit, füllen das Bild nur zu knapp einem Fünftel. Dort kann der ältere Prüfwert gar nicht
+bestehen, und jedes Bild galt als durchgefallen. Der Owner hat entschieden: In diesem Fall steht «nicht
+beurteilbar», mit Grund und der Gebäude-Zahl als Auskunft. Auf dem Weg dahin habe ich eine Frage mit einer falschen
+Zahl gestellt; sie wurde berichtigt und neu beantwortet. Nebenbei behoben: Solche Ergebnisse wurden bisher bei
+jedem Lauf neu gerechnet, statt aus dem Zwischenspeicher zu kommen.

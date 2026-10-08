@@ -1459,6 +1459,32 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
     if maske is None and bestanden:
         bestanden = None
 
+    # UNTER 20 % GEBAEUDEANTEIL IST DER GESAMTWERT NICHT ANWENDBAR (Owner-Entscheid
+    # 08.10.2026, Visbox-Entscheid 70; Befund `auf-20261008-265`). Dort ist er nach eigener
+    # Messung rechnerisch unerreichbar (`geometrie_qa.ANTEIL_GEMESSEN_NIEDRIG`,
+    # `auf-20260819-15`: bei 17 % deckelt geom_iou bei 0.256) — ein «durchgefallen» belegte
+    # nichts ueber das Bild, und jedes Modell ohne Boden fiele immer durch. Die
+    # Gebaeude-Pruefung kann nicht einspringen: Sie urteilt seit dem 30.09.2026 nicht
+    # (`geometrie_qa.PAARURTEIL_URTEILT`, an erzeugten Bildern trennt sie nicht). Also die
+    # dritte Antwort: NICHT BEURTEILBAR, mit Grund, und die Gebaeude-Zahl als Auskunft.
+    # Ab 20 % bleibt alles wie bisher.
+    anteil = urteil.get("anteil_soll")
+    gesamtwert_anwendbar = not (anteil is not None
+                                and 0.0 < anteil < geometrie_qa.ANTEIL_GEMESSEN_NIEDRIG)
+    begruendung = urteil["begruendung"]
+    if not gesamtwert_anwendbar:
+        bestanden = None
+        auskunft = ""
+        rho = masken_ergebnis.get("rho_maske")
+        gerichtet = rho.get("gerichtet") if isinstance(rho, dict) else None
+        if gerichtet is not None:
+            auskunft = (f" Gebäude-Prüfung als Auskunft (nicht geeicht, urteilt nicht): "
+                        f"Tiefenordnung auf dem Haus {gerichtet:+.2f}.")
+        begruendung = (
+            f"Nicht beurteilbar — das Haus füllt nur {anteil:.1%} des Bildes, weniger als "
+            f"{geometrie_qa.ANTEIL_GEMESSEN_NIEDRIG:.0%}; der Gesamtwert ist hier nicht "
+            f"anwendbar.{auskunft} Gemessen war: {urteil['begruendung']}")
+
     return {
         "status": STATUS_OK,
         "bestanden": bestanden,
@@ -1496,7 +1522,10 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # Worten; die Zahl steht daneben, weil sich eine Zeichenkette schlecht vergleichen
         # laesst.
         "polaritaet_zeichen": urteil["polaritaet"],
-        "begruendung": urteil["begruendung"],
+        "begruendung": begruendung,
+        # Ob der Gesamtwert ueberhaupt urteilen durfte (Owner-Entscheid 08.10.2026): False
+        # unter 20 % Gebaeudeanteil — dann ist `bestanden` None und `begruendung` sagt warum.
+        "gesamtwert_anwendbar": gesamtwert_anwendbar,
         "n_punkte": len(roh),
         "hintergrund_strategie": markierung["strategie"],
         "n_hintergrund_ist": markierung["n_hintergrund"],
@@ -1525,6 +1554,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
     return {
         "status": status,
         "bestanden": False,
+        "gesamtwert_anwendbar": None,
         "score": None,
         "spearman": None,
         "geom_iou": None,

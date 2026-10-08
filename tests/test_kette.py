@@ -1161,7 +1161,12 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
     assert Path(multipass["depth_exr"]).is_file() and Path(multipass["depth_png"]).is_file()
     qa = erster["knoten"][KNOTEN_QA]["ausgaben"]
     assert qa["status"] == "ok", qa["error"]
-    assert qa["bestanden"] is True and qa["score"] > 0.99, qa.get("begruendung")
+    # Gemessen wird weiter perfekt — geurteilt nicht mehr: Der Testbau ohne Gelaende
+    # fuellt 17 % des Bildes, und unter 20 % ist der Gesamtwert nicht anwendbar
+    # (Owner-Entscheid 08.10.2026, Visbox-Entscheid 70). Bis dahin stand hier
+    # `bestanden is True`.
+    assert qa["score"] > 0.99, qa.get("begruendung")
+    assert qa["gesamtwert_anwendbar"] is False and qa["bestanden"] is None
     assert aufrufe == Counter(
         {ART_GEOMETRIE: 1, ART_MULTIPASS: 1, ART_RENDER: 1, ART_QA: 1, "schaetzer": 1})
 
