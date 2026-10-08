@@ -1,0 +1,78 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-268",
+ "worker": "local",
+ "rang": 55,
+ "status": "erledigt — K1–K5 in WebKitGTK mit vier echten Abholer-Laeufen geprueft",
+ "beendet": "2026-10-08T12:45:00Z",
+ "weg": "Wie 266/267: eigene Arbeitskopie detached auf origin/claude/kosmovis-v018-nicht-beurteilbar (e6f775995), npm ci (Exit 0), Lizenz-Paket gebaut (Exit 0), «npx tauri build --no-bundle» mit eigenem Cargo-Zielordner (Exit 0, 232 s), Binaerdatei umbenannt kopiert; nichts installiert, installierte App nicht ersetzt und nicht beruehrt. Eigener Xvfb (1920x1080x24, freie Displaynummer), eigener Netz-Namensraum (bwrap --unshare-net, nur Loopback: 8600/8630/8700 der echten Dienste darin unerreichbar), darin eigene Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (127.0.0.1, freier Port, eigene Ablage, Fehlerbericht-/Feedback-/Lernjournal-/Ablage-Pfade im Wegwerf-Ordner, Ollama auf toten Port) und ein lokaler Messkanal. App-Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1, freier KOSMO_MCP_PORT, Software-GL (mesa). Profil VOR dem ersten Laden ueber eine nur lokal eingebundene, nie committete Messhilfe (index.html + public/__mess.js, feste Befehle, kein eval) vorbelegt: kosmo.claude.anschluss=aus, Claude-Adresse und Sync auf toten Port, eigene Bruecken-Adresse, kosmo.verbindung.festeAdressen=1; dieselbe Hilfe sperrt fetch/WebSocket/EventSource/XHR auf 8600/8700/8630 (keine Sperrung noetig geworden). Projekt «Beispielprojekt laden — Demohaus», ein Graph Modell → Render ← Prompt «Abendlicht, warme Fassade», Render → Bildvergleich (Kachel), Z-Image Turbo (Vorgabe), Qualitaet 128, 1600x1000. Gerechnet vom Abholer (ai-imaging main, tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst), je Lauf unter der geteilten GPU-Sperre bei freier Karte (< 3 GB, < 20 W, kein Sprachmodell geladen — nichts zu entladen). Klicks mit xdotool nur auf dem eigenen Xvfb; Port 8630 und Display :0 nie angefasst.",
+ "koepfe": {
+  "gebaut": "e6f77599591521df463572fcb252444e863bb483 (claude/kosmovis-v018-nicht-beurteilbar, auf 81d4dcc50)",
+  "abholer": "ai-imaging main 1a2ce71 (enthaelt 512800d)",
+  "hinweis": "Zweigkopf unveraendert gebaut; nur index.html + public/__mess.js lokal fuer die Messhilfe, nie committet; App-Kopf zeigt v0.1.7."
+ },
+ "laeufe": {
+  "lauf_1": "Demohaus MIT Raeumen, Kameras auto (IFC + interior auto): 1 Innenansicht «innen» (Raum «Wohnen Whg 1»), passed true, Grund «GEOM_IOU NICHT ANWENDBAR, innen … Geometrie 0.979 gegen 0.65», 132 s — das Bestehen und die Innenansicht in einem Lauf.",
+  "zwischenschritt": "Alle Raeume im Plan geloescht (EG 15 und OG 9 ueber die Raumstempel, Treppenhaus ueber die Zonenflaeche). Zwei kleine Zonen ohne sichtbaren Stempel («Reduit Whg 1», «Reduit Whg 2») blieben uebrig — zwei Bestellungen gingen darum noch als IFC mit interior raus und wurden VOR dem Abholen abgebrochen (zaehlen richtig nicht mit). Die Reduits liessen sich nur aus der Ansicht des jeweils ANDEREN Geschosses (als Projektion) waehlen; im eigenen Geschoss gewinnt die Bodenplatte. Danach sendet die App glb ohne interior, Kameras auto.",
+  "lauf_2": "Demohaus ohne Raeume, Kameras auto (s, sSE, nNW): passed false, Grund mit «NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18.1% …» (sSE) und «… nur 19.8% …» (nNW), qa.geometry status not_measured, 292 s.",
+  "lauf_3": "Demohaus ohne Raeume + Auto-Kamera-Knoten (Eingang, Uebersicht): echtes Durchfallen, Grund «Geometrie 0.5988208376679796 gegen 0.65», Eingang 0.650 bestanden, Uebersicht 0.599 durchgefallen, 218 s.",
+  "lauf_4": "wie Lauf 2 (Auto-Kamera-Knoten wieder entfernt, Kameras auto), damit der 18-%-Fall das Hauptbild fuer Inspektor und Kuratierkarte ist: dasselbe Verdikt wie Lauf 2 (18.1 % / 19.8 %), 306 s.",
+  "testbau": "Nicht gerechnet: das Bestehen kam schon aus Lauf 1 (passed true), und K3/K4 brauchten den 18-%-Fall als letzten Lauf; so blieb es bei den vier kurzen GPU-Laeufen des Auftrags. Ein Bestehen von AUSSEN ist damit am Geraet nicht gezeigt.",
+  "gpu": "Karte vor jedem Lauf frei, kein Sprachmodell geladen; Sperre je Lauf genommen und sofort freigegeben."
+ },
+ "schritte": {
+  "K1": {
+   "antwort": "ja",
+   "satz": "In allen vier Laeufen sagen Kachel (Bildvergleich-Knoten), Abzeichen am Hauptbild und Verlauf-Punkt dasselbe; der Verlauf am Ende: Lauf 4 nicht beurteilbar, Lauf 3 durchgefallen, Lauf 2 nicht beurteilbar, Lauf 1 bestanden (aria «Lauf n von hh:mm, <Urteil>, gross anzeigen»).",
+   "tabelle": [
+    {
+     "lauf": "1 · 14:06 · innen, passed true",
+     "kachel": "QA ok ⚠ (--ok)",
+     "verlauf": "bestanden (vis-verlauf-punkt--bestanden)"
+    },
+    {
+     "lauf": "2 · 14:23 · 18-%-Fall",
+     "kachel": "QA nicht beurteilbar ⚠ (--neutral)",
+     "verlauf": "nicht beurteilbar (Punkt hohl), Abzeichen «LAUF 2 · 14:23 nicht beurteilbar»"
+    },
+    {
+     "lauf": "3 · 14:28 · 0.599 gegen 0.65",
+     "kachel": "QA ✗ ⚠ (--fehl)",
+     "verlauf": "durchgefallen (Punkt --durchgefallen), Abzeichen «LAUF 3 · 14:28 durchgefallen»"
+    },
+    {
+     "lauf": "4 · 14:35 · 18-%-Fall",
+     "kachel": "QA nicht beurteilbar ⚠ (--neutral)",
+     "verlauf": "nicht beurteilbar, Abzeichen «LAUF 4 · 14:35 nicht beurteilbar»"
+    }
+   ],
+   "bild": "auf-20261008-268-k1.png (Render-Knoten nach Lauf 4 mit Verlauf 4/3/2/1 und Kachel im Bildvergleich-Knoten)"
+  },
+  "K2": {
+   "antwort": "ja",
+   "satz": "Grosse Ansicht, Treue zur Geometrie: Lauf 1 (innen, bestanden) und Lauf 3 (durchgefallen) «keine Gebäude-Zahl geliefert — Urteil und Zahl im Grund», Lauf 2 (18-%-Fall) «nicht anwendbar — siehe Grund»; kein «Grundlage widerrufen» mehr."
+  },
+  "K3": {
+   "antwort": "ja",
+   "satz": "Inspektor beim 18-%-Fall (Lauf 4): «QA-Verdikt: nicht beurteilbar», «Geometrie-Status: nicht gemessen», Grund ungekuerzt unter «QA-Vorbehalt», unter BEWERTUNG nur «Nicht beurteilbar — der Grund steht unter «QA-Vorbehalt», keine Wertung.» — im ganzen Inspektor kein «zurueckgezogen»."
+  },
+  "K4": {
+   "antwort": "ja",
+   "satz": "Kuratierkarte je Kamera beim 18-%-Fall: «s: nicht gemessen», «sSE: nicht gemessen», «nNW: nicht gemessen» (qa_je_kamera mit status not_measured) statt «ohne QA»; bei Lauf 3 wie zuvor «Eingang: bestanden» / «Übersicht: durchgefallen»."
+  },
+  "K5": {
+   "antwort": "ja",
+   "satz": "Der Grund sagt «nur 18.1%» (sSE) und «nur 19.8%» (nNW), mit einer Stelle — kein «20 %» mehr vor «weniger als 20 %»; die Werte sind am Demohaus heute 18.1/19.8 statt der erwarteten 17.x/19.9, die Rundung stimmt."
+  }
+ },
+ "urteil": "Ja — render-verlauf, verlauf-nachgang und nicht-beurteilbar koennen zusammen (als Kopf e6f775995) zu Int 1: Kachel und Verlauf urteilen in WebKitGTK bei echten Abholer-Laeufen gleich (bestanden / durchgefallen / nicht beurteilbar), und die Saetze aus K2–K5 stehen so am Geraet.",
+ "auffaelliges": [
+  "Inspektor beim ECHTEN Durchfallen (Lauf 3): «QA-Verdikt: verfehlt», darunter unter BEWERTUNG weiterhin «Bewertung zurueckgezogen — die Grundlage dieser Zahlen ist widerlegt. Die Bildseite liefert die tragfaehigen Werte nach.» (Lage widerrufen, weil kein rho_maske). Nicht Teil von K3, liest sich neben einem gefaellten Urteil aber widerspruechlich — der Verlauf hat das «zurueckgezogen» schon verloren, der Inspektor nicht.",
+  "K5-Schreibweise: «18.1%» ohne Leerzeichen, im selben Satz «20 %» mit Leerzeichen (Bildseite, kosmo_szene._lage_ohne_urteil).",
+  "Raeume loeschen: die zwei Reduits haben keinen sichtbaren Raumstempel und sind im eigenen Geschoss nicht anklickbar (Bodenplatte gewinnt), nur aus dem anderen Geschoss als Projektion; ohne Blick in die Bestellung (model.ifc statt model.glb) faellt das nicht auf. Ein Versuch, sie per Rahmen zu waehlen, verschob stattdessen die Nordwand — sofort rueckgaengig gemacht, die folgenden Bestellungen trugen wieder das unveraenderte Haus (glb, gleiche rho wie Lauf 2 in Lauf 4).",
+  "Die App hat ein zweites, verstecktes Webview (innerWidth 0), das dieselbe index.html laedt — eine Messhilfe laeuft darum zweimal; fuer kuenftige Proben einplanen.",
+  "Waehrend der Probe bekamen die Owner-Dienste Bruecke 8600 und vite 5183 neue Prozessnummern (von anderer Seite neu gestartet; von hier nicht beruehrt). Port 8630 gehoerte die ganze Zeit der Owner-App.",
+  "In /var/crash liegt ein WebKitWebProcess-Bericht (SIGSEGV, 14:13) mit Arbeitsverzeichnis im Ablageordner eines ANDEREN Helfers — weder diese Test-App noch die Owner-App (deren Arbeitsverzeichnis ist das Heimverzeichnis); nicht geloescht, nur gemeldet."
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (eigene App erzeugte keinen Absturzbericht), danach per gemerkter PID Bruecke, Messkanal, Sitzungs-DBus, Namensraum und zuletzt Xvfb; keine Restprozesse. Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Ablage, eigene Bildschirmfotos und Hilfsskripte geloescht; GPU-Sperre frei; nur Ergebnis und k1-Bild abgelegt, nichts committet, nichts gepusht; installierte App, Port 8630, Bruecke 8600 und vite 5183 unberuehrt."
+}
