@@ -7714,7 +7714,7 @@ Bekannt und ausdrücklich nicht erledigt:
       *(07.10.2026: (A) es liegt an der **Kamera** — ohne Standpunkt griff die unkomponierte Schrägsicht, mit `s` besteht dieselbe Mappe mit 0,91; (B) nicht reproduzierbar, Reihenfolge — Protokoll 74 §61)*
 - [x] **Kern (v0.1.8):** «Anwenden» ohne Standpunkt rechnet frontal von Süden wie der Abholer (`arbeitsgang.STANDPUNKT_VORGABE`), mit Satz im Ergebnis (`standpunkt_vorgabe`). *(07.10.2026; `tests/test_standpunkt_vorgabe.py`; am Gerät unbestätigt — die Vorführmappe muss danach ohne Kamera bestehen: `auf-20261007-262`; **am Gerät bestätigt 08.10.2026**: besteht ohne Kamera mit 0,9117, direkt und über den Dienst, bitgleich mit 261 A1)*
 - [x] **Fläche (Dienst):** `standpunkt_vorgabe` im Ergebnis des Laufstands weitergeben (Befund 1 aus `auf-20261007-262`). *(08.10.2026, `oberflaeche/server.py`; Protokoll `docs/VISBOX_PROTOKOLL.md`; Dienst-Neustart angesagt)*
-- [ ] **Fläche/iPad:** den Satz `standpunkt_vorgabe` sichtbar zeigen — erst zeichnen (Entwurfsfläche), dann bauen.
+- [x] **Fläche/iPad:** den Satz `standpunkt_vorgabe` sichtbar zeigen — Owner-Entscheid 73 (08.10.2026), Bau siehe unten.
 - [x] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
       *(01.10.2026: als Schritt A7 in `auf-20261001-235` gelegt)*
 - [x] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
@@ -7784,7 +7784,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **KosmoVis drüben:** Korrektur auf «claude/kosmovis-v018-nicht-beurteilbar»: Reihenfolge in `bewertungsLage`, Verlauf-Punkt = Urteil der Kachel, Treue ohne Gebäude-Zahl; Proben mit realistischem Ergebnis ohne Maskenfelder. Danach kurze WebKitGTK-Nachprobe, dann beide Zweige an Int 1.
       *(08.10.2026, e6f775995: `qaUrteil` gemeinsam für Kachel und Verlauf; rot vor grün 6/7 → 7/7 mit realistischen Ergebnissen; Kuratierkarte «nicht gemessen» — Protokoll 74 §73)*
 - [ ] **local:** `auf-20261008-268` — Nachprobe in WebKitGTK mit echten Abholer-Läufen; danach alle drei Verlauf-Zweige an Int 1.
-- [ ] **Später (erst zeichnen):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe (Vorschlag des Agenten, ~15 Zeilen).
+- [ ] **KosmoVis drüben (Entscheid 72):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe — erst zeichnen (Blatt 16), dann bauen.
+- [ ] **KosmoVis drüben (Entscheid 71):** Uhrzeitzeile unter den Daumenbildern weglassen (Knoten 14 px niedriger).
+- [ ] **Fläche/iPad (Entscheid 73):** Satz `standpunkt_vorgabe` sichtbar unter dem Bild — erst zeichnen (Blatt 16), dann bauen.
+- [ ] **Integrator, nach v0.1.8 (Entscheid 74):** «nicht beurteilbar» als eigener Zustand im Vertrag — ruhig vorschlagen.
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
