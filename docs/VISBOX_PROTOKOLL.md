@@ -236,6 +236,12 @@ lief ja zu Ende) und `varianten_nicht_begonnen: <zahl>`. *Befund dazu:* Bis dahi
 nächste Variante trotzdem und wurde erst vor ihrem ersten Knoten angehalten — mit einem leeren
 Lauf in der Mappe.
 
+**Ohne bestellten Standpunkt** (seit dem 07.10.2026; in der Antwort seit dem 08.10.2026): Nennt weder
+die Mappe noch der Aufruf `kamera`, `auge`/`blick_auf` oder `innenraum`, rechnet der Lauf frontal von
+Süden (`kamera: "s"`, wie der Abholer). Dann steht im Ergebnis `standpunkt_vorgabe: {kamera, satz}` —
+der Satz ist für einen Menschen geschrieben und kann so gezeigt werden. War ein Standpunkt bestellt,
+ist das Feld `null`.
+
 **Zum Pfad `ordner`:** Er ist ein Pfad **auf der HomeStation**. Die App kennt ihn nur, wenn sie
 ihn gesagt bekommt; wurde der Server mit `--ordner` gestartet, kann sie ihn weglassen. Ein Weg,
 auf dem die App die Projekte der HomeStation auflisten könnte: **nicht vorhanden.**

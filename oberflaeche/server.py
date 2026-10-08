@@ -2604,6 +2604,10 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
             "bilder": list(ergebnis.get("bilder") or []),
             "variantengruppe": ergebnis.get("variantengruppe"),
             "varianten_nicht_begonnen": ergebnis.get("varianten_nicht_begonnen"),
+            # DER STANDPUNKT, DEN NIEMAND BESTELLT HAT (auf-20261007-262, Befund 1): Die
+            # Bibliothek sagte ihn seit dem 07.10.2026 im Rueckgabewert — und hier fiel er
+            # weg. `None`, wenn ein Standpunkt bestellt war.
+            "standpunkt_vorgabe": ergebnis.get("standpunkt_vorgabe"),
         }
     except (arbeitsgang.ArbeitsgangError, projekt.ProjektError,
             kette.KettenError) as fehler:

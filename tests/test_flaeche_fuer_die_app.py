@@ -978,3 +978,18 @@ def test_die_seite_zeigt_und_ruft_was_die_app_braucht(sicht_mit_allem, tmp_path)
                           timeout=60)
     assert lauf.returncode == 0, lauf.stderr
     assert lauf.stdout.strip() == "alles gut", lauf.stdout + lauf.stderr
+
+
+def test_die_standpunkt_vorgabe_kommt_ueber_die_leitung(server, mappe, monkeypatch):
+    """Befund 1 aus ``auf-20261007-262``: Der Satz stand im Rückgabewert von ``rechne``,
+    aber weder in der Antwort noch im Fortschritt des Dienstes."""
+    _haenge_ein(monkeypatch, _Werkbank())
+    vorgabe = _rechne_und_warte(server, mappe)["stand"]["ergebnis"]["standpunkt_vorgabe"]
+    assert vorgabe["kamera"] == "s"
+    assert vorgabe["satz"].startswith("Kein Standpunkt bestellt")
+
+
+def test_mit_bestelltem_standpunkt_steht_keine_vorgabe_da(server, mappe, monkeypatch):
+    _haenge_ein(monkeypatch, _Werkbank())
+    stand = _rechne_und_warte(server, mappe, einstellungen={"kamera": "nNW"})["stand"]
+    assert stand["ergebnis"]["standpunkt_vorgabe"] is None

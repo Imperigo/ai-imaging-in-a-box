@@ -7712,8 +7712,9 @@ Bekannt und ausdrücklich nicht erledigt:
       *(07.10.2026: eine Ladung je Auftrag, bitgleich, Spitze nicht höher, Dienst danach 654 MiB; z-image-turbo 64,7 → 54,2 s; Qwen kaum schneller, Variante 1 langsamer — Protokoll 74 §60)*
 - [x] **local:** `auf-20261007-261` — (A) Warum fällt die Prüfung an der Vorführmappe jetzt durch (218 bestand mit 0,81–0,97)? Startwert, Weg, Kamera oder Stand getrennt. (B) Ist das erste Qwen-Bild nach dem Umbau reproduzierbar langsamer?
       *(07.10.2026: (A) es liegt an der **Kamera** — ohne Standpunkt griff die unkomponierte Schrägsicht, mit `s` besteht dieselbe Mappe mit 0,91; (B) nicht reproduzierbar, Reihenfolge — Protokoll 74 §61)*
-- [x] **Kern (v0.1.8):** «Anwenden» ohne Standpunkt rechnet frontal von Süden wie der Abholer (`arbeitsgang.STANDPUNKT_VORGABE`), mit Satz im Ergebnis (`standpunkt_vorgabe`). *(07.10.2026; `tests/test_standpunkt_vorgabe.py`; am Gerät unbestätigt — die Vorführmappe muss danach ohne Kamera bestehen: `auf-20261007-262`)*
-- [ ] **Kern/Fläche:** den Satz `standpunkt_vorgabe` auf der Fläche und im iPad zeigen — erst zeichnen (Entwurfsfläche), dann bauen. Heute steht er nur im Rückgabewert von `rechne`.
+- [x] **Kern (v0.1.8):** «Anwenden» ohne Standpunkt rechnet frontal von Süden wie der Abholer (`arbeitsgang.STANDPUNKT_VORGABE`), mit Satz im Ergebnis (`standpunkt_vorgabe`). *(07.10.2026; `tests/test_standpunkt_vorgabe.py`; am Gerät unbestätigt — die Vorführmappe muss danach ohne Kamera bestehen: `auf-20261007-262`; **am Gerät bestätigt 08.10.2026**: besteht ohne Kamera mit 0,9117, direkt und über den Dienst, bitgleich mit 261 A1)*
+- [x] **Fläche (Dienst):** `standpunkt_vorgabe` im Ergebnis des Laufstands weitergeben (Befund 1 aus `auf-20261007-262`). *(08.10.2026, `oberflaeche/server.py`; Protokoll `docs/VISBOX_PROTOKOLL.md`; Dienst-Neustart angesagt)*
+- [ ] **Fläche/iPad:** den Satz `standpunkt_vorgabe` sichtbar zeigen — erst zeichnen (Entwurfsfläche), dann bauen.
 - [x] **local:** nach dem Einspielen die Dienst-Unit neu kopieren (PYTHONUNBUFFERED) — mit der Sammel-Nachprobe ansagen.
       *(01.10.2026: als Schritt A7 in `auf-20261001-235` gelegt)*
 - [x] **Kern:** `POST /api/verbinden` am Python-Server ohne Anmeldung mit Grössengrenze lesen (Befund Vermittler-Durchsicht).
@@ -7764,7 +7765,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten bauen, nach Abnahme des Blatts, auf eigenem Zweig.
       *(07.10.2026: Zweig «claude/kosmovis-v018-render-verlauf», Kopf 5fdf523be; nur in Chromium geprüft — Protokoll 74 §62)*
 - [ ] **local:** `auf-20261008-264` — F6 am vollständigen Demohaus: Stile in der glb, Tiefe gleich, sieht die Soll-Tiefe das Dach? Danach Antwort an den Integrator.
-- [ ] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
+- [x] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
+      *(08.10.2026: V1–V8 alle ja auf 5fdf523be, 6 echte Läufe; Zweig an Int 1 gemeldet. Nachgang: Ortszeit, fortlaufende Laufnummer, «nicht anwendbar» bei Innenansicht, undurchsichtige grosse Ansicht — Zweig «claude/kosmovis-v018-verlauf-nachgang», Protokoll 74 §64)*
+- [ ] **KosmoVis drüben:** Verlauf-Nachgang bauen, in WebKitGTK kurz nachprüfen lassen, an Int 1 melden.
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
