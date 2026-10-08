@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-269",
+  "art": "frage",
+  "beschreibung": "E191: Handerkennung OWLv2 base an den 80 Bildern aus 251/253 messen — Treffer bei den Hand-Bildern, Szenenverlust, Sekunden je Bild.",
+  "anweisung": "=== HANDERKENNUNG OWLv2 AN DER ECHTEN 360-AUFNAHME MESSEN (E191) ===\n\nWORUM ES GEHT\n  Owner-Entscheid E191 (08.10.2026): ein zweites Modell nur fuer Haende, gewaehlt ist\n  «A: OWLv2 base» (Hugging Face: google/owlv2-base-patch16-ensemble, Gewichte Apache-2.0).\n  Anlass: In deinem 253/254 deckt DETR die filmende Person in 38 von 41 Bildern; verfehlt werden\n  Bilder, auf denen nur die nackte Hand am unteren Rand steht. OWLv2 sucht im Bild nach einem\n  Wort («hand») und liefert Rechtecke; die Maske waere das Rechteck plus Saum.\n  Dieser Auftrag MISST NUR. Eingebaut wird erst nach der Messung, und zwar von KosmoPrepare\n  (core/person_maske.py). B (SAM 2.1, genaue Umrisse) kommt nur, wenn die Messung zeigt, dass das\n  Rechteck zu viel Szene wegnimmt — also hier NICHT laden.\n\nA) UMGEBUNG\n  .venv-person aus 253 weiterverwenden; nichts Neues installieren, ausser transformers kennt\n  Owlv2ForObjectDetection nicht (dann melden, NICHT aktualisieren). Melde die Fassungen von torch\n  und transformers.\n\nB) GEWICHTE: ABLAGE, PRUEFSUMME, LIZENZ\n  Ablage ausserhalb jedes Repos: ~/.kosmoprepare/modelle/owlv2-base-patch16-ensemble/\n  (im Ergebnis nur so, mit «~»). Laden mit\n    huggingface_hub.snapshot_download(\"google/owlv2-base-patch16-ensemble\", local_dir=<Ordner>,\n        allow_patterns=[\"*.json\",\"*.safetensors\",\"*.txt\",\"*.md\"])\n  Melden: Commit-Kennung der Revision, Dateien mit Groesse und SHA-256, die Lizenzzeile aus\n  README.md woertlich. Laedt beim ersten Gebrauch etwas NACH (Backbone, Tokenizer), dann: was,\n  woher, Lizenz, SHA-256.\n\nC) MESSUNG AN DENSELBEN 80 BILDERN WIE 251/253 (nur lesen, Arbeitsordner nicht veraendern)\n  Je Ansicht back/front/left/right Bild 1, 13, …, 229. Darunter die 41 Bilder mit filmender\n  Person (251 «ja»); die uebrigen 39 sind die Probe fuer den Szenenverlust.\n  Je Bild Owlv2Processor + Owlv2ForObjectDetection auf der Grafikkarte,\n  post_process_object_detection mit target_sizes = Bildgroesse. Zwei Suchwoerter getrennt:\n  «a photo of a hand» und «a hand». Je Suchwort drei Schwellen: 0.1, 0.2, 0.3 (OWLv2 liefert\n  niedrige Werte; die Vorgabe des Prozessors nennen).\n  Maske = jedes Rechteck plus Saum von 2.5 % der Bildbreite je Seite (wie bei DETR in\n  core/person_maske.py), auf das Bild beschnitten.\n  Je Bild, Suchwort und Schwelle melden: Anzahl Rechtecke, hoechster Score, Anteil der\n  Bildflaeche unter der Maske, Kasten (x0,x1,y0,y1 als Anteil, y nach unten).\n  Auswerten:\n    - HAND-BILDER: die Bilder, die in 253 als «verfehlt» stehen bzw. in 254 nicht ganz gedeckt\n      waren (Hand allein am unteren Rand; zehn in «front», zwei in «left» — nenne die Liste,\n      die du nimmst). Je Bild: Hand getroffen ja/nein (Rechteck ueberdeckt die Hand; ansehen).\n    - DIE 41 ZUSAMMEN: wie viele sind gedeckt von DETR allein (aus 254), von OWLv2 allein, und\n      von DETR UND OWLv2 zusammen?\n    - SZENENVERLUST: in den 39 Bildern ohne filmende Person mittlerer und groesster maskierter\n      Anteil durch OWLv2; jedes Rechteck dort ansehen: fremde Hand (Passant — kein Fehler, aber\n      nennen) oder gar keine Hand (was dann: Tuergriff, Ast, Plakat …)?\n    - in den 41: wie viel Flaeche nimmt das Rechteck AUSSER der Hand weg (grob, Anteil des\n      Rechtecks, der nicht Hand ist) — das ist die Frage, ob B noetig wird.\n  Laufzeit je Bild auf der Grafikkarte (ohne erstes Laden) und hoechster Speicherbedarf\n  (torch.cuda.max_memory_allocated). Masken nur im Wegwerfordner ansehen, danach loeschen.\n\nWAS DU NICHT TUST\n  Kein SAM, kein YOLO/Ultralytics (AGPL), kein anderes Modell. Die Kette nicht neu fahren,\n  core/person_maske.py und core/splat_maske.py nicht aendern, im Klon nichts committen. Keine\n  Bilder, Masken oder Gewichte ins Repo (Regel 3: echte Aufnahme). Keine Pfade mit\n  Benutzernamen, keine Host- oder Netznamen, keine Tokens im Ergebnis. Leistungsgrenze 400 W.\n\nRUECKGABE\n  A Fassungen torch/transformers; ob Owlv2 ohne Aktualisierung lief.\n  B Ablageort (mit ~), Revision, Dateien mit Groesse und SHA-256, Lizenzzeile woertlich, Nachladen.\n  C Tabelle je Bild x Suchwort x Schwelle; Hand-Bilder getroffen je Einstellung; die 41 gedeckt\n    (DETR / OWLv2 / beide); Szenenverlust Mittel/Maximum samt was dort erkannt wurde; Anteil des\n    Rechtecks, der nicht Hand ist; Laufzeit; Speicher.\n  Drei Urteilssaetze: Trifft OWLv2 die Hand dort, wo DETR sie verfehlt (mit welchem Suchwort und\n  welcher Schwelle)? Wie viel Szene kostet das Rechteck? Reicht das Rechteck, oder braucht es B?",
+  "erstellt": "2026-10-08T19:30:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 247/249 (nur am Heimrechner)",
+    "erzeugen_mit": null
+  },
+  "params": {
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-254",
+    "modell": "google/owlv2-base-patch16-ensemble",
+    "bilder_je_ansicht": 20,
+    "owner_entscheid": "E191"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Nur die Gewichte unter ~/.kosmoprepare/modelle/ laden; in .venv-person nichts installieren.",
+    "hinweise": [
+      "Arbeitsordner aus 243, 247, 249 nicht veraendern.",
+      "Keine Bilder, Masken oder Gewichte ins Repo.",
+      "Kein SAM, kein YOLO/Ultralytics (AGPL)."
+    ]
+  },
+  "rueckgabe": [
+    "A Fassungen, Owlv2 ohne Aktualisierung.",
+    "B Ablageort, Revision, Dateien mit SHA-256, Lizenzzeile, Nachladen.",
+    "C Tabelle je Bild/Suchwort/Schwelle; Hand-Bilder getroffen; die 41 gedeckt (DETR/OWLv2/beide); Szenenverlust; Rechteck ausser Hand; Laufzeit; Speicher.",
+    "Drei Urteilssaetze."
+  ],
+  "rang": 56
+}
