@@ -7781,7 +7781,10 @@ Bekannt und ausdrücklich nicht erledigt:
       *(08.10.2026, 81d4dcc50: `nichtBeurteilbarLautGrund`, fünfte Lage in `bewertungsLage`; rot vor grün 3/5 → 5/5; Chromium grün bis auf ein Flattern in einer fremden Datei — Protokoll 74 §70)*
 - [x] **local:** `auf-20261008-267` — «nicht beurteilbar» in WebKitGTK am echten Demohaus; danach Nachgang und Anzeige zusammen an Int 1.
       *(08.10.2026: B1, B2 ja; B3 teils; B4 im Verlauf NEIN — gemeinsame Ursache: unser Abholer liefert nie rho_maske, darum «widerrufen» vor allem anderen. Korrektur auf dem Zweig beauftragt — Protokoll 74 §72)*
-- [ ] **KosmoVis drüben:** Korrektur auf «claude/kosmovis-v018-nicht-beurteilbar»: Reihenfolge in `bewertungsLage`, Verlauf-Punkt = Urteil der Kachel, Treue ohne Gebäude-Zahl; Proben mit realistischem Ergebnis ohne Maskenfelder. Danach kurze WebKitGTK-Nachprobe, dann beide Zweige an Int 1.
+- [x] **KosmoVis drüben:** Korrektur auf «claude/kosmovis-v018-nicht-beurteilbar»: Reihenfolge in `bewertungsLage`, Verlauf-Punkt = Urteil der Kachel, Treue ohne Gebäude-Zahl; Proben mit realistischem Ergebnis ohne Maskenfelder. Danach kurze WebKitGTK-Nachprobe, dann beide Zweige an Int 1.
+      *(08.10.2026, e6f775995: `qaUrteil` gemeinsam für Kachel und Verlauf; rot vor grün 6/7 → 7/7 mit realistischen Ergebnissen; Kuratierkarte «nicht gemessen» — Protokoll 74 §73)*
+- [ ] **local:** `auf-20261008-268` — Nachprobe in WebKitGTK mit echten Abholer-Läufen; danach alle drei Verlauf-Zweige an Int 1.
+- [ ] **Später (erst zeichnen):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe (Vorschlag des Agenten, ~15 Zeilen).
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
