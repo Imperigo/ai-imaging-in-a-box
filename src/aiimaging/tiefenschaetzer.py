@@ -1481,8 +1481,8 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
             auskunft = (f" Gebäude-Prüfung als Auskunft (nicht geeicht, urteilt nicht): "
                         f"Tiefenordnung auf dem Haus {gerichtet:+.2f}.")
         begruendung = (
-            f"Nicht beurteilbar — das Haus füllt nur {anteil:.1%} des Bildes, weniger als "
-            f"{geometrie_qa.ANTEIL_GEMESSEN_NIEDRIG:.0%}; der Gesamtwert ist hier nicht "
+            f"Nicht beurteilbar — das Haus füllt nur {anteil * 100:.1f} % des Bildes, weniger "
+            f"als {geometrie_qa.ANTEIL_GEMESSEN_NIEDRIG * 100:.0f} %; der Gesamtwert ist hier nicht "
             f"anwendbar.{auskunft} Gemessen war: {urteil['begruendung']}")
 
     return {

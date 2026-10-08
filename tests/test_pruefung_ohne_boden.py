@@ -65,7 +65,7 @@ def test_ein_kleines_haus_ist_nicht_beurteilbar_statt_durchgefallen(bild):
     assert urteil["anteil_soll"] == pytest.approx(144 / 1024)
     assert urteil["gesamtwert_anwendbar"] is False
     assert urteil["bestanden"] is None
-    assert urteil["begruendung"].startswith("Nicht beurteilbar — das Haus füllt nur 14.1%")
+    assert urteil["begruendung"].startswith("Nicht beurteilbar — das Haus füllt nur 14.1 %")
     assert "der Gesamtwert ist hier nicht anwendbar" in urteil["begruendung"]
 
 
@@ -139,7 +139,7 @@ def test_der_grund_sagt_nicht_beurteilbar_und_nicht_durchgefallen():
     e = ks.als_ergebnis("vis-20261008120000-abc123", ["a.png"],
                         geometrie_urteil=_urteil_unter_zwanzig())
     grund = ks.nur_vertragsfelder(e)["qa"]["verdict"]["reason"]
-    assert grund.startswith("NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 17.9%")
+    assert grund.startswith("NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 17.9 %")
     assert "nicht durchgefallen, sondern nicht beurteilbar" in grund
     assert "NICHT GEMESSEN" not in grund
 
@@ -150,4 +150,4 @@ def test_knapp_unter_zwanzig_wird_nicht_auf_zwanzig_gerundet():
     urteil = dict(_urteil_unter_zwanzig(), anteil_soll=0.199)
     grund = ks.nur_vertragsfelder(ks.als_ergebnis(
         "vis-20261008120000-abc123", ["a.png"], geometrie_urteil=urteil))["qa"]["verdict"]["reason"]
-    assert "nur 19.9%" in grund
+    assert "nur 19.9 %" in grund

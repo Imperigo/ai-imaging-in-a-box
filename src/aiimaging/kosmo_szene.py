@@ -2329,8 +2329,10 @@ def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
         # Wahrheitswert — der Satz sagt, dass `false` hier nicht durchgefallen heisst.
         anteil = geometrie_urteil.get("anteil_soll")
         # Eine Stelle nach dem Komma: 0,199 hiess mit {:.0%} «nur 20 % … weniger als 20 %»
-        # (HomeStation, auf-20261008-267).
-        wieviel = f"nur {anteil:.1%}" if isinstance(anteil, (int, float)) else "weniger"
+        # (HomeStation, auf-20261008-267). Mit Leerzeichen vor «%», wie «20 %» im selben Satz
+        # (auf-20261008-268).
+        wieviel = (f"nur {anteil * 100:.1f} %" if isinstance(anteil, (int, float))
+                   else "weniger")
         return (f"NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt {wieviel} des "
                 f"Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. "
                 f"'passed: false' heisst hier nicht durchgefallen, sondern nicht "

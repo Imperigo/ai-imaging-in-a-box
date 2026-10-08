@@ -7783,7 +7783,9 @@ Bekannt und ausdrücklich nicht erledigt:
       *(08.10.2026: B1, B2 ja; B3 teils; B4 im Verlauf NEIN — gemeinsame Ursache: unser Abholer liefert nie rho_maske, darum «widerrufen» vor allem anderen. Korrektur auf dem Zweig beauftragt — Protokoll 74 §72)*
 - [x] **KosmoVis drüben:** Korrektur auf «claude/kosmovis-v018-nicht-beurteilbar»: Reihenfolge in `bewertungsLage`, Verlauf-Punkt = Urteil der Kachel, Treue ohne Gebäude-Zahl; Proben mit realistischem Ergebnis ohne Maskenfelder. Danach kurze WebKitGTK-Nachprobe, dann beide Zweige an Int 1.
       *(08.10.2026, e6f775995: `qaUrteil` gemeinsam für Kachel und Verlauf; rot vor grün 6/7 → 7/7 mit realistischen Ergebnissen; Kuratierkarte «nicht gemessen» — Protokoll 74 §73)*
-- [ ] **local:** `auf-20261008-268` — Nachprobe in WebKitGTK mit echten Abholer-Läufen; danach alle drei Verlauf-Zweige an Int 1.
+- [x] **local:** `auf-20261008-268` — Nachprobe in WebKitGTK mit echten Abholer-Läufen; danach alle drei Verlauf-Zweige an Int 1.
+      *(08.10.2026: K1–K5 ja — Kachel und Verlauf in allen vier echten Läufen gleich; die drei Zweige als e6f775995 an Int 1 gemeldet. Offen: ein Bestehen von aussen ungeprüft; Inspektor beim echten Durchfallen «verfehlt» + «zurückgezogen» → Feinschliff-Zweig; «18.1%» ohne Leerzeichen → bei uns behoben, jetzt «18.1 %»)*
+- [ ] **Int 1:** die drei Verlauf-Zweige einspielen (e6f775995) — nach seinem Zeitplan.
 - [ ] **KosmoVis drüben (Entscheid 72):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe — erst zeichnen (Blatt 16), dann bauen.
 - [ ] **KosmoVis drüben (Entscheid 71):** Uhrzeitzeile unter den Daumenbildern weglassen (Knoten 14 px niedriger).
 - [ ] **Fläche/iPad (Entscheid 73):** Satz `standpunkt_vorgabe` sichtbar unter dem Bild — erst zeichnen (Blatt 16), dann bauen.
