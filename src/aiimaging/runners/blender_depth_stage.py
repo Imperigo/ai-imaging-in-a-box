@@ -63,7 +63,8 @@ liefern den Farbwert exakt so, wie er gesetzt wurde.
 Aufruf (immer über `aiimaging.seams`, nicht von Hand):
     blender --background --python blender_depth_stage.py -- \
         --glb <in.glb> --out <verzeichnis> [--aufloesung 512] [--samples 16] \
-        [--rotiere-z-up] [--ohne-beauty] [--ohne-material-id]
+        [--rotiere-z-up] [--ohne-beauty] [--ohne-material-id] \
+        [--kontext-ply <splat.ply> [--kontext-matrix=m0,...,m15]]
 """
 from __future__ import annotations
 
@@ -190,6 +191,16 @@ def _argumente():
                          "<out>/herzschlag.txt schreiben. Ohne Angabe: keines. Siehe "
                          "`_herzschlag_starten` — es ist ein LEBENSzeichen und kein "
                          "Fortschrittszeichen, und der Unterschied ist der ganze Punkt.")
+    # DER KONTEXT (Owner-Entscheid 76, 08.10.2026): ein Splat als UMGEBUNG. Ohne Angabe
+    # entsteht nichts davon — kein Objekt, kein Berichtsblock, keine Zusatzdatei —, und
+    # jeder Lauf ohne Splat bleibt, was er war. Siehe `_kontext_laden`.
+    ap.add_argument("--kontext-ply", dest="kontext_ply", default=None,
+                    help="3DGS-PLY als Umgebung: sichtbar in Beauty und Tiefe, NICHT in "
+                         "Huellbox, Rahmung und Bauwerksmaske")
+    ap.add_argument("--kontext-matrix", dest="kontext_matrix", default=None,
+                    help="16 Zahlen 'm0,...,m15', 4x4 ZEILENWEISE, Lage des Splats in der "
+                         "glTF-Welt (Meter, Y oben). Ohne Angabe die Einheit. Siehe "
+                         "aiimaging.kontext")
     return ap.parse_args(argv)
 
 
@@ -447,6 +458,26 @@ def _huellbox_aus_text(text: str):
     return lo, hi
 
 
+#: Die Marke am Kontext-Objekt (eine Objekteigenschaft). An ihr — und nur an ihr — erkennen
+#: Hüllbox, Material-ID-Tabelle und Meshzählung, dass ein Objekt NICHT zum Modell gehört.
+#: Ein Name wäre die schwächere Wahl: Ein Bauteil darf heissen, wie es will.
+KONTEXT_MARKE = "aiimaging_kontext"
+KONTEXT_OBJEKT = "Kontext_Splat"
+KONTEXT_FARBE = "kontext_farbe"
+KONTEXT_RADIUS = "kontext_radius"
+#: Was ein 3DGS-PLY mindestens tragen muss. ``rot_*`` fehlt mit Absicht: Kugeln haben keine
+#: Ausrichtung.
+KONTEXT_SPALTEN = ("f_dc_0", "f_dc_1", "f_dc_2", "opacity", "scale_0", "scale_1", "scale_2")
+
+
+def _ist_kontext(obj) -> bool:
+    """Gehört dieses Objekt zum Kontext (Splat) und damit NICHT zum Modell?"""
+    try:
+        return bool(obj.get(KONTEXT_MARKE))
+    except Exception:                                      # noqa: BLE001
+        return False
+
+
 def _bbox_aller_meshes():
     """Achsparallele Bounding-Box aller Mesh-Objekte in Weltkoordinaten.
 
@@ -467,7 +498,7 @@ def _bbox_aller_meshes():
     lo = [float("inf")] * 3
     hi = [float("-inf")] * 3
     for obj in bpy.data.objects:
-        if obj.type != "MESH":
+        if obj.type != "MESH" or _ist_kontext(obj):
             continue
         for ecke in obj.bound_box:
             welt = obj.matrix_world @ __import__("mathutils").Vector(ecke)
@@ -566,6 +597,23 @@ def _gelaendeform_modul():
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
         from aiimaging import gelaendeform                   # noqa: PLC0415
         return gelaendeform
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _kontext_modul():
+    """``aiimaging.kontext`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart wie :func:`_sonne_modul`. Von dort kommen die gesetzten Zahlen
+    (Deckkraftschwelle, Radiuskappung), die Lage als Matrix und der Fingerabdruck — damit
+    sie diesseits der Prozessgrenze prüfbar sind. **Ohne das Modul wird abgebrochen**,
+    nicht geraten: Ein geratener Achsentausch legte den Splat auf die Seite, und das Bild
+    sähe trotzdem aus wie eines mit Umgebung.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import kontext                       # noqa: PLC0415
+        return kontext
     except Exception:                                      # noqa: BLE001
         return None
 
@@ -683,7 +731,7 @@ def _bbox_bauwerk():
     # Auskunft, welches Wort der Regel fehlt, wenn die Box nichts verliert.
     groesster = ("", 0.0)
     for obj in bpy.data.objects:
-        if obj.type != "MESH":
+        if obj.type != "MESH" or _ist_kontext(obj):
             continue
         ecken = [obj.matrix_world @ __import__("mathutils").Vector(e)
                  for e in obj.bound_box]
@@ -1098,6 +1146,245 @@ def _sonne_setzen(mitte, spanne: float, a=None):
 
 
 # --------------------------------------------------------------------------------------
+# Kontext — ein Splat als Umgebung (Owner-Entscheid 76, 08.10.2026)
+# --------------------------------------------------------------------------------------
+#
+# **Sichtbar, aber nicht gemessen.** Der Splat steht in Beauty und Tiefe; Hüllbox,
+# Kamera und Bauwerksmaske sehen ihn nicht. Das ist an drei Stellen gesichert:
+#
+# 1. **Reihenfolge.** Er wird erst NACH Hüllbox und Kamera geladen (siehe `main`). Rahmung,
+#    Sichtprüfung der Kamera (`_sicht_frei`) und Sonnenstand sind dann schon gerechnet —
+#    mit der Szene, wie sie ohne Splat wäre.
+# 2. **Marke.** Das Objekt trägt :data:`KONTEXT_MARKE`; `_bbox_aller_meshes`,
+#    `_bbox_bauwerk`, die Meshzählung und `_material_id_zuweisen` lassen es aus. Die Marke
+#    schützt, falls jemand die Reihenfolge einmal ändert.
+# 3. **Eigene Kennung.** Im Material-ID-Pass bekommt er einen Eintrag mit
+#    ``quelle: "kontext"`` — als LETZTEN, damit jede Kennfarbe des Modells dieselbe bleibt
+#    wie ohne Splat. ``aiimaging.maske`` nimmt solche Einträge vor jeder Regel heraus.
+#
+# **Verdecken darf er.** Steht Splat-Geometrie zwischen Kamera und Bauwerk, verdeckt sie es
+# in Tiefe, Beauty und Maske — so sieht die Kamera es auch. Wieviel, misst
+# `_verdeckung_messen` und meldet es im Bericht.
+
+
+def _kontext_laden(a) -> tuple:
+    """Den Splat einlesen, zu Punkten machen, einfärben und in die Welt des Modells legen.
+
+    Returns:
+        ``(objekt, setze_material_knoten, befund)``. Der Knoten ist der «Set Material» der
+        Geometry Nodes — der Material-ID-Pass tauscht dort das Material.
+
+    Wie gerechnet wird (die Zahlen stehen in ``aiimaging.kontext``, GESETZT):
+
+    * **Punkte:** jeder Gaussian wird ein Punkt («Mesh to Points»), Cycles rendert ihn
+      als Kugel. Verworfen wird, was unter ``DECKKRAFT_MIN`` liegt
+      (``sigmoid(opacity)``), und was nicht endlich ist.
+    * **Farbe:** SH-Grad 0, ``rgb = clamp(0,5 + SH_C0 · f_dc)``. Der Wert ist eine
+      Bildfarbe (sRGB); als Emission wird er linear gesetzt, damit im PNG dieselbe Farbe
+      steht. Emission und nicht Principled: Die Farbe eines Splats IST schon das Licht der
+      Aufnahme; noch einmal beleuchtet, sähe er doppelt belichtet aus.
+    * **Radius:** Mittel der zwei grössten ``exp(scale_i)``, mit dem Massstab der Matrix in Meter
+      der Welt gerechnet und auf ``[RADIUS_MIN_M, RADIUS_MAX_M]`` gekappt.
+    * **Lage:** ``kontext.matrix_nach_blender`` — die Matrix gilt in der glTF-Welt, und der
+      Splat bekommt dieselbe Drehung wie das Modell beim Import.
+
+    Raises:
+        RuntimeError: Modul nicht erreichbar, Datei unlesbar, Spalten fehlen, nichts übrig.
+            **Abbruch statt leerem Bild:** Wer einen Splat bestellt und ein Bild ohne
+            bekommt, hält es für eines mit.
+    """
+    import mathutils
+    import numpy as np                                   # mit Blender ausgeliefert
+
+    kx = _kontext_modul()
+    if kx is None:
+        raise RuntimeError(
+            "aiimaging.kontext ist von hier nicht lesbar, und der Kontext braucht von dort "
+            "Lage, Schwellen und Fingerabdruck. Ohne sie wird kein Splat geladen — ein "
+            "geratener Achsentausch legte ihn auf die Seite.")
+    pfad = Path(a.kontext_ply)
+    befund = {"quelle": "splat-ply", **kx.fingerabdruck(pfad)}
+    roh_matrix = None
+    if getattr(a, "kontext_matrix", None):
+        roh_matrix = [float(t) for t in str(a.kontext_matrix).split(",")]
+    m_blender = kx.matrix_nach_blender(roh_matrix,
+                                       z_up_quelle=bool(getattr(a, "rotiere_z_up", False)))
+    welt = mathutils.Matrix([m_blender[4 * z:4 * z + 4] for z in range(4)])
+    massstab = kx.matrix_massstab(m_blender)
+
+    vorher = set(bpy.data.objects)
+    # Achsen ausdrücklich als Einheit: Der PLY-Import dreht sonst nach seinen Vorgaben,
+    # und die Lage hängt allein an der Matrix.
+    bpy.ops.wm.ply_import(filepath=str(pfad), forward_axis="Y", up_axis="Z",
+                          global_scale=1.0)
+    neu = [o for o in bpy.data.objects if o not in vorher]
+    if len(neu) != 1 or neu[0].type != "MESH":
+        raise RuntimeError(f"Der PLY-Import von {pfad.name!r} ergab {len(neu)} Objekt(e) "
+                           f"statt eines Meshes.")
+    roh = neu[0]
+    netz = roh.data
+    n = len(netz.vertices)
+    fehlend = [s for s in KONTEXT_SPALTEN if s not in netz.attributes]
+    if fehlend:
+        raise RuntimeError(
+            f"{pfad.name!r} ist kein 3DGS-Splat: Es fehlen {fehlend}. Eine gewöhnliche "
+            f"Punktwolke hat keine Deckkraft und keine Skala; was hier daraus würde, wäre "
+            f"geraten.")
+
+    def spalte(name):
+        werte = np.empty(n, dtype=np.float32)
+        netz.attributes[name].data.foreach_get("value", werte)
+        return werte.astype(np.float64)
+
+    lage = np.empty(n * 3, dtype=np.float32)
+    netz.vertices.foreach_get("co", lage)
+    lage = lage.reshape(n, 3).astype(np.float64)
+    f_dc = np.stack([spalte(f"f_dc_{i}") for i in range(3)], axis=1)
+    skala = np.stack([spalte(f"scale_{i}") for i in range(3)], axis=1)
+    with np.errstate(over="ignore", invalid="ignore"):
+        deckkraft = 1.0 / (1.0 + np.exp(-spalte("opacity")))
+        radius_splat = np.sort(np.exp(skala), axis=1)[:, 1:].mean(axis=1)
+    endlich = (np.isfinite(lage).all(axis=1) & np.isfinite(f_dc).all(axis=1)
+               & np.isfinite(radius_splat) & np.isfinite(deckkraft))
+    dicht = deckkraft >= kx.DECKKRAFT_MIN
+    behalten = endlich & dicht
+    k = int(behalten.sum())
+    n_rest = sum(1 for at in netz.attributes if at.name.startswith("f_rest_"))
+    bpy.data.objects.remove(roh, do_unlink=True)
+    bpy.data.meshes.remove(netz)
+    if k == 0:
+        raise RuntimeError(
+            f"Vom Splat {pfad.name!r} bleibt nichts: {n} Punkte gelesen, alle unter der "
+            f"Deckkraft {kx.DECKKRAFT_MIN} oder nicht endlich.")
+
+    farbe = np.clip(0.5 + kx.SH_C0 * f_dc[behalten], 0.0, 1.0)
+    linear = np.where(farbe <= 0.04045, farbe / 12.92, ((farbe + 0.055) / 1.055) ** 2.4)
+    rgba = np.concatenate([linear, np.ones((k, 1))], axis=1)
+    welt_radius = radius_splat[behalten] * massstab
+    gekappt = np.clip(welt_radius, kx.RADIUS_MIN_M, kx.RADIUS_MAX_M)
+
+    netz = bpy.data.meshes.new(KONTEXT_OBJEKT)
+    netz.vertices.add(k)
+    netz.vertices.foreach_set("co", lage[behalten].astype(np.float32).ravel())
+    attr = netz.attributes.new(KONTEXT_FARBE, "FLOAT_COLOR", "POINT")
+    attr.data.foreach_set("color", rgba.astype(np.float32).ravel())
+    attr = netz.attributes.new(KONTEXT_RADIUS, "FLOAT", "POINT")
+    # Der Radius steht im Objektraum; die Matrix skaliert ihn danach wieder auf Weltmass.
+    attr.data.foreach_set("value", (gekappt / massstab).astype(np.float32))
+    obj = bpy.data.objects.new(KONTEXT_OBJEKT, netz)
+    bpy.context.scene.collection.objects.link(obj)
+    obj[KONTEXT_MARKE] = True
+    obj.matrix_world = welt
+    # Er leuchtet nicht auf das Modell und spiegelt sich nicht darin: Emission mit der
+    # Stärke 1 wäre sonst eine Lichtquelle aus Tausenden Kugeln. Schatten wirft er.
+    for strahl in ("visible_diffuse", "visible_glossy", "visible_transmission",
+                   "visible_volume_scatter"):
+        if hasattr(obj, strahl):
+            setattr(obj, strahl, False)
+
+    material = bpy.data.materials.new("KONTEXT_Splat")
+    material.use_nodes = True
+    baum = material.node_tree
+    baum.nodes.clear()
+    attribut = baum.nodes.new("ShaderNodeAttribute")
+    attribut.attribute_type = "GEOMETRY"
+    attribut.attribute_name = KONTEXT_FARBE
+    emission = baum.nodes.new("ShaderNodeEmission")
+    emission.inputs["Strength"].default_value = 1.0
+    ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+    baum.links.new(attribut.outputs["Color"], emission.inputs["Color"])
+    baum.links.new(emission.outputs["Emission"], ausgang.inputs["Surface"])
+
+    gruppe = bpy.data.node_groups.new("Kontext_Punkte", "GeometryNodeTree")
+    gruppe.interface.new_socket(name="Geometry", in_out="INPUT",
+                                socket_type="NodeSocketGeometry")
+    gruppe.interface.new_socket(name="Geometry", in_out="OUTPUT",
+                                socket_type="NodeSocketGeometry")
+    rein = gruppe.nodes.new("NodeGroupInput")
+    raus = gruppe.nodes.new("NodeGroupOutput")
+    zu_punkten = gruppe.nodes.new("GeometryNodeMeshToPoints")
+    zu_punkten.mode = "VERTICES"
+    radius = gruppe.nodes.new("GeometryNodeInputNamedAttribute")
+    radius.data_type = "FLOAT"
+    radius.inputs["Name"].default_value = KONTEXT_RADIUS
+    setze = gruppe.nodes.new("GeometryNodeSetMaterial")
+    setze.inputs["Material"].default_value = material
+    gruppe.links.new(rein.outputs[0], zu_punkten.inputs["Mesh"])
+    gruppe.links.new(radius.outputs["Attribute"], zu_punkten.inputs["Radius"])
+    gruppe.links.new(zu_punkten.outputs["Points"], setze.inputs["Geometry"])
+    gruppe.links.new(setze.outputs["Geometry"], raus.inputs[0])
+    modifikator = obj.modifiers.new("Kontext_Punkte", "NODES")
+    modifikator.node_group = gruppe
+
+    # Hüllbox der behaltenen Mittelpunkte in der Welt — gegen sie prüft die Probe die Lage.
+    m = np.array(m_blender, dtype=np.float64).reshape(4, 4)
+    punkte_welt = lage[behalten] @ m[:3, :3].T + m[:3, 3]
+    befund.update({
+        "punkte_gelesen": n,
+        "punkte_gerendert": k,
+        "verworfen_deckkraft": int((endlich & ~dicht).sum()),
+        "verworfen_ungueltig": int((~endlich).sum()),
+        "deckkraft_schwelle": kx.DECKKRAFT_MIN,
+        "farbe": "SH-Grad 0: clamp(0.5 + SH_C0 * f_dc), als Emission; f_rest nicht gelesen",
+        "f_rest_spalten_ignoriert": n_rest,
+        "radius_m": {
+            "regel": ("Mittel der zwei groessten exp(scale_i), mal Massstab der Matrix, "
+                      "gekappt"),
+            "untergrenze": kx.RADIUS_MIN_M, "obergrenze": kx.RADIUS_MAX_M,
+            "min": round(float(gekappt.min()), 6), "max": round(float(gekappt.max()), 6),
+            "median": round(float(np.median(gekappt)), 6),
+            "gekappt_unten": int((welt_radius < kx.RADIUS_MIN_M).sum()),
+            "gekappt_oben": int((welt_radius > kx.RADIUS_MAX_M).sum()),
+        },
+        "matrix_angewandt": roh_matrix is not None,
+        "matrix_bedeutung": ("4x4 zeilenweise, glTF-Welt (Meter, Y oben); in Blender: "
+                             "[Z-up-Korrektur] * R_x(+90) * M"),
+        "matrix_blender": [round(w, 9) for w in m_blender],
+        # Mittelpunkte, ohne Radius — dieselbe Welt wie `bbox` (Blender, Z oben).
+        "huellbox": [[round(float(v), 6) for v in punkte_welt.min(axis=0)],
+                     [round(float(v), 6) for v in punkte_welt.max(axis=0)]],
+        "zaehlt_zur_bauwerksbox": False,
+        "zaehlt_zur_rahmung": False,
+    })
+    return obj, setze, befund
+
+
+#: Name der Material-ID ohne Kontext — derselbe Durchgang, der Splat ausgeblendet.
+MATERIAL_ID_OHNE_KONTEXT = "material_id_ohne_kontext.png"
+
+
+def _verdeckung_messen(ohne_png: Path, mit_png: Path) -> dict:
+    """Wieviele Bildpunkte des MODELLS der Splat verdeckt — aus zwei Material-ID-Bildern.
+
+    Ein Modellpunkt ist einer, der ohne Splat nicht schwarz ist (Bauwerk und Gelände des
+    Modells). Verdeckt ist er, wenn derselbe Punkt mit Splat eine andere Kennfarbe trägt:
+    Eine andere Farbe an dieser Stelle kann nur der Splat davor sein. Billig, weil der
+    Material-ID-Pass ein Sample ohne Lichtwege ist.
+    """
+    import numpy as np
+
+    def lies(pfad):
+        bild = bpy.data.images.load(str(pfad), check_existing=False)
+        try:
+            b, h = bild.size
+            werte = np.empty(b * h * bild.channels, dtype=np.float32)
+            bild.pixels.foreach_get(werte)
+            return np.rint(werte.reshape(h * b, bild.channels)[:, :3] * 255.0).astype(int)
+        finally:
+            bpy.data.images.remove(bild)
+
+    ohne, mit = lies(ohne_png), lies(mit_png)
+    modell = ohne.any(axis=1)
+    verdeckt = modell & (ohne != mit).any(axis=1)
+    n_modell, n_verdeckt = int(modell.sum()), int(verdeckt.sum())
+    return {"modellpunkte_ohne_kontext": n_modell, "davon_verdeckt": n_verdeckt,
+            "anteil": (round(n_verdeckt / n_modell, 6) if n_modell else None),
+            "grund": ("Modellpunkte = nicht schwarz im Material-ID-Pass ohne Splat (Bauwerk "
+                      "und Gelaende des Modells); verdeckt = dort mit Splat eine andere "
+                      "Kennfarbe.")}
+
+
+# --------------------------------------------------------------------------------------
 # Material-ID — Farbverteilung über den Goldenen Winkel
 # --------------------------------------------------------------------------------------
 
@@ -1146,7 +1433,7 @@ def _ist_ifc_knoten(name: str) -> bool:
     return bool(IFC_KNOTEN.match(str(name)))
 
 
-def _material_id_zuweisen() -> tuple[list[dict], int]:
+def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
     """Jedem Material eine ID-Farbe geben und die Szene darauf umstellen.
 
     Returns:
@@ -1173,6 +1460,14 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
     materiallose glb wie zuvor. Darum bleibt beides nebeneinander möglich, und die
     Herkunft steht in jedem Eintrag (`quelle`), damit niemand eine Objekt-Maske für eine
     Material-Maske hält.
+
+    Der Kontext (Splat, 08.10.2026)
+    -------------------------------
+    ``kontext`` ist ``(objekt, setze_material_knoten)`` aus :func:`_kontext_laden` oder
+    ``None``. Der Splat bekommt seinen Eintrag mit ``quelle: "kontext"`` **als letzten** —
+    jede Kennfarbe des Modells bleibt damit dieselbe wie ohne Splat. Sein Material sitzt
+    nicht in einem Slot, sondern im «Set Material» seiner Geometry Nodes und wird dort
+    getauscht.
     """
     tabelle: list[dict] = []
     nach_material: dict[str, int] = {}
@@ -1193,7 +1488,8 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
 
     # Nach Namen sortiert, damit zwei Läufe dieselben Indizes und damit dieselben Farben
     # vergeben. Ohne feste Reihenfolge wäre die Maske nicht reproduzierbar.
-    meshes = sorted((o for o in bpy.data.objects if o.type == "MESH"), key=lambda o: o.name)
+    meshes = sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
+                    key=lambda o: o.name)
     for obj in meshes:
         belegt = [s for s in obj.material_slots if s.material is not None]
         # EIN BAUTEIL AUS UNSERER IFC BEKOMMT SEINE ID JE OBJEKT — auch mit Material
@@ -1219,6 +1515,13 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
                 slot.material = bpy.data.materials[
                     f"MATID_{nach_material[name]:03d}_{name}"
                 ]
+
+    if kontext is not None:
+        obj, setze = kontext
+        setze.inputs["Material"].default_value = eintragen(obj.name, "kontext")
+        # Das Material des Splats ist keines des Modells; `n_materialien` bleibt die Zahl
+        # von ohne Splat.
+        n_echte_materialien -= 1
 
     return tabelle, n_echte_materialien
 
@@ -1661,6 +1964,14 @@ def main() -> int:
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
                       if getattr(a, "kamera_huellbox", None) else (lo, hi))
     _, _, _, kamera_herkunft = _kamera_setzen(kam_lo, kam_hi, a)
+    # DER KONTEXT KOMMT ERST JETZT — nach Hüllbox, Bauwerksbox und Kamera. Alles, was
+    # gemessen und gerahmt wird, ist damit schon gerechnet, und zwar an der Szene ohne
+    # Splat. Siehe `_kontext_laden`.
+    kontext = None
+    kontext_befund = None
+    if getattr(a, "kontext_ply", None):
+        k_obj, k_setze, kontext_befund = _kontext_laden(a)
+        kontext = (k_obj, k_setze)
     mitte = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
     spanne = max(hi[i] - lo[i] for i in range(3)) or 1.0
 
@@ -1704,10 +2015,10 @@ def main() -> int:
 
     # ── Durchgang 2: Material-ID ──────────────────────────────────────────────────────
     tabelle: list[dict] = []
-    n_materialien = len(bpy.data.materials)
+    n_materialien = len(bpy.data.materials) - (1 if kontext is not None else 0)
     material_id_png = out_dir / "material_id.png"
     if not a.ohne_material_id:
-        tabelle, n_materialien = _material_id_zuweisen()
+        tabelle, n_materialien = _material_id_zuweisen(kontext)
         # Der Compositor darf hier nicht mitlaufen: Er schriebe die (unveränderte) Tiefe
         # ein zweites Mal über dieselbe Datei.
         _kompositor_abschalten(szene)
@@ -1727,8 +2038,34 @@ def main() -> int:
         # damit 19 statt 5 Farben, weil jede ID um ±1 zerfaserte und selbst der schwarze
         # Grund zwischen 0 und 1 sprang.
         szene.render.dither_intensity = 0.0
+        if kontext is not None:
+            # ERST OHNE SPLAT, derselbe Durchgang. Das Bild ist die Gegenprobe: Es muss
+            # gleich dem Material-ID-Bild eines Laufs ohne Kontext sein, und aus beiden
+            # zusammen ergibt sich, was der Splat verdeckt (`_verdeckung_messen`).
+            kontext[0].hide_render = True
+            szene.render.filepath = str(out_dir / MATERIAL_ID_OHNE_KONTEXT[:-4])
+            bpy.ops.render.render(write_still=True)
+            kontext[0].hide_render = False
         szene.render.filepath = str(out_dir / "material_id")
         bpy.ops.render.render(write_still=True)
+        if kontext is not None:
+            ohne_png = out_dir / MATERIAL_ID_OHNE_KONTEXT
+            kontext_befund["material_id"] = next(
+                ({"index": e["index"], "quelle": e["quelle"],
+                  "farbe_srgb_8bit": e["farbe_srgb_8bit"]}
+                 for e in tabelle if e["quelle"] == "kontext"), None)
+            # Nur der Dateiname: Er liegt neben `material_id.png` (Regel 3, kein Pfad).
+            kontext_befund["material_id_ohne_kontext_png"] = (
+                MATERIAL_ID_OHNE_KONTEXT if _frisch(ohne_png, beginn) else None)
+            try:
+                kontext_befund["verdeckung"] = _verdeckung_messen(ohne_png, material_id_png)
+            except Exception as e:                       # noqa: BLE001
+                kontext_befund["verdeckung"] = {"anteil": None,
+                                                "grund": f"nicht messbar: {e}"}
+    elif kontext is not None:
+        kontext_befund["material_id"] = None
+        kontext_befund["verdeckung"] = {
+            "anteil": None, "grund": "Ohne Material-ID-Pass nicht gemessen."}
 
     # ── Die Normalisierung passiert NICHT mehr hier ───────────────────────────────────
     # `tiefe_norm.png` entsteht seit dem 18.08.2026 auf der Produktseite
@@ -1809,7 +2146,7 @@ def main() -> int:
         # wirken nur auf `abgeleitet`. Dort steht der benutzte Wert; sonst `None` (NICHT
         # GESTELLT) und, wenn bestellt, `<name>_wirkungslos` mit dem Grund.
         **_kamerawerte_befund(a, kamera_herkunft),
-        "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
+        "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,
         "seitenverhaeltnis": a.aufloesung / (a.hoehe or a.aufloesung),
@@ -1837,6 +2174,10 @@ def main() -> int:
         "depth_exr_kanaele": _exr_kanalnamen(exr) if exr is not None else [],
         "depth_exr_format": exr_format,
     }
+    if kontext_befund is not None:
+        # NUR WENN BESTELLT. Ohne Splat bleibt der Bericht Feld fuer Feld der bisherige —
+        # bewacht in tests/test_kontext_splat.py. Fehlt der Block, war keiner bestellt.
+        report["kontext"] = kontext_befund
     if herzschlag is not None:
         # Der Faden ist daemonisch und stürbe auch von selbst — aber ein Herzschlag, der
         # nach dem letzten Bild noch weiterschlägt, ist ein Lebenszeichen für einen

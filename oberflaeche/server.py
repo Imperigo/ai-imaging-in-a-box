@@ -837,7 +837,13 @@ def _knotenbaum(graph) -> list[dict]:
 #: Sie kommen aus dem Import und stehen in der Mappe. Sie hier anzubieten hiesse, zwei
 #: Quellen für dieselbe Angabe zu haben — und die falsche gewänne genau dann, wenn
 #: jemand sie einmal angefasst und danach vergessen hat.
-NICHT_EINSTELLBAR = ("ifc_path", "glb_path", "bbox")
+#:
+#: **Der Splat (Entscheid 76, 08.10.2026) steht vorerst auch hier** — nicht, weil das
+#: Projekt ihn wüsste, sondern weil sein Bedienfeld noch nicht gezeichnet ist (CLAUDE.md:
+#: erst zeichnen, dann bauen). Ein rohes Textfeld für einen Pfad schriebe ihn absolut in
+#: die Mappe (Regel 3), und eine Lage aus sechzehn Zahlen tippt niemand von Hand. Gesetzt
+#: wird er heute in den Einstellungen der Mappe (``arbeitsgang.lege_an``) oder im Aufruf.
+NICHT_EINSTELLBAR = ("ifc_path", "glb_path", "bbox", "kontext_ply", "kontext_matrix")
 
 
 def _angeboten(name: str, einstellungen: dict) -> bool:

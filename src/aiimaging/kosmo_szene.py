@@ -611,7 +611,7 @@ def _auf_raster(aufl):
 #: der Grundsatz (E75 drüben, 19.09.2026) — nur sagt die Abweisung jetzt, *warum*.
 BEKANNTE_FELDER = {
     "": ("schema", "geometry", "render", "style", "vis", "cameras", "out",
-         "interior", "gelaende", "komposition", "innenansichten"),
+         "interior", "gelaende", "komposition", "innenansichten", "context"),
     "geometry": ("path", "format", "up_axis"),
     "render": ("resolution", "faithful", "samples", "sun",
                "environment", "himmel", "belichtung", "rauschschwelle", "passes"),
@@ -621,6 +621,9 @@ BEKANNTE_FELDER = {
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
     "interior": ("rooms",),
+    # Seit 08.10.2026 (Owner-Entscheid 76, Feldnamen vom Integrator): die Umgebung als
+    # Splat. Gelesen in `kontext_aus_szene`.
+    "context": ("kind", "ply", "verortung", "transform", "fit", "crs_note"),
 }
 
 #: Der einzige belegte Inhalt von ``interior.rooms``: seit dem 19.09.2026 gesendet, je
@@ -772,6 +775,157 @@ def unbekannte_felder(fremd: dict) -> tuple[str, ...]:
                 gefunden.extend(f"cameras[{i}].{name}" for name in sorted(spec)
                                 if name not in KAMERA_FELDER)
     return tuple(gefunden)
+
+
+#: Die Arten von ``context.kind``, die wir rendern können. Heute nur der Splat.
+KONTEXT_ARTEN = ("splat",)
+
+#: Die Werte von ``context.fit`` — wie die Lage des Splats zustande kam (Integrator,
+#: 08.10.2026): ``behelf`` von Hand gesetzt, ``passpunkte`` über Passpunkte eingepasst.
+KONTEXT_FIT = ("behelf", "passpunkte")
+
+#: Der Satz zu ``fit: behelf``, wörtlich wie bestellt — er geht in ``verdict.hinweise``.
+SATZ_KONTEXT_BEHELF = "Lage des Splats von Hand gesetzt, nicht vermessen."
+
+#: Der Schluessel, unter dem ein **Kameraurteil** den Kontext dieses Laufs vermerkt —
+#: :func:`kontext_vermerk` oder ``None`` (gesetzt in ``abholer.verarbeiter``).
+URTEIL_KONTEXT = "kontext"
+
+
+def kontext_aus_szene(roh) -> dict | None:
+    """``RenderScene.context`` → was der Multipass als Umgebung bekommt — oder ``None``.
+
+    **Owner-Entscheid 76 (08.10.2026):** Der Splat läuft als Umgebung im Multipass mit,
+    gemessen wird weiter nur das Bauwerk (siehe :mod:`aiimaging.kontext`). Die Form kommt
+    vom Integrator: ``{kind: "splat", ply: <absoluter Pfad auf der HomeStation>,
+    verortung: <Pfad> | null, transform: [16], fit: "behelf" | "passpunkte",
+    crs_note: <Satz>}``.
+
+    **Ein unbrauchbarer Kontext ist ein MANGEL, kein leerer.** Unbekannte Art, fehlende
+    Datei, eine Matrix, die keine ist: Der Lauf wird angehalten und der Grund steht im
+    Ergebnis. Ohne Umgebung zu rendern sähe aus wie ein Bild mit — die bestellende Seite
+    hielte die Umgebung für geliefert.
+
+    Returns:
+        ``None``, wenn ``context`` fehlt oder ``null`` ist (nicht bestellt). Sonst
+        ``{art, ply, datei, matrix, fit, crs_note, verortung, hinweise, maengel}`` —
+        ``ply`` ist der Pfad für den Multipass und geht **nie** nach aussen (Regel 3);
+        dafür gibt es ``datei`` (nur der Name) und :func:`kontext_vermerk`. ``matrix``
+        ist ``None`` für die Einheit, sonst 16 Zahlen zeilenweise in der glTF-Welt.
+    """
+    from pathlib import Path
+
+    from . import kontext as _kontext                       # noqa: PLC0415
+
+    if roh is None:
+        return None
+    maengel: list[str] = []
+    hinweise: list[str] = []
+    ergebnis = {"art": None, "ply": None, "datei": None, "matrix": None, "fit": None,
+                "crs_note": None, "verortung": None, "hinweise": hinweise,
+                "maengel": maengel}
+    if not isinstance(roh, dict):
+        maengel.append(f"'context' ist {type(roh).__name__} und kein Block — welche "
+                       f"Umgebung gemeint ist, raten wir nicht.")
+        return ergebnis
+
+    art = roh.get("kind")
+    ergebnis["art"] = art
+    if art not in KONTEXT_ARTEN:
+        maengel.append(
+            f"'context.kind' ist {art!r}. Rendern koennen wir als Umgebung nur "
+            f"{list(KONTEXT_ARTEN)}; eine andere Art ohne Umgebung zu rechnen, saehe aus "
+            f"wie geliefert.")
+
+    ply = roh.get("ply")
+    if not isinstance(ply, str) or not ply.strip():
+        maengel.append(f"'context.ply' ist {ply!r} — ohne Datei gibt es keinen Splat.")
+    else:
+        ergebnis["ply"] = ply
+        ergebnis["datei"] = Path(ply).name
+        if not Path(ply).is_file():
+            maengel.append(
+                f"'context.ply': Die Splat-Datei {Path(ply).name!r} liegt auf diesem "
+                f"Rechner nicht vor. Gerechnet wird ohne sie NICHT — ein Bild ohne die "
+                f"bestellte Umgebung saehe aus wie eines mit.")
+
+    transform = roh.get("transform")
+    if transform is None:
+        hinweise.append("KONTEXT: keine Lage ('transform') mitgesandt — der Splat steht "
+                        "so, wie seine Datei es sagt (Einheit in der glTF-Welt).")
+    else:
+        try:
+            ergebnis["matrix"] = list(_kontext.pruefe_matrix(transform))
+        except _kontext.KontextError as fehler:
+            maengel.append(f"'context.transform': {fehler}")
+
+    fit = roh.get("fit")
+    ergebnis["fit"] = fit
+    if fit is not None and fit not in KONTEXT_FIT:
+        maengel.append(f"'context.fit' ist {fit!r}, bekannt sind {list(KONTEXT_FIT)}. "
+                       f"Wie verlaesslich die Lage ist, raten wir nicht.")
+    elif fit == "behelf":
+        hinweise.append(SATZ_KONTEXT_BEHELF)
+    elif fit is None:
+        hinweise.append("KONTEXT: Wie die Lage des Splats zustande kam, ist nicht gesagt "
+                        "('fit' fehlt) — vermessen ist sie damit nicht belegt.")
+
+    note = roh.get("crs_note")
+    if note is not None and not isinstance(note, str):
+        maengel.append(f"'context.crs_note' ist {note!r} und kein Satz.")
+    elif note:
+        ergebnis["crs_note"] = note
+        hinweise.append(f"KONTEXT, Bezugssystem: {' '.join(note.split())}")
+
+    verortung = roh.get("verortung")
+    if verortung is not None and not isinstance(verortung, str):
+        maengel.append(f"'context.verortung' ist {verortung!r} und kein Pfad.")
+    elif verortung:
+        # NUR DER NAME: Gelesen wird die Datei nicht — die Lage steht in `transform`.
+        ergebnis["verortung"] = Path(verortung).name
+    return ergebnis
+
+
+def kontext_vermerk(kontext: dict | None, bericht: dict | None = None) -> dict | None:
+    """Was vom Kontext nach aussen geht — **ohne Pfad** (Regel 3).
+
+    Aus der gelesenen Bestellung (:func:`kontext_aus_szene`) und, wenn da, dem Block
+    ``kontext`` des Blender-Berichts: Datei (Name, sha256), Lage (``fit``, ``crs_note``),
+    Punktzahlen und der Anteil des Modells, den der Splat verdeckt.
+    """
+    if not kontext:
+        return None
+    block = (bericht or {}).get("kontext") or {}
+    verdeckung = block.get("verdeckung") or {}
+    return {
+        "art": kontext.get("art"),
+        "datei": kontext.get("datei"),
+        "sha256": block.get("sha256"),
+        "fit": kontext.get("fit"),
+        "crs_note": kontext.get("crs_note"),
+        "matrix_angewandt": kontext.get("matrix") is not None,
+        "punkte_gerendert": block.get("punkte_gerendert"),
+        "verworfen_deckkraft": block.get("verworfen_deckkraft"),
+        "verdeckt_anteil": verdeckung.get("anteil"),
+        "hinweise": list(kontext.get("hinweise") or ()),
+    }
+
+
+def kontext_saetze(vermerk) -> list[str]:
+    """Die Saetze fuer ``verdict.hinweise`` zu einem :data:`URTEIL_KONTEXT`-Vermerk.
+
+    **In ``hinweise`` und nicht in ``reason``**, aus demselben Grund wie
+    :func:`aufsicht_satz`: Eine Umgebung ist bestellt, nicht missraten. Der erste Satz sagt,
+    dass gemessen nur das Bauwerk wird; die folgenden kommen aus der Bestellung (``fit``,
+    ``crs_note``).
+    """
+    if not isinstance(vermerk, dict) or not vermerk.get("datei"):
+        return []
+    # Der verdeckte Anteil steht NICHT im Satz: Er gilt je Kamera, der Satz je Auftrag.
+    # Er steht im Vermerk am Kameraurteil (befund.json, urteil.json).
+    return [f"UMGEBUNG: Splat {vermerk['datei']!r} im Bild — sichtbar in Bild und Tiefe, "
+            f"gemessen wird nur das Bauwerk.",
+            *[s for s in vermerk.get("hinweise") or () if s]]
 
 
 def wert_oder(quelle: dict, schluessel: str, ersatz):
@@ -1315,6 +1469,12 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
 
     ebenen = _lies_passes(render.get("passes"), maengel)
 
+    # DIE UMGEBUNG (Entscheid 76, 08.10.2026) — siehe `kontext_aus_szene`. Ihre Maengel
+    # halten den Lauf an wie jeder andere.
+    kontext_block = kontext_aus_szene(fremd.get("context"))
+    if kontext_block is not None:
+        maengel.extend(kontext_block["maengel"])
+
     sonne = render.get("sun")
     if sonne is not None and not isinstance(sonne, dict):
         maengel.append(f"'render.sun' ist {sonne!r} und kein Block {{azimuth, elevation}}.")
@@ -1457,6 +1617,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "innenraum": innenraum,
         "innen_bestellt": innen_bestellt,
         "gelaende_erwartet": gelaende,
+        # `None` heisst: keine Umgebung bestellt.
+        "kontext": kontext_block,
         # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
         #
         # **Der Anlass ist eine Zaehlung** (26.08.2026): `tools/abholen.py` zeigte
@@ -1535,6 +1697,10 @@ DURCHGEREICHT = {
     # Seit 22.09.2026: `gelaende` (auf-67), dreiwertig. Schlaegt den prozessweiten
     # Schalter des Abholers, weil die Aussage je Szene gilt.
     "gelaende_erwartet": "abholer.verarbeiter → maske (gelaende_erwartet=…)",
+    # Seit 08.10.2026 (Entscheid 76): `context` {kind: splat, ply, transform, fit, …}.
+    "kontext": "abholer.verarbeiter → seams.glb_zu_multipass(kontext_ply=…, "
+               "kontext_matrix=…) → blender_depth_stage --kontext-ply/--kontext-matrix; "
+               "Vermerk am Kameraurteil (URTEIL_KONTEXT) → verdict.hinweise, befund.json",
 }
 
 #: Felder, die der Betreiber setzen **kann** und die heute **nichts** bewirken.
@@ -1988,6 +2154,11 @@ def _aufsicht_saetze(geometrie_urteil, je_kamera) -> list[str]:
                                   (URTEIL_BILDAUFTRAG, bildauftrag_satz)):
             satz = bilde(eintrag.get(schluessel) or urteil.get(schluessel))
             if satz and satz not in saetze:
+                saetze.append(satz)
+        # DIE UMGEBUNG (Entscheid 76): je Auftrag dieselben Saetze — einmal genuegt.
+        for satz in kontext_saetze(eintrag.get(URTEIL_KONTEXT)
+                                   or urteil.get(URTEIL_KONTEXT)):
+            if satz not in saetze:
                 saetze.append(satz)
     return saetze
 

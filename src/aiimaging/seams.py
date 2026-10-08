@@ -43,6 +43,7 @@ from pathlib import Path
 
 from aiimaging import einlass
 from aiimaging import fortschritt
+from aiimaging import kontext as _kontext
 from aiimaging.contracts import ContractError, needs_rotation
 
 _RUNNER_DIR = Path(__file__).resolve().parent / "runners"
@@ -866,7 +867,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          gelaende_z=None, hoehe=None,
                          herzschlag_takt_s=None, kamera_huellbox=None,
                          sonne=None, deckungsgrad=None, augenhoehe=None,
-                         bias_grad=None) -> list[str]:
+                         bias_grad=None, kontext_ply=None,
+                         kontext_matrix=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -984,6 +986,22 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente.append("--ohne-beauty")
     if not material_id:
         argumente.append("--ohne-material-id")
+    # DER KONTEXT (Entscheid 76) STEHT HINTEN — und nur, wenn bestellt. Ohne Splat ist die
+    # Liste damit Wort fuer Wort die bisherige (bewacht in tests/test_kontext_splat.py).
+    # Die Matrix in der Gleichheitszeichen-Form, aus demselben Grund wie `--auge`: Ihre
+    # Zahlen tragen oft ein Minus.
+    if kontext_ply is not None:
+        argumente += ["--kontext-ply", str(kontext_ply)]
+        if kontext_matrix is not None:
+            try:
+                m = _kontext.pruefe_matrix(kontext_matrix)
+            except _kontext.KontextError as fehler:
+                raise SeamError(f"kontext_matrix: {fehler}") from fehler
+            argumente += ["--kontext-matrix=" + ",".join(repr(w) for w in m)]
+    elif kontext_matrix is not None:
+        raise SeamError(
+            "kontext_matrix ohne kontext_ply: eine Lage fuer einen Splat, den es nicht "
+            "gibt. Das ist entweder ein vergessener Pfad oder ein Rest — geraten wird nicht.")
     return argumente
 
 
@@ -1014,6 +1032,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
                      kamera_huellbox=None, sonne=None,
                      deckungsgrad=None, augenhoehe=None, bias_grad=None,
+                     kontext_ply=None, kontext_matrix=None,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
@@ -1044,6 +1063,15 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             Geometrieanteil des Bildes *sinkt* (am 20.08.2026 gemessen: 6,9 % statt 21,9 %).
             Der Bericht beschreibt weiterhin, was dasteht — die Kamera rahmt, was gezeigt
             werden soll. Zwei verschiedene Fragen, zwei verschiedene Hüllboxen.
+        kontext_ply: Ein **Splat** (3DGS-PLY) als Umgebung (Owner-Entscheid 76,
+            08.10.2026). Sichtbar in Beauty und Tiefe, **nicht** in Hüllbox, Rahmung und
+            Bauwerksmaske; im Material-ID-Pass mit eigener Kennung ``quelle: "kontext"``.
+            Der Bericht trägt dann den Block ``kontext`` (Datei nur mit Namen und sha256,
+            kein Pfad). ``None`` heisst nicht bestellt — Kommando und Ausgaben bleiben die
+            bisherigen. Siehe :mod:`aiimaging.kontext`.
+        kontext_matrix: 16 Zahlen, **zeilenweise** 4×4, die Lage des Splats in der
+            **glTF-Welt** (Meter, Y oben — dieselbe wie die glb). ``None``: die Einheit.
+            Nur zusammen mit ``kontext_ply``.
         herzschlag_takt_s: Die **Herzschlagwache**, seit dem 20.08.2026 **eingeschaltet**
             (``None`` schaltet sie ab). Der Runner
             schreibt dann alle so viele Sekunden ein Lebenszeichen nach
@@ -1155,6 +1183,13 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     # des Vorlaufs. Eine Bestellung, die nie haette laufen koennen, soll keine Dateien
     # kosten.
     _standpunkt_pruefen(kamera=kamera, auge=auge, blick_auf=blick_auf)
+    # DER SPLAT MUSS DA SEIN, BEVOR BLENDER STARTET — eine fehlende Datei soll nicht erst
+    # nach dem Kaltstart auffallen, und nie als Bild ohne Umgebung.
+    if kontext_ply is not None and not Path(kontext_ply).is_file():
+        raise SeamError(
+            f"kontext_ply: Die Splat-Datei {Path(kontext_ply).name!r} gibt es nicht. "
+            f"Ohne sie wird nicht gerechnet — ein Bild ohne die bestellte Umgebung sähe "
+            f"aus wie eines mit.")
     frist = _gesamtfrist(timeout, was="timeout")
 
     if _starte is not None:
@@ -1221,7 +1256,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     # Dieselbe Lehre wie beim Report und bei den Bildern zwei Zeilen tiefer: Die Existenz
     # einer Datei ist kein Beleg fuer ihren Inhalt — und hier nicht einmal fuer ihren Lauf.
     (out_dir / HERZSCHLAG_DATEI).unlink(missing_ok=True)
-    for muster in ("tiefe_*.exr", "tiefe_norm.png", "material_id.png", "beauty_*.png"):
+    for muster in ("tiefe_*.exr", "tiefe_norm.png", "material_id.png", "beauty_*.png",
+                   "material_id_ohne_kontext.png"):
         for alt_datei in out_dir.glob(muster):
             alt_datei.unlink(missing_ok=True)
 
@@ -1236,7 +1272,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s,
                               kamera_huellbox=kamera_huellbox, sonne=sonne,
                               deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
-                              bias_grad=bias_grad),
+                              bias_grad=bias_grad, kontext_ply=kontext_ply,
+                              kontext_matrix=kontext_matrix),
     ]
 
     ergebnis = starte(cmd, frist)
@@ -1420,7 +1457,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
                             kamera_huellbox=None,
                             sonne=None, deckungsgrad=None, augenhoehe=None,
-                            bias_grad=None) -> list[str]:
+                            bias_grad=None, kontext_ply=None,
+                            kontext_matrix=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -1444,7 +1482,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               # Der Helfer war geteilt, die Aufrufe waren es nicht.
                               kamera_huellbox=kamera_huellbox,
                               deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
-                              bias_grad=bias_grad),
+                              bias_grad=bias_grad, kontext_ply=kontext_ply,
+                              kontext_matrix=kontext_matrix),
     ]
 
 
