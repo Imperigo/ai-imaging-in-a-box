@@ -1,0 +1,54 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261007-262",
+ "worker": "local",
+ "status": "erledigt",
+ "beendet": "2026-10-08T06:33:00Z",
+ "git_log_1": "cfcee8e Verlauf am Render-Knoten gebaut; WebKitGTK-Gegenprobe beauftragt (263)",
+ "pull": "git pull --ff-only: «Bereits aktuell» auf cfcee8e (enthaelt 65088a9 «Anwenden ohne Standpunkt rechnet frontal von Sueden»). Dienst visbox-flaeche danach neu gestartet (systemctl --user restart, aktiv). Kein Code geaendert, nichts installiert.",
+ "umgebung": "wie betrieb/visbox-flaeche.service: .venv-render, AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers, PYTHONPATH=src; je Lauf frische Wegwerf-Kopie von build/vorfuehr/mappe samt testbau.ifc; GPU-Sperre je Lauf, Karte vorher frei (1.1–1.8 GB, ~35 W, ollama ps leer, kein Sprachmodell zu entladen).",
+ "laeufe": {
+  "D0_dienst_mit_speicher": {
+   "weg": "POST /api/rechne {ordner: Kopie, varianten: null, einstellungen: {backbone: z-image-turbo}} — ohne kamera, ohne seed",
+   "befund": "Alle vier Knoten aus dem Speicher (aus_cache true, 1.0 s): die Kopie traegt den Speicher der Vorfuehrmappe mit, und der Hash mit kamera=\"s\" lag dort schon (Lauf vom 01.10.). Gerechnet wurde also nichts; das gelieferte Bild ist das alte A1-Bild. Die Bild-Angabe im Ergebnis zeigte dabei relativ auf den Lauf-Ordner der ORIGINAL-Mappe (nur gelesen, Original unveraendert, mtime 01.10.).",
+   "score": 0.9117,
+   "geom_iou": 0.912,
+   "bestanden": true,
+   "sha256": "172db46ac96b476d4314e252e678be8948356d1dabb2eaa3ae64f489562d0037"
+  },
+  "D1_dienst_frisch": {
+   "weg": "wie D0, aber in der Kopie den Speicher-Ordner geleert (gleichwertig cache=None, wie in 261 fuer A1 begruendet) — echt gerechnet",
+   "knoten": "geometrie 0.0005 s, multipass 4.39 s, render 19.0 s, qa 1.18 s; alle aus_cache false; Lauf 25.2 s",
+   "kamera_multipass": {"weg": "abgeleitet", "kuerzel": "s", "azimut_grad": 180.0, "augenhoehe_m": 1.7, "modus": "shift", "brennweite_mm": 35.0, "abstand_m": 13.63},
+   "seed": "keiner (gerechnet 0)",
+   "score": 0.9117,
+   "geom_iou": 0.912,
+   "grund_woertlich": "Score 0.912 ≥ Schwelle 0.65 (|spearman| 0.911 über 230858 gemeinsame Punkte, geom_iou 0.912).",
+   "bestanden": true,
+   "sha256": "172db46ac96b476d4314e252e678be8948356d1dabb2eaa3ae64f489562d0037",
+   "bitgleich_mit_261_A1": "ja",
+   "standpunkt_vorgabe": "nicht in der Antwort des Dienstes: POST /api/rechne und /api/fortschritt.ergebnis fuehren das Feld nicht (ergebnis traegt nur status, vermerkt, modell_stand, error, abgebrochen, bilder, variantengruppe, varianten_nicht_begonnen). Man sieht dem Dienst-Ergebnis die Vorgabe also nicht an — nur am Multipass-Bericht.",
+   "gpu_spitze": "26421 MiB"
+  },
+  "D2_direkt": {
+   "weg": "arbeitsgang.rechne(Kopie, varianten=None, cache=None, backbone=\"z-image-turbo\") — ohne kamera, ohne seed",
+   "knoten": "alle vier gerechnet (gerechnet 4, cache_treffer 0), render 11.5 s, gesamt 19.2 s, eine Ladung des Bildmodells",
+   "kamera_multipass": {"weg": "abgeleitet", "kuerzel": "s", "azimut_grad": 180.0, "augenhoehe_m": 1.7, "modus": "shift", "brennweite_mm": 35.0, "abstand_m": 13.63, "vollstaendig": true},
+   "seed": "keiner (gerechnet 0)",
+   "score": 0.9117224906618661,
+   "geom_iou": 0.9121144834888701,
+   "bestanden": true,
+   "standpunkt_vorgabe": {"kamera": "s", "satz": "Kein Standpunkt bestellt — gerechnet frontal von Süden, wie der Abholer ohne mitgesandte Kamera. Ein anderer Blick: «kamera» in den Einstellungen der Mappe oder im Aufruf setzen."},
+   "sha256": "172db46ac96b476d4314e252e678be8948356d1dabb2eaa3ae64f489562d0037",
+   "bitgleich_mit_261_A1": "ja",
+   "gpu_spitze": "27078 MiB"
+  }
+ },
+ "auffaelliges": [
+  "Ohne Kamera rechnet der Weg jetzt denselben Hash wie mit kamera=\"s\" (render-e9ad3de3…). Darum trifft eine Kopie der Vorfuehrmappe sofort den alten Speicher: «Anwenden» liefert dort ohne Rechnen das bestehende 0.91-Bild. Die Ansage «Mappen ohne Standpunkt rechnen beim naechsten Lauf neu» gilt also nur, wo kamera=\"s\" nicht schon einmal gerechnet wurde.",
+  "Der Dienst gibt standpunkt_vorgabe nicht weiter (weder in /api/rechne noch in /api/fortschritt) — wer ueber die Flaeche rechnet, sieht den Satz nicht.",
+  "Bei einem Speichertreffer aus einer KOPIE zeigt die Bild-Angabe des Dienstes relativ in den Lauf-Ordner der ursprunglichen Mappe (die Speicher-Eintraege tragen repo-relative Pfade); gelesen, nicht geschrieben."
+ ],
+ "urteil": "Ja — «Anwenden» ohne Standpunkt rechnet jetzt frontal von Sueden (Multipass: abgeleitet, s, 180°), die Vorfuehrmappe besteht ohne Kamera mit 0.9117 / geom_iou 0.912, ueber den Dienst wie direkt bitgleich mit 261 A1 (172db46a…); nur reicht der Dienst den Satz standpunkt_vorgabe nicht an die Flaeche weiter.",
+ "aufraeumen": "Wegwerf-Kopien und Logs geloescht, GPU-Sperre frei, Original-Mappe unveraendert, nichts committet."
+}
