@@ -2323,6 +2323,16 @@ def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
     jede andere Kamera in ``qa_je_kamera`` gilt (siehe :func:`_vorbehalte_je_kamera`).
     Der Wortlaut ist unveraendert.
     """
+    if geometrie_urteil.get("gesamtwert_anwendbar") is False:
+        # Owner-Entscheid 08.10.2026 (Visbox-Entscheid 70): unter 20 % Gebaeudeanteil ist
+        # der Gesamtwert nicht anwendbar. `passed` bleibt im fremden Vertrag ein
+        # Wahrheitswert — der Satz sagt, dass `false` hier nicht durchgefallen heisst.
+        anteil = geometrie_urteil.get("anteil_soll")
+        wieviel = f"nur {anteil:.0%}" if isinstance(anteil, (int, float)) else "weniger"
+        return (f"NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt {wieviel} des "
+                f"Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. "
+                f"'passed: false' heisst hier nicht durchgefallen, sondern nicht "
+                f"beurteilbar.")
     if (geometrie_urteil.get("torchance") or {}).get("lage") == "zu_klein":
         return ("NICHT BEURTEILBAR (Rahmung): Das Bauwerk fuellt so wenig Bild, dass "
                 "das Tor GEMESSEN nicht bestehen kann. 'passed: false' heisst hier "
@@ -2942,7 +2952,11 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # SELBSTLOESCHEND: nur wenn der Score fehlt UND das Paarurteil gemessen hat. Steht
     # ein Score da, traegt er das Urteil und diese Zeile schweigt.
     _paar = (_geo.get("paarurteil") or {})
-    if _geo.get("score") is None and _paar.get("gemessen") is True \
+    if _geo.get("gesamtwert_anwendbar") is False:
+        # Der Satz aus `_lage_ohne_urteil` traegt den Fall schon (Entscheid 70); ein
+        # zweiter «KEIN SCORE»-Satz sagte dasselbe in anderen Worten.
+        pass
+    elif _geo.get("score") is None and _paar.get("gemessen") is True \
             and _paar.get("urteilt") is False:
         # SEIT DEM 30.09.2026 URTEILT DER MASKENWEG NICHT (Owner-Entscheid auf auf-175): ρ
         # steht da, aber «durchgefallen» waere ein Urteil aus einer Zahl, die nicht trennt.

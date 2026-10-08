@@ -107,3 +107,38 @@ def test_ein_nicht_beurteilbares_urteil_bleibt_im_zwischenspeicher():
     bedarf = kette.BEDARF[kette.ART_QA]
     assert bedarf.maengel({"status": "ok", "bestanden": None}) == []
     assert bedarf.maengel({"bestanden": True}) != []          # ohne status: kein Treffer
+
+
+# ======================================================================================
+# An der Vertragsgrenze zu KosmoOrbit: `passed` bleibt ein Wahrheitswert
+# ======================================================================================
+#
+# Der Integrator meldete am 08.10.2026 (dringend): Sein Vertrag hat `passed: z.boolean()`;
+# ein `null` wiese jedes Demohaus-Ergebnis ab. Unsere Übergabe macht aus der dritten
+# Antwort schon immer `false` plus einen Satz in `verdict.reason` — hier festgehalten für
+# den neuen Fall.
+
+def _urteil_unter_zwanzig():
+    return {"score": None, "spearman": None, "geom_iou": 0.0, "bestanden": None,
+            "schwelle": 0.65, "anteil_soll": 0.179, "gesamtwert_anwendbar": False,
+            "rho_maske": None}
+
+
+def test_passed_bleibt_im_vertrag_ein_wahrheitswert():
+    from aiimaging import kosmo_szene as ks
+    e = ks.als_ergebnis("vis-20261008120000-abc123", ["a.png"],
+                        geometrie_urteil=_urteil_unter_zwanzig())
+    assert e["qa"]["geometry"]["passed"] is False
+    assert e["qa"]["verdict"]["passed"] is False
+    knapp = ks.nur_vertragsfelder(e)
+    assert knapp["qa"]["verdict"]["passed"] is False
+
+
+def test_der_grund_sagt_nicht_beurteilbar_und_nicht_durchgefallen():
+    from aiimaging import kosmo_szene as ks
+    e = ks.als_ergebnis("vis-20261008120000-abc123", ["a.png"],
+                        geometrie_urteil=_urteil_unter_zwanzig())
+    grund = ks.nur_vertragsfelder(e)["qa"]["verdict"]["reason"]
+    assert grund.startswith("NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18%")
+    assert "nicht durchgefallen, sondern nicht beurteilbar" in grund
+    assert "NICHT GEMESSEN" not in grund
