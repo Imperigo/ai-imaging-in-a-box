@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-264",
+  "art": "multipass",
+  "beschreibung": "F6 Ansage und Messung am vollstaendigen Demohaus-Export: kommen die IFC-Stile in die glb, bleibt die Tiefe gleich, sieht die Soll-Tiefe das Dach?",
+  "anweisung": "=== F6: STILE AUS DER IFC IN DIE GLB — ANSAGE, UND: SIEHT UNSERE SOLL-TIEFE JETZT DAS DACH? ===\n\nWORUM ES GEHT\n  Danke fuer 259. Seither hat der Integrator den Kernel-Export vervollstaendigt (KosmoOrbit\n  1dc7e6f09, ROADMAP 1725/1732): IfcRoof, IfcStair, IfcRailing als Tessellation, IfcWindow/IfcDoor\n  mit IfcRelFillsElement, IfcSurfaceStyle je Materialschluessel. Bekannte Grenze laut Integrator:\n  Waende mit dachId werden noch auf voller Hoehe extrudiert. Er fragt, ob unsere Soll-Tiefe das Dach\n  jetzt sieht. Gleichzeitig bauen wir F6: unsere Umwandlung IFC → glb uebernimmt jetzt die\n  Oberflaechenstile der Datei.\n\n  ANSAGE (Verhaltensaenderung nach dem naechsten git pull, nur im .venv-ifc-Runner):\n  ifc_to_glb_runner.py schreibt fuer jedes Bauteil MIT IfcSurfaceStyle ein glTF-Material (Name und\n  Farbe aus der Datei, immer deckend). Bauteile OHNE Stil bleiben ohne Material — die Grautoene, die\n  ifcopenshell sonst einsetzt, kommen nicht hinein. Der Bericht traegt neu: materialien,\n  n_bauteile_mit_stil, n_bauteile_ohne_stil. Unveraendert: die Geometrie (gleiche Knoten, Ecken,\n  Dreiecke, Namen). An unserer Testgeometrie gemessen: ohne Stile glb byte-gleich wie zuvor, mit\n  Stilen Tiefenkarte bitgleich (PNG und EXR-Pixel). Was sich aendert: Bild-Durchgang (Beauty) zeigt\n  die Farben, Material-ID-Durchgang trennt nach Material statt nach Objekt. Nur neu angelegte Mappen\n  bzw. neu umgewandelte IFC sind betroffen; bestehende Mappen behalten ihre glb.\n\nWAS DU TUST (nur CPU ausser C3; nichts installieren)\n  A  git pull --ff-only in ai-imaging (mindestens der Stand, der diese Datei bringt). KosmoOrbit-Klon\n     auf mindestens 1dc7e6f09 (Integrator-Zweig).\n  B  Demohaus wie in 259 ohne Oberflaeche erzeugen (haus.demohausBauen in leeres Dokument, dann\n     exportIfc des Kernels), in einen Wegwerfordner. Mit ifcopenshell zaehlen: IfcSurfaceStyle,\n     IfcStyledItem, IfcRoof, IfcStair, IfcRailing, IfcWindow, IfcDoor, IfcOpeningElement, IfcWall.\n  C1 Unsere Umwandlung (neuer Stand) auf diese IFC: Bericht-Felder status, n_elements, n_triangles,\n     uebersprungen, materialien (Name, Farbe, n_bauteile, durchsicht_in_der_datei),\n     n_bauteile_mit_stil / _ohne_stil.\n  C2 Gegenprobe Geometrie: dieselbe IFC mit dem Runner VOR F6 (Stand cfcee8e, eigener worktree) —\n     n_elements und n_triangles gleich? Dann beide glb durch den Multipass (Blender, kamera \"s\" und\n     \"sSE\", 512 px): tiefe_norm.png je Paar bitgleich? EXR-Pixel gleich?\n  C3 Sieht die Soll-Tiefe das Dach? Je Kamera (\"s\", \"sSE\", \"nNW\") ein Satz: Dach sichtbar ja/nein,\n     ragen Waende durch das Dach (die bekannte Grenze dachId)? Treppe/Gelaender/Fenster sichtbar?\n     Dazu die drei tiefe_norm.png klein (256 px) als\n     auftraege/ergebnisse/auf-20261008-264-tiefe-<s|sse|nnw>.png und das Beauty-Bild von \"sSE\"\n     als auftraege/ergebnisse/auf-20261008-264-beauty-sse.png (Demohaus ist synthetisch).\n  C4 Ein Bild mit z-image-turbo von \"sSE\" ueber den Abholer- oder Mappenweg, mit Pruefung:\n     Score, rho_maske, bestanden ja/nein.\n\nWAS DU NICHT TUST\n  Keinen Code aendern (weder hier noch drueben), nichts installieren, die installierte App nicht\n  anfassen. Keine Pfade mit Benutzernamen, keine Host- oder Netznamen. Wegwerfordner und worktree\n  danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-264.json)\n  B Zaehltabelle. C1 Berichtsfelder. C2 gleich ja/nein je Groesse und je Kamera. C3 je Kamera der\n  Satz und die Bilder. C4 Zahlen. Urteil in je einem Satz: (1) kommen die Stile richtig an,\n  (2) bleibt die Tiefe gleich, (3) sieht die Soll-Tiefe das Dach.",
+  "erstellt": "2026-10-08T08:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel: haus.demohausBauen + exportIfc (ab 1dc7e6f09), ohne Oberflaeche"
+  },
+  "params": {
+    "folgt_auf": "auf-20261007-259",
+    "kosmoorbit_mindestens": "1dc7e6f09",
+    "roadmap": [
+      "1725",
+      "1732"
+    ],
+    "stand_vor_f6": "cfcee8e",
+    "kameras": [
+      "s",
+      "sSE",
+      "nNW"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Blender fuer C2/C3, GPU nur fuer C4 (ein Bild, z-image-turbo); Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); das Demohaus ist synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "B Zaehltabelle der IFC-Typen.",
+    "C1 Berichtsfelder der neuen Umwandlung.",
+    "C2 Geometrie und Tiefe gleich ja/nein je Kamera.",
+    "C3 je Kamera: Dach sichtbar, Waende durchs Dach, Bilder.",
+    "C4 Score, rho_maske, bestanden.",
+    "Urteil: Stile, Tiefe, Dach — je ein Satz."
+  ],
+  "rang": 51
+}

@@ -133,6 +133,91 @@ def _knotenname(produkt) -> str:
     return f"{typ}_{name}_{guid}"
 
 
+#: Woher ein Material der glb stammt. Nur diese eine Quelle kommt hinein.
+QUELLE_STIL = "ifc_surface_style"
+
+
+def ist_stil_aus_der_datei(instance_id) -> bool:
+    """Stammt ein Material, das ifcopenshell liefert, aus der Datei — oder von ihm selbst?
+
+    **Gemessen am 08.10.2026** an ``make_test_ifc.py --stile`` (ifcopenshell 0.8.5): Ein
+    Bauteil mit ``IfcStyledItem`` bekommt ein Material, dessen ``instance_id`` auf den
+    ``IfcSurfaceStyle`` der Datei zeigt (Name «Sichtbeton», Farbe aus der Datei). Ein
+    Bauteil **ohne** Stil bekommt trotzdem eines — ``instance_id`` 0, als Name nur die
+    Bauteilart («IfcWall», «IfcSlab»), als Farbe ein Grau, das ifcopenshell je Art
+    vorgibt (``auf-20261007-259``: Wand 0,9, Decke 0,4, sonst 0,7).
+
+    Diese Vorgaben gehören **nicht** in die glb: Sie sähen nach Modellinformation aus und
+    wären keine. Darum entscheidet allein die Kennung.
+    """
+    try:
+        return int(instance_id) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def srgb_zu_linear(k: float) -> float:
+    """Eine Farbkomponente von sRGB nach linear — glTF ``baseColorFactor`` ist linear.
+
+    **Angenommen, nicht gemessen:** IFC legt den Farbraum von ``IfcColourRGB`` nicht fest;
+    die verbreiteten Erzeuger schreiben die Werte, die man am Bildschirm sieht, also sRGB.
+    Ohne Umrechnung käme jede Farbe in Blender zu hell an.
+    """
+    k = min(max(float(k), 0.0), 1.0)
+    return k / 12.92 if k <= 0.04045 else ((k + 0.055) / 1.055) ** 2.4
+
+
+def _aufrufen(wert):
+    """ifcopenshell 0.8 liefert manche Angaben als Methode, ältere als Wert."""
+    return wert() if callable(wert) else wert
+
+
+def _stil_des_materials(modell, material) -> dict | None:
+    """Name und Farbe eines Materials — **nur**, wenn es aus der Datei stammt."""
+    kennung = _aufrufen(getattr(material, "instance_id", 0))
+    if not ist_stil_aus_der_datei(kennung):
+        return None
+    name = None
+    try:
+        entitaet = modell.by_id(int(kennung))
+        name = getattr(entitaet, "Name", None)
+    except Exception:                                 # noqa: BLE001 — Name ist Beiwerk
+        pass
+    farbe = _aufrufen(getattr(material, "diffuse", None))
+    try:
+        rgb = [float(_aufrufen(getattr(farbe, k))) for k in ("r", "g", "b")]
+    except Exception:                                 # noqa: BLE001
+        try:
+            rgb = [float(k) for k in _aufrufen(getattr(farbe, "components"))][:3]
+        except Exception:                             # noqa: BLE001
+            return None                               # ein Stil ohne lesbare Farbe
+    durchsicht = _aufrufen(getattr(material, "transparency", None))
+    try:
+        durchsicht = float(durchsicht)
+        durchsicht = None if durchsicht != durchsicht or durchsicht <= 0.0 else durchsicht
+    except (TypeError, ValueError):
+        durchsicht = None
+    return {"kennung": int(kennung),
+            "name": (name or _aufrufen(getattr(material, "name", "")) or f"Stil-{kennung}"),
+            "farbe_srgb": [round(k, 4) for k in rgb],
+            "durchsicht": durchsicht}
+
+
+def _glb_material(stil: dict):
+    """Das glTF-Material zu einem Stil — **deckend**, auch wenn die Datei Durchsicht nennt.
+
+    Warum deckend: Blender liest im Tiefendurchgang nur Flächen, deren Deckkraft über der
+    Alpha-Schwelle liegt. Ein Fenster mit Durchsicht 0,8 verschwände dann aus der
+    Soll-Tiefe, und die Prüfung gegen die Geometrie urteilte gegen ein Haus ohne Fenster.
+    Was die Datei an Durchsicht nennt, steht im Bericht und nicht in der glb.
+    """
+    import trimesh                                    # noqa: PLC0415 — nur in diesem Prozess
+    farbe = [srgb_zu_linear(k) for k in stil["farbe_srgb"]] + [1.0]
+    return trimesh.visual.material.PBRMaterial(
+        name=stil["name"], baseColorFactor=farbe, metallicFactor=0.0,
+        roughnessFactor=1.0)
+
+
 def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
     """Konvertiert IFC (IFC4 oder IFC2X3) → glb (Y-up) und liefert einen Report.
 
@@ -154,6 +239,8 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
     n_bauwerk = 0
     bau_min = bau_max = None
     uebersprungen: dict[str, int] = {}
+    stile_gesehen: dict[str, dict] = {}
+    n_mit_stil = n_ohne_stil = 0
     for produkt in modell.by_type("IfcProduct"):
         if not getattr(produkt, "Representation", None):
             continue
@@ -172,8 +259,36 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         flaechen = np.asarray(form.geometry.faces, dtype="int64").reshape(-1, 3)
         if len(ecken) == 0 or len(flaechen) == 0:
             continue
-        szene.add_geometry(trimesh.Trimesh(vertices=ecken, faces=flaechen, process=False),
-                           node_name=_knotenname(produkt))
+        # DIE STILE DER DATEI, UND NUR SIE (F6, 08.10.2026). Je Flaeche sagt
+        # `material_ids`, welches Material sie traegt. Ein Bauteil mit nur einem Material
+        # bleibt EIN Mesh mit denselben Ecken wie zuvor; erst ein Bauteil mit mehreren
+        # wird je Material geteilt — die Geometrie bleibt dabei dieselbe, nur aufgeteilt.
+        stile = [_stil_des_materials(modell, mat) for mat in form.geometry.materials]
+        zuordnung = np.asarray(form.geometry.material_ids, dtype="int64").reshape(-1)
+        if len(zuordnung) != len(flaechen):
+            zuordnung = np.full(len(flaechen), -1, dtype="int64")
+        gruppen = sorted(set(zuordnung.tolist()))
+        name = _knotenname(produkt)
+        netz = trimesh.Trimesh(vertices=ecken, faces=flaechen, process=False)
+        stilnamen: set[str] = set()
+        for teil, gruppe in enumerate(gruppen):
+            stil = stile[gruppe] if 0 <= gruppe < len(stile) else None
+            stueck = (netz if len(gruppen) == 1
+                      else netz.submesh([np.nonzero(zuordnung == gruppe)[0]],
+                                        append=True))
+            if stil is not None:
+                stueck.visual = trimesh.visual.TextureVisuals(material=_glb_material(stil))
+                stile_gesehen.setdefault(stil["name"], {
+                    "name": stil["name"], "farbe_srgb": stil["farbe_srgb"],
+                    "durchsicht_in_der_datei": stil["durchsicht"], "n_bauteile": 0})
+                stilnamen.add(stil["name"])
+            szene.add_geometry(stueck, node_name=name if teil == 0 else f"{name}_{teil}")
+        for stilname in stilnamen:
+            stile_gesehen[stilname]["n_bauteile"] += 1
+        if stilnamen:
+            n_mit_stil += 1
+        else:
+            n_ohne_stil += 1
         n_elemente += 1
         n_dreiecke += len(flaechen)
         # Der groesste gemessene Fehler dieser Woche: Die Kamera rahmt die Huellbox der
@@ -238,6 +353,17 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
             "NICHT_GEBAUTE_SUBSTANZ. Ein IfcSpace als Mesh ist ein massiver Quader; "
             "eine Innenaufnahme stünde mitten darin."
         ),
+        # WAS AN MATERIAL IN DER GLB STEHT, und woher (F6, 08.10.2026). Leer heisst: Die
+        # Datei traegt keine Oberflaechenstile — NICHT, dass sie verloren gingen.
+        "materialien": sorted(stile_gesehen.values(), key=lambda e: e["name"]),
+        "materialien_quelle": QUELLE_STIL,
+        "n_bauteile_mit_stil": n_mit_stil,
+        "n_bauteile_ohne_stil": n_ohne_stil,
+        "materialien_note": (
+            "Nur IfcSurfaceStyle aus der Datei, Farbe von sRGB nach linear umgerechnet "
+            "(angenommen), immer deckend. Bauteile ohne Stil bleiben ohne Material — die "
+            "Grautoene, die ifcopenshell sonst je Bauteilart einsetzt, stammen nicht aus dem "
+            "Modell und stehen nicht in der glb. Durchsicht aus der Datei steht nur hier."),
         "bbox_note": "bbox in nativen IFC-Metern (Z oben); die glb selbst ist Y-up",
         "error": None,
     }

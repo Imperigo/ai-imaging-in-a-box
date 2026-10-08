@@ -1330,3 +1330,9 @@ Unter dem Bild stehen die letzten vier Läufe, das neueste links, jeder mit sein
 Bild gross, ohne das Hauptbild zu ersetzen; gelöscht wird nichts. Beim Bau zeigte sich, dass die Software frühere
 Läufe bisher wirklich vergass — jetzt hält sie die letzten vier fest. Ein Satz der Zeichnung war falsch und wurde
 berichtigt. Geprüft ist es im Browser; die Probe in der Engine der Desktop-App macht der Heim-PC.
+
+**08.10.2026 — Farben aus dem Modell kommen jetzt mit.** KosmoOrbit schreibt in seine IFC inzwischen Farben je
+Material, dazu Dach, Treppe, Geländer, Fenster und Türen. Unsere Umwandlung übernimmt diese Farben — aber nur die,
+die wirklich im Modell stehen, nicht die Ersatzgrautöne des Lesewerkzeugs. Die Form bleibt dabei unangetastet:
+Die Tiefenkarte, an der jedes Bild gemessen wird, ist mit und ohne Farben dieselbe, auf das Pixel. Ob unsere Messung
+jetzt auch das Dach sieht, prüft der Heim-PC am echten Demohaus.

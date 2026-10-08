@@ -233,7 +233,7 @@ class _Step:
 
 def _quader(s: _Step, kontext: str, breite: float, tiefe: float, hoehe: float,
             x: float, y: float, z: float, grund: str, *,
-            einheit_je_meter: float = 1.0) -> tuple[str, str]:
+            einheit_je_meter: float = 1.0, stil: str | None = None) -> tuple[str, str]:
     """Ein extrudierter Quader als IfcProductDefinitionShape + zugehörige Platzierung.
 
     `x`, `y`, `z` bezeichnen die **Minimum-Ecke** des Quaders, nicht seine Mitte. Das
@@ -260,6 +260,11 @@ def _quader(s: _Step, kontext: str, breite: float, tiefe: float, hoehe: float,
     )
     richtung = s.add("IFCDIRECTION((0.,0.,1.))")
     koerper = s.add(f"IFCEXTRUDEDAREASOLID({profil},{s.platzierung()},{richtung},{hoehe:.6f})")
+    if stil is not None:
+        # Der Stil haengt am Koerper, nicht am Bauteil — so schreiben es die Erzeuger, und
+        # so liest ihn ifcopenshell. `stil` ist schon die Referenz, die das Schema an
+        # dieser Stelle verlangt (siehe `_oberflaechenstil`).
+        s.add(f"IFCSTYLEDITEM({koerper},({stil}),$)")
     rep = s.add(f"IFCSHAPEREPRESENTATION({kontext},'Body','SweptSolid',({koerper}))")
     shape = s.add(f"IFCPRODUCTDEFINITIONSHAPE($,$,({rep}))")
     # Nur X und Y werden versetzt: die Extrusion läuft von der Platzierung aus nach
@@ -542,10 +547,42 @@ def gelaendekante(*, hochbau: bool, vielfaches: float = GELAENDE_VIELFACHES) -> 
     }
 
 
+#: Die Oberflächenstile der Testgeometrie mit ``mit_stilen`` — Name und Farbe (0–1).
+#:
+#: **Erfunden, nicht gemessen** — eine Testgeometrie braucht unterscheidbare Farben, keine
+#: wirklichen. Das Gelände bleibt ohne Stil: Eine Datei, in der nur ein Teil der Bauteile
+#: einen Stil trägt, ist der Normalfall eines echten Exports, und genau den soll die
+#: Umwandlung nach glb auseinanderhalten (``auf-20261007-259``: ohne Stil liefert
+#: ifcopenshell eigene Grautöne, die nicht aus dem Modell stammen).
+STILE = {
+    "Wand": ("Sichtbeton", (0.62, 0.60, 0.56)),
+    "Bodenplatte": ("Unterlagsboden", (0.45, 0.42, 0.38)),
+}
+
+
+def _oberflaechenstil(s: _Step, name: str, rgb: tuple[float, float, float],
+                      schema: str) -> str:
+    """Ein ``IfcSurfaceStyle`` mit Farbe — und die Referenz, die ``IfcStyledItem`` braucht.
+
+    Die beiden Schemata unterscheiden sich genau hier: IFC4 nimmt den Stil direkt,
+    IFC2X3 verlangt eine ``IfcPresentationStyleAssignment`` dazwischen. Und
+    ``IfcSurfaceStyleShading`` hat in IFC4 ein zweites Attribut (``Transparency``), in
+    IFC2X3 nicht.
+    """
+    farbe = s.add(f"IFCCOLOURRGB($,{rgb[0]:.4f},{rgb[1]:.4f},{rgb[2]:.4f})")
+    schattierung = s.add(f"IFCSURFACESTYLESHADING({farbe}" + (",0.)" if schema == "IFC4"
+                                                              else ")"))
+    stil = s.add(f"IFCSURFACESTYLE('{name}',.BOTH.,({schattierung}))")
+    if schema == "IFC4":
+        return stil
+    return s.add(f"IFCPRESENTATIONSTYLEASSIGNMENT(({stil}))")
+
+
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 mit_gelaende: bool = False, mit_raeumen: bool = False,
                 hochbau: bool = False,
-                gelaende_vielfaches: float = GELAENDE_VIELFACHES) -> Path:
+                gelaende_vielfaches: float = GELAENDE_VIELFACHES,
+                mit_stilen: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -573,7 +610,16 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             ``IfcProduct`` mit Geometrie — ``ifc_zu_glb`` zählte danach andere Elemente und
             Dreiecke. Eine stillschweigend geänderte Testgeometrie macht eine Messreihe
             unbrauchbar, ohne dass es auffällt.
+        mit_stilen: Wände und Bodenplatte tragen einen ``IfcSurfaceStyle`` mit Farbe
+            (:data:`STILE`), das Gelände keinen. **Vorgabe aus**: Ohne den Schalter ist die
+            Datei Zeichen für Zeichen dieselbe wie zuvor, denn jede Stil-Entität verschöbe
+            die Nummern aller folgenden.
     """
+    if hochbau and mit_stilen:
+        raise ValueError(
+            "hochbau und mit_stilen zugleich: Die Stile in STILE sind fuer Wand und "
+            "Bodenplatte des Quaders vergeben. Wer Stile am Hochbau braucht, bekommt "
+            "eigene — geraten wird hier nicht.")
     if hochbau and mit_raeumen:
         raise ValueError(
             "hochbau und mit_raeumen zugleich: Die beiden Räume aus RAEUME sind an die "
@@ -739,6 +785,11 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             f".BASESLAB.)"
         ))
 
+    stil_wand = stil_platte = None
+    if mit_stilen:
+        stil_wand = _oberflaechenstil(s, *STILE["Wand"], schema)
+        stil_platte = _oberflaechenstil(s, *STILE["Bodenplatte"], schema)
+
     if hochbau:
         # DAS ZWEITE BAUWERK. Es ersetzt den Quader und laesst alles andere stehen:
         # Einheiten, Schema, Kontext, Geschoss — und ein bestelltes Gelaende darunter,
@@ -750,7 +801,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
         # erwartete Gesamt-Bounding-Box eine glatte Prüfgrösse bleibt.
         shape, ort = _quader(s, kontext, LAENGE_X, BREITE_Y, PLATTENDICKE,
                              0.0, 0.0, -PLATTENDICKE, ort_gesch,
-                             einheit_je_meter=einheit_je_meter)
+                             einheit_je_meter=einheit_je_meter, stil=stil_platte)
         bauteile.append(s.add(
             f"IFCSLAB('{_ifc_guid(next(g))}',{besitz},'Bodenplatte',$,$,{ort},{shape},$,"
             f".FLOOR.)"
@@ -765,7 +816,8 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
         "Wand-West":  (WANDDICKE, innen_y, 0.0, WANDDICKE),
         "Wand-Ost":   (WANDDICKE, innen_y, LAENGE_X - WANDDICKE, WANDDICKE),
     }).items():
-        shape, ort = _quader(s, kontext, bw, bt, HOEHE_Z, px, py, 0.0, ort_gesch, einheit_je_meter=einheit_je_meter)
+        shape, ort = _quader(s, kontext, bw, bt, HOEHE_Z, px, py, 0.0, ort_gesch,
+                             einheit_je_meter=einheit_je_meter, stil=stil_wand)
         bauteile.append(s.add(
             # IFC4 kennt bei IfcWall ein neuntes Attribut (PredefinedType), IFC2X3
             # nicht. Ein Attribut zuviel macht die Datei für einen strengen Leser
@@ -840,7 +892,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: Die Schalter, die keine Stellungsargumente sind. Einmal aufgeschrieben, damit die
 #: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
-SCHALTER = ("--gelaende", "--raeume", "--hochbau")
+SCHALTER = ("--gelaende", "--raeume", "--hochbau", "--stile")
 
 #: Schalter MIT Wert, als Vorsilbe. Sie brauchen einen eigenen Eintrag: Die Filterung
 #: unten vergleicht auf Gleichheit, und `--gelaende-vielfaches=8.0` ist mit keinem
@@ -851,7 +903,7 @@ WERTSCHALTER = ("--gelaende-vielfaches=",)
 
 GEBRAUCH = (
     "Gebrauch: make_test_ifc.py [ZIEL] [IFC4|IFC2X3] [MILLI] [--gelaende] [--raeume]\n"
-    "                              [--hochbau]\n"
+    "                              [--hochbau] [--stile]\n"
     "  ZIEL       Pfad der zu schreibenden Datei (Vorgabe: build/testbau.ifc)\n"
     "  Schema     IFC4 (Vorgabe) oder IFC2X3\n"
     "  Vorsatz    MILLI fuer Millimeter, sonst Meter\n"
@@ -865,6 +917,7 @@ GEBRAUCH = (
     "  --hochbau  STATT des Quaders ein gegliedertes Bauwerk: Stuetzenraster, Kern,\n"
     "             Fassadentafeln, Auskragung. Fuer Messungen, an denen ein glatter\n"
     "             Kasten nichts zeigt.\n"
+    "  --stile    Waende und Bodenplatte mit Oberflaechenstil (Farbe), Gelaende ohne\n"
 )
 
 
@@ -888,6 +941,7 @@ if __name__ == "__main__":
                 raise SystemExit(2) from None
     mit_raeumen = "--raeume" in sys.argv
     hochbau = "--hochbau" in sys.argv
+    mit_stilen = "--stile" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -905,7 +959,8 @@ if __name__ == "__main__":
         warnings.simplefilter("ignore", GelaendeWarnung)
         p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
                         mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
-                        hochbau=hochbau, gelaende_vielfaches=vielfaches)
+                        hochbau=hochbau, gelaende_vielfaches=vielfaches,
+                        mit_stilen=mit_stilen)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
 
     # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.

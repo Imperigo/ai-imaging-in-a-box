@@ -1154,10 +1154,12 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
     Rückfall ohne Materialien
     -------------------------
     Trägt ein Mesh gar kein Material, bekommt es **objektweise** eine eigene ID. Sonst
-    verschmölze eine materiallose Szene zu einer einzigen Fläche. Genau das ist der
-    Normalfall der aktuellen Kette: `ifc_to_glb_runner.py` überträgt nur Geometrie, keine
-    IfcMaterial-Zuordnung — die glb kommt ohne Materialien in Blender an. Die Herkunft
-    steht deshalb in jedem Eintrag (`quelle`), damit niemand eine Objekt-Maske für eine
+    verschmölze eine materiallose Szene zu einer einzigen Fläche. Bis zum 08.10.2026 war
+    das der Normalfall der Kette: `ifc_to_glb_runner.py` übertrug nur Geometrie. Seither
+    übernimmt er die `IfcSurfaceStyle` der Datei (F6) — aber nur sie; ein Bauteil ohne
+    Stil kommt weiter ohne Material an, und eine Datei ganz ohne Stile ergibt dieselbe
+    materiallose glb wie zuvor. Darum bleibt beides nebeneinander möglich, und die
+    Herkunft steht in jedem Eintrag (`quelle`), damit niemand eine Objekt-Maske für eine
     Material-Maske hält.
     """
     tabelle: list[dict] = []

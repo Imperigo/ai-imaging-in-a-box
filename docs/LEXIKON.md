@@ -4619,6 +4619,17 @@ Farbe es trägt. Fehlt er, erfindet das Lesewerkzeug eine Vorgabe (etwa ein Grau
 *Im Projekt:* `auf-20261007-259` zählte im Demohaus null Oberflächenstile — darum wird die Übernahme
 von Materialien in unsere 3D-Datei vorerst nicht gebaut.
 
+**Deckend (Material)** — Ein Material, durch das man nicht hindurchsieht. In der 3D-Datei für die
+Tiefenkarte setzen wir jedes Material deckend, auch Glas: Blender zählt im Tiefendurchgang nur Flächen,
+die deckend genug sind — ein durchsichtiges Fenster verschwände sonst aus der Soll-Tiefe.
+*Im Projekt:* `ifc_to_glb_runner._glb_material`; die Durchsicht aus der IFC steht nur im Bericht.
+
+**sRGB und linear (Farbraum)** — Zwei Arten, dieselbe Farbe als Zahl zu schreiben. sRGB ist die
+Schreibweise «wie am Bildschirm gesehen», linear die, mit der ein Renderprogramm rechnet. Das
+3D-Format glTF verlangt linear; IFC sagt es nicht, die Programme schreiben meist sRGB. Darum rechnen
+wir beim Übernehmen um — sonst käme jede Farbe zu hell an.
+*Im Projekt:* `ifc_to_glb_runner.srgb_zu_linear` (Annahme, nicht gemessen).
+
 **Ausschnitt (Öffnungselement)** — Ein Loch, das in eine Wand geschnitten wird, wo später ein Fenster
 oder eine Tür sitzt. Es ist kein Bauteil, nur die Lücke. Liefert ein Modell nur den Ausschnitt und
 nicht das Fenster selbst, sieht die Geometrie an dieser Stelle ein offenes Loch.
@@ -6462,6 +6473,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
 | 2026-09-30 | Ergaenzt aus Sitzung 73: **Regel B (null-Regel, E123)**, **Hinweis gegen Vorbehalt**, **Lizenz offen**, **Umrisstreue**, **Sobel-Filter**, **Rahmung (nach dem Bauwerk)**, **Formprüfung (Augenurteil als Referenz)**, **AUC**, **Störfaktor**, **Kreuzpaar**, **Richtungstreue**, **Flächentrennung**, **Decke (einer Probe)**, **Vorab festgelegte Regel**, **Wiederholbarkeit (des Augenurteils)**, **Ausgewogene Trefferquote**, **Stichentscheid**, **Nachmessung (Replikation)**, **Grauzone (des Augenurteils)**, **Union-2.1**, **Gewichte-Ordner**, **Tunnel**, **Vorführmodus**, **TestFlight und Apple-Entwicklerkonto**, **Fassung (je Knotenart)**, **Tailscale**, **Tailscale Serve (Weiterleitung)**, **Ollama**, **Qwen3** |

@@ -7763,6 +7763,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Owner:** Blatt 15 am Bild abnehmen (oder ändern). *(07.10.2026, über die Zentrale: «so abnehmen»; KosmoOrbit E174, gebaut in v0.1.8)*
 - [x] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten bauen, nach Abnahme des Blatts, auf eigenem Zweig.
       *(07.10.2026: Zweig «claude/kosmovis-v018-render-verlauf», Kopf 5fdf523be; nur in Chromium geprüft — Protokoll 74 §62)*
+- [ ] **local:** `auf-20261008-264` — F6 am vollständigen Demohaus: Stile in der glb, Tiefe gleich, sieht die Soll-Tiefe das Dach? Danach Antwort an den Integrator.
 - [ ] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
@@ -7777,14 +7778,18 @@ Bekannt und ausdrücklich nicht erledigt:
       *(06.10.2026: Zweig «kosmovis-v017-qwen21-ergebnis», `d17c6c185`, Blatt in ihrem Eingang)*
 - [x] **cloud (Int 1):** P-LIZENZMARKE Schritt 1 gegen die echte Datei prüfen, Antwort abwarten. *(06.10.2026: ROADMAP 1681, Fixture + Probe bei ihnen, passt ohne Rückbau)*
 - [x] **Kern:** `guidance_applied` auch für Qwen-2.1 — Regler `true_cfg_scale` 1.0 aus der Signatur (Rechnung unverändert). *(06.10.2026)*
-- [ ] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt. *Zählung beauftragt: `auf-20261007-259` (07.10.2026).*
+- [x] **Kern (v0.1.8):** IFC-Oberflächenstile in die glb übernehmen (`ifc_to_glb_runner` liest `materials` nie) — erst am Demohaus zählen, ob es Stile trägt. *Zählung beauftragt: `auf-20261007-259` (07.10.2026).*
   *Zurückgestellt (07.10.2026), nicht gebaut:* `auf-20261007-259` — das Demohaus trägt **null** Oberflächenstile;
   «beton» und «kalksandstein» haben keine Farbe. In der glb kämen höchstens drei Grautöne an, und die stammen aus
   den Vorgaben des Lesewerkzeugs, nicht aus dem Modell. Wieder aufnehmen, sobald der Kernel-Export Stile schreibt.
-- [ ] **Integrator (Kernel-Export, nicht unser Code):** Dächer, Treppe und Geländer fehlen in der IFC; Fenster und
+  *Wieder aufgenommen und gebaut (08.10.2026):* Der Kernel-Export schreibt seit 1dc7e6f09 Stile (ROADMAP 1725/1732).
+  `ifc_to_glb_runner` übernimmt nur `IfcSurfaceStyle` der Datei (Kennung > 0), deckend; ohne Stile byte-gleiche glb,
+  mit Stilen bitgleiche Tiefe (gemessen hier mit Blender). `tests/test_ifc_stile.py`, `make_test_ifc.py --stile`.
+  Am Demohaus unbestätigt: `auf-20261008-264` (Protokoll 74 §63).
+- [x] **Integrator (Kernel-Export, nicht unser Code):** Dächer, Treppe und Geländer fehlen in der IFC; Fenster und
   Türen kommen nur als Ausschnitte (`auf-20261007-259`). Für Visbox heisst das: Die Soll-Tiefenkarte hat dort kein
   Dach, wo das Bild eines zeichnet — die Prüfung gegen die Geometrie urteilt dann gegen ein unvollständiges Haus.
-  Gemeldet von der HomeStation und von uns über die Zentrale (07.10.2026).
+  Gemeldet von der HomeStation und von uns über die Zentrale (07.10.2026). *(Gebaut vom Integrator 07.10.2026, 1dc7e6f09 — Grenze: Wände mit dachId noch auf voller Höhe. Ob unsere Soll-Tiefe das Dach sieht: `auf-20261008-264`.)*
 - [x] **Kern:** Blatt 13 auf der Entwurfsfläche: Satz zum ersten Öffnen auf macOS 15 berichtigen.
       *(01.10.2026, Fassung 19 der Entwurfsfläche)*
 - [ ] **Owner:** Probe am Mac nach der Abgabe; Entwurfsmodus bis 15.10. entscheiden.
