@@ -1,0 +1,371 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-271",
+ "worker": "local",
+ "rang": 58,
+ "folgt_auf": "Zentrale 20261008-135749-homestation-an-kosmovis-splat-render-luecken",
+ "owner_entscheid": [
+  "75",
+  "76"
+ ],
+ "status": "erledigt — M1–M5 am echten Splat gemessen, drei Abholer-Laeufe (A: Splat + Bestand markiert, B: Splat, Rolle entfernt, C: ohne Splat, Bestand markiert), je 3 Kameras x 3 Seeds",
+ "beendet": "2026-10-08T16:05:00Z",
+ "weg": "Wegwerf-Arbeitskopie (detached) auf origin/claude/lw-splat-context a1bc1c296, darin origin/claude/kosmovis-v018-splat-context cf839597c lokal gemergt (ein Konflikt: Importzeilen in kosmo-maus.ts, beide Seiten behalten), nicht gepusht. 'context' in RenderScene.shape: true. npm ci (Exit 0), npm run build (Exit 0), npx tauri build --no-bundle mit eigenem Cargo-Zielordner (Exit 0, 258 s; zweiter Bau 169 s fuer die Messhilfe), Binaerdatei umbenannt kopiert. Eigener Xvfb (1600x1000), eigener Netz-Namensraum (bwrap --unshare-net), darin Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (127.0.0.1, eigener Port, eigene Ablage, Fehlerbericht/Feedback/Lernjournal/Ablage im Wegwerf-Ordner, Ollama auf totem Port) und ein Relais Unix-Socket <-> MCP-Port der Test-App. App mit env -i, Wegwerf-XDG, KOSMO_MCP_PORT eigener Port im Namensraum (8630/8600/8700 dort unerreichbar). Profil ueber eine nur lokal eingebundene, nie committete Messhilfe vorbelegt (Bruecken-Adresse, Sync auf totem Port, feste Adressen). Bedient ueber kosmo_blick/kosmo_maus (Splat laden mit pfade = Wolke + .verortung.json, Volumen-Datei), Karten «Anwenden» und Graph-Verbindungen per xdotool nur auf dem eigenen Xvfb. Splat verortet geladen (Behelfsverortung, nicht in LV95, 1'057'305 von 3'171'915 Punkten im Viewer). Volumen-Reiter: V6/V8 ab Werk abgewaehlt, Knopf hiess «1 als Bestand uebernehmen» → nur V1 (Halle, 662.8 m², Hoehe 3.45 m) als Bestand, also EIN Bestandsquader statt der drei aus dem Demolauf. KosmoVis-Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel» ueber vis_graphErstellen/vis_nodeSetzen, Ausfuehren in der App (Z-Image Turbo, 128, 1600x1000, Kameras auto). Der Auftrag kam mit context (kind splat, fit behelf, transform 16 Zahlen). Gerechnet vom Abholer (ai-imaging main, tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst), je Lauf unter der geteilten GPU-Sperre bei freier Karte (< 20 W, < 3 GB, kein Sprachmodell geladen — nichts zu entladen). Varianten B und C als Kopien des App-Auftrags in der Wegwerf-Ablage (gleiche render-scene, nur context entfernt bzw. Rolle entfernt).",
+ "koepfe": {
+  "gebaut": "lokaler Merge (nicht gepusht) von a1bc1c296 (claude/lw-splat-context) + cf839597c (claude/kosmovis-v018-splat-context); App-Kopf v0.1.7",
+  "abholer": "ai-imaging main 67fb7c3 (enthaelt 2ff4212 Ausschnitt E75, 12d92d9 Splat im Multipass E76, 67fb7c3 Bestand ohne Schrift)",
+  "rolle_existing": "extras.role = \"existing\" ist auf KEINEM der Zweige (derive/gltf.ts auf lw-splat-context, kosmovis-v018-splat-context und kosmo-orbit-v1-build-pzxkbj 8dbabfb1a ohne role; Runde 14 nicht gepusht). Darum fuer A und C das model.glb des Auftrags in der Wegwerf-Ablage nachbehandelt: am einen Knoten mit extras.kind = \"mass\" extras.role = \"existing\" gesetzt (JSON-Block der glb neu geschrieben). kosmo_szene.bestand_in_glb liest danach n_bestand 1 von 1. B: die unveraenderte glb der App (ohne Rolle)."
+ },
+ "laeufe": {
+  "A": {
+   "context": true,
+   "rolle": true,
+   "kameras": [
+    "s",
+    "sSE",
+    "nNW"
+   ],
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "zeiten_s": {
+    "s": 100.2,
+    "sSE": 97.9,
+    "nNW": 98.6,
+    "gesamt": 296.7
+   },
+   "verdict": "passed false, «Geometrie 0.108 gegen 0.65»"
+  },
+  "B": {
+   "context": true,
+   "rolle": false,
+   "zeiten_s": {
+    "s": 100.6,
+    "sSE": 98.7,
+    "nNW": 99.1,
+    "gesamt": 298.4
+   },
+   "verdict": "passed false, «Geometrie 0.0 gegen 0.65»"
+  },
+  "C": {
+   "context": false,
+   "rolle": true,
+   "zeiten_s": {
+    "s": 93.9,
+    "sSE": 93.1,
+    "nNW": 93.2,
+    "gesamt": 280.2
+   },
+   "verdict": "passed false, «NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 3.7 % des Bildes …» (sSE/nNW 4.4 %)"
+  },
+  "gpu": "27 Z-Image-Turbo-Bilder statt ~12: der Abholer rechnet ohne --seeds die Vorgabe 0,1,2 je Kamera (3 Laeufe x 3 Kameras x 3 Seeds). Dafuer liegen M4-Seeds 0–2 aus je einem Lauf vor. Sperre je Lauf genommen und freigegeben."
+ },
+ "schritte": {
+  "M1": {
+   "frage": "Splat im Bild — mit und ohne context",
+   "je_kamera": {
+    "s": {
+     "punkte_gerendert": 955409,
+     "verworfen_deckkraft": 2216506,
+     "verdeckt_anteil": 0.2136,
+     "multipass_s_mit": 7.4,
+     "multipass_s_ohne": 5.0
+    },
+    "sSE": {
+     "punkte_gerendert": 955409,
+     "verworfen_deckkraft": 2216506,
+     "verdeckt_anteil": 0.3137,
+     "multipass_s_mit": 6.9,
+     "multipass_s_ohne": 4.0
+    },
+    "nNW": {
+     "punkte_gerendert": 955409,
+     "verworfen_deckkraft": 2216506,
+     "verdeckt_anteil": 0.5433,
+     "multipass_s_mit": 5.7,
+     "multipass_s_ohne": 3.7
+    }
+   },
+   "punkte_gelesen": 3171915,
+   "laufzeit_gesamt_s": {
+    "mit (A)": 296.7,
+    "mit (B)": 298.4,
+    "ohne (C)": 280.2
+   },
+   "laufzeit_hinweis": "Multipass-Zeit aus Dateizeiten (Start bzw. voriges Urteil bis blender-report.json): mit Splat 5.7–7.6 s je Kamera, ohne 3.7–5.0 s; gesamt +16–18 s (+6 %).",
+   "satz": "Die Lage stimmt grob (Baumgruppen an beiden Hallenenden, Hallenoberkante im Splat), die Farben (SH-Grad 0, als Emission) sind plausibel, aber der Splat ist im Bild sehr lueckig: einzelne Scheiben statt Flaeche, 70 % der Punkte fallen an der Deckkraftschwelle 0.1, und Z-Image macht aus den Scheiben in allen 18 Bildern mit Splat Konfetti/Kreisscheiben ueber das ganze Bild; die Halle ist zu 21–54 % verdeckt.",
+   "nebenbefund": "Mit Splat zaehlt anteil_soll die Splat-Punkte mit: 0.230 / 0.265 / 0.315 statt 0.037 / 0.044 / 0.044 ohne. Damit greift der 20-%-Riegel «nicht beurteilbar» nicht mehr: A und B werden als DURCHGEFALLEN gewertet (Score 0.108 bzw. 0.0), obwohl das Bauwerk nur 2.9 / 3.0 / 2.0 % des Bildes fuellt (maskenbefund.anteil_bauwerk). C (gleiches Bauwerk, ohne Splat) sagt richtig «NICHT BEURTEILBAR».",
+   "urteil": "nein — Splat geht mit und liegt richtig, traegt aber nicht: Konfetti im Bild und der Anteilsriegel wird ausgehebelt."
+  },
+  "M2": {
+   "frage": "Tiefenspanne auf dem Bauwerk mit und ohne Splat",
+   "verfahren": "tiefe_.exr je Kamera gelesen (aiimaging.bildlesen), Bauwerk = material_id.png ohne Hintergrund und ohne Kontextfarbe; Normierung wie bildschreiben.normalisiere_tiefe (min/max ueber alle gueltigen Punkte).",
+   "je_kamera": {
+    "s": {
+     "ohne": {
+      "normierung_m": [
+       89.7,
+       101.13
+      ],
+      "bauwerk_m": [
+       89.7,
+       101.13
+      ],
+      "anteil_der_spanne": 1.0
+     },
+     "mit": {
+      "normierung_m": [
+       65.61,
+       163.02
+      ],
+      "bauwerk_m": [
+       89.7,
+       101.08
+      ],
+      "anteil_der_spanne": 0.117,
+      "anteil_p2_p98": 0.103
+     }
+    },
+    "sSE": {
+     "ohne": {
+      "normierung_m": [
+       70.24,
+       101.48
+      ],
+      "bauwerk_m": [
+       70.24,
+       101.48
+      ],
+      "anteil_der_spanne": 1.0
+     },
+     "mit": {
+      "normierung_m": [
+       43.67,
+       166.84
+      ],
+      "bauwerk_m": [
+       70.24,
+       101.48
+      ],
+      "anteil_der_spanne": 0.254,
+      "anteil_p2_p98": 0.212
+     }
+    },
+    "nNW": {
+     "ohne": {
+      "normierung_m": [
+       70.24,
+       101.48
+      ],
+      "bauwerk_m": [
+       70.24,
+       101.48
+      ],
+      "anteil_der_spanne": 1.0
+     },
+     "mit": {
+      "normierung_m": [
+       40.31,
+       155.75
+      ],
+      "bauwerk_m": [
+       70.24,
+       101.48
+      ],
+      "anteil_der_spanne": 0.271,
+      "anteil_p2_p98": 0.252
+     }
+    }
+   },
+   "score_rho": {
+    "mit (A, gewaehlter Seed)": {
+     "s": {
+      "score": 0.108,
+      "rho_maske": -0.752
+     },
+     "sSE": {
+      "score": 0.22,
+      "rho_maske": 0.998
+     },
+     "nNW": {
+      "score": 0.124,
+      "rho_maske": -0.326
+     }
+    },
+    "ohne (C, gewaehlter Seed)": {
+     "s": {
+      "score": null,
+      "rho_maske": 0.678
+     },
+     "sSE": {
+      "score": 0.0,
+      "rho_maske": 0.988
+     },
+     "nNW": {
+      "score": 0.0,
+      "rho_maske": 0.988
+     }
+    },
+    "rho_maske_aller_seeds": {
+     "mit (A)": {
+      "s": [
+       0.609,
+       -0.752,
+       0.576
+      ],
+      "sSE": [
+       0.34,
+       0.948,
+       0.998
+      ],
+      "nNW": [
+       0.342,
+       0.991,
+       -0.326
+      ]
+     },
+     "ohne (C)": {
+      "s": [
+       -0.685,
+       0.399,
+       0.678
+      ],
+      "sSE": [
+       0.981,
+       -0.886,
+       0.988
+      ],
+      "nNW": [
+       0.978,
+       -0.882,
+       0.988
+      ]
+     }
+    },
+    "hinweis": "C ist «nicht beurteilbar» (Score nur Auskunft); die Seed-Wahl geht nach «umriss» und waehlt teils den Seed mit negativem rho_maske (A s: Seed 1, -0.752, obwohl Seed 0 0.609 hat)."
+   },
+   "satz": "Der Verdacht bestaetigt sich am echten Splat: die Normierung streckt sich von 89.7–101.1 m auf 65.6–163.0 m (Kamera s), das Bauwerk behaelt nur 12–27 % des Grauwertbereichs statt 100 % — in tiefe_norm.png ist die Halle fast einheitlich grau. rho_maske wird dadurch im Mittel nicht schlechter (A 0.41, C 0.28 ueber alle 9 Seeds), streut aber gleich stark.",
+   "urteil": "nein — Kontrastverlust Faktor 4–9 auf dem Bauwerk; Normierung sollte das Bauwerk (oder ein Perzentil) zum Bezug nehmen."
+  },
+  "M3": {
+   "frage": "Ausschnitt an der Halle (E75)",
+   "je_kamera": {
+    "s": {
+     "ausschnitt": false,
+     "vollstaendig": true,
+     "fuellgrad": 0.698,
+     "abstand_m": 100.4,
+     "flaechenanteil_sichtbar": null,
+     "anteil_soll_ohne_splat": 0.0373,
+     "anteil_soll_mit_splat": 0.2299,
+     "anteil_bauwerk_mit_splat": 0.0293
+    },
+    "sSE": {
+     "ausschnitt": false,
+     "vollstaendig": true,
+     "fuellgrad": 0.7,
+     "abstand_m": 90.3,
+     "flaechenanteil_sichtbar": null,
+     "anteil_soll_ohne_splat": 0.0444,
+     "anteil_soll_mit_splat": 0.2649,
+     "anteil_bauwerk_mit_splat": 0.0305
+    },
+    "nNW": {
+     "ausschnitt": false,
+     "vollstaendig": true,
+     "fuellgrad": 0.7,
+     "abstand_m": 90.3,
+     "flaechenanteil_sichtbar": null,
+     "anteil_soll_ohne_splat": 0.0444,
+     "anteil_soll_mit_splat": 0.3149,
+     "anteil_bauwerk_mit_splat": 0.0203
+    }
+   },
+   "grund": "Der Ausschnitt ist an kamera_huellbox gebunden (blender_depth_stage: ausschnitt = bool(kamera_huellbox)). Die kommt aus abholer._rahmung_fuer → glbbox.rahmungsbox, und die liefert fuer dieses Modell box None, wortlich: «Die Bauwerksbox ist praktisch die Szene (Schrumpfung 0.0) — die Namensregel fand kein Gelände.» Ohne Gelaende in der glb (Bestand aus dem Splat, --kein-gelaende) wird nach der Szene gerahmt und E75 schaltet nie ein — in allen 9 Kameras der drei Laeufe ausschnitt false; flaechenanteil_sichtbar steht nicht im Kamerablock.",
+   "satz": "Unveraendert 3.7–4.4 % Bauwerk (vorher 3.8–4.5 %), Kamera 90–100 m entfernt; der Ausschnitt greift an genau diesem Fall nicht.",
+   "urteil": "nein — nicht beurteilbar (< 20 %) wie vorher; E75 braucht hier einen Weg ohne Gelaende-Huellbox (z.B. Bauwerksbox = Szene zulassen, wenn der Splat nicht zaehlt)."
+  },
+  "M4": {
+   "frage": "Bestand ohne Schrift — Seeds 0,1,2 mit Zusatz (A) und ohne (B, Rolle entfernt, sonst gleich; beide mit Splat)",
+   "zaehlung_kamera_s": {
+    "mit": "0 von 3",
+    "ohne": "1 von 3"
+   },
+   "je_bild": {
+    "mit (A)": {
+     "s": [
+      "nein",
+      "nein",
+      "nein"
+     ],
+     "sSE": [
+      "nein",
+      "nein",
+      "nein"
+     ],
+     "nNW": [
+      "unsicher (winzige, unlesbare Zeichen auf einem weissen Block im Hintergrund)",
+      "nein (leeres oranges Schild)",
+      "nein"
+     ]
+    },
+    "ohne (B)": {
+     "s": [
+      "nein",
+      "nein",
+      "JA — Schriftzug «…LAULE AROJ BOJIALOJCUND UET» quer ueber das Hallenband"
+     ],
+     "sSE": [
+      "nein",
+      "nein",
+      "nein"
+     ],
+     "nNW": [
+      "nein",
+      "nein",
+      "unsicher (oranges Band mit buchstabenartigen Flecken an einem Nachbarbau)"
+     ]
+    }
+   },
+   "zaehlung_alle_9": {
+    "mit": "0 deutlich, 1 unsicher",
+    "ohne": "1 deutlich, 1 unsicher"
+   },
+   "c_ohne_splat_mit_zusatz": "C (ohne Splat, mit Zusatz): 0 von 9, Halle als glatte Blechhalle.",
+   "satz": "Mit Zusatz in 9 Bildern kein deutlicher Schriftzug, ohne Zusatz einmal ein grosser Fantasie-Schriftzug an der Halle (s, Seed 2) — die Richtung stimmt, aber 0 gegen 1 bei n = 9 ist kein Beleg; der Zusatz aendert ausserdem das ganze Bild (gleicher Seed, voellig andere Szene).",
+   "urteil": "offen — vermutlich ja, statistisch nicht belegt; ein groesserer Lauf (z.B. 10 Seeds ohne Splat-Konfetti) waere noetig."
+  },
+  "M5": {
+   "frage": "Hinweise in verdict.hinweise",
+   "A_woertlich": [
+    "BESTAND: 1 Körper als bestehend markiert; dem Bildauftrag wurde «existing building shown as a plain massing volume, blank facade without lettering or signage» angehängt (ohne Schrift). Ob das Bild ohne Schrift bleibt, ist ungemessen.",
+    "UMGEBUNG: Splat 'splat.ply' im Bild — sichtbar in Bild und Tiefe, gemessen wird nur das Bauwerk.",
+    "Lage des Splats von Hand gesetzt, nicht vermessen.",
+    "KONTEXT, Bezugssystem: Lage aus Verortung (nicht in LV95), Verortung behelf, Massstab ±5.8 %"
+   ],
+   "B_woertlich": [
+    "UMGEBUNG: Splat 'splat.ply' im Bild — sichtbar in Bild und Tiefe, gemessen wird nur das Bauwerk.",
+    "Lage des Splats von Hand gesetzt, nicht vermessen.",
+    "KONTEXT, Bezugssystem: Lage aus Verortung (nicht in LV95), Verortung behelf, Massstab ±5.8 %"
+   ],
+   "C_woertlich": [
+    "BESTAND: 1 Körper als bestehend markiert; dem Bildauftrag wurde «existing building shown as a plain massing volume, blank facade without lettering or signage» angehängt (ohne Schrift). Ob das Bild ohne Schrift bleibt, ist ungemessen."
+   ],
+   "satz": "Alle drei verlangten Saetze stehen woertlich in A; ohne Rolle fehlt «BESTAND: …», ohne context fehlen «UMGEBUNG: …», der Behelf-Satz und der Bezugssystem-Satz. Zusaetzlich kommt «KONTEXT, Bezugssystem: …» aus crs_note.",
+   "urteil": "ja"
+  }
+ },
+ "urteil": "Splat im Bild (E76) laeuft durch und liegt richtig, traegt aber am echten Splat noch nicht: Konfetti im Bild, Tiefenkontrast auf dem Bauwerk auf 12–27 % gestaucht, und der Anteilsriegel wird ueber die Splat-Punkte ausgehebelt (durchgefallen statt nicht beurteilbar). Der Ausschnitt (E75) schaltet an der Halle nicht ein, weil das Modell kein Gelaende hat. Bestand ohne Schrift: Richtung stimmt (0 gegen 1 Schriftzug), nicht belegt. Hinweise vollstaendig.",
+ "auffaelliges": [
+  "anteil_soll zaehlt den Splat mit → Riegel 20 % umgangen (M1/M3).",
+  "E75 haengt an rahmungsbox, die ohne Gelaende None liefert → ausschnitt nie aktiv (M3).",
+  "Seed-Wahl «nach umriss» waehlt in A bei s und nNW den Seed mit negativem rho_maske, obwohl ein positiver da ist (M2).",
+  "extras.role kommt von keinem Zweig — glb fuer A/C von Hand markiert (koepfe.rolle_existing).",
+  "Nur V1 als Bestand (V6/V8 ab Werk abgewaehlt), also ein Quader statt drei.",
+  "Merge-Konflikt lw-splat-context × kosmovis-v018-splat-context in kosmo-maus.ts (nur Importzeilen) — fuer den Integrator.",
+  "Keine synthetischen Bilder abgelegt (optional, nicht gemacht); Bilder des echten Splats nur lokal beim Owner."
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (kein Absturzbericht, /var/crash nur kexec_cmd), danach per gemerkter PID Bruecke, Relais, Sitzungs-DBus, Namensraum und Xvfb; Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Wegwerf-Ablage und Hilfsskripte geloescht; GPU-Sperre frei; installierte App, Port 8630, Bruecke 8600 und Sync 8700 unberuehrt; nichts in KosmoOrbit gepusht."
+}
