@@ -1,0 +1,129 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-265",
+ "worker": "local",
+ "rang": 52,
+ "status": "erledigt: A, B, C, D gerechnet. Kein Code geaendert, nichts installiert, installierte App, Dienst-Port und Haupt-Bildschirm nicht beruehrt, nichts committet.",
+ "A_staende": {
+  "ai_imaging": "524c2d9 («Bauwerksmaske nach F6 wieder an»), git pull --ff-only: «Bereits aktuell»",
+  "kosmoorbit": "4b868e845 (Integrator-Zweig nach fetch, Zweigspitze unveraendert)",
+  "weg": "eigener worktree des Orbit-Repos auf 4b868e845, npm ci (Exit 0) nur dort; Wegwerf-tsx im Kernel-Paket mit setup-regelwissen + execute(doc,'haus.demohausBauen',{}) + exportIfc(doc)",
+  "ifc": "IFC4, 152653 Byte (264: 152590; Unterschied nur Zeitstempel/Kennungen der neuen Umwandlung)"
+ },
+ "B_multipass": {
+  "weg": "arbeitsgang.lege_an(Wegwerfmappe, demohaus.ifc) mit Runner 524c2d9, dann seams.glb_zu_multipass(modell.glb der Mappe, up_axis='Y', aufloesung=512, kamera=k), .venv-render, Cycles auf CPU; maske.maske_aus_bericht mit Vorgabe gelaende_erwartet=True (wie der Kettenknoten)",
+  "je_kamera": {
+   "s": {
+    "quelle": {
+     "objekt": 55
+    },
+    "eintraege": 55,
+    "maske_gemessen": true,
+    "anteil_maske": 0.1794,
+    "grund": ""
+   },
+   "sSE": {
+    "quelle": {
+     "objekt": 55
+    },
+    "eintraege": 55,
+    "maske_gemessen": true,
+    "anteil_maske": 0.1734,
+    "grund": ""
+   },
+   "nNW": {
+    "quelle": {
+     "objekt": 55
+    },
+    "eintraege": 55,
+    "maske_gemessen": true,
+    "anteil_maske": 0.1987,
+    "grund": ""
+   }
+  },
+  "befund": "Alle 55 Eintraege je Kamera mit quelle «objekt», Namen wieder Knotennamen (IfcWall_Wand_…, IfcWindow_Fenster_…_1 usw.; 47 Bauteile + 8 geteilte Fenster). Maske gemessen bei allen drei; Anteile gleich dem Geometrieanteil aus 264 (0.179/0.173/0.199). Gelaendebefund «kein_gelaende_belegt» als Katalog-Nullbefund (ifc_katalog=true): «Die Maske GILT»."
+ },
+ "C_bilder": {
+  "weg": "Mappenweg: arbeitsgang.rechne(mappe, cache=None, varianten=None, kamera=k, backbone='z-image-turbo', prompt=…) je Kamera; AIIMAGING_MODELLE wie der Dienst; GPU-Sperre je Lauf, Karte vorher frei (2.2 GB, kein Sprachmodell geladen)",
+  "prompt": "a two-storey house with a pitched roof on a lawn, overcast daylight, photorealistic (wie 264; ohne Prompt verweigert die Kette den Lauf — «prompt fehlt oder ist leer»)",
+  "aufloesung": "512x512 (Vorgabe der neuen Mappe; 264 lief mit 768x512 — die Kamera-Abstaende sind darum die 512er: s 28.0 m, sSE/nNW 27.56 m)",
+  "seed": "keiner bestellt (gerechnet 0)",
+  "modus": "bestellt image_edit, gerechnet txt2img (bekannter Hinweis)",
+  "je_kamera": {
+   "s": {
+    "score": null,
+    "rho_maske": -0.3901,
+    "rho_maske_gerichtet": 0.3901,
+    "anteil_soll": 0.1794,
+    "bestanden": false,
+    "geom_iou": 0.0,
+    "geom_iou_norm": -0.219,
+    "n_gemeinsam": 0,
+    "kantenanteil": 0.0019,
+    "paarurteil_bestanden": null,
+    "maskenbefund_gemessen": true,
+    "gelaende_befund": "kein_gelaende_belegt",
+    "grund_woertlich": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieanteil: nur 17.9% der Bildpunkte tragen Geometrie. Am 19.08.2026 gemessen (auf-20260819-15): Bei 17 % deckelt 'geom_iou' bei 0.256 — die Schwelle 0.65 ist dann ARITHMETISCH UNERREICHBAR, und ein durchgefallenes Bild belegt nichts über seine Geometrietreue. Ab 60 % lag der Deckel bei 0.967. Der Grund: Ein monokularer Schätzer legt in eine leere Fläche eine Bodenebene hinein (auf-20260818-10), und je mehr leere Fläche, desto mehr erfundene Geometrie in der Ist-Silhouette. Was zwischen 20 % und 60 % geschieht, ist ungemessen.",
+    "ohne_maskenweg_im_ergebnis": false,
+    "render_s": 7.625,
+    "seed": 0,
+    "satz_zum_bild": "Giebelansicht von Sueden: Satteldach mit GESCHLOSSENEM Giebel (hell verputzt, mit einem erfundenen Giebelfenster und einer dunklen Luke), zweigeschossiges Haus mit Anbau rechts; das Bildmodell erfindet ein hohes Fensterband in der Mitte und weitere Fenster, Balkon/Gelaender fehlt."
+   },
+   "sSE": {
+    "score": null,
+    "rho_maske": -0.7681,
+    "rho_maske_gerichtet": 0.7681,
+    "anteil_soll": 0.1734,
+    "bestanden": false,
+    "geom_iou": 0.0,
+    "geom_iou_norm": -0.21,
+    "n_gemeinsam": 0,
+    "kantenanteil": 0.3032,
+    "paarurteil_bestanden": null,
+    "maskenbefund_gemessen": true,
+    "gelaende_befund": "kein_gelaende_belegt",
+    "grund_woertlich": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieanteil: nur 17.3% der Bildpunkte tragen Geometrie. Am 19.08.2026 gemessen (auf-20260819-15): Bei 17 % deckelt 'geom_iou' bei 0.256 — die Schwelle 0.65 ist dann ARITHMETISCH UNERREICHBAR, und ein durchgefallenes Bild belegt nichts über seine Geometrietreue. Ab 60 % lag der Deckel bei 0.967. Der Grund: Ein monokularer Schätzer legt in eine leere Fläche eine Bodenebene hinein (auf-20260818-10), und je mehr leere Fläche, desto mehr erfundene Geometrie in der Ist-Silhouette. Was zwischen 20 % und 60 % geschieht, ist ungemessen.",
+    "ohne_maskenweg_im_ergebnis": false,
+    "render_s": 7.613,
+    "seed": 0,
+    "satz_zum_bild": "Haus von Suedsuedost mit Satteldach und eingeschossigem Anbau mit Flachdach rechts; der Giebel ist nicht offen, aber VERGLAST (Glasgiebel unter dem Dachrand) — das Bildmodell deutet das offene Dreieck als Glasflaeche; dazu erfundene Fenster, Holzverkleidung und ein Vordach/Balkon links."
+   },
+   "nNW": {
+    "score": null,
+    "rho_maske": -0.808,
+    "rho_maske_gerichtet": 0.808,
+    "anteil_soll": 0.1987,
+    "bestanden": false,
+    "geom_iou": 0.0,
+    "geom_iou_norm": -0.248,
+    "n_gemeinsam": 0,
+    "kantenanteil": 0.0207,
+    "paarurteil_bestanden": null,
+    "maskenbefund_gemessen": true,
+    "gelaende_befund": "kein_gelaende_belegt",
+    "grund_woertlich": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieanteil: nur 19.9% der Bildpunkte tragen Geometrie. Am 19.08.2026 gemessen (auf-20260819-15): Bei 17 % deckelt 'geom_iou' bei 0.256 — die Schwelle 0.65 ist dann ARITHMETISCH UNERREICHBAR, und ein durchgefallenes Bild belegt nichts über seine Geometrietreue. Ab 60 % lag der Deckel bei 0.967. Der Grund: Ein monokularer Schätzer legt in eine leere Fläche eine Bodenebene hinein (auf-20260818-10), und je mehr leere Fläche, desto mehr erfundene Geometrie in der Ist-Silhouette. Was zwischen 20 % und 60 % geschieht, ist ungemessen.",
+    "ohne_maskenweg_im_ergebnis": false,
+    "render_s": 7.637,
+    "seed": 0,
+    "satz_zum_bild": "Nordgiebel GESCHLOSSEN (helle Blechverkleidung, ein erfundenes rotes Kreuz und eine Luke im Giebel), zweigeschossiger Baukoerper mit erfundenen roten Fensterrahmen und mehr Fenstern als im Modell; ein Ast im Vordergrund ist erfunden."
+   }
+  },
+  "ohne_maskenweg": "Die Warnung «OHNE MASKENWEG gemessen» steht in keinem der drei Ergebnisse mehr (Volltextsuche im ganzen Ergebnis: nicht gefunden). rho_maske ist jetzt gemessen.",
+  "warum_score_none": "Score bleibt None, weil n_gemeinsam = 0 (geom_iou 0.0): die Warnung «Keine gemeinsame Silhouette …» nennt selbst die zweite Lesart — Szene ohne Gelaende, der Schaetzer legt eine Bodenebene in den leeren Vordergrund. Wie in 264.",
+  "paarurteil": "gemessen, aber «NICHT GEEICHT, NUR AUSKUNFT» (Owner-Entscheid 30.09.): bestanden None bei allen drei.",
+  "bild_im_repo": "auftraege/ergebnisse/auf-20261008-265-bild-sse.png (sSE, 256 px, synthetisch)",
+  "sha256_kurz": {
+   "s": "71aecc23420b220a",
+   "sSE": "57493019c863cf6b",
+   "nNW": "5152ae8a6135999a"
+  }
+ },
+ "urteil": "Der Maskenweg laeuft am Demohaus wieder (alle 55 Eintraege «objekt», Maske gemessen, rho_maske gerichtet 0.39 / 0.77 / 0.81 bei s / sSE / nNW, keine «OHNE MASKENWEG»-Warnung mehr) — das Demohaus-Bild besteht aber weiterhin NICHT: Score None (keine gemeinsame Silhouette bei 17–20 % Geometrieanteil), bestanden false bei allen drei Kameras.",
+ "nicht_getan": [
+  "kein Code geaendert, nichts installiert (npm ci nur im Wegwerf-worktree)",
+  "installierte App nicht beruehrt, kein Dienst-Port, kein Haupt-Bildschirm",
+  "nichts committet"
+ ],
+ "aufraeumen": "Orbit-worktree samt node_modules entfernt, Wegwerfordner (IFC, Mappe, Multipass-Laeufe, Skripte, Logs) geloescht, GPU-Sperre frei.",
+ "fehler": null
+}
