@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-265",
+  "art": "qa",
+  "beschreibung": "Nach F6 fiel die Bauwerksmaske bei Haeusern mit Stil und ohne Gelaende weg (Demohaus); behoben — Nachmessung am Demohaus mit drei Kameras.",
+  "anweisung": "=== ANSAGE + NACHMESSUNG: DIE BAUWERKSMASKE NACH F6 — BEHOBEN, BITTE AM DEMOHAUS NACHPRUEFEN ===\n\nWORUM ES GEHT\n  Danke fuer 264 — sauber, und dein C4 hat einen Fehler von uns aufgedeckt: Seit F6 fuehrte der\n  Material-ID-Durchgang Materialnamen («Beton») statt Bauteilnamen («IfcWall_…»). Die Bauwerksmaske\n  liest genau diese Tabelle (Gelaenderegel und Katalog-Nullbefund arbeiten auf Knotennamen). Bei einem\n  Haus, dessen Bauteile alle einen Stil tragen und das kein Gelaende mitbringt — dem Demohaus —, fiel\n  die Maske darum weg: «OHNE MASKENWEG gemessen», rho_maske None. Hier nachgestellt am Testbau mit\n  --stile: Maske gemessen=False, vor F6 True.\n  ANSAGE (nach dem naechsten git pull, Blender-Runner): Ein Objekt aus unserer IFC-Umwandlung\n  (Knotenname «Ifc…_») bekommt im Material-ID-Durchgang wieder seine ID je OBJEKT, auch wenn es ein\n  Material traegt. Tabelle und Maske sind damit dieselben wie vor F6 (hier gemessen: Maske Pixel fuer\n  Pixel gleich). Die Farben bleiben in der glb und im Beauty-Bild. Szenen, die nicht aus unserer\n  IFC-Umwandlung kommen (glb aus KosmoOrbit), sind unveraendert. Der Dienst der Flaeche ruft Blender\n  als eigenen Prozess — kein Neustart noetig fuer diesen Teil.\n  Berichtigt: «gleiche Knoten, gleiche Namen» galt nur fuer Bauteile mit EINEM Stil; Fenster (Glas +\n  Rahmen) werden geteilt (Anhang _1), wie du gemessen hast.\n\nWAS DU TUST\n  A  git pull --ff-only in ai-imaging (mindestens der Stand, der diese Datei bringt).\n  B  Dasselbe Demohaus wie in 264 (KosmoOrbit 4b868e845 oder neuer), neu umgewandelt, neue\n     Wegwerfmappe. Multipass s/sSE/nNW: material_id_tabelle — quelle je Eintrag (erwartet: alle\n     «objekt»), Anzahl Eintraege; maskenbefund gemessen ja/nein und Anteil der Maske am Bild.\n  C  Drei Bilder z-image-turbo ueber den Mappenweg (kamera s, sSE, nNW; ohne Startwert), mit Pruefung:\n     Score, rho_maske, anteil_soll, bestanden, Grund woertlich; steht «OHNE MASKENWEG» noch da?\n  D  Ein Satz je Bild, was es zeigt (Giebel geschlossen/offen, erfundene Fenster).\n\nWAS DU NICHT TUST\n  Keinen Code aendern, nichts installieren. Keine Bilder ins Repo ausser einem kleinen Beauty/Bild\n  von sSE (synthetisch, 256 px) als auftraege/ergebnisse/auf-20261008-265-bild-sse.png. Keine Pfade\n  mit Benutzernamen, keine Host- oder Netznamen. Wegwerfordner danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-265.json)\n  B Tabelle je Kamera (quelle, Eintraege, Maske gemessen, Anteil). C Tabelle je Kamera (Score,\n  rho_maske, anteil_soll, bestanden, Grund). Urteil in einem Satz: laeuft der Maskenweg am Demohaus\n  wieder, und besteht das Demohaus-Bild?",
+  "erstellt": "2026-10-08T09:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel: haus.demohausBauen + exportIfc (ab 4b868e845), ohne Oberflaeche"
+  },
+  "params": {
+    "folgt_auf": "auf-20261008-264",
+    "kameras": [
+      "s",
+      "sSE",
+      "nNW"
+    ],
+    "backbone": "z-image-turbo"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Blender und GPU: drei Bilder z-image-turbo; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur git pull --ff-only; bei unerwartetem Zustand STOPP und melden.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); das Demohaus ist synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "B je Kamera: quelle der Material-ID-Eintraege, Anzahl, Maske gemessen, Anteil.",
+    "C je Kamera: Score, rho_maske, anteil_soll, bestanden, Grund woertlich.",
+    "D je Bild ein Satz.",
+    "Urteil in einem Satz."
+  ],
+  "rang": 52
+}

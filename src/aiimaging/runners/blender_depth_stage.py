@@ -71,6 +71,7 @@ import colorsys
 import json
 import math
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -1134,6 +1135,17 @@ def _emissions_material(name: str, farbe_srgb) -> "bpy.types.Material":
     return mat
 
 
+#: Knotennamen aus unserer IFC-Umwandlung: ``IfcWall_Wand-Sued_<GlobalId>`` (siehe
+#: ``ifc_to_glb_runner._knotenname``), ein geteiltes Bauteil mit Anhang ``_1``.
+IFC_KNOTEN = re.compile(r"^Ifc[A-Z][A-Za-z0-9]*_")
+
+
+def _ist_ifc_knoten(name: str) -> bool:
+    """Stammt ein Objekt aus unserer IFC-Umwandlung? — am Namen, denn nur er überlebt
+    den glb-Export."""
+    return bool(IFC_KNOTEN.match(str(name)))
+
+
 def _material_id_zuweisen() -> tuple[list[dict], int]:
     """Jedem Material eine ID-Farbe geben und die Szene darauf umstellen.
 
@@ -1184,7 +1196,15 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
     meshes = sorted((o for o in bpy.data.objects if o.type == "MESH"), key=lambda o: o.name)
     for obj in meshes:
         belegt = [s for s in obj.material_slots if s.material is not None]
-        if not belegt:
+        # EIN BAUTEIL AUS UNSERER IFC BEKOMMT SEINE ID JE OBJEKT — auch mit Material
+        # (Befund 08.10.2026, nach F6). Die Bauwerksmaske liest diese Tabelle: Gelaenderegel
+        # und Katalog-Nullbefund arbeiten auf KNOTENnamen («IfcSlab_Gelaende_…»), nicht auf
+        # Materialnamen («Beton»). Seit die Stile der IFC in die glb kommen, stand hier
+        # «Beton» statt des Bauteils — und bei einem Haus ohne Gelaende fiel die Maske weg
+        # (am Testbau mit --stile nachgestellt: gemessen=False, vorher True). Damit fehlte
+        # genau das Mass, das die Abwesenheit eines Bauwerks faengt. Die Farben bleiben in
+        # der glb und im Beauty; nur die Kennung hier bleibt, was sie vor F6 war.
+        if not belegt or _ist_ifc_knoten(obj.name):
             obj.data.materials.clear()
             obj.data.materials.append(eintragen(obj.name, "objekt"))
             continue

@@ -1336,3 +1336,10 @@ Material, dazu Dach, Treppe, Geländer, Fenster und Türen. Unsere Umwandlung ü
 die wirklich im Modell stehen, nicht die Ersatzgrautöne des Lesewerkzeugs. Die Form bleibt dabei unangetastet:
 Die Tiefenkarte, an der jedes Bild gemessen wird, ist mit und ohne Farben dieselbe, auf das Pixel. Ob unsere Messung
 jetzt auch das Dach sieht, prüft der Heim-PC am echten Demohaus.
+
+**08.10.2026 — ein Fehler von uns, gefunden am echten Haus und behoben.** Die Messung am vollständigen Demohaus
+bestätigte: Farben kommen an, die Form bleibt gleich, und die Prüfung sieht jetzt das Dach. Sie zeigte aber auch,
+dass die Übernahme der Farben eine wichtige Prüfung still ausgeschaltet hatte — die, die erkennt, ob im Bild
+überhaupt ein Gebäude steht. Am Testhaus fiel das nicht auf, weil es ein Gelände hatte; am Demohaus ohne Gelände
+schon. Die Ursache war eindeutig, die Behebung klein, und ein neuer Test fängt den Fall künftig ab. Die Nachmessung
+am Demohaus läuft.

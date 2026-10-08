@@ -181,3 +181,39 @@ def test_ifc2x3_liefert_dieselben_stile(tmp_path):
     bericht = ifc_zu_glb(_erzeuge(tmp_path / "t.ifc", "IFC2X3", "--stile"),
                          tmp_path / "t.glb")
     assert {m["name"] for m in bericht["materialien"]} == {"Sichtbeton", "Unterlagsboden"}
+
+
+def _blender_fehlt() -> bool:
+    from aiimaging import seams
+    try:
+        return not Path(seams.finde_blender()).exists()
+    except Exception:                                  # noqa: BLE001
+        return True
+
+
+@pytest.mark.skipif(_ifc_fehlt() or _blender_fehlt(), reason=".venv-ifc oder Blender fehlt")
+def test_mit_stilen_und_ohne_gelaende_bleibt_die_bauwerksmaske_dieselbe(tmp_path):
+    """**Der Befund nach F6 (08.10.2026), hier nachgestellt.** Ein Haus, dessen Bauteile
+    alle einen Stil tragen und das kein Gelände mitbringt — der Fall des Demohauses
+    (``auf-20261008-264``: 47 von 47 mit Stil). Der Material-ID-Durchgang führte danach
+    Materialnamen statt Bauteilnamen, die Geländeregel fand nichts, an dem sie greifen
+    konnte, und die Maske fiel weg: ``gemessen`` False, vorher True. Damit fehlte das Mass,
+    das die Abwesenheit eines Bauwerks fängt.
+
+    Seither bleibt die Kennung eines IFC-Bauteils objektweise; die Maske ist mit und ohne
+    Stile Pixel für Pixel dieselbe."""
+    import numpy as np
+    from aiimaging import maske
+    from aiimaging.seams import glb_zu_multipass, ifc_zu_glb
+
+    masken = {}
+    for name, schalter in (("ohne", ()), ("mit", ("--stile",))):
+        ifc = _erzeuge(tmp_path / f"{name}.ifc", *schalter)
+        assert ifc_zu_glb(ifc, tmp_path / f"{name}.glb")["status"] == "ok"
+        bericht = glb_zu_multipass(tmp_path / f"{name}.glb", tmp_path / f"mp_{name}",
+                                   up_axis="Y", aufloesung=128, samples=4, kamera="s")
+        befund = maske.maske_aus_bericht(bericht, gelaende_erwartet=True)
+        assert befund["gemessen"] is True, befund.get("grund")
+        assert all(e["quelle"] == "objekt" for e in bericht["material_id_tabelle"])
+        masken[name] = np.asarray(befund["maske"])
+    assert np.array_equal(masken["ohne"], masken["mit"])

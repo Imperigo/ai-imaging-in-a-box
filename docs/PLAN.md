@@ -7764,7 +7764,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Owner:** Blatt 15 am Bild abnehmen (oder ändern). *(07.10.2026, über die Zentrale: «so abnehmen»; KosmoOrbit E174, gebaut in v0.1.8)*
 - [x] **v0.1.8 (KosmoVis drüben):** Verlauf am Render-Knoten bauen, nach Abnahme des Blatts, auf eigenem Zweig.
       *(07.10.2026: Zweig «claude/kosmovis-v018-render-verlauf», Kopf 5fdf523be; nur in Chromium geprüft — Protokoll 74 §62)*
-- [ ] **local:** `auf-20261008-264` — F6 am vollständigen Demohaus: Stile in der glb, Tiefe gleich, sieht die Soll-Tiefe das Dach? Danach Antwort an den Integrator.
+- [x] **local:** `auf-20261008-264` — F6 am vollständigen Demohaus: Stile in der glb, Tiefe gleich, sieht die Soll-Tiefe das Dach? Danach Antwort an den Integrator.
+      *(08.10.2026: Stile ja (7 Materialien, 47/47 mit Stil), Tiefe byte- und pixelgleich, Dach in der Soll-Tiefe sichtbar; offene Giebel = dachId-Grenze des Exports; Türen ohne Körper. **Befund:** Maskenweg fiel weg — von F6 verursacht, behoben (Protokoll 74 §65). Antwort an den Integrator gesendet.)*
+- [x] **Kern (Blender-Stufe):** Material-ID eines IFC-Bauteils bleibt objektweise, damit die Bauwerksmaske greift (Befund nach F6). *(08.10.2026, `runners/blender_depth_stage.py` `_ist_ifc_knoten`; Probe in `tests/test_ifc_stile.py`)*
+- [ ] **local:** `auf-20261008-265` — Maskenweg am Demohaus nach der Behebung; drei geprüfte Bilder (s/sSE/nNW).
 - [x] **local:** `auf-20261007-263` — Verlauf in WebKitGTK (Desktop-App aus dem Zweig): Reihe, Abzeichen, grosse Ansicht, Höhe.
       *(08.10.2026: V1–V8 alle ja auf 5fdf523be, 6 echte Läufe; Zweig an Int 1 gemeldet. Nachgang: Ortszeit, fortlaufende Laufnummer, «nicht anwendbar» bei Innenansicht, undurchsichtige grosse Ansicht — Zweig «claude/kosmovis-v018-verlauf-nachgang», Protokoll 74 §64)*
 - [ ] **KosmoVis drüben:** Verlauf-Nachgang bauen, in WebKitGTK kurz nachprüfen lassen, an Int 1 melden.
