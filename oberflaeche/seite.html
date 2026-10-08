@@ -69,6 +69,10 @@
   .durchgefallen  { color: var(--durchgefallen);  border-color: var(--durchgefallen); }
   .nicht-gemessen { color: var(--ungemessen);     border-color: var(--ungemessen);
                     border-style: dashed; }
+  /* NICHT BEURTEILBAR (Entscheid 70, Blatt 16): Ton und Strich wie «nicht gemessen» —
+     beide sind kein Urteil. Getrennt sind sie nur durch das Wort. */
+  .nicht-beurteilbar { color: var(--ungemessen); border-color: var(--ungemessen);
+                       border-style: dashed; }
 
   .bild { border: 1px solid var(--rand); border-radius: 6px; padding: 12px; margin-bottom: 10px; }
   .bild .kopf { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -83,6 +87,7 @@
   .rahmen.bestanden      { border-color: var(--bestanden); }
   .rahmen.durchgefallen  { border-color: var(--durchgefallen); }
   .rahmen.nicht-gemessen { border-color: var(--ungemessen); border-style: dashed; }
+  .rahmen.nicht-beurteilbar { border-color: var(--ungemessen); border-style: dashed; }
   .rahmen img { display: block; width: 100%; height: auto; }
   .rahmen .auflage {
     position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 10px;
@@ -104,6 +109,7 @@
   .rahmen.bestanden      .auflage { color: var(--bestanden); }
   .rahmen.durchgefallen  .auflage { color: var(--durchgefallen); }
   .rahmen.nicht-gemessen .auflage { color: var(--ungemessen); }
+  .rahmen.nicht-beurteilbar .auflage { color: var(--ungemessen); }
   /* DER ENTWURF: gepunktet und blau. Er ist «nicht gemessen» und traegt darum dessen
      Klasse mit — das Blau ueberschreibt nur die Farbe, nicht die Aussage. */
   .zeichen.entwurf, .rahmen.entwurf { color: var(--entwurf); border-color: var(--entwurf);
@@ -112,6 +118,19 @@
   .rahmen .auflage { z-index: 2; }
   .rahmen .auflage .zweit { display: block; font-weight: 600; color: var(--durchgefallen); }
   .zahl { font-variant-numeric: tabular-nums; }
+  /* KEIN STANDPUNKT BESTELLT (Entscheid 73, Blatt 16): eine Auskunft, kein Vorbehalt —
+     darum kein Warnzeichen und keine Urteilsfarbe, nur die Schrift und ein «S» im Kreis. */
+  .standpunkt { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px;
+                font-size: 14px; color: var(--schrift); }
+  .standpunkt .richtung { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+                          border: 1.5px solid var(--leise); box-sizing: border-box;
+                          display: inline-flex; align-items: center; justify-content: center;
+                          font-family: ui-monospace, "SF Mono", Menlo, monospace;
+                          font-size: 11px; }
+  /* Der Verweis im Gruen des Blatts — das «Anfassbar» der Entwurfsflaeche, dieselbe
+     bekannte, offene Spannung zum Gruen von «bestanden» wie in der App
+     (`Blattfarbe.gewaehltRand`). Er ist unterstrichen und steht nie auf dem Bild. */
+  .standpunkt a { color: var(--bestanden); text-underline-offset: 3px; }
 
   /* DER WISCHREGLER (Entscheid 17). Das Vorher liegt UEBER dem Nachher und wird von
      links her weggeschnitten — die Auflage des Nachher bleibt obenauf: Sie gehoert zu
@@ -270,7 +289,7 @@
     </div>
   </section>
 
-  <section style="grid-column: 1 / -1">
+  <section id="standpunkt" style="grid-column: 1 / -1">
     <h2>Standpunkt</h2>
     <div id="rissgrund" class="meldung">Noch kein Projekt geöffnet.</div>
     <div id="rissblock" hidden>
@@ -351,6 +370,8 @@ function zeichenFuer(bild) {
     "bestanden": "bestanden",
     "durchgefallen": "durchgefallen",
     "nicht-gemessen": "nicht gemessen",
+    // ENTSCHEID 70 (Blatt 16): Haus unter 20 % des Bildes. Aussehen wie «nicht gemessen».
+    "nicht-beurteilbar": "nicht beurteilbar",
   }[bild.zeichen] || bild.zeichen;
   // DER ENTWURF IST NICHT GEMESSEN — und sagt, warum (Entscheid 30). Die Klasse
   // «nicht-gemessen» bleibt dran; das Blau kommt dazu, es ersetzt sie nicht.
@@ -628,6 +649,7 @@ function zeichenwort(b) {
     "bestanden": "GEPRÜFT",
     "durchgefallen": "DURCHGEFALLEN",
     "nicht-gemessen": "NICHT GEPRÜFT",
+    "nicht-beurteilbar": "NICHT BEURTEILBAR",
   }[b.zeichen] || b.zeichen;
 }
 
@@ -800,6 +822,22 @@ function zeigeReihen(d, ziel) {
   }
 }
 
+/** «Kein Standpunkt bestellt — von Süden gerechnet.» unter dem Bild (Entscheid 73, Blatt 16)
+ *  — oder `null`, und dann steht nichts da. Der Satz kommt fertig vom Server (aus der
+ *  Bibliothek); hier steht er nicht ein zweites Mal. «Standpunkt setzen» fuehrt zum
+ *  Abschnitt, in dem man ihn bestellt (der Grundriss weiter oben). */
+function standpunktZeile(b) {
+  if (typeof b.standpunkt_vorgabe !== "string" || !b.standpunkt_vorgabe.trim()) return null;
+  const zeile = feld("div", "standpunkt");
+  // «S» wie die Vorgabe der Bibliothek (`arbeitsgang.STANDPUNKT_VORGABE`); eine Probe
+  // haelt die beiden gleich.
+  zeile.append(feld("span", "richtung", "S"), feld("span", null, b.standpunkt_vorgabe));
+  const weg = feld("a", null, "Standpunkt setzen");
+  weg.href = "#standpunkt";
+  zeile.append(weg);
+  return zeile;
+}
+
 function zeigeBilder(d) {
   const ziel = $("bilder");
   ziel.replaceChildren();
@@ -841,6 +879,9 @@ function zeigeBilder(d) {
     // UND JETZT DAS BILD SELBST. Bis zum 21.09.2026 nannte diese Flaeche nur Dateinamen
     // und Urteile — ein Werkzeug fuer Bilder, das keine Bilder zeigt.
     karte.append(nebeneinander(d.ordner, b, d.bilder));
+    // DIREKT UNTER DEM BILD: von wo gerechnet wurde, wenn niemand es sagte (Entscheid 73).
+    const standpunkt = standpunktZeile(b);
+    if (standpunkt) karte.append(standpunkt);
 
     if (b.basis) {
       const u = b.basis.geometrie_bestanden;

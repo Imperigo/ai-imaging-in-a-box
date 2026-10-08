@@ -62,6 +62,9 @@ final class UrteilTests: XCTestCase {
         XCTAssertEqual(Urteil(zeichen: "bestanden"), .bestanden)
         XCTAssertEqual(Urteil(zeichen: "durchgefallen"), .durchgefallen)
         XCTAssertEqual(Urteil(zeichen: "nicht-gemessen"), .nichtGemessen)
+        // NICHT BEURTEILBAR IST KEIN VIERTES URTEIL (Entscheid 70, 08.10.2026): In der Mappe
+        // steht `null`. Das eigene Wort macht `Pruefzeichen`, nicht das Urteil.
+        XCTAssertEqual(Urteil(zeichen: "nicht-beurteilbar"), .nichtGemessen)
         // UNBEKANNT IST NICHT «NICHT GEMESSEN». Ein Zeichen von einem neueren Server wird
         // nicht geraten.
         XCTAssertNil(Urteil(zeichen: "ungeprueft"))

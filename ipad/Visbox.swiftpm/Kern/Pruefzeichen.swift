@@ -66,18 +66,25 @@ public struct Farbton: Equatable, Hashable, Sendable {
     }
 }
 
-/// Welche Art Zeichen ein Bild trägt — **fünf Arten, vier Farben.**
+/// Welche Art Zeichen ein Bild trägt — **sechs Arten, vier Farben.**
 ///
 /// Die drei Antworten des Projekts, dazu der Entwurf (blau, spricht kein Urteil) und ein
 /// Zeichen, das diese App nicht kennt. *Dieselbe Farbe darf nie zwei Dinge heissen*
 /// (Blatt «Die Zeichen», 21.09.2026): Die vier Aussagen tragen vier Farben. Das unbekannte
 /// Zeichen trägt die Farbe von «nicht gemessen», weil es **dasselbe heisst** — kein Urteil —,
-/// und unterscheidet sich durch sein Wort (22.09.2026, siehe `rand`).
+/// und unterscheidet sich durch sein Wort (22.09.2026, siehe `rand`). Ebenso «nicht
+/// beurteilbar» (Entscheid 70, Blatt 16, 08.10.2026): kein Urteil, getrennt durch das Wort.
 /// `testKeineFarbeHeisstZweiDinge` hält beides fest.
 public enum Zeichenart: String, CaseIterable, Sendable {
     case bestanden
     case durchgefallen
     case nichtGemessen
+    /// **Gemessen, aber nicht beurteilbar** (Entscheid 70, Blatt 16, 08.10.2026): Das Haus
+    /// füllt weniger als 20 % des Bildes, und dort ist der Gesamtwert nach eigener Messung
+    /// rechnerisch unerreichbar — ein «durchgefallen» belegte nichts. Kein Urteil, darum Ton
+    /// und Strich von «nicht gemessen»; getrennt nur durch das Wort. Vom Server als Zeichen
+    /// `nicht-beurteilbar` (`Pruefzeichen.zeichenNichtBeurteilbar`).
+    case nichtBeurteilbar
     case entwurf
     /// Ein Zeichen vom Server, das diese App nicht kennt (ein neuerer Server).
     ///
@@ -106,6 +113,9 @@ public enum Zeichenart: String, CaseIterable, Sendable {
         // gegen die Abschrift des Blatts), `testKeineFarbeHeisstZweiDinge` (das Wort trennt),
         // `testKeineUrteilsfarbeIstEineGrundfarbe` (nie das Leise).
         case .unbekannt: return Zeichenart.nichtGemessen.rand
+        // DASSELBE FUER «NICHT BEURTEILBAR» (Blatt 16, 08.10.2026): «Ton und Strich wie
+        // nicht gemessen, getrennt durch das Wort» — so steht es auf dem Blatt.
+        case .nichtBeurteilbar: return Zeichenart.nichtGemessen.rand
         }
     }
 
@@ -121,10 +131,11 @@ public enum Zeichenart: String, CaseIterable, Sendable {
     /// **Gestrichelt heisst: hier ist nichts gemessen** — auch beim unbekannten Zeichen,
     /// denn ein Urteil, das die App nicht lesen kann, ist für sie keines. Damit sich ein
     /// ungeprüftes Bild auch von weitem und ohne Farbensehen nicht wie ein bestandenes
-    /// liest. `testNichtGemessenUndUnbekanntSindGestrichelt` bewacht beide.
+    /// liest. Ebenso «nicht beurteilbar»: gemessen, aber ohne Urteil (Blatt 16).
+    /// `testNichtGemessenUndUnbekanntSindGestrichelt` bewacht alle drei.
     public var gestrichelt: Bool {
         switch self {
-        case .nichtGemessen, .unbekannt: return true
+        case .nichtGemessen, .nichtBeurteilbar, .unbekannt: return true
         case .bestanden, .durchgefallen, .entwurf: return false
         }
     }
@@ -135,6 +146,7 @@ public enum Zeichenart: String, CaseIterable, Sendable {
         case .bestanden: return "BESTANDEN"
         case .durchgefallen: return "DURCHGEFALLEN"
         case .nichtGemessen: return "NICHT GEMESSEN"
+        case .nichtBeurteilbar: return "NICHT BEURTEILBAR"
         case .entwurf: return "ENTWURF — NICHT GEPRÜFT"
         case .unbekannt: return "ZEICHEN UNBEKANNT"
         }
@@ -202,6 +214,11 @@ public struct Pruefzeichen: Equatable, Sendable {
     /// Das Wort, wenn der Server **kein** Zeichen mitschickte (Feld fehlt oder `null`).
     public static let wortNichtGeliefert = "ZEICHEN NICHT GELIEFERT"
 
+    /// Das Zeichen des Servers für «nicht beurteilbar» (Entscheid 70; `_bild_fuer_die_flaeche`
+    /// in `oberflaeche/server.py`, seit dem 08.10.2026). Ein **Urteil** ist es nicht —
+    /// `Urteil(zeichen:)` liest es als `.nichtGemessen` —, nur ein eigenes Wort am Bild.
+    public static let zeichenNichtBeurteilbar = "nicht-beurteilbar"
+
     /// Der feste Anfang des Server-Hinweises, dass die Skizze beim Bildmodell nicht ankam
     /// (Entscheid E24 vom 22.09.2026; `aiimaging.kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN`).
     ///
@@ -241,6 +258,17 @@ public struct Pruefzeichen: Equatable, Sendable {
     public init(urteil: Urteil, lesart: Bildlesart, pruefzahl: Double?,
                 unterschied: Double? = nil, hinweise: [String] = [],
                 schwelle: Double? = nil) {
+        self.init(urteil: urteil, lesart: lesart, pruefzahl: pruefzahl,
+                  unterschied: unterschied, hinweise: hinweise, schwelle: schwelle,
+                  nichtBeurteilbar: false)
+    }
+
+    /// Wie oben — und `nichtBeurteilbar` sagt, dass der Server zum fehlenden Urteil das
+    /// Zeichen `nicht-beurteilbar` schickte. Es wirkt **nur** beim Prüfen und nur ohne
+    /// Urteil: Beim Entwerfen bleibt das Zeichen blau, wie bei «nicht gemessen».
+    private init(urteil: Urteil, lesart: Bildlesart, pruefzahl: Double?,
+                 unterschied: Double?, hinweise: [String], schwelle: Double?,
+                 nichtBeurteilbar: Bool) {
         let art: Zeichenart
         let zahl: Zahlanzeige
         switch (lesart, urteil) {
@@ -248,7 +276,8 @@ public struct Pruefzeichen: Equatable, Sendable {
         // nicht die Zahl dieses Urteils — sie zu zeigen hiesse, «nicht gemessen» mit
         // einem Messwert zu versehen.
         case (_, .nichtGemessen):
-            art = lesart == .entwerfen ? .entwurf : .nichtGemessen
+            art = lesart == .entwerfen ? .entwurf
+                : (nichtBeurteilbar ? .nichtBeurteilbar : .nichtGemessen)
             zahl = .keine
         case (.entwerfen, _):
             art = .entwurf
@@ -286,7 +315,8 @@ public struct Pruefzeichen: Equatable, Sendable {
                 schwelle: Double? = nil) {
         if let roh = zeichen, let urteil = Urteil(zeichen: roh) {
             self.init(urteil: urteil, lesart: lesart, pruefzahl: pruefzahl,
-                      unterschied: unterschied, hinweise: hinweise, schwelle: schwelle)
+                      unterschied: unterschied, hinweise: hinweise, schwelle: schwelle,
+                      nichtBeurteilbar: roh == Pruefzeichen.zeichenNichtBeurteilbar)
         } else {
             self.init(art: .unbekannt,
                       wort: zeichen == nil ? Pruefzeichen.wortNichtGeliefert : Zeichenart.unbekannt.wort,
@@ -491,6 +521,13 @@ public struct Mappenbild: Equatable, Sendable {
     /// zum 23.09.2026 las die App es nicht, und der Satz ging dort verloren. Gezeigt wird er
     /// über `unterlageHinweisEigens`.
     public let unterlageHinweis: String?
+    /// **Von wo gerechnet, wenn niemand es sagte** (`standpunkt_vorgabe`, Entscheid 73,
+    /// Blatt 16, 08.10.2026): die Zeile «Kein Standpunkt bestellt — von Süden gerechnet.»,
+    /// wie der Server sie aus der Mappe liest. `nil`: Ein Standpunkt war bestellt, ein
+    /// älterer Eintrag, oder ein Server, der das Feld nicht führt — dann steht unter dem Bild
+    /// nichts. Ein leerer Satz gilt wie keiner. **Eine Auskunft, kein Vorbehalt:** Sie geht
+    /// nicht in `pruefzeichen(_:)` und nicht aufs geteilte Bild.
+    public let standpunktVorgabe: String?
 
     public init(_ o: [String: JSONWert]) {
         bild = o["bild"]?.alsText
@@ -518,6 +555,9 @@ public struct Mappenbild: Equatable, Sendable {
             $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
         }
         unterlageHinweis = o["unterlage_hinweis"]?.alsText.flatMap {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
+        }
+        standpunktVorgabe = o["standpunkt_vorgabe"]?.alsText.flatMap {
             $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
         }
     }

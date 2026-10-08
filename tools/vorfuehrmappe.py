@@ -82,7 +82,7 @@ MAPPENDATEI = "vorfuehrmappe.json"
 FELDER_DER_FLAECHE = (
     "bild", "schicht", "zeichen", "satz", "erzeugt", "score", "schwelle", "titel",
     "entwurf", "variantengruppe", "hinweise", "skizze_nicht_angekommen", "skizze_hinweis",
-    "vorher", "unterlage_hinweis",
+    "vorher", "unterlage_hinweis", "standpunkt_vorgabe",
 )
 
 #: Was die Fläche zeigt, aber **nicht** in die Mappe geht — mit Grund:

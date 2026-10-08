@@ -894,6 +894,17 @@ const lauf = new Function(...Object.keys(ctx), skript + `
          "der Skizze-Hinweis steht nicht auf dem Bild");
   pruefe(auflagen.some(a => a.textContent.startsWith("GEPRÜFT · 0.81 (Schwelle 0.80)")),
          "Zahl und Schwelle stehen nicht auf dem Bild");
+  // ENTSCHEID 73: Die Mappe fuehrt keinen Standpunkt — unter jedem Bild die Zeile, mit
+  // dem Verweis zum Grundriss. Und nicht auf dem Bild: eine Auskunft, kein Vorbehalt.
+  const zeilen73 = bilder.alle(c => c.classList && c.classList.contains("standpunkt"));
+  pruefe(zeilen73.length === sicht.bilder.length, "Standpunkt-Zeilen: " + zeilen73.length);
+  pruefe(zeilen73.every(z => z.textContent.includes("Kein Standpunkt bestellt — von Süden gerechnet.")),
+         "Standpunkt-Satz fehlt");
+  pruefe(zeilen73.every(z => z.children.some(c => c.tagName === "A" && c.href === "#standpunkt"
+                                                   && c.textContent === "Standpunkt setzen")),
+         "Verweis «Standpunkt setzen» fehlt");
+  pruefe(!auflagen.some(a => a.textContent.includes("Kein Standpunkt")),
+         "der Standpunkt-Satz steht auf dem Bild");
   pruefe(text.includes("Variantenreihe (Startwerte)"), "Reihe Startwerte fehlt");
   pruefe(text.includes("Variantenreihe (Ebenen)"), "Reihe Ebenen fehlt");
   pruefe(schlange.textContent.includes("Dritte Idee"), "Titel in der Warteschlange fehlt");

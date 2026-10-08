@@ -151,6 +151,49 @@ final class PruefzeichenTests: XCTestCase {
                                     pruefzahl: 0.93).zeile, "BESTANDEN · 0.93")
     }
 
+    /// **«Nicht beurteilbar» hat sein eigenes Wort** (Entscheid 70, Blatt 16, 08.10.2026) —
+    /// und wie jedes Zeichen ohne Urteil keine Zahl und keine Schwelle, auch wenn der Server
+    /// sie schickt (unter 20 % Gebäudeanteil ist der Wert gemessen, aber nicht anwendbar).
+    func testNichtBeurteilbarHatSeinWortUndKeineZahl() {
+        let z = Pruefzeichen(zeichen: "nicht-beurteilbar", lesart: .pruefen, pruefzahl: 0.97,
+                             schwelle: 0.65)
+        XCTAssertEqual(z.art, .nichtBeurteilbar)
+        XCTAssertEqual(z.zeile, "NICHT BEURTEILBAR")
+        XCTAssertEqual(z.zahl, .keine)
+        XCTAssertNil(z.schwelle)
+        XCTAssertEqual(Pruefzeichen.zeichenNichtBeurteilbar, "nicht-beurteilbar")
+        // BEIM ENTWERFEN BLAU, wie bei «nicht gemessen»: dort wird kein Urteil gesprochen.
+        XCTAssertEqual(Pruefzeichen(zeichen: "nicht-beurteilbar", lesart: .entwerfen,
+                                    pruefzahl: 0.97).art, .entwurf)
+        // DURCH DEN GANZEN WEG: Bytes → Mappe → Zeichen.
+        let b = bild(#"{"zeichen": "nicht-beurteilbar", "score": 0.97, "schwelle": 0.65, "satz": "Nicht beurteilbar — das Haus füllt nur 17.9% des Bildes."}"#)
+        XCTAssertEqual(b.pruefzeichen(b.vorgabeLesart).art, .nichtBeurteilbar)
+        XCTAssertEqual(b.pruefzeichen(.pruefen).zeilen, ["NICHT BEURTEILBAR"])
+        // UND «NICHT GEMESSEN» BLEIBT, WAS ES WAR.
+        XCTAssertEqual(Pruefzeichen(zeichen: "nicht-gemessen", lesart: .pruefen,
+                                    pruefzahl: nil).art, .nichtGemessen)
+        XCTAssertEqual(Pruefzeichen(urteil: .nichtGemessen, lesart: .pruefen,
+                                    pruefzahl: nil).art, .nichtGemessen)
+    }
+
+    /// **Der Satz «Kein Standpunkt bestellt»** (Entscheid 73, Blatt 16, 08.10.2026) kommt aus
+    /// seinem Feld — und ist eine Auskunft, kein Vorbehalt: Er steht nicht im Zeichen und
+    /// geht nicht aufs geteilte Bild.
+    func testDerStandpunktSatzKommtAusSeinemFeld() {
+        let satz = "Kein Standpunkt bestellt — von Süden gerechnet."
+        let b = bild(#"{"bild": "b.png", "zeichen": "bestanden", "score": 0.91, "standpunkt_vorgabe": ""#
+                     + satz + #""}"#)
+        XCTAssertEqual(b.standpunktVorgabe, satz)
+        XCTAssertFalse(b.pruefzeichen(.pruefen).zeilen.joined().contains("Standpunkt"))
+        XCTAssertTrue(b.pruefzeichen(.pruefen).vorbehalte.isEmpty, "kein Vorbehalt")
+        for roh in [#"{"bild": "b.png"}"#, #"{"bild": "b.png", "standpunkt_vorgabe": null}"#,
+                    #"{"bild": "b.png", "standpunkt_vorgabe": ""}"#,
+                    #"{"bild": "b.png", "standpunkt_vorgabe": "  "}"#,
+                    #"{"bild": "b.png", "standpunkt_vorgabe": {"kamera": "s"}}"#] {
+            XCTAssertNil(bild(roh).standpunktVorgabe, roh)
+        }
+    }
+
     // ------------------------------------------------- der Vorbehalt aus Entscheid E24
 
     func testSkizzeNichtAngekommenGibtEinenSichtbarenVorbehalt() {
@@ -212,7 +255,7 @@ final class PruefzeichenTests: XCTestCase {
     /// Wort; was sie mit keinem Urteil verwechseln lässt, verbieten die Farben hier.
     func testKeineFarbeHeisstZweiDinge() {
         let aussagen: [Zeichenart] = [.bestanden, .durchgefallen, .nichtGemessen, .entwurf]
-        XCTAssertEqual(Set(aussagen + [.unbekannt]), Set(Zeichenart.allCases),
+        XCTAssertEqual(Set(aussagen + [.unbekannt, .nichtBeurteilbar]), Set(Zeichenart.allCases),
                        "eine neue Art braucht hier ihren Platz")
         let raender = aussagen.map { $0.rand }
         XCTAssertEqual(Set(raender).count, raender.count, "\(raender.map { $0.hex })")
@@ -222,14 +265,24 @@ final class PruefzeichenTests: XCTestCase {
         XCTAssertEqual(Zeichenart.unbekannt.rand, Zeichenart.nichtGemessen.rand)
         XCTAssertEqual(Zeichenart.unbekannt.schrift, Zeichenart.nichtGemessen.schrift)
         XCTAssertEqual(Zeichenart.unbekannt.gestrichelt, Zeichenart.nichtGemessen.gestrichelt)
+        // «NICHT BEURTEILBAR» EBENSO (Blatt 16, 08.10.2026): Ton und Strich wie «nicht
+        // gemessen», getrennt durch das Wort.
+        XCTAssertEqual(Zeichenart.nichtBeurteilbar.rand, Zeichenart.nichtGemessen.rand)
+        XCTAssertEqual(Zeichenart.nichtBeurteilbar.schrift, Zeichenart.nichtGemessen.schrift)
+        XCTAssertEqual(Zeichenart.nichtBeurteilbar.gestrichelt, Zeichenart.nichtGemessen.gestrichelt)
         for art in [Zeichenart.bestanden, .durchgefallen, .entwurf] {
             XCTAssertNotEqual(Zeichenart.unbekannt.rand, art.rand, "\(art)")
+            XCTAssertNotEqual(Zeichenart.nichtBeurteilbar.rand, art.rand, "\(art)")
         }
         // DAS WORT TRENNT: jede Art ihr eigenes, und «nicht geliefert» noch einmal eigens.
         let woerter = Zeichenart.allCases.map { $0.wort } + [Pruefzeichen.wortNichtGeliefert]
         XCTAssertEqual(Set(woerter).count, woerter.count, "\(woerter)")
         XCTAssertNotEqual(Pruefzeichen(zeichen: "neu", lesart: .pruefen, pruefzahl: nil).zeile,
                           Pruefzeichen(urteil: .nichtGemessen, lesart: .pruefen, pruefzahl: nil).zeile)
+        XCTAssertNotEqual(Pruefzeichen(zeichen: "nicht-beurteilbar", lesart: .pruefen,
+                                       pruefzahl: nil).zeile,
+                          Pruefzeichen(zeichen: "nicht-gemessen", lesart: .pruefen,
+                                       pruefzahl: nil).zeile)
         XCTAssertFalse(Set(raender).contains(Pruefzeichen.vorbehaltSchrift),
                        "ein Vorbehalt ist kein weiteres Urteil")
     }
@@ -264,11 +317,14 @@ final class PruefzeichenTests: XCTestCase {
         XCTAssertTrue(Zeichenart.nichtGemessen.gestrichelt)
         XCTAssertTrue(Zeichenart.unbekannt.gestrichelt,
                       "ein Zeichen, das die App nicht lesen kann, ist für sie kein Urteil")
+        XCTAssertTrue(Zeichenart.nichtBeurteilbar.gestrichelt,
+                      "gemessen, aber ohne Urteil — Strich wie «nicht gemessen» (Blatt 16)")
         for art in [Zeichenart.bestanden, .durchgefallen] {
             XCTAssertFalse(art.gestrichelt, "\(art)")
         }
         // Und am Bild aus der Mappe, nicht nur an der Art:
-        for roh in [#"{"zeichen": "neu"}"#, #"{"zeichen": null}"#, #"{}"#] {
+        for roh in [#"{"zeichen": "neu"}"#, #"{"zeichen": null}"#, #"{}"#,
+                    #"{"zeichen": "nicht-beurteilbar"}"#] {
             XCTAssertTrue(bild(roh).pruefzeichen(.pruefen).art.gestrichelt, roh)
         }
     }
@@ -840,6 +896,10 @@ final class PruefzeichenTests: XCTestCase {
             // Blatt «Die Zeichen», Abschnitt «Wie die Zeichen am Bild sitzen: Zeichen unbekannt»
             // (nachgezogen 23.09.2026): der Ton von «nicht gemessen», gestrichelt.
             .unbekannt: ("Die drei Antworten: nicht gemessen", "#c8a53f"),
+            // Blatt 16 «Sätze am Bild», Teil B, «Und das Zeichen» (Entscheid 70, 08.10.2026):
+            // «NICHT BEURTEILBAR», 2 px gestrichelt in #c8a53f — «Ton und Strich wie nicht
+            // gemessen, getrennt durch das Wort».
+            .nichtBeurteilbar: ("Sätze am Bild: Und das Zeichen — nicht beurteilbar", "#c8a53f"),
         ]
         for art in Zeichenart.allCases {
             guard let (stelle, hex) = artenAufDemBlatt[art] else {
@@ -865,6 +925,7 @@ final class PruefzeichenTests: XCTestCase {
             ("bestanden, Schrift", Zeichenart.bestanden.schrift, "#8fd4ac"),
             ("durchgefallen", Zeichenart.durchgefallen.rand, "#e2776f"),
             ("nicht gemessen", Zeichenart.nichtGemessen.rand, "#c8a53f"),
+            ("nicht beurteilbar (Blatt 16)", Zeichenart.nichtBeurteilbar.rand, "#c8a53f"),
             ("Entwurf", Zeichenart.entwurf.rand, "#6fb3d2"),
             // rgba(8,10,13,0.94) auf dem Blatt
             ("Streifen", Pruefzeichen.streifen, "#080a0d"),

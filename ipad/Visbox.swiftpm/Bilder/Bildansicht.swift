@@ -157,6 +157,7 @@ struct Bildansicht: View {
                 }
                 Bildvergleich(vorher: vorher, nachher: aktuell.grafik,
                               zeichen: zeichen, art: vergleich)
+                standpunkt
                 if let name = aktuell.vorher {
                     Text("Unterlage: " + name)
                         .font(Schrift.zahl(12))
@@ -166,6 +167,7 @@ struct Bildansicht: View {
             } else {
                 Bildflaeche(grafik: aktuell.grafik, vorhanden: aktuell.vorhanden)
                     .pruefzeichen(zeichen, .gross)
+                standpunkt
                 Text(ohneVorherSatz)
                     .font(Schrift.text(13))
                     .foregroundStyle(Zeichenblatt.leise)
@@ -179,6 +181,32 @@ struct Bildansicht: View {
             if let name = aktuell.vorher {
                 await verbindung.ladeUnterlage(name, mappe: aktuell.mappe, bildband: stand)
             }
+        }
+    }
+
+    /// **Von wo gerechnet, wenn niemand es sagte** (Entscheid 73, Blatt 16, 08.10.2026):
+    /// direkt unter dem Bild, derselbe Satz wie auf der Fläche im Browser — er kommt fertig
+    /// vom Server (`Mappenbild.standpunktVorgabe`). Steht keiner da, bleibt die Zeile weg.
+    ///
+    /// **Eine Auskunft, kein Vorbehalt:** kein Warnzeichen, keine Urteilsfarbe, nur Schrift
+    /// und ein «S» im Kreis wie auf dem Blatt. Der Verweis «Standpunkt setzen» des Blatts
+    /// fehlt hier noch: Die App hat keine Ansicht, in der man den Standpunkt bestellt
+    /// (Blatt 2 ist auf dem iPad nicht gebaut). Am Gerät unbestätigt.
+    @ViewBuilder
+    private var standpunkt: some View {
+        if let zeile = aktuell.angaben.standpunktVorgabe {
+            HStack(spacing: 10) {
+                Text("S")
+                    .font(Schrift.zahl(11))
+                    .frame(width: 22, height: 22)
+                    .overlay(Circle().strokeBorder(Zeichenblatt.leise, lineWidth: 1.5))
+                    .accessibilityHidden(true)
+                Text(zeile)
+                    .font(Schrift.text(14))
+                    .foregroundStyle(Zeichenblatt.schrift)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .combine)
         }
     }
 

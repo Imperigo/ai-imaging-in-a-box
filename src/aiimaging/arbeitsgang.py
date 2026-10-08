@@ -270,6 +270,12 @@ def _grund_der_pruefung(qa_id: str, ausgaben: dict) -> str:
     Score («Score 1.000 ≥ Schwelle 0.65 …»). Allein neben ein nicht gemessenes Bild
     gestellt, liest sich dieser Satz wie ein bestandenes Urteil. Der Handeingriff
     (``nicht_anwendbar``) sagt es selbst und bleibt, wie er ist.
+
+    **Ebenso «nicht beurteilbar» (Entscheid 70, 08.10.2026):** Unter 20 % Gebäudeanteil
+    (``gesamtwert_anwendbar`` ist ``False``) beginnt die Begründung selbst mit «Nicht
+    beurteilbar — …». Der vorangestellte Satz sagte dort «NICHT GEMESSEN» — gemessen war
+    aber, und neben dem eigenen Zeichen «nicht beurteilbar» stünden zwei Antworten am Bild.
+    Gefunden von der Probe ``test_der_pruefknoten_kommt_bis_zum_zeichen``.
     """
     satz = None
     for schluessel in ("begruendung", "grund"):
@@ -279,7 +285,8 @@ def _grund_der_pruefung(qa_id: str, ausgaben: dict) -> str:
             break
     if satz is None:
         satz = f"Die Prüfung {qa_id} hat zu ihrem Urteil keine Begründung mitgeliefert."
-    if ausgaben.get("bestanden") is None and ausgaben.get("nicht_anwendbar") is not True:
+    if (ausgaben.get("bestanden") is None and ausgaben.get("nicht_anwendbar") is not True
+            and ausgaben.get("gesamtwert_anwendbar") is not False):
         satz = (f"Die Prüfung {qa_id} hat gerechnet, aber kein Urteil gefällt — NICHT "
                 f"GEMESSEN, weder bestanden noch durchgefallen. Was sie dazu meldet: "
                 f"{satz}")
@@ -544,6 +551,13 @@ VARIANTEN_HOECHSTENS = 8
 #: Bezugsgrösse aller bisher gemessenen Tiefenkarten. Geändert ist nur, dass dieser Weg
 #: ihn nicht mehr still erreicht.
 STANDPUNKT_VORGABE = "s"
+
+#: Die Zeile, die unter einem Bild steht, das ohne bestellten Standpunkt gerechnet wurde
+#: (Entscheid 73, Blatt 16 der Entwurfsfläche, 08.10.2026). **Eine Auskunft, kein
+#: Vorbehalt:** Das Bild ist nicht schlechter, nur von einem Standpunkt, den niemand gewählt
+#: hat. Sie gehört zu :data:`STANDPUNKT_VORGABE` — ändert sich die Vorgabe, ändert sich der
+#: Satz mit.
+STANDPUNKT_VORGABE_ZEILE = "Kein Standpunkt bestellt — von Süden gerechnet."
 
 #: Die Angaben, von denen jede einen Standpunkt bestellt. Steht keine davon da, gilt
 #: :data:`STANDPUNKT_VORGABE`.
@@ -1241,6 +1255,10 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
             "satz": ("Kein Standpunkt bestellt — gerechnet frontal von Süden, wie der "
                      "Abholer ohne mitgesandte Kamera. Ein anderer Blick: «kamera» in den "
                      "Einstellungen der Mappe oder im Aufruf setzen."),
+            # DIE ZEILE UNTER DEM BILD (Entscheid 73, Blatt 16, 08.10.2026) — kurz, und auf
+            # Flaeche und iPad wortgleich. Darum steht sie hier und nicht zweimal in den
+            # Oberflaechen. Der lange Satz bleibt fuer den, der wissen will, wie man es aendert.
+            "zeile": STANDPUNKT_VORGABE_ZEILE,
         }
 
     if entwurf:
@@ -1262,6 +1280,7 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
             eingang = _eingangsbild(p, wurzel, name, pfad_skizze, ueber)
             plaene.append({"args": args, "skizze": name, "anweisung": text,
                            "unterlage": eingang["herkunft"],
+                           "standpunkt_vorgabe": standpunkt_vorgabe,
                            "graph": _skizzengraph(glb, args, p, pfad=eingang["pfad"],
                                                   anweisung=text)})
     elif varianten:
@@ -1269,11 +1288,13 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
         for startwert in _startwerte(args, varianten):
             eigene = {**args, "seed": startwert}
             plaene.append({"args": eigene, "skizze": None, "anweisung": None,
-                           "unterlage": None, "graph": _baue_grundgraph(glb, eigene, p)})
+                           "unterlage": None, "standpunkt_vorgabe": standpunkt_vorgabe,
+                           "graph": _baue_grundgraph(glb, eigene, p)})
     else:
         art = None
         plaene.append({"args": args, "skizze": None, "anweisung": None,
-                       "unterlage": None, "graph": _baue_grundgraph(glb, args, p)})
+                       "unterlage": None, "standpunkt_vorgabe": standpunkt_vorgabe,
+                       "graph": _baue_grundgraph(glb, args, p)})
 
     gruppe_id = _gruppenkennung(art) if len(plaene) > 1 else None
 
@@ -1469,6 +1490,19 @@ def _zahl_zu(knoten_ergebnisse: dict, qa_id: str | None) -> tuple:
     return _zahl(ausgaben.get("score")), _zahl(ausgaben.get("schwelle"))
 
 
+def _anwendbar_zu(knoten_ergebnisse: dict, qa_id: str | None):
+    """``gesamtwert_anwendbar`` der Prüfung ``qa_id`` — ``True``, ``False`` oder ``None``.
+
+    Nur ein echter Wahrheitswert zählt; alles andere (fehlt, ``0``, Text) ist ``None`` —
+    *nicht gemeldet*, nie «anwendbar». Dieselbe Vorsicht wie bei :func:`_zahl_zu`.
+    """
+    if qa_id is None:
+        return None
+    wert = ((knoten_ergebnisse.get(qa_id) or {}).get("ausgaben") or {}).get(
+        "gesamtwert_anwendbar")
+    return wert if isinstance(wert, bool) else None
+
+
 def _trage_ein(p: dict, wurzel: Path, plan: dict, lauf: dict, stand, *,
                entwurf: bool, gruppe: dict | None,
                nicht_begonnen: int | None = None) -> tuple[int, list[str]]:
@@ -1558,6 +1592,11 @@ def _trage_ein(p: dict, wurzel: Path, plan: dict, lauf: dict, stand, *,
         # Urteil.
         messung = copy.deepcopy(messungen.get(kid)) or {}
         messung["score"], messung["schwelle"] = score, schwelle
+        # OB DER GESAMTWERT URTEILEN DURFTE (Entscheid 70, 08.10.2026): `False` unter 20 %
+        # Gebaeudeanteil — dann ist das Urteil «nicht beurteilbar» und nicht «nicht
+        # gemessen», und die Anzeige braucht diese Angabe, um die beiden zu trennen, ohne den
+        # Satz zu deuten. `None`: keine Pruefung, oder eine, die das Feld nicht meldet.
+        messung["gesamtwert_anwendbar"] = _anwendbar_zu(knoten_ergebnisse, qa_id)
         if urteil is None:
             score, schwelle = None, None
         felder = schichten.get(kid) or {}
@@ -1590,6 +1629,11 @@ def _trage_ein(p: dict, wurzel: Path, plan: dict, lauf: dict, stand, *,
             # wurde — siehe `ANGABEFELDER`. Wieder als eigene Kopie.
             "lizenz": copy.deepcopy(angaben[kid]["lizenz"]),
             "maengel": copy.deepcopy(angaben[kid]["maengel"]),
+            # VON WO GERECHNET, WENN NIEMAND ES SAGTE (Entscheid 73, 08.10.2026): `{kamera,
+            # satz, zeile}` wie im Rueckgabewert von `rechne`, oder `None`, wenn ein
+            # Standpunkt bestellt war. Am Bild und nicht nur im Rueckgabewert — sonst ist der
+            # Satz nach dem Neuladen der Seite weg. Wieder als eigene Kopie.
+            "standpunkt_vorgabe": copy.deepcopy(plan.get("standpunkt_vorgabe")),
         }
         if plan["skizze"] is not None:
             # WORAUS ES ENTSTAND. Die Skizze nennt ihr Bild (`ergebnis`), das Bild seine
