@@ -571,6 +571,11 @@ def test_f_die_tiefe_wird_nach_dem_modell_normiert(laeufe):
     # Geglaettet (Entscheid 77): der Block steht da, mit dem Radius zur Bildbreite.
     assert u["glaettung"]["radius_px"] == kontext.glaette_radius(LAUF["aufloesung"])
     assert u["glaettung"]["n_umgebung"] > 0
+    # In der Datei steht dieselbe Normierung (auf-20261008-272: dort stand null).
+    datei = json.loads((Path(laeufe["mit"]["depth_exr"]).parent / "blender-report.json")
+                       .read_text(encoding="utf-8"))
+    assert datei["depth_normalisierung"]["umgebung"]["band_modell"] == list(
+        bildschreiben.MODELL_BAND)
 
 
 @ohne_kette

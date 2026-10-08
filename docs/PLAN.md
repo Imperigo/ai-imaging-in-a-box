@@ -7842,7 +7842,11 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Behebungen zu 271:** Umgebung in der Prüfung ausgeblendet, Tiefe nach dem Modell normiert, Ausschnitt ohne Gelände, Hochachse der Brücke für die Rahmung umgeschrieben. *(08.10.2026, §81)*
 - [ ] **Nachmessung `auf-20261008-272`** (local) — dann Vertragszweig `cf839597c` an Int 1 melden.
 - [x] **Konfetti — Entscheid 77 «Glätten»** gebaut: Lücken geschlossen, Tiefe gemittelt, Modell im Mittelband. *(08.10.2026, §82)*
-- [ ] **Messung `auf-20261008-273`** (local): ist das Konfetti weg?
+- [x] **Messung `auf-20261008-272`/`273`** (local): Ausblenden, Modellband, Ausschnitt, Rahmung über die Brücke tragen; Konfetti bleibt 9 von 9; ohne Umgebung «nicht messbar». *(08.10.2026, §83)*
+- [x] **Radius ×4** (Breite/32) und Normierung in `blender-report.json`. *(08.10.2026, §83)*
+- [x] **Messboden — Entscheid 78** gebaut, gegen echtes Blender geprüft. *(08.10.2026, §83)*
+- [x] **Feinschliff-Nachzug** (Vergleich-Bild schrumpft, Verlauf-Knoten 724 px) auf `claude/kosmovis-v018-verlauf-feinschliff` 0a9433b68. *(08.10.2026, §83)*
+- [ ] **Messung `auf-20261008-274`** (local): Feinschliff in WebKitGTK, Konfetti, Messboden — dann Feinschliff und Splat-Vertrag an Int 1.
 
 ## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)
 

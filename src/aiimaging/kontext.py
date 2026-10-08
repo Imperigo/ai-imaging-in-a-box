@@ -217,8 +217,12 @@ def fingerabdruck(pfad) -> dict:
 # Umgebung wird über ein Fenster gemittelt. Reine stdlib, linear in der Bildgrösse.
 
 #: Halbe Fensterbreite in Bildpunkten je 128 Bildpunkte Bildbreite. GESETZT, nicht gemessen
-#: (512 px → 4, 1024 px → 8); ob es das Konfetti nimmt, misst die HomeStation.
-GLAETTE_PX_JE_128 = 1.0
+#: (512 px → 16, 1024 px → 32, 1600 px → 50).
+#:
+#: **Vervierfacht nach ``auf-20261008-273``:** Mit 1,0 (1600 px → 12) füllte das Schliessen
+#: am echten Splat nur 7–9 % der Umgebungspunkte, und das Konfetti blieb 9 von 9. Die
+#: Rechenzeit hängt nicht vom Radius ab (Laufmaxima und Integralbild sind linear).
+GLAETTE_PX_JE_128 = 4.0
 GLAETTE_MIN_PX = 2
 
 

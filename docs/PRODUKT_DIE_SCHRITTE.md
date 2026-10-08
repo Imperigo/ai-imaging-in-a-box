@@ -1389,3 +1389,9 @@ Entfernungen dort gemittelt, damit Flächen entstehen. Beim Ansehen fiel auf, da
 dem Haus zu einer weissen Fläche machte; jetzt bekommt das Haus den mittleren Bereich der Grautöne und die Umgebung
 weiche Ränder. Ob das Konfetti weg ist, misst der Heim-PC.
 
+**Messboden — Entscheid 78 (08.10.2026).** Die nähere Kamera für lange Bauten funktionierte, aber ohne Umgebung
+sagte die Prüfung «nicht messbar», obwohl die Bilder gut waren: Das Modell hat keinen Boden, das Bild schon, und die
+Prüfung hielt den Boden für das Gebäude. Der Owner hat einen «Messboden» gewählt — eine gedachte Bodenfläche, die
+nur die Prüfung kennt. Sie wird aus der Kamera berechnet und stimmt mit einer echt gerenderten Bodenplatte auf
+Millimeter überein. Zugleich wurde das Glätten der Umgebung verstärkt, weil das Konfetti blieb.
+

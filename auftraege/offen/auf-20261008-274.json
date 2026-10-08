@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-274",
+  "art": "frage",
+  "beschreibung": "Feinschliff-Nachzug in WebKitGTK (0a9433b68), Konfetti mit Radius x4, Messboden (E78).",
+  "anweisung": "=== DREI PUNKTE IN EINEM GANG: FEINSCHLIFF-NACHZUG (WebKitGTK), KONFETTI MIT GROSSEM RADIUS, MESSBODEN (E78) ===\n\nA · WEBKITGTK-PROBE DES NACHZUGS (KosmoOrbit-Zweig claude/kosmovis-v018-verlauf-feinschliff, Kopf 0a9433b68)\n  Behebt eure zwei Punkte aus 270: (1) Vergleich-Knoten: Kachel ist jetzt eine Flex-Spalte, das Bild hat\n  flex 1 1 0 / min-height 0 / object-fit contain und keine Prozent-Hoehe mehr (die rechnete WebKit nicht auf);\n  alle Textzeilen liegen darunter und haben die Kartenflaeche als Hintergrund. (2) Render-Knoten mit Verlauf\n  10 px niedriger: 724 statt 734 px; bei 1440x900 an der Palettenstelle in Chromium 6 px Luft.\n  Aufbau wie 270 (Wegwerf-Kopie, Desktop-App aus 0a9433b68, Xvfb, Wegwerf-Profil, installierte App nicht\n  ersetzen). Pruefe: A1 Vergleich-Knoten in WebKitGTK — Bild schrumpft, QA-/Grund-/AUFSICHT-Zeile UNTER dem\n  Bild, auf dem dunklen Abendbild lesbar? A2 Render-Knoten mit Verlauf bei 1440x900 ganz im Fenster? A3 alles\n  aus 270 (F3–F5) unveraendert. Bildschirmfotos a1, a2.\n\nB · KONFETTI MIT VIERFACHEM RADIUS (Entscheid 77, nachgeschaerft nach 273)\n  ai-imaging main nach dieser Ansage: glaette_radius = Breite/32 (1600 px -> 50 statt 12; Rechenzeit haengt\n  nicht vom Radius ab). Derselbe Hallenauftrag Lauf A (Splat+Bestand), s/sSE/nNW, Seeds 0–2.\n  B1 Konfetti x von 9 (273: 9 von 9). B2 glaettung.n_gefuellt je Kamera (273: 7–9 %). B3 Tiefenbild: wirkt die\n  Umgebung zusammenhaengend? Fuellt das Schliessen Himmel zwischen Baumkronen zu einer Wand? Ein Satz.\n  B4 depth_normalisierung steht jetzt in blender-report.json (eure Bitte aus 272) — ja/nein.\n\nC · MESSBODEN (Owner-Entscheid 78)\n  Hat das Modell gemessen kein Gelaende (Maske: gelaende_erkannt false), bekommt die Soll-Karte DER PRUEFUNG\n  eine gedachte Ebene auf gelaende_z. Das Tiefenbild fuer das Bildmodell aendert sich NICHT. Im Kameraurteil\n  neu: messboden {ebene_z, n_boden, angewandt}. Dadurch steigt anteil_soll (der Boden zaehlt mit) — Modelle\n  ohne Boden (Demohaus, Halle) werden damit beurteilbar.\n  C1 Lauf C (ohne Splat) an der Halle, s/sSE/nNW: Score, n_gemeinsam, anteil_soll, Urteil (272: «nicht\n     messbar», 0 gemeinsame Punkte). C2 Demohaus ohne Raeume (18-%-Fall aus 268/270): Urteil jetzt? Score?\n  C3 Testbau MIT Gelaende (wie N4): unveraendert (messboden null)? C4 Bestehen von aussen: ohne die Kamera\n     «Uebersicht» von Hand zu streichen — besteht der Auftrag? Wenn nein: woran haengt es (Satz)?\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Bilder des echten Splats\n  ins Repo. Keine Namen, Pfade mit Benutzernamen, Host- oder Netznamen, IPs in Text oder Bildern.\n  Arbeitskopie und Profil danach loeschen. Den Auftrag NICHT verschieben: er bleibt in auftraege/offen/\n  (Projektregel; «erledigt» heisst Ergebnis liegt vor — die Bitte in 272 war falsch, 271–273 sind zurueck).\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-274.json)\n  Koepfe; A1–A3, B1–B4, C1–C4 je ja/nein + Zahlen + Satz; Bildschirmfotos a1, a2 klein.\n  Urteile: kann der Feinschliff zu Int 1? Ist das Konfetti weg? Traegt der Messboden?",
+  "erstellt": "2026-10-08T21:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Demohaus, Bestand aus dem Splat), tools/make_test_ifc.py --gelaende; der echte Splat bleibt lokal"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-verlauf-feinschliff@0a9433b68",
+      "claude/kosmovis-v018-splat-context@cf839597c",
+      "claude/lw-splat-context"
+    ],
+    "folgt_auf": "auf-20261008-273",
+    "entscheide": [
+      "77",
+      "78"
+    ],
+    "kosmoorbit": [
+      "E197",
+      "E198"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: etwa 24 Z-Image-Turbo-Laeufe; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Bilder des echten Splats bleiben lokal (REGEL 3); im Repo nur synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "Koepfe.",
+    "A1–A3, B1–B4, C1–C4 je Zahlen und ein Satz.",
+    "Bildschirmfotos a1, a2 (klein).",
+    "Drei Urteile: Feinschliff zu Int 1? Konfetti weg? Messboden traegt?"
+  ],
+  "rang": 61
+}

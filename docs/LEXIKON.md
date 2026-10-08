@@ -6222,6 +6222,11 @@ hängen, liegt der Unterschied im Bild; wandern sie mit der Vorgabe, lag er in d
 Die HomeStation hat so am 23.09.2026 gezeigt, dass der Abstand zum Hintergrund wirklich
 ändert, was das Modell zeichnet (`auf-154`).
 
+**Messboden** — Eine gedachte Bodenfläche, die nur die Prüfung kennt. Viele Modelle haben keinen Boden,
+das erzeugte Bild aber immer; ohne Boden im Modell verwechselte die Prüfung Boden und Gebäude und konnte gar nicht
+messen. Der Messboden liegt auf Geländehöhe und wird aus der Kamera ausgerechnet; das Bildmodell sieht ihn nie.
+*Im Projekt:* `messboden.mit_messboden`, `abholer._mit_messboden`; Entscheid 78, gegen echtes Blender geprüft.
+
 **Messschalter** — Eine Einstellung, die es nur gibt, damit sich **eine Ursache von einer
 anderen trennen lässt** — nicht, damit jemand sie im Alltag stellt. Sie ist
 ausgeschaltet, solange niemand sie setzt, und dann rechnet alles bitgenau wie vorher. Im
@@ -6593,6 +6598,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §80: **Bestand (Körper)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §81: **Ausblenden (in der Prüfung)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §82: **Glätten der Umgebung** |
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §83: **Messboden** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |

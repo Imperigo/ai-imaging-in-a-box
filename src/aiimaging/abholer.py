@@ -2705,6 +2705,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Fuer die Seedwahl nach dem Umriss dasselbe: Der Umriss ist der des Bauwerks,
             # nicht der der Baeume dahinter.
             soll_umriss = _ohne_umgebung(soll, kontext_pixel) if kontext_pixel else soll
+            # DER MESSBODEN (Owner-Entscheid 78, auf-20261008-272): Hat das Modell keinen
+            # Boden, bekommt die Soll-Karte DER PRUEFUNG eine gedachte Ebene auf Gelaendehoehe
+            # — das Tiefenbild fuer das Bildmodell bleibt unberuehrt. Der Umriss fuer die
+            # Seedwahl bleibt der des Bauwerks.
+            soll_pruefung, messboden_befund = _mit_messboden(soll, breite, hoch, bericht,
+                                                             maskenbefund)
 
             # DIE DOPPELTE ANSICHT. Zweizaehlige Drehsymmetrie laesst die beiden
             # Ueber-Eck-Ansichten der HABS/NPS-Regel zusammenfallen; bei einem Quader
@@ -2776,7 +2782,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
 
             ergebnis, urteil, auswahl = _bester_seed(
                 seeds, aus, kuerzel, _rendere_seed,
-                lambda png: messen(png, soll, breite=breite, hoehe=hoch,
+                lambda png: messen(png, soll_pruefung, breite=breite, hoehe=hoch,
                                    modell=_tiefen_modell, schwelle=grenze,
                                    maske=maskenbefund.get("maske"), **ausblendung),
                 maske_da=maskenbefund.get("maske") is not None,
@@ -2786,7 +2792,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             maskenanker = None
             if nullprobe:
                 anker, maskenanker = _nullprobe(
-                    aus, soll, breite, hoch, bildschreiben=bildschreiben,
+                    aus, soll_pruefung, breite, hoch, bildschreiben=bildschreiben,
                     messen=messen, grenze=grenze, tiefen_modell=_tiefen_modell,
                     maske=maskenbefund.get("maske"), **ausblendung)
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
@@ -2884,6 +2890,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DIESER Kamera. Von hier erreicht sie `verdict.hinweise`.
             urteil[_kosmo_szene.URTEIL_KONTEXT] = _kosmo_szene.kontext_vermerk(kontext, bericht)
             urteil[_kosmo_szene.URTEIL_BESTAND] = bestand_auftrag
+            urteil["messboden"] = messboden_befund
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -4458,6 +4465,25 @@ def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
             "zustaendig": False, "bild_png": None, "rahmung": rahmung,
             "grund": rahmung.get("abbruch_grund") or rahmung.get("grund", ""),
             _kosmo_szene.URTEIL_ZWEI_TORE: None}
+
+
+def _mit_messboden(soll, breite, hoehe, bericht, maskenbefund):
+    """Die Soll-Karte der Pruefung mit Messboden — oder unveraendert, mit dem Grund.
+
+    Nur, wenn die Maske GEMESSEN hat, dass kein Gelaende da ist (`gelaende_erkannt` False);
+    ungemessen wird nichts erfunden. Nur fuer die flache Karte des echten Wegs.
+    """
+    from aiimaging import messboden as _messboden
+    if (maskenbefund or {}).get("gelaende_erkannt") is not False:
+        return soll, None
+    if not soll or isinstance(soll[0], (list, tuple)) or breite is None or hoehe is None:
+        return soll, None
+    try:
+        neu, befund = _messboden.mit_messboden(soll, int(breite), int(hoehe),
+                                               (bericht or {}).get("kamera") or {})
+    except _messboden.MessbodenError as fehler:
+        return soll, {"angewandt": False, "grund": str(fehler)}
+    return neu, dict(befund, angewandt=befund["n_boden"] > 0)
 
 
 def _ohne_umgebung(soll, kontext_pixel):

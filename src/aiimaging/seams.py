@@ -1381,7 +1381,30 @@ def tiefe_neu_normieren(report: dict, out_dir, *, ferne_abstand: float | None = 
         _starte=_starte, ferne_abstand=ferne_abstand)
 
 
-def _tiefe_nachbearbeiten(report: dict, out_dir: Path,
+def _tiefe_nachbearbeiten(report: dict, out_dir: Path, **kw) -> dict:
+    """:func:`_tiefe_nachbearbeiten_innen` — und danach die Datei nachtragen.
+
+    **Befund ``auf-20261008-272``:** ``depth_normalisierung`` stand nur im zurückgegebenen
+    Bericht, in ``blender-report.json`` blieb ``null`` (Blender schreibt die Datei, bevor
+    hier normiert wird). Wer die Ablage auswertet, musste die Normierung nachrechnen. Seither
+    werden die drei Felder in die Datei nachgetragen; scheitert das, bleibt der Lauf gültig.
+    """
+    report = _tiefe_nachbearbeiten_innen(report, out_dir, **kw)
+    datei = Path(out_dir) / "blender-report.json"
+    if datei.is_file():
+        try:
+            inhalt = json.loads(datei.read_text(encoding="utf-8"))
+            if isinstance(inhalt, dict):
+                for feld in ("depth_png", "depth_normalisierung", "depth_png_fehler"):
+                    inhalt[feld] = report.get(feld)
+                datei.write_text(json.dumps(inhalt, ensure_ascii=False, indent=2),
+                                 encoding="utf-8")
+        except (OSError, ValueError, TypeError):
+            pass
+    return report
+
+
+def _tiefe_nachbearbeiten_innen(report: dict, out_dir: Path,
                           *, timeout: float = GESAMTFRIST_NACHBEARBEITUNG_S,
                           _starte=None, ferne_abstand: float | None = None) -> dict:
     """Aus der EXR das normalisierte PNG rechnen — auf dieser Seite der Prozessgrenze.

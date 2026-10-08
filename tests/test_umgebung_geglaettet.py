@@ -21,9 +21,10 @@ def _bild(zeilen):
 
 
 def test_der_radius_waechst_mit_der_bildbreite():
-    assert kontext.glaette_radius(512) == 4
-    assert kontext.glaette_radius(1024) == 8
-    assert kontext.glaette_radius(64) == kontext.GLAETTE_MIN_PX
+    assert kontext.glaette_radius(512) == 16
+    assert kontext.glaette_radius(1024) == 32
+    assert kontext.glaette_radius(1600) == 50          # auf-273: vorher 12, zu klein
+    assert kontext.glaette_radius(8) == kontext.GLAETTE_MIN_PX
 
 
 def test_eine_luecke_zwischen_punkten_wird_geschlossen():
