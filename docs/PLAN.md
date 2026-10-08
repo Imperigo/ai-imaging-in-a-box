@@ -7829,3 +7829,29 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (drüben):** P1 Lieferstatus null und P2 qa.verdict.hinweise auf `claude/kosmovis-v017-lieferstatus-hinweise`, Tore grün, Blatt an Int 1.
       *(01.10.2026: P1 gebaut bis `9022ece05`, dazu B1–B4; P2 nicht nochmals — seit v0.1.6, ROADMAP 1644)*
 - [ ] **local (Mac):** `auf-20261001-234` — Visbox 0.1.0 am echten Mac bauen, starten, probieren (Owner-Hinweis: der Heim-PC-Worker erreicht einen Mac mit Xcode).
+
+## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)
+
+> **Entschieden:** Der Splat läuft als UMGEBUNG im Multipass mit — sichtbar in Tiefe und Bild, gemessen wird
+> weiter nur das Bauwerk (Owner-Entscheid 76). Feldnamen vom Integrator: `RenderScene.context = {kind: "splat",
+> ply, verortung, transform[16], fit, crs_note}`, `transform` zeilenweise in der glTF-Welt (Y oben).
+> **Gemessen (hier, Blender 4.2.1, Testbau + synthetischer Splat, 160 × 120):** Tiefe 5 085 → 13 173 Bildpunkte mit
+> Geometrie; Bauwerksmaske mit und ohne Splat Punkt für Punkt gleich; Hüllbox, Kamera, Sonne unverändert;
+> ohne Splat Beauty und Material-ID pixelgleich zum Stand davor.
+> **Offen:** Messung an einem echten Splat am Heim-PC; Normalisierung der Tiefe über die ganze Szene; Oberfläche.
+
+- [x] **Kern:** `tools/make_test_splat.py` (stdlib, glTF-Welt), Blender-Stufe `--kontext-ply`/`--kontext-matrix`
+      (Punkte über Geometry Nodes, Farbe SH-Grad 0, Radius gekappt, Deckkraft unter 0,10 verworfen), eigene Kennung
+      `quelle: kontext` in der Material-ID, Maske nimmt sie vor jeder Regel heraus, Bericht-Block `kontext` ohne Pfad,
+      Verdeckungsanteil; durchgereicht über `seams`, `kette` (Inhalt des Splats im Hash), `arbeitsgang`
+      (Einstellung `kontext_ply`, relativ zur Mappe), `kosmo_szene.kontext_aus_szene` und Abholer.
+      *(08.10.2026, `tests/test_kontext_splat.py`, 40 Proben, 7 davon mit Blender — Protokoll 74 §78)*
+- [ ] **cloud (Int 1):** `context` senden, wie angekündigt — unser Abholer liest ihn ab diesem Stand; ein unbrauchbarer
+      Kontext (Art, Datei, Matrix, fit) hält den Auftrag mit Grund an. Bestätigung des ersten echten Auftrags.
+- [ ] **local:** am Heim-PC mit einem echten Splat messen — Bild, Tiefe, Verdeckung, Rechenzeit; ob die gesetzten
+      Zahlen (Deckkraft 0,10, Radius 0,01–0,50 m) ein brauchbares Bild geben, und ob die Tiefe des Bauwerks neben
+      einer weiten Umgebung genug Kontrast behält (am Testbau: Spanne 0,5 m → 22,7 m).
+- [ ] **ui:** Bedienfeld für die Umgebung — erst auf der Entwurfsfläche zeichnen; bis dahin bietet die Fläche
+      `kontext_ply`/`kontext_matrix` nicht an (`oberflaeche/server.NICHT_EINSTELLBAR`).
+- [ ] **Kern:** Nach der Heim-PC-Messung entscheiden, ob die Tiefenkarte über das Bauwerk statt über die ganze Szene
+      normiert wird, wenn ein Splat dabei ist.
