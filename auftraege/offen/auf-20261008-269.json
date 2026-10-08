@@ -3,45 +3,38 @@
   "worker": "local",
   "auftrag_id": "auf-20261008-269",
   "art": "frage",
-  "beschreibung": "WebKitGTK-Probe des Verlauf-Feinschliffs (E197/E198, Inspektor ohne Doppelsatz), Kurzhilfe mit :has().",
-  "anweisung": "=== KURZE WEBKITGTK-PROBE: FEINSCHLIFF AM VERLAUF (E197 Uhrzeiten weg, E198 Pruef-Satz eine Zeile + Kurzhilfe) ===\n\nWORUM ES GEHT\n  Zweig claude/kosmovis-v018-verlauf-feinschliff, Kopf 96b0ed9dd (auf e6f775995, also mit allem aus 268).\n  Neu: (1) die Uhrzeitzeile unter den Daumenbildern ist weg, der Knoten mit Verlauf ist 734 statt 748 px\n  hoch; (2) der Pruef-Satz an der Bild-Kachel ist genau EINE Zeile mit «…», der volle Satz steht in einer\n  Kurzhilfe, die nach unten oeffnet (Darueberfahren UND Tab-Fokus); (3) im Inspektor steht beim echten\n  Durchfallen und beim Bestehen kein «Bewertung zurueckgezogen» mehr, nur der Hinweis «Keine Sterne: …».\n  WICHTIG: Damit der Knoten die offene Kurzhilfe nicht abschneidet, nutzt der Bau den CSS-Selektor :has()\n  — WebKitGTK kann ihn erst ab Version 2.42. Bitte die WebKitGTK-Version der Maschine notieren.\n\nAUFBAU\n  Wie 268: eigene Arbeitskopie, Desktop-App aus 96b0ed9dd bauen, Xvfb, Wegwerf-Profil; installierte App\n  nicht ersetzen. ECHTE Abholer-Laeufe: der 18-%-Fall (Demohaus ohne Raeume) und ein echtes Durchfallen;\n  wenn moeglich ein Bestehen von aussen (Testbau mit Gelaende, guter Prompt) — das fehlte in 268.\n\nWAS DU PRUEFST\n  F1 Render-Knoten mit Verlauf: keine Uhrzeit unter den Daumenbildern; ragt der Knoten an der\n     Palettenstelle noch ueber den Fensterrand? verdeckt der ⇄-Knopf noch etwas?\n  F2 Bild-Kachel (Vergleich-/Bild-Knoten): Pruef-Satz genau eine Zeile mit «…», vollstaendig sichtbar\n     (nicht nur ein Streifen)?\n  F3 Kurzhilfe: beim Darueberfahren UND bei Tab-Fokus der volle Satz, nach unten offen, NICHT vom\n     Knoten abgeschnitten, im Fenster? (Hier entscheidet :has() — bei Abschneiden Bildschirmfoto.)\n  F4 Inspektor beim echten Durchfallen und beim Bestehen: «verfehlt»/«erreicht» ohne «zurueckgezogen»,\n     dafuer «Keine Sterne: …»?\n  F5 Alles aus 268 (K1–K5) unveraendert: Kachel = Verlauf je Lauf.\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Namen, Pfade mit\n  Benutzernamen, Host- oder Netznamen in Bildern oder Text. Arbeitskopie und Profil danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-269.json)\n  Gebauter Kopf; WebKitGTK-Version; F1–F5 je ja/nein + Satz; Bildschirmfotos klein:\n  auftraege/ergebnisse/auf-20261008-269-<f1|f3>.png. Urteil: kann der Feinschliff zu Int 1?",
-  "erstellt": "2026-10-08T14:30:00Z",
+  "beschreibung": "E191: Handerkennung OWLv2 base an den 80 Bildern aus 251/253 messen — Treffer bei den Hand-Bildern, Szenenverlust, Sekunden je Bild.",
+  "anweisung": "=== HANDERKENNUNG OWLv2 AN DER ECHTEN 360-AUFNAHME MESSEN (E191) ===\n\nWORUM ES GEHT\n  Owner-Entscheid E191 (08.10.2026): ein zweites Modell nur fuer Haende, gewaehlt ist\n  «A: OWLv2 base» (Hugging Face: google/owlv2-base-patch16-ensemble, Gewichte Apache-2.0).\n  Anlass: In deinem 253/254 deckt DETR die filmende Person in 38 von 41 Bildern; verfehlt werden\n  Bilder, auf denen nur die nackte Hand am unteren Rand steht. OWLv2 sucht im Bild nach einem\n  Wort («hand») und liefert Rechtecke; die Maske waere das Rechteck plus Saum.\n  Dieser Auftrag MISST NUR. Eingebaut wird erst nach der Messung, und zwar von KosmoPrepare\n  (core/person_maske.py). B (SAM 2.1, genaue Umrisse) kommt nur, wenn die Messung zeigt, dass das\n  Rechteck zu viel Szene wegnimmt — also hier NICHT laden.\n\nA) UMGEBUNG\n  .venv-person aus 253 weiterverwenden; nichts Neues installieren, ausser transformers kennt\n  Owlv2ForObjectDetection nicht (dann melden, NICHT aktualisieren). Melde die Fassungen von torch\n  und transformers.\n\nB) GEWICHTE: ABLAGE, PRUEFSUMME, LIZENZ\n  Ablage ausserhalb jedes Repos: ~/.kosmoprepare/modelle/owlv2-base-patch16-ensemble/\n  (im Ergebnis nur so, mit «~»). Laden mit\n    huggingface_hub.snapshot_download(\"google/owlv2-base-patch16-ensemble\", local_dir=<Ordner>,\n        allow_patterns=[\"*.json\",\"*.safetensors\",\"*.txt\",\"*.md\"])\n  Melden: Commit-Kennung der Revision, Dateien mit Groesse und SHA-256, die Lizenzzeile aus\n  README.md woertlich. Laedt beim ersten Gebrauch etwas NACH (Backbone, Tokenizer), dann: was,\n  woher, Lizenz, SHA-256.\n\nC) MESSUNG AN DENSELBEN 80 BILDERN WIE 251/253 (nur lesen, Arbeitsordner nicht veraendern)\n  Je Ansicht back/front/left/right Bild 1, 13, …, 229. Darunter die 41 Bilder mit filmender\n  Person (251 «ja»); die uebrigen 39 sind die Probe fuer den Szenenverlust.\n  Je Bild Owlv2Processor + Owlv2ForObjectDetection auf der Grafikkarte,\n  post_process_object_detection mit target_sizes = Bildgroesse. Zwei Suchwoerter getrennt:\n  «a photo of a hand» und «a hand». Je Suchwort drei Schwellen: 0.1, 0.2, 0.3 (OWLv2 liefert\n  niedrige Werte; die Vorgabe des Prozessors nennen).\n  Maske = jedes Rechteck plus Saum von 2.5 % der Bildbreite je Seite (wie bei DETR in\n  core/person_maske.py), auf das Bild beschnitten.\n  Je Bild, Suchwort und Schwelle melden: Anzahl Rechtecke, hoechster Score, Anteil der\n  Bildflaeche unter der Maske, Kasten (x0,x1,y0,y1 als Anteil, y nach unten).\n  Auswerten:\n    - HAND-BILDER: die Bilder, die in 253 als «verfehlt» stehen bzw. in 254 nicht ganz gedeckt\n      waren (Hand allein am unteren Rand; zehn in «front», zwei in «left» — nenne die Liste,\n      die du nimmst). Je Bild: Hand getroffen ja/nein (Rechteck ueberdeckt die Hand; ansehen).\n    - DIE 41 ZUSAMMEN: wie viele sind gedeckt von DETR allein (aus 254), von OWLv2 allein, und\n      von DETR UND OWLv2 zusammen?\n    - SZENENVERLUST: in den 39 Bildern ohne filmende Person mittlerer und groesster maskierter\n      Anteil durch OWLv2; jedes Rechteck dort ansehen: fremde Hand (Passant — kein Fehler, aber\n      nennen) oder gar keine Hand (was dann: Tuergriff, Ast, Plakat …)?\n    - in den 41: wie viel Flaeche nimmt das Rechteck AUSSER der Hand weg (grob, Anteil des\n      Rechtecks, der nicht Hand ist) — das ist die Frage, ob B noetig wird.\n  Laufzeit je Bild auf der Grafikkarte (ohne erstes Laden) und hoechster Speicherbedarf\n  (torch.cuda.max_memory_allocated). Masken nur im Wegwerfordner ansehen, danach loeschen.\n\nWAS DU NICHT TUST\n  Kein SAM, kein YOLO/Ultralytics (AGPL), kein anderes Modell. Die Kette nicht neu fahren,\n  core/person_maske.py und core/splat_maske.py nicht aendern, im Klon nichts committen. Keine\n  Bilder, Masken oder Gewichte ins Repo (Regel 3: echte Aufnahme). Keine Pfade mit\n  Benutzernamen, keine Host- oder Netznamen, keine Tokens im Ergebnis. Leistungsgrenze 400 W.\n\nRUECKGABE\n  A Fassungen torch/transformers; ob Owlv2 ohne Aktualisierung lief.\n  B Ablageort (mit ~), Revision, Dateien mit Groesse und SHA-256, Lizenzzeile woertlich, Nachladen.\n  C Tabelle je Bild x Suchwort x Schwelle; Hand-Bilder getroffen je Einstellung; die 41 gedeckt\n    (DETR / OWLv2 / beide); Szenenverlust Mittel/Maximum samt was dort erkannt wurde; Anteil des\n    Rechtecks, der nicht Hand ist; Laufzeit; Speicher.\n  Drei Urteilssaetze: Trifft OWLv2 die Hand dort, wo DETR sie verfehlt (mit welchem Suchwort und\n  welcher Schwelle)? Wie viel Szene kostet das Rechteck? Reicht das Rechteck, oder braucht es B?",
+  "erstellt": "2026-10-08T19:30:00Z",
   "geometrie": {
-    "synthetisch": true,
-    "pfad": null,
-    "erzeugen_mit": "KosmoOrbit-Kernel: haus.demohausBauen + exportIfc; Testbau aus tools/make_test_ifc.py --gelaende"
+    "synthetisch": false,
+    "pfad": "Arbeitsordner aus 247/249 (nur am Heimrechner)",
+    "erzeugen_mit": null
   },
   "params": {
-    "zweige": [
-      "claude/kosmovis-v018-verlauf-feinschliff@96b0ed9dd"
-    ],
-    "folgt_auf": "auf-20261008-268",
-    "entscheide": [
-      "71",
-      "72"
-    ],
-    "kosmoorbit": [
-      "E197",
-      "E198"
-    ]
+    "daten_bleiben_lokal": true,
+    "folgt_auf": "auf-20261007-254",
+    "modell": "google/owlv2-base-patch16-ensemble",
+    "bilder_je_ansicht": 20,
+    "owner_entscheid": "E191"
   },
   "auflagen": {
-    "leistungsgrenze_w": 0,
-    "nur_bei_leerlauf": true,
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
     "leerlauf_schwelle_w": 120,
     "leerlauf_schwelle_mem_gb": 8,
-    "hinweis": "GPU: drei kurze Z-Image-Turbo-Laeufe ueber die Bruecke; Sprachmodell vorher entladen.",
+    "hinweis": "Nur die Gewichte unter ~/.kosmoprepare/modelle/ laden; in .venv-person nichts installieren.",
     "hinweise": [
-      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
-      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
-      "Nur synthetische Geometrie (REGEL 3); das Demohaus ist synthetisch."
+      "Arbeitsordner aus 243, 247, 249 nicht veraendern.",
+      "Keine Bilder, Masken oder Gewichte ins Repo.",
+      "Kein SAM, kein YOLO/Ultralytics (AGPL)."
     ]
   },
   "rueckgabe": [
-    "Gebauter Kopf und WebKitGTK-Version.",
-    "F1–F5 je ja/nein und ein Satz.",
-    "Bildschirmfotos f1, f3 (klein, synthetisch).",
-    "Urteil: kann der Feinschliff zu Int 1?"
+    "A Fassungen, Owlv2 ohne Aktualisierung.",
+    "B Ablageort, Revision, Dateien mit SHA-256, Lizenzzeile, Nachladen.",
+    "C Tabelle je Bild/Suchwort/Schwelle; Hand-Bilder getroffen; die 41 gedeckt (DETR/OWLv2/beide); Szenenverlust; Rechteck ausser Hand; Laufzeit; Speicher.",
+    "Drei Urteilssaetze."
   ],
   "rang": 56
 }

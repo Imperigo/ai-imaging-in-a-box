@@ -7788,7 +7788,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Int 1:** die drei Verlauf-Zweige einspielen (e6f775995) — nach seinem Zeitplan.
 - [x] **KosmoVis drüben (Entscheid 72):** langer Grund-Satz an der Kachel auf eine Zeile mit «…», voller Satz in der Kurzhilfe — erst zeichnen (Blatt 16), dann bauen.
       *(08.10.2026: Blatt 16 gezeichnet; gebaut 1f73d5dc0/9db7e52eb, dazu Inspektor ohne «zurückgezogen» 96b0ed9dd; Zweig «claude/kosmovis-v018-verlauf-feinschliff» gepusht; Chromium grün)*
-- [ ] **local:** `auf-20261008-269` — Feinschliff in WebKitGTK (Kurzhilfe mit `:has()`, ab WebKitGTK 2.42); danach an Int 1, mit e6f775995 nach dem Schnitt.
+- [ ] **local:** `auf-20261008-270` — Feinschliff in WebKitGTK (Kurzhilfe mit `:has()`, ab WebKitGTK 2.42); danach an Int 1, mit e6f775995 nach dem Schnitt.
 - [x] **KosmoVis drüben (Entscheid 71):** Uhrzeitzeile unter den Daumenbildern weglassen (Knoten 14 px niedriger). *(08.10.2026, Zweig «claude/kosmovis-v018-verlauf-feinschliff», 7024bb557: Reihe 70 statt 84 px, Knoten mit Verlauf 734 statt 748 px; Chromium grün)*
 - [x] **Fläche/iPad (Entscheid 73):** Satz `standpunkt_vorgabe` sichtbar unter dem Bild — erst zeichnen (Blatt 16), dann bauen.
       *(08.10.2026, `9595fef`: Zeile am Bildeintrag der Mappe (`herkunft.standpunkt_vorgabe`), Sicht-Feld `standpunkt_vorgabe`, Fläche mit «Standpunkt setzen» → Grundriss, iPad ohne Verweis (keine Ansicht dafür); `tests/test_saetze_am_bild.py` — Protokoll 74 §75; **am Gerät unbestätigt**, iPad-Teil erst nach der Mac-CI)*

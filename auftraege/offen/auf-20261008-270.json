@@ -1,0 +1,47 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-270",
+  "art": "frage",
+  "beschreibung": "WebKitGTK-Probe des Verlauf-Feinschliffs (E197/E198, Inspektor ohne Doppelsatz), Kurzhilfe mit :has().",
+  "anweisung": "=== KURZE WEBKITGTK-PROBE: FEINSCHLIFF AM VERLAUF (E197 Uhrzeiten weg, E198 Pruef-Satz eine Zeile + Kurzhilfe) ===\n\nWORUM ES GEHT\n  Zweig claude/kosmovis-v018-verlauf-feinschliff, Kopf 96b0ed9dd (auf e6f775995, also mit allem aus 268).\n  Neu: (1) die Uhrzeitzeile unter den Daumenbildern ist weg, der Knoten mit Verlauf ist 734 statt 748 px\n  hoch; (2) der Pruef-Satz an der Bild-Kachel ist genau EINE Zeile mit «…», der volle Satz steht in einer\n  Kurzhilfe, die nach unten oeffnet (Darueberfahren UND Tab-Fokus); (3) im Inspektor steht beim echten\n  Durchfallen und beim Bestehen kein «Bewertung zurueckgezogen» mehr, nur der Hinweis «Keine Sterne: …».\n  WICHTIG: Damit der Knoten die offene Kurzhilfe nicht abschneidet, nutzt der Bau den CSS-Selektor :has()\n  — WebKitGTK kann ihn erst ab Version 2.42. Bitte die WebKitGTK-Version der Maschine notieren.\n\nAUFBAU\n  Wie 268: eigene Arbeitskopie, Desktop-App aus 96b0ed9dd bauen, Xvfb, Wegwerf-Profil; installierte App\n  nicht ersetzen. ECHTE Abholer-Laeufe: der 18-%-Fall (Demohaus ohne Raeume) und ein echtes Durchfallen;\n  wenn moeglich ein Bestehen von aussen (Testbau mit Gelaende, guter Prompt) — das fehlte in 268.\n\nWAS DU PRUEFST\n  F1 Render-Knoten mit Verlauf: keine Uhrzeit unter den Daumenbildern; ragt der Knoten an der\n     Palettenstelle noch ueber den Fensterrand? verdeckt der ⇄-Knopf noch etwas?\n  F2 Bild-Kachel (Vergleich-/Bild-Knoten): Pruef-Satz genau eine Zeile mit «…», vollstaendig sichtbar\n     (nicht nur ein Streifen)?\n  F3 Kurzhilfe: beim Darueberfahren UND bei Tab-Fokus der volle Satz, nach unten offen, NICHT vom\n     Knoten abgeschnitten, im Fenster? (Hier entscheidet :has() — bei Abschneiden Bildschirmfoto.)\n  F4 Inspektor beim echten Durchfallen und beim Bestehen: «verfehlt»/«erreicht» ohne «zurueckgezogen»,\n     dafuer «Keine Sterne: …»?\n  F5 Alles aus 268 (K1–K5) unveraendert: Kachel = Verlauf je Lauf.\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Namen, Pfade mit\n  Benutzernamen, Host- oder Netznamen in Bildern oder Text. Arbeitskopie und Profil danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-270.json)\n  Gebauter Kopf; WebKitGTK-Version; F1–F5 je ja/nein + Satz; Bildschirmfotos klein:\n  auftraege/ergebnisse/auf-20261008-270-<f1|f3>.png. Urteil: kann der Feinschliff zu Int 1?",
+  "erstellt": "2026-10-08T14:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel: haus.demohausBauen + exportIfc; Testbau aus tools/make_test_ifc.py --gelaende"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-verlauf-feinschliff@96b0ed9dd"
+    ],
+    "folgt_auf": "auf-20261008-268",
+    "entscheide": [
+      "71",
+      "72"
+    ],
+    "kosmoorbit": [
+      "E197",
+      "E198"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: drei kurze Z-Image-Turbo-Laeufe ueber die Bruecke; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Nur synthetische Geometrie (REGEL 3); das Demohaus ist synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "Gebauter Kopf und WebKitGTK-Version.",
+    "F1–F5 je ja/nein und ein Satz.",
+    "Bildschirmfotos f1, f3 (klein, synthetisch).",
+    "Urteil: kann der Feinschliff zu Int 1?"
+  ],
+  "rang": 57
+}
