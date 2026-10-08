@@ -1350,3 +1350,12 @@ bestehen, und jedes Bild galt als durchgefallen. Der Owner hat entschieden: In d
 beurteilbar», mit Grund und der Gebäude-Zahl als Auskunft. Auf dem Weg dahin habe ich eine Frage mit einer falschen
 Zahl gestellt; sie wurde berichtigt und neu beantwortet. Nebenbei behoben: Solche Ergebnisse wurden bisher bei
 jedem Lauf neu gerechnet, statt aus dem Zwischenspeicher zu kommen.
+
+**08.10.2026 — zwei Sätze stehen jetzt am Bild, so wie auf Blatt 16 gezeichnet.** Rechnet Visbox ein Bild, ohne
+dass jemand einen Standpunkt gewählt hat, steht direkt darunter: «Kein Standpunkt bestellt — von Süden gerechnet.»
+Im Browser führt «Standpunkt setzen» gleich zum Grundriss, auf dem man ihn wählt; auf dem iPad steht vorerst nur
+der Satz, weil die App noch keinen Ort hat, an dem man den Standpunkt wählt. Der Satz ist eine Auskunft und keine
+Warnung, darum ohne Warnfarbe. Und füllt das Haus weniger als ein Fünftel des Bildes, trägt das Bild jetzt ein
+eigenes Zeichen «NICHT BEURTEILBAR» — gelb und gestrichelt wie «nicht gemessen», aber mit dem richtigen Wort, denn
+gemessen wurde. Beides steht jetzt im Projekt beim Bild selbst und bleibt darum auch nach dem Neuladen erhalten.
+Auf dem Gerät ist es noch nicht geprüft.
