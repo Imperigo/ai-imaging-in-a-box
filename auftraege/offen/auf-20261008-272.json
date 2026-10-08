@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-272",
+  "art": "frage",
+  "beschreibung": "Nachmessung zu 271: Splat ausgeblendet, Tiefe nach Modell, Ausschnitt ohne Gelaende, Rahmung glb ueber die Bruecke.",
+  "anweisung": "=== NACHMESSUNG ZU 271: DREI BEHEBUNGEN AM SPLAT-WEG (ai-imaging main, nach dieser Ansage) ===\n\nWAS SICH GEAENDERT HAT (Antwort auf eure Befunde aus 271)\n  B1 (M1 «anteil_soll zaehlt den Splat»): Die Pruefung blendet die Bildpunkte der Umgebung jetzt auf BEIDEN\n     Seiten aus (Soll und geschaetztes Bild werden dort Hintergrund). Sie zaehlen weder als Bauwerk noch als\n     Fehler. Auch die Seedwahl «nach Umriss» nimmt den Umriss des Bauwerks, nicht den der Baeume.\n     Im Urteil neu: n_ausgeblendet. Erwartung an der Halle: anteil_soll ~3–4 %, Urteil «nicht beurteilbar».\n  B2 (M2 «Normierung gestreckt»): Mit Splat wird tiefe_norm.png nach der Spanne des MODELLS normiert; der\n     Splat davor/dahinter wird geklemmt (bleibt Geometrie, eigener Boden ueber dem Hintergrund).\n     depth_normalisierung traegt neu den Block «umgebung» (n_umgebung, min/max_m_gesamt, n_geklemmt_nah/fern).\n     Ohne Splat bleibt alles bitgleich.\n  B3 (M3 «Ausschnitt schaltet ohne Gelaende nie ein»): Meldet die Rahmung «Bauwerk = Szene» (kein Gelaende),\n     bekommt die Richtungskamera jetzt den Schalter --kamera-ausschnitt.\n  B4 (Beifund beim Bau, betrifft JEDEN glb-Auftrag der Bruecke): Ohne Hochachse im Auftrag ging «Y_UP» an die\n     Bauwerksbox, die nur «Y» kennt — die Rahmung nach dem Bauwerk (Owner-Entscheid 30.09.) kam bei glb ueber\n     die Bruecke NIE an. Jetzt umgeschrieben. Folge: glb MIT erkanntem Gelaende werden naeher gerahmt.\n\nAUFBAU\n  Wie 271 (Test-App a1bc1c296 + cf839597c in Wegwerf-Kopie, Xvfb, Wegwerf-Profil), ai-imaging auf main\n  NACH dieser Ansage. Derselbe Auftrag (Halle, V1 Bestand), Laeufe A (Splat+Bestand) und C (ohne Splat),\n  je s/sSE/nNW, Seeds 0–2 (Vorgabe). Dazu EIN glb-Auftrag mit Gelaende (Testbau: tools/make_test_ifc.py\n  --gelaende, in KosmoOrbit als glb exportiert, oder ein eigenes glb mit Knoten «Gelaende»).\n\nWAS DU MISST\n  N1 (B1) Je Kamera anteil_soll, n_ausgeblendet, Urteil (nicht beurteilbar?), score, rho_maske — A gegen C.\n  N2 (B2) Je Kamera depth_normalisierung.min_m/max_m und Block «umgebung»; Anteil des Graubereichs, den das\n     Bauwerk in tiefe_norm.png traegt (in 271: 12/25/27 %). Sieht das Haus im Tiefenbild wieder kraeftig aus?\n  N3 (B3) Je Kamera kamera.ausschnitt, flaechenanteil_sichtbar, abstand_m, anteil_soll (in 271: 3,7–4,4 %).\n     Ziel waren ~35 % Bildanteil. Urteil danach beurteilbar?\n  N4 (B4) glb mit Gelaende ueber die Bruecke: Rahmung «nach Bauwerk»? anteil_soll vorher/nachher.\n  N5 Konfetti: Macht Z-Image aus dem Splat weiter Kreisscheiben? (B1–B3 aendern daran nichts — nur\n     zaehlen, x von 9.) Ein Satz, wie es aussieht.\n  N6 Seedwahl: Nimmt «nach Umriss» jetzt einen Seed mit positivem rho_maske, wenn einer da ist?\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Bilder des echten Splats\n  ins Repo. Keine Namen, Pfade mit Benutzernamen, Host- oder Netznamen, IPs in Text oder Bildern.\n  Arbeitskopie und Profil danach loeschen.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-272.json)\n  Gebaute Koepfe; N1–N6 je Zahlen + ein Satz; Urteil je Punkt: traegt es, ja/nein. Bitte den Auftrag nach\n  der Rueckgabe nach auftraege/erledigt/ legen (271 liegt noch in offen/).",
+  "erstellt": "2026-10-08T19:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Bestand aus dem Splat), tools/make_test_ifc.py --gelaende; der echte Splat bleibt lokal"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-splat-context@cf839597c",
+      "claude/lw-splat-context"
+    ],
+    "folgt_auf": "auf-20261008-271",
+    "entscheide": [
+      "75",
+      "76"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: etwa 21 Z-Image-Turbo-Laeufe; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Bilder des echten Splats bleiben lokal (REGEL 3); im Repo nur synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "Gebaute Koepfe.",
+    "N1–N6 je Zahlen und ein Satz.",
+    "Urteil je Punkt: traegt es?"
+  ],
+  "rang": 59
+}

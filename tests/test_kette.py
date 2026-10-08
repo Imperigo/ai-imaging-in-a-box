@@ -1403,6 +1403,9 @@ NICHT_BESTELLT_MIT_GRUND = {
                           "Wache, nicht das Bild."),
     "shift_y": ("Der Shift wird aus der Rahmung GERECHNET, nicht bestellt. Ihn von aussen "
                 "zu setzen hiesse, die Rechnung zu uebergehen, die ihn begruendet."),
+    "kamera_ausschnitt": ("Der Abholer entscheidet ihn aus der Rahmung (Bauwerk = Szene, "
+                          "auf-20261008-271); die Kette rahmt ueber die Bauwerksbox, und mit "
+                          "ihr gilt der Ausschnitt ohnehin."),
 }
 
 

@@ -90,12 +90,14 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     """
     # 23 seit dem 08.10.2026 (Owner-Entscheid 76): `kontext_ply` und `kontext_matrix`, der
     # Splat als Umgebung — beide durchgereicht, aus `RenderScene.context`.
-    assert len(_multipass_einstellungen()) == 23
+    # 24 seit auf-20261008-271: `kamera_ausschnitt` (Ausschnitt ohne Gelaende).
+    assert len(_multipass_einstellungen()) == 24
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
     # 19 seit dem 08.10.2026: die beiden Kontextangaben.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 19
+    # 20 seit auf-20261008-271: `kamera_ausschnitt`.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 20
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 4
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
@@ -212,6 +214,15 @@ def _lauf(tmp_path):
         {"kind": "splat", "ply": str(splat), "transform": [1, 0, 0, 0, 0, 1, 0, 0,
                                                            0, 0, 1, 0, 0, 0, 0, 1],
          "fit": "behelf"})
+    # DER AUSSCHNITT OHNE GELAENDE (auf-20261008-271): `kamera_ausschnitt` geht nur mit,
+    # wenn die Rahmung «Bauwerk = Szene» meldet — dafuer braucht es eine lesbare glb.
+    import importlib.util
+    werkzeug = Path(__file__).resolve().parents[1] / "tools" / "make_test_glb.py"
+    spez = importlib.util.spec_from_file_location("make_test_glb_durchreichung", werkzeug)
+    erzeuger = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(erzeuger)
+    (tmp_path / "m.glb").write_bytes(
+        erzeuger.baue_glb([("Halle", (-33.0, 0.0, -5.0), (33.0, 3.45, 5.0))]))
     verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
                 "verzeichnis": tmp_path,
                 "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"}],

@@ -489,7 +489,8 @@ def _luecke_messen(tiefe: Sequence[float],
 def normalisiere_tiefe(tiefe: Sequence[float], *,
                        hintergrund_ab_m: float = HINTERGRUND_AB_M,
                        ferne_trennen: bool = False,
-                       ferne_abstand: float | None = None) -> tuple[list[float], dict]:
+                       ferne_abstand: float | None = None,
+                       umgebung: Sequence[bool] | None = None) -> tuple[list[float], dict]:
     """Meterwerte → Grauwerte 0..1 (*nah = hell*) plus die Angaben zur Rückrechnung.
 
     Warum nicht Blenders ``Normalize``-Knoten
@@ -582,6 +583,27 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
     min_m = min(tiefe[i] for i in gueltig)
     max_m_gemessen = max(tiefe[i] for i in gueltig)
 
+    # DIE UMGEBUNG STRECKT DIE SKALA NICHT (Splat, auf-20261008-271). Mit ihr reichte die
+    # Normierung an der Halle von 89,7–101,1 m auf 65,6–163,0 m, und das Bauwerk behielt
+    # 12–27 % des Grauwertbereichs. Ist `umgebung` gesetzt (True = Punkt der Umgebung),
+    # gilt die Skala des MODELLS; Umgebungspunkte davor und dahinter werden geklemmt — sie
+    # bleiben Geometrie, nur ohne eigene Aufloesung. Ohne `umgebung` aendert sich nichts.
+    umgebung_befund = None
+    if umgebung is not None:
+        if len(umgebung) != len(tiefe):
+            raise SchreibError(
+                f"umgebung hat {len(umgebung)} statt {len(tiefe)} Werte — geraten wird "
+                f"nicht, welche Punkte gemeint sind.")
+        modell = [i for i in gueltig if not umgebung[i]]
+        umgebung_befund = {"n_umgebung": sum(1 for i in gueltig if umgebung[i]),
+                           "min_m_gesamt": float(min_m),
+                           "max_m_gesamt": float(max_m_gemessen),
+                           "nach_modell": bool(modell), "n_geklemmt_nah": 0,
+                           "n_geklemmt_fern": 0}
+        if modell:
+            min_m = min(tiefe[i] for i in modell)
+            max_m_gemessen = max(tiefe[i] for i in modell)
+
     warnungen: list[str] = []
     luecke, fehlersatz = _luecke_messen(tiefe, hintergrund_ab_m)
     if fehlersatz:
@@ -650,13 +672,14 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             f"alte Skala.")
 
     spanne = (max_m - min_m) or 1.0          # eine ebene Fläche frontal: Spanne 0
+    nach_modell = bool(umgebung_befund and umgebung_befund["nach_modell"])
 
     # DER BODEN DER GEOMETRIE — hoechstens einer. `None` heisst: kein Boden, die Rechnung
     # bleibt Bit fuer Bit die von vor dem 16.09.2026. Der Abstand geht dem Mindestgrau vor,
     # weil er nie kleiner ist (siehe `ferne_abstand` im Docstring).
     if abstand is not None:
         boden = abstand
-    elif ferne_getrennt:
+    elif ferne_getrennt or nach_modell:
         boden = GEKLEMMT_MINDESTGRAU
     else:
         boden = None
@@ -677,6 +700,12 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             # Geometrie-QA meldete dann −1 auf korrekter Geometrie).
             t = max_m
             n_geklemmt += 1
+        if nach_modell and t > max_m:
+            t = max_m
+            umgebung_befund["n_geklemmt_fern"] += 1
+        elif nach_modell and t < min_m:
+            t = min_m
+            umgebung_befund["n_geklemmt_nah"] += 1
         # nah = hell (ControlNet-Konvention). Der Hintergrund bleibt 0.0 — unendlich fern
         # ist der Grenzfall von „dunkel", nicht ein eigener Sonderfall.
         wert = 1.0 - (t - min_m) / spanne
@@ -751,7 +780,7 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
                           "grau in boden..1, boden = geklemmt_mindestgrau"),
         # Der Grauwert der geklemmten Punkte — mit Abstand ist das der Abstand (ein
         # Boden, nicht zwei; siehe `ferne_abstand` im Docstring).
-        "geklemmt_mindestgrau": boden if ferne_getrennt else None,
+        "geklemmt_mindestgrau": boden if (ferne_getrennt or nach_modell) else None,
         "n_geometriepixel": len(gueltig),
         # Wer den Wert später anders setzt, soll in der Datei sehen, wogegen gemessen
         # wurde — die Schranke bestimmt min_m und max_m mit.
@@ -777,13 +806,17 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         normalisierung["ferne_abstand"] = abstand
         # Der eine Wert, mit dem jeder Leser zurueckrechnet (`bildlesen._boden_lesen`).
         normalisierung["grau_boden"] = boden
+    # Die Umgebung nur, wenn es sie gibt — ohne Splat bleibt die Schluesselmenge dieselbe.
+    if umgebung_befund is not None:
+        normalisierung["umgebung"] = umgebung_befund
     return grau, normalisierung
 
 
 def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_M,
                      bittiefe: int = 16, ferne_trennen: bool = False,
                      ferne_abstand: float | None = None,
-                     timeout: int = 300, _leser=None, _starte=None) -> dict:
+                     timeout: int = 300, _leser=None, _starte=None,
+                     umgebung: Sequence[bool] | None = None) -> dict:
     """EXR in Metern → normalisiertes Graustufen-PNG. Der ganze Weg, ohne Blender.
 
     Das ist die Stelle, die :func:`aiimaging.seams.glb_zu_multipass` nach dem Blender-Lauf
@@ -832,7 +865,8 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
             Path(exr), timeout=timeout, _starte=_starte)
     grau, normalisierung = normalisiere_tiefe(
         werte, hintergrund_ab_m=hintergrund_ab_m, ferne_trennen=ferne_trennen,
-        ferne_abstand=ferne_abstand)
+        ferne_abstand=ferne_abstand,
+        **({"umgebung": umgebung} if umgebung is not None else {}))
     schreibe_graustufen_png(ziel_png, grau, breite, hoehe, bittiefe=bittiefe)
     normalisierung["breite"] = breite
     normalisierung["hoehe"] = hoehe

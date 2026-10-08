@@ -847,6 +847,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     # ── Bildpunkte einsortieren ───────────────────────────────────────────────────────
     n_gelaende = n_hintergrund = n_unbekannt = n_kontext = 0
     roh_maske: list[bool] = []
+    kontext_pixel: list[bool] = []
     unbekannte_farben: set[tuple[int, int, int]] = set()
 
     for stelle, punkt in enumerate(farben):
@@ -856,6 +857,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                 f"(r, g, b) — so, wie bildlesen.lies_png_farben es liefert."
             )
         farbe = (int(punkt[0]), int(punkt[1]), int(punkt[2]))
+        kontext_pixel.append(farbe in kontext_farben)
         if farbe == HINTERGRUND_FARBE:
             n_hintergrund += 1
             roh_maske.append(False)
@@ -1028,6 +1030,10 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # Immer da, 0 und leer ohne Splat — sie zaehlen nie zum Bauwerk.
         "n_kontext": n_kontext,
         "kontext_namen": sorted(set(kontext_farben.values())),
+        # WO die Umgebung im Bild liegt — je Bildpunkt, nur wenn es sie gibt (sonst
+        # `None`, damit der Befund ohne Splat derselbe bleibt). Die Pruefung blendet diese
+        # Punkte aus (`tiefenschaetzer.qa_gegen_soll(ausblenden=…)`, auf-20261008-271).
+        "kontext_pixel": kontext_pixel if n_kontext else None,
         "anteil_bauwerk": n_bauwerk / n_bildpunkte,
         "gelaende_erkannt": gelaende_erkannt,
         # WOHER DAS GELAENDE STAMMT. `"name+form"` erst dann, wenn ein uebertragener
@@ -1098,6 +1104,32 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
     ergebnis["hoehe"] = hoehe
     ergebnis["material_id_png"] = str(material_id_png)
     return ergebnis
+
+
+def umgebung_je_bildpunkt(bericht: dict) -> list[bool] | None:
+    """Welche Bildpunkte die Umgebung (Splat) zeigt — aus Material-ID-Pass und Tabelle.
+
+    ``None``, wenn es keine Umgebung, keinen Pass oder keine lesbare Tabelle gibt: Dann
+    bleibt die Normierung der Tiefe die bisherige. Gebraucht von
+    ``seams._tiefe_nachbearbeiten`` (``auf-20261008-271``: die Umgebung streckte die Skala).
+    """
+    png = (bericht or {}).get("material_id_png")
+    tabelle = (bericht or {}).get("material_id_tabelle") or ()
+    farben_kontext = set()
+    for stelle, eintrag in enumerate(tabelle):
+        if (isinstance(eintrag, dict)
+                and str(eintrag.get("quelle", "")).strip().lower() == QUELLE_KONTEXT):
+            try:
+                farben_kontext.add(_farbe_aus_eintrag(eintrag, stelle))
+            except MaskeError:
+                return None
+    if not png or not farben_kontext:
+        return None
+    try:
+        farben, _breite, _hoehe = lies_png_farben(png)
+    except Exception:                                  # noqa: BLE001 — dann wie bisher
+        return None
+    return [(int(f[0]), int(f[1]), int(f[2])) in farben_kontext for f in farben]
 
 
 def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,

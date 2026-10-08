@@ -868,7 +868,7 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          herzschlag_takt_s=None, kamera_huellbox=None,
                          sonne=None, deckungsgrad=None, augenhoehe=None,
                          bias_grad=None, kontext_ply=None,
-                         kontext_matrix=None) -> list[str]:
+                         kontext_matrix=None, kamera_ausschnitt: bool = False) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -964,6 +964,10 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         lo, hi = kamera_huellbox
         argumente += ["--kamera-huellbox="
                       + ",".join(str(float(v)) for v in (*lo, *hi))]
+    # LANGE, FLACHE BAUWERKE AUCH OHNE GELAENDE (auf-20261008-271): Dort gibt es keine
+    # Bauwerksbox, weil das Bauwerk die Szene IST — der Ausschnitt hing aber an ihr.
+    if kamera_ausschnitt:
+        argumente += ["--kamera-ausschnitt"]
     # Der Sonnenstand der Bestellung. Nur, was WIRKLICH bestellt wurde, wird
     # weitergereicht: Ein mitgeschickter Vorgabewert waere im Bericht des Runners von
     # einer Bestellung nicht mehr zu unterscheiden, und genau diesen Unterschied traegt
@@ -1032,7 +1036,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
                      kamera_huellbox=None, sonne=None,
                      deckungsgrad=None, augenhoehe=None, bias_grad=None,
-                     kontext_ply=None, kontext_matrix=None,
+                     kontext_ply=None, kontext_matrix=None, kamera_ausschnitt: bool = False,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
@@ -1273,7 +1277,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               kamera_huellbox=kamera_huellbox, sonne=sonne,
                               deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
                               bias_grad=bias_grad, kontext_ply=kontext_ply,
-                              kontext_matrix=kontext_matrix),
+                              kontext_matrix=kontext_matrix,
+                              kamera_ausschnitt=kamera_ausschnitt),
     ]
 
     ergebnis = starte(cmd, frist)
@@ -1428,6 +1433,12 @@ def _tiefe_nachbearbeiten(report: dict, out_dir: Path,
         # dieser Aufruf Wort fuer Wort der von vorher — auch fuer eine Attrappe, die
         # mitschreibt, was sie bekommt.
         weiter = {} if ferne_abstand is None else {"ferne_abstand": ferne_abstand}
+        # DIE UMGEBUNG STRECKT DIE SKALA NICHT (auf-20261008-271) — nur mit Splat.
+        if report.get("kontext"):
+            from aiimaging import maske as _maske
+            umgebung = _maske.umgebung_je_bildpunkt(report)
+            if umgebung is not None:
+                weiter["umgebung"] = umgebung
         normalisierung = bildschreiben.tiefe_exr_zu_png(
             exr, ziel, timeout=timeout, _starte=_starte, **weiter)
     except Exception as e:                              # Befund als Feld, nicht als Absturz
@@ -1458,7 +1469,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             kamera_huellbox=None,
                             sonne=None, deckungsgrad=None, augenhoehe=None,
                             bias_grad=None, kontext_ply=None,
-                            kontext_matrix=None) -> list[str]:
+                            kontext_matrix=None, kamera_ausschnitt: bool = False) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -1483,7 +1494,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               kamera_huellbox=kamera_huellbox,
                               deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
                               bias_grad=bias_grad, kontext_ply=kontext_ply,
-                              kontext_matrix=kontext_matrix),
+                              kontext_matrix=kontext_matrix,
+                              kamera_ausschnitt=kamera_ausschnitt),
     ]
 
 

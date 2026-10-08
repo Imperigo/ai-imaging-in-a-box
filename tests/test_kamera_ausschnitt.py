@@ -29,11 +29,14 @@ def test_in_der_bibliothek_ist_der_ausschnitt_aus():
         assert kamera["ausschnitt"] is False
 
 
-def test_der_blender_schritt_schaltet_ihn_nur_mit_bauwerksbox_ein():
+def test_der_blender_schritt_schaltet_ihn_mit_bauwerksbox_oder_schalter_ein():
+    """Seit ``auf-20261008-271`` auch mit ``--kamera-ausschnitt`` (Bauwerk = Szene)."""
     from pathlib import Path
     quelle = (Path(__file__).resolve().parents[1] / "src" / "aiimaging" / "runners"
               / "blender_depth_stage.py").read_text(encoding="utf-8")
-    assert 'ausschnitt=bool(getattr(a, "kamera_huellbox", None))' in quelle
+    assert 'ausschnitt=bool(getattr(a, "kamera_huellbox", None)' in quelle
+    assert 'or getattr(a, "kamera_ausschnitt", False))' in quelle
+    assert '"--kamera-ausschnitt", action="store_true"' in quelle
 
 
 def test_ganz_im_bild_fuellt_die_halle_nur_einen_streifen():
@@ -88,3 +91,88 @@ def test_das_beschneiden_rechnet_richtig():
     assert k._polygonflaeche(k._beschnitten(streifen)) == pytest.approx(0.2)
     aussen = [(0.6, 0.6), (0.9, 0.6), (0.9, 0.9)]
     assert k._beschnitten(aussen) == []
+
+
+# ======================================================================================
+# Ohne Gelände (auf-20261008-271): das Bauwerk ist die Szene
+# ======================================================================================
+
+def _halle_glb(tmp_path, *, mit_gelaende=False):
+    """Eine Halle 66 × 10 × 3,45 m als glb (``tools/make_test_glb.py``, glTF-Achsen: Y oben),
+    wahlweise auf einer Geländeplatte 120 × 80 m."""
+    import importlib.util
+    from pathlib import Path
+    werkzeug = Path(__file__).resolve().parents[1] / "tools" / "make_test_glb.py"
+    spez = importlib.util.spec_from_file_location("make_test_glb_halle", werkzeug)
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+    koerper = [("Halle", (-33.0, 0.0, -5.0), (33.0, 3.45, 5.0))]
+    if mit_gelaende:
+        koerper.append(("Gelaende", (-60.0, -0.3, -40.0), (60.0, 0.0, 40.0)))
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    pfad = tmp_path / "halle.glb"
+    pfad.write_bytes(modul.baue_glb(koerper))
+    return pfad
+
+
+def test_ohne_gelaende_meldet_die_rahmung_bauwerk_gleich_szene(tmp_path):
+    from aiimaging import glbbox
+    urteil = glbbox.rahmungsbox(_halle_glb(tmp_path))
+    assert urteil["box"] is None and urteil.get("szene_ist_bauwerk") is True
+
+
+def test_der_abholer_schaltet_den_ausschnitt_ohne_box_nur_dann_ein(tmp_path):
+    from aiimaging import abholer
+    ohne = _halle_glb(tmp_path)
+    assert abholer._ausschnitt_ohne_box(None, ohne, "Y", "s") is True
+    # Von Hand gestellt (keine Richtung) oder eigene Box: nicht.
+    assert abholer._ausschnitt_ohne_box(None, ohne, "Y", None) is False
+    assert abholer._ausschnitt_ohne_box(((0, 0, 0), (1, 1, 1)), ohne, "Y", "s") is False
+    mit = _halle_glb(tmp_path / "g", mit_gelaende=True)
+    from aiimaging import glbbox
+    assert glbbox.rahmungsbox(mit)["box"] is not None          # Gelände erkannt: Box
+    assert abholer._ausschnitt_ohne_box(None, mit, "Y", "s") is False
+
+
+def test_der_schalter_kommt_im_kommando_an(tmp_path):
+    from aiimaging import seams
+    ohne = seams.baue_kommando_multipass("m.glb", tmp_path, up_axis="Y")
+    mit = seams.baue_kommando_multipass("m.glb", tmp_path, up_axis="Y", kamera_ausschnitt=True)
+    assert "--kamera-ausschnitt" not in ohne
+    assert mit[-1] == "--kamera-ausschnitt" or "--kamera-ausschnitt" in mit
+    assert [x for x in mit if x != "--kamera-ausschnitt"] == ohne
+
+
+def _blender_fehlt() -> bool:
+    from pathlib import Path
+    from aiimaging import seams
+    try:
+        return not Path(seams.finde_blender()).exists()
+    except Exception:                                  # noqa: BLE001
+        return True
+
+
+@pytest.mark.skipif(_blender_fehlt(), reason="Blender fehlt")
+def test_mit_blender_bekommt_die_halle_ohne_gelaende_den_ausschnitt(tmp_path):
+    from aiimaging.seams import glb_zu_multipass
+    glb = _halle_glb(tmp_path)
+    bericht = glb_zu_multipass(glb, tmp_path / "mp", up_axis="Y", aufloesung=96, samples=2,
+                               kamera="s", kamera_ausschnitt=True)
+    assert bericht["kamera"]["ausschnitt"] is True
+    vorher = glb_zu_multipass(glb, tmp_path / "mp0", up_axis="Y", aufloesung=96, samples=2,
+                              kamera="s")
+    assert vorher["kamera"]["ausschnitt"] is False
+
+
+def test_die_angenommene_hochachse_der_bruecke_rahmt_nach_dem_bauwerk(tmp_path):
+    """**Befund 08.10.2026:** Ohne Hochachse im Auftrag (jeder glb-Auftrag der Brücke) ging
+    ``"Y_UP"`` an ``glbbox``, das nur ``"Y"`` kennt — die Rahmung nach dem Bauwerk kam auf
+    diesem Weg nie an. Seither schreibt ``_glb_hochachse`` die Angabe um."""
+    from aiimaging import abholer
+    assert abholer.ANGENOMMENE_HOCHACHSE == "Y_UP"
+    assert abholer._glb_hochachse("Y_UP") == "Y" and abholer._glb_hochachse(None) == "Y"
+    mit = _halle_glb(tmp_path, mit_gelaende=True)
+    box = abholer._rahmung_fuer(None, mit, abholer.ANGENOMMENE_HOCHACHSE, "s")
+    assert box is not None                                    # vorher: None
+    ohne = _halle_glb(tmp_path / "o")
+    assert abholer._ausschnitt_ohne_box(None, ohne, abholer.ANGENOMMENE_HOCHACHSE, "s") is True

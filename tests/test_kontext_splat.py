@@ -549,6 +549,31 @@ def test_e_ohne_splat_bitgleich(laeufe):
 
 
 @ohne_kette
+def test_f_die_tiefe_wird_nach_dem_modell_normiert(laeufe):
+    """``auf-20261008-271``: Die Umgebung streckte die Skala (Haus 12–27 % des Graubereichs).
+    Seither gilt die Spanne des Modells; der Splat wird davor und dahinter geklemmt."""
+    ohne = laeufe["ohne"]["depth_normalisierung"]
+    mit = laeufe["mit"]["depth_normalisierung"]
+    assert "umgebung" not in ohne
+    u = mit["umgebung"]
+    assert u["nach_modell"] is True and u["n_umgebung"] > 0
+    assert (mit["min_m"], mit["max_m"]) == pytest.approx((ohne["min_m"], ohne["max_m"]),
+                                                         abs=1e-6)
+    assert u["max_m_gesamt"] > mit["max_m"] + 1.0              # der Splat reicht weiter
+    assert u["n_geklemmt_fern"] > 0
+    assert mit["geklemmt_mindestgrau"] is not None             # geklemmt ≠ Hintergrund
+
+
+@ohne_kette
+def test_g_die_maske_kennt_die_umgebung_je_bildpunkt(laeufe):
+    mit = maske.maske_aus_bericht(laeufe["mit"])
+    assert sum(mit["kontext_pixel"]) == mit["n_kontext"]
+    assert maske.maske_aus_bericht(laeufe["ohne"])["kontext_pixel"] is None
+    assert maske.umgebung_je_bildpunkt(laeufe["mit"]) == mit["kontext_pixel"]
+    assert maske.umgebung_je_bildpunkt(laeufe["ohne"]) is None
+
+
+@ohne_kette
 def test_drehung_um_die_hochachse_am_echten_lauf(laeufe):
     """Die Integrator-Probe am Bild: M = T · R_y(90°) — die Hüllbox im Bericht folgt."""
     m = _ry(90.0, t=VERSATZ)

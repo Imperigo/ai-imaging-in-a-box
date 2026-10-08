@@ -1375,3 +1375,11 @@ sie in der Modelldatei. Visbox erkennt die Markierung und sagt dem Bildmodell da
 ohne Schrift erscheinen sollen — im Demolauf hatte es einen erfundenen Schriftzug an die Halle gemalt. Ob der Satz
 wirkt, ist noch nicht gemessen; das macht der Heim-PC mit und ohne Zusatz.
 
+**Erste Messung mit der echten Umgebung — und was sie umgeworfen hat (08.10.2026).** Der Heim-PC hat die Umgebung
+mit der echten Punktaufnahme gerechnet. Lage und Farbe stimmten. Drei Dinge trugen nicht: Die Prüfung zählte die
+Bäume als Gebäude mit; die Tiefenkarte wurde durch die Umgebung so gestreckt, dass das Haus kaum noch Kontrast hatte;
+und die nähere Kamera für lange Bauten schaltete gerade bei der Halle nie ein. Alle drei sind behoben: Die Umgebung
+wird bei der Prüfung ausgeblendet, die Tiefe richtet sich nach dem Haus, und der nähere Blick greift auch ohne
+Gelände. Dabei kam ein älterer Fehler ans Licht: Die Regel «nach dem Gebäude rahmen» vom 30.09. kam bei Aufträgen
+über die Brücke nie an. Offen bleibt, dass das Bildmodell aus den Punkten der Umgebung «Konfetti» malt.
+

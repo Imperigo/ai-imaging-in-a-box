@@ -1224,7 +1224,8 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                   hintergrund_strategie: str = HG_VORGABE,
                   hintergrund_anteil: float | None = None,
                   breite: int | None = None, hoehe: int | None = None,
-                  maske: Sequence[bool] | None = None) -> dict:
+                  maske: Sequence[bool] | None = None,
+                  ausblenden: Sequence[bool] | None = None) -> dict:
     """Die Funktion, die die Geometrie-Metrik endlich **anwendbar** macht.
 
     Sie schliesst den Bogen: Aus dem erzeugten Bild wird eine Ist-Tiefenkarte geschätzt,
@@ -1321,6 +1322,21 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         hintergrund_strategie=HG_KEINE, breite=breite, hoehe=hoehe,
     )
 
+    # DIE UMGEBUNG AUSBLENDEN (Splat, Entscheid 76; auf-20261008-271). Ihre Bildpunkte
+    # sind weder Bauwerk noch Fehler: Im Soll zaehlten sie als Geometrie (anteil_soll
+    # 23–31 % statt 3,7–4,4 %), und die 20-%-Regel griff nicht mehr. Hier werden sie auf
+    # BEIDEN Seiten Hintergrund — so stimmen Soll und Ist dort ueberein und tragen nichts
+    # bei, und die Karte behaelt ihre Form (Kanten, Maskenweg).
+    ausgeblendet: list[int] = []
+    if ausblenden is not None:
+        if len(ausblenden) != len(soll):
+            raise TiefenschaetzerError(
+                f"ausblenden hat {len(ausblenden)} statt {len(soll)} Werte — geraten wird "
+                f"nicht, welche Punkte gemeint sind.")
+        ausgeblendet = [i for i, aus in enumerate(ausblenden) if aus]
+        soll = list(soll)
+        for i in ausgeblendet:
+            soll[i] = math.inf
     sil_soll = geometrie_qa.silhouette(soll, hintergrund)
     n_soll_geometrie = sum(sil_soll)
     obergrenze = n_soll_geometrie / len(soll)
@@ -1385,6 +1401,10 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # den 14 Läufen mit Vorzeichen aus `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`
         # haben zwei ein positives (+0.127 bei Score 0.1842, +0.337 bei 0.2301), beide
         # weit unter der Schwelle — kein bekanntes Urteil ändert sich.
+        if ausgeblendet:
+            markierung = dict(markierung, tiefen=list(markierung["tiefen"]))
+            for i in ausgeblendet:
+                markierung["tiefen"][i] = math.inf
         urteil = geometrie_qa.geometrie_gate(
             soll, markierung["tiefen"], schwelle=schwelle, hintergrund=hintergrund,
             polaritaet=gemessenes_zeichen(eintrag.name),
@@ -1501,6 +1521,8 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # auf-20261001-235: Die Regel in `kosmo_szene.soll_silhouette_randlos` stand, aber
         # das Feld kam hier nie an; die Proben setzten es von Hand.
         "anteil_soll": urteil.get("anteil_soll"),
+        # Ausgeblendete Umgebung (Splat): `None` ohne, sonst die Zahl der Punkte.
+        "n_ausgeblendet": len(ausgeblendet) if ausblenden is not None else None,
         "n_gemeinsam": urteil["n_gemeinsam"],
         "n_soll": urteil["n_soll"],
         "n_ist": urteil["n_ist"],
@@ -1560,6 +1582,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "geom_iou": None,
         "geom_iou_norm": None,
         "anteil_soll": None,
+        "n_ausgeblendet": None,
         "n_gemeinsam": None,
         "n_soll": None,
         "n_ist": None,

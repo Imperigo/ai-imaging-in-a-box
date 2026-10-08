@@ -618,7 +618,7 @@ def rahmungsbox(pfad, *, up_axis: str = "Y") -> dict:
         return {"box": None, "nach": "szene",
                 "grund": f"Kein Bauwerk erkennbar: {aus.get('note') or 'ohne Angabe'}."}
     if not isinstance(schrumpf, (int, float)) or schrumpf < MINDEST_SCHRUMPFUNG:
-        return {"box": None, "nach": "szene",
+        return {"box": None, "nach": "szene", "szene_ist_bauwerk": True,
                 "grund": (f"Die Bauwerksbox ist praktisch die Szene (Schrumpfung "
                           f"{schrumpf!r}) — die Namensregel fand kein Gelände.")}
     return {"box": box, "nach": "bauwerk",

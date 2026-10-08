@@ -186,6 +186,9 @@ def _argumente():
                          "die Szene Gelände trägt: Ein Geländestück blaeht die Hüllbox "
                          "auf, die Kamera zieht sich zurück, und das Gebäude wird kleiner "
                          "statt grösser. Am 20.08.2026 gemessen — siehe _bbox_aller_meshes.")
+    ap.add_argument("--kamera-ausschnitt", action="store_true",
+                    help="Lange, flache Bauwerke als Ausschnitt zeigen (Entscheid 75), auch "
+                         "ohne --kamera-huellbox: wenn das Bauwerk die Szene ist.")
     ap.add_argument("--herzschlag-s", type=float, default=None,
                     help="Alle so viele Sekunden ein Lebenszeichen nach "
                          "<out>/herzschlag.txt schreiben. Ohne Angabe: keines. Siehe "
@@ -897,7 +900,10 @@ def _kamera_setzen(lo, hi, a=None):
                 # Szenenbox waere eine grosse Gelaendeplatte «lang und flach», und der
                 # Ausschnitt hebelte den Rahmungsriegel aus, der genau dieses Bild nicht
                 # rendern soll (`test_kettenlauf_echt`, Grundstueck).
-                ausschnitt=bool(getattr(a, "kamera_huellbox", None)),
+                # Seit auf-20261008-271 auch mit `--kamera-ausschnitt`: Ohne Gelaende ist die
+                # Szene das Bauwerk, und genau die lange Halle bekam nie eine Bauwerksbox.
+                ausschnitt=bool(getattr(a, "kamera_huellbox", None)
+                                or getattr(a, "kamera_ausschnitt", False)),
                 # Das TATSÄCHLICHE Seitenverhältnis dieses Laufs, nicht eine Annahme.
                 # Bis zum 19.08.2026 stand hier fest 1.0 mit dem Kommentar „der Runner
                 # rendert quadratisch" — was stimmte, aber `prompts.Stil.seitenverhaeltnis`

@@ -7838,6 +7838,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kern (Entscheid 76):** Splat als farbige Punktwolke im Multipass, Abholer liest `context`. *(08.10.2026, siehe Abschnitt «Splat als Umgebung» unten, Protokoll 74 §78)*
 - [x] **Kern:** Bestand lesen (`extras.role`) → Bildanweisung «ohne Schrift» (positiv, `kosmo_szene.BESTAND_ZUSATZ`). Den negativen Prompt **nicht** angeschlossen: Er wirkt auf `z-image-turbo` nicht. *(08.10.2026, Protokoll 74 §80; Wirkung misst `auf-20261008-271`)*
 - [ ] **HomeStation:** App-Seite für `context` (Pfad und `splatAnsichtsMatrix`), danach Messauftrag am echten Splat.
+- [x] **Messung am echten Splat (`auf-20261008-271`):** Lage, Farbe und Hinweise tragen; Zählung, Tiefe und Ausschnitt nicht, Schrift offen. *(08.10.2026, Protokoll 74 §81)*
+- [x] **Behebungen zu 271:** Umgebung in der Prüfung ausgeblendet, Tiefe nach dem Modell normiert, Ausschnitt ohne Gelände, Hochachse der Brücke für die Rahmung umgeschrieben. *(08.10.2026, §81)*
+- [ ] **Nachmessung `auf-20261008-272`** (local) — dann Vertragszweig `cf839597c` an Int 1 melden.
+- [ ] **Konfetti:** Z-Image macht aus den Splat-Punkten Kreisscheiben — Entscheid des Owners, wie der Splat ins Bild geht.
 
 ## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)
 

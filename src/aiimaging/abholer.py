@@ -1522,12 +1522,47 @@ def mindest_frei_mib(backbone_name) -> tuple[int, str]:
 RAHMUNG_NACH_BAUWERK = True
 
 
+def _glb_hochachse(hochachse) -> str:
+    """Die Hochachse in der Schreibweise von :mod:`aiimaging.glbbox` (``"Y"``/``"Z"``).
+
+    **Befund 08.10.2026 (beim Bau zu ``auf-20261008-271``):** Hier ging die Hochachse des
+    Auftrags roh an ``glbbox.rahmungsbox`` — und ohne Angabe ist das
+    :data:`ANGENOMMENE_HOCHACHSE` ``"Y_UP"``, also jeder glb-Auftrag der Brücke.
+    ``glbbox`` kennt nur ``"Y"``, warf, und die Rahmung meldete «nicht lesbar — nach der
+    Szene gerahmt». Die Rahmung nach dem Bauwerk (Owner-Entscheid 30.09.2026) kam auf
+    diesem Weg also nie an. ``contracts.normalize_up_axis`` ist die eine Stelle für
+    diese Schreibweisen.
+    """
+    from aiimaging import contracts
+    try:
+        return contracts.normalize_up_axis(hochachse or "Y")
+    except Exception:                                   # noqa: BLE001 — dann wie bisher
+        return str(hochachse or "Y")
+
+
 def _rahmung_fuer(kamera_huellbox, modell, hochachse, richtung):
     """Die Box für die Kamera — gegeben, nach dem Bauwerk (wenn eingeschaltet), oder None."""
     if kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None:
         return kamera_huellbox
     from aiimaging import glbbox
-    return glbbox.rahmungsbox(modell, up_axis=hochachse or "Y")["box"]
+    return glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse))["box"]
+
+
+def _ausschnitt_ohne_box(kamera_huellbox, modell, hochachse, richtung) -> bool:
+    """Darf die Richtungskamera lange, flache Bauten als Ausschnitt zeigen, obwohl es
+    keine Bauwerksbox gibt? **Ja, wenn das Bauwerk die Szene ist** (kein Gelände).
+
+    **Anlass ``auf-20261008-271``:** Entscheid 75 hing an der Bauwerksbox, und die fehlt
+    genau bei der Halle aus dem Splat — ohne Gelände ist Bauwerk gleich Szene. Alle neun
+    Kameras zeigten die Halle ganz, auf 3,7–4,4 % des Bildes. Mit Gelände, das die
+    Namensregel nicht fand, bleibt es aus: Dann wäre die Szenenbox eine Platte, und der
+    Ausschnitt hebelte den Rahmungsriegel aus (``test_kettenlauf_echt``, Grundstück).
+    """
+    if kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None:
+        return False
+    from aiimaging import glbbox
+    return bool(glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse))
+                .get("szene_ist_bauwerk"))
 
 
 def _engine_aus(render_ergebnis) -> dict | None:
@@ -2492,6 +2527,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # dritte Moeglichkeit sind sie gebaut.
                 timeout=ZEITDECKEL_S if zeitdeckel_s is None else zeitdeckel_s,
             )
+            # DER AUSSCHNITT OHNE GELAENDE — nur, wenn er gilt; sonst bleiben Einstellungen
+            # und Speicherschluessel die bisherigen.
+            if (einstellungen.get("kamera_huellbox") is None
+                    and _ausschnitt_ohne_box(kamera_huellbox, modell, hochachse,
+                                             aufgabe.get("richtung"))):
+                einstellungen["kamera_ausschnitt"] = True
             # DER SPLAT ALS UMGEBUNG — nur, wenn bestellt. Ohne ihn bleiben Einstellungen
             # und Speicherschluessel Wort fuer Wort die bisherigen.
             if kontext is not None:
@@ -2656,6 +2697,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             maskenbefund = _maske_bauen(
                 bericht, gelaende_erwartet=gelaende_der_szene,
                 gelaende_zusatz=_formgelaende_aus_bericht(bericht))
+            # DIE UMGEBUNG ZAEHLT NICHT ALS BAUWERK (auf-20261008-271): Ihre Bildpunkte
+            # werden in der Pruefung ausgeblendet — nur, wenn es sie gibt; ohne Splat
+            # bleibt jeder Aufruf Wort fuer Wort der bisherige.
+            kontext_pixel = maskenbefund.get("kontext_pixel")
+            ausblendung = {"ausblenden": kontext_pixel} if kontext_pixel else {}
+            # Fuer die Seedwahl nach dem Umriss dasselbe: Der Umriss ist der des Bauwerks,
+            # nicht der der Baeume dahinter.
+            soll_umriss = _ohne_umgebung(soll, kontext_pixel) if kontext_pixel else soll
 
             # DIE DOPPELTE ANSICHT. Zweizaehlige Drehsymmetrie laesst die beiden
             # Ueber-Eck-Ansichten der HABS/NPS-Regel zusammenfallen; bei einem Quader
@@ -2729,9 +2778,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 seeds, aus, kuerzel, _rendere_seed,
                 lambda png: messen(png, soll, breite=breite, hoehe=hoch,
                                    modell=_tiefen_modell, schwelle=grenze,
-                                   maske=maskenbefund.get("maske")),
+                                   maske=maskenbefund.get("maske"), **ausblendung),
                 maske_da=maskenbefund.get("maske") is not None,
-                soll=soll, breite=breite, hoehe=hoch)
+                soll=soll_umriss, breite=breite, hoehe=hoch)
             bilder.append(ergebnis["bild_png"])
             anker = None
             maskenanker = None
@@ -2739,7 +2788,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 anker, maskenanker = _nullprobe(
                     aus, soll, breite, hoch, bildschreiben=bildschreiben,
                     messen=messen, grenze=grenze, tiefen_modell=_tiefen_modell,
-                    maske=maskenbefund.get("maske"))
+                    maske=maskenbefund.get("maske"), **ausblendung)
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
                           # Welches Bild zu diesem Urteil gehoert. Steht bis zum
@@ -2968,6 +3017,9 @@ MULTIPASS_DURCHGEREICHT = {
                    "(kosmo_szene.kontext_aus_szene); nur wenn bestellt",
     "kontext_matrix": "szene['kontext']['matrix'] aus RenderScene.context.transform "
                       "(16 Zahlen zeilenweise, glTF-Welt); fehlt sie, die Einheit",
+    # Seit auf-20261008-271: der Ausschnitt auch ohne Gelaende.
+    "kamera_ausschnitt": "_ausschnitt_ohne_box(...) — nur Richtungskamera ohne eigene Box, "
+                         "wenn die Rahmung meldet: Bauwerk = Szene",
 }
 
 #: Einstellungen, die `verarbeiter` **nicht** setzt — mit dem Grund und dem, was fehlt.
@@ -4408,8 +4460,29 @@ def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
             _kosmo_szene.URTEIL_ZWEI_TORE: None}
 
 
+def _ohne_umgebung(soll, kontext_pixel):
+    """Die Soll-Karte mit der Umgebung als Hintergrund (``inf``) — flach oder zeilenweise.
+
+    Passt die Laenge nicht, bleibt die Karte, wie sie war: Geraten wird nicht.
+    """
+    import math as _math
+    if soll and isinstance(soll[0], (list, tuple)):
+        flach = [w for zeile in soll for w in zeile]
+        if len(flach) != len(kontext_pixel):
+            return soll
+        aus, i = [], 0
+        for zeile in soll:
+            aus.append([_math.inf if kontext_pixel[i + j] else w for j, w in enumerate(zeile)])
+            i += len(zeile)
+        return aus
+    if len(soll) != len(kontext_pixel):
+        return soll
+    return [_math.inf if k else w for w, k in zip(soll, kontext_pixel)]
+
+
 def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
-               tiefen_modell=None, maske=None) -> tuple[dict | None, dict | None]:
+               tiefen_modell=None, maske=None,
+               ausblenden=None) -> tuple[dict | None, dict | None]:
     """Was Bilder **ohne jede Geometrie** auf dieser Soll-Karte erreichen.
 
     Die Anker werden **gemessen und nicht nachgeschlagen.** Eine Tabelle nach Szenennamen
@@ -4449,7 +4522,8 @@ def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
             bild = bildschreiben.schreibe_kontrollbild(
                 Path(ordner) / f"nullprobe_{art}.png", art, int(breite), int(hoehe))
             urteil = messen(str(bild), soll, breite=breite, hoehe=hoehe,
-                            modell=tiefen_modell, schwelle=grenze, maske=maske)
+                            modell=tiefen_modell, schwelle=grenze, maske=maske,
+                            **({"ausblenden": ausblenden} if ausblenden else {}))
         except Exception:      # noqa: BLE001 — ein Anker darf den Auftrag nicht mitnehmen
             continue
         if not urteil:

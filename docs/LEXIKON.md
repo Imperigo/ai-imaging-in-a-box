@@ -4710,6 +4710,13 @@ Schriftzüge.
 *Im Projekt:* `kosmo_szene.bestand_in_glb`, `kosmo_szene.BESTAND_ZUSATZ`; ob der Zusatz wirkt, misst
 `auf-20261008-271`.
 
+**Ausblenden (in der Prüfung)** — Bildpunkte, die bei der Prüfung gar nicht mitzählen: weder als
+Gebäude noch als Fehler. Gebraucht für die Umgebung aus der Punktaufnahme (Bäume, Nachbarbauten): Sie ist im Bild,
+aber geprüft wird nur, ob das Bild zum geplanten Gebäude passt. Vorher zählte die Umgebung als Gebäude mit, und ein
+Haus auf 3 % des Bildes sah aus wie eines auf 30 %.
+*Im Projekt:* `tiefenschaetzer.qa_gegen_soll(ausblenden=…)`, `maske.bauwerksmaske` (`kontext_pixel`),
+`auf-20261008-271`.
+
 **Ausschnitt (Kamera)** — Ein Bild, das ein Gebäude nicht ganz zeigt, sondern näher heran geht, so
 dass seine Enden aus dem Bild laufen. Bei sehr langen, flachen Bauten (z. B. einer 66 m langen, 3,45 m hohen
 Halle) wäre das ganze Gebäude sonst nur ein dünner Streifen im Bild und nicht prüfbar.
@@ -6577,6 +6584,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §75 (Entscheide 70 und 73 am Bild): **Sprungmarke (Anker)**; nachgefuehrt: **Nicht beurteilbar** (eigenes Zeichen), **Standpunkt-Vorgabe** (steht am Bild) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §79: **Ausschnitt (Kamera)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §80: **Bestand (Körper)** |
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §81: **Ausblenden (in der Prüfung)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
