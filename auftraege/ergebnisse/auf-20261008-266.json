@@ -1,0 +1,59 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-266",
+ "worker": "local",
+ "rang": 53,
+ "status": "erledigt — N1–N5 in WebKitGTK geprueft, zusammen mit 267 an einem Bau (Kopf 81d4dcc50, enthaelt den Nachgang 0f9789ece)",
+ "beendet": "2026-10-08T11:05:00Z",
+ "weg": "Ein Durchgang fuer 266 und 267 (wie in 267 angeboten): eigene Arbeitskopie detached auf origin/claude/kosmovis-v018-nicht-beurteilbar (81d4dcc50, enthaelt 0f9789ece), npm ci (Exit 0), Lizenz-Paket gebaut, «npx tauri build --no-bundle» mit eigenem Cargo-Zielordner (Exit 0, 226 s), Binaerdatei umbenannt kopiert, nichts installiert, installierte App nicht ersetzt und nicht beruehrt. Eigener Xvfb (1920x1080x24, freie Displaynummer), eigener Netz-Namensraum (bwrap --unshare-net, nur Loopback; 8600/8630/8700 der echten Dienste darin unerreichbar), darin eigene Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (127.0.0.1, freier Port, eigene Ablage, Fehlerbericht-/Feedback-/Lernjournal-/Ablage-Pfade ins Wegwerf-Verzeichnis) und ein lokaler Messkanal. Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1, KOSMO_MCP_PORT frei, Software-GL (mesa). Profil VOR dem ersten Laden ueber eine nur lokal eingebundene, nie committete Messhilfe (index.html + public/__mess.js, feste Befehle, kein eval) vorbelegt: kosmo.claude.anschluss=aus, Claude-Adresse und Sync auf toten Port, eigene Bruecken-Adresse, kosmo.verbindung.festeAdressen=1; dieselbe Hilfe sperrt zusaetzlich fetch/WebSocket/EventSource/XHR auf 8600, 8700, 8630 (keine Sperrung noetig geworden). Gerechnet vom Abholer (ai-imaging main, enthaelt d24be39; tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst), je Lauf unter der geteilten GPU-Sperre bei freier Karte (~2.0 GB, ~16 W, kein Sprachmodell geladen). Klicks mit xdotool nur auf dem eigenen Xvfb; Port 8630 und Display :0 nie angefasst.",
+ "koepfe": {
+  "gebaut": "81d4dcc50795e6d4abcf02678bdeeea31e9b3649 (claude/kosmovis-v018-nicht-beurteilbar; enthaelt 0f9789ece)",
+  "abholer": "ai-imaging main 54e45da (enthaelt d24be39)",
+  "hinweis": "Zweigkopf unveraendert gebaut; nur index.html + public/__mess.js lokal fuer die Messhilfe, nie committet; App-Kopf zeigt v0.1.7."
+ },
+ "laeufe": {
+  "demohaus_knoten": "Ein Render-Knoten im Projekt «Beispielprojekt laden — Demohaus», Z-Image Turbo (Vorgabe), Qualitaet 128, Prompt «Abendlicht, warme Fassade»; 5 gewertete Laeufe + 1 vor dem Abholen abgebrochener (zaehlt richtig nicht mit).",
+  "lauf_1": "Demohaus mit Raeumen (IFC + interior auto, Kameras auto): 1 Innenansicht «innen», QA passed true, «GEOM_IOU NICHT ANWENDBAR, innen …», 132 s.",
+  "lauf_2": "Demohaus mit Raeumen + Auto-Kamera-Knoten (Eingang, Uebersicht, Innenraum): 3 Bilder, Geometrie 0.397 (Uebersicht) gegen 0.65, passed false, Grund beginnt mit «GEOM_IOU NICHT ANWENDBAR, Innenraum …», 346 s.",
+  "zwischenschritt": "Fuer den Ausloesefall alle 26 Raeume (Zonen) im Plan einzeln geloescht (EG 16, OG 10, je Beschriftung anklicken + Entf); dabei wurden Treppe und EG-Bodenplatte versehentlich mitgeloescht und per Rueckgaengig sofort wiederhergestellt, das Anbaudach einmal geloescht und zurueckgeholt, damit die Raeume darunter waehlbar wurden — danach sendet die App glb ohne interior, Kameras auto, wie der Weg aus 264/265.",
+  "lauf_3": "Demohaus ohne Raeume, Kameras auto (s, sSE, nNW): passed false, Grund enthaelt «NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18% des Bildes …» (sSE) und «… nur 20% …» (nNW), Score None, 292 s.",
+  "lauf_4": "Demohaus ohne Raeume + Auto-Kamera (Eingang, Uebersicht; Innenraum faellt ohne Zonen weg): echtes Durchfallen gemessen, «Geometrie 0.5983 gegen 0.65», Eingang 0.651 bestanden, Uebersicht 0.598 durchgefallen, 217 s.",
+  "lauf_5": "wie Lauf 3 (Kameras auto): wieder «NICHT BEURTEILBAR (Gebaeudeanteil)», 294 s.",
+  "testbau": "Zweites Projekt «Testbau Gelaende»: tools/make_test_ifc.py --gelaende --stile ueber AUSTAUSCH › Import › IFC laden (GTK-Dateiwahl) geladen, «Uebernehmen» — die App uebernimmt nur «4 Waende, 1 Decke», die Gelaendeplatte (IfcSlab «Gelaende») NICHT. Prompt bewusst falsch («a bowl of fruit on a kitchen table, close-up still life, no building»), Kameras auto: passed false ohne «NICHT BEURTEILBAR», sSE 0.433 / nNW 0.350 gemessen durchgefallen, s ungeprueft, 301 s.",
+  "gpu": "Karte vor jedem Lauf frei (1995–2013 MiB, 15–17 W, kein Sprachmodell geladen); Sperre je Lauf genommen und sofort freigegeben."
+ },
+ "schritte": {
+  "N1": {
+   "antwort": "ja",
+   "satz": "Daumenbilder, Laufschild und Kopf der grossen Ansicht zeigen Ortszeit: Lauf 1–5 um 12:16 / 12:23 / 12:36 / 12:42 / 12:47, gemessen gegen die Maschinenuhr (CEST, UTC+2; Webview meldet Europe/Zurich, Versatz −120 min) — die grosse Ansicht schreibt «08.10.2026 · 12:36» ohne «UTC»."
+  },
+  "N2": {
+   "antwort": "ja",
+   "satz": "Nach dem 5. Lauf steht auf dem Hauptbild «LAUF 5 · 12:47»; die Reihe zeigt Lauf 5/4/3/2 (Lauf 1 herausgefallen); die grosse Ansicht des aelteren Bildes sagt «LAUF 3 · 08.10.2026 · 12:36 · 3 von 4 im Verlauf», Lauf 2 «4 von 4», Lauf 4 «2 von 4» — n stimmt; ein vor dem Abholen abgebrochener Auftrag zaehlte nicht mit.",
+   "bild": "auf-20261008-266-n2.png (links Knoten nach Lauf 5, rechts grosse Ansicht Lauf 3)"
+  },
+  "N3": {
+   "antwort": "teils",
+   "satz": "Innenansicht (Lauf 1): «Treue zur Geometrie: nicht anwendbar — Grundlage widerrufen» statt «nicht gemessen» — der Widerspruch aus 263 ist weg, der Zusatz sagt aber «Grundlage widerrufen» und nicht «Ansicht nicht zustaendig», weil der Vertrag weder rho_maske noch Kante/Paarurteil traegt (bewertungsLage → widerrufen vor nicht-zustaendig, da geometry.status «measured»). Aussenansicht mit Pruefung (Lauf 4, echtes Durchfallen): der Grund nennt Zahl und Schwelle woertlich («Geometrie 0.5983203077157486 gegen 0.65»), die Treue-Zeile zeigt aber ebenfalls «nicht anwendbar — Grundlage widerrufen» statt «Zahl / Schwelle» — rho_maske kommt vom Abholer in qa.geometry nie an (in keinem der 6 Ergebnisse, auch nicht je Kamera), «Zahl / Schwelle» liess sich darum am Geraet nicht zeigen."
+  },
+  "N4": {
+   "antwort": "ja",
+   "satz": "Dunkles Thema: die grosse Ansicht ist deckend — ueber dem Render-Knoten darunter ist die leere Flaeche der Ansicht pixelgleich einfarbig (Standardabweichung 0 auf 600x300 px), keine Knoten oder Linien sichtbar; helles Thema «Papier» deckend und gut lesbar (Kopf, Urteil, Grund, Werte, Fusssatz).",
+   "bild": "auf-20261008-266-n4.png (links dunkel Lauf 3, rechts hell Lauf 4)"
+  },
+  "N5": {
+   "antwort": "ja",
+   "satz": "Unveraendert wie 263: nach Lauf 1 kein Abzeichen und keine Reihe; ab Lauf 2 Reihe mit Daumen (43x46 px), neuester links, Urteilspunkt und Zeit; Abzeichen «LAUF n · hh:mm» (396–474) und Urteil (482–564) innerhalb des Bildes (392–568, gleiche Zeile); Klick auf Daumen oeffnet die Ansicht waagrecht mittig (274–1166 bei 1440 Breite), ←/→-Knoepfe und Pfeiltasten blaettern und bleiben am Rand stehen, Escape schliesst, Fokus danach auf dem Daumenbild, Hauptbild bleibt «LAUF 5»; Leinwand ziehen (−100/−100) und Rad-Zoom (3 raus, 3 rein) bewegen Knoten, Bild, Abzeichen und Reihe exakt gemeinsam und zurueck auf die Ausgangspixel."
+  }
+ },
+ "urteil": "Ja, der Nachgang kann zu Int 1 (am besten gleich mit 267 als ein Kopf): Ortszeit, fortlaufende Laufnummer, deckende Ansicht und alles aus 263 laufen in WebKitGTK; einzige Einschraenkung ist N3 — weil der Abholer kein rho_maske liefert, steht in der Treue-Zeile bei innen wie aussen «nicht anwendbar — Grundlage widerrufen» statt «Ansicht nicht zustaendig» bzw. «Zahl / Schwelle».",
+ "auffaelliges": [
+  "Ein Punkt «bestanden» oder «durchgefallen» ist am Geraet nie zu sehen: alle 6 Laeufe (auch Lauf 4 mit gemessenem Durchfallen 0.598 < 0.65) tragen im Verlauf «nicht beurteilbar», weil qa.geometry vom Abholer nie rho_maske/kantenanteil/kante/paarurteil enthaelt und bewertungsLage darum «widerrufen» meldet. Vor-bestehend (laufUrteil in 0f9789ece gleich), betrifft aber jede echte Lieferung.",
+  "Lauf 2 und Lauf 4: Kachel «QA ✗ ⚠» (rot), am selben Bild Abzeichen/Verlauf «nicht beurteilbar» — die beiden Anzeigen lesen verschiedene Regeln (Kachel: passed + Wort im Grund; Verlauf: bewertungsLage).",
+  "Ein Auftrag mit Raeumen (interior auto) und Kameras auto liefert genau EIN Bild, die Innenansicht; erst mit Auto-Kamera-Knoten kommen Aussenansichten. Ein Demohaus-Bild «von aussen, Kameras auto» gibt es in der App nur ohne Raeume.",
+  "Raeume loeschen im Plan: nach Rueckgaengig liegen wiederhergestellte Elemente in der Trefferreihenfolge hinter Dach/Bodenplatte — ein Klick auf eine Raumbeschriftung waehlt dann das Anbaudach bzw. die Bodenplatte statt des Raums (Treppe liegt immer vor dem Raum). Kein Zweig-Befund.",
+  "Der Vorbehaltssatz unter der Kachel im Bildvergleich-Knoten ist im DOM vollstaendig, wird aber von der festen Knotenhoehe (overflow hidden) nach einer halben Zeile abgeschnitten.",
+  "Kuratierflaeche: die Kamerazeilen der Karte zeigen «s: ohne QA / sSE: ohne QA / nNW: ohne QA», obwohl qa_je_kamera fuer alle drei Eintraege (status not_measured) liefert; nur EINE Variante je Render-Knoten (der Vergleich braucht zwei Karten und war darum hier leer)."
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (kein Absturzbericht, /var/crash nur kexec_cmd), danach per gemerkter PID Bruecke, Messkanal, Sitzungs-DBus, Namensraum und zuletzt Xvfb; eine vom Vorgaenger verbliebene Test-Bruecke (Port 8697, heute 08:35 gestartet, Arbeitsverzeichnis der geloeschten Arbeitskopie von 263) und die verwaiste Arbeitskopie wt-266 vorab entfernt; Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Ablage, Fotos und Hilfsskripte geloescht; GPU-Sperre frei; nur Ergebnis und Bilder abgelegt, nichts committet, nichts gepusht; installierte App, Port 8630, Bruecke 8600 und vite 5183 unberuehrt."
+}

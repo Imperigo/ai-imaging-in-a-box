@@ -1,0 +1,56 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-267",
+ "worker": "local",
+ "rang": 54,
+ "status": "erledigt — B1–B4 in WebKitGTK geprueft, am echten Demohaus-Fall (Haus 18 % / 20 %), zusammen mit 266 an einem Bau",
+ "beendet": "2026-10-08T11:05:00Z",
+ "weg": "Ein Durchgang fuer 266 und 267 (wie in 267 angeboten): eigene Arbeitskopie detached auf origin/claude/kosmovis-v018-nicht-beurteilbar (81d4dcc50, enthaelt 0f9789ece), npm ci (Exit 0), Lizenz-Paket gebaut, «npx tauri build --no-bundle» mit eigenem Cargo-Zielordner (Exit 0, 226 s), Binaerdatei umbenannt kopiert, nichts installiert, installierte App nicht ersetzt und nicht beruehrt. Eigener Xvfb (1920x1080x24, freie Displaynummer), eigener Netz-Namensraum (bwrap --unshare-net, nur Loopback; 8600/8630/8700 der echten Dienste darin unerreichbar), darin eigene Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (127.0.0.1, freier Port, eigene Ablage, Fehlerbericht-/Feedback-/Lernjournal-/Ablage-Pfade ins Wegwerf-Verzeichnis) und ein lokaler Messkanal. Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1, KOSMO_MCP_PORT frei, Software-GL (mesa). Profil VOR dem ersten Laden ueber eine nur lokal eingebundene, nie committete Messhilfe (index.html + public/__mess.js, feste Befehle, kein eval) vorbelegt: kosmo.claude.anschluss=aus, Claude-Adresse und Sync auf toten Port, eigene Bruecken-Adresse, kosmo.verbindung.festeAdressen=1; dieselbe Hilfe sperrt zusaetzlich fetch/WebSocket/EventSource/XHR auf 8600, 8700, 8630 (keine Sperrung noetig geworden). Gerechnet vom Abholer (ai-imaging main, enthaelt d24be39; tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst), je Lauf unter der geteilten GPU-Sperre bei freier Karte (~2.0 GB, ~16 W, kein Sprachmodell geladen). Klicks mit xdotool nur auf dem eigenen Xvfb; Port 8630 und Display :0 nie angefasst.",
+ "koepfe": {
+  "gebaut": "81d4dcc50795e6d4abcf02678bdeeea31e9b3649 (claude/kosmovis-v018-nicht-beurteilbar)",
+  "abholer": "ai-imaging main 54e45da (enthaelt d24be39); Dienst und visbox-flaeche nicht neu gestartet (nicht verlangt, eigener Abholer-Aufruf gegen die eigene Ablage)"
+ },
+ "laeufe": {
+  "demohaus_knoten": "Ein Render-Knoten im Projekt «Beispielprojekt laden — Demohaus», Z-Image Turbo (Vorgabe), Qualitaet 128, Prompt «Abendlicht, warme Fassade»; 5 gewertete Laeufe + 1 vor dem Abholen abgebrochener (zaehlt richtig nicht mit).",
+  "lauf_1": "Demohaus mit Raeumen (IFC + interior auto, Kameras auto): 1 Innenansicht «innen», QA passed true, «GEOM_IOU NICHT ANWENDBAR, innen …», 132 s.",
+  "lauf_2": "Demohaus mit Raeumen + Auto-Kamera-Knoten (Eingang, Uebersicht, Innenraum): 3 Bilder, Geometrie 0.397 (Uebersicht) gegen 0.65, passed false, Grund beginnt mit «GEOM_IOU NICHT ANWENDBAR, Innenraum …», 346 s.",
+  "zwischenschritt": "Fuer den Ausloesefall alle 26 Raeume (Zonen) im Plan einzeln geloescht (EG 16, OG 10, je Beschriftung anklicken + Entf); dabei wurden Treppe und EG-Bodenplatte versehentlich mitgeloescht und per Rueckgaengig sofort wiederhergestellt, das Anbaudach einmal geloescht und zurueckgeholt, damit die Raeume darunter waehlbar wurden — danach sendet die App glb ohne interior, Kameras auto, wie der Weg aus 264/265.",
+  "lauf_3": "Demohaus ohne Raeume, Kameras auto (s, sSE, nNW): passed false, Grund enthaelt «NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18% des Bildes …» (sSE) und «… nur 20% …» (nNW), Score None, 292 s.",
+  "lauf_4": "Demohaus ohne Raeume + Auto-Kamera (Eingang, Uebersicht; Innenraum faellt ohne Zonen weg): echtes Durchfallen gemessen, «Geometrie 0.5983 gegen 0.65», Eingang 0.651 bestanden, Uebersicht 0.598 durchgefallen, 217 s.",
+  "lauf_5": "wie Lauf 3 (Kameras auto): wieder «NICHT BEURTEILBAR (Gebaeudeanteil)», 294 s.",
+  "testbau": "Zweites Projekt «Testbau Gelaende»: tools/make_test_ifc.py --gelaende --stile ueber AUSTAUSCH › Import › IFC laden (GTK-Dateiwahl) geladen, «Uebernehmen» — die App uebernimmt nur «4 Waende, 1 Decke», die Gelaendeplatte (IfcSlab «Gelaende») NICHT. Prompt bewusst falsch («a bowl of fruit on a kitchen table, close-up still life, no building»), Kameras auto: passed false ohne «NICHT BEURTEILBAR», sSE 0.433 / nNW 0.350 gemessen durchgefallen, s ungeprueft, 301 s.",
+  "gpu": "Karte vor jedem Lauf frei (1995–2013 MiB, 15–17 W, kein Sprachmodell geladen); Sperre je Lauf genommen und sofort freigegeben."
+ },
+ "ausloesefall": {
+  "weg": "Demohaus aus «Beispielprojekt laden» (Kernel haus.demohausBauen), Raeume entfernt, Render-Knoten mit Kameras auto → glb ohne interior an die eigene Bruecke → Abholer → Pruefung (Lauf 3 und Lauf 5).",
+  "vertrag": "verdict.passed false; verdict.reason enthaelt «UNGEPRUEFT bei Kamera 'sSE' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18% des Bildes, weniger als 20 % …» und dasselbe fuer nNW mit «nur 20%»; qa.geometry status not_measured, Score None; qa.geometry ohne rho_maske/Kante/Paarurteil."
+ },
+ "schritte": {
+  "B1": {
+   "antwort": "ja",
+   "satz": "Am Render-Knoten (Lauf 3 und Lauf 5) steht oben rechts im Bild «nicht beurteilbar» mit hohlem Ring, weisse Schrift auf dunklem Grund (neutral, kein Rot); im Verlauf je ein hohler Punkt (vis-verlauf-punkt--nicht-beurteilbar), aria «Lauf 5 von 12:47, nicht beurteilbar». Einschraenkung: dasselbe zeigen auch Laeufe ohne das Wort (z. B. Lauf 4, gemessenes Durchfallen), s. auffaelliges.",
+   "bild": "auf-20261008-267-b1.png"
+  },
+  "B2": {
+   "antwort": "ja",
+   "satz": "Kachel im Bildvergleich-Knoten: «QA nicht beurteilbar ⚠» (Klasse --neutral, dunkle Schrift) statt «QA ✗»; der Satz darunter ist zeichengleich verdict.reason (921 von 921 Zeichen verglichen) — er wird von der festen Knotenhoehe nach einer halben Zeile abgeschnitten, ist also am Knoten selbst nicht lesbar.",
+   "bild": "auf-20261008-267-b2.png"
+  },
+  "B3": {
+   "antwort": "teils",
+   "satz": "Kurations-Inspektor: «QA-Verdikt: nicht beurteilbar» statt «verfehlt», keine aktiven Sterne (5 leere), der Grund steht ungekuerzt unter «QA-Vorbehalt»; der Satz unter BEWERTUNG ist aber «Bewertung zurueckgezogen — die Grundlage dieser Zahlen ist widerlegt. Die Bildseite liefert die tragfaehigen Werte nach.» statt «Nicht beurteilbar — der Grund steht unter «QA-Vorbehalt», keine Wertung.», weil bewertungsLage «widerrufen» (kein rho_maske im Vertrag) vor der neuen Lage greift; aus demselben Grund zeigt die grosse Ansicht «nicht anwendbar — Grundlage widerrufen» statt «— siehe Grund». Die Vergleichstabelle war nicht pruefbar: die Kuratierflaeche fuehrt je Render-Knoten nur eine Variante."
+  },
+  "B4": {
+   "antwort": "ja (Kachel/Inspektor), Verlauf nein",
+   "satz": "Gegenprobe Testbau (make_test_ifc --gelaende --stile, aber die App uebernimmt die Gelaendeplatte nicht, also ohne Gelaende im Auftrag) mit falschem Prompt: passed false ohne «NICHT BEURTEILBAR», sSE 0.433 / nNW 0.350 durchgefallen → Kachel weiter «QA ✗ ⚠» (rot, --fehl), Inspektor «QA-Verdikt: verfehlt»; ebenso am Demohaus Lauf 4 (Geometrie 0.598 gegen 0.65): Kachel «QA ✗ ⚠». «durchgefallen» im Verlauf war dagegen nirgends zu sehen — auch Lauf 4 traegt dort «nicht beurteilbar» (Lage widerrufen, vor-bestehend, nicht durch diesen Zweig)."
+  }
+ },
+ "urteil": "Ja, der Zweig (mit dem Nachgang darin) kann zu Int 1 — Kachel, Abzeichen, hohler Punkt und Inspektor-Verdikt sagen am echten Demohaus-Fall neutral «nicht beurteilbar», ein echtes Durchfallen bleibt ✗/«verfehlt»; nachzuziehen ist (gern als eigener Schritt) die Reihenfolge in bewertungsLage: weil der Abholer nie rho_maske liefert, gewinnt immer «widerrufen», sodass der neue Inspektor-Satz und «— siehe Grund» am Geraet nie erscheinen und der Verlauf auch gemessenes Durchfallen als «nicht beurteilbar» zeigt.",
+ "auffaelliges": [
+  "Rundung im Satz der Bildseite: nNW «Das Haus fuellt nur 20% des Bildes, weniger als 20 %» (Anteil 0.199, mit :.0% gerundet) — liest sich widerspruechlich; Satz kommt von ai-imaging (kosmo_szene._lage_ohne_urteil), nicht von KosmoOrbit.",
+  "Der Hauptgrund beginnt bei Kameras auto mit «KEIN SCORE; DER MASKENWEG URTEILT NICHT … 'passed: false' heisst hier ungeprueft», das «NICHT BEURTEILBAR» steht erst als dritter Satzteil je Kamera; die App findet es trotzdem (Suche irgendwo im Satz).",
+  "Lauf 3 und Lauf 5 lieferten dasselbe rho (0.1566470567321148) — gleicher Seed 0, gleicher Prompt, gleiche Kameras.",
+  "Die IFC-Uebernahme der App kennt die Gelaendeplatte aus make_test_ifc.py --gelaende nicht («Im IFC erkannt: 4 Waende, 1 Decke»); ein Testbau MIT Gelaende laesst sich ueber die Oberflaeche nicht bestellen."
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (kein Absturzbericht, /var/crash nur kexec_cmd), danach per gemerkter PID Bruecke, Messkanal, Sitzungs-DBus, Namensraum und zuletzt Xvfb; eine vom Vorgaenger verbliebene Test-Bruecke (Port 8697, heute 08:35 gestartet, Arbeitsverzeichnis der geloeschten Arbeitskopie von 263) und die verwaiste Arbeitskopie wt-266 vorab entfernt; Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Ablage, Fotos und Hilfsskripte geloescht; GPU-Sperre frei; nur Ergebnis und Bilder abgelegt, nichts committet, nichts gepusht; installierte App, Port 8630, Bruecke 8600 und vite 5183 unberuehrt."
+}
