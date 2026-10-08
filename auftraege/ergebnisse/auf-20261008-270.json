@@ -1,0 +1,124 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261008-270",
+  "worker": "local",
+  "rang": 57,
+  "folgt_auf": "auf-20261008-268",
+  "status": "erledigt — F1–F5 in WebKitGTK 2.52.6 mit drei echten Abholer-Laeufen geprueft (nicht beurteilbar, durchgefallen, bestanden von aussen)",
+  "beendet": "2026-10-08T16:50:00Z",
+  "weg": "Wie 268: Wegwerf-Arbeitskopie detached auf origin/claude/kosmovis-v018-verlauf-feinschliff (96b0ed9dd) nach git fetch, npm ci (Exit 0), Lizenz-Paket gebaut (Exit 0), «npx tauri build --no-bundle» mit eigenem Cargo-Zielordner (Exit 0, 252 s), Binaerdatei umbenannt kopiert; nichts installiert, installierte App nicht beruehrt. Eigener Xvfb (1920x1080x24, freie Displaynummer, nur Unix-Socket), eigener Netz-Namensraum (bwrap --unshare-net; 8600/8630/8700 der echten Dienste darin unerreichbar), darin eigene Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (127.0.0.1, freier Port, eigene Ablage, Fehlerbericht/Feedback/Lernjournal/Ablage im Wegwerf-Ordner, Ollama auf totem Port) und ein lokaler Messkanal. App nur mit env -i, Wegwerf-XDG, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1, Software-GL (mesa). Profil vor dem ersten Laden ueber eine nur lokal eingebundene, nie committete Messhilfe (index.html + public/__mess.js, feste Befehle, kein eval) vorbelegt: kosmo.claude.anschluss=aus, Claude-Adresse und Sync auf toten Port, eigene Bruecken-Adresse, feste Adressen; fetch/WebSocket/EventSource/XHR auf 8600/8700/8630 gesperrt (0 Sperrungen noetig). Fenster ohne Fenstermanager auf 1920x1080 gezogen (wie maximiert), fuer F1 zusaetzlich auf die App-Vorgabe 1440x900. «Beispielprojekt laden — Demohaus», die 26 Raeume (Zonen) ueber den App-Befehl design.loeschen entfernt (danach 0 Zonen, Waende/Decken/Dach unveraendert, App sendet glb ohne interior). Graph wie 268: Modell, Render, Prompt, Bildvergleich ueber die Node-Palette gesetzt (Render an der Palettenstelle), Verbindungen und Prompt «Abendlicht, warme Fassade» ueber den App-Befehlsweg (vis.verbinden / vis.nodeParametrieren); Z-Image Turbo (Vorgabe), 128, 1600x1000. Ausfuehren per echtem Klick (xdotool, nur eigener Xvfb). Gerechnet vom Abholer (ai-imaging main 27da636, tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst, Vorgabe-Seeds), je Lauf unter der geteilten GPU-Sperre bei freier Karte (15–17 W, ~1.4 GB, Ollama /api/ps leer — nichts zu entladen). Hover per echter Mausbewegung, Tab-Fokus per echter Tab-Taste (Fokus vorher auf das vorangehende Feld gesetzt).",
+  "koepfe": {
+    "gebaut": "96b0ed9dd5e2825830310ec691862ea31530538f (claude/kosmovis-v018-verlauf-feinschliff, auf e6f775995); App-Kopf v0.1.7",
+    "abholer": "ai-imaging main 27da636 (alle drei Laeufe; per Taktgeber-pull waehrend der Probe von ac7b4a0 vorgerueckt) — die Zahlen decken sich mit 268 (18.1/19.8 %, 0.598)",
+    "webkitgtk": "libwebkit2gtk-4.1-0 2.52.6-0ubuntu0.26.04.1 (>= 2.42, :has() vorhanden: CSS.supports('selector(:has(a))') = true)",
+    "hinweis": "Zweigkopf unveraendert gebaut; nur index.html + public/__mess.js lokal fuer die Messhilfe, nie committet."
+  },
+  "laeufe": {
+    "lauf_1": "Demohaus ohne Raeume, Kameras auto (s, sSE, nNW): passed false, Grund mit «NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 18.1 % …» (sSE) und «… nur 19.8 % …» (nNW), qa.geometry status not_measured, 293 s.",
+    "lauf_2": "Demohaus ohne Raeume + Auto-Kamera-Knoten (Eingang, Uebersicht): echtes Durchfallen, «Geometrie 0.5983203077157486 gegen 0.65», status measured, Hinweis «AUFSICHT: Die Kamera Übersicht steht über dem Dach …», 251 s.",
+    "lauf_3": "Bestehen von aussen: derselbe Graph (Eingang + Uebersicht bestellt); im wartenden Auftrag in der Wegwerf-Ablage die Kamera «Übersicht» aus render-scene.json entfernt, BEVOR der Abholer ihn nahm — gerechnet also nur «Eingang» (aussen, Augenhoehe). passed true, «Geometrie 0.6506018642726552 gegen 0.65», status measured, 118 s. Ehrlich: knapp ueber der Schwelle (wie 0.650/0.651 in 266/268), und die Kameraliste wurde von Hand gekuerzt, nicht in der App.",
+    "testbau": "Nicht verwendet: die IFC-Uebernahme der App laesst die Gelaendeplatte fallen (266), darum der Weg ueber die Eingangskamera am Demohaus.",
+    "gpu": "Drei Laeufe, Karte vor jedem frei, kein Sprachmodell geladen; Sperre je Lauf genommen und sofort freigegeben."
+  },
+  "schritte": {
+    "F1": {
+      "antwort": "ja (bei 1920x1080); knapp nein bei 1440x900",
+      "satz": "Keine Uhrzeitzeile mehr (0 × .vis-verlauf-zeit), der Knoten mit Verlauf ist 734 px hoch (Verlauf 70 px, Daumen 32 px, Koerper scrollHeight = clientHeight, nichts abgeschnitten); bei 1920x1080 steht er an der Palettenstelle y 260–994, ganz im Fenster; im App-Vorgabefenster 1440x900 steht er y 170–904 und ragt noch 4 px (nur Rahmen/Innenabstand, Verlauf endet bei 852) ueber den Rand — vorher 18 px; der ⇄-Knopf (y 852–886) verdeckt auch bei Mittellage nichts mehr: er schliesst genau an die Unterkante der Daumenbilder (852) an.",
+      "messung": {
+        "knoten_h": 734,
+        "1920x1080": {
+          "knoten_y": [
+            260,
+            994
+          ],
+          "im_fenster": true
+        },
+        "1440x900": {
+          "knoten_y": [
+            170,
+            904
+          ],
+          "ueber_rand_px": 4,
+          "verlauf_unten": 852,
+          "tausch_knopf": {
+            "x": [
+              676,
+              764
+            ],
+            "y": [
+              852,
+              886
+            ]
+          },
+          "daumen_bei_mittellage_x": [
+            628,
+            765
+          ],
+          "ueberdeckung_px": 0
+        }
+      },
+      "bild": "auf-20261008-270-f1.png (links 1440x900, Knoten zur Probe in Mittellage geschoben — ueberdeckt dort den Prompt-Knoten — mit ⇄-Knopf darunter; rechts 1920x1080 an der Palettenstelle nach Lauf 3, Verlauf 3/2/1)"
+    },
+    "F2": {
+      "antwort": "teils",
+      "satz": "Der Pruef-Satz ist genau eine Zeile (12 px, white-space nowrap, text-overflow ellipsis, beim 18-%-Satz 3830 px Text in 184 px mit «…»), ganz im Knotenkoerper (638–650 in 516–650) und gepunktet unterstrichen — aber das Bild schrumpft in WebKitGTK NICHT: .vis-img-full bleibt 134 px (ganzer Koerper), QA-Zeile, Grund-Zeile und beim Durchfallen der AUFSICHT-Hinweis samt «mehr»-Knopf liegen UEBER dem Bild (QA 624–636 bzw. 564–576, Hinweis 592–650), die QA-Zeile ist auf dem dunklen Abendbild kaum lesbar.",
+      "messung": {
+        "vergleich_koerper": [
+          516,
+          650
+        ],
+        "bild": [
+          516,
+          650
+        ],
+        "lauf_1": {
+          "qa": [
+            624,
+            636
+          ],
+          "grund": [
+            638,
+            650
+          ]
+        },
+        "lauf_2": {
+          "qa": [
+            564,
+            576
+          ],
+          "grund": [
+            578,
+            590
+          ],
+          "hinweis": [
+            592,
+            650
+          ]
+        }
+      }
+    },
+    "F3": {
+      "antwort": "ja",
+      "satz": "Beim Darueberfahren (echte Maus) UND bei Tab-Fokus (echte Tab-Taste vom Prompt-Feld aus, Fokus landet auf der Grund-Zeile) oeffnet die Kurzhilfe nach unten (k-tooltip-blase--unten) mit dem vollen Satz, 288 x 276 px bei y 654–930, links buendig an der Kachel, im Fenster (1080) und nicht abgeschnitten: der Knotenkoerper wechselt per :has() auf overflow visible (geschlossen hidden) — WebKitGTK 2.52.6 kann :has().",
+      "bild": "auf-20261008-270-f3.png (Hover nach Lauf 1, 18-%-Satz; Tab-Fokus zeigt dasselbe Bild)"
+    },
+    "F4": {
+      "antwort": "ja",
+      "satz": "Inspektor beim echten Durchfallen (Lauf 2): «QA-Verdikt: verfehlt», «Geometrie-Status: gemessen», unter BEWERTUNG nur «Keine Sterne: die Geometrie-Zahlen dieses Ergebnisses sind als Wertung widerrufen.»; beim Bestehen (Lauf 3): «QA-Verdikt: bestanden» (nicht «erreicht»), derselbe «Keine Sterne: …»-Satz; im ganzen Inspektor 0 × «zurueckgezogen»."
+    },
+    "F5": {
+      "antwort": "ja (K1, K2, K5 gesehen; K3/K4 nicht erneut)",
+      "satz": "Kachel und Verlauf urteilen je Lauf gleich: Lauf 1 «QA nicht beurteilbar ⚠» (--neutral) / Punkt hohl nicht-beurteilbar, Lauf 2 «QA ✗ ⚠» (--fehl) / durchgefallen, Lauf 3 «QA ok ⚠» (--ok) / bestanden, Laufschild «LAUF 3 · 18:35 bestanden», aria «Lauf n von hh:mm, <Urteil>, gross anzeigen»; grosse Ansicht Lauf 1 «Treue zur Geometrie: nicht anwendbar — siehe Grund», «3 von 3 im Verlauf»; der Grund sagt «18.1 %» / «19.8 %» (jetzt mit Leerzeichen); Kuratierkarte bei Lauf 2/3 «Eingang: bestanden / Übersicht: durchgefallen» bzw. «Eingang: bestanden». Inspektor beim 18-%-Fall (K3) und Kuratierkarte je Kamera beim 18-%-Fall (K4) nicht erneut angesehen (der 18-%-Lauf war nicht der letzte)."
+    }
+  },
+  "urteil": "Ja — der Feinschliff kann zu Int 1: Uhrzeiten weg (734 px), Kurzhilfe ueber :has() in WebKitGTK 2.52.6 ganz und nach unten offen (Hover und Tab), Inspektor ohne «zurueckgezogen», Kachel = Verlauf je Lauf. Mit zwei Nachzuegen fuer den Bild-Strang: (1) im Vergleich-Knoten schrumpft das Bild in WebKitGTK nicht, QA-/Grund-/Hinweis-Zeilen liegen ueber dem Bild (F2); (2) im 1440x900-Fenster ragt der Knoten an der Palettenstelle noch 4 px ueber den Rand.",
+  "auffaelliges": [
+    "F2: .vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > .vis-img-full bleibt in WebKitGTK 134 px hoch (height 100 %, grid-template-rows minmax(0,1fr) greift nicht wie gedacht); mit object-fit contain liegt der Bildinhalt bei ca. 526–640, die Zeilen darueber. Beim Durchfallen kommen der AUFSICHT-Hinweis (zwei Zeilen) und der Knopf «mehr» dazu — alles ueber dem Bild.",
+    "F1: Bei 1440x900 (Fenster-Vorgabe der App, ohne Maximieren) 4 px ueber dem Rand; betroffen nur der Rahmen unter dem Verlauf.",
+    "F4: Beim Bestehen steht «bestanden», nicht «erreicht» wie im Auftrag vermutet; «verfehlt» beim Durchfallen wie erwartet.",
+    "Grund-Satz des 18-%-Falls beginnt jetzt mit «KEIN SCORE; DER MASKENWEG URTEILT NICHT: …» (Abholer ac7b4a0) — der volle Satz ist 3830 px lang, die Kurzhilfe 276 px hoch; bei einem Vergleich-Knoten weit unten im Fenster koennte sie unten aus dem Fenster laufen (hier nicht der Fall: 930 von 1080).",
+    "Lauf 3 ist ein Bestehen nur knapp (0.6506 gegen 0.65) und mit von Hand gekuerzter Kameraliste im wartenden Auftrag.",
+    "Die Messhilfe brauchte keine Port-Sperre (0 gesperrte Aufrufe); /var/crash blieb ohne neuen Bericht (nur kexec_cmd)."
+  ],
+  "aufraeumen": "App per WM_DELETE_WINDOW beendet (kein Absturzbericht), danach per gemerkter PID Messkanal, Bruecke, Sitzungs-DBus und Xvfb; keine Restprozesse. Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Ablage, Bildschirmfotos und Hilfsskripte geloescht; GPU-Sperre frei; installierte App, Port 8630, Bruecke 8600 und Sync 8700 unberuehrt; in Architektur-Cosmos nichts committet oder gepusht."
+}
