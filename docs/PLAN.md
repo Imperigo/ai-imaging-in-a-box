@@ -7776,6 +7776,7 @@ Bekannt und ausdrücklich nicht erledigt:
       *(08.10.2026: V1–V8 alle ja auf 5fdf523be, 6 echte Läufe; Zweig an Int 1 gemeldet. Nachgang: Ortszeit, fortlaufende Laufnummer, «nicht anwendbar» bei Innenansicht, undurchsichtige grosse Ansicht — Zweig «claude/kosmovis-v018-verlauf-nachgang», Protokoll 74 §64)*
 - [x] **KosmoVis drüben:** Verlauf-Nachgang bauen. *(08.10.2026, Zweig «claude/kosmovis-v018-verlauf-nachgang», Kopf 0f9789ece; Chromium grün; fremdes elevations-gate rot aus dem Integrator-Kopf — Protokoll 74 §67)*
 - [ ] **local:** `auf-20261008-266` — Nachgang in WebKitGTK; danach an Int 1 melden.
+- [ ] **KosmoVis drüben:** Anzeige «nicht beurteilbar» statt ✗, wenn `verdict.reason` «NICHT BEURTEILBAR» trägt (Wunsch des Integrators zu Entscheid 70, ohne Vertragswechsel) — Zweig «claude/kosmovis-v018-nicht-beurteilbar» auf dem Nachgang; mit ihm zusammen melden.
 - [ ] **Int 1:** Verlauf einspielen — nach 263 und nach dem Schnitt von v0.1.7 (Meldung über die Zentrale).
 - [x] **cloud (Int 1):** Nachgang und Lizenz-Hinweis einspielen — liegen in seinem Prüflauf, er schiebt nach unserer Freigabe aus 246; danach Stand-Zeilen der Meldeblätter mit Kopf setzen (wir). *(06.10.2026: ROADMAP 1693/1694; Stand-Zeilen vorher gesetzt)*
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
