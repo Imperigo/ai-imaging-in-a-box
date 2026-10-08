@@ -1,0 +1,302 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-264",
+ "worker": "local",
+ "rang": 51,
+ "status": "erledigt: A, B, C1–C4 gerechnet. Kein Code geaendert, nichts installiert, installierte App nicht beruehrt, nichts committet.",
+ "A_staende": {
+  "ai_imaging": "f443e9b (enthaelt 7eb5020 F6); git pull --ff-only: «Bereits aktuell»",
+  "kosmoorbit": "4b868e845 (Integrator-Zweig nach fetch; enthaelt 1dc7e6f09 und danach 27ea93962 «IFC: Moebel tragen den Stil ihres Materials»)",
+  "weg": "eigener worktree des Orbit-Repos auf 4b868e845, npm ci (Exit 0) nur dort; Wegwerf-tsx mit setzeRegelwissen (wie test/setup-regelwissen.ts) + execute(doc,'haus.demohausBauen',{}) + exportIfc(doc)",
+  "stand_vor_f6": "cfcee8e in eigenem worktree des ai-imaging-Repos (nur der Runner daraus benutzt)"
+ },
+ "B_zaehlung": {
+  "ifc": "IFC4, 152590 Byte (gleich gross wie die Geraeteprobe 08.10. auf ed63ed71f)",
+  "werkzeug": "ifcopenshell 0.8.5 im .venv-ifc",
+  "tabelle": {
+   "IfcSurfaceStyle": 7,
+   "IfcStyledItem": 79,
+   "IfcRoof": 2,
+   "IfcStair": 1,
+   "IfcRailing": 1,
+   "IfcWindow": 8,
+   "IfcDoor": 31,
+   "IfcOpeningElement": 39,
+   "IfcWall": 32,
+   "zusaetzlich": {
+    "IfcSlab": 2,
+    "IfcFurnishingElement": 1,
+    "IfcRelFillsElement": 39,
+    "IfcSpace": 26,
+    "IfcMaterial": 2
+   }
+  },
+  "stile_in_der_datei": [
+   [
+    "Beton",
+    [
+     0.788,
+     0.773,
+     0.737
+    ],
+    0.0
+   ],
+   [
+    "Kalksandstein",
+    [
+     0.847,
+     0.824,
+     0.776
+    ],
+    0.0
+   ],
+   [
+    "Sanitaerkeramik",
+    [
+     0.957,
+     0.957,
+     0.945
+    ],
+    0.0
+   ],
+   [
+    "Dach",
+    [
+     0.431,
+     0.373,
+     0.322
+    ],
+    0.0
+   ],
+   [
+    "Stahl",
+    [
+     0.541,
+     0.553,
+     0.565
+    ],
+    0.0
+   ],
+   [
+    "Glas",
+    [
+     0.87,
+     0.921,
+     0.936
+    ],
+    0.75
+   ],
+   [
+    "Fensterrahmen",
+    [
+     0.894,
+     0.867,
+     0.808
+    ],
+    0.0
+   ]
+  ],
+  "stile_kopf": [
+   "name",
+   "SurfaceColour",
+   "Transparency"
+  ],
+  "gegenueber_geraeteprobe_0810": "ein Stil mehr (Sanitaerkeramik, Moebel; Commit 27ea93962) und ein StyledItem mehr (79 statt 78)",
+  "rest": "IfcDoor 31 weiterhin OHNE Representation (keine Geometrie, kein Stil); ihre Oeffnungen sind darum in der glb offene Loecher in der Wand."
+ },
+ "C1_umwandlung_neu": {
+  "stand": "f443e9b (.venv-ifc, ifc_to_glb_runner.py --report)",
+  "status": "ok",
+  "n_elements": 47,
+  "n_elements_aufschluesselung": "32 Waende + 2 Decken + 2 Daecher + 1 Treppe + 1 Gelaender + 8 Fenster + 1 Moebel",
+  "n_triangles": 2342,
+  "uebersprungen": {
+   "IfcOpeningElement": 39,
+   "IfcSpace": 26
+  },
+  "materialien_quelle": "ifc_surface_style",
+  "materialien": [
+   {
+    "name": "Beton",
+    "farbe_srgb": [
+     0.788,
+     0.773,
+     0.737
+    ],
+    "n_bauteile": 11,
+    "durchsicht_in_der_datei": null
+   },
+   {
+    "name": "Dach",
+    "farbe_srgb": [
+     0.431,
+     0.373,
+     0.322
+    ],
+    "n_bauteile": 2,
+    "durchsicht_in_der_datei": null
+   },
+   {
+    "name": "Fensterrahmen",
+    "farbe_srgb": [
+     0.894,
+     0.867,
+     0.808
+    ],
+    "n_bauteile": 8,
+    "durchsicht_in_der_datei": null
+   },
+   {
+    "name": "Glas",
+    "farbe_srgb": [
+     0.87,
+     0.921,
+     0.936
+    ],
+    "n_bauteile": 8,
+    "durchsicht_in_der_datei": 0.75
+   },
+   {
+    "name": "Kalksandstein",
+    "farbe_srgb": [
+     0.847,
+     0.824,
+     0.776
+    ],
+    "n_bauteile": 24,
+    "durchsicht_in_der_datei": null
+   },
+   {
+    "name": "Sanitaerkeramik",
+    "farbe_srgb": [
+     0.957,
+     0.957,
+     0.945
+    ],
+    "n_bauteile": 1,
+    "durchsicht_in_der_datei": null
+   },
+   {
+    "name": "Stahl",
+    "farbe_srgb": [
+     0.541,
+     0.553,
+     0.565
+    ],
+    "n_bauteile": 1,
+    "durchsicht_in_der_datei": null
+   }
+  ],
+  "n_bauteile_mit_stil": 47,
+  "n_bauteile_ohne_stil": 0,
+  "glb_nachgesehen": "7 glTF-Materialien, alle alphaMode OPAQUE, baseColorFactor = sRGB→linear der Dateifarbe (z. B. Dach 0.157/0.114/0.086); 55 von 55 Primitiven mit Material. Summe n_bauteile 55 > 47, weil jedes der 8 Fenster zwei Stile traegt (Glas + Rahmen)."
+ },
+ "C2_gegenprobe": {
+  "geometrie": {
+   "n_elements_gleich": true,
+   "n_triangles_gleich": true,
+   "uebersprungen_gleich": true,
+   "ecken_gleich": "ja (1408 = 1408)",
+   "knoten_gleich": false,
+   "knoten_befund": "NEIN, nicht ganz: alt 47 Knoten/Meshes, neu 55. Die 8 Fenster werden je Material in zwei Knoten geteilt («IfcWindow_Fenster_<GUID>» und «…_1»). Ecken- und Dreieckssumme bleiben gleich, die uebrigen 39 Namen gleich. Die Ansage «gleiche Knoten, Namen» stimmt also nur fuer Bauteile mit EINEM Stil."
+  },
+  "multipass": "seams.glb_zu_multipass(up_axis='Y', aufloesung=512, kamera=…), .venv-render, Stand f443e9b, Cycles auf CPU",
+  "je_kamera": {
+   "s": {
+    "tiefe_norm_png_bytegleich": true,
+    "png_pixel_gleich": true,
+    "exr_pixel_gleich": true,
+    "exr_datei_bytegleich": false,
+    "sha256_tiefe_norm_kurz": "c3da1ca3206a0513"
+   },
+   "sSE": {
+    "tiefe_norm_png_bytegleich": true,
+    "png_pixel_gleich": true,
+    "exr_pixel_gleich": true,
+    "exr_datei_bytegleich": false,
+    "sha256_tiefe_norm_kurz": "acff953dbb3d3e3c"
+   }
+  },
+  "exr_hinweis": "EXR-Pixel ueber aiimaging.bildlesen.lies_exr_tiefe verglichen (262144 Werte je Bild, alle gleich); die EXR-Dateien unterscheiden sich nur ausserhalb der Pixel (Kopf/Metadaten).",
+  "material_id": "alt 17 (s) bzw. 15 (sSE) Farben = objektweise; neu 7 bzw. 6 Farben = nach Material — wie angesagt."
+ },
+ "C3_dach": {
+  "kameras_512": {
+   "s": {
+    "azimut_grad": 180,
+    "abstand_m": 28.0,
+    "geometrieanteil": 0.179
+   },
+   "sSE": {
+    "azimut_grad": 145,
+    "abstand_m": 27.56,
+    "geometrieanteil": 0.173
+   },
+   "nNW": {
+    "azimut_grad": 325,
+    "abstand_m": 27.56,
+    "geometrieanteil": 0.199
+   }
+  },
+  "geometrie_nachgemessen": "Hauptdach (Satteldach, First in Nord-Sued-Richtung) z 5.60–8.63 m ueber x −0.5…12.5, y −0.5…10.5; Anbaudach z 2.80–2.96 m ueber x 11.7…15.3. Alle 32 Waende enden flach auf Geschosshoehe (EG 2.80, OG 5.60); an keiner Wand liegt die Oberkante ueber der Dachflaeche darueber (groesster Wert −0.01 m). Die Giebeldreiecke unter dem Hauptdach sind leer, am Anbau bleibt auf der hohen Seite ein Spalt bis 0.16 m.",
+  "je_kamera": {
+   "s": "Dach sichtbar ja (Giebelansicht, das Dreieck 5.6–8.6 m steht), aber das Giebeldreieck ist OFFEN: die Tiefe faellt darin zum First hin dunkel ab, man sieht unter die Dachflaechen hinein; Waende ragen NICHT durchs Dach, sie enden auf 5.60 m. Gelaender sichtbar ja (Balkon links, OG), Fenster als flache Felder sichtbar ja, Tueroeffnungen als dunkle Loecher; Treppe nein (innen).",
+   "sSE": "Dach sichtbar ja (offener Suedgiebel und die Traufkante der Ostflaeche; im Beauty dunkelbraun), Waende ragen NICHT durchs Dach; Gelaender sichtbar ja (steht ohne Balkonplatte vor der Suedfassade), Fenster sichtbar ja (im Beauty Glas blaulich mit hellem Rahmen, 2×2 an der Suedfassade), Treppe nein.",
+   "nNW": "Dach sichtbar ja (Nordgiebel, ebenfalls offen, Tiefe faellt im Dreieck nach hinten ab), Waende ragen NICHT durchs Dach; Fenster als flache Felder an der Nordfassade sichtbar ja, eine Tueroeffnung als dunkler Schlitz; Gelaender und Treppe nein (Sued- bzw. Innenseite)."
+  },
+  "bilder": {
+   "tiefe_s": "auftraege/ergebnisse/auf-20261008-264-tiefe-s.png",
+   "tiefe_sse": "auftraege/ergebnisse/auf-20261008-264-tiefe-sse.png",
+   "tiefe_nnw": "auftraege/ergebnisse/auf-20261008-264-tiefe-nnw.png",
+   "beauty_sse": "auftraege/ergebnisse/auf-20261008-264-beauty-sse.png",
+   "hinweis": "Tiefen: tiefe_norm.png des neuen glb (512 px, 16 Bit), fuer das Repo auf 256 px und 8 Bit verkleinert. Beauty: 512 px, Original-Beauty des Multipass (deckend)."
+  },
+  "nebenbefunde": [
+   "Die bekannte Grenze dachId zeigt sich hier NICHT als Durchstossen, sondern umgekehrt: die Waende enden auf voller GESCHOSShoehe, die Giebeldreiecke bleiben offen (Soll-Tiefe zeigt die Dachunterseite durch den Giebel).",
+   "Das Gelaender (x 0.18…2.02, y −1.52…0.02, z 2.80…3.82) steht vor der Fassade ohne Platte darunter — eine Balkonplatte ist im Export nicht vorhanden.",
+   "Tueren ohne Geometrie: die 31 Aussparungen sind offene Loecher."
+  ]
+ },
+ "C4_bild": {
+  "weg": "Mappenweg: arbeitsgang.lege_an(Wegwerfmappe, demohaus.ifc) mit neuem Runner, dann arbeitsgang.rechne(mappe, cache=None, varianten=None, kamera='sSE', backbone='z-image-turbo'); .venv-render, AIIMAGING_MODELLE wie der Dienst; GPU-Sperre gehalten, Karte vorher frei (2.2 GB, 16 W, kein Sprachmodell geladen)",
+  "prompt": "a two-storey house with a pitched roof on a lawn, overcast daylight, photorealistic",
+  "aufloesung": "768x512",
+  "seed": "keiner (gerechnet 0)",
+  "kamera_multipass": {
+   "weg": "abgeleitet",
+   "kuerzel": "sSE",
+   "azimut_grad": 145.0,
+   "abstand_m": 32.47,
+   "augenhoehe_m": 1.7,
+   "brennweite_mm": 35.0,
+   "vollstaendig": true
+  },
+  "render_s": 8.87,
+  "gpu_spitze_mib": 27496,
+  "score": null,
+  "rho_maske": null,
+  "geom_iou": 0.0,
+  "geom_iou_norm": -0.228,
+  "n_gemeinsam": 0,
+  "anteil_soll": 0.186,
+  "bestanden": false,
+  "grund_woertlich": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Geringer Geometrieanteil: nur 18.6% der Bildpunkte tragen Geometrie.",
+  "warnung_maskenweg": "OHNE MASKENWEG gemessen: rho_maske, Kante und Paarurteil bleiben ungemessen.",
+  "modus": "bestellt image_edit, gerechnet txt2img (bekannter Hinweis)",
+  "sha256": "13074e3fc6f2466f39d90ea23f66516985423a106dc673cdb180205b584a5600",
+  "satz_zum_bild": "Haus ja: zweigeschossiges Haus mit Satteldach, Balkon mit Gelaender links und eingeschossigem Anbau rechts, Blick von Suedsuedost auf Augenhoehe ueber Rasen — Komposition passt zur Tiefenkarte; das Bildmodell schliesst den offenen Giebel mit Holzschalung und erfindet mehr Fenster und Tueren.",
+  "bild_im_repo": "nein (nicht verlangt)"
+ },
+ "urteil": [
+  "(1) Stile: Ja — alle 7 IfcSurfaceStyle kommen mit Name und Farbe deckend in die glb, 47 von 47 Bauteilen tragen einen Stil, keine ifcopenshell-Grautoene; nur werden die 8 Fenster dabei in je zwei Knoten (Glas, Rahmen) geteilt, also 55 statt 47 Knoten.",
+  "(2) Tiefe: Ja — tiefe_norm.png byte- und pixelgleich, EXR-Pixel gleich bei «s» und «sSE»; nur die Material-ID trennt jetzt nach Material (7/6 statt 17/15 Farben).",
+  "(3) Dach: Ja, die Soll-Tiefe sieht das Satteldach aus allen drei Richtungen, und keine Wand stoesst durch; die Grenze dachId zeigt sich stattdessen als offene Giebeldreiecke, durch die man auf die Dachunterseite sieht."
+ ],
+ "nicht_getan": [
+  "kein Code geaendert (hier und drueben), nichts installiert (npm ci nur im Wegwerf-worktree)",
+  "installierte App nicht beruehrt, kein Dienst-Port, kein Haupt-Bildschirm",
+  "nichts committet"
+ ],
+ "aufraeumen": "beide worktrees (Orbit 4b868e845 samt node_modules, ai-imaging cfcee8e) entfernt, Wegwerfordner (IFC, glb, Mappe, Multipass-Laeufe, Skripte, Logs) geloescht, GPU-Sperre frei.",
+ "fehler": null
+}
