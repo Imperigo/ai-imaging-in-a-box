@@ -1,0 +1,363 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-272",
+ "worker": "local",
+ "rang": 59,
+ "folgt_auf": "auf-20261008-271",
+ "owner_entscheid": [
+  "75",
+  "76"
+ ],
+ "status": "erledigt — N1–N6 am echten Splat gemessen, zusammen mit auf-20261008-273 in EINEM Gang auf dem Stand NACH Entscheid 77 (Glaetten), wie von KosmoVis angeboten; Laeufe A (Splat + Bestand) und C (ohne Splat) je s/sSE/nNW x Seeds 0–2, dazu N4 (Testbau mit Gelaende aus der App) neu und mit dem alten Kopf, je Seed 0",
+ "beendet": "2026-10-08T17:05:00Z",
+ "weg": "Wegwerf-Arbeitskopie (detached) auf origin/claude/lw-splat-context 0aeb240bb (enthaelt Runde 14 a5166818f), darin origin/claude/kosmovis-v018-splat-context cf839597c lokal gemergt (diesmal OHNE Konflikt), nicht gepusht. 'context' in RenderScene.shape: ja (render-scene.ts, optional). npm ci (Exit 0), npm run build (Exit 0), tauri build --no-bundle mit eigenem Cargo-Zielordner (Exit 0, 4 min 37 s), Binaerdatei umbenannt kopiert. Eigener Xvfb, eigener Netz-Namensraum (bwrap --unshare-net), darin Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (eigener Port, eigene Ablage, Ollama auf totem Port) und Relais Unix-Socket <-> MCP-Port der Test-App; App mit env -i und Wegwerf-XDG. Messhilfe nur lokal (Vorbelegung Bruecke/Sync/feste Adressen, Sperre der Owner-Ports), nie committet; diesmal EIN Bau. Bedient ueber kosmo_blick/kosmo_maus: Splat laden (pfade = Wolke + .verortung.json; 1'057'305 Punkte im Viewer, Behelfsverortung), Volumen-Datei, «1 als Bestand uebernehmen» (V1, 662.8 m², 3.45 m; V6/V8 wieder nicht mitgezaehlt), Karten «Anwenden» und zwei Graph-Verbindungen per xdotool nur auf dem eigenen Xvfb, KosmoVis-Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel», Ausfuehren in der App (Z-Image Turbo, 128, 1600x1000, Kameras auto). Der Auftrag kam mit context (kind splat, fit behelf, transform 16 Zahlen). Abholer: tools/abholen.py --store <eigene Ablage je Lauf> --fremde-freigabe --hoechstens 1 (--kein-gelaende fuer A und C), .venv-render, unter der geteilten GPU-Sperre bei freier Karte (16–71 W, 1.4 GB, kein Sprachmodell geladen — nichts zu entladen, Sperre nie belegt angetroffen). C = Kopie des App-Auftrags ohne context. Beendet per WM_DELETE_WINDOW.",
+ "koepfe": {
+  "gebaut": "lokaler Merge (nicht gepusht) von 0aeb240bb (claude/lw-splat-context) + cf839597c (claude/kosmovis-v018-splat-context); App-Kopf v0.1.7",
+  "abholer": "ai-imaging main d068561 (Entscheid 77 «Glaetten», enthaelt 27da636 B1–B4); main stand beim Lauf auf 5ebcecf (nur Ergebnisdateien von 270 darueber, kein Code). N4-Vorher mit ac7b4a0 (vor B4) in einer Wegwerf-Kopie.",
+  "hinweis_kopf": "272 wurde NICHT auf 27da636 allein gemessen, sondern zusammen mit 273 auf d068561. Folge fuer N2: das Modell liegt auf dem Grauband 0.15–0.85 (G2) statt 0–1 (B2); die Umgebung ist geglaettet (G1). N1, N3, N4, N6 aendert das nicht (ohne Splat bitgleich; Ausblendung und Rahmung unberuehrt).",
+  "rolle_existing": "extras.role = \"existing\" kommt jetzt aus derive/gltf.ts (bestandExtras): model.glb der App traegt am Bestandskoerper role existing, unsicherheit (2.147 / 2.03 m) und bestand (quelle splat, V1, Fuellgrad 0.28). KEIN Handmarkieren mehr."
+ },
+ "laeufe": {
+  "A": {
+   "context": true,
+   "rolle": true,
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "zeiten_s": {
+    "s": 103.9,
+    "sSE": 99.4,
+    "nNW": 99.5,
+    "gesamt": 302.8
+   },
+   "verdict": "geometrie_urteil (nNW): nicht beurteilbar, 13.6 %; s: durchgefallen, Score 0.032"
+  },
+  "C": {
+   "context": false,
+   "rolle": true,
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "zeiten_s": {
+    "s": 97.7,
+    "sSE": 94.5,
+    "nNW": 94.7,
+    "gesamt": 286.9
+   },
+   "verdict": "nicht bestanden: «Nicht messbar … Keine gemeinsame Silhouette» (Score None) in allen drei Kameras"
+  },
+  "N4_neu": {
+   "modell": "Testbau aus tools/make_test_ifc.py --gelaende, in der App importiert (siehe N4), Seed 0",
+   "zeiten_s": {
+    "s": 45.9,
+    "sSE": 42.2,
+    "nNW": 10.5,
+    "gesamt": 98.7
+   }
+  },
+  "N4_alt": {
+   "kopf": "ac7b4a0",
+   "zeiten_s": {
+    "s": 41.1,
+    "sSE": 35.2,
+    "nNW": 6.0,
+    "gesamt": 82.3
+   }
+  },
+  "gpu": "24 Z-Image-Turbo-Bilder (A 9, C 9, N4 neu 3, N4 alt 3 — nNW ist bei N4 die doppelte Ansicht und kostet kaum) fuer 272 UND 273 zusammen; 273 brauchte keinen eigenen Lauf. Dazu zwei kleine Blender-Laeufe (512x320, 16 Samples) fuer das synthetische K2-Bild. Sperre je Lauf genommen und freigegeben."
+ },
+ "schritte": {
+  "N1": {
+   "frage": "B1: Umgebung ausgeblendet — anteil_soll, n_ausgeblendet, Urteil, score, rho_maske, A gegen C",
+   "je_kamera": {
+    "s": {
+     "A": {
+      "anteil_soll": 0.2729,
+      "n_ausgeblendet": 430211,
+      "urteil": "beurteilbar, durchgefallen",
+      "score": 0.032,
+      "rho_maske": 0.745
+     },
+     "C": {
+      "anteil_soll": 0.2847,
+      "n_ausgeblendet": null,
+      "urteil": "nicht messbar → nicht bestanden (keine gemeinsame Silhouette)",
+      "score": null,
+      "rho_maske": 0.994
+     }
+    },
+    "sSE": {
+     "A": {
+      "anteil_soll": 0.1978,
+      "n_ausgeblendet": 564518,
+      "urteil": "nicht beurteilbar (19.8 %)",
+      "score": 0.05,
+      "rho_maske": 0.964
+     },
+     "C": {
+      "anteil_soll": 0.2332,
+      "n_ausgeblendet": null,
+      "urteil": "nicht messbar → nicht bestanden",
+      "score": null,
+      "rho_maske": 0.998
+     }
+    },
+    "nNW": {
+     "A": {
+      "anteil_soll": 0.1365,
+      "n_ausgeblendet": 940376,
+      "urteil": "nicht beurteilbar (13.6 %)",
+      "score": 0.0,
+      "rho_maske": 0.968
+     },
+     "C": {
+      "anteil_soll": 0.2332,
+      "n_ausgeblendet": null,
+      "urteil": "nicht messbar → nicht bestanden",
+      "score": null,
+      "rho_maske": 0.998
+     }
+    }
+   },
+   "verdeckung_durch_splat": {
+    "s": 0.042,
+    "sSE": 0.152,
+    "nNW": 0.415
+   },
+   "satz": "Die Ausblendung wirkt: anteil_soll zaehlt nur noch das Bauwerk (A 27.3/19.8/13.6 % gegen 271: 23.0/26.5/31.5 % mit Splat-Punkten); was A unter C liegt, ist genau die Halle, die der Splat verdeckt (4/15/41 %). Die erwartete Lage «~3–4 %, nicht beurteilbar» stimmt nicht mehr, weil B3 gleichzeitig den Ausschnitt einschaltet (N3).",
+   "urteil": "ja — der Splat hebelt den 20-%-Riegel nicht mehr aus (sSE/nNW sagen richtig «nicht beurteilbar»); ABER s wird beurteilt und faellt mit Score 0.032 durch, obwohl das Bild die Halle zeigt — n_gemeinsam nur 3438 Punkte, die Konfetti-Scheiben im Bild verderben die Silhouette."
+  },
+  "N2": {
+   "frage": "B2 (+G2): Tiefe nach dem Modell normiert",
+   "je_kamera": {
+    "s": {
+     "min_m": 17.5,
+     "max_m": 20.15,
+     "umgebung": {
+      "n_umgebung": 430211,
+      "min_m_gesamt": 5.9,
+      "max_m_gesamt": 71.06,
+      "n_geklemmt_nah": 85694,
+      "n_geklemmt_fern": 309548,
+      "min_m_modell": 17.97,
+      "max_m_modell": 20.15,
+      "band_modell": [
+       0.15,
+       0.85
+      ]
+     },
+     "graubereich_bauwerk": 0.7,
+     "graubereich_bauwerk_p2_p98": 0.673
+    },
+    "sSE": {
+     "min_m": 15.08,
+     "max_m": 32.26,
+     "umgebung": {
+      "n_umgebung": 564518,
+      "min_m_gesamt": 13.45,
+      "max_m_gesamt": 75.22,
+      "n_geklemmt_nah": 122800,
+      "n_geklemmt_fern": 265829,
+      "min_m_modell": 18.12,
+      "max_m_modell": 32.26,
+      "band_modell": [
+       0.15,
+       0.85
+      ]
+     },
+     "graubereich_bauwerk": 0.7,
+     "graubereich_bauwerk_p2_p98": 0.667
+    },
+    "nNW": {
+     "min_m": 15.08,
+     "max_m": 32.26,
+     "umgebung": {
+      "n_umgebung": 940376,
+      "min_m_gesamt": 3.48,
+      "max_m_gesamt": 94.2,
+      "n_geklemmt_nah": 594699,
+      "n_geklemmt_fern": 189621,
+      "min_m_modell": 18.11,
+      "max_m_modell": 32.26,
+      "band_modell": [
+       0.15,
+       0.85
+      ]
+     },
+     "graubereich_bauwerk": 0.7,
+     "graubereich_bauwerk_p2_p98": 0.678
+    }
+   },
+   "vergleich_271": "Graubereich des Bauwerks 12/25/27 % (271) → 70/70/70 % (= ganzes Modellband 0.15–0.85; p2–p98 67–68 %). Ohne Splat (C) 100 %.",
+   "verfahren": "depth_normalisierung steht NICHT auf der Platte (blender-report.json schreibt der Runner vor dem Nachrechnen, dort depth_normalisierung null; die Zahlen leben nur im Speicher des Abholers). Darum mit demselben Code nachgerechnet (bildschreiben.tiefe_exr_zu_png + maske.umgebung_je_bildpunkt auf tiefe_.exr) — das Ergebnis-PNG ist in allen 9 Kameras (A, C, N4) BITGLEICH mit dem tiefe_norm.png des Laufs. Graubereich = Spanne der Grauwerte auf den Bauwerkspunkten (material_id ohne Hintergrund und ohne Kontextfarbe).",
+   "satz": "Ja, das Haus ist im Tiefenbild wieder kraeftig: ein glatter Verlauf ueber das ganze Mittelband statt eines fast einheitlichen Graus; die Spanne der Normierung schrumpft bei s von 65.6–163.0 m auf 17.5–20.2 m.",
+   "urteil": "ja"
+  },
+  "N3": {
+   "frage": "B3: Ausschnitt ohne Gelaende",
+   "je_kamera": {
+    "s": {
+     "ausschnitt": true,
+     "flaechenanteil_sichtbar": null,
+     "sichtbare_huellbox_laut_begruendung": 0.35,
+     "fuellgrad": 4.15,
+     "abstand_m": 24.1,
+     "anteil_soll_C": 0.2847,
+     "anteil_soll_A": 0.2729
+    },
+    "sSE": {
+     "ausschnitt": true,
+     "flaechenanteil_sichtbar": null,
+     "sichtbare_huellbox_laut_begruendung": 0.35,
+     "fuellgrad": 7.9,
+     "abstand_m": 29.0,
+     "anteil_soll_C": 0.2332,
+     "anteil_soll_A": 0.1978
+    },
+    "nNW": {
+     "ausschnitt": true,
+     "flaechenanteil_sichtbar": null,
+     "sichtbare_huellbox_laut_begruendung": 0.35,
+     "fuellgrad": 7.9,
+     "abstand_m": 29.0,
+     "anteil_soll_C": 0.2332,
+     "anteil_soll_A": 0.1365
+    }
+   },
+   "vergleich_271": "ausschnitt false, 90–100 m, 3.7–4.4 % → ausschnitt true, 24–29 m, 23–28 % (ohne Splat).",
+   "hinweis": "Ein Feld flaechenanteil_sichtbar steht im Kamerablock nicht; die 35 % stehen woertlich in kamera.begruendung («die sichtbare Hüllbox füllt 35%»). Das Bauwerk selbst fuellt weniger (23–28 %), weil die Hüllbox ein Quader ist und das Bild auch Himmel ueber der Traufe zeigt.",
+   "satz": "Der Ausschnitt schaltet an der Halle jetzt in allen 9 Kameras ein; ohne Splat liegt das Haus mit 23–28 % ueber dem Riegel und wird beurteilt — aber C kommt dann als «nicht messbar» heraus (Score None, n_gemeinsam 0): die Soll-Karte hat keinen Boden, der Schaetzer legt einen in den Vordergrund, und die beiden Silhouetten treffen sich an keinem Punkt, obwohl die Tiefenordnung auf dem Haus +0.99 betraegt.",
+   "urteil": "ja fuer die Rahmung (Ziel ~35 % der Huellbox erreicht, Bauwerk 23–28 %); das Urteil danach ist beurteilbar, aber nicht messbar — eine neue Luecke, siehe auffaelliges."
+  },
+  "N4": {
+   "frage": "B4: glb mit Gelaende ueber die Bruecke — Rahmung nach Bauwerk?",
+   "aufbau": "tools/make_test_ifc.py --gelaende → in der Test-App «IFC laden» → «Uebernehmen». Die App uebernahm nur 2 von 6 Bauteilen (Meldung woertlich: «Bestand übernommen: 2 von 6 Bauteilen — 4 übersprungen (Konflikt mit bestehender Geometrie oder kein passendes Geschoss gefunden)»): die Bodenplatte als Decke und die Gelaendeplatte als FreeMesh «IFCSLAB #42»; die vier Waende blieben Kontext und kamen nicht in die glb. Darum vier Waende (8 x 5 m, AW Beton 36) per design_wandZeichnen nachgezeichnet. glb der App: 6 Mesh-Knoten, das Gelaende heisst «FreeMesh IFCSLAB #42 · EG …» — der Name «Gelaende» geht beim Import verloren. Ausgefuehrt in der App ueber die eigene Bruecke (render-scene ohne Hochachse).",
+   "rahmung": {
+    "neu_d068561": "nach Bauwerk — glbbox entschieden_durch «form» (Schrumpfung 0.649, Gelaende = FreeMesh IFCSLAB #42), Box 8.4 x 5.4 x 3.25 m",
+    "alt_ac7b4a0": "nach Szene — woertlich «Bauwerksbox nicht lesbar (GlbError) — nach der Szene gerahmt.» (Y_UP an glbbox)"
+   },
+   "anteil_soll": {
+    "vorher_ac7b4a0": {
+     "s": 0.0525,
+     "sSE": 0.0517,
+     "nNW": 0.0517
+    },
+    "nachher_d068561": {
+     "s": 0.6176,
+     "sSE": 0.6214,
+     "nNW": 0.6214
+    }
+   },
+   "abstand_m": {
+    "vorher": {
+     "s": 37.8,
+     "sSE": 38.8
+    },
+    "nachher": {
+     "s": 14.3,
+     "sSE": 13.8
+    }
+   },
+   "urteil_je_kopf": {
+    "vorher": "nicht beurteilbar (5.2 %)",
+    "nachher": "Score 0.891 (s) / 0.991 (sSE, nNW) ≥ 0.65"
+   },
+   "satz": "B4 traegt: dieselbe glb der App wird mit dem neuen Kopf nach dem Bauwerk gerahmt, das Haus fuellt 62 % statt 5 % des Bildes; erkannt wurde das Gelaende ueber die Formregel, nicht ueber den Namen.",
+   "urteil": "ja"
+  },
+  "N5": {
+   "frage": "Konfetti",
+   "zaehlung": "9 von 9 (A); C 0 von 9",
+   "satz": "Unveraendert: in allen neun Bildern liegen Kreisscheiben ueber Himmel, Fassade und Vorplatz, jetzt groesser und dichter, weil die Kamera 24–29 m statt 90–100 m weg steht (nNW Seed 2: orange-braune Kugeln); die Halle selbst ist als glatte Blechfassade erkennbar.",
+   "urteil": "nein — Konfetti bleibt (siehe auch auf-20261008-273 K1)"
+  },
+  "N6": {
+   "frage": "Seedwahl «nach Umriss» nimmt positives rho_maske?",
+   "je_kamera_A": {
+    "s": {
+     "gewaehlt": 2,
+     "kandidaten_rho": [
+      0.98,
+      0.89,
+      0.745
+     ],
+     "abhebung": [
+      2.362,
+      2.855,
+      3.844
+     ]
+    },
+    "sSE": {
+     "gewaehlt": 2,
+     "kandidaten_rho": [
+      0.997,
+      0.942,
+      0.964
+     ],
+     "abhebung": [
+      1.837,
+      2.361,
+      2.929
+     ]
+    },
+    "nNW": {
+     "gewaehlt": 2,
+     "kandidaten_rho": [
+      0.957,
+      0.95,
+      0.968
+     ],
+     "abhebung": [
+      2.409,
+      1.867,
+      2.861
+     ]
+    }
+   },
+   "je_kamera_C": {
+    "s": {
+     "gewaehlt": 2,
+     "kandidaten_rho": [
+      0.997,
+      0.894,
+      0.994
+     ]
+    },
+    "sSE": {
+     "gewaehlt": 2,
+     "kandidaten_rho": [
+      0.996,
+      0.99,
+      0.998
+     ]
+    },
+    "nNW": {
+     "gewaehlt": 2,
+     "kandidaten_rho": [
+      0.996,
+      0.989,
+      0.998
+     ]
+    }
+   },
+   "satz": "Diesmal war in keiner Kamera ein Seed mit negativem rho_maske dabei (A und C: alle 18 Kandidaten 0.745–0.998), gewaehlt wurde jedes Mal Seed 2 (groesste Abhebung) — bei A/s ist das der Kandidat mit dem KLEINSTEN rho (0.745 statt 0.980).",
+   "urteil": "nicht pruefbar — der Fall «negativ gegen positiv» trat nicht auf; positiv gewaehlt ja, aber nicht als Folge von B1 belegbar."
+  }
+ },
+ "urteil": "B1 (Ausblendung) traegt: der Splat zaehlt nicht mehr als Bauwerk, der Riegel greift wieder. B2/G2 traegt: das Haus traegt 70 % des Graubereichs statt 12–27 %. B3 traegt fuer die Rahmung (Ausschnitt in allen Kameras, 23–28 % statt 4 %), legt aber eine neue Luecke frei: ohne Gelaende ist das Urteil danach «nicht messbar» (keine gemeinsame Silhouette). B4 traegt deutlich (62 % statt 5 % am Testbau mit Gelaende). Konfetti unveraendert 9 von 9. Seedwahl: kein negativer Kandidat, nicht pruefbar.",
+ "auffaelliges": [
+  "C (ohne Splat, Ausschnitt an): Score None, «keine gemeinsame Silhouette», n_ist = n_soll, n_gemeinsam 0 in allen drei Kameras — obwohl die Bilder die Halle sauber zeigen (rho_maske 0.99). Der Urteilstext nennt selbst die zweite Lesart «Soll-Karte, der die Flaeche fehlt» (kein Gelaende, Schaetzer legt einen Boden in den Vordergrund). Mit dem Ausschnitt ist das jetzt der Regelfall an der Halle.",
+  "A/s faellt mit Score 0.032 durch (n_gemeinsam 3438): das Konfetti zerstoert die Silhouette; sSE/nNW kommen nur wegen der Splat-Verdeckung (15/41 % der Halle) unter 20 % und damit auf «nicht beurteilbar».",
+  "depth_normalisierung (samt umgebung/glaettung) steht in keiner Datei des Auftrags: blender-report.json traegt null, render-result/befund/urteil tragen es nicht. Nachgerechnet und bitgleich belegt (N2).",
+  "N4: der IFC-Import der App verliert den Namen «Gelaende» (FreeMesh «IFCSLAB #42») und uebernimmt die Waende des Testbaus nicht (2 von 6 Bauteilen); die Rahmung nach dem Bauwerk gelang nur ueber die Formregel. Fuer den Integrator/KosmoDraw.",
+  "N4: der Prompt «Einfamilienhaus, …» wurde halb uebersetzt («einfamilienhaus» blieb deutsch, Warnung im Befund).",
+  "Kamera-Block traegt kein Feld flaechenanteil_sichtbar; die 35 % stehen nur in kamera.begruendung.",
+  "Merge lw-splat-context × kosmovis-v018-splat-context lief diesmal ohne Konflikt.",
+  "Keine Bilder des echten Splats im Repo; sie liegen nur lokal beim Owner."
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (kein Absturzbericht, /var/crash unveraendert), danach per gemerkter PID Bruecke, Relais, Sitzungs-DBus, Namensraum und Xvfb; Arbeitskopien (App und ai-imaging-Altkopf) per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Wegwerf-Ablagen und Hilfsskripte geloescht; GPU-Sperre frei; installierte App und die Dienste des Owners unberuehrt; nichts in KosmoOrbit gepusht."
+}

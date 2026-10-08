@@ -1,0 +1,100 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-273",
+ "worker": "local",
+ "rang": 60,
+ "folgt_auf": "auf-20261008-272",
+ "owner_entscheid": [
+  "77"
+ ],
+ "status": "erledigt — K1–K4 am echten Splat (Lauf A aus auf-20261008-272, derselbe Lauf, keine eigenen GPU-Bilder) und am synthetischen Splat (K2-Beleg)",
+ "beendet": "2026-10-08T17:05:00Z",
+ "weg": "Wie auf-20261008-272 (dieselbe Test-App, derselbe App-Auftrag, Seeds 0–2): 272 und 273 in EINEM Gang auf dem neuen Stand gefahren, weil die 272-Laeufe beim Eintreffen der Ansage noch nicht liefen. K2-Beleg: tools/make_test_ifc.py (Testbau) → seams.ifc_zu_glb, tools/make_test_splat.py (20'000 Punkte, Startwert 7), Splat 0.6 m unter der Bodenplatte in die Mitte gelegt (wie tests/test_kontext_splat.py), seams.glb_zu_multipass ohne und mit Splat (Kamera s, 512x320, 16 Samples), keine KI.",
+ "koepfe": {
+  "abholer": "ai-imaging main d068561 (Entscheid 77); main stand beim Lauf auf 5ebcecf (nur Ergebnisdateien von 270 darueber)",
+  "app": "lokaler Merge 0aeb240bb + cf839597c (siehe auf-20261008-272)"
+ },
+ "schritte": {
+  "K1": {
+   "frage": "Konfetti in den 9 Bildern",
+   "zaehlung": "9 von 9 (271: 18 von 18)",
+   "satz": "Die Umgebung im Bild besteht weiter aus Kreisscheiben und Kugeln ueber Himmel, Fassade und Vorplatz — eher groesser und dichter als in 271, weil der Ausschnitt die Kamera auf 24–29 m heranholt; nur in wenigen Bildern blitzen echte Baeume oder Nachbarbauten zwischen den Scheiben durch (sSE Seed 1, nNW Seed 1).",
+   "urteil": "nein"
+  },
+  "K2": {
+   "frage": "Tiefenbild zusammenhaengend? Haus kraeftig?",
+   "echter_splat": "Nein, nicht zusammenhaengend: die Umgebung in tiefe_norm.png bleibt eine Punktwolke aus Flecken (dunkle Klumpen dahinter, weisse Scheiben davor); grosse nahe Scheiben (bis ~100 px) liegen auch VOR der Halle. Das Haus ist kraeftig: glatter Verlauf ueber das Band 0.15–0.85.",
+   "synthetischer_splat": "auftraege/ergebnisse/auf-20261008-273-k2.png (links ohne, rechts mit synthetischem Splat): der Boden vor dem Haus ist eine zusammenhaengende helle Flaeche im Band 0.85–1 (nicht mehr reinweiss-flach), der Boden dahinter ein dunkles Band; das Haus liegt auf 0.15–0.85. Am synthetischen Splat (dichte, gleichmaessige Punkte) traegt das Schliessen also, am echten (luckig, 70 % der Punkte an der Deckkraftschwelle verworfen) nicht.",
+   "synthetisch_zahlen": {
+    "radius_px": 4,
+    "n_umgebung": 73396,
+    "n_gefuellt": 6069,
+    "band_modell": [
+     0.15,
+     0.85
+    ],
+    "min_m_modell": 10.9,
+    "max_m_modell": 11.37
+   },
+   "urteil": "Haus ja; Umgebung zusammenhaengend nein (echt), ja (synthetisch)"
+  },
+  "K3": {
+   "frage": "Zahlen je Kamera (Lauf A)",
+   "je_kamera": {
+    "s": {
+     "radius_px": 12,
+     "n_gefuellt": 39844,
+     "n_ausgeblendet": 430211,
+     "anteil_soll": 0.2729,
+     "urteil": "durchgefallen (Score 0.032)",
+     "nachbearbeitung_s": {
+      "mit": 3.3,
+      "ohne_C": 2.6
+     },
+     "blender_herzschlag_s": 6
+    },
+    "sSE": {
+     "radius_px": 12,
+     "n_gefuellt": 58862,
+     "n_ausgeblendet": 564518,
+     "anteil_soll": 0.1978,
+     "urteil": "nicht beurteilbar",
+     "nachbearbeitung_s": {
+      "mit": 3.9,
+      "ohne_C": 2.9
+     },
+     "blender_herzschlag_s": 6
+    },
+    "nNW": {
+     "radius_px": 12,
+     "n_gefuellt": 62372,
+     "n_ausgeblendet": 940376,
+     "anteil_soll": 0.1365,
+     "urteil": "nicht beurteilbar",
+     "nachbearbeitung_s": {
+      "mit": 4.7,
+      "ohne_C": 2.3
+     },
+     "blender_herzschlag_s": 4
+    }
+   },
+   "laufzeit_gesamt_s": {
+    "A_mit": 302.8,
+    "C_ohne": 286.9
+   },
+   "verfahren": "radius_px/n_gefuellt nachgerechnet mit demselben Code auf tiefe_.exr (bitgleich zum tiefe_norm.png des Laufs; das Feld steht in keiner Datei des Auftrags, siehe 272 auffaelliges). Bild 1600x992 → Radius 1600/128 = 12.5 → 12. Nachbearbeitung = Zeit von blender-report.json bis tiefe_norm.png; Glaetten + Normieren kosten mit Splat +0.7 / +1.0 / +2.4 s gegenueber C — im erwarteten Rahmen (~2–3 s).",
+   "satz": "Das Schliessen fuellt nur 7–9 % der Umgebungspunkte nach (39'844 / 58'862 / 62'372 bei 430'211 / 564'518 / 940'376); die Luecken des echten Splats sind groesser als 12 px."
+  },
+  "K4": {
+   "frage": "Reicht der Radius?",
+   "satz": "Nein: mit 12 px bleibt die Umgebung im Tiefenbild fleckig und das Bild 9 von 9 Konfetti; die Abstaende zwischen den Scheiben sind am echten Splat oft 30–100 px. Ein Lauf mit doppeltem Radius ist nicht bestellbar und wurde nicht gemacht. Zu bedenken: die Scheiben VOR der Halle sind selbst gross und hell (nahe Punkte, Radius bis 0.5 m) — Schliessen fuellt nur Hintergrund und aendert an ihnen nichts.",
+   "urteil": "nein"
+  }
+ },
+ "urteil": "Das Konfetti ist NICHT weg: 9 von 9. Das Haus ist im Tiefenbild kraeftig (Band 0.15–0.85), die Umgebung am echten Splat aber weiter eine Punktwolke; am synthetischen Splat wird sie zusammenhaengend.",
+ "auffaelliges": [
+  "depth_normalisierung.umgebung.glaettung steht nirgends auf der Platte (blender-report.json: null) — fuer die Messung nachgerechnet.",
+  "Grosse helle Scheiben VOR dem Bauwerk (nahe Splat-Punkte) bleiben unberuehrt, weil nur Hintergrund geschlossen wird; sie sind im Bild die auffaelligsten Kreise.",
+  "Keine Bilder des echten Splats im Repo; im Repo nur das synthetische k2.png."
+ ]
+}
