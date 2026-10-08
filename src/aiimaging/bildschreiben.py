@@ -486,6 +486,31 @@ def _luecke_messen(tiefe: Sequence[float],
     return bericht, None
 
 
+def _grau_mit_umgebung(t: float, lo: float, hi: float, befund: dict) -> float:
+    """Ein Punkt mit Umgebung: Modellspanne linear auf :data:`MODELL_BAND`, davor und
+    dahinter gestaucht — nah bleibt heller als fern, auch in der Umgebung."""
+    unten, oben = MODELL_BAND
+    if t < lo:
+        befund["n_geklemmt_nah"] += 1
+        weg = lo - befund["min_m_gesamt"]
+        return oben + (1.0 - oben) * ((lo - t) / weg if weg > 0 else 1.0)
+    if t > hi:
+        befund["n_geklemmt_fern"] += 1
+        weg = befund["max_m_gesamt"] - hi
+        anteil = (t - hi) / weg if weg > 0 else 1.0
+        return unten - (unten - GEKLEMMT_MINDESTGRAU) * anteil
+    return unten + (oben - unten) * ((hi - t) / (hi - lo) if hi > lo else 1.0)
+
+
+#: Die Grauwerte des MODELLS, wenn eine Umgebung (Splat) mitläuft (Entscheid 76/77,
+#: ``auf-20261008-271``). GESETZT, nicht gemessen. Das Modell liegt linear auf diesem Band;
+#: Umgebung davor wird auf ``(oben, 1]`` gestaucht, dahinter auf ``[Boden, unten)``. So
+#: behält das Haus 70 % des Graubereichs (am echten Splat vorher 12–27 %), und die
+#: Umgebung bleibt nah vor fern — geklemmt auf eine Fläche las sich der Boden vor dem Haus
+#: als weisse, nahe Wand (synthetischer Splat, 08.10.2026, angesehen).
+MODELL_BAND = (0.15, 0.85)
+
+
 def normalisiere_tiefe(tiefe: Sequence[float], *,
                        hintergrund_ab_m: float = HINTERGRUND_AB_M,
                        ferne_trennen: bool = False,
@@ -679,7 +704,9 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
     # weil er nie kleiner ist (siehe `ferne_abstand` im Docstring).
     if abstand is not None:
         boden = abstand
-    elif ferne_getrennt or nach_modell:
+    elif nach_modell:
+        boden = MODELL_BAND[0]
+    elif ferne_getrennt:
         boden = GEKLEMMT_MINDESTGRAU
     else:
         boden = None
@@ -700,12 +727,9 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             # Geometrie-QA meldete dann −1 auf korrekter Geometrie).
             t = max_m
             n_geklemmt += 1
-        if nach_modell and t > max_m:
-            t = max_m
-            umgebung_befund["n_geklemmt_fern"] += 1
-        elif nach_modell and t < min_m:
-            t = min_m
-            umgebung_befund["n_geklemmt_nah"] += 1
+        if nach_modell:
+            grau[i] = _grau_mit_umgebung(t, min_m, max_m, umgebung_befund)
+            continue
         # nah = hell (ControlNet-Konvention). Der Hintergrund bleibt 0.0 — unendlich fern
         # ist der Grenzfall von „dunkel", nicht ein eigener Sonderfall.
         wert = 1.0 - (t - min_m) / spanne
@@ -761,6 +785,19 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         # disjunkt zum Hintergrund). Ein Vorbehalt, der das Gegenteil des Waechters sagt,
         # ist selbst ein Fehler.
 
+    if nach_modell:
+        # Fuer die Rueckrechnung: Mit Boden = MODELL_BAND[0] gilt die Formel mit Boden fuer
+        # jeden Punkt des MODELLS genau, wenn min_m so weit vorgezogen wird, dass das Band
+        # oben bei MODELL_BAND[1] endet. Fuer Punkte der Umgebung gilt sie NICHT (gestaucht)
+        # — die blendet die Pruefung ohnehin aus, und die EXR hat Vorrang.
+        unten, oben = MODELL_BAND
+        umgebung_befund["min_m_modell"] = float(min_m)
+        umgebung_befund["max_m_modell"] = float(max_m)
+        umgebung_befund["band_modell"] = [unten, oben]
+        min_m = max_m - (1.0 - unten) / (oben - unten) * ((max_m - min_m) or 1.0)
+        vorbehalt = ("Mit Umgebung: Die Rueckrechnung gilt nur fuer Punkte des Modells "
+                     f"(Grau {unten}–{oben}); Umgebung davor/dahinter ist gestaucht. "
+                     "Wer Meter der Umgebung braucht, nimmt die EXR.")
     normalisierung = {
         "min_m": float(min_m),
         "max_m": float(max_m),
@@ -863,10 +900,20 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
     else:
         werte, breite, hoehe = bildlesen.lies_exr_tiefe(
             Path(exr), timeout=timeout, _starte=_starte)
+    # GLAETTEN (Owner-Entscheid 77, auf-20261008-271 «Konfetti»): Mit Umgebung wird deren
+    # Tiefe vor der Normierung gemittelt und ihre Luecken gefuellt — `umgebung` ist schon
+    # die geschlossene Flaeche (`maske.umgebung_je_bildpunkt`). Ohne Umgebung: nichts.
+    glaettung = None
+    if umgebung is not None:
+        from aiimaging import kontext as _kontext
+        werte, glaettung = _kontext.glaette_tiefe(werte, umgebung, breite, hoehe,
+                                                  gueltig_bis_m=hintergrund_ab_m)
     grau, normalisierung = normalisiere_tiefe(
         werte, hintergrund_ab_m=hintergrund_ab_m, ferne_trennen=ferne_trennen,
         ferne_abstand=ferne_abstand,
         **({"umgebung": umgebung} if umgebung is not None else {}))
+    if glaettung is not None:
+        normalisierung["umgebung"]["glaettung"] = glaettung
     schreibe_graustufen_png(ziel_png, grau, breite, hoehe, bittiefe=bittiefe)
     normalisierung["breite"] = breite
     normalisierung["hoehe"] = hoehe

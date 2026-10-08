@@ -1383,3 +1383,9 @@ wird bei der Prüfung ausgeblendet, die Tiefe richtet sich nach dem Haus, und de
 Gelände. Dabei kam ein älterer Fehler ans Licht: Die Regel «nach dem Gebäude rahmen» vom 30.09. kam bei Aufträgen
 über die Brücke nie an. Offen bleibt, dass das Bildmodell aus den Punkten der Umgebung «Konfetti» malt.
 
+**Konfetti — Entscheid 77 (08.10.2026).** Mit der echten Umgebung malte das Bildmodell bunte Punkte statt Bäume, weil
+die Aufnahme Lücken hat. Der Owner hat «glätten» gewählt: Die Lücken werden im Tiefenbild gefüllt und die
+Entfernungen dort gemittelt, damit Flächen entstehen. Beim Ansehen fiel auf, dass die erste Fassung den Boden vor
+dem Haus zu einer weissen Fläche machte; jetzt bekommt das Haus den mittleren Bereich der Grautöne und die Umgebung
+weiche Ränder. Ob das Konfetti weg ist, misst der Heim-PC.
+

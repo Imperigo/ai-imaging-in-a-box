@@ -48,6 +48,8 @@ from pathlib import Path
 __all__ = [
     "DECKKRAFT_MIN", "KontextError", "MATRIX_EINHEIT", "RADIUS_MAX_M", "RADIUS_MIN_M",
     "SH_C0", "fingerabdruck", "matrix_massstab", "matrix_nach_blender", "pruefe_matrix",
+    "GLAETTE_MIN_PX", "GLAETTE_PX_JE_128", "glaette_radius", "glaette_tiefe",
+    "schliesse_umgebung",
 ]
 
 
@@ -201,3 +203,135 @@ def fingerabdruck(pfad) -> dict:
     if groesse == 0:
         raise KontextError(f"Splat-Datei {p.name!r} ist leer.")
     return {"datei": p.name, "bytes": groesse, "sha256": summe.hexdigest()}
+
+
+# ======================================================================================
+# GLÄTTEN (Owner-Entscheid 77, 08.10.2026)
+# ======================================================================================
+#
+# **Anlass ``auf-20261008-271``:** Am echten Splat malte Z-Image in allen 18 Bildern
+# «Konfetti» — Kreisscheiben statt Bäume. Die Aufnahme ist lückig (70 % der Punkte unter
+# der Deckkraft verworfen), und im Tiefenbild stand die Umgebung als Streuung einzelner
+# Scheiben. Der Owner hat entschieden: **glätten.** Die Lücken zwischen den Punkten werden
+# gefüllt (nur dort, wo vorher Hintergrund war — nie auf dem Bauwerk), und die Tiefe der
+# Umgebung wird über ein Fenster gemittelt. Reine stdlib, linear in der Bildgrösse.
+
+#: Halbe Fensterbreite in Bildpunkten je 128 Bildpunkte Bildbreite. GESETZT, nicht gemessen
+#: (512 px → 4, 1024 px → 8); ob es das Konfetti nimmt, misst die HomeStation.
+GLAETTE_PX_JE_128 = 1.0
+GLAETTE_MIN_PX = 2
+
+
+def glaette_radius(breite: int) -> int:
+    """Der Radius für :func:`schliesse_umgebung` und :func:`glaette_tiefe` bei dieser Breite."""
+    return max(GLAETTE_MIN_PX, int(round(int(breite) * GLAETTE_PX_JE_128 / 128.0)))
+
+
+def _zeilen_max(werte: list[bool], breite: int, hoehe: int, r: int) -> list[bool]:
+    """Jeder Punkt wird wahr, wenn in seiner Zeile im Abstand ``≤ r`` einer wahr ist."""
+    aus = [False] * len(werte)
+    for y in range(hoehe):
+        z = y * breite
+        letzter = -10 ** 9                       # Lage des letzten wahren Punkts links
+        naechster = [10 ** 9] * breite           # Lage des nächsten wahren Punkts rechts
+        n = 10 ** 9
+        for x in range(breite - 1, -1, -1):
+            if werte[z + x]:
+                n = x
+            naechster[x] = n
+        for x in range(breite):
+            if werte[z + x]:
+                letzter = x
+            aus[z + x] = (x - letzter <= r) or (naechster[x] - x <= r)
+    return aus
+
+
+def _transponiert(werte: list, breite: int, hoehe: int) -> list:
+    return [werte[y * breite + x] for x in range(breite) for y in range(hoehe)]
+
+
+def _dehne(werte: list[bool], breite: int, hoehe: int, r: int) -> list[bool]:
+    zeilen = _zeilen_max(werte, breite, hoehe, r)
+    spalten = _zeilen_max(_transponiert(zeilen, breite, hoehe), hoehe, breite, r)
+    return _transponiert(spalten, hoehe, breite)
+
+
+def schliesse_umgebung(umgebung, frei, breite: int, hoehe: int,
+                       radius: int | None = None) -> list[bool]:
+    """Die Lücken der Umgebung schliessen — **nur auf freien Punkten** (Hintergrund).
+
+    Morphologisches Schliessen (erst dehnen, dann wieder schrumpfen) mit einem quadratischen
+    Fenster der halben Breite ``radius``: Was zwischen zwei Umgebungspunkten liegt, wird
+    Umgebung; die Aussenkante bleibt, wo sie war. Ein Punkt des Bauwerks wird nie Umgebung —
+    gefüllt wird nur, wo ``frei`` wahr ist.
+    """
+    n = int(breite) * int(hoehe)
+    if len(umgebung) != n or len(frei) != n:
+        raise KontextError(f"Umgebung/frei passen nicht zu {breite}×{hoehe}.")
+    r = glaette_radius(breite) if radius is None else int(radius)
+    # Mit einem Rand von `r` falschen Punkten rechnen: Ausserhalb des Bildes ist keine
+    # Umgebung — sonst bliebe beim Schrumpfen am Bildrand stehen, was nur gedehnt war.
+    bp, hp = breite + 2 * r, hoehe + 2 * r
+    gepolstert = [False] * (bp * hp)
+    for y in range(hoehe):
+        for x in range(breite):
+            gepolstert[(y + r) * bp + x + r] = bool(umgebung[y * breite + x])
+    gedehnt = _dehne(gepolstert, bp, hp, r)
+    # Schrumpfen = Dehnen des Komplements.
+    geschrumpft = [not w for w in _dehne([not w for w in gedehnt], bp, hp, r)]
+    innen = [geschrumpft[(y + r) * bp + x + r] for y in range(hoehe) for x in range(breite)]
+    return [bool(u) or (bool(g) and bool(f)) for u, g, f in zip(umgebung, innen, frei)]
+
+
+def glaette_tiefe(tiefe, umgebung, breite: int, hoehe: int, radius: int | None = None,
+                  *, gueltig_bis_m: float = 1.0e7) -> tuple[list[float], dict]:
+    """Die Tiefe auf der (geschlossenen) Umgebung über ein Fenster mitteln.
+
+    Gemittelt werden nur gültige Tiefen der Umgebung (endlich, ``0 < t < gueltig_bis_m``);
+    ein gefüllter Punkt bekommt so die Tiefe seiner Nachbarn. Punkte ausserhalb der
+    Umgebung bleiben **unverändert** — das Bauwerk wird nicht angefasst. Ein Umgebungspunkt
+    ohne gültigen Nachbarn im Fenster bleibt, wie er war.
+
+    Returns:
+        ``(tiefe_neu, befund)`` — ``befund = {radius_px, n_umgebung, n_gefuellt}``.
+    """
+    n = int(breite) * int(hoehe)
+    if len(tiefe) != n or len(umgebung) != n:
+        raise KontextError(f"Tiefe/Umgebung passen nicht zu {breite}×{hoehe}.")
+    r = glaette_radius(breite) if radius is None else int(radius)
+
+    def ok(i):
+        t = tiefe[i]
+        return umgebung[i] and math.isfinite(t) and 0.0 < t < gueltig_bis_m
+
+    w1 = breite + 1
+    summe = [0.0] * (w1 * (hoehe + 1))           # Integralbilder
+    zahl = [0] * (w1 * (hoehe + 1))
+    for y in range(hoehe):
+        zs, zz = 0.0, 0
+        for x in range(breite):
+            i = y * breite + x
+            if ok(i):
+                zs += tiefe[i]
+                zz += 1
+            k = (y + 1) * w1 + (x + 1)
+            summe[k] = summe[k - w1] + zs
+            zahl[k] = zahl[k - w1] + zz
+    neu = list(tiefe)
+    n_gefuellt = 0
+    for y in range(hoehe):
+        y0, y1 = max(0, y - r), min(hoehe, y + r + 1)
+        for x in range(breite):
+            i = y * breite + x
+            if not umgebung[i]:
+                continue
+            x0, x1 = max(0, x - r), min(breite, x + r + 1)
+            c = zahl[y1 * w1 + x1] - zahl[y0 * w1 + x1] - zahl[y1 * w1 + x0] + zahl[y0 * w1 + x0]
+            if c == 0:
+                continue
+            s = summe[y1 * w1 + x1] - summe[y0 * w1 + x1] - summe[y1 * w1 + x0] + summe[y0 * w1 + x0]
+            if not ok(i):
+                n_gefuellt += 1
+            neu[i] = s / c
+    return neu, {"radius_px": r, "n_umgebung": int(sum(1 for u in umgebung if u)),
+                 "n_gefuellt": n_gefuellt}

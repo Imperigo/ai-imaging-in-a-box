@@ -28,7 +28,8 @@ from pathlib import Path
 
 import pytest
 
-from aiimaging import abholer, arbeitsgang, bildlesen, contracts, kette, kontext, kosmo_szene
+from aiimaging import abholer, arbeitsgang, bildlesen, bildschreiben, contracts, kette, kontext
+from aiimaging import kosmo_szene
 from aiimaging import maske, seams
 from aiimaging.graph import Knoten
 
@@ -557,17 +558,27 @@ def test_f_die_tiefe_wird_nach_dem_modell_normiert(laeufe):
     assert "umgebung" not in ohne
     u = mit["umgebung"]
     assert u["nach_modell"] is True and u["n_umgebung"] > 0
-    assert (mit["min_m"], mit["max_m"]) == pytest.approx((ohne["min_m"], ohne["max_m"]),
-                                                         abs=1e-6)
-    assert u["max_m_gesamt"] > mit["max_m"] + 1.0              # der Splat reicht weiter
-    assert u["n_geklemmt_fern"] > 0
-    assert mit["geklemmt_mindestgrau"] is not None             # geklemmt ≠ Hintergrund
+    assert (u["min_m_modell"], u["max_m_modell"]) == pytest.approx(
+        (ohne["min_m"], ohne["max_m"]), abs=1e-6)
+    assert u["max_m_gesamt"] > u["max_m_modell"] + 1.0        # der Splat reicht weiter
+    assert u["n_geklemmt_fern"] > 0 and u["n_geklemmt_nah"] > 0
+    assert mit["geklemmt_mindestgrau"] == bildschreiben.MODELL_BAND[0]
+    # Die Rueckrechnung aus dem PNG trifft jeden Punkt des MODELLS (die EXR ist der Massstab).
+    bauwerk = maske.maske_aus_bericht(laeufe["mit"])["maske"]
+    png, _, _ = bildlesen.tiefen_aus_report(laeufe["mit"], quelle="png")
+    exr, _, _ = bildlesen.tiefen_aus_report(laeufe["mit"], quelle="exr")
+    assert max(abs(a - b) for a, b, k in zip(png, exr, bauwerk) if k) < 1e-3
+    # Geglaettet (Entscheid 77): der Block steht da, mit dem Radius zur Bildbreite.
+    assert u["glaettung"]["radius_px"] == kontext.glaette_radius(LAUF["aufloesung"])
+    assert u["glaettung"]["n_umgebung"] > 0
 
 
 @ohne_kette
 def test_g_die_maske_kennt_die_umgebung_je_bildpunkt(laeufe):
     mit = maske.maske_aus_bericht(laeufe["mit"])
-    assert sum(mit["kontext_pixel"]) == mit["n_kontext"]
+    # Geschlossen (Entscheid 77): die gemalten Punkte plus die gefuellten Luecken.
+    assert sum(mit["kontext_pixel"]) == mit["n_kontext"] + mit["n_kontext_gefuellt"]
+    assert mit["n_kontext_gefuellt"] >= 0
     assert maske.maske_aus_bericht(laeufe["ohne"])["kontext_pixel"] is None
     assert maske.umgebung_je_bildpunkt(laeufe["mit"]) == mit["kontext_pixel"]
     assert maske.umgebung_je_bildpunkt(laeufe["ohne"]) is None

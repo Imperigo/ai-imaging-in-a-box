@@ -1103,7 +1103,24 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
     ergebnis["breite"] = breite
     ergebnis["hoehe"] = hoehe
     ergebnis["material_id_png"] = str(material_id_png)
+    # GEGLAETTET (Entscheid 77): Die Tiefe fuellt die Luecken der Umgebung; die Pruefung
+    # blendet dieselben Punkte aus, sonst stuende dort Himmel im Soll und Laub im Bild.
+    if ergebnis.get("kontext_pixel"):
+        roh = ergebnis["kontext_pixel"]
+        ergebnis["kontext_pixel"] = _umgebung_geschlossen(roh, farben, breite, hoehe)
+        ergebnis["n_kontext_gefuellt"] = sum(ergebnis["kontext_pixel"]) - sum(roh)
     return ergebnis
+
+
+def _umgebung_geschlossen(roh, farben, breite: int, hoehe: int) -> list[bool]:
+    """Die Umgebung mit geschlossenen Luecken — gefuellt nur auf Hintergrund-Punkten.
+
+    Dieselbe Rechnung wie in ``bildschreiben.tiefe_exr_zu_png`` (dort fuer die Tiefe), damit
+    Pruefung und Bild dieselben Punkte meinen (:func:`aiimaging.kontext.schliesse_umgebung`).
+    """
+    from aiimaging import kontext as _kontext
+    frei = [(int(f[0]), int(f[1]), int(f[2])) == HINTERGRUND_FARBE for f in farben]
+    return _kontext.schliesse_umgebung(roh, frei, breite, hoehe)
 
 
 def umgebung_je_bildpunkt(bericht: dict) -> list[bool] | None:
@@ -1126,10 +1143,13 @@ def umgebung_je_bildpunkt(bericht: dict) -> list[bool] | None:
     if not png or not farben_kontext:
         return None
     try:
-        farben, _breite, _hoehe = lies_png_farben(png)
+        farben, breite, hoehe = lies_png_farben(png)
     except Exception:                                  # noqa: BLE001 — dann wie bisher
         return None
-    return [(int(f[0]), int(f[1]), int(f[2])) in farben_kontext for f in farben]
+    roh = [(int(f[0]), int(f[1]), int(f[2])) in farben_kontext for f in farben]
+    if not any(roh):
+        return None
+    return _umgebung_geschlossen(roh, farben, breite, hoehe)
 
 
 def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,

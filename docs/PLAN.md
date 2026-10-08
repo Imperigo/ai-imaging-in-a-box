@@ -7841,7 +7841,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Messung am echten Splat (`auf-20261008-271`):** Lage, Farbe und Hinweise tragen; Zählung, Tiefe und Ausschnitt nicht, Schrift offen. *(08.10.2026, Protokoll 74 §81)*
 - [x] **Behebungen zu 271:** Umgebung in der Prüfung ausgeblendet, Tiefe nach dem Modell normiert, Ausschnitt ohne Gelände, Hochachse der Brücke für die Rahmung umgeschrieben. *(08.10.2026, §81)*
 - [ ] **Nachmessung `auf-20261008-272`** (local) — dann Vertragszweig `cf839597c` an Int 1 melden.
-- [ ] **Konfetti:** Z-Image macht aus den Splat-Punkten Kreisscheiben — Entscheid des Owners, wie der Splat ins Bild geht.
+- [x] **Konfetti — Entscheid 77 «Glätten»** gebaut: Lücken geschlossen, Tiefe gemittelt, Modell im Mittelband. *(08.10.2026, §82)*
+- [ ] **Messung `auf-20261008-273`** (local): ist das Konfetti weg?
 
 ## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)
 

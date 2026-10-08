@@ -4717,6 +4717,13 @@ Haus auf 3 % des Bildes sah aus wie eines auf 30 %.
 *Im Projekt:* `tiefenschaetzer.qa_gegen_soll(ausblenden=…)`, `maske.bauwerksmaske` (`kontext_pixel`),
 `auf-20261008-271`.
 
+**Glätten der Umgebung** — Die Punktaufnahme der Umgebung hat Lücken; im Tiefenbild sähe sie aus wie
+verstreute Scheiben, und das Bildmodell malt daraus «Konfetti». Glätten heisst: die kleinen Lücken zwischen den
+Punkten füllen (nur dort, wo vorher leerer Himmel war, nie auf dem Gebäude) und die Entfernungen dort über eine
+kleine Umgebung mitteln, damit Flächen entstehen. Dazu bekommt das Gebäude den mittleren Bereich der Grautöne,
+die Umgebung davor und dahinter je einen gestauchten Rand — so bleibt «nah ist hell» überall erhalten.
+*Im Projekt:* `kontext.schliesse_umgebung`, `kontext.glaette_tiefe`, `bildschreiben.MODELL_BAND`; Entscheid 77.
+
 **Ausschnitt (Kamera)** — Ein Bild, das ein Gebäude nicht ganz zeigt, sondern näher heran geht, so
 dass seine Enden aus dem Bild laufen. Bei sehr langen, flachen Bauten (z. B. einer 66 m langen, 3,45 m hohen
 Halle) wäre das ganze Gebäude sonst nur ein dünner Streifen im Bild und nicht prüfbar.
@@ -6585,6 +6592,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §79: **Ausschnitt (Kamera)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §80: **Bestand (Körper)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §81: **Ausblenden (in der Prüfung)** |
+| 2026-10-08 | Ergaenzt aus Sitzung 74 §82: **Glätten der Umgebung** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |

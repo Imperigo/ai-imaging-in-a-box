@@ -1,0 +1,44 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261008-273",
+  "art": "frage",
+  "beschreibung": "Konfetti nach Entscheid 77: Umgebung im Tiefenbild geschlossen, gemittelt, Modell im Mittelband.",
+  "anweisung": "=== MESSUNG KONFETTI (Owner-Entscheid 77 «Glaetten»), nach 272 ===\n\nWAS SICH GEAENDERT HAT (ai-imaging main nach dieser Ansage; nur mit Splat, ohne Splat bitgleich)\n  G1 Die Luecken der Umgebung werden im Tiefenbild geschlossen (morphologisches Schliessen, quadratisches\n     Fenster, Radius = Bildbreite/128 Bildpunkte, mindestens 2; nur auf Hintergrund, nie auf dem Bauwerk), und\n     ihre Tiefe wird ueber dasselbe Fenster gemittelt. Die Pruefung blendet dieselben Punkte aus.\n  G2 Mit Splat liegt das MODELL auf dem Grauband 0,15–0,85; Umgebung davor wird auf 0,85–1 gestaucht, dahinter\n     auf 0,002–0,15. (Vorher in 272: Modellspanne 0–1, Umgebung geklemmt — der Boden vor dem Haus wurde eine\n     weisse Flaeche.) depth_normalisierung.umgebung traegt band_modell, min/max_m_modell und «glaettung»\n     (radius_px, n_gefuellt).\n\nAUFBAU\n  Wie 272, ai-imaging main NACH dieser Ansage. Derselbe Hallenauftrag, Lauf A (Splat + Bestand), s/sSE/nNW,\n  Seeds 0–2 (9 Bilder). Wenn 272 noch nicht gelaufen ist: 272 zuerst auf dem Stand VOR dieser Ansage, oder\n  272 und 273 zusammen auf dem neuen Stand — dann bitte sagen, welcher Kopf.\n\nWAS DU MISST\n  K1 Konfetti: in wie vielen der 9 Bilder Kreisscheiben/Punkte statt Vegetation/Flaechen? (271: 18 von 18.)\n     Ein Satz, wie die Umgebung jetzt aussieht.\n  K2 Tiefenbild: Sieht die Umgebung in tiefe_norm.png zusammenhaengend aus (Flaechen statt Punktwolke)? Haus\n     kraeftig? Ein kleines Bild NUR vom synthetischen Splat (tools/make_test_splat.py) als Beleg.\n  K3 Zahlen je Kamera: glaettung.radius_px, n_gefuellt, n_ausgeblendet, anteil_soll, Urteil, Laufzeit Multipass\n     (Glaetten ist reines Python: bei 1024 px erwartet ~2–3 s mehr).\n  K4 Reicht der Radius? Falls Konfetti bleibt: ein Lauf mit doppeltem Radius ist NICHT bestellbar — nur melden.\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Bilder des echten Splats ins\n  Repo. Keine Namen, Pfade mit Benutzernamen, Host- oder Netznamen, IPs in Text oder Bildern.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261008-273.json)\n  Gebauter Kopf; K1–K4 je Zahlen + Satz; synthetisches Tiefenbild klein: auftraege/ergebnisse/auf-20261008-273-k2.png.\n  Urteil: ist das Konfetti weg, ja/nein. Danach nach erledigt/ legen.",
+  "erstellt": "2026-10-08T20:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Bestand aus dem Splat), tools/make_test_splat.py; der echte Splat bleibt lokal"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-splat-context@cf839597c",
+      "claude/lw-splat-context"
+    ],
+    "folgt_auf": "auf-20261008-272",
+    "entscheide": [
+      "76",
+      "77"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: 9 Z-Image-Turbo-Laeufe; Sprachmodell vorher entladen.",
+    "hinweise": [
+      "Nur in einer Wegwerf-Arbeitskopie; nichts pushen.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Bilder des echten Splats bleiben lokal (REGEL 3); im Repo nur synthetisch."
+    ]
+  },
+  "rueckgabe": [
+    "Gebauter Kopf.",
+    "K1–K4 je Zahlen und ein Satz.",
+    "Synthetisches Tiefenbild k2 (klein).",
+    "Urteil: Konfetti weg?"
+  ],
+  "rang": 60
+}
