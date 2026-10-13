@@ -1,0 +1,234 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261013-276",
+ "worker": "local",
+ "rang": 63,
+ "folgt_auf": "auf-20261013-275",
+ "owner_entscheid": [
+  "79"
+ ],
+ "status": "erledigt mit Befund — Brücke, Abholer und Nullprobe laufen im Code von main ohne Behelf durch (Fehler aus 275 behoben); die Brücke nimmt die Aufnahme (Gleichheit klar bestanden, 240 Blickwinkel), aber die Löcher sind NICHT zu: Deckung 10.0 % (Ring 4.0 %), im Bild fasst das Netz nur noch 5–16 % der Fläche neben dem Bauwerk (275: 21–26 %). Das Bild besteht trotzdem (alle drei Kameras, mit Nullprobe).",
+ "beendet": "2026-10-13T12:25:00Z",
+ "weg": "Test-App wie 275: Wegwerf-Arbeitskopie (detached) auf 0aeb240bb (claude/lw-splat-context), cf839597c (claude/kosmovis-v018-splat-context) lokal gemergt, nicht gepusht; npm ci / npm run build / tauri build --no-bundle (Exit 0, 235 s), Messhilfe nur lokal. Eigener Xvfb, bwrap --unshare-net, eigene Bruecke und Relais auf eigenen Ports, App mit env -i. Bedient ueber kosmo_maus/vis_*: neues Projekt, Splat laden (1'057'305 Punkte, Behelfsverortung wie 275), Volumen-Datei, V1 als Bestand (3.45 m), Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel» (Prompt-Verbindung und Ausfuehren per echter Maus auf dem eigenen Xvfb, wie 275), Z-Image Turbo, 128, 1600x1000, Kameras auto. Abholer: tools/abholen.py unveraendert (--store eigene Ablage --fremde-freigabe --hoechstens 1 --kein-gelaende, MIT Nullprobe), .venv-render, AIIMAGING_SPLAT_AUFNAHME auf den Ordner sparse/0 der Aufnahme, GPU-Sperre bei freier Karte (18 W, 2.6 GB, Ollama leer). Ringvergleich und eine Wiederholung zur Speichermessung: seams.splat_zu_netz direkt mit der Matrix des App-Auftrags (Ring: Aufnahme-Variable leer).",
+ "koepfe": {
+  "abholer": "ai-imaging main 5c39773 fuer alle Laeufe",
+  "gebaut": "lokaler Merge (nicht gepusht) 0aeb240bb + cf839597c; App-Kopf v0.1.7",
+  "fassungen": {
+   "python": "3.11.15",
+   "torch": "2.14.1+cu130",
+   "gsplat": "1.5.3",
+   "open3d": "0.20.0",
+   "numpy": "2.4.6"
+  },
+  "behelf_lokal": "keiner im Auftragsweg; Code unveraendert"
+ },
+ "aufnahme_finden": {
+  "automatisch": "nein am App-Auftrag: context.ply ist der Pfad, unter dem die App den Splat geladen hat — dort ein Verweis (Symlink) in einem anderen Ordner. aufnahme_kandidaten nimmt den Ordner des Verweises, nicht des Ziels (kein resolve()), darum «keine». Am Originalpfad des Splats findet sie sparse/0 «neben dem splat».",
+  "gefahren_mit": "AIIMAGING_SPLAT_AUFNAHME (Vermerk aufnahme = «umgebung»)"
+ },
+ "schritte": {
+  "A1": {
+   "frage": "Bericht der Bruecke; Vergleich mit dem Ring",
+   "aufnahme": {
+    "blickwinkel_quelle": "aufnahme",
+    "aufnahme": "umgebung",
+    "gleichheit": {
+     "gleich": true,
+     "median_rel": 0.000313,
+     "p90_rel": 0.001184,
+     "kameras_innen": 1.0,
+     "n_punkte": 19867,
+     "n_kameras": 960
+    },
+    "auswahl": {
+     "bilder_gesamt": 960,
+     "augenblicke_gesamt": 240,
+     "augenblicke_gewaehlt": 60,
+     "kameras_je_augenblick": 4,
+     "rig": true,
+     "kameramodell": "PINHOLE",
+     "bildgroesse": "1086x1086 → 640x640"
+    },
+    "blickwinkel": 240,
+    "gefuellt_mittel": 0.9991,
+    "voxel": {
+     "angefragt_m": 0.07,
+     "benutzt_m": 0.0875,
+     "blockwache": "1x angeschlagen: 252'514 Bloecke > 250'000, Neustart mit Voxel x1.25 → 195'776 Bloecke"
+    },
+    "dreiecke": 500000,
+    "dreiecke_roh": 4161161,
+    "ecken": 331135,
+    "netzstuecke": 497497,
+    "inseln_entfernt": 496510,
+    "inseln_entfernt_dreiecke_anteil": 0.6885,
+    "groesstes_stueck": 202254,
+    "deckung": 0.0999,
+    "deckung_abstand_median_splat_einheiten": 0.2376,
+    "rechenzeit_s": {
+     "im_auftrag_erster_lauf": 60.2,
+     "wiederholung_eigener_speicher": 26.6,
+     "teile_wiederholung": {
+      "lesen": 1.24,
+      "aufnahme": 0.65,
+      "rendern": 4.17,
+      "verschmelzen": 3.12,
+      "aufraeumen": 11.25,
+      "deckung": 0.19
+     }
+    },
+    "gpu_spitze_gb": 6.2,
+    "gpu_methode": "nvidia-smi alle 0.2 s in der Wiederholung, Spitze 8.6 GB minus 2.4 GB Ruhe"
+   },
+   "ring": {
+    "blickwinkel": 48,
+    "voxel_m": 0.07,
+    "blockwache": "nicht angeschlagen (245'424 Bloecke)",
+    "deckung": 0.0399,
+    "deckung_abstand_median_splat_einheiten": 0.4548,
+    "netzstuecke": 181280,
+    "inseln_entfernt_dreiecke_anteil": 0.4226,
+    "dreiecke": 500000,
+    "dreiecke_roh": 2586876,
+    "rechenzeit_s": 15.5,
+    "gpu_spitze_gb": 13.6
+   },
+   "satz": "Die Aufnahme passt klar zum Splat (Median 0.03 % der Diagonale) und stellt 240 Blickwinkel; die Blockwache schlug einmal an und hob den Voxel auf 8.75 cm, kein Absturz. Die Deckung steigt von 4.0 % (Ring) auf 10.0 %, aber das Netz zerfaellt staerker: 497'497 Stuecke statt 181'280, 69 % der Dreiecke fallen als Inseln weg (Ring 42 %).",
+   "befund_ursache": "Die Posen stimmen: gsplat aus Aufnahmekameras rendert das Bild der Aufnahme deckungsgleich nach (Sichtprobe an 8 Bildern). Die erwartete Tiefe (ED) ist aber stark verrauscht/gesprenkelt (Tiefe pro Bildpunkt springt), und die gefilmte Person samt Arm steht als Wolke nah vor den Kameras; die TSDF verschmilzt das zu vielen kleinen Stuecken. Vermutung, nicht gemessen: Tiefe filtern (Median/Deckkraftschwelle je Bildpunkt) oder Gewichtsschwelle hoeher."
+  },
+  "A2": {
+   "frage": "Bild: Flaeche neben dem Bauwerk, die das Netz fasst; Konfetti",
+   "umgebung_auf_nicht_bauwerk": {
+    "276_aufnahme": {
+     "s": 0.049,
+     "sSE": 0.158,
+     "nNW": 0.113
+    },
+    "275_ring_7cm": {
+     "s": 0.259,
+     "sSE": 0.209,
+     "nNW": 0.243
+    }
+   },
+   "umgebung_im_bild": {
+    "s": 0.035,
+    "sSE": 0.121,
+    "nNW": 0.087
+   },
+   "bauwerk_verdeckt": {
+    "s": 0.0,
+    "sSE": 0.0,
+    "nNW": 0.001
+   },
+   "methode": "Anteil Bildpunkte mit der Kontextfarbe im Material-ID-Pass (wie 275)",
+   "konfetti": "0 von 9",
+   "fremdkoerper": "2 von 9: sSE Seed 0 (weisse Kuppel-/Silobauten und weisser Streifen im Zaun, aus einem hellen Netzfetzen), s Seed 0 (zwei kleine schwebende Tafeln auf der Dachkante); gewaehlt wurde in allen drei Kameras Seed 2 — alle drei sauber",
+   "satz": "Kein Gehweg, keine Kronen, keine Nachbarbauten als Flaechen: Das Netz steht aus den Hallenkameras nur noch als verstreute kleine Fetzen da (5–16 % statt 21–26 %), Konfetti weiter 0 von 9; die Umgebung im Bild (Baeume, Zaun, Platz, Nachbarbauten) erfindet das Bildmodell.",
+   "urteil": "nein — Loecher nicht zu, im Bild weniger Umgebung als mit dem Ring"
+  },
+  "A3": {
+   "frage": "Pruefung je Kamera; besteht der Auftrag?",
+   "je_kamera": {
+    "s": {
+     "anteil_soll": 0.2847,
+     "score": 0.94,
+     "geom_iou": 0.901,
+     "rho_maske": 0.985,
+     "n_ausgeblendet": 55237,
+     "n_trennhilfe": 517824,
+     "nullanker_rauschen": 0.208,
+     "seed": 2,
+     "urteil": "bestanden"
+    },
+    "sSE": {
+     "anteil_soll": 0.2332,
+     "score": 0.917,
+     "geom_iou": 0.868,
+     "rho_maske": 0.968,
+     "n_ausgeblendet": 192233,
+     "n_trennhilfe": 529931,
+     "nullanker_rauschen": 0.0,
+     "seed": 2,
+     "urteil": "bestanden"
+    },
+    "nNW": {
+     "anteil_soll": 0.233,
+     "score": 0.948,
+     "geom_iou": 0.904,
+     "rho_maske": 0.982,
+     "n_ausgeblendet": 137898,
+     "n_trennhilfe": 531871,
+     "nullanker_rauschen": 0.0,
+     "seed": 2,
+     "urteil": "bestanden"
+    }
+   },
+   "gesamt": "qa passed true «Geometrie 0.917 gegen 0.65»; geometry_gates passed true (rho_maske 0.968, geom_iou 0.868 ≥ 0.85, Kamera sSE), fail_reasons «gegenprobe_fehlt»; lieferstatus geliefert",
+   "nullprobe": "lief (Fehler 3 behoben): nullanker und bodenabstand gefuellt; s: Verlauf-Boden erklaert 64 % von rho (Warnung), sSE/nNW 6–7 %",
+   "satz": "Ja, der Auftrag besteht in allen drei Kameras (0.940 / 0.917 / 0.948, geom_iou 0.87–0.90) — erstmals alle drei, weil das duenne Netz die Halle nicht mehr verdeckt; ohne Gegenprobe gegen fremde Geometrie.",
+   "urteil": "ja"
+  },
+  "A4": {
+   "frage": "Laufzeit; Lesedauer des COLMAP-Lesers",
+   "auftrag_s": 372.9,
+   "zeiten_s": {
+    "s": 107.1,
+    "sSE": 101.0,
+    "nNW": 100.2,
+    "gesamt": 308.4,
+    "stillstand": 64.0
+   },
+   "vergleich": {
+    "275_netz_aus_dem_speicher": 266.8,
+    "275_kugeln": 290.2
+   },
+   "colmap_leser_s": {
+    "lies_aufnahme_cameras_images_frames": 0.007,
+    "lies_punkte3d_20000": 0.071,
+    "fingerabdruck_sha256": 0.096,
+    "im_runner_aufnahme_schritt": 0.65
+   },
+   "colmap_umfang": "images.bin 232 MB (960 Bilder, 240 Augenblicke, 4 Kameras), points3D.bin 27 MB",
+   "satz": "Der ganze Auftrag brauchte 373 s, davon rund 60 s fuer den ersten Brueckenlauf und 64 s Stillstand (Laden); der COLMAP-Leser ist vernachlaessigbar (7 ms fuer Kameras/Bilder, 71 ms fuer die Punkte, warm gemessen).",
+   "einschraenkung": "Lesezeiten mit warmem Dateicache (dreimal gelesen, gleich)."
+  },
+  "A5": {
+   "frage": "splat-umgebung.sh Probelauf mit echtem gsplat",
+   "antwort": "ja, Exit 0, 67.5 s, in die bestehende .venv-splat (nichts neu installiert, nichts geaendert)",
+   "ring": {
+    "blickwinkel": 48,
+    "dreiecke": 499999,
+    "deckung": 0.9223,
+    "inseln": 8116,
+    "zeit_s": 54.8
+   },
+   "aufnahme": {
+    "blickwinkel": 240,
+    "dreiecke": 499999,
+    "deckung": 0.9669,
+    "inseln": 2132,
+    "zeit_s": 8.4
+   },
+   "gpu_spitze_gb": 0.8,
+   "satz": "Laeuft durch: Am synthetischen Strassenraum deckt die Aufnahme 96.7 % gegen 92.2 % mit dem Ring, mit einem Viertel der Stuecke; der Ringlauf ist der erste im Prozess und traegt das Laden der gsplat-Kerne.",
+   "einrichtung": "PYTHON = vorhandenes Python 3.11 (wie 275), TORCH_INDEX cu130"
+  }
+ },
+ "urteile": {
+  "loecher_zu": "nein — Deckung 10.0 % (Ring 4.0 %), im Bild 5–16 % der Flaeche neben dem Bauwerk (275: 21–26 %), Netz in 497'497 Stuecken. Die Aufnahme passt und die Posen stimmen; es scheitert an der verrauschten gsplat-Tiefe beim Verschmelzen.",
+  "bild_besteht": "ja — alle drei Kameras bestanden mit Nullprobe (0.940/0.917/0.948), Konfetti 0 von 9, gewaehlte Bilder sauber; die Umgebung im Bild stammt aber vom Bildmodell, nicht aus dem Splat."
+ },
+ "auffaelliges": [
+  "Die Aufnahme wird am App-Auftrag nicht automatisch gefunden: context.ply ist ein Verweis (Symlink) in einem anderen Ordner, aufnahme_kandidaten loest ihn nicht auf. Path(ply).resolve() vor der Suche wuerde ihn finden.",
+  "Netz-sha256 ist bei gleichem Schluessel nicht gleich (Erstlauf im Auftrag gegen Wiederholung) — Deckung, Stuecke und Blockzahl identisch, die Datei nicht; nichtdeterministisch (GPU/Vereinfachung). Fuer den Speicher unerheblich, fuer Vergleiche gut zu wissen.",
+  "Der Erstlauf im Auftrag brauchte 60.2 s gesamt_s, die Wiederholung 26.6 s bei gleichen Teilzeiten — der Unterschied liegt ausserhalb der gemessenen Teile (vermutlich der abgebrochene erste Voxelversuch der Blockwache und das erste Laden von CUDA/gsplat im Prozess); zeiten_s fuehrt den abgebrochenen Versuch nicht auf.",
+  "Grafikspeicher mit der Aufnahme 6.2 GB, mit dem Ring 13.6 GB (640x640 statt 640x480, aber Voxel groesser nach der Blockwache).",
+  "Mit Ring und 7 cm schlaegt die Blockwache knapp nicht an (245'424 von 250'000).",
+  "Das Deckungsmass zaehlt nur die dichten Punkte im Bereich um die Mitte (20'328), nicht den ganzen Splat.",
+  "Bei Kamera s erklaert der Verlauf-Boden 64 % von rho_maske (Warnung im bodenabstand).",
+  "kosmo_maus «ziehen» am Prompt-Port und «klick» auf Ausfuehren kamen wieder nicht an (wie 274/275); per echter Maus auf dem eigenen Xvfb sofort.",
+  "Bilder des echten Splats nur lokal beim Owner, nicht im Repo; keine Bilder aus dem Video aufbewahrt."
+ ],
+ "bilder": [],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (/var/crash unveraendert), Bruecke, Relais, Sitzungs-DBus und Xvfb per gemerkter PID; Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Wegwerf-Ablagen, Diagnose- und Hilfsdateien geloescht; GPU-Sperre frei. Behalten: .venv-splat und der Netz-Speicher (neu: Netz aus der Aufnahme und Ring-Netz Fassung 2)."
+}
