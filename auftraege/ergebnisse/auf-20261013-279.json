@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261013-279",
+  "worker": "local",
+  "stand": "teil",
+  "zeit": "2026-10-13T20:30:00Z",
+  "P1": {"ja": true, "satz": "Pull 2407b95, visbox-flaeche neu gestartet; /api/hallo ueber Tailscale liefert visbox/fassung 0.2.0/name 'Visbox Heim-PC', ohne Rechnernamen."},
+  "P2": {"ja": true, "satz": "POST /api/kopplung/anfordern: Antwort ohne Zahl (angezeigt, gilt_bis, versuche 3); Zahl steht im Journal-Kasten 'Mac koppeln'; notify-send vorhanden, Owner bestaetigt Mitteilung/Kopplung am Mac."},
+  "P3": {"ja": null, "satz": "Teil: zweiter Aufruf innerhalb 30 s -> 'Die Zahl steht schon am Heim-PC … Eine neue gibt es in 30 s' (neu:false). 429 nach Ablauf noch nicht geprueft."},
+  "P4": {"ja": null, "satz": "Offen: avahi-utils fehlt; Owner erlaubt Installation morgen, dann Heimnetz mit TLS pruefen."},
+  "P5": {"ja": null, "satz": "Folgt nach P4."},
+  "P6": {"ja": true, "satz": "Owner: Die Mac-App hat den Heim-PC von selbst gefunden, die Zahl erschien, die Kopplung gelang."},
+  "urteil": "Ueber Tailscale traegt die Server-Seite der Kopplung (P1, P2, P6 ja). Heimnetz (P4/P5) und 429 nach Ablauf folgen morgen."
+}
