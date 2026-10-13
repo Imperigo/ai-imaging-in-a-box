@@ -2,7 +2,8 @@
 
 Bis dahin trug Visbox drei verschiedene: Bibliothek 0.0.1 (pyproject) und 0.0.2 (Modul), iPad-App
 0.1, Mac-App 0.1.7 (die Nummer von KosmoOrbit). Seit dem 01.10.2026 zählt Visbox selbst, ab
-**0.1.0** — die erste vorführbare Fassung. Welche KosmoOrbit-Fassung dazu passt, steht im
+**0.1.0** — die erste vorführbare Fassung; seit dem 13.10.2026 **0.2.0** (Entscheid 82,
+`docs/VISBOX_0.2.0_2026-10-13.md`). Welche KosmoOrbit-Fassung dazu passt, steht im
 Lieferblatt, nicht in der Nummer.
 """
 from __future__ import annotations

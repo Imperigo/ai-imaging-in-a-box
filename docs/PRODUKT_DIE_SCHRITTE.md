@@ -1427,3 +1427,8 @@ Umgebung aus den Fotos zu rechnen, mit Epic RealityScan, das er selbst installie
 RealityScan die Fotos samt den Kamerastandorten, holt das Netz zurück, prüft, dass es am richtigen Ort liegt, und fällt
 sonst auf den offenen Weg zurück. Mitgeliefert wird RealityScan nie.
 
+**Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
+gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
+der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher
+KosmoOrbit-Fassung es passt.
+

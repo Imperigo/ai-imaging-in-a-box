@@ -7888,3 +7888,10 @@ Bekannt und ausdrücklich nicht erledigt:
       `kontext_ply`/`kontext_matrix` nicht an (`oberflaeche/server.NICHT_EINSTELLBAR`).
 - [ ] **Kern:** Nach der Heim-PC-Messung entscheiden, ob die Tiefenkarte über das Bauwerk statt über die ganze Szene
       normiert wird, wenn ein Splat dabei ist.
+
+## Visbox 0.2.0 (Entscheid 82, 13.10.2026)
+
+- [x] Nummer überall 0.2.0, Fassungsblatt. *(13.10.2026, §92)*
+- [ ] iPad/Mac-Prüfstrecke grün auf dem Commit.
+- [x] KosmoOrbit 0.1.8 mit Verlauf und Splat-Vertrag eingespielt (Int 1, Runde 23, `e40051731`). *(13.10.2026)*
+
