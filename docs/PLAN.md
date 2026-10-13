@@ -7852,7 +7852,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Offene Brücke Splat → Netz** gebaut (`seams.splat_zu_netz`, `kontext_netz`, Runner, Blender lädt Netz; Glätten nur noch für Kugeln). *(13.10.2026, §85)*
 - [x] **Messung `auf-20261013-275`**: Brücke eingerichtet, **Konfetti weg (0 von 9)**; Netz deckt nur 21–26 % (Löcher). *(13.10.2026, §86)*
 - [x] **Dringend behoben:** Abbruch ohne Gelände mit Nullprobe seit E78a; `--oben=`; Voxel 7 cm; cu130. *(13.10.2026, §86)*
-- [ ] **Löcher im Netz:** Blickwinkel aus der Aufnahme statt gesetztem Ring, Inselgrenze prüfen.
+- [x] **Blickwinkel aus der Aufnahme** gebaut (eigener COLMAP-Leser; pycolmap wegen GPL-Fund weggelassen), Inselgrenze geprüft (bleibt 200). *(13.10.2026, §87)*
+- [ ] **Messung `auf-20261013-276`** (local): Löcher zu? Bild besteht?
 - [ ] **Brücke RealityScan** — später (Entscheid 80); Fotos liegen vor (960 Bilder mit Masken).
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

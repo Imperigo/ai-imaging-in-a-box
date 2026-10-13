@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261013-276",
+  "art": "frage",
+  "beschreibung": "Splat-Bruecke aus den echten Kamerastandorten (COLMAP-Rig): Loecher zu, Bild besteht?",
+  "anweisung": "=== SPLAT-BRUECKE AUS DEN ECHTEN KAMERASTANDORTEN: SIND DIE LOECHER ZU? ===\n\nWAS SICH GEAENDERT HAT (ai-imaging main nach der Ansage; nur Splat-Laeufe)\n  Die Bruecke rendert den Splat jetzt aus den Kamerastandorten der Aufnahme (COLMAP sparse/0, mit Rig) statt aus\n  einem gesetzten Ring: hoechstens 240 Blickwinkel (60 Augenblicke x 4 Rig-Kameras), Intrinsik aus COLMAP auf\n  640 px skaliert. Gelesen wird COLMAP mit EIGENEM Code (stdlib) — NICHT mit pycolmap: dessen PyPI-Rad bindet\n  GPL-2.0+-Teile von SuiteSparse statisch ein (gemeldet im NOTICE). Bitte pycolmap NICHT in .venv-splat\n  installieren. Vor dem Rendern prueft der Runner, ob Aufnahme und Splat im selben System liegen (Median/P90 der\n  Abstaende points3D -> dichte Splat-Mitten relativ zur Diagonale, Kamerazentren in der Box); sonst Rueckfall\n  auf den Ring mit Grund. Neu im Bericht/Vermerk: blickwinkel_quelle (aufnahme|ring), aufnahme (parameter|\n  umgebung|neben dem splat|keine), gleichheit (Zahlen), deckung (Anteil der dichten Splat-Punkte nahe am Netz),\n  netz.inseln, voxel. Blockwache: ueber 250 000 aktive Bloecke startet der Runner mit groesserem Voxel neu\n  (gegen den Open3D-Absturz). Speicher-Schluessel enthaelt den Inhalt der Aufnahme (FASSUNG 2: alles einmal neu).\n  CPU-Probe (synthetischer Strassenraum): Deckung 70,6 % (Ring) -> 96,0 % (Aufnahme), Netzstuecke 2547 -> 75.\n\nEINRICHTEN\n  ai-imaging main ziehen. Die Aufnahme dem Dienst bekanntmachen: AIIMAGING_SPLAT_AUFNAHME auf den Ordner\n  sparse/0 setzen (oder sparse/0 neben das Splat-PLY legen; die Bruecke sucht <ply-ordner>/sparse/0,\n  <ply-ordner>/../sparse/0, <ply-stamm>.colmap/). Keine Pfade in die Rueckgabe.\n\nMESSEN (derselbe Hallenauftrag wie 275, Lauf A: Splat + Bestand, s/sSE/nNW, Seeds 0–2; MIT Nullprobe)\n  A1 Bericht der Bruecke: blickwinkel_quelle, Gleichheit (Median/P90 relativ, Kameras in der Box), Anzahl\n     Blickwinkel, Voxel (hat die Blockwache angeschlagen? wie oft?), Dreiecke, Netzstuecke, inseln, deckung,\n     Rechenzeit, GPU-Spitze. Zum Vergleich EIN Lauf mit dem Ring (Aufnahme-Variable leer): deckung, Stuecke.\n  A2 Bild: Flaeche neben dem Bauwerk, die das Netz fasst (275: 21–26 %). Gehweg, Kronen, Nachbarbauten als\n     Flaechen? Konfetti weiter 0 von 9? Ein Satz.\n  A3 Pruefung: anteil_soll, Score, Urteil je Kamera; besteht der Auftrag?\n  A4 Laufzeit des ganzen Auftrags; Lesedauer des COLMAP-Lesers fuer images.bin/points3D.bin.\n  A5 betrieb/splat-umgebung.sh Probelauf (Strassenraum, Ring und Aufnahme) mit echtem gsplat: laeuft durch?\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern. Nichts installieren (auch kein pycolmap). Keine Bilder des\n  echten Splats ins Repo. Keine Namen, Pfade mit Benutzernamen, Host- oder Netznamen, IPs. Auftrag in offen/.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261013-276.json)\n  Koepfe; A1–A5 je Zahlen + Satz. Urteile: Sind die Loecher zu? Besteht das Bild?",
+  "erstellt": "2026-10-13T11:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Bestand aus dem Splat), tools/make_test_splat.py --form strasse, tools/make_test_colmap.py; der echte Splat bleibt lokal"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-splat-context@cf839597c",
+      "claude/lw-splat-context"
+    ],
+    "folgt_auf": "auf-20261013-275",
+    "entscheide": [
+      "79"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: Splat-Bruecke (bis 240 gsplat-Bilder, ein Ring-Vergleich) plus 9 Z-Image-Turbo-Laeufe.",
+    "hinweise": [
+      "Nichts installieren, auch kein pycolmap (GPL-Fund im Rad).",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Bilder des echten Splats bleiben lokal (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Koepfe.",
+    "A1–A5 je Zahlen und ein Satz.",
+    "Urteile: Loecher zu? Bild besteht?"
+  ],
+  "rang": 63
+}

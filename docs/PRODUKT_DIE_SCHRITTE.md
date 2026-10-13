@@ -1409,3 +1409,9 @@ mit Open3D zu einem farbigen 3D-Netz. Blender lädt dieses Netz wie ein gewöhnl
 die Umgebung bleibt die alte Notlösung, und das Ergebnis sagt es dazu. Weil hier keine Grafikkarte ist, misst der
 Heim-PC, ob das Konfetti damit verschwindet. RealityScan folgt später.
 
+**Die Umgebung aus den echten Kamerastandorten (13.10.2026).** Der erste Lauf mit dem Netz hatte das Konfetti beseitigt,
+aber grosse Löcher gelassen, weil die Brücke aus einem gesetzten Kreis schaute. Jetzt schaut sie von dort, wo die
+Aufnahme wirklich stand — der Heim-PC hat nachgewiesen, dass Kameras und Splat genau übereinander liegen. Am künstlichen
+Strassenraum stieg die Abdeckung von 71 auf 96 %. Dabei ein Lizenzfund: Ein Lesewerkzeug (pycolmap) trägt in seinem
+fertigen Paket GPL-Code; es wird darum nicht verwendet, ein eigener Leser ersetzt es.
+
