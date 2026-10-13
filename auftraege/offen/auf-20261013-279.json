@@ -1,0 +1,41 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261013-279",
+  "art": "frage",
+  "beschreibung": "Kopplung mit Zahl (E83): Server-Seite am Heim-PC pruefen (hallo, anfordern, Drossel, Heimnetz mit TLS).",
+  "anweisung": "=== SERVER-SEITE DER KOPPLUNG MIT ZAHL PRUEFEN (Owner-Entscheid 83) ===\n\nWAS SICH GEAENDERT HAT (ai-imaging main nach der Ansage)\n  visbox-flaeche kennt neu: GET /api/hallo (ohne Anmeldung, ohne Geheimnis: visbox, fassung, name),\n  POST /api/kopplung/anfordern (ohne Anmeldung): oeffnet eine 6-stellige Zahl fuer einen Mac, zeigt sie im\n  Fenster/Journal und als Mitteilung (notify-send, falls vorhanden), gibt sie NIE zurueck; 5 min gueltig,\n  einmal, 3 Fehlversuche; hoechstens eine neue Zahl je 30 s. /api/verbinden liefert zusaetzlich «zugang».\n  Optional --heimnetz: zweiter Zuhoerer im Heim-WLAN NUR mit TLS (selbst signiertes Zertifikat, per openssl\n  erzeugt, neben dem Kennwort), Bonjour _visbox._tcp mit tls=1 per avahi-publish-service. Ohne --heimnetz aendert\n  sich am Zuhoeren nichts. Die iPad-Zahl (/api/kopplung) bleibt bei 600 s und 5 Versuchen.\n\nPRUEFEN (Platzhalter <ts-name> / <lan-ip> nur lokal einsetzen, NIE in die Rueckgabe schreiben)\n  P1 git pull, visbox-flaeche neu starten. curl -sk https://<ts-name>:8443/api/hallo -> JSON ohne Rechnernamen?\n  P2 curl -sk -X POST https://<ts-name>:8443/api/kopplung/anfordern -d '{}' -> Antwort ohne Zahl; Zahl im\n     Journal (journalctl --user -u visbox-flaeche -f) und als Mitteilung am Bildschirm? Wenn keine Mitteilung:\n     Grund aus dem Fenster (D-Bus unter systemd user?).\n  P3 zweiter Aufruf innerhalb 30 s -> «steht schon da»; nach Ablauf ohne gueltige Zahl -> 429 mit Wartezeit?\n  P4 --heimnetz in ExecStart setzen, neu starten: Zertifikatsdateien mit Rechten 0600? avahi-browse -rt\n     _visbox._tcp zeigt den Eintrag mit tls=1? curl http://<lan-ip>:8732/api/hallo -> KEINE Antwort (kein\n     Klartext)? curl -k https://<lan-ip>:8732/api/hallo -> Antwort? Das «Zeichen des Heim-PC» im Fenster (nur\n     melden, ob es erscheint, nicht den Wert).\n  P5 --heimnetz wieder herausnehmen, neu starten — ausser der Owner will es behalten (fragen).\n  P6 Beim Owner nachfragen und weitergeben: Hat die Mac-App (ZIP aus Lauf 38460933538 oder spaeter) den\n     Heim-PC von selbst gefunden, erschien die Zahl, gelang die Kopplung?\n\nWAS DU NICHT TUST\n  Nichts installieren ausser — nur falls fuer P2/P4 noetig und der Owner zustimmt — libnotify-bin/avahi-utils aus\n  den Ubuntu-Quellen (dann melden). Keinen Code aendern, nichts pushen. Keine Zahlen, Kennwoerter, Zeichen,\n  Rechnernamen, IPs in die Rueckgabe. Auftrag in offen/.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261013-279.json)\n  Kopf; P1–P6 je ja/nein + Satz. Urteil: Traegt die Server-Seite der Kopplung?",
+  "erstellt": "2026-10-13T22:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "keine Geometrie noetig"
+  },
+  "params": {
+    "folgt_auf": "auf-20261001-214",
+    "entscheide": [
+      "83",
+      "83a",
+      "83b",
+      "83c",
+      "83d"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "Keine GPU noetig.",
+    "hinweise": [
+      "Keine Zahlen, Kennwoerter, Rechnernamen oder IP-Adressen in die Rueckgabe (REGEL 3).",
+      "Installation nur mit Zustimmung des Owners und nur Ubuntu-Pakete libnotify-bin/avahi-utils."
+    ]
+  },
+  "rueckgabe": [
+    "Kopf.",
+    "P1–P6 je ja/nein und ein Satz.",
+    "Urteil: Traegt die Server-Seite?"
+  ],
+  "rang": 66
+}

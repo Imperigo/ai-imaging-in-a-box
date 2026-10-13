@@ -192,13 +192,23 @@ Pfad — und genau die Umgebung, in der der Owner die App öffnet, ist die heikl
 
 ## Öffnen
 
-* **Xcode (Mac):** `ipad/Visbox.swiftpm` öffnen, Ziel «Visbox», ein iPad-Simulator oder das
-  eigene Gerät. Mit kostenlosem Konto (Entscheid Nr. 23) läuft die App je 7 Tage.
-  **Vor dem ersten Aufspielen** die Kennung `org.example.visbox` (ein Platzhalter, der
-  niemandem gehört) gegen eine eigene tauschen — in `Kern/Marke.swift` **und** in
-  `Package.swift` (`bundleIdentifier`), sonst schlägt die Prüfung an.
-* **Swift Playgrounds (iPad):** den Ordner `Visbox.swiftpm` auf das iPad bringen (Dateien-App,
-  iCloud Drive oder ein git-Programm) und dort öffnen. **Am Gerät unbestätigt.**
+* **Xcode (Mac) — der Weg, am Gerät bestätigt** (13.10.2026, iPadOS 26.7.2):
+  1. Xcode aus dem Mac App Store; einmal mit der Apple-ID anmelden (Settings → Accounts).
+  2. `ipad/Visbox.swiftpm` doppelklicken (öffnet in Xcode).
+  3. Links «Visbox» → «Signing & Capabilities»: **Team** = eigene Apple-ID, **Bundle Identifier**
+     `org.example.visbox` (ein Platzhalter, der niemandem gehört) gegen einen eigenen tauschen —
+     auch in `Kern/Marke.swift`, sonst schlägt die Prüfung an.
+  4. iPad per Kabel, «Vertrauen»; am iPad Einstellungen → Datenschutz & Sicherheit →
+     **Entwicklermodus** ein.
+  5. Oben das iPad als Ziel, ▶.
+  6. Am **iPad** (nicht am Mac): Einstellungen → Allgemein → VPN & Geräteverwaltung →
+     Entwickler-App → der eigenen Apple-ID **vertrauen**.
+  Mit kostenlosem Konto (Entscheid Nr. 23) läuft die App je **7 Tage**; danach ▶ in Xcode. Das
+  Kabel darf danach ab; in Window → Devices and Simulators «Connect via network» anhaken, dann
+  spielt Xcode über das WLAN auf.
+* **Swift Playgrounds (iPad): geht bei iPadOS 26 nicht.** Am Gerät des Owners meldete es «nicht
+  kompatibel»; laut Apple-Entwicklerforum unterstützt Swift Playgrounds das iOS-26-SDK bisher nicht
+  (Rat von Apple: Xcode). Für ältere iPadOS weiter möglich, aber unbestätigt.
 
 ## Die Swift-Kette hier (Linux) laden
 
