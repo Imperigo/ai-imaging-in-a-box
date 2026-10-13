@@ -7856,7 +7856,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Messung `auf-20261013-276`**: Prüfung 3 von 3 bestanden; Löcher bleiben (Deckung 10 %). *(13.10.2026, §88)*
 - [x] **Splat-Vertrag `cf839597c`** an Int 1 freigegeben (v0.1.8). *(13.10.2026, §88)*
 - [x] **Tiefenfilter** und vier Fehler aus 276 gebaut. *(13.10.2026, §89)*
-- [ ] **Messung `auf-20261013-277`** (local): beste Filterwahl, Löcher kleiner?
+- [x] **Messung `auf-20261013-277`**: Filter als Vorgabe nahm das Netz (Streuung 99,99 % verworfen) — **zurückgestellt**, Vorgabe kein Filter. *(13.10.2026, §90)*
+- [ ] **Löcher in der Umgebung** (Deckung ~10 %): nächster Weg mit dem Owner entscheiden.
 - [ ] **Brücke RealityScan** — später (Entscheid 80); Fotos liegen vor (960 Bilder mit Masken).
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

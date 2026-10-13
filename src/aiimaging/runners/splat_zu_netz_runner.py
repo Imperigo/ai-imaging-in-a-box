@@ -678,6 +678,10 @@ def _filter_bericht(summe: dict, filter_: set, nah: float, kn, *, weg_aktiv: boo
 # 4 · Verschmelzen — mit Blockwache
 # --------------------------------------------------------------------------------------
 
+#: Was ein Lauf bis zu einem Abbruch weiss — fuer den Fehlerbericht (siehe `main`).
+_ZWISCHENSTAND: dict = {}
+
+
 class _ZuVieleBloecke(Exception):
     """Die TSDF hat mehr aktive Blöcke als ``BLOECKE_MAX`` — mit diesem Voxel nicht weiter."""
 
@@ -713,30 +717,48 @@ def _verschmelzen(bilder, ansichten, *, voxel: float, tiefe_max: float, spanne: 
         attr_channels=((1), (1), (3)), voxel_size=float(voxel), block_resolution=8,
         block_count=bloecke, device=cpu)
     gefuellt: list[float] = []
+    uebersprungen = {"leer": 0, "gescheitert": 0}
     t_render = t_tsdf = 0.0
     t0 = time.monotonic()
     for ansicht, (rgb, tiefe, anteil) in zip(ansichten, bilder):
         t1 = time.monotonic()
         t_render += t1 - t0
-        gefuellt.append(anteil)
-        if anteil > 0.0:
+        # DER FUELLANTEIL NACH DEM SIEBEN (auf-20261013-277 Fehler 2): `anteil` wurde vor den
+        # Tiefenfiltern gemessen; ein danach leeres Bild liess Open3D abbrechen. Gezaehlt
+        # wird, was wirklich Tiefe traegt — leere und gescheiterte Bilder werden uebersprungen.
+        tiefe_np = np.asarray(tiefe)
+        rest = float(np.count_nonzero(tiefe_np > 0.0)) / max(1, tiefe_np.size)
+        gefuellt.append(rest)
+        if rest <= 0.0:
+            uebersprungen["leer"] += 1
+        else:
             kamera = o3c.Tensor(np.array(ansicht["ki"]["K"], dtype=np.float64).reshape(3, 3))
             tiefe_bild = o3d.t.geometry.Image(o3c.Tensor(np.ascontiguousarray(
                 tiefe, dtype=np.float32)))
             farb_bild = o3d.t.geometry.Image(o3c.Tensor(np.ascontiguousarray(
                 rgb, dtype=np.float32) / 255.0))
             aussen = o3c.Tensor(np.array(ansicht["ansicht"], dtype=np.float64).reshape(4, 4))
-            bl = volumen.compute_unique_block_coordinates(
-                tiefe_bild, kamera, aussen, 1.0, float(tiefe_max),
-                trunc_voxel_multiplier=kn.SDF_TRUNC_VOXEL)
-            volumen.integrate(bl, tiefe_bild, farb_bild, kamera, kamera, aussen, 1.0,
-                              float(tiefe_max), trunc_voxel_multiplier=kn.SDF_TRUNC_VOXEL)
-            aktiv = int(volumen.hashmap().size())
-            if aktiv > bloecke_max:
-                raise _ZuVieleBloecke(aktiv)
+            try:
+                bl = volumen.compute_unique_block_coordinates(
+                    tiefe_bild, kamera, aussen, 1.0, float(tiefe_max),
+                    trunc_voxel_multiplier=kn.SDF_TRUNC_VOXEL)
+                volumen.integrate(bl, tiefe_bild, farb_bild, kamera, kamera, aussen, 1.0,
+                                  float(tiefe_max), trunc_voxel_multiplier=kn.SDF_TRUNC_VOXEL)
+            except RuntimeError:
+                # «No block is touched»: wenige Resttiefen jenseits der Reichweite. Ein Bild,
+                # das nichts beitraegt, darf den Lauf nicht kosten (277: 17 solche Bilder).
+                uebersprungen["gescheitert"] += 1
+            else:
+                aktiv = int(volumen.hashmap().size())
+                if aktiv > bloecke_max:
+                    raise _ZuVieleBloecke(aktiv)
         t0 = time.monotonic()
         t_tsdf += t0 - t1
-    return volumen, gefuellt, t_render, t_tsdf, int(volumen.hashmap().size())
+    if not volumen.hashmap().size():
+        raise RuntimeError(f"Kein Bild hat Tiefe beigetragen ({uebersprungen['leer']} leer, "
+                           f"{uebersprungen['gescheitert']} gescheitert von {len(gefuellt)}) — "
+                           f"Tiefenfilter zu streng?")
+    return volumen, (gefuellt, uebersprungen), t_render, t_tsdf, int(volumen.hashmap().size())
 
 
 # --------------------------------------------------------------------------------------
@@ -921,14 +943,17 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
         # der Blockwache kostete am echten Splat Sekunden, die bis hierher nirgends standen.
         t_versuch = time.monotonic()
         summe: dict = {}
+        _ZWISCHENSTAND.update(tiefenfilter_summe=summe, voxel=float(voxel),
+                              filter=sorted(filter_))
         try:
-            volumen, gefuellt, t_render, t_tsdf, n_bloecke = _verschmelzen(
+            volumen, (gefuellt, uebersprungen), t_render, t_tsdf, n_bloecke = _verschmelzen(
                 bilder(summe), ansichten, voxel=voxel, tiefe_max=tiefe_max, spanne=spanne,
                 bloecke_max=hoechstens, kn=kn)
             versuche.append({"voxel": round(float(voxel), 9), "bloecke": n_bloecke,
                              "dauer_s": round(time.monotonic() - t_versuch, 3)})
             break
         except _ZuVieleBloecke as zu_viel:
+            _ZWISCHENSTAND["versuche"] = versuche
             versuche.append({"voxel": round(float(voxel), 9), "bloecke": zu_viel.bloecke,
                              "abgebrochen": True,
                              "dauer_s": round(time.monotonic() - t_versuch, 3)})
@@ -1010,7 +1035,8 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
                         "bildgroessen": sorted([list(s) for s in {
                             (a["ki"]["breite"], a["ki"]["hoehe"]) for a in ansichten}]),
                         "gefuellt_mittel": round(float(np.mean(gefuellt)), 4),
-                        "gefuellt_min": round(float(np.min(gefuellt)), 4)},
+                        "gefuellt_min": round(float(np.min(gefuellt)), 4),
+                        "uebersprungen": uebersprungen},
         "aufnahme": aufnahme_bericht,
         "masken": masken_geladen["bericht"],
         "tiefenfilter": filter_bericht,
@@ -1091,7 +1117,10 @@ def main(argv=None) -> int:
             masken=a.masken, tiefenfilter=a.tiefenfilter)
     except Exception as e:                                # Fehler als Bericht, nicht als Traceback
         rep = {"status": "error", "error": f"{type(e).__name__}: {e}",
-               "renderer": a.renderer, "netz": None, "versionen": _versionen()}
+               "renderer": a.renderer, "netz": None, "versionen": _versionen(),
+               # Was bis zum Abbruch gezaehlt war (auf-20261013-277 Fehler 3: ohne dies fehlten
+               # gerade die Filteranteile, die den Abbruch erklaeren).
+               "zwischenstand": _ZWISCHENSTAND or None}
 
     text = json.dumps(rep, indent=2, ensure_ascii=False)
     if a.report:

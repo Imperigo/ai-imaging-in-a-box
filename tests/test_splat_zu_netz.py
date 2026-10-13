@@ -1259,16 +1259,22 @@ def test_tiefenfilter_gesetzt_und_im_speicherschluessel():
     assert g["deckkraft_tiefe"] == kn.DECKKRAFT_TIEFE > kn.DECKKRAFT_LEER
     assert g["tiefe_sprung_rel"] == kn.TIEFE_SPRUNG_REL and g["nah_min_m"] == kn.NAH_MIN_M
     assert g["deckung_stichprobe"] == kn.DECKUNG_STICHPROBE
-    assert kn.netz_parameter()["tiefenfilter"] == sorted(kn.TIEFENFILTER)
-    # Ohne Filter ist es ein anderes Netz — also ein anderer Schlüssel.
+    # Vorgabe seit auf-20261013-277: KEIN Filter (Streuung verwarf am echten Splat 99,99 %).
+    assert kn.VORGABE_TIEFENFILTER == ()
+    assert kn.netz_parameter()["tiefenfilter"] == []
+    assert kn.netz_parameter(tiefenfilter="alle")["tiefenfilter"] == sorted(kn.TIEFENFILTER)
+    # Mit Filtern ist es ein anderes Netz — also ein anderer Schlüssel; «keine» ist die Vorgabe.
     ohne = kn.netz_parameter(tiefenfilter="keine")
     assert ohne["tiefenfilter"] == []
     assert (seams.splat_schluessel("a" * 64, ohne)
-            != seams.splat_schluessel("a" * 64, kn.netz_parameter()))
+            == seams.splat_schluessel("a" * 64, kn.netz_parameter()))
+    assert (seams.splat_schluessel("a" * 64, kn.netz_parameter(tiefenfilter="alle"))
+            != seams.splat_schluessel("a" * 64, ohne))
 
 
 def test_tiefenfilter_lesen():
-    assert kn.tiefenfilter_lesen(None) == sorted(kn.TIEFENFILTER)
+    assert kn.tiefenfilter_lesen(None) == []
+    assert kn.tiefenfilter_lesen("alle") == sorted(kn.TIEFENFILTER)
     assert kn.tiefenfilter_lesen("keine") == kn.tiefenfilter_lesen(()) == []
     assert kn.tiefenfilter_lesen("nah, deckkraft") == ["deckkraft", "nah"]
     with pytest.raises(kn.KontextNetzError, match="unbekannt"):
@@ -1444,7 +1450,7 @@ def test_naht_reicht_masken_weiter_und_schluesselt_ihren_inhalt(tmp_path, splat_
     ohne = seams.splat_zu_netz(splat, speicher=tmp_path / "sp", _starte=starter)
     assert "--masken=keine" in starter.aufrufe[-1][0]
     assert ohne["masken"]["gefunden"] is False and ohne["masken"]["sha256"] is None
-    assert any(a == "--tiefenfilter=deckkraft,maske,nah,sprenkel,streuung,weg"
+    assert any(a == "--tiefenfilter=keine"
                for a in starter.aufrufe[-1][0])
     # Masken dazu: weitergereicht, anderer Schlüssel, Vermerk ohne Pfad.
     _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=2, punkte=5, person=6,
@@ -1580,7 +1586,7 @@ def test_die_person_zerfetzt_das_netz_und_der_tiefenfilter_heilt_es(strasse_mit_
         return seams.splat_zu_netz(lauf / "splat.ply", renderer="cpu-probe", aufloesung=160,
                                    voxel_m=0.07, speicher=lauf / "sp", tiefenfilter=filter_)
 
-    ohne, mit = fusion("keine"), fusion(None)
+    ohne, mit = fusion("keine"), fusion("alle")   # «alle» ausdruecklich: Vorgabe ist keiner
     zahlen = {n: {"deckung": b["deckung"]["anteil"],
                   "stuecke": b["netz"]["inseln"]["komponenten"],
                   "inselanteil": b["netz"]["inseln"]["entfernt_dreiecke_anteil"],
@@ -1620,3 +1626,16 @@ def test_die_schalter_fuer_person_und_masken_wirken(tmp_path):
     assert _erzeuger().main([str(tmp_path / "s.ply"), "--punkte", "400", "--form", "strasse",
                              "--person", "5", "--person-augenblicke", "4"]) == 0
     assert kn.lies_ply_kopf(tmp_path / "s.ply")["elemente"][0]["anzahl"] == 420
+
+
+
+@ohne_splat_python
+def test_leere_bilder_nach_dem_sieben_kosten_den_lauf_nicht(tmp_path):
+    """``auf-20261013-277`` Fehler 2: Ein nach dem Sieben leeres Tiefenbild liess Open3D
+    abbrechen («No block is touched»). Seither werden leere und gescheiterte Bilder
+    übersprungen und gezählt."""
+    splat = tmp_path / "s.ply"
+    _erzeuger().erzeuge_splat(splat, punkte=4000)
+    b = seams.splat_zu_netz(splat, renderer="cpu-probe", aufloesung=96, voxel_m=0.2,
+                            speicher=tmp_path / "sp", tiefenfilter="alle")
+    assert "uebersprungen" in b["blickwinkel"], b["blickwinkel"]

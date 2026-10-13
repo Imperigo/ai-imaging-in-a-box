@@ -68,7 +68,7 @@ __all__ = [
     "SDF_TRUNC_VOXEL", "SICHTFELD_GRAD", "TIEFE_MAX_FAKTOR", "UMLAUF_ABSTAND_FAKTOR",
     "UMLAUF_ERHEBUNG_GRAD", "VOXEL_M", "ZIEL_DREIECKE",
     "DECKKRAFT_TIEFE", "DECKUNG_STICHPROBE", "MASKE_SCHWELLE", "MASKEN_JSON", "MASKEN_ORTE",
-    "NAH_MIN_M", "STICHPROBE_STARTWERT", "TIEFENFILTER", "TIEFE_SPRUNG_REL",
+    "NAH_MIN_M", "STICHPROBE_STARTWERT", "TIEFENFILTER", "TIEFE_SPRUNG_REL", "VORGABE_TIEFENFILTER",
     "TIEFE_STREUUNG_REL", "WEG_MIN_M",
     "WEG_REICHWEITE_M",
     "finde_masken", "maske_zum_bild", "masken_fingerabdruck", "masken_kandidaten",
@@ -207,6 +207,15 @@ FASSUNG = 3
 #: Die Namen der Filter, in der Reihenfolge des Berichts. ``maske`` wirkt nur, wo die
 #: Aufnahme Masken hat (:func:`finde_masken`), ``weg`` nur mit Blickwinkeln aus der Aufnahme.
 TIEFENFILTER = ("deckkraft", "sprenkel", "streuung", "nah", "weg", "maske")
+
+#: Was ohne Angabe gilt: **kein Filter** (Rueckstellung 13.10.2026 nach ``auf-20261013-277``).
+#: Mit «alle» als Vorgabe lieferte die Bruecke am echten Splat KEIN Netz mehr: Die relative
+#: Streuung lag im Median bei 1,50, die Schwelle 0,10 verwarf 99,99 % der Bildpunkte, Open3D
+#: brach ab («No block is touched»), und jeder Splat-Auftrag fiel auf die Kugeln zurueck.
+#: Die uebrigen Filter wirkten am echten Splat kaum (alle vier zusammen: 468k statt 497k
+#: Stuecke, Deckung 5,9 statt 9,9 %) und «weg» kostete ~100 s. Die Filter bleiben fuer
+#: Vergleichslaeufe waehlbar («alle» oder eine Liste); die Vorgabe ist der Stand von 276.
+VORGABE_TIEFENFILTER: tuple = ()
 
 #: Ab welcher **akkumulierten Deckkraft** (``alpha`` aus gsplat) ein Bildpunkt seine Tiefe
 #: abgibt. GESETZT. :data:`DECKKRAFT_LEER` (0,5) bleibt die Grenze für «leer» — aber eine
@@ -756,7 +765,7 @@ def blickwinkel(bereich: dict, *, oben=(0.0, 1.0, 0.0), massstab: float = 1.0,
 
 def netz_parameter(*, aufloesung: int = AUFLOESUNG_PX, je_kreis: int = BLICKWINKEL_JE_KREIS,
                    voxel_m: float = VOXEL_M, oben=(0.0, 1.0, 0.0), massstab: float = 1.0,
-                   renderer: str = "gsplat", tiefenfilter=TIEFENFILTER) -> dict:
+                   renderer: str = "gsplat", tiefenfilter=None) -> dict:
     """Alles, was das Netz bestimmt, als eine Tabelle — für Speicherschlüssel und Bericht.
 
     Die gesetzten Konstanten stehen mit darin: Wer eine davon ändert, bekommt einen anderen
@@ -1338,13 +1347,16 @@ def voxel_fuer_bloecke(voxel: float, bloecke: int, hoechstens: int = BLOECKE_MAX
 def tiefenfilter_lesen(filter_) -> list[str]:
     """Die eingeschalteten Tiefenfilter als sortierte Liste — aus Liste, Tupel oder ``"a,b"``.
 
-    ``"keine"`` und ``()`` heissen: kein Filter (nur für Vergleichsläufe).
+    ``None`` heisst :data:`VORGABE_TIEFENFILTER` (heute: keiner), ``"alle"`` alle,
+    ``"keine"`` und ``()`` keiner.
 
     Raises:
         KontextNetzError: ein unbekannter Name — geraten wird nicht, ein Tippfehler schaltete
             sonst einen Filter still ab.
     """
     if filter_ is None:
+        return sorted(VORGABE_TIEFENFILTER)
+    if isinstance(filter_, str) and filter_.strip() == "alle":
         return sorted(TIEFENFILTER)
     if isinstance(filter_, str):
         teile = [] if filter_.strip() in ("", "keine") else filter_.split(",")

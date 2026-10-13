@@ -812,66 +812,75 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
         # IN EINEN NEBENORDNER RECHNEN UND ERST AM ENDE UMBENENNEN: Ein abgebrochener Lauf
         # hinterliesse sonst ein halbes Netz unter dem richtigen Namen — und das waere beim
         # naechsten Mal ein Treffer.
-        with tempfile.TemporaryDirectory(dir=ordner, prefix="lauf-") as roh:
-            roh_netz, roh_bericht = Path(roh) / "netz.ply", Path(roh) / "bericht.json"
-            cmd = [splat_python, str(SPLAT_RUNNER), str(ply), str(roh_netz),
-                   "--report", str(roh_bericht),
-                   "--aufloesung", str(parameter["aufloesung"]),
-                   "--blickwinkel", str(parameter["blickwinkel_je_kreis"]),
-                   "--voxel-m", repr(parameter["voxel_m"]),
-                   # `=` und kein Leerzeichen (auf-20261013-275): Am echten Splat beginnt
-                   # die Hochachse mit Minus, und argparse hielt den Wert fuer einen Schalter.
-                   "--oben=" + ",".join(repr(k) for k in parameter["oben"]),
-                   "--massstab", repr(parameter["massstab"]),
-                   "--renderer", renderer,
-                   "--tiefenfilter=" + (",".join(parameter["tiefenfilter"]) or "keine")]
-            if aufnahme_ordner is not None:
-                # Mit `=` wie bei `--oben` (auf-20261013-275): Ein Pfad darf mit Minus beginnen.
-                cmd.append("--aufnahme=" + str(aufnahme_ordner))
-                # DIE MASKEN AUSDRUECKLICH (13.10.2026): Die Naht hat sie gesucht und ihren
-                # Inhalt in den Schluessel genommen; der Runner sucht nicht noch einmal, sonst
-                # koennten Schluessel und Netz auf verschiedenen Masken beruhen.
-                cmd.append("--masken=" + (str(masken_fund["ordner"]) if masken_fund["gefunden"]
-                                          else "keine"))
-            ergebnis = starte(cmd, frist)
-            if ergebnis.returncode != 0:
-                raise SeamError(f"Splat→Netz fehlgeschlagen (Code {ergebnis.returncode}):\n"
-                                f"{_fehlertext(ergebnis, bericht=roh_bericht)}")
-            try:
-                bericht = json.loads(roh_bericht.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+        # EIN GESCHEITERTER LAUF HINTERLAESST KEINEN LEEREN SCHLUESSEL-ORDNER (auf-20261013-277
+        # Fehler 5) — ein leerer Ordner saehe in der Ablage aus wie ein angefangenes Netz.
+        try:
+            with tempfile.TemporaryDirectory(dir=ordner, prefix="lauf-") as roh:
+                roh_netz, roh_bericht = Path(roh) / "netz.ply", Path(roh) / "bericht.json"
+                cmd = [splat_python, str(SPLAT_RUNNER), str(ply), str(roh_netz),
+                       "--report", str(roh_bericht),
+                       "--aufloesung", str(parameter["aufloesung"]),
+                       "--blickwinkel", str(parameter["blickwinkel_je_kreis"]),
+                       "--voxel-m", repr(parameter["voxel_m"]),
+                       # `=` und kein Leerzeichen (auf-20261013-275): Am echten Splat beginnt
+                       # die Hochachse mit Minus, und argparse hielt den Wert fuer einen Schalter.
+                       "--oben=" + ",".join(repr(k) for k in parameter["oben"]),
+                       "--massstab", repr(parameter["massstab"]),
+                       "--renderer", renderer,
+                       "--tiefenfilter=" + (",".join(parameter["tiefenfilter"]) or "keine")]
+                if aufnahme_ordner is not None:
+                    # Mit `=` wie bei `--oben` (auf-20261013-275): Ein Pfad darf mit Minus beginnen.
+                    cmd.append("--aufnahme=" + str(aufnahme_ordner))
+                    # DIE MASKEN AUSDRUECKLICH (13.10.2026): Die Naht hat sie gesucht und ihren
+                    # Inhalt in den Schluessel genommen; der Runner sucht nicht noch einmal, sonst
+                    # koennten Schluessel und Netz auf verschiedenen Masken beruhen.
+                    cmd.append("--masken=" + (str(masken_fund["ordner"]) if masken_fund["gefunden"]
+                                              else "keine"))
+                ergebnis = starte(cmd, frist)
+                if ergebnis.returncode != 0:
+                    raise SeamError(f"Splat→Netz fehlgeschlagen (Code {ergebnis.returncode}):\n"
+                                    f"{_fehlertext(ergebnis, bericht=roh_bericht)}")
                 try:
-                    bericht = json.loads(ergebnis.stdout)
-                except (json.JSONDecodeError, TypeError) as fehler:
-                    raise SeamError(f"Splat-Runner lieferte keinen lesbaren Bericht: "
-                                    f"{fehler}") from fehler
-            if not isinstance(bericht, dict) or bericht.get("status") != "ok":
-                grund = bericht.get("error") if isinstance(bericht, dict) else repr(bericht)
-                raise SeamError(f"Splat-Runner meldet keinen Erfolg: {grund}")
-            # NACHSEHEN STATT GLAUBEN: Ein Erfolg ohne Netz ist ein Fehlschlag.
+                    bericht = json.loads(roh_bericht.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    try:
+                        bericht = json.loads(ergebnis.stdout)
+                    except (json.JSONDecodeError, TypeError) as fehler:
+                        raise SeamError(f"Splat-Runner lieferte keinen lesbaren Bericht: "
+                                        f"{fehler}") from fehler
+                if not isinstance(bericht, dict) or bericht.get("status") != "ok":
+                    grund = bericht.get("error") if isinstance(bericht, dict) else repr(bericht)
+                    raise SeamError(f"Splat-Runner meldet keinen Erfolg: {grund}")
+                # NACHSEHEN STATT GLAUBEN: Ein Erfolg ohne Netz ist ein Fehlschlag.
+                try:
+                    kennzahlen = _kn.netz_kennzahlen(roh_netz)
+                except _kn.KontextNetzError as fehler:
+                    raise SeamError(f"Splat-Runner meldete Erfolg, aber: {fehler}") from fehler
+                bericht.setdefault("netz", {})
+                bericht["netz"].update({"datei": netz.name, "sha256": kennzahlen["sha256"],
+                                        "bytes": kennzahlen["bytes"]})
+                bericht.setdefault("splat", {})
+                bericht["splat"].update({"datei": fingerabdruck["datei"],
+                                         "sha256": fingerabdruck["sha256"],
+                                         "bytes": fingerabdruck["bytes"]})
+                bericht["parameter"] = parameter
+                bericht.setdefault("blickwinkel_quelle", "ring")
+                vermerk = bericht.get("aufnahme")
+                bericht["aufnahme"] = vermerk if isinstance(vermerk, dict) else {}
+                bericht["aufnahme"].update({"quelle": aufnahme_art, "sha256": aufnahme_sha,
+                                            "suche_grund": aufnahme_grund})
+                vermerk_m = bericht.get("masken")
+                bericht["masken"] = vermerk_m if isinstance(vermerk_m, dict) else {}
+                bericht["masken"].update(dict(masken_vermerk, sha256=masken_sha))
+                os.replace(roh_netz, netz)
+                bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
+                                         encoding="utf-8")
+        except BaseException:
             try:
-                kennzahlen = _kn.netz_kennzahlen(roh_netz)
-            except _kn.KontextNetzError as fehler:
-                raise SeamError(f"Splat-Runner meldete Erfolg, aber: {fehler}") from fehler
-            bericht.setdefault("netz", {})
-            bericht["netz"].update({"datei": netz.name, "sha256": kennzahlen["sha256"],
-                                    "bytes": kennzahlen["bytes"]})
-            bericht.setdefault("splat", {})
-            bericht["splat"].update({"datei": fingerabdruck["datei"],
-                                     "sha256": fingerabdruck["sha256"],
-                                     "bytes": fingerabdruck["bytes"]})
-            bericht["parameter"] = parameter
-            bericht.setdefault("blickwinkel_quelle", "ring")
-            vermerk = bericht.get("aufnahme")
-            bericht["aufnahme"] = vermerk if isinstance(vermerk, dict) else {}
-            bericht["aufnahme"].update({"quelle": aufnahme_art, "sha256": aufnahme_sha,
-                                        "suche_grund": aufnahme_grund})
-            vermerk_m = bericht.get("masken")
-            bericht["masken"] = vermerk_m if isinstance(vermerk_m, dict) else {}
-            bericht["masken"].update(dict(masken_vermerk, sha256=masken_sha))
-            os.replace(roh_netz, netz)
-            bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
-                                     encoding="utf-8")
+                ordner.rmdir()                       # nur, wenn leer
+            except OSError:
+                pass
+            raise
         bericht["zwischenspeicher"] = {"treffer": False, "schluessel": schluessel}
 
     ausgabe = netz
