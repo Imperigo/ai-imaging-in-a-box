@@ -1116,3 +1116,158 @@ def test_die_mac_app_koppelt_ueber_die_kopplung_und_heftet_an():
         assert re.search(r"URLSession\(configuration: art\)", code) is None, datei.name
     flaeche = _mac_code(MAC_QUELLEN / "Start" / "Arbeitsansicht.swift")
     assert "Heimvertrauen.entscheide(challenge)" in flaeche
+
+
+# ============================ 12 · Aktualisieren (Owner-Entscheid 84, 13.10.2026, Blatt 18)
+#
+# Die Pruefstrecke legt bei neuer Nummer eine GitHub-Freigabe ab (Job `freigabe`), und die
+# Apps fragen danach (`Kern/Aktualisierung.swift`). Was hier bewacht wird, ist die NAHT
+# zwischen beiden: Der Kern sucht Dateien mit Namen, die der Workflow schreibt, und fragt ein
+# Repo, das der Workflow befuellt. Laeuft eine Seite davon, findet die App nie eine Fassung —
+# und das sieht genauso aus wie «keine neue Fassung».
+
+AKTUALISIERUNG = KERN_QUELLEN / "Aktualisierung.swift"
+MAC_AKTUALISIEREN = MAC_QUELLEN / "Aktualisieren"
+FASSUNGSHINWEIS = APP / "Verbindung" / "Fassungshinweis.swift"
+
+
+def _ablauf() -> dict:
+    import yaml
+    return yaml.safe_load(ARBEITSABLAUF.read_text(encoding="utf-8"))
+
+
+def _befehle(job: dict) -> str:
+    return "\n".join(s.get("run", "") for s in job["steps"])
+
+
+def test_die_freigabe_laeuft_nur_auf_main_nach_gruen_und_darf_allein_schreiben():
+    """Nur auf ``main``, nie im Pull Request, erst nach ``app`` und ``mac`` — und als einziger
+    Job mit Schreibrecht. Ein Zweig, der die Nummer hochsetzt, legte sonst eine Freigabe an,
+    die es auf ``main`` nie gab."""
+    ablauf = _ablauf()
+    assert ablauf["permissions"] == {"contents": "read"}
+    job = ablauf["jobs"]["freigabe"]
+    assert job["needs"] == ["app", "mac"]
+    bedingung = job["if"].replace(" ", "")
+    assert "github.ref=='refs/heads/main'" in bedingung, job["if"]
+    assert "github.event_name!='pull_request'" in bedingung, job["if"]
+    assert job["permissions"] == {"contents": "write"}
+    for name, anderer in ablauf["jobs"].items():
+        if name != "freigabe":
+            assert "permissions" not in anderer, f"{name} hat eigene Rechte"
+
+
+def test_die_freigabe_traegt_die_dateien_die_der_kern_sucht():
+    """Tag ``v<nummer>``, das Mac-ZIP aus dem Job ``mac``, das iPad-Paket, das Fassungsblatt als
+    Text und die Pruefsummen in der Form von ``sha256sum`` — unter genau den Namen, die
+    ``Aktualisierung`` sucht."""
+    ablauf = _ablauf()
+    job = ablauf["jobs"]["freigabe"]
+    befehle = _befehle(job)
+    assert 'gh release create "v$NUMMER"' in befehle
+    assert '--notes-file "$BLATT"' in befehle
+    assert '--target "$GITHUB_SHA"' in befehle
+    assert "--latest" in befehle and "--draft" not in befehle and "--prerelease" not in befehle
+    assert 'ls-remote --exit-code --tags origin "refs/tags/v$NUMMER"' in befehle
+    assert 'BLAETTER=(docs/VISBOX_"$NUMMER"_*.md)' in befehle
+    assert '["project"]["version"]' in befehle
+    assert '["CFBundleName"]' in befehle
+    # DIE NAMEN DES KERNS.
+    kern = _ohne_kommentarzeilen(AKTUALISIERUNG.read_text(encoding="utf-8"))
+    assert 'var macPaket: String { "\\(Marke.name)-mac.zip" }' in kern
+    assert 'var ipadPaket: String { "\\(Marke.name).swiftpm.zip" }' in kern
+    assert _swift_text(AKTUALISIERUNG, "pruefsummen") == "SHA256SUMS.txt"
+    assert 'var tag: String { "v\\(description)" }' in kern
+    for name in ('"freigabe/$NAME-mac.zip"', '"freigabe/$NAME.swiftpm.zip"',
+                 "freigabe/SHA256SUMS.txt"):
+        assert name in befehle, name
+    assert 'sha256sum "$NAME-mac.zip" "$NAME.swiftpm.zip"' in befehle
+    assert "> SHA256SUMS.txt" in befehle
+    # DAS MAC-ZIP IST DAS DES JOBS `mac`, nicht ein zweites gebautes.
+    holen = [s for s in job["steps"]
+             if str(s.get("uses", "")).startswith("actions/download-artifact")]
+    assert len(holen) == 1 and holen[0]["uses"] == "actions/download-artifact@v4", holen
+    abgelegt = [s for s in ablauf["jobs"]["mac"]["steps"]
+                if str(s.get("uses", "")).startswith("actions/upload-artifact")]
+    assert holen[0]["with"]["name"] == abgelegt[0]["with"]["name"]
+    assert "ipad/VisboxMac/App/Info.plist" in befehle
+    # DER ORDNER DES IPAD-PAKETS ist der, den diese Proben pruefen.
+    assert "zip -r -q -X" in befehle and " Visbox.swiftpm " in befehle
+    assert (IPAD / "Visbox.swiftpm").resolve() == APP.resolve()
+
+
+def test_die_pruefstrecke_nimmt_nur_aktionen_mit_bekannter_lizenz():
+    """Regel 1 in der Pruefstrecke: nur Aktionen von GitHub selbst (MIT), mit fester Fassung.
+    Sie gehen nicht in die App ein und stehen trotzdem im ``NOTICE`` — samt ``gh``."""
+    erlaubt = {"actions/checkout@v4", "actions/upload-artifact@v4",
+               "actions/download-artifact@v4"}
+    benutzt = {s["uses"] for job in _ablauf()["jobs"].values() for s in job["steps"]
+               if "uses" in s}
+    assert benutzt <= erlaubt, sorted(benutzt - erlaubt)
+    notice = NOTICE.read_text(encoding="utf-8")
+    for name in ("actions/download-artifact", "GitHub CLI (gh)"):
+        assert name in notice, name
+
+
+def test_die_apps_fragen_genau_dieses_repo():
+    """Oeffentlich und ohne Konto, ``…/releases/latest`` **dieses** Repos; geladen wird nur,
+    was unter ``github.com/<besitzer>/<repo>/releases/download/`` liegt."""
+    assert _swift_text(AKTUALISIERUNG, "besitzer") == "Imperigo"
+    assert _swift_text(AKTUALISIERUNG, "repo") == "ai-imaging-in-a-box"
+    kern = _ohne_kommentarzeilen(AKTUALISIERUNG.read_text(encoding="utf-8"))
+    assert '"https://api.github.com/repos/\\(besitzer)/\\(repo)/releases/latest"' in kern
+    assert 'teile[1] == besitzer, teile[2] == repo' in kern
+    # KEIN TOKEN in der Frage (Regel 3): weder im Kern noch in den Apps.
+    for datei in [AKTUALISIERUNG, FASSUNGSHINWEIS, *sorted(MAC_AKTUALISIEREN.glob("*.swift"))]:
+        code = _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+        assert "Authorization" not in code and "Bearer" not in code, datei.name
+
+
+def test_der_mac_ersetzt_ueber_das_system_ohne_shell():
+    """Entpacken mit ``/usr/bin/ditto`` als Prozess mit Liste der Argumente, die alte App in den
+    Papierkorb statt geloescht, Kennung, Nummer und Siegel geprueft — und keine Shell."""
+    code = _mac_code(MAC_AKTUALISIEREN / "Ersetzer.swift")
+    assert 'URL(fileURLWithPath: "/usr/bin/ditto")' in code
+    assert 'prozess.arguments = ["-x", "-k", zip.path, ordner.path]' in code
+    assert code.count("Process()") == 1
+    for verboten in ("/bin/sh", "/bin/bash", "/bin/zsh", '"-c"', "system(", "NSAppleScript",
+                     "removeItem(at: alt"):
+        assert verboten not in code, verboten
+    assert "trashItem(at: alt" in code
+    for schritt in ("Aktualisierung.pruefeOrt(", "Aktualisierung.pruefe(anlage:",
+                    "Aktualisierung.waehleBuendel(", "Aktualisierung.pruefeBuendel(",
+                    "siegelHaelt(neu)", "Aktualisierung.istAusDiesemRepo(adresse)",
+                    "Aktualisierung.istErlaubteWeiterleitung(neu)"):
+        assert schritt in code, schritt
+    # DIE REIHENFOLGE IST DIE SICHERUNG: geprueft wird alles, bevor getauscht wird.
+    assert code.index("siegelHaelt(neu)") < code.index("try tausche(alt: alt, neu: neu)")
+    assert code.index("Aktualisierung.pruefe(anlage:") < code.index("entpacke(zip")
+
+
+def test_keine_installation_ohne_klick():
+    """Der Waechter bietet nur an; ``ladeUndErsetze`` ruft allein das Blatt, auf den Knopf
+    «Laden und ersetzen» oder «Erneut versuchen»."""
+    aufrufe = []
+    for datei in _swift_dateien(MAC_QUELLEN):
+        for zeile in _mac_code(datei).splitlines():
+            if "ladeUndErsetze()" in zeile and "func ladeUndErsetze" not in zeile:
+                aufrufe.append((datei.name, zeile.strip()))
+    assert {d for d, _ in aufrufe} == {"Aktualisierenblatt.swift"}, aufrufe
+    blatt = _mac_code(MAC_AKTUALISIEREN / "Aktualisierenblatt.swift")
+    assert "Button(Aktualisierung.ladenUndErsetzen) { waechter.ladeUndErsetze() }" in blatt
+    fenster = _mac_code(MAC_QUELLEN / "Start" / "Hauptfenster.swift")
+    assert "Text(Aktualisierung.knopf(angebot.nummer))" in fenster
+    assert "aktualisierung.starte()" in fenster
+
+
+def test_das_ipad_zeigt_nur_einen_hinweis():
+    """Selbst ersetzen darf eine iPad-App nicht — dort gibt es weder Laden noch Tauschen."""
+    code = _ohne_kommentarzeilen(FASSUNGSHINWEIS.read_text(encoding="utf-8"))
+    assert "Aktualisierung.ipadHinweis(neu)" in code
+    assert 'forResource: "embedded", withExtension: "mobileprovision"' in code
+    for datei in _swift_dateien(APP):
+        text = _ohne_kommentarzeilen(datei.read_text(encoding="utf-8"))
+        for verboten in ("downloadTask", "trashItem", "Process("):
+            assert verboten not in text, (datei.name, verboten)
+    start = _ohne_kommentarzeilen((APP / "Startansicht.swift").read_text(encoding="utf-8"))
+    assert "Fassungshinweis(frage: fassung)" in start and "fassung.starte()" in start

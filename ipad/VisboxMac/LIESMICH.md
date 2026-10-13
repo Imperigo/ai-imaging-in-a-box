@@ -13,7 +13,22 @@ die Mac-App selbst misst nur und zeigt.
 
 ## Herunterladen
 
-Die App kommt fertig aus der Prüfstrecke, ohne Xcode und ohne Apple-Konto (Entscheid 58):
+**Seit 0.2.1 (Entscheid 84, 13.10.2026) aus der Freigabe:** Auf GitHub im Repo rechts unter
+**Releases** die neueste Freigabe öffnen und `Visbox-mac.zip` laden — ohne Anmeldung, nur einmal
+auspacken. Daneben liegen das iPad-Paket, das Fassungsblatt und `SHA256SUMS.txt`
+(nachprüfen mit `shasum -a 256 -c SHA256SUMS.txt` im Download-Ordner). Eine Freigabe entsteht
+nur, wenn auf `main` eine neue Nummer steht.
+
+**Danach aktualisiert sich die App selbst:** Liegt eine neuere Fassung auf GitHub, steht in der
+Werkzeugleiste **«● 0.x.y verfügbar — Aktualisieren»**. Ein Klick zeigt Nummer und Neuerungen;
+erst **«Laden und ersetzen»** lädt, gleicht die Prüfsumme ab, prüft Kennung und Unterschrift,
+legt die alte App in den Papierkorb und die neue an ihren Platz; dann **«Neu starten»**. Gefragt
+wird beim Start und einmal täglich. Danach verlangt macOS eventuell noch einmal «Trotzdem öffnen»
+(unten) und den Schlüsselbund. Läuft die App noch aus «Downloads», ersetzt sie sich nicht —
+erst in «Programme» ziehen.
+
+Für einen Zweig, der noch nicht auf `main` ist, gilt weiter der Weg aus der Prüfstrecke, ohne
+Xcode und ohne Apple-Konto (Entscheid 58):
 
 1. Auf GitHub im Repo unter **Actions** den Ablauf **«iPad»** öffnen und den letzten grünen
    Lauf des gewünschten Zweigs wählen.
@@ -157,7 +172,8 @@ ipad/VisboxMac/
     ├── Start/               Strom A: Startzeilen, Einrichten, Leitung, Fläche, Schriften, Farben
     ├── Vermittlung/         Strom B: das iPad über den Mac
     ├── Vorfuehrung/         Strom C: der Vorführmodus
-    └── Assistent/           Strom D: die Seitenleiste des Assistenten
+    ├── Assistent/           Strom D: die Seitenleiste des Assistenten
+    └── Aktualisieren/       Entscheid 84: fragen, laden, prüfen, ersetzen (Regeln im Kern)
 ```
 
 Übersetzt wird nur in der Prüfstrecke (`.github/workflows/ipad.yml`, Job `mac`): `swift build`

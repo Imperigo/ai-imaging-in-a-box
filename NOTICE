@@ -383,6 +383,52 @@ nur im Fenster des Dienstes) und hier deklariert.
 --------------------------------------------------------------------------------
 
 ================================================================================
+Werkzeuge der Pruefstrecke und der Aktualisierung - nicht ausgeliefert
+================================================================================
+
+Seit Owner-Entscheid 84 (13.10.2026, Visbox 0.2.1) legt die Pruefstrecke
+(.github/workflows/ipad.yml, Job "freigabe") bei neuer Nummer eine GitHub-
+Freigabe ab, und die Mac-App ersetzt sich auf Klick selbst. Nichts davon geht
+in Visbox ein: Die Werkzeuge laufen auf den Rechnern von GitHub bzw. gehoeren
+zum Betriebssystem des Mac. Verworfen wurde Sparkle (MIT,
+https://github.com/sparkle-project/Sparkle) - es waere die einzige Abhaengigkeit
+der Mac-App von aussen (ein fertig uebersetztes Framework, das die Pruefstrecke
+ins von Hand gebaute Buendel legen und mitunterschreiben muesste), verlangt
+einen eigenen geheimen Schluessel (EdDSA) als Geheimnis der Pruefstrecke und
+einen eigenen Feed (Appcast); Begruendung in
+docs/VISBOX_0.2.1_2026-10-13.md, die Regeln des Eigenbaus in
+ipad/Visbox.swiftpm/Kern/Aktualisierung.swift.
+
+--------------------------------------------------------------------------------
+GitHub CLI (gh)                                    MIT
+https://github.com/cli/cli  ·  https://github.com/cli/cli/blob/trunk/LICENSE
+
+Auf den Runnern von GitHub vorinstalliert, nicht von uns mitgebracht. Aufruf
+nur im Job "freigabe":
+    gh release create v<nummer> ... <mac-zip> <ipad-zip> <fassungsblatt> SHA256SUMS.txt
+mit dem Token des Laufs (GH_TOKEN = github.token), nie mit einem eigenen.
+
+--------------------------------------------------------------------------------
+actions/checkout, actions/upload-artifact, actions/download-artifact   MIT
+https://github.com/actions/checkout  ·  https://github.com/actions/upload-artifact
+https://github.com/actions/download-artifact
+
+Aktionen von GitHub selbst, je mit fester Hauptfassung (@v4); laufen nur in der
+Pruefstrecke. download-artifact ist seit 0.2.1 dabei: Der Job "freigabe" holt
+das ZIP, das der Job "mac" gebaut hat, statt es ein zweites Mal zu bauen.
+tests/test_ipad_geruest.py laesst keine andere Aktion zu.
+
+--------------------------------------------------------------------------------
+ditto (macOS, /usr/bin/ditto)                      Teil des Betriebssystems
+
+Vermerk, keine Abhaengigkeit (wie die Apple-Frameworks, CLAUDE.md, Regel 1).
+Die Mac-App ruft es beim Aktualisieren als Prozess mit fester Pfadangabe und
+Liste der Argumente auf (ditto -x -k <zip> <leerer ordner>), ohne Shell -
+dasselbe Werkzeug, mit dem die Pruefstrecke das ZIP packt.
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Tailscale - externer Dienst, nicht ausgeliefert
 ================================================================================
 

@@ -17,6 +17,12 @@
 # `.app` mit Behelfs-Unterschrift und als ZIP zum Herunterladen abgelegt — der Owner holt sie
 # von hier (Entscheid 58). Gestartet ist sie damit noch nicht.
 #
+# Seit dem 13.10.2026 (v0.2.1, Owner-Entscheid 84) ein viertes, im eigenen Job `freigabe`: Traegt
+# `main` eine Nummer, die noch keinen Tag hat, legt er eine GitHub-Freigabe ab (Tag `v<nummer>`;
+# Mac-ZIP, iPad-Paket als ZIP, Fassungsblatt, SHA256SUMS.txt). Danach fragen die Apps
+# (`Kern/Aktualisierung.swift`). Nur auf `main`, nur bei neuer Nummer (84b), nur wenn `app` und
+# `mac` gruen sind.
+#
 # WAS HIER BEWUSST NICHT STEHT
 #
 # Kein Aufspielen, keine Signatur mit Apple-Konto (die Mac-App traegt nur die Behelfs-
@@ -48,6 +54,9 @@ concurrency:
   group: ipad-${{ github.ref }}
   cancel-in-progress: true
 
+# NUR LESEN, fuer jeden Job — ausser `freigabe`, der als einziger schreiben darf (er legt Tag
+# und Freigabe an). Die Schreibrechte stehen darum an ihm und nicht hier: Ein Fehler in einem
+# Uebersetzungsschritt soll nichts im Repo anlegen koennen.
 permissions:
   contents: read
 
@@ -184,3 +193,102 @@ jobs:
           path: ipad/VisboxMac/${{ env.NAME }}-mac.zip
           retention-days: 14
           if-no-files-found: error
+
+  freigabe:
+    name: Freigabe bei neuer Nummer
+    # DIE FREIGABE (Owner-Entscheid 84, 13.10.2026): Die Apps fragen
+    # `…/releases/latest` dieses Repos und bieten an, was neuer ist. Bis dahin holte der Owner
+    # jede Fassung von Hand als ZIP aus einem Lauf.
+    #
+    # NUR AUF `main` UND NIE IN EINEM PULL REQUEST: Ein Zweig, der die Nummer hochsetzt, legte
+    # sonst eine Freigabe an, bevor er zusammengefuehrt ist — und die Apps boeten einen Stand an,
+    # den es auf `main` nie gab. Ein `workflow_dispatch` auf einem Zweig laesst diesen Job darum
+    # aus (belegt mit dem ersten Lauf auf dem Zweig des Baus, 13.10.2026).
+    #
+    # NUR BEI NEUER NUMMER (84b): Die Nummer aus `pyproject.toml` hat noch keinen Tag. Dass sie
+    # an allen vier Stellen gleich ist, bewacht `tests/test_versionsnummer.py` — darunter das
+    # iPad-Manifest, und weil es unter `ipad/` liegt, faehrt dieser Ablauf bei jeder neuen Nummer.
+    #
+    # NUR NACH GRUEN: `needs` wartet auf beide Jobs. Eine Freigabe, deren iPad-App nicht
+    # uebersetzt, waere ein Angebot, das am Geraet scheitert.
+    needs: [app, mac]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # DER EINZIGE JOB MIT SCHREIBRECHT — fuer Tag und Freigabe, nichts sonst.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Stand holen
+        uses: actions/checkout@v4
+
+      - name: Nummer lesen, Tag suchen, Fassungsblatt finden
+        id: nummer
+        run: |
+          set -euo pipefail
+          NUMMER=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          echo "Nummer: $NUMMER"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$NUMMER" > /dev/null; then
+            echo "v$NUMMER hat schon einen Tag — keine neue Freigabe."
+            echo "neu=nein" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # DAS FASSUNGSBLATT IST DER TEXT DER FREIGABE: genau eines je Nummer. Fehlt es, ist
+          # der Lauf rot — eine Nummer ohne Blatt ist ein Versehen, kein Grund, still nichts
+          # zu sagen.
+          shopt -s nullglob
+          BLAETTER=(docs/VISBOX_"$NUMMER"_*.md)
+          if [ "${#BLAETTER[@]}" -ne 1 ]; then
+            echo "::error::Fuer $NUMMER braucht es genau ein Fassungsblatt docs/VISBOX_${NUMMER}_<datum>.md (gefunden: ${#BLAETTER[@]})."
+            exit 1
+          fi
+          NAME=$(python3 -c 'import plistlib; print(plistlib.load(open("ipad/VisboxMac/App/Info.plist", "rb"))["CFBundleName"])')
+          {
+            echo "neu=ja"
+            echo "nummer=$NUMMER"
+            echo "blatt=${BLAETTER[0]}"
+            echo "name=$NAME"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Die Mac-App aus dem Job `mac` holen
+        if: steps.nummer.outputs.neu == 'ja'
+        # DASSELBE ZIP, das der Job `mac` gebaut und abgelegt hat — nicht ein zweites Mal
+        # gebaut. `actions/download-artifact` ist MIT (GitHub), laeuft nur hier in der
+        # Pruefstrecke und geht nicht in die App ein (`NOTICE`).
+        uses: actions/download-artifact@v4
+        with:
+          name: Visbox-mac
+          path: freigabe
+
+      - name: iPad-Paket, Pruefsummen, Freigabe
+        if: steps.nummer.outputs.neu == 'ja'
+        # `gh` IST AUF DEN RUNNERN VON GITHUB VORHANDEN (GitHub CLI, MIT) und spricht mit dem
+        # Token dieses Laufs — kein eigener Schluessel, nichts im Repo.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMMER: ${{ steps.nummer.outputs.nummer }}
+          BLATT: ${{ steps.nummer.outputs.blatt }}
+          NAME: ${{ steps.nummer.outputs.name }}
+        run: |
+          set -euo pipefail
+          test -f "freigabe/$NAME-mac.zip"
+          # DAS IPAD-PAKET ALS ZIP, mit dem Ordner selbst darin (`Visbox.swiftpm/…`): So
+          # oeffnet es sich nach dem Entpacken am Mac mit Doppelklick in Xcode. Ohne `-y`, also
+          # ohne Verweise — das App-Paket hat keine (`tests/test_ipad_geruest.py`).
+          (cd ipad && zip -r -q -X "../freigabe/$NAME.swiftpm.zip" Visbox.swiftpm -x '*/.build/*' '*/.swiftpm/*')
+          cp "$BLATT" freigabe/
+          # DIE PRUEFSUMMEN IN DER FORM VON `sha256sum`: «<summe>  <name>» — so liest sie der
+          # Kern (`Aktualisierung.summe`), und so prueft sie ein Mensch mit `shasum -a 256 -c`.
+          (cd freigabe && sha256sum "$NAME-mac.zip" "$NAME.swiftpm.zip" "$(basename "$BLATT")" > SHA256SUMS.txt)
+          cat freigabe/SHA256SUMS.txt
+          gh release create "v$NUMMER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$NAME $NUMMER" \
+            --notes-file "$BLATT" \
+            --latest \
+            "freigabe/$NAME-mac.zip" \
+            "freigabe/$NAME.swiftpm.zip" \
+            "freigabe/$(basename "$BLATT")" \
+            freigabe/SHA256SUMS.txt
