@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261013-277",
+  "art": "frage",
+  "beschreibung": "Tiefenfilter der Splat-Bruecke am echten Splat: Loecher kleiner? Welche Filter? Masken am eigenen Lauf.",
+  "anweisung": "=== TIEFENFILTER DER SPLAT-BRUECKE: SCHLIESSEN SICH DIE LOECHER? ===\n\nWAS SICH GEAENDERT HAT (ai-imaging main nach der Ansage; nur Splat-Laeufe; FASSUNG 3 -> Netz einmal neu)\n  Die Bruecke filtert die Tiefe je Bild, bevor sie verschmilzt (ein verworfener Bildpunkt traegt keine Tiefe):\n    deckkraft  — nur wo die akkumulierte Deckkraft >= 0,7\n    sprenkel   — Abweichung vom 3x3-Median > 5 % verworfen\n    streuung   — Streuung der Tiefe entlang des Strahls > 10 % verworfen (zweiter gsplat-Durchgang mit z und z^2;\n                 scheitert er, setzt der Filter aus und der Bericht sagt es in streuung_fehler)\n    nah        — naeher als 1,5 m an der Kamera verworfen\n    weg        — naeher als 1,2 m an IRGENDEINER Kamera der Aufnahme verworfen (der Laufweg ist leerer Raum)\n    maske      — nur wenn Masken NEBEN DERSELBEN Aufnahme liegen (../../masks/<ansicht>/<bildname>.png),\n                 Polaritaet aus maske.json (kosmoprepare: weiss = behalten). KEINE Uebertragung zwischen Laeufen.\n  Synthetische Probe (Strassenraum mit «Person»): Fetzen 8 989 -> 860 Stuecke, Inseln 6,1 % -> 1,1 %; getragen\n  vom Streuungsfilter; Nah und Maske allein halfen kaum. Kosten: etwa 6 Punkte Deckung der Strasse.\n  Dazu behoben: Aufnahme/Masken hinter Symlinks gefunden; zeiten_s mit jedem Voxelversuch; Netz deterministisch\n  (eine sha256); Deckung als Stichprobe ueber ALLE dichten Punkte (deckung.dicht_gesamt).\n\nAUFBAU\n  ai-imaging main ziehen; AIIMAGING_SPLAT_AUFNAHME wie in 276. Nichts installieren.\n\n1 · BRUECKE ALLEIN, Abnahme-Splat (OHNE Masken), drei Varianten — direkter Aufruf, z. B.\n    .venv-render oder Produkt-Python: from aiimaging import seams;\n    seams.splat_zu_netz(<ply>, matrix=<transform aus der Szene>, aufnahme=<sparse/0>, tiefenfilter=X)\n    mit X = \"keine\", \"streuung,nah,weg\", None (= alle, Vorgabe). Je Variante: tiefenfilter.je_filter (Anteile),\n    streuung_bilder / streuung_fehler, Dreiecke, Stuecke, inseln, deckung, Voxel/Blockwache, Zeit, GPU-Spitze.\n2 · AUFTRAG (Hallenauftrag wie 276, Lauf A, s/sSE/nNW, Seeds 0–2, MIT Nullprobe) mit der Vorgabe (alle):\n    Flaeche neben dem Bauwerk, die das Netz fasst (276: 5–16 %); Konfetti/Fremdkoerper x von 9; Pruefung je\n    Kamera (276: 0,940/0,917/0,948 bestanden); Laufzeit.\n3 · ZUSATZ MIT MASKEN: der Splat aus auf-256 D mit SEINER Aufnahme (sparse/0 daneben, masks/ daneben):\n    Bruecke allein mit Vorgabe — masken.gefunden/anzahl/polaritaet/polaritaet_quelle, Anteil maske,\n    deckung, Stuecke. Gegen dieselbe Bruecke mit tiefenfilter=\"deckkraft,sprenkel,streuung,nah,weg\" (ohne\n    Maske). Kein Auftrag mit Bildern noetig.\n4 · Netz zweimal rechnen (Speicher leeren): gleiche sha256?\n\nWAS DU NICHT TUST\n  Nichts pushen, nichts mergen, keinen Code aendern, nichts installieren. Keine Bilder des echten Splats und\n  keine Bilder mit der Person ins Repo. Keine Namen, Pfade mit Benutzernamen, Host- oder Netznamen, IPs.\n  Auftrag in offen/.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261013-277.json)\n  Koepfe; 1–4 je Zahlen + Satz. Urteile: Welche Filterwahl ist am echten Splat am besten? Sind die Loecher\n  kleiner? Besteht das Bild weiter?",
+  "erstellt": "2026-10-13T15:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Bestand aus dem Splat), tools/make_test_splat.py --form strasse --person; der echte Splat bleibt lokal"
+  },
+  "params": {
+    "zweige": [
+      "claude/kosmovis-v018-splat-context@cf839597c",
+      "claude/lw-splat-context"
+    ],
+    "folgt_auf": "auf-20261013-276",
+    "entscheide": [
+      "79"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: Bruecke 3 Varianten + 2 am Lauf 256 D (je bis 240 gsplat-Bilder, zweiter Durchgang), dazu 9 Z-Image-Turbo-Laeufe.",
+    "hinweise": [
+      "Nichts installieren.",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Keine Bilder des echten Splats oder mit der Person ins Repo (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Koepfe.",
+    "1–4 je Zahlen und ein Satz.",
+    "Urteile: beste Filterwahl? Loecher kleiner? Bild besteht?"
+  ],
+  "rang": 64
+}

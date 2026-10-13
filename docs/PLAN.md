@@ -7853,7 +7853,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Messung `auf-20261013-275`**: Brücke eingerichtet, **Konfetti weg (0 von 9)**; Netz deckt nur 21–26 % (Löcher). *(13.10.2026, §86)*
 - [x] **Dringend behoben:** Abbruch ohne Gelände mit Nullprobe seit E78a; `--oben=`; Voxel 7 cm; cu130. *(13.10.2026, §86)*
 - [x] **Blickwinkel aus der Aufnahme** gebaut (eigener COLMAP-Leser; pycolmap wegen GPL-Fund weggelassen), Inselgrenze geprüft (bleibt 200). *(13.10.2026, §87)*
-- [ ] **Messung `auf-20261013-276`** (local): Löcher zu? Bild besteht?
+- [x] **Messung `auf-20261013-276`**: Prüfung 3 von 3 bestanden; Löcher bleiben (Deckung 10 %). *(13.10.2026, §88)*
+- [x] **Splat-Vertrag `cf839597c`** an Int 1 freigegeben (v0.1.8). *(13.10.2026, §88)*
+- [x] **Tiefenfilter** und vier Fehler aus 276 gebaut. *(13.10.2026, §89)*
+- [ ] **Messung `auf-20261013-277`** (local): beste Filterwahl, Löcher kleiner?
 - [ ] **Brücke RealityScan** — später (Entscheid 80); Fotos liegen vor (960 Bilder mit Masken).
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

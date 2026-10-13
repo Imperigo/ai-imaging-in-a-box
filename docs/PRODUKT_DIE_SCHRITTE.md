@@ -1415,3 +1415,9 @@ Aufnahme wirklich stand — der Heim-PC hat nachgewiesen, dass Kameras und Splat
 Strassenraum stieg die Abdeckung von 71 auf 96 %. Dabei ein Lizenzfund: Ein Lesewerkzeug (pycolmap) trägt in seinem
 fertigen Paket GPL-Code; es wird darum nicht verwendet, ein eigener Leser ersetzt es.
 
+**Prüfung bestanden, Löcher bleiben — Tiefenfilter (13.10.2026).** Mit der echten Umgebung bestanden die Bilder zum
+ersten Mal in allen drei Kameras. Die Umgebung selbst hatte aber weiter Löcher: Die gefilmte Person stand als Wolke vor
+der Kamera, und die Tiefe war gesprenkelt. Jetzt sortiert die Brücke unsichere Tiefen aus, bevor sie das Netz baut —
+am wirksamsten die Punkte, an denen der Splat entlang eines Sehstrahls «unentschieden» ist. Ob das am echten Splat die
+Löcher schliesst, misst der Heim-PC.
+
