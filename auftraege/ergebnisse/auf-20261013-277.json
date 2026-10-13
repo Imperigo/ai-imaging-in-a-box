@@ -1,0 +1,329 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261013-277",
+ "worker": "local",
+ "rang": 64,
+ "folgt_auf": "auf-20261013-276",
+ "owner_entscheid": [
+  "79"
+ ],
+ "status": "erledigt mit Befund — die Vorgabe der Tiefenfilter liefert am echten Splat KEIN Netz: Der Streuungsfilter verwirft 99.99 % aller Bildpunkte, und der Runner bricht danach in Open3D ab («No block is touched in TSDF volume»). Am Abnahme-Splat und an Lauf 256 D gleich. Im Auftrag faellt der Abholer darum auf die Kugeln zurueck (Konfetti 9 von 9, nur Kamera s bestanden). Ohne Streuung laufen alle Filter durch, verkleinern die Loecher aber nicht (Stuecke 468'147–497'497, Deckung 5.9–10.4 %). Netz ist jetzt deterministisch (gleiche sha256).",
+ "beendet": "2026-10-13T12:55:00Z",
+ "weg": "ai-imaging main 36687f9 fuer alle Laeufe, nichts installiert, kein Code im Repo geaendert. Teil 1/3/4: seams.splat_zu_netz direkt aus .venv-render (Runner in der vorhandenen .venv-splat), je Variante eigener Wegwerf-Speicher, GPU-Spitze per nvidia-smi alle 0.2 s minus Ruhe; Matrix aus der Behelfsverortung des jeweiligen Splats, von Z oben auf glTF (Y oben) gedreht — fuer den Abnahme-Splat zahlengleich mit dem transform des App-Auftrags (gleicher Speicherschluessel). Teil 2: Test-App wie 276 — Wegwerf-Arbeitskopie (detached) auf 0aeb240bb, cf839597c lokal gemergt, nicht gepusht; npm ci Exit 0, tauri build --no-bundle Exit 0 (227 s) mit eigenem Cargo-Zielordner; Messhilfe nur lokal (Profil vorbelegt: Bruecke auf eigenen Port, Sync auf toten Port, Vollautomatik an). Eigener Xvfb, bwrap --unshare-net, darin Sitzungs-DBus, eigene Bruecke (eigener Port, eigene Ablage, Ollama auf totem Port), Relais Unix-Socket zum MCP-Port der Test-App; App mit env -i, Software-GL, Wegwerf-XDG. Bedient ueber kosmo_maus/kosmo_blick und vis_*: neues Projekt, Splat + Verortung laden (1'057'305 Punkte), Volumen-Datei, V1 als Bestand (3.45 m, im Coop angewendet), Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel» (beide Verbindungen und Ausfuehren per echter Maus auf dem eigenen Xvfb; kosmo_maus «ziehen» nicht erneut versucht), Z-Image Turbo, 128, 1600x1000, Kameras auto. Abholer: tools/abholen.py unveraendert (--store eigene Ablage --fremde-freigabe --hoechstens 1 --kein-gelaende, MIT Nullprobe), AIIMAGING_MODELLE wie im Dienst, AIIMAGING_SPLAT_AUFNAHME wie in 276, GPU-Sperre bei freier Karte (17–22 W, 2.1 GB, Ollama leer).",
+ "koepfe": {
+  "abholer": "ai-imaging main 36687f9",
+  "gebaut": "lokaler Merge (nicht gepusht) 0aeb240bb + cf839597c; App-Kopf v0.1.7",
+  "fassungen": {
+   "python": "3.11.15",
+   "torch": "2.14.1+cu130",
+   "gsplat": "1.5.3",
+   "open3d": "0.20.0",
+   "numpy": "2.4.6"
+  },
+  "behelf_lokal": "Nur zur Diagnose, nie im Repo, keine Urteilszahl beruht darauf: eine Kopie des Runners ausserhalb des Repos, die (a) ein Bild ohne Tiefe nach dem Sieben ueberspringt statt abzubrechen, (b) die Filteranteile und Perzentile der relativen Streuung nach stderr schreibt, weil der Bericht bei einem Abbruch fehlt. Mit ihr endet die Vorgabe statt im Absturz in «kein einziges Dreieck».",
+  "aufnahme_finden": "behoben: Am Verweis-Pfad des App-Auftrags findet finde_aufnahme die Aufnahme jetzt «neben dem splat» (ohne Umgebungsvariable geprueft); der Auftrag lief wie bestellt mit AIIMAGING_SPLAT_AUFNAHME."
+ },
+ "schritte": {
+  "T1": {
+   "frage": "Bruecke allein, Abnahme-Splat ohne Masken: keine / streuung,nah,weg / Vorgabe",
+   "keine": {
+    "status": "ok",
+    "blickwinkel": 240,
+    "gefuellt_mittel": 0.9991,
+    "voxel": {
+     "angefragt_m": 0.07,
+     "benutzt_m": 0.0875,
+     "blockwache": "1x angeschlagen: 252'514 Bloecke → Voxel x1.25 → 195'776"
+    },
+    "dreiecke": 500000,
+    "dreiecke_roh": 4161161,
+    "stuecke": 497497,
+    "groesstes_stueck": 202254,
+    "inseln_entfernt_dreiecke_anteil": 0.6885,
+    "deckung": 0.0994,
+    "deckung_stichprobe": "200'000 von 955'409 dichten Punkten (dicht_gesamt)",
+    "deckung_abstand_median": 0.2388,
+    "zeit_s": {
+     "wand": 30.1,
+     "gesamt": 29.2,
+     "rendern": 4.4,
+     "blockwache_verworfen": 5.4,
+     "verschmelzen": 3.0,
+     "aufraeumen": 13.5
+    },
+    "gpu_spitze_gb": 6.1,
+    "tiefenfilter_je_filter": "alle 0 (aus)"
+   },
+   "streuung_nah_weg": {
+    "status": "Absturz nach 4.6 s: Splat→Netz fehlgeschlagen (Code 1), RuntimeError aus Open3D VoxelBlockGrid «No block is touched in TSDF volume, abort integration» — kein Netz, kein Bericht",
+    "gpu_spitze_gb": 2.5,
+    "je_filter_behelf": {
+     "streuung": 0.9999,
+     "nah": 0.0965,
+     "weg": 0.0642
+    },
+    "verworfen_anteil_behelf": 0.9999,
+    "streuung_bilder": 240,
+    "streuung_fehler": null,
+    "bilder_ohne_tiefe_behelf": "206 von 240 ganz leer, 17 weitere, an denen Open3D keinen Block trifft",
+    "mit_behelf": "«Die Verschmelzung ergab kein einziges Dreieck» (111.6 s)"
+   },
+   "vorgabe_alle": {
+    "status": "Absturz nach 4.6 s, derselbe Open3D-Fehler — kein Netz",
+    "gpu_spitze_gb": 2.5,
+    "je_filter_behelf": {
+     "deckkraft": 0.0132,
+     "sprenkel": 0.0548,
+     "streuung": 0.9999,
+     "nah": 0.0965,
+     "weg": 0.0642,
+     "maske": 0.0
+    },
+    "verworfen_anteil_behelf": 0.9999,
+    "streuung_bilder": 240,
+    "streuung_fehler": null,
+    "masken": "keine gefunden (keine neben dieser Aufnahme)",
+    "mit_behelf": "«kein einziges Dreieck» (114.3 s)"
+   },
+   "streuung_gemessen": {
+    "relative_streuung_perzentile_5_25_50_75_95": [
+     0.69,
+     1.17,
+     1.5,
+     1.88,
+     2.71
+    ],
+    "anteil_unter_0_1": 0.0001,
+    "anteil_unter_0_2": 0.0017,
+    "anteil_unter_0_3": 0.0059,
+    "erwartete_tiefe_aus_momenten_durch_ed_perzentile_5_50_95": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "deutung": "Der zweite Durchgang rechnet richtig (E[z] daraus = ED von gsplat). Am echten Splat ist die Tiefe entlang JEDES Strahls breit verteilt — Median sigma = 1.5 x Tiefe —, vermutlich weil halbdurchsichtige ferne und nahe Gaussians mit kleinem Gewicht E[z^2] tragen. Die Schwelle 10 % aus der synthetischen Probe trennt hier nichts: Sie verwirft alles."
+   },
+   "zusatz_ohne_streuung": {
+    "nah": {
+     "stuecke": 497009,
+     "deckung": 0.0784,
+     "inseln_anteil": 0.6919,
+     "verworfen": 0.0965,
+     "zeit_s": 29.9
+    },
+    "weg": {
+     "stuecke": 496936,
+     "deckung": 0.069,
+     "inseln_anteil": 0.6901,
+     "verworfen": 0.0642,
+     "zeit_s": 203.1
+    },
+    "deckkraft": {
+     "stuecke": 479164,
+     "deckung": 0.0996,
+     "inseln_anteil": 0.698,
+     "verworfen": 0.0132,
+     "zeit_s": 29.1
+    },
+    "sprenkel": {
+     "stuecke": 488501,
+     "deckung": 0.1039,
+     "inseln_anteil": 0.6835,
+     "verworfen": 0.0548,
+     "zeit_s": 34.8
+    },
+    "deckkraft_sprenkel_nah_weg": {
+     "stuecke": 468147,
+     "groesstes_stueck": 151713,
+     "deckung": 0.0591,
+     "inseln_anteil": 0.6961,
+     "verworfen": 0.1837,
+     "zeit_s": 208.4,
+     "gpu_spitze_gb": 6.1,
+     "zeiten": "rendern 108.3 s, blockwache_verworfen 81.2 s (der Filter weg wird im abgebrochenen Voxelversuch mitbezahlt)"
+    }
+   },
+   "satz": "Beide Varianten mit Streuung stuerzen nach 4.6 s ab — der Filter verwirft 99.99 % der Bildpunkte, und ein leeres Tiefenbild bricht die Integration ab; ohne Filter bleibt es beim Stand von 276 (497'497 Stuecke, Deckung 9.9 %, 30 s, 6.1 GB). Die Filter ohne Streuung aendern daran wenig: Stuecke −0 bis −6 %, Deckung faellt bis 5.9 %, «weg» kostet rund 170 s mehr."
+  },
+  "T2": {
+   "frage": "Hallenauftrag wie 276 mit der Vorgabe, MIT Nullprobe",
+   "app_auftrag": "context kind splat, fit behelf, transform 16 Zahlen — gleich der Matrix aus T1, gleicher Speicherschluessel",
+   "kontext_weg": "kugeln — die Bruecke scheiterte im Auftrag mit demselben Open3D-Fehler (kontext.netz_grund), Hinweis «UMGEBUNG ALS NOTLOESUNG (Kugeln)» im verdict",
+   "umgebung_auf_nicht_bauwerk": {
+    "277_vorgabe_kugeln": {
+     "s": 0.327,
+     "sSE": 0.369,
+     "nNW": 0.595
+    },
+    "276_netz_ohne_filter": {
+     "s": 0.049,
+     "sSE": 0.158,
+     "nNW": 0.113
+    },
+    "275_netz_7cm": {
+     "s": 0.259,
+     "sSE": 0.209,
+     "nNW": 0.243
+    }
+   },
+   "umgebung_im_bild": {
+    "s": 0.246,
+    "sSE": 0.319,
+    "nNW": 0.553
+   },
+   "bauwerk_verdeckt": {
+    "s": 0.042,
+    "sSE": 0.152,
+    "nNW": 0.415
+   },
+   "methode": "Anteil Bildpunkte mit der Kontextfarbe im Material-ID-Pass (wie 275/276); die Zahlen sind bis auf die dritte Stelle die des Kugel-Laufs aus 275",
+   "konfetti": "9 von 9 (Scheiben, Tafeln, Kugelhaufen in jedem Bild; in s Seed 2 dazu zwei erfundene Figuren)",
+   "je_kamera": {
+    "s": {
+     "anteil_soll": 0.2729,
+     "score": 0.876,
+     "geom_iou": 0.79,
+     "rho_maske": 0.986,
+     "seed": 2,
+     "nullanker": {
+      "rauschen": 0.058,
+      "grau": 0.022,
+      "verlauf": 0.3
+     },
+     "bodenabstand": "Verlauf-Boden erklaert 67 % von rho (Warnung)",
+     "urteil": "bestanden"
+    },
+    "sSE": {
+     "anteil_soll": 0.1978,
+     "score": 0.52,
+     "geom_iou": 0.301,
+     "rho_maske": 0.99,
+     "seed": 2,
+     "urteil": "nicht beurteilbar (19.8 % < 20 %)"
+    },
+    "nNW": {
+     "anteil_soll": 0.1365,
+     "score": 0.0,
+     "geom_iou": 0.124,
+     "rho_maske": 0.955,
+     "seed": 2,
+     "urteil": "nicht beurteilbar (13.6 %), Rahmung zu weit"
+    }
+   },
+   "gesamt": "verdict passed false «NICHT BEURTEILBAR (Gebaeudeanteil) … Geometrie 0.0 gegen 0.65»; 276: 0.940/0.917/0.948 alle bestanden",
+   "laufzeit_s": {
+    "auftrag": 319.1,
+    "s": 108.9,
+    "sSE": 101.7,
+    "nNW": 100.6,
+    "gesamt": 311.2,
+    "bruecke_bis_absturz": "rund 5",
+    "wache": "kein Stillstand, laengste Pause 24 s"
+   },
+   "satz": "Mit der Vorgabe faellt der Auftrag auf den Stand vor 275 zurueck: Die Bruecke liefert kein Netz, die Umgebung kommt als Kugeln, Konfetti 9 von 9, nur s besteht (0.876); sSE und nNW sind wieder nicht beurteilbar, weil die Kugeln die Halle verdecken (15 % / 42 %). Laufzeit 319 s.",
+   "urteil": "nein"
+  },
+  "T3": {
+   "frage": "Lauf 256 D mit seiner Aufnahme und seinen Masken: Vorgabe gegen deckkraft,sprenkel,streuung,nah,weg",
+   "masken": {
+    "gefunden": true,
+    "anzahl_naht": 960,
+    "lage": "../../masks (neben der Aufnahme)",
+    "maske_json": true,
+    "benutzt_im_runner": 240,
+    "polaritaet": "weiss = behalten",
+    "polaritaet_quelle": "maske.json",
+    "weiss_anteil": 0.905
+   },
+   "vorgabe": {
+    "status": "Absturz nach 5.6 s, derselbe Open3D-Fehler — kein Netz",
+    "je_filter_behelf": {
+     "deckkraft": 0.023,
+     "sprenkel": 0.061,
+     "streuung": 0.9999,
+     "nah": 0.0713,
+     "weg": 0.051,
+     "maske": 0.094
+    },
+    "verworfen_behelf": 0.9999,
+    "gpu_spitze_gb": 2.4
+   },
+   "ohne_maske_deckkraft_sprenkel_streuung_nah_weg": {
+    "status": "Absturz nach 5.2 s — kein Netz"
+   },
+   "zusatz_ohne_streuung": {
+    "keine": {
+     "stuecke": 416232,
+     "deckung": 0.0905,
+     "inseln_anteil": 0.7177,
+     "voxel_m": 0.109,
+     "zeit_s": 32.3
+    },
+    "maske": {
+     "stuecke": 393048,
+     "deckung": 0.0912,
+     "inseln_anteil": 0.7519,
+     "maske_anteil": 0.094,
+     "voxel_m": 0.109,
+     "zeit_s": 30.1
+    },
+    "deckkraft_sprenkel_nah_weg_maske": {
+     "stuecke": 504626,
+     "deckung": 0.0505,
+     "inseln_anteil": 0.754,
+     "verworfen": 0.243,
+     "voxel_m": 0.0875,
+     "zeit_s": 189.9
+    },
+    "deckkraft_sprenkel_nah_weg": {
+     "stuecke": 531668,
+     "deckung": 0.0505,
+     "inseln_anteil": 0.7431,
+     "verworfen": 0.1707,
+     "voxel_m": 0.0875,
+     "zeit_s": 199.9
+    },
+    "einschraenkung": "Die Blockwache waehlte je nach Filter 10.9 cm oder 8.75 cm — Stueckzahlen zwischen diesen Gruppen sind nur grob vergleichbar."
+   },
+   "satz": "Die Masken werden gefunden, richtig gepolt (maske.json) und verwerfen 9.4 % der Bildpunkte; mit der Vorgabe hilft das nichts, weil die Streuung alles verwirft. Allein wirkt die Maske klein: 416'232 → 393'048 Stuecke (−6 %), Deckung 9.05 → 9.12 %; zusammen mit den anderen Filtern 531'668 → 504'626 Stuecke (−5 %), Deckung gleich 5.05 %."
+  },
+  "T4": {
+   "frage": "Netz zweimal rechnen, Speicher leer: gleiche sha256?",
+   "abnahme_keine": {
+    "laeufe": 3,
+    "sha256_gleich": true,
+    "sha256": "4f2c8953…",
+    "stuecke": 497497
+   },
+   "lauf256D_maske": {
+    "laeufe": 2,
+    "sha256_gleich": true,
+    "sha256": "3aff12a9…"
+   },
+   "vorgabe": "nicht pruefbar (kein Netz)",
+   "satz": "Ja — fuenf Laeufe in getrennten Prozessen mit leerem Speicher ergeben je Variante dieselbe Datei (276: verschieden)."
+  }
+ },
+ "urteile": {
+  "beste_filterwahl": "Am echten Splat taugt die Vorgabe nicht (kein Netz). Unter den lauffaehigen ist keine Wahl besser als «keine»: deckkraft allein (Stuecke −4 %, Deckung gleich) und maske allein (−6 %) sind die einzigen ohne Verlust; nah, weg und die Kombination kosten Deckung (bis 5.1–5.9 %), weg dazu rund 170 s. Empfehlung bis zur Klaerung: deckkraft (+ maske, wo vorhanden), Streuung aus.",
+  "loecher_kleiner": "nein — mit der Vorgabe gar kein Netz; ohne Streuung 468'147–531'668 Stuecke und Deckung 5–10 % wie in 276.",
+  "bild_besteht": "nein mit der Vorgabe — Rueckfall auf Kugeln: 1 von 3 bestanden (s 0.876), sSE und nNW nicht beurteilbar, Konfetti 9 von 9 (276: 3 von 3, 0 von 9)."
+ },
+ "fehler": [
+  "Streuungsfilter: verwirft am echten Splat 99.99 % (Abnahme-Splat und Lauf 256 D); relative Streuung im Median 1.50, nur 0.01 % unter der Schwelle 0.10. Folge: Die Vorgabe ergibt nie ein Netz, und jeder Owner-Auftrag mit Splat faellt auf die Kugeln zurueck.",
+  "Runner, _gesiebt/_verschmelzen: der Fuellanteil wird VOR dem Sieben gemessen (anteil > 0), danach geht ein leeres Tiefenbild in compute_unique_block_coordinates — Open3D wirft «No block is touched» und der ganze Lauf endet (Code 1). Dazu tastet Open3D dort nur ein Raster ab: Auch Bilder mit wenigen Resttiefen scheitern (17 Faelle). Abhilfe: Bild ueberspringen, wenn nach dem Sieben nichts uebrig ist, und den RuntimeError je Bild fangen und zaehlen.",
+  "Der Bericht fehlt beim Abbruch: Je-Filter-Anteile und streuung_bilder stehen nur im Bericht eines erfolgreichen Laufs; der Befund zeigt nur den abgeschnittenen C++-Text. Ein Filter, der alles verwirft, sollte vor der Integration mit Zahlen gemeldet werden.",
+  "Filter weg: rund 100 s je Durchgang (Abstand jedes Bildpunkts zu 960 Kamerazentren); schlaegt die Blockwache an, wird er im verworfenen Versuch noch einmal bezahlt (blockwache_verworfen 66–81 s). Mit weg dauert die Bruecke 190–208 s statt 30 s.",
+  "Ein gescheiterter Brueckenlauf hinterlaesst einen leeren Schluessel-Ordner im Netz-Speicher (harmlos, aufgeraeumt)."
+ ],
+ "auffaelliges": [
+  "Netz jetzt deterministisch (Fehler 3 aus 276 behoben); Aufnahme hinter dem Verweis wird gefunden (Fehler 1 behoben); zeiten_s fuehrt den abgebrochenen Voxelversuch (blockwache_verworfen_s, Fehler 2 behoben); Deckung ueber 200'000 von 955'409 dichten Punkten (Fehler 4 behoben). Die Deckung ohne Filter bleibt 9.9 % (276 mit 20'328 Punkten: 10.0 %).",
+  "Die Kugel-Zahlen des Auftrags (Score 0.876/0.520/0.000, Flaechenanteile) sind dieselben wie im Kugel-Lauf von 275 — der Rueckfall ist reproduzierbar.",
+  "Blockwache: am Abnahme-Splat einmal (8.75 cm), an Lauf 256 D ohne Filter zweimal (10.9 cm).",
+  "Die Masken von Lauf 256 D tragen die Person nur an 9.4 % der Bildpunkte; maske.json gibt die Polaritaet, die Weiss-Mehrheit (0.905) bestaetigt sie.",
+  "Port 8731 war auf dem Rechner von einem fremden Prozess belegt; die Test-App lief im eigenen Netz-Namensraum und stoerte ihn nicht.",
+  "Bilder des echten Splats nur lokal beim Owner (alle 9 Bilder, Vergleich 276 gegen 277, Netz-Draufsicht), nicht im Repo; keine Masken- oder Rohbilder abgelegt."
+ ],
+ "bilder": [],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (/var/crash unveraendert), Relais, Bruecke, Sitzungs-DBus, Namensraum und Xvfb per gemerkter PID; Arbeitskopie per git worktree remove --force entfernt; Cargo-Zielordner, Profil, Wegwerf-Ablage, Wegwerf-Speicher, Behelfs-Runner und Hilfsskripte geloescht; GPU-Sperre frei. Behalten: .venv-splat und der Netz-Speicher (nichts Neues darin, der leere Ordner des gescheiterten Laufs entfernt)."
+}
