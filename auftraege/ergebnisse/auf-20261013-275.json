@@ -1,0 +1,316 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261013-275",
+ "worker": "local",
+ "rang": 62,
+ "folgt_auf": "auf-20261008-274",
+ "owner_entscheid": [
+  "79"
+ ],
+ "status": "erledigt mit Befund — E1 eingerichtet (Skript Exit 0, synthetischer Probelauf ok). Am echten Splat scheitert die Bruecke im Code von main zweimal (Argument-Form «--oben», danach Absturz SIGSEGV in Open3D bei 5-cm-Voxeln) und faellt sauber auf die Kugeln zurueck; ausserdem bricht der Abholer jeden Auftrag ohne Gelaende an der Nullprobe ab (trennhilfe). M1–M5 darum mit einem ausgewiesenen Behelf gemessen: Netz mit dem unveraenderten Runner bei Voxel 7 cm gerechnet und dem Auftrag als fertiges Netz gegeben (Weg «geliefert»), Abholer mit --ohne-nullprobe. Kein Code geaendert, nichts gepusht ausser diesem Ergebnis.",
+ "beendet": "2026-10-13T08:05:00Z",
+ "weg": "Einrichtung: bash betrieb/splat-umgebung.sh mit PYTHON = vorhandenes Python 3.11 (uv-verwaltet, nicht neu installiert; das System hat nur 3.14), TORCH_INDEX cu130 (Treiber meldet CUDA 13.2; cu124 kennt die RTX 5090 = sm_120 nicht), TORCH_CUDA_ARCH_LIST 12.0, CUDA-Toolkit 13.3 (nvcc) war schon da und wurde nur in PATH/CUDA_HOME genannt. Test-App wie 274: Wegwerf-Arbeitskopie (detached) auf 0aeb240bb (claude/lw-splat-context), darin cf839597c (claude/kosmovis-v018-splat-context) lokal gemergt (ohne Konflikt), nicht gepusht; npm ci (Exit 0), npm run build (Exit 0), tauri build --no-bundle mit eigenem Cargo-Zielordner (Exit 0, 241 s); Messhilfe nur lokal (index.html + public/__mess.js: Bruecke/Sync auf eigene bzw. tote Ports, Vollautomatik an), nie committet. Eigener Xvfb, bwrap --unshare-net, darin Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (eigener Port, eigene Ablage, Ollama auf totem Port), Relais Unix-Socket <-> MCP-Port der Test-App (eigener Port); App mit env -i und Wegwerf-XDG. Bedient ueber kosmo_blick/kosmo_maus und die vis_*-Werkzeuge: neues Projekt, Splat laden (Wolke + Verortung, 1'057'305 Punkte, Behelfsverortung), Volumen-Datei, «1 als Bestand uebernehmen» (V1, 3.45 m, im Coop angewendet), Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel» (eine Verbindung per echter Maus auf dem eigenen Xvfb, weil kosmo_maus «ziehen» am Prompt-Port nicht ankam — wie in 274), Ausfuehren (Z-Image Turbo, 128, 1600x1000, Kameras auto). Der App-Auftrag kam mit context (kind splat, fit behelf, transform 16 Zahlen). Abholer: tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst, je Lauf unter der geteilten GPU-Sperre bei freier Karte (18–21 W, 2.0 GB, Ollama /api/ps leer). Lauf 1 = App-Auftrag unveraendert; Laeufe 2 und 3 = Kopien dieses Auftrags (neue Kennung), Lauf 3 mit context.ply auf das 7-cm-Netz.",
+ "koepfe": {
+  "abholer": "ai-imaging main cb2d4cd (Entscheid 79, e660137) fuer alle Laeufe",
+  "gebaut": "lokaler Merge (nicht gepusht) 0aeb240bb + cf839597c; App-Kopf v0.1.7",
+  "fassungen": {
+   "python": "3.11.15",
+   "torch": "2.14.1+cu130",
+   "cuda_torch": "13.0",
+   "nvcc": "13.3",
+   "treiber_cuda": "13.2",
+   "gsplat": "1.5.3",
+   "open3d": "0.20.0",
+   "numpy": "2.4.6"
+  },
+  "behelf_lokal": "Zwei lokale Behelfe, nie im Repo: (1) ein Aufruf-Huelle um tools/abholen.py, die nur «--oben <wert>» zu «--oben=<wert>» umschreibt (Lauf 2); (2) die Naht seams.splat_zu_netz direkt mit voxel_m 0.07 und derselben Umschreibung (Netz fuer Lauf 3). Der Runner selbst ist unveraendert; zur Diagnose lief zusaetzlich eine Kopie mit Ausgaben (Bloecke, Kapazitaet) ausserhalb des Repos."
+ },
+ "laeufe": {
+  "A_app": {
+   "modell": "App-Auftrag unveraendert (Splat + V1 als Bestand)",
+   "zeit_s": 103.7,
+   "verdict": "job error nach Kamera s: «_nullprobe() got an unexpected keyword argument 'trennhilfe'»; Umgebung als Kugeln (Bruecke: argparse «--oben: expected one argument»)"
+  },
+  "A_kugeln": {
+   "modell": "Kopie des App-Auftrags, Huelle «--oben=», --ohne-nullprobe",
+   "zeit_s": 290.2,
+   "zeiten_s": {
+    "s": 100.6,
+    "sSE": 90.0,
+    "nNW": 87.0,
+    "gesamt": 277.6
+   },
+   "kontext_weg": "kugeln",
+   "netz_grund": "Splat→Netz fehlgeschlagen (Code -11): (keine Ausgabe)",
+   "verdict": "passed false, «NICHT BEURTEILBAR (Gebaeudeanteil) … 13.6 %»"
+  },
+  "A_netz": {
+   "modell": "Kopie des App-Auftrags, context.ply = Netz 7 cm (Weg «geliefert»), --ohne-nullprobe",
+   "zeit_s": 266.8,
+   "zeiten_s": {
+    "s": 90.7,
+    "sSE": 87.8,
+    "nNW": 85.0,
+    "gesamt": 263.5
+   },
+   "kontext_weg": "netz",
+   "verdict": "passed false, «Geometrie 0.445 gegen 0.65; Geometrie-Schwelle NICHT kalibriert (keine Nullprobe)»"
+  },
+  "gpu": "21 Z-Image-Turbo-Bilder (Lauf A_app 3 bis zum Abbruch, A_kugeln 9, A_netz 9), dazu Brueckenlaeufe (synthetisch 2, echt 1 + 1 aus dem Speicher, 8 Diagnoselaeufe je 6–16 s) und zwei kleine Blender-Laeufe (512 px, 16 Samples) fuer m3. Sperre je Lauf genommen und freigegeben."
+ },
+ "schritte": {
+  "E1": {
+   "frage": "Laeuft das Skript durch? Fassungen, Dauer, Platz",
+   "antwort": "ja",
+   "dauer_s": 160,
+   "groesse_venv_gb": 6.5,
+   "nebenbei": "gsplat legt seine beim ersten Rendern uebersetzten CUDA-Kerne im Nutzer-Zwischenspeicher fuer torch-Erweiterungen ab (44 MB, ausserhalb von .venv-splat, so von gsplat vorgesehen); behalten, sonst uebersetzt der naechste Lauf neu.",
+   "probelauf": "status ok, renderer gsplat, geraet cuda; Netz 256'508 Ecken, 499'999 Dreiecke; 48 Blickwinkel; 52.0 s (inkl. erstes Uebersetzen der Kerne)",
+   "platz": "Platte danach 1.4 TB frei",
+   "satz": "Das Skript laeuft mit zwei Anpassungen ueber Umgebungsvariablen durch: Python 3.11 aus einer vorhandenen Installation (das System hat nur 3.14, open3d hat dafuer kein Rad) und TORCH_INDEX cu130 statt der Vorgabe cu124, die die RTX 5090 (sm_120) nicht kennt; nvcc 13.3 passt in der Hauptfassung zu torch cu130.",
+   "hinweis_blatt": "Vorgabe TORCH_INDEX cu124 in SPLAT_BRUECKE.md/splat-umgebung.sh passt nicht zu Blackwell-Karten; cu128 braeuchte ein CUDA-12.8-Toolkit fuer das Uebersetzen, hier ist nur 13.x da."
+  },
+  "M1": {
+   "frage": "Netz: Rechenzeit, Grafikspeicher, Ecken/Dreiecke, Huellbox, kontext.weg, Speicher",
+   "im_auftrag_main": "kontext.weg = «kugeln» in beiden Auftraegen: (a) unveraendert scheitert der Aufruf sofort, weil seams.splat_zu_netz «--oben» und den Wert getrennt uebergibt und der Wert hier mit Minus beginnt (oben = [-0.033, -0.995, 0.092]) — argparse liest ihn als Schalter; (b) mit «--oben=» stuerzt der Runner nach 6–8 s mit SIGSEGV ab (Code -11, keine Ausgabe), in VoxelBlockGrid.extract_triangle_mesh (Zeile 331).",
+   "diagnose_absturz": {
+    "voxel_5cm": {
+     "aktive_bloecke": 435463,
+     "block_count_gesetzt": 134300,
+     "ergebnis": "SIGSEGV"
+    },
+    "voxel_5cm_block_count_600000": "SIGSEGV",
+    "voxel_5cm_plus_estimated_vertex_number_30M": "SIGSEGV",
+    "voxel_6cm": {
+     "aktive_bloecke": 323805,
+     "ergebnis": "SIGSEGV"
+    },
+    "voxel_7cm": {
+     "aktive_bloecke": 245424,
+     "ergebnis": "ok, 2'586'876 Dreiecke roh"
+    },
+    "voxel_8cm": {
+     "aktive_bloecke": 190145,
+     "ergebnis": "ok"
+    },
+    "voxel_10cm": {
+     "aktive_bloecke": 119876,
+     "ergebnis": "ok"
+    },
+    "voxel_15cm": {
+     "aktive_bloecke": 48059,
+     "ergebnis": "ok"
+    },
+    "schluss": "Open3D 0.20 stuerzt beim Herausziehen auf der CPU zwischen rund 245'000 und 324'000 aktiven Bloecken ab; die geschaetzte Blockzahl (134'300) liegt dreifach unter der echten, aber auch genug Platz hilft nicht."
+   },
+   "netz_7cm": {
+    "rechenzeit_s": 14.5,
+    "wand_s": 15.7,
+    "zeiten_runner_s": {
+     "lesen": 1.21,
+     "rendern": 1.55,
+     "verschmelzen": 1.77,
+     "aufraeumen": 9.88
+    },
+    "grafikspeicher_spitze_gb": 13.6,
+    "grafikspeicher_methode": "nvidia-smi alle 0.2 s, Spitze 15.6 GB minus 2.0 GB Ruhe",
+    "ecken": 354072,
+    "dreiecke": 499999,
+    "dreiecke_roh": 2586876,
+    "dreiecke_nach_inseln": 1493666,
+    "vereinfacht": true,
+    "blickwinkel": {
+     "gesamt": 48,
+     "gefuellt_mittel": 0.996,
+     "gefuellt_min": 0.908
+    },
+    "splat": {
+     "punkte": 3171915,
+     "dicht": 955409,
+     "sh_grad": 3
+    },
+    "huellbox_netz_m": [
+     60.4,
+     60.4,
+     46.6
+    ],
+    "huellbox_splat_dicht_m": [
+     150.9,
+     215.4,
+     266.1
+    ],
+    "huellbox_kugeln_m": [
+     268.3,
+     169.8,
+     202.6
+    ],
+    "huellbox_hinweis": "Netz in der Welt (Blender, Z oben): x −3.0…57.4, y −31.4…29.0, z −19.5…27.1 m; der dichte Splat umfasst das Mehrfache. 46.6 m Hoehe fuer einen Strassenraum heisst: Schwebeteile ueber und unter dem Boden sind mitverschmolzen."
+   },
+   "zwischenspeicher": {
+    "erster_lauf": {
+     "treffer": false,
+     "wand_s": 15.66
+    },
+    "zweiter_lauf": {
+     "treffer": true,
+     "wand_s": 0.3
+    },
+    "schluessel_gleich": true
+   },
+   "kontext_weg_mit_netz": "netz (Quelle «geliefert», weil das Netz dem Auftrag als fertige Datei gegeben wurde)",
+   "satz": "Am echten Splat rechnet die Bruecke im Code von main kein Netz: erst ein Argumentfehler, dann ein Absturz in Open3D bei 5-cm-Voxeln; der Rueckfall auf die Kugeln ist sauber und steht in verdict.hinweise. Mit 7 cm rechnet derselbe Runner in 14.5 s ein Netz (354'072 Ecken, 499'999 Dreiecke, rund 13.6 GB Grafikspeicher), und der zweite Aufruf kommt in 0.3 s aus dem Speicher.",
+   "urteil": "nein im Code von main; ja mit 7 cm (Behelf)"
+  },
+  "M2": {
+   "frage": "Konfetti x von 9",
+   "zaehlung": "0 von 9 mit dem Netz (Kugel-Lauf heute: 9 von 9; 274: 9 von 9)",
+   "fremdkoerper_anderer_art": "3 von 9: s Seed 0 (weisse Fetzen ueber Himmel und Fassade, deutlich), sSE Seed 1 (Plane/Kuppel und Geruest vor der Halle), sSE Seed 2 (weisse Bahn unten rechts); gewaehlt wurde in allen drei Kameras Seed 2 — s/2 und nNW/2 sind sauber, sSE/2 traegt die Bahn",
+   "satz": "Keine Scheiben, Kugeln, Tafeln oder Kloetze mehr: Die Umgebung kommt als Platz, Gehweg, Gitterfassaden, Baeume, Schornsteine und Nachbarbauten ins Bild, die Halle als glatte Blechfassade; was bleibt, sind in drei Bildern weisse Fetzen und Planen — die Bildmodell-Deutung der Netzfetzen (siehe M3).",
+   "urteil": "ja — das Konfetti ist weg (0 von 9), ersetzt durch seltenere Fetzen (3 von 9, eines deutlich)"
+  },
+  "M3": {
+   "frage": "Loecher: fasst das Netz Gehweg, Baeume, Nachbarbauten?",
+   "umgebung_im_bild": {
+    "netz_7cm": {
+     "s": 0.211,
+     "sSE": 0.168,
+     "nNW": 0.191
+    },
+    "kugeln": {
+     "s": 0.246,
+     "sSE": 0.319,
+     "nNW": 0.553
+    },
+    "methode": "Anteil Bildpunkte mit der Kontextfarbe im Material-ID-Pass"
+   },
+   "umgebung_auf_nicht_bauwerk": {
+    "netz_7cm": {
+     "s": 0.259,
+     "sSE": 0.209,
+     "nNW": 0.243
+    },
+    "kugeln": {
+     "s": 0.327,
+     "sSE": 0.369,
+     "nNW": 0.595
+    }
+   },
+   "bauwerk_verdeckt": {
+    "netz_7cm": {
+     "s": 0.089,
+     "sSE": 0.032,
+     "nNW": 0.019
+    },
+    "kugeln": {
+     "s": 0.042,
+     "sSE": 0.152,
+     "nNW": 0.415
+    }
+   },
+   "satz": "Nein, nicht als Flaechen: Aus den Hallenkameras deckt das Netz nur 21–26 % der Flaeche neben dem Bauwerk, als zerrissene Fetzen (42 % der rohen Dreiecke fallen als Inseln unter 200 Dreiecken weg); Gehweg, Baumkronen und Nachbarfassaden sind nicht als zusammenhaengende Flaechen erkennbar, dazwischen steht der leere Hintergrund. Vermutlich passen die erwarteten Tiefen der 48 Blickwinkel (Ring im Zentrum der dichten Punkte) nicht zueinander, und die Hallenkameras stehen weit ausserhalb dieses Rings.",
+   "synthetisch": "auftraege/ergebnisse/auf-20261013-275-m3.png (links Kugeln, rechts Netz; Testbau tools/make_test_ifc.py, Splat tools/make_test_splat.py 20'000 Punkte Startwert 7, 0.6 m unter der Bodenplatte, Kamera s, 512 px, 16 Samples, keine KI): Der Boden wird vom Fleckenteppich zur glatten gruenen Flaeche mit wenigen kleinen Loechern; die Rueckwand bleibt gesprenkelt. Netz 256'508 Ecken / 499'999 Dreiecke, 39.8 s.",
+   "urteil": "teils — am synthetischen Splat zusammenhaengend, am echten Splat nur Fetzen"
+  },
+  "M4": {
+   "frage": "Pruefung je Kamera",
+   "je_kamera": {
+    "s": {
+     "netz": {
+      "anteil_soll": 0.2595,
+      "n_ausgeblendet": 334172,
+      "n_trennhilfe": 376634,
+      "n_gemeinsam": 192227,
+      "score": 0.445,
+      "geom_iou": 0.465,
+      "rho_maske": 0.782,
+      "urteil": "beurteilbar, durchgefallen (0.445 < 0.65)"
+     },
+     "kugeln": {
+      "anteil_soll": 0.2729,
+      "n_ausgeblendet": 675487,
+      "n_trennhilfe": 361734,
+      "score": 0.876,
+      "geom_iou": 0.79,
+      "urteil": "bestanden"
+     }
+    },
+    "sSE": {
+     "netz": {
+      "anteil_soll": 0.2257,
+      "n_ausgeblendet": 266526,
+      "n_trennhilfe": 445645,
+      "n_gemeinsam": 231677,
+      "score": 0.678,
+      "geom_iou": 0.645,
+      "rho_maske": 0.832,
+      "urteil": "bestanden"
+     },
+     "kugeln": {
+      "anteil_soll": 0.1978,
+      "n_ausgeblendet": 912284,
+      "n_trennhilfe": 366928,
+      "score": 0.52,
+      "urteil": "nicht beurteilbar (19.8 %)"
+     }
+    },
+    "nNW": {
+     "netz": {
+      "anteil_soll": 0.2287,
+      "n_ausgeblendet": 302445,
+      "n_trennhilfe": 487044,
+      "n_gemeinsam": 267091,
+      "score": 0.855,
+      "geom_iou": 0.735,
+      "rho_maske": 0.994,
+      "urteil": "bestanden"
+     },
+     "kugeln": {
+      "anteil_soll": 0.1365,
+      "n_ausgeblendet": 1159609,
+      "n_trennhilfe": 247647,
+      "score": 0.0,
+      "urteil": "nicht beurteilbar (13.6 %)"
+     }
+    }
+   },
+   "verdict_netz": "passed false: «Geometrie 0.445 gegen 0.65» (Kamera s); geometry_gates zusaetzlich geom_iou < 0.85 in allen drei",
+   "vergleich_274": "274 Lauf A: s 0.6505 knapp bestanden, sSE 0.621 durchgefallen, nNW nicht beurteilbar",
+   "satz": "Mit dem Netz verdeckt die Umgebung die Halle kaum noch (2–9 % statt 4–42 %), darum sind jetzt alle drei Kameras beurteilbar (anteil_soll 23–26 %); sSE und nNW bestehen (0.678 / 0.855), s faellt mit 0.445 durch — im gewaehlten Seed 2 ist die Halle sauber, der Score leidet an der Rangkorrelation (|spearman| 0.43).",
+   "einschraenkung": "Ohne Nullprobe gefahren (Befund trennhilfe) — nullanker, bodenabstand und einordnung stehen deshalb leer."
+  },
+  "M5": {
+   "frage": "Laufzeit des ganzen Auftrags gegen 274",
+   "zeiten_s": {
+    "274_lauf_A": 314,
+    "275_kugeln": 290.2,
+    "275_netz_aus_dem_speicher": 266.8,
+    "275_netz_erster_lauf_geschaetzt": 282.5,
+    "bruecke_erster_lauf": 15.7,
+    "bruecke_aus_dem_speicher": 0.3
+   },
+   "satz": "Das Netz kostet nichts: Ein Auftrag mit Netz aus dem Speicher braucht 267 s, mit erstmaliger Rechnung rund 283 s (Bruecke 15.7 s dazu) — weniger als der Kugel-Lauf heute (290 s) und 274 (314 s), weil Blender ein Netz mit 500'000 Dreiecken schneller zeichnet als 955'409 Kugeln.",
+   "einschraenkung": "Der erste Lauf mit Rechnung im Auftrag selbst ist nicht gemessen (im Auftrag stuerzt die Bruecke ab); die 283 s sind die Summe aus Auftrag und Brueckenlauf."
+  }
+ },
+ "urteile": {
+  "bruecke_laeuft": "nein im Code von main (Argument «--oben» mit Minuswert; danach Open3D-Absturz bei 5-cm-Voxeln, ab rund 300'000 aktiven Bloecken) — der Rueckfall auf die Kugeln samt Hinweis funktioniert. Mit «--oben=» und Voxel 7 cm laeuft sie: 14.5 s, rund 13.6 GB Grafikspeicher, Speicher nach Inhalt greift (0.3 s).",
+  "konfetti_weg": "ja — 0 von 9 mit dem Netz (heute mit Kugeln 9 von 9). Es bleiben Fetzen/Planen in 3 von 9, weil das Netz am echten Splat nur 21–26 % der Umgebung als zerrissene Flaechen fasst.",
+  "neuer_fehler_abholer": "Seit Entscheid 78a (ba358f4) bricht der Abholer jeden Auftrag ab, bei dem der Messboden greift (Modell ohne Gelaende — also auch die normalen Owner-Auftraege mit --kein-gelaende): «_nullprobe() got an unexpected keyword argument 'trennhilfe'». Der Dienst des Owners faehrt ohne --ohne-nullprobe."
+ },
+ "auffaelliges": [
+  "seams.splat_zu_netz uebergibt «--oben» und den Wert als zwei Argumente; beginnt der Wert mit einem Minus (am echten Splat immer, sobald die x-Komponente von oben negativ ist), bricht argparse ab. Abhilfe: «--oben=» + Wert. Die Proben nutzten nur positive oben-Vektoren.",
+  "Runner: Open3D 0.20 VoxelBlockGrid.extract_triangle_mesh (CPU) stuerzt mit SIGSEGV ab, sobald rund 300'000 Bloecke aktiv sind (324'000 Absturz, 245'000 ok); weder block_count 600'000 noch estimated_vertex_number 30 Mio. helfen. Die Blockschaetzung (134'300) liegt um den Faktor 3 unter der Wirklichkeit (435'463). Moegliche Wege: Voxel so waehlen, dass die Bloecke unter ~250'000 bleiben, das Volumen in Teilen herausziehen, oder auf der GPU rechnen.",
+  "Abholer: _nullprobe() nimmt kein trennhilfe an, bekommt es aber ueber **ausblendung, sobald der Messboden greift — TypeError, Auftrag auf error nach der ersten Kamera. Betrifft jeden Auftrag ohne Gelaende, nicht nur Splats.",
+  "Der seams-Rueckfall meldet beim Absturz nur «Code -11: (keine Ausgabe)» — der Runner schreibt bei SIGSEGV nichts; faulthandler im Runner wuerde die Stelle nennen.",
+  "Netz-Huellbox 60 x 60 x 47 m (Welt): das Netz traegt Schwebeteile bis 27 m ueber und 19.5 m unter dem Boden; 42 % der rohen Dreiecke fallen als Inseln weg — die erwarteten Tiefen der Blickwinkel passen schlecht zueinander.",
+  "Die Netzfarben sind stumpf (Mittel 0.58/0.52/0.47); das Bildmodell malt trotzdem eine glaubwuerdige Umgebung.",
+  "geometry_gates.reason nennt «NICHT BESTANDEN wegen Kamera 'sSE', 'nNW'» und beschreibt dann Kamera s, waehrend die Kameraurteile sSE und nNW als bestanden fuehren (dort zaehlt geom_iou ≥ 0.85, 0.645/0.735) — die Wortwahl verwirrt.",
+  "Vorgabe TORCH_INDEX cu124 passt nicht zu Blackwell (sm_120); hier cu130 mit nvcc 13.3.",
+  "kosmo_maus «ziehen» am Prompt-Port kam wieder nicht an (wie 274); per echter Maus auf dem eigenen Xvfb sofort.",
+  "Keine Bilder des echten Splats im Repo; sie liegen nur lokal beim Owner (vorher 274 gegen nachher 275)."
+ ],
+ "bilder": [
+  "auf-20261013-275-m3.png"
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (/var/crash unveraendert), danach per gemerkter PID Bruecke, Relais, Sitzungs-DBus und Xvfb (der Namensraum endete mit ihnen); Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Wegwerf-Ablagen, Diagnose- und Hilfsdateien geloescht; GPU-Sperre frei. Behalten: .venv-splat, der Netz-Speicher (darin das 7-cm-Netz des echten Splats, das synthetische Netz) und die uebersetzten gsplat-Kerne. Installierte App und Dienste des Owners unberuehrt; in KosmoOrbit nichts committet oder gepusht."
+}
