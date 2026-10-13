@@ -165,6 +165,12 @@ Masken tragen; die Masken sind ein Zusatz.
 
 ## Probelauf ohne Grafikkarte (CPU-Ersatzrenderer, 13.10.2026)
 
+**Nachtrag Tiefenfilter:** Die Probe mit der gefilmten Person (Strassenraum, Voxel 7 cm) steht in
+`docs/SPLAT_TIEFENFILTER_2026-10-13.md`: ohne Filter 8 989 Netzstücke, mit Streuung 762, mit allen
+Filtern 860; Nahbereich und Masken allein kaum besser (8 827 / 7 255). Die Tabelle unten stammt von
+**vor** dem Tiefenfilter und vor der erwarteten Tiefe im Ersatzrenderer; mit beiden deckt der Ring
+am Strassenraum noch 56 %, die Aufnahme 96 % (151 statt 75 Stücke).
+
 Synthetischer Strassenraum (`--form strasse`, 12 000 Punkte, 12 × 75 m), Voxel 0,15 m,
 Renderbreite 160 Bildpunkte, Aufnahme mit 80 Augenblicken × 4 Kameras. **Nur Probe** — gsplat
 rendert anders, die Zahlen sagen etwas über die Wege, nicht über das echte Netz.
