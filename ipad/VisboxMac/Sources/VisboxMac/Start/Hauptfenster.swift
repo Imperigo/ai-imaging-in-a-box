@@ -85,7 +85,9 @@ struct Hauptfenster: View {
         .frame(minWidth: 1100, minHeight: 700)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $einrichtenOffen) {
-            Einrichten(leitung: leitung, fertig: { einrichtenOffen = false })
+            // SEIT ENTSCHEID 83 (13.10.2026) zuerst die Kopplung mit Zahl (Blatt 17); der
+            // bisherige Dialog ist darin der kleine Link «Von Hand eintragen …» (83c).
+            Koppeln(leitung: leitung, fertig: { einrichtenOffen = false })
                 // OHNE ADRESSE UND KENNWORT GIBT ES NICHTS ZU ZEIGEN: Das Blatt geht erst zu,
                 // wenn beides gesichert ist.
                 .interactiveDismissDisabled(leitung.braucheEinrichten)

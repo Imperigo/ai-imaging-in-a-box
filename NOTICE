@@ -336,6 +336,53 @@ AUFLOESUNG: Prozessgrenze
 --------------------------------------------------------------------------------
 
 ================================================================================
+Programme am Heim-PC fuer das Koppeln des Mac - als Prozess, nicht ausgeliefert
+================================================================================
+
+Seit Owner-Entscheid 83 (13.10.2026) koppelt sich die Mac-App mit einer Zahl, die
+am Heim-PC erscheint; im Heim-WLAN hoert die Flaeche dafuer mit --heimnetz
+verschluesselt (aiimaging.heimnetz, betrieb/README.md). Drei Programme des
+Betriebssystems werden dafuer aufgerufen - jedes als eigener Prozess, keines
+geht in Visbox ein, keines wird veraendert, und fehlt eines, sagt der Dienst
+im Fenster, was dann nicht geht.
+
+--------------------------------------------------------------------------------
+OpenSSL (Programm openssl)                         Apache-2.0
+                                       (vor 3.0: OpenSSL/SSLeay-Lizenz, permissiv)
+https://www.openssl.org/  ·  https://www.openssl.org/source/license.html
+
+Aufruf als Prozess, einmal beim ersten Start mit --heimnetz:
+    openssl req -x509 -newkey ec ... -keyout <dienstordner> -out <dienstordner>
+Erzeugt ein selbst unterschriebenes Zertifikat; es liegt beim Betreiber im
+Dienstordner neben der Kennwortdatei, nie im Repo. Das Modul ssl der
+Python-Standardbibliothek (das ebenfalls OpenSSL benutzt) ist Teil von Python.
+
+--------------------------------------------------------------------------------
+Avahi (Programm avahi-publish-service, Paket avahi-utils)   LGPL-2.1-or-later
+https://avahi.org/  ·  https://github.com/avahi/avahi
+
+AUFLOESUNG: Prozessgrenze
+
+Aufruf ausschliesslich als Subprozess, solange --heimnetz laeuft:
+    avahi-publish-service -s "<App> Heim-PC" _visbox._tcp <anschluss> fassung=1 tls=1
+Kein Linken, kein Import; die drei Auflagen der LGPL-Praezisierung (CLAUDE.md,
+Regel 1): Prozessgrenze, unveraendert, austauschbar (fehlt es, findet der Mac
+den Heim-PC nur ueber Tailscale) und hier deklariert.
+
+--------------------------------------------------------------------------------
+libnotify (Programm notify-send, Paket libnotify-bin)       LGPL-2.1-or-later
+https://gitlab.gnome.org/GNOME/libnotify
+
+AUFLOESUNG: Prozessgrenze
+
+Aufruf ausschliesslich als Subprozess, je angeforderter Zahl einmal:
+    notify-send --app-name <App> ... "<App>: Mac koppeln" "Zahl ... gueltig bis ..."
+Kein Linken, kein Import; unveraendert, austauschbar (fehlt es, steht die Zahl
+nur im Fenster des Dienstes) und hier deklariert.
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Tailscale - externer Dienst, nicht ausgeliefert
 ================================================================================
 
@@ -379,7 +426,8 @@ tests/test_ipad_geruest.py vergleicht sie mit den Dateien.
 
 Registriert werden die Schriften zur Laufzeit ueber CoreText (Apple-Plattform,
 nicht mitgeliefert - wie SwiftUI, PencilKit, Network und Security; in der Mac-App
-dazu WebKit fuer die Flaeche des Heim-PC).
+dazu WebKit fuer die Flaeche des Heim-PC und, seit Entscheid 83, CryptoKit fuer
+den Fingerabdruck des Zertifikats im Heim-WLAN).
 
 --------------------------------------------------------------------------------
 IBM Plex Sans                                      OFL-1.1

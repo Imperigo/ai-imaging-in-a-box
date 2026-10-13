@@ -4811,9 +4811,50 @@ Mac lässt je Gegenstelle nur wenige Verbindungen zu, damit ein Gerät nicht all
 **Uhr mit Ruhezustand** — Eine Uhr, die weiterläuft, während der Laptop zugeklappt ist. Mit ihr
 läuft die Frist einer Koppelzahl auch im Schlaf ab, statt nach dem Aufklappen weiterzugelten.
 
-**TLS mit festgehaltenem Schlüssel** — Verschlüsselung, bei der sich das iPad beim Koppeln den
-Schlüssel der Gegenseite merkt und danach nur noch mit genau ihr spricht. Für den Weg
-iPad ↔ Mac geprüft und nicht gebaut; der Owner wählte stattdessen Tailscale direkt (Entscheid 63).
+**TLS mit festgehaltenem Schlüssel (Zertifikat anheften, Pinning)** — Verschlüsselung, bei der
+sich ein Gerät beim Koppeln den Ausweis der Gegenseite merkt und danach nur noch mit genau ihr
+spricht — auch wenn kein Aussteller ihn beglaubigt hat. Für den Weg iPad ↔ Mac geprüft und nicht
+gebaut; der Owner wählte stattdessen Tailscale direkt (Entscheid 63). **Gebaut seit dem
+13.10.2026** für den Mac im Heim-WLAN (Entscheid 83b): Er merkt sich den Fingerabdruck des
+Zertifikats des Heim-PC und nimmt danach kein anderes mehr an (`Start/Heimvertrauen.swift`).
+
+**Selbst unterschriebenes Zertifikat** — Ein Ausweis, den sich ein Rechner selbst ausstellt,
+ohne dass eine anerkannte Stelle ihn beglaubigt. Er verschlüsselt genauso gut, beweist aber für
+sich allein nicht, wer dahinter steht — darum merkt sich der Mac ihn beim Koppeln (anheften).
+*In diesem Projekt* erzeugt ihn der Heim-PC beim ersten Start mit `--heimnetz` mit dem Programm
+`openssl`; er liegt neben der Kennwortdatei, nie im Repo.
+
+**Vertrauen beim ersten Mal (TOFU)** — Ein Gerät glaubt der Gegenseite beim allerersten Kontakt
+und merkt sich, wen es da vor sich hatte; ab dann fällt jeder Tausch auf. Bekannt aus SSH.
+Schwachstelle ist genau dieser erste Kontakt. *In diesem Projekt* sichert ihn die Zahl am
+Bildschirm des Heim-PC gegen jedes andere Gerät im WLAN ab (Entscheid 83b).
+
+**Dazwischenstellen (Man-in-the-Middle)** — Ein Angriff, bei dem sich jemand unbemerkt
+zwischen zwei Geräte schaltet und beiden vorspielt, er sei das andere. Er liest dann alles mit,
+auch eine Zahl zum Koppeln. *In diesem Projekt* der eine Fall, gegen den die Zahl im WLAN nicht
+hilft — nur der Vergleich des «Zeichens des Heim-PC» auf beiden Bildschirmen.
+
+**PAKE (Anmeldung mit kurzem Geheimnis)** — Eine Familie von Verfahren, mit denen zwei Geräte
+aus einer kurzen Zahl einen sicheren Schlüssel machen, ohne dass ein Mithörer die Zahl
+durchprobieren kann. *In diesem Projekt* bewusst nicht gebaut (13.10.2026): Es selbst zu bauen
+hiesse, Verschlüsselung zu erfinden; darum gibt es stattdessen das Zeichen zum Vergleichen.
+
+**Zeichen des Heim-PC** — Die ersten 16 Stellen des Fingerabdrucks seines Zertifikats, in
+Vierergruppen («ab12 cd34 ef56 7890»). Es steht im Fenster am Heim-PC und beim Koppeln am Mac;
+stimmen beide überein, spricht der Mac sicher mit dem eigenen Heim-PC. 16 Stellen lassen sich —
+anders als 4 oder 6 — nicht mit einem gefälschten Zertifikat durch Probieren treffen.
+
+**Mitteilung (am Bildschirm)** — Das kleine Fenster, das ein Betriebssystem oben am Rand
+einblendet, etwa bei einer neuen Nachricht. *In diesem Projekt* zeigt der Heim-PC damit die Zahl
+zum Koppeln des Mac (Entscheid 83a), über das Programm `notify-send`, wenn es installiert ist.
+
+**Drossel** — Eine Grenze, wie oft etwas in einer Zeit geschehen darf. *In diesem Projekt*
+gibt der Heim-PC höchstens alle 30 Sekunden eine neue Zahl zum Koppeln heraus: Wer raten will,
+bekommt so wenige Versuche, und jede neue Zahl erscheint sichtbar am Bildschirm.
+
+**Tailscale-Befehlszeile** — Das Tailscale-Programm ohne Fenster, das auf Befehle antwortet.
+*In diesem Projekt* fragt die Mac-App damit, welche Geräte im eigenen Tailscale-Netz gerade an
+sind (`tailscale status --json`), und fragt dann jedes, ob es ein Visbox-Heim-PC ist.
 
 **MagicDNS** — Der Teil von Tailscale, der Namen wie `<rechner>.<netz>.ts.net` in eine Adresse
 übersetzt. Ist Tailscale am Gerät aus, kennt es den Namen nicht — die App sagt dann «Tailscale am
@@ -4821,7 +4862,8 @@ iPad an?».
 
 **Zertifikat** — Ein digitaler Ausweis eines Servers. Damit prüft das Gerät, dass es wirklich
 mit dem eigenen Heim-PC spricht und nicht mit einem Fremden. Tailscale Serve liefert dem Heim-PC
-ein gültiges, darum braucht die App keine Ausnahme.
+ein gültiges, darum braucht die App keine Ausnahme. Im Heim-WLAN ohne Tailscale ist es ein
+selbst unterschriebenes, das der Mac anheftet (siehe dort, Entscheid 83b).
 
 **Schema (einer Adresse)** — Der Anfang einer Adresse wie `http://` oder `https://`; er sagt, ob
 unverschlüsselt oder verschlüsselt gesprochen wird. Unterwegs nimmt die iPad-App nur `https`.
@@ -5771,7 +5813,9 @@ Tabelle lädt sonst gar nicht.
 
 **Prüfstrecke (auf GitHub)** — Ein automatischer Ablauf, der bei jedem Hochladen die Proben fährt und bei der iPad-App auf einem Mac übersetzt. Rot heisst: etwas ist kaputt, und derjenige, der hochgeladen hat, erfährt es sofort.
 
-**Bonjour (mDNS)** — Apples Verfahren, mit dem sich Geräte im selben Netz gegenseitig finden, ohne dass jemand eine Adresse eintippt: Ein Gerät ruft «wer bietet Dienst X?», das passende antwortet. *In diesem Projekt* antwortet der Rechner, und das iPad sucht.
+**Bonjour (mDNS)** — Apples Verfahren, mit dem sich Geräte im selben Netz gegenseitig finden, ohne dass jemand eine Adresse eintippt: Ein Gerät ruft «wer bietet Dienst X?», das passende antwortet. *In diesem Projekt* antwortet der Rechner, und das iPad sucht. Seit dem 13.10.2026
+(Entscheid 83) sucht auch die Mac-App so nach dem Heim-PC im WLAN; der Heim-PC kündigt sich
+dafür mit dem Programm `avahi-publish-service` an, wenn er mit `--heimnetz` läuft.
 
 **Rundruf** — Eine Nachricht, die an alle Geräte im Netz zugleich geht statt an eines. *In diesem Projekt* ist der Rundruf die Art, wie sich der Rechner dem iPad bekannt macht (Owner-Entscheid 27), selbst geschrieben, ohne fremden Baustein.
 
@@ -6828,6 +6872,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 83 (Mac koppelt mit Zahl): **Selbst unterschriebenes Zertifikat**, **Vertrauen beim ersten Mal (TOFU)**, **Dazwischenstellen (Man-in-the-Middle)**, **PAKE**, **Zeichen des Heim-PC**, **Mitteilung (am Bildschirm)**, **Drossel**, **Tailscale-Befehlszeile**; nachgefuehrt: **TLS mit festgehaltenem Schlüssel** (jetzt «Zertifikat anheften, Pinning», gebaut für den Mac im WLAN), **Zertifikat**, **Bonjour (mDNS)** (auch die Mac-App sucht) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §78 (Entscheid 76, Splat als Umgebung): **Splat (3D Gaussian Splatting)**, **PLY (Dateiformat)**, **Punktwolke**, **Geometry Nodes, «Mesh to Points»**, **SH-Grad 0 (Grundfarbe eines Gaussians)**, **Deckkraft eines Gaussians (Opazität, Sigmoid)**, **Transformationsmatrix (4×4, zeilenweise)**, **Umgebung im Bild (Kontext)**; nachgefuehrt: **Verdeckung** (durch die Umgebung) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §75 (Entscheide 70 und 73 am Bild): **Sprungmarke (Anker)**; nachgefuehrt: **Nicht beurteilbar** (eigenes Zeichen), **Standpunkt-Vorgabe** (steht am Bild) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §79: **Ausschnitt (Kamera)** |

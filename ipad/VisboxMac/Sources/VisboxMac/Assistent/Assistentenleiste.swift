@@ -48,7 +48,9 @@ struct AssistentAnschluss: @unchecked Sendable {
         // DIE FRIST DER ANFRAGE GILT (`schicke` setzt sie); die der Sitzung darf ihr nicht
         // zuvorkommen — ihre Vorgabe ist 60 s, eine Antwort des Modells dauert länger.
         art.timeoutIntervalForRequest = frist
-        return URLSession(configuration: art)
+        // DASSELBE ZERTIFIKAT WIE UEBERALL (Entscheid 83b, `Heimvertrauen`).
+        return URLSession(configuration: art, delegate: Heimvertrauenslotse.gemeinsam,
+                          delegateQueue: nil)
     }()
 
     func schicke(_ anfrage: Anfrage) async throws -> (status: Int, daten: Data) {
