@@ -2254,6 +2254,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             kontext = dict(
                 kontext, weg=vorbereitet["weg"], netz=vorbereitet.get("netz"),
                 netz_grund=vorbereitet.get("grund"), multipass_ply=vorbereitet["ply"],
+                realityscan_grund=vorbereitet.get("realityscan_grund"),
+                realityscan_ursache=vorbereitet.get("realityscan_ursache"),
                 hinweise=[*(kontext.get("hinweise") or ()),
                           *([vorbereitet["hinweis"]] if vorbereitet.get("hinweis") else [])])
             # Auch der Befund des Auftrags (`befund.json`) liest den Kontext aus der Szene.
@@ -2575,6 +2577,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                                "gerechnet_unter": bericht.get("blender")}
             else:
                 bericht = multipass(einstellungen.pop("glb_path"), aus, **einstellungen)
+                # DER WEG DER UMGEBUNG REIST MIT (Entscheid 81, 13.10.2026): Am Weg prueft
+                # `kette._cache_maengel`, ob ein Eintrag nach dem Ein- oder Ausschalten von
+                # RealityScan noch ein Treffer ist — derselbe Vermerk wie im Kettenknoten.
+                if kontext is not None and isinstance(bericht, dict):
+                    bericht.setdefault("kontext_weg", {
+                        "weg": kontext.get("weg"),
+                        "realityscan_ursache": kontext.get("realityscan_ursache")})
                 # ABGELEGT WIRD, WAS ALS TREFFER TAUGEN WUERDE — dieselbe Pruefung, nicht
                 # eine zweite. Der erste Anlauf fragte hier nach `status == "ok"`, und das
                 # war eine ANDERE Bedingung als die beim Lesen: Ein Bericht ohne

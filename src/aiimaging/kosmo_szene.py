@@ -893,7 +893,8 @@ def kontext_vermerk(kontext: dict | None, bericht: dict | None = None) -> dict |
     ``kontext`` des Blender-Berichts: Datei (Name, sha256), Lage (``fit``, ``crs_note``),
     Punktzahlen und der Anteil des Modells, den der Splat verdeckt.
 
-    **Seit dem 13.10.2026 (Entscheid 79) mit dem Weg:** ``weg`` ist ``"netz"`` (die
+    **Seit dem 13.10.2026 (Entscheid 79) mit dem Weg:** ``weg`` ist ``"realityscan"`` (Netz
+    aus den Fotos, Entscheid 81; ``realityscan_grund`` sagt sonst, warum nicht), ``"netz"`` (die
     Splat-Brücke hat ein Netz geliefert) oder ``"kugeln"`` (Notlösung), ``netz`` die
     Kennzahlen des Netzes (Ecken, Dreiecke, sha256, Blickwinkel, Voxel — kein Pfad),
     ``netz_grund`` warum es Kugeln wurden. Gesetzt vom Abholer
@@ -915,6 +916,8 @@ def kontext_vermerk(kontext: dict | None, bericht: dict | None = None) -> dict |
         "weg": weg,
         "netz": kontext.get("netz"),
         "netz_grund": kontext.get("netz_grund"),
+        # Seit Entscheid 81 (13.10.2026): warum RealityScan nicht benutzt wurde — ohne Pfad.
+        "realityscan_grund": kontext.get("realityscan_grund"),
         "sha256": block.get("sha256"),
         "fit": kontext.get("fit"),
         "crs_note": kontext.get("crs_note"),

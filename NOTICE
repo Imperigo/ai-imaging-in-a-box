@@ -325,6 +325,14 @@ RealityScan 2.x   proprietaer, Epic Games; RealityScan EULA
   Hosting/SaaS - darum nie als Dienst ueber KosmoOrbit. Gelesen 13.10.2026,
   docs/SPLAT_WEGE_2026-10-13.md.
 
+Bruecke: src/aiimaging/realityscan.py (Entscheid 81, 13.10.2026) - nur, wenn
+der Nutzer AIIMAGING_REALITYSCAN selbst setzt; keine Suche nach einer
+Installation. Anleitung und offene Fragen: betrieb/REALITYSCAN_BRUECKE.md.
+Das Linux-Paket von RealityScan bringt sein eigenes Wine mit (LGPL-2.1-or-
+later); es gehoert zur Installation des Nutzers, wird unveraendert als
+Programm gestartet (realityscan-cli) und geht nicht in Visbox ein.
+AUFLOESUNG: Prozessgrenze
+
 --------------------------------------------------------------------------------
 
 ================================================================================

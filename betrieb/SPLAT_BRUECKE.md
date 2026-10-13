@@ -10,6 +10,11 @@ open3d — **nie** im Produkt-venv (Regel 4).
 in `verdict.hinweise`: «UMGEBUNG ALS NOTLOESUNG (Kugeln) gezeichnet — Splat-Bruecke nicht
 eingerichtet …». Der Vermerk `kontext.weg` steht dann auf `"kugeln"`, mit der Brücke auf `"netz"`.
 
+**Vor diesem Weg steht seit Entscheid 81 (13.10.2026) RealityScan** — wenn der Owner es selbst
+installiert und eingeschaltet hat: ein Netz aus den Fotos statt aus dem Splat (`kontext.weg` =
+`"realityscan"`). Einrichtung und offene Fragen: `betrieb/REALITYSCAN_BRUECKE.md`. Ohne RealityScan
+bleibt alles hier, wie es ist.
+
 ## Einrichten (HomeStation)
 
     bash betrieb/splat-umgebung.sh

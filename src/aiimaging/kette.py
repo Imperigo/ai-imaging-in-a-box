@@ -105,7 +105,7 @@ from pathlib import Path
 
 from aiimaging import (
     backbone, bildlesen, bildschreiben, contracts, geometrie_qa, glbbox, kontext,
-    kontext_netz, maske,
+    kontext_netz, maske, realityscan,
     raumkamera, render, seams, tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
@@ -1445,7 +1445,11 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
         vorbereitet = seams.kontext_vorbereiten(weiter["kontext_ply"],
                                                 matrix=weiter.get("kontext_matrix"))
         weiter["kontext_ply"] = vorbereitet["ply"]
-        kontext_weg = {k: vorbereitet[k] for k in ("weg", "netz", "grund", "hinweis")}
+        # `realityscan_*` seit Entscheid 81 (13.10.2026): Am Weg haengt, ob der Eintrag
+        # spaeter noch ein Treffer ist (`realityscan.treffer_maengel`).
+        kontext_weg = {k: vorbereitet.get(k) for k in ("weg", "netz", "grund", "hinweis",
+                                                       "realityscan_grund",
+                                                       "realityscan_ursache")}
     # DIE RAHMUNG NACH DEM BAUWERK (30.09.2026) — nur mit Richtungskamera, ohne eigene Box und
     # ohne Standpunkt von Hand. Beweislauf auf-20260930-188: Form 6/8 gegen 0/8.
     rahmung_vermerk = None
@@ -2093,6 +2097,16 @@ def _cache_maengel(art: str, ausgaben: dict, bedarf: dict[str, Bedarf]) -> list[
         if isinstance(block, dict) and block.get("quelle") == kontext_netz.QUELLE_SPLAT:
             maengel.append("Umgebung als Kugeln (Notloesung) gezeichnet — kein Treffer, "
                            "damit die Splat-Bruecke greift, sobald sie eingerichtet ist.")
+        # DER WEG DER UMGEBUNG IST NICHT IM SCHLUESSEL (Entscheid 81, 13.10.2026): Der Knoten
+        # kennt den Splat, nicht ob sein Netz aus RealityScan oder vom offenen Weg kam. Ein
+        # Netz des offenen Wegs bliebe nach dem Einschalten von RealityScan sonst ein Treffer
+        # — und umgekehrt eines aus RealityScan nach dem Ausschalten. Ein Eintrag ohne
+        # `kontext_weg`, aber mit Netz (von vor dieser Regel), zaehlt wie einer ohne Versuch.
+        if isinstance(block, dict) and block.get("quelle") == kontext_netz.QUELLE_NETZ:
+            weg = ausgaben.get("kontext_weg")
+            grund = realityscan.treffer_maengel(weg if isinstance(weg, dict) else {})
+            if grund:
+                maengel.append(grund)
     return maengel
 
 

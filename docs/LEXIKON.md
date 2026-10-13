@@ -3933,6 +3933,46 @@ hineinkopiert wurde, statt daneben als eigene Datei zu liegen. Von aussen sieht 
 reist mit. *Im Projekt:* Das Python-Paket `pycolmap` (selbst BSD) enthält so Teile der Rechenbibliothek
 SuiteSparse unter GPL; darum liest die Splat-Brücke COLMAP mit eigenem Code (13.10.2026).
 
+**RealityScan-Brücke (Fotos → Netz)** — Der Weg, auf dem Visbox die Umgebung nicht aus dem Splat,
+sondern direkt aus den **Fotos** der Aufnahme zu einem farbigen Netz rechnen lässt — vom Programm Epic
+RealityScan, das der Nutzer selbst installiert hat (**Fremdprogramm**). Visbox schreibt die Aufnahme in
+die Form, die RealityScan liest, startet es, prüft das Ergebnis und nimmt es nur, wenn es am richtigen
+Ort liegt. *Im Projekt:* `aiimaging/realityscan.py`, Owner-Entscheid 81 (13.10.2026); eingeschaltet nur
+mit der Variable `AIIMAGING_REALITYSCAN`, sonst bleibt der offene Weg. Anleitung:
+`betrieb/REALITYSCAN_BRUECKE.md`.
+
+**Wine** — Ein freies Programm, das Windows-Programme unter Linux laufen lässt, ohne Windows: Es
+übersetzt die Aufrufe des Windows-Programms an das Betriebssystem in die von Linux. Dateien sieht das
+Windows-Programm dabei auf einem Laufwerk `Z:`, das für das ganze Linux-Dateisystem steht — aus
+`/mnt/lauf/images` wird `Z:\mnt\lauf\images`. *Im Projekt:* RealityScan für Linux ist ein
+Windows-Programm, das sein eigenes Wine mitbringt; Visbox schreibt jeden Pfad für RealityScan so um
+(`realityscan.wine_pfad`). Wine gehört zur Installation des Nutzers, nicht zu Visbox (`NOTICE`).
+
+**Export-Parameterdatei (RealityScan)** — Eine kleine Datei, in der RealityScan festhält, *wie* es ein
+Netz speichert: welches Dateiformat, ob mit Farben, in welchen Koordinaten. Sie wird einmal im Programm
+mit der Maus eingestellt und gespeichert und danach bei jedem Lauf wiederverwendet. *Im Projekt:* Ihr
+Aufbau ist nicht öffentlich beschrieben, darum erfindet Visbox sie nicht — der Owner legt sie an
+(«PLY mit Eckpunktfarben, Koordinaten unverändert») und nennt ihren Ort in
+`AIIMAGING_REALITYSCAN_EXPORT_XML`. Ihr Inhalt steht im Speicherschlüssel: Eine andere Einstellung
+ergibt ein anderes Netz.
+
+**COLMAP-Textformat** — Dieselben Angaben wie die **COLMAP**-Dateien einer Aufnahme (Kameras, Posen,
+Punkte), aber als lesbarer Text statt als Bytes: eine Zeile je Kamera, zwei je Bild, eine je Punkt.
+Ältere Programme lesen nur diese Form, und sie kennt kein **Rig** — jedes Bild trägt seine eigene Pose.
+*Im Projekt:* RealityScan liest eine Aufnahme nur so; `realityscan.colmap_als_text` schreibt sie aus der
+Binärform um, und eine Probe liest sie mit dem eigenen Leser zurück und vergleicht jede Pose.
+
+**Lageprüfung (Netz ↔ Aufnahme)** — Die Probe, ob ein Netz, das ein fremdes Programm geliefert hat,
+dort liegt, wo die Aufnahme liegt — nicht verschoben, gedreht oder in anderem Massstab. Gezählt wird,
+wie viele Punkte der Aufnahme eine Ecke des Netzes in ihrer Nähe haben, und ob beide etwa gleich gross
+sind. *Im Projekt:* `realityscan.lage_befund`; liegt das Netz aus RealityScan daneben, wird es nicht
+benutzt, und der offene Weg läuft (Grund `lage`). Die Schwellen sind gesetzt, nicht gemessen.
+
+**Umeyama-Verfahren** — Eine Rechnung, die aus Paaren zusammengehöriger Punkte in zwei Koordinatensystemen
+die eine Verschiebung, Drehung und Massstabsänderung findet, die das eine am besten auf das andere legt.
+*Im Projekt:* Damit hat die HomeStation nachgewiesen, dass Splat und Aufnahme im selben System liegen
+(13.10.2026). Für ein neu gelagertes Netz aus RealityScan ist es eine offene Frage, nicht gebaut.
+
 **Akkumulierte Deckkraft (alpha)** — Wie viel von einem Bildpunkt insgesamt zugedeckt ist, wenn
 mehrere halbdurchsichtige Wölkchen hintereinander liegen: 0 heisst, man sieht ganz hindurch, 1 heisst,
 nichts kommt mehr durch. Zwei Wölkchen mit je halber Deckkraft decken zusammen drei Viertel. *Im
@@ -6797,6 +6837,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §83: **Messboden** |
 | 2026-10-13 | Ergaenzt beim Bau der Splat-Bruecke (Entscheid 79): **Splat-Brücke (Splat → Netz)**, **Rastern (Rasterization)**, **Erwartete Tiefe**, **TSDF (Verschmelzen von Tiefenbildern)**, **Voxel**, **Eckpunktfarbe (Vertexfarbe)**, **Insel (im Netz)**, **CUDA**, **Ersatzrenderer (cpu-probe)** |
 | 2026-10-13 | Ergaenzt beim Tiefenfilter der Splat-Bruecke (nach auf-20261013-276): **Akkumulierte Deckkraft (alpha)**, **Tiefenfilter (Splat-Brücke)**, **Sprenkel (in der Tiefe)**, **Streuung entlang des Strahls**, **Nahbereich (der Kamera)**, **Weg der Aufnahme (Filter)**, **Maske der Aufnahme (Personenmaske)**, **Maskenpolarität**, **Zufallsstichprobe mit festem Startwert**, **Feste Reihenfolge (eines Netzes)**; nachgefuehrt: **Erwartete Tiefe** (Schwaeche, ED = D/alpha), **Ersatzrenderer (cpu-probe)** (mischt wie gsplat), **Deckung (des Netzes)** (Stichprobe), **Verweis (Symlink)** (Aufnahme hinter dem Verweis) |
+| 2026-10-13 | Ergaenzt bei der RealityScan-Bruecke (Entscheid 81): **RealityScan-Brücke (Fotos → Netz)**, **Wine**, **Export-Parameterdatei (RealityScan)**, **COLMAP-Textformat**, **Lageprüfung (Netz ↔ Aufnahme)**, **Umeyama-Verfahren** |
 | 2026-10-13 | Ergaenzt bei den Blickwinkeln aus der Aufnahme (nach auf-20261013-275): **COLMAP**, **Kamerapose (Pose)**, **Rig (Kamera-Rig)**, **Augenblick (Frame)**, **Gleichheitsprüfung (Aufnahme ↔ Splat)**, **Deckung (des Netzes)**, **Blockwache**, **Statisch eingebunden (Bibliothek)**; nachgefuehrt: **TSDF** (7 cm), **Insel (im Netz)** (bleibt absolut), **Ersatzrenderer (cpu-probe)** (Tiefe auf der Scheibe) |
 | 2026-10-13 | Ergaenzt aus Sitzung 74 §84: **Photogrammetrie**, **Relightable Gaussian Splatting (lichtaktiver Splat)**, **Fremdprogramm (vom Nutzer installiert)**; nachgefuehrt: **Messboden** (nur zum Trennen) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |

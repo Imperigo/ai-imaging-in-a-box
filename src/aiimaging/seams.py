@@ -8,6 +8,9 @@ Warum das so gebaut ist
 * **Blender** (GPL-2.0-or-later) → `blender --background --python <runner>` (Regel 2)
 * **IfcOpenShell** (LGPL-3.0-or-later, Wheel enthält GPL-lizenziertes CGAL) → eigenes
   venv, eigener Prozess (LGPL-Präzisierung zu Regel 1)
+* **RealityScan** (proprietär, vom Nutzer installiert, Entscheid 79/81) → ``realityscan-cli``
+  als Prozess; die Befehlsfolge baut :mod:`aiimaging.realityscan`, gestartet wird mit dem
+  Starter von hier (:func:`_default_starte`)
 
 Beides ist GPL-rechtlich eine Aggregation: Die fremden Programme bleiben unter ihrer
 Lizenz, der Code hier bleibt Apache-2.0. Die Verständigung läuft ausschliesslich über
@@ -960,34 +963,111 @@ def _pfade_gekuerzt(text: str) -> str:
     return re.sub(r"(?:/[^\s'\"/:]+)+/([^\s'\"/:]+)", r"\1", str(text))
 
 
+def _realityscan_versuch(kontext_ply, aufnahme, realityscan_lauf) -> dict:
+    """Der erste Weg von :func:`kontext_vorbereiten`: RealityScan (Owner-Entscheid 81).
+
+    Nur, wenn eingeschaltet **und** eingerichtet **und** eine Aufnahme zum Splat gefunden
+    **und** ihre Fotos da sind; sonst ein Grund ohne Pfad und eine Ursache
+    (``realityscan.URSACHE_*``), und der offene Weg läuft.
+
+    Returns:
+        ``{bericht | None, art, grund, ursache}``.
+    """
+    from aiimaging import realityscan as _rs
+
+    e = _rs.einrichtung()                     # «aus» ist einer ihrer Gründe
+    if not e["bereit"]:
+        return {"bericht": None, "art": None, "grund": e["grund"], "ursache": e["ursache"]}
+    try:
+        ordner, art, _such_grund = finde_aufnahme(kontext_ply, aufnahme)
+    except SeamError as fehler:
+        return {"bericht": None, "art": None, "ursache": _rs.URSACHE_AUFNAHME,
+                "grund": _pfade_gekuerzt(str(fehler))[:400]}
+    if ordner is None:
+        return {"bericht": None, "art": art, "ursache": _rs.URSACHE_AUFNAHME,
+                "grund": "Keine COLMAP-Aufnahme zum Splat gefunden (Parameter, "
+                         f"{SPLAT_AUFNAHME_ENV} oder neben dem Splat)."}
+    fund = _rs.finde_bilder(ordner)
+    if not fund["gefunden"]:
+        return {"bericht": None, "art": art, "ursache": _rs.URSACHE_BILDER,
+                "grund": fund["grund"]}
+    lauf = realityscan_lauf or _rs.realityscan_zu_netz
+    try:
+        bericht = lauf(ordner, bilder=fund["ordner"], splat=kontext_ply)
+    except _rs.RealityScanError as fehler:
+        return {"bericht": None, "art": art, "ursache": fehler.ursache,
+                "grund": _rs.ohne_pfade(fehler.grund)[:400]}
+    except Exception as fehler:               # noqa: BLE001 — Rückfall statt Abbruch, gesagt
+        return {"bericht": None, "art": art, "ursache": _rs.URSACHE_LAUF,
+                "grund": _rs.ohne_pfade(f"{type(fehler).__name__}: {fehler}")[:400]}
+    return {"bericht": bericht, "art": art, "grund": None, "ursache": None}
+
+
 def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
-                        _splat_zu_netz=None) -> dict:
+                        _splat_zu_netz=None, _realityscan=None) -> dict:
     """Was als Umgebung in den Multipass geht: das **Netz** — oder, als Notlösung, die Kugeln.
 
     Gemeinsam für Abholer und Kette (``kette._fuehre_multipass``), damit beide Wege dieselbe
     Entscheidung treffen.
 
     * Ist ``kontext_ply`` schon ein Netz (PLY mit Flächen), geht es unverändert durch.
-    * Sonst wird :func:`splat_zu_netz` gerufen (zwischengespeichert) — mit der Aufnahme aus
-      ``aufnahme=`` oder nach der Konvention von :func:`finde_aufnahme`.
+    * **Sonst zuerst RealityScan** (Owner-Entscheid 81, 13.10.2026): wenn eingeschaltet und
+      eingerichtet (:func:`aiimaging.realityscan.einrichtung`), eine Aufnahme gefunden
+      (:func:`finde_aufnahme`) und ihre Fotos da sind (:func:`aiimaging.realityscan.finde_bilder`)
+      — und nur, wenn das Netz bei der Aufnahme und beim Splat liegt (Lageprüfung). Dann steht
+      :data:`aiimaging.realityscan.SATZ_REALITYSCAN` als ``hinweis`` da: Die Umgebung stammt
+      aus einem Programm, das nicht im Produkt ist.
+    * Sonst der **offene Weg**: :func:`splat_zu_netz` (zwischengespeichert) — mit der Aufnahme
+      aus ``aufnahme=`` oder nach der Konvention von :func:`finde_aufnahme`.
     * **Fehlt die Brücke oder scheitert sie, bleibt es beim Kugel-Weg** (Owner-Auftrag
       13.10.2026) — und das wird gesagt: ``hinweis`` ist ein Satz für
       ``verdict.hinweise``. Ein stiller Rückfall sähe aus wie das neue Bild.
 
     Returns:
-        ``{ply, weg: "netz"|"kugeln", netz: Kennzahlen|None, grund: str|None,
-        hinweis: str|None}`` — ``ply`` ist der Pfad für den Multipass (nie nach aussen).
+        ``{ply, weg: "realityscan"|"netz"|"kugeln", netz: Kennzahlen|None, grund: str|None,
+        hinweis: str|None, realityscan_grund: str|None, realityscan_ursache: str|None}`` —
+        ``ply`` ist der Pfad für den Multipass (nie nach aussen); ``realityscan_grund`` sagt
+        ohne Pfad, warum RealityScan nicht benutzt wurde.
     """
     from aiimaging import kontext_netz as _kn
+    from aiimaging import realityscan as _rs
 
     try:
         if _kn.art_der_datei(kontext_ply) == "netz":
             kennzahlen = _kn.netz_kennzahlen(kontext_ply)
             return {"ply": str(kontext_ply), "weg": "netz", "grund": None, "hinweis": None,
+                    "realityscan_grund": "Netz geliefert — nichts zu rechnen.",
+                    "realityscan_ursache": _rs.URSACHE_GELIEFERT,
                     "netz": {"ecken": kennzahlen["ecken"], "dreiecke": kennzahlen["dreiecke"],
                              "sha256": kennzahlen["sha256"], "quelle": "geliefert"}}
     except (_kn.KontextNetzError, OSError):
         pass                                  # kein lesbares Netz — dann wie ein Splat
+
+    # ERST REALITYSCAN, DANN DER OFFENE WEG, DANN DIE KUGELN (Entscheid 81, 13.10.2026).
+    # Der offene Weg deckt am echten Splat ~10 % der Umgebung (auf-20261013-276/-277);
+    # RealityScan rechnet aus den Fotos. Es ist nie Voraussetzung (Auflage 3): Jeder
+    # Grund, es nicht zu nehmen, fuehrt hierunter weiter.
+    rs = _realityscan_versuch(kontext_ply, aufnahme, _realityscan)
+    if rs["bericht"] is not None:
+        b = rs["bericht"]
+        n = b.get("netz") or {}
+        lage = b.get("lage") or {}
+        return {"ply": b["netz_ply"], "weg": _rs.WEG, "grund": None,
+                "hinweis": _rs.SATZ_REALITYSCAN, "realityscan_grund": None,
+                "realityscan_ursache": None,
+                "netz": {"ecken": n.get("ecken"), "dreiecke": n.get("dreiecke"),
+                         "sha256": n.get("sha256"), "quelle": _rs.WEG,
+                         "programm_fassung": (b.get("programm") or {}).get("fassung"),
+                         "vereinfacht": n.get("vereinfacht"),
+                         "rechenzeit_s": (b.get("zeiten_s") or {}).get("lauf_s"),
+                         "aufnahme": rs["art"],
+                         "bilder": (b.get("bilder") or {}).get("anzahl"),
+                         "lage": {k: lage.get(k) for k in ("nah_colmap", "nah_splat",
+                                                           "massstab", "mitte_rel")},
+                         "zwischenspeicher_treffer": (b.get("zwischenspeicher")
+                                                      or {}).get("treffer")}}
+    rs_vermerk = {"realityscan_grund": rs["grund"], "realityscan_ursache": rs["ursache"]}
+
     brueckenlauf = _splat_zu_netz or splat_zu_netz
     try:
         bericht = brueckenlauf(kontext_ply, matrix=matrix, aufnahme=aufnahme)
@@ -996,11 +1076,11 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
         return {"ply": str(kontext_ply), "weg": "kugeln", "netz": None,
                 "grund": _pfade_gekuerzt(str(fehler))[:400],
                 "hinweis": (_kn.SATZ_KUGELN_NICHT_EINGERICHTET if nicht_eingerichtet
-                            else _kn.SATZ_KUGELN_GESCHEITERT)}
+                            else _kn.SATZ_KUGELN_GESCHEITERT), **rs_vermerk}
     except Exception as fehler:               # noqa: BLE001 — Rückfall statt Abbruch, gesagt
         return {"ply": str(kontext_ply), "weg": "kugeln", "netz": None,
                 "grund": _pfade_gekuerzt(f"{type(fehler).__name__}: {fehler}")[:400],
-                "hinweis": _kn.SATZ_KUGELN_GESCHEITERT}
+                "hinweis": _kn.SATZ_KUGELN_GESCHEITERT, **rs_vermerk}
     n = bericht.get("netz") or {}
     bw = bericht.get("blickwinkel") or {}
     parameter = bericht.get("parameter") or {}
@@ -1008,6 +1088,7 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
     # Warum der Ring, obwohl eine Aufnahme da war — ein Satz ohne Pfad (Regel 3).
     auf_grund = auf.get("grund") or auf.get("suche_grund")
     return {"ply": bericht["netz_ply"], "weg": "netz", "grund": None, "hinweis": None,
+            **rs_vermerk,
             "netz": {"ecken": n.get("ecken"), "dreiecke": n.get("dreiecke"),
                      "sha256": n.get("sha256"), "quelle": "splat-bruecke",
                      "renderer": bericht.get("renderer"), "geraet": bericht.get("geraet"),

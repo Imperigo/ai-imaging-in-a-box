@@ -198,6 +198,21 @@ def ohne_zeitfaktor_ueberall(monkeypatch):
     monkeypatch.delenv("AIIMAGING_ZEITFAKTOR", raising=False)
 
 
+#: Die Variablen der RealityScan-Brücke (Entscheid 81, 13.10.2026). Am Heim-PC stehen sie in
+#: der Umgebung des Dienstes — wer dort die Suite fährt, soll nicht stundenlang RealityScan
+#: rechnen, und keine Probe soll je nach Rechner einen anderen Weg nehmen. Wer die Brücke
+#: prüft, setzt sie in der Probe selbst.
+REALITYSCAN_VARIABLEN = ("AIIMAGING_REALITYSCAN", "AIIMAGING_REALITYSCAN_EXE",
+                         "AIIMAGING_REALITYSCAN_EXPORT_XML", "AIIMAGING_REALITYSCAN_SPEICHER")
+
+
+@pytest.fixture(autouse=True)
+def ohne_realityscan_ueberall(monkeypatch):
+    """Keine Probe benutzt ein installiertes RealityScan — nur die Attrappen der Proben."""
+    for name in REALITYSCAN_VARIABLEN:
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def paarurteil_urteilt(monkeypatch):
     """Die alte Form des Paarurteils einschalten: ρ URTEILT (bis 30.09.2026 die Vorgabe).

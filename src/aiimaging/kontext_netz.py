@@ -979,9 +979,12 @@ def _kamera(nr: int, modell: int, breite: int, hoehe: int, params) -> dict:
         cx, cy = params[1], params[2]
     else:
         fx, fy, cx, cy = params[:4]
+    # `params` UNVERAENDERT MIT (13.10.2026, RealityScan-Bruecke): `realityscan.colmap_als_text`
+    # schreibt die Kamera als Text zurueck, mit allen Parametern ihres Modells — aus
+    # fx/fy/cx/cy allein liesse sich eine Verzeichnung nicht zurueckschreiben.
     return {"modell": name, "perspektivisch": perspektivisch, "breite": int(breite),
             "hoehe": int(hoehe), "fx": float(fx), "fy": float(fy), "cx": float(cx),
-            "cy": float(cy)}
+            "cy": float(cy), "params": tuple(float(w) for w in params)}
 
 
 def _lies_kameras(p: Path) -> dict[int, dict]:

@@ -253,3 +253,21 @@ def test_fehlendes_blender_wird_gemeldet_statt_ersetzt(monkeypatch):
 
     with pytest.raises(seams.SeamError, match="Blender nicht gefunden"):
         seams.finde_blender()
+
+
+# --------------------------------------------------------------------------------------
+# 5 · Fremdprogramme, vom Nutzer installiert (Entscheid 79/81, 13.10.2026)
+# --------------------------------------------------------------------------------------
+
+def test_realityscan_kennt_nur_ein_modul_und_nur_als_prozess():
+    """Auflagen 1 und 2: RealityScan wird nie gesucht, nie geladen, nie mitgeliefert — nur
+    ``aiimaging/realityscan.py`` nennt es, und nur als Programm, das ein gesetzter Pfad
+    startet. Ein zweites Modul mit dem Pfad der Installation hiesse eine zweite Stelle, die
+    es ohne die ausdrückliche Einrichtung finden könnte."""
+    nennen = [p.name for p in kern_dateien()
+              if "/opt/realityscan" in p.read_text(encoding="utf-8")
+              or "realityscan-cli\"" in p.read_text(encoding="utf-8")]
+    assert nennen == ["realityscan.py"]
+    quelle = (PAKET / "realityscan.py").read_text(encoding="utf-8")
+    assert "which(" not in quelle and "shell=True" not in quelle
+    assert not any(p.suffix.lower() in (".exe", ".deb", ".rpm") for p in PAKET.rglob("*"))
