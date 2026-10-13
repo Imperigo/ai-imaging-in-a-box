@@ -603,6 +603,12 @@ SPLAT_SPEICHER_ENV = "AIIMAGING_SPLAT_NETZ_SPEICHER"
 #: Aufnahme, wenn es sie gibt (:func:`finde_aufnahme`).
 SPLAT_AUFNAHME_ENV = "AIIMAGING_SPLAT_AUFNAHME"
 
+#: Die Umgebungsvariable für den Ordner der **Masken** einer Aufnahme, wenn sie nicht nach der
+#: Konvention neben ihr liegen (:func:`aiimaging.kontext_netz.masken_kandidaten`). Seit
+#: 13.10.2026 (nach ``auf-20261013-276``). Sie gilt nur zusammen mit einer Aufnahme — Masken
+#: ohne die Posen ihres Laufs sind wertlos.
+SPLAT_MASKEN_ENV = "AIIMAGING_SPLAT_MASKEN"
+
 #: Gesamtfrist eines Brückenlaufs in Sekunden. GESETZT, nicht gemessen (13.10.2026): Rendern
 #: von 48 Blickwinkeln mit gsplat dauert auf einer Desktop-GPU Sekunden, die TSDF eines
 #: Strassenraums mit 5-cm-Voxeln auf der CPU eher Minuten. 30 Minuten lassen Luft für einen
@@ -652,20 +658,26 @@ def _splat_speicher(speicher) -> Path:
 
 
 def splat_schluessel(sha256_splat: str, parameter: dict,
-                     sha256_aufnahme: str | None = None) -> str:
+                     sha256_aufnahme: str | None = None,
+                     sha256_masken: str | None = None) -> str:
     """Der Speicherschlüssel eines Netzes: sha256 des Splats **plus** aller Parameter **plus**
     der Aufnahme, wenn eine die Blickwinkel stellt.
 
     Der Inhalt, nicht der Pfad (derselbe Grund wie ``kette.EINGABEDATEIEN``): Ein neu
     aufgenommener Splat unter altem Namen ist kein Treffer, und derselbe Splat an einem
     anderen Ort ist einer. Ebenso die Aufnahme (13.10.2026): Andere Kameras ergeben ein
-    anderes Netz (:func:`aiimaging.kontext_netz.aufnahme_fingerabdruck`).
+    anderes Netz (:func:`aiimaging.kontext_netz.aufnahme_fingerabdruck`). Und die Masken
+    (13.10.2026, nach ``auf-20261013-276``): Sie blenden Bildpunkte aus, andere Masken
+    ergeben ein anderes Netz (:func:`aiimaging.kontext_netz.masken_fingerabdruck`). Ohne
+    Masken bleibt der Schlüssel, wie er ohne dieses Feld war.
     """
     import hashlib
 
     inhalt = {"splat": sha256_splat, "parameter": parameter}
     if sha256_aufnahme is not None:
         inhalt["aufnahme"] = sha256_aufnahme
+    if sha256_masken is not None:
+        inhalt["masken"] = sha256_masken
     text = json.dumps(inhalt, sort_keys=True, ensure_ascii=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -721,6 +733,7 @@ def finde_aufnahme(ply, aufnahme=None) -> tuple[Path | None, str, str | None]:
 def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
                   blickwinkel: int | None = None, voxel_m: float | None = None,
                   renderer: str = "gsplat", speicher=None, aufnahme=None,
+                  masken=None, tiefenfilter=None,
                   timeout: float = GESAMTFRIST_SPLAT_S, _starte=None) -> dict:
     """Splat (3DGS-PLY) → farbiges Netz (PLY), über den Subprozess im `.venv-splat`.
 
@@ -743,6 +756,11 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
         aufnahme: der COLMAP-Ordner der Aufnahme; ``None`` heisst: nach der Konvention
             suchen (:func:`finde_aufnahme`). Gefunden, geht er an den Runner, und sein
             Inhalt steht im Speicherschlüssel.
+        masken: der Ordner der Masken zur Aufnahme; ``None`` heisst :data:`SPLAT_MASKEN_ENV`,
+            sonst neben der Aufnahme suchen (:func:`aiimaging.kontext_netz.finde_masken`).
+            Nur mit Aufnahme; ihr Inhalt steht im Speicherschlüssel.
+        tiefenfilter: die eingeschalteten Tiefenfilter; ``None`` heisst alle
+            (:data:`aiimaging.kontext_netz.TIEFENFILTER`), ``"keine"`` nur für Vergleiche.
 
     Returns:
         Der Bericht des Runners, ergänzt um ``netz_ply`` (Pfad, nur für den Multipass —
@@ -771,14 +789,17 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
             aufloesung=_kn.AUFLOESUNG_PX if aufloesung is None else aufloesung,
             je_kreis=_kn.BLICKWINKEL_JE_KREIS if blickwinkel is None else blickwinkel,
             voxel_m=_kn.VOXEL_M if voxel_m is None else voxel_m,
-            oben=oben, massstab=massstab, renderer=renderer)
+            oben=oben, massstab=massstab, renderer=renderer, tiefenfilter=tiefenfilter)
         aufnahme_ordner, aufnahme_art, aufnahme_grund = finde_aufnahme(ply, aufnahme)
         aufnahme_sha = (None if aufnahme_ordner is None
                         else _kn.aufnahme_fingerabdruck(aufnahme_ordner)["sha256"])
     except (_kontext.KontextError, _kn.KontextNetzError) as fehler:
         raise SeamError(f"Splat-Bruecke: {fehler}") from fehler
+    masken_fund, masken_vermerk = _finde_masken(aufnahme_ordner, masken)
+    masken_sha = _kn.masken_fingerabdruck(masken_fund)
 
-    schluessel = splat_schluessel(fingerabdruck["sha256"], parameter, aufnahme_sha)
+    schluessel = splat_schluessel(fingerabdruck["sha256"], parameter, aufnahme_sha,
+                                  masken_sha)
     ordner = _splat_speicher(speicher) / schluessel
     netz = ordner / "netz.ply"
     bericht_datei = ordner / "bericht.json"
@@ -802,10 +823,16 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
                    # die Hochachse mit Minus, und argparse hielt den Wert fuer einen Schalter.
                    "--oben=" + ",".join(repr(k) for k in parameter["oben"]),
                    "--massstab", repr(parameter["massstab"]),
-                   "--renderer", renderer]
+                   "--renderer", renderer,
+                   "--tiefenfilter=" + (",".join(parameter["tiefenfilter"]) or "keine")]
             if aufnahme_ordner is not None:
                 # Mit `=` wie bei `--oben` (auf-20261013-275): Ein Pfad darf mit Minus beginnen.
                 cmd.append("--aufnahme=" + str(aufnahme_ordner))
+                # DIE MASKEN AUSDRUECKLICH (13.10.2026): Die Naht hat sie gesucht und ihren
+                # Inhalt in den Schluessel genommen; der Runner sucht nicht noch einmal, sonst
+                # koennten Schluessel und Netz auf verschiedenen Masken beruhen.
+                cmd.append("--masken=" + (str(masken_fund["ordner"]) if masken_fund["gefunden"]
+                                          else "keine"))
             ergebnis = starte(cmd, frist)
             if ergebnis.returncode != 0:
                 raise SeamError(f"Splat→Netz fehlgeschlagen (Code {ergebnis.returncode}):\n"
@@ -839,6 +866,9 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
             bericht["aufnahme"] = vermerk if isinstance(vermerk, dict) else {}
             bericht["aufnahme"].update({"quelle": aufnahme_art, "sha256": aufnahme_sha,
                                         "suche_grund": aufnahme_grund})
+            vermerk_m = bericht.get("masken")
+            bericht["masken"] = vermerk_m if isinstance(vermerk_m, dict) else {}
+            bericht["masken"].update(dict(masken_vermerk, sha256=masken_sha))
             os.replace(roh_netz, netz)
             bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
                                      encoding="utf-8")
@@ -851,6 +881,41 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
         shutil.copyfile(netz, ausgabe)
     bericht["netz_ply"] = str(ausgabe)
     return bericht
+
+
+def _finde_masken(aufnahme_ordner, masken) -> tuple[dict, dict]:
+    """Die Masken zur Aufnahme — und ein Vermerk ohne Pfad (Regel 3).
+
+    Reihenfolge wie bei der Aufnahme: ``masken=`` ausdrücklich, dann
+    :data:`SPLAT_MASKEN_ENV`, dann neben der Aufnahme. **Ohne Aufnahme keine Masken**: Sie
+    gehören zu den Bildern eines Laufs, und nur dessen Posen sagen, wo ein Bildpunkt liegt
+    (Auskunft der HomeStation, 13.10.2026: Masken eines anderen Laufs derselben Szene passen
+    nur dem Namen nach). Eine unlesbare Aufnahme heisst hier «keine Masken» — ob sie taugt,
+    urteilt der Runner.
+    """
+    from aiimaging import kontext_netz as _kn
+
+    leer = {"gefunden": False, "art": None, "ordner": None, "dateien": {}, "json": None,
+            "bilder": 0}
+    if aufnahme_ordner is None:
+        return leer, {"gefunden": False, "quelle": "keine aufnahme", "anzahl": 0}
+    ordner, quelle = None, "neben der aufnahme"
+    if masken is not None:
+        ordner, quelle = Path(masken), "parameter"
+    elif (env := os.environ.get(SPLAT_MASKEN_ENV)):
+        ordner, quelle = Path(env), "umgebung"
+    try:
+        namen = [b["name"] for b in _kn.lies_aufnahme(aufnahme_ordner)["bilder"].values()]
+    except _kn.KontextNetzError:
+        return leer, {"gefunden": False, "quelle": quelle, "anzahl": 0,
+                      "grund": "Aufnahme nicht lesbar"}
+    fund = _kn.finde_masken(aufnahme_ordner, namen, ordner)
+    if masken is not None and not fund["gefunden"]:
+        raise SeamError(f"masken={Path(masken).name!r}: keine Maske zu einem Bild der "
+                        "Aufnahme (Bildname, Bildname + .png oder Stamm + .png).")
+    return fund, {"gefunden": fund["gefunden"], "quelle": quelle,
+                  "lage": fund["art"], "anzahl": len(fund["dateien"]),
+                  "bilder": fund["bilder"], "maske_json": fund["json"] is not None}
 
 
 def _splat_aus_speicher(netz: Path, bericht_datei: Path) -> dict | None:
@@ -945,6 +1010,9 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
                      "aufnahme_grund": (None if not auf_grund
                                         else _pfade_gekuerzt(str(auf_grund))[:400]),
                      "deckung": (bericht.get("deckung") or {}).get("anteil"),
+                     "masken": (bericht.get("masken") or {}).get("anzahl", 0),
+                     "tiefe_verworfen": ((bericht.get("tiefenfilter") or {})
+                                         .get("verworfen_anteil")),
                      "zwischenspeicher_treffer": (bericht.get("zwischenspeicher")
                                                   or {}).get("treffer")}}
 

@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import struct
 from pathlib import Path
 
@@ -66,6 +67,13 @@ __all__ = [
     "RING_NEIGUNGEN_GRAD", "SATZ_KUGELN_GESCHEITERT", "SATZ_KUGELN_NICHT_EINGERICHTET",
     "SDF_TRUNC_VOXEL", "SICHTFELD_GRAD", "TIEFE_MAX_FAKTOR", "UMLAUF_ABSTAND_FAKTOR",
     "UMLAUF_ERHEBUNG_GRAD", "VOXEL_M", "ZIEL_DREIECKE",
+    "DECKKRAFT_TIEFE", "DECKUNG_STICHPROBE", "MASKE_SCHWELLE", "MASKEN_JSON", "MASKEN_ORTE",
+    "NAH_MIN_M", "STICHPROBE_STARTWERT", "TIEFENFILTER", "TIEFE_SPRUNG_REL",
+    "TIEFE_STREUUNG_REL", "WEG_MIN_M",
+    "WEG_REICHWEITE_M",
+    "finde_masken", "maske_zum_bild", "masken_fingerabdruck", "masken_kandidaten",
+    "masken_polaritaet", "nah_min_splat", "polaritaet_aus_json", "stichprobe_indizes",
+    "tiefenfilter_lesen",
     "ansicht_matrix", "anteil_innen", "art_der_datei", "aufnahme_blickwinkel",
     "aufnahme_fingerabdruck", "aufnahme_kandidaten", "bildhoehe", "blickwinkel",
     "dichter_bereich", "gleichheit_befund", "huelle_erweitert", "intrinsik",
@@ -171,8 +179,112 @@ ANTEIL_UNTEN, ANTEIL_OBEN = 0.02, 0.98
 #: Der Codestand der Brücke. Hochzählen, wenn bei gleichen Parametern ein anderes Netz
 #: entsteht — die Zahl steht im Speicherschlüssel (:func:`netz_parameter`), sonst käme ein
 #: altes Netz als Treffer zurück. **2 seit 13.10.2026:** Blickwinkel aus der Aufnahme,
-#: Blockwache und Deckungsmass.
-FASSUNG = 2
+#: Blockwache und Deckungsmass. **3 seit 13.10.2026 (nach ``auf-20261013-276``):**
+#: Tiefenfilter, Masken der Aufnahme, Netz in fester Reihenfolge, Deckung über alle dichten
+#: Punkte.
+FASSUNG = 3
+
+
+# --------------------------------------------------------------------------------------
+# Der Tiefenfilter (13.10.2026, nach auf-20261013-276)
+# --------------------------------------------------------------------------------------
+# **Anlass:** Am echten Splat stimmten die Posen (gsplat aus den Aufnahmekameras ergab die
+# Aufnahmebilder deckungsgleich), aber die erwartete Tiefe war stark gesprenkelt, und die
+# gefilmte Person samt Arm stand als Wolke nah vor den Kameras. Die TSDF machte daraus
+# 497 497 Stücke; 69 % der Dreiecke fielen als Inseln weg, die Deckung blieb bei 10 %.
+# Eine TSDF mittelt Rauschen nur heraus, wenn es klein gegen ihre Abschneidedistanz ist —
+# ein Bildpunkt, dessen Tiefe um Meter springt, legt eine eigene Fläche an. Darum wird die
+# Tiefe **vor** dem Verschmelzen gesiebt; ein verworfener Bildpunkt trägt Tiefe 0 und wird
+# von Open3D übergangen. Sechs Filter, je einzeln gezählt (Bericht ``tiefenfilter``).
+#
+# **Was nicht geht, und warum:** Der naheliegende Vergleich «akkumulierte Tiefe D durch
+# Deckkraft gegen erwartete Tiefe ED» prüft nichts — gsplat 1.5.3 rechnet ED genau so
+# (``rendering.py``: ``render_colors[..., -1:] / render_alphas``). Eine Mediantiefe kennt
+# gsplat 1.5 nicht. Die zweiten Schätzungen sind darum der **Median der Nachbarn** (3 × 3,
+# quer zum Strahl) und die **Streuung entlang des Strahls** (``E[z²] − E[z]²``, aus einem
+# zweiten Durchgang von gsplat mit der Tiefe als Merkmal je Kamera).
+
+#: Die Namen der Filter, in der Reihenfolge des Berichts. ``maske`` wirkt nur, wo die
+#: Aufnahme Masken hat (:func:`finde_masken`), ``weg`` nur mit Blickwinkeln aus der Aufnahme.
+TIEFENFILTER = ("deckkraft", "sprenkel", "streuung", "nah", "weg", "maske")
+
+#: Ab welcher **akkumulierten Deckkraft** (``alpha`` aus gsplat) ein Bildpunkt seine Tiefe
+#: abgibt. GESETZT. :data:`DECKKRAFT_LEER` (0,5) bleibt die Grenze für «leer» — aber eine
+#: Tiefe, durch die man zur Hälfte hindurchsieht, mischt Vorder- und Hintergrund: Die
+#: erwartete Tiefe liegt dann irgendwo dazwischen, auf keiner Fläche.
+#:
+#: **0,7 statt der zuerst gesetzten 0,9** (13.10.2026, am synthetischen Strassenraum mit dem
+#: Ersatzrenderer gemessen): 0,9 verwarf dort 33 % der Bildpunkte mit Tiefe, 0,7 noch 10 %;
+#: beide kosteten Fläche (ohne Person: Deckung 98,3 % → 97,8 %, 7 % weniger Dreiecke bei 0,7)
+#: und brachten mehr Stücke, nicht weniger. Der synthetische Splat ist nicht trainiert —
+#: zwischen seinen Wölkchen bleiben Lücken, ein trainierter deckt seine Flächen fast ganz.
+#: Gegen die Person hilft dieser Filter nicht: Vor einer Wand ist alpha nahe 1, auch wenn die
+#: Tiefe in der Luft liegt. Er bleibt gegen Wolken vor dem Himmel. Am echten Splat zu messen
+#: (Bericht ``tiefenfilter.je_filter.deckkraft``).
+DECKKRAFT_TIEFE = 0.7
+
+#: Wie weit die Tiefe eines Bildpunkts vom **Median seiner 3 × 3 Nachbarn** abweichen darf,
+#: als Anteil der Tiefe. GESETZT. Auf einer Ebene ist der Median der Nachbarn die Tiefe der
+#: Mitte selbst — auch bei streifendem Blick, wo die Tiefe von Zeile zu Zeile stark wächst,
+#: denn sie wächst gleichmässig. Ein Sprenkel springt gegen alle Nachbarn. 5 % heisst bei
+#: 20 m Abstand 1 m: so viel lässt keine Fläche zwischen zwei Bildpunkten. Kanten verlieren
+#: einen Bildpunkt Saum; den sehen andere Blickwinkel von vorn.
+TIEFE_SPRUNG_REL = 0.05
+
+#: Wie weit die Tiefen der Wölkchen **entlang eines Strahls** streuen dürfen (Standard-
+#: abweichung, gewichtet wie die erwartete Tiefe), als Anteil der erwarteten Tiefe. GESETZT,
+#: 13.10.2026.
+#:
+#: **Anlass:** Am synthetischen Strassenraum mit Person (Ersatzrenderer, erwartete Tiefe wie
+#: gsplat): Eine halb durchsichtige Wolke 1 m vor der Kamera und eine Wand 6 m dahinter
+#: ergeben als erwartete Tiefe etwa 3 m — **in der Luft**, weit jenseits des Nahbereichs.
+#: Weder Nahbereich noch Weg noch Deckkraft (vor der Wand ist alpha nahe 1) sehen das; die
+#: Streuung schon: 0,6 × 1 m und 0,4 × 6 m streuen um 2,4 m, 80 % der Tiefe. Eine Fläche
+#: streut um die Dicke ihrer Wölkchen — Zentimeter, bei streifendem Blick einige Prozent.
+#: 10 % lässt das durch.
+TIEFE_STREUUNG_REL = 0.10
+
+#: Unter dieser Tiefe (Meter der Welt, über ``massstab`` in Splat-Einheiten) wird verworfen.
+#: GESETZT. Wer eine Aufnahme macht, steht mit Körper, Arm und Stange in der Nähe der Kamera
+#: — am echten Splat die «Wolke nah vor den Kameras». 1,5 m fasst Arm und Körper; den Boden
+#: unter einer waagrecht blickenden Kamera auf Brusthöhe (um 1,3 m) verliert nur der unterste
+#: Bildrand, und den sehen die Kameras der Augenblicke davor und danach von weiter weg.
+NAH_MIN_M = 1.5
+
+#: **Der Weg der Aufnahme ist leerer Raum.** Was näher als dies (Meter der Welt) an
+#: **irgendeiner** Kamera der Aufnahme liegt — nicht nur an der, aus der gerade gerendert
+#: wird —, ist der Mensch, der sie trug. GESETZT, 13.10.2026.
+#:
+#: **Anlass:** Am synthetischen Strassenraum mit Person (``make_test_splat.py --person``)
+#: nahmen Nahbereich und Masken nur die Person **dieses** Augenblicks weg; die Wolken der
+#: Augenblicke davor und danach sieht die Kamera 1,5 bis 5 m entfernt, und sie blieben als
+#: Fetzen (578 statt 223 Netzstücke, mit Nahbereich 575, mit Masken 620). Wo die Kamera
+#: durchgetragen wurde, steht nichts von der Umgebung — ausser dem, der sie trug.
+#:
+#: **Warum 1,2 m und nicht 1,5 m:** Die Kugel um die Kamera darf den Boden nicht berühren —
+#: sonst fehlt unter dem ganzen Weg ein Streifen Boden, und den sieht keine Kamera anders.
+#: Die Kameras der HomeStation stehen auf Brusthöhe (um 1,3 m). Die Beine der Person bleiben
+#: damit ausserhalb; sie nehmen Masken und Nahbereich, soweit es die eigenen sind.
+WEG_MIN_M = 1.2
+
+#: Bis zu welchem Abstand von der rendernden Kamera (Meter der Welt) andere Kameras für
+#: :data:`WEG_MIN_M` geprüft werden. GESETZT. Weiter weg ist eine Wolke im Bild klein, und
+#: die Prüfung kostet je Kamera einen Abstand je Bildpunkt.
+WEG_REICHWEITE_M = 10.0
+
+#: Ab welchem Grauwert (0..255) ein Maskenpunkt «weiss» ist. GESETZT. Die Masken der
+#: HomeStation tragen nur 0 und 255; die Mitte trennt auch weichgezeichnete Ränder.
+MASKE_SCHWELLE = 128
+
+#: Wie viele dichte Splat-Punkte das Deckungsmass höchstens zählt — eine **gleichmässige
+#: Zufallsstichprobe über alle**, mit festem Startwert (:func:`stichprobe_indizes`). GESETZT.
+#: Bis ``auf-20261013-276`` waren es die ~20 000 Punkte, aus denen auch der Bereich bestimmt
+#: wird, als Schritt durch die Datei; deren Reihenfolge legt der Trainer fest, nicht wir.
+#: 200 000 Abstände misst Open3D in Sekundenbruchteilen.
+DECKUNG_STICHPROBE = 200_000
+
+#: Der feste Startwert der Stichprobe — zwei Läufe zählen dieselben Punkte.
+STICHPROBE_STARTWERT = 20261013
 
 
 # --------------------------------------------------------------------------------------
@@ -644,14 +756,18 @@ def blickwinkel(bereich: dict, *, oben=(0.0, 1.0, 0.0), massstab: float = 1.0,
 
 def netz_parameter(*, aufloesung: int = AUFLOESUNG_PX, je_kreis: int = BLICKWINKEL_JE_KREIS,
                    voxel_m: float = VOXEL_M, oben=(0.0, 1.0, 0.0), massstab: float = 1.0,
-                   renderer: str = "gsplat") -> dict:
+                   renderer: str = "gsplat", tiefenfilter=TIEFENFILTER) -> dict:
     """Alles, was das Netz bestimmt, als eine Tabelle — für Speicherschlüssel und Bericht.
 
     Die gesetzten Konstanten stehen mit darin: Wer eine davon ändert, bekommt einen anderen
     Schlüssel, ohne :data:`FASSUNG` hochzählen zu müssen.
 
+    ``tiefenfilter`` sind die eingeschalteten Filter (:data:`TIEFENFILTER`; ``()`` = keiner,
+    nur für Vergleichsläufe) — sie stehen im Schlüssel, denn ohne Filter entsteht ein
+    anderes Netz.
+
     Raises:
-        KontextNetzError: Auflösung, Blickwinkel oder Voxel nicht positiv.
+        KontextNetzError: Auflösung, Blickwinkel oder Voxel nicht positiv, Filter unbekannt.
     """
     if int(aufloesung) < 16:
         raise KontextNetzError(f"aufloesung={aufloesung}: mindestens 16 Bildpunkte breit.")
@@ -663,6 +779,7 @@ def netz_parameter(*, aufloesung: int = AUFLOESUNG_PX, je_kreis: int = BLICKWINK
     return {
         "fassung": FASSUNG,
         "renderer": str(renderer),
+        "tiefenfilter": tiefenfilter_lesen(tiefenfilter),
         "aufloesung": int(aufloesung),
         "hoehe": bildhoehe(aufloesung),
         "blickwinkel_je_kreis": int(je_kreis),
@@ -681,6 +798,11 @@ def netz_parameter(*, aufloesung: int = AUFLOESUNG_PX, je_kreis: int = BLICKWINK
             "gleich_median_max": GLEICH_MEDIAN_MAX, "gleich_p90_max": GLEICH_P90_MAX,
             "kameras_innen_min": KAMERAS_INNEN_MIN, "huelle_rand": HUELLE_RAND,
             "bloecke_max": BLOECKE_MAX,
+            "deckkraft_tiefe": DECKKRAFT_TIEFE, "tiefe_sprung_rel": TIEFE_SPRUNG_REL,
+            "tiefe_streuung_rel": TIEFE_STREUUNG_REL,
+            "nah_min_m": NAH_MIN_M, "maske_schwelle": MASKE_SCHWELLE,
+            "weg_min_m": WEG_MIN_M, "weg_reichweite_m": WEG_REICHWEITE_M,
+            "deckung_stichprobe": DECKUNG_STICHPROBE,
         },
     }
 
@@ -749,10 +871,31 @@ def aufnahme_kandidaten(ply) -> list[Path]:
     ``<ordner>/sparse/0`` (so legt COLMAP es an, der Splat daneben),
     ``<ordner>/../sparse/0`` (der Splat in einem Unterordner wie ``exports/``), und
     ``<stamm>.colmap/`` (eine Aufnahme, die eigens zum Splat abgelegt wurde).
+
+    **Erst neben dem Pfad, wie er kommt, dann neben seinem Ziel** (13.10.2026,
+    ``auf-20261013-276``, Fehler 1): Die App lädt den Splat über einen Verweis (Symlink) in
+    ihrem Projektordner; neben dem Verweis liegt keine Aufnahme, neben dem Ziel schon. Der
+    Pfad, wie er kommt, bleibt vorn — wer eine Aufnahme bewusst neben den Verweis legt,
+    meint sie.
     """
     p = Path(ply)
-    return [p.parent / "sparse" / "0", p.parent.parent / "sparse" / "0",
-            p.parent / (p.stem + ".colmap")]
+    aus: list[Path] = []
+    for q in (p, _aufgeloest(p)):
+        for k in (q.parent / "sparse" / "0", q.parent.parent / "sparse" / "0",
+                  q.parent / (q.stem + ".colmap")):
+            if k not in aus:
+                aus.append(k)
+    return aus
+
+
+def _aufgeloest(p: Path) -> Path:
+    """``p`` mit aufgelösten Verweisen — oder ``p`` selbst, wenn kein Verweis im Spiel ist
+    (dann soll ein relativer Pfad nicht als zweiter, absoluter Kandidat auftauchen)."""
+    try:
+        ziel = p.resolve()
+    except (OSError, RuntimeError):
+        return p
+    return p if ziel == Path(os.path.abspath(p)) else ziel
 
 
 def aufnahme_fingerabdruck(ordner) -> dict:
@@ -1084,7 +1227,8 @@ def aufnahme_blickwinkel(aufnahme: dict, *, breite: int = AUFLOESUNG_PX,
                 continue
             if b["kamera"] not in ki_je_kamera:
                 ki_je_kamera[b["kamera"]] = intrinsik_skaliert(kamera, breite)
-            ansichten.append({"art": "aufnahme", "bild": bild, "kamera": b["kamera"],
+            ansichten.append({"art": "aufnahme", "bild": bild, "name": b["name"],
+                              "kamera": b["kamera"],
                               "augenblick": nr, "auge": kamerazentrum(b["q"], b["t"]),
                               "ansicht": pose_zu_ansicht(b["q"], b["t"]),
                               "ki": ki_je_kamera[b["kamera"]]})
@@ -1185,3 +1329,220 @@ def voxel_fuer_bloecke(voxel: float, bloecke: int, hoechstens: int = BLOECKE_MAX
     if int(bloecke) <= int(hoechstens):
         return float(voxel)
     return float(voxel) * max(1.25, 1.1 * math.sqrt(int(bloecke) / int(hoechstens)))
+
+
+# ======================================================================================
+# Tiefenfilter, Stichprobe und Masken der Aufnahme (13.10.2026, nach auf-20261013-276)
+# ======================================================================================
+
+def tiefenfilter_lesen(filter_) -> list[str]:
+    """Die eingeschalteten Tiefenfilter als sortierte Liste — aus Liste, Tupel oder ``"a,b"``.
+
+    ``"keine"`` und ``()`` heissen: kein Filter (nur für Vergleichsläufe).
+
+    Raises:
+        KontextNetzError: ein unbekannter Name — geraten wird nicht, ein Tippfehler schaltete
+            sonst einen Filter still ab.
+    """
+    if filter_ is None:
+        return sorted(TIEFENFILTER)
+    if isinstance(filter_, str):
+        teile = [] if filter_.strip() in ("", "keine") else filter_.split(",")
+    else:
+        teile = list(filter_)
+    namen = sorted({str(t).strip() for t in teile if str(t).strip()})
+    fremd = [n for n in namen if n not in TIEFENFILTER]
+    if fremd:
+        raise KontextNetzError(f"Tiefenfilter {fremd} unbekannt; bekannt sind "
+                               f"{list(TIEFENFILTER)} oder 'keine'.")
+    return namen
+
+
+def nah_min_splat(massstab: float) -> float:
+    """:data:`NAH_MIN_M` in Einheiten des Splats: Ein Meter der Welt sind ``1 / massstab``."""
+    if not float(massstab) > 0.0:
+        raise KontextNetzError(f"massstab={massstab} muss positiv sein.")
+    return NAH_MIN_M / float(massstab)
+
+
+def stichprobe_indizes(n: int, hoechstens: int = DECKUNG_STICHPROBE,
+                       startwert: int = STICHPROBE_STARTWERT) -> list[int]:
+    """Eine gleichmässige Zufallsstichprobe aus ``range(n)``, sortiert, mit festem Startwert.
+
+    **Anlass** (``auf-20261013-276``, Fehler 4): Das Deckungsmass zählte ~20 000 Punkte als
+    Schritt durch die Datei. In welcher Reihenfolge ein Trainer die Gaussians schreibt, ist
+    seine Sache; eine Zufallsstichprobe ist von ihr unabhängig und trifft jeden dichten Punkt
+    mit derselben Wahrscheinlichkeit. Fester Startwert: zwei Läufe zählen dieselben Punkte.
+    """
+    import random
+
+    n, k = int(n), int(hoechstens)
+    if n <= 0 or k <= 0:
+        return []
+    if k >= n:
+        return list(range(n))
+    return sorted(random.Random(int(startwert)).sample(range(n), k))
+
+
+#: Wo die Masken neben einer Aufnahme ``<lauf>/sparse/0`` liegen, relativ zu ihr — in dieser
+#: Reihenfolge. Die erste Form ist die der HomeStation (``<lauf>/masks/<ansicht>/``, neben
+#: ``<lauf>/images/<ansicht>/``, Auskunft 13.10.2026).
+MASKEN_ORTE = (("..", "..", "masks"), ("..", "masks"), ("masks",))
+
+#: Die Datei mit den Kennzahlen der Masken (KosmoPrepare, Schema
+#: ``kosmoprepare.splat-maske/0.2``) — im Maskenordner oder eine Ebene darüber.
+MASKEN_JSON = "maske.json"
+
+
+def masken_kandidaten(aufnahme) -> list[tuple[str, Path]]:
+    """Wo zu einer Aufnahme ihre Masken gesucht werden: ``[(art, ordner), …]``.
+
+    **Nur neben DIESER Aufnahme** (13.10.2026, Auskunft der HomeStation): Masken gehören zu
+    einem Lauf mit eigenem ``sparse/0`` und eigenem Splat. Eine Maske aus einem anderen Lauf
+    passt nur dem Namen nach — dessen Posen sind nicht als gleich geprüft. Darum gibt es
+    keine Suche über Läufe hinweg; wer Masken anderswo hat, nennt den Ordner ausdrücklich.
+
+    ``art`` sagt ohne Pfad, welche Lage galt (``"../../masks"``, ``"../masks"``, ``"masks"``).
+    Wie bei :func:`aufnahme_kandidaten` erst lexikalisch, dann mit aufgelösten Verweisen.
+    """
+    a = Path(aufnahme)
+    aus: list[tuple[str, Path]] = []
+    for basis in (a, _aufgeloest(a)):
+        for teile in MASKEN_ORTE:
+            ordner = basis
+            for t in teile:
+                ordner = ordner.parent if t == ".." else ordner / t
+            if all(ordner != o for _, o in aus):
+                aus.append(("/".join(teile), ordner))
+    return aus
+
+
+def maske_zum_bild(ordner, bildname: str) -> Path | None:
+    """Die Maske zu einem Bild der Aufnahme — oder ``None``.
+
+    Drei Namensformen, in dieser Reihenfolge: voller Bildname plus ``.png`` (``back/0031.jpg``
+    → ``back/0031.jpg.png``, so bei der HomeStation), derselbe Name, Stamm plus ``.png``.
+    """
+    o = Path(ordner)
+    name = str(bildname).replace("\\", "/")
+    for kandidat in (o / (name + ".png"), o / name, (o / name).with_suffix(".png")):
+        if kandidat.is_file():
+            return kandidat
+    return None
+
+
+def finde_masken(aufnahme, bildnamen, ordner=None) -> dict:
+    """Die Masken einer Aufnahme suchen: im genannten ``ordner`` oder nach
+    :func:`masken_kandidaten`.
+
+    Ein Ordner gilt, sobald darin zu **einem** Bild der Aufnahme eine Maske liegt; gewählt
+    wird der erste solche.
+
+    Returns:
+        ``{gefunden, art, ordner, dateien: {bildname: Path}, json: Path | None, bilder}`` —
+        ``art`` ohne Pfad (``"parameter"`` oder die Lage), ``bilder`` die Zahl der Bilder.
+    """
+    namen = list(bildnamen)
+    kandidaten = ([("parameter", Path(ordner))] if ordner is not None
+                  else masken_kandidaten(aufnahme))
+    for art, o in kandidaten:
+        if not o.is_dir():
+            continue
+        dateien = {}
+        for n in namen:
+            m = maske_zum_bild(o, n)
+            if m is not None:
+                dateien[n] = m
+        if dateien:
+            json_datei = next((j for j in (o / MASKEN_JSON, o.parent / MASKEN_JSON)
+                               if j.is_file()), None)
+            return {"gefunden": True, "art": art, "ordner": o, "dateien": dateien,
+                    "json": json_datei, "bilder": len(namen)}
+    return {"gefunden": False, "art": None, "ordner": None, "dateien": {}, "json": None,
+            "bilder": len(namen)}
+
+
+def masken_fingerabdruck(fund: dict) -> str | None:
+    """sha256 über Namen und Inhalt aller gefundenen Masken (und ``maske.json``) — ohne Pfad.
+
+    Steht im Speicherschlüssel: Andere Masken ergeben ein anderes Netz. ``None`` ohne Masken.
+    """
+    if not fund.get("gefunden"):
+        return None
+    zeilen = []
+    eintraege = sorted(fund["dateien"].items())
+    if fund.get("json") is not None:
+        eintraege.append((MASKEN_JSON, fund["json"]))
+    for name, pfad in eintraege:
+        summe = hashlib.sha256()
+        with open(pfad, "rb") as datei:
+            for stueck in iter(lambda: datei.read(1 << 20), b""):
+                summe.update(stueck)
+        zeilen.append(f"{name}\t{summe.hexdigest()}")
+    return hashlib.sha256("\n".join(zeilen).encode("utf-8")).hexdigest()
+
+
+#: Was in ``maske.json`` «Weiss behalten» bzw. «Schwarz behalten» heisst (klein geschrieben,
+#: ohne Leerzeichen verglichen). Das Schema von KosmoPrepare kennen wir nur aus der Auskunft
+#: der HomeStation (13.10.2026: Weiss = behalten, Schwarz = Person/Handzone); ein
+#: ausdrückliches Feld geht vor.
+_WEISS_BEHALTEN = ("weiss=behalten", "white=keep", "255=behalten", "255=keep",
+                   "schwarz=ausblenden", "black=mask", "black=remove", "0=ausblenden")
+_SCHWARZ_BEHALTEN = ("schwarz=behalten", "black=keep", "0=behalten", "0=keep",
+                     "weiss=ausblenden", "white=mask", "white=remove", "255=ausblenden")
+_POLARITAET_FELDER = ("polaritaet", "polarity")
+
+
+def polaritaet_aus_json(daten) -> bool | None:
+    """Sagt ``maske.json``, ob Weiss «behalten» heisst? ``True``/``False``, oder ``None``.
+
+    Ein ausdrückliches Feld (``polaritaet``/``polarity`` als Text wie ``"weiss=behalten"``
+    oder als Zahl des behaltenen Werts, 255 oder 0) geht vor; sonst gilt das Schema
+    ``kosmoprepare.splat-maske/…``: Weiss = behalten (Auskunft der HomeStation).
+    """
+    if not isinstance(daten, dict):
+        return None
+    for feld, wert in daten.items():
+        if str(feld).strip().lower() not in _POLARITAET_FELDER:
+            continue
+        if isinstance(wert, (int, float)) and not isinstance(wert, bool):
+            return {255: True, 0: False}.get(int(wert))
+        text = str(wert).strip().lower().replace(" ", "").replace(":", "=")
+        if any(t in text for t in _WEISS_BEHALTEN):
+            return True
+        if any(t in text for t in _SCHWARZ_BEHALTEN):
+            return False
+    if str(daten.get("schema", "")).startswith("kosmoprepare.splat-maske/"):
+        return True
+    return None
+
+
+def masken_polaritaet(weiss_anteil: float, aus_json: bool | None = None) -> dict:
+    """Welche Farbe der Maske «behalten» heisst — und woher das kommt.
+
+    1. ``maske.json`` sagt es (:func:`polaritaet_aus_json`) → Quelle ``"maske.json"``.
+    2. Sonst die **Vorgabe** Weiss = behalten (so die HomeStation, so die gängigen Werkzeuge).
+    3. **Mehrheitsregel**, nur ohne Angabe in ``maske.json``: Ist über alle benutzten Masken
+       weniger als die Hälfte weiss, wäre mit der Vorgabe mehr ausgeblendet als behalten —
+       eine Person füllt nicht das halbe Bild. Dann gilt Schwarz = behalten, mit Warnung.
+
+    Widerspricht die Mehrheit einer ``maske.json``, gilt die Datei, und die Warnung sagt es.
+
+    Returns:
+        ``{weiss_behalten, quelle, weiss_anteil, warnung}``.
+    """
+    anteil = round(float(weiss_anteil), 4)
+    mehrheit_weiss = anteil >= 0.5
+    if aus_json is not None:
+        warnung = (None if aus_json == mehrheit_weiss else
+                   f"maske.json sagt {'Weiss' if aus_json else 'Schwarz'} = behalten, aber "
+                   f"nur {anteil if aus_json else 1 - anteil:.0%} der Maskenpunkte sind "
+                   f"{'weiss' if aus_json else 'schwarz'} — bitte pruefen.")
+        return {"weiss_behalten": bool(aus_json), "quelle": MASKEN_JSON,
+                "weiss_anteil": anteil, "warnung": warnung}
+    if mehrheit_weiss:
+        return {"weiss_behalten": True, "quelle": "vorgabe", "weiss_anteil": anteil,
+                "warnung": None}
+    return {"weiss_behalten": False, "quelle": "mehrheitsregel", "weiss_anteil": anteil,
+            "warnung": (f"Nur {anteil:.0%} der Maskenpunkte sind weiss — gegen die Vorgabe "
+                        f"gilt Schwarz = behalten (Mehrheitsregel).")}
