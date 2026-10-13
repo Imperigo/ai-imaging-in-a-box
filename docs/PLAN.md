@@ -7904,3 +7904,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Bau: Server (`/api/hallo`, Kopplung anfordern, Heimnetz mit TLS), Kern und Mac-App; Prüfstrecke grün.
 - [ ] Am echten Mac und Heim-PC prüfen (Auftrag an local).
 
+## Aktualisieren (Entscheid 84, 13.10.2026)
+
+- [x] Blatt 18 gezeichnet, 84a/84b beantwortet. *(13.10.2026, §95)*
+- [ ] Prüfstrecke legt bei neuer Nummer eine GitHub-Freigabe ab (Mac-ZIP, iPad-Paket, Fassungsblatt, Prüfsumme).
+- [ ] Mac-App: Knopf, Laden, Prüfsumme, Ersetzen, Neustart.
+- [ ] iPad-App: Hinweis auf neue Fassung und auf den Ablauf der 7 Tage.
+

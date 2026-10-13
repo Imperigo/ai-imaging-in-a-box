@@ -289,3 +289,6 @@ auf Blatt 13.
 | 83a | Wo erscheint die Zahl am Heim-PC? | **Im Fenster des Dienstes und als Mitteilung am Bildschirm** (Owner, per Auswahl). Verworfen: nur im Fenster. |
 | 83b | Wer darf koppeln? | **Tailscale-Netz und auch Heim-WLAN** (Owner, per Auswahl; Empfehlung war nur Tailscale). Bau: im WLAN nur mit TLS und angeheftetem Zertifikat, nie Klartext. |
 | 83c | «Von Hand eintragen» behalten? | **Ja, als kleiner Link** (Owner, per Auswahl). |
+| 84 | Ein Aktualisieren-Knopf, wenn eine neue Fassung auf GitHub liegt? | **Mac: Knopf, lädt die neue Fassung und ersetzt sich; iPad: nur Hinweis** (Owner, 13.10.2026, per Auswahl; Blatt 18). Selbst-Ersetzen am iPad erlaubt Apple nur über App Store/TestFlight (bezahltes Konto) — verworfen; ebenso «nur Hinweis» und «nicht jetzt» am Mac. |
+| 84a | Wann fragt die App? | **Beim Start und einmal täglich** (Owner, per Auswahl). Verworfen: nur auf Knopfdruck. |
+| 84b | Wann erscheint eine Fassung zum Herunterladen? | **Nur bei neuer Nummer** (Owner, per Auswahl). Verworfen: bei jedem Stand auf main. |
