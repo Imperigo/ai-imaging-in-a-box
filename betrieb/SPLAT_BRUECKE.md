@@ -22,7 +22,7 @@ von `.venv-splat`.
 | Was | Vorgabe | Wann ändern |
 |---|---|---|
 | `PYTHON` | `python3.11` | Hier geprüft mit 3.11 (open3d 0.20). |
-| `TORCH_INDEX` | `https://download.pytorch.org/whl/cu124` | Passend zur CUDA-Fassung des Treibers (`nvidia-smi`, Zeile «CUDA Version»). |
+| `TORCH_INDEX` | `https://download.pytorch.org/whl/cu130` | Passend zur CUDA-Fassung des Treibers (`nvidia-smi`, Zeile «CUDA Version»). cu130 seit `auf-20261013-275`: cu124 kennt die RTX 5090 nicht. |
 | `GSPLAT_VERSION` | `1.5.3` | Nur nach einem Messauftrag. |
 
 Liegt die Umgebung woanders, zeigt `AIIMAGING_SPLAT_PYTHON` auf ihr Python; das Netz wird nach
@@ -46,7 +46,7 @@ gleich.
    Neigungen; dazu eine Umlaufbahn von aussen nach innen (`aiimaging.kontext_netz`, alle Zahlen
    **GESETZT**).
 3. Rendern mit `gsplat.rasterization(…, render_mode="RGB+ED")` — Farbe und erwartete Tiefe.
-4. Verschmelzen mit Open3D (TSDF, 5-cm-Voxel), Inseln entfernen, bei Bedarf vereinfachen.
+4. Verschmelzen mit Open3D (TSDF, 7-cm-Voxel), Inseln entfernen, bei Bedarf vereinfachen.
 5. PLY mit Eckpunktfarben, im System des Splats (die Verortung wendet Blender an), dazu ein
    Bericht ohne Pfade.
 
@@ -55,6 +55,6 @@ Der Abholer ruft die Brücke **einmal je Auftrag**; dasselbe Netz kommt danach a
 ## Was am Heim-PC noch zu messen ist
 
 * Rechenzeit und Grafikspeicher an einem echten Splat (Vorgaben: 640 × 480, 16 Blickwinkel je
-  Kreis = 48 Bilder, Voxel 5 cm).
+  Kreis = 48 Bilder, Voxel 7 cm).
 * Ob das Netz das Konfetti beendet (dieselben Kameras wie `auf-20261008-274`).
 * Ob Augenhöhe, Neigungen und Umlauf am Gehweg-Splat die Flächen fassen, oder ob Löcher bleiben.

@@ -7850,7 +7850,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Messboden nur zum Trennen** (Entscheid 78a) und nur bei gemessener Maske (274 C3). *(13.10.2026, §84)*
 - [x] **Splat-Wege geprüft** (`docs/SPLAT_WEGE_2026-10-13.md`), Entscheid 79, Präzisierung Fremdprogramme in `CLAUDE.md`. *(13.10.2026, §84)*
 - [x] **Offene Brücke Splat → Netz** gebaut (`seams.splat_zu_netz`, `kontext_netz`, Runner, Blender lädt Netz; Glätten nur noch für Kugeln). *(13.10.2026, §85)*
-- [ ] **Messung `auf-20261013-275`** (local): Brücke einrichten, Konfetti weg?
+- [x] **Messung `auf-20261013-275`**: Brücke eingerichtet, **Konfetti weg (0 von 9)**; Netz deckt nur 21–26 % (Löcher). *(13.10.2026, §86)*
+- [x] **Dringend behoben:** Abbruch ohne Gelände mit Nullprobe seit E78a; `--oben=`; Voxel 7 cm; cu130. *(13.10.2026, §86)*
+- [ ] **Löcher im Netz:** Blickwinkel aus der Aufnahme statt gesetztem Ring, Inselgrenze prüfen.
 - [ ] **Brücke RealityScan** — später (Entscheid 80); Fotos liegen vor (960 Bilder mit Masken).
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

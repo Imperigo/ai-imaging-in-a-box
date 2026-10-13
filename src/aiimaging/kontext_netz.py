@@ -106,9 +106,12 @@ SICHTFELD_GRAD = 90.0
 #: Bildbreite in Bildpunkten; die Höhe ist drei Viertel davon (:func:`bildhoehe`). GESETZT.
 AUFLOESUNG_PX = 640
 
-#: Kantenlänge eines Voxels der TSDF, in Metern der Welt. GESETZT. 5 cm: fein genug für
+#: Kantenlänge eines Voxels der TSDF, in Metern der Welt. GESETZT. 5 cm war gedacht: fein genug für
 #: Bordsteine und Stufen, grob genug, dass ein Strassenraum von 100 m in den Speicher passt.
-VOXEL_M = 0.05
+#: **Von 0,05 auf 0,07 m nach ``auf-20261013-275``:** Bei 5 cm stuerzte Open3D 0.20 am echten
+#: Splat in ``extract_triangle_mesh`` ab (SIGSEGV; ~435 000 aktive Bloecke, Grenze gemessen bei
+#: ~300 000: 324 000 stuerzt, 245 000 geht). Mit 7 cm lief es (499 999 Dreiecke, 14,5 s).
+VOXEL_M = 0.07
 
 #: Die Abschneidedistanz der TSDF in Voxeln. GESETZT (die Faustregel aus der Open3D-Dokumentation
 #: ist 3–5 Voxel).

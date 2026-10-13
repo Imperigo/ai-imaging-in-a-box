@@ -331,7 +331,7 @@ def test_naht_startet_den_runner_mit_frist_und_parametern(tmp_path, splat_python
     assert frist == seams.GESAMTFRIST_SPLAT_S
     werte = {cmd[i]: cmd[i + 1] for i in range(4, len(cmd) - 1) if cmd[i].startswith("--")}
     assert werte["--voxel-m"] == "0.1" and werte["--renderer"] == "gsplat"
-    assert werte["--oben"] == "0.0,0.0,1.0" and werte["--massstab"] == "1.0"
+    assert "--oben=0.0,0.0,1.0" in cmd and werte["--massstab"] == "1.0"
     assert werte["--aufloesung"] == str(kn.AUFLOESUNG_PX)
     assert werte["--blickwinkel"] == str(kn.BLICKWINKEL_JE_KREIS)
     assert bericht["zwischenspeicher"]["treffer"] is False
@@ -772,3 +772,27 @@ def test_fusion_mit_dem_ersatzrenderer(tmp_path):
     wieder = seams.splat_zu_netz(splat, renderer="cpu-probe", aufloesung=160,
                                  blickwinkel=8, voxel_m=0.15, speicher=tmp_path / "sp")
     assert wieder["zwischenspeicher"]["treffer"] is True
+
+
+def test_eine_hochachse_mit_minus_kommt_beim_runner_an(tmp_path, splat_python):
+    """``auf-20261013-275`` Fehler 1: Am echten Splat ist die Hochachse z. B. (-0.033, …). Als
+    eigener Wert nach ``--oben`` hielt argparse ihn für einen Schalter und brach ab."""
+    import importlib.util
+    splat = tmp_path / "s.ply"
+    _erzeuger().erzeuge_splat(splat, punkte=100)
+    starter = _Starter()
+    m = [1, 0, 0, 0, 0, -0.03, -1, 0, 0, 1, -0.03, 0, 0, 0, 0, 1]
+    seams.splat_zu_netz(splat, matrix=m, speicher=tmp_path / "sp", _starte=starter)
+    (cmd, _frist), = starter.aufrufe
+    oben = [a for a in cmd if a.startswith("--oben")]
+    assert len(oben) == 1 and oben[0].startswith("--oben=")
+    spez = importlib.util.spec_from_file_location("runner_oben", seams.SPLAT_RUNNER)
+    runner = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(runner)
+    args = runner._parser().parse_args([str(splat), str(tmp_path / "n.ply"), oben[0]])
+    assert min(args.oben) < 0                                 # der Wert kam an
+
+
+def test_die_voxelgroesse_haelt_open3d_am_echten_splat_aus():
+    """``auf-20261013-275`` Fehler 2: 5 cm stürzte Open3D ab, 7 cm lief."""
+    assert kn.VOXEL_M == 0.07

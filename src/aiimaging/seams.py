@@ -733,7 +733,9 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
                    "--aufloesung", str(parameter["aufloesung"]),
                    "--blickwinkel", str(parameter["blickwinkel_je_kreis"]),
                    "--voxel-m", repr(parameter["voxel_m"]),
-                   "--oben", ",".join(repr(k) for k in parameter["oben"]),
+                   # `=` und kein Leerzeichen (auf-20261013-275): Am echten Splat beginnt
+                   # die Hochachse mit Minus, und argparse hielt den Wert fuer einen Schalter.
+                   "--oben=" + ",".join(repr(k) for k in parameter["oben"]),
                    "--massstab", repr(parameter["massstab"]),
                    "--renderer", renderer]
             ergebnis = starte(cmd, frist)

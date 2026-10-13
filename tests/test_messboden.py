@@ -147,3 +147,31 @@ def test_der_messboden_trifft_eine_echte_bodenplatte(tmp_path):
             assert mittel < grenze, mittel
         else:
             assert mittel > 0.1, mittel                       # Strahllänge ist falsch
+
+
+def test_ein_auftrag_ohne_gelaende_laeuft_mit_nullprobe_durch(tmp_path, monkeypatch):
+    """**Fehler 3 aus ``auf-20261013-275`` (dringend):** Seit E78a bekam ``_nullprobe`` die
+    Trennhilfe, kannte sie aber nicht — jeder Auftrag ohne Gelände brach mit ``unexpected
+    keyword argument 'trennhilfe'`` ab, auch die gewöhnlichen des Owners (Dienst mit
+    Nullprobe). Keine Probe fuhr diesen Weg: alle liefen mit ``nullprobe=False``."""
+    from aiimaging import bruecke
+    from test_sammelnachprobe_230 import KOSMO_AUTO_KAMERAS, _kette_gebaeude_6m, _kosmo_ordner
+
+    ordner = _kosmo_ordner(tmp_path, kameras=KOSMO_AUTO_KAMERAS[:1])
+    b, h = 8, 8
+    soll = [math.inf] * 24 + [20.0] * 16 + [math.inf] * 24
+    gerufen = []
+
+    def qa(png, soll_karte, **kw):
+        gerufen.append(kw)
+        return {"score": 0.81, "bestanden": True, "status": "ok"}
+
+    _protokoll, attrappen = _kette_gebaeude_6m(qa=qa, soll=lambda *a, **k: (list(soll), b, h))
+    monkeypatch.setattr(abholer, "_maske_bauen", lambda *a, **k: {
+        "maske": [math.isfinite(w) for w in soll], "gemessen": True,
+        "gelaende_erkannt": False})
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path / "aus", nullprobe=True, **attrappen)
+    antwort = abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=verarbeite)
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort.get("grund")
+    assert any("trennhilfe" in kw for kw in gerufen)            # auch in der Nullprobe
+    assert (ordner / bruecke.DATEI_ERGEBNIS).exists()

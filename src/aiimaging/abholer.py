@@ -4545,7 +4545,7 @@ def _ohne_umgebung(soll, kontext_pixel):
 
 def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
                tiefen_modell=None, maske=None,
-               ausblenden=None) -> tuple[dict | None, dict | None]:
+               ausblenden=None, trennhilfe=None) -> tuple[dict | None, dict | None]:
     """Was Bilder **ohne jede Geometrie** auf dieser Soll-Karte erreichen.
 
     Die Anker werden **gemessen und nicht nachgeschlagen.** Eine Tabelle nach Szenennamen
@@ -4586,7 +4586,11 @@ def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
                 Path(ordner) / f"nullprobe_{art}.png", art, int(breite), int(hoehe))
             urteil = messen(str(bild), soll, breite=breite, hoehe=hoehe,
                             modell=tiefen_modell, schwelle=grenze, maske=maske,
-                            **({"ausblenden": ausblenden} if ausblenden else {}))
+                            **({"ausblenden": ausblenden} if ausblenden else {}),
+                            # Seit E78a (13.10.2026): Ohne diesen Parameter brach jeder
+                            # Auftrag ohne Gelaende mit Nullprobe ab (auf-20261013-275,
+                            # Fehler 3) — die Proben liefen alle mit nullprobe=False.
+                            **({"trennhilfe": trennhilfe} if trennhilfe else {}))
         except Exception:      # noqa: BLE001 — ein Anker darf den Auftrag nicht mitnehmen
             continue
         if not urteil:

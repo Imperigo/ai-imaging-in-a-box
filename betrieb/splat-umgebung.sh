@@ -11,7 +11,7 @@
 #     bash betrieb/splat-umgebung.sh
 # Anpassbar ueber Umgebungsvariablen:
 #     PYTHON=python3.11                               welcher Interpreter das venv bekommt
-#     TORCH_INDEX=https://download.pytorch.org/whl/cu124   passend zum Treiber (nvidia-smi)
+#     TORCH_INDEX=https://download.pytorch.org/whl/cu130   passend zum Treiber (nvidia-smi)
 #     GSPLAT_VERSION=1.5.3
 #
 # Das Skript installiert NICHTS ausserhalb von `.venv-splat` und aendert keine Systemdateien.
@@ -19,7 +19,7 @@ set -euo pipefail
 
 WURZEL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON="${PYTHON:-python3.11}"
-TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu124}"
+TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu130}"
 GSPLAT_VERSION="${GSPLAT_VERSION:-1.5.3}"
 VENV="$WURZEL/.venv-splat"
 

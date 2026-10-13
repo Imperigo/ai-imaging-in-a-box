@@ -390,7 +390,9 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
     }
 
 
-def main(argv=None) -> int:
+def _parser() -> argparse.ArgumentParser:
+    """Die Schalter — eigene Funktion, damit eine Probe das Lesen der Werte pruefen kann
+    (auf-20261013-275: eine Hochachse mit Minus brach argparse ab)."""
     ap = argparse.ArgumentParser(description="Splat (3DGS-PLY) → farbiges Netz (PLY). "
                                              "Läuft im .venv-splat.")
     ap.add_argument("splat")
@@ -410,6 +412,11 @@ def main(argv=None) -> int:
     ap.add_argument("--renderer", choices=RENDERER, default="gsplat",
                     help="gsplat (echt, CUDA) oder cpu-probe (NUR für Proben)")
     ap.add_argument("--geraet", default="cuda", help="torch-Gerät für gsplat")
+    return ap
+
+
+def main(argv=None) -> int:
+    ap = _parser()
     a = ap.parse_args(argv)
 
     try:
