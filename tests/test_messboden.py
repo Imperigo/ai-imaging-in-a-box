@@ -59,35 +59,53 @@ def bild(tmp_path) -> Path:
     return pfad
 
 
-def test_der_befund_aus_272_wird_messbar(bild):
-    """Nachgestellt: Halle quer im Bild, darunter Boden im Bild, nicht im Modell. Ohne Messboden
-    kein gemeinsamer Punkt; mit ihm misst die Prüfung."""
-    b, h = 40, 40
+def _halle_mit_bodenbild(b=40, h=40):
     kamera = dict(KAMERA, auge=[0.0, -30.0, 1.7], blick_auf=[0.0, 0.0, 1.7])
-    soll = []
-    for y in range(h):
-        for x in range(b):
-            soll.append(30.0 + 0.05 * x if 14 <= y < 20 else math.inf)
+    soll = [30.0 + 0.05 * x if 14 <= y < 20 else math.inf for y in range(h) for x in range(b)]
     maske = [math.isfinite(w) for w in soll]
     mit, befund = messboden.mit_messboden(soll, b, h, kamera)
     ist_bild = [1.0 / w if math.isfinite(w) else 0.001 for w in mit]   # das Bild hat Boden
+    trennhilfe = [a != c for a, c in zip(mit, soll)]
+    return soll, maske, ist_bild, trennhilfe, befund, b, h
+
+
+def test_der_befund_aus_272_wird_messbar(bild):
+    """Nachgestellt: Halle quer im Bild, darunter Boden im Bild, nicht im Modell. Ohne Messboden
+    kein gemeinsamer Punkt; mit ihm als Trennhilfe misst die Prüfung."""
+    soll, maske, ist_bild, trennhilfe, befund, b, h = _halle_mit_bodenbild()
     ohne = ts.qa_gegen_soll(bild, soll, modell=attrappe(ist_bild), breite=b, hoehe=h, maske=maske)
     assert ohne["score"] is None and ohne["n_gemeinsam"] == 0
-    gemessen = ts.qa_gegen_soll(bild, mit, modell=attrappe(ist_bild), breite=b, hoehe=h,
-                                maske=maske)
+    gemessen = ts.qa_gegen_soll(bild, soll, modell=attrappe(ist_bild), breite=b, hoehe=h,
+                                maske=maske, trennhilfe=trennhilfe)
     assert gemessen["score"] is not None and gemessen["n_gemeinsam"] > 0
-    assert befund["n_boden"] > 0
+    assert gemessen["n_trennhilfe"] == befund["n_boden"] > 0
 
 
-def test_der_abholer_legt_ihn_nur_ohne_gemessenes_gelaende_an():
+def test_nur_zum_trennen_der_boden_zaehlt_nicht_im_anteil_und_nicht_im_score(bild):
+    """Owner-Entscheid 78, Nachtrag 13.10.2026: Der Boden hilft nur beim Trennen. Anteil und
+    gemeinsame Punkte sind die des Hauses — nicht die des Bodens (274: «schenkt» geom_iou)."""
+    soll, maske, ist_bild, trennhilfe, _befund, b, h = _halle_mit_bodenbild()
+    urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(ist_bild), breite=b, hoehe=h,
+                              maske=maske, trennhilfe=trennhilfe)
+    assert urteil["anteil_soll"] == pytest.approx(sum(maske) / (b * h))
+    assert urteil["n_gemeinsam"] <= sum(maske)
+
+
+def test_der_abholer_legt_ihn_nur_bei_gemessener_maske_ohne_gelaende_an():
     soll = [math.inf] * 16
     bericht = {"kamera": KAMERA}
-    neu, befund = abholer._mit_messboden(soll, 4, 4, bericht, {"gelaende_erkannt": False})
-    assert befund["angewandt"] is True and sum(map(math.isfinite, neu)) == 8
-    for maske in ({"gelaende_erkannt": True}, {}, None):          # Gelände da / ungemessen
-        assert abholer._mit_messboden(soll, 4, 4, bericht, maske) == (soll, None)
-    kaputt = abholer._mit_messboden(soll, 4, 4, {"kamera": {}}, {"gelaende_erkannt": False})
-    assert kaputt[0] == soll and kaputt[1]["angewandt"] is False
+    zurueck, hilfe, befund = abholer._mit_messboden(
+        soll, 4, 4, bericht, {"gemessen": True, "gelaende_erkannt": False})
+    assert zurueck == soll                                    # die Soll-Karte bleibt
+    assert befund["angewandt"] is True and befund["nur_zum_trennen"] is True
+    assert sum(hilfe) == 8
+    # 274 C3: ungemessene Maske (auch mit gelaende_erkannt False) -> kein Messboden.
+    for maske in ({"gemessen": False, "gelaende_erkannt": False},
+                  {"gemessen": True, "gelaende_erkannt": True}, {}, None):
+        assert abholer._mit_messboden(soll, 4, 4, bericht, maske) == (soll, None, None)
+    kaputt = abholer._mit_messboden(soll, 4, 4, {"kamera": {}},
+                                    {"gemessen": True, "gelaende_erkannt": False})
+    assert kaputt[1] is None and kaputt[2]["angewandt"] is False
 
 
 def _blender_fehlt() -> bool:

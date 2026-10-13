@@ -7846,7 +7846,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Radius ×4** (Breite/32) und Normierung in `blender-report.json`. *(08.10.2026, §83)*
 - [x] **Messboden — Entscheid 78** gebaut, gegen echtes Blender geprüft. *(08.10.2026, §83)*
 - [x] **Feinschliff-Nachzug** (Vergleich-Bild schrumpft, Verlauf-Knoten 724 px) auf `claude/kosmovis-v018-verlauf-feinschliff` 0a9433b68. *(08.10.2026, §83)*
-- [ ] **Messung `auf-20261008-274`** (local): Feinschliff in WebKitGTK, Konfetti, Messboden — dann Feinschliff und Splat-Vertrag an Int 1.
+- [x] **Messung `auf-20261008-274`** (local): Feinschliff ja (an Int 1), Konfetti nein, Messboden trägt, schenkt aber Punkte. *(13.10.2026, §84)*
+- [x] **Messboden nur zum Trennen** (Entscheid 78a) und nur bei gemessener Maske (274 C3). *(13.10.2026, §84)*
+- [x] **Splat-Wege geprüft** (`docs/SPLAT_WEGE_2026-10-13.md`), Entscheid 79, Präzisierung Fremdprogramme in `CLAUDE.md`. *(13.10.2026, §84)*
+- [ ] **Offene Brücke Splat → Netz** (gsplat + Open3D, eigene Umgebung am Heim-PC) — Bau.
+- [ ] **Brücke RealityScan** (vom Owner selbst installiert) — Bau, dazu Auftrag: Fotos der Aufnahme vorhanden?
+- [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 
 ## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)
 

@@ -2709,8 +2709,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Boden, bekommt die Soll-Karte DER PRUEFUNG eine gedachte Ebene auf Gelaendehoehe
             # — das Tiefenbild fuer das Bildmodell bleibt unberuehrt. Der Umriss fuer die
             # Seedwahl bleibt der des Bauwerks.
-            soll_pruefung, messboden_befund = _mit_messboden(soll, breite, hoch, bericht,
-                                                             maskenbefund)
+            soll_pruefung, trennhilfe, messboden_befund = _mit_messboden(
+                soll, breite, hoch, bericht, maskenbefund)
+            if trennhilfe is not None:
+                ausblendung = dict(ausblendung, trennhilfe=trennhilfe)
 
             # DIE DOPPELTE ANSICHT. Zweizaehlige Drehsymmetrie laesst die beiden
             # Ueber-Eck-Ansichten der HABS/NPS-Regel zusammenfallen; bei einem Quader
@@ -4468,22 +4470,36 @@ def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
 
 
 def _mit_messboden(soll, breite, hoehe, bericht, maskenbefund):
-    """Die Soll-Karte der Pruefung mit Messboden — oder unveraendert, mit dem Grund.
+    """Die Trennhilfe aus dem Messboden — oder ``None``, mit dem Grund im Befund.
 
-    Nur, wenn die Maske GEMESSEN hat, dass kein Gelaende da ist (`gelaende_erkannt` False);
-    ungemessen wird nichts erfunden. Nur fuer die flache Karte des echten Wegs.
+    **Nur zum Trennen** (Owner-Entscheid 78, Nachtrag 13.10.2026): Zurueck kommt die
+    unveraenderte Soll-Karte und, wenn angewandt, die Liste der Punkte, an denen der Boden
+    laege — fuer ``qa_gegen_soll(trennhilfe=…)``. Sie zaehlen nur beim Trennen von Haus und
+    Hintergrund im Bild, nicht im Score.
+
+    Nur, wenn die Maske GEMESSEN hat (``gemessen`` True) UND kein Gelaende fand
+    (``gelaende_erkannt`` False). **Befund ``auf-20261008-274`` C3:** Bis dahin genuegte
+    ``gelaende_erkannt`` False — auch bei einer ungemessenen Maske, und am Testbau mit
+    (unerkannter) Gelaendeplatte lag dann ein Messboden 25 cm unter der Platte.
+
+    Returns:
+        ``(soll, trennhilfe_oder_None, befund_oder_None)``.
     """
     from aiimaging import messboden as _messboden
-    if (maskenbefund or {}).get("gelaende_erkannt") is not False:
-        return soll, None
+    befund_maske = maskenbefund or {}
+    if befund_maske.get("gemessen") is not True or befund_maske.get("gelaende_erkannt") is not False:
+        return soll, None, None
     if not soll or isinstance(soll[0], (list, tuple)) or breite is None or hoehe is None:
-        return soll, None
+        return soll, None, None
     try:
         neu, befund = _messboden.mit_messboden(soll, int(breite), int(hoehe),
                                                (bericht or {}).get("kamera") or {})
     except _messboden.MessbodenError as fehler:
-        return soll, {"angewandt": False, "grund": str(fehler)}
-    return neu, dict(befund, angewandt=befund["n_boden"] > 0)
+        return soll, None, {"angewandt": False, "grund": str(fehler)}
+    trennhilfe = [a != b for a, b in zip(neu, soll)]
+    angewandt = befund["n_boden"] > 0
+    return soll, (trennhilfe if angewandt else None), dict(befund, angewandt=angewandt,
+                                                           nur_zum_trennen=True)
 
 
 def _ohne_umgebung(soll, kontext_pixel):

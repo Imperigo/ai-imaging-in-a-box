@@ -1395,3 +1395,11 @@ Prüfung hielt den Boden für das Gebäude. Der Owner hat einen «Messboden» ge
 nur die Prüfung kennt. Sie wird aus der Kamera berechnet und stimmt mit einer echt gerenderten Bodenplatte auf
 Millimeter überein. Zugleich wurde das Glätten der Umgebung verstärkt, weil das Konfetti blieb.
 
+**Wo der Fehler beim Splat lag, und der richtige Weg (13.10.2026).** Auf die Frage des Owners, warum der Splat nicht
+richtig verarbeitet wird, die ehrliche Antwort: Wir hatten ihn nur behelfsmässig als harte Kugeln gezeichnet — daher
+das Konfetti, und kein Glätten konnte das beheben. Geprüft wurden die offiziellen Wege bei NVIDIA und Epic samt
+Lizenzen. Entscheid 79: Im Produkt macht ein offener Weg (gsplat und Open3D) aus dem Splat ein echtes 3D-Netz; wo der
+Owner Epic RealityScan selbst installiert hat, macht eine Brücke aus den Fotos ein noch besseres Netz. RealityScan
+darf nicht mitgeliefert und nicht als Dienst für Kunden betrieben werden — dafür gibt es jetzt eine eigene Regel.
+Ausserdem zählt der Messboden nur noch zum Trennen von Haus und Hintergrund, nicht in die Punktzahl.
+

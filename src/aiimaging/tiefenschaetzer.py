@@ -1225,7 +1225,8 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                   hintergrund_anteil: float | None = None,
                   breite: int | None = None, hoehe: int | None = None,
                   maske: Sequence[bool] | None = None,
-                  ausblenden: Sequence[bool] | None = None) -> dict:
+                  ausblenden: Sequence[bool] | None = None,
+                  trennhilfe: Sequence[bool] | None = None) -> dict:
     """Die Funktion, die die Geometrie-Metrik endlich **anwendbar** macht.
 
     Sie schliesst den Bogen: Aus dem erzeugten Bild wird eine Ist-Tiefenkarte geschätzt,
@@ -1338,6 +1339,18 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         for i in ausgeblendet:
             soll[i] = math.inf
     sil_soll = geometrie_qa.silhouette(soll, hintergrund)
+    # DER MESSBODEN NUR ZUM TRENNEN (Owner-Entscheid 78, Nachtrag 13.10.2026 nach
+    # auf-20261008-274): Die Punkte, an denen der gedachte Boden laege, zaehlen NUR bei der
+    # Markierung des Hintergrunds im Bild mit (damit das Haus nicht als Hintergrund gilt).
+    # In Score, geom_iou und Anteil zaehlt allein das Haus — der Boden «schenkte» sonst
+    # einen grossen Teil von geom_iou (Halle 0,98 statt ~0,91; «Uebersicht» Boden = ganzes Bild).
+    getrennt: list[int] = []
+    if trennhilfe is not None:
+        if len(trennhilfe) != len(soll):
+            raise TiefenschaetzerError(
+                f"trennhilfe hat {len(trennhilfe)} statt {len(soll)} Werte — geraten wird "
+                f"nicht, welche Punkte gemeint sind.")
+        getrennt = [i for i, j in enumerate(trennhilfe) if j and not sil_soll[i]]
     n_soll_geometrie = sum(sil_soll)
     obergrenze = n_soll_geometrie / len(soll)
 
@@ -1386,7 +1399,7 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
     try:
         markierung = markiere_hintergrund(
             roh, polaritaet=eintrag.polaritaet, strategie=strategie,
-            anteil=hintergrund_anteil, n_geometrie=n_soll_geometrie,
+            anteil=hintergrund_anteil, n_geometrie=n_soll_geometrie + len(getrennt),
             breite=ist_ergebnis["breite"], hoehe=ist_ergebnis["hoehe"],
         )
         # Die gemessene Polarität gehört an das Tor, und bis zum 26.08.2026 kam sie hier
@@ -1401,9 +1414,9 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # den 14 Läufen mit Vorzeichen aus `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`
         # haben zwei ein positives (+0.127 bei Score 0.1842, +0.337 bei 0.2301), beide
         # weit unter der Schwelle — kein bekanntes Urteil ändert sich.
-        if ausgeblendet:
+        if ausgeblendet or getrennt:
             markierung = dict(markierung, tiefen=list(markierung["tiefen"]))
-            for i in ausgeblendet:
+            for i in (*ausgeblendet, *getrennt):
                 markierung["tiefen"][i] = math.inf
         urteil = geometrie_qa.geometrie_gate(
             soll, markierung["tiefen"], schwelle=schwelle, hintergrund=hintergrund,
@@ -1523,6 +1536,7 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "anteil_soll": urteil.get("anteil_soll"),
         # Ausgeblendete Umgebung (Splat): `None` ohne, sonst die Zahl der Punkte.
         "n_ausgeblendet": len(ausgeblendet) if ausblenden is not None else None,
+        "n_trennhilfe": len(getrennt) if trennhilfe is not None else None,
         "n_gemeinsam": urteil["n_gemeinsam"],
         "n_soll": urteil["n_soll"],
         "n_ist": urteil["n_ist"],
@@ -1583,6 +1597,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "geom_iou_norm": None,
         "anteil_soll": None,
         "n_ausgeblendet": None,
+        "n_trennhilfe": None,
         "n_gemeinsam": None,
         "n_soll": None,
         "n_ist": None,

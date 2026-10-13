@@ -70,6 +70,21 @@ Forschungs-Ausnahme, unter drei Auflagen:
 Die Freigabe gilt je Registereintrag (`Backbone.lizenz_offen` mit Begründung). Die
 Forschungs-Ausnahme bleibt als Mechanismus für künftige Forschungsmodelle bestehen.
 
+**Präzisierung Fremdprogramme, vom Nutzer installiert (Owner-Entscheid 79, 2026-10-13):**
+Proprietäre Programme (heute Epic **RealityScan**) dürfen über eine Brücke aufgerufen werden —
+ausschliesslich unter vier Auflagen:
+
+1. **Nie mitgeliefert** — kein Binary, kein Installer, kein Download durch uns. Der Nutzer
+   installiert es selbst, mit eigener Lizenz (RealityScan: eigener Platz, gratis unter 1 Mio. USD
+   Umsatz in 12 Monaten, sonst 1250 USD je Platz und Jahr).
+2. **Nur als Prozess, nur auf dem Rechner seines Lizenznehmers** — Befehlszeile oder lokale
+   Fernsteuerung; nie als Dienst für Dritte (RealityScan-EULA §1.2 c/d: keine Nutzung durch
+   Dritte, kein Hosting, kein «service bureau»). Darum nie über den Bestellweg von KosmoOrbit
+   für Kunden.
+3. **Nie Voraussetzung** — der offene Weg (heute gsplat + Open3D, Apache-2.0/MIT) liefert
+   dasselbe Ergebnis in geringerer Güte; fehlt das Fremdprogramm, läuft der offene Weg.
+4. **Deklariert** — im `NOTICE` als «nicht ausgeliefert, vom Nutzer installiert», mit Lizenz.
+
 **Plattform-Bausteine:** Die Apple-Frameworks der iPad-App (SwiftUI, PencilKit, Network,
 Security) gehören zur Plattform wie das Betriebssystem und werden nicht mitgeliefert. Sie
 stehen als Vermerk im `NOTICE`, nicht als Abhängigkeit.

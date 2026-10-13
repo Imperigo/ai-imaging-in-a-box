@@ -267,6 +267,25 @@ Terms of Use), Qwen2.5-3B/-72B (Qwen-Lizenzen).
 --------------------------------------------------------------------------------
 
 ================================================================================
+Epic RealityScan - Fremdprogramm, vom Nutzer installiert, nicht ausgeliefert
+================================================================================
+
+Owner-Entscheid 79 (13.10.2026), CLAUDE.md "Fremdprogramme, vom Nutzer
+installiert": Visbox darf RealityScan (frueher RealityCapture) ueber eine
+Bruecke als Prozess aufrufen, wenn der Nutzer es selbst installiert und
+lizenziert hat. Weder Programm noch Installer noch Bibliothek geht in Visbox
+ein; es ist nie Voraussetzung (der offene Weg gsplat + Open3D bleibt).
+
+RealityScan 2.x   proprietaer, Epic Games; RealityScan EULA
+  https://www.realityscan.com/eula  -  https://www.realityscan.com/license
+  Gratis unter 1 Mio. USD Umsatz in den letzten 12 Monaten, sonst je Platz
+  und Jahr kostenpflichtig. EULA §1.2(c)/(d): keine Nutzung durch Dritte, kein
+  Hosting/SaaS - darum nie als Dienst ueber KosmoOrbit. Gelesen 13.10.2026,
+  docs/SPLAT_WEGE_2026-10-13.md.
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Tailscale - externer Dienst, nicht ausgeliefert
 ================================================================================
 

@@ -17,9 +17,19 @@ Gespräch auftaucht, wird hier nachgetragen — siehe `CLAUDE.md`.
 Werkzeuge, die festhalten, wer wann was geändert hat — vergleichbar mit einem
 Planarchiv, das jeden Zwischenstand aufbewahrt statt ihn zu überschreiben.
 
+**Fremdprogramm (vom Nutzer installiert)** — Ein Programm mit eigener, nicht-offener Lizenz, das Visbox
+nicht mitliefert, aber aufrufen darf, wenn der Nutzer es selbst installiert und lizenziert hat — nur auf seinem
+Rechner, nie als Dienst für andere, und nie als Voraussetzung.
+*Im Projekt:* Präzisierung in `CLAUDE.md` (Entscheid 79), heute Epic RealityScan.
+
 **Git** — Das Programm, das jede Änderung an den Projektdateien aufzeichnet. Es
 speichert nicht nur den aktuellen Stand, sondern die vollständige Geschichte. Jeder
 frühere Zustand ist wiederherstellbar.
+
+**Relightable Gaussian Splatting (lichtaktiver Splat)** — Ein Splat, der auf neues Licht reagiert. Ein
+gewöhnlicher Splat speichert das Licht der Aufnahme fest; damit er neu beleuchtet werden kann, muss er in
+Materialeigenschaften zerlegt werden (Grundfarbe, Rauheit, Ausrichtung). Heute Forschung.
+*Im Projekt:* Forschungsfrage des Owners zu Entscheid 79, nicht gebaut (`docs/SPLAT_WEGE_2026-10-13.md`).
 
 **Repository (kurz: Repo)** — Der Projektordner samt seiner gesamten Geschichte. Ein
 Repo liegt lokal auf dem Rechner und meist zusätzlich auf einem Server (siehe *GitHub*).
@@ -320,6 +330,12 @@ Open Source im Sinne der OSI. *Beispiel: FLUX.1-dev.*
 **OSI (Open Source Initiative)** — Organisation, die anerkannte Open-Source-Lizenzen
 führt. „Nicht OSI-konform" heisst: offen zugänglich, aber mit Auflagen, die echte
 Weiterverwendung einschränken.
+
+**Photogrammetrie** — Aus vielen Fotos eines Gegenstands oder Ortes ein 3D-Modell rechnen: Das Programm
+findet dieselben Punkte auf mehreren Bildern und schliesst daraus, wo sie im Raum liegen; heraus kommt ein Netz mit
+aufgemalter Fotofarbe (Textur). Im Projekt der bessere Weg zur Umgebung als ein Splat, wenn die Fotos da sind.
+*Im Projekt:* Epic RealityScan als vom Nutzer installiertes Fremdprogramm (Entscheid 79,
+`docs/SPLAT_WEGE_2026-10-13.md`).
 
 **Proprietär** — Der dritte Fall neben permissiv und copyleft: Software, deren Quelltext
 nicht offenliegt und deren Benutzung ein Vertrag regelt, den allein der Hersteller
@@ -6225,6 +6241,7 @@ Die HomeStation hat so am 23.09.2026 gezeigt, dass der Abstand zum Hintergrund w
 **Messboden** — Eine gedachte Bodenfläche, die nur die Prüfung kennt. Viele Modelle haben keinen Boden,
 das erzeugte Bild aber immer; ohne Boden im Modell verwechselte die Prüfung Boden und Gebäude und konnte gar nicht
 messen. Der Messboden liegt auf Geländehöhe und wird aus der Kamera ausgerechnet; das Bildmodell sieht ihn nie.
+Seit dem 13.10.2026 hilft er nur beim Trennen von Haus und Hintergrund; in die Punktzahl zählt allein das Haus.
 *Im Projekt:* `messboden.mit_messboden`, `abholer._mit_messboden`; Entscheid 78, gegen echtes Blender geprüft.
 
 **Messschalter** — Eine Einstellung, die es nur gibt, damit sich **eine Ursache von einer
@@ -6599,6 +6616,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §81: **Ausblenden (in der Prüfung)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §82: **Glätten der Umgebung** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §83: **Messboden** |
+| 2026-10-13 | Ergaenzt aus Sitzung 74 §84: **Photogrammetrie**, **Relightable Gaussian Splatting (lichtaktiver Splat)**, **Fremdprogramm (vom Nutzer installiert)**; nachgefuehrt: **Messboden** (nur zum Trennen) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |
 | 2026-10-01 | Ergaenzt aus Sitzung 74 (Plan v0.1.7): **Gatekeeper**, **Behelfs-Unterschrift (ad-hoc)**, **Vermittler (Relay)**, **Lieferblatt**, **Vollbau**, **Sammel-Nachprobe**, **Vorführmappe**, **Platzhalter (Beispielmappe)**, **Wachsender Abstand (Backoff)**, **Bestätigte Antwort**, **Begleitdaten**, **Formatkennung**, **Bündel (.app)**, **Info.plist**, **«Trotzdem öffnen»**, **Startzeile**, **Anschluss (Port)**, **Basic-Anmeldung**, **WKWebView**, **Gedankentext**, **Entladen (des Sprachmodells)**, **Werkzeugbeschreibung**, **Vorschlagskarte**, **Verlauf**, **nvidia-smi**, **TXT-Eintrag**, **Kopf (Header)**, **Hop-by-Hop-Kopf**, **100 Continue**, **Absage der Tür**, **Flüchtige Sitzung**, **Fensterinhalt**, **ASCII**, **Prozentschreibung**, **Gegenstelle**, **Uhr mit Ruhezustand**, **TLS mit festgehaltenem Schlüssel**, **MagicDNS**, **Zertifikat**, **Schema (einer Adresse)**, **Strecke**, **local-prepare (Prüf-Helfer)**, **Versionsnummer (Visbox 0.1.0)**, **Aufsicht**, **Pipeline-Klasse**, **Randlose Silhouette**, **Nicht anwendbar**, **Bildauftrag der Innenkamera**, **Quellstand**, **Dienst-Unit**, **Journal**, **Geschütztes Leerzeichen**, **Xvfb**, **Grafikbeschleunigung**, **Software-GL**, **WebKitGTK**, **foreignObject**, **Trefferfläche**, **Zentrale**; berichtigt: **TestFlight und Apple-Entwicklerkonto** (Freigabe auf macOS 15) |
