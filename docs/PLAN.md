@@ -7902,12 +7902,13 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] `ipad/LIESMICH.md`: Xcode-Weg für iPadOS 26 (Swift Playgrounds geht dort nicht). *(13.10.2026, §96)*
 - [x] Blatt 17 gezeichnet, Fragen 83a–c beantwortet. *(13.10.2026, §93)*
 - [x] Bau: Server (`/api/hallo`, Kopplung anfordern, Heimnetz mit TLS), Kern und Mac-App; Prüfstrecke grün. *(13.10.2026, §96)*
-- [ ] Am echten Mac und Heim-PC prüfen (Auftrag an local).
+- [x] Am echten Mac und Heim-PC über Tailscale bestätigt (`auf-20261013-279` Teil, P6 Owner). *(13.10.2026, §97)*
+- [ ] Heim-WLAN (`--heimnetz`) am Gerät (279 P4/P5).
 
 ## Aktualisieren (Entscheid 84, 13.10.2026)
 
 - [x] Blatt 18 gezeichnet, 84a/84b beantwortet. *(13.10.2026, §95)*
-- [ ] Prüfstrecke legt bei neuer Nummer eine GitHub-Freigabe ab (Mac-ZIP, iPad-Paket, Fassungsblatt, Prüfsumme).
-- [ ] Mac-App: Knopf, Laden, Prüfsumme, Ersetzen, Neustart.
-- [ ] iPad-App: Hinweis auf neue Fassung und auf den Ablauf der 7 Tage.
+- [x] Prüfstrecke legt bei neuer Nummer eine GitHub-Freigabe ab (Mac-ZIP, iPad-Paket, Fassungsblatt, Prüfsumme). *(13.10.2026, §97)*
+- [x] Mac-App: Knopf, Laden, Prüfsumme, Ersetzen, Neustart (am Gerät erst ab 0.2.2 sichtbar). *(13.10.2026, §97)*
+- [x] iPad-App: Hinweis auf neue Fassung und auf den Ablauf der 7 Tage. *(13.10.2026, §97)*
 
