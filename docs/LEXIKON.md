@@ -3846,6 +3846,10 @@ halbdurchsichtige Wölkchen hintereinander. Die erwartete Tiefe ist ihr gewichte
 viel, wie es zur Farbe des Bildpunkts beiträgt. So bekommt jeder Bildpunkt **eine** Entfernung, auch wenn
 mehrere Wölkchen beteiligt sind. *Im Projekt:* `render_mode="RGB+ED"` in gsplat («ED», expected depth);
 Bildpunkte, die zu weniger als der Hälfte gedeckt sind, gelten als leer (`kontext_netz.DECKKRAFT_LEER`).
+*Ihre Schwäche (13.10.2026, `auf-20261013-276`):* Steht eine halbdurchsichtige Wolke vor einer Wand,
+liegt der Mittelwert irgendwo dazwischen, in der Luft — darum der **Tiefenfilter**. gsplat rechnet sie
+als akkumulierte Tiefe geteilt durch die **akkumulierte Deckkraft**; ein Vergleich der beiden prüft
+also nichts.
 
 **TSDF (Verschmelzen von Tiefenbildern)** — Ein Verfahren, viele Tiefenbilder aus verschiedenen Richtungen zu
 einer Oberfläche zusammenzusetzen. Der Raum wird in kleine Würfel (Voxel) geteilt; jeder merkt sich, wie weit
@@ -3875,7 +3879,8 @@ und nur auf NVIDIA-Karten. *Im Projekt:* gsplat rendert nur mit CUDA; darum läu
 nicht in der Cloud-Sitzung.
 
 **Ersatzrenderer (cpu-probe)** — Ein absichtlich einfacher Zeichner für Proben: Er malt jedes Wölkchen als
-kleines Quadrat und behält je Bildpunkt das nächste. Die Tiefe nimmt er seit dem 13.10.2026 dort, wo der
+kleines Quadrat und behielt bis zum 13.10.2026 je Bildpunkt das nächste; seither mischt er wie gsplat
+von vorn nach hinten und gibt **erwartete Tiefe** und **akkumulierte Deckkraft** zurück. Die Tiefe nimmt er seit dem 13.10.2026 dort, wo der
 Sehstrahl die flache Scheibe des Wölkchens trifft — vorher trug jedes Quadrat die Tiefe seiner Mitte, und bei
 flachem Blick lag der Boden im Netz drei Würfel zu hoch. Er sieht schlechter aus als gsplat, braucht aber keine
 Grafikkarte — so lässt sich der Rest der Brücke (Blickwinkel, Verschmelzen, Datei) überall prüfen.
@@ -3915,7 +3920,8 @@ Schwelle steht bei 1 % (`kontext_netz.GLEICH_MEDIAN_MAX`, gesetzt).
 **Deckung (des Netzes)** — Welcher Anteil der dichten Wölkchen eines Splats nahe an einer Fläche des daraus
 gerechneten Netzes liegt (höchstens drei **Voxel** entfernt). Ein Mass für die Löcher, ohne Bild und ohne
 Kamera. *Im Projekt:* `deckung.anteil` im Bericht der Splat-Brücke; am synthetischen Strassenraum 71 % mit dem
-Ring gegen 96 % mit den Kameras der Aufnahme.
+Ring gegen 96 % mit den Kameras der Aufnahme. Gezählt wird seit dem 13.10.2026 eine
+**Zufallsstichprobe mit festem Startwert** über alle dichten Wölkchen.
 
 **Blockwache** — Eine Zählung während des Verschmelzens (**TSDF**): Die Würfel liegen in Blöcken, und Open3D 0.20
 stürzt beim Herausziehen des Netzes ab, wenn zu viele Blöcke belegt sind (am echten Splat bei rund 300 000). Die
@@ -3926,6 +3932,77 @@ Bericht. *Im Projekt:* `kontext_netz.BLOECKE_MAX` (250 000, gesetzt), `voxel.ver
 hineinkopiert wurde, statt daneben als eigene Datei zu liegen. Von aussen sieht man sie nicht — aber ihre Lizenz
 reist mit. *Im Projekt:* Das Python-Paket `pycolmap` (selbst BSD) enthält so Teile der Rechenbibliothek
 SuiteSparse unter GPL; darum liest die Splat-Brücke COLMAP mit eigenem Code (13.10.2026).
+
+**Akkumulierte Deckkraft (alpha)** — Wie viel von einem Bildpunkt insgesamt zugedeckt ist, wenn
+mehrere halbdurchsichtige Wölkchen hintereinander liegen: 0 heisst, man sieht ganz hindurch, 1 heisst,
+nichts kommt mehr durch. Zwei Wölkchen mit je halber Deckkraft decken zusammen drei Viertel. *Im
+Projekt:* gsplat gibt sie je Bildpunkt mit; die Splat-Brücke nimmt eine Tiefe nur, wo sie mindestens
+0,7 beträgt (`kontext_netz.DECKKRAFT_TIEFE`, gesetzt). Seit dem 13.10.2026 rechnet auch der
+**Ersatzrenderer (cpu-probe)** sie aus.
+
+**Tiefenfilter (Splat-Brücke)** — Ein Sieb für die Tiefenbilder, bevor sie zum Netz verschmolzen
+werden (**TSDF**): Ein Bildpunkt, dessen Tiefe nicht trägt, bekommt die Tiefe null und wird
+übergangen. Sechs Siebe, jedes für sich gezählt: zu wenig **akkumulierte Deckkraft**, **Sprenkel**,
+**Streuung entlang des Strahls**, **Nahbereich**, der **Weg der Aufnahme** und die **Maske der
+Aufnahme**. *Im Projekt:* eingeführt
+am 13.10.2026, nachdem am echten Splat gesprenkelte Tiefe und die gefilmte Person das Netz in fast
+500 000 Stücke zerlegt hatten (`auf-20261013-276`); der Bericht nennt je Sieb den Anteil der
+verworfenen Bildpunkte (`tiefenfilter.je_filter`).
+
+**Sprenkel (in der Tiefe)** — Einzelne Bildpunkte, deren Tiefe gegen ihre Nachbarn springt, wie
+Salz und Pfeffer in einem Bild. Eine echte Fläche ändert ihre Tiefe von Punkt zu Punkt gleichmässig,
+auch schräg gesehen; ein Sprenkel springt gegen alle Nachbarn. Erkannt wird er am **Median** der
+acht Nachbarn und des Punkts selbst: Weicht die Tiefe mehr als 5 % davon ab, wird sie verworfen
+(`kontext_netz.TIEFE_SPRUNG_REL`, gesetzt). Der Median ist der mittlere Wert der Reihe — ein
+einzelner Ausreisser verschiebt ihn nicht.
+
+**Streuung entlang des Strahls** — Wie weit die Wölkchen, die zu einem Bildpunkt beitragen, in der
+Tiefe auseinanderliegen. Liegen sie alle auf einer Fläche, ist die Streuung klein; steht eine
+halbdurchsichtige Wolke vor einer Wand, ist sie gross — und die **erwartete Tiefe** liegt dann in der
+Luft zwischen beiden. Gerechnet als Wurzel aus «Mittel der Quadrate minus Quadrat des Mittels»,
+mit denselben Gewichten wie die erwartete Tiefe. *Im Projekt:* Ein zweiter Durchgang von gsplat
+mischt statt der Farbe die Tiefe und ihr Quadrat; streut die Tiefe um mehr als 10 % ihres Werts,
+wird sie verworfen (`kontext_netz.TIEFE_STREUUNG_REL`, gesetzt, 13.10.2026). Gefunden am
+synthetischen Strassenraum: Gegen die Wolke vor der Kamera halfen weder Nahbereich noch Masken.
+
+**Nahbereich (der Kamera)** — Was näher als 1,5 m vor der Kamera liegt (`kontext_netz.NAH_MIN_M`,
+gesetzt): Dort steht bei einer Aufnahme meist der Mensch, der filmt — Körper, Arm, Stange. Seine
+Tiefe wird verworfen. *Im Projekt:* in Metern der Welt angegeben und über den Massstab der
+Verortung in die Einheiten des Splats umgerechnet (am echten Splat ist eine Einheit rund 6 m).
+
+**Weg der Aufnahme (Filter)** — Der Raum, durch den die Kamera getragen wurde, ist leer — ausser dem
+Menschen, der sie trug. Darum wird jede Tiefe verworfen, die näher als 1,2 m an **irgendeiner**
+Kamera der Aufnahme liegt, nicht nur an der, aus der gerade gerendert wird
+(`kontext_netz.WEG_MIN_M`, gesetzt). *Warum es ihn braucht:* Die Person steht in jedem
+**Augenblick** woanders; der **Nahbereich** und die Maske nehmen nur die Person des eigenen
+Augenblicks weg, die der Nachbaraugenblicke sieht die Kamera ein paar Meter entfernt. *Warum 1,2 m:*
+Die Kugel um die Kamera auf Brusthöhe soll den Boden darunter nicht berühren.
+
+**Maske der Aufnahme (Personenmaske)** — Zu jedem Foto einer Aufnahme ein Schwarz-Weiss-Bild gleicher
+Grösse, das sagt, welche Bildpunkte gelten: weiss behalten, schwarz ausblenden (die Person, die
+Hand). *Im Projekt:* Liegen solche Masken neben der Aufnahme (`masks/` neben `sparse/0`, Name des
+Fotos plus `.png`), blendet die Splat-Brücke die schwarzen Bildpunkte aus; ihr Inhalt geht in den
+Speicherschlüssel des Netzes ein. Masken aus einem **anderen** Lauf derselben Szene werden nie
+übernommen — dessen Kameras sind nicht als gleich geprüft.
+
+**Maskenpolarität** — Welche Farbe einer Maske «behalten» heisst. Üblich ist weiss = behalten; manche
+Werkzeuge machen es umgekehrt. *Im Projekt:* Sagt es die Datei `maske.json` neben den Masken, gilt
+sie; sonst weiss = behalten. Ist ohne `maske.json` über alle Masken weniger als die Hälfte weiss,
+gilt die **Mehrheitsregel** — eine Person füllt nicht das halbe Bild, also ist dann schwarz das
+Behaltene —, und der Bericht warnt.
+
+**Zufallsstichprobe mit festem Startwert** — Eine Auswahl, in der jedes Stück gleich wahrscheinlich
+vorkommt, gezogen mit einem Zufallsgenerator, der immer bei derselben Zahl beginnt (**Seed
+(Startwert)**). So ist sie unabhängig von der Reihenfolge der Daten und trotzdem bei jedem Lauf
+dieselbe. *Im Projekt:* Die **Deckung (des Netzes)** zählt seit dem 13.10.2026 bis zu 200 000
+dichte Wölkchen so ausgewählt, über den ganzen Splat; vorher jeden n-ten in der Reihenfolge der Datei.
+
+**Feste Reihenfolge (eines Netzes)** — Dasselbe Netz kann in einer Datei verschieden aufgeschrieben
+sein: Die Ecken und Dreiecke sind dieselben, nur ihre Reihenfolge nicht — dann ist die Prüfsumme
+(**Hash / Prüfsumme**) eine andere. *Im Projekt:* Open3D füllt beim Verschmelzen eine Tabelle
+gleichzeitig auf mehreren Rechenkernen, und die Dreiecke kamen bei jedem Lauf anders heraus
+(`auf-20261013-276`). Die Splat-Brücke ordnet das Netz seither nach Lage, bevor sie es
+vereinfacht und schreibt — gleicher Schlüssel, bitgleiche Datei (**Determinismus**).
 
 **Transformationsmatrix (4×4, zeilenweise)** — Sechzehn Zahlen in vier Zeilen, die sagen,
 wie ein Ding gedreht, vergrössert und verschoben wird, um an seinen Platz zu kommen. Die
@@ -4272,6 +4349,9 @@ auf eine andere Datei zeigt — wie eine Verknüpfung auf dem Schreibtisch.
 Ein Verweis liegt im Projektordner und kann trotzdem auf etwas ganz anderes zeigen. Darum
 wird nicht der Name geprüft, sondern das Ziel, dem er folgt.
 *Der Satz dazu:* **Ein Name sagt, wie etwas heisst, nicht wo es liegt.**
+*Ein zweites Mal (13.10.2026, `auf-20261013-276`):* KosmoOrbit legt den Splat als Verweis in seinen
+Projektordner. Die Splat-Brücke suchte die Aufnahme neben dem Verweis und fand keine; seither sucht
+sie zuerst dort und dann neben dem Ziel.
 
 **Nullbar (nullable)** — Ein Feld, das ausdrücklich auch «nichts» enthalten darf, nicht
 nur einen Wert. In der Beschreibung eines Werkzeugs steht dann nicht «Text», sondern
@@ -6716,6 +6796,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §82: **Glätten der Umgebung** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §83: **Messboden** |
 | 2026-10-13 | Ergaenzt beim Bau der Splat-Bruecke (Entscheid 79): **Splat-Brücke (Splat → Netz)**, **Rastern (Rasterization)**, **Erwartete Tiefe**, **TSDF (Verschmelzen von Tiefenbildern)**, **Voxel**, **Eckpunktfarbe (Vertexfarbe)**, **Insel (im Netz)**, **CUDA**, **Ersatzrenderer (cpu-probe)** |
+| 2026-10-13 | Ergaenzt beim Tiefenfilter der Splat-Bruecke (nach auf-20261013-276): **Akkumulierte Deckkraft (alpha)**, **Tiefenfilter (Splat-Brücke)**, **Sprenkel (in der Tiefe)**, **Streuung entlang des Strahls**, **Nahbereich (der Kamera)**, **Weg der Aufnahme (Filter)**, **Maske der Aufnahme (Personenmaske)**, **Maskenpolarität**, **Zufallsstichprobe mit festem Startwert**, **Feste Reihenfolge (eines Netzes)**; nachgefuehrt: **Erwartete Tiefe** (Schwaeche, ED = D/alpha), **Ersatzrenderer (cpu-probe)** (mischt wie gsplat), **Deckung (des Netzes)** (Stichprobe), **Verweis (Symlink)** (Aufnahme hinter dem Verweis) |
 | 2026-10-13 | Ergaenzt bei den Blickwinkeln aus der Aufnahme (nach auf-20261013-275): **COLMAP**, **Kamerapose (Pose)**, **Rig (Kamera-Rig)**, **Augenblick (Frame)**, **Gleichheitsprüfung (Aufnahme ↔ Splat)**, **Deckung (des Netzes)**, **Blockwache**, **Statisch eingebunden (Bibliothek)**; nachgefuehrt: **TSDF** (7 cm), **Insel (im Netz)** (bleibt absolut), **Ersatzrenderer (cpu-probe)** (Tiefe auf der Scheibe) |
 | 2026-10-13 | Ergaenzt aus Sitzung 74 §84: **Photogrammetrie**, **Relightable Gaussian Splatting (lichtaktiver Splat)**, **Fremdprogramm (vom Nutzer installiert)**; nachgefuehrt: **Messboden** (nur zum Trennen) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |

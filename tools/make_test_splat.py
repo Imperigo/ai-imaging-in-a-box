@@ -36,6 +36,13 @@ zwei Wände bei x = ±0,2 L über die ganze Länge, zwei Quader auf der Strasse
 Dort sieht ein Ring in der Mitte die Wände nur streifend und hinter den Quadern nichts — die
 Probe für die Blickwinkel aus der Aufnahme (``tools/make_test_colmap.py --weg linie``).
 
+**Die Person** (``--person N``, 13.10.2026, nach ``auf-20261013-276``): Am echten Splat stand
+die gefilmte Person samt Arm als Wolke nah vor den Kameras, und die TSDF machte daraus
+Fetzen. Mit ``--person N`` kommt je Augenblick des Rig-Wegs (``--person-augenblicke``,
+derselbe Weg wie ``make_test_colmap.py``) eine kleine, dichte Wolke aus ``N`` Gaussians dazu,
+gelb, an jedem Augenblick woanders (``make_test_colmap.person_wolke``) — **alle zugleich**, wie
+ein Training sie hinterlässt. Sie zählen zu den dichten Punkten.
+
 **Die Schwebeteile sind die Probe für das Verwerfen.** Ihre Deckkraft liegt bei
 ``sigmoid(−6) ≈ 0,0025`` — weit unter der Schwelle des Runners. Sie stehen absichtlich
 auch **vor** dem Bauwerk: Würden sie nicht verworfen, verdeckten sie es, und die
@@ -44,10 +51,12 @@ Bauwerksmaske mit Splat wiche von der ohne ab.
 Aufruf:
     python3 tools/make_test_splat.py ziel.ply [--punkte 20000] [--startwert 7]
         [--ursprung x,y,z] [--groesse 30] [--mit-f-rest] [--form platz|strasse]
+        [--person 12] [--person-augenblicke 80]
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import math
 import random
 import struct
@@ -66,11 +75,20 @@ FARBE_BODEN = (0.35, 0.55, 0.25)
 FARBE_WAND = (0.60, 0.30, 0.22)
 FARBE_QUADER = (0.20, 0.35, 0.75)
 FARBE_SCHWEBE = (1.00, 1.00, 1.00)
+FARBE_PERSON = (0.95, 0.85, 0.20)
 
 #: Deckkraft als Logit (so steht sie in der Datei). ``sigmoid(4) ≈ 0,982``,
 #: ``sigmoid(−6) ≈ 0,0025``.
 OPAZITAET_DICHT = 4.0
 OPAZITAET_SCHWEBE = -6.0
+
+#: Deckkraft der Person als Logit: ``sigmoid(0,4) ≈ 0,60``. Halb durchsichtig, weil ein
+#: Training eine Person, die sich mit der Kamera bewegt, nie scharf lernt — jeder Augenblick
+#: widerspricht dem vorigen, und es bleibt eine **Wolke** (``auf-20261013-276``: «die Person
+#: samt Arm steht als Wolke nah vor den Kameras»). Über ``DECKKRAFT_DICHT`` und
+#: ``DECKKRAFT_LEER`` des Runners: Sie zählt als dicht, und der Ersatzrenderer zeichnet sie.
+#: Wo sich zwei Wölkchen überlagern, springt die Tiefe — das Sprenkeln aus 276.
+OPAZITAET_PERSON = 0.4
 
 WAND_HOEHE = 8.0
 QUADER_KANTE = 3.0
@@ -107,9 +125,31 @@ def _anzahlen(punkte: int) -> dict:
             "schwebe": punkte - boden - wand - quader}
 
 
+def _colmap_erzeuger():
+    """``make_test_colmap.py`` daneben, über den Pfad — dort steht der Weg des Rigs und die
+    Person, damit Splat und Aufnahme dieselben Stellen meinen."""
+    pfad = Path(__file__).resolve().with_name("make_test_colmap.py")
+    spez = importlib.util.spec_from_file_location("make_test_colmap_person", pfad)
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+    return modul
+
+
+def _personen(n: int, augenblicke: int, form: str, groesse: float) -> list[tuple]:
+    """Alle Personenwolken des Rig-Wegs, ``(x, y, z, σ)`` je Gaussian (Modulkopf)."""
+    if n <= 0:
+        return []
+    c = _colmap_erzeuger()
+    aus = []
+    for a, (auge, vorn) in enumerate(c.rig_weg(augenblicke, form=form, groesse=groesse)):
+        aus.extend(c.person_wolke(a, auge, vorn, n))
+    return aus
+
+
 def erzeuge_splat(ziel, *, punkte: int = 20000, startwert: int = 7,
                   ursprung=(0.0, 0.0, 0.0), groesse: float = 30.0,
-                  mit_f_rest: bool = False, form: str = "platz") -> dict:
+                  mit_f_rest: bool = False, form: str = "platz", person: int = 0,
+                  person_augenblicke: int = 80) -> dict:
     """Den Splat schreiben und beschreiben, was darin steht.
 
     Returns:
@@ -136,8 +176,15 @@ def erzeuge_splat(ziel, *, punkte: int = 20000, startwert: int = 7,
         zeilen.append((x + ox, y + oy, z + oz, _f_dc(farbe, zufall),
                        [math.log(s) for s in skala], opazitaet))
 
+    personen = _personen(person, person_augenblicke, form, L)
+    n["person"] = len(personen)
+
+    def personen_schreiben():
+        for x, y, z, sigma in personen:
+            punkt(x, y, z, FARBE_PERSON, (sigma, sigma, sigma), OPAZITAET_PERSON)
+
     if form == "strasse":
-        _strasse(punkt, n, L, zufall)
+        _strasse(punkt, n, L, zufall, personen_schreiben)
         return _schreiben(ziel, zeilen, n, mit_f_rest)
 
     # Boden — die Gaussians so gross wie der Punktabstand, damit eine Fläche entsteht.
@@ -171,6 +218,7 @@ def erzeuge_splat(ziel, *, punkte: int = 20000, startwert: int = 7,
             p = (cx + u, h + v, cz + (h if seite == 3 else -h))
             s = (breit, breit, FLACH)
         punkt(*p, FARBE_QUADER, s, OPAZITAET_DICHT)
+    personen_schreiben()
 
     # Schwebeteile — fast durchsichtig, auch vor dem Bauwerk. Siehe Modulkopf.
     for _ in range(n["schwebe"]):
@@ -199,7 +247,7 @@ def _quader(punkt, anzahl: int, cx: float, cz: float, zufall: random.Random) -> 
         punkt(*p, FARBE_QUADER, s, OPAZITAET_DICHT)
 
 
-def _strasse(punkt, n: dict, L: float, zufall: random.Random) -> None:
+def _strasse(punkt, n: dict, L: float, zufall: random.Random, personen_schreiben) -> None:
     """Die Form «strasse» (Modulkopf): Boden, zwei Wände, zwei Quader, Schwebeteile."""
     b, s = 0.4 * L, 2.5 * L                              # Breite (x) und Länge (z)
     abstand = math.sqrt(b * s / n["boden"])
@@ -215,6 +263,7 @@ def _strasse(punkt, n: dict, L: float, zufall: random.Random) -> None:
     halb = n["quader"] // 2
     _quader(punkt, halb, -0.25 * b, -0.25 * s, zufall)
     _quader(punkt, n["quader"] - halb, 0.25 * b, 0.2 * s, zufall)
+    personen_schreiben()                                 # vor den Schwebeteilen: dicht
     for _ in range(n["schwebe"]):
         punkt(zufall.uniform(-0.4 * b, 0.4 * b), zufall.uniform(0.5, 3.0),
               zufall.uniform(-s / 4, s / 4), FARBE_SCHWEBE, (0.3, 0.3, 0.3),
@@ -242,7 +291,8 @@ def _schreiben(ziel, zeilen: list, n: dict, mit_f_rest: bool) -> dict:
     lo = [min(z[i] for z in dicht) for i in range(3)]
     hi = [max(z[i] for z in dicht) for i in range(3)]
     return {"pfad": str(ziel), "punkte": len(zeilen), "anzahlen": n,
-            "dicht": len(dicht), "schwebe": n["schwebe"], "huellbox_dicht": [lo, hi]}
+            "dicht": len(dicht), "schwebe": n["schwebe"], "person": n.get("person", 0),
+            "huellbox_dicht": [lo, hi]}
 
 
 def _punkt(text: str) -> tuple[float, float, float]:
@@ -264,11 +314,16 @@ def main(argv=None) -> int:
                     help="auch die 45 höheren SH-Koeffizienten schreiben (alle null)")
     ap.add_argument("--form", choices=FORMEN, default="platz",
                     help="platz (quadratisch, Vorgabe) oder strasse (lang und schmal)")
+    ap.add_argument("--person", type=int, default=0,
+                    help="Gaussians der gefilmten Person je Augenblick (0 = keine Person)")
+    ap.add_argument("--person-augenblicke", type=int, default=80,
+                    help="Augenblicke des Rig-Wegs, wie make_test_colmap.py --augenblicke")
     a = ap.parse_args(argv)
     try:
         befund = erzeuge_splat(a.ziel, punkte=a.punkte, startwert=a.startwert,
                                ursprung=a.ursprung, groesse=a.groesse,
-                               mit_f_rest=a.mit_f_rest, form=a.form)
+                               mit_f_rest=a.mit_f_rest, form=a.form, person=a.person,
+                               person_augenblicke=a.person_augenblicke)
     except ValueError as fehler:
         print(f"Fehler: {fehler}", file=sys.stderr)
         return 2

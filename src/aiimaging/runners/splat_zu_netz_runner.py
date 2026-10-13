@@ -24,9 +24,14 @@ Der Ablauf
 3. **Rendern** mit ``gsplat.rasterization(..., render_mode="RGB+ED")``: Farbe und
    **erwartete Tiefe** je Bildpunkt. Wo die akkumulierte Deckkraft unter
    ``DECKKRAFT_LEER`` liegt, gilt der Punkt als leer.
+3a. **Tiefe sieben** (seit 13.10.2026, nach ``auf-20261013-276``): akkumulierte Deckkraft,
+   Sprenkel gegen den Median der Nachbarn, Streuung entlang des Strahls (zweiter Durchgang von
+   gsplat), Nahbereich, Weg der Aufnahme, Masken der Aufnahme (:func:`_tiefe_filtern`, Zahlen
+   in ``kontext_netz``, Abschnitt «Der Tiefenfilter»).
 4. **Verschmelzen:** Open3D-TSDF (``VoxelBlockGrid``), ein Dreiecksnetz mit Eckpunktfarben.
    Über ``BLOECKE_MAX`` aktiven Blöcken wird mit grösserem Voxel neu verschmolzen.
-5. **Aufräumen:** kleine Inseln weg, bei Bedarf vereinfachen; die **Deckung** zählen.
+5. **Aufräumen:** Netz in feste Reihenfolge bringen, kleine Inseln weg, bei Bedarf
+   vereinfachen; die **Deckung** zählen.
 6. **Schreiben:** PLY (binär, Eckpunktfarben) im **Koordinatensystem des Splats** — ohne
    Matrix; die Verortung wendet weiter Blender an. Dazu ein Bericht als JSON.
 
@@ -37,9 +42,12 @@ Umgebung.
 
 Der CPU-Ersatzrenderer (nur für Proben)
 --------------------------------------
-``--renderer cpu-probe`` ersetzt gsplat durch einen einfachen Punkt-Renderer mit
-Tiefenpuffer: jeder dichte Gaussian ein Quadrat in der Grösse seiner projizierten Achsen,
-SH-Grad 0, ohne weiche Mischung. **Er ist keine Alternative zu gsplat**, sondern die Naht,
+``--renderer cpu-probe`` ersetzt gsplat durch einen einfachen Punkt-Renderer: jeder
+Gaussian mit Deckkraft ab ``DECKKRAFT_LEER`` ein Quadrat in der Grösse seiner projizierten
+Achsen, Tiefe auf seiner Scheibe, SH-Grad 0. Seit 13.10.2026 (nach ``auf-20261013-276``)
+mischt er wie gsplat von vorn nach hinten: akkumulierte Deckkraft und **erwartete** Tiefe
+statt der nächsten Scheibe — sonst sähe die Probe die Wolke vor der Kamera nicht so, wie
+gsplat sie liefert. **Er ist keine Alternative zu gsplat**, sondern die Naht,
 an der sich Blickwinkel, TSDF, Inselentfernung und PLY-Ausgabe ohne Grafikkarte prüfen
 lassen (13.10.2026: in der Cloud-Sitzung gibt es kein CUDA, gsplat rendert dort nicht).
 Der Bericht trägt ``renderer: "cpu-probe"`` — ein solches Netz darf nie für ein echtes gelten.
@@ -47,7 +55,8 @@ Der Bericht trägt ``renderer: "cpu-probe"`` — ein solches Netz darf nie für 
 Aufruf (immer über ``aiimaging.seams.splat_zu_netz``):
     .venv-splat/bin/python splat_zu_netz_runner.py <splat.ply> <netz.ply> [--report r.json]
         [--aufloesung 640] [--blickwinkel 16] [--voxel-m 0.05] [--oben 0,1,0]
-        [--massstab 1.0] [--aufnahme=<sparse/0>] [--renderer gsplat|cpu-probe]
+        [--massstab 1.0] [--aufnahme=<sparse/0>] [--masken=<ordner>|keine]
+        [--tiefenfilter=deckkraft,maske,nah,sprenkel|keine] [--renderer gsplat|cpu-probe]
         [--geraet cuda|cpu]
 
 COLMAP wird mit der Standardbibliothek gelesen (``kontext_netz.lies_aufnahme``), nicht mit
@@ -77,8 +86,9 @@ GSPLAT_JE_DURCHGANG = 4
 #: wird gekappt — die Probe soll Sekunden dauern, nicht Minuten.
 PROBE_RADIUS_MAX_PX = 12
 
-#: Wie viele dichte Punkte höchstens für Mitte, Boden und Halbmesser gelesen werden — und für
-#: das Deckungsmass.
+#: Wie viele dichte Punkte höchstens für Mitte, Boden und Halbmesser gelesen werden. Das
+#: Deckungsmass zählt seit 13.10.2026 eine eigene, grössere Stichprobe über alle dichten
+#: Punkte (``kontext_netz.DECKUNG_STICHPROBE``, ``auf-20261013-276`` Fehler 4).
 STICHPROBE_BEREICH = 20000
 
 #: Wie viele COLMAP-Punkte höchstens gegen den Splat geprüft werden. Der Median braucht nicht
@@ -185,7 +195,7 @@ def _aufnahme_pruefen(ordner: Path, g: dict, dicht, ki_breite: int, kn) -> dict:
     import open3d as o3d
 
     aus = {"taugt": False, "ansichten": None, "auswahl": None, "gleichheit": None,
-           "grund": None}
+           "grund": None, "zentren": None}
     try:
         aufnahme = kn.lies_aufnahme(ordner)
         ansichten, auswahl = kn.aufnahme_blickwinkel(aufnahme, breite=ki_breite,
@@ -224,7 +234,7 @@ def _aufnahme_pruefen(ordner: Path, g: dict, dicht, ki_breite: int, kn) -> dict:
     if not befund["gleich"]:
         aus["grund"] = befund["grund"]
         return aus
-    aus.update(taugt=True, ansichten=ansichten)
+    aus.update(taugt=True, ansichten=ansichten, zentren=zentren)
     return aus
 
 
@@ -232,8 +242,20 @@ def _aufnahme_pruefen(ordner: Path, g: dict, dicht, ki_breite: int, kn) -> dict:
 # 3 · Rendern — gsplat (echt) und der Ersatzrenderer (nur Proben)
 # --------------------------------------------------------------------------------------
 
-def _gsplat_ansichten(g: dict, ansichten, geraet: str, nah: float, fern: float, kn):
-    """Je Blickwinkel ``(rgb uint8 HxWx3, tiefe float32 HxW, gefuellt-Anteil)``.
+def _gsplat_ansichten(g: dict, ansichten, geraet: str, nah: float, fern: float, kn, *,
+                      streuung_an: bool = True, streuung_fehler: list | None = None):
+    """Je Blickwinkel ``(rgb uint8 HxWx3, tiefe float32 HxW, alpha float32 HxW, streuung)``.
+
+    ``alpha`` ist die **akkumulierte Deckkraft** (``1 − Π(1 − αᵢ)`` entlang des Strahls), wie
+    gsplat sie zurückgibt; die Tiefenfilter (:func:`_tiefe_filtern`) brauchen sie.
+
+    ``streuung`` (float32 HxW oder ``None``): die Standardabweichung der Tiefe **entlang des
+    Strahls**, gewichtet wie die erwartete Tiefe (13.10.2026, nach ``auf-20261013-276``). Ein
+    zweiter Durchgang von gsplat mischt statt der Farbe zwei Merkmale je Kamera und Gaussian,
+    ``z`` und ``z²`` (die Tiefe seiner Mitte in dieser Kamera — dieselbe, die gsplat für ED
+    mischt): ``E[z²] − E[z]²``. **Nur am Heim-PC prüfbar** (CUDA); scheitert der Durchgang,
+    bleibt ``streuung`` ``None``, der Filter setzt aus und der Bericht sagt es — die Brücke
+    selbst bricht daran nicht ab.
 
     Jeder Blickwinkel trägt seine eigene Intrinsik (``ki``): Die Kameras einer Aufnahme dürfen
     verschieden sein. Gerendert wird je Durchgang nur, was dieselbe Bildgrösse hat.
@@ -246,6 +268,7 @@ def _gsplat_ansichten(g: dict, ansichten, geraet: str, nah: float, fern: float, 
         raise RuntimeError("gsplat rendert nur mit CUDA (NVIDIA-Grafikkarte); hier ist "
                            "keine erreichbar. Fuer Proben ohne Karte: --renderer cpu-probe.")
     dev = torch.device(geraet)
+    streuung_fehler = [] if streuung_fehler is None else streuung_fehler
     w = g["endlich"]
     zu = lambda a: torch.from_numpy(np.ascontiguousarray(a[w])).float().to(dev)  # noqa: E731
     means, quats, scales = zu(g["lage"]), zu(g["quat"]), zu(g["skala"])
@@ -269,23 +292,52 @@ def _gsplat_ansichten(g: dict, ansichten, geraet: str, nah: float, fern: float, 
                 means, quats, scales, opac, sh, views, Ks, b, h,
                 near_plane=nah, far_plane=fern, sh_degree=g["sh_grad"],
                 render_mode="RGB+ED")
+            momente = None
+            if streuung_an and not streuung_fehler:
+                try:
+                    # z je Kamera und Gaussian: dritte Zeile der Ansicht mal Lage plus t_z.
+                    z = torch.einsum("nk,ck->cn", means, views[:, 2, :3]) + views[:, 2, 3:4]
+                    merkmale = torch.stack([z, z * z], dim=-1)          # [C, N, 2]
+                    momente, _, _ = rasterization(
+                        means, quats, scales, opac, merkmale, views, Ks, b, h,
+                        near_plane=nah, far_plane=fern, sh_degree=None, render_mode="RGB")
+                    momente = momente.cpu().numpy()
+                except Exception as fehler:                 # noqa: BLE001 — Filter setzt aus
+                    streuung_fehler.append(f"{type(fehler).__name__}: {fehler}"[:300])
+                    momente = None
         bild, alpha = bild.cpu().numpy(), alpha[..., 0].cpu().numpy()
         for j in range(len(teil)):
-            a = alpha[j]
-            leer = a < kn.DECKKRAFT_LEER
+            a = alpha[j].astype(np.float32)
             # Ohne Hintergrund ist die Farbe mit der Deckkraft vorgemischt; zurückteilen.
             rgb = np.clip(bild[j, ..., :3] / np.maximum(a, 1e-6)[..., None], 0.0, 1.0)
             tiefe = bild[j, ..., 3].astype(np.float32)
-            tiefe[leer | ~np.isfinite(tiefe)] = 0.0
-            yield (np.round(rgb * 255.0).astype(np.uint8), tiefe, float((~leer).mean()))
+            tiefe[~np.isfinite(tiefe)] = 0.0
+            streuung = None
+            if momente is not None:
+                geteilt = np.maximum(a, 1e-6)
+                ez, ez2 = momente[j, ..., 0] / geteilt, momente[j, ..., 1] / geteilt
+                streuung = np.sqrt(np.maximum(ez2 - ez * ez, 0.0)).astype(np.float32)
+            yield (np.round(rgb * 255.0).astype(np.uint8), tiefe, a, streuung)
 
 
 def _probe_ansichten(g: dict, ansichten, kn):
-    """Der Ersatzrenderer: Punkte mit Tiefenpuffer. NUR FÜR PROBEN (Modulkopf)."""
+    """Der Ersatzrenderer: Punkte mit Tiefenpuffer. NUR FÜR PROBEN (Modulkopf).
+
+    Je Blickwinkel ``(rgb, tiefe, alpha, streuung)`` wie :func:`_gsplat_ansichten`. **Die akkumulierte
+    Deckkraft** (13.10.2026, nach ``auf-20261013-276``): Bis hierher gab der Ersatz nur Farbe
+    und Tiefe; der Tiefenfilter braucht ``alpha``. Gerechnet wie bei gsplat als
+    ``1 − Π(1 − oᵢ · gᵢ)`` über alle Gaussians, deren Scheibe der Strahl trifft — ``oᵢ`` die
+    Deckkraft, ``gᵢ = exp(−½ d²/σ²)`` der Abfall in der Scheibe (``σ`` die längste Achse).
+    Tiefe und Farbe werden wie bei gsplat von vorn nach hinten gemischt (Gewicht
+    ``oᵢ gᵢ · Tᵢ``, ``Tᵢ`` der Durchlass davor) und durch die Summe der Gewichte geteilt: die
+    **erwartete** Tiefe. Vereinfacht gegen gsplat: ein runder Abfall mit der längsten Achse
+    statt der projizierten Ellipse, und nur innerhalb von 2σ.
+    """
     import numpy as np
 
     w = g["endlich"] & (g["deckkraft"] >= kn.DECKKRAFT_LEER)
     lage = g["lage"][w]
+    deckkraft = g["deckkraft"][w]
     farbe = np.clip(0.5 + 0.28209479177387814 * g["sh"][w][:, 0, :], 0.0, 1.0)
     farbe8 = np.round(farbe * 255.0).astype(np.uint8)
     # Die drei Achsen je Gaussian in der Welt: Drehung mal Skala. Die Drehung kommt aus der
@@ -325,7 +377,8 @@ def _probe_ansichten(g: dict, ansichten, kn):
         reihe = np.argsort(radius, kind="stable")
         u, vv, zz, radius, c = u[reihe], vv[reihe], zz[reihe], radius[reihe], farbe8[vorn][reihe]
         n_cam, nc, mitte, reichweite = n_cam[reihe], nc[reihe], mitte[reihe], reichweite[reihe]
-        idx_l, z_l, c_l = [], [], []
+        o_v = deckkraft[vorn][reihe]
+        idx_l, z_l, c_l, log_l = [], [], [], []
         for dy in range(-PROBE_RADIUS_MAX_PX, PROBE_RADIUS_MAX_PX + 1):
             for dx in range(-PROBE_RADIUS_MAX_PX, PROBE_RADIUS_MAX_PX + 1):
                 ab = int(np.searchsorted(radius, max(abs(dx), abs(dy))))
@@ -349,16 +402,276 @@ def _probe_ansichten(g: dict, ansichten, kn):
                 idx_l.append((vy[ok] * b + uu[ok])[gut])
                 z_l.append(zt[gut])
                 c_l.append(c[ab:][ok][gut])
+                sigma2 = (0.5 * reichweite[ab:][ok][gut]) ** 2
+                beitrag = o_v[ab:][ok][gut] * np.exp(-0.5 * abw2[gut] / np.maximum(sigma2,
+                                                                                   1e-24))
+                log_l.append(np.log1p(-np.minimum(beitrag, 0.999999)))
         tiefe = np.zeros(b * h, dtype=np.float32)
         rgb = np.zeros((b * h, 3), dtype=np.uint8)
+        alpha = np.zeros(b * h, dtype=np.float32)
+        streuung = np.zeros(b * h, dtype=np.float32)
         if idx_l:
             idx, zs, cs = np.concatenate(idx_l), np.concatenate(z_l), np.concatenate(c_l)
-            folge = np.lexsort((zs, idx))                # je Bildpunkt der nächste zuerst
-            idx, zs, cs = idx[folge], zs[folge], cs[folge]
-            erste = np.unique(idx, return_index=True)[1]
-            tiefe[idx[erste]] = zs[erste]
-            rgb[idx[erste]] = cs[erste]
-        yield (rgb.reshape(h, b, 3), tiefe.reshape(h, b), float((tiefe > 0).mean()))
+            la = np.concatenate(log_l)
+            folge = np.lexsort((zs, idx))                # je Bildpunkt von vorn nach hinten
+            idx, zs, cs, la = idx[folge], zs[folge], cs[folge], la[folge]
+            alpha = (1.0 - np.exp(np.bincount(idx, weights=la, minlength=b * h))
+                     ).astype(np.float32)
+            # ERWARTETE TIEFE WIE GSPLAT (13.10.2026, nach auf-20261013-276): Bis hierher
+            # nahm der Ersatz je Bildpunkt die NAECHSTE Scheibe. gsplat mischt von vorn nach
+            # hinten, Gewicht w = a · T (T = Durchlass davor), und teilt durch die Summe der
+            # Gewichte. Erst so steht eine halb durchsichtige Wolke vor einer Wand dort, wo
+            # 276 sie sah: als Tiefe irgendwo dazwischen, in der Luft — mit dem naechsten
+            # Treffer laege sie sauber auf der Wolke, und die Probe saehe den Fehler nicht.
+            erste, gruppe = np.unique(idx, return_index=True, return_inverse=True)[1:]
+            summe = np.cumsum(la)
+            davor = (summe - la) - (summe[erste] - la[erste])[gruppe]
+            gewicht = (1.0 - np.exp(la)) * np.exp(davor)
+            w_sum = np.bincount(idx, weights=gewicht, minlength=b * h)
+            belegt = w_sum > 1e-12
+            tiefe64 = np.zeros(b * h)
+            tiefe64[belegt] = (np.bincount(idx, weights=gewicht * zs, minlength=b * h)[belegt]
+                               / w_sum[belegt])
+            tiefe[belegt] = tiefe64[belegt]
+            farbe_w = np.stack([np.bincount(idx, weights=gewicht * cs[:, k], minlength=b * h)
+                                for k in range(3)], axis=1)
+            rgb[belegt] = np.clip(np.round(farbe_w[belegt] / w_sum[belegt, None]), 0,
+                                  255).astype(np.uint8)
+            # Die Streuung entlang des Strahls, mit denselben Gewichten (wie gsplat, dort im
+            # zweiten Durchgang): E[z²] − E[z]².
+            ez2 = (np.bincount(idx, weights=gewicht * zs * zs, minlength=b * h)[belegt]
+                   / w_sum[belegt])
+            streuung[belegt] = np.sqrt(np.maximum(ez2 - tiefe64[belegt] ** 2, 0.0))
+        yield (rgb.reshape(h, b, 3), tiefe.reshape(h, b), alpha.reshape(h, b),
+               streuung.reshape(h, b))
+
+
+# --------------------------------------------------------------------------------------
+# 3a · Tiefe sieben — Deckkraft, Sprenkel, Nahbereich, Masken (13.10.2026, nach 276)
+# --------------------------------------------------------------------------------------
+
+def _median_3x3(tiefe):
+    """Der Median der 3 × 3 Nachbarn je Bildpunkt (Rand: die Nachbarn ausserhalb zählen 0).
+
+    ``np.partition`` statt ``np.median``: Gebraucht wird nur das fünfte von neun, und das
+    halbiert die Zeit (240 Bilder à 640 × 640 je Lauf).
+    """
+    import numpy as np
+
+    h, b = tiefe.shape
+    rand = np.pad(tiefe, 1)
+    stapel = np.stack([rand[dy:dy + h, dx:dx + b] for dy in range(3) for dx in range(3)])
+    return np.partition(stapel, 4, axis=0)[4]
+
+
+def _weg_naehe(tiefe, kandidat, ansicht, zentren, weg_min: float):
+    """Welche Bildpunkte (unter ``kandidat``) näher als ``weg_min`` an einer der ``zentren``
+    liegen — als Punkte der Welt aus Tiefe, Intrinsik und Ansicht zurückgerechnet."""
+    import numpy as np
+
+    aus = np.zeros(tiefe.shape, dtype=bool)
+    if zentren is None or not len(zentren) or not kandidat.any():
+        return aus
+    ki = ansicht["ki"]
+    v = np.array(ansicht["ansicht"], dtype=np.float64).reshape(4, 4)
+    r, t = v[:3, :3], v[:3, 3]
+    zeile, spalte = np.nonzero(kandidat)
+    z = tiefe[zeile, spalte].astype(np.float64)
+    kamera = np.stack([(spalte + 0.5 - ki["cx"]) / ki["fx"] * z,
+                       (zeile + 0.5 - ki["cy"]) / ki["fy"] * z, z], axis=1)
+    welt = (kamera - t) @ r                               # Rᵀ (p − t), zeilenweise
+    nah = np.zeros(len(welt), dtype=bool)
+    for k in range(0, len(zentren), 32):                  # in Stücken: Speicher begrenzt
+        d2 = ((welt[:, None, :] - zentren[None, k:k + 32, :]) ** 2).sum(axis=2)
+        nah |= (d2 < weg_min * weg_min).any(axis=1)
+    aus[zeile[nah], spalte[nah]] = True
+    return aus
+
+
+def _tiefe_filtern(tiefe, alpha, *, filter_: set, nah: float, behalten, kn,
+                   ansicht=None, zentren=None, weg_min: float = 0.0,
+                   weg_reichweite: float = 0.0, streuung=None):
+    """Die Tiefe eines Blickwinkels sieben; verworfene Bildpunkte tragen danach Tiefe 0.
+
+    **Anlass** (``auf-20261013-276``): gesprenkelte erwartete Tiefe und die gefilmte Person
+    als Wolke nah vor der Kamera; die TSDF machte daraus 497 497 Stücke (Begründung und
+    Schwellen in ``kontext_netz``, Abschnitt «Der Tiefenfilter»). Jeder Filter wird **für
+    sich** gezählt — ein Bildpunkt, den zwei verwerfen, zählt bei beiden —, damit der Bericht
+    sagt, welcher wie viel trägt; ``verworfen`` zählt jeden Bildpunkt einmal.
+
+    Args:
+        filter_: die eingeschalteten Filter (``kontext_netz.TIEFENFILTER``).
+        nah: Mindesttiefe in Einheiten des Splats (``kontext_netz.nah_min_splat``).
+        behalten: bool HxW aus der Maske (True = behalten) oder ``None``.
+        ansicht, zentren, weg_min, weg_reichweite: für den Filter ``weg`` — die Kamerazentren
+            der Aufnahme (Nx3, Splat-Einheiten) und die Abstände in Splat-Einheiten.
+        streuung: Standardabweichung der Tiefe entlang des Strahls (HxW) oder ``None`` — dann
+            setzt der Filter ``streuung`` aus.
+
+    Returns:
+        ``(tiefe, zaehler)`` — ``zaehler`` mit ``mit_tiefe`` (Bildpunkte, die vorher Tiefe
+        trugen), je Filter die Zahl der verworfenen und ``verworfen`` gesamt.
+    """
+    import numpy as np
+
+    basis = (tiefe > 0) & np.isfinite(tiefe)
+    leer = np.zeros_like(basis)
+    weg = {}
+    weg["deckkraft"] = (basis & (alpha < kn.DECKKRAFT_TIEFE)
+                        if "deckkraft" in filter_ else leer)
+    if "sprenkel" in filter_:
+        roh = np.where(basis, tiefe, 0.0).astype(np.float32)
+        weg["sprenkel"] = basis & (np.abs(roh - _median_3x3(roh))
+                                   > kn.TIEFE_SPRUNG_REL * roh)
+    else:
+        weg["sprenkel"] = leer
+    weg["streuung"] = (basis & (streuung > kn.TIEFE_STREUUNG_REL * tiefe)
+                       if ("streuung" in filter_ and streuung is not None) else leer)
+    weg["nah"] = basis & (tiefe < nah) if "nah" in filter_ else leer
+    if "weg" in filter_ and zentren is not None and ansicht is not None:
+        # Nur Zentren in Reichweite der rendernden Kamera, nur Bildpunkte, die eines davon
+        # erreichen können (Tiefe ≤ Reichweite + weg_min): Das hält die Rechnung klein.
+        v = np.array(ansicht["ansicht"], dtype=np.float64).reshape(4, 4)
+        hier = -v[:3, :3].T @ v[:3, 3]
+        nahe = zentren[((zentren - hier) ** 2).sum(axis=1) < weg_reichweite ** 2]
+        weg["weg"] = _weg_naehe(tiefe, basis & (tiefe < weg_reichweite + weg_min), ansicht,
+                                nahe, weg_min)
+    else:
+        weg["weg"] = leer
+    weg["maske"] = (basis & ~behalten if ("maske" in filter_ and behalten is not None)
+                    else leer)
+    alle = (weg["deckkraft"] | weg["sprenkel"] | weg["streuung"] | weg["nah"] | weg["weg"]
+            | weg["maske"])
+    aus = np.where(basis & ~alle, tiefe, 0.0).astype(np.float32)
+    zaehler = {"mit_tiefe": int(basis.sum()), "verworfen": int(alle.sum())}
+    zaehler.update({k: int(v.sum()) for k, v in weg.items()})
+    return aus, zaehler
+
+
+def _maske_lesen(pfad: Path, breite: int, hoehe: int):
+    """Eine Maske als Grauwert 0..255 (uint8), auf ``breite × hoehe`` gebracht — oder ``None``.
+
+    Gelesen mit Open3D (``o3d.io.read_image``, PNG/JPG), **keine neue Abhängigkeit**.
+    Graustufen direkt; RGB als Mittel der Kanäle; RGBA mit nicht einheitlichem Alpha über
+    den Alphakanal. Skaliert wird nach dem nächsten Nachbarn: Eine Maske hat Kanten, keine
+    Zwischentöne, und eine Mittelung erfände sie.
+    """
+    import numpy as np
+    import open3d as o3d
+
+    bild = np.asarray(o3d.io.read_image(str(pfad)))
+    if bild.size == 0:
+        return None
+    if bild.dtype != np.uint8:                           # 16 Bit: auf 0..255
+        bild = (bild.astype(np.float64) / max(1.0, float(np.iinfo(bild.dtype).max))
+                * 255.0).round().astype(np.uint8)
+    if bild.ndim == 3:
+        if bild.shape[2] == 4 and bild[..., 3].min() != bild[..., 3].max():
+            bild = bild[..., 3]
+        else:
+            bild = bild[..., :3].mean(axis=2).round().astype(np.uint8)
+    h0, b0 = bild.shape
+    zeilen = np.minimum(((np.arange(hoehe) + 0.5) * h0 / hoehe).astype(np.int64), h0 - 1)
+    spalten = np.minimum(((np.arange(breite) + 0.5) * b0 / breite).astype(np.int64), b0 - 1)
+    return bild[zeilen][:, spalten]
+
+
+def _masken_vorbereiten(ansichten, masken_ordner, aufnahme: Path | None, kn) -> dict:
+    """Die Masken der gewählten Blickwinkel laden und die Polarität bestimmen.
+
+    Returns:
+        ``{je_bild: {bildnummer: bool HxW (True = behalten)}, bericht}`` — ``bericht`` ohne
+        Pfad: gefunden, Zahl gefunden/benutzt, Lage, Polarität und ihre Quelle.
+    """
+    import numpy as np
+
+    bericht = {"gefunden": False, "anzahl": 0, "benutzt": 0, "lage": None,
+               "polaritaet": None, "polaritaet_quelle": None, "weiss_anteil": None,
+               "warnung": None, "unlesbar": 0}
+    if aufnahme is None or masken_ordner == "keine":
+        bericht["grund"] = "keine Aufnahme" if aufnahme is None else "keine Masken"
+        return {"je_bild": {}, "bericht": bericht}
+    namen = [a["name"] for a in ansichten if a.get("name")]
+    fund = kn.finde_masken(aufnahme, namen,
+                           None if masken_ordner in (None, "auto") else Path(masken_ordner))
+    bericht.update(gefunden=fund["gefunden"], anzahl=len(fund["dateien"]), lage=fund["art"])
+    if not fund["gefunden"]:
+        return {"je_bild": {}, "bericht": bericht}
+    grau = {}
+    for a in ansichten:
+        pfad = fund["dateien"].get(a.get("name"))
+        if pfad is None:
+            continue
+        m = _maske_lesen(pfad, a["ki"]["breite"], a["ki"]["hoehe"])
+        if m is None:
+            bericht["unlesbar"] += 1
+            continue
+        grau[a["bild"]] = m >= kn.MASKE_SCHWELLE           # True = weiss
+    if not grau:
+        bericht["gefunden"] = False
+        return {"je_bild": {}, "bericht": bericht}
+    weiss = float(np.mean([m.mean() for m in grau.values()]))
+    aus_json = None
+    if fund["json"] is not None:
+        try:
+            aus_json = kn.polaritaet_aus_json(json.loads(fund["json"].read_text(
+                encoding="utf-8")))
+        except (OSError, ValueError):
+            bericht["warnung"] = "maske.json nicht lesbar"
+    pol = kn.masken_polaritaet(weiss, aus_json)
+    bericht.update(benutzt=len(grau),
+                   polaritaet="weiss = behalten" if pol["weiss_behalten"] else
+                   "schwarz = behalten",
+                   polaritaet_quelle=pol["quelle"], weiss_anteil=pol["weiss_anteil"],
+                   warnung=pol["warnung"] or bericht["warnung"])
+    je_bild = {nr: (m if pol["weiss_behalten"] else ~m) for nr, m in grau.items()}
+    return {"je_bild": je_bild, "bericht": bericht}
+
+
+def _gesiebt(bilder, ansichten, *, filter_: set, nah: float, masken: dict, summe: dict, kn,
+             zentren=None, weg_min: float = 0.0, weg_reichweite: float = 0.0):
+    """Die Bilder eines Renderers durch :func:`_tiefe_filtern` — je Blickwinkel
+    ``(rgb, tiefe, gefuellt-Anteil)`` für die TSDF; die Zähler wandern in ``summe``."""
+    import numpy as np
+
+    for ansicht, (rgb, tiefe, alpha, streuung) in zip(ansichten, bilder):
+        leer = alpha < kn.DECKKRAFT_LEER
+        tiefe = np.where(leer, 0.0, tiefe).astype(np.float32)
+        tiefe, zaehler = _tiefe_filtern(tiefe, alpha, filter_=filter_, nah=nah,
+                                        behalten=masken.get(ansicht.get("bild")), kn=kn,
+                                        ansicht=ansicht, zentren=zentren, weg_min=weg_min,
+                                        weg_reichweite=weg_reichweite, streuung=streuung)
+        if streuung is not None:
+            summe["streuung_bilder"] = summe.get("streuung_bilder", 0) + 1
+        for k, v in zaehler.items():
+            summe[k] = summe.get(k, 0) + v
+        summe["bildpunkte"] = summe.get("bildpunkte", 0) + int(tiefe.size)
+        yield rgb, tiefe, float((~leer).mean())
+
+
+def _filter_bericht(summe: dict, filter_: set, nah: float, kn, *, weg_aktiv: bool,
+                    massstab: float, streuung_fehler=()) -> dict:
+    """Die Zähler als Anteile — je Filter: welcher Anteil der Bildpunkte mit Tiefe verworfen."""
+    n = max(1, summe.get("mit_tiefe", 0))
+    return {"eingeschaltet": sorted(filter_),
+            "bildpunkte_mit_tiefe": int(summe.get("mit_tiefe", 0)),
+            "verworfen_anteil": round(summe.get("verworfen", 0) / n, 4),
+            "je_filter": {k: round(summe.get(k, 0) / n, 4) for k in kn.TIEFENFILTER},
+            "schwellen": {"deckkraft_tiefe": kn.DECKKRAFT_TIEFE,
+                          "tiefe_sprung_rel": kn.TIEFE_SPRUNG_REL,
+                          "tiefe_streuung_rel": kn.TIEFE_STREUUNG_REL,
+                          "nah_min_m": kn.NAH_MIN_M,
+                          "nah_min_splat_einheiten": round(float(nah), 6),
+                          "weg_min_m": kn.WEG_MIN_M,
+                          "weg_min_splat_einheiten": round(kn.WEG_MIN_M / massstab, 6),
+                          "weg_reichweite_m": kn.WEG_REICHWEITE_M,
+                          "maske_schwelle": kn.MASKE_SCHWELLE},
+            # «weg» braucht die Kameras der Aufnahme; mit dem Ring wirkt er nicht.
+            "weg_aktiv": bool(weg_aktiv),
+            # «streuung» braucht den zweiten Durchgang von gsplat; scheitert er, setzt der
+            # Filter aus, und hier steht warum.
+            "streuung_bilder": int(summe.get("streuung_bilder", 0)),
+            "streuung_fehler": (list(streuung_fehler)[:1] or None)}
 
 
 # --------------------------------------------------------------------------------------
@@ -440,12 +753,15 @@ def _versionen() -> dict:
     return aus
 
 
-def _deckung(netz, punkte, abstand: float) -> dict:
+def _deckung(netz, punkte, abstand: float, *, dicht_gesamt: int) -> dict:
     """Welcher Anteil der dichten Splat-Punkte höchstens ``abstand`` von einer Netzfläche liegt.
 
     **Das Mass für die Löcher** (13.10.2026): ``auf-20261013-275`` sah die Löcher nur im Bild
     (21–26 % der Fläche neben dem Bauwerk). Hier wird es am Netz selbst gezählt, ohne Kamera —
     damit Ring und Aufnahme vergleichbar sind und die HomeStation es am echten Splat misst.
+    ``punkte`` ist seit ``auf-20261013-276`` (Fehler 4) eine gleichmässige Zufallsstichprobe
+    über **alle** dichten Punkte (``kontext_netz.stichprobe_indizes``); ``dicht_gesamt`` sagt,
+    aus wie vielen.
     """
     import numpy as np
     import open3d as o3d
@@ -456,19 +772,70 @@ def _deckung(netz, punkte, abstand: float) -> dict:
                                                                     dtype=np.float32))).numpy()
     return {"anteil": round(float((d <= abstand).mean()), 4),
             "abstand_median": round(float(np.median(d)), 6),
-            "abstand_splat_einheiten": round(float(abstand), 6), "punkte": int(len(punkte))}
+            "abstand_splat_einheiten": round(float(abstand), 6), "punkte": int(len(punkte)),
+            "dicht_gesamt": int(dicht_gesamt), "stichprobe": "zufall, fester startwert"}
+
+
+def _netz_ordnen(netz):
+    """Ecken und Dreiecke in eine feste Reihenfolge bringen — das Netz wird reproduzierbar.
+
+    **Anlass** (``auf-20261013-276``, Fehler 3): Bei gleichem Schlüssel war die Netz-sha256
+    zweier Läufe verschieden, Deckung, Stücke und Blockzahl gleich. Hier nachgestellt (CPU,
+    Ersatzrenderer, drei Läufe, 13.10.2026): drei verschiedene sha256, aber nach Lage
+    sortiert **dieselben Ecken**. Die Ursache ist nicht gsplat, sondern Open3D: Die Hashtabelle
+    der ``VoxelBlockGrid`` füllt sich parallel, und in ihrer Reihenfolge kommen die Dreiecke
+    heraus. Die Geometrie ist dieselbe, die Datei nicht — und die Vereinfachung
+    (``simplify_quadric_decimation``) hängt an der Reihenfolge, also wird **vor** ihr geordnet.
+
+    Ecken nach Lage (dann Farbe), jedes Dreieck mit der kleinsten Ecke vorn (Umlaufsinn
+    bleibt), die Dreiecke danach sortiert.
+    """
+    import numpy as np
+    import open3d as o3d
+
+    ecken = np.asarray(netz.vertices)
+    farben = np.asarray(netz.vertex_colors) if netz.has_vertex_colors() else None
+    dreiecke = np.asarray(netz.triangles)
+    schluessel = [ecken[:, 2], ecken[:, 1], ecken[:, 0]]
+    if farben is not None:
+        schluessel = [farben[:, 2], farben[:, 1], farben[:, 0]] + schluessel
+    folge = np.lexsort(schluessel)
+    neu = np.empty_like(folge)
+    neu[folge] = np.arange(len(folge))
+    d = neu[dreiecke]
+    dreh = np.argmin(d, axis=1)
+    zeilen = np.arange(len(d))[:, None]
+    d = d[zeilen, (dreh[:, None] + np.arange(3)[None, :]) % 3]
+    d = d[np.lexsort((d[:, 2], d[:, 1], d[:, 0]))]
+    aus = o3d.geometry.TriangleMesh(o3d.utility.Vector3dVector(ecken[folge]),
+                                    o3d.utility.Vector3iVector(d.astype(np.int32)))
+    if farben is not None:
+        aus.vertex_colors = o3d.utility.Vector3dVector(farben[folge])
+    return aus
 
 
 def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, voxel_m: float,
                   oben, massstab: float, renderer: str, geraet: str,
-                  aufnahme: Path | None = None, bloecke_max: int | None = None) -> dict:
-    import numpy as np
-
+                  aufnahme: Path | None = None, bloecke_max: int | None = None,
+                  masken: str | None = None, tiefenfilter=None) -> dict:
     zeiten: dict[str, float] = {}
     beginn = time.monotonic()
+    # DIE BIBLIOTHEKEN ZUERST LADEN UND MESSEN (13.10.2026, auf-20261013-276 Fehler 2): Im
+    # Erstlauf fehlten 34 s, die in keiner Teilzeit standen — das erste Laden von torch,
+    # gsplat und CUDA fiel bis dahin ungezählt in den ersten Renderdurchgang.
+    import numpy as np
+    import open3d as o3d  # noqa: F401 — hier geladen, damit das Laden gezählt wird
+    if renderer == "gsplat":
+        import gsplat  # noqa: F401
+        import torch  # noqa: F401
+    zeiten["bibliotheken_s"] = round(time.monotonic() - beginn, 3)
+
+    t1 = time.monotonic()
     kn = _kontext_netz()
     parameter = kn.netz_parameter(aufloesung=aufloesung, je_kreis=je_kreis, voxel_m=voxel_m,
-                                  oben=oben, massstab=massstab, renderer=renderer)
+                                  oben=oben, massstab=massstab, renderer=renderer,
+                                  tiefenfilter=tiefenfilter)
+    filter_ = set(parameter["tiefenfilter"])
 
     g = lies_splat(splat, kn)
     dicht = g["endlich"] & (g["deckkraft"] >= kn.DECKKRAFT_DICHT)
@@ -479,12 +846,15 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
     schritt = max(1, len(lage_dicht) // STICHPROBE_BEREICH)
     stichprobe = lage_dicht[::schritt]
     bereich = kn.dichter_bereich([tuple(p) for p in stichprobe], oben=parameter["oben"])
-    zeiten["lesen_s"] = round(time.monotonic() - beginn, 3)
+    deckung_punkte = lage_dicht[np.array(kn.stichprobe_indizes(len(lage_dicht)),
+                                         dtype=np.int64)]
+    zeiten["lesen_s"] = round(time.monotonic() - t1, 3)
 
     # BLICKWINKEL: aus der Aufnahme, wenn sie da ist und zum Splat passt — sonst der Ring.
     t1 = time.monotonic()
     aufnahme_bericht = {"angegeben": aufnahme is not None, "verwendet": False}
     ansichten = None
+    weg_zentren = None
     if aufnahme is not None:
         geprueft = _aufnahme_pruefen(aufnahme, g, dicht, parameter["aufloesung"], kn)
         aufnahme_bericht.update({"auswahl": geprueft["auswahl"],
@@ -493,6 +863,10 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
         if geprueft["taugt"]:
             ansichten = geprueft["ansichten"]
             aufnahme_bericht["verwendet"] = True
+            # ALLE Kamerazentren der Aufnahme, nicht nur die gewählten: Die Person stand an
+            # jedem Augenblick neben der Kamera (Filter «weg»).
+            weg_zentren = np.unique(np.round(np.array(geprueft["zentren"], dtype=np.float64),
+                                             6), axis=0)
     zeiten["aufnahme_s"] = round(time.monotonic() - t1, 3)
     if ansichten is None:
         quelle = "ring"
@@ -507,42 +881,77 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
     spanne = max(bereich["halbmesser"], bereich["decke"] - bereich["boden"])
     tiefe_max = kn.TIEFE_MAX_FAKTOR * spanne * kn.UMLAUF_ABSTAND_FAKTOR
     nah = 0.05 / massstab
+    nah_filter = kn.nah_min_splat(massstab)
 
-    def bilder():
+    # MASKEN nur, wenn die Blickwinkel aus der Aufnahme kommen: Eine Maske gehört zu einem
+    # Bild der Aufnahme, ein Ring-Blickwinkel hat keins.
+    streuung_fehler: list[str] = []
+    t1 = time.monotonic()
+    masken_geladen = _masken_vorbereiten(ansichten, masken,
+                                         aufnahme if quelle == "aufnahme" else None, kn)
+    if quelle != "aufnahme" and aufnahme is not None:
+        masken_geladen["bericht"]["grund"] = "Aufnahme nicht verwendet (Ring)"
+    # Gefunden heisst nicht angewandt: Mit ausgeschaltetem Filter «maske» (Vergleichslauf)
+    # werden die Masken gezählt, aber nicht benutzt.
+    masken_geladen["bericht"]["angewandt"] = bool(masken_geladen["je_bild"]
+                                                 and "maske" in filter_)
+    zeiten["masken_s"] = round(time.monotonic() - t1, 3)
+
+    def bilder(summe):
         if renderer == "gsplat":
-            return _gsplat_ansichten(g, ansichten, geraet, nah, tiefe_max * 2.0, kn)
-        if renderer == "cpu-probe":
-            return _probe_ansichten(g, ansichten, kn)
-        raise RuntimeError(f"Renderer {renderer!r} unbekannt, bekannt sind {list(RENDERER)}.")
+            roh = _gsplat_ansichten(g, ansichten, geraet, nah, tiefe_max * 2.0, kn,
+                                    streuung_an="streuung" in filter_,
+                                    streuung_fehler=streuung_fehler)
+        elif renderer == "cpu-probe":
+            roh = _probe_ansichten(g, ansichten, kn)
+        else:
+            raise RuntimeError(f"Renderer {renderer!r} unbekannt, bekannt sind "
+                               f"{list(RENDERER)}.")
+        return _gesiebt(roh, ansichten, filter_=filter_, nah=nah_filter,
+                        masken=masken_geladen["je_bild"], summe=summe, kn=kn,
+                        zentren=weg_zentren, weg_min=kn.WEG_MIN_M / massstab,
+                        weg_reichweite=kn.WEG_REICHWEITE_M / massstab)
 
     hoechstens = int(bloecke_max or kn.BLOECKE_MAX)
     voxel_angefragt = voxel_m / massstab                 # in Einheiten des Splats
     voxel = voxel_angefragt
     versuche = []
     for _ in range(VOXEL_VERSUCHE):
+        # JEDER VERSUCH MIT SEINER ZEIT (auf-20261013-276 Fehler 2): Ein abgebrochener Versuch
+        # der Blockwache kostete am echten Splat Sekunden, die bis hierher nirgends standen.
+        t_versuch = time.monotonic()
+        summe: dict = {}
         try:
             volumen, gefuellt, t_render, t_tsdf, n_bloecke = _verschmelzen(
-                bilder(), ansichten, voxel=voxel, tiefe_max=tiefe_max, spanne=spanne,
+                bilder(summe), ansichten, voxel=voxel, tiefe_max=tiefe_max, spanne=spanne,
                 bloecke_max=hoechstens, kn=kn)
-            versuche.append({"voxel": round(float(voxel), 9), "bloecke": n_bloecke})
+            versuche.append({"voxel": round(float(voxel), 9), "bloecke": n_bloecke,
+                             "dauer_s": round(time.monotonic() - t_versuch, 3)})
             break
         except _ZuVieleBloecke as zu_viel:
             versuche.append({"voxel": round(float(voxel), 9), "bloecke": zu_viel.bloecke,
-                             "abgebrochen": True})
+                             "abgebrochen": True,
+                             "dauer_s": round(time.monotonic() - t_versuch, 3)})
             voxel = kn.voxel_fuer_bloecke(voxel, zu_viel.bloecke, hoechstens)
     else:
         raise RuntimeError(f"Auch nach {VOXEL_VERSUCHE} Versuchen mehr als {hoechstens} "
                            f"TSDF-Bloecke ({versuche}) — Open3D wuerde abstuerzen.")
+    zeiten["blockwache_verworfen_s"] = round(sum(v["dauer_s"] for v in versuche
+                                                 if v.get("abgebrochen")), 3)
     zeiten["rendern_s"] = round(t_render, 3)
     zeiten["verschmelzen_s"] = round(t_tsdf, 3)
+    filter_bericht = _filter_bericht(summe, filter_, nah_filter, kn,
+                                     weg_aktiv=weg_zentren is not None, massstab=massstab,
+                                     streuung_fehler=streuung_fehler)
 
-    import open3d as o3d
     t1 = time.monotonic()
     netz = volumen.extract_triangle_mesh(weight_threshold=kn.GEWICHT_MIN).to_legacy()
     n_roh = len(netz.triangles)
     if n_roh == 0:
         raise RuntimeError("Die Verschmelzung ergab kein einziges Dreieck — keine Tiefe in "
-                           "den Blickwinkeln (Blickwinkel, Deckkraft oder Massstab pruefen).")
+                           "den Blickwinkeln (Blickwinkel, Deckkraft, Tiefenfilter oder "
+                           "Massstab pruefen).")
+    netz = _netz_ordnen(netz)
     cluster, n_je_cluster, _ = netz.cluster_connected_triangles()
     cluster, n_je_cluster = np.asarray(cluster), np.asarray(n_je_cluster)
     insel = n_je_cluster[cluster] < kn.INSEL_MIN_DREIECKE
@@ -556,6 +965,7 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
     vereinfacht = False
     if n_nach_inseln > kn.ZIEL_DREIECKE:
         netz = netz.simplify_quadric_decimation(target_number_of_triangles=kn.ZIEL_DREIECKE)
+        netz = _netz_ordnen(netz)
         vereinfacht = True
     if not netz.has_vertex_colors() or len(netz.triangles) == 0:
         was = "keine Farbe" if len(netz.triangles) else "kein Dreieck"
@@ -567,9 +977,13 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
         raise RuntimeError(f"Open3D konnte {ziel.name!r} nicht schreiben.")
     zeiten["aufraeumen_s"] = round(time.monotonic() - t1, 3)
     t1 = time.monotonic()
-    deckung = _deckung(netz, stichprobe, kn.DECKUNG_ABSTAND_VOXEL * voxel)
+    deckung = _deckung(netz, deckung_punkte, kn.DECKUNG_ABSTAND_VOXEL * voxel,
+                       dicht_gesamt=len(lage_dicht))
     zeiten["deckung_s"] = round(time.monotonic() - t1, 3)
     zeiten["gesamt_s"] = round(time.monotonic() - beginn, 3)
+    # Was in keiner Teilzeit steht — gross heisst: eine Stelle wird nicht gemessen.
+    zeiten["ungezaehlt_s"] = round(zeiten["gesamt_s"] - sum(
+        v for k, v in zeiten.items() if k != "gesamt_s"), 3)
 
     ecken = np.asarray(netz.vertices)
     farben = np.asarray(netz.vertex_colors)
@@ -598,11 +1012,13 @@ def splat_zu_netz(splat: Path, ziel: Path, *, aufloesung: int, je_kreis: int, vo
                         "gefuellt_mittel": round(float(np.mean(gefuellt)), 4),
                         "gefuellt_min": round(float(np.min(gefuellt)), 4)},
         "aufnahme": aufnahme_bericht,
+        "masken": masken_geladen["bericht"],
+        "tiefenfilter": filter_bericht,
         "deckung": deckung,
         "netz": {"datei": ziel.name, "ecken": int(len(ecken)),
                  "dreiecke": int(len(netz.triangles)), "dreiecke_roh": int(n_roh),
                  "dreiecke_nach_inseln": int(n_nach_inseln), "vereinfacht": vereinfacht,
-                 "inseln": inseln,
+                 "inseln": inseln, "reihenfolge": "fest (nach Lage geordnet)",
                  "huellbox": [[round(float(v), 6) for v in ecken.min(0)],
                               [round(float(v), 6) for v in ecken.max(0)]],
                  "farbe_mittel": [round(float(v), 4) for v in farben.mean(0)]},
@@ -647,6 +1063,12 @@ def _parser() -> argparse.ArgumentParser:
     ap.add_argument("--bloecke-max", dest="bloecke_max", type=int, default=None,
                     help="Blockwache der TSDF; Vorgabe kontext_netz.BLOECKE_MAX (für Proben "
                          "und um die Grenze von Open3D zu messen)")
+    ap.add_argument("--masken", default=None,
+                    help="Ordner der Masken zur Aufnahme, oder 'keine'; ohne Angabe neben der "
+                         "Aufnahme suchen (kontext_netz.masken_kandidaten)")
+    ap.add_argument("--tiefenfilter", default=None,
+                    help="eingeschaltete Tiefenfilter, z. B. 'deckkraft,nah' oder 'keine'; "
+                         "Vorgabe alle (kontext_netz.TIEFENFILTER)")
     ap.add_argument("--renderer", choices=RENDERER, default="gsplat",
                     help="gsplat (echt, CUDA) oder cpu-probe (NUR für Proben)")
     ap.add_argument("--geraet", default="cuda", help="torch-Gerät für gsplat")
@@ -665,7 +1087,8 @@ def main(argv=None) -> int:
             je_kreis=a.blickwinkel or kn.BLICKWINKEL_JE_KREIS,
             voxel_m=a.voxel_m or kn.VOXEL_M, oben=a.oben, massstab=a.massstab,
             renderer=a.renderer, geraet=a.geraet,
-            aufnahme=Path(a.aufnahme) if a.aufnahme else None, bloecke_max=a.bloecke_max)
+            aufnahme=Path(a.aufnahme) if a.aufnahme else None, bloecke_max=a.bloecke_max,
+            masken=a.masken, tiefenfilter=a.tiefenfilter)
     except Exception as e:                                # Fehler als Bericht, nicht als Traceback
         rep = {"status": "error", "error": f"{type(e).__name__}: {e}",
                "renderer": a.renderer, "netz": None, "versionen": _versionen()}

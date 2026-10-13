@@ -984,7 +984,7 @@ def test_neue_gesetzte_zahlen_im_speicherschluessel():
     g = kn.netz_parameter()["gesetzt"]
     assert g["aufnahme_blicke_max"] == kn.AUFNAHME_BLICKE_MAX == 240
     assert g["bloecke_max"] == kn.BLOECKE_MAX and g["gleich_median_max"] == kn.GLEICH_MEDIAN_MAX
-    assert kn.FASSUNG == 2
+    assert kn.FASSUNG == 3          # 3 seit auf-20261013-276: Tiefenfilter, Masken, Ordnung
 
 
 # --- die Konvention: woher der Ordner kommt -------------------------------------------
@@ -1193,6 +1193,15 @@ def test_blockwache_vergroessert_den_voxel_statt_abzustuerzen(strasse):
     assert v["vergroessert"] is True and v["versuche"][0]["abgebrochen"] is True
     assert v["benutzt_splat_einheiten"] > v["angefragt_splat_einheiten"]
     assert v["versuche"][-1]["bloecke"] <= 1500 and "Open3D" in v["grund"]
+    # auf-20261013-276 Fehler 2: Der abgebrochene Versuch steht mit seiner Zeit da, und die
+    # Teilzeiten erklären die Gesamtzeit (vorher fehlten am echten Splat 34 s).
+    z = b["zeiten_s"]
+    print(json.dumps(z))
+    assert all(x["dauer_s"] > 0 for x in v["versuche"])
+    assert z["blockwache_verworfen_s"] == pytest.approx(
+        sum(x["dauer_s"] for x in v["versuche"] if x.get("abgebrochen")), abs=0.01)
+    assert z["blockwache_verworfen_s"] > 0 and "bibliotheken_s" in z
+    assert abs(z["ungezaehlt_s"]) < 0.05 * z["gesamt_s"] + 0.5
 
 
 def test_die_schalter_der_erzeuger_wirken(tmp_path):
@@ -1211,3 +1220,403 @@ def test_die_schalter_der_erzeuger_wirken(tmp_path):
                              "--form", "strasse"]) == 0
     kopf = kn.lies_ply_kopf(tmp_path / "s.ply")
     assert kopf["elemente"][0]["anzahl"] == 400
+
+
+# ======================================================================================
+# 9 · Nach auf-20261013-276: Tiefenfilter, Masken der Aufnahme, vier Fehler
+# ======================================================================================
+#
+# Am echten Splat: gesprenkelte erwartete Tiefe, die gefilmte Person als Wolke nah vor den
+# Kameras, 497 497 Netzstücke. Dazu vier Fehler (Symlink, Zeiten der Blockwache, sha256 nicht
+# reproduzierbar, Deckung nur über eine Teilmenge). Die stdlib-Proben laufen immer, die
+# Fusion nur mit AIIMAGING_SPLAT_PYTHON.
+
+def _png_lesen(pfad: Path) -> tuple[int, int, bytes]:
+    """Ein 8-Bit-Graustufen-PNG ohne Filter (wie ``make_test_colmap`` es schreibt) lesen."""
+    import zlib
+
+    daten = pfad.read_bytes()
+    assert daten[:8] == b"\x89PNG\r\n\x1a\n"
+    pos, idat, breite, hoehe = 8, b"", 0, 0
+    while pos < len(daten):
+        (laenge,) = struct.unpack(">I", daten[pos:pos + 4])
+        art, inhalt = daten[pos + 4:pos + 8], daten[pos + 8:pos + 8 + laenge]
+        if art == b"IHDR":
+            breite, hoehe = struct.unpack(">II", inhalt[:8])
+            assert inhalt[8:10] == bytes([8, 0])            # 8 Bit, Graustufen
+        elif art == b"IDAT":
+            idat += inhalt
+        pos += 12 + laenge
+    roh = zlib.decompress(idat)
+    zeilen = b"".join(roh[y * (breite + 1) + 1:(y + 1) * (breite + 1)] for y in range(hoehe))
+    return breite, hoehe, zeilen
+
+
+# --- die gesetzten Zahlen und ihre Lesart -------------------------------------------
+
+def test_tiefenfilter_gesetzt_und_im_speicherschluessel():
+    g = kn.netz_parameter()["gesetzt"]
+    assert g["deckkraft_tiefe"] == kn.DECKKRAFT_TIEFE > kn.DECKKRAFT_LEER
+    assert g["tiefe_sprung_rel"] == kn.TIEFE_SPRUNG_REL and g["nah_min_m"] == kn.NAH_MIN_M
+    assert g["deckung_stichprobe"] == kn.DECKUNG_STICHPROBE
+    assert kn.netz_parameter()["tiefenfilter"] == sorted(kn.TIEFENFILTER)
+    # Ohne Filter ist es ein anderes Netz — also ein anderer Schlüssel.
+    ohne = kn.netz_parameter(tiefenfilter="keine")
+    assert ohne["tiefenfilter"] == []
+    assert (seams.splat_schluessel("a" * 64, ohne)
+            != seams.splat_schluessel("a" * 64, kn.netz_parameter()))
+
+
+def test_tiefenfilter_lesen():
+    assert kn.tiefenfilter_lesen(None) == sorted(kn.TIEFENFILTER)
+    assert kn.tiefenfilter_lesen("keine") == kn.tiefenfilter_lesen(()) == []
+    assert kn.tiefenfilter_lesen("nah, deckkraft") == ["deckkraft", "nah"]
+    with pytest.raises(kn.KontextNetzError, match="unbekannt"):
+        kn.tiefenfilter_lesen("nha")                       # ein Tippfehler schaltet nicht ab
+
+
+def test_nahbereich_in_metern_der_welt():
+    """1,5 m der Welt — am echten Splat ist eine Einheit ≈ 6,22 m (massstab ≈ 0,16)."""
+    assert kn.nah_min_splat(1.0) == pytest.approx(kn.NAH_MIN_M)
+    assert kn.nah_min_splat(1 / 6.22) == pytest.approx(kn.NAH_MIN_M * 6.22)
+    with pytest.raises(kn.KontextNetzError):
+        kn.nah_min_splat(0.0)
+
+
+# --- Fehler 4: die Deckung zählt eine Stichprobe über ALLE dichten Punkte ------------
+
+def test_stichprobe_gleichmaessig_ueber_alle_und_wiederholbar():
+    """``auf-20261013-276`` Fehler 4: ~20 000 Punkte als Schritt durch die Datei. Jetzt eine
+    Zufallsstichprobe über alle — unabhängig von der Reihenfolge, in der der Trainer schreibt."""
+    n, k = 1_000_000, kn.DECKUNG_STICHPROBE
+    a = kn.stichprobe_indizes(n, k)
+    assert a == kn.stichprobe_indizes(n, k)                # fester Startwert
+    assert len(a) == len(set(a)) == k and a == sorted(a)
+    assert a[0] < n // 1000 and a[-1] > n - n // 1000      # von vorn bis hinten
+    # Je Zehntel der Datei ein Zehntel der Stichprobe (± 3 %).
+    zehntel = [0] * 10
+    for i in a:
+        zehntel[i * 10 // n] += 1
+    assert all(abs(z / k - 0.1) < 0.003 for z in zehntel), zehntel
+    assert kn.stichprobe_indizes(50, k) == list(range(50))  # weniger Punkte: alle
+    assert kn.stichprobe_indizes(0) == []
+
+
+def test_der_runner_zaehlt_die_deckung_ueber_die_ganze_stichprobe():
+    assert "kn.stichprobe_indizes(len(lage_dicht))" in RUNNER_QUELLE
+    assert "_deckung(netz, deckung_punkte," in RUNNER_QUELLE
+
+
+# --- Fehler 1: die Aufnahme hinter einem Verweis (Symlink) ---------------------------
+
+def test_aufnahme_wird_hinter_einem_symlink_gefunden(tmp_path, monkeypatch):
+    """``auf-20261013-276`` Fehler 1: Die App lädt ``context.ply`` als Verweis in ihrem
+    Projektordner; die Aufnahme liegt neben dem Ziel."""
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    lauf = tmp_path / "lauf"
+    _erzeuger().erzeuge_splat(lauf / "splat.ply", punkte=100)
+    _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=2, punkte=5)
+    app = tmp_path / "app" / "projekt"
+    app.mkdir(parents=True)
+    (app / "context.ply").symlink_to(lauf / "splat.ply")
+    ordner, art, grund = seams.finde_aufnahme(app / "context.ply")
+    assert art == "neben dem splat" and grund is None
+    assert ordner.resolve() == (lauf / "sparse" / "0").resolve()
+    # Der Pfad, wie er kommt, bleibt vorn: Eine Aufnahme neben dem Verweis gilt zuerst.
+    _colmap().schreibe_aufnahme(app / "sparse" / "0", augenblicke=2, punkte=5)
+    assert seams.finde_aufnahme(app / "context.ply")[0] == app / "sparse" / "0"
+    # Ohne Verweis keine zweiten Kandidaten (ein relativer Pfad wird nicht doppelt).
+    assert len(kn.aufnahme_kandidaten(Path("x") / "s.ply")) == 3
+
+
+def test_masken_werden_neben_einer_verlinkten_aufnahme_gefunden(tmp_path):
+    lauf = tmp_path / "lauf"
+    _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=2, punkte=5,
+                                person=4, masken=lauf / "masks", ansichtsordner=True)
+    (tmp_path / "verweis").symlink_to(lauf / "sparse" / "0")
+    namen = [b["name"] for b in kn.lies_aufnahme(tmp_path / "verweis")["bilder"].values()]
+    fund = kn.finde_masken(tmp_path / "verweis", namen)
+    assert fund["gefunden"] and fund["art"] == "../../masks" and len(fund["dateien"]) == 8
+
+
+# --- die Masken der Aufnahme ---------------------------------------------------------
+
+def test_masken_lage_und_drei_namensformen(tmp_path):
+    a = tmp_path / "lauf" / "sparse" / "0"
+    assert [k for k, _ in kn.masken_kandidaten(a)] == ["../../masks", "../masks", "masks"]
+    assert [o for _, o in kn.masken_kandidaten(a)] == [
+        tmp_path / "lauf" / "masks", tmp_path / "lauf" / "sparse" / "masks", a / "masks"]
+    m = tmp_path / "m"
+    (m / "back").mkdir(parents=True)
+    (m / "back" / "0031.jpg.png").write_bytes(b"x")            # voller Name + .png
+    (m / "front").mkdir()
+    (m / "front" / "0001.png").write_bytes(b"x")               # Stamm + .png
+    (m / "left").mkdir()
+    (m / "left" / "0002.jpg").write_bytes(b"x")                # derselbe Name
+    assert kn.maske_zum_bild(m, "back/0031.jpg") == m / "back" / "0031.jpg.png"
+    assert kn.maske_zum_bild(m, "front/0001.jpg") == m / "front" / "0001.png"
+    assert kn.maske_zum_bild(m, "left/0002.jpg") == m / "left" / "0002.jpg"
+    assert kn.maske_zum_bild(m, "right/0003.jpg") is None
+
+
+def test_masken_nur_neben_dieser_aufnahme(tmp_path):
+    """Auskunft der HomeStation (13.10.2026): Masken eines anderen Laufs derselben Aufnahme
+    passen nur dem Namen nach. Gesucht wird nur relativ zu DIESER Aufnahme."""
+    anderer = tmp_path / "anderer_lauf"
+    _colmap().schreibe_aufnahme(anderer / "sparse" / "0", augenblicke=2, punkte=5, person=4,
+                                masken=anderer / "masks", ansichtsordner=True)
+    dieser = tmp_path / "abnahme" / "sparse" / "0"
+    _colmap().schreibe_aufnahme(dieser, augenblicke=2, punkte=5, ansichtsordner=True)
+    namen = [b["name"] for b in kn.lies_aufnahme(dieser)["bilder"].values()]
+    assert kn.finde_masken(dieser, namen)["gefunden"] is False
+    # Ausdrücklich genannt, gilt der Ordner.
+    assert kn.finde_masken(dieser, namen, anderer / "masks")["art"] == "parameter"
+
+
+def test_synthetische_masken_schneiden_die_person_aus(tmp_path):
+    lauf = tmp_path / "lauf"
+    befund = _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=3, punkte=5,
+                                         person=12, masken=lauf / "masks",
+                                         ansichtsordner=True, breite=200, hoehe=200)
+    assert befund["masken"]["anzahl"] == 12
+    assert 0.0 < befund["masken"]["ausgeschnitten"] < 0.5   # die Person, nicht das Bild
+    schwarz = []
+    for p in sorted((lauf / "masks").rglob("*.png")):
+        b, h, pixel = _png_lesen(p)
+        assert (b, h) == (200, 200) and set(pixel) <= {0, 255}
+        schwarz.append(pixel.count(0) / len(pixel))
+    assert len(schwarz) == 12 and max(schwarz) > 0.05       # nah vor einer Kamera: gross
+    daten = json.loads((lauf / "masks" / "maske.json").read_text(encoding="utf-8"))
+    assert daten["schema"].startswith("kosmoprepare.splat-maske/")
+    assert kn.polaritaet_aus_json(daten) is True
+
+
+def test_maskenfingerabdruck_folgt_dem_inhalt(tmp_path):
+    lauf = tmp_path / "lauf"
+    _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=2, punkte=5, person=6,
+                                masken=lauf / "masks", breite=64, hoehe=64)
+    namen = [b["name"] for b in kn.lies_aufnahme(lauf / "sparse" / "0")["bilder"].values()]
+    a = kn.masken_fingerabdruck(kn.finde_masken(lauf / "sparse" / "0", namen))
+    kopie = tmp_path / "kopie"
+    shutil.copytree(lauf, kopie)
+    b = kn.masken_fingerabdruck(kn.finde_masken(kopie / "sparse" / "0", namen))
+    assert a == b                                           # Inhalt, nicht Pfad
+    ziel = next((kopie / "masks").glob("*.png"))
+    ziel.write_bytes(ziel.read_bytes() + b"\0")
+    assert kn.masken_fingerabdruck(kn.finde_masken(kopie / "sparse" / "0", namen)) != a
+    assert kn.masken_fingerabdruck({"gefunden": False}) is None
+
+
+@pytest.mark.parametrize("daten, erwartet", [
+    ({"schema": "kosmoprepare.splat-maske/0.2", "verfahren": "person"}, True),
+    ({"polaritaet": "weiss=behalten"}, True),
+    ({"polarity": "white = keep"}, True),
+    ({"polaritaet": "schwarz=behalten"}, False),
+    ({"polaritaet": 0}, False),
+    ({"polaritaet": 255}, True),
+    ({"schema": "etwas/1"}, None),
+    ([1, 2], None),
+])
+def test_polaritaet_aus_maske_json(daten, erwartet):
+    assert kn.polaritaet_aus_json(daten) is erwartet
+
+
+def test_polaritaet_vorgabe_mehrheit_und_json():
+    v = kn.masken_polaritaet(0.9)
+    assert (v["weiss_behalten"], v["quelle"], v["warnung"]) == (True, "vorgabe", None)
+    m = kn.masken_polaritaet(0.1)                            # fast alles schwarz
+    assert (m["weiss_behalten"], m["quelle"]) == (False, "mehrheitsregel") and m["warnung"]
+    j = kn.masken_polaritaet(0.1, aus_json=True)             # die Datei gilt, mit Warnung
+    assert (j["weiss_behalten"], j["quelle"]) == (True, "maske.json") and j["warnung"]
+    assert kn.masken_polaritaet(0.9, aus_json=True)["warnung"] is None
+
+
+def test_naht_reicht_masken_weiter_und_schluesselt_ihren_inhalt(tmp_path, splat_python,
+                                                               monkeypatch):
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    monkeypatch.delenv(seams.SPLAT_MASKEN_ENV, raising=False)
+    lauf = tmp_path / "lauf"
+    splat = lauf / "splat.ply"
+    _erzeuger().erzeuge_splat(splat, punkte=100)
+    _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=2, punkte=5,
+                                ansichtsordner=True)
+    starter = _Starter()
+    ohne = seams.splat_zu_netz(splat, speicher=tmp_path / "sp", _starte=starter)
+    assert "--masken=keine" in starter.aufrufe[-1][0]
+    assert ohne["masken"]["gefunden"] is False and ohne["masken"]["sha256"] is None
+    assert any(a == "--tiefenfilter=deckkraft,maske,nah,sprenkel,streuung,weg"
+               for a in starter.aufrufe[-1][0])
+    # Masken dazu: weitergereicht, anderer Schlüssel, Vermerk ohne Pfad.
+    _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=2, punkte=5, person=6,
+                                masken=lauf / "masks", ansichtsordner=True, breite=64,
+                                hoehe=64)
+    mit = seams.splat_zu_netz(splat, speicher=tmp_path / "sp", _starte=starter)
+    assert f"--masken={lauf / 'masks'}" in starter.aufrufe[-1][0]
+    assert mit["zwischenspeicher"]["schluessel"] != ohne["zwischenspeicher"]["schluessel"]
+    assert mit["masken"]["gefunden"] is True and mit["masken"]["anzahl"] == 8
+    assert mit["masken"]["lage"] == "../../masks" and mit["masken"]["maske_json"] is True
+    assert str(tmp_path) not in json.dumps(mit["masken"])
+    # Andere Masken: neues Netz.
+    n = len(starter.aufrufe)
+    m = next((lauf / "masks").rglob("*.png"))
+    m.write_bytes(m.read_bytes() + b"\0")
+    seams.splat_zu_netz(splat, speicher=tmp_path / "sp", _starte=starter)
+    assert len(starter.aufrufe) == n + 1
+    # Ausdrücklich genannt, aber ohne passende Maske: ein Fehler, kein stilles Weglassen.
+    with pytest.raises(seams.SeamError, match="keine Maske"):
+        seams.splat_zu_netz(splat, speicher=tmp_path / "sp", masken=tmp_path,
+                            _starte=starter)
+    # Ohne Aufnahme keine Masken — auch wenn ein Ordner daliegt.
+    allein = tmp_path / "allein"
+    _erzeuger().erzeuge_splat(allein / "s.ply", punkte=100)
+    (allein / "masks").mkdir()
+    b = seams.splat_zu_netz(allein / "s.ply", speicher=tmp_path / "sp", _starte=starter)
+    assert b["masken"]["quelle"] == "keine aufnahme"
+    assert not any(a.startswith("--masken") for a in starter.aufrufe[-1][0])
+
+
+def test_naht_reicht_die_tiefenfilter_weiter(tmp_path, splat_python, monkeypatch):
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    splat = tmp_path / "s.ply"
+    _erzeuger().erzeuge_splat(splat, punkte=100)
+    starter = _Starter()
+    a = seams.splat_zu_netz(splat, speicher=tmp_path / "sp", tiefenfilter="keine",
+                            _starte=starter)
+    assert "--tiefenfilter=keine" in starter.aufrufe[-1][0]
+    b = seams.splat_zu_netz(splat, speicher=tmp_path / "sp", tiefenfilter=["nah"],
+                            _starte=starter)
+    assert "--tiefenfilter=nah" in starter.aufrufe[-1][0]
+    assert a["zwischenspeicher"]["schluessel"] != b["zwischenspeicher"]["schluessel"]
+    args = _runner_parser().parse_args([str(splat), "n.ply", "--tiefenfilter=keine",
+                                        "--masken=keine"])
+    assert (args.tiefenfilter, args.masken) == ("keine", "keine")
+    with pytest.raises(seams.SeamError, match="unbekannt"):
+        seams.splat_zu_netz(splat, speicher=tmp_path / "sp", tiefenfilter="nha",
+                            _starte=starter)
+
+
+def test_die_person_im_splat_und_in_der_aufnahme_am_selben_ort(tmp_path):
+    """Die Person des Splats und die der Masken sind dieselbe (``make_test_colmap.rig_weg``
+    und ``person_wolke``), und sie ändert ihren Ort mit jedem Augenblick."""
+    c = _colmap()
+    erzeugt = _erzeuger().erzeuge_splat(tmp_path / "s.ply", punkte=400, form="strasse",
+                                        person=10, person_augenblicke=20)
+    assert erzeugt["person"] == 200 and erzeugt["dicht"] == 400 - erzeugt["schwebe"] + 200
+    weg = c.rig_weg(20, form="strasse")
+    lagen = []
+    for a, (auge, vorn) in enumerate(weg):
+        wolke = c.person_wolke(a, auge, vorn, 10)
+        mx = sum(p[0] for p in wolke) / len(wolke) - auge[0]
+        mz = sum(p[2] for p in wolke) / len(wolke) - auge[2]
+        d = math.hypot(mx, mz)
+        assert 0.3 < d < 1.0, d                          # nah am Rig
+        lagen.append(math.atan2(mz, mx))
+    assert len({round(w, 1) for w in lagen}) > 15        # jedes Mal woanders
+
+
+def test_der_ersatzrenderer_liefert_eine_akkumulierte_deckkraft():
+    """Der Tiefenfilter braucht alpha; bis 276 gab der Ersatz nur Farbe und Tiefe."""
+    baum = ast.parse(RUNNER_QUELLE)
+    probe = next(k for k in ast.walk(baum)
+                 if isinstance(k, ast.FunctionDef) and k.name == "_probe_ansichten")
+    quelle = ast.get_source_segment(RUNNER_QUELLE, probe)
+    assert "np.bincount(idx, weights=" in quelle and "alpha.reshape(h, b)" in quelle
+    assert "render_mode=\"RGB+ED\"" in RUNNER_QUELLE
+
+
+@ohne_splat_python
+def test_das_netz_ist_bei_gleichem_schluessel_bitgleich(strasse):
+    """``auf-20261013-276`` Fehler 3: Gleicher Schlüssel, andere sha256. Ursache Open3D (die
+    Hashtabelle der TSDF füllt sich parallel, die Dreiecke kommen in wechselnder Reihenfolge);
+    der Runner ordnet das Netz jetzt nach Lage. Vorher hier: drei Läufe, drei sha256."""
+    summen = []
+    for i in range(3):
+        lauf = subprocess.run(
+            [os.environ[seams.SPLAT_PYTHON_ENV], str(seams.SPLAT_RUNNER),
+             str(strasse / "s.ply"), str(strasse / f"n{i}.ply"), "--report",
+             str(strasse / f"b{i}.json"), "--renderer", "cpu-probe", "--aufloesung", "160",
+             "--blickwinkel", "8", "--voxel-m", "0.15"],
+            capture_output=True, text=True, timeout=600)
+        b = json.loads((strasse / f"b{i}.json").read_text(encoding="utf-8"))
+        assert lauf.returncode == 0, b.get("error")
+        summen.append(kn.netz_kennzahlen(strasse / f"n{i}.ply")["sha256"])
+    assert len(set(summen)) == 1, summen
+    # Fehler 4: Die Deckung zählt eine Stichprobe über alle dichten Punkte.
+    d = b["deckung"]
+    assert d["dicht_gesamt"] == b["splat"]["dicht"]
+    assert d["punkte"] == min(b["splat"]["dicht"], kn.DECKUNG_STICHPROBE)
+
+
+# --- C · die Person im synthetischen Strassenraum (nur mit AIIMAGING_SPLAT_PYTHON) ------
+
+@pytest.fixture
+def strasse_mit_person(tmp_path, monkeypatch):
+    """Der Strassenraum mit der gefilmten Person (``--person 30``) und den Masken dazu, so
+    abgelegt wie bei der HomeStation: ``lauf/sparse/0``, ``lauf/masks/<ansicht>/…png``."""
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    monkeypatch.delenv(seams.SPLAT_MASKEN_ENV, raising=False)
+    lauf = tmp_path / "lauf"
+    _erzeuger().erzeuge_splat(lauf / "splat.ply", punkte=12000, startwert=7, form="strasse",
+                              person=30)
+    _colmap().schreibe_aufnahme(lauf / "sparse" / "0", augenblicke=80, form="strasse",
+                                person=30, masken=lauf / "masks", ansichtsordner=True,
+                                breite=543, hoehe=543)
+    return lauf
+
+
+@ohne_splat_python
+def test_die_person_zerfetzt_das_netz_und_der_tiefenfilter_heilt_es(strasse_mit_person):
+    """``auf-20261013-276``: Die Person als Wolke vor der Kamera zerlegt das Netz in Fetzen.
+
+    Am synthetischen Strassenraum mit dem Ersatzrenderer (erwartete Tiefe wie gsplat), Voxel
+    7 cm wie am echten Splat: ohne Filter viele Stücke und ein grosser Inselanteil; mit den
+    Filtern ein Bruchteil davon. Getragen wird das vor allem von der **Streuung entlang des
+    Strahls** — Nahbereich und Masken allein halfen hier kaum (Messblatt
+    ``docs/SPLAT_TIEFENFILTER_2026-10-13.md``).
+    """
+    lauf = strasse_mit_person
+
+    def fusion(filter_):
+        return seams.splat_zu_netz(lauf / "splat.ply", renderer="cpu-probe", aufloesung=160,
+                                   voxel_m=0.07, speicher=lauf / "sp", tiefenfilter=filter_)
+
+    ohne, mit = fusion("keine"), fusion(None)
+    zahlen = {n: {"deckung": b["deckung"]["anteil"],
+                  "stuecke": b["netz"]["inseln"]["komponenten"],
+                  "inselanteil": b["netz"]["inseln"]["entfernt_dreiecke_anteil"],
+                  "verworfen": b["tiefenfilter"]["je_filter"], "masken": b["masken"]}
+              for n, b in (("ohne", ohne), ("mit", mit))}
+    print(json.dumps(zahlen, ensure_ascii=False))
+    assert ohne["blickwinkel_quelle"] == mit["blickwinkel_quelle"] == "aufnahme"
+    # Die Masken: gefunden neben der Aufnahme, Polarität aus maske.json, alle 240 benutzt.
+    m = mit["masken"]
+    assert m["gefunden"] is True and m["lage"] == "../../masks" and m["benutzt"] == 240
+    assert (m["polaritaet"], m["polaritaet_quelle"]) == ("weiss = behalten", "maske.json")
+    assert m["angewandt"] is True and ohne["masken"]["angewandt"] is False
+    assert ohne["tiefenfilter"]["verworfen_anteil"] == 0.0
+    je = mit["tiefenfilter"]["je_filter"]
+    assert all(je[k] > 0 for k in kn.TIEFENFILTER), je        # jeder Filter greift
+    assert mit["tiefenfilter"]["weg_aktiv"] is True
+    assert mit["tiefenfilter"]["streuung_bilder"] == 240
+    # Die Fetzen: ein Bruchteil der Stücke, ein Bruchteil des Inselanteils.
+    assert (mit["netz"]["inseln"]["komponenten"] * 4
+            < ohne["netz"]["inseln"]["komponenten"])
+    assert (mit["netz"]["inseln"]["entfernt_dreiecke_anteil"] * 3
+            < ohne["netz"]["inseln"]["entfernt_dreiecke_anteil"])
+    # Die Deckung zählt die Person mit (18 % der dichten Punkte) — mit Filter fällt sie weg.
+    assert mit["deckung"]["anteil"] > 0.65
+
+
+def test_die_schalter_fuer_person_und_masken_wirken(tmp_path):
+    """Schalterprobe: ``--person``, ``--masken``, ``--ansichtsordner`` (``make_test_colmap``)
+    und ``--person``, ``--person-augenblicke`` (``make_test_splat``) von der Befehlszeile."""
+    assert _colmap().main([str(tmp_path / "lauf" / "sparse" / "0"), "--augenblicke", "2",
+                           "--form", "strasse", "--person", "5", "--ansichtsordner",
+                           "--masken", str(tmp_path / "lauf" / "masks")]) == 0
+    namen = sorted(b["name"] for b in kn.lies_aufnahme(
+        tmp_path / "lauf" / "sparse" / "0")["bilder"].values())
+    assert namen[0] == "back/0000.jpg" and len(namen) == 8
+    assert (tmp_path / "lauf" / "masks" / "back" / "0000.jpg.png").is_file()
+    assert _erzeuger().main([str(tmp_path / "s.ply"), "--punkte", "400", "--form", "strasse",
+                             "--person", "5", "--person-augenblicke", "4"]) == 0
+    assert kn.lies_ply_kopf(tmp_path / "s.ply")["elemente"][0]["anzahl"] == 420
