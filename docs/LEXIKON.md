@@ -160,6 +160,22 @@ zusätzlich Schutzmechanismus für Regel 3 (keine echten Projektdaten im Repo).
 
 **Issue** — Ein Eintrag in der Aufgaben-/Fehlerliste eines Repositories.
 
+**Tag (Markierung im Verlauf)** — Ein fester Name für einen bestimmten Commit, etwa `v0.2.1`. Anders als ein Zweig
+wandert ein Tag nicht mit, wenn weitergearbeitet wird: Er zeigt für immer auf denselben Stand. *Im Projekt:* Die
+Prüfstrecke erkennt eine neue Nummer daran, dass es für sie noch keinen Tag gibt (Entscheid 84b).
+
+**Freigabe auf GitHub (Release)** — Eine Seite auf GitHub, die zu einem Tag gehört: ein Begleittext und Dateien zum
+Herunterladen. Anders als die Ablage eines Laufs der Prüfstrecke (nach 14 Tagen weg) bleibt sie, und sie hat eine
+feste Adresse, die ein Programm ohne Anmeldung fragen kann («die neueste Freigabe»). *Im Projekt:* seit Visbox 0.2.1
+(Entscheid 84) legt die Prüfstrecke bei neuer Nummer eine an — mit Mac-App, iPad-Paket, Fassungsblatt und
+Prüfsummen —, und beide Apps fragen beim Start und einmal täglich danach.
+
+**Prüfsummen-Datei (`SHA256SUMS.txt`)** — Eine kleine Textdatei, die zu jeder Datei einer Freigabe ihren Fingerabdruck
+(siehe *SHA-256*) nennt, eine Zeile je Datei. Wer eine Datei lädt, rechnet ihren Fingerabdruck nach und vergleicht:
+Stimmt er nicht, ist die Datei beschädigt oder ausgetauscht. *Im Projekt:* Die Mac-App ersetzt sich nur, wenn die
+geladene Datei zu ihrer Zeile passt — und, wenn GitHub selbst einen Fingerabdruck nennt, auch zu diesem. Was sie
+**nicht** beweist: wer die Freigabe gemacht hat.
+
 ---
 
 ## 2 · Lizenzen und Recht
@@ -4713,6 +4729,26 @@ wie «lokales Netzwerk» —, die das System liest, bevor es die App startet.
 dem man auf macOS 15 eine nicht von Apple beglaubigte App einmal freigibt (siehe
 *Gatekeeper*).
 
+**Provisioning-Profil (`embedded.mobileprovision`)** — Eine kleine Datei, die Xcode beim Aufspielen einer App aufs
+iPad in die App legt. Sie sagt, auf welchem Gerät die App laufen darf und **bis wann**; danach startet sie nicht mehr.
+Mit dem kostenlosen Apple-Konto sind das 7 Tage. *Im Projekt:* Die iPad-App liest daraus ihr Ablaufdatum und warnt
+zwei Tage vorher (Entscheid 84). Fehlt die Datei (Simulator, App Store), sagt die App nichts.
+
+**Sparkle** — Eine verbreitete, freie Bibliothek (MIT), mit der sich Mac-Apps selbst aktualisieren. Sie liest eine
+Liste der Fassungen (einen «Appcast», eine Art Nachrichtenfeed) und prüft jede neue Fassung mit einer eigenen
+Unterschrift (EdDSA, ein Unterschriftverfahren mit geheimem und öffentlichem Schlüssel). *Im Projekt:* geprüft und
+verworfen (Entscheid 84, Bau): Sie wäre die erste fremde Abhängigkeit der Mac-App und verlangte einen geheimen
+Schlüssel in der Prüfstrecke; der Eigenbau braucht beides nicht.
+
+**App Translocation (verschobener Startort)** — Ein Schutz von macOS: Öffnet man eine heruntergeladene App, ohne sie
+vorher aus dem Download-Ordner zu verschieben, startet macOS sie aus einem verborgenen, schreibgeschützten Ordner.
+*Im Projekt:* Dort kann sich die Mac-App nicht selbst ersetzen; das Blatt «Aktualisieren» bittet dann, sie in den
+Ordner «Programme» zu ziehen.
+
+**Weiterleitung (Redirect)** — Die Antwort eines Servers «die Datei liegt woanders, frag dort». Das Programm folgt
+ihr meist von selbst. *Im Projekt:* GitHub leitet beim Herunterladen einer Freigabe auf seine Ablage um; die Mac-App
+folgt nur Weiterleitungen zu GitHub selbst und bricht sonst ab.
+
 **Startzeile** — Eine der vier Zeilen beim Öffnen der Mac-App (Leitung, Rechner am Heim-PC,
 Assistent, iPad). Jede sagt, ob ihr Teil steht, lädt, wartet oder fehlt — und warum
 (Entscheid 38).
@@ -6878,6 +6914,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 84 (Aktualisieren, Visbox 0.2.1): **Tag (Markierung im Verlauf)**, **Freigabe auf GitHub (Release)**, **Prüfsummen-Datei (`SHA256SUMS.txt`)**, **Provisioning-Profil (`embedded.mobileprovision`)**, **Sparkle** (mit Appcast und EdDSA), **App Translocation (verschobener Startort)**, **Weiterleitung (Redirect)** |
 | 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 83 (Mac koppelt mit Zahl): **Selbst unterschriebenes Zertifikat**, **Vertrauen beim ersten Mal (TOFU)**, **Dazwischenstellen (Man-in-the-Middle)**, **PAKE**, **Zeichen des Heim-PC**, **Mitteilung (am Bildschirm)**, **Drossel**, **Tailscale-Befehlszeile**, **Auflösen (eines Fundes)**; nachgefuehrt: **TLS mit festgehaltenem Schlüssel** (jetzt «Zertifikat anheften, Pinning», gebaut für den Mac im WLAN), **Zertifikat**, **Bonjour (mDNS)** (auch die Mac-App sucht) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §78 (Entscheid 76, Splat als Umgebung): **Splat (3D Gaussian Splatting)**, **PLY (Dateiformat)**, **Punktwolke**, **Geometry Nodes, «Mesh to Points»**, **SH-Grad 0 (Grundfarbe eines Gaussians)**, **Deckkraft eines Gaussians (Opazität, Sigmoid)**, **Transformationsmatrix (4×4, zeilenweise)**, **Umgebung im Bild (Kontext)**; nachgefuehrt: **Verdeckung** (durch die Umgebung) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §75 (Entscheide 70 und 73 am Bild): **Sprungmarke (Anker)**; nachgefuehrt: **Nicht beurteilbar** (eigenes Zeichen), **Standpunkt-Vorgabe** (steht am Bild) |

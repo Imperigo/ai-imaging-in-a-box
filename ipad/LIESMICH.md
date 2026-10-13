@@ -206,6 +206,10 @@ Pfad — und genau die Umgebung, in der der Owner die App öffnet, ist die heikl
   Mit kostenlosem Konto (Entscheid Nr. 23) läuft die App je **7 Tage**; danach ▶ in Xcode. Das
   Kabel darf danach ab; in Window → Devices and Simulators «Connect via network» anhaken, dann
   spielt Xcode über das WLAN auf.
+  **Seit 0.2.1 (Entscheid 84)** sagt die App selbst, wann das nötig ist: zwei Tage vor Ablauf der
+  7 Tage eine Zeile unter der Verbindung (gelesen aus dem Profil, das Xcode in die App legt), und
+  «Neue Fassung 0.x.y verfügbar — am Mac in Xcode aufspielen», wenn auf GitHub eine neuere
+  Freigabe liegt (dort auch `Visbox.swiftpm.zip`). Selbst ersetzen kann sich die iPad-App nicht.
 * **Swift Playgrounds (iPad): geht bei iPadOS 26 nicht.** Am Gerät des Owners meldete es «nicht
   kompatibel»; laut Apple-Entwicklerforum unterstützt Swift Playgrounds das iOS-26-SDK bisher nicht
   (Rat von Apple: Xcode). Für ältere iPadOS weiter möglich, aber unbestätigt.

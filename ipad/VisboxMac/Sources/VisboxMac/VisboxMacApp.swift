@@ -14,6 +14,9 @@ import VisboxKern
 @main
 struct VisboxMacApp: App {
     @StateObject private var leitung = Heimleitung()
+    // EINER FUER DIE GANZE APP, nicht je Fenster (Entscheid 84, 13.10.2026): Zwei Fenster
+    // fragten sonst zweimal und koennten zweimal ersetzen.
+    @StateObject private var aktualisierung = Fassungswaechter()
 
     init() {
         // DIE SCHRIFTEN VOR DEM ERSTEN BILDSCHIRM: Registriert wird einmal (`static let`);
@@ -23,7 +26,7 @@ struct VisboxMacApp: App {
 
     var body: some Scene {
         WindowGroup(Marke.name) {
-            Hauptfenster(leitung: leitung)
+            Hauptfenster(leitung: leitung, aktualisierung: aktualisierung)
         }
         // Blatt 13 ist 1440 × 900 gezeichnet — die Fläche eines 14-Zoll-Mac.
         .defaultSize(width: 1440, height: 900)

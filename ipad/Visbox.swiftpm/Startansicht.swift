@@ -31,6 +31,8 @@ import SwiftUI
 /// *Gebaut, am Gerät unbestätigt (22.09.2026).*
 struct Startansicht: View {
     @ObservedObject private var wahl = Leistenwahl.gemeinsam
+    @ObservedObject private var fassung = Fassungsfrage.gemeinsam
+    @Environment(\.scenePhase) private var phase
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +41,9 @@ struct Startansicht: View {
             // Geraet unbestaetigt (23.09.2026); hier uebersetzt SwiftUI nicht.
             VStack(spacing: 0) {
                 Verbindungszeile()
+                // DER HINWEIS AUF EINE NEUE FASSUNG UND AUF DEN ABLAUF (Entscheid 84,
+                // 13.10.2026): unter der Verbindungszeile, im Vollbild mit ihr ausgeblendet.
+                Fassungshinweis(frage: fassung)
                 Rectangle()
                     .fill(Zeichenblatt.linie)
                     .frame(height: 1)
@@ -58,5 +63,10 @@ struct Startansicht: View {
         // DER ENTWURF IST DUNKEL, und die Systemteile (Blätter, Hinweise, Tastatur) sollen
         // es auch sein — sonst stünde ein weisses Blatt über der dunklen Fläche.
         .preferredColorScheme(.dark)
+        // BEIM START UND EINMAL TAEGLICH (84a).
+        .task { fassung.starte() }
+        .onChange(of: phase) { _, neu in
+            if neu == .active { fassung.wiederAktiv() }
+        }
     }
 }

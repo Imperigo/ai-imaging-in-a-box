@@ -3,8 +3,13 @@
 Bis dahin trug Visbox drei verschiedene: Bibliothek 0.0.1 (pyproject) und 0.0.2 (Modul), iPad-App
 0.1, Mac-App 0.1.7 (die Nummer von KosmoOrbit). Seit dem 01.10.2026 zählt Visbox selbst, ab
 **0.1.0** — die erste vorführbare Fassung; seit dem 13.10.2026 **0.2.0** (Entscheid 82,
-`docs/VISBOX_0.2.0_2026-10-13.md`). Welche KosmoOrbit-Fassung dazu passt, steht im
+`docs/VISBOX_0.2.0_2026-10-13.md`), am selben Tag **0.2.1** (Entscheid 84,
+`docs/VISBOX_0.2.1_2026-10-13.md`). Welche KosmoOrbit-Fassung dazu passt, steht im
 Lieferblatt, nicht in der Nummer.
+
+Seit 0.2.1 legt die Prüfstrecke bei neuer Nummer eine GitHub-Freigabe ab, und ihr Text ist das
+Fassungsblatt der Nummer. Darum gehört zu jeder Nummer **genau ein** Fassungsblatt — fehlt es,
+wird der Lauf auf `main` rot, und das soll schon hier auffallen, nicht erst dort.
 """
 from __future__ import annotations
 
@@ -39,3 +44,14 @@ def test_die_nummer_hat_drei_teile():
     """«0.1» und «0.1.0» sind für einen Menschen dasselbe, für einen Vergleich nicht."""
     nummer = next(iter(_stellen().values()))
     assert re.fullmatch(r"\d+\.\d+\.\d+", nummer), nummer
+
+
+def test_zur_nummer_gibt_es_genau_ein_fassungsblatt():
+    """Dasselbe Muster wie im Job ``freigabe`` (``docs/VISBOX_<nummer>_*.md``)."""
+    nummer = next(iter(_stellen().values()))
+    blaetter = sorted((WURZEL / "docs").glob(f"VISBOX_{nummer}_*.md"))
+    assert len(blaetter) == 1, (nummer, blaetter)
+    text = blaetter[0].read_text(encoding="utf-8")
+    assert text.startswith(f"# Visbox {nummer}"), text[:60]
+    # DER ABSCHNITT, AUS DEM DIE MAC-APP DIE NEUERUNGEN LIEST (`Aktualisierung.neuerungen`).
+    assert re.search(r"^## [^\n]*neu", text, re.M | re.I), "kein Abschnitt «… neu …»"

@@ -20,11 +20,13 @@ import VisboxKern
 /// *Gebaut, am Gerät unbestätigt (01.10.2026).*
 struct Hauptfenster: View {
     @ObservedObject var leitung: Heimleitung
+    @ObservedObject var aktualisierung: Fassungswaechter
     @StateObject private var vorfuehrung: Vorfuehrsteuerung
     @StateObject private var vermittlung = Vermittlungsanschluss()
 
-    init(leitung: Heimleitung) {
+    init(leitung: Heimleitung, aktualisierung: Fassungswaechter) {
         self.leitung = leitung
+        self.aktualisierung = aktualisierung
         _vorfuehrung = StateObject(wrappedValue: Vorfuehrsteuerung(pruefe: { [leitung] in
             await leitung.versuch()
         }))
@@ -32,6 +34,7 @@ struct Hauptfenster: View {
 
     @State private var arbeitet = false
     @State private var einrichtenOffen = false
+    @State private var aktualisierenOffen = false
 
     var body: some View {
         Group {
@@ -56,7 +59,25 @@ struct Hauptfenster: View {
                 Vermittlungsmelder(dienst: dienst, leitung: leitung)
             }
         }
+        .background {
+            // EIN EIGENER ANKER FUER DAS BLATT «AKTUALISIEREN»: Zwei `.sheet` an derselben
+            // Ansicht streiten sich in SwiftUI darum, welches gilt.
+            Color.clear.sheet(isPresented: $aktualisierenOffen) {
+                Aktualisierenblatt(waechter: aktualisierung,
+                                   schliessen: { aktualisierenOffen = false })
+            }
+        }
         .toolbar {
+            // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
+            // wenn GitHub eine NEUERE Nummer hat (84b). Ein Klick oeffnet erst das Blatt —
+            // ersetzt wird nie ohne den zweiten Klick «Laden und ersetzen».
+            if let angebot = aktualisierung.angebot {
+                Button { aktualisierenOffen = true } label: {
+                    Text(Aktualisierung.knopf(angebot.nummer))
+                        .foregroundStyle(Startfarbe.gruenText)
+                }
+                .help("Eine neue Fassung liegt auf GitHub")
+            }
             // IMMER DA, in jeder Ansicht: Falsches Kennwort und vertippte Adresse behebt nur
             // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
             Button(Vorfuehrsaetze.einrichten) { einrichtenOffen = true }
@@ -95,6 +116,8 @@ struct Hauptfenster: View {
         .onAppear {
             einrichtenOffen = leitung.braucheEinrichten
             leitung.starte()
+            // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
+            aktualisierung.starte()
             vorfuehrung.starte()
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
