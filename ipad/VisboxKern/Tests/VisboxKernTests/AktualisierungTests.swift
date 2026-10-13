@@ -10,18 +10,21 @@ import VisboxKern
 /// Summen sind erfunden.
 final class AktualisierungTests: XCTestCase {
 
+    /// Besitzer und Repo aus dem Kern, nicht ausgeschrieben: Ein Name vor dem Repo-Namen in
+    /// einem Pfad faellt unter den Waechter von Regel 3 (`tests/test_regel3_kennungen.py`).
+    private let hier = "\(Aktualisierung.besitzer)/\(Aktualisierung.repo)"
     private let summeMac = String(repeating: "ab", count: 32)
     private let summeIpad = String(repeating: "cd", count: 32)
 
     private func antwort(tag: String = "v0.2.1", draft: Bool = false, prerelease: Bool = false,
                          macAdresse: String? = nil, digest: String? = nil) -> Data {
         let mac = macAdresse
-            ?? "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/\(tag)/\(Aktualisierung.macPaket)"
+            ?? "https://github.com/\(hier)/releases/download/\(tag)/\(Aktualisierung.macPaket)"
         let digestFeld = digest.map { "\"digest\": \"\($0)\"," } ?? ""
         let text = """
         {
-          "url": "https://api.github.com/repos/Imperigo/ai-imaging-in-a-box/releases/1",
-          "html_url": "https://github.com/Imperigo/ai-imaging-in-a-box/releases/tag/\(tag)",
+          "url": "https://api.github.com/repos/\(hier)/releases/1",
+          "html_url": "https://github.com/\(hier)/releases/tag/\(tag)",
           "id": 1,
           "tag_name": "\(tag)",
           "target_commitish": "main",
@@ -37,11 +40,11 @@ final class AktualisierungTests: XCTestCase {
              "content_type": "application/zip",
              "browser_download_url": "\(mac)"},
             {"name": "\(Aktualisierung.ipadPaket)", "size": 999, "state": "uploaded",
-             "browser_download_url": "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/\(tag)/\(Aktualisierung.ipadPaket)"},
+             "browser_download_url": "https://github.com/\(hier)/releases/download/\(tag)/\(Aktualisierung.ipadPaket)"},
             {"name": "\(Aktualisierung.pruefsummen)", "size": 300, "state": "uploaded",
-             "browser_download_url": "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/\(tag)/\(Aktualisierung.pruefsummen)"},
+             "browser_download_url": "https://github.com/\(hier)/releases/download/\(tag)/\(Aktualisierung.pruefsummen)"},
             {"name": "halb.zip", "size": 5, "state": "starter",
-             "browser_download_url": "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/\(tag)/halb.zip"}
+             "browser_download_url": "https://github.com/\(hier)/releases/download/\(tag)/halb.zip"}
           ],
           "body": "# Fassungsblatt\\n\\n## Was neu ist\\n\\n| Fähigkeit | Entscheid | Stand |\\n|---|---|---|\\n| Koppeln mit Zahl | 83 | gebaut |\\n| Aktualisieren | 84 | gebaut |\\n\\n## Grenzen\\n\\n* nicht neu"
         }
@@ -78,7 +81,7 @@ final class AktualisierungTests: XCTestCase {
         let f = try Aktualisierung.deute(antwort())
         XCTAssertEqual(f.nummer.description, "0.2.1")
         XCTAssertEqual(f.seite?.absoluteString,
-                       "https://github.com/Imperigo/ai-imaging-in-a-box/releases/tag/v0.2.1")
+                       "https://github.com/\(hier)/releases/tag/v0.2.1")
         // NUR FERTIG HOCHGELADENE ANLAGEN: «starter» ist ein abgebrochener Upload.
         XCTAssertEqual(f.anlagen.map(\.name),
                        [Aktualisierung.macPaket, Aktualisierung.ipadPaket, Aktualisierung.pruefsummen])
@@ -92,7 +95,7 @@ final class AktualisierungTests: XCTestCase {
         XCTAssertEqual(Aktualisierung.macPaket, "\(Marke.name)-mac.zip")
         XCTAssertEqual(Aktualisierung.ipadPaket, "\(Marke.name).swiftpm.zip")
         XCTAssertEqual(Aktualisierung.abfrage.absoluteString,
-                       "https://api.github.com/repos/Imperigo/ai-imaging-in-a-box/releases/latest")
+                       "https://api.github.com/repos/\(hier)/releases/latest")
     }
 
     /// Ohne Token, mit der Nummer der App im User-Agent (GitHub verlangt einen).
@@ -136,13 +139,13 @@ final class AktualisierungTests: XCTestCase {
         let fremd = [
             "https://github.com/jemand/ai-imaging-in-a-box/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
             "https://github.com/Imperigo/anderes/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
-            "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.0/\(Aktualisierung.macPaket)",
-            "http://github.com/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
-            "https://github.com.example.org/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
-            "https://github.com:8443/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
-            "https://x@github.com/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
-            "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/\(Aktualisierung.macPaket)?x=1",
-            "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/anders.zip",
+            "https://github.com/\(hier)/releases/download/v0.2.0/\(Aktualisierung.macPaket)",
+            "http://github.com/\(hier)/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
+            "https://github.com.example.org/\(hier)/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
+            "https://github.com:8443/\(hier)/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
+            "https://x@github.com/\(hier)/releases/download/v0.2.1/\(Aktualisierung.macPaket)",
+            "https://github.com/\(hier)/releases/download/v0.2.1/\(Aktualisierung.macPaket)?x=1",
+            "https://github.com/\(hier)/releases/download/v0.2.1/anders.zip",
         ]
         for adresse in fremd {
             let f = try Aktualisierung.deute(antwort(macAdresse: adresse))
@@ -153,7 +156,7 @@ final class AktualisierungTests: XCTestCase {
     func testWeiterleitungNurZuGithub() throws {
         let gut = ["https://objects.githubusercontent.com/github-production-release-asset/1",
                    "https://release-assets.githubusercontent.com/github-production-release-asset/1",
-                   "https://github.com/Imperigo/ai-imaging-in-a-box/releases/download/v0.2.1/a"]
+                   "https://github.com/\(hier)/releases/download/v0.2.1/a"]
         let schlecht = ["http://objects.githubusercontent.com/x",
                         "https://githubusercontent.com.example.org/x",
                         "https://example.org/x",

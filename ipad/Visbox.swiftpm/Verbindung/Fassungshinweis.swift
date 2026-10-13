@@ -114,7 +114,7 @@ struct Fassungshinweis: View {
                 .foregroundStyle(Zeichenblatt.leise)
                 .accessibilityHidden(true)
             Text(satz)
-                .font(Zeichenblatt.text(14))
+                .font(Schrift.text(14))
             Spacer(minLength: 8)
             Button(action: aus) {
                 Image(systemName: "xmark")

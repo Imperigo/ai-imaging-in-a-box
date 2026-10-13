@@ -33,7 +33,7 @@ was ein Bild anders macht. Die erste Nummer, die über die neue Freigabe verteil
 * **Die Freigabe:** Die Prüfstrecke (`.github/workflows/ipad.yml`, Job `freigabe`) legt sie an, wenn auf `main` eine
   Nummer steht, die noch keinen Tag hat — nur nach grünem Bau beider Apps. Inhalt: `Visbox-mac.zip`,
   `Visbox.swiftpm.zip` (das iPad-Paket), dieses Blatt und `SHA256SUMS.txt`. Tag `v0.2.1`.
-* **Die Apps fragen** beim Start und einmal täglich `https://api.github.com/repos/Imperigo/ai-imaging-in-a-box/releases/latest`
+* **Die Apps fragen** beim Start und einmal täglich die neueste Freigabe dieses Repos (`https://api.github.com/repos/<besitzer>/<repo>/releases/latest`, beide Namen in `Kern/Aktualisierung.swift`)
   — öffentlich, ohne Konto, ohne Token. Angeboten wird nur eine **höhere** Nummer.
 * **Der Mac ersetzt sich nur nach Klick** und nur, wenn Grösse, Prüfsumme (aus `SHA256SUMS.txt` und, wenn vorhanden,
   von GitHub selbst), Kennung, Nummer und Siegel der Unterschrift stimmen. Die alte App geht in den Papierkorb.
@@ -96,5 +96,5 @@ was ein Bild anders macht. Die erste Nummer, die über die neue Freigabe verteil
 
 ## Prüfung
 
-Volle Suite ohne GPU: **9715 Proben**, grün. iPad/Mac: Prüfstrecke `.github/workflows/ipad.yml`, beide Jobs grün auf dem
+Volle Suite ohne GPU: **9713 Proben**, grün. iPad/Mac: Prüfstrecke `.github/workflows/ipad.yml`, beide Jobs grün auf dem
 Zweig des Baus; der Job `freigabe` dort übersprungen (er gilt nur auf `main`).
