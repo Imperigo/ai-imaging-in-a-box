@@ -1421,3 +1421,9 @@ der Kamera, und die Tiefe war gesprenkelt. Jetzt sortiert die Brücke unsichere 
 am wirksamsten die Punkte, an denen der Splat entlang eines Sehstrahls «unentschieden» ist. Ob das am echten Splat die
 Löcher schliesst, misst der Heim-PC.
 
+**RealityScan jetzt (13.10.2026).** Der offene Weg über den Splat bleibt bei etwa einem Zehntel Umgebung stehen; der
+Splat liefert seine Tiefe zu unscharf für ein sauberes Netz, und Filter halfen nicht. Der Owner hat entschieden, die
+Umgebung aus den Fotos zu rechnen, mit Epic RealityScan, das er selbst installiert. Die Brücke ist gebaut: Sie gibt
+RealityScan die Fotos samt den Kamerastandorten, holt das Netz zurück, prüft, dass es am richtigen Ort liegt, und fällt
+sonst auf den offenen Weg zurück. Mitgeliefert wird RealityScan nie.
+

@@ -7857,8 +7857,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Splat-Vertrag `cf839597c`** an Int 1 freigegeben (v0.1.8). *(13.10.2026, §88)*
 - [x] **Tiefenfilter** und vier Fehler aus 276 gebaut. *(13.10.2026, §89)*
 - [x] **Messung `auf-20261013-277`**: Filter als Vorgabe nahm das Netz (Streuung 99,99 % verworfen) — **zurückgestellt**, Vorgabe kein Filter. *(13.10.2026, §90)*
-- [ ] **Löcher in der Umgebung** (Deckung ~10 %): nächster Weg mit dem Owner entscheiden.
-- [ ] **Brücke RealityScan** — später (Entscheid 80); Fotos liegen vor (960 Bilder mit Masken).
+- [x] **Löcher in der Umgebung:** Entscheid 81 — RealityScan jetzt; Brücke gebaut. *(13.10.2026, §91)*
+- [ ] **Owner installiert RealityScan** am Heim-PC (selbst).
+- [ ] **Messung `auf-20261013-278`** (local): einrichten, offene Fragen, Umgebung vollständig?
+- [x] **Brücke RealityScan** gebaut (Entscheid 81 ersetzt 80). *(13.10.2026, §91)*
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 
 ## Splat als Umgebung (Entscheid 76, 08.10.2026 — Sitzung 74 §78)

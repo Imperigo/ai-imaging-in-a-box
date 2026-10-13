@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261013-278",
+  "art": "frage",
+  "beschreibung": "RealityScan-Bruecke nach Installation durch den Owner: einrichten (Export-XML), offene Fragen, messen.",
+  "anweisung": "=== REALITYSCAN-BRUECKE: EINRICHTEN (NACH DER INSTALLATION DURCH DEN OWNER) UND MESSEN — Owner-Entscheid 81 ===\n\nVORAUSSETZUNG — NICHT VON DIR ZU TUN\n  RealityScan installiert der OWNER selbst (Regel «Fremdprogramme, vom Nutzer installiert» in CLAUDE.md: nie\n  von uns oder einem Worker installiert oder heruntergeladen). Ist es nicht installiert: Auftrag liegen lassen,\n  nur «nicht installiert» zurueckmelden. NICHTS herunterladen, NICHTS installieren.\n\nWAS DIE BRUECKE TUT (ai-imaging main nach der Ansage; ohne Variablen aendert sich nichts)\n  Eingeschaltet nur mit AIIMAGING_REALITYSCAN (Pfad zu realityscan-cli), dazu AIIMAGING_REALITYSCAN_EXPORT_XML\n  (Pflicht) und optional AIIMAGING_REALITYSCAN_EXE (Vorgabe: der dokumentierte Pfad unter /opt/realityscan).\n  Sie schreibt die COLMAP-Aufnahme als Text (je Bild eigene Pose, mit points3D), ruft RealityScan headless:\n  -headless -newScene -set appIncSubdirs=true -addFolder <images> -importColmap <images.txt> -align\n  -selectMaximalComponent -setReconstructionRegionAuto -calculateNormalModel -simplify 500000\n  -calculateVertexColors -exportModel \"Model 1\" <netz.ply> <export.xml> -quit; prueft das PLY (Flaechen,\n  Farbe) und die Lage gegen Aufnahme und Splat; sonst Rueckfall auf den offenen Weg mit Grund\n  (realityscan_ursache). Hinweis-Satz in verdict.hinweise. Anleitung: betrieb/REALITYSCAN_BRUECKE.md.\n\n1 · EINRICHTEN (nur Einstellungen, keine Installation)\n  E1 Im RealityScan-Programm (Oberflaeche unter Wine, einmalig) ein Export-Parameter-XML anlegen: Modell als\n     PLY MIT Eckpunktfarben (red/green/blue), Koordinaten unveraendert (kein Verschieben/Skalieren). Ablage\n     ausserhalb des Repos; AIIMAGING_REALITYSCAN_EXPORT_XML darauf. Welche Einstellungen? (Satz, keine Pfade)\n  E2 AIIMAGING_REALITYSCAN auf realityscan-cli setzen; Pruefaufruf:\n     python3 -c \"from aiimaging import realityscan as r; print(r.einrichtung())\"\n2 · OFFENE FRAGEN (bitte je ja/nein + Satz; Grundlage fuer unseren naechsten Bau)\n  F1 Wo liegt realityscan-cli nach der Installation des .deb/.rpm (z. B. /opt/realityscan/bin/realityscan-cli oder im PATH), und reicht es die Argumente einzeln an Wine weiter (Pfade mit Leerzeichen, ohne Shell)?\n  F2 Wie wird die Epic-Lizenz headless aktiviert? Laeuft -headless ohne angemeldete Sitzung, oder verlangt der erste Start eine Anmeldung in der Oberflaeche?\n  F3 Laedt -importColmap die Bilder selbst, oder braucht es vorher -addFolder <images> mit appIncSubdirs=true? Passen die Bildnamen mit Unterordner (back/0031.jpg) zu den geladenen Bildern, und gegen welchen Ordner loest RealityScan sie auf (Ordner der images.txt oder der Bilder)?\n  F4 Welche der drei Textdateien erwartet -importColmap (images.txt oder cameras.txt), und braucht es points3D.txt mit Spuren oder genuegt sie leer?\n  F5 Behaelt RealityScan nach -importColmap und -align die Lage und den Massstab der Aufnahme, oder lagert es neu? (Die Lagepruefung faengt es ab; dann wird das Netz nicht benutzt.) Gibt es eine Einstellung, die die importierten Posen festhaelt?\n  F6 Legt -simplify ein neues Modell an? Wenn ja: Wie heisst es (Model 2?), und exportiert -exportModel \"Model 1\" dann das unvereinfachte Netz (Bericht netz.vereinfacht)?\n  F7 Welche Einstellungen braucht die Export-Parameterdatei fuer PLY mit Eckpunktfarben (red/green/blue) und unveraenderten Koordinaten (kein Verschieben, kein Massstab, keine Achsendrehung)? Schreibt der Export binaer oder ASCII?\n  F8 Welche Fassung meldet das Programm in seiner Ausgabe (Zeile mit 'RealityScan x.y')?\n  F9 Wie lange dauert der Lauf mit 960 Bildern, und reicht die Frist von 4 h?\n  F10 Format von -exportRegistration: Liesse sich daraus eine Ausrichtung (Umeyama-Verfahren) zur Aufnahme rechnen, falls RealityScan neu lagert? (Nicht gebaut.)\n3 · MESSEN\n  M1 r.realityscan_zu_netz(\"<lauf>/sparse/0\") am Abnahme-Lauf: Dauer, Ecken/Dreiecke, Lagepruefung\n     (Ursache?), Netz-Huellbox gegen den Splat, Fassung.\n  M2 Hallenauftrag wie 276 (Lauf A, s/sSE/nNW, Seeds 0–2, mit Nullprobe) mit eingeschaltetem RealityScan:\n     kontext.weg = \"realityscan\"? Flaeche neben dem Bauwerk, die das Netz fasst (276: 5–16 %); Konfetti/\n     Fremdkoerper x von 9; Pruefung je Kamera; Laufzeit (zweiter Auftrag aus dem Speicher?).\n  M3 Gegenprobe: dieselbe Bestellung mit AIIMAGING_REALITYSCAN leer → kontext.weg = \"netz\" (offener Weg).\n\nWAS DU NICHT TUST\n  Nichts herunterladen, nichts installieren, nichts pushen, keinen Code aendern. RealityScan nie fuer andere\n  als den Owner laufen lassen. Keine Bilder des echten Splats/der Fotos ins Repo. Keine Namen, Pfade mit\n  Benutzernamen, Host- oder Netznamen, IPs. Auftrag in offen/.\n\nRUECKGABE (auftraege/ergebnisse/auf-20261013-278.json)\n  Koepfe, Fassung RealityScan; E1–E2, F1–F10, M1–M3 je Zahlen + Satz.\n  Urteile: Ist die Umgebung jetzt vollstaendig? Besteht das Bild?",
+  "erstellt": "2026-10-13T19:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "KosmoOrbit-Kernel (Bestand aus dem Splat); Fotos und Splat bleiben lokal"
+  },
+  "params": {
+    "folgt_auf": "auf-20261013-277",
+    "entscheide": [
+      "79",
+      "81"
+    ],
+    "wartet_auf": "Installation durch den Owner"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "GPU: RealityScan-Lauf (960 Bilder, Stunden moeglich) plus 9 Z-Image-Turbo-Laeufe.",
+    "hinweise": [
+      "Nichts herunterladen, nichts installieren (Regel Fremdprogramme).",
+      "Keine Geraete-, Netz- oder Hostnamen, keine IP-Adressen, keine Benutzernamen (REGEL 3).",
+      "Fotos und Splat bleiben lokal (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "Koepfe und Fassung RealityScan.",
+    "E1–E2, offene Fragen, M1–M3 je Zahlen und ein Satz.",
+    "Urteile: Umgebung vollstaendig? Bild besteht?"
+  ],
+  "rang": 65
+}
