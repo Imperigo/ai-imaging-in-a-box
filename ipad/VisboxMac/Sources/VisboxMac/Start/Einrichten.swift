@@ -34,9 +34,15 @@ struct Einrichten: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             feld("Adresse des Heim-PC") {
-                TextField("", text: $adresseText, prompt: Text(Heimadresse.beispiel))
+                // EINE ANLEITUNG IM FELD, KEINE ADRESSE (13.10.2026): Ein Beispiel im Feld wurde
+                // woertlich abgetippt. Die Form steht darunter, mit erkennbaren Platzhaltern.
+                TextField("", text: $adresseText, prompt: Text(Heimadresse.feldhinweis))
                     .autocorrectionDisabled()
             }
+            Text(Heimadresse.formhinweis)
+                .font(Macschriften.schrift(.text, 12))
+                .foregroundStyle(Startfarbe.leise)
+                .fixedSize(horizontal: false, vertical: true)
             feld("Benutzer") {
                 TextField("", text: $benutzerText, prompt: Text(Heimadresse.vorgabeBenutzer))
                     .autocorrectionDisabled()
@@ -96,6 +102,10 @@ struct Einrichten: View {
             return
         case .gut(let gut, _):
             url = gut
+        }
+        if let beispiel = Heimadresse.istBeispiel(url) {
+            satz = beispiel
+            return
         }
         let benutzer = benutzerText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !benutzer.isEmpty else {

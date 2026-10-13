@@ -4852,6 +4852,12 @@ zum Koppeln des Mac (Entscheid 83a), über das Programm `notify-send`, wenn es i
 gibt der Heim-PC höchstens alle 30 Sekunden eine neue Zahl zum Koppeln heraus: Wer raten will,
 bekommt so wenige Versuche, und jede neue Zahl erscheint sichtbar am Bildschirm.
 
+**Auflösen (eines Fundes)** — Der zweite Schritt der Suche im WLAN: Bonjour meldet zuerst nur
+einen Namen («Visbox Heim-PC»); erst das Auflösen ergibt Adresse und Anschluss, unter denen das
+Gerät wirklich antwortet. *In diesem Projekt* hat es seit dem ersten Gerätetest (13.10.2026)
+eine Frist von 5 Sekunden; danach steht «nicht erreicht» mit dem Grund da, statt endlos
+«wird aufgelöst …».
+
 **Tailscale-Befehlszeile** — Das Tailscale-Programm ohne Fenster, das auf Befehle antwortet.
 *In diesem Projekt* fragt die Mac-App damit, welche Geräte im eigenen Tailscale-Netz gerade an
 sind (`tailscale status --json`), und fragt dann jedes, ob es ein Visbox-Heim-PC ist.
@@ -6872,7 +6878,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 83 (Mac koppelt mit Zahl): **Selbst unterschriebenes Zertifikat**, **Vertrauen beim ersten Mal (TOFU)**, **Dazwischenstellen (Man-in-the-Middle)**, **PAKE**, **Zeichen des Heim-PC**, **Mitteilung (am Bildschirm)**, **Drossel**, **Tailscale-Befehlszeile**; nachgefuehrt: **TLS mit festgehaltenem Schlüssel** (jetzt «Zertifikat anheften, Pinning», gebaut für den Mac im WLAN), **Zertifikat**, **Bonjour (mDNS)** (auch die Mac-App sucht) |
+| 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 83 (Mac koppelt mit Zahl): **Selbst unterschriebenes Zertifikat**, **Vertrauen beim ersten Mal (TOFU)**, **Dazwischenstellen (Man-in-the-Middle)**, **PAKE**, **Zeichen des Heim-PC**, **Mitteilung (am Bildschirm)**, **Drossel**, **Tailscale-Befehlszeile**, **Auflösen (eines Fundes)**; nachgefuehrt: **TLS mit festgehaltenem Schlüssel** (jetzt «Zertifikat anheften, Pinning», gebaut für den Mac im WLAN), **Zertifikat**, **Bonjour (mDNS)** (auch die Mac-App sucht) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §78 (Entscheid 76, Splat als Umgebung): **Splat (3D Gaussian Splatting)**, **PLY (Dateiformat)**, **Punktwolke**, **Geometry Nodes, «Mesh to Points»**, **SH-Grad 0 (Grundfarbe eines Gaussians)**, **Deckkraft eines Gaussians (Opazität, Sigmoid)**, **Transformationsmatrix (4×4, zeilenweise)**, **Umgebung im Bild (Kontext)**; nachgefuehrt: **Verdeckung** (durch die Umgebung) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §75 (Entscheide 70 und 73 am Bild): **Sprungmarke (Anker)**; nachgefuehrt: **Nicht beurteilbar** (eigenes Zeichen), **Standpunkt-Vorgabe** (steht am Bild) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §79: **Ausschnitt (Kamera)** |

@@ -112,18 +112,28 @@ struct Koppelbildschirm: View {
         return Button {
             if let a = d.adresse { waehle(d, a) }
         } label: {
-            HStack {
-                Text(d.name)
-                // UNTERWEGS VERMITTELT DER MAC (Protokoll §8b): klein und ruhig dazu, damit
-                // klar ist, wer antwortet. Gekoppelt wird genau gleich.
-                if d.ueberDenMac {
-                    Text("über den Mac")
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(d.name)
+                    // UNTERWEGS VERMITTELT DER MAC (Protokoll §8b): klein und ruhig dazu, damit
+                    // klar ist, wer antwortet. Gekoppelt wird genau gleich.
+                    if d.ueberDenMac {
+                        Text("über den Mac")
+                            .font(Schrift.text(12))
+                            .foregroundStyle(Zeichenblatt.leise)
+                    }
+                    Spacer()
+                    Text(Suche.fundtext(d))
+                        .font(Schrift.zahl(13))
+                }
+                // DER GRUND, WENN DAS AUFLOESEN SCHEITERTE (Geraetetest 13.10.2026) — samt dem
+                // vorgesehenen Weg über Tailscale.
+                if let grund = d.grund, d.adresse == nil {
+                    Text(grund)
                         .font(Schrift.text(12))
                         .foregroundStyle(Zeichenblatt.leise)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
-                Text(d.adresse.map(Suche.eingabetext) ?? "wird aufgelöst …")
-                    .font(Schrift.zahl(13))
             }
             .padding(.horizontal, 16)
         }

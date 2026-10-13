@@ -24,6 +24,33 @@ public enum Heimadresse {
     /// ab; `tests/test_ipad_geruest.py` hält beide Seiten gegeneinander.
     public static var vorgabeBenutzer: String { Marke.name.lowercased() }
 
+    /// Namen, die nur in Beispielen stehen — **nie** der Name eines echten Heim-PC.
+    ///
+    /// **Der Anlass** (erster Start der Mac-App, 13.10.2026): Der Owner hat ein Beispiel aus
+    /// dem Chat wörtlich abgetippt (`…dein-netz.ts.net`). Die Platzhalter mit `<…>` fängt die
+    /// Prüfung schon; diese hier fängt die ausgeschriebenen. Nur im Handweg geprüft
+    /// (`istBeispiel`), nicht in `pruefe` — die Proben des Kerns benutzen bewusst erfundene
+    /// Namen wie `beispiel.ts.net`.
+    public static let beispielnamen = ["dein-netz", "dein-rechner", "your-tailnet",
+                                       "tailnet-name", "rechner.netz"]
+
+    /// Der Satz, wenn eine Adresse ein Beispielname ist — sonst `nil`.
+    public static func istBeispiel(_ url: URL) -> String? {
+        let name = (url.host ?? "").lowercased()
+        guard beispielnamen.contains(where: { name.contains($0) }) else { return nil }
+        return "Das ist ein Beispielname, nicht der Name des Heim-PC. Den echten zeigt die "
+            + "Tailscale-App am Heim-PC (Name des Geräts, mit «.ts.net» am Ende) — oder "
+            + "«Koppeln» nehmen, dann sucht der Mac selbst."
+    }
+
+    /// Was im leeren Feld steht — **als Anleitung, nicht als Adresse**, damit niemand es
+    /// abtippt (13.10.2026).
+    public static let feldhinweis = "Name aus der Tailscale-App am Heim-PC, mit https://"
+
+    /// Die Form, ausgeschrieben unter dem Feld.
+    public static let formhinweis = "Form: https:// ‹Name des Heim-PC› . ‹Name des Netzes› "
+        + ".ts.net:8443 — beide Namen stehen in der Tailscale-App am Heim-PC."
+
     public enum Pruefung: Equatable, Sendable {
         /// Die Adresse in der Form, die gemerkt wird (`https://name:anschluss`), und ein Satz,
         /// wenn etwas ergänzt wurde.
