@@ -7897,7 +7897,9 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## Mac koppeln mit Zahl (Entscheid 83, 13.10.2026)
 
-- [x] Mac-App 0.2.0 am echten Mac gestartet (Owner). *(13.10.2026, §93)*
+- [x] Mac-App 0.2.0 am echten Mac gestartet und mit dem Heim-PC verbunden (Owner). *(13.10.2026, §93/§94)*
+- [x] iPad-App 0.2.0 auf dem echten iPad (iPadOS 26.7.2) über Xcode. *(13.10.2026, §94)*
+- [ ] `ipad/LIESMICH.md`: Xcode-Weg für iPadOS 26 (Swift Playgrounds geht dort nicht).
 - [x] Blatt 17 gezeichnet, Fragen 83a–c beantwortet. *(13.10.2026, §93)*
 - [ ] Bau: Server (`/api/hallo`, Kopplung anfordern, Heimnetz mit TLS), Kern und Mac-App; Prüfstrecke grün.
 - [ ] Am echten Mac und Heim-PC prüfen (Auftrag an local).
