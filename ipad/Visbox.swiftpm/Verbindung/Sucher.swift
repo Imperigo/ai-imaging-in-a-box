@@ -88,8 +88,10 @@ final class Sucher {
                 jetzt[name] = GefundenerDienst(name: name, rechner: schon.rechner,
                                                anschluss: schon.anschluss, eintraege: eintraege)
             } else {
+                // DER GRUND VOM LETZTEN VERSUCH BLEIBT STEHEN, waehrend neu aufgeloest wird —
+                // sonst sprang die Zeile zwischen «nicht erreicht» und «wird aufgelöst».
                 jetzt[name] = GefundenerDienst(name: name, rechner: nil, anschluss: nil,
-                                               eintraege: eintraege)
+                                               eintraege: eintraege, grund: bekannt[name]?.grund)
                 loeseAuf(ergebnis.endpoint, name: name, eintraege: eintraege)
             }
         }
@@ -122,14 +124,34 @@ final class Sucher {
                 self.aufloesungen[name] = nil
             case .failed, .waiting:
                 // NICHT AUFGELOEST BLEIBT NICHT AUFGELOEST — gemeldet wird der Dienst trotzdem,
-                // ohne Adresse. Er ist da; nur erreichen laesst er sich noch nicht.
+                // ohne Adresse, und seit dem Geraetetest vom 13.10.2026 MIT GRUND. Bis dahin
+                // stand er dann endlos auf «wird aufgelöst …».
                 verbindung.cancel()
                 self.aufloesungen[name] = nil
+                self.gescheitert(name, eintraege: eintraege)
             default:
                 break
             }
         }
         verbindung.start(queue: schlange)
+        // DIE FRIST (`Suche.aufloesFrist`): Kommt die Verbindung bis dahin nicht zustande,
+        // wird sie abgebrochen und der Fund mit Grund gemeldet.
+        schlange.asyncAfter(deadline: .now() + Suche.aufloesFrist) { [weak self, weak verbindung] in
+            guard let self, let verbindung, self.aufloesungen[name] === verbindung else { return }
+            verbindung.cancel()
+            self.aufloesungen[name] = nil
+            self.gescheitert(name, eintraege: eintraege)
+        }
+    }
+
+    /// Den Fund ohne Adresse, aber mit Grund melden — nur auf `schlange`.
+    private func gescheitert(_ name: String, eintraege: [String: String]) {
+        guard bekannt[name]?.aufgeloest != true else { return }
+        let ohne = GefundenerDienst(name: name, rechner: nil, anschluss: nil, eintraege: eintraege)
+        bekannt[name] = GefundenerDienst(
+            name: name, rechner: nil, anschluss: nil, eintraege: eintraege,
+            grund: Suche.satzNichtAufgeloest(ueberDenMac: ohne.ueberDenMac))
+        melde()
     }
 
     private func melde() {

@@ -14,9 +14,10 @@ public enum Methode: String, Sendable {
 public struct Weg: Hashable, Sendable {
     public let pfad: String
     public let methode: Methode
-    /// Ob der Weg **ohne Anmeldung** erreichbar ist. Zwei sind es — das Verbinden und die
-    /// Koppelseite für den Browser —, und beide nur, solange an der HomeStation eine
-    /// Kopplung offen ist.
+    /// Ob der Weg **ohne Anmeldung** erreichbar ist. Vier sind es: das Verbinden und die
+    /// Koppelseite für den Browser — beide nur, solange an der HomeStation eine Kopplung
+    /// offen ist —, und seit dem 13.10.2026 (Entscheid 83) `hallo` und `kopplungAnfordern`,
+    /// mit denen sich der Mac selbst koppelt. Keiner der vier gibt ohne die Zahl etwas heraus.
     public let ohneAnmeldung: Bool
 
     public init(pfad: String, methode: Methode, ohneAnmeldung: Bool = false) {
@@ -57,6 +58,9 @@ public enum Wege {
     /// Die Startzeilen der Mac-App (Plan v0.1.7): Blender, Grafikspeicher, Assistent — je
     /// mit Satz. Ohne Pfade und ohne Rechnernamen. Form: `docs/VISBOX_PROTOKOLL.md`, §3.
     public static let heim = Weg(pfad: "/api/heim", methode: .get)
+    /// «Bist du ein Visbox-Heim-PC?» (Entscheid 83) — **ohne Anmeldung**, für die Suche des
+    /// Mac. → `visbox`, `fassung`, `name`. Ohne Rechnernamen und ohne Geheimnis.
+    public static let hallo = Weg(pfad: "/api/hallo", methode: .get, ohneAnmeldung: true)
 
     // ---------------------------------------------------------------- handeln (POST)
 
@@ -86,12 +90,18 @@ public enum Wege {
     /// holt sie und zeigt sie, das iPad tippt sie an `verbinden` ein. → `zahl`,
     /// `gilt_noch_s`, `satz`. Eine noch offene Zahl wird drüben ersetzt.
     public static let kopplung = Weg(pfad: "/api/kopplung", methode: .post)
+    /// Der Mac fordert eine Zahl **für sich selbst** an (Entscheid 83) — **ohne Anmeldung**.
+    /// Die Zahl erscheint am Bildschirm des Heim-PC und **nie** in der Antwort → `angezeigt`,
+    /// `gilt_bis`, `satz` (oder 429 mit `warten_s`). Eingetauscht wird sie an `verbinden`.
+    public static let kopplungAnfordern = Weg(pfad: "/api/kopplung/anfordern", methode: .post,
+                                              ohneAnmeldung: true)
 
     /// Alle Wege, die der Server heute bedient.
     public static let alle: [Weg] = [
-        seite, seiteLang, projekt, fortschritt, bild, koppeln, heim,
+        seite, seiteLang, projekt, fortschritt, bild, koppeln, heim, hallo,
         anlegen, einstellungen, skizze, rechne, verbinden,
         benennen, abbrechen, rechneSkizze, assistent, assistentAnwenden, kopplung,
+        kopplungAnfordern,
     ]
 
     /// Die Adresse für einen Weg auf einer HomeStation — oder `nil`, wenn sich aus

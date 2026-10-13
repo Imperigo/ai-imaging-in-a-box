@@ -146,4 +146,28 @@ final class SucheTests: XCTestCase {
         XCTAssertTrue(w.gibFrei(.koppeln))
         XCTAssertFalse(w.gibFrei(.koppeln), "zweimal freigeben endet nicht zweimal")
     }
+
+    // -------------------------------------------- Geraetetest vom 13.10.2026 (iPadOS 26)
+
+    func testEinDirekterHeimPcStehtVorDemMac() {
+        let mac = GefundenerDienst(name: "A über den Mac", rechner: "192.0.2.30", anschluss: 8731,
+                                   eintraege: ["vermittler": Vermittlerangebot.vermittler])
+        let direkt = dienst("Z Heim-PC")
+        XCTAssertEqual(Suche.waehle([mac, direkt]), .mehrere([direkt, mac]),
+                       "der direkte Weg ist der vorgesehene, auch wenn sein Name später kommt")
+    }
+
+    func testEinNichtAufgeloesterFundSagtWarumUndWohin() {
+        let laeuft = dienst("Heim", nil, nil)
+        XCTAssertEqual(Suche.fundtext(laeuft), "wird aufgelöst …")
+        let satz = Suche.satzNichtAufgeloest(ueberDenMac: true)
+        let gescheitert = GefundenerDienst(name: "Heim", rechner: nil, anschluss: nil,
+                                           eintraege: [:], grund: satz)
+        XCTAssertEqual(Suche.fundtext(gescheitert), "nicht erreicht")
+        XCTAssertTrue(satz.contains("Lokales Netzwerk"), satz)
+        XCTAssertTrue(satz.contains("Tailscale"), satz)
+        XCTAssertTrue(satz.hasPrefix("Der Mac"), satz)
+        XCTAssertEqual(Suche.aufloesFrist, 5)
+        XCTAssertEqual(Suche.fundtext(dienst("Heim")), "192.0.2.10:8731")
+    }
 }

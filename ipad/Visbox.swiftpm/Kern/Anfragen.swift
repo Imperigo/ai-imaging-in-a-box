@@ -1003,4 +1003,15 @@ extension Anfragen {
     public static func kopplung(anmeldung: Anmeldung?) throws -> Anfrage {
         try baue(Wege.kopplung, rumpf: [:], anmeldung: anmeldung)
     }
+
+    /// `GET /api/hallo` — **ohne Anmeldung** (Entscheid 83): Ist das ein Visbox-Heim-PC?
+    public static func hallo() -> Anfrage {
+        baueLesen(Wege.hallo, anmeldung: nil)
+    }
+
+    /// `POST /api/kopplung/anfordern` — **ohne Anmeldung** (Entscheid 83): eine Zahl für
+    /// diesen Mac, am Bildschirm des Heim-PC gezeigt. Die Antwort trägt sie nie.
+    public static func kopplungAnfordern() throws -> Anfrage {
+        try baue(Wege.kopplungAnfordern, rumpf: [:], anmeldung: nil)
+    }
 }

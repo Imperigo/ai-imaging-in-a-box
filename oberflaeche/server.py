@@ -48,12 +48,13 @@ import re
 import secrets
 import os
 import socket
+import ssl
 import sys
 import threading
 import time
 import urllib.parse
 from collections import OrderedDict
-from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 # DER KERN WIRD IMPORTIERT, NICHT UMGEKEHRT. Diese Richtung ist die ganze Regel 4: Die
@@ -62,8 +63,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import inspect                                                  # noqa: E402
 
-from aiimaging import (arbeitsgang, assistent, glbbox, heimstand, importeur,  # noqa: E402
-                       kette, knotenweg, kopplung, projekt, render)
+import aiimaging                                                # noqa: E402
+from aiimaging import (arbeitsgang, assistent, glbbox, heimnetz, heimstand,  # noqa: E402
+                       importeur, kette, knotenweg, kopplung, projekt, render)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -419,6 +421,13 @@ WEG_ASSISTENT_ANWENDEN = "/api/assistent/anwenden"
 # Unterwegs spricht das iPad ueber Tailscale direkt mit dem Heim-PC; der Dienst dort laeuft
 # dauerhaft ohne `--kopplung`, und die Zahl holt der angemeldete Mac auf diesem Weg.
 WEG_KOPPLUNG = "/api/kopplung"
+# SEIT DEM 13.10.2026 (Owner-Entscheid 83) — der Mac koppelt sich SELBST mit einer Zahl.
+# Beide Wege kommen OHNE Anmeldung durch (der Mac hat noch keine) und geben darum nichts
+# heraus, was ein Geheimnis waere: `hallo` sagt nur «hier ist ein Visbox-Heim-PC» (ohne
+# Rechnernamen), `anfordern` laesst die Zahl am Bildschirm des Heim-PC erscheinen und gibt
+# sie NIE in der Antwort zurueck. Eingetauscht wird sie wie bisher ueber `WEG_VERBINDEN`.
+WEG_HALLO = "/api/hallo"
+WEG_KOPPLUNG_ANFORDERN = "/api/kopplung/anfordern"
 #: Höchstens so viele Bytes liest `POST /api/verbinden` — der einzige Weg, der ohne Anmeldung
 #: einen Rumpf annimmt. Gleich der Grenze der Vermittlung am Mac (`koppelRumpfGrenze`).
 VERBINDEN_HOECHSTENS = 1024
@@ -1413,6 +1422,7 @@ WEGTAFEL = {
     WEG_ASSISTENT: "_assistent",
     WEG_ASSISTENT_ANWENDEN: "_assistent_anwenden",
     WEG_KOPPLUNG: "_kopplung_oeffnen",
+    WEG_KOPPLUNG_ANFORDERN: "_kopplung_anfordern",
 }
 
 #: Dasselbe fuer die lesenden Wege (GET). Jede Methode bekommt den zerlegten Weg
@@ -1425,6 +1435,7 @@ WEGTAFEL_LESEN = {
     WEG_BILD: "_bild_anfrage",
     WEG_KOPPELN: "_koppelseite",
     WEG_HEIM: "_heim",
+    WEG_HALLO: "_hallo",
 }
 
 #: Die zwei Wege, die **neben** den anderen laufen — alle übrigen gehen hintereinander
@@ -1546,6 +1557,20 @@ class Flaeche(BaseHTTPRequestHandler):
     #: Ob die offene Zahl über ``POST /api/kopplung`` (Mac-App) kam — dann sagt die
     #: Ablehnung, dass es eine neue am Mac gibt, nicht an der HomeStation.
     kopplung_vom_mac = False
+    #: Ob die offene Zahl sich ein Mac über ``POST /api/kopplung/anfordern`` **selbst**
+    #: angefordert hat (Entscheid 83) — dann gelten fünf Minuten und drei Versuche, und die
+    #: Ablehnung schickt ihn an «Neue Zahl anfordern».
+    kopplung_angefordert = False
+    #: Wann zuletzt eine Zahl angefordert und erzeugt wurde, auf der stetigen Uhr — für die
+    #: Drossel (``kopplung.naechste_anforderung_in``). Auf der Klasse wie die Kopplung: Eine
+    #: Drossel je Verbindung drosselte nichts.
+    kopplung_angefordert_um = None
+    #: Wie eine angeforderte Zahl am Heim-PC erscheint — ``zeige(kopplung)``. ``None`` heisst
+    #: nur im Fenster (:func:`zeige_zahl_im_fenster`); :func:`baue_server` setzt mit
+    #: ``mitteilung=True`` die Fassung, die zusätzlich eine Mitteilung am Bildschirm zeigt.
+    #: Die Proben setzen eine Attrappe — am Heim-PC soll keine Probe Mitteilungen aufpoppen
+    #: lassen.
+    zeige_zahl = None
     #: Das Sprachmodell des Assistenten (``aiimaging.assistent.Ollama``), gesetzt mit
     #: ``--assistent-adresse``/``--sprachmodell`` — oder ``None``: dann nimmt der Kern
     #: Adresse und Modell bei jeder Anfrage aus der Umgebung (oder die Vorgaben).
@@ -1592,6 +1617,12 @@ class Flaeche(BaseHTTPRequestHandler):
         # kein Kennwort verlangt, bleibt die Tuer zu — mit dem Satz, was zu tun ist.
         #
         #     *Eine Adresse sagt, woher die Leitung kommt, nicht wer am anderen Ende sitzt.*
+        weg = urllib.parse.urlparse(self.path).path
+        # DAS HALLO VOR ALLEM ANDEREN (Entscheid 83, 13.10.2026): Es traegt kein Geheimnis
+        # und keinen Rechnernamen, nur «hier ist ein Visbox-Heim-PC» — der Mac erkennt daran
+        # bei der Suche, wen er vor sich hat, auch hinter einer Weiterleitung ohne Kennwort.
+        if self.command == "GET" and weg == WEG_HALLO:
+            return True
         if self.kennwort is None and _ueber_weiterleitung(self.headers):
             self._fehler(
                 f"Diese Anfrage kam über eine Weiterleitung (z. B. Tailscale Serve). So ist "
@@ -1630,6 +1661,12 @@ class Flaeche(BaseHTTPRequestHandler):
         if (self.command == "GET"
                 and urllib.parse.urlparse(self.path).path == WEG_KOPPELN
                 and self._kopplung_gilt()):
+            return True
+        # DIE DRITTE OEFFNUNG (Entscheid 83, 13.10.2026): Der Mac fordert eine Zahl an, die
+        # AM BILDSCHIRM DES HEIM-PC erscheint. Er bekommt sie nicht zurueck — wer sie kennt,
+        # sitzt dort oder hat sie dort abgelesen. Nur POST, nur dieser Pfad; gedrosselt
+        # (eine neue Zahl je 30 s) in `_kopplung_anfordern`.
+        if self.command == "POST" and weg == WEG_KOPPLUNG_ANFORDERN:
             return True
         # DER NAME AUS `NAME`, in Satz und Bereich (Durchsicht der Welle 2, 22.09.2026):
         # Hier stand «Visbox» fest — die Stelle, die beim Umbenennen niemand findet.
@@ -1937,7 +1974,7 @@ class Flaeche(BaseHTTPRequestHandler):
         # eine Zahl braucht. Bis zum 01.10.2026 las der Server hier jeden Rumpf ganz, auch von
         # einem Gerät, das noch nichts darf (Befund der Vermittler-Durchsicht; die Mac-Seite
         # begrenzt schon seit `c61fe3c` am Kopf auf 1 KiB).
-        if (urllib.parse.urlparse(self.path).path == WEG_VERBINDEN
+        if (urllib.parse.urlparse(self.path).path in (WEG_VERBINDEN, WEG_KOPPLUNG_ANFORDERN)
                 and laenge > VERBINDEN_HOECHSTENS):
             self._fehler("Zum Verbinden genügt eine Zahl — die Anfrage ist zu gross.", 413)
             return
@@ -1990,8 +2027,12 @@ class Flaeche(BaseHTTPRequestHandler):
             print(f"  Verbinden abgelehnt: {antwort['grund']} "
                   f"(noch {antwort['versuche_uebrig']} Versuche)")
             satz = antwort["satz_fuer_das_geraet"]
-            if type(self).kopplung_vom_mac:
+            if type(self).kopplung_angefordert:
+                satz = kopplung.SATZ_FUER_DEN_MAC_ANGEFORDERT
+            elif type(self).kopplung_vom_mac:
                 satz = kopplung.SATZ_FUER_DAS_GERAET_VOM_MAC
+            if antwort["stand"] == kopplung.STAND_AUFGEBRAUCHT:
+                print("  Koppeln:    Die Zahl ist nach den Fehlversuchen geschlossen.")
             self._sende({"verbunden": False, "satz": satz}, 403)
             return
 
@@ -2003,7 +2044,94 @@ class Flaeche(BaseHTTPRequestHandler):
         # Sie kommen nur dieses eine Mal.
         self._sende({"verbunden": True, "benutzer": BENUTZER,
                      "kennwort": self.kennwort,
-                     "satz": SATZ_VERBUNDEN})
+                     "satz": SATZ_VERBUNDEN,
+                     "zugang": self._zugang()})
+
+    def _zugang(self) -> dict:
+        """Unter welcher Adresse das Gerät den Heim-PC **künftig** erreicht (Entscheid 83).
+
+        * Kam die Anfrage über den verschlüsselten Zuhörer im Heimnetz (``--heimnetz``):
+          seine Adresse und der Fingerabdruck seines Zertifikats — der Mac heftet ihn an.
+        * Sonst (über Tailscale Serve, oder direkt): ``adresse`` ist ``None`` und heisst
+          **«dieselbe, unter der gefragt wurde»**. Der Server weiss nicht, unter welchem Namen
+          ihn Tailscale Serve erreichbar macht; der Mac weiss es — er hat dort gefragt.
+        """
+        zugang = getattr(getattr(self, "server", None), "heimnetz_zugang", None)
+        if zugang:
+            return {"weg": "heimnetz", "adresse": zugang["adresse"],
+                    "zertifikat_sha256": zugang["zertifikat_sha256"]}
+        return {"weg": "wie_gefragt", "adresse": None, "zertifikat_sha256": None}
+
+    def _hallo(self, weg) -> None:
+        """``GET /api/hallo`` — **ohne Anmeldung, ohne Geheimnis, ohne Rechnernamen.**
+
+        Der Mac fragt bei der Suche jeden Kandidaten (Tailscale-Gerät, Bonjour-Fund); wer so
+        antwortet, ist ein Heim-PC dieser App und darf in die Liste. Mehr verrät der Weg nicht:
+        nicht, ob gerade eine Zahl offen ist, nicht, wie der Rechner heisst.
+        """
+        # DER SCHLUESSEL IST DER NAME (heute «visbox»), wie der Benutzer: Der Mac liest ihn aus
+        # `Marke.name` — nach der Umbenennung (Entscheid 34) gehen beide Seiten zusammen mit.
+        self._sende({NAME.lower(): True, "fassung": aiimaging.__version__,
+                     "name": f"{NAME} Heim-PC"})
+
+    def _kopplung_anfordern(self, wunsch: dict) -> None:
+        """``POST /api/kopplung/anfordern`` — eine Zahl für einen Mac, **am Heim-PC gezeigt.**
+
+        **Der Anlass** (Owner-Entscheid 83, 13.10.2026): Der Mac koppelt sich selbst. Er
+        fordert hier eine Zahl an; sie erscheint im Fenster des Dienstes und als Mitteilung
+        (83a). Der Mensch tippt sie am Mac ein, und ``POST /api/verbinden`` gibt dafür
+        Benutzer und Kennwort heraus — wie bei jeder Kopplung. Es gelten fünf Minuten, einmal,
+        drei Versuche (``kopplung.FRIST_ANGEFORDERT_S``, ``VERSUCHE_ANGEFORDERT``).
+
+        **Die Antwort trägt die Zahl nie** — nur, dass sie angezeigt wurde und bis wann sie
+        gilt. Sonst bekäme sie jeder, der fragen kann.
+
+        **Gedrosselt:** höchstens eine neue Zahl je ``kopplung.DROSSEL_ANGEFORDERT_S``. Kommt
+        die Anforderung früher und gilt die letzte angeforderte noch, **bleibt sie** (die
+        Antwort sagt «steht schon da»); gilt sie nicht mehr, kommt 429 mit der Wartezeit.
+        Eine neue Zahl ersetzt jede offene — auch eine fürs iPad —, sonst gälten zwei
+        zugleich.
+
+        **Das Fenster des Dienstes ist ein Protokoll**, und hier steht die Zahl darin —
+        anders als bei ``POST /api/kopplung``. Das ist Entscheid 83a: Der Heim-PC muss sie
+        zeigen, sonst kann niemand sie ablesen. Sie gilt fünf Minuten und einmal; im
+        Protokoll von gestern ist sie tot.
+        """
+        if not self.kennwort:
+            self._fehler(f"{NAME} läuft am Heim-PC ohne Kennwort — es gibt nichts, was eine "
+                         f"Zahl übergeben könnte. Dort mit --kennwort-datei starten "
+                         f"(betrieb/README.md).")
+            return
+        klasse = type(self)
+        warten = kopplung.naechste_anforderung_in(klasse.kopplung_angefordert_um)
+        offen = klasse.kopplung_offen
+        if warten > 0:
+            if (offen is not None and klasse.kopplung_angefordert
+                    and kopplung.stand(offen) == kopplung.STAND_OFFEN):
+                self._sende({"angezeigt": True, "neu": False, "gilt_bis": offen.gilt_bis,
+                             "gilt_noch_s": int(max(0.0, offen.faellig - time.monotonic())),
+                             "versuche": offen.versuche_uebrig,
+                             "satz": f"Die Zahl steht schon am Heim-PC, gültig bis "
+                                     f"{offen.gilt_bis}. Eine neue gibt es in "
+                                     f"{math.ceil(warten)} s."})
+                return
+            self._sende({"angezeigt": False, "warten_s": math.ceil(warten),
+                         "satz": f"Eine neue Zahl gibt es in {math.ceil(warten)} s."}, 429)
+            return
+        if offen is not None:
+            kopplung.schliesse(offen)
+        neu = kopplung.eroeffne(frist_s=kopplung.FRIST_ANGEFORDERT_S,
+                                versuche=kopplung.VERSUCHE_ANGEFORDERT)
+        klasse.kopplung_offen = neu
+        klasse.kopplung_vom_mac = False
+        klasse.kopplung_angefordert = True
+        klasse.kopplung_angefordert_um = time.monotonic()
+        (klasse.zeige_zahl or zeige_zahl_im_fenster)(neu)
+        self._sende({"angezeigt": True, "neu": True, "gilt_bis": neu.gilt_bis,
+                     "gilt_noch_s": int(kopplung.FRIST_ANGEFORDERT_S),
+                     "versuche": kopplung.VERSUCHE_ANGEFORDERT,
+                     "satz": f"Zahl am Heim-PC angezeigt, gültig bis {neu.gilt_bis} — "
+                             f"einmal, {kopplung.VERSUCHE_ANGEFORDERT} Versuche."})
 
     def _kopplung_oeffnen(self, wunsch: dict) -> None:
         """Eine neue Zahl zum Koppeln — **nur angemeldet**, nur mit Kennwort am Server.
@@ -2038,6 +2166,7 @@ class Flaeche(BaseHTTPRequestHandler):
         neu = kopplung.eroeffne()
         type(self).kopplung_offen = neu
         type(self).kopplung_vom_mac = True
+        type(self).kopplung_angefordert = False
         minuten = int(kopplung.FRIST_S // 60)
         self._sende({"zahl": neu.pin, "gilt_noch_s": int(kopplung.FRIST_S),
                      "satz": f"Diese Zahl gilt {minuten} Minuten für EIN Gerät: auf dem "
@@ -2672,10 +2801,45 @@ def satz_nicht_angemeldet(kennwort_in_datei: bool = False) -> str:
             f"in dem {NAME} gestartet wurde.")
 
 
+def _zahl_lesbar(pin: str) -> str:
+    """«123456» als «123 456» — zwei Dreiergruppen liest man fehlerfrei ab."""
+    return f"{pin[:3]} {pin[3:]}" if len(pin) == 6 else pin
+
+
+def zeige_zahl_im_fenster(offen) -> None:
+    """Die angeforderte Zahl im Fenster des Dienstes — **gut sichtbar** (Entscheid 83a)."""
+    print("")
+    print("  ┌─ Mac koppeln ─────────────────────────────────────────────")
+    print(f"  │  Zahl  {_zahl_lesbar(offen.pin)}   gültig bis {offen.gilt_bis}, einmal, "
+          f"{offen.versuche_uebrig} Versuche")
+    print("  │  Am Mac eintippen. Wer sie nicht angefordert hat: nichts tun — sie verfällt.")
+    print("  └───────────────────────────────────────────────────────────")
+    sys.stdout.flush()
+
+
+def zeige_zahl_mit_mitteilung(offen, *, starter=None, wo=None) -> str | None:
+    """Fenster **und** Mitteilung am Bildschirm (Entscheid 83a) — ``None``, wenn beides ging.
+
+    Fehlt ``notify-send`` oder scheitert es, steht der Grund im Fenster, unter der Zahl.
+    """
+    zeige_zahl_im_fenster(offen)
+    kw = {"starter": starter}
+    if wo is not None:
+        kw["wo"] = wo
+    grund = heimnetz.mitteile(f"{NAME}: Mac koppeln",
+                              f"Zahl {_zahl_lesbar(offen.pin)} — gültig bis "
+                              f"{offen.gilt_bis}, einmal.",
+                              gueltig_s=kopplung.FRIST_ANGEFORDERT_S, **kw)
+    if grund is not None:
+        print(f"     Mitteilung: {grund}")
+    return grund
+
+
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                 anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
                 kopplung_offen=None, ablage=None, sprachmodell=None,
-                kennwort_in_datei: bool = False) -> ThreadingHTTPServer:
+                kennwort_in_datei: bool = False,
+                mitteilung: bool = False) -> ThreadingHTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -2718,7 +2882,14 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                    "kopplung_offen": kopplung_offen,
                    "ablage": Path(ablage) if ablage else None,
                    "sprachmodell": sprachmodell,
-                   "kennwort_in_datei": bool(kennwort_in_datei)})
+                   "kennwort_in_datei": bool(kennwort_in_datei),
+                   # MIT MITTEILUNG NUR IM BETRIEB (`main`): Eine Probe, die einen Server
+                   # baut, soll am Heim-PC nichts aufpoppen lassen.
+                   "zeige_zahl": (staticmethod(zeige_zahl_mit_mitteilung) if mitteilung
+                                  else None),
+                   # EIGENE DROSSEL UND KOPPLUNGSART JE SERVER, nicht die der Grundklasse.
+                   "kopplung_angefordert": False,
+                   "kopplung_angefordert_um": None})
     # JEDE ANFRAGE IN EINEM EIGENEN FADEN (01.10.2026) — damit eine Frage an den
     # Assistenten den Server nicht festhaelt. Hintereinander laeuft trotzdem alles ausser
     # `WEGE_NEBENHER`, unter `Flaeche.reihe`. Die Faeden sind Daemonen: Ein Strg-C wartet
@@ -2726,6 +2897,116 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
     server = ThreadingHTTPServer((adresse, anschluss), klasse)
     server.daemon_threads = True
     return server
+
+
+#: Der Anschluss des verschlüsselten Zuhörers im Heimnetz (``--heimnetz``, Entscheid 83b) —
+#: neben :data:`VORGABE_ANSCHLUSS`. Gefunden wird er über Bonjour, wo der Anschluss
+#: mitkommt; eintippen muss ihn niemand.
+VORGABE_HEIMNETZ_ANSCHLUSS = 8732
+
+#: Wie lange ein Gerät im Heimnetz für den TLS-Handschlag und eine Anfrage hat, bevor die
+#: Verbindung fällt — **gesetzt.** Ohne Frist hielte ein stummes Gerät einen Faden für immer.
+HEIMNETZ_FRIST_S = 30.0
+
+
+class Heimnetzserver(ThreadingHTTPServer):
+    """Der verschlüsselte Zuhörer im Heim-WLAN — **nur TLS, nie Klartext** (Entscheid 83b).
+
+    Er teilt die Klasse der Anfragen mit dem Hauptserver: dieselbe Tür, dieselbe Kopplung,
+    derselbe Versuchszähler. Was ihn unterscheidet, steht auf ihm selbst
+    (``heimnetz_zugang``: Adresse und Fingerabdruck) und geht in die Antwort von
+    ``POST /api/verbinden``.
+
+    **Der Handschlag geschieht im Faden der Anfrage**, nicht beim Annehmen: Ein Gerät, das
+    die Verbindung öffnet und schweigt, hielte sonst die ganze Annahme fest.
+    """
+
+    daemon_threads = True
+
+    def __init__(self, adresse, klasse, *, kontext: ssl.SSLContext, zugang: dict):
+        self.kontext = kontext
+        self.heimnetz_zugang = zugang
+        super().__init__(adresse, klasse)
+
+    def finish_request(self, request, client_address):
+        request.settimeout(HEIMNETZ_FRIST_S)
+        try:
+            geschuetzt = self.kontext.wrap_socket(request, server_side=True)
+        except (ssl.SSLError, OSError):
+            # KEIN TLS, KEINE ANTWORT. Wer Klartext schickt, bekommt nicht einmal einen Satz
+            # im Klartext zurueck — sonst ginge doch etwas unverschluesselt durch das WLAN.
+            return
+        try:
+            super().finish_request(geschuetzt, client_address)
+        finally:
+            try:
+                geschuetzt.close()
+            except OSError:
+                pass
+
+
+def baue_heimnetz_server(haupt: ThreadingHTTPServer, *, adresse: str,
+                         anschluss: int = VORGABE_HEIMNETZ_ANSCHLUSS,
+                         zertifikat, schluessel) -> Heimnetzserver:
+    """Den verschlüsselten Zuhörer neben ``haupt`` bauen, **ohne ihn zu starten.**
+
+    Raises:
+        FlaechenError: Der Hauptserver hat kein Kennwort, keine Adresse im Heimnetz wurde
+            ermittelt, oder Zertifikat/Schlüssel fehlen. **Ohne TLS wird nichts gebaut.**
+    """
+    klasse = haupt.RequestHandlerClass
+    if not getattr(klasse, "kennwort", None):
+        raise FlaechenError("Der Zuhörer im Heimnetz braucht ein Kennwort am Server "
+                            "(--kennwort-datei).")
+    # EINE ADRESSE, NICHT ALLE: Auf 0.0.0.0 hoerte der Zuhoerer auch auf der Tailscale-
+    # Schnittstelle und jeder anderen — gemeint ist das Heim-WLAN. (`127.0.0.1` lassen die
+    # Proben zu; im Betrieb faengt `starte_heimnetz` sie ab.)
+    if not adresse or adresse in (ALLE_ADRESSEN, ""):
+        raise FlaechenError(
+            f"Für --heimnetz wurde keine Adresse im Heimnetz ermittelt ({NICHT_ERMITTELT}). "
+            f"Ohne sie hört der verschlüsselte Zuhörer nirgends, wo der Mac ihn findet.")
+    if zertifikat is None or schluessel is None:
+        raise FlaechenError("Ohne Zertifikat hört im Heimnetz nichts — Klartext mit "
+                            "Kennwort im WLAN ist ausgeschlossen (Entscheid 83b).")
+    try:
+        kontext = heimnetz.tls_kontext(zertifikat, schluessel)
+        abdruck = heimnetz.fingerabdruck(zertifikat)
+    except (heimnetz.HeimnetzError, OSError, ValueError) as fehler:
+        raise FlaechenError(str(fehler)) from fehler
+    zugang = {"adresse": f"https://{adresse}:{anschluss}", "zertifikat_sha256": abdruck}
+    server = Heimnetzserver((adresse, anschluss), klasse, kontext=kontext, zugang=zugang)
+    # DER WIRKLICHE ANSCHLUSS (bei 0 waehlt ihn das System).
+    zugang["adresse"] = f"https://{adresse}:{server.server_address[1]}"
+    return server
+
+
+def starte_heimnetz(haupt, *, ordner, anschluss: int, adresse=None):
+    """``--heimnetz``: Zertifikat, Zuhörer, Ankündigung — ``(server, ankuendigung, saetze)``.
+
+    Wirft :class:`FlaechenError`, wenn der Zuhörer nicht verschlüsselt starten kann; eine
+    fehlende **Ankündigung** dagegen hält nichts auf (Satz in ``saetze``).
+    """
+    adresse = adresse or heimnetz_adresse()
+    if adresse is None or adresse.startswith("127."):
+        raise FlaechenError(
+            f"Für --heimnetz wurde keine Adresse im Heimnetz ermittelt ({NICHT_ERMITTELT}). "
+            f"Ohne sie hört der verschlüsselte Zuhörer nirgends, wo der Mac ihn findet.")
+    try:
+        pem, schluessel, neu = heimnetz.zertifikat(ordner, NAME)
+    except heimnetz.HeimnetzError as fehler:
+        raise FlaechenError(str(fehler)) from fehler
+    server = baue_heimnetz_server(haupt, adresse=adresse, anschluss=anschluss,
+                                  zertifikat=pem, schluessel=schluessel)
+    abdruck = server.heimnetz_zugang["zertifikat_sha256"]
+    saetze = [f"  Heimnetz:   verschlüsselt auf {server.heimnetz_zugang['adresse']}  "
+              f"(Zertifikat {'eben erzeugt' if neu else 'vorhanden'})",
+              f"              Zeichen des Heim-PC: {heimnetz.zeichen(abdruck)}  — steht beim "
+              f"Koppeln auch am Mac"]
+    ankuendigung, satz = heimnetz.kuendige_an(
+        name=NAME, dienst=_rundruf_modul().DIENST, anschluss=server.server_address[1],
+        texte=(f"fassung={_rundruf_modul().FASSUNG}", "tls=1"))
+    saetze.append(f"  Finden:     {satz}")
+    return server, ankuendigung, saetze
 
 
 # ALLE ADRESSEN DIESES RECHNERS. Man kann auf ihr hoeren, aber sie nicht eintippen: Ein
@@ -2879,6 +3160,12 @@ def main(argv=None) -> int:
     ap.add_argument("--im-heimnetz", action="store_true",
                     help="Auf allen Adressen hören, damit ein iPad herankommt. Verlangt "
                          "ein Kennwort — und zeigt an, was das bedeutet.")
+    ap.add_argument("--heimnetz", action="store_true",
+                    help="Zusätzlich im Heim-WLAN hören, NUR verschlüsselt (selbst "
+                         "unterschriebenes Zertifikat neben der Kennwortdatei) und per "
+                         "Bonjour auffindbar — damit sich ein Mac ohne Tailscale koppeln "
+                         "kann. Verlangt --kennwort-datei. Siehe betrieb/README.md.")
+    ap.add_argument("--heimnetz-anschluss", type=int, default=VORGABE_HEIMNETZ_ANSCHLUSS)
     ap.add_argument("--assistent-adresse", default=None,
                     help="Wo Ollama für den Assistenten antwortet. Vorgabe: "
                          f"{assistent.VORGABE_ADRESSE} (oder die Umgebungsvariable "
@@ -2932,12 +3219,25 @@ def main(argv=None) -> int:
             return 2
 
     offen = kopplung.eroeffne() if a.kopplung else None
+    # DER ZUHOERER IM HEIMNETZ NUR MIT KENNWORTDATEI: Das Zertifikat liegt neben ihr, im
+    # Dienstordner ausserhalb des Repos — und ein Kennwort, das bei jedem Start neu ist,
+    # entkoppelte jeden Mac bei jedem Neustart.
+    if a.heimnetz and kennwort_aus_datei is None:
+        print("--heimnetz verlangt --kennwort-datei: Das Zertifikat liegt neben dem Kennwort "
+              "im Dienstordner (betrieb/README.md).")
+        return 2
 
     try:
         server = baue_server(ordner=a.ordner, adresse=adresse, anschluss=a.anschluss,
                              kennwort=kennwort, kopplung_offen=offen,
                              ablage=a.auftragsablage, sprachmodell=sprachmodell,
-                             kennwort_in_datei=kennwort_aus_datei is not None)
+                             kennwort_in_datei=kennwort_aus_datei is not None,
+                             mitteilung=True)
+        heim_server, ankuendigung, heim_saetze = None, None, []
+        if a.heimnetz:
+            heim_server, ankuendigung, heim_saetze = starte_heimnetz(
+                server, ordner=Path(kennwort_aus_datei[0]).expanduser().parent,
+                anschluss=a.heimnetz_anschluss)
     except FlaechenError as fehler:
         # KEIN STACKTRACE. Das ist der eine Fehler, den ein Mensch beim Start wirklich
         # sieht, und er ist fuer ihn geschrieben.
@@ -2976,11 +3276,22 @@ def main(argv=None) -> int:
     if a.im_heimnetz:
         rundruf, satz = starte_rundruf(server.server_address[1])
         print(satz)
+    for satz in heim_saetze:
+        print(satz)
+    if heim_server is not None:
+        threading.Thread(target=heim_server.serve_forever, daemon=True,
+                         name="heimnetz").start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nBeendet.")
     finally:
+        # DIE ANKUENDIGUNG ZUERST: Kein Mac soll einen Heim-PC finden, der gleich weg ist.
+        if ankuendigung is not None:
+            ankuendigung.beende()
+        if heim_server is not None:
+            heim_server.shutdown()
+            heim_server.server_close()
         # ERST DER RUNDRUF, DANN DIE FLAECHE: Er verabschiedet sich im Netz (Gueltigkeit
         # 0), damit kein iPad eine Stunde lang auf eine HomeStation zeigt, die weg ist.
         if rundruf is not None:

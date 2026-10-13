@@ -22,12 +22,20 @@ public struct GefundenerDienst: Equatable, Hashable, Sendable, Identifiable {
     public let anschluss: Int?
     /// Die TXT-Einträge, Schlüssel klein geschrieben.
     public let eintraege: [String: String]
+    /// Warum das Auflösen scheiterte — `nil`, solange es läuft oder gelungen ist.
+    ///
+    /// **Der Anlass** (erster Gerätetest, 13.10.2026, iPadOS 26.7.2): Der Eintrag «über den
+    /// Mac» stand endlos auf «wird aufgelöst …», ohne Grund und ohne Abbruch — ein Auflösen,
+    /// das scheiterte, liess den Dienst einfach ohne Adresse stehen. Jetzt hat es eine Frist
+    /// (`Suche.aufloesFrist`) und danach einen Satz (`Suche.satzNichtAufgeloest`).
+    public let grund: String?
 
     public init(name: String, rechner: String?, anschluss: Int?,
-                eintraege: [String: String] = [:]) {
+                eintraege: [String: String] = [:], grund: String? = nil) {
         self.name = name
         self.rechner = rechner
         self.anschluss = anschluss
+        self.grund = grund
         var klein: [String: String] = [:]
         for (s, w) in eintraege where klein[s.lowercased()] == nil {
             klein[s.lowercased()] = w
@@ -118,6 +126,29 @@ public enum Suche {
     /// angegeben wird; wer einen angibt, ist von ihr unabhängig.
     public static let vorgabeAnschluss = 8731
 
+    /// Wie lange das Auflösen eines Fundes dauern darf — **gesetzt, 5 s** (Gerätetest vom
+    /// 13.10.2026): Im eigenen WLAN antwortet ein Dienst in Bruchteilen einer Sekunde; wer
+    /// fünf Sekunden schweigt, kommt nicht mehr.
+    public static let aufloesFrist: TimeInterval = 5
+
+    /// Der Satz, wenn ein Fund nicht aufgelöst wurde — **mit Grund und dem vorgesehenen
+    /// Weg**: Seit Entscheid 63 spricht das iPad direkt über Tailscale mit dem Heim-PC; der
+    /// Weg über den Mac ist aus, bis man ihn einschaltet, und unverschlüsselt.
+    public static func satzNichtAufgeloest(ueberDenMac: Bool) -> String {
+        let wer = ueberDenMac ? "Der Mac" : "Dieser Heim-PC"
+        return "\(wer) antwortet nicht (nach \(Int(aufloesFrist)) s abgebrochen). Darf "
+            + "\(Marke.name) ins lokale Netzwerk? Einstellungen › Datenschutz & Sicherheit › "
+            + "Lokales Netzwerk › \(Marke.name). Vorgesehen ist der direkte Weg über "
+            + "Tailscale: Tailscale am iPad einschalten und unten die Adresse des Heim-PC "
+            + "eintippen."
+    }
+
+    /// Was rechts im Fund steht: die Adresse, «wird aufgelöst …» oder «nicht erreicht».
+    public static func fundtext(_ d: GefundenerDienst) -> String {
+        if let a = d.adresse { return eingabetext(a) }
+        return d.grund == nil ? "wird aufgelöst …" : "nicht erreicht"
+    }
+
     /// Wählt aus dem, was die Suche meldet.
     ///
     /// Dieselbe HomeStation kann mehrfach gemeldet werden (über WLAN und Kabel). Gleiche
@@ -129,8 +160,12 @@ public enum Suche {
             if let schon = nachName[d.name], schon.aufgeloest || !d.aufgeloest { continue }
             nachName[d.name] = d
         }
+        // EIN DIREKTER HEIM-PC VOR EINEM «UEBER DEN MAC» (Geraetetest 13.10.2026): Der
+        // direkte Weg ist der vorgesehene (Entscheid 63); der Mac vermittelt nur, wenn man ihn
+        // eingeschaltet hat. Innerhalb beider Gruppen nach Namen.
         let eindeutig = nachName.values.sorted {
-            ($0.name.lowercased(), $0.name) < ($1.name.lowercased(), $1.name)
+            ($0.ueberDenMac ? 1 : 0, $0.name.lowercased(), $0.name)
+                < ($1.ueberDenMac ? 1 : 0, $1.name.lowercased(), $1.name)
         }
         switch eindeutig.count {
         case 0: return .keiner

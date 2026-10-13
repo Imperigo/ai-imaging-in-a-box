@@ -114,4 +114,15 @@ final class HeimadresseTests: XCTestCase {
         XCTAssertEqual(Heimadresse.vorgabeBenutzer, Marke.name.lowercased())
         XCTAssertFalse(Heimadresse.vorgabeBenutzer.isEmpty)
     }
+
+    // ------------------------------------- ein abgetipptes Beispiel (13.10.2026)
+
+    func testEinAusgeschriebenesBeispielIstKeinHeimPc() throws {
+        let beispiel = try XCTUnwrap(URL(string: "https://heim-pc.dein-netz.ts.net:8443"))
+        XCTAssertNotNil(Heimadresse.istBeispiel(beispiel))
+        let echt = try XCTUnwrap(URL(string: "https://werkstatt.tail0a1b2.ts.net:8443"))
+        XCTAssertNil(Heimadresse.istBeispiel(echt))
+        XCTAssertFalse(Heimadresse.feldhinweis.contains(".ts.net"),
+                       "im Feld steht eine Anleitung, keine Adresse zum Abtippen")
+    }
 }

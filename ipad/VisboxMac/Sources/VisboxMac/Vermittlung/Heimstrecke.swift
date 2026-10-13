@@ -40,7 +40,10 @@ final class Heimstrecke: Sendable {
         // automatischer Konfiguration setzt und der dann Adresse und Zeitpunkt jeder Anfrage
         // saehe.
         art.connectionProxyDictionary = [:]
-        sitzung = URLSession(configuration: art)
+        // DASSELBE ZERTIFIKAT WIE UEBERALL (Entscheid 83b, `Heimvertrauen` im Start-Teil):
+        // im Heim-WLAN nur das angeheftete.
+        sitzung = URLSession(configuration: art, delegate: Heimvertrauenslotse.gemeinsam,
+                             delegateQueue: nil)
     }
 
     /// Reicht eine Anfrage weiter und meldet, was kam.

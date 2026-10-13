@@ -194,6 +194,13 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate {
                  completionHandler: @escaping (URLSession.AuthChallengeDisposition,
                                                URLCredential?) -> Void) {
         let raum = challenge.protectionSpace
+        // DAS ZERTIFIKAT ZUERST (Entscheid 83b): im Heim-WLAN nur das angeheftete, ueber
+        // Tailscale prueft das System — dieselbe Regel wie fuer jede Anfrage der App.
+        if raum.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+            let (art, ausweis) = Heimvertrauen.entscheide(challenge)
+            completionHandler(art, ausweis)
+            return
+        }
         guard raum.authenticationMethod == NSURLAuthenticationMethodHTTPBasic else {
             completionHandler(.performDefaultHandling, nil)
             return

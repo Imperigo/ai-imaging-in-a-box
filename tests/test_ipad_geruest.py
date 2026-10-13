@@ -716,7 +716,7 @@ def test_die_mac_app_importiert_nur_apples_plattform_und_den_kern():
     """Regel 1 an der Stelle, an der eine Abhängigkeit hereinkäme: an den Importen. Erlaubt
     sind Apples Bausteine (sie gehören zur Plattform, ``NOTICE``) und der Kern."""
     erlaubt = {"Foundation", "SwiftUI", "AppKit", "WebKit", "Network", "Security", "CoreText",
-               "Combine", "Dispatch", "OSLog", "VisboxKern"}
+               "Combine", "Dispatch", "OSLog", "CryptoKit", "VisboxKern"}
     dateien = _swift_dateien(MAC_QUELLEN)
     assert dateien, "keine Quellen der Mac-App gefunden"
     for datei in dateien:
@@ -1065,3 +1065,54 @@ def test_ats_kennt_nur_die_ausnahme_fuers_heimnetz():
     assert ats == {"NSAllowsLocalNetworking": True}, (
         "App Transport Security darf nur lokale Netze ausnehmen — https über Tailscale "
         f"braucht keine Ausnahme. Gefunden: {ats!r}")
+
+
+# ================================== 11 · Der Mac koppelt sich selbst (Entscheid 83, 13.10.2026)
+#
+# Die Regeln der Zahl, die sich der Mac anfordert, sind im Kern ABSCHRIFTEN von
+# `aiimaging.kopplung` und vom Anschluss des Zuhoerers im Heimnetz — der Mac laesst Python
+# nicht laufen. Laeuft eine Seite davon, zaehlte der Mac Fehlversuche, die drueben nicht
+# gelten, oder suchte einen Anschluss, auf dem niemand hoert.
+
+HEIMKOPPLUNG = KERN_QUELLEN / "Heimkopplung.swift"
+
+
+def test_die_regeln_der_angeforderten_zahl_sind_die_der_homestation(server):
+    from aiimaging import kopplung
+
+    assert float(_swift_konstante(HEIMKOPPLUNG, "frist")) == kopplung.FRIST_ANGEFORDERT_S
+    assert int(_swift_konstante(HEIMKOPPLUNG, "versuche")) == kopplung.VERSUCHE_ANGEFORDERT
+    assert float(_swift_konstante(HEIMKOPPLUNG, "drossel")) == kopplung.DROSSEL_ANGEFORDERT_S
+    assert int(_swift_konstante(HEIMKOPPLUNG, "heimnetzAnschluss")) == (
+        server.VORGABE_HEIMNETZ_ANSCHLUSS)
+    # DIE MELDUNG NACH DEN FEHLVERSUCHEN nennt die Zahl, die drueben gilt.
+    assert "drei Fehlversuchen" in _swift_text(HEIMKOPPLUNG, "satzGeschlossen")
+    assert kopplung.VERSUCHE_ANGEFORDERT == 3
+
+
+def test_das_zeichen_rechnet_der_mac_wie_der_heim_pc():
+    """Der Owner vergleicht das «Zeichen des Heim-PC» auf zwei Bildschirmen — es muss auf
+    beiden aus denselben Stellen bestehen."""
+    from aiimaging import heimnetz
+
+    text = _ohne_kommentarzeilen(HEIMKOPPLUNG.read_text(encoding="utf-8"))
+    assert re.search(r"\.prefix\(16\)", text), "Fingerabdruck.zeichen nimmt nicht 16 Stellen"
+    assert heimnetz.ZEICHEN_STELLEN == 16
+
+
+def test_die_mac_app_koppelt_ueber_die_kopplung_und_heftet_an():
+    """Das Blatt «Einrichten» ist seit Entscheid 83 der Link «Von Hand eintragen …» in
+    ``Koppeln``; und jede Sitzung zum Heim-PC trägt den Lotsen, der im WLAN nur das
+    angeheftete Zertifikat annimmt."""
+    fenster = _mac_code(MAC_QUELLEN / "Start" / "Hauptfenster.swift")
+    assert "Koppeln(leitung: leitung" in fenster
+    koppeln = _mac_code(MAC_QUELLEN / "Start" / "Koppeln.swift")
+    assert "Von Hand eintragen …" in koppeln and "Einrichten(leitung: leitung" in koppeln
+    for datei in (MAC_QUELLEN / "Start" / "Heimleitung.swift",
+                  MAC_QUELLEN / "Assistent" / "Assistentenleiste.swift",
+                  MAC_VERMITTLUNG / "Heimstrecke.swift"):
+        code = _mac_code(datei)
+        assert "delegate: Heimvertrauenslotse.gemeinsam" in code, datei.name
+        assert re.search(r"URLSession\(configuration: art\)", code) is None, datei.name
+    flaeche = _mac_code(MAC_QUELLEN / "Start" / "Arbeitsansicht.swift")
+    assert "Heimvertrauen.entscheide(challenge)" in flaeche

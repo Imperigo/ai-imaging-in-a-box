@@ -13,11 +13,16 @@ final class WegeTests: XCTestCase {
     }
 
     /// Seit dem 22.09.2026 zwei: das Verbinden (POST, die App) und die Koppelseite (GET,
-    /// der Browser, Entscheid 26). Mehr nicht — und keiner der beiden unter der anderen
-    /// Methode: `GET /api/verbinden` und `POST /koppeln` bleiben hinter der Tuer.
-    func testNurVerbindenUndKoppelnKommenOhneAnmeldungDurch() {
+    /// der Browser, Entscheid 26). Seit dem 13.10.2026 (Entscheid 83) vier: dazu `hallo`
+    /// (GET) und `kopplungAnfordern` (POST), mit denen sich der Mac selbst koppelt. Mehr
+    /// nicht — und keiner unter der anderen Methode: `GET /api/verbinden` und
+    /// `POST /koppeln` bleiben hinter der Tuer.
+    func testNurDieVierWegeHineinKommenOhneAnmeldungDurch() {
         let offen = Set(Wege.alle.filter(\.ohneAnmeldung))
-        XCTAssertEqual(offen, [Wege.verbinden, Wege.koppeln])
+        XCTAssertEqual(offen, [Wege.verbinden, Wege.koppeln, Wege.hallo,
+                               Wege.kopplungAnfordern])
+        XCTAssertEqual(Wege.hallo.methode, .get)
+        XCTAssertEqual(Wege.kopplungAnfordern.methode, .post)
         XCTAssertEqual(Wege.verbinden.methode, .post,
                        "der Server laesst das Verbinden ohne Anmeldung nur als POST durch")
         XCTAssertEqual(Wege.koppeln.methode, .get,

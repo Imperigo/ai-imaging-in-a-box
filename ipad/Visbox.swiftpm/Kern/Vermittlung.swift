@@ -176,12 +176,16 @@ public enum Vermittlungsregel {
     /// * `kopplung` — öffnet am Heim-PC eine Zahl, die ein Gerät gegen **dessen** Kennwort
     ///   tauscht (Entscheid 63). Nur die Mac-App ruft es, direkt; über den Mac weitergereicht
     ///   gäbe es jedem gekoppelten iPad den Weg zum Kennwort des Heim-PC.
+    /// * `hallo`, `kopplungAnfordern` (Entscheid 83, 13.10.2026) — damit koppelt sich **die
+    ///   Mac-App** selbst mit dem Heim-PC, direkt. Weitergereicht liesse der Mac jedes Gerät
+    ///   in seinem WLAN Zahlen am Heim-PC aufpoppen; das iPad ruft beide nicht. Am Mac
+    ///   bleiben sie hinter seiner Tür (anders als drüben, wo sie ohne Anmeldung gehen).
     ///
     /// Knotenansicht (`/knoten…`) und Brücke (`/bruecke…`) stehen nicht einmal in `Wege`.
     public static let nichtWeitergereicht: [Weg] = [
         Wege.verbinden, Wege.koppeln, Wege.seite, Wege.seiteLang, Wege.anlegen,
         Wege.einstellungen, Wege.heim, Wege.assistent, Wege.assistentAnwenden,
-        Wege.kopplung,
+        Wege.kopplung, Wege.hallo, Wege.kopplungAnfordern,
     ]
 
     /// Ob diese Anfrage **wörtlich** auf der Positivliste steht.

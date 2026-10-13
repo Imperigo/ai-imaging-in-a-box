@@ -75,3 +75,57 @@ KosmoOrbit unter `/` zusammenstossen (Befund `auf-20261001-213`).
 Das Kennwort legt der erste Start in `~/.config/visbox/kennwort` an (0600). **Ohne Kennwort weist
 die Fläche jede weitergeleitete Anfrage ab** (403) — hinter einer Weiterleitung kommt jede
 Anfrage von `127.0.0.1`, und die Adresse allein sagt nicht mehr, wer fragt.
+
+## Der Mac koppelt sich mit einer Zahl (Entscheid 83, 13.10.2026)
+
+Die Mac-App sucht den Heim-PC selbst und fragt nach einer **sechsstelligen Zahl**, statt dass
+Adresse, Benutzer und Kennwort abgetippt werden. Am Heim-PC ist dafür nichts einzuschalten,
+solange der Mac über **Tailscale** koppelt: Der Dienst oben (mit `--kennwort-datei`) kennt die
+Wege schon.
+
+* **Wo die Zahl erscheint:** im Fenster des Dienstes — beim Dienst also im Systemprotokoll
+  (`journalctl --user -u visbox-flaeche -f`) — und als **Mitteilung am Bildschirm**, wenn
+  `notify-send` da ist (Paket `libnotify-bin`). Fehlt es oder scheitert es (der Dienst sieht
+  keine Sitzung am Bildschirm), steht der Grund unter der Zahl im Fenster.
+* **Was gilt:** 5 Minuten, einmal, 3 Versuche; höchstens eine neue Zahl je 30 Sekunden. Die
+  Zahl steht nie in einer Antwort des Servers — nur am Bildschirm des Heim-PC.
+* **Wer eine Zahl sieht, die er nicht angefordert hat:** nichts tun. Sie verfällt nach fünf
+  Minuten oder nach drei falschen Versuchen. Erscheinen immer wieder neue, rät jemand im
+  eigenen Netz — dann den Dienst anhalten (`systemctl --user stop visbox-flaeche`).
+
+### Im Heim-WLAN ohne Tailscale: `--heimnetz` (ausdrücklich einschalten)
+
+Soll sich ein Mac auch **ohne Tailscale** im Heim-WLAN koppeln (Entscheid 83b), braucht der
+Dienst einen zweiten Zuhörer. Er hört auf der Adresse des Heim-PC im WLAN, **nur
+verschlüsselt** (TLS 1.2 und neuer), Anschluss 8732, und kündigt sich über Bonjour an.
+
+    # in betrieb/visbox-flaeche.service die Zeile ExecStart ergänzen:
+    #     oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort --heimnetz
+    systemctl --user daemon-reload
+    systemctl --user restart visbox-flaeche.service
+
+Beim ersten Start erzeugt `openssl` ein selbst unterschriebenes Zertifikat
+(`~/.config/visbox/heimnetz-zertifikat.pem` und `heimnetz-schluessel.pem`, nur für den eigenen
+Benutzer lesbar), neben dem Kennwort, nie im Repo. Das Fenster nennt dazu das **Zeichen des
+Heim-PC** (16 Stellen, z. B. `ab12 cd34 ef56 7890`). Gebraucht werden `openssl` und, damit der
+Mac den Heim-PC findet, `avahi-publish-service` (Paket `avahi-utils`, avahi-Dienst läuft). Ohne
+avahi startet der Zuhörer trotzdem, der Mac findet ihn dann aber nicht von selbst.
+
+**Was das für die Sicherheit heisst:**
+
+* Im WLAN geht **nichts im Klartext**: Wer ohne TLS anklopft, bekommt keine Antwort.
+* Der Mac lernt das Zertifikat bei der Kopplung und nimmt danach **nur noch dieses** an
+  («Vertrauen beim ersten Mal», angeheftet). Gegen ein anderes Gerät im WLAN schützt die Zahl,
+  die nur am Bildschirm des Heim-PC steht.
+* **Was die Zahl nicht leisten kann:** Stellt sich jemand im eigenen WLAN genau beim Koppeln
+  zwischen Mac und Heim-PC, sieht er die Zahl, die der Mac schickt. Dagegen hilft nur, das
+  Zeichen des Heim-PC am Mac (es steht beim Koppeln unter dem Namen) mit dem im Fenster zu
+  vergleichen. Danach ist die Leitung angeheftet und geschützt.
+* Der Zuhörer ist eine **zweite Tür ins Heimnetz**: dieselbe Anmeldung, dieselben Wege wie
+  über Tailscale. Im fremden WLAN gibt es ihn nicht — er hört nur auf der Adresse zu Hause.
+
+**Wieder abschalten:** `--heimnetz` aus der Zeile `ExecStart` nehmen, `daemon-reload`,
+`restart`. Ein Mac, der im WLAN gekoppelt war, erreicht den Heim-PC dann nicht mehr, bis er
+über Tailscale neu gekoppelt wird. **Das Zertifikat tauschen:** beide `heimnetz-*.pem`
+löschen und neu starten — jeder Mac muss sich danach neu koppeln, weil er das alte angeheftet
+hat.

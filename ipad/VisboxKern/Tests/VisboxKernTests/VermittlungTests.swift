@@ -69,7 +69,10 @@ final class VermittlungTests: XCTestCase {
             if case .selbstKoppeln = v { durch.append(weg) }
             if case .weiterreichen = v { XCTFail("unangemeldet weitergereicht: \(weg.pfad)") }
         }
-        XCTAssertEqual(Set(durch), Set(Wege.alle.filter(\.ohneAnmeldung)))
+        // SEIT ENTSCHEID 83 (13.10.2026) fuehrt die App vier Wege ohne Anmeldung; am Mac
+        // gehen davon nur die zwei des iPad durch. `hallo` und `kopplungAnfordern` braucht
+        // nur die Mac-App selbst, direkt zum Heim-PC — am Mac bleiben sie hinter der Tuer.
+        XCTAssertTrue(Set(durch).isSubset(of: Set(Wege.alle.filter(\.ohneAnmeldung))))
         XCTAssertEqual(Set(durch), [Wege.verbinden, Wege.koppeln])
     }
 
@@ -262,7 +265,8 @@ final class VermittlungTests: XCTestCase {
                     XCTAssertEqual(w.ziel, ziel)
                     weiter.insert(weg)
                 case .abweisen(let a):
-                    XCTAssertEqual(a.status, weg.ohneAnmeldung ? 403 : 404, ziel)
+                    XCTAssertEqual(a.status, [Wege.verbinden, Wege.koppeln].contains(weg)
+                                   ? 403 : 404, ziel)
                 case .selbstKoppeln:
                     XCTAssertTrue(weg.ohneAnmeldung, ziel)
                 }

@@ -119,6 +119,8 @@ ipad/
 │   │   ├── Heimadresse.swift    die Adresse des Heim-PC: https, 8443, kein Pfad — für die
 │   │   │                        Mac-App und die https-Adresse am iPad
 │   │   ├── Leitung.swift        eine HTTP-Anfrage lesen, eine Antwort schreiben (für den Mac)
+│   │   ├── Heimkopplung.swift   der Mac koppelt sich selbst (Entscheid 83): Tailscale-Geräte,
+│   │   │                        Bonjour-Funde, Zahl anfordern, Antwort deuten, Anheften
 │   │   ├── Vermittlung.swift    der Mac als Vermittler: Tür, Weiterreichen, Zeile «iPad»
 │   │   └── Vermittlerkopplung.swift  die Kopplung iPad ↔ Mac und der Zugang des Mac
 │   │                            (Protokoll §8b; die Mac-Seite liegt in

@@ -72,9 +72,12 @@ import hmac
 import secrets
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 
 __all__ = [
     "FRIST_S", "PIN_STELLEN", "VERSUCHE",
+    "DROSSEL_ANGEFORDERT_S", "FRIST_ANGEFORDERT_S", "VERSUCHE_ANGEFORDERT",
+    "SATZ_FUER_DEN_MAC_ANGEFORDERT", "naechste_anforderung_in",
     "GRUND_ABGELAUFEN", "GRUND_AUFGEBRAUCHT", "GRUND_FALSCH", "GRUND_VERBRAUCHT",
     "SATZ_FUER_DAS_GERAET",
     "SATZ_FUER_DAS_GERAET_VOM_MAC",
@@ -107,6 +110,21 @@ PIN_STELLEN = 6
 #: Menschen an der HomeStation.
 VERSUCHE = 5
 
+#: DIE ZAHL, DIE SICH DER MAC SELBST ANFORDERT (Owner-Entscheid 83, 13.10.2026): Der Mac
+#: koppelt sich mit einer Zahl, die am Heim-PC erscheint — **fünf Minuten, einmal, drei
+#: Versuche.** Strenger als die Zahl fürs iPad, weil sie **ohne Anmeldung** angefordert wird
+#: (``POST /api/kopplung/anfordern``): Wer sie anfordert, beweist noch nichts. Die Werte der
+#: Zahl fürs iPad (zehn Minuten, fünf Versuche) bleiben, wie sie sind — sie werden von einem
+#: angemeldeten Mac oder beim Start geholt.
+FRIST_ANGEFORDERT_S = 300.0
+VERSUCHE_ANGEFORDERT = 3
+
+#: Wie oft eine neue Zahl angefordert werden darf: **höchstens eine je 30 Sekunden** —
+#: gesetzt, nicht gemessen (Entscheid 83). Die Drossel ist die zweite Schranke neben den drei
+#: Versuchen: Wer raten will, bekommt drei Versuche je 30 s, und jede neue Zahl erscheint
+#: als Mitteilung am Bildschirm des Heim-PC — jemand im Raum sieht, dass geraten wird.
+DROSSEL_ANGEFORDERT_S = 30.0
+
 STAND_OFFEN = "offen"
 STAND_ABGELAUFEN = "abgelaufen"
 STAND_AUFGEBRAUCHT = "aufgebraucht"
@@ -127,6 +145,12 @@ SATZ_FUER_DAS_GERAET = "Das hat nicht geklappt. An der HomeStation eine neue Zah
 #: iPad unterwegs an einen Rechner, der zuhause steht (Befund ``auf-20261001-221`` B3).
 SATZ_FUER_DAS_GERAET_VOM_MAC = (
     "Das hat nicht geklappt. Am Mac unter «iPad koppeln» eine neue Zahl holen.")
+
+
+#: Der Satz an den Mac, wenn seine selbst angeforderte Zahl nicht angenommen wurde — sie
+#: erscheint am Heim-PC, geholt wird eine neue aber **am Mac** (Entscheid 83).
+SATZ_FUER_DEN_MAC_ANGEFORDERT = (
+    "Das hat nicht geklappt. Am Mac «Neue Zahl anfordern» wählen — sie erscheint am Heim-PC.")
 
 
 @dataclass
@@ -152,6 +176,10 @@ class Kopplung:
     #: Nur zur Anzeige — die Wanduhrzeit, zu der sie erzeugt wurde. Es wird **nichts**
     #: darauf gerechnet; siehe den Modulkopf.
     gezeigt_um: str = field(default="")
+    #: Nur zur Anzeige — bis wann sie gilt, als Wanduhrzeit «HH:MM» (Entscheid 83: «gültig
+    #: bis …»). Gerechnet wird weiter nur auf ``faellig``; stellt jemand die Wanduhr, lügt
+    #: höchstens diese Anzeige, nie die Frist.
+    gilt_bis: str = field(default="")
 
 
 def _uhr(jetzt) -> float:
@@ -191,6 +219,7 @@ def eroeffne(*, jetzt=None, frist_s: float = FRIST_S, versuche: int = VERSUCHE,
         faellig=_uhr(jetzt) + float(frist_s),
         versuche_uebrig=int(versuche),
         gezeigt_um=time.strftime("%Y-%m-%d %H:%M:%S"),
+        gilt_bis=(datetime.now() + timedelta(seconds=float(frist_s))).strftime("%H:%M"),
     )
 
 
@@ -269,6 +298,25 @@ def pruefe(kopplung: Kopplung, eingabe, *, jetzt=None) -> dict:
 
     kopplung.verbraucht = True
     return _antwort(True, STAND_VERBRAUCHT, "", kopplung.versuche_uebrig)
+
+
+def naechste_anforderung_in(letzte_um, *, jetzt=None,
+                            drossel_s: float = DROSSEL_ANGEFORDERT_S) -> float:
+    """Wie viele Sekunden noch, bis wieder eine neue Zahl angefordert werden darf — ``0.0``,
+    wenn jetzt.
+
+    Args:
+        letzte_um: Wann zuletzt eine Zahl angefordert **und erzeugt** wurde, auf der stetigen
+            Uhr — oder ``None``: noch nie.
+        jetzt: Der Stand der stetigen Uhr; ``None`` heisst «jetzt». Für Tests.
+
+    Auf der stetigen Uhr aus demselben Grund wie die Frist: Eine Drossel, die eine
+    zurückgestellte Wanduhr aufhebt, drosselt nichts.
+    """
+    if letzte_um is None:
+        return 0.0
+    rest = float(letzte_um) + float(drossel_s) - _uhr(jetzt)
+    return max(0.0, rest)
 
 
 def schliesse(kopplung: Kopplung) -> None:

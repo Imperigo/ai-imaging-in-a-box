@@ -40,9 +40,40 @@ Danach öffnet sie wie jedes Programm. **Nach jedem neuen Herunterladen** ist es
 Unterschrift: Der Weg oben gilt dann noch einmal, und beim ersten Lesen des Kennworts fragt
 macOS, ob «Visbox» an den Schlüsselbund darf → **«Immer erlauben»**.
 
-## Einrichten
+## Koppeln (seit 13.10.2026, Entscheid 83)
 
-Beim ersten Start geht das Blatt **«Einrichten»** auf. Später ist es **immer** erreichbar: über
+Beim ersten Start geht das Blatt **«Koppeln»** auf (Blatt 17 der Entwurfsfläche). Nichts
+abtippen:
+
+1. **Suchen.** Der Mac sucht den Heim-PC selbst — im eigenen Tailscale-Netz (über die
+   Befehlszeile der Tailscale-App, `tailscale status --json`) und im WLAN zu Hause (Bonjour).
+   Jeder Fund wird gefragt (`GET /api/hallo`); **wählbar ist nur, wer als Visbox-Heim-PC
+   antwortet.**
+2. **Weiter → Zahl.** Am Heim-PC erscheint eine sechsstellige Zahl — im Fenster des Dienstes und
+   als Mitteilung. Sie gilt **5 Minuten, einmal, 3 Versuche**. Eintippen, «Koppeln». «Neue Zahl
+   anfordern» holt eine neue (höchstens eine je 30 s). Nach drei Fehlversuchen sagt der Mac,
+   dass die Zahl geschlossen ist.
+3. **Verbunden.** Adresse und Benutzer sind gemerkt, das Kennwort liegt im Schlüsselbund; das
+   Blatt zeigt die vier Startzeilen, wie sie sich aufbauen.
+
+**Im WLAN ohne Tailscale** geht das nur, wenn der Heim-PC mit `--heimnetz` läuft
+(`betrieb/README.md`): verschlüsselt, mit selbst unterschriebenem Zertifikat. Der Mac **heftet
+es an** — er nimmt danach nur noch dieses an. Beim Koppeln steht unter dem Namen das **Zeichen
+des Heim-PC** (16 Stellen); dasselbe steht im Fenster am Heim-PC. Wer ganz sicher sein will,
+vergleicht die beiden — nur das schützt gegen jemanden, der sich genau beim Koppeln im WLAN
+dazwischenstellt.
+
+**Wo Tailscale am Mac gesucht wird:** `/Applications/Tailscale.app/Contents/MacOS/Tailscale`
+(App-Store-Fassung, so in der Tailscale-Doku; die Standalone-Fassung liegt am selben Ort), dann
+`/usr/local/bin/tailscale` (Starter der Standalone-Fassung, wenn in deren Einstellungen
+installiert), dann `/opt/homebrew/bin/tailscale` (Homebrew, nicht belegt). Findet sich keiner,
+sucht der Mac nur im WLAN, und das Blatt sagt es.
+
+Klein darunter: **«Von Hand eintragen …»** öffnet den bisherigen Dialog (Entscheid 83c).
+
+## Von Hand eintragen
+
+Der bisherige Weg, heute der kleine Link im Blatt «Koppeln». Später ist es **immer** erreichbar: über
 «Einrichten» in der Werkzeugleiste des Fensters, in der Startansicht oben rechts und im Band des
 Vorführmodus.
 
@@ -82,6 +113,13 @@ Die Kopfzeile ist gezählt («baut auf · 2 von 4»). Gefragt wird beim Start un
 **«Schon anfangen»** (Entscheid 39) geht, sobald die Leitung steht — auch wenn der Assistent
 noch lädt. Es öffnet die Visbox-Fläche des Heim-PC in der App; rechts ist der Platz für den
 Assistenten.
+
+## Stand (13.10.2026, Entscheid 83)
+
+**Gebaut, am Gerät unbestätigt:** das Blatt «Koppeln» (Suche über Tailscale und Bonjour, Zahl,
+Verbunden), das Anheften des Zertifikats im WLAN für alle Leitungen zum Heim-PC (Startzeilen,
+Fläche, Assistent, Vermittlung; `Start/Heimvertrauen.swift`). Die Logik dahinter steht im Kern
+(`Kern/Heimkopplung.swift`, Proben `HeimkopplungTests`).
 
 ## Stand (01.10.2026)
 

@@ -76,7 +76,10 @@ final class Heimleitung: ObservableObject {
         art.urlCache = nil
         art.requestCachePolicy = .reloadIgnoringLocalCacheData
         art.httpShouldSetCookies = false
-        sitzung = URLSession(configuration: art)
+        // DER LOTSE PRUEFT DAS ZERTIFIKAT (Entscheid 83b): ueber Tailscale das System, im
+        // Heim-WLAN nur das angeheftete (`Heimvertrauen`).
+        sitzung = URLSession(configuration: art, delegate: Heimvertrauenslotse.gemeinsam,
+                             delegateQueue: nil)
 
         // DIE GEMERKTE ADRESSE WIRD NOCH EINMAL GEPRUEFT: Was in den Einstellungen liegt, kann
         // jemand von Hand geändert haben.
@@ -242,6 +245,30 @@ final class Heimleitung: ObservableObject {
         if let fehler = Heimschluesselbund.speichere(neu) {
             return fehler
         }
+        // EINE ANDERE ADRESSE VON HAND heisst: ueber Tailscale, das System prueft. Ein alter
+        // angehefteter Fingerabdruck aus dem WLAN gilt fuer sie nicht. Bleibt die Adresse
+        // (nur Benutzer oder Kennwort neu), bleibt auch der Fingerabdruck.
+        if Heimgedaechtnis.adresse != url {
+            Heimgedaechtnis.fingerabdruck = nil
+        }
+        return uebernimm(url, neu)
+    }
+
+    /// Übernimmt, was die Kopplung mit Zahl ergab (Entscheid 83): Adresse, Anmeldung und —
+    /// im Heim-WLAN — den Fingerabdruck, der von jetzt an angeheftet ist. `nil`, wenn es
+    /// geklappt hat, sonst der Satz.
+    @MainActor
+    func richteEin(zugang: Heimzugang) -> String? {
+        if let fehler = Heimschluesselbund.speichere(zugang.anmeldung) {
+            return fehler
+        }
+        Heimgedaechtnis.fingerabdruck = zugang.fingerabdruck
+        return uebernimm(zugang.adresse, zugang.anmeldung)
+    }
+
+    @MainActor
+    private func uebernimm(_ url: URL, _ neu: Anmeldung) -> String? {
+        let name = neu.benutzer
         Heimgedaechtnis.adresse = url
         adresse = url
         anmeldung = neu

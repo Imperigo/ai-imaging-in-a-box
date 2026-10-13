@@ -88,6 +88,7 @@ Bewacht in `tests/test_flaeche_fuer_die_app.py` (die Koppelseite, «und nichts s
 | `/bild` | `ordner` (freiwillig), `name` (Dateiname relativ zum Projektordner) | Die Bildbytes, `Content-Type` nach Endung: `.png` `image/png`, `.jpg`/`.jpeg` `image/jpeg`, `.webp` `image/webp` | **404** «Es fehlt der Projektordner oder der Bildname.»; **404** wenn der Name aus dem Projektordner herauszeigt (absolut, `..`, Verweis nach draussen), eine andere Endung hat oder die Datei fehlt; **404** «Das Bild liess sich nicht lesen: …» |
 | `/koppeln` | — | Die **Koppelseite** (HTML) für einen Browser: ein Zahlenfeld, das `POST /api/verbinden` ruft und im Erfolgsfall Benutzer und Kennwort **einmal** zeigt. Sie trägt nichts aus dem Projekt und lädt nichts nach. Die App braucht sie nicht. | Unangemeldet ohne geltende Zahl: **401** (Tür). Angemeldet ohne geltende Zahl: **404** «Auf dieser HomeStation ist gerade kein Verbinden offen. …» |
 | `/api/heim` | — | Die **Startzeilen der Mac-App** (seit 01.10.2026, Plan v0.1.7; aus `aiimaging.heimstand.heimstand`). **Fester Vertrag:** `{"blender": {"da": bool, "satz"}, "grafikkarte": {"frei_gb": number\|null, "satz"}, "assistent": {"stand": "bereit"\|"laedt"\|"fehlt"\|"aus", "modell": str\|null, "satz"}, "satz"}`. `blender.da`: das Programm, das die Kette aufriefe, liegt als ausführbare Datei da — **nur nachgesehen**, nie gestartet, kein `import bpy`. `frei_gb`: freier Grafikspeicher der ersten Karte laut `nvidia-smi` (GB zu 1024 MiB, eine Stelle); `null` heisst **nicht gemessen** (kein `nvidia-smi`, Fehler, keine Zahl). `assistent.stand`: `aus` — Ollama antwortet nicht; `fehlt` — das Modell liegt nicht da oder ist nach Regel 1 nicht zugelassen; `laedt` — es liegt da, aber gerade rechnet ein Bild (Sprach- und Bildmodell passen nicht zugleich auf die Karte), **oder** — seit 01.10.2026, Befund `auf-20261001-218` — das Bildmodell liegt nach einem Lauf noch im Prozess des Servers auf der Karte (ab 1 GB, gemessen an torch, nur wenn torch schon geladen ist; Satz «Das Bildmodell liegt nach dem letzten Lauf noch auf der Grafikkarte …»; bis dahin hiess das «bereit» bei 6,1 GB frei); `bereit` — es antwortet (der Satz sagt, ob es erst geladen wird, einige Sekunden). **Keine Pfade, keine Rechner- oder Gerätenamen, keine Adresse** in der Antwort. Liest nur, lädt nichts, gibt nichts frei — und läuft darum **nebenher** (§1, Nebenläufigkeit). `blender.da` gilt seit 01.10.2026 auch, wenn `AIIMAGING_BLENDER` nur einen Namen trägt (`blender`), der über den Suchpfad gefunden wird — wie die Kette ihn aufruft; bis dahin hiess das «Datei fehlt». | — (jedes Scheitern steht als Satz in der Zeile) |
+| `/api/hallo` | — | Seit 13.10.2026 (Entscheid 83), **ohne Anmeldung**, auch hinter einer Weiterleitung ohne Kennwort: `{"visbox": true, "fassung": "<aiimaging.__version__>", "name": "Visbox Heim-PC"}` (Schlüssel und Name aus `NAME`). Kein Rechnername, kein Geheimnis, nicht einmal, ob gerade eine Zahl offen ist. Damit erkennt der Mac bei der Suche einen Heim-PC, siehe §7b. | — |
 | jeder andere | — | — | **404** `{"fehler": "Unbekannter Weg: <pfad>"}` |
 
 ### Handeln (POST)
@@ -95,6 +96,7 @@ Bewacht in `tests/test_flaeche_fuer_die_app.py` (die Koppelseite, «und nichts s
 | Weg | Anfrage (JSON) | Antwort (200) | Fehler |
 |---|---|---|---|
 | `/api/verbinden` | `pin` (Zeichenkette, sechs Ziffern; Leerraum am Rand wird entfernt) | `{"verbunden": true, "benutzer", "kennwort", "satz"}` | **403** `{"verbunden": false, "satz"}` bei falscher/abgelaufener/aufgebrauchter/verbrauchter Zahl; **403** `{"fehler": "Auf dieser HomeStation ist gerade kein Verbinden offen."}` |
+| `/api/kopplung/anfordern` | — (`{}`) | Seit 13.10.2026, **ohne Anmeldung**: eine Zahl für den Mac, **am Heim-PC gezeigt, nie in der Antwort** — siehe §7b | **429** gedrosselt; **400** Server ohne Kennwort; **413** Rumpf über 1 KiB |
 | `/api/anlegen` | `ordner`, `modell` (Pfade **auf der HomeStation**), `name` (freiwillig), `einstellungen` (freiwillig, Objekt) | `{"angelegt": true, "import": {…}}` — der Import-Block, siehe §4 | **400** «Es fehlt der Projektordner oder die Modelldatei.»; **400** mit dem Satz der Bibliothek (Projekt liegt schon da, Import scheitert). *Ein unbrauchbares Modell ist kein Fehler*: Es wird angelegt, und der Befund steht im Import-Block. |
 | `/api/einstellungen` | `ordner` (freiwillig), `einstellungen` (Objekt; ein Feld mit `null` wird **entfernt** und gilt dann wieder als Vorgabe) | `{"gespeichert": true, "einstellungen": {…}}` (der ganze neue Satz) | **400** «Kein Projektordner angegeben.» / «Es fehlen die Einstellungen.»; **404** kein Projekt; **400** wenn die Kette damit nicht baut (Satz der Bibliothek) oder ein Feld unbekannt ist («Diese Einstellung kennt das Programm nicht: …») — **dann wird nichts gespeichert**; **400** bei Kollision, siehe §6 |
 | `/api/skizze` | `ordner` (freiwillig), `png_base64` (die Zeichnung als PNG, Base64), `ueber` (freiwillig: Bildname, auf den gezeichnet wurde; fehlt er, ist es eine Skizze auf leerem Grund), `bemerkung` (freiwillig), `name` (freiwillig; wird **nicht** Dateiname, sondern geht in die Bemerkung), `schluessel` (freiwillig, seit 22.09.2026: 8–128 Zeichen aus `A–Z a–z 0–9 . _ -`, z. B. eine UUID — gegen Doppelsendung, siehe unten) | `{"abgelegt": true, "skizze": "<dateiname>", "hinweis": "<satz>"}`, mit Schlüssel zusätzlich `"schluessel"` | **400** «Es fehlt der Projektordner oder die Zeichnung.»; **400** Schlüssel in falscher Form; **400** derselbe Schlüssel mit einer **anderen** Zeichnung («…schon mit einer ANDEREN Zeichnung angekommen…», es wird nichts abgelegt); **400** kein gültiges Base64 / kein PNG (erkannt an den ersten acht Bytes) / grösser als **2 MiB** (geprüft **vor** dem Schreiben); **400** Satz der Bibliothek; **400** «Die Zeichnung liess sich nicht schreiben: …» |
@@ -427,6 +429,47 @@ Antwort an den Mac, nicht im Fenster des Dienstes.
 | Erfolg | `{"verbunden": true, "benutzer": …, "kennwort": …, "satz": "Verbunden. Benutzer und Kennwort kommen nur dieses eine Mal über die Leitung."}` — seit dem 22.09.2026. Vorher hiess der Satz «Dieses Gerät merkt sich die Anmeldung»; das stimmt für die App (Schlüsselbund), nicht für einen Browser auf der Koppelseite, und der Server kann es für keines der beiden wissen. Ob und wo die Anmeldung aufbewahrt wird, sagt die App selbst. |
 
 Ein Weg, eine erteilte Anmeldung zurückzuziehen oder ein Gerät zu vergessen: **nicht vorhanden.**
+
+## 7b · Der Mac koppelt sich selbst (Entscheid 83, 13.10.2026)
+
+Der Mac sucht den Heim-PC (Tailscale: `tailscale status --json`, je Gerät `GET /api/hallo`;
+WLAN: Bonjour `_visbox._tcp` mit TXT `tls=1`), fordert eine Zahl an und tauscht sie wie jedes
+Gerät an `POST /api/verbinden` gegen Benutzer und Kennwort.
+
+**`POST /api/kopplung/anfordern`** — **ohne Anmeldung**, Rumpf `{}` (höchstens 1 KiB wie
+`verbinden`). Die Zahl erscheint im Fenster des Dienstes und als Mitteilung (`notify-send`),
+**nie in der Antwort**.
+
+| Antwort | Rumpf |
+|---|---|
+| **200**, neue Zahl | `{"angezeigt": true, "neu": true, "gilt_bis": "HH:MM", "gilt_noch_s": 300, "versuche": 3, "satz": "Zahl am Heim-PC angezeigt, gültig bis …"}` |
+| **200**, gedrosselt, die letzte gilt noch | `{"angezeigt": true, "neu": false, "gilt_bis", "gilt_noch_s", "versuche", "satz": "Die Zahl steht schon am Heim-PC, … Eine neue gibt es in N s."}` |
+| **429**, gedrosselt, keine gilt | `{"angezeigt": false, "warten_s": N, "satz"}` |
+| **400** | Server ohne Kennwort: `{"fehler": …}` |
+
+| | |
+|---|---|
+| Frist | **300 s**, stetige Uhr (`kopplung.FRIST_ANGEFORDERT_S`) |
+| Versuche | **3** (`kopplung.VERSUCHE_ANGEFORDERT`); der Mac zählt selbst mit und meldet nach dem dritten «geschlossen» — der Server sagt es absichtlich nicht |
+| Drossel | höchstens **eine neue Zahl je 30 s** (`kopplung.DROSSEL_ANGEFORDERT_S`), gesetzt |
+| Verbrauch | einmal; eine neue Zahl ersetzt jede offene (auch eine fürs iPad) |
+| Ablehnung | «Das hat nicht geklappt. Am Mac «Neue Zahl anfordern» wählen — sie erscheint am Heim-PC.» |
+
+**`POST /api/verbinden` sagt seither, wohin es künftig geht** — Feld `zugang` in der
+Erfolgsantwort (für jedes Gerät; die iPad-App liest es nicht und braucht es nicht):
+
+* über den verschlüsselten Zuhörer im Heim-WLAN (`--heimnetz`): `{"weg": "heimnetz", "adresse":
+  "https://<adresse-im-wlan>:8732", "zertifikat_sha256": "<64 hex>"}` — der Mac prüft, dass der
+  Fingerabdruck der ist, den er im Handschlag sah, und **heftet ihn an**;
+* sonst: `{"weg": "wie_gefragt", "adresse": null, "zertifikat_sha256": null}` — die Adresse,
+  unter der gefragt wurde (über Tailscale kennt der Server seinen Namen nicht, der Mac schon).
+
+**Der Zuhörer im Heim-WLAN** (`--heimnetz`, nur mit `--kennwort-datei`): eigene Adresse im WLAN,
+Anschluss 8732, **nur TLS ≥ 1.2** (wer Klartext schickt, bekommt keine Antwort), selbst
+unterschriebenes Zertifikat (`openssl`, im Dienstordner), dieselbe Tür und dieselbe Kopplung wie
+der Hauptserver. Warum die Zahl nicht mit dem Fingerabdruck verrechnet wird (eine Million Werte
+sind in unter einer Sekunde durchprobiert) und was das «Zeichen des Heim-PC» leistet, steht in
+`src/aiimaging/heimnetz.py` (`ZEICHEN_STELLEN`); Betrieb und Abschalten in `betrieb/README.md`.
 
 ## 8 · Finden im Heimnetz
 
