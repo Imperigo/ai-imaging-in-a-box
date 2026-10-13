@@ -2151,7 +2151,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 kamera_huellbox=None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None,
-                _raeume=None, _pipeline_lage=None):
+                _raeume=None, _pipeline_lage=None, _kontext_vorbereiten=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
 
     Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
@@ -2203,6 +2203,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     from . import bildlesen, bildschreiben, geometrie_qa, render, seams, tiefenschaetzer
 
     multipass = _multipass or seams.glb_zu_multipass
+    # Die Splat-Bruecke (Entscheid 79, 13.10.2026) — als Naht, damit der Netz-Weg ohne GPU
+    # und ohne `.venv-splat` pruefbar ist.
+    kontext_vorbereiten = _kontext_vorbereiten or seams.kontext_vorbereiten
     rendern = _rendere or render.rendere
     messen = _qa or tiefenschaetzer.qa_gegen_soll
     soll_lesen = _soll or bildlesen.tiefen_aus_report
@@ -2240,6 +2243,21 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             raise AbholerError(
                 "Umgebung (Splat) bestellt, aber nicht verwendbar: "
                 + ("; ".join(kontext.get("maengel") or ()) or "keine Datei genannt"))
+        # DER SPLAT WIRD ZUM NETZ (Owner-Entscheid 79, 13.10.2026) — EINMAL je Auftrag, vor
+        # den Kameras; die Naht speichert das Netz nach Inhalt, eine zweite Kamera und ein
+        # zweiter Auftrag mit demselben Splat rechnen es nicht neu. Fehlt die Bruecke oder
+        # scheitert sie, bleibt es bei den Kugeln — mit einem Satz in `verdict.hinweise`
+        # (ueber den Vermerk am Kameraurteil): ein stiller Rueckfall saehe aus wie das neue
+        # Bild. Der Vermerk traegt `weg` und die Kennzahlen des Netzes, nie einen Pfad.
+        if kontext is not None:
+            vorbereitet = kontext_vorbereiten(kontext["ply"], matrix=kontext.get("matrix"))
+            kontext = dict(
+                kontext, weg=vorbereitet["weg"], netz=vorbereitet.get("netz"),
+                netz_grund=vorbereitet.get("grund"), multipass_ply=vorbereitet["ply"],
+                hinweise=[*(kontext.get("hinweise") or ()),
+                          *([vorbereitet["hinweis"]] if vorbereitet.get("hinweis") else [])])
+            # Auch der Befund des Auftrags (`befund.json`) liest den Kontext aus der Szene.
+            szene["kontext"] = kontext
         # DIE HOCHACHSE DES AUFTRAGS SCHLAEGT DIE ANNAHME.
         #
         # `kosmovis.render-scene/v1` hat kein Feld dafuer, also gilt hier sonst
@@ -2536,7 +2554,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DER SPLAT ALS UMGEBUNG — nur, wenn bestellt. Ohne ihn bleiben Einstellungen
             # und Speicherschluessel Wort fuer Wort die bisherigen.
             if kontext is not None:
-                einstellungen["kontext_ply"] = kontext["ply"]
+                # Das Netz aus der Bruecke, sonst der Splat selbst (Kugel-Notloesung).
+                einstellungen["kontext_ply"] = kontext.get("multipass_ply") or kontext["ply"]
                 if kontext.get("matrix") is not None:
                     einstellungen["kontext_matrix"] = list(kontext["matrix"])
 
@@ -3023,7 +3042,9 @@ MULTIPASS_DURCHGEREICHT = {
     "stillstand_frist_s": "verarbeiter(stillstand_frist_s=…)",
     # Seit 08.10.2026 (Owner-Entscheid 76), Feldnamen vom Integrator.
     "kontext_ply": "szene['kontext']['ply'] aus RenderScene.context.ply "
-                   "(kosmo_szene.kontext_aus_szene); nur wenn bestellt",
+                   "(kosmo_szene.kontext_aus_szene); nur wenn bestellt. Seit 13.10.2026 "
+                   "(Entscheid 79) das daraus gerechnete NETZ (seams.kontext_vorbereiten); "
+                   "ohne Splat-Bruecke der Splat selbst als Kugel-Notloesung",
     "kontext_matrix": "szene['kontext']['matrix'] aus RenderScene.context.transform "
                       "(16 Zahlen zeilenweise, glTF-Welt); fehlt sie, die Einheit",
     # Seit auf-20261008-271: der Ausschnitt auch ohne Gelaende.

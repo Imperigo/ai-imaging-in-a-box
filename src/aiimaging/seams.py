@@ -51,6 +51,7 @@ _RUNNER_DIR = Path(__file__).resolve().parent / "runners"
 IFC_RUNNER = _RUNNER_DIR / "ifc_to_glb_runner.py"
 IFC_RAEUME_RUNNER = _RUNNER_DIR / "ifc_raeume_runner.py"
 BLENDER_RUNNER = _RUNNER_DIR / "blender_depth_stage.py"
+SPLAT_RUNNER = _RUNNER_DIR / "splat_zu_netz_runner.py"
 
 
 class SeamError(RuntimeError):
@@ -578,6 +579,289 @@ def finde_blender() -> str:
     raise SeamError(
         "Blender nicht gefunden. AIIMAGING_BLENDER setzen oder blender in den PATH legen."
     )
+
+
+# ======================================================================================
+# DIE SPLAT-BRÜCKE — Splat → Netz (Owner-Entscheid 79, 13.10.2026)
+# ======================================================================================
+#
+# **Anlass:** Der Splat ging bis hierher als harte Kugeln ins Bild, und das Bildmodell malte
+# daraus «Konfetti» (`auf-20261008-271` bis `-274`). gsplat rendert ihn richtig, Open3D
+# verschmilzt die Tiefen zu einem farbigen Netz, Blender lädt das Netz wie ein Objekt
+# (`aiimaging.kontext_netz`, `runners/splat_zu_netz_runner.py`). Beides läuft im
+# `.venv-splat`, als Subprozess — dieselbe Grenze wie bei IfcOpenShell, hier wegen des
+# Gewichts (torch, CUDA) und nicht wegen der Lizenz (alle drei permissiv, siehe NOTICE).
+
+#: Die Umgebungsvariable für das Python des `.venv-splat`.
+SPLAT_PYTHON_ENV = "AIIMAGING_SPLAT_PYTHON"
+
+#: Die Umgebungsvariable für den Ablageort der Netze (Speicher nach Inhalt).
+SPLAT_SPEICHER_ENV = "AIIMAGING_SPLAT_NETZ_SPEICHER"
+
+#: Gesamtfrist eines Brückenlaufs in Sekunden. GESETZT, nicht gemessen (13.10.2026): Rendern
+#: von 48 Blickwinkeln mit gsplat dauert auf einer Desktop-GPU Sekunden, die TSDF eines
+#: Strassenraums mit 5-cm-Voxeln auf der CPU eher Minuten. 30 Minuten lassen Luft für einen
+#: grossen Splat und begrenzen einen hängenden Lauf. Wie alle Gesamtfristen über
+#: :data:`ZEITFAKTOR_ENV` auf langsamere Geräte umgerechnet. Messauftrag am Heim-PC.
+GESAMTFRIST_SPLAT_S = 1800
+
+
+def finde_splat_python() -> str:
+    """Pfad zum Python des `.venv-splat` — dasselbe Muster wie :func:`finde_ifc_python`.
+
+    Reihenfolge: :data:`SPLAT_PYTHON_ENV`, dann `.venv-splat` im Projektwurzelverzeichnis.
+    **Kein Rückfall auf `sys.executable`**: torch, gsplat und open3d gehören nicht ins
+    Produkt-venv (Regel 4), und ein Rückfall hiesse, dass sie dort gesucht würden.
+
+    Anders als beim IFC-Python wird die Variable **auf Vorhandensein geprüft**: Fehlt die
+    Brücke, zeichnet der Aufrufer die Umgebung als Notlösung — und dafür muss ein Tippfehler
+    in der Variable genauso laut «nicht eingerichtet» heissen wie ein fehlendes venv, statt
+    erst im Subprozess als unverständlicher Startfehler aufzutauchen.
+
+    Raises:
+        SeamError: nicht eingerichtet — mit dem Weg, wie es eingerichtet wird.
+    """
+    if (env := os.environ.get(SPLAT_PYTHON_ENV)):
+        if Path(env).exists():
+            return env
+        raise SeamError(f"{SPLAT_PYTHON_ENV} zeigt auf eine Datei, die es nicht gibt "
+                        f"({Path(env).name!r}). Die Splat-Bruecke ist damit nicht "
+                        f"eingerichtet; siehe betrieb/SPLAT_BRUECKE.md.")
+    kandidat = Path(__file__).resolve().parents[2] / ".venv-splat" / "bin" / "python"
+    if kandidat.exists():
+        return str(kandidat)
+    raise SeamError(
+        ".venv-splat nicht gefunden — die Splat-Bruecke ist nicht eingerichtet. Anlegen mit "
+        "betrieb/splat-umgebung.sh (Anleitung: betrieb/SPLAT_BRUECKE.md), oder "
+        f"{SPLAT_PYTHON_ENV} setzen. Ein Rueckfall auf das Produkt-Python findet bewusst "
+        "nicht statt: torch, gsplat und open3d gehoeren nicht ins Produkt.")
+
+
+def _splat_speicher(speicher) -> Path:
+    if speicher is not None:
+        return Path(speicher)
+    if (env := os.environ.get(SPLAT_SPEICHER_ENV)):
+        return Path(env)
+    wurzel = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
+    return Path(wurzel) / "aiimaging" / "splat-netz"
+
+
+def splat_schluessel(sha256_splat: str, parameter: dict) -> str:
+    """Der Speicherschlüssel eines Netzes: sha256 des Splats **plus** aller Parameter.
+
+    Der Inhalt, nicht der Pfad (derselbe Grund wie ``kette.EINGABEDATEIEN``): Ein neu
+    aufgenommener Splat unter altem Namen ist kein Treffer, und derselbe Splat an einem
+    anderen Ort ist einer.
+    """
+    import hashlib
+
+    text = json.dumps({"splat": sha256_splat, "parameter": parameter}, sort_keys=True,
+                      ensure_ascii=True)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
+                  blickwinkel: int | None = None, voxel_m: float | None = None,
+                  renderer: str = "gsplat", speicher=None,
+                  timeout: float = GESAMTFRIST_SPLAT_S, _starte=None) -> dict:
+    """Splat (3DGS-PLY) → farbiges Netz (PLY), über den Subprozess im `.venv-splat`.
+
+    **Zwischengespeichert nach sha256 des Splats plus Parametern** (:func:`splat_schluessel`):
+    Der Abholer rechnet den Multipass je Kamera; das Netz desselben Splats entsteht einmal.
+
+    Args:
+        ply: der Splat.
+        ziel: Wohin das Netz zusätzlich kopiert wird; ``None`` heisst, es bleibt im Speicher
+            und ``netz_ply`` zeigt dorthin.
+        matrix: die Verortung (16 Zahlen zeilenweise, glTF-Welt) oder ``None``. **Das Netz
+            entsteht trotzdem ohne Matrix**, im System des Splats — gebraucht wird sie nur
+            für «oben» und den Massstab (:func:`aiimaging.kontext_netz.oben_und_massstab`):
+            Augenhöhe und Voxel sind Meter der Welt.
+        aufloesung, blickwinkel, voxel_m: ``None`` heisst die gesetzte Vorgabe aus
+            :mod:`aiimaging.kontext_netz`.
+        renderer: ``"gsplat"`` (echt) oder ``"cpu-probe"`` (nur Proben, siehe Runner).
+        speicher: Ablageort; sonst :data:`SPLAT_SPEICHER_ENV`, sonst
+            ``~/.cache/aiimaging/splat-netz``.
+
+    Returns:
+        Der Bericht des Runners, ergänzt um ``netz_ply`` (Pfad, nur für den Multipass —
+        geht nie nach aussen), ``netz.sha256``, ``splat.sha256`` und
+        ``zwischenspeicher = {treffer, schluessel}``.
+
+    Raises:
+        SeamError: nicht eingerichtet, Datei fehlt, Lauf gescheitert oder ohne Netz.
+    """
+    from aiimaging import kontext_netz as _kn
+
+    starte = _starte or _default_starte
+    frist = _gesamtfrist(timeout, was="timeout")
+    if frist is None:
+        raise SeamError("timeout=None gibt es fuer die Splat-Bruecke nicht: Der Runner "
+                        "schreibt seinen Bericht erst am Ende, und ohne Gesamtfrist waere "
+                        "ein haengender Lauf durch nichts begrenzt.")
+    # ZUERST DIE EINRICHTUNG, DANN DIE DATEI — dieselbe Reihenfolge wie bei `ifc_zu_glb`.
+    splat_python = finde_splat_python()
+    try:
+        fingerabdruck = _kontext.fingerabdruck(ply)
+        m = None if matrix is None else _kontext.pruefe_matrix(matrix)
+        oben, massstab = _kn.oben_und_massstab(m)
+        parameter = _kn.netz_parameter(
+            aufloesung=_kn.AUFLOESUNG_PX if aufloesung is None else aufloesung,
+            je_kreis=_kn.BLICKWINKEL_JE_KREIS if blickwinkel is None else blickwinkel,
+            voxel_m=_kn.VOXEL_M if voxel_m is None else voxel_m,
+            oben=oben, massstab=massstab, renderer=renderer)
+    except (_kontext.KontextError, _kn.KontextNetzError) as fehler:
+        raise SeamError(f"Splat-Bruecke: {fehler}") from fehler
+
+    schluessel = splat_schluessel(fingerabdruck["sha256"], parameter)
+    ordner = _splat_speicher(speicher) / schluessel
+    netz = ordner / "netz.ply"
+    bericht_datei = ordner / "bericht.json"
+
+    bericht = _splat_aus_speicher(netz, bericht_datei)
+    if bericht is not None:
+        bericht["zwischenspeicher"] = {"treffer": True, "schluessel": schluessel}
+    else:
+        ordner.mkdir(parents=True, exist_ok=True)
+        # IN EINEN NEBENORDNER RECHNEN UND ERST AM ENDE UMBENENNEN: Ein abgebrochener Lauf
+        # hinterliesse sonst ein halbes Netz unter dem richtigen Namen — und das waere beim
+        # naechsten Mal ein Treffer.
+        with tempfile.TemporaryDirectory(dir=ordner, prefix="lauf-") as roh:
+            roh_netz, roh_bericht = Path(roh) / "netz.ply", Path(roh) / "bericht.json"
+            cmd = [splat_python, str(SPLAT_RUNNER), str(ply), str(roh_netz),
+                   "--report", str(roh_bericht),
+                   "--aufloesung", str(parameter["aufloesung"]),
+                   "--blickwinkel", str(parameter["blickwinkel_je_kreis"]),
+                   "--voxel-m", repr(parameter["voxel_m"]),
+                   "--oben", ",".join(repr(k) for k in parameter["oben"]),
+                   "--massstab", repr(parameter["massstab"]),
+                   "--renderer", renderer]
+            ergebnis = starte(cmd, frist)
+            if ergebnis.returncode != 0:
+                raise SeamError(f"Splat→Netz fehlgeschlagen (Code {ergebnis.returncode}):\n"
+                                f"{_fehlertext(ergebnis, bericht=roh_bericht)}")
+            try:
+                bericht = json.loads(roh_bericht.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                try:
+                    bericht = json.loads(ergebnis.stdout)
+                except (json.JSONDecodeError, TypeError) as fehler:
+                    raise SeamError(f"Splat-Runner lieferte keinen lesbaren Bericht: "
+                                    f"{fehler}") from fehler
+            if not isinstance(bericht, dict) or bericht.get("status") != "ok":
+                grund = bericht.get("error") if isinstance(bericht, dict) else repr(bericht)
+                raise SeamError(f"Splat-Runner meldet keinen Erfolg: {grund}")
+            # NACHSEHEN STATT GLAUBEN: Ein Erfolg ohne Netz ist ein Fehlschlag.
+            try:
+                kennzahlen = _kn.netz_kennzahlen(roh_netz)
+            except _kn.KontextNetzError as fehler:
+                raise SeamError(f"Splat-Runner meldete Erfolg, aber: {fehler}") from fehler
+            bericht.setdefault("netz", {})
+            bericht["netz"].update({"datei": netz.name, "sha256": kennzahlen["sha256"],
+                                    "bytes": kennzahlen["bytes"]})
+            bericht.setdefault("splat", {})
+            bericht["splat"].update({"datei": fingerabdruck["datei"],
+                                     "sha256": fingerabdruck["sha256"],
+                                     "bytes": fingerabdruck["bytes"]})
+            bericht["parameter"] = parameter
+            os.replace(roh_netz, netz)
+            bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
+                                     encoding="utf-8")
+        bericht["zwischenspeicher"] = {"treffer": False, "schluessel": schluessel}
+
+    ausgabe = netz
+    if ziel is not None:
+        ausgabe = Path(ziel)
+        ausgabe.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(netz, ausgabe)
+    bericht["netz_ply"] = str(ausgabe)
+    return bericht
+
+
+def _splat_aus_speicher(netz: Path, bericht_datei: Path) -> dict | None:
+    """Ein abgelegtes Netz — oder ``None``, wenn der Eintrag nicht hält, was er zusagt.
+
+    Geprüft wird, dass der Bericht lesbar ist und ``ok`` sagt, und dass das Netz da ist und
+    **dieselbe Prüfsumme** trägt wie im Bericht. Ein aufgeräumter Ordner oder ein halb
+    überschriebenes Netz ist kein Treffer, sondern wird neu gerechnet.
+    """
+    from aiimaging import kontext_netz as _kn
+
+    if not (netz.is_file() and bericht_datei.is_file()):
+        return None
+    try:
+        bericht = json.loads(bericht_datei.read_text(encoding="utf-8"))
+        if not isinstance(bericht, dict) or bericht.get("status") != "ok":
+            return None
+        if _kn.netz_kennzahlen(netz)["sha256"] != (bericht.get("netz") or {}).get("sha256"):
+            return None
+    except (OSError, json.JSONDecodeError, _kn.KontextNetzError):
+        return None
+    return bericht
+
+
+def _pfade_gekuerzt(text: str) -> str:
+    """Absolute Pfade in einem Satz auf ihren Dateinamen kürzen — Regel 3.
+
+    Der Grund eines gescheiterten Brückenlaufs geht in den Befund, und ein Satz aus einem
+    fremden Prozess (Traceback, Fehlermeldung) trägt gern den ganzen Pfad mit Benutzerkonto.
+    """
+    import re
+
+    return re.sub(r"(?:/[^\s'\"/:]+)+/([^\s'\"/:]+)", r"\1", str(text))
+
+
+def kontext_vorbereiten(kontext_ply, *, matrix=None, _splat_zu_netz=None) -> dict:
+    """Was als Umgebung in den Multipass geht: das **Netz** — oder, als Notlösung, die Kugeln.
+
+    Gemeinsam für Abholer und Kette (``kette._fuehre_multipass``), damit beide Wege dieselbe
+    Entscheidung treffen.
+
+    * Ist ``kontext_ply`` schon ein Netz (PLY mit Flächen), geht es unverändert durch.
+    * Sonst wird :func:`splat_zu_netz` gerufen (zwischengespeichert).
+    * **Fehlt die Brücke oder scheitert sie, bleibt es beim Kugel-Weg** (Owner-Auftrag
+      13.10.2026) — und das wird gesagt: ``hinweis`` ist ein Satz für
+      ``verdict.hinweise``. Ein stiller Rückfall sähe aus wie das neue Bild.
+
+    Returns:
+        ``{ply, weg: "netz"|"kugeln", netz: Kennzahlen|None, grund: str|None,
+        hinweis: str|None}`` — ``ply`` ist der Pfad für den Multipass (nie nach aussen).
+    """
+    from aiimaging import kontext_netz as _kn
+
+    try:
+        if _kn.art_der_datei(kontext_ply) == "netz":
+            kennzahlen = _kn.netz_kennzahlen(kontext_ply)
+            return {"ply": str(kontext_ply), "weg": "netz", "grund": None, "hinweis": None,
+                    "netz": {"ecken": kennzahlen["ecken"], "dreiecke": kennzahlen["dreiecke"],
+                             "sha256": kennzahlen["sha256"], "quelle": "geliefert"}}
+    except (_kn.KontextNetzError, OSError):
+        pass                                  # kein lesbares Netz — dann wie ein Splat
+    brueckenlauf = _splat_zu_netz or splat_zu_netz
+    try:
+        bericht = brueckenlauf(kontext_ply, matrix=matrix)
+    except SeamError as fehler:
+        nicht_eingerichtet = "nicht eingerichtet" in str(fehler)
+        return {"ply": str(kontext_ply), "weg": "kugeln", "netz": None,
+                "grund": _pfade_gekuerzt(str(fehler))[:400],
+                "hinweis": (_kn.SATZ_KUGELN_NICHT_EINGERICHTET if nicht_eingerichtet
+                            else _kn.SATZ_KUGELN_GESCHEITERT)}
+    except Exception as fehler:               # noqa: BLE001 — Rückfall statt Abbruch, gesagt
+        return {"ply": str(kontext_ply), "weg": "kugeln", "netz": None,
+                "grund": _pfade_gekuerzt(f"{type(fehler).__name__}: {fehler}")[:400],
+                "hinweis": _kn.SATZ_KUGELN_GESCHEITERT}
+    n = bericht.get("netz") or {}
+    bw = bericht.get("blickwinkel") or {}
+    parameter = bericht.get("parameter") or {}
+    return {"ply": bericht["netz_ply"], "weg": "netz", "grund": None, "hinweis": None,
+            "netz": {"ecken": n.get("ecken"), "dreiecke": n.get("dreiecke"),
+                     "sha256": n.get("sha256"), "quelle": "splat-bruecke",
+                     "renderer": bericht.get("renderer"), "geraet": bericht.get("geraet"),
+                     "blickwinkel": bw.get("gesamt"), "voxel_m": parameter.get("voxel_m"),
+                     "aufloesung": parameter.get("aufloesung"),
+                     "rechenzeit_s": (bericht.get("zeiten_s") or {}).get("gesamt_s"),
+                     "zwischenspeicher_treffer": (bericht.get("zwischenspeicher")
+                                                  or {}).get("treffer")}}
 
 
 def _ifc_frist(timeout):
@@ -1462,6 +1746,10 @@ def _tiefe_nachbearbeiten_innen(report: dict, out_dir: Path,
             umgebung = _maske.umgebung_je_bildpunkt(report)
             if umgebung is not None:
                 weiter["umgebung"] = umgebung
+                # Nur auf dem Netz-Weg gesetzt (13.10.2026): Ohne Netz bleibt der Aufruf
+                # Wort fuer Wort der bisherige — auch fuer eine mitschreibende Attrappe.
+                if not _kontext.wird_geglaettet(report):
+                    weiter["glaetten"] = False
         normalisierung = bildschreiben.tiefe_exr_zu_png(
             exr, ziel, timeout=timeout, _starte=_starte, **weiter)
     except Exception as e:                              # Befund als Feld, nicht als Absturz

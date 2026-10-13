@@ -38,6 +38,14 @@ Was gesetzt und nicht gemessen ist
 Splat besteht aus weichen, halbdurchsichtigen Ellipsoiden; Cycles rendert hier **harte
 Kugeln**. Das ist eine Näherung, und ihre Zahlen sind Setzungen, keine Messung — welche
 Werte an echten Splats das schönste Bild geben, ist am Heim-PC zu messen.
+
+Seit dem 13.10.2026: die Kugeln sind die Notlösung
+--------------------------------------------------
+Owner-Entscheid 79: Der Splat wird mit gsplat gerendert und mit Open3D zu einem farbigen
+**Netz** verschmolzen (:mod:`aiimaging.kontext_netz`, :func:`aiimaging.seams.splat_zu_netz`);
+Blender lädt das Netz als Objekt, mit derselben Matrix wie hier. Die Kugeln bleiben, wo die
+Brücke fehlt oder scheitert — gesagt in ``verdict.hinweise``. Geglättet wird nur noch der
+Kugel-Weg (:func:`wird_geglaettet`).
 """
 from __future__ import annotations
 
@@ -49,7 +57,7 @@ __all__ = [
     "DECKKRAFT_MIN", "KontextError", "MATRIX_EINHEIT", "RADIUS_MAX_M", "RADIUS_MIN_M",
     "SH_C0", "fingerabdruck", "matrix_massstab", "matrix_nach_blender", "pruefe_matrix",
     "GLAETTE_MIN_PX", "GLAETTE_PX_JE_128", "glaette_radius", "glaette_tiefe",
-    "schliesse_umgebung",
+    "schliesse_umgebung", "wird_geglaettet",
 ]
 
 
@@ -339,3 +347,26 @@ def glaette_tiefe(tiefe, umgebung, breite: int, hoehe: int, radius: int | None =
             neu[i] = s / c
     return neu, {"radius_px": r, "n_umgebung": int(sum(1 for u in umgebung if u)),
                  "n_gefuellt": n_gefuellt}
+
+
+def wird_geglaettet(bericht) -> bool:
+    """Wird die Umgebung dieses Laufs geglättet (Entscheid 77) — oder ist sie ein Netz?
+
+    **Nur der Kugel-Weg wird geglättet** (Entscheid 13.10.2026, mit Entscheid 79). Das
+    Glätten war die Antwort auf eine **lückige Streuung** von Kugeln: schliessen, was
+    zwischen ihnen liegt, und die Tiefe über 50 Bildpunkte mitteln. Das Netz der
+    Splat-Brücke ist schon eine Fläche. Seine Lücken sind **echte** — Himmel zwischen
+    Kronen, ein Durchblick —, und dort machte das Schliessen aus Luft eine Wand; genau das
+    hat ``auf-20261008-274`` (B) am Kugel-Weg gesehen («Himmel zwischen Kronen wird
+    Blockwand»). Das Mitteln verschmierte zudem echte Kanten der Umgebung.
+
+    **Was bleibt:** das Modellband der Normierung (``bildschreiben.MODELL_BAND``) — es hängt
+    nicht an der Form der Umgebung, sondern daran, dass sie die Skala nicht strecken darf.
+
+    Erkannt am Block ``kontext`` des Blender-Berichts (``quelle``). Ohne Block oder bei
+    unbekannter Quelle: wie bisher geglättet.
+    """
+    from aiimaging.kontext_netz import QUELLE_NETZ   # noqa: PLC0415 — stdlib-Modul
+
+    block = (bericht or {}).get("kontext") if isinstance(bericht, dict) else None
+    return not (isinstance(block, dict) and block.get("quelle") == QUELLE_NETZ)

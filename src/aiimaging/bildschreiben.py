@@ -853,8 +853,13 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
                      bittiefe: int = 16, ferne_trennen: bool = False,
                      ferne_abstand: float | None = None,
                      timeout: int = 300, _leser=None, _starte=None,
-                     umgebung: Sequence[bool] | None = None) -> dict:
+                     umgebung: Sequence[bool] | None = None,
+                     glaetten: bool = True) -> dict:
     """EXR in Metern → normalisiertes Graustufen-PNG. Der ganze Weg, ohne Blender.
+
+    ``glaetten`` (13.10.2026): Mit ``False`` wird die Umgebung **nicht** gemittelt, nur
+    nach dem Modellband normiert — der Netz-Weg der Splat-Brücke (siehe
+    :func:`aiimaging.kontext.wird_geglaettet`). Vorgabe wie bisher: geglättet.
 
     Das ist die Stelle, die :func:`aiimaging.seams.glb_zu_multipass` nach dem Blender-Lauf
     aufruft. Sie ersetzt den Schritt, der bis zum 18.08.2026 im Runner stand.
@@ -904,10 +909,17 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
     # Tiefe vor der Normierung gemittelt und ihre Luecken gefuellt — `umgebung` ist schon
     # die geschlossene Flaeche (`maske.umgebung_je_bildpunkt`). Ohne Umgebung: nichts.
     glaettung = None
-    if umgebung is not None:
+    if umgebung is not None and glaetten:
         from aiimaging import kontext as _kontext
         werte, glaettung = _kontext.glaette_tiefe(werte, umgebung, breite, hoehe,
                                                   gueltig_bis_m=hintergrund_ab_m)
+    elif umgebung is not None:
+        # DER NETZ-WEG (Entscheid 79, 13.10.2026): Die Umgebung ist eine geschlossene
+        # Flaeche; ihre Luecken sind echte (Himmel zwischen Kronen). Gemittelt wuerde dort
+        # aus Luft eine Wand (`auf-20261008-274` B: «Himmel zwischen Kronen wird Blockwand»).
+        glaettung = {"angewandt": False,
+                     "grund": "Netz-Weg: die Umgebung ist schon eine Flaeche, ihre Luecken "
+                              "sind echte — nur nach dem Modellband normiert."}
     grau, normalisierung = normalisiere_tiefe(
         werte, hintergrund_ab_m=hintergrund_ab_m, ferne_trennen=ferne_trennen,
         ferne_abstand=ferne_abstand,

@@ -74,6 +74,30 @@ https://github.com/mikedh/trimesh
 Nur im .venv-ifc (Runner-Environment), nicht im Produkt-Environment.
 
 --------------------------------------------------------------------------------
+Splat-Bruecke (Splat -> Netz): gsplat, Open3D, PyTorch
+Hinter der Prozessgrenze, eigene Umgebung (.venv-splat), seit 13.10.2026
+
+gsplat 1.5.x   Apache-2.0
+  https://github.com/nerfstudio-project/gsplat/blob/main/LICENSE
+Open3D         MIT
+  https://github.com/isl-org/Open3D/blob/main/LICENSE
+PyTorch        BSD-3-Clause
+  https://github.com/pytorch/pytorch/blob/main/LICENSE
+
+Owner-Entscheid 79 (docs/SPLAT_WEGE_2026-10-13.md, Lizenzen dort gelesen):
+gsplat rendert den Splat aus vielen Blickwinkeln, Open3D verschmilzt die
+Tiefen zu einem farbigen Netz. Alle drei sind permissiv; die Prozessgrenze
+steht hier nicht aus Lizenzgruenden, sondern wegen Regel 4: torch zieht die
+CUDA-Laufzeit nach (siehe den Block "Bildmodell-Stufe" unten, dieselben
+proprietaeren NVIDIA-Pakete), und gsplat rendert nur mit CUDA. Aufruf
+ausschliesslich als Subprozess:
+    .venv-splat/bin/python src/aiimaging/runners/splat_zu_netz_runner.py
+Kein `import gsplat`, `import open3d` oder `import torch` dafuer im
+Produkt-Environment; tests/test_prozessgrenze.py wacht ueber gsplat und
+open3d. Unveraendert verwendet, austauschbar (die Kugel-Notloesung in
+Blender bleibt als Rueckfall). Einrichten: betrieb/SPLAT_BRUECKE.md.
+
+--------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 GEOS - Geometry Engine Open Source                 LGPL-2.1

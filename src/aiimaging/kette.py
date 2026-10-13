@@ -104,7 +104,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    backbone, bildlesen, bildschreiben, contracts, geometrie_qa, glbbox, kontext, maske,
+    backbone, bildlesen, bildschreiben, contracts, geometrie_qa, glbbox, kontext,
+    kontext_netz, maske,
     raumkamera, render, seams, tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
@@ -1433,6 +1434,18 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
               if name in p}
     if "multipass_timeout" in p:
         weiter["timeout"] = p["multipass_timeout"]
+    # DIE SPLAT-BRUECKE (Owner-Entscheid 79, 13.10.2026): Ein Splat geht als NETZ in den
+    # Multipass, wenn die Bruecke eingerichtet ist; sonst als Kugeln, und das steht im
+    # Bericht. Dieselbe Entscheidung wie im Abholer (`seams.kontext_vorbereiten`). Kein
+    # eigener Knoten: Das Netz haengt allein am Inhalt des Splats und an gesetzten Zahlen,
+    # und die Naht speichert es danach (sha256 + Parameter) — ein Knoten braechte nur einen
+    # zweiten Speicher fuer dasselbe Netz.
+    kontext_weg = None
+    if weiter.get("kontext_ply"):
+        vorbereitet = seams.kontext_vorbereiten(weiter["kontext_ply"],
+                                                matrix=weiter.get("kontext_matrix"))
+        weiter["kontext_ply"] = vorbereitet["ply"]
+        kontext_weg = {k: vorbereitet[k] for k in ("weg", "netz", "grund", "hinweis")}
     # DIE RAHMUNG NACH DEM BAUWERK (30.09.2026) — nur mit Richtungskamera, ohne eigene Box und
     # ohne Standpunkt von Hand. Beweislauf auf-20260930-188: Form 6/8 gegen 0/8.
     rahmung_vermerk = None
@@ -1454,6 +1467,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     bericht.setdefault("status", STATUS_OK)
     if rahmung_vermerk is not None:
         bericht["rahmung"] = rahmung_vermerk
+    if kontext_weg is not None:
+        bericht["kontext_weg"] = kontext_weg
 
     # DAS PNG MIT ABSTAND NEU AUS DER EXR. `glb_zu_multipass` hat es schon ohne Abstand
     # geschrieben; hier wird es ersetzt, samt Normierung. Warum nicht als Angabe an
@@ -2068,6 +2083,16 @@ def _cache_maengel(art: str, ausgaben: dict, bedarf: dict[str, Bedarf]) -> list[
         # Doppelmeldungen werden in Kauf genommen: Bei einer fehlenden Datei sagen beide
         # Netze dasselbe. Das ist der Preis dafür, dass keines vom anderen abhängt.
         maengel.extend(eigen.maengel(ausgaben))
+    # DIE KUGEL-NOTLOESUNG IST KEIN TREFFER (13.10.2026, Entscheid 79). Ihr Schluessel ist
+    # derselbe, den ein Netz-Lauf haette, sobald die Splat-Bruecke eingerichtet ist (im
+    # Knoten steht der Splat, nicht der Weg) — und ein alter Eintrag lieferte dann weiter das
+    # Konfetti. Darum wird sie nie als Treffer gehalten: Solange die Bruecke fehlt, rechnet
+    # ein Splat-Lauf jedes Mal neu; das kostet Blender-Zeit und ist gewollt.
+    if art == ART_MULTIPASS:
+        block = ausgaben.get("kontext")
+        if isinstance(block, dict) and block.get("quelle") == kontext_netz.QUELLE_SPLAT:
+            maengel.append("Umgebung als Kugeln (Notloesung) gezeichnet — kein Treffer, "
+                           "damit die Splat-Bruecke greift, sobald sie eingerichtet ist.")
     return maengel
 
 

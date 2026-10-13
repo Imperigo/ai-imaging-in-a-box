@@ -3828,6 +3828,54 @@ die **Sigmoid**-Funktion `1 / (1 + e^−x)` macht daraus den Wert zwischen 0 und
 einer festen Kugel, und ein Hauch Rauschen in der Luft würde sonst zur Wand vor dem
 Bauwerk.*
 
+**Splat-Brücke (Splat → Netz)** — Der Weg, auf dem aus einer Splat-Aufnahme eine gewöhnliche Fläche aus
+Dreiecken wird: Der Splat wird aus vielen Richtungen fotografiert (richtig, mit seinen weichen Wölkchen), aus
+jedem Bild wird abgelesen, wie weit die Dinge entfernt sind, und diese Entfernungen werden zu einer einzigen
+Oberfläche zusammengesetzt. Die Fläche trägt die Farben der Aufnahme. Ein Programm, das Flächen zeichnen kann
+(Blender), zeichnet sie dann ohne Lücken. *Im Projekt:* Entscheid 79, `seams.splat_zu_netz`,
+`runners/splat_zu_netz_runner.py`; ersetzt die Kugel-Notlösung, die das «Konfetti» verursachte.
+
+**Rastern (Rasterization)** — Ein 3D-Ding in ein Bild aus Bildpunkten verwandeln: für jedes Teil ausrechnen,
+auf welche Bildpunkte es fällt und mit welcher Farbe. Das Gegenstück zum Strahlenverfolgen, bei dem für jeden
+Bildpunkt ein Sehstrahl in die Szene geschickt wird; Rastern ist schneller. *Im Projekt:* gsplat rastert die
+Wölkchen eines Splats auf der Grafikkarte, weich überlagert und in ihrer richtigen Form und Drehung
+(`gsplat.rasterization`).
+
+**Erwartete Tiefe** — Bei einem Splat liegt hinter einem Bildpunkt oft nicht eine Fläche, sondern mehrere
+halbdurchsichtige Wölkchen hintereinander. Die erwartete Tiefe ist ihr gewichteter Mittelwert: Jedes zählt so
+viel, wie es zur Farbe des Bildpunkts beiträgt. So bekommt jeder Bildpunkt **eine** Entfernung, auch wenn
+mehrere Wölkchen beteiligt sind. *Im Projekt:* `render_mode="RGB+ED"` in gsplat («ED», expected depth);
+Bildpunkte, die zu weniger als der Hälfte gedeckt sind, gelten als leer (`kontext_netz.DECKKRAFT_LEER`).
+
+**TSDF (Verschmelzen von Tiefenbildern)** — Ein Verfahren, viele Tiefenbilder aus verschiedenen Richtungen zu
+einer Oberfläche zusammenzusetzen. Der Raum wird in kleine Würfel (Voxel) geteilt; jeder merkt sich, wie weit
+er vor oder hinter der gesehenen Fläche liegt, gemittelt über alle Bilder, die ihn sehen. Wo der Wert von
+«davor» zu «dahinter» wechselt, liegt die Oberfläche; daraus entsteht ein Netz aus Dreiecken. Der Name kommt vom
+Englischen *truncated signed distance function* — gekappter, vorzeichenbehafteter Abstand. *Im Projekt:* Open3D
+(`VoxelBlockGrid`) in der Splat-Brücke, 5-cm-Würfel (`kontext_netz.VOXEL_M`, gesetzt).
+
+**Voxel** — Ein kleiner Würfel in einem dreidimensionalen Raster, so wie ein Bildpunkt ein kleines Quadrat in
+einem Bild ist. *Im Projekt:* die Rechenzellen der TSDF; ihre Kantenlänge bestimmt, wie fein das Netz der
+Umgebung wird und wieviel Speicher es braucht.
+
+**Eckpunktfarbe (Vertexfarbe)** — Eine Farbe, die nicht als Bild auf eine Fläche geklebt ist, sondern an jedem
+Eckpunkt eines Netzes steht; dazwischen wird übergeblendet. Einfacher als eine Textur, und für ein dichtes Netz
+genau genug. *Im Projekt:* So trägt das Netz der Splat-Brücke die Farben der Aufnahme; Blender zeichnet sie als
+leuchtende Farbe, ohne sie neu zu beleuchten.
+
+**Insel (im Netz)** — Ein kleines Netzstück, das mit dem Rest nicht verbunden ist — meist ein Fetzen aus einer
+einzelnen falschen Tiefe. *Im Projekt:* Die Splat-Brücke entfernt Inseln unter 200 Dreiecken
+(`kontext_netz.INSEL_MIN_DREIECKE`, gesetzt).
+
+**CUDA** — Die Programmierschnittstelle von NVIDIA, über die Programme auf der Grafikkarte rechnen. Proprietär
+und nur auf NVIDIA-Karten. *Im Projekt:* gsplat rendert nur mit CUDA; darum läuft die Splat-Brücke am Heim-PC,
+nicht in der Cloud-Sitzung.
+
+**Ersatzrenderer (cpu-probe)** — Ein absichtlich einfacher Zeichner für Proben: Er malt jedes Wölkchen als
+kleines Quadrat und behält je Bildpunkt das nächste. Er sieht schlechter aus als gsplat, braucht aber keine
+Grafikkarte — so lässt sich der Rest der Brücke (Blickwinkel, Verschmelzen, Datei) überall prüfen.
+*Im Projekt:* `--renderer cpu-probe`; ein so entstandenes Netz trägt `nur_probe: true` und gilt nie als echtes.
+
 **Transformationsmatrix (4×4, zeilenweise)** — Sechzehn Zahlen in vier Zeilen, die sagen,
 wie ein Ding gedreht, vergrössert und verschoben wird, um an seinen Platz zu kommen. Die
 Verschiebung steht in der letzten Spalte, die letzte Zeile ist immer `0 0 0 1`.
@@ -6616,6 +6664,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §81: **Ausblenden (in der Prüfung)** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §82: **Glätten der Umgebung** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §83: **Messboden** |
+| 2026-10-13 | Ergaenzt beim Bau der Splat-Bruecke (Entscheid 79): **Splat-Brücke (Splat → Netz)**, **Rastern (Rasterization)**, **Erwartete Tiefe**, **TSDF (Verschmelzen von Tiefenbildern)**, **Voxel**, **Eckpunktfarbe (Vertexfarbe)**, **Insel (im Netz)**, **CUDA**, **Ersatzrenderer (cpu-probe)** |
 | 2026-10-13 | Ergaenzt aus Sitzung 74 §84: **Photogrammetrie**, **Relightable Gaussian Splatting (lichtaktiver Splat)**, **Fremdprogramm (vom Nutzer installiert)**; nachgefuehrt: **Messboden** (nur zum Trennen) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |

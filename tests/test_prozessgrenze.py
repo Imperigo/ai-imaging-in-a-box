@@ -30,7 +30,12 @@ from conftest import PAKET, RUNNER_DIR, SRC
 
 #: Module, die im Produkt-Environment nichts zu suchen haben. Ihre Lizenzen sind der
 #: Grund für die Prozessgrenze — nicht Geschmack.
-VERBOTEN = ("bpy", "ifcopenshell")
+#:
+#: ``gsplat`` und ``open3d`` seit dem 13.10.2026 (Entscheid 79, Splat-Brücke): beide
+#: permissiv, aber Regel 4 — sie laufen nur im ``.venv-splat`` hinter
+#: ``runners/splat_zu_netz_runner.py``. ``torch`` steht nicht hier: Die Bildmodell-Stufe
+#: (``aiimaging.render``) lädt es bewusst innerhalb einer Funktion (siehe NOTICE).
+VERBOTEN = ("bpy", "ifcopenshell", "gsplat", "open3d")
 
 
 def importierte_module(quelle: str) -> set[str]:
@@ -144,6 +149,8 @@ def test_frischer_interpreter_bleibt_frei_von_bpy_und_ifcopenshell():
 @pytest.mark.parametrize("dateiname, erwartet", [
     ("blender_depth_stage.py", "bpy"),
     ("ifc_to_glb_runner.py", "ifcopenshell"),
+    ("splat_zu_netz_runner.py", "gsplat"),
+    ("splat_zu_netz_runner.py", "open3d"),
 ])
 def test_runner_existiert_und_nutzt_sein_fremdmodul(dateiname, erwartet):
     """Die Grenze hat zwei Seiten: Was drüben liegt, DARF das Fremdmodul nutzen — dafür ist es da.
@@ -184,6 +191,7 @@ def test_seams_kennt_die_runner_nur_als_pfade():
 
     assert seams.BLENDER_RUNNER == RUNNER_DIR / "blender_depth_stage.py"
     assert seams.IFC_RUNNER == RUNNER_DIR / "ifc_to_glb_runner.py"
+    assert seams.SPLAT_RUNNER == RUNNER_DIR / "splat_zu_netz_runner.py"
     assert isinstance(seams.BLENDER_RUNNER, Path)
 
 

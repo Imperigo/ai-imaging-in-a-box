@@ -198,8 +198,9 @@ def _argumente():
     # entsteht nichts davon — kein Objekt, kein Berichtsblock, keine Zusatzdatei —, und
     # jeder Lauf ohne Splat bleibt, was er war. Siehe `_kontext_laden`.
     ap.add_argument("--kontext-ply", dest="kontext_ply", default=None,
-                    help="3DGS-PLY als Umgebung: sichtbar in Beauty und Tiefe, NICHT in "
-                         "Huellbox, Rahmung und Bauwerksmaske")
+                    help="3DGS-PLY (Kugel-Notloesung) oder Netz-PLY mit Flaechen (aus der "
+                         "Splat-Bruecke) als Umgebung: sichtbar in Beauty und Tiefe, NICHT "
+                         "in Huellbox, Rahmung und Bauwerksmaske. Erkannt am PLY-Kopf")
     ap.add_argument("--kontext-matrix", dest="kontext_matrix", default=None,
                     help="16 Zahlen 'm0,...,m15', 4x4 ZEILENWEISE, Lage des Splats in der "
                          "glTF-Welt (Meter, Y oben). Ohne Angabe die Einheit. Siehe "
@@ -466,6 +467,9 @@ def _huellbox_aus_text(text: str):
 #: Ein Name wäre die schwächere Wahl: Ein Bauteil darf heissen, wie es will.
 KONTEXT_MARKE = "aiimaging_kontext"
 KONTEXT_OBJEKT = "Kontext_Splat"
+#: Der Name des Netzes aus der Splat-Brücke (13.10.2026) — ein anderer als beim Splat, damit
+#: die Material-ID-Tabelle sagt, welcher Weg gezeichnet wurde.
+KONTEXT_NETZ_OBJEKT = "Kontext_Netz"
 KONTEXT_FARBE = "kontext_farbe"
 KONTEXT_RADIUS = "kontext_radius"
 #: Was ein 3DGS-PLY mindestens tragen muss. ``rot_*`` fehlt mit Absicht: Kugeln haben keine
@@ -617,6 +621,22 @@ def _kontext_modul():
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
         from aiimaging import kontext                       # noqa: PLC0415
         return kontext
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _kontext_netz_modul():
+    """``aiimaging.kontext_netz`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart wie :func:`_kontext_modul`. Von dort kommt die Erkennung, ob die
+    Kontextdatei ein Netz ist (PLY-Kopf mit Flächen). **Ohne das Modul bleibt es beim
+    Splat-Weg** — der hält bei einer Datei, die kein Splat ist, mit Grund an (fehlende
+    Spalten), statt zu raten.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import kontext_netz                  # noqa: PLC0415
+        return kontext_netz
     except Exception:                                      # noqa: BLE001
         return None
 
@@ -1218,6 +1238,13 @@ def _kontext_laden(a) -> tuple:
             "Lage, Schwellen und Fingerabdruck. Ohne sie wird kein Splat geladen — ein "
             "geratener Achsentausch legte ihn auf die Seite.")
     pfad = Path(a.kontext_ply)
+    # DAS NETZ AUS DER SPLAT-BRUECKE (Owner-Entscheid 79, 13.10.2026): Traegt die Datei
+    # Flaechen, ist sie ein Netz und wird wie ein Objekt geladen. Erkannt am PLY-Kopf
+    # (`element face`), nicht am Namen und nicht an einem Schalter — ein Schalter, der zur
+    # Datei nicht passt, legte ein Netz als Punktwolke an oder umgekehrt.
+    kn = _kontext_netz_modul()
+    if kn is not None and kn.art_der_datei(pfad) == "netz":
+        return _kontext_netz_laden(a, kx, kn)
     befund = {"quelle": "splat-ply", **kx.fingerabdruck(pfad)}
     roh_matrix = None
     if getattr(a, "kontext_matrix", None):
@@ -1356,6 +1383,115 @@ def _kontext_laden(a) -> tuple:
                              "[Z-up-Korrektur] * R_x(+90) * M"),
         "matrix_blender": [round(w, 9) for w in m_blender],
         # Mittelpunkte, ohne Radius — dieselbe Welt wie `bbox` (Blender, Z oben).
+        "huellbox": [[round(float(v), 6) for v in punkte_welt.min(axis=0)],
+                     [round(float(v), 6) for v in punkte_welt.max(axis=0)]],
+        "zaehlt_zur_bauwerksbox": False,
+        "zaehlt_zur_rahmung": False,
+    })
+    return obj, setze, befund
+
+
+def _kontext_netz_laden(a, kx, kn) -> tuple:
+    """Das Netz aus der Splat-Brücke als Umgebung laden (Owner-Entscheid 79, 13.10.2026).
+
+    Dieselben Zusagen wie der Kugel-Weg, damit alles danach dieselbe Szene sieht:
+    **dieselbe Matrix** (``kontext.matrix_nach_blender`` — das Netz steht im System des
+    Splats), **dieselbe Marke** :data:`KONTEXT_MARKE` (aus Hüllbox, Bauwerksbox, Meshzählung
+    und Material-ID-Zuweisung ausgeschlossen), **dieselbe Kennung** im Material-ID-Pass
+    (``quelle: "kontext"``, über einen «Set Material»-Knoten wie beim Splat, damit
+    :func:`_material_id_zuweisen` unverändert tauschen kann).
+
+    **Emission aus der Eckpunktfarbe**, aus demselben Grund wie beim Splat: Die Farbe ist das
+    Licht der Aufnahme; noch einmal beleuchtet, sähe die Umgebung doppelt belichtet aus. Der
+    PLY-Import von Blender 4.2 liest die Farbe als sRGB und legt sie linear ab (hier
+    nachgesehen: 200 → 0,5776) — als Emission gesetzt steht im PNG wieder die Farbe der Datei.
+
+    Returns:
+        ``(objekt, setze_material_knoten, befund)`` wie :func:`_kontext_laden`.
+    """
+    import mathutils
+    import numpy as np                                   # mit Blender ausgeliefert
+
+    pfad = Path(a.kontext_ply)
+    befund = {"quelle": kn.QUELLE_NETZ, **kx.fingerabdruck(pfad)}
+    roh_matrix = None
+    if getattr(a, "kontext_matrix", None):
+        roh_matrix = [float(t) for t in str(a.kontext_matrix).split(",")]
+    m_blender = kx.matrix_nach_blender(roh_matrix,
+                                       z_up_quelle=bool(getattr(a, "rotiere_z_up", False)))
+    welt = mathutils.Matrix([m_blender[4 * z:4 * z + 4] for z in range(4)])
+
+    vorher = set(bpy.data.objects)
+    # Achsen ausdrücklich als Einheit, wie beim Splat: Die Lage hängt allein an der Matrix.
+    bpy.ops.wm.ply_import(filepath=str(pfad), forward_axis="Y", up_axis="Z",
+                          global_scale=1.0, import_colors="SRGB")
+    neu = [o for o in bpy.data.objects if o not in vorher]
+    if len(neu) != 1 or neu[0].type != "MESH":
+        raise RuntimeError(f"Der PLY-Import von {pfad.name!r} ergab {len(neu)} Objekt(e) "
+                           f"statt eines Netzes.")
+    obj = neu[0]
+    obj.name = KONTEXT_NETZ_OBJEKT
+    netz = obj.data
+    if len(netz.polygons) == 0:
+        raise RuntimeError(f"{pfad.name!r} trägt nach dem Import keine Flächen.")
+    obj[KONTEXT_MARKE] = True
+    obj.matrix_world = welt
+    for strahl in ("visible_diffuse", "visible_glossy", "visible_transmission",
+                   "visible_volume_scatter"):
+        if hasattr(obj, strahl):
+            setattr(obj, strahl, False)
+
+    farbattribut = netz.color_attributes[0].name if len(netz.color_attributes) else None
+    material = bpy.data.materials.new("KONTEXT_Netz")
+    material.use_nodes = True
+    baum = material.node_tree
+    baum.nodes.clear()
+    emission = baum.nodes.new("ShaderNodeEmission")
+    emission.inputs["Strength"].default_value = 1.0
+    ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+    if farbattribut is not None:
+        attribut = baum.nodes.new("ShaderNodeAttribute")
+        attribut.attribute_type = "GEOMETRY"
+        attribut.attribute_name = farbattribut
+        baum.links.new(attribut.outputs["Color"], emission.inputs["Color"])
+    else:
+        # Ohne Eckpunktfarbe ein neutrales Grau — und gesagt, im Befund unten.
+        emission.inputs["Color"].default_value = (0.2, 0.2, 0.2, 1.0)
+    baum.links.new(emission.outputs["Emission"], ausgang.inputs["Surface"])
+    netz.materials.clear()
+
+    gruppe = bpy.data.node_groups.new("Kontext_Netz", "GeometryNodeTree")
+    gruppe.interface.new_socket(name="Geometry", in_out="INPUT",
+                                socket_type="NodeSocketGeometry")
+    gruppe.interface.new_socket(name="Geometry", in_out="OUTPUT",
+                                socket_type="NodeSocketGeometry")
+    rein = gruppe.nodes.new("NodeGroupInput")
+    raus = gruppe.nodes.new("NodeGroupOutput")
+    setze = gruppe.nodes.new("GeometryNodeSetMaterial")
+    setze.inputs["Material"].default_value = material
+    gruppe.links.new(rein.outputs[0], setze.inputs["Geometry"])
+    gruppe.links.new(setze.outputs["Geometry"], raus.inputs[0])
+    modifikator = obj.modifiers.new("Kontext_Netz", "NODES")
+    modifikator.node_group = gruppe
+
+    n = len(netz.vertices)
+    lage = np.empty(n * 3, dtype=np.float32)
+    netz.vertices.foreach_get("co", lage)
+    lage = lage.reshape(n, 3).astype(np.float64)
+    m = np.array(m_blender, dtype=np.float64).reshape(4, 4)
+    punkte_welt = lage @ m[:3, :3].T + m[:3, 3]
+    befund.update({
+        "ecken": n,
+        "dreiecke": int(sum(len(p.vertices) - 2 for p in netz.polygons)),
+        "punkte_gelesen": None,
+        "punkte_gerendert": None,
+        "farbe": ("Eckpunktfarbe als Emission (sRGB der Datei)" if farbattribut
+                  else "keine Eckpunktfarbe in der Datei — neutrales Grau als Emission"),
+        "matrix_angewandt": roh_matrix is not None,
+        "matrix_bedeutung": ("4x4 zeilenweise, glTF-Welt (Meter, Y oben); in Blender: "
+                             "[Z-up-Korrektur] * R_x(+90) * M"),
+        "matrix_blender": [round(w, 9) for w in m_blender],
+        # Ecken des Netzes — dieselbe Welt wie `bbox` (Blender, Z oben).
         "huellbox": [[round(float(v), 6) for v in punkte_welt.min(axis=0)],
                      [round(float(v), 6) for v in punkte_welt.max(axis=0)]],
         "zaehlt_zur_bauwerksbox": False,

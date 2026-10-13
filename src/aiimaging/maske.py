@@ -1105,11 +1105,24 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
     ergebnis["material_id_png"] = str(material_id_png)
     # GEGLAETTET (Entscheid 77): Die Tiefe fuellt die Luecken der Umgebung; die Pruefung
     # blendet dieselben Punkte aus, sonst stuende dort Himmel im Soll und Laub im Bild.
-    if ergebnis.get("kontext_pixel"):
+    # Nur auf dem Kugel-Weg (13.10.2026, `kontext.wird_geglaettet`): Das Netz der
+    # Splat-Bruecke hat echte Luecken, und dieselben Punkte wie im Bild sind dann die rohen.
+    if ergebnis.get("kontext_pixel") and _wird_geglaettet(report):
         roh = ergebnis["kontext_pixel"]
         ergebnis["kontext_pixel"] = _umgebung_geschlossen(roh, farben, breite, hoehe)
         ergebnis["n_kontext_gefuellt"] = sum(ergebnis["kontext_pixel"]) - sum(roh)
     return ergebnis
+
+
+def _wird_geglaettet(report) -> bool:
+    """:func:`aiimaging.kontext.wird_geglaettet` — auch fuer einen Report als Pfad."""
+    from aiimaging import kontext as _kontext
+    if not isinstance(report, dict):
+        try:
+            report = json.loads(Path(report).read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            return True                                  # wie bisher
+    return _kontext.wird_geglaettet(report)
 
 
 def _umgebung_geschlossen(roh, farben, breite: int, hoehe: int) -> list[bool]:
@@ -1149,6 +1162,8 @@ def umgebung_je_bildpunkt(bericht: dict) -> list[bool] | None:
     roh = [(int(f[0]), int(f[1]), int(f[2])) in farben_kontext for f in farben]
     if not any(roh):
         return None
+    if not _wird_geglaettet(bericht):
+        return roh
     return _umgebung_geschlossen(roh, farben, breite, hoehe)
 
 

@@ -892,14 +892,29 @@ def kontext_vermerk(kontext: dict | None, bericht: dict | None = None) -> dict |
     Aus der gelesenen Bestellung (:func:`kontext_aus_szene`) und, wenn da, dem Block
     ``kontext`` des Blender-Berichts: Datei (Name, sha256), Lage (``fit``, ``crs_note``),
     Punktzahlen und der Anteil des Modells, den der Splat verdeckt.
+
+    **Seit dem 13.10.2026 (Entscheid 79) mit dem Weg:** ``weg`` ist ``"netz"`` (die
+    Splat-Brücke hat ein Netz geliefert) oder ``"kugeln"`` (Notlösung), ``netz`` die
+    Kennzahlen des Netzes (Ecken, Dreiecke, sha256, Blickwinkel, Voxel — kein Pfad),
+    ``netz_grund`` warum es Kugeln wurden. Gesetzt vom Abholer
+    (``seams.kontext_vorbereiten``); fehlt die Angabe, sagt es der Blender-Bericht
+    (``quelle``).
     """
+    from . import kontext_netz as _kontext_netz            # noqa: PLC0415 — stdlib
+
     if not kontext:
         return None
     block = (bericht or {}).get("kontext") or {}
     verdeckung = block.get("verdeckung") or {}
+    weg = kontext.get("weg")
+    if weg is None and block.get("quelle"):
+        weg = "netz" if block.get("quelle") == _kontext_netz.QUELLE_NETZ else "kugeln"
     return {
         "art": kontext.get("art"),
         "datei": kontext.get("datei"),
+        "weg": weg,
+        "netz": kontext.get("netz"),
+        "netz_grund": kontext.get("netz_grund"),
         "sha256": block.get("sha256"),
         "fit": kontext.get("fit"),
         "crs_note": kontext.get("crs_note"),
