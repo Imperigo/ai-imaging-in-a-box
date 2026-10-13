@@ -1,5 +1,9 @@
 # Splat zu 3D-Elementen — welche Wege es gibt und welche erlaubt sind (13.10.2026)
 
+**Codestand:** `49efdc2` (Messungen 271–274 bis dahin; der Splat-Weg ist noch nicht gebaut)
+
+**Grundlage:** `auf-20261008-271` bis `auf-20261008-274` (Konfetti); Lizenztexte und EULA am 13.10.2026 gelesen (Quellen unten)
+
 **Anlass.** Am echten Splat malte das Bildmodell «Konfetti» (`auf-20261008-271`–`274`, 9 von 9 Bildern, auch nach
 Glätten mit Radius 50). Der Owner fragte: *«wo liegt der Fehler, Gaussian Splats sollten komplett richtig verarbeitet
 werden?»* und wies auf offizielle Wege bei NVIDIA und Epic hin.
