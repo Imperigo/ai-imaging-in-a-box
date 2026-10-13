@@ -1,0 +1,330 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261008-274",
+ "worker": "local",
+ "rang": 61,
+ "folgt_auf": "auf-20261008-273",
+ "owner_entscheid": [
+  "77",
+  "78"
+ ],
+ "status": "erledigt — A1–A3 in WebKitGTK 2.52.6 an zwei echten Demohaus-Laeufen, B1–B4 am echten Splat (Lauf A, s/sSE/nNW, Seeds 0–2), C1–C4 an Halle ohne Splat, Demohaus (auto und Eingang+Uebersicht) und Testbau mit Gelaende; EINE Test-App fuer alles",
+ "beendet": "2026-10-08T18:35:00Z",
+ "weg": "EINE Wegwerf-Arbeitskopie (detached) auf 0a9433b68 (claude/kosmovis-v018-verlauf-feinschliff), darin lokal 0aeb240bb (claude/lw-splat-context) und cf839597c (claude/kosmovis-v018-splat-context) gemergt — beide Merges OHNE Konflikt, nicht gepusht. npm ci (Exit 0), npm run build (Exit 0), npx tauri build --no-bundle mit eigenem Cargo-Zielordner (Exit 0, 3 min 23 s; zweiter Bau 2 min 31 s, weil die Messhilfe zwei feste Befehle mehr brauchte), Binaerdatei umbenannt kopiert; nichts installiert. Eigener Xvfb (1920x1080, nur Unix-Socket), eigener Netz-Namensraum (bwrap --unshare-net), darin Sitzungs-DBus, eigene Bruecke aus der Arbeitskopie (eigener Port, eigene Ablage, Fehlerbericht/Feedback/Lernjournal/Ablage im Wegwerf-Ordner, Ollama auf totem Port), Messkanal und Relais Unix-Socket <-> MCP-Port der Test-App (KOSMO_MCP_PORT eigener Port im Namensraum; 8600/8630/8700 dort unerreichbar). App nur mit env -i, Wegwerf-XDG, cwd im Wegwerf-Ordner, Software-GL (mesa). Messhilfe nur lokal (index.html + public/__mess.js, nie committet): Vorbelegung Bruecke/Sync (toter Port)/feste Adressen/Vollautomatik an (Coop, damit Bedienschritte ohne Karte durchgehen), Sperre der Owner-Ports (0 Sperrungen noetig), feste Befehle (Rechtecke, Zaehlen, Zonen loeschen ueber den App-Befehl design.loeschen), kein eval. Bedient ueber kosmo_blick/kosmo_maus (MCP), Ausfuehren, Hover, Tab und eine Graph-Verbindung (Auto-Kamera) per echtem xdotool nur auf dem eigenen Xvfb. Graphen ueber die Node-Palette (Render an der Palettenstelle). Abholer: ai-imaging main 49efdc2, tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 (--kein-gelaende fuer Demohaus und Halle, nicht fuer den Testbau mit Gelaende), .venv-render, AIIMAGING_MODELLE wie im Dienst; je Lauf unter der geteilten GPU-Sperre bei freier Karte (14–21 W, 1.2–1.6 GB, Ollama /api/ps leer — nichts zu entladen). C1 = Kopie des App-Auftrags A ohne context. Beendet per WM_DELETE_WINDOW.",
+ "koepfe": {
+  "gebaut": "lokaler Merge (nicht gepusht) 0a9433b68 (claude/kosmovis-v018-verlauf-feinschliff) + 0aeb240bb (claude/lw-splat-context) + cf839597c (claude/kosmovis-v018-splat-context), Merge-Kopf 03ee9e443; App-Kopf v0.1.7",
+  "abholer": "ai-imaging main 49efdc2 (Entscheid 78 Messboden, Glaetten x4, Normierung in die Datei) fuer alle fuenf Laeufe",
+  "webkitgtk": "libwebkit2gtk-4.1-0 2.52.6-0ubuntu0.26.04.1",
+  "hinweis": "Zweigkoepfe unveraendert gebaut; nur index.html + public/__mess.js lokal fuer die Messhilfe, nie committet."
+ },
+ "laeufe": {
+  "D1": {
+   "modell": "Demohaus ohne Raeume (26 Zonen geloescht), Kameras auto s/sSE/nNW, Prompt «Abendlicht, warme Fassade», Seeds 0–2",
+   "zeit_s": 311,
+   "verdict": "passed true, «Geometrie 0.905 gegen 0.65»"
+  },
+  "D2": {
+   "modell": "wie D1 + Auto-Kamera-Knoten (Eingang, Uebersicht), Seeds 0–2, Kameraliste NICHT gekuerzt",
+   "zeit_s": 223,
+   "verdict": "passed true, «GEOM_IOU NICHT ANWENDBAR, Übersicht: … Geometrie 0.796 gegen 0.65», Hinweis AUFSICHT"
+  },
+  "A": {
+   "modell": "Halle: Splat (1'057'305 Punkte, Behelfsverortung) + V1 als Bestand (662.8 m², 3.45 m), context kind splat/fit behelf, Prompt «Industriehalle, Tageslicht, klarer Himmel», Seeds 0–2",
+   "zeit_s": 314,
+   "verdict": "passed false, «NICHT BEURTEILBAR (Gebaeudeanteil): … 19.7 %»"
+  },
+  "C1": {
+   "modell": "Auftrag A ohne context",
+   "zeit_s": 306,
+   "verdict": "passed true, «Geometrie 0.982 gegen 0.65»"
+  },
+  "C3": {
+   "modell": "tools/make_test_ifc.py --gelaende, in der App «IFC laden» → «Übernehmen», Prompt «Einfamilienhaus, Tageslicht», Seed 0",
+   "zeit_s": 137,
+   "verdict": "passed false, «KEIN MASKENWEG …» (nicht durchgefallen)"
+  },
+  "gpu": "36 Z-Image-Turbo-Bilder (D1 9, D2 6, A 9, C1 9, C3 3) statt der angesagten ~24: Demohaus mit Seeds 0–2, damit C2/C4 mit 270 vergleichbar bleiben; nur C3 mit Seed 0. Karte vor jedem Lauf frei, Sperre je Lauf genommen und freigegeben."
+ },
+ "schritte": {
+  "A1": {
+   "antwort": "ja",
+   "satz": "Im Vergleich-Knoten schrumpft das Bild jetzt in WebKitGTK: beim Bestehen (D1) 106 px (516–622), QA-Zeile 624–636 und Grund-Zeile 638–650 darunter; beim Lauf mit AUFSICHT-Hinweis (D2) 46 px (516–562), QA 564–576, Grund 578–590, Hinweis samt «mehr» 592–650 — keine Zeile liegt mehr auf dem Bild, alle tragen die Kartenflaeche als Hintergrund (rgb 244/246/250, position relative) und sind damit unabhaengig vom Bild lesbar.",
+   "messung": {
+    "koerper": [
+     516,
+     650
+    ],
+    "D1": {
+     "bild": [
+      516,
+      622
+     ],
+     "qa": [
+      624,
+      636
+     ],
+     "grund": [
+      638,
+      650
+     ]
+    },
+    "D2": {
+     "bild": [
+      516,
+      562
+     ],
+     "qa": [
+      564,
+      576
+     ],
+     "grund": [
+      578,
+      590
+     ],
+     "hinweis": [
+      592,
+      650
+     ]
+    }
+   },
+   "einschraenkung": "Die Abendbilder dieses Laufs waren nicht so dunkel wie in 270 (Fassade orange beleuchtet); die Lesbarkeit folgt hier aus dem Kartenhintergrund der Zeilen, nicht aus einem dunklen Testbild.",
+   "bild": "auf-20261008-274-a1.png (Vergleich-Knoten nach D2: Bild oben, darunter QA, Grund, AUFSICHT, «mehr»)"
+  },
+  "A2": {
+   "antwort": "ja",
+   "satz": "Der Render-Knoten mit Verlauf (2 Laeufe) ist 724 px hoch (Verlauf 60 px, Koerper scrollHeight = clientHeight); im App-Vorgabefenster 1440x900 steht er an der Palettenstelle y 170–894, also 6 px Luft zum Rand (270: 904, 4 px drueber); bei 1920x1080 y 260–984.",
+   "messung": {
+    "knoten_h": 724,
+    "verlauf_h": 60,
+    "1440x900": {
+     "knoten_y": [
+      170,
+      894
+     ],
+     "luft_px": 6
+    },
+    "1920x1080": {
+     "knoten_y": [
+      260,
+      984
+     ]
+    }
+   },
+   "bild": "auf-20261008-274-a2.png (1440x900, halbe Groesse: Graph mit Render-Knoten an der Palettenstelle, Verlauf 2/1, Vergleich-Knoten links)"
+  },
+  "A3": {
+   "antwort": "ja (F3, F4, F5 im Bestehens-Fall; einen Durchfall-Fall gab es diesmal nicht)",
+   "satz": "F3: Hover (echte Maus) und Tab (echte Tab-Taste vom Prompt-Feld, erster Halt die Grund-Zeile) oeffnen die Kurzhilfe nach unten (k-tooltip-blase--unten, 288 x 94 px), der Knotenkoerper wechselt auf overflow visible; F4: Inspektor «QA-Verdikt bestanden», «Geometrie-Status gemessen», QA-Vorbehalt und QA-Hinweis (AUFSICHT) voll, BEWERTUNG «Keine Sterne: …», 0 × «zurueckgezogen»; F5: Kachel «QA ok ⚠» (--ok), Verlauf «Lauf 2 … bestanden» / «Lauf 1 … bestanden», Kuratierkarte «Eingang: bestanden / Übersicht: bestanden»."
+  },
+  "B1": {
+   "antwort": "nein — Konfetti 9 von 9",
+   "satz": "In allen neun Bildern bleiben Fremdkoerper ueber Himmel, Fassade und Vorplatz, aber in anderer Gestalt: statt vieler kleiner Kreisscheiben jetzt grosse rechteckige Tafeln/Kacheln (vor allem im Himmel ueber der Halle), Kloetze und weiterhin grosse helle Kugeln/Scheiben vor der Halle; dazu Erfundenes (Figuren, Schilder) in einzelnen Bildern.",
+   "zaehlung": "9 von 9 (273: 9 von 9)"
+  },
+  "B2": {
+   "antwort": "ja, deutlich mehr gefuellt",
+   "je_kamera": {
+    "s": {
+     "radius_px": 50,
+     "n_gefuellt": 285120,
+     "n_umgebung_nach_schliessen": 675487,
+     "anteil": 0.42,
+     "273": {
+      "radius_px": 12,
+      "n_gefuellt": 39844
+     }
+    },
+    "sSE": {
+     "radius_px": 50,
+     "n_gefuellt": 406628,
+     "n_umgebung_nach_schliessen": 912284,
+     "anteil": 0.446,
+     "273": {
+      "radius_px": 12,
+      "n_gefuellt": 58862
+     }
+    },
+    "nNW": {
+     "radius_px": 50,
+     "n_gefuellt": 281605,
+     "n_umgebung_nach_schliessen": 1159609,
+     "anteil": 0.243,
+     "273": {
+      "radius_px": 12,
+      "n_gefuellt": 62372
+     }
+    }
+   },
+   "satz": "Das Schliessen fuellt 24–45 % der Umgebung (vorher 7–9 %), rund 7x so viele Bildpunkte; die Splat-Punkte selbst sind bitgleich zu 273 (Umgebung minus Gefuelltes = 390'367 / 505'656 / 878'004 in beiden Laeufen). Laufzeit A gesamt 310 s (273: 303 s) — der Radius kostet wie angesagt nichts Messbares."
+  },
+  "B3": {
+   "antwort": "teils",
+   "satz": "Das Tiefenbild der Umgebung ist jetzt zusammenhaengende graue Flaeche statt Fleckenwolke, aber der Himmel zwischen den Baumkronen wird stellenweise zu einer dunklen Blockwand mit scharfkantigen RECHTECKIGEN Loechern (Luecken > 50 px bleiben schwarz), und die grossen hellen Scheiben naher Punkte vor der Halle stehen unveraendert — genau diese Bloecke und Rechtecke kehren im Bild als Tafeln und Kacheln wieder."
+  },
+  "B4": {
+   "antwort": "ja",
+   "satz": "blender-report.json traegt depth_normalisierung je Kamera samt umgebung (n_umgebung, min/max gesamt, nach_modell true, n_geklemmt nah/fern, min/max Modell, band_modell [0.15, 0.85]) und umgebung.glaettung {radius_px 50, n_umgebung, n_gefuellt}; auch ohne Splat steht der Block (ohne umgebung)."
+  },
+  "C1": {
+   "antwort": "ja — jetzt beurteilt und bestanden",
+   "je_kamera": {
+    "s": {
+     "score": 0.984,
+     "n_gemeinsam": 1005759,
+     "anteil_soll": 0.643,
+     "anteil_bauwerk": 0.285,
+     "messboden": {
+      "ebene_z": -0.151,
+      "n_boden": 568329,
+      "angewandt": true
+     },
+     "urteil": "bestanden"
+    },
+    "sSE": {
+     "score": 0.982,
+     "n_gemeinsam": 961474,
+     "anteil_soll": 0.617,
+     "anteil_bauwerk": 0.233,
+     "messboden": {
+      "ebene_z": -0.151,
+      "n_boden": 609095,
+      "angewandt": true
+     },
+     "urteil": "bestanden"
+    },
+    "nNW": {
+     "score": 0.982,
+     "n_gemeinsam": 961490,
+     "anteil_soll": 0.617,
+     "anteil_bauwerk": 0.233,
+     "messboden": {
+      "ebene_z": -0.151,
+      "n_boden": 609090,
+      "angewandt": true
+     },
+     "urteil": "bestanden"
+    }
+   },
+   "vergleich_272": "«nicht messbar», n_gemeinsam 0, Score None → Score 0.982–0.984, n_gemeinsam 0.96–1.0 Mio., anteil_soll 23–28 % → 62–64 %",
+   "satz": "Der Messboden loest die Luecke aus 272: Soll und Ist treffen sich jetzt auf fast allen Punkten. Ehrlich dazu der Abholer selbst: «die Szene schenkt 0.643 / 0.617 / 0.617» — ohne den Boden waere geom_iou 0.921 / 0.907 / 0.907; ein konstantes Bild bekaeme den Bodenanteil schon."
+  },
+  "C2": {
+   "antwort": "ja — beurteilbar, bestanden",
+   "je_kamera": {
+    "s": {
+     "score": 0.921,
+     "anteil_soll": 0.584,
+     "anteil_bauwerk": 0.234,
+     "n_boden": 555439,
+     "geom_iou_roh": 0.977,
+     "geom_iou_ohne_boden": 0.946,
+     "seed": 1,
+     "rho_maske_gewaehlt": -0.676
+    },
+    "sSE": {
+     "score": 0.905,
+     "anteil_soll": 0.552,
+     "anteil_bauwerk": 0.182,
+     "n_boden": 587487,
+     "geom_iou_roh": 0.847,
+     "geom_iou_ohne_boden": 0.659,
+     "seed": 1
+    },
+    "nNW": {
+     "score": 0.92,
+     "anteil_soll": 0.569,
+     "anteil_bauwerk": 0.201,
+     "n_boden": 584125,
+     "geom_iou_roh": 0.901,
+     "geom_iou_ohne_boden": 0.771,
+     "seed": 1
+    }
+   },
+   "vergleich_270": "«NICHT BEURTEILBAR (Gebaeudeanteil) 18.1 % / 19.8 %», not_measured → passed true, Score 0.905 (schwaechste, sSE)",
+   "satz": "Der 18-%-Fall wird jetzt beurteilt (anteil_soll 55–58 % mit Boden, das Haus allein weiterhin 18–23 %) und besteht mit 0.905; der Boden schenkt 0.55–0.58 an geom_iou, und bei s waehlte die Seedwahl «nach Umriss» Seed 1 mit rho_maske −0.676 (gerichtet falsch) — bestanden trotzdem mit 0.921."
+  },
+  "C3": {
+   "antwort": "nein — messboden NICHT null",
+   "je_kamera": {
+    "s": {
+     "score": 0.931,
+     "anteil_soll": 0.66,
+     "n_gemeinsam": 1022092,
+     "messboden": {
+      "ebene_z": -0.25,
+      "n_boden": 57304,
+      "angewandt": true
+     }
+    },
+    "sSE": {
+     "score": 0.977,
+     "anteil_soll": 0.67,
+     "n_gemeinsam": 1040527,
+     "messboden": {
+      "ebene_z": -0.25,
+      "n_boden": 65677,
+      "angewandt": true
+     }
+    },
+    "nNW": {
+     "score": 0.975,
+     "anteil_soll": 0.67,
+     "n_gemeinsam": 1038300,
+     "messboden": {
+      "ebene_z": -0.25,
+      "n_boden": 65677,
+      "angewandt": true
+     }
+    }
+   },
+   "verdict": "passed false, «KEIN MASKENWEG: … es fehlt ein Material-ID-Pass, und ohne Gelaende in der Szene dazu die Angabe gelaende_erwartet=false» — nicht durchgefallen",
+   "satz": "Der Testbau traegt eine echte Gelaendeplatte, die Maske erkennt sie aber nicht (gelaende_erkannt false, gelaende_quelle «name», geprueft nur Materialnamen Beton/Volumen/mauerwerk; ihr eigener Satz: «die Formregel arbeitet auf KNOTENnamen»; maskenbefund.gemessen false) — darum legt die Pruefung zusaetzlich einen Messboden auf −0.25 m (57–66 Tsd. Punkte, rund 4 % des Bildes, weil die Platte den meisten Hintergrund schon deckt); die Scores 0.93–0.98 aendert das kaum.",
+   "nebenbefunde": [
+    "_mit_messboden prueft nur gelaende_erkannt is False, nicht maskenbefund.gemessen — hier wurde der Boden auf eine UNGEMESSENE Maske gelegt, entgegen dem eigenen Docstring («ungemessen wird nichts erfunden»).",
+    "Die IFC-Uebernahme der App nahm diesmal 6 von 6 Bauteilen (4 Waende als «Bestand mauerwerk 300 mm», Decke, Gelaende als FreeMesh «IFCSLAB #42») — in 272 nur 2 von 6; kein Nachzeichnen noetig. Der Name «Gelaende» geht weiter verloren.",
+    "Gelaufen OHNE --kein-gelaende (die Szene hat Gelaende); wie N4 in 272 gefahren wurde, steht dort nicht — darum ist «KEIN MASKENWEG» kein Vergleich mit 272, die Scores (0.93/0.98/0.98) liegen nahe an N4 (0.891/0.991)."
+   ]
+  },
+  "C4": {
+   "antwort": "ja — besteht ohne Streichen, aber nur dank Messboden und ohne geom_iou bei der Uebersicht",
+   "je_kamera": {
+    "Eingang": {
+     "score": 0.872,
+     "anteil_soll": 0.877,
+     "geom_iou": 0.982,
+     "geom_iou_ohne_boden": 0.853,
+     "n_boden": 227200
+    },
+    "Übersicht": {
+     "score": 0.796,
+     "anteil_soll": 1.0,
+     "geom_iou": null,
+     "spearman": 0.634,
+     "n_boden": 1108549
+    }
+   },
+   "vergleich_270": "Lauf 2 durchgefallen 0.598 (Uebersicht), Lauf 3 bestanden 0.6506 nur mit von Hand gestrichener Uebersicht → jetzt passed true mit 0.796, Kameraliste unveraendert",
+   "satz": "Der Auftrag besteht von aussen (Eingang 0.872, Uebersicht 0.796), aber die Uebersicht besteht, weil der Messboden das GANZE Bild fuellt (anteil_soll 1.0): geom_iou wird «nicht anwendbar», und der Score ruht allein auf der Rangkorrelation |spearman| 0.634 — das ist kein Geometriebeleg fuer die Aufsicht."
+  }
+ },
+ "urteile": {
+  "feinschliff_zu_int1": "ja — beide Punkte aus 270 behoben (Bild schrumpft, Zeilen unter dem Bild auf Kartenflaeche; Render-Knoten 724 px, 6 px Luft bei 1440x900), F3–F5 unveraendert.",
+  "konfetti_weg": "nein — 9 von 9; das Schliessen mit Radius 50 macht die Tiefe zusammenhaengender, verwandelt die Scheiben im Bild aber in Rechteck-Tafeln und Kloetze; nahe helle Scheiben vor der Halle bleiben.",
+  "messboden_traegt": "teils — er macht Modelle ohne Boden beurteilbar (Halle C 0.98 statt «nicht messbar», Demohaus 0.905 statt «nicht beurteilbar», Eingang+Uebersicht besteht ohne Streichen); aber (1) der Boden schenkt 0.29–0.88 an geom_iou (konstantes Bild), (2) bei einer Aufsicht deckt er das ganze Bild und schaltet geom_iou ab, (3) er greift auch am Testbau MIT Gelaendeplatte, weil die Maske die Platte nicht erkennt und ungemessen bleibt."
+ },
+ "auffaelliges": [
+  "Lauf A (mit Splat) bekommt ebenfalls den Messboden: s besteht jetzt knapp mit 0.6505 (anteil_soll 0.408, n_gemeinsam 458'618), sSE faellt mit 0.621 durch (geom_iou 0.429), nNW nicht beurteilbar (anteil_soll 0.197); 272: 0.032 / nicht beurteilbar / nicht beurteilbar.",
+  "C4/Uebersicht: anteil_soll 1.0 durch den Messboden → «GEOM_IOU NICHT ANWENDBAR … die Soll-Silhouette deckt das ganze Bild (Innenansicht oder bildfuellende Wand)» — der Satz passt nicht zur Lage (es ist der gedachte Boden).",
+  "C2/s: Seedwahl nach Umriss nahm Seed 1 mit rho_maske −0.676 (Kandidaten +0.044 / −0.676 / +0.108); bestanden trotzdem 0.921.",
+  "C3: Messboden auf ungemessener Maske (siehe C3 nebenbefunde).",
+  "A: Esc auf dem Testfenster schaltet «Bedienen» fuer Claude ab (wie dokumentiert); wieder eingeschaltet von Hand ueber «Claude verbunden» — der Knopf erscheint erst, wenn ein GET-/mcp-Strom gehalten wird.",
+  "Die Test-App hat zwei Webansichten; die verborgene antwortet auch auf die Messhilfe (ohne window.__kosmo, Fenster 0x0) — Messungen wurden wiederholt, bis die sichtbare antwortete.",
+  "Eine Graph-Verbindung (Auto-Kamera → Kamera-Standpunkte) per kosmo_maus «ziehen» kam nicht an (keine Meldung, keine Kante, erster Auftrag ohne Kameras abgebrochen); per echter Maus sofort.",
+  "Keine Bilder des echten Splats im Repo; sie liegen nur lokal beim Owner (vorher 272 gegen nachher 274)."
+ ],
+ "bilder": [
+  "auf-20261008-274-a1.png",
+  "auf-20261008-274-a2.png"
+ ],
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (kein Absturzbericht, /var/crash unveraendert), danach per gemerkter PID Ereignisstrom, Bruecke, Relais, Messkanal, Sitzungs-DBus, Namensraum und Xvfb; Arbeitskopie per git worktree remove --force entfernt, Cargo-Zielordner, Profil, Wegwerf-Ablage und Hilfsskripte geloescht; GPU-Sperre frei; installierte App und die Dienste des Owners unberuehrt; in KosmoOrbit nichts committet oder gepusht."
+}
