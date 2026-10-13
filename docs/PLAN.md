@@ -7895,3 +7895,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] iPad/Mac-Prüfstrecke grün auf dem Commit.
 - [x] KosmoOrbit 0.1.8 mit Verlauf und Splat-Vertrag eingespielt (Int 1, Runde 23, `e40051731`). *(13.10.2026)*
 
+## Mac koppeln mit Zahl (Entscheid 83, 13.10.2026)
+
+- [x] Mac-App 0.2.0 am echten Mac gestartet (Owner). *(13.10.2026, §93)*
+- [x] Blatt 17 gezeichnet, Fragen 83a–c beantwortet. *(13.10.2026, §93)*
+- [ ] Bau: Server (`/api/hallo`, Kopplung anfordern, Heimnetz mit TLS), Kern und Mac-App; Prüfstrecke grün.
+- [ ] Am echten Mac und Heim-PC prüfen (Auftrag an local).
+
