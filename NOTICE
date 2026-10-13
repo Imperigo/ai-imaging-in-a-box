@@ -97,6 +97,24 @@ Produkt-Environment; tests/test_prozessgrenze.py wacht ueber gsplat und
 open3d. Unveraendert verwendet, austauschbar (die Kugel-Notloesung in
 Blender bleibt als Rueckfall). Einrichten: betrieb/SPLAT_BRUECKE.md.
 
+COLMAP-Dateiformat (Blickwinkel aus der Aufnahme, seit 13.10.2026)
+  Gelesen mit EIGENEM Code (src/aiimaging/kontext_netz.py, Standardbibliothek,
+  Apache-2.0 wie das Projekt). Kein COLMAP-Code, kein pycolmap im Produkt
+  und nicht im .venv-splat. COLMAP selbst steht unter BSD-3-Clause
+  (https://github.com/colmap/colmap/blob/main/LICENSE, am 13.10.2026 gelesen);
+  das Dateiformat ist dokumentiert und wird hier nur gelesen.
+  COPYLEFT-FUND, ausdruecklich gemeldet: Das PyPI-Rad pycolmap 4.2.1
+  (Metadaten: BSD-3-Clause) bindet SuiteSparse statisch ein, darunter
+  CHOLMOD/Supernodal, CHOLMOD/MatrixOps und SPQR (SuiteSparse 7.13, GNU General
+  Public License Version 2 oder spaeter), dazu libgfortran/libgomp/libquadmath
+  (GCC-Laufzeit). Keine Zeile AUFLOESUNG hier, mit Absicht: pycolmap ist keine
+  Komponente dieses Projekts, nichts davon wird geladen oder ausgeliefert —
+  aufgeloest ist der Fund durch Weglassen. Das COLMAP-LICENSE warnt
+  selbst: "Building COLMAP with these dependencies may affect the resulting
+  COLMAP license." Eine importierte Bibliothek ist kein eigenstaendiges
+  Programm (Regel 1/2) — darum nicht verwendet. tests/test_prozessgrenze.py
+  verbietet pycolmap im Kern, tests/test_splat_zu_netz.py im Runner.
+
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------

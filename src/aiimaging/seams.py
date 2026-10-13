@@ -598,6 +598,11 @@ SPLAT_PYTHON_ENV = "AIIMAGING_SPLAT_PYTHON"
 #: Die Umgebungsvariable für den Ablageort der Netze (Speicher nach Inhalt).
 SPLAT_SPEICHER_ENV = "AIIMAGING_SPLAT_NETZ_SPEICHER"
 
+#: Die Umgebungsvariable für die COLMAP-Aufnahme des Splats (``sparse/0``), für die HomeStation
+#: und den Dienst. Seit 13.10.2026 (nach ``auf-20261013-275``): Die Blickwinkel kommen aus der
+#: Aufnahme, wenn es sie gibt (:func:`finde_aufnahme`).
+SPLAT_AUFNAHME_ENV = "AIIMAGING_SPLAT_AUFNAHME"
+
 #: Gesamtfrist eines Brückenlaufs in Sekunden. GESETZT, nicht gemessen (13.10.2026): Rendern
 #: von 48 Blickwinkeln mit gsplat dauert auf einer Desktop-GPU Sekunden, die TSDF eines
 #: Strassenraums mit 5-cm-Voxeln auf der CPU eher Minuten. 30 Minuten lassen Luft für einen
@@ -646,23 +651,76 @@ def _splat_speicher(speicher) -> Path:
     return Path(wurzel) / "aiimaging" / "splat-netz"
 
 
-def splat_schluessel(sha256_splat: str, parameter: dict) -> str:
-    """Der Speicherschlüssel eines Netzes: sha256 des Splats **plus** aller Parameter.
+def splat_schluessel(sha256_splat: str, parameter: dict,
+                     sha256_aufnahme: str | None = None) -> str:
+    """Der Speicherschlüssel eines Netzes: sha256 des Splats **plus** aller Parameter **plus**
+    der Aufnahme, wenn eine die Blickwinkel stellt.
 
     Der Inhalt, nicht der Pfad (derselbe Grund wie ``kette.EINGABEDATEIEN``): Ein neu
     aufgenommener Splat unter altem Namen ist kein Treffer, und derselbe Splat an einem
-    anderen Ort ist einer.
+    anderen Ort ist einer. Ebenso die Aufnahme (13.10.2026): Andere Kameras ergeben ein
+    anderes Netz (:func:`aiimaging.kontext_netz.aufnahme_fingerabdruck`).
     """
     import hashlib
 
-    text = json.dumps({"splat": sha256_splat, "parameter": parameter}, sort_keys=True,
-                      ensure_ascii=True)
+    inhalt = {"splat": sha256_splat, "parameter": parameter}
+    if sha256_aufnahme is not None:
+        inhalt["aufnahme"] = sha256_aufnahme
+    text = json.dumps(inhalt, sort_keys=True, ensure_ascii=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+#: Wie der Vermerk sagt, woher die Aufnahme kam — ohne Pfad (Regel 3).
+AUFNAHME_PARAMETER, AUFNAHME_UMGEBUNG = "parameter", "umgebung"
+AUFNAHME_NEBEN_SPLAT, AUFNAHME_KEINE = "neben dem splat", "keine"
+
+
+def finde_aufnahme(ply, aufnahme=None) -> tuple[Path | None, str, str | None]:
+    """Die COLMAP-Aufnahme zu einem Splat — nach einer **Konvention**, nicht aus dem Vertrag.
+
+    **Anlass** (13.10.2026, ``auf-20261013-275``): Die Blickwinkel sollen aus den Kameras der
+    Aufnahme kommen. ``RenderScene.context`` hat dafür kein Feld, und ein Vertragsfeld ist
+    eine eigene Frage. Bis dahin gilt, in dieser Reihenfolge:
+
+    1. ``aufnahme=`` ausdrücklich — dann **muss** es eine Aufnahme sein (sonst Fehler: Wer sie
+       nennt, will sie, und ein stiller Ring wäre eine Überraschung);
+    2. :data:`SPLAT_AUFNAHME_ENV` — für die HomeStation und den Dienst; zeigt sie ins Leere,
+       wird weitergesucht und der Grund vermerkt;
+    3. neben dem Splat (:func:`aiimaging.kontext_netz.aufnahme_kandidaten`): ``sparse/0``
+       daneben, eine Ebene höher, oder ``<stamm>.colmap/``.
+
+    Ob die Aufnahme **zum Splat passt**, prüft erst der Runner (Gleichheitsprüfung); eine
+    Umgebungsvariable, die für alle Splats gilt, kann zu einem fremden zeigen.
+
+    Returns:
+        ``(ordner | None, art, grund | None)`` — ``art`` ist einer der Werte
+        ``"parameter"``, ``"umgebung"``, ``"neben dem splat"``, ``"keine"``.
+
+    Raises:
+        SeamError: ``aufnahme=`` zeigt auf keinen COLMAP-Ordner.
+    """
+    from aiimaging import kontext_netz as _kn
+
+    if aufnahme is not None:
+        if not _kn.ist_aufnahme_ordner(aufnahme):
+            raise SeamError(f"aufnahme={Path(aufnahme).name!r} ist kein COLMAP-Ordner "
+                            "(images und cameras als .bin oder .txt fehlen).")
+        return Path(aufnahme), AUFNAHME_PARAMETER, None
+    grund = None
+    if (env := os.environ.get(SPLAT_AUFNAHME_ENV)):
+        if _kn.ist_aufnahme_ordner(env):
+            return Path(env), AUFNAHME_UMGEBUNG, None
+        grund = (f"{SPLAT_AUFNAHME_ENV} zeigt auf keinen COLMAP-Ordner "
+                 f"({Path(env).name!r}); neben dem Splat gesucht.")
+    for kandidat in _kn.aufnahme_kandidaten(ply):
+        if _kn.ist_aufnahme_ordner(kandidat):
+            return kandidat, AUFNAHME_NEBEN_SPLAT, grund
+    return None, AUFNAHME_KEINE, grund
 
 
 def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
                   blickwinkel: int | None = None, voxel_m: float | None = None,
-                  renderer: str = "gsplat", speicher=None,
+                  renderer: str = "gsplat", speicher=None, aufnahme=None,
                   timeout: float = GESAMTFRIST_SPLAT_S, _starte=None) -> dict:
     """Splat (3DGS-PLY) → farbiges Netz (PLY), über den Subprozess im `.venv-splat`.
 
@@ -682,10 +740,14 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
         renderer: ``"gsplat"`` (echt) oder ``"cpu-probe"`` (nur Proben, siehe Runner).
         speicher: Ablageort; sonst :data:`SPLAT_SPEICHER_ENV`, sonst
             ``~/.cache/aiimaging/splat-netz``.
+        aufnahme: der COLMAP-Ordner der Aufnahme; ``None`` heisst: nach der Konvention
+            suchen (:func:`finde_aufnahme`). Gefunden, geht er an den Runner, und sein
+            Inhalt steht im Speicherschlüssel.
 
     Returns:
         Der Bericht des Runners, ergänzt um ``netz_ply`` (Pfad, nur für den Multipass —
-        geht nie nach aussen), ``netz.sha256``, ``splat.sha256`` und
+        geht nie nach aussen), ``netz.sha256``, ``splat.sha256``,
+        ``aufnahme.quelle``/``aufnahme.sha256`` (ohne Pfad) und
         ``zwischenspeicher = {treffer, schluessel}``.
 
     Raises:
@@ -710,10 +772,13 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
             je_kreis=_kn.BLICKWINKEL_JE_KREIS if blickwinkel is None else blickwinkel,
             voxel_m=_kn.VOXEL_M if voxel_m is None else voxel_m,
             oben=oben, massstab=massstab, renderer=renderer)
+        aufnahme_ordner, aufnahme_art, aufnahme_grund = finde_aufnahme(ply, aufnahme)
+        aufnahme_sha = (None if aufnahme_ordner is None
+                        else _kn.aufnahme_fingerabdruck(aufnahme_ordner)["sha256"])
     except (_kontext.KontextError, _kn.KontextNetzError) as fehler:
         raise SeamError(f"Splat-Bruecke: {fehler}") from fehler
 
-    schluessel = splat_schluessel(fingerabdruck["sha256"], parameter)
+    schluessel = splat_schluessel(fingerabdruck["sha256"], parameter, aufnahme_sha)
     ordner = _splat_speicher(speicher) / schluessel
     netz = ordner / "netz.ply"
     bericht_datei = ordner / "bericht.json"
@@ -738,6 +803,9 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
                    "--oben=" + ",".join(repr(k) for k in parameter["oben"]),
                    "--massstab", repr(parameter["massstab"]),
                    "--renderer", renderer]
+            if aufnahme_ordner is not None:
+                # Mit `=` wie bei `--oben` (auf-20261013-275): Ein Pfad darf mit Minus beginnen.
+                cmd.append("--aufnahme=" + str(aufnahme_ordner))
             ergebnis = starte(cmd, frist)
             if ergebnis.returncode != 0:
                 raise SeamError(f"Splat→Netz fehlgeschlagen (Code {ergebnis.returncode}):\n"
@@ -766,6 +834,11 @@ def splat_zu_netz(ply, ziel=None, *, matrix=None, aufloesung: int | None = None,
                                      "sha256": fingerabdruck["sha256"],
                                      "bytes": fingerabdruck["bytes"]})
             bericht["parameter"] = parameter
+            bericht.setdefault("blickwinkel_quelle", "ring")
+            vermerk = bericht.get("aufnahme")
+            bericht["aufnahme"] = vermerk if isinstance(vermerk, dict) else {}
+            bericht["aufnahme"].update({"quelle": aufnahme_art, "sha256": aufnahme_sha,
+                                        "suche_grund": aufnahme_grund})
             os.replace(roh_netz, netz)
             bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
                                      encoding="utf-8")
@@ -813,14 +886,16 @@ def _pfade_gekuerzt(text: str) -> str:
     return re.sub(r"(?:/[^\s'\"/:]+)+/([^\s'\"/:]+)", r"\1", str(text))
 
 
-def kontext_vorbereiten(kontext_ply, *, matrix=None, _splat_zu_netz=None) -> dict:
+def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
+                        _splat_zu_netz=None) -> dict:
     """Was als Umgebung in den Multipass geht: das **Netz** — oder, als Notlösung, die Kugeln.
 
     Gemeinsam für Abholer und Kette (``kette._fuehre_multipass``), damit beide Wege dieselbe
     Entscheidung treffen.
 
     * Ist ``kontext_ply`` schon ein Netz (PLY mit Flächen), geht es unverändert durch.
-    * Sonst wird :func:`splat_zu_netz` gerufen (zwischengespeichert).
+    * Sonst wird :func:`splat_zu_netz` gerufen (zwischengespeichert) — mit der Aufnahme aus
+      ``aufnahme=`` oder nach der Konvention von :func:`finde_aufnahme`.
     * **Fehlt die Brücke oder scheitert sie, bleibt es beim Kugel-Weg** (Owner-Auftrag
       13.10.2026) — und das wird gesagt: ``hinweis`` ist ein Satz für
       ``verdict.hinweise``. Ein stiller Rückfall sähe aus wie das neue Bild.
@@ -841,7 +916,7 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, _splat_zu_netz=None) -> dic
         pass                                  # kein lesbares Netz — dann wie ein Splat
     brueckenlauf = _splat_zu_netz or splat_zu_netz
     try:
-        bericht = brueckenlauf(kontext_ply, matrix=matrix)
+        bericht = brueckenlauf(kontext_ply, matrix=matrix, aufnahme=aufnahme)
     except SeamError as fehler:
         nicht_eingerichtet = "nicht eingerichtet" in str(fehler)
         return {"ply": str(kontext_ply), "weg": "kugeln", "netz": None,
@@ -855,6 +930,9 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, _splat_zu_netz=None) -> dic
     n = bericht.get("netz") or {}
     bw = bericht.get("blickwinkel") or {}
     parameter = bericht.get("parameter") or {}
+    auf = bericht.get("aufnahme") or {}
+    # Warum der Ring, obwohl eine Aufnahme da war — ein Satz ohne Pfad (Regel 3).
+    auf_grund = auf.get("grund") or auf.get("suche_grund")
     return {"ply": bericht["netz_ply"], "weg": "netz", "grund": None, "hinweis": None,
             "netz": {"ecken": n.get("ecken"), "dreiecke": n.get("dreiecke"),
                      "sha256": n.get("sha256"), "quelle": "splat-bruecke",
@@ -862,6 +940,11 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, _splat_zu_netz=None) -> dic
                      "blickwinkel": bw.get("gesamt"), "voxel_m": parameter.get("voxel_m"),
                      "aufloesung": parameter.get("aufloesung"),
                      "rechenzeit_s": (bericht.get("zeiten_s") or {}).get("gesamt_s"),
+                     "blickwinkel_quelle": bericht.get("blickwinkel_quelle"),
+                     "aufnahme": auf.get("quelle", AUFNAHME_KEINE),
+                     "aufnahme_grund": (None if not auf_grund
+                                        else _pfade_gekuerzt(str(auf_grund))[:400]),
+                     "deckung": (bericht.get("deckung") or {}).get("anteil"),
                      "zwischenspeicher_treffer": (bericht.get("zwischenspeicher")
                                                   or {}).get("treffer")}}
 

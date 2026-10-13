@@ -3852,7 +3852,8 @@ einer Oberfläche zusammenzusetzen. Der Raum wird in kleine Würfel (Voxel) gete
 er vor oder hinter der gesehenen Fläche liegt, gemittelt über alle Bilder, die ihn sehen. Wo der Wert von
 «davor» zu «dahinter» wechselt, liegt die Oberfläche; daraus entsteht ein Netz aus Dreiecken. Der Name kommt vom
 Englischen *truncated signed distance function* — gekappter, vorzeichenbehafteter Abstand. *Im Projekt:* Open3D
-(`VoxelBlockGrid`) in der Splat-Brücke, 5-cm-Würfel (`kontext_netz.VOXEL_M`, gesetzt).
+(`VoxelBlockGrid`) in der Splat-Brücke, 7-cm-Würfel (`kontext_netz.VOXEL_M`, gesetzt; 5 cm brachten Open3D am
+echten Splat zum Absturz, siehe **Blockwache**).
 
 **Voxel** — Ein kleiner Würfel in einem dreidimensionalen Raster, so wie ein Bildpunkt ein kleines Quadrat in
 einem Bild ist. *Im Projekt:* die Rechenzellen der TSDF; ihre Kantenlänge bestimmt, wie fein das Netz der
@@ -3865,16 +3866,66 @@ leuchtende Farbe, ohne sie neu zu beleuchten.
 
 **Insel (im Netz)** — Ein kleines Netzstück, das mit dem Rest nicht verbunden ist — meist ein Fetzen aus einer
 einzelnen falschen Tiefe. *Im Projekt:* Die Splat-Brücke entfernt Inseln unter 200 Dreiecken
-(`kontext_netz.INSEL_MIN_DREIECKE`, gesetzt).
+(`kontext_netz.INSEL_MIN_DREIECKE`, gesetzt). Am echten Splat waren es 42 % der Dreiecke — dort keine falschen
+Tiefen, sondern schlecht gesehene echte Fläche. Die Zahl bleibt absolut (13.10.2026): Ein Anteil wüchse mit der
+Szene und würfe mehr weg; geheilt werden die Fetzen durch bessere Blickwinkel (**Kamerapose**).
 
 **CUDA** — Die Programmierschnittstelle von NVIDIA, über die Programme auf der Grafikkarte rechnen. Proprietär
 und nur auf NVIDIA-Karten. *Im Projekt:* gsplat rendert nur mit CUDA; darum läuft die Splat-Brücke am Heim-PC,
 nicht in der Cloud-Sitzung.
 
 **Ersatzrenderer (cpu-probe)** — Ein absichtlich einfacher Zeichner für Proben: Er malt jedes Wölkchen als
-kleines Quadrat und behält je Bildpunkt das nächste. Er sieht schlechter aus als gsplat, braucht aber keine
+kleines Quadrat und behält je Bildpunkt das nächste. Die Tiefe nimmt er seit dem 13.10.2026 dort, wo der
+Sehstrahl die flache Scheibe des Wölkchens trifft — vorher trug jedes Quadrat die Tiefe seiner Mitte, und bei
+flachem Blick lag der Boden im Netz drei Würfel zu hoch. Er sieht schlechter aus als gsplat, braucht aber keine
 Grafikkarte — so lässt sich der Rest der Brücke (Blickwinkel, Verschmelzen, Datei) überall prüfen.
 *Im Projekt:* `--renderer cpu-probe`; ein so entstandenes Netz trägt `nur_probe: true` und gilt nie als echtes.
+
+**COLMAP** — Ein freies Programm (BSD-Lizenz, von der ETH Zürich mitentwickelt), das aus vielen Fotos eines Ortes
+herausrechnet, wo jede Kamera stand und wohin sie blickte, und dazu eine lockere Punktwolke der gesehenen
+Flächen. Das Ergebnis liegt als kleiner Satz Dateien in einem Ordner `sparse/0` (`cameras`, `images`, `points3D`,
+seit Fassung 4 auch `rigs` und `frames`). Splat-Trainingsprogramme wie Brush lernen den Splat auf genau diesen
+Kameras. *Im Projekt:* Die Splat-Brücke liest diese Dateien selbst, ohne Zusatzprogramm
+(`kontext_netz.lies_aufnahme`) — das fertige Python-Paket `pycolmap` bringt GPL-Teile mit und ist darum nicht
+zugelassen (Regel 1).
+
+**Kamerapose (Pose)** — Wo eine Kamera steht und wohin sie blickt, zusammen: ein Ort und eine Drehung. COLMAP
+schreibt sie als «Welt → Kamera»: wie ein Punkt der Welt in die Sicht der Kamera umgerechnet wird. *Im Projekt:*
+Seit dem 13.10.2026 rendert die Splat-Brücke den Splat aus den Posen der Aufnahme, statt aus gesetzten
+Blickwinkeln — der Splat ist nur dort verlässlich, wo die Aufnahme ihn sah. Die Pose geht unverändert an gsplat,
+weil beide dieselbe Achsenrichtung benutzen (x rechts, y unten, z Blick; `kontext_netz.pose_zu_ansicht`).
+
+**Rig (Kamera-Rig)** — Mehrere Kameras, fest miteinander verbunden, die gleichzeitig auslösen — etwa vier
+Kameras nach vorn, hinten, links und rechts auf einem Gestell. Weil sie starr verbunden sind, genügt es, die Lage
+des Gestells je Augenblick zu kennen. *Im Projekt:* Die Aufnahme der HomeStation ist ein Rig aus vier Kameras,
+je 240 **Augenblicke**; die Brücke nimmt höchstens 240 Bilder, gleichmässig über die Augenblicke verteilt,
+jeweils alle vier Kameras (`kontext_netz.AUFNAHME_BLICKE_MAX`, gesetzt).
+
+**Augenblick (Frame)** — Ein Auslösezeitpunkt eines **Rigs**: die Bilder, die alle Kameras im selben Moment
+gemacht haben. COLMAP 4 führt sie in der Datei `frames`. *Im Projekt:* die Einheit, in der die Splat-Brücke Bilder
+aus der Aufnahme auswählt — ganze Augenblicke, nie einzelne Kameras daraus.
+
+**Gleichheitsprüfung (Aufnahme ↔ Splat)** — Die Probe, ob eine Aufnahme und ein Splat im selben
+Koordinatensystem liegen, bevor ihre Kameras benutzt werden. Gemessen wird, wie weit die Punkte der Aufnahme von
+den nächsten dichten Wölkchen des Splats liegen (Median und 90-%-**Perzentil**, als Anteil der Ausdehnung) und
+ob die Kameras im Bereich des Splats stehen. *Im Projekt:* Liegt etwas über der Schwelle, nimmt die Brücke den
+Ring und schreibt den Grund in den Bericht. Am echten Splat lag der Median bei 0,25 % der Ausdehnung, die
+Schwelle steht bei 1 % (`kontext_netz.GLEICH_MEDIAN_MAX`, gesetzt).
+
+**Deckung (des Netzes)** — Welcher Anteil der dichten Wölkchen eines Splats nahe an einer Fläche des daraus
+gerechneten Netzes liegt (höchstens drei **Voxel** entfernt). Ein Mass für die Löcher, ohne Bild und ohne
+Kamera. *Im Projekt:* `deckung.anteil` im Bericht der Splat-Brücke; am synthetischen Strassenraum 71 % mit dem
+Ring gegen 96 % mit den Kameras der Aufnahme.
+
+**Blockwache** — Eine Zählung während des Verschmelzens (**TSDF**): Die Würfel liegen in Blöcken, und Open3D 0.20
+stürzt beim Herausziehen des Netzes ab, wenn zu viele Blöcke belegt sind (am echten Splat bei rund 300 000). Die
+Wache zählt nach jedem Bild; wird es zu viel, beginnt die Brücke mit grösseren Würfeln neu und sagt es im
+Bericht. *Im Projekt:* `kontext_netz.BLOECKE_MAX` (250 000, gesetzt), `voxel.vergroessert` im Bericht.
+
+**Statisch eingebunden (Bibliothek)** — Eine Bibliothek, die beim Übersetzen fest in eine andere Programmdatei
+hineinkopiert wurde, statt daneben als eigene Datei zu liegen. Von aussen sieht man sie nicht — aber ihre Lizenz
+reist mit. *Im Projekt:* Das Python-Paket `pycolmap` (selbst BSD) enthält so Teile der Rechenbibliothek
+SuiteSparse unter GPL; darum liest die Splat-Brücke COLMAP mit eigenem Code (13.10.2026).
 
 **Transformationsmatrix (4×4, zeilenweise)** — Sechzehn Zahlen in vier Zeilen, die sagen,
 wie ein Ding gedreht, vergrössert und verschoben wird, um an seinen Platz zu kommen. Die
@@ -6665,6 +6716,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §82: **Glätten der Umgebung** |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §83: **Messboden** |
 | 2026-10-13 | Ergaenzt beim Bau der Splat-Bruecke (Entscheid 79): **Splat-Brücke (Splat → Netz)**, **Rastern (Rasterization)**, **Erwartete Tiefe**, **TSDF (Verschmelzen von Tiefenbildern)**, **Voxel**, **Eckpunktfarbe (Vertexfarbe)**, **Insel (im Netz)**, **CUDA**, **Ersatzrenderer (cpu-probe)** |
+| 2026-10-13 | Ergaenzt bei den Blickwinkeln aus der Aufnahme (nach auf-20261013-275): **COLMAP**, **Kamerapose (Pose)**, **Rig (Kamera-Rig)**, **Augenblick (Frame)**, **Gleichheitsprüfung (Aufnahme ↔ Splat)**, **Deckung (des Netzes)**, **Blockwache**, **Statisch eingebunden (Bibliothek)**; nachgefuehrt: **TSDF** (7 cm), **Insel (im Netz)** (bleibt absolut), **Ersatzrenderer (cpu-probe)** (Tiefe auf der Scheibe) |
 | 2026-10-13 | Ergaenzt aus Sitzung 74 §84: **Photogrammetrie**, **Relightable Gaussian Splatting (lichtaktiver Splat)**, **Fremdprogramm (vom Nutzer installiert)**; nachgefuehrt: **Messboden** (nur zum Trennen) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §63 (F6, Stile aus der IFC): **Deckend (Material)**, **sRGB und linear (Farbraum)**; aus §69 (Entscheid 70): **Gesamtwert (der Prüfung)**, **Nicht beurteilbar** |
 | 2026-10-07 | Ergaenzt aus Sitzung 74 §58 (v0.1.8, Bildmodell einmal je Auftrag): **Laden (eines Bildmodells)**, **Ein Modell je Auftrag (Modellvorrat)**, **Freigeben (des Grafikspeichers)**, **Aufräumen auch im Fehlerfall (try/finally, Kontextmanager)**, **Kontextvariable**; aus Antwort 259: **Oberflächenstil (IFC)**, **Ausschnitt (Öffnungselement)**; aus Antwort 261: **Standpunkt-Vorgabe**, **Komponiert (eine Ansicht)** |

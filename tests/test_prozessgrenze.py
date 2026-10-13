@@ -35,7 +35,12 @@ from conftest import PAKET, RUNNER_DIR, SRC
 #: permissiv, aber Regel 4 — sie laufen nur im ``.venv-splat`` hinter
 #: ``runners/splat_zu_netz_runner.py``. ``torch`` steht nicht hier: Die Bildmodell-Stufe
 #: (``aiimaging.render``) lädt es bewusst innerhalb einer Funktion (siehe NOTICE).
-VERBOTEN = ("bpy", "ifcopenshell", "gsplat", "open3d")
+#:
+#: ``pycolmap`` seit dem 13.10.2026 (Blickwinkel aus der Aufnahme): Das PyPI-Rad bindet
+#: GPL-2.0+-Teile von SuiteSparse (CHOLMOD Supernodal/MatrixOps, SPQR) statisch ein. COLMAP
+#: wird darum mit der Standardbibliothek gelesen (``kontext_netz.lies_aufnahme``) — auch der
+#: Runner importiert es nicht (``tests/test_splat_zu_netz.py``).
+VERBOTEN = ("bpy", "ifcopenshell", "gsplat", "open3d", "pycolmap")
 
 
 def importierte_module(quelle: str) -> set[str]:

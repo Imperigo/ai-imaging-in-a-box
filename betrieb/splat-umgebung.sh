@@ -15,6 +15,10 @@
 #     GSPLAT_VERSION=1.5.3
 #
 # Das Skript installiert NICHTS ausserhalb von `.venv-splat` und aendert keine Systemdateien.
+#
+# KEIN pycolmap (13.10.2026): Die Blickwinkel aus der COLMAP-Aufnahme liest der Runner mit
+# eigenem Code (aiimaging/kontext_netz.py). Das PyPI-Rad bindet GPL-2.0+-Teile von
+# SuiteSparse statisch ein (NOTICE, Abschnitt Splat-Bruecke) — Regel 1.
 set -euo pipefail
 
 WURZEL="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -47,17 +51,24 @@ if not torch.cuda.is_available():
                      "TORCH_INDEX passend zum Treiber waehlen (nvidia-smi).")
 PY
 
-echo "== Probelauf: synthetischer Splat -> Netz (echtes gsplat, kein Ersatzrenderer)"
+echo "== Probelauf: synthetischer Strassenraum -> Netz (echtes gsplat), Ring und Aufnahme"
 PROBE="$(mktemp -d)"
 trap 'rm -rf "$PROBE"' EXIT
-python3 "$WURZEL/tools/make_test_splat.py" "$PROBE/splat.ply" --punkte 20000
-"$VENV/bin/python" "$WURZEL/src/aiimaging/runners/splat_zu_netz_runner.py" \
-    "$PROBE/splat.ply" "$PROBE/netz.ply" --report "$PROBE/bericht.json" > /dev/null
-"$VENV/bin/python" - "$PROBE/bericht.json" <<'PY'
+python3 "$WURZEL/tools/make_test_splat.py" "$PROBE/splat.ply" --punkte 20000 --form strasse
+python3 "$WURZEL/tools/make_test_colmap.py" "$PROBE/sparse/0" --form strasse
+for WEG in ring aufnahme; do
+    EXTRA=()
+    [ "$WEG" = aufnahme ] && EXTRA=("--aufnahme=$PROBE/sparse/0")
+    "$VENV/bin/python" "$WURZEL/src/aiimaging/runners/splat_zu_netz_runner.py" \
+        "$PROBE/splat.ply" "$PROBE/netz_$WEG.ply" --report "$PROBE/bericht_$WEG.json" \
+        "${EXTRA[@]}" > /dev/null
+    "$VENV/bin/python" - "$PROBE/bericht_$WEG.json" <<'PY'
 import json, sys
 b = json.load(open(sys.argv[1], encoding="utf-8"))
-print("status", b["status"], "renderer", b["renderer"], "geraet", b["geraet"])
-print("netz", b["netz"]["ecken"], "Ecken,", b["netz"]["dreiecke"], "Dreiecke;",
-      "Blickwinkel", b["blickwinkel"]["gesamt"], "; Zeit", b["zeiten_s"]["gesamt_s"], "s")
+print("status", b["status"], "renderer", b["renderer"], "geraet", b["geraet"],
+      "blickwinkel", b["blickwinkel_quelle"], b["blickwinkel"]["gesamt"])
+print("netz", b["netz"]["dreiecke"], "Dreiecke; Deckung", b["deckung"]["anteil"],
+      "; Inseln", b["netz"]["inseln"]["komponenten"], "; Zeit", b["zeiten_s"]["gesamt_s"], "s")
 PY
+done
 echo "== fertig. Die Bruecke ist eingerichtet: $VENV"

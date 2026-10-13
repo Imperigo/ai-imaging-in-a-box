@@ -796,3 +796,418 @@ def test_eine_hochachse_mit_minus_kommt_beim_runner_an(tmp_path, splat_python):
 def test_die_voxelgroesse_haelt_open3d_am_echten_splat_aus():
     """``auf-20261013-275`` Fehler 2: 5 cm stürzte Open3D ab, 7 cm lief."""
     assert kn.VOXEL_M == 0.07
+
+
+# ======================================================================================
+# 8 · Blickwinkel aus der Aufnahme (13.10.2026, nach auf-20261013-275)
+# ======================================================================================
+#
+# Die Aufnahme ist synthetisch (``tools/make_test_colmap.py``, Regel 3) und wird in jeder
+# Probe neu geschrieben — keine Binärdatei im Repo. Das Format ist an pycolmap 4.2.1
+# nachgeprüft (Protokoll); pycolmap selbst ist hier nicht im Spiel (GPL-Teile im Rad).
+
+COLMAP_ERZEUGER = WURZEL / "tools" / "make_test_colmap.py"
+
+
+def _colmap():
+    spez = importlib.util.spec_from_file_location("make_test_colmap_probe", COLMAP_ERZEUGER)
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+    return modul
+
+
+def _ansicht_mal(v, p):
+    return tuple(v[4 * z] * p[0] + v[4 * z + 1] * p[1] + v[4 * z + 2] * p[2] + v[4 * z + 3]
+                 for z in range(3))
+
+
+@pytest.mark.parametrize("auge, ziel, oben", [
+    ((1.0, 2.0, 3.0), (1.0, 2.0, -7.0), (0.0, 1.0, 0.0)),
+    ((-4.0, 1.6, 9.0), (3.0, 0.2, -2.0), (0.0, 1.0, 0.0)),
+    ((0.5, -2.0, 0.3), (2.0, 7.0, 1.0), (0.0, 0.0, 1.0)),
+])
+def test_colmap_pose_ist_die_ansichtsmatrix(auge, ziel, oben):
+    """COLMAP ``cam_from_world`` und :func:`ansicht_matrix` folgen derselben Konvention
+    (OpenCV): Die Pose geht ohne Umklappen als Ansichtsmatrix an gsplat und Open3D."""
+    v = kn.ansicht_matrix(auge, ziel, oben)
+    r = [list(v[0:3]), list(v[4:7]), list(v[8:11])]
+    q = _colmap().quaternion_aus_matrix(r)
+    pose = kn.pose_zu_ansicht(q, (v[3], v[7], v[11]))
+    assert pose == pytest.approx(v, abs=1e-12)
+    assert kn.kamerazentrum(q, (v[3], v[7], v[11])) == pytest.approx(auge, abs=1e-12)
+    # Und dieselbe Bedeutung: Das Ziel liegt vor der Kamera auf der Achse, oben ist −y.
+    vorn = _ansicht_mal(pose, ziel)
+    assert vorn[0] == pytest.approx(0.0, abs=1e-9) and vorn[1] == pytest.approx(0.0, abs=1e-9)
+    assert vorn[2] > 0
+    hoch = tuple(a + o for a, o in zip(auge, oben))
+    assert _ansicht_mal(pose, hoch)[1] < 0
+
+
+@pytest.mark.parametrize("text", [False, True])
+def test_colmap_aufnahme_mit_rig_wird_gelesen(tmp_path, text):
+    befund = _colmap().schreibe_aufnahme(tmp_path / "sparse" / "0", augenblicke=6, punkte=50,
+                                         text=text)
+    a = kn.lies_aufnahme(tmp_path / "sparse" / "0")
+    assert a["format"] == ("txt" if text else "bin") and a["rig"] is True
+    assert len(a["bilder"]) == 24 and len(a["augenblicke"]) == 6
+    # Je Augenblick die vier Rig-Kameras, nach Kamera geordnet.
+    assert [[a["bilder"][i]["kamera"] for i in ab] for ab in a["augenblicke"]] == [[1, 2, 3, 4]] * 6
+    k = a["kameras"][1]
+    assert (k["modell"], k["breite"], k["hoehe"], k["perspektivisch"]) == ("PINHOLE", 1086,
+                                                                           1086, True)
+    assert k["fx"] == pytest.approx(543.0) and k["cx"] == pytest.approx(543.0)
+    # Die vier Kameras eines Augenblicks stehen am selben Ort, auf dem Weg.
+    for nr, ab in enumerate(a["augenblicke"]):
+        zentren = [kn.kamerazentrum(a["bilder"][i]["q"], a["bilder"][i]["t"]) for i in ab]
+        for z in zentren:
+            assert z == pytest.approx(befund["zentren"][nr], abs=1e-9)
+    # Die Punkte samt Spuren: alle, und als Stichprobe jeder zweite.
+    assert len(kn.lies_punkte3d(tmp_path / "sparse" / "0")) == 50
+    assert len(kn.lies_punkte3d(tmp_path / "sparse" / "0", hoechstens=25)) == 25
+
+
+def test_colmap_ohne_frames_ist_jedes_bild_ein_augenblick(tmp_path):
+    _colmap().schreibe_aufnahme(tmp_path, augenblicke=3, punkte=10, mit_frames=False)
+    a = kn.lies_aufnahme(tmp_path)
+    assert a["rig"] is False and len(a["augenblicke"]) == 12
+    assert all(len(ab) == 1 for ab in a["augenblicke"])
+    namen = [a["bilder"][ab[0]]["name"] for ab in a["augenblicke"]]
+    assert namen == sorted(namen)
+
+
+def test_colmap_unlesbares_wird_abgewiesen(tmp_path):
+    with pytest.raises(kn.KontextNetzError, match="Keine COLMAP-Aufnahme"):
+        kn.lies_aufnahme(tmp_path)
+    _colmap().schreibe_aufnahme(tmp_path, augenblicke=2, punkte=5)
+    roh = (tmp_path / "images.bin").read_bytes()
+    (tmp_path / "images.bin").write_bytes(roh[:len(roh) // 2])
+    with pytest.raises(kn.KontextNetzError, match="endet"):
+        kn.lies_aufnahme(tmp_path)
+    (tmp_path / "images.bin").write_bytes(roh)
+    roh = (tmp_path / "cameras.bin").read_bytes()
+    (tmp_path / "cameras.bin").write_bytes(roh[:12] + struct.pack("<i", 99) + roh[16:])
+    with pytest.raises(kn.KontextNetzError, match="Modell 99"):
+        kn.lies_aufnahme(tmp_path)
+
+
+@pytest.mark.parametrize("n, k, erwartet", [
+    (240, 60, None), (10, 4, [0, 3, 6, 9]), (5, 9, [0, 1, 2, 3, 4]), (7, 1, [3]),
+    (0, 5, []), (5, 0, []),
+])
+def test_augenblicke_gleichmaessig_mit_erstem_und_letztem(n, k, erwartet):
+    gewaehlt = kn.waehle_augenblicke(n, k)
+    if erwartet is not None:
+        assert gewaehlt == erwartet
+    else:
+        assert len(gewaehlt) == 60 and len(set(gewaehlt)) == 60
+        assert gewaehlt[0] == 0 and gewaehlt[-1] == 239
+        schritte = {b - a for a, b in zip(gewaehlt, gewaehlt[1:])}
+        assert schritte <= {4, 5}                  # 239 / 59 ≈ 4,05
+
+
+def test_aufnahme_blickwinkel_alle_rig_kameras_je_augenblick(tmp_path):
+    """Am echten Splat: 4 Kameras × 240 Augenblicke, höchstens 240 Bilder → 60 Augenblicke
+    mit je allen vier Kameras, auf die Renderbreite skaliert, quadratisch."""
+    _colmap().schreibe_aufnahme(tmp_path, augenblicke=240, punkte=10)
+    a = kn.lies_aufnahme(tmp_path)
+    ansichten, auswahl = kn.aufnahme_blickwinkel(a, breite=640, hoechstens=240)
+    assert len(ansichten) == 240 and auswahl["augenblicke_gewaehlt"] == 60
+    assert auswahl["kameras_je_augenblick"] == 4 and auswahl["bilder_gesamt"] == 960
+    je = {}
+    for v in ansichten:
+        je.setdefault(v["augenblick"], []).append(v["kamera"])
+    assert all(sorted(k) == [1, 2, 3, 4] for k in je.values())
+    ki = ansichten[0]["ki"]
+    assert (ki["breite"], ki["hoehe"]) == (640, 640)
+    assert ki["fx"] == pytest.approx(543.0 * 640 / 1086) and ki["cx"] == pytest.approx(320.0)
+    assert ansichten[0]["ansicht"] == kn.pose_zu_ansicht(a["bilder"][ansichten[0]["bild"]]["q"],
+                                                         a["bilder"][ansichten[0]["bild"]]["t"])
+    # Ein Fischauge wird ausgelassen und gezählt, nicht als Lochkamera missdeutet.
+    a["kameras"][2] = dict(a["kameras"][2], modell="OPENCV_FISHEYE", perspektivisch=False)
+    ansichten, auswahl = kn.aufnahme_blickwinkel(a, breite=640, hoechstens=240)
+    assert len(ansichten) == 180 and auswahl["ausgelassen_nicht_perspektivisch"] == 60
+    for k in a["kameras"].values():
+        k["perspektivisch"] = False
+    with pytest.raises(kn.KontextNetzError, match="kein Blickwinkel"):
+        kn.aufnahme_blickwinkel(a)
+
+
+def test_intrinsik_skaliert_haelt_das_seitenverhaeltnis():
+    k = {"modell": "PINHOLE", "perspektivisch": True, "breite": 1600, "hoehe": 1200,
+         "fx": 1000.0, "fy": 1010.0, "cx": 801.0, "cy": 598.0}
+    ki = kn.intrinsik_skaliert(k, 640)
+    assert (ki["breite"], ki["hoehe"]) == (640, 480)
+    assert ki["K"] == pytest.approx((400.0, 0, 320.4, 0, 404.0, 239.2, 0, 0, 1))
+    with pytest.raises(kn.KontextNetzError, match="keine Lochkamera"):
+        kn.intrinsik_skaliert(dict(k, perspektivisch=False), 640)
+
+
+def test_gleichheit_echte_zahlen_gehen_durch_verschoben_nicht():
+    """Die Zahlen der HomeStation am echten Splat (13.10.2026): Median 0,0274, P90 0,0877
+    Einheiten bei einer dichten Ausdehnung von 4,43 × 1,04 × 10,23 Einheiten, 89 % der
+    Kameras in der unerweiterten Box. Das muss klar durchgehen."""
+    diag = math.sqrt(4.43 ** 2 + 1.04 ** 2 + 10.23 ** 2)
+    echt = kn.gleichheit_befund(median=0.0274, p90=0.0877, diagonale=diag, kameras_innen=0.89,
+                                n_punkte=20000, n_kameras=960)
+    assert echt["gleich"] is True and echt["grund"] is None
+    assert echt["median_rel"] < kn.GLEICH_MEDIAN_MAX / 3          # mit Luft
+    assert echt["p90_rel"] < kn.GLEICH_P90_MAX / 4
+    # 10 m verschoben — am echten Splat 1 Einheit ≈ 6,22 m, also 1,6 Einheiten.
+    weg = kn.gleichheit_befund(median=1.6, p90=1.7, diagonale=diag, kameras_innen=0.89,
+                               n_punkte=20000, n_kameras=960)
+    assert weg["gleich"] is False and "nicht im selben System" in weg["grund"]
+    assert "Median" in weg["grund"] and "P90" in weg["grund"]
+    draussen = kn.gleichheit_befund(median=0.0274, p90=0.0877, diagonale=diag,
+                                    kameras_innen=0.2, n_punkte=20000, n_kameras=960)
+    assert draussen["gleich"] is False and "Kamerazentren" in draussen["grund"]
+    ohne = kn.gleichheit_befund(median=None, p90=None, diagonale=diag, kameras_innen=1.0,
+                                n_punkte=0, n_kameras=960)
+    assert ohne["gleich"] is False and "nicht pruefbar" in ohne["grund"]
+
+
+def test_huelle_und_anteil_innen():
+    lo, hi = kn.huelle_erweitert((0, 0, 0), (4, 2, 10), 0.25)
+    assert lo == (-1.0, -0.5, -2.5) and hi == (5.0, 2.5, 12.5)
+    assert kn.anteil_innen([(0, 0, 0), (5, 2.5, 12.5), (6, 0, 0), (0, 0, -3)], lo, hi) == 0.5
+    assert kn.anteil_innen([], lo, hi) == 0.0
+
+
+def test_blockwache_vergroessert_den_voxel_genug():
+    """auf-20261013-275: 435 000 Blöcke bei 5 cm stürzten ab. Der neue Voxel muss darunter."""
+    assert kn.voxel_fuer_bloecke(0.05, 200_000) == 0.05
+    neu = kn.voxel_fuer_bloecke(0.05, 435_000)
+    assert 435_000 * (0.05 / neu) ** 2 < kn.BLOECKE_MAX
+    assert kn.voxel_fuer_bloecke(0.05, 260_000) == pytest.approx(0.05 * 1.25)
+
+
+def test_neue_gesetzte_zahlen_im_speicherschluessel():
+    g = kn.netz_parameter()["gesetzt"]
+    assert g["aufnahme_blicke_max"] == kn.AUFNAHME_BLICKE_MAX == 240
+    assert g["bloecke_max"] == kn.BLOECKE_MAX and g["gleich_median_max"] == kn.GLEICH_MEDIAN_MAX
+    assert kn.FASSUNG == 2
+
+
+# --- die Konvention: woher der Ordner kommt -------------------------------------------
+
+def test_aufnahme_kandidaten_neben_dem_splat(tmp_path):
+    ply = tmp_path / "projekt" / "exports" / "umgebung.ply"
+    assert kn.aufnahme_kandidaten(ply) == [
+        tmp_path / "projekt" / "exports" / "sparse" / "0",
+        tmp_path / "projekt" / "sparse" / "0",
+        tmp_path / "projekt" / "exports" / "umgebung.colmap"]
+
+
+@pytest.mark.parametrize("ort", ["daneben", "hoeher", "stamm"])
+def test_finde_aufnahme_neben_dem_splat(tmp_path, monkeypatch, ort):
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    ply = tmp_path / "p" / "exports" / "umgebung.ply"
+    ordner = {"daneben": ply.parent / "sparse" / "0", "hoeher": ply.parent.parent / "sparse" / "0",
+              "stamm": ply.parent / "umgebung.colmap"}[ort]
+    _colmap().schreibe_aufnahme(ordner, augenblicke=2, punkte=5, text=(ort == "stamm"))
+    assert seams.finde_aufnahme(ply) == (ordner, "neben dem splat", None)
+
+
+def test_finde_aufnahme_reihenfolge(tmp_path, monkeypatch):
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    ply = tmp_path / "s.ply"
+    assert seams.finde_aufnahme(ply) == (None, "keine", None)
+    # Ein Ordner ohne images ist keine Aufnahme.
+    (tmp_path / "sparse" / "0").mkdir(parents=True)
+    (tmp_path / "sparse" / "0" / "cameras.bin").write_bytes(b"\0" * 8)
+    assert seams.finde_aufnahme(ply)[1] == "keine"
+    neben = tmp_path / "s.colmap"
+    _colmap().schreibe_aufnahme(neben, augenblicke=2, punkte=5)
+    env = tmp_path / "dienst" / "sparse"
+    _colmap().schreibe_aufnahme(env, augenblicke=2, punkte=5)
+    param = tmp_path / "ausdruecklich"
+    _colmap().schreibe_aufnahme(param, augenblicke=2, punkte=5)
+    assert seams.finde_aufnahme(ply) == (neben, "neben dem splat", None)
+    monkeypatch.setenv(seams.SPLAT_AUFNAHME_ENV, str(env))
+    assert seams.finde_aufnahme(ply) == (env, "umgebung", None)
+    assert seams.finde_aufnahme(ply, param) == (param, "parameter", None)
+    # Die Variable zeigt ins Leere: weitersuchen, Grund vermerken — ohne Pfad.
+    monkeypatch.setenv(seams.SPLAT_AUFNAHME_ENV, str(tmp_path / "geheim" / "fehlt"))
+    ordner, art, grund = seams.finde_aufnahme(ply)
+    assert (ordner, art) == (neben, "neben dem splat")
+    assert seams.SPLAT_AUFNAHME_ENV in grund and str(tmp_path) not in grund
+    # Ausdrücklich genannt, aber keine Aufnahme: ein Fehler, kein stiller Ring.
+    with pytest.raises(seams.SeamError, match="kein COLMAP-Ordner"):
+        seams.finde_aufnahme(ply, tmp_path / "geheim")
+
+
+def test_naht_reicht_die_aufnahme_weiter_und_schluesselt_ihren_inhalt(tmp_path, splat_python,
+                                                                    monkeypatch):
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    splat = tmp_path / "s.ply"
+    _erzeuger().erzeuge_splat(splat, punkte=100)
+    speicher = tmp_path / "sp"
+    starter = _Starter()
+    ohne = seams.splat_zu_netz(splat, speicher=speicher, _starte=starter)
+    assert not any(a.startswith("--aufnahme") for a in starter.aufrufe[-1][0])
+    assert ohne["aufnahme"]["quelle"] == "keine" and ohne["aufnahme"]["sha256"] is None
+    # Neben dem Splat abgelegt: gefunden, weitergereicht (mit `=`), anderer Schlüssel.
+    ordner = tmp_path / "sparse" / "0"
+    _colmap().schreibe_aufnahme(ordner, augenblicke=3, punkte=5)
+    mit = seams.splat_zu_netz(splat, speicher=speicher, _starte=starter)
+    cmd = starter.aufrufe[-1][0]
+    assert f"--aufnahme={ordner}" in cmd
+    args = _runner_parser().parse_args([str(splat), "n.ply", f"--aufnahme={ordner}"])
+    assert args.aufnahme == str(ordner)
+    assert mit["zwischenspeicher"]["schluessel"] != ohne["zwischenspeicher"]["schluessel"]
+    assert mit["aufnahme"]["quelle"] == "neben dem splat"
+    assert mit["aufnahme"]["sha256"] == kn.aufnahme_fingerabdruck(ordner)["sha256"]
+    assert str(tmp_path) not in json.dumps(mit["aufnahme"])
+    # Gleicher Inhalt an anderem Ort: Treffer. Andere Kameras: neues Netz.
+    kopie = tmp_path / "anders"
+    shutil.copytree(ordner, kopie)
+    n = len(starter.aufrufe)
+    wieder = seams.splat_zu_netz(splat, speicher=speicher, aufnahme=kopie, _starte=starter)
+    assert len(starter.aufrufe) == n and wieder["zwischenspeicher"]["treffer"] is True
+    _colmap().schreibe_aufnahme(kopie, augenblicke=4, punkte=5)
+    seams.splat_zu_netz(splat, speicher=speicher, aufnahme=kopie, _starte=starter)
+    assert len(starter.aufrufe) == n + 1
+
+
+def test_vermerk_sagt_woher_die_blickwinkel_kamen(tmp_path, splat_python, monkeypatch):
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+
+    class _Rueckfall(_Starter):
+        def __call__(self, cmd, timeout):
+            lauf = super().__call__(cmd, timeout)
+            bericht = Path(cmd[cmd.index("--report") + 1])
+            b = json.loads(bericht.read_text(encoding="utf-8"))
+            b.update(blickwinkel_quelle="ring", deckung={"anteil": 0.42},
+                     aufnahme={"verwendet": False, "grund": f"Aufnahme und Splat liegen nicht "
+                               f"im selben System ({tmp_path}/geheim/x)"})
+            bericht.write_text(json.dumps(b), encoding="utf-8")
+            return lauf
+
+    splat = tmp_path / "s.ply"
+    _erzeuger().erzeuge_splat(splat, punkte=100)
+    _colmap().schreibe_aufnahme(tmp_path / "sparse" / "0", augenblicke=2, punkte=5)
+    v = seams.kontext_vorbereiten(
+        splat, _splat_zu_netz=lambda ply, **kw: seams.splat_zu_netz(
+            ply, speicher=tmp_path / "sp", _starte=_Rueckfall(), **kw))
+    assert v["weg"] == "netz"
+    n = v["netz"]
+    assert (n["blickwinkel_quelle"], n["aufnahme"], n["deckung"]) == ("ring", "neben dem splat",
+                                                                     0.42)
+    assert "nicht im selben System" in n["aufnahme_grund"]
+    assert str(tmp_path) not in json.dumps(n)
+
+
+def _runner_parser():
+    spez = importlib.util.spec_from_file_location("runner_aufnahme", seams.SPLAT_RUNNER)
+    runner = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(runner)
+    return runner._parser()
+
+
+def test_der_runner_liest_colmap_ohne_pycolmap():
+    """pycolmap (PyPI-Rad 4.2.1) bindet GPL-2.0+-Teile von SuiteSparse statisch ein; gelesen
+    wird darum mit der Standardbibliothek (``kontext_netz.lies_aufnahme``)."""
+    importe = set()
+    for knoten in ast.walk(ast.parse(RUNNER_QUELLE)):
+        if isinstance(knoten, ast.Import):
+            importe.update(a.name.split(".")[0] for a in knoten.names)
+        elif isinstance(knoten, ast.ImportFrom) and knoten.module:
+            importe.add(knoten.module.split(".")[0])
+    assert "pycolmap" not in importe
+    assert "kn.lies_aufnahme(" in RUNNER_QUELLE and "kn.gleichheit_befund(" in RUNNER_QUELLE
+    einrichtung = (WURZEL / "betrieb" / "splat-umgebung.sh").read_text(encoding="utf-8")
+    assert "pycolmap" not in einrichtung.replace("KEIN pycolmap", "")
+
+
+# --- die echte Fusion mit Aufnahme (nur mit AIIMAGING_SPLAT_PYTHON) -------------------
+
+def _fusion(tmp_path, *, aufnahme=None, **kw):
+    return seams.splat_zu_netz(tmp_path / "s.ply", renderer="cpu-probe", aufloesung=160,
+                               blickwinkel=8, voxel_m=0.15, speicher=tmp_path / "sp",
+                               aufnahme=aufnahme, **kw)
+
+
+@pytest.fixture
+def strasse(tmp_path, monkeypatch):
+    """Der synthetische Strassenraum (``make_test_splat.py --form strasse``) mit seiner
+    Aufnahme entlang der Mittellinie — die Lage, an der der Ring am echten Splat scheiterte."""
+    monkeypatch.delenv(seams.SPLAT_AUFNAHME_ENV, raising=False)
+    _erzeuger().erzeuge_splat(tmp_path / "s.ply", punkte=12000, startwert=7, form="strasse")
+    _colmap().schreibe_aufnahme(tmp_path / "auf", augenblicke=80, form="strasse")
+    return tmp_path
+
+
+@ohne_splat_python
+def test_aufnahme_deckt_den_strassenraum_besser_als_der_ring(strasse):
+    ring = _fusion(strasse)
+    auf = _fusion(strasse, aufnahme=strasse / "auf")
+    print(json.dumps({n: {"quelle": b["blickwinkel_quelle"], "deckung": b["deckung"],
+                          "dreiecke": b["netz"]["dreiecke"], "inseln": b["netz"]["inseln"],
+                          "blickwinkel": b["blickwinkel"]["gesamt"],
+                          "gleichheit": (b["aufnahme"].get("gleichheit") or {}).get("median_rel"),
+                          "zeit_s": b["zeiten_s"]["gesamt_s"]}
+                      for n, b in (("ring", ring), ("aufnahme", auf))}, ensure_ascii=False))
+    assert ring["blickwinkel_quelle"] == "ring" and ring["aufnahme"]["quelle"] == "keine"
+    assert auf["blickwinkel_quelle"] == "aufnahme" and auf["aufnahme"]["verwendet"] is True
+    assert auf["aufnahme"]["quelle"] == "parameter"
+    assert auf["blickwinkel"]["aufnahme"] == kn.AUFNAHME_BLICKE_MAX
+    assert auf["aufnahme"]["gleichheit"]["gleich"] is True
+    assert auf["deckung"]["anteil"] > ring["deckung"]["anteil"] + 0.1
+    assert auf["deckung"]["anteil"] > 0.9
+    # Weniger Fetzen: Die Aufnahme sieht die Wände von vorn, der Ring streifend.
+    assert auf["netz"]["inseln"]["komponenten"] < ring["netz"]["inseln"]["komponenten"]
+    # Das Netz bleibt im Splat (kein Wachstum über den Rand bei streifendem Blick).
+    lo, hi = auf["splat"]["huellbox_dicht"]
+    n_lo, n_hi = auf["netz"]["huellbox"]
+    for i in range(3):
+        assert n_lo[i] > lo[i] - 1.0 and n_hi[i] < hi[i] + 1.0
+    assert str(strasse) not in json.dumps({k: v for k, v in auf.items() if k != "netz_ply"})
+
+
+@ohne_splat_python
+def test_verschobene_aufnahme_faellt_auf_den_ring_mit_grund(strasse):
+    d = 10.0 / math.sqrt(3.0)                       # 10 m, schräg
+    _colmap().schreibe_aufnahme(strasse / "weg", augenblicke=80, form="strasse",
+                                versatz=(d, d, d))
+    b = _fusion(strasse, aufnahme=strasse / "weg")
+    g = b["aufnahme"]["gleichheit"]
+    print(json.dumps(g, ensure_ascii=False))
+    assert b["blickwinkel_quelle"] == "ring" and b["aufnahme"]["verwendet"] is False
+    assert g["gleich"] is False and g["median_rel"] > kn.GLEICH_MEDIAN_MAX
+    assert "nicht im selben System" in b["aufnahme"]["grund"]
+    assert b["blickwinkel"]["ring"] > 0 and b["blickwinkel"]["aufnahme"] == 0
+
+
+@ohne_splat_python
+def test_blockwache_vergroessert_den_voxel_statt_abzustuerzen(strasse):
+    runner = seams.SPLAT_RUNNER
+    bericht = strasse / "b.json"
+    lauf = subprocess.run(
+        [os.environ[seams.SPLAT_PYTHON_ENV], str(runner), str(strasse / "s.ply"),
+         str(strasse / "n.ply"), "--report", str(bericht), "--renderer", "cpu-probe",
+         "--aufloesung", "160", "--blickwinkel", "8", "--voxel-m", "0.15",
+         "--bloecke-max", "1500"], capture_output=True, text=True, timeout=600)
+    b = json.loads(bericht.read_text(encoding="utf-8"))
+    assert lauf.returncode == 0, b.get("error")
+    v = b["voxel"]
+    print(json.dumps(v))
+    assert v["vergroessert"] is True and v["versuche"][0]["abgebrochen"] is True
+    assert v["benutzt_splat_einheiten"] > v["angefragt_splat_einheiten"]
+    assert v["versuche"][-1]["bloecke"] <= 1500 and "Open3D" in v["grund"]
+
+
+def test_die_schalter_der_erzeuger_wirken(tmp_path):
+    """Schalterprobe: ``make_test_colmap.py`` und ``make_test_splat.py --form`` von der
+    Befehlszeile — dieselbe Aufnahme wie aus Python, und die Strasse ist lang und schmal."""
+    m = _colmap()
+    assert m.main([str(tmp_path / "a"), "--augenblicke", "3", "--radius", "5",
+                   "--versatz", "1,2,3", "--text", "--form", "platz"]) == 0
+    a = kn.lies_aufnahme(tmp_path / "a")
+    assert a["format"] == "txt" and len(a["augenblicke"]) == 3
+    zentrum = kn.kamerazentrum(a["bilder"][1]["q"], a["bilder"][1]["t"])
+    assert zentrum == pytest.approx((5.0 + 1.0, 1.6 + 2.0, 0.0 + 3.0), abs=1e-9)
+    assert m.main([str(tmp_path / "b"), "--form", "strasse", "--augenblicke", "2"]) == 0
+    assert kn.lies_aufnahme(tmp_path / "b")["format"] == "bin"
+    assert _erzeuger().main([str(tmp_path / "s.ply"), "--punkte", "400",
+                             "--form", "strasse"]) == 0
+    kopf = kn.lies_ply_kopf(tmp_path / "s.ply")
+    assert kopf["elemente"][0]["anzahl"] == 400
