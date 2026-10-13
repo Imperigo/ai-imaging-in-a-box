@@ -1403,3 +1403,9 @@ Owner Epic RealityScan selbst installiert hat, macht eine Brücke aus den Fotos 
 darf nicht mitgeliefert und nicht als Dienst für Kunden betrieben werden — dafür gibt es jetzt eine eigene Regel.
 Ausserdem zählt der Messboden nur noch zum Trennen von Haus und Hintergrund, nicht in die Punktzahl.
 
+**Die Brücke vom Splat zum Netz (13.10.2026).** Gebaut ist der offene Weg aus Entscheid 79: Ein eigenes kleines Programm
+in eigener Umgebung (wie Blender) rendert den Splat mit gsplat richtig aus 48 Blickwinkeln und verschmilzt die Bilder
+mit Open3D zu einem farbigen 3D-Netz. Blender lädt dieses Netz wie ein gewöhnliches Objekt — keine Kugeln mehr. Ohne
+die Umgebung bleibt die alte Notlösung, und das Ergebnis sagt es dazu. Weil hier keine Grafikkarte ist, misst der
+Heim-PC, ob das Konfetti damit verschwindet. RealityScan folgt später.
+
