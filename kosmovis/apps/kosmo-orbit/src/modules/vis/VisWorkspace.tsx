@@ -7,6 +7,7 @@ import { sendeGraphRenderAuftrag } from './vis-jobs';
 import { VisReportDossier } from './VisReportDossier';
 import { useVisRuntime, waehleGezeigtenGraphen } from './vis-runtime';
 import { kameraVorschlagenAktion } from './vis-graph-aktionen';
+import { anfangFallsLeer, startGraphAnlegen } from './start-graph';
 // PC1 (`docs/V084-SPEZ.md` §5 W2, C-15) — der Vis-Island-Katalog (eigener
 // Namensraum, s. `island/inhalte/registry.ts`-Kopfkommentar) + die
 // Registrierung seiner Stufe-2/3-Inhalte als Import-Seiteneffekt (Muster
@@ -165,6 +166,16 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
  */
   const buehneRef = useRef<IslandBuehneHandle>(null);
 
+  /**
+   * Entscheid 91 (Blatt 22): ein leeres Dokument bekommt den fertigen Anfang — von selbst
+   * nur, wenn der Wirt es will (Visbox, `legeAnfangBeimOeffnen`); sonst steht er unten als
+   * Vorschlag mit einem Knopf. Warum je Wirt: Kopf von `start-graph.ts`.
+   */
+  useEffect(() => {
+    if (graphen.length === 0) anfangFallsLeer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision]);
+
   return (
     <div className="vis-workspace-fuellen" data-testid="vis-island-fuellen">
       <div className="vis-workspace-buehne">
@@ -173,6 +184,20 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
         ) : (
           <div className="vis-workspace-buehne-zentriert">
             <Messrahmen height={200} caption="Noch kein Render-Graph" />
+            {/* Entscheid 91 (Blatt 22): der Anfang als Vorschlag — was er anlegt, steht
+                darunter in einem Satz; der Knopf legt ihn an (ein Undo-Schritt). */}
+            <p className="vis-leer-anfang-satz" data-testid="vis-leer-anfang-satz">
+              Fertiger Anfang: Modell, Auto-Kamera, Stimmung und Prompt → Render → Bildvergleich.
+              Gerechnet wird erst auf «Ausführen».
+            </p>
+            <KButton
+              size="sm"
+              tone="accent"
+              data-testid="vis-leer-anfang-anlegen"
+              onClick={() => startGraphAnlegen()}
+            >
+              Fertigen Anfang anlegen
+            </KButton>
             {/* Zielgroessen-Gate (Befund 17.09.2026): die Groesse stand auf
                 der 44px-Stufe (touch-Groesse), steht jetzt auf der
                 32px-Stufe (sm-Groesse), weil B89 (02.09.2026) ausserhalb

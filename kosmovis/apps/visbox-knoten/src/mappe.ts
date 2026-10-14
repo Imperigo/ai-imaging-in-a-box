@@ -19,6 +19,10 @@
  *    derselben) und wandelt im Hintergrund um. Hier wird nachgefragt, bis es fertig ist, und
  *    danach die neue Mappe geladen — sie ist am Server jetzt die zuletzt geöffnete.
  *
+ * 4. Seit Entscheid 92 (14.10.2026, Blatt 23) die **Standpunkte des Heim-PCs** für die
+ *    Auto-Kamera (`registriereHeimStandpunkte`): dieselben drei Richtungen, die der Abholer ohne
+ *    mitgeschickte Kameras rechnet, als Vorschau — der Auftrag bleibt `cameras: 'auto'`.
+ *
  * Und die Brücke: Auf dieser Seite ist der Visbox-Server die Brücke. `vis-jobs.ts` liest ihre
  * Adresse aus `localStorage['kosmo.bridge']`; sie wird hier auf `/bruecke` desselben Servers
  * gesetzt. Andere Adressen gehören zu KosmoOrbit und haben in diesem Ursprung nichts zu tun.
@@ -30,6 +34,7 @@ import {
   type ModellLadeWirt,
   type ModellLadeZustand,
 } from '../../kosmo-orbit/src/modules/vis/modell-laden';
+import { registriereHeimStandpunkte, type HeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 
 export interface MappeAntwort {
   name: string | null;
@@ -47,6 +52,9 @@ export interface MappeAntwort {
   herkunft?: string | null;
   fassung?: number;
   bauteile?: number | null;
+  /** Entscheid 92: die drei Standpunkte, die der Heim-PC ohne mitgeschickte Kameras rechnet
+   *  (`knotenweg.heim_standpunkte`) — `null` ohne Modell. */
+  standpunkte?: HeimStandpunkte | null;
 }
 
 /** Der Stand des Ladens, wie `GET ./modell-laden` ihn meldet (`oberflaeche/server.py`). */
@@ -150,6 +158,9 @@ export async function ladeMappe(): Promise<string> {
   const mappe = (await antwort.json()) as MappeAntwort;
   raeumeGelegtes();
   setzeModellLadeZustand(zustandAusMappe(mappe));
+  // Entscheid 92 (Blatt 23): die Auto-Kamera zeigt, was der Heim-PC rechnen wird — vor dem
+  // Hochzaehlen der Revision unten, damit der Knoten gleich in seiner Hoehe steht.
+  registriereHeimStandpunkte(mappe.glb && mappe.standpunkte ? mappe.standpunkte : null);
   if (!mappe.glb) {
     setzeModellGlb(null);
     useProject.setState((s) => ({ revision: s.revision + 1 }));

@@ -7100,12 +7100,37 @@ es zeigt nicht mehr, was ein neuer Lauf liefern würde.
 Präsentation und Druck gesetzt werden. Der Knoten «Aufs Blatt» legt ein Render dorthin. In Visbox
 gibt es keine Blätter; der Knoten sagt das.
 
+**Fertiger Anfang (Startgraph)** — Ein kleiner, schon verbundener Graph, den ein Dokument ohne
+Graph bekommt, damit man nicht vor einer leeren Fläche steht: Modell, Auto-Kamera, Stimmung und
+Prompt, zusammengeführt im Kombinierer, dann Render und Bildvergleich. Er rechnet nichts von
+selbst — erst «Ausführen» bestellt ein Bild. In Visbox entsteht er beim Öffnen, in KosmoOrbit auf
+Knopfdruck («Fertigen Anfang anlegen»), weil dort schon das Öffnen sonst ein gespeichertes, mit
+anderen geteiltes Projekt verändern würde. *Im Projekt:* Entscheid 91, `start-graph.ts` im
+Vis-Werkzeug.
+
+**Rückgängig-Klammer** — Mehrere Arbeitsschritte, die als **einer** gelten: Ein einziges
+«Rückgängig» nimmt sie alle zurück. So kommt der fertige Anfang mit seinen sieben Knoten und sechs
+Linien in einem Schritt und geht in einem Schritt wieder. *Im Code:* `history.beginGroup()` …
+`endGroup()`.
+
+**Standpunkte des Heim-PCs (Vorschau an der Auto-Kamera)** — Die drei Blickrichtungen, die der
+Heim-PC rechnet, wenn ein Auftrag keine eigenen Kameras mitbringt: von Süden frontal, von Südosten
+und von Nordwesten über Eck. Visbox zeigt sie am Auto-Kamera-Knoten vorab, gerechnet mit derselben
+Regel wie am Heim-PC — als *Vorschau*, nicht als Bestellung: Der Auftrag sagt weiter «automatisch»,
+damit der Heim-PC das Objektiv verschieben kann (siehe **Shift**), was eine mitgeschickte Kamera
+nicht kann. *Im Projekt:* Entscheid 92, `knotenweg.heim_standpunkte`, `heim-standpunkte.ts`.
+
+**Vorbild (Bild-Referenz)** — Ein fremdes Bild, das zeigt, wie etwas aussehen soll — eine Stimmung,
+ein Material. Im Vis-Werkzeug hält es der Knoten «Bild-Referenz»; im Bildvergleich steht es neben dem
+eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus Entscheid 91/92 (fertiger Anfang, Auto-Kamera mit den Standpunkten des Heim-PCs): **Fertiger Anfang (Startgraph)**, **Rückgängig-Klammer**, **Standpunkte des Heim-PCs (Vorschau an der Auto-Kamera)**, **Vorbild (Bild-Referenz)** |
 | 2026-10-14 | Ergaenzt aus Fassung 3 der RealityScan-Brücke (Textur statt Eckfarben): **Textur**, **Abwicklung (UV-Abwicklung)**, **Texel**, **OBJ und MTL (Dateiformate)**; **Emissions-Shader** um die Stärke 1 der Umgebung ergänzt, **Eckpunktfarbe** und **Deckel (im Netz)** nachgeführt (Grenze 2,5 % statt 5 %) |
 | 2026-10-14 | Ergaenzt aus der Erklärung der Knoten für die Kosmo-Tafel (`docs/KNOTEN_ERKLAERT.md`): **Kosmo-Tafel**, **Knotenkatalog**, **Gruppe eines Knotens**, **Anschlusssorte (Porttyp)**, **Preset**, **Geometrie-Treue**, **Bildwerkzeug**, **Strichzeichnung (Line-Art)**, **Rückgängig (Undo)**, **Viewport-Aufnahme**, **Kuratierfläche**, **Prüfurteil (QA)**, **Veraltet**, **KosmoPublish** |
 | 2026-10-14 | Ergaenzt aus Entscheid 90 («Datei laden …» am Modell-Knoten): **Lade-Fähigkeit des Wirts**, **Fassung des Modells (in einer Mappe)**, **Start-Mappe**, **Geschlossenes Dateiformat**, **Nachfragen (Polling)**, **Dateiwähler (Öffnen-Dialog, `NSOpenPanel`)**, **UI-Delegat (`WKUIDelegate`)** |

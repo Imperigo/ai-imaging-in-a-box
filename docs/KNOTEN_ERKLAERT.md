@@ -1,6 +1,6 @@
 # Die Knoten des Vis-Werkzeugs — was jeder kann und wie sie zusammenhängen
 
-**Codestand:** `7224c0d` (Visbox), Kopie `kosmovis/` auf KosmoOrbit `22988d6ed` (`kosmovis/HERKUNFT.json`)
+**Codestand:** `7224c0d` (Visbox), Kopie `kosmovis/` auf KosmoOrbit `c68c8c213` (Zweig `claude/kosmovis-startgraph`) (`kosmovis/HERKUNFT.json`)
 **Grundlage:** `knotenweg`, `abholer`, `bruecke`, `kosmo_szene` — dazu die Kopie unter `kosmovis/` (Knotenkatalog, Knotenansicht, Auftragsweg)
 
 *Auftrag des Owners, 14.10.2026: «Ergänze auf der Kosmo-Tafel, was jedes einzelne Node kann, wie
@@ -93,6 +93,16 @@ einen Bildvergleich — als **ein** Rückgängig-Schritt (`dreiStimmungenEinfueg
 Auto-Kamera-Knoten (falls keiner da ist) und hängt ihn an jeden Render-Knoten, der noch keine
 Kameras hat (`kameraVorschlagenAktion`, gleiche Datei).
 
+**Der fertige Anfang** (Entscheid 91, 14.10.2026, Blatt 22). Ein Dokument ohne Graph bekommt diese
+Kette einmal, ohne Material und Zahl: Modell, Auto-Kamera, Stimmung (Morgenlicht) und ein leerer
+Prompt → Kombinierer → Render → Bildvergleich, verbunden, als **ein** Rückgängig-Schritt
+(`startGraphAnlegen`, `modules/vis/start-graph.ts`). Gerechnet wird erst auf «Ausführen». Zur
+Auto-Kamera führt keine Linie vom Modell: Sie hat keinen Eingang und liest das Modell aus dem
+Dokument. **In Visbox** entsteht der Anfang beim Öffnen von selbst, mit «Datei laden …» im
+Modell-Knoten; **in KosmoOrbit** steht er als Vorschlag mit dem Knopf «Fertigen Anfang anlegen» —
+dort würde ein Anfang beim blossen Öffnen ein gespeichertes, geteiltes Projekt ändern (Sicherung,
+Rückgängig-Stapel, zweites Gerät). Ein bestehender Graph bleibt unverändert.
+
 ### Der Weg eines Render-Auftrags
 
 **In Visbox** (Knotenansicht unter `/knoten/` des Visbox-Servers):
@@ -100,8 +110,10 @@ Kameras hat (`kameraVorschlagenAktion`, gleiche Datei).
 1. «Ausführen» am Render-Knoten → der Knoten sammelt Szene, Prompt, Zahlen, Kameras und seine
    Einstellungen und schickt Modell (glb) plus Auftragsbeschrieb an die **Brücke** — in Visbox ist
    das der eigene Server unter `/bruecke` (`brueckeAufDiesenServer`, `apps/visbox-knoten/src/mappe.ts`).
-2. Der Server legt den Auftrag als Ordner in die Auftragsablage der Mappe
-   (`<Mappe>/knotenweg/vis-…/`, `knotenweg.lege_an`). **Jeder Auftrag beginnt auf «wartet auf
+2. Der Server legt den Auftrag als Ordner in die Auftragsablage
+   (`<Start-Mappe>/knotenweg/vis-…/` oder `--auftragsablage`, `knotenweg.lege_an`). Es ist **eine**
+   Ablage, beim Start bestimmt — auch für Mappen, die erst danach mit «Datei laden …» entstehen; der
+   Laufzettel nennt seit dem 14.10.2026 den Namen der Mappe, aus der bestellt wurde. **Jeder Auftrag beginnt auf «wartet auf
    Freigabe».**
 3. Am Knoten erscheint **«Freigeben»**. Erst dieser Klick setzt den Auftrag in die Reihe, mit der
    Marke einer menschlichen Freigabe (`knotenweg.freigeben`).
@@ -178,7 +190,9 @@ Ehrlich beschriftet: «Vorschlag aus dem Modell» (keine KI-Wahl) oder «von Han
 **Wie er funktioniert.** Wie der Material-Knoten rein abgeleitet: Bei jeder Auswertung rechnet er
 die Standpunkte aus der Ausdehnung des Modells neu (Eingang, Übersicht, und bei Räumen im Modell
 auch Innenraum); übernommene Kameras stehen vorne. Ein Standpunkt, dessen Auge ausserhalb des
-Modells liegt, wird markiert.
+Modells liegt, wird markiert. «Innenraum» wird nur bestellt, wenn das Modell Räume (Zonen) hat —
+dann geht die Szene als IFC statt glb (`istUeberDiesenWegBestellbar`, `interiorFaehrt`); so sagt es
+seit dem 14.10.2026 auch der Hilfetext.
 
 **Was er auslöst.** Hängt er am Render-Knoten, reisen seine Standpunkte im Auftrag mit, und der
 Abholer rechnet genau diese. Ohne ihn (oder mit leerer Liste) rechnet der Abholer seine drei festen
@@ -186,14 +200,19 @@ Richtungen.
 
 **Ein- und Ausgänge.** Kein Eingang. Ausgang **Kameras** → Render (Eingang *Kamera-Standpunkte*).
 
-**Visbox vs. KosmoOrbit.** In Visbox **Stellvertreter**: Er leitet **keine** Standpunkte aus dem
-Modell ab (leere Liste) und kennt nur übernommene Kameras — die es in einer Visbox-Mappe heute nicht
-gibt. Er zeigt also «Keine Geometrie im Modell — nichts abzuleiten», und der Abholer rechnet die
-drei festen Richtungen.
+**Visbox vs. KosmoOrbit.** In Visbox leitet der Kern **keine** eigenen Standpunkte ab (Stellvertreter,
+leere Liste). Seit Entscheid 92 (14.10.2026, Blatt 23) zeigt der Knoten stattdessen die **drei
+Standpunkte des Heim-PCs** — Süd (frontal), Südost und Nordwest (über Eck), mit Abstand — gerechnet
+vom Visbox-Server aus der Hüllbox der Mappe mit **derselben** Rechnung, die der Abholer fährt
+(`knotenweg.heim_standpunkte`: `AUTO_RICHTUNGEN`, Box nach dem Bauwerk, `kameras.kamerasatz`). Darunter
+steht «Rechnet der Heim-PC … — Vorschau». **Bestellt werden sie nicht:** Der Auftrag trägt weiter
+`cameras: "auto"`, denn eine mitgeschickte Kamera kann den Objektiv-Shift nicht tragen, mit dem der
+Heim-PC senkrechte Kanten senkrecht hält. Am Heim-PC kann der Abstand noch wachsen, wenn eine Kamera
+verdeckt ist (das prüft nur Blender).
 
 *Quelle:* `VIS_NODE_KATALOG.kamera`; `evaluiereGraph` Fall `render` (Kameras nur bei Linie am
 Eingang `kameras`); `NodeKoerper` Fall `kamera`; Stellvertreter `kosmo-kernel/src/derive/kamera.ts`;
-`abholer.AUTO_RICHTUNGEN`.
+`abholer.AUTO_RICHTUNGEN`; `modules/vis/heim-standpunkte.ts`; `knotenweg.heim_standpunkte`.
 
 ### 4 · Bild-Referenz
 
@@ -205,9 +224,10 @@ Eingang `kameras`); `NodeKoerper` Fall `kamera`; Stellvertreter `kosmo-kernel/sr
 jede Bild-Referenz als mögliches Vorbild für einen **Farbangleich**: die Farbstimmung eines Renders
 an die des Referenzbilds angleichen, statt sie neu erfinden zu lassen.
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Bild** — lässt sich an Bildvergleich oder Aufs Blatt
-ziehen. **Aber:** Diese Linie trägt heute kein Bild weiter. Vergleich und Blatt holen Bilder nur
-von Render- und Aufnahme-Knoten (`bildQuelle`); eine Linie von der Referenz bleibt dort leer.
+**Ein- und Ausgänge.** Kein Eingang. Ausgang **Bild** → **Bildvergleich**: Seit dem 14.10.2026 steht
+das Referenzbild dort neben dem Render (`bildQuelle` liest die Referenz). An **Aufs Blatt** lässt sich
+die Linie ziehen, aber der Knopf bleibt gesperrt und daneben steht «nur Vorbild»: Eine Referenz ist
+ein fremdes Bild, kein Bild des Projekts, und gehört nicht als Visualisierung auf ein Blatt.
 
 **Visbox vs. KosmoOrbit.** Gleich. Die Splat-Ansicht als Quelle, die der Katalog nennt, ist in
 Visbox nicht angeschlossen (Splat-Ebene fest leer, Stellvertreter `state/splat-ebene.ts`).
@@ -293,7 +313,9 @@ Ausgang **Finaler Prompt** → Render (Eingang *Prompt*).
 * **Geometrie-Treue** — wie eng die KI der Form des Modells folgen soll (0 bis 1, Vorgabe 0,8 ohne
   Linie). Am Heim-PC wird sie zur Stärke der Formführung (`controlnet_staerke`).
 * **Samples** — wie viele Rechenschritte je Bildpunkt (Vorgabe 128). *Achtung:* Ist am Render-Knoten
-  «Qualität gegen Zeit» gewählt, gilt diese Wahl und nicht die Zahl von der Linie.
+  «Qualität gegen Zeit» gewählt, gilt diese Wahl und nicht die Zahl von der Linie. Seit dem 14.10.2026
+  sagt der Render-Knoten das selbst: Hängt eine Zahl an *Samples*, heisst der leere Eintrag «von der
+  Zahl am Eingang «Samples»», und die Zeile nennt den Vorrang.
 
 **Ein- und Ausgänge.** Kein Eingang. Ausgang **Wert** (Zahl) → Render (Eingang *Geometrie-Treue*
 oder *Samples*).
@@ -331,7 +353,9 @@ soll, warnt der Knoten vorher.
 Freigabe» → **Freigeben** → in der Reihe → der Abholer am Heim-PC rechnet (Vorlauf, Bild,
 Geometrie-Prüfung, je Kamera) → **Bild + Urteil** zurück. Die Zustände am Knoten: bereit · gesendet ·
 wartet auf Freigabe · wartet (in der Reihe) · rendert · fertig · Fehler · abgebrochen ·
-Zeitüberschreitung (nach 30 min ohne Ergebnis) · veraltet. «Abbrechen» steht bereit, solange der
+Zeitüberschreitung (nach 30 min ohne Ergebnis) · veraltet. Ging ein Splat nicht als Umgebung mit, steht über dem
+Bildplatz «Ohne Umgebung: <Grund>» (Feld `umgebungFehlt` am Lauf, seit dem 14.10.2026; fehlt das Feld,
+keine Zeile). «Abbrechen» steht bereit, solange der
 Lauf offen ist. Ab zwei Läufen zeigt der Knoten unter dem Bild eine Reihe der letzten Läufe. Jedes
 fertige Bild ist eine Karte in der Kuratierfläche.
 
@@ -340,7 +364,7 @@ fertige Bild ist eine Karte in der Kuratierfläche.
 
 **Visbox vs. KosmoOrbit.** In Visbox geht der Auftrag an den eigenen Server (`/bruecke`), und **jeder**
 Auftrag wartet zuerst auf «Freigeben». Gerechnet wird nur, wenn am Heim-PC ein Abholer auf die
-Auftragsablage der Mappe schaut; sonst bleibt der Auftrag in der Reihe stehen (die Brücke meldet den
+Auftragsablage schaut (die eine, beim Start des Servers bestimmte — siehe unten); sonst bleibt der Auftrag in der Reihe stehen (die Brücke meldet den
 Abholer-Zustand mit). Innenansichten bestellt dieser Weg in Visbox nicht: dafür braucht es Räume
 im Dokument und ein IFC-Modell, Visbox schickt glb.
 
@@ -358,8 +382,8 @@ im Dokument und ein IFC-Modell, Visbox schickt glb.
 «QA ✗» oder «nicht beurteilbar», darunter der Vorbehalt (warum), Lieferhinweise und die Marke
 «Lizenz offen», wo das Bildwerkzeug noch keine geklärte Lizenz hat.
 
-**Wie er funktioniert.** Er holt sich für jeden Eingang das fertige Bild des verbundenen Render-
-oder Aufnahme-Knotens. Ohne Linie zeigt er «verbinde Render-Bilder».
+**Wie er funktioniert.** Er holt sich für jeden Eingang das fertige Bild des verbundenen Render-,
+Aufnahme- oder Bild-Referenz-Knotens. Ohne Linie zeigt er «verbinde Render-Bilder».
 
 **Was er auslöst.** Nichts — er zeigt nur. Bewertet, ausgewählt und nachgearbeitet wird in der
 Kuratierfläche.
@@ -393,15 +417,22 @@ Satz «Blätter gibt es in Visbox nicht — ‹Aufs Blatt› kommt mit der Rück
 
 ## Was im Code nicht eindeutig ist
 
-* **Auto-Kamera, Hilfetext gegen Verhalten (KosmoOrbit).** Der Katalogtext sagt «Bestellt wird nur
-  Eingang/Übersicht». Der Code bestellt «Innenraum» aber mit, sobald das Modell Räume hat
-  (`istUeberDiesenWegBestellbar` mit `interiorFaehrt`, seit B117 Schritt 2) — dann geht auch IFC statt
-  glb. Der Hilfetext ist älter als dieser Schritt. Betrifft KosmoOrbit; in Visbox gibt es keine Räume.
-* **Bild-Referenz an Vergleich/Blatt.** Die Linie lässt sich ziehen, trägt aber kein Bild weiter
-  (`bildQuelle` kennt nur Render und Aufnahme). Ob das so gewollt ist, sagt der Code nicht; der Katalog
-  verspricht «Stil-Referenz, Vergleich».
-* **Wer in Visbox den Abholer startet.** Der Server sagt nur, dass der Abholer auf die Ablage zeigen
-  muss (`--auftragsablage`-Hilfe in `oberflaeche/server.py`). Ob er beim Start der Mac-App oder des
-  Heim-PCs von selbst mitläuft, steht nicht in den gelesenen Dateien.
-* **Zahl an «Samples».** Die Linie gilt nur, solange «Qualität gegen Zeit» am Render-Knoten leer ist.
-  Am Knoten selbst steht das nirgends.
+*Nachgetragen am 14.10.2026 (Zweig `claude/startgraph`, KosmoOrbit `claude/kosmovis-startgraph`): drei der
+vier Punkte sind behoben, der vierte ist geprüft.*
+
+* ~~**Auto-Kamera, Hilfetext gegen Verhalten.**~~ **Behoben:** Der Hilfetext nennt jetzt Innenraum bei
+  Räumen im Modell und dass die Szene dann als IFC geht.
+* ~~**Bild-Referenz an Vergleich/Blatt.**~~ **Entschieden und behoben:** Der Bildvergleich zeigt die
+  Referenz (wie der Katalog verspricht); aufs Blatt geht sie nicht («nur Vorbild»).
+* ~~**Zahl an «Samples».**~~ **Behoben:** Der Render-Knoten nennt den Vorrang von «Qualität gegen Zeit».
+* **Wer in Visbox den Abholer startet — geprüft.** Die Auftragsablage der Knotenansicht ist **eine**,
+  beim Start des Servers bestimmt: `<Start-Mappe>/knotenweg` (mit `--ordner`) oder `--auftragsablage`.
+  Eine Mappe, die «Datei laden …» erst danach anlegt, bekommt **keine** eigene Ablage — ihre Aufträge
+  landen in derselben, und der Laufzettel nennt seit dem 14.10.2026 ihren Namen (`mappe`). «Datei
+  laden» verliert also keine Aufträge. **Offen bleibt der Betrieb:** Der Dienst `betrieb/visbox-flaeche.service`
+  startet ohne `--ordner` und ohne `--auftragsablage` — dort hat die Knotenansicht **gar keine**
+  Ablage (Bestellen endet mit «Keine Auftragsablage …», 503). Und der Abholer-Dienst
+  `betrieb/kosmo-abholer.service` liest `--store` (Vorgabe `/tmp/kosmo-jobs`) und
+  `--eigener-store /tmp/aiimaging-jobs`, nie eine `knotenweg`-Ablage. Damit am Heim-PC aus der
+  Knotenansicht gerechnet wird, braucht es eine feste Ablage in **beiden** Diensten (dieselbe für
+  `--auftragsablage` und einen weiteren `--store`-Lauf) — eine Betriebsentscheidung für den Heim-PC.

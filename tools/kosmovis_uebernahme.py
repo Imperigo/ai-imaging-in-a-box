@@ -182,6 +182,9 @@ PROBEN = (
     "apps/kosmo-orbit/test/vis-textur-material.test.ts",
     # Entscheid 90 (14.10.2026): der Modell-Knoten mit Lade-Faehigkeit des Wirts.
     "apps/kosmo-orbit/test/kv-modell-laden.test.tsx",
+    # Entscheid 91/92 (14.10.2026): der fertige Anfang, Bild-Referenz im Vergleich,
+    # Samples-Vorrang, «Noch geladen», Standpunkte des Heim-PCs an der Auto-Kamera.
+    "apps/kosmo-orbit/test/kv-startgraph.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
