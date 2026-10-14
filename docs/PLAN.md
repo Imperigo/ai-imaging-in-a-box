@@ -7995,3 +7995,4 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.
 - [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
 - [ ] Integrator: Warum trägt der Splat-Bestand in der glb kein `role existing`? (Zentrale)
+- [ ] Nach R29-Meldung des Integrators: «claude/kosmovis-startgraph» auf den R29-Kopf neu aufsetzen, `umgebungFehlt` nur als Satz lesen, `line-height` aus R29 (`var(--k-lh-knapp)`) übernehmen, Visbox-Kopie nachziehen; Einspielen in Runde 30.
