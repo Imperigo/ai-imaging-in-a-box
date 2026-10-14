@@ -1,0 +1,193 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261013-278",
+ "worker": "local",
+ "rang": 65,
+ "folgt_auf": "auf-20261013-277",
+ "owner_entscheid": [
+  "79",
+  "81"
+ ],
+ "status": "erledigt mit Befund — RealityScan 2.2 ist eingerichtet und liefert am Abnahme-Lauf ein Netz mit 93 % Deckung (277: 9.9 %), 43 Stuecken, richtiger Lage und Massstab, in 324 s fuer 960 Bilder. Die Bruecke WIE GEBAUT laeuft aber nicht: realityscan-cli startet nicht, images.txt im Arbeitsordner laesst RealityScan auf einen Rueckfrage-Dialog warten (Hang bis zur Frist, danach Waise), -simplify exportiert das falsche Modell, die Farben kommen als float und werden in Blender schwarz, und ein Deckel aus Riesendreiecken (59 % der Flaeche) muss weg. Darum ist AIIMAGING_REALITYSCAN im Drop-in vorbereitet, aber auskommentiert. COLMAP-dicht als Vergleich: 47–87 % Deckung, Loecher oder Ballons, rund 1 h fuer ein Drittel der Bilder.",
+ "beendet": "2026-10-14T10:45:00Z",
+ "weg": "Nichts heruntergeladen oder installiert, kein Code im Repo geaendert, kein pycolmap. RealityScan nur headless bzw. auf eigenem Xvfb (GDK_BACKEND=x11, ohne WAYLAND_DISPLAY), Fenster dort nur angesehen, keine Klicks, keine Anmeldung, die Oberflaeche nie bedient. Aufruf ueber das wine des Pakets mit der exe als Programm (realityscan-cli scheitert, F1). Probelaeufe mit 60 Bildern (15 Zeitpunkte x 4 Richtungen), dann voller Lauf direkt per Befehlszeile mit korrigierter Befehlsfolge (Text-Aufnahme aus colmap_als_text der Bruecke, Bildnamen relativ zum Textordner). Bruecke selbst (realityscan_zu_netz, ai-imaging main) zweimal mit kurzer Frist aufgerufen. COLMAP: eigener Bau 4.2.1 (CUDA), Teilmenge 320 Bilder/800 px, patch_match → stereo_fusion → Poisson. Messung beider Netze mit demselben Werkzeug wie 277 (Deckung 200'000 dichte Splat-Punkte, fester Startwert, Abstand 0.0422 Splat-Einheiten ≈ 26 cm) und der Lagepruefung der Bruecke. Immer nur ein grosser GPU-Lauf (Sperre), Ollama war leer und blieb unberuehrt, 400-W-Kappe blieb. Prozesse nur per PID beendet.",
+ "koepfe": {
+  "abholer": "ai-imaging main 50cd3ad",
+  "realityscan": "2.2.0.119430 (Paket 2.2-1, eigenes Wine/CrossOver 25.0)",
+  "colmap": "4.2.1, eigener Bau mit CUDA (nur patch_match_cuda neu uebersetzt: PTX compute_90, Fassung 9.3→9.2, JIT auf sm_120), mit CGAL/CHOLMOD gelinkt; benutzt nur Poisson (MIT), kein Delaunay (CGAL/GPL)",
+  "blender": "5.2.2 LTS (nur Importprobe der Farben)"
+ },
+ "einrichtung": {
+  "E1": {
+   "ergebnis": "ja",
+   "weg": "Befehlszeile, ohne Oberflaeche: Die Hilfe (Model Export) sagt, dass man den ModelExport-Abschnitt aus der .rsinfo eines Exports in eine leere .xml kopiert und mit -exportModel benutzt. So angelegt, dann jede Einstellung einzeln gemessen.",
+   "einstellungen": "PLY binaer (formatAndVersionUID «ply 000», exportBinary=1), Ecken und Dreiecke an, Normalen aus; exportVertexColors=0 (!) — gemessen: mit 1 schreibt RealityScan die Netzfarbe meshColor (alles 1.0, weiss), mit 0 die berechneten Eckpunktfarben; exportVertexColorSpace=1 (0 liefert linear, viel zu dunkel); settingsRotation «90 0 0» — RealityScan fuehrt die importierte Aufnahme intern mit vertauschten Achsen (y/z, Z oben), erst diese Drehung gibt die Koordinaten der Aufnahme unveraendert zurueck; Massstab 1 1 1, Anker 0 0 0, exportCoordinateSystemType=0.",
+   "pruefung": "Netzecken gegen points3D (60er-Probe): Median 0.018 Einheiten (≈ 11 cm, Sparse-Punkte streuen), am Volllauf Lagepruefung der Bruecke passt (nah 0.994/0.990, Massstab 0.982). Ohne Drehung: Median 2.3 Einheiten daneben.",
+   "satz": "Export-XML liegt ausserhalb des Repos und waehlt PLY binaer mit Eckpunktfarben (exportVertexColors=0, Farbraum 1) und einer Drehung 90° um X, die genau die interne Achsvertauschung von RealityScan aufhebt — damit stimmen Lage und Massstab mit der Aufnahme."
+  },
+  "E2": {
+   "ergebnis": "teilweise",
+   "gesetzt": "Ergaenzung kosmo-abholer.service.d/realityscan.conf (wie systemctl --user edit, daemon-reload): AIIMAGING_REALITYSCAN_EXPORT_XML gesetzt; AIIMAGING_REALITYSCAN vorbereitet (zeigt auf das wine des Pakets, nicht auf realityscan-cli), aber AUSKOMMENTIERT.",
+   "einrichtung": {
+    "mit_variable": {
+     "eingeschaltet": true,
+     "bereit": true,
+     "grund": null
+    },
+    "dienst_jetzt": {
+     "eingeschaltet": false,
+     "bereit": false,
+     "ursache": "aus"
+    }
+   },
+   "satz": "einrichtung() meldet mit gesetzter Variable bereit=true; im Dienst bleibt RealityScan bewusst aus, weil die Bruecke wie gebaut jeden Splat-Auftrag bis zur 4-h-Frist haengen liesse (F3) und danach RealityScan als Waise auf der Karte stehen bliebe — Einschalten = eine Zeile entkommentieren, erst nach dem Bruecken-Fix."
+  }
+ },
+ "fragen": {
+  "F1": {
+   "antwort": "nein",
+   "satz": "realityscan-cli liegt unter /opt/realityscan/bin, startet hier aber nicht («winewrapper: cannot execute RealityScan.exe», auch ohne Argumente); es reicht die Argumente einzeln weiter (Leerzeichen-Pfade kamen richtig an). Was geht: das wine des Pakets mit dem Pfad der exe als Programm — und da die Bruecke [cli, exe, …] ruft, genuegt AIIMAGING_REALITYSCAN auf dieses wine, ohne Codeaenderung; ohne Display laeuft -headless ebenso."
+  },
+  "F2": {
+   "antwort": "ja",
+   "satz": "-headless lief in allen Laeufen ohne Anmelde- oder Lizenzdialog, auch ohne DISPLAY; die Anmeldung des Owners vom 13.10. im eigenen Wine-Profil genuegt. Wie es sich ohne vorherige Anmeldung verhaelt, ist nicht geprueft (Konto nie angefasst)."
+  },
+  "F3": {
+   "antwort": "ja, laedt selbst",
+   "satz": "-loadColmap (dokumentiert; -importColmap geht als undokumentierter Alias) laedt die Bilder selbst und loest die Namen (back/0031.jpg) gegen den ORDNER DER images.txt auf; -addFolder ist unnoetig und schadet (Bilder doppelt: 60er-Probe 120+60, voll 960+960). Fehlt ein Bild, oeffnet RealityScan einen Rueckfrage-Dialog, den -headless NICHT unterdrueckt — der Lauf haengt; absolute Namen werden an den Ordner angehaengt und scheitern ebenso, relative mit ../ gehen. Die Bruecke schreibt images.txt in einen Arbeitsordner → gemessen: Hang bis zur Frist."
+  },
+  "F4": {
+   "antwort": "images.txt; Spuren noetig",
+   "satz": "Mit images.txt (die Doku nimmt jede der drei Dateien) liest es alle drei; points3D.txt MUSS Punkte tragen — leer erscheint «COLMAP missing 3D points» als Meldung, und der Lauf haengt ebenfalls. mit_punkten=False ist also kein gangbarer Weg."
+  },
+  "F5": {
+   "antwort": "ja, behaelt",
+   "satz": "Die importierte Komponente behaelt Lage und Massstab exakt (der Sparse-Export sind dieselben 11'721 Punkte wie points3D, nur mit vertauschten Achsen, die die Export-Drehung aufhebt). -align lagert die Importkomponente nicht um, legt aber zusaetzlich EIGENE Komponenten an (60er-Probe: zwei weitere); -selectMaximalComponent nahm die importierte, bei 960 Bildern waere das Glueck — darum -align weglassen (Netz entsteht auch ohne). lockPoseForContinue gibt es, wurde nicht gebraucht."
+  },
+  "F6": {
+   "antwort": "ja, Model 2",
+   "satz": "-simplify legt «Model 2» an und waehlt es; -exportModel \"Model 1\" exportiert dann das UNVEREINFACHTE Netz (gemessen 9'968'048 statt 499'996 Dreiecke, 249 MB). Richtig: -exportSelectedModel oder «Model 2»."
+  },
+  "F7": {
+   "antwort": "binaer, Farben float",
+   "satz": "Einstellungen wie E1 (wichtig: exportVertexColors=0, Drehung 90 0 0); Export binaer little-endian (exportBinary=0 gibt Text). Die Farben stehen als property float red/green/blue 0..1 — Blender 5.2 liest float-Farben als 0..255 und macht sie fast schwarz (Mittel 0.0001 statt 0.44); die Bruecke muss nach dem Export auf uchar umschreiben."
+  },
+  "F8": {
+   "antwort": "RealityScan 2.2.0.119430",
+   "satz": "Die Zeile «RealityScan 2.2.0.119430 © 2026 Epic Games, Inc.» steht nur mit -stdConsole auf stdout (sonst ist stdout leer) und immer im Protokoll RealityScan.log im Temp-Ordner des Wine-Profils; die Bruecke braucht -stdConsole, sonst bleibt programm.fassung leer."
+  },
+  "F9": {
+   "antwort": "324 s, Frist reicht",
+   "satz": "Voller Lauf 960 Bilder (1086 px, Normal-Detail, korrigierte Befehlsfolge ohne -align): 324 s Wandzeit (Netz 257 s, Vereinfachen 25 s), GPU rund 25 GB ueber Ruhe, Spitze 348 W — die 4 h reichen um das 40-fache. ABER: Die Bruecke wie gebaut haengt (F3) bis zur Frist, und subprocess beendet dann nur wine — RealityScan.exe blieb als Waise stehen (gemessen mit 180-s-Frist, per PID beendet). Prozessgruppe beenden noetig."
+  },
+  "F10": {
+   "antwort": "nein (ohne params.xml)",
+   "satz": "-exportRegistration ohne params.xml schreibt nur eine Bildliste (Pfade, keine Posen), auch mit Endung .out — daraus laesst sich nichts ausrichten; Posen gibt es nur mit einer im Dialog gespeicherten params.xml (Bundler, COLMAP-Text, CSV mit Position und Rotation; nicht angelegt, weil Oberflaeche noetig). Nicht noetig: Die Lage bleibt (F5); fuer eine Kontrolle taugt -exportSparsePointCloud mit derselben Export-Drehung, Punkt fuer Punkt gleich den points3D."
+  }
+ },
+ "messen": {
+  "M1": {
+   "bruecke_wie_gebaut": "zweimal gescheitert: mit realityscan-cli Code 1 nach 12 s («cannot execute»); mit wine als Starter Abbruch durch die Frist (180 s gesetzt, Hang am COLMAP-Import), RealityScan danach als Waise",
+   "volllauf_korrigiert": {
+    "bilder": 960,
+    "zeit_s": 324,
+    "netz_s": 257,
+    "dreiecke_roh": 9968048,
+    "dreiecke": 499996,
+    "ecken": 249896,
+    "format": "binary_little_endian, Farben float",
+    "lage_bruecke": {
+     "passt": true,
+     "nah_colmap": 0.9939,
+     "nah_splat": 0.9902,
+     "massstab": 0.9817,
+     "mitte_rel": 0.0215
+    },
+    "huellbox_vs_splat": "Netz −2.07…2.39 / −0.62…0.92 / −5.34…6.66, dichter Splat (5–95 %) −1.90…1.86 / −0.37…0.48 / −4.21…4.88 — die automatische Region deckt den Splat-Kern",
+    "fassung": "2.2.0.119430"
+   },
+   "deckel": "59 % der Netzflaeche liegen in 123 Riesendreiecken (Kante > 0.5 Splat-Einheiten ≈ 3 m), u. a. eine waagrechte Platte ueber die ganze Region, wo der Splat keine Punkte hat — RealityScan schliesst offene Bereiche. Ohne Entfernen wuerde das Netz die Halle verdecken wie die Kugeln in 277. Entfernt: Deckung 93.4 → 92.9 %, Stuecke 43 → 6.",
+   "satz": "Die Bruecke wie gebaut liefert kein Netz; derselbe Lauf mit korrigierter Befehlsfolge liefert in 324 s ein lagerichtiges Netz mit 93 % Deckung."
+  },
+  "M2": {
+   "gerechnet": false,
+   "satz": "Nicht gerechnet: Ohne Codeaenderung an der Bruecke (verboten) kaeme der Auftrag nur bis zur Frist und fiele auf den offenen Weg zurueck; das ist M3 und aus 276/277 bekannt."
+  },
+  "M3": {
+   "gerechnet": false,
+   "satz": "Nicht neu gerechnet; im Dienst ist AIIMAGING_REALITYSCAN leer, kontext.weg bleibt «netz»/«kugeln» wie in 277."
+  }
+ },
+ "vergleich": {
+  "mass": "wie 277: Deckung = Anteil von 200'000 dichten Splat-Punkten (fester Startwert) mit Netz innerhalb 0.0422 Splat-Einheiten (≈ 26 cm); Stuecke = zusammenhaengende Teile (roh / nach Aufraeumen wie die Bruecke: Inseln < 200 Dreiecke weg, 500'000 Dreiecke); Lage = Abstand der Netzecken zum naechsten dichten Splat-Punkt, 1 Splat-Einheit ≈ 6.22 m",
+  "zeilen": [
+   {
+    "weg": "offener Weg 277 (Splat→TSDF, keine Filter)",
+    "zeit_s": 30,
+    "gpu_gb": 6.1,
+    "deckung": 0.0994,
+    "stuecke": "497'497 (Runner) / 6'651 (abgelegtes Netz)",
+    "lage": "—"
+   },
+   {
+    "weg": "RealityScan 2.2, 960 Bilder, Normal, 500k, Deckel entfernt",
+    "zeit_s": 324,
+    "gpu_gb": 25.0,
+    "watt_max": 348,
+    "deckung": 0.9293,
+    "deckung_vor_bereinigung": 0.9341,
+    "stuecke": "43 / 6",
+    "lage_median_cm": 3.7,
+    "lage_p90_cm": 11.6,
+    "anteil_innerhalb_26cm": 0.977
+   },
+   {
+    "weg": "COLMAP-dicht Poisson trim 10, 320 Bilder/800 px",
+    "zeit_s": 4020,
+    "gpu_gb": 25.7,
+    "watt_max": 228,
+    "deckung": 0.4894,
+    "deckung_500k": 0.474,
+    "stuecke": "635 / 62",
+    "lage_median_cm": 3.0,
+    "lage_p90_cm": 7.0,
+    "anteil_innerhalb_26cm": 0.9987
+   },
+   {
+    "weg": "COLMAP-dicht Poisson trim 5, 320 Bilder/800 px",
+    "zeit_s": 4045,
+    "gpu_gb": 25.7,
+    "watt_max": 228,
+    "deckung": 0.8783,
+    "deckung_500k": 0.8708,
+    "stuecke": "869 / 139",
+    "lage_median_cm": 5.0,
+    "lage_p90_cm": 40.0,
+    "anteil_innerhalb_26cm": 0.8654
+   }
+  ],
+  "hinweise": [
+   "COLMAP-Zeit = patch_match 3838 s + Fusion 22 s + Poisson 159/185 s; mit allen 960 Bildern in voller Groesse mehrere Stunden (nicht gerechnet).",
+   "GPU-Angaben = Spitze minus Ruhe; beide Wege belegen rund 25 GB — mit geladenem Kosmo-Modell muessten beide kleiner rechnen.",
+   "trim 5 deckt viel, blaest aber Poisson-Ballons in leere Bereiche (Huellbox fast doppelt, p90 40 cm); trim 10 liegt genau, hat aber Loecher.",
+   "Netz-Ansichten (nur graues Netz, keine Fotos, keine Personen) lokal abgelegt, nicht im Repo."
+  ]
+ },
+ "urteile": {
+  "umgebung_vollstaendig": "nein — RealityScan ist installiert, angemeldet und das Export-XML steht; eingeschaltet ist es im Dienst bewusst nicht, weil die Bruecke wie gebaut haengen wuerde.",
+  "bild_besteht": "nicht geprueft (M2 nicht gerechnet); das Netz selbst ist mit 93 % Deckung und 6 Stuecken eine andere Klasse als 277 (9.9 %, Konfetti).",
+  "empfehlung": "RealityScan in die Visbox (als vom Nutzer installiertes Fremdprogramm), COLMAP-dicht nicht: RealityScan ist 12x schneller auf dreimal so vielen Bildern, deckt 93 % statt 47–87 % und liefert ein zusammenhaengendes, lagerichtiges Netz. Vorher an der Bruecke: (1) Starter = wine des Pakets mit der exe, oder Doku/Einrichtung aendern; (2) -addFolder und -align streichen, -loadColmap mit images.txt, deren Bildnamen relativ zum Textordner auf die Fotos zeigen (oder Text neben die Bilder); (3) points3D immer mit Spuren; (4) nach -simplify -exportSelectedModel; (5) -stdConsole fuer die Fassung; (6) nach dem Export Farben float→uchar umschreiben und Riesendreiecke (Deckel) entfernen; (7) bei Frist die ganze Prozessgruppe beenden. COLMAP-dicht hoechstens als offener Rueckfall (BSD/MIT, eigener Prozess, nur Poisson)."
+ },
+ "fehler": [
+  "realityscan-cli des Pakets 2.2 startet RealityScan nicht («winewrapper: cannot execute RealityScan.exe»); die Bruecke reicht zudem die exe als erstes Argument an cli weiter.",
+  "Bruecke: images.txt im Arbeitsordner → Bildnamen werden gegen diesen Ordner aufgeloest → modaler Dialog trotz -headless → Hang bis zur 4-h-Frist.",
+  "Bruecke: nach Frist bleibt RealityScan.exe als Waise (subprocess.run beendet nur wine).",
+  "Bruecke: -exportModel \"Model 1\" nach -simplify exportiert das unvereinfachte Netz.",
+  "Bruecke: -addFolder laedt alle Bilder ein zweites Mal.",
+  "Export: Farben als float 0..1 — Blender 5.2 macht sie schwarz; Netz traegt einen Deckel aus Riesendreiecken (59 % der Flaeche).",
+  "Bruecke, Regel 3: ohne_pfade ersetzt doppelt maskierte Wine-Pfade (\\\\) in stderr nicht — im Fehlertext stand ein Benutzerverzeichnis (nur lokal gesehen, hier nicht wiedergegeben)."
+ ],
+ "owner": [
+  "Nichts sofort. Konto und Lizenz bleiben, wie sie sind. Nach dem Bruecken-Fix eine Zeile im Dienst-Drop-in entkommentieren (oder der Worker tut es auf Zuruf). Lizenz: gratis nur unter 1 Mio. USD Umsatz in 12 Monaten — bitte bestaetigen."
+ ]
+}
