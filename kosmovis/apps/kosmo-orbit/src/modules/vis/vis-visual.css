@@ -501,6 +501,34 @@
   color: var(--k-ink-faint);
   font-family: var(--k-font-mono);
 }
+/* Entscheid 90 (Visbox, Blatt 21) — der Modell-Knoten mit Lade-Faehigkeit des Wirts
+   (`ModellKnoten.tsx`). Ohne Wirt (KosmoOrbit) erscheint nichts davon. Der Koerper ist
+   fest hoch (`MODELL_KOERPER_H_MIT_LADEN`); der Satz bricht um und wird hoechstens
+   abgeschnitten, nie ueber den Knoten hinaus gezeichnet. */
+.vis-modell-laden {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  align-items: stretch;
+}
+.vis-modell-knopf {
+  align-self: flex-start;
+}
+.vis-modell-formate,
+.vis-modell-mappe {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  line-height: 1.35;
+}
+.vis-modell-satz {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.vis-modell-satz--fehler {
+  color: var(--k-danger);
+}
 .vis-node-feld {
   width: 100%;
   padding: 3px 6px;

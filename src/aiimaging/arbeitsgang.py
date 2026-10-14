@@ -75,8 +75,8 @@ from aiimaging.varianten import VariantenError, saatreihe
 __all__ = ["ANGABEFELDER", "ArbeitsgangError", "EINGANGSORDNER", "ENTWURF_SCHRITTE",
            "ENTWURF_VERMERK", "KONTEXT_EINSTELLUNG", "MESSFELDER", "NACHHOLEN_HOECHSTENS", "NEUTRALER_GRUND",
            "SKIZZEN_VORSATZ", "VARIANTEN_ARTEN", "VARIANTEN_EBENEN",
-           "VARIANTEN_HOECHSTENS", "VARIANTEN_STARTWERTE", "entwurfsargumente",
-           "lege_an", "pruefe_varianten", "rechne", "rechne_skizze",
+           "VARIANTEN_HOECHSTENS", "VARIANTEN_STARTWERTE", "ZWISCHEN_GLB",
+           "entwurfsargumente", "ersetze_modell", "lege_an", "pruefe_varianten", "rechne", "rechne_skizze",
            "setze_auf_unterlage"]
 
 
@@ -91,7 +91,7 @@ class ArbeitsgangError(ValueError):
 
 def lege_an(wurzel, modell, *, name: str | None = None,
             einstellungen: dict | None = None, timeout: float | None = None,
-            _starte=None) -> dict:
+            melder=None, _starte=None) -> dict:
     """Ein Modell hereinholen **und** die Mappe dazu anlegen — in einem Griff.
 
     Args:
@@ -103,6 +103,9 @@ def lege_an(wurzel, modell, *, name: str | None = None,
             einer IFC seit dem 22.09.2026 zusätzlich einmal läuft (eigener Subprozess
             im ``.venv-ifc``, eigene Frist) — das Anlegen einer IFC dauert dadurch
             spürbar länger.
+        melder: Wird vor jedem Schritt mit ``{"schritt": "umwandeln"}`` bzw.
+            ``{"schritt": "raeume"}`` gerufen (Entscheid 90, der Modell-Knoten zeigt, was
+            gerade geschieht). Ein Fehler im Melder hält nichts an.
 
     Returns:
         ``{projekt, import_bericht, pfad}``. Das Projekt ist **geschrieben**.
@@ -124,9 +127,18 @@ def lege_an(wurzel, modell, *, name: str | None = None,
     zusatz = {}
     if timeout is not None:
         zusatz["timeout"] = timeout
+    _melde_sicher(melder, {"schritt": "umwandeln"})
     bericht = importeur.importiere(modell, wurzel / "modell.glb",
                                    _starte=_starte, **zusatz)
+    p["import"] = _importeintrag(modell, bericht, wurzel, melder=melder, _starte=_starte)
+    pfad = projekt.speichere(p, wurzel)
+    return {"projekt": p, "import_bericht": bericht, "pfad": pfad}
 
+
+def _importeintrag(modell, bericht: dict, wurzel: Path, *, melder=None, _starte=None) -> dict:
+    """Der Eintrag ``import`` der Mappe aus einem Importbericht — für :func:`lege_an` und
+    :func:`ersetze_modell` derselbe, damit eine neue Fassung genau so dasteht wie die erste.
+    """
     # DER IMPORTBERICHT GEHOERT INS PROJEKT, und zwar vollstaendig. Er sagt, ueber welchen
     # Weg das Modell hereinkam und was dabei NICHT geprueft wurde (`treue`). Spaeter ist
     # das nicht mehr zu rekonstruieren: Die glb allein sagt nicht, woraus sie entstand.
@@ -148,7 +160,9 @@ def lege_an(wurzel, modell, *, name: str | None = None,
     hochachse = bericht.get("bericht", {}).get("up_axis") if bericht["status"] == "ok" else None
     steht_fest = bool(hochachse) and bericht["weg"] != importeur.WEG_DURCHGEREICHT
 
-    p["import"] = {
+    if bericht.get("status") == "ok" and bericht.get("weg") == importeur.WEG_IFC:
+        _melde_sicher(melder, {"schritt": "raeume"})
+    return {
         "status": bericht["status"],
         "weg": bericht["weg"],
         # RELATIV ZUR MAPPE. Die glb liegt DARIN — ein absoluter Pfad ueberlebt die
@@ -167,8 +181,97 @@ def lege_an(wurzel, modell, *, name: str | None = None,
         "naechster_schritt": bericht.get("naechster_schritt"),
         "raeume": _raeume_beim_anlegen(modell, bericht, _starte),
     }
-    pfad = projekt.speichere(p, wurzel)
-    return {"projekt": p, "import_bericht": bericht, "pfad": pfad}
+
+
+#: Wohin :func:`ersetze_modell` die neue glb zuerst schreibt — neben die alte, nicht darüber.
+ZWISCHEN_GLB = ".modell-neu.glb"
+
+
+def ersetze_modell(wurzel, modell, *, timeout: float | None = None, melder=None,
+                   _starte=None) -> dict:
+    """Eine **neue Fassung** des Modells in eine bestehende Mappe — Bilder, Skizzen und
+    Läufe bleiben (Owner-Entscheid 90b, 14.10.2026).
+
+    Der Anlass: Wer dieselbe Datei noch einmal lädt, hat sie meist weitergezeichnet. Eine
+    zweite Mappe daneben hiesse, dass die Bilder des alten Stands in der einen und die des
+    neuen in der anderen liegen — der Vergleich, für den man zwei Stände überhaupt hat,
+    ginge nur noch über zwei Fenster.
+
+    **Was sich ändert:** ``modell`` (Pfad, Fingerabdruck, Einlass, ``fassung`` + 1),
+    ``import`` (wie bei :func:`lege_an`, samt Räumen einer IFC) und die glb der Mappe. Die
+    vorige Fassung steht danach in ``modell_fassungen``, mit der Zahl der Bilder und
+    Skizzen, die es bis dahin gab — welche Bilder zum alten Stand gehören, ist damit
+    ablesbar, ohne dass an einem Bild etwas geändert wird.
+
+    **Was sich nicht ändert:** ``bilder``, ``skizzen``, ``laeufe``, ``einstellungen``,
+    ``name``. Kein Bild wird gelöscht und keines umgeschrieben.
+
+    **Abgelehnt ersetzt nichts.** Kommt die neue Datei nicht durch (falsches Format,
+    leere Geometrie), bleibt die Mappe, wie sie war — die alte Fassung ist ein brauchbares
+    Modell, und eine Ablehnung soll es nicht wegnehmen. Darum wird die neue glb zuerst
+    neben die alte geschrieben (:data:`ZWISCHEN_GLB`) und erst nach dem Erfolg an ihren Ort
+    gerückt.
+
+    **Unter der Laufsperre** (:func:`_nimm_sperre`): Ein Modell, das während einer Rechnung
+    ausgetauscht wird, gäbe Bilder, die unter dem neuen Stand stehen und aus dem alten
+    gerechnet sind.
+
+    Returns:
+        ``{projekt, import_bericht, pfad, ersetzt}`` — ``ersetzt`` ist ``False``, wenn die
+        neue Datei abgelehnt wurde; der Grund steht dann im ``import_bericht``.
+
+    Raises:
+        ArbeitsgangError: In der Mappe läuft gerade eine Rechnung.
+        projekt.ProjektError: In ``wurzel`` liegt keine Mappe.
+        importeur.ImporteurError: Die Umwandlung selbst ist gescheitert.
+    """
+    import os
+
+    wurzel = Path(wurzel)
+    sperre = _nimm_sperre(wurzel)
+    zwischen = wurzel / ZWISCHEN_GLB
+    try:
+        auf = projekt.oeffne(wurzel)
+        p = auf["projekt"]
+        zusatz = {"timeout": timeout} if timeout is not None else {}
+        _melde_sicher(melder, {"schritt": "umwandeln"})
+        try:
+            bericht = importeur.importiere(modell, zwischen, _starte=_starte, **zusatz)
+        except BaseException:
+            _raeume_zwischen_weg(wurzel)
+            raise
+        if bericht["status"] != "ok":
+            _raeume_zwischen_weg(wurzel)
+            return {"projekt": p, "import_bericht": bericht, "pfad": auf["pfad"],
+                    "ersetzt": False}
+
+        alte_glb = (p.get("import") or {}).get("glb")
+        alte_glb = projekt.loese_pfad(alte_glb, wurzel) if alte_glb else None
+        ziel = wurzel / "modell.glb"
+        if bericht["weg"] != importeur.WEG_DURCHGEREICHT:
+            # DIE NEUE GLB AN IHREN ORT, samt dem, was der Weg daneben geschrieben hat
+            # (Importbericht). Erst jetzt — vorher stand die alte Fassung unberuehrt da.
+            for datei in sorted(wurzel.glob(ZWISCHEN_GLB.removesuffix(".glb") + "*")):
+                os.replace(datei, wurzel / datei.name.replace(
+                    ZWISCHEN_GLB.removesuffix(".glb"), "modell", 1))
+            bericht = {**bericht, "glb_path": str(ziel)}
+        elif alte_glb is not None and Path(alte_glb).resolve() == ziel.resolve():
+            # EINE DURCHGEREICHTE GLB ERSETZT EINE UMGEWANDELTE: Die alte `modell.glb` waere
+            # danach ein Erzeugnis ohne Herkunft in der Mappe — eines, das aussieht wie das
+            # Modell und es nicht ist.
+            ziel.unlink(missing_ok=True)
+
+        projekt.neue_fassung(p, wurzel, modell)
+        p["import"] = _importeintrag(modell, bericht, wurzel, melder=melder, _starte=_starte)
+        pfad = projekt.speichere(p, wurzel)
+        return {"projekt": p, "import_bericht": bericht, "pfad": pfad, "ersetzt": True}
+    finally:
+        Path(sperre).unlink(missing_ok=True)
+
+
+def _raeume_zwischen_weg(wurzel: Path) -> None:
+    for datei in wurzel.glob(ZWISCHEN_GLB.removesuffix(".glb") + "*"):
+        datei.unlink(missing_ok=True)
 
 
 #: Die Einstellung, unter der eine Mappe ihren **Splat** führt (Owner-Entscheid 76,

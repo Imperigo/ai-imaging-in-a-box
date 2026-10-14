@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "22988d6edc10417b02cc12969c65eb943d31875c"
+    "commit": "50b11c0ec40fa3a3cde228594b3b233d16000446"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -34,7 +34,8 @@
     "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "e8ebca49388aabd1521dd3ae7fd045c7190bbb0a48fa1b23ee37d88ca3469649",
     "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "45ed8d302ece438376edb79bf80d5191a802361609290601e6157ffce186a87c",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "8bd0532d89cdddb0e85c65574ff733edb422124e2bb6eb087af10eeb1e327290",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "165aadf1e135b7193e36e6799a388ad29a907cd86e5165f43755541497485251",
+    "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "ef709d81069556a6b0bd101612a9e042bc70843e0366eab4efa4c8080439813e",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "f7ba1da22dd0a478ad6a1346db6a00f725ddfb45da8ae36000d17c8ab5c1bf46",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "d8fd17ca1629f295507d8896023b9bbe9ccfb0251a585f922354d7d2f9184397",
     "apps/kosmo-orbit/src/modules/vis/VisReportDossier.tsx": "082b083163dc2948ca433643415f07cc47a1b5cf534877a3063b3927866a807a",
     "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "99ce3d6aca55096dc9df69229a8129807f77756d4a478b800feeb876b41dc091",
@@ -56,6 +57,7 @@
     "apps/kosmo-orbit/src/modules/vis/island/vis-island-katalog.ts": "70cc98473fe32e18c065d29c38d9c73a09dd7e6afaa587334cfef365ea4c6f79",
     "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "4a60df5316e444e270eb7b910d616f55da222872ab91b64203ec1624be0146cb",
     "apps/kosmo-orbit/src/modules/vis/knoten-zoom.ts": "157f39dc0d0b1b11a1ce864efbdb27a9a7a696954760afa1f55a7d47dd7fdd98",
+    "apps/kosmo-orbit/src/modules/vis/modell-laden.ts": "41bb75c6499604a48e55dfb301d7b4002192effaf7d8bcd3b73f5e1b888a6f47",
     "apps/kosmo-orbit/src/modules/vis/render-verlauf.ts": "7a6d7f30eeafcb0a8a64457eb493f72aa196438a2208526480c70a28c2ef2527",
     "apps/kosmo-orbit/src/modules/vis/render-warteort.ts": "315c3e52967dca88d8bb0a89d72138d80b2017b04a36f120d218f546b30d4585",
     "apps/kosmo-orbit/src/modules/vis/textur-bild.ts": "abec18984a77e22435f978c9a3a73602ac366ae736e9061c40d069ab7b2defe5",
@@ -64,7 +66,7 @@
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "ded2a48b6b8ab23429b2006699e8ab850fc3db4af6150426d566a4901b22ade8",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "9cc32c827d1ef25bf8daa42775e882014801ded91695ecc268a93b33f2570eee",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "5b1f5044e8da1f6110af72c0451af1d06eefb77be3ae1baa8042bb55b92c3fba",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "e7c7553b6a4dd9b329dfc786396e7cfbd1d3e3fe3e29a12ecba8c7e0d6289ccb",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "1d1f1f38b6c1df6584844fb99c0d1dd7621f01d38061d1e53647ce96c8e942db",
     "apps/kosmo-orbit/src/shell/governance-speicher.ts": "52ab9840d865d7e937a0c80c3ea5a3ef0759657357afe5854492935e07efe1c1",
     "apps/kosmo-orbit/src/shell/tastennamen.ts": "77424e739a266dbcd81d012e00d0ff3f91e213223cc3a16ee2dd5cffdf288461",
     "apps/kosmo-orbit/src/shell/trackpad-geste.ts": "0e544469d3eac17a9ef6a748119cd39b22a98c76a311c851ba70624010822a2e",
@@ -93,6 +95,7 @@
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx": "967a99760aedda96784d805a4edb1de99d7466224b19b60c7f75d6ded18f5941",
     "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "c44bb09f829359d478c02fd3e8bf08259b66ae7db997543422a2e48e0c02b6b4",
     "apps/kosmo-orbit/test/kv-lieferstatus-null.test.tsx": "4ed99c9808b56ff94082397415fb9fa2fb8eba616a6b6c99ccdcb7db9c7cc266",
+    "apps/kosmo-orbit/test/kv-modell-laden.test.tsx": "449c6b75cd14dcc629b92475b7a64061cefcad285976a0b94103e8764e53d19c",
     "apps/kosmo-orbit/test/kv-nicht-beurteilbar.test.tsx": "cd5c80351ddc5f1b6b39497f41dffc1638a3db3ab4592c7ac0fc5bddf8bdd84e",
     "apps/kosmo-orbit/test/kv-qa-hinweise.test.tsx": "193185add02c05da4b51bbbd83fc1ab21d6671d7ede1b89b07972b5d58e7ee6d",
     "apps/kosmo-orbit/test/kv-qa-status.test.ts": "55d87bde1a30ac8ef98e61b79604b4815949cb1352e31005461d2f21e6042e15",

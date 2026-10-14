@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import VisboxKern
 import WebKit
@@ -166,6 +167,10 @@ struct Heimflaeche: NSViewRepresentable {
         let lotse = context.coordinator
         lotse.melde = { satz in meldung = satz }
         ansicht.navigationDelegate = lotse
+        // DER DATEIWAEHLER DER SEITE (Entscheid 90): Ohne `uiDelegate` tut ein
+        // `<input type="file">` in einer WKWebView nichts — «Datei laden …» am Modell-Knoten
+        // waere ein Knopf ohne Wirkung.
+        ansicht.uiDelegate = lotse
         lotse.lade(ansicht)
         return ansicht
     }
@@ -185,8 +190,9 @@ struct Heimflaeche: NSViewRepresentable {
     }
 }
 
-/// Führt die Webfläche: lädt die Seite, beantwortet die Anmeldung, meldet Fehler als Satz.
-final class Flaechenlotse: NSObject, WKNavigationDelegate {
+/// Führt die Webfläche: lädt die Seite, beantwortet die Anmeldung, meldet Fehler als Satz —
+/// und öffnet den Dateiwähler, wenn die Seite danach fragt (Entscheid 90).
+final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
     var basis: URL
     var anmeldung: Anmeldung
     var wahl: Flaechenwahl
@@ -244,6 +250,34 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         melde(nil)
+    }
+
+    /// «Datei laden …» am Modell-Knoten (Owner-Entscheid 90, 14.10.2026, Blatt 21): Die Seite
+    /// fragt mit einem `<input type="file">` nach einer Datei, und eine `WKWebView` zeigt dafür
+    /// von sich aus **nichts** — der Gastgeber muss den Wähler selbst öffnen. Hier ist es der
+    /// gewöhnliche Öffnen-Dialog des Mac (`NSOpenPanel`), als Blatt am Fenster.
+    ///
+    /// **Jede Datei ist wählbar**, auch eine ArchiCAD-Datei: Der Heim-PC sagt dann, wie man
+    /// daraus eine IFC macht (Entscheid 90c). Ein Wähler, der sie ausgraut, liesse den Menschen
+    /// ohne diesen Satz. Abbrechen gibt `nil` zurück — dann bleibt die Seite, wie sie war.
+    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
+                 initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping ([URL]?) -> Void) {
+        let tafel = NSOpenPanel()
+        tafel.canChooseFiles = true
+        tafel.canChooseDirectories = parameters.allowsDirectories
+        tafel.allowsMultipleSelection = parameters.allowsMultipleSelection
+        tafel.resolvesAliases = true
+        tafel.message = "Modell wählen — IFC, glb, OBJ, FBX …"
+        tafel.prompt = "Laden"
+        let fertig: (NSApplication.ModalResponse) -> Void = { antwort in
+            completionHandler(antwort == .OK ? tafel.urls : nil)
+        }
+        if let fenster = webView.window {
+            tafel.beginSheetModal(for: fenster, completionHandler: fertig)
+        } else {
+            tafel.begin(completionHandler: fertig)
+        }
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,

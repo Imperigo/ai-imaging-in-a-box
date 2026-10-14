@@ -346,22 +346,34 @@ def mappe_fuer_knoten(ordner) -> dict:
     """Was die Knotenansicht über das Modell der offenen Mappe wissen muss.
 
     Returns:
-        ``{name, glb, huellbox_m, hochachse, grund, huellbox_vermerk}`` — ``glb`` ist der
+        ``{name, glb, huellbox_m, hochachse, grund, huellbox_vermerk, mappe, herkunft,
+        fassung, bauteile}`` — ``glb`` ist der
         Pfad der glb-Datei der Mappe oder ``None``; ``huellbox_m`` die Hüllbox der gebauten
         Substanz in Weltkoordinaten (Meter, Z oben) oder ``None``; ``grund`` sagt einem
         Menschen, warum etwas fehlt, und ist leer, wenn nichts fehlt.
     """
+    from aiimaging.modellladen import herkunft_von
+
     auf = projekt.oeffne(ordner)
     p = auf["projekt"]
     einfuhr = p.get("import") or {}
     glb = projekt.loese_pfad(einfuhr.get("glb"), ordner) if einfuhr.get("glb") else None
     antwort = {"name": p.get("name"), "glb": str(glb) if glb else None,
                "huellbox_m": None, "hochachse": einfuhr.get("hochachse"), "grund": "",
-               "huellbox_vermerk": ""}
+               "huellbox_vermerk": "",
+               # FUER DEN MODELL-KNOTEN (Entscheid 90, Blatt 21): «Szene: N Bauteile (aus
+               # IFC)», die Mappe und ihre Fassung. `bauteile` ist die Zahl der Teile mit
+               # Geometrie in der glb (ein IFC-Bauteil ist dort ein Teil) — `None`, solange
+               # die glb nicht gelesen ist.
+               "mappe": Path(ordner).name,
+               "herkunft": herkunft_von((p.get("modell") or {}).get("pfad")),
+               "fassung": projekt.modellfassung(p),
+               "bauteile": None}
     if glb is None or not Path(glb).is_file():
         antwort["glb"] = None
-        antwort["grund"] = ("Die Mappe hat noch kein glb — erst ein Modell einlesen, dann "
-                            "zeigt die Knotenansicht es an.")
+        # SEIT ENTSCHEID 90 sagt der Satz, wo es weitergeht: am Modell-Knoten selbst.
+        antwort["grund"] = (f"Die Mappe «{Path(ordner).name}» hat noch kein Modell — "
+                            "«Datei laden …» holt eines herein.")
         return antwort
     achse = einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else "Y"
     try:
@@ -369,6 +381,7 @@ def mappe_fuer_knoten(ordner) -> dict:
     except glbbox.GlbError as fehler:
         antwort["grund"] = f"Die Hüllbox liess sich nicht lesen: {fehler}"
         return antwort
+    antwort["bauteile"] = box.get("n_knoten")
     antwort["huellbox_m"] = box.get("bbox_bauwerk") or box.get("bbox_szene")
     # DER VERMERK DER BOX IST FACHSPRACHE (welche Regel das Gelaende getrennt hat) — er
     # geht mit, aber nicht in `grund`, den die Seite einem Menschen zeigt.

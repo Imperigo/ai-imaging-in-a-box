@@ -180,6 +180,8 @@ PROBEN = (
     "apps/kosmo-orbit/test/vis-island-textur.test.tsx",
     "apps/kosmo-orbit/test/vis-textur-bild.test.ts",
     "apps/kosmo-orbit/test/vis-textur-material.test.ts",
+    # Entscheid 90 (14.10.2026): der Modell-Knoten mit Lade-Faehigkeit des Wirts.
+    "apps/kosmo-orbit/test/kv-modell-laden.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
