@@ -1,0 +1,109 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261014-282",
+ "worker": "local",
+ "rang": 69,
+ "folgt_auf": "auf-20261014-281",
+ "entscheide": [
+  "79",
+  "81",
+  "90"
+ ],
+ "status": "erledigt — Die Bildprobe mit Splat-Kontext lief ganz durch den Abholer. Das texturierte Netz kam aus dem Speicher (zwischenspeicher_treffer true, kein RealityScan-Lauf), weg realityscan, format obj, 4 Texturen zu 8K. Die drei Bilder sind geliefert. Die QA besteht nicht: Geometrie 0.236/0.772/0.774 (s/sSE/nNW), der strenge Riegel faellt bei allen drei Kameras. Das liegt NICHT an der Textur: Ein Kontrolllauf desselben Auftrags ohne Kontext faellt genauso (0.000/0.786/0.787). Die Textur traegt im fertigen Bild nichts, weil die automatischen Kameras von aussen auf den Bestandskoerper schauen: Vom Netz sind nur 0.16–0.47 % des Bildes zu sehen (M3: 0.03–0.54 %). Modell laden im Knoten funktioniert (IFC unter 2 s, beim zweiten Laden «Fassung 2»), aber nicht am Dienst, wie er eingerichtet ist: Er laeuft ohne --ordner und antwortet mit 409.",
+ "beendet": "2026-10-14T16:15:00Z",
+ "koepfe": {
+  "ai_imaging": "main e9c5586 (Visbox 0.2.7)",
+  "realityscan": "2.2.0.119430 (nicht gelaufen, Netz aus dem Speicher)",
+  "dienste": "Vor dem Neustart laeuft kein Auftrag (der Durchgang des Zeitgebers abgewartet). Danach visbox-flaeche und Abholer neu gestartet; visbox-flaeche ist active."
+ },
+ "bildprobe": {
+  "weg": "Bestellung als Auftrag in einer eigenen Ablage, die der Abholer liest (der zweite Weg aus 282 (1); so wie 275 bei den Laeufen 2 und 3). Den Hallenauftrag hat die installierte App (0.1.7) mit V1 als Bestand (3.45 m) erzeugt: dieselbe model.glb und render-scene (Prompt «Industriehalle, Tageslicht, klarer Himmel», Z-Image Turbo, 128, 1600x1000, Kameras auto). Dazu context {kind splat, ply, verortung, transform, fit behelf}. transform = R_x(-90) mal die Szenenmatrix der Verortung, also die Lage aus der Verortung in der glTF-Welt (Y oben), wie aiimaging.kontext sie erwartet. Mit dem App-Auftrag von M3 konnte ich sie nicht Zahl fuer Zahl vergleichen (der liegt nicht mehr vor). Die Lage stimmt: Die Netzhuelle liegt um den Grundriss von V1, und das Netz erscheint im Material-ID-Pass an Boden und Rand wie in M3. Abholer: tools/abholen.py unveraendert (--fremde-freigabe --hoechstens 1 --kein-gelaende, mit Nullprobe), Umgebung wie der Dienst, nur bei freier Karte. In KosmoOrbit habe ich nichts eingeschaltet oder umgangen; am Testprofil nichts geaendert.",
+  "realityscan_aus_dem_speicher": true,
+  "kontext_weg": "realityscan",
+  "netz_format": "obj",
+  "texturen": "4 x 8192x8192 PNG",
+  "netz_dreiecke": 999400,
+  "lauf": "Zwei Laeufe, einer vor und einer nach dem Pull und dem Neustart. Beide liefern dieselben Zahlen, die Bilder sind bit-gleich (md5).",
+  "qa_je_kamera": {
+   "s": {
+    "geometry_fidelity": 0.236,
+    "geom_iou": 0.333,
+    "passed": false
+   },
+   "sSE": {
+    "geometry_fidelity": 0.772,
+    "geom_iou": 0.598,
+    "passed": true
+   },
+   "nNW": {
+    "geometry_fidelity": 0.774,
+    "geom_iou": 0.601,
+    "passed": true
+   },
+   "seeds_gewaehlt": "1/2/2"
+  },
+  "geometry_gates": {
+   "passed": false,
+   "fail_reasons": [
+    "geom_iou_unter_schwelle",
+    "gegenprobe_fehlt",
+    "kamera_nicht_bestanden:sSE",
+    "kamera_nicht_bestanden:nNW"
+   ],
+   "rho_maske_s": 0.504,
+   "schwelle_geom_iou": 0.85
+  },
+  "lieferstatus": "geliefert",
+  "kontrolle_ohne_kontext": {
+   "qa_s_sSE_nNW": [
+    0.0,
+    0.786,
+    0.787
+   ],
+   "geom_iou_s_sSE_nNW": [
+    0.198,
+    0.619,
+    0.62
+   ],
+   "satz": "Derselbe Auftrag ohne context faellt genauso. Der Abstand zu M3 (0.971/0.948/0.919) kommt also nicht von der Textur, sondern vom Auftrag selbst: glb aus der installierten App 0.1.7 statt aus der Test-App von M3, Codestand e9c5586 statt edde216. Welcher der beiden es ist, habe ich nicht getrennt."
+  },
+  "umgebung_im_bild": {
+   "s": 0.0016,
+   "sSE": 0.0047,
+   "nNW": 0.0042,
+   "m3": {
+    "s": 0.0003,
+    "sSE": 0.0041,
+    "nNW": 0.0031
+   },
+   "methode": "Anteil der Bildpunkte mit der Kontextfarbe im Material-ID-Pass, wie 275/276/M2/M3"
+  },
+  "fremdkoerper_aus_deckel_resten": "0 von 9 (keine flachen, himmelfarbenen Fetzen; M3 ebenfalls 0)",
+  "konfetti": "0 von 9",
+  "anderes_nicht_gezaehlt": "Ohne Bezug zum Netz erfindet das Bildmodell: bei s Seed 2 Tuerme und einen Kessel ueber der Traufe, bei sSE Seed 1 einen Lieferwagen, bei nNW Seed 2 ein Zeichen in der Ecke unten rechts. Bei s Seed 0 liegen kleine Rohrstuecke am Boden, dort wo im Material-ID-Pass Netzstuecke liegen (unten links).",
+  "person": "Bei sSE Seed 1 eine kleine Figur in Warnweste, ohne erkennbares Gesicht, vom Bildmodell erfunden. Dieses Bild wurde nicht gewaehlt. Bilder nur lokal, nicht auf der Tafel.",
+  "textur_im_bild": "Nicht sichtbar. Die Kameras stehen aussen vor dem Bestandskoerper, die Textur der Halle liegt dahinter oder darunter, und vom Netz sind 0.2–0.5 % der Bildflaeche zu sehen. Gegen M3 mit Eckfarben ist im fertigen Bild kein Unterschied zu sehen, den man der Textur zuschreiben koennte. Sichtbar wuerde sie erst mit Kameras in der Halle oder einem Bestand, der die Halle nicht umschliesst.",
+  "zeiten_s": {
+   "abholer_gesamt": 337,
+   "render_s_sSE_nNW": [
+    117.4,
+    109.9,
+    104.1
+   ],
+   "realityscan": 0,
+   "m3_abholer_gesamt": 631
+  },
+  "gpu": "Spitze 31 GB, bis 350 W (Bildmodell). Einmal habe ich gewartet: Ein fremdes Ollama-Modell lag mit 25 GB auf der Karte, der Abholer hat den Auftrag richtig liegengelassen. Nicht entladen, bis zum Ablauf gewartet."
+ },
+ "modell_laden": {
+  "echter_dienst": "POST /knoten/modell-laden am Dienst visbox-flaeche antwortet 409 «Der Heim-PC weiss nicht, wohin die Mappe soll: Er laeuft ohne Start-Mappe. Mit --ordner starten». Der Dienst startet ohne --ordner, darum liefert auch /api/projekt nur «Kein Projektordner angegeben». GET /knoten/modell-laden geht (Formate, bis 768 MB). Die Einheit habe ich nicht geaendert; ob der Dienst eine Start-Mappe bekommt, entscheidet KosmoVis bzw. der Owner.",
+  "probe": "Darum habe ich denselben Server (oberflaeche/server.py, Stand e9c5586) als eigene Instanz gestartet: eigener Anschluss, eigenes Kennwort, --ordner auf eine leere Wegwerf-Mappe. In der echten Knotenansicht (/knoten/, Chromium ohne Fenster): GRAPH-Insel, «+ Graph erstellen», Node «Modell», «Datei laden …» mit dem Dateidialog. Synthetische Dateien aus tools/make_test_ifc.py (--hochbau, IFC4) und tools/make_test_glb.py. Zusaetzlich direkt per API: tools/make_test_ifc.py --raeume.",
+  "zustaende": "Sichtbar im Knoten: leer «Datei laden …» mit den Formaten; dann «‹datei› wird geladen … (0 s) läuft»; dann geladen «Szene: 141 Bauteile (aus IFC) · Mappe «testhalle»»; beim zweiten Laden «· Fassung 2». Ist schon ein Modell da, heisst der Knopf «Andere Datei …». Die Mappen liegen neben der Start-Mappe (start, testbau, testhalle, testquader); unter quelle/ liegt nur die aktuelle Fassung (f2).",
+  "ifc_dauer": "Knoten bis zum Endzustand 1.97 s bei 141 Bauteilen (Hochbau). Per API dauer_s 0.6 s beim ersten und 0.4 s beim zweiten Laden (Testbau mit Raeumen, 5 Bauteile).",
+  "glb_dauer": "1.2 s im Knoten, dauer_s 0.0 per API, 2 Bauteile",
+  "zweites_mal_fassung_2": "ja — dieselbe IFC ergibt «Neue Fassung 2 in der Mappe «testhalle» — Bilder und Skizzen bleiben» (ersetzt true, fassung 2), dieselbe glb ebenso. Keine zweite Mappe.",
+  "api_projekt": "/api/projekt ohne ?ordner= liefert danach die zuletzt geladene Mappe (testquader)."
+ },
+ "urteil": "Die Textur kommt richtig an (Speicher-Treffer, OBJ, 4 Texturen, keine Deckel-Fremdkoerper), traegt aber im fertigen Bild dieses Auftrags nichts: Die automatischen Aussenkameras sehen das Netz kaum. Die QA faellt, und das hat einen anderen Grund als die Textur (der Kontrolllauf ohne Kontext faellt genauso). Als Naechstes waeren zu klaeren: warum derselbe Hallenauftrag jetzt bei s 0.24 statt 0.97 ergibt (glb aus der App 0.1.7 oder Codestand), und Kameras in der Halle, wenn die Textur sichtbar werden soll. Modell laden ist brauchbar und schnell, mit klaren Zustaenden und richtigen Fassungen. Am Dienst geht es erst, wenn er mit --ordner startet.",
+ "aufraeumen": "Eigene Server-Instanz, Chromium ohne Fenster und Abholer-Laeufe sind beendet, die Server-Instanz per gemerkter PID. Keine RealityScan-, Wine- oder Blender-Waisen. Die Wegwerf-Mappen und die Bilder bleiben lokal, nichts davon im Repo und nichts auf der Tafel (ein Bild mit Person). Ollama nicht angefasst."
+}
