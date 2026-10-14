@@ -1,0 +1,108 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261014-283",
+ "worker": "local",
+ "rang": 70,
+ "folgt_auf": "auf-20261014-282",
+ "entscheide": [
+  "79",
+  "81",
+  "90d"
+ ],
+ "status": "erledigt — Der Rueckgang kommt aus der glb, nicht aus dem Codestand. Die glb aus 282 traegt KEIN extras.role = \"existing\" (der Knoten heisst kind \"mass\"), darum haengt der Abholer den Bestandszusatz nicht an den Bildauftrag. Auf edde216 ergibt dieselbe glb bit-gleiche Bilder und dieselben Zahlen wie auf main (0.000/0.786/0.787). Dieselbe glb, nur mit role existing am Knoten, ergibt auf main ohne Splat-Kontext 0.965/0.953/0.953 (M3 mit Kontext 0.971/0.948/0.919). Kein Bisect noetig, nichts behoben. T4: Mit zwei Kameras in der Halle fuellt das Netz 98.6 % und 96.5 % des Bildes; die Textur ist im Beauty-Pass deutlich zu sehen, im fertigen Bild aber kaum (Endbild Textur gegen Eckfarben nur 5–6 Grauwerte Unterschied). T5: nein — der Dienst stuerzt beim Datei laden ohne Start-Mappe im Server ab, bevor die Bibliothek den Rueckfall-Ordner erreicht.",
+ "beendet": "2026-10-14T17:05:00Z",
+ "koepfe": {
+  "ai_imaging": "main 5878a45 (nach dem Pull, enthaelt 8379994 Rueckfall-Ordner); T1 und T4b aus einem eigenen git worktree auf edde216 (nach den Laeufen entfernt)",
+  "app": "KosmoOrbit 0.1.7, installiertes Paket unveraendert seit dem 07.10. — M2, M3 und 282 liefen also mit demselben App-Paket",
+  "realityscan": "2.2.0.119430 (nicht gelaufen, beide Netze aus dem Speicher)",
+  "dienste": "visbox-flaeche zweimal neu gestartet (nach dem Pull, und nach der T5-Probe, um den haengenden Ladestand zu loesen); vorher kein Auftrag in den Ablagen offen, kosmo-abholer.service inactive. Einheiten nicht geaendert."
+ },
+ "weg": "Alle Laeufe als Auftrag in einer eigenen Ablage, tools/abholen.py unveraendert (--fremde-freigabe --hoechstens 1 --kein-gelaende, mit Nullprobe), Umgebung wie der Dienst. Fuer den alten Stand: PYTHONPATH auf src des worktree, damit das editierbar installierte Paket NICHT den main-Code zieht (geprueft: aiimaging.__version__ 0.2.2 aus dem worktree). Auftrag je Lauf = render-scene aus 282 (Prompt «Industriehalle, Tageslicht, klarer Himmel», Z-Image Turbo, 128, 1600x1000, Kameras auto), nur die genannte Groesse geaendert. Ein GPU-Lauf zur Zeit, vor jedem Lauf nvidia-smi und Ollama geprueft (Karte frei, 1.4–1.6 GB, Ollama leer). Nichts installiert, kein Code geaendert.",
+ "t1_t3": {
+  "tabelle": [
+   {
+    "lauf": "282 Kontrolle (Referenz)",
+    "codestand": "e9c5586",
+    "glb": "282 (App 0.1.7)",
+    "kontext": "ohne",
+    "geom_s_sSE_nNW": [0.0, 0.786, 0.787],
+    "geom_iou_s_sSE_nNW": [0.198, 0.619, 0.62],
+    "geometry_gates": {"passed": false, "rho_mask": 0.591, "geom_iou": 0.198, "fail_reasons": ["geom_iou_unter_schwelle", "gegenprobe_fehlt", "kamera_nicht_bestanden:sSE", "kamera_nicht_bestanden:nNW"]}
+   },
+   {
+    "lauf": "T1",
+    "codestand": "edde216 (M3)",
+    "glb": "282 (App 0.1.7)",
+    "kontext": "ohne",
+    "geom_s_sSE_nNW": [0.0, 0.786, 0.787],
+    "geom_iou_s_sSE_nNW": [0.198, 0.619, 0.62],
+    "geometry_gates": {"passed": false, "rho_mask": 0.591, "geom_iou": 0.198, "fail_reasons": ["geom_iou_unter_schwelle", "gegenprobe_fehlt", "kamera_nicht_bestanden:sSE", "kamera_nicht_bestanden:nNW"]},
+    "bilder": "bit-gleich mit der 282-Kontrolle (md5 s.png und sSE.png gleich)",
+    "satz": "Der Codestand aendert an diesem Auftrag keinen Bildpunkt."
+   },
+   {
+    "lauf": "T2 (Ersatz)",
+    "codestand": "main 5878a45",
+    "glb": "282, nur extras.role = \"existing\" am Mesh-Knoten gesetzt (sonst Byte fuer Byte gleich)",
+    "kontext": "ohne",
+    "geom_s_sSE_nNW": [0.965, 0.953, 0.953],
+    "geom_iou_s_sSE_nNW": [0.938, 0.91, 0.91],
+    "geometry_gates": {"passed": true, "rho_mask": 0.998, "geom_iou": 0.91, "fail_reasons": ["gegenprobe_fehlt"]},
+    "bildauftrag": "«Industriehalle, daylight, clear sky, existing building shown as a plain massing volume, blank facade without lettering or signage» statt «Industriehalle, daylight, clear sky»",
+    "satz": "Allein die Rolle Bestand hebt s von 0.000 auf 0.965 — das ist der ganze Abstand zu M3."
+   }
+  ],
+  "m3_glb": "nicht mehr vorhanden (die Ablage von M3 ist weg). Darum T2 als Ersatz: 282-glb plus role existing. Belege, dass die Geometrie dieselbe ist: Der Beauty-Pass von M3 (aufbewahrte Verkleinerung, 800 px) und der von 282 unterscheiden sich im Mittel um 0.35/0.61/0.53 Grauwerte, Bauwerksumriss IoU 0.9996 (s) und 0.987 (sSE).",
+  "glb_282": {
+   "huelle_m": {"min": [-4.707, -0.151, -6.991], "max": [61.205, 3.299, 10.324]},
+   "groesse_m": [65.9, 3.45, 17.3],
+   "meshes": 1,
+   "knoten_mit_mesh": 1,
+   "dreiecke": 12,
+   "extras_role_existing": "nein — Knoten-extras nur kind \"mass\" und geschoss \"EG\"",
+   "hochachse": "Y (glTF; der Abholer schliesst es aus dem Erzeuger «KosmoOrbit V1», die Datei sagt es nicht)",
+   "md5_gleich_in_allen_282_ablagen": true
+  },
+  "sind_es_dieselben_modelle": "Geometrisch ja (gleicher Beauty-Pass), in der Markierung nein: M3 trug nach allem, was sich messen laesst, den Bestand (role existing) — die 282-glb nicht.",
+  "bisect": "nicht noetig — der Codestand ist es nicht",
+  "ursache_satz": "Der Abfall kommt aus der glb: Ohne extras.role = \"existing\" faellt der Bestandszusatz im Bildauftrag weg, und ohne ihn ordnet das Bildmodell bei Kamera s die Tiefe verkehrt herum (spearman +0.388 bei Polaritaet -1, Score auf 0 abgeschnitten); mit ihm 0.965. Warum die App-Bedienung in 282 den Bestand nicht markiert hat (V1 mit 3.45 m war gesetzt), ist hier nicht getrennt — das App-Paket war in M3 und 282 dasselbe."
+ },
+ "t4_innenkameras": {
+  "auftrag": "282-Auftrag mit Splat-Kontext (transform, verortung, fit behelf wie 282), cameras statt auto: innenO und innenW, fov 60, up_axis Y, Augenhoehe 1.6–1.7 m, Standpunkt und Ziel im Innern des Netzes, Blick entlang der Halle in beide Richtungen (Abstand 43 m). Lage aus dem Netz in Weltkoordinaten (Transform der Verortung auf das Netz angewandt).",
+  "laeufe": {
+   "textur": "main, Netz Fassung 3 aus dem Speicher (OBJ, 999'400 Dreiecke, Textur als Emission)",
+   "eckfarben": "gleicher Auftrag mit AIIMAGING_REALITYSCAN_UNWRAP_XML leer und der PLY-Exportdatei. Auf main waere das ein neuer Schluessel (Fassung 3) und damit ein RealityScan-Lauf; um das Netz aus dem Speicher zu nehmen, lief dieser Teil im worktree edde216 — Treffer auf das Eckfarben-Netz von M3 (499'441 Dreiecke)."
+  },
+  "je_kamera": {
+   "innenO": {
+    "netzanteil": 0.9855,
+    "netzanteil_eckfarben": 0.9856,
+    "bauwerk_im_bild": 0.0145,
+    "kantenenergie_netz": {"textur": 3.48, "eckfarben": 3.62},
+    "satz": "Im Beauty-Pass liest man die Halle (Dachstuhl, Stuetzen, Boden), mit Textur aber in flachen, verschmierten Flecken — die Eckfarben von M3 wirken hier sogar ruhiger und gleich scharf. Das fertige Bild folgt der Tiefe, nicht den Farben: Das Bildmodell macht aus dem Gang eine Aussenszene mit Daechern und Himmel, mit Textur und mit Eckfarben fast gleich (5–6 Grauwerte Unterschied)."
+   },
+   "innenW": {
+    "netzanteil": 0.965,
+    "netzanteil_eckfarben": 0.9645,
+    "bauwerk_im_bild": 0.035,
+    "kantenenergie_netz": {"textur": 5.0, "eckfarben": 3.67},
+    "satz": "Hier traegt die Textur sichtbar: Dachlatten und Boden sind schaerfer als mit Eckfarben (Kantenenergie 5.0 gegen 3.67). Im fertigen Bild kommt davon fast nichts an: Es wird eine Gasse unter freiem Himmel, die Linienfuehrung der Halle bleibt, die Oberflaechen nicht."
+   }
+  },
+  "kantenenergie_methode": "mittlerer Betrag des Laplace-Operators der Graustufen im Beauty-Pass, nur dort, wo der Material-ID-Pass das Netz zeigt",
+  "netzanteil_methode": "Anteil der Bildpunkte mit der Kontextfarbe im Material-ID-Pass, wie 282",
+  "endbild_textur_gegen_eckfarben": {"innenO": 6.2, "innenW": 5.4, "beauty_pass": {"innenO": 42.8, "innenW": 34.2}, "einheit": "mittlere absolute Differenz in Grauwerten"},
+  "qa": "Geometrie ungemessen (geometry_gates not_measured: geom_iou_nicht_gemessen, gegenprobe_fehlt) — das Bauwerk fuellt in der Halle nur 1.5–3.5 % des Bildes; der Abholer meldet RAHMUNG ZU WEIT. Kein Innenraum-Bildauftrag: Der Auftrag traegt kein interior, der Prompt blieb «Tageslicht, klarer Himmel».",
+  "person": "Im gewaehlten Bild von innenW (beide Laeufe) eine vom Bildmodell erfundene Figur und eine Fantasie-Schrift. Bilder nur lokal, nichts auf der Tafel.",
+  "zeiten_s": {"textur": 221.6, "eckfarben": 206.8, "realityscan": 0}
+ },
+ "t5_rueckfall_ordner": {
+  "ergebnis": "nein",
+  "befund": "POST /knoten/modell-laden am neu gestarteten Dienst (ohne --ordner) bricht im Server ab: _modell_laden reicht Path(self.ordner) an den Faden, self.ordner ist None, Path(None) wirft TypeError (oberflaeche/server.py, Zeile 1997). Die Verbindung endet ohne Antwort (HTTP 000), im Systemprotokoll steht der TypeError. ~/Visbox-Mappen entsteht nicht.",
+  "folge": "Der Ladestand wird VOR dem Abbruch gesetzt und bleibt auf «laeuft» stehen: GET zeigt «probe283.ifc wird geladen …», jedes weitere POST antwortet 409 «Es wird schon eine Datei geladen», bis der Dienst neu startet. Ich habe ihn darum ein zweites Mal neu gestartet (laden danach leer).",
+  "bibliothek": "modellladen.lade(None, …) allein geht: mit AIIMAGING_MAPPEN_ORDNER auf einen Wegwerf-Ordner legt sie die Mappe dort an (geladen, Fassung 1, 0.6 s, synthetische Hochbau-IFC). Der Rueckfall selbst stimmt; nur der Server reicht ihm nicht None durch.",
+  "nicht_geaendert": "Code und Einheit nicht angefasst."
+ },
+ "urteil": "Der Rueckgang kommt aus der glb des Auftrags, nicht aus dem Codestand zwischen edde216 und main: Ohne die Bestandsrolle am Volumen faellt der Zusatz im Bildauftrag weg, und Kamera s kippt von 0.965 auf 0.000 (gleicher Code, gleiche Geometrie, ein Feld Unterschied). Die Textur traegt im Innenblick im Beauty-Pass (bei innenW sichtbar schaerfer als die Eckfarben, bei innenO nicht), im fertigen Bild aber kaum, weil das Bildmodell der Tiefe folgt und mit dem Aussen-Prompt eine Aussenszene malt. Datei laden ohne Start-Mappe geht am Dienst noch nicht (Path(None) im Server).",
+ "aufraeumen": "worktree entfernt, alle Abholer-Laeufe beendet (per gemerkter PID abgewartet), keine Blender-, RealityScan- oder Wine-Waisen. Ablagen, Bilder und Messskripte bleiben lokal, nichts im Repo und nichts auf der Tafel (ein Bild mit Figur). Ollama nicht angefasst, Karte danach 1.4 GB / 33 W."
+}
