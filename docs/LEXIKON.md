@@ -129,6 +129,20 @@ verbindet beide Änderungsgeschichten zu einer.
 **Merge-Konflikt** — Tritt auf, wenn zwei Zweige *dieselbe Zeile* unterschiedlich
 geändert haben. Git kann nicht entscheiden, welche Fassung gilt, und fragt nach.
 
+**Nachziehen per Merge (statt Neuaufsetzen)** — Einen eigenen Zweig auf einen neueren Hauptstand bringen, indem
+man den Hauptstand *hineinführt*: Die bisherige Geschichte bleibt, wie sie war, und ein zusätzlicher Schritt hält fest,
+dass der neue Stand dazugekommen ist. Das Gegenstück, das «Neuaufsetzen» (Rebase), schreibt die Geschichte um und
+verlangt danach ein **Überschreiben mit Gewalt (Force-Push)** — dabei ersetzt man den Zweig auf dem Server, und wer
+schon den alten Stand hatte, verliert den gemeinsamen Boden.
+*Im Projekt:* Runde 29 wurde am 14.10.2026 so in «claude/kosmovis-startgraph» und «claude/kosmovis-kamera-aus-3d»
+geholt (Protokoll 74 §122) — auf fremden und eigenen Zweigen wird nicht mit Gewalt überschrieben.
+
+**Hilfszweig** — Ein Zweig, der nur als Zwischenstand dient und nie eingespielt werden soll. Er bündelt mehrere
+Zweige, damit man eine Kopie von genau einem Stand nehmen oder prüfen kann, ob die Zweige ohne Zusammenstoss
+zusammengehen.
+*Im Projekt:* «claude/kosmovis-visbox-stand» (Runde 29 + startgraph + kamera-aus-3d) ist die Herkunft der
+Visbox-Kopie unter `kosmovis/`; im Blatt an den Integrator steht ausdrücklich, dass er nicht eingespielt wird.
+
 **Pull Request (PR)** — Der Vorschlag, einen Zweig in einen anderen zu übernehmen. Auf
 GitHub eine Seite mit allen Änderungen, Zeile für Zeile, plus Kommentarfunktion. In
 Teams der Ort der gegenseitigen Überprüfung. Bei Alleinarbeit oft entbehrlich —
@@ -7155,6 +7169,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus dem Nachzug auf Runde 29 (Protokoll 74 §122): **Nachziehen per Merge (statt Neuaufsetzen)** mit **Force-Push**, **Hilfszweig** |
 | 2026-10-14 | Ergaenzt aus Strg+Z in der Visbox-Knotenansicht: **Wirt (der Knotenansicht)** |
 | 2026-10-14 | Ergaenzt aus Visbox 0.2.8 (Neustart, Nummer, iPad verbindet von selbst): **Neustart-Helfer**, **Prozessnummer (PID)**, **Ein Fenster statt Fenstergruppe (`Window` / `WindowGroup`)**, **Wiederverbinden** |
 | 2026-10-14 | Ergaenzt aus Entscheid 91/92 (fertiger Anfang, Auto-Kamera mit den Standpunkten des Heim-PCs): **Fertiger Anfang (Startgraph)**, **Rückgängig-Klammer**, **Standpunkte des Heim-PCs (Vorschau an der Auto-Kamera)**, **Vorbild (Bild-Referenz)** |
