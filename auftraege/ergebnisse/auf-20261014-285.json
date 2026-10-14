@@ -1,0 +1,56 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261014-285",
+ "worker": "local",
+ "rang": 72,
+ "folgt_auf": "auf-20261014-284",
+ "entscheide": [
+  "93"
+ ],
+ "status": "erledigt — Ablage = die Bruecken-Ablage auf der Datenplatte (render-jobs), die der Abholer als --store liest. visbox-flaeche per oertlichem Drop-in umgestellt und neu gestartet. Probe von Anfang bis Ende mit synthetischer Quader-Mappe: Knotenansicht -> Ausfuehren -> awaiting_approval in der Ablage (40 s ohne Freigabe unberuehrt) -> Freigeben -> queued -> running -> done in 245 s; 2 von 3 Bildern geliefert und am Render-Knoten sichtbar. Lieferstatus «fehlgeschlagen» kommt aus der Pruefung (Kamera s Rahmung 62.9 % < 65 %, zwei Tore: geom_iou 0.836 < 0.85), nicht aus dem Weg.",
+ "beendet": "2026-10-14T17:50:00Z",
+ "koepfe": {
+  "ai_imaging": "main ef9a612 nach git pull --ff-only (Visbox 0.2.9, Strg+Z in der Knotenansicht). Kein Code geaendert, betrieb/visbox-flaeche.service nicht geaendert.",
+  "dienste": "visbox-flaeche einmal neu gestartet (vorher: kosmo-abholer.service inactive, kein Auftrag queued/running in der Ablage, Karte 39 W / 1.4 GB, kein Ollama-Modell geladen). kosmo-abholer und sein Timer NICHT angefasst. 8600 nicht beruehrt.",
+  "browser": "Playwright-Chromium ohne Fenster auf 127.0.0.1:8731/knoten/, Anmeldung visbox mit dem Dateikennwort (nicht ausgegeben). Browser am Ende geschlossen, Probeskript beendet sich selbst."
+ },
+ "e2_ablage": {
+  "gewaehlt": "/mnt/data/ArchitekturKosmos/render-jobs (Bruecken-Ablage)",
+  "warum": [
+   "Der laufende Abholer liest sie wirklich: oertliches Drop-in kosmo-abholer.service.d/store.conf setzt --store auf genau diese Ablage; der Abholer-Puls (abholer-puls.json) darin wurde bei jedem Takt (30 s) frisch geschrieben.",
+   "Format passt: knotenweg.lege_an schreibt <ablage>/vis-<zeit>-<hex>/ mit job.json, render-scene.json, model.glb — die Form von aiimaging.bruecke, die der Abholer ueber --store bedient.",
+   "Die zweite Ablage (--eigener-store, tmp) passt NICHT: eigene_quelle erwartet <job_id>/<job_id>.json statt job.json — und der Ordner existiert derzeit nicht einmal (Abholer meldet ihn als «fehlt — uebersprungen»)."
+  ],
+  "vorprobe_vor_umstellung": "In einer Wegwerf-Ablage: knotenweg.lege_an mit Quader-glb -> status awaiting_approval, Token-Form CONFIRMED_RENDER_… ja; bruecke.offene_auftraege vorher 0 (nur queued zaehlt), nach knotenweg.freigeben 1; bruecke.lies_auftrag(fremde_freigabe_gilt=False) -> freigegeben «per Klick in der Visbox-Knotenansicht»; tools/abholen.py --probe --store <Wegwerf-Ablage> -> «Offene Auftraege [Bruecke]: 1 … frei». Wegwerf-Ablage danach geloescht.",
+  "freigabe_sicherheit": "--fremde-freigabe des Abholers hebelt die Freigabe NICHT aus: offene_auftraege nimmt nur Status queued, ein Knotenauftrag in awaiting_approval wird nie gelesen. In der Probe bestaetigt (40 s = mehr als ein Takt, Status blieb awaiting_approval)."
+ },
+ "e3_umgestellt": {
+  "ergebnis": "ja",
+  "wie": "Oertliches Drop-in visbox-flaeche.service.d/auftragsablage.conf (ExecStart= leeren, dann dieselbe Zeile plus --auftragsablage). Die installierte Einheit selbst bleibt deckungsgleich mit der Vorlage. daemon-reload, restart; Dienst active, 127.0.0.1:8731 lauscht.",
+  "sonst_nichts": "Keine weitere Aenderung am Dienst; Abholer nicht umgestellt."
+ },
+ "e4_probe": {
+  "mappe": "synthetisch: zwei Quader mit zwei Materialien als glb (Erzeuger schreibe_test_glb aus tests/test_multipass.py), ueber «Datei laden …» im Modell-Knoten -> Mappe «quader», Szene: 2 Bauteile (aus glb). Prompt die Vorgabe «Morgenlicht, klare lange Schatten, frische kuehle Luft» — keine Personen, keine Figuren.",
+  "schritte": [
+   {"schritt": "Datei laden …", "status": "ok", "dauer_s": 1.0, "beobachtet": "Modell-Knoten «Szene: 2 Bauteile (aus glb)», Auto-Kamera Sued 9 m / Suedost 9 m / Nordwest 9 m"},
+   {"schritt": "Ausfuehren", "status": "ok", "dauer_s": 2.1, "beobachtet": "neuer Auftragsordner in der Bruecken-Ablage, job.json status awaiting_approval, approval_token in Form CONFIRMED_RENDER_…, idle_window_only true, mappe «quader», requested_engine ki; Render-Knoten zeigt «WARTET AUF FREIGABE» und den Knopf «Freigeben»"},
+   {"schritt": "Warten ohne Freigabe", "status": "ok", "dauer_s": 40, "beobachtet": "Status bleibt awaiting_approval, Abholer fasst ihn nicht an"},
+   {"schritt": "Leerlauf der Karte vor Freigabe", "status": "ok", "beobachtet": "39 W, 1.4 GB belegt, kein Ollama-Modell geladen (Schwellen 120 W / 8 GB)"},
+   {"schritt": "Freigeben", "status": "ok", "dauer_s": 5, "beobachtet": "queued mit Marke visbox_freigabe «Klick in der Knotenansicht»"},
+   {"schritt": "Abholer holt ab", "status": "ok", "dauer_s": 20, "beobachtet": "running beim naechsten Takt (Abfrage alle 5 s, also hoechstens 20 s nach Freigabe)"},
+   {"schritt": "Rechnen bis done", "status": "done", "dauer_s": 245.0, "beobachtet": "Dauer ab Freigabe; Abholer-Zeiten: s 7.5 s (abgebrochen), sSE 108.8 s, nNW 105.9 s, gesamt 222.1 s, davon Stillstand 26.2 s; engine z-image-turbo (Apache-2.0)"},
+   {"schritt": "Bild am Render-Knoten", "status": "ja", "beobachtet": "Bild (1600 x 992) erscheint im Render-Knoten und als Bild 1 im Bildvergleich samt QA-Satz; Knotenstatus «FEHLGESCHLAGEN» (= Lieferstatus des Auftrags, siehe unten). Bild zeigt nur die zwei Quader in kuehlem Licht."}
+  ],
+  "pruefzahlen": {
+   "lieferstatus": "fehlgeschlagen — 2 von 3 Kameras geliefert, 2 von 3 Bildern",
+   "kamera_s": "NICHT GERENDERT (Rahmung): Bauwerk fuellt 62.9 % der Bildbreite, noetig 65 %; ungemessen",
+   "kamera_sSE": {"geometry_fidelity": 0.9065, "spearman": -0.9828, "geom_iou": 0.8361, "rho_maske_gerichtet": 0.9828, "kantenanteil": 0.311, "zwei_tore": "NICHT BESTANDEN — rho_maske 0.9828 >= 0.10, geom_iou 0.8361 < 0.85; ohne Gegenprobe"},
+   "kamera_nNW": {"geometry_fidelity": 0.9061, "spearman": -0.9825, "geom_iou": 0.8357, "rho_maske_gerichtet": 0.9825, "kantenanteil": 0.310, "zwei_tore": "NICHT BESTANDEN — rho_maske 0.9825 >= 0.10, geom_iou 0.8357 < 0.85; ohne Gegenprobe"},
+   "kameraspanne": "n 3, gemessen 2, bester 0.9065, schlechtester 0.9061",
+   "verdict": "passed false (Kamera s ungeprueft, sSE/nNW am zweiten Tor durchgefallen)"
+  },
+  "hinweis": "Der WEG ist bestanden (bestellen -> freigeben -> abholen -> Bild am Knoten). Das rote Urteil ist eine Frage an KosmoVis: Auto-Kamera s rahmt die kleine Quader-Szene (8 m groesste Kante, 9 m Abstand) knapp zu eng, und geom_iou liegt bei beiden Ueber-Eck-Kameras knapp unter 0.85. Nicht weiter verfolgt (kein Code geaendert).",
+  "rest": "Der Probeauftrag bleibt in der Bruecken-Ablage liegen (Endzustand done), die Mappe «quader» im Rueckfall-Ordner der Flaeche. Beide synthetisch."
+ },
+ "e5_execstart": "ExecStart=%h/ai-imaging-in-a-box/.venv-render/bin/python oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort --auftragsablage /mnt/data/ArchitekturKosmos/render-jobs"
+}
