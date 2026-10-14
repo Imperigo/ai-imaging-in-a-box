@@ -3,8 +3,9 @@ import VisboxKern
 
 /// Das Blatt «Aktualisieren» (Blatt 18 der Entwurfsflaeche, Owner-Entscheid 84, 13.10.2026):
 /// Nummer, Neuerungen aus dem Fassungsblatt, der Hinweis zur Behelfs-Unterschrift, dann
-/// «Später» / «Laden und ersetzen» — danach Fortschritt, Abgleich der Pruefsumme, Ersetzen und
-/// «Neu starten».
+/// Fortschritt, Abgleich der Pruefsumme, Ersetzen und der Neustart **von selbst** (Entscheid
+/// 87: der Klick auf den Knopf hat das Laden schon gestartet). «Laden und ersetzen» bleibt nur
+/// für «Erneut versuchen» nach einem Fehler; «Neu starten» nur, falls der Neustart hängt.
 ///
 /// **Zeigt nur an.** Die Saetze und Phasen stehen im Kern (`Aktualisierung`,
 /// `Aktualisierungsphase`), das Tun im `Fassungswaechter`.
@@ -116,8 +117,7 @@ struct Aktualisierenblatt: View {
             Button(Aktualisierung.spaeter) {}
                 .disabled(true)
         case .fertig:
-            Button("Später neu starten", action: schliessen)
-                .keyboardShortcut(.cancelAction)
+            // DER NEUSTART LAEUFT VON SELBST (Entscheid 87); der Knopf ist der Notweg.
             Button(Aktualisierung.neuStarten) { waechter.starteNeu() }
                 .keyboardShortcut(.defaultAction)
         case .gescheitert:

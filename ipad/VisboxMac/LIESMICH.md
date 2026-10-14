@@ -22,10 +22,11 @@ auspacken. Daneben liegen das iPad-Paket, das Fassungsblatt und `SHA256SUMS.txt`
 nur, wenn auf `main` eine neue Nummer steht.
 
 **Danach aktualisiert sich die App selbst:** Liegt eine neuere Fassung auf GitHub, steht in der
-Werkzeugleiste **«● 0.x.y verfügbar — Aktualisieren»**. Ein Klick zeigt Nummer und Neuerungen;
-erst **«Laden und ersetzen»** lädt, gleicht die Prüfsumme ab, prüft Kennung und Unterschrift,
-legt die alte App in den Papierkorb und die neue an ihren Platz; dann **«Neu starten»**. Gefragt
-wird beim Start und einmal täglich. Danach verlangt macOS eventuell noch einmal «Trotzdem öffnen»
+Werkzeugleiste **«● 0.x.y verfügbar — Aktualisieren»**. **Ein Klick genügt** (Entscheid 87): Die
+App zeigt Nummer und Neuerungen, lädt, gleicht die Prüfsumme ab, prüft Kennung und Unterschrift,
+legt die alte App in den Papierkorb und die neue an ihren Platz und **startet von selbst neu**.
+Gefragt wird beim Start und danach jede Stunde. **Wer noch 0.2.0 hat**, holt einmal von Hand: Erst
+ab 0.2.1 sucht die App selbst nach neuen Fassungen. Danach verlangt macOS eventuell noch einmal «Trotzdem öffnen»
 (unten) und den Schlüsselbund. Läuft die App noch aus «Downloads», ersetzt sie sich nicht —
 erst in «Programme» ziehen.
 

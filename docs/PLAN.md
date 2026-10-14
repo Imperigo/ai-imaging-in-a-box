@@ -7873,7 +7873,13 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [x] **Owner-Entscheid 85 (a–c)** per Auswahl, Blatt 19 gezeichnet. *(14.10.2026, §101)*
 - [x] **Gebaut:** Mac-App öffnet die Knoten, Schalter oben; Heim-PC merkt sich die zuletzt geöffnete Mappe. *(14.10.2026, §101)*
-- [ ] **Am Mac bestätigen** (Owner): erscheinen die Knoten nach «Schon anfangen», wirkt der Schalter, lässt sich ausführen und freigeben? Kommt mit der nächsten Fassung (Aktualisieren-Knopf).
+- [ ] **Am Mac bestätigen** (Owner): erscheinen die Knoten nach «Schon anfangen», wirkt der Schalter, lässt sich ausführen und freigeben? Owner hat 0.2.0 → einmal von Hand 0.2.3 laden.
+
+## Ein Klick fürs Aktualisieren (Entscheid 87, 14.10.2026 — Sitzung 74 §103)
+
+- [x] **Gebaut:** ein Klick lädt und ersetzt, Neustart von selbst, stündlich fragen; Visbox 0.2.3. *(14.10.2026, §103)*
+- [ ] **Am Mac bestätigen** (Owner): 0.2.3 von Hand, danach die nächste Fassung mit einem Klick.
+- [ ] **KosmoOrbit** Ein-Klick-Aktualisieren (Integrator, Zentrale; Antwort mit Plan erwartet).
 - [x] **Brücke RealityScan** gebaut (Entscheid 81 ersetzt 80). *(13.10.2026, §91)*
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

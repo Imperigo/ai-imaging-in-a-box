@@ -9,11 +9,11 @@ import VisboxKern
 /// Anlass: Owner-Entscheid 84 (13.10.2026, Blatt 18). Bis dahin holte der Owner jede Fassung
 /// von Hand als ZIP aus einem Lauf der Pruefstrecke.
 ///
-/// * **Beim Start und einmal taeglich** (84a): `starte()` fragt sofort und danach stuendlich,
-///   ob die Tagesregel des Kerns eine Frage faellig nennt. Stuendlich und nicht alle 24 h,
-///   weil ein Mac schlaeft: Ein Takt, der 24 h wartet, verschoebe sich um jede Nacht.
-/// * **Keine Installation ohne Klick:** Hier wird nur angeboten. Geladen wird erst mit
-///   «Laden und ersetzen».
+/// * **Beim Start und jede Stunde** (Entscheid 87, vorher taeglich): `starte()` fragt sofort
+///   und sieht danach alle zehn Minuten nach, ob die Regel des Kerns eine Frage faellig nennt
+///   — ein Mac schlaeft, und ein Takt, der eine Stunde schliefe, verschoebe sich um jede Nacht.
+/// * **Ein Klick** (Entscheid 87): Der Knopf «● 0.x.y verfügbar» laedt sofort; nach dem
+///   Ersetzen startet die App **von selbst** neu. Ohne den Klick wird nie etwas installiert.
 /// * **Still bei Fehlern der Frage:** Kein Netz oder eine gedrosselte Schnittstelle heisst
 ///   «kein Angebot», nicht eine Meldung am Bildschirm — die App laeuft ohne GitHub weiter.
 ///
@@ -46,7 +46,7 @@ final class Fassungswaechter: ObservableObject {
             // BEIM START IMMER (84a), unabhaengig davon, wann zuletzt gefragt wurde.
             await self?.frage()
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 3_600 * 1_000_000_000)
+                try? await Task.sleep(nanoseconds: 600 * 1_000_000_000)
                 guard let self else { return }
                 if Aktualisierung.sollFragen(letzte: self.letzte, jetzt: Date()) {
                     await self.frage()
@@ -82,7 +82,8 @@ final class Fassungswaechter: ObservableObject {
         }
     }
 
-    /// «Laden und ersetzen» — der eine Klick, ohne den nichts ersetzt wird.
+    /// Laden und ersetzen — ausgeloest vom einen Klick auf den Knopf (Entscheid 87), ohne den
+    /// nichts ersetzt wird.
     func ladeUndErsetze() {
         guard let angebot, !arbeitet else { return }
         guard let kennung = Bundle.main.bundleIdentifier else {
@@ -98,6 +99,8 @@ final class Fassungswaechter: ObservableObject {
                     Task { @MainActor in self?.melde(neu) }
                 }
                 self?.schliesse(mit: .fertig)
+                // VON SELBST NEU STARTEN (Entscheid 87). Scheitert das, bleibt «Neu starten».
+                self?.starteNeu()
             } catch let fehler as Aktualisierungsfehler {
                 self?.schliesse(mit: .gescheitert(fehler))
             } catch {

@@ -168,7 +168,7 @@ public enum Aktualisierungsphase: Equatable, Sendable {
             return "Lädt …"
         case .prueft: return "Prüfsumme wird abgeglichen …"
         case .ersetzt: return "Prüfsumme stimmt. Die App wird ersetzt …"
-        case .fertig: return "Ersetzt. Prüfsumme und Kennung stimmen — bitte neu starten."
+        case .fertig: return "Ersetzt. Prüfsumme und Kennung stimmen — die App startet neu …"
         case .gescheitert(let fehler): return fehler.satz
         }
     }
@@ -291,8 +291,10 @@ public enum Aktualisierung {
     // ------------------------------------------------------------------ Tagesregel (84a)
 
     /// Wie lange nach einer Frage die naechste faellig ist. Beim Start wird **immer** gefragt;
-    /// laeuft die App laenger, fragt sie, sobald diese Spanne um ist.
-    public static let abstand: TimeInterval = 24 * 60 * 60
+    /// laeuft die App laenger, fragt sie, sobald diese Spanne um ist. **Eine Stunde** seit
+    /// Entscheid 87 (14.10.2026, Owner per Auswahl; vorher ein Tag, 84a): Eine neue Fassung
+    /// soll ankommen wie bei jeder App, ohne zusaetzlichen Dienst.
+    public static let abstand: TimeInterval = 60 * 60
 
     /// Ob jetzt gefragt wird. Nie gefragt → ja. Liegt die letzte Frage **in der Zukunft**
     /// (die Uhr wurde zurueckgestellt), auch ja — sonst fragte die App womoeglich nie wieder.

@@ -69,10 +69,13 @@ struct Hauptfenster: View {
         }
         .toolbar {
             // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
-            // wenn GitHub eine NEUERE Nummer hat (84b). Ein Klick oeffnet erst das Blatt —
-            // ersetzt wird nie ohne den zweiten Klick «Laden und ersetzen».
+            // wenn GitHub eine NEUERE Nummer hat (84b). EIN KLICK (Entscheid 87): Er oeffnet das
+            // Blatt UND startet das Laden; danach ersetzt sich die App und startet neu.
             if let angebot = aktualisierung.angebot {
-                Button { aktualisierenOffen = true } label: {
+                Button {
+                    aktualisierenOffen = true
+                    aktualisierung.ladeUndErsetze()
+                } label: {
                     Text(Aktualisierung.knopf(angebot.nummer))
                         .foregroundStyle(Startfarbe.gruenText)
                 }

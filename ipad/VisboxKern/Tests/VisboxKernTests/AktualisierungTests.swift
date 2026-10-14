@@ -187,12 +187,13 @@ final class AktualisierungTests: XCTestCase {
     func testEinmalTaeglich() {
         let jetzt = Date(timeIntervalSince1970: 2_000_000_000)
         XCTAssertTrue(Aktualisierung.sollFragen(letzte: nil, jetzt: jetzt))
-        XCTAssertFalse(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-3600), jetzt: jetzt))
-        XCTAssertFalse(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-86_399), jetzt: jetzt))
-        XCTAssertTrue(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-86_400), jetzt: jetzt))
+        // Entscheid 87: jede Stunde.
+        XCTAssertFalse(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-60), jetzt: jetzt))
+        XCTAssertFalse(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-3599), jetzt: jetzt))
+        XCTAssertTrue(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-3600), jetzt: jetzt))
         // DIE UHR WURDE ZURUECKGESTELLT: sonst fragte die App womoeglich nie wieder.
         XCTAssertTrue(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(3600), jetzt: jetzt))
-        XCTAssertEqual(Aktualisierung.abstand, 86_400)
+        XCTAssertEqual(Aktualisierung.abstand, 3_600)
     }
 
     // ------------------------------------------------------------------ Pruefsumme

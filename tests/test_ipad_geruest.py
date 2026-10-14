@@ -1245,19 +1245,36 @@ def test_der_mac_ersetzt_ueber_das_system_ohne_shell():
 
 
 def test_keine_installation_ohne_klick():
-    """Der Waechter bietet nur an; ``ladeUndErsetze`` ruft allein das Blatt, auf den Knopf
-    «Laden und ersetzen» oder «Erneut versuchen»."""
+    """Der Waechter bietet nur an; ``ladeUndErsetze`` rufen nur Klicks: der Knopf
+    «● 0.x.y verfügbar» im Fenster (Entscheid 87: EIN Klick lädt sofort) und im Blatt
+    «Laden und ersetzen» bzw. «Erneut versuchen»."""
     aufrufe = []
     for datei in _swift_dateien(MAC_QUELLEN):
         for zeile in _mac_code(datei).splitlines():
             if "ladeUndErsetze()" in zeile and "func ladeUndErsetze" not in zeile:
                 aufrufe.append((datei.name, zeile.strip()))
-    assert {d for d, _ in aufrufe} == {"Aktualisierenblatt.swift"}, aufrufe
+    assert {d for d, _ in aufrufe} == {"Aktualisierenblatt.swift", "Hauptfenster.swift"}, aufrufe
     blatt = _mac_code(MAC_AKTUALISIEREN / "Aktualisierenblatt.swift")
     assert "Button(Aktualisierung.ladenUndErsetzen) { waechter.ladeUndErsetze() }" in blatt
     fenster = _mac_code(MAC_QUELLEN / "Start" / "Hauptfenster.swift")
     assert "Text(Aktualisierung.knopf(angebot.nummer))" in fenster
     assert "aktualisierung.starte()" in fenster
+    # IM FENSTER NUR IM KNOPF DES ANGEBOTS: «if let angebot» → Button { … ladeUndErsetze() }.
+    knopf = re.search(r"if let angebot = aktualisierung\.angebot \{\s*Button \{\s*"
+                      r"aktualisierenOffen = true\s*aktualisierung\.ladeUndErsetze\(\)\s*\}",
+                      fenster)
+    assert knopf, "der eine Klick sitzt nicht im Knopf des Angebots"
+    assert sum("ladeUndErsetze()" in z for z in fenster.splitlines()) == 1
+
+
+def test_nach_dem_ersetzen_startet_die_app_von_selbst_neu():
+    """Entscheid 87: Nach «fertig» ruft der Wächter selbst ``starteNeu()``; der Knopf
+    «Neu starten» im Blatt bleibt nur als Notweg."""
+    waechter = _mac_code(MAC_AKTUALISIEREN / "Fassungswaechter.swift")
+    assert re.search(r"schliesse\(mit: \.fertig\)\s*(//[^\n]*\s*)*self\?\.starteNeu\(\)",
+                     waechter), "kein Neustart von selbst nach dem Ersetzen"
+    blatt = _mac_code(MAC_AKTUALISIEREN / "Aktualisierenblatt.swift")
+    assert "Später neu starten" not in blatt
 
 
 def test_das_ipad_zeigt_nur_einen_hinweis():

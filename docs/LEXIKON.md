@@ -3972,6 +3972,17 @@ Länge am Bau — gebeten; rot: nicht übernommen) in die Verortung; Visbox sagt
 Urteil (`kosmo_szene.massstab_aus_verortung`). Ein Handmass gewinnt immer. **Drift** heisst, dass der
 Massstab entlang des Wegs der Kamera nicht gleich bleibt.
 
+**Selbst-Aktualisieren (Updater)** — Der Teil einer App, der nachsieht, ob es eine neuere Fassung gibt,
+sie auf Wunsch lädt, prüft, die alte ersetzt und die App neu startet — wie man es von Browsern kennt. *Im
+Projekt:* in der Mac-App von Visbox selbst gebaut (Entscheid 84, seit 87 mit einem Klick und Neustart von
+selbst); für KosmoOrbit empfohlen: das Updater-Plugin von Tauri. Eine App, die das noch nicht kann, muss
+einmal von Hand ersetzt werden.
+
+**AppImage** — Eine Form, ein Linux-Programm als **eine einzige Datei** auszuliefern, die man ohne
+Installation starten kann. Weil es nur eine Datei ist, kann das Programm sie selbst gegen eine neuere
+tauschen. *Im Projekt:* die Linux-Form, in der sich KosmoOrbit über den Tauri-Updater selbst ersetzen
+könnte (ein `.deb`-Paket kann er nicht ersetzen).
+
 **Prozessgruppe** — Startet ein Programm weitere Programme, bilden sie zusammen eine Familie, die das
 Betriebssystem als eine Gruppe führen kann. Wer die **ganze Gruppe** beendet, trifft auch die Kinder und
 Enkel; wer nur das erste Programm beendet, lässt sie weiterlaufen. *Im Projekt:* RealityScan läuft unter
@@ -6956,6 +6967,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus Entscheid 87 (ein Klick fürs Aktualisieren): **Selbst-Aktualisieren (Updater)**, **AppImage** |
 | 2026-10-14 | Ergaenzt beim Leser des Massstab-Blocks: **Bewegungssensor (IMU)**, **Massstab (des Splats)** (mit Gegenprobe, Ampel, Kontrollmass, Drift) |
 | 2026-10-14 | Ergaenzt aus Entscheid 85 (Mac zeigt zuerst die Knoten): **Segmentschalter**; nachgefuehrt: **WKWebView**, **Knotenansicht / Knoteneditor** (Kopie aus KosmoOrbit, nicht mehr der eigene Entwurf) |
 | 2026-10-14 | Ergaenzt beim Reparieren der RealityScan-Bruecke (Fassung 2, nach `auf-20261013-278`): **Prozessgruppe** (mit verwaistem Prozess), **Deckel (im Netz)**, **Farbe als Ganzzahl oder Kommazahl (uchar / float)**; nachgefuehrt: **RealityScan-Brücke** (jetzt der Weg fürs Umgebungsnetz) |
