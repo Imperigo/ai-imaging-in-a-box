@@ -1,0 +1,57 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261014-284",
+ "worker": "local",
+ "rang": 71,
+ "folgt_auf": "auf-20261014-283",
+ "entscheide": [
+  "90d",
+  "91",
+  "92"
+ ],
+ "status": "erledigt (nur gelesen und angesehen) — D1: nur --kennwort-datei gesetzt. D2: Kennwort ueber den Neustart gleich. D3: /bruecke/jobs antwortet 503 «Keine Auftragsablage», der Abholer liest die Bruecken-Ablage und die tmp-Ablage, nie einen knotenweg — Bestellen aus der Knotenansicht endet im Dienst mit 503, wie hier vermutet. D4: fertiger Anfang steht mit sieben verbundenen Knoten, Auto-Kamera mit Sued/Suedost/Nordwest samt Abstand, leere Mappe zeigt «Datei laden …». D5: Strg+Z wirkt nicht. ACHTUNG: 0.2.8 ist noch NICHT auf main; D4 und D5 darum aus einer Nebeninstanz des Zweiges, nicht aus dem Dienst.",
+ "beendet": "2026-10-14T16:58:00Z",
+ "koepfe": {
+  "ai_imaging": "main a57b671 nach git pull --ff-only («Bereits aktuell»). Der Auftrag 284 und Visbox 0.2.8 (fertiger Anfang, standpunkte) liegen nur auf claude/ai-imaging-assessment-pstkyp (bbd8bef, 7 Commits vor main). Auf main gibt knotenweg noch kein «standpunkte» zurueck, und der dist-Bau ist der alte (BAUSTAND main.tsx-Hash anders als auf dem Zweig).",
+  "dienste": "visbox-flaeche einmal neu gestartet (vorher: kosmo-abholer.service inactive, keine Ablage mit laufendem Auftrag). Der Dienst liefert danach weiter den main-Bau aus — der neue Anfang ist im Dienst also noch nicht zu sehen. Einheiten, Konfiguration und Code nicht geaendert. 8630/8600/8700/5183 nicht beruehrt.",
+  "nebeninstanz": "Fuer D4/D5: git worktree des Zweiges (bbd8bef) in einem Wegwerf-Ordner, server.py auf 127.0.0.1:8739 mit eigener Wegwerf-Kennwortdatei und Wegwerf-Auftragsablage, je einmal mit --ordner auf eine Wegwerf-Mappe mit Modell und eine ohne. Nach der Probe per PID beendet, worktree entfernt, Kennwort- und Ablagedateien geloescht. Browser: Playwright-Chromium ohne Fenster."
+ },
+ "d1_schalter": {
+  "aufruf": "systemd-Benutzereinheit visbox-flaeche.service = betrieb/visbox-flaeche.service: .venv-render/bin/python oberflaeche/server.py --kennwort-datei <heim>/.config/visbox/kennwort (WorkingDirectory Repo, AIIMAGING_MODELLE gesetzt, PYTHONUNBUFFERED=1, Restart=on-failure)",
+  "--kennwort-datei": "ja",
+  "--ordner": "nein",
+  "--auftragsablage": "nein",
+  "--heimnetz": "nein"
+ },
+ "d2_kennwort": {
+  "ergebnis": "gleich",
+  "wie": "Pruefsumme der Kennwortdatei vor und nach systemctl --user restart verglichen (Inhalt nicht gelesen ausgegeben); Aenderungszeit der Datei steht unveraendert auf dem 01.10.; Anmeldung mit dem Dateikennwort nach dem Neustart: 200.",
+  "folgerung": "Ein neues Kennwort je Neustart erklaert das iPad-Verhalten NICHT. Die Ursache muss anderswo liegen (z. B. gemerkte Anmeldung im Geraet, Weiterleitung/Zertifikat) — hier nicht weiter verfolgt."
+ },
+ "d3_auftragsablage": {
+  "weg_hinweis": "/knoten/jobs gibt es nicht (404 «Unbekannter Weg»); die Auftraege der Knotenansicht laufen ueber /bruecke/jobs.",
+  "get_bruecke_jobs": "503 «Keine Auftragsablage: mit --ordner (dann liegt sie in der Mappe) oder --auftragsablage starten.»",
+  "get_bruecke_health": "200, services.jobstore false, abholer zustand «nie_gesehen», grund «Keine Ablage eingestellt.»",
+  "abholer_liest": "kosmo-abholer.service (Takt per kosmo-abholer.timer, ein Durchgang): --store = Ablage der KosmoOrbit-Bruecke auf der Datenplatte (render-jobs) und --eigener-store = tmp-Ablage. Keinen knotenweg einer Mappe.",
+  "folgerung": "Befund von hier bestaetigt: Der Dienst hat keine Auftragsablage, und selbst mit einer im knotenweg einer Mappe liest der Abholer sie nicht. Jedes Bestellen aus der Knotenansicht im Dienst endet mit 503."
+ },
+ "d4_fertiger_anfang": {
+  "mappe_mit_modell": "Sieben Knoten stehen verbunden da (Stimmung, Prompt, Modell, Auto-Kamera, Prompt-Kombinierer, Render, Bildvergleich; Modell→Szene, Auto-Kamera→Kamera-Standpunkte, Stimmung/Prompt→Kombinierer→Render→Bild 1), die Auto-Kamera zeigt «Sued — frontal, 24 m», «Suedost — ueber Eck, 29 m», «Nordwest — ueber Eck, 29 m» mit dem Satz «Rechnet der Heim-PC aus der Huellbox … — Vorschau», und /knoten/mappe liefert standpunkte mit drei Eintraegen (s/sSE/nNW).",
+  "leere_mappe": "Dieselben sieben Knoten verbunden; im Modell-Knoten steht der Knopf «Datei laden …» mit der Formatliste und dem Satz «Die Mappe … hat noch kein Modell — «Datei laden …» holt eines herein.», die Auto-Kamera sagt «Keine Geometrie im Modell — nichts abzuleiten.», standpunkte ist null, «Ausfuehren» ist ausgegraut.",
+  "nichts_bestellt": "In beiden Faellen keine einzige Nicht-GET-Anfrage der Seite, Wegwerf-Ablage blieb leer, keine Seitenfehler.",
+  "nebenbefund_1": "Im Bild der Mappe mit Modell stehen unter Prompt, Kombinierer und Render blasse Doppel der Knoten (Reste einer frueheren Lage). Wahrscheinlich ein Malrest des fensterlosen Browsers, als die Modell-Knotenhoehe nach dem Laden der glb umsprang; am echten Bildschirm nachsehen.",
+  "nebenbefund_2": "projekt.speichere ersetzt einen absoluten Heimpfad im import.glb durch einen Platzhalter (Regel 3) — eine Mappe, deren glb so vermerkt wird, findet ihr Modell danach nicht mehr. Fuer die Probe darum glb relativ in der Mappe. Kein Fehler im normalen Ladeweg gesehen, nur als Hinweis.",
+  "bilder": "zwei Bildschirmfotos lokal am Heim-PC (Mappe mit Modell / leere Mappe), nicht im Repo"
+ },
+ "d5_strg_z": {
+  "ergebnis": "nein",
+  "probe": "Knoten Stimmung gezogen (um 100 px), dann Strg+Z — einmal mit Fokus auf dem Knoten, einmal nach Klick auf die leere Flaeche (Fokus body), zusaetzlich Meta+Z: der Knoten blieb jedes Mal an der neuen Stelle.",
+  "vermutung": "In der Visbox-Kopie findet sich kein Tastenkuerzel, das useProject.undo() ruft (in kosmo-orbit/src der Kopie nur der Touch-Doppeltipp in IslandShell); das Kuerzel haengt in KosmoOrbit vermutlich am Wirt (App.tsx), den main.tsx der Visbox nicht mitnimmt. Nicht bestaetigt, nur gelesen."
+ },
+ "vorschlag_dienstaufruf": {
+  "hinweis": "NICHT eingestellt, erst nach Owner-Entscheid.",
+  "flaeche": "oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort --auftragsablage /mnt/data/ArchitekturKosmos/render-jobs (dieselbe Ablage, die der Abholer schon mit --store liest — dann braucht der Abholer keine Aenderung, und /bruecke/health sieht seinen Puls). Alternativ eine eigene Ablage, dann muesste der Abholer sie zusaetzlich lesen (eigener Durchgang oder zweite Einheit, da --store einmalig ist).",
+  "nicht_empfohlen": "--ordner allein: die Ablage laege im knotenweg genau einer Mappe, den der Abholer nicht liest.",
+  "zu_pruefen_vorher": "ob ein Knotenauftrag in der Bruecken-Ablage die --fremde-freigabe-Pruefung des Abholers besteht, und ob 0.2.8 erst auf main muss, damit der Dienst den neuen Anfang ueberhaupt ausliefert."
+ }
+}
