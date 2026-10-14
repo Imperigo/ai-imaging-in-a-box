@@ -1,0 +1,244 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261014-280",
+ "worker": "local",
+ "rang": 67,
+ "folgt_auf": "auf-20261013-278",
+ "entscheide": [
+  "79",
+  "81"
+ ],
+ "status": "erledigt — Die Deckung haelt (93.42 % gegen 93.46 % in M2), und die Deckel-Reste sind weg: Ueber 0.3 Einheiten bleibt kein Dreieck (M2: 189 Dreiecke, 12.4 % der Flaeche), die laengste Kante ist 0.273. In den 9 Bildern ist kein Fremdkoerper aus Deckel-Resten mehr (M2: 3 Bilder). Die QA besteht hoeher (0.971/0.948/0.919). Der strenge Riegel faellt bei nNW knapp: geom_iou 0.8486 gegen die Schwelle 0.85 (M2 0.811), dazu fehlt weiter die Gegenprobe. bereinigung steht jetzt in urteil.kontext.netz. Einen Massstab-Satz gibt es nicht, weil die Verortung keinen Block massstab hat.",
+ "beendet": "2026-10-14T12:05:00Z",
+ "koepfe": {
+  "abholer": "ai-imaging main edde216 (enthaelt 2083372 «Deckel-Grenze halbiert»; DECKEL_KANTE_REL = 0.025)",
+  "app": "KosmoOrbit 820a41ffd (installiertes Paket wie M2, unveraendert, im eigenen Netz-Namensraum)",
+  "realityscan": "2.2.0.119430"
+ },
+ "einrichtung": {
+  "dienste": "daemon-reload, visbox-flaeche neu gestartet (active). Das Drop-in mit AIIMAGING_REALITYSCAN bleibt eingeschaltet.",
+  "einrichtung": {
+   "eingeschaltet": true,
+   "bereit": true,
+   "grund": null,
+   "ursache": null
+  }
+ },
+ "weg": "Wie M2 (fassung2_m2 in 278): Test-App (installiertes Paket 820a41ffd) mit env -i auf eigenem Xvfb, GDK_BACKEND=x11, bwrap --unshare-net, eigene Bruecke im Namensraum (eigene Ablage, Ollama auf totem Port), MCP ueber Relais. Neues Projekt; Splat und Verortung geladen (1'057'305 Punkte, Behelfsverortung); Volumen-Datei; V1 als Bestand (3.45 m). Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel»; Verbindungen und Ausfuehren per Maus nur auf dem eigenen Xvfb, xdotool immer mit eigenem DISPLAY. Z-Image Turbo, 128, 1600x1000, Kameras auto. Abholer: tools/abholen.py unveraendert (--fremde-freigabe --hoechstens 1 --kein-gelaende, mit Nullprobe), Umgebung wie der Dienst. Gestartet erst, als der fremde RealityScan-Lauf (Texturprobe) beendet und 60 s lang kein RealityScan.exe und kein wineserver mehr zu sehen war. GPU-Sperre bei freier Karte (1.6 GB, 15 W, Ollama leer); Ollama nicht angefasst. Nichts installiert, kein Code geaendert, die Grenze nicht verstellt.",
+ "a_bruecke": {
+  "durchgelaufen": true,
+  "abholer_gesamt_s": 631,
+  "realityscan_lauf_s": 301.4,
+  "umschrift_s": 7.0,
+  "netz": {
+   "dreiecke": 499441,
+   "ecken": 249726,
+   "vereinfacht": true,
+   "lage": {
+    "nah_colmap": 0.9937,
+    "nah_splat": 0.9902,
+    "massstab": 0.9905,
+    "mitte_rel": 0.0219
+   },
+   "zwischenspeicher_treffer": false
+  },
+  "bereinigung": {
+   "farben": "float→uchar",
+   "dreiecke_vorher": 500008,
+   "deckel_dreiecke": 567,
+   "deckel_flaeche_anteil": 0.8057,
+   "ecken_entfernt": 170,
+   "kante_grenze": 0.273853
+  },
+  "rest_ueber_0_3": {
+   "dreiecke": 0,
+   "flaeche_anteil": 0.0,
+   "laengste_kante": 0.273,
+   "darunter": "Kante > 0.25: 47 Dreiecke / 1.5 % der Flaeche; > 0.2: 150 / 3.4 %; > 0.1: 953 / 10.3 %; p99.9 der Kanten 0.135"
+  },
+  "farben": "uchar 0..255, Median Rot 112, Anteil 0/1/255 je ≤ 0.1 %"
+ },
+ "b_deckung": {
+  "mass": "wie 277/278/M2 (200'000 dichte Splat-Punkte, fester Startwert, 0.0422 Splat-Einheiten ≈ 26 cm)",
+  "deckung": 0.9342,
+  "abstand_median": 0.0033,
+  "stuecke": 52,
+  "groesstes_stueck": 496632,
+  "lage_median_cm": 3.7,
+  "lage_p90_cm": 11.8,
+  "anteil_innerhalb_26cm": 0.9757
+ },
+ "c_kontext": {
+  "weg": "realityscan",
+  "realityscan_grund": null,
+  "aufnahme": "neben dem splat",
+  "bilder": 960,
+  "bereinigung_im_urteil": "ja — urteil.kontext.netz.bereinigung mit deckel_dreiecke 567, deckel_flaeche_anteil 0.8057, kante_grenze 0.273853 (gleich wie im Bericht des Netz-Speichers)",
+  "massstab": null,
+  "massstab_satz": "keiner — die Verortung des Splats hat keinen Block massstab (urteil.kontext.massstab = null, kein Satz in den Hinweisen)"
+ },
+ "d_bild": {
+  "qa": {
+   "passed": true,
+   "geometrie_schlechteste": 0.919,
+   "je_kamera": {
+    "s": {
+     "score": 0.971,
+     "geom_iou": 0.965
+    },
+    "sSE": {
+     "score": 0.948,
+     "geom_iou": 0.901
+    },
+    "nNW": {
+     "score": 0.919,
+     "geom_iou": 0.849
+    }
+   },
+   "seeds_gewaehlt": "2/2/2"
+  },
+  "geometry_gates": {
+   "passed": false,
+   "fail_reasons": [
+    "geom_iou_unter_schwelle",
+    "gegenprobe_fehlt"
+   ],
+   "rho_maske": 0.996,
+   "geom_iou_nNW": 0.8486,
+   "schwelle": 0.85,
+   "kamera": "nNW"
+  },
+  "lieferstatus": "geliefert",
+  "bilder_nicht_schwarz": "Mittel 115–119 je Kanal, fast schwarz 0.6–1.4 %",
+  "umgebung_im_bild": {
+   "s": 0.0003,
+   "sSE": 0.0041,
+   "nNW": 0.0031
+  },
+  "umgebung_auf_nicht_bauwerk": {
+   "s": 0.0004,
+   "sSE": 0.0054,
+   "nNW": 0.0041
+  },
+  "bauwerk_verdeckt": {
+   "s": 0.0,
+   "sSE": 0.0,
+   "nNW": 0.0
+  },
+  "fremdkoerper_aus_deckel_resten": "0 von 9 (M2: 3 von 9 — sSE Seed 0, nNW Seed 0 und 1)",
+  "fremdkoerper_je_bild": {
+   "s": [
+    0,
+    0,
+    0
+   ],
+   "sSE": [
+    0,
+    0,
+    0
+   ],
+   "nNW": [
+    0,
+    0,
+    0
+   ]
+  },
+  "konfetti": "0 von 9",
+  "anderes_nicht_gezaehlt": "Echt und nicht gezaehlt: rot-weisser Dachaufbau (sSE Seed 2, nNW Seed 2), am Boden links bei sSE ein kleines Netzstueck (im Bild Seed 1 ein Vordach). Ohne Deckelbezug: Aus einem kleinen Netzstueck am Boden wird bei nNW Seed 2 ein Abfallbehaelter. Ohne Geometrie im Beauty-Pass erfindet das Bildmodell bei sSE Seed 2 eine durchsichtige Kugel und bei s Seed 1 eine Halle ueber der Traufe.",
+  "person": "keine erkennbare Person; in s Seed 1 und 2 je zwei kleine, gesichtslose Figuren, vom Bildmodell erfunden",
+  "satz": "Mit der Grenze 2.5 % sind die Deckel-Reste aus dem Netz und aus den Bildern verschwunden, die Deckung bleibt 93 %. Die QA steigt auf 0.971/0.948/0.919, der strenge Riegel faellt nur noch knapp (nNW 0.849 gegen 0.85). Sichtbar ist neben dem Bauwerk jetzt fast nichts mehr vom Netz (0.04–0.5 % der Flaeche, M2 1–3.5 %)."
+ },
+ "vergleich_m2_m3": {
+  "deckel_kante_rel": [
+   0.05,
+   0.025
+  ],
+  "kante_grenze": [
+   0.5477,
+   0.2739
+  ],
+  "deckel_dreiecke": [
+   329,
+   567
+  ],
+  "deckel_flaeche_anteil": [
+   0.7745,
+   0.8057
+  ],
+  "rest_ueber_0_3_dreiecke": [
+   189,
+   0
+  ],
+  "rest_ueber_0_3_flaeche": [
+   0.124,
+   0.0
+  ],
+  "deckung": [
+   0.9346,
+   0.9342
+  ],
+  "stuecke": [
+   57,
+   52
+  ],
+  "lage_median_cm": [
+   3.7,
+   3.7
+  ],
+  "lage_p90_cm": [
+   11.8,
+   11.8
+  ],
+  "qa_s_sSE_nNW": [
+   [
+    0.955,
+    0.923,
+    0.898
+   ],
+   [
+    0.971,
+    0.948,
+    0.919
+   ]
+  ],
+  "geom_iou_s_sSE_nNW": [
+   [
+    0.941,
+    0.854,
+    0.811
+   ],
+   [
+    0.965,
+    0.901,
+    0.849
+   ]
+  ],
+  "fremdkoerper_deckel": [
+   "3 von 9",
+   "0 von 9"
+  ],
+  "konfetti": [
+   "0 von 9",
+   "0 von 9"
+  ],
+  "bereinigung_im_urteil": [
+   false,
+   true
+  ],
+  "hinweis": "Netz nicht deterministisch: Jeder Lauf ist ein neues RealityScan-Netz (500004 bzw. 500008 Dreiecke vor der Bereinigung). Die Unterschiede sind also nicht allein der Grenze zuzuschreiben."
+ },
+ "e_waisen": "keine: Nach dem Lauf lief kein RealityScan.exe, kein wineserver und kein winewrapper mehr",
+ "zeiten_s": {
+  "abholer_gesamt": 631,
+  "realityscan": 301.4,
+  "render_drei_kameras": 316.6,
+  "render_je_kamera": {
+   "s": 111.1,
+   "sSE": 105.6,
+   "nNW": 100.0
+  },
+  "stillstand_laengste_pause": 316
+ },
+ "gpu": "Gewartet, bis der fremde RealityScan-Lauf (Texturprobe) zu Ende war. Danach Karte frei (1.6 GB), Ollama leer und nicht angefasst. Sperre genommen und freigegeben.",
+ "aufraeumen": "App per WM_DELETE_WINDOW beendet (/var/crash unveraendert). Relais, Bruecke, Sitzungs-DBus und Xvfb per gemerkter PID beendet, Wegwerf-Ordner geloescht. Bilder bleiben nur lokal, nicht im Repo. Behalten: Netz im RealityScan-Speicher. Drop-in bleibt eingeschaltet."
+}
