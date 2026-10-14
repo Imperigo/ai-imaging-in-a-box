@@ -1475,6 +1475,11 @@ Fensterwänden ein unlesbarer Brei. Jetzt legt RealityScan eine echte Bildtextur
 Flächen gelegt wird; im Vergleich des Heim-PC war das gleich scharf wie der Splat oder schärfer. Ob es im fertigen Bild
 sichtbar besser ist, misst der Heim-PC als Nächstes. Wer die neue Einstellung nicht setzt, bekommt weiter den alten Weg.
 
+**Was die Knoten tun (14.10.2026).** Auf der Bildertafel des Owners hängt jetzt je Knoten eine Karte: was er kann, wie er
+funktioniert, was er auslöst und mit wem er verbunden ist, dazu eine Übersicht vom Modell bis zum geprüften Bild. Alles
+aus dem Code belegt; wo Visbox noch einen Platzhalter hat, steht es auf der Karte. Beim Aufschreiben fielen vier
+Ungereimtheiten auf, die jetzt als eigene Posten im Plan stehen.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

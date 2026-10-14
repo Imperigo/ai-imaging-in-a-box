@@ -7901,6 +7901,14 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Gemessen: 1600 px machen die Textur nicht schärfer (Grenze Optik/Video), kosten +5.5 min — für die Brücke nicht nötig. *(14.10.2026, §108)*
 - [ ] Messauftrag M4 `auf-20261014-281` (local).
 
+## Was die Knoten tun (Owner 14.10.2026 — Sitzung 74 §110)
+
+- [x] Erklärung je Knoten in `docs/KNOTEN_ERKLAERT.md`, 13 Karten auf der Kosmo-Tafel. *(14.10.2026, §110)*
+- [ ] Hilfetext Auto-Kamera an den Code angleichen (Innenraum) — Vis-Werkzeug, beide Programme.
+- [ ] Bild-Referenz: Linie zu Bildvergleich/Aufs Blatt trägt kein Bild — klären (gewollt?) und beheben oder sperren.
+- [ ] «Samples»-Zahl: Hinweis am Knoten, dass «Qualität gegen Zeit» Vorrang hat.
+- [ ] Prüfen, ob der Abholer am Heim-PC die Ablage `<Mappe>/knotenweg` jeder Mappe sieht (mit «Datei laden» entstehen neue Mappen).
+
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
 
 - [ ] Wartet auf: PLY-Sofort-Fix, Vertrag `kosmo.punktwolke/0.1` (Integrator), Import (Prepare), Modell (Integrator).
