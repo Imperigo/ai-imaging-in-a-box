@@ -7898,6 +7898,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] HomeStation legt die Vorlagen (Abwicklung, OBJ-Export) in den Zentrale-Anhang.
 - [ ] Bau: Abwicklung, OBJ + PNG, Vereinfachung 500k–1 Mio., Deckel für OBJ, Render mit Emission 1.
 - [x] Prepare: 1086 px waren ein Rechenfehler, behoben (≈ 1616 px), KosmoPrepare 6b7db4a/6ffe28f. *(14.10.2026, §108)*
+- [x] Gemessen: 1600 px machen die Textur nicht schärfer (Grenze Optik/Video), kosten +5.5 min — für die Brücke nicht nötig. *(14.10.2026, §108)*
 - [ ] Messauftrag M4 danach.
 
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
