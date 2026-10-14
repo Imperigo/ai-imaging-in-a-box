@@ -2,13 +2,31 @@
   "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20261013-279",
   "worker": "local",
-  "stand": "teil",
-  "zeit": "2026-10-13T20:30:00Z",
-  "P1": {"ja": true, "satz": "Pull 2407b95, visbox-flaeche neu gestartet; /api/hallo ueber Tailscale liefert visbox/fassung 0.2.0/name 'Visbox Heim-PC', ohne Rechnernamen."},
-  "P2": {"ja": true, "satz": "POST /api/kopplung/anfordern: Antwort ohne Zahl (angezeigt, gilt_bis, versuche 3); Zahl steht im Journal-Kasten 'Mac koppeln'; notify-send vorhanden, Owner bestaetigt Mitteilung/Kopplung am Mac."},
-  "P3": {"ja": null, "satz": "Teil: zweiter Aufruf innerhalb 30 s -> 'Die Zahl steht schon am Heim-PC … Eine neue gibt es in 30 s' (neu:false). 429 nach Ablauf noch nicht geprueft."},
-  "P4": {"ja": null, "satz": "Offen: avahi-utils fehlt; Owner erlaubt Installation morgen, dann Heimnetz mit TLS pruefen."},
-  "P5": {"ja": null, "satz": "Folgt nach P4."},
-  "P6": {"ja": true, "satz": "Owner: Die Mac-App hat den Heim-PC von selbst gefunden, die Zahl erschien, die Kopplung gelang."},
-  "urteil": "Ueber Tailscale traegt die Server-Seite der Kopplung (P1, P2, P6 ja). Heimnetz (P4/P5) und 429 nach Ablauf folgen morgen."
+  "stand": "erledigt",
+  "zeit": "2026-10-14T08:45:00Z",
+  "P1": {
+    "ja": true,
+    "satz": "Pull 2407b95, visbox-flaeche neu gestartet; /api/hallo ueber Tailscale liefert visbox/fassung 0.2.0/name 'Visbox Heim-PC', ohne Rechnernamen."
+  },
+  "P2": {
+    "ja": true,
+    "satz": "POST /api/kopplung/anfordern: Antwort ohne Zahl (angezeigt, gilt_bis, versuche 3); Zahl steht im Journal-Kasten 'Mac koppeln'; notify-send vorhanden, Owner bestaetigt Mitteilung/Kopplung am Mac."
+  },
+  "P3": {
+    "ja": true,
+    "satz": "Zweiter Aufruf innerhalb 30 s -> 200 'steht schon da' (neu:false); nach drei absichtlich falschen Versuchen (Text statt Zahl, keine echte Zahl eingetippt) ist die Zahl aufgebraucht, der naechste Aufruf innerhalb 30 s gibt 429 mit warten_s 30 und 'Eine neue Zahl gibt es in 30 s.'; nach 31 s kommt wieder eine neue Zahl (200, neu:true)."
+  },
+  "P4": {
+    "ja": true,
+    "satz": "--heimnetz per Drop-in (leeres ExecStart= plus neues), daemon-reload, Neustart: Zertifikat und Schluessel mit 0600 erzeugt; avahi-browse -rtp zeigt _visbox._tcp auf Anschluss 8732 mit tls=1; Klartext-http auf 8732 bekommt keine Antwort (Verbindung abgebrochen), https -k antwortet 200 mit visbox/fassung/name; das Zeichen des Heim-PC erscheint im Journal."
+  },
+  "P5": {
+    "ja": true,
+    "satz": "Drop-in geloescht, daemon-reload, Neustart: Dienst aktiv, Anschluss 8732 zu, keine Bonjour-Ankuendigung mehr, /api/hallo ueber 127.0.0.1:8731 antwortet 200 (Fassung 0.2.1); die zwei Zertifikatsdateien bleiben im Dienstordner beim Kennwort liegen."
+  },
+  "P6": {
+    "ja": true,
+    "satz": "Owner: Die Mac-App hat den Heim-PC von selbst gefunden, die Zahl erschien, die Kopplung gelang."
+  },
+  "urteil": "Die Server-Seite der Kopplung traegt: ueber Tailscale (P1, P2, P6) und im Heimnetz nur mit TLS (P4); die Drossel verhaelt sich wie im Code beschrieben ('steht schon da' bzw. 429 mit Wartezeit, P3). --heimnetz ist wieder heraus (P5), weil der Owner es nicht behalten wollte."
 }
