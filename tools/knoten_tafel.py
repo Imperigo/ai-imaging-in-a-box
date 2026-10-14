@@ -32,6 +32,18 @@ import sys
 import tempfile
 from pathlib import Path
 
+
+def _kopie_stand() -> str:
+    """Der Stand der Visbox-Kopie (``kosmovis/HERKUNFT.json``), kurz — nicht fest im Text, weil
+    die Karten sonst nach jedem Nachzug einen alten Stand zeigen (14.10.2026: stand noch auf
+    22988d6ed, obwohl die Kopie auf R29 lag)."""
+    try:
+        quelle = json.loads((Path(__file__).resolve().parents[1] / "kosmovis" / "HERKUNFT.json")
+                            .read_text(encoding="utf-8"))["quelle"]["commit"]
+        return str(quelle)[:9]
+    except (OSError, ValueError, KeyError, TypeError):
+        return "unbekannt"
+
 WURZEL = Path(__file__).resolve().parents[1]
 SCHRIFTEN = WURZEL / "ipad" / "Visbox.swiftpm" / "Schriften"
 SANS = SCHRIFTEN / "IBMPlexSans" / "IBMPlexSans[wdth,wght].ttf"
@@ -475,7 +487,7 @@ def karte_html(k: dict, nummer: int) -> str:
 <div class="visbox" style="border-color:{ton}"><h2 style="color:{ton}">{_e(tontitel)}</h2>
 <p>{_e(k["visbox"][1])}</p></div></div></div>
 <div class="fuss"><span>Quelle: {_e(k["quelle"])}</span>
-<span>KosmoVis 22988d6ed · docs/KNOTEN_ERKLAERT.md</span></div>
+<span>KosmoVis {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
 </div></body></html>"""
 
 
@@ -575,7 +587,7 @@ def uebersicht_html() -> str:
 <div class="block" style="margin-top:22px;background:transparent;padding:22px 0 0">
 <h2>Der Weg eines Render-Auftrags</h2><div class="schritte">{weg}</div></div>
 <div class="fuss"><span>Quelle: visgraph.ts · vis.ts (vis.verbinden) · vis-jobs.ts · knotenweg.py · abholer.py</span>
-<span>KosmoVis 22988d6ed · docs/KNOTEN_ERKLAERT.md</span></div>
+<span>KosmoVis {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
 </div></body></html>"""
 
 
