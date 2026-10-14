@@ -7892,6 +7892,14 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Entscheid 89** «In Programme verschieben» gebaut; Visbox 0.2.6. *(14.10.2026, §107)*
 - [ ] **Am Mac:** 0.2.6 einmal von Hand nach «Programme», danach der nächste Klick.
 
+## RealityScan-Brücke Fassung 3: Textur statt Eckfarben (Vorschlag HomeStation 14.10.2026)
+
+- [x] Befund HomeStation: texturiertes Netz so scharf wie der Splat oder schärfer (7.0–7.8 gegen 4.1–4.9), Eckfarben an der Fensterwand unlesbar; +2.5 min. *(14.10.2026, §108)*
+- [ ] HomeStation legt die Vorlagen (Abwicklung, OBJ-Export) in den Zentrale-Anhang.
+- [ ] Bau: Abwicklung, OBJ + PNG, Vereinfachung 500k–1 Mio., Deckel für OBJ, Render mit Emission 1.
+- [ ] Prepare: Bilder mit max_res 1600 statt 1086 auslesen (ihre Kette).
+- [ ] Messauftrag M4 danach.
+
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
 
 - [ ] Wartet auf: PLY-Sofort-Fix, Vertrag `kosmo.punktwolke/0.1` (Integrator), Import (Prepare), Modell (Integrator).
