@@ -24,13 +24,26 @@ def _werkzeug():
     return modul
 
 
+def _konstanten() -> dict[str, str]:
+    """`export const NAME = 'wert'` aus dem Kern — für Katalog-Schlüssel wie `[KAMERA_AUS_3D_TYP]`."""
+    werte = {}
+    for datei in KATALOG.parent.glob("*.ts"):
+        werte.update(re.findall(r"export const (\w+) = '(\w+)'", datei.read_text(encoding="utf-8")))
+    return werte
+
+
 def _katalog() -> dict[str, dict]:
-    """typ → {label, kategorie, inputs [(label, typ)], outputs [(label, typ)]} aus dem TS-Katalog."""
+    """typ → {label, kategorie, inputs [(label, typ)], outputs [(label, typ)]} aus dem TS-Katalog.
+
+    Auch Einträge mit berechnetem Schlüssel (`[KAMERA_AUS_3D_TYP]: {`) zählen: Der Leser übersah
+    sie bis zum 14.10.2026 und meldete «zwölf», als es dreizehn waren (Protokoll 74 §123)."""
     text = KATALOG.read_text(encoding="utf-8")
     teil = text[text.index("export const VIS_NODE_KATALOG"):text.index("export function visPort")]
+    konst = _konstanten()
     aus = {}
-    for block in re.split(r"\n  (?=\w+: \{\n)", teil)[1:]:
-        typ = re.search(r"typ: '(\w+)'", block).group(1)
+    for block in re.split(r"\n  (?=(?:\w+|\[\w+\]): \{\n)", teil)[1:]:
+        roh = re.search(r"typ: (?:'(\w+)'|(\w+))", block)
+        typ = roh.group(1) or konst[roh.group(2)]
         port = r"\{ name: '\w+', typ: '(\w+)', label: '([^']+)' \}"
 
         def ports(feld):
@@ -44,9 +57,10 @@ def _katalog() -> dict[str, dict]:
 
 
 def test_der_katalog_wird_gelesen():
-    """Die Gegenprobe zum Leser: zwölf Knotenarten, wie der Kommentar im Katalog sagt."""
+    """Die Gegenprobe zum Leser: vierzehn Knotenarten, wie der Kommentar im Katalog sagt."""
     katalog = _katalog()
-    assert len(katalog) == 12
+    assert len(katalog) == 14
+    assert "Katalog der 14 Node-Typen" in KATALOG.read_text(encoding="utf-8")
     assert katalog["render"]["inputs"][0] == ("Szene", "szene")
 
 
@@ -89,7 +103,7 @@ def test_alle_karten_ohne_heimpfad_in_der_tafelnotiz(tmp_path):
     kt = _werkzeug()
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
     jsons = sorted(tmp_path.glob("*.json"))
-    assert len(jsons) == 13
+    assert len(jsons) == 15
     for p in jsons:
         assert "/home/" not in p.read_text(encoding="utf-8"), p.name
 

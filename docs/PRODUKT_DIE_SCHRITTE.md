@@ -1501,3 +1501,11 @@ Mac die alte App offen, und ein neues Fenster ging davor auf. Jetzt beendet sich
 Helfer öffnet danach die neue; beim nächsten Start meldet sie, welche Fassung installiert ist. Die Nummer steht klein
 neben dem Namen. Das iPad fragt beim Öffnen sofort nach der gemerkten HomeStation und sucht gleichzeitig nach ihrem
 Namen — vorher wartete es bis zu einer halben Minute, bevor es überhaupt suchte. Am Gerät ist beides noch zu sehen.
+
+**Die Skizze vom iPad als Knoten (14.10.2026).** Die Skizzen, die man am iPad zeichnet und in die Mappe legt, standen
+bisher nur auf der alten Visbox-Seite. Jetzt holt ein eigener Knoten sie in die Knotenansicht: von selbst die neueste, eine
+ältere ist am Knoten wählbar, mit kleinem Vorschaubild. Ehrlich gesagt kann die Skizze das Bild noch nicht führen — der
+Render-Knoten nimmt heute gar kein Bild an, und die Bestellung hat kein Feld dafür. Sie lässt sich darum vorerst neben die
+Renders in den Bildvergleich legen. Ob eine Skizze künftig den Render lenken soll, ist eine eigene Entscheidung. In
+KosmoOrbit steht derselbe Knoten mit dem Satz, dass es Skizzen vom iPad in Visbox gibt.
+

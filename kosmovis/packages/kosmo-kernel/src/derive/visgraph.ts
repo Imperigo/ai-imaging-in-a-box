@@ -76,7 +76,7 @@ export const VIS_STIMMUNGEN: Record<string, { label: string; prompt: string }> =
   weiss: { label: 'Weissmodell', prompt: 'Weissmodell, neutrales Studiolicht, keine Materialien' },
 };
 
-/** Katalog der 13 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
+/** Katalog der 14 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
 export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   modell: {
     typ: 'modell',
@@ -205,6 +205,22 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     inputs: [],
     outputs: [{ name: 'bild', typ: 'bild', label: 'Bild' }],
     defaults: { url: '' },
+  },
+  // Owner-Entscheide 95/95a (14.10.2026, Blatt 25 der Visbox): die Skizzen, die man am iPad in
+  // die Mappe legt, kommen als Zulieferer in die Knotenansicht. Welche es gibt, weiss nur der
+  // WIRT (`registriereSkizzenQuelle`, App `modules/vis/skizze-quelle.ts`) — der Katalog kennt
+  // nur den Porttyp. `skizze` ist «neueste» (Vorgabe: von selbst die zuletzt gelegte) oder der
+  // Dateiname einer älteren. Kein Eingang am Render-Knoten nimmt heute ein Bild an; der Ausgang
+  // geht darum in Bildvergleich und «Aufs Blatt».
+  skizzeIpad: {
+    typ: 'skizzeIpad',
+    label: 'Skizze vom iPad',
+    hilfe:
+      'Die Skizze, die am iPad in die Mappe gelegt wurde — von selbst die neueste, eine ältere ist am Knoten wählbar. Mit dem Bildvergleich verbinden. Gibt es nur in Visbox.',
+    kategorie: 'quelle',
+    inputs: [],
+    outputs: [{ name: 'bild', typ: 'bild', label: 'Bild' }],
+    defaults: { skizze: 'neueste' },
   },
   aufnahme: {
     typ: 'aufnahme',

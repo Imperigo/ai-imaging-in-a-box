@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import {
   augeImModell,
@@ -74,6 +75,8 @@ import { renderWarteAnzeige } from './render-warteort';
 import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
+import { SkizzeKnotenKoerper } from './SkizzeKnoten';
+import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
@@ -478,6 +481,10 @@ const KOERPER_H: Record<string, number> = {
   stimmung: 90,
   kombinierer: 80,
   zahl: 38,
+  // «Skizze vom iPad» (Entscheide 95/95a, `SkizzeKnoten.tsx`): Auswahl und Daumenbild (80 px);
+  // ohne Wirt, ohne Skizze oder beim Lesen steht ein Satz in derselben Fläche — eine Höhe für
+  // alle Zustände, der Knoten springt nicht.
+  skizzeIpad: 116,
   // A2/16.09. hatte hier 872 stehen — am laufenden Bild gemessen und trotzdem
   // falsch benutzt: 872 px Körper ergeben einen 1016 px hohen Knoten, und das
   // Fenster ist 900 px hoch. Gemessen am 17.09. lagen VIER der sechs
@@ -1092,6 +1099,9 @@ export function NodeCanvas({
   const verwerfeBild = useVisRuntime((s) => s.verwerfeBild);
   // v0.6.7 P0: Viewport-Aufnahmen (aufnahme-Node) — reine Laufzeit, wie `laeufe`.
   const aufnahmen = useVisRuntime((s) => s.aufnahmen);
+  // «Skizze vom iPad» (Entscheide 95/95a): die Skizzen des Wirts — abonniert, damit Vergleich
+  // und Blatt das Bild zeigen, sobald es geholt ist (`skizzeAlsBildQuelle` in `bildQuelle`).
+  useSyncExternalStore(abonniereSkizzen, skizzenStand, skizzenStand);
 
   const auswertung = useMemo(
     () => (graph ? evaluiereGraph(doc, graph) : null),
@@ -1647,6 +1657,9 @@ export function NodeCanvas({
     const e = graph.edges.find((e) => e.to === nodeId && e.toPort === port);
     if (!e) return null;
     const quellNode = graph.nodes.find((n) => n.id === e.from);
+    // «Skizze vom iPad» (Entscheide 95/95a): das Bild der geltenden Skizze als data:-Adresse —
+    // dieselbe Form wie eine Aufnahme, also ohne Sonderfall in Vergleich und Blatt.
+    if (quellNode?.typ === SKIZZE_IPAD_TYP) return skizzeAlsBildQuelle(quellNode.params);
     if (quellNode?.typ === 'aufnahme') {
       const params = quellNode.params ?? {};
       const aufnahme = waehleAufnahme(aufnahmen, String(params['kamera'] ?? 'aktuell'));
@@ -3322,6 +3335,10 @@ function NodeKoerper({
       // Entscheid 90 (Visbox, Blatt 21): mit Lade-Faehigkeit des Wirts Knopf und Zustaende,
       // ohne sie (KosmoOrbit) die eine Zeile von vorher — s. `ModellKnoten.tsx`.
       return <ModellKnotenKoerper bauteileImDokument={szeneBauteileAnzahl(doc)} />;
+    case SKIZZE_IPAD_TYP:
+      // Entscheide 95/95a (Visbox, Blatt 25): mit Skizzen-Quelle des Wirts Auswahl und
+      // Daumenbild, ohne sie (KosmoOrbit) ein ruhiger Satz — s. `SkizzeKnoten.tsx`.
+      return <SkizzeKnotenKoerper wahl={skizzenWahl(params)} onWahl={(w) => param('skizze', w)} />;
     case 'material':
       return (
         <KlappText
@@ -3851,7 +3868,7 @@ function NodeKoerper({
               // (die dataURL liegt schon lokal vor) — sonst derselbe Weg.
               const ablage =
                 'dataUrl' in quelle
-                  ? aufnahmeAufsBlatt(quelle.dataUrl, titel)
+                  ? aufnahmeAufsBlatt(quelle.dataUrl, titel, quelle.beschriftung)
                   : bildAufsBlatt(quelle.jobId, quelle.bild, titel, lizenzAusQuelle(quelle));
               // P5b (v0.9.56): der `bildAufsBlatt`-Zweig ist ein Bridge-Fetch
               // (Aufnahme-Zweig nicht) — derselbe Uebersetzer fuer beide, weil

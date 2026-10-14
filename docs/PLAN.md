@@ -8007,7 +8007,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Blatt 25 gezeichnet: drei Zulieferer-Knoten (Skizze, Standpunkt, Bilder der Mappe). *(14.10.2026, §119)*
 - [x] Owner-Entscheide 95/95a: Skizze zuerst, von selbst die neueste. *(14.10.2026)*
 - [x] Heim-PC-Teil: Skizzen in `/knoten/mappe`, Bild über `/knoten/skizze`. *(14.10.2026, §119)*
-- [ ] Knoten «Skizze vom iPad» auf dem R29-Kopf (beide Programme), dann «Standpunkt vom iPad», «Bilder der Mappe» — danach kann die Seite ganz weg.
+- [x] Knoten «Skizze vom iPad» auf dem R29-Kopf (beide Programme): KosmoOrbit «claude/kosmovis-skizze-vom-ipad» `96a3488b5` an Int 1 gemeldet, Visbox-Kopie und Wirt nachgezogen. Render-Knoten nimmt kein Bild an — Ausgang in Bildvergleich und Blatt. *(14.10.2026, §123)*
+- [ ] Einspielen von skizze-vom-ipad bei Int 1 (mit startgraph und kamera-aus-3d: Zählproben auf 14).
+- [ ] Owner-Entscheid: Soll eine Skizze den Render führen (Bild-Eingang am Render-Knoten plus Feld im Vertrag)?
+- [ ] Danach «Standpunkt vom iPad», «Bilder der Mappe» — danach kann die Seite ganz weg.
 - [x] Knoten «Kamera aus 3D-Ansicht» gebaut, an Int 1 und UI gemeldet. *(14.10.2026, §121)*
 - [x] Kamera aus 3D-Ansicht auf R29 nachgezogen (Merge über KosmoDraw, `6ad0136e1`), Visbox-Kopie nachgezogen (zeigt «Keine 3D-Ansicht offen»). *(14.10.2026, §122)*
 - [ ] (Rest:) UI-Knopf — Knoten «Kamera aus 3D-Ansicht» (Owner-Entscheid über die Zentrale, 14.10.2026): übernimmt die Kamera der 3D-Ansicht samt Splat-Umgebung, dazu ein Anlege-Befehl — auf «claude/kosmovis-*», Basis R29-Kopf (wartet auf die R29-Meldung). Danach baut UI den Knopf «In KosmoVis rendern»; der Render-Block in KosmoDesign wird Zulieferer.

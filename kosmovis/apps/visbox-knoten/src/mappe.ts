@@ -23,6 +23,12 @@
  *    Auto-Kamera (`registriereHeimStandpunkte`): dieselben drei Richtungen, die der Abholer ohne
  *    mitgeschickte Kameras rechnet, als Vorschau — der Auftrag bleibt `cameras: 'auto'`.
  *
+ * 5. Seit Entscheiden 95/95a (14.10.2026, Blatt 25) die **Skizzen-Quelle** für den Knoten «Skizze
+ *    vom iPad» (`skizzenQuelleDerMappe`, registriert in `main.tsx`): die Liste aus `GET ./mappe`
+ *    (Feld `skizzen`, die neueste zuerst, `knotenweg.skizzen_der_mappe`), das Bild aus
+ *    `GET ./skizze?name=…` — beides für die Mappe dieser Seite (`?ordner=`, sonst die zuletzt
+ *    geöffnete). Nach jedem Laden einer Mappe wird die Liste neu gelesen.
+ *
  * Und die Brücke: Auf dieser Seite ist der Visbox-Server die Brücke. `vis-jobs.ts` liest ihre
  * Adresse aus `localStorage['kosmo.bridge']`; sie wird hier auf `/bruecke` desselben Servers
  * gesetzt. Andere Adressen gehören zu KosmoOrbit und haben in diesem Ursprung nichts zu tun.
@@ -35,6 +41,11 @@ import {
   type ModellLadeZustand,
 } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { registriereHeimStandpunkte, type HeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
+import {
+  aktualisiereSkizzen,
+  type Skizze,
+  type SkizzenQuelle,
+} from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 
 export interface MappeAntwort {
   name: string | null;
@@ -55,6 +66,8 @@ export interface MappeAntwort {
   /** Entscheid 92: die drei Standpunkte, die der Heim-PC ohne mitgeschickte Kameras rechnet
    *  (`knotenweg.heim_standpunkte`) — `null` ohne Modell. */
   standpunkte?: HeimStandpunkte | null;
+  /** Entscheide 95/95a: die Skizzen der Mappe, die neueste zuerst (ohne verworfene). */
+  skizzen?: Skizze[];
 }
 
 /** Der Stand des Ladens, wie `GET ./modell-laden` ihn meldet (`oberflaeche/server.py`). */
@@ -161,6 +174,8 @@ export async function ladeMappe(): Promise<string> {
   // Entscheid 92 (Blatt 23): die Auto-Kamera zeigt, was der Heim-PC rechnen wird — vor dem
   // Hochzaehlen der Revision unten, damit der Knoten gleich in seiner Hoehe steht.
   registriereHeimStandpunkte(mappe.glb && mappe.standpunkte ? mappe.standpunkte : null);
+  // Entscheide 95/95a: eine andere Mappe hat andere Skizzen — der Knoten liest sie neu.
+  void aktualisiereSkizzen();
   if (!mappe.glb) {
     setzeModellGlb(null);
     useProject.setState((s) => ({ revision: s.revision + 1 }));
@@ -288,5 +303,30 @@ export async function verfolge(
     mappe: jetzt.mappe ?? '',
     ...(jetzt.fassung ? { fassung: jetzt.fassung } : {}),
     satz: jetzt.satz,
+  };
+}
+
+/** Die Anfrage an den Server für die Mappe dieser Seite, mit `name` dazu (`?ordner=` bleibt). */
+function mappenFrage(zusatz: Record<string, string> = {}): string {
+  const frage = new URLSearchParams(location.search);
+  for (const [k, v] of Object.entries(zusatz)) frage.set(k, v);
+  const text = frage.toString();
+  return text ? `?${text}` : '';
+}
+
+/**
+ * Die Skizzen-Quelle für den Knoten «Skizze vom iPad» (Entscheide 95/95a). Liest die Adresse der
+ * Seite bei jedem Ruf neu: Nach dem Laden einer Datei fällt `?ordner=` weg (`verfolge`), dann
+ * gilt die zuletzt geöffnete Mappe.
+ */
+export function skizzenQuelleDerMappe(): SkizzenQuelle {
+  return {
+    async liste() {
+      const antwort = await fetch(`./mappe${mappenFrage()}`);
+      if (!antwort.ok) throw new Error(await fehlerSatz(antwort));
+      const mappe = (await antwort.json()) as MappeAntwort;
+      return Array.isArray(mappe.skizzen) ? mappe.skizzen.filter((s) => typeof s?.name === 'string' && s.name) : [];
+    },
+    bildUrl: (name) => `./skizze${mappenFrage({ name })}`,
   };
 }

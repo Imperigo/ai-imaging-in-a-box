@@ -529,6 +529,41 @@
 .vis-modell-satz--fehler {
   color: var(--k-danger);
 }
+/* «Skizze vom iPad» (Entscheide 95/95a, `SkizzeKnoten.tsx`): Auswahl und darunter EINE Flaeche
+   fester Hoehe — Daumenbild oder Satz. Der Koerper hat eine Hoehe fuer alle Zustaende
+   (`KOERPER_H.skizzeIpad`), darum ist die Flaeche fest und das Bild passt sich ein. */
+.vis-skizze {
+  display: grid;
+  /* Eine Spur, die nie breiter wird als der Koerper: ohne `minmax(0, 1fr)` zieht der lange
+     Name in der Auswahl die Spur auf seine Mindestbreite (gemessen 251 statt 184 px), und
+     Auswahl und Bild ragen ueber den rechten Rand. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: var(--k-s2);
+}
+.vis-skizze-flaeche {
+  height: 80px;
+  min-width: 0;
+}
+.vis-skizze-bild {
+  object-fit: contain;
+  background: var(--k-raised);
+}
+.vis-skizze-satz {
+  border: 1px dashed var(--k-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--k-s2);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  line-height: var(--k-lh-knapp);
+  overflow-wrap: anywhere;
+}
+.vis-skizze-satz--fehler {
+  color: var(--k-danger);
+}
 .vis-node-feld {
   width: 100%;
   padding: 3px 6px;

@@ -2353,8 +2353,14 @@ export async function bildAufsBlatt(
  * Job und war NIE ein Fake-Render, das «Vorschau (Fake-Render)»-Label wäre
  * hier selbst eine Falschbehauptung).
  */
-export async function aufnahmeAufsBlatt(dataUrl: string, titel: string): Promise<string> {
-  return platziereBildAufsBlatt(dataUrl, titel, 'Aufnahme (Viewport)');
+export async function aufnahmeAufsBlatt(
+  dataUrl: string,
+  titel: string,
+  // «Skizze vom iPad» (Entscheide 95/95a): ein Bild ohne Bridge, das keine Aufnahme ist, sagt
+  // auf dem Blatt, was es ist. Ohne Angabe bleibt es wortgleich wie bisher.
+  beschriftung: string = 'Aufnahme (Viewport)',
+): Promise<string> {
+  return platziereBildAufsBlatt(dataUrl, titel, beschriftung);
 }
 
 /**

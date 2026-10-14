@@ -271,11 +271,47 @@ KNOTEN: list[dict] = [
                    "in Visbox nicht — kommt mit der Rückkehr nach KosmoOrbit wieder»."),
         "quelle": "visgraph.ts · vis-jobs.ts (bildAufsBlatt) · Stellvertreter commands/publish.ts",
     },
+    # Seit Runde 29 und Entscheiden 95/95a (14.10.2026): zwei Zulieferer-Knoten, hinten angefügt,
+    # damit die Nummern der zwölf Karten auf der Tafel bleiben.
+    {
+        "kurz": "13-kamera-aus-3d", "typ": "kameraAus3d", "titel": "Kamera aus 3D-Ansicht",
+        "gruppe": "quelle",
+        "hilfe": "Übernimmt den Blick, der in der 3D-Ansicht eingestellt ist.",
+        "ein": [], "aus": [("Kamera-Standpunkte", "kameras")],
+        "kann": "Trägt genau den Blick der 3D-Ansicht an den Render-Knoten — Position, Ziel und "
+                "Blickfeld, ohne Objektiv-Shift.",
+        "wie": "Liest die Kamera beim Anlegen und auf «Kamera übernehmen», nicht laufend, und "
+               "speichert sie im Knoten. Das Blickfeld wird für das Bestellformat umgerechnet.",
+        "loest": "Hängt er am Render-Knoten, geht nur seine Kamera in den Auftrag. Trägt er keine, "
+                 "wird nicht bestellt.",
+        "zusammen": [("aus", "Kameras", "Render · Eingang Kamera-Standpunkte")],
+        "visbox": ("fehlt",
+                   "Visbox hat keine 3D-Ansicht. Der Knoten sagt «Keine 3D-Ansicht offen», "
+                   "statt eine Kamera vorzutäuschen."),
+        "quelle": "visgraph.ts · derive/kamera-aus-3d.ts · KameraAus3dKnoten.tsx",
+    },
+    {
+        "kurz": "14-skizze-vom-ipad", "typ": "skizzeIpad", "titel": "Skizze vom iPad",
+        "gruppe": "quelle",
+        "hilfe": "Die Skizze, die am iPad in die Mappe gelegt wurde.",
+        "ein": [], "aus": [("Bild", "bild")],
+        "kann": "Holt die Skizzen der Mappe in die Knotenansicht: von selbst die neueste, eine "
+                "ältere ist am Knoten wählbar, mit Vorschaubild.",
+        "wie": "Die Liste meldet das Programm, in dem die Knoten laufen. Die Wahl ist ein "
+               "Parameter des Knotens und lässt sich rückgängig machen.",
+        "loest": "Nichts beim Heim-PC. Der Render-Knoten nimmt heute kein Bild an; die Skizze "
+                 "geht in den Bildvergleich (und in KosmoOrbit aufs Blatt).",
+        "zusammen": [("aus", "Bild", "Bildvergleich · Bild 1–3, Aufs Blatt · Bild")],
+        "visbox": ("gleich",
+                   "In Visbox mit den Skizzen der offenen Mappe. In KosmoOrbit steht nur der "
+                   "Satz, dass es Skizzen vom iPad in Visbox gibt."),
+        "quelle": "visgraph.ts · skizze-quelle.ts · SkizzeKnoten.tsx · visbox-knoten/src/mappe.ts",
+    },
 ]
 
 #: Die Notiz neben jedem Bild auf der Tafel — zwei bis vier Sätze.
 NOTIZEN = {
-    "00-uebersicht": "Zwölf Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
+    "00-uebersicht": "Vierzehn Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
                      "gleiche Sorte passt, nichts fliesst im Kreis. Nur der Render-Knoten bestellt "
                      "etwas beim Heim-PC, und erst auf «Ausführen» und «Freigeben».",
     "01-modell": "Bringt das Gebäude als Szene in den Graphen; ohne ihn rendert nichts. In Visbox "
@@ -304,6 +340,12 @@ NOTIZEN = {
                         "nur, löst nichts aus.",
     "12-aufs-blatt": "Legt das Bild auf ein Plakatblatt in KosmoPublish. In Visbox gibt es keine "
                      "Blätter; der Klick sagt das.",
+    "13-kamera-aus-3d": "Trägt den Blick der 3D-Ansicht als Kamera an den Render-Knoten, gelesen "
+                        "beim Anlegen und auf Knopfdruck. In Visbox gibt es keine 3D-Ansicht, der "
+                        "Knoten sagt das.",
+    "14-skizze-vom-ipad": "Holt die neueste Skizze der Mappe in die Knotenansicht, eine ältere ist "
+                          "wählbar. Der Render-Knoten nimmt noch kein Bild an — die Skizze geht in "
+                          "den Bildvergleich.",
 }
 
 
@@ -420,7 +462,7 @@ def karte_html(k: dict, nummer: int) -> str:
                    f'<span>{_e(text)}</span></div>')
     return f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
 <style>{_kopf_css()}</style></head><body><div class="karte">
-<div class="oben"><span class="nummer">{nummer:02d} / 12</span>
+<div class="oben"><span class="nummer">{nummer:02d} / {len(KNOTEN)}</span>
 <span class="gruppe" style="color:{farbe}">{_e(gruppenname)}</span></div>
 <h1>{_e(k["titel"])}</h1><div class="hilfe">{_e(k["hilfe"])}</div>
 <div class="leib"><div>{_knoten_svg(k)}{_legende_html(k)}</div>
@@ -521,7 +563,7 @@ def uebersicht_html() -> str:
 .drei {{ display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 22px; margin-top: 22px; }}
 .block p b {{ color: var(--tinte); }}
 </style></head><body><div class="karte">
-<div class="oben"><span class="nummer">00 / 12</span>
+<div class="oben"><span class="nummer">00 / {len(KNOTEN)}</span>
 <span class="gruppe" style="color:#ffc21a">Übersicht</span></div>
 <h1>Wie die Knoten zusammenhängen</h1>
 <div class="hilfe">Die typische Kette im Vis-Werkzeug — vom Modell bis zum geprüften Bild.</div>
@@ -587,7 +629,7 @@ def rendere(html_pfad: Path, png: Path, chrome: str, hoehe: int = 1900) -> tuple
 
 
 def karten() -> list[tuple[str, str, str, str]]:
-    """(kurzname, titel, notiz, html) für die Übersicht und alle zwölf Knoten."""
+    """(kurzname, titel, notiz, html) für die Übersicht und alle Knoten (`KNOTEN`)."""
     aus = [("00-uebersicht", "Übersicht: Wie die Knoten zusammenhängen",
             NOTIZEN["00-uebersicht"], uebersicht_html())]
     for i, k in enumerate(KNOTEN, start=1):

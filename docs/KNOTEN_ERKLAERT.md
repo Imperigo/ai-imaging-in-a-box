@@ -69,7 +69,7 @@ Der Kopf jedes Knotens trägt einen schmalen Farbstreifen nach seiner Gruppe (`V
 
 | Gruppe | Streifen | Knoten |
 |---|---|---|
-| **Quelle** — bringt etwas in den Graphen | Hellblau | Modell, Material-Bausteine, Auto-Kamera, Bild-Referenz, Viewport-Aufnahme |
+| **Quelle** — bringt etwas in den Graphen | Hellblau | Modell, Material-Bausteine, Auto-Kamera, Bild-Referenz, Viewport-Aufnahme, Kamera aus 3D-Ansicht, Skizze vom iPad |
 | **Wandler** — formt Text und Zahlen | Ocker | Prompt, Stimmung, Prompt-Kombinierer, Zahl |
 | **Render** — bestellt das Bild | Terracotta | Render |
 | **Ausgabe** — zeigt oder legt ab | Grün | Bildvergleich, Aufs Blatt |
@@ -254,6 +254,43 @@ Der Knoten bleibt bei **«Noch keine Aufnahme»**.
 
 *Quelle:* `VIS_NODE_KATALOG.aufnahme`; `NodeKoerper` Fall `aufnahme`; `waehleAufnahme`
 (`vis-runtime.ts`); Aufnahmen kommen nur aus `Viewport3D.tsx` (KosmoOrbit, nicht in der Kopie).
+
+### 13 · Kamera aus 3D-Ansicht (seit Runde 29, 14.10.2026)
+
+**Was er kann.** Trägt genau den Blick der 3D-Ansicht an den Render-Knoten: Position, Ziel und
+Blickfeld, ohne Objektiv-Shift.
+
+**Wie er funktioniert.** Liest die Kamera beim Anlegen und auf «Kamera übernehmen», nicht laufend,
+und speichert sie als Parameter im Knoten. Das Blickfeld wird für das Bestellformat umgerechnet.
+
+**Was er auslöst.** Hängt er am Render-Knoten, geht nur seine Kamera in den Auftrag; trägt er keine,
+wird nicht bestellt.
+
+**Ein- und Ausgänge.** Kein Eingang. Ausgang **Kamera-Standpunkte** → Render.
+
+**Visbox vs. KosmoOrbit.** Visbox hat keine 3D-Ansicht: Der Knoten sagt **«Keine 3D-Ansicht offen»**.
+
+*Quelle:* `VIS_NODE_KATALOG[KAMERA_AUS_3D_TYP]`; `derive/kamera-aus-3d.ts`; `KameraAus3dKnoten.tsx`.
+
+### 14 · Skizze vom iPad (Entscheide 95/95a, 14.10.2026)
+
+**Was er kann.** Holt die Skizzen der Mappe in die Knotenansicht: von selbst die neueste, eine ältere
+am Knoten wählbar, mit Vorschaubild.
+
+**Wie er funktioniert.** Welche Skizzen es gibt, meldet der Wirt (`registriereSkizzenQuelle`): in
+Visbox die Liste aus `/knoten/mappe`, das Bild aus `/knoten/skizze`. Die Wahl ist der Parameter
+`skizze` («neueste» oder ein Dateiname) und lässt sich rückgängig machen.
+
+**Was er auslöst.** Nichts beim Heim-PC. **Der Render-Knoten nimmt heute kein Bild an**, und der
+Auftrag hat kein Feld dafür — die Skizze geht in den Bildvergleich (und in KosmoOrbit aufs Blatt).
+
+**Ein- und Ausgänge.** Kein Eingang. Ausgang **Bild** → Bildvergleich, Aufs Blatt.
+
+**Visbox vs. KosmoOrbit.** In Visbox mit den Skizzen der offenen Mappe; in KosmoOrbit meldet niemand
+Skizzen an, der Knoten sagt **«Skizzen vom iPad gibt es in Visbox.»**
+
+*Quelle:* `VIS_NODE_KATALOG.skizzeIpad`; `skizze-quelle.ts`; `SkizzeKnoten.tsx`;
+`visbox-knoten/src/mappe.ts` (`skizzenQuelleDerMappe`); `knotenweg.skizzen_der_mappe`.
 
 ## Wandler
 

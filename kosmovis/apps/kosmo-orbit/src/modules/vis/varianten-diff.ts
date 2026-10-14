@@ -48,7 +48,11 @@ export type KuratierQuelle =
       engineUsed?: string | undefined;
       engineLicense?: string | undefined;
     }
-  | { dataUrl: string };
+  | {
+      dataUrl: string;
+      /** Beschriftung auf dem Blatt, wenn das Bild keine Aufnahme ist (etwa «Skizze (iPad)»). */
+      beschriftung?: string | undefined;
+    };
 
 /**
  * P-LIZENZMARKE Schritt 2 (Owner-Entscheid E154 (4), 06.10.2026: «Anzeigen,

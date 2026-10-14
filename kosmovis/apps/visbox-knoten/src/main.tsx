@@ -16,6 +16,10 @@
  * ersten Bild, damit der Knoten gleich in seiner Höhe mit Knopf steht. In KosmoOrbit ruft das
  * niemand, und der Knoten bleibt die eine Zeile von dort.
  *
+ * Entscheide 95/95a (14.10.2026, Blatt 25): Diese Seite meldet dem Knoten «Skizze vom iPad» die
+ * Skizzen der Mappe an (`registriereSkizzenQuelle(skizzenQuelleDerMappe())`). In KosmoOrbit ruft
+ * das niemand, und der Knoten sagt dort, dass es Skizzen vom iPad in Visbox gibt.
+ *
  * Entscheid 91 (14.10.2026, Blatt 22): `legeAnfangBeimOeffnen(true)` — eine leere Mappe zeigt den
  * fertigen Anfang (Modell, Auto-Kamera, Stimmung, Prompt → Render → Bildvergleich), mit
  * «Datei laden …» im Modell-Knoten. KosmoOrbit zeigt ihn als Vorschlag mit Knopf.
@@ -35,8 +39,17 @@ import { szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs'
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
+import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
-import { aufDemVisboxServer, brueckeAufDiesenServer, ladeMappe, ladeWirt, verfolge, type LadeSicht } from './mappe';
+import {
+  aufDemVisboxServer,
+  brueckeAufDiesenServer,
+  ladeMappe,
+  ladeWirt,
+  skizzenQuelleDerMappe,
+  verfolge,
+  type LadeSicht,
+} from './mappe';
 import './visbox.css';
 
 function VisboxKnoten() {
@@ -83,6 +96,7 @@ legeAnfangBeimOeffnen(true);
 if (aufDemVisboxServer()) {
   brueckeAufDiesenServer();
   registriereModellLaden(ladeWirt());
+  registriereSkizzenQuelle(skizzenQuelleDerMappe());
   void ladeMappe()
     .then((satz) => melde(satz))
     .catch((fehler: unknown) => melde(`Die Mappe liess sich nicht laden: ${String(fehler)}`, { ton: 'fehler' }))

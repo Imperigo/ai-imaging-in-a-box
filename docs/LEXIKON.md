@@ -6731,6 +6731,39 @@ können. *Im Projekt:* der Modell-Knoten des Vis-Werkzeugs (Entscheid 90): Visbo
 an, KosmoOrbit nicht (dort kommt das Gebäude aus dem Entwurf), und dort bleibt der Knoten, wie er war
 (`modules/vis/modell-laden.ts`).
 
+**Skizzen-Quelle des Wirts** — Eine zweite Fähigkeit nach dem Muster der **Lade-Fähigkeit des
+Wirts**: Das Programm, in dem das Vis-Werkzeug läuft, sagt dem Werkzeug, **welche Skizzen es gibt
+und wo ihr Bild liegt** — eine Liste (die neueste zuerst) und je Skizze eine Adresse. Das Werkzeug
+selbst kennt keine Mappe und keinen Server. *Im Projekt:* der Knoten «Skizze vom iPad» (Entscheide
+95/95a): Visbox meldet die Skizzen der offenen Mappe an (`registriereSkizzenQuelle` in
+`kosmovis/apps/visbox-knoten/src/main.tsx`, Liste aus `/knoten/mappe`, Bild aus `/knoten/skizze`);
+KosmoOrbit meldet nichts an, und der Knoten sagt dort «Skizzen vom iPad gibt es in Visbox.»
+(`modules/vis/skizze-quelle.ts`).
+
+**Zulieferer-Knoten** — Ein Knoten ohne Eingang, der etwas **von ausserhalb der Knotenansicht**
+hereinholt — eine Skizze vom iPad, den Blick der 3D-Ansicht, ein Bild der Mappe — und es an einem
+Ausgang anbietet. Er rechnet nichts; er bringt nur etwas an die Arbeitsfläche, damit es dort
+verbunden werden kann. *Im Projekt:* seit Entscheid 94 sind die Knoten die Arbeitsfläche zum
+Rendern; was vorher auf anderen Seiten stand, kommt als Zulieferer-Knoten herein («Skizze vom
+iPad», «Kamera aus 3D-Ansicht»).
+
+**Daumenbild (Vorschaubild)** — Eine kleine Fassung eines Bildes, gerade gross genug, um es
+wiederzuerkennen. Es ersetzt das Bild nicht, es zeigt nur, **welches** gemeint ist. *Im Projekt:*
+der Knoten «Skizze vom iPad» zeigt unter seiner Auswahl die geltende Skizze 80 Bildpunkte hoch.
+
+**data:-Adresse (Data-URL)** — Eine Adresse, in der **das Bild selbst steckt** statt eines
+Verweises auf einen Ort: Sie beginnt mit `data:image/png;base64,` und dahinter folgen die
+Bilddaten als Buchstaben. Sie braucht keinen Server mehr, ist aber gross. *Im Projekt:* der Knoten
+«Skizze vom iPad» holt das Bild der geltenden Skizze einmal vom Visbox-Server und hält es so fest,
+damit Bildvergleich und «Aufs Blatt» es ohne weiteren Abruf haben.
+
+**Berechneter Schlüssel** — In einem Verzeichnis im Programmcode steht vor jedem Eintrag sein Name
+(«render: …»). Ein berechneter Schlüssel nennt stattdessen eine Konstante, deren Wert der Name ist
+(«[KAMERA_AUS_3D_TYP]: …»). Für das Programm ist das dasselbe; ein Werkzeug, das den Code nur als Text
+liest, sieht den Eintrag aber nicht, wenn es nur die erste Schreibweise kennt. *Im Projekt:* die
+Probe der Kosmo-Tafel (`tests/test_knoten_tafel.py`) übersah so den Knoten «Kamera aus 3D-Ansicht»
+und zählte zwölf statt dreizehn Knoten, bis «Skizze vom iPad» dazukam (Protokoll 74 §123).
+
 **Stellvertreter (Stand-in)** — Eine kleine, selbst geschriebene Datei, die **an der Stelle
 eines fehlenden Originals steht** und dieselben Namen anbietet, damit der Code, der sie
 aufruft, unverändert bleiben kann. Sie tut nur, was im neuen Zusammenhang Sinn ergibt, und
@@ -7169,6 +7202,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus dem Knoten «Skizze vom iPad» (Entscheide 95/95a, Protokoll 74 §123): **Skizzen-Quelle des Wirts**, **Zulieferer-Knoten**, **Daumenbild (Vorschaubild)**, **data:-Adresse (Data-URL)**, **Berechneter Schlüssel** |
 | 2026-10-14 | Ergaenzt aus dem Nachzug auf Runde 29 (Protokoll 74 §122): **Nachziehen per Merge (statt Neuaufsetzen)** mit **Force-Push**, **Hilfszweig** |
 | 2026-10-14 | Ergaenzt aus Strg+Z in der Visbox-Knotenansicht: **Wirt (der Knotenansicht)** |
 | 2026-10-14 | Ergaenzt aus Visbox 0.2.8 (Neustart, Nummer, iPad verbindet von selbst): **Neustart-Helfer**, **Prozessnummer (PID)**, **Ein Fenster statt Fenstergruppe (`Window` / `WindowGroup`)**, **Wiederverbinden** |

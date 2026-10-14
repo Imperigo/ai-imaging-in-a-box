@@ -40,6 +40,11 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
   // kombinierer/vergleich: arbeiten rein über ihre Eingänge, keine Parameter.
   kombinierer: [],
   vergleich: [],
+  // «Skizze vom iPad» (Entscheide 95/95a): defaults `{ skizze: 'neueste' }` — gewählt am Knoten
+  // (`SkizzeKnoten.tsx`); welche Skizzen es gibt, meldet der Wirt (`skizze-quelle.ts`).
+  skizzeIpad: [
+    { name: 'skizze', info: 'Welche Skizze der Mappe gilt — «neueste» nimmt von selbst die zuletzt gelegte, sonst eine bestimmte ältere.' },
+  ],
   prompt: [
     // `evaluiereGraph` case 'prompt': `String(params['text'] ?? '')`.
     { name: 'text', info: 'Freier Stil-Text — geht wortgleich als Prompt-Ausgang in den Graphen.' },
@@ -86,7 +91,7 @@ export function nodeParameterInfos(typ: string): readonly NodeParameterInfo[] {
 }
 
 /** Fallback-Zweck, falls ein Katalog-Eintrag ohne `hilfe` auftaucht — heute
- *  tragen alle 13 Typen eine (`test/vis-legende-infos.test.ts` beweist es),
+ *  tragen alle 14 Typen eine (`test/vis-legende-infos.test.ts` beweist es),
  *  der ehrliche Satz bleibt als Netz für künftige Katalog-Zugänge. */
 export function nodeZweck(typ: string): string {
   const k = VIS_NODE_KATALOG[typ];

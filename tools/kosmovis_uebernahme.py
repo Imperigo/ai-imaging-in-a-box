@@ -191,6 +191,8 @@ PROBEN = (
     # Entscheid 91/92 (14.10.2026): der fertige Anfang, Bild-Referenz im Vergleich,
     # Samples-Vorrang, «Noch geladen», Standpunkte des Heim-PCs an der Auto-Kamera.
     "apps/kosmo-orbit/test/kv-startgraph.test.tsx",
+    # Entscheide 95/95a (14.10.2026): der Knoten «Skizze vom iPad» mit Skizzen-Quelle des Wirts.
+    "apps/kosmo-orbit/test/kv-skizze-vom-ipad.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
@@ -257,6 +259,9 @@ NICHT_UEBERTRAGEN = {
         "mit z.toJSONSchema. Visbox rechnet mit zod 4.6.5, KosmoOrbit mit 4.4.3; die neuere "
         "Fassung schreibt Tupel ohne items/minItems/maxItems. Die Vertraege selbst sind gleich, "
         "die Schemata gehoeren zu Prepare in KosmoOrbit, nicht zum Vis-Werkzeug.",
+    "apps/kosmo-orbit/test/kv-skizze-vom-ipad-blatt.test.tsx":
+        "Entscheide 95/95a: legt die Skizze aufs Blatt (KosmoPublish). Blätter gibt es in Visbox "
+        "nicht — wie kv-blattbild-platz; der Rest des Knotens kommt mit kv-skizze-vom-ipad.",
     "apps/kosmo-orbit/test/kv-kamera-aus-3d.test.tsx":
         "Runde 29: 16 von 21 Proben laufen hier, fünf nicht — eine lädt eine Splat-Ebene (in "
         "Visbox fest leer, Stellvertreter state/splat-ebene.ts), vier bauen ein Geschoss im "
