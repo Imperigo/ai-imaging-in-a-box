@@ -7988,3 +7988,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] iPad: beim Öffnen und Zurückkommen sofort fragen (5 s), gleich nach dem Namen suchen. *(14.10.2026, §113)*
 - [ ] Am Gerät: 0.2.8 → nächste Fassung startet von selbst neu und bestätigt (Owner).
 - [ ] Am iPad: verbindet beim Öffnen; sonst sagen, was die Zeile zeigt (Owner).
+- [x] Fertiger Anfang und Auto-Kamera-Vorschau (Entscheide 91/92) in 0.2.8 geführt; KosmoOrbit-Zweig bei Int 1. *(14.10.2026, §114)*
+- [ ] Dienstbetrieb: Kennwort über Neustart, Auftragsablage der Knoten (local `auftraege/offen/auf-20261014-284.json`).
+- [ ] Strg+Z in der Visbox-Knotenansicht klären.
+- [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.

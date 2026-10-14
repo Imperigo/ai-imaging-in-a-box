@@ -132,7 +132,16 @@ jobs:
         # Ein Buendel fuer beide Chips kostete die doppelte Uebersetzung fuer einen Rechner,
         # den es nicht gibt.
         working-directory: ipad/VisboxMac
-        run: swift build -c release --arch arm64
+        # DIE FEHLERZEILEN ALS HINWEIS (14.10.2026): Die Cloud-Sitzung kann das Protokoll eines
+        # Laufs nicht lesen, nur seine Hinweise. Ohne diese Zeilen hiess ein roter Lauf dort nur
+        # «exit code 1».
+        shell: bash
+        run: |
+          set -o pipefail
+          swift build -c release --arch arm64 2>&1 | tee build.log || {
+            grep -E "error:" build.log | sort -u | head -20 | while IFS= read -r z; do echo "::error::$z"; done
+            exit 1
+          }
 
       - name: Das Buendel zusammensetzen
         # NAME UND PROGRAMM AUS DER PLIST, nicht hier ein zweites Mal: `App/Info.plist` ist

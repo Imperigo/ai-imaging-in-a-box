@@ -73,12 +73,7 @@ struct Hauptfenster: View {
         .background {
             // NACH DEM NEUSTART AUS DEM AKTUALISIEREN (14.10.2026): «Visbox 0.x.y ist
             // installiert» — oder dass sie nicht ankam. Ein eigener Anker, wie oben.
-            Color.clear.alert(aktualisierung.neustartBefund?.satz ?? "",
-                              isPresented: Binding(
-                                get: { aktualisierung.neustartBefund != nil },
-                                set: { if !$0 { aktualisierung.bestaetigungGesehen() } })) {
-                Button("OK", role: .cancel) { aktualisierung.bestaetigungGesehen() }
-            }
+            Neustartmeldung(waechter: aktualisierung)
         }
         .toolbar {
             // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
@@ -177,6 +172,24 @@ struct Hauptfenster: View {
         .onDisappear {
             vorfuehrung.halte()
             vermittlung.halte()
+        }
+    }
+}
+
+/// «Visbox 0.x.y ist installiert» nach dem Neustart aus dem Aktualisieren (14.10.2026) — eine
+/// eigene kleine Ansicht, damit der Rumpf des Fensters nicht noch einen Ausdruck mehr traegt.
+private struct Neustartmeldung: View {
+    @ObservedObject var waechter: Fassungswaechter
+
+    private var offen: Binding<Bool> {
+        Binding(get: { waechter.neustartBefund != nil },
+                set: { neu in if !neu { waechter.bestaetigungGesehen() } })
+    }
+
+    var body: some View {
+        let satz: String = waechter.neustartBefund?.satz ?? ""
+        Color.clear.alert(satz, isPresented: offen) {
+            Button("OK", role: .cancel) { waechter.bestaetigungGesehen() }
         }
     }
 }

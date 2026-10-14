@@ -38,7 +38,7 @@ def test_auch_der_umzug_beendet_erst():
 def test_der_naechste_start_bestaetigt_die_nummer():
     fenster = _code(MAC / "Start" / "Hauptfenster.swift")
     assert "aktualisierung.pruefeNeustart()" in fenster
-    assert "aktualisierung.neustartBefund?.satz" in fenster
+    assert "Neustartmeldung(waechter: aktualisierung)" in fenster and "waechter.neustartBefund?.satz" in fenster
     kern = (IPAD / "Kern" / "Aktualisierung.swift").read_text(encoding="utf-8")
     assert "ist installiert." in kern and "kam nicht an" in kern
 

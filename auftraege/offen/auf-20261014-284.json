@@ -1,0 +1,41 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261014-284",
+ "art": "frage",
+ "rang": 71,
+ "erstellt": "2026-10-14T16:45:00Z",
+ "beschreibung": "Dienstbetrieb pruefen: Kennwort bleibt ueber Neustarts? Auftragsablage der Knotenansicht im Dienst? Dazu den fertigen Anfang und die Auto-Kamera-Vorschau am Heim-PC ansehen",
+ "anweisung": "ANSAGE: Ab dem naechsten main (Visbox 0.2.8 plus Entscheid 91/92) legt die Knotenansicht eine leere Mappe beim Oeffnen mit einem fertigen Anfang an (Modell, Auto-Kamera, Stimmung, Prompt, Kombinierer, Render, Bildvergleich), und /knoten/mappe liefert 'standpunkte' (die drei Richtungen des Abholers als Vorschau). Es wird dadurch NICHTS bestellt und nichts gerechnet. Nach git pull den Dienst neu starten, damit der neue Bau (kosmovis/apps/visbox-knoten/dist) ausgeliefert wird. ZU TUN, nur lesen und ansehen: D1) Wie startet der Dienst der Flaeche (betrieb/visbox-flaeche.service bzw. euer tatsaechlicher Aufruf)? Ja/nein je Schalter: --kennwort-datei, --ordner, --auftragsablage, --heimnetz. D2) Bleibt das Kennwort ueber einen Dienst-Neustart gleich (Datei vorhanden, Inhalt nach Neustart unveraendert - Inhalt NICHT zurueckmelden, nur gleich/anders)? Anlass: Der Owner meldet, das iPad verbinde sich beim Oeffnen nicht von selbst; ein neues Kennwort je Neustart wuerde genau das erklaeren ('nimmt die gemerkte Anmeldung nicht mehr an'). D3) Hat die Knotenansicht im Dienst eine Auftragsablage? GET /knoten/jobs angemeldet: Status 200 oder 503 'Keine Auftragsablage'? Liest der Abholer-Dienst dieselbe Ablage (welche Ordner liest er - nur die Art nennen, z. B. 'tmp-Ablage' / 'knotenweg der Start-Mappe', keine Pfade mit Benutzernamen)? Befund aus der Pruefung hier: Die Dienst-Vorlage startet ohne --ordner und ohne --auftragsablage, der Abholer liest nur die tmp-Ablagen - dann endet jedes Bestellen aus der Knotenansicht mit 503. D4) Fertiger Anfang: Knotenansicht mit einer Mappe mit Modell oeffnen (Browser am Heim-PC genuegt): stehen sieben Knoten verbunden da, zeigt die Auto-Kamera Sued/Suedost/Nordwest mit Abstand? Mit einer leeren Mappe: steht 'Datei laden ...' im Modell-Knoten? Ein Bildschirmfoto je Fall nur lokal, nicht ins Repo. D5) Wirkt Strg+Z in der Visbox-Knotenansicht (Knoten verschieben, Strg+Z)? NICHT: den Dienst umkonfigurieren oder Code aendern - nur feststellen und zurueckmelden; ein Vorschlag fuer den Dienstaufruf ist willkommen, eingestellt wird er erst nach Owner-Entscheid. Keine Kennwoerter, Hosts, IPs, Benutzernamen in die Rueckgabe (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "vorhandene Mappen am Heim-PC; Bilder bleiben lokal"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-283",
+  "entscheide": [
+   "90d",
+   "91",
+   "92"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "hinweis": "Keine GPU-Laeufe noetig.",
+  "hinweise": [
+   "Keine Kennwoerter, Hosts, IPs, Benutzernamen oder Pfade mit Namen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "D1 Schalter ja/nein.",
+  "D2 gleich/anders.",
+  "D3 Status und welche Ablage der Abholer liest.",
+  "D4 je Fall ein Satz.",
+  "D5 ja/nein.",
+  "Vorschlag Dienstaufruf (nicht einstellen)."
+ ]
+}
