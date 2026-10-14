@@ -189,5 +189,137 @@
  ],
  "owner": [
   "Nichts sofort. Konto und Lizenz bleiben, wie sie sind. Nach dem Bruecken-Fix eine Zeile im Dienst-Drop-in entkommentieren (oder der Worker tut es auf Zuruf). Lizenz: gratis nur unter 1 Mio. USD Umsatz in 12 Monaten — bitte bestaetigen."
- ]
+ ],
+ "fassung2_m2": {
+  "beendet": "2026-10-14T11:20:00Z",
+  "koepfe": {
+   "abholer": "ai-imaging main 1501e2c",
+   "app": "KosmoOrbit 820a41ffd (installiertes Paket, unveraendert, im eigenen Netz-Namensraum)",
+   "realityscan": "2.2.0.119430"
+  },
+  "einrichtung": {
+   "drop_in": "AIIMAGING_REALITYSCAN entkommentiert (wine des Pakets, exe ueber Vorgabe gefunden), daemon-reload; visbox-flaeche neu gestartet",
+   "einrichtung": {
+    "eingeschaltet": true,
+    "bereit": true,
+    "grund": null,
+    "ursache": null
+   }
+  },
+  "weg": "Wie 276: Test-App (installiertes Paket) mit env -i auf eigenem Xvfb, bwrap --unshare-net, eigene Bruecke im Namensraum (eigene Ablage, Ollama auf totem Port), Relais zum MCP-Port. Neues Projekt, Splat + Verortung geladen (1'057'305 Punkte, Behelfsverortung), Volumen-Datei, V1 als Bestand (3.45 m), Graph Modell → Render ← Prompt «Industriehalle, Tageslicht, klarer Himmel» (Verbindungen und Ausfuehren per echter Maus auf dem eigenen Xvfb), Z-Image Turbo, 128, 1600x1000, Kameras auto. Splat in einem Ordner mit Verweisen auf sparse/ und images/ des Laufs (die App nimmt nur Dateien unter ihrem Heimordner) — die Bruecke fand Aufnahme und Fotos selbst («neben dem splat»), ohne AIIMAGING_SPLAT_AUFNAHME. Abholer: tools/abholen.py unveraendert (--fremde-freigabe --hoechstens 1 --kein-gelaende, MIT Nullprobe), Umgebung wie der Dienst. GPU-Sperre bei freier Karte (1.6 GB, 38 W, Ollama leer, kein Massstab-Prozess). Nichts installiert, kein Code geaendert.",
+  "a_bruecke": {
+   "durchgelaufen": true,
+   "abholer_gesamt_s": 627,
+   "realityscan_lauf_s": 279.9,
+   "umschrift_s": 7.2,
+   "netz": {
+    "dreiecke": 499675,
+    "ecken": 249831,
+    "vereinfacht": true,
+    "lage": {
+     "nah_colmap": 0.9937,
+     "nah_splat": 0.9896,
+     "massstab": 0.9926,
+     "mitte_rel": 0.0219
+    },
+    "zwischenspeicher_treffer": false
+   },
+   "bereinigung": {
+    "farben": "float→uchar",
+    "dreiecke_vorher": 500004,
+    "deckel_dreiecke": 329,
+    "deckel_flaeche_anteil": 0.7745,
+    "ecken_entfernt": 65,
+    "kante_grenze_splat_einheiten": 0.5477
+   },
+   "vergleich_278": "278 von Hand: 123 Dreiecke / 59 % mit fester Grenze 0.5 Splat-Einheiten an einem anderen Lauf (Netz nicht deterministisch). Jetzt 329 / 77 % bei Grenze 0.548 — gleiche Groessenordnung, der Deckel ist hier groesser. Echte Teile nimmt die Grenze NICHT weg: Deckung nach der Bereinigung 93.5 % = Deckung vor der Bereinigung in 278 (93.4 %).",
+   "deckel_rest": "Unter der Grenze bleiben Deckel-Reste: 20 Dreiecke knapp darunter (Kante 0.5–0.548), 189 Dreiecke mit Kante > 0.3 Splat-Einheiten (≈ 1.9 m) tragen 12.4 % der Netzflaeche. Sie erscheinen im Beauty-Pass als himmelfarbene flache Fetzen und im Bild als Fremdkoerper (siehe d). Nur gemeldet, nicht geaendert.",
+   "befund": "bereinigung steht nur im Bericht des Netz-Speichers, nicht im Vermerk urteil.kontext.netz — wer nur das Urteil liest, sieht weder Deckelzahl noch Flaechenanteil."
+  },
+  "b_deckung": {
+   "mass": "wie 277/278 (200'000 dichte Splat-Punkte, fester Startwert, 0.0422 Splat-Einheiten ≈ 26 cm)",
+   "deckung": 0.9346,
+   "abstand_median": 0.0033,
+   "stuecke": 57,
+   "groesstes_stueck": 497022,
+   "lage_median_cm": 3.7,
+   "lage_p90_cm": 11.8,
+   "anteil_innerhalb_26cm": 0.975,
+   "vergleich": "278 von Hand 93.4 % (vor) / 92.9 % (nach eigener Bereinigung); offener Weg 277: 9.9 %"
+  },
+  "c_kontext_weg": {
+   "weg": "realityscan",
+   "realityscan_grund": null,
+   "aufnahme": "neben dem splat",
+   "bilder": 960,
+   "hinweis": "UMGEBUNG aus den Fotos (RealityScan, vom Nutzer installiert) — nicht im Produkt ausgeliefert."
+  },
+  "d_bild": {
+   "qa": {
+    "passed": true,
+    "geometrie_schlechteste": 0.898,
+    "je_kamera": {
+     "s": {
+      "score": 0.955,
+      "geom_iou": 0.941
+     },
+     "sSE": {
+      "score": 0.923,
+      "geom_iou": 0.854
+     },
+     "nNW": {
+      "score": 0.898,
+      "geom_iou": 0.811
+     }
+    },
+    "seeds_gewaehlt": "2/2/2"
+   },
+   "geometry_gates": {
+    "passed": false,
+    "fail_reasons": [
+     "geom_iou_unter_schwelle",
+     "gegenprobe_fehlt"
+    ],
+    "rho_maske": 0.996,
+    "geom_iou_nNW": 0.811,
+    "schwelle": 0.85
+   },
+   "lieferstatus": "geliefert",
+   "farben": "Netzfarben uchar 0..255, 256 Stufen, Median Rot 112, Anteil 0/1/255 je < 0.1 % — float→uchar mit ×255 richtig. Bilder nicht schwarz (Mittel 114–116 je Kanal, fast schwarz 0.7–2.1 %).",
+   "person": "keine erkennbare Person in den 9 Bildern",
+   "umgebung_im_bild": {
+    "s": 0.007,
+    "sSE": 0.027,
+    "nNW": 0.018
+   },
+   "umgebung_auf_nicht_bauwerk": {
+    "s": 0.01,
+    "sSE": 0.035,
+    "nNW": 0.023
+   },
+   "bauwerk_verdeckt": {
+    "s": 0.0,
+    "sSE": 0.0,
+    "nNW": 0.0
+   },
+   "umgebung_methode": "Anteil Bildpunkte mit der Kontextfarbe im Material-ID-Pass (wie 275/276)",
+   "konfetti": "0 von 9",
+   "fremdkoerper": "5 von 9: Pfeil-/Flaechenstuecke aus Deckel-Resten (sSE Seed 0, nNW Seed 0 und 1), zerknitterte Plane (nNW Seed 2), rot-weisser Dachaufbau aus dem Netzstreifen ueber der Traufe (sSE Seed 2, nNW Seed 2). Gewaehlt: s sauber, sSE mit Dachaufbau, nNW mit Plane und Dachaufbau.",
+   "satz": "Die Pruefung besteht (0.955/0.923/0.898), der strenge Riegel nicht (nNW geom_iou 0.811 < 0.85, 276: alle ≥ 0.868). Das Netz deckt den Splat zu 93 %, liegt aber fast ganz im Bestandskoerper der Halle — aus den Hallenkameras sieht man davon nur 1–3.5 % der Flaeche neben dem Bauwerk (276: 5–16 %); was sichtbar bleibt, sind vor allem Deckel-Reste, die das Bildmodell zu Fremdkoerpern macht."
+  },
+  "e_waisen": "keine: nach dem Lauf weder RealityScan.exe noch wineserver aus diesem Lauf (geprueft direkt nach Ende). Ein spaeter gestarteter, fremder RealityScan-Lauf (Texturprobe eines anderen Arbeitsgangs, Start nach dem Ende von RealityScan in diesem Auftrag) lief danach — nicht von der Bruecke.",
+  "zeiten_s": {
+   "abholer_gesamt": 627,
+   "realityscan": 279.9,
+   "render_drei_kameras": 333.0,
+   "render_je_kamera": {
+    "s": 122.3,
+    "sSE": 107.9,
+    "nNW": 102.7
+   },
+   "stillstand_laengste_pause": 294
+  },
+  "gpu": "Karte vor dem Lauf frei (1.6 GB, 38 W), Ollama leer; Sperre genommen und freigegeben",
+  "aufraeumen": "App per WM_DELETE_WINDOW beendet (/var/crash unveraendert), Bruecke, Relais, Sitzungs-DBus und Xvfb per gemerkter PID; Wegwerf-Ordner samt Bildern geloescht. Behalten: Netz im RealityScan-Speicher. Drop-in bleibt EINGESCHALTET (AIIMAGING_REALITYSCAN aktiv)."
+ }
 }
