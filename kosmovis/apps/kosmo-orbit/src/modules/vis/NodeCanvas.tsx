@@ -75,6 +75,8 @@ import { KuratierFlaeche } from './KuratierFlaeche';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
+import { ModellKnotenKoerper } from './ModellKnoten';
+import { modellLadenWirt } from './modell-laden';
 import { laufNummerVon, verlaufReihe, verlaufSichtbar, type VerlaufEintrag } from './render-verlauf';
 import './vis-visual.css';
 
@@ -632,7 +634,19 @@ export function beiblattPlatz(
 export function basisNodeHoehe(typ: string): number {
   const kat = VIS_NODE_KATALOG[typ];
   const ports = Math.max(kat?.inputs.length ?? 0, kat?.outputs.length ?? 0);
-  return KOPF_H + 8 + ports * PORT_ABSTAND + (KOERPER_H[typ] ?? 30) + 10;
+  return KOPF_H + 8 + ports * PORT_ABSTAND + koerperHoehe(typ) + 10;
+}
+
+/** Entscheid 90 (Visbox, Blatt 21): Koerperhoehe des Modell-Knotens, wenn der Wirt eine
+ *  Lade-Faehigkeit bereitstellt (`registriereModellLaden`) — Platz fuer den laengsten der
+ *  vier Zustaende: ein Satz ueber bis zu fuenf Zeilen («nicht lesbar», etwa bei einer
+ *  ArchiCAD-Datei) und darunter der Knopf. EINE Hoehe fuer alle vier Zustaende, damit der
+ *  Knoten beim Laden nicht springt und die Platzsuche mit derselben Zahl rechnet. */
+export const MODELL_KOERPER_H_MIT_LADEN = 118;
+
+function koerperHoehe(typ: string): number {
+  if (typ === 'modell' && modellLadenWirt()) return MODELL_KOERPER_H_MIT_LADEN;
+  return KOERPER_H[typ] ?? 30;
 }
 
 /** V1-Welle Commit 2: Höhe eines eingeklappten Nodes — nur Kopf + (komprimiert
@@ -3253,10 +3267,10 @@ function NodeKoerper({
   const params = node.params ?? {};
 
   switch (node.typ) {
-    case 'modell': {
-      const teile = szeneBauteileAnzahl(doc);
-      return <div className="vis-node-info-zeile">Szene: {teile} Bauteile (GLB)</div>;
-    }
+    case 'modell':
+      // Entscheid 90 (Visbox, Blatt 21): mit Lade-Faehigkeit des Wirts Knopf und Zustaende,
+      // ohne sie (KosmoOrbit) die eine Zeile von vorher — s. `ModellKnoten.tsx`.
+      return <ModellKnotenKoerper bauteileImDokument={szeneBauteileAnzahl(doc)} />;
     case 'material':
       return (
         <KlappText

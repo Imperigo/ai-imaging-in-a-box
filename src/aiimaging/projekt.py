@@ -80,7 +80,8 @@ __all__ = [
     "MODELL_FEHLT", "MODELL_NICHT_PRUEFBAR", "MODELL_UNVERAENDERT", "MODELL_VERAENDERT",
     "PROJEKTDATEI", "ProjektError", "ProjektKollision", "SCHEMA",
     "VOLLE_PRUEFUNG_BIS_BYTE", "TITEL_HOECHSTENS",
-    "benenne", "fingerabdruck", "markiere_skizze", "neu", "oeffne", "speichere",
+    "benenne", "fingerabdruck", "markiere_skizze", "modellfassung", "neu", "neue_fassung",
+    "oeffne", "speichere",
     "vermerke_bild", "vermerke_skizze",
 ]
 
@@ -407,15 +408,6 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
     except OSError as fehler:
         raise ProjektError(f"Der Projektordner liess sich nicht anlegen: {fehler}") from fehler
 
-    try:
-        befund = einlass.sichte(modell)
-    except einlass.EinlassError as fehler:
-        # DER SICHTGANG DARF HIER NICHT SCHEITERN LASSEN. Dass er nicht stattfinden
-        # konnte, ist eine Auskunft ueber die Umstaende und kein Urteil ueber die Datei.
-        befund = {"brauchbar": None, "grund": f"Der Sichtgang war nicht möglich: {fehler}",
-                  "format": None, "hochachse": None, "hochachse_steht_fest": None,
-                  "hinweise": [], "naechster_schritt": None}
-
     return {
         "schema": SCHEMA,
         "name": name or modell.stem,
@@ -434,26 +426,7 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
         # Stand kommen, der auf der Platte liegt; sonst wird abgelehnt statt
         # ueberschrieben. Siehe `speichere` und `ProjektKollision`.
         "stand_nr": 1,
-        "modell": {
-            # RELATIV ZUR MAPPE, wo es geht, HEIMRELATIV («~/…»), wo der relative Weg
-            # durch den Heimatordner fuehren wuerde (Befund 23.09.2026) — siehe
-            # `pfad_fuer_die_mappe`. Ein absoluter Pfad ueberlebt die Saeuberung nach
-            # Regel 3 nicht, und ein relativer durch /home/<name>/ auch nicht.
-            "pfad": pfad_fuer_die_mappe(modell, wurzel),
-            "abdruck": fingerabdruck(modell),
-            # DER BEFUND VOM EINLASS WANDERT MIT, und das ist mehr als Bequemlichkeit:
-            # Er sagt, was ueber Format und Hochachse feststand, ALS das Projekt entstand.
-            # Spaeter ist das nicht mehr zu rekonstruieren.
-            "einlass": {
-                "brauchbar": befund["brauchbar"],
-                "grund": befund["grund"],
-                "format": befund.get("format"),
-                "hochachse": befund.get("hochachse"),
-                "hochachse_steht_fest": befund.get("hochachse_steht_fest"),
-                "hinweise": list(befund.get("hinweise") or ()),
-                "naechster_schritt": befund.get("naechster_schritt"),
-            },
-        },
+        "modell": _modellblock(modell, wurzel),
         "einstellungen": dict(einstellungen or {}),
         "bilder": [],
         # DIE EINGABE DES ENTWURFSMODUS (E23). Sie steht hier von Anfang an leer da und
@@ -462,6 +435,85 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
         "skizzen": [],
         "regel3_ersetzt": 0,
     }
+
+
+def _modellblock(modell: Path, wurzel: Path) -> dict:
+    """Der Eintrag ``modell`` der Mappe — für :func:`neu` und :func:`neue_fassung` derselbe.
+
+    Hier wird **einmal auf das Modell gesehen** (Sichtgang am Einlass); ein Modell, das
+    nicht taugt, steht als Befund darin und wirft nicht.
+    """
+    modell, wurzel = Path(modell), Path(wurzel)
+    try:
+        befund = einlass.sichte(modell)
+    except einlass.EinlassError as fehler:
+        # DER SICHTGANG DARF HIER NICHT SCHEITERN LASSEN. Dass er nicht stattfinden
+        # konnte, ist eine Auskunft ueber die Umstaende und kein Urteil ueber die Datei.
+        befund = {"brauchbar": None, "grund": f"Der Sichtgang war nicht möglich: {fehler}",
+                  "format": None, "hochachse": None, "hochachse_steht_fest": None,
+                  "hinweise": [], "naechster_schritt": None}
+    return {
+        # RELATIV ZUR MAPPE, wo es geht, HEIMRELATIV («~/…»), wo der relative Weg
+        # durch den Heimatordner fuehren wuerde (Befund 23.09.2026) — siehe
+        # `pfad_fuer_die_mappe`. Ein absoluter Pfad ueberlebt die Saeuberung nach
+        # Regel 3 nicht, und ein relativer durch /home/<name>/ auch nicht.
+        "pfad": pfad_fuer_die_mappe(modell, wurzel),
+        "abdruck": fingerabdruck(modell),
+        # DER BEFUND VOM EINLASS WANDERT MIT, und das ist mehr als Bequemlichkeit:
+        # Er sagt, was ueber Format und Hochachse feststand, ALS das Projekt entstand.
+        # Spaeter ist das nicht mehr zu rekonstruieren.
+        "einlass": {
+            "brauchbar": befund["brauchbar"],
+            "grund": befund["grund"],
+            "format": befund.get("format"),
+            "hochachse": befund.get("hochachse"),
+            "hochachse_steht_fest": befund.get("hochachse_steht_fest"),
+            "hinweise": list(befund.get("hinweise") or ()),
+            "naechster_schritt": befund.get("naechster_schritt"),
+        },
+    }
+
+
+def modellfassung(projekt: dict) -> int:
+    """Die wievielte Fassung des Modells in dieser Mappe steht — 1, solange nie ersetzt."""
+    nummer = (projekt.get("modell") or {}).get("fassung")
+    return nummer if isinstance(nummer, int) and nummer >= 1 else 1
+
+
+def neue_fassung(projekt: dict, wurzel, modell) -> dict:
+    """Ein neues Modell **in dieselbe Mappe** vermerken — Owner-Entscheid 90b (14.10.2026).
+
+    Rechnet nichts, wandelt nichts um (das tut :func:`aiimaging.arbeitsgang.ersetze_modell`)
+    und schreibt nichts — wie :func:`neu` hält es nur fest. Danach zeigt ``modell`` auf die
+    neue Datei, mit eigenem Fingerabdruck und Einlass, und ``modell.fassung`` ist um eins
+    höher. Die vorige Fassung kommt nach ``modell_fassungen``, mit dem Zeitpunkt des
+    Wechsels und der Zahl der Bilder und Skizzen, die es bis dahin gab.
+
+    **Bilder, Skizzen und Läufe bleiben, wie sie sind** — kein Eintrag wird gelöscht oder
+    umgeschrieben. Welche Bilder zum alten Stand gehören, steht in ``modell_fassungen``
+    (``bilder_bis_dahin``: die ersten so viele der Liste). *Wer beim Wechsel die alten
+    Bilder wegräumt, nimmt den Vergleich, für den man zwei Stände überhaupt hat.*
+
+    Returns:
+        Den neuen Eintrag ``modell``.
+    """
+    alt = dict(projekt.get("modell") or {})
+    nummer = modellfassung(projekt)
+    verlauf = list(projekt.get("modell_fassungen") or [])
+    verlauf.append({
+        "fassung": nummer,
+        "pfad": alt.get("pfad"),
+        "abdruck": alt.get("abdruck"),
+        "format": (alt.get("einlass") or {}).get("format"),
+        "ersetzt": _jetzt(),
+        "bilder_bis_dahin": len(projekt.get("bilder") or []),
+        "skizzen_bis_dahin": len(projekt.get("skizzen") or []),
+    })
+    neu_block = _modellblock(Path(modell), Path(wurzel))
+    neu_block["fassung"] = nummer + 1
+    projekt["modell"] = neu_block
+    projekt["modell_fassungen"] = verlauf
+    return neu_block
 
 
 def _stand_auf_der_platte(ziel: Path):

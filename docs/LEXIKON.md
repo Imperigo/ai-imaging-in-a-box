@@ -2070,6 +2070,12 @@ Abholer ruft `verarbeite(auftrag)` auf, und dieser Aufruf blockiert bis zum Ende
 Renderlaufs. Zwischen Aufruf und Rückkehr gibt es keinen einzigen Moment, in dem der
 Abholer von sich aus nachsehen könnte, ob der Lauf noch vorankommt.*
 
+**Nachfragen (Polling)** — Statt auf eine lange Antwort zu warten, holt sich die Seite in kurzen
+Abständen den Stand ab: «läuft noch» — «läuft noch» — «fertig». Das hält keine Leitung minutenlang offen,
+und die Seite kann zwischendurch zeigen, was gerade geschieht. *Im Projekt:* «Datei laden …» (Entscheid
+90): Der Heim-PC nimmt die Datei an, wandelt sie in einem **Hintergrundfaden** um, und der Modell-Knoten
+fragt alle 0,8 s unter `GET /knoten/modell-laden` nach — eine IFC kann Minuten brauchen.
+
 **Hintergrundfaden und Daemon-Faden** — Ein **Hintergrundfaden** ist ein zweiter
 Ausführungsstrang, der neben dem Hauptstrang herläuft (siehe *Thread*, *GIL*). Ein
 **Daemon-Faden** ist einer, der das Programm nicht am Beenden hindert: Endet der
@@ -4837,6 +4843,17 @@ Anfrage mit. Die Leitung muss darum verschlüsselt sein — bei Visbox unterwegs
 Heim-PC ausliefert, statt es nachzubauen: seit Entscheid 85 (14.10.2026) zuerst die
 **Knotenansicht**, per Schalter die Visbox-Seite.
 
+**Dateiwähler (Öffnen-Dialog, `NSOpenPanel`)** — Das gewohnte Fenster «Datei öffnen» des Mac, in dem
+man eine Datei aussucht. Eine Webseite fragt mit einem Knopf «Datei wählen» danach; in einem Browser
+erscheint es von selbst, in einem eingebauten Browserfenster (**WKWebView**) nur, wenn die App es selbst
+öffnet. *Im Projekt:* «Datei laden …» am Modell-Knoten (Entscheid 90) — die Mac-App öffnet es in
+`Arbeitsansicht.swift`.
+
+**UI-Delegat (`WKUIDelegate`)** — Ein Teil der App, den das eingebaute Browserfenster fragt, wenn die
+Seite etwas will, das über die Seite hinausgeht: ein Fenster für eine Datei, eine Rückfrage, ein neues
+Fenster. Fehlt er, geschieht an dieser Stelle einfach nichts — der Knopf sieht bedienbar aus und ist es
+nicht. *Im Projekt:* `Flaechenlotse` in der Mac-App, seit Entscheid 90.
+
 **Segmentschalter** — Ein Bedienelement aus zwei oder mehr nebeneinander liegenden Feldern, von
 denen genau eines gewählt ist — wie die Tasten eines alten Radios. *Im Projekt:* oben in der
 Mac-App «Knoten | Visbox-Seite» (Entscheid 85 A).
@@ -6334,6 +6351,20 @@ Gebäude verschiebt den Bildausschnitt, *und niemand sieht ihm an, woher er komm
 Import räumt die Szene darum zuerst leer.
 *Wo im Projekt:* `runners/blender_import_runner.py`, Funktion `_leere_szene`.
 
+**Fassung des Modells (in einer Mappe)** — Lädt man dieselbe Datei noch einmal (weil man sie
+weitergezeichnet hat), entsteht keine zweite Mappe, sondern in derselben eine **neue Fassung**: Das Modell
+wird ausgetauscht, die bisherigen Bilder und Skizzen bleiben. Die Mappe merkt sich, bis zu welchem Bild die
+alte Fassung galt — so lässt sich der alte Stand mit dem neuen vergleichen. *Im Projekt:* Entscheid 90b,
+`arbeitsgang.ersetze_modell`, Feld `modell.fassung` und Liste `modell_fassungen`.
+
+**Start-Mappe** — Die Mappe, mit der der Visbox-Server am Heim-PC gestartet wurde (`--ordner`). Neue
+Mappen aus «Datei laden …» kommen **daneben**, in denselben übergeordneten Ordner (Entscheid 90a), und
+heissen wie die Datei — nur mit Buchstaben, Ziffern, `-` und `_`.
+
+**Geschlossenes Dateiformat** — Ein Format, das nur das Programm lesen kann, das es geschrieben hat,
+weil sein Aufbau nicht veröffentlicht ist — etwa die `.pln` von ArchiCAD oder die `.rvt` von Revit. Statt
+«unbekannt» sagt Visbox dann, wie man im Programm eine offene Fassung (IFC) speichert (Entscheid 90c).
+
 **Projekt (die Mappe)** — Der Ort, an dem die Arbeit an *einem* Gebäudemodell
 zusammenbleibt: welches Modell, welche Einstellungen, welche Bilder daraus entstanden sind
 und was die Prüfung zu jedem gesagt hat.
@@ -6653,6 +6684,13 @@ Pinch als Rad mit gedrückter ctrl-Taste, Safari und die Mac-App (WebKit) als ei
 «Gesten-Ereignisse». Im Projekt seit Runde 26 (14.10.2026) in der Knotenansicht von Visbox:
 `kosmovis/apps/kosmo-orbit/src/shell/trackpad-geste.ts`, wörtlich aus KosmoOrbit (E152).
 Vorher zoomte dort jedes Wischen, statt die Fläche zu schieben.
+
+**Lade-Fähigkeit des Wirts** — Eine Fähigkeit, die das Programm, in dem ein übernommenes Werkzeug
+läuft (der **Wirt**), dem Werkzeug von aussen anbietet. Das Werkzeug fragt nur «gibt es eine?» und zeigt
+den Knopf dann — oder eben nicht. So läuft **derselbe** Code in zwei Programmen, die Verschiedenes
+können. *Im Projekt:* der Modell-Knoten des Vis-Werkzeugs (Entscheid 90): Visbox bietet «Datei laden …»
+an, KosmoOrbit nicht (dort kommt das Gebäude aus dem Entwurf), und dort bleibt der Knoten, wie er war
+(`modules/vis/modell-laden.ts`).
 
 **Stellvertreter (Stand-in)** — Eine kleine, selbst geschriebene Datei, die **an der Stelle
 eines fehlenden Originals steht** und dieselben Namen anbietet, damit der Code, der sie
@@ -7070,6 +7108,7 @@ gibt es keine Blätter; der Knoten sagt das.
 |---|---|
 | 2026-10-14 | Ergaenzt aus Fassung 3 der RealityScan-Brücke (Textur statt Eckfarben): **Textur**, **Abwicklung (UV-Abwicklung)**, **Texel**, **OBJ und MTL (Dateiformate)**; **Emissions-Shader** um die Stärke 1 der Umgebung ergänzt, **Eckpunktfarbe** und **Deckel (im Netz)** nachgeführt (Grenze 2,5 % statt 5 %) |
 | 2026-10-14 | Ergaenzt aus der Erklärung der Knoten für die Kosmo-Tafel (`docs/KNOTEN_ERKLAERT.md`): **Kosmo-Tafel**, **Knotenkatalog**, **Gruppe eines Knotens**, **Anschlusssorte (Porttyp)**, **Preset**, **Geometrie-Treue**, **Bildwerkzeug**, **Strichzeichnung (Line-Art)**, **Rückgängig (Undo)**, **Viewport-Aufnahme**, **Kuratierfläche**, **Prüfurteil (QA)**, **Veraltet**, **KosmoPublish** |
+| 2026-10-14 | Ergaenzt aus Entscheid 90 («Datei laden …» am Modell-Knoten): **Lade-Fähigkeit des Wirts**, **Fassung des Modells (in einer Mappe)**, **Start-Mappe**, **Geschlossenes Dateiformat**, **Nachfragen (Polling)**, **Dateiwähler (Öffnen-Dialog, `NSOpenPanel`)**, **UI-Delegat (`WKUIDelegate`)** |
 | 2026-10-14 | Ergaenzt aus der Übernahme Runde 26 der Knotenansicht (KosmoOrbit 22988d6ed): **Zwei-Finger-Geste (Wischen und Pinch)** |
 | 2026-10-14 | Ergaenzt aus Entscheid 87 (ein Klick fürs Aktualisieren): **Selbst-Aktualisieren (Updater)**, **AppImage** |
 | 2026-10-14 | Ergaenzt beim Leser des Massstab-Blocks: **Bewegungssensor (IMU)**, **Massstab (des Splats)** (mit Gegenprobe, Ampel, Kontrollmass, Drift) |

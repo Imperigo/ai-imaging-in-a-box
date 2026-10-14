@@ -10,6 +10,11 @@
  * (`@kosmo/ui/bewegung.css`), die gemerkte Schriftgrösse und Bewegung vor dem ersten Bild
  * (`ladeAnzeige`), und an der Stationshülle `data-vis-aktives-projekt` — ob das Modell der
  * Mappe im Dokument angekommen ist, mit derselben Zählung wie die Render-Sperre.
+ *
+ * Entscheid 90 (14.10.2026, Blatt 21): Auf dem Visbox-Server stellt diese Seite dem
+ * Modell-Knoten die Lade-Fähigkeit bereit (`registriereModellLaden(ladeWirt(…))`) — vor dem
+ * ersten Bild, damit der Knoten gleich in seiner Höhe mit Knopf steht. In KosmoOrbit ruft das
+ * niemand, und der Knoten bleibt die eine Zeile von dort.
  */
 import '../../kosmo-orbit/src/zod-jitless'; // muss der erste Import bleiben, s. Datei-Kopf dort
 import { StrictMode } from 'react';
@@ -24,7 +29,8 @@ import { KAnsageBereich, KBestaetigung, KFehlerzone, KMeldungen, ladeAnzeige, me
 import { VisWorkspace } from '../../kosmo-orbit/src/modules/vis/VisWorkspace';
 import { szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
-import { aufDemVisboxServer, brueckeAufDiesenServer, ladeMappe } from './mappe';
+import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
+import { aufDemVisboxServer, brueckeAufDiesenServer, ladeMappe, ladeWirt, verfolge, type LadeSicht } from './mappe';
 import './visbox.css';
 
 function VisboxKnoten() {
@@ -58,9 +64,24 @@ ladeAnzeige();
 
 if (aufDemVisboxServer()) {
   brueckeAufDiesenServer();
+  registriereModellLaden(ladeWirt());
   void ladeMappe()
     .then((satz) => melde(satz))
-    .catch((fehler: unknown) => melde(`Die Mappe liess sich nicht laden: ${String(fehler)}`, { ton: 'fehler' }));
+    .catch((fehler: unknown) => melde(`Die Mappe liess sich nicht laden: ${String(fehler)}`, { ton: 'fehler' }))
+    .then(() => fetch('./modell-laden'))
+    .then(async (antwort) => {
+      if (!antwort.ok) return;
+      const sicht = (await antwort.json()) as LadeSicht;
+      registriereModellLaden(ladeWirt(sicht));
+      // LAEUFT SCHON EINES (die Seite wurde waehrend einer IFC neu geladen): weiter verfolgen.
+      if (sicht.laden?.stand === 'laeuft') {
+        setzeModellLadeZustand(await verfolge(sicht.laden, setzeModellLadeZustand));
+      }
+    })
+    .catch(() => {
+      // Ohne Antwort bleibt der Knopf mit leerer Formatliste; das Laden selbst sagt dann,
+      // woran es liegt.
+    });
 }
 
 const wurzel = document.getElementById('root');

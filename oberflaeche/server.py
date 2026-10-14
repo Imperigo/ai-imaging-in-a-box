@@ -65,7 +65,7 @@ import inspect                                                  # noqa: E402
 
 import aiimaging                                                # noqa: E402
 from aiimaging import (arbeitsgang, assistent, glbbox, heimnetz, heimstand,  # noqa: E402
-                       importeur, kette, knotenweg, kopplung, projekt, render)
+                       importeur, kette, knotenweg, kopplung, modellladen, projekt, render)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -447,6 +447,11 @@ VERBINDEN_HOECHSTENS = 1024
 WEG_KNOTEN = "/knoten"
 WEG_KNOTEN_MAPPE = "/knoten/mappe"
 WEG_KNOTEN_MODELL = "/knoten/modell.glb"
+#: Entscheid 90 (14.10.2026, Blatt 21): «Datei laden …» am Modell-Knoten. ``POST`` nimmt die
+#: Datei an (Formular, Feld ``datei``) und beginnt das Laden im Hintergrund; ``GET`` sagt,
+#: welche Formate hereinkommen und wie weit das Laden ist. Kein Tafelweg — die App ruft
+#: ihn nicht, nur die Knotenansicht im Browser (siehe oben).
+WEG_KNOTEN_MODELL_LADEN = "/knoten/modell-laden"
 WEG_BRUECKE = "/bruecke"
 
 #: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
@@ -1565,6 +1570,12 @@ class Flaeche(BaseHTTPRequestHandler):
     #: ohne ``?ordner=`` zeigt sie (Entscheid 85 B, 14.10.2026: die Mac-App öffnet zuerst die
     #: Knoten). Auf der Klasse, weil jede Anfrage ein neues Objekt ist.
     zuletzt_geoeffnet = None
+    #: Das Laden einer Datei am Modell-Knoten (Entscheid 90): der Stand des letzten oder
+    #: laufenden, oder ``None``. Auf der Klasse wie ``zuletzt_geoeffnet`` — und nur EINES zur
+    #: Zeit: Zwei Umwandlungen, die beide eine Mappe anlegen oder ersetzen, gäben zwei Stände.
+    modell_laden = None
+    #: Der Faden, in dem das Laden läuft (für die Proben, die auf sein Ende warten).
+    modell_faden = None
     #: Wann zuletzt eine Zahl angefordert und erzeugt wurde, auf der stetigen Uhr — für die
     #: Drossel (``kopplung.naechste_anforderung_in``). Auf der Klasse wie die Kopplung: Eine
     #: Drossel je Verbindung drosselte nichts.
@@ -1778,7 +1789,12 @@ class Flaeche(BaseHTTPRequestHandler):
 
     def _projekt(self, weg) -> None:
         frage = urllib.parse.parse_qs(weg.query)
-        ordner = (frage.get("ordner") or [None])[0] or self.ordner
+        # OHNE ANGABE DIE ZULETZT GEOEFFNETE (Entscheid 90, 14.10.2026): Nach «Datei laden …»
+        # an den Knoten zeigt die Visbox-Seite dieselbe Mappe wie die Knoten — sonst stuende
+        # dort weiter die vom Start. Die Seite traegt die Mappe danach in ihr Feld ein, damit
+        # Rechnen und Benennen dieselbe treffen.
+        ordner = ((frage.get("ordner") or [None])[0] or type(self).zuletzt_geoeffnet
+                  or self.ordner)
         if not ordner:
             self._fehler("Kein Projektordner angegeben — mit --ordner starten oder "
                          "oben einen eintragen.", 404)
@@ -1887,6 +1903,8 @@ class Flaeche(BaseHTTPRequestHandler):
                 # Plattenpfad im Browser traegt den Rechnernamen nach aussen (Regel 3).
                 antwort["glb"] = bool(antwort["glb"])
                 self._sende(antwort)
+            elif pfad == WEG_KNOTEN_MODELL_LADEN:
+                self._sende(modell_laden_sicht(type(self).modell_laden))
             elif pfad == WEG_KNOTEN_MODELL:
                 ordner = self._knoten_ordner(frage)
                 if not ordner:
@@ -1932,7 +1950,63 @@ class Flaeche(BaseHTTPRequestHandler):
             return
         self._sende_datei(ziel.read_bytes(), typ)
 
+    def _modell_laden(self, laenge: int) -> None:
+        """``POST /knoten/modell-laden`` — die Datei annehmen, das Laden im Hintergrund
+        beginnen, sofort antworten.
+
+        **Warum im Hintergrund und nicht «Antwort, wenn fertig»** (Entscheid zur Frist,
+        14.10.2026): Alle Wege gehen hintereinander unter :attr:`reihe`. Eine IFC kann
+        Minuten brauchen (Umwandlung und Raumleser, je eigene Frist im ``.venv-ifc``); eine
+        Antwort erst danach hielte so lange den ganzen Server fest — Fortschritt, Seite,
+        iPad. Dazu kommt, dass eine Webansicht oder Weiterleitung eine stumme Leitung nach
+        einer Minute kappt. Darum: annehmen, Faden starten, mit dem Stand antworten; die
+        Knotenansicht fragt mit ``GET`` nach, bis er nicht mehr «läuft».
+        """
+        klasse = type(self)
+        laufend = klasse.modell_laden
+        if laufend and laufend.get("stand") == "laeuft":
+            self._fehler(f"Es wird schon eine Datei geladen («{laufend.get('datei')}»). "
+                         "Eine zur Zeit — bitte warten, bis sie da ist.", 409)
+            return
+        if laenge > modellladen.GROESSTE_DATEI_BYTE + 1024 * 1024:
+            self._fehler("Die Datei ist zu gross — angenommen werden Modelle bis "
+                         f"{modellladen.GROESSTE_DATEI_BYTE // (1024 * 1024)} MB.", 413)
+            return
+        try:
+            felder = lies_formular(self.headers.get("Content-Type", ""), self.rfile.read(laenge))
+        except knotenweg.KnotenwegError:
+            self._fehler("Eine Datei kommt als Formular (multipart/form-data) mit dem Feld "
+                         "«datei».")
+            return
+        if "datei" not in felder:
+            self._fehler("Im Formular fehlt das Feld «datei».")
+            return
+        dateiname, inhalt = felder["datei"]
+        try:
+            dateiname = modellladen.pruefe_dateiname(dateiname)
+        except modellladen.ModellLadenError as fehler:
+            self._fehler(str(fehler))
+            return
+        if not self.ordner:
+            self._fehler("Der Heim-PC weiss nicht, wohin die Mappe soll: Er läuft ohne "
+                         "Start-Mappe. Mit --ordner starten — die neue Mappe kommt daneben.",
+                         409)
+            return
+        stand = {"kennung": secrets.token_hex(6), "stand": "laeuft", "datei": dateiname,
+                 "schritt": "ablegen", "satz": f"«{dateiname}» wird geladen …",
+                 "begonnen": time.monotonic()}
+        klasse.modell_laden = stand
+        faden = threading.Thread(target=_lade_modell_im_hintergrund, name="modell-laden",
+                                 args=(klasse, Path(self.ordner), dateiname, inhalt,
+                                       stand["kennung"]), daemon=True)
+        klasse.modell_faden = faden
+        faden.start()
+        self._sende(modell_laden_sicht(stand), 202)
+
     def _knotenweg_handeln(self, pfad: str, laenge: int) -> None:
+        if pfad == WEG_KNOTEN_MODELL_LADEN:
+            self._modell_laden(laenge)
+            return
         rest = pfad[len(WEG_BRUECKE):] if pfad.startswith(WEG_BRUECKE) else None
         teile = [t for t in (rest or "").split("/") if t]
         try:
@@ -2801,6 +2875,60 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
         LAUFSTAND.beende(ergebnis=ergebnis_fuer_den_stand, fehler=fehler_fuer_den_stand)
 
 
+def modell_laden_sicht(stand: dict | None) -> dict:
+    """Was ``GET /knoten/modell-laden`` sagt: die Formate (aus :mod:`aiimaging.modellladen`,
+    also aus ``importeur.WEGE``) und der Stand des Ladens — **ohne Plattenpfad**: Die Mappe
+    steht nur mit ihrem Namen da (Regel 3, ein Pfad traegt den Rechnernamen nach aussen)."""
+    sicht = None
+    if stand:
+        sicht = {k: v for k, v in stand.items() if k not in ("begonnen", "mappe_pfad")}
+        sicht["seit_s"] = round(time.monotonic() - stand["begonnen"], 1)
+    return {"formate": modellladen.anzeige_formate(), "annehmen": modellladen.annehmen(),
+            "hoechstens_mb": modellladen.GROESSTE_DATEI_BYTE // (1024 * 1024), "laden": sicht}
+
+
+def _lade_modell_im_hintergrund(klasse, start: Path, dateiname: str, inhalt: bytes,
+                                kennung: str) -> None:
+    """Der Faden hinter ``POST /knoten/modell-laden``: ruft :func:`modellladen.lade` und
+    schreibt den Stand zurück. Gelingt es, ist die Mappe danach die **zuletzt geöffnete**
+    (Entscheid 85 B) — Knoten und Seite zeigen sie beide."""
+
+    def gilt() -> bool:
+        return bool(klasse.modell_laden) and klasse.modell_laden.get("kennung") == kennung
+
+    def melder(ereignis: dict) -> None:
+        if gilt():
+            klasse.modell_laden = {**klasse.modell_laden,
+                                   "schritt": ereignis.get("schritt"),
+                                   "satz": ereignis.get("satz") or klasse.modell_laden["satz"]}
+
+    try:
+        ergebnis = modellladen.lade(start, dateiname, inhalt, melder=melder)
+    except modellladen.ModellLadenError as fehler:
+        ergebnis = {"stand": "fehler", "satz": str(fehler), "mappe": None}
+    except Exception as fehler:                    # noqa: BLE001 — der Faden sagt es, statt zu sterben
+        ergebnis = {"stand": "fehler", "mappe": None,
+                    "satz": f"Das Laden ist unerwartet gescheitert: {fehler}"}
+
+    ende = {**(klasse.modell_laden or {}), "stand": ergebnis["stand"],
+            "satz": ergebnis["satz"], "schritt": None,
+            "dauer_s": ergebnis.get("dauer_s"), "herkunft": ergebnis.get("herkunft"),
+            "ersetzt": bool(ergebnis.get("ersetzt")), "fassung": ergebnis.get("fassung"),
+            "mappe": None, "bauteile": None}
+    mappe = ergebnis.get("mappe")
+    if ergebnis["stand"] == "geladen" and mappe:
+        ende["mappe"] = Path(mappe).name
+        try:
+            ende["bauteile"] = knotenweg.mappe_fuer_knoten(mappe)["bauteile"]
+        except (projekt.ProjektError, OSError):
+            pass
+    with Flaeche.reihe:
+        if gilt():
+            if ergebnis["stand"] == "geladen" and mappe:
+                klasse.zuletzt_geoeffnet = str(mappe)
+            klasse.modell_laden = ende
+
+
 def satz_nicht_angemeldet(kennwort_in_datei: bool = False) -> str:
     """Der Satz der Tür bei 401 — **er sagt, wo das Kennwort steht.**
 
@@ -2896,6 +3024,9 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                   {"ordner": Path(ordner) if ordner else None,
                    # JE SERVER, nicht in der Grundklasse (Entscheid 85 B).
                    "zuletzt_geoeffnet": None,
+                   # DAS LADEN AM MODELL-KNOTEN je Server (Entscheid 90), wie oben.
+                   "modell_laden": None,
+                   "modell_faden": None,
                    "kennwort": kennwort or None,
                    "kopplung_offen": kopplung_offen,
                    "ablage": Path(ablage) if ablage else None,

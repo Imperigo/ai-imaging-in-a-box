@@ -924,6 +924,10 @@ async function laden() {
     const antwort = await fetch("/api/projekt?ordner=" + encodeURIComponent(ordner));
     const d = await antwort.json();
     if (d.fehler) { $("stand").textContent = d.fehler; return; }
+    // OHNE EINTRAG ZEIGT DER SERVER DIE ZULETZT GEOEFFNETE MAPPE (Entscheid 90: etwa eine,
+    // die gerade an den Knoten geladen wurde). Sie kommt ins Feld, damit Rechnen, Benennen
+    // und Skizzen dieselbe Mappe treffen, die hier zu sehen ist.
+    if (!ordner && d.ordner) $("ordner").value = d.ordner;
     zeigeModell(d); zeigeBaum(d); zeigeBilder(d); zeigeSkizzenteil(d); zeigeGrundriss(d);
     zeigeWarteschlange(d);
     $("stand").textContent = d.bilder.length + " Bilder, " + d.laeufe.length + " Läufe";
