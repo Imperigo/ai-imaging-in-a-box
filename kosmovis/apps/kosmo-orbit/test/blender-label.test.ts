@@ -7,20 +7,38 @@ import { bildLabel } from '../src/modules/vis/vis-jobs';
  * `BILD_LABEL_FAKE_RENDER`-Konstante durch eine echte Herkunftsprüfung.
  *
  * WICHTIG (Container-Grenze, wörtlich, s. `vis-jobs.ts`s Kommentar an
- * `bildLabel`): der `'Render (Cycles)'`-Zweig ist im Container-Betrieb NIE
+ * `bildLabel`): der `'echter Render'`-Zweig ist im Container-Betrieb NIE
  * erreichbar — die Fake-Bridge (`tools/homestation-bridge/kosmo_bridge/
  * main.py` `_fake_worker_step`) liefert IMMER `worker: 'fake-worker'`. Diese
  * Suite ist der EINZIGE Ort, an dem der Echt-Zweig überhaupt ausgeführt wird
  * — mit einem KÜNSTLICHEN JobRecord-Ausschnitt, nicht über einen echten
  * Bridge-Roundtrip. Bis zu einer echten HomeStation-Abnahme (0.8.10+,
  * Owner-Termin) bleibt er ein unbewiesener Live-Pfad.
+ *
+ * P11/B5 (V016-SPEZ) — Befund NACHGEZOGEN, 23.09.2026: `bildLabel` behauptete
+ * bisher zwei falsche Herkünfte. (1) Fehlte `worker` GANZ (keine Angabe, z. B.
+ * ein fehlgeschlagener Zusatz-Fetch), nannte die Funktion das Bild trotzdem
+ * «Vorschau (Fake-Render)» — eine geratene Behauptung, kein gemessener
+ * Befund: ein Bild ohne `worker`-Angabe könnte ebenso ein echter Render
+ * gewesen sein, dessen Feld nur nicht mitkam. Jetzt: «Herkunft unbekannt».
+ * (2) Ein KI-Bild (Stiltransfer über `requestedStyle: 'redux'/'ipadapter'/
+ * 'lora'`, `RenderScene.style.mode` in `kosmo-contracts`) hiess «Render
+ * (Cycles)» — Cycles ist der Render-KERN, die KI-Veredelung ein zusätzlicher
+ * Schritt danach; beide unter demselben Namen zu zeigen verschleiert genau
+ * die Unterscheidung, die der Nutzer treffen soll. Jetzt: «KI-Bild». Der
+ * echte-Worker-ohne-KI-Stil-Fall selbst heisst neu «echter Render» (bleibt
+ * ebenfalls Container-unerreichbar) — `'fake-worker'` UND `'lineart'` bleiben
+ * UNVERÄNDERT (E2E `blender-bridge.spec.ts:247`/`vis-publish-bild.spec.ts`
+ * hängen am `'fake-worker'`-Wortlaut, ausserhalb dieses Pakets, nicht
+ * angefasst).
  */
-describe('bildLabel — Herkunfts-Label (E13)', () => {
-  it('worker fehlt → «Vorschau (Fake-Render)» (Default-/Rückwärtskompatibilitäts-Fall)', () => {
-    expect(bildLabel({})).toBe('Vorschau (Fake-Render)');
+describe('bildLabel — Herkunfts-Label (E13, P11/B5 nachgezogen)', () => {
+  it('B5: worker fehlt GANZ → «Herkunft unbekannt», NICHT mehr geraten als Fake-Render', () => {
+    expect(bildLabel({})).toBe('Herkunft unbekannt');
+    expect(bildLabel({ requestedStyle: 'lineart' })).toBe('Herkunft unbekannt');
   });
 
-  it("worker === 'fake-worker' → «Vorschau (Fake-Render)» (Container-Normalfall, jede Fake-Bridge-Antwort)", () => {
+  it("worker === 'fake-worker' → «Vorschau (Fake-Render)» (Container-Normalfall, jede Fake-Bridge-Antwort — unverändert, E2E hängt daran)", () => {
     expect(bildLabel({ worker: 'fake-worker' })).toBe('Vorschau (Fake-Render)');
     expect(bildLabel({ worker: 'fake-worker', requestedStyle: 'lineart' })).toBe('Vorschau (Fake-Render)');
   });
@@ -29,13 +47,19 @@ describe('bildLabel — Herkunfts-Label (E13)', () => {
     expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'lineart' })).toBe('Strichzeichnung (Line-Art)');
   });
 
-  it('echter Worker + requestedStyle undefined → «Render (Cycles)» (Container-unerreichbar, s. Kopfkommentar)', () => {
-    expect(bildLabel({ worker: 'homestation-1' })).toBe('Render (Cycles)');
-    expect(bildLabel({ worker: 'homestation-1', requestedStyle: undefined })).toBe('Render (Cycles)');
+  it('echter Worker + requestedStyle undefined/"none" → «echter Render» (Container-unerreichbar, s. Kopfkommentar)', () => {
+    expect(bildLabel({ worker: 'homestation-1' })).toBe('echter Render');
+    expect(bildLabel({ worker: 'homestation-1', requestedStyle: undefined })).toBe('echter Render');
+    expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'none' })).toBe('echter Render');
   });
 
-  it('echter Worker + requestedStyle "none"/"redux"/… (kein Line-Art) → «Render (Cycles)»', () => {
-    expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'none' })).toBe('Render (Cycles)');
-    expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'redux' })).toBe('Render (Cycles)');
+  // B5: DER KERN-BEFUND — vor der Reparatur lieferten alle drei Zeilen
+  // «Render (Cycles)», obwohl «redux»/«ipadapter»/«lora» KI-Stiltransfer
+  // bestellen (`RenderScene.style.mode`, kosmo-contracts). Cycles ist nur
+  // der Render-KERN darunter, nicht die volle Herkunft des gezeigten Bildes.
+  it('B5: echter Worker + requestedStyle "redux"/"ipadapter"/"lora" (KI-Veredelung) → «KI-Bild», NICHT «echter Render»/«Cycles»', () => {
+    expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'redux' })).toBe('KI-Bild');
+    expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'ipadapter' })).toBe('KI-Bild');
+    expect(bildLabel({ worker: 'homestation-1', requestedStyle: 'lora' })).toBe('KI-Bild');
   });
 });

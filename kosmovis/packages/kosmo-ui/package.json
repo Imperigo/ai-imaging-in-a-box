@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./aura.css": "./src/aura.css",
     "./skizze-tokens.css": "./src/skizze-tokens.css",
-    "./skizze-motion.css": "./src/skizze-motion.css"
+    "./skizze-motion.css": "./src/skizze-motion.css",
+    "./bewegung.css": "./src/bewegung.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -27,6 +28,6 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.11"
   }
 }

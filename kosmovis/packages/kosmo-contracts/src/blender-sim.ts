@@ -89,6 +89,9 @@ export const BlenderSimJob = z.object({
   /** Ehrliche Begründung, v. a. bei `kein-blender-worker`. */
   message: z.string().optional(),
   worker: z.string().optional(),
+  /** auf-248: Zeitpunkt der Übernahme (ISO-8601), von der Brücke bzw. vom
+   * Worker gesetzt. Fehlt, wenn die Brücke den Worker nur ableitet. */
+  worker_seit: z.string().optional(),
   /** Das eingebettete Ergebnis, sobald `done` — nur für `art:
    * 'sonnenstunden'` befüllt (weitere Arten bekommen ihr eigenes Result-
    * Schema erst, wenn sie es brauchen). Ohne dieses Feld würde

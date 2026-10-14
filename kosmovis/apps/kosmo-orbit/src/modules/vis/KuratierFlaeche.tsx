@@ -1,18 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { VIS_KATEGORIE_HUE, VIS_NODE_KATALOG, type VisGraph } from '@kosmo/kernel';
-import { KButton, KIcon, KTooltip, melde } from '@kosmo/ui';
+import { KButton, KCheckbox, KIcon, KTooltip, melde } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
 import { aufnahmeAufsBlatt, bescheideBridgeCatch, bildAufsBlatt, BILDWEG_OFFEN } from './vis-jobs';
 import { KuratierInspektor, type VorbildWahl } from './KuratierInspektor';
 import {
+  kameraQaText,
   kameraQaZeilen,
   kartenId,
   kurzKennung,
+  LIZENZ_MELDUNG_MS,
+  LIZENZ_OFFEN_LABEL,
+  lizenzAblageZusatz,
+  lizenzAusQuelle,
+  lizenzOffenGrund,
   varianteDiff,
   varianteMerkmale,
   type KameraQaZeile,
   type KuratierKartenDaten,
 } from './varianten-diff';
+import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import './vis-visual.css';
 
 /**
@@ -94,8 +101,16 @@ export function KuratierFlaeche({
       const name =
         'dataUrl' in k.quelle
           ? await aufnahmeAufsBlatt(k.quelle.dataUrl, titel)
-          : await bildAufsBlatt(k.quelle.jobId, k.quelle.bild, titel);
-      melde(`«${titel}» liegt auf «${name}» — im KosmoPublish weiterschieben`, { ton: 'erfolg' });
+          : await bildAufsBlatt(k.quelle.jobId, k.quelle.bild, titel, lizenzAusQuelle(k.quelle));
+      // P-LIZENZMARKE Schritt 2 (E154 (4)): «Ins Projekt» ist der Schritt
+      // Richtung Veroeffentlichung, der in KosmoVis liegt. Traegt das Bild
+      // eine offene Lizenz, sagt die Meldung es mit Grund; abgelegt wird
+      // trotzdem — nichts gesperrt.
+      const zusatz = lizenzAblageZusatz(lizenzAusQuelle(k.quelle));
+      melde(`«${titel}» liegt auf «${name}» — im KosmoPublish weiterschieben${zusatz}`, {
+        ton: 'erfolg',
+        ...(zusatz ? { dauerMs: LIZENZ_MELDUNG_MS } : {}),
+      });
     } catch (err) {
       // P5b (v0.9.56): `bildAufsBlatt`-Zweig ist ein Bridge-Fetch (Aufnahme-
       // Zweig nicht) — derselbe Uebersetzer fuer beide, s. Kommentar an der
@@ -384,7 +399,7 @@ function KameraQaBadges({ zeilen, ausrichtung = 'start' }: { zeilen: KameraQaZei
           data-testid="vis-kuratier-kamera-qa-eintrag"
           className={`vis-bild-kachel-qa${k.bestanden === true ? ' vis-bild-kachel-qa--ok' : k.bestanden === false ? ' vis-bild-kachel-qa--fehl' : ''}`}
         >
-          {k.kamera}: {k.bestanden === undefined ? 'ohne QA' : k.bestanden ? 'bestanden' : 'durchgefallen'}
+          {k.kamera}: {kameraQaText(k)}
         </span>
       ))}
     </span>
@@ -432,6 +447,10 @@ function RasterKarte({
   // `KameraQaBadges` nichts, und die Karte bleibt wie vor diesem Paket.
   const qaJeKamera = 'jobId' in karte.quelle ? karte.quelle.qaJeKamera : undefined;
   const kameraZeilen = kameraQaZeilen(qaJeKamera);
+  // P-LIZENZMARKE Schritt 2: dieselbe Angabe fuer das Abzeichen am Bild und
+  // die Kurzhilfe am «Ins Projekt»-Knopf.
+  const lizenz = lizenzAusQuelle(karte.quelle);
+  const lizenzOffen = lizenzOffenGrund(lizenz) !== undefined;
 
   const rahmenKlasse = ausgewaehlt
     ? 'vis-raster-karte--gewaehlt'
@@ -467,11 +486,16 @@ function RasterKarte({
         >
           {id}
         </span>
-        {karte.kur.markiert && (
-          <span className="vis-raster-karte-badge">
-            FAVORIT
-          </span>
-        )}
+        <span className="vis-raster-karte-embleme-rechts">
+          {karte.kur.markiert && (
+            <span className="vis-raster-karte-badge">
+              FAVORIT
+            </span>
+          )}
+          {/* P-LIZENZMARKE Schritt 2 (E154 (4)): «Lizenz offen» am Bild, in
+              der Form des Favorit-Abzeichens; der Grund in der Kurzhilfe. */}
+          <LizenzOffenMarke lizenz={lizenz} testid="vis-kuratier-karte-lizenz-offen" abzeichen="rechts" lage="unten" />
+        </span>
       </div>
 
       {/* Fusszeile: Meta + Aktionen */}
@@ -483,7 +507,13 @@ function RasterKarte({
           <KameraQaBadges zeilen={kameraZeilen} />
         </div>
         <div className="vis-raster-karte-aktionen">
-          <KTooltip text={karte.kur.markiert ? 'Markierung entfernen' : 'Bild markieren'}>
+          {/* Nachgang 3: die Kurzhilfen der Knoepfe nehmen ihre Lage von der
+              Fusszeile, nicht vom Knopf — sonst schneidet der Kartenrand
+              sie ab (`.vis-raster-karte-kurzhilfe`, vis-visual.css). */}
+          <KTooltip
+            className="vis-raster-karte-kurzhilfe"
+            text={karte.kur.markiert ? 'Markierung entfernen' : 'Bild markieren'}
+          >
           <button
             type="button"
             data-testid="vis-kuratier-stern"
@@ -498,7 +528,10 @@ function RasterKarte({
             <KIcon name={karte.kur.markiert ? 'stern-voll' : 'stern'} size={14} />
           </button>
           </KTooltip>
-          <KTooltip text={karte.kur.verworfen ? 'Aus der Ablage zurückholen' : 'Verwerfen (in die Ablage — nicht gelöscht)'}>
+          <KTooltip
+            className="vis-raster-karte-kurzhilfe"
+            text={karte.kur.verworfen ? 'Aus der Ablage zurückholen' : 'Verwerfen (in die Ablage — nicht gelöscht)'}
+          >
           <button
             type="button"
             data-testid="vis-kuratier-verwerfen"
@@ -513,7 +546,14 @@ function RasterKarte({
             <KIcon name="schliessen" size={14} />
           </button>
           </KTooltip>
-          <KTooltip text="Ins Projekt (KosmoPublish)">
+          <KTooltip
+            className="vis-raster-karte-kurzhilfe"
+            text={
+              lizenzOffen
+                ? `Ins Projekt (KosmoPublish) — ${LIZENZ_OFFEN_LABEL}: vor einer Veröffentlichung klären`
+                : 'Ins Projekt (KosmoPublish)'
+            }
+          >
           <button
             type="button"
             data-testid="vis-kuratier-ins-projekt"
@@ -527,13 +567,24 @@ function RasterKarte({
             <KIcon name="ordner" size={14} />
           </button>
           </KTooltip>
-          <label
-            className="vis-raster-karte-vgl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <input type="checkbox" data-testid="vis-kuratier-vergleich-wahl" checked={imVergleich} onChange={onVergleichWahl} />
-            VGL
-          </label>
+          {/* Die Klammer um das Kaestchen traegt das `stopPropagation`, das
+              vorher am `<label>` hing: `KCheckbox` rendert das `<label>`
+              selbst und reicht alle uebrigen Eigenschaften an das `<input>`
+              weiter — ein `onClick` dort faengt nur den Klick auf das
+              (durchsichtige) Feld ab, nicht den auf den gezeichneten Kasten
+              `.k-checkbox-box` oder die Beschriftung. Ohne diese Klammer
+              waehlte ein Klick auf VGL zugleich die Karte aus (`onWahl` am
+              Kartenrahmen), was diese Zeile seit je verhindert. */}
+          <span onClick={(e) => e.stopPropagation()}>
+            <KCheckbox
+              size="sm"
+              className="vis-raster-karte-vgl"
+              data-testid="vis-kuratier-vergleich-wahl"
+              checked={imVergleich}
+              onChange={onVergleichWahl}
+              label="VGL"
+            />
+          </span>
         </div>
       </div>
     </div>
@@ -586,6 +637,14 @@ function VergleichAnsicht({
           <span className="vis-vergleich-karte-id">
             {id}
           </span>
+          {/* P-LIZENZMARKE Schritt 2 (E154 (4)): auch im Vergleich steht die
+              Marke am Bild. */}
+          <LizenzOffenMarke
+            lizenz={lizenzAusQuelle(k.quelle)}
+            testid={`vis-kuratier-vergleich-lizenz-offen-${label.toLowerCase()}`}
+            abzeichen="links"
+            lage="unten"
+          />
         </div>
       </div>
     );
@@ -612,7 +671,7 @@ function VergleichAnsicht({
             </span>
             <span className="vis-mono-label k-label vis-vergleich-zeile-label">{z.label}</span>
             <span
-              className={`vis-vergleich-zeile-wert${z.abweichend ? ' vis-vergleich-zeile-wert--abweichend-b' : ''}`}
+              className={`vis-vergleich-zeile-wert vis-vergleich-zeile-wert--b${z.abweichend ? ' vis-vergleich-zeile-wert--abweichend-b' : ''}`}
             >
               {z.b}
             </span>
@@ -632,7 +691,7 @@ function VergleichAnsicht({
               {kameraZeilenA.length === 0 && '—'}
             </span>
             <span className="vis-mono-label k-label vis-vergleich-zeile-label">Kameras</span>
-            <span className="vis-vergleich-zeile-wert">
+            <span className="vis-vergleich-zeile-wert vis-vergleich-zeile-wert--b">
               <KameraQaBadges zeilen={kameraZeilenB} />
               {kameraZeilenB.length === 0 && '—'}
             </span>
@@ -648,6 +707,9 @@ function VergleichAnsicht({
           Variante B ins Projekt
         </KButton>
       </div>
+      {/* P-LIZENZMARKE Schritt 2: der Hinweis beim Schritt ins Projekt, der
+          Knopf bleibt bedienbar. */}
+      <LizenzOffenAblageHinweis lizenz={lizenzAusQuelle(b.quelle)} testid="vis-kuratier-vergleich-b-lizenz-ablage" />
     </div>
   );
 }

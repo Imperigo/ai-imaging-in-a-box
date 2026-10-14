@@ -24,6 +24,10 @@ import { VIS_WERKZEUG_KATALOG } from '../src/modules/vis/island/vis-island-katal
  * v0.8.11 P-B1/E4 (Owner-Wahl E-Vis, `docs/V0811-SPEZ.md` §2 E4, Matrix
  * C-6): 13→15 — additiv 2 neue Icons für die ANSICHT-Insel-Werkzeuge
  * 'ansichten' (Gespeicherte Ansichten) und 'legende' (Porttyp-Legende).
+ *
+ * P16 (v0.1.5, `docs/V016-SPEZ.md` Zeile 246, Abnahmezeile 6): 14→15 —
+ * additiv 1 neues Icon 'textur' für das zweite STIMMUNG-Werkzeug (der
+ * «Textur-Knopf»).
  */
 
 function alsDom(html: string): HTMLDivElement {
@@ -36,19 +40,19 @@ function zaehleAkzentpunkte(html: string): number {
   return (html.match(/r="1\.13"/g) ?? []).length;
 }
 
-describe('vis-glyphen: 14 Werkzeug-Icons decken den kompletten Vis-Katalog ab', () => {
-  it('VIS_WERKZEUG_KATALOG hat 14 Einträge (v0.8.11 P-B1/E4: +ansichten/+legende; K35: -minimap)', () => {
-    expect(VIS_WERKZEUG_KATALOG).toHaveLength(14);
+describe('vis-glyphen: 15 Werkzeug-Icons decken den kompletten Vis-Katalog ab', () => {
+  it('VIS_WERKZEUG_KATALOG hat 15 Einträge (P16 v0.1.5: +textur; v0.8.11 P-B1/E4: +ansichten/+legende; K35: -minimap)', () => {
+    expect(VIS_WERKZEUG_KATALOG).toHaveLength(15);
   });
 
-  it('VIS_GLYPHEN deckt exakt die 14 Katalog-Ids ab (K35: kein minimap-Icon mehr)', () => {
+  it('VIS_GLYPHEN deckt exakt die 15 Katalog-Ids ab (K35: kein minimap-Icon mehr)', () => {
     const erwartet = VIS_WERKZEUG_KATALOG.map((w) => w.id).sort();
     const tatsaechlich = Object.keys(VIS_GLYPHEN).sort();
     expect(tatsaechlich).toEqual(erwartet);
-    expect(tatsaechlich).toHaveLength(14);
+    expect(tatsaechlich).toHaveLength(15);
   });
 
-  it('kein Vis-Katalog-Werkzeug trägt mehr einen Text-Kürzel-Fallback als `glyphe` (alle 14 sind ComponentType)', () => {
+  it('kein Vis-Katalog-Werkzeug trägt mehr einen Text-Kürzel-Fallback als `glyphe` (alle 15 sind ComponentType)', () => {
     for (const w of VIS_WERKZEUG_KATALOG) {
       expect(typeof w.glyphe, w.id).not.toBe('string');
     }

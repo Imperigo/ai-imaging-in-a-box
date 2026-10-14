@@ -51,7 +51,7 @@ const ORTE: readonly { name: string; pfad: string; erwarteteListen: number }[] =
 const VORGABE = 'z-image-turbo';
 
 /** Kein Wert darf verschwinden — bestehende Auftraege muessen weiter parsen. */
-const NIE_ENTFERNEN = ['qwen', 'flux2-klein', 'flux-krea', 'sdxl'] as const;
+const NIE_ENTFERNEN = ['qwen', 'flux2-klein', 'flux-krea', 'sdxl', 'qwen-image-2.1'] as const;
 
 const lies = (relPfad: string) => readFileSync(fileURLToPath(new URL(relPfad, import.meta.url)), 'utf8');
 
@@ -65,11 +65,11 @@ const lies = (relPfad: string) => readFileSync(fileURLToPath(new URL(relPfad, im
 function listen(quelle: string): string[][] {
   const gefunden: string[][] = [];
   const enumForm = /backbone\??\s*:\s*z\s*(?:\r?\n\s*)?\.enum\(\[([^\]]*)\]\)/g;
-  const unionForm = /backbone\??\s*:\s*((?:'[a-z0-9-]+'\s*\|\s*)+'[a-z0-9-]+')\s*;/g;
+  const unionForm = /backbone\??\s*:\s*((?:'[a-z0-9.-]+'\s*\|\s*)+'[a-z0-9.-]+')\s*;/g;
   for (const form of [enumForm, unionForm]) {
     for (const treffer of quelle.matchAll(form)) {
       const roh = treffer[1] ?? '';
-      gefunden.push([...roh.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1] as string));
+      gefunden.push([...roh.matchAll(/'([a-z0-9.-]+)'/g)].map((m) => m[1] as string));
     }
   }
   return gefunden;

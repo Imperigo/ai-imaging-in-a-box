@@ -26,9 +26,14 @@ describe('aura.css: Glass-Fallback-Ketten (Papier bleibt deckend, Orbit bekommt 
     expect(auraCss).toMatch(/\.k-dialog-box\s*{[^}]*background:\s*var\(--k-glass-fill,\s*var\(--k-raised\)\)/);
   });
 
-  it('.k-select steht auf --k-sunken (Fallback --k-field), radius-md', () => {
+  // 21.09.2026 (Form-Familie, Owner-Entscheid): `.k-select` ist ein
+  // Bedienelement und trägt darum die Vollrundung statt `--k-radius-md`.
+  // Die Flächen-Aussage dieses Tests (--k-sunken/--k-field) bleibt; nur die
+  // Radius-Erwartung zieht nach — sie wäre sonst die einzige Stelle, die die
+  // alte Form festhält.
+  it('.k-select steht auf --k-sunken (Fallback --k-field), vollrund', () => {
     expect(auraCss).toMatch(/\.k-select\s*{[^}]*background-color:\s*var\(--k-sunken,\s*var\(--k-field\)\)/);
-    expect(auraCss).toMatch(/\.k-select\s*{[^}]*border-radius:\s*var\(--k-radius-md\)/);
+    expect(auraCss).toMatch(/\.k-select\s*{[^}]*border-radius:\s*var\(--k-radius-pill\)/);
   });
 
   it('.k-meldung-karte + .k-dialog-box tragen Glow-/Glass-Fallbacks statt roher Hex-Werte', () => {

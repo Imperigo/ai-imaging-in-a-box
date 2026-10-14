@@ -21,6 +21,13 @@ import { VIS_INSELN, VIS_ISLAND_REIHENFOLGE, VIS_WERKZEUG_KATALOG } from '../src
  * C-6): additiv +2 — ANSICHT bekommt 'ansichten' (Gespeicherte Ansichten)
  * und 'legende' (Porttyp-Legende), die letzten beiden P-B1-Audit-Funde ohne
  * Insel-Äquivalent — 13→15 Werkzeuge total, ANSICHT 4→6.
+ *
+ * K35 (Owner-Korrekturen 2026-07, S.14): 'minimap' entfernt — 15→14.
+ *
+ * P16 (v0.1.5, `docs/V016-SPEZ.md` Zeile 246, Abnahmezeile 6): additiv +1 —
+ * STIMMUNG bekommt 'textur' (der «Textur-Knopf», Bildkarten aus
+ * `derive/textur.ts` zu einem gewaehlten Material) — 14→15 Werkzeuge total,
+ * STIMMUNG 1→2.
  */
 
 describe('vis-island-katalog — Aufbau', () => {
@@ -49,10 +56,10 @@ describe('vis-island-katalog — Aufbau', () => {
     expect(sonne.randKlasse).toBe('isl-rand-sonne');
   });
 
-  it('14 Werkzeuge total, jedes genau einer Insel zugeordnet (v0.8.11 P-B1/E4: +ansichten/+legende; K35: -minimap)', () => {
-    expect(VIS_WERKZEUG_KATALOG).toHaveLength(14);
+  it('15 Werkzeuge total, jedes genau einer Insel zugeordnet (P16: +textur; v0.8.11 P-B1/E4: +ansichten/+legende; K35: -minimap)', () => {
+    expect(VIS_WERKZEUG_KATALOG).toHaveLength(15);
     const summe = VIS_INSELN.reduce((n, k) => n + k.werkzeuge.length, 0);
-    expect(summe).toBe(14);
+    expect(summe).toBe(15);
   });
 
   it('SONNE: genau EIN Werkzeug (Sonnenstunden, v0.8.9 §9 E11)', () => {
@@ -71,9 +78,9 @@ describe('vis-island-katalog — Aufbau', () => {
     expect(ids).toEqual(['zoom', 'raster', 'routing', 'ansichten', 'legende']);
   });
 
-  it('STIMMUNG: genau EIN Werkzeug (die 3 Presets als Bild-Kacheln, Owner-Auftrag §1)', () => {
+  it('STIMMUNG: zwei Werkzeuge (die 3 Presets als Bild-Kacheln, Owner-Auftrag §1; + Textur-Knopf, P16 Abnahmezeile 6)', () => {
     const werkzeuge = VIS_INSELN.find((k) => k.id === 'stimmung')!.werkzeuge;
-    expect(werkzeuge.map((w) => w.id)).toEqual(['stimmung']);
+    expect(werkzeuge.map((w) => w.id)).toEqual(['stimmung', 'textur']);
   });
 
   it('AUSTAUSCH: Render senden, Aufs Plakat, Kamera vorschlagen, Report (v0.8.10 E3-Nachtrag: -manuell, Owner-Auftrag §1)', () => {
@@ -108,6 +115,7 @@ describe('vis-island-katalog — Aufbau', () => {
       'sonnenstunden',
       'ansichten',
       'legende',
+      'textur',
     ]) {
       const w = VIS_WERKZEUG_KATALOG.find((x) => x.id === id)!;
       expect(w.hatPopup).toBe(true);

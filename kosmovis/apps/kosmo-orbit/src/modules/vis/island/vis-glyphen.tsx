@@ -34,6 +34,12 @@ import type { ComponentType, ReactNode } from 'react';
  * Häkchen — «gespeicherter Schnappschuss»), Legende (drei Zeilen aus
  * Punkt+Strich — 1:1 das Listen-Motiv der echten Legende, `vis-visual.css`
  * `.vis-legende-zeile`).
+ *
+ * P16 (v0.1.5, Abnahmezeile 6): additiv um 1 Icon für das zweite
+ * STIMMUNG-Insel-Werkzeug «Textur» erweitert — 14→15 (nach K35s Abzug auf 14,
+ * s. `vis-island-katalog.ts`s Kopfkommentar). Textur (quadratische
+ * Materialprobe mit Diagonalstrichen — Schraffur-Andeutung, unterscheidbar
+ * von `raster`s Vollgitter).
  */
 
 const WURZEL_ATTRIBUTE = {
@@ -223,6 +229,20 @@ const legende = glyphe(
   </>,
 );
 
+/**
+ * Textur — quadratische Materialprobe mit drei Diagonalstrichen (Schraffur-
+ * Andeutung, unterscheidbar von `raster`s Vollgitter und `palette`s vier
+ * Kaesten), Akzent an der unteren rechten Ecke. P16 (v0.1.5, Abnahmezeile 6)
+ * — STIMMUNG-Insel (`vis-island-katalog.ts`).
+ */
+const textur = glyphe(
+  <>
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <path d="M7 17 L17 7 M7 11.5 L11.5 7 M12.5 17 L17 12.5" />
+    {akzent(17, 17)}
+  </>,
+);
+
 /** Die Vis-Werkzeug-Icons, geschlüsselt nach `vis-island-katalog.ts`s `IslandWerkzeug.id`. */
 export const VIS_GLYPHEN: Record<string, ComponentType<GlyphProps>> = {
   palette,
@@ -239,4 +259,5 @@ export const VIS_GLYPHEN: Record<string, ComponentType<GlyphProps>> = {
   sonnenstunden,
   ansichten,
   legende,
+  textur,
 };

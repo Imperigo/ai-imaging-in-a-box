@@ -6618,6 +6618,16 @@ einer Bodenplatte, ist das Fernste der Boden und fällt nicht auf; steht ein Qua
 kleinen Grauwert an (z. B. 0,15), der Hintergrund bleibt schwarz — die Kante trennt sich ab.
 Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
+**Zwei-Finger-Geste (Wischen und Pinch)** — Auf dem Trackpad eines Mac zwei Finger
+**gemeinsam verschieben** heisst *Wischen*: die Fläche wandert mit den Fingern mit. Zwei Finger
+**auseinander- oder zusammenziehen** heisst *Pinch*: die Ansicht wird grösser oder kleiner, und
+zwar dort, wo der Zeiger steht. Ein *Mausrad* dagegen dreht in festen Rasten; eine Raste
+zoomt. Der Browser meldet alle drei als «Rad-Ereignis», nur verschieden verpackt — Chrome einen
+Pinch als Rad mit gedrückter ctrl-Taste, Safari und die Mac-App (WebKit) als eigene
+«Gesten-Ereignisse». Im Projekt seit Runde 26 (14.10.2026) in der Knotenansicht von Visbox:
+`kosmovis/apps/kosmo-orbit/src/shell/trackpad-geste.ts`, wörtlich aus KosmoOrbit (E152).
+Vorher zoomte dort jedes Wischen, statt die Fläche zu schieben.
+
 **Stellvertreter (Stand-in)** — Eine kleine, selbst geschriebene Datei, die **an der Stelle
 eines fehlenden Originals steht** und dieselben Namen anbietet, damit der Code, der sie
 aufruft, unverändert bleiben kann. Sie tut nur, was im neuen Zusammenhang Sinn ergibt, und
@@ -6967,6 +6977,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus der Übernahme Runde 26 der Knotenansicht (KosmoOrbit 22988d6ed): **Zwei-Finger-Geste (Wischen und Pinch)** |
 | 2026-10-14 | Ergaenzt aus Entscheid 87 (ein Klick fürs Aktualisieren): **Selbst-Aktualisieren (Updater)**, **AppImage** |
 | 2026-10-14 | Ergaenzt beim Leser des Massstab-Blocks: **Bewegungssensor (IMU)**, **Massstab (des Splats)** (mit Gegenprobe, Ampel, Kontrollmass, Drift) |
 | 2026-10-14 | Ergaenzt aus Entscheid 85 (Mac zeigt zuerst die Knoten): **Segmentschalter**; nachgefuehrt: **WKWebView**, **Knotenansicht / Knoteneditor** (Kopie aus KosmoOrbit, nicht mehr der eigene Entwurf) |

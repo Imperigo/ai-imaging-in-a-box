@@ -1,0 +1,318 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   bewegung.css — Bewegungsbausteine B1, B2, B4, B5 (MOTION-LEITFADEN-V2 §4), B6/B7 (U13), B8 (U19), B9 (C45)
+   30.09.2026 · UI-Worker
+
+   HALTUNG: Bewegung erklaert eine Veraenderung — sonst unterbleibt sie.
+   Jeder Baustein hier zeigt, WAS dazukommt und WOHER; keiner ist Schmuck.
+   Wer einen davon einsetzt, nennt die Zeile des Haeufigkeitsrasters
+   (Leitfaden §2): nichts hiervon gehoert an eine Stelle, die hundertmal am
+   Tag benutzt wird.
+
+   REGELN (geprueft von test/bewegung-bausteine.test.ts):
+   - Dauern NUR aus Token (`aura.css`), keine Zahl in transition/animation.
+   - Nur transform/opacity — Ausnahme B1 (eine Gitterzeile, einmalig).
+   - Nichts erscheint aus scale(0); kein transition: all.
+   - Jeder Baustein hat seinen eigenen Reduced-Motion-Zweig unten. Der
+     globale Riegel in aura.css kuerzt nur die Dauer (Uebergaenge 0s, Animationen 0.01ms); ein
+     Baustein soll auch ohne ihn ruhig sein.
+   - KEIN `both`/`forwards`: eine Animation, die ihr Endbild festhaelt, wirkt
+     fuer den Browser dauerhaft — ein wirkendes transform (auch `none`) macht
+     das Element zum Anker jedes `position:fixed` darin. So hat
+     `.k-einblenden` (aura.css, `both`) schon zweimal Dialoge und die
+     Kosmo-Blase gefangen (KosmoPanel.tsx, DockRegeln.tsx). Hier ist das
+     Endbild immer der Ruhezustand; `backwards` haelt nur das Anfangsbild
+     waehrend der Verzoegerung, danach ist die Animation weg.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Versatz je Stufe beim gestaffelten Eintritt (066 §4 nannte 24 ms bisher
+     nur als Inline-Zahl). Nach acht Stufen ist Schluss: 8 × 24 = 192 ms,
+     kuerzer als ein --k-motion-base — der Rest kommt gleichzeitig. */
+  --k-staffel-schritt: 24ms;
+  /* U13 (Owner B2/B3, 01.10.2026). Beide liegen ueber der 400er-Linie und
+     sind damit Ablauf, nicht Antwort auf eine Bedienung (aura.css, Dauer-
+     Leiter): der Platzhalter atmet in 1,8 s (gleich wie das Warten in Visbox, Abstimmung 01.10.2026), der
+     Fertig-Puls laeuft einmal in 640 ms aus (doppeltes «setzen»). */
+  --k-warten-takt: 1.8s;
+  --k-puls-dauer: 640ms;
+}
+
+/* ── B1 · Aufklappen ────────────────────────────────────────────────────────
+   Hoehe von 0 auf «so hoch wie noetig», ohne zu messen: die Gitterzeile geht
+   von 0fr auf 1fr. Oeffnen mit --k-motion-base, Schliessen schneller mit
+   --k-motion-fast (Austritt schneller als Eintritt, 066 §1).
+   Gebrauch:
+     <div class="k-aufklappen" data-offen="true|false">
+       <div class="k-aufklappen-inhalt">…</div>
+     </div>
+   Zu heisst NICHT DA, nicht nur null Pixel hoch: `visibility: hidden` nimmt
+   den Inhalt aus Tab-Reihenfolge, Vorlesen und Zeigertreffern — sonst meldet
+   die Insel-Wache die Felder als verdeckt (AssetWorkspace.tsx, «Zu heisst
+   hier: nicht da»). `visibility` wird beim Schliessen erst am Ende der
+   Bewegung umgeschaltet (so interpoliert der Browser sie), beim Oeffnen
+   sofort.
+   Der Rand darf um --k-s2 ueberstehen, damit Fokusring und Feldrahmen nicht
+   abgeschnitten werden (`overflow: clip` mit Rand statt `hidden`). */
+.k-aufklappen {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--k-motion-fast);
+}
+.k-aufklappen[data-offen='true'] {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--k-motion-base);
+}
+.k-aufklappen > .k-aufklappen-inhalt {
+  min-height: 0;
+  overflow: clip;
+  overflow-clip-margin: var(--k-s2);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--k-motion-fast),
+    visibility var(--k-motion-fast);
+}
+.k-aufklappen[data-offen='true'] > .k-aufklappen-inhalt {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--k-motion-base),
+    visibility var(--k-motion-base);
+}
+
+/* ── B2 · Staffel ───────────────────────────────────────────────────────────
+   Kinder eines neu aufgebauten Satzes erscheinen nacheinander (Opacity +
+   4 px, dieselbe Figur wie .k-einblenden). Die Stufe setzt die Komponente:
+   style={{ '--k-i': index }}. Hoechstens 8 Stufen, alles danach kommt mit
+   der achten — eine lange Liste soll nicht «nachtroepfeln». */
+.k-staffel {
+  animation: k-staffel var(--k-motion-settle) backwards;
+  animation-delay: calc(min(var(--k-i, 0), 8) * var(--k-staffel-schritt));
+}
+@keyframes k-staffel {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── B4 · Zeichnen ──────────────────────────────────────────────────────────
+   Eine Linie zeichnet sich einmal von Anfang bis Ende: zeigt eine Verbindung
+   und ihre Richtung (Draehte, Pfeile). Der Pfad braucht pathLength="1",
+   dann sind Strich und Luecke genau eine Pfadlaenge, unabhaengig von der
+   echten Laenge. Kein Dauerlauf — die Animation endet und bleibt stehen. */
+.k-zeichnen {
+  stroke-dasharray: 1;
+  animation: k-zeichnen var(--k-motion-settle) backwards;
+}
+@keyframes k-zeichnen {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── B5 · Ankommen ──────────────────────────────────────────────────────────
+   Dieselbe Figur wie `.k-einblenden` (Opacity + 4 px, --k-motion-settle),
+   aber ohne festgehaltenes Endbild (s. Kopf). Fuer eine Flaeche, die neu
+   erscheint und in der etwas `position:fixed` stehen kann — eine Station,
+   eine Ansicht innerhalb einer Station. `.k-einblenden` selbst bleibt
+   unveraendert: ihr `both` umzustellen betrifft jede Station und ist
+   Sache des Integrators (Vorschlag im Leitfaden §7). */
+.k-ankommen {
+  animation: k-staffel var(--k-motion-settle) backwards;
+}
+
+/* ── B6 · Warten am Ort (U13, Owner B2) ─────────────────────────────────────
+   Der Platzhalter steht dort, wo das Ergebnis erscheint, in dessen Groesse
+   (die setzt der Einsatzort). Unbestimmt: ein leiser Schleier atmet.
+   Bestimmt: eine Fuellung waechst von links (nur transform). Gebrauch ueber
+   `KWarteOrt` (warten-fertig.tsx). */
+.k-warten {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: var(--k-s7);
+  padding: var(--k-s3);
+  border-radius: var(--k-radius);
+  background: color-mix(in oklab, var(--k-ink) 5%, transparent);
+  color: var(--k-ink-faint);
+  font: inherit;
+  text-align: center;
+}
+.k-warten[data-art='unbestimmt']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--k-ink) 6%, transparent);
+  opacity: 0.3;
+  animation: k-warten-atem var(--k-warten-takt) ease-in-out infinite;
+}
+@keyframes k-warten-atem {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.k-warten-fuellung {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: color-mix(in oklab, var(--k-accent) 14%, transparent);
+  transition: transform var(--k-motion-settle);
+}
+.k-warten-text {
+  position: relative;
+}
+/* Form «Leiste» (06.10.2026, Owner: Fortschritt für alle Vorgänge und Downloads): Textzeile links, darunter ein
+   Balken von 3 px über die ganze Breite — Spur gedämpft, Füllung in der Akzentfarbe. Der Text bricht höchstens auf
+   zwei Zeilen um und verlässt nie seine Box (UI-Regel 2). */
+.k-warten[data-form='leiste'] {
+  display: block;
+  min-height: 0;
+  padding: var(--k-s1) 0 calc(3px + var(--k-s2));
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-eng);
+}
+.k-warten[data-form='leiste']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: var(--k-radius-pill);
+  background: color-mix(in oklab, var(--k-ink) 12%, transparent);
+}
+.k-warten[data-form='leiste'] .k-warten-fuellung {
+  inset: auto 0 0 0;
+  height: 3px;
+  z-index: 1;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-accent);
+}
+.k-warten[data-form='leiste'][data-art='unbestimmt']::before {
+  inset: auto 0 0 0;
+  height: 3px;
+  z-index: 1;
+  border-radius: var(--k-radius-pill);
+  background: color-mix(in oklab, var(--k-accent) 60%, transparent);
+}
+.k-warten[data-form='leiste'] .k-warten-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* ── B7 · Fertig-Puls (U13, Owner B3) ───────────────────────────────────────
+   Ein Ring in der Farbe des Elements laeuft einmal nach aussen aus. Das
+   Endbild ist unsichtbar (opacity 0) — also der Ruhezustand, kein
+   festgehaltenes Bild. Der Ring wird bei jedem neuen Fertig neu eingesetzt
+   (`KFertigPuls`), dadurch startet die Animation neu. */
+.k-fertig-puls {
+  position: relative;
+}
+.k-fertig-puls-ring {
+  position: absolute;
+  inset: 0;
+  /* Form-Familie (Owner B8): eckig fuer Inhalt, rund fuer Bedienung —
+     `KFertigPuls rund` setzt die Pille. */
+  border-radius: var(--k-puls-rundung, var(--k-radius));
+  box-shadow: 0 0 0 2px var(--k-puls-farbe, currentColor);
+  opacity: 0;
+  pointer-events: none;
+  animation: k-fertig-puls var(--k-puls-dauer) cubic-bezier(0.22, 0.9, 0.28, 1);
+}
+@keyframes k-fertig-puls {
+  from {
+    opacity: 0.9;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+/* ── B8 · Aus dem Auslöser (U19, Owner C5) ─────────────────────────────────
+   Ein Fenster wächst aus dem Knopf, der es geöffnet hat: Den Ursprung setzt
+   `useHerkunft` (herkunft.ts) als `transform-origin`, hier steht nur die
+   Bewegung. Federnd (Owner C1), ab 92 % Grösse, nie aus scale(0). Das Endbild
+   ist der Ruhezustand (kein `both`), also kein Anker für `position:fixed`. */
+.k-aus-ausloeser {
+  animation: k-aus-ausloeser var(--k-feder) backwards;
+}
+@keyframes k-aus-ausloeser {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── B9 · Vergleich gleitet beim Sprung (C45) ───────────────────────────────
+   Nur der Sprung über den Umschalter gleitet; beim Ziehen folgt die Linie dem
+   Zeiger ohne Verzögerung (KVergleich setzt die Klasse nur beim Sprung). */
+.k-vergleich--gleitet .k-vergleich-rechts {
+  transition: clip-path var(--k-motion-base);
+}
+.k-vergleich--gleitet .k-vergleich-linie {
+  transition: left var(--k-motion-base);
+}
+
+/* ── Reduced Motion: Schnitt statt Bewegung ─────────────────────────────────
+   Jeder Baustein steht hier einzeln. Der Endzustand bleibt derselbe — nur der
+   Weg dorthin entfaellt. */
+@media (prefers-reduced-motion: reduce) {
+  .k-aufklappen,
+  .k-aufklappen[data-offen='true'],
+  .k-aufklappen > .k-aufklappen-inhalt,
+  .k-aufklappen[data-offen='true'] > .k-aufklappen-inhalt {
+    transition: none;
+  }
+  .k-staffel {
+    animation: none;
+  }
+  .k-zeichnen {
+    animation: none;
+    stroke-dasharray: none;
+  }
+  .k-ankommen {
+    animation: none;
+  }
+  .k-warten[data-art='unbestimmt']::before {
+    animation: none;
+    opacity: 0.6;
+  }
+  .k-warten-fuellung {
+    transition: none;
+  }
+  .k-fertig-puls-ring {
+    animation: none;
+  }
+  .k-aus-ausloeser {
+    animation: none;
+  }
+  .k-vergleich--gleitet .k-vergleich-rechts,
+  .k-vergleich--gleitet .k-vergleich-linie {
+    transition: none;
+  }
+}

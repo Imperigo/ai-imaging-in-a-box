@@ -94,7 +94,9 @@ describe('KuratierInspektor — "nicht-zustaendig" bekommt einen eigenen Satz st
     expect(bewertungsLage(qa)).toBe('widerrufen');
     render(qa);
     const text = container!.textContent ?? '';
-    expect(text).toContain('Bewertung zurueckgezogen');
+    // HomeStation 268: der Satz betrifft nur die Sterne, keine Gegenaussage zum Verdikt.
+    expect(text).toContain('Keine Sterne: die Geometrie-Zahlen dieses Ergebnisses sind als Wertung widerrufen.');
+    expect(text).not.toContain('zurueckgezogen');
     expect(text).not.toContain('nichts zu messen');
   });
 });

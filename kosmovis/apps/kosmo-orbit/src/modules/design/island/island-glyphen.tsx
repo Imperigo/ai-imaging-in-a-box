@@ -293,15 +293,6 @@ const sync = glyphe(
   </>,
 );
 
-/** Manuell — Schalter-Pille mit Knopf, Akzent als Bedienpunkt (Handsteuerung statt Automatik). */
-const manuell = glyphe(
-  <>
-    <rect x="4" y="9" width="16" height="8" rx="4" />
-    <circle cx="9" cy="13" r="2.6" />
-    {akzent(9, 13)}
-  </>,
-);
-
 /** Skizze — Freihandstift zieht eine Linie zu Papier, Akzent an der Stiftspitze (Bauauftrag Punkt 2). */
 const skizze = glyphe(
   <>
@@ -489,7 +480,8 @@ const bauablauf = glyphe(
   </>,
 );
 
-/** KosmoDraw — Modellbaum: Wurzelknoten, Stamm, zwei Kindknoten (das
+/** KosmoQuantity (bis 21.09.2026 «KosmoDraw») — Modellbaum:
+ *  Wurzelknoten, Stamm, zwei Kindknoten (das
  *  Panel ist zuerst ein Baum, dann Mengen/Ausmass), Akzent am ersten
  *  Verzweigungspunkt. B77, C-8. */
 const draw = glyphe(
@@ -503,8 +495,100 @@ const draw = glyphe(
   </>,
 );
 
-/** Die 37 Werkzeug-Icons, geschlüsselt nach `island-katalog.ts`s `IslandWerkzeug.id`. */
+/** Volumenstudie (U25 Phase 0, `inhalte/s-panels.tsx`) — drei Baukörper
+ *  unterschiedlicher Höhe auf einer Grundlinie (die Varianten der Studie),
+ *  Akzent an der Oberkante des höchsten Körpers (das Höhenlimit). */
+const studie = glyphe(
+  <>
+    <path d="M3 20.5 H21" />
+    <rect x="4" y="13" width="4.5" height="7.5" />
+    <rect x="9.75" y="7" width="4.5" height="13.5" />
+    <rect x="15.5" y="15" width="4.5" height="5.5" />
+    {akzent(12, 7)}
+  </>,
+);
+
+/** Fensterband (U25 Phase 0, `inhalte/s-panels.tsx`) — ein durchlaufendes
+ *  Band mit Pfosten und einem Riegel; Akzent im Kreuzungspunkt von Pfosten
+ *  und Riegel (dort teilt das Raster). */
+const fensterband = glyphe(
+  <>
+    <rect x="3" y="6.5" width="18" height="11" rx="0.8" />
+    <path d="M9 6.5 V17.5 M15 6.5 V17.5 M3 12 H21" />
+    {akzent(15, 12)}
+  </>,
+);
+
+/** Stuetzenraster (U25 Phase 0) — zwei Achsen je Richtung, zwei Stuetzen im
+ *  Raster; Akzent am Achsenkreuz zwischen ihnen. */
+const stuetzenraster = glyphe(
+  <>
+    <path d="M3 8 H21 M3 16 H21 M8 3 V21 M16 3 V21" />
+    <rect x="6.25" y="6.25" width="3.5" height="3.5" />
+    <rect x="14.25" y="14.25" width="3.5" height="3.5" />
+    {akzent(16, 8)}
+  </>,
+);
+
+/** Splat (U25 Phase 0, `inhalte/s-panels.tsx`) — eine Punktwolke: sieben
+ *  kleine Punkte in lockerer Haufenform, Akzent im dichtesten Punkt. */
+const splat = glyphe(
+  <>
+    <circle cx="6" cy="17" r="1.3" />
+    <circle cx="10.5" cy="13.5" r="1.3" />
+    <circle cx="15" cy="17.5" r="1.3" />
+    <circle cx="18.5" cy="12" r="1.3" />
+    <circle cx="8" cy="8" r="1.3" />
+    <circle cx="14" cy="7" r="1.3" />
+    {akzent(12.5, 11)}
+  </>,
+);
+
+/** Unternehmerplan (U25 Phase 0) — der Architektenplan (durchgezogener
+ *  Grundriss) und darueber der Rueckmeldeplan des Unternehmers (kurze Striche
+ *  daneben); Akzent an der Abweichung. */
+const unternehmerplan = glyphe(
+  <>
+    <path d="M4 19 V6 H13 V12 H20 V19 Z" />
+    <path d="M7 16 H10 M15 16 H17.5" />
+    {akzent(13, 12)}
+  </>,
+);
+
+/** Möbel (K2, `docs/AUFTRAG-EINBAU-B163-KOSMODESIGN-AN-INTEGRATOR.md` §K2) —
+ *  Sofa-Silhouette: Sitzfläche, zwei Armlehnen, zwei Beine, Akzent am
+ *  Sitzkissen-Knick (der Punkt, an dem man das Möbel "packt"). Auch
+ *  `zeichen: 'moebel'` in `island-katalog.ts`s `ZEICHNEN_GRUPPEN` (Gruppen-
+ *  Symbol «Einrichten») nutzt dieses Icon. */
+const moebel = glyphe(
+  <>
+    <path d="M4.5 10 A1.75 1.75 0 0 1 8 10 V13 H16 V10 A1.75 1.75 0 0 1 19.5 10 V17 H4.5 Z" />
+    <path d="M8 13 H16" />
+    <path d="M5.5 17 V19.5 M18.5 17 V19.5" />
+    {akzent(12, 13)}
+  </>,
+);
+
+/** Leuchte (K2) — Pendelleuchte: Deckenkappe, Schnur, Kegelschirm, Akzent an
+ *  der Lichtquelle (Schirm-Unterkante Mitte — dort, wo das Licht austritt).
+ *  Auch `zeichen`-Fallback für die Gruppe «Einrichten», falls `moebel` einmal
+ *  fehlt (s. `island-katalog.ts`). */
+const leuchte = glyphe(
+  <>
+    <path d="M9 3.5 H15" />
+    <path d="M12 3.5 V7.5" />
+    <path d="M7.5 7.5 H16.5 L14.5 14.5 H9.5 Z" />
+    {akzent(12, 17.5)}
+  </>,
+);
+
+/** Die 39 Werkzeug-Icons, geschlüsselt nach `island-katalog.ts`s `IslandWerkzeug.id`.
+ *  K2 (`docs/AUFTRAG-EINBAU-B163-KOSMODESIGN-AN-INTEGRATOR.md`, Paket
+ *  dl-d4-gruppenschiene, Nachbesserung 24.09.2026): +2 (`moebel`/`leuchte`) —
+ *  vorher 37, s. Kommentar an den beiden neuen Konstanten oben. */
 export const ISLAND_GLYPHEN: Record<string, ComponentType<GlyphProps>> = {
+  moebel,
+  leuchte,
   oeffnung,
   messen,
   kommentare,
@@ -523,7 +607,6 @@ export const ISLAND_GLYPHEN: Record<string, ComponentType<GlyphProps>> = {
   rendern,
   blaetter,
   sync,
-  manuell,
   skizze,
   gelaender,
   rampe,
@@ -545,6 +628,12 @@ export const ISLAND_GLYPHEN: Record<string, ComponentType<GlyphProps>> = {
   maengel,
   bauablauf,
   draw,
+  // U25 Phase 0: Insel-Heimat der Volumenstudie (`s-panels.tsx`).
+  studie,
+  fensterband,
+  stuetzenraster,
+  splat,
+  unternehmerplan,
 };
 
 // ── 4 Island-Pill-Icons ────────────────────────────────────────────────

@@ -134,7 +134,7 @@
      weitergedacht. So bleibt der Grad farbunabhaengig lesbar, und die Farbe
      beantwortet die zweite Frage, die ein Architekt stellt: von wem? */
   --k-herkunft-mensch: var(--k-rolle-manuell, #74c2a0); /* der Architekt hat es gesagt */
-  --k-herkunft-kosmo: var(--k-mod-kosmo, #b06a8c); /* Kosmo hat es ausgelegt */
+  --k-herkunft-kosmo: var(--k-mod-kosmo, #e5174f); /* Kosmo hat es ausgelegt */
   --k-herkunft-norm: var(--k-skizze-tinte-basis); /* es steht in einer Norm — neutral, kein Ton */
   --k-herkunft-punkt: 4px; /* Durchmesser des Herkunftspunkts */
 
@@ -169,10 +169,10 @@
      nicht vom Werkzeug, sondern von der Stimme im Raum. */
   --k-zuruf-flaeche: color-mix(
     in srgb,
-    var(--k-mod-kosmo, #b06a8c) 7%,
+    var(--k-mod-kosmo, #e5174f) 7%,
     var(--k-orb-glas-basis, rgba(20, 23, 31, 0.35))
   );
-  --k-zuruf-rand: color-mix(in srgb, var(--k-mod-kosmo, #b06a8c) 28%, transparent);
+  --k-zuruf-rand: color-mix(in srgb, var(--k-mod-kosmo, #e5174f) 28%, transparent);
   /* Maximale Satzbreite des Zurufs. 480px, weil ein Befund in zwei bis drei
      Zeilen lesbar sein muss, ohne die Zeichenflaeche zu kapern. */
   --k-zuruf-breite: 480px;

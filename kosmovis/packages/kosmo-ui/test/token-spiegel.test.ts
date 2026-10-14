@@ -9,7 +9,6 @@ import {
   orbit,
   paper,
   radius,
-  radiusHub,
   scale,
   semantic,
   shadow,
@@ -51,14 +50,35 @@ function block(css: string, selectorNeedle: string): string {
   return css.slice(open, i + 1);
 }
 
-/** Liest `--k-name: WERT;` aus einem Block-Ausschnitt. */
+/** Liest `--k-name: WERT;` aus einem Block-Ausschnitt.
+ *
+ * 21.09.2026 (Form-Familie, Owner-Entscheid): seit die sieben alten
+ * Radius-Namen auf `--k-radius` UMGEHÄNGT statt gelöscht wurden, steht in
+ * aura.css an diesen Stellen ein Verweis (`var(--k-radius)`) und kein
+ * Literal mehr. Der Spiegel darf daran nicht blind werden — er löst den
+ * Verweis darum im SELBEN Block auf (beliebig tief, mit Zyklus-Riegel) und
+ * vergleicht weiter den tatsächlichen Wert. Ein Token ohne Ziel bleibt ein
+ * Testfehler, kein stilles Durchwinken. */
 function lies(blockCss: string, varName: string, blockLabel: string): string {
-  const m = blockCss.match(new RegExp(`${varName}:\\s*([^;]+);`));
-  const wert = m?.[1];
-  if (wert === undefined) {
-    throw new Error(`token-spiegel: "${varName}" nicht im Block "${blockLabel}" von aura.css gefunden.`);
+  const gesehen = new Set<string>();
+  let name = varName;
+  for (;;) {
+    if (gesehen.has(name)) {
+      throw new Error(`token-spiegel: Verweis-Zyklus über "${name}" im Block "${blockLabel}" von aura.css.`);
+    }
+    gesehen.add(name);
+    const m = blockCss.match(new RegExp(`${name}:\\s*([^;]+);`));
+    const roh = m?.[1];
+    if (roh === undefined) {
+      throw new Error(`token-spiegel: "${name}" nicht im Block "${blockLabel}" von aura.css gefunden.`);
+    }
+    // Kommentar hinter dem Wert (`var(--k-radius); /* war 12px */`) abstreifen.
+    const wert = roh.replace(/\/\*[\s\S]*?\*\//g, '').trim();
+    const verweis = wert.match(/^var\((--[a-z0-9-]+)\)$/);
+    const ziel = verweis?.[1];
+    if (ziel === undefined) return wert;
+    name = ziel;
   }
-  return wert.trim();
 }
 
 // Die Theme-relevanten Blöcke — needle enthält die abschliessende Klammer,
@@ -173,8 +193,12 @@ describe('token-spiegel (W0): aura.css ist die Wahrheit, tokens.ts folgt exakt',
     }
   });
 
-  it('NEU (W1) --k-radius-hub stimmt mit tokens.radiusHub überein', () => {
-    expect(radiusHub, 'radiusHub vs. --k-radius-hub').toBe(lies(rootBlock, '--k-radius-hub', ':root'));
+  it('--k-radius-hub ist eingezogen — weder aura.css noch tokens.ts führen ihn noch', () => {
+    // 21.09.2026 (Form-Entscheid 1a): der Token hatte null Verbraucher und
+    // wurde NUR von diesem Spiegeltest am Leben gehalten. Statt ihn still zu
+    // streichen prüft der Spiegel jetzt seine Abwesenheit — sonst kommt er
+    // bei der nächsten Gelegenheit wieder, und niemand merkt es.
+    expect(rootBlock, '--k-radius-hub lebt wieder in aura.css').not.toMatch(/--k-radius-hub:/);
   });
 
   it('NEU (W1) Flächenstufe Hover (--k-hover) stimmt beidseitig überein (paper + orbit)', () => {

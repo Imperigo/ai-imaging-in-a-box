@@ -14,6 +14,7 @@ import {
   type SelectHTMLAttributes,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { zEbeneLeiter } from './tokens';
 
 /**
  * KSelect (v0.6.9) — ECHTES Custom-Dropdown im Werkplan-Stil.
@@ -171,6 +172,22 @@ function berechnePopupLage(triggerRect: DOMRect): PopupLage {
  * Viewport heraus ist — deckungsgleich mit Abnahme 4 des Urteils
  * («weiterscrollen, bis der Trigger den Clip verlässt»).
  */
+/**
+ * Int 24 (01.10.2026): ob ein Element der Bezugsrahmen fensterfester
+ * Nachkommen ist (CSS «containing block» fuer `position: fixed`). Nur dann
+ * beschneidet sein `overflow` sie; sonst haengen sie am Fenster.
+ */
+function istFixBezug(stil: CSSStyleDeclaration): boolean {
+  const gesetzt = (w: string | undefined) => !!w && w !== 'none';
+  return (
+    gesetzt(stil.transform) ||
+    gesetzt(stil.perspective) ||
+    gesetzt(stil.filter) ||
+    /paint|layout|strict|content/.test(stil.contain ?? '') ||
+    /transform|perspective|filter/.test(stil.willChange ?? '')
+  );
+}
+
 function triggerSichtbar(trigger: HTMLElement): boolean {
   const rect = trigger.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return false;
@@ -178,9 +195,24 @@ function triggerSichtbar(trigger: HTMLElement): boolean {
   let oben = 0;
   let rechts = window.innerWidth;
   let unten = window.innerHeight;
+  // Int 24 (01.10.2026, Probe `e2e/p-anker-scroll-anker.spec.ts` Abnahme 3):
+  // liegt der Trigger in einem `position: fixed`-Element (das Kosmo-
+  // Seitenfenster), klippen die Vorfahren JENSEITS davon ihn nicht — gemessen
+  // hing das Fenster (x 970..1400) unter `.app-main` (overflow hidden,
+  // x 0..970), die Schnittmenge war leer, und das Popup schloss beim ersten
+  // Rollen der Einstellungen. Ab einem fensterfesten Element zaehlen darum
+  // nur noch Vorfahren, die selbst Bezugsrahmen fuer `fixed` sind.
+  let fensterfest = window.getComputedStyle(trigger).position === 'fixed';
   let knoten: HTMLElement | null = trigger.parentElement;
   while (knoten && knoten !== document.body && knoten !== document.documentElement) {
     const stil = window.getComputedStyle(knoten);
+    if (fensterfest) {
+      if (!istFixBezug(stil)) {
+        knoten = knoten.parentElement;
+        continue;
+      }
+      fensterfest = false;
+    }
     // '' (leer) ≠ 'visible', tritt aber in jsdom (Unit-Tests) für JEDES
     // Element ohne explizite overflow-Regel auf — ein echter Browser löst
     // das immer auf einen konkreten Wert auf ('visible' ist die
@@ -201,6 +233,7 @@ function triggerSichtbar(trigger: HTMLElement): boolean {
         unten = Math.min(unten, r.bottom);
       }
     }
+    if (stil.position === 'fixed') fensterfest = true;
     knoten = knoten.parentElement;
   }
   const l = Math.max(rect.left, links);
@@ -478,7 +511,9 @@ export function KSelect(props: KSelectProps) {
   const popupId = `${id}-listbox`;
 
   return (
-    <span ref={wrapRef} style={{ position: 'relative', display: 'inline-block', ...wrapStyle }}>
+    // v0.1.8 (KosmoDraw, Freigabe Inspector R22): `max-width: 100%` — sonst wurde die Hülle so breit wie der ganze
+    // Text, und der Knopf kürzte nie mit «…», sondern lief über seine Zelle hinaus.
+    <span ref={wrapRef} style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', ...wrapStyle }}>
       <button
         {...(rest as Record<string, unknown>)}
         ref={triggerRef}
@@ -491,6 +526,9 @@ export function KSelect(props: KSelectProps) {
         {...(offen ? { 'aria-activedescendant': `${id}-opt-${aktivIndex}` } : {})}
         {...(testid !== undefined ? { 'data-testid': testid } : {})}
         data-value={wert}
+        // Gekürzt («…») muss der Volltext erreichbar bleiben: als Hinweis beim Darüberfahren, ausser der Aufrufer
+        // setzt selbst einen `title` (dann gewinnt seiner, er steht in `rest` oben und wird hier nicht überschrieben).
+        {...((rest as { title?: unknown }).title === undefined && anzeige !== '' ? { title: anzeige } : {})}
         disabled={disabled ?? false}
         // Gemessener Befund (23.08.2026, `docs/BEFUND-SELECT-SCHLIESST-SICH-SELBST.md`,
         // hier per Diagnose-Sonde WEITER eingegrenzt): die eigentliche Ursache
@@ -536,7 +574,12 @@ export function KSelect(props: KSelectProps) {
         // P-F6 (v0.9.2): Listbox als body-Portal mit fixer Lage aus dem
         // Trigger-Rechteck — entkommt den overflow-Klippen der Insel-Popups
         // (P-F4-Fund, island.css:410/446 ↔ vorher position:absolute hier).
-        // z-index unter der CursorEbene (2147483000), über allen Fenstern.
+        // z-index unter der Zeiger-Ebene, ueber allen Fenstern. Seit dem
+        // 21.09.2026 auf der Ebenen-Leiter: `meldung + 30` = 330 steht ueber
+        // Meldung (300), Bestaetigung (310) und Startkurtine (320) und unter
+        // dem Zeiger (400) — dieselbe Stellung wie vorher, nur in Zahlen, die
+        // niemand ueberbieten muss. Vorher 2147482000, «eine Einheit unter
+        // der CursorEbene».
         createPortal(
         <div
           ref={listeRef}
@@ -553,7 +596,7 @@ export function KSelect(props: KSelectProps) {
           className="k-menu offen k-einblenden"
           style={{
             position: 'fixed',
-            zIndex: 2147482000,
+            zIndex: zEbeneLeiter.meldung + 30,
             ...(popupLage
               ? {
                   left: popupLage.left,

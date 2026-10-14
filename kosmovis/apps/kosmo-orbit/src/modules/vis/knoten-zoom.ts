@@ -61,3 +61,21 @@ export function zoomAmZeiger(
   const differenz = 1 / v.scale - 1 / neu;
   return { cx: v.cx + dx * differenz, cy: v.cy + dy * differenz, scale: neu };
 }
+
+/**
+ * **Verstaerkung je Zoom-Schritt** (Owner 14.10.2026, in der Mac-App von Visbox: «das Scrollen
+ * ist sehr traege, man muss viel scrollen, um naeher an die Knoten zu kommen oder
+ * rauszuzoomen»). Mausrad, Pinch in Chromium (`wheel` + ctrlKey) und Pinch in WebKit liefern
+ * je Ereignis einen Faktor; er wird hier potenziert. Mit 2.5 zoomt ein Mausrad-Notch
+ * (deltaY 100) um rund 26 % statt 11 %, und ein Pinch wirkt entsprechend staerker.
+ *
+ * Gilt nur fuer den Knotengraph — Grundriss, Schnitt und Tafeln behalten ihre Werte
+ * (`navigation-geste.ts`, nicht Teil des Vis-Werkzeugs).
+ */
+export const KNOTEN_ZOOM_VERSTAERKUNG = 2.5;
+
+/** Der Faktor eines Zoom-Schritts, verstaerkt um {@link KNOTEN_ZOOM_VERSTAERKUNG}. */
+export function verstaerkterFaktor(faktor: number): number {
+  if (!Number.isFinite(faktor) || faktor <= 0) return 1;
+  return Math.pow(faktor, KNOTEN_ZOOM_VERSTAERKUNG);
+}

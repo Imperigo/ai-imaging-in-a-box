@@ -24,6 +24,7 @@ export interface FlipRechteck {
 }
 
 export function reduzierteBewegungAktiv(): boolean {
+  if (typeof document !== 'undefined' && document.documentElement.getAttribute('data-bewegung') === 'aus') return true;
   return (
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&

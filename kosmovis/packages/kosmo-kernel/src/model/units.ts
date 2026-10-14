@@ -109,3 +109,13 @@ export function polygonFlaeche(poly: readonly Pt[]): number {
   if (poly.length < 3) return 0;
   return Math.abs(polygonArea(poly));
 }
+
+/**
+ * B9: die UMLAUFRICHTUNG als Frage, nicht als Vorzeichen einer Fläche —
+ * `true` = gegen den Uhrzeiger (positiver Drehsinn, x Ost / y Nord). Wer
+ * einen Umriss dreht (Splat-Übernahme, Wände aus Volumen), fragt hier und
+ * muss sich nicht in die Ausnahmeliste des P-VORZEICHEN-Wächters eintragen.
+ */
+export function gegenUhrzeiger(poly: readonly Pt[]): boolean {
+  return polygonArea(poly) > 0;
+}

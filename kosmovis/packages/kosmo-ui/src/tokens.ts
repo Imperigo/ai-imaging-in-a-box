@@ -13,7 +13,8 @@
  * v0.7.3 D7 (Owner-Entscheid, Gestaltungs-Spez): Theme-PAAR Papier (hell) und
  * Kosmos/`orbit` (dunkel) — Tinte (`ink`) wurde ENTFERNT (Migration
  * `ink→orbit` in `App.tsx`, VOR dem `useState`). Standard-Akzent ist die
- * Teal-Familie (Papier `#3e96a2`, Kosmos `#57b6c2`) — wählbare Zweit-Akzente
+ * Teal-Familie (Papier `#006d79` — knallig seit 01.10.2026, U5; davor `#2d6d76` —, Kosmos `#69bec9`, nachgeschaerft 23.09.2026
+ * fuer 4.5:1 Akzentschrift; bis dahin `#3e96a2`/`#57b6c2`) — wählbare Zweit-Akzente
  * (Kupfer, Signal, Blau, Grün) leben als `data-akzent`-Blöcke in aura.css.
  * Sekundär trägt jedes Modul einen eigenen, zurückhaltenden Farbton, der nur
  * in Zeichen, Badges und aktiven Zuständen erscheint — nie flächig.
@@ -38,8 +39,8 @@ export const paper = {
   line: '#e4e0d6',
   lineStrong: '#c9c4b6',
   /** Standard-Akzent (kein `data-akzent` gesetzt) — Teal dunkel, v0.7.3 D7. */
-  accent: '#3e96a2',
-  accentInk: '#06141a',
+  accent: '#006d79',
+  accentInk: '#ffffff',
   /**
    * v0.8.0B / W1 (Spez §1 B-26) — Flächenstufe Hover, Papier-Äquivalent.
    * Mittelwert zwischen `field` (#f5f3ee) und `line` (#e4e0d6): dunkler als
@@ -75,27 +76,33 @@ export const semantic = {
  * — dort gilt dieser TS-Wert als Erstdefinition.
  */
 export const moduleHue = {
-  orbit: '#8f897b', // die Zentrale bleibt neutral
-  design: '#c25e3a', // Entwerfen trägt die Markenfarbe
-  draw: '#4e4a42', // Graphit — die Zeichnung
-  data: '#46617a', // tiefes Blau — das Wissen
-  vis: '#c79a3d', // Bernstein — das Licht
-  publish: '#6f8b6a', // Salbei — das fertige Blatt
-  prepare: '#7d5e78', // Pflaume — die Grundlagen
-  kosmo: '#b06a8c', // Kosmo selbst: warmes Karmin-Rosé, die Stimme im Raum
-  train: '#8c6d3f', // Ocker — das Lernen, Schicht um Schicht
-  doc: '#5d7489', // Schiefer — Diagnose und Berichte
-  sketch: '#96604a', // Sienna — der Stift auf Papier
-  speak: '#4f7a7a', // Petrol — die Stimme im Raum
-  asset: '#7a6a55', // Nussbaum — die Bibliothek der Dinge
-  dev: '#5e6b52', // Tannengrün — die Werkstatt an der Software
+  // Owner 30.09.2026 (Logo-Sammlung, Blatt «Farben»): «die farbpalette
+  // allgemein darf knalliger wieder sein … nutze popige farben, darf auch
+  // neon inhalte haben» und «ja farben sind toll, bitte kosmo logo nicht
+  // pink, nimm ein cooles rot». Die frueheren gedeckten Toene (Graphit,
+  // Salbei, Pflaume …) sind ersetzt; die Worte in den Kommentaren unten
+  // nennen die Rolle, nicht mehr den Ton. KosmoSpez: Neon-Limette.
+  orbit: '#12d8ea', // KosmoOrbit selbst: Neon-Türkis der Marke
+  design: '#ff4d2e', // Entwerfen trägt die Markenfarbe
+  draw: '#3d6bff', // Graphit — die Zeichnung
+  data: '#00b4f0', // tiefes Blau — das Wissen
+  vis: '#ffc21a', // Bernstein — das Licht
+  publish: '#1fd17a', // Salbei — das fertige Blatt
+  prepare: '#b24dff', // Pflaume — die Grundlagen
+  kosmo: '#e5174f', // Kosmo selbst: cooles Rot, die Stimme im Raum
+  train: '#ffb020', // Ocker — das Lernen, Schicht um Schicht
+  doc: '#5b8cff', // Schiefer — Diagnose und Berichte
+  sketch: '#ff6b57', // Sienna — der Stift auf Papier
+  speak: '#14d9c4', // Petrol — die Stimme im Raum
+  asset: '#ff8a1f', // Nussbaum — die Bibliothek der Dinge
+  dev: '#7cd65b', // Tannengrün — die Werkstatt an der Software
   // v0.8.1 / P11 (docs/V081-SPEZ.md §7(a), C-29): Indigo — der Vertrauens-
   // Siegel-Ton fürs .kxp-Hyper-Modell + die Trust-Layer-Freigabe.
-  trust: '#5b5a8a',
+  trust: '#8e6cff',
   // v0.8.1 / P14 (docs/V081-SPEZ.md §7(e), C-28/C-30): gedecktes Zinn —
   // der Export-Hub/KosmoPackage-Screen, der die sechs realen Formate + .kxp
   // an einem Ort bündelt.
-  paket: '#6b7a8a',
+  paket: '#5fb3d9',
   // P-SPEZ (`docs/KOSMOSPEZ-KONZEPT.md` §h7): KosmoSpez, das achte Haupttool
   // (Energie-/Klimadesign, Sonnenstudien). Endgültige Stationsfarbe war laut
   // Konzept ausdrücklich offen («wird mit ClaudeDesign bestimmt») — Owner-
@@ -105,7 +112,7 @@ export const moduleHue = {
   // strikt getrennt von den Ergebnisfarben.» Löst den bisherigen
   // moosig-grauen Platzhalter ab (ROADMAP-Nachzug, kein Golden-Leser: `derive/`,
   // `plansvg.ts`, `stilblatt.ts` importieren kein `@kosmo/ui`/`tokens.ts`).
-  spez: '#9C84C4',
+  spez: '#b8f02c',
 } as const;
 
 export type ModuleId = keyof typeof moduleHue;
@@ -198,6 +205,33 @@ export const gewicht = {
 export const breakpoint = {
   schmal: 700,
   mittel: 1100,
+  /**
+   * **VIERTE SPROSSE, nachgetragen am 21.09.2026 — und sie ist nach ihrer
+   * AUFGABE benannt, nicht nach einer Groesse.**
+   *
+   * Die drei anderen Sprossen sagen, wie breit das Fenster ist. Diese sagt,
+   * ab wann die Zentrale drei Spalten traegt: Projektbild links, Werkzeuge
+   * in der Mitte, Kosmo rechts (Owner-Auftrag 21.09.2026, «chattext darf
+   * mehr platz einnehmen»).
+   *
+   * **Die Zahl ist gerechnet, nicht gewaehlt.** Die drei Spalten brauchen in
+   * ihrer Mindestbreite 300px (Projektbild) + 456px (Werkzeugreihe 432px
+   * plus Luft) + 320px (Kosmo) = 1076px, dazu zweimal `--k-s7`
+   * Spaltenabstand (64px) und der Seitenrand der Zentrale (2x24px) = 1188px.
+   * 1200 ist die naechste runde Zahl darueber.
+   *
+   * **Warum keine der bestehenden drei Sprossen reicht** — beides
+   * nachgerechnet, nicht geschaetzt: bei `mittel` (1100) blieben fuer Kosmo
+   * 256px, schmaler als die schwebende Blase, die er ersetzen soll; bei
+   * `weit` (1500) gaebe es die Spalte bei 1400x900 nicht, und das ist die
+   * Fenstergroesse, an der der Owner die Zentrale beurteilt.
+   *
+   * **Und der Preis, offen benannt:** eine Skala mit vier Sprossen ist
+   * leichter zu verfehlen als eine mit drei. Der Breakpoint-Waechter
+   * (`test/breakpoint-waechter.test.ts`) liest diese Liste und laesst
+   * weiterhin keine Breite zu, die nicht hier steht.
+   */
+  dreispaltig: 1200,
   weit: 1500,
 } as const;
 
@@ -222,21 +256,108 @@ export const scale = {
   s10: '96px',
 } as const;
 
+/**
+ * Die EINE Flächenrundung R — spiegelt `--k-radius` aus aura.css.
+ *
+ * Form-Familie (Owner-Entscheid 21.09.2026, Verschärfung von Regel 4 in
+ * `docs/kosmodata-neugestaltung/UI-REGELN.md`): das System kennt nur noch
+ * zwei Rundungen — R für Flächen und volle Rundung für Bedienelemente. R =
+ * 16px, weil 32px die gemessene Regelhöhe der Bedienelemente ist
+ * (`.k-werkzeug-kreis` 32 × 32, 30 Fundstellen) und ein 2·R hohes
+ * Bedienelement unter «vollrund» und unter R dieselbe Geometrie hat.
+ */
+export const radiusR = '16px';
+
 /** Radien — spiegelt `--k-radius-sm/-md/-lg` aus aura.css. v0.7.3 D7: die
  * runden Werte 8/12/16px waren bis 0.7.2 ein reiner `orbit`-Override —
  * jetzt themenübergreifende Grammatik im `:root`-Block (Papier UND Kosmos).
  * `pill` bleibt als praktischer Zusatzwert (volle Rundung, keine
- * aura-Variable nötig) bestehen. */
-export const radius = { sm: '8px', md: '12px', lg: '16px', pill: '999px' } as const;
+ * aura-Variable nötig) bestehen.
+ *
+ * 21.09.2026 (Form-Entscheid 1a): `sm`/`md`/`lg` trugen einmal 8/12/16px —
+ * eigene Werte, die der Owner auf die eine Rundung eingezogen hat. Die
+ * Schlüssel bleiben als Verweise bestehen, damit kein Aufrufer bricht; neu
+ * geschriebener Code nimmt `radiusR` bzw. `radius.pill`. Siehe
+ * `RADIUS_ABGELOEST` — die Liste, die die Wache liest. */
+export const radius = { sm: radiusR, md: radiusR, lg: radiusR, pill: '999px' } as const;
 
 /**
- * NEU (v0.8.0B / W1, Spez §1 B-27) — spiegelt `--k-radius-hub`
- * (OrbitStart/Orbit-Hub, themen-agnostisch wie die drei Radien oben).
+ * ABGELÖSTE RUNDUNGSNAMEN — Form-Entscheid 1a, Owner 21.09.2026.
+ *
+ * Sechs Namen, die alle denselben Wert tragen wie `--k-radius`. Sie sind
+ * BESTANDSSCHUTZ, KEIN ANGEBOT: sie bleiben, damit kein Pixel springt, aber
+ * an keiner neuen Stelle. Zwei Namen sind lebendig — `--k-radius` für
+ * Flächen, `--k-radius-pill` für Bedienelemente.
+ *
+ * **DER BESTAND IST AM 21.09.2026 AUF NULL GEFALLEN — alle 157 Stellen sind
+ * umgestellt.** Vorher standen hier sm 77 · md 42 · xs 21 · lg 9 · karte 7 ·
+ * node 1; die Zahlen waren gezählt, nicht geschätzt, und sie sind einzeln
+ * abgearbeitet worden. `bestand: 0` heisst ab jetzt: dieser Name darf
+ * NIRGENDS mehr aufgerufen werden, auch nicht einmal.
+ *
+ * Die Wache (`packages/kosmo-ui/test/form-familie-radius.test.ts`) hält
+ * genau diese Null. Sie ist damit von einer Wachstumsbremse zu einem Riegel
+ * geworden — der Unterschied ist, dass ein einziger neuer Aufruf jetzt rot
+ * meldet statt im Bestand unterzugehen.
+ *
+ * **WARUM DIE DEKLARATIONEN TROTZDEM STEHEN BLEIBEN** (und nicht, wie
+ * `--k-radius-hub`, eingezogen werden): sie haben noch einen Verbraucher.
+ * `docs/skizze-momente.html` ist ein Dokument, das im Browser rendert und
+ * `--k-radius-xs/-sm/-md/-karte` benutzt; es liegt ausserhalb der beiden
+ * Geltungswurzeln und würde beim Löschen still auf Rundung 0 fallen. Ein
+ * Token mit Verbraucher ist Bestand, auch wenn der Verbraucher ein
+ * Dokument ist. Der Einzug ist damit kein Nein, sondern ein Nachher.
+ *
+ * NICHT hier: `--k-radius-hub`. Er ist am 21.09.2026 EINGEZOGEN, nicht
+ * abgelöst — null Verbraucher, gemessen (`grep -rn "var(--k-radius-hub"`
+ * repo-weit ohne `node_modules` → 0). Ein Token, das nur noch sein eigener
+ * Spiegeltest am Leben hält, ist kein Bestand.
  */
-export const radiusHub = '26px';
+export const RADIUS_ABGELOEST: readonly { name: string; war: string; bestand: number }[] = [
+  { name: '--k-radius-sm', war: '8px', bestand: 0 },
+  { name: '--k-radius-md', war: '12px', bestand: 0 },
+  { name: '--k-radius-xs', war: '6px', bestand: 0 },
+  { name: '--k-radius-lg', war: '16px', bestand: 0 },
+  { name: '--k-radius-karte', war: '14px', bestand: 0 },
+  { name: '--k-radius-node', war: '18px', bestand: 0 },
+] as const;
+
+/**
+ * DAUER-LEITER — Bewegungs-Entscheid 1a, Owner 21.09.2026. Spiegelt
+ * `--k-dauer-antippen/-oeffnen/-setzen` aus aura.css (dort die einzige
+ * Wahrheit).
+ *
+ * Drei Stufen für alles, was auf eine BEDIENUNG antwortet. Die eigentliche
+ * Antwort ist aber nicht die Drei, sondern die Trennlinie: was länger als
+ * `dauerGrenzeMs` dauert, ist kein Übergang mehr, sondern Ablauf oder
+ * Ambiente (Orb-Puls, Startsequenz, Zeichenablauf) und fällt nicht unter
+ * diese Leiter.
+ */
+export const dauer = {
+  /** Der Knopf antwortet. */
+  antippen: '120ms',
+  /** Etwas klappt auf, etwas schiebt sich ein. */
+  oeffnen: '200ms',
+  /** Etwas kommt an und bleibt liegen. */
+  setzen: '320ms',
+} as const;
+
+/**
+ * Die Trennlinie in Millisekunden. Gemessen (`node
+ * tools/bewegungsdauer-gate.mjs`, Stand 21.09.2026): von den 52 rohen
+ * Dauerwerten bleiben ohne `0`/`0.01` fünfzig — 19 darunter, 1 genau
+ * darauf, 30 darüber. Diese Leiter meint die 20 bis einschliesslich 400.
+ */
+export const dauerGrenzeMs = 400;
 
 export const motion = {
-  /** Zurückhaltend-präzise (Owner Q20): kurz, physikalisch sauber, nie verspielt. */
+  /** Zurückhaltend-präzise (Owner Q20): kurz, physikalisch sauber, nie verspielt.
+   *
+   * 21.09.2026: `fast`/`base`/`settle` tragen DIESELBEN drei Zahlen wie
+   * `dauer.antippen/oeffnen/setzen` — gebündelt mit ihrer Kurve. Das ist
+   * keine zweite Leiter, sondern die Kurzschreibweise derselben; dass beide
+   * Sätze zusammenbleiben, hält
+   * `packages/kosmo-ui/test/bewegung-dauer-leiter.test.ts` fest. */
   fast: '120ms cubic-bezier(0.3, 0, 0.2, 1)',
   base: '200ms cubic-bezier(0.3, 0, 0.2, 1)',
   settle: '320ms cubic-bezier(0.22, 0.9, 0.28, 1)',
@@ -301,7 +422,7 @@ export const orbit = {
   raised: '#1a1e27',
   ink: '#f4f6fa',
   inkSoft: '#b6bdcb',
-  inkFaint: '#7f8695', // B138: war #6e7686, s. aura.css
+  inkFaint: '#9299a8', // 01.10.2026 Owner «heller» (war #7f8695, B138: #6e7686), s. aura.css
   /**
    * v0.8.0B / W1 (Spez §1/§6, Konfliktentscheid «Borders Alpha-Weiss») —
    * Alpha-Border-Flip: `line`/`lineStrong` waren bis 0.7.2 Volltöne
@@ -316,8 +437,8 @@ export const orbit = {
   hairline: 'rgba(120, 140, 190, 0.14)',
   /** NEU (W1, Spez §1 B-26) — Flächenstufe Hover, komplettiert sunken→hover. */
   hover: '#222732',
-  accent: '#57b6c2',
-  accentHover: '#6cc4cf',
+  accent: '#69bec9',
+  accentHover: '#80c8d1',
   accentInk: '#06141a',
 } as const;
 
@@ -366,7 +487,7 @@ export const boot = {
   schrift: '#dce0e8',
   schriftSoft: '#b6bdcb',
   schriftMuted: '#8b92a2',
-  schriftFaint: '#7f8695', // B138: folgt --k-ink-faint (orbit), s. aura.css
+  schriftFaint: '#9299a8', // folgt --k-ink-faint (orbit), 01.10.2026 mit ihm angehoben; s. aura.css
 } as const;
 
 /**
@@ -425,10 +546,35 @@ export type ThemeName = 'paper' | 'orbit';
  * `docs/MESSUNG-EBENEN-2026-08-26.md` (93 erfasste Vergaben, 5 gemessene
  * Bestandsordnungen, 3 Dokumentations-Widersprüche). Anders als der Rest
  * dieser Datei ist dies KEIN Spiegel von `aura.css` — z-index-Werte sind im
- * ganzen Repo verstreut (CSS, `zIndex`-Inline-Props, sogar ein reines `z:`-
- * Objektfeld ohne jedes `z-index`/`zIndex` im Quelltext, s. `QUELLE_DOCK`
- * unten) und hatten vor dieser Tafel gar keine gemeinsame Quelle. Diese
- * Tafel BENENNT Bestandswerte (keine Neuvergabe) und macht den einen
+ * ganzen Repo verstreut (CSS, `zIndex`-Inline-Props, bis U25 Phase 6 sogar
+ * ein reines `z:`-Objektfeld ohne jedes `z-index`/`zIndex` im Quelltext — der
+ * Dock-Kern, mit dem Dock entfallen) und hatten vor dieser Tafel gar keine
+ * gemeinsame Quelle.
+ *
+ * 21.09.2026 — DIESER SATZ GILT AB JETZT NUR NOCH FÜR DIESE TAFEL, nicht
+ * mehr für die Ebenen überhaupt (Schichtungs-Entscheid 4a, Owner). Die neue
+ * `zEbeneLeiter` unten IST ein Spiegel von `aura.css` wie alles andere in
+ * dieser Datei: dort stehen die sechs `--k-ebene-*`, hier ihre Zahlen. Der
+ * Grund ist derselbe, den die Widersprüche W1/W5/W6/W7 vier Mal belegt
+ * haben — eine Zahl, die an zwei Orten steht, driftet.
+ *
+ * **SEIT DEM 21.09.2026 BESCHREIBT DIESE TAFEL KEINE ROHEN ZAHLEN MEHR.**
+ * Sie hiess einmal das «Protokoll dessen, was die Leiter ablösen soll», und
+ * sollte verschwinden, sobald das Umstellungs-Paket durch ist. Das Paket ist
+ * durch — die Tafel bleibt trotzdem, weil sie etwas prüft, das die Leiter
+ * NICHT prüft: den `#root`-Mechanismus (aussen schlägt innen, unabhängig von
+ * jeder Zahl) und die dokumentierten Ordnungspaare. Das sind Aussagen über
+ * die Bauweise, nicht über Werte. (Bis U25 Phase 6 prüfte sie zusätzlich den
+ * Blindfleck in `dock-kern.ts`; der ist mit dem Dock entfallen.)
+ *
+ * Ihre `wert`-Felder tragen jetzt die AUFGELÖSTEN Leiter-Zahlen, und
+ * `tools/z-ebenen-gate.mjs` löst `var(--k-ebene-…)` und
+ * `calc(var(--k-ebene-…) + N)` aus `aura.css` auf, statt eine rohe Zahl zu
+ * erwarten. Ohne diesen Schritt hätte das Gate nach der Umstellung «kein
+ * z-index im Block gefunden» gemeldet — mit dem Wortlaut recht und mit der
+ * Sache unrecht.
+ *
+ * Diese Tafel BENENNT Bestandswerte (keine Neuvergabe) und macht den einen
  * Mechanismus sichtbar, der die meisten Überdeckungsfälle dieses Repos
  * erklärt — s. `MECHANISMUS` — plus den einen, der sie NICHT erklärt, obwohl
  * das naheliegend gewesen wäre — s. `EHRLICHER BEFUND` unten.
@@ -499,11 +645,13 @@ export type ThemeName = 'paper' | 'orbit';
  *      `z-index`-Zeile; der Riegel (`tools/z-ebenen-gate.mjs`) prüft Datei,
  *      Selektor, Marker UND Wert.
  *   2. Fünf weitere Werte (CursorEbene/KSelect-Portal/Dock-Solver-Leiter)
- *      als REFERENZ (`governed:false`) — Quelle ist eine `.tsx`-Datei oder
- *      `state/dock-kern.ts`, beide ausserhalb des Dateikreises dieses
- *      Pakets. Der Riegel LIEST sie trotzdem (nur lesend, keine Änderung)
- *      und vergleicht live gegen die hier dokumentierten Werte — das ist
- *      der Deckel für genau den Blindfleck aus `dock-kern.ts` (s. dort).
+ *      als REFERENZ (`governed:false`) — Quelle ist eine `.tsx`-/`.css`-
+ *      Datei ausserhalb des Dateikreises dieses Pakets. Der Riegel LIEST sie
+ *      trotzdem (nur lesend, keine Änderung) und vergleicht live gegen die
+ *      hier dokumentierten Werte. U25 Phase 6 (Owner 01.10.2026, «nur noch
+ *      Insel-Oberfläche»): die Dock-Solver-Leiter aus `state/dock-kern.ts`
+ *      ist mit dem Dock entfallen; es bleiben die zwei Referenzwerte
+ *      CursorEbene und KSelect-Portal.
  *   3. Bewusst NICHT migriert: die drei stationslokalen „Verlierer"-Werte
  *      aus den Fällen 1137/1148 c/1151 (`.k-menu` 100, `.dw-modus-chip-wrap`
  *      6, `.vis-chrome-topright` 36) — s. `AUSGESCHLOSSEN` unten, jede mit
@@ -516,6 +664,9 @@ export type ThemeName = 'paper' | 'orbit';
  *      `MESSUNG-EBENEN-2026-08-26.md` §3.4/§5). Aufgeschlüsselt: 5 migriert
  *      + 4 Referenz (Cursor, Portal-Popup, 2×Dock-Stufenpaar als 1
  *      Fundstelle) + 3 ausgeschlossen (benannt) + 81 unangetastet = 93.
+ *      (Zählung der Messung vom 26.08.2026 — die Dock-Fundstelle ist seit
+ *      U25 Phase 6 mit dem Dock entfallen, die Messung selbst bleibt
+ *      Geschichte und wird hier nicht umgerechnet.)
  *
  * AUSGESCHLOSSEN (bewusst NICHT migriert, mit Begründung):
  *   - `.k-menu` (aura.css:2131, z:100, Fall 1137): stationslokal, gefangen
@@ -552,6 +703,66 @@ export type ThemeName = 'paper' | 'orbit';
  * bekannter Deckel-Fall in dieser Familie), aber ungeprüft und nicht Teil
  * dieses engen Pakets. Eigener, gemessener Auftrag.
  */
+/**
+ * ══ DIE EBENEN-LEITER — Schichtungs-Entscheide 1b/2a/3b/4a/7c/10b, Owner
+ * 21.09.2026. Spiegelt `--k-ebene-*` aus `aura.css` (dort die einzige
+ * Wahrheit, `packages/kosmo-ui/test/ebenen-leiter.test.ts` bricht bei
+ * Abweichung).
+ *
+ * Sechs Stufen, von unten nach oben. Sechs Namen kann sich ein Mensch
+ * merken; zwölf schlägt er nach, und dann rechnet er doch wieder mit Zahlen.
+ *
+ * WAS DIESE LEITER NICHT REGELT (Entscheid 1b/3b/11a): alles Stationslokale.
+ * Der maschinelle Schnitt ist `position: fixed` — fixiert ⇒ Token Pflicht,
+ * `absolute`/`relative` ⇒ rohe Zahl erlaubt. `z-index: 2` zwischen zwei
+ * Geschwistern in derselben Karte ist eine Zeichenanweisung, keine
+ * Rangentscheidung; sie zu benennen erzeugt Ballast.
+ *
+ * DIE EINE UMKEHRUNG (Entscheid 7c): `meldung` liegt ÜBER `modal`. Heute
+ * trägt `.k-meldungen-host` 200 und liegt damit unter jedem Scrim ab 205.
+ * Eine Meldung, die man nicht sieht, ist keine Meldung.
+ *
+ * ZWISCHENRÄNGE: innerhalb einer Stufe ist Platz. Zwei Flächen derselben
+ * Art stapeln sich mit `calc(var(--k-ebene-schwebend) + 1)` — nicht mit
+ * einer siebten Stufe.
+ *
+ * EINBAU NUR GESCHLOSSEN: solange ein Teil der Stellen noch rohe
+ * 500/900/2000/9990 trägt, liegt eine bereits umgestellte Modal-Stufe (200)
+ * darunter. Halb umgestellt ist schlechter als gar nicht — das ist ein
+ * Befund für das Umstellungs-Paket, keine Nebenbemerkung.
+ */
+export const zEbeneLeiter = {
+  /** Die Arbeitsfläche selbst. */
+  grund: 0,
+  /** Global fixiertes Chrome, das IMMER da ist: Insel-Rahmen, Bühnenkopf,
+   * Boden-Dock. 40 ist keine runde Zahl, sondern die gemessene Unterkante
+   * dieses Bandes (`.isl-root`, `island.css`) — alles darunter bleibt
+   * stationslokal und roh. */
+  chrome: 40,
+  /** Was sich öffnet und wieder schliesst: Panel, offene Insel, Menü,
+   * Führung, portalte Popup-Liste. */
+  schwebend: 100,
+  /** Scrims und Dialoge — «alles darunter ist jetzt inaktiv». */
+  modal: 200,
+  /** Toasts und Bestätigungen. Über `modal`, s. Entscheid 7c. */
+  meldung: 300,
+  /** Die CursorEbene, IHR ALLEIN (Entscheid 10a/10b). War 2147483000 — eine
+   * neunstellige Zahl ist eine Einladung, sie zu überbieten. */
+  zeiger: 400,
+} as const;
+
+/** Die sechs Stufen in ihrer verbindlichen Reihenfolge, von unten nach oben.
+ * Die Wache prüft gegen DIESE Liste, nicht gegen die Reihenfolge der Felder
+ * im Objekt oben — eine Objekt-Reihenfolge ist keine Zusage. */
+export const zEbeneLeiterOrdnung = [
+  'grund',
+  'chrome',
+  'schwebend',
+  'modal',
+  'meldung',
+  'zeiger',
+] as const satisfies readonly (keyof typeof zEbeneLeiter)[];
+
 export interface ZEbenenQuelle {
   /** Repo-relativer Pfad ab `kosmo-orbit/`. */
   datei: string;
@@ -570,7 +781,8 @@ export interface ZEbenenEintrag {
   /** Kurzname — vom Riegel referenziert (Marker-Text `W0-EBENENTAFEL <name>`). */
   name: string;
   /** Bestandswert(e) — keine Neuvergabe. Ein Array bei mehrgliedrigen
-   * Leitern (Dock-Solver), sonst ein einzelner Wert. */
+   * Leitern (bis U25 Phase 6 die Dock-Solver-Leiter, heute keine), sonst
+   * ein einzelner Wert. */
   wert: number | readonly number[];
   /** Was in diese Stufe gehört. */
   beschreibung: string;
@@ -585,37 +797,36 @@ export interface ZEbenenEintrag {
   faelle?: readonly string[];
 }
 
-/** Die vier Dock-Solver-Stufen (s. `QUELLE_DOCK`-Kommentar am Riegel) —
- * `DockPanel.tsx:203`s eigener Kommentar nennt sie „Stack/Rail 14,
- * B-Streifen 16, verankerte Floats 30, FREI positionierte Floats … 32".
- * NICHT Teil der neun Fälle, aber die vom Auftrag ausdrücklich verlangte
- * Abdeckung des `dock-kern.ts`-Blindflecks (kein `z-index`/`zIndex` im
- * Quelltext dieser Datei, `grep -c` = 0 — nachgeprüft). */
-export const zEbeneDock = {
-  stackRail: 14,
-  bStreifen: 16,
-  verankert: 30,
-  frei: 32,
-} as const;
+// U25 Phase 6: die vier Dock-Solver-Stufen (`zEbeneDock`, 14/16/30/32) und
+// ihr Tafel-Eintrag `DOCK_SOLVER` sind mit dem Dock entfallen (Owner
+// 01.10.2026, «nur noch Insel-Oberfläche»; `state/dock-kern.ts` gelöscht).
 
 export const zEbene: readonly ZEbenenEintrag[] = [
   {
     name: 'CURSOR',
-    wert: 2147483000,
+    wert: 400,
     beschreibung: 'Die eine CursorEbene (Eigencursor-Overlay) — per Kommentar exklusiv gehalten, nichts sonst gehört hierher.',
     root: 'aussen',
-    quellen: [{ datei: 'apps/kosmo-orbit/src/shell/cursor-ebene.css', zeile: 79, selektor: '.cursor-ebene-wrapper', governed: false }],
+    // Zeile zweimal nachgezogen 24.09.2026 (Owner-Entscheid, Hardware-Zeiger-
+    // Umbau `CursorEbene.tsx`/`cursor-ebene.css`) — erst 79→55 beim Neuschrieb
+    // der Datei (die gezeichnete Zeiger-Box wich der blossen Klick-Feder-
+    // Beigabe), dann 55→73, weil derselbe Umbau einen zweiten Fund nachzog:
+    // die direkte `:root[data-eigencursor='an']`-Regel fehlte (Nachfahren-
+    // Kombinator trifft `:root` nie selbst, Live-Fund am Chromium, s. Commit
+    // "Hardware-Zeiger: :root selbst fehlte der cursor-Regel") und wurde
+    // VOR `.cursor-ebene-wrapper` eingefügt — das schiebt jede Zeile danach.
+    quellen: [{ datei: 'apps/kosmo-orbit/src/shell/cursor-ebene.css', zeile: 73, selektor: '.cursor-ebene-wrapper', governed: false }],
   },
   {
     name: 'PORTAL_POPUP',
-    wert: 2147482000,
+    wert: 330,
     beschreibung: 'Body-portalte Popups, die über jedem Fenster/Panel, aber unter CURSOR liegen müssen (KSelect-Listbox).',
     root: 'aussen',
-    quellen: [{ datei: 'packages/kosmo-ui/src/select.tsx', zeile: 556, selektor: 'zIndex (KSelect-Listbox, body-Portal)', governed: false }],
+    quellen: [{ datei: 'packages/kosmo-ui/src/select.tsx', zeile: 594, selektor: 'zIndex (KSelect-Listbox, body-Portal)', governed: false }],
   },
   {
     name: 'MELDUNGS_TOAST',
-    wert: 200,
+    wert: 300,
     beschreibung:
       'Der Meldungs-Turm (`KMeldungen`, Erfolg/Fehler/Hinweis-Toasts). Liegt INNERHALB #root (kein createPortal, App.tsx:1666) — schlägt OFFENE_INSEL nur, weil beide im selben #root-Kontext stehen und 200 > 100 ist, NICHT wegen des #root-Mechanismus. Fall 8/9 (ROADMAP 1156).',
     root: 'innen',
@@ -624,7 +835,7 @@ export const zEbene: readonly ZEbenenEintrag[] = [
   },
   {
     name: 'BODEN_DOCK',
-    wert: 108,
+    wert: 130,
     beschreibung:
       'App-weite Bodenleiste (Navigations-Layer, `position:fixed`, INNERHALB #root). Deckte den Trust-Ausfuhr-Knopf — behoben über padding-bottom-Reserve, nicht über z-index (der Rang war nie das Problem).',
     root: 'innen',
@@ -633,7 +844,7 @@ export const zEbene: readonly ZEbenenEintrag[] = [
   },
   {
     name: 'OFFENE_INSEL',
-    wert: 100,
+    wert: 120,
     beschreibung:
       'Jede geöffnete Insel (Modifikator auf `.isl-root`, `position:fixed` geerbt). INNERHALB #root. Deckte den Vis-Ausführen-Knopf (Fall 1148 a) — fehlende Geometrie-Koordination, kein #root-Sprung.',
     root: 'innen',
@@ -642,7 +853,7 @@ export const zEbene: readonly ZEbenenEintrag[] = [
   },
   {
     name: 'KOSMO_PANEL',
-    wert: 60,
+    wert: 110,
     beschreibung:
       'Kosmo-Blase (`.kp-panel`, `position:fixed`, INNERHALB #root — nur seine Scrim-KINDER portalen seit v0.9.6, das Panel selbst nicht). Deckte Publish-Platzierungsflächen (1144 A) und den Dock-Inspector (1148 b).',
     root: 'innen',
@@ -658,17 +869,6 @@ export const zEbene: readonly ZEbenenEintrag[] = [
     quellen: [{ datei: 'apps/kosmo-orbit/src/modules/design/island/island.css', zeile: 1118, selektor: '.isl-einstellungen-kreis', governed: true }],
     faelle: ['ROADMAP 1151 (siebter Deckel)'],
   },
-  {
-    name: 'DOCK_SOLVER',
-    wert: [zEbeneDock.stackRail, zEbeneDock.bStreifen, zEbeneDock.verankert, zEbeneDock.frei],
-    beschreibung:
-      'Vier Dock-Solver-Stufen (Stack/Rail 14 < B-Streifen 16 < verankerte Floats 30 < frei gezogene Floats 32), `position:absolute` via `.k-dock-panel`, INNERHALB #root. Reine `z:`-Objektfelder in `state/dock-kern.ts` — WEDER `z-index` NOCH `zIndex` im Quelltext dieser Datei (grep -c = 0). Nicht Teil der neun Fälle; hier nur, weil der Auftrag die Abdeckung dieses Blindflecks ausdrücklich verlangt (s. Riegel).',
-    root: 'innen',
-    quellen: [
-      { datei: 'apps/kosmo-orbit/src/state/dock-kern.ts', zeile: 410, selektor: 'z: 14 (Stack/Rail)', governed: false },
-      { datei: 'apps/kosmo-orbit/src/state/dock-kern.ts', zeile: 436, selektor: 'z: 16 (B-Streifen)', governed: false },
-      { datei: 'apps/kosmo-orbit/src/state/dock-kern.ts', zeile: 467, selektor: 'z: 30 (verankerte Floats)', governed: false },
-      { datei: 'apps/kosmo-orbit/src/state/dock-kern.ts', zeile: 561, selektor: 'z: 32 (freie Floats)', governed: false },
-    ],
-  },
+  // U25 Phase 6: hier stand der Eintrag `DOCK_SOLVER` (14/16/30/32 aus
+  // `state/dock-kern.ts`) — mit dem Dock entfallen.
 ] as const;

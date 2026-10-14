@@ -38,6 +38,25 @@ describe('render-scene/v1', () => {
     }
   });
 
+  it('E128 (P-QWEN21): `qwen-image-2.1` ist bestellbar, ohne research_only', () => {
+    const scene = RenderScene.parse({
+      geometry: { path: 'm.glb', format: 'glb' },
+      out: 'x',
+      vis: { skip: false, backbone: 'qwen-image-2.1', upscale: false },
+    });
+    expect(scene.vis.backbone).toBe('qwen-image-2.1');
+    expect(scene.vis.research_only).toBeUndefined();
+  });
+
+  it('E128 (P-QWEN21): eine alte Bestellung ohne backbone parst unveraendert mit `z-image-turbo`', () => {
+    const scene = RenderScene.parse({
+      geometry: { path: 'm.glb', format: 'glb' },
+      out: 'x',
+      vis: { skip: false, upscale: false },
+    });
+    expect(scene.vis.backbone).toBe('z-image-turbo');
+  });
+
   it('verweigert faithful ausserhalb 0..1', () => {
     expect(() =>
       RenderScene.parse({
@@ -797,8 +816,8 @@ describe('kosmo.project/v1', () => {
       // mehr) — dieser Test baute vorher ein Manifest ohne `schema` und
       // profitierte unbemerkt vom (falschen) Lese-Default. Befund im Bericht.
       schema: 'kosmo.project/v1',
-      id: 'testobjekt-lichthof',
-      name: 'Testobjekt Lichthof',
+      id: 'demohaus',
+      name: 'Demohaus',
       created_at: '2026-07-02T08:00:00Z',
       updated_at: '2026-07-02T08:00:00Z',
     });
@@ -979,6 +998,137 @@ describe('V2-Technik Block 1 — video-splat (eigenes Schema, kein-sfm-worker eh
     });
     expect(job.status).toBe('awaiting_approval');
     expect(job.approval_token).toBe('CONFIRMED_SPLAT_1c214b97');
+  });
+
+  // B5 (06.10.2026): die Felder, die der Splat-Worker der Brücke schreibt
+  // (`kosmo_bridge/splat_worker.py` `_bearbeite`) und `GET /jobs/{id}`
+  // einbettet — echte Form aus dem Worker abgelesen, nicht erfunden.
+  it('B5: running trägt progress {phase, pct, stufe}, videoquelle, kette_pid und meta.projektion', async () => {
+    const { VideoSplatJob } = await import('../src');
+    const job = VideoSplatJob.parse({
+      job_id: 'vsplat-1783414062-a2c3b1',
+      kind: 'video-splat',
+      status: 'running',
+      frame_count: 12,
+      meta: { quelle: 'LRV_x.lrv', projektion: 'dual-fisheye', frameCount: 12 },
+      created_at: '2026-10-06T10:33:00Z',
+      worker: 'splat-worker',
+      videoquelle: 'insta360',
+      progress: { phase: 'colmap_matching', pct: 0.15, stufe: 'Bilder abgleichen (COLMAP)' },
+      gestartet_at: '2026-10-06T10:33:05Z',
+      kette_pid: 4242,
+      message: 'rechnet: Bilder abgleichen (COLMAP)',
+    });
+    expect(job.progress).toEqual({ phase: 'colmap_matching', pct: 0.15, stufe: 'Bilder abgleichen (COLMAP)' });
+    expect(job.videoquelle).toBe('insta360');
+    expect(job.kette_pid).toBe(4242);
+    expect(job.meta?.projektion).toBe('dual-fisheye');
+  });
+
+  it('B5: done bettet kosmo.splat-result/v1 ein (bilder_registriert darf null sein)', async () => {
+    const { VideoSplatJob } = await import('../src');
+    const job = VideoSplatJob.parse({
+      job_id: 'vsplat-1783414062-a2c3b1',
+      status: 'done',
+      created_at: '2026-10-06T10:33:00Z',
+      progress: { phase: 'fertig', pct: 1, stufe: 'fertig' },
+      message: 'Splat fertig: 5207 Gaussians aus 96 von 96 Bildern in 32 s.',
+      result: {
+        schema: 'kosmo.splat-result/v1',
+        job_id: 'vsplat-1783414062-a2c3b1',
+        ply: 'splat.ply',
+        count: 5207,
+        bytes: 1230401,
+        app_lesbar: true,
+        app_grund: null,
+        videoquelle: 'standard',
+        frames_eingang: 96,
+        bilder_gesamt: 96,
+        bilder_registriert: null,
+        dauer_s: 32.4,
+        kette: 'KosmoPrepare core/splat_pipeline.py (ffmpeg → COLMAP → brush)',
+        protokoll: 'splat-pipeline.log',
+      },
+    });
+    expect(job.result?.ply).toBe('splat.ply');
+    expect(job.result?.count).toBe(5207);
+    expect(job.result?.bilder_registriert).toBeNull();
+  });
+
+  it('B5: ein Ergebnis mit falschem Schema oder ohne ply wird abgewiesen', async () => {
+    const { VideoSplatJob } = await import('../src');
+    const basis = { job_id: 'vsplat-1783414062-a2c3b1', status: 'done', created_at: 'x' };
+    expect(() =>
+      VideoSplatJob.parse({ ...basis, result: { schema: 'kosmo.bake-result/v1', ply: 'a.ply', count: 1, bytes: 1, app_lesbar: true } }),
+    ).toThrow();
+    expect(() =>
+      VideoSplatJob.parse({ ...basis, result: { schema: 'kosmo.splat-result/v1', count: 1, bytes: 1, app_lesbar: true } }),
+    ).toThrow();
+    expect(() => VideoSplatJob.parse({ ...basis, progress: { phase: 'x', pct: 1.5, stufe: 'x' } })).toThrow();
+  });
+
+  // splat-video2 (06.10.2026): das VIDEO geht an die Brücke; der Worker
+  // schreibt Bildplan, Diagnose und die Zahlen aus `tools/splat_kette.py`
+  // (`bericht.json`). Echte Formen aus `splat_worker.py` `_bearbeite_video`
+  // und `kette_diagnose`. Rückwärtsverträglich: alles optional, ein alter
+  // Record (oben) bleibt gültig.
+  it('splat-video2: Video-Eingang, Bildplan, Ergebnis mit Teilmodellen und Kettenquelle', async () => {
+    const { VideoSplatJob } = await import('../src');
+    const job = VideoSplatJob.parse({
+      job_id: 'vsplat-1791278936-524468',
+      status: 'done',
+      created_at: '2026-10-06T12:00:00Z',
+      eingang: 'video',
+      video: { datei: 'video.lrv', name: 'rundgang360.lrv', bytes: 192_000_000 },
+      video_geloescht: true,
+      meta: { quelle: 'rundgang360.lrv', projektion: 'dual-fisheye', dauerS: 187.4 },
+      videoquelle: 'insta360',
+      bildplan: { dauer_s: 187.4, fps: 1.28, max_frames: 240, zeitpunkte: 240, ansichten: 4, bilder: 960, kette_quelle: 'insv' },
+      result: {
+        schema: 'kosmo.splat-result/v1',
+        ply: 'splat.ply',
+        count: 900_000,
+        bytes: 200_000_000,
+        app_lesbar: true,
+        videoquelle: 'insta360',
+        kette_quelle: 'insv',
+        bilder_gesamt: 960,
+        bilder_registriert: 960,
+        modelle: 1,
+        punkte_sfm: 297_424,
+        schleifenschluss: true,
+        linsen_quelle: 'gemessen mit tools/insv_linsen.py',
+        hinweise: ['max-res 1600 → 508'],
+      },
+    });
+    expect(job.eingang).toBe('video');
+    expect(job.video?.name).toBe('rundgang360.lrv');
+    expect(job.bildplan?.bilder).toBe(960);
+    expect(job.result?.modelle).toBe(1);
+    expect(job.result?.kette_quelle).toBe('insv');
+    expect(job.meta?.dauerS).toBe(187.4);
+  });
+
+  it('splat-video2 (N9): error trägt diagnose mit Teilmodellen, brush-Absturz und Rat', async () => {
+    const { VideoSplatJob } = await import('../src');
+    const job = VideoSplatJob.parse({
+      job_id: 'vsplat-1791278936-524468',
+      status: 'error',
+      created_at: '2026-10-06T12:00:00Z',
+      message: 'Splat-Kette gescheitert — Rekonstruktion in 2 Teile zerfallen (20 + 16 von 48 Bildern registriert).',
+      diagnose: {
+        bilder: 48,
+        teilmodelle: [20, 16],
+        brush_absturz: 'min > max, or either was NaN.',
+        fail: null,
+        abgelehnt: null,
+        code: 101,
+        satz: 'Rekonstruktion in 2 Teile zerfallen (20 + 16 von 48 Bildern registriert)',
+        rat: 'mehr Bilder waehlen',
+      },
+    });
+    expect(job.diagnose?.teilmodelle).toEqual([20, 16]);
+    expect(job.diagnose?.rat).toContain('mehr Bilder');
   });
 });
 
@@ -1178,7 +1328,7 @@ describe('kosmodev.workorder/v1 (Block 2 / AB1)', () => {
   it('parst eine Workorder und füllt das Schema-Literal als Default', async () => {
     const { Workorder } = await import('../src');
     const wo = Workorder.parse({
-      projekt: 'Testobjekt Lichthof',
+      projekt: 'Demohaus',
       erzeugt_um: '2026-07-07T09:05:00Z',
       auftraege: [auftrag, { ...auftrag, id: 'auftrag-abc123-x2', quelle: 'kosmo', ort: 'Werkzeugleiste' }],
     });

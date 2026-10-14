@@ -257,7 +257,7 @@ export const renderAuftrag = registerCommand({
     nodeId: z.string().describe('Render-Node im Graphen (Typ «render»)'),
     kameraWahl: z.enum(['auto', 'saved']).default('auto'),
     stimmungPreset: z.enum(['morgen', 'abend', 'weiss']).optional(),
-    backbone: z.enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl']).optional(),
+    backbone: z.enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl', 'qwen-image-2.1']).optional(),
     aufloesung: z
       .tuple([z.number().int().positive(), z.number().int().positive()])
       .optional()

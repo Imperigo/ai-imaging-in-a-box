@@ -39,6 +39,25 @@ export const OFFENE_BLENDER_JOB_STATUS: readonly BlenderJobStatus[] = [
   'running',
 ];
 
+/**
+ * Der Zustand eines Blender-Auftrags in Worten (Owner 06.10.2026: «Status: running» war roh). Für die
+ * Sonnenstunden-Insel und den Bake-Auftrag in KosmoAsset — eine Liste, damit beide dasselbe sagen. Der Rohwert
+ * bleibt am Element als `data-status` für Proben stehen.
+ */
+const BLENDER_JOB_STATUS_WORT: Record<BlenderJobStatus, string> = {
+  awaiting_approval: 'wartet auf deine Freigabe',
+  queued: 'wartet auf den Rechner der HomeStation',
+  running: 'wird gerechnet',
+  done: 'fertig',
+  error: 'fehlgeschlagen',
+  cancelled: 'abgebrochen',
+  'kein-blender-worker': 'kein Blender-Rechner angeschlossen',
+};
+
+export function blenderJobStatusWort(status: BlenderJobStatus): string {
+  return BLENDER_JOB_STATUS_WORT[status] ?? status;
+}
+
 export interface BlenderJobLauf {
   kind: BlenderJobKind;
   status: BlenderJobStatus;

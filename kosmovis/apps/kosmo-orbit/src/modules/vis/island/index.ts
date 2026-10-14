@@ -20,3 +20,7 @@ import './inhalte/sonne';
 // Import-Seiteneffekt wie alle übrigen `inhalte/*.tsx`-Dateien.
 import './inhalte/ansichten';
 import './inhalte/legende';
+// P16 (v0.1.5, Abnahmezeile 6) — der Textur-Knopf (STIMMUNG-Insel, zweites
+// Werkzeug), Registrierung als Import-Seiteneffekt wie alle übrigen
+// `inhalte/*.tsx`-Dateien.
+import './inhalte/textur';

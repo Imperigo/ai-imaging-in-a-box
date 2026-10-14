@@ -347,4 +347,35 @@ describe('Zeile 54 — die Schichten', () => {
     expect(useVisRuntime.getState().gerechneteBilder['node-54']).toBeUndefined();
     expect(finde('vis-kuratier-uebernommenes-bild')).toBeNull();
   });
+
+  it('«Uebernehmen» selbst raeumt eine vorhandene Nachbearbeitung weg, BEVOR es rechnet (P16 — der Bedienweg galt am 23.09.2026 als ungeprueft)', () => {
+    // `60-ABNAHMELISTE.md` fuehrte Zeile 54 zuletzt als «unklar — Bedienweg
+    // ungeprueft»: der Kern war gebaut und mit `77-P61-MESSUNG.md` belegt,
+    // aber keine Probe im Baum hatte je auf den Knopf «Uebernehmen» selbst
+    // geklickt (nur auf «zuruecknehmen» und die zwei Nachbarn). Diese Probe
+    // schliesst genau diese Luecke, nach demselben Muster wie ihre Nachbarn
+    // oben (Nachbearbeiten) und in `vis-farbangleich-oberflaeche.test.tsx`
+    // (Zeile 55).
+    useVisRuntime.getState().setzeGerechnetesBild('node-54', {
+      art: 'nachbearbeitung',
+      nodeId: 'node-54',
+      dataUrl: 'data:image/png;base64,NNN',
+      bericht: BERICHT,
+      zusage: 'x',
+    });
+    zeichne();
+    expect(finde('vis-kuratier-bild-bericht')).not.toBeNull();
+    // Vorgabe-Zustand (Farbton + Saettigung, Deckenholz) traegt den Knopf
+    // schon — kein Kaestchen-Klick noetig, um ihn auszuloesen.
+    const knopf = finde('vis-kuratier-uebernehmen') as HTMLButtonElement;
+    expect(knopf.disabled).toBe(false);
+    act(() => {
+      knopf.click();
+    });
+    // Wie bei Nachbearbeiten/Farbangleich: die Rechnung selbst scheitert in
+    // jsdom (kein Canvas); das WEGRAEUMEN der ANDEREN Schicht passiert davor
+    // (`rechneUebernehmen()` ruft `verwirf()` vor `rechneUebernahme()`) und
+    // ist genau das, was hier gemessen wird.
+    expect(useVisRuntime.getState().gerechneteBilder['node-54']?.art).not.toBe('nachbearbeitung');
+  });
 });

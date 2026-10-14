@@ -71,6 +71,9 @@ export const DevJob = z.object({
   anzahl_auftraege: z.number().int().min(0),
   /** Wer den Job per claim übernommen hat (sichtbar im Client). */
   worker: z.string().optional(),
+  /** auf-248: Zeitpunkt der Übernahme (ISO-8601), von der Brücke bzw. vom
+   * Worker gesetzt. Fehlt, wenn die Brücke den Worker nur ableitet. */
+  worker_seit: z.string().optional(),
   /** Ehrliche Begründung, v. a. bei `error`. */
   message: z.string().optional(),
   result: DevJobResult.optional(),

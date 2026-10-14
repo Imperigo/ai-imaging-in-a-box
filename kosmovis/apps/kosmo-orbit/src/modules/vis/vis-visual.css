@@ -9,13 +9,14 @@
  * `NodeCanvas.tsx` zur Positionierung berechnet. */
 
 /* ── KPipelineNode-Anatomie auf dem SVG-Node (B-44) ─────────────────────
-   Die Karte bleibt geometrisch die bestehende «geschnittene Ecke»-Form
-   (Karteikarten-Verwandter, NodeCanvas.tsx `d=…`) — nur Randfarbe/-stärke
-   und der Laufend-Puls folgen jetzt der KPipelineNode-Anatomie (1.5px
-   Rollenborder bei 55% Deckkraft, running-Puls NUR bei laufendem Status,
-   Gesetz 7: Glow ist Informationszustand). `--_rolle` kommt vom Node selbst
-   (Kategorie-Hue, dieselbe CSS-Custom-Property-Injektion wie `KPipelineNode`/
-   `KCard` in kosmo-ui). */
+   KV1 (docs/AUFTRAG-EINBAU-KOSMOVIS-KNOTEN-N1-AN-INTEGRATOR.md, 24.09.2026):
+   die Karte ist eine runde Insel-Karte (`<rect rx="16">`, NodeCanvas.tsx),
+   nicht mehr die fruehere geschnittene Ecke (`<path>`, Karteikarten-
+   Verwandter) — Randfarbe/-stärke und der Laufend-Puls folgen weiter der
+   KPipelineNode-Anatomie (1.5px Rollenborder bei 55% Deckkraft, running-Puls
+   NUR bei laufendem Status, Gesetz 7: Glow ist Informationszustand).
+   `--_rolle` kommt vom Node selbst (Kategorie-Hue, dieselbe CSS-Custom-
+   Property-Injektion wie `KPipelineNode`/`KCard` in kosmo-ui). */
 .vis-node-karte {
   stroke: color-mix(in srgb, var(--_rolle, var(--k-line-strong)) 55%, transparent);
   stroke-width: 1.5;
@@ -67,11 +68,140 @@
 .vis-bild-kachel-qa--vorbehalt {
   color: var(--k-warning);
 }
+/* E189 (bei uns 70): «nicht beurteilbar» laut Grund — neutral, weder gruen
+   noch rot; nach `--vorbehalt`, damit die Badge nicht in der Warnfarbe
+   steht (der Satz darunter traegt sie schon). Kartentinte, wo die Kachel
+   auf einem Knoten steht, sonst die weiche Tinte des Themas. */
+.vis-bild-kachel-qa--neutral {
+  color: var(--vis-node-tinte, var(--k-ink-soft));
+}
 .vis-bild-kachel-qa-vorbehalt {
   display: block;
   font-size: var(--k-t-xxs);
   color: var(--k-warning);
   line-height: var(--k-lh-knapp);
+}
+/* Entscheid 72 (Blatt 16): der Grund-Satz an der Kachel ist EINE Zeile mit
+   «…»; der volle Satz steht in der Kurzhilfe. Die gepunktete Linie sagt, dass
+   dahinter mehr steht (wie auf dem Blatt). */
+.vis-bild-kachel-grund-zeile {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.vis-bild-kachel-grund-huelle {
+  display: block;
+  min-width: 0;
+}
+/* Die Kurzhilfe oeffnet NACH UNTEN (wie auf dem Blatt), linksbuendig, so
+   breit wie ein lesbarer Absatz statt so schmal wie die Kachel. */
+.vis-bild-kachel-grund-huelle > .k-tooltip-blase {
+  white-space: normal;
+  width: max-content;
+  max-width: 18rem;
+  left: 0;
+  transform: none;
+}
+/* Der Koerper eines Knotens schneidet ab, was ueber seine Hoehe hinausliefe
+   (`.vis-node-koerper`, A15). Die Kurzhilfe des Grund-Satzes muss aber ueber
+   den Knoten hinaus reichen — sonst stand im Vergleich-Knoten nur ihr
+   Mittelstueck da (gemessen am Bild). Nur solange sie offen ist (Zeiger
+   darueber oder Fokus darin), sonst bleibt die Klemme. */
+.vis-node-koerper:has(.vis-bild-kachel-grund-huelle:hover),
+.vis-node-koerper:has(.vis-bild-kachel-grund-huelle:focus-within) {
+  overflow: visible;
+}
+/* P-LIZENZMARKE Schritt 2 (E154 (4), «Anzeigen, nicht sperren»): der Hinweis
+   «Lizenz offen» traegt die Vorbehaltsklasse oben (Warnfarbe, gleiche
+   Groesse) — hier steht nur, was die Kurzhilfe-Huelle dazu braucht. Die
+   Huelle fuellt ihre Zeile, damit die Blase im schmalen Knoten (184 px, der
+   Koerper schneidet ab) an der Zeile ausgerichtet umbricht statt ueber den
+   Rand zu laufen. */
+.vis-lizenz-offen-huelle {
+  display: block;
+  min-width: 0;
+}
+.vis-lizenz-offen-huelle > .k-tooltip-blase {
+  white-space: normal;
+  width: max-content;
+  max-width: 100%;
+  left: 0;
+  transform: none;
+}
+.vis-lizenz-offen-ablage {
+  overflow-wrap: anywhere;
+}
+/* Am «Aufs Blatt»-Knoten steht die Marke neben dem Knopf: der Koerper ist nur
+   eine Knopfzeile hoch. */
+.vis-node-blatt-zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-width: 0;
+}
+.vis-node-blatt-zeile > .vis-lizenz-offen-huelle {
+  flex: 1;
+}
+/* Auf einem Bild (Kuratier-Karte, Vergleich) steht die Marke als Abzeichen
+   in der Form von «FAVORIT» (`.vis-raster-karte-badge`), in der Farbe des
+   Vorbehalts. Die Embleme-Zeile laesst den Zeiger durch; das Abzeichen nimmt
+   ihn, damit die Kurzhilfe aufgeht. Die Blase oeffnet ins Bild hinein. */
+.vis-lizenz-offen-huelle--links,
+.vis-lizenz-offen-huelle--rechts {
+  display: inline-block;
+  pointer-events: auto;
+}
+.vis-lizenz-offen-huelle--links > .k-tooltip-blase,
+.vis-lizenz-offen-huelle--rechts > .k-tooltip-blase {
+  max-width: 16rem;
+}
+.vis-lizenz-offen-huelle--rechts > .k-tooltip-blase {
+  left: auto;
+  right: 0;
+}
+/* Nachgang 3 (Befund des lokalen Workers, auf-20261006-248): die Karte
+   beschneidet ihren Inhalt (`.vis-raster-karte`, `overflow: hidden` fuer die
+   runden Ecken des Bildes). Die Kurzhilfe haengt sonst an ihrer Huelle, einem
+   Kaestchen von Abzeichengroesse, und lief darueber hinaus: am Abzeichen
+   gemessen bis 63 px nach links abgeschnitten. Die Huelle gibt die Lage darum
+   an die Embleme-Zeile ab (Kartenbreite weniger 16 px); die Blase oeffnet von
+   der rechten Kante nach links und bricht dort um. */
+.vis-raster-karte-embleme .vis-lizenz-offen-huelle--rechts {
+  position: static;
+}
+.vis-raster-karte-embleme .vis-lizenz-offen-huelle--rechts > .k-tooltip-blase {
+  max-width: min(16rem, 100%);
+}
+/* Dasselbe im Vergleich: der Kopf reicht bis zur rechten Kante, damit die
+   Blase des Abzeichens die Bildbreite hat. */
+.vis-vergleich-karte-kopf .vis-lizenz-offen-huelle--links {
+  position: static;
+}
+.vis-vergleich-karte-kopf .vis-lizenz-offen-huelle--links > .k-tooltip-blase {
+  max-width: min(16rem, 100%);
+}
+.vis-raster-karte-badge.vis-raster-karte-badge--lizenz {
+  display: inline-block;
+  color: var(--k-warning);
+  border-color: var(--k-warning);
+}
+.vis-raster-karte-embleme-rechts {
+  display: flex;
+  gap: var(--k-s2);
+  align-items: flex-start;
+}
+/* Auftrag 180 (kv-qa-hinweise): Auskunft, keine Warnung — ruhige Tinte, kein
+   Warnzeichen, keine Warnfarbe; getrennt vom Vorbehalt (`reason`). */
+.vis-bild-kachel-qa-hinweise {
+  display: grid;
+  gap: var(--k-s1);
+  justify-items: start;
+  font-size: var(--k-t-xxs);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-knapp);
+  overflow-wrap: anywhere;
 }
 .vis-img-full {
   width: 100%;
@@ -93,7 +223,7 @@
   box-sizing: border-box;
   background: var(--k-surface);
   border: 1px solid var(--k-line);
-  border-radius: var(--k-radius-sm);
+  border-radius: var(--k-radius);
   font-size: var(--k-t-xs);
   color: var(--k-ink-soft);
 }
@@ -105,7 +235,7 @@
 .vis-legende-punkt {
   width: 7px;
   height: 7px;
-  border-radius: 999px;
+  border-radius: var(--k-radius-pill);
   background: var(--_farbe);
 }
 
@@ -213,6 +343,68 @@
   cursor: crosshair;
   --k-zeiger: crosshair; /* v0.9.0 Cursor-Spiegel fuer die Kosmo-Ebene (cursor selbst ist global none) */
 }
+
+/* ── KV-B5: Knotenebene (HTML ueber dem Leinwand-SVG) ─────────────────
+   Die Knoten liegen nicht mehr im `<svg>` (dort lag ihr Koerper als HTML in
+   einem `foreignObject`, und WebKit zeichnete Felder mit eigener
+   Zeichenebene am falschen Ort, s. NodeCanvas.tsx am Ende des `<svg>`).
+   Die Ebene deckt die Leinwand, trifft selbst NICHTS und schneidet ab wie
+   das `<svg>`. Sie traegt dieselben Kartenfarben und dieselben Zeiger-
+   Eigenschaften (`user-select`, `touch-action`), die die Knoten frueher vom
+   `.vis-canvas-svg` erbten — sonst waeren die Karten ohne Farbe und die
+   Text-Selektion aus P-ZWEITKANTE kaeme zurueck. Kein `z-index`: die Ebene
+   malt in Dokumentreihenfolge ueber dem `<svg>` und unter allem, was eine
+   Ebenenstufe traegt (Legende 20, Beiblatt 25, Kuratier-Flaeche 35). */
+.vis-knoten-ebene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  --vis-node-flaeche: var(--k-raised);
+  --vis-node-tinte: var(--k-ink);
+}
+[data-theme='orbit'] .vis-knoten-ebene {
+  --vis-node-flaeche: var(--k-ink);
+  --vis-node-tinte: var(--k-field);
+}
+/* Verschiebung und Zoomstufe der Leinwand (Inline-`transform` aus
+   NodeCanvas.tsx); Ursprung oben links, damit Weltkoordinaten 1:1 gelten. */
+.vis-knoten-welt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+}
+/* Der Knoten-Kasten: Lage und Groesse inline, trifft selbst nichts —
+   getroffen werden seine gemalten SVG-Teile und sein Koerper. */
+.vis-knoten {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.vis-knoten-svg {
+  position: absolute;
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+.vis-knoten-zeichnung {
+  pointer-events: auto;
+}
+/* Der Koerper: dieselbe Lage wie das fruehere `foreignObject` und wie dieses
+   abgeschnitten (`overflow: hidden` war dort die Vorgabe des Browsers). */
+.vis-node-koerper {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: auto;
+}
+/* Nach `.vis-node-koerper`, damit die Sperre beim Ziehen gewinnt. */
 .vis-node-koerper--gesperrt {
   pointer-events: none;
 }
@@ -313,7 +505,8 @@
   width: 100%;
   padding: 3px 6px;
   border: 1px solid var(--k-line-strong);
-  border-radius: 4px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
   background: var(--k-surface);
   font-size: var(--k-t-micro);
   font-family: inherit;
@@ -347,6 +540,71 @@
 .vis-node-zahl-regler {
   flex: 1;
 }
+/* ── KV-B5-Nachgang: die Schiene «Umgebung drehen» am Render-Knoten ──────
+   `.k-slider` (@kosmo/ui) zeichnet die Bahn in `--k-line-strong` und den
+   Griff in `--k-accent` mit einem Rand in `--k-raised` — Farben fuer den
+   THEMENgrund. Die Karte des Knotens ist aber in beiden Themen hell
+   (`--vis-node-flaeche`, im dunklen Thema bewusst gekreuzt, s. oben). Am
+   gezeichneten Bildpunkt gemessen (Chromium, Bahn gegen Karte): dunkel 1,01:1
+   gesperrt und 1,02:1 frei, hell 1,31:1 und 1,74:1; der Griff hell gesperrt
+   2,25:1 (`opacity: 0.5`). Im Bild des lokalen Workers (WebKitGTK) war darum
+   nur der Knopf zu sehen, keine Bahn.
+   Hier zeichnet die Schiene gegen die KARTE: Bahn und Griffrand in der
+   Kartentinte (`--vis-node-tinte`), in beiden Themen ueber 3:1 wie das
+   `kontrast`-Tor (WCAG 1.4.11). Gesperrt (ohne Himmel) ist die Bahn
+   gestrichelt und der Griff hohl, statt das Ganze auf halbe Deckkraft zu
+   setzen — so bleibt sie sichtbar UND als gesperrt lesbar.
+   Umgangen wird das Bauteil nur hier, ueber die eigene Klasse am Knoten;
+   `@kosmo/ui` bleibt unveraendert. Die Hoehe 14 px traegt den 14-px-Griff
+   im Kasten des Feldes (vorher 4 px, der Griff stand darueber hinaus); ohne
+   den Rand des Browsers (2 px oben und unten) bleibt die Zeile so hoch wie
+   ihre Beschriftung. Gemessen: mit 16 px plus Rand wuchs die Zeile um 6 px,
+   und im Laufzustand schnitt der Koerper unten 4 px ab. Getrennte Regeln je
+   Engine: ein unbekanntes Pseudo-Element machte sonst die ganze Regel
+   ungueltig. */
+.vis-knoten-ebene .k-slider.vis-node-schiene {
+  height: 14px;
+  margin: 0;
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene:disabled {
+  opacity: 1;
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--vis-node-tinte);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene::-moz-range-track {
+  height: 4px;
+  background: var(--vis-node-tinte);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene::-moz-range-progress {
+  background: var(--vis-node-tinte);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene::-webkit-slider-thumb {
+  background: var(--k-accent);
+  border-color: var(--vis-node-tinte);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene::-moz-range-thumb {
+  background: var(--k-accent);
+  border-color: var(--vis-node-tinte);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene:disabled::-webkit-slider-runnable-track {
+  background: repeating-linear-gradient(90deg, var(--vis-node-tinte) 0 8px, transparent 8px 12px);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene:disabled::-moz-range-track {
+  background: repeating-linear-gradient(90deg, var(--vis-node-tinte) 0 8px, transparent 8px 12px);
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene:disabled::-moz-range-progress {
+  background: transparent;
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene:disabled::-webkit-slider-thumb {
+  background: var(--vis-node-flaeche);
+  box-shadow: none;
+}
+.vis-knoten-ebene .k-slider.vis-node-schiene:disabled::-moz-range-thumb {
+  background: var(--vis-node-flaeche);
+  box-shadow: none;
+}
 .vis-node-zahl-wert {
   font-family: var(--k-font-mono);
   font-size: var(--k-t-xs);
@@ -377,7 +635,13 @@
   font-size: var(--k-t-xxs);
   font-family: var(--k-font-mono);
   color: var(--k-ink-faint);
-  line-height: 1.3;
+  line-height: var(--k-lh-knapp);
+}
+/* B2 (Nachprobe auf-20261001-230): ohne Prompt bei bestelltem KI-Schritt
+   sagt diese Zeile VOR dem Senden, dass die KI-Veredelung ablehnen wird —
+   in der Warnfarbe des Vorbehalts, nicht in der leisen Tinte darueber. */
+.vis-node-final-prompt--warnung {
+  color: var(--k-warning);
 }
 .vis-node-aktionen {
   display: flex;
@@ -431,9 +695,66 @@
 .vis-node-leerbild--fehler {
   color: var(--k-danger);
 }
+/* Fortschritt am Ort (06.10.2026): der Platzhalter steht in Bildgrösse im Bildplatz des Render-Knotens —
+   dieselbe Registerhöhe (110 px) wie das Bild und der leere Rahmen, damit die Knotenhöhe nicht vom Laufzustand
+   abhängt (A15). Der Text bricht um und bleibt in der Fläche (UI-Regel 2); `KWarteOrt` füllt nur aus echtem
+   Fortschritt (Regel G6). */
+.vis-node-warteort,
+.vis-node-warteort-innen,
+.vis-node-warteort-flaeche {
+  height: 110px;
+  min-width: 0;
+}
+.vis-node-warteort-flaeche {
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-eng);
+  overflow-wrap: anywhere;
+}
 .vis-vergleich-bilder {
   display: flex;
   gap: 4px;
+}
+/* Entscheid 72 (Blatt 16): im Vergleich-KNOTEN (feste Koerperhoehe) teilen
+   sich Bild und Zeilen die Hoehe — das Bild nimmt, was die QA-Zeile und die
+   EINE Grund-Zeile uebrig lassen. Gemessen am Bild: vorher war der Inhalt
+   144 px hoch in einem 134 px hohen Koerper, und die Grund-Zeile stand nur
+   mit 2 px im Bild. Der Knoten wird dadurch nicht hoeher. Ausserhalb des
+   Knotens (Kuratier-Vergleich) gilt das nicht. */
+/* WebKitGTK-Geraeteprobe (2.52.6, Tauri): im Raster oben loeste WebKit die
+   `height: 100%` des Bildes in der Spur `minmax(0, 1fr)` nicht auf — das Bild
+   blieb 134 px hoch, die Spur schrumpfte trotzdem, und QA-Zeile, Grund-Zeile
+   und der Hinweis darunter standen UEBER dem Bild (auf einem dunklen
+   Abendbild kaum lesbar). Darum hier eine Spalte statt eines Rasters und
+   keine Prozent-Hoehe am Bild: die Kachel ist so hoch wie der Koerper, das
+   Bild nimmt mit `flex: 1 1 0` den Rest und darf dank `min-height: 0` (WebKit
+   nimmt sonst die Bildhoehe als Untergrenze) schrumpfen; die Zeilen behalten
+   ihre Hoehe. Damit steht keine Zeile auf dem Bild. */
+.vis-node-koerper > .vis-vergleich-bilder {
+  height: 100%;
+  min-height: 0;
+}
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > * {
+  flex: 0 0 auto;
+}
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > .vis-img-full {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  object-fit: contain;
+}
+/* Und falls eine Zeile doch einmal auf das Bild faellt (eine Engine, die die
+   Spalte anders rechnet): sie traegt die Flaeche der Karte, damit sie auf
+   jedem Bild lesbar bleibt. `position: relative` legt sie ueber das Bild. */
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > :not(.vis-img-full) {
+  position: relative;
+  background: var(--vis-node-flaeche, var(--k-raised));
 }
 .vis-vergleich-leer {
   height: 110px;
@@ -510,12 +831,39 @@
   color: var(--k-ink-faint);
 }
 
+/* Nachgang 2 (06.10.2026, Befund des lokalen Workers auf-20261006-246:
+   «die festen Schwebeknoepfe der Station liegen ueber der Flaeche und
+   verdecken Teile davon»). Die Flaeche fuellt die ganze Buehne, und an allen
+   vier Raendern schweben Knoepfe UEBER ihr (Shell z 42, Inseln z 120 — sie
+   liegt mit z 35 darunter, und das soll so bleiben: die Knoepfe bleiben
+   bedienbar). GEMESSEN mit `getBoundingClientRect` an 1400×900, 1920×1080,
+   1280×800 und 1024×768, an allen vier Groessen gleich, weil alle am Rand
+   verankert sind:
+     oben   — Kopfzeile bis 60 px (Zweitgruppe «SYNC», Logo, 3D·PLAN bis 58,
+              Speichern/Einstellungen bis 55, Auge bis 48);
+     links  — EG bis 52 px, GRAPH- und SONNE-Pille bis 48;
+     rechts — STIMMUNG-Insel offen ab 91,5 px vom Rand, Kosmo-Orb 68,
+              Kuratier-Knopf 60,4;
+     unten  — ⇄ ab 48 px (Orb und SONNE stehen in den Ecken, also schon im
+              rechten bzw. linken Rand).
+   Der Innenrand haelt den Inhalt aus diesen Baendern, mit `--k-s3` Luft;
+   der Grund der Flaeche bleibt randlos. Die Zahlen sind gemessen, nicht
+   geraten, und haben eine Wache: `e2e/kv-nachgang2.spec.ts` prueft mit
+   `elementFromPoint`, dass kein Bedienelement der Flaeche verdeckt ist —
+   waechst ein Nachbar, faellt es dort auf. */
 .vis-kuratier-flaeche {
   position: absolute;
   inset: 0;
   z-index: 35;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  --vis-kuratier-rand-oben: calc(60px + var(--k-s3));
+  --vis-kuratier-rand-rechts: calc(92px + var(--k-s3));
+  --vis-kuratier-rand-unten: calc(48px + var(--k-s3));
+  --vis-kuratier-rand-links: calc(52px + var(--k-s3));
+  padding: var(--vis-kuratier-rand-oben) var(--vis-kuratier-rand-rechts) var(--vis-kuratier-rand-unten)
+    var(--vis-kuratier-rand-links);
   background: var(--k-field);
 }
 .vis-kuratier-mitte {
@@ -552,7 +900,8 @@
   width: 18px;
   height: 18px;
   flex: none;
-  border-radius: 6px;
+  /* Bedienelement -> Pille (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe Rundung. */
+  border-radius: var(--k-radius-pill);
   background: color-mix(in srgb, var(--_farbe) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--_farbe) 45%, transparent);
 }
@@ -578,13 +927,19 @@
   display: flex;
   flex-direction: column;
 }
+/* Nachgang 2: seit dem Innenrand der Flaeche ist die mittlere Spalte schmaler
+   (1280 px Fenster: 560 statt 720 px). Die Leiste brauchte in einer Zeile
+   rund 640 px — darunter liefen «Verworfen», «Raster» und «Vergleich» unter
+   den Inspektor (bei 1024 px schon vorher). Sie bricht darum um, statt
+   abzuschneiden; 48 px bleiben die Mindesthoehe. */
 .vis-kuratier-subtoolbar {
-  height: 48px;
+  min-height: 48px;
   flex: none;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
+  gap: var(--k-s2) var(--k-s4);
+  padding: var(--k-s2) var(--k-s5);
   border-bottom: 1px solid var(--k-line);
   background: var(--k-surface);
 }
@@ -597,6 +952,7 @@
   color: var(--k-ink);
 }
 .vis-kuratier-subtoolbar-zahl {
+  white-space: nowrap;
   font-family: var(--k-font-mono);
   font-size: var(--k-t-micro);
   color: var(--k-ink-faint);
@@ -608,7 +964,7 @@
   display: flex;
   gap: 2px;
   padding: 3px;
-  border-radius: var(--k-radius-sm);
+  border-radius: var(--k-radius);
   background: var(--k-field);
   border: 1px solid var(--k-line);
 }
@@ -616,7 +972,8 @@
 .vis-kuratier-segment-eintrag {
   height: 26px;
   padding: 0 11px;
-  border-radius: 6px;
+  /* Bedienelement -> Pille (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe Rundung. */
+  border-radius: var(--k-radius-pill);
   border: none;
   cursor: pointer;
   background: transparent;
@@ -639,9 +996,14 @@
   display: grid;
   gap: 24px;
 }
+/* Nachgang 2: drei Spalten, solange jede mindestens 180 px breit ist; darunter
+   weniger. Mit dem Innenrand der Flaeche ist die mittlere Spalte bei 1024 px
+   Fenster nur noch rund 300 px breit — drei Karten waeren je 76 px, ihre
+   Kopf- und Knopfzeilen lagen uebereinander. Ab 1280 px bleibt es bei drei.
+   Der Abzug sind die zwei Luecken von je 16 px. */
 .vis-kuratier-raster {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(max(180px, calc((100% - 32px) / 3)), 1fr));
   gap: 16px;
 }
 .vis-kuratier-ablage-stapel {
@@ -668,7 +1030,7 @@
 .vis-raster-karte {
   position: relative;
   aspect-ratio: 4 / 3;
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   overflow: hidden;
   cursor: pointer;
   border: 1px solid var(--k-line-strong);
@@ -711,7 +1073,7 @@
   font-weight: var(--k-gewicht-betont);
   letter-spacing: var(--k-sperrung-eng);
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--k-radius-pill);
   color: var(--k-glass-ink); /* D-6: war #f4f6fa, exakter Token-Treffer */
   background: rgba(5, 6, 8, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -728,7 +1090,7 @@
   font-weight: var(--k-gewicht-betont);
   letter-spacing: var(--k-sperrung);
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: var(--k-radius-pill);
   color: var(--k-rolle-agent);
   background: rgba(5, 6, 8, 0.6);
   border: 1px solid var(--k-rolle-agent-line);
@@ -757,10 +1119,30 @@
   align-items: center;
   gap: 5px;
 }
+/* Nachgang 3 (auf-20261006-248): die Kurzhilfen der Knoepfe («Ins Projekt»
+   mit dem Lizenz-Hinweis, «Verwerfen») sind breiter als die Karte und wurden
+   an beiden Seiten abgeschnitten — gemessen bis 165 von 366 px. Die Blase
+   nimmt ihre Lage jetzt von der Fusszeile (volle Kartenbreite) statt vom
+   Knopf: rechtsbuendig ueber der Fusszeile, so breit wie der Text, hoechstens
+   die Kartenbreite, und dort umbrechend. */
+.vis-raster-karte-aktionen > .vis-raster-karte-kurzhilfe {
+  position: static;
+}
+.vis-raster-karte-aktionen > .vis-raster-karte-kurzhilfe > .k-tooltip-blase {
+  top: auto;
+  bottom: 100%;
+  left: auto;
+  right: var(--k-s3);
+  transform: none;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--k-s3));
+  white-space: normal;
+}
 .vis-raster-karte-knopf {
   width: 22px;
   height: 22px;
-  border-radius: 6px;
+  /* Bedienelement -> Pille (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe Rundung. */
+  border-radius: var(--k-radius-pill);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -786,7 +1168,19 @@
 }
 
 /* Vergleichsansicht (A/B, Rollenfarbe generator vs. Accent) */
+/* Nachgang 3, Punkt 4 (Befund des lokalen Workers, auf-20261007-250, 1b):
+   bei 1024 x 768 ist die Mitte nur 264 px breit. Die beiden Karten standen
+   trotzdem nebeneinander (je 146 x 91 px): «Lizenz offen» brach auf drei
+   Zeilen, «V-01» auf zwei, die Kurzhilfe ragte 83 px unter die Karte, und die
+   Mindestbreite der Spalten schob Karte B und die Spalte «Variante B» 25 px
+   unter den Inspektor. Die Flaeche ist darum ein Groessen-Behaelter
+   (`container`, Muster wie `prepare-tafel.css`): unter 480 px Breite stehen
+   die Karten untereinander und die Tabellen zeigen den Parameter ueber den
+   beiden Werten (Regel am Dateiende dieses Abschnitts). Die Schwelle ist
+   gemessen: zwei Karten nebeneinander brauchen je rund 220 px, damit der
+   Kopf (Buchstabe, Kennung, Abzeichen) in einer Zeile steht. */
 .vis-vergleich-flaeche {
+  container: vis-vergleich / inline-size;
   display: grid;
   gap: 18px;
   max-width: 1100px;
@@ -794,14 +1188,18 @@
 }
 .vis-vergleich-paar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
 }
+/* Nachgang 3: die Karte beschneidet nicht mehr (vorher `overflow: hidden`
+   nur fuer die runden Bildecken) — bei 1024 px Fenster ist sie 146 x 91 px
+   klein, und die Kurzhilfe des Abzeichens wurde unten um 84 px gekappt. Die
+   Rundung traegt jetzt das Bild selbst; die Blase darf unter die Karte
+   reichen. */
 .vis-vergleich-karte {
   position: relative;
   aspect-ratio: 16 / 10;
-  border-radius: var(--k-radius-lg);
-  overflow: hidden;
+  border-radius: var(--k-radius);
   border: 1px solid var(--k-line-strong);
 }
 .vis-vergleich-karte--a {
@@ -816,11 +1214,16 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  /* = Radius der Karte (.vis-vergleich-karte); fest statt «inherit», weil die
+     Form-Familie nur var(--k-radius) / var(--k-radius-pill) kennt (Nachzug
+     Integrator beim Einspielen von Nachgang 3, gleiche Darstellung). */
+  border-radius: var(--k-radius);
 }
 .vis-vergleich-karte-kopf {
   position: absolute;
   top: 12px;
   left: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -828,7 +1231,7 @@
 .vis-vergleich-karte-label {
   width: 24px;
   height: 24px;
-  border-radius: var(--k-radius-xs); /* D-6: war 7px, off-scale (2/4/6/999) */
+  border-radius: var(--k-radius); /* D-6: war 7px, off-scale (2/4/6/999) */
   display: grid;
   place-items: center;
   font-family: var(--k-font-mono);
@@ -843,21 +1246,23 @@
   background: var(--k-accent);
 }
 .vis-vergleich-karte-id {
+  flex: none;
+  white-space: nowrap;
   font-family: var(--k-font-mono);
   font-size: var(--k-t-xs);
   color: var(--k-vis-chip-ink-hell); /* D-6: war #e6e9ef */
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--k-radius-pill);
   background: rgba(5, 6, 8, 0.6);
 }
 .vis-vergleich-tabelle {
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   border: 1px solid var(--k-line);
   overflow: hidden;
 }
 .vis-vergleich-tabelle-kopf {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   padding: 10px 16px;
   background: var(--k-surface);
   border-bottom: 1px solid var(--k-line);
@@ -872,15 +1277,23 @@
 .vis-vergleich-tabelle-kopf-b {
   color: var(--k-accent);
 }
+/* Nachgang 3, Punkt 4: die Wertspalten duerfen schmaler werden als ihr
+   laengstes Wort (`minmax(0, 1fr)`) und brechen dann um. Vorher hielt der
+   Vorbehalt der Attrappe («style_score/geometry_fidelity/…», ein Wort von
+   rund 330 px) seine Zeile breiter als die Tabelle: die Spalte «Variante B»
+   lief bei jeder Fenstergroesse rechts aus der Tabelle (gemessen bis 284 px)
+   und wurde von ihr abgeschnitten. Der Vertragstext bleibt ungekuerzt. */
 .vis-vergleich-zeile {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   padding: 9px 16px;
   background: var(--k-raised);
   border-bottom: 1px solid var(--k-line);
 }
 .vis-vergleich-zeile-wert {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--k-font-mono);
   font-size: var(--k-t-sm);
   color: var(--k-ink-faint);
@@ -905,8 +1318,39 @@
 }
 .vis-vergleich-aktionen {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+}
+/* Schmale Mitte (s. `.vis-vergleich-flaeche`): Karten untereinander, in den
+   Tabellen steht der Parameter als eigene Zeile ueber «A | B». */
+@container vis-vergleich (max-width: 479px) {
+  .vis-vergleich-paar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vis-vergleich-tabelle-kopf,
+  .vis-vergleich-zeile {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'label label'
+      'a b';
+    gap: var(--k-s2) var(--k-s4);
+  }
+  .vis-vergleich-tabelle-kopf-label,
+  .vis-vergleich-zeile-label {
+    grid-area: label;
+    min-width: 0;
+    padding: 0;
+    text-align: center;
+  }
+  .vis-vergleich-tabelle-kopf-a,
+  .vis-vergleich-zeile-wert--a {
+    grid-area: a;
+  }
+  .vis-vergleich-tabelle-kopf-b,
+  .vis-vergleich-zeile-wert--b {
+    grid-area: b;
+  }
 }
 
 .vis-kuratier-statuszeile {
@@ -985,7 +1429,7 @@
 .vis-inspektor-slot {
   position: relative;
   aspect-ratio: 4 / 3;
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   overflow: hidden;
   border: 1px solid var(--k-accent);
   box-shadow: var(--k-glow-cyan, none);
@@ -1030,7 +1474,7 @@
 .vis-inspektor-herkunft-punkt {
   width: 6px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--k-radius-pill);
   background: var(--_farbe);
 }
 .vis-inspektor-herkunft-label {
@@ -1118,7 +1562,7 @@
 .vis-report-scrim {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: var(--k-ebene-modal);
   background: rgba(20, 22, 28, 0.55);
   display: flex;
   align-items: flex-start;
@@ -1150,7 +1594,8 @@
      Schwarz ist auf Papier falsch, Tusche-Schatten sind warm. */
   background: #ffffff;
   color: #1a1a1a;
-  border-radius: 2px; /* D-6: war 3px, off-scale — Geschwister-Radius wie .vis-report-kachel/-governance unten */
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius); /* D-6: war 3px, off-scale — Geschwister-Radius wie .vis-report-kachel/-governance unten */
   box-shadow: var(--k-shadow-overlay); /* D-6/E-7: war 0 8px 28px rgba(0,0,0,.35) */
   padding: 48px 56px;
   display: grid;
@@ -1197,7 +1642,8 @@
 }
 .vis-report-kachel {
   border: 1px solid #ccc;
-  border-radius: 2px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
   overflow: hidden;
 }
 .vis-report-kachel img {
@@ -1222,7 +1668,8 @@
 }
 .vis-report-governance {
   border: 1px solid #ccc;
-  border-radius: 2px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
   padding: 14px 16px;
   display: grid;
   gap: 6px;
@@ -1256,4 +1703,336 @@
     max-width: none;
     width: auto;
   }
+}
+
+/* ── Entscheid 68 / E174: Verlauf am Render-Knoten ───────────────────────
+   Vorlage: Entwurfsblatt «15 · Verlauf am Render-Knoten». Die Reihe steht in
+   der Zeile `bild` unter dem Hauptbild und ist FEST 60 px hoch — dieselbe
+   Zahl wie `VERLAUF_ZEILE_H` (NodeCanvas.tsx), um die der Knoten waechst:
+   Abstand 2 + Kopf 26 (zwei Zeilen zu 13) + Daumenbild 32.
+   Die Uhrzeitzeile darunter ist seit Owner-Entscheid 71 entfallen (die Zeit
+   steht im Laufschild, in der grossen Ansicht und im Vorleser-Label).
+   WebKitGTK-Geraeteprobe (1440 x 900): der Knoten ragte an der Stelle der
+   Palette noch 4 px ueber den Fensterrand. Die zwei Abstaende sind darum
+   enger (8 -> 2 ueber dem Kopf, 4 -> 0 unter ihm; der Zeilenabstand des
+   Kopfes laesst unter der zweiten Zeile noch rund 3 px Luft), die Reihe ist
+   10 px niedriger und der Knoten mit ihr. Was laenger waere, wird hier
+   abgeschnitten statt den Knoten still zu sprengen. Farben aus der Karte
+   (`--vis-node-tinte`/`--vis-node-flaeche`), die in beiden Themen hell ist.
+   Die Zeilenhoehe kommt von der Skala (`--k-lh-eng`): Kopf 10,5 px x 1,2 =
+   12,6 px je Zeile, passt in seine feste Spur (26 px). */
+.vis-verlauf {
+  display: grid;
+  grid-template-rows: 26px 32px;
+  row-gap: 0;
+  height: 60px;
+  padding-top: var(--k-s1);
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--vis-node-tinte);
+}
+.vis-verlauf-kopf {
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-eng);
+  overflow: hidden;
+  min-width: 0;
+}
+.vis-verlauf-titel {
+  font-family: var(--k-font-mono);
+  font-weight: var(--k-gewicht-stark);
+  letter-spacing: var(--k-sperrung-eng);
+  margin-right: var(--k-s3);
+}
+.vis-verlauf-reihe {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--k-s2);
+  min-width: 0;
+}
+/* Die Trefferflaeche ist das ganze Daumenbild, 32 px hoch — so hoch wie die
+   Knoepfe des Knotens (32 px). */
+.vis-verlauf-knopf {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 32px;
+  min-width: 0;
+  cursor: pointer;
+}
+.vis-verlauf-knopf:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-verlauf-daumen {
+  position: relative;
+  display: block;
+  height: 32px;
+  overflow: hidden;
+  background: var(--k-line);
+}
+/* Das neueste Bild ist das Hauptbild: Rahmen nach innen, damit der Koerper
+   ihn am linken Rand nicht abschneidet. */
+.vis-verlauf-knopf--haupt .vis-verlauf-daumen {
+  outline: 2px solid var(--vis-node-tinte);
+  outline-offset: -2px;
+}
+.vis-verlauf-daumen-bild {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Der Urteilspunkt: gefuellt bestanden/durchgefallen, hohl «nicht
+   beurteilbar» (Legende der Vorlage). Ausserhalb der Karte (grosse Ansicht)
+   gelten die Themenfarben. */
+.vis-verlauf-punkt {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+.vis-verlauf-daumen > .vis-verlauf-punkt {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  box-shadow: 0 0 0 2px var(--vis-node-flaeche, var(--k-raised));
+}
+.vis-verlauf-punkt--bestanden {
+  background: var(--k-success);
+}
+.vis-verlauf-punkt--durchgefallen {
+  background: var(--k-danger);
+}
+.vis-verlauf-punkt--nicht-beurteilbar {
+  background: var(--vis-node-flaeche, var(--k-raised));
+  border: 2px solid var(--vis-node-tinte, var(--k-ink-soft));
+}
+/* «ohne QA»: hohl wie «nicht beurteilbar», aber gestrichelt — es kam nichts
+   zurueck, statt dass jemand «nicht beurteilbar» gesagt hat. */
+.vis-verlauf-punkt--ohne-qa {
+  background: var(--vis-node-flaeche, var(--k-raised));
+  border: 2px dashed var(--vis-node-tinte, var(--k-ink-soft));
+}
+
+/* Die grosse Ansicht: `.k-dialog-scrim`/`.k-bestaetigung-scrim`/
+   `.k-dialog-box` aus @kosmo/ui (Lage, Schleier, Flaeche), hier nur die
+   Anordnung der Vorlage: Kopf mit Lauf, Zeitpunkt und drei Knoepfen, links
+   das Bild, rechts Urteil, Grund, Werte, Marke und der Satz zum Hauptbild. */
+.vis-verlauf-gross {
+  width: min(892px, calc(100vw - 48px));
+  overflow: hidden;
+  color: var(--k-ink);
+}
+/* Verlauf-Nachgang (HomeStation, 08.10.2026): im dunklen Thema schien unter
+   WebKitGTK ein Knoten durch die Ansicht — Glas ohne Weichzeichner; auch
+   das «deckende» Glas des Hauses (`--k-glas-deckend`, Welle E3 · C14) ist
+   nur zu 96 % deckend. Eine Ansicht, die ein Bild zeigt, braucht kein Glas:
+   sie ist IMMER undurchsichtig, in beiden Themen die Flaechenfarbe
+   (`--k-surface`, ohne Alpha). */
+.k-dialog-box.vis-verlauf-gross {
+  background: var(--k-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.vis-verlauf-gross:focus {
+  outline: none;
+}
+.vis-verlauf-gross-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s4);
+  padding: var(--k-s4) var(--k-s5);
+  border-bottom: 1px solid var(--k-line);
+  flex: 0 0 auto;
+}
+.vis-verlauf-gross-titel {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-md);
+  font-weight: var(--k-gewicht-stark);
+  letter-spacing: var(--k-sperrung-eng);
+}
+.vis-verlauf-gross-zeit {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+.vis-verlauf-gross-stelle {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+.vis-verlauf-gross-luecke {
+  flex: 1 1 auto;
+}
+.vis-verlauf-gross-knopf {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid var(--k-line-strong);
+  border-radius: var(--k-radius);
+  background: var(--k-raised);
+  color: var(--k-ink);
+  cursor: pointer;
+}
+.vis-verlauf-gross-knopf:hover:not(:disabled) {
+  background: var(--k-hover, var(--k-raised));
+}
+.vis-verlauf-gross-knopf:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-verlauf-gross-knopf:disabled {
+  color: var(--k-ink-faint);
+  border-style: dashed;
+  cursor: default;
+}
+.vis-verlauf-gross-inhalt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  min-height: 0;
+}
+.vis-verlauf-gross-bild {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: min(470px, calc(100vh - 160px));
+  min-width: 0;
+  background: var(--k-field);
+}
+.vis-verlauf-gross-img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.vis-verlauf-gross-seite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s4);
+  padding: var(--k-s5);
+  min-width: 0;
+  overflow-y: auto;
+  border-left: 1px solid var(--k-line);
+}
+.vis-verlauf-urteil {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  padding: var(--k-s2) var(--k-s3);
+  border: 1px solid currentColor;
+  border-radius: var(--k-radius-pill);
+  font-size: var(--k-t-md);
+  font-weight: var(--k-gewicht-stark);
+}
+.vis-verlauf-urteil--bestanden {
+  color: var(--k-success);
+}
+.vis-verlauf-urteil--durchgefallen {
+  color: var(--k-danger);
+}
+.vis-verlauf-urteil--nicht-beurteilbar,
+.vis-verlauf-urteil--ohne-qa {
+  color: var(--k-ink-soft);
+}
+.vis-verlauf-gross-grund {
+  font-size: var(--k-t-md);
+  line-height: var(--k-lh-lesen);
+  overflow-wrap: anywhere;
+}
+.vis-verlauf-gross-werte {
+  display: grid;
+  gap: var(--k-s2);
+  margin: 0;
+  font-size: var(--k-t-sm);
+}
+.vis-verlauf-gross-werte > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--k-s3);
+  min-width: 0;
+}
+.vis-verlauf-gross-werte dt {
+  flex: 0 0 auto;
+  color: var(--k-ink-soft);
+}
+.vis-verlauf-gross-werte dd {
+  margin: 0;
+  font-family: var(--k-font-mono);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.vis-verlauf-gross-fuss {
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink-soft);
+}
+@media (max-width: 700px) {
+  .vis-verlauf-gross-inhalt {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vis-verlauf-gross-seite {
+    border-left: none;
+    border-top: 1px solid var(--k-line);
+  }
+}
+
+/* Entscheid 68 / E174, Nachtrag (4): Abzeichen IM Hauptbild. Der Rahmen ist
+   genau so gross wie das Bild (die Hoehe kommt allein vom Bild, der Knoten
+   waechst nicht); die Abzeichen liegen oben im Bild und nehmen keinen Zeiger.
+   Passen beide nicht in eine Zeile (schmales Bild, langes Urteil), bricht das
+   Urteil rechts darunter um, statt das Laufschild zu ueberdecken. */
+.vis-hauptbild {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.vis-hauptbild-abzeichen {
+  position: absolute;
+  top: var(--k-s2);
+  left: var(--k-s2);
+  right: var(--k-s2);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--k-s1);
+  pointer-events: none;
+}
+.vis-hauptbild-lauf,
+.vis-hauptbild-urteil {
+  padding: var(--k-s1) var(--k-s2);
+  border-radius: var(--k-radius-pill);
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-eng);
+  white-space: nowrap;
+}
+.vis-hauptbild-lauf {
+  font-family: var(--k-font-mono);
+  background: var(--vis-node-tinte);
+  color: var(--vis-node-flaeche);
+}
+.vis-hauptbild-urteil {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s1);
+  margin-left: auto;
+  background: var(--vis-node-flaeche);
+  font-weight: var(--k-gewicht-stark);
+}
+.vis-hauptbild-urteil .vis-verlauf-punkt {
+  width: 6px;
+  height: 6px;
+}
+.vis-hauptbild-urteil.vis-verlauf-urteil--nicht-beurteilbar,
+.vis-hauptbild-urteil.vis-verlauf-urteil--ohne-qa {
+  color: var(--vis-node-tinte);
 }

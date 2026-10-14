@@ -7,13 +7,15 @@ import { breakpoint } from '../src/tokens';
 /**
  * Breakpoint-Wächter (D-6, E-3 `docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`)
  * — die Kanon-Skala kennt genau drei Breiten-Grenzen (`schmal`/`mittel`/
- * `weit` = 700/1100/1500px, `tokens.ts` `breakpoint`). Media-Queries können
+ * `weit` = 700/1100/1500px, dazu seit dem 21.09.2026 `dreispaltig` = 1200px
+ * fuer die dreispaltige Zentrale — `tokens.ts` `breakpoint`, dort steht die
+ * Rechnung). Media-Queries können
  * kein `var()`, darum keine CSS-Token-Wache wie bei Farben/Radien/Sperrwerten
  * — dieser Test übernimmt dieselbe Rolle mechanisch für `@media`-Breiten:
  * er liest per `fs` alle `.css`-Dateien unter `apps/kosmo-orbit/src` und
  * `packages/kosmo-ui/src` (Lese-Muster wie `apps/kosmo-orbit/test/
  * css-var-konsistenz.test.ts`) und bricht, sobald ein `min-width`/
- * `max-width`-Wert ausserhalb {700, 1100, 1500} auftaucht — PLUS 701, der
+ * `max-width`-Wert ausserhalb der Skala auftaucht — PLUS 701, der
  * einzig zulässigen `min-width`-Kehrseite von 700 im E-3-Zwischenband
  * (s. Kommentar bei `ERLAUBTE_BREITEN` unten).
  *
@@ -98,12 +100,12 @@ function quellenLesen(dir: string): { datei: string; inhalt: string }[] {
   return alleCssDateien(dir).map((pfad) => ({ datei: pfad, inhalt: readFileSync(pfad, 'utf8') }));
 }
 
-describe('Breakpoint-Wächter (D-6, E-3) — @media-Breiten bleiben auf {700, 1100, 1500}', () => {
+describe('Breakpoint-Wächter (D-6, E-3) — @media-Breiten bleiben auf {700, 1100, 1200, 1500}', () => {
   it('keine CSS-Datei unter apps/kosmo-orbit/src oder packages/kosmo-ui/src verlässt die Kanon-Skala', () => {
     const quellen = [...quellenLesen(APP_SRC), ...quellenLesen(UI_SRC)];
     const treffer = findeOffScaleBreakpoints(quellen);
     const meldung = treffer
-      .map((t) => `${t.datei}:${t.zeile}: @media ${t.bedingung} — ${t.breite}px ausserhalb {700, 701, 1100, 1500}`)
+      .map((t) => `${t.datei}:${t.zeile}: @media ${t.bedingung} — ${t.breite}px ausserhalb {700, 701, 1100, 1200, 1500}`)
       .join('\n');
     expect(treffer, `Off-Scale-Breakpoints:\n${meldung}`).toEqual([]);
   });
@@ -113,8 +115,22 @@ describe('Breakpoint-Wächter (D-6, E-3) — @media-Breiten bleiben auf {700, 11
     expect(alleCssDateien(UI_SRC).length).toBeGreaterThan(0);
   });
 
-  it('die Kanon-Skala selbst besteht aus genau den drei erwarteten Werten', () => {
-    expect(new Set(Object.values(breakpoint))).toEqual(new Set([700, 1100, 1500]));
+  /**
+   * **Von drei auf vier Sprossen, am 21.09.2026 — bewusst geaendert, nicht
+   * umgangen.**
+   *
+   * Diese Zeile ist der Riegel gegen das stille Wachsen der Skala, und sie
+   * hat genau das getan: der Umbau der Zentrale auf drei Spalten kam mit
+   * einer 1190 an und wurde hier rot gemeldet. Die 1190 ist danach zu
+   * `breakpoint.dreispaltig` = 1200 geworden — einer benannten Sprosse mit
+   * ihrer Rechnung in `tokens.ts`, nicht einer Zahl im CSS.
+   *
+   * **Was der Riegel weiterhin leistet:** die Liste hier wird von Hand
+   * gefuehrt. Wer eine fuenfte Sprosse eintraegt, muss diese Zeile anfassen
+   * und stoesst dabei auf die Frage, ob er sie wirklich braucht.
+   */
+  it('die Kanon-Skala selbst besteht aus genau den vier erwarteten Werten', () => {
+    expect(new Set(Object.values(breakpoint))).toEqual(new Set([700, 1100, 1200, 1500]));
   });
 });
 

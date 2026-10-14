@@ -30,6 +30,22 @@ describe('reduzierteBewegungAktiv', () => {
     expect(reduzierteBewegungAktiv()).toBe(true);
   });
 
+  it('liest auch die Wahl in der App (data-bewegung="aus"), nicht nur das Gerät', () => {
+    // Seit Lieferung 32 kappt der Riegel Übergänge auf 0s: ohne diese Prüfung
+    // wartete flipPlay unter «Bewegung aus» auf ein transitionend, das nie kommt.
+    vi.stubGlobal('matchMedia', () => ({ matches: false, media: '', addEventListener: () => {}, removeEventListener: () => {} }));
+    document.documentElement.setAttribute('data-bewegung', 'aus');
+    try {
+      expect(reduzierteBewegungAktiv()).toBe(true);
+      const el = document.createElement('div');
+      mitRect(el, { left: 0, top: 0, width: 50, height: 50 });
+      flipPlay(el, { left: 100, top: 100, width: 50, height: 50 });
+      expect(el.style.transform).toBe('');
+    } finally {
+      document.documentElement.removeAttribute('data-bewegung');
+    }
+  });
+
   it('ohne matchMedia (SSR/Test-Umgebung) gilt "nicht reduziert"', () => {
     vi.stubGlobal('matchMedia', undefined);
     expect(reduzierteBewegungAktiv()).toBe(false);

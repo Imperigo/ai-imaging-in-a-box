@@ -67,7 +67,7 @@ function NodePaletteStufe2() {
           `bestaetigen()` nach — ein Graph verschwindet unwiderruflich
           sichtbar, anders als ein einzelner Node (`NodeCanvas.tsx`s
           `vis.nodeLoeschen`, das Vorbild-Muster, ohne Rückfrage). */}
-      <div className="visisl-render-zeile">
+      <div className="visisl-render-zeile visisl-graph-kopf">
         <span className="visisl-render-titel">{graph?.name ?? 'Graph'}</span>
         <KButton
           size="touch"

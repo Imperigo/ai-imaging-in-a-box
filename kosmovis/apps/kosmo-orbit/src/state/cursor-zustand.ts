@@ -149,7 +149,7 @@ function zeigtPointerFine(): boolean {
  *
  * **Bewusst OHNE Import aus `shell/**`** (Schichtregel, s. Kopfkommentar
  * dieser Datei: «state/ kennt shell/ nicht»). `istTauriDesktop()`
- * (`shell/cloud-login.ts`) wird darum NICHT importiert, sondern dieselbe
+ * (`shell/tauri-desktop.ts`) wird darum NICHT importiert, sondern dieselbe
  * Probe (`'__TAURI_INTERNALS__' in window`) eigenständig dupliziert — exakt
  * das Muster, das `shell/sicherer-modus.ts` an anderer Stelle mit
  * `texturenAktiv()` schon vormacht (dort eine Paket-Grenze statt einer

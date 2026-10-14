@@ -4,7 +4,8 @@
  * Der dünne Kern für das Vis-Werkzeug (E26, 24.09.2026): dieselben Namen wie im Original,
  * aber nur aus den Dateien, die herüberkamen — wörtlich (Modell, Befehle, Vis-Graph,
  * Bildnachbearbeitung) oder als Stellvertreter (Kameras, glb, IFC, Blätter). Die Reihenfolge
- * folgt dem Original, weil die Befehle beim Laden registriert werden.
+ * folgt dem Original, weil die Befehle beim Laden registriert werden. Runde 26 (14.10.2026):
+ * dazu Fundstellen (Typ im Datenmodell), die Papiergrösse eines Blatts und die Texturkacheln.
  */
 export * from './model/units';
 export * from './model/ids';
@@ -15,11 +16,14 @@ export * from './commands/publish';
 export * from './commands/vis';
 export * from './derive/visgraph';
 export * from './derive/gltf';
+export * from './derive/sheet';
 export * from './derive/kamera';
 export * from './derive/render-presets';
 export * from './ifc/export';
+export * from './fundstelle';
 export * from './derive/renderprompt';
 export * from './derive/begruenung';
+export * from './derive/textur';
 export * from './bild/farbangleich';
 export * from './bild/nachbearbeitung';
 export * from './bild/belichtung';

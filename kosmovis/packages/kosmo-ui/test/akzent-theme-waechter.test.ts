@@ -83,8 +83,16 @@ describe('P-AKZENTTREU: Akzentwahl muss in JEDEM Thema wirken', () => {
     }
   });
 
-  it('Vorwahl-Akzent «tusche» behält seinen bisherigen, per-Thema unterschiedlichen Wert (paper #3e96a2, orbit #57b6c2)', () => {
-    expect(gemessenerAccent('paper', 'tusche')).toBe('#3e96a2');
-    expect(gemessenerAccent('orbit', 'tusche')).toBe('#57b6c2');
+  // Die WERTE sind am 23.09.2026 durch Owner-Entscheid abgeloest («Markenfarbe
+  // nachschaerfen», 19.09.): #3e96a2 → #2d6d76, #57b6c2 → #69bec9, damit
+  // Akzentschrift 4.5:1 erreicht (`e2e/akzent-schrift-kontrast.spec.ts`).
+  // Am 01.10.2026 erneut abgeloest (U5, Owner-Entscheid 12 «heller Modus
+  // knallig»): Papier #2d6d76 → #006d79, voll gesaettigt, an keiner Stelle
+  // weniger Kontrast (Rechnung im Kommentar an `--k-accent` in aura.css).
+  // Was dieser Fall eigentlich prueft, bleibt: «tusche» hat JE THEMA einen
+  // eigenen Wert und faellt nicht auf den des anderen zurueck.
+  it('Vorwahl-Akzent «tusche» behält seinen per-Thema unterschiedlichen Wert (paper #006d79, orbit #69bec9)', () => {
+    expect(gemessenerAccent('paper', 'tusche')).toBe('#006d79');
+    expect(gemessenerAccent('orbit', 'tusche')).toBe('#69bec9');
   });
 });
