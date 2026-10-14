@@ -7889,6 +7889,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Zoom schneller** in KosmoOrbit (eigener Zweig) und Visbox. *(14.10.2026, §106)*
 - [ ] **Int 1** spielt `claude/kosmovis-knoten-zoom` ein.
 - [ ] **Am Mac bestätigen** (Owner): neue Knoten, Schieben mit zwei Fingern, Zoom-Tempo.
+
+## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
+
+- [ ] Wartet auf: PLY-Sofort-Fix, Vertrag `kosmo.punktwolke/0.1` (Integrator), Import (Prepare), Modell (Integrator).
+- [ ] **Unsere Stufe:** den Verweis auf die Punktwolke im Render-Auftrag lesen und die Punkte in Blender darstellen (Punkt-Instanzen oder Netz). Befund HomeStation: die App schickt den Verweis schon (Splat-Ebene), die Cycles-Werkzeuge lesen ihn nicht.
+- [ ] Malstrich-Versuch des Owners (Geometry Nodes, Punkte zu Pinselstrichen) — falls er als Visbox-Stil taugt, kommt er mit Bildern.
 - [x] **Brücke RealityScan** gebaut (Entscheid 81 ersetzt 80). *(13.10.2026, §91)*
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 
