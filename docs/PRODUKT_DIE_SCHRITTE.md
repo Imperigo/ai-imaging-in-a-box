@@ -1436,6 +1436,12 @@ ein Dialog, der den Lauf anhielt, das falsche Modell beim Export, schwarze Farbe
 Programm, das nach dem Abbruch weiterlief, und ein Pfad im Fehlertext). Alle sieben sind behoben; ob das fertige Bild
 besteht, misst der Heim-PC als Nächstes.
 
+**Die Mac-App zeigt zuerst die Knoten (14.10.2026).** Der Owner fragte, warum die Mac-App eine Webseite zeigt, wo sie doch
+das KosmoVis-Werkzeug sein soll. Die Antwort: Die Mac-App ist ein Fenster auf den Heim-PC, und der Knotenbaum lag dort
+hinter einem Knopf. Jetzt öffnet die App direkt die Knoten; oben schaltet ein Schalter auf die Visbox-Seite und zurück, und
+die Knoten zeigen die Mappe, die zuletzt offen war. Nachgebaut wird am Mac nichts: Der Knotenbaum ist die Kopie aus
+KosmoOrbit und wird dort weiterentwickelt.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

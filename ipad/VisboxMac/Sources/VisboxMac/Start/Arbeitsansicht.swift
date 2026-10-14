@@ -2,8 +2,13 @@ import SwiftUI
 import VisboxKern
 import WebKit
 
-/// Die Arbeit nach «Schon anfangen» (Entscheid 39) — **für v0.1.7 die Fläche des Heim-PC**,
-/// daneben der Platz für den Assistenten.
+/// Die Arbeit nach «Schon anfangen» (Entscheid 39) — **zuerst die Knoten des Heim-PC**
+/// (Entscheid 85, 14.10.2026, Blatt 19), umschaltbar auf die Visbox-Seite, daneben der Platz
+/// für den Assistenten.
+///
+/// **Seit Entscheid 85:** Oben steht der Schalter «Knoten | Visbox-Seite» (A); beim Öffnen
+/// immer die Knoten (C, `Flaechenwahl.beimOeffnen`). Welche Mappe die Knoten zeigen, sagt der
+/// Heim-PC (B): die zuletzt auf der Visbox-Seite geöffnete.
 ///
 /// Die Fläche ist die Webseite, die der Visbox-Server am Heim-PC unter `/` ausliefert
 /// (`oberflaeche/seite.html`), in einer `WKWebView`: Mappe und Bilder gehen damit sofort,
@@ -20,6 +25,7 @@ struct Arbeitsansicht: View {
     let zurueck: () -> Void
 
     @State private var flaechenSatz: String?
+    @State private var wahl: Flaechenwahl = Flaechenwahl.beimOeffnen
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,6 +37,14 @@ struct Arbeitsansicht: View {
                     .font(Macschriften.schrift(.text, 14))
                     .foregroundStyle(Startfarbe.leise)
                 Spacer()
+                Picker("Ansicht", selection: $wahl) {
+                    ForEach(Flaechenwahl.allCases, id: \.self) { art in
+                        Text(art.titel).tag(art)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
                 Button("Startzeilen", action: zurueck)
                     .buttonStyle(.plain)
                     .font(Macschriften.schrift(.text, 13))
@@ -57,7 +71,8 @@ struct Arbeitsansicht: View {
     private var flaeche: some View {
         if let basis = leitung.adresse, let anmeldung = leitung.anmeldung {
             ZStack(alignment: .bottom) {
-                Heimflaeche(basis: basis, anmeldung: anmeldung, meldung: $flaechenSatz)
+                Heimflaeche(basis: basis, anmeldung: anmeldung, wahl: wahl,
+                            meldung: $flaechenSatz)
                 if let satz = flaechenSatz {
                     Text(satz)
                         .font(Macschriften.schrift(.text, 13))
@@ -137,10 +152,11 @@ struct Assistentenplatzhalter: View {
 struct Heimflaeche: NSViewRepresentable {
     let basis: URL
     let anmeldung: Anmeldung
+    let wahl: Flaechenwahl
     @Binding var meldung: String?
 
     func makeCoordinator() -> Flaechenlotse {
-        Flaechenlotse(basis: basis, anmeldung: anmeldung)
+        Flaechenlotse(basis: basis, anmeldung: anmeldung, wahl: wahl)
     }
 
     func makeNSView(context: Context) -> WKWebView {
@@ -159,9 +175,11 @@ struct Heimflaeche: NSViewRepresentable {
         lotse.melde = { satz in meldung = satz }
         // NEU EINGERICHTET (andere Adresse, anderes Kennwort): neu laden, sonst bliebe die
         // Seite mit der alten Anmeldung offen.
-        if lotse.basis != basis || lotse.anmeldung != anmeldung {
+        // ODER UMGESCHALTET (Knoten ↔ Visbox-Seite): die andere Seite laden.
+        if lotse.basis != basis || lotse.anmeldung != anmeldung || lotse.wahl != wahl {
             lotse.basis = basis
             lotse.anmeldung = anmeldung
+            lotse.wahl = wahl
             lotse.lade(ansicht)
         }
     }
@@ -171,15 +189,17 @@ struct Heimflaeche: NSViewRepresentable {
 final class Flaechenlotse: NSObject, WKNavigationDelegate {
     var basis: URL
     var anmeldung: Anmeldung
+    var wahl: Flaechenwahl
     var melde: (String?) -> Void = { _ in }
 
-    init(basis: URL, anmeldung: Anmeldung) {
+    init(basis: URL, anmeldung: Anmeldung, wahl: Flaechenwahl) {
         self.basis = basis
         self.anmeldung = anmeldung
+        self.wahl = wahl
     }
 
     func lade(_ ansicht: WKWebView) {
-        guard let ziel = Wege.adresse(Wege.seite, basis: basis) else {
+        guard let ziel = wahl.adresse(basis: basis) else {
             melde("Aus der Adresse des Heim-PC liess sich die Seite nicht bauen.")
             return
         }

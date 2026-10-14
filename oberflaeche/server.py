@@ -1561,6 +1561,10 @@ class Flaeche(BaseHTTPRequestHandler):
     #: angefordert hat (Entscheid 83) — dann gelten fünf Minuten und drei Versuche, und die
     #: Ablehnung schickt ihn an «Neue Zahl anfordern».
     kopplung_angefordert = False
+    #: Die zuletzt auf der Seite geöffnete Mappe (``/api/projekt?ordner=``) — die Knotenansicht
+    #: ohne ``?ordner=`` zeigt sie (Entscheid 85 B, 14.10.2026: die Mac-App öffnet zuerst die
+    #: Knoten). Auf der Klasse, weil jede Anfrage ein neues Objekt ist.
+    zuletzt_geoeffnet = None
     #: Wann zuletzt eine Zahl angefordert und erzeugt wurde, auf der stetigen Uhr — für die
     #: Drossel (``kopplung.naechste_anforderung_in``). Auf der Klasse wie die Kopplung: Eine
     #: Drossel je Verbindung drosselte nichts.
@@ -1783,6 +1787,17 @@ class Flaeche(BaseHTTPRequestHandler):
             self._sende(sicht(Path(ordner)))
         except projekt.ProjektError as fehler:
             self._fehler(str(fehler), 404)
+            return
+        # DIE ZULETZT GEOEFFNETE MAPPE (Entscheid 85 B, 14.10.2026): Die Mac-App oeffnet die
+        # Knoten ohne `?ordner=`; sie sollen die Mappe zeigen, die zuletzt auf der Seite offen
+        # war. Gemerkt nur, was sich oeffnen liess — eine Fehleingabe verschiebt nichts.
+        type(self).zuletzt_geoeffnet = str(ordner)
+
+    def _knoten_ordner(self, frage: dict | None):
+        """Die Mappe der Knotenansicht: die genannte, sonst die zuletzt auf der Seite
+        geöffnete (Entscheid 85 B), sonst die vom Start."""
+        return (((frage or {}).get("ordner") or [None])[0]
+                or type(self).zuletzt_geoeffnet or self.ordner)
 
     def _fortschritt(self, weg) -> None:
         self._sende(LAUFSTAND.sicht())
@@ -1860,8 +1875,9 @@ class Flaeche(BaseHTTPRequestHandler):
                 else:
                     self._fehler(f"Diesen Weg der Brücke gibt es in {NAME} nicht: {rest}", 404)
             elif pfad == WEG_KNOTEN_MAPPE:
-                # WIE `_projekt`: der Ordner aus der Anfrage, sonst der vom Start.
-                ordner = ((frage or {}).get("ordner") or [None])[0] or self.ordner
+                # WIE `_projekt`: der Ordner aus der Anfrage, sonst der zuletzt geoeffnete,
+                # sonst der vom Start (Entscheid 85 B).
+                ordner = self._knoten_ordner(frage)
                 if not ordner:
                     self._fehler("Kein Projektordner — mit --ordner starten oder auf der "
                                  f"{NAME}-Seite einen öffnen.", 404)
@@ -1872,7 +1888,7 @@ class Flaeche(BaseHTTPRequestHandler):
                 antwort["glb"] = bool(antwort["glb"])
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL:
-                ordner = ((frage or {}).get("ordner") or [None])[0] or self.ordner
+                ordner = self._knoten_ordner(frage)
                 if not ordner:
                     self._fehler("Kein Projektordner — mit --ordner starten oder auf der "
                                  f"{NAME}-Seite einen öffnen.", 404)
@@ -2878,6 +2894,8 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
         ablage = Path(ordner) / "knotenweg"
     klasse = type("FlaecheMitOrdner", (Flaeche,),
                   {"ordner": Path(ordner) if ordner else None,
+                   # JE SERVER, nicht in der Grundklasse (Entscheid 85 B).
+                   "zuletzt_geoeffnet": None,
                    "kennwort": kennwort or None,
                    "kopplung_offen": kopplung_offen,
                    "ablage": Path(ablage) if ablage else None,

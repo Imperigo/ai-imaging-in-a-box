@@ -7863,6 +7863,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Owner-Entscheid:** RealityScan ist der Weg fürs Umgebungsnetz, COLMAP höchstens offener Rückfall. *(14.10.2026, §100)*
 - [x] **Brücke Fassung 2** — die sieben Befunde aus 278 behoben. *(14.10.2026, §100)*
 - [ ] **HomeStation schaltet ein und rechnet M2** (Hallenauftrag mit Umgebung aus RealityScan): Besteht das Bild?
+
+## Mac zeigt zuerst die Knoten (Entscheid 85, 14.10.2026 — Sitzung 74 §101)
+
+- [x] **Owner-Entscheid 85 (a–c)** per Auswahl, Blatt 19 gezeichnet. *(14.10.2026, §101)*
+- [x] **Gebaut:** Mac-App öffnet die Knoten, Schalter oben; Heim-PC merkt sich die zuletzt geöffnete Mappe. *(14.10.2026, §101)*
+- [ ] **Am Mac bestätigen** (Owner): erscheinen die Knoten nach «Schon anfangen», wirkt der Schalter, lässt sich ausführen und freigeben? Kommt mit der nächsten Fassung (Aktualisieren-Knopf).
 - [x] **Brücke RealityScan** gebaut (Entscheid 81 ersetzt 80). *(13.10.2026, §91)*
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

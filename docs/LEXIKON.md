@@ -4782,8 +4782,13 @@ Tailscale-Weiterleitung auf 8443.
 Benutzer und Kennwort, bevor er etwas herausgibt, und das Programm schickt beides bei jeder
 Anfrage mit. Die Leitung muss darum verschlüsselt sein — bei Visbox unterwegs über Tailscale.
 
-**WKWebView** — Apples eingebautes Browserfenster für Apps. Die Mac-App zeigt darin die
-Visbox-Fläche des Heim-PC, statt sie nachzubauen.
+**WKWebView** — Apples eingebautes Browserfenster für Apps. Die Mac-App zeigt darin, was der
+Heim-PC ausliefert, statt es nachzubauen: seit Entscheid 85 (14.10.2026) zuerst die
+**Knotenansicht**, per Schalter die Visbox-Seite.
+
+**Segmentschalter** — Ein Bedienelement aus zwei oder mehr nebeneinander liegenden Feldern, von
+denen genau eines gewählt ist — wie die Tasten eines alten Radios. *Im Projekt:* oben in der
+Mac-App «Knoten | Visbox-Seite» (Entscheid 85 A).
 
 **Gedankentext (thinking)** — Was ein Sprachmodell wie Qwen3 vor der Antwort für sich
 «überlegt». Visbox liest ihn getrennt mit (`think: true`) und zeigt ihn nie an.
@@ -6490,9 +6495,11 @@ keine Aussage.*
 **Knotenansicht / Knoteneditor** — Eine Darstellung des Ablaufs als Kästchen (Knoten), die
 mit Linien verbunden sind: Jede Linie sagt, woher ein Kästchen seine Eingabe liest. Ein
 **Knoteneditor** lässt diese Linien auch selbst ziehen und Knoten hinzufügen — so einer ist
-der von KosmoOrbit. Die **Knotenansicht** von Visbox (entschieden am 24.09.2026, gezeichnet,
-nicht gebaut) zeigt nur die feste Kette von Visbox: Modell → Tiefenbilder → KI-Bild →
-Prüfung, mit Vorschau und Zustand an jedem Knoten.
+der von KosmoOrbit. Die **Knotenansicht** von Visbox ist seit E26 (24.09.2026) **eine Kopie
+dieses Knoteneditors** aus KosmoOrbit (`kosmovis/apps/visbox-knoten`); der Heim-PC liefert sie
+unter `/knoten/` aus. Die Mac-App zeigt sie seit Entscheid 85 (14.10.2026) als Erstes. Der
+frühere eigene Entwurf (feste Kette Modell → Tiefenbilder → KI-Bild → Prüfung, Blatt 11) ist
+damit überholt.
 
 **Führungsregler (`true_cfg_scale`)** — Nicht jedes Bildmodell lässt sich über denselben
 Knopf führen. Beim Bearbeitungsmodell `qwen-image-edit-2511` heisst der Knopf, der wirklich
@@ -6935,6 +6942,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus Entscheid 85 (Mac zeigt zuerst die Knoten): **Segmentschalter**; nachgefuehrt: **WKWebView**, **Knotenansicht / Knoteneditor** (Kopie aus KosmoOrbit, nicht mehr der eigene Entwurf) |
 | 2026-10-14 | Ergaenzt beim Reparieren der RealityScan-Bruecke (Fassung 2, nach `auf-20261013-278`): **Prozessgruppe** (mit verwaistem Prozess), **Deckel (im Netz)**, **Farbe als Ganzzahl oder Kommazahl (uchar / float)**; nachgefuehrt: **RealityScan-Brücke** (jetzt der Weg fürs Umgebungsnetz) |
 | 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 84 (Aktualisieren, Visbox 0.2.1): **Tag (Markierung im Verlauf)**, **Freigabe auf GitHub (Release)**, **Prüfsummen-Datei (`SHA256SUMS.txt`)**, **Provisioning-Profil (`embedded.mobileprovision`)**, **Sparkle** (mit Appcast und EdDSA), **App Translocation (verschobener Startort)**, **Weiterleitung (Redirect)** |
 | 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 83 (Mac koppelt mit Zahl): **Selbst unterschriebenes Zertifikat**, **Vertrauen beim ersten Mal (TOFU)**, **Dazwischenstellen (Man-in-the-Middle)**, **PAKE**, **Zeichen des Heim-PC**, **Mitteilung (am Bildschirm)**, **Drossel**, **Tailscale-Befehlszeile**, **Auflösen (eines Fundes)**; nachgefuehrt: **TLS mit festgehaltenem Schlüssel** (jetzt «Zertifikat anheften, Pinning», gebaut für den Mac im WLAN), **Zertifikat**, **Bonjour (mDNS)** (auch die Mac-App sucht) |

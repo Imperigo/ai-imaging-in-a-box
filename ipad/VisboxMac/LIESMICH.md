@@ -3,8 +3,10 @@
 Eine eigene App für den Mac (SwiftUI, macOS 14 oder neuer, Apple-Chip), gebaut für die
 **Vorführung auswärts** (Entscheide 35–44, Plan v0.1.7 Strom A). Sie baut beim Öffnen die
 Leitung zum Heim-PC selbst auf, zeigt in vier Zeilen, wie weit sie ist (Blatt 13), und öffnet
-mit «Schon anfangen» die Visbox-Fläche des Heim-PC. **Sie rechnet nie selbst** — gerechnet
-wird am Heim-PC, wie bei der iPad-App.
+mit «Schon anfangen» die **Knotenansicht** des Heim-PC — das KosmoVis-Werkzeug (Entscheid 85,
+14.10.2026, Blatt 19). Oben schaltet «Knoten | Visbox-Seite» auf die Visbox-Seite (Mappe
+wählen, Bilder, Skizzen) und zurück; die Knoten zeigen die zuletzt dort geöffnete Mappe.
+**Sie rechnet nie selbst** — gerechnet wird am Heim-PC, wie bei der iPad-App.
 
 Sie teilt den **Kern** mit der iPad-App (`ipad/VisboxKern`): dieselben Wege, dieselbe
 Anmeldung, dieselbe Marke. Die Regeln der Startzeilen und die Prüfung der Adresse stehen dort
