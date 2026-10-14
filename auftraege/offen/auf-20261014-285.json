@@ -1,0 +1,39 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261014-285",
+ "art": "frage",
+ "rang": 72,
+ "erstellt": "2026-10-14T18:30:00Z",
+ "beschreibung": "Owner-Entscheid 93: Dienst der Flaeche mit --auftragsablage auf die Ablage, die der Abholer liest, damit Bestellen aus der Knotenansicht rechnet",
+ "anweisung": "OWNER-ENTSCHEID 93 (14.10.2026, per Auswahl): 'Ja, umstellen'. Hintergrund auf-20261014-284 D1/D3: Der Dienst visbox-flaeche laeuft nur mit --kennwort-datei; /bruecke/jobs gibt 503 'Keine Auftragsablage'; der Abholer (kosmo-abholer) liest die Bruecken-Ablage und die eigene tmp-Ablage (--eigener-store). ZU TUN: E1) Erst git pull (main traegt Visbox 0.2.8). E2) Waehle die Ablage, die der laufende Abholer WIRKLICH liest und deren Format zu knotenweg.lege_an passt (Laufzettel job.json mit approval_token, Status wartet auf Freigabe) - pruefe das an einem Probe-Auftrag, bevor du umstellst. E3) Stelle im Dienst visbox-flaeche (eure lokale Unit) --auftragsablage <diese Ablage> ein und starte ihn neu; nichts anderes am Dienst aendern. E4) Probe von Anfang bis Ende mit einer SYNTHETISCHEN Mappe (Quader, kein echtes Modell): Knotenansicht -> Ausfuehren -> der Auftrag erscheint in der Ablage mit Status 'wartet auf Freigabe' -> Freigeben -> der Abholer holt ihn ab und legt ein Bild mit Pruefung ab (nur bei Leerlauf der Karte). Zurueck: Status je Schritt, Dauer, Kennzahlen der Pruefung, ob das Bild am Render-Knoten erscheint. E5) Schreibe in die Rueckgabe die EINE Zeile ExecStart, wie sie jetzt laeuft, mit Platzhalter %h statt Benutzerpfad - wir tragen sie in betrieb/visbox-flaeche.service ein (die Vorlage im Repo aenderst du NICHT selbst). NICHT: Code aendern; den Abholer umstellen; echte Projektdaten; Bilder mit Personen oder erfundenen Figuren; Pfade mit Benutzernamen, Hosts, IPs oder Kennwoerter in die Rueckgabe (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "Quader-Mappe ueber 'Datei laden ...' (synthetische glb aus tests/ oder tools/)"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-284",
+  "entscheide": [
+   "93"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Ein Bildlauf, nie zwei GPU-Laeufe gleichzeitig.",
+  "hinweise": [
+   "Keine Kennwoerter, Hosts, IPs, Benutzernamen oder Pfade mit Namen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "E2 welche Ablage und warum.",
+  "E3 umgestellt ja/nein.",
+  "E4 Status je Schritt, Dauer, Pruefzahlen, Bild am Knoten ja/nein.",
+  "E5 ExecStart-Zeile mit %h."
+ ]
+}
