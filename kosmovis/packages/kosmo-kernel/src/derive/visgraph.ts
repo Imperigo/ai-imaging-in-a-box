@@ -155,8 +155,14 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     // ihn vor dem Senden heraus: Innenansichten sind seit P-INTERIOR
     // (ROADMAP 1071) an `interior`/IFC gebunden, dieser Weg sendet immer
     // glb. Der Zusatz macht das jetzt ehrlich, statt es nur zu verschweigen.
+    //
+    // KV-STARTGRAPH (14.10.2026, Visbox-Plan «Was die Knoten tun»): Seit B117
+    // Schritt 2 stimmte der Zusatz nicht mehr. `istUeberDiesenWegBestellbar`
+    // laesst «Innenraum» durch, sobald `interiorFaehrt(doc)` wahr ist (Zonen im
+    // Dokument) — dann sendet `postRenderJob` IFC statt glb und bestellt die
+    // Innenansicht mit. Der Text sagt jetzt beides, statt «nur glb» zu behaupten.
     hilfe:
-      'Leitet benannte Standpunkte (Eingang/Übersicht/ggf. Innenraum) regelbasiert aus den Modell-Bounds ab — Vorschlag aus dem Modell, keine KI-Wahl. Mit dem Render-Node verbinden. Bestellt wird nur Eingang/Übersicht: eine Innenansicht ist an interior/IFC gebunden, dieser Weg sendet nur glb-Geometrie.',
+      'Leitet benannte Standpunkte (Eingang/Übersicht, bei Räumen im Modell auch Innenraum) regelbasiert aus den Modell-Bounds ab — Vorschlag aus dem Modell, keine KI-Wahl. Mit dem Render-Node verbinden. Innenraum wird nur bestellt, wenn das Modell Räume (Zonen) hat; dann geht die Szene als IFC statt glb.',
     kategorie: 'quelle',
     inputs: [],
     outputs: [{ name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' }],

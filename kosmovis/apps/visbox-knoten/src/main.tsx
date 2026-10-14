@@ -15,6 +15,10 @@
  * Modell-Knoten die Lade-Fähigkeit bereit (`registriereModellLaden(ladeWirt(…))`) — vor dem
  * ersten Bild, damit der Knoten gleich in seiner Höhe mit Knopf steht. In KosmoOrbit ruft das
  * niemand, und der Knoten bleibt die eine Zeile von dort.
+ *
+ * Entscheid 91 (14.10.2026, Blatt 22): `legeAnfangBeimOeffnen(true)` — eine leere Mappe zeigt den
+ * fertigen Anfang (Modell, Auto-Kamera, Stimmung, Prompt → Render → Bildvergleich), mit
+ * «Datei laden …» im Modell-Knoten. KosmoOrbit zeigt ihn als Vorschlag mit Knopf.
  */
 import '../../kosmo-orbit/src/zod-jitless'; // muss der erste Import bleiben, s. Datei-Kopf dort
 import { StrictMode } from 'react';
@@ -30,6 +34,7 @@ import { VisWorkspace } from '../../kosmo-orbit/src/modules/vis/VisWorkspace';
 import { szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
+import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { aufDemVisboxServer, brueckeAufDiesenServer, ladeMappe, ladeWirt, verfolge, type LadeSicht } from './mappe';
 import './visbox.css';
 
@@ -58,6 +63,11 @@ function VisboxKnoten() {
 
 // Gemerkte Schriftgrösse und Bewegung vor dem ersten Bild an <html>, sonst springt die Schrift.
 ladeAnzeige();
+
+// ENTSCHEID 91 (Blatt 22): Die Knotenansicht beginnt mit dem fertigen Anfang statt «Noch kein
+// Render-Graph» — hier von selbst, weil das Dokument nur in dieser Seite lebt (kein Tresor, keine
+// Mitarbeitenden; Begruendung im Kopf von `start-graph.ts`). Auch im Entwicklungsserver.
+legeAnfangBeimOeffnen(true);
 
 // AUF DEM VISBOX-SERVER: Brücke hierher, dann das Modell der Mappe. Im Entwicklungsserver
 // (`npm run dev`) gibt es beides nicht — die Ansicht läuft dann leer, wie ohne Mappe.

@@ -116,7 +116,7 @@ def _format(szene: dict, dateiname: str | None) -> str:
 
 
 def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
-            *, kennung: str | None = None) -> dict:
+            *, kennung: str | None = None, mappe: str | None = None) -> dict:
     """Einen Auftrag annehmen: drei Dateien in einen neuen Ordner, Status wartet auf Freigabe.
 
     Args:
@@ -125,6 +125,13 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
         modell: Die Bytes der Modelldatei.
         dateiname: Der Name, unter dem sie geschickt wurde — nur Rückfall fürs Format.
         kennung: Nur für Proben; sonst wie bei der Brücke aus Uhrzeit und Zufall.
+        mappe: Der NAME der Mappe, aus der bestellt wurde (nur der Ordnername, kein Pfad —
+            Regel 3). **Warum (Prüfung 14.10.2026, Visbox-Plan «Was die Knoten tun»):** Die
+            Ablage ist die eine, beim Start des Servers bestimmte (``<Start-Mappe>/knotenweg``
+            oder ``--auftragsablage``) — der Abholer liest genau sie. Seit «Datei laden …»
+            (Entscheid 90) bestellt die Knotenansicht aber auch aus Mappen, die erst danach
+            entstanden sind; ihre Aufträge liegen richtig in derselben Ablage, nur sagte
+            nichts mehr, zu welcher Mappe ein Bild gehört. Der Laufzettel sagt es jetzt.
 
     Returns:
         Der Laufzettel, wie er in ``job.json`` steht — mit ``approval_token``, den nur der
@@ -167,6 +174,7 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
         "requested_engine": "cycles" if vis.get("skip") else "ki",
         "requested_style": stil.get("mode", "none"),
         "created_at": _jetzt(),
+        **({"mappe": str(mappe)} if mappe else {}),
         bruecke.FELD_MELDUNG: "Wartet auf Freigabe — erst ein Klick auf «Freigeben» "
                               "schickt den Auftrag an die Grafikkarte.",
     }
@@ -347,7 +355,7 @@ def mappe_fuer_knoten(ordner) -> dict:
 
     Returns:
         ``{name, glb, huellbox_m, hochachse, grund, huellbox_vermerk, mappe, herkunft,
-        fassung, bauteile}`` — ``glb`` ist der
+        fassung, bauteile, standpunkte}`` — ``glb`` ist der
         Pfad der glb-Datei der Mappe oder ``None``; ``huellbox_m`` die Hüllbox der gebauten
         Substanz in Weltkoordinaten (Meter, Z oben) oder ``None``; ``grund`` sagt einem
         Menschen, warum etwas fehlt, und ist leer, wenn nichts fehlt.
@@ -368,7 +376,9 @@ def mappe_fuer_knoten(ordner) -> dict:
                "mappe": Path(ordner).name,
                "herkunft": herkunft_von((p.get("modell") or {}).get("pfad")),
                "fassung": projekt.modellfassung(p),
-               "bauteile": None}
+               "bauteile": None,
+               # ENTSCHEID 92: die drei Standpunkte des Abholers vorab (`heim_standpunkte`).
+               "standpunkte": None}
     if glb is None or not Path(glb).is_file():
         antwort["glb"] = None
         # SEIT ENTSCHEID 90 sagt der Satz, wo es weitergeht: am Modell-Knoten selbst.
@@ -386,4 +396,77 @@ def mappe_fuer_knoten(ordner) -> dict:
     # DER VERMERK DER BOX IST FACHSPRACHE (welche Regel das Gelaende getrennt hat) — er
     # geht mit, aber nicht in `grund`, den die Seite einem Menschen zeigt.
     antwort["huellbox_vermerk"] = box.get("note") or ""
+    antwort["standpunkte"] = heim_standpunkte(glb, achse or "Y", szene_box=box.get("bbox_szene"))
     return antwort
+
+
+#: Die Namen der drei festen Richtungen des Abholers (:data:`aiimaging.abholer.AUTO_RICHTUNGEN`)
+#: für einen Menschen — so stehen sie am Auto-Kamera-Knoten.
+RICHTUNGSNAMEN = {"s": ("Süd", "frontal"), "sSE": ("Südost", "über Eck"),
+                  "nNW": ("Nordwest", "über Eck")}
+
+#: Das Seitenverhältnis, mit dem die Knotenansicht bestellt, wenn am Render-Knoten keine
+#: Auflösung gewählt ist (1600 × 1000, `vis-jobs.ts`). Der Abholer rechnet die Kamera mit dem
+#: Seitenverhältnis des Laufs; eine andere gewählte Auflösung verschiebt den Abstand etwas.
+SEITENVERHAELTNIS_VORGABE = 1600 / 1000
+
+
+def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None) -> dict:
+    """Die drei Standpunkte, die der Abholer ohne mitgeschickte Kameras rechnet — VORAB.
+
+    **Anlass (Owner-Entscheid 92, 14.10.2026, Blatt 23):** Der Auto-Kamera-Knoten in Visbox
+    war leer («Keine Geometrie im Modell — nichts abzuleiten»), obwohl der Heim-PC für jedes
+    Bild drei feste Richtungen rechnet. Knoten und Heim-PC sollen dasselbe zeigen.
+
+    **Dieselbe Rechnung, nicht eine zweite:** :data:`aiimaging.abholer.AUTO_RICHTUNGEN`, die
+    Box wie ``abholer._rahmung_fuer`` (nach dem Bauwerk, :func:`aiimaging.glbbox.rahmungsbox`,
+    sonst die Szene), der Ausschnitt wie ``abholer._ausschnitt_ohne_box``, und
+    :func:`aiimaging.kameras.kamerasatz` — genau der Aufruf des Blender-Vorlaufs.
+
+    **Was der Heim-PC danach noch tut** und hier nicht geht: Er zieht eine verdeckte Kamera
+    zurück (``kameras.ziehe_bis_frei``, braucht die Szene in Blender). Der Abstand kann dort
+    also grösser werden; Richtung und Blickziel bleiben.
+
+    **Was das NICHT ist:** eine Bestellung. Der Auftrag trägt weiter ``cameras: "auto"``, und
+    der Heim-PC rechnet diese drei selbst — mit dem Objektiv-Shift, den eine mitgeschickte
+    Kamera nicht tragen kann (``CameraSpec`` kennt keinen Shift).
+
+    Returns:
+        ``{standpunkte: [{kuerzel, name, art, abstand_m, auge, blick_auf, vollstaendig,
+        begruendung}], satz}`` — Weltkoordinaten in Metern, Z oben. Leer mit ``satz``, wenn
+        sich keine Box lesen liess. Nie eine Ausnahme: Ein Knoten ohne Vorschau ist kein Grund,
+        die Mappe nicht zu zeigen.
+    """
+    from . import abholer, kameras  # spät: nur, wer die Mappe fragt, braucht sie
+
+    rahmung = glbbox.rahmungsbox(glb, up_axis=up_axis)
+    box = rahmung.get("box") or szene_box
+    if box is None:
+        # OHNE BAUWERKSBOX rahmt der Vorlauf nach allen Netzen der Szene — hier dieselbe Box
+        # aus der glb, ohne Blender.
+        try:
+            box = glbbox.bauwerksbox(glb, up_axis=up_axis).get("bbox_szene")
+        except (glbbox.GlbError, OSError, ValueError):
+            box = None
+    if box is None:
+        return {"standpunkte": [], "satz": "Ohne lesbare Hüllbox kein Vorschlag — der Heim-PC "
+                                           "rechnet die drei Richtungen trotzdem selbst."}
+    try:
+        satz = kameras.kamerasatz(
+            box, kuerzel=list(abholer.AUTO_RICHTUNGEN),
+            seitenverhaeltnis=SEITENVERHAELTNIS_VORGABE,
+            ausschnitt=bool(rahmung.get("box") or rahmung.get("szene_ist_bauwerk")))
+    except ValueError as fehler:
+        return {"standpunkte": [], "satz": f"Kein Vorschlag aus dieser Hüllbox: {fehler}"}
+    aus = []
+    for k in satz["kameras"]:
+        name, art = RICHTUNGSNAMEN.get(k["kuerzel"], (k["kuerzel"], ""))
+        aus.append({"kuerzel": k["kuerzel"], "name": name, "art": art,
+                    "abstand_m": round(float(k["abstand_m"]), 1),
+                    "auge": [round(float(v), 3) for v in k["auge"]],
+                    "blick_auf": [round(float(v), 3) for v in k["blick_auf"]],
+                    "vollstaendig": bool(k["vollstaendig"]),
+                    "begruendung": str(k.get("begruendung") or "")})
+    nach = "dem Bauwerk" if rahmung.get("box") else "der ganzen Szene"
+    return {"standpunkte": aus,
+            "satz": f"Rechnet der Heim-PC aus der Hüllbox ({nach}) — Vorschau."}

@@ -77,6 +77,8 @@ import { LizenzOffenMarke } from './LizenzMarke';
 import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
 import { ModellKnotenKoerper } from './ModellKnoten';
 import { modellLadenWirt } from './modell-laden';
+import { heimStandpunkte } from './heim-standpunkte';
+import { umgebungFehltSatz } from './umgebung-fehlt';
 import { laufNummerVon, verlaufReihe, verlaufSichtbar, type VerlaufEintrag } from './render-verlauf';
 import './vis-visual.css';
 
@@ -641,11 +643,23 @@ export function basisNodeHoehe(typ: string): number {
  *  Lade-Faehigkeit bereitstellt (`registriereModellLaden`) — Platz fuer den laengsten der
  *  vier Zustaende: ein Satz ueber bis zu fuenf Zeilen («nicht lesbar», etwa bei einer
  *  ArchiCAD-Datei) und darunter der Knopf. EINE Hoehe fuer alle vier Zustaende, damit der
- *  Knoten beim Laden nicht springt und die Platzsuche mit derselben Zahl rechnet. */
-export const MODELL_KOERPER_H_MIT_LADEN = 118;
+ *  Knoten beim Laden nicht springt und die Platzsuche mit derselben Zahl rechnet.
+ *  KV-STARTGRAPH: 118 → 140, fuer die Zeile «Noch geladen: …» unter dem Satz (zwei Zeilen
+ *  bei langem Mappennamen). */
+export const MODELL_KOERPER_H_MIT_LADEN = 140;
+
+/** KV-STARTGRAPH: warum eine Bild-Referenz nicht aufs Blatt geht (Kurzhilfe am Blatt-Knoten). */
+export const BLATT_REFERENZ_GRUND =
+  'Eine Bild-Referenz ist ein fremdes Vorbild, kein Bild dieses Projekts — sie kommt nicht aufs Blatt. Ein Render- oder Aufnahme-Bild anschliessen.';
+
+/** Entscheid 92 (Visbox, Blatt 23): Koerperhoehe der Auto-Kamera, wenn der Wirt die
+ *  Standpunkte des Heim-PCs kennt (`registriereHeimStandpunkte`) — drei Zeilen und der Satz
+ *  darunter. Ohne Wirt (KosmoOrbit) bleibt es `KOERPER_H.kamera`. */
+export const KAMERA_KOERPER_H_MIT_HEIM = 96;
 
 function koerperHoehe(typ: string): number {
   if (typ === 'modell' && modellLadenWirt()) return MODELL_KOERPER_H_MIT_LADEN;
+  if (typ === 'kamera' && heimStandpunkte()) return KAMERA_KOERPER_H_MIT_HEIM;
   return KOERPER_H[typ] ?? 30;
 }
 
@@ -1631,6 +1645,17 @@ export function NodeCanvas({
       const params = quellNode.params ?? {};
       const aufnahme = waehleAufnahme(aufnahmen, String(params['kamera'] ?? 'aktuell'));
       return aufnahme ? { dataUrl: aufnahme.dataUrl } : null;
+    }
+    // KV-STARTGRAPH (14.10.2026, Visbox-Plan «Was die Knoten tun»): die Bild-Referenz.
+    // Ihre Linie liess sich ziehen (Ausgang `bild`), trug aber nichts — hier kannte man
+    // nur Render und Aufnahme, und der Bildvergleich blieb leer. Der Katalog verspricht
+    // «Stil-Referenz, Vergleich»: die Referenz steht jetzt im Vergleich neben dem Render,
+    // so wie sie im eigenen Knoten steht (dieselbe Adresse, ein `<img>`). Aufs Blatt geht
+    // sie NICHT (`istReferenz` unten, Fall `blatt`): sie ist ein fremdes Vorbild, kein
+    // eigenes Bild, und ein Blatt traegt es sonst wie eine Visualisierung des Projekts.
+    if (quellNode?.typ === 'referenz') {
+      const url = String((quellNode.params ?? {})['url'] ?? '').trim();
+      return url ? { dataUrl: url } : null;
     }
     // N4-Wache (ROADMAP 1340): dieselbe Abbildung wie `renderKarten` unten —
     // beide rufen jetzt `quelleAusLauf` statt das Literal je an ihrer Stelle
@@ -2698,7 +2723,12 @@ function RenderBedienung({
   params,
   param,
   preset,
+  samplesVerbunden = false,
 }: {
+  /** KV-STARTGRAPH (14.10.2026): haengt eine Zahl am Eingang «Samples»? Dann sagt die
+   *  Qualitaets-Zeile, wer gilt — gewaehlt die Stufe, leer die Zahl (`vis-jobs.ts`
+   *  `renderBedienungAusParams`: die gewaehlte Stufe ersetzt `samples`). */
+  samplesVerbunden?: boolean;
   params: Record<string, string | number | boolean>;
   param: (feld: string, wert: string | number | boolean) => void;
   /** Der Preset-Wähler ist Zeile 4 der Abnahmeliste und damit das ERSTE der
@@ -2758,8 +2788,17 @@ function RenderBedienung({
       </Zeile>
 
       {/* ZEILE 51 — «mach mir einer der in 10min durch ist, schreib qualitaet runter» */}
-      <Zeile id="bedienung-qualitaet">
-        <label className="vis-node-render-formular">
+      {/* KV-STARTGRAPH (Visbox-Plan «Was die Knoten tun»): die Zahl am Eingang «Samples»
+          galt nur, solange hier nichts gewaehlt war — am Knoten stand das nirgends. Ohne
+          neue Zeile (das Register `RENDER_ZEILEN` haelt die Hoehe): der leere Eintrag
+          nennt die Zahl, und der Titel der Zeile sagt den Vorrang. */}
+      <Zeile
+        id="bedienung-qualitaet"
+        {...(samplesVerbunden
+          ? { title: 'Gewählt hat diese Stufe Vorrang vor der Zahl am Eingang «Samples»; leer gilt die Zahl.' }
+          : {})}
+      >
+        <label className="vis-node-render-formular" data-testid="render-qualitaet-zeile">
           <span className="vis-node-fortschritt">Qualität gegen Zeit</span>
           <KSelect
             size="sm"
@@ -2769,7 +2808,13 @@ function RenderBedienung({
             className="vis-node-select-voll"
             style={KLEMME_VOLL}
           >
-            <option value="">{preset ? `aus dem Preset (${preset.render.samples})` : '128 — Vorgabe'}</option>
+            <option value="">
+              {samplesVerbunden
+                ? 'von der Zahl am Eingang «Samples»'
+                : preset
+                  ? `aus dem Preset (${preset.render.samples})`
+                  : '128 — Vorgabe'}
+            </option>
             {QUALITAETSSTUFEN.map((q) => (
               <option key={q.abtastungen} value={String(q.abtastungen)}>
                 {`${q.abtastungen} · ${zeitText(zeitschaetzungSekunden(q.abtastungen, [4000, 2667]))} · ${q.name}`}
@@ -3382,6 +3427,10 @@ function NodeKoerper({
       // P-LIZENZMARKE Schritt 2: traegt das fertige Bild eine offene Lizenz?
       // Dann steht die Marke unter dem Bild (Zeile `bild`).
       const lizenzOffenAmBild = status === 'fertig' && lauf?.lizenzOffen === true;
+      // Runde 29 (Integrator): ging ein Splat nicht als Umgebung mit, sagt der Lauf es
+      // (`umgebungFehlt`) — eine Zeile ueber dem Bildplatz, solange der Lauf steht. Der
+      // Bildplatz gibt die Hoehe ab (wie bei «Lizenz offen»), der Knoten waechst nicht.
+      const umgebungFehlt = lauf ? umgebungFehltSatz(lauf) : null;
       const gruen = status === 'fertig' && !liefer;
       const rot = status === 'fehler' || status === 'zeitueberschreitung' || liefer?.ton === 'fehler';
       const grau = status === 'bereit' || status === 'abgebrochen' || liefer?.ton === 'neutral';
@@ -3452,7 +3501,12 @@ function NodeKoerper({
        */
       return (
         <div className="vis-node-render-wrap" onPointerDown={(e) => e.stopPropagation()}>
-          <RenderBedienung params={params} param={param} preset={preset} />
+          <RenderBedienung
+            params={params}
+            param={param}
+            preset={preset}
+            samplesVerbunden={!!doc.get<VisGraph>(graphId)?.edges.some((e) => e.to === node.id && e.toPort === 'samples')}
+          />
 
           <Zeile id="aktionen">
             <div className="vis-node-aktionen">
@@ -3596,6 +3650,14 @@ function NodeKoerper({
           </Zeile>
 
           <Zeile id="bild">
+            <div className={umgebungFehlt ? 'vis-node-bildplatz--umgebung-fehlt' : undefined}>
+            {umgebungFehlt && (
+              <KTooltip text={`Ohne Umgebung: ${umgebungFehlt}`}>
+                <div className="vis-bild-kachel-qa-vorbehalt vis-node-umgebung-fehlt" data-testid="render-umgebung-fehlt">
+                  Ohne Umgebung: {umgebungFehlt}
+                </div>
+              </KTooltip>
+            )}
             {status === 'fertig' && lauf?.jobId && lauf.bild ? (
               /* A15 — das Bild wird auf die registrierte Zeilenhöhe GEDECKELT.
                  Ohne Deckel folgt seine Höhe dem Seitenverhältnis (184 px
@@ -3617,7 +3679,7 @@ function NodeKoerper({
                     alt="Render"
                     testid="render-bild"
                     className="vis-img-full"
-                    style={{ maxHeight: lizenzOffenAmBild ? 110 - LIZENZ_ZEILE_H : 110, width: 'auto', maxWidth: '100%', display: 'block', marginInline: 'auto' }}
+                    style={{ maxHeight: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0), width: 'auto', maxWidth: '100%', display: 'block', marginInline: 'auto' }}
                   />
                   {verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
                     <HauptbildAbzeichen lauf={verlauf[0]} nummer={laufNummerVon(verlauf[0], 0, verlauf.length)} />
@@ -3711,6 +3773,7 @@ function NodeKoerper({
                 </span>
               </div>
             )}
+            </div>
             {/* Entscheid 68 / E174: die Reihe der letzten Laeufe unter dem
                 Hauptbild, ab zwei Laeufen. Sie wechselt das Hauptbild nicht;
                 der Knoten waechst dafuer um `VERLAUF_ZEILE_H`. */}
@@ -3764,7 +3827,10 @@ function NodeKoerper({
       );
     }
     case 'blatt': {
-      const quelle = bildQuelle(node.id, 'bild');
+      const eigenerGraph = doc.get<VisGraph>(graphId);
+      const eingang = eigenerGraph?.edges.find((e) => e.to === node.id && e.toPort === 'bild');
+      const istReferenz = eigenerGraph?.nodes.find((n) => n.id === eingang?.from)?.typ === 'referenz';
+      const quelle = istReferenz ? null : bildQuelle(node.id, 'bild');
       return (
         <div className="vis-node-blatt-zeile" onPointerDown={(e) => e.stopPropagation()}>
           <KButton
@@ -3800,6 +3866,13 @@ function NodeKoerper({
           >
             Aufs Blatt
           </KButton>
+          {istReferenz && (
+            <KTooltip text={BLATT_REFERENZ_GRUND}>
+              <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-referenz-hinweis">
+                nur Vorbild
+              </span>
+            </KTooltip>
+          )}
           {/* P-LIZENZMARKE Schritt 2: der Koerper ist 38 px hoch (Register
               `KOERPER_H.blatt`) — die Marke steht darum NEBEN dem Knopf, nicht
               darunter; der Grund steht in der Kurzhilfe und in der Meldung. */}
@@ -3908,6 +3981,27 @@ function NodeKoerper({
       // gleichlautende Pruefungen (s. Kommentar an `istUeberDiesenWegBestell
       // bar` in vis-jobs.ts).
       const interiorMoeglich = interiorFaehrt(doc);
+      // Entscheid 92 (Visbox, Blatt 23): ohne eigene Standpunkte, aber mit denen des
+      // Heim-PCs vom Wirt — die Vorschau dessen, was `cameras: 'auto'` dort heisst. Nicht
+      // bestellt (Begruendung im Kopf von `heim-standpunkte.ts`), darum eigens beschriftet.
+      const heim = kameras.length === 0 ? heimStandpunkte() : null;
+      if (heim) {
+        return (
+          <div className="vis-node-kamera-liste" data-testid="vis-auto-kamera-liste">
+            {heim.standpunkte.map((k) => (
+              <KTooltip key={k.kuerzel} text={k.begruendung || `${k.name}, ${k.art}`}>
+                <div data-testid={`vis-kamera-heim-${k.kuerzel}`}>
+                  <b>{k.name}</b> — {k.art}
+                  {Number.isFinite(k.abstand_m) ? `, ${Math.round(k.abstand_m)} m` : ''}
+                </div>
+              </KTooltip>
+            ))}
+            <span className="vis-node-kamera-leer" data-testid="vis-kamera-heim-satz">
+              {heim.satz}
+            </span>
+          </div>
+        );
+      }
       return (
         <div className="vis-node-kamera-liste" data-testid="vis-auto-kamera-liste">
           {kameras.length === 0 ? (

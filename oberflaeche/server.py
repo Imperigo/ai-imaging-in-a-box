@@ -2028,7 +2028,14 @@ class Flaeche(BaseHTTPRequestHandler):
                     raise knotenweg.KnotenwegError(f"Die Szene ist kein JSON: {fehler}") \
                         from fehler
                 dateiname, modell = felder["model"]
-                self._sende(knotenweg.lege_an(self._ablage(), szene, modell, dateiname))
+                # DIE EINE ABLAGE, UND DER AUFTRAG NENNT SEINE MAPPE (14.10.2026): die
+                # Ablage bleibt die vom Start, die der Abholer liest — auch fuer eine Mappe,
+                # die «Datei laden …» erst danach angelegt hat. Der Laufzettel traegt den
+                # Namen der Mappe, aus der bestellt wurde (`knotenweg.lege_an`).
+                aus_mappe = self._knoten_ordner(None)
+                self._sende(knotenweg.lege_an(
+                    self._ablage(), szene, modell, dateiname,
+                    mappe=Path(aus_mappe).name if aus_mappe else None))
             elif len(teile) == 3 and teile[0] == "jobs" and teile[2] in ("approve", "cancel"):
                 roh = self.rfile.read(laenge) if laenge else b""
                 if teile[2] == "approve":

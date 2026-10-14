@@ -96,6 +96,12 @@ export function ModellKnotenKoerper({ bauteileImDokument }: { bauteileImDokument
           <div className="vis-modell-satz vis-modell-satz--fehler" role="alert" data-testid="modell-satz">
             {zustand.satz}
           </div>
+          {/* KV-STARTGRAPH: das vorige Modell gilt weiter — der Knoten sagt es. */}
+          {zustand.noch ? (
+            <div className="vis-modell-mappe" data-testid="modell-noch">
+              Noch geladen: Mappe «{zustand.noch.mappe}» · {szeneZeile(zustand.noch.bauteile, zustand.noch.herkunft)}
+            </div>
+          ) : null}
           {knopf('Andere Datei …')}
         </>
       )}

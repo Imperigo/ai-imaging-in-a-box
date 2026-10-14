@@ -386,3 +386,69 @@ def test_die_ablage_laesst_sich_ausdruecklich_setzen(server, tmp_path, monkeypat
                  "--auftragsablage", str(tmp_path / "anderswo")])
     assert liste[0].RequestHandlerClass.ablage == tmp_path / "anderswo"
     liste[0].server_close()
+
+
+# ------------------------------------------- 6 · Entscheid 92 und die eine Ablage (14.10.2026)
+
+
+def test_die_auto_kamera_zeigt_die_drei_richtungen_des_abholers(tmp_path):
+    """Entscheid 92: Knoten und Heim-PC zeigen dasselbe — die drei festen Richtungen des
+    Abholers, aus derselben Box und mit demselben Aufruf wie der Blender-Vorlauf."""
+    from aiimaging import abholer, glbbox, kameras
+
+    glb = _glb(tmp_path)
+    vorschau = knotenweg.heim_standpunkte(glb, "Y")
+    assert [s["kuerzel"] for s in vorschau["standpunkte"]] == list(abholer.AUTO_RICHTUNGEN)
+    assert [s["name"] for s in vorschau["standpunkte"]] == ["Süd", "Südost", "Nordwest"]
+    assert "Vorschau" in vorschau["satz"]
+
+    # Der Vorlauf rechnet je Auftrag EINE Richtung (`--kamera <kuerzel>`) — dieselbe Zahl.
+    rahmung = glbbox.rahmungsbox(glb, up_axis="Y")
+    box = rahmung["box"] or glbbox.bauwerksbox(glb, up_axis="Y")["bbox_szene"]
+    for s in vorschau["standpunkte"]:
+        einzeln = kameras.kamerasatz(
+            box, kuerzel=[s["kuerzel"]], seitenverhaeltnis=1600 / 1000,
+            ausschnitt=bool(rahmung["box"] or rahmung.get("szene_ist_bauwerk")))["kameras"][0]
+        assert s["auge"] == pytest.approx(list(einzeln["auge"]), abs=1e-3)
+        assert s["blick_auf"] == pytest.approx(list(einzeln["blick_auf"]), abs=1e-3)
+    # Süd steht im Süden (kleineres y), Nordwest im Norden und Westen.
+    sued, _, nw = vorschau["standpunkte"]
+    (lo, hi) = box
+    assert sued["auge"][1] < lo[1]
+    assert nw["auge"][1] > hi[1] and nw["auge"][0] < lo[0]
+
+
+def test_die_mappe_bringt_die_standpunkte_mit(tmp_path):
+    mappe = tmp_path / "mappe"
+    mappe.mkdir()
+    arbeitsgang.lege_an(mappe, _glb(tmp_path), name="Testbau")
+    antwort = knotenweg.mappe_fuer_knoten(mappe)
+    assert len(antwort["standpunkte"]["standpunkte"]) == 3
+
+
+def test_ohne_lesbare_box_kein_vorschlag_aber_ein_satz(tmp_path):
+    kaputt = tmp_path / "kaputt.glb"
+    kaputt.write_bytes(b"kein glb")
+    vorschau = knotenweg.heim_standpunkte(kaputt, "Y")
+    assert vorschau["standpunkte"] == []
+    assert "Heim-PC" in vorschau["satz"]
+
+
+def test_der_auftrag_nennt_seine_mappe_und_bleibt_in_der_einen_ablage(server, tmp_path):
+    """Prüfung «Sieht der Abholer jede Mappe?» (14.10.2026): Die Ablage ist die vom Start;
+    eine später geöffnete Mappe (wie nach «Datei laden …») legt KEINE eigene an. Der
+    Laufzettel nennt die Mappe — nur ihren Namen, keinen Pfad (Regel 3)."""
+    ablage = tmp_path / "start" / "knotenweg"
+    neue = tmp_path / "Neue Mappe"
+    neue.mkdir()
+    rumpf, typ = _formular({"scene": (None, json.dumps(SZENE).encode()),
+                            "model": ("model.glb", b"glTF")})
+    a = _Anfrage(server, befehl="POST", weg="/bruecke/jobs", rumpf=rumpf, typ=typ,
+                 ablage=ablage, ordner=tmp_path / "start")
+    type(a.selbst).zuletzt_geoeffnet = str(neue)
+    a.stelle()
+    assert a.codes == [200], a.selbst.wfile.getvalue()
+    zettel = a.json()
+    assert zettel["mappe"] == "Neue Mappe"
+    assert (ablage / zettel["job_id"] / "job.json").is_file()
+    assert not (neue / "knotenweg").exists()

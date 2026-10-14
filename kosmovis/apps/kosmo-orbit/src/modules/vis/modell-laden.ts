@@ -38,8 +38,19 @@ export type ModellLadeZustand =
       fassung?: number;
       satz?: string;
     }
-  /** (4) Nicht lesbar — mit dem Satz, warum, und was stattdessen zu tun ist. */
-  | { stand: 'fehler'; satz: string; datei?: string };
+  /** (4) Nicht lesbar — mit dem Satz, warum, und was stattdessen zu tun ist. `noch`: das
+   *  Modell, das davor geladen war und weiter gilt (KV-STARTGRAPH, Visbox-Plan «Modell laden
+   *  im Knoten»): eine unlesbare zweite Datei nimmt das erste Modell nicht weg, und der
+   *  Knoten soll das sagen, statt nur den Fehler zu zeigen. */
+  | { stand: 'fehler'; satz: string; datei?: string; noch?: GeladenesModell };
+
+/** Was von einem geladenen Modell genannt wird, wenn danach eine Datei nicht lesbar war. */
+export interface GeladenesModell {
+  bauteile: number;
+  herkunft: string;
+  mappe: string;
+  fassung?: number;
+}
 
 /** Was der Wirt bereitstellt. */
 export interface ModellLadeWirt {
@@ -107,6 +118,8 @@ export function abonniereModellLaden(h: () => void): () => void {
 export async function ladeModellDatei(datei: File): Promise<ModellLadeZustand | null> {
   const wirt = stand.wirt;
   if (!wirt || stand.zustand.stand === 'laeuft') return null;
+  // Was jetzt gilt — bleibt es nach einem Fehler, nennt der Knoten es weiter.
+  const vorher = geltendesModell(stand.zustand);
   setze({ zustand: { stand: 'laeuft', datei: datei.name, satz: `«${datei.name}» wird geladen …` } });
   let ende: ModellLadeZustand;
   try {
@@ -118,8 +131,18 @@ export async function ladeModellDatei(datei: File): Promise<ModellLadeZustand | 
       satz: fehler instanceof Error ? fehler.message : String(fehler),
     };
   }
+  if (ende.stand === 'fehler' && vorher && !ende.noch) ende = { ...ende, noch: vorher };
   setze({ zustand: ende });
   return ende;
+}
+
+/** Das Modell, das in diesem Zustand gilt: das geladene, oder nach einem Fehler das davor. */
+export function geltendesModell(z: ModellLadeZustand): GeladenesModell | undefined {
+  if (z.stand === 'geladen') {
+    return { bauteile: z.bauteile, herkunft: z.herkunft, mappe: z.mappe, ...(z.fassung ? { fassung: z.fassung } : {}) };
+  }
+  if (z.stand === 'fehler') return z.noch;
+  return undefined;
 }
 
 /** Die Zeile «Szene: N Bauteile (aus IFC)» eines geladenen Modells — eine Stelle für

@@ -733,6 +733,22 @@
   height: 110px;
   min-width: 0;
 }
+/* Runde 29 (Integrator): «Ohne Umgebung: …» ueber dem Bildplatz. Die Zeile ist so hoch wie
+   die Lizenz-Zeile (`LIZENZ_ZEILE_H`, 16 px), der Bildplatz gibt sie ab — der Knoten bleibt
+   so hoch, wie das Register `RENDER_ZEILEN` sagt. Einzeilig, der volle Satz in der Kurzhilfe. */
+.vis-node-umgebung-fehlt {
+  height: 16px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vis-node-bildplatz--umgebung-fehlt .vis-node-warteort,
+.vis-node-bildplatz--umgebung-fehlt .vis-node-warteort-innen,
+.vis-node-bildplatz--umgebung-fehlt .vis-node-warteort-flaeche,
+.vis-node-bildplatz--umgebung-fehlt .vis-node-leerbild {
+  height: 94px;
+}
 .vis-node-warteort-flaeche {
   font-size: var(--k-t-xs);
   line-height: var(--k-lh-eng);
@@ -1568,8 +1584,18 @@
 .vis-workspace-buehne-zentriert {
   height: 100%;
   display: flex;
+  /* Entscheid 91 (Blatt 22): Rahmen, Satz und die zwei Knoepfe untereinander. */
+  flex-direction: column;
+  gap: var(--k-s3);
   align-items: center;
   justify-content: center;
+}
+.vis-leer-anfang-satz {
+  margin: 0;
+  max-width: 36em;
+  text-align: center;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
 }
 /* v0.9.25 P-M: `.vis-ansichten-buehne` (Manuell-«Ansichten»-Tab) und die
    Toolbar-Helfer `.vis-toolbar-spacer`/`.vis-toolbar-hinweis` (VisTabs)
