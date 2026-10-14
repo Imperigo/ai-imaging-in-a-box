@@ -437,6 +437,24 @@ def test_server_ohne_start_mappe_und_eine_zur_zeit(server, start):
     assert code == 409 and "gross.ifc" in antwort["fehler"]
 
 
+def test_server_ohne_start_mappe_laedt_wirklich(server, tmp_path, monkeypatch):
+    """auf-20261014-283 T5: Ohne ``--ordner`` warf der Server (``Path(None)``), der Stand blieb
+    auf «laeuft», und jedes weitere Laden bekam 409. Jetzt in den Rueckfall-Ordner (90d)."""
+    ziel = tmp_path / "rueckfall"
+    monkeypatch.setenv(modellladen.MAPPEN_ORDNER_ENV, str(ziel))
+    s = _Server(server, None)
+    code, antwort = s.lade("Neubau.glb", _glb())
+    assert code == 202, antwort
+    s.warte()
+    code, sicht = s.get("/knoten/modell-laden")
+    assert sicht["laden"]["stand"] == "geladen", sicht
+    assert any(ziel.iterdir())
+    # Und ein zweites Laden wird wieder angenommen, nicht mit 409 abgewiesen.
+    code, _ = s.lade("Zweitbau.glb", _glb())
+    assert code == 202
+    s.warte()
+
+
 def test_der_weg_steht_nicht_in_den_tafeln_der_app(server):
     """Die App ruft den Weg nicht — er gehört zur Knotenansicht, die über die Vorsilbe
     erkannt wird; ``Wege.swift`` (``tests/test_ipad_geruest.py``) muss ihn nicht kennen."""

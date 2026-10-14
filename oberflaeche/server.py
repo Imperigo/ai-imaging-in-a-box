@@ -1989,12 +1989,16 @@ class Flaeche(BaseHTTPRequestHandler):
             return
         # OHNE START-MAPPE kein Fehler mehr (Entscheid 90d): die Bibliothek legt die Mappe
         # dann im festen Rueckfall-Ordner an (`modellladen.mappen_ordner`).
+        # DIE START-MAPPE VOR DEM STAND BESTIMMEN (auf-20261014-283 T5): Bis dahin stand hier
+        # `Path(self.ordner)` erst beim Anlegen des Fadens — ohne `--ordner` warf das, NACHDEM der
+        # Stand schon «laeuft» hiess, und jedes weitere Laden bekam 409 bis zum Neustart.
+        start = Path(self.ordner) if self.ordner else None
         stand = {"kennung": secrets.token_hex(6), "stand": "laeuft", "datei": dateiname,
                  "schritt": "ablegen", "satz": f"«{dateiname}» wird geladen …",
                  "begonnen": time.monotonic()}
         klasse.modell_laden = stand
         faden = threading.Thread(target=_lade_modell_im_hintergrund, name="modell-laden",
-                                 args=(klasse, Path(self.ordner), dateiname, inhalt,
+                                 args=(klasse, start, dateiname, inhalt,
                                        stand["kennung"]), daemon=True)
         klasse.modell_faden = faden
         faden.start()
@@ -2891,7 +2895,7 @@ def modell_laden_sicht(stand: dict | None) -> dict:
             "hoechstens_mb": modellladen.GROESSTE_DATEI_BYTE // (1024 * 1024), "laden": sicht}
 
 
-def _lade_modell_im_hintergrund(klasse, start: Path, dateiname: str, inhalt: bytes,
+def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inhalt: bytes,
                                 kennung: str) -> None:
     """Der Faden hinter ``POST /knoten/modell-laden``: ruft :func:`modellladen.lade` und
     schreibt den Stand zurück. Gelingt es, ist die Mappe danach die **zuletzt geöffnete**

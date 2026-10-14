@@ -7992,3 +7992,5 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Dienstbetrieb: Kennwort über Neustart, Auftragsablage der Knoten (local `auftraege/offen/auf-20261014-284.json`).
 - [ ] Strg+Z in der Visbox-Knotenansicht klären.
 - [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.
+- [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
+- [ ] Integrator: Warum trägt der Splat-Bestand in der glb kein `role existing`? (Zentrale)
