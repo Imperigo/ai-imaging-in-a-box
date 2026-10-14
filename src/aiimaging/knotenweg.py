@@ -377,6 +377,9 @@ def mappe_fuer_knoten(ordner) -> dict:
                "herkunft": herkunft_von((p.get("modell") or {}).get("pfad")),
                "fassung": projekt.modellfassung(p),
                "bauteile": None,
+               # ENTSCHEID 95 (14.10.2026, Blatt 25): die Skizzen der Mappe fuer den Knoten
+               # «Skizze vom iPad», die neueste zuerst — gelesen aus der Mappe, ohne glb.
+               "skizzen": skizzen_der_mappe(p),
                # ENTSCHEID 92: die drei Standpunkte des Abholers vorab (`heim_standpunkte`).
                "standpunkte": None}
     if glb is None or not Path(glb).is_file():
@@ -470,3 +473,34 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None) -> dict:
     nach = "dem Bauwerk" if rahmung.get("box") else "der ganzen Szene"
     return {"standpunkte": aus,
             "satz": f"Rechnet der Heim-PC aus der Hüllbox ({nach}) — Vorschau."}
+
+
+#: Wie viele Skizzen der Knoten «Skizze vom iPad» zur Wahl bekommt — die neuesten.
+SKIZZEN_HOECHSTENS = 24
+
+
+def skizzen_der_mappe(p: dict, hoechstens: int = SKIZZEN_HOECHSTENS) -> list[dict]:
+    """Die Skizzen einer Mappe für den Knoten «Skizze vom iPad» — **die neueste zuerst**.
+
+    **Anlass (Owner-Entscheide 95/95a, 14.10.2026, Blatt 25):** Die Knotenansicht ist die
+    Arbeitsfläche zum Rendern (Entscheid 94), die Skizzen vom iPad standen aber nur auf der
+    Visbox-Seite. Der Knoten nimmt von selbst die neueste; eine ältere wählt man am Knoten.
+
+    Verworfene Skizzen fehlen — sie sind nicht mehr gemeint. Jede Skizze steht einmal (die
+    Mappe vermerkt dieselbe Zeichnung bei jedem Zustandswechsel neu); es gilt ihr letzter
+    Eintrag. Kein Pfad: nur der Dateiname der Mappe, den ``/knoten/skizze?name=`` ausliefert.
+
+    Returns:
+        ``[{name, titel, erzeugt, ueber, stand}]``, höchstens ``hoechstens``.
+    """
+    letzte: dict[str, dict] = {}
+    for e in p.get("skizzen") or []:
+        if isinstance(e, dict) and e.get("skizze"):
+            letzte[str(e["skizze"])] = e
+    liste = [
+        {"name": name, "titel": e.get("titel"), "erzeugt": e.get("erzeugt"),
+         "ueber": e.get("ueber"), "stand": e.get("stand")}
+        for name, e in letzte.items() if e.get("stand") != projekt.SKIZZE_VERWORFEN
+    ]
+    liste.sort(key=lambda x: str(x.get("erzeugt") or ""), reverse=True)
+    return liste[:max(0, int(hoechstens))]

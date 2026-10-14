@@ -452,6 +452,9 @@ WEG_KNOTEN_MODELL = "/knoten/modell.glb"
 #: welche Formate hereinkommen und wie weit das Laden ist. Kein Tafelweg — die App ruft
 #: ihn nicht, nur die Knotenansicht im Browser (siehe oben).
 WEG_KNOTEN_MODELL_LADEN = "/knoten/modell-laden"
+#: Entscheid 95 (14.10.2026, Blatt 25): das Bild einer Skizze der Mappe für den Knoten «Skizze
+#: vom iPad» — ``?name=`` aus ``/knoten/mappe`` (``skizzen``), dieselbe Pfadregel wie ``/bild``.
+WEG_KNOTEN_SKIZZE = "/knoten/skizze"
 WEG_BRUECKE = "/bruecke"
 
 #: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
@@ -1905,6 +1908,12 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL_LADEN:
                 self._sende(modell_laden_sicht(type(self).modell_laden))
+            elif pfad == WEG_KNOTEN_SKIZZE:
+                # DIE MAPPE DER KNOTENANSICHT, nicht die vom Start: `_knoten_ordner`. Den
+                # Namen prueft `bildpfad` (in `_bild`), wie bei jedem Bild.
+                ordner = self._knoten_ordner(frage)
+                name = ((frage or {}).get("name") or [None])[0]
+                self._bild({"ordner": [ordner] if ordner else [], "name": [name] if name else []})
             elif pfad == WEG_KNOTEN_MODELL:
                 ordner = self._knoten_ordner(frage)
                 if not ordner:

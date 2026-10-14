@@ -8003,5 +8003,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Mac: Schalter «Knoten | Seite» weg, Seite über das Menü «Darstellung». *(14.10.2026, §117)*
 - [x] Grundsatz in `CLAUDE.md`; Integrator und UI-Worker informiert. *(14.10.2026, §117)*
 - [x] Blatt 25 gezeichnet: drei Zulieferer-Knoten (Skizze, Standpunkt, Bilder der Mappe). *(14.10.2026, §119)*
-- [ ] Owner: Reihenfolge und Skizzen-Wahl (Blatt 25); danach bauen auf dem R29-Kopf — dann kann die Seite ganz weg.
+- [x] Owner-Entscheide 95/95a: Skizze zuerst, von selbst die neueste. *(14.10.2026)*
+- [x] Heim-PC-Teil: Skizzen in `/knoten/mappe`, Bild über `/knoten/skizze`. *(14.10.2026, §119)*
+- [ ] Knoten «Skizze vom iPad» auf dem R29-Kopf (beide Programme), dann «Standpunkt vom iPad», «Bilder der Mappe» — danach kann die Seite ganz weg.
 - [ ] Knoten «Kamera aus 3D-Ansicht» (Owner-Entscheid über die Zentrale, 14.10.2026): übernimmt die Kamera der 3D-Ansicht samt Splat-Umgebung, dazu ein Anlege-Befehl — auf «claude/kosmovis-*», Basis R29-Kopf (wartet auf die R29-Meldung). Danach baut UI den Knopf «In KosmoVis rendern»; der Render-Block in KosmoDesign wird Zulieferer.
