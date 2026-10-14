@@ -2919,7 +2919,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DIE UMGEBUNG AM URTEIL (Entscheid 76) — ohne Pfad, mit dem verdeckten Anteil
             # DIESER Kamera. Von hier erreicht sie `verdict.hinweise`.
             urteil[_kosmo_szene.URTEIL_KONTEXT] = _kosmo_szene.kontext_vermerk(kontext, bericht)
-            urteil[_kosmo_szene.URTEIL_BESTAND] = bestand_auftrag
+            # BESTAND FEHLT bei bestellter Umgebung: eine Warnung (Integrator, auf-283).
+            urteil[_kosmo_szene.URTEIL_BESTAND] = _kosmo_szene.bestand_vermerk(bestand_auftrag,
+                                                                               kontext)
             urteil["messboden"] = messboden_befund
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.

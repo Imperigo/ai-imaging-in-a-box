@@ -97,3 +97,21 @@ def test_ohne_bestand_bleibt_der_bildauftrag_woertlich(tmp_path):
     assert abholer.lies_befund(ordner)["kameras"][0].get(kosmo_szene.URTEIL_BESTAND) is None
     assert not any(h.startswith("BESTAND") for h in
                    _vertrag(ordner)["qa"]["verdict"].get("hinweise") or ())
+
+
+def test_umgebung_ohne_markierten_bestand_warnt():
+    """Vorschlag des Integrators zu auf-20261014-283: Umgebung bestellt, aber kein Körper mit
+    ``role existing`` — dann ein Satz in ``verdict.hinweise``, kein Abbruch."""
+    vermerk = kosmo_szene.bestand_vermerk(None, {"ply": "x.ply"})
+    assert vermerk == {"fehlt": True}
+    assert kosmo_szene.bestand_satz(vermerk) == kosmo_szene.BESTAND_FEHLT_SATZ
+    assert "als Bestand" in kosmo_szene.BESTAND_FEHLT_SATZ
+    # Ohne Umgebung bleibt es still, mit Bestand gilt der Zusatz.
+    assert kosmo_szene.bestand_vermerk(None, None) is None
+    zusatz = {"n_bestand": 2, "zusatz": kosmo_szene.BESTAND_ZUSATZ}
+    assert kosmo_szene.bestand_vermerk(zusatz, {"ply": "x.ply"}) is zusatz
+
+
+def test_der_abholer_setzt_den_vermerk_ueber_die_bibliothek():
+    code = Path(abholer.__file__).read_text(encoding="utf-8")
+    assert "_kosmo_szene.bestand_vermerk(bestand_auftrag" in code

@@ -1108,8 +1108,31 @@ def bildauftrag_bestand(prompt: str, bestand: dict | None) -> dict | None:
             "n_bestand": bestand.get("n_bestand"), "n_knoten": bestand.get("n_knoten")}
 
 
+#: Der Satz, wenn eine Umgebung bestellt ist, aber kein Körper als Bestand markiert ist
+#: (Vorschlag des Integrators zu ``auf-20261014-283``: Dort fehlte dem Volumen ``program
+#: «bestand»``, darum fehlte ``role existing`` und mit ihm der Bestandszusatz — die Prüfung
+#: fiel 0.000/0.786/0.787, dieselbe glb mit der Rolle bestand 0.965/0.953/0.953).
+BESTAND_FEHLT_SATZ = ("BESTAND FEHLT: Eine Umgebung ist bestellt, aber kein Körper ist als Bestand "
+                      "markiert — der Bildauftrag läuft ohne Bestandszusatz, und die Prüfung kann "
+                      "daran fallen. In KosmoOrbit das Volumen als Bestand anlegen (Programm "
+                      "«Bestand») oder «als Bestand übernehmen».")
+
+
+def bestand_vermerk(bestand_auftrag: dict | None, kontext) -> dict | None:
+    """Der :data:`URTEIL_BESTAND`-Vermerk einer Kamera: der Zusatz, wenn Bestand da ist;
+    ``{"fehlt": True}``, wenn eine Umgebung bestellt ist, aber kein Bestand markiert;
+    sonst ``None``. Eine Warnung, kein Abbruch — gerechnet wird trotzdem."""
+    if bestand_auftrag:
+        return bestand_auftrag
+    if kontext is not None:
+        return {"fehlt": True}
+    return None
+
+
 def bestand_satz(vermerk) -> str | None:
     """Der Satz für ``verdict.hinweise`` zu einem :data:`URTEIL_BESTAND`-Vermerk."""
+    if isinstance(vermerk, dict) and vermerk.get("fehlt"):
+        return BESTAND_FEHLT_SATZ
     if not isinstance(vermerk, dict) or not vermerk.get("n_bestand"):
         return None
     return (f"BESTAND: {vermerk['n_bestand']} Körper als bestehend markiert; dem Bildauftrag "
