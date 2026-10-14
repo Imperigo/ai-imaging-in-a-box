@@ -7997,3 +7997,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
 - [ ] Integrator: Warum trägt der Splat-Bestand in der glb kein `role existing`? (Zentrale)
 - [ ] Nach R29-Meldung des Integrators: «claude/kosmovis-startgraph» auf den R29-Kopf neu aufsetzen, `umgebungFehlt` nur als Satz lesen, `line-height` aus R29 (`var(--k-lh-knapp)`) übernehmen, Visbox-Kopie nachziehen; Einspielen in Runde 30.
+
+## Knoten sind die Arbeitsfläche (Entscheid 94, 14.10.2026, Visbox 0.2.9)
+
+- [x] Mac: Schalter «Knoten | Seite» weg, Seite über das Menü «Darstellung». *(14.10.2026, §117)*
+- [x] Grundsatz in `CLAUDE.md`; Integrator und UI-Worker informiert. *(14.10.2026, §117)*
+- [ ] Was die Seite heute noch zusätzlich zeigt (Skizzen vom iPad, Läufe), als Knoten oder am Knoten anbieten — dann kann die Seite ganz weg.

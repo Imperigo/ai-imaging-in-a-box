@@ -126,7 +126,13 @@ def test_c_zuerst_die_knoten_und_a_der_schalter_oben():
     assert re.search(r"case knoten\s*\n\s*case seite", wahl)      # Reihenfolge im Schalter
     arbeit = ARBEIT.read_text(encoding="utf-8")
     assert "@State private var wahl: Flaechenwahl = Flaechenwahl.beimOeffnen" in arbeit
-    assert ".pickerStyle(.segmented)" in arbeit
+    # Entscheid 94: kein Schalter mehr in der Leiste; die Seite nur ueber das Menue.
+    assert ".pickerStyle(.segmented)" not in arbeit
+    assert "Button(\"Zurück zu den Knoten\") { wahl = .knoten }" in arbeit
+    assert "publisher(for: .seiteOeffnen)" in arbeit
+    app = (WURZEL / "ipad" / "VisboxMac" / "Sources" / "VisboxMac" / "VisboxMacApp.swift").read_text(
+        encoding="utf-8")
+    assert "CommandGroup(after: .toolbar)" in app and "post(name: .seiteOeffnen" in app
     assert "wahl.adresse(basis: basis)" in arbeit
     # Nichts gemerkt (C): kein AppStorage/UserDefaults für die Wahl.
     assert "AppStorage" not in arbeit and "UserDefaults" not in arbeit

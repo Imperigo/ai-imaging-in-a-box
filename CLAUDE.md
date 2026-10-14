@@ -345,6 +345,14 @@ Vis-Werkzeug weiterbaut, zieht Visbox **von sich aus** nach, ohne Frage an den O
 weiter als Auftrag an den Integrator bzw. den UI-Worker. *Anlass: Die Kopie stand drei Wochen still, und der Owner sah am
 Mac noch die alten Knoten.*
 
+### Die Knotenansicht ist die Arbeitsfläche zum Rendern (Owner-Klarstellung 14.10.2026)
+
+> *«Bei beiden Softwares ist die Node-Tree-Oberfläche die offizielle Rendering-Arbeitsfläche für den Architekten.»*
+
+In KosmoOrbit wie in Visbox wird ein Bild **in der Knotenansicht** bestellt, verglichen und abgelegt. Andere Flächen
+(die Visbox-Seite, das iPad) liefern zu — Skizzen, Mappe, Standpunkte —, sind aber keine zweite Arbeitsfläche. Was ein
+Architekt zum Rendern braucht, kommt als Knoten oder an einen Knoten, nicht auf eine Nebenseite (Entscheid 94).
+
 ### Nachrichten über die Zentrale (Owner-Entscheid 06.10.2026, abends)
 
 Bis dahin konnte diese Cloud-Sitzung andere Sitzungen nicht erreichen; der Owner leitete jede Zeile

@@ -8,7 +8,9 @@ import Foundation
 /// Beides kommt weiter vom Heim-PC — am Mac wird nichts nachgebaut; der Knotenbaum ist die
 /// Kopie aus KosmoOrbit (E26) und wird dort weiterentwickelt.
 ///
-/// * **A** — ein Schalter «Knoten | Visbox-Seite» oben in der Kopfleiste.
+/// * **A** — ein Schalter «Knoten | Visbox-Seite» oben in der Kopfleiste. **Ersetzt durch
+///   Entscheid 94** (14.10.2026): Die Knoten sind DIE Arbeitsfläche zum Rendern; die Seite
+///   öffnet nur noch das Menü «Darstellung», zurück führt «Zurück zu den Knoten».
 /// * **B** — welche Mappe die Knoten zeigen, entscheidet der Heim-PC: die zuletzt auf der
 ///   Visbox-Seite geöffnete, sonst die vom Start (`oberflaeche/server.py`).
 /// * **C** — beim Öffnen **immer** zuerst die Knoten (`beimOeffnen`), nichts gemerkt.

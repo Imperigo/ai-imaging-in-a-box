@@ -33,5 +33,14 @@ struct VisboxMacApp: App {
         }
         // Blatt 13 ist 1440 × 900 gezeichnet — die Fläche eines 14-Zoll-Mac.
         .defaultSize(width: 1440, height: 900)
+        .commands {
+            // ENTSCHEID 94 (14.10.2026): Die Knoten sind DIE Arbeitsflaeche zum Rendern; die
+            // Visbox-Seite (Mappe, Skizzen vom iPad, Laeufe) ist ein Nebenweg im Menue.
+            CommandGroup(after: .toolbar) {
+                Button(Flaechenwahl.seite.titel + " öffnen") {
+                    NotificationCenter.default.post(name: .seiteOeffnen, object: nil)
+                }
+            }
+        }
     }
 }

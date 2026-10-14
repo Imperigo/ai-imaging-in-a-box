@@ -45,14 +45,15 @@ struct Arbeitsansicht: View {
                     .font(Macschriften.schrift(.text, 14))
                     .foregroundStyle(Startfarbe.leise)
                 Spacer()
-                Picker("Ansicht", selection: $wahl) {
-                    ForEach(Flaechenwahl.allCases, id: \.self) { art in
-                        Text(art.titel).tag(art)
-                    }
+                // ENTSCHEID 94 (14.10.2026): Die Knoten sind DIE Arbeitsflaeche zum Rendern. Kein
+                // Schalter mehr in der Leiste — die Seite oeffnet das Menue «Darstellung»
+                // (`VisboxMacApp`), und von dort fuehrt dieser eine Knopf zurueck.
+                if wahl == .seite {
+                    Button("Zurück zu den Knoten") { wahl = .knoten }
+                        .buttonStyle(.plain)
+                        .font(Macschriften.schrift(.text, 13))
+                        .foregroundStyle(Startfarbe.leise)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
                 Button("Startzeilen", action: zurueck)
                     .buttonStyle(.plain)
                     .font(Macschriften.schrift(.text, 13))
@@ -73,6 +74,10 @@ struct Arbeitsansicht: View {
         }
         .background(Startfarbe.grund)
         .foregroundStyle(Startfarbe.text)
+        // DIE SEITE NUR NOCH UEBER DAS MENUE (Entscheid 94): «Darstellung → Visbox-Seite».
+        .onReceive(NotificationCenter.default.publisher(for: .seiteOeffnen)) { _ in
+            wahl = .seite
+        }
     }
 
     @ViewBuilder
@@ -308,4 +313,9 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
         if fehler == .abgebrochen { return }
         melde(fehler.satz)
     }
+}
+
+extension Notification.Name {
+    /// «Darstellung → Visbox-Seite» im Menue der App (Entscheid 94, 14.10.2026).
+    static let seiteOeffnen = Notification.Name("flaeche.seiteOeffnen")
 }
