@@ -1,0 +1,43 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261014-281",
+ "art": "frage",
+ "rang": 68,
+ "erstellt": "2026-10-14T16:00:00Z",
+ "beschreibung": "RealityScan-Bruecke Fassung 3 (Textur statt Eckfarben) einrichten und am Hallenauftrag messen (M4)",
+ "anweisung": "Hintergrund: Nach deinem Texturweg-Vergleich (Textur 7.0-7.8 gegen Splat 4.1-4.9, Eckfarben an der Fensterwand unlesbar) und deinen Vorlagen ist Fassung 3 der Bruecke gebaut (src/aiimaging/realityscan.py FASSUNG 3). Befehlsfolge in EINEM Aufruf: -headless -stdConsole -newScene -loadColmap <images.txt> -selectMaximalComponent -setReconstructionRegionAuto -calculateNormalModel -simplify 1000000 -set MvsGeometryTexturingDoHdr=false -set txtImageDownscaleTexture=1 -unwrap <unwrap.xml> -calculateTexture -exportSelectedModel <netz.obj> <export.xml> -quit (kein -selectModel: -simplify waehlt das neue Modell). Danach bereinigt die Bruecke das OBJ (Deckel weg wie bisher 2.5 %, Texturkoordinaten bleiben), legt OBJ + MTL + PNGs zusammen im Speicher ab; Blender laedt das OBJ und zeichnet die Textur mit Emission 1. Eingeschaltet wird die Textur ueber die NEUE Variable AIIMAGING_REALITYSCAN_UNWRAP_XML; ohne sie bleibt alles wie Fassung 2 (Eckfarben), aber der Speicherschluessel aendert sich (FASSUNG 3): Der naechste Splat-Auftrag rechnet RealityScan einmal neu (~5 min). ZU TUN: E1) git pull main. Vorlagen aus betrieb/realityscan/ (unwrap-optimal.xml, export-obj-textur.xml) an deinen Ort kopieren (oder deine eigenen von heute nehmen), im Drop-in AIIMAGING_REALITYSCAN_UNWRAP_XML setzen und AIIMAGING_REALITYSCAN_EXPORT_XML auf die OBJ-Textur-Datei stellen; daemon-reload, Dienste neu starten. python3 -c 'from aiimaging import realityscan as r; print(r.einrichtung())' muss bereit=true und Textur melden. F1) Laeuft die ganze Folge in EINEM Aufruf (wie oben, ohne -load eines gespeicherten Projekts)? Wirken -set und -unwrap dort wie in deinem Handlauf? F2) Schreibt der OBJ-Export ein MTL mit map_Kd trotz exportMaterials=0 und ein Text-OBJ trotz exportBinary=1? Welche Dateinamen bekommen MTL und PNG, und sind die Verweise ohne Pfade? (Die Bereinigung nimmt nur Text-OBJ.) M1) Denselben Hallenauftrag wie M3 rechnen. Messen wie 277/278/M2/M3: Deckung, Stuecke, Lage. Dazu: Schaerfe im 1:1-Ausschnitt an denselben Blickpunkten wie dein Texturweg-Vergleich (Splat / Textur Fassung 3 / Eckfarben M3). M2) Liegt das bereinigte OBJ in der Lage von Fassung 2 (Lagepruefung, Material-ID-Bild)? Besteht das Bild die QA, Fremdkoerper aus Deckel-Resten je Bild, Konfetti? M3) Zeit und Speicher: RealityScan gesamt, Bereinigung (~1 Mio. Dreiecke), Blender-Import mit 3-4 Texturen 8K; Mehrkosten gegen M3. NICHT: Code aendern; Bilder, Ortsnamen, Pfade, Personen ins Repo (Regel 3) - Bilder lokal bzw. auf die Tafel nach tafel/LIESMICH.md (keine privaten Aufnahmen). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "wie M3: KosmoOrbit-Kernel (Bestand aus dem Splat); Fotos, Splat und Bilder bleiben lokal"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-280",
+  "entscheide": [
+   "79",
+   "81"
+  ],
+  "fassung": 3,
+  "ziel_dreiecke": 1000000
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Ein grosser GPU-Lauf (RealityScan), danach Blender und Bildmodell - nicht gleichzeitig mit anderen GPU-Laeufen.",
+  "hinweise": [
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf (Codestand, RealityScan-Fassung).",
+  "E1 einrichtung() Ausgabe ohne Pfade.",
+  "F1, F2 je ja/nein und ein Satz.",
+  "Tabelle M3 gegen M4: Deckung, Stuecke, Lage, Schaerfe je Blickpunkt, Zeit.",
+  "QA, Fremdkoerper, Konfetti je Bild.",
+  "Urteil: Ist die Textur im fertigen Bild sichtbar schaerfer, und lohnt die Mehrzeit?"
+ ]
+}

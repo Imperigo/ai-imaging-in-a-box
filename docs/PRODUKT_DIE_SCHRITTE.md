@@ -1470,6 +1470,11 @@ spürbar schneller. Neue Regel des Owners: Was am Vis-Werkzeug geändert wird, g
 macOS liess sie von einem versteckten, schreibgeschützten Ort laufen, weil sie nicht in «Programme» lag. Ab 0.2.6 erkennt
 Visbox das selbst und legt sich mit einem Klick nach «Programme».
 
+**Die Umgebung mit echter Textur (14.10.2026).** Bisher trug das Netz aus den Fotos nur eine Farbe je Eckpunkt — an
+Fensterwänden ein unlesbarer Brei. Jetzt legt RealityScan eine echte Bildtextur auf das Netz, wie ein Foto, das auf die
+Flächen gelegt wird; im Vergleich des Heim-PC war das gleich scharf wie der Splat oder schärfer. Ob es im fertigen Bild
+sichtbar besser ist, misst der Heim-PC als Nächstes. Wer die neue Einstellung nicht setzt, bekommt weiter den alten Weg.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

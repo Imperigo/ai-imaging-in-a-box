@@ -7895,11 +7895,11 @@ Bekannt und ausdrücklich nicht erledigt:
 ## RealityScan-Brücke Fassung 3: Textur statt Eckfarben (Vorschlag HomeStation 14.10.2026)
 
 - [x] Befund HomeStation: texturiertes Netz so scharf wie der Splat oder schärfer (7.0–7.8 gegen 4.1–4.9), Eckfarben an der Fensterwand unlesbar; +2.5 min. *(14.10.2026, §108)*
-- [ ] HomeStation legt die Vorlagen (Abwicklung, OBJ-Export) in den Zentrale-Anhang.
-- [ ] Bau: Abwicklung, OBJ + PNG, Vereinfachung 500k–1 Mio., Deckel für OBJ, Render mit Emission 1.
+- [x] HomeStation legt die Vorlagen in den Zentrale-Anhang; jetzt in `betrieb/realityscan/`. *(14.10.2026, §109)*
+- [x] Bau Fassung 3: Abwicklung, OBJ + PNG, 1 Mio. Dreiecke, Deckel für OBJ, Emission 1. *(14.10.2026, §109)*
 - [x] Prepare: 1086 px waren ein Rechenfehler, behoben (≈ 1616 px), KosmoPrepare 6b7db4a/6ffe28f. *(14.10.2026, §108)*
 - [x] Gemessen: 1600 px machen die Textur nicht schärfer (Grenze Optik/Video), kosten +5.5 min — für die Brücke nicht nötig. *(14.10.2026, §108)*
-- [ ] Messauftrag M4 danach.
+- [ ] Messauftrag M4 `auf-20261014-281` (local).
 
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
 
