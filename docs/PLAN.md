@@ -7866,7 +7866,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Deckel-Grenze 2.5 %** (statt 5 %), Bereinigung auch im Urteil. *(14.10.2026, §102)*
 - [ ] **Messung `auf-20261014-280`** (local, M3): hält die Deckung bei 2.5 %, sind die Deckel-Reste weg?
 - [x] **Massstab-Block lesen** (Satz je Ampel im Urteil); die Stufe selbst baut KosmoPrepare. *(14.10.2026, §102)*
-- [ ] **Owner:** Ampel-Schwellen und «App bittet um Kontrollmass» (Auswahlfrage).
+- [x] **Owner-Entscheid 86:** Ampel wie vorgeschlagen, bei Gelb um ein Kontrollmass bitten. *(14.10.2026, §102)*
+- [ ] **Prepare** baut die Stufe «massstab», **ui** die Bitte um das Kontrollmass (Zentrale).
 
 ## Mac zeigt zuerst die Knoten (Entscheid 85, 14.10.2026 — Sitzung 74 §101)
 
