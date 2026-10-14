@@ -32,6 +32,19 @@ import { useRollfokus } from './rollfokus';
  * **Fokus wird nur nach einem Tastendruck gesetzt**, nie beim Rendern. Ein
  * Effekt, der beim Mounten `focus()` ruft, reisst den Fokus aus dem Formular,
  * in dem gerade jemand tippt — deshalb das Merkzeichen `tasteWarZuletzt`.
+ *
+ * ## Kein Wortbruch (25.09.2026)
+ *
+ * Eine Beschriftung bricht nie mitten im Wort (`.k-tab { white-space:
+ * nowrap }`), und passt ein Reiter nicht mehr, rückt er in eine neue Zeile
+ * (`.k-tabs { flex-wrap: wrap }`, aura.css). Entschieden: Umbruch als
+ * **Vorgabe**, nicht auf Wunsch je Verbraucher — die Alternative bei zu
+ * wenig Platz wäre Überlauf oder Abschneiden, beides verbietet UI-REGELN
+ * Regel 2/3. Wer genug Platz hat, sieht keinen Unterschied (einzeilig wie
+ * bisher). Anlass: Wand-Inspector (K7 d1) brach «Allge/mein» bei 340 px;
+ * dessen Übersteuerung `modules/design/eigenschaften/wand-reiter.css` samt
+ * `className="insp-wand-reiter"` in `Inspector.tsx` wird damit überflüssig
+ * und kann vom nächsten Besitzer von `modules/design/**` entfernt werden.
  */
 export interface KTabItem {
   id: string;
@@ -111,7 +124,9 @@ export function KTabs({ items, aktiv, onChange, size = 'md', ...rest }: KTabsPro
             {...(item.testid !== undefined ? { 'data-testid': item.testid } : {})}
           >
             {item.icon !== undefined && <KIcon name={item.icon} size={14} />}
-            <span>{item.label}</span>
+            <span className="k-tab-text" data-text={item.label}>
+              {item.label}
+            </span>
           </button>
         );
       })}

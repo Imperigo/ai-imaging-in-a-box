@@ -1,6 +1,8 @@
-import { useSyncExternalStore } from 'react';
+import { useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { KButton } from './components';
+import { useOverlaySchliessen } from './overlay-schliessen';
+import { zEbeneLeiter } from './tokens';
 
 /**
  * Meldungen (V1-Finish P1) — das eine Sprachrohr der App: `melde()` ersetzt
@@ -13,7 +15,10 @@ export interface Meldung {
   id: number;
   text: string;
   ton: 'info' | 'erfolg' | 'fehler';
-  aktion?: { label: string; run: () => void };
+  /** C3 (06.10.2026): `testid`/`ariaLabel` sind freiwillig — ein Aktionsknopf,
+   *  den der Heimrechner-Worker ansteuern soll, braucht eine stabile Kennung
+   *  und eine sprechende Beschriftung; ohne beide bleibt er wie bisher. */
+  aktion?: { label: string; run: () => void; testid?: string; ariaLabel?: string };
 }
 
 let meldungen: Meldung[] = [];
@@ -106,6 +111,21 @@ export function melde(
   meldungen = [...meldungen.slice(-3), m]; // nie mehr als 4 aufs Mal
   timer.set(m.id, setTimeout(() => entferne(m.id), opts?.dauerMs ?? (ton === 'fehler' ? 8000 : 4000)));
   benachrichtige();
+}
+
+/**
+ * U16, Owner B10 (01.10.2026): «Fehler kurz + ‹Kosmo fragen› daneben.»
+ * Die App meldet hier, wie man Kosmo eine Frage stellt (das Paket kennt
+ * Kosmo nicht). Solange niemand das tut, erscheint der Knopf nicht — ein
+ * Knopf, der ins Leere führt, wäre schlimmer als keiner.
+ */
+let kosmoFragen: ((frage: string) => void) | null = null;
+export function setzeKosmoFragen(fn: ((frage: string) => void) | null): void {
+  kosmoFragen = fn;
+  benachrichtige();
+}
+function kosmoFragenJetzt(): ((frage: string) => void) | null {
+  return kosmoFragen;
 }
 
 /** Kurzform für Fehlerpfade (catch-Blöcke): nimmt Error oder Text. */
@@ -283,6 +303,7 @@ export function KMeldungen() {
   // `abonniere`-Funktion (derselbe `hoerer`-Satz), zwei unabhängige
   // Ausschnitte desselben Benachrichtigungs-Takts.
   const geisterListe = useSyncExternalStore(abonniere, () => geister, () => geister);
+  const fragen = useSyncExternalStore(abonniere, kosmoFragenJetzt, kosmoFragenJetzt);
   if (liste.length === 0 && geisterListe.length === 0) return null;
   const versteckt = Math.max(0, liste.length - SICHTBARE_TOASTS_MAX);
   const sichtbare = versteckt > 0 ? liste.slice(-SICHTBARE_TOASTS_MAX) : liste;
@@ -308,12 +329,27 @@ export function KMeldungen() {
             <KButton
               size="sm"
               tone="quiet"
+              {...(m.aktion.testid ? { 'data-testid': m.aktion.testid } : {})}
+              {...(m.aktion.ariaLabel ? { 'aria-label': m.aktion.ariaLabel } : {})}
               onClick={() => {
                 m.aktion!.run();
                 entferne(m.id);
               }}
             >
               {m.aktion.label}
+            </KButton>
+          )}
+          {m.ton === 'fehler' && fragen && (
+            <KButton
+              size="sm"
+              tone="quiet"
+              data-testid="meldung-kosmo-fragen"
+              onClick={() => {
+                fragen(`Diese Meldung verstehe ich nicht: «${m.text}». Was bedeutet sie, und was soll ich tun?`);
+                entferne(m.id);
+              }}
+            >
+              Kosmo fragen
             </KButton>
           )}
           <button aria-label="Meldung schliessen" className="k-meldung-schliessen" onClick={() => entferne(m.id)}>
@@ -343,12 +379,22 @@ export function KMeldungen() {
 
 // ── Bestätigung (ersetzt confirm) ────────────────────────────────────
 
+/** p81: ein Weg im Auswahl-Dialog (`waehleWeg`) — ein Knopf neben «Abbrechen». */
+export interface DialogWeg {
+  id: string;
+  label: string;
+  gefaehrlich?: boolean;
+}
+
 interface BestaetigungAnfrage {
   titel: string;
   text?: string;
   bestaetigen?: string;
   gefaehrlich?: boolean;
-  resolve: (ok: boolean) => void;
+  /** p81: gesetzt → statt des einen Ja-Knopfs je Weg ein Knopf. */
+  wege?: readonly DialogWeg[];
+  /** `null` = abgebrochen; sonst `'ja'` bzw. die `id` des gewaehlten Wegs. */
+  resolve: (wahl: string | null) => void;
 }
 
 let anfrage: BestaetigungAnfrage | null = null;
@@ -366,8 +412,23 @@ export function bestaetigen(opts: {
   gefaehrlich?: boolean;
 }): Promise<boolean> {
   return new Promise((resolve) => {
-    anfrage?.resolve(false); // eine offene Anfrage aufs Mal
-    anfrage = { titel: opts.titel, resolve, ...(opts.text ? { text: opts.text } : {}), ...(opts.bestaetigen ? { bestaetigen: opts.bestaetigen } : {}), ...(opts.gefaehrlich ? { gefaehrlich: true } : {}) };
+    anfrage?.resolve(null); // eine offene Anfrage aufs Mal
+    anfrage = { titel: opts.titel, resolve: (wahl) => resolve(wahl === 'ja'), ...(opts.text ? { text: opts.text } : {}), ...(opts.bestaetigen ? { bestaetigen: opts.bestaetigen } : {}), ...(opts.gefaehrlich ? { gefaehrlich: true } : {}) };
+    dialogBenachrichtige();
+  });
+}
+
+/**
+ * **p81 (Owner-Entscheid 30.09.2026 «Nachfragen»):** derselbe Dialog, aber mit
+ * mehreren Wegen statt einem Ja — etwa «Projekt und 3 Dokumente löschen» und
+ * «Projekt löschen, Dokumente in die Bibliothek», dazu wie immer «Abbrechen».
+ * Liefert die `id` des gewaehlten Wegs, `null` bei Abbrechen/Esc/Klick daneben.
+ * Test-Kennung je Knopf: `bestaetigung-weg-<id>`.
+ */
+export function waehleWeg(opts: { titel: string; text?: string; wege: readonly DialogWeg[] }): Promise<string | null> {
+  return new Promise((resolve) => {
+    anfrage?.resolve(null);
+    anfrage = { titel: opts.titel, wege: opts.wege, resolve, ...(opts.text ? { text: opts.text } : {}) };
     dialogBenachrichtige();
   });
 }
@@ -403,12 +464,33 @@ function dialogAbonniere(cb: () => void): () => void {
  */
 export function KBestaetigung() {
   const offen = useSyncExternalStore(dialogAbonniere, () => anfrage, () => anfrage);
-  if (!offen) return null;
-  const schliesse = (ok: boolean) => {
-    offen.resolve(ok);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const schliesse = (wahl: string | null) => {
+    if (!anfrage) return;
+    anfrage.resolve(wahl);
     anfrage = null;
     dialogBenachrichtige();
   };
+  /**
+   * Schichtung 20a/37a/38b/39a (21.09.2026): hier stand ein
+   * `onKeyDown={...}` AM SCRIM — ein React-Handler, der nur feuert, wenn das
+   * Ereignis aus dem Scrim-Teilbaum kommt. Der Fokus liegt beim Öffnen aber
+   * nicht dort (`autoFocus` am Ja-Knopf greift nur, wenn der Dialog frisch
+   * montiert und der Browser ihn annimmt), und ein Escape auf `<body>`
+   * erreichte den Handler nie. Der Dialog trug damit `aria-modal` UND einen
+   * «Esc-Vertrag» im Test-Titel — und beides war unbelegt. Jetzt hält ihn
+   * das Haus-Gesetz: Escape global, Fokusfalle, Fokusrückgabe, Stapel-Regel.
+   *
+   * `esc`/`modal` an `offen` gebunden, weil dieser Wirt DAUERHAFT montiert
+   * ist (einmal in der Shell) — ohne die Bindung stünde er auch ohne offene
+   * Anfrage im Modal-Stapel und schluckte fremde Escapes.
+   */
+  useOverlaySchliessen(boxRef, () => schliesse(null), {
+    modal: offen !== null,
+    esc: offen !== null,
+    aussenklick: false,
+  });
+  if (!offen) return null;
   return createPortal(
     <div
       role="dialog"
@@ -416,29 +498,53 @@ export function KBestaetigung() {
       aria-label={offen.titel}
       data-testid="bestaetigung"
       className="k-dialog-scrim k-bestaetigung-scrim"
-      onKeyDown={(e) => e.key === 'Escape' && schliesse(false)}
-      style={{ zIndex: 900 }}
-      onClick={() => schliesse(false)}
+      style={{ zIndex: zEbeneLeiter.meldung + 10 }}
+      onClick={() => schliesse(null)}
     >
       <div
+        ref={boxRef}
         className="k-dialog-box k-skalieren-ein k-dialog k-bestaetigung-box"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="k-titel k-bestaetigung-titel">{offen.titel}</div>
         {offen.text && <div className="k-bestaetigung-text">{offen.text}</div>}
-        <div className="k-bestaetigung-aktionen">
-          <KButton size="sm" tone="ghost" data-testid="bestaetigung-nein" onClick={() => schliesse(false)}>
+        {/* p81: mit Wegen stehen die Knoepfe untereinander (volle Breite,
+            Abbrechen zuunterst) — nebeneinander passten die langen Texte
+            nicht in die 420-px-Box (UI-Regel 2, gemessen in
+            `e2e/p81-projekt-dokumente.spec.ts`). */}
+        <div
+          className="k-bestaetigung-aktionen"
+          style={offen.wege ? { flexDirection: 'column-reverse', alignItems: 'stretch' } : undefined}
+        >
+          <KButton size="sm" tone="ghost" data-testid="bestaetigung-nein" onClick={() => schliesse(null)}>
             Abbrechen
           </KButton>
-          <KButton
-            size="sm"
-            tone={offen.gefaehrlich ? 'danger' : 'accent'}
-            data-testid="bestaetigung-ja"
-            autoFocus
-            onClick={() => schliesse(true)}
-          >
-            {offen.bestaetigen ?? 'Bestätigen'}
-          </KButton>
+          {offen.wege ? (
+            // p81: der Fokus liegt auf dem ersten NICHT gefaehrlichen Weg —
+            // ein versehentliches Enter zerstoert nichts.
+            offen.wege.map((w, i, alle) => (
+              <KButton
+                key={w.id}
+                size="sm"
+                tone={w.gefaehrlich ? 'danger' : 'accent'}
+                data-testid={`bestaetigung-weg-${w.id}`}
+                autoFocus={i === Math.max(0, alle.findIndex((x) => !x.gefaehrlich))}
+                onClick={() => schliesse(w.id)}
+              >
+                {w.label}
+              </KButton>
+            ))
+          ) : (
+            <KButton
+              size="sm"
+              tone={offen.gefaehrlich ? 'danger' : 'accent'}
+              data-testid="bestaetigung-ja"
+              autoFocus
+              onClick={() => schliesse('ja')}
+            >
+              {offen.bestaetigen ?? 'Bestätigen'}
+            </KButton>
+          )}
         </div>
       </div>
     </div>,

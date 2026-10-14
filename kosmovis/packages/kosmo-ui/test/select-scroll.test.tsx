@@ -443,4 +443,86 @@ describe('KSelect: P-ANKER — Scroll berechnet die Popup-Lage neu statt zu schl
     expect(rafSpion).not.toHaveBeenCalled();
     rafSpion.mockRestore();
   });
+  it('Trigger in einem fensterfesten Fenster: ein geklippter Vorfahre AUSSERHALB davon schliesst nicht (Int 24)', async () => {
+    // Nachbau des Befunds vom 01.10.2026 (`e2e/p-anker-scroll-anker.spec.ts`
+    // Abnahme 3): das Kosmo-Seitenfenster ist `position: fixed`, haengt im
+    // Baum aber unter `.app-main` (overflow hidden, x 0..970; hier auf das
+    // jsdom-Fenster 1024x768 verkleinert: 0..600). Ein
+    // fensterfestes Element wird von einem solchen Vorfahren NICHT
+    // beschnitten — die Pruefung zog ihn trotzdem heran, die Schnittmenge war
+    // leer, und das Popup schloss beim ersten Rollen.
+    const aussen = document.createElement('div');
+    aussen.style.overflowX = 'hidden';
+    aussen.style.overflowY = 'hidden';
+    const fenster = document.createElement('div');
+    fenster.style.position = 'fixed';
+    fenster.style.overflowX = 'hidden';
+    fenster.style.overflowY = 'hidden';
+    aussen.appendChild(fenster);
+    document.body.appendChild(aussen);
+    fakeRect(aussen, { top: 60, bottom: 768, left: 0, right: 600 });
+    fakeRect(fenster, { top: 0, bottom: 768, left: 600, right: 1024 });
+    try {
+      montiere(
+        <KSelect data-testid="s" value="a" onChange={() => {}}>
+          <option value="a">A</option>
+          <option value="b">B</option>
+        </KSelect>,
+        fenster,
+      );
+      const trigger = host!.querySelector('[data-testid="s"]') as HTMLButtonElement;
+      fakeRect(trigger, { top: 400, bottom: 425, left: 650, right: 900 });
+      act(() => trigger.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+      expect(document.querySelector('[data-testid="s-popup"]')).not.toBeNull();
+
+      fakeRect(trigger, { top: 300, bottom: 325, left: 650, right: 900 });
+      act(() => {
+        window.dispatchEvent(new Event('scroll'));
+      });
+      await naechsterFrame();
+
+      const popup = document.querySelector('[data-testid="s-popup"]') as HTMLElement | null;
+      expect(popup).not.toBeNull();
+      expect(popup!.style.top).toBe('327px'); // neuer trigger.bottom(325) + 2
+    } finally {
+      aussen.remove();
+    }
+  });
+
+  it('Gegenprobe: das fensterfeste Fenster SELBST klippt weiter — verlaesst der Trigger es, schliesst das Popup', async () => {
+    const aussen = document.createElement('div');
+    aussen.style.overflowX = 'hidden';
+    aussen.style.overflowY = 'hidden';
+    const fenster = document.createElement('div');
+    fenster.style.position = 'fixed';
+    fenster.style.overflowX = 'hidden';
+    fenster.style.overflowY = 'hidden';
+    aussen.appendChild(fenster);
+    document.body.appendChild(aussen);
+    fakeRect(aussen, { top: 60, bottom: 768, left: 0, right: 600 });
+    fakeRect(fenster, { top: 100, bottom: 700, left: 600, right: 1024 });
+    try {
+      montiere(
+        <KSelect data-testid="s" value="a" onChange={() => {}}>
+          <option value="a">A</option>
+          <option value="b">B</option>
+        </KSelect>,
+        fenster,
+      );
+      const trigger = host!.querySelector('[data-testid="s"]') as HTMLButtonElement;
+      fakeRect(trigger, { top: 400, bottom: 425, left: 650, right: 900 });
+      act(() => trigger.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+      expect(document.querySelector('[data-testid="s-popup"]')).not.toBeNull();
+
+      fakeRect(trigger, { top: 40, bottom: 65, left: 650, right: 900 });
+      act(() => {
+        window.dispatchEvent(new Event('scroll'));
+      });
+      await naechsterFrame();
+
+      expect(document.querySelector('[data-testid="s-popup"]')).toBeNull();
+    } finally {
+      aussen.remove();
+    }
+  });
 });

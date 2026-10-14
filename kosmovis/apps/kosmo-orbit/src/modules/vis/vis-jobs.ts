@@ -7,24 +7,30 @@ import {
   isVisPresetId,
   pruefeGlasnaht,
   pruefeKamerahoehen,
+  sheetPaperSize,
   visPresetById,
   type AutoKameraStandpunkt,
   type HimmelArt,
   type KosmoDoc,
   type Sheet,
+  type SheetImage,
   type VisGraph,
 } from '@kosmo/kernel';
 import { STANDARD_BRIDGE_URL } from '@kosmo/ai';
 import {
   RenderJob,
+  RenderScene,
   BlenderSimJob,
   BakeJob,
   bridgeRoutes,
+  renderResultMaengel,
   unbekannteFelder,
   type BlenderSimArt,
 } from '@kosmo/contracts';
 import { melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
+import { useSplatEbene } from '../../state/splat-ebene';
+import { splatRenderKontext, szeneMitSplatKontext } from '../design/splat-render-kontext';
 import { researchProfilAktiv } from '../../state/research-profil';
 import { memoKey, useVisRuntime, type NodeLaufStatus } from './vis-runtime';
 // P-BESCHEID (v0.9.33, B43 Teil 2 §10): der Urteilsspruch selbst ist eine
@@ -32,8 +38,13 @@ import { memoKey, useVisRuntime, type NodeLaufStatus } from './vis-runtime';
 // ihn fuettert. `pruefeBridge` ist die bestehende `/health`-Probe aus dem
 // Heimserver-Modul; sie ist tokenfrei erreichbar und darum genau die
 // Gegenprobe, die «laeuft die Bridge ueberhaupt?» beantworten kann.
-import { bridgeBescheid, type BescheidLage } from './bridge-bescheid';
+import { BRIDGE_TOKEN_FEHLT_ODER_FALSCH_SATZ, bridgeBescheid, tokenSatz, type BescheidLage } from './bridge-bescheid';
+import { meldeBrueckenFehler } from '../../shell/homeserver-knopf';
 import { BRIDGE_TOKEN_KEY, pruefeBridge } from '../../state/home-server';
+import { kuerzel } from '../../shell/tastennamen';
+// Nur der Typ: `varianten-diff.ts` holt Werte aus dieser Datei, ein
+// Wert-Import zurueck waere ein Kreis.
+import type { LizenzAngabe } from './varianten-diff';
 
 /**
  * Bridge-Jobs für KosmoVis (P2/HS3) — ein Weg für Graph UND Einfach-Ansicht:
@@ -43,8 +54,27 @@ import { BRIDGE_TOKEN_KEY, pruefeBridge } from '../../state/home-server';
  */
 
 export type JobQa = NonNullable<RenderJob['result']>['qa'];
-/** Der validierte Job-Record — der Vertrag ist die EINE Wahrheit (HS1). */
-export type JobRecord = RenderJob;
+/** kv-lieferstatus-null (L1): der Lieferstatus des Ergebnisses, `null` heisst
+ *  «nicht festgestellt» (ein Vorbehalt, kein Fehler). */
+export type JobLieferstatus = NonNullable<RenderJob['result']>['lieferstatus'];
+/**
+ * Nachgang 3 (auf-20261006-248; Bruecke `claude/lw-bruecke-worker-feld` bei
+ * `5f59fd40e`, beim Integrator zum Einbau): die Bruecke sagt am Job, WER ihn
+ * rechnet — `worker`, dazu `worker_seit` (Zeitpunkt der Uebernahme, ISO-8601
+ * UTC) und, nur wenn sie den Worker selbst ableitet, `worker_quelle:
+ * 'abgeleitet'`. `worker` steht schon im Vertrag (`@kosmo/contracts`
+ * `RenderJob`), die beiden neuen Felder nicht; zod wuerde sie still
+ * abstreifen. Sie werden darum HIER, nur beim Lesen in der Vis-Station,
+ * optional dazugenommen — der gemeinsame Vertrag bleibt unberuehrt. Fehlen
+ * sie (aeltere Bruecke), ist der Record wortgleich gueltig wie bisher.
+ */
+const RenderJobVis = RenderJob.extend({
+  worker_seit: z.string().optional(),
+  worker_quelle: z.string().optional(),
+});
+/** Der validierte Job-Record — der Vertrag ist die EINE Wahrheit (HS1),
+ *  in der Vis-Station um die zwei Herkunftsfelder der Bruecke erweitert. */
+export type JobRecord = z.infer<typeof RenderJobVis>;
 
 /**
  * Typisierter HTTP-Fehler der Bridge (KLEIN 8). Ein blankes `new Error(status)`
@@ -65,6 +95,15 @@ export class BridgeHttpError extends Error {
 /** True, wenn der Fehler eine Ablehnung wegen Token/Rechten ist (401/403). */
 export function istAuthFehler(err: unknown): err is BridgeHttpError {
   return err instanceof BridgeHttpError && (err.status === 401 || err.status === 403);
+}
+
+/**
+ * C3 (Splat-Abnahme 06.10.2026): der Satz zu einem gesehenen 401/403 — aus
+ * `bridge-bescheid.ts`, mit dem Token-Stand dieses Geräts («fehlt» oder
+ * «passt nicht»), und immer mit dem Verweis auf Einstellungen ▸ HomeServer.
+ */
+export function authFehlerSatz(err: BridgeHttpError): string {
+  return `${tokenSatz({ netzfehler: false, status: err.status, tokenGesetzt: bridgeToken() !== '' }) ?? BRIDGE_TOKEN_FEHLT_ODER_FALSCH_SATZ}.`;
 }
 
 /**
@@ -173,9 +212,28 @@ export function bridgeFetch(pfad: string, init?: RequestInit): Promise<Response>
  * EIN gemeinsamer Status-Mapper (HS3) für beide Poll-Stellen — die frühere
  * Doppelung in NodeCanvas und VisWorkspace stirbt hier. Übersetzt den
  * Bridge-Job-Zustand ehrlich in den Client-Lebenszyklus.
+ *
+ * P11/B7 (V016-SPEZ) — Befund: ein eingebettetes `result` hiess BISHER immer
+ * «fertig», auch mit leerem `images`-Array (`RenderResult.images:
+ * z.array(z.string())` erlaubt `[]` — vertragskonform, aber nichts zum
+ * Zeigen). «fertig» ohne Bild ist eine falsche Erfolgsmeldung. Jetzt: nur
+ * MIT mindestens einem Bild «fertig», sonst ehrlich «fehler» — dieselbe
+ * NodeLaufStatus-Vokabel wie jeder andere Fehlschlag (bewusst KEIN neuer
+ * Status-Wert: `NodeLaufStatus`/`CompanionKartenStatus` sind über
+ * `apps/kosmo-orbit/src/shell/companion-daten.ts`s `STATUS_LABEL`/
+ * `STATUS_TON` — ausserhalb dieses Pakets — als ERSCHÖPFENDE `Record<...>`
+ * verdrahtet; ein zusätzlicher Wert würde dort nicht kompilieren).
  */
 export function mappeJobStatus(record: { status: string; result?: unknown }): NodeLaufStatus {
-  if (record.result) return 'fertig';
+  if (record.result) {
+    // `unknown` bleibt bewusst der Parametertyp (wie vor B7): unter
+    // `exactOptionalPropertyTypes: true` lehnt TS ein enger getyptes
+    // `result?: { images?: unknown }` an mehreren realen `RenderJob`-Aufrufern
+    // ab (Viewport3D.tsx/Companion.tsx, ausserhalb dieses Pakets). Die
+    // Bild-Prüfung selbst bleibt darum ein Laufzeit-Check, keine Typannahme.
+    const bilder = (record.result as { images?: unknown }).images;
+    return Array.isArray(bilder) && bilder.length > 0 ? 'fertig' : 'fehler';
+  }
   switch (record.status) {
     case 'awaiting_approval':
       return 'wartetFreigabe';
@@ -213,6 +271,9 @@ export function mappeJobStatus(record: { status: string; result?: unknown }): No
  * NICHT hier — für das Modell gibt es überhaupt keinen Lizenz-Beleg im Repo
  * («vor Download klären», `docs/MODEL_DOWNLOAD_MANIFEST.md`), und ein
  * research-Schalter wäre dort eine Zusage, die niemand geprüft hat.
+ * `qwen-image-2.1` steht ebenso bewusst NICHT hier: Owner-Entscheid E128
+ * nimmt es ohne Schalter ins Produkt, die Lizenz wird vor der
+ * Veröffentlichung gelöst (Hinweis in `BILDWERKZEUG_TEXTE`).
  */
 const NUR_RESEARCH_BACKBONES = ['flux-krea'] as const;
 
@@ -284,8 +345,9 @@ function istNurResearchBackbone(backbone: string | undefined): boolean {
  * `NodeCanvas.tsx`/`austausch.tsx` (beide abonnieren `revision`, laufen also
  * bei JEDEM Befehl irgendwo in der App neu, solange KosmoVis offen ist) UND
  * ein zweites Mal bei jedem `laeufe`-Poll-Tick, OHNE dass sich die Geometrie
- * geändert hätte. Gemessen am mitgelieferten Referenzprojekt «Testobjekt Lichthof» (7
- * Geschosse, 32 Wände, 139 Entities): `deriveAll` kostet dort **~18 ms
+ * geändert hätte. Gemessen am damals mitgelieferten Lichthof-Referenzprojekt
+ * (seit W6 · P-LICHTHOF-UMZUG das Demohaus, 7 Geschosse, 32 Wände,
+ * 139 Entities): `deriveAll` kostet dort **~18 ms
  * MEDIAN** je invalidiertem Aufruf (Wand-Gehrung `miterWallEnds` scannt für
  * JEDE Wand ALLE anderen Wände des Docs — O(Wandzahl) je Wand). An einem
  * synthetisch grösseren Modell (432 Wände) steigt das auf **~255 ms
@@ -293,8 +355,8 @@ function istNurResearchBackbone(backbone: string | undefined): boolean {
  * JEDEN Befehl in einem grösseren Projekt spürbar bremst, sobald KosmoVis
  * offen ist, wäre keine Reparatur, sondern eine neue, versteckte Bremse
  * (Auflage: «Eine Reparatur, die die Oberfläche zäh macht, ist keine»). Die
- * Kind-Zählung unten bleibt dagegen bei **< 0.02 ms** selbst am
- * Referenzprojekt «Testobjekt Lichthof» (reines `Map`-Durchlaufen, keine Extrusion, keine
+ * Kind-Zählung unten bleibt dagegen bei **< 0.02 ms** selbst am damaligen
+ * Lichthof-Referenzprojekt (reines `Map`-Durchlaufen, keine Extrusion, keine
  * Gehrungsrechnung) — kein Memo-Cache nötig, die billige Zählung ist schon
  * schnell genug, dass ein zusätzlicher Cache nur Komplexität ohne
  * messbaren Nutzen wäre.
@@ -361,11 +423,66 @@ export function szeneBauteileAnzahl(doc: KosmoDoc): number {
  * der hinter der gezählten Menge zurückbleibt, schickt den Leser an die
  * falsche Stelle.
  */
+/**
+ * B2 (Nachprobe auf-20261001-230, Auftrag `auf-vis-20261001-01`): ein frischer
+ * Graph hat keinen Prompt, und die KI-Veredelung von KosmoVis lehnt einen
+ * leeren Prompt ab («Prompt ist leer»: die Tiefenkarte gibt die Kubatur vor,
+ * Material, Licht und Stimmung stehen nur im Prompt). Bisher ging der Auftrag
+ * trotzdem ab, und die Ablehnung kam erst danach.
+ *
+ * WAHL: ein Hinweis VOR dem Senden, KEIN Anfangs-Prompt. Ein vorgegebener
+ * Text wuerde Material, Licht und Stimmung still fuer den Architekten
+ * festlegen, und das Bild saehe nach einer Entscheidung aus, die niemand
+ * getroffen hat. Der Hinweis steht am Render-Knoten in der Prompt-Zeile (in
+ * der Warnfarbe) und am Knopf, BEVOR jemand sendet.
+ *
+ * BEWUSST NICHT GESPERRT: eine Sperre an der Naht wurde gebaut und gemessen;
+ * sie machte 18 bestehende Proben rot, die einen Auftrag ohne Prompt an die
+ * Attrappen-Bruecke schicken (u. a. PC2, P-LEERSZENE, P-DREISTANDPUNKTE,
+ * K1). Ob ein leerer Prompt gesperrt wird, ist eine Entscheidung ueber
+ * fremde Proben und wird im Meldeblatt vorgelegt, nicht hier vorweggenommen.
+ *
+ * Gilt nur, wenn ein KI-Schritt bestellt ist: «Nur Cycles» und die
+ * Strichzeichnung brauchen keinen Prompt.
+ */
+export const LEERER_PROMPT_HINWEIS =
+  'Kein Prompt: die KI-Veredelung lehnt einen leeren Auftrag ab. ' +
+  'Verbinde einen Stimmungs- oder Stil-Knoten oder fülle das Auftrags-Formular am Render-Knoten ' +
+  '(«… mehr»). Ohne KI-Schritt («Nur Cycles» oder Strichzeichnung) geht es auch ohne Prompt.';
+
+/** B2: fehlt der Prompt fuer einen bestellten KI-Schritt? Reine Funktion. */
+export function promptFehltFuerKi(prompt: string, opts: { nurCycles?: boolean; lineart?: boolean }): boolean {
+  const kiSchritt = !(opts.nurCycles === true || opts.lineart === true);
+  return kiSchritt && prompt.trim() === '';
+}
+
+/**
+ * B4 (Nachprobe auf-20261001-230): ohne Bruecken-Token lehnt eine Bruecke im
+ * Netz jeden Auftrag mit 401 ab (sie verlangt den Token, sobald sie nicht nur
+ * auf diesem Rechner lauscht). Der Hinweis kommt darum VOR dem Senden. Er
+ * sperrt nichts: eine Bruecke kann bewusst ohne Token offen laufen, und auf
+ * diesem Rechner (`localhost`) braucht sie keinen. Reine Funktion.
+ */
+export const TOKEN_FEHLT_HINWEIS =
+  'Kein Brücken-Token gesetzt: eine Brücke im Netz lehnt den Auftrag ohne Token ab. ' +
+  'Token in den KosmoVis-Einstellungen eintragen.';
+
+export function tokenHinweisVorDemSenden(basis: string, token: string): string | undefined {
+  if (token.trim() !== '') return undefined;
+  try {
+    const host = new URL(basis).hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return undefined;
+  } catch {
+    return undefined;
+  }
+  return TOKEN_FEHLT_HINWEIS;
+}
+
 export const KEINE_GEOMETRIE_HINWEIS =
   'Kein Render ohne Geometrie — die Szene hat 0 Bauteile (Wände/Decken/Dächer/' +
   'Volumenkörper/Treppen/Rampen/Stützen/Unterzüge/Geländer/FreeMesh/Möbel). ' +
   'Ursache: In KosmoDesign wurde noch nichts gebaut oder geladen. Befehlspalette ' +
-  '(⌘K/Ctrl+K) → «Beispielprojekt Demohaus laden», danach zurück zu KosmoVis. ' +
+  `(${kuerzel('mod+k')}) → «Beispielprojekt Demohaus laden», danach zurück zu KosmoVis. ` +
   'Nicht am Render-Node oder an der Bridge suchen — Verbindung und Graph sind in ' +
   'Ordnung, es fehlt nur das Modell selbst.';
 
@@ -556,6 +673,15 @@ export const BILDWERKZEUG_TEXTE: Record<Bildwerkzeug, { readonly name: string; r
     name: 'FLUX.1-Krea-dev',
     hinweis: 'NICHT kommerziell — nur im Forschungsprofil bestellbar, sonst weist der Auftrag ab',
   },
+  // E128 (ENTSCHEIDE-2026-09-22): kommt ins Produkt, die Lizenz wird vor der
+  // Veroeffentlichung geloest. Darum KEIN Eintrag in NUR_RESEARCH_BACKBONES
+  // (E128 ohne Schalter). Am Geraet gemessen (ROADMAP 1632): keine
+  // Tiefenfuehrung — Stil und Einsetzen auf einem gerechneten Bild, die
+  // formtreue Strecke bleibt bei der Vorgabe.
+  'qwen-image-2.1': {
+    name: 'Qwen-Image 2.1',
+    hinweis: 'Qwen-Image 2.1 — Lizenz noch offen, keine Tiefenführung',
+  },
 };
 
 /** Die Werkzeuge in Anzeigereihenfolge — Schlüssel des Records, nichts Eigenes. */
@@ -654,11 +780,15 @@ export function renderBedienungAusParams(params: Record<string, string | number 
  * - `nicht-gelesen` — das Feld reist mit und aendert am Bild nichts. Das ist
  *   die teuerste Lage, weil sie im Vertrag wie eine Faehigkeit aussieht
  *   («Die Attrappe», Muster 11).
+ * - `nicht-vorgesehen` — seit K1 (29.09.2026, E75): das Feld reist NICHT mehr
+ *   mit. Die Gegenseite nimmt es nicht an und weist Bestellungen mit
+ *   unbekannten Feldern ab; wir senden es darum nicht (`NICHT_GESENDET`). Es
+ *   bleibt im Vertragstext und in der Bedienung, das Bild aendert es nicht.
  * - `ungeprueft` — niemand hat nachgesehen. Steht hier nur, solange die
  *   Messung wirklich aussteht; «ungeprueft» ist eine Auskunft, «vermutlich»
  *   waere keine.
  */
-export type Fremdstand = 'gelesen' | 'nicht-gelesen' | 'ungeprueft';
+export type Fremdstand = 'gelesen' | 'nicht-gelesen' | 'nicht-vorgesehen' | 'ungeprueft';
 
 export interface FremdnahtBefund {
   /** Pfad im Vertrag, wie er in `render-scene.ts` steht. */
@@ -756,61 +886,84 @@ export const FREMDNAHT: readonly FremdnahtBefund[] = [
     feld: 'render.sun.staerke',
     titel: 'Sonnenstärke',
     zeile: '46',
-    stand: 'nicht-gelesen',
-    gemessenAm: '17.09.2026',
+    stand: 'gelesen',
+    gemessenAm: '29.09.2026',
     beleg:
-      'kommt bei lies_szene im Block «sonne» an und geht dort nicht weiter: seams._multipass_argumente ' +
-      'reicht aus dem Sonnenblock NUR elevation/azimuth/konvention durch, und blender_depth_stage.py hat ' +
-      'keinen Schalter dafuer. Das Cycles-Werkzeug der HomeStation hat einen (--sonne-staerke), liest aber keinen Vertrag.',
+      'Angabe der Gegenseite im Blatt -01 (gebaut am 24.09.2026), hier NICHT nachgemessen: der Wert geht ' +
+      'in die Cycles-Rechnung ein. Vorbehalt: er wirkt auf das Cycles-Bild, nicht auf das gelieferte KI-Bild. ' +
+      'Die Messung vom 17.09.2026 (nicht gelesen) ist damit ueberholt.',
   },
   {
     feld: 'render.sun.kelvin',
     titel: 'Farbtemperatur',
     zeile: '46',
-    stand: 'nicht-gelesen',
-    gemessenAm: '17.09.2026',
+    stand: 'gelesen',
+    gemessenAm: '29.09.2026',
     beleg:
-      'wie staerke. Gegenstueck auf der HomeStation waere --sonne-farbe (Planck-Naeherung in render_lauf.py), unverbunden.',
+      'Angabe der Gegenseite im Blatt -01 (gebaut am 24.09.2026), hier NICHT nachgemessen: der Wert geht ' +
+      'in die Cycles-Rechnung ein. Vorbehalt: er wirkt auf das Cycles-Bild, nicht auf das gelieferte KI-Bild. ' +
+      'Die Messung vom 17.09.2026 (nicht gelesen) ist damit ueberholt.',
   },
   {
     feld: 'render.sun.winkelGrad',
     titel: 'Sonnenwinkel',
     zeile: '46',
-    stand: 'nicht-gelesen',
-    gemessenAm: '17.09.2026',
+    stand: 'gelesen',
+    gemessenAm: '29.09.2026',
     beleg:
-      'wie staerke — und hier gibt es nicht einmal drueben einen Schalter: render_lauf.py setzt den ' +
-      'Sonnenwinkel FEST auf 0.62 Grad (daten.angle = math.radians(0.62)). Von den drei Sonnenzahlen ist ' +
-      'diese die einzige, die auch bei angeschlossener Naht noch Arbeit drueben braeuchte.',
+      'Angabe der Gegenseite im Blatt -01 (gebaut am 24.09.2026), hier NICHT nachgemessen: der Wert geht ' +
+      'in die Cycles-Rechnung ein. Vorbehalt: er wirkt auf das Cycles-Bild, nicht auf das gelieferte KI-Bild. ' +
+      'Die Messung vom 17.09.2026 (nicht gelesen) ist damit ueberholt.',
   },
   {
     feld: 'render.himmel',
     titel: 'Himmel',
     zeile: '47/48',
-    stand: 'nicht-gelesen',
-    gemessenAm: '17.09.2026',
+    stand: 'nicht-vorgesehen',
+    gemessenAm: '29.09.2026',
     beleg:
-      'taucht in lies_szene gar nicht erst auf — die Gegenseite liest render feldweise mit .get() und ' +
-      'beanstandet Unbekanntes nicht. render_lauf.py haette --himmel-staerke/--luft/--staub, ist aber unverbunden.',
+      'Die Gegenseite nimmt das Feld nicht an (E75, auf-20260924-171 K1); wir senden es seit dem 29.09.2026 ' +
+      'nicht mehr (NICHT_GESENDET in vis-jobs.ts). Bedienelement und Preset bleiben, das Bild aendert es nicht.',
   },
   {
     feld: 'render.belichtung',
     titel: 'Belichtung',
     zeile: '4',
-    stand: 'nicht-gelesen',
-    gemessenAm: '17.09.2026',
+    stand: 'nicht-vorgesehen',
+    gemessenAm: '29.09.2026',
     beleg:
-      'wie himmel: nicht in lies_szene. Gegenstueck auf der HomeStation waere --belichtung/--look/--farbraum, unverbunden.',
+      'Die Gegenseite nimmt das Feld nicht an (E75, auf-20260924-171 K1); wir senden es seit dem 29.09.2026 ' +
+      'nicht mehr (NICHT_GESENDET in vis-jobs.ts). Bedienelement und Preset bleiben, das Bild aendert es nicht.',
   },
   {
     feld: 'render.rauschschwelle',
     titel: 'Rauschschwelle',
     zeile: '51',
-    stand: 'nicht-gelesen',
-    gemessenAm: '17.09.2026',
+    stand: 'nicht-vorgesehen',
+    gemessenAm: '29.09.2026',
     beleg:
-      'wie himmel: nicht in lies_szene. Drueben steckt die Rauschschwelle in den Profilen DRAFT/PREVIEW/' +
-      'PRODUCTION/FINAL von render_lauf.py, nicht in einem eigenen Schalter.',
+      'Die Gegenseite nimmt das Feld nicht an (E75, auf-20260924-171 K1); wir senden es seit dem 29.09.2026 ' +
+      'nicht mehr (NICHT_GESENDET in vis-jobs.ts). Bedienelement und Preset bleiben, das Bild aendert es nicht.',
+  },
+  {
+    feld: 'render.environment',
+    titel: 'Stimmung',
+    zeile: '—',
+    stand: 'nicht-vorgesehen',
+    gemessenAm: '29.09.2026',
+    beleg:
+      'Die Gegenseite nimmt das Feld nicht an (E75, auf-20260924-171 K1); die Stimmungsinsel waehlt ' +
+      'weiter, gesendet wird nichts (NICHT_GESENDET in vis-jobs.ts).',
+  },
+  {
+    feld: 'komposition',
+    titel: 'Komposition',
+    zeile: '—',
+    stand: 'nicht-vorgesehen',
+    gemessenAm: '29.09.2026',
+    beleg:
+      'Die Gegenseite nimmt das Feld nicht an und es widerspricht unseren Kameras (E75, auf-20260924-171 K1); ' +
+      'der Inhalt steht in cameras[].fov und render.resolution. Gesendet wird es nicht (NICHT_GESENDET).',
   },
   {
     feld: 'vis.backbone',
@@ -836,6 +989,11 @@ export function fremdnahtNichtGelesen(): readonly string[] {
   return FREMDNAHT.filter((f) => f.stand === 'nicht-gelesen').map((f) => f.feld);
 }
 
+/** K1: die Felder, die NICHT mehr mitreisen — gezaehlt aus der Tabelle. */
+export function fremdnahtNichtGesendet(): readonly string[] {
+  return FREMDNAHT.filter((f) => f.stand === 'nicht-vorgesehen').map((f) => f.feld);
+}
+
 /**
  * Der Satz, der am Render-Knoten steht. Er wird GERECHNET, nicht getippt —
  * wer die Tabelle aendert, aendert die Oberflaeche mit, und andersherum kann
@@ -851,11 +1009,16 @@ export function fremdnahtNichtGelesen(): readonly string[] {
  */
 export function fremdnahtSatz(): string {
   const gelesen = FREMDNAHT.filter((f) => f.stand === 'gelesen').length;
-  const offen = FREMDNAHT.filter((f) => f.stand === 'nicht-gelesen');
-  const tag = FREMDNAHT[0]?.gemessenAm ?? '';
+  const aus = FREMDNAHT.filter((f) => f.stand === 'nicht-vorgesehen' || f.stand === 'nicht-gelesen');
+  // Der jüngste Messtag, nicht der erste Eintrag: die Tabelle wird zeilenweise
+  // nachgezogen, und ein Datum, das älter ist als seine Zeilen, wäre falsch.
+  const tag =
+    FREMDNAHT.map((f) => f.gemessenAm)
+      .sort((a, b) => a.split('.').reverse().join('').localeCompare(b.split('.').reverse().join('')))
+      .at(-1) ?? '';
   return (
     `Gemessen ${tag}: die Bildseite wertet ${gelesen} von ${FREMDNAHT.length} Auftragsfeldern aus. ` +
-    `${offen.length} reisen mit und ändern am Bild nichts — ${offen.map((f) => f.titel).join(', ')}.`
+    `${aus.length} sind nicht bedient und gehen nicht mehr mit — ${aus.map((f) => f.titel).join(', ')}.`
   );
 }
 
@@ -918,6 +1081,47 @@ export const BILDWEG_OFFEN: readonly BildwegOffen[] = [
       'braucht sie nicht zurueckgeschickt.',
   },
 ];
+
+/**
+ * P11 (V016-SPEZ, «Szene vor dem Versand pruefen») — validiert den
+ * AUSGEHENDEN `scene`-Block gegen `RenderScene` (kosmovis.render-scene/v1,
+ * `@kosmo/contracts`), bevor `postRenderJob` ihn absendet. Derselbe
+ * `path: message`-Stil wie `parseJob` unten (dort für eingehende
+ * Bridge-Antworten) — hier für die ausgehende Bestellung gespiegelt: WELCHES
+ * Feld den Vertrag verletzt, nicht nur DASS er verletzt ist. Wirft, sendet
+ * nichts.
+ */
+function pruefeSzeneVorVersand(scene: unknown): void {
+  const geprueft = RenderScene.safeParse(scene);
+  if (!geprueft.success) {
+    const details = geprueft.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+    throw new Error(`Szene verletzt den Vertrag (render-scene/v1) — nicht gesendet: ${details}`);
+  }
+}
+
+/**
+ * K1 (auf-20260924-171, Owner-Entscheid E75 «nur Felder senden, die die
+ * Gegenseite annimmt»): diese fuenf Felder stehen im Vertragstext
+ * (`render-scene.ts`), gehen aber NICHT mehr an /jobs. Die Bildseite weist
+ * Bestellungen mit Feldern ab, die sie nicht kennt — ein Demohaus mit Preset
+ * blieb dort liegen. EINE Liste, EINE Stelle (`ohneAbgewieseneFelder`): ein
+ * sechstes Feld gehoert hierher und nirgends sonst hin. Bedienelemente,
+ * Presets und gespeicherte Parameter bleiben unveraendert; der Inhalt steht
+ * schon in `cameras[].fov` und `render.resolution`.
+ */
+export const NICHT_GESENDET = {
+  /** Oberste Ebene der Szene. */
+  szene: ['komposition'],
+  /** Unterfelder von `render`. */
+  render: ['himmel', 'belichtung', 'rauschschwelle', 'environment'],
+} as const;
+
+function ohneAbgewieseneFelder<T extends { render: Record<string, unknown> }>(scene: T): T {
+  const kopie: Record<string, unknown> = { ...scene, render: { ...scene.render } };
+  for (const feld of NICHT_GESENDET.szene) delete kopie[feld];
+  for (const feld of NICHT_GESENDET.render) delete (kopie['render'] as Record<string, unknown>)[feld];
+  return kopie as T;
+}
 
 export async function postRenderJob(params: {
   prompt: string;
@@ -983,7 +1187,7 @@ export async function postRenderJob(params: {
    * statt tiefenkonditioniertem Rendern. Alle bisherigen Werte bleiben
    * gueltig, keiner entfaellt.
    */
-  backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl';
+  backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
   /**
    * Explizites research-Flag (Lizenz-Sanierung 11.08.2026): erforderlich für
    * Non-Commercial-Backbones (`'flux-krea'`), landet als `vis.research_only`
@@ -1195,8 +1399,31 @@ export async function postRenderJob(params: {
     out: '',
     geometry: { path: '', format: interiorMoeglich ? ('ifc' as const) : ('glb' as const) },
   };
+  // P11 (V016-SPEZ, «Szene vor dem Versand pruefen») — DER LETZTE PUNKT, an
+  // dem noch nichts gesendet ist: die Szene lief bis hierhin UNGEPRUEFT an
+  // die Bridge — kein `RenderScene.safeParse` sah die ausgehende Bestellung
+  // je, nur eingehende Antworten liefen durch `parseJob`. Ein Verstoss wäre
+  // entweder als kryptischer Bridge-Fehler zurückgekommen oder,
+  // schlimmer, als eine Bestellung, die die Gegenseite anders interpretiert
+  // als gemeint. Wirft VOR `bridgeFetch` — kein Byte geht raus, wenn die
+  // Szene den eigenen Vertrag verletzt.
+  // lw-splat-context (08.10.2026): die sichtbare Splat-Ebene reist als
+  // Umgebung mit (`RenderScene.context`) — aber nur, wenn der Vertrag das
+  // Feld kennt (`SPLAT_CONTEXT_IM_VERTRAG`, die eine Stelle in
+  // `splat-render-kontext.ts`). Geht sie nicht mit, steht der Grund
+  // sichtbar da, statt dass der Splat still im Bild fehlt.
+  const splat = useSplatEbene.getState();
+  const splatTeil = szeneMitSplatKontext(
+    scene,
+    splat.ebene ? splatRenderKontext({ ebene: splat.ebene, handLage: splat.handLage }) : null,
+  );
+  if (splatTeil.hinweis) melde(splatTeil.hinweis, { ton: 'info' });
+  // K1: gepruefte UND gesendete Szene ist dieselbe — die fuenf abgewiesenen
+  // Felder sind vorher raus.
+  const gesendet = ohneAbgewieseneFelder(splatTeil.szene);
+  pruefeSzeneVorVersand(gesendet);
   const form = new FormData();
-  form.append('scene', JSON.stringify(scene));
+  form.append('scene', JSON.stringify(gesendet));
   // Y3 P-IFC-BESTELLUNG-Muster (`bake-auftrag.ts:116`, woertlich uebernommen).
   const dateiname = interiorMoeglich ? 'model.ifc' : 'model.glb';
   const mimeTyp = interiorMoeglich ? 'application/x-step' : 'model/gltf-binary';
@@ -1241,7 +1468,7 @@ export function sendeGraphRenderAuftrag(
   environment?: { preset: 'morgen' | 'abend' | 'weiss' },
   opts?: {
     kameraWahl?: 'auto' | 'saved';
-    backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl';
+    backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
     aufloesung?: readonly [number, number];
   },
 ): void {
@@ -1329,6 +1556,9 @@ export function sendeGraphRenderAuftrag(
   // wäre der neue Weg ein Loch im Lizenz-Riegel.
   const backbone = opts?.backbone ?? bedienung.backbone;
   const researchOnly = istNurResearchBackbone(backbone) && researchProfilAktiv();
+  // B4: Hinweis vor dem Senden, sperrt nicht (s. `tokenHinweisVorDemSenden`).
+  const tokenHinweis = tokenHinweisVorDemSenden(bridgeBase(), bridgeToken());
+  if (tokenHinweis) melde(tokenHinweis, { ton: 'info' });
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
   setzeLauf(nodeId, { status: 'gesendet', memoKey: key, gestartetUm: Date.now() });
@@ -1372,9 +1602,9 @@ export function sendeGraphRenderAuftrag(
       // Rohtext zeigt. EIN Bescheid, zwei Anzeigen — kein zweiter
       // `/health`-Ruf (der wäre teuer und könnte ein anderes Urteil liefern
       // als der, den `patchLauf` gerade gesetzt hat).
-      const bescheid = await bescheidFuerBridgeFehler(err);
+      const bescheid = await bescheidFuerBridgeFehler(err, { schreibRuf: true });
       patchLauf(nodeId, { status: 'fehler', fehler: bescheid });
-      melde(bescheid, { ton: 'fehler' });
+      meldeBrueckenFehler(bescheid);
     });
 }
 
@@ -1439,7 +1669,7 @@ export async function abbrechenJob(jobId: string): Promise<JobRecord> {
  * da war.
  */
 function parseJob(raw: unknown): JobRecord {
-  const geprueft = RenderJob.safeParse(raw);
+  const geprueft = RenderJobVis.safeParse(raw);
   if (!geprueft.success) {
     const details = geprueft.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Bridge-Antwort passt nicht zum Render-Job-Vertrag — ${details}`);
@@ -1450,6 +1680,12 @@ function parseJob(raw: unknown): JobRecord {
       `[E76] ${unbekannt.length} Feld(er) in der Bridge-Antwort waren dem Vertrag unbekannt und wurden von ` +
         `zod abgestreift (Owner-Entscheid 19.09.2026, auf-20260919-104): ${unbekannt.join(', ')}`,
     );
+  }
+  // kv-vertrag (E123, Regel B): ein `null` der Gegenseite wird angenommen und
+  // als benannter Mangel gemeldet, nicht still als «leer» weitergereicht.
+  const maengel = geprueft.data.result ? renderResultMaengel(geprueft.data.result) : [];
+  if (maengel.length > 0) {
+    console.warn(`[E123] Ergebnis angenommen, ${maengel.length} benannte(r) Mangel: ${maengel.join('; ')}`);
   }
   return geprueft.data;
 }
@@ -1753,30 +1989,172 @@ export function messeBildGroesse(dataUrl: string): {
 /**
  * E13 (`docs/V089-SPEZ.md` §9, PBL2) — Herkunfts-Label eines Bildes, das aufs
  * Blatt kommt. Ersetzt die frühere feste `BILD_LABEL_FAKE_RENDER`-Konstante
- * (E7/V088-SPEZ) durch eine echte Herkunftsprüfung:
- *  - `worker` fehlt ODER ist `'fake-worker'` → «Vorschau (Fake-Render)»
- *    (Sanktion 8/V088: Fake-Bild ohne Kennzeichnung = ungültig — bleibt die
- *    Default-Antwort, damit JEDER Aufrufer ohne Herkunftsangabe weiter
- *    ehrlich als Fake gekennzeichnet wird).
+ * (E7/V088-SPEZ) durch eine echte Herkunftsprüfung.
+ *
+ * P11/B5 (V016-SPEZ) NACHGEZOGEN, 23.09.2026 — zwei falsche Behauptungen
+ * korrigiert:
+ *  - `worker` fehlt GANZ (keine Angabe, z. B. ein fehlgeschlagener
+ *    Zusatz-Fetch) → «Herkunft unbekannt». VORHER hiess das «Vorschau
+ *    (Fake-Render)» — eine GERATENE Behauptung: ein Bild ohne `worker`-Feld
+ *    könnte ebenso ein echter Render gewesen sein, dessen Feld nur nicht
+ *    mitkam. Ehrlich ist «unbekannt», nicht «fake».
+ *  - `worker === 'fake-worker'` (die Fake-Bridge nennt sich selbst so) →
+ *    weiterhin «Vorschau (Fake-Render)», UNVERÄNDERT (Sanktion 8/V088:
+ *    Fake-Bild ohne Kennzeichnung = ungültig; E2E `blender-bridge.
+ *    spec.ts:247`/`vis-publish-bild.spec.ts` hängen am Wortlaut, ausserhalb
+ *    dieses Pakets, nicht angefasst).
  *  - `requestedStyle === 'lineart'` (und ein ECHTER Worker) → «Strichzeichnung
- *    (Line-Art)» (E10).
- *  - sonst (echter Worker, kein Line-Art) → «Render (Cycles)».
+ *    (Line-Art)» (E10) — Cycles/Freestyle-Rendering, kein KI-Stiltransfer,
+ *    unverändert.
+ *  - `requestedStyle` ist `'redux'`/`'ipadapter'`/`'lora'` (und ein ECHTER
+ *    Worker) → «KI-Bild». VORHER hiess das ebenfalls «Render (Cycles)» —
+ *    Cycles ist nur der Render-KERN, die KI-Veredelung danach ein
+ *    zusätzlicher Schritt (`RenderScene.style.mode`, `kosmo-contracts`); ein
+ *    KI-veredeltes Bild als «Cycles» zu zeigen verschleiert genau die
+ *    Unterscheidung, die dieses Label dem Nutzer geben soll.
+ *  - sonst (echter Worker, kein Line-Art, keine KI-Veredelung) → «echter
+ *    Render».
+ *
+ * NACHGANG 3, 07.10.2026 (Befund des lokalen Workers, auf-20261006-248):
+ *  - `worker` fehlt, das Ergebnis nennt aber `engine_used` → «Gerechnet mit
+ *    <Modell>» statt «Herkunft unbekannt» (die echte Bruecke vor `5f59fd40e`
+ *    traegt kein `worker`). Ohne beides bleibt «Herkunft unbekannt».
+ *  - `worker` ist da UND die Bruecke sagt mehr (`worker_quelle`,
+ *    `worker_seit`) → hinter dem Label Worker, «(abgeleitet)» und der
+ *    Uebernahmezeitpunkt, z. B. «echter Render · Abholer (abgeleitet)».
+ *    `worker` hat Vorrang vor `engine_used`.
  *
  * WICHTIG (Container-Grenze, wörtlich): der `worker`-Wert kommt IMMER von der
  * Fake-Bridge (`tools/homestation-bridge/kosmo_bridge/main.py`
- * `_fake_worker_step`, setzt `record["worker"] = "fake-worker"`) — der
- * `'Render (Cycles)'`-Zweig dieser Funktion ist im Container-Betrieb NIE
- * erreichbar, weil hier nie ein anderer `worker`-String ankommt. Er wird
- * AUSSCHLIESSLICH per Unit-Test mit einem künstlichen `JobRecord` bewiesen
- * (`apps/kosmo-orbit/test/blender-label.test.ts`) und bleibt bis zu einer
- * echten HomeStation-Abnahme (0.8.10+, Owner-Termin) ein unbewiesener
- * Live-Pfad — genau so dokumentiert, nicht stillschweigend als «getestet»
- * behauptet.
+ * `_fake_worker_step`, setzt `record["worker"] = "fake-worker"`) — die
+ * Zweige «echter Render»/«KI-Bild» dieser Funktion sind im Container-Betrieb
+ * NIE erreichbar, weil hier nie ein anderer `worker`-String ankommt. Sie
+ * werden AUSSCHLIESSLICH per Unit-Test mit einem künstlichen `JobRecord`
+ * bewiesen (`apps/kosmo-orbit/test/blender-label.test.ts`) und bleiben bis
+ * zu einer echten HomeStation-Abnahme (0.8.10+, Owner-Termin) ein
+ * unbewiesener Live-Pfad — genau so dokumentiert, nicht stillschweigend als
+ * «getestet» behauptet.
  */
-export function bildLabel(h: { worker?: string; requestedStyle?: string }): string {
-  if (!h.worker || h.worker === 'fake-worker') return 'Vorschau (Fake-Render)';
-  if (h.requestedStyle === 'lineart') return 'Strichzeichnung (Line-Art)';
-  return 'Render (Cycles)';
+export function bildLabel(h: {
+  worker?: string;
+  requestedStyle?: string;
+  workerSeit?: string;
+  workerQuelle?: string;
+  engineUsed?: string;
+}): string {
+  if (h.worker === undefined) {
+    // Nachgang 3 (auf-20261006-248): die Bruecke vor `5f59fd40e` traegt in den
+    // Job-Eintrag kein `worker` (nur `requested_engine`), das Ergebnis nennt
+    // aber das gerechnete Modell. Das ist eine Angabe der Gegenseite, keine
+    // Vermutung — sie steht da, statt «unbekannt». Ohne beides bleibt es
+    // «Herkunft unbekannt»; geraten wird nichts.
+    const modell = h.engineUsed?.trim();
+    return modell ? `Gerechnet mit ${modell}` : 'Herkunft unbekannt';
+  }
+  if (h.worker === 'fake-worker') return 'Vorschau (Fake-Render)';
+  const art =
+    h.requestedStyle === 'lineart'
+      ? 'Strichzeichnung (Line-Art)'
+      : h.requestedStyle === 'redux' || h.requestedStyle === 'ipadapter' || h.requestedStyle === 'lora'
+        ? 'KI-Bild'
+        : 'echter Render';
+  return art + herkunftZusatz(h.worker, h.workerQuelle, h.workerSeit);
+}
+
+/** Bekannte Worker-Kennungen der Bruecke in Lesefassung; jede andere steht
+ *  wortgleich da. */
+const WORKER_NAME: Readonly<Record<string, string>> = {
+  abholer: 'Abholer',
+  'comfyui-worker': 'ComfyUI-Worker',
+  'splat-worker': 'Splat-Worker',
+};
+
+/** `2026-10-07T14:03:09Z` → `07.10.2026 14:03 UTC`; Unlesbares faellt weg. */
+function uebernahmeZeit(iso: string | undefined): string | undefined {
+  if (!iso) return undefined;
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return undefined;
+  const zwei = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${zwei(t.getUTCDate())}.${zwei(t.getUTCMonth() + 1)}.${t.getUTCFullYear()} ` +
+    `${zwei(t.getUTCHours())}:${zwei(t.getUTCMinutes())} UTC`
+  );
+}
+
+/**
+ * Nachgang 3 — was die Bruecke seit `5f59fd40e` zusaetzlich sagt: hinter dem
+ * Label der Worker, «(abgeleitet)», wenn die Bruecke ihn nur erschlossen hat
+ * (`worker_quelle`), und der Zeitpunkt der Uebernahme (`worker_seit`). Traegt
+ * der Record keines der beiden neuen Felder (aeltere Bruecke), bleibt das
+ * Label wie bisher. Die Attrappe (`fake-worker`) behaelt ihr Pflicht-Label
+ * unveraendert (oben, vor diesem Zusatz).
+ */
+function herkunftZusatz(worker: string, quelle: string | undefined, seit: string | undefined): string {
+  const abgeleitet = quelle === 'abgeleitet';
+  const zeit = uebernahmeZeit(seit);
+  if (!abgeleitet && zeit === undefined) return '';
+  const name = WORKER_NAME[worker] ?? worker;
+  return ` · ${name}${abgeleitet ? ' (abgeleitet)' : ''}${zeit !== undefined ? `, seit ${zeit}` : ''}`;
+}
+
+/**
+ * P-LIZENZMARKE Schritt 2, Publish-Teil 2 (E154 (4) «Anzeigen, nicht
+ * sperren»; Kernel seit ROADMAP 1691: `SheetImage.lizenzOffen?: { modell?,
+ * lizenz? }`, angenommen von `publish.bildPlatzieren`/`bildFuellen`): die
+ * Angabe fuer den Bild-Slot — oder `undefined`, wenn das Bild keine offene
+ * Lizenz meldet. Wie `lizenzOffenGrund` zaehlt nur ein ausdrueckliches
+ * `true`; leere Namen fallen weg, statt als leere Felder auf das Blatt zu
+ * gehen. Reine Funktion; sie sperrt nichts.
+ */
+export function lizenzFuersBlatt(
+  angabe: LizenzAngabe | null | undefined,
+): { modell?: string; lizenz?: string } | undefined {
+  if (angabe?.lizenzOffen !== true) return undefined;
+  const modell = angabe.engineUsed?.trim();
+  const lizenz = angabe.engineLicense?.trim();
+  return { ...(modell ? { modell } : {}), ...(lizenz ? { lizenz } : {}) };
+}
+
+/** Breite eines neuen Bild-Slots auf dem Blatt (mm Papier) — wie bisher. */
+export const BLATTBILD_BREITE = 160;
+/** Rand und Abstand zwischen Bildern (mm). */
+const BLATTBILD_RAND = 40;
+const BLATTBILD_ABSTAND = 20;
+/**
+ * Angenommene Hoehe eines Bild-Slots je Breite. Der Slot kennt nur `w`; die Bilder
+ * der Vis-Station sind 1600x992 bis 1600x1000 (0,62). 0,75 laesst Luft, damit auch
+ * ein hoeheres Bild nicht in den naechsten Slot ragt.
+ */
+const BLATTBILD_HOEHE_JE_BREITE = 0.75;
+
+/**
+ * Der erste freie Platz fuer ein neues Bild auf dem Blatt — zeilenweise von oben
+ * links, im Raster Breite + Abstand, innerhalb des Papiers.
+ *
+ * **Anlass (lokaler Worker, auf-20261007-250):** Bis hierher kam jedes neue Bild fest
+ * auf (40, 40). Ein zweites «Aufs Blatt» lag GENAU auf dem ersten, die beiden
+ * Herkunftszeilen uebereinander — lesbar erst nach Rueckgaengig. Belegt zaehlt jeder
+ * vorhandene Bild-Slot mit seiner angenommenen Hoehe. Ist das Raster voll, rueckt das
+ * Bild schraeg versetzt neben das letzte — sichtbar daneben, nie deckungsgleich.
+ * Reine Funktion.
+ */
+export function freierBildPlatz(
+  bilder: readonly Pick<SheetImage, 'x' | 'y' | 'w'>[],
+  papier: { width: number; height: number },
+  breite: number = BLATTBILD_BREITE,
+): { x: number; y: number } {
+  const hoehe = breite * BLATTBILD_HOEHE_JE_BREITE;
+  const belegt = bilder.map((b) => ({ x: b.x, y: b.y, w: b.w, h: b.w * BLATTBILD_HOEHE_JE_BREITE }));
+  const frei = (x: number, y: number) =>
+    belegt.every((b) => x + breite + BLATTBILD_ABSTAND / 2 <= b.x || b.x + b.w + BLATTBILD_ABSTAND / 2 <= x
+      || y + hoehe + BLATTBILD_ABSTAND / 2 <= b.y || b.y + b.h + BLATTBILD_ABSTAND / 2 <= y);
+  for (let y = BLATTBILD_RAND; y + hoehe <= papier.height - BLATTBILD_RAND; y += hoehe + BLATTBILD_ABSTAND) {
+    for (let x = BLATTBILD_RAND; x + breite <= papier.width - BLATTBILD_RAND; x += breite + BLATTBILD_ABSTAND) {
+      if (frei(x, y)) return { x, y };
+    }
+  }
+  const n = belegt.length;
+  return { x: BLATTBILD_RAND + 12 * n, y: BLATTBILD_RAND + 12 * n };
 }
 
 /**
@@ -1792,12 +2170,15 @@ export function bildLabel(h: { worker?: string; requestedStyle?: string }): stri
  *
  * `label` ist NEU (E13) und OPTIONAL: `bildAufsBlatt` berechnet ihn aus dem
  * Job-Record (`bildLabel`), `aufnahmeAufsBlatt` erzwingt sein eigenes Label
- * fest. Fehlt `label` (jeder Aufrufer AUSSERHALB dieses Pakets, s.o.), bleibt
- * das Verhalten byte-identisch zum bisherigen Stand: `bildLabel({})` liefert
- * ohne Herkunftsangabe immer «Vorschau (Fake-Render)» (Sanktion 8 bleibt
- * scharf, auch ohne den neuen Parameter).
+ * fest. Fehlt `label` (jeder Aufrufer AUSSERHALB dieses Pakets, s.o.), fällt
+ * es auf `bildLabel({})` zurück. P11/B5 NACHGEZOGEN: das ist seit
+ * 23.09.2026 NICHT mehr «Vorschau (Fake-Render)», sondern «Herkunft
+ * unbekannt» (s. `bildLabel`-Kommentar) — ein Aufrufer ohne jede
+ * Herkunftsangabe behauptet keine geratene Fake-Kennzeichnung mehr, bleibt
+ * aber weiterhin PFLICHT-beschriftet (Sanktion 8 bleibt scharf: ein Bild
+ * ohne JEDE Kennzeichnung ist ungültig, «unbekannt» ist eine Kennzeichnung).
  */
-export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: string): string {
+export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: string, lizenz?: LizenzAngabe): string {
   // Owner-Entscheid 04.09.2026: hier stand ein Tor, das ueber 1 MiB
   // Base64-Zeichen abgewiesen hat. Es ist weg — die MESSUNG bleibt und wird
   // gemeldet, damit ein grosses Bild nachvollziehbar bleibt, statt still zu
@@ -1806,6 +2187,11 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
   const bildGroesse = messeBildGroesse(dataUrl);
   console.info(`[Blattbild] ${bildGroesse.mbText} MB (${bildGroesse.base64Zeichen} Base64-Zeichen)`);
   const slotLabel = label ?? bildLabel({});
+  // P-LIZENZMARKE Schritt 2, Publish-Teil 2 (E154 (4), ROADMAP 1691): die
+  // Marke geht mit dem Bild auf das Blatt. Ohne Marke bleibt das Feld weg —
+  // dann nimmt `bildFuellen` eine alte Marke des Slots mit (Kernel-Regel).
+  const marke = lizenzFuersBlatt(lizenz);
+  const lizenzFeld = marke ? { lizenzOffen: marke } : {};
   const { doc, runCommand, history } = useProject.getState();
   history.beginGroup();
   try {
@@ -1817,19 +2203,21 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
     }
     const leer = (sheet.bilder ?? []).find((b) => !b.assetId);
     if (leer) {
-      runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: leer.id, dataUrl });
+      runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: leer.id, dataUrl, ...lizenzFeld });
       // `bildFuellen` kennt kein `title`-Param (Kernel-Vertrag bleibt
       // unverändert) — das Pflicht-Label kommt über den bestehenden
       // `bildAnpassen`-Command, in DERSELBEN Undo-Gruppe.
       runCommand('publish.bildAnpassen', { sheetId: sheet.id, bildId: leer.id, title: slotLabel });
     } else {
+      const platz = freierBildPlatz(sheet.bilder ?? [], sheetPaperSize(sheet));
       runCommand('publish.bildPlatzieren', {
         sheetId: sheet.id,
-        x: 40,
-        y: 40,
-        w: 160,
+        x: platz.x,
+        y: platz.y,
+        w: BLATTBILD_BREITE,
         dataUrl,
         title: slotLabel,
+        ...lizenzFeld,
       });
     }
     return sheet.name;
@@ -1846,9 +2234,15 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
  * (`holeJob`) und berechnet daraus das Label — dieselbe Quelle, die den Job
  * auch sonst beschreibt, keine zweite Wahrheit. Schlägt der Zusatz-Fetch
  * fehl (Netz-Aussetzer o.ä.), fällt das Label ehrlich auf `bildLabel({})`
- * zurück («Vorschau (Fake-Render)») — NIE ein erfundenes «Render (Cycles)».
+ * zurück — seit P11/B5 «Herkunft unbekannt» statt der geratenen «Vorschau
+ * (Fake-Render)» — NIE ein erfundenes «echter Render»/«KI-Bild».
  */
-export async function bildAufsBlatt(jobId: string, imageName: string, titel: string): Promise<string> {
+export async function bildAufsBlatt(
+  jobId: string,
+  imageName: string,
+  titel: string,
+  lizenz?: LizenzAngabe,
+): Promise<string> {
   // Über bridgeFetch (Token-Header + connect-src) statt rohem fetch — sonst
   // sperrt eine token-geschützte Bridge das Blatt-Einbetten aus (Fable-Auflage 1).
   const blob = await bildBlob(jobId, imageName);
@@ -1859,17 +2253,33 @@ export async function bildAufsBlatt(jobId: string, imageName: string, titel: str
     r.readAsDataURL(blob);
   });
   let label = bildLabel({});
+  // P-LIZENZMARKE (Publish-Teil 2): die Marke kommt aus DEMSELBEN Job-Record
+  // wie das Label. Nur wenn er nicht zu holen ist oder kein Ergebnis traegt,
+  // gilt die Angabe des Aufrufers (sein Lauf stammt aus demselben Job) — ein
+  // Netz-Aussetzer soll die Marke nicht still verlieren.
+  let angabe = lizenz;
   try {
     const job = await holeJob(jobId);
     label = bildLabel({
       ...(job.worker !== undefined ? { worker: job.worker } : {}),
       ...(job.requested_style !== undefined ? { requestedStyle: job.requested_style } : {}),
+      ...(job.worker_seit !== undefined ? { workerSeit: job.worker_seit } : {}),
+      ...(job.worker_quelle !== undefined ? { workerQuelle: job.worker_quelle } : {}),
+      // Nachgang 3: Rueckfall, solange die Bruecke kein `worker` liefert.
+      ...(job.result?.engine_used !== undefined ? { engineUsed: job.result.engine_used } : {}),
     });
+    if (job.result) {
+      angabe = {
+        lizenzOffen: job.result.engine_license_open,
+        engineUsed: job.result.engine_used,
+        engineLicense: job.result.engine_license,
+      };
+    }
   } catch {
     // Ehrlicher Rückfall auf das Fake-Render-Label (s. Kommentar oben) —
     // ein gescheiterter Zusatz-Fetch darf das Platzieren selbst nicht kippen.
   }
-  return platziereBildAufsBlatt(dataUrl, titel, label);
+  return platziereBildAufsBlatt(dataUrl, titel, label, angabe);
 }
 
 /**
@@ -1899,20 +2309,38 @@ export async function aufnahmeAufsBlatt(dataUrl: string, titel: string): Promise
  * vorsichtigere Wortlaut — eine misslungene Messung darf keine neue
  * Behauptung erzeugen), Bescheid formulieren.
  */
-export async function bescheidFuerBridgeFehler(err: unknown): Promise<string> {
+export async function bescheidFuerBridgeFehler(
+  err: unknown,
+  // CORS-Befund E156: ein schreibender Ruf (Render-POST) kann angekommen
+  // sein, auch wenn die Antwort unlesbar ist — der Aufrufer weiss das, der
+  // Fehler selbst nicht. Lesende Aufrufer lassen es weg (Verhalten wie bisher).
+  optionen: { schreibRuf?: boolean } = {},
+): Promise<string> {
   const netzfehler = err instanceof TypeError;
   const rohtext = err instanceof Error ? err.message : String(err);
   const lage: BescheidLage = {
     netzfehler,
+    ...(optionen.schreibRuf ? { schreibRuf: true } : {}),
     ...(err instanceof BridgeHttpError ? { status: err.status } : {}),
     tokenGesetzt: (localStorage.getItem(BRIDGE_TOKEN_KEY) ?? '').trim().length > 0,
     cspVerdacht: netzfehler && bridgeVermutlichCspGeblockt(),
   };
-  const gegenprobe = netzfehler && !lage.cspVerdacht
-    ? await pruefeBridge(bridgeBase()).then((s) => s === 'verbunden').catch(() => undefined)
-    : undefined;
+  const gegenprobe = netzfehler && !lage.cspVerdacht ? await bridgeHealthGegenprobe() : undefined;
   if (gegenprobe !== undefined) lage.healthErreichbar = gegenprobe;
   return bridgeBescheid(lage, rohtext).text;
+}
+
+/**
+ * Die tokenfreie Gegenprobe auf `/health` (P-BESCHEID) als eigener Schritt,
+ * damit auch Wege ausserhalb von KosmoVis sie fahren (C3: der Video-Splat-
+ * Start der Medienkarte). `true` = die Brücke läuft, `false` = auch `/health`
+ * schweigt, `undefined` = die Probe selbst ist gescheitert (dann wird nichts
+ * behauptet).
+ */
+export async function bridgeHealthGegenprobe(): Promise<boolean | undefined> {
+  return pruefeBridge(bridgeBase())
+    .then((s) => s === 'verbunden')
+    .catch(() => undefined);
 }
 
 /**
@@ -1930,5 +2358,6 @@ export async function bescheidFuerBridgeFehler(err: unknown): Promise<string> {
  * zweimal für denselben Fehler.
  */
 export async function bescheideBridgeCatch(err: unknown): Promise<void> {
-  melde(await bescheidFuerBridgeFehler(err), { ton: 'fehler' });
+  // C3: derselbe Toast, bei einem Token-Bescheid mit dem Knopf zum HomeServer.
+  meldeBrueckenFehler(await bescheidFuerBridgeFehler(err));
 }

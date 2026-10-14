@@ -68,7 +68,13 @@ export function VisReportDossier({ onClose }: { onClose: () => void }) {
    * in `IslandShell.tsx`).
    */
   const scrimRef = useRef<HTMLDivElement | null>(null);
-  useOverlaySchliessen(scrimRef, onClose, { esc: true, aussenklick: false });
+  // 21.09.2026 von `esc` auf `modal`: der Bogen war die siebte modale Flaeche
+  // ohne Fokusfalle und ohne Fokusrueckgabe — Escape allein reicht nicht.
+  // `modal` schaltet Escape, Falle und Rueckgabe gemeinsam; man kann sich die
+  // Haelfte nicht mehr aus Versehen holen. `aussenklick: false` bleibt: der
+  // Scrim IST die ganze Flaeche, und ein versehentlicher Klick soll einen
+  // Druckbogen nicht wegraeumen.
+  useOverlaySchliessen(scrimRef, onClose, { modal: true, aussenklick: false });
 
   return (
     <div

@@ -11,6 +11,8 @@ import {
   KEINE_GEOMETRIE_HINWEIS,
   szeneBauteileAnzahl,
 } from '../../vis-jobs';
+import { LIZENZ_MELDUNG_MS, lizenzAblageZusatz, type LizenzAngabe } from '../../varianten-diff';
+import { LizenzOffenMarke } from '../../LizenzMarke';
 import { visInhaltsRegistry } from './registry';
 import '../vis-island.css';
 
@@ -128,11 +130,17 @@ function AufsPlakatStufe2() {
   const fertigeRenderNodes = (graph?.nodes ?? []).filter((n) => n.typ === 'render' && laeufe[n.id]?.status === 'fertig');
   const aufnahmeListe = Object.values(aufnahmen);
 
-  const aufsBlatt = async (nodeId: string, jobId: string, bild: string, titel: string) => {
+  const aufsBlatt = async (nodeId: string, jobId: string, bild: string, titel: string, lizenz: LizenzAngabe) => {
     setSendend(nodeId);
     try {
-      const name = await bildAufsBlatt(jobId, bild, titel);
-      melde(`Render liegt auf «${name}» — im KosmoPublish weiterschieben`, { ton: 'erfolg' });
+      const name = await bildAufsBlatt(jobId, bild, titel, lizenz);
+      // P-LIZENZMARKE Schritt 2 (E154 (4)): offene Lizenz in der Meldung,
+      // abgelegt wird trotzdem.
+      const zusatz = lizenzAblageZusatz(lizenz);
+      melde(`Render liegt auf «${name}» — im KosmoPublish weiterschieben${zusatz}`, {
+        ton: 'erfolg',
+        ...(zusatz ? { dauerMs: LIZENZ_MELDUNG_MS } : {}),
+      });
     } catch (err) {
       // P5b (v0.9.56): `bildAufsBlatt` holt das Bild per Bridge-Fetch — der
       // EINE Bridge-Uebersetzer statt des rohen `err.message` («Failed to
@@ -179,12 +187,15 @@ function AufsPlakatStufe2() {
         return (
           <div key={n.id} className="visisl-render-zeile">
             <span className="visisl-render-titel">Render (fertig)</span>
+            {/* P-LIZENZMARKE Schritt 2 (E154 (4)): die Marke neben «Aufs
+                Blatt», der Grund in der Kurzhilfe. Sperrt nichts. */}
+            <LizenzOffenMarke lizenz={lauf} testid={`island-aufs-plakat-lizenz-offen-${n.id}`} />
             <KButton
               size="touch"
               tone="quiet"
               disabled={sendend === n.id}
               data-testid={`island-aufs-plakat-${n.id}`}
-              onClick={() => void aufsBlatt(n.id, lauf.jobId!, lauf.bild!, 'Visualisierung')}
+              onClick={() => void aufsBlatt(n.id, lauf.jobId!, lauf.bild!, 'Visualisierung', lauf)}
             >
               Aufs Blatt
             </KButton>

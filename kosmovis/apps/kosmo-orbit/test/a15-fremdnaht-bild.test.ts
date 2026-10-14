@@ -38,6 +38,8 @@ import {
   FREMDNAHT,
   fremdnahtBefund,
   fremdnahtNichtGelesen,
+  fremdnahtNichtGesendet,
+  NICHT_GESENDET,
   fremdnahtSatz,
   renderBedienungAusParams,
   AUFLOESUNGEN,
@@ -112,7 +114,7 @@ describe('A15 · Fremdnaht Bild — kein Bedienelement ohne Messung', () => {
     }
     // Gegenprobe zur Gegenprobe: die Tabelle ist nicht leer, sonst besteht
     // die Schleife oben, ohne einen einzigen Eintrag gesehen zu haben.
-    expect(FREMDNAHT.length).toBeGreaterThanOrEqual(11);
+    expect(FREMDNAHT.length).toBeGreaterThanOrEqual(13);
   });
 
   it('3 · der Hinweistext bleibt im Laengenbudget seiner Zeile', () => {
@@ -129,20 +131,40 @@ describe('A15 · Fremdnaht Bild — kein Bedienelement ohne Messung', () => {
     // Pruefung weiter als offen.
     expect(satz).toContain('Gemessen');
     expect(satz).not.toContain('nicht geprüft');
-    expect(satz).toContain('Sonnenstärke');
+    // K1: die nicht bedienten Felder stehen mit Anzeigenamen im Satz.
+    expect(satz).toContain('nicht bedient');
+    expect(satz).toContain('Himmel');
   });
 
-  it('4 · die Sonnen-STAERKE gilt als nicht gelesen, der Sonnen-STAND als gelesen', () => {
+  it('4 · Sonnen-STAND und Sonnen-Details gelten als gelesen (Details seit Blatt -01, 24.09.2026)', () => {
     // Der Unterschied ist der ganze Befund der Welle: der Hinweis im Auftrag
     // lautete, Zeile 46 gehe «vielleicht schon durch», weil `sun` ein Feld
     // `staerke` traegt. Gemessen geht der STAND durch und die STAERKE nicht.
     expect(fremdnahtBefund('render.sun.azimuth')?.stand).toBe('gelesen');
     expect(fremdnahtBefund('render.sun.elevation')?.stand).toBe('gelesen');
     for (const feld of ['render.sun.staerke', 'render.sun.kelvin', 'render.sun.winkelGrad']) {
-      expect(fremdnahtBefund(feld)?.stand, `${feld} gilt faelschlich als gelesen`).toBe('nicht-gelesen');
+      expect(fremdnahtBefund(feld)?.stand, `${feld} gilt faelschlich als nicht gelesen`).toBe('gelesen');
     }
     // Die Liste wird gezaehlt, nicht getippt (Muster 4).
     expect(fremdnahtNichtGelesen().length).toBe(FREMDNAHT.filter((f) => f.stand === 'nicht-gelesen').length);
+    expect(fremdnahtNichtGelesen()).toEqual([]);
+  });
+
+  it('4b · K1: die fuenf nicht gesendeten Felder sind in der Tabelle «nicht-vorgesehen» — und umgekehrt', () => {
+    const erwartet = [
+      'komposition',
+      'render.himmel',
+      'render.belichtung',
+      'render.rauschschwelle',
+      'render.environment',
+    ];
+    // Die Sendeliste im Code und der Stand in der Tabelle duerfen nicht auseinanderlaufen.
+    const gesendetListe = [
+      ...NICHT_GESENDET.szene,
+      ...NICHT_GESENDET.render.map((f) => `render.${f}`),
+    ];
+    expect([...gesendetListe].sort()).toEqual([...erwartet].sort());
+    expect([...fremdnahtNichtGesendet()].sort()).toEqual([...erwartet].sort());
   });
 
   it('5 · die fuenf offenen Bildzeilen stehen vollstaendig und ohne Bedienelement da', () => {

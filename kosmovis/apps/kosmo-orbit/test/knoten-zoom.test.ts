@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { zoomAmZeiger, type KnotenAnsicht } from '../src/modules/vis/knoten-zoom';
+import { KNOTEN_ZOOM_VERSTAERKUNG, verstaerkterFaktor, zoomAmZeiger, type KnotenAnsicht } from '../src/modules/vis/knoten-zoom';
 
 /**
  * **P-KNOTEN-ZOOM — das Rad zoomte zur Mitte, nicht zum Zeiger.**
@@ -95,5 +95,27 @@ describe('zoomAmZeiger — der Punkt unter dem Zeiger bleibt liegen', () => {
     const nachher = zoomAmZeiger(start, 99, dx, 0, GRENZEN);
     expect(nachher.scale).toBe(GRENZEN.max);
     expect(weltX(nachher, dx)).toBeCloseTo(vorher, 9);
+  });
+});
+
+describe('Verstaerkung je Zoom-Schritt (Owner 14.10.2026: «das Scrollen ist sehr traege»)', () => {
+  it('ein Mausrad-Notch zoomt um rund ein Viertel statt um ein Zehntel', () => {
+    const roh = Math.exp(-100 * 0.0012); // radZoomFaktor eines Notch (deltaY 100)
+    expect(1 - roh).toBeLessThan(0.12);
+    expect(1 - verstaerkterFaktor(roh)).toBeGreaterThan(0.25);
+  });
+  it('Richtung bleibt, 1 bleibt 1, Unsinn wird 1', () => {
+    expect(verstaerkterFaktor(1)).toBe(1);
+    expect(verstaerkterFaktor(1.1)).toBeGreaterThan(1.1);
+    expect(verstaerkterFaktor(0.9)).toBeLessThan(0.9);
+    expect(verstaerkterFaktor(0)).toBe(1);
+    expect(verstaerkterFaktor(Number.NaN)).toBe(1);
+    expect(KNOTEN_ZOOM_VERSTAERKUNG).toBeGreaterThan(1);
+  });
+  it('rein und wieder raus landet am selben Massstab', () => {
+    const v: KnotenAnsicht = { cx: 0, cy: 0, scale: 1 };
+    const rein = zoomAmZeiger(v, verstaerkterFaktor(1.2), 0, 0, { min: 0.1, max: 4 });
+    const raus = zoomAmZeiger(rein, verstaerkterFaktor(1 / 1.2), 0, 0, { min: 0.1, max: 4 });
+    expect(raus.scale).toBeCloseTo(1, 10);
   });
 });

@@ -9,6 +9,7 @@ import {
   type ExecuteOptions,
   type ExecutionResult,
   type JournalEntry,
+  type Patch,
   type Storey,
 } from '@kosmo/kernel';
 import { melde, meldeFehler } from '@kosmo/ui';
@@ -51,6 +52,224 @@ export interface ProjectState {
   setActiveStorey(id: string): void;
   select(ids: string[]): void;
   setMeshEditId(id: string | null): void;
+}
+
+/**
+ * E157 KosmoMaus (lw-kosmo-maus) — Befehls-Wache. Löst eine Agenten-Handlung
+ * (synthetischer Klick von Claude oder Kosmo, `state/kosmo-maus.ts`) einen
+ * Befehl aus, darf er das Projekt nicht direkt ändern: die Wache legt eine
+ * Vorschlagskarte an und liefert das Ergebnis einer Probe (`dryRun`) zurück.
+ * `null` heisst «nicht abgefangen» — dann läuft alles wie immer.
+ */
+let befehlsWache: ((commandId: string, params: unknown, opts?: ExecuteOptions) => ExecutionResult | null) | null = null;
+export function setzeBefehlsWache(fn: typeof befehlsWache): void {
+  befehlsWache = fn;
+}
+
+/**
+ * kosmo-maus-3 (08.10.2026, Befund KosmoDraw/Geräteprobe 575 «erfolg:
+ * Dachfenster gesetzt», obwohl nichts gesetzt war): hält die Wache einen
+ * Befehl an, liefert `runCommand` das Ergebnis einer Probe (`dryRun`) —
+ * dieselbe Form wie ein echtes Ergebnis, aber das Projekt ist unverändert und
+ * die Kennungen darin gibt es nicht. `istAngehalten(r)` sagt es ausdrücklich;
+ * Aufrufer, die danach «erfolg» melden oder Kennungen wählen, fragen hier.
+ * Die Wache (`kosmo-maus.ts`) merkt sich ihre Ergebnisse mit `merkeAngehalten`.
+ */
+const angehalteneErgebnisse = new WeakSet<object>();
+
+/**
+ * lw-maus-rad-vollbild (c): wer gerade handelt, über eine lange Ladezeit
+ * hinweg. Die Wache erkennt eine Agenten-Handlung nur während `fuehreMausAus`
+ * und kurz danach (`NACHLAUF_MS`); das Lesen einer Splat-Wolke dauert länger,
+ * der schreibende Schritt kam dann als Handlung des Architekten durch.
+ * `halteHandlungFest()` merkt JETZT (beim Auslösen), wer handelt, und
+ * `lauf(fn)` lässt `fn` später im Namen genau dieses Handelnden laufen — die
+ * Wache hält dann an wie in der Handlung selbst. Ohne Agent (der Architekt
+ * bedient) ist `agent` `null` und `lauf` ruft `fn` unverändert.
+ * `kosmo-maus.ts` setzt die Umsetzung (`setzeHandlungsFang`), wie die Wache.
+ */
+export interface FestgehalteneHandlung {
+  readonly agent: string | null;
+  lauf<T>(fn: () => T): T;
+}
+const OHNE_AGENT: FestgehalteneHandlung = { agent: null, lauf: (fn) => fn() };
+let handlungsFang: (() => FestgehalteneHandlung) | null = null;
+export function setzeHandlungsFang(f: typeof handlungsFang): void {
+  handlungsFang = f;
+}
+export function halteHandlungFest(): FestgehalteneHandlung {
+  return handlungsFang?.() ?? OHNE_AGENT;
+}
+export function merkeAngehalten<T extends object>(r: T): T {
+  angehalteneErgebnisse.add(r);
+  return r;
+}
+export function istAngehalten(r: unknown): boolean {
+  return typeof r === 'object' && r !== null && angehalteneErgebnisse.has(r);
+}
+
+// ---------------------------------------------------------------------------
+// Sammelweg: mehrere Befehle EINER Handlung werden unter der Wache EINE Karte
+// (lw-lesend-wache, Folgeauftrag «Übernahme als EIN Paket», Geräte-Befund
+// auf-272: eine IFC-Bestand-Übernahme unter der KosmoMaus zerfiel in 7
+// Einzelkarten; die Wände fanden ihren angehaltenen Aufbau nicht, nach dem
+// Anwenden gab es 0 Wände).
+//
+// `alsEinVorschlag(titel, fn)`: würde die Wache gerade anhalten, laufen alle
+// `runCommand` in `fn` der Reihe nach auf einer KOPIE des Dokuments — spätere
+// Schritte sehen so die Kennungen der früheren (Aufbau → Wand); `sammelDoc()`
+// gibt `fn` diese Kopie zum Lesen. Danach legt die Wache EINE Karte an.
+// «Anwenden» (`wendePaketAn`) prüft das Paket erst auf einer frischen Kopie
+// und wendet es dann atomar als EINE Rückgängig-Gruppe an (Muster:
+// `applyPaket` in `KosmoPanel.tsx`, `versucheCoopPaket` in `kosmo-coop.ts`).
+// Ohne Wache (der Owner bedient selbst) läuft `fn` unverändert direkt.
+// ---------------------------------------------------------------------------
+
+/** Ein gesammelter Schritt: Befehl, Parameter und die Kennungen, die er in der Kopie anlegte. */
+export interface PaketSchritt {
+  commandId: string;
+  params: unknown;
+  zusammenfassung: string;
+  /** Kennungen neu angelegter Entitäten (Reihenfolge der Patches) — für die Umschreibung beim Anwenden. */
+  neuIds: string[];
+  patchAnzahl: number;
+}
+export interface SammelWache {
+  /** Würde die Wache einen Befehl JETZT anhalten (Agent handelt, kein Coop, kein Anwenden)? */
+  haeltAn(): boolean;
+  legePaketAn(titel: string, schritte: PaketSchritt[]): void;
+}
+let sammelWache: SammelWache | null = null;
+export function setzeSammelWache(w: SammelWache | null): void {
+  sammelWache = w;
+}
+let sammlung: { kopie: KosmoDoc; schritte: PaketSchritt[] } | null = null;
+const gesammelteErgebnisse = new WeakSet<object>();
+/** Lief dieses Ergebnis nur auf der Sammel-Kopie (das Projekt ist noch unverändert, eine Paket-Karte folgt)? */
+export function istGesammelt(r: unknown): boolean {
+  return typeof r === 'object' && r !== null && gesammelteErgebnisse.has(r);
+}
+/** Während `alsEinVorschlag` sammelt: die Kopie, auf der die Schritte laufen; sonst `null`. */
+export function sammelDoc(): KosmoDoc | null {
+  return sammlung?.kopie ?? null;
+}
+
+function kopiereDoc(doc: KosmoDoc): KosmoDoc {
+  return KosmoDoc.fromJSON(structuredClone(doc.toJSON()));
+}
+
+function neueIds(patches: readonly AnyPatch[]): string[] {
+  return patches
+    .filter((p): p is Patch => !isSettingsPatch(p) && p.before === null && p.after !== null)
+    .map((p) => p.id);
+}
+
+function ersetzeIds(wert: unknown, map: ReadonlyMap<string, string>): unknown {
+  if (map.size === 0) return wert;
+  if (typeof wert === 'string') return map.get(wert) ?? wert;
+  if (Array.isArray(wert)) return wert.map((w) => ersetzeIds(w, map));
+  if (wert && typeof wert === 'object') {
+    return Object.fromEntries(Object.entries(wert as Record<string, unknown>).map(([k, v]) => [k, ersetzeIds(v, map)]));
+  }
+  return wert;
+}
+
+export function alsEinVorschlag<T>(titel: string, fn: () => T): T {
+  // Verschachtelt oder ohne Wache: unverändert direkt.
+  if (sammlung || !sammelWache?.haeltAn()) return fn();
+  const s = { kopie: kopiereDoc(useProject.getState().doc), schritte: [] as PaketSchritt[] };
+  sammlung = s;
+  let wert: T;
+  try {
+    wert = fn();
+  } finally {
+    sammlung = null;
+  }
+  if (s.schritte.some((x) => x.patchAnzahl > 0)) sammelWache.legePaketAn(titel, s.schritte);
+  return wert;
+}
+
+/**
+ * Ein gesammeltes Paket anwenden: zuerst Probe auf einer frischen Kopie
+ * (scheitert ein Schritt, wirft es, und am Projekt hat sich nichts geändert),
+ * dann echt, als EINE Rückgängig-Gruppe. Die in der Sammel-Kopie vergebenen
+ * Kennungen werden auf die echten umgeschrieben, damit spätere Schritte die
+ * früheren treffen. Scheitert der echte Lauf doch, wird die Gruppe
+ * zurückgenommen.
+ */
+export function wendePaketAn(schritte: readonly PaketSchritt[], opts: ExecuteOptions = {}): ExecutionResult[] {
+  const lauf = (ausf: (commandId: string, params: unknown) => ExecutionResult, erg: ExecutionResult[]) => {
+    const map = new Map<string, string>();
+    for (const s of schritte) {
+      const r = ausf(s.commandId, ersetzeIds(s.params, map));
+      neueIds(r.patches).forEach((neu, i) => {
+        const alt = s.neuIds[i];
+        if (alt !== undefined && alt !== neu) map.set(alt, neu);
+      });
+      erg.push(r);
+    }
+  };
+  const kopie = kopiereDoc(useProject.getState().doc);
+  lauf((id, p) => {
+    const kollision = geschossIndexKollision(kopie, id, p);
+    if (kollision) throw new CommandError(kollision, id);
+    return execute(kopie, id, p, opts);
+  }, []);
+  const { history } = useProject.getState();
+  const ergebnisse: ExecutionResult[] = [];
+  history.beginGroup();
+  let fertig = false;
+  try {
+    lauf((id, p) => useProject.getState().runCommand(id, p, opts), ergebnisse);
+    fertig = true;
+  } finally {
+    history.endGroup();
+    if (!fertig && ergebnisse.some((r) => r.patches.length > 0)) useProject.getState().undo();
+  }
+  return ergebnisse;
+}
+
+/**
+ * E158 Coop-Modus (lw-coop, `state/kosmo-coop.ts`), Owner-Nachentscheid
+ * 07.10.2026: «Strg+Z nimmt NUR die eigenen Schritte des Owners zurück.»
+ *
+ * `ohneVerlauf(fn)`: Befehle, die `fn` über `runCommand` ausführt, laufen wie
+ * immer (Dokument, Journal, Sync), landen aber NICHT im Undo-Stapel des
+ * Owners — so führt `kosmo-coop.ts` die Schritte von Claude und Kosmo; die
+ * nimmt der Owner gezielt im Verlauf zurück.
+ *
+ * `setzeVerlaufWache(fn)`: vor jedem Strg+Z/Strg+Y fragt der Store die Wache.
+ * `sperre` heisst «nicht umkehren» (der eigene Schritt hängt mit einer
+ * späteren Agenten-Änderung zusammen, blind umkehren hiesse deren Arbeit
+ * überschreiben), `hinweis` ist eine reine Zusatz-Meldung. Ohne Wache, oder
+ * wenn sie `null` sagt, läuft alles wie vor dem Coop.
+ */
+let verlaufAus = 0;
+export function ohneVerlauf<T>(fn: () => T): T {
+  verlaufAus++;
+  try {
+    return fn();
+  } finally {
+    verlaufAus--;
+  }
+}
+export interface VerlaufWacheUrteil {
+  sperre?: string;
+  hinweis?: string;
+}
+let verlaufWache: ((richtung: 'undo' | 'redo', history: History) => VerlaufWacheUrteil | null) | null = null;
+export function setzeVerlaufWache(fn: typeof verlaufWache): void {
+  verlaufWache = fn;
+}
+/** Fragt die Wache; `false` = gesperrt (gemeldet). */
+function verlaufErlaubt(richtung: 'undo' | 'redo', history: History): boolean {
+  const urteil = verlaufWache?.(richtung, history) ?? null;
+  if (urteil?.sperre) {
+    melde(urteil.sperre, { ton: 'info' });
+    return false;
+  }
+  if (urteil?.hinweis) melde(urteil.hinweis, { ton: 'info' });
+  return true;
 }
 
 /** Sync-Haken: wird nach jeder lokalen Mutation mit den Patches gerufen. */
@@ -218,11 +437,24 @@ export const useProject = create<ProjectState>((set, get) => {
       // Kommentar an `geschossIndexKollision` oben. Greift bei JEDEM
       // Aufrufer (Kosmo, UI, Bootstrap, IFC-Übernahme), weil `runCommand`
       // der einzige Weg ist, den sie alle nehmen.
+      // Sammelweg: in `alsEinVorschlag` unter der Wache laufen die Schritte
+      // auf der Kopie (das Projekt bleibt unverändert, EINE Karte folgt).
+      if (sammlung && !opts?.dryRun) {
+        const s = sammlung;
+        const kollisionKopie = geschossIndexKollision(s.kopie, commandId, params);
+        if (kollisionKopie) throw new CommandError(kollisionKopie, commandId);
+        const r = execute(s.kopie, commandId, params, { ...opts, actor: opts?.actor ?? 'kosmo' });
+        s.schritte.push({ commandId, params, zusammenfassung: r.summary, neuIds: neueIds(r.patches), patchAnzahl: r.patches.length });
+        gesammelteErgebnisse.add(r);
+        return r;
+      }
       const kollision = geschossIndexKollision(get().doc, commandId, params);
       if (kollision) throw new CommandError(kollision, commandId);
+      const abgefangen = opts?.dryRun ? null : befehlsWache?.(commandId, params, opts); // E157 KosmoMaus
+      if (abgefangen) return abgefangen;
       const result = execute(get().doc, commandId, params, opts);
       if (!opts?.dryRun) {
-        get().history.record(result.patches);
+        if (verlaufAus === 0) get().history.record(result.patches); // E158: Agenten-Schritte ausserhalb der Owner-Kette
         // v0.9.4 P-GE2 (Owner-Befund Ursache 2): JEDER Befehl laeuft hier
         // durch — Kosmos Diff-Karte, ein Autopilot-Schritt, ein Handgriff in
         // der Oberflaeche und die IFC-Bestandsuebernahme (alle vier rufen
@@ -270,6 +502,7 @@ export const useProject = create<ProjectState>((set, get) => {
       // Änderung, die der Nutzer irrtümlich erwartet. Reine Zusatz-Meldung —
       // der Undo-Schritt selbst läuft unverändert weiter, egal ob gewarnt
       // wurde.
+      if (!verlaufErlaubt('undo', get().history)) return false; // E158 Coop
       const fremdWarnung = get().history.canUndo ? rueckgaengigTraefeNichtDieLetzteSichtbareAenderung() : null;
       if (fremdWarnung) {
         melde(
@@ -309,6 +542,7 @@ export const useProject = create<ProjectState>((set, get) => {
 
     redo() {
       // B85, dieselbe Regel wie `undo` oben.
+      if (!verlaufErlaubt('redo', get().history)) return false; // E158 Coop
       let patches: readonly AnyPatch[] | null;
       try {
         patches = get().history.redo(get().doc);
@@ -341,6 +575,33 @@ export const useProject = create<ProjectState>((set, get) => {
 });
 
 /**
+ * E158 Coop-Modus (lw-coop, `state/kosmo-coop.ts`) — einen fertigen Schritt
+ * anwenden, der aus keinem Kernbefehl stammt: «Rückgängig Claude/Kosmo» setzt
+ * die Umkehr-Patches der Coop-Änderungen eines Urhebers ein. Derselbe Weg wie
+ * nach `execute` in `runCommand`: Dokument, EINE Undo-Stufe (der Architekt
+ * kann das Zurücknehmen mit Strg+Z zurücknehmen), Journal, Sync-Haken,
+ * Merker «lokale Änderung». Geprüft wird vorher in `kosmo-coop.ts` (nur Teile,
+ * die noch so dastehen, wie der Agent sie hinterliess).
+ */
+export function wendeSchrittAn(patches: readonly AnyPatch[], eintrag: JournalEntry): void {
+  if (patches.length === 0) return;
+  const { doc, history } = useProject.getState();
+  doc.apply(patches);
+  history.record([...patches]);
+  useProject.setState((s) => {
+    const nochDa = s.activeStoreyId !== null && s.doc.get(s.activeStoreyId)?.kind === 'storey';
+    return {
+      revision: s.revision + 1,
+      journal: [...s.journal, eintrag].slice(-500),
+      selection: s.selection.filter((id) => s.doc.entities.has(id)),
+      activeStoreyId: nochDa ? s.activeStoreyId : (s.doc.storeysOrdered()[0]?.id ?? null),
+    };
+  });
+  meldeLokaleAenderung();
+  patchListener?.(patches);
+}
+
+/**
  * Ereignis-Mitschnitt (v0.6.8 «Kosmo sieht mit», Commit 2) — bewusst KEIN
  * neuer Store: `journal` oben wird bereits bei JEDEM `runCommand()` gefüttert
  * (der EINE zentrale Schreib-Weg, CLAUDE.md), unabhängig vom Actor (Mensch/
@@ -365,15 +626,37 @@ export function formatiereEreignisse(anzahl = 20): string {
     .join('\n');
 }
 
+/**
+ * kosmo-maus-2 (Integrator-Freigabe 08.10.2026): läuft gerade die FESTE
+ * Grundausstattung eines neuen Projekts (`bootstrapProject`)? Die
+ * Befehls-Wache der KosmoMaus (`kosmo-maus.ts`) hält diese vier Befehle dann
+ * nicht als Karten an — «Neues Projekt» mit fester Vorlage zählt als ein
+ * UI-Schritt. Nur diese Vorlage: keine Parameter von einem Modell.
+ */
+let grundausstattungLaeuft = false;
+export function legtGrundausstattungAn(): boolean {
+  return grundausstattungLaeuft;
+}
+
 /** Startprojekt: EG + Standardaufbauten, damit sofort gezeichnet werden kann. */
 export function bootstrapProject(): void {
-  const { doc, runCommand } = useProject.getState();
+  const { doc } = useProject.getState();
   // P-GESCHOSS: Riegel zuerst, VOR jeder Doc-Lesung — s. Kommentar an
   // `bootstrappteDocs` oben. Ein zweiter Aufruf für DASSELBE Doc endet
   // hier, egal von wo (Effekt, Renderaufruf, StrictMode-Doppelinvoke).
   if (bootstrappteDocs.has(doc)) return;
   bootstrappteDocs.add(doc);
   if (doc.byKind('storey').length > 0) return;
+  grundausstattungLaeuft = true;
+  try {
+    legeGrundausstattungAn();
+  } finally {
+    grundausstattungLaeuft = false;
+  }
+}
+
+function legeGrundausstattungAn(): void {
+  const { runCommand } = useProject.getState();
   const eg = runCommand('design.geschossErstellen', {
     name: 'EG',
     index: 0,

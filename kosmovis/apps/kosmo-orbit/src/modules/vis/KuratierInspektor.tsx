@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { VIS_KATEGORIE_HUE, VIS_NODE_KATALOG, type VisGraph } from '@kosmo/kernel';
-import { KButton, KIcon, KKeyValue, Messrahmen } from '@kosmo/ui';
+import { KButton, KCheckbox, KIcon, KKeyValue, KWarteOrt, Messrahmen } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
 import {
   BEREICH_LABEL,
@@ -18,7 +18,8 @@ import {
   type EigenschaftName,
 } from './bild-rechnen';
 import { useVisRuntime } from './vis-runtime';
-import { bewertungsLage, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, kurzKennung, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
+import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, kurzKennung, lieferVorbehalt, LIZENZ_OFFEN_LABEL, lizenzAusQuelle, lizenzOffenGrund, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
+import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import './vis-visual.css';
 
 /**
@@ -112,7 +113,10 @@ function BildFlaeche({
 }) {
   const gerechnet = useVisRuntime((s) => s.gerechneteBilder[karte.node.id]);
   const verwirf = useVisRuntime((s) => s.verwirfGerechnetesBild);
-  const [laeuft, setLaeuft] = useState(false);
+  // Was gerade gerechnet wird, in Worten — `null`, wenn nichts läuft. Vorher ein blosses Ja/Nein, das nur die
+  // Knöpfe sperrte; jetzt steht der Vorgang als unbestimmte Leiste am Ort (Owner 06.10.2026, Regel G6: die
+  // Rechnung meldet keinen Anteil, also atmet die Leiste).
+  const [laeuft, setLaeuft] = useState<string | null>(null);
   // Die Vorbild-Wahl ist der Index in `vorbilder`; ohne zweite Karte gibt es
   // nichts zu waehlen und der ganze Zweig faellt weg.
   const [vorbildIndex, setVorbildIndex] = useState(0);
@@ -171,8 +175,8 @@ function BildFlaeche({
         ? 'den Farbangleich'
         : 'die Nachbearbeitung';
 
-  const rechne = (fn: () => Promise<void>) => {
-    setLaeuft(true);
+  const rechne = (was: string, fn: () => Promise<void>) => {
+    setLaeuft(was);
     // Die zwei Store-Griffe rechnen auf das Original, nicht auf die
     // Belichtung — sonst zeigte danach ein Bild, dessen Bericht nicht zu ihm
     // gehoert. Die Belichtung faellt darum weg und kann neu gedrueckt werden.
@@ -180,7 +184,7 @@ function BildFlaeche({
     // Dasselbe gilt fuer die Uebernahme: sie sitzt in derselben Schicht und
     // waere sonst ein Bild ohne passenden Bericht.
     verwirfUebernahme(karte.node.id);
-    void fn().finally(() => setLaeuft(false));
+    void fn().finally(() => setLaeuft(null));
   };
 
   const eigenschaftUmschalten = (e: EigenschaftName) => {
@@ -191,7 +195,7 @@ function BildFlaeche({
 
   const rechneUebernehmen = () => {
     if (!vorbild || eigenschaften.length === 0) return;
-    setLaeuft(true);
+    setLaeuft('Übernahme aus dem Vorbild wird gerechnet');
     // Die Uebernahme ersetzt die andere Schicht-Belegung, nicht umgekehrt.
     verwirf(karte.node.id);
     setBelichtet(null);
@@ -202,16 +206,16 @@ function BildFlaeche({
       vorbild.label,
       eigenschaften,
       bereich,
-    ).finally(() => setLaeuft(false));
+    ).finally(() => setLaeuft(null));
   };
 
   const rechneHeller = () => {
-    setLaeuft(true);
+    setLaeuft('Bild wird heller gerechnet');
     void rechneBelichtung(karte.node.id, belichtungsQuelle, belichtungsGrundlage, hebung)
       .then((e) => {
         if (e) setBelichtet(e);
       })
-      .finally(() => setLaeuft(false));
+      .finally(() => setLaeuft(null));
   };
 
   return (
@@ -251,9 +255,9 @@ function BildFlaeche({
             tone="quiet"
             className="vis-inspektor-fuss-knopf"
             data-testid="vis-kuratier-nachbearbeiten"
-            disabled={laeuft}
+            disabled={laeuft !== null}
             title="Deckenholz dunkler, Gruen kraeftiger — zwei gemessene Masken, kein Bildpunkt wandert"
-            onClick={() => rechne(() => rechneNachbearbeitung(karte.node.id, karte.quelle))}
+            onClick={() => rechne('Bild wird nachbearbeitet', () => rechneNachbearbeitung(karte.node.id, karte.quelle))}
           >
             Nachbearbeiten
           </KButton>
@@ -263,9 +267,9 @@ function BildFlaeche({
               tone="quiet"
               className="vis-inspektor-fuss-knopf"
               data-testid="vis-kuratier-farbangleich"
-              disabled={laeuft}
+              disabled={laeuft !== null}
               title={`Farbstimmung von «${vorbild.label}» uebernehmen (Histogrammangleich je Kanal)`}
-              onClick={() => rechne(() => rechneFarbangleich(karte.node.id, karte.quelle, vorbild.quelle))}
+              onClick={() => rechne('Farbe wird angeglichen', () => rechneFarbangleich(karte.node.id, karte.quelle, vorbild.quelle))}
             >
               Farbe angleichen
             </KButton>
@@ -275,13 +279,18 @@ function BildFlaeche({
             tone="quiet"
             className="vis-inspektor-fuss-knopf"
             data-testid="vis-kuratier-belichten"
-            disabled={laeuft}
+            disabled={laeuft !== null}
             title="Heller rechnen und die Lichter stehen lassen — eine gemessene Maske ueber max(R,G,B), kein Bildpunkt wandert"
             onClick={rechneHeller}
           >
             Heller
           </KButton>
         </div>
+        {laeuft !== null && (
+          <div data-testid="vis-kuratier-warteort">
+            <KWarteOrt form="leiste" text={laeuft} />
+          </div>
+        )}
         <select
           className="vis-node-select-voll"
           data-testid="vis-kuratier-hebung-wahl"
@@ -329,15 +338,14 @@ function BildFlaeche({
             <div className="vis-mono-label k-label vis-kuratier-rail-titel">Aus Vorbild übernehmen</div>
             <div>Was soll von «{vorbild.label}» kommen — und nur das:</div>
             {UEBERNAHME_EIGENSCHAFTEN.map((e) => (
-              <label key={e} className="vis-inspektor-herkunft-glied">
-                <input
-                  type="checkbox"
-                  data-testid={`vis-kuratier-uebernahme-eigenschaft-${e}`}
-                  checked={eigenschaften.includes(e)}
-                  onChange={() => eigenschaftUmschalten(e)}
-                />{' '}
-                {EIGENSCHAFT_LABEL[e]}
-              </label>
+              <KCheckbox
+                key={e}
+                className="vis-inspektor-herkunft-glied"
+                data-testid={`vis-kuratier-uebernahme-eigenschaft-${e}`}
+                checked={eigenschaften.includes(e)}
+                onChange={() => eigenschaftUmschalten(e)}
+                label={EIGENSCHAFT_LABEL[e]}
+              />
             ))}
             <select
               className="vis-node-select-voll"
@@ -361,7 +369,7 @@ function BildFlaeche({
               tone="quiet"
               className="vis-inspektor-fuss-knopf"
               data-testid="vis-kuratier-uebernehmen"
-              disabled={laeuft || eigenschaften.length === 0}
+              disabled={laeuft !== null || eigenschaften.length === 0}
               title="Nur die angekreuzten Eigenschaften, nur im gewaehlten Bereich — alles andere bleibt Byte fuer Byte gleich"
               onClick={rechneUebernehmen}
             >
@@ -500,7 +508,15 @@ export function KuratierInspektor({
   const lage = bewertungsLage(qa);
   const kennung = 'jobId' in karte.quelle ? kurzKennung(karte.quelle.jobId) : kurzKennung(karte.node.id);
 
-  const metaZeilen: Array<{ key: string; wert: string }> = [
+  const qaHinweise = (qa?.verdict.hinweise ?? []).filter((h) => h.trim() !== '');
+  const lieferVorbehaltText =
+    'jobId' in karte.quelle ? lieferVorbehalt(karte.quelle.lieferstatus, karte.quelle.lieferstatusGrund) : undefined;
+  // P-LIZENZMARKE Schritt 2 (Owner-Entscheid E154 (4), «Anzeigen, nicht
+  // sperren»): eine offene Lizenz steht am Bild, als Meta-Zeile mit Grund und
+  // beim Schritt «Ins Projekt übernehmen». Der Knopf bleibt bedienbar.
+  const lizenz = lizenzAusQuelle(karte.quelle);
+  const lizenzGrund = lizenzOffenGrund(lizenz);
+  const metaZeilen: Array<{ key: string; wert: ReactNode; testid?: string }> = [
     { key: 'Node-Typ', wert: merkmale.typLabel },
     { key: 'Szene', wert: merkmale.szene },
     { key: 'Stimmung', wert: merkmale.stimmung },
@@ -508,7 +524,7 @@ export function KuratierInspektor({
     ...(merkmale.faithful !== undefined ? [{ key: 'Geometrie-Treue', wert: merkmale.faithful.toFixed(2) }] : []),
     ...(merkmale.samples !== undefined ? [{ key: 'Samples', wert: String(merkmale.samples) }] : []),
     ...(merkmale.qaBestanden !== undefined
-      ? [{ key: 'QA-Verdikt', wert: merkmale.qaBestanden ? 'bestanden' : 'verfehlt' }]
+      ? [{ key: 'QA-Verdikt', wert: qaVerdiktText(merkmale) }]
       : []),
     // B148 (17.09.2026), Regel 2 aus `auf-20260826-52` woertlich: «Nicht
     // messbar ist weder bestanden noch durchgefallen. Die Anzeige kennt drei
@@ -539,6 +555,32 @@ export function KuratierInspektor({
     // der Vertrag `qa.verdict.reason` liefert (U10, keine Dauerwarnung) —
     // ungekürzt (Auflage).
     ...(merkmale.qaVorbehalt ? [{ key: 'QA-Vorbehalt', wert: merkmale.qaVorbehalt }] : []),
+    // Auftrag 180 (kv-qa-hinweise): `qa.verdict.hinweise` ist eine Auskunft,
+    // kein Vorbehalt — eigene Zeile(n) daneben, ungekuerzt (Auflage), ohne
+    // Warnsignal. Fehlendes Feld oder leere Liste: keine Zeile.
+    // kv-lieferstatus-null (KosmoVis L1) und B3: «nicht festgestellt»,
+    // «fehlgeschlagen» und «übersprungen» sind ein Vorbehalt, ungekuerzt und
+    // nie als «geliefert»; «geliefert» und ein fehlendes Feld ergeben keine Zeile.
+    ...(lieferVorbehaltText ? [{ key: 'Liefer-Vorbehalt', wert: lieferVorbehaltText }] : []),
+    // P-LIZENZMARKE Schritt 2: der Grund ungekuerzt, in der Warnfarbe des
+    // Vorbehalts; ohne Marke keine Zeile.
+    ...(lizenzGrund
+      ? [
+          {
+            key: 'Lizenz-Vorbehalt',
+            testid: 'vis-kuratier-inspektor-lizenz-zeile',
+            wert: (
+              <span className="vis-bild-kachel-qa-vorbehalt">
+                {LIZENZ_OFFEN_LABEL}: {lizenzGrund}
+              </span>
+            ),
+          },
+        ]
+      : []),
+    ...qaHinweise.map((h, i) => ({
+      key: qaHinweise.length > 1 ? `QA-Hinweis ${i + 1}` : 'QA-Hinweis',
+      wert: h,
+    })),
     // P-BEFUNDSICHT (27.08.2026, `docs/STAND-WORKERAUFTRAEGE-2026-08-27.md`
     // Posten 1+2): rho_maske (Schwelle 0.80, geeicht 23.08.) und
     // kante_an_maskengrenze kamen bis hierhin im Vertrag an und wurden nie
@@ -608,6 +650,9 @@ export function KuratierInspektor({
           gemeldet, statt eine fremde Datei anzufassen. */}
       <div className="vis-inspektor-inhalt">
         <BildFlaeche karte={karte} vorbilder={vorbilder} alt={merkmale.typLabel} />
+        {/* P-LIZENZMARKE Schritt 2: die Marke am Bild, der Grund in der
+            Kurzhilfe und in der Meta-Zeile unten. */}
+        <LizenzOffenMarke lizenz={lizenz} testid="vis-kuratier-inspektor-lizenz-offen" lage="unten" />
 
         <div>
           <div className="vis-inspektor-titel">Variante {id}</div>
@@ -661,10 +706,15 @@ export function KuratierInspektor({
           {/* v0.9.42: «nichts zurueckbekommen» und «Grundlage widerrufen» sahen
               bisher gleich aus — beides null Sterne, derselbe Satz. Der zweite
               Fall ist der gefaehrlichere, weil er wie der erste aussieht. */}
+          {/* HomeStation 268: hier stand «Bewertung zurueckgezogen — die
+              Grundlage dieser Zahlen ist widerlegt». Der echte Abholer liefert
+              nie `rho_maske`, also stand der Satz unter JEDEM echten Ergebnis —
+              auch unter «QA-Verdikt: verfehlt» oder «bestanden», als Gegenaussage
+              zu einem gefaellten Urteil. `widerrufen` betrifft nur die Sterne
+              und Zahlen; der Hinweis sagt jetzt genau das. */}
           {lage === 'widerrufen' && (
             <div className="vis-inspektor-bewertung-leer">
-              Bewertung zurueckgezogen — die Grundlage dieser Zahlen ist widerlegt.
-              Die Bildseite liefert die tragfaehigen Werte nach.
+              Keine Sterne: die Geometrie-Zahlen dieses Ergebnisses sind als Wertung widerrufen.
             </div>
           )}
           {/* P3-Nachzug (ROADMAP 1339/1340): der vierte Fall `'nicht-zustaendig'`
@@ -674,6 +724,13 @@ export function KuratierInspektor({
               Unterschied, um den es geht: das ist NICHT dasselbe wie «wir
               haben es nicht geschafft» (ohne-qa) oder «gemessen und
               widerlegt» (widerrufen) — ein eigener Satz statt desselben Topfs. */}
+          {/* E189: der Absender sagt selbst «NICHT BEURTEILBAR» — sein Satz
+              steht ungekuerzt in der Zeile «QA-Vorbehalt» oben. */}
+          {lage === 'nicht-beurteilbar' && (
+            <div className="vis-inspektor-bewertung-leer">
+              Nicht beurteilbar — der Grund steht unter «QA-Vorbehalt», keine Wertung.
+            </div>
+          )}
           {lage === 'nicht-zustaendig' && (
             <div className="vis-inspektor-bewertung-leer">
               Hier war nichts zu messen — diese Szene ist für die Prüfung nicht
@@ -694,6 +751,9 @@ export function KuratierInspektor({
             {karte.kur.verworfen ? 'Zurückholen' : 'Verwerfen'}
           </KButton>
         </div>
+        {/* P-LIZENZMARKE Schritt 2: der Hinweis direkt am Schritt Richtung
+            Veroeffentlichung — der Knopf darunter bleibt bedienbar. */}
+        <LizenzOffenAblageHinweis lizenz={lizenz} testid="vis-kuratier-inspektor-lizenz-ablage" />
         <KButton size="sm" tone="accent" className="vis-inspektor-fuss-primaer" data-testid="vis-kuratier-inspektor-ins-projekt" onClick={onInsProjekt}>
           <KIcon name="ordner" size={14} />
           Ins Projekt übernehmen

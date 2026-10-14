@@ -88,8 +88,24 @@ describe('KField/KInput (Spez §3 B-35): sunken+line, Mono-Micro-Label, NEU comm
     expect(auraCss).toMatch(/\.k-input\s*{[^}]*background:\s*var\(--k-sunken,\s*var\(--k-field\)\)/);
   });
 
-  it('aura.css: .k-field-label ist Mono, uppercase, Tracking .14em', () => {
-    expect(auraCss).toMatch(/\.k-field-label\s*{[^}]*font-family:\s*var\(--k-font-mono\)/);
+  /**
+   * **Von Mono auf Hausschrift geaendert am 21.09.2026 — Owner-Auftrag, kein
+   * Versehen.**
+   *
+   * Der Owner hat die «code schriften» in der Oberflaeche bemaengelt und
+   * verlangt: *«bitte alles einheitlich konsequent mit den schriften»*. Die
+   * daraus gebaute Regel steht in `aura.css` bei `.k-label`:
+   * Schreibmaschinenschrift traegt Zahlen, Kennungen und Code — Woerter
+   * tragen die Hausschrift. Die Beschriftung eines Eingabefeldes ist ein
+   * Wort.
+   *
+   * **Was NICHT faellt und darum hier weiter geprueft wird:** Versalien und
+   * Sperrung. Sie sind ein Satzmittel, keine Schriftart — ohne sie waere die
+   * Feldbeschriftung eine gewoehnliche Textzeile, und die Auszeichnung, um
+   * die es dem urspruenglichen Bau ging, waere mitgefallen.
+   */
+  it('aura.css: .k-field-label ist Hausschrift, uppercase, Tracking .14em', () => {
+    expect(auraCss).toMatch(/\.k-field-label\s*{[^}]*font-family:\s*var\(--k-font-ui\)/);
     expect(auraCss).toMatch(/\.k-field-label\s*{[^}]*text-transform:\s*uppercase/);
     expect(auraCss).toMatch(/\.k-field-label\s*{[^}]*letter-spacing:\s*0\.14em/);
   });

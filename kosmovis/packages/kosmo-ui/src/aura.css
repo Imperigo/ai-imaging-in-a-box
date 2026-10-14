@@ -74,12 +74,33 @@
      dunkle Teal-Familie `#3E96A2` (Kosmos nutzt die hellere `#57b6c2` aus
      derselben Familie — siehe `[data-theme='orbit']` unten) — dunkler, weil
      der helle Papier-Grund mehr Kontrast braucht als das dunkle Kosmos-Feld.
-     `--k-accent-ink` bleibt dunkel (wie Kosmos' `--k-signal-tinte`), Weiss
-     hätte auf #3e96a2 nur ~3.4:1 Kontrast, Dunkel ~5.4:1. */
-  --k-accent: #3e96a2;
-  --k-accent-hover: #5ba6b0;
-  --k-accent-ink: #06141a;
-  --k-accent-wash: rgba(62, 150, 162, 0.12);
+     NACHGESCHAERFT 23.09.2026 (Owner-Entscheid 19.09.: «nachschaerfen»).
+     `#3e96a2` erreichte als Schrift auf seinem eigenen Waschgrund nur 2.89:1
+     (`kosmo-send`, gemessen am Bildpunkt, B156). Derselbe Farbton, dunkler
+     gestellt (HSL-Helligkeit 0.44 → 0.32): `#2d6d76` erreicht auf seinem
+     Waschgrund 4.74 bzw. 4.78:1 (Zentrale bzw. KosmoDesign, gemessen am
+     Bildpunkt) und auf Weiss 5.9:1 (gerechnet). Eine Stufe hoeher (0.33) waeren
+     es am Bildpunkt nur 4.53 gewesen — der Waschgrund dunkelt mit dem Ton
+     mit, und 0.03 Reserve sind keine. Die Wache: `e2e/akzent-schrift-
+     kontrast.spec.ts`.
+
+     DER PREIS STEHT DANEBEN, weil er sonst still bezahlt wuerde: dunkle
+     Tinte AUF dem Akzent faellt mit dem dunkleren Ton von ~5.4 auf 3.2:1.
+     `--k-accent-ink` wird darum Weiss (5.9:1) — dieselbe Wahl, die die vier
+     Zweit-Akzente unten schon immer treffen. Der Hover wird im hellen Thema
+     DUNKLER statt heller (mehr Gewicht = dunkler, s. `--k-hover` oben).
+
+     KNALLIG GESTELLT 01.10.2026 (U5, Owner-Entscheid 12 «heller Modus knallig
+     wie der dunkle», C34): `#2d6d76` war ein gedecktes Petrol (Sättigung 0.45),
+     das neben dem leuchtenden Türkis des dunklen Themas blass wirkte. Jetzt
+     voll gesättigt bei fast gleicher Helligkeit: `#006d79` (Sättigung 1.0).
+     Gerechnet, und an KEINER Stelle schlechter als vorher: auf dem Waschgrund
+     4.87 (Fläche) / 4.61 (Feld) statt 4.79 / 4.53, auf Feld 5.47, auf
+     `--k-sunken` 4.90, Weiss darauf 6.06. Der Hover bleibt eine Stufe dunkler. */
+  --k-accent: #006d79;
+  --k-accent-hover: #005d67;
+  --k-accent-ink: #ffffff;
+  --k-accent-wash: rgba(0, 109, 121, 0.12);
   --k-success: #4e6d49;
   --k-warning: #a37b22;
   /* v0.8.1 / P3 (Spez §4.3/C-16) — kanonisiert: waren zuvor NUR als
@@ -132,6 +153,12 @@
      Verbraucher: `apps/kosmo-orbit/src/modules/design/island/island.css`
      (`--f-glass`-Papier-Default). Kein bestehender Wert oben verändert. */
   --k-insel-glas-papier: rgba(255, 255, 255, 0.82);
+  /* Welle E3 · C14 (Home-PC-Worker, 06.10.2026): das Glas OHNE Weichzeichner
+     — aus der Fläche des Themas gemischt (keine neue Farbe), 96 % deckend.
+     Gilt nur, wo der Weichzeichner fehlt (Regeln vor `.k-glass` unten). Steht
+     an `:root`, wird aber an <html> mit dessen `--k-surface` aufgelöst — im
+     dunklen Thema also mit der dunklen Fläche. */
+  --k-glas-deckend: color-mix(in srgb, var(--k-surface) 96%, transparent);
   /* DIE MATERIALLEITER (P-a, 08.09.2026) — drei benannte Glassorten statt
      neun freier Weichzeichner-Rezepte, und sie sind AN DAS THEMA GEBUNDEN.
 
@@ -306,16 +333,17 @@
        nie einen `[data-akzent]`-Block gehabt (Wert kommt aus dem
        Theme-Block selbst, dort unverändert `#3e96a2`/`#57b6c2`). */
 
-/* Modul-Farbtöne (Zeichen, Badges, Aktiv-Ringe — nie flächig) */
+/* Modul-Farbtöne (Zeichen, Badges, Aktiv-Ringe — nie flächig). Seit 30.09.2026
+   knallig (Owner, Logo-Sammlung) — Spiegel von `moduleHue` in tokens.ts. */
 :root {
-  --k-mod-orbit: #8f897b;
-  --k-mod-design: #c25e3a;
-  --k-mod-draw: #4e4a42;
-  --k-mod-data: #46617a;
-  --k-mod-vis: #c79a3d;
-  --k-mod-publish: #6f8b6a;
-  --k-mod-prepare: #7d5e78;
-  --k-mod-kosmo: #b06a8c;
+  --k-mod-orbit: #12d8ea;
+  --k-mod-design: #ff4d2e;
+  --k-mod-draw: #3d6bff;
+  --k-mod-data: #00b4f0;
+  --k-mod-vis: #ffc21a;
+  --k-mod-publish: #1fd17a;
+  --k-mod-prepare: #b24dff;
+  --k-mod-kosmo: #e5174f;
   /* K22 (Orb-Tool-Tönung) — die restlichen Stations-Töne, 1:1-Spiegel aus
      `tokens.ts` `moduleHue` (dortiger Kommentar: «Module, die (noch) keine
      eigene aura-Variable haben … dort gilt dieser TS-Wert als
@@ -323,14 +351,14 @@
      den `data-station`-Regeln in `apps/kosmo-orbit/src/app.css`, damit
      JEDE Station (auch doc/train/asset/dev/trust/paket) den Kosmo-Orb fein
      in ihrer eigenen Farbe tönen kann. */
-  --k-mod-train: #8c6d3f;
-  --k-mod-doc: #5d7489;
-  --k-mod-sketch: #96604a;
-  --k-mod-speak: #4f7a7a;
-  --k-mod-asset: #7a6a55;
-  --k-mod-dev: #5e6b52;
-  --k-mod-trust: #5b5a8a;
-  --k-mod-paket: #6b7a8a;
+  --k-mod-train: #ffb020;
+  --k-mod-doc: #5b8cff;
+  --k-mod-sketch: #ff6b57;
+  --k-mod-speak: #14d9c4;
+  --k-mod-asset: #ff8a1f;
+  --k-mod-dev: #7cd65b;
+  --k-mod-trust: #8e6cff;
+  --k-mod-paket: #5fb3d9;
   /* v0.7.3 D7: Lato (UI) / PT Sans Narrow (Titel) waren bis 0.7.2 ein
      orbit-Override — jetzt Grammatik THEMENÜBERGREIFEND (`:root`), der
      bisherige Stack bleibt als Fallback-Kette dahinter stehen. Fonts:
@@ -342,12 +370,97 @@
   /* Plakat-Titel: enge, schwere Grotesk (Systembestand, offline-fähig) */
   --k-font-titel: 'PT Sans Narrow', 'Archivo Narrow', 'Roboto Condensed', 'Arial Narrow',
     'Helvetica Neue', var(--k-font-ui);
+  /* ══ FORM-FAMILIE — Owner-Entscheid 21.09.2026 ═══════════════════════
+     «ich moechte das alles also jeder knopf jede insel, jeder tab was auch
+     immer alles immer den gleichen kreisradius aufweist … und die insel
+     sind z.b einfach zwei selbe halbkreise mit einer pille also rechteck
+     drin als verlaengerung das es zur pille wird»
+
+     Das ist die Verschärfung von Regel 4 in
+     `docs/kosmodata-neugestaltung/UI-REGELN.md` («Kreis-Knöpfe als
+     Grundform der Werkzeuge») — KEINE zweite, konkurrierende Regel, sondern
+     dieselbe, zu Ende gedacht. Ab hier tragen ZWEI Token die ganze Rundung
+     des Systems:
+
+       --k-radius       R = 16px  — die EINE Rundung der Flächen
+                                    (Popup, Dialog, Karte, Panel, Tafel)
+       --k-radius-pill  999px     — Vollrundung der Bedienelemente
+                                    (Knopf, Tab, Insel, Chip, Feld, Schalter)
+
+     Der Zusammenhang zwischen beiden IST der Entscheid: ein Bedienelement
+     von 2·R = 32px Höhe ist unter «vollrund» und unter R dieselbe
+     Geometrie — ein Kreis, nicht zwei Regeln. Eine Leiste derselben Höhe
+     wird damit zur Pille: zwei Halbkreise von R mit einem Rechteck
+     dazwischen, genau die Form, die der Owner beschreibt.
+
+     WARUM 16 UND NICHT 12 ODER 14 — gemessen, nicht geschmeckt: 32px ist
+     die Regelhöhe der Bedienelemente dieses Systems. `.k-werkzeug-kreis`
+     (32 × 32) ist mit 30 Fundstellen das mit Abstand meistbenutzte
+     Bedienelement und zugleich die Grundform aus UI-Regel 4;
+     `.k-btn-sm` (32px) ist die meistgenutzte Knopfgrösse (8 Fundstellen
+     gegen 6 für `-lg`, 4 für `-md`). R = 32 / 2 = 16.
+
+     DIE ALTEN NAMEN BLEIBEN — nicht gelöscht, sondern umgehängt, und zwar
+     damit kein Verbraucher bricht. Hier stand einmal je ein eigener Wert —
+     xs 6 · sm 8 · md 12 · lg 16 · karte 14 · node 18 · hub 26 —; der Owner
+     hat sie am 21.09.2026 auf die eine Rundung eingezogen.
+
+     ══ ABGELÖST — was das Wort hier bedeutet (Form-Entscheid 1a, 21.09.2026)
+     Ein abgelöster Name ist BESTANDSSCHUTZ, KEIN ANGEBOT: er trägt weiter
+     den richtigen Wert, damit kein Pixel springt, aber er darf an KEINER
+     neuen Stelle auftauchen. Jede Zeile unten trägt darum das Wort
+     `ABGELOEST` als Marke — nicht als Prosa, sondern als das, was die Wache
+     liest. Ein Name ohne diese Marke gilt als lebendig.
+
+     DIE UMSTELLUNG IST GEMACHT — der Bestand steht auf NULL. Hier stand am
+     21.09.2026 vormittags noch die gezählte Ausgangslage
+       sm 77 · md 42 · xs 21 · lg 9 · karte 7 · node 1 · hub 0  = 157
+     und daneben der Satz, die Umstellung sei «ein eigenes Paket, nicht diese
+     Datei». Das Paket ist am selben Tag gelaufen: alle 157 Stellen rufen
+     jetzt `--k-radius` auf, gezählt mit demselben Zählwerk, das die Wache
+     benutzt (`packages/kosmo-ui/test/leiter-bestand.ts`, Kommentare zählen
+     nicht mit).
+
+     KEIN PIXEL HAT SICH DABEI BEWEGT, und das ist GEMESSEN, nicht gefolgert:
+     zwei gebaute Stände (vor und nach der Umstellung), fünf Flächen
+     (Zentrale, KosmoDesign, KosmoData, KosmoPublish, KosmoVis), jedes
+     Element mit einer Rundung ausgelesen — 821 verglichen, 0 Unterschiede.
+     Dass die Sonde überhaupt etwas sehen KANN, ist gegengeprüft: senkt man
+     `--k-radius-sm` versuchsweise auf 4px, meldet dieselbe Sonde 43
+     Unterschiede. Der Grund für die Null ist einfach: die sechs Namen waren
+     seit dem Einzug Verweise auf `--k-radius`, die Umstellung tauscht den
+     Namen und nicht den Wert.
+
+     Die Wache hält ab jetzt die Null statt eines Bestands. Damit ist aus der
+     Wachstumsbremse ein Riegel geworden: EIN einziger neuer Aufruf meldet
+     rot, statt in einer grossen Zahl unterzugehen.
+
+     `--k-radius-hub` ist am 21.09.2026 EINGEZOGEN, nicht abgelöst: null
+     Verbraucher, gemessen — eine Repo-Suche nach `var(--k-radius-hub)` ohne
+     `node_modules` findet 0 Stellen. Er wurde nur noch von
+     `token-spiegel.test.ts` am Leben gehalten. Ein Token ohne Verbraucher
+     ist kein Bestand, den man schützen müsste.
+
+     KEINE DEKLARATION AUSSERHALB EINES REGELBLOCKS. Beim Bau dieses Blocks
+     ist genau das passiert (eine verrutschte Zeile landete vor dem
+     Dateikopf), und der Schaden war nicht dort, wo man ihn sucht:
+     `akzent-theme-waechter.test.ts` lässt jsdoms eigene CSS-Engine diese
+     Datei parsen, und die schluckt so eine Zeile in den Selektor der ERSTEN
+     Regel — `:root, [data-theme='paper']` verliert damit seine Wirkung, und
+     die Akzentwache meldet rot an einer Stelle, die niemand angefasst hat.
+     Wer hier eine Zeile verschiebt, prüft nicht nur die eigene Wache.
+
+     Eine NEUE Fläche nimmt `--k-radius`, ein neues Bedienelement
+     `--k-radius-pill`. Das sind die zwei lebendigen Namen, sonst keiner.
+
+     Bewacht von `packages/kosmo-ui/test/form-familie-radius.test.ts`. */
+  --k-radius: 16px;
   /* v0.7.3 D7: die runden Radien (bis 0.7.2 nur `[data-theme='orbit']`)
      wandern themenübergreifend in dieselbe Grammatik — kein Override mehr
      unten im orbit-Block nötig. */
-  --k-radius-sm: 8px;
-  --k-radius-md: 12px;
-  --k-radius-lg: 16px;
+  --k-radius-sm: var(--k-radius); /* ABGELOEST 21.09.2026 — war 8px */
+  --k-radius-md: var(--k-radius); /* ABGELOEST 21.09.2026 — war 12px */
+  --k-radius-lg: var(--k-radius); /* ABGELOEST 21.09.2026 — war 16px, Wert unverändert */
   /* v0.7.8 Abnahme-Fix (F3/F1, Handoff-Abgleich 14.07.) — drei fehlende
      DS-Radiusstufen, additiv (themen-agnostisch wie die drei obigen).
      Owner-Entscheid, was NICHT mitkommt: das 48px-Raster-Utility und die
@@ -355,12 +468,60 @@
      Dock-Fläche braucht sie heute (nur die drei Radien werden von den
      Fixes dieser Runde tatsächlich referenziert); nachziehen, sobald eine
      echte Fläche danach fragt, statt vorsorglich zu tokenisieren. */
-  --k-radius-xs: 6px;
-  --k-radius-karte: 14px;
-  --k-radius-node: 18px;
-  /* v0.8.0B / W1 (Spez §1 B-27) — OrbitStart/Orbit-Hub existiert real und
-     fragt danach; themen-agnostisch wie die drei Radien darüber. */
-  --k-radius-hub: 26px;
+  --k-radius-xs: var(--k-radius); /* ABGELOEST 21.09.2026 — war 6px */
+  --k-radius-karte: var(--k-radius); /* ABGELOEST 21.09.2026 — war 14px */
+  --k-radius-node: var(--k-radius); /* ABGELOEST 21.09.2026 — war 18px */
+  /* ══ DAUER-LEITER — Bewegungs-Entscheid 1a, Owner 21.09.2026 ════════════
+     DREI Stufen für alles, was auf eine BEDIENUNG antwortet:
+
+       --k-dauer-antippen  120ms  der Knopf antwortet
+       --k-dauer-oeffnen   200ms  etwas klappt auf, etwas schiebt sich ein
+       --k-dauer-setzen    320ms  etwas kommt an und bleibt liegen
+
+     DIE TRENNLINIE BEI 400 MS IST DIE EIGENTLICHE ANTWORT, nicht die Drei.
+     Was länger als 400 ms dauert, ist kein Übergang mehr, sondern ABLAUF
+     oder AMBIENTE — Orb-Puls, Startsequenz, Zeichenablauf. Dort zählt
+     Rhythmus, nicht Normierung; diese Leiter gilt dort NICHT (die grobe
+     1s/2s/4s-Leiter dafür ist Bewegungs-Entscheid 2b und ein eigenes Paket).
+
+     GEMESSEN, nicht geschätzt (`node tools/bewegungsdauer-gate.mjs`, Stand
+     21.09.2026): 52 verschiedene rohe Dauerwerte in `transition`/
+     `animation`-Klauseln unter `apps/kosmo-orbit/src` +
+     `packages/kosmo-ui/src`. Ohne `0` und `0.01` (die zwei Reduced-Motion-
+     Werte) bleiben 50: **19 liegen unter 400 ms, 1 liegt genau auf 400 ms,
+     30 darüber.** Die Leiter betrifft damit die 20 Werte bis einschliesslich
+     400 ms; die 30 darüber sind nicht gemeint.
+
+     KEINE ZWEITE LEITER: `--k-motion-fast/-base/-settle` tragen dieselben
+     drei Zahlen, gebündelt mit ihrer Kurve. Sie bleiben, was sie sind —
+     die Kurzschreibweise für `transition: … var(--k-motion-base)`. Die drei
+     Token hier sind die BLOSSE Dauer, für die Stellen, die eine Dauer ohne
+     Kurve brauchen (`animation-duration`, eigene Kurve, `calc()`). Dass
+     beide Sätze dieselben Zahlen tragen, ist keine Absichtserklärung,
+     sondern eine Zusage: `bewegung-dauer-leiter.test.ts` bricht, sobald
+     eines von beiden wandert.
+
+     DIE UMSTELLUNG IST GELAUFEN (21.09.2026, am selben Tag). Hier stand
+     «Verbraucher heute: 0 — die Umstellung der ~40 Stellen ist ein eigenes
+     Paket»; das Paket ist gemacht. Gemessen mit derselben Zaehlung wie die
+     Wache: 35 rohe Dauerangaben unter oder auf 400 ms, danach 12.
+
+     WAS DIE 12 SIND, einzeln benannt, damit niemand sie fuer Rueckstand
+     haelt: zwei Reduced-Motion-Werte (0.01 ms), eine VERZOEGERUNG von 40 ms
+     (keine Dauer), vier Rueckfallwerte hinter einem Token
+     (`var(--k-motion-base, 200ms)` und `var(--k-dock-schnell, 160ms)` — der
+     rohe Wert greift dort nie) und fuenf Werte in `start-sequenz.css`. Die
+     letzten fuenf sind AUSDRUECKLICH nicht gemeint: die Startsequenz steht
+     drei Absaetze weiter oben selbst auf der Ausschlussliste, zusammen mit
+     Orb-Puls und Zeichenablauf. Dort zaehlt Rhythmus, nicht Normierung.
+
+     ZWEI WERTE HABEN SICH SICHTBAR BEWEGT, und das ist der Preis: 300 ms
+     wurden 320 (Ruettler bei Fehleingabe), 400 ms wurden 320 (Haken des
+     Ladeorbits, Blitz des Fehlerrings). Beides sind Rueckmeldungen, beides
+     liegt jetzt auf «setzen». Alles andere ruecke um hoechstens 40 ms. */
+  --k-dauer-antippen: 120ms;
+  --k-dauer-oeffnen: 200ms;
+  --k-dauer-setzen: 320ms;
   --k-motion-fast: 120ms cubic-bezier(0.3, 0, 0.2, 1);
   --k-motion-base: 200ms cubic-bezier(0.3, 0, 0.2, 1);
   --k-motion-settle: 320ms cubic-bezier(0.22, 0.9, 0.28, 1);
@@ -395,6 +556,109 @@
      pointerdown antwortet und NIE nachhinken darf. */
   --k-druck-dauer: 80ms;
   --k-druck-skala: 0.97;
+
+  /* ══ EBENEN-LEITER — Schichtungs-Entscheide 1b/2a/3b/4a/7c/10b, Owner
+     21.09.2026 ════════════════════════════════════════════════════════════
+     SECHS Stufen, von unten nach oben. Sechs Namen kann sich ein Mensch
+     merken; zwölf schlägt er nach und rechnet dann doch wieder mit Zahlen.
+
+       --k-ebene-grund       0  die Arbeitsfläche selbst
+       --k-ebene-chrome     40  global fixiertes Chrome, das IMMER da ist
+                                (Insel-Rahmen, Bühnenkopf, Boden-Dock)
+       --k-ebene-schwebend 100  was sich öffnet und wieder schliesst
+                                (Panel, offene Insel, Menü, Führung, Popup)
+       --k-ebene-modal     200  Scrims und Dialoge — «alles darunter ist
+                                jetzt inaktiv»
+       --k-ebene-meldung   300  Toasts und Bestätigungen
+       --k-ebene-zeiger    400  die CursorEbene — IHR ALLEIN
+
+     WARUM DIE MELDUNG ÜBER DEM MODAL LIEGT (Entscheid 7c): heute trägt
+     `.k-meldungen-host` 200 und liegt damit UNTER jedem Scrim ab 205. Eine
+     Meldung, die man nicht sieht, ist keine Meldung; ein Dialog, der kurz
+     eine Meldung über sich hat, bleibt ein Dialog. Das ist die eine Stelle,
+     an der diese Leiter den Bestand bewusst UMKEHRT — alles andere hält die
+     gemessene Reihenfolge.
+
+     WARUM 40 UND NICHT 1 (Entscheid 1b/3b): 40 ist keine runde Zahl,
+     sondern die gemessene Unterkante des global fixierten Chromes
+     (`.isl-root`, `island.css`). Alles DARUNTER ist stationslokal und
+     bleibt eine rohe Zahl — `z-index: 2` zwischen zwei Geschwistern in
+     derselben Karte ist eine Zeichenanweisung, keine Rangentscheidung.
+     Der maschinelle Schnitt ist `position: fixed`: fixiert ⇒ Token Pflicht,
+     absolut/relativ ⇒ rohe Zahl erlaubt.
+
+     WARUM 400 UND NICHT 2147483000 (Entscheid 10b): eine neunstellige Zahl
+     ist eine Einladung, sie zu überbieten. Der Anspruch der Zeiger-Ebene
+     («über allem») steht heute nur als Kommentar; hier steht er als Stufe.
+
+     ZWISCHENRÄNGE: innerhalb einer Stufe ist Platz (40→100, 100→200, …).
+     Wer zwei Flächen derselben Art stapeln muss, schreibt
+     `calc(var(--k-ebene-schwebend) + 1)` — und NICHT eine neue Stufe.
+
+     GEMESSEN, nicht geschätzt (Stand 21.09.2026): 137 Stellen vergeben im
+     Repo eine Ebene (114 `z-index:` in CSS, 16 `zIndex` in .ts/.tsx, 7
+     `z:` in `state/dock-kern.ts`), davon **0 über ein Token**. Von den
+     CSS-Stellen sind **28** Regelblöcke `position: fixed` UND ≥ 40 — das
+     ist der Kreis, den diese Leiter benennen soll. Die übrigen bleiben rohe
+     Zahlen, mit Absicht.
+
+     DIE UMSTELLUNG IST GELAUFEN, UND ZWAR GESCHLOSSEN (21.09.2026). Hier
+     stand «Verbraucher heute: 0 … halb umgestellt ist schlechter als gar
+     nicht»; darum wurden alle Stellen in EINEM Zug umgehängt — 31 in CSS,
+     6 in TSX über den Zahlenspiegel `zEbeneLeiter`. Danach trägt KEINE
+     global fixierte Regel mehr eine rohe Ebene ab 40; die Wache hält jetzt
+     die Null statt eines Bestands.
+
+     ZWISCHENRÄNGE STEHEN IN ZEHNERSCHRITTEN (`+ 10`, `+ 20`, …), nicht in
+     Einerschritten. Der Grund ist der nächste Einbau: wer eine Fläche
+     zwischen zwei bestehende schieben muss, braucht Platz dafür, sonst
+     entsteht genau die Zahlenspirale wieder, die diese Leiter beendet. Die
+     Insel-Teile im Chrome-Band stehen bewusst in Einerschritten — sie sind
+     ein fertiges, geschlossenes Ensemble.
+
+     ══ WAS SICH AN DER REIHENFOLGE WIRKLICH GEÄNDERT HAT ══════════════════
+     Nachgerechnet, Platz für Platz, gegen die gemessene Ausgangslage. Vier
+     Änderungen, und jede hat ihren Grund:
+
+     1. **Die Meldung liegt jetzt über allen Scrims** — der Entscheid 7c,
+        die einzige Umkehr, die ausdrücklich gewollt war.
+     2. **Die Sprechblase (`.k-tooltip-blase`) liegt jetzt unter Meldung und
+        Bestätigung** (vorher über beiden). Das ist die Folge von 1: wenn
+        eine Meldung über allem liegt, liegt sie auch über einer
+        Sprechblase. Eine Sprechblase gehört ohnehin zu dem Element, auf dem
+        der Zeiger steht — steht dort ein Dialog, zeichnet sie in dessen
+        eigenem Stapel.
+     3. **Die Orb-Übernahme liegt jetzt unter einer Bestätigung** (vorher
+        darüber). Eine Bestätigung verlangt eine Antwort; sie darf von einer
+        Vollbild-Übernahme nicht verdeckt werden.
+     4. **`.kp-faden` und die Befehlspalette hatten beide 50** — ein
+        Gleichstand, den die Reihenfolge im Dokument entschied. Der Faden
+        steht jetzt fest darüber. Ein Gleichstand ist keine Ordnung.
+
+     Alles andere hält die gemessene Reihenfolge, Platz für Platz.
+
+     UND EINE GRENZE DIESER MESSUNG, offen benannt: der maschinelle Schnitt
+     «`position: fixed` im selben Regelblock» findet nicht alles. `.es-scrim`
+     trägt nur die Ebene, das `position: fixed` kommt aus `.k-dialog-scrim`
+     — zwei Regeln, ein Element. Solche Fälle sind hier von Hand
+     dazugenommen; eine Textsuche allein hätte sie übersehen.
+
+     Spiegel in `packages/kosmo-ui/src/tokens.ts` (`zEbeneLeiter`), bewacht
+     von `packages/kosmo-ui/test/ebenen-leiter.test.ts`. */
+  --k-ebene-grund: 0;
+  --k-ebene-chrome: 40;
+  --k-ebene-schwebend: 100;
+  --k-ebene-modal: 200;
+  --k-ebene-meldung: 300;
+  --k-ebene-zeiger: 400;
+  /* Owner-Entscheide 13.10.2026: leicht (1), auch im hellen Thema — nur für den Schleier (2, hebt Schichtung Nr. 36
+     für ihn auf; die Flächen selbst bleiben hell deckend). Hell Milchglas, dunkel Rauchglas (unten). */
+  --k-fokus-unschaerfe: blur(3px) saturate(0.9);
+  --k-fokus-unschaerfe-dialog: blur(6px) saturate(0.9);
+  --k-fokus-ton: rgba(250, 248, 243, 0.28);
+  /* Die Glanzkante der Fläche im Fokus: helle Oberkante, feiner Innenrand. Braucht keine Unschärfe — sie wirkt
+     auch am Gerät, das keinen Weichzeichner zeichnet. */
+  --k-glanzkante: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.55);
 
   /* v0.7.2 «Visuelles Update» §1 — additiv, ALLE Themes (kein bestehender
      Wert oben in dieser Regel wurde verändert, es kommen nur neue Variablen
@@ -700,7 +964,7 @@
   --k-boot-schrift: #dce0e8; /* Leitsatz (.k-start-sequenz-leitsatz) — der EINZIGE der fünf Werte ohne jedes Token-Gegenstück, auch kein themen-abhängiges */
   --k-boot-schrift-soft: #b6bdcb; /* erledigte Ladezeile (.k-start-sequenz-zeile--fertig); = --k-ink-soft (orbit) */
   --k-boot-schrift-muted: #8b92a2; /* Überspringen-Knopf (.k-start-sequenz-ueberspringen); = --k-ink-muted (orbit) */
-  --k-boot-schrift-faint: #7f8695; /* offene Ladezeile (.k-start-sequenz-zeile); = --k-ink-faint (orbit) — B138: war #6e7686, folgt dem orbit-Wert, damit diese Gleichsetzung wahr bleibt. Der Grund der Startsequenz ist #0b0d12, der Kontrast steigt damit von 4.26:1 auf 5.24:1. */
+  --k-boot-schrift-faint: #9299a8; /* offene Ladezeile (.k-start-sequenz-zeile); = --k-ink-faint (orbit) — 01.10.2026 mit ihm auf #9299a8; B138: war #6e7686, folgt dem orbit-Wert, damit diese Gleichsetzung wahr bleibt. Der Grund der Startsequenz ist #0b0d12, der Kontrast steigt damit von 4.26:1 auf 5.24:1. */
 
   /* v0.9.36 / W-9 (Token-Drift-Aufräumung, `docs/BERICHT-FABLE-UI-2026-08-18.md`
      §4 W-9) — ADDITIV, eigenes Token, KEIN Bestandteil der `--k-boot-schrift*`-
@@ -728,8 +992,8 @@
      Stationsfarbe navigiert (moduleHue.spez in tokens.ts, unveraendert),
      die drei Falschfarben-Skalen MESSEN — Violett erscheint NIE in einer
      Skala (README-Regel, hier nur als Kommentar wiederholt, keine Logik). */
-  --spez-station: #9c84c4;
-  --spez-station-ink: #6b5691; /* nur Papier — «Linien/Text auf hellem Grund», README nennt keinen Kosmos-Wert */
+  --spez-station: #b8f02c; /* seit 30.09.2026 Neon-Limette (Owner, Logo-Sammlung) — in keiner Messskala enthalten */
+  --spez-station-ink: #4d6a00; /* nur Papier — «Linien/Text auf hellem Grund», README nennt keinen Kosmos-Wert */
   /* --spez-seq-sonne (Sonnenstunden/Einstrahlung/Ueberhitzung), 5 Stuetzwerte
      Stufe 1→5, Papier dunkelt ein (README-Tabelle, Reihenfolge/Beschriftung
      identisch zu Kosmos). */
@@ -1026,8 +1290,15 @@
      Bau neu gemessen statt die Vorab-Rechnung zu glauben. #7f8695 schafft
      4.52:1 dort und 4.90–5.28:1 gegen die uebrigen fuenf Gruende.
      Messung, Rechenweg und Gegenprobe:
-     `docs/MESSUNG-2026-09-11-TEXTKONTRAST.md`. */
-  --k-ink-faint: #7f8695;
+     `docs/MESSUNG-2026-09-11-TEXTKONTRAST.md`.
+     **01.10.2026, Owner-Entscheid «heller, überall»:** #7f8695 → #9299a8.
+     Die Farbprobe vom 30.09. mass Nebenschrift auf GETOENTEN Gruenden, die
+     die Messung vom 11.09. nicht kannte: Paketwahl-Kachel rgb(35,49,58)
+     3.66:1, Kopfleiste rgb(34,37,42) 4.21:1, heller Grau-Grund
+     rgb(44,48,56) 3.62:1. #9299a8 schafft dort 4.67 / 5.38 / 4.63 und auf
+     den alten Gruenden 5.77–6.27:1; leiser als ink-soft (#b6bdcb) bleibt
+     sie. Probe: `test/nebenschrift-dunkel-lesbar.test.ts`. */
+  --k-ink-faint: #9299a8;
   --k-technik: #444b59;
   /* v0.8.0B / W1 (Spez §1/§6, Konfliktentscheid «Borders Alpha-Weiss») —
      Alpha-Border-Flip, NUR im Kosmos-Theme: die einzige Stelle, an der
@@ -1061,10 +1332,15 @@
      zweier unabhängig hergeleiteter ink-Stufen (ink-700 vs. das frühere
      ink-800-Border-Grau). */
   --k-hover: #222732;
-  --k-accent: #57b6c2;
-  --k-accent-hover: #6cc4cf;
+  /* NACHGESCHAERFT 23.09.2026 — s. Papier-Block oben. `#57b6c2` erreichte
+     auf dem Glas der Kosmo-Blase in KosmoDesign 4.31:1; einen Hauch heller
+     (HSL-Helligkeit 0.55 → 0.60) sind es 4.68:1 (gemessen am Bildpunkt; der
+     Waschgrund hellt mit dem Ton leicht mit, gerechnet waren es 4.77). `--k-signal` bleibt
+     `#57b6c2`: das Leuchtsignal ist keine Schrift und haelt die Marke. */
+  --k-accent: #69bec9;
+  --k-accent-hover: #80c8d1;
   --k-accent-ink: #06141a;
-  --k-accent-wash: rgba(87, 182, 194, 0.12);
+  --k-accent-wash: rgba(105, 190, 201, 0.12);
   --k-danger: #cd7670;
   --k-success: #74c2a0;
   /* K20 (Owner wörtlich, `docs/OWNER-KORREKTUREN-2026-07.md` S.6: «auch bei
@@ -1084,6 +1360,9 @@
      Overlay-Sprache (Viewport-HUD, Achsenkreuz, Kuratier-Karten), NIE als
      Stationsfläche. */
   --k-glass-fill: rgba(20, 23, 31, 0.62);
+  /* Fokus-Schleier im dunklen Thema: Rauchglas statt Milchglas, die Glanzkante leiser. */
+  --k-fokus-ton: rgba(14, 16, 22, 0.3);
+  --k-glanzkante: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   /* K22 — dunkle Spiegelvariante der Orb-Glas-Basis (Befund Abschnitt 3,
      wörtlich «Orbit-Theme bekommt eine dunkle Spiegelvariante (Basis
      rgba(20,23,31,0.35))») — transparenter als `--k-glass-fill` (0.62). */
@@ -1179,7 +1458,7 @@
      auf statt einzudunkeln (README-Regel «steigt immer vom Grund weg»);
      `--spez-station-ink` bleibt ohne Override — README nennt dafuer keinen
      Kosmos-Wert («—»). */
-  --spez-station: #b4a0db;
+  --spez-station: #c6f55a; /* 30.09.2026: Neon-Limette, im dunklen Thema einen Hauch heller */
   --spez-seq-sonne-1: #46351b;
   --spez-seq-sonne-2: #8a5f25;
   --spez-seq-sonne-3: #c08630;
@@ -1229,6 +1508,65 @@
   --k-accent-wash: rgba(30, 107, 71, 0.1);
 }
 
+/* Welle E3 · C14 (Home-PC-Worker, Abnahme 06.10.2026, auf-242): in der
+   Desktop-App unter Linux (WebKitGTK) waren Einstellungsfenster und Listen
+   halbdurchsichtig, aber OHNE Unschaerfe — der Inhalt dahinter stand scharf
+   lesbar unter dem Text. Das Glas (`--k-glass-fill`, 62 % deckend; das
+   Insel-Papierglas 82 %) ist auf den Weichzeichner angewiesen. Wo er fehlt,
+   wird es deckend (`--k-glas-deckend`). Drei Wege, weil keiner allein sicher
+   ist:
+   1. `data-glas="deckend"` an <html> (`anzeige.ts#glasOhneWeichzeichner`):
+      WebKitGTK liest `backdrop-filter`, zeichnet ihn aber je nach Version und
+      Grafiktreiber nicht — fuer CSS sieht das aus wie «unterstuetzt».
+   2. Engines ohne `backdrop-filter` ueberhaupt (`@supports not`).
+   3. WebKit ohne beschleunigtes Zeichnen (`-webkit-transform-3d` falsch):
+      dort gibt es keinen Weichzeichner. Engines, die das Merkmal nicht
+      kennen, werten die Abfrage als falsch — sie bleiben beim Glas.
+   Chromium, Safari am Mac und das iPad behalten das Glas.
+   `--k-glass-fill` nur im dunklen Thema: Papier kennt kein Glas, dort faellt
+   jede Flaeche schon auf `--k-raised` zurueck (Wache `token-rueckfall`). */
+:root[data-theme='orbit'][data-glas='deckend'] {
+  --k-glass-fill: var(--k-glas-deckend);
+}
+:root[data-glas='deckend'] {
+  --k-insel-glas-papier: var(--k-glas-deckend);
+}
+/* Fokus-Schleier ohne Weichzeichner: dichter getönt, damit die Fläche trotzdem vortritt (Entwurfsbild `f3-*`).
+   Dazu verwischt dort, wo es geht, die ZEICHENFLÄCHE SELBST: Am Linux-Gerät zeichnet WebKitGTK die Scheibe
+   (`backdrop-filter`) nicht unscharf, wohl aber `filter: blur` auf dem Inhalt (Messung des Home-PC-Workers vom
+   13.10.2026, WebKitGTK 2.52.6: Scheibe nur mit Beschleunigung, die App läuft ohne; Inhalt in beiden Fällen
+   unscharf, ohne Beschleunigung etwa 1,5-mal so viel Rechenlast, solange der Schleier offen ist). Nur Blätter wie
+   die Zeichenfläche bekommen den Filter, nie eine Hülle mit festen Kindern: ein Filter macht die Hülle zum
+   Bezugsrahmen für `position: fixed`, und alles darin spränge an eine andere Stelle. Wer eine Zeichenfläche hat,
+   trägt `k-fokus-verwischbar` oder nennt sie in seiner eigenen Datei (KosmoDesign: `design.css`). */
+:root[data-glas='deckend']:has(.k-fokus-schleier, .k-dialog-scrim) .k-fokus-verwischbar {
+  filter: blur(3px);
+}
+:root[data-glas='deckend'] {
+  --k-fokus-unschaerfe: none;
+  --k-fokus-unschaerfe-dialog: none;
+  --k-fokus-ton: rgba(250, 248, 243, 0.5);
+}
+:root[data-theme='orbit'][data-glas='deckend'] {
+  --k-fokus-ton: rgba(14, 16, 22, 0.5);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-theme='orbit'] {
+    --k-glass-fill: var(--k-glas-deckend);
+  }
+  :root {
+    --k-insel-glas-papier: var(--k-glas-deckend);
+  }
+}
+@media not all and (-webkit-transform-3d) {
+  :root[data-theme='orbit'] {
+    --k-glass-fill: var(--k-glas-deckend);
+  }
+  :root {
+    --k-insel-glas-papier: var(--k-glas-deckend);
+  }
+}
+
 /* v0.7.6 «Kosmo-Viz» §Fundament — Glass-HUD-Utility. Werte kommen aus dem
    `orbit`-Block; auf Papier sind `--k-glass-*` ungesetzt und die Fallbacks
    greifen (schlichte Fläche statt Glass). Der reduced-motion-Riegel weiter
@@ -1237,7 +1575,7 @@
 .k-glass {
   background: var(--k-glass-fill, var(--k-raised));
   border: 1px solid var(--k-glass-stroke, var(--k-line));
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   box-shadow: var(--k-glass-schatten, var(--k-shadow-overlay));
   backdrop-filter: var(--k-glas-dicht);
   -webkit-backdrop-filter: var(--k-glas-dicht);
@@ -1317,7 +1655,7 @@ body {
 body {
   font-family: var(--k-font-ui);
   font-size: var(--k-t-md);
-  line-height: 1.45;
+  line-height: var(--k-lh-basis);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-feature-settings: 'tnum' 1; /* tabellarische Zahlen — Masse müssen fluchten */
@@ -1370,17 +1708,78 @@ progress {
 }
 *::-webkit-scrollbar-thumb {
   background: var(--k-line-strong);
-  border-radius: 4px;
+  /* Form-Familie 21.09.2026: der Griff ist ein Bedienelement — 8px breit,
+     also eine Pille, nicht ein Quadrat mit weichen Ecken. War roh `4px`. */
+  border-radius: var(--k-radius-pill);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ══ U14 · Anzeige einstellbar (Owner B6/B18, 01.10.2026) ══════════════════
+   Gesetzt von `anzeige.ts` an <html>. Schrift: jede Stufe der Leiter mal
+   0,92 (klein) bzw. 1,15 (gross), auf halbe Pixel gerundet — dieselbe Leiter,
+   nur grösser oder kleiner, nie eine neue Stufe. Bewegung: «aus» ist derselbe
+   Riegel wie der des Geräts gleich darunter; «ruhig» lässt Übergänge und hält
+   jede Schleife nach einem Durchgang an. «Wie das Gerät» setzt kein Attribut. */
+:root[data-schrift='klein'] {
+  --k-t-xxs: 8.5px;
+  --k-t-xs: 9.5px;
+  --k-t-sm: 11px;
+  --k-t-md: 12.5px;
+  --k-t-lg: 14.5px;
+  --k-t-plakat: 18.5px;
+  --k-t-h3: 19.5px;
+  --k-t-h2: 26px;
+  --k-t-anzeige: 31.5px;
+  --k-t-h1: 38.5px;
+  --k-t-display: 55px;
+  --k-t-code: 12px;
+  --k-t-micro: 10px;
+}
+:root[data-schrift='gross'] {
+  --k-t-xxs: 10.5px;
+  --k-t-xs: 12px;
+  --k-t-sm: 14px;
+  --k-t-md: 15.5px;
+  --k-t-lg: 18.5px;
+  --k-t-plakat: 23px;
+  --k-t-h3: 24px;
+  --k-t-h2: 32px;
+  --k-t-anzeige: 39px;
+  --k-t-h1: 48.5px;
+  --k-t-display: 69px;
+  --k-t-code: 15px;
+  --k-t-micro: 12.5px;
+}
+:root[data-bewegung='aus'] *,
+:root[data-bewegung='aus'] *::before,
+:root[data-bewegung='aus'] *::after {
+  /* 0s statt 0.01ms: transition-property steht ohne eigene Angabe auf `all`,
+     und jede Dauer über 0 startete bei JEDER Stiländerung einen Übergang —
+     beim Zoom gemessen rund 170, unter Last bis 900 (Lieferung 22 §3 P5).
+     Wer auf `transitionend` wartet, prüft «weniger Bewegung» selbst
+     (`reduzierteBewegungAktiv`, `bewegungJetzt`). Animationen behalten
+     0.01ms, damit `animationend` weiter feuert. */
+  transition-duration: 0s !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  transition-delay: 0ms !important;
+  /* Eine Endlosschleife liefe sonst mit 0.01ms weiter und flackerte. */
+  animation-iteration-count: 1 !important;
+}
+:root[data-bewegung='ruhig'] *,
+:root[data-bewegung='ruhig'] *::before,
+:root[data-bewegung='ruhig'] *::after {
+  animation-iteration-count: 1 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
+    /* 0s statt 0.01ms: s. `data-bewegung='aus'` oben. */
+    transition-duration: 0s !important;
     animation-duration: 0.01ms !important;
     /* Serie K / A2: eine reine Dauer-Kürzung reicht nicht, solange eine
        `animation-delay` steht (z.B. die gestaffelte Kachel-Startanimation) —
@@ -1472,11 +1871,34 @@ progress {
    `text-transform: uppercase` + `letter-spacing` im App-Chrome. Farbe ist
    bewusst NICHT Teil der Utility («Schwarz trägt») — das Label erbt
    `--k-ink` oder bekommt kontextuell `--k-ink-soft`, nie den Akzent. */
+/* ══ SCHRIFTREGEL — Owner-Auftrag 21.09.2026 ══════════════════════════════
+   Woertlich: «beim zuletzt geschehen scheint es noch schriftarten zu geben
+   die aussehen wie code schriften bitte alles einheitlich konsequent mit den
+   schriften danke.»
+
+   DIE REGEL IN EINEM SATZ: **Schreibmaschinenschrift ist fuer ZAHLEN und
+   MASCHINENTEXT, nicht fuer Woerter.**
+
+     Mono  — Masse, Koordinaten, Kennungen, Pfade, Tastenkuerzel, Versionen,
+             Code, Zeitstempel: alles, was ziffernweise gelesen oder in einer
+             Spalte untereinander verglichen wird.
+     UI    — jedes Wort, das ein Mensch als Sprache liest. Beschriftungen
+             gehoeren dazu, auch die kleinen.
+
+   WAS BLEIBT: Versalien und Sperrung. Sie sind ein SATZ-Mittel, keine
+   Schriftart — ein gesperrtes Versal-Label in der Hausschrift liest sich als
+   Abschnittsmarke, dasselbe in Schreibmaschinenschrift liest sich als
+   Konsolenausgabe. Der Owner hat die SCHRIFT bemaengelt, nicht die Auszeichnung.
+
+   GEMESSEN, NICHT GESCHAETZT (21.09.2026, Sweep ueber sieben Flaechen am
+   gerenderten Bildpunkt): 35 verschiedene Klassen trugen Mono auf Text mit
+   mindestens drei Buchstaben. Die grosse Mehrheit davon haengt an DIESER
+   Klasse — `.k-label` wird an 326 Stellen gesetzt. */
 .k-label {
-  font-family: var(--k-font-mono);
+  font-family: var(--k-font-ui);
   font-size: var(--k-t-xs);
   font-weight: var(--k-gewicht-betont);
-  line-height: 1.3;
+  line-height: var(--k-lh-knapp);
   text-transform: uppercase;
   letter-spacing: var(--k-sperrung);
   font-variant-numeric: tabular-nums;
@@ -1501,6 +1923,12 @@ progress {
   position: relative;
   background: var(--k-raised);
   border: 1px solid var(--k-technik);
+  /* BENANNTE AUSNAHME der Form-Familie (21.09.2026): `.k-karte` ist die
+     Tusche-/Papierkarte mit abgeschnittener Ecke (`clip-path`, D-7/E-4) —
+     ihre Form IST die scharfe Kante plus der 12px-Schnitt. Eine Rundung
+     hier würde den Schnitt in der Ecke ins Leere laufen lassen. Bleibt
+     bewusst bei 0 und ist als Ausnahme in
+     `packages/kosmo-ui/test/form-familie-radius.test.ts` gelistet. */
   border-radius: 0;
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
 }
@@ -1804,7 +2232,7 @@ progress {
    dieselbe Einblend-Klasse») — Design/Vis fehlten sie bislang, das
    Nachziehen dort macht der jeweilige Stations-Stream, nicht kosmo-ui. */
 .k-einblenden {
-  animation: k-einblenden var(--k-motion-settle) both;
+  animation: k-einblenden var(--k-motion-settle) backwards;
 }
 @keyframes k-einblenden {
   from { opacity: 0; transform: translateY(4px); }
@@ -1875,10 +2303,47 @@ progress {
   justify-content: center;
   padding: 24px;
 }
+/* Fokus-Schleier, Art 2/3 «Entscheiden» und «Vollbild» (Owner 13.10.2026): hinter jedem Dialog wird es unscharf.
+   Der Scrim liegt schon direkt unter der Box und trägt seine Tönung selbst; hier kommt nur die Unschärfe dazu.
+   Am Gerät ohne Weichzeichner ist sie `none` (unten), die Tönung bleibt. */
+.k-dialog-scrim {
+  -webkit-backdrop-filter: var(--k-fokus-unschaerfe-dialog);
+  backdrop-filter: var(--k-fokus-unschaerfe-dialog);
+}
+/* Art 1 «Wählen»: der eine Schleier unter der obersten angemeldeten Fläche (`useFokusSchleier`). */
+/* Die angemeldete Fläche wird auf den Zwischenrang `schwebend + 90` gehoben, ihr Schleier liegt eins darunter.
+   Ein Zwischenrang, keine siebte Stufe (Leiter oben): über allem, was sich öffnet, unter allem, was «alles darunter
+   ist jetzt inaktiv» sagt (modal). */
+[data-k-fokus='gehoben'] {
+  z-index: calc(var(--k-ebene-schwebend) + 90) !important;
+}
+.k-fokus-schleier {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--k-ebene-schwebend) + 89);
+  background: var(--k-fokus-ton);
+  -webkit-backdrop-filter: var(--k-fokus-unschaerfe);
+  backdrop-filter: var(--k-fokus-unschaerfe);
+  /* Erst nach einem Atemzug: wer mit der Maus nur über das Rad streicht, soll nicht die ganze Fläche flackern
+     sehen. Bei «weniger Bewegung» steht er sofort da (Regeln `data-bewegung` / `prefers-reduced-motion`). */
+  animation: k-fokus-ein var(--k-dauer-antippen) ease-out var(--k-dauer-antippen) both;
+}
+@keyframes k-fokus-ein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* v0.1.8 (Befund KosmoDraw «Öffnungswink-el», «m / m»): hier stand seit T4b das Umbrechen «an jeder
+   Stelle» samt erzwungenem Wortbruch. Das senkte die MINDESTBREITE jedes Wortes — Raster- und Flex-Spalten
+   schrumpften so weit, dass gewöhnliche Wörter mitten durch brachen («Mate-rial»), obwohl sie gepasst hätten.
+   `break-word` bricht nur, was sonst wirklich überliefe (eine lange URL), und lässt die Mindestbreite in
+   Ruhe. UI-Regel 2 bleibt gewahrt; Probe `e2e/k-dialog-kein-wortbruch.spec.ts`. */
 .k-dialog {
   max-height: calc(100vh - 48px);
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Fokus-/Wichtigkeits-Systematik (T7, docs/OBERFLAECHE-FOKUS-SYSTEMATIK.md):
@@ -1892,7 +2357,7 @@ progress {
 /* Serie J / J3b (Tätigkeits-Adaption, Regel 2.3.3): Gruppen wechseln ihre
    Fokus-Klasse zur Laufzeit (adaptiveFokusStufe) — die Opazitäts-Änderung
    ist gedämpft über --k-motion-base, NIE ungedämpft. Der globale
-   prefers-reduced-motion-Block oben (jede Transition auf 0.01ms) schaltet
+   prefers-reduced-motion-Block oben (jede Transition auf 0s) schaltet
    auch diese ab. */
 .k-primaer {
   opacity: 1;
@@ -1984,8 +2449,22 @@ progress {
    ausserhalb des PA2-Dateikreises (`e2e/orbit-faecher.spec.ts`) messen
    weiterhin seine Bounding-Box; er sitzt jetzt zentriert HINTER der
    Kachel-Reihe statt im Kreismittelpunkt. */
+/* 21.09.2026 von 108px auf 96px — Owner woertlich: «die tabs der einzelnen
+   haupttools zusammenquetschen mehr». Die Reihe war 672px breit (4x108 +
+   3x80 Lueckenmass) und brach in der schmaleren Mittelspalte der Zentrale
+   in zwei Zeilen um, sobald Kosmo als dritte Spalte danebensteht (gemessen
+   am 21.09.2026 bei 1280x720, 1400x900 und 1680x1050: jedes Mal ZWEI
+   Zeilen). Neu 4x96 + 3x16 = 432px, und die Reihe steht bei allen drei
+   Fenstergroessen in EINER.
+
+   96 und nicht kleiner, weil das Symbol im Kreis 64px misst
+   (`shell/orbit-icons.tsx` `GROESSE`, mit eigener Wache
+   `test/auf-20260921-hauptsymbole.test.tsx`): seine Diagonale betraegt
+   90.5px und muss in den Kreis passen, sonst stehen die Ecken der Glyphe
+   ueber dem Tuscherand. Wer hier weiter herunter will, aendert zuerst das
+   Symbol — die Reihenfolge ist nicht beliebig. */
 :root {
-  --k-orbit-knoten-groesse: 108px;
+  --k-orbit-knoten-groesse: 96px;
 }
 .k-orbit-start {
   display: flex;
@@ -2036,8 +2515,28 @@ progress {
      150px/80px zog (`oberflaeche-hierarchie.spec.ts`, ausserhalb des PA2-
      Dateikreises, aber live rot geworden — Klick auf `module-data` wurde
      vom umgebrochenen, geschlossenen Office-Fächer abgefangen). */
-  gap: 80px;
+  /* 21.09.2026 von 80px auf `--k-s5` (16px). Die 80px waren KEIN Geschmack,
+     sondern ein Riegel: geschlossene Faecher lagen mit realer Boxgroesse UND
+     `pointer-events: auto` im DOM, und zwei benachbarte fingen sich
+     gegenseitig die Klicks ab. **Dieser Grund ist seit B139 (11.09.2026,
+     Owner-Entscheid) weg** — die geschlossene Huelle ist zeigerdicht
+     (`.k-orbit-faecher-huelle:not(.offen)` weiter oben, samt der zweiten
+     Zeile fuer `.k-orbit-faecher`), gemessen in
+     `e2e/b139-blinde-klickflaeche-tot.spec.ts`. Was blieb, war der Abstand
+     ohne seine Begruendung.
+
+     Was die Lueckenbreite HEUTE noch traegt: den Text unter den Kreisen. Bei
+     16px Lueckenmass stehen die Kachelmitten 112px auseinander, und das
+     Unterlabel ist auf `--k-orbit-knoten-groesse + --k-s3` = 104px
+     gedeckelt (`orbit-065.css`) — es kann seinen Nachbarn nicht mehr
+     beruehren. Beide Zahlen gehoeren zusammen; wer eine aendert, misst die
+     andere nach. */
+  gap: var(--k-s5);
   max-width: 100%;
+  /* Sicherheitsnetz fuer sehr schmale Fenster (< 700px, dort ist die
+     Zentrale einspaltig). Oberhalb davon darf die Reihe nicht mehr
+     umbrechen — dafuer sorgen die Werte oben und die Spaltenbreiten in
+     `orbit-065.css`. */
   flex-wrap: wrap;
 }
 /* Q1-Fix (08.09.2026) — GEGENSTÜCK zum Harten Vertrag oben, kein Widerruf:
@@ -2118,20 +2617,12 @@ progress {
 .k-orbit-faecher-huelle:not(.offen) .k-orbit-faecher {
   pointer-events: none;
 }
-/* C-3 (PE3-Fix v0.8.4): Zwischenband — s. Vertrag oben («beide Zahlen
-   MÜSSEN zusammen geändert werden») und das Gegenstück in `orbit-065.css`
-   (`.orbit065-faecher-huelle` 118px in demselben Band): Lücke 44px ⇒
-   Mitte-zu-Mitte 152px > 118px Fächer ⇒ kein Abfangen, und die Reihe
-   (4×108 + 3×44 = 564px) bricht beim Tauri-Minimum 980px nicht mehr um —
-   der Umbruch war der C-3-Fund (Office-Fächer über der KosmoData-Kachel).
-   D-6 (E-3): Band war 861–1150px, jetzt 701–1100px (980px-Absicherung
-   bleibt innerhalb). Oberhalb des Bands gilt unverändert 80px/150px. */
-@media (min-width: 701px) and (max-width: 1100px) {
-  /* K-BP-SCHMAL..K-BP-MITTEL (E-3) */
-  .k-orbit-ring-feld {
-    gap: 44px;
-  }
-}
+/* ERSATZLOS ENTFALLEN am 21.09.2026 — hier stand ein Zwischenband
+   (701-1100px), das die Luecke von 80px auf 44px verengte, damit die Reihe
+   beim Tauri-Minimum 980px nicht umbricht. Beide Zahlen sind weg: die Reihe
+   misst jetzt durchgehend 432px (4x96 + 3x16) und passt damit auch bei 980px
+   in eine Zeile, ohne Sonderregel. Eine Sonderregel, die dasselbe tut wie
+   die Grundregel, ist kein Schutz mehr, sondern eine zweite Wahrheit. */
 .k-orbit-mitte {
   position: absolute;
   top: 50%;
@@ -2188,13 +2679,24 @@ progress {
   box-shadow: var(--k-shadow-raised);
   transform: scale(1.03);
 }
+/* Fund 9 (Agenten-Pruefllauf HomeStation, 24.09.2026): `all: unset` oben
+   setzt die Umrisslinie des globalen Fokusrings zurueck (gleiche
+   Spezifitaet, steht spaeter). Der Tastaturfokus sah darum aus wie der
+   Hover. Hier kommt das aeussere Band des Hausrings zurueck; Spezifitaet
+   0,2,0 schlaegt `all: unset`. */
+.k-orbit-hauptknopf:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
 .k-orbit-hauptknopf-titel {
   font-weight: var(--k-gewicht-stark);
   font-size: var(--k-t-sm);
   letter-spacing: 0.01em;
 }
 .k-orbit-badge-kommend {
-  font-family: var(--k-font-mono);
+  /* Schriftregel 21.09.2026 (s. `.k-label` in aura.css): Woerter in der Hausschrift,
+     Schreibmaschinenschrift bleibt den Zahlen. */
+  font-family: var(--k-font-ui);
   font-size: var(--k-t-xxs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2274,21 +2776,36 @@ progress {
 /* «Was es kann» — 2–3 Sätze, sichtbar beim Hover/Fokus GENAU dieser Zeile
    (gleiche Collapse-Technik wie `.k-kachel-werkzeuge`: reale Grösse bleibt
    0 bis zum Hover, `toBeAttached()` bleibt also vorher wahr, `toBeVisible()`
-   erst danach). */
+   erst danach).
+
+   R4/U7 (23.09.2026, Bot-Fund `docs/MESSUNG-UX-BOTLAUF-2026-09-23.md`): ein
+   fester `max-height: 140px` im offenen Zustand schnitt lange Fähigkeits-
+   texte hart ab (gemessen: 146px echter Inhalt gegen 139px sichtbare Box,
+   `e2e/r4-kleinigkeiten.spec.ts` «U7»; UI-REGELN.md Regel 2 verbietet das
+   ausdrücklich — «kein Text verlässt seine Box», Inhalt ist zu teilen/die
+   Box mitwachsend zu bauen, nicht zu klemmen). `.k-orbit-faecher` (die
+   Hülle darüber) hat selbst keine feste Höhe/kein `overflow` — sie wächst
+   frei mit ihrem Inhalt (`position:absolute`, kein `max-height` dort), ein
+   grösserer Fähigkeitstext schiebt darum nur die eigene Hülle weiter nach
+   unten, ohne einen Rollbalken oder eine zweite Fläche zu erzeugen. Darum
+   `max-height: none` im offenen Zustand — die Box wächst auf die reale
+   Inhaltshöhe, nie länger geklemmt. Kollabiert bleibt `max-height: 0`
+   unverändert (reale Grösse weiterhin 0 vor dem Hover, kein Layout-Sprung),
+   nur der offene Zustand verliert den festen Deckel. */
 .k-orbit-faehigkeit {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
   font-size: var(--k-t-micro);
-  line-height: 1.45;
+  line-height: var(--k-lh-lesen);
   color: var(--k-ink-soft);
   background: var(--k-surface);
   border: 0 solid var(--k-line);
-  transition: max-height var(--k-motion-base), opacity var(--k-motion-base);
+  transition: opacity var(--k-motion-base);
 }
 .k-orbit-untertool-zeile:hover .k-orbit-faehigkeit,
 .k-orbit-untertool:focus-visible ~ .k-orbit-faehigkeit {
-  max-height: 140px;
+  max-height: none;
   opacity: 1;
   border-width: 0 1px 1px 1px;
   padding: 7px 10px;
@@ -2322,7 +2839,10 @@ progress {
   justify-content: center;
   gap: var(--k-s2);
   border: 1px solid transparent;
-  border-radius: var(--k-radius-md);
+  /* Form-Familie 21.09.2026: Knopf = Bedienelement = vollrund. Bei
+     `.k-btn-sm` (32px) ergibt das exakt R=16 — Kreis und Pille sind
+     hier dieselbe Geometrie. War `--k-radius-md`. */
+  border-radius: var(--k-radius-pill);
   cursor: pointer;
   font-weight: var(--k-gewicht-stark);
   letter-spacing: 0.01em;
@@ -2430,7 +2950,9 @@ progress {
   appearance: none;
   -webkit-appearance: none;
   border: 1px solid var(--k-line);
-  border-radius: var(--k-radius-md);
+  /* Form-Familie 21.09.2026: Feld = Bedienelement = vollrund (war
+     `--k-radius-md`). */
+  border-radius: var(--k-radius-pill);
   background-color: var(--k-sunken, var(--k-field));
   color: var(--k-ink);
   background-repeat: no-repeat;
@@ -2487,8 +3009,14 @@ progress {
    Umschalter (bislang zwei Ad-hoc-Optiken). KSegmentPill entfällt als eigene
    Komponente — KTabs deckt die Segmented-Pill-Anatomie hier bereits
    vollständig ab (Begründung im Bau-Bericht). */
+/* Kein Wortbruch (25.09.2026, Fund aus K7 d1: «Allge/mein» bei 340 px,
+   UI-REGELN Regel 2/3): `.k-tab` bricht nie um, `.k-tabs` rückt einen Reiter,
+   der nicht mehr passt, in eine neue Zeile. Beides gehört zusammen — `nowrap`
+   allein schöbe den Text aus der Leiste. Solange alles passt, bleibt die
+   Leiste einzeilig; abgeschnitten wird nie. Probe: test/tabs-kein-wortbruch. */
 .k-tabs {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 2px;
   padding: 2px;
@@ -2500,6 +3028,7 @@ progress {
   all: unset;
   box-sizing: border-box;
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: var(--k-s2);
   cursor: pointer;
@@ -2508,6 +3037,22 @@ progress {
   border-radius: var(--k-radius-pill);
   padding: var(--k-s2) var(--k-s4);
   transition: background var(--k-motion-fast), border-color var(--k-motion-fast), color var(--k-motion-fast);
+}
+/* Der aktive Reiter wird fett — ohne Vorhalt wuerde er dabei breiter und die
+   Leiste rueckte nach. Die Beschriftung reserviert darum die Breite ihrer
+   fetten Fassung vorab (unsichtbar, ohne Hoehe). Probe: tabs-kein-wortbruch. */
+.k-tab-text {
+  display: inline-flex;
+  flex-direction: column;
+}
+.k-tab-text::after {
+  content: attr(data-text);
+  font-weight: var(--k-gewicht-stark);
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
 }
 .k-tabs--sm .k-tab {
   font-size: var(--k-t-sm);
@@ -2559,7 +3104,12 @@ progress {
   width: 100%;
 }
 .k-panel-zwei-titel {
-  font-family: var(--k-font-mono);
+  /* Schriftregel 21.09.2026 (s. .k-label in aura.css): Woerter in der
+     Hausschrift. Diese Stelle erklaerte die Schreibmaschinenschrift NOCH
+     EINMAL, obwohl sie ihre Beschriftungsform schon von .k-label bekam —
+     darum blieb sie beim Umstellen stehen und fiel erst in der zweiten
+     Messung auf. */
+  font-family: var(--k-font-ui);
   font-size: var(--k-t-sm);
   font-weight: var(--k-gewicht-betont);
   letter-spacing: 0.14em;
@@ -2618,7 +3168,7 @@ progress {
   min-width: 190px;
   background: var(--k-glass-fill, var(--k-raised));
   border: 1px solid var(--k-glass-stroke, var(--k-line-strong));
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
   backdrop-filter: var(--k-glas-dicht);
   -webkit-backdrop-filter: var(--k-glas-dicht);
@@ -2683,7 +3233,7 @@ progress {
   box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
   backdrop-filter: var(--k-glas-dicht);
   -webkit-backdrop-filter: var(--k-glas-dicht);
-  border-radius: var(--k-radius-karte);
+  border-radius: var(--k-radius);
   display: flex;
   flex-direction: column;
 }
@@ -2752,7 +3302,9 @@ progress {
   gap: var(--k-s2);
 }
 .k-field-label {
-  font-family: var(--k-font-mono);
+  /* Schriftregel 21.09.2026 (s. bei `.k-label`): die Beschriftung eines
+     Feldes ist Sprache, nicht Messwert. Versalien und Sperrung bleiben. */
+  font-family: var(--k-font-ui);
   font-size: var(--k-t-micro);
   font-weight: var(--k-gewicht-betont);
   letter-spacing: 0.14em;
@@ -2769,7 +3321,9 @@ progress {
 }
 .k-input {
   border: 1px solid var(--k-line);
-  border-radius: var(--k-radius-md);
+  /* Form-Familie 21.09.2026: Feld = Bedienelement = vollrund (war
+     `--k-radius-md`). */
+  border-radius: var(--k-radius-pill);
   background: var(--k-sunken, var(--k-field));
   color: var(--k-ink);
   padding: 6px var(--k-s4);
@@ -2804,7 +3358,9 @@ progress {
   gap: var(--k-s3);
   width: 100%;
   border: 1px solid var(--k-line);
-  border-radius: var(--k-radius-md);
+  /* Form-Familie 21.09.2026: Kommandofeld (48px) = vollrund; der Rahmen
+     muss die Rundung des Feldes darin tragen. War `--k-radius-md`. */
+  border-radius: var(--k-radius-pill);
   background: var(--k-sunken, var(--k-field));
   padding: 0 var(--k-s4);
   transition: border-color var(--k-motion-fast), box-shadow var(--k-motion-fast);
@@ -2830,7 +3386,7 @@ progress {
   font-size: var(--k-t-micro);
   color: var(--k-ink-faint);
   border: 1px solid var(--k-line-strong);
-  border-radius: var(--k-radius-xs);
+  border-radius: var(--k-radius);
   padding: 2px 6px;
 }
 
@@ -2842,9 +3398,11 @@ progress {
   align-items: center;
   gap: var(--k-s2);
   border: 1px solid currentColor;
-  border-radius: var(--k-radius-sm);
+  /* Form-Familie 21.09.2026: Chip = Bedienelement = vollrund (war
+     `--k-radius-sm`). */
+  border-radius: var(--k-radius-pill);
   background: transparent;
-  line-height: 1.6;
+  line-height: var(--k-lh-lesen);
   white-space: nowrap;
 }
 .k-chip--sm {
@@ -2911,7 +3469,12 @@ progress {
   padding: 0 var(--k-s3);
   border: 1px dashed var(--k-glass-stroke, var(--k-line-strong));
   border-radius: var(--k-radius-pill);
-  font-family: var(--k-font-mono);
+  /* Schriftregel 21.09.2026 (s. .k-label in aura.css): Woerter in der
+     Hausschrift. Diese Stelle erklaerte die Schreibmaschinenschrift NOCH
+     EINMAL, obwohl sie ihre Beschriftungsform schon von .k-label bekam —
+     darum blieb sie beim Umstellen stehen und fiel erst in der zweiten
+     Messung auf. */
+  font-family: var(--k-font-ui);
   font-size: var(--k-t-xxs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -3048,7 +3611,10 @@ progress {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  border-radius: 10px;
+  /* Form-Familie 21.09.2026: Fläche → die EINE Rundung. Der «wörtliche
+     Spec-Einzelwert 10» zwischen sm(8) und md(12) ist mit dem Einzug
+     beider Stufen gegenstandslos geworden. War roh `10px`. */
+  border-radius: var(--k-radius);
   overflow: hidden;
   background: var(--k-line-subtil, var(--k-line));
   /* v0.8.0B P8b (Matrix-Abnahme W6-Befund, ROADMAP 388) — Chromium kollabiert
@@ -3085,7 +3651,13 @@ progress {
   background: var(--k-surface);
 }
 .k-keyvalue-key {
-  font-family: var(--k-font-mono);
+  /* Schriftregel 21.09.2026 (s. bei `.k-label`): DER SCHLUESSEL IST SPRACHE,
+     DER WERT IST DATEN. «Ansicht», «Raster», «Geschoss» sind Woerter und
+     stehen ab jetzt in der Hausschrift; `.k-keyvalue-wert` direkt darunter
+     bleibt Mono, weil dort «EG (0.00 m)» und «328°» untereinander in einer
+     Spalte stehen und ziffernweise verglichen werden. Genau diese Trennung
+     ist die Regel — nicht «weniger Mono», sondern Mono am richtigen Ort. */
+  font-family: var(--k-font-ui);
   font-size: var(--k-t-micro);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -3113,7 +3685,7 @@ progress {
 /* KHud (`hud.tsx`, Spez §3 B-42) — Glass-HUD-Karte für Kennzahlen/Modus-
    Badge/Achsenkreuz/Zoom (0.7.5-Viz-Anatomie); Einsatz W3/W5. */
 .k-hud {
-  border-radius: var(--k-radius-karte);
+  border-radius: var(--k-radius);
   padding: var(--k-s4) var(--k-s5);
 }
 .k-hud-kopf {
@@ -3174,7 +3746,7 @@ progress {
   padding: var(--k-s4);
   background: var(--k-surface);
   border: 1.5px solid color-mix(in srgb, var(--_rolle) 55%, transparent);
-  border-radius: var(--k-radius-node);
+  border-radius: var(--k-radius);
   transition: border-color var(--k-motion-base), box-shadow var(--k-motion-base);
 }
 .k-node--aktiv {
@@ -3244,7 +3816,7 @@ progress {
    Akzent + Glow. KuratierFlaeche-Einsatz W5. */
 .k-variantenkarte {
   position: relative;
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   overflow: hidden;
   border: 1px solid var(--k-line);
   background: var(--k-surface);
@@ -3332,7 +3904,10 @@ progress {
   box-sizing: border-box;
   width: 26px;
   height: 26px;
-  border-radius: var(--k-radius-xs); /* D-6: war 7px, off-scale (2/4/6/999) */
+  /* Form-Familie 21.09.2026: Aktionsknopf (26px) = vollrund. D-6 hatte
+     hier 7px off-scale auf `--k-radius-xs` gezogen; jetzt Bedienelement-
+     Vollrundung. */
+  border-radius: var(--k-radius-pill);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -3356,7 +3931,7 @@ progress {
    Rollenakzent als 2px-Hairline LINKS, nie eine gefärbte Box. */
 .k-card {
   position: relative;
-  border-radius: var(--k-radius-karte);
+  border-radius: var(--k-radius);
   padding: var(--k-s6);
   color: var(--k-ink);
   transition: border-color var(--k-motion-base), box-shadow var(--k-motion-base);
@@ -3627,7 +4202,7 @@ progress {
      OFFENE_INSEL (100) nur, weil beide im selben #root-Kontext stehen und
      200 > 100 ist — Fall 8/9 (ROADMAP 1156), KEIN #root-Sprung, entgegen der
      dortigen Beschreibung. */
-  z-index: 200;
+  z-index: var(--k-ebene-meldung);
   display: flex;
   flex-direction: column;
   gap: var(--k-s3);
@@ -3666,7 +4241,7 @@ progress {
   background: var(--k-glass-fill, var(--k-raised));
   border: 1px solid var(--k-glass-stroke, var(--k-line-strong));
   border-left: 3px solid var(--_ton, var(--k-ink-soft));
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   box-shadow: var(--k-shadow-md, var(--k-shadow-overlay));
   backdrop-filter: var(--k-glas-dicht);
   -webkit-backdrop-filter: var(--k-glas-dicht);
@@ -3693,7 +4268,7 @@ progress {
   background: var(--k-glass-fill, var(--k-raised));
   border: 1px solid var(--k-glass-stroke, var(--k-line-strong));
   border-left: 3px solid var(--_ton, var(--k-ink-soft));
-  border-radius: var(--k-radius-md);
+  border-radius: var(--k-radius);
   box-shadow: var(--k-shadow-md, var(--k-shadow-overlay));
   backdrop-filter: var(--k-glas-dicht);
   -webkit-backdrop-filter: var(--k-glas-dicht);
@@ -3763,7 +4338,7 @@ progress {
   padding: var(--k-s6);
   background: var(--k-surface);
   border: 1px solid color-mix(in srgb, var(--k-warning) 40%, transparent);
-  border-radius: var(--k-radius-karte);
+  border-radius: var(--k-radius);
   box-shadow: var(--k-shadow-md, var(--k-shadow-raised));
 }
 .k-approval-kopf {
@@ -3839,13 +4414,13 @@ progress {
 }
 .k-tooltip-blase {
   position: absolute;
-  z-index: 2000;
+  z-index: calc(var(--k-ebene-modal) + 90);
   display: flex;
   align-items: center;
   gap: var(--k-s2);
   white-space: nowrap;
   padding: 4px var(--k-s3);
-  border-radius: var(--k-radius-xs);
+  border-radius: var(--k-radius);
   font-size: var(--k-t-xs);
   color: var(--k-ink);
   background: var(--k-glass-fill, var(--k-raised));
@@ -3880,7 +4455,7 @@ progress {
   font-size: var(--k-t-micro);
   color: var(--k-ink-faint);
   border: 1px solid var(--k-line-strong);
-  border-radius: var(--k-radius-xs);
+  border-radius: var(--k-radius);
   padding: 1px 5px;
 }
 
@@ -3888,7 +4463,19 @@ progress {
    Icon aus der bestehenden `KIcon`-Registry. `:indeterminate` ist ein
    natives CSS-Pseudo, das erst greift, sobald `checkbox.tsx` das
    DOM-Property per Ref-Effekt setzt. */
+/* `position: relative` ist hier KEINE Kosmetik, sondern die Reparatur eines
+   gemessenen Fehlers (21.09.2026): das `<input>` darunter ist `position:
+   absolute`. Ohne einen positionierten Vorfahren ist sein Bezugsrahmen der
+   Seitenanfang — es klebt dann an einer festen Stelle der SEITE statt an
+   seiner eigenen Beschriftung, und in einer rollenden Flaeche laeuft es
+   davon. In den Einstellungen gemessen: der Dialogkoerper rollt von 0 auf
+   33837, das Feld der Leistungs-Zustimmung bleibt dabei auf y=2917 stehen —
+   2000 px unterhalb des Fensters, also mit Zeiger und Tastatur unerreichbar,
+   waehrend der gezeichnete Kasten oben brav mitrollt. Mit dieser Zeile ist
+   das `<label>` der Bezugsrahmen, und das Feld liegt wieder ueber seinem
+   eigenen Kasten. */
 .k-checkbox {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--k-s3);
@@ -3900,16 +4487,55 @@ progress {
   opacity: 0;
   cursor: pointer;
 }
+/* DIESELBE WURZELURSACHE WIE W7-3 BEIM KSWITCH (s. `.k-switch-strecke` oben),
+   gemessen am 21.09.2026 nach der Umstellung von 15 rohen Kaestchen auf diesen
+   Baustein: `<input>` und der gezeichnete Kasten liegen in derselben
+   `z-index:auto`-Mal-Schicht, der Kasten steht im DOM danach und malt darum
+   darueber. `elementFromPoint` auf die Feldmitte lieferte in allen fuenfzehn
+   Faellen den Haken-`<path>` im Kasten statt das Feld
+   (`e2e/kaestchen-trifft-sich-selbst.spec.ts`, roter Lauf vor dieser Zeile).
+
+   Zwei Wachen hingen daran: der Serienbild-Motor findet ueber seine
+   Trefferprobe die Kennung nicht mehr, und die Insel-Ueberdeckungssonde kann
+   ihren Selbsttreffer nicht mehr schaffen — sie blieb gruen, weil beide
+   Kennungen in ihrer Ausnahmeliste stehen, und war damit blind statt rot.
+
+   GEPRUEFT statt angenommen, dass die Bedingung von W7-3 hier genauso gilt:
+   `.k-checkbox-box` traegt `aria-hidden="true"`, und saemtliche Zustaende
+   kommen ueber Geschwisterwaehler vom `<input>` (`input:checked + …` usw.,
+   unten) — nirgends haengt ein `:hover`, ein Aktiv-Zustand oder ein
+   JS-Handler am Kasten selbst. Der Haken und das Minus erben `none` und
+   brauchen keine eigene Zeile. Ein Klick auf den Kasten geht danach auf das
+   Feld darunter, am Rand auf das `<label>` — beide schalten. */
 .k-checkbox-box {
+  pointer-events: none;
   position: relative;
   flex: none;
   display: grid;
   place-items: center;
   background: var(--k-sunken, var(--k-field));
   border: 1px solid var(--k-line-strong);
-  border-radius: var(--k-radius-xs);
+  /* Form-Familie 21.09.2026: quadratisches Kästchen (16×16 / 20×20) →
+     vollrund heisst hier wirklich Kreis. Der Owner-Satz «keine Quadrate
+     mit abgerundeten Kanten sondern Kreise» trifft nirgends so wörtlich
+     wie hier. Kein Radio-Knopf im System, mit dem der Kreis verwechselt
+     werden könnte (`grep -rn "radio" packages/kosmo-ui/src` → 0).
+     War `--k-radius-xs`. */
+  border-radius: var(--k-radius-pill);
   color: var(--k-signal-tinte, #fff);
   transition: background var(--k-motion-fast), border-color var(--k-motion-fast);
+}
+/* v0.1.8 (Vorprobe R24, Befund e): im dunklen Thema war das leere Kästchen ein fast schwarzer Kreis
+   (`--k-sunken` #08090d) mit einem Rand von 18 % Weiss — am Gerät las es sich als «schwarzer Kreis ohne Spur»
+   («Schatten anzeigen», Tür «Antrieb»/«Absturz»). Leer ist es jetzt ein klarer Ring auf dem Grund der Fläche,
+   gewählt bleibt es die volle Akzentscheibe. Dasselbe für die Spur des Schalters. Probe
+   `e2e/schalter-dunkel-r24.spec.ts` (Kontrast Ring gegen Fläche ≥ 3:1). */
+[data-theme='orbit'] .k-checkbox-box {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+[data-theme='orbit'] .k-switch-strecke {
+  border-color: rgba(255, 255, 255, 0.55);
 }
 .k-checkbox--sm .k-checkbox-box {
   width: 16px;
@@ -3966,6 +4592,9 @@ progress {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
+  /* v0.1.8 (Gerät-Nachprobe Runde 22): ein Schieber, der nur noch so breit ist wie sein Knopf, ist keiner — am
+     Gerät (WebKitGTK) schrumpfte er als Flex-Kind genau darauf. Die Spur bleibt mindestens so lang. */
+  min-width: 64px;
   background: transparent;
   cursor: pointer;
 }
@@ -4049,7 +4678,12 @@ progress {
   width: 100%;
   min-height: 72px;
   border: 1px solid var(--k-line);
-  border-radius: var(--k-radius-md);
+  /* BEFUND zur Form-Familie (21.09.2026), bewusst NICHT umgebaut: das
+     Textfeld ist ein Bedienelement, aber mehrzeilig (`min-height: 72px`) —
+     vollrund ergäbe 36px-Ecken, in die der Text bei 6px/12px Polsterung
+     hineinliefe (UI-Regel 2: kein Text verlässt seine Box). Es bleibt
+     darum auf der Flächenrundung R und wartet auf den Owner-Entscheid. */
+  border-radius: var(--k-radius);
   background: var(--k-sunken, var(--k-field));
   color: var(--k-ink);
   padding: 6px var(--k-s4);
@@ -4105,4 +4739,94 @@ progress {
 .k-table--dicht th,
 .k-table--dicht td {
   padding: var(--k-s2) var(--k-s3);
+}
+
+/* ══ KVergleich (C45, Owner-Wahl B, 01.10.2026) ═════════════════════════════
+   Zwei Varianten übereinander, eine Linie mit Griff teilt sie, darunter der
+   Sprung-Umschalter. Die Gleitbewegung beim Sprung steht in bewegung.css. */
+.k-vergleich {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s3);
+}
+.k-vergleich-flaeche {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--k-radius);
+  touch-action: none;
+  user-select: none;
+  cursor: ew-resize;
+}
+.k-vergleich-rechts {
+  position: absolute;
+  inset: 0;
+}
+.k-vergleich-name {
+  position: absolute;
+  top: var(--k-s3);
+  padding: var(--k-s1) var(--k-s3);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+  color: var(--k-ink);
+  font-size: var(--k-t-sm);
+  pointer-events: none;
+}
+.k-vergleich-name--links {
+  left: var(--k-s3);
+}
+.k-vergleich-name--rechts {
+  right: var(--k-s3);
+}
+.k-vergleich-linie {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--k-surface);
+  box-shadow: var(--k-shadow-raised);
+  outline: none;
+}
+.k-vergleich-griff {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--k-surface);
+  border: 2px solid var(--k-line-strong);
+  color: var(--k-ink);
+}
+.k-vergleich-linie:focus-visible .k-vergleich-griff {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 2px;
+}
+.k-vergleich-sprung {
+  align-self: center;
+  display: flex;
+  gap: var(--k-s1);
+  padding: var(--k-s1);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+}
+.k-vergleich-sprung button {
+  min-height: 44px;
+  padding: 0 var(--k-s4);
+  border: none;
+  border-radius: var(--k-radius-pill);
+  background: transparent;
+  color: var(--k-ink-soft);
+  font: inherit;
+  font-size: var(--k-t-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.k-vergleich-sprung button[aria-pressed='true'] {
+  background: var(--k-raised);
+  color: var(--k-ink);
 }

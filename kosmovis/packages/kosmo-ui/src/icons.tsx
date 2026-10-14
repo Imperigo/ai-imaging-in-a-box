@@ -49,7 +49,8 @@ export type KIconName =
   | 'palette'
   | 'ueberlagerung'
   | 'ruecksetzen'
-  | 'scan';
+  | 'scan'
+  | 'speichern';
 
 const REGISTRY: Record<KIconName, ReactNode> = {
   zahnrad: (
@@ -249,6 +250,14 @@ const REGISTRY: Record<KIconName, ReactNode> = {
     <>
       <path d="M2 5V3a1 1 0 0 1 1-1h2M14 5V3a1 1 0 0 0-1-1h-2M2 11v2a1 1 0 0 0 1 1h2M14 11v2a1 1 0 0 1-1 1h-2" />
       <path d="M2.5 8h11" />
+    </>
+  ),
+  /** Der Speicher-Kreis neben dem Zahnrad (Entwurf A, `docs/entwuerfe/palette-und-speichern/`, 30.09.2026). */
+  speichern: (
+    <>
+      <path d="M3 2.5h8l2.5 2.5v8.5H3Z" />
+      <path d="M5.5 2.5v3h5v-3" />
+      <rect x="5" y="9" width="6" height="4.5" rx=".6" />
     </>
   ),
 };

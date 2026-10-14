@@ -1,7 +1,7 @@
 import { bestaetigen, melde, meldeFehler } from '@kosmo/ui';
-import type { VisGraph } from '@kosmo/kernel';
+import type { VisGraph, VisNode } from '@kosmo/kernel';
 import { useProject } from '../../state/project-store';
-import { basisNodeHoehe, NODE_W } from './NodeCanvas';
+import { basisNodeHoehe, groessteNodeHoehe, NODE_W } from './NodeCanvas';
 import { useVisRuntime } from './vis-runtime';
 
 /**
@@ -98,14 +98,18 @@ export function dreiStimmungenEinfuegen(graphIdVorgabe?: string): void {
       };
       const verbinde = (from: string, fromPort: string, to: string, toPort: string) =>
         runCommand('vis.verbinden', { graphId: gid!, from, fromPort, to, toPort });
-      const zeilenAbstand = Math.max(basisNodeHoehe('stimmung'), basisNodeHoehe('kombinierer'), basisNodeHoehe('render')) + 40;
+      // KV-B5-Nachgang: Zeilenabstand und Anschluss nach unten mit der
+      // GROESSTEN Hoehe (`groessteNodeHoehe`), nicht der Basishoehe. Gemessen
+      // (Chromium, 1920×1080): ein laufender Render-Knoten ist 702 px hoch und
+      // reichte bei 620 px Zeilenabstand 82 px in den Render-Knoten darunter.
+      const zeilenAbstand = Math.max(groessteNodeHoehe('stimmung'), groessteNodeHoehe('kombinierer'), groessteNodeHoehe('render')) + 40;
       const spaltenAbstand = NODE_W + 80;
       const stimmungX = 320;
       const kombX = stimmungX + spaltenAbstand;
       const renderX = kombX + spaltenAbstand;
       const vergleichX = renderX + spaltenAbstand;
       const bestehend = doc.get<VisGraph>(gid)?.nodes ?? [];
-      const basisY = bestehend.length === 0 ? 0 : Math.max(0, ...bestehend.map((n) => n.y + basisNodeHoehe(n.typ))) + 40;
+      const basisY = bestehend.length === 0 ? 0 : Math.max(0, ...bestehend.map((n) => n.y + groessteNodeHoehe(n.typ))) + 40;
       const modell = setze('modell', 40, basisY + 260);
       const material = setze('material', 40, basisY + 420);
       const vergleich = setze('vergleich', vergleichX, basisY + zeilenAbstand + 40);
@@ -146,7 +150,13 @@ export function kameraVorschlagenAktion(graphIdVorgabe?: string): void {
       let graph = doc.get<VisGraph>(gid)!;
       let kameraNode = graph.nodes.find((n) => n.typ === 'kamera');
       if (!kameraNode) {
-        runCommand('vis.nodeSetzen', { graphId: gid, typ: 'kamera', x: 40, y: 40 });
+        // KV-B5-Nachgang: (40, 40) ist der Wunschplatz, nicht mehr der feste.
+        // Gemessen (Chromium, 1400×900, Modell/Prompt/Render aus der Palette):
+        // der Render-Knoten liegt bei (220, 20), die Kamera landete auf
+        // (40, 40) und ueberdeckte ihn 20 px breit ueber ihre ganze Hoehe —
+        // geprueft wurde hier nie. Jetzt dieselbe Platzsuche wie die Palette.
+        const platz = freierKnotenPlatz(graph.nodes, 'kamera', { x: 40, y: 40 });
+        runCommand('vis.nodeSetzen', { graphId: gid, typ: 'kamera', x: platz.x, y: platz.y });
         graph = doc.get<VisGraph>(gid)!;
         kameraNode = graph.nodes[graph.nodes.length - 1]!;
         // Posten 6 (`auftraege/von-homestation/auf-orbit-20260828-16.md`,
@@ -196,6 +206,63 @@ export function kameraVorschlagenAktion(graphIdVorgabe?: string): void {
   }
 }
 
+/** Mindestabstand zwischen zwei Knoten bei der Platzsuche (Welt-Pixel). */
+const KNOTEN_ABSTAND = 24;
+
+/**
+ * Ein freier Platz fuer einen neuen Knoten der Art `typ`, so nah wie moeglich
+ * an `start` (linke obere Ecke) — die Spiral-Platzsuche, die bis zum
+ * KV-B5-Nachgang (06.10.2026) nur in `nodeHinzufuegen` lebte. Jetzt ruft sie
+ * auch `kameraVorschlagenAktion`, die ihren Knoten bis dahin ungeprueft auf
+ * (40, 40) setzte.
+ *
+ * KV-B5-Nachgang: geprueft wird mit der GROESSTEN Hoehe jedes Knotens
+ * (`groessteNodeHoehe`: Klapptext offen, Render-Knoten mitten im Lauf), nicht
+ * mit der Basishoehe — ein Knoten waechst nach dem Anlegen, und die Platzsuche
+ * darf ihm den Platz dafuer nicht wegnehmen. Fuer die Mitten-Verankerung
+ * (A21, in `nodeHinzufuegen`) bleibt die Basishoehe massgeblich.
+ *
+ * P-KNOTENPLATZ-KLEMME (27.08.2026, Begruendung in `nodeHinzufuegen`): die
+ * Randklemme (x, y >= 20) gilt fuer JEDEN Kandidaten VOR der Pruefung, damit
+ * die Pruefung genau die Koordinaten sieht, die auch geschrieben werden.
+ */
+export function freierKnotenPlatz(
+  bestehend: readonly Pick<VisNode, 'x' | 'y' | 'typ'>[],
+  typ: string,
+  start: { x: number; y: number },
+): { x: number; y: number } {
+  const eigeneHoehe = groessteNodeHoehe(typ);
+  const passtHier = (x: number, y: number) =>
+    !bestehend.some((n) => {
+      const nHoehe = groessteNodeHoehe(n.typ);
+      return (
+        x < n.x + NODE_W + KNOTEN_ABSTAND &&
+        x + NODE_W + KNOTEN_ABSTAND > n.x &&
+        y < n.y + nHoehe + KNOTEN_ABSTAND &&
+        y + eigeneHoehe + KNOTEN_ABSTAND > n.y
+      );
+    });
+  const klemme = (x: number, y: number) => ({ x: Math.max(20, x), y: Math.max(20, y) });
+  const anfang = klemme(start.x, start.y);
+  if (passtHier(anfang.x, anfang.y)) return anfang;
+  const SCHRITT = 60;
+  const WINKEL_JE_UMLAUF = 12;
+  for (let radius = 1; radius <= 40; radius++) {
+    for (let schritt = 0; schritt < WINKEL_JE_UMLAUF; schritt++) {
+      const winkel = (schritt / WINKEL_JE_UMLAUF) * Math.PI * 2;
+      const kand = klemme(
+        Math.round(start.x + radius * SCHRITT * Math.cos(winkel)),
+        Math.round(start.y + radius * SCHRITT * Math.sin(winkel) * 0.6),
+      );
+      if (passtHier(kand.x, kand.y)) return kand;
+    }
+  }
+  // Letzter Ausweg: unter allen bestehenden Knoten anhaengen. Auch hier
+  // geklemmt, damit der Rueckgabewert dieselbe Zusicherung traegt.
+  const maxY = bestehend.reduce((m, n) => Math.max(m, n.y + groessteNodeHoehe(n.typ)), start.y);
+  return klemme(start.x, maxY + KNOTEN_ABSTAND);
+}
+
 /** Node per Spiral-Platzsuche einfügen — identisch zu `VisWorkspace.tsx`s bisherigem `nodeHinzu()`. */
 export function nodeHinzufuegen(graphId: string, typ: string): void {
   if (!graphId) return;
@@ -203,14 +270,6 @@ export function nodeHinzufuegen(graphId: string, typ: string): void {
   try {
     const bestehend = doc.get<VisGraph>(graphId)?.nodes ?? [];
     const eigeneHoehe = basisNodeHoehe(typ);
-    const ABSTAND = 24;
-    const passtHier = (x: number, y: number) =>
-      !bestehend.some((n) => {
-        const nHoehe = basisNodeHoehe(n.typ);
-        return (
-          x < n.x + NODE_W + ABSTAND && x + NODE_W + ABSTAND > n.x && y < n.y + nHoehe + ABSTAND && y + eigeneHoehe + ABSTAND > n.y
-        );
-      });
     // W3-a (`docs/ENTSCHEID-KNOTENPLATZ-2026-08-26.md` Weg c) — bis hierhin
     // stand ein FESTER Welt-Anker (START_X=100, START_Y=60), der bei der
     // Standard-Pan/Zoom-Lage zufällig genau auf die Bildschirmecke abbildet,
@@ -222,7 +281,8 @@ export function nodeHinzufuegen(graphId: string, typ: string): void {
     // strukturell nicht erreichen. Fallback `{x:560,y:300}`, der heutige
     // `useState`-Default in `NodeCanvas.tsx`, falls der Store das Feld noch
     // nicht kennt (kein NodeCanvas gemountet). Die Spiral-Kollisionslogik
-    // (`passtHier`) bleibt unverändert — nur ihr Startpunkt wandert.
+    // (`passtHier`, seit KV-B5-Nachgang in `freierKnotenPlatz`) bleibt
+    // unverändert — nur ihr Startpunkt wandert.
     const anker = useVisRuntime.getState().canvasSichtMitte ?? { x: 560, y: 300 };
     // A21 (17.09.2026), Posten 1 + 16 aus `docs/RENDERPROJEKT-2026-09-10/
     // 73-BEFUNDE-OHNE-BESITZER.md` — DER STRUKTURFEHLER, den A15 gefunden und
@@ -295,27 +355,10 @@ export function nodeHinzufuegen(graphId: string, typ: string): void {
     // `klemme` wird jetzt auf JEDEN Kandidaten angewendet, bevor `passtHier`
     // ihn beurteilt, und der Rueckgabewert geht ungeklemmt weiter — die
     // Pruefung sieht damit genau die Koordinaten, die auch geschrieben werden.
-    const klemme = (x: number, y: number) => ({ x: Math.max(20, x), y: Math.max(20, y) });
-    const findeSpiralPlatz = (): { x: number; y: number } => {
-      const SCHRITT = 60;
-      const WINKEL_JE_UMLAUF = 12;
-      for (let radius = 1; radius <= 40; radius++) {
-        for (let schritt = 0; schritt < WINKEL_JE_UMLAUF; schritt++) {
-          const winkel = (schritt / WINKEL_JE_UMLAUF) * Math.PI * 2;
-          const kand = klemme(
-            Math.round(START_X + radius * SCHRITT * Math.cos(winkel)),
-            Math.round(START_Y + radius * SCHRITT * Math.sin(winkel) * 0.6),
-          );
-          if (passtHier(kand.x, kand.y)) return kand;
-        }
-      }
-      // Letzter Ausweg: unter allen bestehenden Knoten anhaengen. Auch hier
-      // geklemmt, damit der Rueckgabewert dieselbe Zusicherung traegt.
-      const maxY = bestehend.reduce((m, n) => Math.max(m, n.y + basisNodeHoehe(n.typ)), START_Y);
-      return klemme(START_X, maxY + ABSTAND);
-    };
-    const start = klemme(START_X, START_Y);
-    const { x, y } = passtHier(start.x, start.y) ? start : findeSpiralPlatz();
+    // Klemme, Spirale und letzter Ausweg stehen seit dem KV-B5-Nachgang in
+    // `freierKnotenPlatz` (oben) — dieselben Schritte, geprueft wird dort
+    // aber mit der groessten Knotenhoehe statt der Basishoehe.
+    const { x, y } = freierKnotenPlatz(bestehend, typ, { x: START_X, y: START_Y });
     runCommand('vis.nodeSetzen', { graphId, typ, x, y });
     // A21 — WAS DER MITTEN-ANKER FUER DIE B69-MELDUNG UNTEN KOSTET, offen
     // gesagt, weil es in die unerwartete Richtung geht. Gemessen (acht

@@ -109,7 +109,9 @@ export function KPanelZweiStufen({
           {tabs.length > 1 && (
             <div className="k-panel-zwei-tabreihe">
               <KTabs
-                items={tabs}
+                // A4 (KosmoMaus-Bedienbarkeit): jeder Reiter trägt eine feste Kennung
+                // `<testid>-tab-<id>`, sofern er keine eigene mitbringt.
+                items={testid !== undefined ? tabs.map((t) => (t.testid !== undefined ? t : { ...t, testid: `${testid}-tab-${t.id}` })) : tabs}
                 aktiv={aktiverTab}
                 onChange={onTabWechseln}
                 size="sm"

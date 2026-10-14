@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { KWarteOrt } from '@kosmo/ui';
 import { bildBlob } from './vis-jobs';
 
 /**
@@ -62,12 +63,15 @@ export function BridgeBild({
     );
   }
   if (!url) {
+    // Fortschritt am Ort (Owner 06.10.2026): das Holen hat keine Zahl (ein Blob in einem Stück), darum eine
+    // unbestimmte Leiste mit Worten statt «lädt …» — sie atmet, statt einen Anteil vorzutäuschen (Regel G6).
     return (
       <div
+        data-testid={testid ? `${testid}-laedt` : undefined}
         className={className}
-        style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--k-ink-faint)', border: '1px dashed var(--k-line)', minHeight: 60 }}
+        style={{ ...style, display: 'flex', alignItems: 'center', minHeight: 60, padding: '0 var(--k-s3)', border: '1px dashed var(--k-line)' }}
       >
-        lädt …
+        <KWarteOrt form="leiste" text="Bild wird geholt" style={{ width: '100%' }} />
       </div>
     );
   }

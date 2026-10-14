@@ -11,20 +11,27 @@ import {
 // `insel-ruhe.ts` — dort auch die Begruendung, warum ein Fenster ausgenommen ist.
 import { ruheVerzoegerung } from './insel-ruhe';
 import {
-  DESIGN_INSELN,
+  DESIGN_INSELN_STANDARD,
   designInselKonfig,
+  gruppeFuerWerkzeug,
+  ordneNachGruppen,
+  ZEICHNEN_GRUPPEN,
   type InselKonfig,
+  type IslandGruppeId,
   type IslandId,
   type IslandWerkzeug,
 } from './island-katalog';
+import { registriereAktivierung, topDreiHaeufigste } from './gruppenschiene-haeufigkeit';
 import { ISLAND_PILL_GLYPHEN } from './island-glyphen';
-import { istTouchArtig, KTooltip, motion, useOverlaySchliessen } from '@kosmo/ui';
+import { istTouchArtig, KChip, KTooltip, motion, useOverlaySchliessen } from '@kosmo/ui';
 import { bevorzugtReduzierteBewegung } from '../../../state/cursor-zustand';
 import { useProject } from '../../../state/project-store';
 import { touchUndoGesteAktiv } from '../../../state/touch-undo';
 import { werkzeugInPhaseSichtbar } from '../../../state/phasen-matrix';
 import { designInhaltsRegistry, type InhaltsRegistry } from './inhalte/registry';
 import { InselStufeContext } from './insel-stufe';
+import { Kreismenue } from './kreismenue';
+import { istEingabefeld, istKreismenueTaste } from '../kurztasten';
 // Registrierung der Stufe-2/3-Inhalte als Import-Seiteneffekt (Fable-Naht
 // für PD3a ‖ PD3b — s. `inhalte/registry.ts`-Kopfkommentar).
 import './inhalte/zeichnen';
@@ -35,6 +42,7 @@ import './inhalte/austausch';
 // fünfter Import, registriert das neue PROJEKT-Werkzeug `profil` (eigene
 // Datei statt `inhalte/projekt.tsx`, um deren Dateikreis nicht anzufassen).
 import './inhalte/profile';
+import { useLeisteAusweichen } from './leiste-lage';
 import './island.css';
 
 /**
@@ -60,7 +68,7 @@ import './island.css';
 const TOAST_MS = 1700;
 /** PB2 (Bauauftrag Punkt 2): Verzögerung, bevor der Lang-Hover-Tooltip am
  *  Werkzeugknopf erscheint. */
-const TOOLTIP_VERZOEGERUNG_MS = 600;
+const TOOLTIP_VERZOEGERUNG_MS = 300; // U26 (Variante A): das Wort steht nicht mehr im Knopf — es kommt beim Zeigen, früher als die 600 ms des Lang-Hover-Hinweises.
 /** D-8 (E-8 C, `docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`): der Lang-Hover-
  *  Tooltip ist auf Touch unsichtbar (kein Hover; der Tap feuert zwar
  *  `pointerenter`, aber `pointerleave` folgt beim Fingerheben lange vor den
@@ -169,6 +177,36 @@ function WerkzeugGlyphe({ glyphe, size }: { glyphe: string | ComponentType<{ siz
   if (typeof glyphe === 'string') return <>{glyphe}</>;
   const Icon = glyphe;
   return <Icon size={size} />;
+}
+
+/**
+ * K1-Nachbesserung (`docs/AUFTRAG-EINBAU-B163-KOSMODESIGN-AN-INTEGRATOR.md`
+ * K1) — Gruppen-testid je `IslandGruppeId`. 1:1 identisch mit
+ * `e2e/helpers/werkzeug-oeffnen.ts`s `GRUPPEN_TESTID_VORSCHLAG` (dort als
+ * Vorschlag dokumentiert, weil die Gruppenschiene noch nicht gebaut war —
+ * hier ist jetzt die tatsächliche Quelle). Von Hand synchron gehalten statt
+ * importiert: `apps/` importiert nicht aus `e2e/` (dieselbe Trennung wie
+ * überall sonst im Repo) — wer eine Seite ändert, ändert die andere mit.
+ */
+const GRUPPENSCHIENE_TESTID: Readonly<Record<IslandGruppeId, string>> = {
+  bauteile: 'isl-gruppe-bauteile',
+  oeffnenErschliessen: 'isl-gruppe-oeffnen-erschliessen',
+  einrichten: 'isl-gruppe-einrichten',
+  raeumeFlaechen: 'isl-gruppe-raeume-flaechen',
+  messenBeschriften: 'isl-gruppe-messen-beschriften',
+  skizzieren: 'isl-gruppe-skizzieren',
+};
+
+/** Reine Lupe (Suche) — inline statt eines neuen Eintrags in
+ *  `werkzeug-icons.tsx` (die Datei liegt ausserhalb dieses Dateikreises,
+ *  `modules/design/werkzeug-icons.tsx` ist NICHT unter `island/**`). */
+function IconGruppenschieneSuche({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
 }
 
 /**
@@ -744,7 +782,9 @@ function useViewportKlammer(ref: { current: HTMLElement | null }, aktiv: boolean
  * Mess-/Setz-Rückkopplung geraten wie eine Beobachtung der eigenen Grösse.
  */
 export const ISL_GESCHOSS_PILLE_UNTERKANTE_PX = 120;
-export const ISL_WERKZEUG_HOEHE_PX = 56;
+// U26 (Variante A): der Knopf ist ein Kreis von 44 ohne Beschriftungszeile; 48 = 44 + Luft für die
+// Gruppen-Trenner (je 12 px, höchstens zwei je Spalte) statt der früheren 56 für Symbol und Wort.
+export const ISL_WERKZEUG_HOEHE_PX = 48;
 export const ISL_WERKZEUG_ABSTAND_PX = 2;
 export const ISL_LEISTE_RAHMEN_PX = 56;
 export const ISL_LEISTE_RESERVE_PX = 2 * ISL_GESCHOSS_PILLE_UNTERKANTE_PX;
@@ -768,6 +808,28 @@ export function leistenZeilen(anzahl: number, fensterHoehe: number): number {
 }
 
 /**
+ * v0.1.6 S1c (Probe `e2e/b151-werkzeugleiste-bleibt-erreichbar.spec.ts`):
+ * wie viele Pixel vom rechten Fensterrand die Leiste belegt, wenn sie an der
+ * RECHTEN Seite steht — sonst 0.
+ *
+ * Warum das gebraucht wird: das Kosmo-Feld weicht der offenen Leiste aus
+ * (`.kp-panel--insel-offen`, kosmo-panel.css, B151), aber mit einer festen
+ * Zahl (112 px). Die passt nur zur EINSPALTIGEN Leiste (1400x900: 71 px breit,
+ * beginnt bei x 1306). Bei 1280x820 und 1024x768 bricht dieselbe Leiste in
+ * zwei Spalten um (`leistenZeilen`, E-10), ist 132 px breit, und das Feld
+ * reichte 43 px in sie hinein: jede Sprechblase am Feldrand (gemessen:
+ * «Kein Sprachmodell») deckte das oberste Werkzeug ab. Die Breite der Leiste
+ * ist eine gemessene Grösse; die feste Zahl war eine Annahme über sie.
+ *
+ * Eine Leiste, die in der linken Fensterhälfte beginnt, steht links und
+ * stört das Feld nicht.
+ */
+export function leisteBelegtVomRechtenRand(leisteLinks: number, fensterBreite: number): number {
+  if (!(fensterBreite > 0) || !(leisteLinks > fensterBreite / 2)) return 0;
+  return Math.max(0, Math.round(fensterBreite - leisteLinks));
+}
+
+/**
  * Hält `--isl-zeilen` auf der Leiste aktuell — beim Mount und bei jeder
  * Fenster-Grössenänderung (iPad-Drehung, geteilter Bildschirm). Wie
  * `useViewportKlammer` ein `useLayoutEffect`: die Spaltenzahl steht vor dem
@@ -777,14 +839,35 @@ function useLeistenSpalten(ref: { current: HTMLElement | null }, anzahl: number,
   useLayoutEffect(() => {
     const el = ref.current;
     if (!aktiv || !el) return;
+    const wurzel = document.documentElement;
+    let veroeffentlicht = false;
     const setzen = () => {
       const hoehe = typeof window === 'undefined' ? 0 : window.innerHeight;
       el.style.setProperty('--isl-zeilen', String(leistenZeilen(anzahl, hoehe)));
+      // v0.1.6 S1c: die Breite, die die Leiste vom rechten Rand belegt, geht
+      // an das Kosmo-Feld (`--isl-leiste-frei`, island.css). Erst NACH den
+      // Zeilen gemessen, weil erst sie die Spaltenzahl festlegen.
+      const leiste = el.closest('.isl-leiste') ?? el;
+      const frei = leisteBelegtVomRechtenRand(leiste.getBoundingClientRect().left, window.innerWidth);
+      if (frei > 0) {
+        wurzel.style.setProperty('--isl-leiste-frei', `${frei}px`);
+        veroeffentlicht = true;
+      } else if (veroeffentlicht) {
+        wurzel.style.removeProperty('--isl-leiste-frei');
+        veroeffentlicht = false;
+      }
     };
     setzen();
     if (typeof window === 'undefined') return;
     window.addEventListener('resize', setzen);
-    return () => window.removeEventListener('resize', setzen);
+    const beobachter =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(setzen);
+    beobachter?.observe(el);
+    return () => {
+      window.removeEventListener('resize', setzen);
+      beobachter?.disconnect();
+      if (veroeffentlicht) wurzel.style.removeProperty('--isl-leiste-frei');
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aktiv, anzahl]);
 }
@@ -913,6 +996,8 @@ export interface IslandShellHandle {
    * unterscheidet sich.
    */
   oeffneFensterFuerWerkzeug(werkzeugId: string): boolean;
+  /** Lieferung 42: schliesst Popup/Fenster dieses Werkzeugs, falls es gerade offen ist (`ui.panelSetzen … false`). */
+  schliesseWerkzeug(werkzeugId: string): boolean;
 }
 
 export interface IslandShellProps {
@@ -1067,6 +1152,11 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
       oeffnePopupFuerWerkzeug(werkzeugId: string): boolean {
         const ziel = sichtbareWerkzeuge.find((w) => w.id === werkzeugId);
         if (!ziel || !ziel.hatPopup) return false;
+        // Ein von aussen geoeffnetes Popup (Kosmo, Toast, Flag) darf nicht von
+        // einem noch laufenden Rueckklapp-Timer eines frueheren Verlassens
+        // wieder zugeklappt werden (Fund Helfer S, 06.10.2026: Fenster 0,6 s
+        // nach dem Verlassen der Leiste geoeffnet, danach Pille).
+        raeumeRueckklappTimer();
         setAktivesWerkzeugId(ziel.id);
         setStufe('popup');
         return true;
@@ -1074,12 +1164,19 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
       oeffneFensterFuerWerkzeug(werkzeugId: string): boolean {
         const ziel = sichtbareWerkzeuge.find((w) => w.id === werkzeugId);
         if (!ziel || !ziel.hatPopup) return false;
+        raeumeRueckklappTimer();
         setAktivesWerkzeugId(ziel.id);
         setStufe('fenster');
         return true;
       },
+      schliesseWerkzeug(werkzeugId: string): boolean {
+        if (aktivesWerkzeugId !== werkzeugId || (stufe !== 'popup' && stufe !== 'fenster')) return false;
+        setStufe('leiste');
+        setAktivesWerkzeugId(null);
+        return true;
+      },
     }),
-    [sichtbareWerkzeuge],
+    [sichtbareWerkzeuge, aktivesWerkzeugId, stufe],
   );
   /** PB2 (Bauauftrag Punkt 2): welches Werkzeug gerade seinen Lang-Hover-
    *  Tooltip zeigt (`null` = keiner) — unabhängig von `stufe`. */
@@ -1088,6 +1185,45 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
    *  `austritt` schaltet auf die `--k-motion-fast`-Ausblendphase, bevor der
    *  Timer das Element ganz entfernt (s. Konstanten-Kommentar oben). */
   const [touchBadge, setTouchBadge] = useState<{ text: string; austritt: boolean } | null>(null);
+
+  /**
+   * K1-Nachbesserung — Gruppenschiene-Zustand. Nur relevant, wenn
+   * `inselKonfig.gruppenschiene === true` (s. `island-katalog.ts`s
+   * `InselKonfig.gruppenschiene`-Kommentar für den Grund, warum der
+   * `zeichnen`-Default das NICHT trägt) — bei allen übrigen Inseln bleiben
+   * diese States ungenutzt und ändern nichts am bisherigen flachen Grid.
+   */
+  const gruppenschieneAktiv = inselKonfig.gruppenschiene === true;
+  /**
+   * Nachbesserung (Owner-Gegenpruefung dl-d4-gruppenschiene, 25.09.2026,
+   * Fund 4) — die zwei neuen K2-Werkzeuge (`moebel`/`leuchte`) haben seit
+   * der K2-Nachbesserung einen Katalog-Eintrag in ZEICHNEN (26 statt 24,
+   * s. `island-katalog.ts`), aber noch KEINE eigene Gruppenkarte in der
+   * flachen Leiste — die gehoert ihnen erst, sobald `gruppenschieneAktiv`
+   * ist (dort leben sie in der Gruppe «Einrichten»). Solange sie in der
+   * flachen Liste bloss dazwischenstehen, blaeht das die ZEICHNEN-Leiste
+   * auf 26 Knoepfe auf und sprengt ihre gemessene Breitengrenze (rot vor
+   * gruen: `e2e/b140-leiste-klappt-weg.spec.ts`, KONTROLLFALL 1024x768 —
+   * 257px statt 210px, zweimal gleich gemessen, vor dieser Aenderung).
+   * Bis die Gruppenschiene Standard ist (offener Punkt, s. Uebergabe-
+   * Hinweis in `island-katalog.ts`), bleibt die FLACHE Leiste darum bei
+   * ihren alten 24 — der Katalog-Eintrag selbst bleibt unveraendert (K2
+   * ist fertig gebaut), nur der flache Auftritt wartet auf denselben
+   * Umschalter wie K1. Wird auch der `useLeistenSpalten`-Spaltenrechnung
+   * unten mitgegeben, sonst rechnet sie mit 26 und zeigt nur 24 — die
+   * Spaltenzahl waere dann zu hoch gegriffen.
+   */
+  const NUR_GRUPPENSCHIENE_IDS = new Set<string>(['moebel', 'leuchte']);
+  // U26 (Variante A): Reihenfolge und Gruppen-Trenner der Inseln ohne Gruppenschiene (`INSEL_GRUPPEN`).
+  const { liste: flacheWerkzeuge, gruppenAnfang } = ordneNachGruppen(
+    island,
+    gruppenschieneAktiv ? sichtbareWerkzeuge : sichtbareWerkzeuge.filter((w) => !NUR_GRUPPENSCHIENE_IDS.has(w.id)),
+  );
+  const [offeneGruppe, setOffeneGruppe] = useState<IslandGruppeId | null>(null);
+  const [sucheOffen, setSucheOffen] = useState(false);
+  const [sucheText, setSucheText] = useState('');
+  const [topDrei, setTopDrei] = useState<string[]>(() => topDreiHaeufigste());
+  const sucheEingabeRef = useRef<HTMLInputElement | null>(null);
 
   const rueckklappTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1150,7 +1286,7 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
   // ihre Spaltenzahl zu rechnen waere eine Messung am leeren Ref.
   useLeistenSpalten(
     werkzeugeRef,
-    sichtbareWerkzeuge.length,
+    flacheWerkzeuge.length,
     orientierung === 'vertikal' && stufe !== 'pill' && !leisteVerborgen,
   );
 
@@ -1294,6 +1430,20 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
     // konsumieren und zurücksetzen (s. `zeigerWarTouch`-Kommentar oben).
     const warTouch = zeigerWarTouch.current;
     zeigerWarTouch.current = false;
+    // K1-Nachbesserung — Häufigkeits-Zähler: JEDE Aktivierung eines
+    // Zeichnen-Werkzeugs über die Gruppenschiene zählt, gleich ob per
+    // Direktknopf (drei häufigste), Gruppenkarte-Kachel oder Suchtreffer —
+    // alle drei Wege laufen durch genau diese eine Funktion.
+    if (gruppenschieneAktiv) {
+      registriereAktivierung(w.id);
+      setTopDrei(topDreiHaeufigste());
+      // Eine offene Gruppenkarte/Suche macht Platz für das Werkzeug-Popup,
+      // statt räumlich mit ihm zu kollidieren (beide öffnen an derselben
+      // Stelle neben der Leiste, `island.css`s `.isl-gruppenschiene-karte`).
+      setOffeneGruppe(null);
+      setSucheOffen(false);
+      setSucheText('');
+    }
     if (!w.hatPopup) {
       // Der Toast IST hier bereits das «Label bei Aktivierung» — für jeden
       // Zeigertyp (D-8: kein zweites Schild nötig).
@@ -1361,6 +1511,75 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
     aussenklick: false,
   });
 
+  /**
+   * K1-Nachbesserung — Gruppenkarte: Esc ODER ein zweiter Klick auf
+   * DIESELBE Gruppe klappt sie zu (`aufGruppeKlick` unten übernimmt den
+   * zweiten Fall direkt am Knopf; dieser Hook trägt Esc + Aussenklick,
+   * dasselbe Muster wie Popup/Fenster oben).
+   */
+  useOverlaySchliessen(wurzelRef, () => setOffeneGruppe(null), {
+    esc: offeneGruppe !== null,
+    aussenklick: offeneGruppe !== null,
+  });
+
+  /** Dieselbe Schliessen-Konvention für die Suchkarte. */
+  useOverlaySchliessen(
+    wurzelRef,
+    () => {
+      setSucheOffen(false);
+      setSucheText('');
+    },
+    { esc: sucheOffen, aussenklick: sucheOffen },
+  );
+
+  /**
+   * K1 (`docs/AUFTRAG-EINBAU-B163-KOSMODESIGN-AN-INTEGRATOR.md` §K1,
+   * wörtlich): «ein Klick auf die Lupe ODER die Taste `/` öffnet ein Feld».
+   * Scoped auf DIESE Insel-Instanz (nur wenn `gruppenschieneAktiv` UND die
+   * Leiste ohnehin schon offen ist, `stufe !== 'pill'`) und nur, solange der
+   * Fokus NICHT bereits in einem Eingabefeld steht — sonst würde jedes `/`
+   * in einem Notiz-/Kommentar-Text die Suche aufreissen. Gegen
+   * `kurztasten.ts` geprüft: `/` ist dort frei (kein Eintrag, s. Bau-Bericht
+   * der Nachbesserung) — und diese Taste lebt ohnehin NICHT in der globalen
+   * Registry, sondern lokal an dieser Insel, kollidiert also strukturell mit
+   * keinem globalen Kürzel.
+   */
+  useEffect(() => {
+    if (!gruppenschieneAktiv || stufe === 'pill') return;
+    function aufTastendruck(e: KeyboardEvent): void {
+      if (e.key !== '/') return;
+      const ziel = e.target as HTMLElement | null;
+      const editierbar =
+        ziel !== null && (ziel.tagName === 'INPUT' || ziel.tagName === 'TEXTAREA' || ziel.isContentEditable === true);
+      if (editierbar) return;
+      e.preventDefault();
+      oeffneSuche();
+    }
+    window.addEventListener('keydown', aufTastendruck);
+    return () => window.removeEventListener('keydown', aufTastendruck);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gruppenschieneAktiv, stufe]);
+
+  /** Das Suchfeld bekommt den Fokus, sobald es erscheint. */
+  useEffect(() => {
+    if (sucheOffen) sucheEingabeRef.current?.focus();
+  }, [sucheOffen]);
+
+  /** Ein Klick auf eine Gruppe klappt ihre Karte auf; derselbe Klick auf die
+   *  BEREITS offene Gruppe klappt sie zu (K1, wörtlich «Ein zweiter Klick …
+   *  klappt zu»). */
+  function aufGruppeKlick(gruppeId: IslandGruppeId): void {
+    setSucheOffen(false);
+    setSucheText('');
+    setOffeneGruppe((aktuell) => (aktuell === gruppeId ? null : gruppeId));
+  }
+
+  function oeffneSuche(): void {
+    setOffeneGruppe(null);
+    setSucheOffen((offen) => !offen);
+    setSucheText('');
+  }
+
   function raeumeTooltipTimer(): void {
     if (tooltipTimer.current) {
       clearTimeout(tooltipTimer.current);
@@ -1379,6 +1598,171 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
     raeumeTooltipTimer();
     setTooltipWerkzeugId(null);
   }
+
+  /**
+   * K1-Nachbesserung — aus dem bisherigen `.map`-Rumpf der flachen Leiste
+   * extrahiert (byte-identisches JSX, keine Verhaltensänderung für die
+   * bestehenden drei Inseln), damit die NEUE Gruppenschiene (Gruppenkarte,
+   * Suchtreffer, drei-häufigste-Direktknöpfe) denselben Werkzeugknopf
+   * wiederverwendet statt ihn zu duplizieren — ein Knopf, eine Stelle für
+   * Icon/Titel/Status-Suffix/Pfeil/Tooltip/Touch-Badge-Vorbereitung.
+   */
+  function werkzeugKnopf(w: IslandWerkzeug) {
+    return (
+      <button
+        key={w.id}
+        type="button"
+        // P-WERKZEUGLEISTE (O-T5): echte Wahrheit vor «zuletzt
+        // geklickt» — s. istWerkzeugAktiv-Prop-Kommentar oben.
+        className={`isl-werkzeug${istWerkzeugAktiv?.(w.id) === true ? ' isl-werkzeug--an' : ''}${gruppenAnfang.has(w.id) ? ' isl-werkzeug--gruppenanfang' : ''}`}
+        data-testid={`island-werkzeug-${w.id}`}
+        aria-pressed={istWerkzeugAktiv?.(w.id) ?? aktivesWerkzeugId === w.id}
+        onClick={() => aufWerkzeugKlick(w)}
+        // D-8 (E-8 B): Zeigertyp fürs folgende `onClick` merken —
+        // ereignisbasiert über den zentralen Helfer, kein Geräteraten.
+        onPointerDown={(e) => {
+          zeigerWarTouch.current = istTouchArtig(e);
+        }}
+        // D-8 (E-8 C): der 600ms-Tooltip bleibt der MAUS vorbehalten —
+        // auf Touch würde erst ein gedrückt gehaltener Finger ihn
+        // erreichen, also ein Long-press, den E-8 ausdrücklich NICHT
+        // einführt; Touch bekommt stattdessen das Aktivierungs-Badge.
+        onPointerEnter={(e) => {
+          if (!istTouchArtig(e)) aufWerkzeugTooltipEnter(w.id);
+        }}
+        onPointerLeave={aufWerkzeugTooltipLeave}
+      >
+        <span className="isl-werkzeug-glyphe" aria-hidden="true">
+          <WerkzeugGlyphe glyphe={w.glyphe} size={20} />
+        </span>
+        {/* Der Werkzeug-NAME bleibt als Textzeile unter dem Icon in
+            der Leiste (Bauauftrag Punkt 1) — nur die Pille oben
+            zeigt ausschliesslich das Icon.
+            P3 (PLH-STATUS-2): `status` war bis hierhin nirgends in
+            dieser Datei gelesen — Werkzeuge mit `status!=='vorhanden'`
+            sahen ununterscheidbar aus wie fertige. Gleiches Muster
+            wie `SpezWorkspace.tsx`s «Öffnen (Platzhalter)» (einzige
+            andere Lesestelle von `w.status` in der App): derselbe
+            Suffix, hier am Werkzeugtitel statt am Knopftext. */}
+        <span className="isl-werkzeug-titel">
+          {w.name}
+          {w.status === 'vorhanden' ? '' : ' (Platzhalter)'}
+        </span>
+        {/* K2 (`docs/AUFTRAG-EINBAU-B163-KOSMODESIGN-AN-INTEGRATOR.md` §K2,
+            wörtlich: «Der Knopf traegt die Marke Vorschlag, solange OE-RP4
+            offen ist») — `KChip` (`@kosmo/ui`) statt eigener Farb-/Rand-CSS,
+            derselbe Baustein wie die übrigen «neu»/Status-Marken im
+            Design-System (kontrast-geprüft dort, nicht hier neu erfunden). */}
+        {w.marke !== undefined && (
+          <KChip variant="status" data-testid={`island-werkzeug-${w.id}-marke`}>
+            {w.marke}
+          </KChip>
+        )}
+        {/* P-WERKZEUGLEISTE (O-T6): Werkzeuge MIT Einstellungen
+            (hatPopup) tragen den Pfeil sichtbar — vorher war
+            hatPopup reines Verhalten ohne Indikator. */}
+        {w.hatPopup && (
+          <span className="isl-werkzeug-pfeil" aria-hidden="true">
+            ▾
+          </span>
+        )}
+        {/* PB2 (Bauauftrag Punkt 2, D15): Lang-Hover-Tooltip ersetzt
+            den früheren Popup-Hinweisblock — viewport-geklammert
+            (`useViewportKlammer`, dieselbe Technik wie Popup/
+            Fenster), schliesst über Weg-Hover ODER Esc
+            (`useOverlaySchliessen` oben). */}
+        {tooltipWerkzeugId === w.id ? (
+          <div
+            ref={tooltipRef}
+            className="isl-werkzeug-tooltip"
+            role="tooltip"
+            data-testid={`island-werkzeug-${w.id}-tooltip`}
+          >
+            {w.name}
+            {w.hinweis ? ` — ${w.hinweis}` : ''}
+          </div>
+        ) : null}
+      </button>
+    );
+  }
+
+  /**
+   * K1-Nachbesserung — die zehn Rail-Knöpfe: Suche, drei häufigste
+   * (`topDrei`, `gruppenschiene-haeufigkeit.ts`), Trennlinie, sechs Gruppen
+   * (`ZEICHNEN_GRUPPEN`, `island-katalog.ts`). Nur berechnet, wenn
+   * `gruppenschieneAktiv` — sonst ungenutzt (kein Zusatzaufwand für die
+   * übrigen drei Inseln).
+   */
+  const topDreiWerkzeuge = gruppenschieneAktiv
+    ? (topDrei.map((id) => sichtbareWerkzeuge.find((w) => w.id === id)).filter(Boolean) as IslandWerkzeug[])
+    : [];
+  /**
+   * ALLE sechs `ZEICHNEN_GRUPPEN` bekommen ihren Rail-Knopf. «Einrichten»
+   * trägt seit der K2-Nachbesserung (`island-katalog.ts`s Übergabe-Hinweis
+   * Punkt 3) zwei echte Katalog-Einträge (`moebel`/`leuchte`) — die Karte
+   * ist damit nicht mehr strukturell leer; `isl-gruppenschiene-karte-leer`
+   * unten bleibt trotzdem als generischer, ehrlicher Fallback stehen (K1
+   * nennt «sechs Gruppen» verbindlich, eine spätere Gruppe ohne Werkzeuge
+   * darf nicht kommentarlos verschwinden).
+   */
+  const gruppenMitInhalt = gruppenschieneAktiv
+    ? ZEICHNEN_GRUPPEN.map((g) => ({
+        gruppe: g,
+        werkzeuge: g.werkzeugIds.map((id) => sichtbareWerkzeuge.find((w) => w.id === id)).filter(Boolean) as IslandWerkzeug[],
+      }))
+    : [];
+  const offeneGruppeInhalt = offeneGruppe ? gruppenMitInhalt.find((e) => e.gruppe.id === offeneGruppe) : undefined;
+  /** Suche: über ALLE gruppierten Werkzeuge (die «26» aus K1 — «Auswahl»
+   *  steht laut K1 ausdrücklich ausserhalb der Gruppen und damit auch
+   *  ausserhalb der Suche über diese Tabelle). */
+  const sucheTreffer =
+    gruppenschieneAktiv && sucheText.trim() !== ''
+      ? gruppenMitInhalt
+          .flatMap((e) => e.werkzeuge)
+          .filter((w) => w.name.toLowerCase().includes(sucheText.trim().toLowerCase()))
+      : [];
+
+  function aufSucheEnter(): void {
+    if (sucheTreffer.length > 0) aufWerkzeugKlick(sucheTreffer[0]!);
+  }
+
+  /**
+   * K8 (Paket d8-kreismenue, `kreismenue.tsx`) — Kreismenue am Zeiger, Taste
+   * Q. Nur die Insel mit Gruppenschiene traegt es (dieselben Gruppen, dieselbe
+   * Aktivierung); die anderen drei Inseln reagieren nicht auf Q. Der Zeigerort
+   * wird am Fenster mitgefuehrt (nur ein Zahlenpaar in einem Ref, kein
+   * Neuzeichnen), die Taste ist auf dieselbe Guard-Kette gelegt wie T
+   * (`istKreismenueTaste`, `kurztasten.ts`). Q oeffnet auch bei eingeklappter
+   * Pille: der Kreis ist ein Kurzweg, kein Teil der Leiste.
+   */
+  const [kreisOffen, setKreisOffen] = useState<{ x: number; y: number } | null>(null);
+  const letzterZeiger = useRef<{ x: number; y: number }>({
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
+  });
+  useEffect(() => {
+    if (!gruppenschieneAktiv) return;
+    function aufZeiger(e: PointerEvent | MouseEvent): void {
+      letzterZeiger.current = { x: e.clientX, y: e.clientY };
+    }
+    function aufTaste(e: KeyboardEvent): void {
+      const ziel = e.target as HTMLElement | null;
+      if (!istKreismenueTaste(e, istEingabefeld(ziel))) return;
+      e.preventDefault();
+      setKreisOffen((offen) => (offen === null ? { ...letzterZeiger.current } : null));
+      setOffeneGruppe(null);
+      setSucheOffen(false);
+      setSucheText('');
+    }
+    window.addEventListener('pointermove', aufZeiger, { passive: true });
+    window.addEventListener('mousemove', aufZeiger, { passive: true });
+    window.addEventListener('keydown', aufTaste);
+    return () => {
+      window.removeEventListener('pointermove', aufZeiger);
+      window.removeEventListener('mousemove', aufZeiger);
+      window.removeEventListener('keydown', aufTaste);
+    };
+  }, [gruppenschieneAktiv]);
 
   const aktivesWerkzeug = aktivesWerkzeugId ? werkzeuge.find((w) => w.id === aktivesWerkzeugId) : undefined;
   const label = inselKonfig.label;
@@ -1415,6 +1799,7 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
    * zuvor zwischen den beiden, aber BEIDE liegen sicher über jeder
    * geschlossenen (Pill-)Insel. */
   const offen = stufe !== 'pill';
+  useLeisteAusweichen(wurzelRef, offen && inselKonfig.randKlasse === 'isl-rand-unten');
 
   return (
     <div
@@ -1478,81 +1863,203 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
               steuert die Spalten dieser Fläche — die Leiste scrollt nie,
               sie wächst in die Breite. `data-werkzeug-anzahl` macht die
               Rechnung im Test nachprüfbar, ohne eine Höhe messen zu müssen. */}
-          <div
-            ref={werkzeugeRef}
-            className="isl-leiste-werkzeuge"
-            data-testid={`island-${island}-werkzeuge`}
-            data-werkzeug-anzahl={sichtbareWerkzeuge.length}
-          >
-            {sichtbareWerkzeuge.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                // P-WERKZEUGLEISTE (O-T5): echte Wahrheit vor «zuletzt
-                // geklickt» — s. istWerkzeugAktiv-Prop-Kommentar oben.
-                className={`isl-werkzeug${istWerkzeugAktiv?.(w.id) === true ? ' isl-werkzeug--an' : ''}`}
-                data-testid={`island-werkzeug-${w.id}`}
-                aria-pressed={istWerkzeugAktiv?.(w.id) ?? aktivesWerkzeugId === w.id}
-                onClick={() => aufWerkzeugKlick(w)}
-                // D-8 (E-8 B): Zeigertyp fürs folgende `onClick` merken —
-                // ereignisbasiert über den zentralen Helfer, kein Geräteraten.
-                onPointerDown={(e) => {
-                  zeigerWarTouch.current = istTouchArtig(e);
-                }}
-                // D-8 (E-8 C): der 600ms-Tooltip bleibt der MAUS vorbehalten —
-                // auf Touch würde erst ein gedrückt gehaltener Finger ihn
-                // erreichen, also ein Long-press, den E-8 ausdrücklich NICHT
-                // einführt; Touch bekommt stattdessen das Aktivierungs-Badge.
-                onPointerEnter={(e) => {
-                  if (!istTouchArtig(e)) aufWerkzeugTooltipEnter(w.id);
-                }}
-                onPointerLeave={aufWerkzeugTooltipLeave}
-              >
-                <span className="isl-werkzeug-glyphe" aria-hidden="true">
-                  <WerkzeugGlyphe glyphe={w.glyphe} size={20} />
-                </span>
-                {/* Der Werkzeug-NAME bleibt als Textzeile unter dem Icon in
-                    der Leiste (Bauauftrag Punkt 1) — nur die Pille oben
-                    zeigt ausschliesslich das Icon.
-                    P3 (PLH-STATUS-2): `status` war bis hierhin nirgends in
-                    dieser Datei gelesen — Werkzeuge mit `status!=='vorhanden'`
-                    sahen ununterscheidbar aus wie fertige. Gleiches Muster
-                    wie `SpezWorkspace.tsx`s «Öffnen (Platzhalter)» (einzige
-                    andere Lesestelle von `w.status` in der App): derselbe
-                    Suffix, hier am Werkzeugtitel statt am Knopftext. */}
-                <span className="isl-werkzeug-titel">
-                  {w.name}
-                  {w.status === 'vorhanden' ? '' : ' (Platzhalter)'}
-                </span>
-                {/* P-WERKZEUGLEISTE (O-T6): Werkzeuge MIT Einstellungen
-                    (hatPopup) tragen den Pfeil sichtbar — vorher war
-                    hatPopup reines Verhalten ohne Indikator. */}
-                {w.hatPopup && (
-                  <span className="isl-werkzeug-pfeil" aria-hidden="true">
-                    ▾
-                  </span>
-                )}
-                {/* PB2 (Bauauftrag Punkt 2, D15): Lang-Hover-Tooltip ersetzt
-                    den früheren Popup-Hinweisblock — viewport-geklammert
-                    (`useViewportKlammer`, dieselbe Technik wie Popup/
-                    Fenster), schliesst über Weg-Hover ODER Esc
-                    (`useOverlaySchliessen` oben). */}
-                {tooltipWerkzeugId === w.id ? (
-                  <div
-                    ref={tooltipRef}
-                    className="isl-werkzeug-tooltip"
-                    role="tooltip"
-                    data-testid={`island-werkzeug-${w.id}-tooltip`}
+          {gruppenschieneAktiv ? (
+            /**
+             * K1 (`docs/AUFTRAG-EINBAU-B163-KOSMODESIGN-AN-INTEGRATOR.md`
+             * §K1) — die Gruppenschiene: zehn runde Knöpfe statt der
+             * flachen Liste. Eigener, einfacher Flex-Container statt des
+             * `--isl-zeilen`-Mehrspalten-Grids der flachen Leiste (E-10)
+             * — bei höchstens zehn kleinen Rundknöpfen (≈ 490px Gesamthöhe
+             * bei 44px/Knopf) braucht es dessen Spaltenrechnung nicht, s.
+             * Bau-Bericht der Nachbesserung für die Rechnung.
+             */
+            <div
+              ref={werkzeugeRef}
+              className="isl-gruppenschiene-rail"
+              data-testid={`island-${island}-werkzeuge`}
+              data-rail-anzahl={1 + topDreiWerkzeuge.length + gruppenMitInhalt.length}
+            >
+              <KTooltip text="Werkzeuge durchsuchen (/)">
+                <button
+                  type="button"
+                  className={`isl-gruppenschiene-knopf${sucheOffen ? ' isl-gruppenschiene-knopf--an' : ''}`}
+                  data-testid="isl-gruppenschiene-suche"
+                  aria-label="Werkzeuge durchsuchen"
+                  aria-pressed={sucheOffen}
+                  onClick={oeffneSuche}
+                >
+                  <IconGruppenschieneSuche size={18} />
+                </button>
+              </KTooltip>
+              {topDreiWerkzeuge.map((w) => (
+                <KTooltip key={w.id} text={w.name}>
+                  <button
+                    type="button"
+                    className={`isl-gruppenschiene-knopf${istWerkzeugAktiv?.(w.id) === true ? ' isl-gruppenschiene-knopf--an' : ''}`}
+                    data-testid={`island-werkzeug-${w.id}`}
+                    aria-label={w.name}
+                    aria-pressed={istWerkzeugAktiv?.(w.id) ?? aktivesWerkzeugId === w.id}
+                    onClick={() => aufWerkzeugKlick(w)}
                   >
-                    {w.name}
-                    {w.hinweis ? ` — ${w.hinweis}` : ''}
-                  </div>
-                ) : null}
-              </button>
-            ))}
-          </div>
+                    <WerkzeugGlyphe glyphe={w.glyphe} size={18} />
+                  </button>
+                </KTooltip>
+              ))}
+              <div className="isl-gruppenschiene-trenner" aria-hidden="true" />
+              {gruppenMitInhalt.map(({ gruppe, werkzeuge: gruppenWerkzeuge }) => {
+                const zeichenWerkzeug = sichtbareWerkzeuge.find((w) => w.id === gruppe.zeichen) ?? gruppenWerkzeuge[0];
+                return (
+                  <KTooltip key={gruppe.id} text={gruppe.label}>
+                    <button
+                      type="button"
+                      className={`isl-gruppenschiene-knopf${offeneGruppe === gruppe.id ? ' isl-gruppenschiene-knopf--an' : ''}`}
+                      data-testid={GRUPPENSCHIENE_TESTID[gruppe.id]}
+                      aria-label={gruppe.label}
+                      aria-expanded={offeneGruppe === gruppe.id}
+                      onClick={() => aufGruppeKlick(gruppe.id)}
+                    >
+                      {zeichenWerkzeug ? (
+                        <WerkzeugGlyphe glyphe={zeichenWerkzeug.glyphe} size={18} />
+                      ) : (
+                        // Zweibuchstaben-Fallback, falls eine künftige Gruppe
+                        // je ohne Katalog-Eintrag für ihr `zeichen` bliebe
+                        // (dasselbe Muster wie die Pille ohne
+                        // `ISLAND_PILL_GLYPHEN`-Eintrag oben) — seit der K2-
+                        // Nachbesserung kein aktiver Fall mehr («Einrichten»
+                        // findet `moebel` jetzt echt im Katalog), bleibt aber
+                        // als ehrlicher Rückfall stehen statt eines Absturzes.
+                        <span aria-hidden="true">{gruppe.label.slice(0, 2)}</span>
+                      )}
+                    </button>
+                  </KTooltip>
+                );
+              })}
+            </div>
+          ) : (
+            /* E-10 (`docs/design/GESTALTUNGS-ENTSCHEIDE-2026-08-10.md`):
+               `--isl-zeilen` (von `useLeistenSpalten` oben gesetzt)
+               steuert die Spalten dieser Fläche — die Leiste scrollt nie,
+               sie wächst in die Breite. `data-werkzeug-anzahl` macht die
+               Rechnung im Test nachprüfbar, ohne eine Höhe messen zu müssen. */
+            <div
+              ref={werkzeugeRef}
+              className="isl-leiste-werkzeuge"
+              data-testid={`island-${island}-werkzeuge`}
+              data-werkzeug-anzahl={flacheWerkzeuge.length}
+            >
+              {flacheWerkzeuge.map((w) => werkzeugKnopf(w))}
+            </div>
+          )}
         </div>
       )}
+
+      {/* K1-Nachbesserung — Gruppenkarte (K1, wörtlich: «Ein Klick auf eine
+          Gruppe klappt rechts daneben eine Karte auf … Ein zweiter Klick
+          oder Esc klappt zu»). Wiederverwendet `.isl-popup`s Glas-/
+          Klammer-/Rand-Positionierung (island.css) über die zusätzliche
+          Modifier-Klasse — dieselbe Stelle, an der sonst ein
+          Werkzeug-Popup aufginge; beide schliessen sich gegenseitig aus
+          (`aufWerkzeugKlick` räumt `offeneGruppe`/`sucheOffen`, sobald ein
+          Werkzeug aktiviert wird). */}
+      {gruppenschieneAktiv && offeneGruppeInhalt ? (
+        <div className={`isl-popup isl-gruppenschiene-karte${reduziert ? '' : ' isl-anim-popIn'}`} data-testid={`${GRUPPENSCHIENE_TESTID[offeneGruppeInhalt.gruppe.id]}-karte`}>
+          <button
+            type="button"
+            className="isl-schliessen"
+            data-testid="isl-gruppenschiene-karte-schliessen"
+            aria-label="Schliessen"
+            onClick={() => setOffeneGruppe(null)}
+          >
+            ✕
+          </button>
+          <div className="isl-gruppenschiene-karte-titel k-label">{offeneGruppeInhalt.gruppe.label}</div>
+          {offeneGruppeInhalt.werkzeuge.length > 0 ? (
+            <div className="isl-gruppenschiene-karte-kacheln">
+              {offeneGruppeInhalt.werkzeuge.map((w) => werkzeugKnopf(w))}
+            </div>
+          ) : (
+            // Generischer, ehrlicher Fallback für eine Gruppe ohne
+            // Katalog-Werkzeuge — seit der K2-Nachbesserung kein aktiver
+            // Fall mehr («Einrichten» hat jetzt `moebel`+`leuchte`), bleibt
+            // aber stehen, statt bei einer künftigen leeren Gruppe eine
+            // leere Fläche kommentarlos zu zeigen (Regel 5, UI-REGELN.md).
+            <p className="isl-popup-hinweis k-label k-label-eng" data-testid="isl-gruppenschiene-karte-leer">
+              Noch keine Werkzeuge in dieser Gruppe.
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {/* K8 — Kreismenue am Zeiger (Taste Q). Wird ueber ein Portal an den
+          `body` gehaengt; gewaehlt wird ueber dieselbe Aktivierung wie auf
+          der Schiene (`aufWerkzeugKlick`). */}
+      {gruppenschieneAktiv && kreisOffen !== null ? (
+        <Kreismenue
+          zeigerX={kreisOffen.x}
+          zeigerY={kreisOffen.y}
+          gruppen={gruppenMitInhalt}
+          startGruppe={
+            (aktivesWerkzeugId !== null ? gruppeFuerWerkzeug(aktivesWerkzeugId) : undefined) ??
+            gruppenMitInhalt[0]?.gruppe.id ??
+            'bauteile'
+          }
+          aktivesWerkzeugId={aktivesWerkzeugId ?? undefined}
+          zeichneGlyphe={(w) => <WerkzeugGlyphe glyphe={w.glyphe} size={20} />}
+          zeichneGruppenGlyphe={(g) => {
+            const z = sichtbareWerkzeuge.find((w) => w.id === g.zeichen);
+            return z ? <WerkzeugGlyphe glyphe={z.glyphe} size={18} /> : null;
+          }}
+          onWahl={(w) => {
+            setKreisOffen(null);
+            aufWerkzeugKlick(w);
+          }}
+          onSchliessen={() => setKreisOffen(null)}
+        />
+      ) : null}
+
+      {/* K1-Nachbesserung — Suchkarte (K1, wörtlich: «ein Klick auf die
+          Lupe oder die Taste `/` öffnet ein Feld, das über die Namen …
+          filtert; Enter aktiviert den ersten Treffer»). */}
+      {gruppenschieneAktiv && sucheOffen ? (
+        <div className={`isl-popup isl-gruppenschiene-karte${reduziert ? '' : ' isl-anim-popIn'}`} data-testid="isl-gruppenschiene-suche-karte">
+          <button
+            type="button"
+            className="isl-schliessen"
+            data-testid="isl-gruppenschiene-suche-schliessen"
+            aria-label="Schliessen"
+            onClick={() => {
+              setSucheOffen(false);
+              setSucheText('');
+            }}
+          >
+            ✕
+          </button>
+          <input
+            ref={sucheEingabeRef}
+            type="text"
+            className="isl-gruppenschiene-suche-feld"
+            data-testid="isl-gruppenschiene-suche-feld"
+            placeholder="Werkzeug suchen…"
+            value={sucheText}
+            onChange={(e) => setSucheText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                aufSucheEnter();
+              }
+            }}
+          />
+          {sucheText.trim() !== '' ? (
+            <div className="isl-gruppenschiene-karte-kacheln" data-testid="isl-gruppenschiene-suche-treffer">
+              {sucheTreffer.length > 0 ? (
+                sucheTreffer.map((w) => werkzeugKnopf(w))
+              ) : (
+                <p className="isl-popup-hinweis k-label k-label-eng">Kein Treffer.</p>
+              )}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {stufe === 'popup' && aktivesWerkzeug ? (
         <div
@@ -1691,8 +2198,12 @@ export interface IslandBuehneProps {
   onWerkzeugAktion?: (werkzeug: IslandWerkzeug) => void;
   /**
    * PC0 v0.8.4 (V084-SPEZ E1): Insel-Konfigs der Station — Default sind die
-   * vier design-Inseln (`DESIGN_INSELN`), byte-gleiches Bestandsverhalten.
-   * Andere Stationen (PC1/PC3/PC4/PC5) übergeben hier ihren eigenen Satz.
+   * vier design-Inseln, `DESIGN_INSELN_STANDARD` (`island-katalog.ts`;
+   * NACHTRAG 25.09.2026: seit der K1-Nachbesserung dieselben vier Inseln
+   * wie `DESIGN_INSELN`, nur mit der Gruppenschiene für `zeichnen` — s.
+   * `DESIGN_INSELN_STANDARD`s Kopfkommentar dort für die volle Begründung
+   * und die Gegenprüfung gegen alle bestehenden Aufrufer). Andere Stationen
+   * (PC1/PC3/PC4/PC5) übergeben hier ihren eigenen Satz.
    */
   inseln?: readonly InselKonfig[];
   /** P-WERKZEUGLEISTE (v0.9.35): durchgereicht an jede Shell — s. IslandShellProps. */
@@ -1712,6 +2223,8 @@ export interface IslandBuehneHandle {
   oeffnePopupFuerWerkzeug(werkzeugId: string): boolean;
   /** B144 — s. `IslandShellHandle`. */
   oeffneFensterFuerWerkzeug(werkzeugId: string): boolean;
+  /** Lieferung 42 — s. `IslandShellHandle`. */
+  schliesseWerkzeug(werkzeugId: string): boolean;
 }
 
 /**
@@ -1724,7 +2237,7 @@ export interface IslandBuehneHandle {
  * über die vier Insel-Instanzen.
  */
 export const IslandBuehne = forwardRef<IslandBuehneHandle, IslandBuehneProps>(function IslandBuehne(
-  { onWerkzeugAktion, inseln = DESIGN_INSELN, registry, istWerkzeugAktiv }: IslandBuehneProps = {},
+  { onWerkzeugAktion, inseln = DESIGN_INSELN_STANDARD, registry, istWerkzeugAktiv }: IslandBuehneProps = {},
   handleRef,
 ) {
   useZweiFingerUndoGeste();
@@ -1745,6 +2258,12 @@ export const IslandBuehne = forwardRef<IslandBuehneHandle, IslandBuehneProps>(fu
       oeffneFensterFuerWerkzeug(werkzeugId: string): boolean {
         for (const konfig of inseln) {
           if (shellRefs.current.get(konfig.id)?.oeffneFensterFuerWerkzeug(werkzeugId)) return true;
+        }
+        return false;
+      },
+      schliesseWerkzeug(werkzeugId: string): boolean {
+        for (const konfig of inseln) {
+          if (shellRefs.current.get(konfig.id)?.schliesseWerkzeug(werkzeugId)) return true;
         }
         return false;
       },

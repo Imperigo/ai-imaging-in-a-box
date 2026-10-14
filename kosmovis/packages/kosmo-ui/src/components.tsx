@@ -84,7 +84,7 @@ export function Panel({ pad = true, style, ...rest }: PanelProps) {
       style={{
         background: 'var(--k-surface)',
         border: '1px solid var(--k-line)',
-        borderRadius: 'var(--k-radius-md)',
+        borderRadius: 'var(--k-radius)',
         padding: pad ? 14 : 0,
         ...style,
       }}
@@ -133,7 +133,9 @@ export function Badge({ children, hue }: BadgeProps) {
         style={{
           width: 6,
           height: 6,
-          borderRadius: 999,
+          // Form-Familie (Owner 21.09.2026): der Punkt trägt die
+          // Vollrundung aus dem Token, nicht eine rohe 999.
+          borderRadius: 'var(--k-radius-pill)',
           background: hue ?? 'var(--k-ink-faint)',
         }}
       />
@@ -326,7 +328,11 @@ export function Messrahmen({
       )}
       <div
         style={{
-          fontFamily: 'var(--k-font-mono)',
+          // Schriftregel 21.09.2026 (s. .k-label in aura.css): die Bildunterschrift
+          // eines Leerzustands ist ein Satz — «Noch keine Grundlagen — sobald
+          // Dokumente da sind, …». Die Masszahl daneben bleibt Mono (s. oben,
+          // `.k-masskette`): sie ist eine Zahl.
+          fontFamily: 'var(--k-font-ui)',
           fontSize: 11.5,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',

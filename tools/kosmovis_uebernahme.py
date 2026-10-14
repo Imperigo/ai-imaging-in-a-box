@@ -53,6 +53,13 @@ WOERTLICH = (
     f"{APP}/state/cursor-zustand.ts",
     f"{APP}/state/touch-undo.ts",
     f"{APP}/zod-jitless.ts",
+    # Runde 26 (14.10.2026): was die neue Fassung zusätzlich braucht und in sich geschlossen
+    # ist — die Trackpad-Geste (E152: zwei Finger schieben, Pinch zoomt, auch in WebKit),
+    # die Tastennamen und die Bausteine der Insel-Bühne (Kreismenü, Gruppenschiene).
+    f"{APP}/shell/trackpad-geste.ts",
+    f"{APP}/modules/design/navigation-geste.ts",
+    f"{APP}/shell/tastennamen.ts",
+    f"{APP}/modules/design/hinweis-lage.ts",
     # Die Hülle, in der jede Station steht: Stationsfarbe an `.app-wurzel`, die Schriften
     f"{APP}/app.css",
     f"{APP}/fonts.css",
@@ -66,6 +73,9 @@ WOERTLICH = (
     f"{APP}/modules/design/island/island-katalog.ts",
     f"{APP}/modules/design/island/island-glyphen.tsx",
     f"{APP}/modules/design/island/inhalte/registry.ts",
+    f"{APP}/modules/design/island/leiste-lage.ts",
+    f"{APP}/modules/design/island/kreismenue.tsx",
+    f"{APP}/modules/design/island/gruppenschiene-haeufigkeit.ts",
     f"{APP}/modules/design/werkzeug-icons.tsx",
     # Die gemeinsamen Einstellungen des TypeScript-Übersetzers
     "tsconfig.base.json",
@@ -88,6 +98,12 @@ WOERTLICH = (
     "packages/kosmo-kernel/src/bild/nachbearbeitung.ts",
     "packages/kosmo-kernel/src/bild/belichtung.ts",
     "packages/kosmo-kernel/src/bild/uebernahme.ts",
+    # Runde 26: Fundstellen (Typ im Datenmodell) und die Texturkacheln der Textur-Insel,
+    # samt dem Materialkatalog, aus dem sie ihre Rezepte nimmt.
+    "packages/kosmo-kernel/src/fundstelle.ts",
+    "packages/kosmo-kernel/src/derive/textur.ts",
+    "packages/kosmo-data/src/materialkatalog.ts",
+    "packages/kosmo-data/tsconfig.json",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -140,6 +156,30 @@ PROBEN = (
     "packages/kosmo-kernel/test/a10-uebernahme.test.ts",
     "packages/kosmo-kernel/test/b-belichtung-leeres-bild.test.ts",
     "packages/kosmo-kernel/test/vis-render.test.ts",
+    # Runde 26 (14.10.2026), nach derselben Regel: nennt das Vis-Werkzeug (oder die
+    # Trackpad-Geste), die Importe gehen in der Kopie auf, und sie ist hier grün.
+    "apps/kosmo-orbit/test/bridge-bescheid-cors.test.ts",
+    "apps/kosmo-orbit/test/fortschritt-render-knoten.test.tsx",
+    "apps/kosmo-orbit/test/fortschritt-sonne.test.tsx",
+    "apps/kosmo-orbit/test/fortschritt-vis-bild.test.tsx",
+    "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx",
+    "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx",
+    "apps/kosmo-orbit/test/kv-lieferstatus-null.test.tsx",
+    "apps/kosmo-orbit/test/kv-nicht-beurteilbar.test.tsx",
+    "apps/kosmo-orbit/test/kv-qa-hinweise.test.tsx",
+    "apps/kosmo-orbit/test/kv-qa-status.test.ts",
+    "apps/kosmo-orbit/test/kv-render-verlauf.test.tsx",
+    "apps/kosmo-orbit/test/kv-saetze-am-bild.test.tsx",
+    "apps/kosmo-orbit/test/kv-urteil-echt.test.tsx",
+    "apps/kosmo-orbit/test/kv-vergleich-schmal.test.tsx",
+    "apps/kosmo-orbit/test/p11-b6-fehlergrund-sichtbar.test.tsx",
+    "apps/kosmo-orbit/test/trackpad-geste.test.ts",
+    "apps/kosmo-orbit/test/u11-ctrl-texte.test.ts",
+    "apps/kosmo-orbit/test/vis-belichten-oberflaeche.test.tsx",
+    "apps/kosmo-orbit/test/vis-farbangleich-oberflaeche.test.tsx",
+    "apps/kosmo-orbit/test/vis-island-textur.test.tsx",
+    "apps/kosmo-orbit/test/vis-textur-bild.test.ts",
+    "apps/kosmo-orbit/test/vis-textur-material.test.ts",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
@@ -151,6 +191,8 @@ AUSGESCHLOSSEN = (
         "fokusring-token.test.ts", "insel-scroll-waechter.test.ts",
         "plangrafik-papier-waechter.test.ts", "schriftgrad-waechter.test.ts",
         "skizze-geladen.test.ts", "zeilenhoehe-skala.test.ts",
+        # Runde 26: zählen Verbraucher der Dauer- und Ebenen-Tokens über ALLE Stationen
+        "bewegung-dauer-leiter.test.ts", "ebenen-leiter.test.ts",
     )),
 )
 
@@ -164,6 +206,10 @@ NICHT_UEBERTRAGEN = {
     "schriftgrad-waechter,skizze-geladen,zeilenhoehe-skala}.test.ts":
         "Wächter über die ganze KosmoOrbit-App (lesen Dateien wie PlanView.tsx, main.tsx, "
         "Companion.tsx) — die gibt es in der Kopie nicht.",
+    "packages/kosmo-ui/test/{bewegung-dauer-leiter,ebenen-leiter}.test.ts":
+        "Runde 26: zählen, wie oft die Dauer- und Ebenen-Tokens im CSS der ganzen App gelesen "
+        "werden (Untergrenzen wie «mehr als 20 Stellen»). Die Kopie hat nur das CSS des "
+        "Vis-Werkzeugs; die Zahl fällt dort unter die Grenze, ohne dass etwas fehlt.",
     "apps/kosmo-orbit/test/{a2-vis-bedienung,b117-weg-b-uebergangshinweis,"
     "e76-unbekannte-felder-parsejob,n1-vis-jobs-referenzpunkt,p-b117-schritt2-interior-transport,"
     "p-dreistandpunkte,p-leerszene-render-sperre,p5b-bridge-toast-bescheid,"
@@ -175,6 +221,16 @@ NICHT_UEBERTRAGEN = {
     "insel-scroll-e10,pb2-laufplaene,p-geometriezaehlung}.test.ts(x)":
         "Prüfen Stellen ausserhalb des Vis-Werkzeugs (Einstellungen, Kosmo-Werkzeuge, "
         "Bauteil-Szene, Laufpläne der ganzen App).",
+    "apps/kosmo-orbit/test/{kv-blattbild-platz,kv-publish-schritt2,kv-nachgang3,"
+    "kv-lizenzmarke-hinweis}.test.ts(x)":
+        "Runde 26: legen ein Render-Bild auf ein Blatt (KosmoPublish). Blätter gibt es in "
+        "Visbox nicht — der Stellvertreter publish.ts sagt es, statt still nichts zu tun.",
+    "apps/kosmo-orbit/test/{kv-k1-felder,kv-nachprobe-230}.test.ts(x)":
+        "Runde 26: bauen eine Wand im KosmoOrbit-Kern und erwarten daraus ein glb — wie die "
+        "Gruppe oben, deren Modell in Visbox aus der Mappe kommt.",
+    "apps/kosmo-orbit/test/kv-e123-ai-variant-parsejob.test.ts":
+        "Runde 26: liest localStorage in der Node-Umgebung ohne jsdom-Kopf; in der Kopie "
+        "ohne Browserspeicher rot, ohne dass am Vis-Werkzeug etwas anders ist.",
     "packages/kosmo-kernel/test/bild-farbe.test.ts":
         "Vorlagen sind Ausschnitte aus einem Renderbild unbekannter Herkunft — Regel 3.",
     "packages/kosmo-kernel/test/kamera3ds-uebernahme.test.ts":

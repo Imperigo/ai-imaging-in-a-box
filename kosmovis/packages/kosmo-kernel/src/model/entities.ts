@@ -19,7 +19,16 @@ import type { BluetenArt } from '../derive/begruenung';
 
 export interface EntityMeta {
   name?: string;
+  /** Reine DXF-Uebersteuerung (`dxf/export.ts`), seit E222 getrennt von `ebeneId`. */
   layer?: string;
+  /**
+   * E222 (Paket 05 WB-Ebenen) — die Ebene dieses Bauteils
+   * (`DocSettings.ebenen`). Fehlt das Feld, gilt die Standardebene der
+   * Bauteilart (Id-Schema `std:<kind>`, Praefix `std:` reserviert); eine
+   * haengende Id faellt gemeldet auf die Standardebene zurueck
+   * (`derive/ebenen.ts` `ebeneVon`).
+   */
+  ebeneId?: string;
   /** Renovationsstatus für Umbau-Projekte (ArchiCAD-Essenz #9). */
   renovation?: 'bestand' | 'abbruch' | 'neu';
   locked?: boolean;
@@ -170,6 +179,17 @@ export interface EntityMeta {
    * Pflicht und zugleich der Ausloeser ist.
    */
   begruenung?: BegruenungVorgabe;
+  /**
+   * E219/E182 (Werkzeugbank 11) — AUSDRUECKLICHE Verknuepfung mit einem
+   * Favoriten (`DocSettings.favoriten`). Fehlt sie, ist das Bauteil nicht
+   * verknuepft: ein Favorit ist dann nur eine Vorlage, deren Werte beim
+   * Anwenden kopiert wurden. Haengt sie (der Favorit existiert nicht mehr),
+   * ist die Verknuepfung wirkungslos und wird gemeldet (Inspector,
+   * `design.favoritenLesen`). Gesetzt und geloest nur ueber die
+   * `design.favorit*`-Befehle. `Opening.typeId` bleibt freier Text und ist
+   * NICHT dieses Feld.
+   */
+  favoritId?: string;
 }
 
 /**
@@ -285,6 +305,13 @@ export interface BauteilAussehen {
    * mit. Die Leuchte umgeht das nicht durch eine Ausnahme, sondern durch die
    * Bauform: ihr Schirm hat einen EIGENEN Materialschluessel, der seinen
    * Durchlass schon mitbringt (`Leuchte.schirmMaterial`).
+   *
+   * BERICHTIGT 07.10.2026 (Owner-Entscheid E172, «Nur der Bewuchs»): der
+   * Satz «an einer begruenten Decke den Deckenkoerper mit» gilt nicht mehr.
+   * An einer Decke mit `meta.begruenung` wirkt `transluzenz` nur auf den
+   * Bewuchs; der Deckenkoerper bleibt deckend, in der 3D-Vorschau
+   * (`durchsichtAmTeil`) wie in der glTF-Ausfuhr (`derive/gltf.ts`
+   * `aussehenFuerTeil`). Fuer alle anderen Bauteile gilt der Absatz oben.
    */
   transluzenz?: number;
 
@@ -893,7 +920,36 @@ export interface AssemblyLayer {
   function: LayerFunction;
   /** Gesetzt = lineare Lage (s. `StabLage`); fehlend = flächige Schicht. */
   stab?: StabLage;
+  /**
+   * Bauphysikalische Rolle der Schicht (KosmoDraw D3, E203; Feld vom
+   * Integrator angelegt, 13.10.2026). Feiner als `function`: «dichtung»
+   * fasst Abdichtung und Dampfbremse zusammen, «daemmung» auch Trittschall.
+   * Optional — ohne Angabe leitet `derive/schichtrolle.ts` die Rolle aus
+   * Funktion und Material ab oder laesst sie unbekannt; geraten wird nie (E202).
+   */
+  rolle?: SchichtRolle;
 }
+
+/** Werte von `AssemblyLayer.rolle` (KosmoDraw D3, E203). */
+export type SchichtRolle =
+  | 'tragend'
+  | 'waermedaemmung'
+  | 'trittschall'
+  | 'dampfbremse'
+  | 'luftdichtung'
+  | 'abdichtung'
+  | 'unterdach'
+  | 'windpapier'
+  | 'hinterlueftung'
+  | 'wetterschutz'
+  | 'bekleidung'
+  | 'belag'
+  | 'unterlagsboden'
+  | 'installation'
+  /** v0.1.8 (Integrator J1, mit KosmoDraw): Trenn- oder Abdecklage, z. B. die
+   *  PE-Folie zwischen Unterlagsboden und Trittschall. Traegt weder F3 noch F4
+   *  und zaehlt nicht als unklare Dichtschicht. */
+  | 'trennlage';
 
 /**
  * Mehrschichtiger Aufbau (ArchiCAD-Composite) — Typenkatalog-Eintrag.
@@ -917,9 +973,14 @@ export interface Wall extends Base {
   assemblyId: string;
   /** Lage der Achse relativ zum Aufbau. */
   alignment: WallAlignment;
-  /** Höhenmodus: bis OK nächstes Geschoss (Standard) oder fix. */
-  heightMode: 'geschoss' | 'fix';
+  /** Höhenmodus: bis OK nächstes Geschoss (Standard), fix, oder bis OK eines Zielgeschosses. */
+  heightMode: 'geschoss' | 'fix' | 'zielgeschoss';
   height?: Mm;
+  /** Nur bei `heightMode: 'zielgeschoss'` gelesen: das Geschoss, an dessen OK Boden die Wand oben endet.
+   * Hängt die Id ins Leere, fällt die Wand auf 'fix' mit der bisherigen Höhe zurück (gemeldet). */
+  oberkanteGeschossId?: string;
+  /** Kopfversatz gegenüber der Oberkante (negativ = tiefer). Wirkt bei 'geschoss' und 'zielgeschoss'. Vorgabe 0. */
+  kopfVersatz?: Mm;
   /** Fusspunkt-Versatz gegenüber OK Boden des Geschosses. */
   baseOffset: Mm;
   /** P-DP (GOLDEN-WECHSEL-096): expliziter Override, welche Seite die
@@ -929,6 +990,27 @@ export interface Wall extends Base {
    * Wände, die zu keiner sauberen geschlossenen Schleife gehören und bei
    * denen der ehrliche Rückfall `'links'` die falsche Seite trifft. */
   referenzseite?: 'links' | 'rechts';
+  /**
+   * **KD-9b D5 Teil 2 (Owner-Entscheid E171) — an WELCHES Dach diese Wand
+   * oben anschliesst.** Die Wandkrone folgt dann der UNTERSEITE jenes Daches
+   * (Aufbaudicke inklusive, wie der Schnitt sie zeichnet), statt flach auf OK
+   * Geschoss zu enden: unter einem Sattel entsteht die Giebelwand mit Knick am
+   * First, unter einem Pult die schraege Krone.
+   *
+   * FEHLT DAS FELD, AENDERT SICH NICHTS. Jede bestehende Wand und jede aus
+   * `design.wandErstellen` behaelt OK Geschoss, Zahl fuer Zahl (Golden-Guard,
+   * dasselbe Muster wie `Beam.deckeId`). Bewusst mit Sammelknopf gesetzt
+   * (`design.waendeAnDachAnschliessen`), nie von selbst: eine Wand folgt dem
+   * Dach nur, wenn jemand es gesetzt hat.
+   *
+   * HAENGENDE REFERENZ = EHRLICHER RUECKFALL auf die bisherige Hoehe, kein
+   * Wurf mitten in der Ableitung und kein Aufraeumzwang beim Loeschen des
+   * Daches (wie `Beam.deckeId`). Der Rueckfall gilt auch, wenn das Dach in
+   * einem anderen Geschoss steht oder seine Basis nicht auf der heutigen
+   * Wandkrone liegt (±1 mm): dann haette die Wand keine Beruehrung mit der
+   * Dachunterseite. Geprueft wird beim SETZEN (`design.wandAnDachSetzen`).
+   */
+  dachId?: string;
 }
 
 /** Decke/Bodenplatte — Umriss auf Geschossebene, Dicke nach unten. */
@@ -937,6 +1019,10 @@ export interface Slab extends Base {
   storeyId: string;
   outline: Pt[];
   holes?: Pt[][];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  outlineBogen?: Mm[];
+  /** Werkzeugbank 06 (E221): Stiche der Lochkanten, je Loch (Index wie `holes`) eine Liste wie `outlineBogen`. */
+  holesBogen?: Mm[][];
   assemblyId?: string;
   thickness: Mm;
   /** Versatz der Oberkante gegenüber OK Boden des Geschosses. */
@@ -1041,6 +1127,13 @@ export interface Opening extends Base {
   height: Mm;
   /** Brüstungshöhe ab OK Boden (bei Türen 0). */
   sill: Mm;
+  /**
+   * Oeffnungswinkel des Tuerblatts im 3D, Grad 0–180, nur Tueren (KosmoDraw
+   * «Oeffnungswinkel je Tuer», Feld vom Integrator angelegt, 13.10.2026).
+   * Fehlt = geschlossen. Wirkt nur auf die 3D-Ableitung (`derive/tuer3d.ts`),
+   * nicht auf Grundriss und Schnitt.
+   */
+  oeffnungswinkel3d?: number;
   /** Anschlagrichtung für das Tür- ODER Fensterflügel-Symbol im Grundriss
    * (v0.6.9 Stream A: bei fensterTyp 'einfluegel' bestimmt swing die
    * Angelseite des Öffnungsbogens; 'fensterband'/'fest' tragen kein swing). */
@@ -1203,6 +1296,8 @@ export interface Zone extends Base {
   kind: 'zone';
   storeyId: string;
   outline: Pt[];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  outlineBogen?: Mm[];
   name: string;
   number?: string;
   sia: Sia416Class;
@@ -1210,6 +1305,19 @@ export interface Zone extends Base {
   program?: string;
   /** Raumtyp für Raumgraph/Checks (V2-F1), z.B. 'korridor', 'treppenhaus'. */
   raumTyp?: string;
+  /**
+   * E213 (Owner 13.10.2026, «Automatisch vorbelegen»): ist die Zone beheizt?
+   * Fehlt = unbekannt — die Huelle (`derive/huelle.ts`) raet dann nicht.
+   * Vorbelegt wird nur aus einem bekannten `raumTyp` (Tabelle bei KosmoDraw),
+   * sichtbar als «vorgeschlagen»; eine Zone ohne Raumtyp bleibt unbekannt.
+   */
+  beheizt?: boolean;
+  /**
+   * Herkunft von `beheizt`: 'raumtyp' = vorgeschlagen aus dem Raumtyp (darf
+   * bei einem Raumtyp-Wechsel neu vorbelegt werden), 'gesetzt' = vom
+   * Architekten gesetzt (wird NIE vom Raumtyp ueberschrieben).
+   */
+  beheiztQuelle?: 'raumtyp' | 'gesetzt';
   /**
    * Site-/Parzellen-Marker (v0.7.0 D8/H-1): additiv, KEINE Migration nötig —
    * Zonen ohne dieses Feld verhalten sich unverändert. Kennzeichnet eine
@@ -1310,6 +1418,8 @@ export interface Gelaender extends Base {
    * s. `bauteilId`) und als Rückfallwert, falls der Wirt später verschwindet
    * (s. dort). */
   punkte: Pt[];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  punkteBogen?: Mm[];
   /** Geländerhöhe ab OK Boden des Geschosses, mm — Command-Grenze 700–1500
    * (SIA-Absturzsicherungsbereich), ausserhalb wird ehrlich abgelehnt statt
    * geklemmt (`design.gelaenderZeichnen`). */
@@ -1355,18 +1465,30 @@ export interface Roof extends Base {
   kind: 'roof';
   storeyId: string;
   outline: Pt[];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  outlineBogen?: Mm[];
   /** Dachneigung in Grad. */
   pitch: number;
   /** Dachüberstand über den Umriss hinaus. */
   overhang: Mm;
   /** Fusspunkt (Traufe) über OK Boden des Geschosses. */
   baseOffset: Mm;
-  /** Dachform: «walm» (Default, alle Seiten geneigt) oder «sattel» (First + 2 Flächen,
-   * Giebel an den Schmalseiten quer zur Firstrichtung). Fehlt das Feld (ältere Dokumente),
-   * gilt «walm». */
-  form?: 'walm' | 'sattel';
+  /** Dachform: «walm» (Default, alle Seiten geneigt), «sattel» (First + 2 Flächen,
+   * Giebel an den Schmalseiten quer zur Firstrichtung), «pult» (eine geneigte Ebene,
+   * s. `fallrichtung`) oder «flach» (waagrechte Platte, Neigung 0, nur Traufe rundum).
+   * Fehlt das Feld (ältere Dokumente), gilt «walm». Ein Zeltdach hat keine eigene Form:
+   * es ist ein Walm über einem Quadrat. */
+  form?: 'walm' | 'sattel' | 'pult' | 'flach';
   /** Nur bei form «sattel»: Achse, entlang der der First verläuft. */
   firstrichtung?: 'x' | 'y';
+  /**
+   * Nur bei form «pult» (KD-9b D2): Richtung in Weltachsen, in die das Dach FÄLLT.
+   * Dort liegt die Traufe, gegenüber der First, die zwei Seiten dazwischen sind
+   * Ortgang. «y+» heisst: das Dach fällt zur Seite mit grösserem y, im Grundriss
+   * (Norden oben, `derive/plansvg.ts`) also nach oben. Bei jeder anderen Form fehlt das
+   * Feld ganz, damit sich das Dokument bestehender Dächer nicht ändert.
+   */
+  fallrichtung?: 'x+' | 'x-' | 'y+' | 'y-';
   /**
    * Dach-Aufbau (v0.9.13 P-DACHAUFBAU, `docs/V0913-SPEZ.md` §1) — additiv,
    * nach demselben Muster wie `Slab.assemblyId`: fehlt das Feld (ältere
@@ -1380,11 +1502,40 @@ export interface Roof extends Base {
   assemblyId?: string;
 }
 
+/**
+ * Dachfenster (KD-9b D6a): ein Fenster IN der Dachflaeche eines Daches.
+ *
+ * WARUM EINE EIGENE ART UND KEINE OEFFNUNG MIT DACH ALS WIRT: rund dreissig
+ * Leser setzen `opening.wallId` voraus (Wandhoehe, Poché, Beschlag, Vorhang,
+ * Schnitt), und jeder haette ein Dach als Wirt erst erkennen muessen. Das
+ * Muster ist das der Aussparung (`hostId`) und des Gelaenders (`bauteilId`):
+ * eine eigene Art mit der Id ihres Wirts.
+ *
+ * Es gibt KEIN `sill` im Modell. Die Lage steht allein in `at`; die Hoehe der
+ * Unterkante folgt aus dem Dach (`derive/dach.ts` `dachfensterEcken`). Der
+ * Befehl nimmt ein `sill` als Eingabehilfe und rechnet es in `at` um.
+ */
+export interface Dachfenster extends Base {
+  kind: 'dachfenster';
+  /** Geschoss des Daches (nicht des Raumes darunter). */
+  storeyId: string;
+  /** Id des Daches (`Roof`), in dessen Flaeche das Fenster liegt. */
+  roofId: string;
+  /** Mitte im Grundriss, Welt-mm. Die Hoehe ergibt sich aus der Dachflaeche. */
+  at: Pt;
+  /** Breite quer zum Gefaelle, mm (waagrecht gemessen, gleich der wahren Breite). */
+  width: Mm;
+  /** Wahre Laenge in der Dachflaeche entlang des Gefaelles, mm (nicht die Laenge im Grundriss). */
+  height: Mm;
+}
+
 /** Baugrenze (Phase 0): Polygon aus dem Baugesetz + optionale Höhenbeschränkung. */
 export interface Boundary extends Base {
   kind: 'boundary';
   storeyId: string;
   outline: Pt[];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  outlineBogen?: Mm[];
   /** Maximale Gebäudehöhe über Projektnull (mm); null = keine. */
   maxHoehe: Mm | null;
   name: string;
@@ -1399,11 +1550,50 @@ export interface MassBody extends Base {
   kind: 'mass';
   storeyId: string;
   outline: Pt[];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  outlineBogen?: Mm[];
   height: Mm;
   baseOffset: Mm;
   program?: string;
   /** Fassadenmodul je Kante (1-basiert), Name aus settings.fassadenModule. */
   module?: { kante: number; modul: string }[];
+  /**
+   * B9 (Splat-Szenario, Owner-Entscheid 06.10.2026): woher ein BESTANDS-
+   * Körper stammt und wie sicher er ist — JE KÖRPER, nicht am Dokument.
+   *
+   * WARUM NICHT `design.herkunftSetzen`: jener Befehl schreibt die EINE
+   * Herkunft des Dokuments (`settings.herkunft`, heute nur `art: 'ifc'`) und
+   * ERSETZT sie. Eine Splat-Übernahme nach einer IFC-Bestandsübernahme hätte
+   * den IFC-Vermerk der glb-Ausfuhr still überschrieben — und ein Quader hat
+   * seine eigene Unsicherheit, die ein Dokumentfeld nicht tragen kann.
+   *
+   * Fehlt das Feld, ist der Körper gezeichnet oder Altbestand.
+   */
+  bestandHerkunft?: SplatBestandHerkunft;
+}
+
+/**
+ * Herkunft eines Bestandskörpers aus `kosmoprepare.splat-volumen/0.1`
+ * (KosmoPrepare `core/splat_volumen.py`). Die Zahlen sind die der Datei,
+ * nicht nachgerechnet — `null` heisst, die Rechnung hat sie nicht gelesen.
+ */
+export interface SplatBestandHerkunft {
+  quelle: 'splat';
+  /** Dateiname der `.ply` OHNE Pfad (REGEL 3). */
+  datei: string;
+  /** `id` des Quaders in der Datei («V1» …). */
+  volumenId: string;
+  koordinaten: 'szene' | 'lv95';
+  /** Restfehler der Verortung (m), `null` = unbekannt. */
+  rmseVerortungM: number | null;
+  /** ± auf den Grundriss (m): halbe Zelle + Restfehler. */
+  unsicherheitGrundrissM: number;
+  /** ± auf die Höhe (m), `null` = nicht gelesen. */
+  unsicherheitHoeheM: number | null;
+  /** belegte Fläche / Rechteck — unter 0.7 ist der Quader nur eine Hülle. */
+  fuellgrad: number;
+  /** ISO-Tag der Übernahme. */
+  stand: string;
 }
 
 /**
@@ -1597,15 +1787,22 @@ export interface SheetPlacement {
    *
    *  'ansicht' additiv (B40, `docs/AUFTRAG-B40-ANSICHTEN-UND-MASSZAHLEN.md`
    *  §2): SIA 400 führt Fassadenansichten («Südansicht», «Ostansicht») in
-   *  beiden Plansätzen als reguläre Blätter — bis hierher gab es dafür
-   *  STRUKTURELL keinen Platz im Modell, nur einen wörtlichen Hinweistext
-   *  in `derive/blattfuellung.ts`/`derive/baugesuch.ts`. Der Wert schliesst
-   *  NUR diese Modell-Lücke: es gibt weder eine Zeichenableitung noch einen
-   *  Weg, eine 'ansicht' zu PLATZIEREN (`publish.ansichtPlatzieren` weist
-   *  sie bewusst mit `CommandError` ab, s. dort) — «Kanten, Blickrichtung,
-   *  Massstabsregel» sind Owner-Entscheide, keine Modellfrage, und bleiben
-   *  offen. `derive/sheet.ts` `placementInner()` liefert dafür bewusst eine
-   *  leere Fläche statt geratener Geometrie.
+   *  beiden Plansätzen als reguläre Blätter. B40 schloss nur die
+   *  STRUKTURELLE Modell-Lücke (der Wert existierte, aber es gab weder eine
+   *  Zeichenableitung noch einen Weg, eine 'ansicht' zu platzieren).
+   *
+   *  **P32/E92 (`docs/V016-SPEZ.md` Welle 2) löst B40 ab:** mit `richtung`
+   *  (unten) entsteht die Zeichenableitung automatisch — `derive/sheet.ts`
+   *  `placementInner()` legt die Schnittlinie ausserhalb der Gebäudebounds
+   *  auf der gewählten Himmelsrichtung (`ansichtSchnitt`/
+   *  `gebaeudeBoundsWelt`) und ruft denselben `sectionInnerSvg`-Weg wie ein
+   *  Schnitt — eine Linie ohne Schnittspur zeichnet dort bereits seit
+   *  langem als reine Ansicht (`g.cuts.length === 0`), das war keine neue
+   *  Zeichenregel. `publish.ansichtPlatzieren` verlangt dafür `richtung`
+   *  und lehnt nur noch DAS ehrlich ab (nicht mehr jede 'ansicht'). OHNE
+   *  `richtung` (z.B. ein vor P32 gespeichertes/importiertes Projekt)
+   *  bleibt `placementInner()` beim alten, ehrlichen Verhalten: eine leere
+   *  Fläche statt geratener Geometrie — Bestandsschutz, kein Absturz.
    *
    *  'aufsicht' (Dachaufsicht/Sparrenlage, dieselbe SIA-400-Lücke) ist
    *  ABSICHTLICH NICHT ergänzt: offen ist, ob sie ein eigener Blatt-Typ
@@ -1616,6 +1813,13 @@ export interface SheetPlacement {
   storeyId?: string;
   /** Schnitt: Schnittlinie + Sichttiefe (Weltkoordinaten mm). */
   section?: { a: Pt; b: Pt; depth: Mm; lookLeft: boolean };
+  /** Ansicht (P32/E92): Himmelsrichtung der Fassade — «Nord bleibt +y»
+   *  (`derive/standort.ts`, dieselbe Konvention wie `Fassadenrichtung` in
+   *  `derive/fassadenmodule.ts`). NUR bei `view: 'ansicht'` gesetzt; die
+   *  Schnittlinie selbst wird daraus abgeleitet, nicht gespeichert (s.
+   *  `view`-Kommentar oben) — ändert sich das Modell, ändert sich die
+   *  Ansicht mit, ohne dass diese Platzierung neu angelegt werden muss. */
+  richtung?: 'nord' | 'sued' | 'ost' | 'west';
   /** Massstab, z.B. 100 für 1:100. */
   scale: number;
   /** Mittelpunkt der Zeichnung auf dem Blatt (Papier-mm, Ursprung links oben). */
@@ -1633,6 +1837,10 @@ export interface SheetPlacement {
   /** Themenplan-Name (RE-ARCHICAD A5): tönt die Platzierung nach den Regeln
    * aus settings.themen + zeichnet eine Legende. Fehlend = normaler Plan. */
   thema?: string;
+  /** E222 — Ebenenkombination dieser Platzierung. Fehlt das Feld: alle
+   *  Ebenen sichtbar. Die Wirkung im Blatt (`derive/sheet.ts`) ist ein
+   *  Folgeposten; heute nur das Feld. */
+  ebenenKombinationId?: string;
 }
 
 /** Freier Textblock auf einem Blatt (Plakat-Titel, Konzepttexte). */
@@ -1662,6 +1870,14 @@ export interface SheetImage {
   w: number;
   assetId: string | null;
   title?: string;
+  /**
+   * P-LIZENZMARKE Schritt 2 (E154 (4) «Anzeigen, nicht sperren», ROADMAP
+   * 1692): die Lizenz des Bildwegs ist offen (`engine_license_open` im
+   * Render-Ergebnis), z. B. ein Forschungsmodell. Nur zur Anzeige am Blatt
+   * und beim Export; gesperrt wird nichts, gedruckt wird es (noch) nicht.
+   * Fehlt das Feld, ist nichts bekannt — die bisherige Form, Goldens gleich.
+   */
+  lizenzOffen?: { modell?: string; lizenz?: string };
 }
 
 /** Revisions-Eintrag eines Blatts (RE-ARCHICAD A7): Index A, B, C … */
@@ -1835,6 +2051,27 @@ export interface Furniture extends Base {
    * Zurücknehmen: s. `hoehe` darüber, dieselbe benannte Grenze.
    */
   material?: string;
+  /**
+   * **P62 / Abnahmezeile 18 — Materialschlüssel DIESES EINEN Stücks Griffe,
+   * unabhängig vom Korpusmaterial (`material` oben).**
+   *
+   * DER ANLASS, wörtlich: «und modelliere bitte noch filigrane aus messing
+   * gemachte handgriffe bei den kuechenfronten ausser bei der geschirrspueler
+   * front» (Zeile 18). `MoebelTyp.griffMaterial` (`derive/moebel.ts`) traegt
+   * den REGELFALL fuer den Typ («messing» bei `kuechenzeile`); dieses Feld
+   * ist die Instanz-Ueberschreibung, dieselbe Bauart wie `material`.
+   *
+   * WARUM EIN EIGENES FELD UND NICHT `material` MITBENUTZT: der Korpus einer
+   * Kuechenzeile ist Holz, die Griffe sind Messing — ein einziges Feld
+   * koennte immer nur EINE der beiden Aussagen tragen. Der zweite Zuruf
+   * derselben Kueche («die griffe fuer kueche, chrom sry», Zeile 32) verlangt
+   * das ausdruecklich: NUR die Griffe wechseln die Farbe, der Korpus bleibt.
+   *
+   * FEHLT DAS FELD, GILT DER KATALOG (`MoebelTyp.griffMaterial`) — bei
+   * Typen ohne Griffe (kein `griffAbstandMm` im Katalog) bleibt es wirkungslos,
+   * `moebelGriffe()` liefert dann ohnehin ein leeres Feld.
+   */
+  griffMaterial?: string;
 }
 
 /**
@@ -2018,11 +2255,18 @@ export interface Terrain extends Base {
  * nachgemessene Lücke aus dem Lehrheft-Abgleich): beide OPTIONAL, ohne sie
  * bleibt eine Aussparung unverändert gültig und zeichnet byte-gleich weiter
  * (Golden-SVG-Vertrag). `'futterrohr'` erweitert `typ` um die dritte, im
- * Lehrheft benannte Art — reine Typ-Erweiterung ohne eigenen Kommando-Weg:
- * `design.aussparungSetzen` nimmt sie (Stand dieser Erweiterung) noch NICHT
- * entgegen, weil ein Futterrohr eigene Pflichtangaben braucht (Ø innen/aussen,
- * Werkstoff, Kote Achse), die keine der bestehenden Aussparungs-Felder
- * abdecken — offene Owner-Frage, s. Schlussbericht B39.
+ * Lehrheft benannte Art.
+ *
+ * BERICHTIGT 23.09.2026, Owner-Entscheid E105: der Satz oben stand bis heute
+ * so da — `design.aussparungSetzen` nehme `'futterrohr'` NICHT entgegen, weil
+ * die vier Pflichtangaben (Ø innen/aussen, Werkstoff, Kote Achse) keinem
+ * bestehenden Feld entsprächen. Das ist seither überholt: die vier Angaben
+ * sind additiv unten als `innenDurchmesser`/`aussenDurchmesser`/`werkstoff`/
+ * `achshoehe` angelegt, und der Befehl verlangt sie zwingend, sobald
+ * `typ: 'futterrohr'` gesetzt wird (sonst ehrlich abgelehnt) — s.
+ * `design.aussparungSetzen` in `commands/design.ts`. Für `typ: 'durchbruch'`
+ * und `'schlitz'` bleiben die vier Felder verboten (weiterhin nur die
+ * bisherigen Angaben), byte-gleiches Verhalten wie vor E105.
  */
 export interface Aussparung extends Base {
   kind: 'aussparung';
@@ -2066,6 +2310,23 @@ export interface Aussparung extends Base {
    * Beschriftung rechnet um.
    */
   sill?: Mm;
+  /**
+   * Futterrohr-Pflichtangaben (Owner-Entscheid E105, 23.09.2026) — additiv,
+   * ALLE VIER nur bei `typ: 'futterrohr'` gesetzt. `design.aussparungSetzen`
+   * verlangt sie zwingend zusammen, sobald `typ: 'futterrohr'` gewählt wird,
+   * und weist sie ab, sobald `typ` etwas anderes ist (s. dort) — eine
+   * Aussparung ohne diese Felder (jeder Bestand vor E105) bleibt unverändert
+   * gültig, byte-gleiches Zeichnen (Golden-SVG-Vertrag, Muster `lage`/`tiefe`
+   * oben).
+   */
+  /** Innendurchmesser des Futterrohrs, mm. */
+  innenDurchmesser?: Mm;
+  /** Aussendurchmesser des Futterrohrs, mm — muss grösser als der Innendurchmesser sein. */
+  aussenDurchmesser?: Mm;
+  /** Werkstoff des Futterrohrs, z.B. «PE», «Stahl», «Guss» — freier Katalogschlüssel, kein Enum. */
+  werkstoff?: string;
+  /** Kote der Rohrachse über OK Boden des Geschosses, mm (Muster `sill`: Bezugspunkt, keine Unter-/Oberkante). */
+  achshoehe?: Mm;
 }
 
 /**
@@ -2140,6 +2401,13 @@ export interface MassKette extends Base {
   storeyId: string;
   /** Mindestens zwei Punkte (Kettenanfang…-ende), Welt-mm. */
   punkte: Pt[];
+  /** KosmoDraw Werkzeugbank 10 (Q8): Bezug je Punkt, parallel zu `punkte`.
+   *  `ort` nach der Grammatik in `derive/plan.ts` (`MASS_BEZUG_ORTE`), passend
+   *  zur Knoten-Id-Bildung (`<entityId>.<ort>`). Fehlt = alle Punkte frei
+   *  (heute); `null` = dieser Punkt frei. */
+  bezuege?: ({ entityId: string; ort: string } | null)[];
+  /** KosmoDraw Werkzeugbank 10 (E215): Markerform; fehlt = heutige Form. */
+  marker?: 'schraeg' | 'pfeil' | 'punkt';
 }
 
 /**
@@ -2293,6 +2561,8 @@ export type AnnotationLinienzug = {
   art: 'linienzug';
   /** Mindestens zwei Punkte (Muster `MassKette.punkte`), Welt-mm. */
   punkte: Pt[];
+  /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
+  bogen?: Mm[];
   /** Letzter Punkt schliesst zum ersten (gestrichelte Skizzen brauchen das
    * nicht); fehlt/false = offener Zug wie eine Masskette. */
   geschlossen?: boolean;
@@ -2533,6 +2803,69 @@ export interface VisGraph extends Base {
   edges: VisEdge[];
 }
 
+/**
+ * P73 (B164 I4) — Porttypen im Knotenbaum-Kern «prepare» (V016-SPEZ §14b).
+ * Zweiter Katalog NEBEN dem VisGraph, bewusst nicht generisch herausgeloest
+ * (Integrator-Begruendung §14b): die Porttypen unterscheiden sich
+ * grundsaetzlich von `VisPortTyp` — Prepare kennt `dokument` (ein erfasstes
+ * Dokument als Quelle), `feld` (ein strukturiertes Erfassungsfeld, P1/P72)
+ * und `zahl-mit-fundstelle` (eine Zahl, die IMMER eine Fundstelle
+ * `{dokumentId, seite, stelle, auszug}` traegt oder als Annahme gilt,
+ * Entscheid 13). `PrepareNode`/`PrepareEdge` haben ABSICHTLICH dieselbe Form
+ * wie `VisNode`/`VisEdge` (Integrator-Wahl §14b: «gemeinsam genutzt werden
+ * die Formen VisNode/VisEdge»), damit der Leinwand-Baustein des UI-Workers
+ * wiederverwendbar bleibt — der Katalog-Inhalt (Typen/Ports) ist eigen.
+ */
+export type PreparePortTyp = 'dokument' | 'feld' | 'zahl-mit-fundstelle';
+
+/** Ein Node im Knotenbaum-Kern «prepare». Typ-Katalog: derive/preparegraph.ts. */
+export interface PrepareNode {
+  id: string;
+  typ: string;
+  /** Canvas-Position (freie Einheiten, kein Weltmass) — Muster VisNode. */
+  x: number;
+  y: number;
+  params: Record<string, string | number | boolean>;
+  collapsed?: boolean;
+}
+
+/** Gerichtete Kante: fromPort (Ausgang) → toPort (Eingang) — Muster VisEdge. */
+export interface PrepareEdge {
+  id: string;
+  from: string;
+  fromPort: string;
+  to: string;
+  toPort: string;
+}
+
+/**
+ * Knotenbaum-Kern «prepare» (P73, B164 I4, V016-SPEZ §14b) — der
+ * projektspezifische Knotenbaum aus Auftrag B164 §2 Entscheid 9-14: links
+ * Dokument-Quellen, Mitte Verarbeitungsknoten, rechts Ergebnisse. NUR die
+ * Graph-Beschreibung lebt im Modell (Undo, Yjs, .kosmo) — wie VisGraph.
+ * Zyklen werden beim Verbinden abgelehnt (prepareGraph.verbinden).
+ */
+export interface PrepareGraph extends Base {
+  kind: 'preparegraph';
+  name: string;
+  nodes: PrepareNode[];
+  edges: PrepareEdge[];
+}
+
+/**
+ * E216 (Paket 07 WB-Beziehung, Solid-Operationen Teil 1) — ein Bauteil
+ * (Operator) bearbeitet ein anderes (Ziel) assoziativ, wie die
+ * Solid-Element-Operationen in ArchiCAD: subtrahieren, subtrahieren mit
+ * Auf- oder Abwaertsextrusion des Operators, Schnittmenge, Vereinigung.
+ * Wirkt in Schnitt und 3D, NICHT im Grundriss (wie ArchiCAD). Ohne diese
+ * Entitaet keine Operation (heutiges Verhalten); `reihenfolge` fehlt =
+ * Dokumentreihenfolge; eine haengende `zielId` oder `operatorId` macht die
+ * Operation wirkungslos und wird gemeldet (`geometry/solid.ts`
+ * `solidMeldungen`). Bestehende Einzelbeziehungen (`Slab.holes`,
+ * `Wall.dachId`, `Beam.deckeId`) bleiben davon unberuehrt.
+ */
+export interface SolidOperation { id: string; meta?: EntityMeta; kind: 'solidoperation'; zielId: string; operatorId: string; art: 'subtraktion' | 'subtraktion-aufwaerts' | 'subtraktion-abwaerts' | 'schnittmenge' | 'vereinigung'; reihenfolge?: number }
+
 export type Entity =
   | Storey | GridAxis | Assembly | Wall | Slab | Opening | Zone | MassBody | Roof | Stair | Rampe | Sheet | Boundary | ImageAsset | Furniture | ZonenTuer | Terrain | Aussparung | Column | Beam | Etikett | VisGraph | FreeMesh | Mangel | Kommentar | MassKette | Gelaender
   // v0.9.2 P-P1 (V092-SPEZ §P-P1): additiv ans Ende, wie jede spätere Entity hier.
@@ -2546,7 +2879,13 @@ export type Entity =
   // S2 (KONZEPT-SKIZZE.md §6): additiv ans Ende, wie jede spätere Entity hier.
   | Skizze
   // A9/Welle 3 (17.09.2026): additiv ans Ende, wie jede spaetere Entity hier.
-  | Leuchte;
+  | Leuchte
+  // P73 (B164 I4, V016-SPEZ §14b): additiv ans Ende, wie jede spaetere Entity hier.
+  | PrepareGraph
+  // KD-9b D6a (07.10.2026): additiv ans Ende, wie jede spaetere Entity hier.
+  | Dachfenster
+  // E216 Paket 07 (13.10.2026): additiv ans Ende, wie jede spaetere Entity hier.
+  | SolidOperation;
 
 /**
  * Register ALLER vom Kernel geführten Entity-Arten (v0.9.6 P-MOL,
@@ -2575,6 +2914,12 @@ export const ENTITY_KINDS = [
   'skizze',
   // A9/Welle 3 (17.09.2026): additiv ans Ende.
   'leuchte',
+  // P73 (B164 I4, 24.09.2026): additiv ans Ende.
+  'preparegraph',
+  // KD-9b D6a (07.10.2026): additiv ans Ende.
+  'dachfenster',
+  // E216 Paket 07 (13.10.2026): additiv ans Ende.
+  'solidoperation',
 ] as const;
 
 export type EntityKind = (typeof ENTITY_KINDS)[number];

@@ -72,7 +72,7 @@ export function GespeicherteAnsichten() {
               key={slot}
               data-testid={`ansicht-slot-${slot}`}
               className="k-glass"
-              style={{ display: 'grid', gap: 8, padding: 12, borderRadius: 'var(--k-radius-md)' }}
+              style={{ display: 'grid', gap: 8, padding: 12, borderRadius: 'var(--k-radius)' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span
@@ -115,7 +115,7 @@ export function GespeicherteAnsichten() {
                   }}
                   style={{
                     position: 'relative',
-                    borderRadius: 'var(--k-radius-sm)',
+                    borderRadius: 'var(--k-radius)',
                     overflow: 'hidden',
                     border: '1px solid var(--k-line)',
                     cursor: imReview ? 'crosshair' : 'default',
@@ -144,7 +144,7 @@ export function GespeicherteAnsichten() {
                         transform: 'translate(-50%, -50%)',
                         width: 18,
                         height: 18,
-                        borderRadius: '999px',
+                        borderRadius: 'var(--k-radius-pill)',
                         background: 'var(--k-signal)',
                         // P-MF3: `--k-ink-1000` existierte nie. Der Punkt liegt auf
                         // `--k-signal` (Zeile darüber), und `--k-signal`/`--k-signal-tinte`
@@ -177,7 +177,7 @@ export function GespeicherteAnsichten() {
                         transform: 'translate(8px, 8px)',
                         background: 'var(--k-raised)',
                         border: '1px solid var(--k-line)',
-                        borderRadius: 'var(--k-radius-sm)',
+                        borderRadius: 'var(--k-radius)',
                         padding: '6px 8px',
                         maxWidth: 180,
                         fontSize: 11.5,
@@ -211,7 +211,7 @@ export function GespeicherteAnsichten() {
                         transform: 'translate(8px, 8px)',
                         background: 'var(--k-raised)',
                         border: '1px solid var(--k-line-strong)',
-                        borderRadius: 'var(--k-radius-sm)',
+                        borderRadius: 'var(--k-radius)',
                         padding: 8,
                         display: 'grid',
                         gap: 6,
@@ -229,7 +229,7 @@ export function GespeicherteAnsichten() {
                           font: 'inherit',
                           fontSize: 12,
                           padding: '4px 6px',
-                          borderRadius: 'var(--k-radius-sm)',
+                          borderRadius: 'var(--k-radius)',
                           border: '1px solid var(--k-line)',
                           background: 'var(--k-surface)',
                           color: 'var(--k-ink)',
@@ -268,7 +268,7 @@ export function GespeicherteAnsichten() {
                     padding: '20px 6px',
                     textAlign: 'center',
                     border: '1px dashed var(--k-line)',
-                    borderRadius: 'var(--k-radius-sm)',
+                    borderRadius: 'var(--k-radius)',
                   }}
                 >
                   {verwaist ? 'Snapshot nicht mehr vorhanden' : 'Kein Snapshot gespeichert'}

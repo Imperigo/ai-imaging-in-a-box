@@ -57,6 +57,27 @@ export interface Command<P = unknown> {
   summarize(params: P, doc: KosmoDoc): string;
   /** Pur: liest den Doc, liefert Patches — mutiert nie selbst. */
   run(doc: KosmoDoc, params: P): AnyPatch[];
+  /**
+   * LESEND (08.10.2026, Auftrag lw-lesend-wache): der Befehl ändert das
+   * Projekt nie, `run` liefert immer `[]`, die Antwort steht in `summarize`.
+   * Die Bedienen-Wache (KosmoMaus) und der Claude-Anschluss legen für ihn
+   * KEINE Vorschlagskarte an — es gibt nichts freizugeben —, sondern lassen
+   * ihn sofort laufen und geben die Zusammenfassung zurück. Fehlt das Feld,
+   * gilt der Befehl als schreibend; ein Probelauf ohne Patches lässt ihn dort
+   * trotzdem durch (Rückfall, `istLesenderLauf`). Erster Nutzer: KosmoDraw D1
+   * `designDetail.knotenPruefen`.
+   */
+  readonly lesend?: true;
+  /**
+   * KI-VERBORGEN (v0.1.8, Werkzeug-Luft, Integrator-Entscheid 14.10.2026):
+   * der Befehl bleibt registriert und ausfuehrbar (UI, Vollprobe, drehbuch,
+   * Rueckgaengig, Diff-Karte), steht aber NICHT in der Werkzeugliste fuer das
+   * Modell (`commandTools()` in `@kosmo/ai`). Gedacht fuer Befehle, die ein
+   * Buendel-Befehl (z.B. `design.schnitt` mit Unteraktion) fuer Kosmo
+   * vertritt; das Buendel ruft `run`/`summarize` des alten Befehls auf. Fehlt
+   * das Feld, ist der Befehl wie bisher fuer Kosmo sichtbar.
+   */
+  readonly kiVerborgen?: true;
 }
 
 export class CommandError extends Error {
@@ -71,7 +92,10 @@ export class CommandError extends Error {
 
 export interface JournalEntry {
   ts: string;
-  actor: 'benutzer' | 'kosmo' | 'kosmodev' | 'kosmodoc' | 'kosmotrain' | 'system';
+  // 'claude' (07.10.2026, Coop E158/E176): Schritte, die Claude ueber den
+  // Claude-Anschluss oder im Coop ausfuehrt, standen bis dahin als 'kosmo'
+  // im Journal; das verwischte den Urheber.
+  actor: 'benutzer' | 'kosmo' | 'claude' | 'kosmodev' | 'kosmodoc' | 'kosmotrain' | 'system';
   commandId: string;
   params: unknown;
   summary: string;
@@ -93,6 +117,20 @@ export function registerCommand<P>(cmd: Command<P>): Command<P> {
 
 export function getCommand(id: string): Command<unknown> | undefined {
   return registry.get(id) as Command<unknown> | undefined;
+}
+
+/** Trägt der Befehl das Kennzeichen `lesend: true`? Unbekannte Befehle: nein. */
+export function istLesenderBefehl(commandId: string): boolean {
+  return getCommand(commandId)?.lesend === true;
+}
+
+/**
+ * Lässt die Freigabe-Wache diesen Lauf ohne Karte durch? Ja, wenn der Befehl
+ * als `lesend` gekennzeichnet ist ODER sein Probelauf (`dryRun`) keinen Patch
+ * liefert — dann gibt es nichts, was ein «Anwenden» ändern könnte.
+ */
+export function istLesenderLauf(commandId: string, probe: Pick<ExecutionResult, 'patches'>): boolean {
+  return istLesenderBefehl(commandId) || probe.patches.length === 0;
 }
 
 export function allCommands(): Command<unknown>[] {
@@ -223,6 +261,22 @@ export class History {
 
   get canRedo(): boolean {
     return this.redoStack.length > 0;
+  }
+
+  /**
+   * Lesestelle fuer den Schritt, den das naechste `undo()` bzw. `redo()`
+   * umkehren wuerde, ohne ihn anzuwenden (Coop E158/E176: die Verlaufs-Wache
+   * prueft vorher, ob ein Agent auf den betroffenen Bauteilen weitergearbeitet
+   * hat). Bis 07.10.2026 las die Wache dafuer die privaten Stapel. Eine
+   * offene Gruppe (`beginGroup` ohne `endGroup`) zaehlt hier nicht, wie
+   * bei `undo()` auch.
+   */
+  naechsterUndo(): readonly AnyPatch[] | undefined {
+    return this.undoStack.at(-1);
+  }
+
+  naechsterRedo(): readonly AnyPatch[] | undefined {
+    return this.redoStack.at(-1);
   }
 
   undo(doc: KosmoDoc): AnyPatch[] | null {

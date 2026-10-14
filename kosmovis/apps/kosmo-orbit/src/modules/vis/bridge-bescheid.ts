@@ -25,6 +25,68 @@
  * nachgestellt zu werden.
  */
 
+/**
+ * C3 (Splat-Abnahme 06.10.2026) — DIE EINE STELLE für den Token-Satz.
+ *
+ * Am Heimrechner stand ohne Token «Brücke nicht erreichbar (Load failed)»,
+ * obwohl die Brücke lief. Grund (nachgelesen in der Brücke, nur gelesen): die
+ * Token-Wache ist die äusserste Schicht und antwortet mit 401, BEVOR die
+ * CORS-Schicht ihren Kopf anhängen kann. Der Browser verwirft diese Antwort
+ * und meldet der App bloss einen Netzfehler («Load failed» in WebKit,
+ * «Failed to fetch» in Chromium). Die App sieht den 401 also nur, wenn er
+ * mit CORS-Kopf ankommt (z.B. über einen Vorschalt-Dienst), sonst nicht.
+ *
+ * Darum drei Sätze, und jeder verweist auf denselben Ort, an dem der Token
+ * eingetragen wird. Wer den Verweis im Text trägt, bekommt den Knopf
+ * «Einstellungen öffnen» dazu (`brauchtHomeServerKnopf`,
+ * `shell/homeserver-knopf.ts`) — der Knopf hängt am Verweis, nicht an einer
+ * zweiten Liste von Fällen.
+ */
+export const HOMESERVER_VERWEIS = 'Einstellungen ▸ HomeServer';
+/** Ein gesehener 401/403, und in den Einstellungen steht kein Token. */
+export const BRIDGE_TOKEN_FEHLT_SATZ = `Bridge-Token fehlt — in ${HOMESERVER_VERWEIS} eintragen`;
+/** Ein gesehener 401/403, obwohl ein Token eingetragen ist. */
+export const BRIDGE_TOKEN_FALSCH_SATZ = `Bridge-Token passt nicht — in ${HOMESERVER_VERWEIS} prüfen`;
+/** Netzfehler ohne Gegenprobe: die App kann «weg» und «Token fehlt» nicht
+ *  sicher trennen und nennt darum beides (Regel 5, Ehrlichkeit). */
+export const BRIDGE_WEG_ODER_TOKEN_FEHLT_SATZ = `Brücke nicht erreichbar oder Bridge-Token fehlt — in ${HOMESERVER_VERWEIS} prüfen`;
+/** Dasselbe mit eingetragenem Token. */
+export const BRIDGE_WEG_ODER_TOKEN_FALSCH_SATZ = `Brücke nicht erreichbar oder Bridge-Token passt nicht — in ${HOMESERVER_VERWEIS} prüfen`;
+/** Ein 401/403 an einer Stelle, die den Token-Stand nicht kennt (z.B. ein
+ *  laufender Job, der schon angelegt war). */
+export const BRIDGE_TOKEN_FEHLT_ODER_FALSCH_SATZ = `Bridge-Token fehlt oder passt nicht — in ${HOMESERVER_VERWEIS} prüfen`;
+
+/** Was die App über einen gescheiterten Ruf zum Token sagen kann. */
+export interface TokenLage {
+  /** Der `fetch` selbst ist geplatzt — kein Statuscode gesehen. */
+  netzfehler: boolean;
+  status?: number | undefined;
+  tokenGesetzt: boolean;
+  /** Gegenprobe auf `/health` (tokenfrei): `true` = Brücke läuft,
+   *  `false` = auch sie schweigt, `undefined` = nicht geprüft. */
+  healthErreichbar?: boolean | undefined;
+}
+
+/**
+ * Der Token-Satz zur Lage, oder `null`, wenn der Token sicher nicht die
+ * Ursache ist (anderer HTTP-Status, oder die Brücke ist gemessen weg).
+ */
+export function tokenSatz(lage: TokenLage): string | null {
+  if (lage.status === 401 || lage.status === 403) {
+    return lage.tokenGesetzt ? BRIDGE_TOKEN_FALSCH_SATZ : BRIDGE_TOKEN_FEHLT_SATZ;
+  }
+  if (!lage.netzfehler) return null;
+  if (lage.healthErreichbar === true) return lage.tokenGesetzt ? BRIDGE_TOKEN_FALSCH_SATZ : BRIDGE_TOKEN_FEHLT_SATZ;
+  if (lage.healthErreichbar === false) return null;
+  return lage.tokenGesetzt ? BRIDGE_WEG_ODER_TOKEN_FALSCH_SATZ : BRIDGE_WEG_ODER_TOKEN_FEHLT_SATZ;
+}
+
+/** Trägt der Text den Verweis auf den HomeServer-Abschnitt? Dann gehört der
+ *  Knopf dazu, der dorthin springt. */
+export function brauchtHomeServerKnopf(text: string): boolean {
+  return text.includes(HOMESERVER_VERWEIS);
+}
+
 /** Was die App über den gescheiterten Ruf weiss, bevor sie urteilt. */
 export interface BescheidLage {
   /** Der `fetch` selbst ist geplatzt (Netzfehler ODER vom Browser
@@ -39,9 +101,16 @@ export interface BescheidLage {
   tokenGesetzt: boolean;
   /** Die Bridge-Adresse liegt vermutlich ausserhalb der CSP-Freigabe. */
   cspVerdacht: boolean;
+  /** Der gescheiterte Ruf war ein SCHREIBENDER (z.B. Render-POST), der die
+   *  Bruecke erreicht haben KANN. WARUM (CORS-Befund E156, 06.10.2026): ohne
+   *  CORS-Freigabe fuer die App-Herkunft nimmt die Bruecke den POST an, der
+   *  Browser verwirft nur die Antwort — und die Gegenprobe `/health` scheitert
+   *  aus demselben Grund. «Offline» waere dann falsch und laedt zum doppelten
+   *  Senden ein. */
+  schreibRuf?: boolean;
 }
 
-export type BescheidArt = 'csp' | 'token-fehlt' | 'token-abgelehnt' | 'offline' | 'roh';
+export type BescheidArt = 'csp' | 'token-fehlt' | 'token-abgelehnt' | 'antwort-unlesbar' | 'offline' | 'roh';
 
 export interface Bescheid {
   art: BescheidArt;
@@ -59,9 +128,12 @@ export interface Bescheid {
  * 2. **Ein gesehener 401/403** — eindeutig, kein Raten nötig.
  * 3. **Netzfehler, aber `/health` antwortet** — die Bridge läuft. Das ist
  *    der Fall aus B43 §10, und er war bisher unsichtbar.
- * 4. **Netzfehler und `/health` schweigt** — jetzt ist «offline» eine
+ * 4. **Netzfehler nach einem schreibenden Ruf** (`schreibRuf`) — der Auftrag
+ *    KANN angekommen sein (CORS-Befund E156): ehrlich «unklar», mit der
+ *    Bitte, zuerst nachzusehen statt erneut zu senden.
+ * 5. **Netzfehler und `/health` schweigt** — jetzt ist «offline» eine
  *    Messung statt einer Vermutung.
- * 5. Alles andere bleibt der Rohtext; eine erfundene Erklärung wäre
+ * 6. Alles andere bleibt der Rohtext; eine erfundene Erklärung wäre
  *    schlechter als eine ehrliche Unklarheit.
  */
 export function bridgeBescheid(lage: BescheidLage, rohtext: string): Bescheid {
@@ -93,6 +165,7 @@ export function bridgeBescheid(lage: BescheidLage, rohtext: string): Bescheid {
       ? {
           art: 'token-abgelehnt',
           text:
+            `${BRIDGE_TOKEN_FALSCH_SATZ}. ` +
             `Die Bridge laeuft, hat den Ruf aber abgelehnt (${lage.status}). Der hinterlegte ` +
             'Bridge-Token passt nicht zur Variable KOSMO_BRIDGE_TOKEN auf dem Home-PC — in den Einstellungen ' +
             'den richtigen Bridge-Token hinterlegen. Ein Neustart der Bridge hilft hier nicht — wer stattdessen ' +
@@ -100,9 +173,13 @@ export function bridgeBescheid(lage: BescheidLage, rohtext: string): Bescheid {
         }
       : {
           art: 'token-fehlt',
+          // UI-Befund C3: zuerst der Satz, der sagt, WAS zu tun ist und WO
+          // (Einstellungen, Abschnitt «HomeServer», Feld «Bridge-Token»);
+          // die Erklaerung zur Variable folgt danach.
           text:
+            `${BRIDGE_TOKEN_FEHLT_SATZ}. ` +
             `Die Bridge laeuft, verlangt aber einen Token (${lage.status}), weil auf dem Home-PC die Variable ` +
-            'KOSMO_BRIDGE_TOKEN gesetzt ist. In den Einstellungen einen Bridge-Token hinterlegen. Ein Neustart ' +
+            'KOSMO_BRIDGE_TOKEN gesetzt ist. Ein Neustart ' +
             'der Bridge hilft hier nicht — wer stattdessen KOSMO_BRIDGE_TOKEN auf dem Home-PC entfernt, muss ' +
             'die Bridge danach neu starten.',
         };
@@ -121,6 +198,7 @@ export function bridgeBescheid(lage: BescheidLage, rohtext: string): Bescheid {
     return {
       art: lage.tokenGesetzt ? 'token-abgelehnt' : 'token-fehlt',
       text:
+        `${lage.tokenGesetzt ? BRIDGE_TOKEN_FALSCH_SATZ : BRIDGE_TOKEN_FEHLT_SATZ}. ` +
         'Die Bridge ANTWORTET (Health-Probe erfolgreich) — der Render-Ruf wurde trotzdem abgewiesen. ' +
         (lage.tokenGesetzt
           ? 'Wahrscheinlich passt der hinterlegte Bridge-Token nicht zur Variable KOSMO_BRIDGE_TOKEN auf dem Home-PC, '
@@ -130,13 +208,29 @@ export function bridgeBescheid(lage: BescheidLage, rohtext: string): Bescheid {
     };
   }
 
+  if (lage.netzfehler && lage.schreibRuf) {
+    // CORS-Befund E156: der POST kann die Bruecke erreicht haben, nur die
+    // Antwort war fuer die App nicht lesbar. Kein «nicht erreichbar» — das
+    // waere eine Behauptung ohne Messung und fuehrt zum doppelten Auftrag.
+    return {
+      art: 'antwort-unlesbar',
+      text:
+        'Keine lesbare Antwort von der Bridge — der Auftrag kann trotzdem angekommen sein. ' +
+        'Haeufigste Ursache: die Bridge gibt der Herkunft dieser App keine CORS-Freigabe ' +
+        '(KOSMO_BRIDGE_ORIGIN auf dem Home-PC). Bitte zuerst in der Auftragsliste nachsehen und nicht erneut senden; ' +
+        'erst wenn dort nichts steht: laeuft die HomeStation-Bridge?',
+    };
+  }
+
   if (lage.netzfehler) {
     return {
       art: 'offline',
       text:
         lage.healthErreichbar === false
           ? 'Bridge nicht erreichbar — auch die Health-Probe antwortet nicht. Laeuft die HomeStation-Bridge? (Offline)'
-          : 'Bridge nicht erreichbar — laeuft die HomeStation-Bridge? (Offline)',
+          : // C3: ohne Gegenprobe ist «weg» nicht von «Token fehlt» zu trennen
+            // (401 ohne CORS-Kopf) — beide Möglichkeiten, mit dem Verweis.
+            `${tokenSatz(lage) ?? 'Bridge nicht erreichbar'}. Laeuft die HomeStation-Bridge? (Offline)`,
     };
   }
 

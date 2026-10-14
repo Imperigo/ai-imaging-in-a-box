@@ -400,6 +400,129 @@ export const Zwischenspeicher = z.object({
  */
 export const Lieferstatus = z.enum(['geliefert', 'uebersprungen', 'fehlgeschlagen']);
 
+/**
+ * kv-vertrag (Antwortblatt `auftraege/ergebnisse/auf-20260922-142-antwort-
+ * geometry-gates-und-qa-je-kamera.md` V2 und Bauposten 1): die zwei Tore der
+ * Geometrie-QA der Gegenseite, oberste Ebene, additiv und optional, OHNE
+ * Default. Schema nach dem Beispiel-JSON der Gegenseite
+ * (`docs/auftraege-kosmovis/erg-20260929-e124-beispiele-und-glas.md` §3 und
+ * die Feldliste in §4), nicht nach einer Liste ohne Typen.
+ *
+ * Unsere zwei Bedingungen aus V2/V3, beide hier festgeschrieben:
+ * - `passed` und `released` sind Boolean, nie `null`. `released` ist nur
+ *   `true`, wenn beide Tore gemessen sind, beide bestehen UND die Gegenprobe
+ *   getrennt hat; `released: false` heisst darum oft «Gegenprobe fehlt»,
+ *   nicht «Bild schlecht» (Anzeige: UI-Lane, Bauposten 3).
+ * - Jeder Status spricht nur die drei Woerter von `GeometryStatus`. Die
+ *   Gegenseite uebersetzt ihre inneren Woerter (`ok | fehlt | degeneriert`)
+ *   beim Schreiben; `degeneriert` erscheint dann als `not_measured` und steht
+ *   weiter in `fail_reasons`.
+ *
+ * Leere Zahlen FEHLEN bei der Gegenseite statt `null` (§4), darum sind die
+ * Zahlen hier nur optional. AUSDRUECKLICH NICHT GEBAUT: `separates`: in der
+ * Feldliste genannt, im Beispiel nicht enthalten, Typ ungeklaert. Kommt es
+ * an, wird es abgestreift und als `[E76]` gemeldet, bis ein Beispiel es
+ * zeigt.
+ */
+export const GeometryGates = z.object({
+  status: GeometryStatus,
+  released: z.boolean(),
+  passed: z.boolean(),
+  camera: z.string().optional(),
+  rho_mask: z.number().optional(),
+  rho_mask_threshold: z.number().optional(),
+  rho_mask_status: GeometryStatus.optional(),
+  rho_mask_passed: z.boolean().optional(),
+  geom_iou: z.number().optional(),
+  geom_iou_threshold: z.number().optional(),
+  geom_iou_status: GeometryStatus.optional(),
+  geom_iou_passed: z.boolean().optional(),
+  counter_check_status: GeometryStatus.optional(),
+  fail_reasons: z.array(z.string()).optional(),
+  reason: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
+});
+export type GeometryGates = z.infer<typeof GeometryGates>;
+
+/**
+ * kv-ebenen (E124 Schritt 1, Owner-Entscheid 29.09.2026 «zwei Schritte»):
+ * der RUECKWEG der Ebenen, nach dem echten Beispiel der Gegenseite
+ * (`docs/auftraege-kosmovis/erg-20260929-e124-beispiele-und-glas.md` §2/§3,
+ * woertlich als `test/fixtures/e124-render-result.json`). Nur Vertrag, keine
+ * Anzeige: die kommt erst, wenn ein echter Lauf die Ebenen belegt.
+ *
+ * Die drei Bedingungen, die wir drueben gestellt haben:
+ * - (a) `bedeutung` ist STRUKTURIERT, je Art ein eigener Block (unten).
+ * - (b) ohne Bestellung kein Feld: `ebenen` ist optional und OHNE Default.
+ * - (c) bestellt, aber fehlt: der Eintrag bleibt stehen, `datei` und
+ *   `bedeutung` sind `null`, `grund` ist dann Pflicht (superRefine unten);
+ *   `renderResultMaengel` benennt ihn. Die Kamera traegt dazu
+ *   `lieferstatus: 'fehlgeschlagen'`, auch bei `bilder_ist == bilder_soll`.
+ *
+ * `datei` ist FLACH (ein Segment, `<kamera>__<art>.png`): so holt die Bruecke
+ * sie ueber `GET /jobs/{id}/artifacts/{name}` ab, die `/`, `\` und `..`
+ * abweist. Ein Name mit Pfad wird darum schon hier abgewiesen.
+ *
+ * Die Zahlen und Texte in `bedeutung` sind dort echt (aus dem
+ * Blender-Bericht); die Beispielwerte fuer das KI-Bild sind Attrappe, betrifft
+ * `ebenen` aber nicht (Blatt, «Was an den Beispielen echt ist»).
+ */
+const Srgb8 = z.tuple([
+  z.number().int().min(0).max(255),
+  z.number().int().min(0).max(255),
+  z.number().int().min(0).max(255),
+]);
+
+/** `tiefe`: 8-Bit-Grau mit Grenzen in Metern; `rueckrechnung` ist die Formel als Text. */
+export const EbeneBedeutungTiefe = z.object({
+  einheit: z.string(),
+  min_m: z.number(),
+  max_m: z.number(),
+  nah: z.string(),
+  hintergrund_grauwert: z.number(),
+  bittiefe: z.number().int().positive(),
+  rueckrechnung: z.string(),
+});
+
+/** `material-id`: Hintergrundfarbe und die Tabelle Farbe → Bauteil. */
+export const EbeneBedeutungMaterialId = z.object({
+  nullfarbe_srgb_8bit: Srgb8,
+  tabelle: z.array(
+    z.object({
+      index: z.number().int().min(0),
+      name: z.string(),
+      farbe_srgb_8bit: Srgb8,
+    }),
+  ),
+});
+
+/** `schoenbild`: womit und wie fein gerechnet wurde. */
+export const EbeneBedeutungSchoenbild = z.object({
+  renderer: z.string(),
+  samples: z.number().int().positive(),
+});
+
+const EbenenDatei = z
+  .string()
+  .min(1)
+  .refine((n) => !/[/\\]/.test(n) && n !== '.' && n !== '..', {
+    message: 'ebenen[].datei ist ein flacher Name (ein Segment), ohne "/", "\\" und "..".',
+  });
+
+const ebeneFelder = {
+  kamera: z.string(),
+  datei: EbenenDatei.nullable(),
+  /** Pflicht, sobald `datei` null ist (superRefine am Ergebnis). */
+  grund: z.string().optional(),
+};
+
+export const Ebene = z.discriminatedUnion('art', [
+  z.object({ ...ebeneFelder, art: z.literal('schoenbild'), bedeutung: EbeneBedeutungSchoenbild.nullable() }),
+  z.object({ ...ebeneFelder, art: z.literal('tiefe'), bedeutung: EbeneBedeutungTiefe.nullable() }),
+  z.object({ ...ebeneFelder, art: z.literal('material-id'), bedeutung: EbeneBedeutungMaterialId.nullable() }),
+]);
+export type Ebene = z.infer<typeof Ebene>;
+
 export const RenderResult = z
   .object({
     schema: z.literal('kosmovis.render-result/v2').default('kosmovis.render-result/v2'),
@@ -438,8 +561,59 @@ export const RenderResult = z
      * `-06.md` (Material-ID als Bild).
      */
     images: z.array(z.string()),
-    ai_variant: z.string().optional(),
-    lieferstatus: Lieferstatus.default('geliefert'),
+    /**
+     * kv-vertrag (E123, Owner-Entscheid 29.09.2026, Antwort
+     * `auftraege/ergebnisse/auf-20260921-133-antwort-null-regel.md`):
+     * NULLBAR. Unser eigener ComfyUI-Worker schreibt `None`, wenn er keine
+     * Bilder gesammelt hat; vorher machte das `null` das ganze Ergebnis
+     * ungueltig und `parseJob` warf den Auftrag weg. Nach Regel B nimmt der
+     * Leser `null` an und meldet einen benannten Mangel («nicht bekannt»),
+     * siehe `renderResultMaengel` unten. Ein fehlendes Feld bleibt «nichts
+     * gesagt» und ist kein Mangel.
+     */
+    ai_variant: z.string().nullable().optional(),
+    /**
+     * kv-vertrag (Antwortblatt `auf-20260923-155` F7 und Bauposten 2): das
+     * GERECHNETE Modell, nicht das bestellte (`RenderJob.requested_engine`
+     * sagt nur `cycles | ki`). Namen der Gegenseite, oberste Ebene wie
+     * `ai_variant`, alle drei optional und OHNE Default: ein fehlendes Feld
+     * heisst «der Worker sagt es nicht», nicht «keine Fuehrung».
+     * `guidance_applied` ist ausdruecklich NICHT nullbar (Bedingung 1 der
+     * Zusage): kennt der Worker die Antwort nicht, laesst er das Feld weg.
+     */
+    engine_used: z.string().optional(),
+    engine_license: z.string().optional(),
+    guidance_applied: z.boolean().optional(),
+    /**
+     * P-LIZENZMARKE (E128, KosmoVis-Vertragsfrage F2 vom 30.09.2026,
+     * `docs/auftraege-kosmovis/antwort-20260930-int1-an-kosmovis.md`): die
+     * Gegenseite setzt das Feld NUR als `true`, wenn die Lizenz des
+     * gerechneten Modells noch offen ist (heute `qwen-image-2.1`); sonst
+     * laesst sie es weg. Bewusst `boolean` statt `literal(true)`: ein
+     * falsches `false` verwirft nicht das ganze Ergebnis mit allen Bildern,
+     * sondern wird in `renderResultMaengel` als benannter Mangel gemeldet
+     * (Regel B, E123). Nicht nullbar, kein Default: fehlt es, fehlt es.
+     * Was die Marke sperrt, ist NICHT hier entschieden (Owner-Entscheid folgt).
+     */
+    engine_license_open: z.boolean().optional(),
+    /** kv-vertrag: siehe `GeometryGates` oben. Additiv, optional, kein Default. */
+    geometry_gates: GeometryGates.optional(),
+    /** kv-ebenen (E124): siehe `Ebene` oben. Additiv, optional, kein Default;
+     *  die Ebenen stehen NICHT in `images`. */
+    ebenen: z.array(Ebene).optional(),
+    /**
+     * kv-lieferstatus-null (KosmoVis L1, Antwortblatt
+     * `auftraege/ergebnisse/erg-20261001-216-kosmovis-v017.md`, Entscheid 51
+     * der Gegenseite): NULLBAR. `null` heisst «nicht festgestellt», z. B. wenn
+     * die Bilderzahl der Kameras nicht zur Bildliste passt. Das ist ein
+     * VORBEHALT, kein Fehler: vorher verwarf `parseJob` das ganze Ergebnis
+     * samt allen Bildern. Jetzt bleibt `null` `null` (nie still «geliefert»),
+     * `renderResultMaengel` benennt es, und die Vis-Station zeigt es als
+     * Vorbehalt. Der Default greift nur, wenn das Feld FEHLT: alte Ergebnisse
+     * bleiben «geliefert» wie bisher. Der Grund ist auch bei `null` Pflicht
+     * (superRefine unten, die Bedingung `!== 'geliefert'` faengt `null` mit).
+     */
+    lieferstatus: Lieferstatus.nullable().default('geliefert'),
     lieferstatus_grund: z.string().optional(),
     qa: z.object({
       style: StyleQA.optional(),
@@ -492,6 +666,26 @@ export const RenderResult = z
           style: StyleQA.optional(),
           /** P6 — siehe Nachtrag `Zwischenspeicher` oben. Additiv, optional, kein Default. */
           zwischenspeicher: Zwischenspeicher.optional(),
+          /**
+           * kv-vertrag (Antwortblatt `auf-20260923-155` Abschnitt 1 und
+           * Bauposten 1): Lieferung JE KAMERA, Namen und Ebene der
+           * Gegenseite. Dieselbe dreiwertige Aufzaehlung wie am Auftrag,
+           * aber OHNE Default: am Auftrag heisst ein fehlendes Feld aus
+           * Rueckwaertsgruenden «geliefert», je Kamera heisst es «nichts
+           * gesagt». Der Grund ist Pflicht, sobald nicht `geliefert`
+           * (superRefine unten), und bei `geliefert` erlaubt (Zwilling,
+           * F1 im selben Blatt).
+           *
+           * kv-lieferstatus-null (L1): auch hier NULLBAR, damit eine Kamera
+           * mit `null` («nicht festgestellt») nicht das ganze Ergebnis
+           * verwirft; Grund-Pflicht und Mangelzeile wie am Auftrag.
+           */
+          lieferstatus: Lieferstatus.nullable().optional(),
+          lieferstatus_grund: z.string().optional(),
+          /** Zaehler, ganze Zahl >= 0 oder `null` («nicht bekannt», keine
+           *  Ersatzzahl). Nebeneinander zu lesen, nicht zu verrechnen. */
+          bilder_soll: z.number().int().min(0).nullable().optional(),
+          bilder_ist: z.number().int().min(0).nullable().optional(),
         }),
       )
       .optional(),
@@ -502,14 +696,73 @@ export const RenderResult = z
       ctx.addIssue({
         code: 'custom',
         message:
-          'lieferstatus_grund ist Pflicht, sobald lieferstatus nicht "geliefert" ist — ' +
+          'lieferstatus_grund ist Pflicht, sobald lieferstatus nicht "geliefert" ist (auch bei null) — ' +
           'ein Statuswert ohne Begruendung ist keine Antwort (F3, auf-orbit-20260828-16.md Posten 1).',
         path: ['lieferstatus_grund'],
       });
     }
+    v.ebenen?.forEach((e, i) => {
+      if (e.datei === null && !e.grund) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'ebenen[].grund ist Pflicht, sobald datei null ist: eine bestellte, aber fehlende Ebene ' +
+            'ohne Begruendung ist keine Antwort (E124, Bedingung c).',
+          path: ['ebenen', i, 'grund'],
+        });
+      }
+    });
+    v.qa_je_kamera?.forEach((k, i) => {
+      if (k.lieferstatus !== undefined && k.lieferstatus !== 'geliefert' && !k.lieferstatus_grund) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'qa_je_kamera[].lieferstatus_grund ist Pflicht, sobald lieferstatus nicht "geliefert" ist (auch bei null), ' +
+            'dieselbe Regel wie am Auftrag (auf-20260923-155, Bauposten 1).',
+          path: ['qa_je_kamera', i, 'lieferstatus_grund'],
+        });
+      }
+    });
   });
 
 export type RenderResult = z.infer<typeof RenderResult>;
+
+/**
+ * kv-vertrag (E123, Regel B): zaehlt die Felder auf, die die Gegenseite als
+ * `null` («nicht bekannt») gemeldet hat, je als benannten Mangel in einem
+ * Satz. Reine Funktion: sie urteilt nicht und wirft nicht; ein Leser, der ein
+ * Ergebnis annimmt, meldet diese Liste, statt das `null` still als «leer»
+ * oder als 0 zu zeigen.
+ *
+ * `geometry_gates` steht hier nicht: die Gegenseite sendet dort kein `null`
+ * (leere Zahlen fehlen, `erg-20260929-e124` §4), und `passed`/`released`
+ * sind nicht nullbar.
+ */
+export function renderResultMaengel(r: RenderResult): string[] {
+  const maengel: string[] = [];
+  const nichtBekannt = '(die Gegenseite meldete null)';
+  if (r.ai_variant === null) maengel.push(`ai_variant: nicht bekannt ${nichtBekannt}`);
+  // P-LIZENZMARKE: der Vertrag kennt nur `true`; ein `false` ist ein
+  // benannter Mangel, kein Schemafehler (Festlegung im Antwortblatt an KosmoVis).
+  if (r.engine_license_open === false) maengel.push('engine_license_open: false gemeldet, der Vertrag kennt nur true');
+  // kv-lieferstatus-null (L1): «nicht festgestellt» ist ein Vorbehalt mit dem
+  // Grund der Gegenseite, nie still «geliefert». Der Grund ist Pflicht
+  // (superRefine), der Rueckfall steht nur fuer Aufrufer ohne Schemapruefung.
+  if (r.lieferstatus === null) maengel.push(`Lieferstatus nicht festgestellt: ${r.lieferstatus_grund ?? 'ohne Grund'}`);
+  for (const k of r.qa_je_kamera ?? []) {
+    if (k.lieferstatus === null) {
+      maengel.push(`qa_je_kamera[${k.kamera}].lieferstatus: nicht festgestellt (${k.lieferstatus_grund ?? 'ohne Grund'})`);
+    }
+    if (k.bilder_soll === null) maengel.push(`qa_je_kamera[${k.kamera}].bilder_soll: nicht bekannt ${nichtBekannt}`);
+    if (k.bilder_ist === null) maengel.push(`qa_je_kamera[${k.kamera}].bilder_ist: nicht bekannt ${nichtBekannt}`);
+  }
+  // kv-ebenen (E124, Bedingung c): eine bestellte, aber fehlende Ebene ist
+  // ein benannter Mangel mit dem Grund der Gegenseite, keine stille Luecke.
+  for (const e of r.ebenen ?? []) {
+    if (e.datei === null) maengel.push(`ebenen[${e.kamera}/${e.art}]: bestellt, nicht geliefert (${e.grund ?? 'ohne Grund'})`);
+  }
+  return maengel;
+}
 
 /** Job-Record der Datei-Queue (render_job_store.py auf der HomeStation). */
 export const RenderJobStatus = z.enum([
@@ -550,6 +803,14 @@ export const RenderJob = z.object({
   // sie noch nicht, echte/erweiterte Worker tragen sie ein):
   /** Wer den Job übernommen hat, z. B. "fake-worker" oder ein echter Worker. */
   worker: z.string().optional(),
+  /** auf-248: Zeitpunkt der Übernahme (ISO-8601), von der Brücke bzw. vom
+   * Worker gesetzt. Fehlt, wenn die Brücke den Worker nur ableitet. */
+  worker_seit: z.string().optional(),
+  /** auf-248: `'abgeleitet'`, wenn die Brücke `worker` nicht gemeldet bekam,
+   * sondern aus dem Abholweg ableitete (Render-Job ohne Eintrag auf running/
+   * done/error → `worker: 'abholer'`). Fehlt, wenn der Worker sich selbst
+   * eingetragen hat. */
+  worker_quelle: z.literal('abgeleitet').optional(),
   /** Laufende Etappe; der Client zeigt Phase + Prozent. */
   progress: RenderJobProgress.optional(),
   /** Was BESTELLT wurde (nicht was gerendert wurde) — Cycles vs. KI-Veredelung. */

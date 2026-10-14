@@ -1,6 +1,5 @@
 import {
   cloneElement,
-  useEffect,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -10,6 +9,9 @@ import {
 import type { KIconName } from './icons';
 import { KIcon } from './icons';
 import { useFokusFalle } from './fokusfalle';
+import { useOverlaySchliessen } from './overlay-schliessen';
+import { useHerkunft } from './herkunft';
+import { zEbeneLeiter } from './tokens';
 
 /**
  * KMenu + KDialog (W0, UI-KONZEPT-065 §3) — die zwei Overlay-Bausteine.
@@ -20,6 +22,14 @@ import { useFokusFalle } from './fokusfalle';
  * P-g / Tastatur-Rückgrat nach `fokusfalle.ts` ausgelagert und von dort
  * exportiert (byte-gleicher Umzug, s. dortiger Kopfkommentar) — hier nur
  * noch importiert.
+ *
+ * **Schichtung 20a (21.09.2026):** Es gibt EIN Haus-Gesetz fürs Schliessen,
+ * `useOverlaySchliessen`. Beide Bausteine hier hielten bis heute eine eigene
+ * Abschrift davon (je ein `document`-`keydown`/`mousedown`-Paar) — genau die
+ * vier «eigener Handler statt gemeinsames Gesetz»-Fälle aus Frage 20. Sie
+ * rufen jetzt das Gesetz. `KDialog` bestellt es als `modal: true`, bekommt
+ * damit Escape, Fokusfalle und Fokusrückgabe in einem und trägt sich in den
+ * Modal-Stapel ein (Escape schliesst nur die oberste Fläche, Entscheid 24a).
  */
 
 // ── KMenu ───────────────────────────────────────────────────────────
@@ -59,21 +69,11 @@ export function KMenu({ trigger, items, onSelect, ...rest }: KMenuProps) {
   const menuRef = useRef<HTMLDivElement | null>(null);
   useFokusFalle(menuRef, offen);
 
-  useEffect(() => {
-    if (!offen) return undefined;
-    const schliesseAussen = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOffen(false);
-    };
-    const schliesseEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOffen(false);
-    };
-    document.addEventListener('mousedown', schliesseAussen);
-    document.addEventListener('keydown', schliesseEsc);
-    return () => {
-      document.removeEventListener('mousedown', schliesseAussen);
-      document.removeEventListener('keydown', schliesseEsc);
-    };
-  }, [offen]);
+  // Das Haus-Gesetz statt der eigenen Abschrift. `esc`/`aussenklick` an
+  // `offen` gebunden — exakt die bisherige Lebensdauer der beiden Horcher.
+  // KEIN `modal`: ein Menü ist keine modale Fläche, es dunkelt nichts ab und
+  // gehört nicht in den Stapel, der Escape auf die oberste Fläche begrenzt.
+  useOverlaySchliessen(wrapRef, () => setOffen(false), { esc: offen, aussenklick: offen });
 
   // `trigger` ist beliebig (KButton, ein natives <button>, …) — dessen
   // konkreter Props-Typ ist mit `cloneElement` nicht variantensicher zu
@@ -175,20 +175,18 @@ export interface KDialogProps {
  * nachgezogen wurde. `meldungen`/`KBestaetigung` steht damit NICHT mehr
  * zwischen `Kurzbefehle` und `WerkzeugSetup`, sondern über der ganzen
  * übrigen Familie — s. korrigierte Reihenfolge und der letzte Satz oben. */
-export function KDialog({ titel, onClose, children, fusszeile, breite = 560, zIndex = 215, ...rest }: KDialogProps) {
+export function KDialog({ titel, onClose, children, fusszeile, breite = 560, zIndex = zEbeneLeiter.modal + 20, ...rest }: KDialogProps) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   // KDialog ist immer "offen", solange gemountet (kein internes offen/zu wie
-  // KMenu) — die Falle ist darum durchgehend aktiv, gebunden an die Lebens-
-  // dauer der Komponente.
-  useFokusFalle(boxRef, true);
-
-  useEffect(() => {
-    const schliesseEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', schliesseEsc);
-    return () => document.removeEventListener('keydown', schliesseEsc);
-  }, [onClose]);
+  // KMenu) — Escape, Falle und Fokusrückgabe sind darum durchgehend aktiv,
+  // gebunden an die Lebensdauer der Komponente. `aussenklick: false`: der
+  // Klick daneben läuft hier über den Scrim (`onClick={onClose}` unten, ein
+  // ECHTES `click` auf einer echten Fläche), nicht über einen globalen
+  // `mousedown`-Horcher — sonst schlösse ein Mausdruck, der in der Box
+  // beginnt und ausserhalb endet, den Dialog mit.
+  useOverlaySchliessen(boxRef, onClose, { modal: true, aussenklick: false });
+  // Owner C5 (01.10.2026): das Fenster wächst aus dem Knopf, der es geöffnet hat.
+  useHerkunft(boxRef);
 
   return (
     <div
@@ -202,7 +200,7 @@ export function KDialog({ titel, onClose, children, fusszeile, breite = 560, zIn
     >
       <div
         ref={boxRef}
-        className="k-dialog-box k-dialog k-skalieren-ein"
+        className="k-dialog-box k-dialog k-aus-ausloeser"
         onClick={(e) => e.stopPropagation()}
         style={{ width: `min(${breite}px, calc(100vw - 48px))` }}
       >

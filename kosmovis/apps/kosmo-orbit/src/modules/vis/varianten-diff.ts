@@ -8,7 +8,7 @@ import {
   type VisRenderAuftrag,
 } from '@kosmo/kernel';
 import type { RenderJob } from '@kosmo/contracts';
-import { formularFeldText, type JobQa } from './vis-jobs';
+import { formularFeldText, type JobLieferstatus, type JobQa } from './vis-jobs';
 import type { KurationEintrag, NodeLauf } from './vis-runtime';
 
 /**
@@ -35,8 +35,73 @@ export type JobQaJeKameraEintrag = NonNullable<
  * hat das Feld schon eingefaedelt — die Oberflaeche bleibt dann wie vor
  * diesem Paket, kein Kamera-Block erscheint. */
 export type KuratierQuelle =
-  | { jobId: string; bild: string; qa?: JobQa | undefined; qaJeKamera?: JobQaJeKameraEintrag[] | undefined }
+  | {
+      jobId: string;
+      bild: string;
+      qa?: JobQa | undefined;
+      qaJeKamera?: JobQaJeKameraEintrag[] | undefined;
+      /** kv-lieferstatus-null (L1): siehe `NodeLauf.lieferstatus`. */
+      lieferstatus?: JobLieferstatus | undefined;
+      lieferstatusGrund?: string | undefined;
+      /** P-LIZENZMARKE Schritt 2 (E154 (4)): siehe `NodeLauf.lizenzOffen`. */
+      lizenzOffen?: boolean | undefined;
+      engineUsed?: string | undefined;
+      engineLicense?: string | undefined;
+    }
   | { dataUrl: string };
+
+/**
+ * P-LIZENZMARKE Schritt 2 (Owner-Entscheid E154 (4), 06.10.2026: «Anzeigen,
+ * nicht sperren»): was ein Bild ueber die Lizenz des Modells sagt, mit dem es
+ * gerechnet wurde. Dieselben drei Felder stehen am Lauf (`NodeLauf`) und an
+ * der Kuratier-Quelle; `lizenzAusQuelle` liest sie aus beiden Formen.
+ */
+export interface LizenzAngabe {
+  lizenzOffen?: boolean | undefined;
+  engineUsed?: string | undefined;
+  engineLicense?: string | undefined;
+}
+
+/** Das Wort am Bild. Eines fuer alle Stellen, damit Kachel, Knoten, Inspektor
+ *  und Ablage dasselbe sagen. */
+export const LIZENZ_OFFEN_LABEL = 'Lizenz offen';
+
+/** Wie lange die Ablage-Meldung mit dem Lizenzhinweis steht: sie traegt einen
+ *  ganzen Satz mehr als die gewohnte Meldung (4 s), so lange wie eine
+ *  Fehlermeldung (`melde`, `@kosmo/ui`). */
+export const LIZENZ_MELDUNG_MS = 8000;
+
+/**
+ * Der Grund zum Hinweis «Lizenz offen» — oder `undefined`, wenn das Ergebnis
+ * keine offene Lizenz meldet. Nur ein ausdrueckliches `true` zaehlt: ein
+ * fehlendes Feld heisst «frei» (Antwortblatt F2), und ein falsches `false`
+ * meldet der Leser schon als benannten Mangel (`renderResultMaengel`); beides
+ * ergibt hier keinen Hinweis. Reine Funktion, kein React; sie sperrt nichts.
+ */
+export function lizenzOffenGrund(angabe: LizenzAngabe | null | undefined): string | undefined {
+  if (angabe?.lizenzOffen !== true) return undefined;
+  const modell = angabe.engineUsed?.trim();
+  const lizenz = angabe.engineLicense?.trim();
+  const womit = modell
+    ? `Gerechnet mit ${modell}${lizenz ? ` (${lizenz})` : ''}.`
+    : `Das Modell, mit dem gerechnet wurde, meldet eine offene Lizenz${lizenz ? ` (${lizenz})` : ''}.`;
+  return `${womit} Die Lizenz ist vor einer Veröffentlichung zu klären.`;
+}
+
+/** Die Lizenzangabe einer Kuratier-Quelle. Eine Viewport-Aufnahme hat kein
+ *  Modell und darum nie eine offene Lizenz. */
+export function lizenzAusQuelle(quelle: KuratierQuelle | null | undefined): LizenzAngabe | undefined {
+  if (!quelle || !('jobId' in quelle)) return undefined;
+  return { lizenzOffen: quelle.lizenzOffen, engineUsed: quelle.engineUsed, engineLicense: quelle.engineLicense };
+}
+
+/** Der Zusatz zur Ablage-Meldung «liegt auf … weiterschieben», wenn das Bild
+ *  eine offene Lizenz traegt: der Hinweis samt Grund. Leer sonst — die Meldung
+ *  bleibt dann wortgleich wie bisher. */
+export function lizenzAblageZusatz(angabe: LizenzAngabe | null | undefined): string {
+  const grund = lizenzOffenGrund(angabe);
+  return grund ? `. ${LIZENZ_OFFEN_LABEL}: ${grund}` : '';
+}
 
 /**
  * N4-Wache (ROADMAP 1340) — die Abbildung «fertiger Lauf → Kuratier-Quelle»,
@@ -53,7 +118,21 @@ export type KuratierQuelle =
  * Bedingung wie zuvor inline (`status==='fertig' && jobId && bild`).
  */
 export function quelleAusLauf(
-  lauf: Pick<NodeLauf, 'status' | 'jobId' | 'bild' | 'qa' | 'qaJeKamera'> | undefined,
+  lauf:
+    | Pick<
+        NodeLauf,
+        | 'status'
+        | 'jobId'
+        | 'bild'
+        | 'qa'
+        | 'qaJeKamera'
+        | 'lieferstatus'
+        | 'lieferstatusGrund'
+        | 'lizenzOffen'
+        | 'engineUsed'
+        | 'engineLicense'
+      >
+    | undefined,
 ): KuratierQuelle | null {
   if (!lauf || lauf.status !== 'fertig' || !lauf.jobId || !lauf.bild) return null;
   return {
@@ -61,7 +140,54 @@ export function quelleAusLauf(
     bild: lauf.bild,
     qa: lauf.qa,
     ...(lauf.qaJeKamera ? { qaJeKamera: lauf.qaJeKamera } : {}),
+    // kv-lieferstatus-null (L1): `null` ist ein Wert, darum `!== undefined`.
+    ...(lauf.lieferstatus !== undefined ? { lieferstatus: lauf.lieferstatus } : {}),
+    ...(lauf.lieferstatusGrund !== undefined ? { lieferstatusGrund: lauf.lieferstatusGrund } : {}),
+    // P-LIZENZMARKE Schritt 2: die Marke reist mit dem Bild in Kachel,
+    // Kuratier-Karte, Inspektor und Ablage.
+    ...(lauf.lizenzOffen !== undefined ? { lizenzOffen: lauf.lizenzOffen } : {}),
+    ...(lauf.engineUsed !== undefined ? { engineUsed: lauf.engineUsed } : {}),
+    ...(lauf.engineLicense !== undefined ? { engineLicense: lauf.engineLicense } : {}),
   };
+}
+
+/**
+ * kv-lieferstatus-null (KosmoVis L1, Antwortblatt
+ * `auftraege/ergebnisse/erg-20261001-216-kosmovis-v017.md`): der Satz, den
+ * Kachel und Inspektor zeigen, wenn das Ergebnis NICHT «geliefert» meldet.
+ * Fuer `null` wortgleich mit der Mangelzeile in `renderResultMaengel`
+ * (`@kosmo/contracts`).
+ *
+ * B3 (Nachprobe auf-20261001-230): auch `'fehlgeschlagen'` und
+ * `'uebersprungen'` stehen hier. Gemessen: jeder Auto-Auftrag kam mit
+ * `'fehlgeschlagen'` zurueck, der Knoten zeigte gruen «fertig», und der
+ * Lieferstatus stand nirgends. Nur «geliefert» und ein fehlendes Feld bleiben
+ * still. Reine Funktion, kein React.
+ */
+export function lieferVorbehalt(
+  lieferstatus: JobLieferstatus | undefined,
+  grund: string | undefined,
+): string | undefined {
+  const kurz = lieferStatusKurz(lieferstatus);
+  if (!kurz) return undefined;
+  const text = grund?.trim();
+  return `Lieferstatus ${kurz.label}: ${text ? text : 'ohne Grund'}`;
+}
+
+/**
+ * B3: das kurze Wort fuer das Status-Feld am Render-Knoten, wenn ein Lauf
+ * zwar Bilder brachte, das Ergebnis aber NICHT «geliefert» meldet. `ton`
+ * waehlt die bestehende Statusfarbe: `fehler` (rot), `neutral` (grau),
+ * `vorbehalt` (die Warnfarbe). `undefined` bei «geliefert» oder fehlendem Feld:
+ * dann bleibt «fertig» stehen wie bisher.
+ */
+export function lieferStatusKurz(
+  lieferstatus: JobLieferstatus | undefined,
+): { label: string; ton: 'fehler' | 'neutral' | 'vorbehalt' } | undefined {
+  if (lieferstatus === null) return { label: 'nicht festgestellt', ton: 'vorbehalt' };
+  if (lieferstatus === 'fehlgeschlagen') return { label: 'fehlgeschlagen', ton: 'fehler' };
+  if (lieferstatus === 'uebersprungen') return { label: 'übersprungen', ton: 'neutral' };
+  return undefined;
 }
 
 /** N2 — Anzeige-Zeile fuer eine einzelne Kamera aus `qa_je_kamera`. Liest
@@ -71,6 +197,11 @@ export function quelleAusLauf(
 export interface KameraQaZeile {
   kamera: string;
   geometryBestanden?: boolean;
+  /** kv-qa-status (auf-20260922-142 Bauposten 2): gesetzt, wenn der Worker
+   *  `geometry.status` als `not_measured` oder `not_applicable` meldet. Dann
+   *  heisst `passed: false` «nicht geprueft», nicht «durchgefallen»:
+   *  `geometryBestanden` bleibt weg und die Geometrie zaehlt nicht im UND. */
+  geometryNichtGeprueft?: 'not_measured' | 'not_applicable';
   styleBestanden?: boolean;
   /** `undefined`, wenn fuer diese Kamera weder Geometrie- noch Stil-QA
    *  vorliegt — keine erfundene Aussage ueber eine Kamera ohne Messung. */
@@ -83,15 +214,31 @@ export interface KameraQaZeile {
  * Absender). Diese Funktion ist der ganze Zweck von V2: je Kamera EIN
  * eigenes Urteil, statt eines einzigen Verdikts ueber den ganzen Lauf.
  */
+/**
+ * Das Wort an der Kamera-Badge der Kuratier-Karte. HomeStation 266/267: ein
+ * Eintrag mit `geometry.status: not_measured` zeigte «ohne QA», obwohl die
+ * QA da war und nur nicht gemessen hatte. «ohne QA» bleibt fuer den Fall,
+ * dass zu dieser Kamera wirklich nichts kam.
+ */
+export function kameraQaText(z: KameraQaZeile): string {
+  if (z.bestanden !== undefined) return z.bestanden ? 'bestanden' : 'durchgefallen';
+  if (z.geometryNichtGeprueft === 'not_measured') return 'nicht gemessen';
+  if (z.geometryNichtGeprueft === 'not_applicable') return 'nicht zuständig';
+  return 'ohne QA';
+}
+
 export function kameraQaZeilen(eintraege: JobQaJeKameraEintrag[] | undefined): KameraQaZeile[] {
   if (!eintraege) return [];
   return eintraege.map((e) => {
-    const geometryBestanden = e.geometry?.passed;
+    const status = e.geometry?.status;
+    const geometryNichtGeprueft = status === 'not_measured' || status === 'not_applicable' ? status : undefined;
+    const geometryBestanden = geometryNichtGeprueft ? undefined : e.geometry?.passed;
     const styleBestanden = e.style?.passed;
     const werte = [geometryBestanden, styleBestanden].filter((v): v is boolean => typeof v === 'boolean');
     return {
       kamera: e.kamera,
       ...(geometryBestanden !== undefined ? { geometryBestanden } : {}),
+      ...(geometryNichtGeprueft ? { geometryNichtGeprueft } : {}),
       ...(styleBestanden !== undefined ? { styleBestanden } : {}),
       ...(werte.length > 0 ? { bestanden: werte.every(Boolean) } : {}),
     };
@@ -142,6 +289,10 @@ export interface VarianteMerkmale {
   samples?: number;
   presetLabel?: string;
   qaBestanden?: boolean;
+  /** E189: `verdict.passed:false`, aber der Absender sagt «NICHT BEURTEILBAR»
+   *  (`nichtBeurteilbarLautGrund`). Dann heisst `qaBestanden:false` nicht
+   *  «verfehlt»; die Anzeige sagt «nicht beurteilbar». */
+  qaNichtBeurteilbar?: true;
   /** Geeicht 23.08.2026 (P-EICHUNG, `render-result.ts` Nachtrag,
    *  `auftraege/von-homestation/auf-orbit-20260823-03.md`) — `rho_maske`
    *  gegen die Schwelle 0.80 verglichen. `undefined` heisst NICHT GEMESSEN
@@ -201,7 +352,7 @@ export interface VarianteMerkmale {
 }
 
 /** Geeicht 23.08.2026 (P-EICHUNG, s. Feld-Kommentar oben). */
-const RHO_MASKE_SCHWELLE = 0.8;
+export const RHO_MASKE_SCHWELLE = 0.8;
 
 /** `undefined` heisst NICHT GEMESSEN (fehlend oder `null`) — dieselbe
  *  Behandlung wie `ohneZahl()` weiter unten, hier fuer das Schwellen-Urteil
@@ -242,6 +393,7 @@ export function varianteMerkmale(
     ...(auftrag ? { faithful: auftrag.faithful, samples: auftrag.samples } : {}),
     ...(auftrag?.presetId ? { presetLabel: visPresetById(auftrag.presetId).name } : {}),
     ...(qa?.verdict ? { qaBestanden: qa.verdict.passed } : {}),
+    ...(nichtBeurteilbarLautGrund(qa) ? { qaNichtBeurteilbar: true as const } : {}),
     ...(qa?.verdict.reason ? { qaVorbehalt: qa.verdict.reason } : {}),
     ...(tiefenstaffelung !== undefined ? { tiefenstaffelungBestanden: tiefenstaffelung } : {}),
     ...(bauwerkVorhanden !== undefined ? { bauwerkVorhanden } : {}),
@@ -268,6 +420,11 @@ function fmtSamples(v?: number): string {
 }
 function fmtQa(v?: boolean): string {
   return v === undefined ? '—' : v ? 'bestanden' : 'verfehlt';
+}
+/** E189: das QA-Verdikt als Wort — «nicht beurteilbar», wo der Absender es
+ *  so nennt, sonst wie bisher. Dieselbe Zeile in Vergleich und Inspektor. */
+export function qaVerdiktText(m: Pick<VarianteMerkmale, 'qaBestanden' | 'qaNichtBeurteilbar'>): string {
+  return m.qaNichtBeurteilbar ? 'nicht beurteilbar' : fmtQa(m.qaBestanden);
 }
 /** Auftrag auf-20260827-62 (Posten 2) — der Vertragswortlaut bleibt
  *  UNGEKÜRZT (Auflage); ohne Vorbehalt bleibt der Platzhalter der anderen
@@ -314,7 +471,7 @@ export function varianteDiff(a: VarianteMerkmale, b: VarianteMerkmale): DiffZeil
     zeile('Preset', a.presetLabel ?? '—', b.presetLabel ?? '—'),
     zeile('Geometrie-Treue', fmtFaithful(a.faithful), fmtFaithful(b.faithful)),
     zeile('Samples', fmtSamples(a.samples), fmtSamples(b.samples)),
-    zeile('QA-Verdikt', fmtQa(a.qaBestanden), fmtQa(b.qaBestanden)),
+    zeile('QA-Verdikt', qaVerdiktText(a), qaVerdiktText(b)),
     // U11 (auf-20260827-62): der Vorbehalt bleibt IN DERSELBEN Tabelle,
     // direkt bei der Zahl, die er einschränkt — nicht auf einer anderen
     // Seite/in einem separaten Panel.
@@ -393,9 +550,54 @@ function nurAlteGeometrie(geometry: JobQa['geometry']): boolean {
  * ist dieselbe Sterne-Skala (0), ueber die die Oberflaeche bei fehlender QA
  * ohnehin schon "Keine QA-Bewertung vorhanden." zeigt (KuratierInspektor.tsx)
  * — ein leeres Feld ist ehrlicher als ein falsches Abzeichen. */
+/**
+ * Owner-Entscheid E189 (bei uns 70): «nicht beurteilbar LAUT GRUND». Der
+ * Vertrag bleibt unveraendert — `verdict.passed` ist `false` —, aber die
+ * Bildseite schreibt in `verdict.reason` einen Satz mit dem Grossbuchstaben-
+ * Wort «NICHT BEURTEILBAR» («(Gebaeudeanteil)»: das Haus fuellt weniger als
+ * 20 % des Bildes; schon laenger «(Rahmung)»), woertlich: «'passed: false'
+ * heisst hier nicht durchgefallen, sondern nicht beurteilbar».
+ *
+ * Gesucht wird IRGENDWO im Satz, nicht nur am Anfang: andere Saetze koennen
+ * davor stehen (z. B. «SCHWELLE FUER DIESE AUFNAHME UNERREICHBAR: …»). Nur
+ * die Grossschreibung zaehlt — ein «nicht beurteilbar» im Fliesstext ist
+ * keine Markierung. `passed: true` bleibt bestanden, was der Satz auch sagt.
+ */
+export const NICHT_BEURTEILBAR_MARKE = 'NICHT BEURTEILBAR';
+
+export function nichtBeurteilbarLautGrund(
+  qa: { verdict: { passed: boolean; reason?: string | undefined } } | undefined,
+): boolean {
+  return qa?.verdict.passed === false && (qa.verdict.reason ?? '').includes(NICHT_BEURTEILBAR_MARKE);
+}
+
+/**
+ * DAS URTEIL EINES ERGEBNISSES — eine Funktion fuer Kachel und Verlauf
+ * (HomeStation-Pruefung 266/267, 08.10.2026). Bis hierhin entschied die
+ * Kachel aus `verdict.passed`, der Verlauf aus `bewertungsLage`. Bei echten
+ * Abholer-Ergebnissen (ohne `rho_maske`/`kante`/`paarurteil`) ist die Lage
+ * immer `widerrufen`, und der Verlauf zeigte darum JEDEN echten Lauf als
+ * «nicht beurteilbar» — auch ein echtes Durchfallen, neben einer Kachel mit
+ * «QA ✗». `widerrufen` betrifft die Zahlen und Sterne, nicht das Verdikt.
+ *
+ * Jetzt allein aus dem Verdikt: `passed:true` → bestanden; `passed:false` →
+ * durchgefallen; `passed:false` mit «NICHT BEURTEILBAR» im Grund → nicht
+ * beurteilbar (E189); keine QA → ohne QA. Kachel und Verlauf rufen beide
+ * DIESE Funktion; `test/kv-urteil-echt.test.tsx` haelt sie gegeneinander.
+ */
+export type QaUrteil = 'bestanden' | 'durchgefallen' | 'nicht-beurteilbar' | 'ohne-qa';
+
+export function qaUrteil(qa: { verdict: { passed: boolean; reason?: string | undefined } } | undefined): QaUrteil {
+  if (!qa) return 'ohne-qa';
+  if (qa.verdict.passed) return 'bestanden';
+  return nichtBeurteilbarLautGrund(qa) ? 'nicht-beurteilbar' : 'durchgefallen';
+}
+
 export function sterneAusQa(qa: JobQa | undefined): number {
   if (!qa) return 0;
   if (nurAlteGeometrie(qa.geometry)) return 0;
+  // E189: ohne Urteil gibt es nichts zu bewerten — wie bei «widerrufen».
+  if (nichtBeurteilbarLautGrund(qa)) return 0;
   const werte = [qa.style?.style_score].filter((v): v is number => typeof v === 'number');
   if (werte.length === 0) return qa.verdict.passed ? 4 : 2;
   const mittel = werte.reduce((s, v) => s + v, 0) / werte.length;
@@ -434,11 +636,23 @@ export function sterneAusQa(qa: JobQa | undefined): number {
  * traegt ein Ergebnis `status:'not_applicable'` UND nur alte Geometrie-
  * Zahlen, ist es «hier war nichts zu messen», nicht «gemessen und widerlegt».
  */
-export type BewertungsLage = 'bewertet' | 'ohne-qa' | 'widerrufen' | 'nicht-zustaendig';
+/**
+ * E189: die fuenfte Lage `'nicht-beurteilbar'` — der Absender sagt selbst,
+ * dass er nicht geurteilt hat (`nichtBeurteilbarLautGrund`). Sie steht HINTER
+ * den bestehenden Pruefungen, damit keine bestehende Lage ihre Bedeutung
+ * wechselt: was vorher `nicht-zustaendig` oder `widerrufen` war, bleibt es;
+ * neu ist nur, dass ein solches Ergebnis nicht mehr als `bewertet` (oder,
+ * mit null Sternen, als `ohne-qa`) durchgeht.
+ */
+export type BewertungsLage = 'bewertet' | 'ohne-qa' | 'widerrufen' | 'nicht-zustaendig' | 'nicht-beurteilbar';
 
 export function bewertungsLage(qa: JobQa | undefined): BewertungsLage {
   if (!qa) return 'ohne-qa';
   if (qa.geometry?.status === 'not_applicable') return 'nicht-zustaendig';
+  // HomeStation 266/267: VOR `widerrufen` — sonst stand im Inspektor unter
+  // «nicht beurteilbar» zusaetzlich «Bewertung zurueckgezogen», weil echte
+  // Ergebnisse immer nur die alten Zahlen tragen.
+  if (nichtBeurteilbarLautGrund(qa)) return 'nicht-beurteilbar';
   if (nurAlteGeometrie(qa.geometry)) return 'widerrufen';
   return sterneAusQa(qa) > 0 ? 'bewertet' : 'ohne-qa';
 }

@@ -101,7 +101,14 @@ const ANSICHT: readonly IslandWerkzeug[] = [
   werkzeug('legende', 'Legende', 'ansicht', icon('legende'), true),
 ];
 
-const STIMMUNG: readonly IslandWerkzeug[] = [werkzeug('stimmung', 'Stimmung', 'stimmung', icon('stimmung'), true)];
+const STIMMUNG: readonly IslandWerkzeug[] = [
+  werkzeug('stimmung', 'Stimmung', 'stimmung', icon('stimmung'), true),
+  // P16 (v0.1.5, Abnahmezeile 6) — der «Textur-Knopf»: Bildkarten aus
+  // `derive/textur.ts` zu einem gewaehlten Material erzeugen. Insel STIMMUNG
+  // ist das thematisch naechste Zuhause (Bild-Erscheinung), s.
+  // `island/inhalte/textur.tsx`s Kopfkommentar.
+  werkzeug('textur', 'Textur', 'stimmung', icon('textur'), true),
+];
 
 const AUSTAUSCH: readonly IslandWerkzeug[] = [
   werkzeug('render-senden', 'Render senden', 'austausch', icon('render-senden'), true),
@@ -125,9 +132,10 @@ const SONNE: readonly IslandWerkzeug[] = [
   werkzeug('sonnenstunden', 'Sonnenstunden', 'sonne', icon('sonnenstunden'), true),
 ];
 
-/** Gesamtkatalog, 14 Werkzeuge über 5 Inseln (v0.8.10 E3-Nachtrag: 'manuell'
+/** Gesamtkatalog, 15 Werkzeuge über 5 Inseln (v0.8.10 E3-Nachtrag: 'manuell'
  * entfernt, 14→13; v0.8.11 P-B1/E4: +'ansichten'/+'legende', 13→15;
- * K35 Owner-Korrekturen 2026-07: −'minimap', 15→14). */
+ * K35 Owner-Korrekturen 2026-07: −'minimap', 15→14; P16 v0.1.5
+ * Abnahmezeile 6: +'textur', 14→15). */
 export const VIS_WERKZEUG_KATALOG: readonly IslandWerkzeug[] = [
   ...GRAPH,
   ...ANSICHT,

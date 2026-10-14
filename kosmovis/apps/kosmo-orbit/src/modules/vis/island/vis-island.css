@@ -462,7 +462,7 @@ body:has(.kp-panel) [data-testid="island-stimmung-root"] {
 .visisl-palette-eintrag {
   text-align: left;
   padding: 4px 6px;
-  border-radius: var(--k-radius-sm);
+  border-radius: var(--k-radius);
   border: 1px solid transparent;
   background: transparent;
   font-size: var(--k-t-sm);
@@ -500,7 +500,7 @@ body:has(.kp-panel) [data-testid="island-stimmung-root"] {
   width: 100%;
   min-height: 44px; /* Touch-Ziel §4.2 */
   padding: 4px 6px;
-  border-radius: var(--k-radius-sm);
+  border-radius: var(--k-radius);
   border: 1px solid transparent;
   background: transparent;
   font-size: var(--k-t-sm);
@@ -594,6 +594,23 @@ body:has(.kp-panel) [data-testid="island-stimmung-root"] {
   font-weight: var(--k-gewicht-stark);
 }
 
+/* Graph-Palette (`inhalte/graph.tsx`): die Kopfzeile «Name · Graph löschen» steht als erste Zeile in
+   der Ecke, die `.isl-vergroessern` und `.isl-schliessen` belegen (`--isl-kopfzone-frei`,
+   `island.css`). Am Gerät (KosmoVis, WebKitGTK 1440 × 900, 08.10.2026) und im Browser gemessen: die
+   Mitte von «Graph löschen» gehörte «Fenster öffnen». Rezept wie `.pubisl-kopfzeile`: die Zeile
+   steht in der Kopfzone, links der beiden Knöpfe — zwei Kopfzonen breit Platz rechts (2 × 52 px
+   deckt 2 × 44 px Knopf plus Abstand), ohne rohe px. */
+.visisl-graph-kopf {
+  min-height: var(--isl-kopfzone-frei);
+  padding-right: calc(2 * var(--isl-kopfzone-frei));
+}
+/* Mit der freigehaltenen Ecke wurde die Palette (220 px) so eng, dass schon «Graph 1» umbrach.
+   300 px tragen Name und Knopf auf einer Zeile; ein langer Name bricht weiter um, statt abgeschnitten
+   zu werden (UI-Regel «ausgeschrieben»). */
+.visisl-palette:has(> .visisl-graph-kopf) {
+  min-width: 300px;
+}
+
 /* ── Stimmungs-Kacheln (E5: prozedurale Vorschau, 0 Assets) ──────── */
 .visisl-stimmung-reihe {
   display: flex;
@@ -605,7 +622,7 @@ body:has(.kp-panel) [data-testid="island-stimmung-root"] {
   align-items: center;
   gap: 4px;
   padding: 4px;
-  border-radius: var(--k-radius-sm);
+  border-radius: var(--k-radius);
   border: 1.5px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -618,10 +635,35 @@ body:has(.kp-panel) [data-testid="island-stimmung-root"] {
 }
 .visisl-stimmung-canvas {
   display: block;
-  border-radius: 4px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
   border: 1px solid var(--k-line);
 }
 .visisl-stimmung-label {
+  font-size: var(--k-t-xs);
+  opacity: 0.75;
+}
+
+/* ── Textur-Knopf (P16, Abnahmezeile 6) — zwei feste 56px-Kacheln, NIE
+   Rollbalken (Regel 1, UI-REGELN.md): 256x256-Kacheln bei fester Breite/
+   Hoehe brauchen kein object-fit, sie sind quadratisch. Muster
+   `.visisl-stimmung-*` oben. ──────────────────────────────────────── */
+.visisl-textur-reihe {
+  display: flex;
+  gap: var(--k-s3);
+}
+.visisl-textur-kachel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k-s2); /* 4px — Skala statt Literal (abstands-gate, Nachzug zu P16) */
+}
+.visisl-textur-bild {
+  display: block;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line);
+}
+.visisl-textur-label {
   font-size: var(--k-t-xs);
   opacity: 0.75;
 }

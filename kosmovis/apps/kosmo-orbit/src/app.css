@@ -156,12 +156,26 @@
   background: var(--k-surface);
   font-size: var(--k-t-sm);
 }
+/* Insel-Stationen (kein Kopfbalken): die Leiste schwebt unter der oberen Inselreihe statt unter ihr
+   zu liegen, rechts beim Sync-Knopf des Inselkopfs. Bricht bei schmalem Fenster um, statt zu rollen. */
+.app-sync-leiste--insel {
+  position: fixed;
+  top: var(--isl-frei-oben, 74px);
+  right: var(--k-s4);
+  z-index: var(--k-ebene-schwebend);
+  flex-wrap: wrap;
+  max-width: min(760px, calc(100vw - 2 * var(--k-s4)));
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  box-shadow: var(--k-shadow-overlay);
+}
 .app-faint {
   color: var(--k-ink-faint);
 }
 .app-sync-input {
   padding: 4px 8px;
-  border-radius: 6px;
+  /* Bedienelement -> Pille (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe Rundung. */
+  border-radius: var(--k-radius-pill);
   border: 1px solid var(--k-line-strong);
   background: var(--k-raised);
 }
@@ -190,7 +204,9 @@
   margin: 0;
   cursor: pointer;
   padding: 2px 8px;
-  border-radius: var(--k-radius-sm);
+  /* Chip -> Pille (Form-Entscheid 1a, 21.09.2026): ein Chip ist ein
+     Bedienelement, kein Kaertchen. */
+  border-radius: var(--k-radius-pill);
   border: 1px solid var(--k-line-strong);
   font-family: var(--k-font-mono);
   font-size: var(--k-t-sm);
@@ -234,6 +250,54 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  /* Ursprung der Station-Bewegung (s. unten); `station-uebergang.ts` ueberschreibt
+     ihn je Wechsel mit der Mitte des angetippten Logos. */
+  --app-ursprung-x: 0px;
+  --app-ursprung-y: 0px;
+}
+/* U4/U19 (Owner B1/C3/C4, 01.10.2026): die Station waechst aus dem angetippten
+   Logo und zieht sich beim Zurueck zur Zentrale in das Logo der Palette
+   zurueck. Klassen und Ursprung setzt `shell/werkzeug-palette/station-uebergang.ts`
+   (`--app-ursprung-x/-y` = Mitte des Logos, in der Flaeche gemessen). Gleiche
+   Figur wie `.k-aus-ausloeser` (`bewegung.css`): federnd, ab 92 %, nie aus
+   scale(0). KEIN `both`/`forwards`: nach der Bewegung ist nichts mehr
+   gesetzt, die Flaeche ist kein Anker fuer `position:fixed` (die Stationen
+   tragen Inseln und Dialoge). Der Rueckzug ist kuerzer als der Eintritt. */
+.app-stationsflaeche.app-waechst {
+  transform-origin: var(--app-ursprung-x, 0) var(--app-ursprung-y, 0);
+  animation: app-station-waechst var(--k-feder) backwards;
+}
+.app-stationsflaeche.app-zieht-zurueck {
+  transform-origin: var(--app-ursprung-x, 0) var(--app-ursprung-y, 0);
+  animation: app-station-zurueck var(--k-motion-fast);
+  /* Waehrend sie sich zurueckzieht, ist sie nichts mehr zum Bedienen. */
+  pointer-events: none;
+}
+@keyframes app-station-waechst {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes app-station-zurueck {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-stationsflaeche.app-waechst,
+  .app-stationsflaeche.app-zieht-zurueck {
+    animation: none;
+  }
 }
 .app-station-huelle {
   position: absolute;
@@ -290,22 +354,267 @@
    Bestands-Funktionen (Sync/Speichern/Öffnen/Kosmo/Rundgang/Einstellungen/
    Bauphasen), die ausserhalb des PA2-Auftrags liegen, aber real erreichbar
    bleiben müssen (s. Kommentar in `App.tsx`). */
+/* ══ DER BALKEN DER STARTSEITE — Owner-Entscheid 21.09.2026 ═══════════════
+   «nur startseite balken, in tools keine balken nirgendwo.»
+
+   HIER STAND EIN GLASIGER ECK-CLUSTER. Er war die Antwort auf die
+   GEGENTEILIGE Weisung von v0.8.4 («kein Balken oben») und hielt die
+   Kopf-Testids am Leben, ohne ein Streifen zu sein: schwebend oben rechts,
+   vollrund, mit Schatten. Der Owner hat die Weisung umgedreht; aus dem
+   Cluster wird der Balken, statt dass ein zweiter daneben entsteht.
+
+   ER SCHWEBT NICHT MEHR, und das loest ein Problem mit: solange er
+   `position: absolute` war, lag er UEBER dem Inhalt — die Kosmo-Spalte
+   brauchte darum eine eigene Hoehenreserve, damit sie nicht darunter lief
+   (`orbit-065.css`, heute frueh am Bildschirm gefunden). Ein Balken im
+   Fluss braucht diese Reserve nicht; sie ist mit diesem Umbau entfallen.
+
+   LINKS PROJEKT, RECHTS WERKZEUG. Die Knoepfe bleiben rechts, wo sie waren
+   und wo jede Probe sie sucht; links kommt hinzu, was der Entwurf dort
+   zeigt: Datum und Projektphase. */
 .app-heim-werkzeuge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 4;
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--k-s3);
-  max-width: calc(100% - 32px);
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  padding: 6px 10px;
-  border-radius: var(--k-radius-pill);
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: var(--k-s3) var(--k-s6);
   background: var(--k-surface);
-  border: 1px solid var(--k-line);
+  border-bottom: 1px solid var(--k-line);
+}
+/* ══ DIE PROJEKT-REITERZEILE (Owner-Entscheid 22.09.2026) ════════════════
+   Unter dem Balken, ueber der Zentrale. Sie ersetzt das Raster in der linken
+   Spalte; die Geschichte dahinter steht in `App.tsx` bei `ProjektListe`.
+
+   ZWEI TEILE, UND DIE TRENNUNG IST DER GANZE WITZ: `.app-projekt-lauf`
+   traegt die Reiter und darf quer laufen; die Anlege-Gruppe daneben laeuft
+   NICHT mit. Genau daran war die Leiste vor v0.9.2 gescheitert — ihr
+   Pluszeichen lag hinter dem Lauf. */
+.app-projekt-reiter {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s4);
+  padding: var(--k-s3) var(--k-s6);
+  border-bottom: 1px solid var(--k-line);
+  min-width: 0;
+}
+.app-projekt-lauf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  /* Kein Rollbalken im Bild: die Zeile laeuft, zeigt aber keinen Streifen
+     (Owner-UI-Regel 1, «keine Rollbalken in schwebenden Flaechen» — hier
+     sinngemaess, weil die Zeile Teil des Rahmens ist). */
+  scrollbar-width: none;
+}
+.app-projekt-lauf::-webkit-scrollbar {
+  display: none;
+}
+/* Gerätebefund LW Runde 14: ein Reiter, der nicht ganz in die Zeile passte, brach hart an der Kante
+   des Laufs ab — es sah aus, als läge die Anlege-Gruppe darüber. Jetzt blendet der Lauf an der Seite
+   weich aus, an der ein Reiter angeschnitten ist (`data-mehr-*` aus `ProjektListe`, App.tsx), und rastet beim
+   Wischen auf Reiteranfänge ein. Erreichbar bleibt jeder Reiter: wischen oder «Alle Projekte», wo
+   steht, wie viele es sind. */
+.app-projekt-lauf {
+  scroll-snap-type: x proximity;
+  --lauf-aus-l: 0px;
+  --lauf-aus-r: 0px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--lauf-aus-l), #000 calc(100% - var(--lauf-aus-r)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--lauf-aus-l), #000 calc(100% - var(--lauf-aus-r)), transparent 100%);
+}
+.app-projekt-lauf[data-mehr-links] {
+  --lauf-aus-l: var(--k-s6);
+}
+.app-projekt-lauf[data-mehr-rechts] {
+  --lauf-aus-r: var(--k-s6);
+}
+.app-projekt-lauf > [role='tab'] {
+  scroll-snap-align: start;
+}
+.app-projektliste-verdeckt {
+  margin-left: var(--k-s1);
+  color: var(--k-ink-soft);
+  font-weight: var(--k-gewicht-normal);
+}
+/* S1a (v0.1.6): die Paketwahl beim Projektanlegen ist aufklappbar. Die Flaeche
+   schwebt unter der Zeile (absolut, ausserhalb des Flusses) — sie macht die
+   Reiterzeile nicht hoeher und schiebt die Zentrale nicht. Kein Rollbalken:
+   die zwei Kacheln der kompakten Fassung passen in die Breite. */
+.app-projekt-paket {
+  flex: none;
+}
+.app-projekt-paket-flaeche {
+  position: absolute;
+  top: 100%;
+  right: var(--k-s6);
+  z-index: 40;
+  width: min(560px, calc(100vw - 2 * var(--k-s6)));
   box-shadow: var(--k-shadow-raised);
+}
+/* E125: die Projektliste — alle Projekte, auch geschlossene; oeffnen und
+   loeschen. Schwebt wie die Paketwahl unter der Zeile und macht sie nicht
+   hoeher (Reserve der Startseite bei 1280x720 praktisch 0 px). Sie ist eine
+   Datensatz-Auflistung und darf darum bei vielen Projekten laufen
+   (UI-Regel 1, Ausnahme). */
+.app-projektliste {
+  flex: none;
+}
+.app-projektliste-flaeche {
+  position: absolute;
+  top: 100%;
+  right: var(--k-s6);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  width: min(480px, calc(100vw - 2 * var(--k-s6)));
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+  padding: var(--k-s3);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-raised);
+  box-shadow: var(--k-shadow-raised);
+}
+.app-projektliste-zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 44px;
+}
+.app-projektliste-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.app-projektliste-name {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-code);
+  /* Ganze Woerter umbrechen; nur ein Wort, das allein breiter ist als die
+     Zeile, wird getrennt (Silbentrennung, sonst am Rand) — lieber das als
+     Text ueber die Box hinaus (UI-Regel 2). */
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+.app-projekt-reiter-leer {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--k-t-xs);
+}
+/* Die Anlege-Gruppe: feste Breite, nie im Lauf. */
+.app-projekt-reiter .app-projekt-tab-neu {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  padding: 0;
+  border: none;
+  background: none;
+  /* KEIN UMBRUCH IN DER ZEILE. Die Grundregel erlaubt ihn (`flex-wrap:
+     wrap`), weil die Anlege-Gruppe frueher in der rund 260px schmalen
+     Seitenspalte stand und dort Feld UND Knopf nicht nebeneinander passten
+     (B134, 11.09.2026). In der Reiterzeile ist Platz; ein Umbruch macht die
+     Zeile doppelt hoch, am Bildschirm nachgesehen. Der Grund von B134 gilt
+     weiter — nur nicht hier. */
+  flex-wrap: nowrap;
+  min-height: 0;
+}
+.app-projekt-reiter .app-projekt-neu-feld {
+  width: 168px;
+}
+/* Ein Reiter in der Zeile ist flach und schmal — er traegt einen Namen,
+   keine Kachel.
+   `:not(.app-projekt-tab-neu)` IST HIER DER GANZE PUNKT. Die Anlege-Gruppe
+   traegt BEIDE Klassen (`app-projekt-tab app-projekt-tab-neu`); ohne den
+   Ausschluss erbte sie den Deckel von 220 px, und in 220 px passen Feld UND
+   Knopf nicht nebeneinander. Das Feld wurde auf rund 90 px gedrueckt und
+   zeigte «Neues Prc» statt «Neues Projekt — Name» — genau die Klasse, die
+   B134 am 11.09.2026 schon einmal gefunden hat. Am Bildschirmfoto
+   `e2e-messungen/bilder/zentrale-reiter-1400.png` gesehen, nicht am
+   Quelltext. */
+/* Gerätebefund LW Runde 14: bei schmalem Bildschirm (iPad 1024) ist der Querlauf nur rund 190 px
+   breit, und kein Reiter passte ganz hinein — der erste lag halb unter der Anlege-Gruppe. Jetzt gibt
+   der Reiter bis auf die Breite des Laufs nach (der Name bricht dafür auf zwei Zeilen um, s. unten);
+   mindestens einer steht damit immer ganz da, die übrigen nennt «Alle Projekte». */
+.app-projekt-reiter .app-projekt-tab:not(.app-projekt-tab-neu) {
+  flex: 0 1 auto;
+  min-width: min(100%, 200px);
+  max-width: 260px;
+  padding: var(--k-s2) var(--k-s4);
+  min-height: 0;
+}
+/* Befund 3 (Geraete-Rundgang v0.1.6, 30.09.2026): mit langem Namen waren
+   «aktiv» abgeschnitten und das «×» aus dem Reiter gedrueckt — der Inhalt
+   schrumpfte nicht, der Reiter hatte einen Deckel, und was nicht passte,
+   ragte hinaus. Jetzt gibt NUR der Name nach: «aktiv» und «×» schrumpfen nie
+   (`flex: none`), der Name steht auf hoechstens zwei Zeilen und ist in
+   `reiterName()` (App.tsx) auf ganze Woerter gekuerzt. Kein `overflow:
+   hidden`, keine Auslassung mitten im Wort (UI-Regeln 2 und 3). */
+.app-projekt-reiter .app-projekt-tab-inhalt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.app-projekt-reiter .app-projekt-tab-inhalt > :not(.app-projekt-tab-name) {
+  flex: none;
+}
+.app-projekt-reiter .app-projekt-tab-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  line-height: var(--k-lh-eng);
+  text-align: left;
+  /* Nur ein einzelnes Wort, das allein breiter ist als die Spalte, darf
+     getrennt werden — sonst liefe es ueber den Reiter hinaus. */
+  overflow-wrap: break-word;
+}
+.app-projekt-tab-schliessen {
+  flex: none;
+}
+
+.app-balken-links {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s4);
+  min-width: 0;
+}
+.app-balken-fuell {
+  flex: 1;
+}
+.app-balken-datum {
+  font-size: var(--k-t-md);
+  color: var(--k-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.app-balken-trenner {
+  width: 1px;
+  height: 18px;
+  flex: none;
+  background: var(--k-line);
+}
+.app-balken-phase {
+  font-size: var(--k-t-xs);
+  letter-spacing: var(--k-sperrung-eng);
+  color: var(--k-ink-faint);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  padding: var(--k-s2) var(--k-s4);
+  white-space: nowrap;
+}
+/* Schmales Fenster: das Datum ist die erste Angabe, die weichen darf — die
+   Phase sagt mehr ueber das Projekt als der Wochentag. */
+@media (max-width: 700px) {
+  .app-balken-datum {
+    display: none;
+  }
 }
 [data-theme='orbit'] .app-heim-werkzeuge {
   background: rgba(20, 23, 31, 0.55);
@@ -342,11 +651,13 @@
 .app-onboarding-spanne {
   position: fixed;
   inset: 0;
-  z-index: 900;
+  z-index: calc(var(--k-ebene-modal) + 70);
   display: flex;
   padding: var(--k-s5);
   overflow: auto;
-  background: color-mix(in srgb, var(--k-bg) 88%, transparent);
+  /* `--k-bg` gibt es im Design-System nicht (die Mischung fiel auf «durchsichtig»,
+     Bot-Fund U4, R3); der Grund der Oberfläche heisst `--k-field`. */
+  background: color-mix(in srgb, var(--k-field) 88%, transparent);
   backdrop-filter: var(--k-glas-duenn);
   -webkit-backdrop-filter: var(--k-glas-duenn);
 }
@@ -361,6 +672,38 @@
 }
 .app-gruss-titel {
   font-size: var(--k-t-anzeige);
+  /* v0.1.6 S1-Nachlauf: der Gruss bleibt EINZEILIG. Zwei Zeilen kosteten
+     47px Hoehe, und die linke Zentrale-Spalte hat bei 1280x720 keinen
+     Pixel Reserve (Katalog-Reihe endet bei 700.4 von 700) — die Startseite
+     scrollte darum zwischen 14 und 18 Uhr («Guten Nachmittag.»), und mit
+     der Ersatzschrift vor dem Laden von PT Sans Narrow auch abends.
+     Der Titel nimmt den Restplatz neben der Rollen-Wahl (`flex: 1 1 0`) und
+     ist selbst der Groessen-Behaelter; seine Zeilenhoehe bleibt die der
+     Anzeige-Groesse, die Hoehe also fest, egal wie klein der Text wird. */
+  flex: 1 1 0;
+  min-width: 0;
+  container-type: inline-size;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Die Textgroesse folgt dem Platz: 0.5 em je Zeichen ist die gemessene
+   Obergrenze von PT Sans Narrow fuer die fuenf Gruesse (0.44 bis 0.48 em,
+   «Guten Nachmittag.» 269px bei 34px). Wo der Platz reicht, bleibt es die
+   Anzeige-Groesse; darunter nie kleiner als `--k-t-lg`. Die Untergrenze
+   h3 reichte nicht: bei 1024x768 hat der Titel 165px, «Guten Nachmittag.»
+   braucht in h3 169.6px und wurde gekuerzt (gemessen). Reicht selbst die
+   Untergrenze nicht (oder steht noch die breitere Ersatzschrift da), kuerzt
+   die Ellipse statt eine zweite Zeile zu oeffnen. */
+.app-gruss-text {
+  /* Vorgabe; `App.tsx` setzt die echte Zeichenzahl als Inline-Stil (der
+     schlaegt diese Regel). */
+  --gruss-zeichen: 12;
+  font-size: clamp(
+    var(--k-t-lg),
+    calc(100cqi / (var(--gruss-zeichen) * 0.5)),
+    var(--k-t-anzeige)
+  );
 }
 .app-rolle-label {
   font-size: var(--k-t-sm);
@@ -397,12 +740,6 @@
   align-items: center;
   gap: 10px;
 }
-.app-kopf-reihe-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
 .app-titel-klein {
   font-weight: var(--k-gewicht-stark);
   font-size: var(--k-t-md);
@@ -425,7 +762,15 @@
   height: 110px;
   overflow: hidden;
   background: var(--k-plan-paper);
-  border-radius: 6px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
+}
+/* CSP (Befund am Gerät 07.10.2026): die Grösse des eingefügten SVG steht
+   hier als Regel, nicht als style="…" im Markup — das blockt die Desktop-App. */
+.app-variante-bild > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .app-variante-leer {
   height: 110px;
@@ -469,32 +814,6 @@
   flex-wrap: wrap;
 }
 
-/* P-F2 (Owner-Feedback 23.07. wörtlich: «neues projekt erstellen nach wie
-   vor mit scrollen … darf so nicht sein, finde neue ui darstellung»):
-   ERSETZT die frühere EINZEILIGE `overflow-x:auto`-Tableiste (P-Z,
-   docs/V0812-SPEZ.md §E-Z — «+ Neues Projekt» sass dort als LETZTER Tab
-   hinter horizontalem Scroll, sobald genug Projekte im Tresor lagen; genau
-   der gemeldete Bug). Jetzt ein KOMPAKTES, umbrechendes Grid statt einer
-   Einzelzeile: `repeat(auto-fill, minmax(150px, 1fr))` + `minmax(0,1fr)`-
-   Spalten (stehende Owner-Regel seit v0.9.1 «nichts abschneiden, nichts
-   unnötig scrollbar», Beleg `wissen/training/claude/lehren/v0.9.1.md` Nr. 9
-   — dieselbe Falle, die dort einen 49px-Fensterüberlauf verursachte). Die
-   «+»-Kachel steht laut App.tsx JETZT als ERSTES Kind vor der Projekt-Liste
-   — ohne jeden Scroll sofort erreichbar. `max-height` + eigenes
-   `overflow-y:auto` bleiben als SICHERHEITSNETZ für sehr viele Projekte
-   (zusätzliche REIHEN scrollen kontrolliert INNERHALB dieser Fläche, nie
-   die Root-Seite — dasselbe Muster wie `.orbit065-home-links`). Jeder
-   Tab/Knopf hält die iPad-Touch-Mindesthöhe 44px ein
-   (`e2e/projekt-tableiste.spec.ts`). */
-.app-projekt-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-  max-height: 168px;
-  overflow-y: auto;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
-}
 .app-projekt-tab {
   display: flex;
   align-items: center;
@@ -503,7 +822,9 @@
   min-width: 0;
   padding-left: 12px;
   border: 1px solid var(--k-line);
-  border-radius: var(--k-radius-sm);
+  /* Reiter -> Pille (Form-Entscheid 1a, 21.09.2026). Der Owner nennt sie
+     ausdruecklich: «jeder knopf jede insel, jeder tab». 46px hoch gemessen. */
+  border-radius: var(--k-radius-pill);
   background: var(--k-surface);
 }
 .app-projekt-tab-aktiv {
@@ -532,15 +853,11 @@ button.app-projekt-tab-oeffnen:hover {
   font-weight: var(--k-gewicht-stark);
   font-size: var(--k-t-code);
   max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-/* Sekundär-Aktion je Tab (Bau-Bericht-Entscheid): EIN direkter Klick statt
-   eines ⋯-Untermenüs — Begründung im Kopfkommentar der `ProjektListe`-
-   Komponente (App.tsx). Bewusst klein/still statt der früheren
-   vollen «Löschen»-Beschriftung. */
-.app-projekt-tab-loeschen {
+/* Das «×» je Reiter. Seit E125 (Owner-Entscheid 30.09.2026) SCHLIESST es
+   nur — geloescht wird in der Projektliste (`.app-projektliste`). Klein und
+   still, ein Klick, keine Rueckfrage: es geht nichts verloren. */
+.app-projekt-tab-schliessen {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -551,19 +868,19 @@ button.app-projekt-tab-oeffnen:hover {
   color: var(--k-ink-faint);
   font-size: var(--k-t-code);
   cursor: pointer;
-  border-radius: var(--k-radius-sm);
+  /* Knopf -> Pille (Form-Entscheid 1a, 21.09.2026). 44x44 Mindestmass —
+     vollrund heisst hier ein Kreis, genau UI-Regel 4. */
+  border-radius: var(--k-radius-pill);
 }
-.app-projekt-tab-loeschen:hover {
-  color: var(--k-danger);
+.app-projekt-tab-schliessen:hover {
+  color: var(--k-ink);
   background: var(--k-hover);
 }
-/* P-F2: die «+»-Kachel ist IMMER die erste Grid-Zelle (App.tsx) UND spannt
-   die volle Grid-Breite (`grid-column: 1 / -1`) — Namensfeld + Knopf
-   brauchen mehr Raum als eine einzelne ~150px-Projektkachel, und die volle
-   Breite macht «Neues Projekt» zusätzlich als die prominenteste, erste
-   Aktion erkennbar (Owner-Auftrag: sofort ohne Scrollen erreichbar). */
+/* Die Anlege-Gruppe. Sie war einmal die erste Zelle eines Rasters und
+   spannte dessen volle Breite; seit dem 22.09.2026 steht sie am Ende der
+   Reiterzeile, ausserhalb des Querlaufs. Der Auftrag dahinter ist durch
+   alle drei Formen derselbe geblieben: sofort erreichbar, ohne Scrollen. */
 .app-projekt-tab-neu {
-  grid-column: 1 / -1;
   gap: 8px;
   padding-right: 8px;
   /* B134 (11.09.2026): umbrechen duerfen, wenn Feld UND Knopf nicht
@@ -575,7 +892,10 @@ button.app-projekt-tab-oeffnen:hover {
 }
 .app-projekt-neu-feld {
   padding: 6px 10px;
-  border-radius: var(--k-radius-sm);
+  /* Eingabefeld -> Pille (Form-Entscheid 1a, 21.09.2026). 44px hoch und
+     einzeilig gemessen. Ein MEHRZEILIGES Feld bleibt bei R: eine Pille um
+     fuenf Zeilen Text ist eine Kapsel, keine Form. */
+  border-radius: var(--k-radius-pill);
   border: 1px solid var(--k-line-strong);
   background: var(--k-raised);
   font-size: var(--k-t-code);
@@ -615,4 +935,187 @@ button.app-projekt-tab-oeffnen:hover {
     min-width: 0;
     flex: 1 1 auto;
   }
+}
+
+/* r8 (Prueflauf-Funde 3/4/7, Owner-Entscheide 1 und 2 vom 24.09.2026):
+   Telefon-Breite ist kein Ziel, das iPad hochkant (768 px) schon. Unter
+   K-BP-SCHMAL steht darum oben der Hinweis «Bildschirm zu schmal» im Fluss
+   (verdeckt nichts), der Einrichtungs-Assistent erscheint dort nicht (er
+   liesse sich nicht beenden), und die Zentrale darf nach unten rollen —
+   die benannte Ausnahme von UI-Regel 1, NUR fuer diese Breite. Darueber
+   bleibt alles wie bisher (`overflow:hidden`, s. `.app-zentrale-scroll`).
+   Probe: `e2e/r8-schmal-hinweis.spec.ts`. */
+.app-schmal-hinweis {
+  display: none;
+}
+@media (max-width: 700px) {
+  /* K-BP-SCHMAL (E-3) */
+  .app-schmal-hinweis {
+    display: block;
+    flex: none;
+    padding: var(--k-s3) var(--k-s4);
+    background: var(--k-surface);
+    color: var(--k-ink);
+    border-bottom: 1px solid var(--k-line);
+    font-size: var(--k-t-md);
+    line-height: var(--k-lh-lesen);
+    text-align: center;
+  }
+  .app-onboarding-spanne {
+    display: none;
+  }
+  .app-zentrale-scroll {
+    overflow-y: auto;
+    /* Welle D4 (`r8-schmal-hinweis.spec.ts` «390x844, eingerichtet»): Kosmos Kreis steht hier fest unten in der
+       Mitte und lag über Wortmarke und Hauptwerkzeug. Die rollbare Zentrale endet darum über ihm; was darunter
+       läge, rollt man herauf. */
+    margin-bottom: 96px;
+  }
+  .app-zentrale-inhalt {
+    flex: none;
+  }
+}
+
+/* ══ DIE LAGEBEURTEILUNG (Owner-Zweck «Ueberblick geben», 22.09.2026) ══════
+   Eine Auskunftsflaeche, keine Kachelwand. Drei Gestaltungsentscheide, jeder
+   aus dem Zweck hergeleitet:
+
+   (1) EINE ZAHL, EIN WORT, EIN SATZ je Zeile — in dieser Reihenfolge. Die
+       Zahl steht in der Schreibmaschinenschrift (Schriftregel 21.09.: Ziffern
+       tragen Mono), damit die Spalte untereinander flieht; das Wort in der
+       Lesefont daneben, der Satz gedeckt dahinter. Wer nur die Spalte
+       ueberfliegt, bekommt die Lage; wer stehenbleibt, bekommt die
+       Erklaerung.
+   (2) KEINE RAHMEN UM JEDE ZEILE. Vier Kaesten untereinander lesen sich wie
+       vier getrennte Dinge; hier sind es vier Blickwinkel auf eine Lage. Eine
+       Haarlinie trennt, mehr nicht.
+   (3) DIE DRINGLICHE ZAHL wird gefaerbt, nicht vergroessert. Eine Zahl, die
+       waechst, verschiebt die Zeile darunter — und was sich bewegt, liest
+       sich als Fehler. */
+.lage {
+  display: grid;
+  /* U18: als Karte «Heute» knapp gesetzt (die Verdichtung aus R1 gilt jetzt
+     hier statt in der linken Spalte). */
+  gap: var(--k-s2);
+  padding: var(--k-s3) var(--k-s4);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+}
+.lage-zeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--k-s1) var(--k-s4);
+  min-width: 0;
+}
+.lage-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+}
+.lage-kopf-wort {
+  /* Schriftregel 21.09.2026: Wörter in der Hausschrift, die Schreibmaschinenschrift bleibt den Zahlen
+     (`e2e/schriftregel-mono-nur-fuer-zahlen.spec.ts`, Welle D4). */
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-stark);
+  letter-spacing: var(--k-sperrung);
+  text-transform: uppercase;
+  color: var(--k-ink-faint);
+}
+.lage-liste {
+  display: grid;
+  gap: var(--k-s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lage-zahl {
+  /* Ziffern tragen Mono (Schriftregel 21.09.2026). `min-width` haelt die
+     Spalte gerade, auch wenn eine Zahl zweistellig wird — sonst springt das
+     Wort daneben, sobald etwas passiert. */
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-lg);
+  font-weight: var(--k-gewicht-stark);
+  min-width: 2.2ch;
+  text-align: right;
+  color: var(--k-ink-soft);
+}
+.lage-zahl--wartet {
+  color: var(--k-warning);
+}
+.lage-wort {
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-betont);
+  white-space: nowrap;
+}
+.lage-satz {
+  /* Wird die Spalte schmal (unter 1100 px 260-280 statt 340), rutscht der
+     Satz unter sein Wort, statt Wort fuer Wort zu einer Saeule zu brechen. */
+  flex: 1 1 14ch;
+  min-width: 0;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lage-fuss {
+  display: flex;
+}
+
+/* Lieferung 12 §1/§2 (UI-Worker 30.09.2026): die Lage der zwei neuen
+   Kopfkreise. Die Bausteine (`WerkzeugPalette`, `SpeichernKreis`)
+   positionieren sich nicht selbst; der Einsatzort tut es hier, auf derselben
+   Ebene wie das Zahnrad (`.isl-einstellungen-kreis`, W0-Ebenentafel
+   INSEL_BUEHNENKOPF). */
+.app-werkzeug-palette-lage {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: calc(var(--k-ebene-chrome) + 2);
+}
+/* Direkt links neben dem Zahnrad: Zahnrad-Rand 14 px + seine 44 px
+   Trefferflaeche + `--k-s2` Luft. */
+.app-speichern-kreis-lage {
+  position: fixed;
+  top: 14px;
+  right: calc(14px + 44px + var(--k-s2));
+  z-index: calc(var(--k-ebene-chrome) + 2);
+}
+/* Lieferung 13 §2 + Geraete-Befund C0/3 (ROADMAP 1626, «an design liegen
+   Kosmo-Kugel … im Restplatz ueber dem Plan»): steht das Kosmo-Seitenfenster,
+   ist Kosmo offen und hat dort Kopf und Schliessen-Knopf. Der Eck-Orb wuerde
+   im Restplatz (die Wurzel ist dann Bezugsblock, `contain: layout`,
+   kosmo-panel.css) rechts unten ueber dem Plan liegen — er tritt zurueck. */
+.app-wurzel:has(.kp-panel--seitenfenster) .keo-wurzel {
+  display: none;
+}
+
+/* ══ ZENTRALE OBEN — Kanten und Unstimmigkeiten (Owner 06.10.2026) ═════════════════════════════════════════════
+   Owner: «ergänzend sehe ich noch kanten und ui unstimmigkeiten im design z.b auf hauptseite oben». Gemessen bei
+   1440 × 900 (Thema Orbit):
+   1. Die Kopfleiste (`.app-heim-werkzeuge`) war ein eckiger Kasten (Radius 0) von 24 bis 1416 px — breiter als
+      alles darunter (Projektzeile und Zentrale 80 bis 1360 px), ihre Kanten standen nirgends in einer Flucht.
+      Jetzt: dieselbe Breite wie der Inhalt (`max-width` wie `.app-zentrale-inhalt`) und runde Ecken wie die Karten.
+   2. Die Projektzeile mischte 40 und 44 px hohe Knöpfe und drei Schriftgrössen (12, 13 und 13,5 px), das
+      Namensfeld trug einen anderen Rand als die Knöpfe daneben. Jetzt: alle 44 px (Trefferfläche), eine Schrift,
+      ein Rand. */
+.app-heim-werkzeuge {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+[data-theme='orbit'] .app-heim-werkzeuge {
+  border-radius: var(--k-radius);
+}
+.app-projekt-reiter .k-btn,
+.app-projekt-reiter .app-projekt-neu-feld {
+  height: 44px;
+  min-height: 44px;
+  font-size: var(--k-t-md);
+}
+.app-projekt-reiter .app-projekt-neu-feld {
+  border-color: var(--k-glass-stroke, var(--k-line-strong));
 }

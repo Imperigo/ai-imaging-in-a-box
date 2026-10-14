@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { exportGlb } from '@kosmo/kernel';
-import { KButton, melde, meldeFehler } from '@kosmo/ui';
+import { KButton, KWarteOrt, melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../../../state/project-store';
 import { postBlenderSimJob, holeBlenderSimJob, abbrechenBlenderSimJob } from '../../vis-jobs';
-import { useBlenderJobsRuntime, OFFENE_BLENDER_JOB_STATUS } from '../../blender-jobs-runtime';
+import { blenderJobStatusWort, useBlenderJobsRuntime, OFFENE_BLENDER_JOB_STATUS } from '../../blender-jobs-runtime';
+import { formatDauer } from '../../vis-runtime';
 import { visInhaltsRegistry } from './registry';
 import '../vis-island.css';
 
@@ -164,10 +165,22 @@ function SonnenstundenStufe2() {
         ) : null}
       </div>
 
+      {/* Fortschritt am Ort (Owner 06.10.2026): solange der Auftrag offen ist, eine unbestimmte Leiste — die
+          Brücke meldet nur Start und Ende, also atmet sie (Regel G6). Der Zustand steht in Worten; der Rohwert
+          bleibt als `data-status` für Proben. */}
       {lauf ? (
-        <p className="visisl-hinweis-klein" data-testid="island-sonnenstunden-status">
-          Status: {lauf.status}
-        </p>
+        offen ? (
+          <div data-testid="island-sonnenstunden-status" data-status={lauf.status}>
+            <KWarteOrt
+              form="leiste"
+              text={`Sonnenstunden: ${blenderJobStatusWort(lauf.status)}${lauf.gestartetUm !== undefined ? ` · seit ${formatDauer(Date.now() - lauf.gestartetUm)}` : ''}`}
+            />
+          </div>
+        ) : (
+          <p className="visisl-hinweis-klein" data-testid="island-sonnenstunden-status" data-status={lauf.status}>
+            Sonnenstunden: {blenderJobStatusWort(lauf.status)}
+          </p>
+        )
       ) : null}
 
       {lauf?.status === 'kein-blender-worker' && lauf.message ? (

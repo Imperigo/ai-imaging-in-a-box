@@ -1,5 +1,6 @@
-import type { Entity } from './entities';
+import type { Entity, EntityKind } from './entities';
 import type { Mm, Pt } from './units';
+import type { ErfassterWert } from '../fundstelle';
 
 /**
  * KosmoDoc — der Entity-Store des Projekts.
@@ -335,7 +336,7 @@ export interface VisRenderWunsch {
   nodeId: string;
   kameraWahl: 'auto' | 'saved';
   stimmungPreset?: 'morgen' | 'abend' | 'weiss';
-  backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl';
+  backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
   aufloesung?: readonly [number, number];
 }
 
@@ -404,6 +405,37 @@ export interface ModellHerkunft {
  * Benutzernamen, und dieses Feld wandert über den Render-Auftrag aus dem
  * Haus.
  */
+/**
+ * EIN VON HAND GESICHERTER BLICK, IM DOKUMENT — Register 8 «Blick sichern»
+ * (P62, 24.09.2026). Anders als `UebernommeneKamera` (nur 3DS-Import,
+ * Herkunft `art: '3ds'`, ganze Liste ersetzt sich) legt `design.blickSichern`
+ * hier EINEN Blick zur bestehenden Liste dazu, und `design.blickLoeschen`
+ * nimmt gezielt EINEN wieder weg — die zwei Setzwege, die
+ * `uebernommeneKameras` laut Kopfkommentar dort bewusst NICHT hat, weil ein
+ * von Hand im Viewport gefundener Blick keine «aus einer 3DS-Datei
+ * übernommene» Kamera ist. Eigenes Feld, eigene Bedeutung, keine Umdeutung
+ * von `uebernommeneKameras`.
+ *
+ * EINHEITEN UND ACHSEN: dieselbe Konvention wie `UebernommeneKamera` —
+ * Meter, glTF/y-oben, Zahl für Zahl das, was der Viewport liefert
+ * (`Viewport3D.tsx` `GesicherteAnsicht`, heute nur im `localStorage`).
+ *
+ * `id` macht den Eintrag adressierbar für `design.blickLoeschen`, ohne dass
+ * der Name eindeutig sein müsste (zwei Blicke dürfen «Eingang» heissen).
+ */
+export interface GespeicherterBlick {
+  /** `newId('blick')` — zeitlich sortierbar, kollisionsfrei (model/ids.ts). */
+  id: string;
+  name: string;
+  /** Augpunkt, Meter, glTF-Konvention (x, y = oben, z). */
+  position: readonly [number, number, number];
+  /** Blickziel, gleiche Einheiten und Achsen. */
+  ziel: readonly [number, number, number];
+  /** Horizontaler Bildwinkel in Grad — wie `UebernommeneKamera.fov`, der
+   *  ECHTE Wert, nicht geklemmt. */
+  fovGrad: number;
+}
+
 export interface UebernommeneKamera {
   /** Name des Kamerablocks in der Quelldatei, z. B. «Cam_0». */
   name: string;
@@ -433,10 +465,24 @@ export interface DocSettings {
   herkunft: ModellHerkunft | null;
   /** Faktor Raumprogramm→anrechenbare Geschossfläche (Owner-Wissen: 1.28 bzw. 1.22 je Büro). */
   agfFactor: number;
+  /**
+   * B164 P72 (I3, Entscheid 13, `docs/AUFTRAG-B164-PREPARE-PAKET-WETTBEWERBS-VORBEREITUNG.md`
+   * §8 L4) — belegter Wert für `agfFactor` mit Fundstelle, projektabhängig aus
+   * dem Programm/der Fragenbeantwortung erfasst. `undefined` = keine Erfassung;
+   * dann bleibt `agfFactor` oben die geltende Zahl und gilt als Annahme
+   * (dieselbe Regel wie jede erfasste Zahl). Das Berechnen aus dem Programm
+   * (I5/M3, v0.1.6) ist NICHT Teil von P72 — dieses Feld nimmt nur den Platz
+   * dafür auf; nichts hier setzt `agfFactor` selbst um, die Goldens bleiben
+   * unberührt. `| undefined` aus demselben Grund wie `gespeicherteBlicke?`
+   * oben: ein Rückgängig-Schritt nimmt das Feld weg statt eine leere
+   * Erfassung zu hinterlassen. */
+  agfFactorErfasst?: ErfassterWert | undefined;
   /** Fassadenzuschlag auf aGF für GF-Volumenstudien (Owner: 10% Skelettbau). */
   facadeFactor: number;
   /** Faktor der Berechnungsliste: aGF-Ziel = HNF-Soll × programmFaktor (Owner: 1.22). */
   programmFaktor: number;
+  /** B164 P72 — gleiches Muster wie `agfFactorErfasst` oben, für `programmFaktor`. */
+  programmFaktorErfasst?: ErfassterWert | undefined;
   /** Zulässiges aGF-Maximum (m²) für Δ-Max der Berechnungsliste; null = keins gesetzt. */
   maxAgf: number | null;
   /** Wettbewerbs-Raumprogramm (Soll-Flächen je Wohnungstyp). */
@@ -638,6 +684,176 @@ export interface DocSettings {
   sonnenStaerke?: number | undefined;
 
   uebernommeneKameras?: UebernommeneKamera[];
+
+  /** Register 8 «Blick sichern» — von Hand gesicherte Blicke im Dokument
+   *  (`design.blickSichern`/`design.blickLoeschen`, s. `GespeicherterBlick`).
+   *  `| undefined` aus demselben Grund wie `nordrichtungGrad`/`sonnenStaerke`
+   *  oben: nur so nimmt ein Rueckgaengig-Schritt das Feld bei einer leeren
+   *  Ausgangsliste wieder WEG statt ein gesetztes `[]` zu hinterlassen. */
+  gespeicherteBlicke?: GespeicherterBlick[] | undefined;
+
+  /**
+   * B164 P70 (Entscheid 49, `docs/V016-SPEZ.md` §14b) — welchem Paket
+   * («Wettbewerbs-Vorbereitung» und Kommendes, `pakete/index.ts`) dieses
+   * Projekt folgt. `null` = ohne Paket (die Infotafel wie heute, U1 «Ohne
+   * Paket»/«Leer»). Bewusst NICHT-optional mit `null`-Default (wie
+   * `standort`/`zonenRegel`/`rolle` oben, nicht wie `schnitt?`/
+   * `pocheModus?`): das Paket ist eine Projekteigenschaft ab der Anlage,
+   * kein nachtraeglich zugeschalteter Zug — ein Rueckgaengig-Schritt soll
+   * es nicht wegnehmen koennen, sondern nur auf einen frueheren Wert
+   * zuruecksetzen. Nur der `id` gegen `pakete/index.ts` `PAKETE` bekannt
+   * ist — eine unbekannte Id ist ein Datenfehler, kein Zustand «ohne
+   * Paket» (dafuer steht `null`).
+   */
+  paketId: string | null;
+
+  /**
+   * E153 (Owner-Entscheid 06.10.2026, ROADMAP 1682 §Offen 1) — der
+   * LV95-Ursprung des KosmoPrepare-Pakets, wie `kosmoprepare_paket` ihn
+   * meldet (`lv95_ursprung`, `core/blaupause_paket.py`). Er ist der Punkt,
+   * der in der 3D-Ansicht bei 0/0/0 liegt (Owner-Entscheid 06.10.2026);
+   * gelesen wird er an EINER Stelle (`apps/…/state/projekt-ursprung.ts`
+   * `projektUrsprung()`).
+   *
+   * WARUM IM DOKUMENT und nicht mehr je Gerät im lokalen Speicher: dort reiste
+   * er weder mit der `.kosmo` noch über Sync, und ein Splat lag auf dem
+   * zweiten Gerät ohne LV95. Gesetzt wird er nur über
+   * `design.paketUrsprungSetzen` — damit ist er rückgängig machbar und steht
+   * im Journal.
+   *
+   * `| undefined` aus demselben Grund wie `nordrichtungGrad`: nur so nimmt
+   * ein Rückgängig-Schritt das Feld WIEDER WEG statt eines Platzhalters.
+   */
+  paketUrsprung?: PaketUrsprung | undefined;
+
+  /**
+   * E154 (3) (Owner-Entscheid 06.10.2026) — WELCHE Splat-Ebene im Projekt
+   * steht: nur ein VERWEIS (Kennung + Name), nie die Punkte. Die Wolke lebt
+   * als Beilage (`assets/splat/<id>.splat` im `.kosmo`, App-Tresor) und
+   * ausserhalb von Yjs; sie ist MB-gross und gehört weder ins Dokument noch
+   * in den Sync.
+   *
+   * WARUM ÜBERHAUPT IM DOKUMENT: der Rückgängig-Verlauf des Kerns kennt nur
+   * Patches auf das Dokument (`History`). Steht der Verweis hier, wird Laden,
+   * Ersetzen und Entfernen der Ebene ein gewöhnlicher Settings-Schritt —
+   * Strg+Z/Strg+Y laufen über DENSELBEN Verlauf wie jede Wand, ohne zweiten
+   * Mechanismus. Die App leitet die sichtbare Ebene aus diesem Verweis ab
+   * (`apps/…/state/splat-ebene.ts`).
+   *
+   * Reist NICHT über Sync (`SYNC_SETTINGS_SCHLUESSEL` nennt ihn nicht): das
+   * zweite Gerät hat die Wolke nicht, ein Verweis dort zeigte ins Leere.
+   *
+   * `| undefined` wie `nordrichtungGrad`: Rückgängig des ersten Ladens nimmt
+   * das Feld wieder WEG (byte-gleich).
+   */
+  splatEbene?: SplatEbeneVerweis | undefined;
+
+  /**
+   * E222 (Owner-Entscheid 13.10.2026, Paket 05 WB-Ebenen) — volles
+   * Ebenen-System wie in ArchiCAD; revidiert die v0.8.9-Rahmung E2 «kein
+   * Sichtbarkeits-Panel». Jedes Bauteil liegt auf einer Ebene
+   * (`EntityMeta.ebeneId`); fehlt sie, gilt die Standardebene seiner
+   * Bauteilart (`std:<kind>`, `derive/ebenen.ts`).
+   *
+   * Fehlt das Feld: nur Standardebenen, abgeleitet aus der Bauteilart, nicht
+   * gespeichert — alle sichtbar, nicht gesperrt, kein Drahtmodell,
+   * Verschneidungsgruppe 1, also exakt das heutige Bild. Ein Eintrag mit
+   * einer `std:`-Id haelt nur den Zustand einer Standardebene fest.
+   *
+   * `| undefined` wie `nordrichtungGrad`: nur so nimmt ein Rueckgaengig-
+   * Schritt das Feld WIEDER WEG statt einer leeren Liste (byte-gleich).
+   */
+  ebenen?: Ebene[] | undefined;
+  /** E222 — benannte Ebenenkombinationen. Fehlt das Feld: keine Kombinationen. */
+  ebenenKombinationen?: EbenenKombination[] | undefined;
+  /**
+   * E222 — die Kombination der Arbeitsansicht (Grundriss, Schnitt, 3D am
+   * Bildschirm). Fehlt das Feld oder ist es `null`: keine Kombination, es
+   * gilt der Zustand der Ebenen selbst (ohne angelegte Ebenen: alle
+   * sichtbar, das heutige Bild). Eine haengende Id faellt gemeldet auf
+   * «keine Kombination» zurueck (`derive/ebenen.ts` `arbeitsKombination`).
+   */
+  arbeitsKombinationId?: string | null | undefined;
+  /**
+   * E219/E182 (Werkzeugbank 11) — benannte Favoriten (Vorlagen) im Projekt.
+   * Ein Favorit kopiert beim Anwenden seine Werte ins Bauteil; nur ein
+   * ausdruecklich verknuepftes Bauteil (`EntityMeta.favoritId`) folgt spaeter
+   * einer Aenderung des Favoriten. Fehlt das Feld, gibt es keine Favoriten.
+   *
+   * `| undefined` aus demselben Grund wie `gespeicherteBlicke`: nur so nimmt
+   * ein Rueckgaengig-Schritt des ERSTEN Speicherns das Feld wieder WEG
+   * (byte-gleich) statt eine leere Liste zu hinterlassen.
+   */
+  favoriten?: Favorit[] | undefined;
+}
+
+/**
+ * E222 — eine Ebene. Beim Anlegen: `sichtbar: true`, `gesperrt: false`,
+ * `drahtmodell: false`, `verschneidungsgruppe: 1`. Verschneidungsgruppe 0
+ * verbindet nie; sonst verbinden sich nur Bauteile gleicher Gruppe, danach
+ * gelten die Baustoffprioritaeten (`derive/section.ts`, `derive/plan.ts`).
+ */
+export interface Ebene { id: string; name: string; sichtbar: boolean; gesperrt: boolean; drahtmodell: boolean; verschneidungsgruppe: number }
+
+/**
+ * E222 — benannte Ebenenkombination: Zustand je Ebene. Eine nicht
+ * aufgefuehrte Ebene gilt als sichtbar; fehlt `gesperrt`/`drahtmodell`,
+ * gilt der Wert der Ebene selbst.
+ */
+export interface EbenenKombination { id: string; name: string; ebenen: Record<string, { sichtbar: boolean; gesperrt?: boolean; drahtmodell?: boolean }> }
+
+/**
+ * E219 — ein Favorit: benannte Vorlage fuer EINE Bauteilart. `felder` traegt
+ * die Werte unter den Feldnamen von `design.eigenschaftSetzen` (je Art eine
+ * feste Liste, `model/favoriten.ts`); `null` heisst «leer» (Wand: Hoehe =
+ * Geschosshoehe, Referenzseite automatisch; Zone: Beheizung aus dem Raumtyp).
+ */
+export interface Favorit { id: string; name: string; art: EntityKind; felder: Record<string, string | number | boolean | null> }
+
+/** E154 — Verweis auf die Splat-Ebene (Beilage), ohne Punkte. */
+export interface SplatEbeneVerweis {
+  /** Kennung der Ebene = Schlüssel der Beilage. */
+  id: string;
+  /** Anzeigename (Dateiname), für Journal und Meldungen. */
+  name: string;
+  /**
+   * C4 (Splat-Abnahme 06.10.2026) — von Hand gesetzte Lage, über der
+   * Platzierung aus Datei/Verortung. Fehlt sie, steht der Splat, wie er
+   * geladen wurde. Gesetzt nur über `design.splatLageSetzen` (Rückgängig,
+   * Journal). WARUM hier und nicht in der Beilage: die Beilage ist kein
+   * Dokument und geht nicht durch den Verlauf; ein Verschieben muss mit
+   * Strg+Z zurück. `| undefined` wie die Geschwister: ein Rückgängig nimmt
+   * das Feld WIEDER WEG.
+   */
+  lage?: SplatHandLage | undefined;
+}
+
+/**
+ * C4 — die Lage eines Splats von Hand: erst gleichmässig skalieren und um die
+ * Hochachse drehen (um den Nullpunkt des Projekts), dann verschieben.
+ * Koordinaten wie im Grundriss: x = Ost, y = Nord, z = Höhe, alles in Metern;
+ * Drehung im Gegenuhrzeigersinn von oben gesehen.
+ */
+export interface SplatHandLage {
+  x: number;
+  y: number;
+  z: number;
+  drehungGrad: number;
+  massstab: number;
+}
+
+/**
+ * E153 — der Paket-Ursprung im Projekt. Auch «nicht gefunden» und «nicht
+ * gelesen» sind ein Stand: dann gehört der GRUND an den Splat, nicht ein
+ * älterer Ursprung. `e`/`n` sind LV95 in Metern, nur bei `gefunden` gesetzt.
+ */
+export interface PaketUrsprung {
+  status: 'gefunden' | 'nicht_gefunden' | 'nicht_gelesen';
+  e: number | null;
+  n: number | null;
+  /** Das Dokument im Paket, aus dem der Ursprung stammt (`fundstelle.dokumentId`). */
+  dokumentId: string | null;
+  grund: string | null;
 }
 
 /** Auflösung von `darstellung3d: 'auto'` (v0.7.0 E3) — pure Funktion, testbar
@@ -662,6 +878,34 @@ export interface DocSettings {
 export function azimutImProjekt(azimutRad: number, nordrichtungGrad: number | undefined): number {
   if (!nordrichtungGrad) return azimutRad;
   return azimutRad - (nordrichtungGrad * Math.PI) / 180;
+}
+
+/**
+ * E153 (Owner-Entscheid 06.10.2026) — EIN Richtungsvektor aus Ost/Nord
+ * (LV95 oder die nordorientierte Szene von KosmoPrepare) in die Achsen des
+ * Projekts, gedreht um die Nordrichtung. Gedreht wird um 0/0 des Projekts:
+ * der Aufrufer zieht den Ursprung VORHER ab (die Drehung ist linear, darum
+ * gilt sie ebenso für jede Spalte einer Abbildungsmatrix).
+ *
+ * DAS VORZEICHEN ist aus der bestehenden Konvention abgeleitet, nicht
+ * gewählt: `nordrichtungGrad` ist die Himmelsrichtung der +Y-Achse
+ * (Kompasspeilung, im Uhrzeigersinn). Die +Y-Achse zeigt also nach
+ * (sin θ, cos θ) in Ost/Nord, die +X-Achse nach (cos θ, −sin θ); die
+ * Projektkoordinaten sind die Projektionen darauf:
+ *   x = Ost·cos θ − Nord·sin θ,   y = Ost·sin θ + Nord·cos θ.
+ * Bei 90 liegt Norden damit LINKS (x = −1) — dieselbe Aussage wie
+ * `nordpfeilSvg` und, über die Sonne, `azimutImProjekt`.
+ *
+ * Ohne Drehung (fehlend, 0, 360) kommt das Paar unverändert zurück, Bit für
+ * Bit — der Rückfall für jedes bestehende Dokument.
+ */
+export function ostNordInsProjekt(ost: number, nord: number, nordrichtungGrad: number | undefined): [number, number] {
+  const grad = nordrichtungGrad === undefined ? 0 : ((nordrichtungGrad % 360) + 360) % 360;
+  if (grad === 0) return [ost, nord];
+  const r = (grad * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return [ost * c - nord * s, ost * s + nord * c];
 }
 
 export function aufgeloesteDarstellung3d(settings: DocSettings): 'material' | 'weiss' | 'schwarz' {
@@ -920,6 +1164,9 @@ export const defaultSettings: DocSettings = {
   fassadenModule: [],
   rolle: null,
   rahmen: { kanton: null, kategorie: null, hindernisfreiPflicht: null },
+  // B164 P70: ein neues Projekt startet ohne Paket, solange die Paketwahl
+  // beim Anlegen nichts anderes setzt (`project-vault.ts` `neuesProjekt`).
+  paketId: null,
 };
 
 export interface Patch {

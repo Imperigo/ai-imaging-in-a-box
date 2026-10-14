@@ -77,6 +77,14 @@ export const CameraSpec = z.object({
   referenzpunkt: CameraReferenzpunkt.optional(),
 });
 
+/**
+ * kv-ebenen (E124): die drei Ebenen, die die Gegenseite je Kamera liefern
+ * kann (Blatt `erg-20260929-e124` §2). Gilt fuer die Bestellung
+ * (`render.passes`) und fuer den Rueckweg (`RenderResult.ebenen[].art`).
+ */
+export const EbenenArt = z.enum(['schoenbild', 'tiefe', 'material-id']);
+export type EbenenArt = z.infer<typeof EbenenArt>;
+
 export const RenderScene = z.object({
   schema: z.literal('kosmovis.render-scene/v1').default('kosmovis.render-scene/v1'),
   geometry: z.object({
@@ -363,6 +371,18 @@ export const RenderScene = z.object({
           rotationGrad: z.number().min(0).max(360).default(0),
         })
         .optional(),
+      /**
+       * kv-ebenen (E124 Schritt 1, Owner-Entscheid 29.09.2026 «zwei
+       * Schritte»): welche EBENEN je Kamera zurueckkommen sollen. Form nach
+       * dem Beispiel der Gegenseite (`docs/auftraege-kosmovis/erg-20260929-
+       * e124-beispiele-und-glas.md` §2): eine Liste aus `EbenenArt` ODER der
+       * Text `"alle"`. Optional und OHNE Default: fehlt das Feld oder ist es
+       * `[]`, liefert die Gegenseite keine Ebene und das Ergebnis traegt
+       * kein `ebenen` (ihre Bedingung b). Ein unbekannter Name wird hier wie
+       * drueben abgewiesen, statt eine Ebene zu raten. Unser Sender setzt
+       * das Feld heute NICHT; die Anzeige kommt erst nach einem echten Lauf.
+       */
+      passes: z.union([z.array(EbenenArt), z.literal('alle')]).optional(),
     })
     .prefault({}),
   style: z
@@ -442,9 +462,14 @@ export const RenderScene = z.object({
        * traegt, ist am Geraet belegt. **Additiv:** kein alter Wert entfaellt,
        * bestehende Auftraege parsen weiter — nur die Vorgabe wechselt, weil
        * die alte nachweislich das Falsche tat.
+       *
+       * E128 (ENTSCHEIDE-2026-09-22, P-QWEN21 am 30.09.2026): `'qwen-image-2.1'`
+       * additiv aufgenommen, OHNE research_only-Pflicht — der Owner nimmt es
+       * ins Produkt und loest die Lizenz vor der Veroeffentlichung. Am Geraet
+       * gemessen (ROADMAP 1632): keine Tiefenfuehrung, darum NICHT Vorgabe.
        */
       backbone: z
-        .enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl'])
+        .enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl', 'qwen-image-2.1'])
         .default('z-image-turbo'),
       /**
        * Bedeutung festgelegt 01.09.2026 (erg-20260901-16-drei-vertragsfragen.md,
@@ -550,6 +575,49 @@ export const RenderScene = z.object({
    * als vorher.
    */
   gelaende: z.boolean().nullable().optional(),
+  /**
+   * Owner-Entscheid 76 (Splat jetzt): der KONTEXT einer Bestellung — eine
+   * Gauss-Splat-Aufnahme der Umgebung, in die das Modell gestellt und mit
+   * ihr gerechnet wird. Festgelegt mit Integrator, prepare und HomeStation;
+   * die App-Seite der HomeStation schaltet sich an `'context' in
+   * RenderScene.shape` ein.
+   *
+   * - `kind`      — heute nur `'splat'`. Ein unbekannter Wert wird
+   *                 abgewiesen, nicht still ignoriert.
+   * - `ply`       — ABSOLUTER Pfad der Splat-Datei (.ply) AUF DER
+   *                 HOMESTATION. Die Datei reist nicht mit; sie liegt dort.
+   * - `verortung` — Pfad der Begleitdatei `<splat>.verortung.json` (wie der
+   *                 Splat im Gelaende liegt), oder `null`, wenn es keine gibt.
+   * - `transform` — 4x4-Matrix, ZEILENWEISE, 16 endliche Zahlen: die Lage des
+   *                 Splats in der glTF-Welt des Modells (Meter, Y oben), so wie
+   *                 `splatAnsichtsMatrix(ebene)` sie fuer die Ansicht rechnet.
+   * - `fit`       — wie die Lage zustande kam: `'behelf'` heisst LAGE VON
+   *                 HAND (eingepasst nach Augenmass, keine Messung);
+   *                 `'passpunkte'` heisst aus Passpunkten bestimmt.
+   * - `crs_note`  — Klartext zum Bezugssystem (z. B. LV95 und Ursprung), fuer
+   *                 Menschen; kein Rechenwert.
+   *
+   * `.strict()`: ein Feld, das hier nicht steht, ist ein Schreibfehler und
+   * wird abgewiesen — eine Lage mit falschem Feldnamen waere sonst still
+   * verloren.
+   *
+   * OHNE `context` ist alles wie bisher: das Feld ist optional, ohne
+   * Vorgabe, jede bestehende Szene bleibt byte-gleich gueltig und bestellt
+   * nichts anders. Ob die Datei unter `ply` wirklich da und lesbar ist,
+   * prueft der Abholer auf der HomeStation; fehlt sie, meldet er einen
+   * SICHTBAREN Fehler am Auftrag, statt ohne Kontext zu rechnen.
+   */
+  context: z
+    .object({
+      kind: z.literal('splat'),
+      ply: z.string().min(1),
+      verortung: z.string().min(1).nullable(),
+      transform: z.array(z.number().finite()).length(16),
+      fit: z.enum(['behelf', 'passpunkte']),
+      crs_note: z.string(),
+    })
+    .strict()
+    .optional(),
 })
   // Y3 P-IFC-BESTELLUNG (V0942-SPEZ §4): die gemessene Probe des Demohauses
   // (kosmo-orbit/abgabe/PROBE-DEMOHAUS.ifc, 26 IFCSPACE mit echter

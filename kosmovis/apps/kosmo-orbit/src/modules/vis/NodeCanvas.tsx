@@ -23,7 +23,7 @@ import {
   type VisNode,
   type VisPortTyp,
 } from '@kosmo/kernel';
-import { ansage, KButton, KField, KIcon, KInput, KSelect, KTooltip, melde, meldeFehler, useRollfokus, type KIconName } from '@kosmo/ui';
+import { ansage, KButton, KCheckbox, KField, KIcon, KInput, KSelect, KSlider, KTooltip, KWarteOrt, melde, meldeFehler, useRollfokus, type KIconName } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import {
   abbrechenJob,
@@ -40,17 +40,21 @@ import {
   fremdnahtSatz,
   holeJob,
   interiorFaehrt,
+  authFehlerSatz,
   istAuthFehler,
   kombiniertePrompt,
   istUeberDiesenWegBestellbar,
   KEINE_GEOMETRIE_HINWEIS,
+  LEERER_PROMPT_HINWEIS,
   mappeJobStatus,
+  promptFehltFuerKi,
   QUALITAETSSTUFEN,
   renderBedienungAusParams,
   sendeGraphRenderAuftrag,
   szeneBauteileAnzahl,
   zeitschaetzungSekunden,
   zeitText,
+  type JobLieferstatus,
 } from './vis-jobs';
 import {
   istZeitUeberschritten,
@@ -62,12 +66,16 @@ import {
   useVisRuntime,
   waehleAufnahme,
   wartetAbholerLabel,
-  wartetAbholerText,
 } from './vis-runtime';
 import { BridgeBild } from './BridgeBild';
-import { zoomAmZeiger } from './knoten-zoom';
+import { renderWarteAnzeige } from './render-warteort';
+import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
+import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
-import { quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
+import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
+import { LizenzOffenMarke } from './LizenzMarke';
+import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
+import { laufNummerVon, verlaufReihe, verlaufSichtbar, type VerlaufEintrag } from './render-verlauf';
 import './vis-visual.css';
 
 /**
@@ -92,9 +100,14 @@ const PORT_ABSTAND_KOLLABIERT = 14;
 const KOPF_H = 26;
 /** Portanker sitzen 4px vom Kartenrand abgesetzt (W1 Massnahme 5). */
 const PORT_ABSATZ = 4;
-/** Zoom-Grenzen der Steuerleiste (W1 Massnahme 4). */
-const ZOOM_MIN = 0.25;
-const ZOOM_MAX = 2.5;
+/** KV-B5: Rand des knoteneigenen `<svg>` rund um die Karte. Er traegt die
+ *  Anschluss-Trefferkreise (Mitte `PORT_ABSATZ` ausserhalb, Radius 11) und
+ *  den Auswahlrahmen (3 px ausserhalb). 20 px deckt beides mit Luft. */
+const KNOTEN_SVG_RAND = 20;
+/** Zoom-Grenzen der Steuerleiste (W1 Massnahme 4). Seit 14.10.2026 weiter (0.1…4 statt
+ *  0.25…2.5): Owner «man muss viel scrollen, um naeher zu kommen oder rauszuzoomen». */
+const ZOOM_MIN = 0.1;
+const ZOOM_MAX = 4;
 /** V1-Welle Commit 1: Grid-Snap-Raster in Node-Raum-Einheiten — deckt sich
  * mit dem sichtbaren 24px-Punktraster (`vis-raster`-Pattern unten). */
 const RASTER = 24;
@@ -342,6 +355,41 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
 ];
 
 /**
+ * P-LIZENZMARKE Schritt 2 (E154 (4)): so viel gibt das fertige Bild in der
+ * Zeile `bild` ab, wenn darunter «Lizenz offen» steht. Gemessen an der
+ * Vorbehaltsklasse: hoechstens 10,5 px Schrift (`--k-t-xxs` der groessten
+ * Stufe) mal 1,35 Zeilenhoehe = 14,2 px; eingetragen 16. Die Zeile bleibt
+ * damit bei ihren 110 px, und der Knoten waechst nicht.
+ */
+export const LIZENZ_ZEILE_H = 16;
+
+/**
+ * Entscheid 68 / E174 (Verlauf am Render-Knoten): so viel kommt in der Zeile
+ * `bild` UNTER dem Hauptbild dazu, solange die Reihe der letzten Laeufe steht
+ * (`RenderVerlauf.tsx`, ab zwei Laeufen). Keine eigene Registerzeile: die
+ * Reihe gehoert zum Bild, und ein frischer Knoten (A15, Budget B) bleibt so
+ * hoch wie bisher. Der Knoten waechst um genau diesen Wert (`nodeHoehe`),
+ * und die Reihe ist in `vis-visual.css` auf genau diese Hoehe gesetzt
+ * (`.vis-verlauf`, 60 px: Abstand 2, Kopf zwei Zeilen 2 x 13, Daumenbild
+ * 32). Wer dort eine Zahl aendert, aendert sie hier mit;
+ * `test/kv-render-verlauf.test.tsx` haelt beide gegeneinander.
+ *
+ * Owner-Entscheid 71 (08.10.2026): die Uhrzeitzeile unter den Daumenbildern
+ * (2 + 12 px) ist entfallen. In WebKitGTK ragte der Knoten an der Stelle der
+ * Palette 8 px ueber den Fensterrand, und der Knopf unten in der Mitte
+ * verdeckte bei Mittellage die Uhrzeiten. Die Zeit steht weiter im
+ * Laufschild, in der grossen Ansicht und im Vorleser-Label jedes Daumenbilds.
+ *
+ * WebKitGTK-Geraeteprobe (08.10.2026, App-Vorgabe 1440 x 900): mit 70 px
+ * ragte der Knoten an der Stelle der Palette noch 4 px ueber den Fensterrand
+ * (Karte 734 px; in Chromium gleich gemessen: Unterkante 904 bei 900). Die
+ * Abstaende ueber und unter dem Kopf sind enger (8 -> 2, 4 -> 0), die Reihe
+ * 60 px, der Knoten 724 px — Unterkante 894, 6 px Luft. Daumenbild (32 px,
+ * so hoch wie die Knoepfe) und Kopf bleiben, wie sie waren.
+ */
+export const VERLAUF_ZEILE_H = 60;
+
+/**
  * Die Zeilen, die erst der Klappknopf zeigt — das Prompt-Formular und die
  * vier Erklärtexte. Auswahlregel: was der Architekt bei JEDEM Bild anfasst,
  * bleibt offen; was er einmal liest, klappt zu. Die Erklärtexte sind damit
@@ -370,8 +418,44 @@ export function zeilenHoehe(zeilen: readonly Koerperzeile[], mitLauf = false): n
   return h + (zeilen.length - 1) * ZEILEN_ABSTAND;
 }
 
-/** Zuwachs des Render-Körpers, sobald ein Lauf am Knoten hängt. */
+/** Zuwachs des Render-Körpers im GRÖSSTEN Laufzustand (alle Zeilen mit
+ *  `hLauf` gewachsen) — die Höhe, die ein Render-Knoten erreichen KANN. */
 const RENDER_H_LAUF_ZUSATZ = zeilenHoehe(RENDER_ZEILEN, true) - zeilenHoehe(RENDER_ZEILEN);
+
+/**
+ * KV-B5-Nachgang (06.10.2026) — WELCHE Zeile bei WELCHEM Laufstand wächst.
+ *
+ * Bis hierhin wuchs der Körper um den vollen Zuschlag (122 px), sobald
+ * IRGENDEIN Lauf am Knoten hing — auch nach einem Abbruch. Gemessen (Chromium,
+ * 1400×900, Render-Knoten aus der Palette, Auftrag gesendet und abgebrochen):
+ * die Karte ging von 580 auf 702 px, ihr Boden von y 750 auf 872, und damit
+ * unter den Knopf unten in der Mitte des Fensters (Oberkante y 852) — genau der
+ * Befund des lokalen Workers in WebKitGTK (`auf-20261006-242`). Der Inhalt
+ * brauchte den Platz da nicht mehr: «Abbrechen» ist nach dem Abbruch weg, und
+ * die Bildfläche zeigte im 110-px-Rahmen nur das Wort «abgebrochen».
+ *
+ * Jetzt wächst eine Zeile nur, solange sie den Platz wirklich braucht:
+ * - `aktionen`: nur solange «Abbrechen»/«Freigeben» dastehen (dieselbe Menge
+ *   wie `laeuftNoch` im Körper, `OFFENE_LAUF_STATUS`);
+ * - `bild`: der volle Rahmen, sobald es etwas zu zeigen gibt (Fortschritt,
+ *   Fehler, Bild) — nach einem Abbruch der Streifen wie beim frischen Knoten.
+ * Körper und Kartenhöhe lesen beide DIESE Funktion; die Probe
+ * `test/kv-b5-nachgang.test.tsx` hält Karte und Zeilen gegeneinander.
+ */
+export function renderZeileWaechst(zeile: string, laufStatus: string | undefined): boolean {
+  if (laufStatus === undefined) return false;
+  if (zeile === 'aktionen') return (OFFENE_LAUF_STATUS as readonly string[]).includes(laufStatus);
+  if (zeile === 'bild') return laufStatus !== 'abgebrochen';
+  return true;
+}
+
+/** Zuwachs des Render-Körpers bei diesem Laufstand (s. `renderZeileWaechst`). */
+function renderLaufZusatz(laufStatus: string | undefined): number {
+  return RENDER_ZEILEN.reduce(
+    (s, z) => s + (z.hLauf !== undefined && renderZeileWaechst(z.id, laufStatus) ? z.hLauf - z.h : 0),
+    0,
+  );
+}
 
 /** Zuwachs, wenn `zeilen` zu einem bereits gefüllten Körper dazukommen: jede
  *  zusätzliche Zeile bringt ihre eigene Höhe UND einen weiteren Abstand mit. */
@@ -482,7 +566,7 @@ const BEIBLATT_RESERVE_OBEN = INSEL_KOPFZEILE_UNTERKANTE_PX;
 const BEIBLATT_RESERVE_LINKS = 100;
 const BEIBLATT_RESERVE_RECHTS = 90;
 const BEIBLATT_RESERVE_UNTEN = 60;
-/** Inhaltsspalte GENAU so breit wie im Kartenkoerper (`foreignObject`-Breite
+/** Inhaltsspalte GENAU so breit wie im Kartenkoerper (Koerper-Breite
  *  `NODE_W - 16`) — die Hoehen in `RENDER_ZEILEN_ZUSATZ` sind bei dieser
  *  Breite gemessen. Ein breiteres Beiblatt haette sie alle ungueltig gemacht. */
 const BEIBLATT_INHALT_W = NODE_W - 16;
@@ -569,13 +653,29 @@ function portY(n: VisNode, i: number): number {
   return KOPF_H + 14 + i * abstand;
 }
 
+/**
+ * KV-B5-Nachgang (06.10.2026) — die GRÖSSTE Höhe, die ein Knoten dieser Art
+ * annehmen kann: Basis, dazu ein offener Klapptext und beim Render-Knoten der
+ * volle Laufzuschlag. Die Platzsuche (`vis-graph-aktionen.ts`) prüft damit,
+ * nicht mit der Basishöhe: ein Knoten, der nach dem Anlegen wächst (Lauf,
+ * Klapptext), wuchs vorher in seinen Nachbarn hinein — gemessen bei «Drei
+ * Stimmungen»: ein laufender Render-Knoten (702 px) reichte 82 px in den
+ * nächsten (Zeilenabstand 620).
+ */
+export function groessteNodeHoehe(typ: string): number {
+  // Entscheid 68 / E174: dazu die Verlaufsreihe — ein Knoten mit mehreren
+  // Laeufen waechst sonst in seinen Nachbarn hinein, dieselbe Lehre wie oben.
+  return basisNodeHoehe(typ) + (KOERPER_H_ZUSATZ_OFFEN[typ] ?? 0) + (typ === 'render' ? RENDER_H_LAUF_ZUSATZ + VERLAUF_ZEILE_H : 0);
+}
+
 /** Echte Nodehöhe inkl. eines offenen Klapptexts (W1 Massnahme 3a) ODER
  * (V1-Welle Commit 2) eingeklappt — `collapsed` gewinnt: ein Klapptext bleibt
- * dabei zu (kollabiert zeigt nie einen Körper). */
-function nodeHoehe(n: VisNode, offen?: ReadonlySet<string>, hatLauf?: boolean): number {
+ * dabei zu (kollabiert zeigt nie einen Körper). Beim Render-Knoten wächst
+ * der Körper je nach Laufstand (`renderLaufZusatz`, KV-B5-Nachgang). */
+function nodeHoehe(n: VisNode, offen?: ReadonlySet<string>, laufStatus?: string, mitVerlauf = false): number {
   if (n.collapsed) return kollabierteNodeHoehe(n.typ);
   const zusatz = offen?.has(n.id) ? (KOERPER_H_ZUSATZ_OFFEN[n.typ] ?? 0) : 0;
-  const lauf = hatLauf === true && n.typ === 'render' ? RENDER_H_LAUF_ZUSATZ : 0;
+  const lauf = n.typ === 'render' ? renderLaufZusatz(laufStatus) + (mitVerlauf ? VERLAUF_ZEILE_H : 0) : 0;
   return basisNodeHoehe(n.typ) + zusatz + lauf;
 }
 
@@ -704,20 +804,63 @@ function edgePfad(a: { x: number; y: number }, b: { x: number; y: number }, modu
 }
 
 /**
+ * B1 (Nachprobe auf-20261001-230): liegt das Ziel eines Tastendrucks in einem
+ * Eingabefeld (`textarea`, `input`, `select` oder bearbeitbarer Text)? Dann
+ * gehoert die Taste dem Feld, nicht der Knoten-Auswahl. Exportiert fuer die
+ * Probe, sonst reine Hilfe.
+ */
+export function kommtAusEingabefeld(ziel: EventTarget | null): boolean {
+  if (!(ziel instanceof Element)) return false;
+  if (ziel.closest('textarea, input, select, [contenteditable]:not([contenteditable="false"])')) return true;
+  return ziel instanceof HTMLElement && ziel.isContentEditable;
+}
+
+/**
+ * KV-B5 (Messung des lokalen Workers auf-20261006-239): «Tab fokussiert
+ * ‹Ausführen›, Enter waehlt nur den Knoten.» Liegt das Ziel eines
+ * Tastendrucks in einem Knopf INNERHALB des Knotens (`button`, eine Rolle
+ * `button`/`combobox`/`checkbox`, ein Verweis)? Dann gehoeren Enter und
+ * Leertaste diesem Knopf — der Browser loest seinen Klick genau darueber aus,
+ * und das `preventDefault` der Knoten-Auswahl verschluckte ihn. Der Knoten
+ * selbst (`knoten`, traegt ebenfalls `role="button"`) zaehlt nicht.
+ */
+export function kommtAusKnopfImKnoten(ziel: EventTarget | null, knoten: Element): boolean {
+  if (!(ziel instanceof Element)) return false;
+  const knopf = ziel.closest('button, a[href], [role="button"], [role="combobox"], [role="checkbox"]');
+  return !!knopf && knopf !== knoten && knoten.contains(knopf);
+}
+
+const HINWEIS_KURZ_ZEICHEN = 90;
+function kurzText(t: string): string {
+  if (t.length <= HINWEIS_KURZ_ZEICHEN) return t;
+  const cut = t.slice(0, HINWEIS_KURZ_ZEICHEN);
+  const leer = cut.lastIndexOf(' ');
+  return `${(leer > 40 ? cut.slice(0, leer) : cut).trimEnd()} …`;
+}
+
+/**
  * Bild + QA-Zeile — der gemeinsame Kern des bestehenden Bildvergleichs
  * (`vergleich`-Node, ehemals als Inline-JSX dupliziert). V-H5 (Welle 3): die
  * Kuratier-Fläche nutzt exakt dieselbe Kachel für ihre Zweier-Vergleichsfläche
  * — «bestehenden Bildvergleich wiederverwenden», nicht neu erfinden.
  */
-function BildKachel({
+export function BildKachel({
   jobId,
   bild,
   qa,
+  lieferstatus,
+  lieferstatusGrund,
+  lizenz,
   alt,
 }: {
   jobId: string;
   bild: string;
-  qa?: { verdict: { passed: boolean; reason?: string | undefined } } | undefined;
+  qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined;
+  /** kv-lieferstatus-null (L1) und B3: alles ausser «geliefert» steht als Vorbehalt unter der QA-Zeile. */
+  lieferstatus?: JobLieferstatus | undefined;
+  lieferstatusGrund?: string | undefined;
+  /** P-LIZENZMARKE Schritt 2 (E154 (4)): `lizenzOffen: true` zeigt «Lizenz offen» unter dem Bild, sperrt nichts. */
+  lizenz?: LizenzAngabe | undefined;
   alt: string;
 }) {
   // Auftrag auf-20260827-62 (Posten 2, `docs/auftraege-kosmovis/
@@ -729,23 +872,81 @@ function BildKachel({
   // erscheint NUR, wenn der Vertrag ihn mitliefert, und verschwindet mit ihm
   // wieder (kein stehender Fusstext, U10).
   const vorbehalt = qa?.verdict.reason;
+  // E189: `passed:false`, aber der Absender sagt «NICHT BEURTEILBAR» — neutral
+  // statt ✗; sein Satz steht als Vorbehalt woertlich darunter.
+  // Dieselbe Funktion wie der Verlauf (`qaUrteil`), damit beide nie wieder
+  // Verschiedenes sagen.
+  const urteil = qaUrteil(qa);
+  const nichtBeurteilbar = urteil === 'nicht-beurteilbar';
+  // Auftrag 180 (kv-qa-hinweise): `qa.verdict.hinweise` ist eine Auskunft,
+  // kein Vorbehalt — ruhige Zeile, KEIN Warnzeichen, getrennt von `reason`.
+  // Fehlendes Feld oder leere Liste: nichts anzeigen, kein Platzhalter.
+  const hinweise = (qa?.verdict.hinweise ?? []).filter((h) => h.trim() !== '');
+  const [hinweiseOffen, setHinweiseOffen] = useState(false);
+  const erster = hinweise[0] ?? '';
+  const istGekuerzt = hinweise.length > 1 || erster.length > HINWEIS_KURZ_ZEICHEN;
+  const sichtbar = hinweiseOffen || !istGekuerzt ? hinweise : [kurzText(erster)];
+  // kv-lieferstatus-null (KosmoVis L1) und B3: «nicht festgestellt»,
+  // «fehlgeschlagen» und «übersprungen» stehen als Vorbehalt in der Warnfarbe
+  // des Vorbehalts, ungekuerzt und nie als «geliefert». Getrennt vom
+  // QA-Warnzeichen, das allein an `reason` haengt.
+  const liefer = lieferVorbehalt(lieferstatus, lieferstatusGrund);
   return (
     <div className="vis-bild-kachel">
       <BridgeBild jobId={jobId} imageName={bild} alt={alt} className="vis-img-full" />
       {qa && (
         <span
-          className={`vis-bild-kachel-qa ${qa.verdict.passed ? 'vis-bild-kachel-qa--ok' : 'vis-bild-kachel-qa--fehl'}${vorbehalt ? ' vis-bild-kachel-qa--vorbehalt' : ''}`}
+          className={`vis-bild-kachel-qa ${urteil === 'bestanden' ? 'vis-bild-kachel-qa--ok' : nichtBeurteilbar ? 'vis-bild-kachel-qa--neutral' : 'vis-bild-kachel-qa--fehl'}${vorbehalt ? ' vis-bild-kachel-qa--vorbehalt' : ''}`}
         >
-          QA {qa.verdict.passed ? 'ok' : '✗'}
+          QA {urteil === 'bestanden' ? 'ok' : nichtBeurteilbar ? 'nicht beurteilbar' : '✗'}
           {vorbehalt ? ' ⚠' : ''}
         </span>
       )}
       {/* U11: der Vorbehalt bleibt bei der Zahl, die er einschränkt — direkt
           unter der QA-Zeile, nicht auf einer anderen Seite/hinter einem Klapp-
           Text (U9b: erreicht den Benutzer, ohne dass er etwas aufklappt). */}
+      {/* Entscheid 72 (KosmoOrbit E198, Blatt 16 «Saetze am Bild»): genau EINE
+          Zeile mit «…» — die Kachel steht in einem Knoten fester Hoehe, und der
+          Satz brach dort nach einer halben Zeile ab. Der volle Satz steht
+          woertlich in der Kurzhilfe (beim Darueberfahren und bei Tastatur-
+          fokus, kein natives title) und vollstaendig im Inspektor. */}
       {vorbehalt && (
-        <span className="vis-bild-kachel-qa-vorbehalt" data-testid="vis-bild-kachel-qa-vorbehalt">
-          {vorbehalt}
+        <KTooltip text={vorbehalt} lage="unten" className="vis-bild-kachel-grund-huelle">
+          <span
+            tabIndex={0}
+            className="vis-bild-kachel-qa-vorbehalt vis-bild-kachel-grund-zeile"
+            data-testid="vis-bild-kachel-qa-vorbehalt"
+          >
+            {vorbehalt}
+          </span>
+        </KTooltip>
+      )}
+      {liefer && (
+        <span className="vis-bild-kachel-qa-vorbehalt" data-testid="vis-bild-kachel-liefer-vorbehalt">
+          {liefer}
+        </span>
+      )}
+      {/* P-LIZENZMARKE Schritt 2 (E154 (4)): dieselbe Vorbehaltszeile, der
+          Grund in der Kurzhilfe. Ohne Marke rendert sie nichts. */}
+      <LizenzOffenMarke lizenz={lizenz} testid="vis-bild-kachel-lizenz-offen" />
+      {hinweise.length > 0 && (
+        <span className="vis-bild-kachel-qa-hinweise" data-testid="vis-bild-kachel-qa-hinweise">
+          {sichtbar.map((h, i) => (
+            <span key={i} className="vis-bild-kachel-qa-hinweis">
+              {h}
+            </span>
+          ))}
+          {istGekuerzt && (
+            <KButton
+              size="sm"
+              tone="quiet"
+              data-testid="vis-bild-kachel-qa-hinweise-mehr"
+              aria-expanded={hinweiseOffen}
+              onClick={() => setHinweiseOffen((o) => !o)}
+            >
+              {hinweiseOffen ? 'weniger' : 'mehr'}
+            </KButton>
+          )}
         </span>
       )}
     </div>
@@ -791,6 +992,8 @@ export function NodeCanvas({
   const setAktiverGraphId = useVisRuntime((s) => s.setAktiverGraphId);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  /** KV-B5: die HTML-Ebene mit den Knoten (s. Kommentar am Ende des `<svg>`). */
+  const ebeneRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ cx: 560, cy: 300, scale: 1 });
   // P6-Review #6: Containergrösse als State (ResizeObserver) — die viewBox
   // aus getBoundingClientRect wäre beim Mount und nach Resize stale
@@ -840,6 +1043,10 @@ export function NodeCanvas({
     });
 
   const laeufe = useVisRuntime((s) => s.laeufe);
+  // Entscheid 68 / E174: die abgeloesten Laeufe je Knoten (`vis-runtime.ts`).
+  const verlauf = useVisRuntime((s) => s.verlauf);
+  const reiheVon = (nodeId: string): VerlaufEintrag[] => verlaufReihe(laeufe[nodeId], verlauf[nodeId]);
+  const mitVerlauf = (n: VisNode): boolean => n.typ === 'render' && verlaufSichtbar(reiheVon(n.id));
   // PC1: `setzeLauf` wandert mit der `ausfuehren()`-Extraktion nach
   // `vis-jobs.ts`s `sendeGraphRenderAuftrag` (dort direkt über
   // `useVisRuntime.getState()` genutzt) — hier nicht mehr nötig.
@@ -902,19 +1109,62 @@ export function NodeCanvas({
               ...(j.worker !== undefined ? { worker: j.worker } : {}),
               ...(j.progress !== undefined ? { progress: j.progress } : {}),
               wartetGrund: j.message,
+              // P11/B6 — IMMER explizit geleert (wie `wartetGrund` oben): ein
+              // erfolgreich verarbeiteter Poll heisst, die Bridge antwortet
+              // wieder verständlich — ein alter Störungs-Hinweis vom letzten
+              // 404/Netzfehler darf nicht stehen bleiben.
+              bridgeHinweis: undefined,
             };
             if (j.result) {
+              // P11/B7 — «fertig» nur MIT mindestens einem Bild. Ein
+              // eingebettetes Ergebnis ohne Bild (vertragskonform, `images:
+              // []`) ist keine Erfolgsmeldung — s. `mappeJobStatus`-Kommentar
+              // (`vis-jobs.ts`) für dieselbe Lehre am anderen Aufrufer.
+              const hatBild = j.result.images.length > 0;
               patchLauf(nodeId, {
                 ...marker,
-                status: 'fertig',
+                status: hatBild ? 'fertig' : 'fehler',
                 bild: j.result.images[0] ?? '',
+                // Entscheid 68 / E174: der Verlauf nennt die Uhrzeit des Ergebnisses.
+                fertigUm: Date.now(),
                 qa: j.result.qa,
                 // N4 — additiv, nur wenn der Worker es geschickt hat. Kein
                 // Default: ein fehlendes Feld heisst «je Kamera nichts gesagt».
                 ...(j.result.qa_je_kamera ? { qaJeKamera: j.result.qa_je_kamera } : {}),
+                // kv-lieferstatus-null (L1): der Lieferstatus geht mit,
+                // `null` eingeschlossen; die Anzeige macht daraus den
+                // Vorbehalt, nie «geliefert».
+                lieferstatus: j.result.lieferstatus,
+                ...(j.result.lieferstatus_grund !== undefined ? { lieferstatusGrund: j.result.lieferstatus_grund } : {}),
+                // P-LIZENZMARKE Schritt 2 (E154 (4)): die Lizenzmarke und die
+                // beiden Felder daneben gehen mit. Bis hierhin las der Vertrag
+                // sie (ROADMAP 1681), und HIER gingen sie verloren. Immer
+                // ausdruecklich gesetzt, auch als `undefined`: `patchLauf`
+                // mischt, und eine alte Marke darf nicht stehen bleiben.
+                lizenzOffen: j.result.engine_license_open === true ? true : undefined,
+                engineUsed: j.result.engine_used,
+                engineLicense: j.result.engine_license,
+                ...(hatBild
+                  ? {}
+                  : {
+                      fehler:
+                        j.result.lieferstatus_grund ??
+                        j.result.qa.verdict.reason ??
+                        'Ergebnis ohne Bild — die Bridge hat kein Bild geliefert.',
+                    }),
               });
             } else if (j.status === 'error') {
-              patchLauf(nodeId, { ...marker, status: 'fehler', fehler: 'Render fehlgeschlagen' });
+              // P11/B6 — der echte Grund (Vertragsfeld `error`, sonst
+              // `message`, s. `RenderJob` in `kosmo-contracts`) VOR dem festen
+              // Satz. Kein realer Worker im Repo füllt heute `error`
+              // (`kosmo_worker_comfyui.py` schreibt nur `message`) — beide
+              // Felder werden trotzdem gelesen, additiv, kein Vertragsfeld
+              // erfunden.
+              patchLauf(nodeId, {
+                ...marker,
+                status: 'fehler',
+                fehler: j.error ?? j.message ?? 'Render fehlgeschlagen',
+              });
             } else if (j.status === 'kein-render-worker') {
               // Matrix-C-1-Fund (v0.9.0): dieser ehrliche Worker-Status wurde
               // vorher von safeParse abgelehnt und hier still verschluckt —
@@ -939,10 +1189,8 @@ export function NodeCanvas({
             // (Wieder gegen den aktuellen jobId prüfen — kein Fremd-Lauf.)
             if (useVisRuntime.getState().laeufe[nodeId]?.jobId !== jobId) return;
             if (istAuthFehler(err)) {
-              patchLauf(nodeId, {
-                status: 'fehler',
-                fehler: 'Bridge lehnt ab — Token fehlt oder ist falsch (KosmoVis-Einstellungen).',
-              });
+              // C3: der eine Satz mit dem Verweis auf Einstellungen ▸ HomeServer.
+              patchLauf(nodeId, { status: 'fehler', fehler: authFehlerSatz(err) });
             } else if (!(err instanceof TypeError) && !(err instanceof BridgeHttpError)) {
               // P-DONE (auftraege/von-homestation/auf-orbit-20260821-01.md
               // AUFTRAG 1, HomeStation-Messung 21.08.2026): die Bridge
@@ -963,10 +1211,22 @@ export function NodeCanvas({
                 status: 'fehler',
                 fehler: `Bridge-Antwort nicht verstanden — ${err instanceof Error ? err.message : String(err)}`,
               });
+            } else if (err instanceof BridgeHttpError) {
+              // P11/B6 — bewusst UNVERÄNDERT: ein transienter HTTP-Fehler der
+              // Bridge (404/502/…) tötet den Lauf weiterhin nicht, der
+              // nächste Poll fasst nach (derselbe Entscheid wie beim
+              // Viewport3D-Zwilling, `viewportRenderPollFehlerAusgang`,
+              // GEGENPROBE in `viewport3d-render-vertragsbruch.test.ts`,
+              // ausserhalb dieses Pakets nicht angetastet). NEU ist nur: der
+              // Grund war bisher NIRGENDS zu sehen — jetzt steht er als
+              // Hinweis am Node, ohne den Status zu kippen.
+              patchLauf(nodeId, { bridgeHinweis: `Bridge antwortet mit Fehler ${err.status} — wird weiter versucht.` });
+            } else if (err instanceof TypeError) {
+              // P11/B6 — derselbe Entscheid, für einen echten Netzfehler
+              // (abgebrochener/fehlgeschlagener `fetch()`): weiterhin still
+              // in Bezug auf den Status, aber der Grund wird sichtbar.
+              patchLauf(nodeId, { bridgeHinweis: 'Keine Verbindung zur Bridge — wird weiter versucht.' });
             }
-            // Echte Netzfehler (TypeError) NICHT hochziehen: der nächste
-            // Poll fasst nach — ein einmaliger Aussetzer soll den Lauf
-            // nicht töten.
           });
       }
     }, 2500);
@@ -999,7 +1259,14 @@ export function NodeCanvas({
     if (!svg) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const factor = Math.exp(-e.deltaY * 0.0012);
+      // E152 (06.10.2026): zwei Finger wischen = schieben, Pinch und Mausrad
+      // = zoomen am Zeiger (`shell/trackpad-geste.ts`, wie Miro).
+      const d = deuteRad(e as unknown as RadEreignis);
+      if (d.art === 'schwenk') {
+        setView((v) => ({ ...v, cx: v.cx + d.dx / v.scale, cy: v.cy + d.dy / v.scale }));
+        return;
+      }
+      const factor = verstaerkterFaktor(d.faktor);
       // P-KNOTEN-ZOOM (09.09.2026): Zoom AM ZEIGER statt zur Flaechenmitte.
       // Vorher stand hier nur der Massstabswechsel — wer einen Knoten am
       // Rand vergroessern wollte, schob ihn damit aus dem Bild. Die Plansicht
@@ -1013,7 +1280,26 @@ export function NodeCanvas({
       setView((v) => zoomAmZeiger(v, factor, dx, dy, { min: ZOOM_MIN, max: ZOOM_MAX }));
     };
     svg.addEventListener('wheel', onWheel, { passive: false });
-    return () => svg.removeEventListener('wheel', onWheel);
+    // E152: Pinch in der Mac-App (WebKit-Gesten statt `wheel` + ctrlKey).
+    const beimPinch = (faktor: number, x: number, y: number) => {
+      const r = svg.getBoundingClientRect();
+      setView((v) => zoomAmZeiger(v, verstaerkterFaktor(faktor), x - r.left - r.width / 2, y - r.top - r.height / 2, { min: ZOOM_MIN, max: ZOOM_MAX }));
+    };
+    const pinchAb = bindeWebkitPinch(svg, beimPinch);
+    // KV-B5: die Knoten liegen seit dem Umbau NICHT mehr im `<svg>`, sondern
+    // in der Knotenebene daneben. Ohne diese zweiten Horcher zoomten und
+    // schoben Rad und Pinch ueber einem Knoten nicht mehr (vorher liefen sie
+    // durch den Knoten ins `<svg>`). Das Beiblatt bleibt bewusst ausserhalb
+    // beider (P16).
+    const ebene = ebeneRef.current;
+    ebene?.addEventListener('wheel', onWheel, { passive: false });
+    const pinchEbeneAb = ebene ? bindeWebkitPinch(ebene, beimPinch) : () => undefined;
+    return () => {
+      svg.removeEventListener('wheel', onWheel);
+      ebene?.removeEventListener('wheel', onWheel);
+      pinchAb();
+      pinchEbeneAb();
+    };
   }, []);
 
   // V1-Welle Commit 1: Escape leert die Mehrfachauswahl (global, wie die
@@ -1033,7 +1319,8 @@ export function NodeCanvas({
   useEffect(() => {
     if (!canvasTastaturBewegt.current) return;
     canvasTastaturBewegt.current = false;
-    const ziel = svgRef.current?.querySelector<SVGGElement>(`[data-rf-index="${rf.aktiverIndex}"]`);
+    // KV-B5: die Knoten liegen in der HTML-Knotenebene, nicht mehr im `<svg>`.
+    const ziel = ebeneRef.current?.querySelector<HTMLDivElement>(`[data-rf-index="${rf.aktiverIndex}"]`);
     ziel?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rf.aktiverIndex]);
@@ -1192,14 +1479,21 @@ export function NodeCanvas({
    * Escape bleibt beim bestehenden globalen `window`-Listener (oben) — der
    * greift unabhängig vom Fokus und leert die Auswahl bereits.
    */
-  const behandleNodeTaste = (e: ReactKeyboardEvent<SVGGElement>, index: number, n: VisNode, label: string) => {
+  const behandleNodeTaste = (e: ReactKeyboardEvent<HTMLDivElement>, index: number, n: VisNode, label: string) => {
+    // B1 (Nachprobe auf-20261001-230): Tasten aus einem Eingabefeld IM Knoten
+    // (Prompt-Textfeld, Zahlenfelder, Auswahllisten) gehoeren dem Feld. Vorher
+    // schluckte dieser Handler die Leertaste (`preventDefault` fuer die
+    // Auswahl), und im Prompt-Feld kam kein Leerzeichen an; Pfeiltasten
+    // wanderten zum naechsten Knoten statt den Cursor zu bewegen.
+    if (e.target !== e.currentTarget && kommtAusEingabefeld(e.target)) return;
+    // KV-B5: Enter/Leertaste auf einem Knopf im Knoten (z. B. «Ausführen»)
+    // loesen den Knopf aus, nicht die Knoten-Auswahl.
+    if ((e.key === 'Enter' || e.key === ' ') && kommtAusKnopfImKnoten(e.target, e.currentTarget)) return;
     canvasTastaturBewegt.current = true;
-    // `rf.onKeyDown` liest nur `.key`/`.preventDefault()` (jedes `KeyboardEvent`
-    // trägt beides, unabhängig vom Element-Typ) — die Signatur in
-    // `rollfokus.ts` ist auf `HTMLElement` typisiert, weil ihre bisherigen
-    // Konsumenten (`AssetWorkspace.tsx` u.a.) alle HTML-Karten sind; der
-    // Knotengraph ist SVG. Der Cast ändert kein Verhalten, nur den Typ.
-    rf.onKeyDown(e as unknown as ReactKeyboardEvent<HTMLElement>, index);
+    // `rf.onKeyDown` ist auf `HTMLElement` typisiert. Seit KV-B5 ist der
+    // Knoten selbst ein HTML-Kasten (`.vis-knoten`), der Cast von frueher
+    // (SVG-`<g>` → HTMLElement) ist damit entfallen.
+    rf.onKeyDown(e, index);
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setAuswahl(new Set([n.id]));
@@ -1404,43 +1698,16 @@ export function NodeCanvas({
   // `canvasBefehl` oben), die Legende als Overlay unten links (s. unten).
 
   return (
-    <div className="vis-canvas-wrap">
-    <svg
-      ref={svgRef}
-      data-testid="node-canvas"
-      // PC1 (`docs/V084-SPEZ.md` §5 W2, Punkt 5): `data-cursor-zone="eigen"`
-      // ist seit PA1 tot — `CursorEbene.tsx` versteckt sich seither NICHT
-      // mehr über Zonen-Heuristiken (die «buggende Maus», D1), sondern folgt
-      // ausschliesslich dem berechneten Cursor (`formVonComputedCursor`,
-      // `CursorEbene.tsx:76-82`). Entfernt statt als Leiche stehen gelassen
-      // (dieselbe Regel wie die tote PD2-Hinweis-Entfernung, v0.8.3 P10).
-      className="vis-canvas-svg"
-      viewBox={(() => {
-        const w = flaeche.w / view.scale;
-        const h = flaeche.h / view.scale;
-        return `${view.cx - w / 2} ${view.cy - h / 2} ${w} ${h}`;
-      })()}
-      onPointerDown={(e) => {
-        if (e.target === svgRef.current) {
-          // V1-Welle Commit 1: Shift auf leerer Fläche startet die Marquee-
-          // Auswahl statt zu pannen — OHNE Shift bleibt Pan exakt wie bisher
-          // (Testpunkt (30,30) + bestehende Pan-Tests unangetastet).
-          if (e.shiftKey) {
-            const p = toCanvas(e.clientX, e.clientY);
-            setMarquee({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
-            (e.target as Element).setPointerCapture?.(e.pointerId);
-            return;
-          }
-          panning.current = { x: e.clientX, y: e.clientY, cx: view.cx, cy: view.cy };
-          // Wie beim Node-Kopf-Griff (unten) mit `?.` statt blankem Aufruf:
-          // ein zwischenzeitlich schon abgelaufener/losgelassener Pointer
-          // (schnelle Klickfolge, manche Browser/Webviews) darf das Pannen
-          // selbst nicht zum Fehler machen — die Position tracken wir ohnehin
-          // per pointermove auf dem svg, Capture ist nur die Komfort-Zugabe.
-          (e.target as Element).setPointerCapture?.(e.pointerId);
-          setAuswahlEdge(null);
-        }
-      }}
+    <div
+      className="vis-canvas-wrap"
+      // KV-B5: Bewegung, Loslassen und Abbruch horchen am UMSCHLAG statt am
+      // `<svg>`. Die Knoten liegen seit dem Umbau in einer HTML-Ebene NEBEN
+      // dem `<svg>`; ein Kanten-Zug (ohne Pointer-Capture, s. Quell-Port)
+      // ueber einen Knoten erreichte das `<svg>` sonst nicht mehr, und ein
+      // Loslassen ueber einem Knotenkoerper liesse `pending` stehen — genau
+      // die stille Falschkante aus P-ZWEITKANTE. Ereignisse aus dem `<svg>`
+      // laufen weiter hier durch (Bubbling). Das Starten (Pan/Marquee) bleibt
+      // am `<svg>` selbst (`e.target === svgRef.current`).
       onPointerMove={(e) => {
         // V1-Welle Commit 1: Marquee zuerst — sie schliesst Pan/Drag/Pending
         // in derselben Geste per Konstruktion aus (Pan startet gar nicht,
@@ -1490,7 +1757,7 @@ export function NodeCanvas({
           const y1 = Math.max(marquee.y0, marquee.y1);
           const getroffen = graph.nodes
             .filter((n) => {
-              const h = nodeHoehe(n, offenerKlapptext, !!laeufe[n.id]);
+              const h = nodeHoehe(n, offenerKlapptext, laeufe[n.id]?.status, mitVerlauf(n));
               return n.x < x1 && n.x + NODE_W > x0 && n.y < y1 && n.y + h > y0;
             })
             .map((n) => n.id);
@@ -1638,6 +1905,43 @@ export function NodeCanvas({
         }
       }}
     >
+    <svg
+      ref={svgRef}
+      data-testid="node-canvas"
+      // PC1 (`docs/V084-SPEZ.md` §5 W2, Punkt 5): `data-cursor-zone="eigen"`
+      // ist seit PA1 tot — `CursorEbene.tsx` versteckt sich seither NICHT
+      // mehr über Zonen-Heuristiken (die «buggende Maus», D1), sondern folgt
+      // ausschliesslich dem berechneten Cursor (`formVonComputedCursor`,
+      // `CursorEbene.tsx:76-82`). Entfernt statt als Leiche stehen gelassen
+      // (dieselbe Regel wie die tote PD2-Hinweis-Entfernung, v0.8.3 P10).
+      className="vis-canvas-svg"
+      viewBox={(() => {
+        const w = flaeche.w / view.scale;
+        const h = flaeche.h / view.scale;
+        return `${view.cx - w / 2} ${view.cy - h / 2} ${w} ${h}`;
+      })()}
+      onPointerDown={(e) => {
+        if (e.target === svgRef.current) {
+          // V1-Welle Commit 1: Shift auf leerer Fläche startet die Marquee-
+          // Auswahl statt zu pannen — OHNE Shift bleibt Pan exakt wie bisher
+          // (Testpunkt (30,30) + bestehende Pan-Tests unangetastet).
+          if (e.shiftKey) {
+            const p = toCanvas(e.clientX, e.clientY);
+            setMarquee({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+            (e.target as Element).setPointerCapture?.(e.pointerId);
+            return;
+          }
+          panning.current = { x: e.clientX, y: e.clientY, cx: view.cx, cy: view.cy };
+          // Wie beim Node-Kopf-Griff (unten) mit `?.` statt blankem Aufruf:
+          // ein zwischenzeitlich schon abgelaufener/losgelassener Pointer
+          // (schnelle Klickfolge, manche Browser/Webviews) darf das Pannen
+          // selbst nicht zum Fehler machen — die Position tracken wir ohnehin
+          // per pointermove auf dem svg, Capture ist nur die Komfort-Zugabe.
+          (e.target as Element).setPointerCapture?.(e.pointerId);
+          setAuswahlEdge(null);
+        }
+      }}
+    >
       {/* Punktraster — leise Orientierung */}
       <defs>
         <pattern id="vis-raster" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -1749,12 +2053,52 @@ export function NodeCanvas({
         />
       )}
 
-      {/* Nodes */}
+    </svg>
+
+    {/* KV-B5 (Auftrag auf-vis-20261006-01, «Felder am Render-Knoten leer»)
+        — DIE KNOTEN STEHEN NICHT MEHR IM `<svg>`.
+
+        Bis hier lagen die Knotenkoerper als HTML in einem SVG-
+        `<foreignObject>` innerhalb der verschobenen Knoten-`<g>`. Chromium
+        zeichnet und trifft das richtig; WebKit (die Desktop-App unter Linux
+        ist WebKitGTK) nicht verlaesslich: HTML im `foreignObject`, das eine
+        eigene Zeichenebene bekommt (`position: relative` am KSelect-Umschlag,
+        `overflow: hidden` am Ausloeser, `opacity` an gesperrten Knoepfen,
+        `transform` beim Zeigen/Druecken), wird relativ zum Fenster statt zum
+        Knoten gezeichnet und getroffen — oder gar nicht. Genau das meldete der
+        Owner: Beschriftungen ueber leeren Flaechen, «Ausführen» ohne Wirkung,
+        unter Xvfb die Felder oben links. Gemessen ist das in Chromium NICHT
+        (dort liegen alle Felder im Knoten); WebKit lief in unserer Umgebung
+        nicht (s. Meldeblatt `meldung-20261006-kosmovis-b5-render-knoten.md`).
+
+        Darum die Loesung, die von keiner Engine-Eigenheit abhaengt: jeder
+        Knoten ist ein HTML-Kasten (`.vis-knoten`) in einer Ebene UEBER dem
+        `<svg>`, mit DERSELBEN Verschiebung und Zoomstufe wie die `viewBox`
+        (`.vis-knoten-welt`, Rechnung wie `beiblattPlatz`). Im Kasten liegen
+        ein eigenes kleines `<svg>` mit Karte, Kopf und Anschluessen —
+        wortgleich wie vorher, samt `<g transform="translate(x, y)">` — und
+        der Koerper als gewoehnliches HTML daneben. Kein `foreignObject` mehr.
+
+        Was gleich bleibt: die Malreihenfolge (Raster, Kanten, Zug-Kante und
+        Marquee lagen schon vorher UNTER den Knoten), die Kennungen
+        (`vis-node-<typ>` umschliesst weiter Anschluesse UND Koerper — die
+        Proben, die Felder «in diesem Knoten» suchen, finden sie dort), die
+        Tastaturbedienung (`data-rf-index`, `role`, `aria-*` am Kasten).
+        Was die Ebene selbst tut: nichts treffen (`pointer-events: none`),
+        nur ihre Knoten. Leere Leinwand trifft weiter das `<svg>` (Pan,
+        Marquee). */}
+    <div ref={ebeneRef} className="vis-knoten-ebene" data-testid="vis-knoten-ebene">
+      <div
+        className="vis-knoten-welt"
+        style={{
+          transform: `translate(${flaeche.w / 2 - view.cx * view.scale}px, ${flaeche.h / 2 - view.cy * view.scale}px) scale(${view.scale})`,
+        }}
+      >
       {graph.nodes.map((n0, rfIndex) => {
         const n = nodePos(n0);
         const kat = VIS_NODE_KATALOG[n.typ];
         if (!kat) return null;
-        const h = nodeHoehe(n0, offenerKlapptext, !!laeufe[n0.id]);
+        const h = nodeHoehe(n0, offenerKlapptext, laeufe[n0.id]?.status, mitVerlauf(n0));
         const lauf = laeufe[n.id];
         const auftrag = auswertung?.renderAuftraege.get(n.id);
         // H-32-Fix (V1-Welle Auflage 0, docs/SIM-BEFUNDE.md): der Veraltet-
@@ -1781,9 +2125,10 @@ export function NodeCanvas({
         // Wahrheitsbegriff für «läuft», hier nur auf den Kartenrahmen gespiegelt.
         const nodeLaeuft = n.typ === 'render' && !!lauf && (OFFENE_LAUF_STATUS as readonly string[]).includes(lauf.status);
         return (
-          <g
+          <div
             key={n.id}
-            transform={`translate(${n.x}, ${n.y})`}
+            className="vis-knoten"
+            style={{ left: n.x, top: n.y, width: NODE_W, height: h }}
             data-testid={`vis-node-${n.typ}`}
             data-rf-index={rfIndex}
             tabIndex={rf.tabIndexFuer(rfIndex)}
@@ -1792,12 +2137,36 @@ export function NodeCanvas({
             aria-pressed={istAusgewaehlt}
             onKeyDown={(e) => behandleNodeTaste(e, rfIndex, n, kat.label)}
           >
-            {/* Karte mit geschnittener Ecke (Karteikarten-Verwandter) — Form/
-                Layout unangetastet; Rand folgt jetzt der KPipelineNode-
-                Anatomie (1.5px Rollenborder 55%, running-Puls nur bei
-                laufendem Status, `vis-visual.css`). */}
-            <path
-              d={`M 0 0 H ${NODE_W - 12} L ${NODE_W} 12 V ${h} H 0 Z`}
+            {/* KV-B5: Karte, Kopf und Anschluesse in einem eigenen kleinen
+                `<svg>`, dessen `viewBox` die Weltkoordinaten des Knotens 1:1
+                abbildet — darum steht darin dieselbe `translate(x, y)`-Gruppe
+                wie vorher. Der Rand `KNOTEN_SVG_RAND` traegt die Anschluesse
+                links/rechts und den Auswahlrahmen; das `<svg>` selbst trifft
+                nichts (`pointer-events: none`), nur seine gemalten Teile. */}
+            <svg
+              className="vis-knoten-svg"
+              width={NODE_W + 2 * KNOTEN_SVG_RAND}
+              height={h + 2 * KNOTEN_SVG_RAND}
+              viewBox={`${n.x - KNOTEN_SVG_RAND} ${n.y - KNOTEN_SVG_RAND} ${NODE_W + 2 * KNOTEN_SVG_RAND} ${h + 2 * KNOTEN_SVG_RAND}`}
+              style={{ left: -KNOTEN_SVG_RAND, top: -KNOTEN_SVG_RAND }}
+              focusable="false"
+            >
+            <g transform={`translate(${n.x}, ${n.y})`} className="vis-knoten-zeichnung">
+            {/* KV1 (docs/AUFTRAG-EINBAU-KOSMOVIS-KNOTEN-N1-AN-INTEGRATOR.md):
+                runde Insel-Karte statt der frueheren geschnittenen Ecke —
+                Radius 16 px, dieselbe Rundung wie die Insel-Pop-ups
+                (`--k-radius`). Layout/Positionierung (NODE_W, h) bleibt
+                unangetastet, nur die Flaeche wechselt von <path> auf <rect>.
+                Rand folgt weiter der KPipelineNode-Anatomie (1.5px
+                Rollenborder 55%, running-Puls nur bei laufendem Status,
+                `vis-visual.css`). */}
+            <rect
+              x={0}
+              y={0}
+              width={NODE_W}
+              height={h}
+              rx={16}
+              ry={16}
               fill="var(--vis-node-flaeche)"
               className={`vis-node-karte${nodeLaeuft ? ' vis-node-karte--laeuft' : ''}`}
               style={{ ['--_rolle' as string]: kategorieFarbe }}
@@ -1848,7 +2217,10 @@ export function NodeCanvas({
                   if (nd) start[id] = { x: nd.x, y: nd.y };
                 }
                 setDrag({ start, startPX: p.x, startPY: p.y, curPX: p.x, curPY: p.y });
-                (e.currentTarget.ownerSVGElement as SVGSVGElement).setPointerCapture?.(e.pointerId);
+                // KV-B5: vorher `ownerSVGElement` — das WAR das Leinwand-SVG.
+                // Seit der Knoten sein eigenes kleines SVG hat, waere es dessen;
+                // die Zeigerbewegung soll aber weiter am Leinwand-SVG haengen.
+                svgRef.current?.setPointerCapture?.(e.pointerId);
               }}
             >
               <rect width={NODE_W} height={KOPF_H} fill="transparent" />
@@ -1986,20 +2358,25 @@ export function NodeCanvas({
               );
             })}
 
+            </g>
+            </svg>
+
             {/* Körper je Typ — V1-Welle Commit 2: eingeklappte Nodes zeigen NUR
                 Kopf + Ports, kein Körper. pointer-events AUS, solange ein
                 Drag/eine Marquee läuft (V1-Welle Commit 1) — der Zeiger kann
                 sonst während des Ziehens über ein HTML-Formularelement im
-                foreignObject (z.B. eine `prompt-text`-Textarea, auch eines
-                FREMDEN Nodes) laufen und native Text-Interaktion auslösen.
-                Ausserhalb eines Drags unverändert interaktiv. */}
+                Koerper (z.B. eine `prompt-text`-Textarea, auch eines FREMDEN
+                Nodes) laufen und native Text-Interaktion auslösen.
+                Ausserhalb eines Drags unverändert interaktiv.
+                KV-B5: gewoehnliches HTML im Knoten-Kasten statt `foreignObject`
+                — gleiche Lage (8 px Rand, unter den Anschluessen), gleiche
+                Breite, und wie das `foreignObject` vorher schneidet der Koerper
+                ab, was ueber seine Hoehe hinausliefe (`.vis-node-koerper`). */}
             {!n0.collapsed && (
-              <foreignObject
-                x={8}
-                y={koerperY}
-                width={NODE_W - 16}
-                height={h - koerperY - 8}
-                className={drag || marquee ? 'vis-node-koerper--gesperrt' : undefined}
+              <div
+                className={`vis-node-koerper${drag || marquee ? ' vis-node-koerper--gesperrt' : ''}`}
+                data-knoten-koerper={n.id}
+                style={{ left: 8, top: koerperY, width: NODE_W - 16, height: h - koerperY - 8 }}
               >
                 <NodeKoerper
                   graphId={graphId}
@@ -2008,6 +2385,7 @@ export function NodeCanvas({
                   material={auswertung?.werte.get(n.id)?.['material'] as string | undefined}
                   eingehenderPrompt={auftrag?.prompt ?? ''}
                   lauf={lauf}
+                  verlauf={n0.typ === 'render' ? reiheVon(n0.id) : []}
                   veraltet={!!veraltet}
                   onAusfuehren={() => ausfuehren(n.id)}
                   onFreigeben={() => freigeben(n.id)}
@@ -2018,12 +2396,13 @@ export function NodeCanvas({
                   offen={offenerKlapptext.has(n.id)}
                   onToggleOffen={() => toggleKlapptext(n.id)}
                 />
-              </foreignObject>
+              </div>
             )}
-          </g>
+          </div>
         );
       })}
-    </svg>
+      </div>
+    </div>
 
     {/* P16 · DIE BEIBLAETTER — was `node-expand` am Render-Knoten zeigt.
         Sie stehen hier, AUSSERHALB des `<svg>`, und das ist die tragende
@@ -2155,7 +2534,7 @@ export function NodeCanvas({
 /**
  * SK-V3 (W1): 3-Zeilen-Klapptext — «… mehr» expandiert den Node über den
  * Eltern-State (`offen`/`onToggleOffen`), NICHT lokal, weil die Kartenhöhe
- * (SVG-Pfad + foreignObject) im ELTERN-Node-Canvas berechnet wird.
+ * (Karte + Koerper) im ELTERN-Node-Canvas berechnet wird.
  */
 function KlappText({
   testid,
@@ -2413,7 +2792,10 @@ function RenderBedienung({
           Anordnung wie am Zahl-Node, darum dieselben drei Klassen von dort.
           A15: ohne Himmel steht der GRUND im Wertfeld, statt eine eigene
           Hinweiszeile zu kosten — ein gesperrter Regler ohne Wort daneben
-          wäre die Sorte stiller Zustand, an der dieses Repo schon hing. */}
+          wäre die Sorte stiller Zustand, an der dieses Repo schon hing.
+          KV-B5-Nachgang: `vis-node-schiene` zeichnet Bahn und Griff gegen
+          die KARTE (vis-visual.css) — die Farben von `.k-slider` sind fuer
+          den Themengrund gemacht und verschwanden auf der hellen Karte. */}
       <Zeile
         id="bedienung-drehung"
         {...(himmelGewaehlt
@@ -2422,15 +2804,15 @@ function RenderBedienung({
       >
         <label className="vis-node-zahl-wrap">
           <span className="vis-node-fortschritt">Umgebung drehen</span>
-          <input
-            type="range"
+          <KSlider
+            size="sm"
             min={0}
             max={360}
             step={5}
             value={drehung}
             disabled={!himmelGewaehlt}
             data-testid="render-umgebung-drehen"
-            className="vis-node-zahl-regler"
+            className="vis-node-zahl-regler vis-node-schiene"
             style={KLEMME_FELD}
             onChange={(e) => param('umgebungDrehungGrad', Number(e.target.value))}
           />
@@ -2791,7 +3173,7 @@ function RenderBeiblatt({
         background: 'var(--k-surface)',
         color: 'var(--k-ink-soft)',
         border: '1px solid var(--k-line)',
-        borderRadius: 'var(--k-radius-sm)',
+        borderRadius: 'var(--k-radius)',
         /* VEREINIGUNG 17.09.2026: stand hier als fester Wert
            `0 6px 18px rgba(0, 0, 0, 0.28)` — schwarz, in beiden Themes gleich,
            und damit genau das, wovor der Kommentar darueber warnt. Der
@@ -2819,6 +3201,7 @@ function NodeKoerper({
   material,
   eingehenderPrompt,
   lauf,
+  verlauf,
   veraltet,
   onAusfuehren,
   onFreigeben,
@@ -2835,7 +3218,9 @@ function NodeKoerper({
   material: string | undefined;
   /** V-H4: der eingehende Prompt am Render-Node (vor dem Formular-Zusatz). */
   eingehenderPrompt: string;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined } | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string } & LizenzAngabe | undefined;
+  /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
+  verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
   onAusfuehren: () => void;
   onFreigeben: () => void;
@@ -2844,7 +3229,7 @@ function NodeKoerper({
   bildQuelle: (
     nodeId: string,
     port: string,
-  ) => { jobId: string; bild: string; qa?: { verdict: { passed: boolean; reason?: string | undefined } } | undefined } | { dataUrl: string } | null;
+  ) => KuratierQuelle | null; // kv-lieferstatus-null (L1): dieselbe Form wie `bildQuelle` im Canvas, samt Lieferstatus
   /** v0.6.7 P0: Viewport-Aufnahmen (nur der 'aufnahme'-Node zeigt sich selbst
    * daraus — Quell-Nodes ohne Eingang brauchen die rohe Ablage, nicht `bildQuelle`). */
   aufnahmen: Record<string, Aufnahme>;
@@ -2929,8 +3314,8 @@ function NodeKoerper({
       const schritt = Number(params['schritt'] ?? 0.05);
       return (
         <div className="vis-node-zahl-wrap" onPointerDown={(e) => e.stopPropagation()}>
-          <input
-            type="range"
+          <KSlider
+            size="sm"
             key={String(params['wert'] ?? 0)}
             min={min}
             max={max}
@@ -2975,9 +3360,17 @@ function NodeKoerper({
         zeitueberschreitung: 'Zeitüberschreitung',
         veraltet: 'veraltet',
       };
-      const gruen = status === 'fertig';
-      const rot = status === 'fehler' || status === 'zeitueberschreitung';
-      const grau = status === 'bereit' || status === 'abgebrochen';
+      // B3 (Nachprobe auf-20261001-230): ein fertiger Lauf, dessen Ergebnis
+      // NICHT «geliefert» meldet, zeigt den Lieferstatus statt eines gruenen
+      // «fertig» (`lieferStatusKurz`, varianten-diff.ts). Der Grund steht am
+      // `title`; Bild und Kachel bleiben, wie sie sind.
+      const liefer = status === 'fertig' ? lieferStatusKurz(lauf?.lieferstatus) : undefined;
+      // P-LIZENZMARKE Schritt 2: traegt das fertige Bild eine offene Lizenz?
+      // Dann steht die Marke unter dem Bild (Zeile `bild`).
+      const lizenzOffenAmBild = status === 'fertig' && lauf?.lizenzOffen === true;
+      const gruen = status === 'fertig' && !liefer;
+      const rot = status === 'fehler' || status === 'zeitueberschreitung' || liefer?.ton === 'fehler';
+      const grau = status === 'bereit' || status === 'abgebrochen' || liefer?.ton === 'neutral';
       const statusKlasse = gruen
         ? 'vis-node-status--fertig'
         : rot
@@ -2985,7 +3378,10 @@ function NodeKoerper({
           : grau
             ? 'vis-node-status--neutral'
             : 'vis-node-status--aktiv';
+
       const laeuftNoch = ['gesendet', 'wartetFreigabe', 'wartetGpu', 'rendert'].includes(status);
+      // Fortschritt am Ort: `null`, wenn nichts unterwegs ist (bereit, fertig, Freigabe, Fehler).
+      const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige(lauf, Date.now()) : null;
       // V-H4 (UI-KONZEPT-065 §5): semantisches Formular — schreibt in flache
       // Render-Node-`params` über den bestehenden `vis.nodeParametrieren`-Weg;
       // derselbe Zusammenführungs-Helfer (vis-jobs.ts) speist Anzeige UND Job.
@@ -2998,6 +3394,15 @@ function NodeKoerper({
       // angezeigte Prompt kommt aus `formularZusatz(params)`, also aus
       // denselben `params`, die auch der Auftrag liest.
       const finalPrompt = kombiniertePrompt(eingehenderPrompt, formularZusatz(params));
+      // B2 (Nachprobe auf-20261001-230): ohne Prompt, aber mit KI-Schritt,
+      // sagt die Prompt-Zeile in der Warnfarbe, dass die KI-Veredelung ablehnen
+      // wird, und der Knopf traegt denselben Satz am `title` — VOR dem Senden.
+      // Kein Anfangs-Prompt, keine Sperre (Begruendung an
+      // `LEERER_PROMPT_HINWEIS`, vis-jobs.ts).
+      const promptLeer = promptFehltFuerKi(finalPrompt, {
+        nurCycles: params['nurCycles'] === true,
+        lineart: params['lineart'] === true,
+      });
       // P-LEERSZENE: dieselbe Zahl wie die «Szene: N Bauteile»-Anzeige am
       // Modell-Node (Kommentar an `szeneBauteileAnzahl`, vis-jobs.ts) — der
       // Knopf sperrt, statt bedienbar auszusehen und folgenlos zu bleiben.
@@ -3048,7 +3453,9 @@ function NodeKoerper({
                     ? 'Kein HomeStation-Server verbunden — im Cloud-Betrieb rendert die Kette nicht lokal. Ein Cloud-Renderweg (Gemini Omni Flash, Public Preview) ist im Tech-Radar (KosmoDoc) vorgemerkt — braucht deinen Entscheid + API-Schlüssel.'
                     : keineGeometrie
                       ? KEINE_GEOMETRIE_HINWEIS
-                      : undefined
+                      : promptLeer
+                        ? LEERER_PROMPT_HINWEIS
+                        : undefined
                 }
               >
                 Ausführen
@@ -3063,8 +3470,12 @@ function NodeKoerper({
                   Abbrechen
                 </KButton>
               )}
-              <span data-testid="render-status" className={`vis-node-status k-label k-label-eng ${statusKlasse}`}>
-                {STATUS_LABEL[status] ?? status}
+              <span
+                data-testid="render-status"
+                className={`vis-node-status k-label k-label-eng ${statusKlasse}`}
+                {...(liefer && lauf?.lieferstatusGrund ? { title: lauf.lieferstatusGrund } : {})}
+              >
+                {liefer ? liefer.label : (STATUS_LABEL[status] ?? status)}
               </span>
             </div>
           </Zeile>
@@ -3112,27 +3523,39 @@ function NodeKoerper({
                 einem React-Baum unter document.body, also ist :root immer
                 Vorfahre -> var(...) loest auf. */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--k-s1) var(--k-s4)', minWidth: 0 }}>
+              {/* Die Klammer zwischen `KTooltip` und `KCheckbox` ist noetig,
+                  nicht schmueckend: `KTooltip` klont GENAU EIN Kind und haengt
+                  ihm die Zeiger-/Fokus-Handler an, und `KCheckbox` reicht
+                  fremde Eigenschaften an das `<input>` weiter — das ist seit
+                  `aura.css` `.k-checkbox input` durchsichtig und liegt unter
+                  dem gezeichneten Kasten. Ohne die Klammer bekaeme also nur
+                  das unsichtbare Feld die Handler, und die Blase erschiene
+                  beim Zeigen auf den Kasten NIE. Der Kommentar oben sagt zu,
+                  dass die Erklaerung beider Schalter hier steht; diese
+                  Klammer haelt die Zusage. */}
               <KTooltip text="nur Cycles — keine KI-Veredelung">
-                <label className="vis-node-checkbox-label">
-                  <input
-                    type="checkbox"
+                <span>
+                  <KCheckbox
+                    size="sm"
+                    className="vis-node-checkbox-label"
                     data-testid="render-nur-cycles"
                     checked={params['nurCycles'] === true}
                     onChange={(e) => param('nurCycles', e.target.checked)}
+                    label="nur Cycles"
                   />
-                  nur Cycles
-                </label>
+                </span>
               </KTooltip>
               <KTooltip text="als Strichzeichnung (Line-Art)">
-                <label className="vis-node-checkbox-label">
-                  <input
-                    type="checkbox"
+                <span>
+                  <KCheckbox
+                    size="sm"
+                    className="vis-node-checkbox-label"
                     data-testid="render-lineart"
                     checked={params['lineart'] === true}
                     onChange={(e) => param('lineart', e.target.checked)}
+                    label="Strichzeichnung"
                   />
-                  Strichzeichnung
-                </label>
+                </span>
               </KTooltip>
             </div>
           </Zeile>
@@ -3147,11 +3570,14 @@ function NodeKoerper({
           <Zeile id="prompt">
             <div
               data-testid="render-final-prompt"
-              className="vis-node-final-prompt"
+              className={`vis-node-final-prompt${promptLeer ? ' vis-node-final-prompt--warnung' : ''}`}
               style={KLEMME_TEXT_ZWEIZEILIG}
-              title={finalPrompt || undefined}
+              title={finalPrompt || (promptLeer ? LEERER_PROMPT_HINWEIS : undefined)}
             >
-              {finalPrompt || 'kein Prompt — verbinde Stimmung/Stil oder fülle das Formular'}
+              {finalPrompt ||
+                (promptLeer
+                  ? 'kein Prompt — die KI-Veredelung lehnt so ab: Stimmung/Stil verbinden oder Formular füllen'
+                  : 'kein Prompt — verbinde Stimmung/Stil oder fülle das Formular')}
             </div>
           </Zeile>
 
@@ -3164,14 +3590,56 @@ function NodeKoerper({
                  und schnitte still ab, genau die Klasse Fehler, gegen die das
                  Register steht. `BridgeBild` reicht `style` an das `<img>`
                  durch (`BridgeBild.tsx`:74). */
-              <BridgeBild
-                jobId={lauf.jobId}
-                imageName={lauf.bild}
-                alt="Render"
-                testid="render-bild"
-                className="vis-img-full"
-                style={{ maxHeight: 110, width: 'auto', maxWidth: '100%', display: 'block', marginInline: 'auto' }}
-              />
+              <>
+                {/* Entscheid 68 / E174 (Nachtrag 4): die Abzeichen der Vorlage
+                    («LAUF n · hh:mm», Urteil) liegen IM Bild — der Rahmen ist
+                    so gross wie das Bild selbst, der Knoten waechst nicht, und
+                    die Abzeichen nehmen keinen Zeiger. Gezeigt, sobald die
+                    Reihe steht und das Hauptbild ihr neuester Lauf ist. */}
+                <div className="vis-hauptbild" data-testid="render-hauptbild">
+                  <BridgeBild
+                    jobId={lauf.jobId}
+                    imageName={lauf.bild}
+                    alt="Render"
+                    testid="render-bild"
+                    className="vis-img-full"
+                    style={{ maxHeight: lizenzOffenAmBild ? 110 - LIZENZ_ZEILE_H : 110, width: 'auto', maxWidth: '100%', display: 'block', marginInline: 'auto' }}
+                  />
+                  {verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
+                    <HauptbildAbzeichen lauf={verlauf[0]} nummer={laufNummerVon(verlauf[0], 0, verlauf.length)} />
+                  )}
+                </div>
+                {/* P-LIZENZMARKE Schritt 2 (E154 (4)): «Lizenz offen» direkt
+                    unter dem Bild, wo es erscheint. Die Zeile bleibt 110 px
+                    hoch (Register `bild`): das Bild gibt die Hoehe der Marke
+                    ab, statt dass der Knoten waechst. Sperrt nichts. */}
+                <LizenzOffenMarke lizenz={lauf} testid="render-lizenz-offen" />
+              </>
+) : warteAnzeige ? (
+              /* Fortschritt am Ort (Owner 06.10.2026, «progressbar im node ui»): solange der Lauf unterwegs ist,
+                 steht im Bildplatz der Platzhalter in Bildgrösse (110 px, dieselbe Registerhöhe wie das Bild).
+                 Gefüllt nur aus `progress.pct` (Regel G6), sonst atmet er — Wortlaut und Art aus
+                 `renderWarteAnzeige` (render-warteort.ts), derselben Quelle wie die KosmoDesign-Insel.
+                 `render-wartet-text` mit `data-grund-bekannt` bleibt als Kennung (auf-20260901-70). */
+              <div
+                className="vis-node-warteort"
+                data-testid="render-warteort"
+                data-art={warteAnzeige.art}
+                data-status={status}
+              >
+                <div
+                  className="vis-node-warteort-innen"
+                  data-testid={status === 'wartetGpu' ? 'render-wartet-text' : 'render-fortschritt'}
+                  {...(status === 'wartetGpu' ? { 'data-grund-bekannt': String(!!lauf?.wartetGrund) } : {})}
+                >
+                  <KWarteOrt
+                    form="flaeche"
+                    className="vis-node-warteort-flaeche"
+                    text={warteAnzeige.text}
+                    {...(warteAnzeige.fortschritt !== undefined ? { fortschritt: warteAnzeige.fortschritt } : {})}
+                  />
+                </div>
+              </div>
             ) : (
               /* A15 — OHNE Lauf ein Streifen statt eines 110 px hohen leeren
                  Rahmens. Gemessen: der leere Rahmen war der grösste einzelne
@@ -3180,7 +3648,7 @@ function NodeKoerper({
                  dann gibt es etwas zu zeigen. Die Höhe beider Zustände steht
                  im Register (`bild`: 24 / 110). */
               <div
-                className={`vis-node-leerbild${rot ? ' vis-node-leerbild--fehler' : ''}${status === 'wartetGpu' && lauf?.wartetGrund ? ' vis-node-leerbild--grund-bekannt' : ''}`}
+                className={`vis-node-leerbild${rot ? ' vis-node-leerbild--fehler' : ''}`}
                 /* Abstands-Gate (Befund 17.09.2026): 'padding: 4px 6px' lag
                    ausserhalb der Skala --k-s1..--k-s10. 4px = --k-s2,
                    unveraendert. 6px liegt genau in der Mitte zwischen
@@ -3190,9 +3658,11 @@ function NodeKoerper({
                    packages/kosmo-ui/src/aura.css, dieses style-Objekt liegt
                    in einem React-Baum unter document.body, also ist :root
                    immer Vorfahre -> var(...) loest auf. */
-                {...(lauf ? {} : { style: { height: 'auto', padding: 'var(--k-s2) var(--k-s2)', textAlign: 'left' as const } })}
-                data-testid={status === 'wartetGpu' ? 'render-wartet-text' : undefined}
-                data-grund-bekannt={status === 'wartetGpu' ? String(!!lauf?.wartetGrund) : undefined}
+                /* KV-B5-Nachgang: der Streifen auch nach einem Abbruch — im
+                   vollen Rahmen stand da nur «abgebrochen», und die Karte
+                   wuchs dafuer unter den Knopf unten im Fenster. Dieselbe
+                   Entscheidung wie die Kartenhoehe (`renderZeileWaechst`). */
+                {...(renderZeileWaechst('bild', lauf?.status) ? {} : { style: { height: 'auto', padding: 'var(--k-s2) var(--k-s2)', textAlign: 'left' as const } })}
               >
                 <span style={KLEMME_TEXT}>
                   {rot
@@ -3201,9 +3671,7 @@ function NodeKoerper({
                       ? 'fertig — aber kein Bild geliefert'
                       : status === 'wartetFreigabe'
                         ? 'wartet auf Freigabe — «Freigeben» startet den Render'
-                        : status === 'wartetGpu'
-                          ? wartetAbholerText(lauf?.gestartetUm, Date.now(), lauf?.wartetGrund)
-                          : status === 'abgebrochen'
+                        : status === 'abgebrochen'
                             ? 'abgebrochen'
                             : lauf
                               ? 'rendert im GPU-Leerlauf …'
@@ -3215,14 +3683,25 @@ function NodeKoerper({
                       Zeile — eine Zeile, die nur manchmal da ist, macht die
                       Knotenhöhe von einem Zustand abhängig, den die
                       Platzsuche nicht kennt. */}
-                  {(lauf?.worker || lauf?.progress) && (status === 'rendert' || status === 'wartetGpu') && (
-                    <span data-testid="render-fortschritt" className="vis-node-fortschritt">
-                      {` · ${lauf.worker ?? 'worker'}`}
-                      {lauf.progress ? ` · ${lauf.progress.phase} ${Math.round(lauf.progress.pct * 100)}%` : ''}
+                  {/* P11/B6 — ein transienter Bridge-/Netzfehler tötet den
+                      Lauf bewusst nicht (s. Poll-`catch`-Kommentar), der
+                      Grund muss trotzdem sichtbar sein statt lautlos zu
+                      bleiben. Nur waehrend der Lauf noch offen ist — nach
+                      einem erfolgreichen Poll leert `bridgeHinweis` sich
+                      selbst (`marker` im Poll-Effekt). */}
+                  {lauf?.bridgeHinweis && laeuftNoch && (
+                    <span data-testid="render-bridge-hinweis" className="vis-node-fortschritt">
+                      {` · ${lauf.bridgeHinweis}`}
                     </span>
                   )}
                 </span>
               </div>
+            )}
+            {/* Entscheid 68 / E174: die Reihe der letzten Laeufe unter dem
+                Hauptbild, ab zwei Laeufen. Sie wechselt das Hauptbild nicht;
+                der Knoten waechst dafuer um `VERLAUF_ZEILE_H`. */}
+            {verlaufSichtbar(verlauf) && (
+              <RenderVerlauf reihe={verlauf} hauptJobId={status === 'fertig' ? lauf?.jobId : undefined} />
             )}
           </Zeile>
         </div>
@@ -3255,7 +3734,16 @@ function NodeKoerper({
                 <img src={b.dataUrl} alt={`Bild ${i + 1}`} className="vis-img-full" />
               </div>
             ) : (
-              <BildKachel key={i} jobId={b.jobId} bild={b.bild} qa={b.qa} alt={`Bild ${i + 1}`} />
+              <BildKachel
+                key={i}
+                jobId={b.jobId}
+                bild={b.bild}
+                qa={b.qa}
+                lieferstatus={b.lieferstatus}
+                lieferstatusGrund={b.lieferstatusGrund}
+                lizenz={lizenzAusQuelle(b)}
+                alt={`Bild ${i + 1}`}
+              />
             ),
           )}
         </div>
@@ -3264,7 +3752,7 @@ function NodeKoerper({
     case 'blatt': {
       const quelle = bildQuelle(node.id, 'bild');
       return (
-        <div onPointerDown={(e) => e.stopPropagation()}>
+        <div className="vis-node-blatt-zeile" onPointerDown={(e) => e.stopPropagation()}>
           <KButton
             size="sm"
             tone="quiet"
@@ -3275,18 +3763,33 @@ function NodeKoerper({
               const titel = String(params['titel'] ?? 'Visualisierung');
               // v0.6.7 P0: eine Viewport-Aufnahme braucht keinen Bridge-Fetch
               // (die dataURL liegt schon lokal vor) — sonst derselbe Weg.
-              const ablage = 'dataUrl' in quelle ? aufnahmeAufsBlatt(quelle.dataUrl, titel) : bildAufsBlatt(quelle.jobId, quelle.bild, titel);
+              const ablage =
+                'dataUrl' in quelle
+                  ? aufnahmeAufsBlatt(quelle.dataUrl, titel)
+                  : bildAufsBlatt(quelle.jobId, quelle.bild, titel, lizenzAusQuelle(quelle));
               // P5b (v0.9.56): der `bildAufsBlatt`-Zweig ist ein Bridge-Fetch
               // (Aufnahme-Zweig nicht) — derselbe Uebersetzer fuer beide, weil
               // `bescheidFuerBridgeFehler` einen Nicht-Netzfehler unveraendert
               // als Rohtext zurueckgibt (bridge-bescheid.ts, Fall `roh`).
+              // P-LIZENZMARKE Schritt 2 (E154 (4)): traegt das Bild eine offene
+              // Lizenz, sagt die Meldung es mit. Abgelegt wird trotzdem.
+              const zusatz = lizenzAblageZusatz(lizenzAusQuelle(quelle));
               void ablage
-                .then((name) => melde(`Render liegt auf «${name}» — im KosmoPublish weiterschieben`, { ton: 'erfolg' }))
+                .then((name) =>
+                  melde(`Render liegt auf «${name}» — im KosmoPublish weiterschieben${zusatz}`, {
+                    ton: 'erfolg',
+                    ...(zusatz ? { dauerMs: LIZENZ_MELDUNG_MS } : {}),
+                  }),
+                )
                 .catch(bescheideBridgeCatch);
             }}
           >
             Aufs Blatt
           </KButton>
+          {/* P-LIZENZMARKE Schritt 2: der Koerper ist 38 px hoch (Register
+              `KOERPER_H.blatt`) — die Marke steht darum NEBEN dem Knopf, nicht
+              darunter; der Grund steht in der Kurzhilfe und in der Meldung. */}
+          <LizenzOffenMarke lizenz={lizenzAusQuelle(quelle)} testid="blatt-lizenz-offen" />
         </div>
       );
     }
@@ -3363,7 +3866,7 @@ function NodeKoerper({
                 // ausgelieferten Zustand) gar nicht rendert; der Satz schickte den
                 // Nutzer damit auf eine Suche, die nicht enden konnte. Nachgezogen
                 // wurde der TEXT, nicht der Knopf.
-                'Öffne kurz KosmoDesign und klicke «Für Vis aufnehmen» — im 3D-Viewport unten rechts oder in der AUSTAUSCH-Insel unter «Rendern». Vis bleibt offen, das Bild landet automatisch hier.',
+                'Öffne kurz KosmoDesign und klicke «Für Vis aufnehmen» — in der Austausch-Insel unter «Rendern». Vis bleibt offen, das Bild landet automatisch hier.',
                 { ton: 'info' },
               )
             }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { JobQa } from './vis-jobs';
+import type { JobLieferstatus, JobQa } from './vis-jobs';
 import type { RenderJob } from '@kosmo/contracts';
 
 /**
@@ -77,6 +77,29 @@ export interface NodeLauf {
    * Paket ueberhaupt angetreten ist.
    */
   qaJeKamera?: JobQaJeKamera[];
+  /**
+   * kv-lieferstatus-null (KosmoVis L1): `lieferstatus` und
+   * `lieferstatus_grund` des Ergebnisses, unveraendert weitergereicht. `null`
+   * heisst «nicht festgestellt» und wird als Vorbehalt gezeigt
+   * (`lieferVorbehalt`, `varianten-diff.ts`), nie als «geliefert». Fehlt das
+   * Feld, war der Lauf noch nicht fertig: dann gibt es nichts zu zeigen.
+   */
+  lieferstatus?: JobLieferstatus;
+  lieferstatusGrund?: string;
+  /**
+   * P-LIZENZMARKE Schritt 2 (Owner-Entscheid E154 (4), «Anzeigen, nicht
+   * sperren»): `engine_license_open`, `engine_used` und `engine_license` des
+   * Ergebnisses. Bis hierhin kam die Marke im Vertrag an (ROADMAP 1681) und
+   * ging am Poll verloren, weil der Lauf nur Bild, QA und Lieferstatus
+   * uebernahm. `true` heisst «Lizenz des gerechneten Modells offen» und wird
+   * an Bild und Ablage als Hinweis gezeigt (`lizenzOffenGrund`,
+   * `varianten-diff.ts`); `undefined` heisst «nichts gemeldet», kein Hinweis.
+   * Explizit `| undefined` wie `wartetGrund`: `patchLauf` mischt, und ein
+   * Ergebnis ohne Marke muss eine alte Marke aktiv leeren koennen.
+   */
+  lizenzOffen?: boolean | undefined;
+  engineUsed?: string | undefined;
+  engineLicense?: string | undefined;
   fehler?: string;
   /** Freigabe-Token aus dem Create-Response — nötig für `/approve`. */
   approvalToken?: string;
@@ -86,6 +109,22 @@ export interface NodeLauf {
   progress?: { phase: string; pct: number };
   /** Zeitpunkt des Absendens (ms, Date.now) — Basis des Timeout-Wächters. */
   gestartetUm?: number;
+  /**
+   * Entscheid 68 / E174 (Verlauf am Render-Knoten): der Zeitpunkt (ms,
+   * Date.now), an dem der Poll das fertige Ergebnis uebernommen hat. Der
+   * Verlauf nennt ihn an jedem Daumenbild; fehlt er (Lauf von vor diesem
+   * Feld, oder nie fertig), steht dort `gestartetUm`.
+   */
+  fertigUm?: number;
+  /**
+   * Verlauf-Nachgang (HomeStation-Pruefung 08.10.2026): die fortlaufende
+   * Nummer dieses Laufs an seinem Knoten — gezaehlt werden die fertigen
+   * Laeufe mit Bild, seit der Knoten in dieser Sitzung lebt (`laufZaehler`).
+   * Sie bleibt am Lauf, auch wenn er aus der Reihe faellt; vorher zaehlte
+   * die Anzeige nur innerhalb der Reihe, und nach dem fuenften Lauf stand
+   * «LAUF 4» auf dem Hauptbild.
+   */
+  laufNummer?: number;
   /**
    * Auftrag auf-20260901-70 (Posten 1) — der Grund, den der Bridge-Job im
    * Vertragsfeld `RenderJob.message` mitliefert, WÄHREND er `queued` bleibt
@@ -100,6 +139,20 @@ export interface NodeLauf {
    * zeigte sonst weiter den Wartegrund von vorhin.
    */
   wartetGrund?: string | undefined;
+  /**
+   * P11/B6 — ein STÖRUNGS-Hinweis, der den Lauf NICHT beendet. Der Poll in
+   * `NodeCanvas.tsx` liess einen HTTP-Fehler der Bridge (z. B. 404/502,
+   * `BridgeHttpError`) und einen echten Netzfehler (`TypeError`) bisher
+   * bewusst still durchfallen — «ein einmaliger Aussetzer soll den Lauf
+   * nicht töten» bleibt richtig (der nächste Poll fasst nach), aber der
+   * GRUND war dabei nirgends zu sehen. Dieses Feld trägt ihn, OHNE den
+   * `status` anzufassen — derselbe Unterschied wie bei `wartetGrund`: ein
+   * Hinweis ist keine Zusicherung, dass der Lauf gescheitert ist.
+   *
+   * Explizit `| undefined` (wie `wartetGrund`) wegen `exactOptionalPropertyTypes`
+   * — ein erfolgreicher Folge-Poll muss das Feld aktiv LEEREN können.
+   */
+  bridgeHinweis?: string | undefined;
   /** Parameter-Hash beim Absenden — weicht der Graph ab, ist das Bild «veraltet». */
   memoKey: string;
 }
@@ -475,6 +528,22 @@ export type VisCanvasBefehlTyp =
 
 interface VisRuntime {
   laeufe: Record<string, NodeLauf>;
+  /**
+   * Entscheid 68 / E174 — der VERLAUF am Render-Knoten: die fertigen Laeufe,
+   * die ein neues «Ausfuehren» an diesem Knoten abgeloest hat, neuester
+   * zuerst, hoechstens `VERLAUF_BEHALTEN`. Bis hierhin ersetzte `setzeLauf`
+   * den Lauf einfach, und das vorige Ergebnis war fuer die Oberflaeche weg.
+   *
+   * Laufzeit wie `laeufe` (kein Doc, kein Yjs, kein Speicher): ein Eintrag
+   * traegt nur Kennung, Bildname und Befund, das Bild selbst liegt weiter
+   * im Auftragsspeicher der HomeStation und wird von dort geholt. Fallen
+   * Eintraege hinten heraus, vergisst die Oberflaeche nur den Verweis;
+   * geloescht wird nirgends etwas.
+   */
+  verlauf: Record<string, readonly NodeLauf[]>;
+  /** Verlauf-Nachgang: wie viele fertige Laeufe mit Bild ein Knoten bisher
+   *  hatte — die Quelle von `NodeLauf.laufNummer`. Laufzeit wie `laeufe`. */
+  laufZaehler: Record<string, number>;
   kuration: Record<string, KurationEintrag>;
   /** Gerechnete Bilder je Node-Id — s. `GerechnetesBild`. */
   gerechneteBilder: Record<string, GerechnetesBild>;
@@ -588,8 +657,44 @@ interface VisRuntime {
   setRenderStimmungPreset: (p: 'morgen' | 'abend' | 'weiss' | null) => void;
 }
 
+/**
+ * Entscheid 68 / E174 — wie viele abgeloeste Laeufe je Knoten im `verlauf`
+ * stehen. Der Knoten zeigt hoechstens vier Daumenbilder; vier fruehere plus
+ * der aktuelle Lauf reichen, damit die Reihe auch WAEHREND eines neuen Laufs
+ * (der noch kein Bild hat) voll bleibt.
+ */
+export const VERLAUF_BEHALTEN = 4;
+
+/** Ein Lauf, dessen Bild man zeigen kann — dieselbe Bedingung wie
+ *  `quelleAusLauf` (`varianten-diff.ts`). */
+export function laufMitBild(lauf: Pick<NodeLauf, 'status' | 'jobId' | 'bild'> | undefined): boolean {
+  return !!lauf && lauf.status === 'fertig' && !!lauf.jobId && !!lauf.bild;
+}
+
+/**
+ * Verlauf-Nachgang: vergibt die fortlaufende Nummer, sobald ein Lauf ein
+ * fertiges Bild hat. Derselbe Auftrag behaelt seine Nummer; ein Lauf, der
+ * schon eine traegt, behaelt sie. Gibt den (evtl. nummerierten) Lauf und den
+ * neuen Zaehlerstand zurueck.
+ */
+function nummeriere(
+  zaehler: Record<string, number>,
+  nodeId: string,
+  lauf: NodeLauf,
+  alt: NodeLauf | undefined,
+): { lauf: NodeLauf; zaehler: Record<string, number> } {
+  if (lauf.laufNummer !== undefined || !laufMitBild(lauf)) return { lauf, zaehler };
+  if (alt && alt.jobId === lauf.jobId && alt.laufNummer !== undefined) {
+    return { lauf: { ...lauf, laufNummer: alt.laufNummer }, zaehler };
+  }
+  const nummer = (zaehler[nodeId] ?? 0) + 1;
+  return { lauf: { ...lauf, laufNummer: nummer }, zaehler: { ...zaehler, [nodeId]: nummer } };
+}
+
 export const useVisRuntime = create<VisRuntime>((set) => ({
   laeufe: {},
+  verlauf: {},
+  laufZaehler: {},
   kuration: {},
   gerechneteBilder: {},
   gehobeneBilder: {},
@@ -597,12 +702,30 @@ export const useVisRuntime = create<VisRuntime>((set) => ({
   gespeicherteAnsichten: {},
   reviewPins: {},
   paletteOffen: false,
-  setzeLauf: (nodeId, lauf) => set((s) => ({ laeufe: { ...s.laeufe, [nodeId]: lauf } })),
+  // Entscheid 68 / E174: ein fertiger Lauf, den ein neuer abloest, wandert in
+  // den `verlauf` statt zu verschwinden. Derselbe Auftrag (gleiche Kennung)
+  // zaehlt nicht als Abloesung.
+  setzeLauf: (nodeId, neu) =>
+    set((s) => {
+      const alt = s.laeufe[nodeId];
+      const { lauf, zaehler } = nummeriere(s.laufZaehler, nodeId, neu, alt);
+      const laeufe = { ...s.laeufe, [nodeId]: lauf };
+      if (!alt || !laufMitBild(alt) || alt.jobId === lauf.jobId) return { laeufe, laufZaehler: zaehler };
+      const frueher = (s.verlauf[nodeId] ?? []).filter((l) => l.jobId !== alt.jobId);
+      return {
+        laeufe,
+        laufZaehler: zaehler,
+        verlauf: { ...s.verlauf, [nodeId]: [alt, ...frueher].slice(0, VERLAUF_BEHALTEN) },
+      };
+    }),
   patchLauf: (nodeId, patch) =>
     set((s) => {
       const alt = s.laeufe[nodeId];
       if (!alt) return s;
-      return { laeufe: { ...s.laeufe, [nodeId]: { ...alt, ...patch } } };
+      // Verlauf-Nachgang: wird der Lauf hier fertig (der Poll), bekommt er
+      // seine Nummer.
+      const { lauf, zaehler } = nummeriere(s.laufZaehler, nodeId, { ...alt, ...patch }, undefined);
+      return { laeufe: { ...s.laeufe, [nodeId]: lauf }, laufZaehler: zaehler };
     }),
   markiereBild: (nodeId) =>
     set((s) => {
