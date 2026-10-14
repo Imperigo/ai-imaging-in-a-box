@@ -77,7 +77,15 @@ jobs:
       - name: Die Proben
         # Ohne `-x`: Wir wollen ALLE Fehlschlaege sehen und nicht nur den ersten. Wer
         # beim ersten abbricht, faehrt danach so oft, wie es Fehler gibt.
-        run: python -m pytest -q
+        # DIE ROTEN PROBEN ALS HINWEIS (14.10.2026): Die Cloud-Sitzung liest nur die Hinweise
+        # eines Laufs, nicht sein Protokoll — ohne diese Zeilen hiess Rot dort «exit code 1».
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pytest -q -rf 2>&1 | tee proben.log || {
+            grep -E "^(FAILED|ERROR) " proben.log | head -30 | while IFS= read -r z; do echo "::error::${z:0:400}"; done
+            exit 1
+          }
 
       - name: Der Einbau-Stand, zum Mitlesen
         # KEIN TOR, sondern eine Auskunft — darum `continue-on-error`. Sie steht hier,
