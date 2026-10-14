@@ -6997,6 +6997,71 @@ und nennt den Grund. Der Unterschied zum Löschen: Man sieht später noch, dass 
 wurde und warum es draussen ist. Im Projekt seit dem 29.09.2026 für das Qwen-Modell mit
 eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
+**Kosmo-Tafel (Tafel)** — Eine private Bildwand des Owners auf claude.ai, auf der Bilder aus
+Software, Proben und Worker-Arbeit nebeneinander hängen, ähnlich einer Pinnwand. Jeder Worker legt
+seine Bilder dafür auf den Zweig `zentrale` im KosmoOrbit-Repo (`tafel/<worker>/`), mit Titel und
+kurzer Notiz; aufgehängt werden sie von dort. Keine Personen, keine Adressen, keine Heimpfade.
+*Im Projekt:* seit dem 14.10.2026; die Knotenkarten erzeugt `tools/knoten_tafel.py`.
+
+**Knotenkatalog** — Die Liste aller Knotenarten, die das Vis-Werkzeug kennt, mit Namen, Kurzhilfe,
+Gruppe und den Ein- und Ausgängen jeder Art. Heute zwölf: Modell, Material-Bausteine, Auto-Kamera,
+Bild-Referenz, Viewport-Aufnahme, Prompt, Stimmung, Prompt-Kombinierer, Zahl, Render, Bildvergleich,
+Aufs Blatt. *Im Projekt:* `VIS_NODE_KATALOG` in `kosmovis/packages/kosmo-kernel/src/derive/visgraph.ts`;
+erklärt in `docs/KNOTEN_ERKLAERT.md`.
+
+**Gruppe eines Knotens (Quelle, Wandler, Render, Ausgabe)** — Die Ordnung der Knotenarten nach
+ihrer Rolle: *Quellen* bringen etwas in den Graphen (das Modell, ein Bild), *Wandler* formen Text und
+Zahlen, *Render* bestellt das Bild, *Ausgaben* zeigen es oder legen es ab. Sichtbar als schmaler
+Farbstreifen unter dem Kopf jedes Knotens; am Rechnen ändert sie nichts.
+
+**Anschlusssorte (Porttyp)** — Die Art dessen, was durch eine Linie zwischen zwei Knoten fliesst.
+Das Vis-Werkzeug kennt sechs, jede mit eigener Farbe: Szene (das 3D-Modell), Prompt (Text), Material
+(Materialsätze), Zahl, Kameras (Standpunkte) und Bild. Verbinden lassen sich nur Anschlüsse
+derselben Sorte. *Nicht zu verwechseln mit* **Anschluss (Port)** *im Netzwerk, der Nummer hinter
+einer Adresse.*
+
+**Preset (Voreinstellung)** — Ein fertiges Paket von Einstellungen, das man als Ganzes wählt statt
+jeden Wert einzeln. Am Render-Knoten: Entwurf schnell, Präsentation, Nacht, Innenraum — je mit
+Auflösung, Sonne und Zahl der Samples. Ohne Preset gilt die Vorgabe (1600 × 1000, 128 Samples).
+
+**Geometrie-Treue** — Ein Wert von 0 bis 1, der sagt, wie eng die KI beim Veredeln der Form des
+Modells folgen soll. Vorgabe 0,8. Am Heim-PC wird er zur Stärke der Formführung; gemessen ist, dass
+mehr nicht immer besser ist (0,8 schnitt besser ab als 1,0).
+*Im Projekt:* Eingang «Geometrie-Treue» am Render-Knoten, Feld `render.faithful` im Auftrag.
+
+**Bildwerkzeug** — Am Render-Knoten der Name für das KI-Bildmodell, das ein Blender-Bild veredelt
+(Vorgabe Z-Image Turbo). Im Code heisst dasselbe *Backbone*. Bei «nur Cycles» und «Strichzeichnung»
+ist keines im Spiel.
+
+**Strichzeichnung (Line-Art)** — Ein Bild nur aus Linien, wie eine Handskizze, ohne Flächen und
+Licht. Am Render-Knoten ein Schalter; er rechnet ohne KI-Veredelung.
+
+**Rückgängig (Undo)** — Einen Arbeitsschritt zurücknehmen. Im Vis-Werkzeug ist jede Änderung am
+Graphen ein Befehl und darum rückgängig machbar — auch eine ganze Vorlage wie «Drei Stimmungen
+einfügen» als *ein* Schritt. Bilder und der Zustand eines Renders gehören nicht dazu; sie liegen nur
+im laufenden Programm.
+
+**Viewport-Aufnahme** — Ein Schnappschuss dessen, was die 3D-Ansicht gerade zeigt (*Viewport* heisst
+das Fenster, in dem das Modell dreidimensional zu sehen ist). Kein Rendering, kein Heim-PC. In
+KosmoOrbit über «Für Vis aufnehmen» im Entwurf; Visbox hat keine 3D-Entwurfsansicht und darum keine
+Aufnahmen.
+
+**Kuratierfläche** — Die Vollbildansicht des Vis-Werkzeugs, in der alle fertigen Bilder als Karten
+nebeneinander liegen: vergleichen, bewerten, auswählen, nacharbeiten — etwa einen *Farbangleich*, bei
+dem ein Bild die Farbstimmung eines Vorbilds bekommt.
+
+**Prüfurteil (QA)** — Das Ergebnis der Prüfung, ob ein erzeugtes Bild zur Form des Modells passt
+(*QA* für *Qualitätssicherung*). Am Bild steht es als «QA ok», «QA ✗» oder «nicht beurteilbar»,
+daneben der Grund. Rechnet der Heim-PC mehrere Kameras, zählt das schwächste Bild.
+
+**Veraltet (ein Bild am Render-Knoten)** — Ein fertiges Bild, dessen Auftrag sich seither geändert
+hat: anderer Prompt, andere Einstellung. Das Bild bleibt stehen, der Knoten sagt aber «veraltet» —
+es zeigt nicht mehr, was ein neuer Lauf liefern würde.
+
+**KosmoPublish (Plakatblatt)** — Der Teil von KosmoOrbit, in dem Pläne und Bilder auf Blätter für
+Präsentation und Druck gesetzt werden. Der Knoten «Aufs Blatt» legt ein Render dorthin. In Visbox
+gibt es keine Blätter; der Knoten sagt das.
+
 ---
 
 ## Änderungsverzeichnis
@@ -7004,6 +7069,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 | Datum | Änderung |
 |---|---|
 | 2026-10-14 | Ergaenzt aus Fassung 3 der RealityScan-Brücke (Textur statt Eckfarben): **Textur**, **Abwicklung (UV-Abwicklung)**, **Texel**, **OBJ und MTL (Dateiformate)**; **Emissions-Shader** um die Stärke 1 der Umgebung ergänzt, **Eckpunktfarbe** und **Deckel (im Netz)** nachgeführt (Grenze 2,5 % statt 5 %) |
+| 2026-10-14 | Ergaenzt aus der Erklärung der Knoten für die Kosmo-Tafel (`docs/KNOTEN_ERKLAERT.md`): **Kosmo-Tafel**, **Knotenkatalog**, **Gruppe eines Knotens**, **Anschlusssorte (Porttyp)**, **Preset**, **Geometrie-Treue**, **Bildwerkzeug**, **Strichzeichnung (Line-Art)**, **Rückgängig (Undo)**, **Viewport-Aufnahme**, **Kuratierfläche**, **Prüfurteil (QA)**, **Veraltet**, **KosmoPublish** |
 | 2026-10-14 | Ergaenzt aus der Übernahme Runde 26 der Knotenansicht (KosmoOrbit 22988d6ed): **Zwei-Finger-Geste (Wischen und Pinch)** |
 | 2026-10-14 | Ergaenzt aus Entscheid 87 (ein Klick fürs Aktualisieren): **Selbst-Aktualisieren (Updater)**, **AppImage** |
 | 2026-10-14 | Ergaenzt beim Leser des Massstab-Blocks: **Bewegungssensor (IMU)**, **Massstab (des Splats)** (mit Gegenprobe, Ampel, Kontrollmass, Drift) |
