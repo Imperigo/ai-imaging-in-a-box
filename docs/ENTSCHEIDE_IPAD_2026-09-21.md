@@ -306,3 +306,6 @@ auf Blatt 13.
 | 90a | Wohin kommt die neue Mappe? | **Neben die Start-Mappe, Name aus der Datei** (Owner, per Auswahl). Verworfen: fester Ordner «Visbox-Mappen». |
 | 90b | Dieselbe Datei noch einmal laden? | **Neue Fassung in derselben Mappe, Bilder und Skizzen bleiben** (Owner, per Auswahl). Verworfen: jedes Mal eine neue Mappe. |
 | 90c | ArchiCAD-Dateien (.pln)? | **Als IFC aus ArchiCAD** (Owner, per Auswahl): Ablage → Sichern unter → IFC; der Knoten sagt das bei einer .pln. Geschlossenes Format, kein freier Leser. Verworfen (vorerst): eine Brücke zum installierten ArchiCAD. |
+| 91 | Ohne Render-Graph gibt es keinen Modell-Knoten und damit kein «Datei laden …» — man muss erst «Graph erstellen». Soll eine leere Mappe einen fertigen Anfang zeigen? (14.10.2026) | **Ja, Modell + Prompt + Render (+ Bildvergleich) verbunden vorlegen** (Owner, per Auswahl; Blatt 22). Nichts rechnet vor «Ausführen» und «Freigeben»; ein bestehender Graph bleibt. Verworfen: nur Modell-Knoten; so lassen. |
+| 91a | Auto-Kamera im Anfang? | **Ja, mit Auto-Kamera** (Owner, per Auswahl) — gegen die Empfehlung; in Visbox ist sie noch Stellvertreter (leer → Heim-PC rechnet die drei festen Richtungen). |
+| 91b | Auch in KosmoOrbit? | **Ja, in beiden** (Owner, per Auswahl). |
