@@ -28,5 +28,5 @@
     "ja": true,
     "satz": "Owner: Die Mac-App hat den Heim-PC von selbst gefunden, die Zahl erschien, die Kopplung gelang."
   },
-  "urteil": "Die Server-Seite der Kopplung traegt: ueber Tailscale (P1, P2, P6) und im Heimnetz nur mit TLS (P4); die Drossel verhaelt sich wie im Code beschrieben ('steht schon da' bzw. 429 mit Wartezeit, P3). --heimnetz ist wieder heraus (P5), weil der Owner es nicht behalten wollte."
+  "urteil": "Die Server-Seite der Kopplung traegt: ueber Tailscale (P1, P2, P6) und im Heimnetz nur mit TLS (P4); die Drossel verhaelt sich wie im Code beschrieben ('steht schon da' bzw. 429 mit Wartezeit, P3). --heimnetz ist wieder heraus (P5), weil der Owner nicht gesagt hat, dass er es behalten will."
 }
