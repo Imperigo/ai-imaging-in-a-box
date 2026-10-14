@@ -4818,6 +4818,11 @@ Unterschrift (EdDSA, ein Unterschriftverfahren mit geheimem und öffentlichem Sc
 verworfen (Entscheid 84, Bau): Sie wäre die erste fremde Abhängigkeit der Mac-App und verlangte einen geheimen
 Schlüssel in der Prüfstrecke; der Eigenbau braucht beides nicht.
 
+**Wirt (der Knotenansicht)** — Die kleine, Visbox-eigene Seite, die das aus KosmoOrbit kopierte Vis-Werkzeug im
+Browser startet und mit dem Heim-PC verbindet (Mappe laden, «Datei laden …», Tastenkürzel). *Wozu:* Was KosmoOrbit in
+seinem Hauptprogramm erledigt, fehlt in der Kopie; der Wirt übernimmt genau diese Teile, ohne die Kopie zu verändern.
+*Im Projekt:* `kosmovis/apps/visbox-knoten/src/` — seit dem 14.10.2026 auch Strg+Z (`kurztasten.ts`).
+
 **Neustart-Helfer** — Ein winziges Hilfsprogramm, das die Mac-App nach dem Aktualisieren startet, bevor sie sich
 beendet. Es wartet, bis die alte App wirklich zu ist, und öffnet erst dann die neue. *Wozu:* Öffnet die alte App die neue
 selbst, hält macOS beide für dieselbe App und holt nur die alte wieder nach vorn — am Mac des Owners stand dann ein neues
@@ -7150,6 +7155,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus Strg+Z in der Visbox-Knotenansicht: **Wirt (der Knotenansicht)** |
 | 2026-10-14 | Ergaenzt aus Visbox 0.2.8 (Neustart, Nummer, iPad verbindet von selbst): **Neustart-Helfer**, **Prozessnummer (PID)**, **Ein Fenster statt Fenstergruppe (`Window` / `WindowGroup`)**, **Wiederverbinden** |
 | 2026-10-14 | Ergaenzt aus Entscheid 91/92 (fertiger Anfang, Auto-Kamera mit den Standpunkten des Heim-PCs): **Fertiger Anfang (Startgraph)**, **Rückgängig-Klammer**, **Standpunkte des Heim-PCs (Vorschau an der Auto-Kamera)**, **Vorbild (Bild-Referenz)** |
 | 2026-10-14 | Ergaenzt aus Fassung 3 der RealityScan-Brücke (Textur statt Eckfarben): **Textur**, **Abwicklung (UV-Abwicklung)**, **Texel**, **OBJ und MTL (Dateiformate)**; **Emissions-Shader** um die Stärke 1 der Umgebung ergänzt, **Eckpunktfarbe** und **Deckel (im Netz)** nachgeführt (Grenze 2,5 % statt 5 %) |

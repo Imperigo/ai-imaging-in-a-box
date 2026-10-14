@@ -2,7 +2,7 @@
  "quelle": {
   "kosmovis/HERKUNFT.json": "9aa3698940e779ef00cd45b7319d95b3a5f7ff8b583c8d32dfd5efe65cc76054",
   "kosmovis/apps/visbox-knoten/index.html": "042e84cfa37a7ad26a571ae68cdee0ac556b0d8fe287b3f5163b4293269134f5",
-  "kosmovis/apps/visbox-knoten/src/main.tsx": "dea445bee949a3a5a1ed1997c62563e9b4cad4de320e16a336c802e5dfea7b76",
+  "kosmovis/apps/visbox-knoten/src/main.tsx": "380675b4326ad8178df6b957262763358808009c5c0c47f6997ffb0411f4c551",
   "kosmovis/apps/visbox-knoten/src/mappe.ts": "46f8e76dcd361ffd58db6bc2900fa8d9bb7612d589d0964c89a36942283c3b7a",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "79b71a093db0cbc793e299032ce20d0ac1a012eba2a3a6af532b5cd59fb7d6dd",
   "kosmovis/apps/visbox-knoten/vite.config.ts": "060d2f44f2ea8947dff6f2abf3c19f19f1931fb8a206047d75a58eea40301040",

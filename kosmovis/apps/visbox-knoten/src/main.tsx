@@ -35,6 +35,7 @@ import { szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs'
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
+import { haengeVerlaufKurztastenAn } from './kurztasten';
 import { aufDemVisboxServer, brueckeAufDiesenServer, ladeMappe, ladeWirt, verfolge, type LadeSicht } from './mappe';
 import './visbox.css';
 
@@ -63,6 +64,13 @@ function VisboxKnoten() {
 
 // Gemerkte Schriftgrösse und Bewegung vor dem ersten Bild an <html>, sonst springt die Schrift.
 ladeAnzeige();
+
+// STRG+Z / ⌘Z (auf-20261014-284 D5): In KosmoOrbit haengt das Kuerzel am Hauptprogramm, das
+// nicht kopiert ist — hier darum der Wirt selbst (`kurztasten.ts`).
+haengeVerlaufKurztastenAn(window, {
+  undo: () => useProject.getState().undo(),
+  redo: () => useProject.getState().redo(),
+});
 
 // ENTSCHEID 91 (Blatt 22): Die Knotenansicht beginnt mit dem fertigen Anfang statt «Noch kein
 // Render-Graph» — hier von selbst, weil das Dokument nur in dieser Seite lebt (kein Tresor, keine

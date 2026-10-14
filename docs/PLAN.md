@@ -7992,7 +7992,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Dienstbetrieb geprüft (284): Kennwort hält; Knoten haben im Dienst keine Ablage. *(14.10.2026, §116)*
 - [x] Owner-Entscheid 93: Dienst mit `--auftragsablage` umstellen. *(14.10.2026)*
 - [ ] Umstellen und Probe von Anfang bis Ende (local `auftraege/offen/auf-20261014-285.json`), danach Vorlage `betrieb/visbox-flaeche.service` nachziehen.
-- [ ] Strg+Z in der Visbox-Knotenansicht klären.
+- [x] Strg+Z in der Visbox-Knotenansicht: im Wirt angehängt, im Browser geprüft. *(14.10.2026, §118)*
 - [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.
 - [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
 - [ ] Integrator: Warum trägt der Splat-Bestand in der glb kein `role existing`? (Zentrale)
