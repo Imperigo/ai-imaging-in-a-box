@@ -35,8 +35,8 @@ let package = Package(
             name: "Visbox",
             targets: ["AppModule"],
             bundleIdentifier: "org.example.visbox",
-            displayVersion: "0.2.5",
-            bundleVersion: "7",
+            displayVersion: "0.2.6",
+            bundleVersion: "8",
             // DAS ICON (Owner-Entscheid 88, 14.10.2026, Blatt 20 «Box mit Bild»): ein Bild 1024
             // in `Assets.xcassets/AppIcon.appiconset`, erzeugt von `tools/make_icon.py`. Die
             // Form `.asset("AppIcon")` ist die, die Swift Playgrounds selbst schreibt.

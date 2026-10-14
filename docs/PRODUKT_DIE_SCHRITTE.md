@@ -1466,6 +1466,10 @@ alte Boxen, kein Schieben mit zwei Fingern. Die Kopie war drei Wochen nicht nach
 kam nie mit `git pull` auf den Heim-PC. Beides ist behoben; dazu zoomt die Knotenfläche jetzt in beiden Programmen
 spürbar schneller. Neue Regel des Owners: Was am Vis-Werkzeug geändert wird, geht immer in beide Programme.
 
+**Die erste echte Probe des Ein-Klick-Wegs (14.10.2026).** Die App bot die neue Fassung an, scheiterte aber beim Ersetzen:
+macOS liess sie von einem versteckten, schreibgeschützten Ort laufen, weil sie nicht in «Programme» lag. Ab 0.2.6 erkennt
+Visbox das selbst und legt sich mit einem Klick nach «Programme».
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

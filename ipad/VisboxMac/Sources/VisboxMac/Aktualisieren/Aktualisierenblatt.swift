@@ -126,9 +126,17 @@ struct Aktualisierenblatt: View {
                 schliessen()
             }
             .keyboardShortcut(.cancelAction)
-            Button("Erneut versuchen") {
-                waechter.zuruecksetzen()
-                waechter.ladeUndErsetze()
+            if Umzug.istVersteckt {
+                // ENTSCHEID 89: statt «Erneut versuchen» (das gleich wieder scheiterte) der Umzug.
+                Button(Aktualisierung.umzugKnopf) {
+                    Umzug.zieheUndStarteNeu { _ in }
+                }
+                .keyboardShortcut(.defaultAction)
+            } else {
+                Button("Erneut versuchen") {
+                    waechter.zuruecksetzen()
+                    waechter.ladeUndErsetze()
+                }
             }
         }
     }

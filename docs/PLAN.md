@@ -7888,7 +7888,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Kopie auf KosmoOrbit-Stand** (Runde 26 + Zoom), Bau eingecheckt, Visbox 0.2.5. *(14.10.2026, §106)*
 - [x] **Zoom schneller** in KosmoOrbit (eigener Zweig) und Visbox. *(14.10.2026, §106)*
 - [ ] **Int 1** spielt `claude/kosmovis-knoten-zoom` ein.
-- [ ] **Am Mac bestätigen** (Owner): neue Knoten, Schieben mit zwei Fingern, Zoom-Tempo.
+- [ ] **Am Mac bestätigen** (Owner): neue Knoten (Aussehen bestätigt 14.10.), Schieben mit zwei Fingern, Zoom-Tempo.
+- [x] **Entscheid 89** «In Programme verschieben» gebaut; Visbox 0.2.6. *(14.10.2026, §107)*
+- [ ] **Am Mac:** 0.2.6 einmal von Hand nach «Programme», danach der nächste Klick.
 
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
 

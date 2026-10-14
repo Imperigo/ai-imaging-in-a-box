@@ -383,11 +383,27 @@ public enum Aktualisierung {
     /// nicht aus einem Bundle (beim Entwickeln), oder macOS hat sie beim ersten Oeffnen an
     /// einen verborgenen, schreibgeschuetzten Ort verschoben («App Translocation»: eine App,
     /// die aus dem Download-Ordner geoeffnet wurde, ohne sie zu verschieben).
+    /// Laeuft die App vom **versteckten Ersatzort** («App Translocation»)? macOS startet eine
+    /// heruntergeladene App, die nicht mit dem Finder verschoben wurde, aus einer schreib-
+    /// geschuetzten Kopie — dort kann sie sich weder ersetzen noch merken, wo sie liegt.
+    public static func istVersteckterOrt(_ pfad: String) -> Bool {
+        pfad.contains("/AppTranslocation/")
+    }
+
+    /// Wohin «In Programme verschieben» die App legt (Entscheid 89, 14.10.2026).
+    public static var programmeZiel: String { "/Applications/\(Marke.name).app" }
+
+    /// Die Saetze fuer den Umzug (Blatt 18, Feld 4).
+    public static var umzugTitel: String { "\(Marke.name) läuft nicht aus «Programme»" }
+    public static let umzugSatz = "macOS hat die App an einen versteckten Ort gelegt; dort kann "
+        + "sie sich nicht aktualisieren. Ein Klick legt sie nach «Programme» und startet sie dort neu."
+    public static let umzugKnopf = "In Programme verschieben"
+
     public static func pruefeOrt(_ pfad: String) -> Aktualisierungsfehler? {
         guard pfad.hasSuffix(".app") || pfad.hasSuffix(".app/") else {
             return .ortGesperrt("Die App läuft nicht aus einem Bundle — es gibt nichts zu ersetzen.")
         }
-        if pfad.contains("/AppTranslocation/") {
+        if istVersteckterOrt(pfad) {
             return .ortGesperrt("macOS hat die App an einen schreibgeschützten Ort verschoben. "
                                 + "Bitte \(Marke.name) in den Ordner «Programme» ziehen, neu öffnen "
                                 + "und dann aktualisieren.")

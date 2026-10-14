@@ -408,4 +408,15 @@ final class AktualisierungTests: XCTestCase {
                        "Die App läuft in weniger als einem Tag ab — am Mac in Xcode neu aufspielen (▶).")
         XCTAssertTrue(Bereitstellungsprofil.hinweis(ablauf: ablauf, jetzt: ablauf)?.contains("abgelaufen") ?? false)
     }
+
+    // Entscheid 89: vom versteckten Ort gestartet → Umzug nach «Programme» anbieten.
+    func testDerVersteckteOrtWirdErkannt() {
+        XCTAssertTrue(Aktualisierung.istVersteckterOrt(
+            "/private/var/folders/x/T/AppTranslocation/ABC/d/\(Marke.name).app"))
+        XCTAssertFalse(Aktualisierung.istVersteckterOrt("/Applications/\(Marke.name).app"))
+        XCTAssertEqual(Aktualisierung.programmeZiel, "/Applications/\(Marke.name).app")
+        XCTAssertNotNil(Aktualisierung.pruefeOrt(
+            "/private/var/folders/x/T/AppTranslocation/ABC/d/\(Marke.name).app"))
+        XCTAssertNil(Aktualisierung.pruefeOrt("/Applications/\(Marke.name).app"))
+    }
 }

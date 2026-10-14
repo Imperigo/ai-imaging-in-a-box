@@ -35,6 +35,9 @@ struct Hauptfenster: View {
     @State private var arbeitet = false
     @State private var einrichtenOffen = false
     @State private var aktualisierenOffen = false
+    // ENTSCHEID 89: vom versteckten Ort gestartet → Umzug nach «Programme» anbieten.
+    @State private var umzugOffen = false
+    @State private var umzugFehler: String?
 
     var body: some View {
         Group {
@@ -116,8 +119,17 @@ struct Hauptfenster: View {
                 // wenn beides gesichert ist.
                 .interactiveDismissDisabled(leitung.braucheEinrichten)
         }
+        .alert(Aktualisierung.umzugTitel, isPresented: $umzugOffen) {
+            Button("Später", role: .cancel) {}
+            Button(Aktualisierung.umzugKnopf) {
+                Umzug.zieheUndStarteNeu { satz in umzugFehler = satz }
+            }
+        } message: {
+            Text(umzugFehler ?? Aktualisierung.umzugSatz)
+        }
         .onAppear {
             einrichtenOffen = leitung.braucheEinrichten
+            umzugOffen = Umzug.istVersteckt
             leitung.starte()
             // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
             aktualisierung.starte()
