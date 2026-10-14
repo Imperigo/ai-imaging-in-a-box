@@ -216,8 +216,9 @@ ZIEL_DREIECKE = _kn.ZIEL_DREIECKE
 #: **Gemessen und nachgestellt (14.10.2026, M2 aus 278 mit Fassung 2):** Bei 5 % (Grenze 0.548
 #: Einheiten) fielen 329 Dreiecke mit 77 % der Fläche, die Deckung blieb 93.5 % (keine echten
 #: Teile weg) — aber 189 Dreiecke über 0.3 Einheiten (≈ 1.9 m) mit 12 % der Fläche blieben
-#: stehen und wurden im Bild zu Fremdkörpern. Darum **2.5 %** (≈ 0.27 Einheiten); ob die
-#: Deckung dabei hält, misst der Heim-PC (GESETZT bis dahin). Die Dreiecke eines Netzes mit
+#: stehen und wurden im Bild zu Fremdkörpern. Darum **2.5 %** (≈ 0.27 Einheiten) — **gemessen
+#: in M3** (``auf-20261014-280``): Deckung 93.42 % (gleich), kein Dreieck über 0.3 Einheiten
+#: mehr, Fremdkörper aus Deckel-Resten 0 von 9. Die Dreiecke eines Netzes mit
 #: 500 000 Dreiecken auf ≈ 11 Einheiten Diagonale messen um 0.02 Einheiten.
 DECKEL_KANTE_REL = 0.025
 

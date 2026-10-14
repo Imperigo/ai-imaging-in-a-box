@@ -7864,7 +7864,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Brücke Fassung 2** — die sieben Befunde aus 278 behoben. *(14.10.2026, §100)*
 - [x] **HomeStation schaltet ein und rechnet M2**: Brücke lief durch (280 s), QA besteht, keine Waise, Farben richtig; Deckel-Reste 5 von 9 Bildern, nNW geometry_gates 0.811 < 0.85. *(14.10.2026, §102)*
 - [x] **Deckel-Grenze 2.5 %** (statt 5 %), Bereinigung auch im Urteil. *(14.10.2026, §102)*
-- [ ] **Messung `auf-20261014-280`** (local, M3): hält die Deckung bei 2.5 %, sind die Deckel-Reste weg?
+- [x] **Messung `auf-20261014-280`** (M3): Deckung 93.4 % hält, Deckel-Reste 0 von 9. *(14.10.2026, §105)*
+- [ ] **geometry_gates nNW** knapp unter 0.85 und «Gegenprobe fehlt» klären (eigener Posten).
 - [x] **Massstab-Block lesen** (Satz je Ampel im Urteil); die Stufe selbst baut KosmoPrepare. *(14.10.2026, §102)*
 - [x] **Owner-Entscheid 86:** Ampel wie vorgeschlagen, bei Gelb um ein Kontrollmass bitten. *(14.10.2026, §102)*
 - [ ] **Prepare** baut die Stufe «massstab», **ui** die Bitte um das Kontrollmass (Zentrale).
