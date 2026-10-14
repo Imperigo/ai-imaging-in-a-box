@@ -153,6 +153,9 @@ jobs:
           cp "$AUSGABE/$PROGRAMM" "$BUENDEL/Contents/MacOS/$PROGRAMM"
           cp App/Info.plist "$BUENDEL/Contents/Info.plist"
           ditto ../Visbox.swiftpm/Schriften "$BUENDEL/Contents/Resources/Schriften"
+          # DAS ICON (Owner-Entscheid 88, Blatt 20): erzeugt von `tools/make_icon.py`, Name wie
+          # `CFBundleIconFile` in der Plist.
+          cp App/Visbox.icns "$BUENDEL/Contents/Resources/Visbox.icns"
           # DIE BEISPIELMAPPE FUER DEN VORFUEHRMODUS (Strom C, Entscheid 49): gelesen wird sie
           # ueber `Bundle.main`, also muss sie im Buendel liegen, nicht im SwiftPM-Ausgabeordner.
           # DIE ECHTE, WENN ES SIE GIBT (`Vorfuehrmappe/`, am Heim-PC gerechnet, auf-218), sonst

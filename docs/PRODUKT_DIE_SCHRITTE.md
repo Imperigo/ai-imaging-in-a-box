@@ -1457,6 +1457,10 @@ kann; darum erschien kein Knopf. Der Owner will es wie bei jeder App. Jetzt gen�
 Fassung, prüft sie, ersetzt sich und startet von selbst neu; gefragt wird stündlich. Einmal muss die alte Fassung noch von
 Hand ersetzt werden. Dasselbe für KosmoOrbit liegt beim Integrator.
 
+**Ein eigenes Icon (14.10.2026).** Bis dahin trug Visbox ein Platzhalter-Blatt. Drei Vorschläge lagen auf der
+Entwurfsfläche; der Owner wählte die Box, deren eine Seite schon Bild ist — Modell hinein, Bild heraus. Es kommt mit
+der Fassung 0.2.4 auf Mac und iPad.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

@@ -7880,6 +7880,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Gebaut:** ein Klick lädt und ersetzt, Neustart von selbst, stündlich fragen; Visbox 0.2.3. *(14.10.2026, §103)*
 - [ ] **Am Mac bestätigen** (Owner): 0.2.3 von Hand, danach die nächste Fassung mit einem Klick.
 - [ ] **KosmoOrbit** Ein-Klick-Aktualisieren (Integrator, Zentrale; Antwort mit Plan erwartet).
+- [x] **Icon** (Entscheid 88, Blatt 20, Vorschlag A) gebaut; Visbox 0.2.4. *(14.10.2026, §104)*
 - [x] **Brücke RealityScan** gebaut (Entscheid 81 ersetzt 80). *(13.10.2026, §91)*
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 
