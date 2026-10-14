@@ -7903,7 +7903,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Blatt 17 gezeichnet, Fragen 83a–c beantwortet. *(13.10.2026, §93)*
 - [x] Bau: Server (`/api/hallo`, Kopplung anfordern, Heimnetz mit TLS), Kern und Mac-App; Prüfstrecke grün. *(13.10.2026, §96)*
 - [x] Am echten Mac und Heim-PC über Tailscale bestätigt (`auf-20261013-279` Teil, P6 Owner). *(13.10.2026, §97)*
-- [ ] Heim-WLAN (`--heimnetz`) am Gerät (279 P4/P5).
+- [x] Heim-WLAN (`--heimnetz`) am Heim-PC bestätigt (279 P3–P5); am Mac noch nicht ausprobiert. *(14.10.2026)*
 
 ## Aktualisieren (Entscheid 84, 13.10.2026)
 
