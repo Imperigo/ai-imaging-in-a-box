@@ -7989,7 +7989,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Am Gerät: 0.2.8 → nächste Fassung startet von selbst neu und bestätigt (Owner).
 - [ ] Am iPad: verbindet beim Öffnen; sonst sagen, was die Zeile zeigt (Owner).
 - [x] Fertiger Anfang und Auto-Kamera-Vorschau (Entscheide 91/92) in 0.2.8 geführt; KosmoOrbit-Zweig bei Int 1. *(14.10.2026, §114)*
-- [ ] Dienstbetrieb: Kennwort über Neustart, Auftragsablage der Knoten (local `auftraege/offen/auf-20261014-284.json`).
+- [x] Dienstbetrieb geprüft (284): Kennwort hält; Knoten haben im Dienst keine Ablage. *(14.10.2026, §116)*
+- [ ] Owner-Entscheid: Dienst mit `--auftragsablage` auf die Brücken-Ablage, damit Bestellen aus den Knoten geht.
 - [ ] Strg+Z in der Visbox-Knotenansicht klären.
 - [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.
 - [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
