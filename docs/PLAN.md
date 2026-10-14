@@ -7899,7 +7899,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Bau Fassung 3: Abwicklung, OBJ + PNG, 1 Mio. Dreiecke, Deckel für OBJ, Emission 1. *(14.10.2026, §109)*
 - [x] Prepare: 1086 px waren ein Rechenfehler, behoben (≈ 1616 px), KosmoPrepare 6b7db4a/6ffe28f. *(14.10.2026, §108)*
 - [x] Gemessen: 1600 px machen die Textur nicht schärfer (Grenze Optik/Video), kosten +5.5 min — für die Brücke nicht nötig. *(14.10.2026, §108)*
-- [ ] Messauftrag M4 `auf-20261014-281` (local).
+- [x] Messauftrag M4 `auf-20261014-281`: Textur schärfer (8.8/9.0/5.6/4.0 gegen Eckfarben 6.4/7.4/3.4/1.9), +4 min, 300 MB. *(14.10.2026, §111)*
+- [ ] Bild mit QA über die eigene Brücke: `auf-20261014-282` (local).
+- [ ] Integrator: Splat aus dem Dateidialog trägt keinen Pfad → Bestellung ohne Umgebung.
 
 ## Was die Knoten tun (Owner 14.10.2026 — Sitzung 74 §110)
 
@@ -7908,6 +7910,14 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Bild-Referenz: Linie zu Bildvergleich/Aufs Blatt trägt kein Bild — klären (gewollt?) und beheben oder sperren.
 - [ ] «Samples»-Zahl: Hinweis am Knoten, dass «Qualität gegen Zeit» Vorrang hat.
 - [ ] Prüfen, ob der Abholer am Heim-PC die Ablage `<Mappe>/knotenweg` jeder Mappe sieht (mit «Datei laden» entstehen neue Mappen).
+
+## Modell laden im Knoten (Entscheid 90 — Sitzung 74 §111)
+
+- [x] Gebaut in beiden (KosmoOrbit-Zweig `claude/kosmovis-modell-laden`, Visbox-Kopie, Server, Mac-Dialog); Visbox 0.2.7. *(14.10.2026, §111)*
+- [ ] Am Mac und am Heim-PC prüfen (`auf-20261014-282` Punkt 3; Owner am Mac).
+- [ ] Owner: Soll die Knotenansicht beim Start schon einen Modell-Knoten vorlegen?
+- [ ] Nach «nicht lesbar» das vorige Modell weiter nennen (kleiner UI-Punkt, beide Programme).
+- [ ] Int 1 spielt `claude/kosmovis-modell-laden` ein.
 
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
 

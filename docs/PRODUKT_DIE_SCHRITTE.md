@@ -1480,6 +1480,16 @@ funktioniert, was er auslöst und mit wem er verbunden ist, dazu eine Übersicht
 aus dem Code belegt; wo Visbox noch einen Platzhalter hat, steht es auf der Karte. Beim Aufschreiben fielen vier
 Ungereimtheiten auf, die jetzt als eigene Posten im Plan stehen.
 
+**Ein Modell direkt im Knoten laden (14.10.2026).** Der Owner fragte, ob er im Modell-Knoten eine IFC oder sogar eine
+ArchiCAD-Datei laden kann. Jetzt geht es: «Datei laden …» im Knoten, der Heim-PC legt daraus eine Mappe an und wandelt
+IFC und andere Formate selbst um; eine neue Fassung derselben Datei bleibt in derselben Mappe, mit allen Bildern.
+ArchiCAD-Dateien sind ein geschlossenes Format — der Knoten sagt, dass sie als IFC aus ArchiCAD gespeichert werden.
+Derselbe Knoten läuft auch in KosmoOrbit, dort ohne Ladeknopf, solange KosmoOrbit keinen anbietet.
+
+**Die Textur am echten Auftrag gemessen (14.10.2026).** An vier Blickpunkten ist die Umgebung mit Textur deutlich schärfer
+als mit Eckfarben und als der Splat. Sie kostet je neuer Aufnahme rund vier Minuten mehr. Das fertige Bild mit Prüfung
+steht noch aus.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

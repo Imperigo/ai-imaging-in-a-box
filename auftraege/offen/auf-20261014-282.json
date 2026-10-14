@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261014-282",
+ "art": "frage",
+ "rang": 69,
+ "erstellt": "2026-10-14T18:00:00Z",
+ "beschreibung": "M4 zu Ende: Bild mit QA fuer die Textur-Umgebung, ueber die eigene Bruecke mit Splat-Kontext; dazu Modell laden im Knoten am echten Server",
+ "anweisung": "Hintergrund: In auf-20261014-281 blieb das Bild mit QA offen, weil der App-Auftrag mit context null ankam (Splat ueber den Dateidialog geladen, ohne Pfad; KosmoMaus «Bedienen» ist aus - das bleibt aus, nicht umgehen). Entscheid KosmoVis: Die Bildprobe laeuft ueber UNSERE Bruecke (Visbox-Server /bruecke bzw. Ablage, siehe src/aiimaging/bruecke.py und knotenweg.py) mit einer Bestellung, die denselben Hallenauftrag wie M3/M4 traegt und den Kontext {kind: splat, ply: <dein Splat>, verortung: <deine Verortung>, transform: <wie in der App-Bestellung von M3>, fit: behelf}. Damit wird kein Schalter in KosmoOrbit umgangen. ZU TUN: (0) git pull main (Kopf mit 'Visbox 0.2.7'), Dienste visbox-flaeche und Abholer neu starten. (1) Bestellung wie beschrieben ablegen (ueber die Bruecke des Visbox-Servers oder als Auftrag in der Ablage, die der Abholer liest), freigeben, rechnen lassen. Das texturierte Netz liegt im Speicher - RealityScan sollte NICHT neu rechnen (bitte bestaetigen: zwischenspeicher.treffer). (2) Zurueck: kontext.weg (realityscan), urteil.kontext.netz.format (obj) und texturen, QA-Zahlen und geometry_gates je Kamera, Fremdkoerper aus Deckel-Resten je Bild, Konfetti, und ein Satz zur Sichtbarkeit der Textur im fertigen Bild gegen M3 (Eckfarben). (3) Modell laden im Knoten am echten Server: in /knoten/ «Graph erstellen», Modell-Knoten anlegen, «Datei laden …» mit einer synthetischen IFC (tools/ im Repo, z. B. die Testgeometrie der Proben - KEINE echte Projektdatei) und einer glb; zurueck: Zustaende sichtbar (laeuft, geladen mit Bauteilzahl, Mappe neben der Start-Mappe angelegt), Dauer der IFC, und ob dieselbe Datei ein zweites Mal 'Fassung 2' ergibt. NICHT: Code aendern; KosmoMaus «Bedienen» einschalten oder umgehen; Bilder mit Personen, Ortsnamen, Pfade ins Repo (Regel 3) - Bilder lokal bzw. auf die Tafel (tafel/LIESMICH.md, keine privaten Aufnahmen). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "wie M3/M4: KosmoOrbit-Kernel (Bestand aus dem Splat); fuer (3) die synthetische Testgeometrie aus tools/"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-281",
+  "entscheide": [
+   "79",
+   "81",
+   "90"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Blender und Bildmodell; RealityScan sollte aus dem Speicher kommen.",
+  "hinweise": [
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "Bildprobe: weg, format, texturen, Speicher-Treffer, QA und geometry_gates je Kamera, Fremdkoerper, Konfetti, Satz zur Textur im Bild.",
+  "Modell laden: Zustaende, IFC-Dauer, Fassung 2 beim zweiten Laden.",
+  "Urteil: Traegt die Textur im fertigen Bild, und ist Modell laden am echten Server brauchbar?"
+ ]
+}
