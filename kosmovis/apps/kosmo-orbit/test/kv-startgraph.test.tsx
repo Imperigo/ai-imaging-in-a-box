@@ -282,17 +282,18 @@ describe('KV-STARTGRAPH · kleine Punkte am Knoten', () => {
     expect(q('render-umgebung-fehlt')).toBeNull();
     act(() => {
       useVisRuntime.setState({
-        laeufe: { [render]: { status: 'abgebrochen', jobId: 'vis-1-abc', umgebungFehlt: 'Der Splat kam ohne Pfad.' } as never },
+        laeufe: { [render]: { status: 'abgebrochen', jobId: 'vis-1-abc', umgebungFehlt: 'Der Splat kam ohne Pfad.' } },
       });
     });
     expect(q('render-umgebung-fehlt')?.textContent).toBe('Ohne Umgebung: Der Splat kam ohne Pfad.');
   });
 
-  it('Runde 29: das Feld wird duldsam gelesen (Satz, { grund }, true), sonst nichts', () => {
+  it('Runde 29: das Feld ist ein Satz (NodeLauf.umgebungFehlt) — fehlt es oder ist es leer, keine Zeile', () => {
     expect(umgebungFehltSatz({ umgebungFehlt: 'kein Pfad' })).toBe('kein Pfad');
-    expect(umgebungFehltSatz({ umgebungFehlt: { grund: 'kein Pfad' } })).toBe('kein Pfad');
-    expect(umgebungFehltSatz({ umgebungFehlt: true })).toBe('Grund nicht genannt');
-    expect(umgebungFehltSatz({ status: 'fertig' })).toBeNull();
+    expect(umgebungFehltSatz({ umgebungFehlt: '  kein Pfad  ' })).toBe('kein Pfad');
+    expect(umgebungFehltSatz({ umgebungFehlt: '   ' })).toBeNull();
+    expect(umgebungFehltSatz({})).toBeNull();
     expect(umgebungFehltSatz(undefined)).toBeNull();
+    expect(umgebungFehltSatz(null)).toBeNull();
   });
 });

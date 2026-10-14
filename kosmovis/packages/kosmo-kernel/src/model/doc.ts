@@ -559,6 +559,13 @@ export interface DocSettings {
   /** Aktive Schnittlinie (H-9, v0.6.8) — null = kein Schnitt gesetzt. Nur über
    * `design.schnittSetzen` gesetzt. */
   schnitt?: SchnittSpec | null;
+  /** Paket 08 WB-Schnitt (E220): Id der aktiven `Schnitt`-Entität. Fehlt,
+   * `null` oder hängend = `schnitt` oben wie heute. `| undefined`, weil
+   * Rückgängig das Feld byte-gleich entfernen muss: `apply()` spreizt
+   * `after` über die Einstellungen und kann einen Schlüssel nicht löschen,
+   * nur auf `undefined` setzen (fällt in `JSON.stringify` weg). Nur über
+   * `design.schnitt` (aktion `aktivieren`/`anlegen`) gesetzt. */
+  aktiverSchnittId?: string | null | undefined;
   /** Fassadenmodul-Zuweisung auf Wandzügen ohne Volumenkörper (H-35, v0.6.8):
    * additive Erweiterung von `design.fassadenModulZuweisen` — statt einer
    * MassBody-Kante wird die Fassadenseite eines Geschosses direkt benannt,
@@ -862,10 +869,15 @@ export interface PaketUrsprung {
 /**
  * DER SONNEN-AZIMUT, WIE ER IM PROJEKT ERSCHEINT — Abnahmezeile 3.
  *
- * `SunCalc.getPosition()` liefert den Azimut im Bogenmass, gemessen von SUED
- * nach WEST (so steht es auch im Viewport-Kommentar). Diese Funktion dreht ihn
- * um die Nordrichtung des Projekts — und das ist alles, was an der ganzen
- * Zeile Rechnung ist.
+ * VERTRAG DES EINGANGS: Azimut im BOGENMASS, gemessen von SUED nach WEST
+ * (die Konvention von suncalc 1.x). ACHTUNG (14.10.2026, Befund S1 und
+ * KosmoDraw): installiert ist suncalc 2.0.0, und das liefert GRAD, gemessen
+ * von NORDEN im Uhrzeigersinn. Ein Wert direkt aus `SunCalc.getPosition()`
+ * darf hier also NICHT roh hinein; der Aufrufer rechnet vorher um
+ * (Bogenmass = (az − 180) · π / 180). Diese Funktion dreht den Azimut um die
+ * Nordrichtung des Projekts — und das ist alles, was an der ganzen Zeile
+ * Rechnung ist. Die Schattenstudie (`derive/schattenstudie.ts`) nimmt
+ * stattdessen `ostNordInsProjekt` mit Ost/Nord-Komponenten.
  *
  * DIE PROBE IN WORTEN, damit die Richtung nicht zur Glaubensfrage wird:
  * Zeigt die +Y-Achse nach OSTEN (90 Grad) und steht die Sonne im echten

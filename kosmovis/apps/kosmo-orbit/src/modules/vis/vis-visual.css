@@ -518,12 +518,12 @@
 .vis-modell-mappe {
   font-size: var(--k-t-xs);
   color: var(--k-ink-faint);
-  line-height: 1.35;
+  line-height: var(--k-lh-knapp);
 }
 .vis-modell-satz {
   font-size: var(--k-t-xs);
   color: var(--k-ink-soft);
-  line-height: 1.35;
+  line-height: var(--k-lh-knapp);
   overflow-wrap: anywhere;
 }
 .vis-modell-satz--fehler {
@@ -738,7 +738,7 @@
    so hoch, wie das Register `RENDER_ZEILEN` sagt. Einzeilig, der volle Satz in der Kurzhilfe. */
 .vis-node-umgebung-fehlt {
   height: 16px;
-  line-height: 16px;
+  line-height: var(--k-lh-knapp);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -862,6 +862,15 @@
    keine rohen Werte (Token-Drift-Gate, ROADMAP 969). */
 .vis-node-kamera-nicht-bestellt {
   color: var(--k-ink-faint);
+}
+/* «Kamera aus 3D-Ansicht» (14.10.2026): jede Zeile bleibt einzeilig — der Knoten hat eine feste
+   Hoehe (`KOERPER_H.kameraAus3d`). Ein langer Umgebungssatz endet mit «…» und steht ganz in der
+   Kurzhilfe (dort mit der gepunkteten Linie, `vis-bild-kachel-grund-zeile`). */
+.vis-node-kamera-zeile {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 /* ════════════════════════════════════════════════════════════════════

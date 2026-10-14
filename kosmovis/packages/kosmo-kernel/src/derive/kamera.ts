@@ -6,7 +6,8 @@
  * nach. In Visbox gibt es dieses Modell nicht. Darum:
  *
  * * Die Typen `KameraReferenzpunkt`, `AutoKameraStandpunkt` und `KamerahoeheBefund` sind
- *   WÖRTLICH übernommen.
+ *   WÖRTLICH übernommen (Runde 29, 14.10.2026: samt `fovVertikalGrad` für «Kamera aus
+ *   3D-Ansicht»).
  * * `projektKameras` übernimmt die Kameras aus `doc.settings.uebernommeneKameras` WÖRTLICH
  *   wie das Original — die aus dem Modell abgeleiteten Vorschläge fehlen hier (leere Liste),
  *   bis Visbox sie aus der Mappe liefert.
@@ -25,6 +26,13 @@ export interface AutoKameraStandpunkt {
   position: [number, number, number];
   target: [number, number, number];
   fov: number;
+  /**
+   * Nur am Standpunkt «Kamera aus 3D-Ansicht» (`derive/kamera-aus-3d.ts`): der VERTIKALE
+   * Öffnungswinkel der 3D-Ansicht. Dann ist `fov` horizontal für das Bestellformat gerechnet,
+   * und `postRenderJob` rechnet mit dem endgültigen Format nach. Geht selbst nie in die
+   * Bestellung (`CameraSpec` kennt das Feld nicht). Fehlt es, gilt `fov` wie bisher.
+   */
+  fovVertikalGrad?: number;
   /** Ehrliche Kurzbegründung fürs UI — nie «KI», immer «aus dem Modell». */
   begruendung: string;
   /**

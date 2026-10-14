@@ -2,6 +2,13 @@ import type { KosmoDoc } from '../model/doc';
 import type { VisEdge, VisGraph, VisNode, VisPortTyp } from '../model/entities';
 import { finalerRenderPrompt, renderPromptBausteine } from './renderprompt';
 import { projektKameras, type AutoKameraStandpunkt } from './kamera';
+import {
+  BESTELLFORMAT_VORGABE,
+  KAMERA_AUS_3D_TYP,
+  kameraAus3dAusParams,
+  kameraAus3dStandpunkt,
+  seitenverhaeltnisAus,
+} from './kamera-aus-3d';
 import { isVisPresetId, visPresetById, type VisPresetId } from './render-presets';
 
 /**
@@ -69,7 +76,7 @@ export const VIS_STIMMUNGEN: Record<string, { label: string; prompt: string }> =
   weiss: { label: 'Weissmodell', prompt: 'Weissmodell, neutrales Studiolicht, keine Materialien' },
 };
 
-/** Katalog der 12 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
+/** Katalog der 13 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
 export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   modell: {
     typ: 'modell',
@@ -212,6 +219,20 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     // Eingriff), er nimmt IMMER den aktuellen Viewport-Stand auf.
     defaults: { kamera: 'aktuell' },
   },
+  // Owner-Entscheid 14.10.2026 (über die Zentrale): die Knotenansicht ist die einzige
+  // Arbeitsfläche zum Rendern; die 3D-Ansicht liefert ihren Blick hierher zu. Die Kamera liegt
+  // als Parameter im Knoten (`derive/kamera-aus-3d.ts`), gesetzt beim Anlegen und auf
+  // «Kamera übernehmen» — darum keine `defaults`: ohne Übernahme trägt er keine Kamera.
+  [KAMERA_AUS_3D_TYP]: {
+    typ: KAMERA_AUS_3D_TYP,
+    label: 'Kamera aus 3D-Ansicht',
+    hilfe:
+      'Übernimmt den Blick, den du in der 3D-Ansicht eingestellt hast — beim Anlegen und auf «Kamera übernehmen», nicht laufend. Mit dem Render-Knoten verbinden. Ohne Objektiv-Shift.',
+    kategorie: 'quelle',
+    inputs: [],
+    outputs: [{ name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' }],
+    defaults: {},
+  },
 };
 
 export function visPort(typ: string, port: string, richtung: 'in' | 'out'): VisPort | undefined {
@@ -280,6 +301,12 @@ export interface VisRenderAuftrag {
   sun?: { azimuth: number; elevation: number };
   komposition?: { seitenverhaeltnis: number; brennweiteMm: number; horizontlinie: number };
   kameras?: AutoKameraStandpunkt[];
+  /**
+   * Am Eingang «Kamera-Standpunkte» hängt «Kamera aus 3D-Ansicht», aber der Knoten trägt noch
+   * keine Kamera. Die App sendet dann NICHT (sonst rechnete die Gegenseite still ihre eigenen
+   * Standpunkte, also ein anderes Bild als bestellt). Fehlt das Feld, ist alles wie bisher.
+   */
+  kameraAus3dFehlt?: true;
 }
 
 /** Auswertungs-Ergebnis je Node: Ausgangswerte der puren Ports. */
@@ -354,8 +381,23 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
         // Hat das Projekt keine übernommene Kamera (der Normalfall und jeder
         // bestehende Golden-Fall), liefert `projektKameras` Zahl für Zahl
         // dasselbe wie zuvor.
-        const hatKameras = graph.edges.some((e) => e.to === n.id && e.toPort === 'kameras');
-        const kameras = hatKameras ? projektKameras(doc) : [];
+        const kameraKante = graph.edges.find((e) => e.to === n.id && e.toPort === 'kameras');
+        const kameraQuelle = kameraKante ? graph.nodes.find((q) => q.id === kameraKante.from) : undefined;
+        // «Kamera aus 3D-Ansicht» (14.10.2026): hängt DIESER Knoten am Eingang, gilt seine
+        // gespeicherte Kamera — und nur sie, nicht die Auto-Standpunkte. Das Blickfeld wird
+        // horizontal für das Bestellformat gerechnet (Voreinstellung, sonst die Vorgabe von
+        // `postRenderJob`); eine am Knoten gewählte Auflösung rechnet `postRenderJob` nach.
+        // Ohne übernommene Kamera: keine Standpunkte und `kameraAus3dFehlt` — die App sendet
+        // dann nicht (eine Bestellung mit `auto` wäre ein anderes Bild als versprochen).
+        const kamera3d = kameraQuelle?.typ === KAMERA_AUS_3D_TYP ? kameraAus3dAusParams(kameraQuelle.params) : null;
+        const kameras =
+          kameraQuelle?.typ === KAMERA_AUS_3D_TYP
+            ? kamera3d
+              ? [kameraAus3dStandpunkt(kamera3d, seitenverhaeltnisAus(preset?.render.resolution ?? BESTELLFORMAT_VORGABE))]
+              : []
+            : kameraKante
+              ? projektKameras(doc)
+              : [];
         renderAuftraege.set(n.id, {
           prompt,
           faithful: typeof treue === 'number' ? Math.min(1, Math.max(0, treue)) : 0.8,
@@ -369,10 +411,12 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
             ? { presetId, resolution: preset.render.resolution, sun: preset.render.sun, komposition: preset.komposition }
             : {}),
           ...(kameras.length > 0 ? { kameras } : {}),
+          ...(kameraQuelle?.typ === KAMERA_AUS_3D_TYP && !kamera3d ? { kameraAus3dFehlt: true as const } : {}),
         });
         break;
       }
       case 'kamera':
+      case KAMERA_AUS_3D_TYP:
         // Reine Quelle — konsumiert direkt im 'render'-Fall über die Kante,
         // trägt selbst keinen Ausgangswert im `werte`-Store (wie 'modell').
         break;

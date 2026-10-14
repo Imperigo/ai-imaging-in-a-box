@@ -69,6 +69,9 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
     // defaults `{ url: '' }` — Bild-Quelle für Stil-Referenz/Vergleich.
     { name: 'url', info: 'Adresse des Referenzbilds (Stil-Referenz oder Vergleichsbild).' },
   ],
+  // «Kamera aus 3D-Ansicht» (14.10.2026): keine einstellbaren Parameter — die Kamera setzt der
+  // Knopf «Kamera übernehmen» (und das Anlegen), nicht die Hand (`derive/kamera-aus-3d.ts`).
+  kameraAus3d: [],
   aufnahme: [
     // defaults `{ kamera: 'aktuell' }` — laut Katalog-Kommentar rein
     // dokumentarisch, der Knopf nimmt IMMER den aktuellen Viewport-Stand auf.
@@ -83,7 +86,7 @@ export function nodeParameterInfos(typ: string): readonly NodeParameterInfo[] {
 }
 
 /** Fallback-Zweck, falls ein Katalog-Eintrag ohne `hilfe` auftaucht — heute
- *  tragen alle 12 Typen eine (`test/vis-legende-infos.test.ts` beweist es),
+ *  tragen alle 13 Typen eine (`test/vis-legende-infos.test.ts` beweist es),
  *  der ehrliche Satz bleibt als Netz für künftige Katalog-Zugänge. */
 export function nodeZweck(typ: string): string {
   const k = VIS_NODE_KATALOG[typ];

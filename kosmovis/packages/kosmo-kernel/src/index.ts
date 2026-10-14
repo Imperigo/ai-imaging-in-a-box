@@ -6,6 +6,7 @@
  * Bildnachbearbeitung) oder als Stellvertreter (Kameras, glb, IFC, Blätter). Die Reihenfolge
  * folgt dem Original, weil die Befehle beim Laden registriert werden. Runde 26 (14.10.2026):
  * dazu Fundstellen (Typ im Datenmodell), die Papiergrösse eines Blatts und die Texturkacheln.
+ * Runde 29 (14.10.2026): dazu die Rechnung für «Kamera aus 3D-Ansicht» (`derive/kamera-aus-3d`).
  */
 export * from './model/units';
 export * from './model/ids';
@@ -18,6 +19,7 @@ export * from './derive/visgraph';
 export * from './derive/gltf';
 export * from './derive/sheet';
 export * from './derive/kamera';
+export * from './derive/kamera-aus-3d';
 export * from './derive/render-presets';
 export * from './ifc/export';
 export * from './fundstelle';

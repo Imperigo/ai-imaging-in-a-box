@@ -104,6 +104,12 @@ WOERTLICH = (
     "packages/kosmo-kernel/src/derive/textur.ts",
     "packages/kosmo-data/src/materialkatalog.ts",
     "packages/kosmo-data/tsconfig.json",
+    # Runde 29 (14.10.2026): Knoten «Kamera aus 3D-Ansicht». Die Rechnung im Kern (Blickfeld
+    # horizontal, Bestellformat) und der Store der 3D-Ansicht — beide in sich geschlossen (nur
+    # `derive/kamera` bzw. zustand). In Visbox meldet nie eine 3D-Ansicht eine Kamera; der Knoten
+    # sagt dann «Keine 3D-Ansicht offen».
+    "packages/kosmo-kernel/src/derive/kamera-aus-3d.ts",
+    f"{APP}/state/viewport-kamera.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -202,6 +208,10 @@ AUSGESCHLOSSEN = (
     # REGEL 3 (14.10.2026): traegt Pfade unter /home/<name>/ als Beispiel — ein Benutzername
     # in einem Pfad darf hier nicht stehen (tests/test_regel3_kennungen.py).
     "packages/kosmo-contracts/test/kv-splat-context.test.ts",
+    # Runde 29: vergleichen das JSON-Schema fuer Prepare Zeichen fuer Zeichen mit der Ausgabe
+    # von zod — und die haengt an der zod-Fassung (s. NICHT_UEBERTRAGEN).
+    "packages/kosmo-contracts/test/bestand-aus-netz.test.ts",
+    "packages/kosmo-contracts/test/punktwolke.test.ts",
 )
 
 #: Was im Arbeitsbereich entsteht und nie verbucht wird.
@@ -242,6 +252,19 @@ NICHT_UEBERTRAGEN = {
     "apps/kosmo-orbit/test/kv-e123-ai-variant-parsejob.test.ts":
         "Runde 26: liest localStorage in der Node-Umgebung ohne jsdom-Kopf; in der Kopie "
         "ohne Browserspeicher rot, ohne dass am Vis-Werkzeug etwas anders ist.",
+    "packages/kosmo-contracts/test/{bestand-aus-netz,punktwolke}.test.ts":
+        "Runde 29: vergleichen die eingecheckten JSON-Schemata fuer Prepare Zeichen fuer Zeichen "
+        "mit z.toJSONSchema. Visbox rechnet mit zod 4.6.5, KosmoOrbit mit 4.4.3; die neuere "
+        "Fassung schreibt Tupel ohne items/minItems/maxItems. Die Vertraege selbst sind gleich, "
+        "die Schemata gehoeren zu Prepare in KosmoOrbit, nicht zum Vis-Werkzeug.",
+    "apps/kosmo-orbit/test/kv-kamera-aus-3d.test.tsx":
+        "Runde 29: 16 von 21 Proben laufen hier, fünf nicht — eine lädt eine Splat-Ebene (in "
+        "Visbox fest leer, Stellvertreter state/splat-ebene.ts), vier bauen ein Geschoss im "
+        "Architekturkern. Den Visbox-Fall (keine 3D-Ansicht, «Keine 3D-Ansicht offen») prüft "
+        "apps/visbox-knoten/test/kamera-ohne-3d.test.tsx.",
+    "apps/kosmo-orbit/test/viewport-kamera.test.ts":
+        "Runde 29: liest die Kamera aus three.js (modules/design/3d/kamera-lesen.ts) — die "
+        "3D-Ansicht gibt es in Visbox nicht.",
     "packages/kosmo-kernel/test/bild-farbe.test.ts":
         "Vorlagen sind Ausschnitte aus einem Renderbild unbekannter Herkunft — Regel 3.",
     "packages/kosmo-kernel/test/kamera3ds-uebernahme.test.ts":

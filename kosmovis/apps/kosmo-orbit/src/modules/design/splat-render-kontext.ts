@@ -25,7 +25,7 @@ export type SplatRenderKontext = { ok: true; context: SplatRenderContext } | { o
 
 export const SPLAT_CONTEXT_IM_VERTRAG: boolean = 'context' in RenderScene.shape;
 
-export function splatRenderKontext(_zustand: { ebene: null; handLage: unknown }): SplatRenderKontext {
+export function splatRenderKontext(_zustand: { ebene: { readonly name: string } | null; handLage: unknown }): SplatRenderKontext {
   return { ok: false, grund: 'keine Splat-Ebene im Projekt' };
 }
 

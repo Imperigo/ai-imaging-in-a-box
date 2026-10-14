@@ -2,25 +2,21 @@
  * «OHNE UMGEBUNG» AM RENDER-KNOTEN (Bitte des Integrators, Runde 29, 14.10.2026).
  *
  * Geht ein Splat nicht als Umgebung mit (etwa: aus dem Dateidialog ohne Pfad geladen), traegt
- * der Lauf `NodeLauf.umgebungFehlt` mit dem Grund. Der Render-Knoten zeigt dann, solange der
- * Lauf steht, eine Zeile «Ohne Umgebung: <Grund>». Fehlt das Feld, ging die Umgebung mit oder
- * es gab keinen Splat — keine Zeile.
+ * der Lauf `NodeLauf.umgebungFehlt` den Grund als Satz (aus dem Splat-Teil des Auftrags,
+ * `vis-jobs.ts`). Der Render-Knoten zeigt dann, solange der Lauf steht, eine Zeile
+ * «Ohne Umgebung: <Grund>». Fehlt das Feld, ging die Umgebung mit oder es gab keinen Splat —
+ * keine Zeile.
  *
- * **Warum hier gelesen und nicht am Typ:** Das Feld kommt mit int-r29 in `NodeLauf`
- * (`vis-runtime.ts`); dieser Zweig baut auf `claude/kosmovis-modell-laden` auf, wo es noch
- * fehlt. Die Anzeige liest es darum duldsam — als Satz, als `{ grund }` oder als blosses
- * `true` — und faellt ohne Feld still weg. Steht es nach dem Einspielen am Typ, aendert sich
- * hier nichts.
+ * Seit dem Nachzug auf Runde 29 steht das Feld am Typ (`NodeLauf.umgebungFehlt?: string`) und
+ * wird nur noch so gelesen. Die frueheren duldsamen Formen (`{ grund }`, `true`) gab es im
+ * Integrator-Stand nie; sie sind entfallen. Ein leerer Satz zaehlt wie ein fehlendes Feld —
+ * `vis-jobs.ts` setzt es nur mit Grund.
  */
-export function umgebungFehltSatz(lauf: unknown): string | null {
-  if (!lauf || typeof lauf !== 'object') return null;
-  const roh = (lauf as { umgebungFehlt?: unknown }).umgebungFehlt;
-  if (typeof roh === 'string') return roh.trim() || 'Grund nicht genannt';
-  if (roh === true) return 'Grund nicht genannt';
-  if (roh && typeof roh === 'object') {
-    const o = roh as { grund?: unknown; satz?: unknown };
-    const text = typeof o.grund === 'string' ? o.grund : typeof o.satz === 'string' ? o.satz : '';
-    return text.trim() || 'Grund nicht genannt';
-  }
-  return null;
+import type { NodeLauf } from './vis-runtime';
+
+export function umgebungFehltSatz(lauf: Pick<NodeLauf, 'umgebungFehlt'> | null | undefined): string | null {
+  const satz = lauf?.umgebungFehlt;
+  if (typeof satz !== 'string') return null;
+  const t = satz.trim();
+  return t ? t : null;
 }

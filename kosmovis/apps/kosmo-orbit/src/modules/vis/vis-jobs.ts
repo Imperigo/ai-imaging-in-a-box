@@ -7,6 +7,10 @@ import {
   isVisPresetId,
   pruefeGlasnaht,
   pruefeKamerahoehen,
+  BESTELLFORMAT_VORGABE,
+  fovImVertrag,
+  kamerasFuerBestellformat,
+  KAMERA_AUS_3D_NAME,
   sheetPaperSize,
   visPresetById,
   type AutoKameraStandpunkt,
@@ -1123,6 +1127,13 @@ function ohneAbgewieseneFelder<T extends { render: Record<string, unknown> }>(sc
   return kopie as T;
 }
 
+/**
+ * Der angelegte Job plus, was die App beim Senden weiss und der Vertrag nicht
+ * traegt: `umgebungFehlt` (Runde 29) — der Grund, warum der sichtbare Splat
+ * nicht als Umgebung mitging. Die Aufrufer legen ihn an den Lauf.
+ */
+export type GesendeterJob = JobRecord & { umgebungFehlt?: string };
+
 export async function postRenderJob(params: {
   prompt: string;
   faithful: number;
@@ -1212,7 +1223,7 @@ export async function postRenderJob(params: {
    * zur Bridge, nur die Quelle beim EINEN Aufrufer hat sich verschoben.
    */
   mode?: 'none' | 'lineart';
-}): Promise<JobRecord> {
+}): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
   // bestehenden catch-Weg als ehrlicher Node-Fehlertext in die UI.
@@ -1306,7 +1317,12 @@ export async function postRenderJob(params: {
   // (oben) jetzt wahr sein KANN: `istUeberDiesenWegBestellbar` laesst
   // «Innenraum» GENAU DANN durch. Eingang/Übersicht sind Aussenstandpunkte
   // und bleiben unberührt.
-  const kamerasOhneInnenraum = params.kameras?.filter((k) => istUeberDiesenWegBestellbar(k.name, interiorMoeglich));
+  // «Kamera aus 3D-Ansicht» (14.10.2026): hier steht das Bestellformat fest — wer einen
+  // vertikalen Winkel mitbringt, bekommt `fov` horizontal fuer GENAU dieses Format
+  // (`kamerasFuerBestellformat`, Kern). Alle anderen Standpunkte bleiben Zahl fuer Zahl.
+  const bestellformat = params.resolution ?? BESTELLFORMAT_VORGABE;
+  const kamerasImFormat = params.kameras ? kamerasFuerBestellformat(params.kameras, bestellformat) : undefined;
+  const kamerasOhneInnenraum = kamerasImFormat?.filter((k) => istUeberDiesenWegBestellbar(k.name, interiorMoeglich));
   const kameras = kamerasOhneInnenraum && kamerasOhneInnenraum.length > 0 ? kamerasOhneInnenraum : undefined;
   // B117 Weg B — Uebergangs-Sichtbarkeit (Owner-Entscheid E57, docs/AUFTRAG-
   // B117-DREI-PERSPEKTIVEN-EINE-GELIEFERT.md Abschnitt 3a Schritt 3; Anatomie
@@ -1362,7 +1378,7 @@ export async function postRenderJob(params: {
         }))
       : (params.kameraWahl ?? 'auto'),
     render: {
-      resolution: params.resolution ?? [1600, 1000],
+      resolution: bestellformat,
       samples: params.samples,
       faithful: params.faithful,
       ...(params.sun ? { sun: params.sun } : {}),
@@ -1417,7 +1433,7 @@ export async function postRenderJob(params: {
     scene,
     splat.ebene ? splatRenderKontext({ ebene: splat.ebene, handLage: splat.handLage }) : null,
   );
-  if (splatTeil.hinweis) melde(splatTeil.hinweis, { ton: 'info' });
+  if (splatTeil.hinweis) melde(`Ohne Umgebung bestellt: ${splatTeil.hinweis}`, { ton: 'info' });
   // K1: gepruefte UND gesendete Szene ist dieselbe — die fuenf abgewiesenen
   // Felder sind vorher raus.
   const gesendet = ohneAbgewieseneFelder(splatTeil.szene);
@@ -1430,7 +1446,8 @@ export async function postRenderJob(params: {
   form.append('model', new Blob([modell], { type: mimeTyp }), dateiname);
   const res = await bridgeFetch(bridgeRoutes.jobs, { method: 'POST', body: form });
   if (!res.ok) throw new BridgeHttpError(res.status, 'Bridge antwortet mit');
-  return parseJob(await res.json());
+  const job = parseJob(await res.json());
+  return splatTeil.hinweis ? { ...job, umgebungFehlt: splatTeil.hinweis } : job;
 }
 
 /**
@@ -1462,6 +1479,32 @@ export async function postRenderJob(params: {
  * genau EINE Quelle der Wahrheit, egal über welchen Weg der Job ausgelöst
  * wird (Knopf am Node, Insel-Knopf, `vis.render`-Kosmo-Tool).
  */
+/** Satz, wenn «Kamera aus 3D-Ansicht» am Render-Knoten haengt und noch keine Kamera traegt. */
+export const KAMERA_AUS_3D_FEHLT_HINWEIS =
+  'Der Knoten «Kamera aus 3D-Ansicht» trägt noch keine Kamera — erst die 3D-Ansicht öffnen, dann «Kamera übernehmen».';
+
+/**
+ * Satz, wenn das Blickfeld der Kamera aus der 3D-Ansicht fuer dieses Format ausserhalb des
+ * Vertrags liegt (`CameraSpec.fov` 10–120°) — sonst `null`. Andere Standpunkte prueft das hier
+ * nicht (sie kommen mit ihrem eigenen, schon geprueften Winkel).
+ */
+export function blickfeldAusserhalbHinweis(
+  kameras: readonly AutoKameraStandpunkt[] | undefined,
+  aufloesung: readonly [number, number] | undefined,
+): string | null {
+  if (!kameras) return null;
+  const format = aufloesung ?? BESTELLFORMAT_VORGABE;
+  for (const k of kamerasFuerBestellformat(kameras, format)) {
+    if (k.fovVertikalGrad === undefined || fovImVertrag(k.fov)) continue;
+    const grad = Number.isFinite(k.fov) ? `${Math.round(k.fov)}°` : 'nicht bestimmbar';
+    return (
+      `«${KAMERA_AUS_3D_NAME}»: das Blickfeld waagrecht (${grad} bei ${format[0]} × ${format[1]}) liegt ausserhalb ` +
+      'von 10–120° — in der 3D-Ansicht enger einstellen oder ein anderes Format wählen, dann «Kamera übernehmen».'
+    );
+  }
+  return null;
+}
+
 export function sendeGraphRenderAuftrag(
   graphId: string,
   nodeId: string,
@@ -1480,6 +1523,13 @@ export function sendeGraphRenderAuftrag(
   if (!roh) return;
   if (!roh.hatSzene) {
     melde('Der Render-Node braucht eine Szene — verbinde den Modell-Node.', { ton: 'fehler' });
+    return;
+  }
+  // «Kamera aus 3D-Ansicht» haengt am Eingang, traegt aber keine Kamera: NICHT senden. Sonst
+  // bestellte der Auftrag `cameras: 'auto'`, und die Gegenseite rechnete still ihre eigenen
+  // Standpunkte — ein anderes Bild als das, was der Knoten verspricht.
+  if (roh.kameraAus3dFehlt) {
+    melde(KAMERA_AUS_3D_FEHLT_HINWEIS, { ton: 'fehler' });
     return;
   }
   // P-LEERSZENE: `hatSzene` allein beweist nur die Kante, nicht die
@@ -1559,6 +1609,14 @@ export function sendeGraphRenderAuftrag(
   // B4: Hinweis vor dem Senden, sperrt nicht (s. `tokenHinweisVorDemSenden`).
   const tokenHinweis = tokenHinweisVorDemSenden(bridgeBase(), bridgeToken());
   if (tokenHinweis) melde(tokenHinweis, { ton: 'info' });
+  // «Kamera aus 3D-Ansicht»: das Blickfeld fuer das endgueltige Format vor dem Senden pruefen —
+  // ausserhalb von 10–120° weist der Vertrag die Bestellung ab (`pruefeSzeneVorVersand`), und
+  // das kaeme sonst als Brueckenfehler an, der keiner ist.
+  const kameraFov = blickfeldAusserhalbHinweis(auftrag.kameras, opts?.aufloesung ?? auftrag.resolution);
+  if (kameraFov) {
+    melde(kameraFov, { ton: 'fehler' });
+    return;
+  }
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
   setzeLauf(nodeId, { status: 'gesendet', memoKey: key, gestartetUm: Date.now() });
@@ -1578,6 +1636,7 @@ export function sendeGraphRenderAuftrag(
         jobId: j.job_id,
         status: mappeJobStatus(j),
         ...(j.approval_token !== undefined ? { approvalToken: j.approval_token } : {}),
+        ...(j.umgebungFehlt !== undefined ? { umgebungFehlt: j.umgebungFehlt } : {}),
       }),
     )
     .catch(async (err) => {

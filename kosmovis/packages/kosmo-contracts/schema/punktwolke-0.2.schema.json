@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "kosmo.punktwolke/0.2"
+    },
+    "quelle": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": [
+            "las",
+            "laz",
+            "e57",
+            "xyz",
+            "ply"
+          ]
+        },
+        "datei": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "punkteQuelle": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "format",
+        "datei",
+        "sha256",
+        "punkteQuelle"
+      ]
+    },
+    "lage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "art": {
+              "type": "string",
+              "const": "lv95"
+            },
+            "ursprung": {
+              "type": "object",
+              "properties": {
+                "e": {
+                  "type": "number"
+                },
+                "n": {
+                  "type": "number"
+                },
+                "h": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "e",
+                "n",
+                "h"
+              ]
+            },
+            "hoehenbezug": {
+              "type": "string",
+              "enum": [
+                "ln02",
+                "lhn95",
+                "ellipsoid",
+                "unbekannt"
+              ]
+            },
+            "erkannt": {
+              "type": "string",
+              "enum": [
+                "crs",
+                "wertebereich",
+                "hand"
+              ]
+            }
+          },
+          "required": [
+            "art",
+            "ursprung",
+            "hoehenbezug",
+            "erkannt"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "art": {
+              "type": "string",
+              "const": "lokal"
+            },
+            "hinweis": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "art",
+            "hinweis"
+          ]
+        }
+      ]
+    },
+    "achsen": {
+      "type": "object",
+      "properties": {
+        "zOben": {
+          "type": "boolean",
+          "const": true
+        },
+        "gedrehtGrund": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "zOben"
+      ]
+    },
+    "daten": {
+      "type": "string",
+      "minLength": 1
+    },
+    "punkte": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "felder": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "xyz",
+          "rgb",
+          "intensitaet",
+          "klasse",
+          "normale"
+        ]
+      }
+    },
+    "begrenzung": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "max": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ]
+    },
+    "ausduennung": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "art": {
+              "type": "string",
+              "const": "keine"
+            }
+          },
+          "required": [
+            "art"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "art": {
+              "type": "string",
+              "enum": [
+                "raster",
+                "zufall-fester-seed"
+              ]
+            },
+            "rasterMm": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "seed": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "grund": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "art",
+            "grund"
+          ]
+        }
+      ]
+    },
+    "verworfen": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "was": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grund": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "was",
+          "grund"
+        ]
+      }
+    },
+    "werkzeug": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "schema",
+    "quelle",
+    "lage",
+    "achsen",
+    "daten",
+    "punkte",
+    "felder",
+    "begrenzung",
+    "ausduennung",
+    "verworfen",
+    "werkzeug"
+  ]
+}

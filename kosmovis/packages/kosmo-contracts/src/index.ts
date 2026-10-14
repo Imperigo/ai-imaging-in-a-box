@@ -7,3 +7,5 @@ export * from './dev-workorder';
 export * from './kosmo-package';
 export * from './lora-train';
 export * from './unbekannte-felder';
+export * from './bestand-aus-netz';
+export * from './punktwolke';

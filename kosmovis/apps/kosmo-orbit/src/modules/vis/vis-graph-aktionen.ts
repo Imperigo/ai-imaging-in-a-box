@@ -1,8 +1,9 @@
 import { bestaetigen, melde, meldeFehler } from '@kosmo/ui';
-import type { VisGraph, VisNode } from '@kosmo/kernel';
+import { KAMERA_AUS_3D_TYP, type VisGraph, type VisNode } from '@kosmo/kernel';
 import { useProject } from '../../state/project-store';
 import { basisNodeHoehe, groessteNodeHoehe, NODE_W } from './NodeCanvas';
 import { useVisRuntime } from './vis-runtime';
+import { kameraAus3dStartParams } from './kamera-aus-3d';
 
 /**
  * PC1 (`docs/V084-SPEZ.md` §5 W2, C-15) — Extraktion der vier Graph-Aktionen,
@@ -359,7 +360,15 @@ export function nodeHinzufuegen(graphId: string, typ: string): void {
     // `freierKnotenPlatz` (oben) — dieselben Schritte, geprueft wird dort
     // aber mit der groessten Knotenhoehe statt der Basishoehe.
     const { x, y } = freierKnotenPlatz(bestehend, typ, { x: START_X, y: START_Y });
-    runCommand('vis.nodeSetzen', { graphId, typ, x, y });
+    // «Kamera aus 3D-Ansicht» liest die Kamera BEIM ANLEGEN (14.10.2026) — im selben Befehl,
+    // also ein Rückgängig-Schritt. Ohne offene 3D-Ansicht entsteht er ohne Kamera und sagt es.
+    runCommand('vis.nodeSetzen', {
+      graphId,
+      typ,
+      x,
+      y,
+      ...(typ === KAMERA_AUS_3D_TYP ? { params: kameraAus3dStartParams() } : {}),
+    });
     // A21 — WAS DER MITTEN-ANKER FUER DIE B69-MELDUNG UNTEN KOSTET, offen
     // gesagt, weil es in die unerwartete Richtung geht. Gemessen (acht
     // Render-Knoten nacheinander ueber denselben Palette-Klick, Meldungen per

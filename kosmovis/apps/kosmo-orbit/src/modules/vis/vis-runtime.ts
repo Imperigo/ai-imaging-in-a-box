@@ -101,6 +101,13 @@ export interface NodeLauf {
   engineUsed?: string | undefined;
   engineLicense?: string | undefined;
   fehler?: string;
+  /**
+   * Runde 29 (Befund HomeStation, Auftrag 281): warum ein sichtbarer Splat
+   * NICHT als Umgebung mitging (z.B. Dateipfad unbekannt). Bleibt am Lauf,
+   * statt nur als fluechtige Meldung — fehlt das Feld, ging er mit oder es
+   * gab keinen.
+   */
+  umgebungFehlt?: string;
   /** Freigabe-Token aus dem Create-Response — nötig für `/approve`. */
   approvalToken?: string;
   /** Wer den Job übernommen hat (z. B. "fake-worker" oder ein echter Worker). */

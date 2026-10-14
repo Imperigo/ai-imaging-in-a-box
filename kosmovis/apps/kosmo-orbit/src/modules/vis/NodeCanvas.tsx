@@ -12,6 +12,7 @@ import {
   augeImModell,
   evaluiereGraph,
   HIMMEL_ARTEN,
+  KAMERA_AUS_3D_TYP,
   projektKameras,
   RENDER_PRESETS,
   renderPromptBausteine,
@@ -68,6 +69,7 @@ import {
   wartetAbholerLabel,
 } from './vis-runtime';
 import { BridgeBild } from './BridgeBild';
+import { KameraAus3dKoerper } from './KameraAus3dKnoten';
 import { renderWarteAnzeige } from './render-warteort';
 import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
@@ -490,6 +492,10 @@ const KOERPER_H: Record<string, number> = {
   referenz: 92,
   kamera: 54,
   aufnahme: 118,
+  // «Kamera aus 3D-Ansicht» (14.10.2026, `KameraAus3dKnoten.tsx`): vier einzeilige Zeilen
+  // (Auge, Blickfeld, Objektiv-Shift, Umgebung) und der Knopf; ohne Kamera der Satz über drei
+  // Zeilen und der Knopf — beide passen in dieselbe Höhe, der Knoten springt nicht.
+  kameraAus3d: 112,
 };
 
 /**
@@ -3277,7 +3283,7 @@ function NodeKoerper({
   material: string | undefined;
   /** V-H4: der eingehende Prompt am Render-Node (vor dem Formular-Zusatz). */
   eingehenderPrompt: string;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
@@ -4056,6 +4062,10 @@ function NodeKoerper({
           )}
         </div>
       );
+    }
+    case KAMERA_AUS_3D_TYP: {
+      const g = doc.get<VisGraph>(graphId);
+      return g ? <KameraAus3dKoerper graph={g} node={node} /> : null;
     }
     default:
       return null;

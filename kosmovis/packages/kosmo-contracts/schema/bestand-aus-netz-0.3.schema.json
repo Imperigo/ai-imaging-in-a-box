@@ -1,0 +1,824 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "kosmo.bestand-aus-netz/0.3"
+    },
+    "eingang": {
+      "type": "object",
+      "properties": {
+        "art": {
+          "type": "string",
+          "const": "netz"
+        },
+        "herkunft": {
+          "type": "string",
+          "const": "visbox-realityscan"
+        },
+        "datei": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "art",
+        "herkunft",
+        "datei",
+        "sha256"
+      ]
+    },
+    "rahmen": {
+      "type": "object",
+      "properties": {
+        "matrix": {
+          "minItems": 16,
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "massstab": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "wert": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "herkunft": {
+                  "type": "string",
+                  "const": "imu"
+                },
+                "ampel": {
+                  "type": "string",
+                  "enum": [
+                    "gruen",
+                    "gelb",
+                    "rot"
+                  ]
+                }
+              },
+              "required": [
+                "wert",
+                "herkunft",
+                "ampel"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "wert": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "herkunft": {
+                  "type": "string",
+                  "const": "hand"
+                },
+                "handmass": {
+                  "type": "object",
+                  "properties": {
+                    "strecke": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sollMm": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "istSzene": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "strecke",
+                    "sollMm",
+                    "istSzene"
+                  ]
+                }
+              },
+              "required": [
+                "wert",
+                "herkunft",
+                "handmass"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "ausrichtungGrund": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entzerrungGrund": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "matrix",
+        "massstab",
+        "ausrichtungGrund"
+      ]
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "werkzeug": {
+      "type": "string",
+      "minLength": 1
+    },
+    "geschosse": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "schluessel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "koteMm": {
+            "type": "number"
+          },
+          "hoeheMm": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "schluessel",
+          "name",
+          "koteMm",
+          "hoeheMm"
+        ]
+      }
+    },
+    "waende": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "schluessel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "geschoss": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "a": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ]
+              },
+              "b": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ]
+              },
+              "dickeMm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "hoeheMm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "schluessel",
+              "geschoss",
+              "a",
+              "b",
+              "dickeMm",
+              "hoeheMm"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "dickeQuelle": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "quelle": {
+                        "type": "string",
+                        "const": "netz"
+                      },
+                      "begruendung": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "quelle"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "quelle": {
+                        "type": "string",
+                        "const": "annahme"
+                      },
+                      "begruendung": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "quelle",
+                      "begruendung"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "netz"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "annahme"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle",
+                  "begruendung"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "abweichung": {
+                "type": "object",
+                "properties": {
+                  "medianMm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "p95Mm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "n": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "medianMm",
+                  "p95Mm",
+                  "n"
+                ]
+              },
+              "abweichungFehlt": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "oeffnungen": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "schluessel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "wand": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "art": {
+                "type": "string",
+                "enum": [
+                  "fenster",
+                  "tuer",
+                  "tor"
+                ]
+              },
+              "mitteMm": {
+                "type": "number",
+                "minimum": 0
+              },
+              "breiteMm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "hoeheMm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "bruestungMm": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "schluessel",
+              "wand",
+              "art",
+              "mitteMm",
+              "breiteMm",
+              "hoeheMm",
+              "bruestungMm"
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "netz"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "annahme"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle",
+                  "begruendung"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "abweichung": {
+                "type": "object",
+                "properties": {
+                  "medianMm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "p95Mm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "n": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "medianMm",
+                  "p95Mm",
+                  "n"
+                ]
+              },
+              "abweichungFehlt": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "boeden": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "schluessel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "geschoss": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "umriss": {
+                "minItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ]
+                }
+              },
+              "dickeMm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "schluessel",
+              "geschoss",
+              "umriss",
+              "dickeMm"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "dickeQuelle": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "quelle": {
+                        "type": "string",
+                        "const": "netz"
+                      },
+                      "begruendung": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "quelle"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "quelle": {
+                        "type": "string",
+                        "const": "annahme"
+                      },
+                      "begruendung": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "quelle",
+                      "begruendung"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "netz"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "annahme"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle",
+                  "begruendung"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "abweichung": {
+                "type": "object",
+                "properties": {
+                  "medianMm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "p95Mm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "n": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "medianMm",
+                  "p95Mm",
+                  "n"
+                ]
+              },
+              "abweichungFehlt": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "daecher": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "schluessel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "geschoss": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "umriss": {
+                "minItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ]
+                }
+              },
+              "form": {
+                "type": "string",
+                "enum": [
+                  "flach",
+                  "pult",
+                  "sattel"
+                ]
+              },
+              "neigungGrad": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 75
+              },
+              "fallrichtung": {
+                "type": "string",
+                "enum": [
+                  "x+",
+                  "x-",
+                  "y+",
+                  "y-"
+                ]
+              },
+              "firstrichtung": {
+                "type": "string",
+                "enum": [
+                  "x",
+                  "y"
+                ]
+              },
+              "traufeUnterkanteMm": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "schluessel",
+              "geschoss",
+              "umriss",
+              "form",
+              "traufeUnterkanteMm"
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "netz"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "quelle": {
+                    "type": "string",
+                    "const": "annahme"
+                  },
+                  "begruendung": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "quelle",
+                  "begruendung"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "abweichung": {
+                "type": "object",
+                "properties": {
+                  "medianMm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "p95Mm": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "n": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "medianMm",
+                  "p95Mm",
+                  "n"
+                ]
+              },
+              "abweichungFehlt": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "nichtErkannt": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "was": {
+            "type": "string",
+            "minLength": 1
+          },
+          "wo": {
+            "type": "string"
+          },
+          "grund": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "was",
+          "grund"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "eingang",
+    "rahmen",
+    "seed",
+    "werkzeug",
+    "geschosse",
+    "waende",
+    "oeffnungen",
+    "boeden",
+    "daecher",
+    "nichtErkannt"
+  ]
+}

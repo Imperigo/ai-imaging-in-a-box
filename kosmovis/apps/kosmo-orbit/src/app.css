@@ -332,13 +332,19 @@
   flex-direction: column;
   padding: 32px 24px 24px;
 }
+/* Owner-Entscheid 14.10.2026 («auf breiten Bildschirmen mitwachsen»): bis rund 1450 px Fensterbreite bleibt es bei
+   1280 px wie bisher; darüber wächst die Zentrale mit (88 % der Breite, höchstens 2240 px). Am Gerät (2493 px) stand
+   sie als Spalte in der Mitte mit je gut 600 px leerem Rand. Entwurf `docs/entwuerfe/zentrale-breit/`. */
+:root {
+  --app-zentrale-breite: clamp(1280px, 88vw, 2240px);
+}
 .app-zentrale-inhalt {
   /* PA2: 1280px (war 1160px) — die rechte Spalte (Wortmarke + Kachel-Reihe,
      `.orbit065-home-rechts`) braucht bei 1280×720 (kleinster Pflicht-
      Viewport, V084-SPEZ §4.3) genug Breite, damit die 4 Hauptkacheln NIE
      umbrechen (`flex-wrap` in `.k-orbit-ring-feld`, aura.css, greift NUR
      als Sicherheitsnetz bei sehr schmalen Fenstern < 860px). */
-  max-width: 1280px;
+  max-width: var(--app-zentrale-breite);
   width: 100%;
   margin: 0 auto;
   flex: 1;
@@ -1103,7 +1109,7 @@ button.app-projekt-tab-oeffnen:hover {
       ein Rand. */
 .app-heim-werkzeuge {
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--app-zentrale-breite);
   margin-left: auto;
   margin-right: auto;
 }

@@ -1359,7 +1359,11 @@
      `token-spiegel.test.ts`); genutzt via `.k-glass` unten. Das Glass ist die schwebende
      Overlay-Sprache (Viewport-HUD, Achsenkreuz, Kuratier-Karten), NIE als
      Stationsfläche. */
-  --k-glass-fill: rgba(20, 23, 31, 0.62);
+  /* 14.10.2026 (Entwurf Kontrollmass, Befund im dunklen Thema): mit 62 % Deckkraft mischte sich die helle 3D-Fläche
+     zu einem mittleren Grau, und blasse Schrift (`--k-ink-faint`) stand darauf bei 1,8:1 (am Bildpunkt gemessen,
+     Sonne-Fenster über leerer 3D-Ansicht). 90 % hält 4,8:1. Am Owner-Gerät ist das Glas ohnehin deckend
+     (`data-glas='deckend'`); betroffen waren Chromium und der Mac. Probe `e2e/glas-lesbar-dunkel.spec.ts`. */
+  --k-glass-fill: rgba(20, 23, 31, 0.9);
   /* Fokus-Schleier im dunklen Thema: Rauchglas statt Milchglas, die Glanzkante leiser. */
   --k-fokus-ton: rgba(14, 16, 22, 0.3);
   --k-glanzkante: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -4613,15 +4617,18 @@ progress {
   outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
   outline-offset: var(--k-fokusring-versatz);
 }
+/* Nachprobe Runde 26 (LW, Gerät): die Spur war kaum zu sehen. Mit `--k-line-strong` stand sie hell bei 1,7:1 und
+   dunkel bei 1,9:1 gegen ihren Grund; eine Spur zeigt, wohin der Schieber geht, und braucht wie jedes Bedienteil
+   3:1. `--k-ink-faint` hält das in beiden Themen. */
 .k-slider::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: var(--k-radius-pill);
-  background: var(--k-line-strong);
+  background: var(--k-ink-faint);
 }
 .k-slider::-moz-range-track {
   height: 4px;
   border-radius: var(--k-radius-pill);
-  background: var(--k-line-strong);
+  background: var(--k-ink-faint);
 }
 .k-slider::-moz-range-progress {
   height: 4px;

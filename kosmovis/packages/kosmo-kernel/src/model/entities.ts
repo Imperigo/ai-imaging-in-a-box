@@ -75,7 +75,7 @@ export interface EntityMeta {
    * einzelnen Bauteil: `meta.layer` steuert NUR den DXF-Ausgang
    * (`dxf/export.ts`), `meta.locked` NUR den Interaktionspfad — beide ohne
    * Geometriewirkung, beide je Bauteil, beide über einen kleinen Command
-   * gesetzt (`design.ebeneSetzen`, `design.sperren`). `nurBild` reiht sich
+   * gesetzt (`design.ebene (dxfName)`, `design.ebene (sperren)`). `nurBild` reiht sich
    * dort ein; gesetzt wird es mit `design.merkmalSetzen` (Merkmal `nurBild`)
  * — bis V9 hatte es einen eigenen Befehl, `design.nurBildSetzen`; der ist in
  * jenem aufgegangen und hat dabei die Werkzeug-Token freigemacht, aus denen
@@ -190,6 +190,36 @@ export interface EntityMeta {
    * NICHT dieses Feld.
    */
   favoritId?: string;
+  /**
+   * Bestand aus Netz (Vertrag `kosmo.bestand-aus-netz/0.3`, 14.10.2026):
+   * woher DIESES Bauteil kommt, wenn es aus einem vermessenen Netz
+   * eingespielt wurde (`design.bestandAusNetzEinspielen`). Gemessen oder
+   * angenommen, mit Grund; die Abweichung zum Netz als Verteilung, oder der
+   * Grund, warum sie fehlt. Fehlt das Feld, ist das Bauteil gezeichnet und
+   * nichts aendert sich (Goldens byte-gleich).
+   *
+   * Eine Marke ohne Geometriewirkung, wie `nurBild` und `aussehen`: Plan,
+   * Schnitt, Mengen und IFC lesen sie nicht. Sie reist mit, wo `meta` reist
+   * (Speichern, Sync, Kopieren); belegt in
+   * `test/bestand-aus-netz-einspielen.test.ts`.
+   */
+  erfassung?: BestandErfassung;
+}
+
+/** Herkunft eines aus dem Netz eingespielten Bauteils (`EntityMeta.erfassung`). */
+export interface BestandErfassung {
+  quelle: 'netz' | 'annahme';
+  /** Pflicht bei `annahme` (der Vertrag lehnt eine Annahme ohne Grund ab). */
+  begruendung?: string;
+  /** Abweichung zum Netz in mm. Fehlt sie, nennt `abweichungFehlt` den Grund. */
+  abweichung?: { medianMm: number; p95Mm: number; n: number };
+  abweichungFehlt?: string;
+  /** Eigene Herkunft der Dicke (Waende, Boeden); fehlt sie, gilt `quelle`. */
+  dickeQuelle?: { quelle: 'netz' | 'annahme'; begruendung?: string };
+  /** Der Vertrag, aus dem das Bauteil kam, z.B. `kosmo.bestand-aus-netz/0.3`. */
+  vertrag: string;
+  /** Pruefsumme des Netzes (`eingang.sha256`). */
+  quelleSha256: string;
 }
 
 /**
@@ -1000,7 +1030,7 @@ export interface Wall extends Base {
    * FEHLT DAS FELD, AENDERT SICH NICHTS. Jede bestehende Wand und jede aus
    * `design.wandErstellen` behaelt OK Geschoss, Zahl fuer Zahl (Golden-Guard,
    * dasselbe Muster wie `Beam.deckeId`). Bewusst mit Sammelknopf gesetzt
-   * (`design.waendeAnDachAnschliessen`), nie von selbst: eine Wand folgt dem
+   * (`design.wandBearbeiten (dachAlle)`), nie von selbst: eine Wand folgt dem
    * Dach nur, wenn jemand es gesetzt hat.
    *
    * HAENGENDE REFERENZ = EHRLICHER RUECKFALL auf die bisherige Hoehe, kein
@@ -1008,7 +1038,7 @@ export interface Wall extends Base {
    * Daches (wie `Beam.deckeId`). Der Rueckfall gilt auch, wenn das Dach in
    * einem anderen Geschoss steht oder seine Basis nicht auf der heutigen
    * Wandkrone liegt (±1 mm): dann haette die Wand keine Beruehrung mit der
-   * Dachunterseite. Geprueft wird beim SETZEN (`design.wandAnDachSetzen`).
+   * Dachunterseite. Geprueft wird beim SETZEN (`design.wandBearbeiten (anDach)`).
    */
   dachId?: string;
 }
@@ -1541,6 +1571,18 @@ export interface Boundary extends Base {
   name: string;
   /** Grenzabstand (V2-Vorform): Bauteile müssen so weit INNERHALB der Linie bleiben (mm). */
   grenzabstand?: Mm | null;
+  /**
+   * Demo 01 (14.10.2026): «netto» heisst, der Grenzabstand ist in der Linie
+   * SCHON ABGEZOGEN (z.B. Huelle = Parzelle − 7 m GA). Checks und
+   * Volumenstudie ziehen dann keinen Grenzabstand mehr ab, auch nicht
+   * ersatzweise den der Zonenregel (`derive/grenzabstand-wirksam.ts`); ein
+   * Mehrhöhenzuschlag gilt weiter. Gesetzt wird es nur über
+   * `design.baugrenzeSetzen { netto: true }` — vom Architekten, von Kosmo
+   * oder Claude, wenn die Linie aus einer Hüllkörper-Rechnung stammt. Fehlt
+   * das Feld: brutto, wie bisher. Rückgängig stellt die alte Baugrenze ganz
+   * wieder her (das Setzen ersetzt sie).
+   */
+  netto?: boolean | undefined;
   /** Mehrhöhenzuschlag: Anteil der Fassadenhöhe über der Freigrenze (z.B. 0.5 ab 12 m). */
   mehrHoehen?: { abHoehe: Mm; anteil: number } | null;
 }
@@ -1813,6 +1855,10 @@ export interface SheetPlacement {
   storeyId?: string;
   /** Schnitt: Schnittlinie + Sichttiefe (Weltkoordinaten mm). */
   section?: { a: Pt; b: Pt; depth: Mm; lookLeft: boolean };
+  /** Paket 08 WB-Schnitt (E220): Verweis auf eine `Schnitt`-Entität. Sind
+   *  `schnittId` und `section` gesetzt, gewinnt `schnittId`; `section` bleibt
+   *  der Rückfall für alte Dokumente und für einen hängenden Verweis. */
+  schnittId?: string;
   /** Ansicht (P32/E92): Himmelsrichtung der Fassade — «Nord bleibt +y»
    *  (`derive/standort.ts`, dieselbe Konvention wie `Fassadenrichtung` in
    *  `derive/fassadenmodule.ts`). NUR bei `view: 'ansicht'` gesetzt; die
@@ -1841,6 +1887,26 @@ export interface SheetPlacement {
    *  Ebenen sichtbar. Die Wirkung im Blatt (`derive/sheet.ts`) ist ein
    *  Folgeposten; heute nur das Feld. */
   ebenenKombinationId?: string;
+  /**
+   * Ausschnitt je Blatt (`derive/planausschnitt.ts`): wie der Bestand
+   * (`program: 'bestand'`) erscheint — 'aus', 'umriss' (feine graue Linie,
+   * Vorgabe sobald Bestand im Modell steht) oder 'voll' (grau getönt, nie
+   * schwarz).
+   */
+  kontext?: 'aus' | 'umriss' | 'voll';
+  /** Zuschnitt: Rahmen um das Projekt (Vorgabe), um gewählte Bauteile oder
+   *  alles; `randM` in Metern (Vorgabe 30 mm Papier, mindestens 5 m). */
+  ausschnitt?: { rahmen: 'projekt' | 'bauteile' | 'alles'; ids?: string[]; randM?: number };
+  /** Blicktiefe in mm — Ansicht ab der vordersten Fassade, Schnitt ab der
+   *  Schnittlinie (ersetzt dort die Sichttiefe). */
+  tiefe?: Mm;
+  /** Ansicht unter beliebigem Azimut der Fassadennormale (0 = Nord = +y, im
+   *  Uhrzeigersinn, Projektachsen) — für gedrehte Gebäude. */
+  fassadeGrad?: number;
+  /** Ansicht senkrecht zur Aussenseite dieses Bauteils (Wand oder
+   *  Umriss-Körper, `kante` 1-basiert); beim Zeichnen neu gelesen,
+   *  `fassadeGrad` hält den Winkel vom Platzieren als Rückfall. */
+  fassadeVon?: { id: string; kante?: number };
 }
 
 /** Freier Textblock auf einem Blatt (Plakat-Titel, Konzepttexte). */
@@ -2392,7 +2458,7 @@ export interface Kommentar extends Base {
  * MassKette (v0.8.3 E2, `docs/V083-SPEZ.md` §2, Island-§8-Freigabe §8-7) —
  * ein echtes, vom Benutzer gesetztes Punkt-zu-Punkt-Mess-Ergebnis (mindestens
  * zwei Punkte, eine offene Kette). Unabhängig vom automatischen
- * `design.bemassungSetzen`-Anzeigepfad (`derive/dimensions.ts`), der nur die
+ * `design.mass (stil)`-Anzeigepfad (`derive/dimensions.ts`), der nur die
  * Darstellung der assoziativen Aussenbemassung steuert — eine MassKette ist
  * eine eigenständige, im Doc gespeicherte Messung, kein Anzeige-Toggle.
  */
@@ -2418,7 +2484,7 @@ export interface MassKette extends Base {
  * flächendeckend — und nur so bleiben die ~17 Grundriss-Bestands-Goldens
  * byte-still (Daten-Guard). Die AUTOMATISCHEN Geschoss-Koten im Schnitt
  * (`DocSettings.bemassung.hoehenKoten`, `sectionInnerSvg`) bleiben davon
- * unberührt — dieselbe Trennung wie `MassKette` vs. `design.bemassungSetzen`.
+ * unberührt — dieselbe Trennung wie `MassKette` vs. `design.mass (stil)`.
  */
 export interface Hoehenkote extends Base {
   kind: 'hoehenkote';
@@ -2866,6 +2932,18 @@ export interface PrepareGraph extends Base {
  */
 export interface SolidOperation { id: string; meta?: EntityMeta; kind: 'solidoperation'; zielId: string; operatorId: string; art: 'subtraktion' | 'subtraktion-aufwaerts' | 'subtraktion-abwaerts' | 'schnittmenge' | 'vereinigung'; reihenfolge?: number }
 
+/**
+ * Paket 08 WB-Schnitt (E220, E215 Fernbereich; Bauplan Werkzeugbank §08):
+ * ein Schnitt als benanntes Modell-Ding mit Name und Nummer, auf das Blätter
+ * (`SheetPlacement.schnittId`) und Grundrissmarker verweisen. Die Linie ist
+ * dieselbe wie `SchnittSpec` (a/b/depth/lookLeft); alles Weitere ist
+ * optional und fehlt = heutiges Verhalten:
+ * `knicke` fehlt = gerade; `reichweiteHorizontal` fehlt = 'begrenzt'
+ * (Sichttiefe `depth`); `reichweiteVertikal` fehlt = unbegrenzt;
+ * `fernbereich` fehlt = aus; `zeigeAufGeschossen` fehlt = alle Geschosse.
+ */
+export interface Schnitt extends Base { kind: 'schnitt'; name: string; nummer: string; a: Pt; b: Pt; depth: Mm; lookLeft: boolean; knicke?: Pt[]; reichweiteHorizontal?: 'begrenzt' | 'unbegrenzt' | 'nulltiefe'; reichweiteVertikal?: { vonStoreyId?: string; bisStoreyId?: string }; fernbereich?: { abstand: Mm }; zeigeAufGeschossen?: string[] }
+
 export type Entity =
   | Storey | GridAxis | Assembly | Wall | Slab | Opening | Zone | MassBody | Roof | Stair | Rampe | Sheet | Boundary | ImageAsset | Furniture | ZonenTuer | Terrain | Aussparung | Column | Beam | Etikett | VisGraph | FreeMesh | Mangel | Kommentar | MassKette | Gelaender
   // v0.9.2 P-P1 (V092-SPEZ §P-P1): additiv ans Ende, wie jede spätere Entity hier.
@@ -2885,7 +2963,9 @@ export type Entity =
   // KD-9b D6a (07.10.2026): additiv ans Ende, wie jede spaetere Entity hier.
   | Dachfenster
   // E216 Paket 07 (13.10.2026): additiv ans Ende, wie jede spaetere Entity hier.
-  | SolidOperation;
+  | SolidOperation
+  // Paket 08 WB-Schnitt (13.10.2026, E220): additiv ans Ende.
+  | Schnitt;
 
 /**
  * Register ALLER vom Kernel geführten Entity-Arten (v0.9.6 P-MOL,
@@ -2920,6 +3000,8 @@ export const ENTITY_KINDS = [
   'dachfenster',
   // E216 Paket 07 (13.10.2026): additiv ans Ende.
   'solidoperation',
+  // Paket 08 WB-Schnitt (13.10.2026, E220): additiv ans Ende.
+  'schnitt',
 ] as const;
 
 export type EntityKind = (typeof ENTITY_KINDS)[number];

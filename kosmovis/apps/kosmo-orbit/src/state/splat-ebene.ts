@@ -12,8 +12,12 @@ import type { SplatHandLage } from '@kosmo/kernel';
 
 /** Nur der Teil des Originals, den das Vis-Werkzeug liest. */
 export interface SplatEbeneZustand {
-  /** Die Splat-Ebene des Projekts — in Visbox nie gesetzt. */
-  ebene: null;
+  /**
+   * Die Splat-Ebene des Projekts — in Visbox nie gesetzt. Runde 29 (14.10.2026): der Typ nennt
+   * den Namen, weil «Kamera aus 3D-Ansicht» (`kamera-aus-3d.ts`) ihn nach der Prüfung auf `null`
+   * liest; mit `null` allein bliebe dort ein Typ ohne Wert (`never`). Der Wert bleibt `null`.
+   */
+  ebene: { readonly name: string } | null;
   handLage: { id: string; lage: SplatHandLage } | null;
 }
 

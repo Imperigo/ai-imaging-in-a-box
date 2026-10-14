@@ -53,7 +53,7 @@ describe('vis-legende-infos — Deckung gegen VIS_NODE_KATALOG (K36)', () => {
     expect(nodeParameterInfos('render').map((p) => p.name)).toEqual(['preset', 'nurCycles']);
   });
 
-  it('nodeZweck(): heute tragen alle 12 Typen eine Katalog-hilfe — der Fallback bleibt ehrlich', () => {
+  it('nodeZweck(): heute tragen alle 13 Typen eine Katalog-hilfe — der Fallback bleibt ehrlich', () => {
     for (const [typ, k] of Object.entries(VIS_NODE_KATALOG)) {
       expect(k.hilfe.length, typ).toBeGreaterThan(0);
       expect(nodeZweck(typ)).toBe(k.hilfe);
