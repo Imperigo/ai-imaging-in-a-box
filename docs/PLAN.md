@@ -7897,7 +7897,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Befund HomeStation: texturiertes Netz so scharf wie der Splat oder schärfer (7.0–7.8 gegen 4.1–4.9), Eckfarben an der Fensterwand unlesbar; +2.5 min. *(14.10.2026, §108)*
 - [ ] HomeStation legt die Vorlagen (Abwicklung, OBJ-Export) in den Zentrale-Anhang.
 - [ ] Bau: Abwicklung, OBJ + PNG, Vereinfachung 500k–1 Mio., Deckel für OBJ, Render mit Emission 1.
-- [ ] Prepare: Bilder mit max_res 1600 statt 1086 auslesen (ihre Kette).
+- [x] Prepare: 1086 px waren ein Rechenfehler, behoben (≈ 1616 px), KosmoPrepare 6b7db4a/6ffe28f. *(14.10.2026, §108)*
 - [ ] Messauftrag M4 danach.
 
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
