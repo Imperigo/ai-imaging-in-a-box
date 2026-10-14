@@ -2763,7 +2763,9 @@ verkehrt herum.
 
 **Emissions-Shader** — Ein Material, das selbst leuchtet, statt Licht zu empfangen.
 *Für den Material-ID-Pass gebraucht: Die Farben sollen die Bauteile bezeichnen, nicht die
-Beleuchtung wiedergeben.*
+Beleuchtung wiedergeben.* Ebenso für die Umgebung (Splat, Netz, Textur), mit der **Stärke 1**: Ihre
+Farbe ist schon das Licht der Aufnahme; noch einmal beleuchtet, sähe sie doppelt belichtet aus — mit
+Stärke 1 steht im Bild genau die Farbe der Datei.
 
 **View-Transform (AgX, Standard)** — Die Umrechnung von berechneten Lichtwerten in
 Bildwerte. `AgX` bildet filmisch ab und ist für Ansichtsbilder schöner; `Standard` rechnet
@@ -3882,7 +3884,30 @@ Umgebung wird und wieviel Speicher es braucht.
 **Eckpunktfarbe (Vertexfarbe)** — Eine Farbe, die nicht als Bild auf eine Fläche geklebt ist, sondern an jedem
 Eckpunkt eines Netzes steht; dazwischen wird übergeblendet. Einfacher als eine Textur, und für ein dichtes Netz
 genau genug. *Im Projekt:* So trägt das Netz der Splat-Brücke die Farben der Aufnahme; Blender zeichnet sie als
-leuchtende Farbe, ohne sie neu zu beleuchten.
+leuchtende Farbe, ohne sie neu zu beleuchten. Für das Netz aus RealityScan seit Fassung 3 nur noch der Rückfall:
+An Fensterwänden war eine Farbe je Ecke zu grob, das Bild unlesbar (HomeStation, 14.10.2026).
+
+**Textur** — Ein Bild, das auf die Flächen eines Netzes geklebt wird wie eine Tapete. Das Netz gibt die Form,
+die Textur die Farbe und die Feinheiten — Fensterrahmen, Fugen, Schrift —, die viel kleiner sein können als
+die Dreiecke darunter. *Im Projekt:* Seit Fassung 3 der RealityScan-Brücke (14.10.2026) trägt das Umgebungsnetz
+eine Textur aus den Fotos statt Eckfarben; gemessen war das Bild damit so scharf wie der Splat oder schärfer.
+
+**Abwicklung (UV-Abwicklung)** — Das Netz wird gedanklich aufgeschnitten und flach ausgelegt, wie ein
+Schnittmuster aus Stoff, damit jedes Dreieck seinen Platz auf einem flachen Bild bekommt. Die Lage auf dem Bild
+heisst **UV** (zwei Zahlen je Ecke, «u» nach rechts, «v» nach oben, damit sie nicht mit x, y, z verwechselt
+werden). *Im Projekt:* RealityScan wickelt mit `-unwrap` ab — und nur mit einer **Abwicklungsdatei**
+(`betrieb/realityscan/unwrap-optimal.xml`); die Schalter in der Befehlszeile wirkten nicht.
+
+**Texel** — Ein Bildpunkt der Textur, so wie ein Pixel ein Bildpunkt des Bildschirms ist. Die Texelgrösse sagt,
+wie viel Fläche am Gebäude ein Texel deckt — je kleiner, desto schärfer. *Im Projekt:* mit der
+Abwicklungsdatei etwa 3 mm je Texel auf 3–4 Bildern zu 8192 × 8192, mit den Vorgaben von RealityScan 7.6 mm.
+
+**OBJ und MTL (Dateiformate)** — Zwei einfache Textdateien für ein texturiertes Netz. Das **OBJ** zählt die
+Ecken (`v`), ihre Lage auf der Textur (`vt`) und die Flächen auf (`f`, je Ecke «Nummer der Ecke / Nummer der
+Texturlage»); die **MTL** sagt, welches Bild zu welchem Material gehört (`map_Kd`). Die Bilder liegen als
+eigene Dateien daneben. *Im Projekt:* Das Netz aus RealityScan kommt seit Fassung 3 als OBJ + MTL + PNG; die
+Brücke nimmt den **Deckel** heraus, nummeriert neu und schreibt die Prüfsumme der Bilder ins OBJ
+(`realityscan.bereinige_obj`).
 
 **Insel (im Netz)** — Ein kleines Netzstück, das mit dem Rest nicht verbunden ist — meist ein Fetzen aus einer
 einzelnen falschen Tiefe. *Im Projekt:* Die Splat-Brücke entfernt Inseln unter 200 Dreiecken
@@ -3995,7 +4020,8 @@ der **Waise** der Auftragsliste.
 es keine Fotos hat — etwa eine waagrechte Platte über die ganze Szene. Sie sehen aus wie eine Wand oder
 ein Dach, wo keines ist, und würden im Bild das Gebäude verdecken. *Im Projekt:* am Heim-PC 123 Dreiecke
 mit 59 % der Fläche (278); `realityscan.bereinige_export` nimmt jedes Dreieck weg, dessen längste Kante
-mehr als 5 % der Netzgrösse misst.
+mehr als 2,5 % der Netzgrösse misst (bis M3 waren es 5 %, und Reste blieben im Bild); für das texturierte
+OBJ dasselbe in `realityscan.bereinige_obj`.
 
 **Farbe als Ganzzahl oder Kommazahl (uchar / float)** — Eine Farbe je Ecke kann auf zwei Arten in der
 Datei stehen: als ganze Zahl von 0 bis 255 (`uchar`) oder als Kommazahl von 0 bis 1 (`float`). Ein
@@ -6977,6 +7003,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus Fassung 3 der RealityScan-Brücke (Textur statt Eckfarben): **Textur**, **Abwicklung (UV-Abwicklung)**, **Texel**, **OBJ und MTL (Dateiformate)**; **Emissions-Shader** um die Stärke 1 der Umgebung ergänzt, **Eckpunktfarbe** und **Deckel (im Netz)** nachgeführt (Grenze 2,5 % statt 5 %) |
 | 2026-10-14 | Ergaenzt aus der Übernahme Runde 26 der Knotenansicht (KosmoOrbit 22988d6ed): **Zwei-Finger-Geste (Wischen und Pinch)** |
 | 2026-10-14 | Ergaenzt aus Entscheid 87 (ein Klick fürs Aktualisieren): **Selbst-Aktualisieren (Updater)**, **AppImage** |
 | 2026-10-14 | Ergaenzt beim Leser des Massstab-Blocks: **Bewegungssensor (IMU)**, **Massstab (des Splats)** (mit Gegenprobe, Ampel, Kontrollmass, Drift) |
