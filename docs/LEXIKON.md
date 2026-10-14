@@ -4818,6 +4818,26 @@ Unterschrift (EdDSA, ein Unterschriftverfahren mit geheimem und öffentlichem Sc
 verworfen (Entscheid 84, Bau): Sie wäre die erste fremde Abhängigkeit der Mac-App und verlangte einen geheimen
 Schlüssel in der Prüfstrecke; der Eigenbau braucht beides nicht.
 
+**Neustart-Helfer** — Ein winziges Hilfsprogramm, das die Mac-App nach dem Aktualisieren startet, bevor sie sich
+beendet. Es wartet, bis die alte App wirklich zu ist, und öffnet erst dann die neue. *Wozu:* Öffnet die alte App die neue
+selbst, hält macOS beide für dieselbe App und holt nur die alte wieder nach vorn — am Mac des Owners stand dann ein neues
+Fenster vor dem alten. *Im Projekt:* `Aktualisierung.neustartBefehl` im Kern, aufgerufen von `Fassungswaechter.starteNeu`
+und vom Umzug nach «Programme» (seit Visbox 0.2.8).
+
+**Prozessnummer (PID)** — Die Nummer, unter der das Betriebssystem ein laufendes Programm führt. Wer sie kennt, kann
+fragen, ob das Programm noch läuft. *Im Projekt:* Der Neustart-Helfer bekommt die Nummer der alten Mac-App und wartet,
+bis es sie nicht mehr gibt.
+
+**Ein Fenster statt Fenstergruppe (`Window` / `WindowGroup`)** — Zwei Arten, wie eine Mac-App in SwiftUI ihr Fenster
+anlegt. Eine *Gruppe* darf beliebig viele gleiche Fenster haben, und jedes erneute Öffnen kann ein weiteres machen; ein
+*einzelnes Fenster* gibt es genau einmal, erneutes Öffnen holt es nach vorn. *Im Projekt:* Die Mac-App hat seit 0.2.8 ein
+einzelnes Fenster.
+
+**Wiederverbinden** — Das iPad nimmt eine schon einmal gekoppelte HomeStation von selbst wieder auf, ohne neue Zahl:
+beim Öffnen der App und jedes Mal, wenn sie wieder nach vorn kommt. Es fragt die gemerkte Adresse mit kurzer Zeitgrenze
+(5 s) und sucht gleichzeitig im WLAN nach ihrem Namen, falls der Router ihr eine neue Adresse gegeben hat. *Nicht* von
+selbst geht das erste Koppeln. *Im Projekt:* `Verbindungsstand.wiederAktiv` (seit Visbox 0.2.8).
+
 **App Translocation (verschobener Startort)** — Ein Schutz von macOS: Öffnet man eine heruntergeladene App, ohne sie
 vorher aus dem Download-Ordner zu verschieben, startet macOS sie aus einem verborgenen, schreibgeschützten Ordner.
 *Im Projekt:* Dort kann sich die Mac-App nicht selbst ersetzen; das Blatt «Aktualisieren» bittet dann, sie in den
@@ -7106,6 +7126,7 @@ gibt es keine Blätter; der Knoten sagt das.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt aus Visbox 0.2.8 (Neustart, Nummer, iPad verbindet von selbst): **Neustart-Helfer**, **Prozessnummer (PID)**, **Ein Fenster statt Fenstergruppe (`Window` / `WindowGroup`)**, **Wiederverbinden** |
 | 2026-10-14 | Ergaenzt aus Fassung 3 der RealityScan-Brücke (Textur statt Eckfarben): **Textur**, **Abwicklung (UV-Abwicklung)**, **Texel**, **OBJ und MTL (Dateiformate)**; **Emissions-Shader** um die Stärke 1 der Umgebung ergänzt, **Eckpunktfarbe** und **Deckel (im Netz)** nachgeführt (Grenze 2,5 % statt 5 %) |
 | 2026-10-14 | Ergaenzt aus der Erklärung der Knoten für die Kosmo-Tafel (`docs/KNOTEN_ERKLAERT.md`): **Kosmo-Tafel**, **Knotenkatalog**, **Gruppe eines Knotens**, **Anschlusssorte (Porttyp)**, **Preset**, **Geometrie-Treue**, **Bildwerkzeug**, **Strichzeichnung (Line-Art)**, **Rückgängig (Undo)**, **Viewport-Aufnahme**, **Kuratierfläche**, **Prüfurteil (QA)**, **Veraltet**, **KosmoPublish** |
 | 2026-10-14 | Ergaenzt aus Entscheid 90 («Datei laden …» am Modell-Knoten): **Lade-Fähigkeit des Wirts**, **Fassung des Modells (in einer Mappe)**, **Start-Mappe**, **Geschlossenes Dateiformat**, **Nachfragen (Polling)**, **Dateiwähler (Öffnen-Dialog, `NSOpenPanel`)**, **UI-Delegat (`WKUIDelegate`)** |

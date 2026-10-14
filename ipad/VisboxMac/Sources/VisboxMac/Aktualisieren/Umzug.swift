@@ -47,16 +47,22 @@ enum Umzug {
             return
         }
         entferneQuarantaene(ziel)
-        let art = NSWorkspace.OpenConfiguration()
-        art.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: ziel, configuration: art) { _, fehler in
-            Task { @MainActor in
-                if let fehler {
-                    gescheitert(Fehler.kopieren(fehler.localizedDescription).errorDescription ?? "")
-                } else {
-                    NSApp.terminate(nil)
-                }
-            }
+        // ERST BEENDEN, DANN OEFFNEN (14.10.2026), wie beim Neustart nach dem Aktualisieren:
+        // Der Helfer wartet, bis diese Instanz weg ist, und oeffnet dann die Kopie.
+        let befehl = Aktualisierung.neustartBefehl(pid: ProcessInfo.processInfo.processIdentifier,
+                                                   buendel: ziel.path)
+        let helfer = Process()
+        helfer.executableURL = URL(fileURLWithPath: befehl[0])
+        helfer.arguments = Array(befehl.dropFirst())
+        do {
+            try helfer.run()
+        } catch {
+            gescheitert(Fehler.kopieren(error.localizedDescription).errorDescription ?? "")
+            return
+        }
+        NSApp.terminate(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Aktualisierung.beendenFrist) {
+            exit(0)
         }
     }
 

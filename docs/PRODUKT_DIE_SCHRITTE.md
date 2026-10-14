@@ -1495,3 +1495,9 @@ gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleic
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher
 KosmoOrbit-Fassung es passt.
 
+
+**Visbox 0.2.8: sauberer Neustart und ein iPad, das sich selbst verbindet (14.10.2026).** Nach dem Aktualisieren blieb am
+Mac die alte App offen, und ein neues Fenster ging davor auf. Jetzt beendet sich die alte App zuerst, und ein kleiner
+Helfer öffnet danach die neue; beim nächsten Start meldet sie, welche Fassung installiert ist. Die Nummer steht klein
+neben dem Namen. Das iPad fragt beim Öffnen sofort nach der gemerkten HomeStation und sucht gleichzeitig nach ihrem
+Namen — vorher wartete es bis zu einer halben Minute, bevor es überhaupt suchte. Am Gerät ist beides noch zu sehen.

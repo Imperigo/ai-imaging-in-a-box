@@ -66,7 +66,11 @@ struct Startansicht: View {
         // BEIM START UND EINMAL TAEGLICH (84a).
         .task { fassung.starte() }
         .onChange(of: phase) { _, neu in
-            if neu == .active { fassung.wiederAktiv() }
+            if neu == .active {
+                fassung.wiederAktiv()
+                // DIE GEMERKTE HOMESTATION GLEICH WIEDER FRAGEN (14.10.2026).
+                Verbindungsstand.gemeinsam.wiederAktiv()
+            }
         }
     }
 }

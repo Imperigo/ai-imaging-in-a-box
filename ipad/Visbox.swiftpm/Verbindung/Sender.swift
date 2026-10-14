@@ -35,14 +35,16 @@ final class Sender {
     }
 
     /// Führt eine Anfrage aus. `fortschritt` bekommt (gesendet, gesamt oder `nil`) — von
-    /// einem beliebigen Faden aus.
-    func fuehreAus(_ anfrage: Anfrage, basis: URL,
+    /// einem beliebigen Faden aus. `frist` kürzt die Wartezeit dieser einen Anfrage (sonst
+    /// 30 s) — für das Nachsehen, ob die HomeStation da ist (14.10.2026).
+    func fuehreAus(_ anfrage: Anfrage, basis: URL, frist: TimeInterval? = nil,
                    fortschritt: ((Int64, Int64?) -> Void)? = nil) async -> Leitungsergebnis {
         guard let adresse = anfrage.adresse(basis: basis) else {
             return .keineAntwort(grund: "Aus der Adresse der HomeStation liess sich kein Weg bauen.",
                                  gesendeteBytes: 0)
         }
         var auftrag = URLRequest(url: adresse)
+        if let frist { auftrag.timeoutInterval = frist }
         auftrag.httpMethod = anfrage.methode.rawValue
         for (name, wert) in anfrage.kopfzeilen {
             auftrag.setValue(wert, forHTTPHeaderField: name)

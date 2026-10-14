@@ -25,7 +25,10 @@ struct VisboxMacApp: App {
     }
 
     var body: some Scene {
-        WindowGroup(Marke.name) {
+        // EIN FENSTER, NICHT EINE GRUPPE (14.10.2026): Mit `WindowGroup` machte jedes erneute
+        // Oeffnen der laufenden App ein zweites Fenster auf — so stand nach «Neu starten» ein
+        // neues Fenster vor dem alten. `Window` holt das eine nach vorn.
+        Window(Marke.name, id: "haupt") {
             Hauptfenster(leitung: leitung, aktualisierung: aktualisierung)
         }
         // Blatt 13 ist 1440 × 900 gezeichnet — die Fläche eines 14-Zoll-Mac.

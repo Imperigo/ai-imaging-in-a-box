@@ -37,6 +37,11 @@ final class Verbindungsstand: ObservableObject {
     /// gemessen: oft genug, dass eine geparkte Skizze bald hinausgeht; selten genug, dass
     /// das Heimnetz davon nichts merkt.
     static let pruefabstand: UInt64 = 10
+    /// So lange wartet das Nachsehen auf eine Antwort (14.10.2026). Bis dahin galten die 30 s
+    /// jeder Anfrage: Antwortete die gemerkte Adresse nicht (der Router hatte eine neue
+    /// vergeben), stand die App nach dem Öffnen eine halbe Minute auf «Suche», bevor sie
+    /// überhaupt nach dem Namen zu suchen begann — es sah aus, als verbinde sie nie.
+    static let pruefFrist: TimeInterval = 5
 
     @Published private(set) var zustand: Verbindungszustand = .aus
     /// Der Name der gekoppelten HomeStation im Heimnetz — `nil`, wenn eingetippt.
@@ -116,6 +121,10 @@ final class Verbindungsstand: ObservableObject {
         netz.start(queue: DispatchQueue(label: "verbindung.netz"))
 
         spiegleFach()
+        // BEIM OEFFNEN GLEICH AUCH NACH DEM NAMEN SUCHEN (14.10.2026), nicht erst nach einer
+        // gescheiterten Frage: Hat die HomeStation eine neue Adresse, findet die Suche sie
+        // in ein bis zwei Sekunden. Antwortet die alte Adresse, gibt `pruefe` die Suche frei.
+        if adresse != nil, stationsname != nil { verlange(.wiederfinden) }
         bestimmeZustand()
         if adresse != nil {
             Task { @MainActor [weak self] in self?.starteSchleife() }
@@ -300,6 +309,16 @@ final class Verbindungsstand: ObservableObject {
 
     // ------------------------------------------------------------------- Prüfen
 
+    /// Die App ist wieder vorn (aus dem Hintergrund oder beim Öffnen): **sofort** nachsehen,
+    /// statt auf die nächste Runde zu warten (14.10.2026). Im Hintergrund hält iPadOS die
+    /// Schleife an; eine Anfrage, die dabei hing, liesse sonst bis zu 30 s «Getrennt» stehen.
+    @MainActor
+    func wiederAktiv() {
+        guard gekoppelt else { return }
+        if stationsname != nil { verlange(.wiederfinden) }
+        starteSchleife()
+    }
+
     @MainActor
     private func starteSchleife() {
         schleife?.cancel()
@@ -320,7 +339,7 @@ final class Verbindungsstand: ObservableObject {
         }
         let vorher = zustand
         let antwort = await sender.fuehreAus(Anfragen.fortschritt(anmeldung: anmeldung),
-                                             basis: basis)
+                                             basis: basis, frist: Verbindungsstand.pruefFrist)
         switch antwort {
         case .antwort(let status, let daten):
             do {

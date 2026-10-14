@@ -419,4 +419,30 @@ final class AktualisierungTests: XCTestCase {
             "/private/var/folders/x/T/AppTranslocation/ABC/d/\(Marke.name).app"))
         XCTAssertNil(Aktualisierung.pruefeOrt("/Applications/\(Marke.name).app"))
     }
+
+    // 14.10.2026: erst beenden, dann oeffnen — und danach bestaetigen.
+    func testDerNeustartHelferWartetAufDieAlteApp() {
+        let befehl = Aktualisierung.neustartBefehl(pid: 4242, buendel: "/Applications/Vis box.app")
+        XCTAssertEqual(befehl.first, "/bin/sh")
+        XCTAssertEqual(befehl[1], "-c")
+        XCTAssertTrue(befehl[2].contains("kill -0"))
+        XCTAssertTrue(befehl[2].contains("exec /usr/bin/open \"$2\""))
+        XCTAssertFalse(befehl[2].contains("open -n"))
+        // Der Pfad geht als eigenes Argument hinein, nie in den Befehlstext.
+        XCTAssertFalse(befehl[2].contains("Vis box"))
+        XCTAssertEqual(Array(befehl.suffix(2)), ["4242", "/Applications/Vis box.app"])
+    }
+
+    func testNachDemNeustartWirdBestaetigtOderGewarnt() throws {
+        let neu = try XCTUnwrap(Fassungsnummer("0.2.8"))
+        let alt = try XCTUnwrap(Fassungsnummer("0.2.7"))
+        XCTAssertNil(Aktualisierung.nachNeustart(erwartet: nil, laufend: neu))
+        XCTAssertNil(Aktualisierung.nachNeustart(erwartet: "kaputt", laufend: neu))
+        XCTAssertEqual(Aktualisierung.nachNeustart(erwartet: "0.2.8", laufend: neu), .bestaetigt(neu))
+        XCTAssertEqual(Aktualisierung.nachNeustart(erwartet: "0.2.8", laufend: alt),
+                       .nichtAngekommen(erwartet: neu, laufend: alt))
+        XCTAssertEqual(Neustartbefund.bestaetigt(neu).satz, "\(Marke.name) 0.2.8 ist installiert.")
+        XCTAssertEqual(Aktualisierung.kleineNummer(neu), "0.2.8")
+        XCTAssertEqual(Aktualisierung.kleineNummer(nil), "")
+    }
 }

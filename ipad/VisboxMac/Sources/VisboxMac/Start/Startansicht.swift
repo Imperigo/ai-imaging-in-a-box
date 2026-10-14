@@ -109,8 +109,15 @@ struct Startkopf: View {
     var body: some View {
         let farbe = Startfarbe.zeile(gesamt)
         HStack(spacing: 16) {
-            Text(Marke.name)
-                .font(Macschriften.schrift(.titel, 25))
+            // DIE NUMMER GANZ KLEIN NEBEN DEM NAMEN (Owner, 14.10.2026): Welche Fassung laeuft,
+            // steht so ohne Menue da — auch nach einem Neustart aus dem Aktualisieren.
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(Marke.name)
+                    .font(Macschriften.schrift(.titel, 25))
+                Text(Aktualisierung.kleineNummer(Aktualisierung.laufendeNummer(Bundle.main.infoDictionary)))
+                    .font(Macschriften.schrift(.text, 10))
+                    .foregroundStyle(Startfarbe.leise)
+            }
             Rectangle().fill(Startfarbe.linie).frame(width: 1, height: 24)
             Text("am Mac · unterwegs")
                 .font(Macschriften.schrift(.text, 14))

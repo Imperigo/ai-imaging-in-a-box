@@ -7979,3 +7979,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Mac-App: Knopf, Laden, Prüfsumme, Ersetzen, Neustart (am Gerät erst ab 0.2.2 sichtbar). *(13.10.2026, §97)*
 - [x] iPad-App: Hinweis auf neue Fassung und auf den Ablauf der 7 Tage. *(13.10.2026, §97)*
 
+
+## Neustart, Nummer, iPad verbindet von selbst (Owner-Meldung 14.10.2026, Visbox 0.2.8)
+
+- [x] Blatt 24 gezeichnet. *(14.10.2026, §113)*
+- [x] Mac: erst beenden, dann öffnen (Neustart-Helfer), ein Fenster, Bestätigung beim nächsten Start. *(14.10.2026, §113)*
+- [x] Mac: Nummer klein neben dem Namen. *(14.10.2026, §113)*
+- [x] iPad: beim Öffnen und Zurückkommen sofort fragen (5 s), gleich nach dem Namen suchen. *(14.10.2026, §113)*
+- [ ] Am Gerät: 0.2.8 → nächste Fassung startet von selbst neu und bestätigt (Owner).
+- [ ] Am iPad: verbindet beim Öffnen; sonst sagen, was die Zeile zeigt (Owner).

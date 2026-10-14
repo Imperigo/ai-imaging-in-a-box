@@ -481,6 +481,65 @@ public enum Aktualisierung {
     public static let spaeter = "Später"
     public static let ladenUndErsetzen = "Laden und ersetzen"
     public static let neuStarten = "Neu starten"
+
+    // ------------------------------------------------------------ Neustart (14.10.2026)
+    //
+    // ANLASS: Am Mac des Owners blieb nach «Neu starten» die alte App offen, ein neues Fenster
+    // ging davor auf, und eine Bestaetigung kam nie. Bis dahin oeffnete die laufende App die
+    // neue selbst und beendete sich danach — erkannte macOS die neue als dieselbe App, holte
+    // es nur die alte nach vorn (ein zweites Fenster derselben, alten Instanz), und ein
+    // `terminate`, das nicht durchkam, liess beide stehen. **Jetzt umgekehrt:** Ein kleiner
+    // Helfer wartet, bis die alte App wirklich beendet ist, und oeffnet erst dann die neue.
+
+    /// Unter diesem Schluessel merkt sich die App **vor** dem Neustart, welche Nummer danach
+    /// laufen soll — beim naechsten Start wird damit bestaetigt oder gewarnt.
+    public static let erwarteteSchluessel = "aktualisierung.erwartet"
+
+    /// Der Befehl fuer den Helfer: warten, bis Prozess `pid` weg ist (hoechstens rund
+    /// 30 Sekunden), dann das Buendel oeffnen. **`/usr/bin/open` ohne `-n`** — die alte App
+    /// laeuft dann nicht mehr, also startet macOS die Datei am Ort neu, und das ist die neue.
+    /// Der Pfad geht als eigenes Argument hinein, nie in den Befehlstext (Leerzeichen,
+    /// Anfuehrungszeichen im Pfad).
+    public static func neustartBefehl(pid: Int32, buendel: String) -> [String] {
+        ["/bin/sh", "-c",
+         "i=0; while kill -0 \"$1\" 2>/dev/null && [ $i -lt 150 ]; do sleep 0.2; i=$((i+1)); done; "
+            + "exec /usr/bin/open \"$2\"",
+         "neustart", String(pid), buendel]
+    }
+
+    /// Wie lange die App nach `terminate` wartet, bevor sie sich selbst beendet. Ein Beenden,
+    /// das an einem offenen Blatt haengen bleibt, darf den Neustart nicht aufhalten.
+    public static let beendenFrist: TimeInterval = 1.5
+
+    /// Was nach einem Neustart zu sagen ist — `nil`, wenn keiner erwartet war.
+    public static func nachNeustart(erwartet: String?, laufend: Fassungsnummer?) -> Neustartbefund? {
+        guard let text = erwartet, let soll = Fassungsnummer(text) else { return nil }
+        guard let laufend else { return nil }
+        return laufend >= soll ? .bestaetigt(laufend) : .nichtAngekommen(erwartet: soll, laufend: laufend)
+    }
+
+    /// Die kleine Nummer neben dem Namen — leer, wenn die App nicht als Bundle laeuft.
+    public static func kleineNummer(_ laufend: Fassungsnummer?) -> String {
+        laufend.map { "\($0)" } ?? ""
+    }
+}
+
+/// Der Befund nach einem Neustart aus dem Aktualisieren.
+public enum Neustartbefund: Equatable, Sendable {
+    /// Die erwartete (oder eine neuere) Fassung laeuft.
+    case bestaetigt(Fassungsnummer)
+    /// Es laeuft noch eine aeltere als erwartet.
+    case nichtAngekommen(erwartet: Fassungsnummer, laufend: Fassungsnummer)
+
+    public var satz: String {
+        switch self {
+        case .bestaetigt(let n):
+            return "\(Marke.name) \(n) ist installiert."
+        case .nichtAngekommen(let soll, let ist):
+            return "Die Aktualisierung auf \(soll) kam nicht an — es läuft noch \(ist). "
+                + "Bitte die App beenden und aus «Programme» neu öffnen."
+        }
+    }
 }
 
 // ======================================================================= iPad: Ablauf

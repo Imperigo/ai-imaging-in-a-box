@@ -127,21 +127,49 @@ final class Fassungswaechter: ObservableObject {
         phase = .angeboten
     }
 
-    /// «Neu starten»: die neue App am selben Ort oeffnen, dann diese beenden. Eine neue
-    /// Instanz ausdruecklich (`createsNewApplicationInstance`) — sonst holte macOS nur diese,
-    /// noch laufende, nach vorn.
+    /// «Neu starten»: **erst beenden, dann oeffnen** (14.10.2026). Ein kleiner Helfer
+    /// (`/bin/sh`, Befehl aus dem Kern: `Aktualisierung.neustartBefehl`) wartet, bis diese
+    /// App weg ist, und oeffnet dann das Buendel am selben Ort — das ist jetzt die neue App.
+    /// Bis dahin oeffnete die App die neue selbst und beendete sich danach; am Mac des Owners
+    /// ging dabei nur ein zweites Fenster der alten App auf, und die alte blieb stehen.
+    ///
+    /// Vorher merkt sich die App, welche Nummer danach laufen soll; der naechste Start
+    /// bestaetigt sie (`pruefeNeustart`). Bleibt das Beenden an etwas haengen, endet die App
+    /// nach `Aktualisierung.beendenFrist` von selbst — gespeichert ist zu dem Zeitpunkt alles.
     func starteNeu() {
         guard phase == .fertig else { return }
-        let art = NSWorkspace.OpenConfiguration()
-        art.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: art) { _, fehler in
-            Task { @MainActor [weak self] in
-                if fehler == nil {
-                    NSApp.terminate(nil)
-                } else {
-                    self?.phase = .gescheitert(.neustartScheiterte)
-                }
-            }
+        let befehl = Aktualisierung.neustartBefehl(pid: ProcessInfo.processInfo.processIdentifier,
+                                                   buendel: Bundle.main.bundlePath)
+        let helfer = Process()
+        helfer.executableURL = URL(fileURLWithPath: befehl[0])
+        helfer.arguments = Array(befehl.dropFirst())
+        do {
+            try helfer.run()
+        } catch {
+            phase = .gescheitert(.neustartScheiterte)
+            return
         }
+        if let nummer = angebot?.nummer {
+            UserDefaults.standard.set("\(nummer)", forKey: Aktualisierung.erwarteteSchluessel)
+        }
+        UserDefaults.standard.synchronize()
+        NSApp.terminate(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Aktualisierung.beendenFrist) {
+            exit(0)
+        }
+    }
+
+    /// Was nach dem Neustart zu sagen ist: «Visbox 0.x.y ist installiert» — oder dass die
+    /// Aktualisierung nicht ankam. Einmal: Der Merker wird beim Lesen geloescht.
+    @Published private(set) var neustartBefund: Neustartbefund?
+
+    func pruefeNeustart() {
+        let merker = UserDefaults.standard.string(forKey: Aktualisierung.erwarteteSchluessel)
+        UserDefaults.standard.removeObject(forKey: Aktualisierung.erwarteteSchluessel)
+        neustartBefund = Aktualisierung.nachNeustart(erwartet: merker, laufend: laufend)
+    }
+
+    func bestaetigungGesehen() {
+        neustartBefund = nil
     }
 }

@@ -70,6 +70,16 @@ struct Hauptfenster: View {
                                    schliessen: { aktualisierenOffen = false })
             }
         }
+        .background {
+            // NACH DEM NEUSTART AUS DEM AKTUALISIEREN (14.10.2026): «Visbox 0.x.y ist
+            // installiert» — oder dass sie nicht ankam. Ein eigener Anker, wie oben.
+            Color.clear.alert(aktualisierung.neustartBefund?.satz ?? "",
+                              isPresented: Binding(
+                                get: { aktualisierung.neustartBefund != nil },
+                                set: { if !$0 { aktualisierung.bestaetigungGesehen() } })) {
+                Button("OK", role: .cancel) { aktualisierung.bestaetigungGesehen() }
+            }
+        }
         .toolbar {
             // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
             // wenn GitHub eine NEUERE Nummer hat (84b). EIN KLICK (Entscheid 87): Er oeffnet das
@@ -130,6 +140,7 @@ struct Hauptfenster: View {
         .onAppear {
             einrichtenOffen = leitung.braucheEinrichten
             umzugOffen = Umzug.istVersteckt
+            aktualisierung.pruefeNeustart()
             leitung.starte()
             // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
             aktualisierung.starte()

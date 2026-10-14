@@ -26,7 +26,7 @@ def test_der_umzug_legt_nach_programme_ohne_etwas_zu_verlieren():
     # Ohne das Entfernen der Quarantaene legte macOS auch die Kopie wieder an den versteckten Ort.
     assert '"com.apple.quarantine"' in code and "removexattr(" in code
     assert code.index("copyItem(") < code.index("entferneQuarantaene(ziel)") < code.index(
-        "openApplication(at: ziel")
+        "buendel: ziel.path")
     assert "NSApp.terminate(nil)" in code
 
 
