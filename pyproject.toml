@@ -72,7 +72,11 @@ dependencies = []
 # setzten stillschweigend aus. Nachgeprueft: Stellt man den alten Fehler wieder her,
 # faellt der Test — er taugt also. Ein Waechter, der nur laeuft, wenn zufaellig das
 # richtige Paket da ist, bewacht nichts.
-dev = ["pytest", "numpy", "Pillow"]
+#
+# `PyYAML` (MIT) liest in `tests/test_ipad_geruest.py` die Pruefstrecken-Datei. Es fehlte hier,
+# und auf GitHub fielen darum seit Visbox 0.2.7 vier Proben mit «No module named 'yaml'»
+# (gefunden 14.10.2026, sobald die roten Proben als Hinweis sichtbar wurden).
+dev = ["pytest", "numpy", "Pillow", "PyYAML"]
 # Nur fuer die Anbindung an KosmoOrbit. Das MCP-SDK ist MIT und damit unter Regel 1
 # zulaessig, zieht aber 19 transitive Abhaengigkeiten nach, die NICHT einzeln geprueft
 # sind. Darum optional: Der Kern laeuft ohne, nur die Cockpit-Anbindung nicht.
