@@ -10,6 +10,8 @@ import plistlib
 import struct
 from pathlib import Path
 
+import pytest
+
 WURZEL = Path(__file__).resolve().parents[1]
 ICNS = WURZEL / "ipad" / "VisboxMac" / "App" / "Visbox.icns"
 SATZ = WURZEL / "ipad" / "Visbox.swiftpm" / "Assets.xcassets" / "AppIcon.appiconset"
@@ -65,3 +67,27 @@ def test_die_vorlage_ist_die_gewaehlte_zeichnung():
     assert svg == m.svg_randlos()
     assert (WURZEL / "ipad" / "Marke" / "visbox-icon-mac.svg").read_text(encoding="utf-8") == m.svg_mac()
     assert m.BILD in svg and "<text" not in svg                  # ohne Schrift
+
+
+def _chromium_fehlt() -> bool:
+    try:
+        _werkzeug()._chromium()
+    except SystemExit:
+        return True
+    return False
+
+
+@pytest.mark.skipif(_chromium_fehlt(), reason="Chromium fehlt")
+def test_das_werkzeug_erzeugt_dieselben_dateien_neu(tmp_path):
+    """``--png`` in einen leeren Ordner: Es entstehen dieselben Dateien wie im Repo, mit denselben
+    Stufen — das Icon ist aus der Vorlage wieder herstellbar."""
+    assert _werkzeug().main(["--png"], wurzel=tmp_path) == 0
+    neu = tmp_path / "ipad"
+    for teil in ("Marke/visbox-icon.svg", "Marke/visbox-icon-mac.svg",
+                 "Visbox.swiftpm/Assets.xcassets/AppIcon.appiconset/Contents.json"):
+        assert (neu / teil).read_bytes() == (WURZEL / "ipad" / teil).read_bytes(), teil
+    roh = (neu / "VisboxMac" / "App" / "Visbox.icns").read_bytes()
+    assert roh[:4] == b"icns" and len(roh) > 50_000
+    breite, hoehe, farbtyp = _png_kante(
+        (neu / "Visbox.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png").read_bytes())
+    assert (breite, hoehe, farbtyp) == (1024, 1024, 2)

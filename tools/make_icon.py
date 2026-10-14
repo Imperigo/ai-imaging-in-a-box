@@ -25,7 +25,6 @@ import tempfile
 from pathlib import Path
 
 WURZEL = Path(__file__).resolve().parents[1]
-ZIEL = WURZEL / "ipad" / "Marke"
 
 GRUND = "#12161c"
 LINIE = "#e8eaed"
@@ -104,13 +103,15 @@ def schreibe_icns(pngs: dict[int, bytes], ziel: Path) -> None:
     ziel.write_bytes(b"icns" + struct.pack(">I", 8 + len(bloecke)) + bloecke)
 
 
-def main(argv=None) -> int:
+def main(argv=None, *, wurzel: Path = WURZEL) -> int:
+    """``wurzel``: wohin geschrieben wird (das Repo; die Proben geben einen leeren Ordner)."""
     a = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     a.add_argument("--png", action="store_true", help="auch PNG, appiconset und icns")
     args = a.parse_args(argv)
-    ZIEL.mkdir(parents=True, exist_ok=True)
-    (ZIEL / "visbox-icon.svg").write_text(svg_randlos(), encoding="utf-8")
-    (ZIEL / "visbox-icon-mac.svg").write_text(svg_mac(), encoding="utf-8")
+    ziel = Path(wurzel) / "ipad" / "Marke"
+    ziel.mkdir(parents=True, exist_ok=True)
+    (ziel / "visbox-icon.svg").write_text(svg_randlos(), encoding="utf-8")
+    (ziel / "visbox-icon-mac.svg").write_text(svg_mac(), encoding="utf-8")
     if not args.png:
         return 0
     with tempfile.TemporaryDirectory() as tmp:
@@ -119,7 +120,7 @@ def main(argv=None) -> int:
         _rastere(svg_mac(), t / "mac.png")
         # iPad: EIN Bild 1024, ohne Durchsicht (App Store und Xcode verlangen das).
         from PIL import Image
-        satz = WURZEL / "ipad" / "Visbox.swiftpm" / "Assets.xcassets" / "AppIcon.appiconset"
+        satz = Path(wurzel) / "ipad" / "Visbox.swiftpm" / "Assets.xcassets" / "AppIcon.appiconset"
         satz.mkdir(parents=True, exist_ok=True)
         with Image.open(t / "ipad.png") as bild:
             bild.convert("RGB").save(satz / "AppIcon-1024.png")
@@ -135,8 +136,10 @@ def main(argv=None) -> int:
             stufe = t / f"mac-{kante}.png"
             _verkleinere(t / "mac.png", stufe, kante)
             pngs[kante] = stufe.read_bytes()
-        schreibe_icns(pngs, WURZEL / "ipad" / "VisboxMac" / "App" / "Visbox.icns")
-        shutil.copyfile(t / "mac.png", ZIEL / "visbox-icon-mac-1024.png")
+        mac = Path(wurzel) / "ipad" / "VisboxMac" / "App"
+        mac.mkdir(parents=True, exist_ok=True)
+        schreibe_icns(pngs, mac / "Visbox.icns")
+        shutil.copyfile(t / "mac.png", ziel / "visbox-icon-mac-1024.png")
     return 0
 
 
