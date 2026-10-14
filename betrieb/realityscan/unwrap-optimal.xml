@@ -1,0 +1,9 @@
+<Configuration id="{00000000-0000-0000-0000-000000000000}">
+  <entry key="unwrapStyle" value="2"/>
+  <entry key="unwrapMinTexelSizeType" value="0"/>
+  <entry key="unwrapMaxTexelSizeType" value="4"/>
+  <entry key="unwrapMaxTexResolution" value="8192"/>
+  <entry key="unwrapMinTexResolution" value="8192"/>
+  <entry key="unwrapLargeTriangleRemovalThr" value="10"/>
+  <entry key="unwrapGutter" value="2"/>
+</Configuration>

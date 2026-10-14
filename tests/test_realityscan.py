@@ -13,6 +13,11 @@ Was hier bewacht wird — **ohne RealityScan**, das es hier nicht gibt
 4. **Die Einbindung** in ``seams.kontext_vorbereiten``, den Abholer und die Kette: Vermerk
    ``weg``, Hinweis-Satz, Reihenfolge der Rückfälle, Treffer des Multipass-Speichers.
 5. **Bis zur Blender-Stufe** (nur mit Blender): Das Netz aus der Attrappe wird als Netz geladen.
+6. **Fassung 3, Textur** (14.10.2026): die Vorlagen unter ``betrieb/realityscan/``, Einrichtung
+   und Rückfall auf Eckfarben, die Befehlsfolge mit ``-unwrap``/``-calculateTexture``, die
+   Bereinigung des OBJ (Deckel weg, Texturkoordinaten bleiben), Speicher über alle Dateien,
+   Lage am OBJ, Erkennung als Netz — und in Blender Emission 1 aus der Textur. Die Attrappe
+   schreibt dafür bei ``-unwrap`` ein OBJ mit MTL und zwei PNG (4×4, mit ``zlib``).
 
 Alle Daten sind synthetisch (``tools/make_test_colmap.py``, ``tools/make_test_splat.py``,
 Regel 3).
@@ -106,7 +111,45 @@ dreiecke.append((i0, i0 + 1, i0 + 2))
 if "-stdConsole" in args:
     print("RealityScan 2.2.0.12345 (Attrappe)")
 print("Export nach " + args[k + 1] + " aus " + os.path.dirname(txt))
-if os.environ.get("RS_ATTRAPPE_KEIN_EXPORT") != "1":
+if "-unwrap" in args and os.environ.get("RS_ATTRAPPE_KEIN_EXPORT") != "1":
+    # FASSUNG 3: abgewickelt und texturiert -> OBJ + MTL + zwei PNG (4x4), wie RealityScan
+    # es neben das OBJ legt. Ein Kommentar mit Pfad (Regel 3), ein Bildverweis als
+    # Windows-Pfad, der Deckel mit negativen Indizes.
+    import zlib
+    assert linux(args[args.index("-unwrap") + 1]).endswith(".xml")
+    assert ziel.endswith(".obj"), ziel
+    ordner, stamm = os.path.dirname(ziel), os.path.splitext(os.path.basename(ziel))[0]
+    def png(pfad, rgb):
+        roh = b"".join(b"\x00" + bytes(rgb) * 4 for _ in range(4))
+        def stueck(art, daten):
+            return (struct.pack(">I", len(daten)) + art + daten
+                    + struct.pack(">I", zlib.crc32(art + daten) & 0xffffffff))
+        with open(pfad, "wb") as d:
+            d.write(b"\x89PNG\r\n\x1a\n" + stueck(b"IHDR", struct.pack(">IIBBBBB", 4, 4, 8, 2, 0, 0, 0))
+                    + stueck(b"IDAT", zlib.compress(roh)) + stueck(b"IEND", b""))
+    png(os.path.join(ordner, stamm + "_u1_v1.png"), (200, 120, 40))
+    png(os.path.join(ordner, stamm + "_u2_v1.png"), (40, 120, 200))
+    if os.environ.get("RS_ATTRAPPE_OHNE_MTL") != "1":
+        with open(os.path.join(ordner, stamm + ".mtl"), "w") as d:
+            d.write("# aus Z:\\home\\nutzer\\geheim\\projekt.rsproj\n"
+                    "newmtl mat0\nKd 1 1 1\nmap_Kd " + stamm + "_u1_v1.png\n\n"
+                    "newmtl mat1\nKd 1 1 1\nmap_Kd Z:\\home\\nutzer\\geheim\\" + stamm + "_u2_v1.png\n")
+    zeilen = ["# RealityScan Attrappe, Projekt Z:\\home\\nutzer\\geheim", "mtllib " + stamm + ".mtl"]
+    for x, y, z in ecken:
+        zeilen.append("v %r %r %r" % (x, y, z))
+    for i in range(len(ecken)):
+        zeilen.append("vt %r %r" % ((i % 7) / 7.0, (i % 5) / 5.0))
+    haelfte = len(dreiecke) // 2
+    for n, (a, b, c) in enumerate(dreiecke[:-1]):
+        if n == 0:
+            zeilen.append("usemtl mat0")
+        if n == haelfte:
+            zeilen.append("usemtl mat1")
+        zeilen.append("f %d/%d %d/%d %d/%d" % (a + 1, a + 1, b + 1, b + 1, c + 1, c + 1))
+    zeilen.append("f -3/-3 -2/-2 -1/-1")             # der Deckel, relativ adressiert
+    with open(ziel, "w") as d:
+        d.write("\n".join(zeilen) + "\n")
+elif os.environ.get("RS_ATTRAPPE_KEIN_EXPORT") != "1":
     kopf = ("ply\nformat binary_little_endian 1.0\nelement vertex %d\nproperty float x\n"
             "property float y\nproperty float z\n" % len(ecken))
     if farbe:
@@ -148,6 +191,24 @@ def eingerichtet(tmp_path, monkeypatch):
     monkeypatch.setenv("RS_ATTRAPPE_PROTOKOLL", str(protokoll))
     return {"cli": cli, "exe": exe, "xml": xml, "protokoll": protokoll,
             "speicher": tmp_path / "speicher"}
+
+
+VORLAGEN = WURZEL / "betrieb" / "realityscan"
+
+
+@pytest.fixture
+def textur(eingerichtet, tmp_path, monkeypatch):
+    """Fassung 3 eingerichtet: die beiden **Vorlagen aus dem Repo**, an einen Ort des Nutzers
+    kopiert (mit Leerzeichen im Pfad), als Export- und Abwicklungsdatei."""
+    ort = tmp_path / "meine einstellungen"
+    ort.mkdir()
+    export = ort / "export-obj-textur.xml"
+    unwrap = ort / "unwrap-optimal.xml"
+    shutil.copyfile(VORLAGEN / "export-obj-textur.xml", export)
+    shutil.copyfile(VORLAGEN / "unwrap-optimal.xml", unwrap)
+    monkeypatch.setenv(rs.REALITYSCAN_EXPORT_XML_ENV, str(export))
+    monkeypatch.setenv(rs.REALITYSCAN_UNWRAP_XML_ENV, str(unwrap))
+    return dict(eingerichtet, export=export, unwrap=unwrap)
 
 
 def _aufrufe(eingerichtet) -> list[list[str]]:
@@ -344,7 +405,7 @@ def test_kommando_wie_am_heim_pc_gemessen():
     for weg in ("-addFolder", "-align", "-importColmap", "-exportModel", "Model 1"):
         assert weg not in cmd
     assert cmd[cmd.index("-loadColmap") + 1] == "Z:\\tmp\\arbeit\\colmap\\images.txt"
-    assert cmd[cmd.index("-simplify") + 1] == str(rs.ZIEL_DREIECKE)
+    assert cmd[cmd.index("-simplify") + 1] == str(rs.ZIEL_DREIECKE_ECKFARBEN)   # Fassung 2
     k = cmd.index("-exportSelectedModel")
     assert cmd[k + 1:k + 3] == ["Z:\\tmp\\arbeit\\export.ply", "Z:\\home\\x\\export ply.xml"]
     assert cmd[-1] == "-quit"
@@ -476,7 +537,7 @@ def test_lauf_schreibt_ein_netz_und_einen_bericht_ohne_pfade(tmp_path, eingerich
     assert b["programm"]["fassung"] == "2.2.0.12345"
     assert b["lage"]["passt"] and b["lage"]["nah_colmap"] > 0.95
     assert b["aufnahme"]["rig"] is True and b["bilder"]["anzahl"] == 24
-    ohne = {k: v for k, v in b.items() if k != "netz_ply"}
+    ohne = {k: v for k, v in b.items() if k not in ("netz_ply", "netz_datei")}
     text = json.dumps(ohne, ensure_ascii=False)
     assert str(tmp_path) not in text and "nutzer" not in text and "Z:\\" not in text
     assert "<arbeit>" in b["ausgabe"]["stdout"]                 # der Arbeitsordner, ersetzt
@@ -947,3 +1008,433 @@ def test_der_ganze_weg_bis_blender(tmp_path, eingerichtet):
     assert k["quelle"] == kn.QUELLE_NETZ
     assert (k["ecken"], k["dreiecke"]) == (v["netz"]["ecken"], v["netz"]["dreiecke"])
     assert os.path.basename(v["ply"]) == k["datei"]
+
+
+# ======================================================================================
+# 6 · Fassung 3 — Textur statt Eckfarben (14.10.2026)
+# ======================================================================================
+
+def _obj_flaechen(pfad: Path) -> tuple[list, dict, list]:
+    """Ein OBJ lesen, wie die Probe es braucht: je Fläche ``((Lage, UV), …)``, die Zahl der
+    Flächen je Material und die ``mtllib``-Zeilen. Unabhängig von ``realityscan``."""
+    v, vt, flaechen, mtllib = [], [], [], []
+    je_material: dict = {}
+    material = None
+    for zeile in pfad.read_text(encoding="utf-8").splitlines():
+        t = zeile.split()
+        if not t or t[0].startswith("#"):
+            continue
+        if t[0] == "v":
+            v.append(tuple(float(w) for w in t[1:4]))
+        elif t[0] == "vt":
+            vt.append(tuple(float(w) for w in t[1:3]))
+        elif t[0] == "mtllib":
+            mtllib.append(" ".join(t[1:]))
+        elif t[0] == "usemtl":
+            material = t[1]
+        elif t[0] == "f":
+            ecken = []
+            for w in t[1:]:
+                teile = w.split("/")
+                i = int(teile[0])
+                i = i - 1 if i > 0 else len(v) + i
+                j = int(teile[1]) if len(teile) > 1 and teile[1] else None
+                j = None if j is None else (j - 1 if j > 0 else len(vt) + j)
+                ecken.append((v[i], None if j is None else vt[j]))
+            flaechen.append(tuple(ecken))
+            je_material[material] = je_material.get(material, 0) + 1
+    return flaechen, je_material, mtllib
+
+
+def test_die_vorlagen_liegen_im_repo_ohne_pfade_und_waehlen_die_textur():
+    export = VORLAGEN / "export-obj-textur.xml"
+    unwrap = VORLAGEN / "unwrap-optimal.xml"
+    assert export.is_file() and unwrap.is_file()
+    assert rs.export_xml_befund(export) == {"format": "obj", "textur_ebene": rs.TEXTUR_EBENE}
+    for p in (export, unwrap):
+        text = p.read_text(encoding="utf-8")
+        assert "Z:" not in text and "/home" not in text and "\\" not in text
+    assert 'unwrapMaxTexResolution" value="8192"' in unwrap.read_text(encoding="utf-8")
+
+
+def test_einrichtung_textur_mit_abwicklungsdatei(textur):
+    e = rs.einrichtung()
+    assert e["bereit"] and e["art"] == rs.ART_TEXTUR and e["hinweis"] is None
+    assert e["unwrap_xml"] == str(textur["unwrap"])
+
+
+def test_einrichtung_ohne_abwicklungsdatei_bleibt_fassung_2_mit_hinweis(eingerichtet):
+    """Der Rückfall: Eine Einrichtung von Fassung 2 (nur die Exportdatei) bricht nicht."""
+    e = rs.einrichtung()
+    assert e["bereit"] and e["art"] == rs.ART_ECKFARBEN and e["unwrap_xml"] is None
+    assert e["hinweis"] == rs.SATZ_ECKFARBEN and rs.REALITYSCAN_UNWRAP_XML_ENV in e["hinweis"]
+
+
+@pytest.mark.parametrize("fall, wort", [
+    ("unwrap_fehlt", "zeigt auf keine Datei"),
+    ("ply_mit_unwrap", "statt OBJ"),
+    ("obj_ohne_unwrap", "keine Textur"),
+    ("schachbrett", "Schachbrett"),
+])
+def test_einrichtung_widersprueche_sind_nicht_eingerichtet(textur, monkeypatch, tmp_path,
+                                                           fall, wort):
+    if fall == "unwrap_fehlt":
+        monkeypatch.setenv(rs.REALITYSCAN_UNWRAP_XML_ENV, str(tmp_path / "fehlt.xml"))
+    elif fall == "ply_mit_unwrap":
+        textur["export"].write_text(textur["export"].read_text(encoding="utf-8")
+                                    .replace('"obj 000 "', '"ply 000 "'), encoding="utf-8")
+    elif fall == "obj_ohne_unwrap":
+        monkeypatch.delenv(rs.REALITYSCAN_UNWRAP_XML_ENV)
+    elif fall == "schachbrett":
+        textur["export"].write_text(textur["export"].read_text(encoding="utf-8")
+                                    .replace('Layer0 type="1"', 'Layer0 type="5"'),
+                                    encoding="utf-8")
+    e = rs.einrichtung()
+    assert not e["bereit"] and e["ursache"] == rs.URSACHE_EINRICHTUNG
+    assert wort in e["grund"] and str(tmp_path) not in e["grund"]
+
+
+def test_kommando_textur_reihenfolge_schalter_und_wine_pfade():
+    cmd = rs.kommando(cli="/opt/realityscan/bin/wine",
+                      exe="/opt/rs/drive_c/Program Files/Epic Games/RealityScan.exe",
+                      images_txt="/tmp/arbeit/colmap/images.txt",
+                      netz_datei="/tmp/arbeit/export/netz.obj",
+                      export_xml="/home/x/meine einstellungen/export-obj-textur.xml",
+                      unwrap_xml="/home/x/meine einstellungen/unwrap-optimal.xml")
+    befehle = [w for w in cmd[2:] if w.startswith("-")]
+    assert befehle == ["-headless", "-stdConsole", "-newScene", "-loadColmap",
+                       "-selectMaximalComponent", "-setReconstructionRegionAuto",
+                       "-calculateNormalModel", "-simplify", "-set", "-set", "-unwrap",
+                       "-calculateTexture", "-exportSelectedModel", "-quit"]
+    assert "-calculateVertexColors" not in cmd
+    assert cmd[cmd.index("-simplify") + 1] == str(rs.ZIEL_DREIECKE) == "1000000"
+    gesetzt = [cmd[i + 1] for i, w in enumerate(cmd) if w == "-set"]
+    assert gesetzt == ["MvsGeometryTexturingDoHdr=false", "txtImageDownscaleTexture=1"]
+    # Die Abwicklung als DATEI-Argument, kein -set unwrap… (wirkt in der Befehlszeile nicht).
+    assert not any(w.startswith("unwrap") for w in gesetzt)
+    assert cmd[cmd.index("-unwrap") + 1] == "Z:\\home\\x\\meine einstellungen\\unwrap-optimal.xml"
+    k = cmd.index("-exportSelectedModel")
+    assert cmd[k + 1:k + 3] == ["Z:\\tmp\\arbeit\\export\\netz.obj",
+                                "Z:\\home\\x\\meine einstellungen\\export-obj-textur.xml"]
+    assert not any('"' in w or "'" in w for w in cmd)
+    # Ohne Abwicklungsdatei: Wort für Wort die Folge von Fassung 2.
+    alt = rs.kommando(cli="w", exe="e", images_txt="/a/images.txt", netz_ply="/a/export.ply",
+                      export_xml="/a/x.xml")
+    assert "-unwrap" not in alt and "-set" not in alt and "-calculateVertexColors" in alt
+    assert alt[alt.index("-simplify") + 1] == str(rs.ZIEL_DREIECKE_ECKFARBEN) == "500000"
+
+
+def test_lauf_textur_obj_mtl_png_im_speicher_bericht_ohne_pfade(tmp_path, textur):
+    sparse = _aufnahme(tmp_path / "home" / "nutzer" / "lauf")
+    b = rs.realityscan_zu_netz(sparse)
+    assert b["status"] == "ok" and b["art"] == rs.ART_TEXTUR and b["hinweise"] == []
+    assert b["netz_datei"] == b["netz_ply"] and b["netz_datei"].endswith("netz.obj")
+    netz = Path(b["netz_datei"])
+    assert kn.ist_obj(netz) and kn.art_der_datei(netz) == "netz"
+    n = b["netz"]
+    assert n["art"] == rs.ART_TEXTUR and n["format"] == "obj"
+    assert (n["dreiecke"], n["ecken"], n["uv"]) == (600, 1800, 1800)    # ohne Deckel
+    assert n["vereinfacht"] is True and n["materialien"] == 2
+    assert [t["datei"] for t in n["texturen"]] == ["netz_textur_1.png", "netz_textur_2.png"]
+    assert all((t["breite"], t["hoehe"]) == (4, 4) for t in n["texturen"])
+    namen = sorted(d["datei"] for d in n["dateien"])
+    assert namen == ["netz.mtl", "netz.obj", "netz_textur_1.png", "netz_textur_2.png"]
+    for d in n["dateien"]:
+        p = netz.parent / d["datei"]
+        assert p.stat().st_size == d["bytes"] and rs._datei_sha(p) == d["sha256"]
+    assert len(n["sha256_alle"]) == 64 and n["sha256"] == rs._datei_sha(netz)
+    r = b["bereinigung"]
+    assert (r["deckel_dreiecke"], r["ecken_entfernt"], r["uv_entfernt"]) == (1, 3, 3)
+    assert r["texturen"] == 2 and r["farben"] == rs.ART_TEXTUR
+    assert b["lage"]["passt"] and b["parameter"]["textur"] is True
+    assert b["parameter"]["unwrap_xml_sha256"] == rs._datei_sha(textur["unwrap"])
+    # Kein Pfad im Bericht, in der Ausgabe, im OBJ und in der MTL (Regel 3).
+    text = json.dumps({k: v for k, v in b.items() if k not in ("netz_ply", "netz_datei")},
+                      ensure_ascii=False)
+    assert str(tmp_path) not in text and "nutzer" not in text and "Z:\\" not in text
+    for datei in ("netz.obj", "netz.mtl"):
+        inhalt = (netz.parent / datei).read_text(encoding="utf-8")
+        assert "nutzer" not in inhalt and "geheim" not in inhalt and "Z:" not in inhalt
+    mtl = (netz.parent / "netz.mtl").read_text(encoding="utf-8")
+    assert "map_Kd netz_textur_1.png" in mtl and "map_Kd netz_textur_2.png" in mtl
+    _, _, mtllib = _obj_flaechen(netz)
+    assert mtllib == ["netz.mtl"]
+    # Die Befehlsfolge kam so bei der Attrappe an.
+    (aufruf,) = _aufrufe(textur)
+    i = aufruf.index("-unwrap")
+    assert aufruf[i + 2] == "-calculateTexture" and aufruf[i + 3] == "-exportSelectedModel"
+    assert aufruf[i + 4].endswith("\\export\\netz.obj")
+
+
+def test_bereinige_obj_deckel_weg_texturkoordinaten_und_materialien_bleiben(tmp_path):
+    N = 80                         # 2.5 % der Diagonale sind dann ≈ 2.7, eine Kante ≤ 1.42
+    q = tmp_path / "roh"
+    q.mkdir()
+    zeilen = ["# Z:\\home\\nutzer\\geheim\\x.rsproj", "mtllib Z:\\home\\nutzer\\roh.mtl"]
+    zeilen += [f"v {float(i)} 0.0 {float(j)}" for i in range(N) for j in range(N)]
+    zeilen += [f"vt {i / N} {j / N}" for i in range(N) for j in range(N)]
+    zeilen += ["v -500 5 -500", "v 500 5 -500", "v 0 5 500", "vt 0 0", "vt 1 0", "vt 0 1"]
+    zeilen += ["vn 0 1 0"]
+    zeilen.append("usemtl a")
+    for i in range(N - 1):
+        for j in range(N - 1):
+            p = i * N + j + 1
+            if i == N // 2 and j == 0:
+                zeilen.append("usemtl b")
+            zeilen.append(f"f {p}/{p}/1 {p + 1}/{p + 1}/1 {p + N + 1}/{p + N + 1}/1")
+            if i == 3 and j == 3:
+                zeilen.append("f -3/-3/1 -2/-2/1 -1/-1/1")           # der Deckel mitten drin
+    (q / "roh.obj").write_text("\n".join(zeilen) + "\n", encoding="utf-8")
+    (q / "roh.mtl").write_text("newmtl a\nmap_Kd -s 1 1 1 a.png\nnewmtl b\nmap_Kd b.png\n",
+                               encoding="utf-8")
+    for name in ("a.png", "b.png"):
+        (q / name).write_bytes(rs._PNG_ZEICHEN + b"\0\0\0\rIHDR" + bytes(8) + b"rest")
+    vorher, je_vorher, _ = _obj_flaechen(q / "roh.obj")
+    ziel = tmp_path / "fertig" / "netz.obj"
+    b = rs.bereinige_obj(q / "roh.obj", ziel)
+    assert b["deckel_dreiecke"] == 1 and b["deckel_flaeche_anteil"] > 0.99
+    # Die drei Deckelecken und die Ecke (N-1, 0), die im Gitter keine Fläche trägt.
+    assert b["ecken_entfernt"] == 4 and b["uv_entfernt"] == 4
+    nachher, je_nachher, mtllib = _obj_flaechen(ziel)
+    deckel = [f for f in vorher if abs(f[0][0][0]) == 500.0]
+    assert len(deckel) == 1
+    # Jede übrige Fläche zeigt auf DIESELBEN Lagen und DIESELBEN Texturkoordinaten.
+    assert nachher == [f for f in vorher if f not in deckel]
+    assert je_nachher == {"a": je_vorher["a"] - 1, "b": je_vorher["b"]}
+    assert mtllib == ["netz.mtl"] and b["materialien"] == 2 and b["texturen"] == 2
+    mtl = (ziel.parent / "netz.mtl").read_text(encoding="utf-8")
+    assert "map_Kd -s 1 1 1 netz_textur_1.png" in mtl and "map_Kd netz_textur_2.png" in mtl
+    assert (ziel.parent / "netz_textur_1.png").read_bytes() == (q / "a.png").read_bytes()
+    text = ziel.read_text(encoding="utf-8")
+    assert "nutzer" not in text and f"# textur-sha256 {b['textur_sha256']}" in text
+    assert all(int(w.split("/")[0]) > 0 for z in text.splitlines() if z.startswith("f ")
+               for w in z.split()[1:])
+    # Eine andere Textur ist ein anderes OBJ (die Summe steht darin).
+    (q / "b.png").write_bytes((q / "b.png").read_bytes() + b"anders")
+    rs.bereinige_obj(q / "roh.obj", tmp_path / "zwei" / "netz.obj")
+    assert rs._datei_sha(tmp_path / "zwei" / "netz.obj") != rs._datei_sha(ziel)
+
+
+def test_textur_speicher_nach_inhalt_und_vollstaendig(tmp_path, textur, monkeypatch):
+    sparse = _aufnahme(tmp_path / "lauf")
+    erst = rs.realityscan_zu_netz(sparse)
+    zweit = rs.realityscan_zu_netz(sparse)
+    assert zweit["zwischenspeicher"]["treffer"] is True and len(_aufrufe(textur)) == 1
+    assert zweit["netz_datei"] == erst["netz_datei"]
+    # Fehlt eine Textur im Speicher, ist es kein Treffer — Blender zeichnete sie rosa.
+    (Path(erst["netz_datei"]).parent / "netz_textur_2.png").unlink()
+    assert rs.realityscan_zu_netz(sparse)["zwischenspeicher"]["treffer"] is False
+    assert len(_aufrufe(textur)) == 2
+    # Eine andere Abwicklungsdatei ist ein anderes Netz.
+    textur["unwrap"].write_text(textur["unwrap"].read_text(encoding="utf-8")
+                                .replace('"2"/>', '"4"/>'), encoding="utf-8")
+    assert rs.realityscan_zu_netz(sparse)["zwischenspeicher"]["treffer"] is False
+    # Und Eckfarben (ohne Abwicklung, mit der PLY-Exportdatei) ist ein anderer Schlüssel.
+    monkeypatch.delenv(rs.REALITYSCAN_UNWRAP_XML_ENV)
+    monkeypatch.setenv(rs.REALITYSCAN_EXPORT_XML_ENV, str(textur["xml"]))
+    eck = rs.realityscan_zu_netz(sparse)
+    assert eck["art"] == rs.ART_ECKFARBEN and eck["netz_datei"].endswith("netz.ply")
+    assert eck["hinweise"] == [rs.SATZ_ECKFARBEN]
+    assert eck["zwischenspeicher"]["schluessel"] != erst["zwischenspeicher"]["schluessel"]
+
+
+def test_textur_export_ohne_mtl_ist_ein_exportfehler_und_wird_gespeichert(tmp_path, textur,
+                                                                          monkeypatch):
+    sparse = _aufnahme(tmp_path / "lauf")
+    monkeypatch.setenv("RS_ATTRAPPE_OHNE_MTL", "1")
+    with pytest.raises(rs.RealityScanError) as fehler:
+        rs.realityscan_zu_netz(sparse)
+    assert fehler.value.ursache == rs.URSACHE_EXPORT and "netz.mtl" in fehler.value.grund
+    assert str(tmp_path) not in fehler.value.grund
+    with pytest.raises(rs.RealityScanError, match="aus dem Speicher"):
+        rs.realityscan_zu_netz(sparse)
+    assert len(_aufrufe(textur)) == 1
+
+
+def test_textur_lage_wird_am_obj_geprueft(tmp_path, textur, monkeypatch):
+    sparse = _aufnahme(tmp_path / "lauf")
+    monkeypatch.setenv("RS_ATTRAPPE_VERSATZ", "5,3,5")
+    with pytest.raises(rs.RealityScanError) as fehler:
+        rs.realityscan_zu_netz(sparse)
+    assert fehler.value.ursache == rs.URSACHE_LAGE
+    assert fehler.value.bericht["lage"]["nah_colmap"] < rs.LAGE_NAH_MIN
+    assert fehler.value.bericht["lage"]["n_ecken"] > 1000
+
+
+def test_lies_ecken_und_lage_mit_einem_obj(tmp_path):
+    p = tmp_path / "n.obj"
+    punkte = _gitter()
+    p.write_text("".join(f"v {x} {y} {z}\n" for x, y, z in punkte) + "f 1 2 3\n",
+                 encoding="utf-8")
+    e = rs.lies_ecken(p)
+    assert e["n"] == len(punkte) and e["farbe"] is False and e["probe"] == punkte
+    assert e["lo"] == [0.0, 0.0, 0.0] and e["hi"][0] == pytest.approx(10 * 11 / 12)
+    assert len(rs.lies_ecken(p, hoechstens=10, voll=False)["probe"]) == 10
+    assert rs.lage_befund(ecken=e["probe"], punkte=punkte)["passt"]
+
+
+def test_ein_obj_ist_ein_netz(tmp_path):
+    netz = tmp_path / "n.obj"
+    netz.write_text("# Netz\nmtllib n.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 0 1\n"
+                    "usemtl m\nf 1/1 2/2 3/3\n", encoding="utf-8")
+    assert kn.ist_obj(netz) and kn.art_der_datei(netz) == "netz"
+    z = kn.netz_kennzahlen(netz)
+    assert (z["ecken"], z["dreiecke"], z["format"], z["datei"]) == (3, 1, "obj", "n.obj")
+    kopf = kn.lies_obj_kopf(netz, voll=True)
+    assert (kopf["uv"], kopf["mtllib"], kopf["usemtl"]) == (3, ["n.mtl"], ["m"])
+    assert kn.obj_begleitdateien(netz)["fehlend"] == ["n.mtl"]
+    punkte = tmp_path / "p.obj"
+    punkte.write_text("v 0 0 0\nv 1 0 0\n", encoding="utf-8")
+    assert kn.art_der_datei(punkte) == "punkte"
+    # Eine PLY mit falscher Endung bleibt eine PLY, eine Textdatei ist kein OBJ.
+    ply = tmp_path / "eigentlich.obj"
+    kn.schreibe_netz_ply(ply, [(0, 0, 0), (1, 0, 0), (0, 1, 0)], [(9, 9, 9)] * 3, [(0, 1, 2)])
+    assert not kn.ist_obj(ply) and kn.art_der_datei(ply) == "netz"
+    text = tmp_path / "brief.obj"
+    text.write_text("Sehr geehrte Damen und Herren\n", encoding="utf-8")
+    assert not kn.ist_obj(text)
+
+    # Ein geliefertes OBJ geht unverändert durch, ohne RealityScan.
+    def nie(*a, **k):
+        raise AssertionError("fuer ein geliefertes Netz laeuft nichts")
+
+    v = seams.kontext_vorbereiten(netz, _splat_zu_netz=nie, _realityscan=nie)
+    assert v["weg"] == "netz" and v["ply"] == str(netz)
+    assert v["realityscan_ursache"] == rs.URSACHE_GELIEFERT
+
+
+def test_einbindung_textur_vermerk(tmp_path, textur):
+    splat = _splat_neben_aufnahme(tmp_path)
+    offen = []
+    v = seams.kontext_vorbereiten(splat, _splat_zu_netz=_offener_weg(tmp_path, offen))
+    assert v["weg"] == rs.WEG and offen == [] and v["ply"].endswith(".obj")
+    n = v["netz"]
+    assert n["art"] == rs.ART_TEXTUR and n["format"] == "obj" and n["hinweise"] == []
+    assert [t["datei"] for t in n["texturen"]] == ["netz_textur_1.png", "netz_textur_2.png"]
+    assert n["bereinigung"]["deckel_dreiecke"] == 1 and len(n["sha256_alle"]) == 64
+    assert str(tmp_path) not in json.dumps(n) and "nutzer" not in json.dumps(n)
+
+
+def test_einbindung_eckfarben_sagt_den_rueckfall(tmp_path, eingerichtet):
+    splat = _splat_neben_aufnahme(tmp_path)
+    v = seams.kontext_vorbereiten(splat, _splat_zu_netz=_offener_weg(tmp_path, []))
+    assert v["weg"] == rs.WEG and v["ply"].endswith(".ply")
+    assert v["netz"]["art"] == rs.ART_ECKFARBEN and v["netz"]["hinweise"] == [rs.SATZ_ECKFARBEN]
+
+
+@pytest.mark.skipif(_blender_fehlt(), reason="Blender fehlt")
+def test_der_ganze_weg_bis_blender_mit_textur(tmp_path, textur):
+    """Das texturierte OBJ wird als Netz geladen, mit Emission 1 aus der Textur schattiert,
+    und das Bauwerk merkt davon nichts (Zahl der Materialien, Kennungen)."""
+    splat = _splat_neben_aufnahme(tmp_path)
+    v = seams.kontext_vorbereiten(splat)
+    assert v["weg"] == rs.WEG and v["netz"]["art"] == rs.ART_TEXTUR, v.get("realityscan_grund")
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(_werkzeug("make_test_glb").baue_glb(
+        [("Haus", (-4.0, 0.0, -3.0), (4.0, 6.0, 3.0))]))
+    gemeinsam = dict(up_axis="Y", kamera="s", aufloesung=96, hoehe=72, samples=1)
+    ohne = seams.glb_zu_multipass(glb, tmp_path / "ohne", **gemeinsam)
+    mit = seams.glb_zu_multipass(glb, tmp_path / "mp", kontext_ply=v["ply"], **gemeinsam)
+    assert mit["status"] == "ok", mit.get("error")
+    k = mit["kontext"]
+    assert k["quelle"] == kn.QUELLE_NETZ and k["format"] == "obj"
+    assert (k["ecken"], k["dreiecke"]) == (v["netz"]["ecken"], v["netz"]["dreiecke"])
+    assert os.path.basename(v["ply"]) == k["datei"]
+    assert k["farbe"].startswith("Textur als Emission")
+    assert k["textur"]["bilder"] == 2 and k["textur"]["ohne_bild"] == 0
+    assert k["textur"]["materialien"] == 2 and k["textur"]["groessen"] == [[4, 4], [4, 4]]
+    # Das Bauwerk bleibt, was es war: dieselbe Zahl Materialien, dieselben Kennungen davor.
+    assert mit["n_materialien"] == ohne["n_materialien"]
+    tab_ohne = [(e["index"], e["name"], e["quelle"]) for e in ohne["material_id_tabelle"]]
+    tab_mit = [(e["index"], e["name"], e["quelle"]) for e in mit["material_id_tabelle"]]
+    assert tab_mit[:len(tab_ohne)] == tab_ohne and tab_mit[-1][2] == "kontext"
+    assert k["material_id"] is not None and k["material_id"]["quelle"] == "kontext"
+
+
+def _png(pfad: Path, rgb, n: int = 4) -> Path:
+    """Eine einfarbige PNG n×n — nur die Standardbibliothek (zlib), synthetisch."""
+    import struct
+    import zlib
+
+    roh = b"".join(b"\x00" + bytes(rgb) * n for _ in range(n))
+
+    def stueck(art, daten):
+        return (struct.pack(">I", len(daten)) + art + daten
+                + struct.pack(">I", zlib.crc32(art + daten) & 0xffffffff))
+
+    pfad.write_bytes(b"\x89PNG\r\n\x1a\n"
+                     + stueck(b"IHDR", struct.pack(">IIBBBBB", n, n, 8, 2, 0, 0, 0))
+                     + stueck(b"IDAT", zlib.compress(roh)) + stueck(b"IEND", b""))
+    return pfad
+
+
+#: Die zwei Farben der Kulisse (sRGB, 8 Bit) — so muss sie mit Emission 1 im Beauty stehen.
+ORANGE, BLAU = (200, 120, 40), (40, 120, 200)
+
+
+def _kulisse_obj(ordner: Path) -> Path:
+    """Vier Wände um das Haus, zwei Materialien mit je einer Textur: die Wände quer zu z orange,
+    die quer zu x blau. **Im System des Splats** (y oben, wie die glb), so wie RealityScan mit
+    der Exportdatei die Koordinaten der Aufnahme zurückgibt; in die Welt legt es die Matrix."""
+    ordner.mkdir(parents=True, exist_ok=True)
+    _png(ordner / "kulisse_orange.png", ORANGE)
+    _png(ordner / "kulisse_blau.png", BLAU)
+    (ordner / "kulisse.mtl").write_text(
+        "newmtl orange\nmap_Kd kulisse_orange.png\nnewmtl blau\nmap_Kd kulisse_blau.png\n",
+        encoding="utf-8")
+    w, h = 40.0, 30.0
+    waende = {"orange": [((-w, -1, -20), (w, -1, -20), (w, h, -20), (-w, h, -20)),
+                         ((-w, -1, 20), (w, -1, 20), (w, h, 20), (-w, h, 20))],
+              "blau": [((-20, -1, -w), (-20, -1, w), (-20, h, w), (-20, h, -w)),
+                       ((20, -1, -w), (20, -1, w), (20, h, w), (20, h, -w))]}
+    zeilen = ["mtllib kulisse.mtl", "vt 0 0", "vt 1 0", "vt 1 1", "vt 0 1"]
+    flaechen = []
+    n = 0
+    for material, liste in waende.items():
+        flaechen.append(f"usemtl {material}")
+        for wand in liste:
+            zeilen += [f"v {x} {y} {z}" for x, y, z in wand]
+            flaechen += [f"f {n + 1}/1 {n + 2}/2 {n + 3}/3", f"f {n + 1}/1 {n + 3}/3 {n + 4}/4"]
+            n += 4
+    p = ordner / "kulisse.obj"
+    p.write_text("\n".join(zeilen + flaechen) + "\n", encoding="utf-8")
+    return p
+
+
+@pytest.mark.skipif(_blender_fehlt(), reason="Blender fehlt")
+def test_blender_zeichnet_die_textur_mit_emission_1(tmp_path):
+    """Ein texturiertes OBJ als Umgebung: geladen als Netz, je Material seine Textur, und im
+    Beauty steht **genau** ihre Farbe (Emission 1, Ansicht «Standard») — kein Licht, kein
+    Schatten auf der Umgebung. Das Bauwerk zählt dieselben Materialien wie ohne Umgebung."""
+    kulisse = _kulisse_obj(tmp_path / "kulisse")
+    assert kn.art_der_datei(kulisse) == "netz"
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(_werkzeug("make_test_glb").baue_glb(
+        [("Haus", (-4.0, 0.0, -3.0), (4.0, 6.0, 3.0))]))
+    gemeinsam = dict(up_axis="Y", kamera="s", aufloesung=96, hoehe=72, samples=4)
+    ohne = seams.glb_zu_multipass(glb, tmp_path / "ohne", **gemeinsam)
+    mit = seams.glb_zu_multipass(glb, tmp_path / "mit", kontext_ply=str(kulisse), **gemeinsam)
+    assert mit["status"] == "ok", mit.get("error")
+    k = mit["kontext"]
+    assert k["quelle"] == kn.QUELLE_NETZ and k["format"] == "obj" and k["dreiecke"] == 8
+    assert k["textur"]["bilder"] == 2 and k["textur"]["materialien"] == 2
+    assert k["farbe"].startswith("Textur als Emission")
+    assert mit["n_materialien"] == ohne["n_materialien"]
+    from aiimaging import bildlesen
+    farben, b, h = bildlesen.lies_png_farben(mit["beauty_png"])
+
+    def nah(f, soll):
+        return all(abs(f[i] - soll[i]) <= 3 for i in range(3))
+
+    orange = sum(1 for f in farben if nah(f, ORANGE))
+    blau = sum(1 for f in farben if nah(f, BLAU))
+    # Die Kulisse füllt den Hintergrund — in IHRER Farbe, nicht beleuchtet.
+    assert orange + blau > 0.2 * b * h, (orange, blau, b * h)
+    ohne_farben, _, _ = bildlesen.lies_png_farben(ohne["beauty_png"])
+    assert not any(nah(f, ORANGE) or nah(f, BLAU) for f in ohne_farben)
+    # Im Material-ID-Pass trägt die ganze Kulisse EINE Kennung, die letzte (Set Material an).
+    assert mit["material_id_tabelle"][-1]["quelle"] == "kontext"
+    soll = tuple(k["material_id"]["farbe_srgb_8bit"])
+    ids, _, _ = bildlesen.lies_png_farben(mit["material_id_png"])
+    assert sum(1 for f in ids if tuple(f) == soll) > 0.2 * b * h
+    assert not any(nah(f, ORANGE) or nah(f, BLAU) for f in ids)

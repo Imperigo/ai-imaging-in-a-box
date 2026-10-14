@@ -77,8 +77,9 @@ __all__ = [
     "ansicht_matrix", "anteil_innen", "art_der_datei", "aufnahme_blickwinkel",
     "aufnahme_fingerabdruck", "aufnahme_kandidaten", "bildhoehe", "blickwinkel",
     "dichter_bereich", "gleichheit_befund", "huelle_erweitert", "intrinsik",
-    "intrinsik_skaliert", "ist_aufnahme_ordner", "ist_netz", "kamerazentrum", "lies_aufnahme",
-    "lies_ply_kopf", "lies_punkte3d", "netz_kennzahlen", "netz_parameter", "oben_und_massstab",
+    "intrinsik_skaliert", "ist_aufnahme_ordner", "ist_netz", "ist_obj", "kamerazentrum",
+    "lies_aufnahme", "lies_obj_kopf", "lies_ply_kopf", "MTL_BILDER", "name_aus_verweis",
+    "obj_begleitdateien", "OBJ_ENDUNG", "lies_punkte3d", "netz_kennzahlen", "netz_parameter", "oben_und_massstab",
     "pose_zu_ansicht", "quaternion_zu_matrix", "schreibe_netz_ply", "sh_grad",
     "sh_grad_aus_kopf", "voxel_fuer_bloecke", "waehle_augenblicke",
 ]
@@ -441,12 +442,185 @@ def ist_netz(kopf: dict) -> bool:
     return bool(flaeche and flaeche["anzahl"] > 0)
 
 
+# ======================================================================================
+# OBJ erkennen (Fassung 3 der RealityScan-Brücke, 14.10.2026)
+# ======================================================================================
+#
+# Ein **texturiertes** Netz ist mehr als eine Datei: das Wavefront-OBJ (Ecken, Texturkoordi-
+# naten, Flächen), daneben eine MTL-Datei (welche Fläche welches Bild trägt) und die Bilder
+# selbst. Bis dahin war «Netz» gleichbedeutend mit «PLY mit ``element face``». Erkannt wird
+# ein OBJ an der **Endung** ``.obj`` *und* daran, dass die Datei **keine PLY** ist und mit
+# OBJ-Anweisungen beginnt — nicht am Namen allein, aus demselben Grund wie bei der PLY.
+
+#: Die Endung eines OBJ, klein geschrieben.
+OBJ_ENDUNG = ".obj"
+
+#: Anweisungen, die in einem OBJ stehen dürfen (Wavefront-Format).
+_OBJ_ANWEISUNGEN = frozenset({b"v", b"vt", b"vn", b"vp", b"f", b"l", b"p", b"o", b"g",
+                              b"s", b"mtllib", b"usemtl", b"usemap", b"mg", b"cstype",
+                              b"deg", b"curv", b"curv2", b"surf", b"parm", b"trim", b"hole",
+                              b"scrv", b"sp", b"end", b"con", b"bevel", b"c_interp",
+                              b"d_interp", b"lod", b"shadow_obj", b"trace_obj", b"bmat",
+                              b"step"})
+
+#: So viel liest :func:`ist_obj` vom Anfang, :func:`lies_obj_kopf` (ohne ``voll``) vom
+#: Anfang und vom Ende.
+_OBJ_FENSTER = 1 << 16
+
+
+def ist_obj(pfad) -> bool:
+    """Ist die Datei ein Wavefront-OBJ? Endung ``.obj``, **keine** PLY, Text, und die ersten
+    Zeilen sind OBJ-Anweisungen (``v``, ``vt``, ``f``, ``mtllib``, Kommentare …).
+
+    Gelesen werden höchstens 64 KiB vom Anfang; eine fehlende Datei ist kein OBJ.
+    """
+    p = Path(pfad)
+    if p.suffix.lower() != OBJ_ENDUNG or not p.is_file():
+        return False
+    try:
+        with open(p, "rb") as datei:
+            roh = datei.read(_OBJ_FENSTER)
+    except OSError:
+        return False
+    if not roh or roh.startswith(b"ply") or b"\0" in roh:     # leer, PLY oder binär
+        return False
+    zeilen = roh.splitlines()
+    if len(roh) == _OBJ_FENSTER and len(zeilen) > 1:
+        zeilen = zeilen[:-1]                                   # die letzte ist angeschnitten
+    zeilen = [z.strip() for z in zeilen if z.strip()][:200]
+    return bool(zeilen) and all(z.startswith(b"#") or z.split()[0] in _OBJ_ANWEISUNGEN
+                                for z in zeilen)
+
+
+def lies_obj_kopf(pfad, *, voll: bool = False) -> dict:
+    """Was in einem OBJ steht, ohne es zu laden — nur die Standardbibliothek.
+
+    Args:
+        voll: ``True`` zählt alle Ecken und Flächen (liest die ganze Datei, zeilenweise);
+            ``False`` sieht nur in die ersten und letzten 64 KiB — genug für «trägt es
+            Flächen?», weil ein OBJ seine Flächen nach den Ecken schreibt.
+
+    Returns:
+        ``{ecken, uv, normalen, flaechen, mtllib, usemtl}`` — Zahlen nur mit ``voll`` (sonst
+        ``flaechen`` als 0 oder 1 und die übrigen ``None``); ``mtllib`` und ``usemtl`` als
+        Namen, wie sie in der Datei stehen (ohne ``voll`` nur die aus den beiden Fenstern).
+
+    Raises:
+        KontextNetzError: nicht lesbar oder kein OBJ.
+    """
+    p = Path(pfad)
+    if not ist_obj(p):
+        raise KontextNetzError(f"{p.name!r} ist kein OBJ (Endung .obj und OBJ-Zeilen erwartet).")
+    mtllib: list[str] = []
+    usemtl: list[str] = []
+
+    def merke(zeile: bytes) -> None:
+        for wort, liste in ((b"mtllib", mtllib), (b"usemtl", usemtl)):
+            if zeile.startswith(wort) and zeile[len(wort):len(wort) + 1] in (b" ", b"\t"):
+                name = zeile[len(wort):].strip().decode("utf-8", errors="replace")
+                if name and name not in liste:
+                    liste.append(name)
+
+    try:
+        if voll:
+            ecken = uv = normalen = flaechen = 0
+            with open(p, "rb") as datei:
+                for zeile in datei:
+                    k = zeile[:3]
+                    if k[:2] == b"v ":
+                        ecken += 1
+                    elif k == b"vt ":
+                        uv += 1
+                    elif k == b"vn ":
+                        normalen += 1
+                    elif k[:2] == b"f ":
+                        flaechen += 1
+                    elif k[:1] in (b"m", b"u"):
+                        merke(zeile.strip())
+            return {"ecken": ecken, "uv": uv, "normalen": normalen, "flaechen": flaechen,
+                    "mtllib": mtllib, "usemtl": usemtl}
+        groesse = p.stat().st_size
+        with open(p, "rb") as datei:
+            anfang = datei.read(_OBJ_FENSTER)
+            datei.seek(max(0, groesse - _OBJ_FENSTER))
+            ende = datei.read(_OBJ_FENSTER)
+    except OSError as fehler:
+        raise KontextNetzError(f"{p.name!r} ist nicht lesbar: {fehler}") from fehler
+    flaechen = 0
+    for teil in (anfang, ende):
+        for zeile in teil.splitlines():
+            z = zeile.strip()
+            if z[:2] in (b"f ", b"f\t"):
+                flaechen = 1
+            elif z[:1] in (b"m", b"u"):
+                merke(z)
+    return {"ecken": None, "uv": None, "normalen": None, "flaechen": flaechen,
+            "mtllib": mtllib, "usemtl": usemtl}
+
+
+#: Anweisungen einer MTL-Datei, die auf ein Bild zeigen (Wavefront-MTL).
+MTL_BILDER = ("map_Kd", "map_Ka", "map_Ks", "map_Ke", "map_Ns", "map_d", "map_Bump",
+              "map_bump", "bump", "disp", "decal", "norm", "refl")
+
+
+def name_aus_verweis(verweis: str) -> str:
+    """Der Dateiname aus einem Verweis — auch aus einem Windows- oder absoluten Pfad."""
+    return verweis.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1].strip()
+
+
+def obj_begleitdateien(pfad) -> dict:
+    """Die Dateien, die zu einem OBJ gehören: MTL (``mtllib``) und ihre Bilder (``map_Kd`` …).
+
+    Gesucht wird **nur neben dem OBJ** und nur nach dem **Dateinamen** des Verweises: Ein
+    absoluter oder ein Windows-Pfad in der Datei (``Z:\\…``) zeigte auf einen fremden Ort.
+    ``mtllib`` wird über die **ganze** Datei gesucht (:func:`lies_obj_kopf` mit ``voll``).
+
+    Returns:
+        ``{mtl: [Path], bilder: [Path], fehlend: [Name]}`` — vorhandene Dateien als Pfade
+        (für den Lauf), fehlende nur als Namen (für einen Grund ohne Pfad).
+    """
+    p = Path(pfad)
+    kopf = lies_obj_kopf(p, voll=True)
+    mtl: list[Path] = []
+    bilder: list[Path] = []
+    fehlend: list[str] = []
+    for verweis in kopf["mtllib"]:
+        name = name_aus_verweis(verweis)
+        q = p.parent / name
+        if not name or not q.is_file():
+            fehlend.append(name or verweis)
+            continue
+        mtl.append(q)
+        try:
+            text = q.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            fehlend.append(name)
+            continue
+        for zeile in text.splitlines():
+            t = zeile.strip().split()
+            if len(t) >= 2 and t[0] in MTL_BILDER:
+                bild = name_aus_verweis(t[-1])
+                b = p.parent / bild
+                if b.is_file():
+                    if b not in bilder:
+                        bilder.append(b)
+                elif bild not in fehlend:
+                    fehlend.append(bild)
+    return {"mtl": mtl, "bilder": bilder, "fehlend": fehlend}
+
+
 def art_der_datei(pfad) -> str:
-    """``"netz"``, ``"splat"`` oder ``"punkte"`` — was in einer PLY steht.
+    """``"netz"``, ``"splat"`` oder ``"punkte"`` — was in einer PLY (oder einem OBJ) steht.
 
     Ein Splat ist eine Punktwolke mit Deckkraft und Skala je Punkt (3DGS); eine gewöhnliche
     Punktwolke hat keine von beiden.
+
+    **Seit Fassung 3 der RealityScan-Brücke (14.10.2026) auch OBJ:** Ein texturiertes Netz
+    kommt als Wavefront-OBJ mit Material- und Bilddateien (:func:`ist_obj`). Ein OBJ mit
+    Flächen ist ein ``"netz"``, eines ohne ``"punkte"``; einen Splat gibt es als OBJ nicht.
     """
+    if ist_obj(pfad):
+        return "netz" if lies_obj_kopf(pfad)["flaechen"] else "punkte"
     kopf = lies_ply_kopf(pfad)
     if ist_netz(kopf):
         return "netz"
@@ -520,12 +694,28 @@ def schreibe_netz_ply(pfad, ecken, farben, dreiecke) -> dict:
 def netz_kennzahlen(pfad) -> dict:
     """Name, Grösse, sha256 und Ecken/Dreiecke eines Netzes — **ohne Pfad** (Regel 3).
 
+    Für ein OBJ (:func:`ist_obj`) zählen die ``v``-Zeilen als Ecken und die ``f``-Zeilen als
+    Dreiecke (wie ``element face`` der PLY: Flächen, nicht zerlegt), und ``format`` ist
+    ``"obj"``. Die sha256 ist die **der OBJ-Datei allein** — die RealityScan-Brücke schreibt
+    die Summe von MTL und Bildern als Kommentar hinein, damit eine andere Textur auch hier
+    eine andere Summe ergibt (und damit einen anderen Speicherschlüssel des Multipass).
+
     Raises:
         KontextNetzError: Datei fehlt, ist leer oder trägt keine Flächen.
     """
     p = Path(pfad)
     if not p.is_file() or p.stat().st_size == 0:
         raise KontextNetzError(f"Netz {p.name!r} fehlt oder ist leer.")
+    if ist_obj(p):
+        zahl = lies_obj_kopf(p, voll=True)
+        if not zahl["flaechen"]:
+            raise KontextNetzError(f"{p.name!r} trägt keine Flächen — das ist kein Netz.")
+        summe = hashlib.sha256()
+        with open(p, "rb") as datei:
+            for stueck in iter(lambda: datei.read(1 << 20), b""):
+                summe.update(stueck)
+        return {"datei": p.name, "bytes": p.stat().st_size, "sha256": summe.hexdigest(),
+                "ecken": zahl["ecken"], "dreiecke": zahl["flaechen"], "format": "obj"}
     kopf = lies_ply_kopf(p)
     if not ist_netz(kopf):
         raise KontextNetzError(f"{p.name!r} trägt keine Flächen — das ist kein Netz.")

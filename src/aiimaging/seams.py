@@ -1011,7 +1011,8 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
     Gemeinsam für Abholer und Kette (``kette._fuehre_multipass``), damit beide Wege dieselbe
     Entscheidung treffen.
 
-    * Ist ``kontext_ply`` schon ein Netz (PLY mit Flächen), geht es unverändert durch.
+    * Ist ``kontext_ply`` schon ein Netz (PLY mit Flächen, oder ein OBJ mit Flächen — seit
+      Fassung 3 der RealityScan-Brücke), geht es unverändert durch.
     * **Sonst zuerst RealityScan** (Owner-Entscheid 81, 13.10.2026): wenn eingeschaltet und
       eingerichtet (:func:`aiimaging.realityscan.einrichtung`), eine Aufnahme gefunden
       (:func:`finde_aufnahme`) und ihre Fotos da sind (:func:`aiimaging.realityscan.finde_bilder`)
@@ -1053,11 +1054,21 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
         b = rs["bericht"]
         n = b.get("netz") or {}
         lage = b.get("lage") or {}
-        return {"ply": b["netz_ply"], "weg": _rs.WEG, "grund": None,
+        # `ply` HEISST SO SEIT ENTSCHEID 76 — es ist der Pfad der Datei fuer den Multipass, seit
+        # Fassung 3 der Bruecke (14.10.2026) auch ein texturiertes OBJ (MTL und Bilder liegen
+        # daneben). `netz_datei` ist der neue Name im Bericht der Bruecke, `netz_ply` der alte.
+        return {"ply": b.get("netz_datei") or b["netz_ply"], "weg": _rs.WEG, "grund": None,
                 "hinweis": _rs.SATZ_REALITYSCAN, "realityscan_grund": None,
                 "realityscan_ursache": None,
                 "netz": {"ecken": n.get("ecken"), "dreiecke": n.get("dreiecke"),
                          "sha256": n.get("sha256"), "quelle": _rs.WEG,
+                         # Textur (OBJ) oder Eckfarben (PLY) — und, bei Eckfarben, warum.
+                         "art": n.get("art") or b.get("art") or _rs.ART_ECKFARBEN,
+                         "format": n.get("format"),
+                         "texturen": [{k: t.get(k) for k in ("datei", "breite", "hoehe", "bytes")}
+                                      for t in (n.get("texturen") or ())],
+                         "dateien": n.get("dateien"), "sha256_alle": n.get("sha256_alle"),
+                         "hinweise": list(b.get("hinweise") or ()),
                          "programm_fassung": (b.get("programm") or {}).get("fassung"),
                          "vereinfacht": n.get("vereinfacht"),
                          # Farben und Deckel (Fassung 2 der Bruecke) — bis 14.10. nur im

@@ -45,12 +45,28 @@ Was hier steht — nur die Standardbibliothek (Regel 4)
 * :func:`lage_befund` — liegt das Netz dort, wo die Aufnahme liegt? Sonst wird es **nicht**
   benutzt (Grund ``lage``): RealityScan könnte neu gelagert oder skaliert haben.
 
+* :func:`bereinige_obj` — dasselbe für das **texturierte** Netz (Fassung 3): Deckel weg,
+  Ecken und Texturkoordinaten neu nummeriert, MTL und Bilder daneben.
+
+Fassung 3 — Textur statt Eckfarben (14.10.2026)
+-----------------------------------------------
+Befund der HomeStation am echten Auftrag: Ein **texturiertes** Netz ist im Bild so scharf wie
+der Splat oder schärfer (Schärfe Splat/Textur/Eckfarben 4.1/7.4/6.3, 4.9/7.8/7.3, 4.8/7.0/3.4,
+an einer Fensterwand 3.2/4.1/1.9); **Eckfarben** sind an Fensterwänden unlesbar — eine Farbe
+je Ecke ist bei ~2 cm Dreiecken gröber als ein Fensterrahmen. Darum wickelt die Brücke das Netz
+ab (``-unwrap`` mit einer **Abwicklungsdatei**), rechnet die Textur (``-calculateTexture``) und
+exportiert ein **OBJ mit PNG-Bildern**. Eingerichtet wird das mit
+:data:`REALITYSCAN_UNWRAP_XML_ENV`; ohne sie bleibt alles wie in Fassung 2
+(:func:`einrichtung`, «Rückfall auf Eckfarben»).
+
 Was gemessen ist, was offen ist
 -------------------------------
 Die Befehlsfolge ist seit ``auf-20261013-278`` (14.10.2026) **am Heim-PC gemessen**:
 RealityScan 2.2, 960 Bilder, 324 s, 93 % Deckung, Lage und Massstab wie die Aufnahme. Die
 Brücke von Fassung 1 lief dort nicht (sieben Befunde, Protokoll 74 §100); Fassung 2 setzt sie
-um. Was offen bleibt, steht in :data:`OFFENE_FRAGEN` und ``betrieb/REALITYSCAN_BRUECKE.md``.
+um. Die Textur-Schritte von Fassung 3 hat die HomeStation **von Hand** gefahren (14.10.2026);
+die Brücke selbst ist dort noch nicht gelaufen. Was offen bleibt, steht in
+:data:`OFFENE_FRAGEN` und ``betrieb/REALITYSCAN_BRUECKE.md``.
 """
 from __future__ import annotations
 
@@ -71,17 +87,20 @@ from pathlib import Path
 from aiimaging import kontext_netz as _kn
 
 __all__ = [
-    "AUSGABE_ZEICHEN", "DECKEL_KANTE_REL", "EXE_VORGABE", "FASSUNG", "FLUECHTIGE_URSACHEN",
+    "ART_ECKFARBEN", "ART_TEXTUR", "AUSGABE_ZEICHEN", "DECKEL_KANTE_REL", "EXE_VORGABE",
+    "FASSUNG", "FASSUNG_ECKFARBEN", "FLUECHTIGE_URSACHEN",
     "GESAMTFRIST_REALITYSCAN_S", "LAGE_ECKEN_MAX", "LAGE_MASSSTAB_MAX", "LAGE_NAH_MIN",
     "LAGE_PROBEN", "LAGE_ZELLE_REL", "NACHFRIST_S", "OFFENE_FRAGEN", "REALITYSCAN_ENV",
     "REALITYSCAN_EXE_ENV", "REALITYSCAN_EXPORT_XML_ENV", "REALITYSCAN_SPEICHER_ENV",
-    "RealityScanError", "SATZ_REALITYSCAN", "URSACHE_AUFNAHME", "URSACHE_AUS",
+    "REALITYSCAN_UNWRAP_XML_ENV", "RealityScanError", "SATZ_ECKFARBEN", "SATZ_REALITYSCAN",
+    "TEXTUR_EBENE", "TEXTUR_SETZEN", "URSACHE_AUFNAHME", "URSACHE_AUS",
     "URSACHE_BILDER", "URSACHE_EINRICHTUNG", "URSACHE_EXPORT", "URSACHE_GELIEFERT",
-    "URSACHE_LAGE", "URSACHE_LAUF", "WEG", "ZIEL_DREIECKE",
-    "bereinige_export", "colmap_als_text", "einrichtung", "eingeschaltet", "finde_bilder", "kommando",
-    "lage_befund", "lage_pruefen", "lies_ecken", "nah_anteil", "ohne_pfade",
-    "pruefe_export", "realityscan_schluessel", "realityscan_zu_netz", "treffer_maengel",
-    "wine_pfad",
+    "URSACHE_LAGE", "URSACHE_LAUF", "WEG", "ZIEL_DREIECKE", "ZIEL_DREIECKE_ECKFARBEN",
+    "bereinige_export", "bereinige_obj", "colmap_als_text", "einrichtung", "eingeschaltet",
+    "export_xml_befund", "finde_bilder", "kommando",
+    "lage_befund", "lage_pruefen", "lies_ecken", "nah_anteil", "ohne_pfade", "png_masse",
+    "pruefe_export", "pruefe_obj_export", "realityscan_schluessel", "realityscan_zu_netz",
+    "treffer_maengel", "wine_pfad",
 ]
 
 
@@ -110,9 +129,16 @@ class RealityScanError(RuntimeError):
 REALITYSCAN_ENV = "AIIMAGING_REALITYSCAN"
 #: Pfad zur ``RealityScan.exe`` (Linux-Pfad); ohne Angabe :data:`EXE_VORGABE`.
 REALITYSCAN_EXE_ENV = "AIIMAGING_REALITYSCAN_EXE"
-#: Pfad zur **Export-Parameterdatei** (XML), die der Owner einmal im Programm anlegt. Pflicht:
-#: Ihr Format ist nicht dokumentiert, und eine erfundene Datei wäre eine Behauptung.
+#: Pfad zur **Export-Parameterdatei** (XML). Pflicht: Die Brücke erfindet keine Datei. Seit
+#: Fassung 3 ist es die **OBJ-Textur-Datei** (Vorlage ``betrieb/realityscan/export-obj-textur.xml``,
+#: von der HomeStation am Programm erprobt); eine PLY-Datei von Fassung 2 geht weiter, dann
+#: mit Eckfarben.
 REALITYSCAN_EXPORT_XML_ENV = "AIIMAGING_REALITYSCAN_EXPORT_XML"
+#: Pfad zur **Abwicklungsdatei** (XML) für ``-unwrap`` (Fassung 3, Vorlage
+#: ``betrieb/realityscan/unwrap-optimal.xml``). Gesetzt heisst **Textur**; ungesetzt heisst
+#: Eckfarben wie in Fassung 2. **Nur die Datei wirkt:** Die Schalter ``-set unwrap…`` hat
+#: RealityScan in der Befehlszeile übergangen (HomeStation, 14.10.2026).
+REALITYSCAN_UNWRAP_XML_ENV = "AIIMAGING_REALITYSCAN_UNWRAP_XML"
 #: Ablage der Netze; sonst ``~/.cache/aiimaging/realityscan-netz``.
 REALITYSCAN_SPEICHER_ENV = "AIIMAGING_REALITYSCAN_SPEICHER"
 
@@ -147,21 +173,77 @@ URSACHE_GELIEFERT = "geliefert"        # Netz geliefert, nichts zu rechnen
 FLUECHTIGE_URSACHEN = frozenset({None, URSACHE_AUS, URSACHE_EINRICHTUNG, URSACHE_LAUF})
 
 
+#: Die zwei Arten des Netzes (``netz.art`` im Bericht).
+ART_TEXTUR = "textur"            # Fassung 3: OBJ + MTL + PNG
+ART_ECKFARBEN = "eckfarben"      # Fassung 2: PLY mit einer Farbe je Ecke
+
+#: Der Satz im Bericht (``hinweise``), wenn ohne Abwicklungsdatei Eckfarben gerechnet werden.
+SATZ_ECKFARBEN = ("Eckfarben statt Textur: " + REALITYSCAN_UNWRAP_XML_ENV + " ist nicht "
+                  "gesetzt (Vorlage betrieb/realityscan/unwrap-optimal.xml) — an Fensterwaenden "
+                  "ist das Bild dann unscharf.")
+
+
 def eingeschaltet() -> bool:
     """Ist :data:`REALITYSCAN_ENV` gesetzt (nicht leer)? Nur das — geprüft wird in
     :func:`einrichtung`."""
     return bool(os.environ.get(REALITYSCAN_ENV, "").strip())
 
 
+#: Welche Ebene der Export als Farbtextur schreibt — ``Layer0 type="1"``. ``type="5"`` schrieb
+#: an der HomeStation nur ein **Schachbrett** (14.10.2026).
+TEXTUR_EBENE = "1"
+
+_FORMAT_ATTRIBUT = re.compile(r'formatAndVersionUID\s*=\s*"\s*([A-Za-z0-9]+)')
+_EBENE0_TYP = re.compile(r'<\s*Layer0\b[^>]*?\btype\s*=\s*"\s*(\d+)')
+
+
+def export_xml_befund(pfad) -> dict:
+    """Was die Export-Parameterdatei wählt — gelesen, nicht geraten.
+
+    Returns:
+        ``{format, textur_ebene}`` — ``format`` aus ``formatAndVersionUID`` (``"obj"``,
+        ``"ply"`` …, klein) oder ``None``, wenn die Datei es nicht sagt; ``textur_ebene`` der
+        ``type`` von ``Layer0`` oder ``None``.
+    """
+    try:
+        text = Path(pfad).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {"format": None, "textur_ebene": None}
+    f = _FORMAT_ATTRIBUT.search(text)
+    e = _EBENE0_TYP.search(text)
+    return {"format": f.group(1).lower() if f else None, "textur_ebene": e.group(1) if e else None}
+
+
 def einrichtung() -> dict:
     """Was eingerichtet ist — und, wenn etwas fehlt, ein Grund **ohne Pfad** (Regel 3).
 
+    **Textur oder Eckfarben (Fassung 3, Entscheid in dieser Fassung).** Die Art folgt der
+    **Abwicklungsdatei** (:data:`REALITYSCAN_UNWRAP_XML_ENV`):
+
+    * gesetzt → ``art = "textur"``: abwickeln, texturieren, OBJ;
+    * ungesetzt → ``art = "eckfarben"``: **genau Fassung 2** (PLY, ``-calculateVertexColors``),
+      mit :data:`SATZ_ECKFARBEN` als ``hinweis``.
+
+    *Warum der Rückfall und kein Abbruch:* Eine am Heim-PC laufende Einrichtung von Fassung 2
+    (nur die PLY-Exportdatei) soll mit dem ``git pull`` nicht still auf den offenen Weg
+    fallen — RealityScan ist dort eingerichtet und liefert mit Eckfarben weiter 93 % Deckung.
+    Der Rückfall wird **gesagt**, nicht still genommen. *Warum an der Variable und nicht nur am
+    Export:* Die Abwicklungsdatei ist die einzige Angabe, die Textur möglich macht; ohne sie
+    gäbe es keine Textur, ganz gleich, was die Exportdatei verlangt.
+
+    **Widersprüche sind nicht eingerichtet** (Ursache ``einrichtung``), wo die Exportdatei ihr
+    Format nennt (:func:`export_xml_befund`): Abwicklungsdatei gesetzt, aber der Export wählt
+    PLY — oder der Export wählt OBJ, aber die Abwicklungsdatei fehlt (ein OBJ ohne Textur wäre
+    grau). Ebenso ein OBJ-Export, dessen ``Layer0`` nicht ``type="1"`` ist (Schachbrett).
+    Sagt die Exportdatei ihr Format nicht, entscheidet die Variable allein.
+
     Returns:
-        ``{eingeschaltet, bereit, cli, exe, export_xml, grund, ursache}`` — die Pfade nur für
-        den Lauf, nie für einen Bericht.
+        ``{eingeschaltet, bereit, cli, exe, export_xml, unwrap_xml, art, hinweis, grund,
+        ursache}`` — die Pfade nur für den Lauf, nie für einen Bericht.
     """
     aus = {"eingeschaltet": eingeschaltet(), "bereit": False, "cli": None, "exe": None,
-           "export_xml": None, "grund": None, "ursache": None}
+           "export_xml": None, "unwrap_xml": None, "art": None, "hinweis": None,
+           "grund": None, "ursache": None}
     if not aus["eingeschaltet"]:
         aus.update(grund=f"RealityScan nicht eingeschaltet ({REALITYSCAN_ENV} nicht gesetzt).",
                    ursache=URSACHE_AUS)
@@ -185,11 +267,32 @@ def einrichtung() -> dict:
                      "legt der Nutzer einmal im Programm an (betrieb/REALITYSCAN_BRUECKE.md)")
     elif not os.path.isabs(xml) or not os.path.isfile(xml):
         fehlt.append(f"{REALITYSCAN_EXPORT_XML_ENV} zeigt auf keine Datei")
+    unwrap = os.environ.get(REALITYSCAN_UNWRAP_XML_ENV, "").strip()
+    if unwrap and (not os.path.isabs(unwrap) or not os.path.isfile(unwrap)):
+        fehlt.append(f"{REALITYSCAN_UNWRAP_XML_ENV} zeigt auf keine Datei (absoluter Pfad zur "
+                     "Abwicklungsdatei erwartet)")
+    art = ART_TEXTUR if unwrap else ART_ECKFARBEN
+    if xml and os.path.isfile(xml):
+        befund = export_xml_befund(xml)
+        if unwrap and befund["format"] not in (None, "obj"):
+            fehlt.append(f"{REALITYSCAN_UNWRAP_XML_ENV} ist gesetzt (Textur), aber die "
+                         f"Export-Parameterdatei waehlt {befund['format']!r} statt OBJ "
+                         "(Vorlage betrieb/realityscan/export-obj-textur.xml)")
+        if not unwrap and befund["format"] == "obj":
+            fehlt.append(f"Die Export-Parameterdatei waehlt OBJ (Textur), aber "
+                         f"{REALITYSCAN_UNWRAP_XML_ENV} ist nicht gesetzt — ohne Abwicklung "
+                         "gibt es keine Textur (Vorlage betrieb/realityscan/unwrap-optimal.xml)")
+        if (unwrap and befund["format"] == "obj" and befund["textur_ebene"] is not None
+                and befund["textur_ebene"] != TEXTUR_EBENE):
+            fehlt.append(f"Die Export-Parameterdatei schreibt Layer0 type="
+                         f"{befund['textur_ebene']!r} — die Farbtextur ist type=\"1\" "
+                         "(type=\"5\" ergibt ein Schachbrett)")
     if fehlt:
         aus.update(grund="RealityScan eingeschaltet, aber nicht eingerichtet: "
                          + "; ".join(fehlt) + ".", ursache=URSACHE_EINRICHTUNG)
         return aus
-    aus.update(bereit=True, cli=cli, exe=exe, export_xml=xml)
+    aus.update(bereit=True, cli=cli, exe=exe, export_xml=xml, unwrap_xml=unwrap or None,
+               art=art, hinweis=None if unwrap else SATZ_ECKFARBEN)
     return aus
 
 
@@ -203,10 +306,23 @@ def einrichtung() -> dict:
 #: Gesamtfristen (:func:`aiimaging.seams.zeitfaktor`).
 GESAMTFRIST_REALITYSCAN_S = 4 * 3600
 
-#: Auf so viele Dreiecke wird das Netz vereinfacht (``-simplify``). GESETZT, **dieselbe Zahl
-#: wie beim offenen Weg** (:data:`aiimaging.kontext_netz.ZIEL_DREIECKE`) und aus demselben
-#: Grund: Blender rendert eine halbe Million Dreiecke ohne Mühe; mehr kostet Ladezeit je Kamera.
-ZIEL_DREIECKE = _kn.ZIEL_DREIECKE
+#: Auf so viele Dreiecke wird das **texturierte** Netz vereinfacht (``-simplify``, Fassung 3).
+#: **Gemessen** an der HomeStation (14.10.2026, echter Auftrag): 500 000 bis 1 Mio. Dreiecke
+#: tragen die Textur, 3 Mio. brachten im Bild nichts mehr. 1 Mio., weil die Textur auf den
+#: Dreiecken liegt — feinere Dreiecke folgen Kanten, die die Textur sonst verzerrt zeigte;
+#: Vereinfachen kostete dort 25–41 s, texturieren ~100 s. Eine **eigene** Zahl, nicht mehr die
+#: des offenen Wegs (dort trägt die Eckfarbe, und Blender lädt je Kamera).
+ZIEL_DREIECKE = 1_000_000
+
+#: Dieselbe Zahl wie in Fassung 2 für den **Rückfall auf Eckfarben** (ohne Abwicklungsdatei):
+#: die des offenen Wegs (:data:`aiimaging.kontext_netz.ZIEL_DREIECKE`), an der auch
+#: :data:`DECKEL_KANTE_REL` gemessen ist. Der Rückfall soll Fassung 2 sein, nicht ein drittes.
+ZIEL_DREIECKE_ECKFARBEN = _kn.ZIEL_DREIECKE
+
+#: Einmal vor dem Texturieren gesetzt (HomeStation, 14.10.2026, so von Hand gefahren): kein
+#: HDR (die Blender-Stufe liest die Textur als gewöhnliche 8-Bit-Farbe aus PNG), und die Fotos
+#: **nicht verkleinert** (Faktor 1) — die Schärfe ist der Grund für die Textur.
+TEXTUR_SETZEN = (("MvsGeometryTexturingDoHdr", "false"), ("txtImageDownscaleTexture", "1"))
 
 #: Der **Deckel**: RealityScan schliesst Bereiche ohne Fotos mit wenigen Riesendreiecken (am
 #: Heim-PC 123 Dreiecke mit 59 % der Fläche, darunter eine waagrechte Platte über die ganze
@@ -246,8 +362,14 @@ LAGE_ECKEN_MAX = 200000
 AUSGABE_ZEICHEN = 2000
 
 #: Codestand der Brücke; steht im Speicherschlüssel. Hochzählen, wenn bei gleichen Eingängen
-#: ein anderes Netz entstünde (andere Befehlsfolge).
-FASSUNG = 2
+#: ein anderes Netz entstünde (andere Befehlsfolge). **3** seit der Textur (14.10.2026) — auch
+#: für den Rückfall auf Eckfarben, dessen Befehlsfolge die von Fassung 2 ist: Ein neuer
+#: Schlüssel kostet dort einen Lauf von Minuten (324 s gemessen), und ein Bericht der Fassung 3
+#: trägt Felder (``netz.art``, ``hinweise``), die ein gespeicherter von Fassung 2 nicht hat.
+FASSUNG = 3
+
+#: Die Fassung, deren Befehlsfolge der Rückfall auf Eckfarben **wörtlich** fährt.
+FASSUNG_ECKFARBEN = 2
 
 #: Was am Heim-PC zu prüfen ist, bevor die Brücke als eingebaut gilt — genau formuliert,
 #: damit ein Auftrag sie wörtlich übernehmen kann. Steht auch in
@@ -258,6 +380,17 @@ OFFENE_FRAGEN = (
     "Wie verhaelt sich -headless ohne vorherige Anmeldung im Wine-Profil (nicht geprueft, das "
     "Konto wurde nie angefasst)?",
     "Wie viel GPU bleibt, wenn das Kosmo-Modell geladen ist (RealityScan belegt rund 25 GB)?",
+    "Fassung 3: Laeuft die ganze Folge in EINEM Aufruf (-newScene … -simplify -set -unwrap "
+    "<datei> -calculateTexture -exportSelectedModel <obj> <xml> -quit), und wirken -set und "
+    "-unwrap so wie nach -load eines gespeicherten Projekts (von Hand gefahren)?",
+    "Fassung 3: Schreibt der OBJ-Export trotz exportMaterials=\"0\" eine MTL mit map_Kd, als "
+    "Text-OBJ (exportBinary=\"1\"), mit welchen Dateinamen fuer MTL und PNG, und mit "
+    "Verweisen ohne Pfad?",
+    "Fassung 3: Laedt die Blender-Stufe das bereinigte OBJ in der Lage der PLY von Fassung 2 "
+    "(Lagepruefung bestanden, Netz deckt das Bauwerk im Material-ID-Bild wie vorher), und "
+    "ist die Textur mit Emission 1 so scharf wie im Handversuch?",
+    "Fassung 3: Wie lange dauern Bereinigung (OBJ ~1 Mio. Dreiecke, reines Python) und "
+    "Blender-Import mit 3-4 Texturen zu 8K, und wie viel Speicher braucht beides?",
 )
 
 
@@ -566,9 +699,30 @@ def finde_bilder(aufnahme, bilder=None) -> dict:
 # Die Befehlsfolge
 # ======================================================================================
 
-def kommando(*, cli, exe, images_txt, netz_ply, export_xml,
-             ziel_dreiecke: int = ZIEL_DREIECKE) -> list[str]:
+def kommando(*, cli, exe, images_txt, export_xml, netz_ply=None, netz_datei=None,
+             unwrap_xml=None, ziel_dreiecke: int | None = None) -> list[str]:
     """Die Befehlsfolge — als **Liste**, für ``subprocess`` ohne Shell.
+
+    **Zwei Folgen** (:func:`einrichtung`): mit ``unwrap_xml`` die **Textur** (Fassung 3), ohne
+    sie **Eckfarben** — Wort für Wort die Folge von Fassung 2.
+
+    Textur, nach dem Handversuch der HomeStation (14.10.2026) — bis ``-simplify`` wie unten,
+    dann statt ``-calculateVertexColors``:
+
+    * ``-set MvsGeometryTexturingDoHdr=false``, ``-set txtImageDownscaleTexture=1``
+      (:data:`TEXTUR_SETZEN`, einmal, vor dem Abwickeln);
+    * ``-unwrap <Abwicklungsdatei>`` — **die Datei als Argument**; die Schalter
+      ``-set unwrap…`` wirken in der Befehlszeile nicht. ``-simplify`` hat das neue Modell
+      gewählt, ``-unwrap`` und ``-calculateTexture`` arbeiten am gewählten (wie
+      ``-selectModel`` im Handversuch);
+    * ``-calculateTexture``;
+    * ``-exportSelectedModel <netz.obj> <Exportdatei>`` — die Exportdatei wählt OBJ mit PNG.
+
+    Args:
+        netz_datei: wohin exportiert wird (``.ply`` oder ``.obj``); ``netz_ply`` ist der
+            alte Name desselben Arguments (Fassung 2) und gilt weiter.
+        ziel_dreiecke: ohne Angabe :data:`ZIEL_DREIECKE` (Textur) bzw.
+            :data:`ZIEL_DREIECKE_ECKFARBEN`.
 
     **Keine Anführungszeichen in den Elementen:** Die Doku zeigt ``"…"`` für die Shell; als
     Liste kommt jedes Element als ein Argument an, auch mit Leerzeichen (``Program Files``).
@@ -592,17 +746,29 @@ def kommando(*, cli, exe, images_txt, netz_ply, export_xml,
     Linux-Pfad, den der Starter (``wine`` des Pakets) als Programm nimmt.
 
     Raises:
-        RealityScanError: keine positive Dreieckszahl.
+        RealityScanError: keine positive Dreieckszahl, oder kein Exportziel.
     """
+    ziel = netz_datei if netz_datei is not None else netz_ply
+    if ziel is None:
+        raise RealityScanError("kommando: kein Exportziel (netz_datei).", URSACHE_EINRICHTUNG)
+    if ziel_dreiecke is None:
+        ziel_dreiecke = ZIEL_DREIECKE if unwrap_xml else ZIEL_DREIECKE_ECKFARBEN
     if int(ziel_dreiecke) <= 0:
         raise RealityScanError("ziel_dreiecke muss positiv sein.", URSACHE_EINRICHTUNG)
-    return [str(cli), str(exe), "-headless", "-stdConsole", "-newScene",
+    kopf = [str(cli), str(exe), "-headless", "-stdConsole", "-newScene",
             "-loadColmap", wine_pfad(images_txt),
             "-selectMaximalComponent", "-setReconstructionRegionAuto",
             "-calculateNormalModel",
-            "-simplify", str(int(ziel_dreiecke)),
-            "-calculateVertexColors",
-            "-exportSelectedModel", wine_pfad(netz_ply), wine_pfad(export_xml),
+            "-simplify", str(int(ziel_dreiecke))]
+    if unwrap_xml:
+        farbe = []
+        for schluessel, wert in TEXTUR_SETZEN:
+            farbe += ["-set", f"{schluessel}={wert}"]
+        farbe += ["-unwrap", wine_pfad(unwrap_xml), "-calculateTexture"]
+    else:
+        farbe = ["-calculateVertexColors"]
+    return [*kopf, *farbe,
+            "-exportSelectedModel", wine_pfad(ziel), wine_pfad(export_xml),
             "-quit"]
 
 
@@ -640,10 +806,15 @@ def lies_ecken(pfad, *, hoechstens: int = LAGE_ECKEN_MAX, voll: bool = True,
         ``{n, probe, lo, hi, farbe, eigenschaften}`` — ``farbe`` heisst ``red``, ``green``,
         ``blue`` sind Eigenschaften der Ecken.
 
+    Ein **OBJ** (Fassung 3) wird ebenso gelesen — seine ``v``-Zeilen; ``farbe`` ist dann
+    ``False`` (die Farbe steht in der Textur), ``dicht`` hat keine Wirkung.
+
     Raises:
         RealityScanError: nicht lesbar.
     """
     p = Path(pfad)
+    if _kn.ist_obj(p):
+        return _lies_obj_ecken(p, hoechstens=hoechstens, voll=voll)
     try:
         kopf = _kn.lies_ply_kopf(p)
     except _kn.KontextNetzError as fehler:
@@ -712,6 +883,134 @@ def lies_ecken(pfad, *, hoechstens: int = LAGE_ECKEN_MAX, voll: bool = True,
             "lo": lo if voll and n else None, "hi": hi if voll and n else None,
             "farbe": {"red", "green", "blue"} <= set(namen_alle),
             "eigenschaften": namen_alle}
+
+
+def _obj_zahlen(zeile: bytes, n: int, was: str, name: str) -> tuple[float, ...]:
+    t = zeile.split()
+    if len(t) < n + 1:
+        raise RealityScanError(f"{name!r}: {was}-Zeile mit zu wenigen Zahlen.", URSACHE_EXPORT)
+    try:
+        werte = tuple(float(w) for w in t[1:n + 1])
+    except ValueError as fehler:
+        raise RealityScanError(f"{name!r}: {was}-Zeile nicht lesbar.", URSACHE_EXPORT) from fehler
+    if not all(math.isfinite(w) for w in werte):
+        raise RealityScanError(f"{name!r}: {was}-Zeile nicht endlich.", URSACHE_EXPORT)
+    return werte
+
+
+def _lies_obj_ecken(p: Path, *, hoechstens: int, voll: bool) -> dict:
+    """:func:`lies_ecken` für ein OBJ: die ``v``-Zeilen, zwei Durchgänge (zählen, ziehen)."""
+    try:
+        n = _kn.lies_obj_kopf(p, voll=True)["ecken"]
+    except _kn.KontextNetzError as fehler:
+        raise RealityScanError(str(fehler), URSACHE_EXPORT) from fehler
+    schritt = max(1, -(-n // max(1, int(hoechstens))))
+    probe: list[tuple[float, float, float]] = []
+    lo = [math.inf] * 3
+    hi = [-math.inf] * 3
+    i = 0
+    try:
+        with open(p, "rb") as datei:
+            for zeile in datei:
+                if zeile[:2] != b"v ":
+                    continue
+                if voll or i % schritt == 0:
+                    punkt = _obj_zahlen(zeile, 3, "v", p.name)
+                    if voll:
+                        for k in range(3):
+                            lo[k] = min(lo[k], punkt[k])
+                            hi[k] = max(hi[k], punkt[k])
+                    if i % schritt == 0:
+                        probe.append(punkt)
+                i += 1
+    except OSError as fehler:
+        raise RealityScanError(f"{p.name!r}: Ecken nicht lesbar ({type(fehler).__name__}).",
+                               URSACHE_EXPORT) from fehler
+    return {"n": n, "probe": probe[:max(1, int(hoechstens))],
+            "lo": lo if voll and n else None, "hi": hi if voll and n else None,
+            "farbe": False, "eigenschaften": ["x", "y", "z"]}
+
+
+_PNG_ZEICHEN = b"\x89PNG\r\n\x1a\n"
+
+
+def png_masse(pfad) -> tuple[int, int] | None:
+    """Breite und Höhe einer PNG aus ihrem Kopf (``IHDR``) — oder ``None``, wenn es keine ist."""
+    try:
+        with open(pfad, "rb") as datei:
+            kopf = datei.read(24)
+    except OSError:
+        return None
+    if len(kopf) < 24 or not kopf.startswith(_PNG_ZEICHEN) or kopf[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", kopf[16:24])
+
+
+def _dateien_befund(dateien) -> tuple[list[dict], str]:
+    """Je Datei ``{datei, bytes, sha256}`` (ohne Pfad) — und die sha256 über alle."""
+    liste = [{"datei": Path(d).name, "bytes": Path(d).stat().st_size,
+              "sha256": _datei_sha(d)} for d in dateien]
+    gesamt = hashlib.sha256("\n".join(f"{e['datei']} {e['sha256']}" for e in liste)
+                            .encode("utf-8")).hexdigest()
+    return liste, gesamt
+
+
+def pruefe_obj_export(pfad) -> dict:
+    """Ist der OBJ-Export das, was die Blender-Stufe lädt (Fassung 3)? Ein **Text-OBJ mit
+    Flächen und Texturkoordinaten**, eine **MTL** daneben (``mtllib``) und ihre **Bilder**
+    (``map_Kd``), jedes eine lesbare PNG.
+
+    Returns:
+        ``{datei, bytes, sha256, ecken, dreiecke, uv, format, materialien, mtl, texturen,
+        huellbox, probe}`` — ``texturen`` je Bild ``{datei, bytes, breite, hoehe}``, ohne Pfad.
+
+    Raises:
+        RealityScanError: ``lauf``, wenn keine Datei da ist; ``export``, wenn sie da ist,
+            aber nicht das beschriebene trägt.
+    """
+    p = Path(pfad)
+    if not p.is_file() or p.stat().st_size == 0:
+        raise RealityScanError("RealityScan hat kein Netz exportiert (keine Datei).",
+                               URSACHE_LAUF)
+    if not _kn.ist_obj(p):
+        raise RealityScanError("Der Export ist kein lesbares Text-OBJ — die Export-"
+                               "Parameterdatei muss OBJ waehlen (Vorlage betrieb/realityscan/"
+                               "export-obj-textur.xml).", URSACHE_EXPORT)
+    try:
+        kopf = _kn.lies_obj_kopf(p, voll=True)
+        begleit = _kn.obj_begleitdateien(p)
+    except _kn.KontextNetzError as fehler:
+        raise RealityScanError(ohne_pfade(fehler), URSACHE_EXPORT) from fehler
+    if not kopf["flaechen"]:
+        raise RealityScanError("Der Export traegt keine Flaechen (f-Zeilen).", URSACHE_EXPORT)
+    if not kopf["uv"]:
+        raise RealityScanError("Der Export traegt keine Texturkoordinaten (vt-Zeilen) — ohne "
+                               "Abwicklung keine Textur.", URSACHE_EXPORT)
+    if not kopf["mtllib"]:
+        raise RealityScanError("Der Export nennt keine Materialdatei (mtllib).", URSACHE_EXPORT)
+    if begleit["fehlend"]:
+        raise RealityScanError("Zum Export fehlen Dateien: "
+                               + ", ".join(ohne_pfade(n) for n in begleit["fehlend"][:4])
+                               + ".", URSACHE_EXPORT)
+    if not begleit["bilder"]:
+        raise RealityScanError("Die Materialdatei des Exports nennt kein Bild (map_Kd) — die "
+                               "Export-Parameterdatei muss die Farbtextur schreiben (Layer0 "
+                               "type=\"1\").", URSACHE_EXPORT)
+    texturen = []
+    for b in begleit["bilder"]:
+        masse = png_masse(b)
+        if masse is None:
+            raise RealityScanError(f"Die Textur {b.name!r} ist keine lesbare PNG.",
+                                   URSACHE_EXPORT)
+        texturen.append({"datei": b.name, "bytes": b.stat().st_size,
+                         "breite": masse[0], "hoehe": masse[1]})
+    ecken = _lies_obj_ecken(p, hoechstens=LAGE_ECKEN_MAX, voll=True)
+    return {"datei": p.name, "bytes": p.stat().st_size, "sha256": _datei_sha(p),
+            "ecken": kopf["ecken"], "dreiecke": kopf["flaechen"], "uv": kopf["uv"],
+            "format": "obj", "materialien": len(kopf["usemtl"]),
+            "mtl": [m.name for m in begleit["mtl"]], "texturen": texturen,
+            "huellbox": [[round(v, 6) for v in ecken["lo"]], [round(v, 6) for v in ecken["hi"]]],
+            "probe": ecken["probe"]}
 
 
 def pruefe_export(pfad) -> dict:
@@ -937,6 +1236,241 @@ def bereinige_export(quelle, ziel, *, kante_rel: float = DECKEL_KANTE_REL) -> di
             "ecken_entfernt": n - len(reihe), "kante_grenze": round(grenze, 6)}
 
 
+def _obj_index(wort: bytes, anzahl: int, was: str, name: str) -> int:
+    """Ein OBJ-Index (1-basiert, negativ = vom Ende des bisher Gelesenen) → 0-basiert."""
+    try:
+        i = int(wort)
+    except ValueError as fehler:
+        raise RealityScanError(f"{name!r}: Flaechenindex {wort[:20]!r} nicht lesbar.",
+                               URSACHE_EXPORT) from fehler
+    if i == 0:
+        raise RealityScanError(f"{name!r}: Flaechenindex 0 ({was}).", URSACHE_EXPORT)
+    return i - 1 if i > 0 else anzahl + i
+
+
+def bereinige_obj(quelle, ziel, *, kante_rel: float = DECKEL_KANTE_REL) -> dict:
+    """Den **texturierten** Export (OBJ + MTL + Bilder) so schreiben, wie die Blender-Stufe ihn
+    braucht — nur die Standardbibliothek (Fassung 3).
+
+    Dasselbe wie :func:`bereinige_export`, für das OBJ:
+
+    1. **Der Deckel** (:data:`DECKEL_KANTE_REL`): Flächen, deren längste Kante mehr als
+       ``kante_rel`` × robuste Diagonale der Ecken misst, fallen weg — dieselbe Regel, dieselbe
+       Grenze wie bei der PLY (am Heim-PC gemessen, M3).
+    2. **Neu nummeriert**: Ecken (``v``), Texturkoordinaten (``vt``) und Normalen (``vn``),
+       die keine Fläche mehr trägt, fallen weg; jede Fläche zeigt danach mit **positiven**
+       Indizes auf dieselben Ecken **und dieselben Texturkoordinaten** wie vorher — die Textur
+       sitzt also, wo sie sass. ``usemtl``, ``o``, ``g``, ``s`` bleiben an ihrer Stelle in der
+       Folge der Flächen.
+    3. **MTL und Bilder daneben**, nach dem Namen des Ziels: ``<stamm>.mtl`` und
+       ``<stamm>_textur_<k>.<endung>``; in der MTL zeigt jeder Bildverweis auf den neuen
+       **Dateinamen ohne Pfad**. Kommentare fallen weg (in OBJ und MTL), weil ein Programm dort
+       gern Pfade mit Benutzerkonto schreibt (Regel 3).
+    4. **Die Summe der Textur im OBJ**: ``# textur-sha256 <summe>`` über MTL und Bilder. Damit
+       hängt die sha256 des OBJ — die der Multipass-Speicher kennt — auch an der Textur.
+
+    Args:
+        quelle: das OBJ des Exports; MTL und Bilder neben ihm.
+        ziel: das bereinigte OBJ; sein Ordner bekommt MTL und Bilder (gedacht: ein leerer).
+
+    Returns:
+        ``{farben: "textur", dreiecke_vorher, deckel_dreiecke, deckel_flaeche_anteil,
+        ecken_entfernt, uv_entfernt, kante_grenze, materialien, texturen, textur_sha256}``.
+
+    Raises:
+        RealityScanError: ``export``, wenn das OBJ nicht lesbar ist, Dateien fehlen oder nach
+            dem Entfernen keine Fläche bleibt.
+    """
+    from array import array
+
+    q, z = Path(quelle), Path(ziel)
+    if not _kn.ist_obj(q):
+        raise RealityScanError(f"{q.name!r} ist kein lesbares Text-OBJ.", URSACHE_EXPORT)
+    try:
+        begleit = _kn.obj_begleitdateien(q)
+    except _kn.KontextNetzError as fehler:
+        raise RealityScanError(ohne_pfade(fehler), URSACHE_EXPORT) from fehler
+    if begleit["fehlend"]:
+        raise RealityScanError("Zum Export fehlen Dateien: "
+                               + ", ".join(ohne_pfade(n) for n in begleit["fehlend"][:4]) + ".",
+                               URSACHE_EXPORT)
+
+    # ── 1. Lesen ────────────────────────────────────────────────────────────────────
+    xs, ys, zs = array("d"), array("d"), array("d")
+    v_zeilen: list[bytes] = []
+    vt_zeilen: list[bytes] = []
+    vn_zeilen: list[bytes] = []
+    f_zahl = array("I")                       # Ecken je Fläche
+    f_v, f_t, f_n = array("q"), array("q"), array("q")     # −1: keine Angabe
+    ereignisse: list[tuple[int, bytes]] = []  # (Flächen davor, Zeile) — usemtl, o, g, s
+    with open(q, "rb") as datei:
+        for roh in datei:
+            zeile = roh.strip()
+            if not zeile or zeile.startswith(b"#"):
+                continue
+            kopf = zeile.split(None, 1)[0]
+            if kopf == b"v":
+                x, y, zz = _obj_zahlen(zeile, 3, "v", q.name)
+                xs.append(x)
+                ys.append(y)
+                zs.append(zz)
+                v_zeilen.append(zeile)
+            elif kopf == b"vt":
+                _obj_zahlen(zeile, 2, "vt", q.name)
+                vt_zeilen.append(zeile)
+            elif kopf == b"vn":
+                vn_zeilen.append(zeile)
+            elif kopf == b"f":
+                ecken_f = zeile.split()[1:]
+                if len(ecken_f) < 3:
+                    raise RealityScanError(f"{q.name!r}: Flaeche mit weniger als 3 Ecken.",
+                                           URSACHE_EXPORT)
+                f_zahl.append(len(ecken_f))
+                for wort in ecken_f:
+                    teile = wort.split(b"/")
+                    f_v.append(_obj_index(teile[0], len(xs), "v", q.name))
+                    f_t.append(_obj_index(teile[1], len(vt_zeilen), "vt", q.name)
+                               if len(teile) > 1 and teile[1] else -1)
+                    f_n.append(_obj_index(teile[2], len(vn_zeilen), "vn", q.name)
+                               if len(teile) > 2 and teile[2] else -1)
+            elif kopf in (b"usemtl", b"o", b"g", b"s"):
+                ereignisse.append((len(f_zahl), zeile))
+            # mtllib wird neu geschrieben; l/p (Linien, Punkte) und Unbekanntes fallen weg.
+    nv, nt, nn = len(xs), len(vt_zeilen), len(vn_zeilen)
+    if not len(f_zahl):
+        raise RealityScanError(f"{q.name!r}: keine Flaechen.", URSACHE_EXPORT)
+    if any(not 0 <= i < nv for i in f_v):
+        raise RealityScanError(f"{q.name!r}: Flaeche zeigt auf eine fehlende Ecke.",
+                               URSACHE_EXPORT)
+    if any(i >= nt or i < -1 for i in f_t) or any(i >= nn or i < -1 for i in f_n):
+        raise RealityScanError(f"{q.name!r}: Flaeche zeigt auf eine fehlende Texturkoordinate "
+                               "oder Normale.", URSACHE_EXPORT)
+
+    # ── 2. Der Deckel ───────────────────────────────────────────────────────────────
+    lo, hi = _robuste_box(list(zip(xs, ys, zs)))
+    grenze = float(kante_rel) * _diagonale(lo, hi)
+    grenze2 = grenze * grenze
+    behalten = bytearray(len(f_zahl))
+    flaeche_alle = flaeche_weg = 0.0
+    weg = 0
+    pos = 0
+    for fi, k in enumerate(f_zahl):
+        idx = f_v[pos:pos + k]
+        pk = [(xs[i], ys[i], zs[i]) for i in idx]
+        laengste = max(sum((pk[j][c] - pk[j - 1][c]) ** 2 for c in range(3)) for j in range(k))
+        a = 0.0
+        for j in range(1, k - 1):                             # Fächer, auch für Vielecke
+            u = [pk[j][c] - pk[0][c] for c in range(3)]
+            v = [pk[j + 1][c] - pk[0][c] for c in range(3)]
+            a += 0.5 * math.sqrt((u[1] * v[2] - u[2] * v[1]) ** 2
+                                 + (u[2] * v[0] - u[0] * v[2]) ** 2
+                                 + (u[0] * v[1] - u[1] * v[0]) ** 2)
+        flaeche_alle += a
+        if grenze > 0 and laengste > grenze2:
+            weg += 1
+            flaeche_weg += a
+        else:
+            behalten[fi] = 1
+        pos += k
+    if not any(behalten):
+        raise RealityScanError("Nach dem Entfernen des Deckels bleibt keine Flaeche.",
+                               URSACHE_EXPORT)
+
+    # ── 3. Neu nummerieren — in der Reihenfolge der Datei ───────────────────────────
+    neu_v, neu_t, neu_n = array("q", [-1]) * nv, array("q", [-1]) * nt, array("q", [-1]) * nn
+    pos = 0
+    for fi, k in enumerate(f_zahl):
+        if behalten[fi]:
+            for j in range(pos, pos + k):
+                neu_v[f_v[j]] = 0
+                if f_t[j] >= 0:
+                    neu_t[f_t[j]] = 0
+                if f_n[j] >= 0:
+                    neu_n[f_n[j]] = 0
+        pos += k
+    for neu in (neu_v, neu_t, neu_n):
+        zaehler = 0
+        for i in range(len(neu)):
+            if neu[i] == 0:
+                neu[i] = zaehler
+                zaehler += 1
+
+    # ── 4. MTL und Bilder, nach dem Namen des Ziels ─────────────────────────────────
+    z.parent.mkdir(parents=True, exist_ok=True)
+    stamm = z.stem
+    neue_namen: dict[str, str] = {}
+    for k, b in enumerate(begleit["bilder"], start=1):
+        neue_namen[b.name] = f"{stamm}_textur_{k}{b.suffix.lower()}"
+        shutil.copyfile(b, z.parent / neue_namen[b.name])
+    mtl_name = f"{stamm}.mtl"
+    mtl_zeilen: list[str] = []
+    for m in begleit["mtl"]:
+        for zeile in m.read_text(encoding="utf-8", errors="replace").splitlines():
+            t = zeile.strip()
+            if not t or t.startswith("#"):
+                continue
+            w = t.split()
+            if len(w) >= 2 and w[0] in _kn.MTL_BILDER:
+                alt = _kn.name_aus_verweis(w[-1])
+                t = " ".join([*w[:-1], neue_namen.get(alt, alt)])
+            mtl_zeilen.append(t)
+    (z.parent / mtl_name).write_text("\n".join(mtl_zeilen) + "\n", encoding="utf-8",
+                                     newline="\n")
+    _, textur_sha = _dateien_befund([z.parent / mtl_name,
+                                     *(z.parent / neue_namen[b.name] for b in begleit["bilder"])])
+
+    # ── 5. Das OBJ ──────────────────────────────────────────────────────────────────
+    with open(z, "wb") as d:
+        d.write(b"# bereinigt von aiimaging.realityscan (Fassung %d)\n" % FASSUNG)
+        d.write(f"# textur-sha256 {textur_sha}\n".encode("ascii"))
+        d.write(f"mtllib {mtl_name}\n".encode("utf-8"))
+        for zeilen, neu in ((v_zeilen, neu_v), (vt_zeilen, neu_t), (vn_zeilen, neu_n)):
+            stapel = []
+            for i, zeile in enumerate(zeilen):
+                if neu[i] >= 0:
+                    stapel.append(zeile)
+                    if len(stapel) >= 1 << 14:
+                        d.write(b"\n".join(stapel) + b"\n")
+                        stapel = []
+            if stapel:
+                d.write(b"\n".join(stapel) + b"\n")
+        e = 0
+        stapel = []
+        pos = 0
+        for fi, k in enumerate(f_zahl):
+            while e < len(ereignisse) and ereignisse[e][0] <= fi:
+                stapel.append(ereignisse[e][1])
+                e += 1
+            if behalten[fi]:
+                woerter = []
+                for j in range(pos, pos + k):
+                    w = str(neu_v[f_v[j]] + 1)
+                    t, n = f_t[j], f_n[j]
+                    if t >= 0 and n >= 0:
+                        w += f"/{neu_t[t] + 1}/{neu_n[n] + 1}"
+                    elif t >= 0:
+                        w += f"/{neu_t[t] + 1}"
+                    elif n >= 0:
+                        w += f"//{neu_n[n] + 1}"
+                    woerter.append(w)
+                stapel.append(("f " + " ".join(woerter)).encode("ascii"))
+            pos += k
+            if len(stapel) >= 1 << 14:
+                d.write(b"\n".join(stapel) + b"\n")
+                stapel = []
+        stapel += [zeile for _, zeile in ereignisse[e:]]
+        if stapel:
+            d.write(b"\n".join(stapel) + b"\n")
+    behalten_v = sum(1 for i in neu_v if i >= 0)
+    behalten_t = sum(1 for i in neu_t if i >= 0)
+    return {"farben": ART_TEXTUR, "dreiecke_vorher": len(f_zahl), "deckel_dreiecke": weg,
+            "deckel_flaeche_anteil": round(flaeche_weg / flaeche_alle, 4) if flaeche_alle else 0.0,
+            "ecken_entfernt": nv - behalten_v, "uv_entfernt": nt - behalten_t,
+            "kante_grenze": round(grenze, 6),
+            "materialien": len({z_ for _, z_ in ereignisse if z_.startswith(b"usemtl")}),
+            "texturen": len(begleit["bilder"]), "textur_sha256": textur_sha}
+
+
 # ======================================================================================
 # Die Lage
 # ======================================================================================
@@ -1159,21 +1693,34 @@ def _aus_speicher(netz: Path, bericht_datei: Path) -> dict | None:
     try:
         if _kn.netz_kennzahlen(netz)["sha256"] != (bericht.get("netz") or {}).get("sha256"):
             return None
-    except _kn.KontextNetzError:
+        # Ein texturiertes Netz ist mehrere Dateien (Fassung 3): Jede muss da und unverändert
+        # sein — eine fehlende Textur zeichnete Blender rosa.
+        for e in (bericht.get("netz") or {}).get("dateien") or ():
+            p = netz.parent / str(e.get("datei"))
+            if p.name != str(e.get("datei")) or not p.is_file() or _datei_sha(p) != e.get("sha256"):
+                return None
+    except (_kn.KontextNetzError, OSError, AttributeError):
         return None
     return bericht
 
 
 def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, splat=None,
-                        ziel_dreiecke: int = ZIEL_DREIECKE,
+                        ziel_dreiecke: int | None = None,
                         timeout: float = GESAMTFRIST_REALITYSCAN_S, _starte=None) -> dict:
-    """Aufnahme + Fotos → farbiges Netz (PLY) über RealityScan — als Prozess, mit Prüfung.
+    """Aufnahme + Fotos → Netz über RealityScan — als Prozess, mit Prüfung.
 
-    **Zwischengespeichert** nach :func:`realityscan_schluessel`: Ein Lauf dauert Stunden, der
-    Abholer fragt je Auftrag. Gespeichert wird auch ein Export, der **da, aber unbrauchbar**
-    ist (Ursache ``export``) — er hängt an der Exportdatei, und deren Inhalt steht im
-    Schlüssel; ein neuer Lauf brächte dasselbe. **Nicht** gespeichert wird ein gescheiterter
-    Lauf (Ursache ``lauf``: Frist, Absturz, Lizenz) — der kann beim nächsten Mal gelingen.
+    **Zwei Arten** (:func:`einrichtung`): mit Abwicklungsdatei ein **texturiertes OBJ**
+    (Fassung 3: ``netz.obj``, ``netz.mtl``, ``netz_textur_<k>.png``), ohne sie die **PLY mit
+    Eckfarben** von Fassung 2 (``netz.ply``) — dann mit :data:`SATZ_ECKFARBEN` in ``hinweise``.
+
+    **Zwischengespeichert** nach :func:`realityscan_schluessel`: Ein Lauf dauert Minuten bis
+    Stunden, der Abholer fragt je Auftrag. Im Schlüssel stehen Fassung, Art, Dreieckszahl und
+    der **Inhalt** von Export- und Abwicklungsdatei. Gespeichert wird auch ein Export, der
+    **da, aber unbrauchbar** ist (Ursache ``export``) — er hängt an den Einstellungsdateien,
+    und deren Inhalt steht im Schlüssel; ein neuer Lauf brächte dasselbe. **Nicht** gespeichert
+    wird ein gescheiterter Lauf (Ursache ``lauf``: Frist, Absturz, Lizenz) — der kann beim
+    nächsten Mal gelingen. Ein texturiertes Netz liegt mit **allen** seinen Dateien in einem
+    Ordner; ein Treffer verlangt jede unverändert (sha256 je Datei).
 
     Nach dem Export (und bei jedem Treffer) prüft :func:`lage_pruefen`, ob das Netz bei der
     Aufnahme liegt (und beim Splat, wenn ``splat`` genannt ist). Liegt es daneben, wird es
@@ -1181,18 +1728,24 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
 
     Args:
         aufnahme: der COLMAP-Ordner (``sparse/0``).
-        ziel: wohin das Netz zusätzlich kopiert wird; sonst bleibt es im Speicher.
+        ziel: wohin das Netz zusätzlich kopiert wird (beim OBJ samt MTL und Bildern in
+            denselben Ordner, unter ihren Namen); sonst bleibt es im Speicher.
         speicher: Ablage; sonst :data:`REALITYSCAN_SPEICHER_ENV`, sonst
             ``~/.cache/aiimaging/realityscan-netz``.
         bilder: der Bilderordner ausdrücklich; sonst :func:`finde_bilder`.
         splat: der Splat, gegen dessen dichte Punkte die Lage zusätzlich geprüft wird.
+        ziel_dreiecke: ohne Angabe :data:`ZIEL_DREIECKE` (Textur) bzw.
+            :data:`ZIEL_DREIECKE_ECKFARBEN`.
         _starte: Test-Naht wie in :mod:`aiimaging.seams` — ``(cmd, timeout) → CompletedProcess``;
             ohne sie :func:`_starte_gruppe` (Frist beendet die ganze Prozessgruppe).
 
     Returns:
-        Bericht **ohne Pfade** — ``{status, fassung, programm, zeiten_s, netz, aufnahme,
-        bilder, export_xml, parameter, ausgabe, lage, zwischenspeicher}`` — und dazu
-        ``netz_ply`` (Pfad, nur für den Multipass; geht nie nach aussen).
+        Bericht **ohne Pfade** — ``{status, fassung, art, programm, zeiten_s, netz, aufnahme,
+        bilder, export_xml, unwrap_xml, parameter, ausgabe, bereinigung, hinweise, lage,
+        zwischenspeicher}``; ``netz`` nennt je Datei Name, Grösse und sha256 (``dateien``) und
+        die Summe über alle (``sha256_alle``). Dazu ``netz_datei`` — der Pfad des Netzes (OBJ
+        oder PLY), nur für den Multipass, geht nie nach aussen — und, gleich, ``netz_ply``
+        (der Name aus Fassung 2, für bestehende Leser).
 
     Raises:
         RealityScanError: mit ``ursache`` und Grund ohne Pfad.
@@ -1203,6 +1756,9 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
     e = einrichtung()
     if not e["bereit"]:
         raise RealityScanError(e["grund"], e["ursache"])
+    textur = e["art"] == ART_TEXTUR
+    if ziel_dreiecke is None:
+        ziel_dreiecke = ZIEL_DREIECKE if textur else ZIEL_DREIECKE_ECKFARBEN
     o = Path(aufnahme)
     if not _kn.ist_aufnahme_ordner(o):
         raise RealityScanError("Keine COLMAP-Aufnahme (images und cameras fehlen).",
@@ -1213,23 +1769,28 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
     try:
         aufnahme_sha = _kn.aufnahme_fingerabdruck(o)["sha256"]
         xml_sha = _datei_sha(e["export_xml"])
+        unwrap_sha = _datei_sha(e["unwrap_xml"]) if textur else None
     except (_kn.KontextNetzError, OSError) as fehler:
         raise RealityScanError(ohne_pfade(fehler), URSACHE_AUFNAHME) from fehler
-    parameter = {"fassung": FASSUNG, "ziel_dreiecke": int(ziel_dreiecke),
-                 "deckel_kante_rel": DECKEL_KANTE_REL}
+    parameter = {"fassung": FASSUNG, "art": e["art"], "textur": textur,
+                 "ziel_dreiecke": int(ziel_dreiecke), "deckel_kante_rel": DECKEL_KANTE_REL,
+                 "unwrap_xml_sha256": unwrap_sha,
+                 "setzen": [f"{k}={w}" for k, w in TEXTUR_SETZEN] if textur else None}
     schluessel = realityscan_schluessel(aufnahme_sha=aufnahme_sha, bilder_sha=fund["sha256"],
                                         export_xml_sha=xml_sha, parameter=parameter)
     ordner = _speicher(speicher) / schluessel
-    netz = ordner / "netz.ply"
+    netz = ordner / ("netz.obj" if textur else "netz.ply")
     bericht_datei = ordner / "bericht.json"
     ersatz = {str(e["cli"]): "<starter>", str(e["exe"]): "<RealityScan.exe>",
               str(e["export_xml"]): "<export.xml>", str(fund["ordner"]): "<bilder>",
               str(o): "<aufnahme>", str(ordner): "<speicher>"}
+    if textur:
+        ersatz[str(e["unwrap_xml"])] = "<unwrap.xml>"
 
     bericht = _aus_speicher(netz, bericht_datei)
     if bericht is not None and bericht.get("status") == "ungueltig":
         raise RealityScanError(f"{bericht.get('grund')} (aus dem Speicher; eine andere "
-                               "Export-Parameterdatei ergibt einen neuen Lauf)",
+                               "Export- oder Abwicklungsdatei ergibt einen neuen Lauf)",
                                URSACHE_EXPORT, bericht)
     if bericht is not None:
         bericht["zwischenspeicher"] = {"treffer": True, "schluessel": schluessel}
@@ -1248,10 +1809,15 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
                     # Eine leere points3D.txt laesst RealityScan haengen (278 F4).
                     raise RealityScanError("Die Aufnahme hat keine 3D-Punkte — RealityScan "
                                            "braucht sie samt Spuren.", URSACHE_AUFNAHME)
-                roh_netz = roh / "export.ply"
+                # Das OBJ in einen EIGENEN Ordner: RealityScan legt MTL und Bilder daneben.
+                if textur:
+                    (roh / "export").mkdir()
+                    roh_netz = roh / "export" / "netz.obj"
+                else:
+                    roh_netz = roh / "export.ply"
                 cmd = kommando(cli=e["cli"], exe=e["exe"], images_txt=text["images_txt"],
-                               netz_ply=roh_netz, export_xml=e["export_xml"],
-                               ziel_dreiecke=ziel_dreiecke)
+                               netz_datei=roh_netz, export_xml=e["export_xml"],
+                               unwrap_xml=e["unwrap_xml"], ziel_dreiecke=ziel_dreiecke)
                 t_lauf = time.monotonic()
                 try:
                     ergebnis = starte(cmd, frist)
@@ -1271,7 +1837,7 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
                         f"{(ausgabe['stderr'] or ausgabe['stdout'])[-400:]}", URSACHE_LAUF,
                         {"ausgabe": ausgabe})
                 bericht = {
-                    "status": "ok", "fassung": FASSUNG,
+                    "status": "ok", "fassung": FASSUNG, "art": e["art"],
                     "programm": {"fassung": _programm_fassung(ergebnis.stdout,
                                                               ergebnis.stderr)},
                     "zeiten_s": {"umschrift_s": round(t_lauf - t_text, 3),
@@ -1282,26 +1848,43 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
                                  "beobachtungen": text["beobachtungen"]},
                     "bilder": {"anzahl": fund["anzahl"], "sha256": fund["sha256"]},
                     "export_xml": {"sha256": xml_sha},
+                    "unwrap_xml": {"sha256": unwrap_sha} if textur else None,
                     "parameter": parameter, "ausgabe": ausgabe,
+                    "hinweise": [e["hinweis"]] if e["hinweis"] else [],
                 }
-                fertig = roh / "netz.ply"
+                t_bereinigung = time.monotonic()
+                fertig_ordner = roh / "fertig"
+                fertig = fertig_ordner / netz.name
                 try:
-                    pruefe_export(roh_netz)                 # Datei, Flaechen, Farbe
-                    bericht["bereinigung"] = bereinige_export(roh_netz, fertig)
-                    export = pruefe_export(fertig)
+                    if textur:
+                        pruefe_obj_export(roh_netz)         # OBJ, Flaechen, UV, MTL, PNG
+                        bericht["bereinigung"] = bereinige_obj(roh_netz, fertig)
+                        export = pruefe_obj_export(fertig)
+                    else:
+                        pruefe_export(roh_netz)             # Datei, Flaechen, Farbe
+                        bericht["bereinigung"] = bereinige_export(roh_netz, fertig)
+                        export = pruefe_export(fertig)
                 except RealityScanError as fehler:
                     if fehler.ursache == URSACHE_EXPORT:
                         # GESPEICHERT, damit ein unbrauchbarer Export nicht bei jedem Auftrag
-                        # Stunden kostet; der Schluessel haengt an der Exportdatei.
+                        # Stunden kostet; der Schluessel haengt an den Einstellungsdateien.
                         bericht.update(status="ungueltig", grund=fehler.grund)
                         bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False,
                                                             indent=1), encoding="utf-8")
                         fehler.bericht = bericht
                     raise
+                bericht["zeiten_s"]["bereinigung_s"] = round(time.monotonic() - t_bereinigung, 3)
                 probe = export.pop("probe")
                 export["vereinfacht"] = export["dreiecke"] <= int(1.1 * int(ziel_dreiecke))
+                export["art"] = e["art"]
+                # ALLE DATEIEN DES NETZES IN DEN SPEICHER — das OBJ zuletzt: Ein Ordner mit
+                # OBJ, aber ohne Textur darf es nie geben (Abbruch dazwischen).
+                dateien = sorted(fertig_ordner.iterdir(), key=lambda p: (p == fertig, p.name))
+                for d in dateien:
+                    os.replace(d, ordner / d.name)
+                export["dateien"], export["sha256_alle"] = _dateien_befund(
+                    [ordner / d.name for d in sorted(dateien, key=lambda p: p.name)])
                 bericht["netz"] = export
-                os.replace(fertig, netz)
                 bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
                                          encoding="utf-8")
         except BaseException:
@@ -1320,7 +1903,12 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
     if ziel is not None:
         ausgabe_pfad = Path(ziel)
         ausgabe_pfad.parent.mkdir(parents=True, exist_ok=True)
+        # Beim OBJ zuerst MTL und Bilder, unter ihren Namen (das OBJ verweist so auf sie).
+        for d in (bericht.get("netz") or {}).get("dateien") or ():
+            if d["datei"] != netz.name:
+                shutil.copyfile(ordner / d["datei"], ausgabe_pfad.parent / d["datei"])
         shutil.copyfile(netz, ausgabe_pfad)
+    bericht["netz_datei"] = str(ausgabe_pfad)
     bericht["netz_ply"] = str(ausgabe_pfad)
     return bericht
 

@@ -1391,6 +1391,99 @@ def _kontext_laden(a) -> tuple:
     return obj, setze, befund
 
 
+#: Eigenschaft am Kontext-Objekt: wie viele Materialien es in ``bpy.data`` gebracht hat. Der
+#: Splat und die PLY bringen eines, das texturierte OBJ eines je Bild. Ohne die Zahl stiege
+#: ``n_materialien`` des Berichts mit der Umgebung — und der Bericht sprach vom Modell.
+KONTEXT_MATERIALZAHL = "aiimaging_kontext_materialien"
+
+
+def _kontext_materialzahl(obj) -> int:
+    """Wie viele Materialien der Kontext mitgebracht hat (ohne Angabe: eines, wie bisher)."""
+    try:
+        return int(obj.get(KONTEXT_MATERIALZAHL, 1))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _kontext_textur_materialien(obj, materialien_vorher, pfad) -> tuple:
+    """Die Materialien des OBJ-Imports zu **Emission 1 aus der Bildtextur** umbauen.
+
+    **Emission mit der Stärke 1**, aus demselben Grund wie bei Splat und Eckfarben: Die Textur
+    IST das Licht der Aufnahme; beleuchtet (etwa ein Teil Selbstleuchten plus Sonne) sähe sie
+    doppelt belichtet aus oder, im Schatten der Sonne, dunkler als fotografiert. Die
+    HomeStation hat Emission 1 als scharf und farbtreu gesehen (14.10.2026). Das Bild liest
+    Blender als sRGB und rechnet es linear; als Emission gesetzt steht im PNG wieder die Farbe
+    der Textur.
+
+    Gebaut wird **in den vorhandenen Materialien** (je ``usemtl`` eines, wie der Import sie
+    anlegt) — keine zusätzlichen: ``n_materialien`` zählt so nur, was der Import brachte
+    (:data:`KONTEXT_MATERIALZAHL`). Ein Material ohne Bild wird neutrales Grau, gesagt im Befund.
+
+    Returns:
+        ``(None, textur)`` — kein Material für den «Set Material» (er wählt im Beauty nichts
+        aus), und ``textur = {materialien, bilder, ohne_bild, groessen}`` für den Befund.
+    """
+    netz = obj.data
+    bilder: list = []
+    ohne_bild = 0
+    for k, slot in enumerate(obj.material_slots):
+        mat = slot.material
+        if mat is None:
+            continue
+        if mat in materialien_vorher:
+            # Nie ein Material des MODELLS umbauen — sollte der Import eines nach Namen
+            # wiederverwenden, bekommt die Umgebung eine Kopie (das Beauty des Bauwerks
+            # bleibt, wie es war).
+            mat = mat.copy()
+            slot.material = mat
+        bild = None
+        if mat.use_nodes and mat.node_tree is not None:
+            bild = next((n.image for n in mat.node_tree.nodes
+                         if n.type == "TEX_IMAGE" and n.image is not None), None)
+        mat.name = f"KONTEXT_Textur_{k:02d}"
+        mat.use_nodes = True
+        baum = mat.node_tree
+        baum.nodes.clear()
+        emission = baum.nodes.new("ShaderNodeEmission")
+        emission.inputs["Strength"].default_value = 1.0
+        ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+        if bild is not None:
+            knoten = baum.nodes.new("ShaderNodeTexImage")
+            knoten.image = bild
+            knoten.interpolation = "Linear"
+            # Am Rand jeder Kachel nicht auf die gegenüberliegende Seite greifen: Die Fuge
+            # der Abwicklung ist 2 Bildpunkte breit.
+            knoten.extension = "EXTEND"
+            baum.links.new(knoten.outputs["Color"], emission.inputs["Color"])
+            if bild not in bilder:
+                bilder.append(bild)
+        else:
+            ohne_bild += 1
+            emission.inputs["Color"].default_value = (0.2, 0.2, 0.2, 1.0)
+        baum.links.new(emission.outputs["Emission"], ausgang.inputs["Surface"])
+    if not len(netz.materials):
+        # Ein OBJ ganz ohne Material: ein graues, damit die Umgebung nicht rosa erscheint.
+        mat = bpy.data.materials.new("KONTEXT_Textur_00")
+        mat.use_nodes = True
+        baum = mat.node_tree
+        baum.nodes.clear()
+        emission = baum.nodes.new("ShaderNodeEmission")
+        emission.inputs["Color"].default_value = (0.2, 0.2, 0.2, 1.0)
+        ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+        baum.links.new(emission.outputs["Emission"], ausgang.inputs["Surface"])
+        netz.materials.append(mat)
+        ohne_bild += 1
+    groessen = []
+    for b in bilder:
+        try:
+            groessen.append([int(b.size[0]), int(b.size[1])])
+        except Exception:                                  # noqa: BLE001 — nur Befund
+            groessen.append(None)
+    return None, {"materialien": len(netz.materials), "bilder": len(bilder),
+                  "ohne_bild": ohne_bild, "groessen": groessen,
+                  "schattierung": "Emission 1 aus der Bildtextur"}
+
+
 def _kontext_netz_laden(a, kx, kn) -> tuple:
     """Das Netz aus der Splat-Brücke als Umgebung laden (Owner-Entscheid 79, 13.10.2026).
 
@@ -1405,6 +1498,11 @@ def _kontext_netz_laden(a, kx, kn) -> tuple:
     Licht der Aufnahme; noch einmal beleuchtet, sähe die Umgebung doppelt belichtet aus. Der
     PLY-Import von Blender 4.2 liest die Farbe als sRGB und legt sie linear ab (hier
     nachgesehen: 200 → 0,5776) — als Emission gesetzt steht im PNG wieder die Farbe der Datei.
+
+    **Das texturierte OBJ** (Fassung 3 der RealityScan-Brücke, 14.10.2026): Import mit
+    ``wm.obj_import`` (ein Objekt, Achsen als Einheit wie die PLY), dann **Emission 1 aus der
+    Bildtextur** je Material (:func:`_kontext_textur_materialien`). Der «Set Material» bleibt
+    für den Material-ID-Pass, wählt im Beauty aber nichts aus — sonst ersetzte er die Textur.
 
     Returns:
         ``(objekt, setze_material_knoten, befund)`` wie :func:`_kontext_laden`.
@@ -1422,13 +1520,28 @@ def _kontext_netz_laden(a, kx, kn) -> tuple:
     welt = mathutils.Matrix([m_blender[4 * z:4 * z + 4] for z in range(4)])
 
     vorher = set(bpy.data.objects)
-    # Achsen ausdrücklich als Einheit, wie beim Splat: Die Lage hängt allein an der Matrix.
-    bpy.ops.wm.ply_import(filepath=str(pfad), forward_axis="Y", up_axis="Z",
-                          global_scale=1.0, import_colors="SRGB")
+    materialien_vorher = set(bpy.data.materials)
+    # DAS TEXTURIERTE NETZ (Fassung 3 der RealityScan-Bruecke, 14.10.2026) kommt als OBJ mit
+    # MTL und Bildern daneben. Erkannt am Inhalt (`kontext_netz.ist_obj`), nicht am Schalter.
+    ist_obj = bool(getattr(kn, "ist_obj", None)) and kn.ist_obj(pfad)
+    if ist_obj:
+        # Achsen ausdrücklich als Einheit, wie bei der PLY — sonst drehte der OBJ-Import nach
+        # seiner Vorgabe (−Z vorn, Y oben) ein zweites Mal. Die Exportdatei von RealityScan
+        # dreht um 90° um X (`settingsRotation`) und gibt so die Koordinaten der Aufnahme
+        # zurück, im System des Splats — dieselbe Lage wie die PLY von Fassung 2; in die Welt
+        # legt es wie dort allein die Matrix. Ein Objekt, nicht eines je `o`/`g`: Marke,
+        # Matrix und «Set Material» gelten dem Ganzen.
+        bpy.ops.wm.obj_import(filepath=str(pfad), forward_axis="Y", up_axis="Z",
+                              global_scale=1.0, use_split_objects=False,
+                              use_split_groups=False)
+    else:
+        # Achsen ausdrücklich als Einheit, wie beim Splat: Die Lage hängt allein an der Matrix.
+        bpy.ops.wm.ply_import(filepath=str(pfad), forward_axis="Y", up_axis="Z",
+                              global_scale=1.0, import_colors="SRGB")
     neu = [o for o in bpy.data.objects if o not in vorher]
     if len(neu) != 1 or neu[0].type != "MESH":
-        raise RuntimeError(f"Der PLY-Import von {pfad.name!r} ergab {len(neu)} Objekt(e) "
-                           f"statt eines Netzes.")
+        raise RuntimeError(f"Der {'OBJ' if ist_obj else 'PLY'}-Import von {pfad.name!r} ergab "
+                           f"{len(neu)} Objekt(e) statt eines Netzes.")
     obj = neu[0]
     obj.name = KONTEXT_NETZ_OBJEKT
     netz = obj.data
@@ -1441,24 +1554,32 @@ def _kontext_netz_laden(a, kx, kn) -> tuple:
         if hasattr(obj, strahl):
             setattr(obj, strahl, False)
 
-    farbattribut = netz.color_attributes[0].name if len(netz.color_attributes) else None
-    material = bpy.data.materials.new("KONTEXT_Netz")
-    material.use_nodes = True
-    baum = material.node_tree
-    baum.nodes.clear()
-    emission = baum.nodes.new("ShaderNodeEmission")
-    emission.inputs["Strength"].default_value = 1.0
-    ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
-    if farbattribut is not None:
-        attribut = baum.nodes.new("ShaderNodeAttribute")
-        attribut.attribute_type = "GEOMETRY"
-        attribut.attribute_name = farbattribut
-        baum.links.new(attribut.outputs["Color"], emission.inputs["Color"])
+    textur = None
+    if ist_obj:
+        material, textur = _kontext_textur_materialien(obj, materialien_vorher, pfad)
+        farbattribut = None
     else:
-        # Ohne Eckpunktfarbe ein neutrales Grau — und gesagt, im Befund unten.
-        emission.inputs["Color"].default_value = (0.2, 0.2, 0.2, 1.0)
-    baum.links.new(emission.outputs["Emission"], ausgang.inputs["Surface"])
-    netz.materials.clear()
+        farbattribut = netz.color_attributes[0].name if len(netz.color_attributes) else None
+        material = bpy.data.materials.new("KONTEXT_Netz")
+        material.use_nodes = True
+        baum = material.node_tree
+        baum.nodes.clear()
+        emission = baum.nodes.new("ShaderNodeEmission")
+        emission.inputs["Strength"].default_value = 1.0
+        ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+        if farbattribut is not None:
+            attribut = baum.nodes.new("ShaderNodeAttribute")
+            attribut.attribute_type = "GEOMETRY"
+            attribut.attribute_name = farbattribut
+            baum.links.new(attribut.outputs["Color"], emission.inputs["Color"])
+        else:
+            # Ohne Eckpunktfarbe ein neutrales Grau — und gesagt, im Befund unten.
+            emission.inputs["Color"].default_value = (0.2, 0.2, 0.2, 1.0)
+        baum.links.new(emission.outputs["Emission"], ausgang.inputs["Surface"])
+        netz.materials.clear()
+    # Wie viele Materialien die Umgebung in `bpy.data` gebracht hat — die Zahl der
+    # Materialien im Bericht ist die des MODELLS (`_kontext_materialzahl`).
+    obj[KONTEXT_MATERIALZAHL] = len(set(bpy.data.materials) - materialien_vorher)
 
     gruppe = bpy.data.node_groups.new("Kontext_Netz", "GeometryNodeTree")
     gruppe.interface.new_socket(name="Geometry", in_out="INPUT",
@@ -1469,6 +1590,11 @@ def _kontext_netz_laden(a, kx, kn) -> tuple:
     raus = gruppe.nodes.new("NodeGroupOutput")
     setze = gruppe.nodes.new("GeometryNodeSetMaterial")
     setze.inputs["Material"].default_value = material
+    if textur is not None:
+        # DIE TEXTUR SITZT IN DEN SLOTS — je Bild ein Material. Der «Set Material» ersetzte sie
+        # alle durch eines; darum waehlt er im Beauty NICHTS aus und erst der Material-ID-Pass
+        # schaltet ihn ein (`_material_id_zuweisen`, «Selection» an).
+        setze.inputs["Selection"].default_value = False
     gruppe.links.new(rein.outputs[0], setze.inputs["Geometry"])
     gruppe.links.new(setze.outputs["Geometry"], raus.inputs[0])
     modifikator = obj.modifiers.new("Kontext_Netz", "NODES")
@@ -1485,8 +1611,13 @@ def _kontext_netz_laden(a, kx, kn) -> tuple:
         "dreiecke": int(sum(len(p.vertices) - 2 for p in netz.polygons)),
         "punkte_gelesen": None,
         "punkte_gerendert": None,
-        "farbe": ("Eckpunktfarbe als Emission (sRGB der Datei)" if farbattribut
+        "format": "obj" if ist_obj else "ply",
+        "farbe": ("Textur als Emission (Staerke 1, sRGB des Bildes)" if textur is not None
+                  and textur["bilder"]
+                  else "keine Textur in der Datei — neutrales Grau als Emission" if ist_obj
+                  else "Eckpunktfarbe als Emission (sRGB der Datei)" if farbattribut
                   else "keine Eckpunktfarbe in der Datei — neutrales Grau als Emission"),
+        "textur": textur,
         "matrix_angewandt": roh_matrix is not None,
         "matrix_bedeutung": ("4x4 zeilenweise, glTF-Welt (Meter, Y oben); in Blender: "
                              "[Z-up-Korrektur] * R_x(+90) * M"),
@@ -1670,9 +1801,13 @@ def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
     if kontext is not None:
         obj, setze = kontext
         setze.inputs["Material"].default_value = eintragen(obj.name, "kontext")
+        # Beim texturierten Netz waehlt der Knoten im Beauty nichts aus (die Textur sitzt in
+        # den Slots); hier gilt die Kennung fuer alle Flaechen.
+        if "Selection" in setze.inputs:
+            setze.inputs["Selection"].default_value = True
         # Das Material des Splats ist keines des Modells; `n_materialien` bleibt die Zahl
-        # von ohne Splat.
-        n_echte_materialien -= 1
+        # von ohne Splat (beim texturierten Netz: ohne seine Materialien je Bild).
+        n_echte_materialien -= _kontext_materialzahl(obj)
 
     return tabelle, n_echte_materialien
 
@@ -2166,7 +2301,8 @@ def main() -> int:
 
     # ── Durchgang 2: Material-ID ──────────────────────────────────────────────────────
     tabelle: list[dict] = []
-    n_materialien = len(bpy.data.materials) - (1 if kontext is not None else 0)
+    n_materialien = len(bpy.data.materials) - (_kontext_materialzahl(kontext[0])
+                                               if kontext is not None else 0)
     material_id_png = out_dir / "material_id.png"
     if not a.ohne_material_id:
         tabelle, n_materialien = _material_id_zuweisen(kontext)
