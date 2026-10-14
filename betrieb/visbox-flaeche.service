@@ -24,8 +24,14 @@ Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # UNGEPUFFERT (Befund auf-20261001-221): Sonst fehlen Zeilen wie «Verbinden abgelehnt» im
 # Systemprotokoll, bis der Puffer voll ist — gerade die, nach denen man sucht.
 Environment=PYTHONUNBUFFERED=1
+# --auftragsablage (Owner-Entscheid 93, 14.10.2026; auf-20261014-285): Ohne sie hatte die
+# Knotenansicht im Dienst keine Ablage, und jedes Bestellen endete mit 503 «Keine Auftragsablage».
+# Es ist DIESELBE Ablage, die kosmo-abholer mit --store liest (die Brücken-Ablage, Form job.json
+# wie `knotenweg.lege_an`) — nicht die tmp-Ablage, die <id>.json erwartet. Am Heim-PC geprüft:
+# Ausführen → wartet auf Freigabe → Freigeben → gerechnet, Bild am Render-Knoten.
 ExecStart=%h/ai-imaging-in-a-box/.venv-render/bin/python \
-    oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort
+    oberflaeche/server.py --kennwort-datei %h/.config/visbox/kennwort \
+    --auftragsablage /mnt/data/ArchitekturKosmos/render-jobs
 Restart=on-failure
 RestartSec=5
 

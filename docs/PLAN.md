@@ -7991,7 +7991,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Fertiger Anfang und Auto-Kamera-Vorschau (Entscheide 91/92) in 0.2.8 geführt; KosmoOrbit-Zweig bei Int 1. *(14.10.2026, §114)*
 - [x] Dienstbetrieb geprüft (284): Kennwort hält; Knoten haben im Dienst keine Ablage. *(14.10.2026, §116)*
 - [x] Owner-Entscheid 93: Dienst mit `--auftragsablage` umstellen. *(14.10.2026)*
-- [ ] Umstellen und Probe von Anfang bis Ende (local `auftraege/offen/auf-20261014-285.json`), danach Vorlage `betrieb/visbox-flaeche.service` nachziehen.
+- [x] Umgestellt, Probe von Anfang bis Ende: Bild am Render-Knoten; Vorlage nachgezogen. *(14.10.2026, §120)*
+- [ ] Prüfung am Quader fiel (Rahmung Kamera s, geom_iou knapp unter 0.85) — am echten Modell im Blick behalten.
 - [x] Strg+Z in der Visbox-Knotenansicht: im Wirt angehängt, im Browser geprüft. *(14.10.2026, §118)*
 - [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.
 - [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
