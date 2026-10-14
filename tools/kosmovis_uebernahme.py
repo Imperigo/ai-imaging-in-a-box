@@ -194,6 +194,9 @@ AUSGESCHLOSSEN = (
         # Runde 26: zählen Verbraucher der Dauer- und Ebenen-Tokens über ALLE Stationen
         "bewegung-dauer-leiter.test.ts", "ebenen-leiter.test.ts",
     )),
+    # REGEL 3 (14.10.2026): traegt Pfade unter /home/<name>/ als Beispiel — ein Benutzername
+    # in einem Pfad darf hier nicht stehen (tests/test_regel3_kennungen.py).
+    "packages/kosmo-contracts/test/kv-splat-context.test.ts",
 )
 
 #: Was im Arbeitsbereich entsteht und nie verbucht wird.
@@ -202,6 +205,9 @@ NIE_VERBUCHT = ("HERKUNFT.json", "package-lock.json")
 #: Proben, die bewusst NICHT mitkommen — mit Grund. Wird in ``HERKUNFT.json`` festgehalten,
 #: damit die Rückkehr im Februar weiss, welche Prüfung hier fehlte.
 NICHT_UEBERTRAGEN = {
+    "packages/kosmo-contracts/test/kv-splat-context.test.ts":
+        "Regel 3: Die Probe schreibt Beispielpfade unter /home/<name>/ aus — in Visbox steht kein "
+        "Benutzername in einem Pfad. Dem Integrator gemeldet (14.10.2026).",
     "packages/kosmo-ui/test/{fokusring-token,insel-scroll-waechter,plangrafik-papier-waechter,"
     "schriftgrad-waechter,skizze-geladen,zeilenhoehe-skala}.test.ts":
         "Wächter über die ganze KosmoOrbit-App (lesen Dateien wie PlanView.tsx, main.tsx, "

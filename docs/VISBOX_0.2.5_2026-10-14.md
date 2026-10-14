@@ -43,5 +43,5 @@ sie vom Heim-PC kommt, liegt ihr fertiger Bau jetzt im Repo, damit ein `git pull
 
 ## Prüfung
 
-Volle Suite ohne GPU, grün (Zahl in `README.md`); JS-Proben der Kopie 1021 grün (vorher 722). iPad/Mac: Prüfstrecke
+Volle Suite ohne GPU, grün (Zahl in `README.md`); JS-Proben der Kopie 1014 grün (vorher 722; eine Probe mit Beispielpfaden unter /home/<name>/ wegen Regel 3 nicht übernommen). iPad/Mac: Prüfstrecke
 `.github/workflows/ipad.yml`; der Job `freigabe` legt die Freigabe erst auf `main` an.

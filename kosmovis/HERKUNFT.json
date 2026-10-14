@@ -159,7 +159,6 @@
     "packages/kosmo-contracts/test/kv-ebenen.test.ts": "439fcbb09d17655d825ce977bdfa4f418e89f4f570e1b6d142b37420c7404beb",
     "packages/kosmo-contracts/test/kv-lieferstatus-null.test.ts": "e7fd3f998df1b1cdb253d84b0083ba4bb350f7089076d58b26f4618318edc8c4",
     "packages/kosmo-contracts/test/kv-qwen21-echt.test.ts": "60baa397ee83f691084304c01af18dc7ef1464edecda1b1a9e9aa84f61b61324",
-    "packages/kosmo-contracts/test/kv-splat-context.test.ts": "9c0f04c321843e3ae04d62cee68027e7350dbe5585ca11202a50a5288a95fd76",
     "packages/kosmo-contracts/test/kv-vertrag.test.ts": "bf3bcda295defb9a720fa47795471a1e3ebd0638055f1040406cc90c18ff797d",
     "packages/kosmo-contracts/test/lora-train.test.ts": "a7348f41360135967f41abb736daf911696026fb5d41c153f9bae25b355af836",
     "packages/kosmo-contracts/test/worker-feld.test.ts": "9174e0f5bcc37e8a9078b0a5f3b79a3981f7ea474f972a304fde682e6181f4f8",
@@ -316,6 +315,7 @@
     "apps/kosmo-orbit/public/fonts/*-OFL.txt": "Lizenztexte der drei Schriften (OFL verlangt, dass sie mitgehen); Wortlaut unverändert."
   },
   "nicht_uebertragen": {
+    "packages/kosmo-contracts/test/kv-splat-context.test.ts": "Regel 3: Die Probe schreibt Beispielpfade unter /home/<name>/ aus — in Visbox steht kein Benutzername in einem Pfad. Dem Integrator gemeldet (14.10.2026).",
     "packages/kosmo-ui/test/{fokusring-token,insel-scroll-waechter,plangrafik-papier-waechter,schriftgrad-waechter,skizze-geladen,zeilenhoehe-skala}.test.ts": "Wächter über die ganze KosmoOrbit-App (lesen Dateien wie PlanView.tsx, main.tsx, Companion.tsx) — die gibt es in der Kopie nicht.",
     "packages/kosmo-ui/test/{bewegung-dauer-leiter,ebenen-leiter}.test.ts": "Runde 26: zählen, wie oft die Dauer- und Ebenen-Tokens im CSS der ganzen App gelesen werden (Untergrenzen wie «mehr als 20 Stellen»). Die Kopie hat nur das CSS des Vis-Werkzeugs; die Zahl fällt dort unter die Grenze, ohne dass etwas fehlt.",
     "apps/kosmo-orbit/test/{a2-vis-bedienung,b117-weg-b-uebergangshinweis,e76-unbekannte-felder-parsejob,n1-vis-jobs-referenzpunkt,p-b117-schritt2-interior-transport,p-dreistandpunkte,p-leerszene-render-sperre,p5b-bridge-toast-bescheid,pc2-vis-render-executor,vis-preset-job}.test.ts": "Bauen ein Gebäude im KosmoOrbit-Kern und erwarten daraus ein glb. Der Stellvertreter exportGlb liefert nur das glb der offenen Mappe — ohne Mappe sagt er es, statt ein leeres Modell zu senden. Kommt mit der Mappen-Anbindung als eigene Visbox-Probe.",
