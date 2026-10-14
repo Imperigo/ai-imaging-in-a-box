@@ -14,7 +14,7 @@ Die vier Auflagen (CLAUDE.md, «Fremdprogramme, vom Nutzer installiert», Entsch
 1. **Nie mitgeliefert.** Hier steht kein Binary, kein Installer, kein Download — nur der
    Aufruf eines Programms, das schon da ist.
 2. **Nur als Prozess, nur auf dem Rechner des Lizenznehmers.** Eingeschaltet wird die Brücke
-   **ausdrücklich**, mit :data:`REALITYSCAN_ENV` (Pfad zu ``realityscan-cli``). **Es gibt keine
+   **ausdrücklich**, mit :data:`REALITYSCAN_ENV` (Pfad zum Starter). **Es gibt keine
    automatische Suche** nach einer Installation, mit Absicht: Eine Suche fände RealityScan
    auch auf einem Rechner, auf dem es jemand anderes für sich installiert hat — etwa auf einem
    Dienstrechner, der Aufträge von KosmoOrbit für Kunden rechnet. Das wäre Nutzung durch
@@ -30,21 +30,27 @@ Was hier steht — nur die Standardbibliothek (Regel 4)
 * :func:`wine_pfad` — ein Linux-Pfad in der Schreibweise, die das Windows-Programm unter Wine
   versteht (``Z:\\…``; Wine bildet ``Z:`` auf ``/`` ab).
 * :func:`colmap_als_text` — die Aufnahme (binär, COLMAP 3 oder 4 mit Rig) im **Textformat von
-  COLMAP 3** (``cameras.txt``, ``images.txt``, ``points3D.txt``), das ``-importColmap`` liest.
-  Je Bild seine eigene Pose; das Rig fällt weg, weil COLMAP 3 keines kennt.
+  COLMAP 3** (``cameras.txt``, ``images.txt``, ``points3D.txt``), das ``-loadColmap`` liest.
+  Je Bild seine eigene Pose; das Rig fällt weg, weil COLMAP 3 keines kennt. Die Bildnamen
+  zeigen **relativ zum Textordner** auf die Fotos (``auf-20261013-278`` F3).
 * :func:`finde_bilder` — die Fotos nach der Konvention ``<sparse/0>/../../images``, geprüft
   gegen die Bildnamen der Aufnahme.
 * :func:`kommando` — die Befehlsfolge, **nur aus Befehlen der Dokumentation** (gelesen
   13.10.2026). Was dort nicht steht, ist eine offene Frage für den Heim-PC
   (``betrieb/REALITYSCAN_BRUECKE.md``), kein erfundener Befehl.
-* :func:`realityscan_zu_netz` — Lauf, Prüfung des Exports, Zwischenspeicher, Bericht ohne Pfad.
+* :func:`bereinige_export` — Farben als ``uchar`` (Blender liest ``float`` als 0..255, F7) und
+  ohne den **Deckel** aus Riesendreiecken, mit dem RealityScan offene Bereiche schliesst.
+* :func:`realityscan_zu_netz` — Lauf (bei Frist die **ganze Prozessgruppe** beendet), Prüfung
+  des Exports, Zwischenspeicher, Bericht ohne Pfad.
 * :func:`lage_befund` — liegt das Netz dort, wo die Aufnahme liegt? Sonst wird es **nicht**
   benutzt (Grund ``lage``): RealityScan könnte neu gelagert oder skaliert haben.
 
-Was offen ist
--------------
-Steht gesammelt in :data:`OFFENE_FRAGEN` und in ``betrieb/REALITYSCAN_BRUECKE.md``. Alle Zahlen
-unter «GESETZT» sind gesetzt, nicht gemessen; gemessen wird am Heim-PC.
+Was gemessen ist, was offen ist
+-------------------------------
+Die Befehlsfolge ist seit ``auf-20261013-278`` (14.10.2026) **am Heim-PC gemessen**:
+RealityScan 2.2, 960 Bilder, 324 s, 93 % Deckung, Lage und Massstab wie die Aufnahme. Die
+Brücke von Fassung 1 lief dort nicht (sieben Befunde, Protokoll 74 §100); Fassung 2 setzt sie
+um. Was offen bleibt, steht in :data:`OFFENE_FRAGEN` und ``betrieb/REALITYSCAN_BRUECKE.md``.
 """
 from __future__ import annotations
 
@@ -55,6 +61,7 @@ import os
 import posixpath
 import re
 import shutil
+import signal
 import struct
 import subprocess
 import tempfile
@@ -64,15 +71,14 @@ from pathlib import Path
 from aiimaging import kontext_netz as _kn
 
 __all__ = [
-    "AUSGABE_ZEICHEN", "BILDER_WEG", "BILDER_WEGE", "BILDER_WEG_COLMAP", "BILDER_WEG_ORDNER",
-    "COLMAP_MIT_PUNKTEN", "EXE_VORGABE", "FASSUNG", "FLUECHTIGE_URSACHEN",
+    "AUSGABE_ZEICHEN", "DECKEL_KANTE_REL", "EXE_VORGABE", "FASSUNG", "FLUECHTIGE_URSACHEN",
     "GESAMTFRIST_REALITYSCAN_S", "LAGE_ECKEN_MAX", "LAGE_MASSSTAB_MAX", "LAGE_NAH_MIN",
-    "LAGE_PROBEN", "LAGE_ZELLE_REL", "MODELL_NAME", "OFFENE_FRAGEN", "REALITYSCAN_ENV",
+    "LAGE_PROBEN", "LAGE_ZELLE_REL", "NACHFRIST_S", "OFFENE_FRAGEN", "REALITYSCAN_ENV",
     "REALITYSCAN_EXE_ENV", "REALITYSCAN_EXPORT_XML_ENV", "REALITYSCAN_SPEICHER_ENV",
     "RealityScanError", "SATZ_REALITYSCAN", "URSACHE_AUFNAHME", "URSACHE_AUS",
     "URSACHE_BILDER", "URSACHE_EINRICHTUNG", "URSACHE_EXPORT", "URSACHE_GELIEFERT",
     "URSACHE_LAGE", "URSACHE_LAUF", "WEG", "ZIEL_DREIECKE",
-    "colmap_als_text", "einrichtung", "eingeschaltet", "finde_bilder", "kommando",
+    "bereinige_export", "colmap_als_text", "einrichtung", "eingeschaltet", "finde_bilder", "kommando",
     "lage_befund", "lage_pruefen", "lies_ecken", "nah_anteil", "ohne_pfade",
     "pruefe_export", "realityscan_schluessel", "realityscan_zu_netz", "treffer_maengel",
     "wine_pfad",
@@ -97,7 +103,10 @@ class RealityScanError(RuntimeError):
 # Einrichtung — nur ausdrücklich (Auflage 2)
 # ======================================================================================
 
-#: Pfad zu ``realityscan-cli``. **Gesetzt heisst eingeschaltet** — sonst nichts.
+#: Pfad zum **Starter**, der ``RealityScan.exe`` als erstes Argument bekommt. **Gesetzt heisst
+#: eingeschaltet** — sonst nichts. Am Heim-PC ist das **das ``wine`` des Pakets**: Das
+#: mitgelieferte ``realityscan-cli`` startet in 2.2 nicht («winewrapper: cannot execute»,
+#: ``auf-20261013-278`` F1). Beide nehmen ``<exe> <befehle…>``, die Brücke ruft also beide gleich.
 REALITYSCAN_ENV = "AIIMAGING_REALITYSCAN"
 #: Pfad zur ``RealityScan.exe`` (Linux-Pfad); ohne Angabe :data:`EXE_VORGABE`.
 REALITYSCAN_EXE_ENV = "AIIMAGING_REALITYSCAN_EXE"
@@ -162,10 +171,10 @@ def einrichtung() -> dict:
     xml = os.environ.get(REALITYSCAN_EXPORT_XML_ENV, "").strip()
     fehlt = []
     if not os.path.isabs(cli) or not os.path.isfile(cli):
-        fehlt.append(f"{REALITYSCAN_ENV} zeigt auf keine Datei (absoluter Pfad zu "
-                     "realityscan-cli erwartet)")
+        fehlt.append(f"{REALITYSCAN_ENV} zeigt auf keine Datei (absoluter Pfad zum Starter "
+                     "erwartet: das wine des Pakets)")
     elif not os.access(cli, os.X_OK):
-        fehlt.append(f"{REALITYSCAN_ENV}: realityscan-cli ist nicht ausfuehrbar")
+        fehlt.append(f"{REALITYSCAN_ENV}: der Starter ist nicht ausfuehrbar")
     if not os.path.isabs(exe) or not os.path.isfile(exe):
         fehlt.append("RealityScan.exe nicht gefunden"
                      + (f" ({REALITYSCAN_EXE_ENV} pruefen)"
@@ -199,27 +208,18 @@ GESAMTFRIST_REALITYSCAN_S = 4 * 3600
 #: Grund: Blender rendert eine halbe Million Dreiecke ohne Mühe; mehr kostet Ladezeit je Kamera.
 ZIEL_DREIECKE = _kn.ZIEL_DREIECKE
 
-#: Der Name des Modells für ``-exportModel``. GESETZT nach dem Beispiel der Doku (ein Netz,
-#: kein ``-simplify``). **Offen:** Ob ``-simplify`` ein neues Modell anlegt (dann hiesse das
-#: vereinfachte vielleicht «Model 2»). Der Bericht vergleicht darum die Dreieckszahl mit
-#: :data:`ZIEL_DREIECKE` (``netz.vereinfacht``) — die HomeStation sieht es am ersten Lauf.
-MODELL_NAME = "Model 1"
+#: Der **Deckel**: RealityScan schliesst Bereiche ohne Fotos mit wenigen Riesendreiecken (am
+#: Heim-PC 123 Dreiecke mit 59 % der Fläche, darunter eine waagrechte Platte über die ganze
+#: Region, ``auf-20261013-278``). Ein Dreieck, dessen längste Kante mehr als dieser Anteil der
+#: robusten Diagonale des Netzes (P2–P98 der Ecken) misst, fällt weg. GESETZT aus dem Befund:
+#: Dort lag die Grenze bei 0.5 Einheiten (≈ 3 m) auf rund 10 Einheiten Diagonale; die Dreiecke
+#: eines vereinfachten Netzes mit 500 000 Dreiecken sind um Grössenordnungen kleiner.
+DECKEL_KANTE_REL = 0.05
 
-#: Wie die Fotos in die Szene kommen. **Offen** (am Heim-PC zu prüfen): ob ``-importColmap``
-#: die Bilder selbst lädt oder nur die Posen zu Bildern, die schon in der Szene sind — und ob
-#: ihre Namen mit Unterordner (``back/0031.jpg``) dann zu den geladenen passen.
-#: ``addFolder``: zuerst ``-addFolder <images>`` mit ``appIncSubdirs=true``, dann
-#: ``-importColmap``; ``importColmap``: nur ``-importColmap``. GESETZT auf ``addFolder``,
-#: weil die Doku das Hinzufügen von Bildern nur so zeigt.
-BILDER_WEG_ORDNER = "addFolder"
-BILDER_WEG_COLMAP = "importColmap"
-BILDER_WEGE = (BILDER_WEG_ORDNER, BILDER_WEG_COLMAP)
-BILDER_WEG = BILDER_WEG_ORDNER
-
-#: Ob ``points3D.txt`` die Punkte samt Spuren trägt (und ``images.txt`` die 2D-Punkte).
-#: GESETZT auf ja: Das ist die getreue Umschrift der Aufnahme, wie ``colmap model_converter``
-#: sie schreibt. **Offen**, ob ``-importColmap`` die Punkte braucht; leer wäre schneller.
-COLMAP_MIT_PUNKTEN = True
+#: Nach Ablauf der Frist: so lange darf die Prozessgruppe nach ``SIGTERM`` aufräumen, bevor
+#: ``SIGKILL`` kommt. GESETZT; am Heim-PC blieb ohne Gruppe ``RealityScan.exe`` als Waise
+#: stehen, weil nur ``wine`` beendet wurde (F9).
+NACHFRIST_S = 10.0
 
 #: Die Lageprüfung (:func:`lage_befund`). GESETZT, nicht gemessen:
 #: * Zellgrösse der Nachbarschaftssuche, als Anteil der Diagonale der COLMAP-Punkte (P2–P98)
@@ -241,35 +241,17 @@ AUSGABE_ZEICHEN = 2000
 
 #: Codestand der Brücke; steht im Speicherschlüssel. Hochzählen, wenn bei gleichen Eingängen
 #: ein anderes Netz entstünde (andere Befehlsfolge).
-FASSUNG = 1
+FASSUNG = 2
 
 #: Was am Heim-PC zu prüfen ist, bevor die Brücke als eingebaut gilt — genau formuliert,
 #: damit ein Auftrag sie wörtlich übernehmen kann. Steht auch in
 #: ``betrieb/REALITYSCAN_BRUECKE.md``.
 OFFENE_FRAGEN = (
-    "Wo liegt realityscan-cli nach der Installation des .deb/.rpm (z. B. "
-    "/opt/realityscan/bin/realityscan-cli oder im PATH), und reicht es die Argumente einzeln "
-    "an Wine weiter (Pfade mit Leerzeichen, ohne Shell)?",
-    "Wie wird die Epic-Lizenz headless aktiviert? Laeuft -headless ohne angemeldete "
-    "Sitzung, oder verlangt der erste Start eine Anmeldung in der Oberflaeche?",
-    "Laedt -importColmap die Bilder selbst, oder braucht es vorher -addFolder <images> mit "
-    "appIncSubdirs=true? Passen die Bildnamen mit Unterordner (back/0031.jpg) zu den "
-    "geladenen Bildern, und gegen welchen Ordner loest RealityScan sie auf (Ordner der "
-    "images.txt oder der Bilder)?",
-    "Welche der drei Textdateien erwartet -importColmap (images.txt oder cameras.txt), und "
-    "braucht es points3D.txt mit Spuren oder genuegt sie leer?",
-    "Behaelt RealityScan nach -importColmap und -align die Lage und den Massstab der "
-    "Aufnahme, oder lagert es neu? (Die Lagepruefung faengt es ab; dann wird das Netz nicht "
-    "benutzt.) Gibt es eine Einstellung, die die importierten Posen festhaelt?",
-    "Legt -simplify ein neues Modell an? Wenn ja: Wie heisst es (Model 2?), und exportiert "
-    "-exportModel \"Model 1\" dann das unvereinfachte Netz (Bericht netz.vereinfacht)?",
-    "Welche Einstellungen braucht die Export-Parameterdatei fuer PLY mit Eckpunktfarben "
-    "(red/green/blue) und unveraenderten Koordinaten (kein Verschieben, kein Massstab, keine "
-    "Achsendrehung)? Schreibt der Export binaer oder ASCII?",
-    "Welche Fassung meldet das Programm in seiner Ausgabe (Zeile mit 'RealityScan x.y')?",
-    "Wie lange dauert der Lauf mit 960 Bildern, und reicht die Frist von 4 h?",
-    "Format von -exportRegistration: Liesse sich daraus eine Ausrichtung (Umeyama-Verfahren) "
-    "zur Aufnahme rechnen, falls RealityScan neu lagert? (Nicht gebaut.)",
+    "Besteht das Bild mit der Umgebung aus RealityScan die QA wie der offene Weg (Hallenauftrag, "
+    "M2 aus auf-20261013-278)?",
+    "Wie verhaelt sich -headless ohne vorherige Anmeldung im Wine-Profil (nicht geprueft, das "
+    "Konto wurde nie angefasst)?",
+    "Wie viel GPU bleibt, wenn das Kosmo-Modell geladen ist (RealityScan belegt rund 25 GB)?",
 )
 
 
@@ -299,7 +281,10 @@ def wine_pfad(p) -> str:
 
 
 _POSIX_PFAD = re.compile(r"(?<![\w.:/\\<>])/(?:[^\s'\"/\\:<>]+/)*[^\s'\"/\\:<>]+/?")
-_WINDOWS_PFAD = re.compile(r"\b[A-Za-z]:\\(?:[^\s'\"\\<>]+\\)*[^\s'\"\\<>]*")
+#: Ein Windows-Pfad, auch **doppelt maskiert** (``Z:\\\\home\\\\…``, so schreibt Wine ihn in
+#: manche Meldungen — am Heim-PC stand so ein Benutzerverzeichnis im Fehlertext, 278) und mit
+#: Schrägstrichen (``Z:/home/…``). Das ``\b`` vor dem Laufwerksbuchstaben lässt ``https://`` stehen.
+_WINDOWS_PFAD = re.compile(r"\b[A-Za-z]:(?:[\\/]+[^\s'\"\\/<>]+)+[\\/]*|\b[A-Za-z]:[\\/]+")
 
 
 def _kurz(treffer: re.Match) -> str:
@@ -321,7 +306,9 @@ def ohne_pfade(text, ersatz: dict[str, str] | None = None) -> str:
             continue
         paare.append((str(pfad), platz))
         try:
-            paare.append((wine_pfad(pfad), platz))
+            w = wine_pfad(pfad)
+            paare += [(w, platz), (w.replace("\\", "\\\\"), platz),
+                      (w.replace("\\", "/"), platz)]
         except RealityScanError:
             pass
     for pfad, platz in sorted(paare, key=lambda pp: -len(pp[0])):
@@ -401,7 +388,7 @@ def _punkte_3d(ordner: Path):
                int(t[6]), float(t[7]), spur)
 
 
-def colmap_als_text(aufnahme, ziel, *, mit_punkten: bool = COLMAP_MIT_PUNKTEN) -> dict:
+def colmap_als_text(aufnahme, ziel, *, mit_punkten: bool = True, bilder=None) -> dict:
     """Die Aufnahme als ``cameras.txt``, ``images.txt``, ``points3D.txt`` (COLMAP-3-Textformat).
 
     Das Format ist das der COLMAP-Dokumentation («Output Format → Text Format»):
@@ -414,11 +401,16 @@ def colmap_als_text(aufnahme, ziel, *, mit_punkten: bool = COLMAP_MIT_PUNKTEN) -
 
     **Je Bild seine eigene Pose** (``cam_from_world``), auch beim Rig: COLMAP 4 schreibt sie
     fertig in ``images`` (:func:`aiimaging.kontext_netz.lies_aufnahme`); ``rigs``/``frames``
-    entfallen, COLMAP 3 kennt sie nicht. **Bildnamen unverändert** (``back/0031.jpg``).
+    entfallen, COLMAP 3 kennt sie nicht. **Bildnamen unverändert** (``back/0031.jpg``) — ausser
+    mit ``bilder``.
 
     Args:
-        mit_punkten: ``False`` schreibt ``points3D.txt`` leer und die 2D-Zeilen leer
-            (:data:`COLMAP_MIT_PUNKTEN`, offene Frage).
+        mit_punkten: ``False`` schreibt ``points3D.txt`` leer und die 2D-Zeilen leer. Nur für
+            Proben: RealityScan **hängt** an einer leeren ``points3D.txt`` (278 F4).
+        bilder: der Ordner der Fotos. Dann zeigt jeder Name **relativ zum Textordner** auf
+            sein Foto (``../../images/back/0031.jpg``): ``-loadColmap`` löst die Namen gegen
+            den Ordner der ``images.txt`` auf, und fehlt ein Bild, wartet RealityScan trotz
+            ``-headless`` auf einen Dialog (278 F3). Absolute Namen scheitern dort ebenso.
 
     Returns:
         ``{images_txt, bilder, kameras, punkte3d, beobachtungen, rig}`` — ``images_txt`` ist
@@ -437,6 +429,15 @@ def colmap_als_text(aufnahme, ziel, *, mit_punkten: bool = COLMAP_MIT_PUNKTEN) -
     if leer:
         raise RealityScanError(f"{len(leer)} Bildname(n) mit Leerzeichen — im COLMAP-Text "
                                "nicht darstellbar.", URSACHE_AUFNAHME)
+    namen = {nr: b["name"] for nr, b in a["bilder"].items()}
+    if bilder is not None:
+        weg = posixpath.relpath(posixpath.normpath(str(Path(bilder).absolute())),
+                                posixpath.normpath(str(z.absolute())))
+        if re.search(r"\s", weg):
+            raise RealityScanError("Der Weg vom Arbeitsordner zu den Fotos traegt ein "
+                                   "Leerzeichen — im COLMAP-Text nicht darstellbar.",
+                                   URSACHE_BILDER)
+        namen = {nr: posixpath.join(weg, n) for nr, n in namen.items()}
     z.mkdir(parents=True, exist_ok=True)
     try:
         with open(z / "cameras.txt", "w", encoding="utf-8", newline="\n") as d:
@@ -462,7 +463,7 @@ def colmap_als_text(aufnahme, ziel, *, mit_punkten: bool = COLMAP_MIT_PUNKTEN) -
                                            URSACHE_AUFNAHME)
                 b = a["bilder"][nr]
                 d.write(f"{nr} " + " ".join(_zahl(w) for w in (*b["q"], *b["t"]))
-                        + f" {b['kamera']} {b['name']}\n")
+                        + f" {b['kamera']} {namen[nr]}\n")
                 d.write(" ".join(f"{_zahl(x)} {_zahl(y)} {pid}" for x, y, pid in punkte)
                         + "\n" if mit_punkten else "\n")
         n_punkte = spuren = 0
@@ -559,42 +560,44 @@ def finde_bilder(aufnahme, bilder=None) -> dict:
 # Die Befehlsfolge
 # ======================================================================================
 
-def kommando(*, cli, exe, bilder, images_txt, netz_ply, export_xml,
-             ziel_dreiecke: int = ZIEL_DREIECKE, bilder_weg: str = BILDER_WEG,
-             modell: str = MODELL_NAME) -> list[str]:
-    """Die Befehlsfolge für ``realityscan-cli`` — als **Liste**, für ``subprocess`` ohne Shell.
+def kommando(*, cli, exe, images_txt, netz_ply, export_xml,
+             ziel_dreiecke: int = ZIEL_DREIECKE) -> list[str]:
+    """Die Befehlsfolge — als **Liste**, für ``subprocess`` ohne Shell.
 
     **Keine Anführungszeichen in den Elementen:** Die Doku zeigt ``"…"`` für die Shell; als
     Liste kommt jedes Element als ein Argument an, auch mit Leerzeichen (``Program Files``).
     Ein Anführungszeichen im Element käme als Zeichen an und machte den Pfad falsch.
 
-    Die Reihenfolge (Doku RealityScan, Befehlszeile, gelesen 13.10.2026):
-    ``-headless`` (nur als erster Befehl erlaubt), ``-newScene``, ``-set appIncSubdirs=true``
-    (Unterordner bei ``-addFolder``), die Bilder (:data:`BILDER_WEG`), ``-importColmap``,
-    ``-align``, ``-selectMaximalComponent``, ``-setReconstructionRegionAuto``,
-    ``-calculateNormalModel``, ``-simplify``, ``-calculateVertexColors``, ``-exportModel``,
-    ``-quit``. Alle Pfade für das Programm als ``Z:``-Pfade (:func:`wine_pfad`); ``exe`` ist
-    der Linux-Pfad, wie ihn ``realityscan-cli`` laut Doku erwartet.
+    Die Reihenfolge, **am Heim-PC gemessen** (``auf-20261013-278``, RealityScan 2.2):
+
+    * ``-headless`` (nur als erster Befehl erlaubt), ``-stdConsole`` — sonst bleibt die
+      Ausgabe leer und die Fassung unbekannt (F8);
+    * ``-newScene``, ``-loadColmap <images.txt>`` — lädt die Fotos **selbst**, Namen relativ
+      zum Textordner (:func:`colmap_als_text` mit ``bilder``). **Kein** ``-addFolder`` (lud
+      jedes Bild doppelt, F3) und **kein** ``-align`` (legte eigene Komponenten neben die
+      importierte, F5: Lage und Massstab bleiben ohne es exakt);
+    * ``-selectMaximalComponent``, ``-setReconstructionRegionAuto``, ``-calculateNormalModel``,
+      ``-simplify``, ``-calculateVertexColors``;
+    * ``-exportSelectedModel`` — ``-simplify`` legt ein **neues** Modell an und wählt es;
+      ``-exportModel "Model 1"`` hätte das unvereinfachte Netz geschrieben (F6);
+    * ``-quit``.
+
+    Alle Pfade für das Programm als ``Z:``-Pfade (:func:`wine_pfad`); ``exe`` ist der
+    Linux-Pfad, den der Starter (``wine`` des Pakets) als Programm nimmt.
 
     Raises:
-        RealityScanError: unbekannter Bilderweg oder keine positive Dreieckszahl.
+        RealityScanError: keine positive Dreieckszahl.
     """
-    if bilder_weg not in BILDER_WEGE:
-        raise RealityScanError(f"Bilderweg {bilder_weg!r} unbekannt (erlaubt: "
-                               f"{', '.join(BILDER_WEGE)}).", URSACHE_EINRICHTUNG)
     if int(ziel_dreiecke) <= 0:
         raise RealityScanError("ziel_dreiecke muss positiv sein.", URSACHE_EINRICHTUNG)
-    cmd = [str(cli), str(exe), "-headless", "-newScene", "-set", "appIncSubdirs=true"]
-    if bilder_weg == BILDER_WEG_ORDNER:
-        cmd += ["-addFolder", wine_pfad(bilder)]
-    cmd += ["-importColmap", wine_pfad(images_txt),
-            "-align", "-selectMaximalComponent", "-setReconstructionRegionAuto",
+    return [str(cli), str(exe), "-headless", "-stdConsole", "-newScene",
+            "-loadColmap", wine_pfad(images_txt),
+            "-selectMaximalComponent", "-setReconstructionRegionAuto",
             "-calculateNormalModel",
             "-simplify", str(int(ziel_dreiecke)),
             "-calculateVertexColors",
-            "-exportModel", str(modell), wine_pfad(netz_ply), wine_pfad(export_xml),
+            "-exportSelectedModel", wine_pfad(netz_ply), wine_pfad(export_xml),
             "-quit"]
-    return cmd
 
 
 # ======================================================================================
@@ -740,6 +743,192 @@ def pruefe_export(pfad) -> dict:
             "format": kopf["format"],
             "huellbox": [[round(v, 6) for v in ecken["lo"]], [round(v, 6) for v in ecken["hi"]]],
             "probe": ecken["probe"]}
+
+
+_FARBEN = ("red", "green", "blue")
+
+
+def _lies_netz(p: Path, kopf: dict) -> tuple[list[str], list[str], list[tuple], list[tuple]]:
+    """``(Namen, Typen, Ecken, Flächen)`` einer PLY mit ``vertex`` und danach ``face``."""
+    elemente = kopf["elemente"]
+    if len(elemente) < 2 or elemente[0]["name"] != "vertex" or elemente[1]["name"] != "face":
+        raise RealityScanError(f"{p.name!r}: erwartet 'vertex', dann 'face'.", URSACHE_EXPORT)
+    v_el, f_el = elemente[0], elemente[1]
+    if any(e["typ"] == "list" for e in v_el["eigenschaften"]):
+        raise RealityScanError(f"{p.name!r}: Liste unter den Ecken.", URSACHE_EXPORT)
+    listen = [e for e in f_el["eigenschaften"] if e["typ"] == "list"]
+    if len(f_el["eigenschaften"]) != 1 or len(listen) != 1:
+        raise RealityScanError(f"{p.name!r}: Flaechen mit mehr als der Eckenliste.",
+                               URSACHE_EXPORT)
+    namen = [e["name"] for e in v_el["eigenschaften"]]
+    typen = [e["typ"] for e in v_el["eigenschaften"]]
+    nv, nf = v_el["anzahl"], f_el["anzahl"]
+    with open(p, "rb") as datei:
+        datei.seek(kopf["kopf_bytes"])
+        roh = datei.read()
+    if kopf["format"] == "ascii":
+        zeilen = roh.decode("ascii", errors="replace").split("\n")
+        if len(zeilen) < nv + nf:
+            raise RealityScanError(f"{p.name!r} endet vor den Flaechen.", URSACHE_EXPORT)
+        ecken = [tuple(float(w) if _kn.PLY_TYPEN[t][0] in "fd" else int(float(w))
+                       for w, t in zip(zeilen[i].split(), typen)) for i in range(nv)]
+        flaechen = []
+        for i in range(nv, nv + nf):
+            t = [int(w) for w in zeilen[i].split()]
+            flaechen.append(tuple(t[1:1 + t[0]]))
+        return namen, typen, ecken, flaechen
+    rand = "<" if kopf["format"] == "binary_little_endian" else ">"
+    v_st = struct.Struct(rand + "".join(_kn.PLY_TYPEN[t][0] for t in typen))
+    ende = nv * v_st.size
+    if len(roh) < ende:
+        raise RealityScanError(f"{p.name!r} endet in den Ecken.", URSACHE_EXPORT)
+    ecken = list(v_st.iter_unpack(roh[:ende]))
+    zaehler = struct.Struct(rand + _kn.PLY_TYPEN[listen[0]["zaehler"]][0])
+    eintrag_form, eintrag_bytes = _kn.PLY_TYPEN[listen[0]["eintrag"]]
+    dreier = struct.Struct(rand + zaehler.format[-1] + eintrag_form * 3)
+    flaechen, pos = [], ende
+    for _ in range(nf):
+        if len(roh) < pos + zaehler.size:
+            raise RealityScanError(f"{p.name!r} endet in den Flaechen.", URSACHE_EXPORT)
+        (k,) = zaehler.unpack_from(roh, pos)
+        if k == 3 and len(roh) >= pos + dreier.size:          # der übliche Fall, schnell
+            flaechen.append(dreier.unpack_from(roh, pos)[1:])
+            pos += dreier.size
+            continue
+        laenge = zaehler.size + k * eintrag_bytes
+        if len(roh) < pos + laenge:
+            raise RealityScanError(f"{p.name!r} endet in den Flaechen.", URSACHE_EXPORT)
+        flaechen.append(struct.unpack_from(rand + eintrag_form * k, roh, pos + zaehler.size))
+        pos += laenge
+    return namen, typen, ecken, flaechen
+
+
+def bereinige_export(quelle, ziel, *, kante_rel: float = DECKEL_KANTE_REL) -> dict:
+    """Den Export so schreiben, wie die Blender-Stufe ihn braucht — nur die Standardbibliothek.
+
+    Zwei Befunde vom Heim-PC (``auf-20261013-278``):
+
+    1. **Farben als ``float`` 0..1** (F7): Blender 5.2 liest sie als 0..255 und zeichnet das
+       Netz fast schwarz. Hier werden sie ``uchar`` (0..255, gerundet). Schon ``uchar`` bleibt.
+    2. **Der Deckel** (:data:`DECKEL_KANTE_REL`): Dreiecke, deren längste Kante mehr als
+       ``kante_rel`` × robuste Diagonale der Ecken misst, fallen weg — und mit ihnen Ecken,
+       die keine Fläche mehr trägt. Ohne das verdeckte das Netz die Halle wie die Kugeln in 277.
+
+    Geschrieben wird immer ``binary_little_endian``, die Ecken mit ihren Eigenschaften (Farben
+    als ``uchar``), die Flächen als ``list uchar int vertex_indices``.
+
+    Returns:
+        ``{farben, dreiecke_vorher, deckel_dreiecke, deckel_flaeche_anteil, ecken_entfernt,
+        kante_grenze}`` — ``farben`` ist ``"float→uchar"`` oder ``"uchar"``.
+
+    Raises:
+        RealityScanError: ``export``, wenn die Datei kein lesbares Netz mit Farben ist oder nach
+            dem Entfernen keine Fläche übrig bleibt.
+    """
+    q, z = Path(quelle), Path(ziel)
+    try:
+        kopf = _kn.lies_ply_kopf(q)
+    except _kn.KontextNetzError as fehler:
+        raise RealityScanError(f"Der Export ist keine lesbare PLY: {fehler}",
+                               URSACHE_EXPORT) from fehler
+    try:
+        namen, typen, ecken, flaechen = _lies_netz(q, kopf)
+    except (OSError, ValueError, IndexError, struct.error) as fehler:
+        raise RealityScanError(f"{q.name!r}: Netz nicht lesbar ({type(fehler).__name__}).",
+                               URSACHE_EXPORT) from fehler
+    if not set(_FARBEN) <= set(namen):
+        raise RealityScanError("Der Export traegt keine Eckpunktfarbe (red/green/blue) — die "
+                               "Export-Parameterdatei muss Farben je Ecke schreiben.",
+                               URSACHE_EXPORT)
+    if not {"x", "y", "z"} <= set(namen):
+        raise RealityScanError(f"{q.name!r}: Ecken ohne x/y/z.", URSACHE_EXPORT)
+    ix, iy, iz = (namen.index(a) for a in "xyz")
+    farb_i = [namen.index(f) for f in _FARBEN]
+    als_float = [_kn.PLY_TYPEN[typen[i]][0] in "fd" for i in farb_i]
+    skala = 255.0
+    if any(als_float):
+        hoechst = max((e[i] for e in ecken for i, f in zip(farb_i, als_float) if f),
+                      default=0.0)
+        skala = 255.0 if hoechst <= 1.0 + 1e-6 else 1.0     # schon 0..255 als Gleitzahl
+    n = len(ecken)
+    for f in flaechen:
+        if any(not 0 <= i < n for i in f):
+            raise RealityScanError(f"{q.name!r}: Flaeche zeigt auf eine fehlende Ecke.",
+                                   URSACHE_EXPORT)
+    lo, hi = _robuste_box([(e[ix], e[iy], e[iz]) for e in ecken]) if n else ([0] * 3, [0] * 3)
+    grenze = float(kante_rel) * _diagonale(lo, hi)
+    grenze2 = grenze * grenze
+
+    def punkt(i):
+        e = ecken[i]
+        return e[ix], e[iy], e[iz]
+
+    behalten, flaeche_alle, flaeche_weg, weg = [], 0.0, 0.0, 0
+    for f in flaechen:
+        pk = [punkt(i) for i in f]
+        laengste = max(sum((pk[j][k] - pk[j - 1][k]) ** 2 for k in range(3))
+                       for j in range(len(pk))) if pk else 0.0
+        a = 0.0
+        for j in range(1, len(pk) - 1):                       # Fächer, auch für Vielecke
+            u = [pk[j][k] - pk[0][k] for k in range(3)]
+            v = [pk[j + 1][k] - pk[0][k] for k in range(3)]
+            a += 0.5 * math.sqrt((u[1] * v[2] - u[2] * v[1]) ** 2
+                                 + (u[2] * v[0] - u[0] * v[2]) ** 2
+                                 + (u[0] * v[1] - u[1] * v[0]) ** 2)
+        flaeche_alle += a
+        if grenze > 0 and laengste > grenze2:
+            weg += 1
+            flaeche_weg += a
+        else:
+            behalten.append(f)
+    if not behalten:
+        raise RealityScanError("Nach dem Entfernen des Deckels bleibt keine Flaeche.",
+                               URSACHE_EXPORT)
+    neu = {}
+    for f in behalten:
+        for i in f:
+            if i not in neu:
+                neu[i] = len(neu)
+    reihe = sorted(neu, key=neu.get)
+    typen_neu = ["uchar" if i in farb_i else t for i, t in enumerate(typen)]
+    v_st = struct.Struct("<" + "".join(_kn.PLY_TYPEN[t][0] for t in typen_neu))
+
+    def farbe(w, gleit):
+        return max(0, min(255, round(float(w) * skala))) if gleit else int(w)
+
+    kopfzeilen = ["ply", "format binary_little_endian 1.0",
+                  "comment bereinigt von aiimaging.realityscan",
+                  f"element vertex {len(reihe)}"]
+    kopfzeilen += [f"property {t} {nm}" for t, nm in zip(typen_neu, namen)]
+    kopfzeilen += [f"element face {len(behalten)}",
+                   "property list uchar int vertex_indices", "end_header"]
+    z.parent.mkdir(parents=True, exist_ok=True)
+    with open(z, "wb") as d:
+        d.write(("\n".join(kopfzeilen) + "\n").encode("ascii"))
+        stapel = []
+        for i in reihe:
+            werte = list(ecken[i])
+            for fi, gleit in zip(farb_i, als_float):
+                werte[fi] = farbe(werte[fi], gleit)
+            stapel.append(v_st.pack(*werte))
+            if len(stapel) >= 1 << 14:
+                d.write(b"".join(stapel))
+                stapel = []
+        d.write(b"".join(stapel))
+        stapel = []
+        for f in behalten:
+            if len(f) > 255:
+                raise RealityScanError(f"{q.name!r}: Flaeche mit mehr als 255 Ecken.",
+                                       URSACHE_EXPORT)
+            stapel.append(struct.pack(f"<B{len(f)}i", len(f), *(neu[i] for i in f)))
+            if len(stapel) >= 1 << 14:
+                d.write(b"".join(stapel))
+                stapel = []
+        d.write(b"".join(stapel))
+    return {"farben": "float→uchar" if any(als_float) else "uchar",
+            "dreiecke_vorher": len(flaechen), "deckel_dreiecke": weg,
+            "deckel_flaeche_anteil": round(flaeche_weg / flaeche_alle, 4) if flaeche_alle else 0.0,
+            "ecken_entfernt": n - len(reihe), "kante_grenze": round(grenze, 6)}
 
 
 # ======================================================================================
@@ -914,6 +1103,40 @@ def _programm_fassung(*texte) -> str | None:
     return None
 
 
+def _beende_gruppe(prozess: subprocess.Popen) -> None:
+    """Die ganze Prozessgruppe beenden: erst ``SIGTERM``, nach :data:`NACHFRIST_S` ``SIGKILL``.
+
+    Nur ``wine`` zu beenden liess am Heim-PC ``RealityScan.exe`` als Waise stehen (278 F9) —
+    es lief in derselben Gruppe weiter und hielt die GPU.
+    """
+    for sig, warte in ((signal.SIGTERM, NACHFRIST_S), (signal.SIGKILL, None)):
+        try:
+            os.killpg(prozess.pid, sig)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            prozess.communicate(timeout=warte)
+            return
+        except subprocess.TimeoutExpired:
+            continue
+
+
+def _starte_gruppe(cmd: list[str], timeout: float) -> subprocess.CompletedProcess:
+    """Wie :func:`aiimaging.seams._default_starte`, aber in **eigener Prozessgruppe**
+    (``start_new_session``), damit die Frist alles trifft, was der Starter angelegt hat."""
+    prozess = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                               errors="replace", start_new_session=True)
+    try:
+        aus, fehl = prozess.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _beende_gruppe(prozess)
+        raise
+    except BaseException:
+        _beende_gruppe(prozess)
+        raise
+    return subprocess.CompletedProcess(cmd, prozess.returncode, aus, fehl)
+
+
 def _aus_speicher(netz: Path, bericht_datei: Path) -> dict | None:
     if not bericht_datei.is_file():
         return None
@@ -936,8 +1159,7 @@ def _aus_speicher(netz: Path, bericht_datei: Path) -> dict | None:
 
 
 def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, splat=None,
-                        bilder_weg: str = BILDER_WEG, ziel_dreiecke: int = ZIEL_DREIECKE,
-                        mit_punkten: bool = COLMAP_MIT_PUNKTEN,
+                        ziel_dreiecke: int = ZIEL_DREIECKE,
                         timeout: float = GESAMTFRIST_REALITYSCAN_S, _starte=None) -> dict:
     """Aufnahme + Fotos → farbiges Netz (PLY) über RealityScan — als Prozess, mit Prüfung.
 
@@ -958,7 +1180,8 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
             ``~/.cache/aiimaging/realityscan-netz``.
         bilder: der Bilderordner ausdrücklich; sonst :func:`finde_bilder`.
         splat: der Splat, gegen dessen dichte Punkte die Lage zusätzlich geprüft wird.
-        _starte: Test-Naht wie in :mod:`aiimaging.seams` — ``(cmd, timeout) → CompletedProcess``.
+        _starte: Test-Naht wie in :mod:`aiimaging.seams` — ``(cmd, timeout) → CompletedProcess``;
+            ohne sie :func:`_starte_gruppe` (Frist beendet die ganze Prozessgruppe).
 
     Returns:
         Bericht **ohne Pfade** — ``{status, fassung, programm, zeiten_s, netz, aufnahme,
@@ -986,15 +1209,14 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
         xml_sha = _datei_sha(e["export_xml"])
     except (_kn.KontextNetzError, OSError) as fehler:
         raise RealityScanError(ohne_pfade(fehler), URSACHE_AUFNAHME) from fehler
-    parameter = {"fassung": FASSUNG, "bilder_weg": bilder_weg,
-                 "ziel_dreiecke": int(ziel_dreiecke), "modell": MODELL_NAME,
-                 "mit_punkten": bool(mit_punkten)}
+    parameter = {"fassung": FASSUNG, "ziel_dreiecke": int(ziel_dreiecke),
+                 "deckel_kante_rel": DECKEL_KANTE_REL}
     schluessel = realityscan_schluessel(aufnahme_sha=aufnahme_sha, bilder_sha=fund["sha256"],
                                         export_xml_sha=xml_sha, parameter=parameter)
     ordner = _speicher(speicher) / schluessel
     netz = ordner / "netz.ply"
     bericht_datei = ordner / "bericht.json"
-    ersatz = {str(e["cli"]): "<realityscan-cli>", str(e["exe"]): "<RealityScan.exe>",
+    ersatz = {str(e["cli"]): "<starter>", str(e["exe"]): "<RealityScan.exe>",
               str(e["export_xml"]): "<export.xml>", str(fund["ordner"]): "<bilder>",
               str(o): "<aufnahme>", str(ordner): "<speicher>"}
 
@@ -1008,19 +1230,22 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
         probe = lies_ecken(netz, voll=False)["probe"]
     else:
         frist = float(timeout) * _seams.zeitfaktor()
-        starte = _starte or _seams._default_starte
+        starte = _starte or _starte_gruppe
         ordner.mkdir(parents=True, exist_ok=True)
         try:
             with tempfile.TemporaryDirectory(dir=ordner, prefix="lauf-") as roh:
                 roh = Path(roh)
                 ersatz[str(roh)] = "<arbeit>"
                 t_text = time.monotonic()
-                text = colmap_als_text(o, roh / "colmap", mit_punkten=mit_punkten)
-                roh_netz = roh / "netz.ply"
-                cmd = kommando(cli=e["cli"], exe=e["exe"], bilder=fund["ordner"],
-                               images_txt=text["images_txt"], netz_ply=roh_netz,
-                               export_xml=e["export_xml"], ziel_dreiecke=ziel_dreiecke,
-                               bilder_weg=bilder_weg)
+                text = colmap_als_text(o, roh / "colmap", bilder=fund["ordner"])
+                if text["punkte3d"] == 0:
+                    # Eine leere points3D.txt laesst RealityScan haengen (278 F4).
+                    raise RealityScanError("Die Aufnahme hat keine 3D-Punkte — RealityScan "
+                                           "braucht sie samt Spuren.", URSACHE_AUFNAHME)
+                roh_netz = roh / "export.ply"
+                cmd = kommando(cli=e["cli"], exe=e["exe"], images_txt=text["images_txt"],
+                               netz_ply=roh_netz, export_xml=e["export_xml"],
+                               ziel_dreiecke=ziel_dreiecke)
                 t_lauf = time.monotonic()
                 try:
                     ergebnis = starte(cmd, frist)
@@ -1053,8 +1278,11 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
                     "export_xml": {"sha256": xml_sha},
                     "parameter": parameter, "ausgabe": ausgabe,
                 }
+                fertig = roh / "netz.ply"
                 try:
-                    export = pruefe_export(roh_netz)
+                    pruefe_export(roh_netz)                 # Datei, Flaechen, Farbe
+                    bericht["bereinigung"] = bereinige_export(roh_netz, fertig)
+                    export = pruefe_export(fertig)
                 except RealityScanError as fehler:
                     if fehler.ursache == URSACHE_EXPORT:
                         # GESPEICHERT, damit ein unbrauchbarer Export nicht bei jedem Auftrag
@@ -1067,7 +1295,7 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
                 probe = export.pop("probe")
                 export["vereinfacht"] = export["dreiecke"] <= int(1.1 * int(ziel_dreiecke))
                 bericht["netz"] = export
-                os.replace(roh_netz, netz)
+                os.replace(fertig, netz)
                 bericht_datei.write_text(json.dumps(bericht, ensure_ascii=False, indent=1),
                                          encoding="utf-8")
         except BaseException:

@@ -3955,7 +3955,28 @@ RealityScan, das der Nutzer selbst installiert hat (**Fremdprogramm**). Visbox s
 die Form, die RealityScan liest, startet es, prüft das Ergebnis und nimmt es nur, wenn es am richtigen
 Ort liegt. *Im Projekt:* `aiimaging/realityscan.py`, Owner-Entscheid 81 (13.10.2026); eingeschaltet nur
 mit der Variable `AIIMAGING_REALITYSCAN`, sonst bleibt der offene Weg. Anleitung:
-`betrieb/REALITYSCAN_BRUECKE.md`.
+`betrieb/REALITYSCAN_BRUECKE.md`. Seit dem 14.10.2026 (Messung `auf-20261013-278`, Owner-Entscheid)
+der Weg fürs Umgebungsnetz: 93 % der Umgebung gedeckt statt 10 % beim offenen Weg.
+
+**Prozessgruppe** — Startet ein Programm weitere Programme, bilden sie zusammen eine Familie, die das
+Betriebssystem als eine Gruppe führen kann. Wer die **ganze Gruppe** beendet, trifft auch die Kinder und
+Enkel; wer nur das erste Programm beendet, lässt sie weiterlaufen. *Im Projekt:* RealityScan läuft unter
+Wine — beendete die Frist nur Wine, blieb RealityScan als **verwaister Prozess** (ein Programm ohne den,
+der es gestartet hat) stehen und hielt die Grafikkarte (278). Die Brücke startet es darum in eigener
+Gruppe und beendet bei Ablauf der Frist alle (`realityscan._starte_gruppe`). Nicht zu verwechseln mit
+der **Waise** der Auftragsliste.
+
+**Deckel (im Netz)** — Wenige, sehr grosse Dreiecke, mit denen RealityScan Bereiche schliesst, für die
+es keine Fotos hat — etwa eine waagrechte Platte über die ganze Szene. Sie sehen aus wie eine Wand oder
+ein Dach, wo keines ist, und würden im Bild das Gebäude verdecken. *Im Projekt:* am Heim-PC 123 Dreiecke
+mit 59 % der Fläche (278); `realityscan.bereinige_export` nimmt jedes Dreieck weg, dessen längste Kante
+mehr als 5 % der Netzgrösse misst.
+
+**Farbe als Ganzzahl oder Kommazahl (uchar / float)** — Eine Farbe je Ecke kann auf zwei Arten in der
+Datei stehen: als ganze Zahl von 0 bis 255 (`uchar`) oder als Kommazahl von 0 bis 1 (`float`). Ein
+Programm, das die eine Art erwartet und die andere bekommt, liest «0.6» als fast nichts von 255 — das
+Netz wird schwarz. *Im Projekt:* RealityScan schreibt Kommazahlen, Blender 5.2 liest sie so falsch; die
+Brücke schreibt die Farben darum auf ganze Zahlen um (278).
 
 **Wine** — Ein freies Programm, das Windows-Programme unter Linux laufen lässt, ohne Windows: Es
 übersetzt die Aufrufe des Windows-Programms an das Betriebssystem in die von Linux. Dateien sieht das
@@ -6914,6 +6935,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt beim Reparieren der RealityScan-Bruecke (Fassung 2, nach `auf-20261013-278`): **Prozessgruppe** (mit verwaistem Prozess), **Deckel (im Netz)**, **Farbe als Ganzzahl oder Kommazahl (uchar / float)**; nachgefuehrt: **RealityScan-Brücke** (jetzt der Weg fürs Umgebungsnetz) |
 | 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 84 (Aktualisieren, Visbox 0.2.1): **Tag (Markierung im Verlauf)**, **Freigabe auf GitHub (Release)**, **Prüfsummen-Datei (`SHA256SUMS.txt`)**, **Provisioning-Profil (`embedded.mobileprovision`)**, **Sparkle** (mit Appcast und EdDSA), **App Translocation (verschobener Startort)**, **Weiterleitung (Redirect)** |
 | 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 83 (Mac koppelt mit Zahl): **Selbst unterschriebenes Zertifikat**, **Vertrauen beim ersten Mal (TOFU)**, **Dazwischenstellen (Man-in-the-Middle)**, **PAKE**, **Zeichen des Heim-PC**, **Mitteilung (am Bildschirm)**, **Drossel**, **Tailscale-Befehlszeile**, **Auflösen (eines Fundes)**; nachgefuehrt: **TLS mit festgehaltenem Schlüssel** (jetzt «Zertifikat anheften, Pinning», gebaut für den Mac im WLAN), **Zertifikat**, **Bonjour (mDNS)** (auch die Mac-App sucht) |
 | 2026-10-08 | Ergaenzt aus Sitzung 74 §78 (Entscheid 76, Splat als Umgebung): **Splat (3D Gaussian Splatting)**, **PLY (Dateiformat)**, **Punktwolke**, **Geometry Nodes, «Mesh to Points»**, **SH-Grad 0 (Grundfarbe eines Gaussians)**, **Deckkraft eines Gaussians (Opazität, Sigmoid)**, **Transformationsmatrix (4×4, zeilenweise)**, **Umgebung im Bild (Kontext)**; nachgefuehrt: **Verdeckung** (durch die Umgebung) |

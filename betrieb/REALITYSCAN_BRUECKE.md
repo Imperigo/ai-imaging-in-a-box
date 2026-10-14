@@ -30,26 +30,32 @@ Nutzer installiert) — nicht im Produkt ausgeliefert.»
 1. **Paket laden und installieren** — das `.deb` (oder `.rpm`) von realityscan.com/linux, mit dem
    eigenen Epic-Konto. Es installiert nach `/opt/realityscan` und bringt sein eigenes Wine mit.
 2. **Lizenz aktivieren.** RealityScan ist gratis unter 1 Mio. USD Umsatz in 12 Monaten, sonst
-   1250 USD je Platz und Jahr. **Wie die Aktivierung ohne Oberfläche geht, ist offen** (Frage 2
-   unten) — vermutlich einmal das Programm mit Oberfläche starten und anmelden.
-3. **Die Export-Parameterdatei anlegen** — einmal im Programm (auch unter Wine): ein Netz
-   exportieren als **PLY**, mit **Farben je Ecke** (red/green/blue), **Koordinaten unverändert**
-   (kein Verschieben, kein Massstab, keine Achsendrehung), und die Einstellungen als XML speichern.
-   Laut Doku steht derselbe Inhalt auch im `ModelExport`-Abschnitt einer `.rsinfo`. *Visbox
-   erfindet diese Datei nicht:* ihr Format ist nicht dokumentiert.
+   1250 USD je Platz und Jahr (Owner bestätigt 14.10.2026: gratis gilt). Einmal mit Oberfläche
+   anmelden; danach läuft `-headless` ohne Anmeldung und ohne Bildschirm (`auf-20261013-278` F2).
+3. **Die Export-Parameterdatei anlegen** — ohne Oberfläche: den `ModelExport`-Abschnitt aus der
+   `.rsinfo` eines Exports in eine leere `.xml` kopieren (Hilfe «Model Export»). Am Heim-PC
+   gemessen (278 E1), **so muss sie stehen:**
+   * PLY binär (`formatAndVersionUID` «ply 000», `exportBinary=1`), Ecken und Dreiecke an;
+   * `exportVertexColors=0` (!) — mit 1 schreibt RealityScan nur die Netzfarbe (weiss);
+   * `exportVertexColorSpace=1` (0 liefert linear, viel zu dunkel);
+   * `settingsRotation` «90 0 0» — RealityScan vertauscht intern die Achsen; erst diese Drehung
+     gibt die Koordinaten der Aufnahme unverändert zurück;
+   * Massstab 1 1 1, Anker 0 0 0, `exportCoordinateSystemType=0`.
+   *Visbox erfindet diese Datei nicht:* ihr Format ist nicht dokumentiert.
 4. **Die drei Variablen für den Dienst setzen** — nicht in der eingecheckten Einheit
    (`betrieb/kosmo-abholer.service` wird gegen die installierte Fassung geprüft), sondern als
    Ergänzung: `systemctl --user edit kosmo-abholer.service` (ebenso für den Heim-Worker, wenn er
    Ketten mit Splat rechnet) und dort
 
        [Service]
-       Environment=AIIMAGING_REALITYSCAN=/opt/realityscan/bin/realityscan-cli
+       Environment=AIIMAGING_REALITYSCAN=<das wine des Pakets>
        Environment=AIIMAGING_REALITYSCAN_EXPORT_XML=%h/realityscan/export-ply-farben.xml
        # nur, wenn RealityScan.exe nicht am dokumentierten Ort liegt:
        # (mit Anführungszeichen, weil der Pfad Leerzeichen trägt)
        # Environment="AIIMAGING_REALITYSCAN_EXE=/opt/realityscan/support/realityscan/drive_c/Program Files/Epic Games/RealityScan/RealityScan.exe"
 
-   Der Pfad zu `realityscan-cli` ist der, den die Installation wirklich angelegt hat (Frage 1).
+   **Der Starter ist das `wine` des Pakets**, nicht `realityscan-cli`: Das startet in 2.2 nicht
+   («winewrapper: cannot execute RealityScan.exe», 278 F1). Beide nehmen `<exe> <befehle…>`.
    Abschalten heisst: die Variable `AIIMAGING_REALITYSCAN` entfernen.
 
 Optional: `AIIMAGING_REALITYSCAN_SPEICHER` — wo die Netze abgelegt werden (sonst
@@ -70,11 +76,20 @@ Der Lauf (`realityscan.realityscan_zu_netz`):
 
 * schreibt die Aufnahme als COLMAP-3-Text (`cameras.txt`, `images.txt`, `points3D.txt`; je Bild
   seine eigene Pose, das Rig fällt weg) in einen Arbeitsordner;
-* ruft `realityscan-cli "<exe>" -headless -newScene -set appIncSubdirs=true -addFolder <images>
-  -importColmap <images.txt> -align -selectMaximalComponent -setReconstructionRegionAuto
-  -calculateNormalModel -simplify 500000 -calculateVertexColors -exportModel "Model 1" <netz.ply>
-  <export.xml> -quit` — alle Pfade als `Z:\…` (Wine bildet `Z:` auf `/` ab), als Liste ohne
-  Shell, Frist 4 h (gesetzt);
+  Die **Bildnamen zeigen relativ zum Textordner** auf die Fotos (`../../…/images/back/0031.jpg`):
+  RealityScan löst sie gegen den Ordner der `images.txt` auf und wartet trotz `-headless` auf einen
+  Dialog, wenn eines fehlt (278 F3). Ohne 3D-Punkte startet nichts — daran hinge es ebenso (F4);
+* ruft `<wine> "<exe>" -headless -stdConsole -newScene -loadColmap <images.txt>
+  -selectMaximalComponent -setReconstructionRegionAuto -calculateNormalModel -simplify 500000
+  -calculateVertexColors -exportSelectedModel <export.ply> <export.xml> -quit` — alle Pfade als
+  `Z:\…` (Wine bildet `Z:` auf `/` ab), als Liste ohne Shell, Frist 4 h, **in eigener
+  Prozessgruppe**: Nach der Frist wird die ganze Gruppe beendet (erst freundlich, nach 10 s hart),
+  sonst bliebe `RealityScan.exe` als Waise stehen (F9). Gemessen 278: kein `-addFolder` (Bilder
+  doppelt), kein `-align` (eigene Komponenten), `-exportSelectedModel` statt `"Model 1"`
+  (unvereinfacht), `-stdConsole` für die Fassung;
+* **bereinigt** den Export: Farben von `float` auf `uchar` (Blender 5.2 macht `float` schwarz,
+  F7), und der **Deckel** fällt weg — Dreiecke mit einer Kante über 5 % der Netzdiagonale, mit
+  denen RealityScan Bereiche ohne Fotos schliesst (am Heim-PC 59 % der Fläche);
 * prüft den Export: PLY mit Flächen (`element face`) **und** Farbe je Ecke — sonst Fehler mit Grund;
 * prüft die **Lage**: Liegt das Netz bei den COLMAP-Punkten der Aufnahme (mindestens die Hälfte
   hat eine Ecke in der Nähe, Zelle 1 % der Diagonale; Diagonale höchstens zweimal grösser oder
@@ -87,34 +102,19 @@ Der Lauf (`realityscan.realityscan_zu_netz`):
 * schreibt einen Bericht **ohne Pfade**: Zeiten, Ecken, Dreiecke, Hüllbox, Fassung des Programms
   (wenn die Ausgabe sie nennt), die letzten 2000 Zeichen der Ausgabe mit ersetzten Pfaden.
 
-## Was der Heim-PC prüft (offene Fragen)
+## Was der Heim-PC geprüft hat, und was offen bleibt
 
-Jede dieser Fragen ist **nicht** aus der Doku zu beantworten; die Brücke ist darum gesetzt, nicht
-gemessen. Dieselbe Liste steht in `realityscan.OFFENE_FRAGEN`.
+Die zehn Fragen von Fassung 1 hat `auf-20261013-278` (14.10.2026) beantwortet; Fassung 2 der
+Brücke setzt die Antworten um (Protokoll 74 §100). Vergleich mit demselben Mass wie 277:
+RealityScan 2.2, 960 Bilder, **324 s, 93 % Deckung**, Lage Median 3.7 cm; der offene Weg 9.9 %;
+COLMAP-dicht (Poisson) 49–87 % in über einer Stunde für ein Drittel der Bilder. Owner-Entscheid
+(14.10.2026): RealityScan ist der Weg fürs Umgebungsnetz, der offene Weg bleibt Rückfall.
 
-1. Wo liegt `realityscan-cli` nach der Installation (z. B. `/opt/realityscan/bin/realityscan-cli`
-   oder im `PATH`), und reicht es die Argumente einzeln an Wine weiter (Pfade mit Leerzeichen,
-   ohne Shell)?
-2. Wie wird die Epic-Lizenz headless aktiviert? Läuft `-headless` ohne angemeldete Sitzung, oder
-   verlangt der erste Start eine Anmeldung in der Oberfläche?
-3. Lädt `-importColmap` die Bilder selbst, oder braucht es vorher `-addFolder <images>` mit
-   `appIncSubdirs=true` (heute gesetzt)? Passen die Bildnamen mit Unterordner (`back/0031.jpg`)
-   zu den geladenen Bildern, und gegen welchen Ordner löst RealityScan sie auf (Ordner der
-   `images.txt` oder der Bilder)? Zum Vergleich: `realityscan_zu_netz(…, bilder_weg="importColmap")`.
-4. Welche der drei Textdateien erwartet `-importColmap` (heute `images.txt`), und braucht es
-   `points3D.txt` mit Spuren (heute ja) oder genügt sie leer (`mit_punkten=False`)?
-5. Behält RealityScan nach `-importColmap` und `-align` Lage und Massstab der Aufnahme, oder
-   lagert es neu? (Die Lageprüfung fängt es ab; dann bleibt der offene Weg.) Gibt es eine
-   Einstellung, die die importierten Posen festhält?
-6. Legt `-simplify` ein neues Modell an? Wenn ja: Wie heisst es («Model 2»?), und exportiert
-   `-exportModel "Model 1"` dann das unvereinfachte Netz (Bericht `netz.vereinfacht`)?
-7. Welche Einstellungen braucht die Export-Parameterdatei für PLY mit Eckpunktfarben und
-   unveränderten Koordinaten? Schreibt der Export binär oder als Text (beides wird gelesen)?
-8. Welche Fassung meldet das Programm in seiner Ausgabe (Zeile mit «RealityScan x.y»)?
-9. Wie lange dauert der Lauf mit 960 Bildern, und reicht die Frist von 4 h?
-10. Format von `-exportRegistration`: Liesse sich daraus eine Ausrichtung (Umeyama-Verfahren) zur
-    Aufnahme rechnen, falls RealityScan neu lagert? **Nicht gebaut**, solange das Format
-    unbekannt ist.
+Offen (dieselbe Liste in `realityscan.OFFENE_FRAGEN`):
+
+1. Besteht das Bild mit der Umgebung aus RealityScan die QA (Hallenauftrag, M2)?
+2. Wie verhält sich `-headless` ohne vorherige Anmeldung im Wine-Profil?
+3. Wie viel GPU bleibt mit geladenem Kosmo-Modell (RealityScan belegt rund 25 GB)?
 
 **Zur Hand für die Prüfung:** `python3 -c "from aiimaging import realityscan as r; print(r.einrichtung())"`
 sagt, ob alles gefunden ist; `r.realityscan_zu_netz("<lauf>/sparse/0")` rechnet einmal direkt

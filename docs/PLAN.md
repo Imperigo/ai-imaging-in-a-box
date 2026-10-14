@@ -7858,8 +7858,11 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Tiefenfilter** und vier Fehler aus 276 gebaut. *(13.10.2026, §89)*
 - [x] **Messung `auf-20261013-277`**: Filter als Vorgabe nahm das Netz (Streuung 99,99 % verworfen) — **zurückgestellt**, Vorgabe kein Filter. *(13.10.2026, §90)*
 - [x] **Löcher in der Umgebung:** Entscheid 81 — RealityScan jetzt; Brücke gebaut. *(13.10.2026, §91)*
-- [ ] **Owner installiert RealityScan** am Heim-PC (selbst).
-- [ ] **Messung `auf-20261013-278`** (local): einrichten, offene Fragen, Umgebung vollständig?
+- [x] **Owner installiert RealityScan** am Heim-PC (selbst; 2.2, Gratislizenz bestätigt). *(14.10.2026, §98/§100)*
+- [x] **Messung `auf-20261013-278`** (local): RealityScan 93 % Deckung in 324 s, COLMAP-dicht 49–87 % in über 1 h; Brücke Fassung 1 lief nicht (7 Befunde). *(14.10.2026, §100)*
+- [x] **Owner-Entscheid:** RealityScan ist der Weg fürs Umgebungsnetz, COLMAP höchstens offener Rückfall. *(14.10.2026, §100)*
+- [x] **Brücke Fassung 2** — die sieben Befunde aus 278 behoben. *(14.10.2026, §100)*
+- [ ] **HomeStation schaltet ein und rechnet M2** (Hallenauftrag mit Umgebung aus RealityScan): Besteht das Bild?
 - [x] **Brücke RealityScan** gebaut (Entscheid 81 ersetzt 80). *(13.10.2026, §91)*
 - [ ] Forschungsfrage: lichtaktiver Splat an Bauteilen — nicht gebaut.
 

@@ -8,9 +8,10 @@ Warum das so gebaut ist
 * **Blender** (GPL-2.0-or-later) → `blender --background --python <runner>` (Regel 2)
 * **IfcOpenShell** (LGPL-3.0-or-later, Wheel enthält GPL-lizenziertes CGAL) → eigenes
   venv, eigener Prozess (LGPL-Präzisierung zu Regel 1)
-* **RealityScan** (proprietär, vom Nutzer installiert, Entscheid 79/81) → ``realityscan-cli``
-  als Prozess; die Befehlsfolge baut :mod:`aiimaging.realityscan`, gestartet wird mit dem
-  Starter von hier (:func:`_default_starte`)
+* **RealityScan** (proprietär, vom Nutzer installiert, Entscheid 79/81) → das ``wine`` des Pakets
+  als Prozess; die Befehlsfolge baut :mod:`aiimaging.realityscan`, gestartet wird dort in
+  eigener Prozessgruppe (``realityscan._starte_gruppe``), damit eine Frist auch das Programm
+  unter Wine trifft
 
 Beides ist GPL-rechtlich eine Aggregation: Die fremden Programme bleiben unter ihrer
 Lizenz, der Code hier bleibt Apache-2.0. Die Verständigung läuft ausschliesslich über

@@ -58,10 +58,14 @@ def _aufnahme(lauf: Path, *, text: bool = False, augenblicke: int = 6, punkte: i
     return sparse
 
 
-#: Die Attrappe für ``realityscan-cli``: liest die Befehlsfolge, nimmt die COLMAP-Punkte aus
-#: der ``points3D.txt`` neben der ``images.txt`` und schreibt um jeden ein kleines farbiges
-#: Dreieck — ein Netz, das dort liegt, wo die Aufnahme liegt. Umgebungsvariablen steuern
-#: Versatz, fehlende Farbe, keinen Export und den Rückgabewert.
+#: Die Attrappe für den Starter: liest die Befehlsfolge, nimmt die COLMAP-Punkte aus der
+#: ``points3D.txt`` neben der ``images.txt`` und schreibt um jeden ein kleines farbiges
+#: Dreieck — ein Netz, das dort liegt, wo die Aufnahme liegt. **Wie RealityScan 2.2 am
+#: Heim-PC** (``auf-20261013-278``): Bildnamen werden gegen den Ordner der ``images.txt``
+#: aufgelöst, und fehlt eines, «hängt» sie (Code 9, statt bis zur Frist zu warten); eine leere
+#: ``points3D.txt`` ebenso; die Farben kommen als ``float`` 0..1, und ein **Deckel** aus einem
+#: Riesendreieck liegt über allem; die Fassung steht nur mit ``-stdConsole`` in der Ausgabe.
+#: Umgebungsvariablen steuern Versatz, fehlende Farbe, keinen Export und den Rückgabewert.
 ATTRAPPE = r'''#!{python}
 import json, os, struct, sys
 args = sys.argv[1:]
@@ -71,9 +75,14 @@ if os.environ.get("RS_ATTRAPPE_PROTOKOLL"):
 def linux(w):
     assert w.startswith("Z:"), w
     return w[2:].replace("\\", "/")
-txt = linux(args[args.index("-importColmap") + 1])
-k = args.index("-exportModel")
-ziel = linux(args[k + 2])
+txt = linux(args[args.index("-loadColmap") + 1])
+k = args.index("-exportSelectedModel")
+ziel = linux(args[k + 1])
+for z in open(txt).read().splitlines()[4::2]:
+    name = z.split()[9]
+    if not os.path.isfile(os.path.join(os.path.dirname(txt), name)):
+        print("Dialog: Bild fehlt " + name, file=sys.stderr)
+        sys.exit(9)
 v = [float(w) for w in os.environ.get("RS_ATTRAPPE_VERSATZ", "0,0,0").split(",")]
 farbe = os.environ.get("RS_ATTRAPPE_OHNE_FARBE") != "1"
 punkte = []
@@ -83,23 +92,30 @@ with open(os.path.join(os.path.dirname(txt), "points3D.txt")) as d:
             continue
         t = z.split()
         punkte.append(tuple(float(t[i + 1]) + v[i] for i in range(3)))
+if not punkte:
+    print("COLMAP missing 3D points", file=sys.stderr)
+    sys.exit(9)
 ecken, dreiecke = [], []
 for x, y, z in punkte:
     i0 = len(ecken)
     ecken += [(x, y, z), (x + 0.05, y, z), (x, y, z + 0.05)]
     dreiecke.append((i0, i0 + 1, i0 + 2))
-print("RealityScan 2.1.0.12345 (Attrappe)")
-print("Export nach " + args[k + 2] + " aus " + os.path.dirname(txt))
+i0 = len(ecken)                                   # der Deckel: ein Riesendreieck
+ecken += [(-40.0, 9.0, -40.0), (40.0, 9.0, -40.0), (0.0, 9.0, 40.0)]
+dreiecke.append((i0, i0 + 1, i0 + 2))
+if "-stdConsole" in args:
+    print("RealityScan 2.2.0.12345 (Attrappe)")
+print("Export nach " + args[k + 1] + " aus " + os.path.dirname(txt))
 if os.environ.get("RS_ATTRAPPE_KEIN_EXPORT") != "1":
     kopf = ("ply\nformat binary_little_endian 1.0\nelement vertex %d\nproperty float x\n"
             "property float y\nproperty float z\n" % len(ecken))
     if farbe:
-        kopf += "property uchar red\nproperty uchar green\nproperty uchar blue\n"
+        kopf += "property float red\nproperty float green\nproperty float blue\n"
     kopf += "element face %d\nproperty list uchar int vertex_indices\nend_header\n" % len(dreiecke)
     with open(ziel, "wb") as d:
         d.write(kopf.encode("ascii"))
         for e in ecken:
-            d.write(struct.pack("<fff", *e) + (struct.pack("<BBB", 150, 120, 90) if farbe else b""))
+            d.write(struct.pack("<fff", *e) + (struct.pack("<fff", 0.6, 0.48, 0.36) if farbe else b""))
         for a, b, c in dreiecke:
             d.write(struct.pack("<Biii", 3, a, b, c))
 code = int(os.environ.get("RS_ATTRAPPE_CODE", "0"))
@@ -111,9 +127,10 @@ sys.exit(code)
 
 @pytest.fixture
 def eingerichtet(tmp_path, monkeypatch):
-    """RealityScan «installiert»: Attrappe, eine leere exe (mit Leerzeichen im Pfad), ein XML."""
+    """RealityScan «installiert»: Attrappe als Starter (am Heim-PC das wine des Pakets), eine
+    leere exe (mit Leerzeichen im Pfad), ein XML."""
     wo = tmp_path / "opt" / "realityscan"
-    cli = wo / "bin" / "realityscan-cli"
+    cli = wo / "bin" / "wine"
     cli.parent.mkdir(parents=True)
     cli.write_text(ATTRAPPE.replace("{python}", sys.executable), encoding="utf-8")
     cli.chmod(cli.stat().st_mode | stat.S_IXUSR)
@@ -164,7 +181,7 @@ def test_fehlende_cli_oder_exe_gibt_einen_grund(eingerichtet, monkeypatch, tmp_p
     monkeypatch.setenv(rs.REALITYSCAN_ENV, str(tmp_path / "nirgends" / "realityscan-cli"))
     monkeypatch.setenv(rs.REALITYSCAN_EXE_ENV, str(tmp_path / "nirgends.exe"))
     e = rs.einrichtung()
-    assert not e["bereit"] and "realityscan-cli" in e["grund"]
+    assert not e["bereit"] and "Starter" in e["grund"] and "wine" in e["grund"]
     assert "RealityScan.exe" in e["grund"] and str(tmp_path) not in e["grund"]
     assert e["cli"] is None and e["exe"] is None
 
@@ -305,29 +322,31 @@ def test_finde_bilder_hinter_einem_verweis_und_ausdruecklich(tmp_path):
 
 
 def _cmd(**kw):
-    return rs.kommando(cli="/opt/realityscan/bin/realityscan-cli",
+    return rs.kommando(cli="/opt/realityscan/bin/wine",
                        exe="/opt/rs/drive_c/Program Files/Epic Games/RealityScan.exe",
-                       bilder="/mnt/lauf/images", images_txt="/tmp/arbeit/colmap/images.txt",
-                       netz_ply="/tmp/arbeit/netz.ply", export_xml="/home/x/export ply.xml",
+                       images_txt="/tmp/arbeit/colmap/images.txt",
+                       netz_ply="/tmp/arbeit/export.ply", export_xml="/home/x/export ply.xml",
                        **kw)
 
 
-def test_kommando_reihenfolge_headless_zuerst_und_wine_pfade():
+def test_kommando_wie_am_heim_pc_gemessen():
+    """Die Befehlsfolge aus ``auf-20261013-278``: ``-stdConsole`` für die Fassung (F8),
+    ``-loadColmap`` ohne ``-addFolder`` (doppelte Bilder, F3) und ohne ``-align`` (eigene
+    Komponenten, F5), ``-exportSelectedModel`` statt ``"Model 1"`` (unvereinfacht, F6)."""
     cmd = _cmd()
-    assert cmd[0].endswith("realityscan-cli") and cmd[1].endswith("RealityScan.exe")
+    assert cmd[0].endswith("wine") and cmd[1].endswith("RealityScan.exe")
     befehle = [w for w in cmd[2:] if w.startswith("-")]
-    assert befehle == ["-headless", "-newScene", "-set", "-addFolder", "-importColmap",
-                       "-align", "-selectMaximalComponent", "-setReconstructionRegionAuto",
+    assert befehle == ["-headless", "-stdConsole", "-newScene", "-loadColmap",
+                       "-selectMaximalComponent", "-setReconstructionRegionAuto",
                        "-calculateNormalModel", "-simplify", "-calculateVertexColors",
-                       "-exportModel", "-quit"]
+                       "-exportSelectedModel", "-quit"]
     assert cmd[2] == "-headless"                               # nur als erster Befehl erlaubt
-    assert cmd[cmd.index("-set") + 1] == "appIncSubdirs=true"
-    assert cmd[cmd.index("-addFolder") + 1] == "Z:\\mnt\\lauf\\images"
-    assert cmd[cmd.index("-importColmap") + 1] == "Z:\\tmp\\arbeit\\colmap\\images.txt"
+    for weg in ("-addFolder", "-align", "-importColmap", "-exportModel", "Model 1"):
+        assert weg not in cmd
+    assert cmd[cmd.index("-loadColmap") + 1] == "Z:\\tmp\\arbeit\\colmap\\images.txt"
     assert cmd[cmd.index("-simplify") + 1] == str(rs.ZIEL_DREIECKE)
-    k = cmd.index("-exportModel")
-    assert cmd[k + 1:k + 4] == [rs.MODELL_NAME, "Z:\\tmp\\arbeit\\netz.ply",
-                                "Z:\\home\\x\\export ply.xml"]
+    k = cmd.index("-exportSelectedModel")
+    assert cmd[k + 1:k + 3] == ["Z:\\tmp\\arbeit\\export.ply", "Z:\\home\\x\\export ply.xml"]
     assert cmd[-1] == "-quit"
     # Eine Liste ohne Shell: kein Element trägt Anführungszeichen, Leerzeichen bleiben
     # in EINEM Element.
@@ -335,27 +354,84 @@ def test_kommando_reihenfolge_headless_zuerst_und_wine_pfade():
     assert sum(1 for w in cmd if "Program Files" in w) == 1
 
 
-def test_kommando_bilderweg_und_zahlen():
-    ohne = _cmd(bilder_weg=rs.BILDER_WEG_COLMAP, ziel_dreiecke=1234)
-    assert "-addFolder" not in ohne and ohne[ohne.index("-simplify") + 1] == "1234"
-    with pytest.raises(rs.RealityScanError):
-        _cmd(bilder_weg="raten")
+def test_kommando_zahlen():
+    assert _cmd(ziel_dreiecke=1234)[_cmd().index("-simplify") + 1] == "1234"
     with pytest.raises(rs.RealityScanError):
         _cmd(ziel_dreiecke=0)
 
 
-def test_der_starter_gibt_eine_liste_ohne_shell_weiter(monkeypatch):
+def test_colmap_text_bildnamen_relativ_zum_textordner(tmp_path):
+    """278 F3: ``-loadColmap`` löst die Namen gegen den Ordner der ``images.txt`` auf; fehlt
+    ein Bild, wartet RealityScan auf einen Dialog. Jeder Name zeigt darum von dort aufs Foto —
+    relativ, weil absolute Namen an den Ordner angehängt werden."""
+    sparse = _aufnahme(tmp_path / "lauf")
+    txt = tmp_path / "speicher" / "schluessel" / "lauf-x" / "colmap"
+    rs.colmap_als_text(sparse, txt, bilder=tmp_path / "lauf" / "images")
+    a = kn.lies_aufnahme(txt)
+    vorher = kn.lies_aufnahme(sparse)
+    for nr, b in a["bilder"].items():
+        assert not b["name"].startswith("/") and b["name"].startswith("../")
+        assert (txt / b["name"]).resolve() == (tmp_path / "lauf" / "images"
+                                               / vorher["bilder"][nr]["name"]).resolve()
+        assert (b["q"], b["t"]) == (vorher["bilder"][nr]["q"], vorher["bilder"][nr]["t"])
+    # Ein Leerzeichen auf dem Weg wäre im Text nicht darstellbar — Grund statt Hänger.
+    leer = tmp_path / "mit leer" / "images"
+    shutil.copytree(tmp_path / "lauf" / "images", leer)
+    with pytest.raises(rs.RealityScanError, match="Leerzeichen") as fehler:
+        rs.colmap_als_text(sparse, tmp_path / "t2", bilder=leer)
+    assert fehler.value.ursache == rs.URSACHE_BILDER
+
+
+def test_der_starter_gibt_eine_liste_ohne_shell_in_eigener_gruppe_weiter(monkeypatch):
     gesehen = {}
 
-    def lauf(cmd, **kw):
-        gesehen.update(cmd=cmd, **kw)
-        return subprocess.CompletedProcess(cmd, 0, "", "")
+    class Prozess:
+        pid, returncode = 4711, 0
 
-    monkeypatch.setattr(seams.subprocess, "run", lauf)
+        def __init__(self, cmd, **kw):
+            gesehen.update(cmd=cmd, **kw)
+
+        def communicate(self, timeout=None):
+            gesehen["frist"] = timeout
+            return "", ""
+
+    monkeypatch.setattr(rs.subprocess, "Popen", Prozess)
     cmd = _cmd()
-    seams._default_starte(cmd, 10)
+    ergebnis = rs._starte_gruppe(cmd, 10)
     assert gesehen["cmd"] is cmd and isinstance(gesehen["cmd"], list)
-    assert not gesehen.get("shell")
+    assert not gesehen.get("shell") and gesehen["start_new_session"] is True
+    assert gesehen["frist"] == 10 and ergebnis.returncode == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "killpg"), reason="nur POSIX")
+def test_die_frist_beendet_die_ganze_gruppe_auch_das_enkelkind(tmp_path, monkeypatch):
+    """278 F9: Nach der Frist blieb ``RealityScan.exe`` als Waise stehen, weil nur ``wine``
+    beendet wurde. Hier startet der «Starter» ein Kind, das weiterliefe — es muss mit weg."""
+    monkeypatch.setattr(rs, "NACHFRIST_S", 2.0)
+    pid_datei = tmp_path / "kind.pid"
+    skript = ("import subprocess, sys, time\n"
+              "k = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+              f"open({str(pid_datei)!r}, 'w').write(str(k.pid))\n"
+              "time.sleep(60)\n")
+    with pytest.raises(subprocess.TimeoutExpired):
+        rs._starte_gruppe([sys.executable, "-c", skript], 3)
+    kind = int(pid_datei.read_text())
+    import time
+    for _ in range(50):                                         # höchstens 5 s
+        try:
+            os.kill(kind, 0)
+        except ProcessLookupError:
+            break
+        # Ein Zombie (schon beendet, nur nicht abgeholt) zählt als beendet.
+        try:
+            if Path(f"/proc/{kind}/stat").read_text().split()[2] == "Z":
+                break
+        except OSError:
+            break
+        time.sleep(0.1)
+    else:
+        os.kill(kind, 9)
+        raise AssertionError("das Enkelkind lebt nach der Frist weiter")
 
 
 def test_ohne_pfade_nimmt_linux_und_windows_pfade():
@@ -369,6 +445,21 @@ def test_ohne_pfade_nimmt_linux_und_windows_pfade():
     assert rs.ohne_pfade("in Z:\\a\\b\\c", {"/a/b": "<arbeit>"}) == "in <arbeit>\\c"
 
 
+def test_ohne_pfade_auch_doppelt_maskiert_und_mit_schraegstrich():
+    """278: Wine schreibt Pfade in manchen Meldungen doppelt maskiert — so stand am Heim-PC
+    ein Benutzerverzeichnis im Fehlertext (Regel 3)."""
+    for text in ("Fehler: Z:\\\\home\\\\nutzer\\\\geheim\\\\export.ply fehlt",
+                 "Fehler: z:\\\\home\\\\nutzer\\\\ordner fehlt",
+                 "Fehler: Z:/home/nutzer/geheim/export.ply fehlt",
+                 "Fehler: C:\\users\\nutzer\\AppData\\Local\\Temp\\RealityScan.log"):
+        aus = rs.ohne_pfade(text)
+        assert "nutzer" not in aus and "geheim" not in aus, aus
+        assert aus.startswith("Fehler: <pfad>")
+    assert rs.ohne_pfade("Z:\\\\a\\\\b\\\\c", {"/a/b": "<arbeit>"}).startswith("<arbeit>")
+    assert rs.ohne_pfade("Z:/a/b/c", {"/a/b": "<arbeit>"}) == "<arbeit>/c"
+    assert rs.ohne_pfade("siehe https://example.org/a/b") == "siehe https://example.org/a/b"
+
+
 # ======================================================================================
 # 3 · Der Lauf mit der Attrappe
 # ======================================================================================
@@ -378,18 +469,122 @@ def test_lauf_schreibt_ein_netz_und_einen_bericht_ohne_pfade(tmp_path, eingerich
     b = rs.realityscan_zu_netz(sparse)
     assert b["status"] == "ok" and b["zwischenspeicher"]["treffer"] is False
     assert kn.art_der_datei(b["netz_ply"]) == "netz"
-    assert b["netz"]["dreiecke"] == 600 and b["netz"]["ecken"] == 1800
+    assert b["netz"]["dreiecke"] == 600 and b["netz"]["ecken"] == 1800   # ohne Deckel
     assert b["netz"]["vereinfacht"] is True and b["netz"]["format"] == "binary_little_endian"
-    assert b["programm"]["fassung"] == "2.1.0.12345"
+    assert b["bereinigung"]["farben"] == "float→uchar"
+    assert b["bereinigung"]["deckel_dreiecke"] == 1 and b["bereinigung"]["ecken_entfernt"] == 3
+    assert b["programm"]["fassung"] == "2.2.0.12345"
     assert b["lage"]["passt"] and b["lage"]["nah_colmap"] > 0.95
     assert b["aufnahme"]["rig"] is True and b["bilder"]["anzahl"] == 24
     ohne = {k: v for k, v in b.items() if k != "netz_ply"}
     text = json.dumps(ohne, ensure_ascii=False)
     assert str(tmp_path) not in text and "nutzer" not in text and "Z:\\" not in text
     assert "<arbeit>" in b["ausgabe"]["stdout"]                 # der Arbeitsordner, ersetzt
-    # Die Attrappe bekam die Aufnahme als Text und die Bilder als Z:-Pfad.
+    # Die Attrappe fand jedes Bild relativ zur images.txt (sonst Code 9), ohne -addFolder.
     (aufruf,) = _aufrufe(eingerichtet)
-    assert aufruf[aufruf.index("-addFolder") + 1] == rs.wine_pfad(sparse.parent.parent / "images")
+    assert "-addFolder" not in aufruf and "-loadColmap" in aufruf
+    # Farben als uchar, wie Blender sie liest.
+    kopf = kn.lies_ply_kopf(b["netz_ply"])
+    typen = {e["name"]: e["typ"] for e in kopf["elemente"][0]["eigenschaften"]}
+    assert (typen["red"], typen["green"], typen["blue"]) == ("uchar",) * 3
+    assert rs.lies_ecken(b["netz_ply"])["farbe"]
+
+
+def test_aufnahme_ohne_punkte_startet_nicht(tmp_path, eingerichtet):
+    """278 F4: An einer leeren points3D.txt hängt RealityScan — darum ein Grund vorher."""
+    sparse = _aufnahme(tmp_path / "lauf", punkte=0)
+
+    def nie(cmd, timeout):
+        raise AssertionError("ohne 3D-Punkte darf nichts starten")
+
+    with pytest.raises(rs.RealityScanError, match="3D-Punkte") as fehler:
+        rs.realityscan_zu_netz(sparse, _starte=nie)
+    assert fehler.value.ursache == rs.URSACHE_AUFNAHME
+
+
+def _ply(pfad, ecken, flaechen, *, farbe="float", form="binary_little_endian"):
+    kopf = ["ply", f"format {form} 1.0", f"element vertex {len(ecken)}",
+            "property float x", "property float y", "property float z",
+            f"property {farbe} red", f"property {farbe} green", f"property {farbe} blue",
+            f"element face {len(flaechen)}", "property list uchar int vertex_indices",
+            "end_header"]
+    import struct
+    with open(pfad, "wb") as d:
+        d.write(("\n".join(kopf) + "\n").encode())
+        for e in ecken:
+            if form == "ascii":
+                d.write((" ".join(str(w) for w in e) + "\n").encode())
+            else:
+                f = "<fff" + ("fff" if farbe == "float" else "BBB")
+                d.write(struct.pack(f, *e))
+        for fl in flaechen:
+            if form == "ascii":
+                d.write((" ".join(str(w) for w in (len(fl), *fl)) + "\n").encode())
+            else:
+                d.write(struct.pack(f"<B{len(fl)}i", len(fl), *fl))
+    return pfad
+
+
+@pytest.mark.parametrize("form", ["binary_little_endian", "ascii"])
+def test_bereinige_export_farben_und_deckel(tmp_path, form):
+    """278 F7 und der Deckel: float-Farben werden uchar, das Riesendreieck fällt weg, seine
+    Ecken mit ihm; ein Viereck (Fächer) bleibt, wenn es klein ist."""
+    N = 40                         # 5 % der Diagonale sind dann 2.6, eine Kante misst ≤ 1.42
+    ecken, flaechen = [], []
+    for i in range(N):
+        for j in range(N):
+            ecken.append((float(i), 0.0, float(j), 0.5, 1.0, 0.0))
+    for i in range(N - 1):
+        for j in range(N - 1):
+            a = i * N + j
+            flaechen.append((a, a + 1, a + N + 1))
+    flaechen.append((0, 1, N + 1, N))                              # ein Viereck
+    d0 = len(ecken)
+    ecken += [(-500.0, 5.0, -500.0, 1, 1, 1), (500.0, 5.0, -500.0, 1, 1, 1),
+              (0.0, 5.0, 500.0, 1, 1, 1)]
+    flaechen.append((d0, d0 + 1, d0 + 2))
+    q = _ply(tmp_path / "roh.ply", ecken, flaechen, form=form)
+    b = rs.bereinige_export(q, tmp_path / "netz.ply")
+    assert b["farben"] == "float→uchar" and b["deckel_dreiecke"] == 1
+    # Die drei Deckelecken und die Ecke (N-1, 0), die im Gitter keine Fläche trägt.
+    assert b["ecken_entfernt"] == 4
+    assert b["deckel_flaeche_anteil"] > 0.99
+    kopf = kn.lies_ply_kopf(tmp_path / "netz.ply")
+    assert kopf["format"] == "binary_little_endian"
+    assert kn.netz_kennzahlen(tmp_path / "netz.ply")["dreiecke"] >= (N - 1) ** 2
+    _, _, ecken2, flaechen2 = rs._lies_netz(tmp_path / "netz.ply", kopf)
+    assert len(ecken2) == N * N - 1 and len(flaechen2) == (N - 1) ** 2 + 1
+    assert {e[3:] for e in ecken2} == {(128, 255, 0)}
+    assert max(i for f in flaechen2 for i in f) == N * N - 2
+
+
+def test_bereinige_export_laesst_uchar_und_ohne_deckel_gleich(tmp_path):
+    n = 40
+    ecken = [(float(i), 0.0, float(j), 10, 20, 30) for i in range(n) for j in range(n)]
+    flaechen = []
+    for i in range(n - 1):
+        for j in range(n - 1):
+            a = i * n + j
+            flaechen += [(a, a + 1, a + n), (a + 1, a + n + 1, a + n)]
+    q = _ply(tmp_path / "roh.ply", ecken, flaechen, farbe="uchar")
+    b = rs.bereinige_export(q, tmp_path / "netz.ply")
+    assert (b["farben"], b["deckel_dreiecke"], b["ecken_entfernt"]) == ("uchar", 0, 0)
+    _, _, e2, f2 = rs._lies_netz(tmp_path / "netz.ply", kn.lies_ply_kopf(tmp_path / "netz.ply"))
+    assert {tuple(e[3:]) for e in e2} == {(10, 20, 30)} and len(e2) == n * n
+    def lage(ek, fl):                                   # Flächen als Koordinaten, ohne Nummern
+        return sorted(tuple(sorted(tuple(ek[i][:3]) for i in f)) for f in fl)
+    assert lage(e2, f2) == lage(ecken, flaechen)
+
+
+def test_bereinige_export_ohne_farbe_ist_ein_exportfehler(tmp_path):
+    p = tmp_path / "roh.ply"
+    p.write_bytes(b"ply\nformat ascii 1.0\nelement vertex 3\nproperty float x\n"
+                  b"property float y\nproperty float z\nelement face 1\n"
+                  b"property list uchar int vertex_indices\nend_header\n0 0 0\n1 0 0\n0 0 1\n"
+                  b"3 0 1 2\n")
+    with pytest.raises(rs.RealityScanError) as fehler:
+        rs.bereinige_export(p, tmp_path / "netz.ply")
+    assert fehler.value.ursache == rs.URSACHE_EXPORT
 
 
 def test_speicher_nach_inhalt(tmp_path, eingerichtet):
@@ -566,7 +761,7 @@ def test_einbindung_realityscan_zuerst_mit_satz(tmp_path, eingerichtet):
     assert v["realityscan_grund"] is None and kn.art_der_datei(v["ply"]) == "netz"
     assert v["netz"]["quelle"] == rs.WEG and v["netz"]["dreiecke"] == 1500
     assert v["netz"]["aufnahme"] == seams.AUFNAHME_NEBEN_SPLAT
-    assert v["netz"]["programm_fassung"] == "2.1.0.12345" and v["netz"]["lage"]["nah_splat"]
+    assert v["netz"]["programm_fassung"] == "2.2.0.12345" and v["netz"]["lage"]["nah_splat"]
     assert str(tmp_path) not in json.dumps(v["netz"]) and "nutzer" not in json.dumps(v["netz"])
 
 

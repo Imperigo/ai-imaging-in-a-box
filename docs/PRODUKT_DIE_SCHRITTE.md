@@ -1427,6 +1427,15 @@ Umgebung aus den Fotos zu rechnen, mit Epic RealityScan, das er selbst installie
 RealityScan die Fotos samt den Kamerastandorten, holt das Netz zurück, prüft, dass es am richtigen Ort liegt, und fällt
 sonst auf den offenen Weg zurück. Mitgeliefert wird RealityScan nie.
 
+**RealityScan gemessen und repariert (14.10.2026).** Der Heim-PC hat RealityScan an der echten Aufnahme laufen lassen:
+In gut fünf Minuten deckt das Netz 93 % der Umgebung, statt einem Zehntel beim offenen Weg, und es liegt am richtigen
+Ort. Der Vergleichsweg mit COLMAP brauchte über eine Stunde und hatte Löcher oder aufgeblasene Flächen. Der Owner hat
+RealityScan darum zum Weg fürs Umgebungsnetz gemacht; der offene Weg bleibt der Rückfall. Die Brücke selbst lief beim
+ersten Versuch aber nicht — sieben Dinge waren anders, als die Dokumentation vermuten liess (das falsche Startprogramm,
+ein Dialog, der den Lauf anhielt, das falsche Modell beim Export, schwarze Farben, ein «Deckel» über der Szene, ein
+Programm, das nach dem Abbruch weiterlief, und ein Pfad im Fehlertext). Alle sieben sind behoben; ob das fertige Bild
+besteht, misst der Heim-PC als Nächstes.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher
