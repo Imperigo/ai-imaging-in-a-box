@@ -18,7 +18,7 @@ Der Owner will die Knoten am Mac sehen; dafür braucht es eine neue Fassung (Fre
 
 | Fähigkeit | Entscheid | Stand |
 |---|---|---|
-| Mac: nach «Schon anfangen» zuerst die Knoten (das KosmoVis-Werkzeug), oben der Schalter «Knoten \| Visbox-Seite» | 85, 85a, 85c | gebaut, Prüfstrecke; am Gerät unbestätigt |
+| Mac: nach «Schon anfangen» zuerst die Knoten (das KosmoVis-Werkzeug), oben der Schalter «Knoten / Visbox-Seite» | 85, 85a, 85c | gebaut, Prüfstrecke; am Gerät unbestätigt |
 | Die Knoten zeigen die zuletzt auf der Visbox-Seite geöffnete Mappe (Heim-PC merkt sie sich, auch im Browser) | 85b | gebaut; am Gerät unbestätigt |
 | Umgebung aus den Fotos (RealityScan): Brücke nach der Messung am Heim-PC repariert — richtiges Startprogramm, kein Hänger an Bildpfaden, vereinfachtes Netz, Farben nicht mehr schwarz, Deckel weg, kein Programm bleibt nach einer Frist stehen | 79, 81 | gebaut; Lauf über die Brücke am Heim-PC in Prüfung |
 
