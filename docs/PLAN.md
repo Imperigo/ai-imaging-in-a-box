@@ -7919,7 +7919,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Am Mac und am Heim-PC prüfen (`auf-20261014-282` Punkt 3; Owner am Mac).
 - [ ] Owner: Soll die Knotenansicht beim Start schon einen Modell-Knoten vorlegen?
 - [ ] Nach «nicht lesbar» das vorige Modell weiter nennen (kleiner UI-Punkt, beide Programme).
-- [ ] Int 1 spielt `claude/kosmovis-modell-laden` ein.
+- [x] Int 1 hat `claude/kosmovis-modell-laden` in Runde 29 eingespielt (Zwischenstand int-r29). *(14.10.2026)*
+- [ ] Render-Knoten: `NodeLauf.umgebungFehlt` als Zeile «Ohne Umgebung: <Grund>» (Bitte des Integrators, beide Programme).
 
 ## Punktwolken im Bild (Zuteilung Integrator 14.10.2026, Punkt 4 für uns)
 
