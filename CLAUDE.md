@@ -333,6 +333,18 @@ Zweig mit einem Blatt in seinem Eingang (`kosmo-orbit/docs/auftraege-kosmovis/`)
 **nie selbst** in seinen Zweig zusammen. Was nicht Visbox ist, fassen wir dort nicht an; ihre
 Regeln (dortige `CLAUDE.md`) gelten auf dem Zweig wie hier unsere.
 
+### KosmoVis und Visbox immer auf demselben Stand (Owner-Vorgabe 14.10.2026)
+
+> *«Grundsätzlich immer alles für beide Softwares, also KosmoOrbit und Visbox — ohne dass ich es freigeben muss. KosmoVis ist
+> immer auf demselben Stand wie Visbox.»*
+
+Jede Änderung am Vis-Werkzeug geht **in beide**: in KosmoOrbit auf eigenem Zweig `claude/kosmovis-*` (gemeldet an Int 1,
+wie oben), in Visbox in die Kopie unter `kosmovis/` (`tools/kosmovis_uebernahme.py`, vorab Geändertes in `HERKUNFT.json`
+unter `geaendert` mit Grund, bis Int 1 eingespielt hat und die Kopie nachgezogen ist). Was KosmoOrbit drüben am
+Vis-Werkzeug weiterbaut, zieht Visbox **von sich aus** nach, ohne Frage an den Owner. Was nicht Vis-Werkzeug ist, geht
+weiter als Auftrag an den Integrator bzw. den UI-Worker. *Anlass: Die Kopie stand drei Wochen still, und der Owner sah am
+Mac noch die alten Knoten.*
+
 ### Nachrichten über die Zentrale (Owner-Entscheid 06.10.2026, abends)
 
 Bis dahin konnte diese Cloud-Sitzung andere Sitzungen nicht erreichen; der Owner leitete jede Zeile
