@@ -7900,7 +7900,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Prepare: 1086 px waren ein Rechenfehler, behoben (≈ 1616 px), KosmoPrepare 6b7db4a/6ffe28f. *(14.10.2026, §108)*
 - [x] Gemessen: 1600 px machen die Textur nicht schärfer (Grenze Optik/Video), kosten +5.5 min — für die Brücke nicht nötig. *(14.10.2026, §108)*
 - [x] Messauftrag M4 `auf-20261014-281`: Textur schärfer (8.8/9.0/5.6/4.0 gegen Eckfarben 6.4/7.4/3.4/1.9), +4 min, 300 MB. *(14.10.2026, §111)*
-- [ ] Bild mit QA über die eigene Brücke: `auf-20261014-282` (local).
+- [x] Bild mit QA über die eigene Brücke (`auf-282`): fällt, aber auch ohne Umgebung — Rückgang woanders her; Textur von aussen unsichtbar. *(14.10.2026, §112)*
+- [ ] Rückgang trennen und Textur im Innenblick: `auf-20261014-283` (local).
+- [x] Entscheid 90d: fester Rückfall-Ordner `~/Visbox-Mappen` gebaut. *(14.10.2026, §112)*
 - [ ] Integrator: Splat aus dem Dateidialog trägt keinen Pfad → Bestellung ohne Umgebung.
 
 ## Was die Knoten tun (Owner 14.10.2026 — Sitzung 74 §110)

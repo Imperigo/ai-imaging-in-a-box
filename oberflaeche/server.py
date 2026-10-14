@@ -1987,11 +1987,8 @@ class Flaeche(BaseHTTPRequestHandler):
         except modellladen.ModellLadenError as fehler:
             self._fehler(str(fehler))
             return
-        if not self.ordner:
-            self._fehler("Der Heim-PC weiss nicht, wohin die Mappe soll: Er läuft ohne "
-                         "Start-Mappe. Mit --ordner starten — die neue Mappe kommt daneben.",
-                         409)
-            return
+        # OHNE START-MAPPE kein Fehler mehr (Entscheid 90d): die Bibliothek legt die Mappe
+        # dann im festen Rueckfall-Ordner an (`modellladen.mappen_ordner`).
         stand = {"kennung": secrets.token_hex(6), "stand": "laeuft", "datei": dateiname,
                  "schritt": "ablegen", "satz": f"«{dateiname}» wird geladen …",
                  "begonnen": time.monotonic()}

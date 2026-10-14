@@ -67,6 +67,19 @@ QUELLORDNER = "quelle"
 #: grösste IFC der Messreihe vom 18.08.2026 lag deutlich darunter.
 GROESSTE_DATEI_BYTE = 768 * 1024 * 1024
 
+#: Wohin neue Mappen kommen, wenn der Server **ohne Start-Mappe** läuft (Owner-Entscheid 90d,
+#: 14.10.2026: «fester Ordner als Rückfall»). Am Heim-PC lief der Dienst ohne ``--ordner``, und
+#: «Datei laden» antwortete nur «ohne Start-Mappe». Mit Start-Mappe gilt weiter 90a (daneben).
+MAPPEN_ORDNER_ENV = "AIIMAGING_MAPPEN_ORDNER"
+MAPPEN_ORDNER_NAME = "Visbox-Mappen"
+
+
+def mappen_ordner() -> Path:
+    """Der Rückfall-Ordner: :data:`MAPPEN_ORDNER_ENV`, sonst ``~/Visbox-Mappen``."""
+    import os                                                  # noqa: PLC0415
+    gesetzt = os.environ.get(MAPPEN_ORDNER_ENV, "").strip()
+    return Path(gesetzt).expanduser() if gesetzt else Path.home() / MAPPEN_ORDNER_NAME
+
 #: Höchstens so viele Zeichen hat ein Mappenname — ein Dateiname kann beliebig lang sein,
 #: ein Ordnername auf manchen Platten nicht.
 NAME_HOECHSTENS = 60
@@ -209,7 +222,7 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
 
     Args:
         start_mappe: Die Mappe, mit der der Server gestartet wurde. Die neue Mappe kommt
-            in ihren **Elternordner**.
+            in ihren **Elternordner**; ohne Start-Mappe in :func:`mappen_ordner` (90d).
         dateiname: Der Name der Datei, wie der Browser ihn schickt.
         inhalt: Die Bytes.
         melder: Bekommt ``{"schritt": …, "satz": …}`` vor jedem Schritt — für den Knoten.
@@ -223,13 +236,8 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
         Arbeit.
 
     Raises:
-        ModellLadenError: keine Start-Mappe, der Dateiname taugt nicht, die Datei ist zu
-            gross.
+        ModellLadenError: der Dateiname taugt nicht, die Datei ist zu gross.
     """
-    if not start_mappe:
-        raise ModellLadenError(
-            "Der Heim-PC weiss nicht, wohin die Mappe soll: Er läuft ohne Start-Mappe. Mit "
-            "--ordner starten — die neue Mappe kommt daneben.")
     dateiname = pruefe_dateiname(dateiname)
     if len(inhalt) > GROESSTE_DATEI_BYTE:
         raise ModellLadenError(
@@ -251,7 +259,12 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
     if satz:
         return _fehler(satz, herkunft=herkunft)
 
-    eltern = Path(start_mappe).resolve().parent
+    # 90a: neben die Start-Mappe; 90d: ohne Start-Mappe in den festen Rückfall-Ordner.
+    if start_mappe:
+        eltern = Path(start_mappe).resolve().parent
+    else:
+        eltern = mappen_ordner()
+        eltern.mkdir(parents=True, exist_ok=True)
     mappe, ersetzen = ziel_fuer(eltern, dateiname)
     fassung = (projekt.modellfassung(projekt.oeffne(mappe)["projekt"]) + 1) if ersetzen else 1
     ablage = mappe / QUELLORDNER / f"f{fassung}"

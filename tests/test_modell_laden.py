@@ -260,9 +260,18 @@ def test_unbekanntes_format_nennt_die_formate(start):
     assert ergebnis["stand"] == "fehler" and "IFC" in ergebnis["satz"] and ".dwg" in ergebnis["satz"]
 
 
-def test_ohne_start_mappe_und_zu_gross_ist_die_anfrage_falsch(start, monkeypatch):
-    with pytest.raises(modellladen.ModellLadenError, match="Start-Mappe"):
-        modellladen.lade(None, "a.glb", _glb())
+def test_ohne_start_mappe_kommt_die_mappe_in_den_festen_ordner(tmp_path, monkeypatch):
+    """90d: Am Heim-PC lief der Dienst ohne --ordner; dann der feste Rueckfall-Ordner."""
+    ziel = tmp_path / "zuhause" / "Visbox-Mappen"
+    monkeypatch.setenv(modellladen.MAPPEN_ORDNER_ENV, str(ziel))
+    ergebnis = modellladen.lade(None, "Neubau.glb", _glb())
+    assert ergebnis["stand"] == "geladen", ergebnis
+    assert Path(ergebnis["mappe"]).parent == ziel.resolve() or Path(ergebnis["mappe"]).parent == ziel
+    monkeypatch.delenv(modellladen.MAPPEN_ORDNER_ENV)
+    assert modellladen.mappen_ordner() == Path.home() / "Visbox-Mappen"
+
+
+def test_zu_gross_ist_die_anfrage_falsch(start, monkeypatch):
     monkeypatch.setattr(modellladen, "GROESSTE_DATEI_BYTE", 10)
     with pytest.raises(modellladen.ModellLadenError, match="zu gross"):
         modellladen.lade(start, "a.glb", _glb())
@@ -419,9 +428,7 @@ def test_server_grenzen_name_und_formular(server, start, monkeypatch):
 
 
 def test_server_ohne_start_mappe_und_eine_zur_zeit(server, start):
-    ohne = _Server(server, None)
-    code, antwort = ohne.lade("Neubau.glb", _glb())
-    assert code == 409 and "Start-Mappe" in antwort["fehler"]
+    # 90d: ohne Start-Mappe wird angenommen (fester Rueckfall-Ordner, eigene Probe oben).
 
     s = _Server(server, start)
     s.klasse.modell_laden = {"kennung": "x", "stand": "laeuft", "datei": "gross.ifc",

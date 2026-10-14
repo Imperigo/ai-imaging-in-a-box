@@ -1,0 +1,41 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261014-283",
+ "art": "frage",
+ "rang": 70,
+ "erstellt": "2026-10-14T19:00:00Z",
+ "beschreibung": "Rueckgang der Pruefung trennen (glb der App 0.1.7 oder Codestand?) und die Textur mit Kameras in der Halle messen",
+ "anweisung": "Hintergrund auf-20261014-282: Die Bildprobe fiel (geom s/sSE/nNW 0.236/0.772/0.774), ein Kontrolllauf OHNE Splat-Kontext ebenso (0.000/0.786/0.787) - gegen M3 (0.971/0.948/0.919) ein Rueckgang, der nicht von der Textur kommt. Ungetrennt: die glb aus der installierten App 0.1.7 oder der neuere Codestand. ZU TUN, ohne Splat-Kontext (der ist hier nicht die Frage), jeweils derselbe Auftrag ausser der genannten Groesse: T1) die glb aus dem 282-Auftrag (App 0.1.7) auf dem Codestand von M3 (ai-imaging edde216, eigener git worktree, NICHT den Dienst umstellen - tools/abholen.py aus dem worktree auf eine eigene Ablage). T2) die glb aus dem M3-Auftrag (falls noch da) auf dem heutigen Stand (main). T3) beide glb nebeneinander: Hueller (bbox), Zahl der Meshes, extras.role existing, Hochachse - sind es ueberhaupt dieselben Modelle? Zurueck je Lauf: geom s/sSE/nNW, geom_iou, geometry_gates, und ein Satz, welche Groesse den Abfall erklaert. Wenn es der Codestand ist: den ersten Commit zwischen edde216 und main nennen, ab dem es kippt (git bisect mit einem Lauf je Schritt, nur Kamera s reicht), und NICHT selbst beheben. T4) Textur sichtbar machen: derselbe Hallenauftrag MIT Splat-Kontext (wie 282), aber mit 2 Kameras IN der Halle (Standpunkt und Ziel im Innern des Splats, Blick entlang der Halle; Koordinaten aus der Verortung, eigene Kameras im Auftrag). Je Kamera: Netzanteil im Bild, ein Satz zur Lesbarkeit der Umgebung (Textur gegen M3-Eckfarben im selben Blick, gleicher Auftrag mit AIIMAGING_REALITYSCAN_UNWRAP_XML leer = Fassung-2-Rueckfall, Netz aus dem Speicher). T5) Modell laden ohne Start-Mappe (ab dem naechsten main, Entscheid 90d): Der Dienst ohne --ordner legt die Mappe in ~/Visbox-Mappen an - einmal pruefen. NICHT: Code aendern; den Dienst dauerhaft auf einen alten Stand stellen; Bilder mit Personen oder erfundenen Figuren, Ortsnamen, Pfade ins Repo (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "wie 282: KosmoOrbit-Kernel (Bestand aus dem Splat); Fotos, Splat und Bilder bleiben lokal"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-282",
+  "entscheide": [
+   "79",
+   "81",
+   "90d"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Mehrere Blender- und Bildlaeufe hintereinander, nie zwei GPU-Laeufe gleichzeitig.",
+  "hinweise": [
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "T1-T3 Tabelle und ein Satz zur Ursache (ggf. erster schlechter Commit).",
+  "T4 je Innenkamera Netzanteil und Satz Textur gegen Eckfarben.",
+  "T5 ja/nein.",
+  "Urteil: Woher kommt der Rueckgang, und traegt die Textur im Innenblick?"
+ ]
+}
