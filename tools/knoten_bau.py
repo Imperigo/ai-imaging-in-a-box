@@ -1,0 +1,62 @@
+"""Den Bau der Knotenansicht erneuern und stempeln (14.10.2026).
+
+**Anlass:** Der Bau (`kosmovis/apps/visbox-knoten/dist/`) war bis zum 14.10.2026 vom Repo
+ausgeschlossen. Die HomeStation lieferte darum den Bau vom 24.09.2026 aus, während die Quelle
+längst weiter war — der Owner sah am Mac noch die alten Knoten. Seither ist der Bau
+**eingecheckt**: Ein `git pull` am Heim-PC bringt ihn mit, ohne dass dort jemand baut.
+
+Damit Bau und Quelle nicht wieder auseinanderlaufen, schreibt dieses Werkzeug nach dem Bau
+``dist/BAUSTAND.json`` mit dem Fingerabdruck der Quelle (``kosmovis/HERKUNFT.json`` und der
+Visbox-eigenen Wirtsdateien). ``tests/test_knoten_bau.py`` fällt, sobald die Quelle sich ändert
+und der Bau nicht neu gestempelt ist.
+
+Gebrauch::
+
+    python3 tools/knoten_bau.py            # npm ci (falls nötig), npm run build, stempeln
+    python3 tools/knoten_bau.py --stempel  # nur stempeln (nach einem Bau von Hand)
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+WURZEL = Path(__file__).resolve().parents[1]
+KOSMOVIS = WURZEL / "kosmovis"
+APP = KOSMOVIS / "apps" / "visbox-knoten"
+BAU = APP / "dist"
+STEMPEL = BAU / "BAUSTAND.json"
+
+#: Was den Bau bestimmt und nicht schon in HERKUNFT.json steht.
+QUELLEN = ("kosmovis/HERKUNFT.json", "kosmovis/package-lock.json",
+           "kosmovis/apps/visbox-knoten/src/main.tsx", "kosmovis/apps/visbox-knoten/src/mappe.ts",
+           "kosmovis/apps/visbox-knoten/src/visbox.css", "kosmovis/apps/visbox-knoten/index.html",
+           "kosmovis/apps/visbox-knoten/vite.config.ts")
+
+
+def fingerabdruck(wurzel: Path = WURZEL) -> dict[str, str]:
+    return {q: hashlib.sha256((wurzel / q).read_bytes()).hexdigest() for q in QUELLEN}
+
+
+def stempele() -> None:
+    STEMPEL.write_text(json.dumps({"quelle": fingerabdruck()}, indent=1, sort_keys=True) + "\n",
+                       encoding="utf-8")
+
+
+def main(argv=None) -> int:
+    a = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    a.add_argument("--stempel", action="store_true", help="nur stempeln, nicht bauen")
+    args = a.parse_args(argv)
+    if not args.stempel:
+        if not (KOSMOVIS / "node_modules").is_dir():
+            subprocess.run(["npm", "ci", "--no-audit", "--no-fund"], cwd=KOSMOVIS, check=True)
+        subprocess.run(["npm", "run", "build"], cwd=APP, check=True)
+    stempele()
+    print(f"Bau gestempelt: {STEMPEL.relative_to(WURZEL)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

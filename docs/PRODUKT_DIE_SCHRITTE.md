@@ -1461,6 +1461,11 @@ Hand ersetzt werden. Dasselbe für KosmoOrbit liegt beim Integrator.
 Entwurfsfläche; der Owner wählte die Box, deren eine Seite schon Bild ist — Modell hinein, Bild heraus. Es kommt mit
 der Fassung 0.2.4 auf Mac und iPad.
 
+**Die Knotenansicht wieder gleich wie in KosmoOrbit (14.10.2026).** Am Mac zeigte Visbox noch die Knoten vom September:
+alte Boxen, kein Schieben mit zwei Fingern. Die Kopie war drei Wochen nicht nachgezogen worden, und ihr fertiger Bau
+kam nie mit `git pull` auf den Heim-PC. Beides ist behoben; dazu zoomt die Knotenfläche jetzt in beiden Programmen
+spürbar schneller. Neue Regel des Owners: Was am Vis-Werkzeug geändert wird, geht immer in beide Programme.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

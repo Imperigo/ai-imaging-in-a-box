@@ -88,6 +88,10 @@ xcuserdata/
 # `npm install` legt `node_modules/` an, `npm run build` den Bau unter `dist/` (der steht
 # oben schon). Beides ist aus `kosmovis/package-lock.json` neu erzeugbar.
 kosmovis/**/node_modules/
+# DER BAU DER KNOTENANSICHT WIRD EINGECHECKT (14.10.2026): Ohne ihn lieferte die HomeStation
+# drei Wochen lang den Bau vom 24.09. aus, weil dort nach `git pull` niemand baut. Erneuert und
+# gestempelt mit `tools/knoten_bau.py`; `tests/test_knoten_bau.py` haelt Bau und Quelle zusammen.
+!kosmovis/apps/visbox-knoten/dist/
 
 # Arbeitskopien der Helfer-Agenten (lokal, nie ins Repo)
 .claude/worktrees/
