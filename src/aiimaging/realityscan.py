@@ -211,10 +211,15 @@ ZIEL_DREIECKE = _kn.ZIEL_DREIECKE
 #: Der **Deckel**: RealityScan schliesst Bereiche ohne Fotos mit wenigen Riesendreiecken (am
 #: Heim-PC 123 Dreiecke mit 59 % der Fläche, darunter eine waagrechte Platte über die ganze
 #: Region, ``auf-20261013-278``). Ein Dreieck, dessen längste Kante mehr als dieser Anteil der
-#: robusten Diagonale des Netzes (P2–P98 der Ecken) misst, fällt weg. GESETZT aus dem Befund:
-#: Dort lag die Grenze bei 0.5 Einheiten (≈ 3 m) auf rund 10 Einheiten Diagonale; die Dreiecke
-#: eines vereinfachten Netzes mit 500 000 Dreiecken sind um Grössenordnungen kleiner.
-DECKEL_KANTE_REL = 0.05
+#: robusten Diagonale des Netzes (P2–P98 der Ecken) misst, fällt weg.
+#:
+#: **Gemessen und nachgestellt (14.10.2026, M2 aus 278 mit Fassung 2):** Bei 5 % (Grenze 0.548
+#: Einheiten) fielen 329 Dreiecke mit 77 % der Fläche, die Deckung blieb 93.5 % (keine echten
+#: Teile weg) — aber 189 Dreiecke über 0.3 Einheiten (≈ 1.9 m) mit 12 % der Fläche blieben
+#: stehen und wurden im Bild zu Fremdkörpern. Darum **2.5 %** (≈ 0.27 Einheiten); ob die
+#: Deckung dabei hält, misst der Heim-PC (GESETZT bis dahin). Die Dreiecke eines Netzes mit
+#: 500 000 Dreiecken auf ≈ 11 Einheiten Diagonale messen um 0.02 Einheiten.
+DECKEL_KANTE_REL = 0.025
 
 #: Nach Ablauf der Frist: so lange darf die Prozessgruppe nach ``SIGTERM`` aufräumen, bevor
 #: ``SIGKILL`` kommt. GESETZT; am Heim-PC blieb ohne Gruppe ``RealityScan.exe`` als Waise

@@ -3958,6 +3958,20 @@ mit der Variable `AIIMAGING_REALITYSCAN`, sonst bleibt der offene Weg. Anleitung
 `betrieb/REALITYSCAN_BRUECKE.md`. Seit dem 14.10.2026 (Messung `auf-20261013-278`, Owner-Entscheid)
 der Weg fürs Umgebungsnetz: 93 % der Umgebung gedeckt statt 10 % beim offenen Weg.
 
+**Bewegungssensor (IMU)** — Ein kleiner Messbaustein in der Kamera, der tausendmal je Sekunde
+misst, wie stark sie beschleunigt und sich dreht. Aus der Beschleunigung lässt sich zurückrechnen,
+wie weit die Kamera in Metern gegangen ist — und damit, wie gross die gescannte Szene in echt ist.
+*Im Projekt:* Vorschlag der HomeStation (14.10.2026) für den **Massstab** des Splats; gebaut wird die
+Stufe bei KosmoPrepare, Visbox liest nur das Ergebnis.
+
+**Massstab (des Splats)** — Wie viele echte Meter einer Einheit des gescannten Modells entsprechen.
+Ein Scan aus Fotos kennt von sich aus keine Meter, nur Verhältnisse. *Im Projekt:* KosmoPrepare
+schreibt ihn mit Unsicherheit, **Gegenprobe** (eine zweite, unabhängige Schätzung) und einer
+**Ampel** (grün: still übernommen; gelb: übernommen, um ein **Kontrollmass** — eine von Hand gemessene
+Länge am Bau — gebeten; rot: nicht übernommen) in die Verortung; Visbox sagt die Ampel als Satz im
+Urteil (`kosmo_szene.massstab_aus_verortung`). Ein Handmass gewinnt immer. **Drift** heisst, dass der
+Massstab entlang des Wegs der Kamera nicht gleich bleibt.
+
 **Prozessgruppe** — Startet ein Programm weitere Programme, bilden sie zusammen eine Familie, die das
 Betriebssystem als eine Gruppe führen kann. Wer die **ganze Gruppe** beendet, trifft auch die Kinder und
 Enkel; wer nur das erste Programm beendet, lässt sie weiterlaufen. *Im Projekt:* RealityScan läuft unter
@@ -6942,6 +6956,7 @@ eigener Formsteuerung (`backbone.Backbone.stillgelegt`).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-14 | Ergaenzt beim Leser des Massstab-Blocks: **Bewegungssensor (IMU)**, **Massstab (des Splats)** (mit Gegenprobe, Ampel, Kontrollmass, Drift) |
 | 2026-10-14 | Ergaenzt aus Entscheid 85 (Mac zeigt zuerst die Knoten): **Segmentschalter**; nachgefuehrt: **WKWebView**, **Knotenansicht / Knoteneditor** (Kopie aus KosmoOrbit, nicht mehr der eigene Entwurf) |
 | 2026-10-14 | Ergaenzt beim Reparieren der RealityScan-Bruecke (Fassung 2, nach `auf-20261013-278`): **Prozessgruppe** (mit verwaistem Prozess), **Deckel (im Netz)**, **Farbe als Ganzzahl oder Kommazahl (uchar / float)**; nachgefuehrt: **RealityScan-Brücke** (jetzt der Weg fürs Umgebungsnetz) |
 | 2026-10-13 | Ergaenzt aus dem Bau von Entscheid 84 (Aktualisieren, Visbox 0.2.1): **Tag (Markierung im Verlauf)**, **Freigabe auf GitHub (Release)**, **Prüfsummen-Datei (`SHA256SUMS.txt`)**, **Provisioning-Profil (`embedded.mobileprovision`)**, **Sparkle** (mit Appcast und EdDSA), **App Translocation (verschobener Startort)**, **Weiterleitung (Redirect)** |

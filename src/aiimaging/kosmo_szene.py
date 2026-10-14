@@ -787,6 +787,97 @@ KONTEXT_FIT = ("behelf", "passpunkte")
 #: Der Satz zu ``fit: behelf``, wörtlich wie bestellt — er geht in ``verdict.hinweise``.
 SATZ_KONTEXT_BEHELF = "Lage des Splats von Hand gesetzt, nicht vermessen."
 
+#: Der Massstab des Splats aus ``splat.verortung.json`` (KosmoPrepare, 14.10.2026): Ampel und
+#: was sie sagt. KosmoPrepare setzt die Ampel (aus Unsicherheit der IMU und Abweichung der
+#: Tiefen-Gegenprobe); Visbox **übernimmt sie, entscheidet sie nicht** — und sagt sie im Urteil.
+MASSSTAB_AMPELN = {"gruen": "gruen", "grün": "gruen", "gelb": "gelb", "rot": "rot"}
+
+#: Ab dieser Drift entlang des Wegs ein eigener Satz (KosmoPrepare: «Zusatzhinweis, wenn s
+#: entlang des Wegs um mehr als 10 % driftet»).
+MASSSTAB_DRIFT_SATZ_AB = 0.10
+
+
+def _prozent(wert) -> str | None:
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        return None
+    return f"{abs(float(wert)) * 100:.0f} %"
+
+
+def massstab_aus_verortung(pfad) -> tuple[dict | None, list[str]]:
+    """Der Block ``massstab`` aus der Verortungsdatei des Splats → ``(vermerk, saetze)``.
+
+    **Nur zur Auskunft, nie zum Rechnen:** Die Lage samt Massstab steht in
+    ``context.transform``; dieser Block sagt, **wie verlässlich** der Massstab ist. Darum ist
+    nichts davon ein Mangel: Fehlt die Datei oder der Block, gibt es keinen Satz (ältere
+    Verortungen kennen ihn nicht); ist sie nicht lesbar, ein Satz, der das sagt.
+
+    Sätze je Ampel (KosmoPrepare setzt sie, Visbox übernimmt): **grün** nennt Wert und
+    Unsicherheit; **gelb** sagt «unsicher» mit den Gründen und dass ein Kontrollmass ihn
+    sichern würde; **rot** sagt «nicht verlässlich», der Behelf bleibt. ``herkunft: "hand"``
+    (ein Handmass gewinnt immer) sagt nur, dass von Hand gemessen ist. Dazu ein Satz, wenn
+    ``drift_rel`` über :data:`MASSSTAB_DRIFT_SATZ_AB` liegt.
+
+    Returns:
+        ``vermerk`` — ``{wert, einheit, unsicherheit_rel, herkunft, ampel, gegenprobe_rel,
+        drift_rel}`` (nur Zahlen und Wörter, kein Pfad) oder ``None``; ``saetze`` für
+        ``verdict.hinweise``.
+    """
+    import json as _json                                     # noqa: PLC0415
+    from pathlib import Path
+
+    p = Path(pfad)
+    if not p.is_file():
+        return None, []
+    try:
+        roh = _json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None, [f"KONTEXT, Massstab: Die Verortung {p.name!r} ist nicht lesbar — wie "
+                      f"verlaesslich der Massstab ist, bleibt offen."]
+    block = roh.get("massstab") if isinstance(roh, dict) else None
+    if block is None:
+        return None, []
+    if not isinstance(block, dict):
+        return None, ["KONTEXT, Massstab: Der Block 'massstab' der Verortung ist kein Block — "
+                      "wie verlaesslich der Massstab ist, bleibt offen."]
+    wert = block.get("wert")
+    zahl = (isinstance(wert, (int, float)) and not isinstance(wert, bool)) and wert > 0
+    gegen = block.get("gegenprobe") if isinstance(block.get("gegenprobe"), dict) else {}
+    ampel = MASSSTAB_AMPELN.get(str(block.get("ampel") or "").strip().lower())
+    herkunft = block.get("herkunft") if isinstance(block.get("herkunft"), str) else None
+    vermerk = {"wert": float(wert) if zahl else None, "einheit": block.get("einheit"),
+               "unsicherheit_rel": block.get("unsicherheit_rel"), "herkunft": herkunft,
+               "ampel": ampel, "gegenprobe_rel": gegen.get("abweichung_rel"),
+               "drift_rel": block.get("drift_rel")}
+    mass = f"{float(wert):.2f} m je Modelleinheit" if zahl else "ohne lesbaren Wert"
+    plusminus = _prozent(block.get("unsicherheit_rel"))
+    mass_mit = mass + (f", ± {plusminus}" if plusminus and zahl else "")
+    gruende = [g for g in (block.get("gruende") or ()) if isinstance(g, str) and g.strip()]
+    warum = (" (" + "; ".join(" ".join(g.split()) for g in gruende) + ")") if gruende else ""
+    woher = {"imu": "aus der Bewegung der Kamera (IMU)"}.get(herkunft or "",
+                                                           f"aus {herkunft}" if herkunft else
+                                                           "ohne Herkunft")
+    saetze = []
+    if herkunft == "hand":
+        saetze.append(f"KONTEXT, Massstab von Hand gemessen: {mass}.")
+    elif ampel == "gruen":
+        saetze.append(f"KONTEXT, Massstab {woher}: {mass_mit}.")
+    elif ampel == "gelb":
+        saetze.append(f"KONTEXT, Massstab UNSICHER{warum}: {mass_mit} {woher} — ein "
+                      f"Kontrollmass am Bau wuerde ihn sichern.")
+    elif ampel == "rot":
+        saetze.append(f"KONTEXT, Massstab NICHT VERLAESSLICH{warum}: Der Behelf bleibt; ein "
+                      f"Kontrollmass am Bau fehlt.")
+    else:
+        saetze.append(f"KONTEXT, Massstab {woher}: {mass_mit} — ohne bekannte Ampel "
+                      f"({block.get('ampel')!r}), also nicht beurteilt.")
+    drift = block.get("drift_rel")
+    if (isinstance(drift, (int, float)) and not isinstance(drift, bool)
+            and abs(drift) > MASSSTAB_DRIFT_SATZ_AB):
+        saetze.append(f"KONTEXT, Massstab aendert sich entlang des Wegs um {_prozent(drift)} — "
+                      f"Masse weit vom Start der Aufnahme weichen ab.")
+    return vermerk, saetze
+
+
 #: Der Schluessel, unter dem ein **Kameraurteil** den Kontext dieses Laufs vermerkt —
 #: :func:`kontext_vermerk` oder ``None`` (gesetzt in ``abholer.verarbeiter``).
 URTEIL_KONTEXT = "kontext"
@@ -808,7 +899,7 @@ def kontext_aus_szene(roh) -> dict | None:
 
     Returns:
         ``None``, wenn ``context`` fehlt oder ``null`` ist (nicht bestellt). Sonst
-        ``{art, ply, datei, matrix, fit, crs_note, verortung, hinweise, maengel}`` —
+        ``{art, ply, datei, matrix, fit, crs_note, verortung, massstab, hinweise, maengel}`` —
         ``ply`` ist der Pfad für den Multipass und geht **nie** nach aussen (Regel 3);
         dafür gibt es ``datei`` (nur der Name) und :func:`kontext_vermerk`. ``matrix``
         ist ``None`` für die Einheit, sonst 16 Zahlen zeilenweise in der glTF-Welt.
@@ -822,7 +913,7 @@ def kontext_aus_szene(roh) -> dict | None:
     maengel: list[str] = []
     hinweise: list[str] = []
     ergebnis = {"art": None, "ply": None, "datei": None, "matrix": None, "fit": None,
-                "crs_note": None, "verortung": None, "hinweise": hinweise,
+                "crs_note": None, "verortung": None, "massstab": None, "hinweise": hinweise,
                 "maengel": maengel}
     if not isinstance(roh, dict):
         maengel.append(f"'context' ist {type(roh).__name__} und kein Block — welche "
@@ -881,8 +972,11 @@ def kontext_aus_szene(roh) -> dict | None:
     if verortung is not None and not isinstance(verortung, str):
         maengel.append(f"'context.verortung' ist {verortung!r} und kein Pfad.")
     elif verortung:
-        # NUR DER NAME: Gelesen wird die Datei nicht — die Lage steht in `transform`.
+        # NUR DER NAME nach aussen. Gelesen wird seit dem 14.10.2026 nur der Block
+        # `massstab` — zur Auskunft; die Lage steht weiter in `transform`.
         ergebnis["verortung"] = Path(verortung).name
+        ergebnis["massstab"], saetze = massstab_aus_verortung(verortung)
+        hinweise.extend(saetze)
     return ergebnis
 
 
@@ -921,6 +1015,8 @@ def kontext_vermerk(kontext: dict | None, bericht: dict | None = None) -> dict |
         "sha256": block.get("sha256"),
         "fit": kontext.get("fit"),
         "crs_note": kontext.get("crs_note"),
+        # Seit dem 14.10.2026: wie verlaesslich der Massstab ist (Ampel von KosmoPrepare).
+        "massstab": kontext.get("massstab"),
         "matrix_angewandt": kontext.get("matrix") is not None,
         "punkte_gerendert": block.get("punkte_gerendert"),
         "verworfen_deckkraft": block.get("verworfen_deckkraft"),

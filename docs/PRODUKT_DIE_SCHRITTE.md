@@ -1442,6 +1442,16 @@ hinter einem Knopf. Jetzt öffnet die App direkt die Knoten; oben schaltet ein S
 die Knoten zeigen die Mappe, die zuletzt offen war. Nachgebaut wird am Mac nichts: Der Knotenbaum ist die Kopie aus
 KosmoOrbit und wird dort weiterentwickelt.
 
+**RealityScan am echten Auftrag (14.10.2026).** Der Heim-PC hat mit der reparierten Brücke einen echten Auftrag gerechnet:
+Sie lief in knapp fünf Minuten ohne Hänger durch, das Bild besteht die Prüfung, und die Farben stimmen. Schlechte
+Nachricht: Ein Teil des «Deckels» blieb stehen und erschien in fünf von neun Bildern als Fremdkörper. Die Grenze, ab der
+ein Dreieck als Deckel gilt, ist darum halbiert; ob dabei echte Teile verloren gehen, misst der Heim-PC als Nächstes.
+
+**Massstab aus der Kamerabewegung (14.10.2026).** Der Heim-PC hat einen Weg gezeigt, wie ein Scan von selbst echte Meter
+bekommt: aus dem Bewegungssensor der Kamera, mit einer zweiten Schätzung als Gegenprobe. Gebaut wird das bei KosmoPrepare,
+wo die Scan-Kette liegt. Visbox liest das Ergebnis und sagt im Urteil, wie verlässlich der Massstab ist — grün still, gelb
+mit der Bitte um ein Mass von Hand, rot mit dem Hinweis, dass der Behelf bleibt.
+
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
 der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher

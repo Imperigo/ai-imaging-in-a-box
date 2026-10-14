@@ -1,0 +1,42 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261014-280",
+ "art": "frage",
+ "rang": 67,
+ "erstellt": "2026-10-14T11:30:00Z",
+ "beschreibung": "RealityScan-Bruecke: Deckel-Grenze 2.5 % statt 5 % nachmessen (M3), Bereinigung im Urteil, Massstab-Satz aus der Verortung",
+ "anweisung": "Hintergrund: In M2 (Nachtrag fassung2_m2 in auf-20261013-278, Commit 125253c) lief die Bruecke Fassung 2 durch, QA bestand (0.955/0.923/0.898), keine Waise. Aber: Bei der Deckel-Grenze 5 % der robusten Netzdiagonale (0.548 Einheiten) blieben 189 Dreiecke ueber 0.3 Einheiten mit 12.4 % der Flaeche stehen und wurden im Bild zu Fremdkoerpern (Pfeile/Flaechen, 5 von 9 Bildern). Deshalb steht DECKEL_KANTE_REL jetzt auf 0.025 (≈ 0.27 Einheiten) — GESETZT, nicht gemessen. Ausserdem steht die Bereinigung jetzt auch im Urteil (urteil.kontext.netz.bereinigung), und ein Massstab-Block in splat.verortung.json (falls vorhanden) wird als Satz ins Urteil gelesen (kosmo_szene.massstab_aus_verortung). ZU TUN, in dieser Reihenfolge: 1) git pull auf main (Kopf mindestens mit 'Deckel 2.5 %' im Log), Dienste neu starten (Abholer, visbox-flaeche). Drop-in AIIMAGING_REALITYSCAN bleibt ein. 2) Denselben Hallenauftrag wie M2 rechnen (der Speicherschluessel aendert sich, RealityScan rechnet neu, ~5 min). 3) Messen mit demselben Mass wie 277/278/M2: Deckung (200'000 dichte Splat-Punkte, Abstand 0.0422 Einheiten), Stuecke, Lage Median/p90. 4) Aus dem Bericht bzw. urteil.kontext.netz.bereinigung: deckel_dreiecke, deckel_flaeche_anteil, kante_grenze. Und: wie viele Dreiecke ueber 0.3 Einheiten bleiben (wie in M2 gezaehlt), mit Flaechenanteil. 5) Bilder ansehen wie in M2: Fremdkoerper aus Deckel-Resten je Bild (Pfeile/Flaechen) — zaehlen, nicht beschreiben, was echt ist (Plane und Dachaufbau sind echte Gegenstaende, nicht zaehlen). Konfetti zaehlen. QA-Zahlen und geometry_gates je Kamera. 6) Falls die Verortung des Splats schon einen Block massstab traegt: den Satz aus verdict.hinweise wortgleich zurueck. NICHT tun: keinen Code aendern, die Grenze nicht selbst verstellen; keine Bilder, Ortsnamen, Pfade oder Personen ins Repo (Regel 3) — Bilder bleiben lokal. Wenn die Deckung unter 92 % faellt: das ist der Befund (die Grenze nimmt echte Teile), Zahlen melden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "wie M2 aus 278: KosmoOrbit-Kernel (Bestand aus dem Splat); Fotos, Splat und Bilder bleiben lokal"
+ },
+ "params": {
+  "folgt_auf": "auf-20261013-278",
+  "entscheide": [
+   "79",
+   "81"
+  ],
+  "deckel_kante_rel": 0.025
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Ein grosser GPU-Lauf (RealityScan ~25 GB), danach Blender und Bildmodell — nicht gleichzeitig mit anderen GPU-Laeufen.",
+  "hinweise": [
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf (Codestand, RealityScan-Fassung).",
+  "Deckung, Stuecke, Lage wie M2 — Tabelle M2 gegen M3.",
+  "bereinigung aus dem Urteil (deckel_dreiecke, deckel_flaeche_anteil, kante_grenze) und Rest ueber 0.3 Einheiten.",
+  "Fremdkoerper aus Deckel-Resten je Bild, Konfetti, QA und geometry_gates je Kamera.",
+  "Massstab-Satz, falls vorhanden.",
+  "Urteil: Haelt die Deckung, und sind die Deckel-Reste weg?"
+ ]
+}

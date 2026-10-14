@@ -1060,6 +1060,9 @@ def kontext_vorbereiten(kontext_ply, *, matrix=None, aufnahme=None,
                          "sha256": n.get("sha256"), "quelle": _rs.WEG,
                          "programm_fassung": (b.get("programm") or {}).get("fassung"),
                          "vereinfacht": n.get("vereinfacht"),
+                         # Farben und Deckel (Fassung 2 der Bruecke) — bis 14.10. nur im
+                         # Speicher-Bericht, im Urteil fehlte es (M2 aus 278).
+                         "bereinigung": b.get("bereinigung"),
                          "rechenzeit_s": (b.get("zeiten_s") or {}).get("lauf_s"),
                          "aufnahme": rs["art"],
                          "bilder": (b.get("bilder") or {}).get("anzahl"),

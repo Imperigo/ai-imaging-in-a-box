@@ -529,7 +529,7 @@ def _ply(pfad, ecken, flaechen, *, farbe="float", form="binary_little_endian"):
 def test_bereinige_export_farben_und_deckel(tmp_path, form):
     """278 F7 und der Deckel: float-Farben werden uchar, das Riesendreieck fällt weg, seine
     Ecken mit ihm; ein Viereck (Fächer) bleibt, wenn es klein ist."""
-    N = 40                         # 5 % der Diagonale sind dann 2.6, eine Kante misst ≤ 1.42
+    N = 80                         # 2.5 % der Diagonale sind dann ≈ 2.7, eine Kante ≤ 1.42
     ecken, flaechen = [], []
     for i in range(N):
         for j in range(N):
@@ -559,7 +559,7 @@ def test_bereinige_export_farben_und_deckel(tmp_path, form):
 
 
 def test_bereinige_export_laesst_uchar_und_ohne_deckel_gleich(tmp_path):
-    n = 40
+    n = 80
     ecken = [(float(i), 0.0, float(j), 10, 20, 30) for i in range(n) for j in range(n)]
     flaechen = []
     for i in range(n - 1):

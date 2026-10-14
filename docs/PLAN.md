@@ -7862,7 +7862,11 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Messung `auf-20261013-278`** (local): RealityScan 93 % Deckung in 324 s, COLMAP-dicht 49–87 % in über 1 h; Brücke Fassung 1 lief nicht (7 Befunde). *(14.10.2026, §100)*
 - [x] **Owner-Entscheid:** RealityScan ist der Weg fürs Umgebungsnetz, COLMAP höchstens offener Rückfall. *(14.10.2026, §100)*
 - [x] **Brücke Fassung 2** — die sieben Befunde aus 278 behoben. *(14.10.2026, §100)*
-- [ ] **HomeStation schaltet ein und rechnet M2** (Hallenauftrag mit Umgebung aus RealityScan): Besteht das Bild?
+- [x] **HomeStation schaltet ein und rechnet M2**: Brücke lief durch (280 s), QA besteht, keine Waise, Farben richtig; Deckel-Reste 5 von 9 Bildern, nNW geometry_gates 0.811 < 0.85. *(14.10.2026, §102)*
+- [x] **Deckel-Grenze 2.5 %** (statt 5 %), Bereinigung auch im Urteil. *(14.10.2026, §102)*
+- [ ] **Messung `auf-20261014-280`** (local, M3): hält die Deckung bei 2.5 %, sind die Deckel-Reste weg?
+- [x] **Massstab-Block lesen** (Satz je Ampel im Urteil); die Stufe selbst baut KosmoPrepare. *(14.10.2026, §102)*
+- [ ] **Owner:** Ampel-Schwellen und «App bittet um Kontrollmass» (Auswahlfrage).
 
 ## Mac zeigt zuerst die Knoten (Entscheid 85, 14.10.2026 — Sitzung 74 §101)
 
