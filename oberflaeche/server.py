@@ -1233,6 +1233,12 @@ def _hinweise_zum_bild(eintrag: dict) -> dict:
         satz = next((h for h in hinweise if h.startswith(SKIZZE_NICHT_ANGEKOMMEN)), None)
         angekommen = satz is not None
     unterlage = _unterlage_hinweis(herkunft)
+    standpunkt = _standpunkt_hinweis(herkunft)
+    if standpunkt is not None and hinweise is not None and standpunkt not in hinweise:
+        # ENTSCHEID 96b: Ein Skizzenbild vom Standpunkt der MAPPE sagt, warum — hinten an die
+        # Liste, VOR dem Satz zur Unterlage (der steht zuletzt, darauf verlaesst sich die Seite).
+        # Kein eigenes Feld: Die Felder der Flaeche liest auch die App (`FELDER_DER_FLAECHE`).
+        hinweise = hinweise + [standpunkt]
     if unterlage is not None and hinweise is not None and unterlage not in hinweise:
         # HINTEN ANGEHAENGT, nicht vorne: Der Satz «SKIZZE NICHT ANGEKOMMEN» steht
         # zuvorderst, und die App verlaesst sich darauf nicht, aber die Webseite zeigt die
@@ -1247,6 +1253,18 @@ def _hinweise_zum_bild(eintrag: dict) -> dict:
     # Anfang wiedererkennen muss — der Anfang stuende sonst ein zweites Mal in der Seite.
     return {"hinweise": hinweise, "skizze_nicht_angekommen": angekommen,
             "skizze_hinweis": satz, "unterlage_hinweis": unterlage}
+
+
+def _standpunkt_hinweis(herkunft: dict):
+    """Owner-Entscheid 96b (15.10.2026): von wo ein Bild aus einer Skizze gerechnet wurde — der
+    Satz der Bibliothek (``herkunft.standpunkt_skizze.zeile``), **nur wenn es der Standpunkt der
+    Mappe war**: Dann ist er womöglich nicht der des Bildes darunter, und das soll man sehen.
+    Vom Bild unter der Skizze ist der gemeinte Fall; dazu steht nichts. Kein Satz von hier."""
+    woher = herkunft.get("standpunkt_skizze") if isinstance(herkunft, dict) else None
+    if not isinstance(woher, dict) or woher.get("von") != "mappe":
+        return None
+    zeile = woher.get("zeile")
+    return zeile if isinstance(zeile, str) and zeile.strip() else None
 
 
 def _unterlage_hinweis(herkunft: dict):

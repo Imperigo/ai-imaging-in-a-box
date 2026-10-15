@@ -44,7 +44,9 @@ def test_die_neueste_zuerst_ohne_verworfene_und_jede_einmal(tmp_path):
     assert namen == ["skizze-a.png", "skizze-b.png"]
     liste = knotenweg.skizzen_der_mappe(projekt.oeffne(mappe)["projekt"], hoechstens=1)
     assert [s["name"] for s in liste] == ["skizze-a.png"]
-    assert set(liste[0]) == {"name", "titel", "erzeugt", "ueber", "stand"}   # kein Pfad
+    # kein Pfad; seit 15.10.2026 dazu Bemerkung (96a) und woher der Standpunkt kommt (96b)
+    assert set(liste[0]) == {"name", "titel", "erzeugt", "ueber", "stand", "bemerkung",
+                             "standpunkt"}
 
 
 def test_ohne_skizzen_eine_leere_liste(tmp_path):

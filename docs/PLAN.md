@@ -8029,7 +8029,9 @@ Bekannt und ausdrücklich nicht erledigt:
 ## Skizze führt das Bild (Entscheide 96/96a/96b)
 
 - [x] Eingang «Skizze», Vertragsfeld `skizze`, Abholer über `rechne_skizze`, Lizenz markiert. *(15.10.2026, §125/§130)*
-- [ ] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b).
+- [x] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b). *(15.10.2026, §131 — gebaut in beiden; drüben bis zum Einspielen bei Int 1 «gebaut, am Gerät unbestätigt»)*
+- [x] Auflage A1 des Integrators: Skizzenname ist relativer Pfad in der Mappe — Vertrag drüben, hier Server und Abholer unabhängig. *(15.10.2026, §131)*
+- [ ] Int 1 spielt `claude/kosmovis-skizze-fuehrt` (mit Runde-31-Kopf) ein; danach Kopie nachziehen und `geaendert` in `HERKUNFT.json` leeren. *(Adressat: cloud/Int 1)*
 - [x] Gemessen: Die Skizze kommt auf Qwen-Image 2.1 an (Strichzone 74.6 gegen 2.8), auf Z-Image nicht. *(15.10.2026, §132)*
 - [x] `knoten_bau.py`: `npm ci` auch bei neuerem Lockfile. *(15.10.2026, §132)*
 - [x] Graph in Visbox übersteht das Neuladen (je Mappe am Heim-PC gesichert). *(15.10.2026, §133)*

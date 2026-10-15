@@ -5636,6 +5636,10 @@ speichert, ohne sie zu kennen.*
 **Pfad-Trickserei (Path Traversal)** — Ein Angriff, bei dem in einem Namen `..` oder `/`
 steckt, um aus dem vorgesehenen Verzeichnis auszubrechen — etwa `../../etc/passwd`. Abwehr:
 Namen prüfen, bevor sie zu Pfaden werden.
+*Seit 15.10.2026 auch für den Namen einer Skizze in der Bestellung* (Auflage A1 des Integrators):
+er muss ein relativer Pfad in der Mappe sein — kein `.`/`..`, kein führender `/`, kein Backslash, kein
+Laufwerksbuchstabe, keine Steuerzeichen, höchstens 255 Zeichen. Drüben prüft der Vertrag, hier prüfen
+Server und Abholer **unabhängig nochmals**.
 
 **Positivliste / Verbotsliste** — Zwei Arten zu prüfen: erlauben, was ausdrücklich zulässig
 ist (Positivliste), oder ablehnen, was ausdrücklich schädlich ist (Verbotsliste). *Bei
@@ -6766,9 +6770,27 @@ wurde, geht als Eingangsbild an das Bildmodell, zusammen mit einer **Anweisung**
 Skizzen.
 
 **Anweisung (an eine Skizze)** — Der Satz, der sagt, **was sich am Bild ändern soll** («ein Vordach aus
-Holz»), im Unterschied zum Prompt, der beschreibt, was entstehen soll. *Im Projekt:* in der
-Knotenansicht wird der Prompt des Render-Knotens zur Anweisung, sobald eine Skizze am Eingang hängt; ist
-er leer, gilt die Bemerkung, die beim Zeichnen an der Skizze stand.
+Holz»), im Unterschied zum Prompt, der beschreibt, was entstehen soll. *Im Projekt:* ~~in der
+Knotenansicht wird der Prompt des Render-Knotens zur Anweisung~~ — **seit Entscheid 96a (15.10.2026) gilt
+in der Knotenansicht die Bemerkung, die beim Zeichnen an der Skizze stand**; die Stimmung (der Prompt)
+tritt zurück und wird nicht als Anweisung gesendet. Hat die Skizze keine Bemerkung, sagt der Knoten das
+vor dem Klick («am iPad eine schreiben») und sendet nichts.
+
+**Standpunkt eines Bildes** — Von wo ein Bild der Mappe gerechnet wurde: Richtung, Augenpunkt und
+Zielpunkt, Brennweite, Raum. *Im Projekt:* seit dem 15.10.2026 steht er an jedem gerechneten Bild
+(`herkunft.standpunkt`). Wird eine Skizze auf ein Bild gezeichnet, entsteht das neue Bild **von genau
+diesem Standpunkt** (Entscheid 96b) — nur dann liegt die Tiefenkarte unter den Strichen. Ist er nicht
+bekannt (ein älteres Bild) oder gibt es kein Bild darunter, gilt der Standpunkt der Mappe, und das steht
+am Ergebnis.
+
+**Steuerzeichen** — Unsichtbare Zeichen im Text, die keine Buchstaben sind, sondern einem Gerät etwas
+befehlen: Zeilenumbruch, Tabulator, «Ende der Zeichenkette» (Nullzeichen). *Im Projekt:* ein Skizzenname
+mit einem Steuerzeichen wird abgewiesen (Auflage A1) — er könnte in einem Protokoll oder Dateinamen etwas
+anderes bedeuten, als er zeigt.
+
+**Laufwerksbuchstabe** — Der Buchstabe mit Doppelpunkt, mit dem Windows ein Laufwerk benennt (`C:`). Ein
+Name, der so beginnt, zeigt auf eine ganze Platte statt in einen Ordner. *Im Projekt:* ein Skizzenname mit
+Laufwerk wird abgewiesen (Auflage A1, siehe Pfad-Trickserei).
 
 **Bearbeitungs-Modell** — Ein Bildmodell, das ein **vorhandenes Bild verändert**, statt eines aus der
 Tiefenkarte neu zu rechnen. Nur ein solches kann eine Skizze überhaupt «sehen». *Im Projekt:* gemessen
@@ -7247,6 +7269,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-15 | Ergaenzt aus A1/96a/96b (Protokoll 74 §131): **Standpunkt eines Bildes**, **Steuerzeichen**, **Laufwerksbuchstabe**; berichtigt **Anweisung (an eine Skizze)** (96a: die Bemerkung gilt, nicht der Prompt); **Pfad-Trickserei** um den Skizzennamen ergänzt |
 | 2026-10-15 | Nachgeführt aus dem RealityScan-Ausfall (auf-287): **Xvfb** (eigener Bildschirm für RealityScan) |
 | 2026-10-15 | Ergaenzt aus Entscheid 96 «Die Skizze führt das Bild» (Protokoll 74 §125): **Die Skizze führt das Bild (Eingang «Skizze»)**, **Anweisung (an eine Skizze)**, **Bearbeitungs-Modell**, **Eingang nur für eine Knotenart**, **Verborgene Datei (Punktdatei)**, **Feld, das ein anderes ausschliesst (Kreuzregel)**, **Additives Vertragsfeld**, **Kurzhilfe (Tooltip)** |
 | 2026-10-14 | Ergaenzt aus dem Knoten «Skizze vom iPad» (Entscheide 95/95a, Protokoll 74 §123): **Skizzen-Quelle des Wirts**, **Zulieferer-Knoten**, **Daumenbild (Vorschaubild)**, **data:-Adresse (Data-URL)**, **Berechneter Schlüssel** |
