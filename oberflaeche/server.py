@@ -455,6 +455,9 @@ WEG_KNOTEN_MODELL_LADEN = "/knoten/modell-laden"
 #: Entscheid 95 (14.10.2026, Blatt 25): das Bild einer Skizze der Mappe für den Knoten «Skizze
 #: vom iPad» — ``?name=`` aus ``/knoten/mappe`` (``skizzen``), dieselbe Pfadregel wie ``/bild``.
 WEG_KNOTEN_SKIZZE = "/knoten/skizze"
+#: Der Graph der Knotenansicht, je Mappe gesichert (15.10.2026, auf-20261015-286: nach dem
+#: Neuladen war er weg). ``GET`` liest, ``POST`` ersetzt — Inhalt: die Render-Graphen.
+WEG_KNOTEN_GRAPH = "/knoten/graph"
 WEG_BRUECKE = "/bruecke"
 
 #: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
@@ -1908,6 +1911,12 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL_LADEN:
                 self._sende(modell_laden_sicht(type(self).modell_laden))
+            elif pfad == WEG_KNOTEN_GRAPH:
+                ordner = self._knoten_ordner(frage)
+                if not ordner:
+                    self._sende({"graphen": [], "satz": None})
+                    return
+                self._sende(knotenweg.lies_graph(ordner))
             elif pfad == WEG_KNOTEN_SKIZZE:
                 # DIE MAPPE DER KNOTENANSICHT, nicht die vom Start: `_knoten_ordner`. Den
                 # Namen prueft `bildpfad` (in `_bild`), wie bei jedem Bild.
@@ -2016,6 +2025,22 @@ class Flaeche(BaseHTTPRequestHandler):
     def _knotenweg_handeln(self, pfad: str, laenge: int) -> None:
         if pfad == WEG_KNOTEN_MODELL_LADEN:
             self._modell_laden(laenge)
+            return
+        if pfad == WEG_KNOTEN_GRAPH:
+            # DER GRAPH DER MAPPE (15.10.2026): sichern, damit er das Neuladen uebersteht.
+            try:
+                if laenge > knotenweg.GRAPH_HOECHSTENS:
+                    raise knotenweg.KnotenwegError("Der Graph ist zu gross, um ihn zu sichern.", 413)
+                ordner = self._knoten_ordner(None)
+                if not ordner:
+                    raise knotenweg.KnotenwegError("Keine Mappe offen — nichts zu sichern.", 404)
+                try:
+                    daten = json.loads(self.rfile.read(laenge) or b"{}")
+                except ValueError as fehler:
+                    raise knotenweg.KnotenwegError(f"Der Graph ist kein JSON: {fehler}") from fehler
+                self._sende(knotenweg.schreibe_graph(ordner, (daten or {}).get("graphen")))
+            except knotenweg.KnotenwegError as fehler:
+                self._fehler(str(fehler), fehler.code)
             return
         rest = pfad[len(WEG_BRUECKE):] if pfad.startswith(WEG_BRUECKE) else None
         teile = [t for t in (rest or "").split("/") if t]

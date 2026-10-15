@@ -568,3 +568,58 @@ def skizzen_der_mappe(p: dict, hoechstens: int = SKIZZEN_HOECHSTENS) -> list[dic
     ]
     liste.sort(key=lambda x: str(x.get("erzeugt") or ""), reverse=True)
     return liste[:max(0, int(hoechstens))]
+
+
+# ====================================================== Der Graph der Mappe (15.10.2026)
+#
+# ANLASS (auf-20261015-286): In Visbox lebt das Dokument der Knotenansicht nur in der Seite —
+# nach dem Neuladen war der Graph weg. Er wird darum je Mappe auf dem Heim-PC gesichert und
+# beim Öffnen wieder gelegt. Gesichert werden NUR die Render-Graphen (Eintraege der Art
+# ``visgraph``), nicht das Modell: das kommt weiter aus der Mappe selbst.
+
+#: Wo der Graph in der Mappe liegt.
+GRAPH_DATEI = "knotengraph.json"
+#: Höchstens so gross darf er sein — ein Graph aus Knoten und Linien ist Text, kein Modell.
+GRAPH_HOECHSTENS = 2 * 1024 * 1024
+#: Das Format, damit eine spätere Fassung eine alte Datei erkennt.
+GRAPH_FORMAT = "visbox.knotengraph/v1"
+
+
+def pruefe_graphen(graphen) -> list[dict]:
+    """Nur eine Liste von Render-Graphen (``kind == "visgraph"``, mit ``id``, ``nodes``,
+    ``edges``) — alles andere wird abgewiesen, nicht still gefiltert."""
+    if not isinstance(graphen, list):
+        raise KnotenwegError("Der Graph der Mappe muss eine Liste sein.")
+    for g in graphen:
+        if not (isinstance(g, dict) and g.get("kind") == "visgraph" and isinstance(g.get("id"), str)
+                and isinstance(g.get("nodes"), list) and isinstance(g.get("edges"), list)):
+            raise KnotenwegError("Im Graph der Mappe steht etwas, das kein Render-Graph ist.")
+    return graphen
+
+
+def schreibe_graph(ordner, graphen) -> dict:
+    """Die Render-Graphen in die Mappe schreiben (ganz ersetzt, über eine Zwischendatei)."""
+    pruefe_graphen(graphen)
+    roh = json.dumps({"format": GRAPH_FORMAT, "graphen": graphen}, ensure_ascii=False)
+    if len(roh.encode("utf-8")) > GRAPH_HOECHSTENS:
+        raise KnotenwegError("Der Graph ist zu gross, um ihn zu sichern.", 413)
+    ziel = Path(ordner) / GRAPH_DATEI
+    zwischen = ziel.with_suffix(".json.neu")
+    zwischen.write_text(roh, encoding="utf-8")
+    zwischen.replace(ziel)
+    return {"gesichert": len(graphen)}
+
+
+def lies_graph(ordner) -> dict:
+    """``{graphen: [...]}`` aus der Mappe — leer, wenn noch keiner gesichert ist. Eine
+    unlesbare Datei heisst leer mit Satz, nicht Absturz: Der Architekt fängt dann neu an."""
+    ziel = Path(ordner) / GRAPH_DATEI
+    if not ziel.is_file():
+        return {"graphen": [], "satz": None}
+    try:
+        daten = json.loads(ziel.read_text(encoding="utf-8"))
+        if daten.get("format") != GRAPH_FORMAT:
+            raise ValueError(f"unbekanntes Format {daten.get('format')!r}")
+        return {"graphen": pruefe_graphen(daten.get("graphen")), "satz": None}
+    except (OSError, ValueError, AttributeError, KnotenwegError) as fehler:
+        return {"graphen": [], "satz": f"Der gesicherte Graph liess sich nicht lesen ({fehler})."}

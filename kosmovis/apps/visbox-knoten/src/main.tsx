@@ -41,6 +41,7 @@ import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbi
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
+import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
 import {
   aufDemVisboxServer,
   brueckeAufDiesenServer,
@@ -116,10 +117,19 @@ if (aufDemVisboxServer()) {
     });
 }
 
-const wurzel = document.getElementById('root');
-if (!wurzel) throw new Error('Kein #root in index.html');
-createRoot(wurzel).render(
-  <StrictMode>
-    <VisboxKnoten />
-  </StrictMode>,
-);
+// DER GRAPH UEBERSTEHT DAS NEULADEN (15.10.2026, auf-20261015-286): erst den gesicherten Graph
+// der Mappe legen, dann das erste Bild — sonst legte der fertige Anfang einen zweiten an.
+async function zeige(): Promise<void> {
+  if (aufDemVisboxServer()) {
+    await ladeGesichertenGraph();
+    sichereBeiAenderung();
+  }
+  const wurzel = document.getElementById('root');
+  if (!wurzel) throw new Error('Kein #root in index.html');
+  createRoot(wurzel).render(
+    <StrictMode>
+      <VisboxKnoten />
+    </StrictMode>,
+  );
+}
+void zeige();

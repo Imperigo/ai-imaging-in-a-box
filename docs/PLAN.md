@@ -8032,6 +8032,6 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b).
 - [x] Gemessen: Die Skizze kommt auf Qwen-Image 2.1 an (Strichzone 74.6 gegen 2.8), auf Z-Image nicht. *(15.10.2026, §132)*
 - [x] `knoten_bau.py`: `npm ci` auch bei neuerem Lockfile. *(15.10.2026, §132)*
-- [ ] **Graph in Visbox geht beim Neuladen verloren** — je Mappe am Heim-PC sichern und beim Öffnen laden.
+- [x] Graph in Visbox übersteht das Neuladen (je Mappe am Heim-PC gesichert). *(15.10.2026, §133)*
 - [ ] Bemerkung zur Skizze schreiben können (iPad beim Ablegen und/oder am Knoten) — erst zeichnen.
 - [ ] Verlauf: «nicht anwendbar» nicht als «durchgefallen»; wartender Auftrag ohne «Grund unbekannt»; Skizze nennt alle ihre Bilder.
