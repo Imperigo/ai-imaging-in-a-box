@@ -1428,10 +1428,19 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
             # `setze_auf_unterlage`. Auch das VOR dem ersten Lauf: Eine fehlende Unterlage
             # der dritten Ebene soll nicht erst auffallen, wenn zwei gerechnet sind.
             eingang = _eingangsbild(p, wurzel, name, pfad_skizze, ueber)
-            plaene.append({"args": args, "skizze": name, "anweisung": text,
+            # VOM STANDPUNKT DES BILDES, AUF DAS GEZEICHNET WURDE (Owner-Entscheid 96b,
+            # 15.10.2026). Bis dahin rechnete jede Skizze vom Standpunkt der Mappe — bei einer
+            # Unterlage aus einer anderen Richtung lag die Tiefenkarte dann neben den Strichen.
+            # Siehe `projekt.standpunkt_fuer_skizze`; ohne Unterlage oder ohne bekannten
+            # Standpunkt bleibt der bisherige Weg, und das steht am Bild.
+            eigene, standpunkt_skizze = _standpunkt_der_skizze(p, ueber, args)
+            plaene.append({"args": eigene, "skizze": name, "anweisung": text,
                            "unterlage": eingang["herkunft"],
-                           "standpunkt_vorgabe": standpunkt_vorgabe,
-                           "graph": _skizzengraph(glb, args, p, pfad=eingang["pfad"],
+                           "standpunkt_vorgabe": (None if standpunkt_skizze["von"]
+                                                  == projekt.STANDPUNKT_VOM_BILD
+                                                  else standpunkt_vorgabe),
+                           "standpunkt_skizze": standpunkt_skizze,
+                           "graph": _skizzengraph(glb, eigene, p, pfad=eingang["pfad"],
                                                   anweisung=text)})
     elif varianten:
         art = VARIANTEN_STARTWERTE
@@ -1508,7 +1517,32 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
             "abgebrochen": (laeufe[-1].get("status") == kette.STATUS_ABGEBROCHEN
                             or zwischen_angehalten),
             "variantengruppe": gruppe_id, "varianten_nicht_begonnen": nicht_begonnen,
-            "standpunkt_vorgabe": standpunkt_vorgabe}
+            # VON WO GERECHNET: die Vorgabe des LETZTEN Laufs (bei einer Skizze vom Standpunkt
+            # ihres Bildes ist es keine — Entscheid 96b) und, bei Skizzen, woher er kam.
+            "standpunkt_vorgabe": gerechnet[-1][0].get("standpunkt_vorgabe") if gerechnet
+                                  else standpunkt_vorgabe,
+            "standpunkt_skizze": (copy.deepcopy(gerechnet[-1][0].get("standpunkt_skizze"))
+                                  if gerechnet else None)}
+
+
+def _standpunkt_der_skizze(p: dict, ueber, args: dict) -> tuple[dict, dict]:
+    """Die Einstellungen eines Skizzenlaufs mit dem Standpunkt ihres Bildes — Entscheid 96b.
+
+    Ist der Standpunkt der Unterlage bekannt (:func:`projekt.standpunkt_fuer_skizze`), fallen
+    ALLE Standpunktangaben der Mappe weg (:data:`projekt.STANDPUNKT_FELDER_BILD`) und die des
+    Bildes treten an ihre Stelle — einzeln überschrieben stünde sonst etwa ein ``auge`` des
+    Bildes neben einem ``kamera`` der Mappe, und ``kette.standpunkt_widerspruch`` wiese den Lauf
+    ab. Sonst bleiben die Einstellungen, wie sie sind (Standpunkt der Mappe).
+
+    Returns:
+        ``(args, standpunkt_skizze)`` — ``args`` als neue Tabelle, die übergebene bleibt.
+    """
+    auskunft = projekt.standpunkt_fuer_skizze(p, ueber)
+    if auskunft["felder"] is None:
+        return dict(args), auskunft
+    eigene = {k: v for k, v in args.items() if k not in projekt.STANDPUNKT_FELDER_BILD}
+    eigene.update(copy.deepcopy(auskunft["felder"]))
+    return eigene, auskunft
 
 
 def _haelt_an(abbrechen) -> bool:
@@ -1784,6 +1818,12 @@ def _trage_ein(p: dict, wurzel: Path, plan: dict, lauf: dict, stand, *,
             # Standpunkt bestellt war. Am Bild und nicht nur im Rueckgabewert — sonst ist der
             # Satz nach dem Neuladen der Seite weg. Wieder als eigene Kopie.
             "standpunkt_vorgabe": copy.deepcopy(plan.get("standpunkt_vorgabe")),
+            # VON WO GERECHNET, IMMER (Owner-Entscheid 96b, 15.10.2026): die Standpunktangaben,
+            # mit denen dieser Lauf rechnete — die Vorgabe «von Süden» eingeschlossen. Eine
+            # Skizze, die später auf dieses Bild gezeichnet wird, entsteht von genau hier
+            # (`projekt.standpunkt_des_bildes`). Bis dahin stand das nirgends am Bild.
+            "standpunkt": {n: copy.deepcopy(args[n]) for n in projekt.STANDPUNKT_FELDER_BILD
+                           if args.get(n) is not None},
         }
         if plan["skizze"] is not None:
             # WORAUS ES ENTSTAND. Die Skizze nennt ihr Bild (`ergebnis`), das Bild seine
@@ -1794,6 +1834,9 @@ def _trage_ein(p: dict, wurzel: Path, plan: dict, lauf: dict, stand, *,
             # UND WORAUF SIE GESETZT WURDE — das Eingangsbild, das der Nachrender wirklich
             # bekam (Befund 22.09.2026, siehe `setze_auf_unterlage`).
             herkunft["unterlage"] = copy.deepcopy(plan.get("unterlage"))
+            # UND VON WO (Entscheid 96b): vom Bild unter der Skizze oder von der Mappe, mit
+            # der Zeile, die das sagt.
+            herkunft["standpunkt_skizze"] = copy.deepcopy(plan.get("standpunkt_skizze"))
         name = projekt.pfad_fuer_die_mappe(bild, wurzel)
         projekt.vermerke_bild(
             # RELATIV ZUR MAPPE — zum dritten Mal derselbe Grund (Beweis 31, 21.09.2026):

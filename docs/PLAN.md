@@ -8029,5 +8029,7 @@ Bekannt und ausdrücklich nicht erledigt:
 ## Skizze führt das Bild (Entscheide 96/96a/96b)
 
 - [x] Eingang «Skizze», Vertragsfeld `skizze`, Abholer über `rechne_skizze`, Lizenz markiert. *(15.10.2026, §125/§130)*
-- [ ] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b).
+- [x] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b). *(15.10.2026, §131 — gebaut in beiden; drüben bis zum Einspielen bei Int 1 «gebaut, am Gerät unbestätigt»)*
+- [x] Auflage A1 des Integrators: Skizzenname ist relativer Pfad in der Mappe — Vertrag drüben, hier Server und Abholer unabhängig. *(15.10.2026, §131)*
+- [ ] Int 1 spielt `claude/kosmovis-skizze-fuehrt` (mit Runde-31-Kopf) ein; danach Kopie nachziehen und `geaendert` in `HERKUNFT.json` leeren. *(Adressat: cloud/Int 1)*
 - [ ] Am Heim-PC messen, ob die Skizze auf qwen-image-2.1 ankommt (local `auftraege/offen/auf-20261015-286.json`).

@@ -2183,6 +2183,10 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
     mappe = knotenweg.mappe_des_auftrags(auftrag["verzeichnis"])
     if mappe is None:
         raise AbholerError(SATZ_SKIZZE_OHNE_MAPPE)
+    # AUFLAGE A1 (Integrator, 15.10.2026), HIER NOCHMALS — unabhaengig von Vertrag und Server: Der
+    # Name ist ein relativer Pfad in der Mappe, und er steht dort als Skizze. Ein Auftrag kann
+    # auch von Hand in die Ablage gelegt sein; was hier gerechnet wird, prueft dieser Weg selbst.
+    _pruefe_skizzenname(mappe, skizze.get("name"))
     beginn = time.monotonic()
     kettenargumente = {"backbone": szene["backbone"]} if szene.get("backbone") else {}
     try:
@@ -2209,14 +2213,19 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
                    {})
     herkunft = eintrag.get("herkunft") or {}
     vorgabe = aus.get("standpunkt_vorgabe")
+    # VON WO (Entscheid 96b): vom Bild unter der Skizze, sonst von der Mappe — mit Grund.
+    woher = aus.get("standpunkt_skizze") or {}
+    standpunkt_saetze = [s for s in (woher.get("zeile"),
+                                     (vorgabe or {}).get("satz") if vorgabe else None) if s]
     vermerk = {
         "name": skizze.get("name"),
         "anweisung": herkunft.get("anweisung") or skizze.get("anweisung"),
         "anweisung_original": skizze.get("anweisung_original"),
         "anweisung_aus": "bestellung" if skizze.get("anweisung") else "bemerkung",
         "unterlage": herkunft.get("unterlage"),
-        "standpunkt": ((vorgabe or {}).get("satz") if vorgabe else
+        "standpunkt": (" ".join(standpunkt_saetze) if standpunkt_saetze else
                        "Standpunkt aus den Einstellungen der Mappe, wie auf der Seite."),
+        "standpunkt_von": woher.get("von"),
         "hinweise": [str(h) for h in nach.get("hinweise") or ()],
         "bild_in_der_mappe": eintrag.get("bild"),
     }
@@ -2239,6 +2248,28 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
         "skizze": vermerk,
         "modellstand": aus.get("modell_stand"),
     }
+
+
+def _pruefe_skizzenname(mappe, name) -> None:
+    """A1 auf der Bildseite: der Name ist ein relativer Pfad, und er steht in der Mappe als
+    Skizze (nicht verworfen). Wirft :class:`AbholerError` mit Satz, sonst nichts."""
+    from . import knotenweg, projekt  # spaet: nur ein Skizzenlauf braucht sie
+
+    mangel = _kosmo_szene.skizzenname_mangel(name)
+    if mangel is not None:
+        raise AbholerError(f"Die Skizze wird nicht gerechnet: {mangel}")
+    try:
+        p = projekt.oeffne(mappe)["projekt"]
+    except projekt.ProjektError as fehler:
+        raise AbholerError(f"Die Mappe der Skizze liess sich nicht oeffnen: {fehler}") from fehler
+    if name not in {s["name"] for s in knotenweg.skizzen_der_mappe(p, hoechstens=10**6)}:
+        verworfen = any(isinstance(e, dict) and e.get("skizze") == name
+                        for e in p.get("skizzen") or ())
+        raise AbholerError(
+            f"Die Skizze {name!r} ist verworfen — bewusst liegengelassen; gerechnet wird sie nicht."
+            if verworfen else
+            f"Die Skizze {name!r} steht nicht als Skizze in der Mappe. Gerechnet wird nur, was "
+            f"dort steht.")
 
 
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,

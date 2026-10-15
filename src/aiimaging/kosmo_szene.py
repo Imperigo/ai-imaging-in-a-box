@@ -996,6 +996,45 @@ SKIZZE_NICHT_ANGEKOMMEN_ANFANG = "SKIZZE NICHT ANGEKOMMEN"
 URTEIL_SKIZZE = "skizze"
 
 
+#: Auflage A1 des Integrators (15.10.2026): die Höchstlänge eines Skizzennamens — dieselbe
+#: wie drüben im Vertrag (``SKIZZENNAME_HOECHSTENS``, ``render-scene.ts``).
+SKIZZENNAME_HOECHSTENS = 255
+
+
+def skizzenname_mangel(name) -> str | None:
+    """Ist ``name`` ein RELATIVER Pfad in der Mappe? Der Satz, warum nicht — oder ``None``.
+
+    **Auflage A1 des Integrators (15.10.2026)**, beim Absegnen von ``RenderScene.skizze``: Der
+    Name reist von der Knotenansicht zum Heim-PC und wird dort in der Mappe nachgeschlagen. Drüben
+    prüft der Vertrag ihn schon (``skizzenNameMangel``); **hier wird unabhängig nochmals
+    geprüft** — eine Bildseite, die sich auf die Prüfung des Absenders verlässt, hat keine.
+
+    Abgewiesen wie drüben: kein Text oder leer; länger als :data:`SKIZZENNAME_HOECHSTENS`;
+    Steuerzeichen (U+0000–U+001F, U+007F); ein Backslash überhaupt (auch führend); ein führender
+    ``/``; ein Laufwerksbuchstabe wie ``C:``; ein Teil ``.`` oder ``..``. Dazu prüfen
+    :func:`aiimaging.knotenweg.lege_an` und :func:`aiimaging.abholer.skizzenlauf`, dass der Name
+    in der Mappe als Skizze steht.
+    """
+    if not isinstance(name, str) or not name:
+        return f"Der Name der Skizze ist {name!r} — kein Text."
+    if len(name) > SKIZZENNAME_HOECHSTENS:
+        return (f"Der Name der Skizze ist {len(name)} Zeichen lang — hoechstens "
+                f"{SKIZZENNAME_HOECHSTENS}.")
+    if any(ord(z) < 0x20 or ord(z) == 0x7F for z in name):
+        return "Der Name der Skizze enthaelt ein Steuerzeichen."
+    if "\\" in name:
+        return ("Der Name der Skizze enthaelt einen Backslash — er ist ein relativer Pfad in "
+                "der Mappe, mit «/» getrennt.")
+    if name.startswith("/"):
+        return "Der Name der Skizze beginnt mit «/» — er ist ein relativer Pfad in der Mappe."
+    if len(name) >= 2 and name[1] == ":" and name[0].isascii() and name[0].isalpha():
+        return ("Der Name der Skizze beginnt mit einem Laufwerk — er ist ein relativer Pfad in "
+                "der Mappe.")
+    if any(teil in (".", "..") for teil in name.split("/")):
+        return "Der Name der Skizze enthaelt «.» oder «..» als Teil — er bleibt in der Mappe."
+    return None
+
+
 def skizze_aus_szene(roh) -> dict | None:
     """``RenderScene.skizze`` → ``{quelle, name, anweisung, anweisung_original,
     anweisung_sprache, maengel}`` — oder ``None``, wenn keine bestellt ist.
@@ -1026,6 +1065,10 @@ def skizze_aus_szene(roh) -> dict | None:
     name = roh.get("name")
     if not isinstance(name, str) or not name.strip():
         maengel.append(f"'skizze.name' ist {name!r} — welche Skizze gemeint ist, raten wir nicht.")
+        name = None
+    elif (mangel := skizzenname_mangel(name)) is not None:
+        # A1: ein Weg hinaus aus der Mappe wird nicht nachgeschlagen, sondern abgewiesen.
+        maengel.append(f"'skizze.name' {name!r}: {mangel}")
         name = None
     roh_anweisung = roh.get("anweisung")
     befund = None

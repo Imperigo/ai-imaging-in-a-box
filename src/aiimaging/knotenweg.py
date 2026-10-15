@@ -216,6 +216,11 @@ def _pruefe_skizze(szene: dict, mappe_pfad) -> str | None:
     name = roh.get("name") if isinstance(roh, dict) else None
     if not isinstance(name, str) or not name.strip():
         raise KnotenwegError(f"Die Skizze der Bestellung nennt keine Datei: {roh!r}.")
+    # AUFLAGE A1 (Integrator, 15.10.2026): ein relativer Pfad IN der Mappe — schon beim Annehmen
+    # geprueft, unabhaengig vom Vertrag drueben, und bevor irgendetwas nachgeschlagen wird.
+    mangel = kosmo_szene.skizzenname_mangel(name)
+    if mangel is not None:
+        raise KnotenwegError(f"Die Skizze der Bestellung ist abgewiesen: {mangel}")
     if not mappe_pfad:
         raise KnotenwegError(
             "Eine Skizze lässt sich nur aus einer offenen Mappe bestellen — dieser Auftrag "
@@ -554,8 +559,15 @@ def skizzen_der_mappe(p: dict, hoechstens: int = SKIZZEN_HOECHSTENS) -> list[dic
     Mappe vermerkt dieselbe Zeichnung bei jedem Zustandswechsel neu); es gilt ihr letzter
     Eintrag. Kein Pfad: nur der Dateiname der Mappe, den ``/knoten/skizze?name=`` ausliefert.
 
+    **Seit dem 15.10.2026 dazu** ``bemerkung`` (Entscheid 96a: sie ist die Anweisung, wenn die
+    Skizze am Render-Knoten hängt — ``None``, wenn keine geschrieben ist; der Knoten sagt dann
+    vorher, dass nichts gesendet wird) und ``standpunkt`` (Entscheid 96b: ``"bild"`` — das Bild
+    entsteht vom Standpunkt der Unterlage; ``"mappe"`` — von dem der Mappe, siehe
+    :func:`aiimaging.projekt.standpunkt_fuer_skizze`).
+
     Returns:
-        ``[{name, titel, erzeugt, ueber, stand}]``, höchstens ``hoechstens``.
+        ``[{name, titel, erzeugt, ueber, stand, bemerkung, standpunkt}]``, höchstens
+        ``hoechstens``.
     """
     letzte: dict[str, dict] = {}
     for e in p.get("skizzen") or []:
@@ -563,7 +575,10 @@ def skizzen_der_mappe(p: dict, hoechstens: int = SKIZZEN_HOECHSTENS) -> list[dic
             letzte[str(e["skizze"])] = e
     liste = [
         {"name": name, "titel": e.get("titel"), "erzeugt": e.get("erzeugt"),
-         "ueber": e.get("ueber"), "stand": e.get("stand")}
+         "ueber": e.get("ueber"), "stand": e.get("stand"),
+         "bemerkung": (e.get("bemerkung") if isinstance(e.get("bemerkung"), str)
+                       and e.get("bemerkung").strip() else None),
+         "standpunkt": projekt.standpunkt_fuer_skizze(p, e.get("ueber"))["von"]}
         for name, e in letzte.items() if e.get("stand") != projekt.SKIZZE_VERWORFEN
     ]
     liste.sort(key=lambda x: str(x.get("erzeugt") or ""), reverse=True)

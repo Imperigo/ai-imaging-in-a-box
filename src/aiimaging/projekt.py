@@ -1041,3 +1041,76 @@ def benenne(wurzel, *, titel: str | None, bild: str | None = None,
         p["stand_nr"] = von_stand
     pfad = speichere(p, wurzel)
     return {"projekt": p, "eintrag": treffer[0], "pfad": pfad}
+
+
+# ============================================================ der Standpunkt eines Bildes
+
+#: Die Angaben, die zusammen festlegen, **von wo** ein Bild gerechnet wurde — jede ein Feld
+#: von :func:`aiimaging.kette.baue_kette`. Seit dem 15.10.2026 (Owner-Entscheid 96b) stehen
+#: sie an jedem Bild, das :func:`aiimaging.arbeitsgang.rechne` einträgt, unter
+#: ``herkunft.standpunkt`` — so wie sie gerechnet wurden, die Vorgabe «von Süden» eingeschlossen.
+STANDPUNKT_FELDER_BILD = ("kamera", "kamera_modus", "rahmung", "augenhoehe", "bias_grad",
+                          "deckungsgrad", "auge", "blick_auf", "brennweite", "innenraum")
+
+#: Woher der Standpunkt eines Bildes aus einer Skizze kommt (Entscheid 96b).
+STANDPUNKT_VOM_BILD = "bild"
+STANDPUNKT_DER_MAPPE = "mappe"
+
+#: Die kurzen Zeilen dazu — auf Seite, Knoten und am Ergebnis dieselben.
+STANDPUNKT_ZEILE_BILD = "Standpunkt: vom Bild unter der Skizze."
+STANDPUNKT_ZEILE_OHNE_BILD = "Standpunkt der Mappe, weil die Skizze auf kein Bild gezeichnet wurde."
+STANDPUNKT_ZEILE_UNBEKANNT = ("Standpunkt der Mappe, weil vom Bild unter der Skizze nicht "
+                              "bekannt ist, von wo es gerechnet wurde.")
+
+
+def standpunkt_des_bildes(p: dict, bild) -> dict | None:
+    """Von wo ein Bild der Mappe gerechnet wurde — ``{feld: wert}`` aus
+    :data:`STANDPUNKT_FELDER_BILD`, oder ``None``, wenn es **nicht bekannt** ist.
+
+    Gelesen aus ``herkunft.standpunkt`` (seit dem 15.10.2026 an jedem gerechneten Bild). Ein
+    älterer Eintrag ohne das Feld ist nur dann bekannt, wenn er ``herkunft.standpunkt_vorgabe``
+    trägt (Entscheid 73): Dann wurde ohne bestellten Standpunkt gerechnet, und die Vorgabe steht
+    dort mit ihrer Richtung. Sonst ``None`` — **geraten wird nicht**: ein Standpunkt aus den
+    heutigen Einstellungen der Mappe sähe aus wie der des Bildes und wäre es womöglich nicht.
+
+    Steht das Bild nicht (oder mehrfach) in der Mappe, ist ebenfalls nichts bekannt.
+    """
+    if not bild:
+        return None
+    treffer = [b for b in (p.get("bilder") or [])
+               if isinstance(b, dict) and b.get("bild") == str(bild)]
+    if len(treffer) != 1:
+        return None
+    herkunft = treffer[0].get("herkunft")
+    if not isinstance(herkunft, dict):
+        return None
+    roh = herkunft.get("standpunkt")
+    if isinstance(roh, dict):
+        felder = {k: roh[k] for k in STANDPUNKT_FELDER_BILD if roh.get(k) is not None}
+        return felder or None
+    vorgabe = herkunft.get("standpunkt_vorgabe")
+    if isinstance(vorgabe, dict) and isinstance(vorgabe.get("kamera"), str) and vorgabe["kamera"]:
+        return {"kamera": vorgabe["kamera"]}
+    return None
+
+
+def standpunkt_fuer_skizze(p: dict, ueber) -> dict:
+    """Von wo das Bild aus einer Skizze entsteht — **Owner-Entscheid 96b (15.10.2026).**
+
+    Das Bild entsteht vom Standpunkt des Bildes, **auf das gezeichnet wurde** (``ueber``, die
+    Unterlage), nicht vom Standpunkt der Mappe: Die Skizze sitzt auf genau diesem Bild, und nur
+    von dort liegt die Tiefenkarte unter den Strichen. Ohne Unterlage, oder wenn von ihr nicht
+    bekannt ist, von wo sie gerechnet wurde (:func:`standpunkt_des_bildes`), bleibt es beim
+    bisherigen Weg — dem Standpunkt der Mappe — und das wird gesagt.
+
+    Returns:
+        ``{von, bild, felder, zeile}`` — ``von`` ist :data:`STANDPUNKT_VOM_BILD` oder
+        :data:`STANDPUNKT_DER_MAPPE`; ``felder`` die Angaben des Bildes oder ``None``.
+    """
+    felder = standpunkt_des_bildes(p, ueber) if ueber else None
+    if felder is not None:
+        return {"von": STANDPUNKT_VOM_BILD, "bild": str(ueber), "felder": felder,
+                "zeile": STANDPUNKT_ZEILE_BILD}
+    return {"von": STANDPUNKT_DER_MAPPE, "bild": str(ueber) if ueber else None,
+            "felder": None,
+            "zeile": STANDPUNKT_ZEILE_UNBEKANNT if ueber else STANDPUNKT_ZEILE_OHNE_BILD}
