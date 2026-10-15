@@ -187,6 +187,12 @@ def eingerichtet(tmp_path, monkeypatch):
     monkeypatch.setenv(rs.REALITYSCAN_EXE_ENV, str(exe))
     monkeypatch.setenv(rs.REALITYSCAN_EXPORT_XML_ENV, str(xml))
     monkeypatch.setenv(rs.REALITYSCAN_SPEICHER_ENV, str(tmp_path / "speicher"))
+    # DER EIGENE BILDSCHIRM (15.10.2026): eine Attrappe der Xvfb-Steckdose.
+    steckdosen = tmp_path / "x11"
+    steckdosen.mkdir()
+    (steckdosen / "X87").write_text("", encoding="utf-8")
+    monkeypatch.setattr(rs, "X11_STECKDOSEN", steckdosen)
+    monkeypatch.setenv(rs.REALITYSCAN_DISPLAY_ENV, ":87")
     protokoll = tmp_path / "aufrufe.jsonl"
     monkeypatch.setenv("RS_ATTRAPPE_PROTOKOLL", str(protokoll))
     return {"cli": cli, "exe": exe, "xml": xml, "protokoll": protokoll,
@@ -1438,3 +1444,42 @@ def test_blender_zeichnet_die_textur_mit_emission_1(tmp_path):
     ids, _, _ = bildlesen.lies_png_farben(mit["material_id_png"])
     assert sum(1 for f in ids if tuple(f) == soll) > 0.2 * b * h
     assert not any(nah(f, ORANGE) or nah(f, BLAU) for f in ids)
+
+
+# ================================================== Der eigene Bildschirm (15.10.2026)
+
+def test_ohne_eigenen_bildschirm_bricht_ein_neuer_lauf_mit_grund_ab(tmp_path, eingerichtet,
+                                                                    monkeypatch):
+    """HomeStation 15.10.2026: RealityScan startet unter wine nur mit X-Bildschirm, auch mit
+    -headless. Fehlt er, sagt es die Einrichtung, und ein neuer Lauf bricht mit diesem Satz ab
+    — die Splat-Brücke übernimmt dann mit Grund, nicht still."""
+    monkeypatch.delenv(rs.REALITYSCAN_DISPLAY_ENV)
+    e = rs.einrichtung()
+    assert e["bereit"] and e["display"] is None and rs.REALITYSCAN_DISPLAY_ENV in e["display_grund"]
+    splat = _splat_neben_aufnahme(tmp_path)
+    v = seams.kontext_vorbereiten(splat, _splat_zu_netz=_offener_weg(tmp_path, []))
+    assert v["weg"] != rs.WEG
+    assert rs.REALITYSCAN_DISPLAY_ENV in (v.get("realityscan_grund") or "")
+    assert v.get("realityscan_ursache") == rs.URSACHE_EINRICHTUNG
+
+
+def test_ein_toter_bildschirm_wird_erkannt(eingerichtet, monkeypatch):
+    monkeypatch.setenv(rs.REALITYSCAN_DISPLAY_ENV, ":88")
+    assert "nicht erreichbar" in rs.display_befund()["grund"]
+    monkeypatch.setenv(rs.REALITYSCAN_DISPLAY_ENV, ":abc")
+    assert rs.display_befund()["display"] is None
+
+
+def test_der_lauf_erbt_nie_den_bildschirm_des_owners():
+    basis = {"DISPLAY": ":0", "WAYLAND_DISPLAY": "wayland-0", "XAUTHORITY": "/x", "PATH": "/bin"}
+    env = rs.umgebung_fuer_lauf(":87", basis)
+    assert env["DISPLAY"] == ":87" and env["GDK_BACKEND"] == "x11" and env["PATH"] == "/bin"
+    assert "WAYLAND_DISPLAY" not in env and "XAUTHORITY" not in env
+    assert "DISPLAY" not in rs.umgebung_fuer_lauf(None, basis)
+
+
+def test_der_starter_bekommt_den_eigenen_bildschirm(tmp_path, eingerichtet, monkeypatch):
+    monkeypatch.setenv("DISPLAY", ":0")
+    erg = rs._starte_gruppe([sys.executable, "-c", "import os;print(os.environ.get('DISPLAY'))"],
+                            30, display=":87")
+    assert erg.stdout.strip() == ":87"

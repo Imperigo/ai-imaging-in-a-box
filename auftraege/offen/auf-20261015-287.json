@@ -1,0 +1,39 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261015-287",
+ "art": "frage",
+ "rang": 73,
+ "erstellt": "2026-10-15T08:00:00Z",
+ "beschreibung": "Zwei Messungen: (A) warum die Auto-Kamera s am kleinen Quader nur 62.9 % Bildbreite fuellt, obwohl sie auf 70 % rechnet; (B) Textur im Innenblick mit einem Innen-Prompt",
+ "anweisung": "A) RAHMUNG KLEINER SZENEN. Befund aus auf-20261014-285: Quader-Mappe aus der Knotenansicht, Kamera s 'NICHT GERENDERT' wegen Rahmung 62.9 % < 65 % (kameras.BILDBREITE_ABBRUCH), sSE/nNW geom_iou 0.836 < 0.85. aiimaging.kameras.kamerasatz rechnet auf DECKUNGSGRAD 0.70 mit seitenverhaeltnis Vorgabe 16/9; die Knotenansicht bestellt 1600x1000 (16:10). Zu messen, ohne Diffusion (nur Multipass/Komposition, keine GPU-Bildstufe noetig): synthetische Quader 8x3x5 m, 20x6x10 m, 40x12x20 m, je Seitenverhaeltnis 16:9 und 16:10, Auto-Kameras s/sSE/nNW wie im Abholer. Je Fall: von kamerasatz VORHERGESAGTE Bildbreite des Bauwerks, im Multipass GEMESSENE Bildbreite (die Zahl, die der Riegel nimmt), Abstand, Bildwinkel horizontal, und ob ziehe_bis_frei den Abstand vergroessert hat. Ein Satz: Woher kommen die fehlenden 7 Prozentpunkte (Seitenverhaeltnis 16:9 statt 16:10? Bildwinkel-Lesart horizontal/vertikal? Rand BILDRAND 0.92? ziehe_bis_frei?). NICHT selbst beheben, keine Schwelle senken. B) TEXTUR INNEN MIT INNEN-PROMPT. In auf-20261014-283 T4 zeigten die zwei Hallen-Kameras die Textur im Beauty-Pass gut, im Endbild kaum, weil der Prompt 'klarer Himmel'/aussen lautete. Derselbe Auftrag wie T4 (Splat-Kontext, Netz aus dem Speicher, zwei Innenkameras), aber mit einem Innen-Prompt (z. B. 'Innenraum einer Halle, Tageslicht durch die Fenster, Materialien wie im Bestand'), je Kamera Textur (Fassung 3) gegen Eckfarben (AIIMAGING_REALITYSCAN_UNWRAP_XML leer = Rueckfall Fassung 2), gleicher Startwert. Zurueck je Kamera: Netzanteil, Kantenenergie Beauty, ein Satz, ob die Textur jetzt im ENDBILD sichtbar ist, und die Pruefzahlen. Bilder bleiben lokal; keine Personen oder erfundenen Figuren - enthaelt ein Bild eine, verwerfen und mit anderem Startwert wiederholen und das vermerken. NICHT: Code aendern; Dienste umstellen; Pfade, Orts- oder Benutzernamen in die Rueckgabe (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "A: tools/make_test_glb.py (Quader); B: wie 283 (Bestand aus dem Splat), Fotos/Splat/Bilder bleiben lokal"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-285",
+  "entscheide": [
+   "79",
+   "81"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "A braucht keine Bildstufe; B mehrere Bildlaeufe hintereinander, nie zwei GPU-Laeufe gleichzeitig.",
+  "hinweise": [
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "A Tabelle je Quader und Seitenverhaeltnis: vorhergesagt, gemessen, Abstand, Bildwinkel, ziehe_bis_frei; ein Satz zur Ursache.",
+  "B je Innenkamera: Netzanteil, Kantenenergie, Satz Endbild, Pruefzahlen.",
+  "Urteil zu A und B in je einem Satz."
+ ]
+}

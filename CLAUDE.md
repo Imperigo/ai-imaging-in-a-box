@@ -353,6 +353,25 @@ In KosmoOrbit wie in Visbox wird ein Bild **in der Knotenansicht** bestellt, ver
 (die Visbox-Seite, das iPad) liefern zu — Skizzen, Mappe, Standpunkte —, sind aber keine zweite Arbeitsfläche. Was ein
 Architekt zum Rendern braucht, kommt als Knoten oder an einen Knoten, nicht auf eine Nebenseite (Entscheid 94).
 
+### KI-Bild nur für Entwürfe und Varianten, nicht für Grundlagen (Owner-Klarstellung 15.10.2026)
+
+> *«AI Imaging brauchen wir ja nur für Entwürfe und Varianten und evtl. als Add-on fürs Rendering — nicht für
+> Grundlagen-Darstellungen wie Gaussian Splats oder Punktwolken.»*
+
+Grundlagen — der Bestand aus Fotos (Gaussian Splat, Netz mit Textur), Punktwolken, Vermessung — werden **direkt
+dargestellt**, so wie sie aufgenommen sind; sie gehen nicht durch das Bildmodell. Das KI-Bild ist für den **Entwurf**
+da (Skizze, Varianten, Stimmungen) und höchstens als Zusatz beim Rendern. Eine Messung, die prüft, ob das Bildmodell
+eine Grundlage «richtig nachmalt», beantwortet die falsche Frage (Entscheid 97, Anlass `auf-20261015-287` B).
+
+**Und wie weit (Entscheid 97a, gleicher Tag):** *«User entscheidet. Grundsätzlich gilt: möglichst viel soll modelliert
+sein, und dem AI Imaging die Grundlagen so weit wie es geht liefern. AI Imaging kann gut Skizzen, Varianten und Stimmung,
+gewisse Dinge gut ergänzen oder schnelle Änderungen.»* Ob der Bestand im fertigen Bild direkt gerendert oder von der KI
+mitgemalt wird, wählt der Architekt am Bild — die Vorgabe ist: so viel wie möglich modelliert und als Grundlage an die KI
+geliefert (Tiefe, Masken, Vorschaubild), die KI ergänzt.
+
+**Messmodelle bleiben (Owner-Entscheid über den Integrator, 15.10.2026):** Der Grundsatz betrifft nur **erzeugte
+Bilder**. Modelle, die im Splat-Weg messen oder prüfen — die Personen-Maske, die MoGe-2-Gegenprobe —, bleiben.
+
 ### Nachrichten über die Zentrale (Owner-Entscheid 06.10.2026, abends)
 
 Bis dahin konnte diese Cloud-Sitzung andere Sitzungen nicht erreichen; der Owner leitete jede Zeile

@@ -80,6 +80,8 @@ der Bericht sagt es (`hinweise`: «Eckfarben statt Textur …»).
        Environment=AIIMAGING_REALITYSCAN=<das wine des Pakets>
        Environment=AIIMAGING_REALITYSCAN_EXPORT_XML=%h/realityscan/export-obj-textur.xml
        Environment=AIIMAGING_REALITYSCAN_UNWRAP_XML=%h/realityscan/unwrap-optimal.xml
+       # Der EIGENE Bildschirm (15.10.2026): ein Xvfb nur für RealityScan, nie der des Owners.
+       Environment=AIIMAGING_REALITYSCAN_DISPLAY=:87
        # Fassung 2 (Eckfarben) stattdessen: die PLY-Exportdatei und KEINE Abwicklungsdatei
        # Environment=AIIMAGING_REALITYSCAN_EXPORT_XML=%h/realityscan/export-ply-farben.xml
        # nur, wenn RealityScan.exe nicht am dokumentierten Ort liegt:
@@ -89,6 +91,16 @@ der Bericht sagt es (`hinweise`: «Eckfarben statt Textur …»).
    **Der Starter ist das `wine` des Pakets**, nicht `realityscan-cli`: Das startet in 2.2 nicht
    («winewrapper: cannot execute RealityScan.exe», 278 F1). Beide nehmen `<exe> <befehle…>`.
    Abschalten heisst: die Variable `AIIMAGING_REALITYSCAN` entfernen.
+
+**Der eigene Bildschirm (Pflicht für neue Läufe, 15.10.2026).** RealityScan 2.2 startet unter dem
+`wine` des Pakets nur mit erreichbarem X-Server — **auch mit `-headless`** (ohne Bildschirm
+`0x887a0001`, mit totem `0x887a0004`; berichtigt 278 F2). Am Heim-PC läuft dafür ein eigenes Xvfb
+(`kosmo-xvfb87.service`, `:87`, 1920×1080×24), der Abholer hängt daran (`Requires`/`After`).
+Die Brücke nimmt **nur** `AIIMAGING_REALITYSCAN_DISPLAY` und nie das geerbte `DISPLAY`: Ein
+Dienst mit der Umgebung des angemeldeten Owners hätte RealityScan sonst auf dessen Bildschirm
+gestartet. Sie entfernt dazu `WAYLAND_DISPLAY` und `XAUTHORITY` aus der Umgebung des Laufs.
+Fehlt der Bildschirm, sagt es `einrichtung()` (`display_grund`), ein Netz aus dem Speicher geht
+weiter, und ein **neuer** Lauf bricht mit diesem Satz ab — die Splat-Brücke übernimmt **mit Grund**.
 
 Optional: `AIIMAGING_REALITYSCAN_SPEICHER` — wo die Netze abgelegt werden (sonst
 `~/.cache/aiimaging/realityscan-netz`).
