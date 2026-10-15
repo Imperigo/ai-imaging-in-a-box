@@ -1193,6 +1193,18 @@ def test_die_freigabe_traegt_die_dateien_die_der_kern_sucht():
     assert "ipad/VisboxMac/App/Info.plist" in befehle
     # DER ORDNER DES IPAD-PAKETS ist der, den diese Proben pruefen.
     assert "zip -r -q -X" in befehle and " Visbox.swiftpm " in befehle
+
+
+def test_die_freigabe_heisst_fest_fuer_die_kosmo_tafel():
+    """OWNER-REGEL 15.10.2026: Das Abteil «Herunterladen» der Kosmo-Tafel zeigt fest auf
+    ``releases/latest/download/Visbox-mac.zip`` und ``…/Visbox.swiftpm.zip``. Die Namen der
+    Freigabe tragen darum nie eine Nummer, und sie haengen an ``CFBundleName`` — wer die App
+    umbenennt, bricht die Tafel. Diese Probe macht das sichtbar, bevor es drueben auffaellt."""
+    assert _plist()["CFBundleName"] == "Visbox"
+    befehle = _befehle(_ablauf()["jobs"]["freigabe"])
+    assert '"freigabe/$NAME-mac.zip"' in befehle
+    assert '"freigabe/$NAME.swiftpm.zip"' in befehle
+    assert "$NUMMER-mac.zip" not in befehle and "$NUMMER.swiftpm.zip" not in befehle
     assert (IPAD / "Visbox.swiftpm").resolve() == APP.resolve()
 
 
