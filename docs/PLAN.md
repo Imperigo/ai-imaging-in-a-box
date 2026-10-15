@@ -8030,4 +8030,8 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [x] Eingang «Skizze», Vertragsfeld `skizze`, Abholer über `rechne_skizze`, Lizenz markiert. *(15.10.2026, §125/§130)*
 - [ ] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b).
-- [ ] Am Heim-PC messen, ob die Skizze auf qwen-image-2.1 ankommt (local `auftraege/offen/auf-20261015-286.json`).
+- [x] Gemessen: Die Skizze kommt auf Qwen-Image 2.1 an (Strichzone 74.6 gegen 2.8), auf Z-Image nicht. *(15.10.2026, §132)*
+- [x] `knoten_bau.py`: `npm ci` auch bei neuerem Lockfile. *(15.10.2026, §132)*
+- [ ] **Graph in Visbox geht beim Neuladen verloren** — je Mappe am Heim-PC sichern und beim Öffnen laden.
+- [ ] Bemerkung zur Skizze schreiben können (iPad beim Ablegen und/oder am Knoten) — erst zeichnen.
+- [ ] Verlauf: «nicht anwendbar» nicht als «durchgefallen»; wartender Auftrag ohne «Grund unbekannt»; Skizze nennt alle ihre Bilder.

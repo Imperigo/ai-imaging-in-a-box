@@ -50,3 +50,23 @@ def test_nur_stempeln_baut_nicht_und_aendert_einen_frischen_stempel_nicht(monkey
         AssertionError("--stempel darf nicht bauen")))
     assert m.main(["--stempel"]) == 0
     assert m.STEMPEL.read_bytes() == vorher
+
+
+def test_npm_ci_auch_wenn_das_lockfile_neuer_ist(tmp_path):
+    """auf-20261015-286: Ein Nachzug brachte ein neues Paket, node_modules war alt, der Bau
+    scheiterte. Jetzt: ci, wenn node_modules fehlt oder das Lockfile neuer ist."""
+    import os
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("kb", WURZEL / "tools" / "knoten_bau.py")
+    kb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kb)
+    assert kb.braucht_npm_ci(tmp_path) is True                       # kein node_modules
+    (tmp_path / "node_modules").mkdir()
+    stand = tmp_path / "node_modules" / ".package-lock.json"
+    stand.write_text("{}", encoding="utf-8")
+    lock = tmp_path / "package-lock.json"
+    lock.write_text("{}", encoding="utf-8")
+    os.utime(stand, (1000, 1000)); os.utime(lock, (2000, 2000))
+    assert kb.braucht_npm_ci(tmp_path) is True                       # Lockfile neuer
+    os.utime(lock, (500, 500))
+    assert kb.braucht_npm_ci(tmp_path) is False                      # Einrichtung aktuell

@@ -45,12 +45,29 @@ def stempele() -> None:
                        encoding="utf-8")
 
 
+def braucht_npm_ci(kosmovis: Path | None = None) -> bool:
+    """Ob ``npm ci`` vor dem Bau nötig ist: ohne ``node_modules`` — oder wenn das Lockfile
+    neuer ist als ``node_modules`` (HomeStation, auf-20261015-286: nach einem Nachzug, der ein
+    neues Paket wie ``@kosmo/data`` brachte, scheiterte der Bau an der alten Einrichtung)."""
+    wurzel = KOSMOVIS if kosmovis is None else Path(kosmovis)
+    module = wurzel / "node_modules"
+    lock = wurzel / "package-lock.json"
+    if not module.is_dir():
+        return True
+    if not lock.is_file():
+        return False
+    # npm schreibt bei jedem ci/install diese Datei neu; sie ist der Stand der Einrichtung.
+    stand = module / ".package-lock.json"
+    bezug = stand if stand.is_file() else module
+    return lock.stat().st_mtime > bezug.stat().st_mtime
+
+
 def main(argv=None) -> int:
     a = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     a.add_argument("--stempel", action="store_true", help="nur stempeln, nicht bauen")
     args = a.parse_args(argv)
     if not args.stempel:
-        if not (KOSMOVIS / "node_modules").is_dir():
+        if braucht_npm_ci():
             subprocess.run(["npm", "ci", "--no-audit", "--no-fund"], cwd=KOSMOVIS, check=True)
         subprocess.run(["npm", "run", "build"], cwd=APP, check=True)
     stempele()
