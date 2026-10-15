@@ -8040,3 +8040,5 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Graph in Visbox übersteht das Neuladen (je Mappe am Heim-PC gesichert). *(15.10.2026, §133)*
 - [ ] Bemerkung zur Skizze schreiben können (iPad beim Ablegen und/oder am Knoten) — erst zeichnen.
 - [ ] Verlauf: «nicht anwendbar» nicht als «durchgefallen»; wartender Auftrag ohne «Grund unbekannt»; Skizze nennt alle ihre Bilder.
+
+- [x] Stand-Blatt vor dem Reset: `docs/STAND_2026-10-15.md`. *(15.10.2026)*
