@@ -5113,7 +5113,7 @@ nicht; seit dem 02.10.2026 zählt jeder Leerraum als Zwischenraum.
 
 **Xvfb** — Ein unsichtbarer Bildschirm im Arbeitsspeicher: Programme zeichnen darauf, ohne dass ein
 echter Bildschirm angeschlossen ist. Im Projekt prüft die HomeStation damit KosmoOrbit, ohne einen
-fremden Bildschirm zu bedienen.
+fremden Bildschirm zu bedienen. *Seit dem 15.10.2026 auch für RealityScan:* Es startet unter wine nur mit einem X-Bildschirm, auch ohne Fenster; der Abholer bekommt dafür ein eigenes Xvfb (`:87`), nie den Bildschirm des Owners (`AIIMAGING_REALITYSCAN_DISPLAY`).
 
 **Grafikbeschleunigung** — Die Grafikkarte übernimmt das Zeichnen der Oberfläche, statt dass der
 Prozessor jeden Bildpunkt selbst rechnet. Fehlt sie, nehmen manche Programme einen anderen, älteren
@@ -7202,6 +7202,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-15 | Nachgeführt aus dem RealityScan-Ausfall (auf-287): **Xvfb** (eigener Bildschirm für RealityScan) |
 | 2026-10-14 | Ergaenzt aus dem Knoten «Skizze vom iPad» (Entscheide 95/95a, Protokoll 74 §123): **Skizzen-Quelle des Wirts**, **Zulieferer-Knoten**, **Daumenbild (Vorschaubild)**, **data:-Adresse (Data-URL)**, **Berechneter Schlüssel** |
 | 2026-10-14 | Ergaenzt aus dem Nachzug auf Runde 29 (Protokoll 74 §122): **Nachziehen per Merge (statt Neuaufsetzen)** mit **Force-Push**, **Hilfszweig** |
 | 2026-10-14 | Ergaenzt aus Strg+Z in der Visbox-Knotenansicht: **Wirt (der Knotenansicht)** |

@@ -141,6 +141,15 @@ REALITYSCAN_EXPORT_XML_ENV = "AIIMAGING_REALITYSCAN_EXPORT_XML"
 REALITYSCAN_UNWRAP_XML_ENV = "AIIMAGING_REALITYSCAN_UNWRAP_XML"
 #: Ablage der Netze; sonst ``~/.cache/aiimaging/realityscan-netz``.
 REALITYSCAN_SPEICHER_ENV = "AIIMAGING_REALITYSCAN_SPEICHER"
+#: Der **eigene** X-Bildschirm für RealityScan, z. B. ``:87`` (ein Xvfb nur dafür). RealityScan
+#: 2.2 startet unter dem wine des Pakets nur mit erreichbarem X-Server, **auch mit
+#: ``-headless``** (HomeStation 15.10.2026: ohne Display ``0x887a0001``, mit totem
+#: ``0x887a0004``; berichtigt die Annahme aus ``auf-20261013-278`` F2). **Bewusst eine eigene
+#: Angabe und nie das geerbte ``DISPLAY``:** Ein Dienst, der die Umgebung des angemeldeten
+#: Owners erbt, hätte RealityScan sonst auf dessen Bildschirm gestartet.
+REALITYSCAN_DISPLAY_ENV = "AIIMAGING_REALITYSCAN_DISPLAY"
+#: Wo ein lokaler X-Server seine Steckdose ablegt (``X<n>`` für ``:<n>``). Für Proben änderbar.
+X11_STECKDOSEN = Path("/tmp/.X11-unix")
 
 #: Wo das Linux-Paket die Windows-Anwendung ablegt (Doku RealityScan 2.1 für Linux, gelesen
 #: 13.10.2026). Eine **Vorgabe** für einen Pfad, den der Nutzer ohnehin eingerichtet hat —
@@ -214,6 +223,28 @@ def export_xml_befund(pfad) -> dict:
     return {"format": f.group(1).lower() if f else None, "textur_ebene": e.group(1) if e else None}
 
 
+def display_befund() -> dict:
+    """Ob RealityScan einen Bildschirm hat: ``{display, grund}`` — ``grund`` ist ``None``, wenn
+    ja. Geprüft wird nur ein lokaler Bildschirm ``:<n>`` (seine Steckdose unter
+    :data:`X11_STECKDOSEN`); einer mit Rechnernamen wird nicht geprüft, nur weitergegeben."""
+    wert = os.environ.get(REALITYSCAN_DISPLAY_ENV, "").strip()
+    if not wert:
+        return {"display": None,
+                "grund": f"{REALITYSCAN_DISPLAY_ENV} nicht gesetzt — RealityScan startet unter "
+                         "wine nur mit einem X-Bildschirm, auch mit -headless; ein eigenes Xvfb "
+                         "einrichten (z. B. :87) und hier nennen (betrieb/REALITYSCAN_BRUECKE.md)"}
+    if wert.startswith(":"):
+        nummer = wert[1:].split(".", 1)[0]
+        if not nummer.isdigit():
+            return {"display": None, "grund": f"{REALITYSCAN_DISPLAY_ENV} ist kein Bildschirm "
+                                              "der Form :<Nummer>"}
+        if not (X11_STECKDOSEN / f"X{nummer}").exists():
+            return {"display": None,
+                    "grund": f"Der Bildschirm {wert} aus {REALITYSCAN_DISPLAY_ENV} ist nicht "
+                             "erreichbar (läuft das Xvfb?)"}
+    return {"display": wert, "grund": None}
+
+
 def einrichtung() -> dict:
     """Was eingerichtet ist — und, wenn etwas fehlt, ein Grund **ohne Pfad** (Regel 3).
 
@@ -243,7 +274,7 @@ def einrichtung() -> dict:
     """
     aus = {"eingeschaltet": eingeschaltet(), "bereit": False, "cli": None, "exe": None,
            "export_xml": None, "unwrap_xml": None, "art": None, "hinweis": None,
-           "grund": None, "ursache": None}
+           "grund": None, "ursache": None, "display": None, "display_grund": None}
     if not aus["eingeschaltet"]:
         aus.update(grund=f"RealityScan nicht eingeschaltet ({REALITYSCAN_ENV} nicht gesetzt).",
                    ursache=URSACHE_AUS)
@@ -291,8 +322,13 @@ def einrichtung() -> dict:
         aus.update(grund="RealityScan eingeschaltet, aber nicht eingerichtet: "
                          + "; ".join(fehlt) + ".", ursache=URSACHE_EINRICHTUNG)
         return aus
+    # DER BILDSCHIRM (15.10.2026) haelt die Einrichtung NICHT an: Ein Netz aus dem Speicher
+    # braucht keinen. Fehlt er, steht der Grund hier, und ein NEUER Lauf bricht mit genau
+    # diesem Satz ab (`netz_aus_aufnahme`) — gesagt, nicht still auf den offenen Weg.
+    bild = display_befund()
     aus.update(bereit=True, cli=cli, exe=exe, export_xml=xml, unwrap_xml=unwrap or None,
-               art=art, hinweis=None if unwrap else SATZ_ECKFARBEN)
+               art=art, hinweis=None if unwrap else SATZ_ECKFARBEN,
+               display=bild["display"], display_grund=bild["grund"])
     return aus
 
 
@@ -1661,11 +1697,26 @@ def _beende_gruppe(prozess: subprocess.Popen) -> None:
             continue
 
 
-def _starte_gruppe(cmd: list[str], timeout: float) -> subprocess.CompletedProcess:
+def umgebung_fuer_lauf(display: str | None, basis: dict | None = None) -> dict:
+    """Die Umgebung des RealityScan-Prozesses: **dieser** Bildschirm, kein geerbter. Wayland
+    und die Berechtigung des angemeldeten Bildschirms fallen weg (``XAUTHORITY``)."""
+    env = dict(os.environ if basis is None else basis)
+    for weg in ("WAYLAND_DISPLAY", "XAUTHORITY", "DISPLAY"):
+        env.pop(weg, None)
+    if display:
+        env["DISPLAY"] = display
+        env["GDK_BACKEND"] = "x11"
+    return env
+
+
+def _starte_gruppe(cmd: list[str], timeout: float, *,
+                   display: str | None = None) -> subprocess.CompletedProcess:
     """Wie :func:`aiimaging.seams._default_starte`, aber in **eigener Prozessgruppe**
-    (``start_new_session``), damit die Frist alles trifft, was der Starter angelegt hat."""
+    (``start_new_session``), damit die Frist alles trifft, was der Starter angelegt hat — und
+    auf dem eigenen Bildschirm (:func:`umgebung_fuer_lauf`)."""
     prozess = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                               errors="replace", start_new_session=True)
+                               errors="replace", start_new_session=True,
+                               env=umgebung_fuer_lauf(display))
     try:
         aus, fehl = prozess.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -1797,7 +1848,12 @@ def realityscan_zu_netz(aufnahme, *, ziel=None, speicher=None, bilder=None, spla
         probe = lies_ecken(netz, voll=False)["probe"]
     else:
         frist = float(timeout) * _seams.zeitfaktor()
-        starte = _starte or _starte_gruppe
+        # EIN NEUER LAUF BRAUCHT DEN EIGENEN BILDSCHIRM (15.10.2026). Ohne ihn startete
+        # RealityScan mit 0x887a0001 nicht, und der Abholer wich ohne klaren Grund aus.
+        if _starte is None and e.get("display_grund"):
+            raise RealityScanError("RealityScan eingeschaltet, aber nicht eingerichtet: "
+                                   + str(e["display_grund"]) + ".", URSACHE_EINRICHTUNG)
+        starte = _starte or (lambda cmd, t: _starte_gruppe(cmd, t, display=e.get("display")))
         ordner.mkdir(parents=True, exist_ok=True)
         try:
             with tempfile.TemporaryDirectory(dir=ordner, prefix="lauf-") as roh:

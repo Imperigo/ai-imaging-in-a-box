@@ -8015,3 +8015,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Knoten «Kamera aus 3D-Ansicht» gebaut, an Int 1 und UI gemeldet. *(14.10.2026, §121)*
 - [x] Kamera aus 3D-Ansicht auf R29 nachgezogen (Merge über KosmoDraw, `6ad0136e1`), Visbox-Kopie nachgezogen (zeigt «Keine 3D-Ansicht offen»). *(14.10.2026, §122)*
 - [ ] (Rest:) UI-Knopf — Knoten «Kamera aus 3D-Ansicht» (Owner-Entscheid über die Zentrale, 14.10.2026): übernimmt die Kamera der 3D-Ansicht samt Splat-Umgebung, dazu ein Anlege-Befehl — auf «claude/kosmovis-*», Basis R29-Kopf (wartet auf die R29-Meldung). Danach baut UI den Knopf «In KosmoVis rendern»; der Render-Block in KosmoDesign wird Zulieferer.
+
+## KI nur für Entwurf (Entscheide 97/97a, 15.10.2026)
+
+- [x] Grundsatz in `CLAUDE.md`, an alle Worker gemeldet; HomeStation stellt Messungen «Textur im KI-Endbild» ein. *(15.10.2026, §126)*
+- [ ] Blatt zeichnen: Wahl am Render-Knoten «Bestand direkt / von der KI mitgemalt» (97a), dann bauen (Zusammensetzen aus Vorschaubild und Entwurfsmaske).
+- [ ] Randfall Rahmung (287 A): flache, lange Körper — Eckentest schiebt zurück; Riegel nennt max(Breite, Höhe) «Bildbreite».
