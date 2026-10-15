@@ -187,8 +187,8 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
             {/* Entscheid 91 (Blatt 22): der Anfang als Vorschlag — was er anlegt, steht
                 darunter in einem Satz; der Knopf legt ihn an (ein Undo-Schritt). */}
             <p className="vis-leer-anfang-satz" data-testid="vis-leer-anfang-satz">
-              Fertiger Anfang: Modell, Auto-Kamera, Stimmung und Prompt → Render → Bildvergleich.
-              Gerechnet wird erst auf «Ausführen».
+              Fertiger Anfang: Modell, Auto-Kamera, Stimmung und Prompt → Render → Varianten →
+              Bildvergleich. Gerechnet wird erst auf «Ausführen» oder «Bilder bestellen».
             </p>
             <KButton
               size="sm"

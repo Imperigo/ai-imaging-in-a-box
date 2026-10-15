@@ -57,10 +57,10 @@ def _katalog() -> dict[str, dict]:
 
 
 def test_der_katalog_wird_gelesen():
-    """Die Gegenprobe zum Leser: vierzehn Knotenarten, wie der Kommentar im Katalog sagt."""
+    """Die Gegenprobe zum Leser: fünfzehn Knotenarten, wie der Kommentar im Katalog sagt."""
     katalog = _katalog()
-    assert len(katalog) == 14
-    assert "Katalog der 14 Node-Typen" in KATALOG.read_text(encoding="utf-8")
+    assert len(katalog) == 15
+    assert "Katalog der 15 Node-Typen" in KATALOG.read_text(encoding="utf-8")
     assert katalog["render"]["inputs"][0] == ("Szene", "szene")
 
 
@@ -103,7 +103,7 @@ def test_alle_karten_ohne_heimpfad_in_der_tafelnotiz(tmp_path):
     kt = _werkzeug()
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
     jsons = sorted(tmp_path.glob("*.json"))
-    assert len(jsons) == 15
+    assert len(jsons) == 16  # Übersicht und fünfzehn Knoten
     for p in jsons:
         assert "/home/" not in p.read_text(encoding="utf-8"), p.name
 

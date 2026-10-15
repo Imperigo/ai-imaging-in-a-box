@@ -140,10 +140,10 @@ describe('G5 · GRAPH-Palette (island-palette-eintrag-blatt) vs. open-project', 
       Object.values(VIS_NODE_KATALOG).filter((t) => t.kategorie === kat),
     );
     expect(eintraege.at(-1)?.typ).toBe('blatt');
-    // Vierzehn Node-Typen (seit «Kamera aus 3D-Ansicht» und «Skizze vom iPad», 14.10.2026) — wächst der Katalog, wächst die Popup-/Fenster-Liste
+    // Fünfzehn Node-Typen (seit «Kamera aus 3D-Ansicht», «Skizze vom iPad» und «Varianten», 14./15.10.2026) — wächst der Katalog, wächst die Popup-/Fenster-Liste
     // mit (E-10 Antwort c, kein Scroll) und der Fund bliebe strukturell
     // derselbe: der jeweils letzte Eintrag der letzten Kategorie.
-    expect(eintraege).toHaveLength(14);
+    expect(eintraege).toHaveLength(15);
   });
 
   it('GRAPH sitzt am linken Rand, vertikal mittig — nicht an der Streifen-Ecke wie SONNE', () => {

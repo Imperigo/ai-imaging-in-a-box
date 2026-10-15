@@ -10,6 +10,7 @@ import {
   seitenverhaeltnisAus,
 } from './kamera-aus-3d';
 import { isVisPresetId, visPresetById, type VisPresetId } from './render-presets';
+import { VARIANTEN_TYP } from './varianten';
 
 /**
  * Render-Graph-Maschine (V1-Finish P2) — das Herz des KosmoVis-Node-Trees.
@@ -84,7 +85,7 @@ export const VIS_STIMMUNGEN: Record<string, { label: string; prompt: string }> =
   weiss: { label: 'Weissmodell', prompt: 'Weissmodell, neutrales Studiolicht, keine Materialien' },
 };
 
-/** Katalog der 14 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
+/** Katalog der 15 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
 export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   modell: {
     typ: 'modell',
@@ -261,6 +262,22 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     inputs: [],
     outputs: [{ name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' }],
     defaults: {},
+  },
+  // «Varianten mit einem Klick» (Owner-Entscheide 92/92a/92b der Visbox, Blatt 23; L24 Bildweg
+  // Varianten, E246): haengt hinter einem Render-Knoten und bestellt dessen Einstellung fuer alle
+  // Kombinationen aus Standpunkten, Stimmungen und Entwuerfen (`derive/varianten.ts`). Die drei
+  // Achsen stehen als Parameter im Knoten (Listen als JSON-Text); leer heisst «nichts gewaehlt»,
+  // dann gilt die Vorgabe 3 × Abend × aktuelles Modell (92a). Der Ausgang geht in den Bildvergleich,
+  // der die Bilder dann als Raster zeigt.
+  [VARIANTEN_TYP]: {
+    typ: VARIANTEN_TYP,
+    label: 'Varianten',
+    hilfe:
+      'Bestellt die Einstellung des Render-Knotens in allen Kombinationen aus Standpunkten, Stimmungen und Entwürfen — mit Zähler, eine Freigabe für alle. Hinter den Render-Knoten hängen, den Ausgang in den Bildvergleich (Raster).',
+    kategorie: 'render',
+    inputs: [{ name: 'render', typ: 'bild', label: 'Render' }],
+    outputs: [{ name: 'bilder', typ: 'bild', label: 'Bilder' }],
+    defaults: { standpunkte: '', stimmungen: '', entwuerfe: '' },
   },
 };
 

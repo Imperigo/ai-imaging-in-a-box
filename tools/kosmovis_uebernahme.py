@@ -110,6 +110,12 @@ WOERTLICH = (
     # sagt dann «Keine 3D-Ansicht offen».
     "packages/kosmo-kernel/src/derive/kamera-aus-3d.ts",
     f"{APP}/state/viewport-kamera.ts",
+    # L24 Bildweg Varianten (E246, Owner-Entscheide 92/92a/92b, 15.10.2026): die Rechnung der
+    # drei Achsen und der Ebenenfilter fuer «Entwurf = Ebenenkombination» — beide in sich
+    # geschlossen (nur Modell, Kamera-Stellvertreter und `kamera-aus-3d`). In Visbox gibt es
+    # keine Ebenenkombinationen; der Entwurf ist dort immer «Aktuelles Modell».
+    "packages/kosmo-kernel/src/derive/varianten.ts",
+    "packages/kosmo-kernel/src/derive/ebenen.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen

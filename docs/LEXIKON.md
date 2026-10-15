@@ -6802,6 +6802,40 @@ Bildseite, die das Feld nicht kennt, weist es ab, statt still ohne die Skizze zu
 den ganzen Satz zeigt, wo am Ort nur Platz für den Anfang ist. *Im Projekt:* die Zeile «Skizze» am
 Render-Knoten zeigt drei Zeilen; den vollen Satz mit Beleg trägt die Kurzhilfe (`KTooltip`).
 
+**Varianten-Knoten («Varianten mit einem Klick»)** — Ein Knoten hinter dem Render-Knoten, der dessen Einstellung in
+allen Kombinationen dreier Achsen bestellt: Standpunkte (woher man blickt), Stimmungen (Morgen, Abend, Weissmodell) und
+Entwürfe (welches Modell). Ein Zähler sagt vorher, wie viele Bilder es werden, z. B. «6 Bilder (3 × 2 × 1)»; ab zwölf
+Bildern warnt er mit der ungefähren Dauer, sperrt aber nichts. *Im Projekt:* Owner-Entscheide 92/92a/92b, gebaut in
+`kosmovis/apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx`; die Rechnung in `derive/varianten.ts`. Siehe auch
+**Variantenachse (Wedge)**.
+
+**Raster (im Bildvergleich)** — Die Bilder einer Variantenbestellung als Tabelle: jede Zeile ein Standpunkt, jede
+Spalte eine Stimmung, je Entwurf ein Reiter. Jede Zelle zeigt ihr Bild und einen farbigen Punkt für das Prüfurteil; ein
+Klick vergrössert. Eine leere Zelle sagt, warum («wartet», «rechnet», «fehlgeschlagen»). *Im Projekt:*
+`VariantenRaster.tsx`, im Knoten «Bildvergleich», sobald ein Varianten-Knoten daran hängt.
+
+**Ebenenkombination (als Entwurf)** — In KosmoOrbit liegt jedes Bauteil auf einer Ebene; eine Kombination ist eine
+gespeicherte Auswahl, welche Ebenen sichtbar sind. Legt man zwei Volumenvarianten auf je eine Ebene, zeigt je eine
+Kombination nur die eine. Der Varianten-Knoten rechnet so jede Kombination als eigenen Entwurf. *Im Projekt:* In Visbox
+gibt es keine Ebenen; dort ist der Entwurf immer «Aktuelles Modell».
+
+**Eine Freigabe für alle** — Jeder Auftrag an den Heim-PC wartet, bis ein Mensch ihn freigibt; technisch hat jeder seinen
+eigenen Freigabeschlüssel. Der Knopf «Alle freigeben» gibt alle wartenden Aufträge einer Variantenbestellung mit einem
+Klick frei. Kosmo und Claude können bestellen, aber nicht freigeben.
+
+**Befehlsjournal** — Die Liste der Befehle, die in der laufenden Sitzung ausgeführt wurden, mit Urheber (Architekt,
+Kosmo, Claude). Nicht zu verwechseln mit dem **Journal** des Heimrechners. *Im Projekt:* Varianten werden gesendet,
+sobald der Befehl «Varianten» darin steht — ein Rückgängig oder ein Abgleich von einem anderen Gerät steht nicht darin
+und löst darum keinen zweiten Auftrag aus.
+
+**Luft der Werkzeugliste (B19)** — Ein Sprachmodell bekommt mit jeder Frage die Beschreibung aller Werkzeuge, die es
+benutzen darf; das kostet Platz im Kontextfenster (gemessen in Token). Die Luft ist, was danach für Gespräch und Antwort
+übrig bleibt. KosmoOrbit hält sie über einer Grenze (7000 Token); jeder neue Befehl verbraucht davon. *Im Projekt:* der
+Befehl `vis_varianten` kostet 146 Token und wird darum erst eingespielt, wenn ein anderes Paket Platz macht.
+
+**Lauf ohne Karte** — Ein Befehl, der nichts am Projekt ändert, braucht keine Vorschlagskarte zum Freigeben: Kosmo
+bekommt die Antwort direkt. *Im Projekt:* `vis_varianten` mit `stand: true` liest den Stand der Bilder so.
+
 **Berechneter Schlüssel** — In einem Verzeichnis im Programmcode steht vor jedem Eintrag sein Name
 («render: …»). Ein berechneter Schlüssel nennt stattdessen eine Konstante, deren Wert der Name ist
 («[KAMERA_AUS_3D_TYP]: …»). Für das Programm ist das dasselbe; ein Werkzeug, das den Code nur als Text
@@ -7247,6 +7281,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-15 | Ergaenzt aus «Varianten mit einem Klick» (Entscheide 92/92a/92b, L24 Bildweg Varianten E246, Protokoll 74 §129): **Varianten-Knoten («Varianten mit einem Klick»)**, **Raster (im Bildvergleich)**, **Ebenenkombination (als Entwurf)**, **Eine Freigabe für alle**, **Befehlsjournal**, **Luft der Werkzeugliste (B19)**, **Lauf ohne Karte** |
 | 2026-10-15 | Nachgeführt aus dem RealityScan-Ausfall (auf-287): **Xvfb** (eigener Bildschirm für RealityScan) |
 | 2026-10-15 | Ergaenzt aus Entscheid 96 «Die Skizze führt das Bild» (Protokoll 74 §125): **Die Skizze führt das Bild (Eingang «Skizze»)**, **Anweisung (an eine Skizze)**, **Bearbeitungs-Modell**, **Eingang nur für eine Knotenart**, **Verborgene Datei (Punktdatei)**, **Feld, das ein anderes ausschliesst (Kreuzregel)**, **Additives Vertragsfeld**, **Kurzhilfe (Tooltip)** |
 | 2026-10-14 | Ergaenzt aus dem Knoten «Skizze vom iPad» (Entscheide 95/95a, Protokoll 74 §123): **Skizzen-Quelle des Wirts**, **Zulieferer-Knoten**, **Daumenbild (Vorschaubild)**, **data:-Adresse (Data-URL)**, **Berechneter Schlüssel** |

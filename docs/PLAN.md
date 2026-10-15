@@ -7995,7 +7995,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Prüfung am Quader fiel (Rahmung Kamera s, geom_iou knapp unter 0.85) — Messung local `auftraege/offen/auf-20261015-287.json` (A).
 - [ ] Textur im Innenblick mit Innen-Prompt — local `auftraege/offen/auf-20261015-287.json` (B).
 - [x] Strg+Z in der Visbox-Knotenansicht: im Wirt angehängt, im Browser geprüft. *(14.10.2026, §118)*
-- [ ] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114.
+- [x] E92 Varianten-Render (Zähler, eine Freigabe, Raster) — Grundlage im Bericht §114. *(15.10.2026, gebaut: KosmoOrbit «claude/kosmovis-varianten» `db3fdfd8c`, Visbox-Kopie nachgezogen, §129)*
+- [ ] L24 Bildweg Varianten einspielen bei Int 1 — erst nach Bündel C (Sperre der vollen Werkzeugliste).
+- [ ] Messung «Varianten mit einem Klick» am Heim-PC (auf-20261015-288).
+- [ ] Sichtprobe Varianten-Knoten und Raster im Browser (aus Budgetgründen verschoben).
 - [x] Auftrag 283: Rückgang kam aus der glb (Bestand nicht markiert), nicht aus dem Code; T5-Fehler behoben. *(14.10.2026, §115)*
 - [ ] Integrator: Warum trägt der Splat-Bestand in der glb kein `role existing`? (Zentrale)
 - [x] Nach R29-Meldung des Integrators: «claude/kosmovis-startgraph» auf den R29-Kopf nachgezogen (per Merge, `c1b24f122`), `umgebungFehlt` nur als Satz, `line-height` über Token, Visbox-Kopie nachgezogen. *(14.10.2026, §122)*

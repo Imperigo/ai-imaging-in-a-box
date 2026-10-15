@@ -2,7 +2,22 @@ import { z } from 'zod';
 import { newId } from '../model/ids';
 import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import type { KosmoDoc, VisRenderWunsch } from '../model/doc';
-import { hatZyklus, visPort, VIS_NODE_KATALOG } from '../derive/visgraph';
+import { hatZyklus, visPort, VIS_NODE_KATALOG, VIS_STIMMUNGEN } from '../derive/visgraph';
+import {
+  findeVariantenKnotenIn,
+  gewaehlteAchsen,
+  schreibeListe,
+  VARIANTEN_TYP,
+  variantenAchsenSatz,
+  variantenAnzahl,
+  variantenRenderKnoten,
+  variantenStandLesen,
+  variantenWarnt,
+  variantenZaehlerSatz,
+  verfuegbareEntwuerfe,
+  verfuegbareStandpunkte,
+  type VariantenAchsen,
+} from '../derive/varianten';
 import { CommandError, registerCommand } from './core';
 
 /**
@@ -296,5 +311,161 @@ export const renderAuftrag = registerCommand({
         after: { visRenderAuftrag: wunsch },
       },
     ];
+  },
+});
+
+/*
+ * «Varianten mit einem Klick» (Owner-Entscheide 92/92a/92b der Visbox; L24 Bildweg Varianten,
+ * E246) — ein Befehl `vis.varianten`, damit Kosmo und Claude den Bildweg von Demoauftrag 01
+ * ohne eigenes Skript gehen koennen: bestellen und (mit `stand: true`) lesen. Rechnung in
+ * `derive/varianten.ts`.
+ *
+ * Das Bestellen stellt — wie `vis.render` — nur den AUFTRAG ins Dokument: es setzt die
+ * Achsen am Knoten und zaehlt `bestellNr` hoch. Senden ist Laufzeit (`modules/vis/varianten.ts`
+ * der App): sie sieht den Befehl im Journal und schickt je Stimmung und Entwurf einen Auftrag an
+ * die HomeStation. Kein Netz im Kern, kein Zeitstempel (Doppellauf-Probe). Freigegeben wird
+ * NICHT hier: die Freigabe ist der Handgriff des Architekten («Alle freigeben» am Knoten).
+ */
+
+function findeVariantenKnoten(doc: KosmoDoc, graphId: string | undefined, nodeId: string | undefined): { graph: VisGraph; node: VisNode } {
+  if (graphId !== undefined) requireGraph(doc, graphId);
+  const treffer = findeVariantenKnotenIn(doc, graphId, nodeId);
+  if (!treffer) {
+    throw new CommandError(
+      nodeId !== undefined
+        ? `Node «${nodeId}» existiert nicht${graphId !== undefined ? ' im Graphen' : ''}`
+        : 'Kein Varianten-Knoten — erst einen Knoten «varianten» hinter den Render-Knoten setzen (vis_nodeSetzen, vis_verbinden: Render.bild → Varianten.render).',
+    );
+  }
+  if (treffer.node.typ !== VARIANTEN_TYP) {
+    throw new CommandError(`Node «${treffer.node.id}» ist kein Varianten-Knoten (Typ «${treffer.node.typ}»)`);
+  }
+  return treffer;
+}
+
+interface VariantenAufloesung {
+  graph: VisGraph;
+  node: VisNode;
+  achsen: VariantenAchsen;
+  /** Der Kern kennt keine Standpunkte (Visbox): die Gegenseite rechnet ihre eigenen. */
+  standpunkteDerGegenseite: boolean;
+}
+
+function loeseVariantenAuf(
+  doc: KosmoDoc,
+  p: { graphId?: string | undefined; nodeId?: string | undefined; standpunkte?: string[] | undefined; stimmungen?: string[] | undefined; entwuerfe?: string[] | undefined },
+): VariantenAufloesung {
+  const { graph, node } = findeVariantenKnoten(doc, p.graphId, p.nodeId);
+  const render = variantenRenderKnoten(graph, node.id);
+  if (!render) {
+    throw new CommandError(
+      'Der Varianten-Knoten hängt an keinem Render-Knoten — verbinde Render «Bild» mit Varianten «Render».',
+    );
+  }
+  const standpunkte = verfuegbareStandpunkte(doc, graph, render.id).map((s) => s.name);
+  const stimmungen = Object.keys(VIS_STIMMUNGEN);
+  const entwuerfe = verfuegbareEntwuerfe(doc).map((e) => e.id);
+  const unbekannt = (wahl: string[] | undefined, da: readonly string[], was: string) => {
+    const fehlt = (wahl ?? []).filter((x) => !da.includes(x));
+    if (fehlt.length > 0) {
+      throw new CommandError(
+        `${was} unbekannt: ${fehlt.map((x) => `«${x}»`).join(', ')} — verfügbar: ${da.length > 0 ? da.map((x) => `«${x}»`).join(', ') : 'keine'}`,
+      );
+    }
+  };
+  if (standpunkte.length > 0) unbekannt(p.standpunkte, standpunkte, 'Standpunkt');
+  unbekannt(p.stimmungen, stimmungen, 'Stimmung');
+  unbekannt(p.entwuerfe, entwuerfe, 'Entwurf');
+  const params = {
+    ...(node.params ?? {}),
+    ...(p.standpunkte !== undefined && standpunkte.length > 0 ? { standpunkte: schreibeListe(p.standpunkte) } : {}),
+    ...(p.stimmungen !== undefined ? { stimmungen: schreibeListe(p.stimmungen) } : {}),
+    ...(p.entwuerfe !== undefined ? { entwuerfe: schreibeListe(p.entwuerfe) } : {}),
+  };
+  return {
+    graph,
+    node,
+    achsen: gewaehlteAchsen(params, standpunkte, stimmungen, entwuerfe),
+    standpunkteDerGegenseite: standpunkte.length === 0,
+  };
+}
+
+function bestellSatz(a: VariantenAufloesung): string {
+  const { standpunkte, stimmungen, entwuerfe } = a.achsen;
+  const auftraege = stimmungen.length * entwuerfe.length;
+  const auftragWort = `${auftraege} ${auftraege === 1 ? 'Auftrag' : 'Aufträge'}`;
+  if (a.standpunkteDerGegenseite) {
+    return (
+      `Varianten bestellt: ${auftragWort} (${stimmungen.length} × ${entwuerfe.length}), Standpunkte rechnet die ` +
+      `HomeStation selbst — jeder wartet auf Freigabe am Knoten «Varianten» (${a.node.id}).`
+    );
+  }
+  const n = variantenAnzahl(standpunkte.length, stimmungen.length, entwuerfe.length);
+  return (
+    `Varianten bestellt: ${variantenZaehlerSatz(standpunkte.length, stimmungen.length, entwuerfe.length)} — ` +
+    `${variantenAchsenSatz(standpunkte.length, stimmungen.length, entwuerfe.length)}, ${auftragWort}` +
+    `${variantenWarnt(n) ? ', viele Bilder: das dauert' : ''}; jeder wartet auf Freigabe am Knoten «Varianten» (${a.node.id}).`
+  );
+}
+
+/**
+ * EIN Befehl fuer Bestellen und Lesen (Integrator 15.10.2026: Sperre fuer neue Befehle und
+ * laengere Beschreibungen, bis Buendel C eingespielt ist — in der vollen Werkzeugliste waren nur
+ * noch 90 Token frei). Darum knapp: ohne `stand` bestellt er (Achsen am Knoten setzen,
+ * `bestellNr` hochzaehlen, ein Rueckgaengig-Schritt, Karte wie `vis.render`); mit `stand: true`
+ * aendert er nichts und gibt je Zelle Stand, Auftrag, Bild und Urteil zurueck — ohne Patch ist
+ * das fuer Kosmo und Claude ein Lauf ohne Karte («ohne Änderung», `istLesenderLauf`).
+ */
+export const varianten = registerCommand({
+  id: 'vis.varianten',
+  title: 'Varianten',
+  description:
+    'Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand.',
+  params: z.object({
+    nodeId: z.string().optional(),
+    standpunkte: z.array(z.string()).optional(),
+    stimmungen: z.array(z.string()).optional(),
+    entwuerfe: z.array(z.string()).optional(),
+    stand: z.boolean().optional(),
+  }),
+  summarize: (p, doc) => {
+    if (!doc) return 'Varianten';
+    try {
+      if (p.stand) {
+        const { graph, node } = findeVariantenKnoten(doc, undefined, p.nodeId);
+        return (
+          variantenStandLesen(graph.id, node.id) ??
+          `Varianten-Knoten «${node.id}»: der Stand der Bilder lebt in der laufenden App (KosmoVis), hier ist keine angemeldet.`
+        );
+      }
+      return bestellSatz(loeseVariantenAuf(doc, p));
+    } catch (err) {
+      return `Varianten: ${err instanceof CommandError ? err.message : 'nicht auswertbar'}`;
+    }
+  },
+  run: (doc, p) => {
+    if (p.stand) {
+      findeVariantenKnoten(doc, undefined, p.nodeId);
+      return [];
+    }
+    const a = loeseVariantenAuf(doc, p);
+    const { standpunkte, stimmungen, entwuerfe } = a.achsen;
+    if (stimmungen.length === 0 || entwuerfe.length === 0 || (!a.standpunkteDerGegenseite && standpunkte.length === 0)) {
+      throw new CommandError('Nichts zu bestellen — mindestens ein Standpunkt, eine Stimmung und ein Entwurf.');
+    }
+    const alt = a.node.params ?? {};
+    const bestellNr = (typeof alt['bestellNr'] === 'number' ? alt['bestellNr'] : 0) + 1;
+    const params = {
+      ...alt,
+      ...(a.standpunkteDerGegenseite ? {} : { standpunkte: schreibeListe(standpunkte) }),
+      stimmungen: schreibeListe(stimmungen),
+      entwuerfe: schreibeListe(entwuerfe),
+      bestellNr,
+    };
+    const after: VisGraph = {
+      ...a.graph,
+      nodes: a.graph.nodes.map((n) => (n.id === a.node.id ? { ...n, params } : n)),
+    };
+    return [{ id: a.graph.id, before: a.graph, after }];
   },
 });

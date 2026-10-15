@@ -63,6 +63,13 @@ export interface NodeLauf {
   status: NodeLaufStatus;
   jobId?: string;
   bild?: string;
+  /**
+   * L24 Bildweg Varianten (E246): ALLE Bilder des Ergebnisses in der Reihenfolge des Vertrags
+   * (`result.images`, je Kamera eines). Der Render-Knoten zeigt weiter nur `bild` (das erste);
+   * das Raster der Varianten (`varianten.ts`) braucht jedes. Fehlt das Feld, war der Lauf noch
+   * nicht fertig.
+   */
+  bilder?: string[];
   qa?: JobQa;
   /**
    * N4 — `qa_je_kamera` aus dem Vertrag, additiv NEBEN `qa`. `qa` bleibt die

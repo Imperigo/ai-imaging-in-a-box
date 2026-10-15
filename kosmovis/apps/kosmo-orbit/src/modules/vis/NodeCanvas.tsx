@@ -14,6 +14,7 @@ import {
   evaluiereGraph,
   HIMMEL_ARTEN,
   KAMERA_AUS_3D_TYP,
+  VARIANTEN_TYP,
   projektKameras,
   RENDER_PRESETS,
   renderPromptBausteine,
@@ -72,6 +73,9 @@ import {
 } from './vis-runtime';
 import { BridgeBild } from './BridgeBild';
 import { KameraAus3dKoerper } from './KameraAus3dKnoten';
+// L24 Bildweg Varianten (E246): Knoten «Varianten» und das Raster im Bildvergleich — eigene Dateien.
+import { VariantenKoerper } from './VariantenKnoten';
+import { VariantenRaster } from './VariantenRaster';
 import { renderWarteAnzeige } from './render-warteort';
 import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
@@ -505,6 +509,11 @@ const KOERPER_H: Record<string, number> = {
   // (Auge, Blickfeld, Objektiv-Shift, Umgebung) und der Knopf; ohne Kamera der Satz über drei
   // Zeilen und der Knopf — beide passen in dieselbe Höhe, der Knoten springt nicht.
   kameraAus3d: 112,
+  // «Varianten» (L24 Bildweg Varianten, E246, `VariantenKnoten.tsx`): Zaehler, drei Achsen mit
+  // je zwei Zeilen zum Anhaken, Dauer- und Standzeile, die zwei Knoepfe. Fest, damit der Knoten
+  // nicht springt, wenn eine Bestellung laeuft; eine lange Achse bricht um und steht ganz in der
+  // Kurzhilfe ihres Titels.
+  varianten: 244,
 };
 
 /**
@@ -1199,6 +1208,8 @@ export function NodeCanvas({
                 ...marker,
                 status: hatBild ? 'fertig' : 'fehler',
                 bild: j.result.images[0] ?? '',
+                // L24 Bildweg Varianten (E246): alle Bilder, eines je Kamera — fuer das Raster.
+                bilder: j.result.images,
                 // Entscheid 68 / E174: der Verlauf nennt die Uhrzeit des Ergebnisses.
                 fertigUm: Date.now(),
                 qa: j.result.qa,
@@ -3894,6 +3905,15 @@ function NodeKoerper({
       );
     }
     case 'vergleich': {
+      // L24 Bildweg Varianten (E246): haengt ein Varianten-Knoten an einem Eingang, zeigt der
+      // Vergleich dessen Bilder als Raster (Zeilen Standpunkte, Spalten Stimmungen, Reiter
+      // Entwurf) — statt der bis zu drei Einzelbilder.
+      const eigener = doc.get<VisGraph>(graphId);
+      const varianten = eigener?.edges
+        .filter((e) => e.to === node.id)
+        .map((e) => eigener.nodes.find((n) => n.id === e.from))
+        .find((n) => n?.typ === VARIANTEN_TYP);
+      if (varianten) return <VariantenRaster variantenId={varianten.id} />;
       const bilder = ['bild1', 'bild2', 'bild3']
         .map((p) => bildQuelle(node.id, p))
         .filter((b): b is NonNullable<typeof b> => b !== null);
@@ -4169,6 +4189,10 @@ function NodeKoerper({
     case KAMERA_AUS_3D_TYP: {
       const g = doc.get<VisGraph>(graphId);
       return g ? <KameraAus3dKoerper graph={g} node={node} /> : null;
+    }
+    case VARIANTEN_TYP: {
+      const g = doc.get<VisGraph>(graphId);
+      return g ? <VariantenKoerper graph={g} node={node} /> : null;
     }
     default:
       return null;
