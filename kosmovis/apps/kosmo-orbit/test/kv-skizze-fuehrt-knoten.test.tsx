@@ -202,16 +202,26 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     expect(prompt.getAttribute('title')).toContain('«Abendstimmung» tritt zurück und wird nicht gesendet');
   });
 
-  it('96a: Skizze ohne Bemerkung — Zeile und Anweisung sagen es VOR dem Klick, in Warnfarbe', async () => {
+  it('96c: Skizze ohne Bemerkung, aber mit Prompt — der Prompt gilt als Anweisung, keine Warnung', async () => {
     registriereSkizzenQuelle(wirt([{ ...SKIZZEN[0]!, bemerkung: '' }]));
     montiere({ skizze: true, prompt: 'Abendstimmung' });
     await warte();
     const zeile = q('render-skizze') as HTMLElement;
+    // (Die Zeile kann aus einem anderen Grund warnen: Auf Z-Image kommt die Skizze nicht an.)
+    expect(zeile.textContent).not.toBe(SKIZZE_OHNE_BEMERKUNG_SATZ);
+    const prompt = q('render-final-prompt') as HTMLElement;
+    expect(prompt.textContent).toContain('Anweisung: Prompt «Abendstimmung»');
+    expect(prompt.textContent).toContain('keine Bemerkung');
+    expect(prompt.className).not.toContain('warnung');
+  });
+
+  it('96a/96c: Skizze ohne Bemerkung UND ohne Prompt — Warnung VOR dem Klick', async () => {
+    registriereSkizzenQuelle(wirt([{ ...SKIZZEN[0]!, bemerkung: '' }]));
+    montiere({ skizze: true, prompt: '' });
+    await warte();
+    const zeile = q('render-skizze') as HTMLElement;
     expect(zeile.textContent).toBe(SKIZZE_OHNE_BEMERKUNG_SATZ);
     expect(zeile.dataset['warnung']).toBe('true');
-    const prompt = q('render-final-prompt') as HTMLElement;
-    expect(prompt.textContent).toBe(SKIZZE_OHNE_BEMERKUNG_SATZ);
-    expect(prompt.className).toContain('warnung');
   });
 
   it('96b: auf ein Bild gezeichnet und dessen Standpunkt bekannt — «Standpunkt: vom Bild unter der Skizze»', async () => {

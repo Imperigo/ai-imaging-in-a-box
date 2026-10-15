@@ -3558,6 +3558,7 @@ function NodeKoerper({
             backbone: renderBedienungAusParams(params).backbone,
             ohneKi: params['nurCycles'] === true || params['lineart'] === true,
             mitKameras: kamerasAmEingang === true,
+            prompt: finalPrompt,
           })
         : undefined;
       // P-LEERSZENE: dieselbe Zahl wie die «Szene: N Bauteile»-Anzeige am

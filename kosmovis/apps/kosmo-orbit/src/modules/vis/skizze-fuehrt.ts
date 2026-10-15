@@ -67,7 +67,7 @@ export const SKIZZE_OHNE_KI_ZEILE = 'Skizze geht nicht mit «nur Cycles» oder �
 
 /** 96a: warum ohne Bemerkung nichts gesendet wird. */
 export const SKIZZE_BEMERKUNG_GRUND =
-  'Mit einer Skizze gilt ihre Bemerkung als Anweisung — die Stimmung tritt zurück. Ohne Bemerkung würde die Bildseite abweisen; darum wird nichts gesendet.';
+  'Mit einer Skizze gilt ihre Bemerkung als Anweisung — die Stimmung tritt zurück. Fehlt die Bemerkung, gilt der Prompt; fehlt beides, würde die Bildseite abweisen, darum wird nichts gesendet.';
 
 /** 96b: von wo das Bild aus dieser Skizze entsteht — wie es die Bibliothek meldet, sonst aus `ueber`. */
 export function skizzenStandpunkt(s: Skizze | null): string {
@@ -97,12 +97,14 @@ export function skizzeFuehrtZeile(opts: {
   backbone: Bildwerkzeug | undefined;
   ohneKi: boolean;
   mitKameras: boolean;
+  /** Der Prompt des Render-Knotens — Rückfall, wenn die Skizze keine Bemerkung hat (96c). */
+  prompt?: string;
 }): SkizzeFuehrtZeile {
   if (!opts.skizze) return { zeile: SKIZZE_KEINE_ZEILE, satz: SKIZZE_KEINE_ZEILE, warnung: false };
   if (opts.ohneKi) return { zeile: SKIZZE_OHNE_KI_ZEILE, satz: SKIZZE_OHNE_KI_ZEILE, warnung: true };
   const gewaehlt = waehleSkizze(skizzenStand().liste, opts.skizze.wahl);
   // Entscheid 96a: ohne Bemerkung wird nichts gesendet — das steht VOR dem Klick da.
-  if (gewaehlt && skizzeHatBemerkung(gewaehlt) === false) {
+  if (gewaehlt && skizzeHatBemerkung(gewaehlt) === false && !(opts.prompt ?? '').trim()) {
     return { zeile: SKIZZE_OHNE_BEMERKUNG_SATZ, satz: `${SKIZZE_OHNE_BEMERKUNG_SATZ} ${SKIZZE_BEMERKUNG_GRUND}`, warnung: true };
   }
   const werkzeug: Bildwerkzeug = opts.backbone ?? 'z-image-turbo';
@@ -145,6 +147,14 @@ export function skizzeAnweisung(wahl: string, prompt: string): SkizzeAnweisung {
   const zurueckSatz = prompt.trim() ? ` Die Stimmung «${prompt.trim()}» tritt zurück und wird nicht gesendet.` : '';
   const hat = gewaehlt ? skizzeHatBemerkung(gewaehlt) : null;
   if (hat === false) {
+    // RUECKFALL 96c: ohne Bemerkung gilt der Prompt; erst ohne beides ist es eine Warnung.
+    if (prompt.trim()) {
+      return {
+        text: `Anweisung: Prompt «${prompt.trim()}» (die Skizze hat keine Bemerkung)`,
+        titel: `Die Skizze hat keine Bemerkung — darum gilt der Prompt «${prompt.trim()}» als Anweisung.`,
+        warnung: false,
+      };
+    }
     return { text: SKIZZE_OHNE_BEMERKUNG_SATZ, titel: `${SKIZZE_OHNE_BEMERKUNG_SATZ} ${SKIZZE_BEMERKUNG_GRUND}`, warnung: true };
   }
   if (hat === true && gewaehlt?.bemerkung) {

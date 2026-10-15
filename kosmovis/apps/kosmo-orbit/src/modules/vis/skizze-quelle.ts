@@ -248,7 +248,8 @@ export interface SkizzeDerBestellung {
   name: string;
   /**
    * Was sich am Bild ändern soll; fehlt sie, nimmt die Bildseite die Bemerkung der Skizze. Die
-   * Knotenansicht setzt sie seit Entscheid 96a NICHT (`skizzeZurBestellung`) — der Vertrag kennt
+   * Knotenansicht setzt sie seit Entscheid 96a nur als RÜCKFALL (96c): den Prompt, wenn die Skizze
+   * keine Bemerkung hat (`skizzeZurBestellung`) — der Vertrag kennt
    * das Feld für andere Besteller.
    */
   anweisung?: string;
@@ -263,7 +264,7 @@ export const SKIZZE_FEHLT_SATZ =
   'Die gewählte Skizze steht nicht (mehr) in der Mappe — nichts gesendet. Am Skizzen-Knoten eine andere wählen.';
 
 /** Entscheid 96a: die gewählte Skizze hat keine Bemerkung — und die ist mit Skizze die Anweisung. */
-export const SKIZZE_OHNE_BEMERKUNG_SATZ = 'Die Skizze hat keine Bemerkung — am iPad eine schreiben.';
+export const SKIZZE_OHNE_BEMERKUNG_SATZ = 'Die Skizze hat keine Bemerkung, und am Render-Knoten hängt kein Prompt — eines von beiden braucht es.';
 
 /**
  * Entscheid 96a: hat die Skizze eine Bemerkung? `true`/`false`, oder `null`, wenn der Wirt das Feld
@@ -290,13 +291,20 @@ export function skizzeHatBemerkung(s: Skizze): boolean | null {
  *   Modell, und der Aufrufer sagt das). Wirft mit Satz, wenn der Wirt die Skizze nicht (mehr) kennt,
  *   die Liste sich nicht lesen liess oder die Skizze keine Bemerkung hat — dann wird nichts gesendet.
  */
-export async function skizzeZurBestellung(wahl: string): Promise<SkizzeDerBestellung | undefined> {
+export async function skizzeZurBestellung(wahl: string, prompt = ''): Promise<SkizzeDerBestellung | undefined> {
   if (!stand.quelle) return undefined;
   await aktualisiereSkizzen();
   if (stand.fehler) throw new Error(`${stand.fehler} — nichts gesendet.`);
   if (!stand.liste || stand.liste.length === 0) throw new Error(`${SKIZZE_LEER_SATZ} Nichts gesendet.`);
   const skizze = waehleSkizze(stand.liste, wahl);
   if (!skizze) throw new Error(SKIZZE_FEHLT_SATZ);
-  if (skizzeHatBemerkung(skizze) === false) throw new Error(`${SKIZZE_OHNE_BEMERKUNG_SATZ} Nichts gesendet.`);
+  // RUECKFALL (Owner, 15.10.2026, Entscheid 96c): Am iPad gibt es noch kein Feld fuer die
+  // Bemerkung. Ohne Bemerkung gilt darum der Prompt des Render-Knotens als Anweisung; erst wenn
+  // auch der leer ist, wird nichts gesendet.
+  if (skizzeHatBemerkung(skizze) === false) {
+    const anweisung = prompt.trim();
+    if (!anweisung) throw new Error(`${SKIZZE_OHNE_BEMERKUNG_SATZ} Nichts gesendet.`);
+    return { name: skizze.name, anweisung };
+  }
   return { name: skizze.name };
 }

@@ -1716,7 +1716,7 @@ export function sendeGraphRenderAuftrag(
   // Bemerkung der Skizze (`style.prompt` reist wie immer mit; die Bildseite rechnet eine Skizze
   // nur mit der Bemerkung).
   const versand: Promise<GesendeterJob> = skizzenWahl
-    ? skizzeZurBestellung(skizzenWahl.wahl).then((skizze) => {
+    ? skizzeZurBestellung(skizzenWahl.wahl, auftrag.prompt ?? '').then((skizze) => {
         if (!skizze) melde(SKIZZE_NUR_IN_VISBOX_SATZ, { ton: 'info' });
         return senden(skizze);
       })
