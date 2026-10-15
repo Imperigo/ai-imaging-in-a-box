@@ -369,6 +369,9 @@ gewisse Dinge gut ergänzen oder schnelle Änderungen.»* Ob der Bestand im fert
 mitgemalt wird, wählt der Architekt am Bild — die Vorgabe ist: so viel wie möglich modelliert und als Grundlage an die KI
 geliefert (Tiefe, Masken, Vorschaubild), die KI ergänzt.
 
+**Messmodelle bleiben (Owner-Entscheid über den Integrator, 15.10.2026):** Der Grundsatz betrifft nur **erzeugte
+Bilder**. Modelle, die im Splat-Weg messen oder prüfen — die Personen-Maske, die MoGe-2-Gegenprobe —, bleiben.
+
 ### Nachrichten über die Zentrale (Owner-Entscheid 06.10.2026, abends)
 
 Bis dahin konnte diese Cloud-Sitzung andere Sitzungen nicht erreichen; der Owner leitete jede Zeile
