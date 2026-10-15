@@ -8025,3 +8025,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Grundsatz in `CLAUDE.md`, an alle Worker gemeldet; HomeStation stellt Messungen «Textur im KI-Endbild» ein. *(15.10.2026, §126)*
 - [ ] Blatt zeichnen: Wahl am Render-Knoten «Bestand direkt / von der KI mitgemalt» (97a), dann bauen (Zusammensetzen aus Vorschaubild und Entwurfsmaske).
 - [ ] Randfall Rahmung (287 A): flache, lange Körper — Eckentest schiebt zurück; Riegel nennt max(Breite, Höhe) «Bildbreite».
+
+## Skizze führt das Bild (Entscheide 96/96a/96b)
+
+- [x] Eingang «Skizze», Vertragsfeld `skizze`, Abholer über `rechne_skizze`, Lizenz markiert. *(15.10.2026, §125/§130)*
+- [ ] Anweisung = Bemerkung der Skizze, Stimmung tritt zurück (96a); Standpunkt = Bild unter der Skizze (96b).
+- [ ] Am Heim-PC messen, ob die Skizze auf qwen-image-2.1 ankommt (local `auftraege/offen/auf-20261015-286.json`).
