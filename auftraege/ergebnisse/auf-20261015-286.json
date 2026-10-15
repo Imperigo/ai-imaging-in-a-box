@@ -1,0 +1,109 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261015-286",
+ "worker": "local",
+ "rang": 74,
+ "folgt_auf": "auf-20261014-285",
+ "entscheide": [
+  "96"
+ ],
+ "status": "erledigt — Weg von Anfang bis Ende bestanden (Skizze an Render -> Ausfuehren -> Freigeben -> Bild am Knoten, Skizze danach «gerechnet»). L1 genau wie erwartet. L2 (Qwen-Image 2.1): Die Skizze KOMMT AN — das Vordach steht genau an der gezeichneten Stelle, ausserhalb der Strichzone bleibt das Bild fast unveraendert (mittlere Abweichung zur Unterlage 74.6 in der Zone, 2.8 ausserhalb). Gegenprobe S7: nichts gesendet, aber ein anderer Satz als erwartet (siehe s7).",
+ "beendet": "2026-10-15T07:50:00Z",
+ "koepfe": {
+  "ai_imaging": "main 9db15d4 nach git pull --ff-only; «Entscheid 96 gebaut …» (1ca7b11) ist in git log --oneline -5 enthalten. Kein Code geaendert.",
+  "knoten_bau": "python3 tools/knoten_bau.py scheiterte zuerst an der Typpruefung (Cannot find module '@kosmo/data'): node_modules unter kosmovis/ kannte das neue Arbeitsbereich-Paket noch nicht, und das Werkzeug ruft npm ci nur, wenn node_modules ganz fehlt. Nach npm ci in kosmovis/ lief der Bau durch und wurde gestempelt; der Bau war byte-gleich mit dem eingecheckten (git status leer). Vorschlag an KosmoVis: knoten_bau.py sollte npm ci auch rufen, wenn package-lock.json neuer ist als node_modules.",
+  "dienste": "ja — visbox-flaeche neu gestartet (systemctl --user restart); Abholer: kosmo-abholer.service war inactive, kein Auftrag queued/running, dann systemctl --user restart kosmo-abholer.timer. Erster Durchgang danach lud den neuen Code (L1 rechnete ueber den Skizzenweg). Drop-in display.conf / kosmo-xvfb87 nicht angefasst.",
+  "browser": "Playwright-Chromium ohne Fenster gegen 127.0.0.1:8731 (Seite und /knoten/), Anmeldung visbox mit dem Dateikennwort (nicht ausgegeben). Treiber am Ende per gemerkter PID beendet.",
+  "gpu": "Vor jedem Lauf nvidia-smi: 14-16 W, 1.8 GB belegt (Desktop, Sunshine, Flaeche 0.65 GB), kein Ollama-Modell geladen, kein fremder Lauf. Immer nur ein GPU-Lauf zur Zeit."
+ },
+ "s2_mappe": {
+  "geometrie": "synthetisch: zwei Quader mit zwei Materialien (schreibe_test_glb aus tests/test_multipass.py) ueber «Datei laden …» im Modell-Knoten -> Mappe «quader» (Fassung 2, die Mappe bestand leer aus 285).",
+  "vorbereitung": "Die Mappe hatte keinen Prompt und keine Hochachse; ueber /api/einstellungen gesetzt (up_axis Y, Prompt 'two simple light concrete building volumes on plain ground, morning light, architectural photograph, empty scene', seed 7). Danach auf der Seite «Rechnen» mit einem Bild (Vorgabemodell) -> Unterlage 512 x 512, ohne Personen.",
+  "skizze": "Auf der Seite («Skizze — Entwurfsmodus», Unterlage = dieses Bild) mit der Maus gezeichnet: Vordachplatte (zwei Linien, Schraffur) und zwei Stuetzen, nur Striche, keine Personen, keine Figuren.",
+  "befund_bemerkung": "Die Seite hat beim Ablegen KEIN Feld fuer die Bemerkung (skizzeAblegen schickt nur ordner, ueber, png_base64, schluessel). Darum aus dem Seitenkontext ueber denselben Weg POST /api/skizze mit bemerkung 'Vordach aus Holz' abgelegt, wie das iPad es tut. Antwort: abgelegt, NICHT gerechnet, mit Hinweis auf das Vorgabemodell."
+ },
+ "s3": {
+  "skizze_zeile": "Skizze führt · Z-Image Turbo: darauf kommt sie gemessen nicht an.",
+  "skizze_zeile_lang": "«skizze-20261015-072645.png · 15.10. 09:26» führt das Bild; gerechnet wird mit Z-Image Turbo. Auf diesem Modell kommt die Skizze gemessen nicht an (auf-20260919-123) — das Bild entsteht aus Tiefenkarte und Text, und am Ergebnis steht «SKIZZE NICHT ANGEKOMMEN». Ein anderes Bildwerkzeug wählen; ein Modell, auf dem sie gemessen ankommt, gibt es noch nicht. Die Kamera-Standpunkte gelten mit einer Skizze nicht: es entsteht EIN Bild vom Standpunkt der Mappe.",
+  "skizze_zeile_qwen21": "Skizze führt · Qwen-Image 2.1: ob sie ankommt, ist ungemessen.",
+  "prompt_zeile_fertiger_anfang": "Anweisung: Morgenlicht, klare lange Schatten, frische kühle Luft",
+  "prompt_zeile_L1": "keine Anweisung — es gilt die Bemerkung der Skizze",
+  "prompt_zeile_L2": "Anweisung: a wooden canopy over the entrance",
+  "bedienung": "Knoten «Skizze vom iPad» aus der Palette, Kante von seinem Ausgang «Bild» an den Eingang «Skizze» gezogen. Fuer L1 «ohne Prompt» den Prompt-Kombinierer entfernt (sonst wird die Stimmung zur Anweisung, vgl. 96a). Fuer L2 den Prompt-Knoten mit dem Text an den Eingang «Prompt» gehaengt."
+ },
+ "s4": {
+  "L1": {
+   "bildwerkzeug": "Z-Image Turbo — Vorgabe, ohne Prompt",
+   "status_je_schritt": "Knoten: BEREIT -> WARTET AUF FREIGABE (Ausfuehren) -> WARTET — NICHT ABGEHOLT (GRUND UNBEKANNT) (nach Freigeben, = in der Reihe) -> FERTIG; job.json: awaiting_approval -> queued -> running -> done",
+   "dauer": "Freigabe bis done ca. 9 s; render-result timings.gesamt 8.6 s (512 x 512 aus den Einstellungen der Mappe)",
+   "bild_am_knoten": "ja (512 x 512, auch Bild 1 im Bildvergleich)",
+   "verdict_reason": "SKIZZE NICHT ANGEKOMMEN: z-image-turbo nimmt gemessen kein Ausgangsbild an (auf-20260919-123 (sieben Läufe, eine sha256); bestätigt in auf-20260922-137 V5 (modus_abweichung=True)). Das Bild ist aus Tiefenkarte und Text gerechnet — was hineingezeichnet war, steckt nicht darin; NICHT ANWENDBAR (Handeingriff): Das Bild entstand aus einer Skizze und folgt absichtlich nicht dem Modell; die Geometriepruefung beantwortet hier die falsche Frage. 'passed: false' heisst hier nicht durchgefallen, sondern nicht anwendbar; Geometrie-Score nicht gemessen (Schwelle 0.65)",
+   "verdict_hinweise": [
+    "AUS SKIZZE GERECHNET: 'skizze-20261015-072645.png' auf ihrer Unterlage, Anweisung aus der Bemerkung der Skizze — wie «aus Skizze rechnen» auf der Seite.",
+    "Auf 'laeufe/render-c5244c83f5725c16/bild.png' gesetzt, Blatt auf Bild.",
+    "Kein Standpunkt bestellt — gerechnet frontal von Süden, wie der Abholer ohne mitgesandte Kamera. Ein anderer Blick: «kamera» in den Einstellungen der Mappe oder im Aufruf setzen."
+   ],
+   "engine_used": "z-image-turbo",
+   "engine_license_open": null,
+   "lieferstatus": "geliefert",
+   "erwartung": "erfuellt: «SKIZZE NICHT ANGEKOMMEN» zuvorderst, «NICHT ANWENDBAR (Handeingriff)», kein engine_license_open. Anweisung kam aus der Bemerkung ('Vordach aus Holz', anweisung_aus 'bemerkung'). Bild: Holzinnenraum ohne das gezeichnete Vordach, keine Personen."
+  },
+  "L2": {
+   "bildwerkzeug": "Qwen-Image 2.1, Prompt 'a wooden canopy over the entrance'",
+   "status_je_schritt": "Knoten: WARTET AUF FREIGABE -> WARTET — NICHT ABGEHOLT (GRUND UNBEKANNT) (0-18 s) -> RENDERT -> FERTIG (48 s); job.json: awaiting_approval -> queued (2 s) -> running (31 s, naechster Takt) -> done (61 s)",
+   "dauer": "Freigabe bis done 61 s, davon ca. 29 s in der Reihe bis zum Takt; timings.gesamt 27.7 s",
+   "bild_am_knoten": "ja (512 x 512), im Verlauf mit Marke «durchgefallen» und «⚠ Lizenz offen»",
+   "verdict_reason": "NICHT ANWENDBAR (Handeingriff): Das Bild entstand aus einer Skizze und folgt absichtlich nicht dem Modell; die Geometriepruefung beantwortet hier die falsche Frage. 'passed: false' heisst hier nicht durchgefallen, sondern nicht anwendbar; Geometrie-Score nicht gemessen (Schwelle 0.65)",
+   "verdict_hinweise": [
+    "AUS SKIZZE GERECHNET: 'skizze-20261015-072645.png' auf ihrer Unterlage, Anweisung: 'a wooden canopy over the entrance' — wie «aus Skizze rechnen» auf der Seite.",
+    "Auf 'laeufe/render-c5244c83f5725c16/bild.png' gesetzt, Blatt auf Bild.",
+    "Kein Standpunkt bestellt — gerechnet frontal von Süden, wie der Abholer ohne mitgesandte Kamera. Ein anderer Blick: «kamera» in den Einstellungen der Mappe oder im Aufruf setzen."
+   ],
+   "engine_used": "qwen-image-2.1",
+   "engine_license_open": true,
+   "lieferstatus": "geliefert",
+   "erwartung": "erfuellt: engine_license_open true, kein «NICHT ANGEKOMMEN»-Satz. Im befund.json zusaetzlich: «LIZENZ OFFEN …», «Diese Pipeline hat keinen 'control_image'-Eingang … Das Schoenbild geht als 'image' hin; die Tiefenkarte erreicht das Modell NICHT», 'strength' (0.6) kennt diese Pipeline nicht.",
+   "nur_messlauf": "Lizenz offen (E128) — nichts davon ausgeliefert, Bilder nur lokal."
+  },
+  "L3_ohne_skizze": {
+   "bildwerkzeug": "Qwen-Image 2.1, gleicher Prompt, Kante Skizze geloest",
+   "status_je_schritt": "awaiting_approval -> queued (2 s) -> running (30 s) -> done (389 s); Knoten FERTIG",
+   "weg": "Modellweg, cameras auto (Sued, Suedost, Nordwest), 1600 x 992",
+   "engine_used": "qwen-image-2.1",
+   "engine_license_open": true,
+   "lieferstatus": "fehlgeschlagen",
+   "lieferstatus_grund": "2 von 3 Kameras geliefert, 2 von 3 Bildern — s fehlgeschlagen: NICHT GERENDERT (Rahmung), s: Das Bauwerk fuellt 62.9% der Bildbreite, gemessen noetig sind 65%",
+   "beobachtet": "Beide Bilder zeigen ebenfalls ein Holzvordach — allein aus dem Prompt, an frei gewaehlter Stelle und anderer Form; keine Personen."
+  }
+ },
+ "s5": {
+  "abweichung_L2_L3": "58.4 (L2 gegen L3-Suedost, beide auf 512 x 512 gebracht; gegen L3-Nordwest 67.5). Wenig aussagekraeftig: L3 ist ein anderer Weg (Modell, anderer Standpunkt, 16:10), das Frontalbild s wurde wegen Rahmung nicht gerechnet.",
+  "abweichung_L2_eingangsbild": "20.4 (L2 gegen Unterlage ohne Striche 20.2; Eingangsbild gegen Unterlage 3.0)",
+  "ortsgenau": "Mittlere Abweichung L2 gegen Unterlage innerhalb des Huellrechtecks der Striche 74.6, ausserhalb 2.8. Holzton im Band der gezeichneten Platte: L2 89 %, Unterlage 16 %, L1 42 %. Keine roten Strichpixel mehr in L2 (0 %). Zum Vergleich L1 (Z-Image): 54.5 in der Zone, 56.1 ausserhalb — gleichmaessig neu, nicht ortsgebunden.",
+  "satz": "Ja, die Skizze kommt bei Qwen-Image 2.1 an: Das Bild aendert sich fast nur dort, wo gezeichnet wurde, und setzt ein Holzvordach mit zwei Stuetzen genau an Platte und Stuetzen der Skizze, waehrend der Rest der Unterlage bleibt; ein Vordach allein beweist es nicht, denn L3 ohne Skizze erfindet aus dem Prompt auch eines — aber an anderer Stelle und in anderer Form.",
+  "vorbehalt": "Ein Lauf, ein Startwert (7), 512 x 512, eine Skizze. Gegenprobe mit derselben Unterlage OHNE Striche und gleichem Prompt (ob Qwen das Vordach zufaellig auch dorthin setzt) nicht gemacht, weil der Knotenweg ohne Skizze das Modell rechnet, nicht die Unterlage."
+ },
+ "s6": {
+  "gerechnet": "ja — Stand «gerechnet»",
+  "nennt_ihr_bild": "ja — ergebnis = das Bild von L2 (laeufe/nachrender-0b45…/bild.png), das auch in der Mappe steht",
+  "befund": "Die Skizze nennt nur das LETZTE Bild: Das Bild aus L1 steht in der Mappe, wird von der Skizze aber nicht mehr genannt (Feld ergebnis ueberschrieben)."
+ },
+ "s7": {
+  "verwerfen": "Am Heim-PC gibt es dafuer keinen Knopf und keinen HTTP-Weg (Seite, Knotenansicht, /api/*); verworfen ueber die Bibliothek (projekt.markiere_skizze stand=verworfen, projekt.speichere). Nichts am Code geaendert.",
+  "satz_am_knoten": "Noch keine Skizze in der Mappe — am iPad zeichnen und «In die Mappe legen». Nichts gesendet.",
+  "auftrag_angelegt": "nein (kein neuer Ordner in der Ablage, Knotenstatus FEHLER)",
+  "abweichung_von_erwartung": "Der erwartete Satz «Die gewählte Skizze steht nicht (mehr) in der Mappe …» erscheint NICHT, weil die Mappe danach gar keine Skizze mehr hat — der Leer-Satz geht vor. Gleiches Ergebnis mit «neueste» und mit ausdruecklich gewaehlter Skizze (dafuer kurz auf «gerechnet» zurueckgesetzt, neu gewaehlt, wieder verworfen).",
+  "serverseitig": "Gegenprobe der Bibliothek in einer Wegwerf-Ablage (knotenweg.lege_an mit der Szene von L2 und der Mappe): KnotenwegError «Die Skizze 'skizze-20261015-072645.png' steht nicht (mehr) in der Mappe «quader» — verworfen oder nie abgelegt. Am Knoten «Skizze vom iPad» eine andere wählen.» — 0 Ordner angelegt, Wegwerf-Ablage geloescht."
+ },
+ "befunde_fuer_kosmovis": [
+  "knoten_bau.py: npm ci nur, wenn node_modules fehlt — nach einem neuen Arbeitsbereich-Paket scheitert der Bau (siehe koepfe.knoten_bau).",
+  "Seite: kein Bemerkungsfeld beim Ablegen einer Skizze; mit 96a (Bemerkung gilt) wird das wichtiger.",
+  "Knotenansicht: Ein Auftrag in der Reihe (queued, freigegeben, wartet auf den naechsten Takt) heisst «WARTET — NICHT ABGEHOLT (GRUND UNBEKANNT)» — klingt nach Fehler, ist aber normal (bis ca. 30 s).",
+  "Knotenansicht: Verlauf zeigt fuer L1/L2 die Marke «durchgefallen», obwohl das Urteil «nicht anwendbar» lautet.",
+  "Knotenansicht: Nach Neuladen der Seite ist der eigene Graph weg (fertiger Anfang wieder da, Skizzen-Knoten und Kanten verloren).",
+  "Mit Skizze gilt heute noch der Standpunkt der Mappe (frontal von Sueden) und die Stimmung als Anweisung — 96a/96b sind laut PLAN noch nicht gebaut; hier fiel es nicht ins Gewicht, weil die Unterlage selbst frontal von Sueden war und L1 ohne Prompt lief.",
+  "S7: Satz «steht nicht (mehr)» erscheint am Knoten nur, wenn andere Skizzen in der Mappe bleiben; bei leerer Mappe kommt der Leer-Satz."
+ ],
+ "bilder": "Alle Bilder bleiben lokal am Heim-PC (Unterlage, Eingangsbild, L1, L2, L3 x2). Keines zeigt eine Person oder Figur; kein Lauf verworfen oder wiederholt.",
+ "aufraeumen": "Probe-Mappe «quader» bleibt (synthetisch), Skizze darin am Ende «verworfen». Auftragsordner der drei Laeufe bleiben in der Ablage. Browser-Treiber per PID beendet, Profil geloescht. Karte danach 15 W."
+}
