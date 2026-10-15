@@ -61,6 +61,16 @@ MAX_MODELL_BYTES = 768 * 1024 * 1024
 #: Die Endzustände. Ein Abbruch ändert sie nicht mehr.
 ENDZUSTAENDE = (bruecke.STATUS_DONE, bruecke.STATUS_ERROR, bruecke.STATUS_CANCELLED)
 
+#: Wo der Auftrag einer SKIZZE den Pfad seiner Mappe vermerkt (Owner-Entscheid 96, 15.10.2026).
+#:
+#: **Warum eine eigene Datei und nicht der Laufzettel:** Der Laufzettel geht über ``GET
+#: /jobs/{id}`` in den Browser, und ein Plattenpfad trägt den Rechnernamen nach aussen
+#: (Regel 3) — der Laufzettel nennt darum seit dem 14.10.2026 nur den NAMEN der Mappe. Der
+#: Abholer braucht aber den Pfad, um die Skizze dort zu rechnen, wo sie liegt. Der Punkt am
+#: Anfang ist die Sperre: :func:`artefakt` liefert keinen Namen aus, der mit einem Punkt
+#: beginnt — die Datei bleibt auf dem Heim-PC.
+DATEI_MAPPE = ".mappe.json"
+
 
 class KnotenwegError(ValueError):
     """Eine Anfrage passt nicht — mit Satz und dem Zustandscode, den der Server sendet."""
@@ -116,7 +126,8 @@ def _format(szene: dict, dateiname: str | None) -> str:
 
 
 def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
-            *, kennung: str | None = None, mappe: str | None = None) -> dict:
+            *, kennung: str | None = None, mappe: str | None = None,
+            mappe_pfad=None) -> dict:
     """Einen Auftrag annehmen: drei Dateien in einen neuen Ordner, Status wartet auf Freigabe.
 
     Args:
@@ -132,6 +143,11 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
             (Entscheid 90) bestellt die Knotenansicht aber auch aus Mappen, die erst danach
             entstanden sind; ihre Aufträge liegen richtig in derselben Ablage, nur sagte
             nichts mehr, zu welcher Mappe ein Bild gehört. Der Laufzettel sagt es jetzt.
+        mappe_pfad: Der PFAD derselben Mappe — nur gebraucht, wenn die Szene eine Skizze
+            trägt (``skizze``, Owner-Entscheid 96): Dann wird sie dort gerechnet, wo sie liegt,
+            und der Pfad steht in :data:`DATEI_MAPPE` neben dem Auftrag, nie im Laufzettel.
+            Eine Skizze ohne Mappe, oder eine, die in der Mappe nicht (mehr) steht, wird mit
+            Satz abgewiesen — angenommen und erst am Heim-PC gescheitert wäre schlimmer.
 
     Returns:
         Der Laufzettel, wie er in ``job.json`` steht — mit ``approval_token``, den nur der
@@ -146,6 +162,7 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
             f"Die Modelldatei ist {len(modell) / 1e6:.0f} MB gross; angenommen werden bis "
             f"{MAX_MODELL_BYTES / 1e6:.0f} MB.", 413)
     fmt = _format(szene, dateiname)
+    skizze = _pruefe_skizze(szene, mappe_pfad)
 
     job_id = kennung or f"vis-{int(time.time())}-{secrets.token_hex(3)}"
     if not kosmo_szene.ist_fremde_job_id(job_id):
@@ -162,6 +179,8 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
                             else {}), "path": str(modellpfad), "format": fmt}
     szene["out"] = str(ordner / "out")
     _schreibe(ordner / bruecke.DATEI_SZENE, szene)
+    if skizze is not None:
+        _schreibe(ordner / DATEI_MAPPE, {"pfad": str(Path(mappe_pfad).resolve())})
 
     vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
     stil = szene.get("style") if isinstance(szene.get("style"), dict) else {}
@@ -180,6 +199,51 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
     }
     _schreibe(ordner / bruecke.DATEI_LAUFZETTEL, zettel)
     return zettel
+
+
+def _pruefe_skizze(szene: dict, mappe_pfad) -> str | None:
+    """Der Name der Skizze, die die Szene bestellt — oder ``None`` ohne Skizze.
+
+    Geprüft wird nur, was hier schon feststeht: Es gibt eine Mappe, und die Skizze steht in
+    ihr (nicht verworfen). Ob sie sich rechnen lässt — Unterlage, Anweisung, Datei —, prüft
+    :func:`aiimaging.arbeitsgang.rechne_skizze` am Heim-PC, mit denselben Sätzen wie auf der
+    Seite. Die Form (``quelle``, ``name``) prüft :func:`aiimaging.kosmo_szene.lies_szene`;
+    hier nur so weit, dass ein Name nachzuschlagen ist.
+    """
+    roh = szene.get("skizze")
+    if roh is None:
+        return None
+    name = roh.get("name") if isinstance(roh, dict) else None
+    if not isinstance(name, str) or not name.strip():
+        raise KnotenwegError(f"Die Skizze der Bestellung nennt keine Datei: {roh!r}.")
+    if not mappe_pfad:
+        raise KnotenwegError(
+            "Eine Skizze lässt sich nur aus einer offenen Mappe bestellen — dieser Auftrag "
+            "kam ohne Mappe. Die Mappe auf der Visbox-Seite öffnen und neu ausführen.")
+    try:
+        skizzen = skizzen_der_mappe(projekt.oeffne(mappe_pfad)["projekt"], hoechstens=10**6)
+    except projekt.ProjektError as fehler:
+        raise KnotenwegError(f"Die Mappe liess sich nicht öffnen: {fehler}") from fehler
+    if name not in {s["name"] for s in skizzen}:
+        raise KnotenwegError(
+            f"Die Skizze {name!r} steht nicht (mehr) in der Mappe «{Path(mappe_pfad).name}» — "
+            f"verworfen oder nie abgelegt. Am Knoten «Skizze vom iPad» eine andere wählen.")
+    return name
+
+
+def mappe_des_auftrags(ordner) -> Path | None:
+    """Der Pfad der Mappe, den :func:`lege_an` bei einer Skizze vermerkt hat — oder ``None``.
+
+    ``None`` heisst: Der Auftrag trägt keinen Vermerk (keine Skizze, oder er kam nicht über
+    die Knotenansicht von Visbox). Ein unlesbarer Vermerk ist ebenfalls ``None`` — der
+    Abholer sagt dann, dass die Mappe fehlt, statt zu raten.
+    """
+    datei = Path(ordner) / DATEI_MAPPE
+    try:
+        pfad = json.loads(datei.read_text(encoding="utf-8")).get("pfad")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return Path(pfad) if isinstance(pfad, str) and pfad else None
 
 
 def lies(ablage, job_id: str) -> dict:

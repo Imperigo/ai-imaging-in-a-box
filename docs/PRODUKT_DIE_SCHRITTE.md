@@ -1509,3 +1509,10 @@ Render-Knoten nimmt heute gar kein Bild an, und die Bestellung hat kein Feld daf
 Renders in den Bildvergleich legen. Ob eine Skizze künftig den Render lenken soll, ist eine eigene Entscheidung. In
 KosmoOrbit steht derselbe Knoten mit dem Satz, dass es Skizzen vom iPad in Visbox gibt.
 
+**Die Skizze führt das Bild (15.10.2026).** Was die alte Visbox-Seite schon konnte, geht jetzt auch in der Knotenansicht:
+Man hängt den Knoten «Skizze vom iPad» an den neuen Eingang «Skizze» des Render-Knotens, und der Heim-PC rechnet das Bild
+aus der Zeichnung — die Skizze auf dem Bild, über das sie gezeichnet wurde, dazu der Prompt als Anweisung, was sich ändern
+soll (ohne Prompt gilt die Bemerkung an der Skizze). Danach steht die Skizze in der Mappe als «gerechnet». Dafür hat die
+Bestellung ein neues Feld bekommen, das KosmoOrbit noch absegnen muss. Ehrlich gesagt: Auf dem Vorgabemodell kommt die
+Skizze gemessen nicht an — der Knoten und das Ergebnis sagen das. Ob sie beim Modell Qwen-Image 2.1 ankommt, ist noch
+ungemessen; der Heim-PC prüft es. In KosmoOrbit bleibt der Render-Knoten, wie er war, weil es dort keine Mappe mit Skizzen gibt.

@@ -23,6 +23,7 @@ import {
   type VisGraph,
   type VisKategorie,
   type VisNode,
+  type VisPort,
   type VisPortTyp,
 } from '@kosmo/kernel';
 import { ansage, KButton, KCheckbox, KField, KIcon, KInput, KSelect, KSlider, KTooltip, KWarteOrt, melde, meldeFehler, useRollfokus, type KIconName } from '@kosmo/ui';
@@ -76,7 +77,8 @@ import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
 import { SkizzeKnotenKoerper } from './SkizzeKnoten';
-import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
+import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
+import { skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
@@ -648,7 +650,7 @@ export function beiblattPlatz(
  * (Drei-Stimmungen-Zeilenabstand, Spiral-Platzsuche), die noch keine Node-ID hat. */
 export function basisNodeHoehe(typ: string): number {
   const kat = VIS_NODE_KATALOG[typ];
-  const ports = Math.max(kat?.inputs.length ?? 0, kat?.outputs.length ?? 0);
+  const ports = Math.max(sichtbareEingaenge(typ).length, kat?.outputs.length ?? 0);
   return KOPF_H + 8 + ports * PORT_ABSTAND + koerperHoehe(typ) + 10;
 }
 
@@ -670,17 +672,45 @@ export const BLATT_REFERENZ_GRUND =
  *  darunter. Ohne Wirt (KosmoOrbit) bleibt es `KOERPER_H.kamera`. */
 export const KAMERA_KOERPER_H_MIT_HEIM = 96;
 
+/**
+ * Owner-Entscheid 96 (Visbox, 15.10.2026): die Zeile «Skizze» im Render-Körper — sie steht NUR, wo
+ * ein Wirt Skizzen anbietet (Visbox), genau wie der Eingang «Skizze» (`sichtbareEingaenge`). In
+ * KosmoOrbit bleibt der Knoten damit Pixel für Pixel so hoch wie bisher: dort ragte er schon am
+ * 08.10.2026 bis 6 px an den Fensterrand (WebKitGTK, `VERLAUF_ZEILE_H`), und eine Zeile, die dort
+ * nichts tun kann, hätte ihn hinausgeschoben. Drei Zeilen Text à 14,2 px (Vorbehaltsklasse wie
+ * `LIZENZ_ZEILE_H`) = 43, eingetragen 44.
+ */
+export const RENDER_ZEILE_SKIZZE: Koerperzeile = { id: 'skizze', h: 44 };
+
 function koerperHoehe(typ: string): number {
   if (typ === 'modell' && modellLadenWirt()) return MODELL_KOERPER_H_MIT_LADEN;
   if (typ === 'kamera' && heimStandpunkte()) return KAMERA_KOERPER_H_MIT_HEIM;
+  if (typ === 'render' && skizzenQuelle()) return (KOERPER_H[typ] ?? 30) + RENDER_ZEILE_SKIZZE.h + ZEILEN_ABSTAND;
   return KOERPER_H[typ] ?? 30;
+}
+
+/**
+ * Owner-Entscheid 96 (Visbox, 15.10.2026): die Eingänge, die die Knotenansicht ZEIGT. Der Eingang
+ * «Skizze» am Render-Knoten (`nurVon: ['skizzeIpad']`) steht nur, wo ein Wirt Skizzen anbietet —
+ * in KosmoOrbit gibt es keine, und ein Anschluss, an den nichts passt, wäre ein Versprechen ohne
+ * Deckung. Er ist der LETZTE Eingang: die Lage der übrigen ändert sich dadurch nicht. Kanten in
+ * einen verborgenen Eingang (ein in Visbox gebauter Graph) werden nicht gezeichnet; die Bestellung
+ * sagt dann, dass das Bild aus dem Modell kommt (`SKIZZE_NUR_IN_VISBOX_SATZ`).
+ *
+ * EINE Stelle für Höhe, Lage, Treffer und Zeichnen — sonst zeigte der Knoten einen Port, den die
+ * Platzsuche nicht kennt.
+ */
+export function sichtbareEingaenge(typ: string): readonly VisPort[] {
+  const ein = VIS_NODE_KATALOG[typ]?.inputs ?? [];
+  if (skizzenQuelle()) return ein;
+  return ein.filter((p) => !p.nurVon?.includes(SKIZZE_IPAD_TYP));
 }
 
 /** V1-Welle Commit 2: Höhe eines eingeklappten Nodes — nur Kopf + (komprimiert
  * gestapelte) Ports, kein Körper. Mindestens ein Port-Slot, auch ohne Ports. */
 function kollabierteNodeHoehe(typ: string): number {
   const kat = VIS_NODE_KATALOG[typ];
-  const ports = Math.max(kat?.inputs.length ?? 0, kat?.outputs.length ?? 0, 1);
+  const ports = Math.max(sichtbareEingaenge(typ).length, kat?.outputs.length ?? 0, 1);
   return KOPF_H + 14 + (ports - 1) * PORT_ABSTAND_KOLLABIERT + 12;
 }
 
@@ -722,7 +752,7 @@ function nodeHoehe(n: VisNode, offen?: ReadonlySet<string>, laufStatus?: string,
 
 function portPos(n: VisNode, port: string, richtung: 'in' | 'out'): { x: number; y: number } {
   const kat = VIS_NODE_KATALOG[n.typ];
-  const liste = richtung === 'in' ? (kat?.inputs ?? []) : (kat?.outputs ?? []);
+  const liste = richtung === 'in' ? sichtbareEingaenge(n.typ) : (kat?.outputs ?? []);
   const i = Math.max(0, liste.findIndex((p) => p.name === port));
   return {
     x: n.x + (richtung === 'in' ? -PORT_ABSATZ : NODE_W + PORT_ABSATZ),
@@ -768,7 +798,7 @@ export function eingangUnterPunkt(
   let bester: { nodeId: string; port: string; d2: number } | null = null;
   for (const n of nodes) {
     if (n.id === quelle.ausserNodeId) continue;
-    const eingaenge = VIS_NODE_KATALOG[n.typ]?.inputs ?? [];
+    const eingaenge = sichtbareEingaenge(n.typ);
     for (let i = 0; i < eingaenge.length; i++) {
       const p = eingaenge[i]!;
       if (p.typ !== quelle.typ) continue;
@@ -2013,6 +2043,9 @@ export function NodeCanvas({
         const von = graph.nodes.find((n) => n.id === e.from);
         const zu = graph.nodes.find((n) => n.id === e.to);
         if (!von || !zu) return null;
+        // Entscheid 96: eine Kante in einen hier verborgenen Eingang wird nicht gezeichnet — sie
+        // landete sonst am ersten Anschluss (`portPos` faellt auf Index 0 zurueck).
+        if (!sichtbareEingaenge(zu.typ).some((p) => p.name === e.toPort)) return null;
         const a = portPos(nodePos(von), e.fromPort, 'out');
         const b = portPos(nodePos(zu), e.toPort, 'in');
         const typ = VIS_NODE_KATALOG[von.typ]?.outputs.find((p) => p.name === e.fromPort)?.typ ?? 'prompt';
@@ -2170,7 +2203,7 @@ export function NodeCanvas({
           ? { ...auftrag, prompt: kombiniertePrompt(auftrag.prompt, formularZusatz(n0.params ?? {})) }
           : undefined;
         const veraltet = lauf && veraltetAuftrag && lauf.memoKey !== memoKey(veraltetAuftrag);
-        const koerperY = KOPF_H + 8 + Math.max(kat.inputs.length, kat.outputs.length) * PORT_ABSTAND;
+        const koerperY = KOPF_H + 8 + Math.max(sichtbareEingaenge(n.typ).length, kat.outputs.length) * PORT_ABSTAND;
         // W1 Massnahme 1: Kategorie-Icon + 2px-Tonstreifen (Hue aus dem
         // Kernel-Katalog, Zeichen aus der KIcon-Registry je Kategorie).
         const kategorieFarbe = VIS_KATEGORIE_HUE[kat.kategorie];
@@ -2341,7 +2374,7 @@ export function NodeCanvas({
             <rect x={0} y={KOPF_H} width={NODE_W} height={2} fill={kategorieFarbe} />
 
             {/* Eingänge links */}
-            {kat.inputs.map((p, i) => {
+            {sichtbareEingaenge(n.typ).map((p, i) => {
               const y = portY(n, i);
               return (
                 <g key={p.name}>
@@ -2442,6 +2475,8 @@ export function NodeCanvas({
                   prompt={auswertung?.werte.get(n.id)?.['prompt'] as string | undefined}
                   material={auswertung?.werte.get(n.id)?.['material'] as string | undefined}
                   eingehenderPrompt={auftrag?.prompt ?? ''}
+                  skizzeAmEingang={auftrag?.skizze}
+                  kamerasAmEingang={graph.edges.some((e) => e.to === n.id && e.toPort === 'kameras')}
                   lauf={lauf}
                   verlauf={n0.typ === 'render' ? reiheVon(n0.id) : []}
                   veraltet={!!veraltet}
@@ -2737,6 +2772,9 @@ const KLEMME_TEXT_ZWEIZEILIG: CSSProperties = {
   WebkitLineClamp: 2,
   overflow: 'hidden',
 };
+
+/** Entscheid 96: die Zeile «Skizze» (`RENDER_ZEILE_SKIZZE`, 44 px) — drei Zeilen, der Rest am `title`. */
+const KLEMME_TEXT_DREIZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 3 };
 
 function RenderBedienung({
   params,
@@ -3278,6 +3316,8 @@ function NodeKoerper({
   prompt,
   material,
   eingehenderPrompt,
+  skizzeAmEingang,
+  kamerasAmEingang,
   lauf,
   verlauf,
   veraltet,
@@ -3296,6 +3336,10 @@ function NodeKoerper({
   material: string | undefined;
   /** V-H4: der eingehende Prompt am Render-Node (vor dem Formular-Zusatz). */
   eingehenderPrompt: string;
+  /** Entscheid 96: die Wahl der Skizze am Eingang «Skizze» (`VisRenderAuftrag.skizze`). */
+  skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
+  /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
+  kamerasAmEingang?: boolean;
   lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
@@ -3485,10 +3529,23 @@ function NodeKoerper({
       // wird, und der Knopf traegt denselben Satz am `title` — VOR dem Senden.
       // Kein Anfangs-Prompt, keine Sperre (Begruendung an
       // `LEERER_PROMPT_HINWEIS`, vis-jobs.ts).
-      const promptLeer = promptFehltFuerKi(finalPrompt, {
-        nurCycles: params['nurCycles'] === true,
-        lineart: params['lineart'] === true,
-      });
+      // Entscheid 96: mit Skizze ist ein leerer Prompt kein Mangel — dann gilt die Bemerkung, die
+      // beim Zeichnen an der Skizze stand (die Bildseite weist ab, wenn auch die fehlt).
+      const mitSkizze = skizzeAmEingang !== undefined && skizzenQuelle() !== null;
+      const promptLeer =
+        !mitSkizze &&
+        promptFehltFuerKi(finalPrompt, {
+          nurCycles: params['nurCycles'] === true,
+          lineart: params['lineart'] === true,
+        });
+      const skizzeZeile = skizzenQuelle()
+        ? skizzeFuehrtZeile({
+            skizze: skizzeAmEingang,
+            backbone: renderBedienungAusParams(params).backbone,
+            ohneKi: params['nurCycles'] === true || params['lineart'] === true,
+            mitKameras: kamerasAmEingang === true,
+          })
+        : undefined;
       // P-LEERSZENE: dieselbe Zahl wie die «Szene: N Bauteile»-Anzeige am
       // Modell-Node (Kommentar an `szeneBauteileAnzahl`, vis-jobs.ts) — der
       // Knopf sperrt, statt bedienbar auszusehen und folgenlos zu bleiben.
@@ -3658,17 +3715,46 @@ function NodeKoerper({
               Klappzuständen gleich: ein Prompt ist beliebig lang, und eine
               Zeile, deren Höhe am Text hängt, macht jede Registerzahl falsch.
               Der volle Wortlaut steht am `title` und im Inspektor. */}
+          {/* Entscheid 96 (Visbox, 15.10.2026): welche Skizze das Bild fuehrt, welches Modell
+              rechnet und ob sie darauf ankommt — nur mit Wirt (`RENDER_ZEILE_SKIZZE`). */}
+          {skizzeZeile && (
+            <Zeile id="skizze">
+              {/* Der volle Satz in der Kurzhilfe (KTooltip, nicht `title=`: kurzhilfe-gate). */}
+              <KTooltip text={skizzeZeile.satz}>
+                <div
+                  data-testid="render-skizze"
+                  data-warnung={String(skizzeZeile.warnung)}
+                  data-satz={skizzeZeile.satz}
+                  className={`vis-node-final-prompt${skizzeZeile.warnung ? ' vis-node-final-prompt--warnung' : ''}`}
+                  style={KLEMME_TEXT_DREIZEILIG}
+                >
+                  {skizzeZeile.zeile}
+                </div>
+              </KTooltip>
+            </Zeile>
+          )}
+
           <Zeile id="prompt">
             <div
               data-testid="render-final-prompt"
               className={`vis-node-final-prompt${promptLeer ? ' vis-node-final-prompt--warnung' : ''}`}
               style={KLEMME_TEXT_ZWEIZEILIG}
-              title={finalPrompt || (promptLeer ? LEERER_PROMPT_HINWEIS : undefined)}
+              title={
+                mitSkizze
+                  ? finalPrompt
+                    ? `Anweisung an die Skizze: ${finalPrompt}`
+                    : 'Keine Anweisung — es gilt die Bemerkung, die beim Zeichnen an der Skizze stand.'
+                  : finalPrompt || (promptLeer ? LEERER_PROMPT_HINWEIS : undefined)
+              }
             >
-              {finalPrompt ||
-                (promptLeer
-                  ? 'kein Prompt — die KI-Veredelung lehnt so ab: Stimmung/Stil verbinden oder Formular füllen'
-                  : 'kein Prompt — verbinde Stimmung/Stil oder fülle das Formular')}
+              {mitSkizze
+                ? finalPrompt
+                  ? `Anweisung: ${finalPrompt}`
+                  : 'keine Anweisung — es gilt die Bemerkung der Skizze'
+                : finalPrompt ||
+                  (promptLeer
+                    ? 'kein Prompt — die KI-Veredelung lehnt so ab: Stimmung/Stil verbinden oder Formular füllen'
+                    : 'kein Prompt — verbinde Stimmung/Stil oder fülle das Formular')}
             </div>
           </Zeile>
 

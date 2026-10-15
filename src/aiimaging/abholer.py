@@ -539,6 +539,8 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         "modellstand": ergebnis.get("modellstand"),
         # Die Umgebung, wenn bestellt (Entscheid 76) — ohne Pfad, Regel 3.
         "kontext": _kosmo_szene.kontext_vermerk(szene.get("kontext")),
+        # Die Skizze, wenn sie das Bild fuehrte (Entscheid 96) — ohne Pfad, Regel 3.
+        "skizze": ergebnis.get("skizze"),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
@@ -2134,6 +2136,111 @@ def _modellstand_nicht_umgewandelt() -> dict:
                       "Modellstand liest nur den glb-Kopf. NICHT GEPRUEFT.")}
 
 
+#: Der Satz, wenn ein Auftrag eine Skizze bestellt, aber keine Mappe vermerkt hat.
+SATZ_SKIZZE_OHNE_MAPPE = (
+    "Eine Skizze ist bestellt, aber zu diesem Auftrag ist keine Mappe vermerkt. Rechnen lässt "
+    "sie sich nur in der Mappe, in der sie liegt — bestellt über die Knotenansicht von Visbox "
+    "(knotenweg.lege_an vermerkt die Mappe dort). Ein Auftrag über einen anderen Weg (Brücke, "
+    "MCP) kann keine Skizze tragen.")
+
+#: Wie das eine Bild eines Skizzenlaufs in ``qa_je_kamera`` heisst — es ist keine der drei
+#: Richtungen des Abholers, sondern der Standpunkt der Mappe.
+KAMERA_SKIZZE = "skizze"
+
+
+def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
+    """Einen Auftrag mit ``skizze`` rechnen — **derselbe Weg wie die Seite**, nicht ein zweiter.
+
+    **Owner-Entscheid 96 (15.10.2026):** In der Knotenansicht soll die Skizze vom iPad das Bild
+    führen, wie «aus Skizze rechnen» auf der alten Visbox-Seite. Darum ruft dieser Weg
+    :func:`aiimaging.arbeitsgang.rechne_skizze` in der Mappe, in der die Skizze liegt
+    (:func:`aiimaging.knotenweg.mappe_des_auftrags`) — mit allem, was dort gilt: die Skizze auf
+    ihrer Unterlage als Eingangsbild, die Anweisung (sonst die Bemerkung der Skizze), der
+    Standpunkt und die Einstellungen der Mappe, die Prüfung «nicht anwendbar», der Satz «SKIZZE
+    NICHT ANGEKOMMEN» auf einem Modell, das kein Ausgangsbild annimmt, und danach die Skizze
+    «gerechnet» mit ihrem Bild. Das Bild steht damit AUCH in der Mappe, wie auf der Seite.
+
+    **Von der Bestellung gelten:** die Skizze, die Anweisung und das Bildwerkzeug
+    (``vis.backbone``). Auflösung, Samples, Treue und Sonne der Bestellung gelten für einen
+    Skizzenlauf nicht — es gelten die Einstellungen der Mappe, wie auf der Seite; die
+    Kameraliste weist :func:`aiimaging.kosmo_szene.skizze_unvertraeglich` schon vorher ab.
+    Das mitgeschickte Modell wird nicht gerechnet: Gerechnet wird das Modell der Mappe (in
+    Visbox liefert die Knotenansicht genau dieses, ``/knoten/modell.glb``).
+
+    **Lizenz:** Ein Modell mit offener Lizenz (E128, ``qwen-image-2.1``) bleibt markiert — die
+    Marke kommt aus dem Lauf (``parameter.lizenz_offen``) über :func:`_engine_aus` bis ins
+    Ergebnis (``engine_license_open: true``). Nie Vorgabe: gerechnet wird, was bestellt ist.
+
+    Raises:
+        AbholerError: keine Mappe vermerkt; die Bibliothek weist die Skizze ab (verworfen,
+            Datei oder Unterlage fehlt, keine Anweisung — mit ihrem Satz); kein Bild entstanden.
+    """
+    from . import arbeitsgang, knotenweg  # spaet: nur ein Skizzenlauf braucht sie
+
+    rechne = rechne or arbeitsgang.rechne_skizze
+    szene = auftrag["szene"]
+    skizze = szene.get("skizze") or {}
+    mappe = knotenweg.mappe_des_auftrags(auftrag["verzeichnis"])
+    if mappe is None:
+        raise AbholerError(SATZ_SKIZZE_OHNE_MAPPE)
+    beginn = time.monotonic()
+    kettenargumente = {"backbone": szene["backbone"]} if szene.get("backbone") else {}
+    try:
+        aus = rechne(mappe, skizze.get("name"), anweisung=skizze.get("anweisung"),
+                     ausfuehrer=ausfuehrer, **kettenargumente)
+    except arbeitsgang.ArbeitsgangError as fehler:
+        raise AbholerError(f"Die Skizze liess sich nicht rechnen: {fehler}") from fehler
+
+    lauf = aus.get("lauf") or {}
+    knoten = lauf.get("knoten") or {}
+    vorsatz = arbeitsgang.SKIZZEN_VORSATZ
+    nach = (knoten.get(f"{vorsatz}-{_kette.KNOTEN_NACHRENDER}") or {}).get("ausgaben") or {}
+    bild = nach.get("bild_png")
+    if aus.get("abgebrochen") or not bild:
+        raise AbholerError(
+            "Aus der Skizze entstand kein Bild"
+            + (" — der Lauf wurde angehalten." if aus.get("abgebrochen") else
+               f": {lauf.get('error') or nach.get('error') or lauf.get('status') or 'ohne Angabe'}"))
+
+    # WORAUF SIE GESETZT WURDE und von wo — aus dem Eintrag, den die Bibliothek in die Mappe
+    # schrieb (dieselben Saetze wie am Bild auf der Seite).
+    eintrag = next((b for b in (aus.get("projekt") or {}).get("bilder") or ()
+                    if isinstance(b, dict) and (aus.get("bilder") or [None])[-1] == b.get("bild")),
+                   {})
+    herkunft = eintrag.get("herkunft") or {}
+    vorgabe = aus.get("standpunkt_vorgabe")
+    vermerk = {
+        "name": skizze.get("name"),
+        "anweisung": herkunft.get("anweisung") or skizze.get("anweisung"),
+        "anweisung_original": skizze.get("anweisung_original"),
+        "anweisung_aus": "bestellung" if skizze.get("anweisung") else "bemerkung",
+        "unterlage": herkunft.get("unterlage"),
+        "standpunkt": ((vorgabe or {}).get("satz") if vorgabe else
+                       "Standpunkt aus den Einstellungen der Mappe, wie auf der Seite."),
+        "hinweise": [str(h) for h in nach.get("hinweise") or ()],
+        "bild_in_der_mappe": eintrag.get("bild"),
+    }
+    qa = (knoten.get(f"{vorsatz}-{_kette.KNOTEN_QA}") or {}).get("ausgaben")
+    if isinstance(qa, dict):
+        urteil = {k: v for k, v in qa.items() if k != "bild_png"}
+    else:
+        urteil = {"status": "nicht_gemessen", "bestanden": None, "score": None,
+                  "grund": "Die Pruefung ist in dieser Mappe abgeschaltet (Einstellung qa)."}
+    urteil = dict(urteil, bild_png=bild, **{_kosmo_szene.URTEIL_SKIZZE: vermerk})
+    return {
+        "bilder": [bild],
+        "geometrie_urteil": urteil,
+        "stil_urteil": None,
+        # EIN Bild, EINE «Kamera»: der Standpunkt der Mappe. `gemessen: False` — ein Bild aus
+        # einer Skizze wird nicht gegen das Modell gemessen (siehe `_qa_je_kamera_eintraege`).
+        "kameras": [{"kamera": KAMERA_SKIZZE, "bild_png": bild, "gemessen": False}],
+        "zeiten": {"gesamt": round(time.monotonic() - beginn, 3)},
+        "engine": _engine_aus(nach),
+        "skizze": vermerk,
+        "modellstand": aus.get("modell_stand"),
+    }
+
+
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
@@ -2151,7 +2258,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 kamera_huellbox=None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None,
-                _raeume=None, _pipeline_lage=None, _kontext_vorbereiten=None):
+                _raeume=None, _pipeline_lage=None, _kontext_vorbereiten=None,
+                _skizzen_ausfuehrer=None, _rechne_skizze=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
 
     Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
@@ -2225,6 +2333,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     def _verarbeite_einen(auftrag: dict) -> dict:
         szene = auftrag["szene"]
         ordner = Path(auftrag["verzeichnis"])
+        # DIE SKIZZE FUEHRT DAS BILD (Owner-Entscheid 96, 15.10.2026): ein eigener Weg, aber
+        # nicht nachgebaut — derselbe wie «aus Skizze rechnen» auf der Seite. Siehe
+        # `skizzenlauf`. `_skizzen_ausfuehrer`/`_rechne_skizze` sind die Naehte fuer Proben.
+        if szene.get("skizze") is not None:
+            return skizzenlauf(auftrag, rechne=_rechne_skizze, ausfuehrer=_skizzen_ausfuehrer)
         # DER GELAENDEBEFUND DER SZENE SCHLAEGT DEN SCHALTER DES PROZESSES (22.09.2026).
         #
         # `gelaende_erwartet` hier oben ist `tools/abholen.py --kein-gelaende`: eine

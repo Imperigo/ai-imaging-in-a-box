@@ -222,3 +222,45 @@ export function skizzeAlsBildQuelle(
   }
   return { dataUrl: url, beschriftung: SKIZZE_BESCHRIFTUNG };
 }
+
+/* ------------------------------------------------------------------ *
+ * Owner-Entscheid 96 (Visbox, 15.10.2026): DIE SKIZZE FUEHRT DAS BILD.
+ * ------------------------------------------------------------------ */
+
+/** Was die Bestellung über die Skizze trägt (`RenderScene.skizze` ohne `quelle`). */
+export interface SkizzeDerBestellung {
+  /** Der Dateiname der Skizze in der Mappe — «neueste» ist hier schon aufgelöst. */
+  name: string;
+  /** Was sich am Bild ändern soll; fehlt sie, nimmt die Bildseite die Bemerkung der Skizze. */
+  anweisung?: string;
+}
+
+/** Hängt eine Skizze am Render-Knoten, aber hier gibt es keine Mappe (KosmoOrbit). */
+export const SKIZZE_NUR_IN_VISBOX_SATZ =
+  'Die Skizze am Render-Knoten kommt nur in Visbox an — bestellt ist das Bild aus dem Modell.';
+
+/** Die gewählte Skizze steht nicht (mehr) in der Mappe. */
+export const SKIZZE_FEHLT_SATZ =
+  'Die gewählte Skizze steht nicht (mehr) in der Mappe — nichts gesendet. Am Skizzen-Knoten eine andere wählen.';
+
+/**
+ * Die Skizze für eine Bestellung — aus der Wahl am Skizzen-Knoten («neueste» oder ein Dateiname)
+ * und dem Prompt, den der Render-Knoten sendet (er wird zur Anweisung, wenn er nicht leer ist).
+ *
+ * Vor dem Auflösen wird die Liste der Mappe NEU gelesen: «neueste» heisst die neueste zum Zeitpunkt
+ * des Klicks, nicht die beim letzten Blick auf den Knoten.
+ *
+ * @returns die Skizze; `undefined`, wenn es keinen Wirt gibt (KosmoOrbit: das Bild kommt aus dem
+ *   Modell, und der Aufrufer sagt das). Wirft mit Satz, wenn der Wirt die Skizze nicht (mehr) kennt
+ *   oder die Liste sich nicht lesen liess — dann wird nichts gesendet.
+ */
+export async function skizzeZurBestellung(wahl: string, prompt: string): Promise<SkizzeDerBestellung | undefined> {
+  if (!stand.quelle) return undefined;
+  await aktualisiereSkizzen();
+  if (stand.fehler) throw new Error(`${stand.fehler} — nichts gesendet.`);
+  if (!stand.liste || stand.liste.length === 0) throw new Error(`${SKIZZE_LEER_SATZ} Nichts gesendet.`);
+  const skizze = waehleSkizze(stand.liste, wahl);
+  if (!skizze) throw new Error(SKIZZE_FEHLT_SATZ);
+  const anweisung = prompt.trim();
+  return { name: skizze.name, ...(anweisung ? { anweisung } : {}) };
+}

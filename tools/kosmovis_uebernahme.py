@@ -193,6 +193,8 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-startgraph.test.tsx",
     # Entscheide 95/95a (14.10.2026): der Knoten «Skizze vom iPad» mit Skizzen-Quelle des Wirts.
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad.test.tsx",
+    # Entscheid 96 (15.10.2026): die Skizze fuehrt das Bild — Eingang und Zeile «Skizze» am Knoten.
+    "apps/kosmo-orbit/test/kv-skizze-fuehrt-knoten.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
@@ -259,6 +261,11 @@ NICHT_UEBERTRAGEN = {
         "mit z.toJSONSchema. Visbox rechnet mit zod 4.6.5, KosmoOrbit mit 4.4.3; die neuere "
         "Fassung schreibt Tupel ohne items/minItems/maxItems. Die Vertraege selbst sind gleich, "
         "die Schemata gehoeren zu Prepare in KosmoOrbit, nicht zum Vis-Werkzeug.",
+    "apps/kosmo-orbit/test/kv-skizze-fuehrt.test.ts":
+        "Entscheid 96: prueft die Bestellung mit einem Quader aus dem Architekturkern (wie die "
+        "Gruppe «Bauen ein Gebäude im KosmoOrbit-Kern»). Den Visbox-Weg prueft "
+        "apps/visbox-knoten/test/skizze-fuehrt.test.tsx mit dem glb der Mappe, die Bibliothek "
+        "tests/test_skizze_fuehrt.py.",
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad-blatt.test.tsx":
         "Entscheide 95/95a: legt die Skizze aufs Blatt (KosmoPublish). Blätter gibt es in Visbox "
         "nicht — wie kv-blattbild-platz; der Rest des Knotens kommt mit kv-skizze-vom-ipad.",

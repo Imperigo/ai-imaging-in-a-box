@@ -28,9 +28,10 @@ import { useProject } from '../src/state/project-store';
  *  - Mit Wirt (Visbox): von selbst die neueste, eine ältere am Knoten wählbar (rückgängig
  *    machbar), Daumenbild, leere Mappe mit Satz.
  *  - Ohne Wirt (KosmoOrbit): ein ruhiger Satz; der Knoten steht trotzdem im Katalog.
- *  - Der Render-Knoten hat KEINEN Bild-Eingang, und die Bestellung (`render-scene/v1`) kein Feld
- *    für ein Ausgangsbild: der Ausgang geht in Bildvergleich und «Aufs Blatt», nicht in den
- *    Render. Die Bestellung bleibt mit Skizzen-Knoten Zeichen für Zeichen wie ohne.
+ *  - Der Ausgang geht in Bildvergleich und «Aufs Blatt». Seit Entscheid 96 (15.10.2026) auch an
+ *    den Eingang «Skizze» des Render-Knotens (`kv-skizze-fuehrt.test.tsx`); an jedem anderen
+ *    Render-Eingang wird er abgewiesen, und ohne diese Kante bleibt die Bestellung Zeichen für
+ *    Zeichen wie ohne Skizzen-Knoten.
  *  - «Aufs Blatt» mit der Beschriftung «Skizze (iPad)» prüft `kv-skizze-vom-ipad-blatt.test.tsx`
  *    (eigene Datei, weil Visbox keine Blätter hat und die Kopie dort ohne sie läuft).
  */
@@ -273,22 +274,25 @@ describe('KV-SKIZZE-VOM-IPAD · mit Wirt (Visbox)', () => {
 });
 
 describe('KV-SKIZZE-VOM-IPAD · wohin das Bild geht', () => {
-  it('der Render-Knoten hat keinen Bild-Eingang — eine Linie dorthin wird abgewiesen', () => {
+  // Entscheid 96 (15.10.2026): seither hat der Render-Knoten genau EINEN Bild-Eingang, «Skizze»
+  // (nur von diesem Knoten) — die uebrigen fuenf weisen die Skizze weiter ab. Die Skizze fuehrt
+  // dort das Bild; geprueft in `kv-skizze-fuehrt.test.tsx`.
+  it('der Render-Knoten nimmt die Skizze nur am Eingang «Skizze» — jeder andere Eingang weist sie ab', () => {
     const render = VIS_NODE_KATALOG['render']!;
-    expect(render.inputs.map((p) => p.typ)).not.toContain('bild');
+    expect(render.inputs.filter((p) => p.typ === 'bild').map((p) => p.name)).toEqual(['skizze']);
     const { runCommand, doc } = useProject.getState();
     const graphId = (runCommand('vis.graphErstellen', { name: 'KV-SKIZZE-RENDER' }).patches[0] as { id: string }).id;
     runCommand('vis.nodeSetzen', { graphId, typ: SKIZZE_IPAD_TYP, x: 0, y: 0 });
     runCommand('vis.nodeSetzen', { graphId, typ: 'render', x: 300, y: 0 });
     const [skizze, rnd] = doc.get<VisGraph>(graphId)!.nodes;
-    for (const port of render.inputs) {
+    for (const port of render.inputs.filter((p) => p.name !== 'skizze')) {
       expect(() =>
         runCommand('vis.verbinden', { graphId, from: skizze!.id, fromPort: 'bild', to: rnd!.id, toPort: port.name }),
       ).toThrow(/Port-Typen passen nicht/);
     }
   });
 
-  it('die Bestellung bleibt mit Skizzen-Knoten Zeichen fuer Zeichen wie ohne', () => {
+  it('die Bestellung bleibt mit Skizzen-Knoten (am Bildvergleich, nicht am Render) Zeichen fuer Zeichen wie ohne', () => {
     const { runCommand, doc } = useProject.getState();
     const graphId = (runCommand('vis.graphErstellen', { name: 'KV-SKIZZE-AUFTRAG' }).patches[0] as { id: string }).id;
     runCommand('vis.nodeSetzen', { graphId, typ: 'modell', x: 0, y: 0 });

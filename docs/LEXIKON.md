@@ -6757,6 +6757,51 @@ Bilddaten als Buchstaben. Sie braucht keinen Server mehr, ist aber gross. *Im Pr
 «Skizze vom iPad» holt das Bild der geltenden Skizze einmal vom Visbox-Server und hält es so fest,
 damit Bildvergleich und «Aufs Blatt» es ohne weiteren Abruf haben.
 
+**Die Skizze führt das Bild (Eingang «Skizze»)** — Ein Bild entsteht nicht aus dem Modell allein,
+sondern **aus einer Zeichnung**: Die Skizze vom iPad, auf das Bild gelegt, über das sie gezeichnet
+wurde, geht als Eingangsbild an das Bildmodell, zusammen mit einer **Anweisung**, was sich ändern soll.
+*Im Projekt:* auf der Seite seit September «aus Skizze rechnen»; in der Knotenansicht seit Entscheid 96
+(15.10.2026) über den Eingang «Skizze» am Render-Knoten — gerechnet wird beide Male auf demselben Weg
+(`arbeitsgang.rechne_skizze`). Der Eingang steht nur in Visbox; in KosmoOrbit gibt es keine Mappe mit
+Skizzen.
+
+**Anweisung (an eine Skizze)** — Der Satz, der sagt, **was sich am Bild ändern soll** («ein Vordach aus
+Holz»), im Unterschied zum Prompt, der beschreibt, was entstehen soll. *Im Projekt:* in der
+Knotenansicht wird der Prompt des Render-Knotens zur Anweisung, sobald eine Skizze am Eingang hängt; ist
+er leer, gilt die Bemerkung, die beim Zeichnen an der Skizze stand.
+
+**Bearbeitungs-Modell** — Ein Bildmodell, das ein **vorhandenes Bild verändert**, statt eines aus der
+Tiefenkarte neu zu rechnen. Nur ein solches kann eine Skizze überhaupt «sehen». *Im Projekt:* gemessen
+nimmt weder das Vorgabemodell (Z-Image Turbo) noch Qwen-Image-Edit das Eingangsbild an — dort «kommt die
+Skizze nicht an», und das Ergebnis sagt es zuvorderst («SKIZZE NICHT ANGEKOMMEN»). Qwen-Image 2.1 kann
+laut Modellkarte bearbeiten; ob die Skizze dort ankommt, ist ungemessen (Auftrag 286), und seine Lizenz
+ist offen (E128) — darum nie Vorgabe.
+
+**Eingang nur für eine Knotenart** — Ein Anschluss am Knoten, der nicht jede passende Sorte annimmt,
+sondern **nur von bestimmten Knoten**. Sonst gilt allein die Anschlusssorte. *Im Projekt:* der Eingang
+«Skizze» am Render-Knoten hat die Sorte «Bild», nimmt aber nur «Skizze vom iPad» — eine Aufnahme oder
+ein anderes Render-Bild weist er mit Satz ab, weil die Bestellung nur eine Skizze der Mappe nennen kann
+(`VisPort.nurVon`).
+
+**Verborgene Datei (Punktdatei)** — Eine Datei, deren Name mit einem Punkt beginnt. Viele Programme
+zeigen sie nicht an, und unser Server liefert sie nie aus. *Im Projekt:* `.mappe.json` neben einem
+Auftrag der Knotenansicht nennt den Pfad der Mappe, in der die Skizze liegt — der Abholer braucht ihn,
+der Browser darf ihn nicht sehen, weil ein Plattenpfad den Rechnernamen verrät (Regel 3).
+
+**Feld, das ein anderes ausschliesst (Kreuzregel)** — Eine Regel im Vertrag, die nicht ein Feld allein
+prüft, sondern **zwei zusammen**: «wenn dieses, dann nicht jenes». *Im Projekt:* mit `skizze` weist der
+Vertrag eine Kameraliste, eine Innenansicht und «nur Cycles» ab — eine Skizze ist EIN Bild vom
+Standpunkt der Mappe und braucht das Bildmodell. In KosmoOrbit heisst das Werkzeug dafür `superRefine`.
+
+**Additives Vertragsfeld** — Ein neues Feld, das **wegbleiben darf**: Wer es nicht sendet, bestellt
+genau wie vorher, und keine bestehende Bestellung wird ungültig. Darum braucht es keine neue Fassung des
+Vertrags. *Im Projekt:* `skizze` (Entscheid 96) wie vorher `context` (Splat) und `gelaende`; eine ältere
+Bildseite, die das Feld nicht kennt, weist es ab, statt still ohne die Skizze zu rechnen.
+
+**Kurzhilfe (Tooltip)** — Ein kleines Feld, das erscheint, wenn der Zeiger auf einem Element ruht, und
+den ganzen Satz zeigt, wo am Ort nur Platz für den Anfang ist. *Im Projekt:* die Zeile «Skizze» am
+Render-Knoten zeigt drei Zeilen; den vollen Satz mit Beleg trägt die Kurzhilfe (`KTooltip`).
+
 **Berechneter Schlüssel** — In einem Verzeichnis im Programmcode steht vor jedem Eintrag sein Name
 («render: …»). Ein berechneter Schlüssel nennt stattdessen eine Konstante, deren Wert der Name ist
 («[KAMERA_AUS_3D_TYP]: …»). Für das Programm ist das dasselbe; ein Werkzeug, das den Code nur als Text
@@ -7202,6 +7247,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-15 | Ergaenzt aus Entscheid 96 «Die Skizze führt das Bild» (Protokoll 74 §125): **Die Skizze führt das Bild (Eingang «Skizze»)**, **Anweisung (an eine Skizze)**, **Bearbeitungs-Modell**, **Eingang nur für eine Knotenart**, **Verborgene Datei (Punktdatei)**, **Feld, das ein anderes ausschliesst (Kreuzregel)**, **Additives Vertragsfeld**, **Kurzhilfe (Tooltip)** |
 | 2026-10-14 | Ergaenzt aus dem Knoten «Skizze vom iPad» (Entscheide 95/95a, Protokoll 74 §123): **Skizzen-Quelle des Wirts**, **Zulieferer-Knoten**, **Daumenbild (Vorschaubild)**, **data:-Adresse (Data-URL)**, **Berechneter Schlüssel** |
 | 2026-10-14 | Ergaenzt aus dem Nachzug auf Runde 29 (Protokoll 74 §122): **Nachziehen per Merge (statt Neuaufsetzen)** mit **Force-Push**, **Hilfszweig** |
 | 2026-10-14 | Ergaenzt aus Strg+Z in der Visbox-Knotenansicht: **Wirt (der Knotenansicht)** |

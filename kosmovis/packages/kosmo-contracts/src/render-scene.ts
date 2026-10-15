@@ -618,6 +618,53 @@ export const RenderScene = z.object({
     })
     .strict()
     .optional(),
+  /**
+   * Owner-Entscheid 96 der Visbox (15.10.2026): DIE SKIZZE FUEHRT DAS BILD.
+   * Eine Skizze vom iPad, die in der Mappe der Visbox liegt, wird zum
+   * Eingangsbild der Bestellung — derselbe Weg wie «aus Skizze rechnen» auf
+   * der Visbox-Seite (`arbeitsgang.rechne_skizze`): die Skizze auf ihrer
+   * Unterlage geht in ein Bildmodell, das das Bild bearbeitet, statt es aus
+   * dem Modell neu zu rechnen.
+   *
+   * - `quelle`    — heute nur `'mappe'`: die Skizze liegt SCHON auf dem
+   *                 Rechner, der rechnet (Visbox, Heim-PC); es reist nur ihr
+   *                 Name, kein Bild. Ein Upload (etwa fuer KosmoOrbit ohne
+   *                 Mappe) waere eine zweite Quelle mit eigenem Feld, nicht
+   *                 diese hier umgedeutet. Ein unbekannter Wert wird
+   *                 abgewiesen.
+   * - `name`      — der Dateiname der Skizze in der Mappe, so wie der Wirt
+   *                 ihn meldet (`GET ./mappe` → `skizzen[].name`). Schon
+   *                 aufgeloest: «neueste» ist eine Wahl am Knoten, keine
+   *                 Bestellung — die Bestellung nennt die eine Datei.
+   * - `anweisung` — was sich am Bild aendern soll. Fehlt sie, nimmt die
+   *                 Bildseite die Bemerkung, die beim Zeichnen an der Skizze
+   *                 stand; fehlt auch die, weist sie mit Satz ab. Bewusst NICHT
+   *                 `style.prompt` umgedeutet: der beschreibt, was entstehen
+   *                 soll, diese hier, was sich aendern soll.
+   *
+   * Was mit `skizze` NICHT zusammengeht (superRefine unten, abgewiesen statt
+   * still uebergangen): eine Liste in `cameras` — eine Skizze ist EIN Bild
+   * vom Standpunkt der Mappe, nicht drei Standpunkte; `interior` — dasselbe;
+   * `vis.skip: true` — ohne Bildmodell gibt es nichts, das die Skizze lesen
+   * koennte.
+   *
+   * `.strict()` wie `context`: ein falsch geschriebenes Feld waere sonst eine
+   * still verlorene Anweisung.
+   *
+   * OHNE `skizze` ist alles wie bisher: optional, ohne Vorgabe, jede
+   * bestehende Szene bleibt byte-gleich gueltig. Keine neue Schemakennung:
+   * additiv wie `context` und `gelaende` (ROADMAP 1062). Wer das Feld nicht
+   * kennt, weist ab (Visbox `kosmo_szene.unbekannte_felder`) — eine aeltere
+   * Bildseite rechnet also nie still ohne die Skizze.
+   */
+  skizze: z
+    .object({
+      quelle: z.literal('mappe'),
+      name: z.string().min(1),
+      anweisung: z.string().min(1).optional(),
+    })
+    .strict()
+    .optional(),
 })
   // Y3 P-IFC-BESTELLUNG (V0942-SPEZ §4): die gemessene Probe des Demohauses
   // (kosmo-orbit/abgabe/PROBE-DEMOHAUS.ifc, 26 IFCSPACE mit echter
@@ -633,6 +680,32 @@ export const RenderScene = z.object({
   // unabhaengig voneinander, mit je eigenem Fehlerpfad, damit die Meldung
   // immer auf das tatsaechlich gesendete Feld zeigt.
   .superRefine((v, ctx) => {
+    // Owner-Entscheid 96 (Visbox, 15.10.2026) — s. Kommentar an `skizze`.
+    if (v.skizze !== undefined) {
+      if (Array.isArray(v.cameras)) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'Mit einer Skizze entsteht EIN Bild vom Standpunkt der Mappe — eine Kameraliste geht dazu nicht (cameras weglassen oder "auto").',
+          path: ['cameras'],
+        });
+      }
+      if (v.interior !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Eine Skizze und eine Innenansicht gehen nicht in einer Bestellung — die Skizze ist EIN Bild.',
+          path: ['interior'],
+        });
+      }
+      if (v.vis.skip) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'Eine Skizze braucht das Bildmodell — mit vis.skip (nur Cycles, Strichzeichnung) gibt es nichts, das sie liest.',
+          path: ['vis', 'skip'],
+        });
+      }
+    }
     if (v.innenansichten && v.geometry.format !== 'ifc') {
       ctx.addIssue({
         code: 'custom',

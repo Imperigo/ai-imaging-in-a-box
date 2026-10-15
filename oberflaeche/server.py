@@ -2046,9 +2046,13 @@ class Flaeche(BaseHTTPRequestHandler):
                 # die «Datei laden …» erst danach angelegt hat. Der Laufzettel traegt den
                 # Namen der Mappe, aus der bestellt wurde (`knotenweg.lege_an`).
                 aus_mappe = self._knoten_ordner(None)
+                # ENTSCHEID 96 (15.10.2026): eine Skizze wird in IHRER Mappe gerechnet — der
+                # Pfad geht an `lege_an` und von dort in eine Datei neben dem Auftrag, nie in
+                # die Antwort an den Browser (Regel 3, `knotenweg.DATEI_MAPPE`).
                 self._sende(knotenweg.lege_an(
                     self._ablage(), szene, modell, dateiname,
-                    mappe=Path(aus_mappe).name if aus_mappe else None))
+                    mappe=Path(aus_mappe).name if aus_mappe else None,
+                    mappe_pfad=aus_mappe or None))
             elif len(teile) == 3 and teile[0] == "jobs" and teile[2] in ("approve", "cancel"):
                 roh = self.rfile.read(laenge) if laenge else b""
                 if teile[2] == "approve":

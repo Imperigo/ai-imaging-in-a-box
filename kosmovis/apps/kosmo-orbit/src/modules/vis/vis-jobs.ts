@@ -49,6 +49,7 @@ import { kuerzel } from '../../shell/tastennamen';
 // Nur der Typ: `varianten-diff.ts` holt Werte aus dieser Datei, ein
 // Wert-Import zurueck waere ein Kreis.
 import type { LizenzAngabe } from './varianten-diff';
+import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
 
 /**
  * Bridge-Jobs für KosmoVis (P2/HS3) — ein Weg für Graph UND Einfach-Ansicht:
@@ -1223,6 +1224,15 @@ export async function postRenderJob(params: {
    * zur Bridge, nur die Quelle beim EINEN Aufrufer hat sich verschoben.
    */
   mode?: 'none' | 'lineart';
+  /**
+   * Owner-Entscheid 96 (Visbox, 15.10.2026) — DIE SKIZZE FUEHRT DAS BILD.
+   * Spiegelt `RenderScene.skizze` (`quelle: 'mappe'`, der Name schon
+   * aufgeloest, s. `skizzeZurBestellung`). Mit Skizze entsteht EIN Bild vom
+   * Standpunkt der Mappe: keine Kameraliste, keine Innenansicht, keine
+   * Umgebung — so verlangt es der Vertrag, und so rechnet die Visbox-Seite.
+   * Ohne Parameter bleibt der Job Zeichen fuer Zeichen wie bisher.
+   */
+  skizze?: SkizzeDerBestellung;
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1244,7 +1254,8 @@ export async function postRenderJob(params: {
   // B117 SCHRITT 2 (Owner-Entscheid E57): die EINE Bedingung, ob dieser
   // Auftrag als IFC/`interior` geht oder byte-identisch zum Stand vor
   // Schritt 2 bleibt (glb, kein `interior`, «Innenraum» gefiltert).
-  const interiorMoeglich = interiorFaehrt(doc);
+  // Entscheid 96: eine Skizze ist EIN Bild — mit ihr geht keine Innenansicht (Vertrag, superRefine).
+  const interiorMoeglich = interiorFaehrt(doc) && params.skizze === undefined;
   // P-GLASNAHT: DER LETZTE PUNKT IN DIESER LANE, an dem die Datei noch in
   // der Hand ist — danach ist sie ein Auftrag an die Bridge und kostet
   // GPU-Zeit. Gemessen an der ausgeführten glb des Demolaufs vom
@@ -1322,7 +1333,11 @@ export async function postRenderJob(params: {
   // (`kamerasFuerBestellformat`, Kern). Alle anderen Standpunkte bleiben Zahl fuer Zahl.
   const bestellformat = params.resolution ?? BESTELLFORMAT_VORGABE;
   const kamerasImFormat = params.kameras ? kamerasFuerBestellformat(params.kameras, bestellformat) : undefined;
-  const kamerasOhneInnenraum = kamerasImFormat?.filter((k) => istUeberDiesenWegBestellbar(k.name, interiorMoeglich));
+  // Entscheid 96: mit Skizze keine Kameraliste — der Standpunkt ist der der Mappe (Vertrag).
+  const kamerasOhneInnenraum =
+    params.skizze !== undefined
+      ? undefined
+      : kamerasImFormat?.filter((k) => istUeberDiesenWegBestellbar(k.name, interiorMoeglich));
   const kameras = kamerasOhneInnenraum && kamerasOhneInnenraum.length > 0 ? kamerasOhneInnenraum : undefined;
   // B117 Weg B — Uebergangs-Sichtbarkeit (Owner-Entscheid E57, docs/AUFTRAG-
   // B117-DREI-PERSPEKTIVEN-EINE-GELIEFERT.md Abschnitt 3a Schritt 3; Anatomie
@@ -1376,7 +1391,9 @@ export async function postRenderJob(params: {
           up_axis: 'y' as const,
           ...(k.referenzpunkt ? { referenzpunkt: k.referenzpunkt } : {}),
         }))
-      : (params.kameraWahl ?? 'auto'),
+      : params.skizze !== undefined
+        ? ('auto' as const)
+        : (params.kameraWahl ?? 'auto'),
     render: {
       resolution: bestellformat,
       samples: params.samples,
@@ -1414,6 +1431,16 @@ export async function postRenderJob(params: {
     ...(interiorMoeglich ? { interior: { rooms: 'auto' as const } } : {}),
     out: '',
     geometry: { path: '', format: interiorMoeglich ? ('ifc' as const) : ('glb' as const) },
+    // Entscheid 96: NUR mit Skizze — ohne bleibt die Szene Zeichen fuer Zeichen wie bisher.
+    ...(params.skizze !== undefined
+      ? {
+          skizze: {
+            quelle: 'mappe' as const,
+            name: params.skizze.name,
+            ...(params.skizze.anweisung ? { anweisung: params.skizze.anweisung } : {}),
+          },
+        }
+      : {}),
   };
   // P11 (V016-SPEZ, «Szene vor dem Versand pruefen») — DER LETZTE PUNKT, an
   // dem noch nichts gesendet ist: die Szene lief bis hierhin UNGEPRUEFT an
@@ -1429,9 +1456,12 @@ export async function postRenderJob(params: {
   // `splat-render-kontext.ts`). Geht sie nicht mit, steht der Grund
   // sichtbar da, statt dass der Splat still im Bild fehlt.
   const splat = useSplatEbene.getState();
+  // Entscheid 96: mit Skizze keine Umgebung — die Skizze rechnet auf ihrer Unterlage.
   const splatTeil = szeneMitSplatKontext(
     scene,
-    splat.ebene ? splatRenderKontext({ ebene: splat.ebene, handLage: splat.handLage }) : null,
+    splat.ebene && params.skizze === undefined
+      ? splatRenderKontext({ ebene: splat.ebene, handLage: splat.handLage })
+      : null,
   );
   if (splatTeil.hinweis) melde(`Ohne Umgebung bestellt: ${splatTeil.hinweis}`, { ton: 'info' });
   // K1: gepruefte UND gesendete Szene ist dieselbe — die fuenf abgewiesenen
@@ -1620,17 +1650,33 @@ export function sendeGraphRenderAuftrag(
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
   setzeLauf(nodeId, { status: 'gesendet', memoKey: key, gestartetUm: Date.now() });
-  void postRenderJob({
-    ...auftrag,
-    ...(environment ? { environment } : {}),
-    ...(opts?.kameraWahl !== undefined ? { kameraWahl: opts.kameraWahl } : {}),
-    ...(backbone !== undefined ? { backbone } : {}),
-    ...(researchOnly ? { researchOnly: true } : {}),
-    // `aufloesung` spiegelt denselben Job-Parameter wie das bestehende
-    // `resolution` (K20/A10-Presets nutzen ihn schon) — kein Zweitfeld.
-    ...(opts?.aufloesung !== undefined ? { resolution: opts.aufloesung } : {}),
-    mode,
-  })
+  // Entscheid 96: `skizze` ist die Wahl am Skizzen-Knoten (Kernel), keine Job-Angabe — sie geht
+  // nicht durch `...auftrag` an `postRenderJob`, sondern aufgeloest als `skizze` (unten).
+  const { skizze: skizzenWahl, ...auftragOhneSkizze } = auftrag;
+  const senden = (skizze?: SkizzeDerBestellung) =>
+    postRenderJob({
+      ...auftragOhneSkizze,
+      ...(environment ? { environment } : {}),
+      ...(opts?.kameraWahl !== undefined ? { kameraWahl: opts.kameraWahl } : {}),
+      ...(backbone !== undefined ? { backbone } : {}),
+      ...(researchOnly ? { researchOnly: true } : {}),
+      // `aufloesung` spiegelt denselben Job-Parameter wie das bestehende
+      // `resolution` (K20/A10-Presets nutzen ihn schon) — kein Zweitfeld.
+      ...(opts?.aufloesung !== undefined ? { resolution: opts.aufloesung } : {}),
+      mode,
+      ...(skizze ? { skizze } : {}),
+    });
+  // OHNE SKIZZE GENAU DER BISHERIGE AUFRUF, im selben Takt. MIT Skizze erst die Liste der Mappe
+  // lesen und «neueste» aufloesen (`skizzeZurBestellung`); kennt der Wirt sie nicht, wirft das mit
+  // Satz, und der Satz steht am Knoten wie jeder andere Fehler dieses Wegs. Ohne Wirt (KosmoOrbit,
+  // ein in Visbox gebauter Graph) geht das Bild aus dem Modell — und das wird gesagt.
+  const versand: Promise<GesendeterJob> = skizzenWahl
+    ? skizzeZurBestellung(skizzenWahl.wahl, auftrag.prompt).then((skizze) => {
+        if (!skizze) melde(SKIZZE_NUR_IN_VISBOX_SATZ, { ton: 'info' });
+        return senden(skizze);
+      })
+    : senden();
+  void versand
     .then((j) =>
       patchLauf(nodeId, {
         jobId: j.job_id,

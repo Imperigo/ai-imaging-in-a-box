@@ -24,6 +24,14 @@ export interface VisPort {
   name: string;
   typ: VisPortTyp;
   label: string;
+  /**
+   * Owner-Entscheid 96 (Visbox, 15.10.2026): NUR diese Knotenarten duerfen in
+   * diesen Eingang. Fehlt das Feld, gilt allein der Porttyp (wie bisher). Der
+   * Eingang «Skizze» am Render-Knoten ist vom Typ `bild`, nimmt aber nur die
+   * «Skizze vom iPad»: die Bestellung kann eine Skizze der Mappe nennen
+   * (`RenderScene.skizze`), kein beliebiges Bild aus dem Graphen.
+   */
+  nurVon?: readonly string[];
 }
 
 /**
@@ -147,6 +155,11 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
       { name: 'treue', typ: 'zahl', label: 'Geometrie-Treue' },
       { name: 'samples', typ: 'zahl', label: 'Samples' },
       { name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' },
+      // Owner-Entscheid 96 (Visbox, 15.10.2026): die Skizze vom iPad fuehrt das Bild. Typ `bild`
+      // wie der Ausgang des Skizzen-Knotens, aber nur von ihm (`nurVon`). Der Eingang steht als
+      // letzter, damit die Lage der fuenf bisherigen Ports gleich bleibt; die Knotenansicht
+      // zeigt ihn nur, wo ein Wirt Skizzen anbietet (Visbox), s. `NodeCanvas.tsx`.
+      { name: 'skizze', typ: 'bild', label: 'Skizze', nurVon: ['skizzeIpad'] },
     ],
     outputs: [{ name: 'bild', typ: 'bild', label: 'Bild' }],
     defaults: {},
@@ -210,13 +223,13 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   // die Mappe legt, kommen als Zulieferer in die Knotenansicht. Welche es gibt, weiss nur der
   // WIRT (`registriereSkizzenQuelle`, App `modules/vis/skizze-quelle.ts`) — der Katalog kennt
   // nur den Porttyp. `skizze` ist «neueste» (Vorgabe: von selbst die zuletzt gelegte) oder der
-  // Dateiname einer älteren. Kein Eingang am Render-Knoten nimmt heute ein Bild an; der Ausgang
-  // geht darum in Bildvergleich und «Aufs Blatt».
+  // Dateiname einer älteren. Seit Entscheid 96 (15.10.2026) geht der Ausgang auch an den Eingang
+  // «Skizze» des Render-Knotens und fuehrt dort das Bild; daneben in Bildvergleich und «Aufs Blatt».
   skizzeIpad: {
     typ: 'skizzeIpad',
     label: 'Skizze vom iPad',
     hilfe:
-      'Die Skizze, die am iPad in die Mappe gelegt wurde — von selbst die neueste, eine ältere ist am Knoten wählbar. Mit dem Bildvergleich verbinden. Gibt es nur in Visbox.',
+      'Die Skizze, die am iPad in die Mappe gelegt wurde — von selbst die neueste, eine ältere ist am Knoten wählbar. An «Skizze» des Render-Knotens: die Skizze führt das Bild. Auch an Bildvergleich und «Aufs Blatt». Gibt es nur in Visbox.',
     kategorie: 'quelle',
     inputs: [],
     outputs: [{ name: 'bild', typ: 'bild', label: 'Bild' }],
@@ -323,6 +336,13 @@ export interface VisRenderAuftrag {
    * Standpunkte, also ein anderes Bild als bestellt). Fehlt das Feld, ist alles wie bisher.
    */
   kameraAus3dFehlt?: true;
+  /**
+   * Owner-Entscheid 96 (Visbox, 15.10.2026): haengt eine «Skizze vom iPad» am Eingang «Skizze»,
+   * steht hier ihre WAHL (Parameter `skizze`: «neueste» oder ein Dateiname) und ihr Knoten.
+   * Welche Datei «neueste» ist, weiss nur der Wirt — aufgeloest wird in der App
+   * (`skizze-quelle.ts`), nicht hier. Ohne Kante fehlt das Feld ganz.
+   */
+  skizze?: { knoten: string; wahl: string };
 }
 
 /** Auswertungs-Ergebnis je Node: Ausgangswerte der puren Ports. */
@@ -414,6 +434,11 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
             : kameraKante
               ? projektKameras(doc)
               : [];
+        // Entscheid 96: die Skizze am Eingang «Skizze» — nur von einem Skizzen-Knoten (eine
+        // Fremdkante aus einem Hand-Edit zaehlt nicht, dieselbe Regel wie `vis.verbinden`).
+        const skizzenKante = graph.edges.find((e) => e.to === n.id && e.toPort === 'skizze');
+        const skizzenKnoten = skizzenKante ? graph.nodes.find((k) => k.id === skizzenKante.from) : undefined;
+        const skizzeRoh = skizzenKnoten?.typ === 'skizzeIpad' ? skizzenKnoten.params?.['skizze'] : undefined;
         renderAuftraege.set(n.id, {
           prompt,
           faithful: typeof treue === 'number' ? Math.min(1, Math.max(0, treue)) : 0.8,
@@ -428,6 +453,14 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
             : {}),
           ...(kameras.length > 0 ? { kameras } : {}),
           ...(kameraQuelle?.typ === KAMERA_AUS_3D_TYP && !kamera3d ? { kameraAus3dFehlt: true as const } : {}),
+          ...(skizzenKnoten?.typ === 'skizzeIpad'
+            ? {
+                skizze: {
+                  knoten: skizzenKnoten.id,
+                  wahl: typeof skizzeRoh === 'string' && skizzeRoh.trim() ? skizzeRoh : 'neueste',
+                },
+              }
+            : {}),
         });
         break;
       }

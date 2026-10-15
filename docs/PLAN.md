@@ -8009,7 +8009,11 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Heim-PC-Teil: Skizzen in `/knoten/mappe`, Bild über `/knoten/skizze`. *(14.10.2026, §119)*
 - [x] Knoten «Skizze vom iPad» auf dem R29-Kopf (beide Programme): KosmoOrbit «claude/kosmovis-skizze-vom-ipad» `96a3488b5` an Int 1 gemeldet, Visbox-Kopie und Wirt nachgezogen. Render-Knoten nimmt kein Bild an — Ausgang in Bildvergleich und Blatt. *(14.10.2026, §123)*
 - [ ] Einspielen von skizze-vom-ipad bei Int 1 (mit startgraph und kamera-aus-3d: Zählproben auf 14).
-- [ ] Owner-Entscheid: Soll eine Skizze den Render führen (Bild-Eingang am Render-Knoten plus Feld im Vertrag)?
+- [x] Owner-Entscheid 96: die Skizze führt den Render (Bild-Eingang am Render-Knoten plus Feld im Vertrag). *(15.10.2026, §124)*
+- [x] Entscheid 96 gebaut: Vertragsfeld `skizze`, Eingang «Skizze» (nur in Visbox sichtbar), Abholer rechnet über `rechne_skizze`; KosmoOrbit «claude/kosmovis-skizze-fuehrt» `1d132e6f8`, Hilfszweig `6c9df3a65`, Visbox-Kopie nachgezogen, Sichtprobe. *(15.10.2026, §125)*
+- [ ] Einspielen von skizze-fuehrt bei Int 1 — Vertragsänderung absegnen lassen.
+- [ ] Heim-PC: `auf-20261015-286` (von Anfang bis Ende; kommt die Skizze bei Qwen-Image 2.1 an?).
+- [ ] Owner-Fragen: Standpunkt der Mappe statt des Bildes unter der Skizze; Stimmung des fertigen Anfangs als Anweisung.
 - [ ] Danach «Standpunkt vom iPad», «Bilder der Mappe» — danach kann die Seite ganz weg.
 - [x] Knoten «Kamera aus 3D-Ansicht» gebaut, an Int 1 und UI gemeldet. *(14.10.2026, §121)*
 - [x] Kamera aus 3D-Ansicht auf R29 nachgezogen (Merge über KosmoDraw, `6ad0136e1`), Visbox-Kopie nachgezogen (zeigt «Keine 3D-Ansicht offen»). *(14.10.2026, §122)*

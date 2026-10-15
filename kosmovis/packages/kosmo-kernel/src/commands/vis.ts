@@ -136,6 +136,13 @@ export const connect = registerCommand({
     if (aus.typ !== ein.typ) {
       throw new CommandError(`Port-Typen passen nicht: ${p.fromPort} ist ${aus.typ}, ${p.toPort} erwartet ${ein.typ}`);
     }
+    // Entscheid 96 (Visbox, 15.10.2026): ein Eingang, der nur bestimmte Knotenarten nimmt
+    // (`VisPort.nurVon`, heute «Skizze» am Render-Knoten).
+    if (ein.nurVon && !ein.nurVon.includes(von.typ)) {
+      throw new CommandError(
+        `«${ein.label}» nimmt nur ${ein.nurVon.map((t) => `«${VIS_NODE_KATALOG[t]?.label ?? t}»`).join(', ')} — nicht «${VIS_NODE_KATALOG[von.typ]?.label ?? von.typ}»`,
+      );
+    }
     // Belegter Eingang wird ersetzt — erst dann auf Zyklus prüfen
     const ohneAlte = graph.edges.filter((e) => !(e.to === zu.id && e.toPort === p.toPort));
     if (hatZyklus(graph.nodes, ohneAlte, { from: von.id, to: zu.id })) {

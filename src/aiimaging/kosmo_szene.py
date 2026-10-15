@@ -611,7 +611,7 @@ def _auf_raster(aufl):
 #: der Grundsatz (E75 drüben, 19.09.2026) — nur sagt die Abweisung jetzt, *warum*.
 BEKANNTE_FELDER = {
     "": ("schema", "geometry", "render", "style", "vis", "cameras", "out",
-         "interior", "gelaende", "komposition", "innenansichten", "context"),
+         "interior", "gelaende", "komposition", "innenansichten", "context", "skizze"),
     "geometry": ("path", "format", "up_axis"),
     "render": ("resolution", "faithful", "samples", "sun",
                "environment", "himmel", "belichtung", "rauschschwelle", "passes"),
@@ -624,6 +624,9 @@ BEKANNTE_FELDER = {
     # Seit 08.10.2026 (Owner-Entscheid 76, Feldnamen vom Integrator): die Umgebung als
     # Splat. Gelesen in `kontext_aus_szene`.
     "context": ("kind", "ply", "verortung", "transform", "fit", "crs_note"),
+    # Seit 15.10.2026 (Owner-Entscheid 96): die Skizze vom iPad fuehrt das Bild. Gelesen in
+    # `skizze_aus_szene`, gerechnet in `abholer` ueber `arbeitsgang.rechne_skizze`.
+    "skizze": ("quelle", "name", "anweisung"),
 }
 
 #: Der einzige belegte Inhalt von ``interior.rooms``: seit dem 19.09.2026 gesendet, je
@@ -978,6 +981,111 @@ def kontext_aus_szene(roh) -> dict | None:
         ergebnis["massstab"], saetze = massstab_aus_verortung(verortung)
         hinweise.extend(saetze)
     return ergebnis
+
+
+#: Die Quellen einer Skizze, die wir rechnen können. Heute nur die Mappe (Entscheid 96).
+SKIZZEN_QUELLEN = ("mappe",)
+
+#: Der feste Anfang des Satzes, mit dem ein Nachrender sagt, dass die Skizze beim Modell
+#: nicht ankam — derselbe wie :data:`aiimaging.kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN`
+#: (eine Probe hält beide gleich; hier als Text, damit dieses Modul die Kette nicht lädt).
+SKIZZE_NICHT_ANGEKOMMEN_ANFANG = "SKIZZE NICHT ANGEKOMMEN"
+
+#: Der Schlüssel am Geometrieurteil eines Skizzenlaufs (Entscheid 96): ``{name, anweisung,
+#: anweisung_aus, unterlage, standpunkt, hinweise}`` — gelesen in :func:`als_ergebnis`.
+URTEIL_SKIZZE = "skizze"
+
+
+def skizze_aus_szene(roh) -> dict | None:
+    """``RenderScene.skizze`` → ``{quelle, name, anweisung, anweisung_original,
+    anweisung_sprache, maengel}`` — oder ``None``, wenn keine bestellt ist.
+
+    **Owner-Entscheid 96 (15.10.2026):** Die Skizze vom iPad führt das Bild — in der
+    Knotenansicht wie bisher auf der Seite (:func:`aiimaging.arbeitsgang.rechne_skizze`).
+    Es reist nur der NAME der Skizze; sie liegt schon in der Mappe am Heim-PC.
+
+    ``anweisung`` ist die Fassung, mit der gerechnet wird — übersetzt wie ``style.prompt``
+    (:func:`aiimaging.sprache.uebersetze`), der Wortlaut bleibt in ``anweisung_original``.
+    ``None``, wenn keine mitkam: Dann nimmt ``rechne_skizze`` die Bemerkung der Skizze (und
+    weist ab, wenn auch die fehlt). ``null`` für das ganze Feld verlangt nichts, wie überall
+    (:func:`wert_oder`).
+    """
+    if roh is None:
+        return None
+    maengel: list[str] = []
+    if not isinstance(roh, dict):
+        return {"quelle": None, "name": None, "anweisung": None, "anweisung_original": None,
+                "anweisung_sprache": None, "maengel": [
+                    f"'skizze' ist {roh!r} und kein Block {{quelle, name, anweisung}}."]}
+    quelle = roh.get("quelle")
+    if quelle not in SKIZZEN_QUELLEN:
+        maengel.append(
+            f"'skizze.quelle' ist {quelle!r}. Rechnen koennen wir eine Skizze nur aus der "
+            f"Mappe ({', '.join(SKIZZEN_QUELLEN)}) — ein hochgeladenes Bild waere eine "
+            f"andere Quelle, die es im Vertrag nicht gibt.")
+    name = roh.get("name")
+    if not isinstance(name, str) or not name.strip():
+        maengel.append(f"'skizze.name' ist {name!r} — welche Skizze gemeint ist, raten wir nicht.")
+        name = None
+    roh_anweisung = roh.get("anweisung")
+    befund = None
+    if roh_anweisung is not None and (not isinstance(roh_anweisung, str)
+                                      or not roh_anweisung.strip()):
+        maengel.append(
+            f"'skizze.anweisung' ist {roh_anweisung!r}. Leer oder kein Text ist keine "
+            f"Anweisung — ohne Feld gilt die Bemerkung der Skizze.")
+    elif isinstance(roh_anweisung, str):
+        befund = sprache.uebersetze(roh_anweisung)
+    return {"quelle": quelle if quelle in SKIZZEN_QUELLEN else None, "name": name,
+            "anweisung": befund["uebersetzt"] if befund else None,
+            "anweisung_original": befund["original"] if befund else None,
+            "anweisung_sprache": befund, "maengel": maengel}
+
+
+def skizze_unvertraeglich(*, kameras, interior, skip, kontext) -> list[str]:
+    """Was mit einer Skizze NICHT zusammengeht — je Feld ein Satz (Entscheid 96).
+
+    Dieselben drei Regeln wie drüben im Vertrag (``RenderScene`` superRefine) und eine
+    vierte: Eine Umgebung (``context``) käme nicht an — die Skizze rechnet auf ihrer
+    Unterlage, nicht in einer Szene. Abgewiesen statt übergangen (E75).
+    """
+    saetze = []
+    if isinstance(kameras, list):
+        saetze.append(
+            "'cameras' ist eine Liste, aber eine Skizze ist EIN Bild vom Standpunkt der "
+            "Mappe (wie «aus Skizze rechnen» auf der Seite) — cameras weglassen oder 'auto'.")
+    elif kameras == "saved":
+        saetze.append("'cameras: saved' und eine Skizze gehen nicht zusammen — die Skizze ist "
+                      "EIN Bild vom Standpunkt der Mappe.")
+    if interior is not None:
+        saetze.append("'interior' und eine Skizze gehen nicht zusammen — die Skizze ist EIN Bild.")
+    if skip is True:
+        saetze.append("'vis.skip: true' und eine Skizze: Ohne Bildmodell gibt es nichts, das "
+                      "die Skizze liest.")
+    if kontext is not None:
+        saetze.append("'context' und eine Skizze: Die Skizze rechnet auf ihrer Unterlage, eine "
+                      "Umgebung (Splat) kaeme nicht an.")
+    return saetze
+
+
+def skizze_saetze(vermerk) -> list[str]:
+    """Die Auskunft eines Skizzenlaufs für ``verdict.hinweise`` — leer ohne Vermerk."""
+    if not isinstance(vermerk, dict):
+        return []
+    name = vermerk.get("name") or "?"
+    if vermerk.get("anweisung_aus") == "bemerkung":
+        woher = "Anweisung aus der Bemerkung der Skizze"
+    else:
+        woher = f"Anweisung: {vermerk.get('anweisung_original') or vermerk.get('anweisung')!r}"
+    saetze = [f"AUS SKIZZE GERECHNET: {name!r} auf ihrer Unterlage, {woher} — wie «aus Skizze "
+              f"rechnen» auf der Seite."]
+    unterlage = (vermerk.get("unterlage") or {}).get("grund")
+    if unterlage:
+        saetze.append(str(unterlage))
+    standpunkt = vermerk.get("standpunkt")
+    if standpunkt:
+        saetze.append(str(standpunkt))
+    return saetze
 
 
 def kontext_vermerk(kontext: dict | None, bericht: dict | None = None) -> dict | None:
@@ -1687,6 +1795,12 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     if kontext_block is not None:
         maengel.extend(kontext_block["maengel"])
 
+    # DIE SKIZZE (Entscheid 96, 15.10.2026) — siehe `skizze_aus_szene`. Was mit ihr nicht
+    # zusammengeht, steht unten bei den Schaltern (dort ist `skip` gelesen).
+    skizze_block = skizze_aus_szene(fremd.get("skizze"))
+    if skizze_block is not None:
+        maengel.extend(skizze_block["maengel"])
+
     sonne = render.get("sun")
     if sonne is not None and not isinstance(sonne, dict):
         maengel.append(f"'render.sun' ist {sonne!r} und kein Block {{azimuth, elevation}}.")
@@ -1779,6 +1893,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             maengel.append(
                 f"'vis.{name}' ist {wert!r}, erwartet war true, false oder null. Ein "
                 f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+    if skizze_block is not None:
+        maengel.extend(skizze_unvertraeglich(
+            kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
+            skip=schalter.get("skip"), kontext=fremd.get("context")))
     # Die Referenzbilder: Eine Zahl warf TypeError aus `list(...)`, ein Text zerfiel
     # still in einzelne Zeichen (23.09.2026).
     refs = stil.get("refs") or []
@@ -1831,6 +1949,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "gelaende_erwartet": gelaende,
         # `None` heisst: keine Umgebung bestellt.
         "kontext": kontext_block,
+        # `None` heisst: keine Skizze bestellt (Entscheid 96).
+        "skizze": skizze_block,
         # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
         #
         # **Der Anlass ist eine Zaehlung** (26.08.2026): `tools/abholen.py` zeigte
@@ -1913,6 +2033,10 @@ DURCHGEREICHT = {
     "kontext": "abholer.verarbeiter → seams.glb_zu_multipass(kontext_ply=…, "
                "kontext_matrix=…) → blender_depth_stage --kontext-ply/--kontext-matrix; "
                "Vermerk am Kameraurteil (URTEIL_KONTEXT) → verdict.hinweise, befund.json",
+    # Seit 15.10.2026 (Entscheid 96): `skizze` {quelle: mappe, name, anweisung?}.
+    "skizze": "abholer.verarbeiter → arbeitsgang.rechne_skizze(Mappe aus "
+              "knotenweg.mappe_des_auftrags, name, anweisung=…, backbone=…); Vermerk "
+              "URTEIL_SKIZZE → verdict.reason/hinweise, befund.json",
 }
 
 #: Felder, die der Betreiber setzen **kann** und die heute **nichts** bewirken.
@@ -2707,6 +2831,14 @@ def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
     jede andere Kamera in ``qa_je_kamera`` gilt (siehe :func:`_vorbehalte_je_kamera`).
     Der Wortlaut ist unveraendert.
     """
+    if geometrie_urteil.get("nicht_anwendbar") is True:
+        # Owner-Entscheid 19.09.2026, seit Entscheid 96 (15.10.2026) auch am Knotenweg: An
+        # einem Bild aus einer Skizze wurde von Hand gearbeitet — es folgt ABSICHTLICH nicht
+        # dem Modell, und genau das wuerde die Pruefung messen.
+        return ("NICHT ANWENDBAR (Handeingriff): Das Bild entstand aus einer Skizze und "
+                "folgt absichtlich nicht dem Modell; die Geometriepruefung beantwortet hier "
+                "die falsche Frage. 'passed: false' heisst hier nicht durchgefallen, sondern "
+                "nicht anwendbar.")
     if geometrie_urteil.get("gesamtwert_anwendbar") is False:
         # Owner-Entscheid 08.10.2026 (Visbox-Entscheid 70): unter 20 % Gebaeudeanteil ist
         # der Gesamtwert nicht anwendbar. `passed` bleibt im fremden Vertrag ein
@@ -3158,7 +3290,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                 "sagt hier also nichts darueber, ob die Tiefe richtig herum steht.")
         # Wir werfen dem fremden Vertrag vor, seine Stil-Schwelle sei kein Gate. Es wäre
         # unredlich, dabei zu verschweigen, was wir über die EIGENE gemessen haben.
-        if geometrie_urteil.get("nullanker") is None:
+        if (geometrie_urteil.get("nullanker") is None
+                and geometrie_urteil.get("nicht_anwendbar") is not True):
             hinweise.append(
                 f"Zur Geometrie-Schwelle {geometrie_qa.SCHWELLE_GEOMETRIE}: Für diesen "
                 f"Lauf liegt KEINE Nullprobe vor. Am 20.08.2026 gemessen "
@@ -3408,6 +3541,16 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         teile.insert(0, str(zeile))
         hinweise.append(str(zeile))
 
+    # DIE SKIZZE KAM NICHT AN (Entscheid 96, 15.10.2026) — zuvorderst in `reason`, wie auf
+    # der Seite zuvorderst am Bild: Ohne den Satz saehe ein Bild aus Tiefenkarte und Text
+    # aus wie eine Bearbeitung der Skizze.
+    _skizze = (geometrie_urteil or {}).get(URTEIL_SKIZZE)
+    if isinstance(_skizze, dict):
+        for satz in reversed([str(h) for h in _skizze.get("hinweise") or ()
+                              if str(h).startswith(SKIZZE_NICHT_ANGEKOMMEN_ANFANG)]):
+            teile.insert(0, satz)
+            hinweise.append(satz)
+
     if uebersprungen:
         # Vor allen anderen: Wer abbestellt hat, braucht keine Erklaerung darueber, was
         # nicht gemessen wurde. Er braucht die Bestaetigung, dass nichts LIEF.
@@ -3422,7 +3565,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     elif not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")
-    elif qa.get("geometry") and geometrie_urteil.get("nullanker") is None:
+    elif (qa.get("geometry") and geometrie_urteil.get("nullanker") is None
+          and geometrie_urteil.get("nicht_anwendbar") is not True):
         # Der Satz muss dort stehen, wo das Abzeichen gelesen wird — nicht nur in einem
         # Übergabeblatt, das niemand aufschlägt, während er auf ein Häkchen sieht.
         teile.append("Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, "
@@ -3458,6 +3602,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # und ihr Satz gehoert trotzdem zum Auftrag.
     if not uebersprungen:
         for satz in _aufsicht_saetze(geometrie_urteil, je_kamera):
+            qa["verdict"].setdefault("hinweise", []).append(satz)
+            hinweise.append(satz)
+        # Entscheid 96: woraus das Bild entstand — Auskunft, kein Vorbehalt.
+        for satz in skizze_saetze((geometrie_urteil or {}).get(URTEIL_SKIZZE)):
             qa["verdict"].setdefault("hinweise", []).append(satz)
             hinweise.append(satz)
 
