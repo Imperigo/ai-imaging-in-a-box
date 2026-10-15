@@ -14,6 +14,7 @@ import {
   evaluiereGraph,
   HIMMEL_ARTEN,
   KAMERA_AUS_3D_TYP,
+  VARIANTEN_TYP,
   projektKameras,
   RENDER_PRESETS,
   renderPromptBausteine,
@@ -72,13 +73,16 @@ import {
 } from './vis-runtime';
 import { BridgeBild } from './BridgeBild';
 import { KameraAus3dKoerper } from './KameraAus3dKnoten';
+// L24 Bildweg Varianten (E246): Knoten «Varianten» und das Raster im Bildvergleich — eigene Dateien.
+import { VariantenKoerper } from './VariantenKnoten';
+import { VariantenRaster } from './VariantenRaster';
 import { renderWarteAnzeige } from './render-warteort';
 import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
 import { SkizzeKnotenKoerper } from './SkizzeKnoten';
 import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
-import { skizzeFuehrtZeile } from './skizze-fuehrt';
+import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
@@ -505,6 +509,11 @@ const KOERPER_H: Record<string, number> = {
   // (Auge, Blickfeld, Objektiv-Shift, Umgebung) und der Knopf; ohne Kamera der Satz über drei
   // Zeilen und der Knopf — beide passen in dieselbe Höhe, der Knoten springt nicht.
   kameraAus3d: 112,
+  // «Varianten» (L24 Bildweg Varianten, E246, `VariantenKnoten.tsx`): Zaehler, drei Achsen mit
+  // je zwei Zeilen zum Anhaken, Dauer- und Standzeile, die zwei Knoepfe. Fest, damit der Knoten
+  // nicht springt, wenn eine Bestellung laeuft; eine lange Achse bricht um und steht ganz in der
+  // Kurzhilfe ihres Titels.
+  varianten: 244,
 };
 
 /**
@@ -677,10 +686,11 @@ export const KAMERA_KOERPER_H_MIT_HEIM = 96;
  * ein Wirt Skizzen anbietet (Visbox), genau wie der Eingang «Skizze» (`sichtbareEingaenge`). In
  * KosmoOrbit bleibt der Knoten damit Pixel für Pixel so hoch wie bisher: dort ragte er schon am
  * 08.10.2026 bis 6 px an den Fensterrand (WebKitGTK, `VERLAUF_ZEILE_H`), und eine Zeile, die dort
- * nichts tun kann, hätte ihn hinausgeschoben. Drei Zeilen Text à 14,2 px (Vorbehaltsklasse wie
- * `LIZENZ_ZEILE_H`) = 43, eingetragen 44.
+ * nichts tun kann, hätte ihn hinausgeschoben. Vier Zeilen Text à 14,2 px (Vorbehaltsklasse wie
+ * `LIZENZ_ZEILE_H`) = 56,8, eingetragen 58 — seit Entscheid 96b steht der Standpunkt mit darin
+ * («Standpunkt: vom Bild unter der Skizze»); vorher drei Zeilen, 44.
  */
-export const RENDER_ZEILE_SKIZZE: Koerperzeile = { id: 'skizze', h: 44 };
+export const RENDER_ZEILE_SKIZZE: Koerperzeile = { id: 'skizze', h: 58 };
 
 function koerperHoehe(typ: string): number {
   if (typ === 'modell' && modellLadenWirt()) return MODELL_KOERPER_H_MIT_LADEN;
@@ -1199,6 +1209,8 @@ export function NodeCanvas({
                 ...marker,
                 status: hatBild ? 'fertig' : 'fehler',
                 bild: j.result.images[0] ?? '',
+                // L24 Bildweg Varianten (E246): alle Bilder, eines je Kamera — fuer das Raster.
+                bilder: j.result.images,
                 // Entscheid 68 / E174: der Verlauf nennt die Uhrzeit des Ergebnisses.
                 fertigUm: Date.now(),
                 qa: j.result.qa,
@@ -2773,8 +2785,8 @@ const KLEMME_TEXT_ZWEIZEILIG: CSSProperties = {
   overflow: 'hidden',
 };
 
-/** Entscheid 96: die Zeile «Skizze» (`RENDER_ZEILE_SKIZZE`, 44 px) — drei Zeilen, der Rest am `title`. */
-const KLEMME_TEXT_DREIZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 3 };
+/** Entscheid 96/96b: die Zeile «Skizze» (`RENDER_ZEILE_SKIZZE`, 58 px) — vier Zeilen, der Rest in der Kurzhilfe. */
+const KLEMME_TEXT_VIERZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 4 };
 
 function RenderBedienung({
   params,
@@ -3538,6 +3550,8 @@ function NodeKoerper({
           nurCycles: params['nurCycles'] === true,
           lineart: params['lineart'] === true,
         });
+      // Entscheid 96a: mit Skizze ist die Anweisung die Bemerkung der Skizze; die Stimmung tritt zurück.
+      const anweisungZeile = mitSkizze ? skizzeAnweisung(skizzeAmEingang.wahl, finalPrompt) : undefined;
       const skizzeZeile = skizzenQuelle()
         ? skizzeFuehrtZeile({
             skizze: skizzeAmEingang,
@@ -3726,7 +3740,7 @@ function NodeKoerper({
                   data-warnung={String(skizzeZeile.warnung)}
                   data-satz={skizzeZeile.satz}
                   className={`vis-node-final-prompt${skizzeZeile.warnung ? ' vis-node-final-prompt--warnung' : ''}`}
-                  style={KLEMME_TEXT_DREIZEILIG}
+                  style={KLEMME_TEXT_VIERZEILIG}
                 >
                   {skizzeZeile.zeile}
                 </div>
@@ -3737,20 +3751,12 @@ function NodeKoerper({
           <Zeile id="prompt">
             <div
               data-testid="render-final-prompt"
-              className={`vis-node-final-prompt${promptLeer ? ' vis-node-final-prompt--warnung' : ''}`}
+              className={`vis-node-final-prompt${promptLeer || anweisungZeile?.warnung ? ' vis-node-final-prompt--warnung' : ''}`}
               style={KLEMME_TEXT_ZWEIZEILIG}
-              title={
-                mitSkizze
-                  ? finalPrompt
-                    ? `Anweisung an die Skizze: ${finalPrompt}`
-                    : 'Keine Anweisung — es gilt die Bemerkung, die beim Zeichnen an der Skizze stand.'
-                  : finalPrompt || (promptLeer ? LEERER_PROMPT_HINWEIS : undefined)
-              }
+              title={anweisungZeile ? anweisungZeile.titel : finalPrompt || (promptLeer ? LEERER_PROMPT_HINWEIS : undefined)}
             >
-              {mitSkizze
-                ? finalPrompt
-                  ? `Anweisung: ${finalPrompt}`
-                  : 'keine Anweisung — es gilt die Bemerkung der Skizze'
+              {anweisungZeile
+                ? anweisungZeile.text
                 : finalPrompt ||
                   (promptLeer
                     ? 'kein Prompt — die KI-Veredelung lehnt so ab: Stimmung/Stil verbinden oder Formular füllen'
@@ -3894,6 +3900,15 @@ function NodeKoerper({
       );
     }
     case 'vergleich': {
+      // L24 Bildweg Varianten (E246): haengt ein Varianten-Knoten an einem Eingang, zeigt der
+      // Vergleich dessen Bilder als Raster (Zeilen Standpunkte, Spalten Stimmungen, Reiter
+      // Entwurf) — statt der bis zu drei Einzelbilder.
+      const eigener = doc.get<VisGraph>(graphId);
+      const varianten = eigener?.edges
+        .filter((e) => e.to === node.id)
+        .map((e) => eigener.nodes.find((n) => n.id === e.from))
+        .find((n) => n?.typ === VARIANTEN_TYP);
+      if (varianten) return <VariantenRaster variantenId={varianten.id} />;
       const bilder = ['bild1', 'bild2', 'bild3']
         .map((p) => bildQuelle(node.id, p))
         .filter((b): b is NonNullable<typeof b> => b !== null);
@@ -4169,6 +4184,10 @@ function NodeKoerper({
     case KAMERA_AUS_3D_TYP: {
       const g = doc.get<VisGraph>(graphId);
       return g ? <KameraAus3dKoerper graph={g} node={node} /> : null;
+    }
+    case VARIANTEN_TYP: {
+      const g = doc.get<VisGraph>(graphId);
+      return g ? <VariantenKoerper graph={g} node={node} /> : null;
     }
     default:
       return null;

@@ -90,12 +90,12 @@ function graph(mitSkizze: boolean): { graphId: string; renderId: string } {
 }
 
 describe('Visbox · die Skizze führt das Bild (Entscheid 96)', () => {
-  it('mit dem Wirt der Seite: die neueste Skizze der Mappe, der Prompt als Anweisung, gültig nach dem Vertrag', async () => {
+  it('mit dem Wirt der Seite: die neueste Skizze der Mappe, ohne Anweisung aus dem Prompt (Entscheid 96a: es gilt die Bemerkung der Skizze), gültig nach dem Vertrag', async () => {
     registriereSkizzenQuelle(skizzenQuelleDerMappe());
     const { graphId, renderId } = graph(true);
     sendeGraphRenderAuftrag(graphId, renderId);
     await vi.waitFor(() => expect(gesendet).not.toBeNull());
-    expect(gesendet!['skizze']).toEqual({ quelle: 'mappe', name: 'skizze-20261015-081200.png', anweisung: 'ein Vordach aus Holz' });
+    expect(gesendet!['skizze']).toEqual({ quelle: 'mappe', name: 'skizze-20261015-081200.png' });
     expect(gesendet!['cameras']).toBe('auto');
     expect(RenderScene.safeParse(gesendet).success).toBe(true);
     await vi.waitFor(() => expect(useVisRuntime.getState().laeufe[renderId]?.status).toBe('wartetFreigabe'));

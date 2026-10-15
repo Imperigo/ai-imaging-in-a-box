@@ -12,15 +12,29 @@ import {
   ZEILEN_ABSTAND,
   zeilenHoehe,
 } from '../src/modules/vis/NodeCanvas';
-import { registriereSkizzenQuelle, SKIZZE_IPAD_TYP, type Skizze, type SkizzenQuelle } from '../src/modules/vis/skizze-quelle';
-import { SKIZZE_KAMERAS_SATZ, SKIZZE_KEINE_ZEILE, SKIZZE_OHNE_KI_ZEILE } from '../src/modules/vis/skizze-fuehrt';
+import {
+  registriereSkizzenQuelle,
+  SKIZZE_IPAD_TYP,
+  SKIZZE_OHNE_BEMERKUNG_SATZ,
+  type Skizze,
+  type SkizzenQuelle,
+} from '../src/modules/vis/skizze-quelle';
+import {
+  SKIZZE_KAMERAS_SATZ,
+  SKIZZE_KEINE_ZEILE,
+  SKIZZE_OHNE_KI_ZEILE,
+  SKIZZE_STANDPUNKT_BILD,
+  SKIZZE_STANDPUNKT_OHNE_BILD,
+  SKIZZE_STANDPUNKT_UNBEKANNT,
+} from '../src/modules/vis/skizze-fuehrt';
 import { useProject } from '../src/state/project-store';
 
 /**
  * KV-SKIZZE-FUEHRT · der Knoten (Owner-Entscheid 96 der Visbox, 15.10.2026). Der Eingang «Skizze»
  * und die Zeile «Skizze» stehen NUR mit Wirt (Visbox); ohne Wirt (KosmoOrbit) ist der Render-Knoten
  * Pixel fuer Pixel so hoch wie vorher. Mit Wirt sagt die Zeile, welches Modell rechnet und ob die
- * Skizze darauf ankommt; der Prompt heisst dann «Anweisung».
+ * Skizze darauf ankommt, und (96b) von welchem Standpunkt das Bild entsteht; die Anweisung ist
+ * (96a) die Bemerkung der Skizze, die Stimmung tritt zurueck — ohne Bemerkung steht das vorher da.
  */
 class StubResizeObserver {
   observe(): void {}
@@ -31,12 +45,12 @@ class StubResizeObserver {
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const SKIZZEN: Skizze[] = [
-  { name: 'skizze-20261015-0812.png', titel: 'Balkon', erzeugt: '2026-10-15T08:12:00', ueber: null, stand: 'abgelegt' },
+  { name: 'skizze-20261015-0812.png', titel: 'Balkon', erzeugt: '2026-10-15T08:12:00', ueber: null, stand: 'abgelegt', bemerkung: 'Balkon aus Holz', standpunkt: 'mappe' },
 ];
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-function wirt(): SkizzenQuelle {
-  return { liste: async () => SKIZZEN, bildUrl: (n: string) => `./skizze?name=${encodeURIComponent(n)}` };
+function wirt(liste: Skizze[] = SKIZZEN): SkizzenQuelle {
+  return { liste: async () => liste, bildUrl: (n: string) => `./skizze?name=${encodeURIComponent(n)}` };
 }
 
 let root: Root | null = null;
@@ -55,7 +69,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function montiere(opts: { skizze?: boolean; params?: Record<string, string | boolean>; kameras?: boolean } = {}): {
+function montiere(
+  opts: { skizze?: boolean; params?: Record<string, string | boolean>; kameras?: boolean; prompt?: string } = {},
+): {
   graphId: string;
   renderId: string;
 } {
@@ -67,6 +83,11 @@ function montiere(opts: { skizze?: boolean; params?: Record<string, string | boo
     runCommand('vis.nodeSetzen', { graphId, typ: SKIZZE_IPAD_TYP, x: 40, y: 40 });
     const s = doc.get<VisGraph>(graphId)!.nodes.at(-1)!.id;
     runCommand('vis.verbinden', { graphId, from: s, fromPort: 'bild', to: renderId, toPort: 'skizze' });
+  }
+  if (opts.prompt !== undefined) {
+    runCommand('vis.nodeSetzen', { graphId, typ: 'prompt', x: 40, y: 500, params: { text: opts.prompt } });
+    const p = doc.get<VisGraph>(graphId)!.nodes.at(-1)!.id;
+    runCommand('vis.verbinden', { graphId, from: p, fromPort: 'prompt', to: renderId, toPort: 'prompt' });
   }
   if (opts.kameras) {
     runCommand('vis.nodeSetzen', { graphId, typ: 'kamera', x: 40, y: 300 });
@@ -132,7 +153,7 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     montiere({ skizze: true });
     await warte();
     const zeile = q('render-skizze') as HTMLElement;
-    expect(zeile.textContent).toBe('Skizze führt · Z-Image Turbo: darauf kommt sie gemessen nicht an.');
+    expect(zeile.textContent).toBe(`Skizze führt · Z-Image Turbo: darauf kommt sie gemessen nicht an. ${SKIZZE_STANDPUNKT_OHNE_BILD}`);
     expect(zeile.dataset['warnung']).toBe('true');
     const title = (q('render-skizze') as HTMLElement).dataset['satz']!;
     expect(title).toContain('«Balkon · 15.10. 08:12» führt das Bild');
@@ -145,7 +166,7 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     montiere({ skizze: true, params: { backbone: 'qwen-image-2.1' } });
     await warte();
     const zeile = q('render-skizze') as HTMLElement;
-    expect(zeile.textContent).toBe('Skizze führt · Qwen-Image 2.1: ob sie ankommt, ist ungemessen.');
+    expect(zeile.textContent).toBe(`Skizze führt · Qwen-Image 2.1: ob sie ankommt, ist ungemessen. ${SKIZZE_STANDPUNKT_OHNE_BILD}`);
     expect(zeile.dataset['warnung']).toBe('false');
   });
 
@@ -163,12 +184,50 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     expect((q('render-skizze') as HTMLElement).dataset['satz']).toContain(SKIZZE_KAMERAS_SATZ);
   });
 
-  it('der Prompt heisst mit Skizze «Anweisung»; ohne Prompt gilt die Bemerkung, und es ist kein Mangel', async () => {
+  it('96a: mit Skizze ist die Anweisung die Bemerkung der Skizze; ohne Prompt kein Mangel', async () => {
     registriereSkizzenQuelle(wirt());
     montiere({ skizze: true });
     await warte();
     const prompt = q('render-final-prompt') as HTMLElement;
-    expect(prompt.textContent).toBe('keine Anweisung — es gilt die Bemerkung der Skizze');
+    expect(prompt.textContent).toBe('Anweisung: Bemerkung der Skizze «Balkon aus Holz»');
     expect(prompt.className).not.toContain('warnung');
+  });
+
+  it('96a: mit Skizze und Stimmung tritt die Stimmung zurueck — und das steht da', async () => {
+    registriereSkizzenQuelle(wirt());
+    montiere({ skizze: true, prompt: 'Abendstimmung' });
+    await warte();
+    const prompt = q('render-final-prompt') as HTMLElement;
+    expect(prompt.textContent).toBe('Anweisung: Bemerkung der Skizze «Balkon aus Holz» — Stimmung tritt zurück');
+    expect(prompt.getAttribute('title')).toContain('«Abendstimmung» tritt zurück und wird nicht gesendet');
+  });
+
+  it('96a: Skizze ohne Bemerkung — Zeile und Anweisung sagen es VOR dem Klick, in Warnfarbe', async () => {
+    registriereSkizzenQuelle(wirt([{ ...SKIZZEN[0]!, bemerkung: '' }]));
+    montiere({ skizze: true, prompt: 'Abendstimmung' });
+    await warte();
+    const zeile = q('render-skizze') as HTMLElement;
+    expect(zeile.textContent).toBe(SKIZZE_OHNE_BEMERKUNG_SATZ);
+    expect(zeile.dataset['warnung']).toBe('true');
+    const prompt = q('render-final-prompt') as HTMLElement;
+    expect(prompt.textContent).toBe(SKIZZE_OHNE_BEMERKUNG_SATZ);
+    expect(prompt.className).toContain('warnung');
+  });
+
+  it('96b: auf ein Bild gezeichnet und dessen Standpunkt bekannt — «Standpunkt: vom Bild unter der Skizze»', async () => {
+    registriereSkizzenQuelle(wirt([{ ...SKIZZEN[0]!, ueber: 'bilder/bild-1.png', standpunkt: 'bild' }]));
+    montiere({ skizze: true });
+    await warte();
+    const zeile = q('render-skizze') as HTMLElement;
+    expect(zeile.textContent).toContain(SKIZZE_STANDPUNKT_BILD);
+    expect(zeile.textContent).not.toContain('Standpunkt der Mappe');
+    expect(zeile.dataset['satz']).toContain(SKIZZE_STANDPUNKT_BILD);
+  });
+
+  it('96b: auf ein Bild gezeichnet, dessen Standpunkt NICHT bekannt ist — Standpunkt der Mappe, mit Grund', async () => {
+    registriereSkizzenQuelle(wirt([{ ...SKIZZEN[0]!, ueber: 'bilder/alt.png', standpunkt: 'mappe' }]));
+    montiere({ skizze: true });
+    await warte();
+    expect(q('render-skizze')?.textContent).toContain(SKIZZE_STANDPUNKT_UNBEKANNT);
   });
 });

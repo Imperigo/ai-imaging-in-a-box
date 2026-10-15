@@ -15,8 +15,13 @@ import { useVisRuntime } from './vis-runtime';
  *     Stimmung ─┐
  *               ├─ Prompt-Kombinierer ─┐
  *     Prompt ───┘                      │
- *     Modell ──────────────────────────┼─ Render ── Bildvergleich
+ *     Modell ──────────────────────────┼─ Render ── Varianten ── Bildvergleich
  *     Auto-Kamera ─────────────────────┘
+ *
+ * **Varianten** (L24 Bildweg Varianten, E246; Owner-Wunsch 14.10.: «direkt bereit zum
+ * Ein-Klick-Render von Varianten»): der Knoten steht hinter dem Render-Knoten mit der Vorgabe
+ * 3 Standpunkte × Abend × aktuelles Modell (92a), und der Bildvergleich zeigt sein Raster. Ein
+ * Klick auf «3 Bilder bestellen» und einer auf «Alle freigeben» — mehr braucht es nicht.
  *
  * **Warum ein Kombinierer dabei ist:** Der Render-Knoten hat EINEN Prompt-Eingang
  * (`VIS_NODE_KATALOG.render`). Stimmung und eigener Text kommen darum ueber den Kombinierer
@@ -55,6 +60,7 @@ export function startGraphAnlegen(): string | undefined {
       const kamera = setze('kamera', lage.kamera.x, lage.kamera.y);
       const komb = setze('kombinierer', lage.kombinierer.x, lage.kombinierer.y);
       const render = setze('render', lage.render.x, lage.render.y);
+      const varianten = setze('varianten', lage.varianten.x, lage.varianten.y);
       const vergleich = setze('vergleich', lage.vergleich.x, lage.vergleich.y);
 
       verbinde(stimmung, 'prompt', komb, 'stimmung');
@@ -62,7 +68,8 @@ export function startGraphAnlegen(): string | undefined {
       verbinde(komb, 'prompt', render, 'prompt');
       verbinde(modell, 'szene', render, 'szene');
       verbinde(kamera, 'kameras', render, 'kameras');
-      verbinde(render, 'bild', vergleich, 'bild1');
+      verbinde(render, 'bild', varianten, 'render');
+      verbinde(varianten, 'bilder', vergleich, 'bild1');
 
       useVisRuntime.getState().setAktiverGraphId(gid);
       return gid;
@@ -75,11 +82,11 @@ export function startGraphAnlegen(): string | undefined {
   }
 }
 
-/** Wo die sieben Knoten des Anfangs liegen (linke obere Ecke, Welt-Pixel). Vier Spalten;
+/** Wo die acht Knoten des Anfangs liegen (linke obere Ecke, Welt-Pixel). Fuenf Spalten;
  *  die Zeilen der ersten Spalte mit der GROESSTEN Hoehe jedes Knotens (aufgeklappt), damit
  *  nichts ueberlappt, wenn man einen Knoten aufklappt. Exportiert fuer die Probe. */
 export function startGraphLage(): Record<
-  'stimmung' | 'prompt' | 'modell' | 'kamera' | 'kombinierer' | 'render' | 'vergleich',
+  'stimmung' | 'prompt' | 'modell' | 'kamera' | 'kombinierer' | 'render' | 'varianten' | 'vergleich',
   { x: number; y: number }
 > {
   const abstand = 32;
@@ -96,7 +103,8 @@ export function startGraphLage(): Record<
     kamera: { x: x0, y: yKamera },
     kombinierer: { x: x0 + spalte, y: y0 },
     render: { x: x0 + 2 * spalte, y: y0 },
-    vergleich: { x: x0 + 3 * spalte, y: y0 },
+    varianten: { x: x0 + 3 * spalte, y: y0 },
+    vergleich: { x: x0 + 4 * spalte, y: y0 },
   };
 }
 

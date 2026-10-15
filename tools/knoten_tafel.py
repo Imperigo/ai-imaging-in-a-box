@@ -319,11 +319,28 @@ KNOTEN: list[dict] = [
                    "Satz, dass es Skizzen vom iPad in Visbox gibt."),
         "quelle": "visgraph.ts · skizze-quelle.ts · SkizzeKnoten.tsx · visbox-knoten/src/mappe.ts",
     },
+    {
+        "kurz": "15-varianten", "typ": "varianten", "titel": "Varianten",
+        "gruppe": "render",
+        "hilfe": "Bestellt die Einstellung des Render-Knotens in allen Kombinationen.",
+        "ein": [("Render", "bild")], "aus": [("Bilder", "bild")],
+        "kann": "Rechnet Standpunkte × Stimmungen × Entwürfe mit einem Klick, mit Zähler vorher und "
+                "einer Freigabe für alle (Entscheide 92/92a/92b).",
+        "wie": "Die drei Achsen hakt man am Knoten an; Vorgabe 3 Standpunkte × Abend × aktuelles "
+               "Modell. Ab zwölf Bildern warnt er mit der ungefähren Dauer.",
+        "loest": "Je Stimmung und Entwurf einen Auftrag beim Heim-PC, mit allen Standpunkten — "
+                 "erst auf «Bilder bestellen» und «Alle freigeben».",
+        "zusammen": [("ein", "Bild", "Render · Bild"), ("aus", "Bild", "Bildvergleich · Bild 1 (Raster)")],
+        "visbox": ("gleich",
+                   "In Visbox mit den drei Richtungen des Heim-PCs als Standpunkten und nur dem "
+                   "aktuellen Modell als Entwurf; in KosmoOrbit auch Blicke und Ebenenkombinationen."),
+        "quelle": "visgraph.ts · derive/varianten.ts · varianten.ts · VariantenKnoten.tsx · VariantenRaster.tsx",
+    },
 ]
 
 #: Die Notiz neben jedem Bild auf der Tafel — zwei bis vier Sätze.
 NOTIZEN = {
-    "00-uebersicht": "Vierzehn Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
+    "00-uebersicht": "Fünfzehn Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
                      "gleiche Sorte passt, nichts fliesst im Kreis. Nur der Render-Knoten bestellt "
                      "etwas beim Heim-PC, und erst auf «Ausführen» und «Freigeben».",
     "01-modell": "Bringt das Gebäude als Szene in den Graphen; ohne ihn rendert nichts. In Visbox "
@@ -358,6 +375,9 @@ NOTIZEN = {
     "14-skizze-vom-ipad": "Holt die neueste Skizze der Mappe in die Knotenansicht, eine ältere ist "
                           "wählbar. Der Render-Knoten nimmt noch kein Bild an — die Skizze geht in "
                           "den Bildvergleich.",
+    "15-varianten": "Bestellt die Einstellung des Render-Knotens für alle Kombinationen aus "
+                    "Standpunkten, Stimmungen und Entwürfen. Ein Zähler sagt vorher, wie viele Bilder "
+                    "es werden, ein Klick gibt alle frei. Der Bildvergleich zeigt sie als Raster.",
 }
 
 

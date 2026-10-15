@@ -75,11 +75,13 @@ afterEach(() => {
 });
 
 describe('KV-STARTGRAPH · der fertige Anfang', () => {
-  it('sieben Knoten, sechs Linien, an den richtigen Anschluessen', () => {
+  // L24 Bildweg Varianten (E246): seit «Varianten mit einem Klick» acht Knoten und sieben Linien —
+  // der Varianten-Knoten steht zwischen Render und Bildvergleich (kv-varianten.test.tsx).
+  it('acht Knoten, sieben Linien, an den richtigen Anschluessen', () => {
     const gid = startGraphAnlegen()!;
     const g = useProject.getState().doc.get<VisGraph>(gid)!;
     expect(g.nodes.map((n) => n.typ).sort()).toEqual(
-      ['kamera', 'kombinierer', 'modell', 'prompt', 'render', 'stimmung', 'vergleich'].sort(),
+      ['kamera', 'kombinierer', 'modell', 'prompt', 'render', 'stimmung', 'varianten', 'vergleich'].sort(),
     );
     const typ = (id: string) => g.nodes.find((n) => n.id === id)!.typ;
     const linien = g.edges.map((e) => `${typ(e.from)}.${e.fromPort}→${typ(e.to)}.${e.toPort}`).sort();
@@ -90,7 +92,8 @@ describe('KV-STARTGRAPH · der fertige Anfang', () => {
         'kombinierer.prompt→render.prompt',
         'modell.szene→render.szene',
         'kamera.kameras→render.kameras',
-        'render.bild→vergleich.bild1',
+        'render.bild→varianten.render',
+        'varianten.bilder→vergleich.bild1',
       ].sort(),
     );
     expect(useVisRuntime.getState().aktiverGraphId).toBe(gid);
@@ -139,7 +142,7 @@ describe('KV-STARTGRAPH · wann der Anfang entsteht', () => {
     expect(q('vis-leer-anfang-satz')?.textContent).toContain('Bildvergleich');
     act(() => q('vis-leer-anfang-anlegen')!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(graphen()).toHaveLength(1);
-    expect(graphen()[0]!.nodes).toHaveLength(7);
+    expect(graphen()[0]!.nodes).toHaveLength(8);
   });
 
   it('Visbox (Wirt will ihn): beim Oeffnen da, «Datei laden …» sofort im Modell-Knoten', () => {

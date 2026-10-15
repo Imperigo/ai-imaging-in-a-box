@@ -77,6 +77,13 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
   // «Kamera aus 3D-Ansicht» (14.10.2026): keine einstellbaren Parameter — die Kamera setzt der
   // Knopf «Kamera übernehmen» (und das Anlegen), nicht die Hand (`derive/kamera-aus-3d.ts`).
   kameraAus3d: [],
+  // «Varianten» (L24 Bildweg Varianten, E246): die drei Achsen hakt man am Knoten an; ohne Wahl
+  // gilt die Vorgabe 3 Standpunkte × Abend × aktuelles Modell (`derive/varianten.ts`).
+  varianten: [
+    { name: 'standpunkte', info: 'Gewählte Standpunkte (Zeilen des Rasters); ohne Wahl die ersten drei.' },
+    { name: 'stimmungen', info: 'Gewählte Stimmungen (Spalten des Rasters); ohne Wahl die Abendstimmung.' },
+    { name: 'entwuerfe', info: 'Gewählte Entwürfe (Reiter des Rasters): aktuelles Modell oder eine Ebenenkombination.' },
+  ],
   aufnahme: [
     // defaults `{ kamera: 'aktuell' }` — laut Katalog-Kommentar rein
     // dokumentarisch, der Knopf nimmt IMMER den aktuellen Viewport-Stand auf.

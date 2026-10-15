@@ -1,0 +1,102 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { History, KosmoDoc, setzeModellGlb, VARIANTEN_TYP, type VisGraph } from '@kosmo/kernel';
+import { useProject } from '../../kosmo-orbit/src/state/project-store';
+import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
+import { startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph';
+import { registriereHeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
+import { alleFreigeben, useVariantenBestellung, variantenAuswahl } from '../../kosmo-orbit/src/modules/vis/varianten';
+import { huellboxAlsNetz } from '../src/mappe';
+
+/**
+ * VISBOX-EIGEN (L24 Bildweg Varianten, E246; Owner-Entscheide 92/92a/92b): «Varianten mit einem
+ * Klick» mit dem glb der Mappe und den drei Richtungen des Heim-PCs. Die Probe aus KosmoOrbit
+ * (`kv-varianten.test.tsx`) baut ihr Gebäude im Architekturkern und fragt die Werkzeugliste von
+ * `@kosmo/ai` ab — beides gibt es in der Kopie nicht. Hier: Vorgabe 3 × Abend × 1, ein Auftrag je
+ * Stimmung mit `cameras: 'auto'`, eine Freigabe für alle.
+ */
+function glb(): ArrayBuffer {
+  const js = new TextEncoder().encode(JSON.stringify({ asset: { version: '2.0' } }).padEnd(28, ' '));
+  const buf = new ArrayBuffer(12 + 8 + js.length);
+  const dv = new DataView(buf);
+  dv.setUint32(0, 0x46546c67, true);
+  dv.setUint32(4, 2, true);
+  dv.setUint32(8, buf.byteLength, true);
+  dv.setUint32(12, js.length, true);
+  dv.setUint32(16, 0x4e4f534a, true);
+  new Uint8Array(buf, 20).set(js);
+  return buf;
+}
+
+const gesendet: Record<string, unknown>[] = [];
+const freigaben: string[] = [];
+
+beforeEach(() => {
+  gesendet.length = 0;
+  freigaben.length = 0;
+  localStorage.setItem('kosmo.bridge', `${location.origin}/bruecke`);
+  useProject.setState({ doc: new KosmoDoc(), history: new History(), journal: [], revision: 0, activeStoreyId: null, selection: [] });
+  useVisRuntime.setState({ aktiverGraphId: null, laeufe: {} });
+  useVariantenBestellung.setState({ bestellungen: {} });
+  setzeModellGlb(glb());
+  const { doc } = useProject.getState();
+  const geschoss = { id: 'st-probe', kind: 'storey', name: 'Mappe', index: 0, elevation: 0, height: 3000, cutHeight: 1100 };
+  const huelle = { id: 'fm-probe', kind: 'freemesh', storeyId: geschoss.id, name: 'Hüllbox', ...huellboxAlsNetz([[0, 0, 0], [8, 5, 3]]) };
+  doc.apply([
+    { id: geschoss.id, before: null, after: geschoss as never },
+    { id: huelle.id, before: null, after: huelle as never },
+  ]);
+  registriereHeimStandpunkte({
+    standpunkte: ['Süd', 'Südost', 'Nordwest'].map((name, i) => ({
+      kuerzel: ['s', 'sSE', 'nNW'][i]!, name, art: 'frontal', abstand_m: 20, auge: [0, 0, 1.6], blick_auf: [0, 0, 0], vollstaendig: true, begruendung: '',
+    })),
+    satz: 'Probe',
+  });
+  let n = 0;
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    const pfad = String(url);
+    if (pfad.endsWith('/approve')) {
+      freigaben.push(pfad.split('/').at(-2)!);
+      return { ok: true, json: async () => ({ job_id: pfad.split('/').at(-2), status: 'queued', scene: 's.json', created_at: '2026-10-15T08:00:00Z', idle_window_only: true }) };
+    }
+    if (pfad.endsWith('/bruecke/jobs')) {
+      gesendet.push(JSON.parse(String((init!.body as FormData).get('scene'))));
+      const nr = ++n;
+      return {
+        ok: true,
+        json: async () => ({ job_id: `vis-1790500000-a0000${nr}`, status: 'awaiting_approval', approval_token: `CONFIRMED_RENDER_${nr}`, scene: 's.json', created_at: '2026-10-15T08:00:00Z', idle_window_only: true }),
+      };
+    }
+    return { ok: true, json: async () => ({}) };
+  });
+});
+
+afterEach(() => {
+  registriereHeimStandpunkte(null);
+  setzeModellGlb(null);
+  vi.unstubAllGlobals();
+});
+
+describe('Varianten mit einem Klick in Visbox', () => {
+  it('Vorgabe: 3 Richtungen des Heim-PCs × Abend × aktuelles Modell = 3 Bilder', () => {
+    const gid = startGraphAnlegen()!;
+    const g = useProject.getState().doc.get<VisGraph>(gid)!;
+    const a = variantenAuswahl(useProject.getState().doc, g, g.nodes.find((x) => x.typ === VARIANTEN_TYP)!);
+    expect(a.heim).toEqual(['Süd', 'Südost', 'Nordwest']);
+    expect(a.anzahl).toBe(3);
+    expect(a.achsen.stimmungen).toEqual(['abend']);
+  });
+
+  it('2 Stimmungen: zwei Aufträge mit cameras «auto», eine Freigabe gibt beide frei', async () => {
+    const gid = startGraphAnlegen()!;
+    const v = useProject.getState().doc.get<VisGraph>(gid)!.nodes.find((x) => x.typ === VARIANTEN_TYP)!;
+    useProject.getState().runCommand('vis.varianten', { nodeId: v.id, stimmungen: ['morgen', 'abend'] });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(2));
+    expect(gesendet.map((s) => s['cameras'])).toEqual(['auto', 'auto']);
+    await vi.waitFor(() =>
+      expect(Object.values(useVisRuntime.getState().laeufe).filter((l) => l.status === 'wartetFreigabe')).toHaveLength(2),
+    );
+    expect(await alleFreigeben(v.id)).toBe(2);
+    expect(freigaben.sort()).toEqual(['vis-1790500000-a00001', 'vis-1790500000-a00002']);
+  });
+});

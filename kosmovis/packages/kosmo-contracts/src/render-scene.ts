@@ -85,6 +85,39 @@ export const CameraSpec = z.object({
 export const EbenenArt = z.enum(['schoenbild', 'tiefe', 'material-id']);
 export type EbenenArt = z.infer<typeof EbenenArt>;
 
+/** A1: die Hoechstlaenge eines Skizzennamens (Zeichen). */
+export const SKIZZENNAME_HOECHSTENS = 255;
+
+/**
+ * Auflage A1 des Integrators (15.10.2026, beim Absegnen von `RenderScene.skizze`): der Name der
+ * Skizze ist ein RELATIVER Pfad IN der Mappe — nie ein Weg hinaus. Die Bildseite schlaegt ihn in
+ * ihrer Mappe nach und prueft das unabhaengig nochmals (Visbox `kosmo_szene.skizzenname_mangel`);
+ * hier wird er schon beim Bau der Bestellung abgewiesen, damit ein Name wie `../../etc/passwd`
+ * gar nicht erst reist.
+ *
+ * Abgewiesen: laenger als 255 Zeichen; Steuerzeichen (U+0000–U+001F, U+007F); ein Backslash
+ * ueberhaupt (auch fuehrend); ein fuehrender `/`; ein Laufwerksbuchstabe wie `C:`; ein Segment
+ * `.` oder `..`.
+ *
+ * @returns der Satz, warum der Name nicht geht — oder `null`, wenn er geht.
+ */
+export function skizzenNameMangel(name: string): string | null {
+  if (name.length > SKIZZENNAME_HOECHSTENS) {
+    return `Der Name der Skizze ist ${name.length} Zeichen lang — hoechstens ${SKIZZENNAME_HOECHSTENS}.`;
+  }
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(name)) return 'Der Name der Skizze enthaelt ein Steuerzeichen.';
+  if (name.includes('\\')) {
+    return 'Der Name der Skizze enthaelt einen Backslash — er ist ein relativer Pfad in der Mappe, mit «/» getrennt.';
+  }
+  if (name.startsWith('/')) return 'Der Name der Skizze beginnt mit «/» — er ist ein relativer Pfad in der Mappe.';
+  if (/^[A-Za-z]:/.test(name)) return 'Der Name der Skizze beginnt mit einem Laufwerk — er ist ein relativer Pfad in der Mappe.';
+  if (name.split('/').some((teil) => teil === '.' || teil === '..')) {
+    return 'Der Name der Skizze enthaelt «.» oder «..» als Teil — er bleibt in der Mappe.';
+  }
+  return null;
+}
+
 export const RenderScene = z.object({
   schema: z.literal('kosmovis.render-scene/v1').default('kosmovis.render-scene/v1'),
   geometry: z.object({
@@ -636,15 +669,25 @@ export const RenderScene = z.object({
    *                 ihn meldet (`GET ./mappe` → `skizzen[].name`). Schon
    *                 aufgeloest: «neueste» ist eine Wahl am Knoten, keine
    *                 Bestellung — die Bestellung nennt die eine Datei.
+   *                 Auflage A1 (Integrator, 15.10.2026): ein RELATIVER Pfad
+   *                 in der Mappe, hoechstens 255 Zeichen, ohne `.`/`..`,
+   *                 ohne fuehrenden `/`, ohne Backslash, ohne Laufwerk, ohne
+   *                 Steuerzeichen (`skizzenNameMangel` oben).
    * - `anweisung` — was sich am Bild aendern soll. Fehlt sie, nimmt die
    *                 Bildseite die Bemerkung, die beim Zeichnen an der Skizze
    *                 stand; fehlt auch die, weist sie mit Satz ab. Bewusst NICHT
    *                 `style.prompt` umgedeutet: der beschreibt, was entstehen
    *                 soll, diese hier, was sich aendern soll.
+   *                 Entscheid 96a (Owner, 15.10.2026): die Knotenansicht
+   *                 sendet sie NICHT — haengt eine Skizze am Render-Knoten,
+   *                 gilt die Bemerkung der Skizze, und die Stimmung tritt
+   *                 zurueck. Das Feld bleibt fuer andere Besteller.
    *
    * Was mit `skizze` NICHT zusammengeht (superRefine unten, abgewiesen statt
    * still uebergangen): eine Liste in `cameras` — eine Skizze ist EIN Bild
-   * vom Standpunkt der Mappe, nicht drei Standpunkte; `interior` — dasselbe;
+   * (Entscheid 96b: vom Standpunkt des Bildes, auf das sie gezeichnet wurde;
+   * ohne ein solches vom Standpunkt der Mappe), nicht drei Standpunkte;
+   * `interior` — dasselbe;
    * `vis.skip: true` — ohne Bildmodell gibt es nichts, das die Skizze lesen
    * koennte.
    *
@@ -660,7 +703,10 @@ export const RenderScene = z.object({
   skizze: z
     .object({
       quelle: z.literal('mappe'),
-      name: z.string().min(1),
+      name: z.string().min(1).superRefine((name, ctx) => {
+        const mangel = skizzenNameMangel(name);
+        if (mangel) ctx.addIssue({ code: 'custom', message: mangel });
+      }),
       anweisung: z.string().min(1).optional(),
     })
     .strict()
@@ -686,7 +732,7 @@ export const RenderScene = z.object({
         ctx.addIssue({
           code: 'custom',
           message:
-            'Mit einer Skizze entsteht EIN Bild vom Standpunkt der Mappe — eine Kameraliste geht dazu nicht (cameras weglassen oder "auto").',
+            'Mit einer Skizze entsteht EIN Bild vom Standpunkt des Bildes unter der Skizze (sonst dem der Mappe) — eine Kameraliste geht dazu nicht (cameras weglassen oder "auto").',
           path: ['cameras'],
         });
       }

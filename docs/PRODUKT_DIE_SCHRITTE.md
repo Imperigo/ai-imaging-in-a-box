@@ -1516,3 +1516,15 @@ soll (ohne Prompt gilt die Bemerkung an der Skizze). Danach steht die Skizze in 
 Bestellung ein neues Feld bekommen, das KosmoOrbit noch absegnen muss. Ehrlich gesagt: Auf dem Vorgabemodell kommt die
 Skizze gemessen nicht an — der Knoten und das Ergebnis sagen das. Ob sie beim Modell Qwen-Image 2.1 ankommt, ist noch
 ungemessen; der Heim-PC prüft es. In KosmoOrbit bleibt der Render-Knoten, wie er war, weil es dort keine Mappe mit Skizzen gibt.
+
+**Varianten mit einem Klick (15.10.2026).** Statt jedes Bild einzeln zu bestellen, hängt jetzt ein Knoten «Varianten»
+hinter dem Render-Knoten. Man hakt an, aus welchen Standpunkten, in welchen Stimmungen und für welche Entwürfe gerechnet
+werden soll; ein Zähler sagt vorher, wie viele Bilder es werden (Vorgabe: drei Standpunkte, Abendstimmung, ein Entwurf =
+drei Bilder). Ab zwölf Bildern warnt er mit der ungefähren Dauer, sperrt aber nichts. Ein Klick bestellt alles, ein
+zweiter gibt alles frei. Die Bilder erscheinen im Bildvergleich als Tabelle: Zeilen Standpunkte, Spalten Stimmungen,
+je Entwurf ein Reiter, mit einem farbigen Punkt fürs Prüfurteil. Kosmo und Claude können dasselbe mit einem Befehl
+bestellen und den Stand lesen — so soll die Wettbewerbs-Demo ihre Variantenbilder ohne eigenes Skript bekommen. Ehrlich
+gesagt: In KosmoOrbit ist das erst eingebaut, wenn ein anderes Paket Platz in Kosmos Werkzeugliste macht; die Dauer ist
+eine Schätzung, am Heim-PC noch nicht gemessen; und dass Volumenvarianten von selbst als eigene Entwürfe erscheinen, fehlt
+noch (heute muss man sie auf Ebenen legen).
+

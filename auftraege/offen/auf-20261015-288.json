@@ -1,0 +1,44 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261015-288",
+ "art": "frage",
+ "rang": 75,
+ "erstellt": "2026-10-15T12:00:00Z",
+ "beschreibung": "Varianten mit einem Klick (Entscheide 92/92a/92b, L24 Bildweg Varianten E246) von Anfang bis Ende: 3 Standpunkte x 2 Stimmungen an einer synthetischen Mappe, eine Freigabe, Raster am Knoten, Zeiten je Bild",
+ "anweisung": "ANSAGE VORAB: Nach dem git pull dieses Zweigs den Visbox-Dienst (oberflaeche/server.py) und den Abholer neu starten - der Knoten-Bau (kosmovis/apps/visbox-knoten/dist) hat sich geaendert: der fertige Anfang hat jetzt einen Knoten 'Varianten' zwischen Render und Bildvergleich, und der Bildvergleich zeigt dann ein Raster. Ohne Neustart liefert der Dienst den alten Bau aus. ABLAUF: 1) Synthetische Mappe anlegen (tools/make_test_glb.py, ein Quader etwa 20x6x10 m, oder tools/vorfuehrmappe.py), Server mit --ordner <mappe> starten, Knotenansicht (/knoten/) im Browser oeffnen. 2) Am Knoten 'Varianten' die Vorgabe ablesen: erwartet '3 Bilder (3 x 1 x 1)' mit den drei Richtungen des Heim-PCs (Sued, Suedost, Nordwest) und 'Abendstimmung'. 3) Zusaetzlich 'Morgenlicht' anhaken: erwartet '6 Bilder (3 x 2 x 1)', keine Warnung (erst ab 12). 4) EIN Klick auf '6 Bilder bestellen': erwartet ZWEI Auftraege in der Ablage (einer je Stimmung), jeder 'wartet auf Freigabe', jeder mit cameras 'auto' und der Stimmung im Prompt (scene.json lesen). 5) EIN Klick auf 'Alle freigeben': beide Auftraege gehen auf queued, der Abholer rechnet sie nacheinander. 6) Wenn beide fertig sind: das Raster im Bildvergleich lesen - je Zelle (Standpunkt x Stimmung) Bild ja/nein, Pruefurteil-Punkt (gruen/rot/grau), und ob jedes Bild in der richtigen Zeile steht (Richtung des Bildes gegen den Zeilennamen, Sichtpruefung). 7) Zeiten: je Auftrag Annahme bis fertig, und je Bild (result.timings, falls vorhanden) - Cycles-Teil und KI-Teil getrennt, mit Backbone und Aufloesung. Die App rechnet die Warnung mit ANNAHME Cycles-Hochrechnung + 47 s KI je Bild (z-image-turbo, Angabe aus auf-20260923-155); bitte sagen, ob diese Zahl stimmt. 8) Ein Klick auf eine fertige Zelle vergroessert das Bild - ja/nein. Falls eine Stufe scheitert: genau dort anhalten, Satz und Laufzettel zurueckgeben. Keine Personen oder erfundenen Figuren in Bildern - enthaelt ein Bild eine, verwerfen und mit anderem Startwert wiederholen und das vermerken. NICHT: Code aendern; Schwellen senken; eine zweite Freigabe je Auftrag von Hand setzen (es geht um den einen Klick); Pfade, Orts- oder Benutzernamen in die Rueckgabe (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py (Quader) bzw. tools/vorfuehrmappe.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261014-284",
+  "entscheide": [
+   "92",
+   "92a",
+   "92b"
+  ],
+  "einbau": "C65",
+  "kosmoorbit_zweig": "claude/kosmovis-varianten"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Zwei Bildlaeufe hintereinander (der Abholer nimmt sie nacheinander), nie zwei GPU-Laeufe gleichzeitig.",
+  "hinweise": [
+   "Nach git pull Dienst und Abholer neu starten (siehe Anweisung).",
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "Stufen 2 bis 5: was am Knoten stand, Zahl der Auftraege in der Ablage, Stand nach dem einen Freigabe-Klick.",
+  "Raster: Tabelle 3 Zeilen x 2 Spalten mit Bild ja/nein, Urteil, richtige Zeile ja/nein.",
+  "Zeiten: je Auftrag und je Bild (Cycles, KI), Backbone, Aufloesung; Urteil zur Annahme 47 s KI je Bild.",
+  "Urteil in einem Satz: laeuft der Bildweg 'Varianten mit einem Klick' von Anfang bis Ende?"
+ ]
+}

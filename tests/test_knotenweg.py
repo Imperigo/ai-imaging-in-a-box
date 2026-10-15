@@ -286,6 +286,38 @@ def test_der_ganze_weg_ueber_den_server(server, tmp_path):
     assert [z["job_id"] for z in liste.json()] == [kennung]
 
 
+def test_varianten_mehrere_auftraege_nacheinander_und_eine_freigabe_fuer_alle(server, tmp_path):
+    """Varianten mit einem Klick (Entscheide 92/92a/92b, L24 Bildweg Varianten E246).
+
+    Die Knotenansicht schickt je Stimmung und Entwurf einen Auftrag, im selben Augenblick
+    hintereinander. Jeder muss als eigener Auftrag angenommen werden (eigene Kennung, eigener
+    Ordner, eigener Freigabeschluessel), und «Alle freigeben» ist auf dem Draht ein
+    ``/approve`` je Auftrag — jeder davon muss durchgehen.
+    """
+    ablage = tmp_path / "ablage"
+    zettel = []
+    for stimmung in ("Morgenlicht", "Abendstimmung", "Weissmodell", "Morgenlicht", "Abendstimmung", "Weissmodell"):
+        szene = {**SZENE, "style": {"mode": "none", "prompt": stimmung}}
+        rumpf, typ = _formular({"scene": (None, json.dumps(szene).encode()),
+                                "model": ("model.glb", b"glTF-bytes")})
+        a = _Anfrage(server, befehl="POST", weg="/bruecke/jobs", rumpf=rumpf, typ=typ,
+                     ablage=ablage).stelle()
+        assert a.codes == [200], a.selbst.wfile.getvalue()
+        zettel.append(a.json())
+    kennungen = [z["job_id"] for z in zettel]
+    assert len(set(kennungen)) == 6
+    assert len({z["approval_token"] for z in zettel}) == 6
+    assert all(z["status"] == "awaiting_approval" for z in zettel)
+    for z in zettel:
+        frei = _Anfrage(server, befehl="POST", weg=f"/bruecke/jobs/{z['job_id']}/approve",
+                        rumpf=json.dumps({"approval_token": z["approval_token"]}).encode(),
+                        ablage=ablage).stelle()
+        assert frei.codes == [200] and frei.json()["status"] == "queued"
+    liste = _Anfrage(server, befehl="GET", weg="/bruecke/jobs", ablage=ablage).stelle()
+    assert sorted(z["job_id"] for z in liste.json()) == sorted(kennungen)
+    assert {z["status"] for z in liste.json()} == {"queued"}
+
+
 def test_ohne_ablage_sagt_der_server_warum(server):
     a = _Anfrage(server, befehl="GET", weg="/bruecke/jobs").stelle()
     assert a.codes == [503]

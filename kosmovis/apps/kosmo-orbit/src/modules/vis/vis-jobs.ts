@@ -13,7 +13,10 @@ import {
   KAMERA_AUS_3D_NAME,
   sheetPaperSize,
   visPresetById,
+  docFuerEbenen,
+  finalerRenderPrompt,
   type AutoKameraStandpunkt,
+  type EbenenKombination,
   type HimmelArt,
   type KosmoDoc,
   type Sheet,
@@ -1227,12 +1230,19 @@ export async function postRenderJob(params: {
   /**
    * Owner-Entscheid 96 (Visbox, 15.10.2026) — DIE SKIZZE FUEHRT DAS BILD.
    * Spiegelt `RenderScene.skizze` (`quelle: 'mappe'`, der Name schon
-   * aufgeloest, s. `skizzeZurBestellung`). Mit Skizze entsteht EIN Bild vom
-   * Standpunkt der Mappe: keine Kameraliste, keine Innenansicht, keine
+   * aufgeloest, s. `skizzeZurBestellung`). Mit Skizze entsteht EIN Bild —
+   * vom Standpunkt des Bildes, auf das gezeichnet wurde, sonst dem der Mappe
+   * (Entscheid 96b, die Bildseite waehlt ihn): keine Kameraliste, keine Innenansicht, keine
    * Umgebung — so verlangt es der Vertrag, und so rechnet die Visbox-Seite.
    * Ohne Parameter bleibt der Job Zeichen fuer Zeichen wie bisher.
    */
   skizze?: SkizzeDerBestellung;
+  /**
+   * L24 Bildweg Varianten (E246): der Entwurf als Ebenenkombination (E222). Gesendet wird dann
+   * nur, was in ihr sichtbar ist (`docFuerEbenen`) — so liegen Volumenvarianten im selben
+   * Dokument und werden je fuer sich gerechnet. Ohne Parameter Zeichen fuer Zeichen wie bisher.
+   */
+  entwurf?: EbenenKombination;
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1251,6 +1261,8 @@ export async function postRenderJob(params: {
     );
   }
   const { doc } = useProject.getState();
+  // L24 Bildweg Varianten (E246): das Modell der Bestellung — ohne Entwurf das ganze Dokument.
+  const szene = params.entwurf ? docFuerEbenen(doc, params.entwurf) : doc;
   // B117 SCHRITT 2 (Owner-Entscheid E57): die EINE Bedingung, ob dieser
   // Auftrag als IFC/`interior` geht oder byte-identisch zum Stand vor
   // Schritt 2 bleibt (glb, kein `interior`, «Innenraum» gefiltert).
@@ -1298,7 +1310,7 @@ export async function postRenderJob(params: {
   // bekannte Rechenzeit schlaegt ein unbekanntes Loch.
   let modell: ArrayBuffer | string;
   {
-    const glb = exportGlb(doc, doc.settings.projectName);
+    const glb = exportGlb(szene, doc.settings.projectName);
     const glasnaht = pruefeGlasnaht(glb);
     if (glasnaht.urteil !== 'traegt') {
       console.warn(
@@ -1315,7 +1327,7 @@ export async function postRenderJob(params: {
     }
     // Gesendet wird je nach Weg — geprueft wurde in beiden Faellen dasselbe
     // Modell, nur in der Darstellung, die der Riegel lesen kann.
-    modell = interiorMoeglich ? exportIfc(doc) : glb;
+    modell = interiorMoeglich ? exportIfc(szene) : glb;
   }
   // P-DREISTANDPUNKTE (HomeStation-Befund, auftraege/von-homestation/
   // auf-orbit-20260821-01.md, Auftrag 3) — SEIT B117 SCHRITT 2 FALLABHAENGIG:
@@ -1333,7 +1345,8 @@ export async function postRenderJob(params: {
   // (`kamerasFuerBestellformat`, Kern). Alle anderen Standpunkte bleiben Zahl fuer Zahl.
   const bestellformat = params.resolution ?? BESTELLFORMAT_VORGABE;
   const kamerasImFormat = params.kameras ? kamerasFuerBestellformat(params.kameras, bestellformat) : undefined;
-  // Entscheid 96: mit Skizze keine Kameraliste — der Standpunkt ist der der Mappe (Vertrag).
+  // Entscheid 96: mit Skizze keine Kameraliste — den Standpunkt waehlt die Bildseite (96b: der des
+  // Bildes unter der Skizze, sonst der der Mappe; Vertrag).
   const kamerasOhneInnenraum =
     params.skizze !== undefined
       ? undefined
@@ -1535,6 +1548,22 @@ export function blickfeldAusserhalbHinweis(
   return null;
 }
 
+/**
+ * L24 Bildweg Varianten (E246, `varianten.ts`): EINE Zelle-Gruppe der Varianten — derselbe Weg
+ * wie «Ausführen» am Render-Knoten, mit vier Ersetzungen. Ausgewertet wird `graph` (die Kopie
+ * mit der gewaehlten Stimmung, `graphMitStimmung`), bestellt werden `kameras` statt der am
+ * Knoten verbundenen, `promptVorsatz` steht vor dem Prompt (nur wenn keine Stimmung in den
+ * Render-Knoten floss), und `entwurf` waehlt das Modell. Der Lauf steht unter `laufId`, nicht
+ * unter dem Render-Knoten — dessen eigenes Bild bleibt, wie es war.
+ */
+export interface VarianteDesAuftrags {
+  graph: VisGraph;
+  laufId: string;
+  kameras?: AutoKameraStandpunkt[];
+  promptVorsatz?: string;
+  entwurf?: EbenenKombination;
+}
+
 export function sendeGraphRenderAuftrag(
   graphId: string,
   nodeId: string,
@@ -1543,14 +1572,26 @@ export function sendeGraphRenderAuftrag(
     kameraWahl?: 'auto' | 'saved';
     backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
     aufloesung?: readonly [number, number];
+    variante?: VarianteDesAuftrags;
   },
 ): void {
   const { doc } = useProject.getState();
-  const graph = doc.get<VisGraph>(graphId);
+  const variante = opts?.variante;
+  const graph = variante?.graph ?? doc.get<VisGraph>(graphId);
   if (!graph) return;
   const auswertung = evaluiereGraph(doc, graph);
-  const roh = auswertung.renderAuftraege.get(nodeId);
-  if (!roh) return;
+  const rohKnoten = auswertung.renderAuftraege.get(nodeId);
+  if (!rohKnoten) return;
+  // Mit eigenen Kameras zaehlt eine leere «Kamera aus 3D-Ansicht» am Render-Knoten nicht: bestellt
+  // wird die gewaehlte Liste, nicht der Eingang.
+  const { kameraAus3dFehlt: _ohneKamera3d, ...rohOhneKamera3d } = rohKnoten;
+  const roh = variante
+    ? {
+        ...(variante.kameras ? { ...rohOhneKamera3d, kameras: variante.kameras } : rohKnoten),
+        ...(variante.promptVorsatz ? { prompt: finalerRenderPrompt(variante.promptVorsatz, rohKnoten.prompt, []) } : {}),
+      }
+    : rohKnoten;
+  const laufId = variante?.laufId ?? nodeId;
   if (!roh.hatSzene) {
     melde('Der Render-Node braucht eine Szene — verbinde den Modell-Node.', { ton: 'fehler' });
     return;
@@ -1649,7 +1690,7 @@ export function sendeGraphRenderAuftrag(
   }
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
-  setzeLauf(nodeId, { status: 'gesendet', memoKey: key, gestartetUm: Date.now() });
+  setzeLauf(laufId, { status: 'gesendet', memoKey: key, gestartetUm: Date.now() });
   // Entscheid 96: `skizze` ist die Wahl am Skizzen-Knoten (Kernel), keine Job-Angabe — sie geht
   // nicht durch `...auftrag` an `postRenderJob`, sondern aufgeloest als `skizze` (unten).
   const { skizze: skizzenWahl, ...auftragOhneSkizze } = auftrag;
@@ -1665,20 +1706,24 @@ export function sendeGraphRenderAuftrag(
       ...(opts?.aufloesung !== undefined ? { resolution: opts.aufloesung } : {}),
       mode,
       ...(skizze ? { skizze } : {}),
+      ...(variante?.entwurf ? { entwurf: variante.entwurf } : {}),
     });
   // OHNE SKIZZE GENAU DER BISHERIGE AUFRUF, im selben Takt. MIT Skizze erst die Liste der Mappe
-  // lesen und «neueste» aufloesen (`skizzeZurBestellung`); kennt der Wirt sie nicht, wirft das mit
-  // Satz, und der Satz steht am Knoten wie jeder andere Fehler dieses Wegs. Ohne Wirt (KosmoOrbit,
-  // ein in Visbox gebauter Graph) geht das Bild aus dem Modell — und das wird gesagt.
+  // lesen und «neueste» aufloesen (`skizzeZurBestellung`); kennt der Wirt sie nicht oder hat sie
+  // keine Bemerkung, wirft das mit Satz, und der Satz steht am Knoten wie jeder andere Fehler
+  // dieses Wegs. Ohne Wirt (KosmoOrbit, ein in Visbox gebauter Graph) geht das Bild aus dem
+  // Modell — und das wird gesagt. Entscheid 96a: der Prompt wird NICHT zur Anweisung — es gilt die
+  // Bemerkung der Skizze (`style.prompt` reist wie immer mit; die Bildseite rechnet eine Skizze
+  // nur mit der Bemerkung).
   const versand: Promise<GesendeterJob> = skizzenWahl
-    ? skizzeZurBestellung(skizzenWahl.wahl, auftrag.prompt).then((skizze) => {
+    ? skizzeZurBestellung(skizzenWahl.wahl).then((skizze) => {
         if (!skizze) melde(SKIZZE_NUR_IN_VISBOX_SATZ, { ton: 'info' });
         return senden(skizze);
       })
     : senden();
   void versand
     .then((j) =>
-      patchLauf(nodeId, {
+      patchLauf(laufId, {
         jobId: j.job_id,
         status: mappeJobStatus(j),
         ...(j.approval_token !== undefined ? { approvalToken: j.approval_token } : {}),
@@ -1708,7 +1753,7 @@ export function sendeGraphRenderAuftrag(
       // `/health`-Ruf (der wäre teuer und könnte ein anderes Urteil liefern
       // als der, den `patchLauf` gerade gesetzt hat).
       const bescheid = await bescheidFuerBridgeFehler(err, { schreibRuf: true });
-      patchLauf(nodeId, { status: 'fehler', fehler: bescheid });
+      patchLauf(laufId, { status: 'fehler', fehler: bescheid });
       meldeBrueckenFehler(bescheid);
     });
 }

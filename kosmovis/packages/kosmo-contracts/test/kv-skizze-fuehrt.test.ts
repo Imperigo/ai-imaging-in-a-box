@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RenderScene } from '../src';
+import { RenderScene, SKIZZENNAME_HOECHSTENS, skizzenNameMangel } from '../src';
 
 /**
  * Owner-Entscheid 96 der Visbox (15.10.2026): die Skizze vom iPad fuehrt das
@@ -62,4 +62,39 @@ describe('RenderScene.skizze — die Skizze fuehrt das Bild (Entscheid 96)', () 
     expect(fehlerPfade({ ...SZENE, skizze: SKIZZE, vis: { skip: true } })).toEqual(['vis.skip']);
     expect(fehlerPfade({ ...SZENE, vis: { skip: true } })).toEqual([]);
   });
+});
+
+describe('RenderScene.skizze.name — Auflage A1: ein relativer Pfad in der Mappe', () => {
+  const mitName = (name: string) => ({ ...SZENE, skizze: { quelle: 'mappe', name } });
+
+  it('gueltig: ein Name und ein relativer Pfad mit «/», auch genau 255 Zeichen', () => {
+    for (const name of ['skizze-20261015-0812.png', 'skizzen/fassade-sued.png', 'a..b.png', '.versteckt.png']) {
+      expect(fehlerPfade(mitName(name)), name).toEqual([]);
+    }
+    expect(fehlerPfade(mitName('a'.repeat(SKIZZENNAME_HOECHSTENS)))).toEqual([]);
+  });
+
+  // Je ein Fall je Regel — der Satz sagt, welche.
+  const FAELLE: Array<[string, string, RegExp]> = [
+    ['Segment «..»', '../../etc/passwd', /«\.» oder «\.\.»/],
+    ['Segment «..» in der Mitte', 'skizzen/../../x.png', /«\.» oder «\.\.»/],
+    ['Segment «.»', './skizze.png', /«\.» oder «\.\.»/],
+    ['fuehrender «/»', '/etc/passwd', /beginnt mit «\/»/],
+    ['fuehrender Backslash', '\\\\server\\freigabe\\x.png', /Backslash/],
+    ['Backslash ueberhaupt', 'skizzen\\x.png', /Backslash/],
+    ['Laufwerk', 'C:/Windows/x.png', /Laufwerk/],
+    ['Laufwerk ohne Schraegstrich', 'c:x.png', /Laufwerk/],
+    ['Steuerzeichen', 'skizze\n.png', /Steuerzeichen/],
+    ['Nullzeichen', 'skizze\u0000.png', /Steuerzeichen/],
+    ['Loeschzeichen', 'skizze\u007f.png', /Steuerzeichen/],
+    ['laenger als 255', 'a'.repeat(SKIZZENNAME_HOECHSTENS + 1), /hoechstens 255/],
+  ];
+  for (const [fall, name, satz] of FAELLE) {
+    it(`abgewiesen: ${fall}`, () => {
+      expect(fehlerPfade(mitName(name))).toEqual(['skizze.name']);
+      expect(skizzenNameMangel(name)).toMatch(satz);
+      const r = RenderScene.safeParse(mitName(name));
+      expect(r.success ? '' : r.error.issues[0]!.message).toMatch(satz);
+    });
+  }
 });

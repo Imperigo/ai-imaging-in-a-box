@@ -46,6 +46,21 @@ export interface Skizze {
   ueber?: string | null;
   /** Zustand in der Mappe (verworfene meldet der Wirt nicht). */
   stand?: string | null;
+  /**
+   * Entscheid 96a (Owner, 15.10.2026): die Bemerkung, die beim Zeichnen an der Skizze stand — sie
+   * ist die Anweisung, wenn die Skizze am Render-Knoten hängt. `null` oder leer: keine geschrieben
+   * (dann wird nichts gesendet). Fehlt das Feld ganz (ein Wirt, der es nicht meldet), ist sie
+   * unbekannt, und die Bildseite entscheidet.
+   */
+  bemerkung?: string | null;
+  /**
+   * Entscheid 96b (Owner, 15.10.2026): von wo das Bild aus dieser Skizze entsteht, wie es die
+   * Bibliothek der Visbox sagt (`projekt.standpunkt_fuer_skizze`): `'bild'` — vom Standpunkt
+   * des Bildes, auf das gezeichnet wurde (`ueber`); `'mappe'` — vom Standpunkt der Mappe (keine
+   * Unterlage, oder von ihr ist der Standpunkt nicht bekannt). Fehlt das Feld, wird aus `ueber`
+   * geschlossen.
+   */
+  standpunkt?: 'bild' | 'mappe' | null;
 }
 
 /** Was der Wirt bereitstellt. */
@@ -231,7 +246,11 @@ export function skizzeAlsBildQuelle(
 export interface SkizzeDerBestellung {
   /** Der Dateiname der Skizze in der Mappe — «neueste» ist hier schon aufgelöst. */
   name: string;
-  /** Was sich am Bild ändern soll; fehlt sie, nimmt die Bildseite die Bemerkung der Skizze. */
+  /**
+   * Was sich am Bild ändern soll; fehlt sie, nimmt die Bildseite die Bemerkung der Skizze. Die
+   * Knotenansicht setzt sie seit Entscheid 96a NICHT (`skizzeZurBestellung`) — der Vertrag kennt
+   * das Feld für andere Besteller.
+   */
   anweisung?: string;
 }
 
@@ -243,24 +262,41 @@ export const SKIZZE_NUR_IN_VISBOX_SATZ =
 export const SKIZZE_FEHLT_SATZ =
   'Die gewählte Skizze steht nicht (mehr) in der Mappe — nichts gesendet. Am Skizzen-Knoten eine andere wählen.';
 
+/** Entscheid 96a: die gewählte Skizze hat keine Bemerkung — und die ist mit Skizze die Anweisung. */
+export const SKIZZE_OHNE_BEMERKUNG_SATZ = 'Die Skizze hat keine Bemerkung — am iPad eine schreiben.';
+
 /**
- * Die Skizze für eine Bestellung — aus der Wahl am Skizzen-Knoten («neueste» oder ein Dateiname)
- * und dem Prompt, den der Render-Knoten sendet (er wird zur Anweisung, wenn er nicht leer ist).
+ * Entscheid 96a: hat die Skizze eine Bemerkung? `true`/`false`, oder `null`, wenn der Wirt das Feld
+ * nicht meldet (dann entscheidet die Bildseite, und sie weist ohne Bemerkung mit Satz ab).
+ */
+export function skizzeHatBemerkung(s: Skizze): boolean | null {
+  if (s.bemerkung === undefined) return null;
+  return typeof s.bemerkung === 'string' && s.bemerkung.trim() !== '';
+}
+
+/**
+ * Die Skizze für eine Bestellung — aus der Wahl am Skizzen-Knoten («neueste» oder ein Dateiname).
+ *
+ * **Entscheid 96a (Owner, 15.10.2026):** Hängt eine Skizze am Render-Knoten, gilt die BEMERKUNG
+ * DER SKIZZE als Anweisung; die Stimmung (der Prompt des Knotens) tritt zurück. Darum geht KEINE
+ * `anweisung` mit — die Bildseite nimmt die Bemerkung, wie `rechne_skizze` ohne Anweisung. Hat die
+ * Skizze keine Bemerkung, wird nichts gesendet: Die Bildseite wiese sie ohnehin ab, aber erst nach
+ * dem Freigeben am Heim-PC.
  *
  * Vor dem Auflösen wird die Liste der Mappe NEU gelesen: «neueste» heisst die neueste zum Zeitpunkt
  * des Klicks, nicht die beim letzten Blick auf den Knoten.
  *
  * @returns die Skizze; `undefined`, wenn es keinen Wirt gibt (KosmoOrbit: das Bild kommt aus dem
- *   Modell, und der Aufrufer sagt das). Wirft mit Satz, wenn der Wirt die Skizze nicht (mehr) kennt
- *   oder die Liste sich nicht lesen liess — dann wird nichts gesendet.
+ *   Modell, und der Aufrufer sagt das). Wirft mit Satz, wenn der Wirt die Skizze nicht (mehr) kennt,
+ *   die Liste sich nicht lesen liess oder die Skizze keine Bemerkung hat — dann wird nichts gesendet.
  */
-export async function skizzeZurBestellung(wahl: string, prompt: string): Promise<SkizzeDerBestellung | undefined> {
+export async function skizzeZurBestellung(wahl: string): Promise<SkizzeDerBestellung | undefined> {
   if (!stand.quelle) return undefined;
   await aktualisiereSkizzen();
   if (stand.fehler) throw new Error(`${stand.fehler} — nichts gesendet.`);
   if (!stand.liste || stand.liste.length === 0) throw new Error(`${SKIZZE_LEER_SATZ} Nichts gesendet.`);
   const skizze = waehleSkizze(stand.liste, wahl);
   if (!skizze) throw new Error(SKIZZE_FEHLT_SATZ);
-  const anweisung = prompt.trim();
-  return { name: skizze.name, ...(anweisung ? { anweisung } : {}) };
+  if (skizzeHatBemerkung(skizze) === false) throw new Error(`${SKIZZE_OHNE_BEMERKUNG_SATZ} Nichts gesendet.`);
+  return { name: skizze.name };
 }
