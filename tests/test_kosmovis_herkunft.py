@@ -82,12 +82,18 @@ def test_eine_still_geaenderte_kopie_faellt_auf(tmp_path, monkeypatch):
     monkeypatch.setattr(w, "HERKUNFT", ziel / "HERKUNFT.json")
     assert w.pruefe() == []
 
-    opfer = ziel / "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx"
+    # EINE DATEI, DIE NICHT UNTER `geaendert` STEHT (15.10.2026: NodeCanvas.tsx stand dort
+    # vorübergehend mit Grund, und die Gegenprobe prüfte dann nichts mehr).
+    geaendert = set(json.loads((ziel / "HERKUNFT.json").read_text(encoding="utf-8")).get("geaendert", {}))
+    rel = next(r for r in ("apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx",
+                           "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx",
+                           "apps/kosmo-orbit/src/modules/vis/modell-laden.ts") if r not in geaendert)
+    opfer = ziel / rel
     opfer.write_text(opfer.read_text(encoding="utf-8") + "\n// still\n", encoding="utf-8")
     (ziel / "apps/kosmo-orbit/src/unverbucht.ts").write_text("export {};\n", encoding="utf-8")
 
     befunde = w.pruefe()
-    assert any("NodeCanvas.tsx: weicht vom Original ab" in b for b in befunde)
+    assert any(f"{rel}: weicht vom Original ab" in b for b in befunde)
     assert any("unverbucht.ts: ohne Herkunft" in b for b in befunde)
 
 
