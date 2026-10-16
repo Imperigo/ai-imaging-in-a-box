@@ -8042,3 +8042,12 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Verlauf: «nicht anwendbar» nicht als «durchgefallen»; wartender Auftrag ohne «Grund unbekannt»; Skizze nennt alle ihre Bilder.
 
 - [x] Stand-Blatt vor dem Reset: `docs/STAND_2026-10-15.md`. *(15.10.2026)*
+
+## v0.1.9 aus dem Demolauf 16.10. (ab Reset Di 20.10.2026, Protokoll 74 §138)
+
+- [ ] Nr. 85 Grundsatz: eine Blender-Grundlage, mehrere deckungsgleiche KI-Varianten (mit 84, 81, 83)
+- [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
+- [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
+- [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
+- [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58
+- [ ] Eigene Liste «nach Reset»: Auftrag 288, L24, Feld Skizzen-Bemerkung, Befunde kopflose LW-Probe und kv-b5
