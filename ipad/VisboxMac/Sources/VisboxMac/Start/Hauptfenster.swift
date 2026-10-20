@@ -73,57 +73,15 @@ struct Hauptfenster: View {
             }
         }
         .background {
-            // DAS KOPPELFENSTER «iPad koppeln» (Entscheid 99): ein eigener Anker, wie oben.
-            Color.clear.sheet(isPresented: $ipadKoppelnOffen) {
-                IpadKoppelfenster(leitung: leitung, schliessen: { ipadKoppelnOffen = false })
-            }
-        }
-        .background {
             // NACH DEM NEUSTART AUS DEM AKTUALISIEREN (14.10.2026): «Visbox 0.x.y ist
             // installiert» — oder dass sie nicht ankam. Ein eigener Anker, wie oben.
             Neustartmeldung(waechter: aktualisierung)
+            // DAS KOPPELFENSTER «iPad koppeln» (Entscheid 99): ebenso ein eigener Anker, als
+            // eigene Ansicht und ohne weiteren Modifikator — mit einem mehr gab der Uebersetzer
+            // am Rumpf auf (Mac-CI 20.10.2026: «unable to type-check … in reasonable time»).
+            IpadKoppelanker(offen: $ipadKoppelnOffen, leitung: leitung)
         }
-        .toolbar {
-            // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
-            // wenn GitHub eine NEUERE Nummer hat (84b). EIN KLICK (Entscheid 87): Er oeffnet das
-            // Blatt UND startet das Laden; danach ersetzt sich die App und startet neu.
-            if let angebot = aktualisierung.angebot {
-                Button {
-                    aktualisierenOffen = true
-                    aktualisierung.ladeUndErsetze()
-                } label: {
-                    Text(Aktualisierung.knopf(angebot.nummer))
-                        .foregroundStyle(Startfarbe.gruenText)
-                }
-                .help("Eine neue Fassung liegt auf GitHub")
-            }
-            // IMMER DA, in jeder Ansicht: Falsches Kennwort und vertippte Adresse behebt nur
-            // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
-            Button(Vorfuehrsaetze.einrichten) { einrichtenOffen = true }
-                .help("Adresse des Heim-PC, Benutzer und Kennwort")
-            // DAS IPAD (Entscheid 63): Unterwegs spricht es selbst über Tailscale mit dem
-            // Heim-PC. Der Mac holt dort nur die Zahl zum ersten Koppeln (`POST /api/kopplung`,
-            // zehn Minuten gültig) und zeigt sie in der Zeile «iPad». Die Vermittlung über den
-            // Mac (§8b) steht darunter, ausgeschaltet, bis man sie einschaltet — sie ist im
-            // fremden WLAN unverschlüsselt.
-            // SEIT ENTSCHEID 99 (20.10.2026) oeffnet «iPad koppeln» das Koppelfenster: Zahl,
-            // QR-Code und der Mac in der Naehe, zwei Minuten lang. Es holt die Zahl selbst.
-            if leitung.adresse != nil {
-                Menu("iPad") {
-                    Button("iPad koppeln") { ipadKoppelnOffen = true }
-                    if let dienst = vermittlung.dienst {
-                        Divider()
-                        Toggle("iPad über diesen Mac anbieten (unverschlüsselt)",
-                               isOn: Binding(get: { vermittlung.angeboten },
-                                             set: { vermittlung.schalteAnbieten($0) }))
-                        Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
-                            .disabled(!vermittlung.angeboten)
-                        Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }
-                            .disabled(!vermittlung.angeboten)
-                    }
-                }
-            }
-        }
+        .toolbar { werkzeuge }
         .frame(minWidth: 1100, minHeight: 700)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $einrichtenOffen) {
@@ -182,6 +140,64 @@ struct Hauptfenster: View {
         .onDisappear {
             vorfuehrung.halte()
             vermittlung.halte()
+        }
+    }
+
+    // DIE WERKZEUGLEISTE als eigener Teil (20.10.2026): Im Rumpf von `body` stand sie mit allen
+    // Ankern in EINEM Ausdruck, und mit dem Koppelfenster gab der Uebersetzer auf.
+    @ViewBuilder
+    private var werkzeuge: some View {
+        // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
+        // wenn GitHub eine NEUERE Nummer hat (84b). EIN KLICK (Entscheid 87): Er oeffnet das
+        // Blatt UND startet das Laden; danach ersetzt sich die App und startet neu.
+        if let angebot = aktualisierung.angebot {
+            Button {
+                aktualisierenOffen = true
+                aktualisierung.ladeUndErsetze()
+            } label: {
+                Text(Aktualisierung.knopf(angebot.nummer))
+                    .foregroundStyle(Startfarbe.gruenText)
+            }
+            .help("Eine neue Fassung liegt auf GitHub")
+        }
+        // IMMER DA, in jeder Ansicht: Falsches Kennwort und vertippte Adresse behebt nur
+        // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
+        Button(Vorfuehrsaetze.einrichten) { einrichtenOffen = true }
+            .help("Adresse des Heim-PC, Benutzer und Kennwort")
+        // DAS IPAD (Entscheid 63): Unterwegs spricht es selbst über Tailscale mit dem
+        // Heim-PC. Der Mac holt dort nur die Zahl zum ersten Koppeln (`POST /api/kopplung`,
+        // zehn Minuten gültig) und zeigt sie in der Zeile «iPad». Die Vermittlung über den
+        // Mac (§8b) steht darunter, ausgeschaltet, bis man sie einschaltet — sie ist im
+        // fremden WLAN unverschlüsselt.
+        // SEIT ENTSCHEID 99 (20.10.2026) oeffnet «iPad koppeln» das Koppelfenster: Zahl,
+        // QR-Code und der Mac in der Naehe, zwei Minuten lang. Es holt die Zahl selbst.
+        if leitung.adresse != nil {
+            Menu("iPad") {
+                Button("iPad koppeln") { ipadKoppelnOffen = true }
+                if let dienst = vermittlung.dienst {
+                    Divider()
+                    Toggle("iPad über diesen Mac anbieten (unverschlüsselt)",
+                           isOn: Binding(get: { vermittlung.angeboten },
+                                         set: { vermittlung.schalteAnbieten($0) }))
+                    Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
+                        .disabled(!vermittlung.angeboten)
+                    Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }
+                        .disabled(!vermittlung.angeboten)
+                }
+            }
+        }
+    }
+}
+
+/// Der Anker des Koppelfensters «iPad koppeln» (Entscheid 99) — eine eigene kleine Ansicht,
+/// wie `Neustartmeldung`.
+private struct IpadKoppelanker: View {
+    @Binding var offen: Bool
+    @ObservedObject var leitung: Heimleitung
+
+    var body: some View {
+        Color.clear.sheet(isPresented: $offen) {
+            IpadKoppelfenster(leitung: leitung, schliessen: { offen = false })
         }
     }
 }
