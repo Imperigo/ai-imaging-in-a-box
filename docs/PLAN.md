@@ -8072,7 +8072,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
     - [x] Heim-PC gebaut: `vis.guete` 'vorschau' rechnet z-image-turbo, 8 Schritte, einen Startwert, KI-Bild ≤ 1024 px, geprüft mit Vermerk «Vorschau»; Ergebnis `guete`; beide Ablagen (Entscheide 104–104b, §148, C74)
-    - [ ] Anzeige im Bau: Schalter «Güte: Vorschau | Voll» am Render-Knoten (KosmoOrbit-Vertrag parallel)
+    - [x] Schalter «Güte: Vorschau | Voll» am Render-Knoten, Vorgabe Vorschau, `vis.guete` aus «Variante erzeugen» und `vis_render`, `guete` am Lauf — KosmoOrbit `claude/kosmovis-vorschau` (Vertrag vom Integrator, R40), Visbox-Kopie nachgezogen; am Gerät unbestätigt (§149, C75)
+    - [ ] Plakette «VORSCHAU» an Bild und Verlauf (ui, `GueteMarke`)
+    - [ ] Güte für den Skizzen-Weg (Owner-Frage; bis dahin grau)
     - [ ] Am Gerät messen: Zeit je Phase Vorschau gegen Voll (auf-20261020-290, local)
   - [x] Fortschritt und Vorschau: `progress {phase, pct}` im Laufzettel, Cycles-Schönbild als Zwischenbild, Restzeit aus den fertigen Kameras (L4-6, Nr. 62/63/71/72; Vorschlag an UI/Integrator 20.10.) — Heim-PC gebaut, beide Ablagen (§142, C69); die Anzeige liegt drüben
   - [ ] Zeitbudget am Render-Knoten, beim Abbruch das letzte Zwischenergebnis behalten (L4-8, Nr. 70/76/80)
@@ -8087,6 +8089,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
 - [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58
+  - [x] Fortschritt-Anzeige (Kamera i von n, Restzeit erst nach der ersten Kamera, Zwischenbild, Teilbild nach Abbruch, gross ansehbar) — UI `14b160b2f` gegengelesen und auf Blatt 29/104b nachgezogen (§149)
+  - [ ] Etappenreihe «Grundlage ✓ · KI-Bild … · Prüfung» und Beschriftung des Zwischenbilds (ui)
 - [ ] Eigene Liste «nach Reset»: Auftrag 288, L24, Feld Skizzen-Bemerkung, Befunde kopflose LW-Probe und kv-b5
 
 ## Visbox eigenständig (Owner-Auftrag 20.10.2026, Plan `docs/PLAN_VISBOX_EIGENSTAENDIG_2026-10-20.md`, Entscheide 103–103c)

@@ -2328,6 +2328,16 @@ steht nur bei einem abgebrochenen Auftrag (Vertragsfeld `teilbild`). Sein Name n
 Kamera, zu der **das Bild** gehört — nicht die, bei der der Lauf gerade stand (seit der
 Geräteprobe vom 20.10.2026).
 
+**Zwischenbild** — Das Bild der zuletzt fertig gerechneten Kamera eines Auftrags, der noch
+läuft (Vertragsfeld `progress.vorschau`). Der Render-Knoten zeigt es hinter Text und Balken des
+Fortschritts; ein Klick zeigt es gross. Es ist noch nicht geprüft und darum kein Ergebnis.
+
+**Zeilenregister (Render-Knoten)** — Die Liste, die für jede Zeile im Render-Knoten festhält,
+wie hoch sie sein darf (in Bildpunkten), einmal in Ruhe und einmal während eines Laufs. Aus ihr
+wird die Höhe des Knotens berechnet; eine Probe verlangt, dass jede gezeichnete Zeile im
+Register steht und umgekehrt. Wer eine Zeile hinzufügt, ohne das Register nachzuführen, schnitte
+sonst still Inhalt ab. Für den Schalter «Güte» wurde darum keine neue Zeile angelegt.
+
 **Kooperativer Abbruch** — Ein Abbruch, der nicht hart eingreift, sondern nur einen Vermerk
 setzt («abgebrochen»), den der Rechnende selbst liest und dann aufhört. Der Heim-PC sieht
 zwischen zwei Schritten nach; ein Schritt, der schon läuft (Blender oder das Bildmodell),
@@ -7587,6 +7597,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus dem Güte-Schalter am Render-Knoten (Protokoll 74 §149): **Zwischenbild**, **Zeilenregister (Render-Knoten)** |
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritte 2 und 6 (Protokoll 74 §147): **Rechenserver**, **Ohne Rechner**, **Rechner-Wahl**, **App-Einstellungen**; **Vorführmodus** als entfallen vermerkt |
 | 2026-10-20 | Ergaenzt aus der schnellen KI-Vorschau (Entscheide 104–104b, Protokoll 74 §148): **Vorschau (Güte)**, **Schritte eines Bildmodells**, **Steuerbild**; **Teilbild (abgebrochen)** um die Kamera des Bilds und **Fortschritt (eines Renderauftrags)** um die Phase «abgebrochen» ergänzt (Geräteprobe der HomeStation) |
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritt 1 (Protokoll 74 §146): **Eigenes Adressschema**, **App-Bündel**, **Ursprung (einer Webseite)** |
