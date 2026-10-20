@@ -128,7 +128,9 @@ def test_c_zuerst_die_knoten_und_a_der_schalter_oben():
     assert "@State private var wahl: Flaechenwahl = Flaechenwahl.beimOeffnen" in arbeit
     # Entscheid 94: kein Schalter mehr in der Leiste; die Seite nur ueber das Menue.
     assert ".pickerStyle(.segmented)" not in arbeit
-    assert "Button(\"Zurück zu den Knoten\") { wahl = .knoten }" in arbeit
+    # Seit Entscheid 115 (Plan UI-Gleichheit S1) steht die Kopfleiste nur noch ueber der Seite.
+    assert "Button(\"Zurück zu den Knoten\", action: zurueckZuDenKnoten)" in arbeit
+    assert "zurueckZuDenKnoten: { wahl = .knoten }" in arbeit
     assert "publisher(for: .seiteOeffnen)" in arbeit
     app = (WURZEL / "ipad" / "VisboxMac" / "Sources" / "VisboxMac" / "VisboxMacApp.swift").read_text(
         encoding="utf-8")

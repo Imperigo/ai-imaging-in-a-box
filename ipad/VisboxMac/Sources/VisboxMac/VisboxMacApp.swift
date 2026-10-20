@@ -50,6 +50,13 @@ struct VisboxMacApp: App {
                 Button(Flaechenwahl.seite.titel + " öffnen") {
                     NotificationCenter.default.post(name: .seiteOeffnen, object: nil)
                 }
+                // DAS THEMA DER KNOTENANSICHT (Entscheid 116 (3)): dunkel wie KosmoOrbit, hier
+                // umschaltbar — gemerkt in der App, gelegt ueber `visboxWirt` (`Arbeitsansicht`).
+                Button(Knotenwirt.Thema.menuepunkt) {
+                    let ablage = UserDefaults.standard
+                    let jetzt = Knotenwirt.Thema(gemerkt: ablage.string(forKey: Knotenwirt.Thema.einstellung))
+                    ablage.set(jetzt.anderes.rawValue, forKey: Knotenwirt.Thema.einstellung)
+                }
             }
         }
     }

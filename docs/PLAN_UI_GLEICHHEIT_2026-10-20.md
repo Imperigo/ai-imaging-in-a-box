@@ -1,6 +1,7 @@
 # Visbox-Ansichten = KosmoVis — Abgleich und Bauplan (Entscheid 115, 20.10.2026)
 
-**Codestand:** Plan, noch nichts gebaut; Visbox `0983b15`, Kopie aus KosmoOrbit `a1d80318` (`kosmovis/HERKUNFT.json`).
+**Codestand:** S1 und S2 gebaut, am Gerät unbestätigt (20.10.2026, Protokoll 74 §159, Einbau-Stand C88); Kopie aus
+KosmoOrbit `76e285cca` auf `claude/kosmovis-kopf` (`kosmovis/HERKUNFT.json`). Bis dahin: Plan auf Visbox `0983b15`, Kopie `a1d80318`.
 **Grundlage:** Entscheid 115 (Owner, stehend): *«ansichten ui und ux sollte zu kosmovis identisch sein immer».*
 Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src/main.tsx`, KosmoOrbit
 `apps/kosmo-orbit/src/App.tsx:1413–1678`, `main.tsx:137–141`, Mac-App `Start/Arbeitsansicht.swift`,
@@ -71,8 +72,8 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 | Stufe | Inhalt | Sitzungen |
 |---|---|---|
 | S0 | Blatt 34 «Visbox = KosmoVis»; Fragen über die Zentrale; Meldeblatt an Int 1 für die Nahtstellen | 0,5 |
-| S1 | Thema; Kreise, Zweitgruppe, Palette; Mac-Kopf weg; Liste, Ausnahmen, Proben | 1,5 |
-| S2 | Claude-Teile, Erzählzeile, Modus; Brücke `visboxWirt`; KI-Leiste in der Knotenansicht weg | 1,5 |
+| S1 ✔ | Thema; Kreise, Zweitgruppe, Palette; Mac-Kopf weg; Liste, Ausnahmen, Proben (gebaut, §159) | 1,5 |
+| S2 ✔ | Claude-Teile, Erzählzeile, Modus; Brücke `visboxWirt`; KI-Leiste in der Knotenansicht weg (gebaut, §159) | 1,5 |
 | S3 | Kugel und Gesprächsfeld mit dem Visbox-Assistenten; Assistent-Leiste ausmustern | 1,5–2 |
 | S4 | Einstellungs-Insel | 1 |
 | S5 | Abgleich und Abbruch im Bau; Nachzug KosmoOrbit; Bau am Mac bestätigen | 0,5 |

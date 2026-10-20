@@ -1,0 +1,188 @@
+{
+  "format": "visbox.ui-ausnahmen/v1",
+  "entscheid": "115/116/116a, docs/ENTSCHEIDE_IPAD_2026-09-21.md; Plan docs/PLAN_UI_GLEICHHEIT_2026-10-20.md",
+  "erklaerung": "Jeder Kopfteil, den KosmoOrbit ueber der Vis-Station zeigt (App.tsx unter bodenDockAusgeblendet, main.tsx neben <App />), steht hier genau einmal: eingesetzt im Visbox-Wirt (mit der Datei, die wortgleich herueberkommt, und der Komponente, die der Wirt zeichnet), als Ausnahme (Grund und Entscheid) oder als offen (mit der Stufe des Plans, die ihn bringt). Die Probe tests/test_kosmovis_ui_gleichheit.py haelt Liste, Kopie und Wirt zusammen.",
+  "quelle": {
+    "datei": "apps/kosmo-orbit/src/App.tsx, apps/kosmo-orbit/src/main.tsx",
+    "stand": "HERKUNFT.json quelle.commit"
+  },
+  "kopfteile": [
+    {
+      "teil": "Hinweis «zu schmal»",
+      "ko": "App.tsx: div.app-schmal-hinweis",
+      "stand": "eingesetzt",
+      "testid": "schmal-hinweis",
+      "datei": "apps/kosmo-orbit/src/app.css"
+    },
+    {
+      "teil": "Stationen-Palette am Logo",
+      "ko": "App.tsx: <WerkzeugPalette> in .app-werkzeug-palette-lage",
+      "stand": "eingesetzt",
+      "komponente": "WerkzeugPalette",
+      "datei": "apps/kosmo-orbit/src/shell/werkzeug-palette/WerkzeugPalette.tsx",
+      "testid": "werkzeug-palette",
+      "vermerk": "Logo = Startansicht; aufgefaechert «Knoten» (offen) und «Visbox-Seite» (Entscheid 116 (1), Nahtstelle registrierePalettenQuelle)."
+    },
+    {
+      "teil": "Einstellungs-Kreis",
+      "ko": "App.tsx: button.isl-einstellungen-kreis",
+      "stand": "eingesetzt",
+      "testid": "island-einstellungen-kreis",
+      "datei": "apps/kosmo-orbit/src/modules/design/island/island.css",
+      "vermerk": "Oeffnet bis S4 die Einstellungen der Mac-App (Einrichten); die Einstellungs-Insel kommt mit S4."
+    },
+    {
+      "teil": "Speichern-Kreis",
+      "ko": "App.tsx: <SpeichernKreis> in .app-speichern-kreis-lage",
+      "stand": "eingesetzt",
+      "komponente": "SpeichernKreis",
+      "datei": "apps/kosmo-orbit/src/shell/speichern-kreis/SpeichernKreis.tsx",
+      "testid": "speichern-kreis",
+      "vermerk": "Lage aus graph-sichern.ts; ohne Handgriffe (s. Ausnahme «Sichern, Weitergeben, Öffnen»)."
+    },
+    {
+      "teil": "Zweitgruppe Rückgängig, Wiederholen, Version",
+      "ko": "App.tsx: <InselZweitgruppe>",
+      "stand": "eingesetzt",
+      "komponente": "InselZweitgruppe",
+      "datei": "apps/kosmo-orbit/src/modules/design/island/InselKopf.tsx",
+      "testid": "island-kopf-zweitgruppe",
+      "vermerk": "Version von der Mac-App (window.visboxWirt.lage)."
+    },
+    {
+      "teil": "Sync-Chip",
+      "ko": "InselZweitgruppe: button[data-testid=sync-toggle]",
+      "stand": "eingesetzt",
+      "testid": "heimpc-chip",
+      "datei": "apps/kosmo-orbit/src/modules/design/island/InselKopf.tsx",
+      "vermerk": "Als Heim-PC-Chip in der Optik des Sync-Chips; Klick oeffnet «Wer rechnet?» (Entscheid 116 (5), Nahtstelle chip)."
+    },
+    {
+      "teil": "Claude-Marke mit Karten",
+      "ko": "main.tsx: <ClaudeAnschluss />",
+      "stand": "eingesetzt",
+      "komponente": "ClaudeAnschluss",
+      "datei": "apps/kosmo-orbit/src/shell/claude-anschluss/ClaudeAnschluss.tsx",
+      "testid": "claude-anschluss",
+      "vermerk": "Zustand von der Mac-App (verbunden) und vom KI-Werkzeugsatz (Karten); Stellvertreter state/claude-anschluss.ts."
+    },
+    {
+      "teil": "Modus-Schalter (Coop, Vollautomatik)",
+      "ko": "ClaudeAnschluss: Ausklapper an der Marke, KosmoCoop.tsx",
+      "stand": "eingesetzt",
+      "komponente": "VollautomatikSchalter",
+      "datei": "apps/kosmo-orbit/src/shell/kosmo-maus/KosmoCoop.tsx",
+      "testid": "visbox-modus",
+      "vermerk": "Die Selbstaendigkeit der Mac-App (Karte | Coop | Voll, Entscheid 108 A) — an der Marke statt «Mitschauen und Bedienen» (Nahtstelle ausklapper)."
+    },
+    {
+      "teil": "Coop-Praesenz und Verlauf",
+      "ko": "ClaudeAnschluss: KosmoCoopKnopf, KosmoCoopFlaeche, KosmoCoopVerlauf, KosmoCoopSchild, VollautomatikAnzeige",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/kosmo-maus/KosmoCoop.tsx",
+      "testid": "kosmo-coop-praesenz",
+      "vermerk": "Schritte ohne Karte aus dem KI-Verlauf des Werkzeugsatzes (Entscheid 114, getrennt von Strg+Z); nur Claude."
+    },
+    {
+      "teil": "Fensterrahmen der Vollautomatik",
+      "ko": "main.tsx: <ClaudeFensterRahmen />",
+      "stand": "eingesetzt",
+      "komponente": "ClaudeFensterRahmen",
+      "datei": "apps/kosmo-orbit/src/shell/claude-anschluss/ClaudeFensterRahmen.tsx",
+      "testid": "claude-fenster-rahmen"
+    },
+    {
+      "teil": "Erzaehlzeile",
+      "ko": "main.tsx: <ErzaehlZeile />",
+      "stand": "eingesetzt",
+      "komponente": "ErzaehlZeile",
+      "datei": "apps/kosmo-orbit/src/shell/claude-anschluss/ErzaehlZeile.tsx",
+      "testid": "erzaehl-zeile"
+    },
+    {
+      "teil": "Thema Papier/Kosmos",
+      "ko": "App.tsx: document.documentElement.dataset.theme (Vorgabe orbit)",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/app.css",
+      "testid": "html[data-theme]",
+      "vermerk": "Wirt thema.ts, vor dem ersten Bild; umschaltbar ueber die Mac-App (Darstellung), spaeter die Einstellungs-Insel (Entscheid 116 (3))."
+    },
+    {
+      "teil": "Sync-Leiste und Mitarbeitende",
+      "ko": "App.tsx: div.app-sync-leiste, <CursorEbene />",
+      "stand": "ausnahme",
+      "grund": "Visbox hat keinen gemeinsamen Raum: kein Sync-Server, keine Mitarbeitenden im selben Modell. An der Stelle des Sync-Chips steht der Heim-PC-Chip.",
+      "entscheid": "Plan §2, Entscheid 116 (5)"
+    },
+    {
+      "teil": "Pille «3D · PLAN»",
+      "ko": "App.tsx: <AnsichtsInfo>",
+      "stand": "ausnahme",
+      "grund": "Visbox hat keine 3D- und keine Planansicht; die Knotenansicht ist die einzige Arbeitsflaeche zum Rendern.",
+      "entscheid": "116 (4)"
+    },
+    {
+      "teil": "Geschoss-Pille",
+      "ko": "PlanView.tsx (seit Nr. 57 im Grundriss-Fenster)",
+      "stand": "ausnahme",
+      "grund": "Visbox kennt keine Geschosse.",
+      "entscheid": "116 (4)"
+    },
+    {
+      "teil": "Startsequenz",
+      "ko": "App.tsx: <StartSequenz>",
+      "stand": "ausnahme",
+      "grund": "Visbox hat die eigene Startansicht (Startzeilen) in der Mac-App; das Logo der Palette fuehrt dorthin.",
+      "entscheid": "Plan §2"
+    },
+    {
+      "teil": "Rundgang und Insel-Onboarding",
+      "ko": "InselZweitgruppe: button[data-testid=starter-guide-start]; <StarterGuide>, <InselOnboarding />",
+      "stand": "ausnahme",
+      "grund": "Beide haben keine Vis-Schritte: der Rundgang erklaert die Stationen der Zentrale, das Onboarding die Insel-Mechanik stationsuebergreifend samt «Kosmo fragt man direkt». Ohne Rundgang kein «?»-Knopf (Nahtstelle onRundgang).",
+      "entscheid": "116 (7)"
+    },
+    {
+      "teil": "Maus-Ebene und Schalter «Mitschauen»/«Bedienen»",
+      "ko": "main.tsx: <KosmoMausEbene />; KosmoMausFreigabeSchalter an der Marke",
+      "stand": "ausnahme",
+      "grund": "Claude bedient Visbox nur ueber Werkzeuge (MCP in der Mac-App), nie mit eigenem Zeiger.",
+      "entscheid": "Plan §2"
+    },
+    {
+      "teil": "Sichern, Weitergeben, Öffnen am Speichern-Kreis",
+      "ko": "SpeichernKreis: speichern-kreis-sichern, -weitergeben, -oeffnen",
+      "stand": "ausnahme",
+      "grund": "Visbox sichert den Render-Graph still bei jedem Schritt auf dem Heim-PC und kennt keine .kosmo-Datei; die Mappe waehlt der Heim-PC (Visbox-Seite). Ohne Weg kein Knopf (Nahtstelle wahlfreie Handgriffe).",
+      "entscheid": "Plan §2"
+    },
+    {
+      "teil": "«Aufs Plakat»",
+      "ko": "Vis-Werkzeug: Blatt-Befehle (KosmoPublish)",
+      "stand": "ausnahme",
+      "grund": "Blaetter und Plakate gibt es in Visbox nicht (Stellvertreter commands/publish.ts sagt es).",
+      "entscheid": "Plan §2"
+    },
+    {
+      "teil": "Kosmo-Kugel und Gespraechsfeld",
+      "ko": "App.tsx: <KosmoEckOrb>, <KosmoPanel>",
+      "stand": "offen",
+      "stufe": "S3",
+      "grund": "Kommt in gleicher Optik mit dem Visbox-Assistenten (Name «Assistent», Entscheid 116 (2)); bis dahin die Assistent-Leiste der Mac-App."
+    },
+    {
+      "teil": "Einstellungs-Insel",
+      "ko": "App.tsx: <Einstellungen>",
+      "stand": "offen",
+      "stufe": "S4",
+      "grund": "Bis dahin oeffnet der Einstellungs-Kreis die Einstellungen der Mac-App."
+    },
+    {
+      "teil": "Befehlspalette (⌘K)",
+      "ko": "App.tsx: <CommandPalette />",
+      "stand": "offen",
+      "stufe": "S5",
+      "grund": "Haengt an den Aktionen der ganzen KosmoOrbit-App; ob und mit welchen Visbox-Aktionen, klaert der Abgleich S5."
+    }
+  ]
+}

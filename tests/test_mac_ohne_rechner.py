@@ -69,7 +69,8 @@ def test_schon_anfangen_und_die_sperre_kommen_vom_kern():
 
 def test_die_assistent_leiste_ist_ohne_rechner_gesperrt_mit_satz():
     arbeit = _code(START / "Arbeitsansicht.swift")
-    assert "gesperrt: sperre.satz)" in arbeit
+    # Seit Plan UI-Gleichheit S2 (20.10.2026) dazu `mitKi`: die KI-Leiste nur auf der Visbox-Seite.
+    assert "gesperrt: sperre.satz, mitKi: wahl != .knoten)" in arbeit
     leiste = _code(MAC / "Assistent" / "Assistentenleiste.swift")
     assert "Eingabe(modell: modell, gesperrt: gesperrt)" in leiste
     # KEIN FELD, DAS NUR EINEN FEHLER BRAECHTE: mit Sperre steht der Satz, nicht das Feld.

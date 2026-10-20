@@ -28,6 +28,14 @@
  * den KI-Werkzeugsatz als `window.visboxKi` bereit und reicht seine Ereignisse an die Mac-App
  * (`webkit.messageHandlers.visboxKi`) — nach dem gesicherten Graph, damit Claude den Stand der
  * Mappe liest und nicht den leeren Anfang. Strg+Z nimmt danach nur die eigenen Schritte zurück.
+ *
+ * Kopfteile (Plan UI-Gleichheit S1/S2, Entscheide 115/116, 20.10.2026), wie `App.tsx` unter
+ * `bodenDockAusgeblendet` und `main.tsx` dort: das dunkle Thema vor dem ersten Bild (`legeThema`),
+ * in der Wurzel die Kopfteile (`VisboxKopf`: «zu schmal», Palette am Logo, Einstellungs- und
+ * Speichern-Kreis, Zweitgruppe mit Heim-PC-Chip), daneben die Claude-Teile (`VisboxClaude`: Marke
+ * mit Karten und Selbständigkeit, Fensterrahmen, Erzählzeile). Die zweite Brücke `visboxWirt`
+ * (`wirt-bruecke.ts`) bringt, was nur die App weiss — Rechner, Claude-Lage, Fassung, Modus, Thema.
+ * Die Mac-Kopfleiste und die KI-Leiste fallen in der Knotenansicht weg.
  */
 import '../../kosmo-orbit/src/zod-jitless'; // muss der erste Import bleiben, s. Datei-Kopf dort
 import { StrictMode } from 'react';
@@ -48,6 +56,11 @@ import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skiz
 import { haengeVerlaufKurztastenAn } from './kurztasten';
 import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
 import { haengeKiAn } from './ki-wirt';
+import { haengeWirtAn, meldeSichern } from './wirt-bruecke';
+import { legeThema } from './thema';
+import { meldePaletteAn, VisboxClaude, VisboxKopf } from './kopf';
+import { haengeAnWerkzeugsatz } from '../../kosmo-orbit/src/state/claude-anschluss';
+import { haengeAnKiVerlauf } from '../../kosmo-orbit/src/state/kosmo-coop';
 import {
   aufDemVisboxServer,
   brueckeAufDiesenServer,
@@ -68,6 +81,7 @@ function VisboxKnoten() {
   void revision;
   return (
     <div className="app-wurzel" data-station="vis">
+      <VisboxKopf />
       <main className="visbox-buehne">
         <KFehlerzone bereich="KosmoVis">
           <div
@@ -87,6 +101,10 @@ function VisboxKnoten() {
 
 // Gemerkte Schriftgrösse und Bewegung vor dem ersten Bild an <html>, sonst springt die Schrift.
 ladeAnzeige();
+// Das Thema wie KosmoOrbit (Vorgabe «orbit», dunkel) — vor dem ersten Bild, sonst blitzt es hell.
+legeThema();
+// Die Ziele der Palette am Logo: «Knoten» und «Visbox-Seite» statt der Stationen von KosmoOrbit.
+meldePaletteAn();
 
 // STRG+Z / ⌘Z (auf-20261014-284 D5): In KosmoOrbit haengt das Kuerzel am Hauptprogramm, das
 // nicht kopiert ist — hier darum der Wirt selbst (`kurztasten.ts`).
@@ -139,14 +157,20 @@ if (aufDemVisboxServer()) {
 async function zeige(): Promise<void> {
   if (aufDemVisboxServer()) {
     await ladeGesichertenGraph();
-    sichereBeiAenderung();
+    sichereBeiAenderung(undefined, undefined, meldeSichern);
   }
   haengeKiAn(window);
+  // Die Claude-Teile lesen die Karten, die Tätigkeit und die Schritte ohne Karte des Werkzeugsatzes.
+  haengeAnWerkzeugsatz();
+  haengeAnKiVerlauf();
+  // Zuletzt die zweite Brücke: «bereit» an die App, die mit ihrer Lage antwortet.
+  haengeWirtAn(window);
   const wurzel = document.getElementById('root');
   if (!wurzel) throw new Error('Kein #root in index.html');
   createRoot(wurzel).render(
     <StrictMode>
       <VisboxKnoten />
+      <VisboxClaude />
     </StrictMode>,
   );
 }

@@ -126,6 +126,34 @@ WOERTLICH = (
     f"{APP}/state/splat-punkt-anfrage.ts",
     # R37: der Store merkt Skizzen, die ein Agent anlegt (`project-store.ts`) — ohne Import.
     f"{APP}/state/agent-skizzen.ts",
+    # KOPFTEILE (Entscheide 115/116, Plan UI-Gleichheit S1/S2, 20.10.2026): was in KosmoOrbit am
+    # Programm-Wirt (`App.tsx` unter `bodenDockAusgeblendet`, `main.tsx`) ueber der Vis-Station
+    # steht. Die Nahtstellen fuer Visbox liegen in KosmoOrbit (Zweig `claude/kosmovis-kopf`:
+    # `registrierePalettenQuelle`, wahlfreie Handgriffe, `chip`, `ausklapper`); was die Dateien
+    # darueber hinaus aus dem Programm lesen, sind Stellvertreter (HERKUNFT.json).
+    f"{APP}/shell/werkzeug-palette/WerkzeugPalette.tsx",
+    f"{APP}/shell/werkzeug-palette/werkzeug-palette.ts",
+    f"{APP}/shell/werkzeug-palette/werkzeug-palette.css",
+    f"{APP}/shell/speichern-kreis/SpeichernKreis.tsx",
+    f"{APP}/shell/speichern-kreis/speichern-kreis.css",
+    f"{APP}/modules/design/island/InselKopf.tsx",
+    f"{APP}/state/autosave-text.ts",
+    f"{APP}/shell/tauri-desktop.ts",
+    # S2: Claude-Marke mit Karten, Erzaehlzeile, Fensterrahmen der Vollautomatik und die Coop-Teile
+    # (Modus-Schalter, «Im Projekt», Verlauf). Den Zustand fuettert in Visbox die Mac-App
+    # (`window.visboxWirt.lage`) und der KI-Werkzeugsatz der Seite — Stellvertreter
+    # `state/claude-anschluss.ts`, `state/kosmo-coop.ts`.
+    f"{APP}/shell/claude-anschluss/ClaudeAnschluss.tsx",
+    f"{APP}/shell/claude-anschluss/ClaudeFensterRahmen.tsx",
+    f"{APP}/shell/claude-anschluss/ErzaehlZeile.tsx",
+    f"{APP}/shell/claude-anschluss/erzaehl-zeile.ts",
+    f"{APP}/shell/claude-anschluss/fusszone.ts",
+    f"{APP}/shell/claude-anschluss/claude-anschluss.css",
+    f"{APP}/shell/kosmo-maus/KosmoCoop.tsx",
+    f"{APP}/shell/kosmo-maus/kosmo-maus.css",
+    f"{APP}/state/claude-taetigkeit.ts",
+    f"{APP}/state/kosmo-maus-freigabe.ts",
+    f"{APP}/state/coop-marke.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -318,6 +346,12 @@ NICHT_UEBERTRAGEN = {
         "commandTools aus @kosmo/ai — das ist in Visbox ein Stellvertreter. Die Gleichheit ist "
         "drüben belegt (Meldeblatt kosmovis-ki); hier prüft kv-ki-werkzeuge.test.ts die Form "
         "für MCP und die Claude-API.",
+    "apps/kosmo-orbit/test/{kv-kopf-nahtstellen,werkzeug-palette,speichern-kreis,inselkopf-erreichbarkeit,"
+    "insel-kopf-sync-chip,claude-anschluss,erzaehl-zeile,l71-erzaehl-taetigkeit}.test.ts(x)":
+        "Kopfteile (Entscheide 115/116, 20.10.2026): pruefen die Teile mit den Stationen, dem Sync, der "
+        "KosmoMaus und dem MCP-Anschluss von KosmoOrbit — in Visbox Stellvertreter. Gruen drueben auf "
+        "`claude/kosmovis-kopf`; den Visbox-Einsatz prueft apps/visbox-knoten/test/kopf.test.tsx, die "
+        "Abdeckung tests/test_kosmovis_ui_gleichheit.py.",
     "packages/kosmo-kernel/test/bild-farbe.test.ts":
         "Vorlagen sind Ausschnitte aus einem Renderbild unbekannter Herkunft — Regel 3.",
     "packages/kosmo-kernel/test/kamera3ds-uebernahme.test.ts":

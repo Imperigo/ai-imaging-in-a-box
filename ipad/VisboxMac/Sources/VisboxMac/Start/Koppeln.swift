@@ -23,6 +23,9 @@ struct Koppeln: View {
     /// Der Takt der Leitung — für den Zusatz «· verbunden» in «Wer rechnet?».
     @ObservedObject var leitungstakt: Leitungssteuerung
     let fertig: () -> Void
+    /// Womit das Blatt aufgeht, wenn die Knotenansicht danach fragt: «rechner» («Wer rechnet?»,
+    /// der Heim-PC-Chip), «claude» («Claude über MCP»), sonst die Kopplung (Plan UI-Gleichheit S1).
+    var anfang: String?
 
     @StateObject private var sucher = Heimsucher()
     @State private var ablauf = Koppelablauf()
@@ -60,7 +63,12 @@ struct Koppeln: View {
                 .frame(width: 560)
             }
         }
-        .onAppear { sucher.starte() }
+        .onAppear {
+            sucher.starte()
+            // AUS DER KNOTENANSICHT GEFRAGT: gleich beim gewünschten Teil.
+            if anfang == "rechner" { rechner = true }
+            if anfang == "claude" { claude = true }
+        }
         .onDisappear { sucher.halte() }
     }
 

@@ -1702,3 +1702,20 @@ geladen ist — die Knotenansicht öffnet darum nicht langsamer. Fehlt dem Rechn
 ein ruhiger Satz statt eines leeren Bildes. Dasselbe Fenster ist der Grundstein für die nächsten Knoten: die
 Auto-Kamera zeigt darin ihre Kameras als Kegel. Ehrlich gesagt: Geprüft ist es im Browser des Prüfrechners; ob es in
 der Mac-App genauso zeichnet, sieht erst der Owner am Gerät.
+**Die Bedienteile über der Knotenansicht (20.10.2026, Entscheide 115/116).** Die Knotenansicht hatte bisher nur ihre
+Fläche; was rundherum zu bedienen war, stand in einer eigenen Leiste der Mac-App darüber und daneben. Jetzt schweben die
+Bedienteile selbst am Rand der Ansicht, so wie in der übrigen Oberfläche der Arbeit: oben links ein runder Knopf mit dem
+Logo, der zur Startansicht führt und beim Darüberfahren «Knoten» und «Visbox-Seite» auffächert; oben rechts ein Zahnrad
+für die Einstellungen, ein Speichern-Knopf, der still zeigt, ob der Render-Graph gesichert ist (und laut wird, wenn
+nicht), und eine kleine Reihe mit einem Schild zum Heim-PC («Heim-PC · bereit»; ein Klick öffnet «Wer rechnet?»),
+Rückgängig, Wiederholen und der Nummer der Fassung. Unten links steht, sobald Claude angeschlossen ist, das Schild
+«Claude verbunden» mit Claudes Vorschlägen zum Anwenden oder Ablehnen; dort stellt man auch ein, wie frei Claude
+arbeiten darf (jede Änderung als Vorschlag, frei ändern oder Vollautomatik), und nimmt Claudes letzten Schritt zurück.
+Oben in der Mitte sagt eine Zeile, was Claude gerade tut. Die ganze Ansicht ist jetzt dunkel; hell gibt es sie weiter
+über das Menü «Darstellung». Die Leiste der Mac-App fällt über den Knoten weg — sie stand doppelt. Was nicht
+übernommen ist, weil es die Sache in Visbox nicht gibt (gemeinsames Arbeiten mehrerer Personen im selben Modell, eine
+Plan- und 3D-Ansicht, Geschosse, ein Rundgang durch Stationen), steht mit Grund in einer Liste, und eine Probe sorgt
+dafür, dass kein neuer Bedienteil unbemerkt fehlt. Die Mac-App und die Seite sprechen dafür über einen zweiten, schmalen
+Weg; das Kennwort des Heim-PC läuft nie darüber. Ehrlich gesagt: Geprüft ist es im Browser des Prüfrechners und an den
+Proben; ob es in der Mac-App genauso aussieht, sieht erst der Owner am Gerät. Der Gesprächspartner «Assistent» als
+schwebende Kugel und eine eigene Einstellungs-Fläche folgen als nächste Stufen.

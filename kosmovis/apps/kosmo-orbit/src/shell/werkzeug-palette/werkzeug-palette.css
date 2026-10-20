@@ -1,0 +1,233 @@
+/* B/C · die Palette am Kosmo-Logo (Entwurf `docs/entwuerfe/palette-und-speichern/`).
+   Das Logo ist ein 44-px-Kreis (Beruehrweg); die Tupfer liegen um seinen
+   Mittelpunkt auf zwei Bogen (`werkzeug-palette.ts`: R 110 und 196 px), 52 px
+   gross, je mit dem Logo aus der Sammlung. U4 (v0.1.7, Entwurf A «zweiter
+   Bogen»): innen die Hauptwerkzeuge, aussen die Unterwerkzeuge des
+   angetippten — die zeigt nur der Knopf `.wp-sichtbar`. Die Namen stehen mit
+   der Maus nicht dauernd da (Owner 30.09.2026) — sie sind eine Kurzhilfe
+   beim Darueberfahren; am Finger (`data-tipp='ja'`) gibt es kein
+   Darueberfahren, dort stehen sie dauernd. */
+.wp-wurzel {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+/* Dieselbe Glas-Bauart wie die anderen Kopfkreise (`.isl-kopf-logo-design`,
+   `.isl-einstellungen-kreis` in `island.css`): dunkles Glas in beiden Welten. */
+.wp-logo {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  background: var(--f-pill, rgba(16, 19, 25, 0.92));
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--isl-pill-ink, var(--k-glass-ink));
+  cursor: pointer;
+}
+.wp-logo:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+.wp-offen .wp-logo {
+  border-color: var(--k-accent);
+}
+.wp-hinweis {
+  position: absolute;
+  top: calc(100% + var(--k-s1));
+  left: 0;
+  /* Zweizeilig und schmal («Nochmals tippen: / Zentrale»): einzeilig lief der
+     Hinweis unter den Tupfer von KosmoDesign (gemessen, 1024 x 768). */
+  width: 88px;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-knapp);
+  color: var(--k-ink-soft);
+  white-space: normal;
+  /* v0.1.8 (Vorprobe R24, Befund d): ohne eigenen Grund lag der Hinweis als nackte Schrift über der Pille «EG».
+     Seit E232 steht das offene Rad über dem Schleier, die Pille verwischt darunter; mit eigenem Grund liest sich
+     der Hinweis als Teil des Rads, nicht als Buchstaben auf einem fremden Knopf. */
+  background: var(--k-raised);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  padding: var(--k-s1) var(--k-s2);
+  box-sizing: border-box;
+  box-shadow: var(--k-shadow-raised);
+  opacity: 0;
+  transition: opacity var(--k-motion-fast);
+  pointer-events: none;
+}
+.wp-offen .wp-hinweis {
+  opacity: 1;
+}
+/* Nachprobe Runde 26 (LW, Gerät): auch mit eigenem Grund lag der Hinweis auf der Oberkante der Pille «EG» — er
+   steht unter dem Logo, und genau dort beginnt die Pille (gemessen 1280 × 800: Hinweis y 60–80, Pille ab y 66). Rechts
+   davon liegt «3D · PLAN», darunter der zweite Tupfer; einen freien Platz gibt es nicht. Solange das Rad offen ist,
+   ist die Pille ohnehin nicht bedienbar (ein Klick daneben schliesst nur, E232); sie tritt darum zurück. Am Gerät,
+   wo die Unschärfe fehlt, war sie sonst scharf unter dem Hinweis. */
+:root:has(.wp-offen) [data-testid='geschoss-pille-root'] {
+  opacity: 0.15;
+  transition: opacity var(--k-dauer-antippen) ease;
+}
+
+/* Der Ring: nur ein Bezugspunkt im Mittelpunkt des Logos, ohne eigene Flaeche
+   — er faengt keinen Zeiger ab, nur die Tupfer tun es. */
+.wp-ring {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  width: 0;
+  height: 0;
+}
+.wp-punkt {
+  /* Lage, Reihenfolge und Farbe setzt die Komponente je Tupfer als
+     Inline-Stil; hier die Grundwerte, damit jeder Aufruf gedeckt ist. */
+  --wp-x: 0px;
+  --wp-y: 0px;
+  --wp-i: 0;
+  --wp-farbe: var(--k-line);
+  position: absolute;
+  top: -26px;
+  left: -26px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k-s1);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--k-ink);
+  cursor: pointer;
+  /* Zu: am Logo gesammelt, unsichtbar. Austritt alles zugleich und schneller
+     als der Eintritt; `visibility` springt erst am Ende, sonst waere das
+     Ausblenden nicht zu sehen. */
+  transform: translate(0, 0) scale(0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform var(--k-motion-fast),
+    opacity var(--k-motion-fast),
+    visibility 0s linear var(--k-dauer-antippen);
+}
+.wp-offen .wp-punkt.wp-sichtbar {
+  transform: translate(var(--wp-x), var(--wp-y)) scale(1);
+  opacity: 1;
+  visibility: visible;
+  /* Eintritt: federnd, gestaffelt vom Logo entlang des Bogens. Gestaffelt
+     werden nur Weg und Deckkraft; `visibility` springt sofort fuer alle
+     Tupfer (dritter Wert 0s). Sonst haengt, WELCHE Werkzeuge die Palette
+     anbietet, an der Animationszeitleiste: unter Last war nur der erste
+     Tupfer da (Befund Int 1, 01.10.2026, `e2e/p5-vis-sichtbar.spec.ts`).
+     `.wp-sichtbar` steht an den Hauptwerkzeugen immer und an den
+     Unterwerkzeugen nur, solange ihr Hauptwerkzeug aufgefaechert ist. */
+  transition:
+    transform var(--k-feder),
+    opacity var(--k-motion-base),
+    visibility 0s;
+  transition-delay:
+    calc(var(--wp-i) * var(--k-staffel-schritt)),
+    calc(var(--wp-i) * var(--k-staffel-schritt)),
+    0s;
+}
+@supports not (transition-timing-function: linear(0, 1)) {
+  .wp-offen .wp-punkt.wp-sichtbar {
+    transition:
+      transform var(--k-feder-fallback),
+      opacity var(--k-motion-base),
+      visibility 0s;
+    transition-delay:
+      calc(var(--wp-i) * var(--k-staffel-schritt)),
+      calc(var(--wp-i) * var(--k-staffel-schritt)),
+      0s;
+  }
+}
+.wp-tupfer {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-raised);
+  /* In der Farbe ihrer Station (U4): `--wp-farbe` setzt die Komponente je
+     Tupfer aus den Stationsfarben (`--k-mod-<id>`); der Rand traegt sie
+     kraeftig, die Flaeche bleibt ruhig. */
+  border: 1px solid color-mix(in srgb, var(--wp-farbe, var(--k-line)) 60%, var(--k-line));
+  box-shadow: var(--k-shadow-raised);
+  transition:
+    transform var(--k-motion-fast),
+    box-shadow var(--k-motion-fast),
+    border-color var(--k-motion-fast);
+}
+/* E232 Fokus-Schleier: offen steht das Rad im Fokus und traegt die Glanzkante (helle Oberkante, feiner
+   Innenrand); sie braucht keine Unschaerfe und wirkt darum auch am Linux-Geraet. */
+.wp-offen .wp-tupfer {
+  box-shadow: var(--k-glanzkante), var(--k-shadow-raised);
+}
+.wp-offen .wp-logo {
+  box-shadow: var(--k-glanzkante), var(--k-shadow-lg, var(--k-shadow-overlay));
+}
+/* Das aufgefaecherte Hauptwerkzeug: Rand voll in seiner Farbe, damit klar ist,
+   zu wem der aeussere Bogen gehoert. */
+.wp-punkt--haupt.wp-aufgefaechert .wp-tupfer {
+  border-color: var(--wp-farbe, var(--k-accent));
+  box-shadow:
+    var(--k-shadow-overlay),
+    0 0 0 2px color-mix(in srgb, var(--wp-farbe, var(--k-accent)) 45%, transparent);
+}
+.wp-punkt:hover .wp-tupfer {
+  transform: scale(1.08);
+  box-shadow: var(--k-shadow-overlay);
+}
+.wp-punkt:focus-visible {
+  outline: none;
+}
+.wp-punkt:focus-visible .wp-tupfer {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+/* Der Name: unter dem Tupfer. Mit der Maus eine Kurzhilfe, nur beim
+   Darueberfahren oder mit dem Tastaturfokus sichtbar; am Finger
+   (`data-tipp='ja'`, U4) steht er dauernd da, denn dort gibt es kein
+   Darueberfahren. Er faengt keinen Zeiger (der Tupfer bleibt die
+   Trefferflaeche). */
+.wp-name {
+  position: absolute;
+  top: calc(100% + var(--k-s1));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--k-s1) var(--k-s2);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-ink);
+  color: var(--k-field);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  line-height: var(--k-lh-knapp);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--k-motion-fast);
+}
+.wp-offen .wp-punkt.wp-sichtbar:hover .wp-name,
+.wp-offen .wp-punkt.wp-sichtbar:focus-visible .wp-name,
+.wp-wurzel[data-tipp='ja'].wp-offen .wp-punkt.wp-sichtbar .wp-name {
+  opacity: 1;
+}
+
+/* Weniger Bewegung: die Palette steht sofort da, ohne Weg. */
+@media (prefers-reduced-motion: reduce) {
+  .wp-punkt,
+  .wp-offen .wp-punkt,
+  .wp-offen .wp-punkt.wp-sichtbar,
+  .wp-name,
+  .wp-tupfer,
+  .wp-hinweis {
+    transition: none;
+  }
+}

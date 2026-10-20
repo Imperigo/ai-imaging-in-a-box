@@ -1,0 +1,277 @@
+/* KosmoMaus (E157) — Teil A, Entwurf «KosmoMaus Bedienteile».
+   Nur Tokens aus aura.css. Farbe je Agent: Claude = Gold der Agenten-Rolle,
+   Kosmo = Rot seines Orbs (C17 A). Ebene = Meldungen (über Chrome, unter
+   Modal), der Zeiger eine Stufe darüber, damit er auf Karten sichtbar bleibt. */
+
+.kosmo-maus-leiste[data-urheber='claude'],
+.kosmo-maus-gruppe[data-urheber='claude'],
+.kosmo-maus-chip[data-urheber='claude'] {
+  --km-farbe: var(--k-rolle-agent);
+}
+
+.kosmo-maus-leiste[data-urheber='kosmo'],
+.kosmo-maus-gruppe[data-urheber='kosmo'],
+.kosmo-maus-chip[data-urheber='kosmo'] {
+  --km-farbe: var(--k-mod-kosmo);
+}
+
+.kosmo-maus-ebene {
+  pointer-events: none;
+}
+
+/* Die Stelle leuchtet kurz auf (C17 A). Bei weniger Bewegung: steht still
+   und verschwindet nach derselben Zeit. */
+.kosmo-maus-leuchten {
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--km-farbe);
+  background: color-mix(in srgb, var(--km-farbe) 16%, transparent);
+  opacity: 0;
+  animation: kosmo-maus-leuchten 900ms var(--k-ease-standard) both;
+}
+
+@keyframes kosmo-maus-leuchten {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kosmo-maus-leuchten {
+    animation: kosmo-maus-leuchten-still 900ms steps(1, end) both;
+  }
+  @keyframes kosmo-maus-leuchten-still {
+    0% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+/* ── Leiste «… bedient — Esc beendet» (Variante A: oben in der Mitte) ── */
+
+.kosmo-maus-leiste {
+  position: fixed;
+  z-index: var(--k-ebene-meldung);
+  top: var(--k-s4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  max-width: calc(100vw - 2 * var(--k-s4));
+  padding: var(--k-s1) var(--k-s1) var(--k-s1) var(--k-s4);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink);
+  background: var(--k-surface);
+  border: 1px solid var(--km-farbe);
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-overlay);
+  pointer-events: auto;
+}
+
+.kosmo-maus-leiste-punkt {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--km-farbe);
+}
+
+.kosmo-maus-leiste-name {
+  color: var(--km-farbe);
+  font-weight: var(--k-gewicht-betont);
+}
+
+/* ── Karten unten rechts ─────────────────────────────────────────────── */
+
+.kosmo-maus-unten {
+  position: fixed;
+  z-index: var(--k-ebene-meldung);
+  right: var(--k-s4);
+  bottom: var(--k-s4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--k-s2);
+  max-width: min(360px, calc(100vw - 2 * var(--k-s4)));
+}
+
+.kosmo-maus-karte {
+  pointer-events: auto;
+  padding: var(--k-s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  box-shadow: var(--k-shadow-overlay);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+}
+
+.kosmo-maus-titel {
+  font-weight: var(--k-gewicht-betont);
+  color: var(--k-ink-soft);
+}
+
+.kosmo-maus-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.kosmo-maus-knoepfe {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--k-s2);
+}
+
+/* ── Schalter (an der Marke und in den Einstellungen) ─────────────────── */
+
+.kosmo-maus-gruppen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--k-s3);
+}
+
+.kosmo-maus-gruppe {
+  min-width: 0;
+  margin: 0;
+  padding: var(--k-s2) var(--k-s3);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s1);
+}
+
+.kosmo-maus-gruppe-name {
+  padding: 0 var(--k-s1);
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-betont);
+  color: var(--km-farbe);
+}
+
+.kosmo-maus-schalter-zeile {
+  min-height: 44px;
+}
+
+/* Nr. 75/77: wodurch «Bedienen» zuletzt wechselte, unter den Schaltern. */
+.kosmo-maus-bedien-grund {
+  padding: 0 var(--k-s1);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.kosmo-maus-abschnitt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+
+.kosmo-maus-abschnitt-titel {
+  font-weight: var(--k-gewicht-betont);
+  color: var(--k-ink);
+}
+
+.kosmo-maus-hinweis {
+  margin: 0;
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink-soft);
+}
+
+/* ── Journal ──────────────────────────────────────────────────────────── */
+
+.kosmo-maus-journal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+
+.kosmo-maus-journal-kopf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s1);
+}
+
+.kosmo-maus-filter {
+  min-height: 32px;
+  padding: 0 var(--k-s3);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: transparent;
+  color: var(--k-ink-soft);
+  font: inherit;
+  font-size: var(--k-t-sm);
+  cursor: pointer;
+}
+
+.kosmo-maus-filter[aria-pressed='true'] {
+  border-color: var(--k-accent);
+  color: var(--k-ink);
+}
+
+.kosmo-maus-journal-leer {
+  margin: 0;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+.kosmo-maus-journal-liste {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kosmo-maus-journal-eintrag {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 36px;
+  border-bottom: 1px solid var(--k-line-subtil);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink);
+}
+
+.kosmo-maus-journal-eintrag[data-ergebnis='verweigert'],
+.kosmo-maus-journal-eintrag[data-ergebnis='fehler'] {
+  color: var(--k-ink-soft);
+}
+
+.kosmo-maus-journal-zeit {
+  font-family: var(--k-font-mono);
+  color: var(--k-ink-soft);
+}
+
+.kosmo-maus-journal-text {
+  overflow-wrap: anywhere;
+}
+
+.kosmo-maus-chip {
+  padding: 0 var(--k-s2);
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  line-height: var(--k-lh-eins);
+  border-radius: var(--k-radius-pill);
+  font-weight: var(--k-gewicht-betont);
+  color: var(--km-farbe);
+  background: color-mix(in srgb, var(--km-farbe) 16%, transparent);
+}

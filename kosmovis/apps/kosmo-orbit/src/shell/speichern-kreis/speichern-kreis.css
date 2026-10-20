@@ -1,0 +1,131 @@
+/* A · Speichern als Kreis neben dem Zahnrad (Entwurf `docs/entwuerfe/palette-
+   und-speichern/pa-*`). Dieselbe Bauart wie `.isl-einstellungen-kreis`
+   (`island.css`): 38 px sichtbar, 44 px Trefferflaeche, dunkles Glas. Die Lage
+   im Fenster setzt der Integrator (neben dem Zahnrad); hier nur die Form.
+   Nichts bewegt sich — gesichert wird bei jedem Schritt. */
+.spk-wurzel {
+  position: relative;
+}
+.spk-kreis {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -3px;
+  padding: 0;
+  background: var(--f-pill, rgba(16, 19, 25, 0.92));
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--isl-pill-ink, var(--k-ink));
+  cursor: pointer;
+}
+.spk-kreis:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+.spk-kreis--offen {
+  box-shadow:
+    0 0 0 2px var(--k-accent),
+    var(--k-shadow-lg, var(--k-shadow-overlay));
+}
+.spk-punkt {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-success);
+  box-shadow: 0 0 0 2px var(--f-pill, rgba(16, 19, 25, 0.92)); /* Ring in Glasfarbe: der Punkt sitzt IM Kreis */
+}
+.spk-punkt[data-stand='sichert'] {
+  background: var(--k-ink-faint);
+}
+.spk-punkt[data-stand='fehler'] {
+  width: 10px;
+  height: 10px;
+  background: var(--k-danger);
+}
+.spk-kreis--fehler {
+  border-color: var(--k-danger);
+}
+
+.spk-karte {
+  position: absolute;
+  z-index: 1;
+  top: calc(100% + var(--k-s3));
+  right: 0;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s1);
+  padding: var(--k-s3);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  box-shadow: var(--k-shadow-overlay);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+}
+.spk-kopf {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--k-s2);
+  padding: var(--k-s1) var(--k-s2) var(--k-s3);
+  margin-bottom: var(--k-s1);
+  border-bottom: 1px solid var(--k-line);
+}
+.spk-punkt--frei {
+  position: static;
+  flex: none;
+  box-shadow: none;
+}
+.spk-titel {
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-betont);
+}
+.spk-nachsatz {
+  margin-left: auto;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+  overflow-wrap: anywhere;
+}
+.spk-karte:has(.spk-punkt[data-stand='fehler']) .spk-titel {
+  color: var(--k-danger);
+}
+.spk-zeile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--k-s1);
+  min-height: 44px;
+  padding: var(--k-s2);
+  border: 0;
+  border-radius: var(--k-radius);
+  background: none;
+  color: var(--k-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.spk-zeile b {
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-betont);
+}
+.spk-zeile span {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+.spk-zeile:hover {
+  background: var(--k-sunken);
+}
+.spk-zeile:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: calc(-1 * var(--k-fokusring-breite));
+}
