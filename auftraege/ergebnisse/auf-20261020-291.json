@@ -1,0 +1,320 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261020-291",
+ "worker": "local",
+ "rang": 78,
+ "folgt_auf": "auf-20261020-290",
+ "entscheide": [
+  "104",
+  "104a",
+  "106d"
+ ],
+ "status": "erledigt mit Befunden — Variante ohne Modell 200 mit hartem Verweis (gleiche Inode), 409-Satz richtig; 100-MB-Upload blockiert health/fortschritt nicht mehr (laengste Antwort 3 ms); Zwilling am Quader erkannt (nNW doppelt_von sSE, zwei KI-Laeufe); Gelaendeplatte mit Auto-Kamera rechnet ohne 'NICHT RENDERN' (3/3); zweite Vorschau spart die Nullanker (Pruefung 22-23 s -> 0,4-0,8 s je Kamera); Assistent mit qwen3:14b antwortet (17,9 s inkl. Laden), Anwenden und Abholer entladen NUR qwen3:14b. Zwei Befunde: der Entlade-Satz geht in beiden Wegen verloren (Abholer-Protokoll und Anwenden-Antwort).",
+ "beendet": "2026-10-20T18:33:00Z",
+ "koepfe": {
+  "stand": "main 66da651 (Visbox 0.3.3); visbox-flaeche neu gestartet 20:06:17 (nach dem Kopf), Abholer per Timer 30 s. Kein Code geaendert, keine Schwelle, Mappe des Dienstes nicht angefasst.",
+  "qwen3_14b": "lag (ollama list: qwen3:14b bdbd181c33f2, 9,3 GB; vom LW vor dem Auftrag gezogen). Zu Beginn kein Ollama-Modell geladen (ollama ps leer).",
+  "weg": "Bruecke der Visbox-Flaeche als Client: POST /bruecke/jobs (multipart; scene, model nur wo verlangt), /approve, /cancel. job.json im Takt 0,2 s, nvidia-smi 0,5 s; Phasenzeiten aus den progress-Wechseln.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb): gegliederter Testbau wie 290 (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m), Quader 8x3x5 m (Hoehe 5 m), Vorgabe-Szene (Haus 12x9x15 m auf Platte 40x30 m); 100-MB-Modell = Testbau mit ungenutztem Fuellpuffer im BIN (gueltige glb).",
+  "szene": "kosmovis.render-scene/v1, cameras 'auto', render.resolution [1600,1000], samples 64, style.mode none, prompt 'morning light, soft shadows'; Vorschau mit vis.seed 482913 (zweite Vorschau Seed 1, 6a Seed 2).",
+  "gpu": "vor jedem Lauf nvidia-smi + ollama ps: 13,7-16,0 W, 1241 MiB, kein Ollama-Modell, kein fremder Auftrag queued/running. Ausnahme: vor 3 'mit gelaende' standen noch 27470 MiB (66 W) vom eben beendeten eigenen Lauf (Abholer-Prozess beim Aufraeumen); der Abholer wartete selbst (34 s bis running). Laeufe strikt nacheinander. Leistungsgrenze 400 W.",
+  "systemlast": "Ein anderer Helfer rechnete parallel auf der CPU: Last (1 min) 23-42 bei 32 Kernen waehrend aller Laeufe (je Lauf unten). Die Zeiten sind darum Zeiten unter Last."
+ },
+ "1_variante_ohne_modell": {
+  "a_grundlage": {
+   "code": 200,
+   "job": "vis-1792519826-d4bcf1",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-8f04a13a7fdb9cde",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 44.7,
+   "systemlast": "23,13 / 15,04 / 14,33"
+  },
+  "b_variante_ohne_model": {
+   "code": 200,
+   "post_bis_antwort_s": 0.002,
+   "job": "vis-1792519895-2978bc",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-8f04a13a7fdb9cde",
+    "wiederverwendet": true
+   },
+   "inode_vergleich": "model.glb im Variantenauftrag: Inode 162166958, Links 2, 1796 B — identisch mit model.glb im Grundlage-Auftrag (Inode 162166958, Links 2, 1796 B): harter Verweis.",
+   "zeit_freigabe_bis_done_s": 140.4
+  },
+  "c_unbekannte_grundlage": {
+   "code": 409,
+   "satz_woertlich": "Die Variante kam ohne Modell, und die Grundlage gl-ffffffffffffffff ist auf diesem Heim-PC nicht zu finden (kein Auftrag hier hat sie gerechnet, oder sein Modell ist weg). Bitte «Grundlage rendern» neu ausführen — oder die Variante mit Modell schicken.",
+   "kein_auftragsordner": true
+  },
+  "d_zeiten": {
+   "ohne_modell": {
+    "rumpf_bytes": 449,
+    "post_bis_antwort_s": 0.002
+   },
+   "mit_100mb_ungedrosselt": {
+    "rumpf_bytes": 104858130,
+    "post_bis_antwort_s": 0.05,
+    "laengste_antwort_health_fortschritt_s": 0.009,
+    "hinweis": "ueber 127.0.0.1 ist der Rumpf in 50 ms durch — nur eine Takt-Probe fiel in den Upload."
+   },
+   "mit_100mb_gedrosselt_10_MB_s": {
+    "senden_s": 10.59,
+    "post_bis_antwort_s": 10.591,
+    "antwort_nach_letztem_byte_s": 0.0,
+    "proben_waehrend_upload": 42,
+    "laengste_health_s": 0.0031,
+    "laengste_fortschritt_s": 0.0009,
+    "codes": [
+     200
+    ],
+    "zweck": "Leitung wie ueber das Netz nachgestellt (1-MB-Stuecke im Takt); Server blieb waehrend des ganzen Uploads ansprechbar."
+   },
+   "auftraege": "vis-1792520098-f8758b, vis-1792520129-da79cc, vis-1792520131-3b5a9c — nur angelegt, nicht freigegeben, danach /cancel: Status cancelled, message 'Vom Nutzer abgebrochen.' (kein Abholer-Satz, weil nie abgeholt)."
+  },
+  "e_mac": "nicht gemacht (Owner nicht dabei)."
+ },
+ "2_zwilling_am_quader": {
+  "job": "vis-1792520258-c77560",
+  "status": "done",
+  "kamera_n": 3,
+  "doppelt_von": {
+   "nNW": "sSE"
+  },
+  "ki_laeufe": 2,
+  "lieferstatus_grund": "2 von 3 Kameras geliefert, 2 von 3 Bildern — nNW uebersprungen: Nicht neu gerendert (identische Soll-Karte), nNW: dieselbe Ansicht wie Kamera 'sSE', deren Bild sie zeigt — kein eigenes Bild",
+  "zeiten_s": {
+   "s": 69.6,
+   "sSE": 70.0,
+   "nNW": 19.9,
+   "gesamt": 159.6,
+   "freigabe_bis_done": 165.5
+  },
+  "phasen_s": {
+   "s": {
+    "blender": 20.6,
+    "bildmodell": 21.6,
+    "pruefung": 27.3
+   },
+   "sSE": {
+    "blender": 20.9,
+    "bildmodell": 18.0,
+    "pruefung": 31.3
+   },
+   "nNW": {
+    "blender": 19.9,
+    "pruefung": 0.2
+   }
+  },
+  "rest_s_folge": "null (ganze Kamera 1), 139, 124, 118, 100, 70, 57, 0",
+  "anmerkung": "nNW wird in Blender noch gerechnet (19,9 s), um die Gleichheit festzustellen; KI und Pruefung entfallen. Die Restzeit vor nNW (70 bzw. 57 s) rechnet noch mit einem KI-Lauf.",
+  "kameraspanne": "n_gemessen 2, n_doppelt 1, schlechtester 0.233, bester 0.861",
+  "systemlast": "25,71 / 23,41 / 18,79 (Mittel 32,3)"
+ },
+ "3_gelaendeplatte_auto_kamera": {
+  "ohne_gelaende": {
+   "job": "vis-1792520447-5f642a",
+   "status": "done",
+   "lieferstatus": "geliefert 3/3",
+   "grundlage": "gl-61b4b495974439fd",
+   "je_kamera": {
+    "s": {
+     "wirksame_bildbreite": 0.6998,
+     "gerahmt_nach": "kamerabox",
+     "fuellgrad": 0.6998,
+     "gebaeudeanteil": 0.171,
+     "anteil_bauwerk_maske": 0.129
+    },
+    "sSE": {
+     "wirksame_bildbreite": 0.7,
+     "gerahmt_nach": "kamerabox",
+     "fuellgrad": 0.7,
+     "gebaeudeanteil": 0.167,
+     "anteil_bauwerk_maske": 0.13
+    },
+    "nNW": {
+     "wirksame_bildbreite": 0.7,
+     "gerahmt_nach": "kamerabox",
+     "fuellgrad": 0.7,
+     "gebaeudeanteil": 0.174,
+     "anteil_bauwerk_maske": 0.13
+    }
+   },
+   "zeiten_s": {
+    "s": 71.2,
+    "sSE": 60.3,
+    "nNW": 65.2,
+    "gesamt": 196.7
+   },
+   "systemlast": "39,23 / 30,19 / 22,23"
+  },
+  "mit_gelaende_true": {
+   "job": "vis-1792520658-b0f59a",
+   "status": "done",
+   "lieferstatus": "geliefert 3/3",
+   "grundlage": "gl-c9656f897ba56fc5",
+   "je_kamera": "Werte identisch mit 'ohne' (gleiche Soll-Karten, gleicher Seed): wirksame_bildbreite 0.6998/0.7/0.7, gerahmt_nach 'kamerabox', fuellgrad 0.70, Gebaeudeanteil 17.1/16.7/17.4 %",
+   "unterschied": "einzig die Warnung im maskenbefund ('Der Aufrufer hat erklärt, diese Szene enthalte kein Gelände — die Regel hat aber [Platte] …') faellt weg; Gelaende wird in beiden Laeufen per Name erkannt (gelaende_quelle 'name').",
+   "zeiten_s": {
+    "s": 48.2,
+    "sSE": 33.7,
+    "nNW": 33.3,
+    "gesamt": 115.1
+   },
+   "systemlast": "41,75 / 35,58 / 25,97"
+  },
+  "verdict_reason_woertlich": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (482913), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 17.1 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'sSE' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 16.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 17.4 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0204217392361351 gegen 0.65; Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)",
+  "verdict_gleich_in_beiden_laeufen": true,
+  "kein_abbruch_nicht_rendern": true,
+  "hinweise": [
+   "fuellgrad = rahmung.basis (grundlage 'gemessener_fuellgrad', Weg 'abgeleitet'); ein eigenes Feld kamera.fuellgrad steht weder in befund.json noch in render-result.json.",
+   "Gebaeudeanteil laut Urteil (anteil_soll) 16,7-17,4 % < 20 % -> 'nicht beurteilbar'; die Rahmung an der Kamerabox (0,70) laesst rechnen, der Anteil am Bild bleibt wegen Platte/Hoehe klein.",
+   "Bilder ohne Personen; das Haus steht erkennbar auf der Platte (auftraege/ergebnisse/auf-20261020-291-bilder/gelaende-vorschau-*.jpg)."
+  ]
+ },
+ "4_vorschau_zeit_nullanker": {
+  "grundlage": "gl-8f04a13a7fdb9cde (Testbau)",
+  "nullanker_dateien": {
+   "vor_erster_vorschau": 0,
+   "anmerkung_vor": "Ordner _grundlagen/_nullanker gab es noch nicht",
+   "nach_erster_vorschau": 3,
+   "nach_zweiter_vorschau": 3
+  },
+  "vorschau_1_seed_482913": {
+   "job": "vis-1792519895-2978bc",
+   "pruefung_s": {
+    "s": 22.2,
+    "sSE": 23.4,
+    "nNW": 22.8
+   },
+   "bildmodell_s": {
+    "s": 21.6,
+    "sSE": 13.4,
+    "nNW": 12.0
+   },
+   "blender_s": {
+    "s": 4.8,
+    "sSE": 6.8,
+    "nNW": 5.8
+   },
+   "zeiten_befund_s": {
+    "s": 48.6,
+    "sSE": 43.7,
+    "nNW": 40.5,
+    "gesamt": 132.8
+   },
+   "freigabe_bis_done_s": 140.4,
+   "systemlast": "28,47 / 18,57 / 15,62 (Mittel 26,9)"
+  },
+  "vorschau_2_seed_1": {
+   "job": "vis-1792520143-83040c",
+   "pruefung_s": {
+    "s": 0.4,
+    "sSE": 0.6,
+    "nNW": 0.8
+   },
+   "bildmodell_s": {
+    "s": 21.4,
+    "sSE": 12.4,
+    "nNW": 13.2
+   },
+   "blender_s": {
+    "s": 5.8,
+    "sSE": 6.6,
+    "nNW": 6.0
+   },
+   "zeiten_befund_s": {
+    "s": 27.7,
+    "sSE": 19.6,
+    "nNW": 20.0,
+    "gesamt": 67.2
+   },
+   "freigabe_bis_done_s": 86.3,
+   "systemlast": "24,45 / 22,11 / 17,80 (Mittel 25,4)"
+  },
+  "gegenprobe": "Dasselbe zwischen 3 'ohne' und 'mit gelaende' (andere Grundlage, gleiche Soll-Karten): Pruefung 26,6/28,8/31,5 s -> 0,6/0,6/0,4 s; der Nullanker wird je Soll-Karte gemerkt, nicht je Grundlage. Am Ende 8 Dateien (3 Testbau, 2 Quader, 3 Gelaendeszene).",
+  "erwartung_erfuellt": true,
+  "nebenbefund": "Beim Testbau zeigen die Vorschaubilder das Bauwerk kaum (Innenraum-/Wandmotive; geom_iou ~0,01, Gebaeudeanteil 10-11 %, 'nicht beurteilbar'). Keine Personen in den Bildern."
+ },
+ "5_assistent_qwen3_14b": {
+  "weg": "POST /api/assistent mit 'ordner' = leere Probe-Mappe im Arbeitsordner (nur modell.glb), nicht die Mappe des Dienstes",
+  "frage": "Zeig das Haus bitte von Suedosten, aus Augenhoehe.",
+  "code": 200,
+  "antwortzeit_s": 17.88,
+  "anmerkung_zeit": "inkl. Laden von qwen3:14b (vorher nichts geladen)",
+  "antwort": "Der Standpunkt von Suedosten wurde mit Augenhöhe 1.6 vorgeschlagen. Falls Sie eine andere Himmelsrichtung meinten, können Sie dies korrigieren.",
+  "vorschlag": {
+   "kamera": "sSE",
+   "augenhoehe": 1.6,
+   "rechenzeit_satz": "Rechenzeit etwa 20 Sekunden am Heim-PC."
+  },
+  "api_heim": {
+   "vor": {
+    "modell": "qwen3:14b",
+    "stand": "bereit",
+    "grafikkarte_frei_gb": 30.1
+   },
+   "nach": {
+    "modell": "qwen3:14b",
+    "stand": "bereit",
+    "grafikkarte_frei_gb": 14.4
+   }
+  },
+  "ollama_ps": {
+   "vor_anwenden": [
+    "qwen3:14b (16,3 GB auf der Karte)"
+   ],
+   "nach_anwenden": []
+  },
+  "anwenden": {
+   "code": 200,
+   "dauer_s": 0.07,
+   "antwort": {
+    "gestartet": true,
+    "schritte_gesamt": 20
+   },
+   "lauf": "scheiterte sofort an der Probe-Mappe (kein Projekt darin) — gewollt, keine GPU-Last, Dienst-Mappe unberuehrt"
+  },
+  "kein_anderes_modell_angefasst": true
+ },
+ "6_entladen_nur_eigenes": {
+  "a_abholer_entlaedt_qwen3_14b": {
+   "vorbereitung": "qwen3:14b per /api/generate mit keep_alive 10m geladen (ollama ps: nur qwen3:14b; 17328 MiB, Auslastung 0-10 %), keine Marke assistent-frage.json, dann Variante vis-1792520913-0cb23c (idle_window_only true) freigegeben",
+   "beobachtet": "Abholer-Durchgang startete 20:28:54; das Ollama-Protokoll zeigt genau EINEN POST /api/generate um 20:28:54 (das Entladen), ollama ps im Sekundentakt: 20:28:54 ['qwen3:14b'] -> 20:28:55 []. Danach gerechnet: done, 116,6 s ab Freigabe (22,1 s bis running).",
+   "satz_abholer_protokoll_woertlich": "Karte: NICHT frei — 17328 MiB belegt (Grenze 4096) — es haelt jemand Gewichte auf der Karte. Auslastung dabei 0 %.",
+   "befund": "Der Entlade-Satz selbst ('Das Sprachmodell qwen3:14b ist entladen; die Grafikkarte gehört dem Bild. Danach: …') steht NIRGENDS — weder im Abholer-Protokoll noch im job.json. Code: src/aiimaging/abholer.py:1670-1672 (_karte_frei: 'if darf: return True, \"\"' verwirft den Grund, den karte_oder_eigenes_entladen in abholer.py:1637 baut); tools/abholen.py:432-433 druckt nur die Auskunft VOR dem Entladen ('NICHT frei'), was danach irrefuehrend stehen bleibt.",
+   "nur_qwen3_14b_entladen": true
+  },
+  "b_kosmo_modell_auf_der_karte": "nicht beobachtbar — kein Kosmo-Modell lag auf der Karte (ollama ps leer bzw. nur qwen3:14b); nicht selbst geladen.",
+  "c_sprachmodell_qwen3_30b": {
+   "weg": "Ein zweiter Flaechen-Prozess mit AIIMAGING_SPRACHMODELL=qwen3:30b auf eigenem Anschluss wurde von der Rechteverwaltung der Sitzung nicht zugelassen; geprueft wurde darum derselbe Kernweg im Prozess (assistent.Ollama() mit der Umgebungsvariable, assistent.anwenden mit Ersatz-Start ohne Lauf, assistent.entlade_wenn_nur_eigenes).",
+   "satz_woertlich": "Nicht entladen: qwen3:30b ist ein Modell von KosmoOrbit (Rolle «leiter») — Visbox entlädt es nie.",
+   "ollama": "kein Aufruf an Ollama (Protokoll: nur /api/tags fremder Herkunft), ollama ps vor/nach leer",
+   "befund": "assistent.anwenden verwirft den Satz: src/aiimaging/assistent.py:1184 'entlade()' ohne Rueckgabe; der Server (_assistent_anwenden) liefert nur die Antwort des Starts. Am Mac kommt 'Nicht entladen: …' darum nicht an."
+  },
+  "fehler_fremdes_modell_entladen": "keiner — Abholer und Anwenden haben nur qwen3:14b entladen, geschuetzt() weist jedes andere Modell ab (kosmo-*, gpt-oss*, Rollenkarte, und alles != qwen3:14b)."
+ },
+ "urteil": "Ja: Eine Variante ist serverseitig ohne Zeitueberschreitung bestellbar (ohne Modell 2 ms, mit 100 MB nur so lang wie die Leitung, health/fortschritt dabei hoechstens 3 ms; am Mac selbst nicht geprueft), und eine Szene mit Gelaendeplatte und Auto-Kamera rechnet (3/3 geliefert, kein 'NICHT RENDERN', mit wie ohne gelaende).",
+ "bilder": {
+  "ordner": "auftraege/ergebnisse/auf-20261020-291-bilder",
+  "dateien": [
+   "gelaende-vorschau-s.jpg",
+   "gelaende-vorschau-sSE.jpg",
+   "gelaende-vorschau-nNW.jpg",
+   "quader-vorschau-s.jpg",
+   "quader-vorschau-sSE.jpg"
+  ],
+  "groesse": "480 px breit",
+  "personen": "keine (alle Bilder gesichtet)"
+ },
+ "offen": [
+  "Entlade-Satz ins Abholer-Protokoll/den Laufzettel bringen (abholer.py:1670-1672) und Satz von 'Anwenden' bis zur Mac-App durchreichen (assistent.py:1184).",
+  "6b (Kosmo-Modell liegt bereits) nur beobachtbar, wenn es ohnehin liegt.",
+  "6c im laufenden Dienst (zweite Flaeche mit Umgebungsvariable) braucht ein Go fuer einen zweiten Server-Prozess.",
+  "1e an der Mac-App mit dem Owner.",
+  "Vorschau am Testbau ohne Platte zeigt das Bauwerk kaum (geom_iou ~0,01) — eigener Messpunkt, nicht Teil dieses Auftrags."
+ ],
+ "aufgeraeumt": "eigene Probeauftraege (10) in der Ablage, ihre Ausgaben unter der out-wurzel, die vier eigenen _grundlagen-Eintraege und der von diesem Auftrag angelegte Ordner _grundlagen/_nullanker (8 Dateien) per gio trash; Probe-Mappe und Hilfsdateien im Arbeitsordner geloescht. Nichts committet."
+}
