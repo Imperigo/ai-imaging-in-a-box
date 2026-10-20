@@ -1618,3 +1618,19 @@ selbständig arbeiten darf. Wartet eine Karte länger als 45 Sekunden, bekommt C
 statt den Auftrag zu wiederholen. Für Claude Desktop startet sich die App auf Wunsch ohne Fenster und reicht nur weiter.
 Ehrlich gesagt: Heute kann Claude erst fragen, ob Visbox bereit ist; alles andere antwortet «kommt mit Stufe 3», wenn die
 Knotenansicht ihre Werkzeuge an den Anschluss gibt. Am Mac selbst ist der Anschluss noch nicht ausprobiert.
+
+**Stimmung, Kamera und Material rechnen jetzt am Heim-PC (20.10.2026, Entscheide 107 und 109–113).** Drei neue Knoten
+der Knotenansicht von Visbox haben ihre Rechnung bekommen, bevor ihre Bedienung gezeichnet ist — damit die Bedienung
+etwas hat, das wirklich wirkt. *Stimmung:* Statt einer festen Sonne liegt ein Rundumfoto des Himmels um das Modell
+(acht Stimmungen, von Morgen bis Winter, frei von Rechten und nur am Rechenrechner abgelegt). Es beleuchtet das Modell,
+wie der Himmel dort es getan hätte; die zusätzliche Sonnenlampe fällt dann weg, damit das Licht nicht doppelt kommt.
+«Weiss» macht alle Flächen zum Gipsmodell. *Kamera:* Wohin die Kameras schauen, auf welcher Augenhöhe, mit welcher
+Brennweite, wie weit weg und ob die senkrechten Kanten senkrecht bleiben, wird jetzt mit jedem Bild bestellt — bisher
+galten dafür drei feste Richtungen für alle Bilder. Die Vorschau der Standpunkte im Knoten rechnet dieselbe Rechnung
+wie das Bild. *Material:* Fassade, Dach, Fenster, Boden und übrige Bauteile können je ein Material aus einer kleinen
+Bibliothek bekommen (Sichtbeton, Backstein, Stampflehm, Holzlattung …), mit Massstab, Drehung, Relief und Tönung.
+Welches Bauteil was ist, liest der Rechner aus dem Modell; das Gelände bleibt immer, wie es ist. Fehlt am Rechner ein
+Himmelsbild oder eine Textur, wird der Auftrag mit einem Satz abgelehnt, der die fehlende Datei nennt — ein Bild ohne
+das Bestellte sähe sonst aus wie eines mit. Und jedes Ergebnis sagt, mit welchen Werten wirklich gerechnet wurde,
+auch mit denen, die der Rechner selbst eingesetzt hat. Ehrlich gesagt: Geprüft ist alles mit nachgebauten Rechnern;
+am echten Rechenrechner wird es erst gemessen, und die Bedienung in der Knotenansicht folgt noch.

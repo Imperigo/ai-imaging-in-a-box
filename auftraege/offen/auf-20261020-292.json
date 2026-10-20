@@ -1,0 +1,50 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261020-292",
+  "art": "qa",
+  "beschreibung": "Neue Knoten am Heim-PC messen: je Stimmung eine Grundlage mit Himmelsbild, Weiss als Gipsmodell, Auto-Kamera 2 Richtungen/50 mm/senkrecht, Materialien Sichtbeton und Stampflehm, Abweisung bei fehlender Datei, Vorschau-Geometrie bei Steuerstaerke 0.8/1.0 und 8/12 Schritten",
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig mit den neuen Knoten am Heim-PC (H1 Stimmung, H2 Kamera, H3 Material; dazu die Saetze des Entladens aus 291) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS SICH AENDERT: (a) render.environment {preset, hdri?, intensitaet?, rotationGrad?} wird gerechnet statt abgewiesen: Himmelsbild als Welt (Drehung um die Hochachse, Staerke), 2k bei vis.guete 'vorschau', sonst 4k; mit Himmelsbild KEINE Sonnenlampe, ausser render.sun ist bestellt; 'weiss' macht zusaetzlich alle Flaechen zum Gipsmodell. Ein Satz je Stimmung kommt in den Prompt, wenn er dort fehlt. (b) cameras_auto {richtungen, augenhoehe_m?, brennweite_mm?, abstand?, perspektive?} gilt je Auftrag statt der Einstellungen des Abholers; abstand {art:'fest', meter} rueckt nicht nach. CameraSpec.perspektive 'senkrecht' stellt eine Kamera von Hand waagrecht mit Shift. Neuer Weg GET /knoten/standpunkte?richtungen=…&augenhoehe=…&brennweite=…&fuellt=…|abstand=…&perspektive=…. (c) render.materialien je Art (fassade, dach, fenster, boden, uebrige) mit Principled BSDF, Box-Projektion, Bump aus Displacement, Toenung; Holzlattung mit Fugen; 1K bei der Vorschau, sonst 2K. (d) Fehlt ein Himmelsbild oder eine Textur: Auftrag endet auf error mit Satz, und render-result.json traegt lieferstatus 'fehlgeschlagen' mit demselben Satz in lieferstatus_grund. (e) Das Ergebnis traegt 'angewandt' (environment / cameras_auto / materialien wie gerechnet, mit 'vorgaben'). (f) Abholer-Protokoll: je Auftrag 'Karte: …' mit dem Satz des Entladens; 'Anwenden' gibt 'entladen' zurueck. VORBEREITUNG: AIIMAGING_HIMMEL_ORDNER und AIIMAGING_MATERIAL_ORDNER auf die abgelegten Ordner setzen (Werte nur am Heim-PC, NIE ins Repo, nicht in die Rueckgabe). GET /api/heim -> 'Himmelsbilder n/8' angeben. Geometrie synthetisch aus tools/make_test_glb.py (gegliederter Testbau, Vorgabe-Szene mit Platte). Alle Bilder 480 px lange Seite, Prompt OHNE Personen ('no people'), Bruecke wie die Knotenansicht. 1) JE STIMMUNG EINE GRUNDLAGE: fuer jede der acht (morgen, mittag, abend, blaue-stunde, bedeckt, nebel, winter, weiss) ein Auftrag mit vis.skip true, cameras 'auto' mit cameras_auto {richtungen:['sSE']}, render.environment {preset}. Je Lauf: Zeit, blender-report 'umgebung' (datei, groesse) und 'sonne'.weg (erwartet 'himmelsbild'), mittlere Helligkeit des Cycles-Bilds, das Bild selbst zurueck (480 px PNG). Dazu EINMAL mittag mit render.sun {elevation 35, azimuth 200}: Sonnenlampe da (sonne.weg 'bestellt')? Und mittag mit rotationGrad 180: Schatten gedreht? 2) WEISS ALS GIPSMODELL: der Lauf 'weiss' aus 1 — sind alle Flaechen einheitlich weiss (blender-report 'materialien'.objekte), stimmt die Material-ID-Tabelle (Namen wie ohne Weiss, bauwerksmaske gemessen?) 3) AUTO-KAMERA: cameras_auto {richtungen:['s','nNW'], brennweite_mm:50, perspektive:'senkrecht'} mit vis.skip true -> zwei Bilder; je Kamera kamera.brennweite_mm (50), shift_y, neigung_grad (0), fuellgrad, abstand_m; dazu GET /knoten/standpunkte mit denselben Parametern (Mappe mit demselben glb) -> Abweichung auge/blick_auf zum blender-report (m). Danach dieselbe Richtung s mit abstand {art:'fest', meter:40}: abstand_m (erwartet ~40, Eckentest nur gemeldet). 4) MATERIALIEN: render.materialien {fassade:{id:'sichtbeton-sandgestrahlt'}, boden:{id:'stampflehm'}} mit vis.skip true, cameras_auto {richtungen:['sSE']} -> Bild zurueck; blender-report 'materialien' (objekte je Art, nicht_getroffen), Material-ID-Tabelle (gleiche Namen wie ohne Materialien?), Zeit gegen einen Lauf ohne Materialien. Dazu fassade:{id:'holzlattung-fichte'}: sind Fugen sichtbar (ja/nein, Bildausschnitt)? Und sichtbeton-schalungsglatt (nicht quadratisches Bild): verzerrt? 5) FEHLENDE DATEI: (a) render.environment {preset:'nebel', hdri:'gibt_es_nicht'} -> erwartet job.json status error und render-result.json lieferstatus 'fehlgeschlagen', lieferstatus_grund woertlich (\"Himmelsbild 'gibt_es_nicht' (4k) fehlt am Rechner.\"). (b) eine Textur voruebergehend umbenennen (z. B. die Displacement-Karte von klinker 2K) und render.materialien {dach:{id:'klinker'}} -> Satz woertlich; Datei danach zuruecknennen. 6) VORSCHAU UND GEOMETRIE (Befund aus 291: die Vorschau zeigt den gegliederten Testbau kaum, Geometriemass ~0.01): auf EINER Grundlage aus 1 (mittag) vier Vorschauen mit vis.seed 482913: ControlNet-Staerke (render.faithful) 0.8 und 1.0, je mit 8 und 12 Schritten (Schritte nur, wenn ohne Codeaenderung einstellbar — sonst nur 8 und das sagen) -> je Lauf Geometriemass (qa.geometry.score bzw. geom_iou), Zeit, Bild zurueck. 7) SAETZE DES ENTLADENS: ist qwen3:14b geladen und ein Auftrag mit idle_window_only da, im Protokoll von tools/abholen.py die Zeile 'Karte: …' woertlich (nur beobachten, nichts laden). NICHT: Code aendern, Dateien ins Repo legen (keine HDRI, keine Texturen, keine Pfade), Ordnerwerte in die Rueckgabe schreiben, Kosmo-Modelle laden oder entladen, Dienste von KosmoOrbit anfassen, Mappe veraendern. Eigene Probeauftraege danach aufraeumen, die umbenannte Textur zurueck.",
+  "erstellt": "2026-10-20T18:59:42Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "folgt_auf": "auf-20261020-291",
+    "entscheide": [
+      "107",
+      "109",
+      "110",
+      "111",
+      "113"
+    ],
+    "einbau": [
+      "C79",
+      "C80",
+      "C81",
+      "C82"
+    ],
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Systemlast, 'Himmelsbilder n/8' aus GET /api/heim (ohne Ordnerwerte).",
+    "1: je Stimmung Zeit, umgebung.datei/groesse, sonne.weg, mittlere Helligkeit, Bild (480 px); mittag mit Sonne: sonne.weg; mittag mit rotationGrad 180: Schatten gedreht ja/nein.",
+    "2: materialien.objekte, Material-ID-Namen gleich wie ohne Weiss ja/nein, bauwerksmaske gemessen ja/nein.",
+    "3: je Kamera brennweite_mm, shift_y, neigung_grad, fuellgrad, abstand_m; Abweichung /knoten/standpunkte gegen blender-report in m; fester Abstand: abstand_m und vollstaendig.",
+    "4: materialien je Art (objekte, nicht_getroffen), ID-Namen gleich ja/nein, Zeit mit/ohne, Bild; Fugen sichtbar ja/nein; Concrete002 verzerrt ja/nein.",
+    "5: (a) und (b) status, lieferstatus, lieferstatus_grund woertlich.",
+    "6: je Lauf (faithful, Schritte) Geometriemass, Zeit, Bild.",
+    "7: Zeile 'Karte: …' woertlich oder 'nicht beobachtbar'.",
+    "Urteil in einem Satz: Tragen Stimmung, Auto-Kamera und Materialien am Geraet, und welche Steuerstaerke laesst die Vorschau der Geometrie folgen?"
+  ],
+  "rang": 79
+}

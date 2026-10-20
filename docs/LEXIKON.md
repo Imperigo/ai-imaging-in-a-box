@@ -3490,6 +3490,21 @@ Bauteil — die häufigste handwerkliche Fehlerquelle der realen Architekturfoto
 sich hier per Konstruktion ausschliessen, indem Neigung und Rollwinkel auf 0 geklemmt
 werden und die Höhenkorrektur über Shift läuft.*
 
+**Senkrechte Perspektive (Zwei-Punkt-Perspektive)** — Ein Bild, in dem alle senkrechten Kanten des Gebäudes
+auch im Bild senkrecht stehen; nur die waagrechten Kanten laufen auf zwei Fluchtpunkte zu. So fotografiert man
+Architektur: Die Kamera bleibt waagrecht, und was oben fehlt, holt der **Shift** ins Bild. Das Gegenstück ist
+die «freie» Perspektive: die Kamera wird nach oben gekippt, und die Kanten stürzen. *Im Projekt:* Entscheid 109,
+Vorgabe «senkrecht» am Knoten «Kamera»; auch eine von Hand gesetzte Kamera kann sie tragen (`perspektive`).
+
+**Fester Abstand (Auto-Kamera)** — Statt «das Haus füllt 70 % des Bilds» wird der Standpunkt in Metern bestellt,
+waagrecht von der Mitte des Bauwerks. Der Heim-PC rückt die Kamera dann nicht mehr zurück, wenn etwas über den
+Rand ragt — er sagt es nur. *Im Projekt:* `cameras_auto.abstand {art: 'fest', meter}`, 20.10.2026.
+
+**Angewandte Vorgaben (im Ergebnis)** — Was der Heim-PC wirklich gerechnet hat, mit allen Werten, die er selbst
+eingesetzt hat, weil die Bestellung sie offenliess — etwa 1,70 m Augenhöhe oder Relief 0,6. *Im Projekt:* das
+Feld `angewandt` im Ergebnis, je für Stimmung, Auto-Kamera und Materialien; `vorgaben` nennt die selbst
+gesetzten Felder.
+
 **Unsymmetrischer Bildrahmen (durch Shift)** — Die Folge, die man beim Shift übersieht:
 Weil der Rahmen gegen die Blickachse verschoben ist, reicht er **oben weiter und unten
 weniger weit**. Die Achse — bei waagrechter Kamera zugleich der Horizont — sitzt nicht
@@ -4067,6 +4082,59 @@ An Fensterwänden war eine Farbe je Ecke zu grob, das Bild unlesbar (HomeStation
 die Textur die Farbe und die Feinheiten — Fensterrahmen, Fugen, Schrift —, die viel kleiner sein können als
 die Dreiecke darunter. *Im Projekt:* Seit Fassung 3 der RealityScan-Brücke (14.10.2026) trägt das Umgebungsnetz
 eine Textur aus den Fotos statt Eckfarben; gemessen war das Bild damit so scharf wie der Splat oder schärfer.
+
+**Himmelsbild (HDRI)** — Ein Rundumfoto des Himmels und der Umgebung, so aufgenommen, dass es nicht nur
+Farben, sondern auch die echte Helligkeit trägt (die Sonne ist darin tausendmal heller als eine Wolke). Legt
+man es als «Welt» um ein Modell, beleuchtet es das Modell so, wie der Himmel am Aufnahmeort es getan hätte —
+mit Licht, Schatten und Spiegelungen in einem. *Im Projekt:* acht Himmelsbilder von Poly Haven (frei von
+Rechten, CC0), eines je Stimmung; sie liegen nur am Heim-PC, nie im Repo. Fehlt eines, wird der Auftrag mit
+dessen Namen abgewiesen (Entscheid 113). `src/aiimaging/stimmung.py`.
+
+**Stimmung (Knoten)** — Die Wahl, unter welchem Himmel und Licht ein Bild entsteht: Morgen, Mittag, Abend,
+Blaue Stunde, bedeckt, Nebel, Winter oder Weiss. Jede Stimmung bringt ein Himmelsbild und einen Satz für das
+Bildmodell mit. Der Himmel lässt sich drehen (woher das Licht kommt) und heller oder dunkler stellen. Mit
+Himmelsbild gibt es keine zusätzliche Sonnenlampe — sonst käme das Licht doppelt —, ausser eine Sonne ist
+ausdrücklich bestellt. *Im Projekt:* `render.environment`, gerechnet seit dem 20.10.2026 (Entscheid 110).
+
+**Gipsmodell (Stimmung «Weiss»)** — Alle Flächen des Modells bekommen dasselbe matte Weiss, wie ein
+Arbeitsmodell aus Gips oder Karton. Übrig bleiben nur Form, Licht und Schatten. *Im Projekt:* Entscheid 113;
+der Heim-PC tauscht dafür jedes Material gegen ein diffuses Weiss (siehe **Principled BSDF**: hier genügt
+die einfachere «Diffuse»-Fläche ohne Glanz).
+
+**Principled BSDF** — In Blender die eine «Allzweck-Oberfläche», mit der fast jedes Material beschrieben wird:
+Farbe, wie rau oder glänzend, wie metallisch, wie durchsichtig. BSDF ist die Fachabkürzung für «wie eine Fläche
+das Licht zurückwirft». *Im Projekt:* Für jede gewählte Materialwahl baut der Heim-PC eine solche Oberfläche
+aus den Bildern des Materials (Farbe, Rauheit, Höhe) — `_material_aus_wahl` im Runner.
+
+**Box-Projektion** — Eine Art, ein Musterbild (Backstein, Beton) auf ein Modell zu legen, ohne das Modell vorher
+aufzuschneiden (siehe **Abwicklung**): Das Bild wird von den drei Hauptrichtungen her aufgeworfen, wie mit drei
+Diaprojektoren von vorn, von der Seite und von oben, und an schrägen Flächen weich überblendet. Vorteil: geht mit
+jedem Modell. Nachteil: an schrägen Flächen können Nähte sichtbar werden. *Im Projekt:* Überblendung 0,2, der
+Massstab in Metern (ein Bild deckt so viele Meter ab), drehbar; ein nicht quadratisches Bild wird nach seinem
+Seitenverhältnis gestreckt.
+
+**Relief (Bump)** — Eine Fläche sieht rau oder gefugt aus, obwohl sie geometrisch glatt bleibt: Ein
+Graustufenbild sagt je Punkt «höher» oder «tiefer», und das Licht wird so berechnet, als wäre die Fläche dort
+gewölbt. Die Form selbst ändert sich nicht — die Silhouette bleibt gerade. *Im Projekt:* `relief` 0 bis 1 an
+der Materialwahl (Vorgabe 0,6), aus dem Höhenbild des Materials; eine «Normal-Map» (ein Bild, das die
+Neigung statt der Höhe speichert) geht mit der Box-Projektion nicht, weil dort die Richtung «nach rechts im
+Bild» je Fläche fehlt.
+
+**Materialwahl (je Bauteil-Art)** — Die Bestellung «Fassade in Sichtbeton, Boden in Stampflehm»: je Art ein
+Material aus der Bibliothek, mit Massstab, Drehung, Relief und wahlweise einer Tönung (eine Farbe, die zu
+einem Anteil darübergemischt wird). Nicht gewählte Arten behalten das Material des Modells, das Gelände bleibt
+immer, wie es ist. *Im Projekt:* `render.materialien`, elf Materialien von ambientCG (CC0) am Heim-PC,
+`src/aiimaging/materialwahl.py`.
+
+**Bauteil-Art** — Welche Rolle ein Teil des Modells spielt: Fassade, Dach, Fenster, Boden oder «übrige» (Türen,
+Treppen, Stützen …), dazu das Gelände. Erkannt am Vermerk, den KosmoOrbit jedem Bauteil mitgibt, oder am Namen
+aus der IFC-Datei («IfcWall_…» ist eine Wand). *Im Projekt:* `materialwahl.art_von`, mit zwei Tabellen, die
+das Programm drüben nachbaut.
+
+**Fuge (im Material)** — Der dunkle, etwas vertiefte Spalt zwischen zwei Latten. Das Bild der Holzlattung zeigt
+eine geschlossene Schalung; die Fugen werden darum beim Rechnen hineingeschnitten — alle 7 cm (5 cm Latte,
+2 cm Fuge), dunkler gefärbt und im Relief vertieft. *Im Projekt:* `fugen` am Bibliothekseintrag
+«holzlattung-fichte».
 
 **Abwicklung (UV-Abwicklung)** — Das Netz wird gedanklich aufgeschnitten und flach ausgelegt, wie ein
 Schnittmuster aus Stoff, damit jedes Dreieck seinen Platz auf einem flachen Bild bekommt. Die Lage auf dem Bild
@@ -7703,6 +7771,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 | Datum | Änderung |
 |---|---|
 | 2026-10-20 | Ergaenzt aus den drei Fehlern vom Mac (Protokoll 74 §152): **Fokusring**, **Feste Bildbox (Einpassen)**; die Seite der **Variante ohne Hochladen** steht unter diesem Eintrag (nicht doppelt angelegt) |
+| 2026-10-20 | Ergaenzt aus den neuen Knoten am Heim-PC (H1–H3, Protokoll 74 §153): **Himmelsbild (HDRI)**, **Stimmung (Knoten)**, **Gipsmodell (Stimmung «Weiss»)**, **Principled BSDF**, **Box-Projektion**, **Relief (Bump)**, **Materialwahl (je Bauteil-Art)**, **Bauteil-Art**, **Fuge (im Material)**, **Senkrechte Perspektive (Zwei-Punkt-Perspektive)**, **Fester Abstand (Auto-Kamera)**, **Angewandte Vorgaben (im Ergebnis)** |
 | 2026-10-20 | Ergaenzt aus den Heim-PC-Fehlern (Protokoll 74 §150): **Variante ohne Hochladen**, **Endgültiger Mangel**, **Kantenrauschen (einer Tiefenkarte)**, **Streamender Teiler**, **Lange Wartezeit (der Mac-App)**, **Eigenes Modell (des Assistenten)**, **Rollenkarte (von KosmoOrbit)**, **Marke «eine Frage läuft»**; **Formular-Upload** und **Entladen (des Sprachmodells)** nachgeführt |
 | 2026-10-20 | Ergaenzt aus dem MCP-Kern der Mac-App (KI-Bedienung Stufe 2, Protokoll 74 §151): **MCP-Anschluss in der Mac-App**, **JSON-RPC**, **Hörer (Listener)**, **Loopback (127.0.0.1)**, **DNS-Rebinding**, **Streamable HTTP**, **Wartefrist (eines Aufrufs von Claude)**, **Werkzeugträger** |
 | 2026-10-20 | Ergaenzt aus dem Güte-Schalter am Render-Knoten (Protokoll 74 §149): **Zwischenbild**, **Zeilenregister (Render-Knoten)** |

@@ -308,6 +308,49 @@ Terms of Use), Qwen2.5-3B/-72B (Qwen-Lizenzen).
 --------------------------------------------------------------------------------
 
 ================================================================================
+Himmelsbilder und Texturen - Bilddaten am Heim-PC, CC0, nicht ausgeliefert
+================================================================================
+
+Zugelassen nach CLAUDE.md, Regel 1, Praezisierung Texturen und Himmelsbilder
+(Owner-Entscheid 107, 20.10.2026): ausschliesslich Bilddaten, unveraendert, mit
+Quelle deklariert. Die Dateien liegen NICHT im Repo und gehen in KEIN Produkt
+ein; die HomeStation hat sie am Heim-PC abgelegt. Gefunden werden sie nur ueber
+Umgebungsvariablen (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER), nie
+ueber einen Pfad im Repo (Regel 3). Die Tabellen dazu: src/aiimaging/stimmung.py
+(STIMMUNGEN), src/aiimaging/materialwahl.py (BIBLIOTHEK).
+
+Himmelsbilder (HDRI)    CC0-1.0      Poly Haven, https://polyhaven.com/hdris
+  morgen        sunny_vondelpark
+  mittag        kloofendal_43d_clear_puresky
+  abend         fish_eagle_hill
+  blaue-stunde  the_sky_is_on_fire
+  bedeckt       overcast_soil_puresky
+  nebel         kloppenheim_04
+  winter        snowy_field
+  weiss         mud_road_puresky
+  Je 2k (Vorschau) und 4k, als <stimmung>__<asset>_<2k|4k>.hdr.
+
+Texturen (PBR-Karten)   CC0-1.0      ambientCG, https://ambientcg.com
+  sichtbeton-sandgestrahlt   Concrete037
+  sichtbeton-schalungsglatt  Concrete002
+  fichte                     Wood096
+  backstein                  Bricks101
+  klinker                    Bricks054
+  sandstein                  Rock004
+  stampflehm                 Ground104
+  verputz-weiss-glatt        Plaster002
+  verputz-weiss-rau          Plaster003
+  holzlattung-fichte         Planks021
+  dreischichtplatte          Wood090A
+  Je 1K (Vorschau) und 2K, Karten Color, Roughness, NormalGL, Displacement
+  (AmbientOcclusion bei sieben), als <id>__<asset>_<1K|2K>-JPG_<Karte>.jpg.
+
+Die Vorschaubilder fuer die Knotenansicht (die im Programm ausgeliefert wuerden)
+kommen spaeter und werden dann mit Datei und SHA-256 hier gefuehrt.
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Epic RealityScan - Fremdprogramm, vom Nutzer installiert, nicht ausgeliefert
 ================================================================================
 

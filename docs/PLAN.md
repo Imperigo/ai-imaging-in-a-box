@@ -8127,3 +8127,16 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Stufen 0–7 nach dem Plan (§4)
   - [x] Stufe 2: MCP-Kern in Swift mit Proben (JSON-RPC: `initialize` mit Fassungswahl, `ping`, `tools/list`, `tools/call`, Meldungen; Werkzeuge als Daten; Wartefrist 45 s mit «wartet noch — Vorschlag K-n liegt in der Assistent-Leiste»; `visbox_status`, `visbox_vorschlag_status`; Spielregel; Freigaberegel Karte/Coop/Voll; Host-/Origin-Prüfung; `POST /mcp`); Hörer der Mac-App nur auf `127.0.0.1:8631`, ab Werk an (`claudeMcp.an`); `--mcp-stdio` ohne Fenster; Werkzeugträger als Platzhalter («kommt mit Stufe 3») — gebaut, am Gerät unbestätigt (§150, C76)
   - [ ] Stufe 3: Brücke App ↔ Knotenansicht als echter Werkzeugträger, Karten in der Assistent-Leiste, Tätigkeitsstrom, Einrichten (Schalter, Hinweis zu den Daten an Anthropic, 106f)
+
+## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)
+
+- [ ] Heim-PC-Teil
+  - [x] H1 Stimmung: `render.environment` mit Himmelsbild, Gipsmodell «weiss», Abweisung mit Satz im Ergebnis, «Himmelsbilder n/8» — gebaut, am Gerät unbestätigt (§153, C79)
+  - [x] H2 Kamera: `cameras_auto` je Auftrag, fester Abstand, senkrecht von Hand, `GET /knoten/standpunkte` in Server und Mac-App — gebaut, am Gerät unbestätigt (§153, C80)
+  - [x] H3 Material: `render.materialien` je Bauteil-Art, Principled/Box/Bump/Tönung, Fugen der Holzlattung — gebaut, am Gerät unbestätigt (§153, C81)
+  - [x] Sätze des Entladens (Befunde aus 291) — gebaut, am Gerät unbestätigt (§153, C82)
+  - [ ] Messung am Heim-PC: auf-20261020-292 (local), dazu Vorschau-Geometrie bei Steuerstärke 0,8/1,0 und 8/12 Schritten
+  - [ ] Zeile «Himmelsbilder n/8» im Einrichten der Mac-App anzeigen; Satz `entladen` in der Assistent-Leiste (Visbox, Swift)
+- [ ] Vertrag V und Katalog K beim Integrator (Felder wie abgestimmt; Fixtures vom Heim-PC liegen bereit)
+- [ ] Oberfläche A–F und W (Bauplan §3) — nacheinander über NodeCanvas
+
