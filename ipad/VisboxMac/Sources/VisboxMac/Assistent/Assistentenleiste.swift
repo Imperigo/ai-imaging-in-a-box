@@ -164,12 +164,17 @@ struct Assistentenleiste: View {
     /// Ohne Rechner: der Satz, warum der Assistent gesperrt ist (`Rechnersperre.satz`);
     /// `nil`, wenn er geht.
     private let gesperrt: String?
+    /// Ob die KI-Leiste oben steht. **Nicht in der Knotenansicht** (Plan UI-Gleichheit S2,
+    /// 20.10.2026): Dort traegt die Seite Claude-Marke, Karten und Selbstaendigkeit selbst.
+    private let mitKi: Bool
 
     init(anschluss: AssistentAnschluss, ordner: String? = nil, gesperrt: String? = nil,
+         mitKi: Bool = true,
          beiStandpunkt: @escaping (VorgeschlagenerStandpunkt?) -> Void = { _ in }) {
         _modell = StateObject(wrappedValue: Assistentenmodell(anschluss: anschluss,
                                                               ordner: ordner))
         self.gesperrt = gesperrt
+        self.mitKi = mitKi
         self.beiStandpunkt = beiStandpunkt
     }
 
@@ -177,9 +182,11 @@ struct Assistentenleiste: View {
         VStack(alignment: .leading, spacing: 12) {
             // BLATT 30, FELD 1 (KI-Bedienung Stufe 3): Claude, der Assistent mit seinem Modell,
             // der Schalter «Selbständigkeit», der Strom und die Karten — vor dem Gespraech.
-            Kileiste(assistentSatz: Assistentenkopf.satz(modell.zeile, heimEingerichtet: true),
-                     zentrale: .gemeinsam, anschluss: .gemeinsam)
-            Divider()
+            if mitKi {
+                Kileiste(assistentSatz: Assistentenkopf.satz(modell.zeile, heimEingerichtet: true),
+                         zentrale: .gemeinsam, anschluss: .gemeinsam)
+                Divider()
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     // `angezeigt`, nicht `beitraege`: Die Nachricht, die gerade unterwegs ist,

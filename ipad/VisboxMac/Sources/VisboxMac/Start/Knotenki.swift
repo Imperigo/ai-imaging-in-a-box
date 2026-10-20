@@ -63,11 +63,84 @@ final class Knotenki: NSObject, WKScriptMessageHandler {
     }
 }
 
-/// Haelt den Boten nur schwach — sonst hielte die Konfiguration die Flaeche fuer immer.
-private final class Schwacherbote: NSObject, WKScriptMessageHandler {
-    weak var bote: Knotenki?
+/// Die zweite Brücke der Knotenansicht, **«visboxWirt»** (Plan UI-Gleichheit S1/S2, Entscheide
+/// 115/116, 20.10.2026): Die Kopfteile der Seite (Palette am Logo, Einstellungs-Kreis,
+/// Heim-PC-Chip, die Selbständigkeit an der Claude-Marke) melden ihre Wünsche, und die App legt
+/// ihre Lage in die Seite (`window.visboxWirt.lage({...})`). Was ein Wunsch heisst und was die
+/// Lage traegt, steht im Kern (`Knotenwirt`, mit Proben).
+///
+/// **Dieselbe Wache wie `Knotenki`:** Nur der Hauptrahmen vom eigenen Adressschema spricht; die
+/// Visbox-Seite des Heim-PC in derselben Flaeche wuenscht nichts. Die Lage traegt kein Kennwort —
+/// sie hat kein Feld dafuer.
+///
+/// *Gebaut, am Gerät unbestätigt (20.10.2026)* — hier nicht übersetzt, nur in der Prüfstrecke.
+final class Knotenwirtbote: NSObject, WKScriptMessageHandler {
+    static let name = Knotenwirt.name
 
-    init(_ bote: Knotenki) {
+    /// Was die App auf einen Wunsch tut — gesetzt von der `Heimflaeche` (aus der `Arbeitsansicht`).
+    var wuensche: (Knotenwirt.Wunsch) -> Void = { _ in }
+    /// Die zuletzt gesetzte Lage; nach «bereit» und bei jeder Aenderung in die Seite gelegt.
+    private(set) var lage: Knotenwirt.Lage?
+    /// Die Ansicht, die «bereit» gemeldet hat — schwach, die Flaeche haelt sie.
+    private weak var ansicht: WKWebView?
+
+    static func haengeAn(_ einstellung: WKWebViewConfiguration, bote: Knotenwirtbote) {
+        einstellung.userContentController.add(Schwacherbote(bote), name: name)
+    }
+
+    func userContentController(_ steuerung: WKUserContentController,
+                               didReceive nachricht: WKScriptMessage) {
+        guard nachricht.frameInfo.isMainFrame,
+              let adresse = nachricht.frameInfo.request.url, Knotenwege.istEigen(adresse),
+              JSONSerialization.isValidJSONObject(nachricht.body),
+              let daten = try? JSONSerialization.data(withJSONObject: nachricht.body),
+              let wert = try? JSONWert.lies(daten),
+              let wunsch = Knotenwirt.wunsch(aus: wert) else { return }
+        let quelle = nachricht.webView
+        MainActor.assumeIsolated {
+            if wunsch == .bereit {
+                ansicht = quelle
+                lege()
+            } else {
+                wuensche(wunsch)
+            }
+        }
+    }
+
+    /// Eine neue Lage — nur, wenn sie sich geaendert hat.
+    @MainActor
+    func setze(_ neu: Knotenwirt.Lage) {
+        guard neu != lage else { return }
+        lage = neu
+        lege()
+    }
+
+    /// Die Seite geht (neu laden, umschalten): bis zum naechsten «bereit» wird nichts gelegt.
+    @MainActor
+    func seiteGeht() {
+        ansicht = nil
+    }
+
+    @MainActor
+    private func lege() {
+        guard let ansicht, let lage, let rumpf = Knotenwirt.rumpf(lage) else { return }
+        ansicht.evaluateJavaScript(rumpf, completionHandler: nil)
+    }
+
+    /// Das Thema vor dem ersten Bild: ein Skript am Anfang des Dokuments, das die gemerkte Wahl
+    /// dorthin legt, wo die Seite sie liest (`kosmo.thema`, wie KosmoOrbit). Das Webfenster hat
+    /// keinen bleibenden Speicher; die App merkt die Wahl (`Knotenwirt.Thema.einstellung`).
+    static func themaSkript(_ thema: Knotenwirt.Thema) -> WKUserScript {
+        WKUserScript(source: "try { localStorage.setItem('kosmo.thema', '\(thema.rawValue)'); } catch (e) {}",
+                     injectionTime: .atDocumentStart, forMainFrameOnly: true)
+    }
+}
+
+/// Haelt einen Boten nur schwach — sonst hielte die Konfiguration die Flaeche fuer immer.
+private final class Schwacherbote: NSObject, WKScriptMessageHandler {
+    weak var bote: (NSObject & WKScriptMessageHandler)?
+
+    init(_ bote: NSObject & WKScriptMessageHandler) {
         self.bote = bote
     }
 

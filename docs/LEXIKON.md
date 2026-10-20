@@ -5839,18 +5839,21 @@ von Claude · K-12», darunter, was geschehen würde; bei einem Render-Auftrag d
 deine Freigabe am Knoten.» *Im Projekt:* Entscheid 106a; `Kikarte` im Kern, gezeichnet in `Kileiste.swift`.
 
 **Selbständigkeit (Karte, Coop, Voll)** — Wie frei die KI arbeiten darf, eingestellt oben in der
-Assistent-Leiste: **Karte** (Vorgabe) — jede Änderung wird erst eine Karte; **Coop** und **Voll** —
+Assistent-Leiste (seit dem 20.10.2026 in der Knotenansicht an der **Claude-Marke**, mit den Schaltern «Coop – ändert
+frei» und «Vollautomatik» aus KosmoOrbit): **Karte** (Vorgabe) — jede Änderung wird erst eine Karte; **Coop** und **Voll** —
 Änderungen gehen ohne Karte. In jedem Fall bleibt Löschen eine Karte, und die Grafikkarte gibt immer ein
 Mensch frei. Die Wahl gilt für Claude und den Assistenten zugleich und wird gemerkt. *Im Projekt:*
 Entscheide 106b, 108 A; `Selbstaendigkeit` im Kern.
 
 **Tätigkeitsstrom** — Eine Zeile in der Assistent-Leiste, die sagt, was die KI gerade tut («● Claude
 legt einen Knoten an …»). Sie steht nur, solange die KI arbeitet, und ein paar Sekunden danach; ein
-Verlauf ist sie nicht. *Im Projekt:* Entscheid 108 C; `Kileistenstand.strom`.
+Verlauf ist sie nicht. In der Knotenansicht übernimmt das seit dem 20.10.2026 die **Erzählzeile**. *Im Projekt:*
+Entscheid 108 C; `Kileistenstand.strom`.
 
 **Zwei Rückgängig-Verläufe (eigene Schritte und KI-Schritte)** — Was die KI ohne Karte ändert (Coop,
 Voll), steht in einem eigenen Verlauf. **Strg+Z nimmt nur die eigenen Schritte des Architekten zurück**;
-den letzten Schritt von Claude nimmt der Knopf «Claudes letzten Schritt zurücknehmen» zurück. Hat jemand
+den letzten Schritt von Claude nimmt der Knopf «Claudes letzten Schritt zurücknehmen» zurück (in der Knotenansicht
+«Zurücknehmen» am letzten Schritt unter «Im Projekt» an der **Claude-Marke**). Hat jemand
 seither am selben Graphen weitergearbeitet, ändert der Knopf nichts und sagt, woran es hängt — und
 umgekehrt hält Strg+Z an, statt Claudes Arbeit zu überschreiben. Eine Karte, die der Architekt anwendet,
 ist sein eigener Schritt. *Im Projekt:* Entscheid 114, wie KosmoOrbit; `rueckgaengigKi` und
@@ -7938,6 +7941,64 @@ sie etwas kann, das gerade niemand benutzt. *Im Projekt:* das 3D-Fenster samt th
 eigenen Dateien unter `kosmovis/apps/visbox-knoten/dist/assets/` und kommt erst, wenn ein
 Modell-Knoten sein Fenster zeigt.
 
+**Kopfteile (der Knotenansicht)** — Die kleinen Bedienteile, die schwebend am Rand über der Arbeitsfläche
+stehen, nicht auf ihr: oben links die **Stationen-Palette** am Logo, oben rechts der **Einstellungs-Kreis**, der
+**Speichern-Kreis** und die **Zweitgruppe**, unten links die **Claude-Marke**, oben in der Mitte die **Erzählzeile**.
+In KosmoOrbit hängen sie nicht an einer Station, sondern am Programm drumherum; darum fehlten sie in Visbox, obwohl die
+Knotenfläche selbst schon gleich war. *Im Projekt:* Entscheide 115/116, `kosmovis/apps/visbox-knoten/src/kopf.tsx`;
+was KosmoOrbit zeigt und Visbox nicht, steht mit Grund in `kosmovis/UI_AUSNAHMEN.json`.
+
+**Stationen-Palette (am Logo)** — Ein runder Knopf mit dem Logo oben links. Ein Klick führt zur Startansicht; fährt
+man mit der Maus darüber (am iPad: erster Tipp), fächern sich wie Farbtupfer auf einer Malerpalette die Ziele auf — in
+Visbox «Knoten» (die offene Fläche, markiert) und «Visbox-Seite». *Im Projekt:* `WerkzeugPalette.tsx`, wortgleich aus
+KosmoOrbit; die Ziele meldet der Wirt an (`registrierePalettenQuelle`).
+
+**Speichern-Kreis** — Ein runder Knopf neben dem Zahnrad, der still sagt, ob gesichert ist: ein kleiner Punkt, der nur
+bei einem Fehler rot wird — dann auch mit Grund, laut. Angetippt zeigt er den Stand («Gesichert · jeder Schritt ·
+zuletzt 14:32»). In Visbox sichert die Knotenansicht den Render-Graph bei jedem Schritt auf dem Heim-PC; Knöpfe zum
+Sichern als Datei oder Öffnen gibt es dort nicht, weil die Mappe der Heim-PC hält. *Im Projekt:* `SpeichernKreis.tsx`,
+Lage aus `graph-sichern.ts`.
+
+**Zweitgruppe (des Inselkopfs)** — Die kleine Reihe oben rechts neben dem Zahnrad: ein Zustands-Chip, «Rückgängig»,
+«Wiederholen» und die Nummer der laufenden Fassung. In KosmoOrbit ist der Chip der Sync (gemeinsames Arbeiten im selben
+Modell), in Visbox der **Heim-PC-Chip**. *Im Projekt:* `InselZweitgruppe` in `InselKopf.tsx`.
+
+**Heim-PC-Chip** — Ein kleines Schild in der Zweitgruppe, das in einem Wort sagt, wie es um den Rechenrechner steht
+(«Heim-PC · bereit», «· nicht erreichbar», «· nicht gekoppelt»), in den Farben, die KosmoOrbit für den Sync nimmt: grün,
+grau, gelb. Ein Klick öffnet «Wer rechnet?». *Im Projekt:* Entscheid 116 (5); Text aus `Knotenwirt.rechnerchip` im Kern.
+
+**Claude-Marke** — Das Schild «Claude verbunden» unten links, das nur steht, solange Claude angeschlossen ist. Darüber
+liegen Claudes **Karten** zum Anwenden oder Ablehnen; angetippt klappt die **Selbständigkeit** auf. Daneben zeigt «Im
+Projekt: Du · Claude», wer ohne Karte etwas geändert hat, mit «Zurücknehmen» je Schritt. *Im Projekt:*
+`ClaudeAnschluss.tsx` und `KosmoCoop.tsx`, wortgleich aus KosmoOrbit; den Zustand liefern die Mac-App und der
+KI-Werkzeugsatz der Seite.
+
+**Erzählzeile** — Eine Zeile oben in der Mitte, die in einem Satz sagt, was Claude gerade tut oder worauf es wartet
+(«Claude wartet auf dich» mit «Anwenden»/«Ablehnen» gleich daneben). Ohne Erzählung steht sie nicht da. *Im Projekt:*
+`ErzaehlZeile.tsx`, wortgleich aus KosmoOrbit.
+
+**Thema (Papier, Kosmos)** — Die Grundfarbe der ganzen Oberfläche: **Kosmos** dunkel (die Vorgabe in KosmoOrbit und
+seit dem 20.10.2026 auch in der Knotenansicht von Visbox), **Papier** hell. Umgeschaltet wird am Mac im Menü
+«Darstellung → Thema wechseln (Papier/Kosmos)»; die App merkt sich die Wahl, weil das Webfenster nichts behält. *Im
+Projekt:* Entscheid 116 (3), `thema.ts` im Wirt, `Knotenwirt.Thema` im Kern.
+
+**Nahtstelle (für einen zweiten Wirt)** — Eine kleine, vorbereitete Stelle in einer fremden Datei, an der ein zweites
+Programm etwas Eigenes anmelden kann, ohne die Datei zu ändern — wie eine Steckdose, die drüben niemand benutzt. So
+kommt die Datei unverändert herüber, und doch tut sie in Visbox das Richtige. *Im Projekt:* die Muster
+`registriereModellLaden` (Entscheid 90) und seit dem 20.10.2026 `registrierePalettenQuelle`, die wahlfreien Handgriffe
+des Speichern-Kreises, `chip` und `onRundgang` der Zweitgruppe, `ausklapper` der Claude-Marke (KosmoOrbit-Zweig
+`claude/kosmovis-kopf`).
+
+**Bote «visboxWirt» (zweite Brücke)** — Ein zweiter Weg zwischen Knotenansicht und Mac-App, neben dem **Bote
+«visboxKi»**: Die Seite sagt der App, was ein Kopfteil will (Startansicht öffnen, Einstellungen, «Wer rechnet?»,
+Selbständigkeit), und die App legt ihre Lage in die Seite (Heim-PC-Chip, ob Claude verbunden ist, Fassung,
+Selbständigkeit, Thema). Das Kennwort des Heim-PC läuft nie darüber — die Lage hat kein Feld dafür. *Im Projekt:*
+`wirt-bruecke.ts`, `Knotenwirtbote` in `Knotenki.swift`, `Knotenwirt` im Kern.
+
+**UI-Ausnahme** — Ein Teil, den KosmoOrbit zeigt und Visbox bewusst nicht, weil es die Sache dahinter in Visbox nicht
+gibt (etwa die Sync-Leiste: Visbox hat keinen gemeinsamen Raum). Jede Ausnahme steht mit Grund und Entscheid in einer
+Liste, und eine Probe prüft, dass jeder Kopfteil von KosmoOrbit entweder eingesetzt oder dort benannt ist. *Im
+Projekt:* `kosmovis/UI_AUSNAHMEN.json`, `tests/test_kosmovis_ui_gleichheit.py`.
 **Metallwert (eines Materials)** — Eine Zahl von 0 bis 1, die sagt, wie sehr eine Fläche wie Metall
 wirkt. Metall hat keine eigene Farbe im Licht, es zeigt nur, was es spiegelt; steht nichts zum Spiegeln
 herum, wirkt es fast schwarz. *Im Projekt:* Bauteile ohne Material bekamen im 3D-Fenster den Wert 1
@@ -7970,7 +8031,8 @@ rechneten.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-20 | Ergaenzt aus den drei Fehlern am 3D-Fenster (Protokoll 74 §159): **Metallwert (eines Materials)**, **Umgebungslicht (aus einem Raum)**, **Normale (Richtung einer Fläche)**, **Schnittebene (vorne und hinten)**, **Entzerren (eines gesicherten Graphen)** |
+| 2026-10-20 | Ergaenzt aus den Kopfteilen der Knotenansicht (Plan UI-Gleichheit S1/S2, Protokoll 74 §159): **Kopfteile (der Knotenansicht)**, **Stationen-Palette (am Logo)**, **Speichern-Kreis**, **Zweitgruppe (des Inselkopfs)**, **Heim-PC-Chip**, **Claude-Marke**, **Erzählzeile**, **Thema (Papier, Kosmos)**, **Nahtstelle (für einen zweiten Wirt)**, **Bote «visboxWirt» (zweite Brücke)**, **UI-Ausnahme**; **Selbständigkeit**, **Tätigkeitsstrom** und **Zwei Rückgängig-Verläufe** nachgeführt (in der Knotenansicht an der Claude-Marke) |
+| 2026-10-20 | Ergaenzt aus den drei Fehlern am 3D-Fenster (Protokoll 74 §160): **Metallwert (eines Materials)**, **Umgebungslicht (aus einem Raum)**, **Normale (Richtung einer Fläche)**, **Schnittebene (vorne und hinten)**, **Entzerren (eines gesicherten Graphen)** |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §158): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |
 | 2026-10-20 | Ergaenzt aus der KI-Bedienung Stufe 3/4 (Protokoll 74 §156): **KI-Werkzeugsatz (der Knotenansicht)**, **Karte (Vorschlag der KI)**, **Selbständigkeit (Karte, Coop, Voll)**, **Tätigkeitsstrom**, **Zwei Rückgängig-Verläufe**, **Verlaufs-Wache**, **Bote «visboxKi» (Script-Message-Handler)**, **Werkzeuge der Mac-App (für Claude)**, **Werkzeugliste im Bau**, **Claude Desktop**; **MCP-Anschluss in der Mac-App** und **Werkzeugträger** nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-292 (Protokoll 74 §154): **Tonwerte (Tonwertkurve)**, **Belichtung (je Stimmung)**, **Überstrahlung (voll weisse Bildpunkte)**, **Ruhiger Hintergrund (Kamerastrahl)**, **Tönung (je Stimmung)**, **Bestellte Bildgrösse und Raster**; **View-Transform** um AgX mit Himmelsbild ergänzt |

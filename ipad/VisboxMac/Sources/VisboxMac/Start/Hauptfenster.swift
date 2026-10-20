@@ -40,6 +40,12 @@ struct Hauptfenster: View {
 
     @State private var arbeitet = false
     @State private var einrichtenOffen = false
+    /// Womit «Einrichten» aufgeht, wenn die Knotenansicht danach fragt (Einstellungs-Kreis,
+    /// Heim-PC-Chip — Plan UI-Gleichheit S1); `nil`: mit der Kopplung.
+    @State private var einrichtenAnfang: Einrichtenanfang?
+    /// Das Thema der Knotenansicht (Entscheid 116 (3)): dunkel wie KosmoOrbit, umschaltbar im Menue
+    /// «Darstellung» (`VisboxMacApp`). Gemerkt hier, weil das Webfenster keinen Speicher behaelt.
+    @AppStorage(Knotenwirt.Thema.einstellung) private var themaText = Knotenwirt.Thema.vorgabe.rawValue
     @State private var aktualisierenOffen = false
     /// Das Koppelfenster «iPad koppeln» (Entscheid 99) — zwei Minuten, dann zu.
     @State private var ipadKoppelnOffen = false
@@ -80,7 +86,7 @@ struct Hauptfenster: View {
             // SEIT ENTSCHEID 83 (13.10.2026) zuerst die Kopplung mit Zahl (Blatt 17); der
             // bisherige Dialog ist darin der kleine Link «Von Hand eintragen …» (83c).
             Koppeln(leitung: leitung, leitungstakt: leitungstakt,
-                    fertig: { einrichtenOffen = false })
+                    fertig: { einrichtenOffen = false }, anfang: einrichtenAnfang?.abschnitt)
                 // OHNE ADRESSE UND KENNWORT GIBT ES NICHTS ZU ZEIGEN: Das Blatt geht erst zu,
                 // wenn beides gesichert ist.
                 .interactiveDismissDisabled(leitung.braucheEinrichten)
@@ -109,9 +115,16 @@ struct Hauptfenster: View {
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
             Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
+        // DIE KNOTENANSICHT FRAGT NACH «EINRICHTEN» (Plan UI-Gleichheit S1, 20.10.2026): der
+        // Einstellungs-Kreis (bis zur Einstellungs-Insel, S4) und der Heim-PC-Chip («Wer rechnet?»).
+        .onReceive(NotificationCenter.default.publisher(for: .einrichtenOeffnen)) { nachricht in
+            einrichtenAnfang = nachricht.object as? Einrichtenanfang
+            einrichtenOffen = true
+        }
         .onChange(of: einrichtenOffen) { _, offen in
             // NACH DEM EINRICHTEN kann das Kennwort neu sein, bei gleicher Adresse.
             if !offen {
+                einrichtenAnfang = nil
                 vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
                 Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
                 // AUCH NACH «ABBRECHEN» gleich nachsehen statt bis zu 60 s zu warten; die Lage
@@ -169,7 +182,12 @@ struct Hauptfenster: View {
         switch schalter.fensterinhalt(eingerichtet: eingerichtet, arbeitet: arbeitet) {
         case .arbeit:
             Arbeitsansicht(leitung: leitung, zurueck: { arbeitet = false },
-                           sperre: schalter.sperre(eingerichtet: eingerichtet))
+                           sperre: schalter.sperre(eingerichtet: eingerichtet),
+                           rechner: Knotenwirt.rechnerchip(eingerichtet: eingerichtet,
+                                                           lage: schalter.lage),
+                           leitungSatz: schalter.band(eingerichtet: eingerichtet)?.titel,
+                           zentrale: .gemeinsam, claude: .gemeinsam,
+                           thema: Knotenwirt.Thema(gemerkt: themaText))
         case .start:
             Startansicht(leitung: leitung,
                          anfangen: { arbeitet = true },

@@ -31,44 +31,34 @@ struct Arbeitsansicht: View {
     let zurueck: () -> Void
     /// Was ohne Rechner gesperrt ist (`Leitungsschalter.sperre`) — hier: der Assistent.
     var sperre: Rechnersperre = .offen
+    /// Der Heim-PC-Chip der Knotenansicht (`Knotenwirt.rechnerchip`) und der Satz des Bands —
+    /// vom `Hauptfenster`, das den Takt der Leitung haelt.
+    var rechner = Knotenwirt.rechnerchip(eingerichtet: false, lage: .startet)
+    var leitungSatz: String?
+
+    // VON AUSSEN GEREICHT (`zentrale: .gemeinsam, claude: .gemeinsam` im `Hauptfenster`), nicht
+    // als Vorgabewert hier — wie in der `Kileiste`: Ein Vorgabewert laese die Einzelstuecke
+    // ausserhalb des Hauptfadens.
+    @ObservedObject var zentrale: Kizentrale
+    @ObservedObject var claude: Claudeanschluss
 
     @State private var flaechenSatz: String?
     @State private var wahl: Flaechenwahl = Flaechenwahl.beimOeffnen
+    /// Das Thema der Knotenansicht (Entscheid 116 (3)) — gemerkt im `Hauptfenster`, nicht hier:
+    /// Diese Ansicht merkt sich nichts (Entscheid 85 C).
+    var thema: Knotenwirt.Thema = .vorgabe
+    @State private var claudeVerbunden = false
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                // DIE NUMMER GANZ KLEIN NEBEN DEM NAMEN (Owner, 14.10.2026): Welche Fassung laeuft,
-                // steht so ohne Menue da — auch nach einem Neustart aus dem Aktualisieren.
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(Marke.name)
-                        .font(Macschriften.schrift(.titel, 25))
-                    Text(Aktualisierung.kleineNummer(Aktualisierung.laufendeNummer(Bundle.main.infoDictionary)))
-                        .font(Macschriften.schrift(.text, 10))
-                        .foregroundStyle(Startfarbe.leise)
-                }
-                Rectangle().fill(Startfarbe.linie).frame(width: 1, height: 24)
-                Text(leitung.bild.kopfzeile)
-                    .font(Macschriften.schrift(.text, 14))
-                    .foregroundStyle(Startfarbe.leise)
-                Spacer()
-                // ENTSCHEID 94 (14.10.2026): Die Knoten sind DIE Arbeitsflaeche zum Rendern. Kein
-                // Schalter mehr in der Leiste — die Seite oeffnet das Menue «Darstellung»
-                // (`VisboxMacApp`), und von dort fuehrt dieser eine Knopf zurueck.
-                if wahl == .seite {
-                    Button("Zurück zu den Knoten") { wahl = .knoten }
-                        .buttonStyle(.plain)
-                        .font(Macschriften.schrift(.text, 13))
-                        .foregroundStyle(Startfarbe.leise)
-                }
-                Button("Startzeilen", action: zurueck)
-                    .buttonStyle(.plain)
-                    .font(Macschriften.schrift(.text, 13))
-                    .foregroundStyle(Startfarbe.leise)
+            // DIE KOPFLEISTE NUR NOCH AUF DER VISBOX-SEITE (Entscheid 115, Plan UI-Gleichheit S1,
+            // 20.10.2026): Ueber den Knoten stehen die Kopfteile von KosmoOrbit in der Seite selbst
+            // (Palette am Logo = Startansicht, Einstellungs- und Speichern-Kreis, Zweitgruppe mit
+            // der Fassung). Eine zweite Leiste darueber waere ein zweiter Kopf.
+            if wahl == .seite {
+                Seitenkopf(kopfzeile: leitung.bild.kopfzeile, zurueckZuDenKnoten: { wahl = .knoten },
+                           zurueck: zurueck)
             }
-            .padding(.horizontal, 22)
-            .frame(height: 52)
-            .background(Startfarbe.flaeche)
 
             HStack(spacing: 0) {
                 flaeche
@@ -85,6 +75,47 @@ struct Arbeitsansicht: View {
         .onReceive(NotificationCenter.default.publisher(for: .seiteOeffnen)) { _ in
             wahl = .seite
         }
+        // OB CLAUDE VERBUNDEN IST, sagt der Kern erst nach einem Kontakt (`Claudezeile`) — der
+        // Kern ist ein `actor`, darum nachgesehen wie in der KI-Leiste.
+        .task { await wacheUeberClaude() }
+    }
+
+    /// Die Lage fuer die Kopfteile der Knotenansicht (`window.visboxWirt.lage`). Kein Kennwort.
+    private var wirtlage: Knotenwirt.Lage {
+        Knotenwirt.Lage(leitung: leitungSatz, sperre: sperre.satz, rechner: rechner,
+                        claudeVerbunden: claudeVerbunden,
+                        version: Knotenwirt.version(Aktualisierung.kleineNummer(
+                            Aktualisierung.laufendeNummer(Bundle.main.infoDictionary))),
+                        modus: zentrale.modus, thema: thema)
+    }
+
+    /// Ein Wunsch der Kopfteile (`Knotenwirt.Wunsch`).
+    private func erfuelle(_ wunsch: Knotenwirt.Wunsch) {
+        switch wunsch {
+        case .bereit:
+            break
+        case .modus(let modus):
+            zentrale.setzeModus(modus)
+        case .rechner:
+            NotificationCenter.default.post(name: .einrichtenOeffnen, object: Einrichtenanfang.rechner)
+        case .claude(let an):
+            claude.schalte(an)
+        case .oeffne(.startansicht):
+            zurueck()
+        case .oeffne(.visboxSeite):
+            wahl = .seite
+        case .einstellung(let abschnitt):
+            NotificationCenter.default.post(name: .einrichtenOeffnen,
+                                            object: Einrichtenanfang(abschnitt: abschnitt))
+        }
+    }
+
+    private func wacheUeberClaude() async {
+        while !Task.isCancelled {
+            let kontakt = await claude.kern.letzterKontakt
+            claudeVerbunden = Knotenwirt.claudeVerbunden(lage: claude.lage.kernlage, letzterKontakt: kontakt)
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+        }
     }
 
     @ViewBuilder
@@ -94,7 +125,7 @@ struct Arbeitsansicht: View {
         if wahl.ausDemBuendel || (leitung.adresse != nil && leitung.anmeldung != nil) {
             ZStack(alignment: .bottom) {
                 Heimflaeche(basis: leitung.adresse, anmeldung: leitung.anmeldung, wahl: wahl,
-                            meldung: $flaechenSatz)
+                            meldung: $flaechenSatz, wirtlage: wirtlage, wuensche: erfuelle)
                 if let satz = flaechenSatz {
                     Text(satz)
                         .font(Macschriften.schrift(.text, 13))
@@ -117,31 +148,88 @@ struct Arbeitsansicht: View {
     // Heim-PC gibt es niemanden, den sie fragen könnte — dann bleibt der Platzhalter mit dem
     // Zustand der Startzeile stehen. Den Ordner wählt die Fläche, nicht die Leiste: `nil`
     // heisst «der Projektordner, mit dem der Server läuft» (Protokoll §3).
+    //
+    // DIE KI-LEISTE NUR AUF DER VISBOX-SEITE (Plan UI-Gleichheit S2, 20.10.2026): In der
+    // Knotenansicht stehen Claude-Marke, Karten, Erzaehlzeile und Selbstaendigkeit in der Seite
+    // (wortgleich aus KosmoOrbit). Die `Kizentrale` bleibt Zustand und Sperre fuer MCP; ihr
+    // Rueckgaengig-Verlauf fuer Claude bleibt getrennt (Entscheid 114).
     @ViewBuilder
     private var assistentenPlatz: some View {
         if let basis = leitung.adresse {
             Assistentenleiste(anschluss: AssistentAnschluss(basis: basis,
                                                             anmeldung: leitung.anmeldung),
-                              gesperrt: sperre.satz)
+                              gesperrt: sperre.satz, mitKi: wahl != .knoten)
         } else {
-            Assistentenplatzhalter(stand: leitung.bild.assistent)
+            Assistentenplatzhalter(stand: leitung.bild.assistent, mitKi: wahl != .knoten)
         }
     }
+}
+
+/// Die Kopfleiste ueber der Visbox-Seite (bis Entscheid 115 auch ueber den Knoten): Marke mit
+/// kleiner Nummer, die Zeile des Heim-PC, «Zurück zu den Knoten» und «Startzeilen».
+struct Seitenkopf: View {
+    let kopfzeile: String
+    let zurueckZuDenKnoten: () -> Void
+    let zurueck: () -> Void
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // DIE NUMMER GANZ KLEIN NEBEN DEM NAMEN (Owner, 14.10.2026): Welche Fassung laeuft,
+            // steht so ohne Menue da — auch nach einem Neustart aus dem Aktualisieren.
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(Marke.name)
+                    .font(Macschriften.schrift(.titel, 25))
+                Text(Aktualisierung.kleineNummer(Aktualisierung.laufendeNummer(Bundle.main.infoDictionary)))
+                    .font(Macschriften.schrift(.text, 10))
+                    .foregroundStyle(Startfarbe.leise)
+            }
+            Rectangle().fill(Startfarbe.linie).frame(width: 1, height: 24)
+            Text(kopfzeile)
+                .font(Macschriften.schrift(.text, 14))
+                .foregroundStyle(Startfarbe.leise)
+            Spacer()
+            // ENTSCHEID 94 (14.10.2026): Die Knoten sind DIE Arbeitsflaeche zum Rendern; von der
+            // Seite fuehrt dieser eine Knopf zurueck.
+            Button("Zurück zu den Knoten", action: zurueckZuDenKnoten)
+                .buttonStyle(.plain)
+                .font(Macschriften.schrift(.text, 13))
+                .foregroundStyle(Startfarbe.leise)
+            Button("Startzeilen", action: zurueck)
+                .buttonStyle(.plain)
+                .font(Macschriften.schrift(.text, 13))
+                .foregroundStyle(Startfarbe.leise)
+        }
+        .padding(.horizontal, 22)
+        .frame(height: 52)
+        .background(Startfarbe.flaeche)
+    }
+}
+
+/// Womit das Blatt «Einrichten» aufgeht, wenn die Knotenansicht danach fragt (Einstellungs-Kreis,
+/// Heim-PC-Chip): «Wer rechnet?», «Claude über MCP» oder der Anfang.
+struct Einrichtenanfang: Equatable {
+    let abschnitt: String?
+
+    static let rechner = Einrichtenanfang(abschnitt: "rechner")
 }
 
 /// Der Platz des Assistenten, solange seine Seitenleiste nicht verdrahtet ist: sein Zustand,
 /// wie die Startzeile ihn kennt — **kein Bedienelement**, das so tut, als ginge es schon.
 struct Assistentenplatzhalter: View {
     let stand: Zeilenstand
+    /// Ob die KI-Leiste oben steht — nicht in der Knotenansicht (dort traegt die Seite sie).
+    var mitKi = true
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { zeit in
             VStack(alignment: .leading, spacing: 12) {
                 // DER KI-TEIL AUCH OHNE HEIM-PC (Blatt 30, Feld 1): Claude bedient die Knoten aus
                 // dem Bündel; nur der Assistent braucht den Heim-PC.
-                Kileiste(assistentSatz: "Assistent: " + stand.wort,
-                         zentrale: .gemeinsam, anschluss: .gemeinsam)
-                Divider()
+                if mitKi {
+                    Kileiste(assistentSatz: "Assistent: " + stand.wort,
+                             zentrale: .gemeinsam, anschluss: .gemeinsam)
+                    Divider()
+                }
                 Text("Assistent")
                     .font(Macschriften.schrift(.titel, 24))
                 HStack(spacing: 10) {
@@ -184,6 +272,10 @@ struct Heimflaeche: NSViewRepresentable {
     let anmeldung: Anmeldung?
     let wahl: Flaechenwahl
     @Binding var meldung: String?
+    /// Die Lage fuer die Kopfteile der Knotenansicht und was die App auf ihre Wuensche tut
+    /// (`visboxWirt`, Plan UI-Gleichheit S1/S2).
+    var wirtlage: Knotenwirt.Lage?
+    var wuensche: (Knotenwirt.Wunsch) -> Void = { _ in }
 
     func makeCoordinator() -> Flaechenlotse {
         Flaechenlotse(basis: basis, anmeldung: anmeldung, wahl: wahl)
@@ -199,9 +291,17 @@ struct Heimflaeche: NSViewRepresentable {
         // Taetigkeit, Karten und Entscheide; die App ruft `window.visboxKi` zurueck. Wie das
         // Schema VOR dem Bau der Ansicht.
         Knotenki.haengeAn(einstellung, bote: context.coordinator.kibote)
+        // DIE ZWEITE BRUECKE «visboxWirt» (Plan UI-Gleichheit S1/S2): dieselbe Wache, eigener Bote.
+        // Das Thema steht vor dem ersten Bild in der Seite (`themaSkript`).
+        Knotenwirtbote.haengeAn(einstellung, bote: context.coordinator.wirtbote)
+        if let lage = wirtlage {
+            einstellung.userContentController.addUserScript(Knotenwirtbote.themaSkript(lage.thema))
+        }
         let ansicht = WKWebView(frame: .zero, configuration: einstellung)
         let lotse = context.coordinator
         lotse.melde = { satz in meldung = satz }
+        lotse.wirtbote.wuensche = wuensche
+        if let lage = wirtlage { lotse.wirtbote.setze(lage) }
         ansicht.navigationDelegate = lotse
         // DER DATEIWAEHLER DER SEITE (Entscheid 90): Ohne `uiDelegate` tut ein
         // `<input type="file">` in einer WKWebView nichts — «Datei laden …» am Modell-Knoten
@@ -219,6 +319,8 @@ struct Heimflaeche: NSViewRepresentable {
     func updateNSView(_ ansicht: WKWebView, context: Context) {
         let lotse = context.coordinator
         lotse.melde = { satz in meldung = satz }
+        lotse.wirtbote.wuensche = wuensche
+        if let lage = wirtlage { lotse.wirtbote.setze(lage) }
         // NEU EINGERICHTET (andere Adresse, anderes Kennwort): neu laden, sonst bliebe die
         // Seite mit der alten Anmeldung offen.
         // ODER UMGESCHALTET (Knoten ↔ Visbox-Seite): die andere Seite laden.
@@ -244,6 +346,8 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
     let quelle: Knotenquelle
     /// Der Bote «visboxKi» der Knotenansicht (KI-Bedienung Stufe 3, `Knotenki`).
     let kibote = Knotenki()
+    /// Der Bote «visboxWirt» der Kopfteile (Plan UI-Gleichheit S1/S2, `Knotenwirtbote`).
+    let wirtbote = Knotenwirtbote()
 
     init(basis: URL?, anmeldung: Anmeldung?, wahl: Flaechenwahl) {
         self.basis = basis
@@ -257,6 +361,7 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
         // geladen oder auf die Visbox-Seite umgeschaltet, gibt es sie nicht mehr.
         Knotenki.seiteGeht(wahl.ausDemBuendel ? "Die Knotenansicht wird neu geladen"
                            : "Die Knotenansicht wurde für die " + Flaechenwahl.seite.titel + " geschlossen")
+        MainActor.assumeIsolated { wirtbote.seiteGeht() }
         if wahl.ausDemBuendel && !quelle.bauVorhanden {
             melde("Die Knotenansicht fehlt im Programm — bitte die Mac-App neu laden.")
             return
@@ -363,4 +468,7 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
 extension Notification.Name {
     /// «Darstellung → Visbox-Seite» im Menue der App (Entscheid 94, 14.10.2026).
     static let seiteOeffnen = Notification.Name("flaeche.seiteOeffnen")
+    /// Die Knotenansicht fragt nach dem Blatt «Einrichten» (Einstellungs-Kreis, Heim-PC-Chip);
+    /// `object` ist ein `Einrichtenanfang`.
+    static let einrichtenOeffnen = Notification.Name("flaeche.einrichtenOeffnen")
 }

@@ -1,11 +1,16 @@
 {
  "quelle": {
-  "kosmovis/HERKUNFT.json": "e107759c730144a2df615ba683463eff7106bf5ae9c39058e3f73aeee066502b",
+  "kosmovis/HERKUNFT.json": "522751e6a1f8acae2fbdee1e2ef059138b22b64242da98dcf667375c4dc3a0dd",
   "kosmovis/apps/visbox-knoten/index.html": "042e84cfa37a7ad26a571ae68cdee0ac556b0d8fe287b3f5163b4293269134f5",
+  "kosmovis/apps/visbox-knoten/src/graph-sichern.ts": "35ce1f7d3c13db7080e932238ce68a300fa53436a47736c6fb6bf1d37b670a5f",
   "kosmovis/apps/visbox-knoten/src/ki-wirt.ts": "569046936630bf6dcb281a0da9b302f9b74c9cec3c7d35679df90bac354230b0",
-  "kosmovis/apps/visbox-knoten/src/main.tsx": "b6f06d65dfa0e331259c3833eec1c75cc76d03470e132a5f3a1a9520c5636d2a",
+  "kosmovis/apps/visbox-knoten/src/kopf.tsx": "b951fa9270fb14438865694915e6e383ce7831d63837abaaab09643cfc006502",
+  "kosmovis/apps/visbox-knoten/src/kurztasten.ts": "83bc196bbcca5010b7531b7fcb5aa62e7f723b52019157aa31392eae6c4b4f3c",
+  "kosmovis/apps/visbox-knoten/src/main.tsx": "9508bdc9f2807e366f9a2142cff4e3643cd58f9eddbb3ca9002a44a3c7ae5a0b",
   "kosmovis/apps/visbox-knoten/src/mappe.ts": "63310f88818dad5efb87200cb10b7a592a0929d2ef10ffb1bac34125604dda78",
+  "kosmovis/apps/visbox-knoten/src/thema.ts": "66d635ae358eb67d5c63ee38247ab4c368f8cb13c106aad83b0928de3fa98e32",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "79b71a093db0cbc793e299032ce20d0ac1a012eba2a3a6af532b5cd59fb7d6dd",
+  "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts": "7378a3ebc26a53fa514cb63c958c20ff1b0b6e88732fe83b835d85dd853aa1c7",
   "kosmovis/apps/visbox-knoten/vite.config.ts": "060d2f44f2ea8947dff6f2abf3c19f19f1931fb8a206047d75a58eea40301040",
   "kosmovis/package-lock.json": "84dc4f436085a3749d0fbbee9ce4f47c109f91b1e8c3b0d392291e19cb6dfad8"
  }

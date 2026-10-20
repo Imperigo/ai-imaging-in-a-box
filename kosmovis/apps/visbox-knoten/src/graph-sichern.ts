@@ -14,9 +14,15 @@
  * bleibt jede Lage, wie sie gesichert ist (`entzerreGraph` in `knoten-entzerren.ts`). Der Wirt
  * hat die Lade-Fähigkeit zu diesem Zeitpunkt schon gemeldet (`main.tsx`), die Höhe des
  * Modell-Knotens stimmt also.
+ *
+ * Seit den Kopfteilen (Entscheide 115/116, 20.10.2026) meldet das Sichern seine Lage an den
+ * Speichern-Kreis (wortgleich aus KosmoOrbit): «sichert …», «Gesichert · zuletzt HH:MM» oder
+ * «NICHT gesichert» mit Grund — auch dann, wenn der Heim-PC mit einem Fehler antwortet, statt dass
+ * die Anzeige still «gesichert» sagt (Fund F7 dort).
  */
 import type { VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
+import type { AutosaveLage } from '../../kosmo-orbit/src/state/project-vault';
 import { entzerreGraph } from '../../kosmo-orbit/src/modules/vis/knoten-entzerren';
 
 /** Wie lange nach der letzten Änderung gesichert wird. */
@@ -56,9 +62,11 @@ export function sichereBeiAenderung(
   senden: (rumpf: string) => Promise<unknown> = (rumpf) =>
     fetch('./graph', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: rumpf }),
   nachMs: number = SICHERN_NACH_MS,
+  melde: (lage: AutosaveLage) => void = () => {},
 ): () => void {
   let zuletzt = JSON.stringify({ graphen: renderGraphen() });
   let uhr: ReturnType<typeof setTimeout> | null = null;
+  let gesichertUm: string | null = null;
   const abmelden = useProject.subscribe((s, vorher) => {
     if (s.revision === vorher.revision) return;
     if (uhr) clearTimeout(uhr);
@@ -67,13 +75,36 @@ export function sichereBeiAenderung(
       const rumpf = JSON.stringify({ graphen: renderGraphen() });
       if (rumpf === zuletzt) return;
       zuletzt = rumpf;
-      void senden(rumpf).catch(() => {
-        zuletzt = ''; // beim nächsten Mal noch einmal versuchen
-      });
+      melde({ stand: 'sichert', iso: gesichertUm });
+      void senden(rumpf)
+        .then(async (antwort) => {
+          const grund = await abgewiesen(antwort);
+          if (grund !== null) throw new Error(grund);
+          gesichertUm = new Date().toISOString();
+          melde({ stand: 'gesichert', iso: gesichertUm });
+        })
+        .catch((fehler: unknown) => {
+          zuletzt = ''; // beim nächsten Mal noch einmal versuchen
+          melde({ stand: 'fehler', iso: gesichertUm, grund: fehler instanceof Error ? fehler.message : String(fehler) });
+        });
     }, nachMs);
   });
   return () => {
     if (uhr) clearTimeout(uhr);
     abmelden();
   };
+}
+
+/** Der Grund, wenn der Heim-PC das Sichern abwies (eine Antwort mit `ok: false`), sonst `null`. */
+async function abgewiesen(antwort: unknown): Promise<string | null> {
+  const a = antwort as { ok?: unknown; status?: unknown; text?: () => Promise<string> } | null;
+  if (!a || typeof a !== 'object' || a.ok !== false) return null;
+  let satz = '';
+  try {
+    satz = typeof a.text === 'function' ? (await a.text()).trim() : '';
+  } catch {
+    satz = '';
+  }
+  // Ein kurzer Satz (wie der der App ohne Heim-PC) wird gezeigt, eine Fehlerseite nicht.
+  return satz && satz.length <= 200 && !satz.startsWith('<') ? satz : `Der Heim-PC hat nicht gesichert (Antwort ${String(a.status)}).`;
 }

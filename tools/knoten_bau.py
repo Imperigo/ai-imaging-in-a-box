@@ -34,6 +34,11 @@ STEMPEL = BAU / "BAUSTAND.json"
 QUELLEN = ("kosmovis/HERKUNFT.json", "kosmovis/package-lock.json",
            "kosmovis/apps/visbox-knoten/src/main.tsx", "kosmovis/apps/visbox-knoten/src/mappe.ts",
            "kosmovis/apps/visbox-knoten/src/ki-wirt.ts",
+           # Kopfteile (Plan UI-Gleichheit S1/S2, 20.10.2026) — und die beiden Wirtsdateien, die
+           # bis dahin fehlten, obwohl sie mitgebaut werden.
+           "kosmovis/apps/visbox-knoten/src/kopf.tsx", "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts",
+           "kosmovis/apps/visbox-knoten/src/thema.ts", "kosmovis/apps/visbox-knoten/src/graph-sichern.ts",
+           "kosmovis/apps/visbox-knoten/src/kurztasten.ts",
            "kosmovis/apps/visbox-knoten/src/visbox.css", "kosmovis/apps/visbox-knoten/index.html",
            "kosmovis/apps/visbox-knoten/vite.config.ts")
 

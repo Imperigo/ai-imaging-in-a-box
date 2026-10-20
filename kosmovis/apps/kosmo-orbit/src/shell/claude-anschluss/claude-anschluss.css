@@ -1,0 +1,400 @@
+/* Claude-Anschluss (v0.1.7, E149) — Karten und Marke unten links.
+   Nur Tokens aus aura.css; Ebene = Meldungen (über Chrome, unter Modal). */
+
+.claude-anschluss {
+  position: fixed;
+  left: var(--k-s4);
+  bottom: var(--k-s4);
+  z-index: var(--k-ebene-meldung);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  max-width: min(360px, calc(100vw - 2 * var(--k-s4)));
+  pointer-events: none;
+}
+
+.claude-anschluss-karte,
+.claude-anschluss-marke,
+.claude-anschluss-zaehler,
+.claude-anschluss-schalter {
+  pointer-events: auto;
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  box-shadow: var(--k-shadow-overlay);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+}
+
+.claude-anschluss-karte {
+  padding: var(--k-s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+
+.claude-anschluss-titel {
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-betont);
+  color: var(--k-ink-soft);
+}
+
+.claude-anschluss-text {
+  margin: 0;
+  font-size: var(--k-t-md);
+  line-height: var(--k-lh-lesen);
+  overflow-wrap: anywhere;
+}
+
+.claude-anschluss-knoepfe {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--k-s2);
+}
+
+.claude-anschluss-zeile {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+}
+
+/* Teil A (A1): die Marke ist ein Knopf und klappt die Schalter auf. */
+.claude-anschluss-marke,
+.claude-anschluss-zaehler {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 36px;
+  padding: 0 var(--k-s3);
+  border-radius: var(--k-radius-pill);
+  font: inherit;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  cursor: pointer;
+}
+
+.claude-anschluss-marke[aria-expanded='true'] {
+  border-color: var(--k-accent);
+  color: var(--k-ink);
+}
+
+.claude-anschluss-auge {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.claude-anschluss-schalter {
+  padding: var(--k-s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  font-size: var(--k-t-sm);
+}
+
+.claude-anschluss-hinweis {
+  margin: 0;
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink-soft);
+}
+
+.claude-anschluss-punkt {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--k-accent);
+}
+
+/* E158 Coop-Modus — schlichte Bedienung (Gestaltung UI-Worker, Teil B):
+   «Im Projekt: Du · Claude · Kosmo», wer woran arbeitet, Verlauf mit
+   «Zurücknehmen» je Schritt. Nur Tokens aus aura.css. */
+
+.kosmo-coop-name[data-urheber='claude'] {
+  color: var(--k-rolle-agent);
+}
+
+.kosmo-coop-name[data-urheber='kosmo'] {
+  color: var(--k-mod-kosmo);
+}
+
+.kosmo-coop-leute,
+.kosmo-coop-schritte {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s1);
+}
+
+.kosmo-coop-person {
+  overflow-wrap: anywhere;
+}
+
+.kosmo-coop-zustand,
+.kosmo-coop-zuletzt,
+.kosmo-coop-schritt-zurueck {
+  color: var(--k-ink-soft);
+}
+
+.kosmo-coop-verlauf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+
+.kosmo-coop-schritt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 36px;
+  border-bottom: 1px solid var(--k-line-subtil);
+}
+
+.kosmo-coop-schritt-text {
+  flex: 1 1 140px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.kosmo-coop-nachfrage {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  padding: var(--k-s2);
+  border: 1px solid var(--k-accent);
+  border-radius: var(--k-radius);
+}
+
+/* Teil B · Gestaltung (UI-Worker, Entwurfsfläche «KosmoOrbit Coop-Modus»,
+   Owner 07.10.2026 B1 A, B3): ein Punkt je Beteiligtem in seiner Farbe —
+   Du Akzent, Claude Gold der Agenten-Rolle, Kosmo Rot seines Orbs. */
+
+.kosmo-coop-knopf {
+  gap: var(--k-s2);
+}
+
+.kosmo-coop-punkte {
+  display: inline-flex;
+  /* Abstands-Skala statt rohem 3px (Integrator beim Einspielen von L30). */
+  gap: var(--k-s2);
+}
+
+.kosmo-coop-punkt {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--k-accent);
+}
+
+.kosmo-coop-punkt[data-urheber='claude'] {
+  background: var(--k-rolle-agent);
+}
+
+.kosmo-coop-punkt[data-urheber='kosmo'] {
+  background: var(--k-mod-kosmo);
+}
+
+.kosmo-coop-flaeche {
+  width: min(360px, calc(100vw - 2 * var(--k-s4)));
+  box-sizing: border-box;
+}
+
+.kosmo-coop-person {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--k-s2);
+  min-height: 32px;
+}
+
+.kosmo-coop-person .kosmo-coop-zustand {
+  font-size: var(--k-t-sm);
+}
+
+.kosmo-coop-person .kosmo-coop-zuletzt {
+  grid-column: 2 / -1;
+  font-size: var(--k-t-sm);
+}
+
+.kosmo-coop-anhalten {
+  min-height: 44px;
+  border-color: var(--k-danger);
+}
+
+.kosmo-coop-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s1);
+}
+
+/* Datensatz-Liste: rollt in sich (UI-Regel 1 Ausnahme), die Fläche bleibt fest. */
+.kosmo-coop-schritte--liste {
+  max-height: min(280px, 40vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* B2 · neuer Schritt, drei Sekunden über der Präsenz. */
+.kosmo-coop-schild {
+  --km-farbe: var(--k-rolle-agent);
+  pointer-events: none;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: var(--k-s1) var(--k-s3);
+  border-radius: var(--k-radius-pill);
+  border: 1px solid var(--km-farbe);
+  background: var(--k-surface);
+  box-shadow: var(--k-shadow-overlay);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+  overflow-wrap: anywhere;
+  animation: kosmo-coop-schild 3s var(--k-ease-standard) both;
+}
+
+.kosmo-coop-schild[data-urheber='kosmo'] {
+  --km-farbe: var(--k-mod-kosmo);
+}
+
+.kosmo-coop-schild b {
+  color: var(--km-farbe);
+}
+
+@keyframes kosmo-coop-schild {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  10%,
+  85% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kosmo-coop-schild {
+    animation: none;
+  }
+}
+
+/* Präsenz und Marke nebeneinander: nicht gegenseitig zusammendrücken (sonst
+   bricht jede in zwei Zeilen um) — reicht die Breite nicht, rutscht die
+   zweite in eine eigene Zeile. */
+.claude-anschluss-zeile {
+  flex-wrap: wrap;
+}
+
+.claude-anschluss-zeile > .claude-anschluss-marke,
+.claude-anschluss-zeile > .claude-anschluss-zaehler {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+/* Nr. 55 Baustein 4: Goldrahmen um das Fenster, solange die Vollautomatik läuft. */
+.claude-fenster-rahmen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--k-ebene-meldung);
+  pointer-events: none;
+  /* Ohne Einblendung: der Rahmen ist ein Zustand und steht sofort (s. Erzählzeile unten). */
+  box-shadow: inset 0 0 0 3px var(--k-rolle-agent);
+}
+
+/* Erzählzeile oben Mitte (L5-5/13/18/21): was Claude oder Kosmo gerade tut.
+   Fensterfest unter dem Kopf (Kopfknöpfe 14..58), ueber den Flaechen. */
+.erzaehl-zeile {
+  --ez-farbe: var(--k-rolle-agent);
+  position: fixed;
+  /* Lage setzt `ErzaehlZeile.tsx` (`erzaehlLage`: mittig, ausser ein Bedienteil liegt dort). */
+  top: 70px;
+  left: 0;
+  /* Meldungsebene wie die Karten unten links: ueber der Buehne, unter Modal-Dialogen nicht. */
+  z-index: var(--k-ebene-meldung);
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  max-width: min(640px, calc(100vw - 2 * var(--k-s4)));
+  padding: var(--k-s2) var(--k-s4);
+  background: var(--k-surface);
+  border: 1px solid color-mix(in srgb, var(--ez-farbe) 55%, var(--k-line));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-overlay);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+  pointer-events: none;
+  animation: erzaehl-zeile-ein 200ms var(--k-ease-standard) both;
+}
+.erzaehl-zeile[data-urheber='kosmo'] {
+  --ez-farbe: var(--k-mod-kosmo);
+}
+.erzaehl-zeile[data-art='wartet'] {
+  border-width: 2px;
+  border-color: var(--ez-farbe);
+  pointer-events: auto;
+}
+/* L71: ein Fehlschlag steht in der Warnfarbe da, ohne Puls (es läuft nichts mehr). */
+.erzaehl-zeile[data-art='fehler'] {
+  --ez-farbe: var(--k-danger);
+}
+.erzaehl-zeile[data-art='fehler'] .erzaehl-zeile-punkt {
+  animation: none;
+}
+.erzaehl-zeile-punkt {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ez-farbe);
+  animation: erzaehl-zeile-puls 1.4s ease-in-out infinite;
+}
+.erzaehl-zeile-text {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.erzaehl-zeile-zusatz {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--k-ink-soft);
+}
+.erzaehl-zeile-knoepfe {
+  flex: none;
+  display: flex;
+  gap: var(--k-s2);
+}
+/* Nur Bewegung, keine Deckkraft: eine Zustandsanzeige muss auch dann zu sehen
+   sein, wenn die Seite unter Last kaum Bilder rechnet (gemessen: im Prüfbrowser
+   mit Software-3D stand die Animationszeit auf 0 — mit «von Deckkraft 0» blieb
+   die Zeile unsichtbar, obwohl sie oben lag). */
+@keyframes erzaehl-zeile-ein {
+  from {
+    transform: translateY(-6px);
+  }
+}
+@keyframes erzaehl-zeile-puls {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .erzaehl-zeile,
+  .erzaehl-zeile-punkt {
+    animation: none;
+  }
+}
