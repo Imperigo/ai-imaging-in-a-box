@@ -118,10 +118,9 @@ Zusammen rund **10–14 Sitzungen** bis Schritt 6. Jeder Schritt wird zuerst als
 * Der Kern bleibt die Python-Bibliothek (Regel 4); die Apps sind dünne Schichten darüber.
 * Die Knotenansicht bleibt die Arbeitsfläche zum Rendern (E94) und bleibt mit KosmoOrbit derselbe Code.
 
-## 9 · Zu entscheiden (Owner)
+## 9 · Entschieden (Owner, 20.10.2026, per Auswahl — alle wie empfohlen)
 
-1. **Wo liegt die Mappe?** Empfehlung: am Mac; der Rechner bekommt je Auftrag nur die Dateien.
-2. **Woher hat das iPad die Mappe?** Empfehlung: vom Mac.
-3. **Vorführmodus?** Empfehlung: entfällt; ohne Rechner normale Oberfläche mit gesperrtem Rechnen.
-4. **Visbox-Seite (`seite.html`)?** Empfehlung: nicht mit ins Bündel; was sie kann, kommt als Knoten oder ins native
-   Fenster (E94).
+1. **Mappe am Mac** (103); der Rechner bekommt je Auftrag nur Modell und Szene.
+2. **iPad holt die Mappe vom Mac** (103a).
+3. **Vorführmodus entfällt** (103b); ohne Rechner normale Oberfläche mit gesperrtem Rechnen.
+4. **Visbox-Seite kommt nicht in die App** (103c); was sie kann, wird Knoten (Blatt 25).
