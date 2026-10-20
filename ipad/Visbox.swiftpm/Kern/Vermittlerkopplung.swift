@@ -54,7 +54,7 @@ public struct Kopplungsversuch: Equatable, Sendable {
 public struct Vermittlerkopplung: Sendable {
 
     /// Wie lange eine Zahl gilt — Abschrift von `kopplung.FRIST_S`.
-    public static let frist: TimeInterval = 600
+    public static let frist: TimeInterval = 120
     /// Wie oft geraten werden darf — Abschrift von `kopplung.VERSUCHE`.
     public static let versuche = 5
     /// Wie viele Stellen — Abschrift von `kopplung.PIN_STELLEN`.

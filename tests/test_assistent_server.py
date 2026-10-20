@@ -577,7 +577,7 @@ def test_kopplung_gibt_eine_zahl_und_das_verbinden_damit_das_kennwort(server, ca
     klasse = _koppel_klasse(server)
     code, a = _an(server, klasse, befehl="POST", weg=server.WEG_KOPPLUNG)
     assert code == 200 and set(a) == {"zahl", "gilt_noch_s", "satz"}
-    assert len(a["zahl"]) == 6 and a["zahl"].isdigit() and a["gilt_noch_s"] == 600
+    assert len(a["zahl"]) == 6 and a["zahl"].isdigit() and a["gilt_noch_s"] == 120  # Entscheid 102b, vorher 600
     # DIE ZAHL NIE INS FENSTER: Im Dienstbetrieb ist es das Systemprotokoll.
     assert a["zahl"] not in capsys.readouterr().out
     # EINE FALSCHE ZAHL zaehlt einen Versuch, mit dem gleichbleibenden Satz.

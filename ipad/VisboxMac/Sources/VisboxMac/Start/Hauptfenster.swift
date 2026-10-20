@@ -166,7 +166,7 @@ struct Hauptfenster: View {
             .help("Adresse des Heim-PC, Benutzer und Kennwort")
         // DAS IPAD (Entscheid 63): Unterwegs spricht es selbst über Tailscale mit dem
         // Heim-PC. Der Mac holt dort nur die Zahl zum ersten Koppeln (`POST /api/kopplung`,
-        // zehn Minuten gültig) und zeigt sie in der Zeile «iPad». Die Vermittlung über den
+        // zwei Minuten gültig) und zeigt sie in der Zeile «iPad». Die Vermittlung über den
         // Mac (§8b) steht darunter, ausgeschaltet, bis man sie einschaltet — sie ist im
         // fremden WLAN unverschlüsselt.
         // SEIT ENTSCHEID 99 (20.10.2026) oeffnet «iPad koppeln» das Koppelfenster: Zahl,

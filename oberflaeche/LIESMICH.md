@@ -239,7 +239,7 @@ die es von da an selbst aufbewahrt.
 
 | | |
 |---|---|
-| **zehn Minuten** | gerechnet auf einer Uhr, die sich nicht stellen lässt |
+| **zwei Minuten** (seit 20.10.2026, vorher zehn) | gerechnet auf einer Uhr, die sich nicht stellen lässt |
 | **fünf Versuche** | danach ist sie tot, nicht «eine Minute gesperrt» |
 | **ein Gerät** | nach dem ersten Verbinden verbraucht |
 

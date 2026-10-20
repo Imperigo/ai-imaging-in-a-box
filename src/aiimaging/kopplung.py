@@ -95,10 +95,11 @@ class KopplungError(ValueError):
     """
 
 
-#: Wie lange eine Zahl gilt. Zehn Minuten reichen, um vom Rechner zum Tablet zu gehen und
-#: sechs Ziffern zu tippen — und sie sind kurz genug, dass ein Bildschirmfoto davon
-#: morgen nichts mehr wert ist.
-FRIST_S = 600.0
+#: Wie lange eine Zahl gilt. **Zwei Minuten seit dem 20.10.2026** (Owner-Entscheid 102b, zu 99a):
+#: Seit das iPad den Mac in der Naehe findet oder einen QR-Code scannt, muss niemand mehr zum
+#: Tablet gehen und tippen — und der Mac zeigt und verschickt die Zahl ohnehin nur zwei Minuten.
+#: Eine Frist an beiden Orten. Bis dahin galten zehn Minuten.
+FRIST_S = 120.0
 
 #: Sechs Stellen. Fünf wären bequemer und eine Zehntelmillion schwächer; acht wären
 #: stärker und würden falsch abgetippt. Sechs ist die Länge, die Menschen aus dem
@@ -114,7 +115,7 @@ VERSUCHE = 5
 #: koppelt sich mit einer Zahl, die am Heim-PC erscheint — **fünf Minuten, einmal, drei
 #: Versuche.** Strenger als die Zahl fürs iPad, weil sie **ohne Anmeldung** angefordert wird
 #: (``POST /api/kopplung/anfordern``): Wer sie anfordert, beweist noch nichts. Die Werte der
-#: Zahl fürs iPad (zehn Minuten, fünf Versuche) bleiben, wie sie sind — sie werden von einem
+#: Zahl fürs iPad (zwei Minuten seit 20.10.2026, fünf Versuche) bleiben, wie sie sind — sie werden von einem
 #: angemeldeten Mac oder beim Start geholt.
 FRIST_ANGEFORDERT_S = 300.0
 VERSUCHE_ANGEFORDERT = 3
@@ -322,7 +323,7 @@ def naechste_anforderung_in(letzte_um, *, jetzt=None,
 def schliesse(kopplung: Kopplung) -> None:
     """Die Zahl von Hand für ungültig erklären.
 
-    Gebraucht, wenn jemand sie versehentlich gezeigt hat und nicht zehn Minuten warten
+    Gebraucht, wenn jemand sie versehentlich gezeigt hat und nicht zwei Minuten warten
     will. *Eine Sperre, die man nur durch Abwarten wieder los wird, wartet niemand ab.*
     """
     kopplung.verbraucht = True

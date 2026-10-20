@@ -2298,13 +2298,13 @@ class Flaeche(BaseHTTPRequestHandler):
         ``--kopplung``.
 
         **Dieselben Regeln wie** ``--kopplung``: :func:`aiimaging.kopplung.eroeffne`, also
-        600 s, fünf Versuche, verbraucht nach dem ersten Erfolg. Eine noch offene Zahl wird
+        120 s (seit 20.10.2026, Entscheid 102b; vorher 600 s), fünf Versuche, verbraucht nach dem ersten Erfolg. Eine noch offene Zahl wird
         **ersetzt** und vorher geschlossen — sonst gälten zwei Zahlen zugleich, und wer die
         alte abgelesen hat, käme damit noch herein.
 
         **Keine Ausnahme an der Tür**: Wer die Zahl holen will, ist schon angemeldet.
         **Die Zahl geht nur in diese Antwort** — kein ``print``, kein Protokoll. Sie ist
-        ein Geheimnis von zehn Minuten, und das Fenster des Dienstes ist ein Protokoll.
+        ein Geheimnis von zwei Minuten, und das Fenster des Dienstes ist ein Protokoll.
 
         Ohne Kennwort am Server gäbe es nichts zu übergeben (wie in :func:`baue_server`):
         Satz statt Kopplung.
@@ -3369,7 +3369,7 @@ def main(argv=None) -> int:
                          "einen Neustart.")
     ap.add_argument("--kopplung", action="store_true",
                     help="Eine sechsstellige Zahl anzeigen, mit der sich ein Gerät "
-                         "EINMAL verbinden darf. Sie gilt zehn Minuten.")
+                         "EINMAL verbinden darf. Sie gilt zwei Minuten.")
     ap.add_argument("--im-heimnetz", action="store_true",
                     help="Auf allen Adressen hören, damit ein iPad herankommt. Verlangt "
                          "ein Kennwort — und zeigt an, was das bedeutet.")

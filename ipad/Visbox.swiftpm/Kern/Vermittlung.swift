@@ -723,7 +723,7 @@ public enum Koppelseite {
         <title>\(name) – mit dem Mac koppeln</title></head>
         <body style="font-family:system-ui,sans-serif;max-width:28em;margin:2em auto;padding:0 1em">
         <h1>Mit dem Mac koppeln</h1>
-        <p>Die sechsstellige Zahl steht am Mac. Sie gilt zehn Minuten und für fünf Versuche.</p>
+        <p>Die sechsstellige Zahl steht am Mac. Sie gilt zwei Minuten und für fünf Versuche.</p>
         <p><input id="zahl" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
         <button id="los">Koppeln</button></p>
         <p id="satz"></p>

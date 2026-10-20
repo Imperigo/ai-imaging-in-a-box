@@ -243,7 +243,7 @@ def test_nach_drei_fehlversuchen_ist_die_zahl_geschlossen(server, capsys):
 
 
 def test_die_zahl_fuers_ipad_behaelt_ihre_regeln(server):
-    """``POST /api/kopplung`` (angemeldet, Entscheid 63) bleibt bei zehn Minuten und fünf
+    """``POST /api/kopplung`` (angemeldet, Entscheid 63) gilt zwei Minuten (Entscheid 102b, vorher zehn) und fünf
     Versuchen — und gibt die Zahl weiter in der Antwort, weil der angemeldete Mac sie zeigt."""
     klasse = _klasse(server)
     code, antwort, _ = _frage(klasse, server, befehl="POST", weg=server.WEG_KOPPLUNG,

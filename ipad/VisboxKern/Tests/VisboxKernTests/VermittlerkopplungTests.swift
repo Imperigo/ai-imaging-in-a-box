@@ -3,7 +3,7 @@ import XCTest
 import VisboxKern
 
 /// Die lokale Kopplung iPad ↔ Mac — dieselben Regeln wie an der HomeStation (Protokoll §7):
-/// 600 s, 5 Versuche, nach Erfolg verbraucht, ein Satz für das Gerät.
+/// 120 s (seit 20.10.2026, vorher 600 s), 5 Versuche, nach Erfolg verbraucht, ein Satz für das Gerät.
 final class VermittlerkopplungTests: XCTestCase {
 
     private let start: TimeInterval = 1000
@@ -15,7 +15,7 @@ final class VermittlerkopplungTests: XCTestCase {
     // ------------------------------------------------------------------ die Regeln
 
     func testDieRegelnSindDieDerHomeStation() {
-        XCTAssertEqual(Vermittlerkopplung.frist, 600)
+        XCTAssertEqual(Vermittlerkopplung.frist, 120)
         XCTAssertEqual(Vermittlerkopplung.versuche, 5)
         XCTAssertEqual(Vermittlerkopplung.stellen, 6)
     }

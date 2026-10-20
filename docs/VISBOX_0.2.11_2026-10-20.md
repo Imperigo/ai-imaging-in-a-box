@@ -3,7 +3,7 @@
 **Codestand:** Fassung 0.2.11 auf `main` (iPad koppeln ohne Abtippen: Mac in der Nähe und QR-Code, die Zahl als Notweg);
 Vorgänger 0.2.10 = Tag `v0.2.10` (20.10.2026)
 
-**Grundlage:** Owner-Auftrag 20.10.2026 «A + B jetzt»; Entscheide 99/99a/99b (Blatt 27); Protokoll 74 §141
+**Grundlage:** Owner-Auftrag 20.10.2026 «A + B jetzt»; Entscheide 99/99a/99b (Blatt 27) und 102b; Protokoll 74 §141
 
 Visbox zählt selbst (Entscheid 66): Bibliothek `aiimaging`, iPad-App und Mac-App tragen dieselbe Nummer
 (`tests/test_versionsnummer.py`). Dieses Blatt ist der Text der Freigabe auf GitHub; die Mac-App zeigt daraus die
@@ -24,6 +24,7 @@ ausführt — ein Fenster, «Neu starten» auf Klick.
 | Mac: «iPad koppeln» zeigt einen QR-Code; das iPad scannt ihn in der Visbox-App | 99b | gebaut, Prüfstrecke; am Gerät unbestätigt |
 | Die Kopplung am Mac schliesst sich nach 2 Minuten | 99a | gebaut, mit Probe |
 | Die Zahl eintippen bleibt als letzter Weg | 99 | wie bisher |
+| Heim-PC: Die Kopplungszahl gilt 2 statt 10 Minuten — eine Frist an beiden Orten | 102b | gebaut, mit Probe; angesagt |
 
 ## Stand am Gerät
 
@@ -37,7 +38,6 @@ ausführt — ein Fenster, «Neu starten» auf Klick.
 
 * Ob iPadOS die Suche in der Nähe ohne Entwicklerkonto zulässt, ist am Gerät noch nicht gesehen — der QR-Code und die
   Zahl gehen in jedem Fall.
-* Der Heim-PC lässt eine Zahl weiter 10 Minuten gelten; nur der Mac zeigt und verschickt sie 2 Minuten.
 * Scheitert das Koppeln nach der Nähe, gibt es dort keinen Knopf «Neu suchen» — dann QR-Code, Zahl oder den Bildschirm
   neu öffnen.
 
