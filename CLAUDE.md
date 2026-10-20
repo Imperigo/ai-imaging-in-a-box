@@ -372,6 +372,17 @@ geliefert (Tiefe, Masken, Vorschaubild), die KI ergänzt.
 **Messmodelle bleiben (Owner-Entscheid über den Integrator, 15.10.2026):** Der Grundsatz betrifft nur **erzeugte
 Bilder**. Modelle, die im Splat-Weg messen oder prüfen — die Personen-Maske, die MoGe-2-Gegenprobe —, bleiben.
 
+### Visbox steht für Leser allein (Owner-Entscheid 100, 20.10.2026)
+
+> *«Für die Vertiefungsarbeit nichts von KosmoVis und KosmoOrbit erwähnen — das ist wie ein anderes Projekt; für die
+> Vertiefungsexperten ist nur wichtig, was Visbox ist.»*
+
+Was **Leser** sehen — Architektur-Blatt, die Visbox-Karten der Tafel (eigenes Abteil für Visbox Mac und iPad),
+`docs/PRODUKT_DIE_SCHRITTE.md`, das Material in `docs/arbeit/` — nennt KosmoOrbit, KosmoVis, Integrator, Zentrale und
+die anderen Worker **nicht**. Die Knotenansicht ist dort «die Knotenansicht von Visbox», ohne Herkunft (100a). Die
+**Arbeitsunterlagen** (Protokolle, Plan, Einbau-Stand, Aufträge, Entscheide) bleiben, wie sie sind; die Zusammenarbeit
+steht dort weiter. Der Ordner `kosmovis/` bleibt vorerst (100b).
+
 ### Nachrichten über die Zentrale (Owner-Entscheid 06.10.2026, abends)
 
 Bis dahin konnte diese Cloud-Sitzung andere Sitzungen nicht erreichen; der Owner leitete jede Zeile
