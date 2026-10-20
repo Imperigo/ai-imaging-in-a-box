@@ -498,3 +498,24 @@ def test_ohne_bekannte_grundlage_sagt_die_pruefung_nichts(tmp_path):
     assert knotenweg.grundlage_passt_nicht(
         tmp_path, {"vis": {"grundlage": "gl-ffffffffffffffff"}}) is None
     assert knotenweg.grundlage_passt_nicht(tmp_path, {"vis": {}}) is None
+
+
+def test_ohne_gemeinsame_silhouette_kein_null_in_geometry_gates():
+    """Integrator 20.10.2026: ``geometry_gates.geom_iou`` ist im fremden Vertrag nur optional,
+    nicht nullbar — ein ``null`` dort verwirft in KosmoOrbit v0.1.8 das GANZE Ergebnis.
+    Hinaus (``nur_vertragsfelder``) darf darum in ``geometry_gates`` nirgends ``null`` stehen;
+    ``qa.geometry.geom_iou`` ist dort nullbar und darf leer sein."""
+    urteil = {"score": None, "bestanden": None, "geom_iou": 0.0, "n_gemeinsam": 0,
+              "spearman": None, "gesamtwert_anwendbar": False, "anteil_soll": 0.12}
+    tore = {"bestanden": None,
+            "tor_folgt": {"gemessen": True, "wert": 0.41, "schwelle": 0.3, "bestanden": True},
+            "tor_dieses": {"gemessen": False, "wert": None, "schwelle": 0.5, "bestanden": None},
+            "gegenprobe": None, "warnungen": []}
+    e = kosmo_szene.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil,
+                                 zwei_tore_urteil=tore)
+    aus = kosmo_szene.nur_vertragsfelder(e)
+    tore_aus = aus[kosmo_szene.FELD_ZWEI_TORE]
+    assert "geom_iou" not in tore_aus
+    assert all(v is not None for v in tore_aus.values())
+    assert isinstance(tore_aus["passed"], bool) and isinstance(tore_aus["released"], bool)
+    assert aus["qa"]["geometry"]["geom_iou"] is None
