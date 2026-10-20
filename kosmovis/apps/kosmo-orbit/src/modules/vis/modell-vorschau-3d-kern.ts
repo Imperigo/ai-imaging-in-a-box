@@ -22,10 +22,28 @@
  *
  * **Gezeichnet wird nur bei Bedarf** (nach Laden, Umkreisen, Grössenwechsel), nicht in einer
  * Dauerschleife — mehrere Fenster im Knotengraph sollen den Rechner nicht warm halten.
+ *
+ * **Hell wie ein Weissmodell** (Owner-Befund am Mac, 20.10.2026: «beim Drehen alles schwarz»).
+ * Ursache: Ein Bauteil ohne Material bekommt vom glTF-Lader dessen Vorgabe-Material, und das
+ * ist **ganz metallisch** (`metalness: 1`; glTF nennt `metallicFactor` 1, wenn nichts dasteht).
+ * Metall zeigt nur, was es spiegelt — ohne Umgebung also fast nichts, ausser einem Glanzfleck
+ * dort, wo die Sonne gerade spiegelt; dreht man, wandert der Fleck weg, und das Haus wird
+ * schwarz. Die IFC-Umwandlung von Visbox lässt Bauteile ohne IFC-Stil genau so ohne Material.
+ * Dagegen: eine Umgebung (`RoomEnvironment` aus three, MIT) als Licht von allen Seiten, Metall
+ * auf höchstens `METALL_HOECHSTENS` begrenzt, schwarze Grundfarbe → Hellgrau, beide Seiten
+ * jeder Fläche, fehlende Flächen-Richtungen nachgerechnet (`sichereMaterial`, `sichereNetz`),
+ * und dünne Kanten ab `KANTEN_WINKEL_GRAD` Knick.
+ *
+ * **Kein Abschneiden beim Hineinzoomen** (gleicher Befund: «näher ranzoomt kommt ein
+ * clipping»). Ursache: Die vordere Schnittebene (`near`) wurde einmal beim Rahmen gesetzt — auf
+ * etwa zwei Modellradien vor der Kamera — und beim Zoomen nicht nachgeführt; wer näher kam,
+ * schnitt das Haus vorne weg. Jetzt rechnet jedes Zeichnen `near`/`far` aus dem Abstand zur
+ * Kugel um Modell und Kegel neu (`nahUndFern`).
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 export type Vec3 = readonly [number, number, number];
 
@@ -69,6 +87,19 @@ export const RAHMEN_RICHTUNG: Vec3 = [1, 0.62, 1.15];
 /** Luft um das Modell (1 = Kugel berührt den Bildrand). */
 export const RAHMEN_LUFT = 1.12;
 
+/** Höchstens so metallisch darf ein Material im Fenster sein (Weissmodell, nicht Spiegel). */
+export const METALL_HOECHSTENS = 0.2;
+/** Grundfarbe für Flächen ohne Farbe oder mit (fast) schwarzer — ein ruhiges Hellgrau. */
+export const GRUNDGRAU = 0xd8d6d0;
+/** Unter dieser Helligkeit (0…1, linear) gilt eine Grundfarbe als «schwarz». */
+export const SCHWARZ_SCHWELLE = 0.02;
+/** Ab diesem Knick zwischen zwei Flächen wird eine Kante gezeichnet (Grad). */
+export const KANTEN_WINKEL_GRAD = 30;
+/** Über so vielen Dreiecken im ganzen Modell entfallen die Kanten (Rechenzeit beim Laden). */
+export const KANTEN_HOECHSTENS_DREIECKE = 200_000;
+/** Kleinster Abstand der vorderen Schnittebene, als Teil des Modellradius. */
+export const NAH_ANTEIL_RADIUS = 1 / 1000;
+
 const GRAD = Math.PI / 180;
 
 function laenge(v: Vec3): number {
@@ -103,6 +134,93 @@ export function pixeldichte(
   const d = Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
   const z = Number.isFinite(knotenZoom) && knotenZoom > 0 ? knotenZoom : 1;
   return Math.min(obergrenze, Math.max(PIXELDICHTE_UNTERGRENZE, d * z));
+}
+
+/**
+ * **Vordere und hintere Schnittebene** aus dem Abstand der Kamera zur Mitte einer Kugel, die
+ * alles Gezeichnete umschliesst (Modell und Kegel).
+ *
+ * Steht die Kamera ausserhalb, beginnt das Bild kurz vor der Kugel (`abstand − 1,5 · radius`,
+ * die halbe Reserve schluckt Rundung) — so eng wie möglich, damit die Tiefe genau bleibt. Ist
+ * sie nahe dran oder drin, gilt `radius / 1000`: man kann bis an eine Wand heran, ohne dass sie
+ * abgeschnitten wird. Hinten endet das Bild hinter der Kugel (`abstand + 2 · radius`).
+ * Kaputte Zahlen ergeben ein ruhiges `0,01 … 1000`.
+ */
+export function nahUndFern(abstand: number, radius: number): { near: number; far: number } {
+  if (!Number.isFinite(abstand) || !Number.isFinite(radius) || radius <= 0 || abstand < 0) {
+    return { near: 0.01, far: 1000 };
+  }
+  const kleinst = Math.max(radius * NAH_ANTEIL_RADIUS, 1e-4);
+  const near = Math.max(abstand - radius * 1.5, kleinst);
+  const far = abstand + radius * 2;
+  return { near, far };
+}
+
+/** Kugel um eine Hüllbox und weitere Punkte (Kegel): Mitte der Box, Radius bis zum fernsten. */
+export function huellkugel(box: Huellbox, punkte: readonly Vec3[] = []): { mitte: Vec3; radius: number } {
+  const mitte: Vec3 = [
+    (box.min[0] + box.max[0]) / 2,
+    (box.min[1] + box.max[1]) / 2,
+    (box.min[2] + box.max[2]) / 2,
+  ];
+  let radius = Math.max(laenge([box.max[0] - box.min[0], box.max[1] - box.min[1], box.max[2] - box.min[2]]) / 2, 0.05);
+  for (const p of punkte) {
+    if (!istEndlich(p)) continue;
+    radius = Math.max(radius, laenge([p[0] - mitte[0], p[1] - mitte[1], p[2] - mitte[2]]));
+  }
+  return { mitte, radius };
+}
+
+/** Das Nötigste eines Materials, damit `sichereMaterial` auch an einer Attrappe prüfbar ist. */
+export interface MaterialLike {
+  metalness?: number;
+  color?: { r: number; g: number; b: number; setHex(hex: number): unknown };
+  map?: unknown;
+  side?: number;
+  vertexColors?: boolean;
+  polygonOffset?: boolean;
+  polygonOffsetFactor?: number;
+  polygonOffsetUnits?: number;
+  needsUpdate?: boolean;
+}
+
+/**
+ * **Material für das Weissmodell absichern** — gibt zurück, was geändert wurde (für Proben).
+ *
+ *  - `metalness` höchstens `METALL_HOECHSTENS` (glTF-Vorgabe ist 1 = Spiegel → schwarz);
+ *  - Grundfarbe (fast) schwarz und keine Bildtextur, keine Punktfarben → `GRUNDGRAU`;
+ *  - beide Seiten jeder Fläche (IFC-Flächen sind nicht immer gleich herum);
+ *  - leicht nach hinten versetzt, damit die Kanten darüber nicht flimmern.
+ */
+export function sichereMaterial(m: MaterialLike): { metall: boolean; farbe: boolean } {
+  let metall = false;
+  let farbe = false;
+  if (typeof m.metalness === 'number' && !(m.metalness <= METALL_HOECHSTENS)) {
+    m.metalness = METALL_HOECHSTENS;
+    metall = true;
+  }
+  const c = m.color;
+  if (c && !m.map && !m.vertexColors) {
+    const hell = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+    if (!(hell >= SCHWARZ_SCHWELLE)) {
+      c.setHex(GRUNDGRAU);
+      farbe = true;
+    }
+  }
+  m.side = THREE.DoubleSide;
+  m.polygonOffset = true;
+  m.polygonOffsetFactor = 1;
+  m.polygonOffsetUnits = 1;
+  m.needsUpdate = true;
+  return { metall, farbe };
+}
+
+/** Fehlen einem Netz die Flächen-Richtungen (Normalen), werden sie nachgerechnet — sonst ist
+ *  jede Fläche gleich dunkel. Gibt `true` zurück, wenn nachgerechnet wurde. */
+export function sichereNetz(g: THREE.BufferGeometry): boolean {
+  if (g.getAttribute('normal') || !g.getAttribute('position')) return false;
+  g.computeVertexNormals();
+  return true;
 }
 
 /**
@@ -276,13 +394,40 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
     return null;
   }
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Neutral statt ACES: ACES dunkelt Weiss ab und zieht es ins Gelbliche; ein Weissmodell soll
+  // weiss bleiben. AgX täte dasselbe gedämpfter.
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 1;
   renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(opt.pixeldichte);
   renderer.setSize(Math.max(1, opt.breite), Math.max(1, opt.hoehe), false);
 
   const szene = new THREE.Scene();
-  szene.add(new THREE.HemisphereLight(0xf4f1ea, 0x3a3d44, 1.6));
-  const sonne = new THREE.DirectionalLight(0xffffff, 1.8);
+  // Licht von allen Seiten (Umgebung) plus Himmel/Boden und eine Sonne für die Schattierung:
+  // jede Seite des Hauses bleibt hell, die Flächen unterscheiden sich trotzdem.
+  let umgebung: THREE.WebGLRenderTarget | null = null;
+  const setzeUmgebung = () => {
+    umgebung?.dispose();
+    umgebung = null;
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const raum = new RoomEnvironment();
+      umgebung = pmrem.fromScene(raum, 0.04);
+      raum.traverse((o) => {
+        const m = o as THREE.Mesh;
+        m.geometry?.dispose();
+        (m.material as THREE.Material | undefined)?.dispose?.();
+      });
+      pmrem.dispose();
+      szene.environment = umgebung.texture;
+    } catch {
+      szene.environment = null; // ohne Umgebung tragen Himmel und Sonne allein
+    }
+  };
+  setzeUmgebung();
+  szene.environmentIntensity = 0.9;
+  szene.add(new THREE.HemisphereLight(0xffffff, 0x8a8d94, 1.1));
+  const sonne = new THREE.DirectionalLight(0xffffff, 1.5);
   sonne.position.set(0.6, 1, 0.45);
   szene.add(sonne);
 
@@ -299,6 +444,8 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
   const kegelGruppe = new THREE.Group();
   szene.add(kegelGruppe);
   const kegelMaterial = new THREE.LineBasicMaterial({ color: new THREE.Color(opt.kegelFarbe ?? '#e0873a') });
+  const kantenMaterial = new THREE.LineBasicMaterial({ color: 0x4a4d55, transparent: true, opacity: 0.55 });
+  const geteilt = new Set<THREE.Material>([kegelMaterial, kantenMaterial]);
 
   let box: Huellbox | null = null;
   let kameras: readonly VorschauKamera[] = [];
@@ -306,9 +453,36 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
   let entsorgt = false;
   let kontextWeg = false;
   let hilfsZiel: THREE.WebGLRenderTarget | null = null;
+  /** Kugel um Modell und Kegel — daraus `near`/`far` bei jedem Zeichnen. */
+  let kugel: { mitte: THREE.Vector3; radius: number } | null = null;
+
+  const setzeKugel = () => {
+    if (!box) {
+      kugel = null;
+      return;
+    }
+    const punkte: Vec3[] = [];
+    for (const k of kameras) if (istEndlich(k.position)) punkte.push(k.position);
+    // Die Kegel reichen eine Kegellänge über den Standpunkt hinaus.
+    const h = huellkugel(box, punkte);
+    const r = punkte.length > 0 ? h.radius + kegelLaenge(box) * 1.5 : h.radius;
+    kugel = { mitte: new THREE.Vector3(h.mitte[0], h.mitte[1], h.mitte[2]), radius: r };
+  };
+
+  /** `near`/`far` einer Kamera aus ihrem Abstand zur Kugel — vor jedem Zeichnen. */
+  const fuehreSchnittNach = (k: THREE.PerspectiveCamera) => {
+    if (!kugel) return;
+    const { near, far } = nahUndFern(k.position.distanceTo(kugel.mitte), kugel.radius);
+    if (k.near !== near || k.far !== far) {
+      k.near = near;
+      k.far = far;
+      k.updateProjectionMatrix();
+    }
+  };
 
   const zeichne = () => {
     if (pausiert || entsorgt || kontextWeg) return;
+    fuehreSchnittNach(kamera);
     renderer.render(szene, kamera);
   };
   steuerung.addEventListener('change', zeichne);
@@ -324,7 +498,7 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
           for (const wert of Object.values(x)) {
             if (wert instanceof THREE.Texture) wert.dispose();
           }
-          if (x !== kegelMaterial) x.dispose();
+          if (!geteilt.has(x)) x.dispose();
         }
       });
     }
@@ -341,6 +515,35 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
       g.setAttribute('position', new THREE.BufferAttribute(punkte, 3));
       kegelGruppe.add(new THREE.LineSegments(g, kegelMaterial));
     }
+    setzeKugel();
+  };
+
+  /** Materialien absichern, Normalen nachrechnen, Kanten anhängen (siehe Kopf). */
+  const bereiteModell = (wurzel: THREE.Object3D) => {
+    const netze: THREE.Mesh[] = [];
+    let dreiecke = 0;
+    wurzel.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh || !m.geometry) return;
+      netze.push(m);
+      sichereNetz(m.geometry);
+      const idx = m.geometry.getIndex();
+      const pos = m.geometry.getAttribute('position');
+      dreiecke += (idx ? idx.count : pos ? pos.count : 0) / 3;
+      const mats = Array.isArray(m.material) ? m.material : [m.material];
+      for (const mat of mats) if (mat) sichereMaterial(mat as unknown as MaterialLike);
+    });
+    if (dreiecke > KANTEN_HOECHSTENS_DREIECKE) return;
+    for (const m of netze) {
+      try {
+        const kanten = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, KANTEN_WINKEL_GRAD), kantenMaterial);
+        kanten.name = 'kanten';
+        kanten.raycast = () => {};
+        m.add(kanten);
+      } catch {
+        // Ein Netz ohne brauchbare Flächen bekommt keine Kanten; das Modell zeigt es trotzdem.
+      }
+    }
   };
 
   const setzeAnsicht = (a: Pick<Ansicht, 'position' | 'target'>) => {
@@ -353,9 +556,6 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
   const rahmen = () => {
     if (!box) return;
     const a = rahmeHuellbox(box, VORSCHAU_FOV_GRAD, seitenverhaeltnis);
-    kamera.near = a.near;
-    kamera.far = a.far * 3;
-    kamera.updateProjectionMatrix();
     const radius = laenge([box.max[0] - box.min[0], box.max[1] - box.min[1], box.max[2] - box.min[2]]) / 2;
     steuerung.minDistance = Math.max(radius * 0.05, 0.05);
     steuerung.maxDistance = Math.max(radius * 20, 5);
@@ -373,6 +573,8 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
   };
   const beiRueckkehr = () => {
     kontextWeg = false;
+    // Die Umgebung lag im verlorenen Kontext; ohne sie wäre das Haus wieder dunkel.
+    setzeUmgebung();
     zeichne();
     opt.onKontextZurueck?.();
   };
@@ -393,6 +595,7 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
               return;
             }
             leere(modellGruppe);
+            bereiteModell(gltf.scene);
             modellGruppe.add(gltf.scene);
             const b3 = new THREE.Box3().setFromObject(gltf.scene);
             box = b3.isEmpty()
@@ -465,6 +668,7 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
       hilfsKamera.up.set(0, 1, 0);
       hilfsKamera.position.set(k.position[0], k.position[1], k.position[2]);
       hilfsKamera.lookAt(k.target[0], k.target[1], k.target[2]);
+      fuehreSchnittNach(hilfsKamera);
       const kegelSichtbar = kegelGruppe.visible;
       kegelGruppe.visible = false;
       renderer.setRenderTarget(hilfsZiel);
@@ -499,6 +703,9 @@ export function erzeugeModellVorschau3d(opt: ModellVorschau3dOptionen): ModellVo
       leere(modellGruppe);
       leere(kegelGruppe);
       kegelMaterial.dispose();
+      kantenMaterial.dispose();
+      umgebung?.dispose();
+      szene.environment = null;
       hilfsZiel?.dispose();
       renderer.dispose();
       // Den Kontext ausdrücklich zurückgeben: Browser verwerfen ab etwa 16 Kontexten den

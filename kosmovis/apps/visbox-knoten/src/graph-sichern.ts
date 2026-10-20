@@ -7,9 +7,17 @@
  * `oberflaeche/server.py` WEG_KNOTEN_GRAPH und `aiimaging.knotenweg.schreibe_graph`) und legt sie
  * beim Öffnen wieder ins Dokument — VOR dem ersten Bild, damit der fertige Anfang (Entscheid 91)
  * nicht zusätzlich angelegt wird.
+ *
+ * Beim Legen wird ein Graph **einmal sanft entzerrt, nur wenn Knoten sich überlappen**
+ * (Owner-Befund am Mac, 20.10.2026: die Auto-Kamera lag über dem unteren Rand des Modell-Knotens,
+ * seit der mit dem 3D-Fenster gewachsen ist — der Graph war vorher gesichert). Ohne Überlappung
+ * bleibt jede Lage, wie sie gesichert ist (`entzerreGraph` in `knoten-entzerren.ts`). Der Wirt
+ * hat die Lade-Fähigkeit zu diesem Zeitpunkt schon gemeldet (`main.tsx`), die Höhe des
+ * Modell-Knotens stimmt also.
  */
 import type { VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
+import { entzerreGraph } from '../../kosmo-orbit/src/modules/vis/knoten-entzerren';
 
 /** Wie lange nach der letzten Änderung gesichert wird. */
 export const SICHERN_NACH_MS = 1000;
@@ -23,7 +31,7 @@ export function renderGraphen(): VisGraph[] {
 export function legeGraphen(graphen: VisGraph[]): number {
   if (graphen.length === 0) return 0;
   const { doc } = useProject.getState();
-  doc.apply(graphen.filter((g) => !doc.get(g.id)).map((g) => ({ id: g.id, before: null, after: g })));
+  doc.apply(graphen.filter((g) => !doc.get(g.id)).map((g) => ({ id: g.id, before: null, after: entzerreGraph(g) })));
   useProject.setState((s) => ({ revision: s.revision + 1 }));
   return graphen.length;
 }

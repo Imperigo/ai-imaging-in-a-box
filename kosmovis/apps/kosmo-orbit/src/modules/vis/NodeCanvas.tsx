@@ -811,6 +811,12 @@ export function groessteNodeHoehe(typ: string): number {
   return basisNodeHoehe(typ) + (KOERPER_H_ZUSATZ_OFFEN[typ] ?? 0) + (typ === 'render' ? RENDER_H_LAUF_ZUSATZ + VERLAUF_ZEILE_H : 0);
 }
 
+/** Höhe eines Knotens in Ruhe (zu oder eingeklappt, kein Lauf) — mit dem Wirt-Zustand, den
+ *  `basisNodeHoehe` kennt. Für das Entzerren gesicherter Graphen (`knoten-entzerren.ts`). */
+export function ruhendeNodeHoehe(n: Pick<VisNode, 'typ' | 'collapsed'>): number {
+  return n.collapsed ? kollabierteNodeHoehe(n.typ) : basisNodeHoehe(n.typ);
+}
+
 /** Echte Nodehöhe inkl. eines offenen Klapptexts (W1 Massnahme 3a) ODER
  * (V1-Welle Commit 2) eingeklappt — `collapsed` gewinnt: ein Klapptext bleibt
  * dabei zu (kollabiert zeigt nie einen Körper). Beim Render-Knoten wächst

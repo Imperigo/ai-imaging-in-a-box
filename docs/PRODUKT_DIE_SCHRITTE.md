@@ -1702,3 +1702,12 @@ geladen ist — die Knotenansicht öffnet darum nicht langsamer. Fehlt dem Rechn
 ein ruhiger Satz statt eines leeren Bildes. Dasselbe Fenster ist der Grundstein für die nächsten Knoten: die
 Auto-Kamera zeigt darin ihre Kameras als Kegel. Ehrlich gesagt: Geprüft ist es im Browser des Prüfrechners; ob es in
 der Mac-App genauso zeichnet, sieht erst der Owner am Gerät.
+**Das 3D-Fenster hell und ohne Abschneiden (20.10.2026, Befund am Mac).** Am Mac war ein IFC-Modell im Fenster fast
+schwarz, beim Drehen ganz, und beim Heranzoomen fiel das Haus vorne weg. Zwei Ursachen: Bauteile, denen die IFC-Datei
+keine Farbe gibt, kamen ohne Material an, und das Dateiformat macht sie dann ganz metallisch — Metall zeigt ohne
+Umgebung nichts. Und die vordere Schnittebene stand fest so weit vor der Kamera, dass sie beim Heranzoomen ins Haus
+schnitt. Jetzt steht das Modell in einem hellen Umgebungslicht, jedes Material ist auf eine helle, matte Wirkung
+begrenzt (wie ein Weissmodell), dünne Kanten zeichnen die Körper nach, und die Schnittebenen folgen bei jedem Bild dem
+Abstand. Dazu lag in einer älteren Mappe der Knoten «Auto-Kamera» über dem gewachsenen Modell-Knoten; beim Öffnen
+rückt Visbox überlappende Knoten jetzt einmal nach unten, ohne sonst etwas zu verschieben. Ehrlich gesagt: Geprüft im
+Browser des Prüfrechners, mit dem Beispielhaus; das IFC-Modell am Mac sieht erst der Owner.

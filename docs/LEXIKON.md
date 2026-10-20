@@ -7938,12 +7938,39 @@ sie etwas kann, das gerade niemand benutzt. *Im Projekt:* das 3D-Fenster samt th
 eigenen Dateien unter `kosmovis/apps/visbox-knoten/dist/assets/` und kommt erst, wenn ein
 Modell-Knoten sein Fenster zeigt.
 
+**Metallwert (eines Materials)** — Eine Zahl von 0 bis 1, die sagt, wie sehr eine Fläche wie Metall
+wirkt. Metall hat keine eigene Farbe im Licht, es zeigt nur, was es spiegelt; steht nichts zum Spiegeln
+herum, wirkt es fast schwarz. *Im Projekt:* Bauteile ohne Material bekamen im 3D-Fenster den Wert 1
+(Vorgabe des Dateiformats) und erschienen schwarz; seit dem 20.10.2026 gilt dort höchstens 0,2.
+
+**Umgebungslicht (aus einem Raum)** — Licht, das von allen Seiten kommt, als stünde das Modell in einem
+hellen Zimmer: Wände, Decke und Boden geben Helligkeit ab. Anders als eine einzelne Lampe lässt es
+keine Seite ganz dunkel. *Im Projekt:* das 3D-Fenster nutzt dafür einen fertigen Raum aus der
+Bibliothek three.js, dazu Himmel, Boden und eine Sonne für die Schattierung.
+
+**Normale (Richtung einer Fläche)** — Ein kleiner Pfeil, der senkrecht aus einer Fläche zeigt. Am
+Winkel zwischen ihm und dem Licht rechnet das Programm, wie hell die Fläche wird. Fehlt er, sind
+alle Flächen gleich hell und das Modell wirkt flach. *Im Projekt:* das 3D-Fenster rechnet fehlende
+Normalen beim Laden nach.
+
+**Schnittebene (vorne und hinten)** — Zwei gedachte Wände vor der Kamera: Was näher liegt als die
+vordere oder weiter weg als die hintere, wird nicht gezeichnet. Sie sind nötig, damit das Programm
+weiss, was vorne und was hinten liegt. Steht die vordere zu weit weg, fehlt beim Heranzoomen der
+vordere Teil des Hauses («Clipping»). *Im Projekt:* das 3D-Fenster setzt beide seit dem 20.10.2026 bei
+jedem Bild neu, nach dem Abstand zum Modell.
+
+**Entzerren (eines gesicherten Graphen)** — Knoten, die sich überdecken, werden beim Laden so weit nach
+unten gerückt, bis sie frei stehen; alles andere bleibt, wo es war. *Im Projekt:* nötig, weil der
+Modell-Knoten mit dem 3D-Fenster höher wurde und ältere gesicherte Anordnungen noch mit der alten Höhe
+rechneten.
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus den drei Fehlern am 3D-Fenster (Protokoll 74 §159): **Metallwert (eines Materials)**, **Umgebungslicht (aus einem Raum)**, **Normale (Richtung einer Fläche)**, **Schnittebene (vorne und hinten)**, **Entzerren (eines gesicherten Graphen)** |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §158): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |
 | 2026-10-20 | Ergaenzt aus der KI-Bedienung Stufe 3/4 (Protokoll 74 §156): **KI-Werkzeugsatz (der Knotenansicht)**, **Karte (Vorschlag der KI)**, **Selbständigkeit (Karte, Coop, Voll)**, **Tätigkeitsstrom**, **Zwei Rückgängig-Verläufe**, **Verlaufs-Wache**, **Bote «visboxKi» (Script-Message-Handler)**, **Werkzeuge der Mac-App (für Claude)**, **Werkzeugliste im Bau**, **Claude Desktop**; **MCP-Anschluss in der Mac-App** und **Werkzeugträger** nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-292 (Protokoll 74 §154): **Tonwerte (Tonwertkurve)**, **Belichtung (je Stimmung)**, **Überstrahlung (voll weisse Bildpunkte)**, **Ruhiger Hintergrund (Kamerastrahl)**, **Tönung (je Stimmung)**, **Bestellte Bildgrösse und Raster**; **View-Transform** um AgX mit Himmelsbild ergänzt |

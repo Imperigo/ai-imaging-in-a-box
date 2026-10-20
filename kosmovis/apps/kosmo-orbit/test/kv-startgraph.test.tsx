@@ -127,6 +127,25 @@ describe('KV-STARTGRAPH · der fertige Anfang', () => {
     }
   });
 
+  it('auch mit Wirt (Visbox: Laden, Heim-Standpunkte) ueberlappt nichts — der hoehere Modell-Knoten mit 3D-Fenster eingerechnet', () => {
+    const ohneWirt = groessteNodeHoehe('modell');
+    registriereModellLaden({ formate: ['IFC'], annehmen: '.ifc', laden: async () => ({ stand: 'leer' }) });
+    registriereHeimStandpunkte({ standpunkte: [], satz: '' });
+    expect(groessteNodeHoehe('modell'), 'mit Wirt ist der Knoten hoeher').toBeGreaterThan(ohneWirt);
+    const lage = startGraphLage();
+    expect(lage.kamera.y - lage.modell.y, 'Auto-Kamera unter dem ganzen Modell-Knoten').toBeGreaterThanOrEqual(groessteNodeHoehe('modell') + 24);
+    const eintraege = Object.entries(lage);
+    for (const [a, pa] of eintraege) {
+      for (const [b, pb] of eintraege) {
+        if (a >= b) continue;
+        const ha = groessteNodeHoehe(a);
+        const hb = groessteNodeHoehe(b);
+        const ueber = pa.x < pb.x + NODE_W && pb.x < pa.x + NODE_W && pa.y < pb.y + hb && pb.y < pa.y + ha;
+        expect(ueber, `${a} und ${b}`).toBe(false);
+      }
+    }
+  });
+
   it('die Auto-Kamera hat keinen Eingang — darum keine Linie vom Modell (Katalog)', () => {
     expect(VIS_NODE_KATALOG.kamera!.inputs).toEqual([]);
   });

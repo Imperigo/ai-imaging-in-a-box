@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { History, KosmoDoc, type VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { ladeGesichertenGraph, legeGraphen, renderGraphen, sichereBeiAenderung } from '../src/graph-sichern';
+import { registriereModellLaden } from '../../kosmo-orbit/src/modules/vis/modell-laden';
+import { groessteNodeHoehe } from '../../kosmo-orbit/src/modules/vis/NodeCanvas';
 
 /**
  * VISBOX-EIGEN (15.10.2026, auf-20261015-286): Nach dem Neuladen war der Graph weg. Der Wirt
@@ -48,5 +50,43 @@ describe('Graph der Mappe', () => {
     vi.advanceTimersByTime(1000);
     expect(senden).toHaveBeenCalledTimes(1);
     ab();
+  });
+
+  it('ein vorher gesicherter Graph mit überlappenden Knoten wird beim Legen einmal entzerrt (Owner-Befund 20.10.2026)', () => {
+    registriereModellLaden({ formate: ['IFC'], annehmen: '.ifc', laden: async () => ({ stand: 'leer' }) });
+    try {
+      // So lag der Anfang, als der Modell-Knoten noch ohne 3D-Fenster war: Kamera 204 + 32 px darunter.
+      const alt = {
+        ...GRAPH,
+        id: 'visgraph_alt',
+        nodes: [
+          { id: 'm', typ: 'modell', x: 40, y: 400, params: {} },
+          { id: 'k', typ: 'kamera', x: 40, y: 636, params: {} },
+          { id: 'r', typ: 'render', x: 600, y: 40, params: {} },
+        ],
+      } as VisGraph;
+      legeGraphen([alt]);
+      const g = renderGraphen().find((x) => x.id === 'visgraph_alt')!;
+      const m = g.nodes.find((n) => n.id === 'm')!;
+      const k = g.nodes.find((n) => n.id === 'k')!;
+      expect(m.y, 'das Modell bleibt').toBe(400);
+      expect(k.y, 'die Kamera steht unter dem ganzen Modell-Knoten').toBeGreaterThanOrEqual(400 + groessteNodeHoehe('modell'));
+      expect(g.nodes.find((n) => n.id === 'r')!.y, 'die andere Spalte bleibt').toBe(40);
+    } finally {
+      registriereModellLaden(null);
+    }
+  });
+
+  it('ohne Überlappung bleibt der gesicherte Graph Pixel für Pixel', () => {
+    const frei = {
+      ...GRAPH,
+      id: 'visgraph_frei',
+      nodes: [
+        { id: 'm', typ: 'modell', x: 40, y: 40, params: {} },
+        { id: 'k', typ: 'kamera', x: 40, y: 900, params: {} },
+      ],
+    } as VisGraph;
+    legeGraphen([frei]);
+    expect(renderGraphen().find((x) => x.id === 'visgraph_frei')).toEqual(frei);
   });
 });

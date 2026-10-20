@@ -8157,5 +8157,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Oberfläche A–F und W (Bauplan §3) — nacheinander über NodeCanvas
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
+  - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§159, C88)
+  - [ ] Am Mac ansehen: IFC-Modell drehen und ganz nah zoomen; Graph der Mappe ohne Überlappung (owner)
   - [ ] Einspielen A und B bei Int 1 (`kosmovis-fehler` ist mit R43 drin) und Bild in WebKitGTK und der Mac-App am Gerät
 

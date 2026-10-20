@@ -1,11 +1,19 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
+  GRUNDGRAU,
   KEGEL_SEITENVERHAELTNIS,
+  METALL_HOECHSTENS,
   PIXELDICHTE_OBERGRENZE,
   PIXELDICHTE_UNTERGRENZE,
   erzeugeModellVorschau3d,
+  huellkugel,
   kegelLaenge,
+  nahUndFern,
+  sichereMaterial,
+  sichereNetz,
   kegelLinien,
   pixeldichte,
   rahmeHuellbox,
@@ -140,5 +148,128 @@ describe('pixeldichte — Bildschirmdichte mal Knotenzoom, begrenzt', () => {
   it('kaputte Eingaben gelten als 1', () => {
     expect(pixeldichte(Number.NaN, Number.NaN)).toBe(1);
     expect(pixeldichte(0, -2)).toBe(1);
+  });
+});
+
+describe('nahUndFern — Schnittebenen folgen dem Zoom (Owner-Befund 20.10.2026: «Clipping»)', () => {
+  it('weit weg: vorne kurz vor der Kugel, hinten kurz dahinter', () => {
+    const { near, far } = nahUndFern(100, 10);
+    expect(near).toBeCloseTo(85);
+    expect(far).toBeCloseTo(120);
+  });
+
+  it('ganz nah oder im Modell: vorne ein Tausendstel des Radius — nichts wird abgeschnitten', () => {
+    for (const abstand of [0, 0.5, 5, 14]) {
+      const { near, far } = nahUndFern(abstand, 10);
+      expect(near, `Abstand ${abstand}`).toBeCloseTo(0.01);
+      expect(far).toBeGreaterThanOrEqual(abstand + 10);
+    }
+  });
+
+  it('jeder Punkt der Kugel liegt zwischen den Ebenen, bei jedem Abstand', () => {
+    const r = 7.3;
+    for (let d = 0; d <= 20 * r; d += r / 4) {
+      const { near, far } = nahUndFern(d, r);
+      // nächster Punkt der Kugel (oder 0, wenn die Kamera drin steht), fernster Punkt
+      const naechst = Math.max(d - r, 0);
+      if (d > r) expect(near).toBeLessThanOrEqual(naechst);
+      expect(far).toBeGreaterThanOrEqual(d + r);
+    }
+  });
+
+  it('kaputte Zahlen: ein ruhiges 0,01 … 1000', () => {
+    expect(nahUndFern(Number.NaN, 1)).toEqual({ near: 0.01, far: 1000 });
+    expect(nahUndFern(5, 0)).toEqual({ near: 0.01, far: 1000 });
+  });
+
+  it('die Kugel schliesst die Standpunkte der Kameras ein', () => {
+    const box = { min: [-1, 0, -1] as Vec3, max: [1, 2, 1] as Vec3 };
+    expect(huellkugel(box).radius).toBeCloseTo(Math.sqrt(3));
+    const k = huellkugel(box, [[20, 1, 0]]);
+    expect(k.mitte).toEqual([0, 1, 0]);
+    expect(k.radius).toBeCloseTo(20);
+  });
+});
+
+/** Ein Dreieck als glb — ohne Material und ohne Normalen, wie ein Bauteil ohne IFC-Stil. */
+function dreieckGlb(): ArrayBuffer {
+  const pos = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+  const json = {
+    asset: { version: '2.0' },
+    scene: 0,
+    scenes: [{ nodes: [0] }],
+    nodes: [{ mesh: 0 }],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
+    accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0, 0, 0], max: [1, 1, 0] }],
+    bufferViews: [{ buffer: 0, byteLength: pos.byteLength }],
+    buffers: [{ byteLength: pos.byteLength }],
+  };
+  let text = JSON.stringify(json);
+  while (text.length % 4) text += ' ';
+  const jb = new TextEncoder().encode(text);
+  const bin = new Uint8Array(pos.buffer);
+  const gesamt = 12 + 8 + jb.length + 8 + bin.length;
+  const out = new ArrayBuffer(gesamt);
+  const dv = new DataView(out);
+  dv.setUint32(0, 0x46546c67, true);
+  dv.setUint32(4, 2, true);
+  dv.setUint32(8, gesamt, true);
+  dv.setUint32(12, jb.length, true);
+  dv.setUint32(16, 0x4e4f534a, true);
+  new Uint8Array(out, 20, jb.length).set(jb);
+  dv.setUint32(20 + jb.length, bin.length, true);
+  dv.setUint32(24 + jb.length, 0x004e4942, true);
+  new Uint8Array(out, 28 + jb.length, bin.length).set(bin);
+  return out;
+}
+
+describe('sichereMaterial / sichereNetz — hell wie ein Weissmodell (Owner-Befund: «alles schwarz»)', () => {
+  it('Ursache belegt: ein Bauteil ohne Material kommt vom glTF-Lader ganz metallisch und ohne Normalen', async () => {
+    const gltf = await new GLTFLoader().parseAsync(dreieckGlb(), '');
+    let netz: THREE.Mesh | null = null;
+    gltf.scene.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) netz = o as THREE.Mesh;
+    });
+    const m = netz!.material as THREE.MeshStandardMaterial;
+    expect(m.metalness, 'Vorgabe des Laders: Spiegel').toBe(1);
+    expect(netz!.geometry.getAttribute('normal')).toBeUndefined();
+
+    const was = sichereMaterial(m);
+    expect(was.metall).toBe(true);
+    expect(m.metalness).toBe(METALL_HOECHSTENS);
+    expect(m.side).toBe(THREE.DoubleSide);
+    expect(sichereNetz(netz!.geometry)).toBe(true);
+    expect(netz!.geometry.getAttribute('normal').count).toBe(3);
+    expect(sichereNetz(netz!.geometry), 'zweimal rechnet nicht nach').toBe(false);
+  });
+
+  it('schwarze Grundfarbe ohne Textur wird hellgrau, eine echte Farbe bleibt', () => {
+    const schwarz = new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0 });
+    expect(sichereMaterial(schwarz)).toEqual({ metall: false, farbe: true });
+    expect(schwarz.color.getHex()).toBe(new THREE.Color(GRUNDGRAU).getHex());
+
+    const rot = new THREE.MeshStandardMaterial({ color: 0xa03020, metalness: 0.1 });
+    expect(sichereMaterial(rot)).toEqual({ metall: false, farbe: false });
+    expect(rot.color.getHex()).toBe(new THREE.Color(0xa03020).getHex());
+    expect(rot.metalness).toBe(0.1);
+  });
+
+  it('mit Bildtextur oder Punktfarben bleibt die Grundfarbe, wie sie ist (die Textur färbt)', () => {
+    const mitBild = new THREE.MeshStandardMaterial({ color: 0x000000 });
+    mitBild.map = new THREE.Texture();
+    expect(sichereMaterial(mitBild).farbe).toBe(false);
+    const mitPunkten = new THREE.MeshStandardMaterial({ color: 0x000000, vertexColors: true });
+    expect(sichereMaterial(mitPunkten).farbe).toBe(false);
+  });
+
+  it('auch an einer Attrappe ohne three: Metall begrenzt, Farbe gesetzt', () => {
+    let gesetzt = -1;
+    const attrappe = {
+      metalness: 0.9,
+      color: { r: 0, g: 0, b: 0, setHex: (h: number) => { gesetzt = h; } },
+    };
+    expect(sichereMaterial(attrappe)).toEqual({ metall: true, farbe: true });
+    expect(attrappe.metalness).toBe(METALL_HOECHSTENS);
+    expect(gesetzt).toBe(GRUNDGRAU);
   });
 });

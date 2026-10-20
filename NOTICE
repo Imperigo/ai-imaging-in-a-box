@@ -587,7 +587,9 @@ Sperrdatei kosmovis/package-lock.json, aus node_modules gelesen, zuletzt am 20.1
 
 three (0.184.0) kam am 20.10.2026 mit dem 3D-Fenster im Modell-Knoten dazu; es
 steht in einem eigenen Teil des Baus, den die Knotenansicht erst laedt, wenn ein
-3D-Fenster zeichnet.
+3D-Fenster zeichnet. Auch die Umgebung fuer das Licht (RoomEnvironment), der
+glTF-Lader und die Drehsteuerung stammen aus three selbst (examples/jsm, MIT) und
+sind keine eigene Abhaengigkeit.
 
 Nur zum Bauen und Pruefen gebraucht, nicht ausgeliefert: vite, vitest,
 @vitejs/plugin-react, jsdom (MIT), typescript (Apache-2.0), die Typangaben

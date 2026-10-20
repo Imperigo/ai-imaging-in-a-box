@@ -222,6 +222,9 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-modell-3d-kern.test.ts",
     "apps/kosmo-orbit/test/kv-modell-3d-fenster.test.tsx",
     "apps/kosmo-orbit/test/kv-modell-knoten-3d.test.tsx",
+    # Owner-Befund am Mac (20.10.2026): gesicherte Graphen beim Laden einmal entzerren, nur bei
+    # echter Ueberlappung (`modules/vis/knoten-entzerren.ts`, gerufen von `graph-sichern.ts`).
+    "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts",
     # KI-Bedienung Stufe 3 (Entscheide 105–106f, 108, 114, 20.10.2026): der KI-Werkzeugsatz der
     # Knotenansicht (`modules/vis/ki-werkzeuge.ts`, kommt mit `modules/vis/**`) — Liste, Karte,
     # Paket, graph_lesen und der eigene KI-Verlauf. Nur Vis-Befehle, darum hier grün.
