@@ -2944,6 +2944,47 @@ def _kontrast_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -
             f"Hintergrund pruefen.")
 
 
+#: Neue Baumasse ausserhalb des Umrisses (auf-20261020-294, B6): wieviel das KI-Bild dort
+#: baut, wo das Modell Himmel hat, im Verhältnis zur Fläche des Hauses (``aiimaging.baumasse``).
+#: Im ``qa``-Block der Lauf mit dem GRÖSSTEN Wert, und je Kamera. Fehlt, wenn nicht gemessen —
+#: kein ``null``. Eine Auskunft, kein Tor: ``geometry`` bleibt Feld für Feld, wie es war.
+FELD_AUSSERHALB = "ausserhalb_umriss_anteil"
+#: Der Satz, wenn das Bildmodell über den Umriss hinaus baut.
+SATZ_AUSSERHALB = "KI BAUT UEBER DEN UMRISS HINAUS"
+
+
+def _ausserhalb_von(urteil):
+    befund = (urteil or {}).get("ausserhalb_umriss") if isinstance(urteil, dict) else None
+    wert = befund.get("anteil_haus") if isinstance(befund, dict) else None
+    return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
+
+
+def _ausserhalb_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """``qa.ausserhalb_umriss_anteil``: je Kamera gemessen, für den Lauf der grösste Wert —
+    mit Satz, wenn er die (gesetzte) Schwelle erreicht."""
+    from . import baumasse as _baumasse  # noqa: PLC0415
+    werte = []
+    for eintrag in je_kamera or ():
+        if isinstance(eintrag, dict):
+            wert = _ausserhalb_von(eintrag.get("geometrie_urteil"))
+            if wert is not None:
+                werte.append((wert, eintrag.get("kamera")))
+    if not werte:
+        wert = _ausserhalb_von(geometrie_urteil)
+        if wert is not None:
+            werte.append((wert, (geometrie_urteil or {}).get("kamera")))
+    if not werte:
+        return
+    groesster, kamera = max(werte, key=lambda w: w[0])
+    qa[FELD_AUSSERHALB] = groesster
+    if groesster >= _baumasse.SCHWELLE_ANTEIL_HAUS:
+        hinweise.append(
+            f"{SATZ_AUSSERHALB}: Im KI-Bild der Kamera {kamera!r} steht neben dem Haus, wo "
+            f"das Modell Himmel hat, Baumasse im Umfang von {groesster * 100:.0f} % der "
+            f"Hausflaeche (Satz ab {_baumasse.SCHWELLE_ANTEIL_HAUS * 100:.0f} %, gesetzt, "
+            f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
+
+
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
     """Je Kamera ein ``{kamera, geometry?, style?}`` — in **ihrer** Form.
 
@@ -2970,7 +3011,7 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                              geometrie_urteil=eintrag.get("geometrie_urteil"),
                              stil_urteil=eintrag.get("stil_urteil"))["qa"]
         satz = {"kamera": str(name)}
-        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST):
+        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST, FELD_AUSSERHALB):
             if feld in block:
                 satz[feld] = block[feld]
         # Ohne Geometrieurteil («nur Grundlage», auf-20261020-293): die Messung der Stimmung.
@@ -4337,6 +4378,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _ueberstrahlt_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # KONTRAST HAUS – HINTERGRUND (auf-20261020-293) — gleich gebaut.
         _kontrast_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
+        # NEUE BAUMASSE AUSSERHALB DES UMRISSES (auf-20261020-294, B6) — gleich gebaut.
+        _ausserhalb_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 

@@ -580,7 +580,19 @@ def materialwahl_ablegen(ordner, szene: dict) -> Path:
 #: Welche Lichtdaten der Stimmung an Blender gehen (``--umgebung-licht``, auf-20261020-293).
 LICHT_AN_BLENDER = ("sonne", "sonnen_staerke", "fuell_staerke", "winkel_grad", "look",
                     "hintergrund_richtung", "hintergrund_abstand_ev", "gelaende_grau",
-                    "herkunft_licht")
+                    "herkunft_licht",
+                    # auf-20261020-294 (B1, B2): Sonne seitlich der Kamera, weicher Rueckfall.
+                    "sonne_seitlich_grad", "sonne_seite", "winkel_weich_grad")
+
+
+def drehung_bestellt(szene: dict) -> bool:
+    """Ob ``render.environment.rotationGrad`` ausdruecklich bestellt war (auf-20261020-294, B1).
+
+    Nur dann geht die Drehung an Blender; sonst dreht der Runner das Himmelsbild je Kamera so,
+    dass die Sonne seitlich der Blickachse steht. Ein ausdrueckliches ``rotationGrad`` des
+    Nutzers hat Vorrang — auch ``0``.
+    """
+    return "rotationGrad" not in tuple((szene or {}).get("umgebung_vorgaben") or ())
 
 
 def umgebung_einstellungen(szene: dict) -> dict:
@@ -597,8 +609,13 @@ def umgebung_einstellungen(szene: dict) -> dict:
     # (tests/test_kette.py, `_was_der_abholer_bestellt`) aus dem Quelltext, was bestellt wird.
     licht = _stimmung.licht_der_stimmung(umgebung.get("preset"))
     aus = dict(umgebung_hdr=str(datei["pfad"]), umgebung_staerke=umgebung["intensitaet"],
-               umgebung_drehung=umgebung["rotationGrad"],
                umgebung_belichtung=licht["belichtung_ev"]) if datei.get("pfad") else {}
+    # DIE DREHUNG NUR, WENN BESTELLT (auf-20261020-294, B1): Sonst rechnet der Runner sie je
+    # Kamera (Sonne `sonne_seitlich_grad` neben der Blickachse) — im Schluessel der
+    # Grundlage stehen dafuer die Kamera und die Lichtdaten. Ohne Lichtdaten (eine Stimmung
+    # vor 293) ginge die Vorgabe 0 wie bisher.
+    if aus and (drehung_bestellt(szene) or not licht.get("sonne_seitlich_grad")):
+        aus = dict(aus, umgebung_drehung=umgebung["rotationGrad"])
     if aus and licht["toenung_linear"] is not None:
         aus = dict(aus, umgebung_toenung=tuple(licht["toenung_linear"]))
     # LICHT MIT SCHATTEN (auf-20261020-293): Sonne, Fuelllicht, Look, Hintergrundabstand und
@@ -637,6 +654,10 @@ def angewandt_der_szene(szene: dict) -> dict:
             # Sonne aus dem Himmelsbild (`licht.sonne`) oder eine weiche aus dem hellsten
             # Bereich. `sonnenlampe` sagt weiter nur, ob eine Sonne BESTELLT war.
             sonnenlampe=bool(szene.get("sonne")),
+            # WIE GEDREHT WIRD (auf-20261020-294, B1): «zur_kamera» — je Kamera, Sonne
+            # seitlich der Blickachse (die gerechnete Drehung steht im Blender-Bericht);
+            # «bestellt» — `rotationGrad` wie bestellt.
+            drehung_weg="bestellt" if drehung_bestellt(szene) else "zur_kamera",
             prompt_satz=(zusatz or {}).get("satz"),
             # Belichtung, Farbtemperatur und Tonwerte je Stimmung (auf-20261020-292) —
             # Daten des Heim-PC, keine Felder des Vertrags; hier, damit das Ergebnis sagt,
@@ -4058,9 +4079,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             urteil[_kosmo_szene.URTEIL_BESTAND] = _kosmo_szene.bestand_vermerk(bestand_auftrag,
                                                                                kontext)
             urteil["messboden"] = messboden_befund
+            # SEIT auf-20261020-294 (B5) AUCH BEI «VOLL», wenn hochgerechnet: Die Untergrenze
+            # wirkte dort (1024 x 640 statt 960 x 600), und kein Vermerk sagte es.
             urteil[_kosmo_szene.URTEIL_GUETE] = (
                 _guete_vermerk(szene, backbone_name, schritte_lauf, auswahl, steuer)
-                if vorschau else None)
+                if vorschau else _guete_vermerk_voll(backbone_name, steuer))
             # UEBERSTRAHLUNG AM HAUS (auf-20261020-292, B1) — nur mit Stimmung: Anteil voll
             # weisser Bildpunkte des Cycles-Bilds auf der Bauwerksmaske. Eine Auskunft, kein
             # Tor; `qa.ueberstrahlt_anteil` im Ergebnis.
@@ -4237,7 +4260,8 @@ MULTIPASS_DURCHGEREICHT = {
     # (Entscheid 109) bekommt ihn hier gerechnet (`senkrecht_gestellt`, kameras.shift_aus_ziel).
     "shift_y": "senkrecht_gestellt(aufgabe) ← CameraSpec.perspektive 'senkrecht'",
     "umgebung_staerke": "umgebung_einstellungen(szene) ← render.environment.intensitaet",
-    "umgebung_drehung": "umgebung_einstellungen(szene) ← render.environment.rotationGrad",
+    "umgebung_drehung": ("umgebung_einstellungen(szene) ← render.environment.rotationGrad, nur "
+                         "wenn bestellt (sonst dreht der Runner je Kamera, auf-20261020-294 B1)"),
     "umgebung_weiss": "umgebung_einstellungen(szene) ← render.environment.preset 'weiss'",
     # Seit auf-20261020-292: Belichtung und Toenung je Stimmung (Daten in aiimaging.stimmung).
     "umgebung_belichtung": "umgebung_einstellungen(szene) ← stimmung.STIMMUNGEN[preset]"
@@ -4615,6 +4639,27 @@ def _guete_vermerk(szene, backbone_name, schritte, auswahl, steuer) -> dict:
     if (steuer or {}).get("schoenbild_grund"):
         vermerk["hinweise"].append(steuer["schoenbild_grund"])
     return vermerk
+
+
+def _guete_vermerk_voll(backbone_name, steuer) -> dict | None:
+    """Der Vermerk der vollen Güte — nur, wenn der KI-Schritt hochgerechnet hat (294, B5).
+
+    Bei «voll» blieb der Vermerk bis dahin leer, auch wenn die Grundlage (960 × 600) unter der
+    Untergrenze des Modells lag und der KI-Schritt 1024 × 640 rechnete. Dieselben Felder wie
+    bei der Vorschau, soweit sie hier etwas sagen (Grösse, Weg, Satz); ohne Hochrechnung
+    ``None`` wie bisher. Kein Vorschausatz in ``verdict.reason`` — der hängt an der Güte,
+    nicht an diesem Vermerk (``kosmo_szene.als_ergebnis``).
+    """
+    if not (steuer or {}).get("hochgerechnet"):
+        return None
+    ki, grund = steuer["ki_groesse"], steuer["grundlage_groesse"]
+    return {"guete": _kosmo_szene.GUETE_VOLL, "backbone": backbone_name,
+            "ki_groesse": list(ki), "grundlage_groesse": list(grund),
+            "verkleinert": bool(steuer.get("verkleinert")), "hochgerechnet": True,
+            "weg": steuer.get("weg"),
+            "hinweise": [f"Die Grundlage {grund[0]}x{grund[1]} ist kleiner als die Untergrenze "
+                         f"von {backbone_name!r}; der KI-Schritt rechnet {ki[0]}x{ki[1]} und "
+                         f"bringt sein Bild auf die Grundlage zurueck."]}
 
 
 def pose_aus_bericht(bericht: dict) -> dict | None:
