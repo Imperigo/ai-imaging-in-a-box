@@ -1,5 +1,7 @@
 # Visbox eigenständig — die Oberfläche aufs Gerät, der Heim-PC als Rechenserver (Plan, 20.10.2026)
 
+**Codestand:** `06b9872` (erhoben auf `claude/ai-imaging-assessment-pstkyp`; Schritt 1 gebaut: Protokoll 74 §146)
+**Grundlage:** Quelltext gelesen (Prüfweg in §1); keine Messung
 **Stand:** Owner-Auftrag 20.10.2026 über LW, wörtlich *«gut dann baue nächste version richtig!»* — kein Plan zur
 Abnahme, sondern Bau ab sofort (Fassung 0.3.x). Die Fragen in §9 gehen gebündelt an den Owner; bis zur Antwort gilt
 jeweils die **Empfehlung als Annahme** (steht so im Fassungsblatt). Schritt 1 ist in Arbeit.
