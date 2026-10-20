@@ -1,0 +1,154 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261015-288",
+ "worker": "local",
+ "rang": 75,
+ "folgt_auf": "auf-20261014-284",
+ "entscheide": [
+  "92",
+  "92a",
+  "92b"
+ ],
+ "einbau": "C65",
+ "status": "erledigt — der Bildweg «Varianten mit einem Klick» laeuft von Anfang bis Ende: 6 Bilder (3 Standpunkte x 2 Stimmungen) mit EINEM Bestell-Klick und EINEM Freigabe-Klick, beide Auftraege fertig, Raster am Knoten gefuellt. Zwei Befunde: (1) der erste Versuch mit dem Vorgabe-Testbau (zwei Quader, 6 m Abstand) wurde von der Rahmung abgelehnt; (2) 3 von 6 Zellen fielen beim Geometrie-Urteil durch (alle Abend-Zellen und Sued/Morgen).",
+ "beendet": "2026-10-20T09:50:00Z",
+ "kopf": {
+  "visbox": "main 0db9b63 (HEAD 86d2850); Dienst 10:29 neu gestartet (laut LW), Abholer-Takt frisch; Kein Code geaendert, nichts committet ausser dieser Datei.",
+  "browser": "Playwright-Chromium ohne Fenster gegen die Visbox-Flaeche (/knoten/), Anmeldung ueber die Kennwortdatei (nicht ausgegeben); Treiber per gemerkter PID beendet.",
+  "gpu": "vor jedem Lauf frei (14 W, 1.2 GB); immer nur ein Lauf; waehrend Bild 350 W (Spitze, unter der 400-W-Grenze), 30.8 GB belegt."
+ },
+ "stufe_1_mappe": {
+  "erste_mappe": "tools/make_test_glb.py Vorgabe (QuaderNah/QuaderFern, 6 m Abstand): am Knoten 3 Bilder (3x1x1) — aber beide Auftraege wurden vom Abholer in 22 s bzw. ~25 s mit NICHT GERENDERT (Rahmung) beendet: Bauwerk fuellt 21 % der Bildbreite, noetig 65 %, 0 von 3 Kameras, 0 von 3 Bildern. Das Raster zeigte «fehlgeschlagen — 0 von 3 Kameras geliefert» je Zelle (ehrlich, kein Bild).",
+  "zweite_mappe": "EIN Quader 20 x 6 x 10 m, Material Beton (baue_glb aus tools/make_test_glb.py, eine Zeile), Mappe «bau»; Hochachse NICHT gesetzt (Vorgabe, nicht wie in 286 per /api/einstellungen auf Y gestellt)."
+ },
+ "stufe_2_vorgabe": {
+  "knoten_varianten": "«3 Bilder (3 × 1 × 1)», Standpunkte: Süd, Südost, Nordwest («Die 3 Richtungen des Heim-PCs … kommen zusammen»), Stimmungen: Abendstimmung (Vorgabe), Entwurf «Aktuelles Modell», Zeitschaetzung «ungefähr 4 min 33 s». Wie erwartet.",
+  "warnung": "keine"
+ },
+ "stufe_3_morgenlicht": {
+  "knoten_varianten": "«6 Bilder (3 × 2 × 1)», Stimmungen: Morgenlicht, Abendstimmung, Schaetzung «ungefähr 9 min 6 s», keine Warnung. Wie erwartet."
+ },
+ "stufe_4_bestellen": {
+  "klick": "EIN Klick auf «6 Bilder bestellen»",
+  "auftraege_in_ablage": 2,
+  "zustand": "beide awaiting_approval / «Bestellung 1: 0 von 6 fertig, 2 Aufträge warten auf Freigabe»",
+  "cameras": "auto (beide)",
+  "prompt": "Auftrag 1: «Morgenlicht, klare lange Schatten, frische kühle Luft»; Auftrag 2: «Abendstimmung, warmes Licht, leuchtende Fenster» (scene.json gelesen). Je ein Auftrag je Stimmung.",
+  "render": "1600x1000, 128 Samples, z-image-turbo, faithful 0.8 (Vorgaben; Abholer bringt 1000 auf 992)",
+  "hinweis": "Bei jedem Bestellen der Satz «Kein Brücken-Token gesetzt …» — irrefuehrend, der Heim-PC-Abholer nimmt trotzdem (wie 15.10. Befund 4)."
+ },
+ "stufe_5_freigabe": {
+  "klick": "EIN Klick auf «Alle freigeben»",
+  "zustand": "Meldung «2 Aufträge freigegeben.», beide queued; der Abholer rechnete sie nacheinander (Morgenlicht zuerst, dann Abend), keine Handfreigabe je Auftrag.",
+  "verlauf": "Freigabe 09:37:46Z; Auftrag Morgen: Annahme 09:38:03Z, fertig 09:43:11Z; Auftrag Abend: Annahme 09:43:42Z, fertig 09:48:43Z. Am Ende am Knoten «Bestellung 2: 6 von 6 fertig»."
+ },
+ "raster": {
+  "zellen": [
+   {
+    "standpunkt": "Süd",
+    "stimmung": "Morgenlicht",
+    "bild": "ja",
+    "urteil": "rot (durchgefallen)",
+    "geometrie": 0.0,
+    "spearman": 0.209,
+    "geom_iou": 0.001,
+    "richtige_zeile": "ja (frontal, nahe Fassade; Richtung nach Sicht plausibel)"
+   },
+   {
+    "standpunkt": "Südost",
+    "stimmung": "Morgenlicht",
+    "bild": "ja",
+    "urteil": "gruen (bestanden)",
+    "geometrie": 0.961,
+    "spearman": -0.984,
+    "geom_iou": 0.938,
+    "richtige_zeile": "ja (ueber Eck, lange Seite links)"
+   },
+   {
+    "standpunkt": "Nordwest",
+    "stimmung": "Morgenlicht",
+    "bild": "ja",
+    "urteil": "gruen (bestanden)",
+    "geometrie": 0.961,
+    "spearman": -0.984,
+    "geom_iou": 0.938,
+    "richtige_zeile": "nicht unterscheidbar von Südost (siehe Befund 3)"
+   },
+   {
+    "standpunkt": "Süd",
+    "stimmung": "Abendstimmung",
+    "bild": "ja",
+    "urteil": "rot (durchgefallen)",
+    "geometrie": 0.04,
+    "spearman": -0.095,
+    "geom_iou": 0.017,
+    "richtige_zeile": "ja"
+   },
+   {
+    "standpunkt": "Südost",
+    "stimmung": "Abendstimmung",
+    "bild": "ja",
+    "urteil": "rot (durchgefallen)",
+    "geometrie": 0.364,
+    "spearman": -0.773,
+    "geom_iou": 0.171,
+    "richtige_zeile": "ja"
+   },
+   {
+    "standpunkt": "Nordwest",
+    "stimmung": "Abendstimmung",
+    "bild": "ja",
+    "urteil": "rot (durchgefallen)",
+    "geometrie": 0.358,
+    "spearman": -0.735,
+    "geom_iou": 0.175,
+    "richtige_zeile": "nicht unterscheidbar von Südost"
+   }
+  ],
+  "schwelle": 0.65,
+  "grau": "keine Zelle grau (alle gemessen)",
+  "bild_ja": "6 von 6",
+  "gruen": 2,
+  "rot": 4,
+  "auftragsurteil": "beide Auftraege 'passed false' (schlechteste Kamera: Morgen 0.0, Abend 0.040)",
+  "personen": "keine Person, keine erfundene Figur in den sechs Bildern (Sichtpruefung); Morgen/Sued-Bild hat einen weissen Rahmen um das Fenster als Bildfehler."
+ },
+ "zeiten": {
+  "je_auftrag": [
+   {
+    "stimmung": "Morgenlicht",
+    "annahme_bis_fertig_s": 308,
+    "timings_gesamt_s": 306.4,
+    "je_kamera_s": {
+     "Süd": 108.2,
+     "Südost": 99.0,
+     "Nordwest": 99.2
+    }
+   },
+   {
+    "stimmung": "Abendstimmung",
+    "annahme_bis_fertig_s": 301,
+    "timings_gesamt_s": 299.5,
+    "je_kamera_s": {
+     "Süd": 100.6,
+     "Südost": 99.4,
+     "Nordwest": 99.5
+    }
+   }
+  ],
+  "je_bild": "rund 100 s je Bild (99 bis 108 s) bei 1600 x 992 (1600x1000 auf Vielfache von 16 gebracht), 128 Samples, Backbone z-image-turbo (ControlNet Union), Karte RTX 5090. Gesamt beide Auftraege 606 s.",
+  "cycles_ki_getrennt": "NICHT erhaeltlich: result.timings fuehrt nur Summe je Kamera (s, sSE, nNW, gesamt, stillstand_s), keine Trennung Cycles/KI; Abholer-Log ebenfalls nicht. Vorschlag an KosmoVis: je Kamera cycles_s und ki_s in timings ausweisen. Leistungsverlauf grob: Phasen um 350 W (KI/Cycles auf GPU) im Wechsel mit ~68 W.",
+  "annahme_47_s": "Die App schaetzt 9 min 6 s (546 s) fuer 6 Bilder = 91 s je Bild; gemessen 101 s je Bild (606 s) — Abweichung +11 %, die App liegt knapp zu niedrig. Ob die 47 s KI je Bild stimmen, ist ohne getrennte Zeiten nicht pruefbar; bei 101 s je Bild gesamt und der 47-s-Annahme ergaebe sich ein Cycles-Teil von ~54 s, was die Schaetzung insgesamt nur um 10 s je Bild verfehlt. Fazit: die Zahl ist in der Groessenordnung richtig (Gesamtschaetzung 11 % zu niedrig), nicht einzeln bestaetigt."
+ },
+ "stufe_8_vergroessern": "ja — Klick auf die Zelle Südost/Morgenlicht oeffnet ein Schwebefeld «Südost · Morgenlicht · Aktuelles Modell» mit dem Bild (51 px in der Zelle auf rund 117 px) und «Prüfung bestanden»; zum Schliessen ein Kreuz. Das Bild ist nur maessig groesser, keine Vollansicht.",
+ "befunde": [
+  "1 Der Vorgabe-Testbau (make_test_glb.py, zwei Quader) taugt nicht fuer den Bildweg: Rahmung lehnt ab (21 % statt 65 %). Fuer Bildweg-Proben einen einzelnen Quader bauen (baue_glb([('Bauwerk',(-10,0,-5),(10,6,5))], materialien=['Beton'])). Der Knoten zeigt den Fehlschlag sauber («fehlgeschlagen — 0 von 3 Kameras geliefert»).",
+  "2 3 von 6 Zellen rot. Sued scheitert in beiden Stimmungen (Bild zeigt nahe Fassade mit erfundenem Innenraum, Silhouette passt nicht); Abend scheitert in allen drei Richtungen (dunkles Nachtbild statt Abend; Silhouette zu schwach). Hochachse der Mappe stand NICHT (Abholer-Log: «Welche Achse oben ist, steht nicht fest»; Kameras mit up_axis z). Ob das Sued-Versagen daran liegt, nicht geprueft.",
+  "3 Südost und Nordwest sehen bei einem punktsymmetrischen Quader gleich aus (gleicher Startwert 1, gleiche Lichtseite); die Richtung der Zeile ist damit nur ueber die Pose (position) belegbar, nicht ueber das Bild. Fuer eine echte Zeilenpruefung ein unsymmetrisches Modell nehmen.",
+  "4 Der Prompt wird mit Glossar halb uebersetzt («morning light, klare long shadows, frische cool Luft»): «NICHT vollstaendig uebersetzt: klare, frische, luft» — fuer die Stimmungstexte des Knotens ein Glossarfehler.",
+  "5 Der Hinweis «Kein Brücken-Token gesetzt …» erscheint bei jedem Bestellen und ist hier irrefuehrend.",
+  "6 Aufraeumen: Auftragsordner der vier Laeufe liegen in der Ablage, Mappe «bau»/«quader» im Rueckfall-Ordner; nichts geloescht."
+ ],
+ "urteil": "Ja: Der Bildweg «Varianten mit einem Klick» laeuft von Anfang bis Ende (ein Bestell-Klick, ein Freigabe-Klick, zwei Auftraege nacheinander, sechs Bilder im Raster mit Urteils-Punkten und Vergroesserung) — die Bildguete (2 von 6 bestanden) ist ein eigener Befund.",
+ "belege_lokal": "Raster-Screenshot, Zellenbilder und Treiberprotokoll im Probenordner l288 der HomeStation (nicht im Repo)."
+}

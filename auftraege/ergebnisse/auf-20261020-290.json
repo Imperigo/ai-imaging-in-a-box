@@ -1,0 +1,782 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261020-290",
+ "worker": "local",
+ "rang": 77,
+ "folgt_auf": "auf-20261020-289",
+ "entscheide": [
+  "104",
+  "104a",
+  "104b"
+ ],
+ "status": "erledigt mit Befunden — Vorschau rechnet wie bestellt (z-image-turbo, 8 Schritte, ein Startwert, KI 1024x640 -> 1600x992); Ziel <= 120 s je Lauf nur bei ruhigem Rechner erreicht (103-105 s), unter CPU-Last nicht (167 s). Abbrueche 6a/6b richtig (Kamera des Bilds, bytegleich, Endstand 'abgebrochen'); der Abbruch-Satz steht aber nur im Abholer-Protokoll, nicht am Laufzettel. 6c: Zwilling am Quader NICHT erkannt (3 Randpixel). 5: abgewiesen, Status bleibt aber 'queued'.",
+ "beendet": "2026-10-20T16:12:00Z",
+ "koepfe": {
+  "stand": "main 63c84d2 (Visbox 0.3.2), Flaeche vom LW neu gestartet, Abholer per Timer 30 s. Kein Code geaendert, keine Schwelle, keine Grundlagen-Datei angefasst, Dienste nicht umgestellt.",
+  "weg": "Bruecke der Visbox-Flaeche als Client: POST /bruecke/jobs (multipart scene + model.glb), dann /approve mit approval_token, Abbruch /cancel — wie die Knotenansicht. Beobachtet wurde job.json (Takt 0,2 s) und nvidia-smi (Takt 0,5 s); Phasenzeiten aus den progress-Wechseln, Laden und Diffusion aus den Zeitstempeln des Abholer-Protokolls (tqdm-Zeilen).",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb). Die Vorgabe-Szene des Skripts (Bauwerk auf Gelaendeplatte 40x30 m) taugt fuer KI-Laeufe mit cameras 'auto' NICHT: Die Auto-Kamera rahmt die ganze Szene, das Bauwerk fuellt 21 % der Bildbreite, der Rahmungsriegel (65 %) laesst keine Kamera rechnen — auch mit 'gelaende': true (Probe vis-1792509788-4f8141, Grundlage gl-ecf840386af6499b bzw. gl-cbd06babc6fdc33b). Gerechnet wurde darum ein gegliederter Testbau OHNE Platte aus demselben Erzeuger: Hauptbau 12x9 m / 15 m hoch, Anbau 7x6 m / 6 m, Dachaufbau 6x4 m / 2,5 m (Rahmung 0,70). Fuer 6a/6b je eine leicht veraenderte Kopie (Anbau 0,5 bzw. 1 m laenger), damit Blender wirklich rechnet statt aus dem Zwischenspeicher; 6c Quader 8x3x5 m.",
+  "szene": "schema kosmovis.render-scene/v1, cameras 'auto' (6a/6b: zwei CameraSpec mit den Posen von s und sSE, Namen 'Vorne'/'Schraeg'), render.resolution [1600, 1000] (geht als 1600x992), render.samples 64, style.mode none, style.prompt 'morning light, soft shadows'.",
+  "gpu": "vor jedem Lauf nvidia-smi + ollama ps: 13,8-16,6 W, 1241 MiB belegt, KEIN Ollama-Modell geladen, kein fremder Auftrag queued/running. Nie gewartet wegen 'Karte nicht frei', nichts entladen. Laeufe strikt nacheinander.",
+  "systemlast": "Ein anderer Helfer rechnete parallel CPU-Bildraten: Last (1 min) schwankte zwischen ~7 und ~35 bei 32 Kernen. Das verfaelscht die Pruefung und die Messung je Startwert deutlich (s. urteil); je Lauf steht die Last dabei. Voll wurde darum ein zweites Mal bei ruhigem Rechner gerechnet (3b)."
+ },
+ "schritte_1_bis_5": {
+  "1_grundlage": {
+   "job": "vis-1792509946-59b80e",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "engine_used": "cycles",
+   "grundlage": {
+    "id": "gl-e1cb603fedbc3608",
+    "wiederverwendet": false
+   },
+   "blender_gesamt_s": 38.4,
+   "blender_je_kamera_s": {
+    "s": 13.0,
+    "sSE": 12.9,
+    "nNW": 12.5
+   },
+   "guete_im_ergebnis": "fehlt (keine bestellt) — richtig",
+   "systemlast_vor": "31,21, 19,78, 16,72"
+  },
+  "2_vorschau": {
+   "status": "done",
+   "grund": "geliefert, 3 von 3",
+   "grundlage": {
+    "id": "gl-e1cb603fedbc3608",
+    "wiederverwendet": true
+   },
+   "guete_im_ergebnis": "vorschau"
+  },
+  "3_voll": {
+   "status": "done",
+   "grund": "geliefert, 3 von 3",
+   "grundlage": {
+    "id": "gl-e1cb603fedbc3608",
+    "wiederverwendet": true
+   },
+   "guete_im_ergebnis": "voll",
+   "hinweis": "Mit vis.seed rechnet auch 'voll' nur EINEN Startwert (Protokoll: 'KEINE STARTWERT-AUSWAHL ... Nur ein Seed angefordert.') — die Auswahl aus drei Startwerten gilt nur ohne vis.seed. Wie bestellt («dasselbe mit voll»), aber Voll ist hier 20 Schritte x 1 Wurf, nicht 20 x 3."
+  },
+  "4_vorschau_ohne_seed_fremdes_modell": {
+   "status": "done",
+   "grund": "geliefert, 3 von 3",
+   "grundlage": {
+    "id": "gl-e1cb603fedbc3608",
+    "wiederverwendet": true
+   },
+   "guete_im_ergebnis": "vorschau",
+   "erwartung_erfuellt": "engine_used 'z-image-turbo', 8 Schritte, Startwert 0 (Grundlage aus skip), guete_vermerk.backbone_bestellt 'qwen-image-2.1' mit Hinweis 'Bestellt war 'qwen-image-2.1'; die Vorschau rechnet immer 'z-image-turbo'. Fuer das bestellte Modell 'Voll' waehlen.'",
+   "person_im_bild": "Lauf vis-1792510619-523783 (Startwert 0): Bild der Kamera sSE zeigt ein Gesicht -> verworfen (nicht in der Ablage), wiederholt mit vis.seed 1 (vis-1792512205-fe33ae, ohne Person). Die Zeiten beider Laeufe stehen in der Tabelle; Startwert-Vorgabe 0 ist am ersten Lauf belegt."
+  },
+  "5_guete_und_skip": {
+   "job": "vis-1792510783-298128",
+   "abgewiesen": true,
+   "grund_woertlich": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- 'vis.guete' ('vorschau') und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein KI-Bild — eine Güte dafuer bestellt nichts.",
+   "blender": "nein",
+   "ki_lauf": "nein",
+   "kein_ausgabeordner": true,
+   "abweichung": "Der Status bleibt 'queued' (Abholer: 'liegengelassen'), der Grund steht in job.json 'message'. Der Abholer liest den Auftrag alle 30 s erneut und laesst ihn wieder liegen (21 Durchgaenge in rund 10 min beobachtet) — kein Endzustand. Code: src/aiimaging/abholer.py:284-290 (maengel -> _grund_vermerken, return; kein setze_status). Ich habe den eigenen Probeauftrag danach per /cancel beendet."
+  }
+ },
+ "tabelle": {
+  "erlaeuterung": "Zeiten in s. blender = Griff in die Grundlage (+Vorschau-Bild); bildmodell = Laden (nur Kamera 1) + Diffusion + Messung je Startwert; pruefung = Nullprobe/Urteil. davon_diffusion_s aus tqdm (ganze Sekunden). ki_groesse aus befund.json guete_vermerk (Voll: Bildgroesse). gpu_spitze = belegter Speicher der ganzen Karte (Grundlast 1241 MiB). Gesamt = render-result timings.gesamt.",
+  "laeufe": [
+   {
+    "rolle": "2 Vorschau (Seed 482913), Last hoch",
+    "job": "vis-1792510005-fc968c",
+    "guete_im_ergebnis": "vorschau",
+    "engine_used": "z-image-turbo",
+    "grundlage": {
+     "id": "gl-e1cb603fedbc3608",
+     "wiederverwendet": true
+    },
+    "bestellt": {
+     "backbone": null,
+     "seed": 482913
+    },
+    "wartezeit_bis_start_s": 12.8,
+    "gesamt_s_timings": 167.3,
+    "gesamt_s_running_bis_done": 169.2,
+    "unter_120_s": false,
+    "gpu_spitze_mib_karte": 27470.0,
+    "gpu_spitze_w": 352.12,
+    "systemlast_vor_1_5_15": "35,35, 23,33, 18,15",
+    "systemlast_1min_mittel_waehrend": 32.39,
+    "verdict_passed": false,
+    "verdict_reason_woertlich": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (482913), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.5 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'sSE' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.1 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie-Score nicht gemessen (Schwelle 0.65)",
+    "kameras": [
+     {
+      "kamera": "s",
+      "blender_s": 6.82,
+      "bildmodell_s": 39.89,
+      "davon_laden_s": 26.8,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 25.66,
+      "kamera_gesamt_s": 72.4,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": null,
+      "spearman": null,
+      "rho_maske_gerichtet": -0.3312,
+      "geom_iou": 0.0,
+      "qa_status": "not_measured"
+     },
+     {
+      "kamera": "sSE",
+      "blender_s": 6.41,
+      "bildmodell_s": 14.24,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 25.84,
+      "kamera_gesamt_s": 46.6,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": null,
+      "spearman": null,
+      "rho_maske_gerichtet": 0.1214,
+      "geom_iou": 0.0,
+      "qa_status": "not_measured"
+     },
+     {
+      "kamera": "nNW",
+      "blender_s": 7.22,
+      "bildmodell_s": 15.03,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 26.26,
+      "kamera_gesamt_s": 48.4,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": null,
+      "spearman": null,
+      "rho_maske_gerichtet": 0.429,
+      "geom_iou": 0.0,
+      "qa_status": "not_measured"
+     }
+    ]
+   },
+   {
+    "rolle": "3 Voll (Seed 482913), Last hoch",
+    "job": "vis-1792510222-a70112",
+    "guete_im_ergebnis": "voll",
+    "engine_used": "z-image-turbo",
+    "grundlage": {
+     "id": "gl-e1cb603fedbc3608",
+     "wiederverwendet": true
+    },
+    "bestellt": {
+     "backbone": null,
+     "seed": 482913
+    },
+    "wartezeit_bis_start_s": 29.3,
+    "gesamt_s_timings": 177.6,
+    "gesamt_s_running_bis_done": 180.3,
+    "unter_120_s": false,
+    "gpu_spitze_mib_karte": 30822.0,
+    "gpu_spitze_w": 347.34,
+    "systemlast_vor_1_5_15": "29,37, 26,82, 20,70",
+    "systemlast_1min_mittel_waehrend": 27.84,
+    "verdict_passed": false,
+    "verdict_reason_woertlich": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.5 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'sSE' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.1 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65",
+    "kameras": [
+     {
+      "kamera": "s",
+      "blender_s": 6.61,
+      "bildmodell_s": 41.49,
+      "davon_laden_s": 13.7,
+      "davon_diffusion_s": 17,
+      "pruefung_s": 25.45,
+      "kamera_gesamt_s": 73.6,
+      "ki_groesse": [
+       1600,
+       992
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 20,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.0,
+      "spearman": 0.5922,
+      "rho_maske_gerichtet": -0.3972,
+      "geom_iou": 0.6054,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "sSE",
+      "blender_s": 6.42,
+      "bildmodell_s": 30.25,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 17,
+      "pruefung_s": 25.85,
+      "kamera_gesamt_s": 62.4,
+      "ki_groesse": [
+       1600,
+       992
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 20,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.4533,
+      "spearman": -0.7137,
+      "rho_maske_gerichtet": 0.7381,
+      "geom_iou": 0.2879,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "nNW",
+      "blender_s": 3.81,
+      "bildmodell_s": 24.21,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 17,
+      "pruefung_s": 13.61,
+      "kamera_gesamt_s": 41.6,
+      "ki_groesse": [
+       1600,
+       992
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 20,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.5192,
+      "spearman": -0.9201,
+      "rho_maske_gerichtet": 0.9332,
+      "geom_iou": 0.2929,
+      "qa_status": "measured"
+     }
+    ]
+   },
+   {
+    "rolle": "3b Voll wiederholt, Last niedrig",
+    "job": "vis-1792512380-b6cc3a",
+    "guete_im_ergebnis": "voll",
+    "engine_used": "z-image-turbo",
+    "grundlage": {
+     "id": "gl-e1cb603fedbc3608",
+     "wiederverwendet": true
+    },
+    "bestellt": {
+     "backbone": null,
+     "seed": 482913
+    },
+    "wartezeit_bis_start_s": 22.6,
+    "gesamt_s_timings": 152.5,
+    "gesamt_s_running_bis_done": 154.0,
+    "unter_120_s": false,
+    "gpu_spitze_mib_karte": 30822.0,
+    "gpu_spitze_w": 347.2,
+    "systemlast_vor_1_5_15": "6,89, 13,14, 17,67",
+    "systemlast_1min_mittel_waehrend": 7.62,
+    "verdict_passed": false,
+    "verdict_reason_woertlich": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.5 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'sSE' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.1 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65",
+    "kameras": [
+     {
+      "kamera": "s",
+      "blender_s": 3.8,
+      "bildmodell_s": 32.06,
+      "davon_laden_s": 7.0,
+      "davon_diffusion_s": 17,
+      "pruefung_s": 17.63,
+      "kamera_gesamt_s": 53.6,
+      "ki_groesse": [
+       1600,
+       992
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 20,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.0,
+      "spearman": 0.5922,
+      "rho_maske_gerichtet": -0.3972,
+      "geom_iou": 0.6054,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "sSE",
+      "blender_s": 4.21,
+      "bildmodell_s": 26.24,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 17,
+      "pruefung_s": 19.03,
+      "kamera_gesamt_s": 49.5,
+      "ki_groesse": [
+       1600,
+       992
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 20,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.4533,
+      "spearman": -0.7137,
+      "rho_maske_gerichtet": 0.7381,
+      "geom_iou": 0.2879,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "nNW",
+      "blender_s": 4.2,
+      "bildmodell_s": 26.05,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 17,
+      "pruefung_s": 19.22,
+      "kamera_gesamt_s": 49.4,
+      "ki_groesse": [
+       1600,
+       992
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 482913,
+      "schritte": 20,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.5192,
+      "spearman": -0.9201,
+      "rho_maske_gerichtet": 0.9332,
+      "geom_iou": 0.2929,
+      "qa_status": "measured"
+     }
+    ]
+   },
+   {
+    "rolle": "4 Vorschau ohne Seed, qwen-image-2.1 bestellt (Bild sSE verworfen: Person)",
+    "job": "vis-1792510619-523783",
+    "guete_im_ergebnis": "vorschau",
+    "engine_used": "z-image-turbo",
+    "grundlage": {
+     "id": "gl-e1cb603fedbc3608",
+     "wiederverwendet": true
+    },
+    "bestellt": {
+     "backbone": "qwen-image-2.1",
+     "seed": null
+    },
+    "wartezeit_bis_start_s": 26.4,
+    "gesamt_s_timings": 105.2,
+    "gesamt_s_running_bis_done": 106.6,
+    "unter_120_s": true,
+    "gpu_spitze_mib_karte": 27470.0,
+    "gpu_spitze_w": 352.51,
+    "systemlast_vor_1_5_15": "6,89, 18,58, 19,72",
+    "systemlast_1min_mittel_waehrend": 7.66,
+    "verdict_passed": false,
+    "verdict_reason_woertlich": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (0), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 's' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.5 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'sSE' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.1 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65",
+    "kameras": [
+     {
+      "kamera": "s",
+      "blender_s": 4.01,
+      "bildmodell_s": 16.43,
+      "davon_laden_s": 6.2,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 17.23,
+      "kamera_gesamt_s": 37.8,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 0,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.0774,
+      "spearman": -0.8206,
+      "rho_maske_gerichtet": -0.0662,
+      "geom_iou": 0.0073,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "sSE",
+      "blender_s": 4.41,
+      "bildmodell_s": 10.81,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 18.64,
+      "kamera_gesamt_s": 33.7,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 0,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.2993,
+      "spearman": -0.4543,
+      "rho_maske_gerichtet": 0.5737,
+      "geom_iou": 0.1972,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "nNW",
+      "blender_s": 4.2,
+      "bildmodell_s": 10.82,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 18.63,
+      "kamera_gesamt_s": 33.7,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 0,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.0,
+      "spearman": 0.4606,
+      "rho_maske_gerichtet": -0.613,
+      "geom_iou": 0.0293,
+      "qa_status": "measured"
+     }
+    ]
+   },
+   {
+    "rolle": "4b wie 4, vis.seed 1 (Wiederholung wegen Person), Last niedrig",
+    "job": "vis-1792512205-fe33ae",
+    "guete_im_ergebnis": "vorschau",
+    "engine_used": "z-image-turbo",
+    "grundlage": {
+     "id": "gl-e1cb603fedbc3608",
+     "wiederverwendet": true
+    },
+    "bestellt": {
+     "backbone": "qwen-image-2.1",
+     "seed": 1
+    },
+    "wartezeit_bis_start_s": 30.5,
+    "gesamt_s_timings": 102.9,
+    "gesamt_s_running_bis_done": 104.4,
+    "unter_120_s": true,
+    "gpu_spitze_mib_karte": 27470.0,
+    "gpu_spitze_w": 352.87,
+    "systemlast_vor_1_5_15": "8,51, 17,93, 19,86",
+    "systemlast_1min_mittel_waehrend": 7.72,
+    "verdict_passed": false,
+    "verdict_reason_woertlich": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (1), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.1 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 's' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.5 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie-Score nicht gemessen (Schwelle 0.65)",
+    "kameras": [
+     {
+      "kamera": "s",
+      "blender_s": 4.21,
+      "bildmodell_s": 16.03,
+      "davon_laden_s": 6.4,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 17.03,
+      "kamera_gesamt_s": 37.2,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 1,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.0165,
+      "spearman": -0.1818,
+      "rho_maske_gerichtet": -0.5891,
+      "geom_iou": 0.0015,
+      "qa_status": "measured"
+     },
+     {
+      "kamera": "sSE",
+      "blender_s": 4.2,
+      "bildmodell_s": 10.42,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 17.83,
+      "kamera_gesamt_s": 32.6,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 1,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": null,
+      "spearman": null,
+      "rho_maske_gerichtet": 0.1057,
+      "geom_iou": 0.0,
+      "qa_status": "not_measured"
+     },
+     {
+      "kamera": "nNW",
+      "blender_s": 4.21,
+      "bildmodell_s": 10.41,
+      "davon_laden_s": 0,
+      "davon_diffusion_s": 2,
+      "pruefung_s": 18.63,
+      "kamera_gesamt_s": 33.1,
+      "ki_groesse": [
+       1024,
+       640
+      ],
+      "geliefert": [
+       1600,
+       992
+      ],
+      "seed": 1,
+      "schritte": 8,
+      "engine_used": "z-image-turbo",
+      "geometry_fidelity": 0.0319,
+      "spearman": -0.1028,
+      "rho_maske_gerichtet": 0.3966,
+      "geom_iou": 0.0099,
+      "qa_status": "measured"
+     }
+    ]
+   }
+  ]
+ },
+ "urteil": "Die Vorschau liegt nur bei ruhigem Rechner unter 2 Minuten je Variante (103-105 s fuer 3 Kameras gegen 152 s Voll, ~32 % schneller), unter paralleler CPU-Last nicht (167 s gegen 178 s Voll); die Diffusion selbst schrumpft von 17 auf 2 s je Kamera, den Rest fressen Pruefung (17-26 s je Kamera) und Messung (~8-12 s je Kamera) — und ihre QA liegt weit unter Voll: Geometrie bei Seed 482913 je Kamera 'nicht gemessen' (geom_iou 0,0, keine gemeinsame Silhouette) gegen Voll 0,00/0,45/0,52 (geom_iou 0,61/0,29/0,29); alle sechs Bilder sind wegen Gebaeudeanteil 10-12 % ohnehin 'NICHT BEURTEILBAR', und die KI-Bilder zeigen bei diesem Prompt Innenraeume statt eines Hauses.",
+ "phasen_kern": {
+  "vorschau_je_kamera_last_niedrig_s": {
+   "blender": 4.2,
+   "laden_nur_kamera_1": 6.3,
+   "diffusion": 2,
+   "messung_je_startwert": 8.5,
+   "pruefung": 17.8,
+   "kamera_gesamt": "33-37"
+  },
+  "voll_je_kamera_last_niedrig_s": {
+   "blender": 4.1,
+   "laden_nur_kamera_1": 7.0,
+   "diffusion": 17,
+   "messung_je_startwert": 9,
+   "pruefung": 18.6,
+   "kamera_gesamt": "49-54"
+  },
+  "last_hoch": "Pruefung 25-26 s, Messung ~12 s je Kamera; Laden im ersten KI-Lauf nach dem Neustart 26,8 s (kalter Dateicache), danach 6-14 s.",
+  "groesster_hebel": "Die Pruefung (Nullprobe/Urteil) ist mit ~18 s je Kamera bei ruhigem Rechner der groesste Posten der Vorschau — groesser als Diffusion und Laden zusammen."
+ },
+ "abbruch_proben": {
+  "6a_vor_kamera_2": {
+   "job": "vis-1792511436-f3b341",
+   "abbruch_gesetzt_bei": {
+    "phase": "blender",
+    "kamera_i": 2,
+    "pct": 0.5,
+    "rest_s": 77
+   },
+   "status": "cancelled",
+   "teilbild": "Vorne__teilbild.png",
+   "teilbild_kamera_des_bilds": true,
+   "bytegleich_mit_ki_bild_kamera_1": true,
+   "satz_woertlich": "Abgebrochen bei Kamera 2 von 2, vor dem Bildmodell. Kein Ergebnis geschrieben.",
+   "satz_fundort": "nur Abholer-Protokoll; job.json message bleibt 'Vom Nutzer abgebrochen.'",
+   "progress_endstand": {
+    "phase": "abgebrochen",
+    "pct": 0.6,
+    "kamera_i": 2,
+    "kamera_n": 2,
+    "rest_s": null,
+    "vorschau": "Schraeg__vorschau.png"
+   },
+   "nebenbefund": "Zwischen /cancel und dem Greifen (22 s, Blender der Kamera 2 laeuft zu Ende) schrieb der Fortschritt noch pct 0.6 und die Vorschau von Kamera 2; der Status blieb dabei 'cancelled' (Sperre haelt).",
+   "freigabe_mit_geraet": "X-Geraet: ipad"
+  },
+  "6b_waehrend_pruefung": {
+   "job": "vis-1792511596-656cc6",
+   "abbruch_gesetzt_bei": {
+    "phase": "pruefung",
+    "kamera_i": 1,
+    "pct": 0.45
+   },
+   "status": "cancelled",
+   "teilbild": "Vorne__teilbild.png",
+   "bytegleich_mit_ki_bild_kamera_1": true,
+   "satz_woertlich": "Abgebrochen bei Kamera 2 von 2, vor Blender. Kein Ergebnis geschrieben.",
+   "satz_fundort": "nur Abholer-Protokoll; job.json message 'Vom Nutzer abgebrochen.'",
+   "progress_endstand": {
+    "phase": "abgebrochen",
+    "pct": 0.5,
+    "kamera_i": 2,
+    "kamera_n": 2,
+    "rest_s": null,
+    "vorschau": "Vorne__vorschau.png"
+   },
+   "hinweis": "Die laufende Pruefung wird nicht unterbrochen (26 s bis zum Greifen); der Abbruch greift beim naechsten Uebergang, darum heisst der Satz 'Kamera 2 ... vor Blender' und nicht 'vor der Pruefung'."
+  },
+  "6c_auto_quader_zwilling": {
+   "job": "vis-1792511705-92e7e3",
+   "quader": "8x3x5 m",
+   "kamera_n": 3,
+   "zwilling_uebersprungen": false,
+   "befund": "FEHLER: sSE und nNW wurden beide voll gerechnet (Bildmodell + Pruefung), kein doppelt_von. Nachgemessen an den beiden Soll-Tiefenkarten (bildlesen.tiefen_aus_report): 1 587 197 von 1 587 200 Pixeln gleich (p99-Abweichung 6e-6 m), aber 3 Pixel an der Unterkante der Silhouette sind in der einen Ansicht Geometrie (9,3-12,6 m) und in der anderen Hintergrund (1e10). _gleiche_ansicht verlangt JEDES Pixel <= 1e-3 m, und weil der Hintergrund als endliche Zahl 1e10 kommt, faengt auch die Maskenpruefung (isfinite) den Unterschied nicht als Maske ab. Code: src/aiimaging/abholer.py:4403-4416 (_gleiche_ansicht, ZWILLING_TOLERANZ_M = 1e-3 in Zeile 4380). Gegenprobe mit samples 16 (vis-1792512023-33c5ff): ebenfalls kein Zwilling. Am 30.09. (auf-173) griff die Erkennung noch.",
+   "meldungsfolge_kamera_i_phase_pct_rest_s": [
+    [
+     1,
+     "blender",
+     0.0,
+     null
+    ],
+    [
+     1,
+     "blender",
+     0.0667,
+     null
+    ],
+    [
+     1,
+     "bildmodell",
+     0.0667,
+     null
+    ],
+    [
+     1,
+     "pruefung",
+     0.3,
+     null
+    ],
+    [
+     2,
+     "blender",
+     0.3333,
+     148
+    ],
+    [
+     2,
+     "blender",
+     0.4,
+     131
+    ],
+    [
+     2,
+     "bildmodell",
+     0.4,
+     125
+    ],
+    [
+     2,
+     "pruefung",
+     0.6333,
+     110
+    ],
+    [
+     3,
+     "blender",
+     0.6667,
+     68
+    ],
+    [
+     3,
+     "blender",
+     0.7333,
+     54
+    ],
+    [
+     3,
+     "bildmodell",
+     0.7333,
+     48
+    ],
+    [
+     3,
+     "pruefung",
+     0.9667,
+     33
+    ],
+    [
+     3,
+     "pruefung",
+     1.0,
+     0
+    ]
+   ],
+   "restzeit": "plausibel fuer drei gerechnete Kameras: nach Kamera 1 (74 s) 148 = 2x74, zu Beginn Kamera 3 68 = Mittel(74, 62); waehrend Kamera 1 None. Ob sie NACH einer Zwillingskamera plausibel bleibt, ist nicht pruefbar, weil kein Zwilling uebersprungen wurde.",
+   "zeiten_s": {
+    "s": 74,
+    "sSE": 62,
+    "nNW": 61,
+    "gesamt": 197,
+    "systemlast_1min_mittel": 32.9
+   }
+  }
+ },
+ "freigabe_vermerk": {
+  "ohne_geraetekopf_woertlich": "freigegeben (/approve)",
+  "mit_X_Geraet_ipad_woertlich": "freigegeben ueber /approve, Geraet ipad (direkt)",
+  "geprueft_an": "allen Laeufen dieses Auftrags (ohne Kopf) und 6a (mit Kopf); nie 'Klick in der Knotenansicht'."
+ },
+ "bilder": {
+  "ordner": "auftraege/ergebnisse/auf-20261020-290-bilder/",
+  "dateien": [
+   "vorschau-s.jpg",
+   "vorschau-sSE.jpg",
+   "vorschau-nNW.jpg",
+   "voll-s.jpg",
+   "voll-sSE.jpg",
+   "voll-nNW.jpg"
+  ],
+  "herkunft": "Vorschau = Lauf 2, Voll = Lauf 3 (gleicher Startwert 482913), auf 480 px verkleinert. Personen: keine. Inhalt: Das Bildmodell macht bei 'morning light, soft shadows' aus dem kleinen Bauwerk (10-12 % des Bildes) Innenraeume mit Fenster bzw. Gegenstaende — kein Haus."
+ },
+ "aufgeraeumt": "Eigene Probe-Auftraege (Ablage der Bruecke) und ihre Ausgaben unter kosmovis-bilder per gio trash entfernt; eigene glb-Kopien geloescht. Die Mappe wurde nicht veraendert.",
+ "nicht_getan": [
+  "Code geaendert",
+  "Schwellen gesenkt",
+  "Grundlagen-Dateien angepasst",
+  "20 Schritte von 'voll' umgestellt",
+  "Ollama-Modelle entladen",
+  "Dienste neu gestartet"
+ ]
+}
