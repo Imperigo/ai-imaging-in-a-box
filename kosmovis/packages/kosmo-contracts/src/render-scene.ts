@@ -496,6 +496,15 @@ export const RenderScene = z.object({
        */
       seed: z.number().int().min(0).max(2147483647).optional(),
       /**
+       * Owner-Auftrag 20.10.2026 (ueber LW, KosmoVis 0.3.2): Guete des
+       * KI-Schritts. `'vorschau'` rechnet schnell und grob, `'voll'` wie bisher.
+       * Fehlt das Feld, rechnet die Gegenseite voll — alte Auftraege bleiben
+       * Zeichen fuer Zeichen gleich. Kein Default hier: die Vorgabe «Vorschau»
+       * setzt der Schalter am Render-Knoten, nicht der Vertrag. Zusammen mit
+       * `skip` abgewiesen (superRefine): ohne KI-Schritt gibt es keine Guete.
+       */
+      guete: z.enum(['vorschau', 'voll']).optional(),
+      /**
        * Modell-Lizenz-Sanierung 11.08.2026 (Advisor-Auftrag Phase 2, Audit
        * 10.08.): `'flux-krea'` (FLUX.1-Krea-dev, BFL-Lizenz NON-COMMERCIAL —
        * auch als GGUF-Variante) ist nur im research-Profil gueltig: das
@@ -573,6 +582,14 @@ export const RenderScene = z.object({
           message:
             'vis.grundlage und vis.skip zugleich: Die Grundlage ist schon gerechnet — ohne KI-Schritt entstuende nichts Neues.',
           path: ['grundlage'],
+        });
+      }
+      if (v.guete !== undefined && v.skip) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'vis.guete und vis.skip zugleich: Die Guete betrifft nur den KI-Schritt — mit skip (nur Grundlage) gibt es keinen.',
+          path: ['guete'],
         });
       }
       if (v.backbone === 'flux-krea' && v.research_only !== true) {

@@ -54,6 +54,7 @@ import { kuerzel } from '../../shell/tastennamen';
 // Wert-Import zurueck waere ein Kreis.
 import type { LizenzAngabe } from './varianten-diff';
 import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
+import { gueteAmKnoten, type Guete } from './guete';
 import {
   GRUNDLAGE_VERALTET_SATZ,
   KEINE_GRUNDLAGE_SATZ,
@@ -1261,6 +1262,8 @@ export async function postRenderJob(params: {
   grundlage?: string;
   /** Nr. 85/84 (Entscheid 98a): fester Startwert des KI-Schritts (`vis.seed`). */
   seed?: number;
+  /** Owner-Auftrag 20.10.2026: Guete des KI-Schritts (`vis.guete`). Ohne Parameter kein Feld (= voll). */
+  guete?: 'vorschau' | 'voll';
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1459,6 +1462,9 @@ export async function postRenderJob(params: {
       // wie bisher. Der Vertrag weist `grundlage` zusammen mit `skip` ab (superRefine).
       ...(params.grundlage !== undefined ? { grundlage: params.grundlage } : {}),
       ...(params.seed !== undefined ? { seed: params.seed } : {}),
+      // Guete nur fuer den KI-Schritt: mit skip (Strich/nur Cycles) faellt sie weg,
+      // sonst wiese der Vertrag den Auftrag ab.
+      ...(params.guete !== undefined && !(lineArt || params.nurCycles === true) ? { guete: params.guete } : {}),
     },
     ...(params.komposition ? { komposition: params.komposition } : {}),
     // B117 SCHRITT 2 (Owner-Entscheid E57): `interior`/IFC kommen NUR, wenn
@@ -1631,6 +1637,8 @@ export function sendeGraphRenderAuftrag(
     /** `vis.render` ueber Kosmo: ausdruecklich bestellte Grundlage/Startwert (ohne `stufe`). */
     grundlage?: string;
     seed?: number;
+    /** `vis.render` ueber Kosmo (Entscheid 104): ausdruecklich bestellte Guete (ohne `stufe`). */
+    guete?: Guete;
   },
 ): void {
   const { doc } = useProject.getState();
@@ -1750,7 +1758,7 @@ export function sendeGraphRenderAuftrag(
   // festlegen — mit genau den Zahlen, die gleich gesendet werden.
   const stufe = opts?.stufe;
   const standJetzt = grundlageStandFuerKnoten(doc, roh, node?.params ?? {}, opts);
-  let kiFest: { grundlage?: string; seed?: number } = {};
+  let kiFest: { grundlage?: string; seed?: number; guete?: Guete } = {};
   if (stufe === 'variante') {
     // Zweite, tiefere Naht neben dem gesperrten Knopf: ohne aktuelle Grundlage geht nichts raus.
     const g = grundlageAmKnoten(node?.params);
@@ -1768,15 +1776,20 @@ export function sendeGraphRenderAuftrag(
       melde(sperre ?? KEINE_GRUNDLAGE_SATZ, { ton: 'fehler' });
       return;
     }
-    kiFest = { grundlage: g.id, seed: g.seed };
+    kiFest = { grundlage: g.id, seed: g.seed, guete: gueteAmKnoten(node?.params) };
   } else if (stufe === undefined) {
     if (opts?.grundlage !== undefined && mode === 'lineart') {
       melde(STRICHZEICHNUNG_OHNE_VARIANTE_SATZ, { ton: 'fehler' });
       return;
     }
+    // Entscheid 104: eine ueber Kosmo bestellte Guete nur MIT KI-Schritt — «nur Cycles» und die
+    // Strichzeichnung rechnen keinen, und der Vertrag weist `vis.guete` mit `vis.skip` ab.
+    // Vorerst auch nicht mit Skizze: der Skizzen-Weg des Heim-PCs kennt die Guete nicht (GUETE_OHNE_SKIZZE_SATZ).
+    const ohneKi = mode === 'lineart' || (auftrag.nurCycles === true && opts?.grundlage === undefined) || !!auftrag.skizze;
     kiFest = {
       ...(opts?.grundlage !== undefined ? { grundlage: opts.grundlage } : {}),
       ...(opts?.seed !== undefined ? { seed: opts.seed } : {}),
+      ...(opts?.guete !== undefined && !ohneKi ? { guete: opts.guete } : {}),
     };
   }
   const key = memoKey(auftrag);
@@ -1813,6 +1826,8 @@ export function sendeGraphRenderAuftrag(
       // `nurCycles: true` am Knoten darf ihn nicht abbestellen — der Vertrag wiese ab.
       ...(kiFest.grundlage !== undefined ? { nurCycles: false, grundlage: kiFest.grundlage } : {}),
       ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
+      // Entscheid 104: die Guete der Variante, wie am Knoten gewaehlt (Vorgabe Vorschau).
+      ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
     });
   // OHNE SKIZZE GENAU DER BISHERIGE AUFRUF, im selben Takt. MIT Skizze erst die Liste der Mappe
   // lesen und «neueste» aufloesen (`skizzeZurBestellung`); kennt der Wirt sie nicht oder hat sie

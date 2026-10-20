@@ -371,6 +371,12 @@ export interface VisRenderWunsch {
   grundlage?: string;
   /** Nr. 85/84 (Entscheid 98a): fester Startwert des KI-Schritts, gesendet als `vis.seed`. */
   seed?: number;
+  /**
+   * Entscheid 104 (Blatt 29): Guete des KI-Schritts, gesendet als `vis.guete`. Fehlt das Feld,
+   * rechnet die Gegenseite voll, wie bisher. Ohne KI-Schritt («nur Cycles», Strichzeichnung)
+   * schickt die App es nicht mit.
+   */
+  guete?: 'vorschau' | 'voll';
 }
 
 /**

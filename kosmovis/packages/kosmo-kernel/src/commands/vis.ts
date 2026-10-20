@@ -283,6 +283,9 @@ export const renderAuftrag = registerCommand({
     // Nr. 85/84 (Vertrag 20.10.2026, Auflage 2): zwei flache Skalare, kein Tupel.
     grundlage: z.string().optional(),
     seed: z.number().int().min(0).max(2147483647).optional(),
+    // Entscheid 104 (Blatt 29): Guete des KI-Schritts, ohne Beschreibung (Werkzeug-Budget; die
+    // Luft-Probe misst +19 Token an der vollen Liste, die schlimmste Auswahl bleibt gleich).
+    guete: z.enum(['vorschau', 'voll']).optional(),
     aufloesung: z
       .tuple([z.number().int().positive(), z.number().int().positive()])
       .optional()
@@ -310,6 +313,7 @@ export const renderAuftrag = registerCommand({
       ...(p.aufloesung !== undefined ? { aufloesung: p.aufloesung } : {}),
       ...(p.grundlage !== undefined ? { grundlage: p.grundlage } : {}),
       ...(p.seed !== undefined ? { seed: p.seed } : {}),
+      ...(p.guete !== undefined ? { guete: p.guete } : {}),
     };
     return [
       {

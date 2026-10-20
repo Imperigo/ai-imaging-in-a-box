@@ -4,6 +4,7 @@ import { KIcon, useHerkunft, useOverlaySchliessen, zEbeneLeiter } from '@kosmo/u
 import { BridgeBild } from './BridgeBild';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { grundlageText, startwertText } from './grundlage';
+import type { NodeLauf } from './vis-runtime';
 import {
   laufGrund,
   laufNummerVon,
@@ -197,18 +198,64 @@ export function RenderVerlauf({
   );
 }
 
+/**
+ * Blatt 29 «Fortschritt und Vorschau»: ein einzelnes Bild eines Laufs ohne fertiges Ergebnis in
+ * derselben grossen Ansicht — das Zwischenbild eines laufenden Renders (`progress.vorschau`) oder
+ * das Teilbild nach einem Abbruch (`teilbild`). Beide sind NICHT geprueft und unvollstaendig; die
+ * Ansicht sagt das an der Stelle des Urteils. Am Knoten kostet das keinen Platz: geoeffnet wird
+ * sie mit einem Klick auf den Warteplatz bzw. die Abbruch-Zeile.
+ */
+export type EinzelbildArt = 'teilbild' | 'zwischenbild';
+
+const EINZELBILD_TEXT: Record<EinzelbildArt, { titel: string; grund: string; fuss: string }> = {
+  teilbild: {
+    titel: 'TEILBILD',
+    grund: 'Abgebrochen — das zuletzt fertige Bild dieses Laufs, unvollständig und ohne Gütewerte.',
+    fuss: 'Am Knoten ändert sich nichts. «Variante erzeugen» rechnet neu.',
+  },
+  zwischenbild: {
+    titel: 'ZWISCHENBILD',
+    grund: 'Das zuletzt fertige Bild des laufenden Renders — der Lauf rechnet weiter; geprüft wird erst am Ende.',
+    fuss: 'Am Knoten ändert sich nichts. Hier wird nur angesehen.',
+  },
+};
+
+export function EinzelbildGross({
+  lauf,
+  jobId,
+  bild,
+  art,
+  onClose,
+}: {
+  lauf: NodeLauf;
+  jobId: string;
+  bild: string;
+  art: EinzelbildArt;
+  onClose: () => void;
+}) {
+  if (typeof document === 'undefined') return null;
+  const eintrag: VerlaufEintrag = { ...lauf, jobId, bild };
+  return createPortal(
+    <VerlaufGross reihe={[eintrag]} index={0} hauptJobId={undefined} onWahl={() => {}} onClose={onClose} art={art} />,
+    document.body,
+  );
+}
+
 function VerlaufGross({
   reihe,
   index,
   hauptJobId,
   onWahl,
   onClose,
+  art,
 }: {
   reihe: readonly VerlaufEintrag[];
   index: number;
   hauptJobId: string | undefined;
   onWahl: (index: number) => void;
   onClose: () => void;
+  /** Ein Einzelbild ohne Ergebnis (s. `EinzelbildGross`); fehlt es, ein Lauf des Verlaufs. */
+  art?: EinzelbildArt;
 }) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const schliessenRef = useRef<HTMLButtonElement | null>(null);
@@ -305,20 +352,23 @@ function VerlaufGross({
         ref={boxRef}
         role="dialog"
         aria-modal="true"
-        aria-label={`Lauf ${nummer} gross`}
+        aria-label={art === 'teilbild' ? 'Teilbild gross' : art === 'zwischenbild' ? 'Zwischenbild gross' : `Lauf ${nummer} gross`}
         tabIndex={-1}
         className="k-dialog-box k-dialog k-aus-ausloeser vis-verlauf-gross"
         data-testid="render-verlauf-gross"
         data-job={e.jobId}
+        {...(art ? { 'data-art': art } : {})}
       >
         <div className="vis-verlauf-gross-kopf">
           <span className="vis-verlauf-gross-titel" data-testid="render-verlauf-gross-titel">
-            LAUF {nummer}
+            {art ? EINZELBILD_TEXT[art].titel : `LAUF ${nummer}`}
           </span>
-          <span className="vis-verlauf-gross-zeit">{zeitpunktText(laufZeit(e))}</span>
-          <span className="vis-verlauf-gross-stelle" data-testid="render-verlauf-gross-stelle">
-            {index + 1} von {n} im Verlauf
-          </span>
+          {!art && <span className="vis-verlauf-gross-zeit">{zeitpunktText(laufZeit(e))}</span>}
+          {!art && (
+            <span className="vis-verlauf-gross-stelle" data-testid="render-verlauf-gross-stelle">
+              {index + 1} von {n} im Verlauf
+            </span>
+          )}
           <span className="vis-verlauf-gross-luecke" />
           <button
             type="button"
@@ -363,22 +413,30 @@ function VerlaufGross({
             />
           </div>
           <div className="vis-verlauf-gross-seite">
-            <span
-              className={`vis-verlauf-urteil vis-verlauf-urteil--${urteil}`}
-              data-testid="render-verlauf-gross-urteil"
-              data-urteil={urteil}
-            >
-              <UrteilPunkt urteil={urteil} />
-              {URTEIL_LABEL[urteil]}
-            </span>
+            {art ? (
+              <span className="vis-verlauf-urteil vis-verlauf-urteil--ohne-qa" data-testid="render-verlauf-gross-urteil" data-urteil="nicht-geprueft">
+                nicht geprüft · unvollständig
+              </span>
+            ) : (
+              <span
+                className={`vis-verlauf-urteil vis-verlauf-urteil--${urteil}`}
+                data-testid="render-verlauf-gross-urteil"
+                data-urteil={urteil}
+              >
+                <UrteilPunkt urteil={urteil} />
+                {URTEIL_LABEL[urteil]}
+              </span>
+            )}
             <div className="vis-verlauf-gross-grund" data-testid="render-verlauf-gross-grund">
-              {laufGrund(e.qa)}
+              {art ? EINZELBILD_TEXT[art].grund : laufGrund(e.qa)}
             </div>
             <dl className="vis-verlauf-gross-werte">
-              <div>
-                <dt>Treue zur Geometrie</dt>
-                <dd data-testid="render-verlauf-gross-treue">{treueText(e.qa)}</dd>
-              </div>
+              {!art && (
+                <div>
+                  <dt>Treue zur Geometrie</dt>
+                  <dd data-testid="render-verlauf-gross-treue">{treueText(e.qa)}</dd>
+                </div>
+              )}
               <div>
                 <dt>Bildwerkzeug</dt>
                 <dd data-testid="render-verlauf-gross-werkzeug">{e.engineUsed ?? 'nicht gemeldet'}</dd>
@@ -401,10 +459,14 @@ function VerlaufGross({
             <LizenzOffenMarke lizenz={e} testid="render-verlauf-gross-lizenz-offen" />
             <span className="vis-verlauf-gross-luecke" />
             <div className="vis-verlauf-gross-fuss" data-testid="render-verlauf-gross-fuss">
-              {hauptNummer !== undefined
-                ? `Am Knoten bleibt Lauf ${hauptNummer} das Hauptbild. Hier wird nur angesehen.`
-                : 'Am Knoten ändert sich nichts. Hier wird nur angesehen.'}{' '}
-              Ältere Läufe zeigt der Verlauf nicht mehr; gelöscht wird dabei nichts.
+              {art
+                ? EINZELBILD_TEXT[art].fuss
+                : <>
+                    {hauptNummer !== undefined
+                      ? `Am Knoten bleibt Lauf ${hauptNummer} das Hauptbild. Hier wird nur angesehen.`
+                      : 'Am Knoten ändert sich nichts. Hier wird nur angesehen.'}{' '}
+                    Ältere Läufe zeigt der Verlauf nicht mehr; gelöscht wird dabei nichts.
+                  </>}
             </div>
           </div>
         </div>

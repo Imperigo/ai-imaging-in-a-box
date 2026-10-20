@@ -120,6 +120,8 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
         // (`vis.grundlage`/`vis.seed`) — derselbe Versand wie «Variante erzeugen» am Knoten.
         ...(auftrag.grundlage !== undefined ? { grundlage: auftrag.grundlage } : {}),
         ...(auftrag.seed !== undefined ? { seed: auftrag.seed } : {}),
+        // Entscheid 104: die ueber Kosmo bestellte Guete (`vis.guete`); ohne Angabe voll wie bisher.
+        ...(auftrag.guete !== undefined ? { guete: auftrag.guete } : {}),
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

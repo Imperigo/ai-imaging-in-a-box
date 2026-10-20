@@ -2926,3 +2926,62 @@
   left: auto;
   right: calc(100% + 10px);
 }
+
+/* Nr. 36/37 (Demolauf 16.10.): Fassaden-/Schnittwahl im Fensterkopf
+   (`ansicht-wahl-kopf.tsx`). Oben in der Mitte des Fensters: oben links lag der
+   Titel im Vierfenster unter der linken Werkzeugpille (Sichtbefund K6). */
+.awk {
+  position: absolute;
+  top: var(--k-s2);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--k-font-ui);
+}
+.awk-knopf {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 32px;
+  padding: var(--k-s1) var(--k-s3);
+  background: var(--k-insel-glas-papier, var(--k-surface));
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-pill);
+  color: var(--k-print-ink);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.awk-knopf:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 2px;
+}
+.awk-pfeil {
+  font-size: var(--k-t-xs);
+}
+.awk-popover {
+  margin-top: var(--k-s2);
+  max-width: min(420px, 90vw);
+  padding: var(--k-s3);
+  background: var(--k-glass-fill, var(--k-surface));
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius);
+  box-shadow: var(--k-shadow-overlay);
+}
+.awk-liste {
+  justify-content: center;
+}
+/* Das 44-px-Trefferfeld der Chips (`::after`) braucht einen positionierten Chip; die
+   bisherigen Aufrufer setzen es inline. Ohne das spannte jedes `::after` über den
+   ganzen Kopf, und der letzte Eintrag fing alle Klicks ab. */
+.awk-liste .isl-buehnenkopf-chip {
+  position: relative;
+}
+.awk-leer {
+  color: var(--k-ink-soft);
+  font-size: var(--k-t-sm);
+}

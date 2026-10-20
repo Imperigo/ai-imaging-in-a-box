@@ -42,6 +42,9 @@ export const STARTWERT_MAX = 2147483647;
 
 export const GRUNDLAGE_VERALTET_SATZ = 'Grundlage veraltet — erst neu rendern, dann Varianten';
 export const KEINE_GRUNDLAGE_SATZ = 'Noch keine Grundlage — zuerst «Grundlage rendern», dann Varianten mit derselben Kamera.';
+/** Entscheid 104: dieselbe Aussage in zwei Zeilen am Knoten — die dritte traegt die Guete; der
+ *  ganze Satz steht in der Kurzhilfe und am gesperrten Knopf. */
+export const KEINE_GRUNDLAGE_KURZ = 'Noch keine Grundlage — zuerst «Grundlage rendern».';
 export const GRUNDLAGE_FEHLT_KENNUNG_SATZ =
   'Das Cycles-Bild ist da, aber der Heim-PC hat keine Grundlage gemeldet — Varianten gehen erst, wenn er Grundlagen ablegt.';
 export const STRICHZEICHNUNG_OHNE_VARIANTE_SATZ =

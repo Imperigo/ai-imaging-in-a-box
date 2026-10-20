@@ -73,3 +73,20 @@ describe('kv-grundlage — vis.render traegt Grundlage und Startwert', () => {
     expect(doc.settings.visRenderAuftrag ?? null).toBeNull();
   });
 });
+
+describe('Entscheid 104 — vis.render traegt die Guete', () => {
+  it('guete landet unveraendert im Wunsch; ohne Feld kein Schluessel', () => {
+    const doc = new KosmoDoc();
+    const { graphId, nodeId } = graphMitRender(doc);
+    execute(doc, 'vis.render', { graphId, nodeId, grundlage: GL, seed: 1, guete: 'vorschau' });
+    expect(doc.settings.visRenderAuftrag).toMatchObject({ grundlage: GL, seed: 1, guete: 'vorschau' });
+    execute(doc, 'vis.render', { graphId, nodeId });
+    expect('guete' in doc.settings.visRenderAuftrag!).toBe(false);
+  });
+
+  it('eine unbekannte Guete wird abgewiesen', () => {
+    const doc = new KosmoDoc();
+    const { graphId, nodeId } = graphMitRender(doc);
+    expect(() => execute(doc, 'vis.render', { graphId, nodeId, guete: 'schnell' })).toThrow(CommandError);
+  });
+});

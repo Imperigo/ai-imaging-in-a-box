@@ -2322,3 +2322,39 @@
   line-height: inherit;
   margin-right: var(--k-s2);
 }
+/* R37 (Nr. 71): Zwischenbild hinter Text und Balken des Warteplatzes; der Text bleibt lesbar auf der
+   halbdurchsichtigen Fläche darüber. */
+.vis-node-warteort {
+  position: relative;
+}
+.vis-node-warteort-vorschau {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--k-radius);
+}
+.vis-node-warteort-vorschau + .vis-node-warteort-innen {
+  position: relative;
+  background: color-mix(in srgb, var(--k-surface) 72%, transparent);
+}
+/* Entscheid 104 (Blatt 29): «Güte: Vorschau | Voll» in der Zeile «Grundlage» — die gewaehlte
+   Stufe in Tinte und fett, die andere wie «neu würfeln». Keine eigene Hoehe. */
+.vis-guete-wahl--an {
+  color: var(--vis-node-tinte);
+  font-weight: 600;
+  text-decoration: none;
+}
+/* Blatt 29: das Zwischenbild ist anklickbar (grosse Ansicht). */
+.vis-node-warteort--klickbar {
+  cursor: zoom-in;
+}
+.vis-node-warteort--klickbar:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+/* Vorerst mit Skizze: der Schalter grau mit seinem Satz (GUETE_OHNE_SKIZZE_SATZ). */
+.vis-guete--gesperrt {
+  color: var(--k-ink-faint);
+}

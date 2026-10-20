@@ -584,6 +584,15 @@ export const RenderResult = z
     engine_used: z.string().optional(),
     engine_license: z.string().optional(),
     /**
+     * Owner-Auftrag 20.10.2026 (KosmoVis 0.3.2): mit welcher Guete der
+     * KI-Schritt gerechnet wurde; `engine_used` nennt dazu das gerechnete
+     * Modell. Optional, ohne Default: fehlt das Feld, sagt der Worker es nicht
+     * (aeltere Gegenseite = voll). Ein unbekannter Wert faellt still weg statt
+     * das ganze Ergebnis abzulehnen — der Vermerk «Vorschau» haengt nur an
+     * `'vorschau'`.
+     */
+    guete: z.enum(['vorschau', 'voll']).optional().catch(undefined),
+    /**
      * Nr. 85 (Vertrag 20.10.2026): die Blender-Grundlage dieses Laufs. Jeder
      * Lauf, der Blender rechnet, meldet eine neue (`wiederverwendet: false`);
      * ein Auftrag mit `vis.grundlage` meldet dieselbe Kennung mit

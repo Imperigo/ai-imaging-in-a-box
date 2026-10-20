@@ -104,6 +104,11 @@ export function istNavGeste(e: NavGesteZeiger, optionen: NavGesteOptionen = {}):
   );
 }
 
+/** E237 (Owner-Entscheid): höchstens so viel näher als «Alles einpassen».
+ *  EINE Zahl für Grundriss (`PlanView.tsx`, `PLAN_ZOOM_FAKTOR_UEBER_EINPASSEN`)
+ *  und Schnitt/Ansicht (`SectionView.tsx`, Zoom 1 = eingepasst). */
+export const ZOOM_FAKTOR_UEBER_EINPASSEN = 20;
+
 /** Ober-/Untergrenze eines Zoom-Faktors — je Aufrufer eigene Zahlen
  *  (`PlanView.tsx`: `PLAN_ZOOM_MIN/MAX` = 0.005…1, Weltmassstab-Grössen;
  *  `SectionView.tsx`: 0.1…20, ein dimensionsloser Faktor auf die

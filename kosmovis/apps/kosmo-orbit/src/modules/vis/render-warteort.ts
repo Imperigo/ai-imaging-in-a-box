@@ -15,14 +15,50 @@ import { wartetAbholerText, formatDauer } from './vis-runtime';
  * * **unbestimmt** — noch nichts gemeldet (unterwegs, wartet auf den Rechner, rechnet ohne Angabe). Dann
  *   atmet der Platzhalter, und beim Warten steht die Wartezeit dabei.
  *
- * Die Kamera-Zahl «i von n» liefert die Brücke heute nicht (nur den Namen in der Phase); sie wird darum nicht
- * aus dem Anteil zurückgerechnet.
+ * **R37 (Video L5-14/16/19/20, Nr. 63/71):** meldet der Abholer `kamera_i`/`kamera_n`, ist das die echte Zahl
+ * über alle Kameras — die Zeile sagt «Kamera 2 von 4 · 37 %» samt Etappe (Blender, Bildmodell, Prüfung), und mit
+ * `rest_s` die geschätzte Restzeit. Vor der ersten fertigen Kamera meldet der Heim-PC `null` (er rechnet die
+ * Restzeit nur aus gemessenen Dauern desselben Laufs) — dann steht «Restzeit wird geschätzt …», nie eine
+ * erfundene Zahl (Owner-Entscheid 104b, Blatt 29). Bis 20.10. stand hier «Restzeit ab der zweiten Kamera»: das
+ * stimmte bei einer einzigen Kamera nie, und es war nicht der Wortlaut des Blatts. `vorschau` (Artefakt des letzten fertigen Zwischenbilds) reicht die Anzeige durch; den Bildweg baut
+ * der Knoten. Ohne diese Felder bleibt alles wie vorher; die Kamera-Zahl wird nie aus dem Anteil zurückgerechnet.
  */
 export interface RenderWarteAnzeige {
   text: string;
   /** 0…1 nur bei echter Zahl; fehlt bei «unbestimmt». */
   fortschritt?: number;
   art: 'unbestimmt' | 'etappe' | 'fein';
+  /** Artefaktname des letzten fertigen Zwischenbilds (R37 `progress.vorschau`), wenn gemeldet. */
+  vorschau?: string;
+}
+
+/** R37-Etappen des Abholers in Worten (KosmoVis-Vorschlag 20.10.2026; «KI-Bild» wie auf Blatt 29). */
+const ABHOLER_ETAPPE: Record<string, string> = { blender: 'Blender', bildmodell: 'KI-Bild', pruefung: 'Prüfung' };
+
+/** Entscheid 104b: der Satz, solange noch keine Kamera fertig ist. */
+export const RESTZEIT_GESCHAETZT = 'Restzeit wird geschätzt …';
+
+/** Restzeit in Worten: «noch etwa 1 min 20 s»; Sekunden unter einer Minute auf 5 s gerundet. */
+export function restzeitText(restS: number | null | undefined): string | null {
+  if (restS === undefined) return null;
+  if (restS === null || !Number.isFinite(restS)) return RESTZEIT_GESCHAETZT;
+  const s = Math.max(0, Math.round(restS));
+  if (s < 60) return `noch etwa ${Math.max(5, Math.round(s / 5) * 5)} s`;
+  const m = Math.floor(s / 60);
+  const rest = s % 60;
+  return rest > 0 ? `noch etwa ${m} min ${rest} s` : `noch etwa ${m} min`;
+}
+
+/**
+ * Visbox de5e6bd: nach einem Abbruch schreibt der Heim-PC `progress.phase = "abgebrochen"` (pct bleibt,
+ * `rest_s` null). Die Zeile dafuer — nie der Rohwert und nie eine Restzeit: «abgebrochen bei Kamera 2 von 3».
+ * Ohne Kamera-Zahl nur «abgebrochen».
+ */
+export const ABGEBROCHEN_PHASE = 'abgebrochen';
+export function abbruchText(p: RenderLaufAusschnitt['progress']): string {
+  return p && p.kamera_i !== undefined && p.kamera_n !== undefined
+    ? `abgebrochen bei Kamera ${p.kamera_i} von ${p.kamera_n}`
+    : 'abgebrochen';
 }
 
 /** Ein Bild-Rechner meldet seine Kamera als «rendert <Name>» (Bild-Rechner der HomeStation). */
@@ -40,7 +76,7 @@ const ETAPPE_WORT: Record<string, string> = {
 export interface RenderLaufAusschnitt {
   status: string;
   gestartetUm?: number | undefined;
-  progress?: { phase: string; pct: number } | undefined;
+  progress?: { phase: string; pct: number; kamera_i?: number | undefined; kamera_n?: number | undefined; vorschau?: string | undefined; rest_s?: number | null | undefined } | undefined;
   worker?: string | undefined;
   wartetGrund?: string | undefined;
   bridgeHinweis?: string | undefined;
@@ -62,18 +98,35 @@ export function renderWarteAnzeige(
       const p = lauf.progress;
       if (!p || !Number.isFinite(p.pct)) return { text: `Bild wird gerechnet${seit}${zusatz}`, art: 'unbestimmt' };
       const anteil = Math.min(1, Math.max(0, p.pct));
+      const vorschau = p.vorschau !== undefined ? { vorschau: p.vorschau } : {};
+      // Der Abbruch kann einen Poll lang noch als «laeuft» dastehen — dann sein Satz, keine Restzeit.
+      if (p.phase === ABGEBROCHEN_PHASE) {
+        return { text: `${abbruchText(p)}${zusatz}`, fortschritt: anteil, art: 'etappe', ...vorschau };
+      }
+      if (p.kamera_i !== undefined && p.kamera_n !== undefined) {
+        const etappe = ABHOLER_ETAPPE[p.phase] ?? ETAPPE_WORT[p.phase] ?? p.phase;
+        const rest = restzeitText(p.rest_s);
+        return {
+          text: `${etappe} · Kamera ${p.kamera_i} von ${p.kamera_n} · ${Math.round(anteil * 100)} %${rest ? ` · ${rest}` : ''}${zusatz}`,
+          fortschritt: anteil,
+          art: 'fein',
+          ...vorschau,
+        };
+      }
       const fein = FEINE_PHASE.exec(p.phase);
       if (fein) {
         return {
           text: `Bild wird gerechnet · Kamera «${fein[1]}» · ${Math.round(anteil * 100)} %${zusatz}`,
           fortschritt: anteil,
           art: 'fein',
+          ...vorschau,
         };
       }
       return {
         text: `Phase «${ETAPPE_WORT[p.phase] ?? p.phase}» · die Brücke meldet nur Etappen${zusatz}`,
         fortschritt: anteil,
         art: 'etappe',
+        ...vorschau,
       };
     }
     default:

@@ -119,8 +119,11 @@ export interface NodeLauf {
   approvalToken?: string;
   /** Wer den Job übernommen hat (z. B. "fake-worker" oder ein echter Worker). */
   worker?: string;
-  /** Laufende Etappe des Workers — der Node zeigt Phase + Prozent (HS3-Auflage 5). */
-  progress?: { phase: string; pct: number };
+  /** Laufende Etappe des Workers — der Node zeigt Phase + Prozent (HS3-Auflage 5);
+   *  R37-Felder (Kamera i/n, Zwischenbild, Restzeit) additiv, s. `RenderJobProgress`. */
+  progress?: { phase: string; pct: number; kamera_i?: number | undefined; kamera_n?: number | undefined; vorschau?: string | undefined; rest_s?: number | null | undefined };
+  /** R37 (Nr. 76): nach einem Abbruch das letzte fertige Zwischenbild, ausdrücklich unvollständig. */
+  teilbild?: string;
   /** Zeitpunkt des Absendens (ms, Date.now) — Basis des Timeout-Wächters. */
   gestartetUm?: number;
   /**
@@ -189,6 +192,12 @@ export interface NodeLauf {
   grundlageWiederverwendet?: boolean | undefined;
   /** 98a: der bestellte Startwert (`vis.seed`); je Kamera meldet ihn `qaJeKamera[].seed`. */
   seed?: number;
+  /**
+   * Entscheide 104/104a: mit welcher Guete das Ergebnis gerechnet ist (`result.guete`); fehlt =
+   * voll. Bei `'vorschau'` setzt die Plakette des UI-Workers (`GueteMarke`) den Vermerk an Bild und
+   * Verlauf. Explizit `| undefined`: `patchLauf` mischt, eine alte Angabe darf nicht stehen bleiben.
+   */
+  guete?: 'vorschau' | 'voll' | undefined;
 }
 
 /** Zustände, in denen ein Lauf noch «offen» ist (der Poll fragt sie ab). */

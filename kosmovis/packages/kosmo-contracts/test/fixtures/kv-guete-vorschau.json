@@ -1,0 +1,125 @@
+{
+  "schema": "kosmovis.render-result/v2",
+  "job_id": "vis-1-abcdef",
+  "images": [
+    "s.png",
+    "sSE.png",
+    "nNW.png"
+  ],
+  "qa": {
+    "geometry": {
+      "geometry_fidelity": 0.81,
+      "spearman": null,
+      "geom_iou": null,
+      "threshold": 0.65,
+      "passed": true,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+      "status": "measured"
+    },
+    "verdict": {
+      "passed": true,
+      "reason": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (482913), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. Geometrie 0.81 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+    }
+  },
+  "timings": {
+    "s": 2.6,
+    "sSE": 2.4,
+    "nNW": 3.7,
+    "gesamt": 8.7
+  },
+  "geometry_gates": {
+    "status": "not_measured",
+    "released": false,
+    "rho_mask_status": "not_measured",
+    "rho_mask_passed": false,
+    "geom_iou_status": "not_measured",
+    "geom_iou_passed": false,
+    "counter_check_status": "not_measured",
+    "fail_reasons": [
+      "zwei_tore_fehlt",
+      "kamera_nicht_gemessen"
+    ],
+    "reason": "NICHT GEMESSEN: Die Kamera 's', auf der das Urteil dieses Auftrags ruht, wurde nicht gemessen — es gibt kein rho_maske und kein geom_iou. 'passed: null' und 'released: false' heissen hier ungeprueft, nicht durchgefallen.",
+    "warnings": [],
+    "camera": "s",
+    "passed": false
+  },
+  "qa_je_kamera": [
+    {
+      "kamera": "s",
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1,
+      "seed": 482913,
+      "pose": {
+        "position": [
+          0.0,
+          -30.0,
+          1.7
+        ],
+        "target": [
+          0.0,
+          0.0,
+          5.5
+        ],
+        "fov": 54.43222311461495,
+        "up_axis": "z"
+      }
+    },
+    {
+      "kamera": "sSE",
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1,
+      "seed": 482913,
+      "pose": {
+        "position": [
+          0.0,
+          -30.0,
+          1.7
+        ],
+        "target": [
+          0.0,
+          0.0,
+          5.5
+        ],
+        "fov": 54.43222311461495,
+        "up_axis": "z"
+      }
+    },
+    {
+      "kamera": "nNW",
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1,
+      "seed": 482913,
+      "pose": {
+        "position": [
+          0.0,
+          -30.0,
+          1.7
+        ],
+        "target": [
+          0.0,
+          0.0,
+          5.5
+        ],
+        "fov": 54.43222311461495,
+        "up_axis": "z"
+      }
+    }
+  ],
+  "lieferstatus": "geliefert",
+  "lieferstatus_grund": "",
+  "engine_used": "z-image-turbo",
+  "engine_license": "Apache-2.0",
+  "guidance_applied": false,
+  "grundlage": {
+    "id": "gl-74896f052c2aef61",
+    "wiederverwendet": true
+  },
+  "guete": "vorschau"
+}

@@ -1591,6 +1591,8 @@ export interface Boundary extends Base {
   outlineBogen?: Mm[];
   /** Maximale Gebäudehöhe über Projektnull (mm); null = keine. */
   maxHoehe: Mm | null;
+  /** K2b: maximale Fassadenhöhe ab Terrain (mm), Grenzwert des FH-Checks (`derive/pruefwerte.ts`). */
+  maxFassadenhoehe?: Mm;
   name: string;
   /** Grenzabstand (V2-Vorform): Bauteile müssen so weit INNERHALB der Linie bleiben (mm). */
   grenzabstand?: Mm | null;

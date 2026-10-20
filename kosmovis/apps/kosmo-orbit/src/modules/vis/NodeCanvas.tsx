@@ -1,6 +1,7 @@
 import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
   useLayoutEffect,
@@ -73,11 +74,12 @@ import {
   wartetAbholerLabel,
 } from './vis-runtime';
 import { BridgeBild } from './BridgeBild';
+import { RenderVorschauBild } from './render-vorschau-bild';
 import { KameraAus3dKoerper } from './KameraAus3dKnoten';
 // L24 Bildweg Varianten (E246): Knoten «Varianten» und das Raster im Bildvergleich — eigene Dateien.
 import { VariantenKoerper } from './VariantenKnoten';
 import { VariantenRaster } from './VariantenRaster';
-import { renderWarteAnzeige } from './render-warteort';
+import { abbruchText, renderWarteAnzeige } from './render-warteort';
 import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
@@ -90,17 +92,19 @@ import {
   grundlageLaufFelder,
   grundlageNachErgebnis,
   grundlageZustand,
+  KEINE_GRUNDLAGE_KURZ,
   KEINE_GRUNDLAGE_SATZ,
   kurzKennung,
   neuerStartwert,
   SKIZZE_OHNE_GRUNDLAGE_SATZ,
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
 } from './grundlage';
+import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, gueteAusErgebnis, type Guete } from './guete';
 import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
 import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
-import { HauptbildAbzeichen, RenderVerlauf } from './RenderVerlauf';
+import { EinzelbildGross, HauptbildAbzeichen, RenderVerlauf, type EinzelbildArt } from './RenderVerlauf';
 import { ModellKnotenKoerper } from './ModellKnoten';
 import { modellLadenWirt } from './modell-laden';
 import { heimStandpunkte } from './heim-standpunkte';
@@ -369,10 +373,15 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
   // als dritte Zeile dazu: 105. NICHT am Bild gemessen (jsdom hat kein Layout) — gerechnet aus
   // `.k-btn-sm` (32 px) und der alten Messung (eine Zeile 32, zwei 70); die Probe am Geraet
   // steht aus und ist gemeldet.
-  { id: 'aktionen', h: 70, hLauf: 105 },
+  // GEMESSEN 20.10.2026 (Chromium, 1440 x 900, «wartet auf Freigabe»): mit «Freigeben» UND
+  // «Abbrechen» brechen die Knoepfe auf vier Zeilen um — 128,2 px, nicht 105. Bis hierhin fing die
+  // Reserve der anderen Zeilen die 23 px still auf; mit der Zeile «Güte» (Entscheid 104) reichte sie
+  // nicht mehr (`kv-b5-nachgang`: Inhalt 0,7 px unter dem Koerper). Eingetragen 130.
+  { id: 'aktionen', h: 70, hLauf: 130 },
   // Nr. 85 Paket 2 (Entscheide 98/98a/98b): was die Grundlage ist. Seit Entscheid 101a DREI
-  // Zeilen: Kennung und Kameras, die Ebenen, der Startwert mit «neu würfeln» — veraltet steht der
-  // Satz (zwei Zeilen) an der Stelle von Kennung und Ebenen, die Kennung dann in der Kurzhilfe.
+  // Zeilen. Seit Entscheid 104 (Blatt 29): Kennung und Kameras (die Ebenen in deren Kurzhilfe),
+  // der Startwert mit «neu würfeln», und als dritte Zeile immer «Güte: Vorschau | Voll» —
+  // veraltet oder ohne Grundlage steht ein Satz von zwei Zeilen vor der Guete. Die Hoehe bleibt.
   // Drei Zeilen à 14,2 px (Vorbehaltsklasse, groesste Schriftstufe) = 42,6, eingetragen 44;
   // gemessen bei 1440 x 900 (Chromium, mittlere Stufe) 36,4.
   { id: 'grundlage', h: 44 },
@@ -1241,6 +1250,7 @@ export function NodeCanvas({
             const marker: Partial<NodeLauf> = {
               ...(j.worker !== undefined ? { worker: j.worker } : {}),
               ...(j.progress !== undefined ? { progress: j.progress } : {}),
+              ...(j.teilbild !== undefined ? { teilbild: j.teilbild } : {}), // R37 Nr. 76
               wartetGrund: j.message,
               // P11/B6 — IMMER explizit geleert (wie `wartetGrund` oben): ein
               // erfolgreich verarbeiteter Poll heisst, die Bridge antwortet
@@ -1279,6 +1289,9 @@ export function NodeCanvas({
                 lizenzOffen: j.result.engine_license_open === true ? true : undefined,
                 engineUsed: j.result.engine_used,
                 engineLicense: j.result.engine_license,
+                // Entscheid 104a: die Guete, die das Ergebnis meldet — immer gesetzt, auch als
+                // `undefined`, damit der Vermerk «Vorschau» eines frueheren Laufs nicht stehen bleibt.
+                guete: gueteAusErgebnis(j.result),
                 // Nr. 85 Paket 2: auf welcher Grundlage das Bild steht (und ob sie
                 // wiederverwendet wurde) — Startwert und Pose je Kamera reisen in `qaJeKamera`.
                 ...grundlageLaufFelder(j.result, lauf.grundlageId),
@@ -2863,11 +2876,66 @@ const KLEMME_TEXT_ZWEIZEILIG: CSSProperties = {
 /** Nr. 85 Paket 2: eine Textzeile, gekuerzt mit «…» (Zeile «Grundlage»). */
 const KLEMME_EINZEILIG: CSSProperties = { minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' };
 
-/** Nr. 85 Paket 2: drei Zeilen (der Satz «Noch keine Grundlage …»). */
-const KLEMME_TEXT_DREIZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 3 };
-
 /** Entscheid 96/96b: die Zeile «Skizze» (`RENDER_ZEILE_SKIZZE`, 58 px) — vier Zeilen, der Rest in der Kurzhilfe. */
 const KLEMME_TEXT_VIERZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 4 };
+
+/**
+ * Entscheid 104 (Blatt 29) — der Schalter «Güte: Vorschau | Voll» in der Zeile `grundlage` (Stufe 2).
+ * Zwei Textknoepfe in der Schrift der Zeile (wie «neu würfeln»), damit die Zeile eine Zeile bleibt;
+ * die gewaehlte Stufe ist `aria-pressed` und hervorgehoben. Was sie tun, sagt die Kurzhilfe.
+ */
+function GueteSchalter({
+  guete,
+  onWahl,
+  gesperrt,
+}: {
+  guete: Guete;
+  onWahl: (g: Guete) => void;
+  /** Vorerst mit Skizze: der Skizzen-Weg des Heim-PCs kennt die Guete nicht (Owner-Frage offen). */
+  gesperrt?: string | undefined;
+}): ReactNode {
+  if (gesperrt) {
+    return (
+      <KTooltip text={gesperrt}>
+        <div
+          data-testid="render-guete"
+          data-guete={guete}
+          data-gesperrt="true"
+          className="vis-guete--gesperrt"
+          aria-disabled="true"
+          tabIndex={0}
+          style={KLEMME_EINZEILIG}
+        >
+          Güte: {gesperrt}
+        </div>
+      </KTooltip>
+    );
+  }
+  return (
+    <div data-testid="render-guete" data-guete={guete} role="group" aria-label="Güte" style={KLEMME_EINZEILIG}>
+      Güte:{' '}
+      {(['vorschau', 'voll'] as const).map((g, i) => (
+        <span key={g}>
+          {i > 0 && ' | '}
+          <KTooltip text={GUETE_TEXTE[g].hinweis}>
+            <button
+              type="button"
+              className={`k-druck vis-klapptext-mehr vis-guete-wahl${guete === g ? ' vis-guete-wahl--an' : ''}`}
+              data-testid={`render-guete-${g}`}
+              aria-pressed={guete === g}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => {
+                if (guete !== g) onWahl(g);
+              }}
+            >
+              {GUETE_TEXTE[g].name}
+            </button>
+          </KTooltip>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function RenderBedienung({
   params,
@@ -2967,7 +3035,9 @@ function RenderBedienung({
             </option>
             {QUALITAETSSTUFEN.map((q) => (
               <option key={q.abtastungen} value={String(q.abtastungen)}>
-                {`${q.abtastungen} · ${zeitText(zeitschaetzungSekunden(q.abtastungen, [4000, 2667]))} · ${q.name}`}
+                {/* Befund L4-7 (Demolauf 16.10.): die Zahl ist nur Blender — «83 s» stand neben einem
+                    Lauf von rund 9 Min. Der KI-Schritt kommt dazu; eine Zahl dafuer ist nicht gemessen. */}
+                {`${q.abtastungen} · ${zeitText(zeitschaetzungSekunden(q.abtastungen, [4000, 2667]))} + KI-Schritt · ${q.name}`}
               </option>
             ))}
           </KSelect>
@@ -3096,9 +3166,12 @@ function RenderErklaerungen({
     <>
       <Zeile id="zusatz-zeitschaetzung">
         <div className="vis-node-final-prompt" data-testid="render-zeitschaetzung" style={KLEMME_TEXT}>
+          {/* Befund L4-7 (Demolauf 16.10.): ohne «nur Blender» las sich die Zahl als Zeit des ganzen
+              Bildes. Fuer den KI-Schritt ist hier keine Zahl gemessen, darum steht keine da. Der
+              Zusatz kostet hoechstens eine Zeile — die Reserve des Registers (`zusatz-zeitschaetzung`). */}
           {istMesspunkt
-            ? `Qualität: ${zeitText(sekunden)} — gemessen am 11.09. auf OPTIX bei ${aufloesung[0]} × ${aufloesung[1]}.`
-            : `Qualität: rund ${zeitText(sekunden)} — GESCHÄTZT aus zwei gemessenen Punkten ` +
+            ? `Qualität: ${zeitText(sekunden)} nur Blender, ohne KI-Schritt — gemessen am 11.09. auf OPTIX bei ${aufloesung[0]} × ${aufloesung[1]}.`
+            : `Qualität: rund ${zeitText(sekunden)} nur Blender, ohne KI-Schritt — GESCHÄTZT aus zwei gemessenen Punkten ` +
               `(128 Abtastungen 83 s, 2048 Abtastungen 775 s, beide bei 4000 × 2667). Eine andere Szene rechnet anders.`}
         </div>
       </Zeile>
@@ -3438,7 +3511,7 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
@@ -3464,6 +3537,8 @@ function NodeKoerper({
 }) {
   const runCommand = useProject((s) => s.runCommand);
   const doc = useProject.getState().doc;
+  // Blatt 29: Zwischenbild oder Teilbild gross (die Ansicht des Verlaufs, `EinzelbildGross`).
+  const [einzelbild, setEinzelbild] = useState<EinzelbildArt | null>(null);
   const param = (feld: string, wert: string | number | boolean) => {
     try {
       runCommand('vis.nodeParametrieren', { graphId, nodeId: node.id, params: { [feld]: wert } });
@@ -3782,35 +3857,20 @@ function NodeKoerper({
               data-zustand={gZustand}
               style={KLEMME_TEXT}
             >
-              {grundlage ? (
+              {/* Entscheid 104 (Blatt 29): die dritte Zeile ist immer der Schalter «Güte: Vorschau |
+                  Voll» — er gehoert zur Stufe 2 wie der Startwert. Damit der Knoten nicht waechst
+                  (KV-B5-Register, 12 px Luft bei 1440 x 900), stehen die Ebenen seither in der
+                  Kurzhilfe der Kennung, und «veraltet»/«keine» haben je zwei Zeilen Satz. */}
+              {grundlage && gZustand !== 'veraltet' ? (
                 <>
-                  {/* Entscheid 101a: drei Zeilen. Veraltet steht der Satz (zwei Zeilen) an der
-                      Stelle von Kennung und Ebenen; die Kennung bleibt in der Kurzhilfe. */}
-                  {gZustand === 'veraltet' ? (
-                    <KTooltip text={`Grundlage ${kurzKennung(grundlage.id)} · ${grundlage.kameras} ${grundlage.kameras === 1 ? 'Kamera' : 'Kameras'}`}>
-                      <div
-                        data-testid="render-grundlage-veraltet"
-                        className="vis-node-grundlage--warnung"
-                        style={KLEMME_TEXT_ZWEIZEILIG}
-                        tabIndex={0}
-                      >
-                        {GRUNDLAGE_VERALTET_SATZ}
-                      </div>
-                    </KTooltip>
-                  ) : (
-                    <>
-                      <div data-testid="render-grundlage-kennung" style={KLEMME_EINZEILIG}>
-                        Grundlage {kurzKennung(grundlage.id)} · {grundlage.kameras}{' '}
-                        {grundlage.kameras === 1 ? 'Kamera' : 'Kameras'}
-                      </div>
-                      {/* Eine Zeile; wird sie gekuerzt, steht der volle Satz in der Kurzhilfe. */}
-                      <KTooltip text={`Ebenen je Kamera: ${grundlage.ebenen.length > 0 ? grundlage.ebenen.map(ebenenName).join(', ') : 'keine gemeldet'}`}>
-                        <div data-testid="render-grundlage-ebenen" style={KLEMME_EINZEILIG} tabIndex={0}>
-                          Ebenen: {grundlage.ebenen.length > 0 ? grundlage.ebenen.map(ebenenName).join(', ') : 'keine gemeldet'}
-                        </div>
-                      </KTooltip>
-                    </>
-                  )}
+                  <KTooltip
+                    text={`Grundlage ${grundlage.id} · Ebenen je Kamera: ${grundlage.ebenen.length > 0 ? grundlage.ebenen.map(ebenenName).join(', ') : 'keine gemeldet'}`}
+                  >
+                    <div data-testid="render-grundlage-kennung" style={KLEMME_EINZEILIG} tabIndex={0}>
+                      Grundlage {kurzKennung(grundlage.id)} · {grundlage.kameras}{' '}
+                      {grundlage.kameras === 1 ? 'Kamera' : 'Kameras'}
+                    </div>
+                  </KTooltip>
                   <div style={KLEMME_EINZEILIG}>
                     Startwert <span data-testid="render-grundlage-startwert">{grundlage.seed}</span> ·{' '}
                     <button
@@ -3824,11 +3884,31 @@ function NodeKoerper({
                     </button>
                   </div>
                 </>
+              ) : grundlage ? (
+                /* Veraltet: der Satz (zwei Zeilen) an der Stelle von Kennung und Startwert — der
+                   Startwert kommt mit der neuen Grundlage neu (98a), die Kennung steht in der Kurzhilfe. */
+                <KTooltip text={`Grundlage ${kurzKennung(grundlage.id)} · ${grundlage.kameras} ${grundlage.kameras === 1 ? 'Kamera' : 'Kameras'}`}>
+                  <div
+                    data-testid="render-grundlage-veraltet"
+                    className="vis-node-grundlage--warnung"
+                    style={KLEMME_TEXT_ZWEIZEILIG}
+                    tabIndex={0}
+                  >
+                    {GRUNDLAGE_VERALTET_SATZ}
+                  </div>
+                </KTooltip>
               ) : (
-                <div data-testid="render-grundlage-keine" style={KLEMME_TEXT_DREIZEILIG}>
-                  {KEINE_GRUNDLAGE_SATZ}
-                </div>
+                <KTooltip text={KEINE_GRUNDLAGE_SATZ}>
+                  <div data-testid="render-grundlage-keine" style={KLEMME_TEXT_ZWEIZEILIG} tabIndex={0}>
+                    {KEINE_GRUNDLAGE_KURZ}
+                  </div>
+                </KTooltip>
               )}
+              <GueteSchalter
+                guete={gueteAmKnoten(params)}
+                onWahl={(g) => param(GUETE_PARAM, g)}
+                gesperrt={mitSkizze ? GUETE_OHNE_SKIZZE_SATZ : undefined}
+              />
             </div>
           </Zeile>
 
@@ -3980,11 +4060,29 @@ function NodeKoerper({
                  `renderWarteAnzeige` (render-warteort.ts), derselben Quelle wie die KosmoDesign-Insel.
                  `render-wartet-text` mit `data-grund-bekannt` bleibt als Kennung (auf-20260901-70). */
               <div
-                className="vis-node-warteort"
+                className={`vis-node-warteort${warteAnzeige.vorschau && lauf?.jobId ? ' vis-node-warteort--klickbar' : ''}`}
                 data-testid="render-warteort"
                 data-art={warteAnzeige.art}
                 data-status={status}
+                /* Blatt 29: ein Klick auf das Zwischenbild zeigt es gross — im selben Platz, ohne Hoehe. */
+                {...(warteAnzeige.vorschau && lauf?.jobId
+                  ? {
+                      role: 'button',
+                      tabIndex: 0,
+                      'aria-label': 'Zwischenbild gross anzeigen',
+                      onPointerDown: (e: ReactPointerEvent) => e.stopPropagation(),
+                      onClick: () => setEinzelbild('zwischenbild'),
+                      onKeyDown: (e: ReactKeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setEinzelbild('zwischenbild');
+                        }
+                      },
+                    }
+                  : {})}
               >
+                {warteAnzeige.vorschau && lauf?.jobId && <RenderVorschauBild jobId={lauf.jobId} imageName={warteAnzeige.vorschau} />}
                 <div
                   className="vis-node-warteort-innen"
                   data-testid={status === 'wartetGpu' ? 'render-wartet-text' : 'render-fortschritt'}
@@ -4030,7 +4128,25 @@ function NodeKoerper({
                       : status === 'wartetFreigabe'
                         ? 'wartet auf Freigabe — «Freigeben» startet den Render'
                         : status === 'abgebrochen'
-                            ? 'abgebrochen'
+                            ? lauf?.teilbild && lauf.jobId
+                              ? (
+                                  /* Blatt 29: ein Klick auf die Zeile zeigt das Teilbild gross (nicht
+                                     geprueft, unvollstaendig) — im Knoten selbst steht es nicht, damit
+                                     die Karte nach dem Abbruch nicht waechst (KV-B5-Register). */
+                                  <>
+                                    {`${abbruchText(lauf.progress)} · `}
+                                    <button
+                                      type="button"
+                                      className="k-druck vis-klapptext-mehr"
+                                      data-testid="render-teilbild-oeffnen"
+                                      onPointerDown={(e) => e.stopPropagation()}
+                                      onClick={() => setEinzelbild('teilbild')}
+                                    >
+                                      Teilbild liegt vor (unvollständig)
+                                    </button>
+                                  </>
+                                )
+                              : abbruchText(lauf?.progress)
                             : lauf
                               ? 'rendert im GPU-Leerlauf …'
                               : cloudLeer
@@ -4059,6 +4175,16 @@ function NodeKoerper({
             {/* Entscheid 68 / E174: die Reihe der letzten Laeufe unter dem
                 Hauptbild, ab zwei Laeufen. Sie wechselt das Hauptbild nicht;
                 der Knoten waechst dafuer um `VERLAUF_ZEILE_H`. */}
+            {einzelbild && lauf?.jobId && (einzelbild === 'teilbild' ? lauf.teilbild : warteAnzeige?.vorschau) && (
+              <EinzelbildGross
+                /* Nur zum Anzeigen: der Knoten haelt eine schmalere Form desselben Laufs. */
+                lauf={lauf as unknown as NodeLauf}
+                jobId={lauf.jobId}
+                bild={(einzelbild === 'teilbild' ? lauf.teilbild : warteAnzeige?.vorschau) as string}
+                art={einzelbild}
+                onClose={() => setEinzelbild(null)}
+              />
+            )}
             {verlaufSichtbar(verlauf) && (
               <RenderVerlauf
                 reihe={verlauf}
