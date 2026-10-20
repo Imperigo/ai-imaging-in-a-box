@@ -482,6 +482,21 @@ Lizenzauskunft an, statt ihn in einem Bericht abzulegen, den später niemand meh
 Das ist die allgemeine Lehre dieses Eintrags — ein bekannter, aber unaufgelöster
 Widerspruch gehört dorthin, wo gearbeitet wird, nicht in die Ablage.*
 
+
+**CC0 (Gemeinfreiheitserklärung)** — Eine Erklärung, mit der jemand auf alle Rechte an einem Werk
+verzichtet, soweit das Gesetz es erlaubt: Jede und jeder darf es ohne Bedingung und ohne Nennung
+benutzen. *Im Projekt:* die Lizenz der Logo-Sammlung Simple Icons auf den Tafelkarten
+(`docs/WERKZEUGE_UND_ARCHITEKTUR.md`).
+
+**Simple Icons** — Eine frei verfügbare Sammlung einfarbiger Logos bekannter Programme und Firmen,
+je als kleine Vektorgrafik, unter CC0. *Im Projekt:* Quelle der Logos auf den Tafelkarten
+«Visbox · Tools» (Fassung 13.21.0); wo die Sammlung kein Logo hat, steht eine Monogramm-Kachel.
+
+**Markenzeichen (auf einer Logo-Karte)** — Das Logo eines Programms gehört als Marke seinem Inhaber,
+auch wenn die Grafikdatei frei weitergegeben werden darf. Eine Karte, die solche Logos zeigt, sagt
+das darum dazu und gibt keine eigene Zeichnung als Logo aus. *Im Projekt:* Fusszeile «trademarks
+belong to their owners» auf jeder Werkzeugkarte.
+
 ---
 
 ## 3 · Programmieren, allgemein
@@ -928,6 +943,25 @@ ohne ihn durch jede Funktion einzeln weiterreichen zu müssen — und den ein zw
 laufender Arbeitsstrang (ein *Faden*) nicht sieht. Wie ein Laufzettel, der an genau einem
 Auftrag klebt. *Hier trägt sie den Modellvorrat des laufenden Auftrags: Die Fläche rechnet jeden
 Lauf in einem eigenen Faden, und ein Lauf soll das Modell eines anderen nie zu fassen bekommen.*
+
+
+**numpy** — Eine Python-Bibliothek für das schnelle Rechnen mit grossen Zahlenfeldern, etwa allen
+Bildpunkten eines Bildes auf einmal (BSD-3). *Im Projekt:* rechnet im Renderschritt die 16-Bit-
+Tiefenkarte um; ihr Installationspaket bringt libquadmath (LGPL) mit — ein im `NOTICE` offen
+benannter Punkt.
+
+**Pillow** — Die gebräuchliche Python-Bibliothek zum Öffnen, Umrechnen und Speichern von Bildern
+(Lizenz MIT-CMU). *Im Projekt:* liest und schreibt die Bilder der Renderkette und der Prüfung;
+wahlweise Zusatz, der Kern braucht sie nicht.
+
+**Mermaid** — Eine Schreibweise, mit der man ein Ablaufbild als kurzen Text in ein Dokument
+schreibt (Kästchen, Pfeile, Beschriftung); Anzeigeprogramme wie GitHub zeichnen daraus das Bild.
+*Im Projekt:* das Architekturbild in `docs/WERKZEUGE_UND_ARCHITEKTUR.md`.
+
+**Chromium ohne Fenster (headless)** — Der quelloffene Kern des Browsers Chrome, so gestartet, dass
+kein Fenster erscheint: Er lädt eine Seite und speichert ein Bildschirmbild davon. *Im Projekt:* so
+entstehen die Tafelkarten aus einer HTML-Seite (`tools/knoten_tafel.py`, Werkzeug- und
+Architekturkarten vom 20.10.2026).
 
 ---
 
@@ -4203,6 +4237,25 @@ ihn nicht. In der Material-ID-Tabelle trägt er die Herkunft `kontext`, und die 
 ihn vor jeder Regel heraus. *Ohne diese Herausnahme kippte er am Testbau den
 Katalog-Nullbefund, und die Maske fiel aus — obwohl sich am Modell nichts geändert hatte.*
 
+
+**IfcOpenShell** — Eine quelloffene Bibliothek, die IFC-Gebäudemodelle liest und ihre Bauteile in
+Flächen umrechnet (LGPL-3.0, mit eingebauten GPL-Teilen der Geometriebibliothek CGAL). *Im
+Projekt:* läuft nur in der eigenen Umgebung `.venv-ifc` als eigenes Programm, nie im Kern
+(Prozessgrenze).
+
+**trimesh** — Eine kleine Python-Bibliothek für Dreiecksnetze: zusammensetzen, prüfen, als Datei
+schreiben (MIT). *Im Projekt:* schreibt im IFC-Umwandler das Modell als GLB-Datei für Blender.
+
+**shapely / GEOS** — shapely ist eine Python-Bibliothek für flache Geometrie (Umrisse, Flächen,
+Schnitte, BSD-3); sie rechnet mit der mitgelieferten Bibliothek GEOS (LGPL-2.1). *Im Projekt:* liegt
+nur in `.venv-ifc`, also hinter der Prozessgrenze.
+
+**gsplat** — Eine Bibliothek, die einen Splat auf der Grafikkarte zu Bildern rendert, aus beliebigen
+Blickwinkeln (Apache-2.0). *Im Projekt:* erster Schritt der Splat-Brücke in `.venv-splat`.
+
+**Open3D** — Eine Bibliothek für 3D-Daten wie Punktwolken und Netze (MIT). *Im Projekt:* verschmilzt
+in der Splat-Brücke die Tiefenbilder aus gsplat zu einem farbigen Netz.
+
 ---
 
 ## 6 · KI-Bildmodelle
@@ -5318,6 +5371,27 @@ Informatik. Er trägt im Projekt eine technische Bedingung: Die Varianten müsse
 Varianten derselben Basis erkennbar** sein. Acht Bilder ohne gemeinsam benannte Grundlage
 sind acht Bilder und keine Studie. Geprüft wird das in `tests/test_schichten.py`.*
 
+
+
+**PyTorch (torch)** — Die verbreitete Bibliothek, mit der neuronale Netze gerechnet werden, auf
+Wunsch auf der Grafikkarte (BSD-3). *Im Projekt:* die Rechenmaschine unter diffusers und
+transformers am Heim-PC und in der Splat-Brücke; keine Abhängigkeit des Kerns.
+
+**transformers** — Die Bibliothek von Hugging Face, die viele vortrainierte Modelle für Bild und
+Text mit einheitlichem Aufruf lädt (Apache-2.0). *Im Projekt:* betreibt die Prüfmodelle für Tiefe
+(Depth Anything V2) und Stil (SigLIP 2).
+
+**Z-Image Turbo** — Ein Bildmodell, das in wenigen Rechenschritten ein Bild erzeugt (Apache-2.0).
+*Im Projekt:* das Vorgabe-Bildmodell von Visbox (`VORGABE_BACKBONE`), immer mit einem ControlNet, das
+es an die Tiefenkarte aus Blender bindet.
+
+**Depth Anything V2 (Small)** — Ein Modell, das aus einem einzelnen Foto schätzt, wie weit jede
+Stelle entfernt ist. Die kleine Fassung steht unter Apache-2.0, die grösseren sind nicht-kommerziell.
+*Im Projekt:* die Geometrieprüfung vergleicht seine Schätzung am KI-Bild mit der Tiefe aus Blender.
+
+**SigLIP 2** — Ein Modell, das ein Bild in eine Zahlenreihe übersetzt, sodass ähnlich aussehende
+Bilder ähnliche Zahlen bekommen (Apache-2.0, von Google). *Im Projekt:* misst in der Stilprüfung, ob
+ein Bild wie die Referenzen aussieht; gewählt statt DINOv3, dessen Lizenz ausscheidet.
 
 ---
 
@@ -6533,6 +6607,24 @@ stürbe jeder Lauf am ersten unbekannten Wort.
 wieder hinausgeworfen. Wer nur die eine Liste liest, sieht ein Eingangsbild ankommen, das
 nie angekommen ist. Genau daraus entstand der bestellte/gerechnete Modus.
 
+
+**Architekturbild (Organigramm der Programme)** — Ein Bild, das zeigt, welche Programme es gibt, wo
+sie laufen und wer wem was übergibt — wie ein Organigramm, nur für Software statt für Personen.
+*Im Projekt:* Tafelkarte `architektur-00-uebersicht` und das Mermaid-Bild in
+`docs/WERKZEUGE_UND_ARCHITEKTUR.md`.
+
+**OpenSSL** — Das verbreitete Programm für Verschlüsselung und Zertifikate (Apache-2.0). *Im
+Projekt:* erzeugt am Heim-PC einmal das eigene Zertifikat für das verschlüsselte Heim-WLAN
+(`--heimnetz`), als eigenes Programm aufgerufen.
+
+**Avahi** — Ein Linux-Programm, das einen Dienst im lokalen Netz bekannt macht, damit andere Geräte
+ihn ohne Adresse finden (LGPL-2.1). *Im Projekt:* meldet den Heim-PC im WLAN, damit der Mac ihn
+findet; als eigenes Programm aufgerufen, nicht eingebunden.
+
+**libnotify (notify-send)** — Ein Linux-Programm, das eine kurze Meldung am Bildschirm einblendet
+(LGPL-2.1). *Im Projekt:* zeigt am Heim-PC die Zahl zum Koppeln des Mac; als eigenes Programm
+aufgerufen.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -7332,12 +7424,18 @@ nicht kann. *Im Projekt:* Entscheid 92, `knotenweg.heim_standpunkte`, `heim-stan
 ein Material. Im Vis-Werkzeug hält es der Knoten «Bild-Referenz»; im Bildvergleich steht es neben dem
 eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
+
+**Monogramm-Kachel** — Ein schlichtes Quadrat mit zwei, drei Buchstaben, das auf einer Karte an
+Stelle eines Logos steht, wenn kein freies Logo vorliegt. Es ist absichtlich keine Nachzeichnung
+einer Marke. *Im Projekt:* auf den Tafelkarten «Visbox · Tools», etwa «IFC» oder «gs».
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus den Tafelkarten «Visbox · Tools» und «Visbox · Architecture» (`docs/WERKZEUGE_UND_ARCHITEKTUR.md`): **CC0 (Gemeinfreiheitserklärung)**, **Simple Icons**, **Markenzeichen (auf einer Logo-Karte)**, **numpy**, **Pillow**, **Mermaid**, **Chromium ohne Fenster (headless)**, **IfcOpenShell**, **trimesh**, **shapely / GEOS**, **gsplat**, **Open3D**, **PyTorch (torch)**, **transformers**, **Z-Image Turbo**, **Depth Anything V2 (Small)**, **SigLIP 2**, **Architekturbild (Organigramm der Programme)**, **OpenSSL**, **Avahi**, **libnotify (notify-send)**, **Monogramm-Kachel** |
 | 2026-10-20 | Ergaenzt aus Visbox 0.2.10 (Protokoll 74 §140): **Einzelinstanz (einer App)** |
 | 2026-10-20 | Ergaenzt aus Nr. 85/83/84 (Demolauf 16.10., Protokoll 74 §139): **Fester Startwert (einer Serie)**, **Blender-Grundlage (eines Renderings)**, **Deckungsgleiche Varianten**, **Nur Grundlage («nur Cycles»)**, **Pose (einer Kamera)** |
 | 2026-10-15 | Ergaenzt aus A1/96a/96b (Protokoll 74 §131): **Standpunkt eines Bildes**, **Steuerzeichen**, **Laufwerksbuchstabe**; berichtigt **Anweisung (an eine Skizze)** (96a: die Bemerkung gilt, nicht der Prompt); **Pfad-Trickserei** um den Skizzennamen ergänzt |
