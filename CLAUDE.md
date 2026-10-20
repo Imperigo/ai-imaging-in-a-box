@@ -45,6 +45,10 @@ und Instrument Serif für die Oberflächen), unverändert und mit ihrer Lizenz i
 deklariert. Die OFL ist permissiv, stand aber nicht in der Liste oben; sie gilt nur für
 Schriften, nicht für Code.
 
+**Präzisierung Texturen und Himmelsbilder (Owner-Entscheid 107, 2026-10-20):** Bilddaten unter **CC0**
+(gemeinfrei, z. B. ambientCG, Poly Haven) sind zugelassen — ausschliesslich Texturen, Materialkarten und Himmelsbilder
+(HDRI), unverändert und mit Quelle im `NOTICE` deklariert. CC0 gilt nur für Bilddaten, nicht für Code.
+
 **Präzisierung Forschungsmodelle (Owner-Entscheid 2026-09-29):** Modellgewichte unter einer
 Forschungslizenz (heute Qwen-Image-2.1, «research or evaluation purposes only») dürfen für die
 Vertiefungsarbeit **rechnen**, weil ein Verkauf noch fern ist — ausschliesslich unter vier Auflagen:
