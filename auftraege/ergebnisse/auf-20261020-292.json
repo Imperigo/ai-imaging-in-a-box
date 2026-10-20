@@ -1,0 +1,482 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261020-292",
+ "worker": "local",
+ "rang": 79,
+ "folgt_auf": "auf-20261020-291",
+ "entscheide": [
+  "107",
+  "109",
+  "110",
+  "111",
+  "113"
+ ],
+ "einbau": [
+  "C79",
+  "C80",
+  "C81",
+  "C82"
+ ],
+ "status": "erledigt mit Befunden — Stimmung (8/8 Himmelsbilder, keine Sonnenlampe ausser bestellt), Gipsmodell, Auto-Kamera (50 mm, senkrecht, fester Abstand) und Materialien rechnen am Geraet; Abweisung bei fehlendem Himmelsbild woertlich wie verlangt. Befunde: Bauwerk bei mittag/morgen ueberstrahlt (reines Weiss, keine Schattierung), Gelaendeplatte bekommt das Boden-Material, /knoten/standpunkte weicht ~1,06 m ab (Seitenverhaeltnis), Vorschau-Geometriemass nicht gemessen (Haus < 20 % des Bildes), Schritte nicht ohne Codeaenderung stellbar, 5b nur mit unbekannter id (Textur nicht umbenannt).",
+ "beendet": "2026-10-20T19:45:00Z",
+ "koepfe": {
+  "stand": "main ee94944 (Visbox 0.3.5); visbox-flaeche neu gestartet 21:20:07 (nach dem Kopf), Abholer per Timer 30 s. Kein Code geaendert, keine Datei ins Repo ausser diesem Ergebnis, Mappe des Dienstes nicht angefasst.",
+  "himmelsbilder": "GET /api/heim: 'Himmelsbilder 8/8.' (da 8, von 8, fehlend []). Ordnerwerte nur am Heim-PC.",
+  "weg": "Bruecke der Visbox-Flaeche als Client: POST /bruecke/jobs (multipart scene+model), /approve; job.json im Takt 0,2 s, nvidia-smi 0,5 s. /knoten/standpunkte mit ?ordner= auf eine eigene Probemappe (Kopie des Testbaus), nicht die Mappe des Dienstes.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb): gegliederter Testbau wie 291 (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m) AUF der Vorgabe-Platte 40x30 m (IfcSlab_Gelaende_...); Knotennamen IfcWall_* (2), IfcRoof_* (1), IfcSlab_Gelaende_* (1).",
+  "szene": "kosmovis.render-scene/v1, cameras 'auto' + cameras_auto, render.resolution [960,600] (gerechnet 960x592), samples 64, style.mode none, prompt 'no people'. Zeiten 'freigabe_bis_done' enthalten bis 30 s Warten auf den Abholer-Takt; 'blender_s' ist die reine Kamerazeit aus befund.zeiten.",
+  "gpu": "vor jedem Lauf nvidia-smi + ollama ps: 1241 MiB, 14-63 W (Nachlauf des vorigen eigenen Laufs), ollama ps leer, kein fremder Auftrag queued/running. Laeufe strikt nacheinander. Spitze Cycles-Laeufe 1324-1328 MiB / 62-64 W; Vorschau (z-image-turbo) 26958 MiB / 318 W, danach wieder 1241 MiB. Leistungsgrenze 400 W.",
+  "systemlast": "Last (1 min) zu Beginn 23-24 (anderer Helfer auf der CPU), ab 21:26 fallend auf 4-11. Je Lauf unten.",
+  "abholer_entladen": "Im Protokoll 20x 'Karte: Auslastung 0 %, 1241 MiB belegt.' — kein Entladen, kein Kosmo-Modell beruehrt (ollama ps die ganze Zeit leer)."
+ },
+ "1_stimmungen": {
+  "morgen": {
+   "job": "vis-1792524272-e725f7",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 35.64,
+   "blender_s": 4.6,
+   "umgebung": {
+    "datei": "morgen__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['morgen'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 72.5,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "early morning light, clear long shadows, fresh cool air",
+   "systemlast": "24.20 / 23.64 / 21.57 (vor dem Lauf), GPU vorher 1241 MiB / 15 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-morgen-sSE.png",
+   "bild_kurz": "Park-Hintergrund (Baeume, Laub), Bauwerk reines Weiss ohne Schattierung (ueberstrahlt), schwebt vor dem Foto"
+  },
+  "mittag": {
+   "job": "vis-1792524221-baff66",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 19.24,
+   "blender_s": 8.8,
+   "umgebung": {
+    "datei": "mittag__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['mittag'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 158.0,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "midday light, high sun, clear sky",
+   "systemlast": "23.63 / 23.46 / 21.40 (vor dem Lauf), GPU vorher 1241 MiB / 14 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-mittag-sSE.png",
+   "bild_kurz": "klarer blauer Himmel, Bauwerk reines Weiss (11,9 % der Bildpunkte = 255), keine Kanten sichtbar"
+  },
+  "abend": {
+   "job": "vis-1792524308-8984d9",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 36.45,
+   "blender_s": 4.6,
+   "umgebung": {
+    "datei": "abend__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['abend'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 93.2,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "evening mood, warm low light, lit interiors glowing",
+   "systemlast": "14.84 / 21.43 / 20.91 (vor dem Lauf), GPU vorher 1241 MiB / 23 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-abend-sSE.png",
+   "bild_kurz": "Buschland/Felsen bei Tageslicht — keine Abendstimmung im Cycles-Bild; Bauwerk hell, leicht schattiert"
+  },
+  "blaue-stunde": {
+   "job": "vis-1792524344-55d792",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 36.25,
+   "blender_s": 4.5,
+   "umgebung": {
+    "datei": "blaue-stunde__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['blaue-stunde'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 135.6,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "blue hour, deep blue sky, warmly lit interiors",
+   "systemlast": "9.15 / 19.11 / 20.15 (vor dem Lauf), GPU vorher 1241 MiB / 63 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-blaue-stunde-sSE.png",
+   "bild_kurz": "rosa Abendhimmel, Wohnhaeuser und Autos im Hintergrund, Bauwerk rosa angehaucht, schattiert — ohne Personen"
+  },
+  "bedeckt": {
+   "job": "vis-1792524381-32b096",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 36.45,
+   "blender_s": 4.5,
+   "umgebung": {
+    "datei": "bedeckt__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['bedeckt'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 224.3,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "overcast sky, soft even light",
+   "systemlast": "8.68 / 17.79 / 19.66 (vor dem Lauf), GPU vorher 1241 MiB / 49 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-bedeckt-sSE.png",
+   "bild_kurz": "heller, fast weisser Wolkenhimmel, weich, Bauwerk schwach abgesetzt"
+  },
+  "nebel": {
+   "job": "vis-1792524417-9bc6af",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 36.25,
+   "blender_s": 4.5,
+   "umgebung": {
+    "datei": "nebel__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['nebel'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 84.4,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "fog, muted light, depth fading into haze",
+   "systemlast": "5.69 / 16.03 / 19.00 (vor dem Lauf), GPU vorher 1241 MiB / 25 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-nebel-sSE.png",
+   "bild_kurz": "grauer Dunst, Wiese und Waldrand, Bauwerk kuehl-grau gut lesbar"
+  },
+  "winter": {
+   "job": "vis-1792524454-be6070",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 36.85,
+   "blender_s": 4.5,
+   "umgebung": {
+    "datei": "winter__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['winter'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 135.7,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "winter, snow on the ground, cold clear light",
+   "systemlast": "5.12 / 14.79 / 18.48 (vor dem Lauf), GPU vorher 1241 MiB / 42 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-winter-sSE.png",
+   "bild_kurz": "Schneefeld mit Fussspuren, Baeume, Bauwerk warmweiss mit klarer Schattenseite"
+  },
+  "weiss": {
+   "job": "vis-1792524491-613428",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 37.05,
+   "blender_s": 4.5,
+   "umgebung": {
+    "datei": "weiss__<Vorgabe-Himmelsbild der Stimmung>_4k.hdr (Name = stimmung.STIMMUNGEN['weiss'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "drehung_grad": 0.0
+   },
+   "sonne_weg": "himmelsbild",
+   "helligkeit_mittel_0_255": 149.1,
+   "lieferstatus": "geliefert",
+   "prompt_satz": "white plaster study model, neutral studio light, no materials",
+   "systemlast": "7.30 / 13.98 / 18.04 (vor dem Lauf), GPU vorher 1241 MiB / 42 W",
+   "bild": "auf-20261020-292-bilder/1-stimmung-weiss-sSE.png",
+   "bild_kurz": "grauer Dunsthimmel, Bauwerk gleichmaessig grauweiss (Gips), weich"
+  }
+ },
+ "1_mittag_mit_sonne": {
+  "job": "vis-1792524528-66fd47",
+  "render_sun": {
+   "elevation": 35,
+   "azimuth": 200
+  },
+  "sonne_weg": "bestellt",
+  "sonnenlampe_da": true,
+  "sonne": {
+   "hoehe_grad": 35.0,
+   "azimut_grad": 200.0,
+   "staerke": 2.0,
+   "bestellt": [
+    "hoehe",
+    "azimut"
+   ]
+  },
+  "angewandt_sonnenlampe": true,
+  "zeit_freigabe_bis_done_s": 38.66,
+  "blender_s": 6.6,
+  "helligkeit_mittel_0_255": 158.0,
+  "wirkung_im_bild": "keine sichtbare: mittlere Abweichung zum Lauf ohne Sonne 0,04/255 (hoechstens 67, nur Rauschen). Sonne aus 200° (SSW) steht hinter der Kamera (sSE), Schatten fallen hinter das Bauwerk, und die Fronten sind ohnehin schon ueberstrahlt.",
+  "systemlast": "5.74 / 12.83 / 17.51 (vor dem Lauf), GPU vorher 1241 MiB / 63 W",
+  "bild": "auf-20261020-292-bilder/1-stimmung-mittag-sonne-sSE.png"
+ },
+ "1_mittag_rotation_180": {
+  "job": "vis-1792524567-6e7940",
+  "drehung_grad": 180.0,
+  "sonne_weg": "himmelsbild",
+  "helligkeit_mittel_0_255": 233.5,
+  "zeit_freigabe_bis_done_s": 39.26,
+  "blender_s": 6.6,
+  "schatten_gedreht": "ja — das Licht kommt jetzt von hinten: die Fronten zur Kamera liegen im Schatten (blaugrau, Kanten lesbar), der Himmel hinter der Kamera ist ueberstrahlt. Einen Schattenwurf auf der Platte sieht man aus 1,7 m Augenhoehe kaum (Platte nur als Kante).",
+  "systemlast": "10.48 / 12.99 / 17.35 (vor dem Lauf), GPU vorher 1241 MiB / 22 W",
+  "bild": "auf-20261020-292-bilder/1-stimmung-mittag-rot180-sSE.png"
+ },
+ "2_weiss_gipsmodell": {
+  "job": "vis-1792524491-613428",
+  "materialien": {
+   "weiss": true,
+   "objekte": 4,
+   "farbe_linear": [
+    0.8,
+    0.79,
+    0.77
+   ],
+   "rauheit": 1.0
+  },
+  "angewandt_gipsmodell": true,
+  "material_id_namen": [
+   "IfcRoof_Dachaufbau_292c",
+   "IfcSlab_Gelaende_292p",
+   "IfcWall_Anbau_292b",
+   "IfcWall_Hauptbau_292a"
+  ],
+  "material_id_namen_gleich_wie_ohne_weiss": true,
+  "material_id_bild_gleich_wie_ohne_weiss": "ja — 5 Farben, Bildpunktzahlen je Farbe identisch mit dem Lauf mittag",
+  "bauwerksmaske_gemessen": "im Auftrag nicht (vis.skip: qa.geometry 'not_measured'); nachgemessen mit maske.bauwerksmaske auf material_id.png: weiss und mittag identisch — anteil_bauwerk 0,1020, gelaende_erkannt true (Name), bauwerk 3 Namen, gelaende 1 Name, unbekannt 0.",
+  "einheitlich_weiss": "ja — objekte 4 (alle Meshes inkl. Platte), farbe_linear [0.8,0.79,0.77], rauheit 1.0; im Bild gleichmaessig grauweiss."
+ },
+ "3_auto_kamera": {
+  "job": "vis-1792524695-b6bcb2",
+  "bestellt": {
+   "richtungen": [
+    "s",
+    "nNW"
+   ],
+   "brennweite_mm": 50,
+   "perspektive": "senkrecht"
+  },
+  "bilder": 2,
+  "zeit_freigabe_bis_done_s": 13.62,
+  "blender_s": {
+   "s": 4.5,
+   "nNW": 4.6,
+   "gesamt": 9.1
+  },
+  "systemlast": "4.64 / 9.88 / 15.63 (vor dem Lauf), GPU vorher 1241 MiB / 16 W",
+  "kameras": {
+   "s": {
+    "brennweite_mm": 50.0,
+    "shift_y": 0.058097,
+    "neigung_grad": 0.0,
+    "fuellgrad": 0.6998,
+    "abstand_m": 83.67,
+    "vollstaendig": true,
+    "standpunkte_weg": {
+     "abstand_m": 82.6,
+     "shift_y": 0.05884
+    },
+    "abweichung_auge_m": 1.056,
+    "abweichung_blick_auf_m": 0.0,
+    "bild": "auf-20261020-292-bilder/3-kam-senk-s.png"
+   },
+   "nNW": {
+    "brennweite_mm": 50.0,
+    "shift_y": 0.055061,
+    "neigung_grad": 0.0,
+    "fuellgrad": 0.7,
+    "abstand_m": 88.29,
+    "vollstaendig": true,
+    "standpunkte_weg": {
+     "abstand_m": 87.2,
+     "shift_y": 0.05573
+    },
+    "abweichung_auge_m": 1.055,
+    "abweichung_blick_auf_m": 0.0,
+    "bild": "auf-20261020-292-bilder/3-kam-senk-nNW.png"
+   }
+  },
+  "abweichung_grund": "Auge liegt im Auftrag 1,3 % weiter weg (Faktor 1,013 = 1,6216/1,6): der Heim-PC rechnet mit dem Seitenverhaeltnis des Auftrags (960x592), GET /knoten/standpunkte mit SEITENVERHAELTNIS_VORGABE (knotenweg.heim_standpunkte, Aufruf kameras.kamerasatz(..., seitenverhaeltnis=SEITENVERHAELTNIS_VORGABE)); der Weg kennt keine Aufloesung. Blickziel identisch, durchlaeufe 0 (kein Zurueckziehen).",
+  "senkrechte": "gerade (Bild: Kanten lotrecht, Shift statt Neigung).",
+  "fester_abstand_40": {
+   "job": "vis-1792524709-0792ab",
+   "abstand_m": 40.045,
+   "abstand_fest_m": 40.0,
+   "vollstaendig": false,
+   "fuellgrad": 1.091,
+   "shift_y": 0.084974,
+   "begruendung": "FESTER ABSTAND: 40.0 m waagrecht von der Mitte, wie bestellt. Nicht alle Ecken der Huellbox liegen im Bild — gemeldet, nicht nachgeschoben.",
+   "standpunkte_weg": {
+    "abstand_m": 40.0,
+    "vollstaendig": false,
+    "abweichung_auge_m": 0.0
+   },
+   "eckentest": "nur gemeldet: Dachaufbau oben angeschnitten, Kamera nicht zurueckgezogen (wie bestellt).",
+   "systemlast": "4.73 / 9.64 / 15.46 (vor dem Lauf), GPU vorher 1241 MiB / 41 W",
+   "bild": "auf-20261020-292-bilder/3-kam-fest40-s.png"
+  }
+ },
+ "4_materialien": {
+  "sichtbeton_und_stampflehm": {
+   "job": "vis-1792524784-6558d7",
+   "objekte_je_art": {
+    "fassade": 2,
+    "dach": 1,
+    "fenster": 0,
+    "boden": 1,
+    "uebrige": 0,
+    "gelaende": 0
+   },
+   "arten": {
+    "boden": {
+     "id": "stampflehm",
+     "groesse": "2K",
+     "objekte": 1
+    },
+    "fassade": {
+     "id": "sichtbeton-sandgestrahlt",
+     "groesse": "2K",
+     "objekte": 2
+    }
+   },
+   "nicht_getroffen": [],
+   "material_id_namen_gleich_wie_ohne": true,
+   "blender_s_mit": 4.6,
+   "blender_s_ohne": 4.6,
+   "zeit_freigabe_bis_done_s_mit": 36.86,
+   "zeit_freigabe_bis_done_s_ohne": 37.06,
+   "systemlast": "6.63 / 9.19 / 14.88 (vor dem Lauf), GPU vorher 1241 MiB / 27 W",
+   "bild": "auf-20261020-292-bilder/4-mat-beton-lehm-sSE.png",
+   "bild_ohne": "auf-20261020-292-bilder/4-mat-ohne-sSE.png",
+   "bild_kurz": "Fassaden graubeige Sichtbeton mit feinem Korn, Platte braun (Stampflehm), Dachaufbau weiss (Dach nicht bestellt). Ohne Himmelsbild: Standard-Licht, grauer Hintergrund.",
+   "befund_platte": "Die Gelaendeplatte (IfcSlab_Gelaende_*) zaehlt als 'boden' und bekommt Stampflehm; gelaende 0 Objekte. materialwahl.art_von prueft das Ifc-Praefix (IfcSlab -> boden) VOR ist_gelaende, waehrend maske.bauwerksmaske dieselbe Platte als Gelaende fuehrt. Laut Docstring soll Gelaende nie ein gewaehltes Material bekommen."
+  },
+  "holzlattung_fichte": {
+   "job": "vis-1792524821-3aa8b1",
+   "objekte_je_art": {
+    "fassade": 2,
+    "dach": 1,
+    "fenster": 0,
+    "boden": 1,
+    "uebrige": 0,
+    "gelaende": 0
+   },
+   "nicht_getroffen": [],
+   "blender_s": 4.5,
+   "fugen_sichtbar": "ja — aber erst nah: bei 64,5 m (Vorgabe-Abstand) ist Latte+Fuge (0,07 m) ~1 Bildpunkt, man sieht nur Streifen-Moiré; Zusatzlauf mit festem Abstand 15 m (Job vis-1792525003-0f9ebd): dunkle senkrechte Fugen klar, regelmaessig.",
+   "befund": "Die Holzmaserung laeuft waagrecht, quer zu den senkrechten Latten (Brett-Textur nicht mit den Fugen gedreht).",
+   "bild": "auf-20261020-292-bilder/4-mat-lattung-sSE.png",
+   "ausschnitt": "auf-20261020-292-bilder/4-ausschnitt-nah-lattung-15m.png",
+   "bild_nah": "auf-20261020-292-bilder/4-nah-lattung-s.png",
+   "systemlast": "10.95 / 9.93 / 14.88 (vor dem Lauf), GPU vorher 1241 MiB / 51 W"
+  },
+  "sichtbeton_schalungsglatt": {
+   "job": "vis-1792524858-6e60a2",
+   "blender_s": 4.6,
+   "textur_seitenverhaeltnis": "2048x1193 (1,72)",
+   "verzerrt": "nein — nachgemessen im Zusatzlauf 15 m (Job vis-1792525027-7863c4): Wiederholung im Bild 87 px waagrecht zu 51 px senkrecht = 1,71, wie die Datei; Kachel an der Fassade ~1,0 x 0,58 m. Wiederholung als Kachelmuster sichtbar.",
+   "bild": "auf-20261020-292-bilder/4-mat-schalglatt-sSE.png",
+   "ausschnitt": "auf-20261020-292-bilder/4-ausschnitt-nah-schalglatt-15m.png",
+   "bild_nah": "auf-20261020-292-bilder/4-nah-schalglatt-s.png",
+   "systemlast": "8.64 / 9.50 / 14.56 (vor dem Lauf), GPU vorher 1241 MiB / 25 W"
+  }
+ },
+ "5_fehlende_datei": {
+  "a_himmelsbild": {
+   "job": "vis-1792524895-f87c0b",
+   "bestellt": {
+    "preset": "nebel",
+    "hdri": "gibt_es_nicht"
+   },
+   "status": "error",
+   "lieferstatus": "fehlgeschlagen",
+   "lieferstatus_grund": "Himmelsbild 'gibt_es_nicht' (4k) fehlt am Rechner.",
+   "message": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- Himmelsbild 'gibt_es_nicht' (4k) fehlt am Rechner.",
+   "woertlich_wie_erwartet": true
+  },
+  "b_textur": {
+   "job": "vis-1792524926-4b6abf",
+   "umbenennen": "NICHT gemacht — Auflage des lokalen Workers: vorhandene Dateien nie umbenennen. Stattdessen eine nicht vorhandene id bestellt: render.materialien {dach:{id:'klinker-gibt-es-nicht'}}.",
+   "status": "error",
+   "lieferstatus": "kein render-result.json (by design: abholer.py ~Z. 299-303 legt das Ergebnis nur bei 'fehlende_dateien' ab, eine unbekannte id ist ein Bestellmangel)",
+   "message": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- Material 'klinker-gibt-es-nicht' (dach) ist nicht in der Bibliothek des Heim-PC. Bekannt: sichtbeton-sandgestrahlt, sichtbeton-schalungsglatt, fichte, backstein, klinker, sandstein, stampflehm, verputz-weiss-glatt, verputz-weiss-rau, holzlattung-fichte, dreischichtplatte.",
+   "satz_fehlende_textur": "am Geraet nicht ausgeloest (braeuchte eine fehlende Karte); laut materialwahl.texturen waere er \"Textur 'klinker' (2K, Displacement) fehlt am Rechner.\" — ungeprueft."
+  }
+ },
+ "6_vorschau_geometrie": {
+  "grundlage": "gl-5a1335f6d9cffd2c (Lauf mittag aus 1), vis.seed 482913, vis.guete 'vorschau'",
+  "laeufe": {
+   "faithful_0.8_schritte_8": {
+    "job": "vis-1792525071-9b334d",
+    "grundlage": {
+     "id": "gl-5a1335f6d9cffd2c",
+     "wiederverwendet": true
+    },
+    "engine": "z-image-turbo",
+    "qa_geometry_status": "not_measured",
+    "geom_iou_gemeldet": 0.0,
+    "geometry_fidelity": null,
+    "zeit_freigabe_bis_done_s": 45.07,
+    "kamera_s": 17.7,
+    "systemlast": "7.33 / 7.82 / 12.81 (vor dem Lauf), GPU vorher 1241 MiB / 14 W",
+    "bild": "auf-20261020-292-bilder/6-vorschau-vor-f08-sSE.png",
+    "silhouette_iou_nachgemessen": 0.829
+   },
+   "faithful_1.0_schritte_8": {
+    "job": "vis-1792525126-8be3b3",
+    "grundlage": {
+     "id": "gl-5a1335f6d9cffd2c",
+     "wiederverwendet": true
+    },
+    "engine": "z-image-turbo",
+    "qa_geometry_status": "not_measured",
+    "geom_iou_gemeldet": 0.0,
+    "geometry_fidelity": null,
+    "zeit_freigabe_bis_done_s": 38.06,
+    "kamera_s": 15.4,
+    "systemlast": "7.69 / 7.94 / 12.57 (vor dem Lauf), GPU vorher 1241 MiB / 14 W",
+    "bild": "auf-20261020-292-bilder/6-vorschau-vor-f10-sSE.png",
+    "silhouette_iou_nachgemessen": 0.868
+   }
+  },
+  "schritte_12": "nicht gerechnet — die Schrittzahl der Vorschau ist backbone.vorschau_schritte (z-image-turbo: 8), per Auftrag ohne Codeaenderung nicht stellbar (abholer.schritte_des_laufs).",
+  "geometriemass": "vom Heim-PC NICHT gemessen: verdict 'NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.0 % des Bildes, weniger als 20 %' — geom_iou 0.0 ist ein Platzhalter. Eigene Nachmessung (Bauwerk aus material_id.png gegen dunkle Bildpunkte < 70 im KI-Bild): IoU 0,83 (0.8) bzw. 0,87 (1.0).",
+  "bild_kurz": "beide: dunkles Gebaeude mit Fensterraster, Silhouette folgt Hauptbau/Anbau/Dachaufbau genau (anders als in 291), gelbliche Platte, Gegenlicht-Hof um das Haus; im Vordergrund unleserliche Schrift-Artefakte (zwei bis drei Textzeilen). 1.0 ruhiger und naeher an der Form als 0.8. Keine Personen."
+ },
+ "7_saetze_des_entladens": {
+  "zeile": "nicht beobachtbar — qwen3:14b war waehrend des ganzen Auftrags nicht geladen (ollama ps leer), es gab keinen Auftrag mit idle_window_only. Beobachtet nur: 20x 'Karte: Auslastung 0 %, 1241 MiB belegt.' (tools/abholen.py Z. 593)."
+ },
+ "befunde": [
+  "B1 Ueberstrahlung: mittag und morgen zeigen das Bauwerk als reine weisse Flaeche ohne Schattierung (mittag 11,9 % der Bildpunkte = 255). Stimmung traegt im Cycles-Bild, aber die Form ist nicht lesbar; Belichtung/Staerke des Himmelsbilds pruefen (runners/blender_depth_stage.py, Welt mit Environment Texture, Staerke 1.0).",
+  "B2 Das Himmelsbild ist sichtbarer Hintergrund: das Bauwerk schwebt vor dem Foto (morgen: Baumstamm unter der Platte; abend: Felsen davor); 'abend' zeigt Tageslicht, keine Abendstimmung.",
+  "B3 Gelaendeplatte wird 'boden' (materialwahl.art_von: Ifc-Praefix vor ist_gelaende) und bekommt Stampflehm, waehrend maske.bauwerksmaske sie als Gelaende fuehrt.",
+  "B4 /knoten/standpunkte rechnet mit SEITENVERHAELTNIS_VORGABE statt dem des Auftrags -> Auge 1,06 m (1,3 %) naeher als am Heim-PC (knotenweg.heim_standpunkte).",
+  "B5 render.resolution [960,600] wird als 960x592 gerechnet (Seitenverhaeltnis 1,6216).",
+  "B6 Holzlattung: Maserung quer zu den Latten; bei Vorgabe-Abstand nur Moiré.",
+  "B7 Vorschau: Geometriemass bei Hausanteil < 20 % nicht gemessen; Schrift-Artefakte im Vordergrund; Schritte nicht stellbar.",
+  "B8 Unbekannte Material-id endet ohne render-result.json (nur Laufzettel), anders als das fehlende Himmelsbild."
+ ],
+ "aufraeumen": "Eigene Auftraege (render-jobs), Ausgaben (kosmovis-bilder), Probemappe und _grundlagen-Eintraege per gio trash entfernt; keine Datei umbenannt.",
+ "urteil": "Stimmung, Auto-Kamera und Materialien tragen am Geraet (alle Laeufe done, Felder angewandt wie bestellt, fehlendes Himmelsbild woertlich abgewiesen), mit Ueberstrahlung bei mittag/morgen und der Platte als Boden als groessten Maengeln; die Vorschau folgt der Geometrie jetzt bei beiden Steuerstaerken, mit 1.0 am besten (Silhouette nachgemessen 0,87 gegen 0,83 bei 0.8, gemeldetes Mass nicht gemessen)."
+}
