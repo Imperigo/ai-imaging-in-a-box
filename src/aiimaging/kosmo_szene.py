@@ -61,6 +61,7 @@ from . import gate as _gate
 from . import kameras as _kameras
 from . import raumkamera as _raumkamera
 from . import sonne as _sonne
+from . import materialwahl as _materialwahl
 from . import stimmung as _stimmung
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
@@ -1806,6 +1807,116 @@ def umgebung_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> dict 
     return antwort
 
 
+#: Die Felder einer MaterialWahl (Vertrag 20.10.2026) und ihrer Toenung.
+MATERIALWAHL_FELDER = ("id", "massstab_m", "drehungGrad", "relief", "toenung")
+TOENUNG_FELDER = ("farbe", "staerke")
+
+
+def materialien_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> dict | None:
+    """``render.materialien`` → ``{materialien, dateien, vorgaben, maengel, endgueltig, fehlt}``.
+
+    **Seit dem 20.10.2026** (Knoten «Material», Entscheide 107/111/113). ``materialien`` ist
+    je bestellter Art die Wahl mit den Vorgaben des Heim-PC (Massstab 1 m, Drehung 0, Relief
+    0,6) — ohne Pfad, so geht sie in ``GRUNDLAGE_MUSS_PASSEN`` und ins Ergebnis. ``dateien``
+    traegt je Art die Karten am Rechner (:func:`aiimaging.materialwahl.texturen`: 1K bei der
+    Vorschau, sonst 2K) und nie ins Ergebnis; ``None`` bei ``vis.grundlage`` (kein Blender).
+    Ein leeres ``{}`` bestellt nichts und wird abgewiesen (Vertrag). Unbekannte id und
+    fehlende Textur enden mit Satz (``endgueltig``), die fehlende Textur dazu mit ihrem Namen
+    unter ``fehlt`` fuer ``lieferstatus_grund`` (Entscheid 113).
+    """
+    if roh is None:
+        return None
+    maengel: list[str] = []
+    endgueltig: list[str] = []
+    fehlt: list[str] = []
+    antwort = {"materialien": None, "dateien": None, "vorgaben": {}, "maengel": maengel,
+               "endgueltig": endgueltig, "fehlt": fehlt}
+    if not isinstance(roh, dict):
+        maengel.append(f"'render.materialien' ist {roh!r} und kein Block {{fassade?, dach?, "
+                       f"fenster?, boden?, uebrige?}}.")
+        return antwort
+    if not roh:
+        satz = ("'render.materialien' ist leer ({}) — es bestellt nichts. Ohne Material "
+                "das Feld weglassen.")
+        maengel.append(satz)
+        endgueltig.append(satz)
+        return antwort
+    fremd = sorted(k for k in roh if k not in _materialwahl.ARTEN)
+    if fremd:
+        maengel.append(f"Unbekannte Arten in 'render.materialien': {', '.join(fremd)}. "
+                       f"Bekannt sind {', '.join(_materialwahl.ARTEN)}.")
+    gewaehlt: dict = {}
+    vorgaben: dict = {}
+    for art in _materialwahl.ARTEN:
+        wahl = roh.get(art)
+        if wahl is None:
+            continue
+        pfad = f"render.materialien.{art}"
+        if not isinstance(wahl, dict):
+            maengel.append(f"'{pfad}' ist {wahl!r} und keine MaterialWahl {{id, ...}}.")
+            continue
+        unbekannt = sorted(k for k in wahl if k not in MATERIALWAHL_FELDER)
+        if unbekannt:
+            maengel.append(f"Unbekannte Felder in '{pfad}': {', '.join(unbekannt)}.")
+        kennung = wahl.get("id")
+        if not (isinstance(kennung, str) and _materialwahl.ID_MUSTER.match(kennung)):
+            maengel.append(f"'{pfad}.id' ist {kennung!r}. Erwartet ist die Kennung eines "
+                           f"Materials der Bibliothek (a-z, 0-9, -; hoechstens 48 Zeichen).")
+            continue
+        if kennung not in _materialwahl.BIBLIOTHEK:
+            satz = (f"Material '{kennung}' ({art}) ist nicht in der Bibliothek des Heim-PC. "
+                    f"Bekannt: {', '.join(_materialwahl.BIBLIOTHEK)}.")
+            maengel.append(satz)
+            endgueltig.append(satz)
+            continue
+        massstab = _bereichszahl(wahl, "massstab_m", f"{pfad}.massstab_m", 0.05, 20,
+                                 _materialwahl.VORGABE_MASSSTAB_M, maengel)
+        drehung = _bereichszahl(wahl, "drehungGrad", f"{pfad}.drehungGrad", 0, 360,
+                                _materialwahl.VORGABE_DREHUNG_GRAD, maengel)
+        relief = _bereichszahl(wahl, "relief", f"{pfad}.relief", 0, 1,
+                               _materialwahl.VORGABE_RELIEF, maengel)
+        toenung = None
+        if _gesetzt(wahl, "toenung"):
+            t = wahl["toenung"]
+            if not isinstance(t, dict) or sorted(k for k in t if k not in TOENUNG_FELDER):
+                maengel.append(f"'{pfad}.toenung' ist {t!r}. Erwartet ist {{farbe: '#rrggbb', "
+                               f"staerke: 0..1}}.")
+            elif not (isinstance(t.get("farbe"), str)
+                      and _materialwahl.FARB_MUSTER.match(t["farbe"])):
+                maengel.append(f"'{pfad}.toenung.farbe' ist {t.get('farbe')!r}. Erwartet ist "
+                               f"'#rrggbb'.")
+            else:
+                if not _gesetzt(t, "staerke"):
+                    maengel.append(f"'{pfad}.toenung' ohne 'staerke'.")
+                staerke = _bereichszahl(t, "staerke", f"{pfad}.toenung.staerke", 0, 1, None,
+                                        maengel)
+                if staerke is not None:
+                    toenung = {"farbe": t["farbe"].lower(), "staerke": staerke}
+        if None in (massstab, drehung, relief):
+            continue
+        gewaehlt[art] = {"id": kennung, "massstab_m": massstab, "drehungGrad": drehung,
+                         "relief": relief, "toenung": toenung}
+        vorgaben[art] = [f for f in ("massstab_m", "drehungGrad", "relief")
+                         if not _gesetzt(wahl, f)]
+    if maengel:
+        return antwort
+    antwort["materialien"] = gewaehlt
+    antwort["vorgaben"] = vorgaben
+    if grundlage is None:
+        dateien = {}
+        for art, wahl in gewaehlt.items():
+            gefunden = _materialwahl.texturen(wahl["id"], guete=guete, ordner=ordner)
+            if gefunden["satz"]:
+                if gefunden["satz"] not in fehlt:
+                    fehlt.append(gefunden["satz"])
+                    maengel.append(gefunden["satz"])
+                    endgueltig.append(gefunden["satz"])
+                continue
+            dateien[art] = gefunden
+        antwort["dateien"] = dateien
+    return antwort
+
+
 #: Die Vorgaben des Heim-PC fuer ``cameras_auto`` (der Vertrag hat keine). Augenhoehe und
 #: Brennweite aus :mod:`aiimaging.kameras`, «Haus fuellt» 0.70 (Entscheid 113 = gemessenes
 #: ``kameras.DECKUNGSGRAD``), Perspektive senkrecht (Entscheid 109 C).
@@ -2251,6 +2362,25 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             prompt_zusaetze.append({"art": "stimmung",
                                     "preset": umgebung_block["umgebung"]["preset"],
                                     "satz": satz, "schon_im_prompt": schon})
+    # DIE MATERIALIEN (Entscheide 107/111/113) — siehe `materialien_aus_szene`. «weiss»
+    # macht alle Oberflaechen zum Gipsmodell; Materialien daneben widersprechen sich.
+    material_block = materialien_aus_szene(render.get("materialien"), guete=guete,
+                                           grundlage=grundlage)
+    if material_block is not None:
+        maengel.extend(material_block["maengel"])
+        endgueltig.extend(material_block["endgueltig"])
+        fehlende_dateien.extend(material_block["fehlt"])
+        if ((umgebung_block or {}).get("umgebung") or {}).get("preset") == \
+                _stimmung.PRESET_WEISS and material_block["materialien"]:
+            satz = ("Stimmung 'weiss' und 'render.materialien' zugleich: «weiss» macht alle "
+                    "Oberflaechen zum Gipsmodell (Entscheid 113) — die gewaehlten Materialien "
+                    "kaemen nicht ins Bild.")
+            maengel.append(satz)
+            endgueltig.append(satz)
+        for art, wahl in (material_block["materialien"] or {}).items():
+            satz, schon = _materialwahl.prompt_satz(art, wahl["id"], sprachbefund["uebersetzt"])
+            prompt_zusaetze.append({"art": "material", "bauteil_art": art, "id": wahl["id"],
+                                    "satz": satz, "schon_im_prompt": schon})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
     kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
     if fremd.get("cameras_auto") is not None:
@@ -2317,6 +2447,11 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "umgebung": (umgebung_block or {}).get("umgebung"),
         "umgebung_datei": (umgebung_block or {}).get("datei"),
         "umgebung_vorgaben": tuple((umgebung_block or {}).get("vorgaben") or ()),
+        # Die Materialien je Art, wie gerechnet (ohne Pfad) — `None`: keine bestellt. Die
+        # Karten am Heim-PC daneben gehen nur an den Runner (als JSON im Auftragsordner).
+        "materialien": (material_block or {}).get("materialien"),
+        "materialien_dateien": (material_block or {}).get("dateien"),
+        "materialien_vorgaben": dict((material_block or {}).get("vorgaben") or {}),
         # Saetze ueber Dateien, die am Rechner fehlen (Entscheid 113) — fuer das Ergebnis.
         "fehlende_dateien": tuple(fehlende_dateien),
         "prompt_sprache": sprachbefund,
@@ -2410,6 +2545,13 @@ DURCHGEREICHT = {
                        "blender_depth_stage --umgebung-hdr/--umgebung-staerke/"
                        "--umgebung-drehung (/--umgebung-weiss)"),
     "umgebung_vorgaben": "abholer.angewandt_der_szene → render-result 'angewandt'",
+    # Seit 20.10.2026 (Knoten «Material», Entscheide 107/111/113).
+    "materialien": ("abholer.verarbeiter → GRUNDLAGE_MUSS_PASSEN und render-result "
+                    "'angewandt.materialien'"),
+    "materialien_dateien": ("abholer.materialwahl_ablegen → materialwahl.json im "
+                            "Auftragsordner → seams.glb_zu_multipass(materialien_json=…) → "
+                            "blender_depth_stage --materialien → _materialien_setzen"),
+    "materialien_vorgaben": "abholer.angewandt_der_szene → render-result 'angewandt'",
     "fehlende_dateien": ("abholer.hole_einen → render-result mit lieferstatus "
                          "'fehlgeschlagen' und lieferstatus_grund"),
     "prompt_original": "befund.json",

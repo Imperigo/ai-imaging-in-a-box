@@ -1413,7 +1413,7 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          kontext_matrix=None, kamera_ausschnitt: bool = False,
                          umgebung_hdr=None, umgebung_staerke=None,
                          umgebung_drehung=None, umgebung_weiss=None,
-                         abstand_fest_m=None) -> list[str]:
+                         abstand_fest_m=None, materialien_json=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -1554,6 +1554,9 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
             argumente += [f"--umgebung-drehung={float(umgebung_drehung)}"]
     if umgebung_weiss:
         argumente.append("--umgebung-weiss")
+    # DIE MATERIALIEN JE ART (Entscheide 107/111/113) — die Wahl als JSON im Auftragsordner.
+    if materialien_json is not None:
+        argumente += ["--materialien", str(materialien_json)]
     if kontext_ply is not None:
         argumente += ["--kontext-ply", str(kontext_ply)]
         if kontext_matrix is not None:
@@ -1599,7 +1602,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      kontext_ply=None, kontext_matrix=None, kamera_ausschnitt: bool = False,
                      umgebung_hdr=None, umgebung_staerke=None,
                          umgebung_drehung=None, umgebung_weiss=None,
-                         abstand_fest_m=None,
+                         abstand_fest_m=None, materialien_json=None,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
@@ -1757,6 +1760,11 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"kontext_ply: Die Splat-Datei {Path(kontext_ply).name!r} gibt es nicht. "
             f"Ohne sie wird nicht gerechnet — ein Bild ohne die bestellte Umgebung sähe "
             f"aus wie eines mit.")
+    if materialien_json is not None and not Path(materialien_json).is_file():
+        raise SeamError(
+            f"materialien_json: Die Materialwahl {Path(materialien_json).name!r} gibt es "
+            f"nicht. Ohne sie wird nicht gerechnet — das Bild trüge sonst die Materialien des "
+            f"Modells statt der gewählten.")
     if umgebung_hdr is not None and not Path(umgebung_hdr).is_file():
         raise SeamError(
             f"umgebung_hdr: Das Himmelsbild {Path(umgebung_hdr).name!r} gibt es nicht. Ohne "
@@ -1850,7 +1858,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               umgebung_hdr=umgebung_hdr, umgebung_staerke=umgebung_staerke,
                               umgebung_drehung=umgebung_drehung,
                               umgebung_weiss=umgebung_weiss,
-                              abstand_fest_m=abstand_fest_m),
+                              abstand_fest_m=abstand_fest_m,
+                              materialien_json=materialien_json),
     ]
 
     ergebnis = starte(cmd, frist)
@@ -2071,7 +2080,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             kontext_matrix=None, kamera_ausschnitt: bool = False,
                          umgebung_hdr=None, umgebung_staerke=None,
                          umgebung_drehung=None, umgebung_weiss=None,
-                         abstand_fest_m=None) -> list[str]:
+                         abstand_fest_m=None, materialien_json=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -2101,7 +2110,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               umgebung_hdr=umgebung_hdr, umgebung_staerke=umgebung_staerke,
                               umgebung_drehung=umgebung_drehung,
                               umgebung_weiss=umgebung_weiss,
-                              abstand_fest_m=abstand_fest_m),
+                              abstand_fest_m=abstand_fest_m,
+                              materialien_json=materialien_json),
     ]
 
 

@@ -93,7 +93,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 24 seit auf-20261008-271: `kamera_ausschnitt` (Ausschnitt ohne Gelaende).
     # 28 seit dem 20.10.2026 (Knoten «Stimmung»): die vier `umgebung_*`.
     # 29 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m`.
-    assert len(_multipass_einstellungen()) == 29
+    # 30 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
+    assert len(_multipass_einstellungen()) == 30
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
@@ -102,7 +103,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 24 seit dem 20.10.2026: die vier `umgebung_*`, alle durchgereicht.
     # 26 und 3 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m` neu, und `shift_y`
     # ist von STEHENGEBLIEBEN nach DURCHGEREICHT gewandert (senkrechte Kamera von Hand).
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 26
+    # 27 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 27
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 3
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
@@ -250,7 +252,14 @@ def _lauf(tmp_path):
                           "umgebung": {"preset": "weiss", "hdri": "mud_road_puresky",
                                        "intensitaet": 1.0, "rotationGrad": 0.0},
                           "umgebung_datei": {"pfad": himmel, "datei": himmel.name,
-                                             "aufloesung": "4k"}}})
+                                             "aufloesung": "4k"},
+                          # DIE MATERIALIEN (20.10.2026): `materialien_json` nur, wenn bestellt.
+                          "materialien": {"fassade": {"id": "backstein", "massstab_m": 1.0,
+                                                      "drehungGrad": 0.0, "relief": 0.6,
+                                                      "toenung": None}},
+                          "materialien_dateien": {"fassade": {
+                              "karten": {"Color": himmel}, "groesse": "2K",
+                              "asset": "Bricks101", "satz": None}}}})
     return protokoll
 
 

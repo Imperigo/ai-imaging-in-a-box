@@ -219,6 +219,11 @@ def _argumente():
                     help="Staerke des Himmelsbilds (Background Strength), Vorgabe 1.0.")
     ap.add_argument("--umgebung-drehung", dest="umgebung_drehung", type=float, default=None,
                     help="Drehung des Himmelsbilds um die Hochachse, Grad, Vorgabe 0.")
+    ap.add_argument("--materialien", dest="materialien", default=None,
+                    help="Materialwahl je Bauteil-Art (JSON aus abholer.materialwahl_ablegen): "
+                         "Principled BSDF mit Box-Projektion, Rauheit, Relief (Bump aus der "
+                         "Hoehe), Toenung. Nicht gewaehlte Arten behalten ihr Material, "
+                         "Gelaende bleibt immer, wie es ist.")
     ap.add_argument("--umgebung-weiss", dest="umgebung_weiss", action="store_true",
                     help="Stimmung «weiss» (Entscheid 113): alle Oberflaechen ein diffuses "
                          "Weiss wie ein Gipsmodell, Rauheit hoch.")
@@ -1180,6 +1185,241 @@ def _ersetze_slots(obj, neues_material) -> int:
     for slot in belegt:
         slot.material = neues_material(slot.material.get(URSPRUNG_MARKE, slot.material.name))
     return len(belegt)
+
+
+def _materialwahl_modul():
+    """``aiimaging.materialwahl`` von hier aus — dieselbe Bauart wie :func:`_maske_modul`.
+
+    Die Zuordnung «welche Art ist dieses Bauteil» steht dort (ohne Blender prüfbar); eine
+    zweite Liste hier liefe beim nächsten Bauteil auseinander.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import materialwahl                  # noqa: PLC0415
+        return materialwahl
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _merkmal(obj, *namen):
+    """Ein Custom Property am Objekt oder an einem Elternteil — der glTF-Import legt die
+    ``extras`` eines Knotens dort ab (``obj["kind"]``)."""
+    while obj is not None:
+        for name in namen:
+            try:
+                wert = obj.get(name)
+            except Exception:                              # noqa: BLE001
+                wert = None
+            if wert not in (None, ""):
+                return wert
+        obj = getattr(obj, "parent", None)
+    return None
+
+
+def _ifc_name(obj) -> str:
+    """Der IFC-Knotenname (``IfcWall_…``) des Objekts oder eines Elternteils, sonst sein Name."""
+    kette = obj
+    while kette is not None:
+        if _ist_ifc_knoten(kette.name):
+            return kette.name
+        kette = getattr(kette, "parent", None)
+    return obj.name
+
+
+def _bauteil_art(obj, wahl_modul, maske, gelaende_namen) -> str:
+    """Die Art eines Objekts nach :func:`aiimaging.materialwahl.art_von` — Gelände über die
+    Geländeregel (Name des Objekts oder eines seiner Materialien) und die Formprüfung."""
+    name = _ifc_name(obj)
+    namen = [obj.name, name] + [s.material.name for s in obj.material_slots
+                                if s.material is not None]
+    gelaende = any(n in gelaende_namen for n in namen) or (
+        maske is not None and any(maske.ist_gelaende(n) for n in namen))
+    return wahl_modul.art_von(
+        name, kind=_merkmal(obj, "kind"),
+        predefined=_merkmal(obj, "PredefinedType", "predefined_type"),
+        opening_type=_merkmal(obj, "openingType", "opening_type"),
+        ist_gelaende=gelaende)
+
+
+def _mix_farbe(baum, faktor, a, b):
+    """Zwei Farben mischen — ``ShaderNodeMix`` (ab 3.4), sonst ``ShaderNodeMixRGB``.
+
+    ``faktor`` ist eine Zahl oder ein Ausgang (dann verbunden); ``a``/``b`` ein Ausgang oder
+    eine Farbe (RGBA-Tupel). Gibt den Farbausgang zurück.
+    """
+    try:
+        mix = baum.nodes.new("ShaderNodeMix")
+        mix.data_type = "RGBA"
+        eingaenge = [x for x in mix.inputs if getattr(x, "type", "") == "RGBA"]
+        ausgang = next(x for x in mix.outputs if getattr(x, "type", "") == "RGBA")
+        fak = mix.inputs["Factor"]
+    except Exception:                                      # noqa: BLE001
+        mix = baum.nodes.new("ShaderNodeMixRGB")
+        eingaenge = [mix.inputs["Color1"], mix.inputs["Color2"]]
+        ausgang = mix.outputs["Color"]
+        fak = mix.inputs["Fac"]
+    if isinstance(faktor, (int, float)):
+        fak.default_value = float(faktor)
+    else:
+        baum.links.new(faktor, fak)
+    for ziel, quelle in zip(eingaenge[:2], (a, b)):
+        if isinstance(quelle, tuple):
+            ziel.default_value = quelle
+        else:
+            baum.links.new(quelle, ziel)
+    return ausgang
+
+
+def _hex_linear(farbe: str):
+    rgb = [int(farbe[i:i + 2], 16) / 255.0 for i in (1, 3, 5)]
+    return (*(_srgb_zu_linear(k) for k in rgb), 1.0)
+
+
+#: Die Box-Projektion mischt an den Kanten der drei Ebenen — 0,2 (Bauplan F4).
+BOX_UEBERBLENDUNG = 0.2
+
+
+def _material_aus_wahl(art: str, wahl: dict, ursprung: str):
+    """Ein Principled BSDF aus einer Materialwahl (Bauplan F4, Entscheide 111/113).
+
+    Texture Coordinate «Object» → Mapping (Massstab 1/massstab_m, Drehung um die Hochachse)
+    → Image Texture je Karte in **Box-Projektion** (Überblendung :data:`BOX_UEBERBLENDUNG`).
+    Farbe gemischt mit der Tönung (Faktor = Stärke), Rauheit als Non-Color, **Bump aus der
+    Höhe** (Stärke = relief) statt Normal-Map, weil die Box-Projektion keine Tangenten hat.
+    Ein Bild, das nicht quadratisch ist, wird in der Hochachse nach seinem Seitenverhältnis
+    gestreckt (gelesen, nicht angenommen — Concrete002). Mit ``fugen`` (Holzlattung)
+    schneidet eine Streifenmaske über x+y Fugen hinein: dunkel und im Relief vertieft.
+    """
+    mat = bpy.data.materials.new(f"Materialwahl_{art}_{wahl['id']}")
+    mat.use_nodes = True
+    baum = mat.node_tree
+    baum.nodes.clear()
+    karten = wahl.get("karten") or {}
+    koord = baum.nodes.new("ShaderNodeTexCoord")
+    abbild = baum.nodes.new("ShaderNodeMapping")
+    massstab = float(wahl.get("massstab_m") or 1.0)
+    bilder = {}
+    for karte in ("Color", "Roughness", "Displacement"):
+        if karten.get(karte):
+            bild = bpy.data.images.load(karten[karte], check_existing=True)
+            if karte != "Color":
+                bild.colorspace_settings.name = "Non-Color"
+            bilder[karte] = bild
+    breite, hoehe = (list(getattr(bilder.get("Color"), "size", None) or ()) + [0, 0])[:2]
+    seiten = (float(breite) / float(hoehe)) if breite and hoehe else 1.0
+    abbild.inputs["Scale"].default_value = (1.0 / massstab, 1.0 / massstab,
+                                            seiten / massstab)
+    abbild.inputs["Rotation"].default_value = (
+        0.0, 0.0, math.radians(float(wahl.get("drehungGrad") or 0.0)))
+    baum.links.new(koord.outputs["Object"], abbild.inputs["Vector"])
+
+    def textur(karte):
+        knoten = baum.nodes.new("ShaderNodeTexImage")
+        knoten.image = bilder[karte]
+        knoten.projection = "BOX"
+        knoten.projection_blend = BOX_UEBERBLENDUNG
+        baum.links.new(abbild.outputs["Vector"], knoten.inputs["Vector"])
+        return knoten
+
+    shader = baum.nodes.new("ShaderNodeBsdfPrincipled")
+    ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+    farbe = textur("Color").outputs["Color"]
+    toenung = wahl.get("toenung")
+    if toenung:
+        farbe = _mix_farbe(baum, toenung["staerke"], farbe, _hex_linear(toenung["farbe"]))
+    fugen = wahl.get("fugen")
+    fuge = None
+    if fugen:
+        # Streifen ueber x+y der Objektkoordinate: Periode Latte+Fuge, Fuge = Anteil am Ende.
+        periode = float(fugen["latte_m"]) + float(fugen["fuge_m"])
+        trennen = baum.nodes.new("ShaderNodeSeparateXYZ")
+        baum.links.new(koord.outputs["Object"], trennen.inputs["Vector"])
+        summe = baum.nodes.new("ShaderNodeMath")
+        summe.operation = "ADD"
+        baum.links.new(trennen.outputs["X"], summe.inputs[0])
+        baum.links.new(trennen.outputs["Y"], summe.inputs[1])
+        geteilt = baum.nodes.new("ShaderNodeMath")
+        geteilt.operation = "DIVIDE"
+        baum.links.new(summe.outputs["Value"], geteilt.inputs[0])
+        geteilt.inputs[1].default_value = periode
+        rest = baum.nodes.new("ShaderNodeMath")
+        rest.operation = "FRACT"
+        baum.links.new(geteilt.outputs["Value"], rest.inputs[0])
+        groesser = baum.nodes.new("ShaderNodeMath")
+        groesser.operation = "GREATER_THAN"
+        baum.links.new(rest.outputs["Value"], groesser.inputs[0])
+        groesser.inputs[1].default_value = float(fugen["latte_m"]) / periode
+        fuge = groesser.outputs["Value"]
+        dunkel = float(fugen.get("dunkel", 0.25))
+        # In der Fuge die Farbe abgedunkelt (Faktor = Maske).
+        farbe = _mix_farbe(baum, fuge, farbe, (dunkel * 0.2, dunkel * 0.17, dunkel * 0.14, 1.0))
+    baum.links.new(farbe, shader.inputs["Base Color"])
+    if "Roughness" in bilder:
+        baum.links.new(textur("Roughness").outputs["Color"], shader.inputs["Roughness"])
+    if "Displacement" in bilder and float(wahl.get("relief") or 0.0) > 0.0:
+        hoehe_knoten = textur("Displacement").outputs["Color"]
+        if fuge is not None:
+            senke = baum.nodes.new("ShaderNodeMath")
+            senke.operation = "SUBTRACT"
+            baum.links.new(hoehe_knoten, senke.inputs[0])
+            baum.links.new(fuge, senke.inputs[1])
+            hoehe_knoten = senke.outputs["Value"]
+        bump = baum.nodes.new("ShaderNodeBump")
+        bump.inputs["Strength"].default_value = float(wahl["relief"])
+        bump.inputs["Distance"].default_value = 0.02 * massstab
+        baum.links.new(hoehe_knoten, bump.inputs["Height"])
+        baum.links.new(bump.outputs["Normal"], shader.inputs["Normal"])
+    baum.links.new(shader.outputs["BSDF"], ausgang.inputs["Surface"])
+    mat[MATERIAL_MARKE] = art
+    mat[URSPRUNG_MARKE] = ursprung
+    return mat
+
+
+def _materialien_setzen(a, gelaende_namen=()) -> dict:
+    """Die Materialwahl je Bauteil-Art auf die Szene legen — **vor dem Schönbild**.
+
+    Heisst nicht wie im Bauplan nach dem Knoten «Oberfläche»: Das Wort meint in diesem
+    Projekt die Bedienoberfläche, und der Kern darf sie in Kleinschreibung nicht nennen
+    (Wächter in den Proben, «der Kern weiss von der Fläche nichts»).
+
+    Je Objekt die Art (:func:`_bauteil_art`); Gelände nie; nicht gewählte Arten behalten
+    ihr glb-Material («aus dem Modell»). Je (Art, ersetztes Material) entsteht ein Material,
+    das den alten Namen als :data:`URSPRUNG_MARKE` trägt — ``_material_id_zuweisen`` vergibt
+    danach dieselben Kennungen wie ohne Wahl.
+    """
+    wahl_modul = _materialwahl_modul()
+    if wahl_modul is None:
+        raise RuntimeError(
+            "aiimaging.materialwahl ist von hier nicht lesbar, und --materialien braucht dort "
+            "die Zuordnung der Bauteil-Arten. Ohne sie wird nicht gerechnet — ein Bild mit den "
+            "Materialien des Modells saehe aus wie eines mit den gewaehlten.")
+    satz = json.loads(Path(a.materialien).read_text(encoding="utf-8"))
+    arten = satz.get("arten") or {}
+    maske = _maske_modul()
+    neu: dict = {}
+    zaehlung = {art: 0 for art in (*wahl_modul.ARTEN, wahl_modul.ART_GELAENDE)}
+    gesetzt = {art: 0 for art in arten}
+    for obj in sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
+                      key=lambda o: o.name):
+        art = _bauteil_art(obj, wahl_modul, maske, set(gelaende_namen))
+        zaehlung[art] = zaehlung.get(art, 0) + 1
+        if art not in arten:
+            continue
+
+        def material(ursprung, _art=art):
+            schluessel = (_art, ursprung)
+            if schluessel not in neu:
+                neu[schluessel] = _material_aus_wahl(_art, arten[_art], ursprung)
+            return neu[schluessel]
+
+        _ersetze_slots(obj, material)
+        gesetzt[art] += 1
+    return {"arten": {art: {"id": w.get("id"), "asset": w.get("asset"),
+                            "groesse": w.get("groesse"), "objekte": gesetzt[art],
+                            "karten": sorted(Path(p).name for p in (w.get("karten") or {}).values())}
+                      for art, w in arten.items()},
+            "objekte_je_art": zaehlung,
+            "nicht_getroffen": sorted(art for art, n in gesetzt.items() if n == 0)}
 
 
 def _alles_weiss() -> dict:
@@ -2413,6 +2653,8 @@ def main() -> int:
     material_befund = None
     if getattr(a, "umgebung_weiss", False):
         material_befund = _alles_weiss()
+    elif getattr(a, "materialien", None):
+        material_befund = _materialien_setzen(a, bau_form.get("gelaende_namen") or ())
     szene.cycles.use_denoising = True                    # 8 Samples auf CPU rauschen sichtbar
     szene.render.image_settings.file_format = "PNG"
     szene.render.image_settings.color_mode = "RGBA"

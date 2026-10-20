@@ -537,6 +537,38 @@ def senkrecht_gestellt(aufgabe: dict) -> dict:
                            "warnungen": list(schief["warnungen"])})
 
 
+#: Der Name der Materialwahl im Auftragsordner — lebt nur zur Laufzeit am Heim-PC.
+DATEI_MATERIALWAHL = "materialwahl.json"
+MATERIALWAHL_SCHEMA = "aiimaging.materialwahl/v1"
+
+
+def materialwahl_ablegen(ordner, szene: dict) -> Path:
+    """Die Materialwahl als JSON fuer den Runner: je Art Wahl, Karten und Fugen.
+
+    Die Karten stehen mit ihrem Pfad am Heim-PC darin — die Datei liegt nur im
+    Auftragsordner dieses Rechners und geht nie ins Ergebnis (Regel 3). «weiss» steht
+    nicht hier: das Gipsmodell schaltet ``--umgebung-weiss``.
+    """
+    import json
+    from . import materialwahl as _materialwahl
+    arten = {}
+    for art, wahl in (szene.get("materialien") or {}).items():
+        dateien = (szene.get("materialien_dateien") or {}).get(art)
+        if not dateien:
+            continue
+        eintrag = _materialwahl.BIBLIOTHEK[wahl["id"]]
+        arten[art] = dict(wahl, asset=dateien.get("asset"), groesse=dateien.get("groesse"),
+                          karten={k: str(v) for k, v in dateien["karten"].items()},
+                          fugen=dict(eintrag["fugen"]) if eintrag.get("fugen") else None)
+    ziel = Path(ordner) / DATEI_MATERIALWAHL
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    tmp = ziel.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps({"schema": MATERIALWAHL_SCHEMA, "arten": arten},
+                              ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    tmp.replace(ziel)
+    return ziel
+
+
 def umgebung_einstellungen(szene: dict) -> dict:
     """Was die bestellte Stimmung an ``seams.glb_zu_multipass`` gibt — leer ohne Stimmung.
 
@@ -583,6 +615,20 @@ def angewandt_der_szene(szene: dict) -> dict:
         aus["cameras_auto"] = {k: (dict(v) if isinstance(v, dict) else
                                    list(v) if isinstance(v, (list, tuple)) else v)
                                for k, v in auto.items()}
+    if szene.get("materialien"):
+        from . import materialwahl as _materialwahl
+        dateien = szene.get("materialien_dateien") or {}
+        aus["materialien"] = {
+            # `toenung` fehlt, wenn keine bestellt war — ein `null` bestuende ihr
+            # `.optional()` nicht.
+            art: dict({k: v for k, v in wahl.items() if v is not None},
+                      label=_materialwahl.BIBLIOTHEK[wahl["id"]]["label"],
+                      asset=(dateien.get(art) or {}).get("asset"),
+                      groesse=((dateien.get(art) or {}).get("groesse")
+                               or _materialwahl.groesse_fuer(szene.get("guete"))),
+                      vorgaben=list((szene.get("materialien_vorgaben") or {}).get(art) or ()),
+                      herkunft=dict(_materialwahl.HERKUNFT))
+            for art, wahl in szene["materialien"].items()}
     senkrecht = [k.get("kuerzel") for k in szene.get("kameras") or ()
                  if isinstance(k, dict) and k.get("perspektive")
                  == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
@@ -3285,6 +3331,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # (4.2 und 5.2 sind zwei Renderer) und kostet 0,22 s — je Kamera abgefragt waere
         # sie eine Verschwendung, je Auftrag ist sie unter der Messgrenze.
         fassung = _blender_fassung() if zwischenspeicher is not None else ""
+        # Die Materialwahl fuer den Runner — einmal je Auftrag, nur wenn bestellt und
+        # Blender rechnet (mit `vis.grundlage` fehlen die Dateien und werden nicht gebraucht).
+        materialwahl_datei = (materialwahl_ablegen(ziel, szene)
+                              if szene.get("materialien_dateien") else None)
 
         bilder: list[str] = []
         urteile: list[dict] = []
@@ -3441,6 +3491,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DIE STIMMUNG (Entscheide 107/110/113) — nur, wenn bestellt; ohne sie bleiben
             # Einstellungen und Speicherschluessel Wort fuer Wort die bisherigen.
             einstellungen.update(umgebung_einstellungen(szene))
+            # DIE MATERIALIEN JE ART (Entscheide 107/111/113) — als JSON im Auftragsordner,
+            # einmal je Auftrag geschrieben; ohne Bestellung kein Schluessel.
+            if materialwahl_datei is not None:
+                einstellungen.update(dict(materialien_json=str(materialwahl_datei)))
 
             # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
             # Gedaechtnis, das niemand bestellt hat, ist die unangenehmste Art von
@@ -4052,6 +4106,8 @@ MULTIPASS_DURCHGEREICHT = {
     "umgebung_hdr": "umgebung_einstellungen(szene) ← render.environment (Datei am Heim-PC)",
     # Seit 20.10.2026 (Knoten «Kamera»): `cameras_auto.abstand {art: 'fest'}`.
     "abstand_fest_m": "kamerawerte_des_auftrags(szene) ← cameras_auto.abstand.meter",
+    # Seit 20.10.2026 (Knoten «Material»): die Wahl je Art als JSON im Auftragsordner.
+    "materialien_json": "materialwahl_ablegen(ziel, szene) ← render.materialien",
     # Bis 20.10.2026 STEHENGEBLIEBEN («der Runner rechnet ihn selbst») — das gilt weiter fuer
     # jede Richtungskamera. Neu: eine MITGESANDTE Kamera mit `perspektive: 'senkrecht'`
     # (Entscheid 109) bekommt ihn hier gerechnet (`senkrecht_gestellt`, kameras.shift_aus_ziel).
@@ -4284,8 +4340,9 @@ GRUNDLAGE_SCHEMA = "aiimaging.grundlage/v1"
 #: der Heim-PC selbst ab, laut und mit Grund.
 #: Seit 20.10.2026 auch die Stimmung (`umgebung`, Entscheid 110): Eine Variante mit anderer
 #: Stimmung braucht ihre eigene Grundlage — das Himmelsbild steht im Cycles-Bild.
+#: Ebenso die Materialien je Art (Knoten «Material», 20.10.2026): Sie stehen im Cycles-Bild.
 GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "kameras_auto",
-                         "umgebung")
+                         "umgebung", "materialien")
 
 
 def grundlage_kennung(job_id: str, kuerzel) -> str:
@@ -4453,7 +4510,8 @@ def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
     # `kontext_ply` (Entscheid 76): Der INHALT des Splats zaehlt, sein Pfad nicht —
     # ein neu aufgenommener Splat unter altem Namen ist kein Treffer. Ohne ihn in den
     # Einstellungen bleibt der Schluessel bitgleich.
-    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path", "kontext_ply", "umgebung_hdr"),
+    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path", "kontext_ply", "umgebung_hdr",
+                                             "materialien_json"),
                                fassung=_kette.fassung_von(_kette.ART_MULTIPASS))
 
 
