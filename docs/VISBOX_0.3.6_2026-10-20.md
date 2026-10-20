@@ -28,12 +28,14 @@ und bei «Mittag» rein weiss überstrahlt. Jetzt gibt der Himmel nur Licht, und
 | Heim-PC: Die Standpunkte für die Kamera-Vorschau rechnen mit dem Seitenverhältnis des Auftrags | auf-292 | behoben, mit Probe |
 | Heim-PC: Die Vorschau steuert immer mit voller Stärke (folgt der Gebäudeform besser, gemessen) | 104, auf-292 | gebaut, mit Probe |
 | Heim-PC: Eine Variante, die nicht zur Grundlage passt, wird schon beim Anlegen abgewiesen (409) | Integrator | gebaut, mit Probe |
+| Mac und Heim-PC: Der Modell-Knoten zeigt das Modell in einem kleinen 3D-Fenster (drehbar, Doppelklick gross) — **ungeplant mitgegangen**: kam kurz vor der Freigabe auf den Zweig; in der Ansage nachgetragen | 109 A | gebaut, mit Probe; am Gerät unbestätigt |
 | Heim-PC: Eine unbekannte Material-Kennung liefert ein Ergebnis mit Satz | 113 (2) | behoben, mit Probe |
 
 ## Stand am Gerät
 
 * **Heim-PC:** nach `git pull` Dienst und Abholer neu starten; Auftrag 293 rechnet alle acht Stimmungen nochmals.
-* **Mac und iPad:** unverändert gegenüber 0.3.5.
+* **Mac:** Update-Knopf; im Modell-Knoten erscheint das Modell klein und drehbar, Doppelklick öffnet es gross.
+* **iPad:** unverändert gegenüber 0.3.5.
 
 ## Bekannte Grenzen (schlechte Nachrichten bleiben drin)
 
