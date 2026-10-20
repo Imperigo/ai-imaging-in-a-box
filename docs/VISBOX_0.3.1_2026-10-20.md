@@ -1,7 +1,6 @@
 # Visbox 0.3.1 — Fassungsblatt (20.10.2026)
 
-**Codestand:** Entwurf auf `claude/ai-imaging-assessment-pstkyp` (Schritte 2 und 6 von «Visbox eigenständig»); die
-Nummer ist **noch nicht** erhöht — die Freigabe geht getrennt. Vorgänger 0.3.0 (die Mac-App bringt die Knotenansicht
+**Codestand:** Fassung 0.3.1 auf `main` (Schritte 2 und 6 von «Visbox eigenständig»); Vorgänger 0.3.0 = Tag `v0.3.0` (die Mac-App bringt die Knotenansicht
 selbst mit)
 
 **Grundlage:** Owner-Auftrag 20.10.2026 «baue nächste version richtig!»; Plan
