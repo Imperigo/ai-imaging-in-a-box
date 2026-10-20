@@ -275,7 +275,7 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
     # waere ein neu aufgenommener Splat unter demselben Namen ein Treffer, und das Bild
     # zeigte die alte Umgebung. Ohne `kontext_ply` im Knoten zaehlt nichts davon, und der
     # Schluessel bleibt bitgleich (`graph.inhalts_hash` hasht nur gesetzte Felder).
-    ART_MULTIPASS: ("kontext_ply",),
+    ART_MULTIPASS: ("kontext_ply", "umgebung_hdr",),
 }
 
 #: Der **Codestand** jeder Knotenart, soweit er den Zwischenspeicher betrifft.
@@ -581,6 +581,12 @@ def baue_kette(
     # der alte, und jeder gerechnete Lauf bleibt ein Treffer.
     kontext_ply: str | Path | None = None,
     kontext_matrix=None,
+    # DIE STIMMUNG (Entscheide 107/110/113, 20.10.2026): Himmelsbild, Staerke, Drehung, Gipsmodell.
+    # `None` heisst wie oben NICHT ANGEFASST — der Knoten bleibt bitgleich.
+    umgebung_hdr=None,
+    umgebung_staerke=None,
+    umgebung_drehung=None,
+    umgebung_weiss=None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -778,6 +784,10 @@ def baue_kette(
                     "ferne_abstand": abstand,
                     "kontext_ply": str(kontext_ply) if kontext_ply else None,
                     "kontext_matrix": matrix,
+                    "umgebung_hdr": str(umgebung_hdr) if umgebung_hdr is not None else None,
+                    "umgebung_staerke": umgebung_staerke,
+                    "umgebung_drehung": umgebung_drehung,
+                    "umgebung_weiss": umgebung_weiss,
                 }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
@@ -1430,7 +1440,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     weiter = {name: p[name] for name in
               ("kamera", "kamera_modus", "kamera_huellbox", "sonne", "gelaende_z",
                "hoehe", "deckungsgrad", "augenhoehe", "bias_grad", "stillstand_frist_s",
-               "kontext_ply", "kontext_matrix")
+               "kontext_ply", "kontext_matrix",
+               "umgebung_hdr", "umgebung_staerke", "umgebung_drehung", "umgebung_weiss")
               if name in p}
     if "multipass_timeout" in p:
         weiter["timeout"] = p["multipass_timeout"]

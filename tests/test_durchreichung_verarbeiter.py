@@ -91,13 +91,15 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 23 seit dem 08.10.2026 (Owner-Entscheid 76): `kontext_ply` und `kontext_matrix`, der
     # Splat als Umgebung — beide durchgereicht, aus `RenderScene.context`.
     # 24 seit auf-20261008-271: `kamera_ausschnitt` (Ausschnitt ohne Gelaende).
-    assert len(_multipass_einstellungen()) == 24
+    # 28 seit dem 20.10.2026 (Knoten «Stimmung»): die vier `umgebung_*`.
+    assert len(_multipass_einstellungen()) == 28
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
     # 19 seit dem 08.10.2026: die beiden Kontextangaben.
     # 20 seit auf-20261008-271: `kamera_ausschnitt`.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 20
+    # 24 seit dem 20.10.2026: die vier `umgebung_*`, alle durchgereicht.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 24
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 4
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
@@ -214,6 +216,8 @@ def _lauf(tmp_path):
         {"kind": "splat", "ply": str(splat), "transform": [1, 0, 0, 0, 0, 1, 0, 0,
                                                            0, 0, 1, 0, 0, 0, 0, 1],
          "fit": "behelf"})
+    himmel = Path(tmp_path) / "weiss__mud_road_puresky_4k.hdr"
+    himmel.write_bytes(b"#?RADIANCE")
     # DER AUSSCHNITT OHNE GELAENDE (auf-20261008-271): `kamera_ausschnitt` geht nur mit,
     # wenn die Rahmung «Bauwerk = Szene» meldet — dafuer braucht es eine lesbare glb.
     import importlib.util
@@ -227,7 +231,13 @@ def _lauf(tmp_path):
                 "verzeichnis": tmp_path,
                 "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"}],
                           "aufloesung": 64, "hoehe": 64, "samples": 1,
-                          "prompt": "a house", "kontext": kontext}})
+                          "prompt": "a house", "kontext": kontext,
+                          # DIE STIMMUNG (20.10.2026): `umgebung_*` gehen nur mit, wenn
+                          # bestellt — «weiss» bestellt dazu das Gipsmodell.
+                          "umgebung": {"preset": "weiss", "hdri": "mud_road_puresky",
+                                       "intensitaet": 1.0, "rotationGrad": 0.0},
+                          "umgebung_datei": {"pfad": himmel, "datei": himmel.name,
+                                             "aufloesung": "4k"}}})
     return protokoll
 
 

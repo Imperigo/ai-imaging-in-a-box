@@ -71,6 +71,7 @@ from . import kosmo_szene as _kosmo_szene
 from . import prompts, raumkamera as _raumkamera, render
 from . import seams as _seams
 from . import sonne as _sonne
+from . import stimmung as _stimmung
 from . import varianten
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
@@ -293,6 +294,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         # solcher Auftrag endet jetzt auf `error`, mit demselben Satz in `message` und
         # `error`. Alle anderen Maengel bleiben, was sie waren: liegengelassen mit Grund.
         if auftrag.get("maengel_endgueltig"):
+            # FEHLT EINE DATEI AM RECHNER (Entscheid 113: Himmelsbild, Textur), steht der Satz
+            # mit ihrem Namen auch im ERGEBNIS — die Oberflaeche liest `lieferstatus_grund`.
+            fehlend = tuple((auftrag.get("szene") or {}).get("fehlende_dateien") or ())
+            if fehlend:
+                _abweisung_ablegen(quelle, ordner, auftrag, " ".join(fehlend), antwort)
             _endgueltig_abweisen(quelle, ordner, antwort)
         return antwort
 
@@ -417,6 +423,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         **({"grundlage": ergebnis["grundlage"]} if ergebnis.get("grundlage") else {}),
         # Entscheid 104: nur, wenn der Auftrag eine Guete trug — wie `grundlage`.
         **({"guete": ergebnis["guete"]} if ergebnis.get("guete") else {}),
+        # Stimmung, Kamera, Oberflaeche — wie gerechnet; nur, wenn etwas davon bestellt war.
+        **({"angewandt": ergebnis["angewandt"]} if ergebnis.get("angewandt") else {}),
     )
     anzahl = len(ergebnis.get("bilder") or [])
     antwort.update(
@@ -457,6 +465,72 @@ def _abbruch_vermerken(quelle, ordner, antwort: dict) -> None:
     vermerk = {"grund": f"{SATZ_ABGEBROCHEN} {antwort.get('grund') or ''}".strip()}
     _grund_vermerken(quelle, ordner, vermerk)
     antwort["grund_vermerkt"] = vermerk.get("grund_vermerkt")
+
+
+def _abweisung_ablegen(quelle, ordner, auftrag: dict, grund: str, antwort: dict) -> None:
+    """Ein Ergebnis ohne Bild, ``lieferstatus: 'fehlgeschlagen'`` und dem Satz, neben den Auftrag.
+
+    Vor dem Statuswechsel geschrieben — dieselbe Reihenfolge wie ``schreibe_ergebnis``: Wer
+    ``error`` sieht, findet das Ergebnis schon vor. Scheitert das Schreiben, bleibt es bei der
+    Abweisung am Laufzettel; ``antwort["ergebnis"]`` ist dann ``None``.
+    """
+    import json
+    job_id = auftrag.get("job_id") or Path(ordner).name
+    ergebnis = _kosmo_szene.nur_vertragsfelder(_kosmo_szene.als_abweisung(
+        job_id, grund, angewandt=angewandt_der_szene(auftrag.get("szene") or {})))
+    ziel = Path(ordner) / getattr(quelle, "DATEI_ERGEBNIS", bruecke.DATEI_ERGEBNIS)
+    try:
+        tmp = ziel.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(ergebnis, ensure_ascii=False, indent=2, default=list),
+                       encoding="utf-8")
+        tmp.replace(ziel)
+    except OSError:
+        return
+    antwort["ergebnis"] = ergebnis
+
+
+def umgebung_einstellungen(szene: dict) -> dict:
+    """Was die bestellte Stimmung an ``seams.glb_zu_multipass`` gibt — leer ohne Stimmung.
+
+    ``umgebung_weiss`` bei «weiss» (Entscheid 113): alle Oberflaechen weiss wie ein
+    Gipsmodell. Ohne Datei (nur bei ``vis.grundlage``, dann rechnet Blender nicht) kein Pfad.
+    """
+    umgebung = (szene or {}).get("umgebung")
+    if not umgebung:
+        return {}
+    datei = (szene or {}).get("umgebung_datei") or {}
+    # `dict(...)` mit Schluesselwoertern, nicht `update` — so liest die Probe der Kette
+    # (tests/test_kette.py, `_was_der_abholer_bestellt`) aus dem Quelltext, was bestellt wird.
+    aus = dict(umgebung_hdr=str(datei["pfad"]), umgebung_staerke=umgebung["intensitaet"],
+               umgebung_drehung=umgebung["rotationGrad"]) if datei.get("pfad") else {}
+    if umgebung.get("preset") == _stimmung.PRESET_WEISS:
+        aus = dict(aus, umgebung_weiss=True)
+    return aus
+
+
+def angewandt_der_szene(szene: dict) -> dict:
+    """``{environment?, cameras_auto?, materialien?}`` — was der Heim-PC rechnet, mit Vorgaben.
+
+    Der Vertrag (mit dem Integrator, 20.10.2026) traegt fuer diese Felder keine Vorgaben;
+    der Heim-PC setzt sie und nennt sie hier. Nur, was bestellt war. Ohne Pfade (Regel 3).
+    """
+    szene = szene or {}
+    aus: dict = {}
+    umgebung = szene.get("umgebung")
+    if umgebung:
+        datei = szene.get("umgebung_datei") or {}
+        zusatz = next((z for z in szene.get("prompt_zusaetze") or ()
+                       if z.get("art") == "stimmung"), None)
+        aus["environment"] = dict(
+            umgebung,
+            aufloesung=datei.get("aufloesung") or _stimmung.aufloesung_fuer(szene.get("guete")),
+            datei=datei.get("datei"),
+            vorgaben=list(szene.get("umgebung_vorgaben") or ()),
+            gipsmodell=umgebung.get("preset") == _stimmung.PRESET_WEISS,
+            sonnenlampe=bool(szene.get("sonne")),
+            prompt_satz=(zusatz or {}).get("satz"),
+            herkunft=dict(_stimmung.HERKUNFT))
+    return aus
 
 
 def _endgueltig_abweisen(quelle, ordner, antwort: dict) -> None:
@@ -716,6 +790,10 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         "kontext": _kosmo_szene.kontext_vermerk(szene.get("kontext")),
         # Die Skizze, wenn sie das Bild fuehrte (Entscheid 96) — ohne Pfad, Regel 3.
         "skizze": ergebnis.get("skizze"),
+        # Stimmung, Kamera, Oberflaeche wie gerechnet (20.10.2026) — dieselbe Form wie im
+        # Ergebnis, dazu die angefuegten Saetze der Knoten.
+        "angewandt": ergebnis.get("angewandt"),
+        "prompt_zusaetze": [dict(z) for z in szene.get("prompt_zusaetze") or ()],
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
@@ -3287,6 +3365,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 if kontext.get("matrix") is not None:
                     einstellungen["kontext_matrix"] = list(kontext["matrix"])
 
+            # DIE STIMMUNG (Entscheide 107/110/113) — nur, wenn bestellt; ohne sie bleiben
+            # Einstellungen und Speicherschluessel Wort fuer Wort die bisherigen.
+            einstellungen.update(umgebung_einstellungen(szene))
+
             # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
             # Gedaechtnis, das niemand bestellt hat, ist die unangenehmste Art von
             # Ueberraschung.
@@ -3788,6 +3870,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             "grundlage": grundlage,
             # Entscheid 104: nur, wenn bestellt — sonst fehlt das Feld im Ergebnis.
             "guete": szene.get("guete"),
+            # Was fuer Stimmung, Kamera und Oberflaeche gerechnet wurde (20.10.2026).
+            "angewandt": angewandt_der_szene(szene),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
@@ -3890,6 +3974,12 @@ MULTIPASS_DURCHGEREICHT = {
     "kontext_matrix": "szene['kontext']['matrix'] aus RenderScene.context.transform "
                       "(16 Zahlen zeilenweise, glTF-Welt); fehlt sie, die Einheit",
     # Seit auf-20261008-271: der Ausschnitt auch ohne Gelaende.
+    # Seit 20.10.2026 (Knoten «Stimmung», Entscheide 107/110/113): das Himmelsbild der
+    # bestellten Stimmung, aus `render.environment` ueber `kosmo_szene.umgebung_aus_szene`.
+    "umgebung_hdr": "umgebung_einstellungen(szene) ← render.environment (Datei am Heim-PC)",
+    "umgebung_staerke": "umgebung_einstellungen(szene) ← render.environment.intensitaet",
+    "umgebung_drehung": "umgebung_einstellungen(szene) ← render.environment.rotationGrad",
+    "umgebung_weiss": "umgebung_einstellungen(szene) ← render.environment.preset 'weiss'",
     "kamera_ausschnitt": "_ausschnitt_ohne_box(...) — nur Richtungskamera ohne eigene Box, "
                          "wenn die Rahmung meldet: Bauwerk = Szene",
 }
@@ -4122,7 +4212,9 @@ GRUNDLAGE_SCHEMA = "aiimaging.grundlage/v1"
 #: Woran eine Grundlage zum Auftrag passen muss (Auflage 4 des Integrators, 20.10.2026):
 #: Wer ueber `vis_render` ohne Knoten bestellt, sieht keine Anzeige «veraltet» — also lehnt
 #: der Heim-PC selbst ab, laut und mit Grund.
-GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras")
+#: Seit 20.10.2026 auch die Stimmung (`umgebung`, Entscheid 110): Eine Variante mit anderer
+#: Stimmung braucht ihre eigene Grundlage — das Himmelsbild steht im Cycles-Bild.
+GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "umgebung")
 
 
 def grundlage_kennung(job_id: str, kuerzel) -> str:
@@ -4290,7 +4382,7 @@ def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
     # `kontext_ply` (Entscheid 76): Der INHALT des Splats zaehlt, sein Pfad nicht —
     # ein neu aufgenommener Splat unter altem Namen ist kein Treffer. Ohne ihn in den
     # Einstellungen bleibt der Schluessel bitgleich.
-    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path", "kontext_ply"),
+    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path", "kontext_ply", "umgebung_hdr"),
                                fassung=_kette.fassung_von(_kette.ART_MULTIPASS))
 
 

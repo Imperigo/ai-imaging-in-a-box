@@ -392,7 +392,8 @@ def test_die_neun_felder_der_antwort_sind_alle_eingeordnet():
     neun = {"interior", "innenansichten", "gelaende", "komposition", "render.environment",
             "render.himmel", "render.belichtung", "render.rauschschwelle",
             "vis.research_only"}
-    bedient = {"interior", "gelaende"}
+    # `render.environment` seit dem 20.10.2026 (Knoten «Stimmung», Entscheid 110).
+    bedient = {"interior", "gelaende", "render.environment"}
 
     assert neun - bedient == set(kosmo_szene.ABGEWIESENE_FELDER)
     for pfad in neun:

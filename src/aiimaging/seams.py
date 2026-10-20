@@ -1410,7 +1410,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          herzschlag_takt_s=None, kamera_huellbox=None,
                          sonne=None, deckungsgrad=None, augenhoehe=None,
                          bias_grad=None, kontext_ply=None,
-                         kontext_matrix=None, kamera_ausschnitt: bool = False) -> list[str]:
+                         kontext_matrix=None, kamera_ausschnitt: bool = False,
+                         umgebung_hdr=None, umgebung_staerke=None, umgebung_drehung=None, umgebung_weiss=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -1536,6 +1537,17 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
     # Liste damit Wort fuer Wort die bisherige (bewacht in tests/test_kontext_splat.py).
     # Die Matrix in der Gleichheitszeichen-Form, aus demselben Grund wie `--auge`: Ihre
     # Zahlen tragen oft ein Minus.
+    # DIE STIMMUNG (Entscheide 107/110/113, 20.10.2026) — nur, wenn bestellt; ohne sie
+    # bleibt die Liste Wort fuer Wort die bisherige. Der Pfad zeigt auf das Himmelsbild am
+    # Heim-PC (`stimmung.himmel_datei`) und lebt nur zur Laufzeit.
+    if umgebung_hdr is not None:
+        argumente += ["--umgebung-hdr", str(umgebung_hdr)]
+        if umgebung_staerke is not None:
+            argumente += [f"--umgebung-staerke={float(umgebung_staerke)}"]
+        if umgebung_drehung is not None:
+            argumente += [f"--umgebung-drehung={float(umgebung_drehung)}"]
+    if umgebung_weiss:
+        argumente.append("--umgebung-weiss")
     if kontext_ply is not None:
         argumente += ["--kontext-ply", str(kontext_ply)]
         if kontext_matrix is not None:
@@ -1579,6 +1591,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      kamera_huellbox=None, sonne=None,
                      deckungsgrad=None, augenhoehe=None, bias_grad=None,
                      kontext_ply=None, kontext_matrix=None, kamera_ausschnitt: bool = False,
+                     umgebung_hdr=None, umgebung_staerke=None, umgebung_drehung=None, umgebung_weiss=None,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
@@ -1736,6 +1749,11 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"kontext_ply: Die Splat-Datei {Path(kontext_ply).name!r} gibt es nicht. "
             f"Ohne sie wird nicht gerechnet — ein Bild ohne die bestellte Umgebung sähe "
             f"aus wie eines mit.")
+    if umgebung_hdr is not None and not Path(umgebung_hdr).is_file():
+        raise SeamError(
+            f"umgebung_hdr: Das Himmelsbild {Path(umgebung_hdr).name!r} gibt es nicht. Ohne "
+            f"es wird nicht gerechnet — ein Bild ohne die bestellte Stimmung saehe aus wie "
+            f"eines mit.")
     frist = _gesamtfrist(timeout, was="timeout")
 
     if _starte is not None:
@@ -1820,7 +1838,10 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
                               bias_grad=bias_grad, kontext_ply=kontext_ply,
                               kontext_matrix=kontext_matrix,
-                              kamera_ausschnitt=kamera_ausschnitt),
+                              kamera_ausschnitt=kamera_ausschnitt,
+                              umgebung_hdr=umgebung_hdr, umgebung_staerke=umgebung_staerke,
+                              umgebung_drehung=umgebung_drehung,
+                              umgebung_weiss=umgebung_weiss),
     ]
 
     ergebnis = starte(cmd, frist)
@@ -2038,7 +2059,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             kamera_huellbox=None,
                             sonne=None, deckungsgrad=None, augenhoehe=None,
                             bias_grad=None, kontext_ply=None,
-                            kontext_matrix=None, kamera_ausschnitt: bool = False) -> list[str]:
+                            kontext_matrix=None, kamera_ausschnitt: bool = False,
+                         umgebung_hdr=None, umgebung_staerke=None, umgebung_drehung=None, umgebung_weiss=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -2064,7 +2086,10 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
                               bias_grad=bias_grad, kontext_ply=kontext_ply,
                               kontext_matrix=kontext_matrix,
-                              kamera_ausschnitt=kamera_ausschnitt),
+                              kamera_ausschnitt=kamera_ausschnitt,
+                              umgebung_hdr=umgebung_hdr, umgebung_staerke=umgebung_staerke,
+                              umgebung_drehung=umgebung_drehung,
+                              umgebung_weiss=umgebung_weiss),
     ]
 
 

@@ -223,7 +223,7 @@ def test_heim_hat_den_festen_vertrag(server, monkeypatch):
     code, h = _frage(server, befehl="GET", weg=server.WEG_HEIM,
                      sprachmodell=Ersatz(aus=True))
     assert code == 200
-    assert set(h) == {"blender", "grafikkarte", "assistent", "satz"}
+    assert set(h) == {"blender", "grafikkarte", "assistent", "himmelsbilder", "satz"}
     assert set(h["blender"]) == {"da", "satz"}
     assert set(h["grafikkarte"]) == {"frei_gb", "satz"}
     assert h["assistent"] == {"stand": "aus", "modell": "qwen3:30b",

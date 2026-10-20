@@ -8,7 +8,12 @@ ein **fester Vertrag** mit der Mac-App::
      "grafikkarte": {"frei_gb": number | null, "satz": str},
      "assistent":   {"stand": "bereit"|"laedt"|"fehlt"|"aus", "modell": str | null,
                      "satz": str},
+     "himmelsbilder": {"da": int, "von": 8, "fehlend": [str], "satz": str},
      "satz": str}
+
+``himmelsbilder`` seit dem 20.10.2026 (Knoten «Stimmung», Entscheid 110): wie viele der acht
+Vorgabe-Himmelsbilder in ``AIIMAGING_HIMMEL_ORDNER`` liegen — die Zeile «Himmelsbilder n/8»
+im Einrichten. Zusätzlich, der bisherige Vertrag bleibt Feld für Feld.
 
 **Ohne Pfade, ohne Rechner- und Gerätenamen** (Regel 3): Die Antwort geht über das Netz
 bis auf einen Mac; wo Blender liegt und wie die Grafikkarte heisst, braucht dort niemand.
@@ -27,7 +32,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from aiimaging import assistent, seams
+from aiimaging import assistent, seams, stimmung
 
 __all__ = ["blender", "grafikkarte", "heimstand", "FRIST_NVIDIA_SMI_S"]
 
@@ -123,5 +128,7 @@ def heimstand(*, sprachmodell=None, bild_rechnet: bool = False,
              f"{g['frei_gb']:.1f} GB Grafikspeicher frei" if g["frei_gb"] is not None
              else "Grafikspeicher nicht gemessen",
              wort]
-    return {"blender": b, "grafikkarte": g, "assistent": a,
+    h = stimmung.himmelsbilder_stand()
+    teile.append(f"Himmelsbilder {h['da']}/{h['von']}")
+    return {"blender": b, "grafikkarte": g, "assistent": a, "himmelsbilder": h,
             "satz": "Heim-PC antwortet: " + ", ".join(teile) + "."}

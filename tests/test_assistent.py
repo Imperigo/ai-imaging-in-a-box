@@ -793,7 +793,9 @@ def test_der_heimstand_hat_genau_die_vertragsform(monkeypatch):
     monkeypatch.setattr(heimstand, "grafikkarte",
                         lambda: {"frei_gb": 7.4, "satz": "7.4 GB Grafikspeicher frei."})
     h = heimstand.heimstand(sprachmodell=Ersatz())
-    assert set(h) == {"blender", "grafikkarte", "assistent", "satz"}
+    # Seit 20.10.2026 dazu `himmelsbilder` (Knoten «Stimmung») — zusaetzlich, der Rest bleibt.
+    assert set(h) == {"blender", "grafikkarte", "assistent", "himmelsbilder", "satz"}
+    assert set(h["himmelsbilder"]) == {"da", "von", "fehlend", "satz"}
     assert set(h["blender"]) == {"da", "satz"} and isinstance(h["blender"]["da"], bool)
     assert set(h["grafikkarte"]) == {"frei_gb", "satz"}
     assert set(h["assistent"]) == {"stand", "modell", "satz"}

@@ -205,6 +205,19 @@ def _argumente():
                     help="16 Zahlen 'm0,...,m15', 4x4 ZEILENWEISE, Lage des Splats in der "
                          "glTF-Welt (Meter, Y oben). Ohne Angabe die Einheit. Siehe "
                          "aiimaging.kontext")
+    # DIE STIMMUNG (Entscheide 107/110/113, 20.10.2026): ein Himmelsbild (HDRI, CC0, am
+    # Heim-PC) als Welt. Ohne Angabe bleibt die feste Welt mit Sonne, Wort fuer Wort.
+    ap.add_argument("--umgebung-hdr", dest="umgebung_hdr", default=None,
+                    help="Himmelsbild (.hdr) als Welt: Environment Texture, Mapping (Drehung "
+                         "um Z), Background. Keine Sonnenlampe, ausser eine Sonne ist "
+                         "bestellt (--sonne-*). Der ID-Pass bleibt vor Schwarz.")
+    ap.add_argument("--umgebung-staerke", dest="umgebung_staerke", type=float, default=None,
+                    help="Staerke des Himmelsbilds (Background Strength), Vorgabe 1.0.")
+    ap.add_argument("--umgebung-drehung", dest="umgebung_drehung", type=float, default=None,
+                    help="Drehung des Himmelsbilds um die Hochachse, Grad, Vorgabe 0.")
+    ap.add_argument("--umgebung-weiss", dest="umgebung_weiss", action="store_true",
+                    help="Stimmung «weiss» (Entscheid 113): alle Oberflaechen ein diffuses "
+                         "Weiss wie ein Gipsmodell, Rauheit hoch.")
     return ap.parse_args(argv)
 
 
@@ -1073,18 +1086,113 @@ def _kamera_setzen(lo, hi, a=None):
 # Beleuchtung — schlicht, aber vorhanden
 # --------------------------------------------------------------------------------------
 
-def _welt_setzen(farbe, staerke: float) -> None:
-    """Gleichmässiges Umgebungslicht als Welt-Hintergrund setzen.
+def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0):
+    """Umgebungslicht als Welt setzen — gleichmässig, oder aus einem Himmelsbild.
 
     `read_factory_settings(use_empty=True)` löscht auch die Welt. Ohne sie rendert Cycles
     vor absolutem Schwarz und ohne jede Aufhellung — genau der Zustand, in dem das
     Beauty-Bild des Vorgängerstands unsichtbar blieb.
+
+    **Mit Himmelsbild** (``hdr``, Entscheide 107/110, 20.10.2026): Texture Coordinate
+    (Generated) → Mapping (Drehung um Z, ``drehung_grad``) → Environment Texture →
+    Background (``staerke``). Die Datei wird unverändert geladen (CC0, Regel 1). Der
+    ID-Pass ruft diese Funktion danach OHNE ``hdr`` — sein Grund bleibt schwarz.
+
+    Returns:
+        ``None`` ohne Himmelsbild, sonst ``{datei, staerke, drehung_grad, groesse}`` — nur
+        der Dateiname, kein Pfad (Regel 3).
     """
     welt = bpy.data.worlds.new("Welt")
     hintergrund = _welt_hintergrund(welt)
     hintergrund.inputs["Color"].default_value = (*farbe, 1.0)
     hintergrund.inputs["Strength"].default_value = staerke
     bpy.context.scene.world = welt
+    if not hdr:
+        return None
+    baum = welt.node_tree
+    koord = baum.nodes.new("ShaderNodeTexCoord")
+    abbild = baum.nodes.new("ShaderNodeMapping")
+    abbild.inputs["Rotation"].default_value = (0.0, 0.0, math.radians(float(drehung_grad)))
+    himmel = baum.nodes.new("ShaderNodeTexEnvironment")
+    himmel.image = bpy.data.images.load(str(hdr), check_existing=True)
+    baum.links.new(koord.outputs["Generated"], abbild.inputs["Vector"])
+    baum.links.new(abbild.outputs["Vector"], himmel.inputs["Vector"])
+    baum.links.new(himmel.outputs["Color"], hintergrund.inputs["Color"])
+    return {"datei": Path(str(hdr)).name, "staerke": float(staerke),
+            "drehung_grad": float(drehung_grad),
+            "groesse": [int(v) for v in himmel.image.size]}
+
+
+#: Was eine bestellte Sonne ausmacht — ist eines davon gesetzt, bleibt die Sonnenlampe auch
+#: mit Himmelsbild (Entscheid 110: sonst doppeltes Licht, ausser die Sonne ist bestellt).
+SONNE_SCHALTER = ("sonne_hoehe", "sonne_azimut", "sonne_staerke", "sonne_kelvin",
+                  "sonne_winkel")
+
+
+def _sonne_bestellt(a) -> bool:
+    return any(getattr(a, name, None) is not None for name in SONNE_SCHALTER)
+
+
+#: Das diffuse Weiss des Gipsmodells (Entscheid 113) — linear, leicht warm, nie reines Weiss
+#: (reines Weiss frisst unter einem hellen Himmel aus).
+GIPS_FARBE = (0.80, 0.79, 0.77)
+GIPS_RAUHEIT = 1.0
+#: Woran ein Material dieses Runners zu erkennen ist, und welches es ersetzte.
+MATERIAL_MARKE = "aiimaging_materialwahl"
+URSPRUNG_MARKE = "aiimaging_ursprung"
+
+
+def _gips_material():
+    """Ein diffuses Weiss, Rauheit hoch — der Gips des Weissmodells."""
+    mat = bpy.data.materials.new("Gips_Weissmodell")
+    mat.use_nodes = True
+    baum = mat.node_tree
+    baum.nodes.clear()
+    diffus = baum.nodes.new("ShaderNodeBsdfDiffuse")
+    diffus.inputs["Color"].default_value = (*GIPS_FARBE, 1.0)
+    diffus.inputs["Roughness"].default_value = GIPS_RAUHEIT
+    ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+    baum.links.new(diffus.outputs["BSDF"], ausgang.inputs["Surface"])
+    mat[MATERIAL_MARKE] = "gips"
+    return mat
+
+
+def _ersetze_slots(obj, neues_material) -> int:
+    """Jeden Slot eines Objekts durch ``neues_material(ursprungsname)`` ersetzen.
+
+    Der Name des ersetzten Materials reist als :data:`URSPRUNG_MARKE` am neuen mit —
+    ``_material_id_zuweisen`` vergibt die Kennung danach unter dem ALTEN Namen, und die
+    Bauwerksmaske (sie liest Namen) sieht dasselbe wie ohne Oberflaeche. Ein Objekt ohne
+    Material bekommt einen Slot mit leerem Ursprung und bleibt dort ein «objekt».
+    """
+    belegt = [s for s in obj.material_slots if s.material is not None]
+    if not belegt:
+        obj.data.materials.clear()
+        obj.data.materials.append(neues_material(""))
+        return 1
+    for slot in belegt:
+        slot.material = neues_material(slot.material.get(URSPRUNG_MARKE, slot.material.name))
+    return len(belegt)
+
+
+def _alles_weiss() -> dict:
+    """Stimmung «weiss»: jedes Mesh des Modells (nicht der Splat) als Gipsmodell."""
+    gips = {}
+
+    def neu(ursprung):
+        if ursprung not in gips:
+            m = _gips_material()
+            m[URSPRUNG_MARKE] = ursprung
+            gips[ursprung] = m
+        return gips[ursprung]
+
+    n = 0
+    for obj in bpy.data.objects:
+        if obj.type == "MESH" and not _ist_kontext(obj):
+            _ersetze_slots(obj, neu)
+            n += 1
+    return {"weiss": True, "objekte": n, "farbe_linear": list(GIPS_FARBE),
+            "rauheit": GIPS_RAUHEIT}
 
 
 #: Die Drehung, die dieser Runner bis zum 26.08.2026 unbedingt setzte.
@@ -1118,6 +1226,13 @@ def _sonne_setzen(mitte, spanne: float, a=None):
         ``(sonne, befund)``. ``befund`` ist das Wörterbuch aus
         :func:`aiimaging.sonne.lage`, ergänzt um ``weg`` — oder ein Rückfallvermerk.
     """
+    if getattr(a, "umgebung_hdr", None) and not _sonne_bestellt(a):
+        # MIT HIMMELSBILD KEINE SONNENLAMPE (Entscheid 110): Das Bild traegt seine Sonne
+        # selbst; beide zusammen gaeben doppeltes Licht. Eine bestellte Sonne bleibt.
+        return None, {"weg": "himmelsbild", "bestellt": (), "hoehe_grad": None,
+                      "azimut_grad": None, "konvention": None, "euler": None,
+                      "grund": ("Keine Sonnenlampe: Das Himmelsbild der Stimmung traegt "
+                                "das Licht, und render.sun war nicht bestellt.")}
     licht = bpy.data.lights.new("Sonne", type="SUN")
     licht.energy = 2.0
     licht.angle = math.radians(3.0)      # weiche Schattenkanten, nicht rasiermesserscharf
@@ -1753,7 +1868,9 @@ def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
     """
     tabelle: list[dict] = []
     nach_material: dict[str, int] = {}
-    n_echte_materialien = len(bpy.data.materials)
+    # Die Materialien dieses Runners (Oberflaeche, Gips) zaehlen nicht als «echte» — sie
+    # ersetzen welche, die weiter in `bpy.data.materials` stehen.
+    n_echte_materialien = sum(1 for m in bpy.data.materials if not m.get(MATERIAL_MARKE))
 
     def eintragen(name: str, quelle: str) -> "bpy.types.Material":
         index = len(tabelle)
@@ -1773,7 +1890,10 @@ def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
     meshes = sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
                     key=lambda o: o.name)
     for obj in meshes:
-        belegt = [s for s in obj.material_slots if s.material is not None]
+        # Ein Slot, den `_ersetze_slots` an ein Objekt OHNE Material gehaengt hat (leerer
+        # Ursprung), zaehlt nicht als belegt: Das Objekt bleibt ein «objekt» wie zuvor.
+        belegt = [s for s in obj.material_slots if s.material is not None
+                  and s.material.get(URSPRUNG_MARKE, None) != ""]
         # EIN BAUTEIL AUS UNSERER IFC BEKOMMT SEINE ID JE OBJEKT — auch mit Material
         # (Befund 08.10.2026, nach F6). Die Bauwerksmaske liest diese Tabelle: Gelaenderegel
         # und Katalog-Nullbefund arbeiten auf KNOTENnamen («IfcSlab_Gelaende_…»), nicht auf
@@ -1789,7 +1909,9 @@ def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
         for slot in obj.material_slots:
             if slot.material is None:
                 continue
-            name = slot.material.name
+            # Der Name des ERSETZTEN Materials, wenn eine Oberflaeche gesetzt wurde — die
+            # Maske liest Namen und soll dasselbe sehen wie ohne Oberflaeche.
+            name = slot.material.get(URSPRUNG_MARKE) or slot.material.name
             if name not in nach_material:
                 nach_material[name] = len(tabelle)
                 slot.material = eintragen(name, "material")
@@ -2268,8 +2390,22 @@ def main() -> int:
     # Umgebungsstärke 0.25 zu Sonnenstärke 2.0: gemessen, nicht geschätzt. Mit 1.0/3.0
     # lag das Bild im Mittel bei 0.83 von 1.0 — durchgehend ausgebrannt, die Fassaden
     # ohne Zeichnung. Die Schattenseite soll dunkel bleiben, ohne zuzulaufen.
-    _welt_setzen((0.55, 0.60, 0.68), 0.25)               # kühles, gleichmässiges Umgebungslicht
+    # MIT HIMMELSBILD (Entscheid 110): das Bild als Welt, Staerke und Drehung wie bestellt.
+    umgebung_befund = None
+    if getattr(a, "umgebung_hdr", None):
+        umgebung_befund = _welt_setzen(
+            (0.55, 0.60, 0.68),
+            1.0 if a.umgebung_staerke is None else float(a.umgebung_staerke),
+            hdr=a.umgebung_hdr,
+            drehung_grad=0.0 if a.umgebung_drehung is None else float(a.umgebung_drehung))
+    else:
+        _welt_setzen((0.55, 0.60, 0.68), 0.25)           # kühles, gleichmässiges Umgebungslicht
     _, sonne_befund = _sonne_setzen(mitte, spanne, a)
+    # DIE OBERFLAECHEN VOR DEM SCHOENBILD (Entscheid 113): «weiss» macht alles zum
+    # Gipsmodell. Der ID-Pass danach vergibt seine Kennungen unter den alten Namen.
+    material_befund = None
+    if getattr(a, "umgebung_weiss", False):
+        material_befund = _alles_weiss()
     szene.cycles.use_denoising = True                    # 8 Samples auf CPU rauschen sichtbar
     szene.render.image_settings.file_format = "PNG"
     szene.render.image_settings.color_mode = "RGBA"
@@ -2461,6 +2597,11 @@ def main() -> int:
         "depth_exr_kanaele": _exr_kanalnamen(exr) if exr is not None else [],
         "depth_exr_format": exr_format,
     }
+    if umgebung_befund is not None:
+        # Nur, wenn ein Himmelsbild bestellt war — sonst bleibt der Bericht der bisherige.
+        report["umgebung"] = umgebung_befund
+    if material_befund is not None:
+        report["materialien"] = material_befund
     if kontext_befund is not None:
         # NUR WENN BESTELLT. Ohne Splat bleibt der Bericht Feld fuer Feld der bisherige —
         # bewacht in tests/test_kontext_splat.py. Fehlt der Block, war keiner bestellt.

@@ -676,7 +676,8 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
                       status: str = STATUS_DONE, uebersprungen: bool = False,
-                      engine=None, ebenen=None, grundlage=None, guete=None) -> dict:
+                      engine=None, ebenen=None, grundlage=None, guete=None,
+                      angewandt=None) -> dict:
     """Das Ergebnis danebenlegen und den Laufzettel fortschreiben — in dieser Reihenfolge.
 
     **Die Reihenfolge ist die ganze Sorgfalt dieser Funktion.** Die fremde Oberfläche
@@ -718,6 +719,8 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
         grundlage=grundlage,
         # Entscheid 104: 'vorschau' | 'voll', nur wenn bestellt — auf beiden Wegen gleich.
         guete=guete,
+        # Was der Heim-PC fuer Stimmung, Kamera und Oberflaeche gerechnet hat (20.10.2026).
+        angewandt=angewandt,
         ebenen=ebenen_bereitstellen(ordner, ebenen))
 
     # ZUERST das Ergebnis, DANN der Laufzettel — siehe Docstring.

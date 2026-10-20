@@ -61,6 +61,7 @@ from . import gate as _gate
 from . import kameras as _kameras
 from . import raumkamera as _raumkamera
 from . import sonne as _sonne
+from . import stimmung as _stimmung
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
 #:
@@ -633,7 +634,8 @@ BEKANNTE_FELDER = {
          "interior", "gelaende", "komposition", "innenansichten", "context", "skizze"),
     "geometry": ("path", "format", "up_axis"),
     "render": ("resolution", "faithful", "samples", "sun",
-               "environment", "himmel", "belichtung", "rauschschwelle", "passes"),
+               "environment", "himmel", "belichtung", "rauschschwelle", "passes",
+               "materialien"),
     "style": ("prompt", "mode", "refs"),
     "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed", "guete"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
@@ -647,6 +649,10 @@ BEKANNTE_FELDER = {
     # `skizze_aus_szene`, gerechnet in `abholer` ueber `arbeitsgang.rechne_skizze`.
     "skizze": ("quelle", "name", "anweisung"),
 }
+
+#: Die Unterfelder von ``render.environment`` (Entscheid 110, Vertrag 20.10.2026) — geprueft
+#: in :func:`umgebung_aus_szene`, nicht in :func:`unbekannte_felder` (zwei Ebenen tief).
+UMGEBUNG_FELDER = ("preset", "hdri", "intensitaet", "rotationGrad")
 
 #: Der einzige belegte Inhalt von ``interior.rooms``: seit dem 19.09.2026 gesendet, je
 #: Auftrag genau EIN Innenstandpunkt (auf-31 R3, auf-91 V5).
@@ -672,10 +678,9 @@ ABGEWIESENE_FELDER = {
         "Bei euch ein geduldeter Zweitname von 'interior' (auf-31 R3), gesendet wird er "
         "nicht (auf-104, Stand 19.09.2026). Angenommen wird nur 'interior' — zwei Namen "
         "fuer dieselbe Bestellung sind zwei Stellen, an denen sie sich widersprechen kann."),
-    "render.environment": (
-        "Bekannt (preset, hdri, intensitaet, rotationGrad — auf-44), aber von unserer "
-        "Kette nicht gelesen: Ein bestelltes Umgebungslicht fiele still weg. Noetig waere "
-        "ein Weg, Umgebungsbilder mit permissiver Lizenz zu uns zu bringen (Regeln 1 und 3)."),
+    # `render.environment` stand hier bis zum 20.10.2026 («ein bestelltes Umgebungslicht
+    # fiele still weg»). Seit Entscheid 107 (CC0-Himmelsbilder am Heim-PC) wird es gelesen:
+    # `umgebung_aus_szene`, gerechnet im Runner (`--umgebung-hdr`).
     "render.himmel": (
         "Form bekannt (render-scene.ts: modell, staerke, luftdichte, aerosoldichte, "
         "drehungGrad), aber unsere Kette liest das Feld nicht: Der Himmel unseres "
@@ -1697,6 +1702,89 @@ def _lies_guete(vis: dict, skip, maengel: list, endgueltig: list | None = None):
     return guete
 
 
+def _gesetzt(block: dict, name: str) -> bool:
+    """Vorhanden und nicht ``null`` — dieselbe Regel wie :func:`wert_oder`."""
+    return isinstance(block, dict) and block.get(name) is not None
+
+
+def _bereichszahl(block: dict, name: str, pfad: str, lo, hi, vorgabe, maengel: list):
+    """Eine Kommazahl im Bereich ``lo..hi`` — die Vorgabe, wenn sie fehlt; ``None`` + Mangel,
+    wenn sie nicht stimmt."""
+    if not _gesetzt(block, name):
+        return vorgabe
+    zahl, satz = lies_zahl(block[name], pfad, ganzzahlig=False, mindestens=lo, hoechstens=hi)
+    if satz:
+        maengel.append(satz)
+        return None
+    return float(zahl)
+
+
+def umgebung_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> dict | None:
+    """``render.environment`` → ``{umgebung, datei, maengel, endgueltig, fehlt}`` — oder ``None``.
+
+    **Seit dem 20.10.2026** (Entscheide 107, 110, 113; Vertrag mit dem Integrator). Das Feld
+    stand bis dahin in :data:`ABGEWIESENE_FELDER`.
+
+    * ``umgebung`` — was gerechnet wird, **mit den Vorgaben des Heim-PC** (der Vertrag hat
+      keine): ``{preset, hdri, intensitaet, rotationGrad}``; ``vorgaben`` daneben nennt die
+      Felder, die der Heim-PC gesetzt hat. Ohne Pfad; diese
+      Form geht in ``GRUNDLAGE_MUSS_PASSEN`` und ins Ergebnis (``angewandt.environment``).
+    * ``datei`` — das Himmelsbild am Rechner aus :func:`aiimaging.stimmung.himmel_datei`
+      (2k bei der Vorschau, sonst 4k). ``None`` bei ``vis.grundlage``: Dann rechnet Blender
+      nicht, und das Bild wird nicht gebraucht.
+    * ``fehlt`` — der Satz mit dem Namen, wenn das Bild fehlt (Entscheid 113). Er steht auch
+      in ``maengel`` und ``endgueltig``: Der Auftrag endet mit Satz, und der Abholer legt ein
+      Ergebnis mit ``lieferstatus_grund`` daneben.
+    """
+    if roh is None:
+        return None
+    maengel: list[str] = []
+    endgueltig: list[str] = []
+    antwort = {"umgebung": None, "datei": None, "maengel": maengel, "endgueltig": endgueltig,
+               "fehlt": None}
+    if not isinstance(roh, dict):
+        maengel.append(f"'render.environment' ist {roh!r} und kein Block {{preset, hdri?, "
+                       f"intensitaet?, rotationGrad?}}.")
+        return antwort
+    fremd = sorted(k for k in roh if k not in UMGEBUNG_FELDER)
+    if fremd:
+        maengel.append(f"Unbekannte Felder in 'render.environment': {', '.join(fremd)}. "
+                       f"Bekannt sind {', '.join(UMGEBUNG_FELDER)}.")
+    preset = roh.get("preset")
+    if preset not in _stimmung.PRESETS:
+        maengel.append(f"'render.environment.preset' ist {preset!r}. Erwartet ist eine der "
+                       f"acht Stimmungen: {', '.join(_stimmung.PRESETS)}.")
+        return antwort
+    hdri = roh.get("hdri")
+    vorgabe = hdri is None
+    if vorgabe:
+        hdri = _stimmung.STIMMUNGEN[preset]["hdri"]
+    elif not (isinstance(hdri, str) and _stimmung.HDRI_MUSTER.match(hdri)):
+        maengel.append(f"'render.environment.hdri' ist {hdri!r}. Erwartet ist der Namensstamm "
+                       f"eines Himmelsbilds (a-z, 0-9, _; hoechstens 64 Zeichen), nie ein Pfad.")
+        return antwort
+    staerke = _bereichszahl(roh, "intensitaet", "render.environment.intensitaet", 0, 10,
+                            _stimmung.VORGABE_INTENSITAET, maengel)
+    drehung = _bereichszahl(roh, "rotationGrad", "render.environment.rotationGrad", 0, 360,
+                            _stimmung.VORGABE_DREHUNG_GRAD, maengel)
+    if staerke is None or drehung is None:
+        return antwort
+    antwort["umgebung"] = {"preset": preset, "hdri": hdri, "intensitaet": staerke,
+                           "rotationGrad": drehung}
+    # Welche Werte der Heim-PC gesetzt hat — getrennt von `umgebung`, damit eine Bestellung
+    # mit ausdruecklicher Vorgabe und eine ohne dieselbe Grundlage treffen.
+    antwort["vorgaben"] = tuple(f for f in ("hdri", "intensitaet", "rotationGrad")
+                                if not _gesetzt(roh, f))
+    if grundlage is None and not maengel:
+        datei = _stimmung.himmel_datei(preset, hdri, guete=guete, ordner=ordner)
+        antwort["datei"] = datei
+        if datei["satz"]:
+            antwort["fehlt"] = datei["satz"]
+            maengel.append(datei["satz"])
+            endgueltig.append(datei["satz"])
+    return antwort
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -2022,6 +2110,24 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
                                                skizze_block is not None, maengel, endgueltig)
     guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)
+    # DIE STIMMUNG (Entscheide 107/110/113, 20.10.2026) — siehe `umgebung_aus_szene`. Fehlt
+    # das Himmelsbild am Rechner, endet der Auftrag mit Satz (endgueltig), und der Satz steht
+    # im Ergebnis unter `lieferstatus_grund` (`fehlende_dateien`).
+    fehlende_dateien: list[str] = []
+    prompt_zusaetze: list[dict] = []
+    umgebung_block = umgebung_aus_szene(render.get("environment"), guete=guete,
+                                        grundlage=grundlage)
+    if umgebung_block is not None:
+        maengel.extend(umgebung_block["maengel"])
+        endgueltig.extend(umgebung_block["endgueltig"])
+        if umgebung_block["fehlt"]:
+            fehlende_dateien.append(umgebung_block["fehlt"])
+        if umgebung_block["umgebung"] is not None:
+            satz, schon = _stimmung.prompt_satz(umgebung_block["umgebung"]["preset"],
+                                                sprachbefund["uebersetzt"])
+            prompt_zusaetze.append({"art": "stimmung",
+                                    "preset": umgebung_block["umgebung"]["preset"],
+                                    "satz": satz, "schon_im_prompt": schon})
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
@@ -2050,6 +2156,14 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             f"'style.refs' ist {refs!r} und keine Liste. Als Text zerfiele es in "
             f"einzelne Zeichen; welche Bilder gemeint sind, raten wir nicht.")
 
+    # DER PROMPT MIT DEN SAETZEN DER KNOTEN — nur, was er noch nicht traegt. Angefuegt NACH
+    # dem Bauteilwaechter: Die Saetze stammen aus unseren Tabellen, nicht vom Besteller.
+    render_prompt = sprachbefund["uebersetzt"]
+    for zusatz in prompt_zusaetze:
+        if zusatz["satz"]:
+            render_prompt = (f"{render_prompt}, {zusatz['satz']}" if render_prompt.strip()
+                             else zusatz["satz"])
+
     return {
         "geometrie": pfad,
         "format": fmt or None,
@@ -2060,8 +2174,17 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "hoehe": aufl[1],
         "samples": samples,
         "controlnet_staerke": treue,
-        "prompt": sprachbefund["uebersetzt"],
+        "prompt": render_prompt,
         "prompt_original": sprachbefund["original"],
+        # Welche Saetze der Knoten der Heim-PC angefuegt hat (oder schon vorfand) — 20.10.2026.
+        "prompt_zusaetze": tuple(prompt_zusaetze),
+        # Die Stimmung, wie gerechnet (ohne Pfad) — `None`: keine bestellt. Die Datei daneben
+        # traegt den Pfad am Heim-PC und geht nur an den Runner, nie ins Ergebnis.
+        "umgebung": (umgebung_block or {}).get("umgebung"),
+        "umgebung_datei": (umgebung_block or {}).get("datei"),
+        "umgebung_vorgaben": tuple((umgebung_block or {}).get("vorgaben") or ()),
+        # Saetze ueber Dateien, die am Rechner fehlen (Entscheid 113) — fuer das Ergebnis.
+        "fehlende_dateien": tuple(fehlende_dateien),
         "prompt_sprache": sprachbefund,
         "prompt_bauteile": tuple(bauteile),
         "stil_modus": wert_oder(stil, "mode", "none"),
@@ -2139,6 +2262,16 @@ DURCHGEREICHT = {
     "controlnet_staerke": "render.RenderAuftrag(controlnet_staerke=…)",
     "backbone": "render.RenderAuftrag(backbone=…)",
     "prompt": "render.RenderAuftrag(prompt=…)",
+    # Seit 20.10.2026 (Entscheide 110/113): die Saetze der Knoten, die angefuegt wurden.
+    "prompt_zusaetze": "lies_szene → 'prompt'; befund.json und render-result 'angewandt'",
+    "umgebung": ("abholer.verarbeiter → GRUNDLAGE_MUSS_PASSEN und render-result "
+                 "'angewandt.environment'"),
+    "umgebung_datei": ("abholer.verarbeiter → seams.glb_zu_multipass(umgebung_hdr=…) → "
+                       "blender_depth_stage --umgebung-hdr/--umgebung-staerke/"
+                       "--umgebung-drehung (/--umgebung-weiss)"),
+    "umgebung_vorgaben": "abholer.angewandt_der_szene → render-result 'angewandt'",
+    "fehlende_dateien": ("abholer.hole_einen → render-result mit lieferstatus "
+                         "'fehlgeschlagen' und lieferstatus_grund"),
     "prompt_original": "befund.json",
     "prompt_sprache": "befund.json und befund_kurz",
     "prompt_bauteile": "befund.json und befund_kurz",
@@ -3339,7 +3472,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                  zeiten=None, uebersprungen: bool = False,
                  nicht_gerendert=(), je_kamera=None,
                  zwei_tore_urteil=None, engine=None, ebenen=None,
-                 grundlage=None, guete=None) -> dict:
+                 grundlage=None, guete=None, angewandt=None) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -3852,6 +3985,28 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # Ergebnis ohne das Feld ist eines von vor dem Schalter, und dort gilt «voll».
     if guete in GUETEN:
         ergebnis["guete"] = guete
+    # WAS DER HEIM-PC WIRKLICH GERECHNET HAT (Knoten Stimmung, Kamera, Oberflaeche;
+    # 20.10.2026). Der Vertrag hat fuer diese Felder keine Vorgaben — der Heim-PC setzt sie
+    # und nennt sie hier: `{environment?, cameras_auto?, materialien?}`, nur was bestellt war.
+    if isinstance(angewandt, dict) and angewandt:
+        ergebnis["angewandt"] = angewandt
+    return ergebnis
+
+
+def als_abweisung(job_id: str, grund: str, *, angewandt=None) -> dict:
+    """Ein Ergebnis fuer einen Auftrag, der **vor** dem Rechnen abgewiesen wurde (Entscheid 113).
+
+    Anlass: Fehlt ein Himmelsbild oder eine Textur am Rechner, endet der Auftrag mit Satz —
+    und die Oberflaeche liest den Grund am Ergebnis (``lieferstatus_grund``), nicht nur am
+    Laufzettel. Keine Bilder, ``lieferstatus: 'fehlgeschlagen'``, der Satz auch vorn in
+    ``verdict.reason``.
+    """
+    ergebnis = als_ergebnis(job_id, [], angewandt=angewandt)
+    ergebnis["lieferstatus"] = LIEFERSTATUS_FEHLGESCHLAGEN
+    ergebnis["lieferstatus_grund"] = str(grund)
+    verdict = ergebnis["qa"].setdefault("verdict", {"passed": False, "reason": ""})
+    verdict["passed"] = False
+    verdict["reason"] = f"ABGEWIESEN: {grund} {verdict.get('reason') or ''}".strip()
     return ergebnis
 
 
