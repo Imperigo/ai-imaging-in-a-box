@@ -327,11 +327,11 @@ Himmelsbilder (HDRI)    CC0-1.0      Poly Haven, https://polyhaven.com/hdris
   blaue-stunde  qwantani_dusk_2_puresky
   bedeckt       overcast_soil_puresky
   nebel         kloofendal_misty_morning_puresky
-  winter        snowy_field
+  winter        snow_field
   weiss         studio_small_08
   Weiter abgelegt und ueber render.environment.hdri bestellbar (vorher Vorgabe):
   sunny_vondelpark, fish_eagle_hill, the_sky_is_on_fire, kloppenheim_04,
-  mud_road_puresky.
+  mud_road_puresky, snowy_field.
   Je 2k (Vorschau) und 4k, als <stimmung>__<asset>_<2k|4k>.hdr.
 
 Texturen (PBR-Karten)   CC0-1.0      ambientCG, https://ambientcg.com

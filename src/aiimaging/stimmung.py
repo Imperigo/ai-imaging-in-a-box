@@ -141,8 +141,8 @@ STIMMUNGEN = {
         "prompt_en": "fog, muted light, depth fading into haze",
         "merkmale": ("fog", "mist", "haze")},
     "winter": {
-        "label": "Winter", "hdri": "snowy_field",
-        "hdri_vorher": None,
+        "label": "Winter", "hdri": "snow_field",
+        "hdri_vorher": "snowy_field",
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": 7500.0,
         "prompt_de": "Winter, Schnee am Boden, kaltes klares Licht",
         "prompt_en": "winter, snow on the ground, cold clear light",
