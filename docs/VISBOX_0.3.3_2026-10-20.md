@@ -30,6 +30,7 @@ wurden und eine doppelte Kamera nicht mehr erkannt wurde.
 | Heim-PC: Die Nullprobe der Prüfung wird je Grundlage gemerkt — weitere Varianten sind schneller, die Prüfung bleibt gleich | 104a | gebaut, mit Probe; Zeit ungemessen |
 | Assistent: eigenes Modell `qwen3:14b`; Visbox entlädt nur dieses, nie ein Kosmo-Modell | 106d | gebaut, mit Probe; am Gerät braucht es `ollama pull qwen3:14b` |
 | Abholer: Hält nur das Assistenten-Modell die Karte und läuft keine Frage, entlädt er es, statt zu warten | 106d, Auflage HomeStation | gebaut, mit Probe |
+| Mac: Erster Teil des Claude-Zugangs — die App hört nur auf diesem Mac (127.0.0.1:8631) und antwortet Claude bisher nur mit ihrem Stand (`visbox_status`); bedienen kann Claude noch nichts. Ab Werk an, abschaltbar (`--mcp-stdio` für Claude Desktop) | 105, 106, 106e, 108 B | gebaut, mit Probe; am Gerät unbestätigt |
 | Mac: Der Satz zu Claude unter «Wer rechnet?» sagt jetzt, was stimmt: «wird eingerichtet» | 105 | gebaut, mit Probe |
 
 ## Stand am Gerät
