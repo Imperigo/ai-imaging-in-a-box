@@ -39,8 +39,7 @@ Entscheid 115 verlangt, dass die Ansichten gleich sind.
 * **Am Gerät nicht geprüft** — die Mac-Teile der Kopfteile sind hier nur auf Syntax geprüft.
 * Die Lichtwerte der Stimmungen sind gesetzt, nicht gemessen; die Messung 294 steht aus.
 * Der neue Update-Knopf wirkt erst ab dieser Fassung: der Schritt von 0.3.7 auf 0.3.8 läuft noch nach der alten Regel.
-* Die Assistenten-Kugel mit Gespräch und die Einstellungs-Insel fehlen noch (Stufen S3, S4); bis dahin heisst der zweite
-  Urheber in den Claude-Teilen «Kosmo».
+* Die Assistenten-Kugel mit Gespräch und die Einstellungs-Insel fehlen noch (Stufen S3, S4).
 
 ## Prüfung
 
