@@ -36,6 +36,10 @@ final class Naeheanbieter: NSObject, ObservableObject {
     }
 
     @Published private(set) var lage: Lage = .aus
+    /// Was die kleine Zeile im Koppelfenster sagt (20.10.2026, Owner-Befund: über die Nähe
+    /// geschah nichts, und keine Seite sagte es) — `nil`, solange nicht angeboten wird. Den
+    /// Satz bestimmt der Kern (`Naeheanbieterstand.zeile`).
+    @Published private(set) var stand: Naeheanbieterstand?
 
     private var ich: MCPeerID?
     private var anbieter: MCNearbyServiceAdvertiser?
@@ -65,6 +69,7 @@ final class Naeheanbieter: NSObject, ObservableObject {
         anbieter = a
         a.startAdvertisingPeer()
         lage = .bietetAn(name: peer.displayName)
+        stand = .bietetAn(name: peer.displayName)
     }
 
     /// Hört auf, sich anzubieten, lehnt eine offene Frage ab und schliesst die Sitzung.
@@ -81,6 +86,7 @@ final class Naeheanbieter: NSObject, ObservableObject {
         sitzung = nil
         schein = nil
         fenster = nil
+        stand = nil
         if case .gesendet = lage { return }
         lage = .aus
     }
@@ -129,6 +135,7 @@ final class Naeheanbieter: NSObject, ObservableObject {
         fragender = peer
         antwort = antworte
         lage = .ipadFragt(name: peer.displayName)
+        stand = .anfrage(name: peer.displayName)
     }
 
     private func verbunden(_ peer: MCPeerID, in s: MCSession) {
@@ -199,7 +206,11 @@ extension Naeheanbieter: MCNearbyServiceAdvertiserDelegate {
                     didNotStartAdvertisingPeer error: Error) {
         let satz = "Der Mac zeigt sich dem iPad nicht (\(error.localizedDescription)). "
             + "Den QR-Code lesen oder die Zahl eintippen."
-        DispatchQueue.main.async { [weak self] in self?.lage = .fehler(satz) }
+        let grund = error.localizedDescription
+        DispatchQueue.main.async { [weak self] in
+            self?.lage = .fehler(satz)
+            self?.stand = .gehtNicht(grund: grund)
+        }
     }
 }
 

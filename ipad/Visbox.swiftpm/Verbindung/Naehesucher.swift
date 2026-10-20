@@ -42,6 +42,13 @@ final class Naehesucher: NSObject, ObservableObject {
     @Published private(set) var lage: Lage = .aus
     /// Der Schein vom Mac — einmal gesetzt, wenn er geprüft ankam.
     @Published private(set) var schein: Koppelschein?
+    /// **Ehrlich, wenn nichts kommt** (20.10.2026, Owner-Befund): sucht / kein Mac nach 30 s /
+    /// startet nicht. Entschieden im Kern (`Naehekopplung.suchstand`); hier nur die Uhr.
+    @Published private(set) var suchstand: Naehesuchstand = .sucht
+    /// Seit wann gesucht wird — `nil`, wenn nicht.
+    private var suchtSeit: Date?
+    /// Warum die Suche nicht startet (`didNotStartBrowsingForPeers`).
+    private var suchfehler: String?
 
     /// Wie sich dieses iPad am Mac zeigt — angelegt beim ersten Suchen, auf dem Hauptfaden
     /// (`UIDevice` gehört dorthin). Seit iPadOS 16 nennt das System ohne Sonderberechtigung
@@ -72,7 +79,22 @@ final class Naehesucher: NSObject, ObservableObject {
         s.delegate = self
         sucher = s
         lage = .sucht
+        suchtSeit = Date()
+        suchfehler = nil
+        aktualisiereSuchstand()
         s.startBrowsingForPeers()
+        // NACH DER FRIST NACHSEHEN, ob etwas kam — eine Uhr genuegt, ein Takt waere zu viel.
+        DispatchQueue.main.asyncAfter(deadline: .now() + Naehekopplung.ohneFundNach + 0.5) {
+            [weak self] in self?.aktualisiereSuchstand()
+        }
+    }
+
+    /// Den Stand der Suche neu bestimmen (Kern).
+    private func aktualisiereSuchstand() {
+        let neu = Naehekopplung.suchstand(seit: suchtSeit, jetzt: Date(),
+                                          gefunden: !funde.isEmpty || gewaehlt != nil,
+                                          fehler: suchfehler)
+        if neu != suchstand { suchstand = neu }
     }
 
     @MainActor
@@ -85,6 +107,9 @@ final class Naehesucher: NSObject, ObservableObject {
         sitzung = nil
         funde = []
         gewaehlt = nil
+        suchtSeit = nil
+        suchfehler = nil
+        suchstand = .sucht
         lage = .aus
     }
 
@@ -132,6 +157,7 @@ final class Naehesucher: NSObject, ObservableObject {
         guard !funde.contains(mac) else { return }
         funde.append(mac)
         zeigeNaechsten()
+        aktualisiereSuchstand()
     }
 
     private func verloren(_ mac: MCPeerID) {
@@ -179,10 +205,13 @@ extension Naehesucher: MCNearbyServiceBrowserDelegate {
     }
 
     func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        let satz = "Die Suche nach dem Mac in der Nähe startet nicht "
-            + "(\(error.localizedDescription)). Einstellungen → Datenschutz → Lokales Netzwerk "
-            + "prüfen, oder den QR-Code lesen."
-        DispatchQueue.main.async { [weak self] in self?.lage = .fehler(satz) }
+        let grund = error.localizedDescription
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.suchfehler = grund
+            self.aktualisiereSuchstand()
+            self.lage = .fehler(self.suchstand.satz)
+        }
     }
 }
 

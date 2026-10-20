@@ -26,6 +26,12 @@ import Foundation
 //   aus ihm heraus — gerechnet wird trotzdem nicht (`rechnenMoeglich` nur bei `verbunden`).
 // * NIE SOFORT. Ein einzelner Fehlschlag ist ein Ruckler (WLAN-Wechsel, Tailscale nach dem
 //   Aufwachen), kein Zustand. Erst die Schwelle schaltet um — auch beim Start ohne Leitung.
+// * SEIT DEM 20.10.2026 EINE HOEHERE SCHWELLE (Owner-Befund an 0.2.11): Unterwegs ueber
+//   Mobilfunk und Tailscale stand am Mac «Vorführmodus — Der Heim-PC antwortet nicht», obwohl
+//   der Heim-PC gesund war (24 ms, kein Neustart) — ein Netzaussetzer ueber die Frist eines
+//   Versuchs genuegte. Seither braucht es DREI Fehlschlaege in Folge UND 30 Sekunden ohne
+//   Antwort; davor zeigt die App nur ein weiches Band («kurz nicht erreichbar — verbinde
+//   neu …», `kurzNichtErreichbar`) und verbindet still weiter.
 // * ZURUECK NUR MIT BESTAETIGUNG. Eine Antwort, die nicht die des Heim-PC ist (unlesbar,
 //   eine Fehlerseite der Weiterleitung), holt den Vorfuehrmodus nicht zurueck: Sonst
 //   stuende «Rechnen» wieder offen, und der erste Lauf scheiterte vor Publikum.
@@ -121,14 +127,18 @@ public struct Vorfuehrschalter: Equatable, Sendable {
 
     // ------------------------------------------------------------- die Setzungen
 
-    /// **Zwei Fehlschläge in Folge** schalten um. Einer ist ein Ruckler; zwei, zwischen
-    /// denen mindestens `ersterAbstand` liegt, sind ein Zustand.
-    public static let schwelleFehlschlaege = 2
-    /// **Oder zehn Sekunden ohne Antwort**, gezählt ab dem ersten Fehlschlag (beim Start ab
-    /// dem Start). Für den Fall, dass ein Versuch hängt und kein zweiter Fehlschlag kommt —
-    /// zehn Sekunden Stille vor Publikum sind lang genug, um es zu sagen. Gesetzt, nicht
+    /// **Drei Fehlschläge in Folge** (seit 20.10.2026; vorher zwei) — und dazu
+    /// `schwelleSekunden`. Ein Netzaussetzer im Mobilfunk dauert oft länger als ein Versuch;
+    /// drei Versuche mit wachsendem Abstand (5, 10 s) überbrücken eine halbe Minute.
+    public static let schwelleFehlschlaege = 3
+    /// **Und mindestens 30 Sekunden ohne Antwort** (seit 20.10.2026; vorher zehn, und «oder»
+    /// statt «und»), gezählt ab dem ersten Fehlschlag (beim Start ab dem Start). Gesetzt, nicht
     /// gemessen; am Gerät nachzusehen.
-    public static let schwelleSekunden: TimeInterval = 10
+    public static let schwelleSekunden: TimeInterval = 30
+    /// **Oder 90 Sekunden ohne jede Antwort**, auch wenn keine drei Fehlschläge zurückkamen —
+    /// für einen Versuch, der trotz seiner Frist hängt. Anderthalb Minuten Stille sind kein
+    /// Aussetzer mehr.
+    public static let schwelleSekundenAllein: TimeInterval = 90
     /// Der erste Abstand zwischen zwei Versuchen — wie KosmoOrbit.
     public static let ersterAbstand: TimeInterval = 5
     /// Der grösste Abstand — wie KosmoOrbit.
@@ -279,6 +289,10 @@ public struct Vorfuehrschalter: Equatable, Sendable {
     /// Ob der Vorführmodus gezeigt wird.
     public var imVorfuehrmodus: Bool { lage == .vorfuehrung }
 
+    /// Ob das **weiche Band** steht: Der Heim-PC antwortete eben noch, jetzt nicht — die
+    /// Schwelle ist nicht erreicht, die App verbindet still neu (`Vorfuehrsaetze.kurzWeg`).
+    public var kurzNichtErreichbar: Bool { lage == .getrennt }
+
     /// Ob neu gerechnet werden kann: **nur bei stehender Leitung.**
     public var rechnenMoeglich: Bool { lage == .verbunden }
 
@@ -300,6 +314,14 @@ public struct Vorfuehrschalter: Equatable, Sendable {
         return arbeitet ? .arbeit : .start
     }
 
+    /// **Die Schwelle zum Vorführmodus** (seit 20.10.2026): drei Fehlschläge in Folge **und**
+    /// 30 s ohne Antwort — oder 90 s ohne jede Antwort. Eine eigene Funktion, weil das iPad
+    /// dieselbe Regel für seinen Verbindungsstand nimmt (`Verbindungsstand`).
+    public static func schwelleErreicht(fehlschlaege: Int, stille: TimeInterval) -> Bool {
+        (fehlschlaege >= schwelleFehlschlaege && stille >= schwelleSekunden)
+            || stille >= schwelleSekundenAllein
+    }
+
     /// Der Abstand nach `stufe` Fehlschlägen: 5, 10, 20, 40, dann 60 s.
     public static func abstand(stufe: Int) -> TimeInterval {
         let roh = ersterAbstand * pow(2, Double(max(0, min(stufe, 16))))
@@ -310,8 +332,8 @@ public struct Vorfuehrschalter: Equatable, Sendable {
 
     private mutating func pruefeSchwelle(jetzt: Date) {
         guard lage == .startet || lage == .getrennt else { return }
-        if fehlschlaege >= Vorfuehrschalter.schwelleFehlschlaege
-            || jetzt.timeIntervalSince(seit) >= Vorfuehrschalter.schwelleSekunden {
+        if Vorfuehrschalter.schwelleErreicht(fehlschlaege: fehlschlaege,
+                                             stille: jetzt.timeIntervalSince(seit)) {
             // «SEIT» BLEIBT: Der Heim-PC antwortet nicht seit dem ersten Fehlschlag (beim
             // Start: seit dem Start), nicht erst seit dem Umschalten.
             lage = .vorfuehrung
@@ -341,6 +363,8 @@ public enum Vorfuehrfarbe {
 /// Die Sätze des Vorführmodus (Blatt 13b), an einer Stelle und geprüft.
 public enum Vorfuehrsaetze {
     public static let plakette = "Vorführmodus"
+    /// Das weiche Band vor der Schwelle (20.10.2026): kein Zustand, ein Aussetzer.
+    public static let kurzWeg = "Heim-PC kurz nicht erreichbar — verbinde neu …"
     public static let bandWort = "VORFÜHRMODUS"
     public static let erneutVerbinden = "Erneut verbinden"
     /// Der Knopf zum Blatt «Einrichten» — **auch im Vorführmodus**: Stimmen Adresse oder

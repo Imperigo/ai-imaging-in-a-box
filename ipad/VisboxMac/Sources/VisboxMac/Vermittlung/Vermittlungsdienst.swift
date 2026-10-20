@@ -70,15 +70,20 @@ final class Vermittlungsdienst: ObservableObject {
 
     // ------------------------------------------------------------------- Handgriffe
 
-    /// Bietet sich im WLAN an. Hat noch nie ein iPad gekoppelt, zeigt er gleich eine Zahl —
-    /// wer einschaltet, will ein iPad koppeln.
-    func starte() {
+    /// Bietet sich im WLAN an. **Eine Zahl nur, wenn `mitZahl`** — beim Einschalten von Hand,
+    /// und auch dann nur, wenn über diesen Mac noch nie ein iPad gekoppelt hat.
+    ///
+    /// Bis zum 20.10.2026 zeigte er bei **jedem** Start eine Zahl, solange über ihn noch kein
+    /// iPad gekoppelt hatte (Owner-Befund an 0.2.11): Das iPad war direkt mit dem Heim-PC
+    /// gekoppelt, und der Mac bot trotzdem bei jedem Öffnen eine neue an. Eine neue Zahl gibt
+    /// es jetzt nur ausdrücklich — «iPad koppeln» oder «Neue Zahl zum Koppeln über den Mac».
+    func starte(mitZahl: Bool = false) {
         guard hoerer == nil else { return }
         angeboten = true
         fehler = nil
         bereit = false
         aufFestemAnschluss = true
-        if !Vermittlergedaechtnis.gekoppelt {
+        if mitZahl, !Vermittlergedaechtnis.gekoppelt {
             stand.oeffneKopplung(jetzt: Vermittlungsuhr.jetzt)
         }
         biete()

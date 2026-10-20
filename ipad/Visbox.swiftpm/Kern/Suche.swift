@@ -405,3 +405,60 @@ public enum Verbindungszustand: Equatable, Sendable {
     /// ob drüben jemand ist — dann bleibt die Skizze im Fach.
     public var darfSenden: Bool { self == .gekoppelt }
 }
+
+// ============================================================ ein Aussetzer ist kein Zustand
+
+/// **Ein kurzer Aussetzer trennt nicht** (Owner-Befund vom 20.10.2026): Unterwegs über
+/// Mobilfunk und Tailscale zeigten Mac und iPad «antwortet nicht», während der Heim-PC gesund
+/// war — eine einzige Anfrage, die ihre Frist verpasste, genügte. Seither gilt am iPad
+/// **dieselbe Schwelle wie am Mac** (`Vorfuehrschalter.schwelleErreicht`): Eine HomeStation,
+/// die eben noch antwortete, gilt erst nach drei Fehlschlägen in Folge **und** 30 Sekunden
+/// ohne Antwort als nicht erreichbar.
+///
+/// Geprüft wird weiter in jeder Runde, und eine Antwort holt sofort zurück. Gesendet wird
+/// während des Aussetzers nicht aus dem Parkfach (`roh` sagt, ob die letzte Anfrage ankam);
+/// nur der angezeigte Zustand bleibt «Gekoppelt».
+public struct Aussetzerfilter: Equatable, Sendable {
+    public private(set) var fehlschlaege = 0
+    /// Seit wann keine Antwort kam — der erste Fehlschlag nach der letzten Antwort.
+    public private(set) var seit: Date?
+    /// Ob die HomeStation seit dem Start je antwortete. Vorher gibt es nichts zu überbrücken.
+    public private(set) var warErreichbar = false
+    /// Was die letzte Anfrage ergab — ungefiltert.
+    public private(set) var roh: Bool?
+
+    public init() {}
+
+    /// Eine Anfrage kam an (`true`) oder nicht (`false`).
+    public mutating func melde(erreicht: Bool, jetzt: Date) {
+        roh = erreicht
+        if erreicht {
+            fehlschlaege = 0
+            seit = nil
+            warErreichbar = true
+        } else {
+            fehlschlaege += 1
+            if seit == nil { seit = jetzt }
+        }
+    }
+
+    /// Von vorn — nach neuem Koppeln oder Trennen.
+    public mutating func vergiss() {
+        self = Aussetzerfilter()
+    }
+
+    /// Was als «erreichbar» gilt: die letzte Antwort — **ausser** während eines kurzen
+    /// Aussetzers nach einer Antwort; dann noch `true`. `nil`: noch nicht gefragt.
+    public func erreichbar(jetzt: Date) -> Bool? {
+        guard let roh else { return nil }
+        if roh { return true }
+        guard warErreichbar, let seit else { return false }
+        return !Vorfuehrschalter.schwelleErreicht(fehlschlaege: fehlschlaege,
+                                                  stille: jetzt.timeIntervalSince(seit))
+    }
+
+    /// Ob gerade ein Aussetzer überbrückt wird.
+    public func kurzWeg(jetzt: Date) -> Bool {
+        roh == false && erreichbar(jetzt: jetzt) == true
+    }
+}

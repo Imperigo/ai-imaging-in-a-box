@@ -125,6 +125,16 @@ jobs:
           echo "--- Assets.car im Hauptbuendel:"; ls -la "$APP/Assets.car" || echo "KEIN Assets.car"
           echo "--- AppIcon-Dateien:"; find "$APP" -iname 'AppIcon*' | head -20
           echo "--- Ressourcenbuendel:"; find "$APP" -name '*.bundle' -maxdepth 2 | while read b; do echo "$b"; ls "$b" | head -20; done
+          # OWNER-BEFUND 20.10.2026 (Naehe): Am Geraet kam ueber die Naehe nichts an. Stehen die
+          # Schluessel fuer Lokales Netzwerk, Bonjour und Kamera so im GEBAUTEN Buendel, wie
+          # MultipeerConnectivity sie braucht (`_visbox-kopp._tcp` und `_visbox-kopp._udp`)? Die
+          # Playgrounds-Form `.localNetwork(bonjourServiceTypes:)` koennte sie anders schreiben.
+          echo "--- NSLocalNetworkUsageDescription:"
+          /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP/Info.plist" || echo "KEIN NSLocalNetworkUsageDescription"
+          echo "--- NSBonjourServices:"
+          /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$APP/Info.plist" || echo "KEIN NSBonjourServices"
+          echo "--- NSCameraUsageDescription:"
+          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$APP/Info.plist" || echo "KEIN NSCameraUsageDescription"
 
   mac:
     name: Mac-App bauen, als ZIP ablegen
@@ -199,6 +209,21 @@ jobs:
           plutil -lint "$BUENDEL/Contents/Info.plist"
           echo "BUENDEL=$BUENDEL" >> "$GITHUB_ENV"
           echo "NAME=$NAME" >> "$GITHUB_ENV"
+
+      - name: Stehen Lokales Netzwerk und Bonjour in der Mac-App? (Auskunft)
+        # OWNER-BEFUND 20.10.2026 (Naehe): wie beim iPad, aus der Plist im gebauten Buendel.
+        # KEIN TOR, eine Auskunft.
+        if: always()
+        continue-on-error: true
+        working-directory: ipad/VisboxMac
+        run: |
+          P="$BUENDEL/Contents/Info.plist"
+          echo "--- NSLocalNetworkUsageDescription:"
+          /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$P" || echo "KEIN NSLocalNetworkUsageDescription"
+          echo "--- NSBonjourServices:"
+          /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$P" || echo "KEIN NSBonjourServices"
+          echo "--- NSCameraUsageDescription:"
+          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$P" || echo "KEIN NSCameraUsageDescription"
 
       - name: Behelfs-Unterschrift
         # OHNE JEDE UNTERSCHRIFT STARTET EIN MAC MIT APPLE-CHIP NICHTS. Die Behelfs-Unterschrift

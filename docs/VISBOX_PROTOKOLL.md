@@ -89,6 +89,7 @@ Bewacht in `tests/test_flaeche_fuer_die_app.py` (die Koppelseite, «und nichts s
 | `/koppeln` | — | Die **Koppelseite** (HTML) für einen Browser: ein Zahlenfeld, das `POST /api/verbinden` ruft und im Erfolgsfall Benutzer und Kennwort **einmal** zeigt. Sie trägt nichts aus dem Projekt und lädt nichts nach. Die App braucht sie nicht. | Unangemeldet ohne geltende Zahl: **401** (Tür). Angemeldet ohne geltende Zahl: **404** «Auf dieser HomeStation ist gerade kein Verbinden offen. …» |
 | `/api/heim` | — | Die **Startzeilen der Mac-App** (seit 01.10.2026, Plan v0.1.7; aus `aiimaging.heimstand.heimstand`). **Fester Vertrag:** `{"blender": {"da": bool, "satz"}, "grafikkarte": {"frei_gb": number\|null, "satz"}, "assistent": {"stand": "bereit"\|"laedt"\|"fehlt"\|"aus", "modell": str\|null, "satz"}, "satz"}`. `blender.da`: das Programm, das die Kette aufriefe, liegt als ausführbare Datei da — **nur nachgesehen**, nie gestartet, kein `import bpy`. `frei_gb`: freier Grafikspeicher der ersten Karte laut `nvidia-smi` (GB zu 1024 MiB, eine Stelle); `null` heisst **nicht gemessen** (kein `nvidia-smi`, Fehler, keine Zahl). `assistent.stand`: `aus` — Ollama antwortet nicht; `fehlt` — das Modell liegt nicht da oder ist nach Regel 1 nicht zugelassen; `laedt` — es liegt da, aber gerade rechnet ein Bild (Sprach- und Bildmodell passen nicht zugleich auf die Karte), **oder** — seit 01.10.2026, Befund `auf-20261001-218` — das Bildmodell liegt nach einem Lauf noch im Prozess des Servers auf der Karte (ab 1 GB, gemessen an torch, nur wenn torch schon geladen ist; Satz «Das Bildmodell liegt nach dem letzten Lauf noch auf der Grafikkarte …»; bis dahin hiess das «bereit» bei 6,1 GB frei); `bereit` — es antwortet (der Satz sagt, ob es erst geladen wird, einige Sekunden). **Keine Pfade, keine Rechner- oder Gerätenamen, keine Adresse** in der Antwort. Liest nur, lädt nichts, gibt nichts frei — und läuft darum **nebenher** (§1, Nebenläufigkeit). `blender.da` gilt seit 01.10.2026 auch, wenn `AIIMAGING_BLENDER` nur einen Namen trägt (`blender`), der über den Suchpfad gefunden wird — wie die Kette ihn aufruft; bis dahin hiess das «Datei fehlt». | — (jedes Scheitern steht als Satz in der Zeile) |
 | `/api/hallo` | — | Seit 13.10.2026 (Entscheid 83), **ohne Anmeldung**, auch hinter einer Weiterleitung ohne Kennwort: `{"visbox": true, "fassung": "<aiimaging.__version__>", "name": "Visbox Heim-PC"}` (Schlüssel und Name aus `NAME`). Kein Rechnername, kein Geheimnis, nicht einmal, ob gerade eine Zahl offen ist. Damit erkennt der Mac bei der Suche einen Heim-PC, siehe §7b. | — |
+| `/api/geraete` | — | Seit 20.10.2026 (Owner-Befund an 0.2.11), **mit Anmeldung**: das **Gerätebuch** des Heim-PC (`aiimaging.geraetebuch`) — `{"ipad": {"gekoppelt": bool, "gekoppelt_vor_s": int\|null, "zuletzt_gesehen_s": int\|null, "weg": "direkt"\|"mac"\|null}}`. Vermerkt wird jede angenommene Zahl fürs iPad (Kopf `X-Geraet: ipad`, oder ohne Kopf eine Zahl aus `POST /api/kopplung`; nie eine selbst angeforderte des Mac) und jede **angemeldete** Anfrage mit `X-Geraet: ipad`; `weg` ist `mac`, wenn die Vermittlung des Mac `X-Geraet-Weg: mac` setzt. Zeiten in Sekunden vor der Antwort. Gespeichert in `geraete.json` neben der Kennwortdatei (0600, ganz oder gar nicht geschrieben; Meldungen höchstens einmal je 60 s), ohne Kennwortdatei nur im Speicher. **Kein Kennwort, keine Zahl, kein Name, keine Adresse.** Die Zeile «iPad» am Mac leitet sich daraus ab (`Ipadzeile`, §8b). | **401** ohne Anmeldung |
 | jeder andere | — | — | **404** `{"fehler": "Unbekannter Weg: <pfad>"}` |
 
 ### Handeln (POST)
@@ -710,6 +711,18 @@ einschalten, wenn ein iPad mitkommt.»; geht jedem anderen Zustand vor, auch ein
 Anfrage kam vor höchstens 30 s («Verbunden, letzte Anfrage vor 4 s.»; das iPad fragt alle 10 s);
 *fehlt* — mit Grund, z. B. «Lokales Netzwerk nicht erlaubt: Systemeinstellungen → Datenschutz &
 Sicherheit → Lokales Netzwerk.»
+
+**Seit dem 20.10.2026 entscheidet `Ipadzeile.stand` (Kern) die Zeile**, nicht mehr die
+Vermittlung allein (Owner-Befund an 0.2.11: das iPad war direkt über Tailscale gekoppelt, die Zeile
+sagte «wartet» mit einer Zahl). Reihenfolge: ein offenes Koppelfenster zeigt seine Zahl (ausser der
+Heim-PC meldet eine Kopplung **nach** dem Öffnen); die Vermittlung meldet ein iPad → «iPad
+gekoppelt · über diesen Mac»; eine ausdrücklich angeforderte Zahl der Vermittlung; das Gerätebuch
+(`GET /api/geraete`) meldet ein gekoppeltes iPad → «iPad gekoppelt · direkt · zuletzt vor …»
+(steht, solange es sich in den letzten **24 h** meldete; länger nicht → wartet, «seit … nicht
+gemeldet»; nie gesehen seit der Kopplung → steht, «zuletzt gesehen: unbekannt»); sonst die
+Vermittlung, zuletzt die Vorgabe. Die Vermittlung öffnet **keine Zahl mehr von selbst** beim Start,
+nur beim Einschalten von Hand. «Wer rechnet wo» folgt `Ipadzeile.weg`: über den Mac nur, wenn die
+Vermittlung an ist und ein iPad über sie spricht (oder der Heim-PC es zuletzt so sah).
 
 ### Was geprüft ist, und was nicht
 

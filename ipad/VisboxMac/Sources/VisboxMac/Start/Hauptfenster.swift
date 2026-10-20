@@ -81,6 +81,12 @@ struct Hauptfenster: View {
             // am Rumpf auf (Mac-CI 20.10.2026: «unable to type-check … in reasonable time»).
             IpadKoppelanker(offen: $ipadKoppelnOffen, leitung: leitung)
         }
+        // DAS WEICHE BAND (20.10.2026): Ein Aussetzer ist kein Vorführmodus. Solange die
+        // Schwelle nicht erreicht ist, steht oben nur «kurz nicht erreichbar — verbinde neu …».
+        .overlay(alignment: .top) {
+            KurzWegBand(zeigen: vorfuehrung.schalter.kurzNichtErreichbar
+                        && !leitung.braucheEinrichten)
+        }
         .toolbar { werkzeuge }
         .frame(minWidth: 1100, minHeight: 700)
         .preferredColorScheme(.dark)
@@ -216,6 +222,26 @@ private struct Neustartmeldung: View {
         let satz: String = waechter.neustartBefund?.satz ?? ""
         Color.clear.alert(satz, isPresented: offen) {
             Button("OK", role: .cancel) { waechter.bestaetigungGesehen() }
+        }
+    }
+}
+
+/// Das weiche Band vor dem Vorführmodus (20.10.2026) — eine eigene kleine Ansicht, wie
+/// `IpadKoppelanker`, damit der Rumpf des Fensters übersetzbar bleibt.
+private struct KurzWegBand: View {
+    let zeigen: Bool
+
+    var body: some View {
+        if zeigen {
+            Text(Vorfuehrsaetze.kurzWeg)
+                .font(Macschriften.schrift(.text, 13))
+                .foregroundStyle(Startfarbe.gelb)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(Startfarbe.flaeche))
+                .overlay(Capsule().stroke(Startfarbe.linie))
+                .padding(.top, 10)
+                .accessibilityLabel(Vorfuehrsaetze.kurzWeg)
         }
     }
 }

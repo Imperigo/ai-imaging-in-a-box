@@ -78,6 +78,8 @@ final class Verbindungsstand: ObservableObject {
     private let oeffnenSatz: String?
     private(set) var anmeldung: Anmeldung?
     private var erreichbar: Bool?
+    /// Ein kurzer Aussetzer trennt nicht (20.10.2026): dieselbe Schwelle wie am Mac.
+    private var aussetzer = Aussetzerfilter()
     private var grund: String?
     private var sendetGerade = false
     /// Wer die Suche gerade will (`Kern/Suche.swift`). Der Sucher läuft, solange einer es
@@ -159,8 +161,11 @@ final class Verbindungsstand: ObservableObject {
     // weil `init` und die Rueckrufe von `Sucher` und `Sender` sie sonst nicht rufen duerften.
 
     private func bestimmeZustand() {
+        // DER AUSSETZER (20.10.2026): Kam die letzte Anfrage nicht an, die HomeStation hat aber
+        // eben noch geantwortet und die Schwelle ist nicht erreicht, bleibt «Gekoppelt».
+        let gefiltert: Bool? = (erreichbar == false && aussetzer.kurzWeg(jetzt: Date())) ? true : erreichbar
         zustand = Verbindungszustand.bestimme(gekoppelt: gekoppelt, sucht: sucher.sucht,
-                                              erreichbar: erreichbar, grund: grund)
+                                              erreichbar: gefiltert, grund: grund)
     }
 
     /// Spiegelt Fach und Satz. **Der Satz kommt aus dem Fach** (`Parkfach.satz`, Vorrang und
@@ -277,6 +282,8 @@ final class Verbindungsstand: ObservableObject {
             Verbindungsgedaechtnis.ueberDenMac = mac
             erreichbar = true
             grund = nil
+            aussetzer.vergiss()
+            aussetzer.melde(erreicht: true, jetzt: Date())
             bestimmeZustand()
             starteSchleife()
             Task { @MainActor [weak self] in
@@ -303,6 +310,7 @@ final class Verbindungsstand: ObservableObject {
         ueberDenMac = false
         erreichbar = nil
         grund = nil
+        aussetzer.vergiss()
         laufstand = nil
         bestimmeZustand()
     }
@@ -366,9 +374,20 @@ final class Verbindungsstand: ObservableObject {
         // das Pruefen sie hier mit, und umgekehrt).
         if erreichbar == false, stationsname != nil { verlange(.wiederfinden) }
         if erreichbar == true { gibFrei(.wiederfinden) }
+        // EIN AUSSETZER IST KEIN ZUSTAND (20.10.2026): Was angezeigt wird, geht durch den
+        // Filter des Kerns — gekoppelt bleibt, wer eben noch antwortete, bis zur Schwelle.
+        // Gesendet wird aber nur nach einer Antwort (`roh`).
+        // NUR DIE STILLE WIRD UEBERBRUECKT: Eine Antwort mit Absage (401, unlesbar) ist kein
+        // Aussetzer — dann gilt sie sofort.
+        let angekommen = erreichbar == true
+        switch antwort {
+        case .keineAntwort: aussetzer.melde(erreicht: false, jetzt: Date())
+        case .antwort where angekommen: aussetzer.melde(erreicht: true, jetzt: Date())
+        case .antwort: aussetzer.vergiss()
+        }
         bestimmeZustand()
 
-        if zustand.darfSenden {
+        if angekommen, zustand.darfSenden {
             await nachsenden()
             if !vorher.darfSenden { await ladeMappe() }
         }
@@ -516,10 +535,18 @@ final class Verbindungsstand: ObservableObject {
                 angekommen = true
             case .abgewiesen:
                 uebergabe = .zurueck
-            case .nichtAngemeldet(let satz), .nichtErreicht(let satz), .ohneAntwort(let satz):
+            case .nichtAngemeldet(let satz):
                 uebergabe = .zurueck
                 erreichbar = false
                 grund = satz
+                aussetzer.vergiss()
+                bestimmeZustand()
+            case .nichtErreicht(let satz), .ohneAntwort(let satz):
+                uebergabe = .zurueck
+                erreichbar = false
+                grund = satz
+                // EIN AUSSETZER BEIM SENDEN zaehlt wie einer beim Pruefen (20.10.2026).
+                aussetzer.melde(erreicht: false, jetzt: Date())
                 bestimmeZustand()
             }
             // Einen Augenblick stehen lassen, damit man sieht, wo sie liegt.

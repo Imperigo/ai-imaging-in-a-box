@@ -22,7 +22,7 @@ struct Startansicht: View {
                     .frame(width: 620)
                     .background(Startfarbe.flaeche)
                 Rectangle().fill(Startfarbe.linie).frame(width: 1)
-                WerrechnetWo()
+                WerrechnetWo(weg: leitung.ipadweg, ipadSteht: leitung.bild.ipad.steht)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
         }
@@ -248,7 +248,15 @@ struct Atmen: View {
 // ================================================================ wer rechnet wo
 
 /// Die rechte Seite von Blatt 13: wer was tut, und der Satz zum ersten Öffnen.
+///
+/// **Die Linie des iPad folgt dem echten Weg** (20.10.2026, Owner-Befund an 0.2.11): Bis dahin
+/// stand immer «iPad – – Mac» und «der Mac reicht das iPad durch» — auch wenn das iPad über
+/// Tailscale direkt mit dem Heim-PC sprach. Welcher Weg gilt, sagt der Kern (`Ipadzeile.weg`);
+/// durchgezogen ist die Linie, wenn die Zeile «iPad» steht, sonst gestrichelt.
 struct WerrechnetWo: View {
+    let weg: Ipadweg
+    let ipadSteht: Bool
+
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             Text("WER RECHNET WO")
@@ -256,18 +264,9 @@ struct WerrechnetWo: View {
                 .kerning(1)
                 .foregroundStyle(Startfarbe.leise)
 
-            HStack(spacing: 18) {
-                kasten("iPad", "zeichnet und zeigt", hervor: false, breite: 170)
-                strich(gestrichelt: true)
-                kasten("Mac", "Oberfläche, Vermittler fürs iPad", hervor: true, breite: 190)
-                strich(gestrichelt: false)
-                kasten("Heim-PC", "Blender, Bildmodell, Prüfung, Sprachmodell", hervor: true,
-                       breite: 190)
-            }
+            bild
 
-            Text("Gerechnet wird nie auf dem Mac und nie auf dem iPad. Der Mac trägt die Leitung "
-                 + "nach Hause und reicht das iPad durch — dafür muss das iPad nur ins selbe "
-                 + "WLAN wie der Mac, nicht ins Heimnetz.")
+            Text(weg.satz)
                 .font(Macschriften.schrift(.text, 14))
                 .foregroundStyle(Startfarbe.leise)
                 .lineSpacing(4)
@@ -301,6 +300,33 @@ struct WerrechnetWo: View {
                 .stroke(Startfarbe.ring, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
         }
         .padding(40)
+    }
+
+    /// Die drei Kästen in der Reihenfolge des Wegs: über den Mac «iPad – Mac – Heim-PC»,
+    /// direkt «Mac – Heim-PC – iPad».
+    @ViewBuilder
+    private var bild: some View {
+        switch weg {
+        case .ueberMac:
+            HStack(spacing: 18) {
+                kasten("iPad", "zeichnet und zeigt", hervor: false, breite: 170)
+                strich(gestrichelt: !ipadSteht)
+                kasten("Mac", weg.macSatz, hervor: true, breite: 190)
+                strich(gestrichelt: false)
+                kasten("Heim-PC", "Blender, Bildmodell, Prüfung, Sprachmodell", hervor: true,
+                       breite: 190)
+            }
+        case .direkt:
+            HStack(spacing: 18) {
+                kasten("Mac", weg.macSatz, hervor: true, breite: 170)
+                strich(gestrichelt: false)
+                kasten("Heim-PC", "Blender, Bildmodell, Prüfung, Sprachmodell", hervor: true,
+                       breite: 190)
+                strich(gestrichelt: !ipadSteht)
+                kasten("iPad", "zeichnet und zeigt, spricht selbst mit dem Heim-PC",
+                       hervor: false, breite: 190)
+            }
+        }
     }
 
     private func kasten(_ titel: String, _ satz: String, hervor: Bool,

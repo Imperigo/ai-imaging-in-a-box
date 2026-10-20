@@ -112,10 +112,12 @@ struct Koppelbildschirm: View {
             Abschnittstitel(text: "Mac in der Nähe")
             switch naehe.lage {
             case .aus, .sucht:
-                Text("Am Mac im Menü «iPad» «iPad koppeln» öffnen — er erscheint dann hier, "
-                     + "zwei Minuten lang. Nichts abtippen.")
+                // EHRLICH, WENN NICHTS KOMMT (20.10.2026): nach 30 s ohne Mac sagt es das.
+                Text(naehe.suchstand.satz)
                     .font(Schrift.text(14))
-                    .foregroundStyle(Zeichenblatt.leise)
+                    .foregroundStyle(naehe.suchstand.qrHervor ? Zeichenblatt.schrift
+                                                               : Zeichenblatt.leise)
+                    .fixedSize(horizontal: false, vertical: true)
             case .gefunden(let name):
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Mit diesem Mac koppeln?")
@@ -165,8 +167,9 @@ struct Koppelbildschirm: View {
     private var qrteil: some View {
         VStack(alignment: .leading, spacing: 10) {
             Abschnittstitel(text: "Oder den QR-Code lesen")
+            // HERVORGEHOBEN, sobald die Naehe nicht traegt (20.10.2026).
             Button("Mit QR-Code koppeln") { qrOffen = true }
-                .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                .buttonStyle(Wahlknopfstil(gewaehlt: naehe.suchstand.qrHervor, breite: nil))
                 .disabled(laeuft)
             Text("Der Mac zeigt ihn unter «iPad koppeln», zwei Minuten lang.")
                 .font(Schrift.text(13))

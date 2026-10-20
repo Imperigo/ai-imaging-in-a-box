@@ -77,6 +77,7 @@ final class AnfragenTests: XCTestCase {
                                      rechenzeit: nil), anmeldung: anmeldung),
             try Anfragen.kopplung(anmeldung: anmeldung),
             Anfragen.hallo(),
+            Anfragen.geraete(anmeldung: anmeldung),
             try Anfragen.kopplungAnfordern(),
         ]
     }

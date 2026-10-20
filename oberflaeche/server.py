@@ -64,8 +64,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import inspect                                                  # noqa: E402
 
 import aiimaging                                                # noqa: E402
-from aiimaging import (arbeitsgang, assistent, glbbox, heimnetz, heimstand,  # noqa: E402
-                       importeur, kette, knotenweg, kopplung, modellladen, projekt, render)
+from aiimaging import (arbeitsgang, assistent, geraetebuch, glbbox, heimnetz,  # noqa: E402
+                       heimstand, importeur, kette, knotenweg, kopplung, modellladen,
+                       projekt, render)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -428,6 +429,16 @@ WEG_KOPPLUNG = "/api/kopplung"
 # sie NIE in der Antwort zurueck. Eingetauscht wird sie wie bisher ueber `WEG_VERBINDEN`.
 WEG_HALLO = "/api/hallo"
 WEG_KOPPLUNG_ANFORDERN = "/api/kopplung/anfordern"
+# SEIT DEM 20.10.2026 (Owner-Befund an 0.2.11) — das Gerätebuch (`aiimaging.geraetebuch`):
+# ob ein iPad gekoppelt ist, wann es sich zuletzt meldete und über welchen Weg. Mit
+# Anmeldung; der Mac fragt es für seine Zeile «iPad» ab.
+WEG_GERAETE = "/api/geraete"
+#: Der Kopf, in dem ein Gerät seine ART sagt (``ipad`` oder ``mac``) — ohne Geheimnis, ohne
+#: Namen. Gesetzt von ``Anfragen`` im Kern der App.
+KOPF_GERAET = "X-Geraet"
+#: Der Kopf, den die Vermittlung des Mac an jede weitergereichte Anfrage des iPad hängt
+#: (``mac``). Fehlt er, kam das iPad direkt.
+KOPF_WEG = "X-Geraet-Weg"
 #: Höchstens so viele Bytes liest `POST /api/verbinden` — der einzige Weg, der ohne Anmeldung
 #: einen Rumpf annimmt. Gleich der Grenze der Vermittlung am Mac (`koppelRumpfGrenze`).
 VERBINDEN_HOECHSTENS = 1024
@@ -1465,6 +1476,7 @@ WEGTAFEL_LESEN = {
     WEG_KOPPELN: "_koppelseite",
     WEG_HEIM: "_heim",
     WEG_HALLO: "_hallo",
+    WEG_GERAETE: "_geraete",
 }
 
 #: Die zwei Wege, die **neben** den anderen laufen — alle übrigen gehen hintereinander
@@ -1617,6 +1629,13 @@ class Flaeche(BaseHTTPRequestHandler):
     #: Ob das Kennwort aus `--kennwort-datei` kommt (Dienstbetrieb) — dann sagt die Tür,
     #: dass es dort steht, und nicht «im Fenster» (siehe :func:`satz_nicht_angemeldet`).
     kennwort_in_datei: bool = False
+    #: Wohin das Gerätebuch geschrieben wird (``geraete.json`` neben der Kennwortdatei), oder
+    #: ``None``: nur im Arbeitsspeicher. Das Buch selbst liegt je Server auf der Klasse
+    #: (``_geraetebuch``), angelegt beim ersten Gebrauch.
+    geraetebuch_datei: Path | None = None
+    #: Das Gerätebuch wird auch von den Wegen nebenher (:data:`WEGE_NEBENHER`) berührt —
+    #: darum eine eigene kleine Sperre, nicht die Reihe.
+    geraete_sperre = threading.Lock()
     sys_version = ""
     #: **Die Reihe** (01.10.2026): Seit der Server Anfragen in eigenen Fäden bedient
     #: (``ThreadingHTTPServer``), gehen alle Wege ausser :data:`WEGE_NEBENHER` trotzdem
@@ -1669,6 +1688,10 @@ class Flaeche(BaseHTTPRequestHandler):
                 f"starten und Benutzer und Kennwort aus seinem Fenster nehmen.", 403)
             return False
         if pruefe_anmeldung(self.headers.get("Authorization"), self.kennwort):
+            # ANGEMELDET: Sagt die Anfrage, sie komme von einem iPad, steht das im Gerätebuch
+            # (nur mit Kennwort — ohne Kennwort sagt eine Anmeldung nichts).
+            if self.kennwort:
+                self._vermerke_geraet()
             return True
 
         # DER EINE WEG, DER UNANGEMELDET DURCHDARF — und er ist der Weg HINEIN.
@@ -2191,6 +2214,7 @@ class Flaeche(BaseHTTPRequestHandler):
             return
 
         print("  Ein Gerät hat sich verbunden. Die Zahl ist damit verbraucht.")
+        self._vermerke_kopplung()
         # DER SATZ SAGT NUR, WAS DER SERVER WEISS (Befund der Durchsicht D-SERVER,
         # 22.09.2026): Hier stand «Dieses Gerät merkt sich die Anmeldung». Die App legt
         # sie in den Schluesselbund, ein Browser auf der Koppelseite nicht von selbst —
@@ -2215,6 +2239,88 @@ class Flaeche(BaseHTTPRequestHandler):
             return {"weg": "heimnetz", "adresse": zugang["adresse"],
                     "zertifikat_sha256": zugang["zertifikat_sha256"]}
         return {"weg": "wie_gefragt", "adresse": None, "zertifikat_sha256": None}
+
+    # ------------------------------------------------------------- das Gerätebuch
+    def _kopf(self, name: str):
+        """Ein Kopf der Anfrage, ohne auf die Schreibung zu achten — auch, wenn eine Probe
+        statt der Kopfzeilen ein gewöhnliches Wörterbuch hereingibt."""
+        koepfe = getattr(self, "headers", None)
+        if koepfe is None:
+            return None
+        wert = koepfe.get(name)
+        if wert is None and isinstance(koepfe, dict):
+            wert = next((v for k, v in koepfe.items() if k.lower() == name.lower()), None)
+        return wert
+
+    def _geraeteart(self):
+        """Die Art des fragenden Geräts aus ``X-Geraet`` — nur eine aus
+        :data:`aiimaging.geraetebuch.ARTEN`, sonst ``None``."""
+        art = (self._kopf(KOPF_GERAET) or "").strip().lower()
+        return art if art in geraetebuch.ARTEN else None
+
+    def _geraeteweg(self) -> str:
+        return "mac" if (self._kopf(KOPF_WEG) or "").strip().lower() == "mac" else "direkt"
+
+    @classmethod
+    def _buch(cls) -> dict:
+        """Das Gerätebuch **dieses Servers** — beim ersten Gebrauch von der Platte gelesen.
+
+        Über ``cls.__dict__`` und nicht über die Vererbung: Jeder Server (und jede Probe) baut
+        sich eine eigene Klasse, und ein Buch auf der Grundklasse teilten sie alle.
+        """
+        if "_geraetebuch" not in cls.__dict__:
+            cls._geraetebuch = geraetebuch.lies(cls.geraetebuch_datei)
+        return cls._geraetebuch
+
+    def _schreibe_buch(self, art: str) -> None:
+        """Das Buch auf die Platte, wenn es eine Datei hat. **Ein Fehler hält nichts auf**: Die
+        Anfrage geht weiter, im Fenster steht der Grund (ohne Inhalt des Buchs)."""
+        klasse = type(self)
+        if klasse.geraetebuch_datei is None:
+            return
+        buch = klasse._buch()
+        try:
+            geraetebuch.schreibe(klasse.geraetebuch_datei, geraetebuch.zum_schreiben(buch))
+            geraetebuch.gemerkt(buch, art)
+        except OSError as fehler:
+            print(f"  Gerätebuch: nicht geschrieben ({fehler.strerror or fehler}).")
+
+    def _vermerke_geraet(self) -> None:
+        """Eine angemeldete Anfrage eines iPad vermerken (``X-Geraet: ipad``)."""
+        art = self._geraeteart()
+        if art is None:
+            return
+        with Flaeche.geraete_sperre:
+            if geraetebuch.vermerke_anfrage(type(self)._buch(), art, weg=self._geraeteweg()):
+                self._schreibe_buch(art)
+
+    def _vermerke_kopplung(self) -> None:
+        """Eine angenommene Zahl vermerken — **wenn sie einem iPad galt.**
+
+        Woran das erkennbar ist: am Kopf ``X-Geraet: ipad`` (ab 0.2.12). Fehlt er (ein
+        älteres iPad), galt die Zahl einem iPad, wenn der Mac sie über ``POST /api/kopplung``
+        geholt hat («iPad koppeln»). Eine Zahl, die sich ein Mac **selbst** angefordert hat,
+        ist nie eine fürs iPad.
+        """
+        art = self._geraeteart()
+        if art is None and self._kopf(KOPF_GERAET) is None:
+            if type(self).kopplung_vom_mac and not type(self).kopplung_angefordert:
+                art = "ipad"
+        if art is None:
+            return
+        with Flaeche.geraete_sperre:
+            geraetebuch.vermerke_kopplung(type(self)._buch(), art, weg=self._geraeteweg())
+            self._schreibe_buch(art)
+
+    def _geraete(self, weg) -> None:
+        """``GET /api/geraete`` — **mit Anmeldung**: was das Gerätebuch über das iPad weiss.
+
+        ``{"ipad": {"gekoppelt", "gekoppelt_vor_s", "zuletzt_gesehen_s", "weg"}}`` — ohne
+        Geheimnis, ohne Namen, ohne Adresse. Was der Mac daraus macht, entscheidet sein Kern
+        (``Ipadzeile``).
+        """
+        with Flaeche.geraete_sperre:
+            self._sende(geraetebuch.antwort(type(self)._buch()))
 
     def _hallo(self, weg) -> None:
         """``GET /api/hallo`` — **ohne Anmeldung, ohne Geheimnis, ohne Rechnernamen.**
@@ -3047,7 +3153,7 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                 anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
                 kopplung_offen=None, ablage=None, sprachmodell=None,
                 kennwort_in_datei: bool = False,
-                mitteilung: bool = False) -> ThreadingHTTPServer:
+                mitteilung: bool = False, geraetebuch_datei=None) -> ThreadingHTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -3100,6 +3206,9 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
                    # baut, soll am Heim-PC nichts aufpoppen lassen.
                    "zeige_zahl": (staticmethod(zeige_zahl_mit_mitteilung) if mitteilung
                                   else None),
+                   # DAS GERAETEBUCH (20.10.2026): je Server, und mit Datei nur im Betrieb.
+                   "geraetebuch_datei": (Path(geraetebuch_datei) if geraetebuch_datei
+                                         else None),
                    # EIGENE DROSSEL UND KOPPLUNGSART JE SERVER, nicht die der Grundklasse.
                    "kopplung_angefordert": False,
                    "kopplung_angefordert_um": None})
@@ -3445,7 +3554,14 @@ def main(argv=None) -> int:
                              kennwort=kennwort, kopplung_offen=offen,
                              ablage=a.auftragsablage, sprachmodell=sprachmodell,
                              kennwort_in_datei=kennwort_aus_datei is not None,
-                             mitteilung=True)
+                             mitteilung=True,
+                             # DAS GERAETEBUCH NEBEN DER KENNWORTDATEI (20.10.2026): im
+                             # Dienstordner, ausserhalb des Repos, 0600 — und nur dort, wo
+                             # das Kennwort einen Neustart ueberlebt. Sonst nur im Speicher.
+                             geraetebuch_datei=(
+                                 Path(kennwort_aus_datei[0]).expanduser().parent
+                                 / geraetebuch.DATEINAME
+                                 if kennwort_aus_datei is not None else None))
         heim_server, ankuendigung, heim_saetze = None, None, []
         if a.heimnetz:
             heim_server, ankuendigung, heim_saetze = starte_heimnetz(

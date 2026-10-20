@@ -45,7 +45,8 @@ final class Vermittlungsanschluss: ObservableObject {
         angeboten = an
         Vermittlergedaechtnis.angeboten = an
         guard let dienst else { return }
-        if an { dienst.starte() } else { dienst.schalteAus() }
+        // EINE ZAHL NUR BEIM EINSCHALTEN VON HAND (20.10.2026) — nicht bei jedem Start der App.
+        if an { dienst.starte(mitZahl: true) } else { dienst.schalteAus() }
     }
 
     func halte() {
@@ -61,9 +62,11 @@ struct Vermittlungsmelder: View {
     var body: some View {
         Color.clear
             .frame(width: 0, height: 0)
-            .onAppear { leitung.setzeIpad(dienst.zeile.alsZeilenstand()) }
+            .onAppear { leitung.setzeVermittlung(dienst.zeile) }
             .onChange(of: dienst.zeile) { _, neu in
-                leitung.setzeIpad(neu.alsZeilenstand())
+                leitung.setzeVermittlung(neu)
             }
+            // AUSGESCHALTET ODER WEG: Die Zeile gehört wieder Gerätebuch und Koppelfenster.
+            .onDisappear { leitung.setzeVermittlung(nil) }
     }
 }

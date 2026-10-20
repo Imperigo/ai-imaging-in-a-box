@@ -324,3 +324,94 @@ public struct Naeheabsprache: Equatable, Sendable {
         gesendet = true
     }
 }
+
+// ============================================================ ehrlich sagen, was geht
+
+// DIE NAEHE SAGT, WENN SIE NICHTS FINDET (Owner-Befund vom 20.10.2026): Am Gerät koppelte der
+// QR-Code; über die Nähe passierte nichts — am iPad kam kein «Mit diesem Mac koppeln?», und
+// keine der beiden Seiten sagte, dass sie nichts fand. Seither melden beide ihren Zustand,
+// und die Sätze und der Zeitpunkt stehen hier.
+
+/// Was der Mac im Koppelfenster über die Nähe sagt — **eine kleine Zeile**.
+public enum Naeheanbieterstand: Equatable, Sendable {
+    /// Er bietet sich an; noch hat kein iPad gefragt.
+    case bietetAn(name: String)
+    /// Ein iPad hat gefragt («iPad möchte koppeln»).
+    case anfrage(name: String)
+    /// Das Anbieten startet nicht (`didNotStartAdvertisingPeer`) — mit dem Grund des Systems.
+    case gehtNicht(grund: String)
+
+    public var zeile: String {
+        switch self {
+        case .bietetAn(let name):
+            return "In der Nähe: sucht … (sichtbar als «\(name)»)"
+        case .anfrage(let name):
+            return "In der Nähe: «\(name)» fragt an."
+        case .gehtNicht(let grund):
+            return "In der Nähe: geht hier nicht — \(Naehekopplung.ohnePunkt(grund)). Bitte den "
+                + "QR-Code nehmen."
+        }
+    }
+
+    /// Ob die Zeile ein Fehler ist (rot statt leise).
+    public var istFehler: Bool {
+        if case .gehtNicht = self { return true }
+        return false
+    }
+}
+
+/// Was das iPad über die Suche in der Nähe weiss — und **wann es aufgibt, still zu bleiben**.
+public enum Naehesuchstand: Equatable, Sendable {
+    /// Sucht, seit weniger als `Naehekopplung.ohneFundNach`.
+    case sucht
+    /// Sucht seit `ohneFundNach` und hat nichts gefunden — der QR-Code wird hervorgehoben.
+    case keinFund
+    /// Die Suche startet nicht (`didNotStartBrowsingForPeers`).
+    case gehtNicht(grund: String)
+
+    public var satz: String {
+        switch self {
+        case .sucht:
+            return Naehekopplung.satzSucht
+        case .keinFund:
+            return Naehekopplung.satzKeinMac
+        case .gehtNicht(let grund):
+            return "Die Suche nach dem Mac in der Nähe startet nicht ("
+                + Naehekopplung.ohnePunkt(grund) + "). Lokales Netzwerk erlaubt? Sonst den "
+                + "QR-Code nehmen."
+        }
+    }
+
+    /// Ob der Knopf «Mit QR-Code koppeln» hervorgehoben wird: sobald die Nähe nicht trägt.
+    public var qrHervor: Bool { self != .sucht }
+}
+
+extension Naehekopplung {
+    /// Nach wie vielen Sekunden Suche ohne Fund das iPad es **sagt** — **30 s**, gesetzt: Ein
+    /// Mac mit offenem Koppelfenster zeigt sich in der Regel nach wenigen Sekunden; das
+    /// Fenster ist zwei Minuten offen. Nach einer halben Minute bleibt genug Zeit für den
+    /// QR-Code, bevor es zugeht.
+    public static let ohneFundNach: TimeInterval = 30
+
+    public static let satzSucht = "Am Mac im Menü «iPad» «iPad koppeln» öffnen — er erscheint "
+        + "dann hier, zwei Minuten lang. Nichts abtippen."
+
+    public static let satzKeinMac = "Kein Mac in der Nähe gefunden. Gleiches WLAN? Lokales "
+        + "Netzwerk erlaubt? Sonst den QR-Code nehmen."
+
+    /// Der Stand der Suche am iPad. `seit`: wann sie begann (`nil`: sie läuft nicht);
+    /// `gefunden`: ob gerade ein Mac zu sehen ist; `fehler`: der Grund, wenn sie nicht startet.
+    public static func suchstand(seit: Date?, jetzt: Date, gefunden: Bool,
+                                 fehler: String?) -> Naehesuchstand {
+        if let fehler { return .gehtNicht(grund: fehler) }
+        guard let seit, !gefunden else { return .sucht }
+        return jetzt.timeIntervalSince(seit) >= ohneFundNach ? .keinFund : .sucht
+    }
+
+    /// Ein Grund ohne Punkt am Ende — er steht mitten im Satz.
+    static func ohnePunkt(_ grund: String) -> String {
+        var g = grund.trimmingCharacters(in: .whitespacesAndNewlines)
+        while g.hasSuffix(".") { g.removeLast() }
+        return g.isEmpty ? "ohne Angabe des Grundes" : g
+    }
+}

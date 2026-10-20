@@ -198,6 +198,34 @@ extension Anmeldung: CustomStringConvertible, CustomDebugStringConvertible, Cust
     }
 }
 
+// ============================================================================ Geräteart
+
+/// Welche Art Gerät fragt — **ohne Namen** (Regel 3): Ein Gerätename verriete, wessen Tablet es
+/// ist; die Art genügt dem Heim-PC für sein Gerätebuch.
+///
+/// Fest beim Übersetzen bestimmt (`#if os(iOS)`): Die App weiss, wofür sie gebaut ist. Unter
+/// Linux (die Proben des Kerns) gibt es keine — dort geht der Kopf nicht hinaus, ausser eine
+/// Probe gibt ihn vor.
+public enum Geraeteart: String, Equatable, Sendable {
+    case ipad
+    case mac
+
+    /// Der Kopf, in dem die Art steht.
+    public static let kopf = "X-Geraet"
+    /// Der Kopf, den die Vermittlung des Mac an eine weitergereichte Anfrage des iPad hängt.
+    public static let wegkopf = "X-Geraet-Weg"
+
+    public static var hier: Geraeteart? {
+        #if os(iOS)
+        return .ipad
+        #elseif os(macOS)
+        return .mac
+        #else
+        return nil
+        #endif
+    }
+}
+
 // ============================================================================ Anfrage
 
 /// Ein Teil der Frage (`?name=wert`). Eigene Struktur statt Tupel, damit eine Anfrage
@@ -315,10 +343,18 @@ public enum Anfragen {
                 rumpf: nil)
     }
 
-    private static func kopfzeilen(_ weg: Weg, anmeldung: Anmeldung?) -> [String: String] {
+    /// Die Köpfe jeder Anfrage. **Seit dem 20.10.2026** mit `X-Geraet` — der Art des
+    /// Geräts (`Geraeteart.hier`: «ipad» oder «mac»), ohne Geheimnis und ohne Namen. Der Heim-PC
+    /// führt damit sein Gerätebuch (`GET /api/geraete`): Nur so weiss der Mac, dass ein iPad
+    /// direkt mit dem Heim-PC gekoppelt ist.
+    static func kopfzeilen(_ weg: Weg, anmeldung: Anmeldung?,
+                           geraet: Geraeteart? = Geraeteart.hier) -> [String: String] {
         var kopf = ["Accept": "application/json"]
         if !weg.ohneAnmeldung, let a = anmeldung {
             kopf["Authorization"] = a.kopfzeile
+        }
+        if let geraet {
+            kopf[Geraeteart.kopf] = geraet.rawValue
         }
         return kopf
     }
@@ -1002,6 +1038,11 @@ extension Anfragen {
     /// Anmeldung. Antwort: `zahl`, `gilt_noch_s`, `satz`.
     public static func kopplung(anmeldung: Anmeldung?) throws -> Anfrage {
         try baue(Wege.kopplung, rumpf: [:], anmeldung: anmeldung)
+    }
+
+    /// `GET /api/geraete` — das Gerätebuch des Heim-PC (20.10.2026), mit Anmeldung.
+    public static func geraete(anmeldung: Anmeldung?) -> Anfrage {
+        baueLesen(Wege.geraete, anmeldung: anmeldung)
     }
 
     /// `GET /api/hallo` — **ohne Anmeldung** (Entscheid 83): Ist das ein Visbox-Heim-PC?

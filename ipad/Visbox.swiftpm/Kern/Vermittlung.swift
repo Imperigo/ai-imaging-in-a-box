@@ -54,9 +54,18 @@ public struct Weiterreichung: Equatable, Sendable {
     /// Die Köpfe, wie sie zum Heim-PC gehen: die erlaubten **und die Anmeldung des Mac.**
     /// Der `Authorization`-Kopf des iPad ist hier schon nicht mehr dabei; er wird ersetzt,
     /// nicht ergänzt.
+    ///
+    /// **Seit dem 20.10.2026 dazu** `X-Geraet: ipad` und `X-Geraet-Weg: mac`: Was über
+    /// die Vermittlung geht, kommt von einem iPad, und zwar über diesen Mac. Der Heim-PC führt
+    /// damit sein Gerätebuch (`GET /api/geraete`). Was das iPad selbst in diesen Köpfen
+    /// schickte, ist schon weg (`erlaubteKoepfe`) — gesetzt wird hier, nicht weitergereicht.
     public func koepfe(mit anmeldung: Anmeldung) -> [Kopfzeile] {
-        koepfe.filter { $0.name.lowercased() != "authorization" }
-            + [Kopfzeile("Authorization", anmeldung.kopfzeile)]
+        let eigene: Set<String> = ["authorization", Geraeteart.kopf.lowercased(),
+                                   Geraeteart.wegkopf.lowercased()]
+        return koepfe.filter { !eigene.contains($0.name.lowercased()) }
+            + [Kopfzeile("Authorization", anmeldung.kopfzeile),
+               Kopfzeile(Geraeteart.kopf, Geraeteart.ipad.rawValue),
+               Kopfzeile(Geraeteart.wegkopf, "mac")]
     }
 
     /// Die Adresse am Heim-PC — `nil`, wenn sich keine bauen lässt, die **auf genau diesen
@@ -180,12 +189,14 @@ public enum Vermittlungsregel {
     ///   Mac-App** selbst mit dem Heim-PC, direkt. Weitergereicht liesse der Mac jedes Gerät
     ///   in seinem WLAN Zahlen am Heim-PC aufpoppen; das iPad ruft beide nicht. Am Mac
     ///   bleiben sie hinter seiner Tür (anders als drüben, wo sie ohne Anmeldung gehen).
+    /// * `geraete` (20.10.2026) — das Gerätebuch des Heim-PC fragt die Mac-App selbst ab,
+    ///   direkt; das iPad ruft es nicht.
     ///
     /// Knotenansicht (`/knoten…`) und Brücke (`/bruecke…`) stehen nicht einmal in `Wege`.
     public static let nichtWeitergereicht: [Weg] = [
         Wege.verbinden, Wege.koppeln, Wege.seite, Wege.seiteLang, Wege.anlegen,
         Wege.einstellungen, Wege.heim, Wege.assistent, Wege.assistentAnwenden,
-        Wege.kopplung, Wege.hallo, Wege.kopplungAnfordern,
+        Wege.kopplung, Wege.hallo, Wege.kopplungAnfordern, Wege.geraete,
     ]
 
     /// Ob diese Anfrage **wörtlich** auf der Positivliste steht.

@@ -61,6 +61,10 @@ public enum Wege {
     /// «Bist du ein Visbox-Heim-PC?» (Entscheid 83) — **ohne Anmeldung**, für die Suche des
     /// Mac. → `visbox`, `fassung`, `name`. Ohne Rechnernamen und ohne Geheimnis.
     public static let hallo = Weg(pfad: "/api/hallo", methode: .get, ohneAnmeldung: true)
+    /// Das Gerätebuch des Heim-PC (20.10.2026): ob ein iPad gekoppelt ist, wann es sich zuletzt
+    /// meldete, über welchen Weg → `ipad` (`Geraetebericht`). **Mit Anmeldung**; der Mac fragt
+    /// es für seine Zeile «iPad» ab.
+    public static let geraete = Weg(pfad: "/api/geraete", methode: .get)
 
     // ---------------------------------------------------------------- handeln (POST)
 
@@ -98,7 +102,7 @@ public enum Wege {
 
     /// Alle Wege, die der Server heute bedient.
     public static let alle: [Weg] = [
-        seite, seiteLang, projekt, fortschritt, bild, koppeln, heim, hallo,
+        seite, seiteLang, projekt, fortschritt, bild, koppeln, heim, hallo, geraete,
         anlegen, einstellungen, skizze, rechne, verbinden,
         benennen, abbrechen, rechneSkizze, assistent, assistentAnwenden, kopplung,
         kopplungAnfordern,

@@ -52,6 +52,7 @@ struct IpadKoppelfenster: View {
                     VStack(alignment: .leading, spacing: 14) {
                         zahlteil(schein, fenster)
                         naeheteil
+                        Naehezeile(stand: naehe.stand)
                     }
                 }
             } else if holt {
@@ -210,7 +211,9 @@ struct IpadKoppelfenster: View {
         fenster = nil
         schein = nil
         qr = nil
-        leitung.setzeIpad(.wartet(satz: Naehekopplung.satzFensterZu))
+        // DIE ZEILE GEHOERT WIEDER DEM GERAETEBUCH (20.10.2026): kein «Fenster zu» mehr,
+        // sondern was der Heim-PC über das iPad weiss.
+        leitung.koppelfensterZu()
     }
 
     /// Der QR-Code des Scheins — Fehlerkorrektur «M» (15 %), reicht für einen Bildschirm.
@@ -221,5 +224,20 @@ struct IpadKoppelfenster: View {
         guard let roh = filter.outputImage else { return nil }
         let gross = roh.transformed(by: CGAffineTransform(scaleX: 8, y: 8))
         return CIContext().createCGImage(gross, from: gross.extent)
+    }
+}
+
+/// Die kleine Zeile «In der Nähe: …» (20.10.2026) — sagt, ob das Anbieten läuft, ein iPad
+/// angefragt hat oder es hier nicht geht. Der Satz kommt aus dem Kern.
+private struct Naehezeile: View {
+    let stand: Naeheanbieterstand?
+
+    var body: some View {
+        if let stand {
+            Text(stand.zeile)
+                .font(Macschriften.schrift(.text, 12))
+                .foregroundStyle(stand.istFehler ? Startfarbe.rot : Startfarbe.leise)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

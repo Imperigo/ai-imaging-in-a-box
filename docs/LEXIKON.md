@@ -6772,6 +6772,26 @@ Text steckt; eine Kamera liest ihn in einem Augenblick. *In diesem Projekt* steh
 Koppelfenster des Mac der Koppelschein als QR-Code, und die iPad-App liest ihn mit ihrer
 eigenen Kamera («Mit QR-Code koppeln») — nicht mit der Kamera-App, die ihn an den Browser gäbe.
 
+**Gerätebuch (des Heim-PC)** — Ein kleiner Vermerk am Heim-PC, ob ein iPad gekoppelt ist,
+wann es sich zuletzt gemeldet hat und ob es direkt oder über den Mac kam — nur Zeiten und
+eine Art, **kein Kennwort, keine Zahl, kein Gerätename**. Er liegt als Datei neben der
+Kennwortdatei und übersteht einen Neustart. *In diesem Projekt* fragt der Mac ihn ab
+(`GET /api/geraete`), damit seine Zeile «iPad» sagt, was wirklich ist: Bis zum 20.10.2026
+wusste der Mac nicht, dass das iPad längst direkt mit dem Heim-PC gekoppelt war.
+
+**Geräteart (Kopf einer Anfrage)** — Ein Zusatz an jeder Anfrage, der nur sagt, welche Art
+Gerät fragt («ipad» oder «mac») — nie, wem es gehört oder wie es heisst. Ein «Kopf» ist dabei
+eine Zeile, die vor dem eigentlichen Inhalt einer Anfrage mitgeht, wie die Angaben auf einem
+Briefumschlag. *In diesem Projekt* führt der Heim-PC damit sein Gerätebuch; was über den Mac
+weitergereicht wird, trägt zusätzlich den Vermerk «über den Mac».
+
+**Netzaussetzer** — Ein kurzer Augenblick, in dem eine Leitung nichts durchlässt, obwohl
+beide Enden in Ordnung sind — typisch im Mobilfunk, beim Wechsel zwischen Funkmasten oder
+wenn Tailscale nach dem Aufwachen neu verbindet. *In diesem Projekt* gilt er nicht als
+«getrennt»: Mac und iPad warten drei Fehlversuche und 30 Sekunden, bevor sie es sagen, und
+zeigen davor nur ein weiches Band «Heim-PC kurz nicht erreichbar — verbinde neu …».
+*Ein Ruckler ist kein Zustand.*
+
 **Stetige Uhr** — Eine Uhr, die nur vorwärts läuft und nicht sagt, wie spät es ist,
 sondern wie viel Zeit seit einem beliebigen Anfang vergangen ist. Sie lässt sich nicht
 stellen — weder von Hand noch von der Zeitumstellung noch von einem Zeitserver. Fristen
@@ -7480,6 +7500,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus der iPad-Zeile am Mac (Protokoll 74 §144): **Gerätebuch (des Heim-PC)**, **Geräteart (Kopf einer Anfrage)**, **Netzaussetzer** |
 | 2026-10-20 | Ergaenzt aus Fortschritt, Vorschau und Teilbild am Heim-PC (Protokoll 74 §142): **Fortschritt (eines Renderauftrags)**, **Restzeit (geschätzt)**, **Teilbild (abgebrochen)**, **Kooperativer Abbruch** |
 | 2026-10-20 | Ergaenzt aus Entscheiden 99/99a/99b (Protokoll 74 §141): **Koppelfenster**, **Koppelschein**, **Nähe-Verbindung (MultipeerConnectivity)**, **QR-Code**; **Kopplungszahl** um die zwei Minuten am Mac ergänzt |
 | 2026-10-20 | Ergaenzt aus den Tafelkarten «Visbox · Tools» und «Visbox · Architecture» (`docs/WERKZEUGE_UND_ARCHITEKTUR.md`): **CC0 (Gemeinfreiheitserklärung)**, **Simple Icons**, **Markenzeichen (auf einer Logo-Karte)**, **numpy**, **Pillow**, **Mermaid**, **Chromium ohne Fenster (headless)**, **IfcOpenShell**, **trimesh**, **shapely / GEOS**, **gsplat**, **Open3D**, **PyTorch (torch)**, **transformers**, **Z-Image Turbo**, **Depth Anything V2 (Small)**, **SigLIP 2**, **Architekturbild (Organigramm der Programme)**, **OpenSSL**, **Avahi**, **libnotify (notify-send)**, **Monogramm-Kachel** |

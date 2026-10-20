@@ -46,8 +46,22 @@ final class Heimleitung: ObservableObject {
 
     /// Für die Fläche (`Arbeitsansicht`) — nicht veröffentlicht, nicht gedruckt.
     private(set) var anmeldung: Anmeldung?
-    /// Was die Vermittlung (Strom B) über das iPad meldet; `nil`: nichts gemeldet.
-    private var ipadStand: Zeilenstand?
+    /// Was die Vermittlung (Strom B) über das iPad meldet; `nil`: nichts gemeldet (aus).
+    private var vermittlung: Vermittlerlage?
+    /// Die Zahl aus «iPad koppeln», solange das Koppelfenster offen ist.
+    private var koppelangebot: Koppelangebot?
+    /// Was das Gerätebuch des Heim-PC zuletzt sagte (`GET /api/geraete`, 20.10.2026).
+    private var geraetebefund: Geraetebefund?
+    /// Über welchen Weg das iPad den Heim-PC erreicht — für «Wer rechnet wo». Entschieden im
+    /// Kern (`Ipadzeile.weg`).
+    @Published private(set) var ipadweg: Ipadweg = .direkt
+
+    /// Die Zeile «iPad», wie der Kern sie aus Gerätebuch, Vermittlung und Koppelfenster
+    /// ableitet (`Ipadzeile.stand`, mit Proben unter Linux).
+    private var ipadStand: Zeilenstand {
+        Ipadzeile.stand(geraete: geraetebefund, vermittlung: vermittlung,
+                        koppeln: koppelangebot, jetzt: Date())
+    }
     private var abstand: TimeInterval?
     private var schleife: Task<Void, Never>?
     private let sitzung: URLSession
@@ -141,16 +155,23 @@ final class Heimleitung: ObservableObject {
         let vorher = bild
         var leitungsbefund: Leitungsbefund?
         var heimbefund: Heimbefund?
+        var geraete: Geraetebefund?
         if let basis = adresse {
             leitungsbefund = await frageLeitung(basis)
             if case .antwort(200, _)? = leitungsbefund {
                 heimbefund = await frageHeim(basis)
+                // DAS GERAETEBUCH (20.10.2026): Ist ein iPad direkt mit dem Heim-PC gekoppelt?
+                geraete = await frageGeraete(basis)
             }
         }
         // ZWISCHENDURCH NEU EINGERICHTET: Diese Antworten gehören zur alten Adresse.
         guard !Task.isCancelled else { return Leitungstakt.kuerzest }
 
         let jetzt = Date()
+        // OHNE LEITUNG WEISS DAS GERAETEBUCH NICHTS NEUES — der letzte Stand gilt nicht weiter
+        // als «gekoppelt und da»: Die Zeile fällt auf Vermittlung und Vorgabe zurück.
+        geraetebefund = geraete
+        ipadweg = Ipadzeile.weg(bericht: geraete.flatMap(Ipadzeile.bericht), vermittlung: vermittlung)
         let neu = Startbild.aus(leitung: leitungsbefund, heim: heimbefund,
                                 adresseDa: adresse != nil, ipad: ipadStand, vorher: vorher,
                                 jetzt: jetzt)
@@ -162,7 +183,10 @@ final class Heimleitung: ObservableObject {
 
         let geaendert = neu.zeilen.map(\.stand.wort) != vorher.zeilen.map(\.stand.wort)
         let laedt = neu.zeilen.contains { $0.stand.laedt }
-        let naechster = Leitungstakt.naechster(nach: abstand, geaendert: geaendert, laedt: laedt)
+        var naechster = Leitungstakt.naechster(nach: abstand, geaendert: geaendert, laedt: laedt)
+        // SOLANGE DAS KOPPELFENSTER OFFEN IST, oft nachsehen: Koppelt das iPad, soll die Zeile
+        // es in Sekunden sagen, nicht nach einer Minute.
+        if koppelangebot != nil { naechster = Leitungstakt.kuerzest }
         abstand = naechster
         return naechster
     }
@@ -182,20 +206,33 @@ final class Heimleitung: ObservableObject {
     func koppleIPad() async -> Koppelzahl.Angebot? {
         guard let basis = adresse else { return nil }
         let anfrage: Anfrage
+        let seit = Date()
         do {
             anfrage = try Anfragen.kopplung(anmeldung: anmeldung)
         } catch {
-            setzeIpad(.fehlt(grund: "Keine Zahl fürs iPad: die Anfrage liess sich nicht bauen."))
+            setzeKoppelangebot(Koppelangebot(stand: .fehlt(grund: "Keine Zahl fürs iPad: die "
+                + "Anfrage liess sich nicht bauen."), seit: seit))
             return nil
         }
         switch await hole(anfrage, basis: basis) {
         case .antwort(let status, let daten, _):
-            setzeIpad(Koppelzahl.zeile(status: status, daten: daten, adresse: basis))
+            setzeKoppelangebot(Koppelangebot(
+                stand: Koppelzahl.zeile(status: status, daten: daten, adresse: basis), seit: seit))
+            starte()
             return try? Koppelzahl.angebot(status: status, daten: daten)
         case .keine(let fehler):
-            setzeIpad(.fehlt(grund: "Keine Zahl fürs iPad: \(fehler.satz)"))
+            setzeKoppelangebot(Koppelangebot(stand: .fehlt(grund: "Keine Zahl fürs iPad: "
+                + fehler.satz), seit: seit))
             return nil
         }
+    }
+
+    /// Das Koppelfenster ist zu — die Zeile zeigt wieder, was Gerätebuch und Vermittlung sagen,
+    /// **keine Zahl mehr** (20.10.2026: vorher «Das Koppelfenster ist zu …», und die Zeile
+    /// blieb auf «wartet», auch wenn das iPad längst gekoppelt war).
+    @MainActor
+    func koppelfensterZu() {
+        setzeKoppelangebot(nil)
     }
 
     // ------------------------------------------------------- für den Vorführmodus
@@ -220,12 +257,20 @@ final class Heimleitung: ObservableObject {
 
     // ------------------------------------------------------------- von aussen
 
-    /// Die iPad-Zeile, wie die Vermittlung (Strom B) sie meldet. `nil` nimmt die Meldung
-    /// zurück — dann wartet die Zeile wieder.
+    /// Was die Vermittlung (Strom B) über das iPad meldet. `nil`: sie ist aus oder meldet
+    /// nichts. Die Zeile entscheidet der Kern (`Ipadzeile.stand`).
     @MainActor
-    func setzeIpad(_ stand: Zeilenstand?) {
-        ipadStand = stand
-        bild.ipad = stand ?? Startbild.ipadVorgabe
+    func setzeVermittlung(_ lage: Vermittlerlage?) {
+        vermittlung = lage
+        ipadweg = Ipadzeile.weg(bericht: geraetebefund.flatMap(Ipadzeile.bericht),
+                                vermittlung: lage)
+        bild.ipad = ipadStand
+    }
+
+    @MainActor
+    private func setzeKoppelangebot(_ angebot: Koppelangebot?) {
+        koppelangebot = angebot
+        bild.ipad = ipadStand
     }
 
     /// Richtet den Heim-PC ein. `kennwort == nil` behält das gemerkte (nur der Benutzer oder die
@@ -302,6 +347,13 @@ final class Heimleitung: ObservableObject {
         let anfrage = Anfragen.fortschritt(anmeldung: anmeldung)
         switch await hole(anfrage, basis: basis) {
         case .antwort(let status, _, let ms): return .antwort(status: status, millisekunden: ms)
+        case .keine(let fehler): return .keineAntwort(fehler)
+        }
+    }
+
+    private func frageGeraete(_ basis: URL) async -> Geraetebefund {
+        switch await hole(Anfragen.geraete(anmeldung: anmeldung), basis: basis) {
+        case .antwort(let status, let daten, _): return .antwort(status: status, daten: daten)
         case .keine(let fehler): return .keineAntwort(fehler)
         }
     }

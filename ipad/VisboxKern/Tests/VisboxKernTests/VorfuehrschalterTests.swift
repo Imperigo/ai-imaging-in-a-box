@@ -11,6 +11,13 @@ final class VorfuehrschalterTests: XCTestCase {
 
     private func t(_ s: TimeInterval) -> Date { t0.addingTimeInterval(s) }
 
+    /// Drei Fehlschläge ab `ab`, der letzte 30 s danach — die Schwelle seit dem 20.10.2026.
+    private func dreiFehlschlaege(_ s: inout Vorfuehrschalter, ab: TimeInterval) {
+        s.melde(weg, jetzt: t(ab))
+        s.melde(weg, jetzt: t(ab + 10))
+        s.melde(weg, jetzt: t(ab + 30))
+    }
+
     /// Ein Schalter, der einmal verbunden war (bei t0).
     private func verbunden() -> Vorfuehrschalter {
         var s = Vorfuehrschalter(start: t0)
@@ -38,17 +45,25 @@ final class VorfuehrschalterTests: XCTestCase {
         s.ticke(jetzt: t(4))
         XCTAssertEqual(s.lage, .startet)
         s.melde(weg, jetzt: t(5.2))
-        XCTAssertEqual(s.lage, .vorfuehrung, "zwei Fehlschläge in Folge")
+        XCTAssertEqual(s.lage, .startet, "zwei Fehlschläge sind seit 20.10.2026 noch ein Aussetzer")
+        s.melde(weg, jetzt: t(15.2))
+        XCTAssertEqual(s.lage, .startet, "drei, aber noch keine 30 s")
+        s.ticke(jetzt: t(29.9))
+        XCTAssertEqual(s.lage, .startet)
+        s.ticke(jetzt: t(30))
+        XCTAssertEqual(s.lage, .vorfuehrung, "drei Fehlschläge und 30 s")
         XCTAssertEqual(s.seit, t0)
         XCTAssertTrue(s.imVorfuehrmodus)
     }
 
-    func testBeimStartMitHaengendemVersuchNachZehnSekunden() {
+    func testBeimStartMitHaengendemVersuchNachNeunzigSekunden() {
         var s = Vorfuehrschalter(start: t0)
-        s.ticke(jetzt: t(9.9))
+        s.ticke(jetzt: t(30))
+        XCTAssertEqual(s.lage, .startet, "Zeit allein, ohne drei Fehlschläge: noch nicht")
+        s.ticke(jetzt: t(89.9))
         XCTAssertEqual(s.lage, .startet)
-        s.ticke(jetzt: t(10))
-        XCTAssertEqual(s.lage, .vorfuehrung)
+        s.ticke(jetzt: t(90))
+        XCTAssertEqual(s.lage, .vorfuehrung, "90 s ohne jede Antwort")
     }
 
     func testBeimStartMitAntwortVerbunden() {
@@ -76,21 +91,44 @@ final class VorfuehrschalterTests: XCTestCase {
         XCTAssertEqual(s.naechsterVersuch, t(35))
     }
 
-    func testGetrenntWirdNachZweiFehlschlaegenVorfuehrung() {
+    func testGetrenntWirdNachDreiFehlschlaegenUndDreissigSekundenVorfuehrung() {
         var s = verbunden()
         s.melde(weg, jetzt: t(30))
         s.melde(weg, jetzt: t(35))
+        XCTAssertEqual(s.lage, .getrennt, "zwei Fehlschläge: noch ein Aussetzer")
+        XCTAssertTrue(s.kurzNichtErreichbar, "das weiche Band steht")
+        s.melde(weg, jetzt: t(45))
+        XCTAssertEqual(s.lage, .getrennt, "drei, aber erst 15 s")
+        s.ticke(jetzt: t(59.9))
+        XCTAssertEqual(s.lage, .getrennt)
+        s.ticke(jetzt: t(60))
         XCTAssertEqual(s.lage, .vorfuehrung)
+        XCTAssertFalse(s.kurzNichtErreichbar, "im Vorführmodus kein weiches Band mehr")
         XCTAssertEqual(s.seit, t(30), "seit dem ersten Fehlschlag, nicht seit dem Umschalten")
     }
 
-    func testGetrenntWirdNachZehnSekundenVorfuehrung() {
+    /// Der Owner-Befund vom 20.10.2026: Mobilfunk, ein Aussetzer über die Frist eines Versuchs
+    /// (8 s) — und der Vorführmodus stand da, obwohl der Heim-PC gesund war.
+    func testEinAussetzerImMobilfunkBringtKeinenVorfuehrmodus() {
         var s = verbunden()
-        s.melde(weg, jetzt: t(30))
-        s.ticke(jetzt: t(39.9))
-        XCTAssertEqual(s.lage, .getrennt)
-        s.ticke(jetzt: t(40))
-        XCTAssertEqual(s.lage, .vorfuehrung)
+        // ZWEI VERSUCHE SCHEITERN (je 8 s Frist), DER DRITTE KOMMT DURCH.
+        s.melde(weg, jetzt: t(18))
+        XCTAssertTrue(s.kurzNichtErreichbar)
+        s.melde(weg, jetzt: t(31))
+        XCTAssertFalse(s.imVorfuehrmodus)
+        s.ticke(jetzt: t(45))
+        XCTAssertFalse(s.imVorfuehrmodus, "still weiter verbinden")
+        s.melde(.antwort, jetzt: t(51))
+        XCTAssertEqual(s.lage, .verbunden, "von selbst zurück")
+        XCTAssertFalse(s.kurzNichtErreichbar)
+        XCTAssertEqual(Vorfuehrsaetze.kurzWeg, "Heim-PC kurz nicht erreichbar — verbinde neu …")
+    }
+
+    func testDieSchwelleIstDreiUndDreissigOderNeunzig() {
+        XCTAssertFalse(Vorfuehrschalter.schwelleErreicht(fehlschlaege: 2, stille: 89))
+        XCTAssertFalse(Vorfuehrschalter.schwelleErreicht(fehlschlaege: 9, stille: 29.9))
+        XCTAssertTrue(Vorfuehrschalter.schwelleErreicht(fehlschlaege: 3, stille: 30))
+        XCTAssertTrue(Vorfuehrschalter.schwelleErreicht(fehlschlaege: 0, stille: 90))
     }
 
     func testGetrenntUndWiederDaOhneVorfuehrung() {
@@ -110,8 +148,7 @@ final class VorfuehrschalterTests: XCTestCase {
 
     func testAusDerVorfuehrungZurueckErstNachEinerBestaetigtenAntwort() {
         var s = verbunden()
-        s.melde(weg, jetzt: t(30))
-        s.melde(weg, jetzt: t(35))
+        dreiFehlschlaege(&s, ab: 30)
         XCTAssertEqual(s.lage, .vorfuehrung)
         s.melde(.unbestaetigt(grund: "Fehlerseite der Weiterleitung"), jetzt: t(45))
         XCTAssertEqual(s.lage, .vorfuehrung, "eine unbestätigte Antwort holt nicht zurück")
@@ -130,6 +167,7 @@ final class VorfuehrschalterTests: XCTestCase {
         s.melde(.unbestaetigt(grund: "unlesbar"), jetzt: t(30))
         XCTAssertEqual(s.lage, .getrennt)
         s.melde(.unbestaetigt(grund: "unlesbar"), jetzt: t(35))
+        s.melde(.unbestaetigt(grund: "unlesbar"), jetzt: t(60))
         XCTAssertEqual(s.lage, .vorfuehrung)
     }
 
@@ -203,24 +241,24 @@ final class VorfuehrschalterTests: XCTestCase {
     /// holt aus dem Vorführmodus heraus — in die Startansicht, nicht ins Rechnen.
     func testEineAbsageHoltAusDemVorfuehrmodusUndEinFehlschlagTrennt() {
         var s = verbunden()
-        s.melde(weg, jetzt: t(30))
-        s.melde(weg, jetzt: t(35))
+        dreiFehlschlaege(&s, ab: 30)
         XCTAssertEqual(s.lage, .vorfuehrung)
-        s.melde(.abgewiesen(grund: "Kennwort stimmt nicht"), jetzt: t(45))
+        s.melde(.abgewiesen(grund: "Kennwort stimmt nicht"), jetzt: t(70))
         XCTAssertEqual(s.lage, .abgewiesen)
-        XCTAssertEqual(s.seit, t(45))
+        XCTAssertEqual(s.seit, t(70))
         XCTAssertEqual(s.letzteAntwort, t0, "eine Absage ist keine bestätigte Antwort")
-        XCTAssertEqual(s.naechsterVersuch, t(50), "von vorn: 5 s")
+        XCTAssertEqual(s.naechsterVersuch, t(75), "von vorn: 5 s")
         // UND WIEDER STILL: getrennt seit dann, Vorführmodus erst nach der Schwelle.
-        s.melde(weg, jetzt: t(50))
+        s.melde(weg, jetzt: t(75))
         XCTAssertEqual(s.lage, .getrennt)
-        XCTAssertEqual(s.seit, t(50))
+        XCTAssertEqual(s.seit, t(75))
         XCTAssertEqual(s.fehlschlaege, 1)
-        s.melde(weg, jetzt: t(55))
+        s.melde(weg, jetzt: t(85))
+        s.melde(weg, jetzt: t(105))
         XCTAssertEqual(s.lage, .vorfuehrung)
         // UND RICHTIG EINGERICHTET: verbunden.
-        s.melde(.abgewiesen(grund: "x"), jetzt: t(60))
-        s.melde(.antwort, jetzt: t(61))
+        s.melde(.abgewiesen(grund: "x"), jetzt: t(110))
+        s.melde(.antwort, jetzt: t(111))
         XCTAssertEqual(s.lage, .verbunden)
         XCTAssertNil(s.letzterGrund)
     }
@@ -231,8 +269,7 @@ final class VorfuehrschalterTests: XCTestCase {
         XCTAssertEqual(s0.fensterinhalt(eingerichtet: true, arbeitet: true), .arbeit)
 
         var vorf = verbunden()
-        vorf.melde(weg, jetzt: t(30))
-        vorf.melde(weg, jetzt: t(35))
+        dreiFehlschlaege(&vorf, ab: 30)
         XCTAssertEqual(vorf.fensterinhalt(eingerichtet: true, arbeitet: true), .vorfuehrung)
         XCTAssertEqual(vorf.fensterinhalt(eingerichtet: true, arbeitet: false), .vorfuehrung)
         XCTAssertEqual(vorf.fensterinhalt(eingerichtet: false, arbeitet: true), .start,
@@ -267,20 +304,20 @@ final class VorfuehrschalterTests: XCTestCase {
     /// aber selbst nicht um: Entschieden wird an seiner eigenen Antwort.
     func testDieHeimleitungMachtDenNaechstenVersuchFaelligAberSchaltetNicht() {
         var s = verbunden()
-        for i in 0..<5 { s.melde(weg, jetzt: t(30 + Double(i))) }
+        for i in 0..<5 { s.melde(weg, jetzt: t(30 + Double(i) * 10)) }
         XCTAssertEqual(s.lage, .vorfuehrung)
-        XCTAssertFalse(s.faellig(jetzt: t(40)))
+        XCTAssertFalse(s.faellig(jetzt: t(80)))
 
-        s.heimleitungFand(.antwort(status: 200, millisekunden: 40), jetzt: t(40))
-        XCTAssertTrue(s.faellig(jetzt: t(40)), "die Leitung steht: jetzt neu versuchen")
+        s.heimleitungFand(.antwort(status: 200, millisekunden: 40), jetzt: t(80))
+        XCTAssertTrue(s.faellig(jetzt: t(80)), "die Leitung steht: jetzt neu versuchen")
         XCTAssertEqual(s.lage, .vorfuehrung, "umgeschaltet wird erst an der eigenen Antwort")
 
         // EINE ABSAGE DORT holt ebenfalls zum Versuch — sie wird den Modus verlassen.
         var v = verbunden()
-        for i in 0..<5 { v.melde(weg, jetzt: t(30 + Double(i))) }
-        v.heimleitungFand(.antwort(status: 401, millisekunden: 40), jetzt: t(40))
-        XCTAssertTrue(v.faellig(jetzt: t(40)))
-        v.melde(.abgewiesen(grund: "Kennwort stimmt nicht"), jetzt: t(40.2))
+        for i in 0..<5 { v.melde(weg, jetzt: t(30 + Double(i) * 10)) }
+        v.heimleitungFand(.antwort(status: 401, millisekunden: 40), jetzt: t(80))
+        XCTAssertTrue(v.faellig(jetzt: t(80)))
+        v.melde(.abgewiesen(grund: "Kennwort stimmt nicht"), jetzt: t(80.2))
         XCTAssertEqual(v.fensterinhalt(eingerichtet: true, arbeitet: false), .start)
     }
 
@@ -329,7 +366,7 @@ final class VorfuehrschalterTests: XCTestCase {
 
     func testErneutVerbindenSetztDenAbstandZurueckUndBleibtImVorfuehrmodus() {
         var s = verbunden()
-        for i in 0..<5 { s.melde(weg, jetzt: t(30 + Double(i))) }
+        for i in 0..<5 { s.melde(weg, jetzt: t(30 + Double(i) * 10)) }
         XCTAssertEqual(s.abstand, 60)
         s.erneutVerbinden(jetzt: t(100))
         XCTAssertTrue(s.faellig(jetzt: t(100)), "der nächste Versuch sofort")
@@ -345,7 +382,8 @@ final class VorfuehrschalterTests: XCTestCase {
 
     func testDieFristEinesVersuchsLiegtUnterDerZeitschwelle() {
         XCTAssertLessThan(Vorfuehrschalter.versuchsfrist, Vorfuehrschalter.schwelleSekunden)
-        XCTAssertGreaterThanOrEqual(Vorfuehrschalter.schwelleFehlschlaege, 2, "nie sofort")
+        XCTAssertGreaterThanOrEqual(Vorfuehrschalter.schwelleFehlschlaege, 3, "nie sofort")
+        XCTAssertLessThan(Vorfuehrschalter.schwelleSekunden, Vorfuehrschalter.schwelleSekundenAllein)
     }
 
     // ------------------------------------------------------------ Sätze und Farben
