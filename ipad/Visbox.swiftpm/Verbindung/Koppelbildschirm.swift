@@ -296,7 +296,7 @@ struct Koppelbildschirm: View {
                 }
             // UNTERWEGS ZEIGT SIE DER MAC (Entscheid 63): Er fragt den Heim-PC danach.
             // Gekoppelt wird trotzdem direkt mit dem Heim-PC — der Mac reicht nur die Zahl.
-            Text("Zu Hause steht sie im Fenster der HomeStation, zehn Minuten lang. Unterwegs "
+            Text("Zu Hause steht sie im Fenster der HomeStation, zwei Minuten lang. Unterwegs "
                  + "zeigt sie der Mac unter «iPad koppeln», zwei Minuten lang. Sie gilt nur für "
                  + "wenige Versuche.")
                 .font(Schrift.text(13))
