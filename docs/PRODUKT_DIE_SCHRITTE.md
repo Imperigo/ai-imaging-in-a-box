@@ -1545,3 +1545,11 @@ weil die Prüfung nicht mehr lief. Dabei fiel ein alter Fehler auf: Ein Lauf, de
 danach «fertig» statt «abgebrochen». Ehrlich gesagt: Die Restzeit ist eine Schätzung aus den schon fertigen Kameras und
 fehlt bei der ersten; wie sich die drei Schritte einer Kamera teilen, ist eine feste Annahme, keine Messung. Und ein
 Schritt, der schon läuft, wird nicht mitten drin unterbrochen.
+
+**Einmal koppeln, und der Mac weiss es (20.10.2026, Visbox 0.2.11 und 0.2.12).** Das iPad lässt sich jetzt ohne Abtippen
+koppeln: Es scannt einen QR-Code am Mac, oder es findet den Mac in der Nähe. Am Gerät ging der QR-Code auf Anhieb; die
+Suche in der Nähe zeigte nichts, und warum, ist noch offen — beide Geräte sagen jetzt ehrlich, wenn sie nichts finden.
+Danach merkt sich das iPad die Kopplung so, dass sie auch ein Neuaufspielen übersteht, und der Mac zeigt, dass ein iPad
+gekoppelt ist, statt immer neue Zahlen anzubieten. Ein kurzer Aussetzer im Mobilfunk wirft die Apps nicht mehr gleich in
+den Vorführmodus.
+

@@ -8046,6 +8046,9 @@ Bekannt und ausdrücklich nicht erledigt:
 ## v0.1.9 aus dem Demolauf 16.10. (ab Reset Di 20.10.2026, Protokoll 74 §138)
 
 - [x] Owner-Befund Mac: Neustart nur auf Klick, ein Fenster — Visbox 0.2.10 (§140)
+- [x] iPad koppeln per Nähe und QR-Code — Visbox 0.2.11 (§141); am Gerät: QR geht, Nähe zeigte nichts
+- [x] Visbox 0.2.12: Kopplung bleibt gemerkt (§143), iPad-Zeile am Mac und «Wer rechnet wo» nach echtem Weg, Nähe ehrlich, Netzaussetzer weich (§144), Fortschritt und Teilbild am Heim-PC (§142)
+- [ ] Nähe-Kopplung am Gerät klären (Erlaubnis «Lokales Netzwerk», Tailscale-VPN?) — QR-Code ist Hauptweg
 - [ ] iPad koppeln ohne Abtippen (Entscheide 99/99a/99b, Blatt 27, §141)
   - [x] A · Mac in der Nähe (MultipeerConnectivity, beide bestätigen, nur Adresse und Zahl) — gebaut
   - [x] B · QR-Code im Koppelfenster, Kamera in der iPad-App — gebaut
