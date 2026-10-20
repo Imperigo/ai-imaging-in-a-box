@@ -1,0 +1,161 @@
+/* Kosmo-Fenster, Welle B (U1 «der Orb wird zum Fensterkopf», C16 Arbeitsweg).
+   Gehoert zu `shell/KosmoPanel.tsx`; die Stellen am Panel selbst bleiben in
+   `kosmo-panel.css`. */
+
+/* ── Das Fenster waechst aus dem Orb (U1) ───────────────────────────────────
+   Ursprung: die Mitte des Orbs in der Ecke (`orb-ursprung.ts` setzt
+   `transform-origin` inline). Feder (`--k-feder`), ab 92 %, nie aus scale(0),
+   und KEIN festgehaltenes Endbild: `backwards` haelt nur das Anfangsbild, danach
+   ist die Animation weg — ein wirkendes `transform` (auch `none`) machte das
+   Fenster zum Anker jedes `position:fixed` darin (siehe `bewegung.css`).
+   Nur Seitenfenster und nur bei voller Bewegung (die Klasse wird nur dann
+   gesetzt; der Riegel unten ist die zweite Sicherung). */
+.kp-aus-orb {
+  animation: kp-aus-orb var(--k-feder) backwards;
+}
+@keyframes kp-aus-orb {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Der Orb im Fensterkopf ─────────────────────────────────────────────────
+   Er fliegt beim Oeffnen von der Ecke an seinen Platz: `--kp-orb-dx/dy` ist die
+   Verschiebung dorthin zurueck (gesetzt von `setzeUrsprung`). Gleiche Feder,
+   gleiches `backwards`. Ohne die Variablen steht er einfach da. */
+.kp-kopf-orb-huelle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s3);
+  flex: none;
+  /* Grundwerte; setzeUrsprung() ueberschreibt sie inline mit dem echten Weg. */
+  --kp-orb-dx: 0px;
+  --kp-orb-dy: 0px;
+}
+.kp-kopf-orb-huelle[data-wandert='ja'] {
+  animation: kp-orb-wandert var(--k-feder) backwards;
+}
+@keyframes kp-orb-wandert {
+  from {
+    transform: translate(var(--kp-orb-dx), var(--kp-orb-dy));
+  }
+  to {
+    transform: none;
+  }
+}
+.kp-kopf-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+/* Als Stopp-Knopf: 44 px Berührweg (E95), das Quadrat in der Mitte sagt «anhalten». */
+.kp-kopf-orb--stopp {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--k-radius-pill);
+  cursor: pointer;
+}
+.kp-kopf-orb--stopp:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+.kp-kopf-orb--stopp:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.kp-kopf-stopp-zeichen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 0;
+  background: var(--k-ink);
+  pointer-events: none;
+}
+.kp-kopf-wort {
+  padding: var(--k-s1) var(--k-s3);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-eins);
+  color: var(--k-ink-soft);
+  white-space: nowrap;
+}
+
+/* ── Der Arbeitsweg (C16) ───────────────────────────────────────────────────
+   Eine ruhige Zeile unter dem Kopf; offen waehrend der Arbeit, danach zu. */
+.kp-arbeitsweg {
+  padding: var(--k-s2) var(--k-s4);
+  color: var(--k-ink-soft);
+  font-size: var(--k-t-sm);
+}
+.kp-arbeitsweg-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--k-t-sm);
+  cursor: pointer;
+}
+.kp-arbeitsweg-kopf:disabled {
+  cursor: default;
+}
+.kp-arbeitsweg-kopf:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+@media (pointer: coarse) {
+  .kp-arbeitsweg-kopf {
+    min-height: 44px;
+  }
+}
+.kp-arbeitsweg-liste {
+  display: grid;
+  gap: var(--k-s2);
+  margin: 0;
+  padding: var(--k-s2) 0 0;
+  list-style: none;
+}
+.kp-arbeitsweg-zeile,
+.kp-arbeitsweg-mehr {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  line-height: var(--k-lh-knapp);
+  overflow-wrap: anywhere;
+}
+.kp-arbeitsweg-mehr {
+  color: var(--k-ink-faint);
+}
+.kp-arbeitsweg-punkt {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 var(--k-s2);
+  border-radius: 50%;
+  background: var(--k-mod-kosmo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kp-aus-orb,
+  .kp-kopf-orb-huelle[data-wandert='ja'] {
+    animation: none;
+  }
+}

@@ -31,6 +31,7 @@
 import { useState } from 'react';
 import { KButton, KSwitch, melde } from '@kosmo/ui';
 import { URHEBER_NAME, useKosmoMaus } from '../../state/kosmo-maus-freigabe';
+import { kosmoName } from '../../state/kosmo-name';
 import {
   COOP_WEG_NAME,
   coopPraesenz,
@@ -85,7 +86,7 @@ export function VollautomatikAnzeige() {
       <KButton
         tone="ghost"
         data-testid="kosmo-vollautomatik-anhalten"
-        aria-label="Alle anhalten — Vollautomatik und Coop aus, Claude und Kosmo bedienen nicht mehr"
+        aria-label={`Alle anhalten — Vollautomatik und Coop aus, Claude und ${kosmoName()} bedienen nicht mehr`}
         onClick={(e) => echt(e) && halteAlleAn()}
       >
         Alle anhalten
@@ -103,7 +104,7 @@ export function VollautomatikSchalter() {
         className="kosmo-maus-schalter-zeile"
         role="switch"
         label="Vollautomatik"
-        aria-label="Vollautomatik: Claude und Kosmo wenden ihre Vorschläge selbst an"
+        aria-label={`Vollautomatik: Claude und ${kosmoName()} wenden ihre Vorschläge selbst an`}
         data-testid="kosmo-einstellungen-vollautomatik"
         checked={voll}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +113,7 @@ export function VollautomatikSchalter() {
         }}
       />
       <p className="kosmo-maus-hinweis">
-        Vollautomatik heisst: Claude und Kosmo wenden ihre Vorschläge selbst an, auch Pakete und Werkzeuge, die sonst eine
+        Vollautomatik heisst: Claude und {kosmoName()} wenden ihre Vorschläge selbst an, auch Pakete und Werkzeuge, die sonst eine
         Bestätigung brauchen. Jeder Schritt steht im Verlauf mit Namen und Quelle und lässt sich dort zurücknehmen.
         Veröffentlichen fragt weiter dich, ein gelöschtes Projekt kommt in den Papierkorb. «Immer ablehnen» gilt weiter. Nur
         an diesem Gerät, nicht über das Internet. «Alle anhalten» schaltet sie aus.
@@ -188,14 +189,14 @@ export function KosmoCoopFlaeche() {
           tone="ghost"
           className="kosmo-coop-anhalten"
           data-testid="kosmo-coop-alle-anhalten"
-          aria-label="Alle anhalten — Claude und Kosmo ändern und bedienen nicht mehr"
+          aria-label={`Alle anhalten — Claude und ${kosmoName()} ändern und bedienen nicht mehr`}
           onClick={(e) => echt(e) && halteAlleAn()}
         >
           Alle anhalten
         </KButton>
       )}
       {laeuft && (
-        <p className="claude-anschluss-hinweis">Anhalten: Claude und Kosmo ändern und bedienen nicht mehr. Ihre Schritte bleiben und lassen sich zurücknehmen.</p>
+        <p className="claude-anschluss-hinweis">Anhalten: Claude und {kosmoName()} ändern und bedienen nicht mehr. Ihre Schritte bleiben und lassen sich zurücknehmen.</p>
       )}
       {/* Alle Schritte des Projekts in einer rollenden Liste (Datensatz-Liste, UI-Regel 1 Ausnahme). */}
       <KosmoCoopVerlauf vorsatz="kosmo-coop" />
@@ -222,7 +223,7 @@ export function KosmoCoopVerlauf({ vorsatz, hoechstens = 200 }: { vorsatz: 'kosm
   };
   return (
     <div className="kosmo-coop-verlauf" data-testid={`${vorsatz}-verlauf`}>
-      <div className="claude-anschluss-titel">Schritte von Claude und Kosmo</div>
+      <div className="claude-anschluss-titel">Schritte von Claude und {kosmoName()}</div>
       <div className="kosmo-coop-filter" role="group" aria-label="Schritte filtern">
         {(['alle', 'claude', 'kosmo'] as const).map((f) => (
           <button
@@ -237,7 +238,7 @@ export function KosmoCoopVerlauf({ vorsatz, hoechstens = 200 }: { vorsatz: 'kosm
           </button>
         ))}
       </div>
-      {schritte.length === 0 && <p className="claude-anschluss-hinweis">Keine Schritte von {filter === 'claude' ? 'Claude' : 'Kosmo'}.</p>}
+      {schritte.length === 0 && <p className="claude-anschluss-hinweis">Keine Schritte von {filter === 'claude' ? 'Claude' : kosmoName()}.</p>}
       <ol className="kosmo-coop-schritte kosmo-coop-schritte--liste">
         {schritte.map((g) => (
           <li

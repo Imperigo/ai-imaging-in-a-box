@@ -8170,10 +8170,16 @@ Bekannt und ausdrücklich nicht erledigt:
   (§159, C88)
 - [x] S2 Claude-Marke mit Karten, Erzählzeile, Selbständigkeit an der Marke, Coop-Verlauf; Brücke `visboxWirt`; KI-Leiste
   in der Knotenansicht weg — gebaut, am Gerät unbestätigt (§159, C88)
-- [ ] Einspielen `claude/kosmovis-kopf` (vier Nahtstellen) bei Int 1 (integrator)
+- [ ] Einspielen `claude/kosmovis-kopf` (vier Nahtstellen, seit S3/S4 sechs) bei Int 1 (integrator)
 - [ ] Bild am Mac: Kopfteile, Thema und Menü, Chip → «Wer rechnet?», Karte an der Marke (owner)
-- [ ] S3 Kugel und Gesprächsfeld mit dem Visbox-Assistenten (Name «Assistent»); Assistent-Leiste ausmustern
-- [ ] S4 Einstellungs-Insel (Anzeige, Darstellung samt Thema, Bewegung, Heim-PC, «Wer rechnet?», «Claude über MCP» mit
-  `visboxWirt` `claude`, Lizenzen, Neuigkeiten)
+- [x] Nachzug Runde 44 in die Kopie (Claude-Stapel an der Marke, `geom_iou_grund`; Hilfszweig per Merge) — §161
+- [x] S3 Kugel und Gesprächsfeld mit dem Visbox-Assistenten (Name «Assistent», Nahtstelle `registriereKosmoName`); das
+  Gespräch führt die Mac-App mit `Assistentengespraech`; Assistent-Leiste in der Knotenansicht ausgemustert — gebaut, am
+  Gerät unbestätigt (§161, C90)
+- [x] S4 Einstellungs-Insel (Schale, Darstellung, Anzeige, Bewegung & Klang wortgleich über `einstellungen-teile.tsx`;
+  Heim-PC, «Wer rechnet?», «Claude über MCP», Lizenzen, Neuigkeiten; Kreis und Chip öffnen sie; die App merkt Thema,
+  Akzent, Anzeige) — gebaut, am Gerät unbestätigt (§161, C90)
+- [ ] Am Mac: Kugel öffnet das Feld, Frage an den Heim-PC, Karte anwenden; ohne Heim-PC der Satz; Insel mit «Wer
+  rechnet?» und Claude-Schalter (owner)
 - [ ] S5 Abgleich gegen den aktuellen KosmoOrbit-Stand im Bau (`--abgleich`, Abbruch in `knoten_bau.py`); Befehlspalette ⌘K
   klären

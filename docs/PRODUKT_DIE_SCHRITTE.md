@@ -1729,3 +1729,23 @@ begrenzt (wie ein Weissmodell), dünne Kanten zeichnen die Körper nach, und die
 Abstand. Dazu lag in einer älteren Mappe der Knoten «Auto-Kamera» über dem gewachsenen Modell-Knoten; beim Öffnen
 rückt Visbox überlappende Knoten jetzt einmal nach unten, ohne sonst etwas zu verschieben. Ehrlich gesagt: Geprüft im
 Browser des Prüfrechners, mit dem Beispielhaus; das IFC-Modell am Mac sieht erst der Owner.
+
+**Der Assistent als Kugel und die Einstellungen als eigene Fläche (20.10.2026, Entscheide 115/116).** Unten rechts in
+der Knotenansicht steht jetzt eine runde, leicht bewegte Kugel: der Assistent, der am Heim-PC mit einem freien
+Sprachmodell (qwen3:14b) rechnet. Ein Klick öffnet daneben ein Gesprächsfeld — auf einem breiten Bildschirm als Spalte
+am rechten Rand, die die Arbeitsfläche zur Seite rückt. Man schreibt, was das Bild zeigen soll; der Assistent antwortet
+und legt, wenn er etwas einzustellen vorschlägt, eine Karte mit «Anwenden», «Ablehnen» und «Ändern» darunter. Gerechnet
+wird erst nach «Anwenden», und das löst immer ein Mensch aus. Kommt eine Antwort, während das Feld zu ist, steht ihr
+Anfang als kleine Blase an der Kugel. Fehlt der Heim-PC, steht im Feld statt der Eingabe ein Satz, warum — kein
+Eingabefeld, das nur einen Fehler zurückbrächte. Die Regeln des Gesprächs (eine Karte zugleich, keine zweite Frage,
+solange eine unterwegs ist, wie lang eine Nachricht sein darf) stehen an einer Stelle, in der Mac-App, die auch das
+Kennwort des Heim-PC hält; die Seite zeigt nur, was die App ihr sagt. Die frühere Leiste des Assistenten am rechten
+Fensterrand fällt in der Knotenansicht weg. Das Zahnrad oben links öffnet jetzt eine eigene Einstellungs-Fläche in der
+Ansicht: Darstellung (hell oder dunkel, Farbakzent), Anzeige (Schriftgrösse, Bewegung), Bewegung und Klang, dazu der
+Heim-PC mit seiner Lage und dem Knopf «Am Mac einrichten» (Adresse und Kennwort bleiben in der Mac-App), «Wer rechnet?»
+mit der Wahl je Arbeit, «Claude über MCP» mit Ein und Aus und dem Befehl zum Verbinden, die Lizenzen und was eine neue
+Fassung bringt. Das Schild «Heim-PC» oben rechts öffnet dieselbe Fläche gleich bei «Wer rechnet?». Was man dort wählt,
+behält die App über das Neuladen hinaus. Abschnitte, die es in Visbox fachlich nicht gibt (Planungsphasen, Projektname,
+Sonnenstand an dieser Stelle, Nutzungsstatistik), sind bewusst weggelassen und mit Grund aufgeschrieben. Ehrlich gesagt:
+Geprüft an den Proben und im Browser des Prüfrechners; das Gespräch mit dem echten Heim-PC und das Bild in der Mac-App
+sieht erst der Owner am Gerät.

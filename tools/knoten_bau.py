@@ -39,12 +39,23 @@ QUELLEN = ("kosmovis/HERKUNFT.json", "kosmovis/package-lock.json",
            "kosmovis/apps/visbox-knoten/src/kopf.tsx", "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts",
            "kosmovis/apps/visbox-knoten/src/thema.ts", "kosmovis/apps/visbox-knoten/src/graph-sichern.ts",
            "kosmovis/apps/visbox-knoten/src/kurztasten.ts",
+           # S3/S4 (20.10.2026): die Einstellungs-Insel des Wirts.
+           "kosmovis/apps/visbox-knoten/src/einstellungen.tsx",
            "kosmovis/apps/visbox-knoten/src/visbox.css", "kosmovis/apps/visbox-knoten/index.html",
            "kosmovis/apps/visbox-knoten/vite.config.ts")
 
 
+def _stellvertreter(wurzel: Path) -> list[str]:
+    """Die Stellvertreter der Kopie (``HERKUNFT.json``) — sie werden mitgebaut, stehen in
+    ``HERKUNFT.json`` aber nur mit ihrem Grund, nicht mit einem Abdruck. Ohne sie bliebe eine
+    Aenderung an einem Stellvertreter (S3: das Gespraechsfeld) vom Stempel unbemerkt."""
+    herkunft = json.loads((wurzel / "kosmovis" / "HERKUNFT.json").read_text(encoding="utf-8"))
+    return sorted(f"kosmovis/{p}" for p in herkunft.get("stellvertreter", {}))
+
+
 def fingerabdruck(wurzel: Path = WURZEL) -> dict[str, str]:
-    return {q: hashlib.sha256((wurzel / q).read_bytes()).hexdigest() for q in QUELLEN}
+    return {q: hashlib.sha256((wurzel / q).read_bytes()).hexdigest()
+            for q in (*QUELLEN, *_stellvertreter(wurzel))}
 
 
 def stempele() -> None:

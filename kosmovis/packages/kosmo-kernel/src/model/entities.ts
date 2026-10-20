@@ -1881,7 +1881,10 @@ export interface SheetPlacement {
    *  ABSICHTLICH NICHT ergänzt: offen ist, ob sie ein eigener Blatt-Typ
    *  ist oder eine Ansicht von oben (`view: 'ansicht'` mit einer noch
    *  fehlenden Blickrichtung) — eine Owner-Frage, nicht hier entschieden. */
-  view: 'grundriss' | 'schnitt' | 'axo' | 'situationsplan' | 'ansicht';
+  view: 'grundriss' | 'schnitt' | 'axo' | 'situationsplan' | 'ansicht' | 'detail';
+  /** Detail (Fehlerprotokoll Nr. 48, 20.10.2026): Verweis auf einen `DetailMarker`; gezeichnet über
+   *  `detailInnerSvg` aus KosmoDraw (K5). Fehlt der Marker, bleibt die Fläche leer. */
+  detailId?: string;
   /** Grundriss: Quell-Geschoss. */
   storeyId?: string;
   /** Schnitt: Schnittlinie + Sichttiefe (Weltkoordinaten mm). */
@@ -2805,6 +2808,12 @@ export interface Skizze extends Base {
  * V093-SPEZ.md` §P-D2) — eigenes 2D-Primitiv, das AM `DetailMarker` hängt
  * (`DetailMarker.zeichnung`) statt am Grundriss.
  *
+ * K5 v0.1.9 (Befund Nr. 49): die Einheit ist PAPIER-mm im Massstab des
+ * Markers (Welt-mm × 1/massstab), jetzt mit einer Nachkommastelle (0.1 mm)
+ * statt ganzzahlig — bei 1:10 also 1 mm Welt statt 10 mm. Gleiche Einheit
+ * wie vorher, darum gelten alte ganzzahlige Werte unveraendert (keine
+ * Migration). y laeuft nach UNTEN (Papier): (0,0) ist die linke OBERE Ecke.
+ *
  * KOORDINATEN-WARNUNG (unmissverständlich, weil der häufigste Rechenfehler):
  * `von`/`bis` sind DETAIL-Koordinaten — also bereits im selben skalierten,
  * auf den Bereichs-Ursprung verschobenen System, das `deriveDetail` für
@@ -2846,6 +2855,14 @@ export interface DetailStrich {
    * Position ebenfalls DETAIL-Koordinaten (s. Kopfkommentar oben).
    */
   text?: { pos: Pt; inhalt: string };
+  /**
+   * K5 v0.1.9 (Demolauf v0.1.8, Befund Nr. 49): Materialschluessel einer
+   * SIA-400-Schraffur (`derive/schraffur.ts`, `schraffurFuer`). Gesetzt
+   * heisst: `von`/`bis` sind die Gegenecken einer achsparallelen FLAECHE,
+   * keine Linie mehr. Fehlt das Feld, bleibt der Eintrag der Strich von
+   * vorher (Daten-Guard, kein Golden beruehrt).
+   */
+  schraffur?: string;
 }
 
 /**

@@ -15,6 +15,14 @@
 
 export const CLAUDE_FUSSZONE_TOKEN = '--claude-fusszone';
 
+/**
+ * Der ganze Stapel unten links (offene Vorschlagskarten, Schalter, Coop-Fläche UND die Zeile), Befund LW 20.10.2026:
+ * das Kärtchen «Ersatzdarstellung» weicht der Zeile aus, lag aber über einer offenen Vorschlagskarte. Wer in DERSELBEN
+ * Spalte unten links sitzt, weicht mit `var(--claude-stapel, …)` dem ganzen Stapel aus; die Navi-Insel (andere Spalte)
+ * bleibt an `--claude-fusszone`, sonst spränge sie bei jeder offenen Karte grundlos hoch.
+ */
+export const CLAUDE_STAPEL_TOKEN = '--claude-stapel';
+
 /** Abstand zwischen der Oberkante der Zeile und dem, was darueber ausweicht. */
 export const CLAUDE_FUSSZONE_LUFT_PX = 8;
 
@@ -33,12 +41,16 @@ export function claudeFusszonePx(fensterHoehe: number, oberkante: number, hoehe:
  * Beobachtet die Zeile und haelt das Token aktuell; gibt die Aufraeumfunktion zurueck,
  * die das Token wieder entfernt (Zeile weg = keine Fusszone).
  */
-export function beobachteClaudeFusszone(zeile: HTMLElement, wurzel: HTMLElement = document.documentElement): () => void {
+export function beobachteClaudeFusszone(
+  zeile: HTMLElement,
+  wurzel: HTMLElement = document.documentElement,
+  token: string = CLAUDE_FUSSZONE_TOKEN,
+): () => void {
   const setze = () => {
     const r = zeile.getBoundingClientRect();
     const px = claudeFusszonePx(window.innerHeight, r.top, r.height);
-    if (px === null) wurzel.style.removeProperty(CLAUDE_FUSSZONE_TOKEN);
-    else wurzel.style.setProperty(CLAUDE_FUSSZONE_TOKEN, `${px}px`);
+    if (px === null) wurzel.style.removeProperty(token);
+    else wurzel.style.setProperty(token, `${px}px`);
   };
   setze();
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(setze) : null;
@@ -47,6 +59,6 @@ export function beobachteClaudeFusszone(zeile: HTMLElement, wurzel: HTMLElement 
   return () => {
     ro?.disconnect();
     window.removeEventListener('resize', setze);
-    wurzel.style.removeProperty(CLAUDE_FUSSZONE_TOKEN);
+    wurzel.style.removeProperty(token);
   };
 }

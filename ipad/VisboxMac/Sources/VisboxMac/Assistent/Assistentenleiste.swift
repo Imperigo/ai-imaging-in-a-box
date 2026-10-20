@@ -9,6 +9,12 @@ import VisboxKern
 
 // DIE SEITENLEISTE DES ASSISTENTEN — Blatt 14, gezeichnet nach der Entwurfsflaeche.
 //
+// SEIT S3 (Plan UI-Gleichheit, 20.10.2026) NUR NOCH AUF DER VISBOX-SEITE: In der Knotenansicht steht
+// die Kugel des Assistenten mit ihrem Gespraechsfeld in der Seite (wortgleich aus KosmoOrbit, Name
+// «Assistent»). Das Gespraech fuehrt weiter DIESES Modell (`Assistentenmodell`, von der
+// `Arbeitsansicht` gehalten) — die Seite bekommt seine Lage ueber die Bruecke «visboxWirt»
+// (`Assistentenlage` im Kern) und schickt ihre Wuensche zurueck (`frageVonSeite`, `aendernVonSeite`).
+//
 // Rechts am Fenster: oben der KI-Teil (`Kileiste`, Blatt 30 Feld 1: Claude, Assistent mit
 // Modell, Selbständigkeit, Tätigkeit, Karten von Claude und Assistent), das Gespraech, darunter die violett
 // gerahmte Karte «Vorschlag:» mit «Anwenden · Ablehnen · Ändern», gestrichelt die Grenzen,
@@ -75,6 +81,9 @@ final class Assistentenmodell: ObservableObject {
     @Published private(set) var gespraech = Assistentengespraech()
     @Published private(set) var zeile: Assistentenzeile?
     @Published var eingabe = ""
+    /// Was das Eingabefeld der Knotenansicht zeigen soll — mit laufender Nummer (S3): nach dem
+    /// Senden leer, eine zurueckgelegte Nachricht, der Text von «Ändern».
+    @Published private(set) var seitenfeld: Assistentenlage.Feld?
 
     let anschluss: AssistentAnschluss
     let ordner: String?
@@ -113,16 +122,43 @@ final class Assistentenmodell: ObservableObject {
         // Hinweis (der Kern entscheidet, `Assistentengespraech.sende`).
         guard let bitte = gespraech.sende(eingabe) else { return }
         eingabe = ""
+        // DIE NACHRICHT ZURUECK INS FELD — sie kam nicht in den Verlauf. Nur, wenn das
+        // Feld noch leer ist: Was inzwischen getippt wurde, wird nicht ueberschrieben.
+        if let zurueck = await schicke(bitte), eingabe.isEmpty {
+            eingabe = zurueck
+        }
+    }
+
+    /// Eine Frage aus dem Gespraechsfeld der Knotenansicht (S3) — **dieselben Regeln** wie aus der
+    /// Leiste (`Assistentengespraech.sende`): zu lang oder leer geht nichts hinaus, der Text bleibt
+    /// in der Seite, der Satz steht im Hinweis. Ging sie hinaus, wird das Feld der Seite leer; kam sie
+    /// nicht an, liegt sie wieder darin.
+    func frageVonSeite(_ text: String) async {
+        guard let bitte = gespraech.sende(text) else { return }
+        legeInsSeitenfeld("")
+        if let zurueck = await schicke(bitte) {
+            legeInsSeitenfeld(zurueck)
+        }
+    }
+
+    /// «Ändern» aus der Knotenansicht: der Text der Karte ins Feld der Seite.
+    func aendernVonSeite() {
+        if let text = gespraech.aendere() { legeInsSeitenfeld(text) }
+    }
+
+    private func legeInsSeitenfeld(_ text: String) {
+        seitenfeld = Assistentenlage.Feld(nummer: (seitenfeld?.nummer ?? 0) + 1, text: text)
+    }
+
+    /// Schickt die Bitte; gibt die Nachricht zurueck, wenn sie scheiterte (sie kam nicht in den Verlauf).
+    private func schicke(_ bitte: Assistentenbitte) async -> String? {
         do {
             let anfrage = try Anfragen.assistent(bitte, anmeldung: anschluss.anmeldung)
             let (status, daten) = try await anschluss.schicke(anfrage)
             gespraech.empfange(try Assistentenantwort.lies(status: status, daten: daten))
+            return nil
         } catch {
-            // DIE NACHRICHT ZURUECK INS FELD — sie kam nicht in den Verlauf. Nur, wenn das
-            // Feld noch leer ist: Was inzwischen getippt wurde, wird nicht ueberschrieben.
-            if let zurueck = gespraech.scheitert(Self.satz(zu: error)), eingabe.isEmpty {
-                eingabe = zurueck
-            }
+            return gespraech.scheitert(Self.satz(zu: error))
         }
     }
 
@@ -159,7 +195,9 @@ final class Assistentenmodell: ObservableObject {
 /// Die Seitenleiste nach Blatt 14. `beiStandpunkt` meldet den vorgeschlagenen Standpunkt,
 /// damit der Plan ihn violett neben den heutigen grünen zeichnen kann (`nil`: keiner).
 struct Assistentenleiste: View {
-    @StateObject private var modell: Assistentenmodell
+    /// Von aussen gehalten (`Arbeitsansicht`), damit das Gespraech dasselbe bleibt, wenn zwischen
+    /// Knoten (Gespraechsfeld in der Seite) und Visbox-Seite (diese Leiste) gewechselt wird.
+    @ObservedObject var modell: Assistentenmodell
     private let beiStandpunkt: (VorgeschlagenerStandpunkt?) -> Void
     /// Ohne Rechner: der Satz, warum der Assistent gesperrt ist (`Rechnersperre.satz`);
     /// `nil`, wenn er geht.
@@ -168,11 +206,10 @@ struct Assistentenleiste: View {
     /// 20.10.2026): Dort traegt die Seite Claude-Marke, Karten und Selbstaendigkeit selbst.
     private let mitKi: Bool
 
-    init(anschluss: AssistentAnschluss, ordner: String? = nil, gesperrt: String? = nil,
+    init(modell: Assistentenmodell, gesperrt: String? = nil,
          mitKi: Bool = true,
          beiStandpunkt: @escaping (VorgeschlagenerStandpunkt?) -> Void = { _ in }) {
-        _modell = StateObject(wrappedValue: Assistentenmodell(anschluss: anschluss,
-                                                              ordner: ordner))
+        self.modell = modell
         self.gesperrt = gesperrt
         self.mitKi = mitKi
         self.beiStandpunkt = beiStandpunkt
@@ -220,7 +257,6 @@ struct Assistentenleiste: View {
         .padding(16)
         .frame(minWidth: 300, idealWidth: 340, maxWidth: 420, maxHeight: .infinity,
                alignment: .top)
-        .task { await modell.wacheUeberStand() }
         .onChange(of: modell.gespraech.karte?.standpunkt) { _, neu in beiStandpunkt(neu) }
     }
 }

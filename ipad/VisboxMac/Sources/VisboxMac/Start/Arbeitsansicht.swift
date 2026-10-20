@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import VisboxKern
 import WebKit
@@ -25,6 +26,12 @@ import WebKit
 /// bis 0.3.0 der Vorführmodus das Fenster ersetzte, steht jetzt oben das Band (im
 /// `Hauptfenster`), und die Assistent-Leiste ist gesperrt mit dem Satz aus `sperre`.
 ///
+/// **Seit S3/S4 (Plan UI-Gleichheit, 20.10.2026)** steht in der Knotenansicht keine Leiste mehr
+/// rechts: Die Kugel des Assistenten mit ihrem Gespraechsfeld und die Einstellungs-Insel stehen in der
+/// Seite (wortgleich aus KosmoOrbit). Das Gespraech fuehrt weiter das `Assistentenmodell` hier (seine
+/// Regeln im Kern, `Assistentengespraech`); die Seite bekommt seine Lage, «Wer rechnet?», «Claude über
+/// MCP» und «Neuigkeiten» ueber die Bruecke «visboxWirt». Auf der Visbox-Seite bleibt die Leiste.
+///
 /// *Gebaut, am Gerät unbestätigt (01.10.2026).*
 struct Arbeitsansicht: View {
     @ObservedObject var leitung: Heimleitung
@@ -35,6 +42,11 @@ struct Arbeitsansicht: View {
     /// vom `Hauptfenster`, das den Takt der Leitung haelt.
     var rechner = Knotenwirt.rechnerchip(eingerichtet: false, lage: .startet)
     var leitungSatz: String?
+    /// Fuer «Wer rechnet?» in der Einstellungs-Insel (S4): die Lage der Leitung, ob eingerichtet, und
+    /// ob eine neuere Fassung bereitsteht («Neuigkeiten»).
+    var leitungslage: Leitungslage = .startet
+    var eingerichtet = false
+    var angebot: Freigabe?
 
     // VON AUSSEN GEREICHT (`zentrale: .gemeinsam, claude: .gemeinsam` im `Hauptfenster`), nicht
     // als Vorgabewert hier — wie in der `Kileiste`: Ein Vorgabewert laese die Einzelstuecke
@@ -48,6 +60,10 @@ struct Arbeitsansicht: View {
     /// Diese Ansicht merkt sich nichts (Entscheid 85 C).
     var thema: Knotenwirt.Thema = .vorgabe
     @State private var claudeVerbunden = false
+    /// Das Gespraech mit dem Assistenten — hier gehalten, damit es beim Wechsel Knoten ↔ Seite bleibt.
+    @StateObject private var assistent = Assistentenhalter()
+    /// «Wer rechnet?» — dieselbe Ablage wie das Blatt «Einrichten» (`Rechnerwahl.schluessel`).
+    @StateObject private var rechnerwahl = Rechnerwahlspeicher()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,10 +79,14 @@ struct Arbeitsansicht: View {
             HStack(spacing: 0) {
                 flaeche
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                Rectangle().fill(Startfarbe.linie).frame(width: 1)
-                assistentenPlatz
-                    .frame(width: 360)
-                    .frame(maxHeight: .infinity)
+                // DIE LEISTE NUR AUF DER VISBOX-SEITE (S3): In der Knotenansicht steht das
+                // Gespraechsfeld an der Kugel in der Seite.
+                if wahl != .knoten {
+                    Rectangle().fill(Startfarbe.linie).frame(width: 1)
+                    assistentenPlatz
+                        .frame(width: 360)
+                        .frame(maxHeight: .infinity)
+                }
             }
         }
         .background(Startfarbe.grund)
@@ -78,15 +98,43 @@ struct Arbeitsansicht: View {
         // OB CLAUDE VERBUNDEN IST, sagt der Kern erst nach einem Kontakt (`Claudezeile`) — der
         // Kern ist ein `actor`, darum nachgesehen wie in der KI-Leiste.
         .task { await wacheUeberClaude() }
+        // DER ASSISTENT FUER BEIDE FLAECHEN: angelegt mit der Adresse des Heim-PC, sein Stand
+        // nachgesehen, solange die Arbeit offen ist (vorher tat das die Leiste selbst).
+        .onAppear { assistent.richteEin(basis: leitung.adresse, anmeldung: leitung.anmeldung) }
+        .onChange(of: leitung.adresse) { _, neu in
+            assistent.richteEin(basis: neu, anmeldung: leitung.anmeldung)
+        }
+        .onChange(of: leitung.anmeldung) { _, neu in
+            assistent.richteEin(basis: leitung.adresse, anmeldung: neu)
+        }
+        .onDisappear { assistent.halte() }
     }
 
     /// Die Lage fuer die Kopfteile der Knotenansicht (`window.visboxWirt.lage`). Kein Kennwort.
     private var wirtlage: Knotenwirt.Lage {
         Knotenwirt.Lage(leitung: leitungSatz, sperre: sperre.satz, rechner: rechner,
                         claudeVerbunden: claudeVerbunden,
-                        version: Knotenwirt.version(Aktualisierung.kleineNummer(
-                            Aktualisierung.laufendeNummer(Bundle.main.infoDictionary))),
-                        modus: zentrale.modus, thema: thema)
+                        version: fassung, modus: zentrale.modus, thema: thema,
+                        assistent: assistentenlage,
+                        rechnerwahl: Rechnerwahllage(wahl: rechnerwahl.wahl, befund: rechnerwahl.befund,
+                                                     lage: leitungslage, eingerichtet: eingerichtet),
+                        claudeMcp: Claudemcplage(an: claude.lage != .aus, satz: claude.lage.satz),
+                        neuigkeiten: Neuigkeitenlage(fassung: fassung, angebot: angebot))
+    }
+
+    private var fassung: String {
+        Knotenwirt.version(Aktualisierung.kleineNummer(
+            Aktualisierung.laufendeNummer(Bundle.main.infoDictionary)))
+    }
+
+    /// Das Gespraech fuer das Feld an der Kugel — ohne Heim-PC mit dem Satz, warum nicht.
+    private var assistentenlage: Assistentenlage {
+        guard let modell = assistent.modell else {
+            return Assistentenlage(gespraech: Assistentengespraech(), zeile: nil,
+                                   gesperrt: sperre.satz ?? Assistentenlage.ohneHeim)
+        }
+        return Assistentenlage(gespraech: modell.gespraech, zeile: modell.zeile, gesperrt: sperre.satz,
+                               feld: modell.seitenfeld)
     }
 
     /// Ein Wunsch der Kopfteile (`Knotenwirt.Wunsch`).
@@ -98,15 +146,36 @@ struct Arbeitsansicht: View {
             zentrale.setzeModus(modus)
         case .rechner:
             NotificationCenter.default.post(name: .einrichtenOeffnen, object: Einrichtenanfang.rechner)
+        case .rechnerWaehlen(let arbeit, let ort):
+            rechnerwahl.waehle(ort, fuer: arbeit)
         case .claude(let an):
             claude.schalte(an)
         case .oeffne(.startansicht):
             zurueck()
         case .oeffne(.visboxSeite):
             wahl = .seite
+        case .oeffne(.einrichten):
+            NotificationCenter.default.post(name: .einrichtenOeffnen, object: nil)
+        case .oeffne(.aktualisieren):
+            NotificationCenter.default.post(name: .aktualisierenOeffnen, object: nil)
         case .einstellung(let abschnitt):
             NotificationCenter.default.post(name: .einrichtenOeffnen,
                                             object: Einrichtenanfang(abschnitt: abschnitt))
+        case .assistent(let w):
+            erfuelleAssistent(w)
+        case .merke(let schluessel, let wert):
+            Knotengedaechtnis.merke(schluessel, wert)
+        }
+    }
+
+    /// Ein Wunsch des Gespraechsfelds — ohne Heim-PC geschieht nichts (das Feld sagt den Satz).
+    private func erfuelleAssistent(_ w: Assistentenwunsch) {
+        guard let modell = assistent.modell, sperre.satz == nil else { return }
+        switch w {
+        case .frage(let text): Task { await modell.frageVonSeite(text) }
+        case .anwenden: Task { await modell.anwenden() }
+        case .ablehnen: modell.ablehnen()
+        case .aendern: modell.aendernVonSeite()
         }
     }
 
@@ -155,10 +224,8 @@ struct Arbeitsansicht: View {
     // Rueckgaengig-Verlauf fuer Claude bleibt getrennt (Entscheid 114).
     @ViewBuilder
     private var assistentenPlatz: some View {
-        if let basis = leitung.adresse {
-            Assistentenleiste(anschluss: AssistentAnschluss(basis: basis,
-                                                            anmeldung: leitung.anmeldung),
-                              gesperrt: sperre.satz, mitKi: wahl != .knoten)
+        if let modell = assistent.modell {
+            Assistentenleiste(modell: modell, gesperrt: sperre.satz, mitKi: wahl != .knoten)
         } else {
             Assistentenplatzhalter(stand: leitung.bild.assistent, mitKi: wahl != .knoten)
         }
@@ -297,6 +364,10 @@ struct Heimflaeche: NSViewRepresentable {
         if let lage = wirtlage {
             einstellung.userContentController.addUserScript(Knotenwirtbote.themaSkript(lage.thema))
         }
+        // WAS DIE SEITE BEHAELT (S4): Akzent, Anzeige, Rueckgaengig-Schalter — vor dem ersten Bild.
+        einstellung.userContentController.addUserScript(
+            WKUserScript(source: Knotenwirt.merkSkript(Knotengedaechtnis.werte),
+                         injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let ansicht = WKWebView(frame: .zero, configuration: einstellung)
         let lotse = context.coordinator
         lotse.melde = { satz in meldung = satz }
@@ -468,7 +539,44 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
 extension Notification.Name {
     /// «Darstellung → Visbox-Seite» im Menue der App (Entscheid 94, 14.10.2026).
     static let seiteOeffnen = Notification.Name("flaeche.seiteOeffnen")
-    /// Die Knotenansicht fragt nach dem Blatt «Einrichten» (Einstellungs-Kreis, Heim-PC-Chip);
-    /// `object` ist ein `Einrichtenanfang`.
+    /// Die Knotenansicht fragt nach dem Blatt «Einrichten» (Einstellungs-Insel › Heim-PC «Am Mac
+    /// einrichten»); `object` ist ein `Einrichtenanfang` oder `nil` (der Anfang: die Kopplung).
     static let einrichtenOeffnen = Notification.Name("flaeche.einrichtenOeffnen")
+    /// Die Knotenansicht fragt nach «Aktualisieren» (Einstellungs-Insel › Neuigkeiten).
+    static let aktualisierenOeffnen = Notification.Name("flaeche.aktualisierenOeffnen")
+}
+
+/// Haelt das Gespraech mit dem Assistenten fuer beide Flaechen (S3) — neu angelegt nur, wenn sich
+/// Adresse oder Anmeldung aendern. Reicht jede Aenderung des Modells an die Ansicht weiter, damit die
+/// Lage der Knotenansicht nachkommt.
+@MainActor
+final class Assistentenhalter: ObservableObject {
+    @Published private(set) var modell: Assistentenmodell?
+    private var basis: URL?
+    private var anmeldung: Anmeldung?
+    private var weiter: AnyCancellable?
+    private var wache: Task<Void, Never>?
+
+    func richteEin(basis neu: URL?, anmeldung neueAnmeldung: Anmeldung?) {
+        guard modell == nil || neu != basis || neueAnmeldung != anmeldung else { return }
+        basis = neu
+        anmeldung = neueAnmeldung
+        halte()
+        guard let neu else {
+            modell = nil
+            weiter = nil
+            return
+        }
+        let m = Assistentenmodell(anschluss: AssistentAnschluss(basis: neu, anmeldung: neueAnmeldung),
+                                  ordner: nil)
+        weiter = m.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        modell = m
+        // DER STAND DES ASSISTENTEN (`GET /api/heim`), solange die Arbeit offen ist.
+        wache = Task { await m.wacheUeberStand() }
+    }
+
+    func halte() {
+        wache?.cancel()
+        wache = nil
+    }
 }

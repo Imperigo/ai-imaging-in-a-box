@@ -1,4 +1,4 @@
-import type { Urheber } from '../../state/kosmo-maus-freigabe';
+import { URHEBER_NAME as NAME, type Urheber } from '../../state/kosmo-maus-freigabe';
 
 /**
  * **Erzählzeile** (Video-Analyse 16.10. L5-5/13/18/21, Integrator L1-7, Nr. 55 Teil 2).
@@ -54,8 +54,6 @@ export type Erzaehlung =
   | { art: 'schritt'; urheber: Urheber; text: string }
   | { art: 'arbeitet'; urheber: Urheber; text: string }
   | { art: 'fehler'; urheber: Urheber; text: string; zusatz: string };
-
-const NAME: Record<Urheber, string> = { claude: 'Claude', kosmo: 'Kosmo' };
 
 /**
  * Werkzeugname lesbar: der Namensraum vor dem ersten Unterstrich fällt weg (`design_wandZeichnen`

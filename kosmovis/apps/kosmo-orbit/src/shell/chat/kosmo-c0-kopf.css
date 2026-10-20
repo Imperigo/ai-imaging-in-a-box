@@ -1,0 +1,170 @@
+/* C0 (Bild k1) — Marke in der Kopfzeile und Auftragsliste darunter.
+   Nichts schwebt: beides sitzt im Fluss der Spalte, ohne eigenen Rollbalken
+   (UI-Regel 1); Text bricht um statt abzuschneiden (UI-Regel 2). */
+.kp-marke {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-width: 0;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  /* Bild k1 zeigt die Marke EINZEILIG. Pruefer-Mangel 3: bei 430 px brach sie
+     in zwei Zeilen um (133 px Platz, 34 px Hoehe). Sie steht jetzt auf einer
+     Zeile; den Platz schafft die Kopfzeile des Seitenfensters (s. unten),
+     nicht ein Abschneiden. */
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.kp-marke-punkt {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--k-success, var(--k-accent));
+}
+.kp-marke-punkt--getrennt {
+  background: var(--k-warning);
+}
+/* L71: erreichbar, aber noch ohne echte Modellantwort — Ring statt Scheibe. */
+.kp-marke-punkt--bereit {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--k-success, var(--k-accent));
+}
+.kp-auftrag {
+  flex: 0 0 auto;
+  padding: var(--k-s3) var(--k-s4);
+  border-bottom: 1px solid var(--k-hairline, var(--k-sunken));
+}
+.kp-auftrag-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+}
+.kp-auftrag-titel {
+  flex: 0 0 auto;
+  font-size: var(--k-t-sm);
+  font-weight: 600;
+  color: var(--k-ink);
+}
+.kp-auftrag-balken {
+  flex: 1 1 auto;
+  min-width: 40px;
+  height: 6px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-sunken);
+  overflow: hidden;
+}
+.kp-auftrag-balken-fuellung {
+  height: 100%;
+  background: var(--k-accent);
+}
+.kp-auftrag-klappen {
+  flex: 0 0 auto;
+  min-width: 32px;
+  min-height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--k-ink-soft);
+  cursor: pointer;
+}
+.kp-auftrag-liste {
+  list-style: none;
+  margin: var(--k-s2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+.kp-auftrag-schritt {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  font-size: var(--k-t-sm);
+  overflow-wrap: anywhere;
+}
+.kp-auftrag-marke {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--k-ink-soft);
+  font-size: var(--k-t-xs);
+  line-height: var(--k-lh-eins);
+}
+.kp-auftrag-marke--erledigt {
+  background: var(--k-accent);
+  border-color: var(--k-accent);
+  color: var(--k-accent-ink, #fff);
+}
+.kp-auftrag-marke--wartet {
+  border-color: var(--k-warning);
+  color: var(--k-warning);
+  font-weight: 700;
+}
+.kp-auftrag-marke--laeuft {
+  border-color: var(--k-accent);
+  background: var(--k-accent-wash);
+}
+.kp-auftrag-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kp-auftrag-wartet {
+  flex: 0 0 auto;
+  color: var(--k-warning);
+}
+
+/* C0 Nachbesserung 7 (Pruefer-Mangel 3): die Kopfzeile des Seitenfensters
+   gibt der Marke ihren einzeiligen Platz. Gemessen bei 430 px: Symbol 18,
+   Titel 42, Marke 133 (natuerlich rund 190), Kosten 27, drei Knoepfe
+   41+42+42, dazu 7 Abstaende a 12 px. Der leere Fuell-Block kostete zwei
+   davon; stattdessen schiebt `margin-left: auto` die Knopfgruppe nach rechts.
+   Abstand 8 statt 12 px und 10 statt 14 px Randabstand geben den Rest. Die
+   Knoepfe bleiben 32 px hoch und breit (Mausweg). */
+.kp-panel--seitenfenster .kp-kopf {
+  gap: var(--k-s2);
+  padding-left: 12px;
+  padding-right: 8px;
+}
+.kp-panel--seitenfenster .kp-kopf > .kp-fuell {
+  display: none;
+}
+.kp-panel--seitenfenster .kp-kopf > [data-testid='tts-kopf-schalter'] {
+  margin-left: auto;
+}
+/* C4b (Paket c3-plan): der Zeitleisten-Schalter kam als vierter Knopf dazu.
+   Gemessen bei 430 px waren die Kopfknoepfe 41-42 px breit statt der oben
+   genannten 32 — mit dem vierten Knopf ragte «Schliessen» 30 px hinaus.
+   Jetzt sind sie wirklich 32 x 32 px (Mausweg), statt die Marke zu kuerzen. */
+.kp-panel--seitenfenster .kp-kopf > .k-btn,
+.kp-panel--seitenfenster .kp-kopf > .k-tooltip > .k-btn {
+  width: 32px;
+  min-width: 32px;
+  padding-left: 0;
+  padding-right: 0;
+  justify-content: center;
+}
+/* Paket c3-plan: die Marke darf schrumpfen, aber nur im Modellnamen.
+   Vorher `flex: 0 0 auto` — ein langer Name schob «Schliessen» hinaus. */
+.kp-panel--seitenfenster .kp-kopf > .kp-marke {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+.kp-marke-text {
+  display: flex;
+  min-width: 0;
+}
+.kp-marke-fest {
+  flex: 0 0 auto;
+  /* Leerzeichen am Rand eines Flex-Kindes fielen sonst weg. */
+  white-space: pre;
+}
+.kp-marke-modell {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

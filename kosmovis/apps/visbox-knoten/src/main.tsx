@@ -36,6 +36,12 @@
  * mit Karten und Selbständigkeit, Fensterrahmen, Erzählzeile). Die zweite Brücke `visboxWirt`
  * (`wirt-bruecke.ts`) bringt, was nur die App weiss — Rechner, Claude-Lage, Fassung, Modus, Thema.
  * Die Mac-Kopfleiste und die KI-Leiste fallen in der Knotenansicht weg.
+ *
+ * S3/S4 (Plan UI-Gleichheit, 20.10.2026): die Kugel der Vis-Station (wortgleich, `KosmoOrb`) öffnet das
+ * Gesprächsfeld des Assistenten (`VisboxAssistent`; das Gespräch führt die Mac-App), der Name
+ * «Assistent» ist vor dem ersten Bild angemeldet (`meldeAssistentAn`). Der Einstellungs-Kreis und der
+ * Heim-PC-Chip öffnen die Einstellungs-Insel (`VisboxEinstellungen`). Die Assistent-Leiste der Mac-App
+ * fällt in der Knotenansicht weg.
  */
 import '../../kosmo-orbit/src/zod-jitless'; // muss der erste Import bleiben, s. Datei-Kopf dort
 import { StrictMode } from 'react';
@@ -58,7 +64,8 @@ import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
 import { haengeKiAn } from './ki-wirt';
 import { haengeWirtAn, meldeSichern } from './wirt-bruecke';
 import { legeThema } from './thema';
-import { meldePaletteAn, VisboxClaude, VisboxKopf } from './kopf';
+import { meldeAssistentAn, meldePaletteAn, VisboxAssistent, VisboxClaude, VisboxKopf, wechsleGespraech } from './kopf';
+import { VisboxEinstellungen } from './einstellungen';
 import { haengeAnWerkzeugsatz } from '../../kosmo-orbit/src/state/claude-anschluss';
 import { haengeAnKiVerlauf } from '../../kosmo-orbit/src/state/kosmo-coop';
 import {
@@ -88,10 +95,12 @@ function VisboxKnoten() {
             className="k-einblenden app-station-huelle"
             data-vis-aktives-projekt={szeneBauteileAnzahl(useProject.getState().doc) > 0 ? 'ja' : 'nein'}
           >
-            <VisWorkspace />
+            <VisWorkspace onKosmoOeffnen={wechsleGespraech} />
           </div>
         </KFehlerzone>
+        <VisboxAssistent />
       </main>
+      <VisboxEinstellungen />
       <KMeldungen />
       <KAnsageBereich />
       <KBestaetigung />
@@ -105,6 +114,8 @@ ladeAnzeige();
 legeThema();
 // Die Ziele der Palette am Logo: «Knoten» und «Visbox-Seite» statt der Stationen von KosmoOrbit.
 meldePaletteAn();
+// Der Name des Assistenten an Kugel, Fensterkopf und Coop-Teilen (Entscheid 116 (2)).
+meldeAssistentAn();
 
 // STRG+Z / ⌘Z (auf-20261014-284 D5): In KosmoOrbit haengt das Kuerzel am Hauptprogramm, das
 // nicht kopiert ist — hier darum der Wirt selbst (`kurztasten.ts`).

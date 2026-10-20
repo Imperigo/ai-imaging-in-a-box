@@ -7,9 +7,9 @@
  * `localStorage` (`kosmo.thema`, `kosmo.akzent`). Dieselben Schlüssel und Vorgaben hier — gesetzt
  * **vor dem ersten Bild**, sonst blitzt die helle Fläche auf.
  *
- * Umgeschaltet wird über die Mac-App (Menü «Darstellung», `window.visboxWirt.lage({thema})`): Ihr
- * Webfenster hat keinen bleibenden Speicher, die App merkt die Wahl über den Neustart hinaus.
- * Später auch in der Einstellungs-Insel (S4).
+ * Umgeschaltet wird über die Mac-App (Menü «Darstellung», `window.visboxWirt.lage({thema})`) und seit
+ * S4 in der Einstellungs-Insel («Darstellung», wortgleich aus KosmoOrbit). Das Webfenster hat keinen
+ * bleibenden Speicher; die App merkt die Wahl über den Neustart hinaus (`merke`, `wirt-bruecke.ts`).
  */
 import type { ThemeName } from '@kosmo/ui';
 
@@ -52,4 +52,15 @@ export function legeThema(wurzel: HTMLElement = document.documentElement): Theme
 export function setzeThema(thema: ThemeName, wurzel: HTMLElement = document.documentElement): void {
   wurzel.dataset.theme = thema;
   schreib(THEMA_SCHLUESSEL, thema);
+}
+
+/** Ein anderer Akzent (Einstellungs-Insel) — gesetzt und gemerkt wie in KosmoOrbit. */
+export function setzeAkzent(akzent: string, wurzel: HTMLElement = document.documentElement): void {
+  wurzel.dataset.akzent = akzent;
+  schreib(AKZENT_SCHLUESSEL, akzent);
+}
+
+/** Thema und Akzent, wie sie gerade an `<html>` stehen. */
+export function jetzigeDarstellung(wurzel: HTMLElement = document.documentElement): { thema: ThemeName; akzent: string } {
+  return { thema: wurzel.dataset.theme === 'paper' ? 'paper' : 'orbit', akzent: wurzel.dataset.akzent ?? AKZENT_VORGABE };
 }

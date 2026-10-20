@@ -24,11 +24,18 @@
 
 import { create } from 'zustand';
 import type { PaketSchritt } from './project-store';
+import { kosmoName } from './kosmo-name';
 
 /** Wer handelt. Jede Handlung trägt genau einen davon (E158: «Urheber je Änderung»). */
 export type Urheber = 'claude' | 'kosmo';
 export const URHEBER: readonly Urheber[] = ['claude', 'kosmo'];
-export const URHEBER_NAME: Record<Urheber, string> = { claude: 'Claude', kosmo: 'Kosmo' };
+/** Der Name je Urheber; «kosmo» liest den angemeldeten Namen beim Zeichnen (`state/kosmo-name.ts`). */
+export const URHEBER_NAME: Readonly<Record<Urheber, string>> = {
+  claude: 'Claude',
+  get kosmo() {
+    return kosmoName();
+  },
+};
 
 export interface AgentFreigabe {
   mitschauen: boolean;

@@ -9,14 +9,19 @@
  *  - der Hinweis «zu schmal» (`app-schmal-hinweis`, nur unter 700 px sichtbar);
  *  - die Palette am Logo (`WerkzeugPalette`): Klick = Startansicht, aufgefächert «Knoten» (offen) und
  *    «Visbox-Seite» (Entscheid 116 (1));
- *  - der Einstellungs-Kreis (`island-einstellungen-kreis`) — öffnet bis S4 die Einstellungen der App;
+ *  - der Einstellungs-Kreis (`island-einstellungen-kreis`) — öffnet seit S4 die Einstellungs-Insel
+ *    (`einstellungen.tsx`, Schale und Abschnitte wortgleich aus KosmoOrbit);
  *  - der Speichern-Kreis (`SpeichernKreis`) mit der Lage aus `graph-sichern.ts`; ohne Handgriffe, weil
  *    Visbox still auf dem Heim-PC sichert und keine .kosmo-Datei kennt («Öffnen» ist Ausnahme);
  *  - die Zweitgruppe (`InselZweitgruppe`): Heim-PC-Chip in der Optik des Sync-Chips (Klick: «Wer
- *    rechnet?», Entscheid 116 (5)), Rückgängig, Wiederholen, die Fassung der App; kein Rundgang
+ *    rechnet?» in der Einstellungs-Insel, Entscheid 116 (5)), Rückgängig, Wiederholen, die Fassung der App; kein Rundgang
  *    (116 (7): er hat keine Vis-Schritte);
  *  - die Claude-Marke mit Karten (`ClaudeAnschluss`), an ihr die Selbständigkeit (der Modus-Schalter),
- *    der Fensterrahmen der Vollautomatik und die Erzählzeile.
+ *    der Fensterrahmen der Vollautomatik und die Erzählzeile;
+ *  - seit S3 das Gesprächsfeld des Assistenten (`VisboxAssistent`): die Kugel steht wortgleich in der
+ *    Vis-Station (`KosmoOrb` in `VisWorkspace`), ihr Klick öffnet das Feld (`KosmoPanel`, Stellvertreter
+ *    mit der Anatomie von dort). Der Name ist «Assistent» (Entscheid 116 (2), `ASSISTENT_NAME`,
+ *    angemeldet über `registriereKosmoName`).
  *
  * Was KosmoOrbit dort zeigt und Visbox nicht hat, steht mit Grund in `kosmovis/UI_AUSNAHMEN.json`;
  * die Probe `tests/test_kosmovis_ui_gleichheit.py` hält beides zusammen.
@@ -32,8 +37,25 @@ import { ErzaehlZeile } from '../../kosmo-orbit/src/shell/claude-anschluss/Erzae
 import { VollautomatikSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoCoop';
 import { eigen } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausSchalter';
 import { modusAus, setzeCoop, useKosmoCoop, type VisboxModus } from '../../kosmo-orbit/src/state/kosmo-coop';
+import { registriereKosmoName } from '../../kosmo-orbit/src/state/kosmo-name';
+import { KosmoPanel } from '../../kosmo-orbit/src/shell/KosmoPanel';
+import { useKosmoGespraech, zeigeKosmo } from '../../kosmo-orbit/src/shell/kosmo-gespraech';
+import { oeffneEinstellungen } from './einstellungen';
 import '../../kosmo-orbit/src/modules/design/island/island.css';
-import { sende, useWirt, type RechnerLage } from './wirt-bruecke';
+import { OHNE_APP_ASSISTENT, sende, useWirt, type RechnerLage } from './wirt-bruecke';
+
+/** Der Name des Assistenten (Entscheid 116 (2)) — derselbe wie im Kern der App (`Knotenwirt.assistentName`). */
+export const ASSISTENT_NAME = 'Assistent';
+
+/** Vor dem ersten Bild (`main.tsx`): Kugel, Fensterkopf und Coop-Teile tragen «Assistent» statt «Kosmo». */
+export function meldeAssistentAn(): void {
+  registriereKosmoName(ASSISTENT_NAME);
+}
+
+/** Der Klick auf die Kugel: das Feld auf oder zu (wie `setKosmoOpen` in KosmoOrbit). */
+export function wechsleGespraech(): void {
+  zeigeKosmo(useKosmoGespraech.getState().ansicht === 'gross' ? 'zu' : 'gross');
+}
 
 /** Die Ziele der Palette (Entscheid 116 (1)). «Knoten» ist die offene Fläche. */
 export const VISBOX_PALETTE: readonly PalettenGruppe[] = [
@@ -114,7 +136,7 @@ export function VisboxKopf() {
         />
       </div>
       <button
-        onClick={() => sende({ art: 'einstellung' })}
+        onClick={() => oeffneEinstellungen()}
         className="k-druck isl-einstellungen-kreis"
         aria-label="Einstellungen öffnen"
         title="Einstellungen"
@@ -130,7 +152,7 @@ export function VisboxKopf() {
         peers={0}
         syncOffen={false}
         version={version ?? ''}
-        onSyncToggle={() => sende({ art: 'rechner' })}
+        onSyncToggle={() => oeffneEinstellungen('rechner')}
         chip={heimChip(rechner)}
       />
     </>
@@ -146,4 +168,15 @@ export function VisboxClaude() {
       <ErzaehlZeile />
     </>
   );
+}
+
+/**
+ * Das Gesprächsfeld des Assistenten (S3) — in der Wurzel, wie `KosmoPanel` in KosmoOrbit in `<main>`
+ * der `.app-wurzel` steht (die Regeln `.app-wurzel:has(.kp-panel--seitenfenster)` brauchen das).
+ * Ohne App führt niemand das Gespräch: Das Feld sagt dann, wo es den Assistenten gibt.
+ */
+export function VisboxAssistent() {
+  const offen = useKosmoGespraech((z) => z.ansicht === 'gross');
+  if (!offen) return null;
+  return <KosmoPanel sichtbar station="vis" onClose={() => zeigeKosmo('zu')} ohneMotorSatz={OHNE_APP_ASSISTENT} />;
 }

@@ -154,6 +154,32 @@ WOERTLICH = (
     f"{APP}/state/claude-taetigkeit.ts",
     f"{APP}/state/kosmo-maus-freigabe.ts",
     f"{APP}/state/coop-marke.ts",
+    # S3 (Plan UI-Gleichheit, Entscheide 115/116 (2), 20.10.2026): die Kugel der Insel-Stationen und
+    # der Kopf des Gespraechsfelds — wortgleich bis auf den Namen, den der Wirt ueber die Nahtstelle
+    # `registriereKosmoName` anmeldet («Assistent», `state/kosmo-name.ts`, Zweig `claude/kosmovis-kopf`).
+    # Den Rumpf des Felds (`KosmoPanel.tsx`, 10 000 Zeilen mit Kosmos Motor) traegt ein Stellvertreter
+    # mit derselben Anatomie (`.kp-panel`), der mit dem Visbox-Assistenten spricht.
+    f"{APP}/modules/design/island/KosmoOrb.tsx",
+    f"{APP}/shell/kosmo-eck-orb/**",
+    f"{APP}/shell/kosmo-fenster/KosmoKopfOrb.tsx",
+    f"{APP}/shell/kosmo-fenster/kosmo-fenster.css",
+    f"{APP}/shell/kosmo-fenster/orb-ursprung.ts",
+    f"{APP}/shell/kosmo-panel.css",
+    f"{APP}/shell/chat/KosmoMarke.tsx",
+    f"{APP}/shell/chat/kosmo-c0-kopf.css",
+    f"{APP}/shell/chat/use-seitenfenster-breit.ts",
+    f"{APP}/modules/prepare/baum/KosmoFragtKarte.tsx",
+    f"{APP}/modules/prepare/baum/kosmo-fragt.css",
+    f"{APP}/state/kosmo-status.ts",
+    f"{APP}/state/kosmo-name.ts",
+    # S4: die Einstellungs-Insel — Schale, «Darstellung», «Anzeige», der Rahmen von «Bewegung &
+    # Klang» und der Rueckgaengig-Schalter (`einstellungen-teile.tsx`, Nahtstelle auf
+    # `claude/kosmovis-kopf`), ihr CSS und die Akzente. Die Abschnitte, die es nur in Visbox gibt
+    # (Heim-PC, «Wer rechnet?», Claude ueber MCP), stehen im Wirt (`apps/visbox-knoten`).
+    f"{APP}/shell/einstellungen-teile.tsx",
+    f"{APP}/shell/einstellungen.css",
+    f"{APP}/shell/orbit-065.css",
+    f"{APP}/shell/akzente.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -257,6 +283,9 @@ PROBEN = (
     # Knotenansicht (`modules/vis/ki-werkzeuge.ts`, kommt mit `modules/vis/**`) — Liste, Karte,
     # Paket, graph_lesen und der eigene KI-Verlauf. Nur Vis-Befehle, darum hier grün.
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts",
+    # S3/S4 (20.10.2026): die Nahtstellen fuer den Namen und die Einstellungs-Teile — je der
+    # Visbox-Fall und der Gegenbeleg «ohne Wirt wie bisher».
+    "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

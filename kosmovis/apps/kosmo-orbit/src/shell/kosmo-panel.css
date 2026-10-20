@@ -1,0 +1,2911 @@
+/* KosmoPanel (v0.8.0B / P7, Stations-Welle Design + Shell-Rest) — visuelle
+   Hülle auf Glass-/Flächenstufen-Grammatik; die `window.__kosmoChat`/
+   `__kosmoBlick`/`__kosmoStatus`-Testbrücken und die Audio-/Chat-Logik
+   bleiben FORMIDENTISCH unangetastet (611 E2E-Referenzen) — dieses CSS
+   betrifft ausschliesslich Darstellung. Zustandsgetriebene Farben (aktiver
+   Sprecher/Bubble-Herkunft/Karten-Status) laufen über Modifier-Klassen statt
+   Inline-Style-Ternaries — dieselbe Auswahl-Zustand-Semantik wie
+   `einstellungen.css`/`design.css`. */
+
+/* P-SB (Owner 23.07. wörtlich «wenn man draufklickt kommt immer noch der
+   balken .. der soll nicht mehr da sein sondern alles in blasen», bekräftigt
+   28.07.): der «Balken» WAR eine `width:340px`-Flex-Spalte über die volle
+   Fensterhöhe. P-SB machte daraus ein schwebendes Glas-Fenster; P-BS gibt
+   dem Fenster jetzt die verbindliche Gestalt der Owner-Freigabe.
+
+   P-BS «Die Blase wächst in drei Stufen» (`docs/KOSMO-UI-FREIGABE-01.md`,
+   Grundsatzentscheid 1f/1c, Handoff 5b): die Blase hat GENAU drei Stufen —
+   S 480×300 · M 620×520 · L 760×880 — und keine Zustände dazwischen.
+   `data-stufe` (gesetzt von `useBlaseStufe`, KosmoPanel.tsx) wählt die
+   Stufe; die Stufen-Regeln ändern AUSSCHLIESSLICH width/height. Der ANKER
+   ist die untere rechte Ecke: `right`/`bottom` stehen nur hier, in KEINER
+   Stufen-Regel — die Blase wächst nach oben und links, die Ecke steht
+   («fühlt sich wie Atmen an und nicht wie ein Fenster, das aufreisst»).
+
+   P-ZL (Owner-Nachtrag N-3, 29.07.2026): `data-stufe` trägt seit v0.9.5 die
+   DARGESTELLTE Stufe — auf der Zentrale gedeckelt bei `m`, weil L dort
+   nachgemessen breiter und höher ist als die freie Fläche (ROADMAP 686).
+   Die gespeicherte Stufe steht unverändert daneben in
+   `data-stufe-gespeichert` und ist hier bewusst OHNE Regel: der Deckel ist
+   eine Grenze der Darstellung, keine zweite Gestalt. Wer je eine Regel auf
+   `data-stufe-gespeichert` schreibt, macht aus dem Deckel einen Zustand.
+
+   GEOMETRIE-LESART der scheinbar widersprüchlichen Freigabe-Abstände
+   (5b «56 über dem Orb» vs. 2a «108 px über dem Boden» / 2j «zum Orb 108»;
+   5b «24 zu jeder Insel» vs. 2a «32 px vor der rechten Insel»):
+   108 ist das AUSSENMASS Unterkante-Blase→Boden im Freigabe-Screen (dort
+   sitzt der 52-px-Orb direkt an der Boden-Zone: 52 + 56 = 108) — 56 ist
+   das LICHTMASS Blase→Orb-Oberkante und als harte Grenze massgeblich. In
+   dieser App steht der Island-Orb 64 px hoch mit 24 px Rand (island.css
+   `.isl-orb-wurzel`, Oberkante 88 px) → Unterkante Blase = 88 + 56 = 144.
+   Analog ist 24 die harte MINDESTGRENZE zu jeder Insel und 32 das
+   GESTALTETE Aussenmass vor der rechten Insel (Screen 2a) — wir setzen 32
+   und erfüllen damit ≥24. Ausführlich: P-BS-Bericht + Kopfkommentar
+   `BLASE_STUFEN` in KosmoPanel.tsx.
+
+   Höhen-Klemme: `min(…, 100dvh - 328px)` = 144 unten + 184 oben — auf
+   kleinen Fenstern klemmt die Stufe, statt eine Insel ODER die
+   Werkzeugleiste zu berühren (die 184 sind seit P-DECKEL-1 die
+   massgebliche Zahl, nicht mehr die frühere 82 — Herleitung im
+   P-DECKEL-1-Block unten, direkt vor `.kp-panel`). Breiten-Klemme
+   analog `100vw - 56px` (32 rechts + 24 links). Harte Obergrenze 900×880
+   (5b) — auch die ziehbare Breite (Abnahme 01, Griff unten) endet dort.
+
+   Die Stufenmasse kommen als Tokens aus dem parallel laufenden Token-Paket
+   (Blatt 2j, `--blase-s/m/l`); die Fallbacks hier sind wörtlich die
+   Freigabe-Werte, damit die Blase auch ohne Token korrekt steht.
+   `z-index:60` (über Insel/Orb 42, unter modalen Scrims 500) und das
+   Glas-Rezept (color-mix auf `--k-surface`, Begründung s. Git-Historie
+   dieser Datei) bleiben von P-SB unverändert.
+
+   P-MF Befund 4 (Abnahme, dieselbe Fehlerklasse wie ROADMAP 669) —
+   `--blase-abstand-insel-rechts`/`--kp-orb-oberkante`/`--blase-abstand-orb`
+   waren `var()`-Aufrufe auf Namen, die NIE irgendwo deklariert werden
+   (weder `aura.css` noch lokal) — der Absatz oben sagt es sogar SELBST:
+   «reine Lage-/Abstandsregel, kein eigenes Token, da nicht als TOKEN-Spalte
+   geführt». Toter `var()`-Aufruf und Fallback fielen nie auseinander, weil
+   der Fallback zufällig immer der einzig gültige Wert war — genau wie beim
+   Befund, den diese Datei hier behebt. Direktwerte statt einer Token-
+   Attrappe: 32 (Aussenmass rechts, Abschnitt oben), 144 = 88 + 56
+   (Unterkante Blase, wörtlich vorgerechnet oben). */
+/* v0.9.5 P-BA «Die Blase weicht aus» (Owner-Entscheid 29.07.2026 zu
+   ROADMAP 685) — `--kp-ausweich` ist die Sinktiefe in px, die
+   `useBlaseAusweichen` (KosmoPanel.tsx) rechnet; hier steht ihr LOKALER
+   Ruhewert 0px, damit die Blase auch ohne JS-Wert korrekt am Anker sitzt
+   (dasselbe Muster wie die `--k-blase-*`-Fallbacks unten).
+
+   Verrechnet als NEGATIVER `margin-bottom`: bei `position: fixed` mit
+   gesetztem `right`/`bottom` und `left`/`top: auto` verschiebt der
+   Aussenabstand die Box, ohne die Ankerregeln anzufassen — `right: 32px`
+   und `bottom: 144px` bleiben Wort für Wort stehen.
+
+   WARUM NICHT `transform`: ein `transform` auf der Blase würde sie zum
+   Bezugsrahmen jedes `position: fixed`-Nachfahren machen. Der Aussenabstand
+   bewegt genauso EINE Eigenschaft, ohne einen neuen Bezugsrahmen
+   aufzumachen. Ausführliche Begründung von Richtung und Auslöser:
+   Kopfkommentar bei `AUSWEICH_ABSTAND` in `KosmoPanel.tsx`.
+
+   v0.9.6 Nachtrag (Owner-Befund «pop up buggt»): `backdrop-filter` (unten)
+   löst DIESELBE Bezugsrahmen-Regel aus wie `transform` — `.kp-panel` war
+   darüber bereits Bezugsrahmen für WerkzeugSetup/Blick-Vollbild/Export-
+   Scrim, ganz unabhängig von dieser `margin-bottom`-Entscheidung. Diese
+   drei Dialoge rendern seit v0.9.6 per `createPortal` an `document.body`
+   (KosmoPanel.tsx) und sind keine Nachfahren von `.kp-panel` mehr — s.
+   dortiger Kopfkommentar bei `showSetup`. */
+/* P-DECKEL-1 (gemessener Befund: `e2e/abnahme.spec.ts:89` lief nach einem
+   Kosmo-Gespräch in eine 90-s-Zeitüberschreitung — Playwright wörtlich
+   «`<div class="kp-kopf">` … subtree intercepts pointer events» beim Klick
+   auf `undo`). Die 82-px-Reserve oben war für den Orb/die Insel gedacht
+   (s. Abschnitt oben) und deckte NUR die oberste Werkzeugleistenzeile von
+   KosmoDesign (`design.css` `.dw-werkzeugleiste-haupt`) — nicht die ZWEITE
+   Zeile darunter (`.dw-werkzeugleiste-kontext`, u. a. `undo`/`redo`/
+   Ebenen-Umschalter/Dock-Werkzeuge).
+
+   NACHGEMESSEN (Chromium, 1400×900, `[data-testid="undo"]` bzw. dessen
+   Elternzeile `.dw-werkzeugleiste-kontext`, `getBoundingClientRect()`,
+   Design-Station voll geladen): Unterkante der zweiten Zeile ≈ 158–160 px
+   (drei Läufe: 158,1 / 159,8 / 158,0 — `undo` selbst bei Oberkante 118,
+   Höhe 32, Unterkante 150, deckungsgleich mit dem Befund). Reserve NEU:
+   184 = 160 (aufgerundete Unterkante) + 24 (derselbe Sicherheitsabstand wie
+   die «harte MINDESTGRENZE zu jeder Insel» weiter oben in dieser Datei —
+   kein neu erfundenes Mass). 226 → 328 = 144 (unten, unverändert) + 184.
+
+   WARUM EINE FESTE ZAHL UND KEINE AUS DER STATIONSHÜLLE ABGELEITETE
+   CSS-VARIABLE: geprüft, verworfen. `.kp-panel` wird global in `App.tsx`
+   gerendert (ausserhalb dieses Pakets), aber jede der fünf Stationen
+   (`DesignWorkspace.tsx`/`PublishWorkspace.tsx`/`PrepareWorkspace.tsx`/
+   `DataWorkspace.tsx`/`SpezWorkspace.tsx`) baut ihre Werkzeugleiste in
+   eigenem Markup mit eigenen Klassennamen (`.dw-werkzeugleiste-*` existiert
+   NUR in `DesignWorkspace.tsx` — nachgeprüft per Grep, kein gemeinsamer
+   Stations-Hüllen-Baustein liest/schreibt eine gemeinsame Höhe). Eine
+   ehrliche Ableitung bräuchte einen `ResizeObserver` je Station (oder einen
+   gemeinsamen Wrapper, den es heute nicht gibt) UND `App.tsx` — beides
+   ausserhalb des Dateikreises dieses Pakets, während ein zweiter Bau-Agent
+   parallel an `modules/design/island/` arbeitet. Nachgemessen statt nur
+   behauptet: die vier anderen Stationen liegen mit ihren rechtsseitigen
+   Bedienelementen durchweg UNTER 160 px Unterkante (Publish max. 171 px,
+   aber bei x 230–350 — links ausserhalb jeder Panel-Breite; Data max.
+   154 px bei `island-zurueck`; Prepare/Spez ≤ 130 px) — die feste Zahl aus
+   der Design-Station ist damit das dokumentierte Maximum, keine geratene
+   Zahl. Eine künftige Version, die ohnehin an der Stationshülle arbeitet,
+   kann die Reserve zur echten `ResizeObserver`-Variable machen; für dieses
+   Paket ist der Umbau ausserhalb des erlaubten Dateikreises unverhältnis-
+   mässig gegenüber einer gemessenen, dokumentierten Konstante.
+
+   UNTERGRENZE KLEINER FENSTER: bei 1024×768 klemmen M UND L gemeinsam auf
+   768 − 328 = 440 px (beide identisch, da M mit 520 px ohnehin über dieser
+   Klemme läge) — deutlich über der Ruhestufe S (300 px), also weiterhin
+   eine nutzbare Fläche, kein Fenster, das «unbrauchbar klein» würde. */
+.kp-panel {
+  position: fixed;
+  right: 32px;
+  bottom: 144px;
+  --kp-ausweich: 0px;
+  margin-bottom: calc(0px - var(--kp-ausweich));
+  /* B75 Schritt 1 (Owner-Entscheid 07.09.2026): DER GRUND IST IMMER
+     DURCHLAESSIG — die volle Regelgruppe samt Herleitung, Messung und Preis
+     steht unmittelbar vor `.kp-panel--zeichnet` weiter unten. Hier steht nur
+     die eine Zeile, die zum Element selbst gehoert; jedes bedienbare Kind
+     holt sich `pointer-events` dort zurueck.
+     KEIN `opacity` hier — das ist Regel 03 fuers Zeichnen und gehoert den
+     beiden Modifiern, nicht dem Grundzustand (`blase-ausweichen.test.ts`
+     prueft genau das: der Grundblock darf kein `opacity` tragen). */
+  pointer-events: none;
+  /* W0-EBENENTAFEL KOSMO_PANEL (packages/kosmo-ui/src/tokens.ts zEbene) —
+     INNERHALB #root (nur die Scrim-Kinder portalen, s. dortigen Kommentar).
+     Deckte Publish-Platzierungsflächen (ROADMAP 1144 A) und den
+     Dock-Inspector (ROADMAP 1148 b) — beides fehlende Geometrie-
+     Koordination, kein #root-Sprung. */
+  z-index: calc(var(--k-ebene-schwebend) + 10);
+  width: min(var(--k-blase-s-breite, 480px), calc(100vw - 56px));
+  height: min(var(--k-blase-s-hoehe, 300px), calc(100dvh - 328px));
+  max-width: min(900px, calc(100vw - 56px));
+  max-height: min(880px, calc(100dvh - 328px));
+  display: flex;
+  flex-direction: column;
+  /* v0.9.5 P-PS, Owner-Entscheid 7 (C-25) — KOSMOS KONTUR.
+     Freigabe Abschnitt 4a, wörtlich: «Die Blase … trägt Kosmos Kontur:
+     Teal-Rand plus Faden zum Orb.» Owner-Entscheid 7 (29.07.2026) stellt
+     klar, dass «Antwortblase» die GANZE Kosmo-Fläche meint — also DIESER
+     Rand, nicht der einer einzelnen Sprechblase im Verlauf.
+     `--k-kosmo-stimme` (seit ROADMAP 677 bereit, dritter Konsument) statt
+     `--k-signal`: die Marke gehört der Marke, der Ton gehört Kosmo
+     (Owner-Entscheid 2 derselben Version).
+     Die Deckkraft hält die Kontur unter der Schwelle, ab der ein Rand zur
+     Fläche wird: dieselbe Glas-Grammatik wie vorher, nur in Kosmos Ton
+     statt in Neutralgrau. Der bisherige `--k-glass-stroke` bleibt als
+     Untergrund stehen (`box-shadow`-freier Innenrand ist nicht nötig — die
+     Farbe MISCHT sich, sie ersetzt die Glaskante nicht). */
+  border: 1px solid color-mix(in srgb, var(--k-kosmo-stimme) 55%, var(--k-glass-stroke, var(--k-line)));
+  border-radius: var(--k-radius);
+  background: color-mix(in srgb, var(--k-surface) 88%, transparent);
+  backdrop-filter: var(--k-glas-dicht);
+  -webkit-backdrop-filter: var(--k-glas-dicht);
+  box-shadow: var(--k-shadow-xl, var(--k-shadow-overlay));
+  overflow: hidden;
+  /* Stufenwechsel: 320 ms, Kurve (.4,0,.2,1) — Handoff 5b «Bewegung».
+     NUR width/height animieren; right/bottom ändern sich nie (Anker). */
+  transition:
+    width var(--k-mot-stufe, 320ms) cubic-bezier(0.4, 0, 0.2, 1),
+    height var(--k-mot-stufe, 320ms) cubic-bezier(0.4, 0, 0.2, 1),
+    margin-bottom var(--k-mot-ausweich, 320ms) cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Die Stufen M und L — KEINE right/bottom/top/left-Angaben (Anker-Beweis:
+   `test/blase-stufen.test.tsx` liest genau das nach). */
+.kp-panel[data-stufe='m'] {
+  width: min(var(--k-blase-m-breite, 620px), calc(100vw - 56px));
+  height: min(var(--k-blase-m-hoehe, 520px), calc(100dvh - 328px));
+}
+.kp-panel[data-stufe='l'] {
+  width: min(var(--k-blase-l-breite, 760px), calc(100vw - 56px));
+  height: min(var(--k-blase-l-hoehe, 880px), calc(100dvh - 328px));
+}
+@media (prefers-reduced-motion: reduce) {
+  .kp-panel {
+    /* 5b: «Alles abschaltbar; der stille Zustand ist vollständig lesbar.» */
+    transition: none;
+  }
+}
+
+/* ── C0 · DAS SEITENFENSTER (23.09.2026, docs/AUFTRAG-EINBAU-KOSMO-CHAT-AN-
+   INTEGRATOR.md, Owner-Entscheid 23.09.2026 «k1 als Grundform», Entwurf
+   docs/entwuerfe/kosmo-chat/k1.png) ────────────────────────────────────────
+   Ersetzt die schwebende Blase (P-SB/P-BS oben) im NICHT angedockten Fall:
+   ein festes, DECKENDES Fenster rechts über die ganze Höhe — «dieselbe
+   Stelle wie heute, aber fest, deckend und mit Ordnung» (Bildunterschrift
+   k1.png). Kein Wachstum, keine drei Stufen, kein Ausweich-Anker unten
+   rechts: das Seitenfenster steht an drei Kanten fest (oben/rechts/unten)
+   und hat nur die eine Grösse, rund 430 px bei 1400×900 (Abnahme C0).
+
+   ZWEI WÄHLER, derselbe Grund wie bei `.kp-panel--angedockt` oben: die
+   Stufen-Regeln (`[data-stufe='m']`/`['l']`) tragen Klasse+Attribut, eine
+   blosse `.kp-panel--seitenfenster`-Klasse wäre also NICHT spezifischer und
+   verlöre den Kaskaden-Wettstreit, je nach Reihenfolge — die zweite Zeile
+   zieht gleich, kein `!important`.
+
+   OPAK STATT GLAS: «der Plan schimmert nicht durch», also kein
+   `backdrop-filter` und keine `color-mix`-Transparenz mehr im Ruhezustand —
+   volle Fläche `--k-surface`, Deckkraft 1 (Abnahme C0). Das ändert NICHTS
+   an `.kp-panel--zeichnet` (Regel 03, B75): die dortige 88-%-Durchlässigkeit
+   bleibt ihr eigener, gewollter Zustand während des Zeichnens im Plan, sie
+   gilt unverändert für alle drei Modifier-Fälle.
+
+   `pointer-events: auto` statt des Grund-`none` (B75 oben): B75 galt der
+   FLOATING Blase, die über bedienbare Inseln/Werkzeuge lag — das
+   Seitenfenster ist jetzt selbst ein eigenständiger, dauerhaft belegter
+   Bereich wie die angedockte Spalte (dieselbe Zeile dort), kein
+   Durchgriffs-Fall mehr. */
+.kp-panel--seitenfenster,
+.kp-panel--seitenfenster[data-stufe] {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  margin-bottom: 0;
+  width: min(430px, 100vw);
+  height: 100dvh;
+  max-width: min(430px, 100vw);
+  max-height: none;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid color-mix(in srgb, var(--k-kosmo-stimme) 55%, var(--k-glass-stroke, var(--k-line)));
+  background: var(--k-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  pointer-events: auto;
+  transition: none;
+}
+/* C0-PLATZRESERVE (Pruefer-Mangel 1, dl-c0-seitenfenster): «nichts schwebt
+   ueber etwas anderem» heisst auch, dass das feste Fenster den Platz, den es
+   belegt, der Station DAHINTER wegnimmt, statt sie zu verdecken. Gemessen vor
+   dieser Regel (1400x900, kosmo-panel-deckt-nicht-zu): 12 von 20
+   Werkzeugleisten-Knoepfen lagen unter dem Fenster. Loesung im Dateikreis, ohne
+   `App.tsx`/`modules/design`: solange ein Seitenfenster gemountet ist, reserviert
+   die Wurzel rechts genau seine Breite (Innenabstand) — Kopfzeile, Werkzeugleiste
+   und Stationsflaeche fliessen in den Rest. Das Fenster selbst ist `fixed` und
+   liegt daher in der Reserve, nicht darueber. `min(430px,100vw)` bleibt
+   gleichlautend mit der Breite oben. */
+.app-wurzel:has(.kp-panel--seitenfenster) {
+  /* NACHBESSERUNG 3: Innenabstand allein hielt nur Fliesstext im Restplatz;
+     alle `position: fixed`-Inseln, Kopf- und Ansichtsleisten rechnen gegen das
+     FENSTER und liefen weiter unter das Seitenfenster (gemessen: 10 Knoepfe
+     bei 1400x900, 14 bei 1280x800). `contain: layout` macht die Wurzel zum
+     Bezugsblock ihrer festen Nachfahren: `right`/`left` der Inseln beziehen
+     sich jetzt auf die verkleinerte Wurzel, nicht mehr aufs Fenster. */
+  width: calc(100% - min(430px, 100vw));
+  contain: layout;
+  box-sizing: border-box;
+}
+/* U25 Phase 6: hier brachen die Werkzeugleisten der Oberfläche «manuell» von KosmoDesign neben dem Seitenfenster
+   um (Nachbesserung 6). Mit der Leiste sind die Regeln entfallen. */
+/* Kopfzeile: fest 56 px hoch und ohne Umbruch lief ihr Inhalt (Wortmarke,
+   Datei-Reihe, Kosmo, Grundknoepfe, zusammen ~1090 px) ueber die verkleinerte
+   Wurzel hinaus, die Grundknoepfe lagen unter dem Fenster. Solange das
+   Seitenfenster steht, bricht die Zeile um (Mindesthoehe 56 px); nichts wird
+   versteckt oder abgeschnitten. */
+.app-wurzel:has(.kp-panel--seitenfenster) .app-header {
+  height: auto;
+  min-height: 56px;
+  flex-wrap: wrap;
+  row-gap: var(--k-s2);
+  padding-top: 6px;
+  padding-bottom: 6px;
+  box-sizing: border-box;
+}
+/* Die Versionsanzeige der zweiten Kopfgruppe (reiner Lesetext, kein Knopf)
+   weicht, solange das Seitenfenster Breite reserviert — dieselbe Massnahme wie
+   die Regel unter 1200 px in `island.css` (`.isl-kopf-zweit-version`), nur
+   ausgeloest durch den Restplatz statt durch die Fensterbreite: die
+   Media-Query sieht die verkleinerte Wurzel nicht. Gemessen (b154, 1400x900,
+   Ansicht offen): 2040 px² Ueberlappung mit der Kopfgruppe vor, 0 danach. */
+.app-wurzel:has(.kp-panel--seitenfenster) .isl-kopf-zweit-version {
+  display: none;
+}
+/* ... und die Kopfgruppe rueckt zusammen: bei 1280x820 bleiben der Wurzel nach
+   Abzug des Fensters 850 px, die geoeffnete Ansicht-Insel (343,6 px, mittig)
+   reicht bis 596,8, die Gruppe begann ohne Version bei 542 (2509 px²
+   Ueberlappung, gemessen). Ohne Luecken und Innenabstand ist sie 174 statt
+   242 px breit und beginnt bei rund 610. Die vier Ziele bleiben je 44 px
+   breit (zielgroessen-gate), nur die leeren Abstaende zwischen ihnen fallen. */
+/* Befund 4 (Geraete-Rundgang v0.1.6, 30.09.2026): hier fiel auch der LINKE
+   Innenabstand, und «SYNC AUS» klebte am Pillenrand (1 px, gemessen). Die
+   Plakette ist Text und kein 44-px-Kreisziel wie die Knoepfe rechts — sie
+   braucht den Rand. Links darum wieder `--k-s3` (8 px): die Gruppe beginnt
+   bei 1280x820 rund 8 px weiter links (~574), die offene Ansicht-Insel endet
+   bei 562 — 12 px Luft statt 20. Rechts sitzt ein 44-px-Knopf mit mittigem
+   Zeichen, der seinen Rand selbst mitbringt. Probe:
+   `e2e/sync-plakette-seitenfenster.spec.ts`. */
+.app-wurzel:has(.kp-panel--seitenfenster) .isl-kopf-zweitgruppe {
+  gap: 0;
+  padding-left: var(--k-s3);
+  padding-right: 0;
+}
+/* ... und die Ansicht-Insel der Vis-Kopfzeile rueckt 35 px nach links. Nach
+   dem Zusammenruecken der Gruppe (Beginn bei 582) reichte die geoeffnete Insel
+   (mittig, 253..597 bei 1280x820) noch 15 px in sie hinein (669 px²). Mit dem
+   Versatz liegt sie offen bei 218..562: 20 px Luft zur Kopfgruppe rechts und
+   20 px zur Ansichts-Info links (bis 198). */
+/* Lieferung 12 §2 (01.10.2026, Int 20): mit dem Speicher-Kreis beginnt die
+   Kopfgruppe 48 px weiter links (bei 1280x820: 526 statt 574). Die Insel
+   rueckt um dieselben 48 px mit (-83 statt -35): offen 170..514, 12 px Luft
+   zur Gruppe; die Ansichts-Info ist dafuer ins Rasterfeld 66 gerueckt (endet
+   bei 146, 24 px Luft). Probe: e2e/b154-vis-inseln-gegen-das-kosmo-feld. */
+.app-wurzel:has(.kp-panel--seitenfenster) [data-testid='island-ansicht-root'] {
+  margin-left: -83px;
+}
+/* Das Seitenfenster selbst ist auch ein fester Nachfahre der Wurzel und
+   waere sonst an deren rechtem Rand haengengeblieben: es hangelt sich um seine
+   eigene Breite nach rechts in die Reserve. */
+.app-wurzel:has(.kp-panel--seitenfenster) .kp-panel--seitenfenster,
+.app-wurzel:has(.kp-panel--seitenfenster) .kp-panel--seitenfenster[data-stufe] {
+  right: calc(-1 * min(430px, 100vw));
+}
+
+/* Der Breiten-Griff (P-BS Abnahme 01, `.kp-blase-griff`) gehört der Blase —
+   das Seitenfenster hat eine feste Breite, kein Ziehen. Ausblenden statt aus
+   dem Markup nehmen: die Klasse bleibt für die Blase (Zentrale-Spalte und
+   der schwebende Fall ausserhalb dieses Pakets) unangetastet. */
+.kp-panel--seitenfenster .kp-blase-griff {
+  display: none;
+}
+
+/* P-BS Abnahme 01: Breiten-Griff an der linken Kante (420–900 px, geklemmt
+   in `klemmBlaseBreite`). Schmal, volle Höhe, über dem Inhalt — die rechte
+   Kante ist der Anker und hat darum keinen Griff. */
+/* v0.9.5 P-EK/O-2 (Owner-Befund 29.07.: «kein Zeiger-Symbol beim Ändern der
+   Fenstermasse») — und warum die vorhandene `cursor`-Regel dafür NICHT
+   genügte, obwohl sie seit P-BS hier steht:
+
+   Die App zeichnet ihren eigenen Zeiger (`shell/CursorEbene.tsx`). Sobald er
+   an ist, setzt `shell/cursor-ebene.css` auf JEDEM Element
+   `cursor: none !important` — der computed `cursor` dieses Griffs ist damit
+   `"none"`, nicht `"ew-resize"`. Die Zonen-Abbildung liest darum seit v0.9.0
+   die ebenso vererbte Spiegel-Property `--k-zeiger` (`computedCursorVon` in
+   `CursorEbene.tsx`, Tabelle `CSS_CURSOR_ZU_FORM` in
+   `state/cursor-zustand.ts`). Ohne diesen Spiegel fiel der Griff auf `null`
+   zurück = neutrale Form: der Eigencursor zeigte über der Anfasskante
+   weiterhin den Standardpfeil. Die `cursor`-Regel wirkte NUR im
+   System-Zeiger-Betrieb (Eigencursor abgeschaltet oder `navigator.
+   webdriver`) — genau darum sah der Owner nichts, ohne dass hier eine Regel
+   gefehlt hätte.
+
+   BEIDE Wege sind darum nötig und stehen hier nebeneinander (Muster
+   `shell/dock/dock-flaeche.css:354`, dort seit v0.9.0 identisch für den
+   Dock-Teiler). `col-resize` statt `ew-resize` als Spiegelwert, weil die
+   Tabelle nur die sechs vertraglichen Werte kennt und `col-resize` genau die
+   waagrechte Doppelpfeil-Form (`ZonenForm 'spalte'`, `ResizeSvg achse=
+   'spalte'`) meint — dieselbe Geste, dieselbe Form wie am Dock-Teiler. */
+/* B160 (18.09.2026, Owner-Entscheid «nimm den zweiten verdecker, miss zuerst»)
+   — DER GRIFF ENDET 24 PUNKTE VOR DER PANELKANTE.
+
+   Befund: der Griff ist 10 Punkte breit und lief ueber die GANZE Panelhoehe.
+   Wo eine Insel-Knopfreihe zufaellig unter diese Kante geriet, verlor genau
+   der Knopf den Zeiger, dessen Mittelpunkt darauf lag. Gemessen im
+   Ausgabe-Popup von KosmoDesign bei 1400x900:
+
+     Griff 669..679 (y 237..755) · Panel 668..1288 (y 236..756)
+     PDF 620..658 frei · SVG 660..698 MITTE 679 = Griffkante · DXF 700..737
+     frei · IFC 739..777 frei · Knopfreihe y 726..758
+
+   Einer von vier, und nur wegen 10 Punkten. Die Knopfreihe ragt drei Punkte
+   unter das Griffende — ein Griff, der 24 Punkte frueher aufhoert, laesst
+   ihren Mittelpunkt (742) frei und bleibt mit 470 statt 518 Punkten Hoehe
+   bequem greifbar.
+
+   WIE TEUER ER SONST IST, gemessen statt vermutet: sechs Stationen x vier
+   Fenstergroessen im Ruhezustand -> EIN Verlust (`vis-leer-graph-insel-
+   oeffnen` bei 1180x820), und 104 Zustaende mit je einer OFFENEN Insel ->
+   NULL. Der Griff ist also nicht flaechig im Weg; er schneidet nur, was
+   zufaellig unter seiner Kante liegt. Genau darum die kleinste Aenderung,
+   die den gemessenen Fall deckt — nicht die groesste, die alle denkbaren
+   deckt.
+
+   NICHT gemessen: ob die 24 Punkte auch den vis-Fall im Ruhezustand
+   freistellen. Blatt: docs/UI-UX-2026-09-18-B160-DER-GRIFF-AUF-DER-KNOPFREIHE.md */
+.kp-blase-griff {
+  position: absolute;
+  left: 0;
+  top: 24px;
+  bottom: 24px;
+  width: 10px;
+  cursor: ew-resize;
+  --k-zeiger: col-resize;
+  touch-action: none;
+  z-index: 2;
+}
+
+/* ── B75 SCHRITT 1 (Owner-Entscheid 07.09.2026) — DER GRUND IST IMMER
+   DURCHLAESSIG ───────────────────────────────────────────────────────────
+
+   ANLASS, gemessen und nicht vermutet
+   (`docs/UI-UX-2026-09-07-DURCHGRIFF-REICHWEITE.md`): das Rezept unten gab
+   es zweimal, und beide Male an einer BEDINGUNG — `--zeichnet` (ein
+   Zeichen-/Messwerkzeug ist aktiv) und `--insel-offen` (irgendeine Insel ist
+   offen, `islandIstOffen`, KosmoPanel.tsx:1162). Ausserhalb dieser zwei
+   Zustaende faengt der Panel-Grund den Zeiger.
+
+   Gemessen am 07.09.2026, drei Fenstergroessen, zwoelf Grundrisse im Gitter
+   auf einem A1-Blatt, damit mit Sicherheit etwas unter dem Panel liegt —
+   dieselbe Geometrie, identische Ueberdeckung, EINE Variable:
+
+     Insel zu     -> pointer-events: auto | 1-4 Elemente vom Panel blockiert
+                     | Klick auf ein zu 80-100 % verdecktes Ziel ABGEWIESEN
+     Insel offen  -> pointer-events: none | 0 Elemente blockiert
+                     | derselbe Klick GETROFFEN
+
+   In der manuellen Oberflaeche gibt es ueberhaupt keine Inseln
+   (`inselnGesamt: 0`, `DesignWorkspace.tsx:5464`) — dort galt die Bedingung
+   also nie. Das ist ROADMAP 1144 A («Fall 1», Kosmo-Panel ueber den
+   Publish-Platzierflaechen), und es war an allen drei Groessen und in beiden
+   Oberflaechen reproduzierbar.
+
+   WARUM DIE BEDINGUNG WEGFAELLT UND NICHT ERWEITERT WIRD
+   Der Kommentar bei `--insel-offen` sagt selbst, was der Zustand tut: «nur
+   der leere Blasen-Grund wird fuer den Moment durchsichtig fuer Klicks».
+   Was in diesem Moment richtig ist, ist es in jedem — der Grund traegt nie
+   eine Bedienung. Eine dritte Bedingung waere eine dritte Stelle, die beim
+   naechsten Fall wieder nachgefuehrt werden muesste; dieselbe Familie wie
+   die vier G2-Nachtraege unten, nur eine Ebene hoeher.
+
+   WAS DIE BEIDEN MODIFIER BEHALTEN — und warum sie stehen bleiben
+   `opacity: 0.88` ist ihre eigene Sache und wandert NICHT hierher: sie
+   gehoert zum Zeichnen bzw. zur offenen Insel, nicht zum Ruhezustand.
+   Ihre `pointer-events`-Zeilen sind ab jetzt Wiederholung dessen, was hier
+   schon gilt. Entfernt werden sie trotzdem nicht: `test/kosmo-karten-risiko.
+   test.tsx:360-375` liest sie als Vertrag woertlich aus dieser Datei, und
+   `test/**` liegt ausserhalb des Dateikreises dieses Workers
+   (`docs/AUFTRAEGE-AN-WORKER.md` §1a). Wer den Test besitzt, kann die
+   Wiederholung streichen; hier waere es ein stiller Eingriff in eine fremde
+   Wache.
+
+   WAS GEPRUEFT WURDE, BEVOR DIESE ZEILEN ENTSTANDEN
+   Ob ein Klick auf den eigenen Grund das Panel schliesst — die naheliegende
+   Regression. Er kann es nicht: `KosmoPanel.tsx` haelt genau VIER
+   `addEventListener` (`:1246`, `:1289` `resize`, `:4780` `keydown`), keinen
+   einzigen auf `pointerdown`/`mousedown`/`click`. Es gibt kein
+   Klick-ausserhalb-Schliessen, das ein durchgelassener Klick ausloesen
+   koennte.
+
+   REICHWEITE, ehrlich: Fall 2 (`dock-panel-inspector`, ROADMAP 1148 b) loest
+   das hier NICHT. Dort deckt kein Grund, sondern `div.kp-verlauf` — ein
+   Kind, das `pointer-events: auto` behaelt und behalten muss. Gemessen:
+   93,25 % an allen drei Groessen, Klick abgewiesen. Fuer ihn bleibt es bei
+   den Wegen aus `docs/AUFTRAG-B75-WER-WEISS-WIEVIEL-PLATZ.md`.
+
+   KEIN LEERZEICHEN VOR DER GESCHWEIFTEN KLAMMER bei den
+   Nachfahren-Selektoren, aus demselben Grund wie unten bei
+   `.kp-panel--zeichnet .kp-eingabe-reihe{`: `kosmo-karten-risiko.test.tsx`s
+   `cssBlock()` sucht den Selektor samt folgendem Leerzeichen und Klammer als
+   reine Teilzeichenkette, und es liest die Datei OHNE die Kommentare zu
+   entfernen. Ein Nachfahren-Selektor mit Leerzeichen wuerde die Suche nach
+   dem echten Eingabe-Reihen-Block auf sich ziehen.
+
+   Und das gilt auch fuer diesen Kommentar: die erste Fassung dieses Absatzes
+   hat die verbotene Zeichenkette als BEISPIEL ausgeschrieben — der Test wurde
+   prompt rot und las meinen Erklaertext als CSS-Block. Wer die Falle
+   beschreibt, tritt hier in sie hinein. */
+
+/* ── DIE UMKEHR (07.09.2026) ────────────────────────────────────────────────
+   Bis hierher lief die Richtung so: der Grund ist durchlaessig, und JEDES
+   Panel-Kind holt sich `auto` zurueck — danach wird Fall fuer Fall wieder
+   abgezogen, was sich als blosse Anzeige herausstellt. Sechsmal ist das
+   passiert (Hairline, System-Zeilen, Kopf-Grund, Eingabe-Reihe,
+   Feedback-Reihe, Sprechblase), jedes Mal erst nach einer Messung am
+   Bildschirm, jedes Mal mit demselben Rezept. Die Kommentare dieser sechs
+   Faelle stehen unten weiter — sie sind der Beleg dafuer, dass die Richtung
+   falsch war, nicht sechs unglueckliche Einzelfaelle.
+
+   WARUM DIE RICHTUNG DAS PROBLEM IST, und nicht die Zahl der Ausnahmen:
+   In der alten Richtung wird ein NEUES passives Element automatisch zur
+   Klickfalle, und zwar STILL — es faellt niemandem auf, bis irgendwann
+   jemand eine Ueberdeckung misst. In der umgekehrten Richtung wird ein neues
+   nicht-semantisches Bedienelement unbedienbar, und das faellt SOFORT auf:
+   der erste Klick darauf tut nichts. Beide Richtungen haben einen Fehlerfall;
+   nur einer davon meldet sich.
+
+   WAS GEZAEHLT WURDE, BEVOR DIESE ZEILEN ENTSTANDEN — die Umkehr kann
+   Bedienelemente stilllegen, darum stand die Zaehlung vor dem Bau. Gezaehlt
+   wurden nicht-semantische Traeger (`div`, `span`, `img`, `svg` …) MIT einem
+   Zeiger-Ereignis, ueber `apps/kosmo-orbit/src/shell/*.tsx` und
+   `packages/kosmo-ui/src/*.tsx`: 23 Stueck. Davon liegen 21 NICHT im Panel —
+   `Kurzbefehle`, `CommandPalette`, `StartSequenz`, `AppDeinstallieren` und
+   `Einstellungen` haengen an `App.tsx` (Geschwister der Blase, nicht Kinder),
+   und alle Dialog-Schleier gehen per `createPortal` an `document.body`
+   (KosmoPanel.tsx:6414 erklaert warum: `backdrop-filter` auf `.kp-panel`
+   sperrt sonst jedes `position:fixed`-Kind in die Blasenbox ein).
+
+   Es bleiben ZWEI, und beide stehen unten namentlich:
+     1. `.kp-blase-griff` (KosmoPanel.tsx:6387) — der Breitengriff. Er traegt
+        `onPointerDown/Move/Up` und KEIN `onClick`, und sein `role="separator"`
+        steht in keiner Bedien-Liste. Eine Zaehlung, die nur `onClick` gesucht
+        haette, haette ihn uebersehen und die Blase unziehbar gemacht.
+     2. `[data-testid="kosmo-blick-thumbnail"]` (KosmoPanel.tsx:7531) — das
+        Mini-Bild in der Blick-Zeile, ein `img` mit `onClick`.
+   Ein dritter Fund war ein Fehlalarm der Zaehlung: das `span` in
+   KosmoPanel.tsx:2511 traegt kein Ereignis, das `onClick` gehoert dem
+   `button` zehn Zeilen tiefer.
+
+   DAZU zwei, die kein Ereignis tragen und `auto` trotzdem brauchen:
+   `.kp-rollen-badge` (haengt an einem `title`-Tooltip, der Hover verlangt)
+   und `.kp-refkarte` (eine ganze Karte mit eigenem Text und Schliesser).
+
+   DER PREIS, gemessen statt behauptet (`e2e-messungen/spuren/
+   b75-verlauf-rollen.json`): ueber einer durchlaessigen Sprechblase ROLLT
+   das Mausrad das Gespraech nicht mehr. Dieselbe Stelle, dieselbe Geometrie,
+   eine Variable — mit der Blasenregel `scrollTop 0`, ohne sie `scrollTop 240`
+   (Rollweg war da: `scrollHeight 1085` gegen `clientHeight 460`, und ein
+   direkter Schub rollte in allen Zustaenden). Das ist der Preis des
+   Owner-Entscheids vom 07.09. und NICHT neu an dieser Umkehr — sie erbt ihn.
+   Reparieren laesst er sich hier nicht: Klick-Durchgriff und Rad-Treffer sind
+   an derselben Stelle dasselbe Ereignis, CSS kann sie nicht trennen. Der Weg
+   ist eine Rad-Bruecke in `KosmoPanel.tsx`; sie ist bestellt in
+   `docs/UI-UX-2026-09-07-RADBRUECKE-VERLAUF.md`.
+
+   KEIN LEERZEICHEN VOR DER GESCHWEIFTEN KLAMMER, derselbe Grund wie oben. */
+.kp-panel button,
+.kp-panel a[href],
+.kp-panel input,
+.kp-panel select,
+.kp-panel textarea,
+.kp-panel summary,
+.kp-panel [role='button'],
+.kp-panel [role='tab'],
+.kp-panel [role='link'],
+.kp-panel [role='menuitem'],
+.kp-panel [role='switch'],
+.kp-panel [role='checkbox'],
+.kp-panel [role='radio'],
+.kp-panel [role='slider'],
+.kp-panel [tabindex]:not([tabindex='-1']),
+.kp-panel .kp-blase-griff,
+.kp-panel [data-testid='kosmo-blick-thumbnail'],
+.kp-panel .kp-rollen-badge,
+.kp-panel .kp-refkarte{
+  pointer-events: auto;
+}
+/* C6-Nachtrag (25.09.2026, Nachbesserung nach Pruefer-Befund 4) — SIEBTER
+   Fall derselben Familie, gefunden NACH der obigen Zaehlung, weil das
+   Element erst mit C6 entstand: `.kge-unterzeile` (KosmoEingabe.tsx), die
+   Reihe fuer Anhang/Mikrofon UNTER dem wachsenden Textfeld. Die zwei
+   Knoepfe darin holen sich `auto` bereits ueber `.kp-panel button` zurueck
+   — die HUELLE selbst (ein blosses `div`, kein `button`/`role`/`tabindex`)
+   aber nicht, und ihr eigener Trefferflaechen-Mittelpunkt liegt im
+   4px-Zwischenraum der beiden Knoepfe, nicht auf einem von ihnen. Gemessen
+   mit `e2e/w2-kp-panel-durchlaessigkeit.spec.ts`: ohne diese Zeile liefert
+   `elementFromPoint` an dieser Stelle `kosmo-input` (die Textarea darunter)
+   statt `kge-unterzeile` — derselbe Durchgriff wie bei den sechs Faellen
+   oben, nur bei einem neuen Element. */
+.kp-panel .kge-unterzeile {
+  pointer-events: auto;
+}
+/* ── DIE SECHS FAELLE, ALS BELEG ────────────────────────────────────────────
+   Was ab hier folgt, sind die Kommentare der sechs Einzelfaelle. Ihre REGELN
+   sind in der Umkehr oben aufgegangen und deshalb geloescht; die Kommentare
+   bleiben, weil sie der Beleg fuer die Umkehr sind: sechsmal dieselbe
+   Diagnose, sechsmal derselbe Handgriff, jedes Mal erst nach einer Messung.
+   Wer die Umkehr eines Tages rueckgaengig machen will, liest hier, was sie
+   ersetzt hat — und was es gekostet hat, jeden dieser Faelle zu finden.
+
+   ZWEI STELLEN DARIN SIND DURCH DIE UMKEHR UEBERHOLT und stehen nur noch
+   als Zeitzeugen: die Ueberlegung, wie tief eine Blasenregel geschachtelt
+   sein muss, damit sie die Spezifitaet der Verlaufs-Kinderregel schlaegt —
+   diese Kinderregel gibt es nicht mehr; und der Satz, dass die Anzeigefelder
+   im Kopf `auto` mittragen — sie tun es nicht mehr. */
+/* Die vier G2-Faelle (s. die Kommentare unten, wortgleiche Ursache): die
+   Hairline ohne Kinder, die passiven System-Zeilen, der Kopf-Grund und die
+   Eingabe-Reihe. Echte Bedienelemente holen sich `auto` zurueck — bei Kopf
+   und Eingabe-Reihe ueber das semantische Tag statt ueber eine Klassenliste,
+   die beim naechsten Anzeigefeld wieder nachgefuehrt werden muesste. */
+/* FUENFTER FALL derselben Familie, gefunden erst durch diese Aenderung
+   (07.09.2026): nachdem der Grund durchlaessig wurde, blieb bei 1024x768 in
+   der manuellen Oberflaeche EIN Blocker uebrig, und `elementFromPoint` nannte
+   ihn beim Namen — `div.kp-feedback-reihe`. Sie ist kein direktes Panel-Kind,
+   sondern steckt in einer Sprechblase IM Verlauf und erbt ihr
+   `pointer-events: auto` von dort. Ihr Inhalt sind genau zwei echte Knoepfe
+   (`fb-gut`/`fb-schlecht`, KosmoPanel.tsx:7679-7693); alles daneben ist Grund,
+   und bei `display: flex` mit `margin-top` ist das ein breiter Streifen quer
+   durch die Blase. Dieselbe Zwei-Ebenen-Regel wie bei `.kp-kopf`: Grund
+   durchlaessig, `button` holt sich `auto` zurueck.
+   Die vier G2-Faelle unten haben ihn nicht gefunden, weil er nur auftritt, wo
+   eine Kosmo-Antwort mit Feedback-Reihe unter einer Bedienflaeche liegt —
+   nichts an ihm war falsch, er war nur nie gemessen. */
+/* SECHSTER FALL — und der erste, der kein Grund mehr ist, sondern INHALT
+   (Owner-Entscheid 07.09.2026, woertlich «sprechblasen auch durchlässig
+   machen»).
+
+   ANLASS: nach dem Durchlaessig-Machen des Grundes blieb genau ein Blocker
+   uebrig, und die volle Ahnenkette hat ihn benannt statt ihn zu vermuten —
+   `div.k-einblenden.kp-bubble.kp-bubble--kosmo` -> `div.kp-verlauf` ->
+   `kp-panel`, `imPanel: true`. Zwei Platzierungen dahinter blieben bei
+   1024x768 in der manuellen Oberflaeche unerreichbar. Der Klassenname
+   `k-einblenden` klingt nach Stationshuelle; er ist hier eine Sprechblase.
+
+   WAS DAS KOSTET, gemessen und nicht behauptet: `{b.text}` ist ein NACKTER
+   TEXTKNOTEN ohne Huelle (`KosmoPanel.tsx:7588`, zwischen Rollen-Badge und
+   Zuruf-Knopf). CSS kann einem Textknoten nichts zurueckgeben — es gibt
+   keinen Selektor dafuer. Vor dieser Aenderung liess sich Kosmos Antwort
+   markieren (Doppelklick -> «Guten», Ziehen -> die ganze erste Zeile,
+   Kontrollfeld daneben -> «Kontrolltext», also war die Messung wach);
+   danach nicht mehr. Der Owner hat den Preis gekannt und ihn bezahlt — mit
+   dem Kopier-Knopf als Ausgleich, bestellt in
+   `docs/UI-UX-2026-09-07-KOPIERKNOPF-KOSMO-BLASE.md`. Bis der gebaut ist,
+   ist Kosmos Text lesbar und nicht mehr herausholbar; das ist bekannt und
+   nicht uebersehen.
+
+   WARUM DREI KLASSEN TIEF: eine zweistufige Fassung waere
+   spezifitaetsgleich mit der Verlaufs-Kinderregel weiter oben, und dann
+   entschiede die Reihenfolge im File — genau die Art stiller Fehlschlag,
+   die man erst am Bildschirm bemerkt. Drei Klassen gewinnen unabhaengig
+   von der Position.
+
+   ALLE DREI BLASENARTEN sind gemeint (`--du`, `--kosmo`, `--system`); sie
+   teilen sich die Grundklasse, eine Regel deckt sie.
+
+   ZURUECK BEKOMMT `auto`, was wirklich bedienbar ist: die Knoepfe
+   (Feedback, Quellen-Chips, Zuruf), vorsorglich Links und Eingabefelder wie
+   im Rezept oben, das Rollen-Badge (es traegt einen `title`-Tooltip und
+   braucht darum Hover) und die ganze RefKarte, die in der Blase verankert
+   ist und eigenen Text plus einen Schliessen-Knopf traegt. */
+
+/* P-BS, Regel 03 (1f): «Beim Zeichnen im Plan geht sie auf Deckung 88 % und
+   lässt Zeiger-Ereignisse durch, wo nur Hintergrund liegt.» P-BS hatte die
+   Klasse als Haken vorbereitet und den Auslöser gemeldet statt gebaut —
+   Welle 2 v0.9.5 schaltet ihn scharf (`zeichnetImPlan` in KosmoPanel.tsx:
+   aktives Zeichen-/Mess-Werkzeug, `useUiZustand#tool !== 'auswahl'`).
+   Anlass war der bestätigte 674-Befund: die Overlay-Blase (667) schluckte
+   Zeigerereignisse über dem Plan (`mass-eingabe.spec.ts` verlor seine
+   pointermoves an die Blase), der alte 340-px-Balken nahm dagegen
+   Layout-Platz und überdeckte nie.
+
+   Die Regeln sind seitdem GENERISCH statt einer Selektorliste: JEDES
+   direkte Panel-Kind bleibt bedienbar (auch die nach P-BS dazugekommenen —
+   Lauf-Bibliothek, Lauf-Vorschlags-/Lauf-Anzeige, Scrims), nur der
+   Panel-Grund selbst und der Fluss-Grund (Zone 1) reichen Zeiger durch;
+   die Einträge IM Fluss bleiben wiederum bedienbar. Genau «wo nur
+   Hintergrund liegt». */
+.kp-panel--zeichnet {
+  opacity: 0.88;
+  pointer-events: none;
+}
+.kp-panel--zeichnet > * {
+  pointer-events: auto;
+}
+.kp-panel--zeichnet .kp-verlauf {
+  pointer-events: none;
+}
+.kp-panel--zeichnet .kp-verlauf > * {
+  pointer-events: auto;
+}
+/* G2 (ROADMAP 1259, Nachtrag — «kosmo-panel-offen» live vermessen statt
+   vermutet): `.kp-panel--zeichnet > *` oben ist wortwörtlich «JEDES direkte
+   Panel-Kind» — das schliesst zwei Kinder ein, die NIE bedienbar waren und es
+   auch nie sein sollten:
+   1. `<Hairline />` (`@kosmo/ui` `components.tsx`, direktes Kind von
+      `.kp-panel` zwischen `.kp-kopf` und `.kp-verlauf`) — ein reines
+      `aria-hidden`-Trennstrich-`<div>` OHNE `className`, 1 px hoch, volle
+      Panelbreite, NIE ein `onClick`. Die generische `> *`-Regel oben gibt ihm
+      trotzdem `pointer-events:auto` zurück — ein unsichtbarer, klickfangender
+      Streifen quer durchs Panel, live gemessen bei `island-werkzeug-varianten`
+      (`elementFromPoint` traf die leere Hairline statt des Werkzeugs
+      dahinter, ein echter `page.mouse.click()` bewirkte nichts — weder öffnet
+      er das Werkzeug-Popup noch das Panel/die Hairline selbst, ein stummer
+      Totklick).
+   2. Jede passive System-Zeile in `.kp-verlauf` (`.kp-system-zeile`,
+      KosmoPanel.tsx — «Neues Projekt geladen …», `kosmo-ui-aktion-*`): ein
+      reines Text-`<div>` ohne `onClick`. `.kp-verlauf > *` oben gibt AUCH
+      dieser Zeile `pointer-events:auto` zurück, obwohl sie nichts tut, wenn
+      man draufklickt — live gemessen bei `island-werkzeug-checks`/`-varianten`
+      (1180×820, `elementFromPoint` traf `kosmo-ui-aktion-aktion`).
+   Fix bleibt IM selben Rezept (kein dritter Mechanismus, kein `z-index`):
+   dieselbe zwei-Ebenen-Regel wie bei `.kp-verlauf` selbst, jetzt auch für die
+   Hairline (ihr eigenes `pointer-events:none` reicht, sie hat nie Kinder) und
+   für `.kp-system-zeile` (Grund reicht Zeiger durch, ein ECHTES Kind — z. B.
+   der anklickbare Blick-Thumbnail in `.kp-blick-zeile`, KosmoPanel.tsx — bleibt
+   über `> *` bedienbar). Kein Bedienelement wird stillgelegt: die Hairline und
+   die System-Zeilen waren NIE Bedienelemente, nur ihr geerbtes
+   `pointer-events:auto` war es fälschlich. */
+.kp-panel--zeichnet > [aria-hidden] {
+  pointer-events: none;
+}
+.kp-panel--zeichnet .kp-system-zeile {
+  pointer-events: none;
+}
+.kp-panel--zeichnet .kp-system-zeile > * {
+  pointer-events: auto;
+}
+/* G2 Nachtrag 2 — dieselbe Familie, ein drittes Mal: nach den zwei Funden
+   oben blieb `island-werkzeug-varianten` (design/projekt, 1400×900) IMMER
+   NOCH gemessen verdeckt, jetzt vom `.kp-kopf` SELBST. `.kp-kopf` ist ein
+   direktes Panel-Kind wie jedes andere — die `> *`-Regel ganz oben gibt IHM
+   `pointer-events:auto` zurück, weil es drei echte Knöpfe trägt (Vorlesen/
+   Einstellungen/Schliessen). Aber `.kp-kopf` selbst ist mehr als diese drei
+   Knöpfe: `<OrbitMark>`, der Titel «Kosmo», der Modell-Badge, die
+   Kosten-Anzeige (`kp-motor-kosten`), der bedingte Lizenz-Hinweis und der
+   Flex-Spacer `kp-fuell` sind ALLE ohne `onClick` — reiner Anzeigetext bzw.
+   ein leerer Abstandshalter — und tragen trotzdem `pointer-events:auto` mit,
+   weil sie im selben `.kp-kopf`-Rechteck sitzen. Nachgemessen: der Klick auf
+   `island-werkzeug-varianten` landete auf `.kp-kopf`s eigenem Grund
+   (unmittelbar unter der Knopfreihe, oberhalb der Hairline) — kein Knopf
+   allein, der ganze Kopf als Fläche.
+   Statt jedes einzelne Anzeige-Element einzeln freizuschalten (fünf neue
+   Ausnahmen, die fünfte beim nächsten Feld vergessen) kehrt sich die Regel
+   HIER um, ohne das Rezept zu verlassen: `.kp-kopf` reicht seinen Grund
+   durch, und `button` (die einzigen drei ECHTEN Bedienelemente — `KButton`
+   rendert nachweislich `<button>`, `@kosmo/ui` `components.tsx`) holen sich
+   `pointer-events:auto` explizit zurück, ein semantisches Tag statt einer
+   Klassenliste, die beim nächsten neuen Anzeige-Feld sonst wieder
+   nachgeführt werden müsste. */
+.kp-panel--zeichnet .kp-kopf {
+  pointer-events: none;
+}
+.kp-panel--zeichnet .kp-kopf button {
+  pointer-events: auto;
+}
+/* G2 Nachtrag 3 — vierter Fund derselben Familie, `.kp-eingabe-reihe` statt
+   `.kp-kopf`: live gemessen bei `island-werkzeug-draw` (design/austausch,
+   1400×900, im Sonderzustand «zwei Inseln gleichzeitig offen», s.
+   `IslandShell.tsx`-Kommentar «möglich: Hover auf Insel B, während Insel A
+   noch ihren 1000ms-Rückklapp-Timer laufen hat» — die Blase sinkt in diesem
+   Zustand tiefer, `.kp-eingabe-reihe` rutscht dabei über die Werkzeugleiste).
+   DIESELBE Lücke: `.kp-eingabe-reihe` trägt Mic-/Flaggen-Knopf UND das
+   Eingabefeld selbst (`KosmoEingabe.tsx`: ein `<input>`, kein `<button>`) —
+   das Rezept braucht darum BEIDE Tags, nicht nur `button`, sonst würde genau
+   das Eingabefeld unbedienbar, das die Abnahme ausdrücklich prüft. */
+/* Kein Leerzeichen vor `{` bei den drei folgenden Selektoren, absichtlich:
+   `test/kosmo-karten-risiko.test.tsx`s `cssBlock()` sucht `` `${selektor} {}`` ``
+   als reine Teilzeichenkette (kein Zeilenanfang-Anker wie bei `blase-stufen.
+   test.tsx`/`blase-ausweichen.test.ts`) — ein `.kp-panel--zeichnet .kp-
+   eingabe-reihe {` mit Leerzeichen träfe denselben Test wie der echte,
+   weiter unten stehende `.kp-eingabe-reihe { flex: 0 0 auto; … }`-Block und
+   läse `pointer-events: none` statt `flex: 0 0 auto` — kein Vertragsbruch,
+   nur eine zu naive Teilzeichenketten-Suche in einer Nachbardatei, die
+   dieser Dateikreis nicht anfassen darf. */
+.kp-panel--zeichnet .kp-eingabe-reihe{
+  pointer-events: none;
+}
+.kp-panel--zeichnet .kp-eingabe-reihe button,
+.kp-panel--zeichnet .kp-eingabe-reihe input,
+.kp-panel--zeichnet .kp-eingabe-reihe textarea {
+  /* C6 (`kge-feld--mehrzeilig`): das mitwachsende Feld ist ein `<textarea>`
+     statt eines `<input>` — dieselbe Luecke wie beim `input` selbst, nur
+     erst mit C6 entstanden (`KosmoEingabe.tsx`). */
+  pointer-events: auto;
+}
+.kp-panel--zeichnet .kp-eingabe-reihe .kge-unterzeile {
+  /* Dieselbe Luecke wie beim allgemeinen `.kp-panel .kge-unterzeile`-Nachtrag
+     oben, hier fuer den Zeichnen-Zustand, der den Grund separat abschaltet. */
+  pointer-events: auto;
+}
+
+/* ROADMAP 984 Befund 1 («Das Kosmo-Fenster frisst die Klicks der
+   Vis-Insel», W6-Paket) — DASSELBE Rezept wie `.kp-panel--zeichnet` direkt
+   oben, EIN zweiter Auslöser: `inselOffen` in `KosmoPanel.tsx`
+   (`useBlaseAusweichen`, dort der grosse Kopfkommentar mit der vollen
+   Herleitung). Kurzfassung, WARUM ein eigener Auslöser nötig ist und nicht
+   nur `--kp-ausweich` (P-BA, das bestehende Sinken):
+
+   1. Sinken allein reicht bei rechts/oben verankerten Inseln (z. B.
+      STIMMUNG, `isl-rand-rechts`, `top:50%`) nicht — die Blase darf laut 5b
+      nie unter ihren Ruhegrund sinken (`bottom:144px` bleibt Anker), das
+      sind konstant höchstens 120 px Spielraum; eine Insel nahe der
+      Bildschirmmitte verlangt oft > 200 px. Live nachgemessen bei Stufe M
+      (748…1368 × 236…756 px, 1400×900 — deckt sich mit
+      `test/blase-ausweichen.test.ts` `ZENTRALE_M`): die STIMMUNG-Pille bei
+      y≈460 lag vollständig unter der Blase, `ausweichTiefe` lieferte 0
+      (ehrlich: keine Bewegung, die nichts freigibt, ist nur Unruhe).
+   2. `z-index` löst es NICHT (schon gemessen, nicht nur vermutet): die
+      Stationsfläche (`.app-station-huelle`) trägt `.k-einblenden`
+      (aura.css) — eine `animation … both`, deren Endbild zwar
+      `transform:none` HEISST, aber als dauerhaft «in Wirkung» gefüllte
+      Animation macht ihr Element trotzdem zum Containing Block für
+      `position:fixed`-Nachfahren. Jede Insel darunter (auch mit
+      `.isl-root--offen`s `z-index:100`) bleibt darum in der LOKALEN
+      Stapel-Ebene der Stationshülle gefangen und kommt gegen `.kp-panel`s
+      `z-index:60` nie an — exakt dieselbe, bereits an anderer Stelle
+      dokumentierte Falle («`.k-einblenden`s Animations-Stacking-Context
+      deckelt jedes lokale z-index ohnehin auf die Hüllen-Ebene»,
+      `modules/design/design.css` `.dw-dropdown`-Kommentar, dort für die
+      BodenDock-Pille). Ein Fix an `.k-einblenden`/`.app-station-huelle`
+      selbst liegt ausserhalb dieses Dateikreises und würde jede Station
+      betreffen — nicht versucht.
+
+   Bleibt die geometrische Lösung auf Seiten der Blase: Panel-Grund UND
+   Fluss-Grund reichen Zeiger durch (wie bei `--zeichnet`), jedes
+   bedienbare Element bleibt bedienbar — weder Gespräch noch Insel-Palette
+   werden dadurch unbedienbar, nur der leere Blasen-Grund wird für den
+   Moment durchsichtig für Klicks. */
+/* B151 (17.09.2026) — DIE ZWEI, DIE DER DURCHLAESSIGE GRUND NICHT ERREICHT.
+   Der Block unten macht den Panel-GRUND durchlaessig, sobald eine Insel-Leiste
+   offen ist. Gemessen wirkt er: von zehn Werkzeugen der rechten Leiste in
+   KosmoDesign sind acht anklickbar. Zwei nicht — und beide aus demselben
+   Grund, aus dem der durchlaessige Grund sie nicht erreichen KANN: sie liegen
+   nicht ueber dem Grund, sondern ueber den eigenen BEDIENELEMENTEN des
+   Panels, und die holen sich ihre `pointer-events` eine Zeile weiter unten
+   ausdruecklich zurueck (`> *`).
+
+   Gemessen (`probe-spalte.mjs`, vier Fenstergroessen, Panel offen und zu):
+     1400x900  island-werkzeug-checks -> kosmo-panel-schliessen
+     1400x900  island-werkzeug-draw   -> kosmo-send
+     1280x820 / 1024x768 / 1680x1050  keine Ueberdeckung
+   Die beiden Panel-Knoepfe sitzen in den RECHTEN ECKEN des Panels (oben
+   schliessen, unten senden), und die Werkzeugleiste laeuft als schmaler
+   Streifen bei x 1315..1377 genau durch beide hindurch. Nur bei 1400x900
+   trifft sie sie — bei den anderen Groessen bricht die Leiste frueher um
+   oder das Panel steht anders.
+
+   Nach oben ist kein Platz: rechts neben der Leiste liegen 23 px bis zum
+   Fensterrand, die Leiste ist 62 breit. Das Panel dagegen hat links 668 px
+   frei. Es rueckt darum um 80 px zur Seite — das ist DIESELBE Entscheidung
+   wie der durchlaessige Grund unten, nur zu Ende gefuehrt: das Panel weicht
+   der Leiste aus, statt ihr zwei Werkzeuge zu nehmen.
+
+   80 px, nicht mehr: gemessen reicht das genau (Panel-Rechtskante faellt von
+   1368 auf 1288, die Leiste beginnt bei 1315). Bei allen vier Groessen bleibt
+   das Panel danach vollstaendig im Bild, und bei den drei Groessen ohne
+   Befund aendert sich nichts zum Schlechteren.
+
+   ANGESAGT: das gilt in JEDER Station, nicht nur in KosmoDesign. Die Regel
+   «Insel-Leiste offen» ist stationsuebergreifend, und eine stationsweise
+   Ausnahme waere eine zweite Zahl, die beim naechsten Umbau veraltet. Der
+   Owner kann das ueberstimmen — dann wird aus der einen Zeile eine mit
+   `.app-wurzel[data-station='design']` davor. */
+.kp-panel--insel-offen {
+  right: 112px;
+  opacity: 0.88;
+  pointer-events: none;
+}
+.kp-panel--insel-offen > * {
+  pointer-events: auto;
+}
+.kp-panel--insel-offen .kp-verlauf {
+  pointer-events: none;
+}
+.kp-panel--insel-offen .kp-verlauf > * {
+  pointer-events: auto;
+}
+/* G2 (ROADMAP 1259, Nachtrag) — dieselbe Lücke wie oben bei `.kp-panel--
+   zeichnet`, hier live vermessen: Sonderzustand «kosmo-panel-offen»,
+   design/projekt UND design/austausch, 1400×900 UND 1180×820,
+   `island-werkzeug-draw`/`-checks`/`-varianten` lieferten `elementFromPoint`
+   konsistent `kosmo-panel` (die Hairline, s. Kommentar oben) bzw. bei
+   1180×820 `kosmo-ui-aktion-aktion` (eine passive System-Zeile, s. dort) —
+   UND ein echter `page.mouse.click()` bewirkte nichts, weder öffnete er das
+   Werkzeug-Popup noch schloss er das Panel. Exakt dasselbe Rezept, keine
+   dritte Variante: die Hairline hat nie Kinder (ihr eigenes
+   `pointer-events:none` reicht), `.kp-system-zeile`s echte Kinder (z. B. der
+   Blick-Thumbnail) bleiben über `> *` bedienbar. */
+.kp-panel--insel-offen > [aria-hidden] {
+  pointer-events: none;
+}
+.kp-panel--insel-offen .kp-system-zeile {
+  pointer-events: none;
+}
+.kp-panel--insel-offen .kp-system-zeile > * {
+  pointer-events: auto;
+}
+/* G2 Nachtrag 2 (s. derselbe Kommentar bei `.kp-panel--zeichnet` oben,
+   wortgleiche Ursache): `.kp-kopf` reicht seinen Grund durch, nur echte
+   `<button>`-Nachfahren (Vorlesen/Einstellungen/Schliessen) holen sich
+   `pointer-events:auto` zurück. Live gemessen: design/projekt @ 1400x900,
+   `island-werkzeug-varianten` lag nach den zwei Funden oben immer noch unter
+   `.kp-kopf`s eigenem Grund (unterhalb der Knopfreihe, über der Hairline). */
+.kp-panel--insel-offen .kp-kopf {
+  pointer-events: none;
+}
+.kp-panel--insel-offen .kp-kopf button {
+  pointer-events: auto;
+}
+/* G2 Nachtrag 3 (s. derselbe Kommentar bei `.kp-panel--zeichnet` oben) —
+   `island-werkzeug-draw`, design/austausch, 1400×900, zwei Inseln
+   gleichzeitig offen: `.kp-eingabe-reihe` reicht seinen Grund durch, Mic-/
+   Flaggen-Knopf UND das Eingabefeld selbst (`<input>`) bleiben bedienbar. */
+/* Kein Leerzeichen vor `{` — derselbe Grund wie bei `.kp-panel--zeichnet
+   .kp-eingabe-reihe` oben (`kosmo-karten-risiko.test.tsx`s naive
+   Teilzeichenketten-Suche). */
+.kp-panel--insel-offen .kp-eingabe-reihe{
+  pointer-events: none;
+}
+.kp-panel--insel-offen .kp-eingabe-reihe button,
+.kp-panel--insel-offen .kp-eingabe-reihe input,
+.kp-panel--insel-offen .kp-eingabe-reihe textarea {
+  /* C6: dieselbe Ergaenzung wie bei `.kp-panel--zeichnet` oben. */
+  pointer-events: auto;
+}
+
+/* B157 (22.09.2026) — DAS AUSWEICHEN NACH OBEN, OHNE MESSUNG UND OHNE TAKT.
+
+   WORAN `1cbc9f157` GESCHEITERT IST, UND ES WAR NICHT DIE ZAHL. Der Ausloeser
+   war `.kp-panel--insel-offen` — «irgendeine Insel, irgendwo». Vertikal
+   ausweichen muss das Panel aber nur der EINEN, die es von unten erreichen
+   kann. Gezaehlt: genau eine Insel je Station traegt `isl-rand-unten`, und es
+   ist immer AUSTAUSCH. Die drei anderen Raender koennen das Panel geometrisch
+   gar nicht erreichen — `isl-rand-oben`/`-oben-neben` sitzen bei `top: 14px`
+   und enden vor den 184 px, die die Hoehenklemme `100dvh - 328px` ohnehin frei
+   haelt; `isl-rand-links`/`-rechts` klappen SEITLICH auf und wachsen nie nach
+   oben.
+
+   AUF KOSMODATA HAENGEN BEIDE OFFENEN INSELN OBEN. Die alte Regel hob das
+   Panel darum auf sie DRAUF: sie verloren den Zeiger, schlossen, das Panel
+   fiel zurueck, sie oeffneten wieder. Ein Kreis, der nie zur Ruhe kommt —
+   gemessen als 300 s Stillstand an 9 von 37 Kombinationen, und KosmoData war
+   bei ALLEN VIER Fenstergroessen dabei. Das ist kein Streumuster, sondern
+   genau dieser Kreis.
+
+   DIE INSEL MELDET IHREN ZUSTAND SELBST — ohne Attribut, ohne Pixel, ohne
+   Beobachter: `.isl-popup` und `.isl-fenster` werden nur gerendert, wenn die
+   Stufe sie hat (`IslandShell.tsx`, beide `stufe === … ? … : null`). Ihr
+   blosses DASEIN ist der Zustand. Eine `leiste` ohne Ausklapp loest darum
+   nichts aus — richtig so, sie reicht nur bis `bottom: 14px` plus ihre eigene
+   Hoehe.
+
+   WARUM `top` UND `height` ZUSAMMEN, und nicht `bottom` allein: Bei drei der
+   vier gefahrenen Fenstergroessen fuellt das Panel seinen erlaubten Streifen
+   `184 … 100dvh-144` schon ganz aus (Stufe m klemmt dort auf
+   `100dvh - 328px`). Verschieben gibt dort NICHTS frei — egal wie genau
+   gemessen wird. Erst die Ruhehoehe macht die Unterkante zu einer Konstanten:
+   184 + 300 = 484, bei jeder Fensterhoehe ab 628 px. Gegen die gemessene
+   Popup-Oberkante von y 649 (Protokoll `1cbc9f157`, 1400x900) sind das 165 px
+   Luft — das Panel endet ueber dem GANZEN Ausklapp, nicht knapp ueber den
+   Knoepfen. Mit `top` allein waere die Unterkante 704 gewesen, 55 px unter der
+   Popup-Oberkante: das waere ein Wurf und keine Aussage.
+
+   Die Hoehenzeile ist buchstabengleich zur Ruhehoehe im Grundblock — keine
+   neue Zahl, dieselbe, nur fuer diesen Moment erzwungen. Eine Grenze der
+   DARSTELLUNG, wie der P-ZL-Deckel der Zentrale; der gespeicherte Stand und
+   `data-stufe` bleiben unberuehrt.
+
+   184 ist die zweite Haelfte der 328 aus dem Grundblock (P-DECKEL-1: 160
+   aufgerundete Unterkante der zweiten Werkzeugleistenzeile + 24
+   Sicherheitsabstand). Wer die 328 bewegt, muss diese 184 mitbewegen.
+
+   `:not(.kp-panel--angedockt)`: die Zentrale-Spalte ist `position: relative` —
+   dort wuerde `top: 184px` das Panel nach UNTEN schieben statt nach oben.
+
+   `max-height` UND NICHT `height` — das ist der Unterschied zwischen wirksam
+   und zu spaet, und er ist gemessen. Die Bewegungsliste von `.kp-panel` nennt
+   `width`, `height` und `margin-bottom`; `top` und `max-height` stehen NICHT
+   darin. Mit `height` sprang die Oberkante sofort auf 184, die Hoehe brauchte
+   aber ihre 320 ms — gemessen am 22.09.2026 (Diagnose
+   `e2e/b157-selektor-diagnose.spec.ts`, 1400x900):
+
+       nach   0 ms   Hoehe 572   Unterkante 756   Popup ab 649   <- verdeckt
+       nach 400 ms   Hoehe 313   Unterkante 497
+       nach 800 ms   Hoehe 300   Unterkante 484   Popup ab 631   <- frei
+
+   Die Reparatur war also richtig und kam zu spaet. UND DAS IST KEIN
+   MESSARTEFAKT: Wer die Insel oeffnet und sofort auf einen Export-Knopf
+   klickt, trifft dieselben 320 ms. Ein Deckel springt wie `top` und macht
+   aus «nach einer Dreiviertelsekunde bedienbar» ein «bedienbar».
+
+   SELEKTOR AUF EINER ZEILE, ABSICHTLICH: `blase-stufen.test.tsx` und
+   `blase-ausweichen.test.ts` greifen ihre Bloecke mit `^\.kp-panel\s*\{`
+   im `m`-Modus. Eine Umbruchzeile, die mit `.kp-panel` beginnt, wuerde diesen
+   Greifer auf DIESEN Block umlenken. */
+.app-wurzel:has(.isl-rand-unten .isl-popup, .isl-rand-unten .isl-fenster) .kp-panel:not(.kp-panel--angedockt) {
+  top: 184px;
+  bottom: auto;
+  max-height: min(var(--k-blase-s-hoehe, 300px), calc(100dvh - 328px));
+}
+
+/* C0-NACHBESSERUNG 2 (Pruefer-Mangel 1/2, dl-c0-seitenfenster) — DIE
+   BLASEN-AUSWEICHEN GELTEN FUER DAS SEITENFENSTER NICHT.
+   Gemessen (b154, 1280x820, Insel «austausch» auf: 332 px² auf dem Kosmo-Feld):
+   die drei Regeln oben sind fuer die schwebende Blase geschrieben — Panel 112 px
+   nach links (`right: 112px`), Deckkraft 0.88, Zeiger-Durchgriff, und mit offenem
+   Popup `top: 184px` samt Maximalhoehe. Am festen Seitenfenster heisst das:
+   es rutscht von der Kante weg (Luecke, in die die Station nicht fliesst),
+   wird durchscheinend (Auftrag: Deckkraft 1) und verliert seine volle Hoehe.
+   Die Klasse `kp-panel--insel-offen` bleibt am Panel (b154 liest sie als
+   Zustandsbeleg); nur ihre Wirkung wird am Seitenfenster zurueckgenommen.
+   Gleiche Gewichtung wie die Blasen-Regeln plus die zweite Klasse, kein
+   `!important`; die Popup-Regel hat fuenf Klassen, hier sechs. */
+.kp-panel--seitenfenster.kp-panel--insel-offen,
+.kp-panel--seitenfenster.kp-panel--insel-offen[data-stufe] {
+  right: 0;
+  opacity: 1;
+  pointer-events: auto;
+}
+.kp-panel--seitenfenster.kp-panel--insel-offen .kp-verlauf,
+.kp-panel--seitenfenster.kp-panel--insel-offen .kp-system-zeile,
+.kp-panel--seitenfenster.kp-panel--insel-offen .kp-kopf,
+.kp-panel--seitenfenster.kp-panel--insel-offen .kp-eingabe-reihe,
+.kp-panel--seitenfenster.kp-panel--insel-offen > [aria-hidden] {
+  pointer-events: auto;
+}
+.app-wurzel:has(.isl-rand-unten .isl-popup, .isl-rand-unten .isl-fenster) .kp-panel.kp-panel--seitenfenster:not(.kp-panel--angedockt) {
+  top: 0;
+  bottom: 0;
+  max-height: none;
+}
+
+.kp-kopf {
+  /* P-BS: der Kopf ist eine feste Reihe — er schrumpft nie unter seine
+     natürliche Höhe (die knappe Höhe geht immer an die scrollenden Zonen). */
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  padding: 10px 14px;
+  /* Owner-Befund B1 (06.10.2026): im schmalen Fenster der Zentrale schob die lange Statuszeile («lokal · Modell ·
+     verbunden · gratis») die Knöpfe rechts aus dem Fenster — das Zahnrad zu den Einstellungen war nicht zu sehen
+     und nur noch über den Umweg «Einstellungen öffnen» der Meldung erreichbar. Die Reihe bricht jetzt um, statt
+     über den Rand zu laufen; nichts wird abgeschnitten. */
+  flex-wrap: wrap;
+  row-gap: var(--k-s2);
+}
+.kp-titel {
+  font-weight: var(--k-gewicht-stark);
+}
+.kp-fuell {
+  flex: 1;
+}
+
+/* v0.9.1 Owner-Screenshot-Befund 22.07. («nichts abschneiden»): das
+   einspaltige Grid hatte KEINE minmax(0,…)-Spalte — die Spaltenbreite folgt
+   dann dem breitesten min-content-Kind (der «Lernjournal exportieren …»-
+   Knopf, `.k-btn` ist global `white-space: nowrap`), die ganze Sektion ragte
+   damit 49px über den rechten Fensterrand («Clou[d]», «…Bri[dge]» beschnitten,
+   Beschnitt-Sonde 22.07.). `minmax(0, 1fr)` klemmt die Spalte auf die
+   Panelbreite; lange Knopf-Labels dürfen HIER (und nur hier) umbrechen —
+   kurze Labels (Standard/Remote/Cloud) brechen nie, weil sie ohnehin passen. */
+.kp-einstellungen {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--k-s3);
+  border-bottom: 1px solid var(--k-line);
+  /* P-SB: im schwebenden Fenster teilt sich der (lange) Einstellungs-Block
+     die begrenzte Höhe mit dem Verlauf — er scrollt in sich selbst, statt
+     das Panel über seine max-height zu drücken oder den Chat zu verdrängen. */
+  overflow-y: auto;
+  flex: 0 1 auto;
+  min-height: 120px;
+  /* r2-chat-rad (23.09.2026, Bot-Fund U3): am Rollanschlag darf die
+     Restbewegung nicht auf einen zufaellig darunterliegenden Vorfahren
+     (z.B. `body`) weiterlaufen — dieselbe Absicht wie `body`s bestehendes
+     `overscroll-behavior: none` (aura.css), hier direkt an der schwebenden
+     Flaeche selbst, statt sich auf den globalen Fallback zu verlassen. */
+  overscroll-behavior: contain;
+}
+/* Owner-Befund B1 (06.10.2026, «Ollama-URL» verdeckt): solange die Einstellungen offen sind, bekommen sie die
+   Höhe des Fensters. Vorher teilten sie sie mit dem Verlauf und schrumpften auf ihre 120 px Mindesthöhe — man sah
+   die Überschrift, das Feld lag darunter, hinter Werkzeug-Hinweis, «Letzter Zug» und Eingabe. Gemessen im
+   429 px hohen Fenster der Zentrale: Kosmo-Kreis 118, Kopf 52, Meldung «kein Sprachmodell» 102, Eingabe-Reihe 156 —
+   für die Einstellungen blieben 29 px. Solange sie offen sind, treten darum Verlauf, Kosmo-Kreis und Eingabe-Reihe
+   zurück (sie laufen weiter und sind beim Schliessen sofort wieder da); Kopf und Meldung bleiben, denn die Meldung
+   sagt, warum man hier ist. */
+.kp-panel--einstellungen .kp-einstellungen {
+  flex: 1 1 auto;
+  min-height: 0;
+  scroll-padding-block: var(--k-s4);
+}
+.kp-panel--einstellungen .kp-verlauf,
+.kp-panel--einstellungen .kp-orbfeld,
+.kp-panel--einstellungen .kp-eingabe-reihe {
+  display: none;
+}
+.kp-einstellungen .k-btn {
+  white-space: normal;
+}
+.kp-einstellungen code {
+  overflow-wrap: anywhere;
+}
+.kp-feld-titel {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+.kp-betriebsart-reihe {
+  display: flex;
+  gap: var(--k-s2);
+}
+.kp-betriebsart-btn {
+  flex: 1;
+}
+.kp-hinweis-soft {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-lesen);
+}
+.kp-select-block {
+  display: block;
+  width: 100%;
+  margin-top: var(--k-s2);
+}
+.kp-ink {
+  color: var(--k-ink);
+}
+.kp-anleitung-box {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-lesen);
+  display: grid;
+  gap: var(--k-s2);
+  padding: 8px 10px;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line);
+  background: var(--k-raised);
+}
+.kp-schalter-label {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  display: flex;
+  gap: var(--k-s3);
+  align-items: center;
+}
+.kp-hinweis-faint {
+  font-size: var(--k-t-xs, 11px);
+  color: var(--k-ink-faint);
+}
+.kp-blick-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+.kp-blick-ring {
+  display: flex;
+  gap: var(--k-s3);
+}
+.kp-blick-eintrag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 52px;
+}
+.kp-blick-bild {
+  width: 40px;
+  height: 40px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
+  object-fit: cover;
+  border: 1px solid var(--k-line-strong);
+}
+.kp-blick-platzhalter {
+  width: 40px;
+  height: 40px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
+  border: 1px dashed var(--k-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--k-t-xxs);
+  color: var(--k-ink-faint);
+}
+.kp-blick-label {
+  font-size: var(--k-t-xxs);
+  color: var(--k-ink-faint);
+  text-align: center;
+  line-height: var(--k-lh-eng);
+}
+
+/* ── Chat-Verlauf ───────────────────────────────────────────────────────── */
+
+.kp-verlauf {
+  flex: 1;
+  /* P-SB: im schwebenden Fenster (max-height statt Vollhöhe) darf der
+     Verlauf schrumpfen und in sich scrollen — ohne `min-height:0` gewinnt
+     die Flex-Grundregel «nicht unter Inhaltsgrösse» und das ganze Panel
+     wüchse über seine `max-height` hinaus. */
+  min-height: 0;
+  /* Owner 13.10.2026 («im chatinterface scrollen … seitwärts … das sollte doch nie sein»): hier stand
+     `overflow: auto` — der Verlauf rollte in BEIDE Richtungen, und die Rasterspalte wuchs mit dem breitesten Inhalt
+     (ein langer Link, ein unteilbarer Bezeichner, eine Codezeile). Gemessen: 500 px seitwärts verschiebbar, die
+     Nachricht stand ausserhalb des Bildes. Ein Chat rollt nur senkrecht: die Spalte folgt dem Fenster
+     (`minmax(0, 1fr)`), langer Text bricht in seiner Blase um, und waagrecht wird nie gerollt.
+     Probe `e2e/kosmo-chat-nie-seitwaerts.spec.ts`. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+  /* r2-chat-rad (23.09.2026, Bot-Fund U3): s. Begruendung bei
+     `.kp-einstellungen` oben — dieselbe Absicht, am Verlauf. */
+  overscroll-behavior: contain;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* P-BLASE (v0.9.30, Owner wörtlich «allgemein chatblasen zentriert, damit
+     ganzes popup kompakter ist») — engerer Zeilenabstand als zweiter Beitrag
+     zur Kompaktheit (--k-s3 statt --k-s4), zusammen mit der schmaleren,
+     zentrierten Blasenspalte unten. */
+  gap: var(--k-s3);
+  align-content: start;
+}
+
+/* Owner 13.10.2026 (s. `.kp-verlauf`): kein Beitrag ist breiter als der Verlauf. Code und unteilbare Bezeichner
+   brechen an jeder Stelle (bei Code sind das keine Wörter), Bilder, Grafiken und Tabellen schrumpfen auf die Breite. */
+.kp-verlauf > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.kp-verlauf :is(pre, code, kbd, samp) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.kp-verlauf :is(img, svg, video, canvas, table) {
+  max-width: 100%;
+}
+.kp-verlauf a {
+  overflow-wrap: anywhere;
+}
+
+/* System-/Blick-Zeilen — dezente zentrierte Pill, kein Bubble-Charakter. */
+.kp-system-zeile {
+  justify-self: center;
+  max-width: 92%;
+  padding: 4px 11px;
+  border-radius: var(--k-radius-pill);
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-basis);
+  text-align: center;
+  color: var(--k-ink-faint);
+  background: var(--k-raised);
+  border: 1px solid var(--k-line);
+}
+/* Nachprobe Runde 26 (LW, Gerät, 2493 × 1361, Seitenfenster): zwei dreizeilige Systemzeilen überlappten — die dritte
+   Zeile lag unter der nächsten Pille. WebKitGTK rechnet die Höhe eines eng gefassten Rasterkinds (`justify-self:
+   center`) mit der ungebrochenen Breite, dieselbe Lücke wie L44/L49. Die Zeile füllt jetzt die Spalte (feste Breite,
+   die Höhe stimmt), die Pille darin ist ein Inline-Block im gewöhnlichen Fluss. Aussehen unverändert. */
+.kp-system-zeile--fluss {
+  justify-self: stretch;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.kp-system-text {
+  display: inline-block;
+  max-width: 92%;
+  padding: var(--k-s2) var(--k-s4);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-raised);
+}
+/* Die Pille ist kein Bedienelement: die Regeln «echte Kinder einer Systemzeile holen den Zeiger zurück» (Zeichnen,
+   offene Insel) gelten für sie nicht. */
+.kp-panel .kp-system-zeile > .kp-system-text {
+  pointer-events: none;
+}
+.kp-blick-zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+}
+.kp-blick-thumbnail {
+  width: 26px;
+  height: 26px;
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
+  object-fit: cover;
+  border: 1px solid var(--k-line-strong);
+  cursor: pointer;
+}
+
+/* Chat-Bubble — Herkunft (du/kosmo) als Modifier statt Inline-Ternary.
+   P-SB: Breite an der Lesbarkeit ausgerichtet — Fliesstext liest sich am
+   besten bei ~45–75 Zeichen je Zeile.
+   P-BLASE (v0.9.30, Owner wörtlich «allgemein chatblasen zentriert, damit
+   ganzes popup kompakter ist») — bis hier stand `justify-self: end`/`start`
+   auf den beiden Modifiern: eine kurze Du-Zeile klebte hart am rechten Rand,
+   mit der GANZEN restlichen Panelbreite als leerer Fläche links davon — das
+   liest sich als grösseres Popup, als der Text es braucht. `justify-self:
+   center` sitzt jetzt auf der BASIS-Klasse (beide Herkünfte teilen sie), die
+   Spalte ist mit `min(52ch, 82%)` zugleich schmaler als vorher (62ch/88%) —
+   beides zusammen zieht den sichtbaren Fluss auf eine engere, mittige Bahn.
+   Die Unterscheidung «wer spricht» bleibt an DREI Merkmalen hängen, die
+   KEINES von ihnen an der Randposition hängt: dem Blasen-Grund
+   (`--k-accent-wash` du · `--k-raised` kosmo), der «Sprech»-Ecke (die kleine
+   Ecke zur Sprecherseite bleibt rechts bei du / links bei kosmo, unabhängig
+   davon, wo die Blase auf der Fläche steht) und — bei Kosmo — dem
+   Rollen-Badge (`kp-rollen-badge`, farbig je Rolle). Zentriert heisst hier
+   also enger, nicht undeutlicher. */
+.kp-bubble {
+  max-width: min(52ch, 82%);
+  justify-self: center;
+  padding: 9px 14px;
+  border-radius: var(--k-radius);
+  font-size: var(--k-t-md);
+  line-height: var(--k-lh-lesen);
+  white-space: pre-wrap;
+  border: 1px solid var(--k-line);
+}
+/* ══ DIE SPRECH-ECKE WAR SEIT HEUTE MORGEN TOT — und ist jetzt echt ═══════
+   21.09.2026, gefunden beim Umstellen der Rundungsnamen.
+
+   Hier stand `border-bottom-right-radius: var(--k-radius-xs)` gegen eine
+   Grundrundung von `--k-radius-lg`: 6px gegen 16px, die eine Ecke enger als
+   die anderen drei — das zweite, farbunabhaengige Zeichen dafuer, wer
+   spricht. Mit dem Einzug der sieben Rundungsnamen auf EINE (Form-Entscheid
+   1a) trugen beide Namen denselben Wert, und damit war die Ecke unsichtbar:
+   vier gleiche Ecken, ein Unterschied nur noch in der Farbe. Die Wache
+   daneben blieb gruen, weil sie den NAMEN pruefte und nicht den WERT — die
+   Lehre dieses Hauses, zum wiederholten Mal.
+
+   DIE ECKE IST JETZT SCHARF, nicht kleiner. Das ist kein Trick, um die
+   Ein-Rundungs-Regel zu umgehen, sondern ihre woertliche Anwendung: der
+   Owner hat gesagt «du darfst formen schon manipulieren, es geht einfach um
+   die abrundung». Eine Ecke ist danach entweder R oder gar nicht gerundet —
+   ein DRITTER Wert waere der Regelbruch, eine scharfe Ecke ist es nicht. Und
+   sie ist deutlicher als die alten 6px je waren.
+
+   WARUM SIE UEBERHAUPT SEIN MUSS: ohne sie unterscheidet nur noch der Grund
+   die beiden Herkuenfte — eine reine Farbunterscheidung, und die faellt fuer
+   jeden aus, der Farben schlecht trennt. Die Blasen stehen seit P-BLASE
+   zentriert, die Position sagt also auch nichts mehr. */
+.kp-bubble--du {
+  background: var(--k-accent-wash);
+  border-bottom-right-radius: 0;
+}
+.kp-bubble--kosmo {
+  background: var(--k-raised);
+  border-bottom-left-radius: 0;
+}
+/* v0.9.5 P-EK/O-1: `system`-Zeilen (Blick, Kontext-Kürzung, die einmalige
+   Verlaufs-Vereinigungs-Notiz) in der KLEINEN Ansicht. Im grossen Panel
+   tragen sie je eine eigene, reichere Zeile (`kp-fluss-*`); die Orb-Karte
+   zeigt denselben Fluss nur schmaler — sie unterdrückt die Zeilen bewusst
+   NICHT (das wäre eine stille Ansichts-Sonderregel), sondern gibt ihnen den
+   ruhigsten Ton: volle Breite, kein Blasen-Grund, gedämpfte Schrift. */
+.kp-bubble--system {
+  justify-self: stretch;
+  max-width: 100%;
+  background: transparent;
+  border-color: transparent;
+  padding: 2px 4px;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+/* ── P-SB: drei Zonen (`docs/KOSMO-GESPRAECH-STRUKTUR.md`) ───────────────── */
+
+/* Zone 1 «Fluss» — die geschrumpfte Ergebniszeile einer angewendeten Karte,
+   an ihrer Stelle zwischen den Bubbles («✓ 3 Wände angelegt · rückgängig»,
+   wörtliches Doc-Beispiel).
+
+   P-BS (Freigabe 2a/2j): «Die Ergebniszeile im Fluss ist bereits Geschichte:
+   32 px hoch, Monospace, ‹rückgängig› in Teal — keine Karte mehr.» Statt der
+   bisherigen grünen Karten-Pille: eine stille Zeile, Ober-/Unterkante in
+   `--k-ergebnis-linie` (2j: «eine Stufe leiser als --linie, damit Zeilen
+   nicht wie Tabellen wirken»), Häkchen in `--k-ergebnis-ok` («nur als
+   Zeichen, nie als Fläche»), Zeilenhöhe aus `--k-zeile-h-ergebnis`
+   (P-MF Befund 4: hiess `--zeile-h` — ein Name, den weder `aura.css` noch
+   diese Datei je deklariert; toter Fallback-Pfad, s. Kopfkommentar oben bei
+   `.kp-panel`). Fallbacks = Papier-Werte der Freigabe; die KOSMOS-Werte
+   liefert `aura.css`.
+
+   Befund `docs/BEFUND-ROLLENBADGE-2026-08-28.md`: ein FESTER
+   `min-height: var(--k-zeile-h-ergebnis, 32px)` auf diesem Grid-Item
+   (`.kp-verlauf`, ein einspaltiges Grid mit `grid-auto-rows` unverändert
+   `auto`) ersetzt bei Grid-Items die automatische, inhaltsbasierte
+   Mindesthöhe komplett durch den festen Wert — die implizite Zeile wird
+   dann exakt 32px hoch bemessen, EGAL wie lang der Ergebnistext ist.
+   Bricht der Text (lange `formatBelegungsBericht()`-Ausgabe, s. Befund)
+   auf zwei Zeilen um, braucht der Inhalt real das Doppelte (`scrollHeight`
+   64px gegen `clientHeight` 30px, am Browser gemessen) — mit
+   `overflow: visible` (Default) läuft die zweite Zeile samt dem
+   «rückgängig»-Knopf unten aus der eigenen Box heraus, direkt in die
+   Trefferfläche der NÄCHSTEN Sprechblase (Rollen-Abzeichen verdeckt den
+   Knopf).
+   ERSTER FIX-VERSUCH (verworfen, am Browser widerlegt): `min-height:
+   max-content` statt eines festen Werts. Das ITEM selbst wächst damit
+   zwar korrekt auf die volle, umgebrochene Inhaltshöhe (gemessen:
+   `getComputedStyle(...).height` traf exakt die gerenderte Boxhöhe) —
+   aber die GRID-SPUR (der `auto`-Zeilenplatz, den `.kp-verlauf` dafür
+   reserviert) wuchs NICHT mit: das nächste Geschwister (die Sprechblase
+   mit dem Rollen-Abzeichen) rückte weiterhin so nach, als wäre die Zeile
+   nur wenige Pixel hoch — derselbe Überlauf-Mechanismus wie beim festen
+   32-px-Wert, nur mit anderen Zahlen. `max-content` ist zwar KEIN
+   `auto`-Wert im Wortsinn, wird von Chromium für die automatische
+   Mindestgrösse eines Grid-Items aber ebenfalls über den «expliziter
+   Wert»-Zweig behandelt statt über den «automatisch, inhaltsbasiert»-Zweig
+   — der Effekt auf die Spurbemessung blieb derselbe Fehler wie vorher.
+   Live gemessen (Playwright, `--fake`-Bruecke, dieselbe Zustandsherstellung
+   wie der Sweep-Test): Zeile `.kp-fluss-ergebnis` `height: 72.17px`
+   (korrekt, dreizeiliger Text bei schmaler Panel-Stufe), Nachbar-Blase
+   (Rollen-Abzeichen) beginnt trotzdem bereits bei y=595,83 — nur 22 px
+   nach dem Zeilenanfang, 50 px VOR ihrem eigenen unteren Rand. Verworfen
+   zugunsten des zweiten, im selben Befund genannten Wegs unten.
+
+   FIX (umgesetzt): `min-height` ganz entfernen → Rückfall auf den
+   CSS-Grid-Startwert `auto`. Das ist genau der Fall, den die
+   Grid-Spezifikation für die automatische Mindestgrösse als «erster,
+   bevorzugter» Zweig behandelt («ist `min-height` `auto`, gilt die
+   inhaltsbasierte automatische Mindestgrösse») — bei einem einzelnen
+   Item je Spur ist das exakt die tatsächliche Inhaltshöhe, WELCHE Zeilen-
+   zahl der Text auch braucht, und die Spur wächst live mit. Live
+   nachgemessen (derselbe Aufbau): keine Überlappung mehr zwischen der
+   Ergebniszeile und der Folgeblase, `elementFromPoint` auf der
+   Knopf-Mitte trifft wieder den Knopf selbst. Kurze, einzeilige
+   Ergebnistexte (der Regelfall) landen dabei weiterhin bei ~30–32px,
+   weil das schon die natürliche Inhaltshöhe von Padding + einer
+   Textzeile ist — der Token `--k-zeile-h-ergebnis` bleibt so sinngemäss
+   die Zielhöhe für den kurzen Fall, ohne für den langen eine Deckelung zu
+   sein. */
+.kp-fluss-ergebnis {
+  justify-self: stretch;
+  box-sizing: border-box;
+  padding: 6px 12px;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--k-ergebnis-linie); /* D-6: toter Fallback #edeae1 entfernt */
+  border-bottom: 1px solid var(--k-ergebnis-linie); /* D-6: toter Fallback #edeae1 entfernt */
+  border-radius: 0;
+}
+.kp-fluss-ok {
+  color: var(--k-ergebnis-ok); /* D-6: toter Fallback #3f9b79 entfernt */
+}
+.kp-fluss-status {
+  color: var(--k-ergebnis-still); /* D-6: toter Fallback #b8b2a4 entfernt */
+  font-style: italic;
+}
+.kp-fluss-rueckgaengig {
+  /* «rückgängig» in Kosmos Stimme (2a/2j-Rolle «Rückgängig»). P-TT (Owner-
+     Entscheid 28.07.2026, Welle 1): eigenes Token `--k-kosmo-stimme` statt
+     der gemeinsamen Marken-Konstante `--k-signal` — nur diese Rolle (und
+     `.kp-archiv-rueckgaengig` unten, dieselbe Rolle in der Archiv-Zeile)
+     trägt Kosmos dunkleren Papier-Ton, `--k-signal` selbst bleibt wieder
+     die unveränderte Marke (s. `aura.css`). */
+  color: var(--k-kosmo-stimme, var(--k-accent));
+  text-decoration: underline;
+  font: inherit;
+}
+/* Zone 1 — verworfener Vorschlag: graue Zeile, bewusst OHNE Rahmen/Aktion —
+   sie ist reine Randnotiz im Fluss, kein Rechenschafts-Eintrag (landet darum
+   auch NICHT im Archiv, s. `baueGespraechsFluss`-Kopfkommentar). P-BS:
+   Grauwert aus `--ergebnis-still` (2j: «Verworfen / rückgängig gemacht»). */
+.kp-fluss-verworfen {
+  justify-self: start;
+  padding: 4px 12px;
+  font-size: var(--k-t-sm);
+  font-style: italic;
+  color: var(--k-ergebnis-still, var(--k-ink-faint));
+}
+
+/* Zone 2 «Offen» — angeheftet direkt über der Eingabe, NICHT Teil des
+   scrollenden Flusses (Zone 1). Rendert im JSX gar nicht (kein leerer
+   Rahmen), solange nichts offen ist — diese Regeln greifen also nur, wenn
+   `.kp-offene-zone` tatsächlich im DOM steht.
+
+   P-BS (5b/2b): Deckel `max-height: 40%` der Blasenhöhe (die Blase hat seit
+   P-BS eine DEFINIERTE Höhe je Stufe, darum trägt das Prozentmass), scrollt
+   in sich (`overflow-y`), und `flex: 0 1 auto` + `min-height: 0` lassen sie
+   in der Enge schrumpfen statt die Eingabezeile zu verdrängen (Abnahme 05).
+   Der 1-px-Tuschrahmen (`--zone-offen-rahmen`, Token-Blatt 2j — «der einzige
+   volle Tuschrahmen in Kosmos Fläche») ersetzt die bisherige Trennlinie:
+   «hier wartet etwas» ohne Rot, ohne Badge, ohne Bewegung (2b). Radius 12
+   wörtlich aus dem Bauteil-Blatt 2g. */
+.kp-offene-zone {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: var(--k-s3);
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+  max-height: 40%;
+  overflow-y: auto;
+  /* r2-chat-rad (23.09.2026, Bot-Fund U3): s. Begruendung bei
+     `.kp-einstellungen` weiter oben — dieselbe Absicht, an der offenen
+     Zone. */
+  overscroll-behavior: contain;
+  border: 1px solid var(--k-zone-offen-rahmen); /* D-6: toter Fallback #1a1815 entfernt */
+  border-radius: var(--k-radius); /* D-6: war 12px, off-scale (2/4/6/999) */
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.kp-offene-zaehler {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+
+/* Zone 3 «Archiv» — geschlossene Kopfzeile im Panel-Kopf, aufklappbar.
+   P-BS (5b/2i): «Archiv im Kopf max. 206 px» — der Deckel sitzt am
+   GANZEN Archiv-Block (Kopfzeile + Liste); die Liste scrollt in sich
+   (Flex-Spalte, `min-height: 0`) und kann den Fluss nie verdrängen.
+
+   P-MF Befund 4: `--archiv-kopf-max` war ein `var()`-Aufruf ohne jede
+   Deklaration (weder `aura.css` noch lokal) — kein Freigabe-Token, reine
+   lokale Layout-Grösse. Direktwert statt Token-Attrappe. */
+.kp-archiv {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 206px;
+  min-height: 0;
+  border-bottom: 1px solid var(--k-line);
+}
+.kp-archiv-zeile {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  text-align: left;
+  cursor: pointer;
+}
+.kp-archiv-liste {
+  margin: 0;
+  padding: 0 14px 10px;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  /* P-BS: kein eigenes vh-Mass mehr — die Liste füllt den Rest des
+     206-px-Deckels (`.kp-archiv` oben) und scrollt in sich. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* r2-chat-rad (23.09.2026, Bot-Fund U3): s. Begruendung bei
+     `.kp-einstellungen` weiter oben — dieselbe Absicht, an der Archiv-
+     Liste, der vierten Rollflaeche. */
+  overscroll-behavior: contain;
+}
+.kp-archiv-eintrag {
+  display: flex;
+  align-items: baseline;
+  gap: var(--k-s3);
+  font-size: var(--k-t-sm);
+}
+.kp-archiv-zeit {
+  font-family: var(--k-font-mono);
+  color: var(--k-ink-faint);
+  flex: 0 0 auto;
+}
+.kp-archiv-tat {
+  flex: 1;
+  color: var(--k-ink);
+}
+.kp-archiv-status {
+  /* P-BS: derselbe Still-Grauwert wie im Fluss (`--ergebnis-still`, 2j). */
+  color: var(--k-ergebnis-still, var(--k-ink-faint));
+  font-style: italic;
+  flex: 0 0 auto;
+}
+.kp-archiv-rueckgaengig {
+  flex: 0 0 auto;
+  /* P-BS: Rückgängig ist Kosmos Stimme (2j-Rolle «Rückgängig»). P-TT
+     (Owner-Entscheid 28.07.2026, Welle 1): dieselbe Umstellung wie
+     `.kp-fluss-rueckgaengig` oben — `--k-kosmo-stimme` statt `--k-signal`. */
+  color: var(--k-kosmo-stimme, var(--k-accent));
+  text-decoration: underline;
+  font: inherit;
+}
+
+/* v0.8.2/P6 (additiv, `docs/V082-SPEZ.md` §6.7, Owner-Entscheid 3) — das
+ * Rollen-Badge (Kosmo-Meister/-Leiter/-Zeichner). `aura.css` gehört gerade
+ * PD1 (parallele Insel-Arbeit) und trägt KEINE eigenen Meister/Leiter/
+ * Zeichner-Farbtokens — nur die bestehenden `--k-rolle-*`-Rollenfarben
+ * («WER handelt», `aura.css` Z. 238-248, ursprünglich für KosmoVis-Knoten).
+ * Statt aura.css anzufassen (verboten, s. Dateikreis) werden hier DREI
+ * bestehende Tokens zweitverwendet, nach Gewicht/Kontext gewählt: `agent`
+ * (wärmstes Gold — der Meister trifft das seltenste, härteste Urteil),
+ * `pna` (Violett — der Leiter koordiniert/vermittelt) und `generator`
+ * (Rotton — der Zeichner produziert/generiert Ergebnisse mechanisch). Reine
+ * Zweitverwendung bestehender Werte, keine neue Farbe, kein aura.css-Diff. */
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css); die
+   `.kp-rollen-badge-hinweis`-Rücksetzung (`text-transform:none;letter-
+   spacing:normal`, unten) bleibt unangetastet — sie hebt beides für den
+   verschachtelten Hinweistext bewusst wieder auf. */
+.kp-rollen-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: var(--k-s2);
+  padding: 1px 8px;
+  border-radius: var(--k-radius-pill, 999px);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-stark);
+  width: fit-content;
+}
+.kp-rollen-badge--meister {
+  color: var(--k-rolle-agent);
+  background: var(--k-rolle-agent-fill);
+  border: 1px solid var(--k-rolle-agent-line);
+}
+.kp-rollen-badge--leiter {
+  color: var(--k-rolle-pna);
+  background: var(--k-rolle-pna-fill);
+  border: 1px solid var(--k-rolle-pna-line);
+}
+.kp-rollen-badge--zeichner {
+  color: var(--k-rolle-generator);
+  background: var(--k-rolle-generator-fill);
+  border: 1px solid var(--k-rolle-generator-line);
+}
+.kp-rollen-badge-hinweis {
+  opacity: 0.75;
+  font-weight: var(--k-gewicht-normal);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.kp-marken-reihe {
+  display: flex;
+  gap: var(--k-s2);
+  margin-top: var(--k-s3);
+  flex-wrap: wrap;
+}
+/* S1 (`docs/KONZEPT-SKIZZE.md` §6) — der ausführbare Knopf eines Zurufs
+ * (`Bubble.aktion`, `modules/design/zonen-zuruf.ts`). Dasselbe Zeilen-Muster
+ * wie `.kp-marken-reihe` oben, ohne dessen Zitat-Chip-Optik. */
+.kp-bubble-aktion {
+  margin-top: var(--k-s3);
+}
+.kp-quelle-chip {
+  all: unset;
+  cursor: pointer;
+  font-size: var(--k-t-xs, 11px);
+  font-family: var(--k-font-mono);
+  padding: 2px 8px;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-surface);
+  color: var(--k-ink-soft);
+}
+/* v0.8.3/P2 (additiv, `docs/V083-SPEZ.md` §6.3/E6c) — RefKarte: die reiche
+ * Referenz-Karte im Chat-Quellenbereich, gerendert nach einem [Qn]-Klick auf
+ * eine KosmoData-Referenz. `Karteikarte` (`@kosmo/ui`, `.k-karte`) liefert
+ * bereits Rahmen/Ecke/Laufnummer — hier nur das interne Zeilen-/Spalten-Layout. */
+.kp-refkarte {
+  max-width: 88%;
+  margin-top: var(--k-s3);
+}
+.kp-refkarte-kopf {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k-s3);
+}
+.kp-refkarte-bild {
+  flex-shrink: 0;
+}
+.kp-refkarte-text {
+  flex: 1;
+  min-width: 0;
+}
+.kp-refkarte-titel {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-sm, 13px);
+}
+.kp-refkarte-autoren {
+  font-size: var(--k-t-xs, 11px);
+  color: var(--k-ink-soft);
+}
+.kp-refkarte-schliessen {
+  all: unset;
+  cursor: pointer;
+  color: var(--k-ink-faint);
+  font-size: var(--k-t-lg);
+  line-height: var(--k-lh-eins);
+  padding: 2px 4px;
+}
+.kp-refkarte-kurztext {
+  margin-top: var(--k-s2);
+  font-size: var(--k-t-xs, 11px);
+  font-style: italic;
+  color: var(--k-ink-soft);
+}
+.kp-refkarte-themen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s2);
+  margin-top: var(--k-s2);
+}
+
+/* v0.1.5 C2 (`docs/AUFTRAG-EINBAU-KOSMO-CHAT-AN-INTEGRATOR.md`: «Daumen und
+   Kopieren erscheinen beim Zeigen») — vorher `opacity: 0.55` fest, also
+   IMMER sichtbar, nur gedaempft. In Ruhe jetzt unsichtbar; `.kp-bubble:hover`
+   und `.kp-bubble:focus-within` (Tastatur-Weg, s. unten) zeigen sie wieder.
+   `pointer-events` bleibt unveraendert `auto` (s. Kopfkommentar oben,
+   `.kp-panel button`-Umkehr) — bei `opacity: 0` waeren die Knoepfe sonst per
+   Tab erreichbar, aber unsichtbar fokussiert; `:focus-within` faengt genau
+   das ab, `transition` macht das Erscheinen kein hartes Umschalten. */
+.kp-feedback-reihe {
+  display: flex;
+  gap: var(--k-s2);
+  margin-top: var(--k-s2);
+  opacity: 0;
+  transition: opacity var(--k-motion-fast);
+}
+.kp-bubble:hover .kp-feedback-reihe,
+.kp-bubble:focus-within .kp-feedback-reihe {
+  opacity: 0.55;
+}
+/* Pruefer-Fund 4: ohne Zeiger (Touch) gibt es kein «Zeigen» — die Reihe bleibt
+   dort dauerhaft (gedaempft) sichtbar, sonst waere sie unerreichbar.
+   UNGEPRUEFT auf einem echten Touchgeraet (nur die Regel ist getestet). */
+@media (hover: none) {
+  .kp-feedback-reihe {
+    opacity: 0.55;
+  }
+}
+.kp-feedback-reihe--gegeben {
+  opacity: 1;
+}
+.kp-bubble:hover .kp-feedback-reihe--gegeben,
+.kp-bubble:focus-within .kp-feedback-reihe--gegeben {
+  opacity: 1;
+}
+.kp-feedback-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: var(--k-t-sm);
+  padding: 1px 6px;
+  /* Knopf -> Pille (Form-Entscheid 1a, 21.09.2026). Hier stand eine ROHE 6px
+     — weder auf der Leiter noch in der richtigen Form. 22px hoch gemessen. */
+  border-radius: var(--k-radius-pill);
+  background: transparent;
+  /* C0 Nachbesserung 8 (Pruefer-Mangel 4): gemessen 26x21 px, also auch schon
+     auf der Basis (0cbf83cb1: 22 px hoch) unter dem Mausweg von 32 px.
+     zielgroessen-gate blieb gruen und sah es nicht. Jetzt 32 px Mausweg,
+     44 px Beruehrweg; das Zeichen bleibt mittig. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+}
+@media (pointer: coarse) {
+  .kp-feedback-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+.kp-feedback-btn--aktiv {
+  background: var(--k-accent-wash);
+}
+
+/* Aktionsketten-/Vorschlag-Karten. */
+.kp-paket-stack {
+  display: grid;
+  gap: var(--k-s2);
+}
+.kp-paket-zusammenfassung {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  padding: 0 2px;
+}
+.kp-karte {
+  border-radius: var(--k-radius); /* D-6: war 10px, off-scale (2/4/6/999) */
+  padding: 10px;
+  display: grid;
+  gap: var(--k-s3);
+  background: var(--k-raised);
+}
+.kp-karte--offen {
+  border: 1px solid var(--k-accent);
+}
+.kp-karte--fertig {
+  border: 1px solid var(--k-success);
+}
+.kp-karte--fehler {
+  border: 1px solid var(--k-warning);
+}
+
+/* ── Welle 2 v0.9.5 — Risiko-Zeichen (§2f) & Zone-2-Faltung (§2g) ────────── */
+
+/* §2f: «Das Risiko-Zeichen ist eine Linienart, kein Alarm.» Eine
+   Löschen-Karte trägt: gestrichelten Kartenrand in der Risiko-Marke, die
+   feine 135°-Schraffur im Kartengrund — und sonst NICHTS (kein Rot als
+   Fläche, kein Ausrufezeichen, keine Modal-Warnung). Schraffur-Geometrie
+   wörtlich aus `--k-risiko-schraffur-mass` (aura.css: «Linie 6px / Abstand
+   14px», Periode 20px): das Token ist ein WERTPAAR und kann in CSS nicht
+   auf einzelne Gradient-Stops verteilt werden (dieselbe technische Grenze
+   wie bei `--blase-s` → Breite/Höhe, Lehre v0.9.4 §2) — die Zahlen stehen
+   darum wörtlich hier, mit dem Token als dokumentierter Quelle. */
+.kp-karte--nimmt-weg {
+  border: 1px dashed var(--k-risiko-marke); /* D-6: toter Fallback #b25750 entfernt */
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--k-risiko-schraffur-farbe, rgba(178, 87, 80, 0.055)) 0,
+    var(--k-risiko-schraffur-farbe, rgba(178, 87, 80, 0.055)) 6px,
+    transparent 6px,
+    transparent 20px
+  );
+}
+
+/* §2f/§2g: Marke 16 × 1.5 — durchgezogen = legt an/ändert (Tuschton),
+   gestrichelt = nimmt weg (Risiko-Marke). Als Border gebaut, damit
+   `dashed` die Strichelung übernimmt (eine Linienart, keine Grafik). */
+.kp-risiko-marke {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 16px;
+  border-top: 1.5px solid var(--k-ink);
+  vertical-align: middle;
+}
+.kp-risiko-marke--nimmt-weg {
+  border-top-style: dashed;
+  border-top-color: var(--k-risiko-marke); /* D-6: toter Fallback #b25750 entfernt */
+}
+
+/* §2f-Label («LEGT AN» / «NIMMT WEG · 6 OBJEKTE»): Versal-Mono wie die
+   übrigen Karten-Eyebrows; «nimmt weg» in der Marke — nur Text und Linie,
+   nie Fläche (2j). */
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.kp-risiko-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  white-space: nowrap;
+}
+.kp-risiko-label--nimmt-weg {
+  color: var(--k-risiko-marke); /* D-6: toter Fallback #b25750 entfernt */
+}
+
+/* §2f: «Rückgängig stellt alle 6 Objekte wieder her.» — stille Textzeile. */
+.kp-risiko-hinweis {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+/* §2g «Ab 8 Schritten zeigt die Karte 3 und faltet den Rest — alle 8
+   zeigen»: der Auffalter als stiller Textknopf in der Karte. */
+.kp-paket-alle-zeigen {
+  all: unset;
+  cursor: pointer;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  text-decoration: underline;
+  width: fit-content;
+}
+
+/* §2g «Verhalten bei Menge»: gefaltete Karte als 44-px-Zeile (Touch-Ziel
+   ≥ 44, harte Grenze 5b). Dieselbe Kartengrammatik (Radius var(--k-radius-
+   xs), --k-raised — D-6: war Radius 8, off-scale), nur eben eine Zeile;
+   eine gefaltete Löschen-Karte behält Strichelung und Marke, damit das
+   Risiko nicht in der Faltung verschwindet. */
+.kp-karte-zeile {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--k-line-strong);
+  border-radius: var(--k-radius); /* D-6: war 8px, off-scale (2/4/6/999) */
+  background: var(--k-raised);
+  font: inherit;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.kp-karte-zeile--nimmt-weg {
+  border-style: dashed;
+  border-color: var(--k-risiko-marke); /* D-6: toter Fallback #b25750 entfernt */
+}
+.kp-karte-zeile-titel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kp-karte-zeile-zusatz {
+  flex: 0 0 auto;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-micro);
+  color: var(--k-ink-faint);
+}
+/* «+N weitere» (§2g): dieselbe Zeilenform, zentriert, bewusst ohne Farbe —
+   die Zone drängt nicht. */
+.kp-zone2-weitere {
+  justify-content: center;
+  color: var(--k-ink-soft);
+}
+
+/* §3a Lauf-Ansage: Zusammenfassung unter den Schrittzeilen («6 Schritte
+   legen an · 1 löscht») — Zählung, kein Alarm. */
+.kp-lauf-ansage-summe {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+.kp-karte-kopf-reihe {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.kp-eyebrow {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+.kp-schritt-liste {
+  margin: 0;
+  /* v0.1.5 C2 — eigenes Haken-Icon je Zeile ersetzt den Listenpunkt
+     (`.kp-schritt-zeile` unten), darum kein doppeltes Symbol. */
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+  font-size: var(--k-t-sm);
+}
+/* v0.1.5 C2 — «Werkzeug-Schritte … zugeklappte Zeile mit Haken und einem
+   Satz». Flex statt Listenpunkt, `min-width: 0` haelt die Zeile im Rahmen.
+   Pruefer-Fund 6 (C4): die urspruengliche Fassung kaschierte einen zu
+   langen Satz mit `overflow: hidden` + `text-overflow: ellipsis` —
+   UI-Regel 2 (`docs/kosmodata-neugestaltung/UI-REGELN.md`) verbietet genau
+   das woertlich («nicht mit overflow: hidden zu kaschieren») und verlangt
+   stattdessen eine mitwachsende Flaeche. Der Satz bricht jetzt um statt
+   abgeschnitten zu werden — die Zeile (und mit ihr `.kp-schritt-liste`,
+   bereits ein `grid` mit `gap`) waechst nach unten, die Karte bleibt
+   innerhalb ihrer eigenen Box. */
+.kp-schritt-zeile {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k-s2);
+}
+.kp-schritt-haken {
+  flex: none;
+  margin-top: var(--k-s1);
+  color: var(--k-success);
+}
+.kp-schritt-satz {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.kp-knopf-reihe {
+  display: flex;
+  gap: var(--k-s2);
+}
+/* v0.1.5 C4 — der additive vierte Knopf «Immer ablehnen», NEBEN dem
+   eingefrorenen `.k-approval-aktionen`-Block von `GovernanceGate.tsx`
+   (dessen eigene vier Knöpfe unverändert bleiben). Bewusst ruhig/ghost statt
+   `tone="danger"` wie das Gate-«Ablehnen» — zwei rote Knöpfe in derselben
+   Karte würden Tragweite verwischen (Einmal-Ablehnen vs. eine dauerhafte
+   Regel je Befehlsart). `aria-pressed` trägt den Zustand für Tastatur/
+   Screenreader, dieselbe Bauart wie `.kp-feedback-btn--aktiv`. */
+.kp-immer-ablehnen {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  padding: var(--k-s2) var(--k-s3);
+  /* Pruefer-Fund 5 (C4): roher <button> ohne KButton-Grössenstufe, live
+     gegen den dist-Build gemessen bei ~22.8px Höhe — unter dem 32-px-
+     Mausweg (`tools/zielgroessen-gate.mjs`), das dieselbe Regel bei
+     `KButton size="sm"` in derselben Karte durchsetzt. `min-height` +
+     Flex-Zentrierung statt mehr Padding, damit die Beschriftung optisch
+     unverändert bleibt. */
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--k-radius-pill);
+  margin-top: calc(-1 * var(--k-s2));
+}
+.kp-immer-ablehnen:hover,
+.kp-immer-ablehnen:focus-visible {
+  color: var(--k-ink);
+  background: var(--k-hover);
+}
+.kp-immer-ablehnen[aria-pressed='true'] {
+  color: var(--k-danger);
+}
+.kp-karte-titel {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-md);
+}
+.kp-vorschau-hinweis {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+.kp-vorschau-reihe {
+  display: flex;
+  gap: var(--k-s2);
+}
+.kp-vorschau-spalte {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.kp-vorschau-label {
+  font-size: var(--k-t-xxs);
+  color: var(--k-ink-faint);
+}
+.kp-vorschau-bild {
+  height: 90px;
+  background: var(--k-plan-paper);
+  /* Flaeche -> die eine Rundung (Form-Entscheid 1a, 21.09.2026): hier stand eine rohe. */
+  border-radius: var(--k-radius);
+  overflow: hidden;
+}
+/* CSP (Befund am Gerät 07.10.2026): Grösse als Regel statt style="…" im Markup. */
+.kp-vorschau-bild > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kp-fehler-zeile {
+  font-size: var(--k-t-sm);
+  color: var(--k-warning);
+}
+/* P22 Teil 2, E89 «Kein Sprachmodell» (`KeinSprachmodell.tsx`): eine RUHIGE
+   Meldung — dieselbe Regel wie bei `.kp-motor-kosten` (Farbe nur auf der
+   SCHRIFT, nie als Fläche, s. dortiger Kopfkommentar in `KosmoPanel.tsx`)
+   und derselbe Blasen-Untergrund wie `.kp-denkt` (kein zweites Rot-Feld). */
+/* B73-Fund (P22, `e2e/module.spec.ts` «NPK-Ausmass», rot-vor-gruen belegt):
+   eine Reihe mit `flex: 1 1 220px` auf dem Text schiebt die Knöpfe bis an
+   die RECHTE Panel-Kante — bei Stufe L/M reicht das bis in den Bereich, den
+   Hintergrund-Werkzeuge (z. B. `draw-tab-ausmass`) unter dem floatenden
+   Panel belegen (AUFTRAG-B73, dieselbe Überdeckungs-Klasse, hier nur ein
+   NEUER Auslöser). Gestapelt statt in einer Reihe — die Knöpfe bleiben
+   linksbündig direkt unter dem Text, wie ein Bubble im Verlauf (die
+   Bubbles sind zentriert/schmal, s. P-BLASE, und reichen aus genau diesem
+   Grund nie bis an den rechten Rand). */
+.kp-kein-modell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--k-s3);
+  padding: var(--k-s3) var(--k-s4);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-raised);
+  /* Gerätebefund Runde 17 (Punkt 3): ohne seitlichen Abstand lief der Rahmen rechts genau an den
+     Bildschirmrand (Seitenfenster), die Rundung fehlte dort — das Panel wirkte abgeschnitten. */
+  margin: var(--k-s2) var(--k-s3);
+}
+/* R4/U12 (23.09.2026, Bot-Fund `docs/MESSUNG-UX-BOTLAUF-2026-09-23.md`):
+   `var(--k-warning)` (#a37b22, theme-invariant) gegen `--k-raised` gerechnet
+   3,88:1 im Papier- und 4,30:1 im Kosmos-Thema — beide unter der WCAG-
+   Schwelle 4,5:1 (SC 1.4.3), `e2e/r4-kleinigkeiten.spec.ts` «U12» misst am
+   gerenderten Bildpunkt nach. `--k-warning` selbst bleibt unangetastet (kein
+   `aura.css`-Token dieses Pakets, andere Stellen wie `.kp-motor-kosten`
+   nutzen es unverändert weiter) — dieser EINE Text bekommt zwei eigene,
+   dem Warnton nahe Farbwerte, je einen pro Thema (gerechnet, `--k-raised`
+   ist #ffffff im Papier- und #1a1e27 im Kosmos-Thema): #916d1e erreicht
+   4,74:1 auf Weiss, #a9832f erreicht 4,73:1 auf #1a1e27 — beide mit
+   Sicherheitsabstand über 4,5:1, nicht nur knapp darüber. */
+.kp-kein-modell-text {
+  font-size: var(--k-t-sm);
+  color: #916d1e;
+  line-height: var(--k-lh-lesen);
+}
+[data-theme='orbit'] .kp-kein-modell-text {
+  color: #a9832f;
+}
+.kp-kein-modell-aktionen {
+  display: flex;
+  gap: var(--k-s2);
+}
+/* P-SB («alles in blasen»): «Kosmo denkt …» spricht in derselben Blasenform
+   wie eine Kosmo-Antwort (Sprech-Ecke) statt als lose Zeile. P-BLASE
+   (v0.9.30): seit die Kosmo-Blasen zentriert stehen (`.kp-bubble` oben),
+   zieht «Kosmo denkt …» mit — sonst stünde der Denk-Hinweis links, während
+   jede echte Antwort daneben/darüber schon mittig sitzt, ein sichtbarer
+   Bruch in genau dem Fluss, der kompakter werden sollte. */
+.kp-denkt {
+  justify-self: center;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: var(--k-radius);
+  /* Dieselbe scharfe Sprech-Ecke wie `.kp-bubble--kosmo` (s. dort): der
+     Denk-Hinweis kommt von Kosmo und traegt darum dasselbe Zeichen. Vorher
+     stand hier `--k-radius-xs` gegen `--k-radius-lg` und war seit dem Einzug
+     wirkungslos. */
+  border-bottom-left-radius: 0;
+  border: 1px solid var(--k-line);
+  background: var(--k-raised);
+  color: var(--k-ink-faint);
+  font-size: var(--k-t-sm);
+}
+
+/* C2/C6-Nachtrag (Pruefer-Fund 2, dl-c0-seitenfenster) — der Knopf «nach
+   unten» (`shell/chat/NachUntenKnopf.tsx`). Direktes Kind von `.kp-verlauf`
+   (letzte Zeile des Grid), `position: sticky` klebt ihn darum an den
+   unteren Rand des SICHTBAREN Scroll-Ausschnitts, egal wie weit
+   hochgeblaettert wurde — `.kp-verlauf` selbst ist der scrollende
+   Vorfahre (`overflow: auto` oben). Dieselben Tokens wie `.kp-denkt`
+   direkt darueber (Kartenoptik der Flaeche, keine neue Farbe erfunden),
+   volle Rundung (`--k-radius-pill`) macht ihn optisch von den eckigen
+   Bubbles/Karten unterscheidbar — ein Steuerelement, kein Inhalt. 32 px
+   Mindesthoehe (E95, Mausweg) trotz kompaktem Text. */
+.kp-nach-unten {
+  justify-self: center;
+  position: sticky;
+  bottom: 4px;
+  width: fit-content;
+  min-height: 32px;
+  padding: 6px 16px;
+  border-radius: var(--k-radius-pill);
+  border: 1px solid var(--k-line);
+  background: var(--k-raised);
+  color: var(--k-ink);
+  font-size: var(--k-t-sm);
+  box-shadow: var(--k-shadow-sm, var(--k-shadow-raised));
+  cursor: pointer;
+}
+.kp-nach-unten:hover {
+  background: var(--k-hover, var(--k-raised));
+}
+
+/* ── Eingabezeile ───────────────────────────────────────────────────────── */
+
+/* P-SB: die Eingabezeile bleibt BEWUSST kein Blasen-Element (eine Eingabe
+   ist eine Handlung, keine Äusserung — als Blase getarnt würde sie wie
+   eine bereits gesendete Nachricht lesen); sie spricht die Formensprache
+   aber mit: Pill-Feld statt Kastenkante, kein harter Trennbalken mehr.
+
+   P-BS, Abnahme 05 (5b: «Eingabezeile immer sichtbar — nie überlagert, nie
+   weggescrollt»): `flex: 0 0 auto` macht sie zur festen Reihe der
+   Flex-Spalte — bei JEDER Stufe, Kartenmenge und Archivlage geben die
+   scrollenden Zonen (Fluss `min-height:0`, Zone 2 `max-height:40%`, Archiv
+   206 px) nach, nie diese Reihe. Sie ist zudem das LETZTE Kind der Spalte
+   und liegt in keinem Scroll-Container — wegscrollen ist strukturell
+   unmöglich. */
+.kp-eingabe-reihe {
+  flex: 0 0 auto;
+  padding: 10px 12px 12px;
+  display: flex;
+  gap: var(--k-s3);
+  align-items: center;
+}
+.kp-mic-aktiv {
+  animation: none;
+}
+.kp-input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-raised);
+  font-size: var(--k-t-code);
+}
+/* ══ DIE EINGABEZEILE DER ANGEDOCKTEN SPALTE BRICHT UM (22.09.2026) ══════
+   GEMESSEN, nicht geschaetzt. In der Spalte ist die Reihe 398 px breit und
+   teilt sich so auf:
+
+     Mikrofon 42 · Feedback 98 · FELD 143 · Senden 66 · drei Abstaende 24
+                                                        · Innenrand 24
+
+   Das Feld — der Zweck der ganzen Zeile — bekam davon 36 %, und nach Abzug
+   seines Innenrands blieben 113 px fuer einen Platzhalter, der 248 px
+   braucht. `e2e/b134-platzhalter-passt-ins-feld.spec.ts` hat das gemeldet,
+   sobald Kosmo am 22.09.2026 dauerhaft auf der Zentrale steht (Owner-
+   Entscheid «immer da») — vorher sah die Wache dieses Feld dort nie.
+
+   ZWEI NAHELIEGENDE WEGE SIND VERWORFEN, und beide aus einem Grund:
+   · Den Platzhalter kuerzen, bis er passt. In 113 px stehen rund 14
+     Zeichen — «Sprich mit …». Das ist kein Hinweis mehr, das ist ein Rest.
+   · Das Wort «Feedback» weglassen und nur die Fahne zeigen. Genau dagegen
+     steht eine Wache: `test/w1-wunschkanal-flagge-auffindbarkeit.test.tsx`
+     haelt fest, dass der Knopf REIN als Zeichen nicht gefunden wurde —
+     ein Kanal mit einem einzigen Eintrag in Wochen war der Beleg. Eine
+     Wache zu umgehen, um eine andere gruen zu machen, ist kein Ergebnis.
+
+   Also bricht die Zeile um: das Feld steht oben allein ueber die volle
+   Breite, die Knoepfe stehen darunter. Jede Beschriftung bleibt, der
+   Platzhalter bleibt ganz, und es kostet eine Zeilenhoehe — aber nur in der
+   angedockten Spalte, die seit dem Owner-Entscheid ohnehin steht. Das freie
+   Kosmo-Fenster ist breit genug und bleibt einzeilig. */
+/* C0 (23.09.2026): das feste Seitenfenster (430 px) ist NICHT breiter als die
+   angedockte Spalte — gemessen am Bild eingebaut-c0.png schrumpfte das Feld
+   im Lauf-Zustand (Feedback + Antworten + Einreihen) auf rund 120 px, und
+   die Platzhalterzeilen liefen unter Anhang und Mikrofon. Derselbe Umbruch
+   wie in der Spalte: Feld allein oben, Knoepfe darunter. */
+.kp-panel--angedockt .kp-eingabe-reihe,
+.kp-panel--seitenfenster .kp-eingabe-reihe {
+  flex-wrap: wrap;
+}
+.kp-panel--angedockt .kp-eingabe-feld,
+.kp-panel--seitenfenster .kp-eingabe-feld {
+  /* `order: -1` statt einer Umsortierung im Quelltext: die Reihenfolge der
+     Kinder ist anderswo Vertrag (das Formular `kge-form` ist
+     `display: contents`, die Sende-Knoepfe stehen bewusst AUSSERHALB davon).
+     Hier soll sich nur die Ansicht aendern, nicht der Aufbau. */
+  order: -1;
+  flex: 1 0 100%;
+}
+.kp-eingabe-feld {
+  flex: 1;
+  margin-top: 0;
+  border-radius: var(--k-radius-pill, 999px);
+  padding: 7px 14px;
+  /* 21.09.2026, am Bildschirm gefunden: in der angedockten Spalte bei
+     1280x720 (Spalte 372px breit) endete der Platzhalter mitten im Wort —
+     «Sprich mit Kosr». Ein harter Schnitt sieht aus wie ein Tippfehler; die
+     Auslassungspunkte sagen, dass da mehr steht. Der Platzhalter ist ein
+     Hinweis, kein Inhalt — er darf gekuerzt aussehen, aber nicht kaputt.
+
+     Es braucht BEIDE Zeilen: `text-overflow` wirkt nur auf Text, der nicht
+     umbrechen darf, und ein `<input>` bricht ohnehin nicht — aber ohne
+     `overflow: hidden` gibt es nichts, was ueberlaufen koennte, und der
+     Browser schneidet stattdessen stumpf am Rand ab. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* C6 — das mitwachsende Feld ist KEINE Pille mehr (eine Pille passt zu
+   genau einer Zeile) und braucht die einzeilige Ellipsis-Klemme nicht: der
+   Text bricht um, statt am Rand abgeschnitten zu werden. `.kp-eingabe-feld`
+   sitzt seit dem Umbau auf der FELD-HUELLE (`.kge-huelle`, s.
+   `KosmoEingabe.tsx`-Kopfkommentar zur mehrzeiligen Bauart) statt auf der
+   `<textarea>` selbst — die Regel hier braucht darum den Nachfahren-
+   Selektor, nicht mehr eine Verbund-Klasse auf einem Element. Die
+   eigentliche Wachstums-/Deckel-Optik steht weiter in `kosmo-eingabe.css`
+   (`kge-feld--mehrzeilig`, umfeldunabhaengig) — hier NUR, was das
+   Panel-Umfeld an der einzeiligen Pillen-Optik zuruecknehmen muss. */
+.kp-eingabe-feld.kge-huelle {
+  border-radius: var(--k-radius);
+  /* KEIN `overflow-y` hier — `kge-feld--mehrzeilig`/`[data-am-deckel]` in
+     `kosmo-eingabe.css` schalten es je nach Wachstumsstand um (hidden bis
+     zum Deckel, auto danach); eine zweite Regel gleicher Spezifitaet (zwei
+     Klassen) wuerde je nach Ladereihenfolge der beiden Dateien gewinnen und
+     den Deckel-Zustand verdecken. */
+  text-overflow: clip;
+  /* «bis zur halben Kartenhoehe» (C6) hatte in der schwebenden Blase (drei
+     Stufen S/M/L, keine feste Hoehe) keine echte Kartenhoehe zum Halbieren
+     — der Fallback aus `kosmo-eingabe.css` (220px) blieb darum massgeblich.
+     NACHGEZOGEN mit C0 (23.09.2026): das Seitenfenster hat jetzt eine feste
+     Hoehe (`100dvh`, `.kp-panel--seitenfenster`), «Karte» IST das Panel —
+     die Ueberschreibung steht direkt darunter. */
+}
+/* C0/C6: die eigentliche Halbierung — `--kge-max-hoehe` (kosmo-eingabe.css)
+   ist eine geerbte Custom Property, diese Regel schreibt sie NUR im
+   Seitenfenster (fest 100dvh) auf die halbe Panelhoehe um. Die angedockte
+   Spalte (Zentrale) bleibt beim 220-px-Fallback — ihre Hoehe ist die Sache
+   der Zentrale-Spalte, nicht dieses Pakets (ausserhalb des Dateikreises). */
+.kp-panel--seitenfenster .kp-eingabe-feld.kge-huelle {
+  --kge-max-hoehe: 50dvh;
+}
+/* Die Huelle traegt jetzt Rand/Hintergrund/Radius (von `.kp-eingabe-feld`
+   geerbt) — die `<textarea>` selbst bleibt unbemalt und transparent, sonst
+   saehe man zwei ineinander geschachtelte Kaesten. */
+.kp-eingabe-feld.kge-huelle .kge-feld--mehrzeilig {
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+/* ── Blick-Vollbild-Vorschau ────────────────────────────────────────────── */
+
+.kp-vollbild-scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--k-ink) 55%, transparent);
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  z-index: calc(var(--k-ebene-modal) + 60);
+}
+.kp-vollbild-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k-s3);
+  max-width: 90vw;
+  max-height: 90vh;
+}
+.kp-vollbild-bild {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: var(--k-radius); /* D-6: war 8px, off-scale (2/4/6/999) */
+  border: 1px solid var(--k-line-strong);
+}
+.kp-vollbild-fuss {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--k-ink-invers); /* D-6: war #fff — Beschriftung auf dem dunklen Scrim, themen-unabhaengig */
+  font-size: var(--k-t-md);
+}
+
+/* ── v0.8.2/P3 «Signal-Erfassung» (additiv) ──────────────────────────────── */
+
+/* Ablehnungsgrund-Eingabe (§4.1 C-19) — ersetzt das GovernanceGate nur an
+   der einen offenen Karte, solange die Eingabe aktiv ist. */
+.kp-grund-box {
+  border-radius: var(--k-radius); /* D-6: war 10px, off-scale (2/4/6/999) */
+  padding: 10px;
+  display: grid;
+  gap: var(--k-s2);
+  background: var(--k-raised);
+  border: 1px solid var(--k-warning);
+}
+.kp-grund-textarea {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-field);
+  font-size: var(--k-t-sm);
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* kosmo-signal/v1-Export-Dialog (§4.4/§5) */
+.kp-export-scrim {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--k-ink) 55%, transparent);
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  z-index: calc(var(--k-ebene-modal) + 60);
+}
+.kp-export-box {
+  display: grid;
+  gap: var(--k-s3);
+  padding: 16px;
+  border-radius: var(--k-radius); /* D-6: war 12px, off-scale (2/4/6/999) */
+  background: var(--k-raised);
+  border: 1px solid var(--k-line-strong);
+  max-width: 420px;
+  min-width: 320px;
+}
+.kp-export-zeile {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--k-s2);
+  font-size: var(--k-t-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.9.5 P-PS «Panel-Sammelpaket» — Zwischenreden (Welle 3, §5a),
+   Motor-/Kostenanzeige (C-24) und Kosmos Faden zum Orb (C-25).
+
+   WARUM ALLES HIER und nicht in `lauf-anzeige.css`/`lauf-vorschlag.css`:
+   der Dateikreis dieses Pakets nennt `shell/kosmo-panel.css`; die beiden
+   Lauf-Stylesheets gehören einem anderen Schnitt. Alle Regeln unten
+   betreffen ausschliesslich Kinder von `.kp-panel` — sie stehen also nicht
+   nur erlaubterweise, sondern auch sachlich richtig hier.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── C-25 · DER FADEN ZUM ORB ─────────────────────────────────────────────
+   Geschwister der Blase, nicht ihr Pseudo-Element: `.kp-panel` trägt
+   `overflow: hidden` (Zone 1/2 dürfen nicht über den Glasrand laufen), ein
+   `::after` unterhalb der Unterkante wäre weggeschnitten.
+
+   GEOMETRIE — dieselbe Herleitung wie der Anker der Blase (Kopfkommentar
+   dieser Datei): Unterkante Blase 144 px, Oberkante Orb 88 px → 56 px
+   Lichtmass. Waagrecht auf der Orb-Mitte: der Insel-Orb steht bei
+   `right: 26px` und ist 64 px breit (Mitte 58), der freie Orb der Zentrale
+   bei `right: 22px`, ebenfalls 64 px (Mitte 54) — 55 px trifft beide
+   Erscheinungen innerhalb von 3 px und in jedem Fall INNERHALB des Kreises.
+   Direktwerte wie beim Anker: ein Token, das genau eine Regel bedient, wäre
+   die Token-Attrappe, die dieser Datei schon einmal vier tote `var()`-
+   Aufrufe eingebracht hat (P-MF Befund 4, s. oben). Die Zahlen stehen darum
+   benannt als lokale Properties — EIN Ort, kein `var()` ins Leere. */
+.kp-faden {
+  --kp-faden-hoehe: 56px;
+  --kp-faden-rechts: 55px;
+  --kp-faden-breite: 2px;
+  position: fixed;
+  right: var(--kp-faden-rechts);
+  bottom: 88px;
+  width: var(--kp-faden-breite);
+  height: var(--kp-faden-hoehe);
+  /* z-index zwischen Orb (42) und Blase (60): der Faden läuft hinter der
+     Blasenkante zusammen und vor dem Plan. */
+  z-index: var(--k-ebene-schwebend);
+  pointer-events: none;
+  border-radius: var(--k-radius-pill);
+  /* Oben (an der Blase) kräftig, unten (am Orb) auslaufend — der Faden
+     hängt an Kosmos Fläche, er ist nicht selbst ein Strich im Bild. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--k-kosmo-stimme) 70%, transparent),
+    color-mix(in srgb, var(--k-kosmo-stimme) 12%, transparent)
+  );
+}
+/* «Nichts pulsiert dauerhaft ausser dem Faden — und der nur, wenn Kosmo
+   aktiv ist» (Freigabe 5b, BEWEGUNG). Der stille Faden bleibt vollständig
+   sichtbar; das Pulsieren kommt NUR beim laufenden Zug dazu. */
+.kp-faden--aktiv {
+  animation: kp-faden-puls var(--k-mot-faden, 2400ms) ease-in-out infinite;
+}
+@keyframes kp-faden-puls {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* «Alles abschaltbar; der stille Zustand ist vollständig lesbar.» */
+  .kp-faden--aktiv {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ── C-24 · MOTOR UND KOSTEN ──────────────────────────────────────────────
+   Eine Zeile Text im Kopf, keine Fläche, kein Rot, keine Bewegung. Nur der
+   teure Fall bekommt überhaupt Farbe — und die auf der SCHRIFT, nie als
+   Fläche (dieselbe Regel, die §2j für die Risiko-Marke setzt). */
+/* D-1 (E-1): `letter-spacing` ersatzlos entfernt — Inhalt (`motorInfo.
+   kostenKurz`) ist nicht versaliert, Sperrung ist an VERSAL gebunden. */
+.kp-motor-kosten {
+  font-size: var(--k-t-micro);
+  color: var(--k-ink-faint);
+  white-space: nowrap;
+  cursor: help;
+}
+.kp-motor-kosten[data-kosten='je-anfrage'] {
+  color: var(--k-warning);
+}
+.kp-motor-kosten[data-kosten='unbekannt'] {
+  color: var(--k-ink-soft);
+  font-style: italic;
+}
+
+/* ── §5a · DIE ZWEI KNÖPFE DER EINGABEZEILE ───────────────────────────────
+   «Sobald ein Lauf aktiv ist, bekommt die Eingabezeile zwei Knöpfe statt
+   einem.» Sie stehen zusammen, damit sie als EIN Entscheid lesbar sind. */
+.kp-zuruf-knoepfe {
+  display: flex;
+  gap: var(--k-s1);
+  flex: 0 0 auto;
+}
+
+/* ── §5a · HALTESTELLEN ───────────────────────────────────────────────────
+   Ein stiller Textschalter je Zeile — die Haltestelle wird dort gesetzt, wo
+   sie wirkt. `.k-druck` (aura.css) trägt bereits die Druck-Rückmeldung.
+
+   v0.9.5 P-MF1 · FARBROLLE KORRIGIERT: hier stand `--k-kosmo-stimme`. Die
+   Freigabe weist die Halte-Stelle im Lauf ausdrücklich der Risiko-Marke zu
+   (`docs/KOSMO-UI-FREIGABE-01.md`, Zeile `--risiko-marke`: «‹Nimmt weg›:
+   Strichmarke, Kartenrand, Halte-Stelle im Lauf»), nicht Kosmos Stimme —
+   eine Haltestelle ist eine Marke des Architekten am Lauf, keine Äusserung
+   Kosmos. Die Auflage derselben Zeile, «nur Linie und Text, nie Fläche, nie
+   Knopf», ist eingehalten: die Farbe trägt hier ausschliesslich die SCHRIFT
+   und die Rahmenlinie auf durchsichtigem Grund; der Schalter bleibt
+   flächenlos. */
+.kp-haltestelle-schalter {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: var(--k-t-xs);
+  padding: 2px 6px;
+  border-radius: var(--k-radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--k-ink-faint);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.kp-haltestelle-schalter[aria-pressed='true'] {
+  color: var(--k-risiko-marke);
+  border-color: color-mix(in srgb, var(--k-risiko-marke) 45%, transparent);
+}
+.kp-haltestelle-schalter:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* Die Zeile selbst zeigt die Haltestelle auch ohne den Schalter zu lesen —
+   ein feiner Strich links, dieselbe Sprache wie der Schritt-Punkt.
+   v0.9.5 P-MF1: dieselbe Farbrolle-Korrektur wie oben — die Halte-Stelle im
+   Lauf trägt die Risiko-Marke. Ein Strich ist genau die Form, die die
+   Freigabe dafür erlaubt («nur Linie und Text»). */
+.lauf-vorschlag-schritt--halt,
+.lauf-schritt--halt {
+  box-shadow: inset 2px 0 0 0 color-mix(in srgb, var(--k-risiko-marke) 60%, transparent);
+}
+.kp-lauf-ansage-halte {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-lesen);
+  margin-top: var(--k-s1);
+}
+
+/* ── Posten 6 · WARUM DER LAUF STEHT ──────────────────────────────────────
+   Der Badge oben hat Platz für ein Wort; hier steht der Satz. Ruhige
+   Tintenschwäche — ein Halt ist kein Fehler. */
+.kp-lauf-halt {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-lesen);
+  padding: var(--k-s1) 0;
+}
+.kp-lauf-halt[data-grund='notbremse'] {
+  color: var(--k-ink);
+}
+
+/* ── §5a · DIE RÜCKFRAGE-KARTE (Zone 2) ───────────────────────────────────
+   Sie sitzt zuoberst in Zone 2 und ist die einzige Karte dort, die etwas
+   AUFHÄLT — darum trägt sie als einzige Kosmos Ton am Rand statt der
+   neutralen Kartenkante. Keine Fläche, keine Warnfarbe: es ist eine Frage,
+   kein Fehler.
+
+   v0.9.5 P-MF1 · GEPRÜFT UND BEWUSST BEIBEHALTEN. Die zwei Haltestellen-
+   Stellen oben sind zur Risiko-Marke gewandert; DIESE nicht, und das ist
+   ein Entscheid, kein Übersehen:
+    · Die Freigabe zählt für `--risiko-marke` «Strichmarke, Kartenrand,
+      Halte-Stelle im Lauf» auf — «Kartenrand» meint dort den Rand einer
+      «nimmt weg»-Karte. Diese Karte nimmt nichts weg; sie fragt.
+    · Der Rand IST hier Kosmos Ton in seiner eigentlichen Rolle: es ist der
+      einzige Ort in Zone 2, an dem KOSMO SELBST spricht statt einen
+      Vorschlag hinzulegen. Die Risiko-Marke hier hiesse «Gefahr» — die
+      Karte fragt aber nur, ob eine Korrektur an bereits Erledigtem
+      eingereiht werden soll (Owner-Entscheid 6). Rot auf eine Frage ist
+      genau die Übertreibung, die §2j ausschliesst.
+    · Die HALTESTELLE und die RÜCKFRAGE sind zwei Dinge: die eine ist eine
+      geplante Marke am Lauf (Risiko-Marke, s. oben), die andere ein Satz
+      Kosmos. Sie tragen darum bewusst verschiedene Töne.
+   EHRLICHE GRENZE, gemeldet statt stillschweigend entschieden: die
+   Freigabe-Tabelle nennt für `--k-kosmo-stimme` drei Rollen (Antwortblase,
+   Rückgängig, aktiver Ring); diese hier ist eine vierte. Sie ist begründet,
+   aber sie ist nicht freigegeben — ein Kandidat für die nächste Runde der
+   Farbrollen-Tabelle. */
+.kp-karte--rueckfrage {
+  border-color: color-mix(in srgb, var(--k-kosmo-stimme) 60%, var(--k-line));
+}
+.kp-rueckfrage-zuruf {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  font-style: italic;
+  line-height: var(--k-lh-lesen);
+}
+.kp-rueckfrage-grund {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  line-height: var(--k-lh-lesen);
+}
+
+/* ── ANGEDOCKT (21.09.2026) ───────────────────────────────────────────────
+   Owner woertlich: «chattext darf mehr platz einnehmen vielleicht ganze
+   bildhoehe der startseite». Auf der Zentrale ist Kosmo eine Spalte, keine
+   Blase — dieselbe Komponente, andere Positionierung.
+
+   Was diese Klasse aendert: sie loest das Panel aus der festen Verankerung
+   und laesst es seine Spalte fuellen. Was sie NICHT aendert: Inhalt,
+   Zustaende, Kennungen, Schliessweg, die Durchlaessigkeitsregel des Grundes
+   (B75) und die `--kp-ausweich`-Rechnung. Wer hier eine Farbe oder einen
+   Abstand setzt, baut die zweite Umsetzung, die der Schalter verhindern
+   soll. */
+/* ZWEI WAEHLER, und der Grund ist gemessen: die Stufen-Regeln oben tragen
+   `.kp-panel[data-stufe='m']` — Klasse PLUS Attribut, also spezifischer als
+   eine blosse Klasse. Ohne die zweite Zeile behielt das angedockte Panel die
+   Hoehe seiner Stufe (im Bild 520 statt voller Spalte) und sah aus wie eine
+   Blase, die man in eine Spalte gelegt hat. Kein `!important`: gleichziehen
+   statt ueberfahren — ein Ausrufezeichen hier waere der naechste, der die
+   naechste Regel nicht mehr versteht. */
+/* NUR AB K-BP-DREISPALTIG = 1200px — eine Sprosse der Kanon-Skala
+   (`packages/kosmo-ui/src/tokens.ts` `breakpoint.dreispaltig`), mit ihrem
+   Gegenstueck in `shell/orbit-065.css`; dort steht, warum die Zentrale
+   darunter keine dritte Spalte traegt. Die Wache
+   `test/dock-breakpunkt-einig.test.ts` haelt beide Zahlen zusammen.
+
+   Darunter greift diese Klasse NICHT, und das ist die ganze Rueckfallregel:
+   ohne ihre Ueberschreibungen gilt wieder der Grundblock — feste
+   Verankerung, Stufenhoehe, schwebende Blase. Kein zweiter Zustand, kein
+   zweites Mount; es faellt nur eine Schicht weg. */
+/* Das Orbfeld ist das Kopfstueck der angedockten Spalte: der Orb steht frei,
+   mittig, mit Luft nach oben und wenig nach unten — der Name direkt darunter
+   gehoert optisch zu ihm. Es wird NUR gerendert, wenn `angedockt` gesetzt ist
+   (`KosmoPanel.tsx`), darum braucht es keine Media-Query: gibt es die Spalte
+   nicht, gibt es das Feld nicht. */
+.kp-orbfeld {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: var(--k-s6) 0 var(--k-s2);
+}
+@media (min-width: 1200px) {
+  .kp-panel--angedockt,
+  .kp-panel--angedockt[data-stufe] {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    margin-bottom: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    /* In der Spalte gibt es nichts zu ueberdecken — das Panel IST die Spalte.
+       Die Kinder holen sich `pointer-events` ohnehin selbst zurueck (B75), der
+       Grund darf sie hier aber gleich behalten. */
+    pointer-events: auto;
+    z-index: auto;
+  }
+}
+
+/* ══ DAS ZEICHEN IM KOPF DER SPALTE (22.09.2026) ══════════════════════════
+   Seit der Owner gemeldet hat, dass der Kosmo-Orb auf der Zentrale zweimal
+   stand, sitzt das BEDIENBARE Zeichen hier — nicht mehr zusaetzlich unten.
+   Seine Huelle ist fuer den schwebenden Zustand auf 64 px ausgelegt; im Kopf
+   traegt es die Identitaet der Spalte und braucht darum die volle Flaeche.
+   96 px statt der frueheren 104 px der reinen Zeichnung: die Huelle kommt
+   jetzt dazu, und 96 + Huellenrand ergibt wieder dieselbe Hoehe. */
+.kp-orbfeld .ks-wrapper--eingebettet {
+  display: flex;
+}
+.kp-orbfeld .ks-knopf {
+  width: auto;
+  height: auto;
+  padding: var(--k-s2);
+}
+
+/* DAS STATIONEN-MENUE KLAPPT IM KOPF DER SPALTE NACH UNTEN (22.09.2026).
+   Gebaut war es fuer das schwebende Zeichen unten am Fenster und klappte
+   darum nach OBEN auf. Im Kopf der Spalte fuehrte genau das ins Leere —
+   gemessen: vier der acht Eintraege lagen oberhalb des Fensters, die
+   uebrigen vier schnitt die Spalte selbst ab (`overflow: hidden`, sie
+   braucht es fuer ihre runden Ecken und ihre Stufenbewegung).
+
+   `toBeVisible` hatte das Menue dabei als «sichtbar» gemeldet. Gefunden hat
+   es erst die Probe am gerenderten Bildpunkt (`e2e/ein-kosmo-orb.spec.ts`)
+   — sichtbar ist nicht bedienbar.
+
+   Nach unten und mittig ist unter dem Orb genug Platz, und zwar INNERHALB
+   der Spalte: sie reicht bei 900 px Fensterhoehe bis 875, das Menue
+   braucht rund 320 px ab dem Orb. Es bleibt damit in dem Rahmen, der es
+   sonst abschneiden wuerde. */
+.kp-orbfeld .ks-stationen-popover {
+  bottom: auto;
+  top: calc(100% + var(--k-s2));
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.kp-orbfeld .ks-wrapper--eingebettet {
+  position: relative;
+}
+
+/* ── C1 «Die Leiste oben, wenn das Fenster zu ist» ─────────────────────────
+   (`docs/AUFTRAG-EINBAU-KOSMO-CHAT-AN-INTEGRATOR.md` §C1, Bild k2). Eine
+   Zeile hohe Glas-Pille, oben in der Mitte — dieselbe `top:14px`-Zeile wie
+   Stationen-Orb/Ansichts-Info/Einstellungs-Kreis (`modules/design/island/
+   island.css`, ausserhalb dieses Dateikreises), aber horizontal zentriert
+   statt links/rechts verankert: die drei Insel-Elemente sitzen bei
+   `left:14…156px` bzw. `right:14px`, ein zentrierter `max-width` lässt auf
+   1400px (k1-Referenzbreite) beidseits reichlich Luft. Kollision auf sehr
+   schmalen Fenstern ist NICHT mit einem echten Insel-Mount nachgemessen
+   (`modules/design/**` liegt ausserhalb dieses Dateikreises) — s. Beleg im
+   Rückgabeblatt.
+
+   UI-Regel 1 (kein Rollbalken in schwebenden Flächen): kein `overflow`, die
+   Pille wächst mit ihrem Inhalt nach unten statt zu rollen.
+   UI-Regel 3 (kein abgeschnittener Text): kein `text-overflow`, `white-
+   space: normal` statt `nowrap` — ein langer Schritt-Satz bricht um, statt
+   abgeschnitten zu werden. */
+.kp-leiste {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: calc(var(--k-ebene-schwebend) + 10);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: var(--k-s2);
+  column-gap: var(--k-s2, 8px);
+  min-height: 38px;
+  max-width: min(560px, calc(100vw - 288px));
+  padding: var(--k-s3) var(--k-s3, 12px);
+  /* Dunkles Glas in beiden Welten: Hartwert statt des inselortigen Pillen-Tokens
+     (ausserhalb der Design-Insel nie deklariert, css-var-konsistenz-Test);
+     Tinte darum der kanonische `--k-glass-ink`, nicht das kippende `--k-ink`. */
+  background: rgba(16, 19, 25, 0.92);
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.08));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--k-glass-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xs);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.kp-leiste-punkt {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--k-success, #3ecf8e);
+}
+.kp-leiste-punkt--getrennt {
+  background: var(--k-danger, #e5484d);
+}
+.kp-leiste-motor {
+  font-weight: var(--k-gewicht-betont);
+}
+.kp-leiste-trenner {
+  width: 1px;
+  align-self: stretch;
+  background: var(--k-glass-stroke, rgba(255, 255, 255, 0.16));
+}
+.kp-leiste-arbeitet {
+  min-width: 0;
+}
+/* Der Fortschrittsbalken nimmt die volle Pillenbreite ein eigenes Mal ein
+   (eigene Zeile, `flex-basis:100%`) statt die Kopf-Elemente zu stauchen —
+   dieselbe «wächst statt rollt»-Logik wie oben. */
+.kp-leiste-balken {
+  flex-basis: 100%;
+  height: 3px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-glass-stroke, rgba(255, 255, 255, 0.16));
+  overflow: hidden;
+}
+.kp-leiste-balken-fuellung {
+  height: 100%;
+  background: var(--k-accent, #cfa15e);
+  transition: width 0.2s ease;
+}
+/* Rohe `<button>`, KEIN `KButton size="sm"/"touch"` — dieselbe Begründung
+   wie `.ks-karte-chip` (`kosmo-symbol.css`): `tools/zielgroessen-gate.mjs`
+   hält beide Bestände fest und wird bei Wachstum rot; ein neuer Bedienweg
+   braucht darum eigenes CSS statt eines gezählten Bestandsnamens. 44px
+   Beruehrweg (E95) über `min-height`, 32px bleibt der visuelle Mausweg
+   (`padding`, kein fester `height`). */
+.kp-leiste-knopf {
+  flex: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--k-s2) var(--k-s3, 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k-s3);
+  background: transparent;
+  border: 1px solid var(--k-glass-stroke, rgba(255, 255, 255, 0.16));
+  border-radius: var(--k-radius-pill);
+  color: inherit;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  cursor: pointer;
+}
+.kp-leiste-knopf--stopp {
+  border-color: var(--k-danger, #e5484d);
+  color: var(--k-danger, #e5484d);
+}
+@media (max-width: 700px) { /* Kanon-Sprosse schmal, war 640px (Breakpoint-Waechter, 25.09.2026) */
+  .kp-leiste {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* v0.1.6 Einbau C2 (p78-Uebergabe, `trenneUnbelegteBaurechtAntwort`): eine
+   Baurechtsantwort, die Kosmo ohne das Baugesetz-Werkzeug gegeben hat, steht
+   eingeklappt; der Hinweis ist eine eigene Zeile davor. Die Blase ist fuer
+   den Zeiger durchlaessig (B75), darum holt sich der Aufklapp-Kopf
+   `pointer-events` zurueck. Kein Text verlaesst seine Box. */
+.kp-baurecht-hinweis {
+  display: block;
+  margin-top: var(--k-s2);
+  padding-left: var(--k-s3);
+  border-left: 2px solid var(--k-warning);
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink-soft);
+  overflow-wrap: anywhere;
+}
+.kp-baurecht-unbelegt {
+  margin-top: var(--k-s2);
+}
+.kp-baurecht-unbelegt-kopf {
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+@media (pointer: coarse) {
+  .kp-baurecht-unbelegt-kopf {
+    min-height: 44px;
+  }
+}
+.kp-baurecht-unbelegt-kopf:focus-visible {
+  outline: 2px solid var(--k-kosmo-stimme);
+  outline-offset: 2px;
+  border-radius: var(--k-radius);
+}
+.kp-baurecht-unbelegt-text {
+  padding-top: var(--k-s2);
+  color: var(--k-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Owner 06.10.2026 («kanten … auf hauptseite oben»): auf der Zentrale steht Kosmo als angedockte Spalte, ohne
+   freien Orb unten rechts — der Faden zeigte dort als loser Strich neben der Spalte ins Leere (gemessen bei
+   1440 × 900: x 1383, y 756–812). Ohne Orb kein Faden. */
+.kp-faden:has(+ .kp-panel--angedockt) {
+  display: none;
+}
+
+/* ── E241 · Feldkopf und Projektfarbe (Owner 14.10.2026, `docs/entwuerfe/kosmo-zwei-projekte/`) ──
+   Über dem Gespräch steht, zu welchem Projekt es gehört. Die Farbe des Projekts erscheint nur hier: Punkt im Feldkopf,
+   Rand links am Kosmo-Fenster und Ring um Kosmos Figur (Antwort 2). Türkis bleibt Kosmo. `--kp-projektfarbe` und
+   `data-projektfarbe` setzt `kosmo-feldkopf.tsx` an das Fenster. */
+.kp-feldkopf {
+  /* In Ruhe; `kosmo-feldkopf.tsx` setzt die Farbe des Projekts am Element. Eine Anzeige ohne eigenes
+     `pointer-events`: der Grund des Kosmo-Fensters ist durchlässig (B75). */
+  --kp-feldfarbe: var(--k-ink-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 40%;
+  padding: var(--k-s1) var(--k-s3);
+  border: 1px solid color-mix(in srgb, var(--kp-feldfarbe) 60%, transparent);
+  border-radius: var(--k-radius-pill);
+  background: color-mix(in srgb, var(--kp-feldfarbe) 16%, transparent);
+  color: var(--k-ink);
+  font-size: var(--k-t-xs);
+}
+.kp-projekt-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kp-projekt-punkt {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kp-feldfarbe);
+}
+.kp-farbwahl {
+  margin-bottom: var(--k-s4);
+}
+.kp-farbwahl-raster {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--k-s2);
+}
+.kp-farbwahl-feld {
+  display: grid;
+  justify-items: center;
+  gap: var(--k-s1);
+  min-width: 0;
+  padding: var(--k-s1);
+  border: 0;
+  border-radius: var(--k-radius);
+  background: transparent;
+  color: var(--k-ink-soft);
+  font: inherit;
+  font-size: var(--k-t-xs);
+  cursor: pointer;
+}
+.kp-farbwahl-tupfer {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+.kp-farbwahl-feld[aria-pressed='true'] .kp-farbwahl-tupfer {
+  box-shadow: 0 0 0 2px var(--k-surface), 0 0 0 4px var(--k-ink);
+}
+.kp-farbwahl-hinweis {
+  margin: var(--k-s3) 0 0;
+  color: var(--k-ink-faint);
+  font-size: var(--k-t-xs);
+}
+.kp-panel[data-projektfarbe] {
+  /* In Ruhe; `kosmo-feldkopf.tsx` setzt den Wert am Fenster. */
+  --kp-projektfarbe: transparent;
+}
+.kp-panel[data-projektfarbe]::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  z-index: 1;
+  width: 3px;
+  background: var(--kp-projektfarbe);
+  pointer-events: none;
+}
+.kp-panel[data-projektfarbe] .kp-orbfeld > * {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--kp-projektfarbe);
+}

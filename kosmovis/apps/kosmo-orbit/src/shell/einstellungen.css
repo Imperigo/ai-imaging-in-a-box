@@ -1,0 +1,435 @@
+/* Einstellungen (v0.8.0B / P7, Stations-Welle Design + Shell-Rest) —
+   Inline-Styles raus, Segmentschalter auf die KTabs-Pill-Anatomie
+   (aura.css .k-tabs/.k-tab, Spez §3 B-36); Markup/testids/aria unverändert,
+   nur die Optik wandert hierher. Ergänzt `orbit065-einstellungen-*`
+   (orbit-065.css) — die Sektions-/Titel-Klassen dort bleiben unangetastet.
+
+   Signal-Restbestände-Audit (P3-Audit, Design-Spez §2 Gesetz 1 «80·15·5,
+   genau eine gefüllte Signal-Fläche pro Viewport»): drei Segmentschalter
+   (Thema, Werkzeug-Anordnung, Oberflächen-Preset) füllten ihren aktiven
+   Eintrag bisher flächig mit `var(--k-accent)` — das widersprach der
+   «genau eine gefüllte Fläche»-Regel im selben Viewport. Ersetzt durch die
+   KTabs-Auswahl-Semantik: aktiv = `--k-raised`-Fläche + `--k-line-strong`-
+   Rand + 5px-Akzent-Punkt (Signal bleibt als PUNKT, nie als Fläche) — exakt
+   das `.k-tab--aktiv`-Rezept aus aura.css, hier als eigene Klasse, weil die
+   Buttons `role="group"`/`aria-pressed` bleiben (kein `role=tab`, Verträge
+   §7.1 bleiben unangetastet). */
+
+.es-scrim {
+  z-index: calc(var(--k-ebene-modal) + 50);
+  background: color-mix(in srgb, var(--k-ink) 22%, transparent);
+}
+
+.es-panel {
+  width: min(640px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.es-koerper-scroll {
+  overflow-y: auto;
+}
+
+.es-station-leer {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+
+.es-station-liste {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: var(--k-s2);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-lesen);
+}
+
+.es-station-mehr {
+  margin-top: var(--k-s2);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+.es-station-mehr > summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--k-accent);
+}
+
+.es-station-mehr > .es-station-liste {
+  margin-top: var(--k-s2);
+}
+
+.es-station-meta {
+  color: var(--k-ink-faint);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+}
+
+.es-darstellung-reihe {
+  display: flex;
+  gap: var(--k-s4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Segment-Container — Pill-Anatomie wie .k-tabs (2px Innenpadding, radius
+   999, Fläche/Rand statt Kästen). */
+.es-segment {
+  display: inline-flex;
+  width: fit-content;
+  align-items: stretch;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line-strong);
+  overflow: hidden;
+}
+
+/* Anzeige-Segmente (U14): bei grosser Schrift oder schmalem Fenster dürfen die
+   Einträge in eine zweite Zeile umbrechen, statt aus dem Fenster zu laufen
+   (Owner-Regel: kein Text verlässt seine Box). Dann ist es keine Pille mehr. */
+.es-segment--umbrechen {
+  flex-wrap: wrap;
+  max-width: 100%;
+  border-radius: var(--k-radius);
+}
+
+/* Der native Schieber trägt vom Browser einen Aussenrand von 2 px je Seite und
+   ist zugleich 100 % breit — in der Zeit-Zeile (Sonne) lief er so um 4 px über
+   den Rand seines Kastens (gemessen bei Schrift «gross»). Kein Rand, dann passt er. */
+.es-panel .k-slider {
+  margin-inline: 0;
+}
+
+.es-segment-item {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  cursor: pointer;
+  padding: 5px 12px;
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-normal);
+  color: var(--k-ink-soft);
+  border: 1px solid transparent;
+  border-radius: var(--k-radius-pill);
+  transition: background var(--k-motion-fast), border-color var(--k-motion-fast), color var(--k-motion-fast);
+}
+.es-segment-item:hover {
+  color: var(--k-ink);
+  background: var(--k-hover);
+}
+/* Auswahl-Zustand: Fläche (--k-raised) + Rand, Signal nur als Punkt (::before) —
+   ersetzt die frühere flächige `var(--k-accent)`-Füllung (Signal-Rest-Audit). */
+.es-segment-item--aktiv {
+  color: var(--k-ink);
+  font-weight: var(--k-gewicht-stark);
+  background: var(--k-raised);
+  border-color: var(--k-line-strong);
+}
+.es-segment-item--aktiv::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-accent);
+  flex: none;
+}
+.es-segment-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  --k-zeiger: not-allowed; /* v0.9.0 Cursor-Spiegel fuer die Kosmo-Ebene (cursor selbst ist global none) */
+}
+
+.es-akzent-reihe {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.es-akzent-swatch {
+  all: unset;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--k-radius-pill);
+  box-shadow: 0 0 0 1px var(--k-line-strong);
+}
+.es-akzent-swatch--aktiv {
+  box-shadow:
+    0 0 0 1.5px var(--k-field),
+    0 0 0 3px var(--k-technik);
+}
+
+.es-feld-block {
+  margin-top: var(--k-s3);
+  display: grid;
+  gap: var(--k-s2);
+}
+
+.es-feld-label {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+.es-feld-hinweis {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+}
+
+.es-schalter-label {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+}
+.es-schalter-label--deaktiviert {
+  color: var(--k-ink-faint);
+  opacity: 0.55;
+}
+
+.es-fehler-text {
+  font-size: var(--k-t-xs);
+  color: var(--k-danger);
+}
+
+.es-knopf-reihe {
+  display: flex;
+  gap: var(--k-s3);
+  flex-wrap: wrap;
+}
+
+.es-hinweis-klein {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  margin-top: var(--k-s2);
+}
+
+.es-system-hinweis {
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-faint);
+  line-height: var(--k-lh-lesen);
+}
+
+.es-override-reihe {
+  display: flex;
+  gap: var(--k-s3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.es-override-label {
+  font-size: var(--k-t-md);
+  color: var(--k-ink-faint);
+}
+
+/* Render-Qualität-Chips bleiben bewusst ausserhalb des Signal-Rest-Audits:
+   Modusfarbe ist `--k-technik` (Render-/Technik-Kanal), keine Akzent-Fläche —
+   dieselbe Trennung wie KPipelineNode/KVariantenKarte (Rollenfarbe statt
+   Signal). Optik unverändert, nur als Klasse statt Inline. */
+.es-override-btn {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-size: var(--k-t-sm);
+  padding: 3px 9px;
+  border-radius: var(--k-radius-pill);
+  color: var(--k-ink-soft);
+  background: var(--k-surface);
+}
+.es-override-btn--aktiv {
+  color: var(--k-field);
+  background: var(--k-technik);
+}
+
+.es-neuigkeit {
+  display: grid;
+  gap: var(--k-s1);
+}
+.es-neuigkeit-kopf {
+  display: flex;
+  gap: var(--k-s3);
+  align-items: baseline;
+}
+.es-neuigkeit-titel {
+  font-weight: var(--k-gewicht-stark);
+  font-size: var(--k-t-md);
+}
+.es-neuigkeit-datum {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+.es-neuigkeit-liste {
+  margin: 0;
+  padding-left: 18px;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  line-height: var(--k-lh-lesen);
+}
+
+.es-system-reihe {
+  display: flex;
+  gap: var(--k-s4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* v0.8.1 / P15 (Nutzungszeit-Panel) — reine Anzeigeliste, keine neue
+   Interaktion (kein Klick/Hover-Zustand nötig, s. Einstellungen.tsx). */
+.nz-liste {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+.nz-zeile {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--k-s3);
+  padding: 4px 0;
+  font-size: var(--k-t-sm);
+  border-bottom: 1px solid var(--k-line);
+}
+.nz-zeile:last-child {
+  border-bottom: none;
+}
+.nz-titel {
+  color: var(--k-ink);
+  font-weight: var(--k-gewicht-stark);
+}
+.nz-wert {
+  color: var(--k-ink-faint);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  white-space: nowrap;
+}
+.nz-werkzeuge-label {
+  display: block;
+  margin-top: var(--k-s4);
+}
+
+/* E-H «Ein-Klick-HomeServer» (`docs/V0812-SPEZ.md` §E-H) — grosser
+   Verbinden-Knopf (Touch-Mindestfläche 44px), drei ehrliche Status-Chips,
+   Host-/Token-Felder, Tailscale-Hinweis. */
+.es-homeserver-knopf {
+  min-height: 44px;
+  width: 100%;
+  justify-content: center;
+  font-size: var(--k-t-md);
+}
+
+.es-homeserver-chips {
+  display: flex;
+  gap: var(--k-s3);
+  flex-wrap: wrap;
+  margin-top: var(--k-s3);
+}
+
+/* D-1 (E-1): Inhalt ist Literal-Versal ("VERBUNDEN"/"GEPRÜFT"/…,
+   Einstellungen.tsx) — Minimalform (kein `--k-font-mono` hier, `.k-label`
+   würde die Schriftfamilie ungewollt mitziehen), Sperrwert als Token. */
+.es-homeserver-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-stark);
+  letter-spacing: var(--k-sperrung-eng);
+  padding: 4px 10px;
+  border-radius: var(--k-radius-pill, 999px);
+  background: var(--k-surface);
+  color: var(--k-ink-soft);
+}
+.es-homeserver-chip-punkt {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--k-radius-pill);
+  background: currentColor;
+}
+.es-homeserver-chip--verbunden {
+  color: var(--k-success);
+}
+.es-homeserver-chip--nicht-verbunden {
+  color: var(--k-warning);
+}
+.es-homeserver-chip--pruefend {
+  color: var(--k-ink-faint);
+}
+
+.es-homeserver-felder {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--k-s3);
+  margin-top: var(--k-s3);
+}
+@media (max-width: 700px) {
+  /* K-BP-SCHMAL (E-3) — D-6: war 520px */
+  .es-homeserver-felder {
+    grid-template-columns: 1fr;
+  }
+}
+
+.es-homeserver-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line-strong);
+  background: var(--k-surface);
+  color: var(--k-ink);
+  font-size: var(--k-t-sm);
+  font-family: var(--k-font-mono);
+}
+
+/* E-L «ehrliche Modell-Anzeige» (`docs/V090-SPEZ.md` §E-L) — Staffelungs-
+   Abgleich statt Pauschalurteil beim KOSMO-LLM-Chip: je Rolle ein Zeilen-
+   Eintrag, vorhanden ✓ oder fehlend, plus ein Fallback-Hinweis. */
+.es-homeserver-rollen {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--k-s2);
+  font-size: var(--k-t-sm);
+}
+.es-homeserver-rolle {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--k-ink-soft);
+}
+.es-homeserver-rolle--vorhanden {
+  color: var(--k-success);
+}
+.es-homeserver-rolle--fehlend {
+  color: var(--k-warning);
+}
+.es-homeserver-rollen-fallback {
+  margin-top: 2px;
+  color: var(--k-warning);
+  font-size: var(--k-t-sm);
+}
+
+.es-homeserver-tailscale {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s2);
+  margin-top: var(--k-s3);
+  color: var(--k-warning);
+  font-size: var(--k-t-sm);
+}
+.es-homeserver-tailscale a {
+  color: inherit;
+  font-weight: var(--k-gewicht-stark);
+  text-decoration: underline;
+}

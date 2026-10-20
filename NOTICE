@@ -235,6 +235,21 @@ gerendert wird, und nur innerhalb von aiimaging.render.lade_modell importiert.
   `*.libs/` ist die Wahrheit.
 
 --------------------------------------------------------------------------------
+Bildmodelle der Vorgabe - Gewichte am Heim-PC, NICHT ausgeliefert
+
+Tongyi-MAI/Z-Image-Turbo                          Apache-2.0
+  https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, Repo offen)
+alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union    Apache-2.0
+  https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union
+  (Modellkarte; das Ursprungsprojekt VideoX-Fun traegt die Apache-2.0 im Volltext)
+
+Vorgabe-, Vorschau- und Rueckfallmodell der Bildkette (aiimaging.backbone,
+Eintrag z-image-turbo). Die Gewichte laedt der Owner am Heim-PC; sie liegen NICHT
+im Repo. Nachgetragen am 20.10.2026, weil die Einstellungs-Insel der
+Knotenansicht («Lizenzen») auf dieses NOTICE verweist und das Vorgabemodell
+nennt.
+
+--------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 LoRA-Trainer: kohya-ss/sd-scripts und ostris/ai-toolkit
@@ -298,8 +313,8 @@ sie am Heim-PC eingerichtet.
 
 Ollama                  MIT          https://github.com/ollama/ollama
 Zugelassene Sprachmodelle (aiimaging.assistent.ERLAUBTE_MODELLE), je Apache-2.0:
-  qwen3:30b   (Qwen/Qwen3-30B-A3B, Vorgabe)
-  qwen3:14b   (Qwen/Qwen3-14B)
+  qwen3:30b   (Qwen/Qwen3-30B-A3B)
+  qwen3:14b   (Qwen/Qwen3-14B, Vorgabe seit Entscheid 106d, 20.10.2026)
   gpt-oss:20b (openai/gpt-oss-20b)
   Gelesen 01.10.2026, docs/VORFUEHRFASSUNG_2026-10-01.md.
 Ausgeschlossen und abgewiesen: Llama (Llama Community License), Gemma (Gemma

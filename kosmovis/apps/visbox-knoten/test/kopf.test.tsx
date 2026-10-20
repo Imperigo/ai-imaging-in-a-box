@@ -15,6 +15,7 @@ import { haengeWirtAn, liesLage, meldeSichern, useWirt, type VisboxWirt } from '
 import { legeThema, THEMA_SCHLUESSEL } from '../src/thema';
 import { meldePaletteAn, VisboxClaude, VisboxKopf } from '../src/kopf';
 import { sichereBeiAenderung, legeGraphen } from '../src/graph-sichern';
+import { schliesseEinstellungen } from '../src/einstellungen';
 
 /**
  * VISBOX-EIGEN (Plan UI-Gleichheit S1/S2, Entscheide 115/116, 20.10.2026): Die Knotenansicht zeigt
@@ -90,6 +91,7 @@ afterEach(() => {
   ab = [];
   registrierePalettenQuelle(null);
   leereKiZustand();
+  schliesseEinstellungen();
 });
 
 describe('S1 · die Kopfteile stehen mit den Kennungen von KosmoOrbit', () => {
@@ -136,9 +138,9 @@ describe('S1 · die Kopfteile stehen mit den Kennungen von KosmoOrbit', () => {
     act(() => q('heimpc-chip')!.click());
     act(() => q('werkzeug-palette-haupt-visbox-seite')!.click());
     act(() => q('werkzeug-palette-logo')!.click());
+    // Seit S4 öffnen Einstellungs-Kreis und Heim-PC-Chip die Einstellungs-Insel in der Seite —
+    // kein Wunsch an die App mehr (Probe `assistent-einstellungen.test.tsx`).
     expect(wirtGesendet.slice(1)).toEqual([
-      { art: 'einstellung' },
-      { art: 'rechner' },
       { art: 'oeffne', ziel: 'visbox-seite' },
       { art: 'oeffne', ziel: 'startansicht' },
     ]);
@@ -251,12 +253,12 @@ describe('die zweite Brücke trägt kein Kennwort', () => {
     expect(JSON.stringify(useWirt.getState())).not.toContain('geheim');
   });
 
-  it('ohne App sagt ein Knopf, wo es das gibt, statt still nichts zu tun', () => {
+  it('ohne App geht kein Wunsch hinaus', () => {
     for (const f of ab.splice(3)) f();
     ab.push(haengeWirtAn(window, null));
     zeichne();
     wirtGesendet = [];
-    act(() => q('island-einstellungen-kreis')!.click());
+    act(() => q('werkzeug-palette-logo')!.click());
     expect(wirtGesendet).toEqual([]);
   });
 });

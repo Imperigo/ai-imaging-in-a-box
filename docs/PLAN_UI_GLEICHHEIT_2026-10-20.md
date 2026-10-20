@@ -1,7 +1,8 @@
 # Visbox-Ansichten = KosmoVis — Abgleich und Bauplan (Entscheid 115, 20.10.2026)
 
-**Codestand:** S1 und S2 gebaut, am Gerät unbestätigt (20.10.2026, Protokoll 74 §159, Einbau-Stand C88); Kopie aus
-KosmoOrbit `76e285cca` auf `claude/kosmovis-kopf` (`kosmovis/HERKUNFT.json`). Bis dahin: Plan auf Visbox `0983b15`, Kopie `a1d80318`.
+**Codestand:** S1 bis S4 gebaut, am Gerät unbestätigt (20.10.2026; S1/S2 Protokoll 74 §159, C88; S3/S4 §161, C90); Kopie
+aus dem Hilfszweig `claude/kosmovis-visbox-stand` `6eb4e8d33` mit R44 und `claude/kosmovis-kopf` (`ae470609b`) samt den Nahtstellen von S3/S4
+(`kosmovis/HERKUNFT.json`). Bis dahin: Plan auf Visbox `0983b15`, Kopie `a1d80318`, dann `76e285cca`.
 **Grundlage:** Entscheid 115 (Owner, stehend): *«ansichten ui und ux sollte zu kosmovis identisch sein immer».*
 Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src/main.tsx`, KosmoOrbit
 `apps/kosmo-orbit/src/App.tsx:1413–1678`, `main.tsx:137–141`, Mac-App `Start/Arbeitsansicht.swift`,
@@ -49,8 +50,11 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 
 ## 3 · Wie es wortgleich bleibt
 
-- **Nahtstellen in KosmoOrbit** (eigener Zweig `claude/kosmovis-kopf`) nach dem Muster `registriereModellLaden`:
-  `registriereSpeicherWirt`, `registriereKosmoAnbieter`, `registriereClaudeQuelle`. Dann kommen die Kopfdateien
+- **Nahtstellen in KosmoOrbit** (eigener Zweig `claude/kosmovis-kopf`) nach dem Muster `registriereModellLaden`.
+  Gebaut wurden (S1–S4): `registrierePalettenQuelle`, wahlfreie Handgriffe am Speichern-Kreis, `chip`/`onRundgang` der
+  Zweitgruppe, `ausklapper` der Claude-Marke, `registriereKosmoName` (Name des Assistenten) und `einstellungen-teile.tsx`
+  (Schale und drei Abschnitte). Ein `registriereKosmoAnbieter` war nicht nötig: Das Gesprächsfeld ist ein Stellvertreter
+  mit derselben Anatomie, das Gespräch führt die Mac-App. Dann kommen die Kopfdateien
   unverändert herüber; Stellvertreter braucht es nur für schwere KosmoOrbit-Module (Projekt-Tresor, Sync, Kosmo-Status).
 - **Zweite Brücke `visboxWirt`** neben `visboxKi`: Seite → App (Modus, Rechner, Claude an/aus, öffnen, Einstellung),
   App → Seite (Leitung, Sperre, Rechner, Claude-Lage, Version, Modus).
@@ -74,8 +78,8 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 | S0 | Blatt 34 «Visbox = KosmoVis»; Fragen über die Zentrale; Meldeblatt an Int 1 für die Nahtstellen | 0,5 |
 | S1 ✔ | Thema; Kreise, Zweitgruppe, Palette; Mac-Kopf weg; Liste, Ausnahmen, Proben (gebaut, §159) | 1,5 |
 | S2 ✔ | Claude-Teile, Erzählzeile, Modus; Brücke `visboxWirt`; KI-Leiste in der Knotenansicht weg (gebaut, §159) | 1,5 |
-| S3 | Kugel und Gesprächsfeld mit dem Visbox-Assistenten; Assistent-Leiste ausmustern | 1,5–2 |
-| S4 | Einstellungs-Insel | 1 |
+| S3 ✔ | Kugel und Gesprächsfeld mit dem Visbox-Assistenten; Assistent-Leiste ausmustern (gebaut, §161) | 1,5–2 |
+| S4 ✔ | Einstellungs-Insel (gebaut, §161) | 1 |
 | S5 | Abgleich und Abbruch im Bau; Nachzug KosmoOrbit; Bau am Mac bestätigen | 0,5 |
 
 ## 6 · Fragen an den Owner (über die Zentrale, Empfehlung zuerst)

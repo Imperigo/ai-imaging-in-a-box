@@ -13,7 +13,7 @@
  * E147) — die Fläche liegt darum als eigene feste Ebene über der App.
  */
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { KButton } from '@kosmo/ui';
 import {
   CLAUDE_ADRESSE_SCHLUESSEL,
@@ -32,7 +32,7 @@ import { bedienWechselKurz, eigen, KosmoMausFreigabeSchalter } from '../kosmo-ma
 import { KosmoCoopFlaeche, KosmoCoopKnopf, KosmoCoopSchild, useCoopSichtbar, VollautomatikAnzeige } from '../kosmo-maus/KosmoCoop';
 import { beobachteCoopMarken } from '../../state/coop-marke';
 import { useKosmoCoop } from '../../state/kosmo-coop';
-import { beobachteClaudeFusszone } from './fusszone';
+import { beobachteClaudeFusszone, CLAUDE_STAPEL_TOKEN } from './fusszone';
 import './claude-anschluss.css';
 
 function leseAdresse(): string {
@@ -77,6 +77,14 @@ export function ClaudeAnschluss({ ausklapper }: { ausklapper?: ClaudeAusklapper 
   // Nr. 56: die Zeile unten links meldet ihre Fusszone, Flaechen-Leisten weichen aus (`fusszone.ts`).
   const [zeile, setZeile] = useState<HTMLDivElement | null>(null);
   useEffect(() => (zeile ? beobachteClaudeFusszone(zeile) : undefined), [zeile]);
+  // Befund LW 20.10.: der ganze Stapel (Karten + Zeile) für das, was in derselben Spalte unten links sitzt. Als
+  // Ref-Rückruf mit Zustand wie die Zeile: ohne Claude rendert die Fläche nichts, ein Effekt beim Einhängen sähe sie nie.
+  const [stapel, setStapel] = useState<HTMLDivElement | null>(null);
+  useEffect(() => (stapel ? beobachteClaudeFusszone(stapel, document.documentElement, CLAUDE_STAPEL_TOKEN) : undefined), [stapel]);
+  const flaecheRef = useCallback((el: HTMLDivElement | null) => {
+    flaeche.current = el;
+    setStapel(el);
+  }, []);
 
   // B2: neue Coop-Schritte leuchten drei Sekunden (Schild hier, Bauteile in Grundriss/3D).
   useEffect(() => beobachteCoopMarken(), []);
@@ -128,7 +136,7 @@ export function ClaudeAnschluss({ ausklapper }: { ausklapper?: ClaudeAusklapper 
   };
 
   return (
-    <div className="claude-anschluss" data-testid="claude-anschluss" ref={flaeche}>
+    <div className="claude-anschluss" data-testid="claude-anschluss" ref={flaecheRef}>
       {kartenOffen && vorschlaege.map((v) => (
         <section
           key={v.kennung}

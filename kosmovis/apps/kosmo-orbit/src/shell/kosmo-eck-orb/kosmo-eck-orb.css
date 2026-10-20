@@ -1,0 +1,265 @@
+/* Kosmo-Orb rechts unten (`KosmoEckOrb.tsx`). Ein fester Platz in der Ecke,
+   ueber allem Stationsinhalt, unter Dialogen. Die Lage kann der Einsatzort
+   ueber `--keo-rechts` / `--keo-unten` verschieben (z. B. ueber einer Leiste). */
+.keo-wurzel {
+  --keo-rechts: var(--k-s4);
+  --keo-unten: var(--k-s4);
+  position: fixed;
+  right: var(--keo-rechts);
+  bottom: var(--keo-unten);
+  z-index: calc(var(--k-ebene-chrome) + 3);
+  display: flex;
+  /* Im Aufbau steht der Knopf vor der Karte (Tab-Folge), oben steht die Karte. */
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: var(--k-s2);
+}
+/* Die Reihe: der Orb und, bei «weniger Bewegung», sein Kurzwort daneben
+   (Owner G1: ein Zustand steckt nie nur in der Bewegung). `row-reverse`: im
+   Aufbau steht der Knopf vorn (Tab-Folge), sichtbar steht das Wort links von ihm. */
+.keo-reihe {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: var(--k-s3);
+}
+.keo-wort {
+  padding: var(--k-s2) var(--k-s4);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-raised);
+  box-shadow: var(--k-shadow-raised);
+  color: var(--k-ink);
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-eins);
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* Der Knopf: 56 px Zeichnung, im Ruhezustand auf 44 px verkleinert (der
+   Beruehrweg), beim Darueberfahren und waehrend Kosmo arbeitet groesser. Die
+   Verkleinerung sitzt als Transformation auf dem Knopf selbst, nicht auf der
+   Wurzel — so faengt nichts in der Wurzel ein `position:fixed` ein. */
+.keo-knopf {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-raised);
+  box-shadow: var(--k-shadow-raised);
+  cursor: pointer;
+  transform: scale(0.786);
+  transform-origin: bottom right;
+  transition:
+    transform var(--k-feder),
+    box-shadow var(--k-motion-fast),
+    border-color var(--k-motion-fast);
+}
+@supports not (transition-timing-function: linear(0, 1)) {
+  .keo-knopf {
+    transition:
+      transform var(--k-feder-fallback),
+      box-shadow var(--k-motion-fast),
+      border-color var(--k-motion-fast);
+  }
+}
+.keo-aktiv .keo-knopf {
+  transform: scale(0.9);
+  border-color: var(--k-mod-kosmo);
+}
+.keo-knopf:hover,
+.keo-knopf:focus-visible,
+.keo-wurzel:hover .keo-knopf {
+  transform: scale(1.07);
+  box-shadow: var(--k-shadow-overlay);
+}
+.keo-knopf:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+.keo-offen .keo-knopf {
+  border-color: var(--k-mod-kosmo);
+  box-shadow:
+    0 0 0 2px var(--k-mod-kosmo),
+    var(--k-shadow-raised);
+}
+.keo-fehler .keo-knopf {
+  border-color: var(--k-danger);
+}
+/* Fortschrittsring (C-5): liegt um den Knopf, waechst und schrumpft mit ihm. */
+.keo-ring {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.keo-ring circle {
+  fill: none;
+  stroke-width: 3;
+}
+.keo-ring-spur {
+  stroke: color-mix(in oklab, var(--k-mod-kosmo) 18%, transparent);
+}
+.keo-ring-bogen {
+  stroke: var(--k-mod-kosmo);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--k-motion-base);
+}
+.keo-zahl {
+  position: absolute;
+  right: 0;
+  bottom: calc(44px - var(--k-s2));
+  pointer-events: none;
+}
+/* Die Karte: ueber dem Orb, rechtsbuendig; nur beim Darueberfahren oder mit
+   dem Tastaturfokus im Orb sichtbar. Sie kommt mit `k-ankommen`-Figur an. */
+.keo-karte {
+  width: min(320px, calc(100vw - 2 * var(--k-s4)));
+  padding: var(--k-s3);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+  box-shadow: var(--k-shadow-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--k-s2));
+  transition:
+    opacity var(--k-motion-fast),
+    transform var(--k-motion-fast),
+    visibility 0s linear var(--k-dauer-antippen);
+}
+.keo-wurzel:hover .keo-karte,
+.keo-wurzel:focus-within .keo-karte {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity var(--k-motion-base),
+    transform var(--k-feder),
+    visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .keo-ring-bogen,
+  .keo-knopf,
+  .keo-karte,
+  .keo-wurzel:hover .keo-karte,
+  .keo-wurzel:focus-within .keo-karte {
+    transition: none;
+  }
+}
+
+/* ── Stopp-Zeichen (C21): waehrend Kosmo arbeitet und das Fenster zu ist, ist
+   der Orb der Stopp-Knopf. Ein kleines Quadrat in der Mitte sagt es — das
+   Zeichen fuer «anhalten» braucht keine Bewegung. */
+.keo-stopp-zeichen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 0;
+  background: var(--k-ink);
+  box-shadow: 0 0 0 2px var(--k-raised);
+  pointer-events: none;
+}
+.keo-stoppt .keo-knopf {
+  border-color: var(--k-mod-kosmo);
+}
+
+/* ── Die Auftragskarte (U1): nur mit laufendem Auftrag. Name, Stand, zwei
+   Knoepfe. Sie kommt mit `k-ankommen` (Opacity + 4 px, ohne festgehaltenes
+   Endbild) und steht, solange der Auftrag laeuft — nicht nur beim
+   Darueberfahren: wer Kosmo arbeiten laesst und das Fenster schliesst, soll
+   sehen, dass er arbeitet. */
+.keo-auftrag,
+.keo-blase {
+  width: min(280px, calc(100vw - 2 * var(--k-s5)));
+  padding: var(--k-s4);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+  box-shadow: var(--k-shadow-overlay);
+  color: var(--k-ink);
+  overflow-wrap: anywhere;
+}
+.keo-auftrag {
+  display: grid;
+  gap: var(--k-s3);
+}
+.keo-auftrag-name {
+  font-size: var(--k-t-sm);
+  font-weight: var(--k-gewicht-stark);
+  line-height: var(--k-lh-basis);
+}
+.keo-auftrag-stand {
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-basis);
+  color: var(--k-ink-soft);
+}
+.keo-auftrag-knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s3);
+}
+/* Rohe Knoepfe mit eigenem 44-px-Berührweg (E95): das zielgroessen-gate haelt
+   die gezaehlten Bestandsnamen (`KButton sm/touch`) fest; ein neuer Bedienweg
+   bekommt darum eigenes CSS. */
+.keo-auftrag-knopf,
+.keo-blase-text,
+.keo-blase-zu {
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--k-s3) var(--k-s4);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-eins);
+  cursor: pointer;
+}
+.keo-auftrag-knopf--stopp {
+  border-color: var(--k-danger);
+  color: var(--k-danger);
+}
+.keo-auftrag-knopf:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.keo-auftrag-knopf:focus-visible,
+.keo-blase-text:focus-visible,
+.keo-blase-zu:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
+/* ── Die Blase (C22): eine kurze Antwort, am Orb. Ein Klick auf den Text
+   oeffnet das Fenster; das Kreuz schliesst sie. */
+.keo-blase {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--k-s3);
+  padding: var(--k-s3);
+}
+.keo-blase-text {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: var(--k-radius);
+  text-align: left;
+  line-height: var(--k-lh-lesen);
+  white-space: normal;
+}
+.keo-blase-zu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+}

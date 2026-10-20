@@ -256,6 +256,8 @@ export const GeometryQA = z.object({
   geometry_fidelity: z.number().nullable().optional(),
   spearman: z.number().nullable().optional(),
   geom_iou: z.number().nullable().optional(),
+  /** R44 (Visbox 0.3.6): warum geom_iou null ist (keine gemeinsame Silhouette). */
+  geom_iou_grund: z.string().optional(),
   threshold: z.number().nullable().default(0.65),
   /** F1b — siehe Nachtrag oben. Additiv, optional, kein Default. */
   status: GeometryStatus.optional(),
@@ -433,7 +435,13 @@ export const GeometryGates = z.object({
   rho_mask_threshold: z.number().optional(),
   rho_mask_status: GeometryStatus.optional(),
   rho_mask_passed: z.boolean().optional(),
-  geom_iou: z.number().optional(),
+  /**
+   * R44 (Visbox 0.3.6): ohne gemeinsame Silhouette laesst die Gegenseite das Feld hier weg
+   * (nur_vertragsfelder entfernt leere Werte). `null` ist trotzdem erlaubt — Absicherung,
+   * damit ein einzelnes null nicht das ganze Ergebnis abweist.
+   */
+  geom_iou: z.number().nullable().optional(),
+  geom_iou_grund: z.string().optional(),
   geom_iou_threshold: z.number().optional(),
   geom_iou_status: GeometryStatus.optional(),
   geom_iou_passed: z.boolean().optional(),

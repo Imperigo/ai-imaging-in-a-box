@@ -1,0 +1,45 @@
+{
+  "schema": "kosmovis.render-result/v2",
+  "job_id": "vis-1792600000-abcdef",
+  "images": [
+    "s__ki.png"
+  ],
+  "qa": {
+    "geometry": {
+      "geometry_fidelity": null,
+      "spearman": null,
+      "geom_iou": null,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+      "geom_iou_grund": "nicht gemessen: Soll- und Ist-Silhouette haben keinen Bildpunkt gemeinsam — 0.0 waere hier keine Messung, sondern ein Platzhalter (Rauschen ergaebe dieselbe Zahl)",
+      "status": "not_measured"
+    },
+    "verdict": {
+      "passed": false,
+      "reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.0 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie-Score nicht gemessen (Schwelle 0.65); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+    }
+  },
+  "geometry_gates": {
+    "status": "not_measured",
+    "released": false,
+    "counter_check_status": "not_measured",
+    "rho_mask": 0.41,
+    "rho_mask_threshold": 0.3,
+    "rho_mask_status": "measured",
+    "rho_mask_passed": true,
+    "geom_iou_threshold": 0.5,
+    "geom_iou_status": "not_measured",
+    "geom_iou_passed": false,
+    "fail_reasons": [
+      "geom_iou_nicht_gemessen",
+      "gegenprobe_fehlt",
+      "nicht_entscheidbar"
+    ],
+    "reason": "OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das Urteil ist damit so viel wert wie das alte.",
+    "warnings": [],
+    "passed": false
+  },
+  "lieferstatus": null,
+  "lieferstatus_grund": "NICHT FESTGESTELLT: 0 von 0 Kameras melden eine Lieferung, 1 Bild(er) in der Liste — ohne eine Meldung je Kamera ist nicht zu sagen, ob alles Bestellte da ist."
+}

@@ -1,0 +1,37 @@
+/* E2 · Kosmo fragt nach — Karte und Zahl (Bausteine, eingesetzt vom
+   Integrator am Kosmo-Knopf). Nur Token; keine Bewegung, nichts blinkt
+   (Entwurf e2, Leitfaden Bewegung §1). */
+.kfn-karte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+.kfn-satz {
+  margin: 0;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink);
+  overflow-wrap: anywhere;
+}
+.kfn-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s2);
+}
+.kfn-zahl {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--k-s1);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-accent);
+  color: var(--k-accent-ink);
+  box-shadow: 0 0 0 2px var(--k-field);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--k-lh-eins);
+}

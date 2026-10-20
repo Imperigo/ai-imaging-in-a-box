@@ -1,7 +1,7 @@
 {
   "format": "visbox.ui-ausnahmen/v1",
   "entscheid": "115/116/116a, docs/ENTSCHEIDE_IPAD_2026-09-21.md; Plan docs/PLAN_UI_GLEICHHEIT_2026-10-20.md",
-  "erklaerung": "Jeder Kopfteil, den KosmoOrbit ueber der Vis-Station zeigt (App.tsx unter bodenDockAusgeblendet, main.tsx neben <App />), steht hier genau einmal: eingesetzt im Visbox-Wirt (mit der Datei, die wortgleich herueberkommt, und der Komponente, die der Wirt zeichnet), als Ausnahme (Grund und Entscheid) oder als offen (mit der Stufe des Plans, die ihn bringt). Die Probe tests/test_kosmovis_ui_gleichheit.py haelt Liste, Kopie und Wirt zusammen.",
+  "erklaerung": "Jeder Kopfteil, den KosmoOrbit ueber der Vis-Station zeigt (App.tsx unter bodenDockAusgeblendet, main.tsx neben <App />), steht hier genau einmal: eingesetzt im Visbox-Wirt (mit der Datei, die wortgleich herueberkommt, und der Komponente, die der Wirt zeichnet), als Ausnahme (Grund und Entscheid) oder als offen (mit der Stufe des Plans, die ihn bringt). Die Probe tests/test_kosmovis_ui_gleichheit.py haelt Liste, Kopie und Wirt zusammen. Seit S3/S4 dazu je Abschnitt der Einstellungen (einstellungen_abschnitte), je Schalter von «Bewegung & Klang» und was das Gespraechsfeld von dort nicht traegt — jedes mit Grund.",
   "quelle": {
     "datei": "apps/kosmo-orbit/src/App.tsx, apps/kosmo-orbit/src/main.tsx",
     "stand": "HERKUNFT.json quelle.commit"
@@ -29,7 +29,7 @@
       "stand": "eingesetzt",
       "testid": "island-einstellungen-kreis",
       "datei": "apps/kosmo-orbit/src/modules/design/island/island.css",
-      "vermerk": "Oeffnet bis S4 die Einstellungen der Mac-App (Einrichten); die Einstellungs-Insel kommt mit S4."
+      "vermerk": "Oeffnet seit S4 die Einstellungs-Insel in der Seite (einstellungen.tsx), nicht mehr das Fenster der Mac-App."
     },
     {
       "teil": "Speichern-Kreis",
@@ -55,7 +55,7 @@
       "stand": "eingesetzt",
       "testid": "heimpc-chip",
       "datei": "apps/kosmo-orbit/src/modules/design/island/InselKopf.tsx",
-      "vermerk": "Als Heim-PC-Chip in der Optik des Sync-Chips; Klick oeffnet «Wer rechnet?» (Entscheid 116 (5), Nahtstelle chip)."
+      "vermerk": "Als Heim-PC-Chip in der Optik des Sync-Chips; Klick oeffnet seit S4 die Einstellungs-Insel bei «Wer rechnet?» (Entscheid 116 (5), Nahtstelle chip)."
     },
     {
       "teil": "Claude-Marke mit Karten",
@@ -105,7 +105,7 @@
       "stand": "eingesetzt",
       "datei": "apps/kosmo-orbit/src/app.css",
       "testid": "html[data-theme]",
-      "vermerk": "Wirt thema.ts, vor dem ersten Bild; umschaltbar ueber die Mac-App (Darstellung), spaeter die Einstellungs-Insel (Entscheid 116 (3))."
+      "vermerk": "Wirt thema.ts, vor dem ersten Bild; umschaltbar ueber die Mac-App (Darstellung) und seit S4 in der Einstellungs-Insel («Darstellung», wortgleich); die App merkt die Wahl (merke)."
     },
     {
       "teil": "Sync-Leiste und Mitarbeitende",
@@ -164,18 +164,31 @@
       "entscheid": "Plan §2"
     },
     {
-      "teil": "Kosmo-Kugel und Gespraechsfeld",
-      "ko": "App.tsx: <KosmoEckOrb>, <KosmoPanel>",
-      "stand": "offen",
-      "stufe": "S3",
-      "grund": "Kommt in gleicher Optik mit dem Visbox-Assistenten (Name «Assistent», Entscheid 116 (2)); bis dahin die Assistent-Leiste der Mac-App."
+      "teil": "Kugel des Assistenten",
+      "ko": "App.tsx: <KosmoEckOrb> (Listen-Stationen); in der Vis-Station VisWorkspace: <KosmoOrb>",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/modules/design/island/KosmoOrb.tsx",
+      "testid": "kosmo-orb-wurzel",
+      "vermerk": "Wortgleich mit KosmoEckOrb.tsx, kosmo-orb-wort.tsx, kosmo-eck-orb.css und state/kosmo-status.ts; gezeichnet von VisWorkspace (wortgleich), der Wirt reicht onKosmoOeffnen. Name «Assistent» ueber die Nahtstelle registriereKosmoName (Entscheid 116 (2))."
+    },
+    {
+      "teil": "Gespraechsfeld",
+      "ko": "App.tsx: <KosmoPanel>",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/kosmo-panel.css",
+      "stellvertreter": "apps/kosmo-orbit/src/shell/KosmoPanel.tsx",
+      "komponente": "KosmoPanel",
+      "testid": "kosmo-panel",
+      "vermerk": "CSS, Kopf-Orb (KosmoKopfOrb.tsx), Marke (KosmoMarke.tsx) und Seitenfenster-Breite wortgleich; der Rumpf ist ein Stellvertreter mit derselben Anatomie (.kp-panel, .kp-kopf, .kp-verlauf, .kp-eingabe-reihe). Das Gespraech fuehrt die Mac-App mit dem Visbox-Assistenten (qwen3:14b am Heim-PC), die Regeln stehen im Kern (Assistentengespraech). Ohne Heim-PC steht statt des Felds der Satz der App."
     },
     {
       "teil": "Einstellungs-Insel",
       "ko": "App.tsx: <Einstellungen>",
-      "stand": "offen",
-      "stufe": "S4",
-      "grund": "Bis dahin oeffnet der Einstellungs-Kreis die Einstellungen der Mac-App."
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/einstellungen-teile.tsx",
+      "komponente": "EinstellungenSchale",
+      "testid": "einstellungen-panel",
+      "vermerk": "Schale, «Darstellung», «Anzeige» und «Bewegung & Klang» wortgleich (Nahtstelle einstellungen-teile.tsx); dazu die Visbox-Abschnitte Heim-PC, «Wer rechnet?», «Claude über MCP», Lizenzen, Neuigkeiten. Je Abschnitt von dort: einstellungen_abschnitte."
     },
     {
       "teil": "Befehlspalette (⌘K)",
@@ -183,6 +196,222 @@
       "stand": "offen",
       "stufe": "S5",
       "grund": "Haengt an den Aktionen der ganzen KosmoOrbit-App; ob und mit welchen Visbox-Aktionen, klaert der Abgleich S5."
+    }
+  ],
+  "einstellungen_abschnitte": [
+    {
+      "testid": "einstellungen-neuigkeiten-station",
+      "ko": "Neu in <Station>",
+      "stand": "ausnahme",
+      "grund": "Nur mit einem Stations-Zahnrad; Visbox hat eine Station, die Neuigkeiten stehen unten.",
+      "entscheid": "Plan §2"
+    },
+    {
+      "testid": "einstellungen-projekt",
+      "ko": "Projekt (Name, Paket-Ursprung)",
+      "stand": "ausnahme",
+      "grund": "Visbox hat kein Projekt im Sinn von KosmoOrbit: die Mappe liegt auf dem Heim-PC, ihr Name kommt von dort; einen Paket-Ursprung aus KosmoPrepare gibt es nicht.",
+      "entscheid": "115 (Funktion existiert fachlich nicht)"
+    },
+    {
+      "testid": "einstellungen-paket-ursprung",
+      "ko": "Paket-Ursprung (C13)",
+      "stand": "ausnahme",
+      "grund": "Kein KosmoPrepare-Paket in Visbox.",
+      "entscheid": "115"
+    },
+    {
+      "testid": "einstellungen-phase",
+      "ko": "Phase SIA (Plan-Phase, Transformieren)",
+      "stand": "ausnahme",
+      "grund": "Visbox fuehrt keine SIA-Phasen; das Modell kommt fertig aus der Mappe.",
+      "entscheid": "115"
+    },
+    {
+      "testid": "einstellungen-sonne",
+      "ko": "Sonne (Standort, Datum, Zeit)",
+      "stand": "ausnahme",
+      "grund": "In Visbox stellt man Sonne und Stimmung am Knoten ein (Sonne-Insel, Stimmungs-Knoten) — die Knotenansicht ist die Arbeitsflaeche (Entscheid 94).",
+      "entscheid": "94"
+    },
+    {
+      "testid": "einstellungen-homeserver",
+      "ko": "HomeServer (Adresse, Token, Verbinden)",
+      "stand": "ersetzt",
+      "durch": "einstellungen-heimpc",
+      "grund": "Heim-PC-Adresse und Kennwort bleiben in der Mac-App (Schluesselbund, Entscheid 116 (6)); die Insel zeigt die Lage und «Am Mac einrichten».",
+      "entscheid": "116 (6)"
+    },
+    {
+      "testid": "einstellungen-darstellung",
+      "ko": "Darstellung (Thema, Akzent)",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/einstellungen-teile.tsx"
+    },
+    {
+      "testid": "einstellungen-anzeige",
+      "ko": "Anzeige (Schrift, Bewegung)",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/einstellungen-teile.tsx"
+    },
+    {
+      "testid": "einstellungen-bewegung-klang",
+      "ko": "Bewegung & Klang",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/einstellungen-teile.tsx",
+      "vermerk": "Rahmen und Rueckgaengig-Schalter wortgleich; die uebrigen Schalter siehe bewegung_klang_schalter."
+    },
+    {
+      "testid": "einstellungen-rundgang",
+      "ko": "Rundgang & Hilfe",
+      "stand": "ausnahme",
+      "grund": "Rundgang und Insel-Einfuehrung haben keine Vis-Schritte.",
+      "entscheid": "116 (7)"
+    },
+    {
+      "testid": "einstellungen-kosmo",
+      "ko": "Kosmo (Motor, Rollen, Werkzeuge)",
+      "stand": "ersetzt",
+      "durch": "einstellungen-rechner, einstellungen-claude",
+      "grund": "Kosmo gibt es in Visbox nicht. Was dort die KI einrichtet, sind hier «Wer rechnet?» (Inhalt wie Rechnerwahlansicht.swift) und «Claude über MCP».",
+      "entscheid": "105, 106, 116 (2)"
+    },
+    {
+      "testid": "einstellungen-immer-erlauben",
+      "ko": "Immer erlauben (Widerruf)",
+      "stand": "ausnahme",
+      "grund": "Kosmos Erlaubnisse gibt es nicht; in Visbox gilt die Selbstaendigkeit Karte | Coop | Voll an der Claude-Marke.",
+      "entscheid": "108 A"
+    },
+    {
+      "testid": "einstellungen-immer-ablehnen",
+      "ko": "Immer ablehnen (Widerruf)",
+      "stand": "ausnahme",
+      "grund": "Wie «Immer erlauben».",
+      "entscheid": "108 A"
+    },
+    {
+      "testid": "einstellungen-modell-lizenzen",
+      "ko": "Modell-Lizenzen (research-Profil)",
+      "stand": "ersetzt",
+      "durch": "einstellungen-lizenzen",
+      "grund": "Visbox hat kein research-Profil zum Einschalten (Forschungsmodelle nur mit Schalter am Heim-PC, CLAUDE.md Regel 1); die Insel nennt die Lizenzen, das NOTICE fuehrt sie.",
+      "entscheid": "Regel 1, E128"
+    },
+    {
+      "testid": "einstellungen-nutzungszeit",
+      "ko": "Nutzungszeit (Oberflaechen-Anpassung)",
+      "stand": "ausnahme",
+      "grund": "Die Nutzungszaehlung und Anpassung der KosmoOrbit-Oberflaeche gibt es in Visbox nicht.",
+      "entscheid": "115"
+    },
+    {
+      "testid": "einstellungen-leistung",
+      "ko": "Leistung (Autotuning)",
+      "stand": "ausnahme",
+      "grund": "Gerechnet wird am Heim-PC, nicht in der Seite; kein Autotuning der Ansicht.",
+      "entscheid": "103"
+    },
+    {
+      "testid": "einstellungen-zeiger-messstand",
+      "ko": "Zeiger-Messstand",
+      "stand": "ausnahme",
+      "grund": "Misst den eigenen Zeiger von KosmoOrbit (CursorEbene) — den gibt es in Visbox nicht.",
+      "entscheid": "Plan §2"
+    },
+    {
+      "testid": "einstellungen-neuigkeiten",
+      "ko": "Funktionen & Neues",
+      "stand": "ersetzt",
+      "durch": "einstellungen-neuigkeiten",
+      "grund": "Gleiche Kennung; Inhalt aus der Mac-App: die laufende Fassung und was eine bereitstehende bringt (Fassungsblatt).",
+      "entscheid": "84"
+    },
+    {
+      "testid": "einstellungen-system",
+      "ko": "System (Start maximiert, Deinstallieren)",
+      "stand": "ausnahme",
+      "grund": "Fenster und Programm fuehrt die Mac-App (Menue, Aktualisieren) — die Seite kann beides nicht.",
+      "entscheid": "Plan §2 (bleibt nativ)"
+    }
+  ],
+  "bewegung_klang_schalter": [
+    {
+      "testid": "einstellung-touch-undo-geste",
+      "stand": "eingesetzt",
+      "datei": "apps/kosmo-orbit/src/shell/einstellungen-teile.tsx"
+    },
+    {
+      "testid": "einstellung-sounds",
+      "stand": "ausnahme",
+      "grund": "Visbox spielt keine Klaenge.",
+      "entscheid": "115"
+    },
+    {
+      "testid": "einstellung-eigencursor",
+      "stand": "ausnahme",
+      "grund": "Kein eigener Zeiger in Visbox (CursorEbene ist Ausnahme).",
+      "entscheid": "Plan §2"
+    },
+    {
+      "testid": "einstellung-zeiger-morph-aus",
+      "stand": "ausnahme",
+      "grund": "Wie «Eigener Zeiger».",
+      "entscheid": "Plan §2"
+    },
+    {
+      "testid": "einstellung-abspielen",
+      "stand": "ausnahme",
+      "grund": "«Kosmo zeichnet sichtbar» gilt Kosmos Zeichnen im Grundriss; der Assistent zeichnet nicht.",
+      "entscheid": "115"
+    },
+    {
+      "testid": "einstellung-charakter",
+      "stand": "ausnahme",
+      "grund": "Kosmos Charakter-Fenster (Tauri) gibt es in Visbox nicht.",
+      "entscheid": "115"
+    }
+  ],
+  "gespraechsfeld_ausnahmen": [
+    {
+      "testid": "kosmo-motor-kosten",
+      "grund": "Der Assistent rechnet am Heim-PC und kostet nichts pro Zug; die Marke sagt Ort und Modell."
+    },
+    {
+      "testid": "lizenz-badge",
+      "grund": "Keine Lizenzdatei fuer den Assistenten."
+    },
+    {
+      "testid": "kosmo-feldkopf",
+      "grund": "Keine Projektfarbe in Visbox."
+    },
+    {
+      "testid": "tts-kopf-schalter",
+      "grund": "Der Assistent liest nicht vor."
+    },
+    {
+      "testid": "kosmo-zeitleiste-schalter",
+      "grund": "Der Verlauf ist kurz (hoechstens 40 Beitraege, Kern); keine Zeitleiste."
+    },
+    {
+      "testid": "kosmo-panel-einstellungen",
+      "grund": "Den Motor waehlt man nicht im Feld; «Wer rechnet?» steht in der Einstellungs-Insel."
+    },
+    {
+      "testid": "kosmo-flagge",
+      "grund": "Kein KosmoDev-Auftragsbuch in Visbox."
+    },
+    {
+      "testid": "kosmo-anhang",
+      "grund": "Der Assistent nimmt keine Dateien an."
+    },
+    {
+      "testid": "kosmo-mic",
+      "grund": "Keine Spracheingabe am Assistenten."
+    },
+    {
+      "testid": "kp-zuruf-knoepfe",
+      "grund": "Keine Laeufe, darum kein Zuruf."
     }
   ]
 }

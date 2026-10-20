@@ -7986,8 +7986,9 @@ Projekt:* Entscheid 116 (3), `thema.ts` im Wirt, `Knotenwirt.Thema` im Kern.
 Programm etwas Eigenes anmelden kann, ohne die Datei zu ändern — wie eine Steckdose, die drüben niemand benutzt. So
 kommt die Datei unverändert herüber, und doch tut sie in Visbox das Richtige. *Im Projekt:* die Muster
 `registriereModellLaden` (Entscheid 90) und seit dem 20.10.2026 `registrierePalettenQuelle`, die wahlfreien Handgriffe
-des Speichern-Kreises, `chip` und `onRundgang` der Zweitgruppe, `ausklapper` der Claude-Marke (KosmoOrbit-Zweig
-`claude/kosmovis-kopf`).
+des Speichern-Kreises, `chip` und `onRundgang` der Zweitgruppe, `ausklapper` der Claude-Marke, seit S3/S4
+`registriereKosmoName` (der Name «Assistent» an Kugel und Coop-Teilen) und `einstellungen-teile.tsx` (Schale und drei
+Abschnitte der Einstellungen als eigene Bausteine) (KosmoOrbit-Zweig `claude/kosmovis-kopf`).
 
 **Bote «visboxWirt» (zweite Brücke)** — Ein zweiter Weg zwischen Knotenansicht und Mac-App, neben dem **Bote
 «visboxKi»**: Die Seite sagt der App, was ein Kopfteil will (Startansicht öffnen, Einstellungen, «Wer rechnet?»,
@@ -7999,6 +8000,36 @@ Selbständigkeit, Thema). Das Kennwort des Heim-PC läuft nie darüber — die L
 gibt (etwa die Sync-Leiste: Visbox hat keinen gemeinsamen Raum). Jede Ausnahme steht mit Grund und Entscheid in einer
 Liste, und eine Probe prüft, dass jeder Kopfteil von KosmoOrbit entweder eingesetzt oder dort benannt ist. *Im
 Projekt:* `kosmovis/UI_AUSNAHMEN.json`, `tests/test_kosmovis_ui_gleichheit.py`.
+
+**Kugel des Assistenten (Orb)** — Der runde, leicht bewegte Knopf unten rechts in der Knotenansicht. Ein Klick öffnet das
+Gesprächsfeld, noch einer schliesst es. Während der Assistent nachdenkt, bewegt sich die Kugel anders und sagt es mit
+einem Wort daneben. *Im Projekt:* `KosmoOrb.tsx` und `KosmoEckOrb.tsx`, wortgleich aus KosmoOrbit; dort heisst der
+Assistent «Kosmo», in Visbox «Assistent» (Entscheid 116 (2)).
+
+**Gesprächsfeld (des Assistenten)** — Das Fenster, in dem man dem Assistenten schreibt und seine Antworten liest: oben
+der Kopf mit Name, Modell und «Schliessen», in der Mitte der Verlauf und die Karte mit seinem Vorschlag (Anwenden,
+Ablehnen, Ändern), unten das Eingabefeld. Fehlt der Heim-PC, steht statt des Eingabefelds ein Satz, warum. *Im Projekt:*
+die Optik wortgleich aus KosmoOrbit (`kosmo-panel.css`), der Inhalt ein Stellvertreter (`KosmoPanel.tsx`); das Gespräch
+selbst führt die Mac-App, mit denselben Regeln wie ihre frühere Assistent-Leiste.
+
+**Antwortblase (an der Kugel)** — Eine kleine Sprechblase neben der Kugel mit dem Anfang einer Antwort, die kam, während
+das Gesprächsfeld zu war. Ein Klick darauf öffnet das Feld; nach zwölf Sekunden verschwindet sie von selbst.
+
+**Seitenfenster (des Gesprächsfelds)** — Auf einem breiten Bildschirm steht das Gesprächsfeld nicht schwebend, sondern
+als feste Spalte am rechten Rand, und die Arbeitsfläche rückt zur Seite, statt verdeckt zu werden. Auf einem schmaleren
+Bildschirm schwebt es über der Fläche.
+
+**Einstellungs-Insel** — Das Fenster mit allen Einstellungen der Knotenansicht, geöffnet über das Zahnrad oben links
+(und über den Heim-PC-Chip gleich bei «Wer rechnet?»). Es enthält Darstellung, Anzeige und Bewegung wie in KosmoOrbit,
+dazu was nur Visbox hat: den Heim-PC, «Wer rechnet?», «Claude über MCP», Lizenzen und Neuigkeiten. Adresse und Kennwort
+des Heim-PC stehen nicht darin — die bleiben in der Mac-App. *Im Projekt:* `einstellungen.tsx` im Wirt, die Schale aus
+`einstellungen-teile.tsx`.
+
+**Gemerkte Einstellung (der Knotenansicht)** — Eine Wahl wie Thema, Farbakzent oder Schriftgrösse, die nach dem Neuladen
+noch gilt. Die Webansicht in der Mac-App vergisst alles beim Schliessen; darum sagt die Seite jede solche Wahl der App,
+und die App legt sie beim nächsten Öffnen vor dem ersten Bild zurück. Nur eine feste Liste von Einstellungen wird so
+gemerkt. *Im Projekt:* `MERKBAR` in `wirt-bruecke.ts`, `Knotenwirt.merkbar` im Kern.
+
 **Metallwert (eines Materials)** — Eine Zahl von 0 bis 1, die sagt, wie sehr eine Fläche wie Metall
 wirkt. Metall hat keine eigene Farbe im Licht, es zeigt nur, was es spiegelt; steht nichts zum Spiegeln
 herum, wirkt es fast schwarz. *Im Projekt:* Bauteile ohne Material bekamen im 3D-Fenster den Wert 1
@@ -8031,6 +8062,7 @@ rechneten.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus Kugel, Gesprächsfeld und Einstellungs-Insel (Plan UI-Gleichheit S3/S4, Protokoll 74 §161): **Kugel des Assistenten (Orb)**, **Gesprächsfeld (des Assistenten)**, **Antwortblase (an der Kugel)**, **Seitenfenster (des Gesprächsfelds)**, **Einstellungs-Insel**, **Gemerkte Einstellung (der Knotenansicht)**; **Nahtstelle (für einen zweiten Wirt)** um die zwei neuen Nahtstellen nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Kopfteilen der Knotenansicht (Plan UI-Gleichheit S1/S2, Protokoll 74 §159): **Kopfteile (der Knotenansicht)**, **Stationen-Palette (am Logo)**, **Speichern-Kreis**, **Zweitgruppe (des Inselkopfs)**, **Heim-PC-Chip**, **Claude-Marke**, **Erzählzeile**, **Thema (Papier, Kosmos)**, **Nahtstelle (für einen zweiten Wirt)**, **Bote «visboxWirt» (zweite Brücke)**, **UI-Ausnahme**; **Selbständigkeit**, **Tätigkeitsstrom** und **Zwei Rückgängig-Verläufe** nachgeführt (in der Knotenansicht an der Claude-Marke) |
 | 2026-10-20 | Ergaenzt aus den drei Fehlern am 3D-Fenster (Protokoll 74 §160): **Metallwert (eines Materials)**, **Umgebungslicht (aus einem Raum)**, **Normale (Richtung einer Fläche)**, **Schnittebene (vorne und hinten)**, **Entzerren (eines gesicherten Graphen)** |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §158): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |

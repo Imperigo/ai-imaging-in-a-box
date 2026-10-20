@@ -13,7 +13,11 @@ Diese Proben halten drei Dinge zusammen:
    nicht unter ``geaendert``), der Wirt zeichnet die Komponente aus genau dieser Datei, und die
    Kennung (``data-testid``) steht dort.
 3. **Die Mac-App zeigt in der Knotenansicht keine eigenen Kopfteile mehr** — keine Kopfleiste,
-   keine KI-Leiste — und die zweite Brücke trägt kein Kennwort.
+   keine KI-Leiste, seit S3 keine Assistent-Leiste — und die zweite Brücke trägt kein Kennwort.
+4. **Seit S3/S4** (Kugel und Gesprächsfeld, Einstellungs-Insel): jeder Abschnitt der Einstellungen
+   von KosmoOrbit und jeder Schalter von «Bewegung & Klang» ist eingesetzt, ersetzt oder Ausnahme
+   mit Grund; der Name «Assistent» und die Liste dessen, was die Seite behält, stehen in Seite und
+   Kern gleich; die Lizenzzeilen der Insel stehen im ``NOTICE``.
 
 Liegt KosmoOrbit daneben (Umgebungsvariable ``KOSMO_ORBIT`` = Pfad zu ``kosmo-orbit/``), prüft die
 letzte Probe zusätzlich, dass ``App.tsx`` und ``main.tsx`` dort keinen Kopfteil zeigen, der hier
@@ -108,8 +112,13 @@ def test_eingesetzt_heisst_wortgleich_und_vom_wirt_gezeichnet():
         assert datei in h["woertlich"], f"{t['teil']}: {datei} kommt nicht wortgleich herüber"
         assert datei not in h.get("geaendert", {}), f"{t['teil']}: {datei} ist geändert, nicht wortgleich"
         quelle = (KOPIE / datei).read_text(encoding="utf-8")
+        # EIN STELLVERTRETER MIT DER ANATOMIE VON DORT (S3, Gesprächsfeld): wortgleich ist dann das
+        # CSS (`datei`), die Komponente kommt aus dem Stellvertreter, und der steht in HERKUNFT.json.
+        if sv := t.get("stellvertreter"):
+            assert sv in h["stellvertreter"], f"{t['teil']}: {sv} ist kein verbuchter Stellvertreter"
+            quelle += (KOPIE / sv).read_text(encoding="utf-8")
         if komp := t.get("komponente"):
-            modul = datei.removeprefix("apps/kosmo-orbit/src/").rsplit(".", 1)[0]
+            modul = (t.get("stellvertreter") or datei).removeprefix("apps/kosmo-orbit/src/").rsplit(".", 1)[0]
             assert re.search(rf"import \{{[^}}]*\b{komp}\b[^}}]*\}} from '[./]+kosmo-orbit/src/{re.escape(modul)}'", wirt), \
                 f"{t['teil']}: der Wirt holt {komp} nicht aus {datei}"
             assert re.search(rf"<{komp}\b", wirt), f"{t['teil']}: der Wirt zeichnet <{komp}> nicht"
@@ -190,3 +199,99 @@ def test_kosmoorbit_zeigt_keinen_kopfteil_der_hier_fehlt():
     fehlend = sorted(t for t in teile | kennungen if t not in benannt)
     assert {"WerkzeugPalette", "SpeichernKreis", "InselZweitgruppe", "ClaudeAnschluss"} <= teile, teile
     assert not fehlend, f"KosmoOrbit zeigt neu: {fehlend} — eintragen (eingesetzt, Ausnahme oder offen)"
+
+
+# ============================================================== S3/S4 (20.10.2026)
+
+def test_s3_s4_sind_nicht_mehr_offen():
+    offen = {t["teil"]: t["stufe"] for t in _ausnahmen()["kopfteile"] if t["stand"] == "offen"}
+    assert "S3" not in offen.values() and "S4" not in offen.values(), offen
+
+
+def test_jeder_abschnitt_der_einstellungen_ist_benannt():
+    h = _ausnahmen()
+    for liste in ("einstellungen_abschnitte", "bewegung_klang_schalter"):
+        kennungen = [a["testid"] for a in h[liste]]
+        assert len(kennungen) == len(set(kennungen)), liste
+        for a in h[liste]:
+            assert a["stand"] in {"eingesetzt", "ersetzt", "ausnahme"}, a
+            if a["stand"] != "eingesetzt":
+                assert a.get("grund") and a.get("entscheid"), a
+            if a["stand"] == "eingesetzt":
+                assert a["datei"] in _herkunft()["woertlich"], a
+    for a in h["gespraechsfeld_ausnahmen"]:
+        assert a.get("grund"), a
+    # Was eingesetzt oder ersetzt ist, steht in der Insel — was Ausnahme ist, nicht.
+    insel = (WIRT / "einstellungen.tsx").read_text(encoding="utf-8")
+    teile = (KOPIE / "apps/kosmo-orbit/src/shell/einstellungen-teile.tsx").read_text(encoding="utf-8")
+    for a in h["einstellungen_abschnitte"] + h["bewegung_klang_schalter"]:
+        ziel = [x.strip() for x in a.get("durch", a["testid"]).split(",")]
+        da = all(f'"{z}"' in insel + teile for z in ziel)
+        if a["stand"] == "ausnahme":
+            assert f'data-testid="{a["testid"]}"' not in insel, a["testid"]
+        else:
+            assert da, f"{a['testid']}: {ziel} steht nicht in der Insel"
+    for name in ("<EinstellungenSchale", "<AbschnittDarstellung", "<AbschnittAnzeige", "<AbschnittBewegungKlang", "<SchalterTouchUndo"):
+        assert name in insel, name
+
+
+def test_kreis_und_chip_oeffnen_die_insel():
+    kopf = (WIRT / "kopf.tsx").read_text(encoding="utf-8")
+    assert "onClick={() => oeffneEinstellungen()}" in kopf
+    assert "onSyncToggle={() => oeffneEinstellungen('rechner')}" in kopf
+    main = (WIRT / "main.tsx").read_text(encoding="utf-8")
+    assert "<VisboxEinstellungen />" in main and "<VisboxAssistent />" in main
+    assert "<VisWorkspace onKosmoOeffnen={wechsleGespraech} />" in main
+    assert main.index("meldeAssistentAn();") < main.index("createRoot(")
+
+
+def test_name_und_merkliste_wie_im_kern():
+    kern = (WURZEL / "ipad" / "Visbox.swiftpm" / "Kern" / "Knotenwirtinseln.swift").read_text(encoding="utf-8")
+    kopf = (WIRT / "kopf.tsx").read_text(encoding="utf-8")
+    name = re.search(r'assistentName = "([^"]+)"', kern).group(1)
+    assert f"ASSISTENT_NAME = '{name}'" in kopf
+    assert name == "Assistent"  # Entscheid 116 (2)
+    swift = re.findall(r'"([\w.-]+)"', re.search(r"merkbar: \[String\] = \[([^\]]+)\]", kern).group(1))
+    bruecke = (WIRT / "wirt-bruecke.ts").read_text(encoding="utf-8")
+    ts = re.findall(r"'([\w.-]+)'", re.search(r"MERKBAR: readonly string\[\] = \[([^\]]+)\]", bruecke).group(1))
+    assert swift == ts, (swift, ts)
+
+
+def test_die_lizenzzeilen_stehen_im_notice():
+    notice = (WURZEL / "NOTICE").read_text(encoding="utf-8")
+    insel = (WIRT / "einstellungen.tsx").read_text(encoding="utf-8")
+    for wort in ("Blender", "IfcOpenShell", "Z-Image-Turbo", "Qwen-Image-2.1", "qwen3:14b", "IBM Plex", "Instrument Serif", "Lato", "PT Sans Narrow", "CC0"):
+        assert wort in insel, wort
+        assert wort.lower() in notice.lower(), f"{wort} fehlt im NOTICE"
+
+
+def test_das_gespraech_fuehrt_die_app_und_die_seite_kennt_kein_kennwort():
+    gespraech = (KOPIE / "apps/kosmo-orbit/src/shell/kosmo-gespraech.ts").read_text(encoding="utf-8")
+    panel = (KOPIE / "apps/kosmo-orbit/src/shell/KosmoPanel.tsx").read_text(encoding="utf-8")
+    for code in (gespraech, panel, (WIRT / "einstellungen.tsx").read_text(encoding="utf-8")):
+        ohne = re.sub(r"/\*.*?\*/|//[^\n]*", "", code, flags=re.S)
+        assert "fetch(" not in ohne, "die Seite fragt den Heim-PC selbst"
+        assert not re.search(r"type=.password|passwort|password|token", ohne, re.I)
+    # Die Regeln stehen im Kern: die Seite zählt keine Längen und keinen Verlauf nach.
+    assert "2000" not in panel and "verlaufHoechstens" not in panel
+    ansicht = (MAC / "Start" / "Arbeitsansicht.swift").read_text(encoding="utf-8")
+    # Die Assistent-Leiste steht nur auf der Visbox-Seite; das Modell hält die Arbeitsansicht.
+    assert re.search(r"if wahl != \.knoten \{\s*Rectangle\(\)[^\n]*\n\s*assistentenPlatz", ansicht)
+    assert "Assistentenhalter" in ansicht and "frageVonSeite" in ansicht
+
+
+@pytest.mark.skipif(not os.environ.get("KOSMO_ORBIT"), reason="KosmoOrbit liegt nicht daneben (KOSMO_ORBIT)")
+def test_kosmoorbit_hat_keinen_abschnitt_der_hier_fehlt():
+    app = Path(os.environ["KOSMO_ORBIT"]) / "apps" / "kosmo-orbit" / "src" / "shell"
+    einst = (app / "Einstellungen.tsx").read_text(encoding="utf-8") + (app / "einstellungen-teile.tsx").read_text(encoding="utf-8")
+    abschnitte = set(re.findall(r'<section[^>]*data-testid="(einstellungen-[\w-]+)"', einst))
+    h = _ausnahmen()
+    benannt = {a["testid"] for a in h["einstellungen_abschnitte"]}
+    assert abschnitte - benannt == set(), f"KosmoOrbit hat neue Abschnitte: {sorted(abschnitte - benannt)}"
+    einstellungen = (app / "Einstellungen.tsx").read_text(encoding="utf-8")
+    block = einstellungen[einstellungen.index("<AbschnittBewegungKlang>"):einstellungen.index("</AbschnittBewegungKlang>")]
+    schalter = set(re.findall(r'data-testid="(einstellung-[\w-]+)"', block)) | {"einstellung-touch-undo-geste"}
+    assert schalter == {a["testid"] for a in h["bewegung_klang_schalter"]}, schalter
+    panel = (app / "KosmoPanel.tsx").read_text(encoding="utf-8") + (app / "kosmo-feldkopf.tsx").read_text(encoding="utf-8")
+    for a in h["gespraechsfeld_ausnahmen"]:
+        assert f'"{a["testid"]}"' in panel, a["testid"]

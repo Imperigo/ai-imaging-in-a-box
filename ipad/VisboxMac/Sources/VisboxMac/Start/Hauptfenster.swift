@@ -115,11 +115,18 @@ struct Hauptfenster: View {
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
             Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
-        // DIE KNOTENANSICHT FRAGT NACH «EINRICHTEN» (Plan UI-Gleichheit S1, 20.10.2026): der
-        // Einstellungs-Kreis (bis zur Einstellungs-Insel, S4) und der Heim-PC-Chip («Wer rechnet?»).
+        // DIE KNOTENANSICHT FRAGT NACH «EINRICHTEN» (Plan UI-Gleichheit S1/S4, 20.10.2026): seit
+        // der Einstellungs-Insel nur noch «Am Mac einrichten» (Heim-PC: Adresse und Kennwort bleiben
+        // hier, Entscheid 116 (6)).
         .onReceive(NotificationCenter.default.publisher(for: .einrichtenOeffnen)) { nachricht in
             einrichtenAnfang = nachricht.object as? Einrichtenanfang
             einrichtenOffen = true
+        }
+        // «AKTUALISIEREN …» AUS DER EINSTELLUNGS-INSEL (Neuigkeiten): das Blatt des Knopfs.
+        .onReceive(NotificationCenter.default.publisher(for: .aktualisierenOeffnen)) { _ in
+            // NUR DAS BLATT, KEIN LADEN: Geladen wird erst mit dem Klick im Blatt — eine Seite
+            // installiert nichts ohne den Menschen.
+            if aktualisierung.angebot != nil { aktualisierenOffen = true }
         }
         .onChange(of: einrichtenOffen) { _, offen in
             // NACH DEM EINRICHTEN kann das Kennwort neu sein, bei gleicher Adresse.
@@ -186,6 +193,8 @@ struct Hauptfenster: View {
                            rechner: Knotenwirt.rechnerchip(eingerichtet: eingerichtet,
                                                            lage: schalter.lage),
                            leitungSatz: schalter.band(eingerichtet: eingerichtet)?.titel,
+                           leitungslage: schalter.lage, eingerichtet: eingerichtet,
+                           angebot: aktualisierung.angebot,
                            zentrale: .gemeinsam, claude: .gemeinsam,
                            thema: Knotenwirt.Thema(gemerkt: themaText))
         case .start:

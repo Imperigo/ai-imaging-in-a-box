@@ -132,9 +132,17 @@ def test_die_wahl_liegt_in_den_app_einstellungen_und_fragt_nur_nach_blender():
     # BLENDER WIRD NICHT GESTARTET (Regel 2) — die App sieht nur nach, ob es da ist.
     for verboten in ("Process(", "NSWorkspace", "launchApplication", "openApplication"):
         assert verboten not in ansicht, verboten
-    # DIE WAHL AENDERT HEUTE NICHTS AM WEG: keine andere Datei der App liest sie.
+    # DIE WAHL AENDERT HEUTE NICHTS AM WEG: keine andere Datei der App liest sie — ausser der
+    # Arbeitsansicht, die sie seit S4 (Plan UI-Gleichheit, 20.10.2026) in der Einstellungs-Insel der
+    # Knotenansicht ZEIGT und WAEHLEN laesst, wie das Blatt «Einrichten». Dort nur diese zwei Stellen.
     for datei in MAC.rglob("*.swift"):
-        if datei.name != "Rechnerwahlansicht.swift":
+        if datei.name == "Arbeitsansicht.swift":
+            code = _code(datei)
+            nutzungen = re.findall(r"rechnerwahl\.(\w+)", code)
+            assert set(nutzungen) <= {"wahl", "befund", "waehle"}, nutzungen
+            assert "Rechnerwahllage(wahl: rechnerwahl.wahl, befund: rechnerwahl.befund" in code
+            assert "rechnerwahl.waehle(ort, fuer: arbeit)" in code
+        elif datei.name != "Rechnerwahlansicht.swift":
             assert "Rechnerwahlspeicher" not in _code(datei), datei.name
     kern = (KERN / "Rechnerwahl.swift").read_text(encoding="utf-8")
     assert 'blenderOrt = "/Applications/Blender.app"' in kern

@@ -1,0 +1,1196 @@
+/**
+ * v0.6.5 (Stream W5 — Shell & Orbit) — NEUE, additive Styles für das Orbit-
+ * Startmenü und die Einstellungen. `aura.css`/`packages/kosmo-ui` bleiben
+ * dabei komplett unangetastet (Freeze, siehe Owner-Auftrag): alles hier sind
+ * NEUE Klassen, teils mit gezielt höherer Spezifität, um einzelne
+ * Positionierungs-Eigenschaften bestehender `k-orbit-*`-Klassen zu
+ * überschreiben (nie deren Öffnen/Schliessen-Vertrag: Opazität +
+ * `pointer-events:auto` bleiben in JEDEM Zustand erhalten, F3-Vertrag).
+ *
+ * Importiert einmal von `OrbitStart.tsx` — CSS-Importe sind global (kein
+ * Modul-Scoping), andere Shell-Dateien nutzen dieselben Klassen ohne
+ * eigenen Import.
+ *
+ * Behebt (docs/UI-SELBSTKRITIK-064.md, Runde 2):
+ *  - R2-N1 (Fächer-Versatz): der Fächer wächst IMMER vom Knoten-Rand weg,
+ *    nie zum Zentrum hin. Bis v0.8.3 aus einer Kompassrichtung (90°-Rhythmus
+ *    des Kreis-Index); seit v0.8.4 PA2 (Kachel-REIHE statt Kreis) gibt es
+ *    nur noch eine sinnvolle Richtung — IMMER «oben» (`--rechts`/`--unten`/
+ *    `--links` unten bleiben als totes, aber harmloses CSS stehen, falls ein
+ *    späteres Paket sie wieder braucht).
+ *  - R2-N2 (Fächer-Karten): echte Karteikarten (45°-Ecke, radial gestaffelt).
+ *  - R2-N3 (Achsen): Begrüssung/Projekte + Orbit auf einer Layout-Achse.
+ *
+ * 0.6.6 (Stream A) ergänzt: Aufgabe 1 (Stationswechsel-Choreografie),
+ * Aufgabe 3 (`.k-druck`-Rollout + Konflikt-Auflösung), Aufgabe 4 (Sheet-/
+ * Fächer-Motion), Aufgabe 5 (Fächer-Ruheraum), Aufgabe 6 (Fächer-Planet-
+ * Bezug), Aufgabe 7 (ehrliche Kopfleisten-Beschriftung ohne Fake-Statuspunkt).
+ *
+ * v0.8.4 PA2 ergänzt: die zentrierte Wortmarke + Versionszeile
+ * (`.orbit084-*`, ersetzt den `app-header` auf der Zentrale) und die
+ * Statik-Umstellung der Kachel-Reihe/-Fächer (Kompassrichtung ist jetzt
+ * IMMER «oben» — s. Kommentar bei `.orbit065-faecher-huelle` unten).
+ */
+
+/* ── PA2 (v0.8.4) → P-F2 (v0.9.2, Owner-Feedback 23.07.) — Wortmarke direkt
+   ÜBER der Kachel-Reihe, ganzes Paket nach oben ───────────────────────────
+   Owner wörtlich: «spiegle die vier Kosmo tools nach oben unter das Kosmo
+   Orbit Logo, das Kosmo Orbit logo und ganzes packet noch etwas nach oben
+   schieben». Bis P-F2 trug dieser Block `flex:1; justify-content:center` —
+   das zentrierte die Wortmarke in JEDEM freien Raum ÜBER der Kachel-Reihe
+   (`.k-orbit-ring-feld`, aura.css, `flex:none`) und schob die Reihe damit an
+   den UNTEREN Rand des Viewports (live gemessen: Reihe bei y≈750-890 von
+   900px Fensterhöhe, riesige Lücke zwischen Logo und Reihe). JETZT `flex:
+   none` — die Wortmarke nimmt nur noch ihre natürliche Höhe ein, `.k-orbit-
+   ring-feld` folgt direkt danach (kleiner, fester Abstand statt der alten
+   Centering-Lücke); beide Blöcke stapeln sich dadurch am OBEREN Rand von
+   `.k-orbit-start` (aura.css, `flex-direction:column; height:100%`) — der
+   frei bleibende Rest der Spalte liegt jetzt UNTER der Kachel-Reihe, nicht
+   mehr darüber verteilt («Paket nach oben»). Direkte Folge (dokumentiert,
+   kein Versehen): der Fächer jeder Hauptkachel öffnet ab jetzt NACH UNTEN
+   statt nach oben (`OrbitStart.tsx`, `orbit065-faecher-huelle--unten` statt
+   `--oben`) — mit der Reihe nahe am oberen Rand wäre für «nach oben» kaum
+   noch Luft, während unterhalb reichlich Platz frei ist; die CSS für
+   `--unten` existierte bereits vollständig (s. Kopfkommentar dieser Datei,
+   «totes, aber harmloses CSS, falls ein späteres Paket sie wieder braucht»
+   — genau dieses Paket). `e2e/orbit-start.spec.ts` (V084-SPEZ §4.2 «unten
+   mittig») ist entsprechend EHRLICH auf die neue Position umgeschrieben
+   (Bau-Bericht P-F2). */
+.orbit084-wortmarke-buehne {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--k-s1);
+  text-align: center;
+  /* Moderater Kopfabstand statt der alten, durch `flex:1`-Centering
+     berechneten Lücke — «etwas nach oben schieben», nicht bündig an den
+     Fensterrand (Owner: «etwas», kein Extremwert).
+     R1-Nachtrag (23.09.2026): war s5/s3-Polster + s3-Luecke — bei 1280×720
+     (dem knappsten Fall) ragte die rechte Spalte 24px unter den verfuegbaren
+     Platz (`.orbit065-home-rechts` scrollHeight>clientHeight,
+     `e2e/zentrale-passt-ohne-scroll.spec.ts`), ohne dass die Seite selbst
+     scrollte — ein stiller Ueberhang statt eines sichtbaren Rollbalkens,
+     aber derselbe Fehler gegen Owner-UI-Regel 1/2. */
+  padding: var(--k-s2) var(--k-s4) 0;
+}
+.orbit084-wortmarke {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-s3);
+  cursor: default;
+}
+/* D-1 (E-1): `letter-spacing` ersatzlos entfernt — Inhalt (`v${__APP_
+   VERSION__}`, OrbitStart.tsx) ist nicht versaliert. */
+.orbit084-version {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+
+/* ── Aufgabe 1 (0.6.6 MOTION-KONZEPT-066 §4) — Stationswechsel-Choreografie
+   `mitUebergang()` (@kosmo/ui `motion.ts`, App.tsx `gehZu()`) kapselt
+   `document.startViewTransition` — die Choreografie selbst («altes Blatt
+   weicht sofort, neues setzt mit --k-feder auf») lebt hier als
+   `::view-transition-*`-Regel. Ohne Browser-Support oder bei
+   `prefers-reduced-motion` ruft `mitUebergang()` den Wechsel synchron auf,
+   `startViewTransition` läuft dann nie — diese Pseudo-Elemente entstehen
+   in dem Fall gar nicht erst (kein Sonderfall/@media hier nötig). */
+@keyframes orbit065-view-alt-weicht {
+  to { opacity: 0; }
+}
+@keyframes orbit065-view-neu-setzt {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+::view-transition-old(root) {
+  animation: orbit065-view-alt-weicht var(--k-motion-fast) ease both;
+}
+::view-transition-new(root) {
+  animation: orbit065-view-neu-setzt var(--k-feder) both;
+}
+
+/* ── R2-N3 → PA2 (v0.8.4): Begrüssung/Projekte und Orbit teilen EINE
+   Layout-Achse (App.tsx-Layout gehört nicht zu meinem Dateibesitz — minimal-
+   invasive Grid-Hülle, keine Logik verändert). PA2-Änderung: die Reihe
+   bekommt jetzt eine DEFINITE Höhe (`grid-template-rows`/`flex`/`min-height:
+   0`-Kette bis hoch zu `.app-zentrale-scroll`, s. `app.css`) statt content-
+   getriebener Höhe — Owner-Auftrag «nicht scrollbar»: die Zentrale füllt
+   IMMER exakt den Viewport, statt bei viel Inhalt zu wachsen. Die linke
+   Spalte (Begrüssung/Projekte/Varianten) bekommt dafür ein eigenes,
+   internes `overflow-y:auto` als Sicherheitsnetz (viele Projekte scrollen
+   NUR dort, nie die Wurzel-Seite — `document.scrollingElement.scrollHeight`
+   bleibt unberührt). Die alte 390px-Fächer-Reserve für den alten Kreis-Ring
+   entfällt ersatzlos: der neue, unten-mittige Kachel-Reihen-Fächer öffnet
+   `position:absolute` nach oben in den jetzt grosszügigen, freien Raum der
+   rechten Spalte (s. `OrbitStart.tsx`/`.orbit084-wortmarke-buehne`). */
+.orbit065-home-grid {
+  display: grid;
+  /* PA2: die linke Spalte (Begrüssung/Projekte/Varianten) bekommt eine
+     kompakte, GEDECKELTE Breite statt gleicher 1fr-Teilung — die rechte
+     Spalte (Wortmarke + Kachel-Reihe) bekommt den GROSSTEIL der Breite, das
+     bringt «KosmoOrbit-Schriftzug zentral mittig» (Owner-Auftrag) so nah wie
+     mit der (ausserhalb des PA2-Dateikreises geschützten) Zweispalten-Achse
+     möglich an die echte Bildschirmmitte heran. Der Umbruch-Vertrag
+     unterhalb 700px (D-6/E-3: war 860px, `e2e/orbit-hub-vollausbau.spec.ts`,
+     EIN Spalten-Token) bleibt unberührt — nur die ≥700px-Werte ändern sich,
+     dort prüft keine Spec einen exakten Wert. */
+  /* 21.09.2026 von 240-260 auf 300-340: die Karte «Weiter arbeiten» traegt
+     das Projektbild, und ein Grundriss in 240 Bildpunkten ist kein Bild,
+     sondern ein Punkt. Der Umbruch-Vertrag unterhalb 700px bleibt
+     unberuehrt — dort greift die Einspaltigkeit, nicht dieser Wert. */
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  /* Dritte Spalte NUR, wenn Kosmo offen ist (21.09.2026). `:has()` haelt die
+     Regel an EINER Stelle — ohne ihn braeuchte die Zentrale eine zweite
+     Zustandsvariable allein fuers Raster, und die waere binnen Wochen mit dem
+     wahren Zustand auseinandergelaufen. */
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--k-s7);
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+/* R1 (23.09.2026, Bot-Fund U1, docs/MESSUNG-UX-BOTLAUF-2026-09-23.md):
+   `overflow-y: auto` stand hier als «Sicherheitsnetz» — genau das war der
+   Fehler. Ein Sicherheitsnetz unter zu hohem Inhalt ist ein Rollbalken, und
+   Owner-UI-Regel 1 verbietet Rollbalken in schwebenden Flaechen ausdruecklich
+   (Ausnahme nur echte Datensatzlisten, die Zentrale ist keine). Gemessen VOR
+   dem Fix (5 Bots + eigene Nachmessung 23.09.2026): die Spalte scrollte innen
+   mit einem 0px-breiten, unsichtbaren Balken — «Weiter arbeiten» und «Katalog
+   sichern» lagen bei allen fuenf Groessen ausserhalb des Bildes. Der Fix ist
+   nicht «rollen erlauben», sondern «der Inhalt passt» — dafuer sorgen die
+   verdichteten Leiter-Werte unten (Gap, `.lage`, `.wa-karte`, `ProjektBild`,
+   die «Neu hier?»-Karte). `overflow` bleibt bewusst UNGESETZT (= `visible`):
+   ein erneuter Rueckfall auf `auto` waere wieder das alte Sicherheitsnetz. */
+.orbit065-home-links {
+  display: grid;
+  /* War var(--k-s6)/24px — Teil der Verdichtung (R1): bei bis zu fuenf
+     Kindern (Gruss, «Neu hier?», Lage, Weiter-arbeiten, Katalog) sparen
+     vier Luecken je 16px zusammen fast eine ganze Kartenhoehe. */
+  gap: var(--k-s3);
+  align-content: start;
+  min-width: 0;
+  min-height: 0;
+}
+/* PA2-Gate-Fix (Fable, Sichtprüfung 1440×900): der nowrap-Knopf
+   «Beispielprojekt laden — …» spreizte die Kinder der schmalen Spalte auf
+   365px (gemessen: scrollWidth 365 bei 260px Spalte) — ALLES in der Spalte
+   wurde dadurch an der Kante hart abgeschnitten statt umzubrechen. Kinder
+   dürfen die Spalte nie mehr aufspreizen; lange Knopf-Texte enden in
+   Ellipsis, Fliesstext bricht normal um. */
+.orbit065-home-links :is(div, p, button, input, span) {
+  min-width: 0;
+  max-width: 100%;
+}
+/* R1-Nachtrag (Bot-Fund U11): `height: auto` liess Knoepfe (und den KSelect-
+   Ausloeser «Rolle») auf die reine Textzeile schrumpfen — gemessen 21-25px,
+   unter dem Mausweg-Mindestmass. `min-height: 32px` haelt das Mindestmass,
+   `height: auto` bleibt fuer mehrzeilige Knopf-Texte noetig. */
+.orbit065-home-links button,
+.orbit065-home-links button span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  height: auto;
+  min-height: 32px;
+}
+
+/* ── Die Lagebeurteilung stand bis U18 in dieser Spalte und wurde hier
+   verdichtet. Seit Entwurf A ist sie die Karte «Heute» in der mittleren
+   Spalte (`.app-heute-lage`); die Verdichtung gilt dort (app.css). ── */
+
+/* ── R1-Verdichtung: Gruss-Zeile (`.app-gruss-*` lebt in app.css, s.o.). ── */
+.orbit065-home-links .app-gruss-sub {
+  margin-top: var(--k-s1);
+}
+.orbit065-home-links .app-gruss-aktion {
+  margin-top: var(--k-s2);
+}
+
+/* ── R1-Verdichtung: «Neu hier?»-Karte (`ErsteStartFrage.tsx` traegt ihre
+   Abstaende als Inline-Style, ausserhalb dieses Dateikreises — darum hier
+   per `data-testid` ueberschrieben). Nur im Erststart-Zustand im DOM, aber
+   genau dort ist der Platz am knappsten (zusaetzliche Karte VOR der Lage-
+   beurteilung, gemessen 259px Ueberhang bei 1920×1080 vor diesem Fix). */
+.orbit065-home-links [data-testid='erste-start-frage'] {
+  padding: var(--k-s3) var(--k-s4) !important;
+  gap: var(--k-s2) !important;
+}
+.orbit065-home-rechts {
+  display: flex;
+  /* U18 Entwurf A (01.10.2026): unter Wortmarke und Kacheln steht Kosmos
+     Karte «Heute» — die Spalte stapelt darum. */
+  flex-direction: column;
+  align-items: center;
+  gap: var(--k-s5);
+  min-width: 0;
+  min-height: 0;
+}
+/* `.k-orbit-start` traegt in aura.css `height: 100%` (Wortmarke und Kacheln
+   fuellten die Spalte allein). Mit der Karte darunter nimmt sie nur noch
+   ihre eigene Hoehe — sonst stuende die Karte am unteren Rand statt unter
+   den Kacheln (gemessen am ersten Bild, 1440×900). */
+.orbit065-home-rechts > .k-orbit-start {
+  height: auto;
+}
+/* Die Karte «Heute» bleibt klein (Entwurf: «eigene kleine Karte»), nie
+   breiter als die Spalte. */
+.app-heute-lage {
+  width: min(100%, 380px);
+}
+/* DIE LINKE SPALTE GIBT UNTER 1100 PX PLATZ AB (23.09.2026). Seit sie am
+   21.09. auf 300-340 px wuchs (fuer das Projektbild), blieben der Kachelreihe
+   bei 768 px Fensterbreite nur 348 px — die Reihe ist breiter und ragte
+   rechts 6 px aus dem Fenster, ohne dass man seitlich schieben kann. Die
+   Probe `e2e/b86-kacheln-im-bild.spec.ts` hat es gemeldet; die
+   Lagebeurteilung war es NICHT (gemessen: mit und ohne sie dieselben 774 px).
+   280 px sind der Kompromiss: das Projektbild bleibt ein Bild, und bei 768 px
+   endet KosmoSpez innerhalb des Fensters.
+
+   Sie steht VOR der Einspalten-Regel darunter, nicht bei den anderen
+   1100-px-Regeln: bei gleicher Gewichtung gewinnt die spaetere, und unter
+   700 px muss die Einspaltigkeit gewinnen. */
+@media (max-width: 1100px) {
+  .orbit065-home-grid {
+    grid-template-columns: minmax(260px, 280px) minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  /* K-BP-SCHMAL (E-3) — D-6: war 860px */
+  .orbit065-home-grid {
+    grid-template-columns: minmax(0, 1fr);
+    /* r8: hier waechst das Raster mit seinem Inhalt, und die Zentrale rollt
+       (`app.css`, Owner-Entscheid 2) — sonst quetschte `minmax(0, 1fr)` beide
+       Spalten in die Fensterhoehe und die untere Haelfte waere abgeschnitten. */
+    grid-template-rows: auto;
+    flex: none;
+  }
+}
+
+/* ── R1-Fix (Kritik-065 p-01/i-01): Hauptwerkzeug-Titel unter dem Kreis ──
+   Vorher lag der Titel als flex-Zeile IM 108px-Kreis (`.k-orbit-hauptknopf`,
+   aura.css) — bei «KosmoDesign» reichte die Kreis-SEHNE nahe am unteren Rand
+   nicht für die Textbreite, die Buchstaben schnitten sichtbar den Tuscherand
+   (Kreisgeometrie: die Sehnenbreite schrumpft zum Rand hin, das Rechteck des
+   Textknotens nicht). Fix: Titel + «kommend»-Badge in einen eigenen, absolut
+   positionierten Block UNTER dem Kreis verschoben — mit festem Abstand
+   (`--k-s2`), unabhängig von Icon/Kreis-Füllung. Bleibt Kind des `<button>`
+   (Klick-Fläche + `toContainText`-Vertrag in orbit-start.spec unverändert).
+   `.k-orbit-hauptknopf` bekommt hier NUR `position:relative` dazu (aura.css
+   selbst setzt keine Position) — alles andere dort unverändert (Freeze).
+   PA2: der frühere Gegenrotations-Wrapper (`.k-orbit-knoten-gegendreh`) ist
+   mit der Rotation entfallen — `.k-orbit-hauptknopf` sitzt jetzt direkt im
+   108px-`.k-orbit-knoten` (aura.css), derselbe Selektor-Zweck bleibt. */
+.k-orbit-knoten .k-orbit-hauptknopf {
+  position: relative;
+}
+/* v0.7.4 P6 (kosmetischer Fix, Kritik-Befund «KOMMEND»-Label-Kollision):
+   `white-space:nowrap` liess das Unterlabel bei langen Namen (z.B.
+   «KosmoDesign» + «kommend»-Badge auf KosmoOffice) so breit werden, dass es
+   in den Bereich des Nachbarknotens auf dem Ring hineinragte — beide Texte
+   verwaschen sich dort optisch. Fix: `max-width` nahe der 108px-Kreisbreite
+   (`.k-orbit-hauptknopf`, aura.css) + echter Umbruch statt Einzeiler — der
+   Text bleibt UNTER seinem eigenen Kreis statt seitlich in den Nachbarn zu
+   wachsen. Reine Positionierungs-Eigenschaft dieser NEUEN Klasse (kein
+   Eingriff in aura.css/`k-orbit-hauptknopf-titel`), Text/DOM/Testid-Vertrag
+   unverändert (`toContainText`, OrbitStart.tsx). */
+.orbit065-hauptknopf-unterlabel {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: var(--k-s2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /* 21.09.2026: an die Kachelgroesse gebunden statt fest 110px. Die Kacheln
+     stehen seit der Quetschung 112px Mitte-zu-Mitte auseinander (96px Kachel
+     + 16px Luecke, `aura.css`); ein fester 110er-Deckel liesse zwei
+     Nachbartexte auf 2px zusammenruecken. 96 + 8 = 104px laesst 8px Luft
+     zwischen zwei Beschriftungen und faellt automatisch mit, wenn die Kachel
+     je wieder kleiner wird. */
+  max-width: calc(var(--k-orbit-knoten-groesse) + var(--k-s3));
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+/* ── R1-Fix (Kritik-065 p-01/i-01): Kreismittelpunkt ohne Fadenkreuz-Icon ──
+   `.k-orbit-mitte` (aura.css) ist ein rein dekorativer, `pointer-events:none`
+   Bahn-Anker — trug bisher dasselbe OrbitMark-Fadenkreuz wie der echte
+   «Kosmo»-Hauptwerkzeugknopf (`IconHauptKosmo`) und wirkte dadurch wie ein
+   unbeschrifteter fünfter Orbit-Knoten mitten im Ring. Der Ort/die Grösse
+   bleiben (orbit-faecher.spec misst seine Bounding-Box) — nur der Inhalt
+   schrumpft auf einen stillen Punkt, klar als Bahn-Mittelpunkt statt als
+   Knopf-Duplikat lesbar. */
+.orbit065-mitte {
+  border-color: transparent;
+  background: transparent;
+}
+/* DER PUNKT IST WEG (21.09.2026), das Element bleibt.
+
+   Hier sass ein 6px-Punkt, der den Mittelpunkt der Kreisbahn markierte. Die
+   Kreisbahn gibt es seit PA2 nicht mehr — die vier Werkzeuge stehen als
+   statische Reihe. Der Punkt markierte also seit damals die Mitte von
+   nichts, und solange die Reihe 672px breit war, fiel er kaum auf.
+
+   Seit der Quetschung auf 432px faellt er auf: die Mitte der Reihe liegt in
+   der Luecke zwischen dem zweiten und dem dritten Werkzeug, und dort liest
+   sich ein grauer Punkt wie ein Trennzeichen zwischen zwei Werkzeugen —
+   am Bildschirm nachgesehen, nicht vermutet. Ein Zeichen, das etwas anderes
+   sagt, als es meint, ist schlimmer als keines.
+
+   `.k-orbit-mitte` selbst BLEIBT als unsichtbarer Anker bestehen:
+   `e2e/orbit-faecher.spec.ts` misst seine Bounding-Box (zweimal), und das
+   ist ein Vertrag ausserhalb dieses Umbaus. */
+
+/* ── R2-N1/N2: Fächer ausserhalb des Rings, echte Karteikarten ──────────
+   Geometrie: `.orbit065-faecher-huelle` hängt (wie `.k-orbit-faecher`
+   vorher) im 108px-Anker `.k-orbit-knoten-gegendreh` — NEU aber
+   sie wächst vom Knoten-Rand WEG, nie zum Zentrum hin. Bis v0.8.3
+   kompassrichtungsabhängig (oben/rechts/unten/links, aus dem Kreis-Index);
+   seit v0.8.4 PA2 (Kachel-REIHE statt Kreis) IMMER «oben» (s. Kopfkommentar
+   dieser Datei) — `--rechts`/`--unten`/`--links` unten bleiben totes, aber
+   harmloses CSS.
+
+   PA2-Breite bewusst SCHMALER als vor v0.8.4 (war 300px, dann 220px):
+   die Kachel-Reihe braucht genug Lücke zwischen den 108px-Knoten, damit
+   zwei benachbarte, GESCHLOSSENE Fächer (Harter Vertrag: immer im DOM,
+   reale Boxgrösse, `pointer-events:auto`, auch zu) sich nie geometrisch
+   berühren — sonst fängt der eine Fächer Klicks für den anderen ab (live
+   mit Playwright bewiesen, zuletzt bei offenem Kosmo-Panel — 340px
+   schmalere verfügbare Breite). Der Kachel-Abstand (`aura.css`
+   `.k-orbit-ring-feld`, 80px) ist auf GENAU diese Breite abgestimmt —
+   beide Werte gehören zusammen, s. dortiger Kommentar für die volle
+   Rechnung. */
+/* B86-Nachtrag (09.09.2026) — DIE KARTE DARF NICHT BREITER SEIN ALS IHR FAECHER.
+   Messung des lokalen Workers am ausgelieferten Stand, im Hochformat mit
+   Fingerbedienung: `module-spez` ragt bei 834x1194 um 28 px und bei 768x1024
+   um 61 px ueber die rechte Fensterkante — und der waagrechte Querlauf ist in
+   beiden Faellen 0. Der abgeschnittene Teil ist damit nicht erreichbar, nicht
+   bloss unschoen: eine ganze Station faellt auf dem Geraet aus, auf dem der
+   Owner sie oeffnen wird. Je kleiner das Geraet, desto mehr fehlt.
+
+   Ursache, nachgemessen statt vermutet: die Huelle ist im Band 701–1100 px
+   auf 118 px begrenzt (Regel unten), die Karte darin war 205 px breit — sie
+   waechst nach ihrem Inhalt und ignoriert die Huelle. Bei den linken Knoten
+   faellt das nicht auf, weil rechts Platz ist; beim rechtesten faellt es aus
+   dem Bild.
+
+   Die Reparatur setzt die Grenze dort, wo sie fehlte, statt die Huelle zu
+   verbreitern: eine breitere Huelle wuerde die Luecke zwischen zwei
+   geschlossenen Faechern angreifen, und die ist per Vertrag an die
+   Reihen-Luecke gekoppelt (s. Kommentar unten). `min-width: 0` gehoert dazu —
+   ohne sie ignoriert ein Flex-Kind seine `max-width` und bleibt bei seiner
+   Inhaltsbreite. */
+.orbit065-faecher-huelle .k-orbit-untertool-zeile,
+.orbit065-faecher-huelle .k-orbit-untertool {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.orbit065-faecher-huelle {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s3);
+  /* 21.09.2026 von 150 auf 186px: bei 150 passte der laengste Owner-Text
+     («Rendere und nutze AI Imaging als Ergaenzung.») auch in zwei Zeilen
+     nicht — auf dem Bildschirmfoto stand «…AI Imaging als…». Breite statt
+     einer dritten Zeile, weil der Faecher sonst je Eintrag waechst und
+     der dichteste acht Eintraege hat. 50vw bleibt der Deckel fuer schmale
+     Fenster. */
+  width: min(186px, 50vw);
+  opacity: 0.0015;
+  pointer-events: auto;
+  z-index: 5;
+  /* Aufgabe 4 (Konzept §4, Overlays der Zentrale): öffnet mit `--k-feder`
+     (Translation 4-8px + Opacity), schliesst mit `--k-motion-fast` Opacity
+     — die Basisregel (hier) trägt die SCHLIESSEN-Dauer, `.offen` (unten)
+     überschreibt sie für die ÖFFNEN-Richtung (CSS wählt die Dauer immer aus
+     dem NEUEN Zustand, derselbe Trick wie bei `.k-druck`). */
+  transition: opacity var(--k-motion-fast), transform var(--k-motion-fast);
+}
+/* v0.8.1 / P15 (Orbit-Hub-Vollausbau, responsives Layout, docs/V081-SPEZ.md
+   §7(f)/§9.5 C-34) — additiv: unter demselben Breakpoint wie
+   `.orbit065-home-grid` (Ein-Spalten-Kollaps) wird die Fächer-Breite enger
+   begrenzt, damit ein tatsächlich geöffneter rechts-/links-Fächer seltener
+   am schmaleren Container-Rand beschnitten wird (s. `app.css`
+   `.app-zentrale-scroll`-Kommentar für den zugehörigen Seiten-Scroll-Fix).
+   D-6 (E-3): war 860px. */
+@media (max-width: 700px) {
+  /* K-BP-SCHMAL (E-3) */
+  .orbit065-faecher-huelle {
+    width: min(200px, 70vw);
+  }
+}
+/* ERSATZLOS ENTFALLEN am 21.09.2026, zusammen mit seinem Gegenstueck in
+   `aura.css` — die beiden Zahlen wandern laut Vertrag nur gemeinsam, also
+   gehen sie auch gemeinsam. Hier schrumpfte der Faecher im Band 701-1100px
+   auf 118px, damit zwei geschlossene Faecher sich nicht ueberlappen und
+   Klicks abfangen. Seit B139 ist die geschlossene Huelle zeigerdicht, es
+   gibt nichts mehr abzufangen. Und 118px waren dem Text laengst zu eng: der
+   laengste Owner-Beschrieb passte am 21.09.2026 schon in 150px nicht (darum
+   186px in der Grundregel) — in 118px stuende er dreifach gebrochen. */
+.orbit065-faecher-huelle.offen {
+  opacity: 1;
+  z-index: 20;
+  transition: opacity var(--k-feder), transform var(--k-feder);
+}
+/* Jede Kompassrichtung wächst «aus dem Knoten heraus»: im Ruhezustand ein
+   6px-Versatz IN Richtung Knoten (Translation, Konzept-Vorgabe 4-8px), beim
+   Öffnen federt sie auf ihre endgültige, zentrierte Position — GALT bis
+   K13 auch für `--oben` (die einzige tatsächlich genutzte Richtung, s.
+   Kopfkommentar oben «seit PA2 IMMER oben»).
+   K13-Nachtrag (docs/V0812-START-SPEZ.md E-S2): `--oben` federt NICHT mehr
+   (Ruhe- und `.offen`-Transform sind jetzt identisch, `transition` bleibt
+   nur noch für `opacity`, s. Elternregel oben) — zwei Gründe: (1) Owner-
+   Auftrag «gerade und nüchterne Blöcke» will bewusst WENIGER Bewegung,
+   nicht mehr; (2) reale Regression (live gefunden, `orbit-start.spec.ts`
+   «Fächer: paarweise Bounding-Box-Überlappung … ist 0», dichtester
+   Kosmo-Fächer): Playwright misst die 8 Blöcke SEQUENZIELL (acht einzelne
+   `boundingBox()`-Rundreisen) — lief die 6px→0-Feder-Transform der ganzen
+   Hülle währenddessen noch (in dieser Sandbox bleibt `prefers-reduced-
+   motion` nachweislich WIRKUNGSLOS, `window.matchMedia(...).matches` liefert
+   `false` trotz `reducedMotion:'reduce'`), driftete die Hülle zwischen zwei
+   Messungen leicht weiter — bei der vormals 16px grossen Kartenlücke
+   unbemerkt, bei der neuen 1px-Hairline-Blockliste genügte das, um
+   benachbarte Blöcke als sub-Pixel-überlappend zu vermessen (live
+   reproduziert und mit Debug-Instrumentierung bestätigt: OHNE Feder-
+   Transform reproduzierbar 0 Überlappungen in 8/8 Läufen, MIT Feder-
+   Transform 3/8 Fehlschläge). Die anderen drei Kompassrichtungen
+   (rechts/unten/links) sind toter Code (nicht mehr angesteuert, s.
+   Kopfkommentar dieser Datei) und bleiben unverändert stehen. */
+.orbit065-faecher-huelle--oben {
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  margin-bottom: var(--k-s6);
+}
+.orbit065-faecher-huelle--oben.offen {
+  transform: translate(-50%, 0);
+}
+/* B86-Nachtrag (22.09.2026): `--k-orbit-faecher-randkorrektur` kommt aus
+   `OrbitStart.tsx` (0px, ausser ein Knoten stuende sonst ueber den
+   Fensterrand hinaus — s. dortiger Kopfkommentar) und schiebt NUR die
+   horizontale Komponente der bestehenden Mitte-Zentrierung. Der
+   `translate(-50%, …)`-Vertrag selbst bleibt unveraendert; die Korrektur
+   ist additiv und default 0px, also fuer jeden Knoten ohne Randlage
+   wirkungslos. */
+.orbit065-faecher-huelle--unten {
+  top: 100%;
+  left: 50%;
+  transform: translate(calc(-50% + var(--k-orbit-faecher-randkorrektur, 0px)), -6px);
+  margin-top: var(--k-s6);
+}
+.orbit065-faecher-huelle--unten.offen {
+  transform: translate(calc(-50% + var(--k-orbit-faecher-randkorrektur, 0px)), 0);
+}
+.orbit065-faecher-huelle--rechts {
+  left: 100%;
+  top: 50%;
+  transform: translate(-6px, -50%);
+  margin-left: var(--k-s6);
+}
+.orbit065-faecher-huelle--rechts.offen {
+  transform: translate(0, -50%);
+}
+.orbit065-faecher-huelle--links {
+  right: 100%;
+  top: 50%;
+  transform: translate(6px, -50%);
+  margin-right: var(--k-s6);
+}
+.orbit065-faecher-huelle--links.offen {
+  transform: translate(0, -50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit065-faecher-huelle,
+  .orbit065-faecher-huelle.offen {
+    transition: none;
+  }
+}
+
+/* ── Aufgabe 6 (0.6.6, C-Befund 5) — Fächer-Planet-Bezug ─────────────────
+   «sichtbarer Bezug zwischen auslösendem Orbit-Planeten und offenem
+   Fächer»: (1) Akzent-Rahmen am Hauptknopf, solange SEIN Fächer offen ist
+   (`aria-expanded` ist bereits vorhanden, kein neuer State nötig — zwei
+   Klassen/Attribut-Selektor (0,2,0) schlagen `.k-orbit-hauptknopf:hover`
+   dank späterer Ladereihenfolge dieser Datei, siehe Kopfkommentar); (2)
+   eine feine Tusche-Verbindungslinie GENAU in der Lücke zwischen Knoten und
+   Fächer, kompassrichtungsabhängig — reines `::before`, kein zusätzliches
+   DOM-Element, ändert keine Bounding-Box eines getesteten Elements
+   (R2-N1/R2-N2 messen `.k-orbit-mitte`/die Karten, nicht dieses Pseudo). */
+.k-orbit-hauptknopf[aria-expanded='true'] {
+  border-color: var(--k-accent);
+  box-shadow: 0 0 0 2px var(--k-accent-wash);
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-orbit-hauptknopf[aria-expanded='true'] {
+    transition: none;
+  }
+}
+/* P21 (V016-SPEZ, Owner-Entscheid E85): «kommend»-Hauptkacheln (heute nur
+   KosmoOffice) sehen erkennbar deaktiviert aus — dieselbe Dimmung wie die
+   «kommend»-Unterkacheln (`.orbit065-karte:disabled` unten), nur über
+   `aria-disabled` statt `disabled`: der Hauptknopf bleibt fokussierbar
+   (Hover/Fokus öffnen weiterhin die Vorschau, s. `OrbitStart.tsx`
+   `klickHauptwerkzeug`-Kommentar) — nur der Klick/Enter ändert nichts mehr.
+   Die Press-Skalierung (`.k-druck:active`, unten) wird für diesen Zustand
+   unterdrückt, damit ein Klick auch optisch nicht wie ein wirksamer Druck
+   aussieht. */
+.k-orbit-hauptknopf[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.65;
+}
+.k-orbit-hauptknopf[aria-disabled='true'].k-druck:active {
+  transform: none;
+}
+.orbit065-faecher-huelle.offen::before {
+  content: '';
+  position: absolute;
+  background: var(--k-accent);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.orbit065-faecher-huelle--oben.offen::before {
+  left: 50%;
+  bottom: calc(-1 * var(--k-s6));
+  width: 1px;
+  height: var(--k-s6);
+  transform: translateX(-50%);
+}
+.orbit065-faecher-huelle--unten.offen::before {
+  left: 50%;
+  top: calc(-1 * var(--k-s6));
+  width: 1px;
+  height: var(--k-s6);
+  transform: translateX(-50%);
+}
+.orbit065-faecher-huelle--rechts.offen::before {
+  top: 50%;
+  left: calc(-1 * var(--k-s6));
+  width: var(--k-s6);
+  height: 1px;
+  transform: translateY(-50%);
+}
+.orbit065-faecher-huelle--links.offen::before {
+  top: 50%;
+  right: calc(-1 * var(--k-s6));
+  width: var(--k-s6);
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+/* ── Aufgabe 3 (0.6.6) — `.k-druck` vs. bestehende Eigen-Transitions ────
+   `.k-orbit-hauptknopf:hover` (Zoom) und `.k-druck:active` (Press-
+   Skalierung) haben gleiche Spezifität (0,2,0) und treffen beim Drücken-
+   während-Hover gleichzeitig zu — ohne Auflösung würde je nach
+   Ladereihenfolge der Hover-Transform den Druck-Transform stumm
+   verschlucken («doppelte Eigen-Transitions»). Diese Regeln (zwei Klassen,
+   0,3,0) lösen es EXPLIZIT auf: der Druck gewinnt immer. K13: `.orbit065-
+   karte` hat seit der Blockliste keinen eigenen Hover-Transform mehr (nur
+   noch Farbwechsel, s. dort) — die Press-Skalierung bleibt trotzdem
+   erhalten, jetzt ohne den früheren Rotations-Reset. */
+.k-orbit-hauptknopf.k-druck:active {
+  transform: scale(var(--k-druck-skala));
+}
+.orbit065-karte.k-druck:active {
+  transform: scale(var(--k-druck-skala));
+}
+.k-kosmo-symbol.k-druck:active {
+  transform: scale(var(--k-druck-skala));
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-orbit-hauptknopf.k-druck:active,
+  .orbit065-karte.k-druck:active,
+  .k-kosmo-symbol.k-druck:active {
+    transform: none;
+  }
+}
+
+/* Familien-Beschrieb — fester Platz ÜBER dem Kartenfächer, --k-s3-Abstand
+   (kommt aus dem `gap` der Hülle oben) — eigenes Element, NICHT mehr die
+   erste Zeile im selben Kasten wie die Karten (R2-N1/N2-Fix). */
+.orbit065-beschrieb {
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  padding: var(--k-s2) var(--k-s3);
+  line-height: var(--k-lh-basis);
+  /* PA2: max. 1 Zeile — die schmalere Kachel-Reihe (150px Fächer-Breite,
+     s. `.orbit065-faecher-huelle`) liess den Beschrieb sonst mehrzeilig
+     werden; der dichteste Fächer (Kosmo, 8 Untertools) brauchte den Platz,
+     um bei 1280×720 (kleinster Pflicht-Viewport) nicht über den Viewport-
+     Rand hinauszuragen (live mit Playwright nachgemessen). */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  /* 21.09.2026 von 1 auf 2 Zeilen: der Owner hat die Beschreibungen selbst
+     geschrieben («Entwerfe und modelliere mit BIM.»), und bei einer Zeile kam
+     «Entwerfe und…» an — der Text war da und trotzdem nicht lesbar. Zwei
+     Zeilen tragen alle acht Owner-Texte. Preis: der Faecher wird je Eintrag
+     um eine Zeilenhoehe hoeher; beim dichtesten Faecher (Kosmo, 8 Eintraege,
+     der Grund fuer die alte Kappung) ist das zu pruefen. */
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Der Kartenfächer selbst — überschreibt NUR die Positionierungs-
+   Eigenschaften von `.k-orbit-faecher` (aura.css, Freeze); Öffnen/Schliessen
+   (Opazität/Klick-Vertrag) bleibt unverändert dort geregelt (dieselbe
+   `offen`-Klasse steuert beides weiter). Zwei Klassen (0,2,0) schlagen die
+   einzelne aura-Klasse (0,1,0) unabhängig von der Stylesheet-Reihenfolge.
+   K13 (Owner-Korrektur «gerade und nüchterne Blöcke», docs/V0812-START-
+   SPEZ.md E-S2): der Fächer ist jetzt EINE ruhige Blockliste statt lose
+   gestapelter, radial gestaffelter Karteikarten. Die 1px-Hairline zwischen
+   Blöcken ist ein ECHTER 1px-Grid-`gap`, dessen Hintergrund (`--k-line`)
+   durch die Lücke scheint — jeder Block selbst deckt seine Zelle voll mit
+   `--k-raised` ab (s. `.orbit065-karte` unten). Bewusst KEIN `gap: 0` mit
+   geteiltem `border-bottom`: Bestandsspec `orbit-start.spec.ts` («Fächer:
+   paarweise Bounding-Box-Überlappung … ist 0») verlangt echte, nicht nur
+   optische Trennung — bei `gap:0` lieferte `getBoundingClientRect()` unter
+   Sub-Pixel-Rundung vereinzelt eine hauchdünne (< 0.5px) Schein-Überlappung
+   benachbarter Zeilen (live reproduziert). Ein echter 1px-Gap schliesst das
+   strukturell aus, ohne die Hairline-Optik zu verlieren. `overflow: hidden`
+   lässt den geraden ersten/letzten Block sauber an der abgerundeten
+   Aussenkontur der Liste enden. */
+.orbit065-faecher-huelle .k-orbit-faecher {
+  position: static;
+  top: auto;
+  left: auto;
+  margin-top: 0;
+  transform: none;
+  width: 100%;
+  display: grid;
+  gap: 1px;
+  background: var(--k-line);
+  border: 1px solid var(--k-line-strong);
+  border-radius: var(--k-radius);
+  overflow: hidden;
+}
+
+/* K13-Blockliste: gerade, linksbündige Reihe (kein Rotate/Clip-Path mehr,
+   ERSETZT die frühere R2-N2-Karteikarten-Staffelung — s. Kopfkommentar
+   `UNTERTOOL_ICON` in `OrbitStart.tsx`). Jeder Block: volles KIcon-Logo
+   (Grösse 20) + Klartext-Name links ausgerichtet. Ruhige Fläche
+   (`--k-raised`) statt Neon/Glow — die 1px-Hairline zwischen Blöcken kommt
+   vom Grid-`gap` des Elternteils oben (dieser Block deckt nur seine eigene
+   Zelle ab). `height` (statt `min-height`) 44px + `overflow: hidden`
+   (Touch-Fläche, K7-Lehre): eine FESTE Höhe entkoppelt die Grid-Zeilen-
+   Geometrie bewusst von Text-Metriken — `--k-font-mono` (IBM Plex Mono)
+   lädt asynchron nach, und mit `min-height` reflowte die Zeile beim
+   Font-Swap (Fallback- vs. Web-Font-Zeilenhöhe) kurzzeitig ANDERS, bevor
+   sie sich wieder auf 44px einpendelte; live mit `orbit-start.spec.ts`
+   («Fächer: paarweise Bounding-Box-Überlappung … ist 0», dichtester
+   Kosmo-Fächer) als Sub-Pixel-Regression gefunden. Mit fester Höhe bleibt
+   die Zeilen-Geometrie unabhängig vom Font-Ladezustand exakt 44px. */
+.orbit065-karte {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s3);
+  position: relative;
+  width: 100%;
+  /* 21.09.2026: feste 44px gegen MINDESTENS 44px getauscht. Der Grund ist ein
+     Fehler, den erst das Bildschirmfoto zeigte: seit die Beschreibung zwei
+     Zeilen tragen darf, lief der Text aus der Karte heraus und legte sich
+     ueber den naechsten Eintrag — «modelliere mit BIM.» stand unter
+     «KosmoVis». Das bricht die Owner-UI-Regel «kein Text verlaesst je seine
+     Box». Die 44 bleiben als Mindestmass (Zielgroesse fuer den Finger), die
+     Karte waechst jetzt mit ihrem Inhalt. Preis: der Faecher wird hoeher —
+     genau das, was die alte Kappung vermeiden wollte; der Owner hat sich fuer
+     seine Texte entschieden. */
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: var(--k-s3) var(--k-s4);
+  border: none;
+  border-radius: 0;
+  background: var(--k-raised);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--k-motion-fast);
+}
+.orbit065-karte:hover,
+.orbit065-karte:focus-visible {
+  background: var(--k-surface);
+}
+.orbit065-karte:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+/* Logo-Slot: fixe 20px-Breite (KIcon-Grösse), `currentColor`-fähig — die
+   Tusche-Farbe (`--k-ink`/`--k-ink-soft`) kommt vom Text-Kontext, kein
+   eigener Akzent/Glow (Owner-Auftrag «kein Neon»). */
+.orbit065-karte-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--k-ink-soft);
+}
+.orbit065-karte:hover .orbit065-karte-icon,
+.orbit065-karte:focus-visible .orbit065-karte-icon {
+  color: var(--k-ink);
+}
+.orbit065-karte-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+/* D-1 (E-1) gab dem Titel Versal+Sperrung aus `.k-label.k-label-eng`
+   (aura.css) — AUFGEHOBEN am 21.09.2026: ein Werkzeugname ist ein Name, und
+   die Namensregel des Owners schreibt seine Schreibung vor. «KOSMODRAW» ist
+   nicht «KosmoDraw». Dieselbe Klasse zog ausserdem die technische Schrift
+   herein, die der Owner am selben Tag als «code schrift» beanstandet hat.
+   Gefunden auf einem Bildschirmfoto — im Quelltext stand der Name richtig. */
+.orbit065-karte-titel {
+  display: block;
+  font-family: var(--k-font-ui);
+  font-weight: var(--k-gewicht-betont);
+  font-size: var(--k-t-sm);
+  overflow-wrap: anywhere;
+}
+.orbit065-karte-kurz {
+  display: -webkit-box;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+  margin-top: var(--k-s1);
+  overflow-wrap: anywhere;
+  /* PA2: max. 1 Zeile (statt beliebig hoch) — derselbe Höhen-Grund wie
+     `.orbit065-beschrieb` oben (schmalere Kachel-Reihe, dichtester Fächer
+     Kosmo mit 8 Blöcken). */
+  -webkit-box-orient: vertical;
+  /* 21.09.2026 von 1 auf 2 Zeilen: der Owner hat die Beschreibungen selbst
+     geschrieben («Entwerfe und modelliere mit BIM.»), und bei einer Zeile kam
+     «Entwerfe und…» an — der Text war da und trotzdem nicht lesbar. Zwei
+     Zeilen tragen alle acht Owner-Texte. Preis: der Faecher wird je Eintrag
+     um eine Zeilenhoehe hoeher; beim dichtesten Faecher (Kosmo, 8 Eintraege,
+     der Grund fuer die alte Kappung) ist das zu pruefen. */
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* ── Einstellungen (KDialog-Umstellung, Mass 5) ─────────────────────────
+   `.k-dialog-koerper` (aura.css) bleibt die scrollende Hülle; hier nur das
+   interne Sektions-Raster + die einheitlichen Sektionstitel (--k-t-lg). */
+.orbit065-einstellungen-koerper {
+  display: grid;
+  gap: var(--k-s5);
+}
+.orbit065-einstellungen-sektion {
+  display: grid;
+  gap: var(--k-s3);
+}
+/* Nachzug Runde 33 (rote Probe `e2e/f-einst-anzeige.spec.ts` «Schrift gross im schmalen Fenster»): seit L45
+   (`3c3052054`, `.k-dialog` bricht mit `overflow-wrap: break-word` statt `anywhere`) zählt ein langes Wort ohne
+   Leerstelle («Heftrand/Faltmarken/Wasserzeichen/…» in einem alten Neuigkeiten-Eintrag) wieder voll zur
+   Mindestbreite. Ein Raster-Kind mit `min-width: auto` zog damit die Spalte auf 430 px, im 340-px-Fenster ragte
+   alles nach rechts. Mit `min-width: 0` darf die Spalte schrumpfen, und das Wort bricht erst dann, wenn es sonst
+   überliefe. */
+.orbit065-einstellungen-koerper > *,
+.orbit065-einstellungen-sektion > *,
+.es-neuigkeit > * {
+  min-width: 0;
+}
+.orbit065-einstellungen-sektionstitel {
+  font-size: var(--k-t-lg);
+  font-weight: var(--k-gewicht-stark);
+}
+
+/* ── Aufgabe 4 (0.6.6 MOTION-KONZEPT-066 §4) — Sheet-/Overlay-Motion ────
+   «Overlays (KMenu/KDialog/Sheet): öffnen mit --k-feder (Translation 4-8px
+   + Opacity), schliessen mit --k-motion-fast Opacity. Kein Backdrop-Blur.»
+   Ersetzt `.k-skalieren-ein` (Skalierung, aura.css) für die Overlays dieser
+   Datei/Domäne (CommandPalette, Kurzbefehle). */
+@keyframes orbit065-sheet-ein {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.orbit065-sheet-ein {
+  animation: orbit065-sheet-ein var(--k-feder) both;
+}
+/* Kinder-Staffelung (Konzept §4: «24ms Versatz, max. 8 Kinder») — Aufrufer
+   setzt `animationDelay: Math.min(index,8)*24ms` inline (JS-Wert, siehe
+   `CommandPalette.tsx`/`OrbitStart.tsx`). */
+.orbit065-sheet-kind {
+  animation: orbit065-sheet-ein var(--k-feder) both;
+}
+/* Stream D1 (0.6.7, ROADMAP-277 dokumentierte Lücke «hartes Unmount»):
+   spiegelbildliche Austritts-Phase — Feder+Translation beim Öffnen,
+   --k-motion-fast reine Opazität beim Schliessen (exakt der Vertrag, den der
+   Kommentar oben schon zitierte, aber 0.6.6 Stream A bewusst vertagt hatte).
+   Dasselbe Muster wie `.k-panel-austritt` (aura.css, KosmoPanel-Präzedenz):
+   der Aufrufer hält ein `schliessend`-State-Bit, setzt diese Klasse
+   VOR dem eigentlichen Unmount und ruft es erst nach `--k-motion-fast`
+   (120ms) auf. Keine Translation beim Austritt (nur Opazität) — Punkt 2 der
+   Motion-Haltung «Austritt schneller/ruhiger als Eintritt». */
+@keyframes orbit065-sheet-aus {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.orbit065-sheet-aus {
+  animation: orbit065-sheet-aus var(--k-motion-fast) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit065-sheet-ein,
+  .orbit065-sheet-kind,
+  .orbit065-sheet-aus {
+    animation: none;
+  }
+}
+
+/* ── Aufgabe 7 (0.6.6, C-Befund 6) — ehrliche Kopfleisten-Beschriftung ───
+   `Badge` (kosmo-ui) zeichnet vor jedem Text zwingend einen 6px-Statuspunkt
+   — richtig für Sync (live/aus/wartend), falsch für reine Aktions-Knöpfe
+   («?» Rundgang, «⚙» Einstellungen, «?» im Kurzbefehle-Kopf), die NIE einen
+   Statuswert trugen (der Punkt war konstant grau). Diese Klasse übernimmt
+   NUR die Typografie von `Badge`, ohne den Punkt — Ursache behoben statt
+   kaschiert (kein Statuspunkt ohne echten Status). */
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.orbit065-kopfleiste-beschriftung {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--k-t-micro);
+  font-weight: var(--k-gewicht-stark);
+  color: var(--k-ink-faint);
+}
+
+/* ── PhasenLeiste (v0.7.2 W2-C, Paket 03 — Spec §4 «Phasen & Ordnung») ───
+   Segmented-Pill der 5 SIA-112-Gruppen — seit E-K5 (`docs/V0812-SPEZ.md`)
+   in den Projekt-Einstellungen statt im Header, s. `PhasenLeiste.tsx`-
+   Kopfkommentar. Rund-Regel (Spec §0.1):
+   Aussenkontur UND jedes Segment sind Pills (`--k-radius-pill`). Aktives
+   Segment: Chip-Hintergrund `var(--k-raised)` + ein kleiner Signal-Punkt
+   VOR dem Label (theme-invariante Markenfarbe `--k-signal`, Spec §1). */
+.orbit065-phasen-leiste {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+}
+/* D-1 (E-1): Versal+Sperrung aus `.k-label.k-label-eng` (aura.css). */
+.orbit065-phasen-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  color: var(--k-ink-faint);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  font-weight: var(--k-gewicht-betont);
+  padding: 5px 10px;
+  border-radius: var(--k-radius-pill);
+  cursor: pointer;
+  transition: background var(--k-motion-fast), color var(--k-motion-fast);
+  white-space: nowrap;
+}
+.orbit065-phasen-segment:hover {
+  color: var(--k-ink);
+}
+.orbit065-phasen-segment--aktiv {
+  background: var(--k-raised);
+  color: var(--k-ink);
+}
+.orbit065-phasen-signal {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-signal, var(--k-accent));
+  flex: none;
+}
+@media (max-width: 1100px) {
+  /* K-BP-MITTEL (E-3). Enger Header (viele Kopfleisten-Knöpfe, s. App.tsx)
+     — nur kompaktere Masse, der Text selbst bleibt unverändert (kein
+     JS-Kürzen gebaut). */
+  .orbit065-phasen-segment {
+    font-size: var(--k-t-xs);
+    padding: 5px 8px;
+  }
+}
+
+/* ── Kritik-2-Auflage (11.07.2026, Header-Kompaktierung) ──────────────────
+   Unter ~1500px Viewport kollabiert die PhasenLeiste auf reine Ziffer-Pillen
+   «1»…«5» (volles Label bleibt als `title`, Spec §4/§12 wörtlich). NUR
+   visuell (`display:none`) — der Textknoten bleibt im DOM, `textContent`
+   (worauf `toContainText`/`toHaveText` bauen) ignoriert CSS-Sichtbarkeit,
+   der Bestands-Vertrag `phasen-leiste.spec.ts` (seit E-K5 in den
+   Projekt-Einstellungen geöffnet, Assertions selbst unverändert) bleibt
+   darum grün, auch beim Standard-E2E-Viewport (1400px,
+   `playwright.config.ts`), der unter dieser Schwelle liegt. */
+@media (max-width: 1500px) {
+  /* K-BP-WEIT (E-3) */
+  .orbit065-phasen-rest {
+    display: none;
+  }
+  .orbit065-phasen-segment {
+    padding: 5px 9px;
+  }
+}
+
+/* ── EntwurfsDock (v0.7.2 W2-C, Paket 03/05 — Spec §4 «Wirkung») ─────────
+   Layout 1:1 aus den vorherigen Inline-Styles übernommen (nur die
+   Style-QUELLE wandert in eine Klasse, damit die Glas-Optik unten per
+   Theme-Attribut-Selektor gezielt NUR im orbit-Theme überschreiben kann —
+   `EntwurfsDock.tsx` selbst importiert diese Datei NICHT eigens, das
+   Bundle lädt sie bereits global über `OrbitStart.tsx`/`App.tsx`, s.
+   Kopfkommentar dieser Datei).
+   v0.8.1 / P4 (Spez §1.1, Werkzeug-Umbau): `gap`/`padding` 4px→2px — der
+   hierher gezogene `tool-skizze`-Knopf macht die untere Rail-Reihe um einen
+   Knopf länger (287px statt 253px Gesamthöhe bei 8 statt 7 Knöpfen); der
+   Dock ist vertikal ZENTRIERT (`top:50%`), die Mehrhöhe wächst also je zur
+   Hälfte nach oben UND unten. Bei sehr niedrigen Fenstern (1400×520,
+   `e2e/dock-layout.spec.ts` «zuletztGeoeffnet») reichte die alte 15px-Luft
+   zur Statusleiste (`dw-statusleiste`, design.css, `bottom:12`) sonst nicht
+   mehr — HEAD-bewiesen (A/B-Isolationstest: 7 Knöpfe/253px blieb
+   überlappungsfrei, 8 Knöpfe/287px überlappte um 1.5px). Die engere
+   Abstands-Grammatik (2px statt 4px, s. auch die Hairline-Wrapper-Padding
+   unten) gewinnt ca. 24px zurück — Sichtbeweis bestätigt weiterhin klar
+   getrennte Kreis-Knöpfe, kein optischer Verlust. */
+.orbit065-dock {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  box-shadow: var(--k-shadow-raised);
+}
+/* Glas-Optik NUR im orbit-Theme (Spec §4: rgba(20,23,31,.55) + blur 22 +
+   1px-Highlight) — via Theme-Attribut, `aura.css`/Stream-A-Tokens bleiben
+   unangetastet (eigene Klasse, kein Freeze-Bruch). */
+[data-theme='orbit'] .orbit065-dock {
+  background: rgba(20, 23, 31, 0.55);
+  backdrop-filter: var(--k-glas-dicht);
+  -webkit-backdrop-filter: var(--k-glas-dicht);
+  border: 1px solid rgba(244, 246, 250, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 246, 250, 0.08),
+    var(--k-shadow-raised);
+}
+
+/* Kreisrunde Knöpfe (Spec §4 + Grundregel §0.1 «Rund statt Block») — Grösse
+   selbst bleibt die bisherige 32×32 (Inline-Style in `EntwurfsDock.tsx`),
+   hier nur die Form + der Hover-Sog-Übergang. */
+.orbit065-dock-knopf {
+  transition: transform var(--k-dauer-oeffnen) var(--k-ease-standard);
+}
+/* Hover-Sog (Spec §4: scale 1.22/translateY −8, 180ms, NUR Nachbarn) — der
+   gehoverte Knopf selbst bleibt unverändert, nur seine direkten
+   Geschwister im Dock-Stapel wachsen ihm entgegen. Bekannte Grenze: die
+   Trenn-Hairline zwischen den zwei Knopf-Gruppen unterbricht die
+   Geschwisterkette (kein Sog ÜBER die Hairline hinweg) — akzeptiert, s.
+   Baubericht. */
+.orbit065-dock-knopf:has(+ .orbit065-dock-knopf:hover),
+.orbit065-dock-knopf:hover + .orbit065-dock-knopf {
+  transform: scale(1.22) translateY(-8px);
+  z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit065-dock-knopf {
+    transition: none;
+  }
+  .orbit065-dock-knopf:has(+ .orbit065-dock-knopf:hover),
+  .orbit065-dock-knopf:hover + .orbit065-dock-knopf {
+    transform: none;
+  }
+}
+
+/* Nutzungs-Pop (Spec §4: `kPop` 450ms) — eigener Name `k-dock-pop`
+   (kosmo-feedback.css/dessen Keyframes gehören Stream D, NICHT anfassen). */
+@keyframes k-dock-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22);
+  }
+  70% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.orbit065-dock-pop {
+  animation: k-dock-pop 450ms var(--k-ease-bounce);
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit065-dock-pop {
+    animation: none;
+  }
+}
+
+/* ── Kurzbefehle: Technik-Stimme (Mass 7) — Mono-Kürzel rechtsbündig ───── */
+.orbit065-kurzbefehl-zeile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--k-s4);
+  align-items: baseline;
+}
+.orbit065-kurzbefehl-taste {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding: var(--k-s1) var(--k-s3);
+  border: 1px solid var(--k-line-strong);
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+  white-space: nowrap;
+}
+
+/* ── «Weiter arbeiten» (21.09.2026, Owner: «tab fuer projekt mit weiter
+   arbeiten, denke das soll zentral sein») ────────────────────────────────
+   Die Karte steht zuoberst in der linken Spalte, ueber der Projektliste: was
+   offen ist, kommt vor dem, was man oeffnen koennte. Rundung und Abstaende
+   ausschliesslich ueber die Leitern — diese Datei war beim Aufraeumen vom
+   21.09. eine der sauberen, das soll sie bleiben. */
+.wa-karte {
+  display: flex;
+  flex-direction: column;
+  /* R1-Verdichtung (23.09.2026): war s3/s4 — zusammen mit dem kompakteren
+     `ProjektBild`-Rahmen (`start/ProjektBild.tsx`) der groesste Einzelposten
+     im Hoehen-Ueberhang aus Bot-Fund U1. */
+  gap: var(--k-s1);
+  padding: var(--k-s2);
+  background: var(--k-raised);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+}
+.wa-zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s4);
+}
+.wa-text {
+  flex: 1;
+  min-width: 0;
+}
+.wa-name {
+  font-size: var(--k-t-md);
+  font-weight: var(--k-gewicht-stark);
+  color: var(--k-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-zuletzt {
+  margin-top: var(--k-s1);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+.wa-stand {
+  margin-top: var(--k-s1);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-faint);
+}
+
+/* ── K-BP-DREISPALTIG = 1200px (21.09.2026) ───────────────────────────────
+   DIE ZAHL IST EINE SPROSSE DER KANON-SKALA, nicht ein Wert nach Gefuehl:
+   `packages/kosmo-ui/src/tokens.ts` `breakpoint.dreispaltig` — dort steht
+   die Rechnung dahinter und warum keine der drei aelteren Sprossen reicht.
+   Der Breakpoint-Waechter (`packages/kosmo-ui/test/breakpoint-waechter.
+   test.ts`) laesst nur Breiten aus jener Liste zu; er hat diesen Umbau beim
+   ersten Anlauf zu Recht rot gemeldet, als hier noch 1190 stand.
+
+   SIE STEHT AN ZWEI STELLEN — hier und in `kosmo-panel.css`
+   (`.kp-panel--angedockt`). Die Wache `test/dock-breakpunkt-einig.test.ts`
+   liest beide Dateien und laesst sie nicht auseinanderlaufen; das ist genau
+   die Fehlerklasse, die dieses Haus dreimal erlebt hat (eine Regel wird
+   gesetzt, die Stellen, die sie zitieren, bleiben stehen).
+
+   WAS DARUNTER PASSIERT: die Zentrale ist wieder zweispaltig, und Kosmo ist
+   wieder die schwebende Blase, die er in jeder Station ist. Nicht
+   verschwunden, nicht zweimal gemountet — dieselbe Komponente, andere
+   Positionierung.
+
+   UND DIE REGEL IST HERUM GEBAUT, nicht doppelt: `display: contents` ist der
+   GRUNDZUSTAND der Huelle, die Spalte ist die Ausnahme oberhalb der Sprosse.
+   Andersherum braeuchte es eine zweite Media-Query mit `max-width: 1199px` —
+   eine Breite, die auf keiner Skala steht, nur damit sich die beiden nicht
+   bei exakt 1200px ueberschneiden. Eine Regel, die ihren Gegenpart nicht
+   braucht, kann auch nicht mit ihm auseinanderlaufen. */
+/* DER KLEINE ORB RUECKT AUF DER ZENTRALE NACH LINKS (21.09.2026).
+
+   Seit Kosmo dort dauerhaft als Spalte steht (Owner-Entscheid «immer da»),
+   lag das freistehende Symbol unten rechts GENAU auf dem Senden-Knopf dieser
+   Spalte — am Bildschirm nachgesehen, nicht vermutet: zwei Orbs
+   uebereinander, der eine ueber dem Knopf des anderen.
+
+   Es verschwindet nicht, weil es mehr ist als ein Panel-Oeffner: sein
+   Rechtsklick fuehrt in das Stationen-Menue, und dieser Weg ist der Einstieg
+   von rund siebzig Proben. Es rueckt darum nur an die andere Seite, wo unter
+   der Projektspalte Platz ist.
+
+   NUR AUF DER ZENTRALE: in jeder Station bleibt es unten rechts, denn dort
+   gibt es keine angedockte Spalte, die im Weg waere. Der Waehler haengt
+   deshalb an der Zentralen-Flaeche und nicht am Symbol selbst. */
+.app-zentrale-flaeche .ks-wrapper--frei,
+.orbit065-home-grid ~ .ks-wrapper--frei,
+body:has(.orbit065-home-grid) .ks-wrapper--frei {
+  /* NACH UNTEN IN DIE MITTE, nicht nach links. Der erste Anlauf schob das
+     Symbol an den linken Rand — dort lag es auf «Katalog sichern» und
+     «Katalog laden» der Projektspalte, am Bildschirm nachgesehen. Die Mitte
+     ist die einzige Stelle, die auf der Zentrale wirklich frei ist: die
+     Werkzeugreihe sitzt oben in dieser Spalte, darunter steht nichts.
+
+     `left: 50%` meint die Bildschirmmitte, und die faellt in die mittlere
+     Spalte (gemessen bei 1400px: Spalte von 455 bis 887, Mitte 700). */
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.orbit065-home-kosmo {
+  /* Unterhalb der Sprosse loest sich die Huelle auf: ohne das waere sie ein
+     Rasterkind ohne Spalte, das Raster legte ihr eine neue Zeile an, und die
+     Zentrale wuechse um die Hoehe einer leeren Huelle. Das Panel darin liegt
+     dann ohnehin `position: fixed` und braucht kein Kaestchen. */
+  display: contents;
+}
+@media (min-width: 1200px) {
+  .orbit065-home-grid:has(.orbit065-home-kosmo) {
+    /* Die Mitte hat ab jetzt einen BODEN statt `minmax(0, 1fr)`. Der Grund
+       ist gemessen: mit 0 als Untergrenze nehmen sich die beiden aeusseren
+       Spalten zuerst ihr Maximum, und die Mitte bekommt den Rest — bei
+       1280x720 waren das 428px fuer eine Reihe, die 432px braucht. Ein
+       `1fr` ohne Boden ist keine Zusage, sondern ein Restbetrag. */
+    grid-template-columns: minmax(300px, 340px) minmax(456px, 1fr) minmax(320px, 400px);
+  }
+  .orbit065-home-kosmo {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    /* KEINE HOEHENRESERVE MEHR (21.09.2026, am selben Tag entstanden und
+       wieder entfallen). Hier stand eine Reserve von der Hoehe der
+       schwebenden Knopfreihe oben rechts — die Spalte lief sonst darunter.
+       Seit die Knopfreihe ein Balken im Fluss ist (`app.css`,
+       `.app-heim-werkzeuge`), schwebt nichts mehr ueber der Spalte, und eine
+       Reserve gegen ein Hindernis, das es nicht mehr gibt, ist nur noch ein
+       Loch oben. */
+  }
+}
+/* Owner-Entscheid 14.10.2026 («auf breiten Bildschirmen mitwachsen», `app.css` `--app-zentrale-breite`): ab 1500 px
+   bekommen auch die linke Spalte und Kosmo mehr Breite, die Mitte nimmt den Rest (1500 aus der Kanon-Skala
+   700/1100/1200/1500, `breakpoint-waechter`). */
+@media (min-width: 1500px) {
+  .orbit065-home-grid:has(.orbit065-home-kosmo) {
+    grid-template-columns: minmax(340px, 440px) minmax(456px, 1fr) minmax(400px, 560px);
+  }
+}
