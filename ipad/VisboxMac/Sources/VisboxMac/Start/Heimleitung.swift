@@ -173,21 +173,28 @@ final class Heimleitung: ObservableObject {
     /// samt Adresse in der Zeile «iPad». Die Zahl tauscht das iPad über Tailscale selbst gegen
     /// die Anmeldung; der Mac reicht dabei nichts weiter. Was der Kern daraus macht
     /// (`Koppelzahl.zeile`), steht dort mit Proben.
+    ///
+    /// **Seit dem 20.10.2026 (Entscheid 99)** gibt sie die Zahl auch zurück — für das
+    /// Koppelfenster (`IpadKoppelfenster`), das sie als QR-Code zeigt und dem iPad in der Nähe
+    /// schickt. `nil`, wenn keine kam; der Grund steht dann in der Zeile.
     @MainActor
-    func koppleIPad() async {
-        guard let basis = adresse else { return }
+    @discardableResult
+    func koppleIPad() async -> Koppelzahl.Angebot? {
+        guard let basis = adresse else { return nil }
         let anfrage: Anfrage
         do {
             anfrage = try Anfragen.kopplung(anmeldung: anmeldung)
         } catch {
             setzeIpad(.fehlt(grund: "Keine Zahl fürs iPad: die Anfrage liess sich nicht bauen."))
-            return
+            return nil
         }
         switch await hole(anfrage, basis: basis) {
         case .antwort(let status, let daten, _):
             setzeIpad(Koppelzahl.zeile(status: status, daten: daten, adresse: basis))
+            return try? Koppelzahl.angebot(status: status, daten: daten)
         case .keine(let fehler):
             setzeIpad(.fehlt(grund: "Keine Zahl fürs iPad: \(fehler.satz)"))
+            return nil
         }
     }
 

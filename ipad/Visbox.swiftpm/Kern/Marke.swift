@@ -37,4 +37,16 @@ public enum Marke {
     /// ihn findet, ist am Gerät unbestätigt. Er steht hier, weil iOS verlangt, dass eine
     /// App jeden Dienst, den sie sucht, vorher im Manifest nennt.
     public static let dienst = "_visbox._tcp"
+
+    /// Der Dienst der **Nähe-Verbindung** zum Koppeln (Entscheid 99, 20.10.2026): der
+    /// `serviceType` von MultipeerConnectivity, unter dem sich der Mac im Koppelfenster
+    /// anbietet. Höchstens 15 Zeichen, nur Kleinbuchstaben, Ziffern und Bindestrich —
+    /// `Naehekopplung.istGueltigeDienstart` prüft es, und beim Umbenennen muss er wieder
+    /// hineinpassen. iOS verlangt ihn im Manifest zweimal, als `_<dienst>._tcp` und
+    /// `_<dienst>._udp`; die Mac-plist ebenso (bewacht in `tests/test_ipad_koppeln_naehe.py`).
+    public static let naehedienst = "visbox-kopp"
+
+    /// Das Schema des Koppelscheins im QR-Code (`<schema>:1?adresse=…&zahl=…&bis=…`,
+    /// `Koppelschein`). Er lebt zwei Minuten und muss darum keine Umbenennung überleben.
+    public static let koppelschema = "visbox-koppeln"
 }

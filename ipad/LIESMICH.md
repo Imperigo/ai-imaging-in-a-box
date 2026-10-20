@@ -122,6 +122,8 @@ ipad/
 │   │   ├── Heimkopplung.swift   der Mac koppelt sich selbst (Entscheid 83): Tailscale-Geräte,
 │   │   │                        Bonjour-Funde, Zahl anfordern, Antwort deuten, Anheften
 │   │   ├── Vermittlung.swift    der Mac als Vermittler: Tür, Weiterreichen, Zeile «iPad»
+│   │   ├── Naehekopplung.swift  iPad koppeln ohne Abtippen (Entscheid 99): Koppelschein für
+│   │   │                        QR-Code und Nähe, Koppelfenster (2 min), beide bestätigen
 │   │   └── Vermittlerkopplung.swift  die Kopplung iPad ↔ Mac und der Zugang des Mac
 │   │                            (Protokoll §8b; die Mac-Seite liegt in
 │   │                            `VisboxMac/Sources/VisboxMac/Vermittlung/`)
@@ -134,7 +136,8 @@ ipad/
 │   │                            Laufanzeige, Teilen, Zeichenrahmen, Mappentafel,
 │   │                            Unterlage, «Darauf skizzieren»
 │   └── Verbindung/              Verbindungszeile, Koppelbildschirm, Sucher, Sender,
-│                                Schlüsselbund, Parkfachliste, Mappenabgleich, Übergabe
+│                                Schlüsselbund, Parkfachliste, Mappenabgleich, Übergabe,
+│                                Naehesucher (Mac in der Nähe), QRLeser (Kamera)
 ├── VisboxKern/                  der Kern als eigenes Swift-Paket, zum Prüfen
 │   ├── Package.swift
 │   ├── Sources/VisboxKern  →  ../../Visbox.swiftpm/Kern   (ein Verweis, keine Kopie)

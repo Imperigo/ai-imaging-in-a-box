@@ -1,0 +1,245 @@
+import Foundation
+import XCTest
+import VisboxKern
+
+/// iPad koppeln ohne Abtippen (Entscheide 99/99a/99b): der Koppelschein für QR-Code und
+/// Nähe-Verbindung, das Fenster von zwei Minuten, die Absprache beider Seiten.
+final class KopplungNaeheTests: XCTestCase {
+
+    private let heim = URL(string: "https://rechner.netz.ts.net:8443")!
+    private let jetzt: TimeInterval = 1_800_000_000
+
+    private func schein(bis: Int? = nil, zahl: String = "482913") throws -> Koppelschein {
+        try XCTUnwrap(Koppelschein(adresse: heim, zahl: zahl, bis: bis ?? Int(jetzt) + 120))
+    }
+
+    private func gelesen(_ text: String, jetzt t: TimeInterval? = nil) -> Koppelschein? {
+        if case .gut(let s) = Koppelschein.lies(text, jetzt: t ?? jetzt) { return s }
+        return nil
+    }
+
+    private func satz(_ text: String, jetzt t: TimeInterval? = nil) -> String? {
+        if case .schlecht(let s) = Koppelschein.lies(text, jetzt: t ?? jetzt) { return s }
+        return nil
+    }
+
+    // ------------------------------------------------------------ die Form
+
+    func testDerScheinHatDieVerabredeteForm() throws {
+        let s = try schein()
+        XCTAssertEqual(s.text, "\(Marke.koppelschema):1?adresse=https%3A%2F%2Frechner.netz.ts.net"
+                       + "%3A8443&zahl=482913&bis=\(Int(jetzt) + 120)")
+    }
+
+    func testHinUndZurueck() throws {
+        let s = try schein()
+        XCTAssertEqual(gelesen(s.text), s)
+        XCTAssertEqual(Koppelschein.lies(s.daten, jetzt: jetzt), .gut(s))
+    }
+
+    func testAuchDieAdresseImHeimnetzGehtHinUndZurueck() throws {
+        let lan = URL(string: "http://192.0.2.10:8731")!
+        let s = try XCTUnwrap(Koppelschein(adresse: lan, zahl: "000123", bis: Int(jetzt) + 60))
+        XCTAssertEqual(gelesen(s.text)?.adresse, lan)
+        XCTAssertEqual(gelesen(s.text)?.zahl.ziffern, "000123", "führende Nullen bleiben")
+    }
+
+    func testImScheinStehenNurAdresseZahlUndFrist() throws {
+        // ENTSCHEID 99: nie das Kennwort, nie der Benutzer — weder im QR-Code noch über die
+        // Nähe-Verbindung (beide tragen denselben Schein).
+        XCTAssertEqual(Koppelschein.felder, ["adresse", "zahl", "bis"])
+        let text = try schein().text.lowercased()
+        for verboten in ["kennwort", "passwort", "password", "benutzer", "user", "authorization"] {
+            XCTAssertFalse(text.contains(verboten), verboten)
+        }
+        let frage = try XCTUnwrap(text.split(separator: "?").last)
+        let namen = frage.split(separator: "&").map { String($0.split(separator: "=")[0]) }
+        XCTAssertEqual(namen, Koppelschein.felder)
+    }
+
+    func testDieBeschreibungNenntDieZahlNicht() throws {
+        XCTAssertFalse(String(describing: try schein()).contains("482913"))
+    }
+
+    // ------------------------------------------------------------ abgelehnt
+
+    func testAbgelaufenWirdAbgelehnt() throws {
+        let s = try schein(bis: Int(jetzt) + 10)
+        XCTAssertNotNil(gelesen(s.text, jetzt: jetzt + 9))
+        XCTAssertEqual(satz(s.text, jetzt: jetzt + 10), Koppelschein.satzAbgelaufen)
+        XCTAssertEqual(satz(s.text, jetzt: jetzt + 3600), Koppelschein.satzAbgelaufen)
+    }
+
+    func testLaengerAlsZweiMinutenStelltDerMacKeinenAus() throws {
+        let grenze = Int(jetzt + Naehekopplung.fenster + Naehekopplung.uhrenspiel)
+        XCTAssertNotNil(gelesen(try schein(bis: grenze).text))
+        XCTAssertEqual(satz(try schein(bis: grenze + 1).text), Koppelschein.satzZuLange)
+        XCTAssertEqual(satz(try schein(bis: Int(jetzt) + 86_400 * 365).text),
+                       Koppelschein.satzZuLange)
+    }
+
+    func testFalschesSchemaUndFalscheFassung() throws {
+        let gut = try schein().text
+        let ohneSchema = String(gut.drop(while: { $0 != ":" }).dropFirst())
+        XCTAssertEqual(satz("https://beispiel.org/?" + ohneSchema), Koppelschein.satzFremd)
+        XCTAssertEqual(satz("anderes:" + ohneSchema), Koppelschein.satzFremd)
+        XCTAssertEqual(satz(gut.replacingOccurrences(of: ":1?", with: ":2?")),
+                       Koppelschein.satzFassung)
+        XCTAssertEqual(satz("\(Marke.koppelschema):1"), Koppelschein.satzFremd)
+        XCTAssertEqual(satz(""), Koppelschein.satzFremd)
+    }
+
+    func testFalscheZahl() throws {
+        let gut = try schein().text
+        for falsch in ["48291", "4829130", "48a913", "٤٨٢٩١٣", "+48291", "", "48 913"] {
+            let kodiert = falsch.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
+            XCTAssertEqual(satz(gut.replacingOccurrences(of: "zahl=482913", with: "zahl=\(kodiert)")),
+                           Koppelschein.satzZahl, falsch)
+        }
+        XCTAssertNil(Koppelschein(adresse: heim, zahl: "12345", bis: Int(jetzt) + 60))
+        XCTAssertNil(Koppelschein(adresse: heim, zahl: " 123456", bis: Int(jetzt) + 60))
+    }
+
+    func testFremdeDoppelteUndFehlendeFelder() throws {
+        let gut = try schein().text
+        XCTAssertEqual(satz(gut + "&kennwort=geheim"), Koppelschein.satzFremd,
+                       "ein Schein mit Kennwort stammt nicht vom Mac")
+        XCTAssertEqual(satz(gut + "&zahl=111111"), Koppelschein.satzFremd)
+        XCTAssertEqual(satz(gut.replacingOccurrences(of: "&zahl=482913", with: "")),
+                       Koppelschein.satzFremd)
+        XCTAssertEqual(satz(gut + "&"), Koppelschein.satzFremd)
+        XCTAssertEqual(satz(gut.replacingOccurrences(of: "bis=", with: "bis=-")),
+                       Koppelschein.satzFremd)
+    }
+
+    func testEineSchlechteAdresseSagtWarum() throws {
+        let gut = try schein().text
+        let mitKennwort = "https%3A%2F%2Fich%3Ageheim%40rechner.netz.ts.net%3A8443"
+        let text = gut.replacingOccurrences(
+            of: "https%3A%2F%2Frechner.netz.ts.net%3A8443", with: mitKennwort)
+        let grund = try XCTUnwrap(satz(text))
+        XCTAssertTrue(grund.hasPrefix("Die Adresse im Code geht nicht:"), grund)
+        XCTAssertNil(Koppelschein(adresse: URL(string: "ftp://192.0.2.10")!, zahl: "123456",
+                                  bis: Int(jetzt) + 60))
+    }
+
+    func testZuLangWirdNichtErstGelesen() throws {
+        let lang = try schein().text + String(repeating: "x", count: Koppelschein.hoechstensBytes)
+        XCTAssertEqual(satz(lang), Koppelschein.satzZuLang)
+        XCTAssertEqual(Koppelschein.lies(Data(lang.utf8), jetzt: jetzt),
+                       .schlecht(Koppelschein.satzZuLang))
+        XCTAssertEqual(Koppelschein.lies(Data([0xff, 0xfe]), jetzt: jetzt),
+                       .schlecht(Koppelschein.satzFremd))
+    }
+
+    // ------------------------------------------------------------ das Fenster
+
+    func testDasFensterIstZweiMinutenOffen() {
+        XCTAssertEqual(Naehekopplung.fenster, 120, "Entscheid 99a")
+        let f = Koppelfenster(jetzt: jetzt, zahlGiltNoch: 600)
+        XCTAssertTrue(f.offen(jetzt: jetzt))
+        XCTAssertTrue(f.offen(jetzt: jetzt + 119.9))
+        XCTAssertFalse(f.offen(jetzt: jetzt + 120))
+        XCTAssertEqual(f.rest(jetzt: jetzt), 120)
+        XCTAssertEqual(f.rest(jetzt: jetzt + 0.5), 120, "aufgerundet")
+        XCTAssertEqual(f.rest(jetzt: jetzt + 500), 0)
+    }
+
+    func testDasFensterGiltNieLaengerAlsDieZahl() {
+        let f = Koppelfenster(jetzt: jetzt, zahlGiltNoch: 45)
+        XCTAssertFalse(f.offen(jetzt: jetzt + 45))
+        XCTAssertEqual(Koppelfenster(jetzt: jetzt, zahlGiltNoch: nil).schluss, jetzt + 120)
+        XCTAssertFalse(Koppelfenster(jetzt: jetzt, zahlGiltNoch: -5).offen(jetzt: jetzt))
+    }
+
+    func testDerScheinDesFenstersGiltBisZuSeinemSchluss() throws {
+        let f = Koppelfenster(jetzt: jetzt + 0.7, zahlGiltNoch: 600)
+        let s = try XCTUnwrap(f.schein(adresse: heim, zahl: try XCTUnwrap(Kopplungszahl("482913"))))
+        XCTAssertEqual(s.bis, Int(jetzt) + 120)
+        XCTAssertNotNil(gelesen(s.text, jetzt: jetzt + 1))
+        XCTAssertEqual(satz(s.text, jetzt: jetzt + 121), Koppelschein.satzAbgelaufen)
+    }
+
+    func testDieUhrZeigtMinutenUndSekunden() {
+        XCTAssertEqual(Koppelfenster.uhrtext(120), "2:00")
+        XCTAssertEqual(Koppelfenster.uhrtext(119), "1:59")
+        XCTAssertEqual(Koppelfenster.uhrtext(5), "0:05")
+        XCTAssertEqual(Koppelfenster.uhrtext(-3), "0:00")
+    }
+
+    func testDieZeileNenntHoechstensDasFenster() throws {
+        let daten = Data(#"{"zahl": "123456", "gilt_noch_s": 600}"#.utf8)
+        let a = try XCTUnwrap(try Koppelzahl.angebot(status: 200, daten: daten))
+        XCTAssertEqual(a.zahl.ziffern, "123456")
+        XCTAssertEqual(a.giltNoch, 600)
+        XCTAssertNil(try Koppelzahl.angebot(status: 200, daten: Data(#"{"zahl": "12a456"}"#.utf8)))
+        XCTAssertTrue(Koppelzahl.zeile(status: 200, daten: daten, adresse: heim).satz
+            .contains("gilt 2 min"))
+    }
+
+    // ------------------------------------------------------------ der Dienst
+
+    func testDerDienstDerNaeheIstGueltig() {
+        XCTAssertTrue(Naehekopplung.istGueltigeDienstart(Naehekopplung.dienstart))
+        XCTAssertEqual(Naehekopplung.dienstart, Marke.naehedienst)
+        XCTAssertEqual(Naehekopplung.bonjourDienste,
+                       ["_\(Marke.naehedienst)._tcp", "_\(Marke.naehedienst)._udp"])
+        XCTAssertNotEqual(Naehekopplung.bonjourDienste[0], Marke.dienst,
+                          "ein eigener Dienst, nicht der der HomeStation")
+    }
+
+    func testDieRegelnDerDienstart() {
+        for gut in ["a", "abc-def", "x1-y2", "abcdefghijklmno"] {
+            XCTAssertTrue(Naehekopplung.istGueltigeDienstart(gut), gut)
+        }
+        for schlecht in ["", "abcdefghijklmnop", "Gross", "mit_strich", "-vorn", "hinten-",
+                         "dop--pelt", "123", "ä-umlaut", "leer zeichen"] {
+            XCTAssertFalse(Naehekopplung.istGueltigeDienstart(schlecht), schlecht)
+        }
+    }
+
+    func testDerAnzeigenameHatHoechstens63Bytes() {
+        XCTAssertEqual(Naehekopplung.anzeigename("  Arbeitsrechner ", ersatz: "Mac"), "Arbeitsrechner")
+        XCTAssertEqual(Naehekopplung.anzeigename("", ersatz: "Mac"), "Mac")
+        let lang = String(repeating: "ä", count: 40) // 80 Bytes
+        let kurz = Naehekopplung.anzeigename(lang, ersatz: "Mac")
+        XCTAssertLessThanOrEqual(kurz.utf8.count, 63)
+        XCTAssertEqual(kurz, String(repeating: "ä", count: 31), "kein Zeichen zerschnitten")
+    }
+
+    // ------------------------------------------------------------ beide bestätigen
+
+    func testOhneBeideBestaetigungenGehtNichtsHinaus() {
+        var a = Naeheabsprache()
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true))
+        // «Koppeln» am Mac ohne angenommene Einladung zählt nicht.
+        a.macSagtKoppeln()
+        a.sitzungSteht()
+        XCTAssertFalse(a.macKoppelt)
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true))
+
+        XCTAssertTrue(a.einladung(vermerk: Naehekopplung.einladungsvermerk))
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true),
+                       "das iPad hat angenommen, der Mac noch nicht")
+        a.sitzungSteht()
+        XCTAssertFalse(a.verbunden, "ohne «Koppeln» am Mac keine Sitzung")
+        a.macSagtKoppeln()
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true))
+        a.sitzungSteht()
+        XCTAssertTrue(a.darfSenden(verschluesselt: true, fensterOffen: true))
+        XCTAssertFalse(a.darfSenden(verschluesselt: false, fensterOffen: true),
+                       "nie unverschlüsselt")
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: false),
+                       "nie nach den zwei Minuten")
+        a.hatGesendet()
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true), "nur einmal")
+    }
+
+    func testEineEinladungOhneVermerkWirdNichtGefragt() {
+        var a = Naeheabsprache()
+        XCTAssertFalse(a.einladung(vermerk: nil))
+        XCTAssertFalse(a.einladung(vermerk: Data("annehmen/2".utf8)))
+        a.macSagtKoppeln()
+        XCTAssertFalse(a.macKoppelt)
+    }
+}

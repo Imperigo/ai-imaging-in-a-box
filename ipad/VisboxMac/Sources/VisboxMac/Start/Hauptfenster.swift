@@ -35,6 +35,8 @@ struct Hauptfenster: View {
     @State private var arbeitet = false
     @State private var einrichtenOffen = false
     @State private var aktualisierenOffen = false
+    /// Das Koppelfenster «iPad koppeln» (Entscheid 99) — zwei Minuten, dann zu.
+    @State private var ipadKoppelnOffen = false
     // ENTSCHEID 89: vom versteckten Ort gestartet → Umzug nach «Programme» anbieten.
     @State private var umzugOffen = false
     @State private var umzugFehler: String?
@@ -71,6 +73,12 @@ struct Hauptfenster: View {
             }
         }
         .background {
+            // DAS KOPPELFENSTER «iPad koppeln» (Entscheid 99): ein eigener Anker, wie oben.
+            Color.clear.sheet(isPresented: $ipadKoppelnOffen) {
+                IpadKoppelfenster(leitung: leitung, schliessen: { ipadKoppelnOffen = false })
+            }
+        }
+        .background {
             // NACH DEM NEUSTART AUS DEM AKTUALISIEREN (14.10.2026): «Visbox 0.x.y ist
             // installiert» — oder dass sie nicht ankam. Ein eigener Anker, wie oben.
             Neustartmeldung(waechter: aktualisierung)
@@ -98,9 +106,11 @@ struct Hauptfenster: View {
             // zehn Minuten gültig) und zeigt sie in der Zeile «iPad». Die Vermittlung über den
             // Mac (§8b) steht darunter, ausgeschaltet, bis man sie einschaltet — sie ist im
             // fremden WLAN unverschlüsselt.
+            // SEIT ENTSCHEID 99 (20.10.2026) oeffnet «iPad koppeln» das Koppelfenster: Zahl,
+            // QR-Code und der Mac in der Naehe, zwei Minuten lang. Es holt die Zahl selbst.
             if leitung.adresse != nil {
                 Menu("iPad") {
-                    Button("iPad koppeln") { Task { await leitung.koppleIPad() } }
+                    Button("iPad koppeln") { ipadKoppelnOffen = true }
                     if let dienst = vermittlung.dienst {
                         Divider()
                         Toggle("iPad über diesen Mac anbieten (unverschlüsselt)",

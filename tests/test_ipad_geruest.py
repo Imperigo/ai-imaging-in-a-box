@@ -313,7 +313,11 @@ def test_das_app_manifest_wiederholt_die_marke_wortgleich():
 
     dienste = re.findall(r'bonjourServiceTypes:\s*\[([^\]]*)\]', manifest)
     assert len(dienste) == 1, dienste
-    assert re.findall(r'"([^"]+)"', dienste[0]) == [marke["dienst"]], dienste[0]
+    # SEIT ENTSCHEID 99 (20.10.2026) dazu die Naehe-Verbindung zum Koppeln, tcp und udp —
+    # aus `Marke.naehedienst`, nach dem Dienst der HomeStation.
+    naehe = marke["naehedienst"]
+    assert re.findall(r'"([^"]+)"', dienste[0]) == [
+        marke["dienst"], f"_{naehe}._tcp", f"_{naehe}._udp"], dienste[0]
 
     produkt = re.findall(r'\.iOSApplication\(\s*name:\s*"([^"]+)"', manifest)
     assert produkt == [marke["name"]], produkt
@@ -680,7 +684,9 @@ def test_die_mac_plist_wiederholt_die_marke():
     assert re.fullmatch(re.escape(marke["kennung"]) + r"\.[a-z0-9-]+",
                         plist["CFBundleIdentifier"]), (
         f"{plist['CFBundleIdentifier']!r} ist nicht {marke['kennung']!r} mit einer Endung")
-    assert plist["NSBonjourServices"] == [marke["dienst"]], plist["NSBonjourServices"]
+    naehe = marke["naehedienst"]
+    assert plist["NSBonjourServices"] == [marke["dienst"], f"_{naehe}._tcp", f"_{naehe}._udp"], (
+        plist["NSBonjourServices"])
     satz = plist["NSLocalNetworkUsageDescription"]
     assert "iPad" in satz and "WLAN" in satz and "Heim-PC" in satz, satz
     assert plist["CFBundlePackageType"] == "APPL"
@@ -716,7 +722,8 @@ def test_die_mac_app_importiert_nur_apples_plattform_und_den_kern():
     """Regel 1 an der Stelle, an der eine Abhängigkeit hereinkäme: an den Importen. Erlaubt
     sind Apples Bausteine (sie gehören zur Plattform, ``NOTICE``) und der Kern."""
     erlaubt = {"Foundation", "SwiftUI", "AppKit", "WebKit", "Network", "Security", "CoreText",
-               "Combine", "Dispatch", "OSLog", "CryptoKit", "VisboxKern"}
+               "Combine", "Dispatch", "OSLog", "CryptoKit", "MultipeerConnectivity", "CoreImage",
+               "VisboxKern"}
     dateien = _swift_dateien(MAC_QUELLEN)
     assert dateien, "keine Quellen der Mac-App gefunden"
     for datei in dateien:

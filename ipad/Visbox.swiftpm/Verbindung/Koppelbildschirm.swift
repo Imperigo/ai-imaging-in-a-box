@@ -13,8 +13,13 @@ import SwiftUI
 ///   sie im Kern (`Suche.pruefe(eingabe:)`, für https mit `Heimadresse.pruefe` der Mac-App).
 /// * Die Zahl wird **vor** dem Senden geprüft (sechs Ziffern): Ein Tippfehler soll keinen der
 ///   wenigen Versuche verbrauchen, die die HomeStation zulässt.
+/// * **Ohne Abtippen** (Entscheide 99/99b, 20.10.2026, Blatt 27): Zuoberst der **Mac in der
+///   Nähe** (`Naehesucher`, beide Seiten bestätigen) und **«Mit QR-Code koppeln»**
+///   (`QRLeser`). Beide liefern denselben Koppelschein — Adresse und Zahl —, und gekoppelt
+///   wird damit **genau wie beim Abtippen** (`koppeln(an:name:mac:zahl:)`). Das Eintippen
+///   bleibt darunter, als letzter Weg.
 ///
-/// *Gebaut, am Gerät unbestätigt (22.09.2026).*
+/// *Gebaut, am Gerät unbestätigt (22.09.2026; Nähe und QR-Code 20.10.2026).*
 @MainActor
 struct Koppelbildschirm: View {
     @ObservedObject var stand: Verbindungsstand
@@ -27,6 +32,8 @@ struct Koppelbildschirm: View {
     @State private var satz: String?
     @State private var geklappt = false
     @State private var laeuft = false
+    @State private var qrOffen = false
+    @StateObject private var naehe = Naehesucher()
 
     /// Was die Prüfung im Kern zur Eingabe sagt — die Adresse, oder der Satz, warum nicht.
     private var pruefung: Heimadresse.Pruefung { Suche.pruefe(eingabe: adresseText) }
@@ -40,6 +47,10 @@ struct Koppelbildschirm: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    if !stand.gekoppelt {
+                        naeheteil
+                        qrteil
+                    }
                     fundteil
                     adressteil
                     zahlteil
@@ -62,11 +73,29 @@ struct Koppelbildschirm: View {
         }
         .onAppear {
             stand.starteSuche()
+            // DIE NAEHE NUR UNGEKOPPELT: Ein gekoppeltes iPad hat am Mac nichts zu suchen.
+            if !stand.gekoppelt { naehe.starte() }
             if adresseText.isEmpty, let a = stand.adresse { adresseText = Suche.eingabetext(a) }
         }
         // NUR DIE SUCHE DIESES BILDSCHIRMS endet hier. Sucht das Pruefen die gekoppelte
         // HomeStation unter ihrem Namen, sucht es weiter (`Suchwunsch`, Durchsicht 22.09.2026).
-        .onDisappear { stand.beendeSuche() }
+        .onDisappear {
+            stand.beendeSuche()
+            naehe.beende()
+        }
+        .onChange(of: naehe.schein) { _, neu in
+            // DER SCHEIN VOM MAC IST DA (geprueft im Kern): koppeln wie beim Abtippen.
+            if let neu { Task { await koppeln(mit: neu) } }
+        }
+        .onChange(of: stand.gekoppelt) { _, gekoppelt in
+            if gekoppelt { naehe.beende() } else { naehe.starte() }
+        }
+        .fullScreenCover(isPresented: $qrOffen) {
+            QRLeser(gelesen: { schein in
+                qrOffen = false
+                Task { await koppeln(mit: schein) }
+            }, abbrechen: { qrOffen = false })
+        }
         .onChange(of: stand.gefunden) { _, neu in
             // GENAU EINE → DIE, aber nur, solange nichts eingetippt ist.
             if case .einer(let d) = Suche.waehle(neu), adresseText.isEmpty, let a = d.adresse {
@@ -76,6 +105,74 @@ struct Koppelbildschirm: View {
     }
 
     // ------------------------------------------------------------------- Teile
+
+    /// Der Mac in der Nähe (Entscheid 99): erst fragt das iPad, dann der Mac.
+    private var naeheteil: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Abschnittstitel(text: "Mac in der Nähe")
+            switch naehe.lage {
+            case .aus, .sucht:
+                Text("Am Mac im Menü «iPad» «iPad koppeln» öffnen — er erscheint dann hier, "
+                     + "zwei Minuten lang. Nichts abtippen.")
+                    .font(Schrift.text(14))
+                    .foregroundStyle(Zeichenblatt.leise)
+            case .gefunden(let name):
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Mit diesem Mac koppeln?")
+                        .font(Schrift.text(17, .semibold))
+                        .foregroundStyle(Zeichenblatt.schrift)
+                    Text(name)
+                        .font(Schrift.zahl(17))
+                        .foregroundStyle(Zeichenblatt.schrift)
+                    Text("Danach fragt der Mac noch einmal. Erst wenn beide zustimmen, schickt er "
+                         + "Adresse und Zahl — nie das Kennwort.")
+                        .font(Schrift.text(13))
+                        .foregroundStyle(Zeichenblatt.leise)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 12) {
+                        Button("Ablehnen") { naehe.lehneAb() }
+                            .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                        Button("Annehmen") { naehe.nimmAn() }
+                            .buttonStyle(Wahlknopfstil(gewaehlt: true, breite: nil))
+                    }
+                }
+                .padding(16)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Zeichenblatt.feld))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Zeichenblatt.linie))
+            case .wartetAufMac(let name):
+                Text("Angenommen. Jetzt am Mac «\(name)» auf «Koppeln» drücken.")
+                    .font(Schrift.text(15, .semibold))
+                    .foregroundStyle(Zeichenblatt.schrift)
+            case .erhalten(let name):
+                Text("Adresse und Zahl von «\(name)» erhalten — das iPad koppelt.")
+                    .font(Schrift.text(15))
+                    .foregroundStyle(Zeichenblatt.schrift)
+            case .fehler(let satz):
+                Text(satz)
+                    .font(Schrift.text(14))
+                    .foregroundStyle(Zeichenblatt.schrift)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Neu suchen") {
+                    naehe.beende()
+                    naehe.starte()
+                }
+                .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+            }
+        }
+    }
+
+    /// Der QR-Code im Koppelfenster des Mac (Entscheid 99b) — mit der Kamera in der App.
+    private var qrteil: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Abschnittstitel(text: "Oder den QR-Code lesen")
+            Button("Mit QR-Code koppeln") { qrOffen = true }
+                .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                .disabled(laeuft)
+            Text("Der Mac zeigt ihn unter «iPad koppeln», zwei Minuten lang.")
+                .font(Schrift.text(13))
+                .foregroundStyle(Zeichenblatt.leise)
+        }
+    }
 
     private var fundteil: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -178,7 +275,8 @@ struct Koppelbildschirm: View {
 
     private var zahlteil: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Abschnittstitel(text: "Die Zahl von der HomeStation")
+            // DER LETZTE WEG (Entscheid 99): eintippen, wenn Naehe und QR-Code nicht gehen.
+            Abschnittstitel(text: "Zahl eintippen — von der HomeStation oder vom Mac")
             TextField("000000", text: $zahl)
                 .font(Schrift.zahl(44, .medium))
                 .keyboardType(.numberPad)
@@ -198,8 +296,9 @@ struct Koppelbildschirm: View {
                 }
             // UNTERWEGS ZEIGT SIE DER MAC (Entscheid 63): Er fragt den Heim-PC danach.
             // Gekoppelt wird trotzdem direkt mit dem Heim-PC — der Mac reicht nur die Zahl.
-            Text("Zu Hause steht sie im Fenster der HomeStation. Unterwegs zeigt sie der Mac "
-                 + "unter «iPad koppeln». Sie gilt nur zehn Minuten und nur für wenige Versuche.")
+            Text("Zu Hause steht sie im Fenster der HomeStation, zehn Minuten lang. Unterwegs "
+                 + "zeigt sie der Mac unter «iPad koppeln», zwei Minuten lang. Sie gilt nur für "
+                 + "wenige Versuche.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
         }
@@ -263,12 +362,25 @@ struct Koppelbildschirm: View {
 
     private func koppeln() async {
         guard let ziel else { return }
-        laeuft = true
         // DER NAME GILT NUR, WENN DIE ADRESSE NOCH SEINE IST — sonst ist sie eingetippt.
         let name = (gewaehlt?.adresse == ziel) ? gewaehlt?.name : nil
         let mac = (gewaehlt?.adresse == ziel) && gewaehlt?.ueberDenMac == true
+        await koppeln(an: ziel, name: name, mac: mac, zahl: zahl)
+    }
+
+    /// Mit dem Schein vom Mac (Nähe oder QR-Code): Adresse und Zahl stehen dann sichtbar in
+    /// den Feldern, und gekoppelt wird **derselbe Weg** wie beim Abtippen.
+    private func koppeln(mit schein: Koppelschein) async {
+        guard !laeuft else { return }
+        gewaehlt = nil
+        adresseText = Suche.eingabetext(schein.adresse)
+        await koppeln(an: schein.adresse, name: nil, mac: false, zahl: schein.zahl.ziffern)
+    }
+
+    private func koppeln(an ziel: URL, name: String?, mac: Bool, zahl eingabe: String) async {
+        laeuft = true
         let (ok, text) = await stand.koppele(adresse: ziel, name: name, ueberDenMac: mac,
-                                             zahl: zahl)
+                                             zahl: eingabe)
         laeuft = false
         geklappt = ok
         satz = text

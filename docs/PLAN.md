@@ -8046,6 +8046,14 @@ Bekannt und ausdrücklich nicht erledigt:
 ## v0.1.9 aus dem Demolauf 16.10. (ab Reset Di 20.10.2026, Protokoll 74 §138)
 
 - [x] Owner-Befund Mac: Neustart nur auf Klick, ein Fenster — Visbox 0.2.10 (§140)
+- [ ] iPad koppeln ohne Abtippen (Entscheide 99/99a/99b, Blatt 27, §141)
+  - [x] A · Mac in der Nähe (MultipeerConnectivity, beide bestätigen, nur Adresse und Zahl) — gebaut
+  - [x] B · QR-Code im Koppelfenster, Kamera in der iPad-App — gebaut
+  - [x] Zahl eintippen bleibt als letzter Weg; Koppelfenster zwei Minuten
+  - [ ] Am Gerät: Mac und iPad nebeneinander, Nähe und QR-Code (owner)
+  - [ ] Owner-Entscheid: Zahl aus `POST /api/kopplung` am Heim-PC auch auf 120 s (heute 600 s; Verhaltensänderung
+        der HomeStation, vorher ansagen)
+  - [ ] C · iCloud-Schlüsselbund — **vorgemerkt**, nicht jetzt (braucht ein Entwicklerkonto)
 
 - [ ] Nr. 85 Grundsatz: eine Blender-Grundlage, mehrere deckungsgleiche KI-Varianten (mit 84, 81, 83)
   - [x] Heim-PC: «nur Cycles» liefert das Cycles-Bild (Nr. 83), Grundlage ablegen/holen, fester Startwert, Pose (§139)

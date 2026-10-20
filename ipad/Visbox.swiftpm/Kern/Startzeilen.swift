@@ -559,18 +559,37 @@ public enum Heimerreichbarkeit: Equatable, Sendable {
 /// Die Antwort auf `POST /api/kopplung` (Entscheid 63): der Heim-PC öffnet eine Zahl, die das
 /// iPad über Tailscale gegen die Anmeldung tauscht. Die Mac-App zeigt sie in der Zeile «iPad».
 public enum Koppelzahl {
+    /// Was der Heim-PC zur Zahl sagte: sie selbst und wie lange sie drüben noch gilt.
+    public struct Angebot: Equatable, Sendable {
+        public let zahl: Kopplungszahl
+        public let giltNoch: TimeInterval
+    }
+
+    /// Die Zahl aus der Antwort — `nil`, wenn keine sechsstellige darin steht. Fehler der
+    /// Antwort wirft sie weiter (`Serverfehler`), damit die Zeile den Grund sagen kann.
+    public static func angebot(status: Int, daten: Data) throws -> Angebot? {
+        let o = try liesAntwort(status: status, daten: daten)
+        guard let text = o["zahl"]?.alsText, text.count == 6,
+              let zahl = Kopplungszahl(text) else { return nil }
+        return Angebot(zahl: zahl, giltNoch: o["gilt_noch_s"]?.alsZahl ?? 600)
+    }
+
     /// Die Zeile «iPad» aus der Antwort — oder ein Satz, warum es keine Zahl gibt. **Nie die
     /// Zahl ohne die Adresse:** Am iPad braucht man beides, und die Adresse steht nur am Mac.
+    ///
+    /// **Seit dem 20.10.2026 (Entscheid 99a) höchstens zwei Minuten:** So lange ist das
+    /// Koppelfenster am Mac offen, und danach zeigt er die Zahl nicht mehr. Drüben gilt sie
+    /// womöglich länger (`gilt_noch_s`); genannt wird, was der Mac anbietet.
     public static func zeile(status: Int, daten: Data, adresse: URL) -> Zeilenstand {
         do {
-            let o = try liesAntwort(status: status, daten: daten)
-            guard let zahl = o["zahl"]?.alsText, zahl.count == 6,
-                  zahl.allSatisfy({ $0.isASCII && $0.isNumber }) else {
+            guard let a = try angebot(status: status, daten: daten) else {
                 return .fehlt(grund: "Der Heim-PC hat keine Zahl geschickt.")
             }
-            let minuten = max(1, Int(((o["gilt_noch_s"]?.alsZahl ?? 600) / 60).rounded()))
-            return .wartet(satz: "Zahl fürs iPad: \(gruppiert(zahl)) — gilt \(minuten) min. Am iPad "
-                + "im Koppelbildschirm die Adresse \(adresse.absoluteString) und diese Zahl eingeben.")
+            let sekunden = min(a.giltNoch, Naehekopplung.fenster)
+            let minuten = max(1, Int((sekunden / 60).rounded()))
+            return .wartet(satz: "Zahl fürs iPad: \(gruppiert(a.zahl.ziffern)) — gilt \(minuten) min. "
+                + "Am iPad den Mac in der Nähe annehmen, den QR-Code lesen oder im "
+                + "Koppelbildschirm die Adresse \(adresse.absoluteString) und diese Zahl eingeben.")
         } catch let f as Serverfehler {
             return .fehlt(grund: "Keine Zahl fürs iPad: \(f.satz)")
         } catch {

@@ -6725,7 +6725,29 @@ richtige, lange Kennwort zu bekommen. Sie ist absichtlich schwach und darum absi
 kurzlebig: Sie gilt Minuten, verträgt wenige Fehlversuche und ist nach dem ersten
 erfolgreichen Verbinden verbraucht. Der Sinn ist ein Tausch — ein schwaches Geheimnis für
 einen Augenblick gegen ein starkes für immer.
-*In diesem Projekt: sechs Stellen, zehn Minuten, fünf Versuche, ein Gerät.*
+*In diesem Projekt: sechs Stellen, zehn Minuten, fünf Versuche, ein Gerät.* Seit dem
+20.10.2026 zeigt der Mac seine Zahl fürs iPad nur noch zwei Minuten lang (das Koppelfenster).
+
+**Koppelfenster** — Das kleine Fenster am Mac unter «iPad» → «iPad koppeln». Es zeigt die
+Zahl, die Adresse und einen QR-Code und macht den Mac für ein iPad in der Nähe sichtbar —
+**zwei Minuten lang**, dann schliesst es sich von selbst (Entscheid 99a). *Ein Angebot, das
+nicht endet, wartet irgendwann auf den Falschen.*
+
+**Koppelschein** — Ein kurzer Text mit genau drei Angaben: die Adresse des Heim-PC, die
+einmalige Zahl und bis wann beides gilt. Der Mac gibt ihn dem iPad als QR-Code oder über die
+Nähe-Verbindung; das iPad koppelt damit wie beim Abtippen. **Kein Kennwort darin**
+(Entscheid 99) — wer den Schein abfotografiert, hat höchstens zwei Minuten und wenige Versuche.
+
+**Nähe-Verbindung (MultipeerConnectivity)** — Ein Baustein von Apple, mit dem sich zwei
+Geräte in der Nähe direkt finden und verbinden — über WLAN oder Bluetooth, ohne Router, ohne
+Internet und ohne Entwicklerkonto. *In diesem Projekt* zeigt sich der Mac im Koppelfenster;
+das iPad fragt «Mit diesem Mac koppeln?», der Mac fragt «iPad möchte koppeln», und erst wenn
+**beide** zustimmen, schickt der Mac über die verschlüsselte Verbindung den Koppelschein.
+
+**QR-Code** — Ein quadratisches Muster aus schwarzen und weissen Punkten, in dem ein kurzer
+Text steckt; eine Kamera liest ihn in einem Augenblick. *In diesem Projekt* steht im
+Koppelfenster des Mac der Koppelschein als QR-Code, und die iPad-App liest ihn mit ihrer
+eigenen Kamera («Mit QR-Code koppeln») — nicht mit der Kamera-App, die ihn an den Browser gäbe.
 
 **Stetige Uhr** — Eine Uhr, die nur vorwärts läuft und nicht sagt, wie spät es ist,
 sondern wie viel Zeit seit einem beliebigen Anfang vergangen ist. Sie lässt sich nicht
@@ -7435,6 +7457,7 @@ einer Marke. *Im Projekt:* auf den Tafelkarten «Visbox · Tools», etwa «IFC»
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus Entscheiden 99/99a/99b (Protokoll 74 §141): **Koppelfenster**, **Koppelschein**, **Nähe-Verbindung (MultipeerConnectivity)**, **QR-Code**; **Kopplungszahl** um die zwei Minuten am Mac ergänzt |
 | 2026-10-20 | Ergaenzt aus den Tafelkarten «Visbox · Tools» und «Visbox · Architecture» (`docs/WERKZEUGE_UND_ARCHITEKTUR.md`): **CC0 (Gemeinfreiheitserklärung)**, **Simple Icons**, **Markenzeichen (auf einer Logo-Karte)**, **numpy**, **Pillow**, **Mermaid**, **Chromium ohne Fenster (headless)**, **IfcOpenShell**, **trimesh**, **shapely / GEOS**, **gsplat**, **Open3D**, **PyTorch (torch)**, **transformers**, **Z-Image Turbo**, **Depth Anything V2 (Small)**, **SigLIP 2**, **Architekturbild (Organigramm der Programme)**, **OpenSSL**, **Avahi**, **libnotify (notify-send)**, **Monogramm-Kachel** |
 | 2026-10-20 | Ergaenzt aus Visbox 0.2.10 (Protokoll 74 §140): **Einzelinstanz (einer App)** |
 | 2026-10-20 | Ergaenzt aus Nr. 85/83/84 (Demolauf 16.10., Protokoll 74 §139): **Fester Startwert (einer Serie)**, **Blender-Grundlage (eines Renderings)**, **Deckungsgleiche Varianten**, **Nur Grundlage («nur Cycles»)**, **Pose (einer Kamera)** |

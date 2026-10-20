@@ -11,6 +11,10 @@
   CFBundleExecutable ist der Name des Programms, das `swift build` aus dem Ziel in
   Package.swift macht; die Pruefstrecke liest ihn von hier.
 
+  NSBonjourServices nennt seit dem 20.10.2026 (Entscheid 99) auch die Naehe-Verbindung
+  zum Koppeln (Marke.naehedienst, tcp und udp), unter der sich der Mac im Koppelfenster
+  anbietet.
+
   Keine Sandbox und keine Berechtigungsdatei: Die App kommt nicht aus dem App Store,
   sondern als ZIP aus der Pruefstrecke, mit Behelfs-Unterschrift.
 -->
@@ -45,10 +49,12 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Der Mac bietet sich dem iPad im selben WLAN an und reicht es zum Heim-PC durch — so braucht das iPad keinen eigenen Weg nach Hause.</string>
+	<string>Der Mac bietet sich dem iPad im selben WLAN an, reicht es zum Heim-PC durch und koppelt ein iPad in der Nähe — so braucht das iPad keinen eigenen Weg nach Hause und muss nichts abtippen.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_visbox._tcp</string>
+		<string>_visbox-kopp._tcp</string>
+		<string>_visbox-kopp._udp</string>
 	</array>
 </dict>
 </plist>

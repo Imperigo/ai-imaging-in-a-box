@@ -473,7 +473,11 @@ tests/test_ipad_geruest.py vergleicht sie mit den Dateien.
 Registriert werden die Schriften zur Laufzeit ueber CoreText (Apple-Plattform,
 nicht mitgeliefert - wie SwiftUI, PencilKit, Network und Security; in der Mac-App
 dazu WebKit fuer die Flaeche des Heim-PC und, seit Entscheid 83, CryptoKit fuer
-den Fingerabdruck des Zertifikats im Heim-WLAN).
+den Fingerabdruck des Zertifikats im Heim-WLAN). Seit Entscheid 99 (20.10.2026,
+iPad koppeln ohne Abtippen) ebenso Plattform, nicht mitgeliefert:
+MultipeerConnectivity (Naehe-Verbindung zwischen Mac und iPad, beide Apps),
+CoreImage (QR-Code im Koppelfenster des Mac), VisionKit und AVFoundation (die
+Kamera der iPad-App liest den QR-Code).
 
 --------------------------------------------------------------------------------
 IBM Plex Sans                                      OFL-1.1

@@ -365,7 +365,8 @@ final class StartzeilenTests: XCTestCase {
         let zeile = Koppelzahl.zeile(status: 200, daten: daten, adresse: heimAdresse)
         XCTAssertEqual(zeile.wort, "wartet")
         XCTAssertTrue(zeile.satz.contains("123 456"), zeile.satz)
-        XCTAssertTrue(zeile.satz.contains("10 min"), zeile.satz)
+        XCTAssertTrue(zeile.satz.contains("2 min"),
+                      "höchstens das Koppelfenster (Entscheid 99a): \(zeile.satz)")
         XCTAssertTrue(zeile.satz.contains(heimAdresse.absoluteString),
                       "ohne die Adresse kann das iPad mit der Zahl nichts anfangen")
     }

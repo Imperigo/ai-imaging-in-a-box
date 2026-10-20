@@ -55,9 +55,17 @@ let package = Package(
                 // Erzeugt NSLocalNetworkUsageDescription und NSBonjourServices. Der Satz nennt
                 // seit dem 01.10.2026 auch den Mac: Unterwegs ist ER es, den die App im WLAN
                 // findet und der die Skizzen an die HomeStation weiterreicht (Protokoll §8b).
+                // SEIT DEM 20.10.2026 (Entscheid 99) dazu die Naehe-Verbindung zum Koppeln:
+                // MultipeerConnectivity verlangt ihren Dienst `Marke.naehedienst` zweimal, als
+                // tcp und udp. Der erste Eintrag bleibt der Dienst der HomeStation.
                 .localNetwork(
-                    purposeString: "Findet die HomeStation im Heimnetz oder unterwegs den Mac, der für sie vermittelt, und schickt ihr die Skizzen zum Rechnen.",
-                    bonjourServiceTypes: ["_visbox._tcp"]
+                    purposeString: "Findet die HomeStation im Heimnetz oder unterwegs den Mac, der für sie vermittelt, koppelt sich mit einem Mac in der Nähe und schickt der HomeStation die Skizzen zum Rechnen.",
+                    bonjourServiceTypes: ["_visbox._tcp", "_visbox-kopp._tcp", "_visbox-kopp._udp"]
+                ),
+                // Erzeugt NSCameraUsageDescription (Entscheid 99b): «Mit QR-Code koppeln» liest
+                // den Code im Koppelfenster des Mac mit der Kamera in der App.
+                .camera(
+                    purposeString: "Liest den QR-Code im Koppelfenster des Mac, damit sich das iPad ohne Abtippen koppelt."
                 )
             ],
             // App Transport Security NUR fuer lokale Netze (NSAllowsLocalNetworking).

@@ -1545,3 +1545,12 @@ und der kleine Helfer, der die neue App öffnet, öffnete nach einer halben Minu
 Jetzt klickt man selbst «Neu starten»; der Helfer bittet die alte App zu enden, zwingt sie notfalls und öffnet nie
 daneben; und wer Visbox ein zweites Mal startet, bekommt die laufende nach vorn statt eines neuen Fensters.
 
+
+**iPad koppeln ohne Abtippen (20.10.2026).** Bisher tippte man am iPad zwei Dinge ab, die am Mac standen: eine lange
+Adresse und eine sechsstellige Zahl. Jetzt öffnet «iPad koppeln» am Mac ein kleines Fenster für zwei Minuten. Liegt das
+iPad daneben, fragt es von selbst «Mit diesem Mac koppeln?»; nimmt man an, fragt der Mac seinerseits «iPad möchte
+koppeln» — erst wenn beide Ja sagen, schickt der Mac über eine verschlüsselte Verbindung Adresse und Zahl hinüber, nie
+das Kennwort. Geht das nicht, liest das iPad mit seiner Kamera einen QR-Code im selben Fenster, und als letzter Weg
+bleibt das Abtippen. Nach den zwei Minuten verschwindet alles von selbst. Ehrlich gesagt: Gebaut und vom Übersetzer
+geprüft, aber noch nie an zwei echten Geräten ausprobiert; und der Heim-PC lässt die Zahl selbst noch zehn Minuten
+gelten — dass sie dort auch nach zwei Minuten verfällt, ist eine eigene Entscheidung.
