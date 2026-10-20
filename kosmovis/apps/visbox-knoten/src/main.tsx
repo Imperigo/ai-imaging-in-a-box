@@ -23,6 +23,11 @@
  * Entscheid 91 (14.10.2026, Blatt 22): `legeAnfangBeimOeffnen(true)` — eine leere Mappe zeigt den
  * fertigen Anfang (Modell, Auto-Kamera, Stimmung, Prompt → Render → Bildvergleich), mit
  * «Datei laden …» im Modell-Knoten. KosmoOrbit zeigt ihn als Vorschlag mit Knopf.
+ *
+ * KI-Bedienung Stufe 3 (Entscheide 105–106f, 108, 114, 20.10.2026): `haengeKiAn(window)` stellt
+ * den KI-Werkzeugsatz als `window.visboxKi` bereit und reicht seine Ereignisse an die Mac-App
+ * (`webkit.messageHandlers.visboxKi`) — nach dem gesicherten Graph, damit Claude den Stand der
+ * Mappe liest und nicht den leeren Anfang. Strg+Z nimmt danach nur die eigenen Schritte zurück.
  */
 import '../../kosmo-orbit/src/zod-jitless'; // muss der erste Import bleiben, s. Datei-Kopf dort
 import { StrictMode } from 'react';
@@ -42,6 +47,7 @@ import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-g
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
 import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
+import { haengeKiAn } from './ki-wirt';
 import {
   aufDemVisboxServer,
   brueckeAufDiesenServer,
@@ -135,6 +141,7 @@ async function zeige(): Promise<void> {
     await ladeGesichertenGraph();
     sichereBeiAenderung();
   }
+  haengeKiAn(window);
   const wurzel = document.getElementById('root');
   if (!wurzel) throw new Error('Kein #root in index.html');
   createRoot(wurzel).render(

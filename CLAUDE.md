@@ -355,6 +355,12 @@ Vis-Werkzeug weiterbaut, zieht Visbox **von sich aus** nach, ohne Frage an den O
 weiter als Auftrag an den Integrator bzw. den UI-Worker. *Anlass: Die Kopie stand drei Wochen still, und der Owner sah am
 Mac noch die alten Knoten.*
 
+**Und die Oberfläche ist dieselbe (Owner-Entscheid 115, 20.10.2026, stehend):** *«ansichten ui und ux sollte zu
+kosmovis identisch sein immer».* Die Visbox-Ansichten übernehmen die KosmoOrbit-Vis-Oberfläche 1:1 — Gestaltung,
+Abstände, Pillen, Legende, Verhalten und die Kopfteile; was in KosmoOrbit über Inseln läuft (Assistent, Einrichten …),
+läuft auch in Visbox als Insel. Ausnahmen nur, wo eine Funktion in Visbox fachlich nicht existiert — benannt im
+Abgleich-Blatt. Eine Probe hält die Kopie wortgleich und wird beim Bau rot, sobald sie abweicht.
+
 ### Die Knotenansicht ist die Arbeitsfläche zum Rendern (Owner-Klarstellung 14.10.2026)
 
 > *«Bei beiden Softwares ist die Node-Tree-Oberfläche die offizielle Rendering-Arbeitsfläche für den Architekten.»*

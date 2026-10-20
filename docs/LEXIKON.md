@@ -5777,8 +5777,9 @@ am Mac einen eigenen MCP-Server, über den Claude (Claude Code oder Claude Deskt
 ist nur auf diesem Rechner erreichbar, ab Werk eingeschaltet und braucht kein Kennwort. Alles, was etwas
 ändert, wird eine Karte in der Assistent-Leiste; Rendern gibt immer ein Mensch frei, Löschen geht nur über
 eine Karte. *Im Projekt:* `ipad/Visbox.swiftpm/Kern/Mcpkern.swift` (die Regeln) und
-`ipad/VisboxMac/Sources/VisboxMac/Claude/` (das Netz); bis Stufe 3 antwortet nur das Werkzeug
-`visbox_status`, alle anderen sagen «kommt mit Stufe 3».
+`ipad/VisboxMac/Sources/VisboxMac/Claude/` (das Netz). Bis Stufe 3 antwortete nur `visbox_status`; seit
+Stufe 3 (20.10.2026, abends) reicht er die Werkzeuge der Knotenansicht und vier eigene der Mac-App durch
+(siehe **KI-Werkzeugsatz (der Knotenansicht)**, **Werkzeuge der Mac-App (für Claude)**).
 
 **JSON-RPC** — Eine feste Form für Fragen und Antworten zwischen zwei Programmen, geschrieben als
 **JSON** (siehe dort). Eine Frage nennt, was getan werden soll («method»), die Angaben dazu
@@ -5820,7 +5821,67 @@ KosmoOrbit.
 
 **Werkzeugträger** — Der Teil der App, der die Werkzeuge, die Claude aufruft, wirklich ausführt oder als
 Karte vorlegt. Der MCP-Kern selbst führt nichts aus, er reicht nur weiter und wartet. *Im Projekt:* ein
-Protokoll im Kern (`Werkzeugtraeger`); bis Stufe 3 ein Platzhalter, ab Stufe 3 die Knotenansicht.
+Protokoll im Kern (`Werkzeugtraeger`); bis Stufe 3 ein Platzhalter, seit Stufe 3 der `Knotentraeger`: Er
+fragt die Knotenansicht (über den **Boten «visboxKi»**, siehe dort) und führt die Werkzeuge der Mac-App
+selbst aus. Ohne laufende App (Weg über stdio) bleibt der Platzhalter.
+
+**KI-Werkzeugsatz (der Knotenansicht)** — Die eine Liste von Werkzeugen, mit denen eine KI die Knotenansicht
+bedient: den Knotengraph lesen, Knoten setzen, einstellen, verbinden, schieben, löschen, ein Bild oder
+Varianten bestellen, und ein Paket aus bis zu 40 Schritten. Jedes Werkzeug hat eine Art — lesen, ändern,
+löschen, rendern —, und daraus folgt, ob der Architekt erst zustimmen muss (siehe **Karte (Vorschlag der
+KI)**). Bevor etwas vorgeschlagen wird, rechnet der Satz es auf einer Kopie durch; ein ungültiger Schritt
+wird gar nicht erst vorgeschlagen. *Im Projekt:* `ki-werkzeuge.ts`, wörtlich aus KosmoOrbit; Claude bekommt
+ihn über MCP, später der Assistent dieselbe Liste.
+
+**Karte (Vorschlag der KI)** — Ein Vorschlag von Claude oder dem Assistenten, der in der Assistent-Leiste
+liegt, bis der Architekt «Anwenden» oder «Ablehnen» drückt. Bis dahin ändert sich nichts. Kopf «Vorschlag
+von Claude · K-12», darunter, was geschehen würde; bei einem Render-Auftrag der Satz «Rendern braucht danach
+deine Freigabe am Knoten.» *Im Projekt:* Entscheid 106a; `Kikarte` im Kern, gezeichnet in `Kileiste.swift`.
+
+**Selbständigkeit (Karte, Coop, Voll)** — Wie frei die KI arbeiten darf, eingestellt oben in der
+Assistent-Leiste: **Karte** (Vorgabe) — jede Änderung wird erst eine Karte; **Coop** und **Voll** —
+Änderungen gehen ohne Karte. In jedem Fall bleibt Löschen eine Karte, und die Grafikkarte gibt immer ein
+Mensch frei. Die Wahl gilt für Claude und den Assistenten zugleich und wird gemerkt. *Im Projekt:*
+Entscheide 106b, 108 A; `Selbstaendigkeit` im Kern.
+
+**Tätigkeitsstrom** — Eine Zeile in der Assistent-Leiste, die sagt, was die KI gerade tut («● Claude
+legt einen Knoten an …»). Sie steht nur, solange die KI arbeitet, und ein paar Sekunden danach; ein
+Verlauf ist sie nicht. *Im Projekt:* Entscheid 108 C; `Kileistenstand.strom`.
+
+**Zwei Rückgängig-Verläufe (eigene Schritte und KI-Schritte)** — Was die KI ohne Karte ändert (Coop,
+Voll), steht in einem eigenen Verlauf. **Strg+Z nimmt nur die eigenen Schritte des Architekten zurück**;
+den letzten Schritt von Claude nimmt der Knopf «Claudes letzten Schritt zurücknehmen» zurück. Hat jemand
+seither am selben Graphen weitergearbeitet, ändert der Knopf nichts und sagt, woran es hängt — und
+umgekehrt hält Strg+Z an, statt Claudes Arbeit zu überschreiben. Eine Karte, die der Architekt anwendet,
+ist sein eigener Schritt. *Im Projekt:* Entscheid 114, wie KosmoOrbit; `rueckgaengigKi` und
+`kiVerlaufWache` in `ki-werkzeuge.ts`, gesetzt vom Wirt `ki-wirt.ts`.
+
+**Verlaufs-Wache** — Eine Prüfung vor jedem Strg+Z und Strg+Y: Würde das Zurücknehmen Arbeit überschreiben,
+die jemand anderes seither gemacht hat, geht es nicht, und ein Satz sagt warum. *Im Projekt:*
+`setzeVerlaufWache` im Store; in Visbox setzt sie der Wirt der Knotenansicht (`kiVerlaufWache`).
+
+**Bote «visboxKi» (Script-Message-Handler)** — Der Weg, auf dem eine Webseite in einer App der App etwas
+sagen kann: Die Seite ruft `webkit.messageHandlers.visboxKi.postMessage(…)`, die App bekommt die Nachricht.
+Umgekehrt ruft die App Funktionen der Seite auf (`callAsyncJavaScript`). *Im Projekt:* So meldet die
+Knotenansicht der Mac-App jede Karte, jeden Entscheid und was die KI gerade tut; die App nimmt nur
+Nachrichten der eigenen Knotenseite an (`Knotenki.swift`), nie von der Visbox-Seite des Heim-PC.
+
+**Werkzeuge der Mac-App (für Claude)** — Vier Werkzeuge, die die Mac-App selbst ausführt statt der
+Knotenansicht: `mappe_lesen` (was in der Mappe liegt), `skizzen_lesen` (die Skizzen vom iPad, auf Wunsch als
+Bild), `bild_ansehen` (das Bild eines fertigen Laufs an Claude) und `lauf_abbrechen` (einen Render-Lauf
+anhalten — das gibt die Grafikkarte frei und braucht darum keine Karte). Keines gibt die Grafikkarte frei.
+*Im Projekt:* `Macwerkzeuge` im Kern, über die bestehenden Wege des Heim-PC (`Heimlesen.swift`).
+
+**Werkzeugliste im Bau** — Die Liste der Werkzeuge der Knotenansicht, als Datei mitgeliefert
+(`ki-werkzeugliste.json`). Claude fragt die Liste nur einmal, wenn es sich verbindet; ist die Knotenansicht
+dann noch nicht offen, kennt Claude die Werkzeuge trotzdem — sie antworten dann mit dem Satz, dass die
+Knotenansicht nicht offen ist. *Im Projekt:* geschrieben von `tools/knoten_bau.py`, gelesen von der
+`Kizentrale`.
+
+**Claude Desktop** — Die Fassung von Claude als eigenes Programm auf dem Mac (neben **Claude Code** im
+Terminal). Es startet MCP-Server als Programm und spricht über **stdio** mit ihnen. *Im Projekt:* Im
+Einrichten › «Claude über MCP» schreibt «Visbox hinzufügen» den Eintrag in die Einstellungsdatei von
+Claude Desktop (Visbox mit `--mcp-stdio`); alles andere in der Datei bleibt.
 
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
@@ -7883,7 +7944,8 @@ Modell-Knoten sein Fenster zeigt.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §156): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |
+| 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §158): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |
+| 2026-10-20 | Ergaenzt aus der KI-Bedienung Stufe 3/4 (Protokoll 74 §156): **KI-Werkzeugsatz (der Knotenansicht)**, **Karte (Vorschlag der KI)**, **Selbständigkeit (Karte, Coop, Voll)**, **Tätigkeitsstrom**, **Zwei Rückgängig-Verläufe**, **Verlaufs-Wache**, **Bote «visboxKi» (Script-Message-Handler)**, **Werkzeuge der Mac-App (für Claude)**, **Werkzeugliste im Bau**, **Claude Desktop**; **MCP-Anschluss in der Mac-App** und **Werkzeugträger** nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-292 (Protokoll 74 §154): **Tonwerte (Tonwertkurve)**, **Belichtung (je Stimmung)**, **Überstrahlung (voll weisse Bildpunkte)**, **Ruhiger Hintergrund (Kamerastrahl)**, **Tönung (je Stimmung)**, **Bestellte Bildgrösse und Raster**; **View-Transform** um AgX mit Himmelsbild ergänzt |
 | 2026-10-20 | Ergaenzt aus F1, dem 3D-Fenster im Modell-Knoten (Entscheid 109 A, Protokoll 74 §155): **3D-Fenster (im Modell-Knoten)**, **WebGL**, **Nachgeladener Teil (der Knotenansicht)** |
 | 2026-10-20 | Ergaenzt aus den drei Fehlern vom Mac (Protokoll 74 §152): **Fokusring**, **Feste Bildbox (Einpassen)**; die Seite der **Variante ohne Hochladen** steht unter diesem Eintrag (nicht doppelt angelegt) |

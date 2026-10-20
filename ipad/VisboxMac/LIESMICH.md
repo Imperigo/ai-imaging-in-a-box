@@ -177,18 +177,42 @@ ipad/VisboxMac/
     ├── Vorfuehrung/         Strom C: der Vorführmodus
     ├── Assistent/           Strom D: die Seitenleiste des Assistenten
     ├── Aktualisieren/       Entscheid 84: fragen, laden, prüfen, ersetzen (Regeln im Kern)
-    └── Claude/              KI-Bedienung Stufe 2: MCP-Hörer nur auf 127.0.0.1:8631, `--mcp-stdio`
+    └── Claude/              KI-Bedienung: MCP-Hörer nur auf 127.0.0.1:8631, `--mcp-stdio`,
+                             Kizentrale (Brücke zur Knotenansicht, Mac-Werkzeuge)
 ```
 
-**Claude anschliessen** (Plan KI-Bedienung, Stufe 2, gebaut, am Gerät unbestätigt): Die App hört ab Werk
-nur auf diesem Rechner auf `http://127.0.0.1:8631/mcp` (Einstellung `claudeMcp.an`). Claude Code:
-`claude mcp add --transport http visbox http://127.0.0.1:8631/mcp`. Claude Desktop startet das Programm
-im Bündel mit `--mcp-stdio` (`Visbox.app/Contents/MacOS/<Programm> --mcp-stdio`); es öffnet kein Fenster
-und reicht an die laufende App weiter. Bis Stufe 3 antwortet nur `visbox_status`; alles andere sagt
-«kommt mit Stufe 3». Kein Kennwort, kein Schlüssel.
+Übersicht zu Claude: siehe unten «Claude anschliessen».
 
 Übersetzt wird nur in der Prüfstrecke (`.github/workflows/ipad.yml`, Job `mac`): `swift build`
 für Apple-Chip, daraus `Visbox.app` mit `Contents/MacOS/<Programm>`, `Contents/Info.plist` und
 `Contents/Resources/Schriften/` (die Schriften der iPad-App unverändert, samt ihren
 OFL-Lizenztexten), Behelfs-Unterschrift, ZIP. Unter Linux lässt sich nur der Kern prüfen
 (`swift test` in `ipad/VisboxKern`).
+
+## Claude anschliessen (KI-Bedienung Stufe 3, 20.10.2026 — gebaut, am Gerät unbestätigt)
+
+Claude bedient die Knotenansicht dieser App über MCP — **nur auf diesem Mac**, ohne Kennwort, ab Werk an
+(Entscheide 106, 106e, 108 B). Einstellen unter **Einrichten › Claude über MCP …** (Schalter an/aus, Befehl,
+«Visbox hinzufügen» für Claude Desktop, was an Anthropic geht).
+
+1. **Claude Code**, einmal im Terminal: `claude mcp add --transport http visbox http://127.0.0.1:8631/mcp`
+   (im Einrichten «Befehl kopieren»). Danach in Claude Code `/mcp`: «visbox» steht als verbunden.
+2. **Claude Desktop**: im Einrichten «Visbox hinzufügen» — schreibt `mcpServers.visbox` (das Programm im
+   Bündel mit `--mcp-stdio`) in `~/Library/Application Support/Claude/claude_desktop_config.json`, alles
+   andere in der Datei bleibt. Claude Desktop danach neu starten.
+3. **Die Knotenansicht öffnen** («Schon anfangen»). Ist sie zu, kennt Claude die Werkzeuge trotzdem (Liste im
+   Bau, `Knoten/ki-werkzeugliste.json`); sie antworten dann «Die Knotenansicht ist … nicht offen».
+
+**Was Claude kann:** `visbox_status` (zuerst), `graph_lesen`, jeder `vis_*`-Befehl der Knotenansicht
+(Knoten setzen, einstellen, schieben, verbinden, trennen, einklappen, löschen, Graph anlegen und löschen,
+`vis_render`, `vis_varianten`), `vis_paket` (bis 40 Schritte als ein Schritt), dazu die Mac-Werkzeuge
+`mappe_lesen`, `skizzen_lesen`, `bild_ansehen` (Bild an Claude) und `lauf_abbrechen`.
+
+**Die Spielregel:** Oben in der Assistent-Leiste «Selbständigkeit: Karte | Coop | Voll» (gemerkt). In
+«Karte» wird jede Änderung eine Karte «Vorschlag von Claude · K-n» mit Anwenden/Ablehnen; in Coop und Voll
+geht Ändern ohne Karte. **Löschen ist immer eine Karte, und die Grafikkarte gibt immer ein Mensch frei** —
+nach dem Anwenden einer Render-Karte am Knoten «Freigeben». Strg+Z nimmt nur die eigenen Schritte zurück;
+Claudes Schritte ohne Karte nimmt «Claudes letzten Schritt zurücknehmen» zurück (Entscheid 114).
+
+**Was an Anthropic geht:** Mappennamen, Prompts, den Knotengraph und Bilder, die Claude ansehen will.
+

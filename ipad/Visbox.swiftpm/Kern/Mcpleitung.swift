@@ -252,3 +252,9 @@ public enum Mcpweiterleitung {
         return (status, rumpf)
     }
 }
+
+extension Mcp {
+    /// Die ganze Adresse des Anschlusses, wie Claude Code sie eintraegt — hier und nicht in
+    /// `Mcpkern`, weil nur diese Datei ein festes `http://` tragen darf (`StreckeTests`).
+    public static let adresse = "http://127.0.0.1:\(anschluss)\(pfad)"
+}

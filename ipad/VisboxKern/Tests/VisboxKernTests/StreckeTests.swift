@@ -175,7 +175,8 @@ final class StreckeTests: XCTestCase {
     /// und `Kern/Anfragen.swift` (das Gerüst, aus dem nur der Pfad gelesen wird). Bis zum
     /// 01.10.2026 strich der Koppelbildschirm selbst ein `http://` ab. Seit dem 20.10.2026 auch
     /// `Kern/Mcpleitung.swift`: Dort baut niemand eine Adresse, sondern der Anschluss fuer Claude
-    /// vergleicht das `Origin` eines Browsers mit `http://localhost` (KI-Bedienung, Stufe 2).
+    /// vergleicht das `Origin` eines Browsers mit `http://localhost` (KI-Bedienung, Stufe 2) — und
+    /// nennt seit Stufe 3 die eine Adresse fuer Claude Code (`Mcp.adresse`).
     func testKeinFestesHttpAusserhalbDerHeimnetzregeln() throws {
         let ipad = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent()

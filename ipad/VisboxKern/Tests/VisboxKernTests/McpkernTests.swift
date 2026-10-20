@@ -319,7 +319,32 @@ final class McpkernTests: XCTestCase {
         XCTAssertFalse(Mcpfreigabe.brauchtKarte(.aendern, modus: .coop))
         XCTAssertFalse(Mcpfreigabe.brauchtKarte(.aendern, modus: .voll))
         XCTAssertEqual(Selbstaendigkeit.vorgabe, .karte, "106b: Karte ist die Vorgabe")
+        for modus in Selbstaendigkeit.allCases {
+            XCTAssertFalse(Mcpfreigabe.brauchtKarte(.anhalten, modus: modus),
+                           "Stufe 4: Lauf abbrechen gibt die Grafikkarte frei, nie eine Karte")
+        }
         XCTAssertTrue(Mcpfreigabe.satz(.voll).contains("Grafikkarte gibt immer ein Mensch frei"))
+    }
+
+    func testDerKernMerktSichDenLetztenKontakt() async throws {
+        let k = kern()
+        let vorher = await k.letzterKontakt
+        XCTAssertNil(vorher, "ohne Nachricht kein Kontakt")
+        _ = await k.verarbeite(try json(#"{"jsonrpc":"2.0","id":1,"method":"ping"}"#))
+        let nachher = await k.letzterKontakt
+        XCTAssertNotNil(nachher)
+    }
+
+    func testOffeneAufrufeLassenSichAufEinmalBeantworten() async throws {
+        let k = kern(frist: 0.05)
+        _ = try await rufe(k, "knoten_setzen")
+        _ = try await rufe(k, "knoten_setzen", id: 8)
+        let weg = await k.beantworteOffene(Mcpergebnis(text: "VERWORFEN: neu geladen", fehler: true))
+        XCTAssertEqual(weg, ["K-1", "K-2"])
+        let offen = await k.offeneVorschlaege()
+        XCTAssertTrue(offen.isEmpty)
+        let nach = try await rufe(k, Mcpkern.nachfrageName, #"{"kennung":"K-1"}"#)
+        XCTAssertEqual(text(nach), "VERWORFEN: neu geladen")
     }
 
     func testDerStatusNenntDenModus() async throws {

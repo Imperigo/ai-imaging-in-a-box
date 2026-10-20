@@ -7881,6 +7881,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Gebaut:** ein Klick lädt und ersetzt, Neustart von selbst, stündlich fragen; Visbox 0.2.3. *(14.10.2026, §103)*
 - [ ] **Am Mac bestätigen** (Owner): 0.2.3 von Hand, danach die nächste Fassung mit einem Klick.
 - [ ] **KosmoOrbit** Ein-Klick-Aktualisieren (Integrator, Zentrale; Antwort mit Plan erwartet).
+- [x] **Immer die neueste** (Owner-Befund 20.10.2026): Der Klick fragt vor dem Laden noch einmal, jede Antwort ersetzt das Angebot, nach einem Fehler nach 5 min wieder, nach dem Aufwachen sofort (Kern `Angebotsstand`). *(20.10.2026, §157, C86)*
+- [ ] **Am Mac bestätigen** (Owner): zwei Fassungen hinterher → ein Klick lädt die neueste (ab der Fassung nach der ersten mit dem Fix).
 - [x] **Icon** (Entscheid 88, Blatt 20, Vorschlag A) gebaut; Visbox 0.2.4, am Mac bestätigt. *(14.10.2026, §104)*
 
 ## Knotenansicht gleich wie KosmoVis (Owner-Vorgabe 14.10.2026 — Sitzung 74 §106)
@@ -8126,7 +8128,14 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] Stufen 0–7 nach dem Plan (§4)
   - [x] Stufe 2: MCP-Kern in Swift mit Proben (JSON-RPC: `initialize` mit Fassungswahl, `ping`, `tools/list`, `tools/call`, Meldungen; Werkzeuge als Daten; Wartefrist 45 s mit «wartet noch — Vorschlag K-n liegt in der Assistent-Leiste»; `visbox_status`, `visbox_vorschlag_status`; Spielregel; Freigaberegel Karte/Coop/Voll; Host-/Origin-Prüfung; `POST /mcp`); Hörer der Mac-App nur auf `127.0.0.1:8631`, ab Werk an (`claudeMcp.an`); `--mcp-stdio` ohne Fenster; Werkzeugträger als Platzhalter («kommt mit Stufe 3») — gebaut, am Gerät unbestätigt (§150, C76)
-  - [ ] Stufe 3: Brücke App ↔ Knotenansicht als echter Werkzeugträger, Karten in der Assistent-Leiste, Tätigkeitsstrom, Einrichten (Schalter, Hinweis zu den Daten an Anthropic, 106f)
+  - [x] Stufe 3: Brücke App ↔ Knotenansicht als echter Werkzeugträger (`Knotenki`, `Kizentrale`, Karte aus der Antwort der Knotenansicht, Werkzeugliste im Bau), KI-Teil der Assistent-Leiste nach Blatt 30 Feld 1 (Claude-Zeile, Assistent, Selbständigkeit gemerkt, Tätigkeitsstrom, Karten, «Claudes letzten Schritt zurücknehmen» nach 114), Einrichten › Claude über MCP nach Feld 3 — gebaut, am Gerät unbestätigt (§156, C85)
+  - [x] Entscheid 114: zwei Rückgängig-Verläufe (KI-Verlauf im Werkzeugsatz, Wache beim Wirt) — beide Programme (claude/kosmovis-ki), gebaut, am Gerät unbestätigt (§156, C85)
+  - [ ] Stufe 4: Mappe-, Skizzen-, Modell-, Kamera-, Abbruch- und Verlauf-Werkzeuge
+    - [x] `mappe_lesen`, `skizzen_lesen` (auch als Bild), `bild_ansehen`, `lauf_abbrechen` über die Heim-Wege — gebaut, am Gerät unbestätigt (§156, C85)
+    - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — erst mit der Mappe am Mac («Visbox eigenständig», Schritt 3)
+  - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
+  - [ ] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste (Karten «Vorschlag des Assistenten» stehen schon)
+  - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)
 
@@ -8138,7 +8147,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Messung am Heim-PC: auf-20261020-292 (local), dazu Vorschau-Geometrie bei Steuerstärke 0,8/1,0 und 8/12 Schritten — Ergebnis `71c2049`, acht Befunde
   - [x] Befunde aus 292 behoben: ruhiger Hintergrund, AgX und Belichtung je Stimmung, Überstrahlung gemessen, Gelände ohne Material, Standpunkte mit Seitenverhältnis, bestellte Bildgrösse, Vorschau-Steuerstärke 1,0, `geom_iou` null mit Grund, Ergebnis bei unbekannter Material-id, 409 beim Anlegen; neue Himmelsbilder — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Nachmessung am Heim-PC: auf-20261020-293 (local) — Ergebnis `94fe5c3`: nichts überstrahlt, aber milchig, flach, ohne Schatten; Haus verschwimmt bei winter/morgen/nebel/bedeckt; sechs Befunde
-  - [x] Befunde aus 293 behoben: Sonnenlampe aus dem Himmelsbild und Fülllicht, Hintergrund mit festem Abstand (Vorprobe), graue Platte, AgX «Medium High Contrast», tiefere Blaue Stunde, `qa.kontrast_haus_hintergrund`, Messung auch bei «nur Grundlage», KI-Schritt mit Untergrenze 1024 px, Messboden auch neben Gelände — gebaut, am Gerät unbestätigt (§156, C85)
+  - [x] Befunde aus 293 behoben: Sonnenlampe aus dem Himmelsbild und Fülllicht, Hintergrund mit festem Abstand (Vorprobe), graue Platte, AgX «Medium High Contrast», tiefere Blaue Stunde, `qa.kontrast_haus_hintergrund`, Messung auch bei «nur Grundlage», KI-Schritt mit Untergrenze 1024 px, Messboden auch neben Gelände — gebaut, am Gerät unbestätigt (§158, C87)
   - [ ] Nachmessung am Heim-PC: auf-20261020-294 (local) — Schatten, Kontrast je Stimmung, je zwei KI-Bilder mit architektonischem Prompt, Vorschau auf 480er-Grundlage
   - [ ] Schrift-Artefakte im Vordergrund der KI-Bilder (B5 aus 293; 294 misst, ob die graue Platte mit Schatten hilft)
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)

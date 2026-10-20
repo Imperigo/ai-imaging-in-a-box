@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -32,6 +33,7 @@ STEMPEL = BAU / "BAUSTAND.json"
 #: Was den Bau bestimmt und nicht schon in HERKUNFT.json steht.
 QUELLEN = ("kosmovis/HERKUNFT.json", "kosmovis/package-lock.json",
            "kosmovis/apps/visbox-knoten/src/main.tsx", "kosmovis/apps/visbox-knoten/src/mappe.ts",
+           "kosmovis/apps/visbox-knoten/src/ki-wirt.ts",
            "kosmovis/apps/visbox-knoten/src/visbox.css", "kosmovis/apps/visbox-knoten/index.html",
            "kosmovis/apps/visbox-knoten/vite.config.ts")
 
@@ -70,6 +72,11 @@ def main(argv=None) -> int:
         if braucht_npm_ci():
             subprocess.run(["npm", "ci", "--no-audit", "--no-fund"], cwd=KOSMOVIS, check=True)
         subprocess.run(["npm", "run", "build"], cwd=APP, check=True)
+        # KI-BEDIENUNG STUFE 3: die Werkzeugliste der Knotenansicht in den Bau, damit die
+        # Mac-App sie Claude nennen kann, bevor die Knotenansicht offen ist. `vite build` leert
+        # dist/ — darum danach, geschrieben von der Probe, die sie sonst gegen die Quelle prueft.
+        subprocess.run(["npx", "vitest", "run", "test/ki-werkzeugliste.test.ts"], cwd=APP,
+                       check=True, env={**os.environ, "VISBOX_KI_LISTE_SCHREIBEN": "1"})
     stempele()
     print(f"Bau gestempelt: {STEMPEL.relative_to(WURZEL)}")
     return 0

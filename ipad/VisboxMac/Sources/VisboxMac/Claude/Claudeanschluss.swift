@@ -21,8 +21,9 @@ import VisboxKern
 ///    Rechner sein (`Mcpzugang.gegenstelleIstLokal`) — die zweite Wand hinter dem Binden.
 /// 3. **Ab Werk an** (Entscheid 108 B), abschaltbar mit der Einstellung `claudeMcp.an`.
 ///
-/// Der Werkzeugtraeger ist bis Stufe 3 ein Platzhalter (`Mcpplatzhalter`): `visbox_status`
-/// antwortet, alles andere sagt «kommt mit Stufe 3».
+/// Der Werkzeugtraeger ist seit Stufe 3 die Knotenansicht und die Mac-App selbst
+/// (`Knotentraeger` → `Kizentrale`): Was etwas aendert, wird eine Karte in der Assistent-Leiste,
+/// ausser im Coop oder in Voll; Loeschen und Rendern immer.
 ///
 /// *Gebaut, am Gerät unbestätigt (20.10.2026)* — hier nicht übersetzt (Linux kennt `Network`
 /// nicht); übersetzt in der Prüfstrecke am Mac.
@@ -57,6 +58,17 @@ final class Claudeanschluss: ObservableObject {
             case .gescheitert(let grund): return "Claude über MCP läuft nicht: \(grund)"
             }
         }
+
+        /// Fuer die Zeile oben in der Assistent-Leiste (`Claudezeile` im Kern).
+        var kernlage: Claudehoererlage {
+            switch self {
+            case .aus: return .aus
+            case .startet: return .startet
+            case .bereit: return .bereit
+            case .belegt: return .gestoert("Anschluss \(Mcp.anschluss) belegt")
+            case .gescheitert(let grund): return .gestoert(grund)
+            }
+        }
     }
 
     @Published private(set) var lage: Lage = .aus
@@ -70,7 +82,8 @@ final class Claudeanschluss: ObservableObject {
     init() {
         let fassung = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
             as? String ?? "0.0.0"
-        kern = Mcpkern(traeger: Mcpplatzhalter(ort: .inDerApp), fassung: fassung)
+        // SEIT STUFE 3: die Knotenansicht und die Mac-App selbst, nicht mehr der Platzhalter.
+        kern = Mcpkern(traeger: Knotentraeger(zentrale: Kizentrale.gemeinsam), fassung: fassung)
     }
 
     /// Beim App-Start: nur, wenn eingeschaltet.

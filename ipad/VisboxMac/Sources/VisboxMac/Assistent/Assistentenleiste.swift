@@ -9,7 +9,8 @@ import VisboxKern
 
 // DIE SEITENLEISTE DES ASSISTENTEN — Blatt 14, gezeichnet nach der Entwurfsflaeche.
 //
-// Rechts am Fenster: «Assistent · läuft am Heim-PC», das Gespraech, darunter die violett
+// Rechts am Fenster: oben der KI-Teil (`Kileiste`, Blatt 30 Feld 1: Claude, Assistent mit
+// Modell, Selbständigkeit, Tätigkeit, Karten von Claude und Assistent), das Gespraech, darunter die violett
 // gerahmte Karte «Vorschlag:» mit «Anwenden · Ablehnen · Ändern», gestrichelt die Grenzen,
 // unten das Eingabefeld. OHNE RECHNER («Visbox eigenstaendig», Schritt 2, Entscheid 103b)
 // steht statt des Felds der Satz der Sperre (`Leitungsschalter.sperre`), und nichts geht
@@ -174,8 +175,11 @@ struct Assistentenleiste: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Assistent · läuft am Heim-PC")
-                .font(.headline)
+            // BLATT 30, FELD 1 (KI-Bedienung Stufe 3): Claude, der Assistent mit seinem Modell,
+            // der Schalter «Selbständigkeit», der Strom und die Karten — vor dem Gespraech.
+            Kileiste(assistentSatz: Assistentenkopf.satz(modell.zeile, heimEingerichtet: true),
+                     zentrale: .gemeinsam, anschluss: .gemeinsam)
+            Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     // `angezeigt`, nicht `beitraege`: Die Nachricht, die gerade unterwegs ist,
