@@ -430,7 +430,9 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
 
     darf, warum = karte_auskunft()
-    print(f"Karte: {'frei' if darf else 'NICHT frei'} — {warum}")
+    # VOR DEM ERSTEN AUFTRAG und vor einem moeglichen Entladen (auf-20261020-291): Was beim
+    # Auftrag galt — etwa «entladen: qwen3:14b» —, steht je Auftrag unter «Karte:».
+    print(f"Karte vor dem Durchgang: {'frei' if darf else 'NICHT frei'} — {warum}")
 
     # Die Ablagen dieses Laufs, in der Reihenfolge, in der sie abgegangen werden.
     # Die Bruecke zuerst, weil sie den laengeren Betrieb hinter sich hat.
@@ -587,6 +589,8 @@ def _berichte(bericht: dict) -> None:
         # Der Grund stand da, der Zustand nicht, und der Vorgabewert des `get` hat den
         # fehlenden Schluessel als Auskunft verkleidet.
         print(f"  {kennung}: {e.get('tat', '?')} — {str(e.get('grund') or e.get('begruendung') or '')[:160]}")
+        if e.get("karte"):
+            print(f"    Karte: {str(e['karte'])[:200]}")
         if e.get("grund_vermerkt") not in (True, None):
             print(f"    Grund NICHT am Auftrag vermerkt: {e['grund_vermerkt']}")
         w = e.get("wache")

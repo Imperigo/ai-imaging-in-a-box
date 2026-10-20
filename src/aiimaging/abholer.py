@@ -263,7 +263,10 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                # verzweigen. `None` heisst: es lag kein Grund an.
                "grund_vermerkt": None,
                # Der flache Name des Teilbilds, nur nach einem Abbruch (20.10.2026).
-               "teilbild": None}
+               "teilbild": None,
+               # Warum die Karte frei war, wenn eine Auskunft etwas sagte — etwa, dass das
+               # eigene Sprachmodell entladen wurde (auf-20261020-291). `None`: nichts gesagt.
+               "karte": None}
 
     try:
         auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -307,6 +310,10 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         antwort["grund"] = warum
         _grund_vermerken(quelle, ordner, antwort)
         return antwort
+    # WARUM DIE KARTE FREI WAR (auf-20261020-291): Hat der Abholer dafuer das eigene
+    # Sprachmodell entladen, steht der Satz «… entladen: qwen3:14b …» hier — bis dahin
+    # verwarf `_karte_frei` ihn, und das Protokoll zeigte nur das «NICHT frei» von vorher.
+    antwort["karte"] = warum or None
 
     # ZU WENIG GRAFIKSPEICHER: WARTEN MIT GRUND, NICHT LADEN UND STERBEN (B161/B1).
     # Dieselbe Form wie oben: Status bleibt `queued`, der Grund steht am Laufzettel.
@@ -1851,7 +1858,8 @@ def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
         )
     darf, warum = darf_rechnen()
     if darf:
-        return True, ""
+        # Der Grund geht mit — er traegt den Satz des Entladens (auf-20261020-291).
+        return True, warum or ""
     return False, (f"Der Auftrag trägt 'idle_window_only' und die Karte ist nicht frei: "
                    f"{warum}")
 

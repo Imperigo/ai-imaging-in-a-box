@@ -176,8 +176,10 @@ def test_anwenden_entlaedt_und_startet_wie_rechne(server, lauf, tmp_path):
     finally:
         server._rechne_im_hintergrund = echt
     assert code == 200, antwort
-    # DIESELBE ANTWORT WIE POST /api/rechne
-    assert set(antwort) == {"gestartet", "schritte_gesamt", "entwurf", "varianten"}
+    # DIESELBE ANTWORT WIE POST /api/rechne — dazu, seit auf-20261020-291, der Satz des
+    # Entladens (`entladen`), wenn das Sprachmodell einen sagte.
+    assert set(antwort) - {"entladen"} == {"gestartet", "schritte_gesamt", "entwurf",
+                                            "varianten"}
     assert antwort["gestartet"] is True and antwort["varianten"] == 3
     assert reihenfolge == ["entlade", "lauf"], "erst entladen, dann rechnen"
     assert lauf[0]["varianten"] == 3

@@ -1181,8 +1181,24 @@ def anwenden(vorschlag, *, starte, entlade=None, mappe: dict | None = None):
     einstellungen, varianten = pruefe_vorschlag(vorschlag, mappe)
     if entlade is None:
         entlade = Ollama().entlade
-    entlade()
-    return starte(einstellungen, varianten)
+    befund = entlade()
+    ergebnis = starte(einstellungen, varianten)
+    # DER SATZ DES ENTLADENS GEHT MIT (auf-20261020-291): Er wurde hier verworfen, und am Mac
+    # kam «Nicht entladen: …» nie an — gerechnet wurde trotzdem, und niemand wusste, warum
+    # die Karte voll blieb. Er steht als `entladen` im Ergebnis des Starts.
+    return _mit_entladen(ergebnis, befund)
+
+
+def _mit_entladen(ergebnis, befund):
+    """``ergebnis`` (Wörterbuch, oder ``(nutzlast, code)`` wie im Server) um ``entladen``."""
+    if not (isinstance(befund, dict) and befund.get("satz")):
+        return ergebnis
+    eintrag = {"entladen": befund.get("entladen"), "satz": str(befund["satz"])}
+    if isinstance(ergebnis, dict):
+        return dict(ergebnis, entladen=eintrag)
+    if isinstance(ergebnis, tuple) and ergebnis and isinstance(ergebnis[0], dict):
+        return (dict(ergebnis[0], entladen=eintrag), *ergebnis[1:])
+    return ergebnis
 
 
 # ================================================ der Abholer und das eigene Modell
