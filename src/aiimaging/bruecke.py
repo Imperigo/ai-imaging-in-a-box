@@ -50,6 +50,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -131,7 +132,9 @@ FELD_FREIGABE_KNOTEN = "visbox_freigabe"
 #: in 0..1, ``vorschau`` ist ein flacher Artefaktname, ``rest_s`` ist ``None``, solange es
 #: keine Schätzung gibt.
 FELD_FORTSCHRITT = "progress"
-FORTSCHRITT_PHASEN = ("blender", "bildmodell", "pruefung")
+#: ``abgebrochen`` seit 20.10.2026: der Endstand nach einem Abbruch (Geräteprobe der
+#: HomeStation) — vorher blieb die letzte Phase stehen, als liefe der Auftrag noch.
+FORTSCHRITT_PHASEN = ("blender", "bildmodell", "pruefung", "abgebrochen")
 
 #: Das letzte fertige Zwischenbild eines **abgebrochenen** Auftrags (``RenderJob.teilbild``,
 #: derselbe Vertrag). Nur bei ``cancelled``, ohne Gütewerte — die Oberfläche zeigt es als
@@ -380,8 +383,10 @@ def _freigabe(laufzettel: dict, fremde_freigabe_gilt: bool) -> tuple[bool, str]:
     marke = laufzettel.get(FELD_FREIGABE_KNOTEN)
     if (isinstance(marke, dict) and marke.get("am")
             and laufzettel.get("status") != STATUS_AWAITING):
-        return True, (f"Freigegeben per Klick in der Visbox-Knotenansicht am {marke['am']} — "
-                      f"ein Mensch hat entschieden, nicht die Brücke.")
+        # WIE FREIGEGEBEN WURDE, sagt die Marke selbst (seit 20.10.2026, `durch`) — bis
+        # dahin stand hier immer «per Klick», auch bei einem Aufruf ueber die API.
+        return True, (f"Freigegeben am {marke['am']} ({marke.get('durch') or 'ueber /approve'}) "
+                      f"— die Marke setzt die Visbox-Freigabe, nicht die Brücke.")
     if not fremde_freigabe_gilt:
         return False, (
             "Der Freigabe-Token dieses Auftrags stammt von der Brücke SELBST — ihr "
@@ -469,6 +474,11 @@ def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict
         )
     ordner = Path(verzeichnis)
     ziel = ordner / DATEI_LAUFZETTEL
+    with laufzettel_sperre(ziel):
+        return _setze_status_gesperrt(ziel, status, fehler)
+
+
+def _setze_status_gesperrt(ziel: Path, status: str, fehler) -> dict:
     laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
     laufzettel["status"] = status
     laufzettel["updated_at"] = _jetzt()
@@ -482,7 +492,14 @@ def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict
         laufzettel.setdefault(FELD_WORKER_SEIT, laufzettel["updated_at"])
     if fehler is not None:
         laufzettel["error"] = fehler
-    _schreibe_atomar(ziel, laufzettel)
+    # Nur `running` haelt sich an ein inzwischen gesetztes `cancelled` (Geraeteprobe
+    # 20.10.2026): Das ist der Uebergang, der einen Abbruch ueberschreiben konnte. Ein
+    # ausdruecklich gesetzter Endzustand bleibt die Sache des Aufrufers — der Abholer sieht
+    # vor `done` selbst nach (`abholer._steht_abgebrochen_in`).
+    if status == STATUS_RUNNING:
+        _laufzettel_zurueckschreiben(ziel, laufzettel)
+    else:
+        _schreibe_atomar(ziel, laufzettel)
     return laufzettel
 
 
@@ -516,14 +533,15 @@ def vermerke_grund(verzeichnis, grund: str) -> dict:
     """
     ordner = Path(verzeichnis)
     ziel = ordner / DATEI_LAUFZETTEL
-    laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
-    text = str(grund or "").strip()
-    if text:
-        laufzettel[FELD_MELDUNG] = text
-    else:
-        laufzettel.pop(FELD_MELDUNG, None)
-    laufzettel["updated_at"] = _jetzt()
-    _schreibe_atomar(ziel, laufzettel)
+    with laufzettel_sperre(ziel):
+        laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
+        text = str(grund or "").strip()
+        if text:
+            laufzettel[FELD_MELDUNG] = text
+        else:
+            laufzettel.pop(FELD_MELDUNG, None)
+        laufzettel["updated_at"] = _jetzt()
+        _laufzettel_zurueckschreiben(ziel, laufzettel)
     return laufzettel
 
 
@@ -609,13 +627,15 @@ def setze_fortschritt(verzeichnis, progress) -> dict:
         BrueckenError: Laufzettel fehlt, oder der Fortschritt passt nicht zur Abmachung.
     """
     ziel = Path(verzeichnis) / DATEI_LAUFZETTEL
-    laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
-    if progress is None:
-        laufzettel.pop(FELD_FORTSCHRITT, None)
-    else:
-        laufzettel[FELD_FORTSCHRITT] = pruefe_fortschritt(progress)
-    laufzettel["updated_at"] = _jetzt()
-    _schreibe_atomar(ziel, laufzettel)
+    geprueft = None if progress is None else pruefe_fortschritt(progress)
+    with laufzettel_sperre(ziel):
+        laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
+        if geprueft is None:
+            laufzettel.pop(FELD_FORTSCHRITT, None)
+        else:
+            laufzettel[FELD_FORTSCHRITT] = geprueft
+        laufzettel["updated_at"] = _jetzt()
+        _laufzettel_zurueckschreiben(ziel, laufzettel)
     return laufzettel
 
 
@@ -632,6 +652,11 @@ def setze_teilbild(verzeichnis, name: str) -> dict:
     """
     ordner = Path(verzeichnis)
     ziel = ordner / DATEI_LAUFZETTEL
+    with laufzettel_sperre(ziel):
+        return _setze_teilbild_gesperrt(ordner, ziel, name)
+
+
+def _setze_teilbild_gesperrt(ordner: Path, ziel: Path, name: str) -> dict:
     laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
     if laufzettel.get("status") != STATUS_CANCELLED:
         raise BrueckenError(
@@ -649,7 +674,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
                       status: str = STATUS_DONE, uebersprungen: bool = False,
-                      engine=None, ebenen=None, grundlage=None) -> dict:
+                      engine=None, ebenen=None, grundlage=None, guete=None) -> dict:
     """Das Ergebnis danebenlegen und den Laufzettel fortschreiben — in dieser Reihenfolge.
 
     **Die Reihenfolge ist die ganze Sorgfalt dieser Funktion.** Die fremde Oberfläche
@@ -689,6 +714,8 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
         nicht_gerendert=nicht_gerendert, je_kamera=je_kamera, engine=engine,
         grundlage=grundlage,
+        # Entscheid 104: 'vorschau' | 'voll', nur wenn bestellt — auf beiden Wegen gleich.
+        guete=guete,
         ebenen=ebenen_bereitstellen(ordner, ebenen))
 
     # ZUERST das Ergebnis, DANN der Laufzettel — siehe Docstring.
@@ -802,6 +829,56 @@ def _kopiere_atomar(quelle: Path, ziel: Path) -> None:
     daneben = ziel.with_suffix(ziel.suffix + ".teil")
     shutil.copyfile(quelle, daneben)
     daneben.replace(ziel)
+
+
+#: Neben dem Laufzettel: die Datei, auf die sich alle Schreiber des Laufzettels sperren.
+SPERRE_ENDUNG = ".sperre"
+
+
+@contextmanager
+def laufzettel_sperre(ziel):
+    """Exklusiv schreiben: Lesen–Ändern–Zurückschreiben des Laufzettels unter einer Sperre.
+
+    **Anlass (Geräteprobe der HomeStation, 20.10.2026):** ``knotenweg.abbrechen`` und
+    :func:`setze_fortschritt` schrieben beide den ganzen Laufzettel, ohne Sperre. Fiel der
+    Abbruch zwischen Lesen und Zurückschreiben des Fortschritts, schrieb der Fortschritt
+    ``running`` über ``cancelled`` — der Abbruch war weg. Gesperrt wird über ``flock`` auf
+    einer Nebendatei (der Laufzettel selbst wird atomar ersetzt, eine Sperre auf ihm
+    hielte nicht). Ohne ``fcntl`` (kein POSIX) bleibt nur die Wache in
+    :func:`_laufzettel_zurueckschreiben`.
+    """
+    try:
+        import fcntl                       # POSIX: HomeStation und Mac
+    except ImportError:                    # pragma: no cover — Windows
+        yield
+        return
+    pfad = Path(ziel).with_name(Path(ziel).name + SPERRE_ENDUNG)
+    with open(pfad, "a+b") as griff:
+        fcntl.flock(griff.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(griff.fileno(), fcntl.LOCK_UN)
+
+
+def _laufzettel_zurueckschreiben(ziel: Path, laufzettel: dict) -> None:
+    """Zurückschreiben — und ein ``cancelled``, das inzwischen dasteht, **behalten**.
+
+    Die zweite Hälfte der Sicherung neben :func:`laufzettel_sperre`: Steht auf der Platte
+    ``cancelled`` und will dieser Schreiber etwas anderes, bleibt ``cancelled`` mit seiner
+    Meldung. Ein Abbruch ist ein Endzustand (wie in ``jobs``); kein Fortschritt, kein
+    ``running`` und kein ``done`` hebt ihn auf.
+    """
+    try:
+        jetzt = json.loads(Path(ziel).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        jetzt = {}
+    if (isinstance(jetzt, dict) and jetzt.get("status") == STATUS_CANCELLED
+            and laufzettel.get("status") != STATUS_CANCELLED):
+        laufzettel["status"] = STATUS_CANCELLED
+        if jetzt.get(FELD_MELDUNG):
+            laufzettel[FELD_MELDUNG] = jetzt[FELD_MELDUNG]
+    _schreibe_atomar(ziel, laufzettel)
 
 
 def _schreibe_atomar(ziel: Path, inhalt: dict) -> None:

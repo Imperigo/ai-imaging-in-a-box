@@ -298,7 +298,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # ZU WENIG GRAFIKSPEICHER: WARTEN MIT GRUND, NICHT LADEN UND STERBEN (B161/B1).
     # Dieselbe Form wie oben: Status bleibt `queued`, der Grund steht am Laufzettel.
     reicht, warum = _speicher_reicht(
-        speicher_frei, (auftrag.get("szene") or {}).get("backbone"))
+        speicher_frei, gerechnetes_backbone(auftrag.get("szene") or {}))
     if not reicht:
         antwort["grund"] = warum
         _grund_vermerken(quelle, ordner, antwort)
@@ -370,6 +370,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         antwort.update(tat=TAT_ABGEBROCHEN, grund=(
             "Abgebrochen, als der Lauf schon fertig war — kein Ergebnis geschrieben, "
             "das letzte Bild steht als Teilbild."))
+        _endstand_abgebrochen(quelle, ordner)
         antwort["teilbild"] = _teilbild_zustellen(
             quelle, ordner, bilder[-1] if bilder else None,
             Path(bilder[-1]).parent.name if bilder else None)
@@ -401,6 +402,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         **({"engine": ergebnis["engine"]} if ergebnis.get("engine") else {}),
         **({"ebenen": ergebnis["ebenen"]} if ergebnis.get("ebenen") else {}),
         **({"grundlage": ergebnis["grundlage"]} if ergebnis.get("grundlage") else {}),
+        # Entscheid 104: nur, wenn der Auftrag eine Guete trug — wie `grundlage`.
+        **({"guete": ergebnis["guete"]} if ergebnis.get("guete") else {}),
     )
     anzahl = len(ergebnis.get("bilder") or [])
     antwort.update(
@@ -427,12 +430,37 @@ def _steht_abgebrochen_in(quelle, ordner) -> bool:
         return False
 
 
+def _endstand_abgebrochen(quelle, ordner) -> None:
+    """Den Fortschritt auf :data:`PHASE_ABGEBROCHEN` setzen, das erreichte ``pct`` behalten.
+
+    Für den Abbruch NACH dem letzten Blick des Verarbeiters — sonst stuende am Auftrag
+    «pruefung, 1.0», als waere er fertig geworden. Ein Schreibfehler kostet nichts.
+    """
+    setze = getattr(quelle, "setze_fortschritt", None)
+    if setze is None:
+        return
+    try:
+        import json as _json
+        datei = Path(ordner) / bruecke.DATEI_LAUFZETTEL
+        if datei.is_file():
+            jetzt = _json.loads(datei.read_text(encoding="utf-8")).get(bruecke.FELD_FORTSCHRITT)
+        else:
+            from . import jobs as _jobs  # noqa: PLC0415
+            jetzt = _jobs.lies_job(Path(ordner).name, ordner).get("progress")
+        setze(ordner, dict(jetzt or {"pct": 1.0}, phase=PHASE_ABGEBROCHEN, rest_s=None))
+    except Exception as fehler:            # noqa: BLE001 — siehe Docstring
+        import logging
+        logging.getLogger(__name__).warning("Endstand nicht geschrieben: %s: %s",
+                                            type(fehler).__name__, fehler)
+
+
 def _teilbild_zustellen(quelle, ordner, pfad, kamera) -> str | None:
     """Das Teilbild flach in den Auftragsordner legen und am Auftrag nennen.
 
     Name ``<kamera>__teilbild.png`` (ohne Kamera ``teilbild.png``). Ohne Bild, ohne
     passende Quelle oder bei einem Schreibfehler: ``None`` — der Abbruch bleibt ein
-    Abbruch, auch ohne Teilbild. Der Fortschritt bleibt stehen, wie er zuletzt war.
+    Abbruch, auch ohne Teilbild. Den Endstand des Fortschritts (Phase
+    :data:`PHASE_ABGEBROCHEN`) hat der Verarbeiter schon geschrieben.
     """
     if not pfad or not Path(pfad).is_file():
         return None
@@ -621,7 +649,7 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # Der negative Prompt des Stils: keine Wirkung und kein Weg dorthin. Steht hier,
         # weil er sonst nirgends stuende — `komponiere` liegt nicht auf diesem Weg.
         "negativ_lage": negativ_lage(
-            ((ergebnis.get("stil_urteil") or {}).get("stil")), szene.get("backbone")),
+            ((ergebnis.get("stil_urteil") or {}).get("stil")), gerechnetes_backbone(szene)),
         # Unter welcher Hochachse gerechnet wurde, und ob sie BESTELLT oder ANGENOMMEN
         # war. Der Vertrag hat kein Feld dafuer; ohne diese Zeile stuende nirgends, unter
         # welcher Voraussetzung die Geometriezahlen des Laufs ueberhaupt gelten.
@@ -1966,6 +1994,111 @@ ANGENOMMENE_HOCHACHSE = "Y_UP"
 #: Effekte aufheben, ist damit eine plausible Erwartung und kein Befund.
 VORGABE_SEEDS = (0, 1, 2)
 
+
+def ist_vorschau(szene: dict) -> bool:
+    """Trägt die Bestellung ``vis.guete: "vorschau"``? (Owner-Entscheid 104, 20.10.2026)"""
+    return (szene or {}).get("guete") == _kosmo_szene.GUETE_VORSCHAU
+
+
+def gerechnetes_backbone(szene: dict) -> str:
+    """Welches Bildmodell dieser Auftrag **rechnet** — nicht, welches er nennt.
+
+    Bei der Vorschau immer :data:`aiimaging.backbone.VORSCHAU_BACKBONE`, auch wenn
+    ``vis.backbone`` ein anderes nennt (Entscheid 104): Die Vorschau soll in Sekunden
+    stehen, und der Demolauf vom 20.10.2026 brauchte rund neun Minuten, weil er das
+    Forschungsmodell ``qwen-image-2.1`` mit 40 Schritten rechnete. Welches gerechnet hat,
+    steht im Ergebnis (``engine_used``) und im Vermerk der Kamera. Sonst das bestellte,
+    ohne Bestellung :data:`aiimaging.render.VORGABE_BACKBONE`.
+    """
+    from . import backbone as _backbone, render as _render  # noqa: PLC0415
+    if ist_vorschau(szene):
+        return _backbone.VORSCHAU_BACKBONE
+    return (szene or {}).get("backbone") or _render.VORGABE_BACKBONE
+
+
+def schritte_des_laufs(szene: dict) -> int:
+    """Die Schritte des Bildmodells: Vorschau nach ``vorschau_schritte``, sonst wie bisher."""
+    from . import backbone as _backbone  # noqa: PLC0415
+    name = gerechnetes_backbone(szene)
+    return (_backbone.vorschau_schritte_fuer(name) if ist_vorschau(szene)
+            else _backbone.schritte_fuer(name))
+
+
+def seed_der_grundlage(geholt, kuerzel) -> int | None:
+    """Der Startwert, den die Grundlage für diese Kamera behalten hat — oder ``None``.
+
+    Ältere Grundlagen (vor dem 20.10.2026) tragen keinen; dann ``None``.
+    """
+    seeds = (geholt or {}).get("seeds") or {}
+    wert = seeds.get(str(kuerzel)) if isinstance(seeds, dict) else None
+    return wert if isinstance(wert, int) and not isinstance(wert, bool) else None
+
+
+def seeds_der_kamera(szene: dict, geholt, kuerzel, seeds) -> tuple:
+    """Welche Startwerte diese Kamera rechnet.
+
+    * ``vis.seed`` bestellt: genau dieser (Nr. 84).
+    * Vorschau ohne ``vis.seed``: genau EINER — der der Grundlage, sonst 0 (Entscheid 104).
+      Die Auswahl aus drei kostet das Dreifache, und eine Vorschau soll schnell sein.
+    * sonst ``seeds`` (Vorgabe :data:`VORGABE_SEEDS`).
+    """
+    if szene.get("seed") is not None:
+        return (szene["seed"],)
+    if ist_vorschau(szene):
+        eigener = seed_der_grundlage(geholt, kuerzel)
+        return (0 if eigener is None else eigener,)
+    return tuple(seeds) if seeds else (0,)
+
+
+#: Wohin die verkleinerten Steuerbilder der Vorschau kommen — je Kamera ein Unterordner,
+#: NIE in die Grundlage: Sie bleibt, wie Blender sie schrieb, und für die volle Güte
+#: wiederverwendbar.
+VORSCHAU_ORDNER = "_vorschau"
+
+
+def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None) -> dict:
+    """Tiefenkarte und Schönbild für den KI-Schritt der Vorschau verkleinern (Entscheid 104).
+
+    Das Seitenverhältnis bleibt, die lange Seite geht auf höchstens
+    :data:`aiimaging.backbone.VORSCHAU_LANGE_SEITE`, beide Seiten auf ein Vielfaches von
+    :data:`aiimaging.backbone.PIXEL_RASTER`. Ist die Tiefenkarte schon klein genug, bleibt
+    alles, wie es ist (``verkleinert: False``) — dann rechnet die Vorschau in der Grösse
+    der Grundlage.
+
+    Die Originale werden **nicht** angefasst: Geschrieben wird in ``ordner``.
+
+    Returns:
+        ``{tiefe_png, schoenbild_png, ki_groesse, grundlage_groesse, verkleinert, weg,
+        schoenbild_grund}``. ``schoenbild_png`` ist ``None``, wenn es keines gab oder es
+        sich nicht verkleinern liess — dann sagt ``schoenbild_grund`` warum (ein Schönbild
+        in anderer Grösse als die Tiefe brächte eine Pipeline mit Bildeingang durcheinander).
+    """
+    from . import backbone as _backbone, bildschreiben  # noqa: PLC0415
+    breite, hoehe = bildschreiben.png_masse(tiefe_png)
+    ziel_b, ziel_h = _backbone.vorschau_groesse(
+        breite, hoehe, lange_seite=lange_seite or _backbone.VORSCHAU_LANGE_SEITE)
+    befund = {"grundlage_groesse": [breite, hoehe], "ki_groesse": [ziel_b, ziel_h],
+              "verkleinert": (ziel_b, ziel_h) != (breite, hoehe), "weg": None,
+              "tiefe_png": str(tiefe_png), "schoenbild_png": schoenbild_png,
+              "schoenbild_grund": None}
+    if not befund["verkleinert"]:
+        return befund
+    ordner = Path(ordner)
+    ordner.mkdir(parents=True, exist_ok=True)
+    tiefe_klein = ordner / "tiefe.png"
+    befund["weg"] = bildschreiben.skaliere_png(tiefe_png, tiefe_klein, ziel_b, ziel_h)["weg"]
+    befund["tiefe_png"] = str(tiefe_klein)
+    if schoenbild_png and Path(schoenbild_png).is_file():
+        try:
+            schoen_klein = ordner / "schoenbild.png"
+            bildschreiben.skaliere_png(schoenbild_png, schoen_klein, ziel_b, ziel_h)
+            befund["schoenbild_png"] = str(schoen_klein)
+        except (bildschreiben.SchreibError, OSError, ValueError) as fehler:
+            befund["schoenbild_png"] = None
+            befund["schoenbild_grund"] = (f"Schoenbild nicht verkleinert und darum nicht "
+                                          f"mitgegeben: {fehler}")
+    return befund
+
 #: Welche Richtungen gerendert werden, wenn die Szene ``cameras: "auto"`` sagt.
 #:
 #: **Drei** (Owner-Entscheid 23.08.2026), vorher eine. Wie viele automatische Standpunkte
@@ -2394,6 +2527,15 @@ FORTSCHRITT_ANTEILE = (("blender", 0.2), ("bildmodell", 0.7), ("pruefung", 0.1))
 VORSCHAU_ART = "vorschau"
 TEILBILD_ART = "teilbild"
 
+#: Die Phase am Auftrag, nachdem ein Abbruch gegriffen hat (Geräteprobe 20.10.2026). Ihr
+#: Vertrag (``RenderJobProgress.phase``, render-result.ts) nimmt jede Zeichenkette; unsere
+#: Prüfung (``bruecke.FORTSCHRITT_PHASEN``) kennt sie seither.
+PHASE_ABGEBROCHEN = "abgebrochen"
+
+#: Wie der Satz eines Abbruchs den Schritt nennt, der als nächstes gekommen wäre.
+SCHRITT_NAMEN = {"blender": "Blender", "bildmodell": "dem Bildmodell",
+                 "pruefung": "der Pruefung"}
+
 
 def _quelle_des_ordners(verzeichnis):
     """Welche Ablage dieser Auftragsordner ist — erkannt an seinem Laufzettel.
@@ -2481,9 +2623,14 @@ class _Fortschritt:
         self.pct = 0.0
         self.phase_jetzt = FORTSCHRITT_ANTEILE[0][0]
         self.vorschau = None
+        # JE BILD SEINE KAMERA (Geraeteprobe der HomeStation, 20.10.2026): Bis dahin gab es
+        # EIN `kamera_des_bilds`, das `vorschau_da` der zweiten Kamera schon umsetzte,
+        # waehrend das KI-Bild noch von der ersten war — `Schraeg__teilbild.png` war
+        # bytegleich mit dem KI-Bild von «Vorne».
         self.cycles_bild = None
+        self.cycles_kamera = None
         self.ki_bild = None
-        self.kamera_des_bilds = None
+        self.ki_kamera = None
         self.fehler: list[str] = []
 
     # --- Buchführung -----------------------------------------------------------------
@@ -2521,27 +2668,47 @@ class _Fortschritt:
         self.phase_jetzt = phase
         self.pct = min(1.0, max(self.pct, pct))
 
-    def pruefe_abbruch(self) -> None:
+    def teilbild(self) -> tuple:
+        """``(pfad, kamera)`` des Teilbilds: das letzte KI-Bild, sonst das Cycles-Bild —
+        und die Kamera DIESES Bilds, nicht die, bei der der Lauf gerade stand."""
+        if self.ki_bild:
+            return self.ki_bild, self.ki_kamera
+        return self.cycles_bild, self.cycles_kamera
+
+    def pruefe_abbruch(self, vor: str | None = None) -> None:
+        """Steht der Auftrag auf ``cancelled``? Dann den Endstand melden und aufhören.
+
+        ``vor`` ist der Schritt, der als NÄCHSTES käme — er steht im Satz (Geräteprobe
+        20.10.2026: «Phase blender» hiess es auch, wenn Blender fertig war und das
+        Bildmodell anstand). Der Endstand am Auftrag ist Phase :data:`PHASE_ABGEBROCHEN`
+        mit dem erreichten ``pct``, ohne Restzeit — vorher blieb dort «blender, 0.6» stehen.
+        """
         try:
             weg = bool(self.abgebrochen(self.ordner))
         except Exception:                  # noqa: BLE001 — unlesbar ist kein Abbruch
             weg = False
         if weg:
-            raise AuftragAbgebrochen(
-                f"Abgebrochen vor Kamera {self.i} von {self.n} (Phase {self.phase_jetzt}).",
-                teilbild=self.ki_bild or self.cycles_bild, kamera=self.kamera_des_bilds)
+            schritt = SCHRITT_NAMEN.get(vor or "", None)
+            satz = (f"Abgebrochen bei Kamera {max(1, min(self.i, self.n))} von {self.n}, "
+                    f"vor {schritt}." if schritt else
+                    f"Abgebrochen nach Kamera {self.i} von {self.n}.")
+            self.phase_jetzt = PHASE_ABGEBROCHEN
+            self.dauern = []               # keine Restzeit mehr
+            self._sende()
+            pfad, kamera = self.teilbild()
+            raise AuftragAbgebrochen(satz, teilbild=pfad, kamera=kamera)
 
     # --- die Übergänge ---------------------------------------------------------------
     def kamera(self, i: int) -> None:
         self.i, self.beginn = i, self.uhr()
-        self.pruefe_abbruch()
+        self.pruefe_abbruch("blender")
         self._setze("blender", (i - 1) / self.n)
         self._sende()
 
     def vorschau_da(self, kuerzel, beauty_png) -> None:
         if not beauty_png or not Path(beauty_png).is_file():
             return
-        self.cycles_bild, self.kamera_des_bilds = str(beauty_png), str(kuerzel)
+        self.cycles_bild, self.cycles_kamera = str(beauty_png), str(kuerzel)
         name = f"{kuerzel}__{VORSCHAU_ART}.png"
         if not bruecke._ist_flacher_name(name):
             return
@@ -2555,13 +2722,13 @@ class _Fortschritt:
             self.vorschau = vorher
 
     def phase(self, phase: str) -> None:
-        self.pruefe_abbruch()
+        self.pruefe_abbruch(phase)
         self._setze(phase, (self.i - 1 + self._anteil_vor(phase)) / self.n)
         self._sende()
 
     def ki_bild_da(self, kuerzel, bild_png) -> None:
         if bild_png and Path(bild_png).is_file():
-            self.ki_bild, self.kamera_des_bilds = str(bild_png), str(kuerzel)
+            self.ki_bild, self.ki_kamera = str(bild_png), str(kuerzel)
 
     def kamera_fertig(self, *, gerechnet: bool) -> None:
         if gerechnet and self.beginn is not None:
@@ -2570,7 +2737,7 @@ class _Fortschritt:
         self._setze(self.phase_jetzt, self.i / self.n)
 
     def ende(self) -> None:
-        self.pruefe_abbruch()
+        self.pruefe_abbruch(None)
         self._setze("pruefung", 1.0)
         self.i = self.n
         self._sende()
@@ -2591,6 +2758,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 zwischenspeicher=None,
                 zeitdeckel_s: int | None = None,
                 kamera_huellbox=None,
+                vorschau_lange_seite: int | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None,
                 _raeume=None, _pipeline_lage=None, _kontext_vorbereiten=None,
@@ -2642,6 +2810,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     ``_abgebrochen`` (Vorgabe :func:`steht_abgebrochen`) sind die Nähte dafür, ``_uhr`` die
     Uhr der Restzeit. Steht der Auftrag zwischen zwei Phasen auf ``cancelled``, endet der
     Lauf mit :class:`AuftragAbgebrochen`.
+
+    **Güte** (Owner-Entscheid 104, 20.10.2026): Trägt die Bestellung ``vis.guete:
+    "vorschau"``, rechnet jede Kamera mit :data:`aiimaging.backbone.VORSCHAU_BACKBONE`
+    (gleich, was ``vis.backbone`` nennt), mit dessen ``vorschau_schritte``, mit genau
+    einem Startwert (``vis.seed``, sonst der der Grundlage, sonst 0) und auf verkleinerten
+    Steuerbildern (:func:`vorschau_steuerbilder`, lange Seite ``vorschau_lange_seite``,
+    Vorgabe :data:`aiimaging.backbone.VORSCHAU_LANGE_SEITE`). Das KI-Bild wird danach auf
+    die Grösse der Grundlage gebracht und **geprüft wie jedes Bild** (104a). Die Grundlage
+    selbst bleibt unverändert. ``'voll'`` oder kein Feld: alles wie zuvor.
 
     Returns:
         Ein ``verarbeite(auftrag) -> {bilder, geometrie_urteil, zeiten, kameras}``, wie
@@ -2782,7 +2959,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         berichte_neu: dict = {}
         # EIN FESTER STARTWERT FUER DIE SERIE (Nr. 84): genau einer statt der Auswahl aus
         # drei — sonst behielte jede Variante womoeglich einen anderen «besten» Wurf.
-        seeds_lauf = (szene["seed"],) if szene.get("seed") is not None else seeds
+        # DIE GUETE (Entscheid 104): Bei der Vorschau ein Startwert je Kamera, das schnelle
+        # Bildmodell, seine Schritte und kleinere Steuerbilder — siehe `seeds_der_kamera`,
+        # `gerechnetes_backbone`, `schritte_des_laufs`, `vorschau_steuerbilder`.
+        vorschau = ist_vorschau(szene)
 
         kameras = szene.get("kameras")
         if szene.get("innenraum"):
@@ -2843,7 +3023,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # je Kamera — eine Antwort, die drueben lesbar ist, statt eines Absturzes.
         # `None` («nicht geprueft») haelt nichts an: Ungeprueft ist nicht dasselbe wie
         # fehlend, und der Ladeweg fragt dieselbe Frage noch einmal (`render.lade_modell`).
-        backbone_name = szene.get("backbone") or render.VORGABE_BACKBONE
+        backbone_name = gerechnetes_backbone(szene)
+        schritte_lauf = schritte_des_laufs(szene)
         lage_modell = (pipeline_lage(backbone_name) if pipeline_lage is not None
                        else {"rechenbar": None})
         if lage_modell.get("rechenbar") is False and not nur_grundlage:
@@ -3290,20 +3471,36 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if bestand_auftrag:
                 prompt_kamera = bestand_auftrag["gerechnet"]
 
+            # DIE STEUERBILDER DER VORSCHAU (Entscheid 104): verkleinerte Kopien neben der
+            # Kamera, die Grundlage bleibt, wie Blender sie schrieb. Bei der vollen Guete
+            # gehen die Originale hin wie bisher.
+            steuer = (vorschau_steuerbilder(tiefe, bericht.get("beauty_png"),
+                                            aus / VORSCHAU_ORDNER,
+                                            lange_seite=vorschau_lange_seite)
+                      if vorschau else None)
+            seeds_kamera = seeds_der_kamera(szene, geholt, kuerzel, seeds)
+
             def _rendere_seed(seed, ziel_png):
+                # Bei einer verkleinerten Vorschau entsteht das KI-Bild klein neben der
+                # Kamera und wird danach auf die Groesse der Grundlage gebracht — die
+                # Pruefung misst Punkt fuer Punkt gegen dieselbe Soll-Karte wie bei «voll».
+                klein = steuer is not None and steuer["verkleinert"]
+                roh_png = (str(aus / VORSCHAU_ORDNER / Path(ziel_png).name) if klein
+                           else ziel_png)
                 erg = rendern(
                     render.RenderAuftrag(
-                        depth_png=tiefe,
+                        depth_png=steuer["tiefe_png"] if steuer else tiefe,
                         prompt=prompt_kamera,
                         controlnet_staerke=szene.get("controlnet_staerke", 0.8),
-                        backbone=szene.get("backbone") or render.VORGABE_BACKBONE,
+                        backbone=backbone_name,
                         # Die Bestellung kennt kein Schrittfeld; es gilt die Modellkarte
-                        # des Eintrags, sonst 20 (auf-20260930-208).
-                        schritte=render.backbone.schritte_fuer(
-                            szene.get("backbone") or render.VORGABE_BACKBONE),
-                        beauty_png=bericht.get("beauty_png"),
+                        # des Eintrags, sonst 20 (auf-20260930-208) — bei der Vorschau
+                        # `vorschau_schritte` des Eintrags (Entscheid 104).
+                        schritte=schritte_lauf,
+                        beauty_png=(steuer["schoenbild_png"] if steuer
+                                    else bericht.get("beauty_png")),
                         seed=seed,
-                        ausgabe_png=ziel_png,
+                        ausgabe_png=roh_png,
                     ),
                     modell=_render_modell,
                 )
@@ -3312,11 +3509,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         f"Kamera {kuerzel!r}, seed {seed}: Render {erg.get('status')} — "
                         f"{erg.get('error') or erg.get('maengel')}"
                     )
+                if klein:
+                    from . import bildschreiben as _bs  # noqa: PLC0415
+                    gb, gh = steuer["grundlage_groesse"]
+                    _bs.skaliere_png(erg["bild_png"], ziel_png, gb, gh)
+                    erg = dict(erg, bild_png=str(ziel_png), ki_bild_klein=erg["bild_png"])
                 return erg
 
             fort.phase("bildmodell")
             ergebnis, urteil, auswahl = _bester_seed(
-                seeds_lauf, aus, kuerzel, _rendere_seed,
+                seeds_kamera, aus, kuerzel, _rendere_seed,
                 lambda png: messen(png, soll_pruefung, breite=breite, hoehe=hoch,
                                    modell=_tiefen_modell, schwelle=grenze,
                                    maske=maskenbefund.get("maske"), **ausblendung),
@@ -3432,6 +3634,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             urteil[_kosmo_szene.URTEIL_BESTAND] = _kosmo_szene.bestand_vermerk(bestand_auftrag,
                                                                                kontext)
             urteil["messboden"] = messboden_befund
+            urteil[_kosmo_szene.URTEIL_GUETE] = (
+                _guete_vermerk(szene, backbone_name, schritte_lauf, auswahl, steuer)
+                if vorschau else None)
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -3456,7 +3661,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             kennung = grundlage_kennung(auftrag.get("job_id") or ordner.name, berichte_neu)
             lege_grundlage_ab(grundlagen_wurzel, kennung,
                               job_id=auftrag.get("job_id") or ordner.name,
-                              szene=szene, berichte=berichte_neu)
+                              szene=szene, berichte=berichte_neu,
+                              seeds=_gewaehlte_seeds(urteile))
             grundlage = {"id": kennung, "wiederverwendet": False}
         # Die gemeldete Zahl traegt mit, wie sie entstanden ist — siehe `_kameraspanne`.
         # Ohne das waere der Uebergang von einer auf drei Kameras eine stille
@@ -3483,6 +3689,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             "grund": "",
             "nur_grundlage": nur_grundlage,
             "grundlage": grundlage,
+            # Entscheid 104: nur, wenn bestellt — sonst fehlt das Feld im Ergebnis.
+            "guete": szene.get("guete"),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
@@ -3636,12 +3844,16 @@ MULTIPASS_STEHENGEBLIEBEN = {
 
 #: Felder von :class:`aiimaging.render.RenderAuftrag`, die `verarbeiter` **setzt**.
 RENDER_DURCHGEREICHT = {
-    "depth_png": "der normalisierte Tiefenpass aus dem Multipass",
+    "depth_png": ("der normalisierte Tiefenpass aus dem Multipass — bei der Vorschau "
+                  "eine verkleinerte Kopie (vorschau_steuerbilder)"),
     "prompt": "szene['prompt'] — bereits übersetzt (kosmo_szene.lies_szene)",
-    "backbone": "szene['backbone'], sonst render.VORGABE_BACKBONE",
+    "backbone": ("gerechnetes_backbone: bei vis.guete 'vorschau' immer "
+                 "backbone.VORSCHAU_BACKBONE, sonst szene['backbone'], sonst "
+                 "render.VORGABE_BACKBONE"),
     "controlnet_staerke": "szene['controlnet_staerke'] aus 'faithful'",
     "beauty_png": "bericht['beauty_png'] — schaltet den Bildbearbeitungsmodus ein",
-    "seed": "je Durchgang aus VORGABE_SEEDS, siehe _bester_seed",
+    "seed": ("je Durchgang aus VORGABE_SEEDS, siehe _bester_seed; genau einer bei vis.seed "
+             "oder bei der Vorschau (seeds_der_kamera)"),
     "ausgabe_png": "Ablageort je Kamera und Startwert",
 }
 
@@ -3681,6 +3893,9 @@ RENDER_STEHENGEBLIEBEN = {
         # SEIT 30.09.2026 TEILWEISE GESCHLOSSEN: `Backbone.schritte_vorgabe` gibt es; belegt
         # ist es für qwen-image-2.1 (40, Modellkarte, auf-208). Für z-image-turbo nicht
         # gesetzt — die 8 aus der Registry-Notiz sind nicht gegen 20 gemessen.
+        # SEIT 20.10.2026 (Entscheid 104) rechnet die VORSCHAU mit den 8 Schritten
+        # (`Backbone.vorschau_schritte`, `schritte_des_laufs`); die volle Güte bleibt bei 20,
+        # bis Auftrag 288 die Frage misst.
         "grund": "Eine LÜCKE gegen die eigene Registry: `backbone.py` sagt zu "
                  "`z-image-turbo` wörtlich «destilliert, auf 8 Schritte OHNE "
                  "klassifikatorfreie Führung trainiert». Der Vorgabewert ist 20, und es "
@@ -3834,14 +4049,22 @@ def _vergleichbar(wert):
     return json.loads(json.dumps(wert, sort_keys=True, default=str))
 
 
-def lege_grundlage_ab(wurzel, kennung: str, *, job_id, szene: dict, berichte: dict) -> Path:
-    """Die Grundlage eines Laufs ablegen — atomar, damit nie eine halbe gelesen wird."""
+def lege_grundlage_ab(wurzel, kennung: str, *, job_id, szene: dict, berichte: dict,
+                      seeds: dict | None = None) -> Path:
+    """Die Grundlage eines Laufs ablegen — atomar, damit nie eine halbe gelesen wird.
+
+    ``seeds`` (``{kuerzel: startwert}``, seit 20.10.2026) ist der Startwert, den jede Kamera
+    dieses Laufs behalten hat. Eine Vorschau auf dieser Grundlage ohne ``vis.seed`` rechnet
+    genau ihn (Entscheid 104) — sonst stuende ihr Bild neben einem anderen Wurf.
+    """
     import json
     ziel = _grundlage_pfad(wurzel, kennung)
     ziel.parent.mkdir(parents=True, exist_ok=True)
     satz = {"schema": GRUNDLAGE_SCHEMA, "id": kennung, "job_id": str(job_id),
             "bestellt": {f: _vergleichbar(szene.get(f)) for f in GRUNDLAGE_MUSS_PASSEN},
             "sonne": _vergleichbar(szene.get("sonne")),
+            "seeds": {str(k): int(v) for k, v in (seeds or {}).items()
+                      if isinstance(v, int) and not isinstance(v, bool)},
             "kameras": [{"kuerzel": str(k), "bericht": _vergleichbar(b)}
                         for k, b in berichte.items()]}
     tmp = ziel.with_suffix(".json.tmp")
@@ -3888,6 +4111,46 @@ def lies_grundlage(wurzel, kennung: str, szene: dict) -> dict:
                 f"{', '.join(fehlt)} fehlt auf der Platte. Die Grundlage ist nicht mehr "
                 f"vollstaendig — bitte neu rendern.")
     return satz
+
+
+def _gewaehlte_seeds(urteile) -> dict:
+    """``{kamera: behaltener Startwert}`` der gerechneten Kameras — für die Grundlage."""
+    raus = {}
+    for u in urteile or ():
+        gewaehlt = ((u or {}).get("seedauswahl") or {}).get("gewaehlt")
+        if u.get("kamera") is not None and isinstance(gewaehlt, int) \
+                and not isinstance(gewaehlt, bool) and not u.get("doppelt_von"):
+            raus[str(u["kamera"])] = gewaehlt
+    return raus
+
+
+def _guete_vermerk(szene, backbone_name, schritte, auswahl, steuer) -> dict:
+    """Was die Vorschau an der Rechnung dieser Kamera geändert hat (Entscheid 104).
+
+    Steht am Kameraurteil unter :data:`aiimaging.kosmo_szene.URTEIL_GUETE` und trägt den
+    Satz in ``verdict.reason``. ``backbone_bestellt`` ist, was ``vis.backbone`` nannte
+    (``None``: nichts) — weicht es ab, steht hier, dass die Vorschau es übergangen hat.
+    """
+    bestellt = szene.get("backbone")
+    vermerk = {
+        "guete": _kosmo_szene.GUETE_VORSCHAU,
+        "backbone": backbone_name,
+        "backbone_bestellt": bestellt,
+        "schritte": schritte,
+        "seed": (auswahl or {}).get("gewaehlt"),
+        "ki_groesse": list((steuer or {}).get("ki_groesse") or ()) or None,
+        "grundlage_groesse": list((steuer or {}).get("grundlage_groesse") or ()) or None,
+        "verkleinert": bool((steuer or {}).get("verkleinert")),
+        "weg": (steuer or {}).get("weg"),
+        "hinweise": [],
+    }
+    if bestellt and bestellt != backbone_name:
+        vermerk["hinweise"].append(
+            f"Bestellt war {bestellt!r}; die Vorschau rechnet immer {backbone_name!r}. Fuer "
+            f"das bestellte Modell 'Voll' waehlen.")
+    if (steuer or {}).get("schoenbild_grund"):
+        vermerk["hinweise"].append(steuer["schoenbild_grund"])
+    return vermerk
 
 
 def pose_aus_bericht(bericht: dict) -> dict | None:

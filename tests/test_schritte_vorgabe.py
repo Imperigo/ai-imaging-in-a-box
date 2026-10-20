@@ -71,4 +71,9 @@ def test_der_homeworker_nimmt_die_karte_wo_die_bestellung_schweigt(bericht, aus,
 def test_der_abholer_fragt_das_register():
     """Der Abholer baut den Auftrag in einer inneren Funktion; geprüft wird die Stelle."""
     quelle = Path(render.__file__).with_name("abholer.py").read_text(encoding="utf-8")
-    assert "schritte=render.backbone.schritte_fuer(" in quelle
+    # Seit dem 20.10.2026 (Entscheid 104) ueber `schritte_des_laufs`: «voll» fragt
+    # `schritte_fuer`, die Vorschau `vorschau_schritte_fuer` — beide das Register.
+    assert "schritte=schritte_lauf" in quelle
+    assert "_backbone.schritte_fuer(name))" in quelle
+    from aiimaging import abholer
+    assert abholer.schritte_des_laufs({"backbone": "qwen-image-2.1"}) == 40

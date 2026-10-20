@@ -1247,3 +1247,128 @@ def schreibe_kontrollbild(ziel, art: str, breite: int, hoehe: int, *,
     return schreibe_graustufen_png(
         ziel, kontrollwerte(art, breite, hoehe, seed=seed), breite, hoehe,
         bittiefe=bittiefe)
+
+
+# ======================================================================================
+# Ein Bild auf eine andere Grösse — für die Vorschau (Owner-Entscheid 104, 20.10.2026)
+# ======================================================================================
+
+def png_masse(png) -> tuple[int, int]:
+    """``(breite, hoehe)`` aus dem Kopf einer PNG-Datei — ohne den Inhalt zu entpacken."""
+    kopf = Path(png).read_bytes()[:24]
+    if len(kopf) < 24 or kopf[:8] != b"\x89PNG\r\n\x1a\n" or kopf[12:16] != b"IHDR":
+        raise SchreibError(f"{png}: kein PNG-Kopf.")
+    return struct.unpack(">II", kopf[16:24])
+
+
+def _gewichte(n_alt: int, n_neu: int) -> list[list[tuple[int, float]]]:
+    """Je Zielpunkt die Quellpunkte und ihr Gewicht — Flächenmittel kleiner, linear grösser.
+
+    **Verkleinern** mittelt die Fläche, die ein Zielpunkt bedeckt, mit Bruchteilen an den
+    Rändern; **vergrössern** legt zwischen die zwei nächsten Quellpunkte eine Gerade, mit
+    den Punktmitten aufeinander. Kein nächster Nachbar: Er liesse dünne Kanten springen.
+    """
+    if n_neu == n_alt:
+        return [[(i, 1.0)] for i in range(n_alt)]
+    raus: list[list[tuple[int, float]]] = []
+    if n_neu < n_alt:
+        massstab = n_alt / n_neu
+        for j in range(n_neu):
+            lo, hi = j * massstab, (j + 1) * massstab
+            teile = [(i, min(hi, i + 1) - max(lo, i))
+                     for i in range(int(math.floor(lo)), min(n_alt, int(math.ceil(hi))))]
+            summe = sum(w for _, w in teile) or 1.0
+            raus.append([(i, w / summe) for i, w in teile if w > 0])
+        return raus
+    for j in range(n_neu):
+        x = (j + 0.5) * n_alt / n_neu - 0.5
+        x = min(max(x, 0.0), n_alt - 1.0)
+        i0 = int(math.floor(x))
+        i1 = min(i0 + 1, n_alt - 1)
+        t = x - i0
+        raus.append([(i0, 1.0 - t), (i1, t)] if t > 0 else [(i0, 1.0)])
+    return raus
+
+
+def _kanal_umrechnen(werte: Sequence[float], breite: int, hoehe: int,
+                     neu_b: int, neu_h: int) -> list[float]:
+    """Ein Kanal auf ``neu_b x neu_h`` — getrennt in Zeilen und Spalten, reine stdlib."""
+    gx, gy = _gewichte(breite, neu_b), _gewichte(hoehe, neu_h)
+    zeilen = []
+    for y in range(hoehe):
+        zeile = werte[y * breite:(y + 1) * breite]
+        zeilen.append([sum(zeile[i] * w for i, w in g) for g in gx])
+    raus: list[float] = []
+    for g in gy:
+        for x in range(neu_b):
+            raus.append(sum(zeilen[i][x] * w for i, w in g))
+    return raus
+
+
+def skaliere_png(quelle_png, ziel_png, breite: int, hoehe: int, *,
+                 _ohne_pillow: bool = False) -> dict:
+    """Ein PNG auf ``breite x hoehe`` bringen — Graustufen in ihrer Bittiefe, Farbe in 8 Bit.
+
+    **Wofür (Owner-Entscheid 104, 20.10.2026).** Die Vorschau rechnet das KI-Bild kleiner
+    als die Grundlage: Tiefenkarte und Schönbild werden für den KI-Schritt verkleinert,
+    das KI-Bild danach auf die Grösse der Grundlage zurückgebracht — damit die Prüfung
+    Punkt für Punkt gegen dieselbe Soll-Karte misst wie bei der vollen Güte. Die Grundlage
+    selbst wird **nicht** angefasst; diese Funktion schreibt immer eine neue Datei.
+
+    **Zwei Wege, ein Ergebnis in der Form.** Ist Pillow da (MIT-CMU, im Render-Umfeld
+    ohnehin geladen), rechnet es — es ist rund hundertmal schneller. Sonst rechnet die
+    stdlib (:func:`_kanal_umrechnen`): Der Kern braucht keine Abhängigkeit (Regel 4), und
+    die Proben laufen auch ohne. Beide Wege mitteln beim Verkleinern die Fläche und legen
+    beim Vergrössern eine Gerade; bitgleich sind sie nicht, und das muss nicht sein — es
+    ist ein Vorschaubild.
+
+    Returns:
+        ``{breite, hoehe, quelle_breite, quelle_hoehe, art, weg}`` mit ``art`` aus
+        ``grau``/``farbe`` und ``weg`` aus ``pillow``/``stdlib``.
+
+    Raises:
+        SchreibError: keine Zielgrösse, oder die Quelle ist weder Graustufen noch 8-Bit-Farbe.
+    """
+    from aiimaging import bildlesen        # lokal wie in `tiefe_exr_zu_png`, siehe dort
+
+    breite, hoehe = int(breite), int(hoehe)
+    if breite <= 0 or hoehe <= 0:
+        raise SchreibError(f"Keine Zielgrösse: {breite} x {hoehe}.")
+    quelle, ziel = Path(quelle_png), Path(ziel_png)
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    qb, qh = png_masse(quelle)
+    befund = {"breite": breite, "hoehe": hoehe, "quelle_breite": qb, "quelle_hoehe": qh}
+
+    if not _ohne_pillow:
+        try:
+            from PIL import Image          # Pillow (MIT-CMU) — nur, wenn es da ist
+        except ImportError:
+            Image = None
+        if Image is not None:
+            with Image.open(quelle) as bild:
+                art = "grau" if bild.mode in ("L", "I;16", "I;16B", "I") else "farbe"
+                if art == "farbe" and bild.mode != "RGB":
+                    bild = bild.convert("RGB")
+                verfahren = (Image.Resampling.BOX if breite * hoehe < qb * qh
+                             else Image.Resampling.BILINEAR)
+                bild.resize((breite, hoehe), verfahren).save(ziel, format="PNG")
+            return dict(befund, art=art, weg="pillow")
+
+    try:
+        werte, b, h, bittiefe = bildlesen._png_lesen(quelle)
+    except bildlesen.BildError:
+        werte = None
+    if werte is not None:
+        neu = _kanal_umrechnen(werte, b, h, breite, hoehe)
+        schreibe_graustufen_png(ziel, neu, breite, hoehe,
+                                bittiefe=bittiefe if bittiefe in (8, 16) else 16)
+        return dict(befund, art="grau", weg="stdlib")
+    try:
+        farben, b, h = bildlesen.lies_png_farben(quelle)
+    except bildlesen.BildError as fehler:
+        raise SchreibError(f"{quelle}: weder Graustufen noch 8-Bit-Farbe ({fehler}).") from None
+    kanaele = [_kanal_umrechnen([p[k] for p in farben], b, h, breite, hoehe)
+               for k in range(3)]
+    schreibe_farb_png(ziel, [(int(round(r)), int(round(g)), int(round(bl)))
+                             for r, g, bl in zip(*kanaele)], breite, hoehe)
+    return dict(befund, art="farbe", weg="stdlib")

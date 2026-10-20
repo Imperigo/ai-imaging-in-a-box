@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261020-290",
+ "art": "qa",
+ "rang": 77,
+ "erstellt": "2026-10-20T16:00:00Z",
+ "beschreibung": "Entscheide 104–104b am Geraet: eine Variante Vorschau gegen Voll auf einer bestehenden Grundlage — Zeiten je Phase, Groesse, Seed, Schritte, Backbone, QA; dazu die Abbruch-Fixes der Geraeteprobe vom 20.10. nachgeprueft",
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig mit der schnellen Vorschau (Entscheide 104–104b) und den Fixes aus der Geraeteprobe vom 20.10. — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS SICH AENDERT: vis.guete 'vorschau' rechnet immer z-image-turbo, 8 Schritte, genau EINEN Startwert (vis.seed, sonst der der Grundlage, sonst 0) und Steuerbilder mit langer Seite <= 1024 (Raster 16); das KI-Bild wird auf die Groesse der Grundlage gebracht und geprueft; Ergebnis oben guete, verdict.reason beginnt mit 'VORSCHAU'. 'voll' oder ohne Feld wie bisher (z-image-turbo 20 Schritte, Auswahl aus drei Startwerten). Abbruch: Teilbild traegt die Kamera seines Bilds, Satz 'vor Blender / vor dem Bildmodell / vor der Pruefung', progress.phase 'abgebrochen' als Endstand; der Laufzettel wird unter Sperre geschrieben. ABLAUF ueber die Bruecke der Visbox-Flaeche (POST /bruecke/jobs mit 'scene' und 'model.glb', dann /approve), synthetische glb aus tools/make_test_glb.py (gegliederter Testbau), cameras 'auto', render.resolution [1600, 1000] (Vorgabe der Gegenseite), render.samples 64. 1) GRUNDLAGE: vis.skip true -> grundlage.id merken, Zeit Blender gesamt. 2) VORSCHAU: vis.grundlage = id aus 1, vis.guete 'vorschau', vis.seed 482913, Prompt 'morning light, soft shadows'. 3) VOLL: dasselbe mit vis.guete 'voll'. 4) VORSCHAU OHNE SEED UND MIT FREMDEM MODELL: wie 2 ohne vis.seed und mit vis.backbone 'qwen-image-2.1' -> erwartet engine_used 'z-image-turbo', 8 Schritte, Startwert der Grundlage (bei Grundlage aus skip: 0). Fuer 2–4 je Lauf und je Kamera zurueck: Zeit je Phase (Laden des Modells, Bildmodell, Pruefung; aus Log/timings), Gesamtzeit je Variante, KI-Bildgroesse (befund.json guete_vermerk.ki_groesse) und gelieferte Groesse, Seed, Schritte, Backbone (engine_used), QA-Werte (geometry_fidelity, spearman, rho_maske gerichtet, geom_iou, verdict.passed, verdict.reason woertlich), Spitze GPU-Speicher. Liegt die Vorschau je Variante unter 2 Minuten (Ziel L4-17)? 5) GUETE + SKIP: vis.guete 'vorschau' mit vis.skip true -> erwartet abgewiesen mit 'vis.guete' im Grund, kein Blender, kein KI-Lauf. 6) ABBRUCH-PROBEN (nach dem Fix): (a) Wiederholung 'Abbruch vor Kamera 2': zwei Kameras, abbrechen nachdem Kamera 1 ihr KI-Bild hat und Kamera 2 Blender rechnet -> Status cancelled, teilbild-Name muss die Kamera des Bilds tragen (Kamera 1), Datei bytegleich mit deren KI-Bild, Satz woertlich, progress (phase, pct, rest_s) woertlich. (b) Abbruch waehrend der Pruefung (Phase pruefung) einer Kamera -> Status, teilbild-Name, Satz, Endstand progress. (c) cameras 'auto' an einem Quader, bei dem eine Ueber-Eck-Ansicht als Zwilling uebersprungen wird -> kamera_n, Folge von kamera_i/phase/pct, Restzeit (rest_s je Meldung), und ob die Restzeit nach der Zwillingskamera plausibel bleibt. 7) FREIGABE: nach einem /approve ueber die API steht in job.json visbox_freigabe.durch neutral 'freigegeben (/approve)' bzw. mit Geraet, nie mehr 'Klick in der Knotenansicht'. Falls eine Stufe scheitert: dort anhalten, Satz und Laufzettel zurueckgeben. Keine Personen in Bildern — enthaelt eines eine, verwerfen, mit anderem Startwert wiederholen und vermerken. NICHT: Code aendern; Schwellen senken; Grundlagen-Dateien von Hand anpassen; die 20 Schritte von 'voll' umstellen (das ist Auftrag 288); Pfade, Orts- oder Benutzernamen in die Rueckgabe (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261020-289",
+  "entscheide": [
+   "104",
+   "104a",
+   "104b"
+  ],
+  "einbau": "C74",
+  "video_analyse": "L4-17",
+  "vertrag": "RenderScene.vis.guete, RenderResult.guete",
+  "ziel_s_je_variante": 120
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Die Laeufe nacheinander, nie zwei GPU-Laeufe gleichzeitig.",
+  "hinweise": [
+   "Nach git pull Dienst und Abholer neu starten (siehe Anweisung).",
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "Schritte 1 bis 5: Status, Grund, grundlage.id/wiederverwendet, guete im Ergebnis.",
+  "Tabelle je Lauf (Vorschau, Voll, Vorschau ohne Seed/fremdes Modell) und Kamera: Zeit je Phase (Laden, Bildmodell, Pruefung), Gesamtzeit, KI-Groesse und gelieferte Groesse, Seed, Schritte, engine_used, QA-Werte, GPU-Spitze.",
+  "Urteil in einem Satz: liegt die Vorschau unter 2 Minuten je Variante, und wie weit liegt ihre QA von Voll weg?",
+  "Abbruch-Proben 6a–6c: Status, teilbild-Name (und ob bytegleich mit dem Bild seiner Kamera), Satz woertlich, progress-Endstand; bei 6c kamera_n, Meldungsfolge und rest_s.",
+  "Freigabe-Vermerk aus 7 woertlich.",
+  "Bilder (klein) von Vorschau und Voll je Kamera in die Ergebnisablage."
+ ]
+}

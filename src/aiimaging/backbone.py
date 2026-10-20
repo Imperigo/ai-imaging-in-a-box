@@ -312,6 +312,18 @@ class Backbone:
     schritte_vorgabe: int | None = None
     schritte_beleg: str | None = None
 
+    #: Die Schrittzahl der **Vorschau** (Owner-Entscheid 104, 20.10.2026: Schalter «Güte:
+    #: Vorschau | Voll», Vorgabe Vorschau). Gilt nur, wenn ein Auftrag ``vis.guete:
+    #: "vorschau"`` trägt — die volle Güte rechnet weiter mit :attr:`schritte_vorgabe` bzw.
+    #: :data:`SCHRITTE_STANDARD`. ``None`` heisst: für die Vorschau nicht belegt.
+    #:
+    #: Ein eigenes Feld und nicht :attr:`schritte_vorgabe`, weil die beiden Fragen getrennt
+    #: zu messen sind: Ob ``z-image-turbo`` auch in voller Güte mit 8 statt 20 Schritten
+    #: rechnen soll, ist Auftrag 288 — hier nebenbei die Vorgabe zu ändern hiesse, jede volle
+    #: Variante ungemessen umzustellen.
+    vorschau_schritte: int | None = None
+    vorschau_schritte_beleg: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -902,6 +914,12 @@ _eintrag(Backbone(
     # 0.0 ist hier der richtige Wert, nicht ein ausgeschalteter — und er bedeutet
     # zugleich, dass ein negativer Prompt an diesem Modell nichts ausrichtet.
     fuehrung=0.0,
+    # DIE VORSCHAU RECHNET MIT DEN 8 SCHRITTEN DER DESTILLATION (Entscheid 104). Die volle
+    # Güte bleibt bei SCHRITTE_STANDARD (20) — ob auch sie auf 8 geht, misst Auftrag 288.
+    vorschau_schritte=8,
+    vorschau_schritte_beleg=("Modellkarte Tongyi-MAI/Z-Image-Turbo: auf 8 Schritte ohne "
+                             "Führung destilliert (8 NFEs); gemessen 1,5 s je Bild bei "
+                             "512 px und 4,8 s bei 1024 px (auf-20260930-199)"),
     # AM GERÄT GEMESSEN (auf-20260818-13): Mit unserer Karte (nah = hell) liegt
     # |spearman| bei 0.38–0.52, mit umgedrehter bei 0.79–0.85 — bei JEDER
     # ControlNet-Stärke rund das Doppelte. Das ControlNet erwartet nah = dunkel.
@@ -1364,6 +1382,60 @@ def schritte_fuer(name: str | None, standard: int = SCHRITTE_STANDARD) -> int:
     eintrag = BACKBONES.get(name or "")
     wert = getattr(eintrag, "schritte_vorgabe", None) if eintrag else None
     return wert if wert else standard
+
+
+#: Die beiden Güten am Render-Knoten (Owner-Entscheid 104, 20.10.2026). Fehlt das Feld in
+#: der Bestellung, gilt :data:`GUETE_VOLL` — so rechnet jeder Auftrag von vor dem Schalter
+#: weiter wie bisher.
+GUETE_VORSCHAU = "vorschau"
+GUETE_VOLL = "voll"
+GUETEN = (GUETE_VORSCHAU, GUETE_VOLL)
+
+#: Die längste Seite des KI-Bilds einer Vorschau, in Pixeln. Gewählt, weil
+#: ``z-image-turbo`` bei 1024 px gemessen 4,8 s je Bild braucht (auf-20260930-199) und
+#: 1024 die Grösse ist, auf die das Modell trainiert ist; die Vorgabe der Gegenseite
+#: (1600 x 1000) wird damit zu 1024 x 640.
+VORSCHAU_LANGE_SEITE = 1024
+
+#: Auf welches Vielfache die Seiten des KI-Bilds gerundet werden. 16, weil der VAE der
+#: Diffusionsmodelle dieses Registers um den Faktor 8 verkleinert und der Transformer die
+#: Fläche in Felder von 2 x 2 teilt — eine Seite, die nicht durch 16 geht, schneidet die
+#: Pipeline still zu.
+PIXEL_RASTER = 16
+
+
+def vorschau_schritte_fuer(name: str | None) -> int:
+    """Die Schrittzahl der Vorschau: :attr:`Backbone.vorschau_schritte`, sonst die volle.
+
+    Ohne belegten Wert fällt sie auf :func:`schritte_fuer` zurück — eine Vorschau ohne
+    Beleg rechnet also nicht schneller, aber auch nicht mit einer erfundenen Zahl.
+    """
+    eintrag = BACKBONES.get(name or "")
+    wert = getattr(eintrag, "vorschau_schritte", None) if eintrag else None
+    return wert if wert else schritte_fuer(name)
+
+
+def vorschau_groesse(breite: int, hoehe: int, *, lange_seite: int = VORSCHAU_LANGE_SEITE,
+                     raster: int = PIXEL_RASTER) -> tuple[int, int]:
+    """Die Grösse des KI-Bilds einer Vorschau — Seitenverhältnis gehalten, auf ``raster``.
+
+    Ist die Vorlage schon nicht grösser als ``lange_seite``, bleibt sie, wie sie ist
+    (``(breite, hoehe)`` zurück): Die Vorschau soll nicht hochrechnen, und eine Vorlage, die
+    die volle Güte so annimmt, nimmt auch die Vorschau so an.
+
+    Sonst wird die lange Seite auf das grösste Vielfache von ``raster`` unter
+    ``lange_seite`` gesetzt und die kurze aus dem Seitenverhältnis gerechnet, auf das
+    nächste Vielfache gerundet (mindestens eines). 1600 x 1000 → 1024 x 640.
+    """
+    breite, hoehe = int(breite), int(hoehe)
+    if breite <= 0 or hoehe <= 0:
+        raise BackboneError(f"Keine Bildgrösse: {breite} x {hoehe}.")
+    if max(breite, hoehe) <= lange_seite:
+        return breite, hoehe
+    lang = max(raster, (lange_seite // raster) * raster)
+    kurz_roh = lang * min(breite, hoehe) / max(breite, hoehe)
+    kurz = max(raster, int(kurz_roh / raster + 0.5) * raster)
+    return (lang, kurz) if breite >= hoehe else (kurz, lang)
 
 
 def hole(name: str) -> Backbone:

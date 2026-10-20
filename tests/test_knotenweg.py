@@ -120,7 +120,11 @@ def test_erst_der_klick_eines_menschen_gibt_frei(tmp_path):
         "auf `queued` liest die Knotenansicht eine Meldung als «vom Abholer zurückgestellt»")
     gelesen = bruecke.lies_auftrag(ordner)
     assert gelesen["freigegeben"] is True
-    assert "Knotenansicht" in gelesen["freigabe_grund"]
+    # Seit der Geraeteprobe vom 20.10.2026 ehrlich: Ohne Angabe des Wegs steht nicht
+    # «Klick in der Knotenansicht» — denselben Weg nimmt ein Aufruf ueber die API.
+    assert "Visbox-Freigabe" in gelesen["freigabe_grund"]
+    assert knotenweg.FREIGABE_DURCH_NEUTRAL in gelesen["freigabe_grund"]
+    assert "Klick" not in gelesen["freigabe_grund"]
     assert gelesen["maengel"] == ()
     assert bruecke.offene_auftraege(tmp_path / "ablage") == [ordner]
 

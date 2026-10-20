@@ -142,6 +142,16 @@ GRUNDLAGE_KENNUNG = re.compile(r"^gl-[0-9a-f]{16}$")
 #: 0..2147483647, damit das Werkzeugschema ohne Sonderfall auskommt.
 SEED_HOECHSTENS = 2147483647
 
+#: Die Güten des Schalters am Render-Knoten (Owner-Entscheid 104, 20.10.2026), im Vertrag als
+#: ``vis.guete``. Fehlt das Feld, gilt «voll» — so rechnet jeder Auftrag von vor dem Schalter.
+GUETEN = _backbone.GUETEN
+GUETE_VORSCHAU = _backbone.GUETE_VORSCHAU
+GUETE_VOLL = _backbone.GUETE_VOLL
+
+#: Unter diesem Schlüssel trägt ein Kameraurteil, was die Güte an der Rechnung geändert hat
+#: (Bildmodell, Schritte, Startwert, Grösse). ``None`` heisst: volle Güte, nichts geändert.
+URTEIL_GUETE = "guete_vermerk"
+
 
 def ist_fremde_job_id(wert) -> bool:
     """Trägt dieser Text die Kennungsform der fremden Warteschlange?
@@ -625,7 +635,7 @@ BEKANNTE_FELDER = {
     "render": ("resolution", "faithful", "samples", "sun",
                "environment", "himmel", "belichtung", "rauschschwelle", "passes"),
     "style": ("prompt", "mode", "refs"),
-    "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed"),
+    "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed", "guete"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -1653,6 +1663,28 @@ def _lies_grundlage_und_seed(vis: dict, skip, mit_skizze: bool, maengel: list):
     return grundlage, seed
 
 
+def _lies_guete(vis: dict, skip, maengel: list):
+    """``vis.guete`` — ``'vorschau'``, ``'voll'`` oder ``None`` (nicht bestellt, gilt «voll»).
+
+    Owner-Entscheid 104 (20.10.2026): Schalter «Güte: Vorschau | Voll» am Render-Knoten. Ein
+    unbekannter Wert wird als Mangel gemeldet und **nicht** als «voll» gelesen — eine
+    vertippte Vorschau, die still neun Minuten rechnet, wäre genau der Fehler, den der
+    Schalter beheben soll. Zusammen mit ``vis.skip: true`` ist jede Güte ein Mangel: «nur
+    Grundlage» rechnet kein KI-Bild, und eine Güte ohne KI-Bild bestellt nichts.
+    """
+    guete = vis.get("guete") if isinstance(vis, dict) else None
+    if guete is None:
+        return None
+    if guete not in GUETEN:
+        maengel.append(f"'vis.guete' ist {guete!r}. Erwartet ist 'vorschau' oder 'voll' "
+                       f"(oder das Feld weglassen: dann gilt 'voll').")
+        return None
+    if skip:
+        maengel.append(f"'vis.guete' ({guete!r}) und 'vis.skip' zugleich: «Nur Grundlage» "
+                       f"rechnet kein KI-Bild — eine Güte dafuer bestellt nichts.")
+    return guete
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -1976,6 +2008,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
                 f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
                                                skizze_block is not None, maengel)
+    guete = _lies_guete(vis, schalter.get("skip"), maengel)
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
@@ -2027,6 +2060,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         # Startwert fuer die ganze Serie. `None` = nicht bestellt.
         "grundlage": grundlage,
         "seed": seed,
+        # Entscheid 104: 'vorschau' | 'voll' | None (nicht bestellt — gilt 'voll').
+        "guete": guete,
         "sonne": sonne,
         # Bestellte Ebenen (E124, Schritt 1, 29.09.2026): Tupel aus EBENEN_ARTEN, leer =
         # keine bestellt.
@@ -2105,6 +2140,9 @@ DURCHGEREICHT = {
     "grundlage": "abholer.verarbeiter: Kameras und Multipass aus der abgelegten "
                  "Grundlage (abholer.lies_grundlage), kein Blender-Lauf",
     "seed": "abholer.verarbeiter: genau dieser Startwert statt der Auswahl aus drei",
+    "guete": ("abholer.verarbeiter: 'vorschau' rechnet VORSCHAU_BACKBONE mit dessen "
+              "vorschau_schritte, einem Startwert und verkleinerten Steuerbildern; "
+              "render-result 'guete' (Entscheid 104)"),
     # Seit 26.08.2026 — vorher der GEFAEHRLICHSTE der stehengebliebenen Felder, weil das
     # Bild danach richtig AUSSAH (auf-vis-20260825-15 Posten 5.3).
     "sonne": ("seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut/"
@@ -3281,7 +3319,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                  zeiten=None, uebersprungen: bool = False,
                  nicht_gerendert=(), je_kamera=None,
                  zwei_tore_urteil=None, engine=None, ebenen=None,
-                 grundlage=None) -> dict:
+                 grundlage=None, guete=None) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -3337,6 +3375,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         je_kamera: Je Kamera ``{kamera, geometrie_urteil?, stil_urteil?}`` und — seit
             dem 23.09.2026 — die vier Felder :data:`FELDER_LIEFERUNG`. Sie wandern
             geprueft nach ``qa_je_kamera[]`` (siehe :func:`_lieferung_je_kamera`).
+        guete: ``'vorschau'`` oder ``'voll'``, wenn der Auftrag ``vis.guete`` trug
+            (Entscheid 104) — dann steht es oben als ``guete``, und bei der Vorschau
+            beginnt ``verdict.reason`` mit «VORSCHAU». ``None``: Feld fehlt im Ergebnis
+            (rückwärtsverträglich).
 
     Returns:
         Ein Wörterbuch nach ``kosmovis.render-result/v2``, plus ein Feld ``hinweise``,
@@ -3692,6 +3734,11 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     #
     # OB ES EIN BILD GIBT, liest der Satz am `bild_png` DESSELBEN Urteils (Durchsicht
     # 23.09.2026) — bis dahin hiess es auch ohne Bild «Das Bild zeigt den Raum».
+    # DIE VORSCHAU SAGT ES ZUERST (Entscheid 104a, 20.10.2026): geprueft wie jedes Bild, aber
+    # gerechnet mit weniger — das gehoert vor jede andere Aussage, sonst liest jemand das
+    # Abzeichen einer Vorschau wie das eines vollen Bilds.
+    if guete == GUETE_VORSCHAU and not uebersprungen:
+        grund = vorschau_satz((geometrie_urteil or {}).get(URTEIL_GUETE)) + " " + grund
     _vermerk_urteil = geometrie_urteil or {}
     innen = innenansicht_satz(_vermerk_urteil.get(URTEIL_INNENANSICHT),
                               gerendert=bool(_vermerk_urteil.get("bild_png")))
@@ -3781,7 +3828,37 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     if isinstance(grundlage, dict) and grundlage.get("id"):
         ergebnis["grundlage"] = {"id": str(grundlage["id"]),
                                  "wiederverwendet": grundlage.get("wiederverwendet") is True}
+    # DIE GUETE (Entscheid 104, Vertrag 20.10.2026): nur, wenn der Auftrag sie trug — ein
+    # Ergebnis ohne das Feld ist eines von vor dem Schalter, und dort gilt «voll».
+    if guete in GUETEN:
+        ergebnis["guete"] = guete
     return ergebnis
+
+
+#: Der Anfang des Urteilssatzes einer Vorschau — dasselbe Wort, das am Bild steht.
+VORSCHAU_ANFANG = "VORSCHAU"
+
+
+def vorschau_satz(vermerk) -> str:
+    """Der Satz, mit dem ``verdict.reason`` einer Vorschau beginnt (Entscheid 104a).
+
+    Nennt, womit gerechnet wurde, soweit der Vermerk es weiss — Bildmodell, Schritte,
+    Grösse des KI-Bilds —, und dass geprüft wurde wie bei jedem Bild.
+    """
+    teile = []
+    if isinstance(vermerk, dict):
+        if vermerk.get("backbone"):
+            teile.append(str(vermerk["backbone"]))
+        if vermerk.get("schritte"):
+            teile.append(f"{vermerk['schritte']} Schritte")
+        if vermerk.get("seed") is not None:
+            teile.append(f"ein Startwert ({vermerk['seed']})")
+        ki = vermerk.get("ki_groesse")
+        if isinstance(ki, (list, tuple)) and len(ki) == 2:
+            teile.append(f"KI-Bild {ki[0]} x {ki[1]}")
+    womit = f" ({', '.join(teile)})" if teile else ""
+    return (f"{VORSCHAU_ANFANG}: schnell gerechnet{womit}, geprueft wie jedes Bild. Fuer "
+            f"das fertige Bild 'Voll' waehlen.")
 
 
 def engine_felder(engine) -> dict:

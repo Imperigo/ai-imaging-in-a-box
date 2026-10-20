@@ -2126,8 +2126,15 @@ class Flaeche(BaseHTTPRequestHandler):
                         wunsch = json.loads(roh or b"{}")
                     except ValueError:
                         wunsch = {}
+                    # DIE HERKUNFT EHRLICH (Geraeteprobe 20.10.2026): nur, was der Kopf sagt
+                    # (`X-Geraet`, `X-Geraet-Weg`); sonst neutral. Ein Klick in der
+                    # Knotenansicht und ein Aufruf ueber die API sehen hier gleich aus.
+                    art = self._geraeteart()
+                    durch = (f"freigegeben ueber /approve, Geraet {art} "
+                             f"({self._geraeteweg()})" if art else None)
                     self._sende(knotenweg.freigeben(self._ablage(), teile[1],
-                                                    (wunsch or {}).get("approval_token")))
+                                                    (wunsch or {}).get("approval_token"),
+                                                    durch=durch))
                 else:
                     self._sende(knotenweg.abbrechen(self._ablage(), teile[1]))
             else:

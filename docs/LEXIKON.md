@@ -2312,7 +2312,9 @@ Schritt er ist (Blender, Bildmodell, Prüfung), bei welcher Kamera von wie viele
 insgesamt ist (0 bis 1), das jüngste Vorschaubild und eine geschätzte Restzeit. Im Vertrag
 heisst das Feld `progress`. Der Anteil der drei Schritte an einer Kamera ist eine feste
 Annahme (0,2 / 0,7 / 0,1), keine Messung — er dient nur der Anzeige. Geschrieben vom Heim-PC
-(`abholer._Fortschritt`) seit dem 20.10.2026.
+(`abholer._Fortschritt`) seit dem 20.10.2026. Nach einem Abbruch steht die Phase
+«abgebrochen» mit dem erreichten Anteil da, damit der Auftrag nicht aussieht, als liefe er
+noch.
 
 **Restzeit (geschätzt)** — Wie lange ein Lauf voraussichtlich noch braucht, in ganzen Sekunden.
 Sie fehlt, bis die erste Kamera fertig gerechnet ist, denn vorher gibt es nichts, woraus man
@@ -2322,7 +2324,9 @@ abzüglich der schon gelaufenen Zeit der aktuellen Kamera.
 **Teilbild (abgebrochen)** — Das letzte fertige Zwischenbild eines Auftrags, den jemand
 mitten im Lauf abgebrochen hat: das KI-Bild der letzten fertigen Kamera, sonst ihr rohes
 Blender-Bild. Es trägt **keine** Gütewerte, weil die Prüfung nicht gelaufen ist, und
-steht nur bei einem abgebrochenen Auftrag (Vertragsfeld `teilbild`).
+steht nur bei einem abgebrochenen Auftrag (Vertragsfeld `teilbild`). Sein Name nennt die
+Kamera, zu der **das Bild** gehört — nicht die, bei der der Lauf gerade stand (seit der
+Geräteprobe vom 20.10.2026).
 
 **Kooperativer Abbruch** — Ein Abbruch, der nicht hart eingreift, sondern nur einen Vermerk
 setzt («abgebrochen»), den der Rechnende selbst liest und dann aufhört. Der Heim-PC sieht
@@ -4309,6 +4313,31 @@ sowohl die Bauform als auch die konkreten trainierten Zahlen.
 
 **Gewichte (Weights)** — Die im Training gelernten Zahlen. Sie *sind* das Können des
 Modells. Dateigrössen von mehreren Gigabyte sind üblich.
+
+**Schritte eines Bildmodells** — Ein Bildmodell malt sein Bild nicht in einem Zug, sondern
+beginnt bei reinem Rauschen und macht es in mehreren Durchgängen ein Stück klarer; jeder
+Durchgang ist ein *Schritt*. Mehr Schritte heisst meist feinere Bilder und längere Rechenzeit,
+ungefähr im selben Verhältnis. Manche Modelle sind eigens auf wenige Schritte trainiert
+(«destilliert») und brauchen nicht mehr. *Im Projekt:* z-image-turbo ist auf 8 Schritte
+destilliert und rechnet in voller Güte heute 20 (ob 8 reichen, misst Auftrag 288);
+qwen-image-2.1 rechnet 40. Die Zahl steht je Modell im Register (`backbone.py`,
+`schritte_vorgabe`, `vorschau_schritte`).
+
+**Vorschau (Güte)** — Die schnelle Stufe des Schalters «Güte: Vorschau | Voll» am
+Render-Knoten (Entscheid 104, Vorgabe). Sie rechnet immer mit z-image-turbo (auch wenn ein
+anderes Modell gewählt ist), mit einem einzigen Zufallswert statt der Auswahl aus drei, mit
+den 8 Schritten, auf die das Modell trainiert ist, und mit einem kleineren KI-Bild (lange
+Seite 1024 Pixel), das danach auf die Grösse der Blender-Grundlage gebracht wird. Das Bild
+wird geprüft wie jedes andere und trägt den Vermerk «Vorschau» (104a). Die Grundlage bleibt
+unverändert, sodass dieselbe Ansicht danach in voller Güte gerechnet werden kann. *Im
+Projekt:* Vertragsfeld `vis.guete` (`'vorschau' | 'voll'`, fehlt = `'voll'`), im Ergebnis
+`guete`; gerechnet in `abholer.verarbeiter` (`gerechnetes_backbone`, `schritte_des_laufs`,
+`seeds_der_kamera`, `vorschau_steuerbilder`). Ziel: höchstens zwei Minuten je Variante.
+
+**Steuerbild** — Ein Bild, das dem Bildmodell nicht als Vorlage zum Abmalen, sondern als
+Vorgabe dient, woran es sich halten muss — bei Visbox vor allem die Tiefenkarte (wie weit
+jeder Punkt entfernt ist) und das rohe Blender-Bild. Für die Vorschau werden verkleinerte
+Kopien davon gemacht; die Originale bleiben liegen.
 
 **Checkpoint** — Eine gespeicherte Fassung der Gewichte.
 
@@ -7559,6 +7588,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 | Datum | Änderung |
 |---|---|
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritte 2 und 6 (Protokoll 74 §147): **Rechenserver**, **Ohne Rechner**, **Rechner-Wahl**, **App-Einstellungen**; **Vorführmodus** als entfallen vermerkt |
+| 2026-10-20 | Ergaenzt aus der schnellen KI-Vorschau (Entscheide 104–104b, Protokoll 74 §148): **Vorschau (Güte)**, **Schritte eines Bildmodells**, **Steuerbild**; **Teilbild (abgebrochen)** um die Kamera des Bilds und **Fortschritt (eines Renderauftrags)** um die Phase «abgebrochen» ergänzt (Geräteprobe der HomeStation) |
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritt 1 (Protokoll 74 §146): **Eigenes Adressschema**, **App-Bündel**, **Ursprung (einer Webseite)** |
 | 2026-10-20 | Ergaenzt aus der iPad-Zeile am Mac (Protokoll 74 §144): **Gerätebuch (des Heim-PC)**, **Geräteart (Kopf einer Anfrage)**, **Netzaussetzer** |
 | 2026-10-20 | Ergaenzt aus Fortschritt, Vorschau und Teilbild am Heim-PC (Protokoll 74 §142): **Fortschritt (eines Renderauftrags)**, **Restzeit (geschätzt)**, **Teilbild (abgebrochen)**, **Kooperativer Abbruch** |

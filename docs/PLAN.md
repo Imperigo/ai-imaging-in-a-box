@@ -8045,6 +8045,12 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## v0.1.9 aus dem Demolauf 16.10. (ab Reset Di 20.10.2026, Protokoll 74 §138)
 
+> **Entschieden:** Nr. 85 (eine Grundlage, mehrere Varianten), Entscheide 99–104b — zuletzt der Schalter «Güte:
+> Vorschau | Voll» mit geprüfter Vorschau (104/104a) und der Restzeit erst nach der ersten Kamera (104b).
+> **Gemessen:** die ≈ 9 Min des Demolaufs kamen von qwen-image-2.1 (40 Schritte), nicht von der Vorgabe z-image-turbo;
+> Fortschritt, Teilbild und Vorschau nur mit Attrappen geprüft, die Geräteprobe der HomeStation fand fünf Abbruchfehler (§148).
+> **Offen:** Vorschau gegen Voll am Gerät (auf-20261020-290), die Anzeige drüben, Nr. 86–91 und die Auto-Kamera-Posten.
+
 - [x] Owner-Befund Mac: Neustart nur auf Klick, ein Fenster — Visbox 0.2.10 (§140)
 - [x] iPad koppeln per Nähe und QR-Code — Visbox 0.2.11 (§141); am Gerät: QR geht, Nähe zeigte nichts
 - [x] Visbox 0.2.12: Kopplung bleibt gemerkt (§143), iPad-Zeile am Mac und «Wer rechnet wo» nach echtem Weg, Nähe ehrlich, Netzaussetzer weich (§144), Fortschritt und Teilbild am Heim-PC (§142)
@@ -8065,6 +8071,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
+    - [x] Heim-PC gebaut: `vis.guete` 'vorschau' rechnet z-image-turbo, 8 Schritte, einen Startwert, KI-Bild ≤ 1024 px, geprüft mit Vermerk «Vorschau»; Ergebnis `guete`; beide Ablagen (Entscheide 104–104b, §148, C74)
+    - [ ] Anzeige im Bau: Schalter «Güte: Vorschau | Voll» am Render-Knoten (KosmoOrbit-Vertrag parallel)
+    - [ ] Am Gerät messen: Zeit je Phase Vorschau gegen Voll (auf-20261020-290, local)
   - [x] Fortschritt und Vorschau: `progress {phase, pct}` im Laufzettel, Cycles-Schönbild als Zwischenbild, Restzeit aus den fertigen Kameras (L4-6, Nr. 62/63/71/72; Vorschlag an UI/Integrator 20.10.) — Heim-PC gebaut, beide Ablagen (§142, C69); die Anzeige liegt drüben
   - [ ] Zeitbudget am Render-Knoten, beim Abbruch das letzte Zwischenergebnis behalten (L4-8, Nr. 70/76/80)
     - [x] Beim Abbruch das letzte Zwischenbild als `teilbild` behalten, ohne Gütewerte — Heim-PC, Blick zwischen den Phasen (§142, C69)

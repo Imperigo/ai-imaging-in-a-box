@@ -1579,3 +1579,14 @@ seinem Grund, etwa «kein Blender gefunden» oder «zu wenig Grafikspeicher». D
 Sie ändert heute noch nichts — alles rechnet weiter am Heim-PC, bis ein Rechner auf dem Gerät selbst gebaut ist. Die
 Render-Knöpfe am Knoten sehen ohne Heim-PC noch aus wie immer; erst der Klick sagt, dass es nicht geht. Und am Mac
 selbst ist die neue Fassung noch nicht ausprobiert.
+**Die schnelle KI-Vorschau (20.10.2026).** Am Render-Knoten gibt es jetzt den Schalter «Güte: Vorschau | Voll», und
+die Vorschau ist die Vorgabe. Der Anlass war eine Zeit: Eine Variante brauchte im Probelauf rund neun Minuten. Die
+Ursache war nicht das gewöhnliche Bildmodell, sondern ein grösseres Forschungsmodell, das mit 40 Schritten rechnete. Die
+Vorschau rechnet darum immer mit dem schnellen Modell, mit den 8 Schritten, auf die es trainiert ist, mit einem einzigen
+Zufallswert statt der Auswahl aus dreien und mit einem kleineren KI-Bild, das danach auf die Grösse der Blender-Grundlage
+gebracht wird. Sie wird geprüft wie jedes Bild und trägt den Vermerk «Vorschau». Die Grundlage bleibt dabei unverändert;
+dieselbe Ansicht lässt sich danach in voller Güte rechnen. Ehrlich gesagt: Wie schnell die Vorschau am Heim-PC wirklich
+ist, ist noch nicht gemessen — erwartet sind Sekunden je Bild, gemessen wird es mit dem nächsten Auftrag. Im selben Gang
+wurden fünf Fehler beim Abbrechen behoben, die eine Probe am Heim-PC gefunden hatte: Das Zwischenbild trug den Namen der
+falschen Kamera, der Satz nannte den falschen Schritt, der Fortschritt blieb stehen, die Freigabe behauptete einen Klick,
+und zwei Schreiber konnten sich den Abbruch gegenseitig überschreiben.

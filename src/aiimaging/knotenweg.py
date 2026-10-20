@@ -279,8 +279,19 @@ def liste(ablage, hoechstens: int = 50) -> list[dict]:
     return saetze
 
 
-def freigeben(ablage, job_id: str, token) -> dict:
+#: Die Herkunft einer Freigabe, wenn der Aufrufer keine nennt — neutral, weil
+#: ``/approve`` aus der Knotenansicht wie über die API gleich aussieht (Geräteprobe der
+#: HomeStation, 20.10.2026: bis dahin stand hier immer «Klick in der Knotenansicht»).
+FREIGABE_DURCH_NEUTRAL = "freigegeben (/approve)"
+
+
+def freigeben(ablage, job_id: str, token, *, durch: str | None = None) -> dict:
     """Ein Mensch hat «Freigeben» gedrückt: wartend → in der Reihe, mit Marke.
+
+    ``durch`` sagt, über welchen Weg die Freigabe kam, soweit der Aufrufer es **weiss**
+    (der Server nennt das Gerät aus ``X-Geraet``). Ohne Angabe steht
+    :data:`FREIGABE_DURCH_NEUTRAL` — nicht «Klick in der Knotenansicht», denn denselben Weg
+    nimmt auch ein Aufruf über die API.
 
     Der Token muss der sein, den :func:`lege_an` ausgegeben hat (Vergleich in konstanter
     Zeit). Ein Auftrag, der nicht wartet, bleibt unverändert — kein stiller Zustandssprung,
@@ -288,6 +299,11 @@ def freigeben(ablage, job_id: str, token) -> dict:
     """
     ordner = auftragsordner(ablage, job_id)
     pfad = ordner / bruecke.DATEI_LAUFZETTEL
+    with bruecke.laufzettel_sperre(pfad):
+        return _freigeben_gesperrt(pfad, job_id, token, durch)
+
+
+def _freigeben_gesperrt(pfad, job_id, token, durch) -> dict:
     zettel = json.loads(pfad.read_text(encoding="utf-8"))
     erwartet = str(zettel.get("approval_token") or "")
     if not erwartet or not hmac.compare_digest(str(token or ""), erwartet):
@@ -296,7 +312,9 @@ def freigeben(ablage, job_id: str, token) -> dict:
         return zettel
     zettel["status"] = bruecke.STATUS_QUEUED
     zettel["updated_at"] = _jetzt()
-    zettel[FELD_FREIGABE] = {"am": zettel["updated_at"], "durch": "Klick in der Knotenansicht"}
+    zettel[FELD_FREIGABE] = {"am": zettel["updated_at"],
+                             "durch": str(durch).strip() if durch and str(durch).strip()
+                             else FREIGABE_DURCH_NEUTRAL}
     # DER WARTEGRUND GEHT MIT DER FREIGABE WEG. Auf `queued` liest die Knotenansicht eine
     # Meldung als «abgeholt, zurückgestellt» — also als Wort des Abholers. Nachgestellt am
     # 24.09.2026 mit einem Satz «Freigegeben — wartet …»: Die Ansicht zeigte «zurückgestellt»,
@@ -310,12 +328,15 @@ def abbrechen(ablage, job_id: str) -> dict:
     """Kooperativer Abbruch, wie bei der Brücke: Endzustände bleiben, was sie sind."""
     ordner = auftragsordner(ablage, job_id)
     pfad = ordner / bruecke.DATEI_LAUFZETTEL
-    zettel = json.loads(pfad.read_text(encoding="utf-8"))
-    if zettel.get("status") not in ENDZUSTAENDE:
-        zettel["status"] = bruecke.STATUS_CANCELLED
-        zettel["updated_at"] = _jetzt()
-        zettel[bruecke.FELD_MELDUNG] = "Vom Nutzer abgebrochen."
-        _schreibe(pfad, zettel)
+    # UNTER DERSELBEN SPERRE WIE DER ABHOLER (Geraeteprobe 20.10.2026) — sonst konnte ein
+    # Fortschritt, der davor gelesen hatte, `running` ueber dieses `cancelled` schreiben.
+    with bruecke.laufzettel_sperre(pfad):
+        zettel = json.loads(pfad.read_text(encoding="utf-8"))
+        if zettel.get("status") not in ENDZUSTAENDE:
+            zettel["status"] = bruecke.STATUS_CANCELLED
+            zettel["updated_at"] = _jetzt()
+            zettel[bruecke.FELD_MELDUNG] = "Vom Nutzer abgebrochen."
+            _schreibe(pfad, zettel)
     return zettel
 
 
