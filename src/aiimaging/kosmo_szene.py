@@ -503,6 +503,15 @@ def spec_zu_kamera(spec: dict) -> dict:
             f"{', '.join(KAMERA_REFERENZPUNKTE)}; ein anderer Wert hiesse, dass die "
             f"Augenhöhe auf etwas bezogen ist, das wir nicht kennen.")
     werte["referenzpunkt"] = bezug
+    # DIE PERSPEKTIVE (Entscheid 109, 20.10.2026): 'senkrecht' heisst waagrechte Achse mit
+    # Objektiv-Shift (abholer rechnet ihn ueber `kameras.shift_aus_ziel`), 'frei' gekippt.
+    # Fehlt sie, bleibt alles wie bisher (gekippt, das Ziel wie bestellt).
+    perspektive = spec.get("perspektive")
+    if perspektive is not None and perspektive not in PERSPEKTIVEN:
+        raise SzenenError(
+            f"CameraSpec 'perspektive' ist {perspektive!r}. Erwartet ist 'senkrecht' oder "
+            f"'frei' (oder das Feld weglassen).")
+    werte["perspektive"] = perspektive
     return werte
 
 
@@ -631,7 +640,8 @@ def _auf_raster(aufl):
 #: der Grundsatz (E75 drüben, 19.09.2026) — nur sagt die Abweisung jetzt, *warum*.
 BEKANNTE_FELDER = {
     "": ("schema", "geometry", "render", "style", "vis", "cameras", "out",
-         "interior", "gelaende", "komposition", "innenansichten", "context", "skizze"),
+         "interior", "gelaende", "komposition", "innenansichten", "context", "skizze",
+         "cameras_auto"),
     "geometry": ("path", "format", "up_axis"),
     "render": ("resolution", "faithful", "samples", "sun",
                "environment", "himmel", "belichtung", "rauschschwelle", "passes",
@@ -648,6 +658,9 @@ BEKANNTE_FELDER = {
     # Seit 15.10.2026 (Owner-Entscheid 96): die Skizze vom iPad fuehrt das Bild. Gelesen in
     # `skizze_aus_szene`, gerechnet in `abholer` ueber `arbeitsgang.rechne_skizze`.
     "skizze": ("quelle", "name", "anweisung"),
+    # Seit 20.10.2026 (Entscheide 109/113, Vertrag mit dem Integrator): die Auto-Kamera mit
+    # ihren Parametern. Gelesen in `kameras_auto_aus_szene`; `abstand` prueft sie selbst.
+    "cameras_auto": ("richtungen", "augenhoehe_m", "brennweite_mm", "abstand", "perspektive"),
 }
 
 #: Die Unterfelder von ``render.environment`` (Entscheid 110, Vertrag 20.10.2026) — geprueft
@@ -740,7 +753,15 @@ NICHT_DURCHSUCHT = ("render.sun", "cameras")
 #: drüben bezog (``okff``, ``huellbox_unterkante``, ``weltnull``); ``position`` trägt die
 #: Zahl bereits im Weltsystem. Er wird darum gelesen und in den Bericht getragen, nicht
 #: angewandt.
-KAMERA_FELDER = ("name", "position", "target", "fov", "up_axis", "referenzpunkt")
+KAMERA_FELDER = ("name", "position", "target", "fov", "up_axis", "referenzpunkt",
+                 # Seit 20.10.2026 (Entscheid 109): 'senkrecht' (Shift, waagrechte Achse)
+                 # oder 'frei' (gekippt wie bisher). Fehlt es, bleibt alles wie bisher.
+                 "perspektive")
+
+#: Die beiden Werte von ``perspektive`` (CameraSpec und ``cameras_auto``).
+PERSPEKTIVE_SENKRECHT = "senkrecht"
+PERSPEKTIVE_FREI = "frei"
+PERSPEKTIVEN = (PERSPEKTIVE_SENKRECHT, PERSPEKTIVE_FREI)
 
 #: Die Schlüssel von ``render.sun``, die wir kennen — und seit dem 24.09.2026 auch prüfen.
 #:
@@ -1785,6 +1806,108 @@ def umgebung_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> dict 
     return antwort
 
 
+#: Die Vorgaben des Heim-PC fuer ``cameras_auto`` (der Vertrag hat keine). Augenhoehe und
+#: Brennweite aus :mod:`aiimaging.kameras`, «Haus fuellt» 0.70 (Entscheid 113 = gemessenes
+#: ``kameras.DECKUNGSGRAD``), Perspektive senkrecht (Entscheid 109 C).
+KAMERAS_AUTO_BRENNWEITEN = (24, 35, 50)
+KAMERAS_AUTO_HOECHSTENS = 8
+
+
+def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
+    """``cameras_auto`` → ``{richtungen, augenhoehe_m, brennweite_mm, abstand, perspektive,
+    vorgaben}`` — oder ``None`` (nicht bestellt bzw. mangelhaft, Satz in ``maengel``).
+
+    **Seit dem 20.10.2026** (Knoten «Kamera», Entscheide 109/113; Vertrag mit dem
+    Integrator). Bis dahin galten Richtungen, Augenhoehe, Brennweite und Deckungsgrad nur als
+    Einstellungen des ganzen Abholers. ``abstand`` ist ``{art: 'auto', fuellt}`` oder ``{art:
+    'fest', meter}``; ``vorgaben`` nennt, was der Heim-PC gesetzt hat. Dieselbe Pruefung
+    nimmt ``knotenweg.standpunkte_abfrage`` fuer die Vorschau der Kegel.
+    """
+    if roh is None:
+        return None
+    vorher = len(maengel)
+    if not isinstance(roh, dict):
+        maengel.append(f"'cameras_auto' ist {roh!r} und kein Block {{richtungen, ...}}.")
+        return None
+    richtungen = roh.get("richtungen")
+    if (not isinstance(richtungen, list) or not richtungen
+            or len(richtungen) > KAMERAS_AUTO_HOECHSTENS
+            or any(r not in _kameras.RICHTUNGEN for r in richtungen)
+            or len(set(richtungen)) != len(richtungen)):
+        maengel.append(
+            f"'cameras_auto.richtungen' ist {richtungen!r}. Erwartet sind 1 bis "
+            f"{KAMERAS_AUTO_HOECHSTENS} verschiedene Kuerzel aus "
+            f"{', '.join(_kameras.RICHTUNGSFOLGE)}.")
+    auge = _bereichszahl(roh, "augenhoehe_m", "cameras_auto.augenhoehe_m", 0.5, 50,
+                         _kameras.AUGENHOEHE_M, maengel)
+    brennweite = roh.get("brennweite_mm")
+    if brennweite is None:
+        brennweite = _kameras.BRENNWEITE_MM
+    elif (isinstance(brennweite, bool) or not isinstance(brennweite, (int, float))
+          or brennweite not in KAMERAS_AUTO_BRENNWEITEN):
+        maengel.append(f"'cameras_auto.brennweite_mm' ist {brennweite!r}. Erwartet ist "
+                       f"24, 35 oder 50.")
+    abstand_roh = roh.get("abstand")
+    abstand = {"art": "auto", "fuellt": _kameras.DECKUNGSGRAD}
+    if abstand_roh is not None:
+        art = abstand_roh.get("art") if isinstance(abstand_roh, dict) else None
+        if art == "auto":
+            fremd = sorted(k for k in abstand_roh if k not in ("art", "fuellt"))
+            fuellt = _bereichszahl(abstand_roh, "fuellt", "cameras_auto.abstand.fuellt",
+                                   0.2, 0.95, _kameras.DECKUNGSGRAD, maengel)
+            abstand = {"art": "auto", "fuellt": fuellt}
+        elif art == "fest":
+            fremd = sorted(k for k in abstand_roh if k not in ("art", "meter"))
+            if not _gesetzt(abstand_roh, "meter"):
+                maengel.append("'cameras_auto.abstand' {art: 'fest'} ohne 'meter'.")
+                meter = None
+            else:
+                meter = _bereichszahl(abstand_roh, "meter", "cameras_auto.abstand.meter",
+                                      2, 2000, None, maengel)
+            abstand = {"art": "fest", "meter": meter}
+        else:
+            fremd = []
+            maengel.append(f"'cameras_auto.abstand' ist {abstand_roh!r}. Erwartet ist "
+                           f"{{art: 'auto', fuellt?}} oder {{art: 'fest', meter}}.")
+        if fremd:
+            maengel.append(f"Unbekannte Felder in 'cameras_auto.abstand': {', '.join(fremd)}.")
+    perspektive = roh.get("perspektive")
+    if perspektive is None:
+        perspektive = PERSPEKTIVE_SENKRECHT
+    elif perspektive not in PERSPEKTIVEN:
+        maengel.append(f"'cameras_auto.perspektive' ist {perspektive!r}. Erwartet ist "
+                       f"'senkrecht' oder 'frei'.")
+    if len(maengel) > vorher:
+        return None
+    vorgaben = [f for f in ("augenhoehe_m", "brennweite_mm", "abstand", "perspektive")
+                if not _gesetzt(roh, f)]
+    if abstand["art"] == "auto" and not _gesetzt(abstand_roh or {}, "fuellt") \
+            and "abstand" not in vorgaben:
+        vorgaben.append("abstand.fuellt")
+    return {"richtungen": list(richtungen), "augenhoehe_m": float(auge),
+            "brennweite_mm": float(brennweite), "abstand": abstand,
+            "perspektive": perspektive, "vorgaben": vorgaben}
+
+
+def kameras_auto_unvertraeglich(*, kameras, skizze, interior) -> list[str]:
+    """Was mit ``cameras_auto`` nicht zusammengeht — je ein Satz (endgueltig).
+
+    Vertrag: nur mit ``cameras === 'auto'`` (fehlend gilt als 'auto'), nicht mit ``skizze``
+    oder ``interior``.
+    """
+    saetze = []
+    if kameras != "auto":
+        saetze.append("'cameras_auto' verlangt cameras: 'auto' (oder kein 'cameras') — mit "
+                      "einer Kameraliste waere der Standpunkt zweimal bestellt.")
+    if skizze is not None:
+        saetze.append("'cameras_auto' und 'skizze' zugleich: Die Skizze fuehrt ihr Bild "
+                      "selbst, es gibt keine Kamera zu rechnen.")
+    if interior is not None:
+        saetze.append("'cameras_auto' und 'interior' zugleich: Die Innenansicht rechnet ihren "
+                      "Standpunkt aus den Raeumen.")
+    return saetze
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -2128,6 +2251,14 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             prompt_zusaetze.append({"art": "stimmung",
                                     "preset": umgebung_block["umgebung"]["preset"],
                                     "satz": satz, "schon_im_prompt": schon})
+    # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
+    kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
+    if fremd.get("cameras_auto") is not None:
+        widerspruch = kameras_auto_unvertraeglich(
+            kameras=fremd.get("cameras", "auto"), skizze=fremd.get("skizze"),
+            interior=fremd.get("interior"))
+        maengel.extend(widerspruch)
+        endgueltig.extend(widerspruch)
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
@@ -2169,6 +2300,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "format": fmt or None,
         "out": fremd.get("out"),
         "kameras": kameras,
+        # Die Auto-Kamera mit Parametern (20.10.2026) — `None`: wie bisher die Einstellungen
+        # des Abholers.
+        "kameras_auto": kameras_auto,
         # `None` heisst hier NICHT GELESEN — dann steht der Grund unter `maengel`.
         "aufloesung": aufl[0],
         "hoehe": aufl[1],
@@ -2256,6 +2390,12 @@ DURCHGEREICHT = {
               "abholer.verarbeiter die Umwandlung IFC → glb (seams.ifc_zu_glb)",
     "out": "abholer: Ausgabeverzeichnis",
     "kameras": "abholer.verarbeiter → Kameraaufgaben",
+    # Seit 20.10.2026 (Knoten «Kamera»): Richtungen, Augenhoehe, Brennweite, Abstand und
+    # Perspektive je Auftrag statt je Abholer.
+    "kameras_auto": ("abholer.verarbeiter → Aufgaben je Richtung, seams.glb_zu_multipass("
+                     "brennweite/augenhoehe/deckungsgrad/abstand_fest_m/kamera_modus) → "
+                     "blender_depth_stage → kameras.kamerasatz; render-result "
+                     "'angewandt.cameras_auto'"),
     "aufloesung": "seams.glb_zu_multipass(aufloesung=…)",
     "hoehe": "seams.glb_zu_multipass(hoehe=…)",
     "samples": "seams.glb_zu_multipass(samples=…)",

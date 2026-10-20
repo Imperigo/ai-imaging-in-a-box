@@ -65,10 +65,13 @@ final class KnotenwegeTests: XCTestCase {
 
     func testDieDatenwegeGehenAnDenHeimPC() {
         for weg in ["/knoten/mappe", "/knoten/graph", "/knoten/modell.glb", "/knoten/skizze",
-                    "/knoten/modell-laden"] {
+                    "/knoten/modell-laden", "/knoten/standpunkte"] {
             XCTAssertEqual(Knotenwege.ziel(pfad: weg), .heim(pfad: weg), weg)
         }
-        XCTAssertEqual(Knotenwege.datenwege.count, 5)
+        XCTAssertEqual(Knotenwege.datenwege.count, 6)
+        // Der Knoten «Kamera» (20.10.2026) fragt mit Parametern — die Frage reist mit.
+        let mitFrage = URL(string: "\(Knotenwege.schema)://app/knoten/standpunkte?richtungen=s,sSE&fuellt=0.7")
+        XCTAssertEqual(mitFrage.map { Knotenwege.ziel(adresse: $0) }, .heim(pfad: "/knoten/standpunkte"))
     }
 
     func testDieBrueckeGehtGanzAnDenHeimPC() {

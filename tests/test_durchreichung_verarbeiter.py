@@ -92,15 +92,18 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # Splat als Umgebung — beide durchgereicht, aus `RenderScene.context`.
     # 24 seit auf-20261008-271: `kamera_ausschnitt` (Ausschnitt ohne Gelaende).
     # 28 seit dem 20.10.2026 (Knoten «Stimmung»): die vier `umgebung_*`.
-    assert len(_multipass_einstellungen()) == 28
+    # 29 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m`.
+    assert len(_multipass_einstellungen()) == 29
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
     # 19 seit dem 08.10.2026: die beiden Kontextangaben.
     # 20 seit auf-20261008-271: `kamera_ausschnitt`.
     # 24 seit dem 20.10.2026: die vier `umgebung_*`, alle durchgereicht.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 24
-    assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 4
+    # 26 und 3 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m` neu, und `shift_y`
+    # ist von STEHENGEBLIEBEN nach DURCHGEREICHT gewandert (senkrechte Kamera von Hand).
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 26
+    assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 3
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
 
@@ -139,7 +142,8 @@ def test_es_sind_absichten_und_luecken_und_beides_kommt_vor():
     absichten = [e for e in alle if e["absicht"]]
     luecken = [e for e in alle if not e["absicht"]]
 
-    assert len(absichten) == 7
+    # 6 seit dem 20.10.2026: `shift_y` ist durchgereicht (senkrechte Kamera von Hand).
+    assert len(absichten) == 6
     # DREI statt vier seit dem 26.08.2026. `timeout` ist keine Luecke mehr — nicht weil
     # jemand sie weggeschrieben haette, sondern weil ihre Begruendung («hohe Samples
     # sprengen den Deckel») GEMESSEN WIDERLEGT wurde und der Schalter jetzt durchgereicht
@@ -229,7 +233,16 @@ def _lauf(tmp_path):
         erzeuger.baue_glb([("Halle", (-33.0, 0.0, -5.0), (33.0, 3.45, 5.0))]))
     verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
                 "verzeichnis": tmp_path,
-                "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"}],
+                # Zwei Kameras: eine Richtung (mit festem Abstand aus `kameras_auto`) und
+                # eine von Hand, senkrecht gestellt (Shift) — zusammen reichen sie alles.
+                "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"},
+                                      {"kuerzel": "hand", "auge": [0.0, -30.0, 1.7],
+                                       "blick_auf": [0.0, 0.0, 6.0], "brennweite_mm": 35.0,
+                                       "perspektive": "senkrecht"}],
+                          "kameras_auto": {"richtungen": ["s"], "augenhoehe_m": 1.7,
+                                           "brennweite_mm": 35.0,
+                                           "abstand": {"art": "fest", "meter": 40.0},
+                                           "perspektive": "senkrecht", "vorgaben": []},
                           "aufloesung": 64, "hoehe": 64, "samples": 1,
                           "prompt": "a house", "kontext": kontext,
                           # DIE STIMMUNG (20.10.2026): `umgebung_*` gehen nur mit, wenn
@@ -246,7 +259,10 @@ def test_der_multipass_bekommt_genau_die_durchgereichten(tmp_path):
     Behauptung mit Testabdeckung."""
     protokoll = _lauf(tmp_path)
 
-    assert set(protokoll["multipass"][0]) == set(abholer.MULTIPASS_DURCHGEREICHT)
+    # Ueber alle Kameras des Laufs: `abstand_fest_m` reist nur mit einer Richtung, `shift_y`
+    # nur mit einer senkrecht gestellten Kamera von Hand (20.10.2026).
+    gesehen = set().union(*(set(kw) for kw in protokoll["multipass"]))
+    assert gesehen == set(abholer.MULTIPASS_DURCHGEREICHT)
 
 
 def test_der_renderauftrag_traegt_die_stehengebliebenen_auf_ihrer_vorgabe(tmp_path):

@@ -177,6 +177,10 @@ def _argumente():
     # waeren; dies ist dieselbe Stelle fuer den Deckungsgrad. None heisst: was
     # die Bibliothek sagt.
     ap.add_argument("--deckungsgrad", type=float, default=None)
+    # FESTER ABSTAND (Knoten «Kamera», `cameras_auto.abstand {art: 'fest'}`, 20.10.2026): in
+    # Metern waagrecht von der Mitte. Nur auf dem Weg «abgeleitet» (mit --kamera); der
+    # Eckentest meldet dann nur und schiebt nicht nach (`kameras.kamerasatz`).
+    ap.add_argument("--abstand-fest", dest="abstand_fest", type=float, default=None)
     ap.add_argument("--gelaende-z", type=float, default=None,
                     help="Geländehöhe im Weltsystem. Ohne Angabe die Unterkante der "
                          "Hüllbox — bei einem Untergeschoss stünde die Kamera sonst im Keller.")
@@ -961,6 +965,8 @@ def _kamera_setzen(lo, hi, a=None):
                 # fuer sich schluessig aussehen.
                 **({"modus": a.kamera_modus}
                    if getattr(a, "kamera_modus", None) else {}),
+                **({"abstand_fest_m": a.abstand_fest}
+                   if getattr(a, "abstand_fest", None) is not None else {}),
             )
             k = satz["kameras"][0]
             auge = mathutils.Vector(k["auge"])
@@ -998,6 +1004,7 @@ def _kamera_setzen(lo, hi, a=None):
                 # "passt es hinein" fragt.
                 "fuellgrad": k["fuellgrad"],
                 "abstand_m": k["abstand_m"],
+                "abstand_fest_m": satz.get("abstand_fest_m"),
                 "seitenverhaeltnis": k["seitenverhaeltnis"],
                 "gelaende_z": satz["gelaende_z"],
                 # Woher der Nullpunkt kommt und wie hoch das Bauwerk ÜBER IHM ist.

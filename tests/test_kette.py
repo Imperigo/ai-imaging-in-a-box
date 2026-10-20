@@ -1401,8 +1401,8 @@ NICHT_BESTELLT_MIT_GRUND = {
     "herzschlag_takt_s": ("Der Takt unseres eigenen Lebenszeichens. Maschinenfest und "
                           "keine Einstellung der Aufnahme — wer ihn aendert, aendert die "
                           "Wache, nicht das Bild."),
-    "shift_y": ("Der Shift wird aus der Rahmung GERECHNET, nicht bestellt. Ihn von aussen "
-                "zu setzen hiesse, die Rechnung zu uebergehen, die ihn begruendet."),
+    # `shift_y` stand hier bis 20.10.2026; seither bestellbar (senkrechte Kamera von Hand,
+    # Entscheid 109) — ueber den Abholer und ueber `baue_kette`.
     "kamera_ausschnitt": ("Der Abholer entscheidet ihn aus der Rahmung (Bauwerk = Szene, "
                           "auf-20261008-271); die Kette rahmt ueber die Bauwerksbox, und mit "
                           "ihr gilt der Ausschnitt ohnehin."),

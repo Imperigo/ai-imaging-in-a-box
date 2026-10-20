@@ -8,7 +8,7 @@ import WebKit
 /// **Wohin** sie geht, entscheidet der Kern (`Knotenwege.ziel`, mit Proben):
 ///
 /// * Teile des Baus kommen aus `Contents/Resources/Knoten/` (`ipad.yml` legt sie dorthin).
-/// * Die Datenwege (`/knoten/mappe`, `/knoten/graph`, `/knoten/modell.glb`, `/knoten/skizze`,
+/// * Die Datenwege (`/knoten/mappe`, `/knoten/graph`, `/knoten/modell.glb`, `/knoten/skizze`, `/knoten/standpunkte`,
 ///   `/knoten/modell-laden`) und die Brücke (`/bruecke/*`) reicht die App an den Heim-PC weiter
 ///   — mit **ihrer** Anmeldung (Basic, aus dem Schlüsselbund), `X-Geraet: mac` und dem
 ///   angehefteten Zertifikat (`Heimvertrauenslotse`), wie jede andere Anfrage der App.

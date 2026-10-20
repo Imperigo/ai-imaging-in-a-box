@@ -489,6 +489,54 @@ def _abweisung_ablegen(quelle, ordner, auftrag: dict, grund: str, antwort: dict)
     antwort["ergebnis"] = ergebnis
 
 
+def kamerawerte_des_auftrags(szene: dict, *, auto_richtungen, brennweite_mm, kamera_modus,
+                             deckungsgrad, augenhoehe) -> dict:
+    """Richtungen und Kamerawerte DIESES Auftrags — aus ``cameras_auto``, sonst vom Abholer.
+
+    Bis zum 20.10.2026 galten Richtungen, Augenhoehe, Brennweite, Deckungsgrad und
+    Kameramodus nur als Einstellungen des ganzen Abholers (``verarbeiter(...)``). Der Knoten
+    «Kamera» bestellt sie je Auftrag (``cameras_auto``, Vorgaben in
+    ``kosmo_szene.kameras_auto_aus_szene``): senkrecht → ``MODUS_SHIFT``, frei →
+    ``MODUS_GEKIPPT``; ``abstand {art: 'fest'}`` → ``abstand_fest_m``, sonst ``fuellt`` als
+    Deckungsgrad.
+    """
+    auto = (szene or {}).get("kameras_auto")
+    if not auto:
+        return {"richtungen": tuple(auto_richtungen), "brennweite_mm": brennweite_mm,
+                "kamera_modus": kamera_modus, "deckungsgrad": deckungsgrad,
+                "augenhoehe": augenhoehe, "abstand_fest_m": None, "quelle": "abholer"}
+    abstand = auto["abstand"]
+    return {"richtungen": tuple(auto["richtungen"]), "brennweite_mm": auto["brennweite_mm"],
+            "kamera_modus": (_kameras_modul.MODUS_SHIFT
+                             if auto["perspektive"] == _kosmo_szene.PERSPEKTIVE_SENKRECHT
+                             else _kameras_modul.MODUS_GEKIPPT),
+            "deckungsgrad": abstand.get("fuellt") if abstand["art"] == "auto" else None,
+            "augenhoehe": auto["augenhoehe_m"],
+            "abstand_fest_m": abstand.get("meter") if abstand["art"] == "fest" else None,
+            "quelle": "auftrag"}
+
+
+def senkrecht_gestellt(aufgabe: dict) -> dict:
+    """Eine mitgesandte Kamera mit ``perspektive: 'senkrecht'`` waagrecht stellen.
+
+    Der Shift ersetzt die Kippung genau (``kameras.shift_aus_ziel``): dieselbe Richtung im
+    Grundriss, das Ziel auf Augenhoehe, das Objektiv um ``shift_y`` verschoben — senkrechte
+    Kanten bleiben senkrecht (Entscheid 109). Ohne ``perspektive`` oder mit ``'frei'``
+    unveraendert; ohne Standort ebenso.
+    """
+    if aufgabe.get("perspektive") != _kosmo_szene.PERSPEKTIVE_SENKRECHT or \
+            aufgabe.get("auge") is None or aufgabe.get("blick_auf") is None:
+        return aufgabe
+    schief = _kameras_modul.shift_aus_ziel(
+        aufgabe["auge"], aufgabe["blick_auf"],
+        brennweite_mm=aufgabe.get("brennweite_mm") or _kameras_modul.BRENNWEITE_MM)
+    return dict(aufgabe, blick_auf=list(schief["waagrechtes_ziel"]),
+                shift_y=_kameras_modul.blender_shift_y(schief["shift_mm"]),
+                senkrecht={"shift_mm": round(schief["shift_mm"], 4),
+                           "neigung_ersetzt_grad": round(schief["neigung_grad"], 4),
+                           "warnungen": list(schief["warnungen"])})
+
+
 def umgebung_einstellungen(szene: dict) -> dict:
     """Was die bestellte Stimmung an ``seams.glb_zu_multipass`` gibt — leer ohne Stimmung.
 
@@ -530,6 +578,16 @@ def angewandt_der_szene(szene: dict) -> dict:
             sonnenlampe=bool(szene.get("sonne")),
             prompt_satz=(zusatz or {}).get("satz"),
             herkunft=dict(_stimmung.HERKUNFT))
+    auto = szene.get("kameras_auto")
+    if auto:
+        aus["cameras_auto"] = {k: (dict(v) if isinstance(v, dict) else
+                                   list(v) if isinstance(v, (list, tuple)) else v)
+                               for k, v in auto.items()}
+    senkrecht = [k.get("kuerzel") for k in szene.get("kameras") or ()
+                 if isinstance(k, dict) and k.get("perspektive")
+                 == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
+    if senkrecht:
+        aus["cameras_senkrecht"] = senkrecht
     return aus
 
 
@@ -3130,6 +3188,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         vorschau = ist_vorschau(szene)
 
         kameras = szene.get("kameras")
+        # DIE KAMERAWERTE DIESES AUFTRAGS (Knoten «Kamera», 20.10.2026): Bestellt er
+        # `cameras_auto`, gelten seine Richtungen, Augenhoehe, Brennweite, Abstand und
+        # Perspektive — sonst wie bisher die Einstellungen dieses Abholers.
+        werte = kamerawerte_des_auftrags(
+            szene, auto_richtungen=auto_richtungen, brennweite_mm=brennweite_mm,
+            kamera_modus=kamera_modus, deckungsgrad=deckungsgrad, augenhoehe=augenhoehe)
         if szene.get("innenraum"):
             # DIE INNENANSICHT AUS `interior` (Befund 22.09.2026, auf-104): EINE Aufgabe,
             # ihr Standpunkt aus den Raeumen — und die Richtungen fuer `auto` fallen weg.
@@ -3148,14 +3212,17 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             aufgaben = [_innenaufgabe(szene["innenraum"],
                                       raeume_lesen(auftrag.get("modell")))]
         elif kameras == "auto" or not isinstance(kameras, list):
-            aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": brennweite_mm}
-                        for r in auto_richtungen]
+            aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": werte["brennweite_mm"]}
+                        for r in werte["richtungen"]]
         else:
             # Mitgesandte Kameras. War `interior` bestellt, reist der Vermerk an jeder
             # mit — siehe `_mitgesandter_innenvermerk` (23.09.2026).
             vermerk = _mitgesandter_innenvermerk(szene)
-            aufgaben = [dict(k, kuerzel=k.get("kuerzel") or f"kamera{i}",
-                             innenraum=dict(vermerk) if vermerk else None)
+            # «SENKRECHT» AN EINER MITGESANDTEN KAMERA (Entscheid 109): waagrechte Achse und
+            # Objektiv-Shift statt Kippen — gerechnet hier (`senkrecht_gestellt`), gestellt
+            # im Runner ueber --shift-y. Ohne `perspektive` bleibt die Kamera, wie sie kam.
+            aufgaben = [senkrecht_gestellt(dict(k, kuerzel=k.get("kuerzel") or f"kamera{i}",
+                                                innenraum=dict(vermerk) if vermerk else None))
                         for i, k in enumerate(kameras)]
         if not aufgaben:
             raise AbholerError(
@@ -3257,9 +3324,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             mit_richtung = aufgabe.get("richtung") is not None
             zurueck = [] if mit_richtung else [
                 f"{name}={wert!r}" for name, wert in (
-                    ("kamera_modus", None if kamera_modus == _kameras_modul.MODUS_SHIFT
-                     else kamera_modus),
-                    ("deckungsgrad", deckungsgrad), ("augenhoehe", augenhoehe),
+                    ("kamera_modus", None if werte["kamera_modus"] == _kameras_modul.MODUS_SHIFT
+                     else werte["kamera_modus"]),
+                    ("deckungsgrad", werte["deckungsgrad"]),
+                    ("augenhoehe", werte["augenhoehe"]),
                     ("bias_grad", bias_grad))
                 if wert is not None]
             innen[URTEIL_KAMERAWERTE_ZURUECK] = (
@@ -3322,7 +3390,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
-                kamera_modus=kamera_modus if mit_richtung else None,
+                kamera_modus=werte["kamera_modus"] if mit_richtung else None,
                 gelaende_z=gelaende_z,
                 # Der Sonnenstand der Bestellung. Bis zum 26.08.2026 lief er ins Leere:
                 # Ein Auftrag mit Abendstand wurde gerendert, als waere er nicht
@@ -3341,8 +3409,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # `None` heisst NICHT ANGEFASST: Dann gelten die Vorgaben des Runners, und
                 # jede bisher gemessene Aufnahme bleibt reproduzierbar.
                 # Seit dem 23.09.2026 nur mit Richtung — siehe `mit_richtung` oben.
-                deckungsgrad=deckungsgrad if mit_richtung else None,
-                augenhoehe=augenhoehe if mit_richtung else None,
+                deckungsgrad=werte["deckungsgrad"] if mit_richtung else None,
+                augenhoehe=werte["augenhoehe"] if mit_richtung else None,
                 bias_grad=bias_grad if mit_richtung else None,
                 stillstand_frist_s=stillstand_frist_s,
                 # DER ZEITDECKEL, seit dem 26.08.2026 bestellbar. Er wird IMMER gesetzt,
@@ -3365,6 +3433,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 if kontext.get("matrix") is not None:
                     einstellungen["kontext_matrix"] = list(kontext["matrix"])
 
+            # DER FESTE ABSTAND und der SHIFT EINER SENKRECHTEN KAMERA — nur, wenn bestellt.
+            if mit_richtung and werte["abstand_fest_m"] is not None:
+                einstellungen.update(dict(abstand_fest_m=werte["abstand_fest_m"]))
+            if not mit_richtung and aufgabe.get("shift_y") is not None:
+                einstellungen.update(dict(shift_y=aufgabe["shift_y"]))
             # DIE STIMMUNG (Entscheide 107/110/113) — nur, wenn bestellt; ohne sie bleiben
             # Einstellungen und Speicherschluessel Wort fuer Wort die bisherigen.
             einstellungen.update(umgebung_einstellungen(szene))
@@ -3977,6 +4050,12 @@ MULTIPASS_DURCHGEREICHT = {
     # Seit 20.10.2026 (Knoten «Stimmung», Entscheide 107/110/113): das Himmelsbild der
     # bestellten Stimmung, aus `render.environment` ueber `kosmo_szene.umgebung_aus_szene`.
     "umgebung_hdr": "umgebung_einstellungen(szene) ← render.environment (Datei am Heim-PC)",
+    # Seit 20.10.2026 (Knoten «Kamera»): `cameras_auto.abstand {art: 'fest'}`.
+    "abstand_fest_m": "kamerawerte_des_auftrags(szene) ← cameras_auto.abstand.meter",
+    # Bis 20.10.2026 STEHENGEBLIEBEN («der Runner rechnet ihn selbst») — das gilt weiter fuer
+    # jede Richtungskamera. Neu: eine MITGESANDTE Kamera mit `perspektive: 'senkrecht'`
+    # (Entscheid 109) bekommt ihn hier gerechnet (`senkrecht_gestellt`, kameras.shift_aus_ziel).
+    "shift_y": "senkrecht_gestellt(aufgabe) ← CameraSpec.perspektive 'senkrecht'",
     "umgebung_staerke": "umgebung_einstellungen(szene) ← render.environment.intensitaet",
     "umgebung_drehung": "umgebung_einstellungen(szene) ← render.environment.rotationGrad",
     "umgebung_weiss": "umgebung_einstellungen(szene) ← render.environment.preset 'weiss'",
@@ -4008,15 +4087,6 @@ MULTIPASS_STEHENGEBLIEBEN = {
                  "gibt es weder rho über der Maske noch die Auswahl unter drei "
                  "Startwerten — und `_bester_seed` fährt dann nur einen.",
         "noetig": "NICHTS. Ohne Maske gäbe es kein zweites Bein des Paartests.",
-    },
-    "shift_y": {
-        "vorgabe": None,
-        "absicht": True,
-        "grund": "`None` heisst: der Runner rechnet ihn aus der abgeleiteten Kamera "
-                 "selbst. Ein Wert hier überschriebe genau die Rechnung, die "
-                 "`kamera_modus=MODUS_SHIFT` anstösst — und der WIRD durchgereicht.",
-        "noetig": "NICHTS. Wer den Versatz von Hand setzen will, setzt ohnehin `auge` "
-                  "und `blick_auf` und umgeht damit die Ableitung ganz.",
     },
     "herzschlag_takt_s": {
         "vorgabe": 2.0,
@@ -4214,7 +4284,8 @@ GRUNDLAGE_SCHEMA = "aiimaging.grundlage/v1"
 #: der Heim-PC selbst ab, laut und mit Grund.
 #: Seit 20.10.2026 auch die Stimmung (`umgebung`, Entscheid 110): Eine Variante mit anderer
 #: Stimmung braucht ihre eigene Grundlage — das Himmelsbild steht im Cycles-Bild.
-GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "umgebung")
+GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "kameras_auto",
+                         "umgebung")
 
 
 def grundlage_kennung(job_id: str, kuerzel) -> str:

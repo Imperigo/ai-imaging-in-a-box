@@ -559,8 +559,14 @@ def mappe_fuer_knoten(ordner) -> dict:
 
 #: Die Namen der drei festen Richtungen des Abholers (:data:`aiimaging.abholer.AUTO_RICHTUNGEN`)
 #: für einen Menschen — so stehen sie am Auto-Kamera-Knoten.
-RICHTUNGSNAMEN = {"s": ("Süd", "frontal"), "sSE": ("Südost", "über Eck"),
-                  "nNW": ("Nordwest", "über Eck")}
+#: Seit dem 20.10.2026 alle zwölf (Knoten «Kamera»: Chips N, NO, O, SO, S, SW, W, NW und die
+#: vier übrigen Diagonalen) — die Zuordnung der Chips steht im Bauplan (F2).
+RICHTUNGSNAMEN = {"n": ("Nord", "frontal"), "e": ("Ost", "frontal"),
+                  "s": ("Süd", "frontal"), "w": ("West", "frontal"),
+                  "nNE": ("Nordost", "über Eck"), "nNW": ("Nordwest", "über Eck"),
+                  "sSE": ("Südost", "über Eck"), "sSW": ("Südwest", "über Eck"),
+                  "eEN": ("Ost-Nordost", "über Eck"), "eES": ("Ost-Südost", "über Eck"),
+                  "wWS": ("West-Südwest", "über Eck"), "wWN": ("West-Nordwest", "über Eck")}
 
 #: Das Seitenverhältnis, mit dem die Knotenansicht bestellt, wenn am Render-Knoten keine
 #: Auflösung gewählt ist (1600 × 1000, `vis-jobs.ts`). Der Abholer rechnet die Kamera mit dem
@@ -568,7 +574,7 @@ RICHTUNGSNAMEN = {"s": ("Süd", "frontal"), "sSE": ("Südost", "über Eck"),
 SEITENVERHAELTNIS_VORGABE = 1600 / 1000
 
 
-def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None) -> dict:
+def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=None) -> dict:
     """Die drei Standpunkte, die der Abholer ohne mitgeschickte Kameras rechnet — VORAB.
 
     **Anlass (Owner-Entscheid 92, 14.10.2026, Blatt 23):** Der Auto-Kamera-Knoten in Visbox
@@ -588,9 +594,15 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None) -> dict:
     der Heim-PC rechnet diese drei selbst — mit dem Objektiv-Shift, den eine mitgeschickte
     Kamera nicht tragen kann (``CameraSpec`` kennt keinen Shift).
 
+    **Seit dem 20.10.2026 mit den Parametern des Knotens «Kamera»** (``kameras_auto``, die
+    Form aus :func:`aiimaging.kosmo_szene.kameras_auto_aus_szene`): Richtungen, Augenhöhe,
+    Brennweite, «Haus füllt» oder fester Abstand, Perspektive — dieselben Werte, mit denen
+    der Abholer rechnet (``abholer.kamerawerte_des_auftrags``). Ohne: die drei Richtungen des
+    Abholers mit den Vorgaben, wie bisher.
+
     Returns:
-        ``{standpunkte: [{kuerzel, name, art, abstand_m, auge, blick_auf, vollstaendig,
-        begruendung}], satz}`` — Weltkoordinaten in Metern, Z oben. Leer mit ``satz``, wenn
+        ``{standpunkte: [{kuerzel, name, art, abstand_m, auge, blick_auf, shift_y,
+        vollstaendig, begruendung}], satz}`` — Weltkoordinaten in Metern, Z oben. Leer mit ``satz``, wenn
         sich keine Box lesen liess. Nie eine Ausnahme: Ein Knoten ohne Vorschau ist kein Grund,
         die Mappe nicht zu zeigen.
     """
@@ -608,11 +620,20 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None) -> dict:
     if box is None:
         return {"standpunkte": [], "satz": "Ohne lesbare Hüllbox kein Vorschlag — der Heim-PC "
                                            "rechnet die drei Richtungen trotzdem selbst."}
+    werte = abholer.kamerawerte_des_auftrags(
+        {"kameras_auto": kameras_auto}, auto_richtungen=abholer.AUTO_RICHTUNGEN,
+        brennweite_mm=None, kamera_modus=kameras.MODUS_SHIFT, deckungsgrad=None,
+        augenhoehe=None)
+    zusatz = {name: wert for name, wert in (
+        ("brennweite_mm", werte["brennweite_mm"]), ("modus", werte["kamera_modus"]),
+        ("deckungsgrad", werte["deckungsgrad"]), ("augenhoehe_m", werte["augenhoehe"]),
+        ("abstand_fest_m", werte["abstand_fest_m"])) if wert is not None}
     try:
         satz = kameras.kamerasatz(
-            box, kuerzel=list(abholer.AUTO_RICHTUNGEN),
+            box, kuerzel=list(werte["richtungen"]),
             seitenverhaeltnis=SEITENVERHAELTNIS_VORGABE,
-            ausschnitt=bool(rahmung.get("box") or rahmung.get("szene_ist_bauwerk")))
+            ausschnitt=bool(rahmung.get("box") or rahmung.get("szene_ist_bauwerk")),
+            **zusatz)
     except ValueError as fehler:
         return {"standpunkte": [], "satz": f"Kein Vorschlag aus dieser Hüllbox: {fehler}"}
     aus = []
@@ -622,11 +643,87 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None) -> dict:
                     "abstand_m": round(float(k["abstand_m"]), 1),
                     "auge": [round(float(v), 3) for v in k["auge"]],
                     "blick_auf": [round(float(v), 3) for v in k["blick_auf"]],
+                    "shift_y": round(float(k["shift_y"]), 5),
+                    "brennweite_mm": float(k["brennweite_mm"]),
                     "vollstaendig": bool(k["vollstaendig"]),
                     "begruendung": str(k.get("begruendung") or "")})
     nach = "dem Bauwerk" if rahmung.get("box") else "der ganzen Szene"
     return {"standpunkte": aus,
             "satz": f"Rechnet der Heim-PC aus der Hüllbox ({nach}) — Vorschau."}
+
+
+def standpunkte_abfrage(ordner, frage: dict) -> dict:
+    """``GET /knoten/standpunkte?richtungen=s,sSE&augenhoehe=1.7&brennweite=35&fuellt=0.7``
+    (oder ``abstand=40`` statt ``fuellt``, dazu ``perspektive=senkrecht|frei``) — die Kegel
+    des Knotens «Kamera», mit denselben Parametern gerechnet wie der Auftrag.
+
+    Geprüft wird mit derselben Funktion wie die Bestellung
+    (:func:`aiimaging.kosmo_szene.kameras_auto_aus_szene`) — eine zweite Prüfung liefe
+    auseinander. ``frage`` ist ``parse_qs``-Form (Listen) oder einfache Werte.
+
+    Returns:
+        ``{standpunkte, satz, kameras_auto}`` — ``kameras_auto`` mit den Vorgaben, wie
+        gerechnet.
+
+    Raises:
+        KnotenwegError: 400 bei einem Parameter, der nicht stimmt (mit dem Satz der
+            Prüfung), 404 ohne Modell in der Mappe.
+    """
+    from . import kosmo_szene  # spät: wie heim_standpunkte
+
+    def wert(name):
+        roh = (frage or {}).get(name)
+        if isinstance(roh, (list, tuple)):
+            roh = roh[0] if roh else None
+        return roh if roh not in ("", None) else None
+
+    def zahl(name):
+        roh = wert(name)
+        if roh is None:
+            return None
+        try:
+            return float(roh)
+        except (TypeError, ValueError):
+            return roh                    # die Pruefung meldet es mit Satz
+
+    bestellt: dict = {}
+    richtungen = wert("richtungen")
+    bestellt["richtungen"] = ([r for r in str(richtungen).split(",") if r]
+                              if richtungen is not None else list(abholer_richtungen()))
+    for name, feld in (("augenhoehe", "augenhoehe_m"), ("brennweite", "brennweite_mm")):
+        if zahl(name) is not None:
+            bestellt[feld] = zahl(name)
+    if "brennweite_mm" in bestellt and isinstance(bestellt["brennweite_mm"], float) \
+            and bestellt["brennweite_mm"].is_integer():
+        bestellt["brennweite_mm"] = int(bestellt["brennweite_mm"])
+    if zahl("abstand") is not None and zahl("fuellt") is not None:
+        raise KnotenwegError("Entweder «fuellt» (Haus füllt) oder «abstand» (fest in m), "
+                             "nicht beides.", 400)
+    if zahl("abstand") is not None:
+        bestellt["abstand"] = {"art": "fest", "meter": zahl("abstand")}
+    elif zahl("fuellt") is not None:
+        bestellt["abstand"] = {"art": "auto", "fuellt": zahl("fuellt")}
+    if wert("perspektive") is not None:
+        bestellt["perspektive"] = wert("perspektive")
+    maengel: list = []
+    gelesen = kosmo_szene.kameras_auto_aus_szene(bestellt, maengel=maengel)
+    if maengel:
+        raise KnotenwegError(" ".join(maengel), 400)
+    auf = projekt.oeffne(ordner)["projekt"]
+    einfuhr = auf.get("import") or {}
+    glb = glb_der_mappe(ordner)
+    if glb is None:
+        raise KnotenwegError(f"Die Mappe «{Path(ordner).name}» hat noch kein Modell.", 404)
+    achse = einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else "Y"
+    antwort = heim_standpunkte(glb, achse or "Y", kameras_auto=gelesen)
+    antwort["kameras_auto"] = gelesen
+    return antwort
+
+
+def abholer_richtungen() -> tuple:
+    """Die Richtungen des Abholers ohne Bestellung (:data:`aiimaging.abholer.AUTO_RICHTUNGEN`)."""
+    from . import abholer
+    return tuple(abholer.AUTO_RICHTUNGEN)
 
 
 #: Wie viele Skizzen der Knoten «Skizze vom iPad» zur Wahl bekommt — die neuesten.

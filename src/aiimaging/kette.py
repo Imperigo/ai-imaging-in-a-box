@@ -587,6 +587,10 @@ def baue_kette(
     umgebung_staerke=None,
     umgebung_drehung=None,
     umgebung_weiss=None,
+    # DER KNOTEN «KAMERA» (20.10.2026): fester Abstand, und der Shift einer senkrecht
+    # gestellten Kamera von Hand (Entscheid 109) — wie im Abholer.
+    abstand_fest_m=None,
+    shift_y=None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -788,6 +792,8 @@ def baue_kette(
                     "umgebung_staerke": umgebung_staerke,
                     "umgebung_drehung": umgebung_drehung,
                     "umgebung_weiss": umgebung_weiss,
+                    "abstand_fest_m": abstand_fest_m,
+                    "shift_y": shift_y,
                 }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
@@ -1441,7 +1447,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
               ("kamera", "kamera_modus", "kamera_huellbox", "sonne", "gelaende_z",
                "hoehe", "deckungsgrad", "augenhoehe", "bias_grad", "stillstand_frist_s",
                "kontext_ply", "kontext_matrix",
-               "umgebung_hdr", "umgebung_staerke", "umgebung_drehung", "umgebung_weiss")
+               "umgebung_hdr", "umgebung_staerke", "umgebung_drehung", "umgebung_weiss",
+               "abstand_fest_m", "shift_y")
               if name in p}
     if "multipass_timeout" in p:
         weiter["timeout"] = p["multipass_timeout"]

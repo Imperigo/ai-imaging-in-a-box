@@ -1411,7 +1411,9 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          sonne=None, deckungsgrad=None, augenhoehe=None,
                          bias_grad=None, kontext_ply=None,
                          kontext_matrix=None, kamera_ausschnitt: bool = False,
-                         umgebung_hdr=None, umgebung_staerke=None, umgebung_drehung=None, umgebung_weiss=None) -> list[str]:
+                         umgebung_hdr=None, umgebung_staerke=None,
+                         umgebung_drehung=None, umgebung_weiss=None,
+                         abstand_fest_m=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -1499,6 +1501,10 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente += [f"--augenhoehe={float(augenhoehe)}"]
     if bias_grad is not None:
         argumente += [f"--bias={float(bias_grad)}"]
+    # DER FESTE ABSTAND (Knoten «Kamera», 20.10.2026) — nur mit Richtung und nur, wenn
+    # bestellt; sonst rechnet der Runner den Abstand aus Bildwinkel und Deckungsgrad.
+    if abstand_fest_m is not None:
+        argumente += [f"--abstand-fest={float(abstand_fest_m)}"]
     if hoehe is not None:
         argumente += ["--hoehe", str(int(hoehe))]
     if herzschlag_takt_s is not None:
@@ -1591,7 +1597,9 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      kamera_huellbox=None, sonne=None,
                      deckungsgrad=None, augenhoehe=None, bias_grad=None,
                      kontext_ply=None, kontext_matrix=None, kamera_ausschnitt: bool = False,
-                     umgebung_hdr=None, umgebung_staerke=None, umgebung_drehung=None, umgebung_weiss=None,
+                     umgebung_hdr=None, umgebung_staerke=None,
+                         umgebung_drehung=None, umgebung_weiss=None,
+                         abstand_fest_m=None,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
@@ -1841,7 +1849,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               kamera_ausschnitt=kamera_ausschnitt,
                               umgebung_hdr=umgebung_hdr, umgebung_staerke=umgebung_staerke,
                               umgebung_drehung=umgebung_drehung,
-                              umgebung_weiss=umgebung_weiss),
+                              umgebung_weiss=umgebung_weiss,
+                              abstand_fest_m=abstand_fest_m),
     ]
 
     ergebnis = starte(cmd, frist)
@@ -2060,7 +2069,9 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             sonne=None, deckungsgrad=None, augenhoehe=None,
                             bias_grad=None, kontext_ply=None,
                             kontext_matrix=None, kamera_ausschnitt: bool = False,
-                         umgebung_hdr=None, umgebung_staerke=None, umgebung_drehung=None, umgebung_weiss=None) -> list[str]:
+                         umgebung_hdr=None, umgebung_staerke=None,
+                         umgebung_drehung=None, umgebung_weiss=None,
+                         abstand_fest_m=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -2089,7 +2100,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               kamera_ausschnitt=kamera_ausschnitt,
                               umgebung_hdr=umgebung_hdr, umgebung_staerke=umgebung_staerke,
                               umgebung_drehung=umgebung_drehung,
-                              umgebung_weiss=umgebung_weiss),
+                              umgebung_weiss=umgebung_weiss,
+                              abstand_fest_m=abstand_fest_m),
     ]
 
 

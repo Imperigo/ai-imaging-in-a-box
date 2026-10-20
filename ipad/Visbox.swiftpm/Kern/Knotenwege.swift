@@ -58,7 +58,7 @@ public enum Knotenwege {
     /// andere unter `/knoten/` ist eine Datei des Baus.
     public static let datenwege: Set<String> = [
         "/knoten/mappe", "/knoten/graph", "/knoten/modell.glb", "/knoten/skizze",
-        "/knoten/modell-laden",
+        "/knoten/modell-laden", "/knoten/standpunkte",
     ]
 
     /// Was der Bau enthaelt, mit dem Typ, den WebKit braucht — **dieselbe Liste wie am

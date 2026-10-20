@@ -2074,7 +2074,8 @@ def kamerasatz(bbox, *,
                bildrand: float = BILDRAND,
                modus: str = MODUS_SHIFT,
                kuerzel=None,
-               ausschnitt: bool = False) -> dict:
+               ausschnitt: bool = False,
+               abstand_fest_m: float | None = None) -> dict:
     """Aus einer Hüllbox die zwölf Kameras — mit Begründung je Kamera.
 
     **Lange, flache Bauwerke** (Entscheid 75, 08.10.2026; ``ausschnitt=True``): Ist
@@ -2105,6 +2106,12 @@ def kamerasatz(bbox, *,
             sitzt das Bauwerk darum etwas tiefer im Rahmen als im gekippten Modus. Das
             ist kein Fehler der Rechnung, sondern was eine Kamera tut.
         kuerzel: Auswahl aus ``RICHTUNGSFOLGE``, oder ``None`` für alle zwölf.
+        abstand_fest_m: **Fester Abstand** in Metern, waagrecht von der Mitte der Hüllbox
+            (Knoten «Kamera», ``cameras_auto.abstand {art: 'fest'}``, 20.10.2026). Dann
+            entfallen der analytische Abstand, der Rückschub des Eckentests und der
+            Ausschnitt: Der Eckentest wird nur **gemeldet** (``vollstaendig``,
+            ``unvollstaendig``), die Kamera bleibt, wo sie bestellt ist. ``None`` (Vorgabe):
+            wie bisher, der Abstand aus Bildwinkel und ``deckungsgrad``.
 
     Returns:
         dict mit ``kameras`` (Liste in der Reihenfolge von ``RICHTUNGSFOLGE``),
@@ -2189,12 +2196,20 @@ def kamerasatz(bbox, *,
     kameras = []
     unvollstaendig = []
     alle_warnungen: list[str] = []
+    if abstand_fest_m is not None and not (
+            isinstance(abstand_fest_m, (int, float)) and not isinstance(abstand_fest_m, bool)
+            and math.isfinite(abstand_fest_m) and abstand_fest_m > 0):
+        raise ValueError(f"abstand_fest_m muss eine positive Zahl sein, war {abstand_fest_m!r}.")
+    fest = abstand_fest_m is not None
     for k in gewaehlt:
         azimut = azimute[k]
         rechnung = abstand_aus_bildwinkel(
             masse, azimut, hoehe_ueber_grund=hoehe_ueber_grund,
             brennweite_mm=brennweite_mm, seitenverhaeltnis=seitenverhaeltnis,
             deckungsgrad=deckungsgrad)
+        if fest:
+            # DER BESTELLTE ABSTAND GILT — kein Bildwinkel, kein Rueckschub (20.10.2026).
+            rechnung = dict(rechnung, abstand_m=float(abstand_fest_m), massgebend="fest")
 
         standort, _ = _achsen_aus_azimut(azimut)
         ziel = (mitte[0], mitte[1], ziel_z)
@@ -2221,7 +2236,7 @@ def kamerasatz(bbox, *,
         # Shift auf das Mass eines wirklichen Shift-Objektivs fällt. Das betrifft nur
         # Fälle, die vorher mit einem TypeError abbrachen; jeder andere Standort bleibt
         # bitgleich.
-        if modus == MODUS_SHIFT and _shift_zu_steil(
+        if not fest and modus == MODUS_SHIFT and _shift_zu_steil(
                 schief["shift_mm"], brennweite_mm=brennweite_mm,
                 seitenverhaeltnis=seitenverhaeltnis, bildrand=bildrand):
             # Ziel ist höchstens die HALBE Rahmenhälfte als Shift, und nie mehr als ein
@@ -2251,7 +2266,7 @@ def kamerasatz(bbox, *,
 
         ausgeschnitten = False
         sichtbar = None
-        if ausschnitt and masse[2] > 0.0 and \
+        if not fest and ausschnitt and masse[2] > 0.0 and \
                 rechnung["breite_m"] / masse[2] >= LANG_FLACH_VERHAELTNIS:
             # LANG UND FLACH (Entscheid 75): Die ganze Ansicht — Breite auf 70 % — liess
             # an einer 66 m langen, 3,45 m hohen Halle 3,8–4,5 % des Bildes Bauwerk
@@ -2316,6 +2331,21 @@ def kamerasatz(bbox, *,
                     f"Kamera steht näher, die sichtbare Hüllbox füllt {sichtbar:.0%}, die "
                     f"Enden laufen aus dem Bild — gewollt, kein gescheiterter Eckentest."),
             }
+        elif fest:
+            # NUR MELDEN, NICHT NACHSCHIEBEN: Der Abstand ist bestellt.
+            ecken = ecken_im_bild(auge, blick, bbox, brennweite_mm=brennweite_mm,
+                                  seitenverhaeltnis=seitenverhaeltnis, bildrand=bildrand,
+                                  shift_mm=shift_mm)
+            geschoben = {
+                "auge": auge, "vollstaendig": bool(ecken["passt"]), "durchlaeufe": 0,
+                "begruendung": (
+                    f"FESTER ABSTAND: {float(abstand_fest_m):.1f} m waagrecht von der Mitte, "
+                    f"wie bestellt. " + ("Alle acht Ecken der Huellbox liegen im Bild."
+                                         if ecken["passt"] else
+                                         "Nicht alle Ecken der Huellbox liegen im Bild — "
+                                         "gemeldet, nicht nachgeschoben."))}
+            if not ecken["passt"]:
+                unvollstaendig.append(k)
         else:
             geschoben = schiebe_bis_im_bild(auge, blick, bbox, shift_mm=shift_mm,
                                             brennweite_mm=brennweite_mm,
@@ -2368,7 +2398,8 @@ def kamerasatz(bbox, *,
                                  shift_mm=shift_mm)
 
         warnungen = []
-        if fuellgrad < deckungsgrad * FUELLGRAD_WARNSCHWELLE:
+        # Beim festen Abstand ist der Fuellgrad die Folge der Bestellung, kein Befund.
+        if not fest and fuellgrad < deckungsgrad * FUELLGRAD_WARNSCHWELLE:
             warnungen.append(
                 f"Das Bauwerk füllt nur {fuellgrad:.1%} des Bildes statt der "
                 f"angeforderten {deckungsgrad:.0%} (Breite {f_breite:.1%}, Höhe "
@@ -2486,6 +2517,7 @@ def kamerasatz(bbox, *,
         "augenhoehe_m": float(augenhoehe_m),
         "gelaende_z": grund,
         "gelaende_bezug": gelaende_bezug,
+        "abstand_fest_m": float(abstand_fest_m) if fest else None,
         "unvollstaendig": unvollstaendig,
         "warnungen": tuple(alle_warnungen),
     }

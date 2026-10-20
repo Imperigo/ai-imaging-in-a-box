@@ -470,6 +470,10 @@ WEG_KNOTEN_SKIZZE = "/knoten/skizze"
 #: Der Graph der Knotenansicht, je Mappe gesichert (15.10.2026, auf-20261015-286: nach dem
 #: Neuladen war er weg). ``GET`` liest, ``POST`` ersetzt — Inhalt: die Render-Graphen.
 WEG_KNOTEN_GRAPH = "/knoten/graph"
+#: Knoten «Kamera» (20.10.2026): die Standpunkte mit den Parametern des Knotens —
+#: ``?richtungen=…&augenhoehe=…&brennweite=…&fuellt=…|abstand=…&perspektive=…``, gerechnet
+#: wie der Auftrag (``knotenweg.standpunkte_abfrage``). Liest nur, wie ``/knoten/mappe``.
+WEG_KNOTEN_STANDPUNKTE = "/knoten/standpunkte"
 WEG_BRUECKE = "/bruecke"
 
 #: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
@@ -1519,7 +1523,8 @@ def ausserhalb_der_reihe(methode: str, pfad: str) -> bool:
         return pfad in (WEG_BRUECKE + "/jobs", WEG_KNOTEN_MODELL_LADEN)
     if methode != "GET":
         return False
-    if pfad in (WEG_KNOTEN_MODELL, WEG_KNOTEN_MAPPE, WEG_KNOTEN_SKIZZE, WEG_BILD):
+    if pfad in (WEG_KNOTEN_MODELL, WEG_KNOTEN_MAPPE, WEG_KNOTEN_SKIZZE, WEG_BILD,
+                WEG_KNOTEN_STANDPUNKTE):
         return True
     teile = [t for t in pfad[len(WEG_BRUECKE):].split("/") if t] \
         if pfad.startswith(WEG_BRUECKE + "/") else []
@@ -1984,6 +1989,13 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL_LADEN:
                 self._sende(modell_laden_sicht(type(self).modell_laden))
+            elif pfad == WEG_KNOTEN_STANDPUNKTE:
+                ordner = self._knoten_ordner(frage)
+                if not ordner:
+                    self._fehler("Kein Projektordner — mit --ordner starten oder auf der "
+                                 f"{NAME}-Seite einen öffnen.", 404)
+                    return
+                self._sende(knotenweg.standpunkte_abfrage(ordner, frage or {}))
             elif pfad == WEG_KNOTEN_GRAPH:
                 ordner = self._knoten_ordner(frage)
                 if not ordner:
