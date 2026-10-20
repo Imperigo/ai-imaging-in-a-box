@@ -2286,6 +2286,29 @@ Bildwinkel ist (`position`, `target`, `fov`, dazu die Hochachse). Das Ergebnis m
 die **gerechnete** Pose je Kamera, auch bei der Auto-Kamera — so kann ein gelungener
 Standpunkt als feste Kamera weiterleben (Nr. 68).
 
+**Fortschritt (eines Renderauftrags)** — Was während eines Laufs am Auftrag steht: in welchem
+Schritt er ist (Blender, Bildmodell, Prüfung), bei welcher Kamera von wie vielen, wie weit er
+insgesamt ist (0 bis 1), das jüngste Vorschaubild und eine geschätzte Restzeit. Im Vertrag
+heisst das Feld `progress`. Der Anteil der drei Schritte an einer Kamera ist eine feste
+Annahme (0,2 / 0,7 / 0,1), keine Messung — er dient nur der Anzeige. Geschrieben vom Heim-PC
+(`abholer._Fortschritt`) seit dem 20.10.2026.
+
+**Restzeit (geschätzt)** — Wie lange ein Lauf voraussichtlich noch braucht, in ganzen Sekunden.
+Sie fehlt, bis die erste Kamera fertig gerechnet ist, denn vorher gibt es nichts, woraus man
+schätzen könnte; danach ist sie die mittlere Dauer der fertigen Kameras mal die verbleibenden,
+abzüglich der schon gelaufenen Zeit der aktuellen Kamera.
+
+**Teilbild (abgebrochen)** — Das letzte fertige Zwischenbild eines Auftrags, den jemand
+mitten im Lauf abgebrochen hat: das KI-Bild der letzten fertigen Kamera, sonst ihr rohes
+Blender-Bild. Es trägt **keine** Gütewerte, weil die Prüfung nicht gelaufen ist, und
+steht nur bei einem abgebrochenen Auftrag (Vertragsfeld `teilbild`).
+
+**Kooperativer Abbruch** — Ein Abbruch, der nicht hart eingreift, sondern nur einen Vermerk
+setzt («abgebrochen»), den der Rechnende selbst liest und dann aufhört. Der Heim-PC sieht
+zwischen zwei Schritten nach; ein Schritt, der schon läuft (Blender oder das Bildmodell),
+wird zu Ende gerechnet. Vorteil: nichts bleibt halb geschrieben zurück. Preis: Der Abbruch
+greift erst beim nächsten Übergang.
+
 **Beweisgang** — Ein Durchlauf, dessen Ergebnis **Bilder** sind und nicht Zahlen. Er misst
 nichts Neues; er macht sichtbar, was die Software an jeder Station tatsächlich tut.
 *Abgrenzung zur Messung:* Eine Messung beantwortet eine offene Frage. Ein Beweisgang
@@ -7457,6 +7480,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus Fortschritt, Vorschau und Teilbild am Heim-PC (Protokoll 74 §142): **Fortschritt (eines Renderauftrags)**, **Restzeit (geschätzt)**, **Teilbild (abgebrochen)**, **Kooperativer Abbruch** |
 | 2026-10-20 | Ergaenzt aus Entscheiden 99/99a/99b (Protokoll 74 §141): **Koppelfenster**, **Koppelschein**, **Nähe-Verbindung (MultipeerConnectivity)**, **QR-Code**; **Kopplungszahl** um die zwei Minuten am Mac ergänzt |
 | 2026-10-20 | Ergaenzt aus den Tafelkarten «Visbox · Tools» und «Visbox · Architecture» (`docs/WERKZEUGE_UND_ARCHITEKTUR.md`): **CC0 (Gemeinfreiheitserklärung)**, **Simple Icons**, **Markenzeichen (auf einer Logo-Karte)**, **numpy**, **Pillow**, **Mermaid**, **Chromium ohne Fenster (headless)**, **IfcOpenShell**, **trimesh**, **shapely / GEOS**, **gsplat**, **Open3D**, **PyTorch (torch)**, **transformers**, **Z-Image Turbo**, **Depth Anything V2 (Small)**, **SigLIP 2**, **Architekturbild (Organigramm der Programme)**, **OpenSSL**, **Avahi**, **libnotify (notify-send)**, **Monogramm-Kachel** |
 | 2026-10-20 | Ergaenzt aus Visbox 0.2.10 (Protokoll 74 §140): **Einzelinstanz (einer App)** |

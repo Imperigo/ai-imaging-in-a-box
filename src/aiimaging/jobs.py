@@ -592,6 +592,43 @@ def vermerke_meldung(job_id: str, verzeichnis, meldung: str) -> dict:
     return satz
 
 
+def vermerke_fortschritt(job_id: str, verzeichnis, progress) -> dict:
+    """Den Fortschritt eines laufenden Auftrags an den Satz heften — ohne Statuswechsel.
+
+    Dieselbe Tür wie :func:`vermerke_meldung`: Der Automat wird nicht berührt, nur ein Feld
+    ersetzt. Der Name ``progress`` ist der des Vertrags (``RenderJob.progress``), damit ein
+    Auftrag auf beiden Wegen dasselbe Feld trägt. ``None`` streicht es. Geprüft wird die
+    Form vom Aufrufer (:func:`aiimaging.bruecke.pruefe_fortschritt`).
+
+    Raises:
+        JobError: Kennung untauglich oder Auftrag nicht vorhanden.
+    """
+    satz = lies_job(job_id, verzeichnis)
+    if progress is None:
+        satz.pop("progress", None)
+    else:
+        satz["progress"] = dict(progress)
+    satz["geaendert"] = _jetzt()
+    schreibe_job(satz, verzeichnis)
+    return satz
+
+
+def vermerke_teilbild(job_id: str, verzeichnis, name: str) -> dict:
+    """Das Teilbild eines **abgebrochenen** Auftrags nennen — nur bei ``cancelled``.
+
+    Raises:
+        JobError: Auftrag nicht vorhanden, oder er steht nicht auf ``cancelled``.
+    """
+    satz = lies_job(job_id, verzeichnis)
+    if satz.get("status") != STATUS_CANCELLED:
+        raise JobError(f"Ein Teilbild gibt es nur bei {STATUS_CANCELLED!r}; der Auftrag "
+                       f"steht auf {satz.get('status')!r}.")
+    satz["teilbild"] = str(name)
+    satz["geaendert"] = _jetzt()
+    schreibe_job(satz, verzeichnis)
+    return satz
+
+
 #: Dateiname des Tokenbuchs im Auftragsverzeichnis.
 #:
 #: **Warum es das braucht** (Home-PC-Worker, `auf-vis-20260821-03`, 21.08.2026):

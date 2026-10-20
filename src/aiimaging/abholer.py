@@ -84,10 +84,28 @@ TAT_VERARBEITET = "verarbeitet"
 TAT_FEHLER = "fehler"
 TAT_LIEGENGELASSEN = "liegengelassen"
 TAT_WAISE = "waise"
+#: Der Auftrag wurde während des Laufs abgebrochen (``cancelled``) — siehe
+#: :class:`AuftragAbgebrochen`. Der Status bleibt ``cancelled``; geschrieben wird kein
+#: Ergebnis, nur das Teilbild.
+TAT_ABGEBROCHEN = "abgebrochen"
 
 
 class AbholerError(ValueError):
     """Der Abholer ist falsch aufgesetzt. Erbt von ``ValueError`` wie alle Fehler hier."""
+
+
+class AuftragAbgebrochen(AbholerError):
+    """Zwischen zwei Schritten stand der Auftrag auf ``cancelled`` — der Lauf hört hier auf.
+
+    ``teilbild`` ist das letzte fertige Zwischenbild (Pfad dieser Maschine) oder ``None``,
+    ``kamera`` die Kamera, zu der es gehört. Zugestellt wird es in :func:`hole_einen`, weil
+    erst dort die Quelle bekannt ist.
+    """
+
+    def __init__(self, satz: str, *, teilbild=None, kamera=None):
+        super().__init__(satz)
+        self.teilbild = teilbild
+        self.kamera = kamera
 
 
 
@@ -196,6 +214,10 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             ``offene_auftraege``, ``laufzettel_pfad``, ``lies_auftrag``, ``setze_status``,
             ``schreibe_ergebnis``. Beide Module führen sie.
 
+            Für Fortschritt und Abbruch (20.10.2026) dazu ``lies_status``,
+            ``artefakt_bereitstellen``, ``setze_fortschritt`` und ``setze_teilbild``;
+            fehlen sie, läuft alles wie vorher, nur ohne Fortschritt und Teilbild.
+
             **Warum überhaupt zwei.** Bis zum 26.08.2026 gab es zwei Nähte, die dasselbe
             versprachen, und nur eine hatte einen Ausführer: Ein über den MCP-Einlass
             bestellter Render ging auf ``queued`` und blieb dort für immer liegen. Statt
@@ -238,7 +260,9 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                # Immer da, auch wenn nie etwas zu vermerken war — ein Ergebnissatz mit
                # wechselnden Schluesseln zwingt jeden Auswerter, vor dem Lesen zu
                # verzweigen. `None` heisst: es lag kein Grund an.
-               "grund_vermerkt": None}
+               "grund_vermerkt": None,
+               # Der flache Name des Teilbilds, nur nach einem Abbruch (20.10.2026).
+               "teilbild": None}
 
     try:
         auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -293,7 +317,23 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         beobachter.start()
     try:
         ergebnis = verarbeite(auftrag)
+    except AuftragAbgebrochen as abbruch:
+        # DER NUTZER HAT ABGEBROCHEN (20.10.2026). Der Status bleibt `cancelled` — er steht
+        # schon dort, gesetzt von dem, der abbrach. Kein Ergebnis, keine Guetewerte; nur
+        # das letzte fertige Zwischenbild als `teilbild`.
+        antwort.update(tat=TAT_ABGEBROCHEN, grund=f"{abbruch} Kein Ergebnis geschrieben.")
+        antwort["teilbild"] = _teilbild_zustellen(quelle, ordner, abbruch.teilbild,
+                                                  abbruch.kamera)
+        return antwort
     except Exception as fehler:            # noqa: BLE001 — jeder Fehler ist ein Ergebnis
+        if _steht_abgebrochen_in(quelle, ordner):
+            # Abgebrochen UND gescheitert: Der Abbruch gilt. `error` ueber `cancelled` zu
+            # schreiben hiesse, dem Nutzer einen Fehler zu melden, den er nicht mehr
+            # wartet — und in der eigenen Ablage ist `cancelled` ein Endzustand.
+            antwort.update(tat=TAT_ABGEBROCHEN, grund=(
+                f"Abgebrochen; der Lauf scheiterte danach an {type(fehler).__name__}: "
+                f"{fehler}. Der Status bleibt '{bruecke.STATUS_CANCELLED}'."))
+            return antwort
         quelle.setze_status(ordner, quelle.STATUS_ERROR, fehler=str(fehler))
         antwort.update(tat=TAT_FEHLER, grund=(
             f"Verarbeitung gescheitert: {type(fehler).__name__}: {fehler}. Der Auftrag "
@@ -318,6 +358,21 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         antwort.update(tat=TAT_FEHLER, grund=(
             f"verarbeite lieferte {type(ergebnis).__name__} statt eines Wörterbuchs mit "
             f"'bilder'. Der Auftrag ist auf '{quelle.STATUS_ERROR}' gesetzt."))
+        return antwort
+
+    # ABGEBROCHEN NACH DEM LETZTEN BLICK (20.10.2026): Der Verarbeiter sieht zwischen den
+    # Phasen nach; fiel der Abbruch in den letzten Schritt — oder kam ein Verarbeiter ohne
+    # Blick —, steht hier `cancelled`. Bis zu diesem Tag schrieb der Abholer dann sein
+    # Ergebnis und setzte `done` UEBER den Abbruch (Bruecke) bzw. scheiterte am Automaten
+    # (eigene Ablage, `cancelled` ist dort Endzustand).
+    if _steht_abgebrochen_in(quelle, ordner):
+        bilder = [b for b in (ergebnis.get("bilder") or []) if Path(b).is_file()]
+        antwort.update(tat=TAT_ABGEBROCHEN, grund=(
+            "Abgebrochen, als der Lauf schon fertig war — kein Ergebnis geschrieben, "
+            "das letzte Bild steht als Teilbild."))
+        antwort["teilbild"] = _teilbild_zustellen(
+            quelle, ordner, bilder[-1] if bilder else None,
+            Path(bilder[-1]).parent.name if bilder else None)
         return antwort
 
     uebersprungen = bool(ergebnis.get("uebersprungen"))
@@ -359,6 +414,44 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # der die fremde Oberfläche hängt.
     _befund_ablegen(ordner, auftrag, ergebnis, antwort)
     return antwort
+
+
+def _steht_abgebrochen_in(quelle, ordner) -> bool:
+    """Steht der Auftrag in DIESER Quelle auf ``cancelled``? Unlesbar heisst: nein."""
+    lies = getattr(quelle, "lies_status", None)
+    if lies is None:
+        return False
+    try:
+        return lies(ordner) == bruecke.STATUS_CANCELLED
+    except Exception:                      # noqa: BLE001 — unlesbar ist kein Abbruch
+        return False
+
+
+def _teilbild_zustellen(quelle, ordner, pfad, kamera) -> str | None:
+    """Das Teilbild flach in den Auftragsordner legen und am Auftrag nennen.
+
+    Name ``<kamera>__teilbild.png`` (ohne Kamera ``teilbild.png``). Ohne Bild, ohne
+    passende Quelle oder bei einem Schreibfehler: ``None`` — der Abbruch bleibt ein
+    Abbruch, auch ohne Teilbild. Der Fortschritt bleibt stehen, wie er zuletzt war.
+    """
+    if not pfad or not Path(pfad).is_file():
+        return None
+    bereit = getattr(quelle, "artefakt_bereitstellen", None)
+    setze = getattr(quelle, "setze_teilbild", None)
+    if bereit is None or setze is None:
+        return None
+    name = f"{kamera}__{TEILBILD_ART}.png" if kamera else f"{TEILBILD_ART}.png"
+    if not bruecke._ist_flacher_name(name):
+        name = f"{TEILBILD_ART}.png"
+    try:
+        bereit(ordner, pfad, name)
+        setze(ordner, name)
+    except Exception as fehler:            # noqa: BLE001 — siehe Docstring
+        import logging
+        logging.getLogger(__name__).warning("Teilbild nicht zugestellt: %s: %s",
+                                            type(fehler).__name__, fehler)
+        return None
+    return name
 
 
 def _grund_vermerken(quelle, ordner, antwort: dict) -> None:
@@ -1737,7 +1830,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
     Lauf und meldete dort einen Stillstand, den es nie gab.
 
     Returns:
-        ``{gesehen, verarbeitet, fehler, liegengelassen, waisen, ergebnisse, gestanden}``.
+        ``{gesehen, verarbeitet, fehler, liegengelassen, abgebrochen, waisen, ergebnisse, gestanden}``.
         ``gesehen`` zählt die Aufträge, die in diesem Durchgang angesehen wurden.
         ``gestanden`` zählt die Läufe, bei denen die Wache einen Stillstand sah.
         ``ergebnisse`` sind die Antworten von :func:`hole_einen` in Bearbeitungsreihenfolge.
@@ -1770,6 +1863,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         "verarbeitet": sum(1 for e in ergebnisse if e["tat"] == TAT_VERARBEITET),
         "fehler": sum(1 for e in ergebnisse if e["tat"] == TAT_FEHLER),
         "liegengelassen": sum(1 for e in ergebnisse if e["tat"] == TAT_LIEGENGELASSEN),
+        "abgebrochen": sum(1 for e in ergebnisse if e["tat"] == TAT_ABGEBROCHEN),
         "gestanden": sum(1 for e in ergebnisse if (e.get("wache") or {}).get("gestanden")),
         "waisen": verwaist,
         "ergebnisse": ergebnisse,
@@ -2276,6 +2370,212 @@ def _pruefe_skizzenname(mappe, name) -> None:
             f"dort steht.")
 
 
+# --------------------------------------------------------------------------------------
+# Fortschritt, Vorschau und Teilbild (20.10.2026)
+# --------------------------------------------------------------------------------------
+#
+# Ein Lauf mit drei Kameras dauert Minuten, und bis zu diesem Tag sah man davon nur
+# «läuft». Abgemacht ist seither ein Feld ``progress`` am Auftrag (siehe
+# :data:`aiimaging.bruecke.FELD_FORTSCHRITT`) und ein ``teilbild`` für den Abbruch.
+
+#: Wie ein Kameradurchgang auf seine drei Phasen fällt — **eine Setzung, keine Messung.**
+#:
+#: Grundlage ist die Grössenordnung, die in diesem Modul an anderer Stelle steht: rund
+#: 40 s Blender je Kamera bei Vertragsvorgaben, rund 25 s Diffusion je Startwert bei drei
+#: Startwerten, dazu die Messung. Daraus ergäbe sich eher 0,3 / 0,6 / 0,1; gewählt ist
+#: 0,2 / 0,7 / 0,1, weil Blender mit Zwischenspeicher oder Grundlage oft entfällt und das
+#: Bildmodell der Teil ist, der wirklich wartet. Die Zahl dient nur der Anzeige — die
+#: Restzeit (``rest_s``) kommt **nicht** aus ihr, sondern aus den gemessenen Dauern der
+#: fertigen Kameras desselben Laufs.
+FORTSCHRITT_ANTEILE = (("blender", 0.2), ("bildmodell", 0.7), ("pruefung", 0.1))
+
+#: Der flache Name der Vorschau einer Kamera — dieselbe Form wie die Ebenen
+#: (``<kamera>__<art>.png``, :func:`ebenen_dieser_kamera`).
+VORSCHAU_ART = "vorschau"
+TEILBILD_ART = "teilbild"
+
+
+def _quelle_des_ordners(verzeichnis):
+    """Welche Ablage dieser Auftragsordner ist — erkannt an seinem Laufzettel.
+
+    Der Verarbeiter bekommt nur den Auftrag, nicht die Quelle (``hole_einen`` reicht sie
+    nicht hinein, und die Signatur ``verarbeite(auftrag)`` ist Vertrag). Beide Ablagen
+    legen ihren Laufzettel unter einem eigenen Namen ab, darum genügt der Blick auf die
+    Datei. ``None``: keiner von beiden — dann wird nichts gemeldet.
+    """
+    from . import eigene_quelle
+    ordner = Path(verzeichnis)
+    if (ordner / bruecke.DATEI_LAUFZETTEL).is_file():
+        return bruecke
+    if eigene_quelle.laufzettel_pfad(ordner).is_file():
+        return eigene_quelle
+    return None
+
+
+def melde_fortschritt(verzeichnis, progress: dict, *, dateien=None) -> dict | None:
+    """Den Fortschritt an den Auftrag schreiben — über die Quelle, zu der der Ordner gehört.
+
+    ``dateien`` (``{flacher Name: Pfad}``) werden **vorher** in den Auftragsordner gelegt:
+    Ein Fortschritt, der eine Vorschau nennt, die noch nicht dort liegt, liesse die
+    Oberfläche ein Bild holen, das es nicht gibt — dieselbe Reihenfolge wie bei
+    :func:`aiimaging.bruecke.schreibe_ergebnis`.
+
+    Das ist die Vorgabe für ``verarbeiter(_melde=…)``. Wirft sie, fängt der Verarbeiter das
+    ab: Ein Fortschritt, der sich nicht schreiben lässt, ist kein Grund, ein Bild zu verlieren.
+    """
+    quelle = _quelle_des_ordners(verzeichnis)
+    if quelle is None or not hasattr(quelle, "setze_fortschritt"):
+        return None
+    for name, pfad in (dateien or {}).items():
+        quelle.artefakt_bereitstellen(verzeichnis, pfad, name)
+    return quelle.setze_fortschritt(verzeichnis, progress)
+
+
+def steht_abgebrochen(verzeichnis) -> bool:
+    """Steht der Auftrag **jetzt** auf ``cancelled``? Unlesbar heisst: nein.
+
+    Unlesbar ist kein Abbruch: Ein Laufzettel, der gerade geschrieben wird, soll einen
+    Lauf nicht beenden. Der nächste Blick kommt nach der nächsten Phase.
+    """
+    quelle = _quelle_des_ordners(verzeichnis)
+    if quelle is None or not hasattr(quelle, "lies_status"):
+        return False
+    try:
+        return quelle.lies_status(verzeichnis) == bruecke.STATUS_CANCELLED
+    except Exception:                      # noqa: BLE001 — siehe Docstring
+        return False
+
+
+class _Fortschritt:
+    """Führt Buch über den Lauf und meldet ihn — mit dem Blick auf einen Abbruch dabei.
+
+    **Was gemeldet wird.** Je Kamera ``blender`` vor dem Multipass (oder dem Griff in die
+    Grundlage), ``bildmodell`` vor dem KI-Schritt, ``pruefung`` nach dem letzten Startwert;
+    ``pct`` über alle Kameras nach :data:`FORTSCHRITT_ANTEILE`, nie rückwärts. Am Ende
+    ``pruefung`` mit ``pct`` 1.0 — das bleibt am Auftrag stehen, auch bei ``done``. Die
+    Messung je Startwert läuft in ``_bester_seed`` mit dem Bild verzahnt und zählt darum
+    zum ``bildmodell``; ``pruefung`` ist, was danach kommt (Nullprobe, Urteil).
+
+    **Die Restzeit** ist ``None``, bis eine Kamera **gerechnet** fertig ist; danach das
+    Mittel der gerechneten Kameras mal die verbleibenden, abzüglich des schon gelaufenen
+    Teils der aktuellen, nie unter 0, ganze Sekunden. Übersprungene Kameras (Blickfeld,
+    Rahmung, Zwilling) zählen nicht ins Mittel — sie dauern Sekundenbruchteile und
+    liessen die Schätzung um die Hälfte fallen.
+
+    **Der Abbruch** wird zwischen den Phasen nachgesehen (ein Blick in den Laufzettel).
+    Ein laufender Blender- oder Bildmodellschritt wird **nicht** unterbrochen; der
+    Abbruch greift beim nächsten Übergang.
+
+    Jeder Schreibfehler wird abgefangen und protokolliert, nie weitergereicht.
+    """
+
+    def __init__(self, ordner, n: int, *, melde, abgebrochen, uhr=time.monotonic):
+        self.ordner = Path(ordner)
+        self.n = max(1, int(n))
+        self.melde = melde
+        self.abgebrochen = abgebrochen
+        self.uhr = uhr
+        self.i = 0
+        self.beginn = None
+        self.dauern: list[float] = []
+        self.pct = 0.0
+        self.phase_jetzt = FORTSCHRITT_ANTEILE[0][0]
+        self.vorschau = None
+        self.cycles_bild = None
+        self.ki_bild = None
+        self.kamera_des_bilds = None
+        self.fehler: list[str] = []
+
+    # --- Buchführung -----------------------------------------------------------------
+    def _anteil_vor(self, phase: str) -> float:
+        summe = 0.0
+        for name, anteil in FORTSCHRITT_ANTEILE:
+            if name == phase:
+                return summe
+            summe += anteil
+        return summe
+
+    def rest_s(self):
+        if not self.dauern:
+            return None
+        mittel = sum(self.dauern) / len(self.dauern)
+        offen = self.n - (self.i - 1) if self.beginn is not None else self.n - self.i
+        gelaufen = (self.uhr() - self.beginn) if self.beginn is not None else 0.0
+        return max(0, int(round(mittel * offen - gelaufen)))
+
+    def _sende(self, dateien=None) -> None:
+        progress = {"phase": self.phase_jetzt, "pct": round(self.pct, 4),
+                    "kamera_i": max(1, min(self.i, self.n)), "kamera_n": self.n,
+                    "rest_s": self.rest_s()}
+        if self.vorschau:
+            progress["vorschau"] = self.vorschau
+        try:
+            self.melde(self.ordner, progress, dateien=dateien)
+        except Exception as fehler:        # noqa: BLE001 — siehe Klassendoku
+            self.fehler.append(f"{type(fehler).__name__}: {fehler}")
+            import logging
+            logging.getLogger(__name__).warning(
+                "Fortschritt nicht geschrieben (der Lauf geht weiter): %s", self.fehler[-1])
+
+    def _setze(self, phase: str, pct: float) -> None:
+        self.phase_jetzt = phase
+        self.pct = min(1.0, max(self.pct, pct))
+
+    def pruefe_abbruch(self) -> None:
+        try:
+            weg = bool(self.abgebrochen(self.ordner))
+        except Exception:                  # noqa: BLE001 — unlesbar ist kein Abbruch
+            weg = False
+        if weg:
+            raise AuftragAbgebrochen(
+                f"Abgebrochen vor Kamera {self.i} von {self.n} (Phase {self.phase_jetzt}).",
+                teilbild=self.ki_bild or self.cycles_bild, kamera=self.kamera_des_bilds)
+
+    # --- die Übergänge ---------------------------------------------------------------
+    def kamera(self, i: int) -> None:
+        self.i, self.beginn = i, self.uhr()
+        self.pruefe_abbruch()
+        self._setze("blender", (i - 1) / self.n)
+        self._sende()
+
+    def vorschau_da(self, kuerzel, beauty_png) -> None:
+        if not beauty_png or not Path(beauty_png).is_file():
+            return
+        self.cycles_bild, self.kamera_des_bilds = str(beauty_png), str(kuerzel)
+        name = f"{kuerzel}__{VORSCHAU_ART}.png"
+        if not bruecke._ist_flacher_name(name):
+            return
+        vorher = self.vorschau
+        self.vorschau = name
+        self._setze("blender", (self.i - 1 + self._anteil_vor("bildmodell")) / self.n)
+        fehler_vorher = len(self.fehler)
+        self._sende(dateien={name: str(beauty_png)})
+        if len(self.fehler) > fehler_vorher:
+            # Nicht bereitgestellt — dann nennt der Fortschritt auch keine neue Vorschau.
+            self.vorschau = vorher
+
+    def phase(self, phase: str) -> None:
+        self.pruefe_abbruch()
+        self._setze(phase, (self.i - 1 + self._anteil_vor(phase)) / self.n)
+        self._sende()
+
+    def ki_bild_da(self, kuerzel, bild_png) -> None:
+        if bild_png and Path(bild_png).is_file():
+            self.ki_bild, self.kamera_des_bilds = str(bild_png), str(kuerzel)
+
+    def kamera_fertig(self, *, gerechnet: bool) -> None:
+        if gerechnet and self.beginn is not None:
+            self.dauern.append(self.uhr() - self.beginn)
+        self.beginn = None
+        self._setze(self.phase_jetzt, self.i / self.n)
+
+    def ende(self) -> None:
+        self.pruefe_abbruch()
+        self._setze("pruefung", 1.0)
+        self.i = self.n
+        self._sende()
+
+
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
@@ -2294,7 +2594,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None,
                 _raeume=None, _pipeline_lage=None, _kontext_vorbereiten=None,
-                _skizzen_ausfuehrer=None, _rechne_skizze=None):
+                _skizzen_ausfuehrer=None, _rechne_skizze=None,
+                _melde=None, _abgebrochen=None, _uhr=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
 
     Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
@@ -2335,6 +2636,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     ``_soll``). Ohne das wäre dieser Weg nur auf einem Rechner mit Blender, GPU und 20 GB
     Gewichten prüfbar — also faktisch gar nicht.
 
+    **Fortschritt** (20.10.2026): Während des Laufs steht am Auftrag, in welcher Phase
+    welche Kamera ist, wie weit der Lauf ist, die jüngste Cycles-Vorschau und eine Restzeit
+    — siehe :class:`_Fortschritt`. ``_melde`` (Vorgabe :func:`melde_fortschritt`) und
+    ``_abgebrochen`` (Vorgabe :func:`steht_abgebrochen`) sind die Nähte dafür, ``_uhr`` die
+    Uhr der Restzeit. Steht der Auftrag zwischen zwei Phasen auf ``cancelled``, endet der
+    Lauf mit :class:`AuftragAbgebrochen`.
+
     Returns:
         Ein ``verarbeite(auftrag) -> {bilder, geometrie_urteil, zeiten, kameras}``, wie
         :func:`hole_einen` es erwartet. ``geometrie_urteil`` ist das Urteil der
@@ -2364,6 +2672,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     # Naht fuer Proben mit einem Ersatzmodul.
     pipeline_lage = (_pipeline_lage if _pipeline_lage is not None
                      else (render.pipeline_lage if _rendere is None else None))
+
+    melde = _melde or melde_fortschritt
+    abgebrochen = _abgebrochen or steht_abgebrochen
+    uhr = _uhr or time.monotonic
 
     def _verarbeite_einen(auftrag: dict) -> dict:
         szene = auftrag["szene"]
@@ -2568,9 +2880,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # `_finde_zwilling`: Bei einem Quader fallen `sSE` und `nNW` zusammen.
         gesehen: list[dict] = []
         beginn_gesamt = time.monotonic()
+        # DER FORTSCHRITT AM AUFTRAG (20.10.2026) — siehe `_Fortschritt`. Er sieht zwischen
+        # den Phasen auch nach, ob der Auftrag abgebrochen wurde.
+        fort = _Fortschritt(ordner, len(aufgaben), melde=melde, abgebrochen=abgebrochen,
+                            uhr=uhr)
 
-        for aufgabe in aufgaben:
+        for nummer, aufgabe in enumerate(aufgaben, start=1):
             kuerzel = aufgabe["kuerzel"]
+            fort.kamera(nummer)
             # Der Innenvermerk dieser Aufgabe, an JEDES ihrer Urteile — auch an eines,
             # das nicht gerendert wurde: Auch dort ist die Frage, WOHER der Standpunkt
             # kam, die erste, die jemand stellt. `None`: `interior` war nicht bestellt.
@@ -2716,6 +3033,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     modellstand=modellstand, **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                fort.kamera_fertig(gerechnet=False)
                 continue
             schluessel = (multipass_schluessel(einstellungen, blender=fassung)
                           if zwischenspeicher is not None and geholt is None else None)
@@ -2764,6 +3082,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     zwischenspeicher.lege_ab(schluessel, bericht, zusagen=zusagen)
                 bericht["zwischenspeicher"] = {"treffer": False, "schluessel": schluessel,
                                                "gerechnet_unter": bericht.get("blender")}
+            # DIE VORSCHAU: das Cycles-Bild dieser Kamera, sobald es da ist — gerechnet, aus
+            # dem Zwischenspeicher oder aus der Grundlage (dort dient deren Schoenbild).
+            if isinstance(bericht, dict):
+                fort.vorschau_da(kuerzel, bericht.get("beauty_png"))
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
@@ -2788,6 +3110,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                     **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                fort.kamera_fertig(gerechnet=False)
                 continue
 
             tiefe = bericht.get("depth_png")
@@ -2847,6 +3170,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 bilder.append(urteile[-1]["bild_png"])
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                fort.kamera_fertig(gerechnet=True)
                 continue
             for lage in (rahmung, komposition):
                 if lage.get("abbruch"):
@@ -2860,6 +3184,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                     modellstand=modellstand, ebenen=ebenen, **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                fort.kamera_fertig(gerechnet=False)
                 continue
 
             # Die Soll-Karte kommt aus der EXR, nicht aus dem PNG: nur sie trägt die
@@ -2949,6 +3274,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                        _kosmo_szene.URTEIL_BILDAUFTRAG: None}))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                fort.kamera_fertig(gerechnet=False)
                 continue
 
             # DER BILDAUFTRAG EINER INNENKAMERA (Sammel-Nachprobe auf-20261001-230): KosmoOrbit
@@ -2988,6 +3314,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     )
                 return erg
 
+            fort.phase("bildmodell")
             ergebnis, urteil, auswahl = _bester_seed(
                 seeds_lauf, aus, kuerzel, _rendere_seed,
                 lambda png: messen(png, soll_pruefung, breite=breite, hoehe=hoch,
@@ -2996,6 +3323,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 maske_da=maskenbefund.get("maske") is not None,
                 soll=soll_umriss, breite=breite, hoehe=hoch)
             bilder.append(ergebnis["bild_png"])
+            fort.ki_bild_da(kuerzel, ergebnis["bild_png"])
+            fort.phase("pruefung")
             anker = None
             maskenanker = None
             if nullprobe:
@@ -3112,7 +3441,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 gesehen.append({"soll": flach, "breite": breite, "hoehe": hoch,
                                 "kamera": kuerzel, "urteil": urteil})
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+            fort.kamera_fertig(gerechnet=True)
 
+        # Ein letzter Blick auf den Abbruch, dann 1.0 — das bleibt am Auftrag stehen.
+        fort.ende()
         zeiten["gesamt"] = round(time.monotonic() - beginn_gesamt, 1)
         # DIE GRUNDLAGE DIESES LAUFS (Nr. 85): geholt → dieselbe Kennung; gerechnet →
         # abgelegt unter einer neuen. Ohne Ablage (kein --out-wurzel) keine Kennung —

@@ -33,6 +33,11 @@ Was dieses Modul mit ``bruecke`` gemeinsam hat, ist kein Zufall: Beide bedienen 
 sechs Namen, die der Abholer braucht (``QUELLEN_FEHLER``, ``STATUS_RUNNING``,
 ``STATUS_ERROR``, ``offene_auftraege``, ``laufzettel_pfad``, ``lies_auftrag``,
 ``setze_status``, ``schreibe_ergebnis``). Das ist der ganze Vertrag einer Quelle.
+
+Seit dem 20.10.2026 kommen vier dazu, die der Abholer **während** eines Laufs braucht:
+``lies_status`` (sieht er einen Abbruch?), ``artefakt_bereitstellen``, ``setze_fortschritt``
+und ``setze_teilbild``. Fehlen sie einer Quelle, rechnet der Abholer wie bisher, nur ohne
+Fortschritt und ohne Teilbild.
 """
 from __future__ import annotations
 
@@ -47,6 +52,7 @@ STATUS_QUEUED = jobs.STATUS_QUEUED
 STATUS_RUNNING = jobs.STATUS_RUNNING
 STATUS_ERROR = jobs.STATUS_ERROR
 STATUS_DONE = jobs.STATUS_DONE
+STATUS_CANCELLED = jobs.STATUS_CANCELLED
 
 #: Der Fehler, den der Abholer beim Lesen abfängt. Die Brücke nennt ihn
 #: ``BrueckenError``; welcher es ist, entscheidet die Quelle, nicht der Abholer.
@@ -283,6 +289,43 @@ def vermerke_grund(verzeichnis, grund: str) -> dict:
     return jobs.vermerke_meldung(ordner.name, ordner, grund)
 
 
+def lies_status(verzeichnis) -> str | None:
+    """Der Status, wie er **jetzt** am Auftrag steht — für den Blick auf einen Abbruch."""
+    ordner = Path(verzeichnis)
+    return jobs.lies_job(ordner.name, ordner).get("status")
+
+
+def artefakt_bereitstellen(verzeichnis, quelle, name: str) -> str:
+    """Eine Datei flach in den Auftragsordner legen — dieselbe Zustellung wie die Brücke."""
+    try:
+        return bruecke.artefakt_bereitstellen(verzeichnis, quelle, name)
+    except bruecke.BrueckenError as fehler:
+        raise QUELLEN_FEHLER(str(fehler)) from fehler
+
+
+def setze_fortschritt(verzeichnis, progress) -> dict:
+    """Den Fortschritt an den Auftrag heften, ohne den Status anzufassen.
+
+    Geprüft nach derselben Abmachung wie bei der Brücke (:func:`bruecke.pruefe_fortschritt`),
+    geschrieben über :func:`aiimaging.jobs.vermerke_fortschritt` — also nicht am Automaten
+    vorbei.
+    """
+    ordner = Path(verzeichnis)
+    try:
+        geprueft = None if progress is None else bruecke.pruefe_fortschritt(progress)
+    except bruecke.BrueckenError as fehler:
+        raise QUELLEN_FEHLER(str(fehler)) from fehler
+    return jobs.vermerke_fortschritt(ordner.name, ordner, geprueft)
+
+
+def setze_teilbild(verzeichnis, name: str) -> dict:
+    """Das Teilbild eines abgebrochenen Auftrags nennen — nur bei ``cancelled``."""
+    ordner = Path(verzeichnis)
+    if not bruecke._ist_flacher_name(name) or not (ordner / name).is_file():
+        raise QUELLEN_FEHLER(f"Teilbild {name!r} liegt nicht als Datei im Auftragsordner.")
+    return jobs.vermerke_teilbild(ordner.name, ordner, name)
+
+
 def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
@@ -339,7 +382,8 @@ def _schreibe_atomar(ziel: Path, inhalt: dict) -> None:
 
 __all__ = [
     "DATEI_ERGEBNIS", "QUELLEN_FEHLER",
-    "STATUS_DONE", "STATUS_ERROR", "STATUS_QUEUED", "STATUS_RUNNING",
-    "laufzettel_pfad", "lies_auftrag", "offene_auftraege", "schreibe_ergebnis",
-    "setze_status",
+    "STATUS_CANCELLED", "STATUS_DONE", "STATUS_ERROR", "STATUS_QUEUED", "STATUS_RUNNING",
+    "artefakt_bereitstellen", "laufzettel_pfad", "lies_auftrag", "lies_status",
+    "offene_auftraege", "schreibe_ergebnis", "setze_fortschritt", "setze_status",
+    "setze_teilbild",
 ]

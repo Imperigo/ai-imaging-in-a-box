@@ -8062,8 +8062,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
-  - [ ] Fortschritt und Vorschau: `progress {phase, pct}` im Laufzettel, Cycles-Schönbild als Zwischenbild, Restzeit aus den fertigen Kameras (L4-6, Nr. 62/63/71/72; Vorschlag an UI/Integrator 20.10.)
+  - [x] Fortschritt und Vorschau: `progress {phase, pct}` im Laufzettel, Cycles-Schönbild als Zwischenbild, Restzeit aus den fertigen Kameras (L4-6, Nr. 62/63/71/72; Vorschlag an UI/Integrator 20.10.) — Heim-PC gebaut, beide Ablagen (§142, C69); die Anzeige liegt drüben
   - [ ] Zeitbudget am Render-Knoten, beim Abbruch das letzte Zwischenergebnis behalten (L4-8, Nr. 70/76/80)
+    - [x] Beim Abbruch das letzte Zwischenbild als `teilbild` behalten, ohne Gütewerte — Heim-PC, Blick zwischen den Phasen (§142, C69)
+    - [ ] Zeitbudget am Render-Knoten
   - [ ] Auto-Kamera auf das Projektvolumen mit festem Bildanteil 25–40 %, Augenhöhe relativ zur EG-Kote am Standpunkt (L4-3, Nr. 60/65/67; KosmoDraw)
   - [ ] Gesicherte Blicke direkt im Kamera-Knoten wählbar, ohne offene 3D-Ansicht (L4-4, Nr. 68)
   - [ ] Hausanteil an KI-Bild UND Grundlage messen und beide zeigen; Geometrie-Treue als Pflichteingang (L4-2)

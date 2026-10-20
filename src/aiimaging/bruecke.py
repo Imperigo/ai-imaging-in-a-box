@@ -125,6 +125,19 @@ FELD_MELDUNG = "message"
 #: Für jeden Auftrag der fremden Brücke ändert sich damit nichts.
 FELD_FREIGABE_KNOTEN = "visbox_freigabe"
 
+#: Der Fortschritt eines laufenden Auftrags — ein Feld ihres Vertrags (``RenderJob.progress``,
+#: additiv und optional, abgesprochen am 20.10.2026): ``{phase, pct, kamera_i?, kamera_n?,
+#: vorschau?, rest_s?}``. ``phase`` ist eines von :data:`FORTSCHRITT_PHASEN`, ``pct`` liegt
+#: in 0..1, ``vorschau`` ist ein flacher Artefaktname, ``rest_s`` ist ``None``, solange es
+#: keine Schätzung gibt.
+FELD_FORTSCHRITT = "progress"
+FORTSCHRITT_PHASEN = ("blender", "bildmodell", "pruefung")
+
+#: Das letzte fertige Zwischenbild eines **abgebrochenen** Auftrags (``RenderJob.teilbild``,
+#: derselbe Vertrag). Nur bei ``cancelled``, ohne Gütewerte — die Oberfläche zeigt es als
+#: «Teilbild (abgebrochen)».
+FELD_TEILBILD = "teilbild"
+
 
 class BrueckenError(ValueError):
     """Ein Auftragsverzeichnis ist unbrauchbar, oder eine Antwort passte nicht hinein."""
@@ -509,6 +522,124 @@ def vermerke_grund(verzeichnis, grund: str) -> dict:
         laufzettel[FELD_MELDUNG] = text
     else:
         laufzettel.pop(FELD_MELDUNG, None)
+    laufzettel["updated_at"] = _jetzt()
+    _schreibe_atomar(ziel, laufzettel)
+    return laufzettel
+
+
+def pruefe_fortschritt(progress) -> dict:
+    """Einen Fortschritt gegen die Abmachung prüfen und als neues Wörterbuch zurückgeben.
+
+    Geprüft wird hier und nicht erst drüben: Ein Feld, das ihr Vertrag abweist, liesse
+    dort den ganzen Laufzettel durchfallen — und dann sähe man nicht einmal mehr den
+    Status. Lieber kein Fortschritt als ein unlesbarer Auftrag.
+
+    Raises:
+        BrueckenError: Form, Phase oder Wertebereich stimmen nicht.
+    """
+    if not isinstance(progress, dict):
+        raise BrueckenError(f"Fortschritt muss ein Wörterbuch sein, war {type(progress).__name__}.")
+    unbekannt = set(progress) - {"phase", "pct", "kamera_i", "kamera_n", "vorschau", "rest_s"}
+    if unbekannt:
+        raise BrueckenError(f"Fortschritt mit unbekannten Feldern: {sorted(unbekannt)}.")
+    if progress.get("phase") not in FORTSCHRITT_PHASEN:
+        raise BrueckenError(f"Unbekannte Phase {progress.get('phase')!r}. Erlaubt: "
+                            f"{', '.join(FORTSCHRITT_PHASEN)}.")
+    pct = progress.get("pct")
+    if isinstance(pct, bool) or not isinstance(pct, (int, float)) or not 0 <= pct <= 1:
+        raise BrueckenError(f"pct muss eine Zahl in 0..1 sein, war {pct!r}.")
+    for feld in ("kamera_i", "kamera_n"):
+        wert = progress.get(feld)
+        if wert is not None and (isinstance(wert, bool) or not isinstance(wert, int)
+                                 or wert < 1):
+            raise BrueckenError(f"{feld} muss eine ganze Zahl ab 1 sein, war {wert!r}.")
+    vorschau = progress.get("vorschau")
+    if vorschau is not None and not _ist_flacher_name(vorschau):
+        raise BrueckenError(f"vorschau muss ein flacher Dateiname sein, war {vorschau!r}.")
+    rest = progress.get("rest_s")
+    if rest is not None and (isinstance(rest, bool) or not isinstance(rest, (int, float))
+                             or rest < 0):
+        raise BrueckenError(f"rest_s muss None oder eine Zahl ab 0 sein, war {rest!r}.")
+    return dict(progress)
+
+
+def _ist_flacher_name(name) -> bool:
+    """Ein Segment, kein Pfad — so holt ``/jobs/{id}/artifacts/{name}`` die Datei."""
+    return (isinstance(name, str) and bool(name) and "/" not in name and "\\" not in name
+            and not name.startswith("."))
+
+
+def lies_status(verzeichnis) -> str | None:
+    """Der Status, wie er **jetzt** im Laufzettel steht — für den Blick auf einen Abbruch.
+
+    Der Abbruch drüben ist kooperativ: ``/cancel`` setzt ``cancelled`` in den Laufzettel und
+    wartet, dass der Rechnende es liest. Dies ist das Lesen.
+    """
+    return _lies_json(Path(verzeichnis) / DATEI_LAUFZETTEL, "Laufzettel (job.json)").get("status")
+
+
+def artefakt_bereitstellen(verzeichnis, quelle, name: str) -> str:
+    """Eine Datei unter einem flachen Namen in den Auftragsordner legen (atomar).
+
+    Dieselbe Zustellung wie bei Bildern und Ebenen: Der Empfänger holt über den blossen
+    Namen, also muss die Datei unter diesem Namen dort liegen.
+
+    Raises:
+        BrueckenError: kein flacher Name, oder die Quelle fehlt.
+    """
+    if not _ist_flacher_name(name):
+        raise BrueckenError(f"Kein flacher Artefaktname: {name!r}.")
+    quelle = Path(quelle)
+    if not quelle.is_file():
+        raise BrueckenError(f"Die Datei für {name!r} fehlt.")
+    ziel = Path(verzeichnis) / name
+    if quelle.resolve() != ziel.resolve():
+        _kopiere_atomar(quelle, ziel)
+    return name
+
+
+def setze_fortschritt(verzeichnis, progress) -> dict:
+    """Den Fortschritt in den Laufzettel schreiben — **ohne** den Status anzufassen.
+
+    Wie :func:`vermerke_grund`: gelesen, ein Feld ersetzt, alles andere bleibt, atomar
+    zurückgeschrieben. ``progress=None`` streicht das Feld. Die Oberfläche liest im
+    Sekundentakt; ein halber Laufzettel wäre für sie ein Fehler.
+
+    Raises:
+        BrueckenError: Laufzettel fehlt, oder der Fortschritt passt nicht zur Abmachung.
+    """
+    ziel = Path(verzeichnis) / DATEI_LAUFZETTEL
+    laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
+    if progress is None:
+        laufzettel.pop(FELD_FORTSCHRITT, None)
+    else:
+        laufzettel[FELD_FORTSCHRITT] = pruefe_fortschritt(progress)
+    laufzettel["updated_at"] = _jetzt()
+    _schreibe_atomar(ziel, laufzettel)
+    return laufzettel
+
+
+def setze_teilbild(verzeichnis, name: str) -> dict:
+    """Das Teilbild eines abgebrochenen Auftrags nennen — nur, wenn er ``cancelled`` ist.
+
+    Die Abmachung erlaubt das Feld allein bei ``cancelled``. Steht der Auftrag anders, wird
+    nichts geschrieben und laut abgewiesen: Ein Teilbild an einem fertigen Auftrag sähe aus
+    wie ein zweites Ergebnis. Die Datei muss schon unter ``name`` im Ordner liegen
+    (:func:`artefakt_bereitstellen`).
+
+    Raises:
+        BrueckenError: Laufzettel fehlt, Status nicht ``cancelled``, Name nicht flach.
+    """
+    ordner = Path(verzeichnis)
+    ziel = ordner / DATEI_LAUFZETTEL
+    laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
+    if laufzettel.get("status") != STATUS_CANCELLED:
+        raise BrueckenError(
+            f"Ein Teilbild gibt es nur bei {STATUS_CANCELLED!r}; der Auftrag steht auf "
+            f"{laufzettel.get('status')!r}.")
+    if not _ist_flacher_name(name) or not (ordner / name).is_file():
+        raise BrueckenError(f"Teilbild {name!r} liegt nicht als Datei im Auftragsordner.")
+    laufzettel[FELD_TEILBILD] = name
     laufzettel["updated_at"] = _jetzt()
     _schreibe_atomar(ziel, laufzettel)
     return laufzettel

@@ -1535,3 +1535,13 @@ das Kennwort. Geht das nicht, liest das iPad mit seiner Kamera einen QR-Code im 
 bleibt das Abtippen. Nach den zwei Minuten verschwindet alles von selbst. Ehrlich gesagt: Gebaut und vom Übersetzer
 geprüft, aber noch nie an zwei echten Geräten ausprobiert; und der Heim-PC lässt die Zahl selbst noch zehn Minuten
 gelten — dass sie dort auch nach zwei Minuten verfällt, ist eine eigene Entscheidung.
+
+**Man sieht jetzt, wie weit ein Bild ist (20.10.2026).** Ein Rendering mit drei Kameras dauert Minuten, und bisher
+stand dabei nur «läuft». Jetzt meldet der Heim-PC laufend, bei welcher Kamera er ist und in welchem Schritt (Blender,
+Bildmodell, Prüfung), wie weit er insgesamt ist und wie lange es noch etwa dauert. Sobald Blender eine Ansicht fertig
+hat, liegt ihr rohes Bild als Vorschau bereit — man sieht also früh, ob Standpunkt und Ausschnitt stimmen. Bricht man
+ab, hört der Heim-PC nach dem laufenden Schritt auf und behält das letzte fertige Bild als «Teilbild», ohne Gütewerte,
+weil die Prüfung nicht mehr lief. Dabei fiel ein alter Fehler auf: Ein Lauf, der trotz Abbruch fertig wurde, meldete
+danach «fertig» statt «abgebrochen». Ehrlich gesagt: Die Restzeit ist eine Schätzung aus den schon fertigen Kameras und
+fehlt bei der ersten; wie sich die drei Schritte einer Kamera teilen, ist eine feste Annahme, keine Messung. Und ein
+Schritt, der schon läuft, wird nicht mitten drin unterbrochen.
