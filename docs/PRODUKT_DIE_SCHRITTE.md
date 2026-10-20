@@ -523,7 +523,7 @@ Nichts davon ändert ein Bild oder ein Urteil; es ändert, was **gesagt** wird.
   weil die App das Bild darunter weder zeigte noch mitschickte.
 * **Innenraum-Bestellungen über die Warteschlange kommen durch.** Bis heute blieb jede liegen — aus
   zwei Gründen, die man nur am Stück sieht: Das Feld war unbekannt, und die Datei hiess
-  anders, als wir sie suchten. Beides behoben; ob auf der liefernden Seite ein drittes
+  anders, als wir sie suchten. Beides behoben; ob im gelieferten Modell ein drittes
   Hindernis wartet, ist gefragt.
 * **Die Entwurfsfläche ist nachgezogen:** Was der Bau brauchte und kein Blatt zeigte, ist
   jetzt gezeichnet. Zwei Stellen tragen das Schild «Owner-Entscheid offen» — dort haben Sie
@@ -868,7 +868,7 @@ hat:
 ### 21.09.2026 · Ein Faden zwischen iPad und Rechner
 
 Dazu kam der Wunsch, dass die beiden Geräte **als ein Werkzeug wirken** und das Senden
-einer Skizze als Bewegung beginnt und drüben weitergeht.
+einer Skizze als Bewegung am iPad beginnt und am Rechner weitergeht.
 
 Der Entwurf dafür steht auf zwei neuen Blättern: dem Faden selbst (fünf Augenblicke vom
 Ablegen bis zum Rückweg) und der HomeStation am Rechner, auf der die Skizze ankommt.

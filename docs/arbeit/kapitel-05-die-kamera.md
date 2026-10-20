@@ -239,11 +239,11 @@ sind ein Begriff des Gebäudemodells (`IfcSpace`). Der Renderweg bekommt aber ei
 Moment, in dem sich die Frage «welche Räume gibt es?» beantworten lässt, liegt vor der
 Umwandlung.*
 
-Die Zuständigkeit dafür liegt bei der Gegenseite und ist als Auftrag gestellt. **Die
+Die Zuständigkeit dafür liegt bei der Umwandlung, die das Modell liefert, und ist als Auftrag gestellt. **Die
 Antwort fehlt**, und sie gehört in dieses Kapitel und nicht in den Ausblick: Es ist eine
 offene Frage der Arbeit, keine Idee für später.
 
-*Nachtrag 19.09.2026:* Die Gegenseite hat gemeldet, dass ihre Brücke das Dateiformat bis
+*Nachtrag 19.09.2026:* Gemeldet wurde, dass die liefernde Brücke das Dateiformat bis
 zum 11.09.2026 unbedingt auf die Dreiecksdatei zurückgebogen hat. **Der Weg war also nicht
 ungenutzt, sondern blockiert** — und seit dem 11.09. ist er es nicht mehr, ohne dass es
 jemand wusste. Die Frage ist damit neu gefasst und erneut gestellt.

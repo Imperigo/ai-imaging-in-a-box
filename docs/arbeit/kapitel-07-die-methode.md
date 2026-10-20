@@ -3,7 +3,7 @@
 > **Stand 29.09.2026 — Entwurf** (geschrieben 19.09.2026, nachgezogen 29.09.2026). Erste
 > geschriebene Fassung eines Kapitels dieser Arbeit.
 > **Nachgetragen am 29.09.2026:** Der ausgeführte Fall zu 7.2 hat eine zweite Hälfte
-> bekommen, und sie ist unbequem — die dritte Antwort stand drüben im Vertrag, aber nicht
+> bekommen, und sie ist unbequem — die dritte Antwort stand im Vertrag, aber nicht
 > in der Anzeige. Der ausgeführte Fall zu 7.5 ist seit dem 21.09.2026 aufgelöst, und der
 > «Preis» dort war keiner. Zu 7.4 und 7.6 sind neue Fälle genannt.
 > Was hier steht, ist aus 29 Sitzungsprotokollen, dem Lexikon und den Auftragsergebnissen
@@ -53,19 +53,19 @@ konnte, ist nicht dasselbe wie ein Bild, das die Schwelle verfehlt hat. Das erst
 nichts über das Bild, das zweite alles. Wer beides als «nicht bestanden» ausliefert, hat
 eine Information vernichtet, die niemand zurückholen kann.
 
-### Der ausgeführte Fall: das Vertragsfeld, das drüben ankommt
+### Der ausgeführte Fall: das Vertragsfeld im Ergebnis
 
-Die erzeugten Bilder werden über eine Schnittstelle an eine fremde Oberfläche übergeben.
-Deren Vertrag sieht für jede Kennzahl einen Zahlenwert vor. Die naheliegende Umsetzung —
+Die erzeugten Bilder werden über eine Schnittstelle an die Anzeige übergeben.
+Der Vertrag dieser Schnittstelle sieht für jede Kennzahl einen Zahlenwert vor. Die naheliegende Umsetzung —
 bei fehlender Messung eine Null einzutragen — wurde verworfen, und zwar mit einer
 Begründung, die sich in einem Satz sagen lässt: **Eine Null ist eine gemessene Null.** Sie
 bedeutet «die Rangkorrelation beträgt exakt null», also «das Bild folgt der Geometrie
 überhaupt nicht» — die schlechtestmögliche Aussage über ein Bild, das in Wahrheit gar
 nicht beurteilt wurde.
 
-Ausgeliefert wird darum `null` mit einem eigenen Statusfeld. Die Gegenseite hat das am
-17.09.2026 unabhängig bestätigt: In ihrem Vertrag sind alle Zahlenmasse des
-Qualitätsblocks als nullbar ausgewiesen, und ihr Statusfeld führt die drei Werte
+Ausgeliefert wird darum `null` mit einem eigenen Statusfeld. Der Ergebnisvertrag hat das am
+17.09.2026 unabhängig bestätigt: Darin sind alle Zahlenmasse des
+Qualitätsblocks als nullbar ausgewiesen, und sein Statusfeld führt die drei Werte
 *gemessen*, *nicht gemessen* und *nicht anwendbar*. **Die dritte Antwort stand auf beiden
 Seiten der Schnittstelle, bevor die beiden Seiten voneinander wussten.**
 
@@ -77,25 +77,25 @@ Messung **nicht** als «hat getrennt» zählt.
 ### Nachtrag 29.09.2026: im Vertrag ja, in der Anzeige nein
 
 Der Satz «die dritte Antwort stand auf beiden Seiten der Schnittstelle» stimmt für den
-**Vertrag** und hat für die **Anzeige** nicht gestimmt. Am 29.09.2026 hat die Gegenseite auf
-die Frage geantwortet, ob ihr Werkzeug ein Urteil ohne Messung annehmen kann
+**Vertrag** und hat für die **Anzeige** nicht gestimmt. Am 29.09.2026 kam die Antwort auf
+die Frage, ob das Einlesen der Ergebnisse ein Urteil ohne Messung annehmen kann
 (`auf-20260922-142`):
 
-* **Das Urteilsfeld `passed` ist drüben an drei Stellen ein Wahrheitswert, nie `null`.** Ein
-  `passed: null` hätte das ganze Ergebnis ungültig gemacht, und ihr Einlesen hätte den
+* **Das Urteilsfeld `passed` ist im Vertrag an drei Stellen ein Wahrheitswert, nie `null`.** Ein
+  `passed: null` hätte das ganze Ergebnis ungültig gemacht, und das Einlesen hätte den
   ganzen Auftrag verworfen — *nicht ehrlicher, sondern unlesbar*.
-* Das dreiwertige Statusfeld (*gemessen*, *nicht gemessen*, *nicht anwendbar*) gibt es drüben
-  seit dem 03.09.2026. **Aber ihre Anzeige liest es nicht:** Die Zeile je Kamera liest nur
-  `passed`. Ein ungeprüftes `passed: false` erschien drüben als **«durchgefallen»** —
-  genau die Verwechslung, gegen die diese Regel steht. Sie nennen es ihren Fehler und haben
-  ihn als dringlichsten Bauposten aufgenommen; gebaut ist er drüben nicht.
+* Das dreiwertige Statusfeld (*gemessen*, *nicht gemessen*, *nicht anwendbar*) gibt es im Vertrag
+  seit dem 03.09.2026. **Aber die Anzeige liest es nicht:** Die Zeile je Kamera liest nur
+  `passed`. Ein ungeprüftes `passed: false` erschien dort als **«durchgefallen»** —
+  genau die Verwechslung, gegen die diese Regel steht. Der Fehler ist als dringlichster
+  Bauposten aufgenommen; gebaut ist er noch nicht.
 
 **Was daraus bei uns wurde (29.09.2026):** Drinnen bleibt das Urteil dreiwertig — die
 Proben tragen den Unterschied zwischen «nicht gemessen» und «durchgefallen». Übersetzt wird
 **an der Aussengrenze**, an genau einer Stelle, die beide Ablagen benutzen: `passed` wird
 dort zum Wahrheitswert (ein fehlendes Urteil wird `false`), die dritte Antwort wandert ganz
 ins Statusfeld, und eine leere Zahl **fehlt**, statt als `null` zu erscheinen (auch das ist
-ihre Auflage). Für «gemessen, aber nicht entscheidbar» haben wir *nicht anwendbar*
+eine Auflage des Vertrags). Für «gemessen, aber nicht entscheidbar» haben wir *nicht anwendbar*
 vorgeschlagen; die Bestätigung steht aus.
 
 *Die Regel hält, aber ihr Ort hat sich verschoben:* Die dritte Antwort steht nicht mehr im
@@ -297,7 +297,7 @@ meldete, wenn eine Antwort längst dalag.
 * **Die Sonne stand um 180 Grad verdreht** (24.09.2026). Der Auftragsvertrag zählt
   die Himmelsrichtung ab Nord, wir zählten ab Süd. Im Code stand eine Warnung: *«ob der
   fremde Vertrag von Norden zählt, ist NICHT geklärt»* — dabei stand die Antwort längst
-  in ihrem Vertrag. Die Warnung sah aus wie Sorgfalt und ersetzte das Nachsehen.
+  im Vertrag. Die Warnung sah aus wie Sorgfalt und ersetzte das Nachsehen.
 * **«0 Treffer» zu Regel 3** (Kapitel 3, 3.4): ein Wächter, der Benutzernamen in Pfaden
   sucht, in einer Tabelle mit der Zeile «Kunden-, Büro- oder Projektnamen». Ein echter
   Projektname stand zu diesem Zeitpunkt im Repo.

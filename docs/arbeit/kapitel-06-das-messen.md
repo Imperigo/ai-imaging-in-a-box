@@ -199,10 +199,10 @@ lautet das Urteil **nicht entscheidbar** — nicht «bestanden».
 > (`counter_check_status: fehlt`, `released: false` — auf diesem Weg immer). Der Satz
 > oben gilt also im Betrieb in seiner schwachen Form: Es gibt eine Warnung, kein Urteil.
 >
-> **Und drüben kam es bis heute nicht an.** Die Antwort der Gegenseite vom 29.09.2026
-> (`auf-20260922-142`): Ihr Einlesen streift ein Feld, das nicht im Vertrag steht, ab —
-> `geometry_gates` fällt dort weg und wird nur im Konsolenlog gemeldet. Sie wollen es in den
-> Vertrag nehmen, nach einem echten Beispiel von uns; gebaut ist es drüben nicht.
+> **Und in der Anzeige kam es bis heute nicht an.** Die Antwort vom 29.09.2026
+> (`auf-20260922-142`): Das Einlesen der Ergebnisse streift ein Feld, das nicht im Vertrag steht, ab —
+> `geometry_gates` fällt dabei weg und wird nur im Konsolenlog gemeldet. Sie wollen es in den
+> Vertrag nehmen, nach einem echten Beispiel von uns; gebaut ist das noch nicht.
 
 ---
 

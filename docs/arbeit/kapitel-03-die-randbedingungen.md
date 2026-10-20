@@ -180,19 +180,19 @@ sichtbar geworden.
 
 * **24.09.2026:** Die Modellausfuhr, die bei Visbox ankommt, schreibt Glas mit Deckkraft 0,25 **und**
   Durchlass (`KHR_materials_transmission`) 1. Blender macht aus beidem etwas, und rund
-  drei Viertel der Strahlen laufen ungebrochen hindurch. Die Antwort an die liefernde Seite war
+  drei Viertel der Strahlen laufen ungebrochen hindurch. Die Antwort war
   darum kein neues Feld und keine Rendereinstellung, sondern: das Material in der Datei
   deckend (OPAQUE, Deckkraft 1) mit Durchlass ausführen. Eine eigene Glas-Regel im
   Renderaufruf wurde **bewusst nicht** gesetzt, weil sie auch unsere Tiefenkarten und damit
   die Geometrieprüfung verändert hätte — erst messen.
-* **29.09.2026, und der Fehler war unserer:** Die liefernde Seite hat diesen Vorschlag angenommen,
+* **29.09.2026, und der Fehler war unserer:** Der Vorschlag ist angenommen worden,
   **unter der Bedingung**, dass unsere Transparenz-Prüfung Durchlass mitzählt. Nachgesehen:
   Sie tat es nicht. Sie zählte nur Materialien mit `alphaMode: BLEND`. Das Glas, das
   künftig geliefert werden soll, wäre bei uns als «keine durchsichtigen Materialien»
   gemeldet worden. Behoben am selben Tag (`modellstand._durchlass`, zwei Proben in
   `tests/test_modellstand.py`); im Einbau-Stand als C33 *gebaut, am Gerät unbestätigt*.
 
-*Gefunden, weil die Gegenseite es als Bedingung gestellt hat — nicht, weil wir es gesucht
+*Gefunden, weil die Annahme an diese Bedingung geknüpft war — nicht, weil wir es gesucht
 hätten.* Für die These heisst das: Die Grenze trennt die Programme sauber, aber sie
 verschiebt die Frage von «welche Funktion wird aufgerufen?» zu «lesen beide Seiten
 dieselbe Datei gleich?». Diese zweite Frage prüft kein Import-Wächter.

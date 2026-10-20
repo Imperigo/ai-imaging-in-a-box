@@ -110,7 +110,7 @@ nicht über Modelle, hier nur das, was die Form der Kette berührt:
    das ihre Bedeutung in Zahlen trägt (Tiefe: Meter, nah hell, Rückrechnung;
    Material-ID: Tabelle und Nullfarbe). Ein Zwilling trägt seine eigenen Ebenen, nicht die
    seines Vorbilds. *Damit wird ein Zwischenergebnis der Kette zum ersten Mal selbst
-   Lieferung.* Angezeigt wird es drüben erst nach einem echten Lauf; der steht aus
+   Lieferung.* Angezeigt wird es in der Knotenansicht erst nach einem echten Lauf; der steht aus
    (`auf-20260929-176`).
 
 ---
