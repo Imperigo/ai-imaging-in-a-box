@@ -7881,6 +7881,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **Gebaut:** ein Klick lädt und ersetzt, Neustart von selbst, stündlich fragen; Visbox 0.2.3. *(14.10.2026, §103)*
 - [ ] **Am Mac bestätigen** (Owner): 0.2.3 von Hand, danach die nächste Fassung mit einem Klick.
 - [ ] **KosmoOrbit** Ein-Klick-Aktualisieren (Integrator, Zentrale; Antwort mit Plan erwartet).
+- [x] **Immer die neueste** (Owner-Befund 20.10.2026): Der Klick fragt vor dem Laden noch einmal, jede Antwort ersetzt das Angebot, nach einem Fehler nach 5 min wieder, nach dem Aufwachen sofort (Kern `Angebotsstand`). *(20.10.2026, §157, C86)*
+- [ ] **Am Mac bestätigen** (Owner): zwei Fassungen hinterher → ein Klick lädt die neueste (ab der Fassung nach der ersten mit dem Fix).
 - [x] **Icon** (Entscheid 88, Blatt 20, Vorschlag A) gebaut; Visbox 0.2.4, am Mac bestätigt. *(14.10.2026, §104)*
 
 ## Knotenansicht gleich wie KosmoVis (Owner-Vorgabe 14.10.2026 — Sitzung 74 §106)
