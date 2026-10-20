@@ -11,7 +11,8 @@ import VisboxKern
 ///
 /// Klein darunter **«Von Hand eintragen …»** (83c) — der bisherige Dialog `Einrichten` —
 /// und seit «Visbox eigenständig», Schritt 6 (20.10.2026) **«Wer rechnet? …»**: die
-/// Rechner-Wahl je Arbeit (`Rechnerwahlansicht`, Blatt 28, Feld 2).
+/// Rechner-Wahl je Arbeit (`Rechnerwahlansicht`, Blatt 28, Feld 2) — und seit der KI-Bedienung
+/// Stufe 3 (20.10.2026) **«Claude über MCP …»** (`Claudeeinrichten`, Blatt 30, Feld 3).
 ///
 /// Was ein Schritt heisst, steht im Kern (`Koppelablauf`); hier wird nur gezeigt und
 /// gedrückt.
@@ -29,11 +30,15 @@ struct Koppeln: View {
     @State private var zahl = ""
     @State private var vonHand = false
     @State private var rechner = false
+    /// Einrichten › Claude über MCP (Blatt 30, Feld 3; KI-Bedienung Stufe 3).
+    @State private var claude = false
     @State private var arbeitet = false
 
     var body: some View {
         Group {
-            if rechner {
+            if claude {
+                Claudeeinrichten(anschluss: .gemeinsam, zurueck: { claude = false })
+            } else if rechner {
                 Rechnerwahlansicht(leitung: leitung, leitungstakt: leitungstakt,
                                    zurueck: { rechner = false })
             } else if vonHand {
@@ -97,6 +102,9 @@ struct Koppeln: View {
                     .buttonStyle(.link)
                     .font(Macschriften.schrift(.text, 12))
                 Button(Rechnerwahl.titel + " …") { rechner = true }
+                    .buttonStyle(.link)
+                    .font(Macschriften.schrift(.text, 12))
+                Button(Claudeeinrichtung.titel + " …") { claude = true }
                     .buttonStyle(.link)
                     .font(Macschriften.schrift(.text, 12))
                 Spacer()
@@ -248,6 +256,9 @@ struct Koppeln: View {
             }
             HStack {
                 Button(Rechnerwahl.titel + " …") { rechner = true }
+                    .buttonStyle(.link)
+                    .font(Macschriften.schrift(.text, 12))
+                Button(Claudeeinrichtung.titel + " …") { claude = true }
                     .buttonStyle(.link)
                     .font(Macschriften.schrift(.text, 12))
                 Spacer()

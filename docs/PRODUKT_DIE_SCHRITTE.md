@@ -1128,6 +1128,30 @@ Vorher stand im Protokoll «mit Ankerbild gerechnet», während ohne gerechnet w
 
 ---
 
+### 20.10.2026 · Claude bedient Visbox am Mac
+
+Claude (im Terminal als Claude Code oder als Programm Claude Desktop) kann jetzt die Knotenansicht von Visbox am Mac
+bedienen: den Knotengraph lesen, Knoten anlegen, einstellen und verbinden, ein Bild oder Varianten bestellen, die Mappe
+und die Skizzen vom iPad lesen, fertige Bilder ansehen und einen laufenden Render-Auftrag abbrechen. Der Anschluss liegt
+in der App und ist nur von diesem Mac aus erreichbar.
+
+**Die Spielregel ist für den Architekten gemacht, nicht für die KI.** Oben in der Assistent-Leiste stellt er ein, wie
+selbständig die KI arbeitet: «Karte» (jede Änderung wird erst ein Vorschlag mit «Anwenden» und «Ablehnen»), «Coop» oder
+«Voll» (Änderungen ohne Vorschlag). Löschen ist in jedem Fall ein Vorschlag, und die Grafikkarte gibt immer der
+Architekt frei — dafür gibt es kein Werkzeug. Was die KI gerade tut, steht nur, solange sie arbeitet.
+
+**Wer nimmt was zurück:** Strg+Z nimmt nur die eigenen Schritte des Architekten zurück. Was Claude ohne Vorschlag
+geändert hat, nimmt der Knopf «Claudes letzten Schritt zurücknehmen» zurück — und nur, wenn seither niemand am selben
+Graphen weitergearbeitet hat; sonst sagt ein Satz, woran es hängt. Fremde Arbeit wird nie still überschrieben.
+
+**Begründung des Wegs:** Die Werkzeuge kommen aus der Knotenansicht selbst, nicht aus einer zweiten Beschreibung in der
+App — so kann die Liste nicht auseinanderlaufen. Ob ein Aufruf ein Vorschlag wird, entscheidet die Knotenansicht nach
+einem Probelauf auf einer Kopie; ein ungültiger Schritt wird gar nicht erst vorgeschlagen. Im Einrichten steht, was an
+Anthropic geht: Mappennamen, Prompts, der Knotengraph und Bilder, die Claude ansehen will.
+
+**Offen:** die Probe am Gerät mit beiden Claude-Programmen; die Werkzeuge, die die Mappe am Mac brauchen (Modell laden,
+Kameras vorschlagen, Verlauf, Mappe anlegen); der Assistent mit derselben Werkzeugliste.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |

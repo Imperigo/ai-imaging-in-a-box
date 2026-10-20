@@ -137,7 +137,8 @@ def test_die_wahl_liegt_in_den_app_einstellungen_und_fragt_nur_nach_blender():
             assert "Rechnerwahlspeicher" not in _code(datei), datei.name
     kern = (KERN / "Rechnerwahl.swift").read_text(encoding="utf-8")
     assert 'blenderOrt = "/Applications/Blender.app"' in kern
-    # ENTSCHEIDE 105/106 (20.10.2026): wahr formuliert — «steuert immer» stimmte nicht.
-    assert '"Claude über MCP: wird eingerichtet — dann bedient Claude "' in kern
-    assert '+ Marke.name + " auf diesem Mac, unabhängig von dieser Wahl.' in kern
+    # ENTSCHEIDE 105/106 (20.10.2026): wahr formuliert — «steuert immer» stimmte nicht; seit
+    # Stufe 3 (KI-Bedienung) ist der Anschluss gebaut, darum «eingerichtet».
+    assert '"Claude über MCP: eingerichtet — Claude bedient "' in kern
+    assert '+ Marke.name + " auf diesem Mac über die Knotenansicht, unabhängig von dieser Wahl "' in kern
     assert "steuert " not in kern.split("mcpSatz", 1)[1].split("heuteSatz", 1)[0]

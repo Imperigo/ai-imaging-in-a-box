@@ -8126,7 +8126,14 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] Stufen 0–7 nach dem Plan (§4)
   - [x] Stufe 2: MCP-Kern in Swift mit Proben (JSON-RPC: `initialize` mit Fassungswahl, `ping`, `tools/list`, `tools/call`, Meldungen; Werkzeuge als Daten; Wartefrist 45 s mit «wartet noch — Vorschlag K-n liegt in der Assistent-Leiste»; `visbox_status`, `visbox_vorschlag_status`; Spielregel; Freigaberegel Karte/Coop/Voll; Host-/Origin-Prüfung; `POST /mcp`); Hörer der Mac-App nur auf `127.0.0.1:8631`, ab Werk an (`claudeMcp.an`); `--mcp-stdio` ohne Fenster; Werkzeugträger als Platzhalter («kommt mit Stufe 3») — gebaut, am Gerät unbestätigt (§150, C76)
-  - [ ] Stufe 3: Brücke App ↔ Knotenansicht als echter Werkzeugträger, Karten in der Assistent-Leiste, Tätigkeitsstrom, Einrichten (Schalter, Hinweis zu den Daten an Anthropic, 106f)
+  - [x] Stufe 3: Brücke App ↔ Knotenansicht als echter Werkzeugträger (`Knotenki`, `Kizentrale`, Karte aus der Antwort der Knotenansicht, Werkzeugliste im Bau), KI-Teil der Assistent-Leiste nach Blatt 30 Feld 1 (Claude-Zeile, Assistent, Selbständigkeit gemerkt, Tätigkeitsstrom, Karten, «Claudes letzten Schritt zurücknehmen» nach 114), Einrichten › Claude über MCP nach Feld 3 — gebaut, am Gerät unbestätigt (§156, C85)
+  - [x] Entscheid 114: zwei Rückgängig-Verläufe (KI-Verlauf im Werkzeugsatz, Wache beim Wirt) — beide Programme (claude/kosmovis-ki), gebaut, am Gerät unbestätigt (§156, C85)
+  - [ ] Stufe 4: Mappe-, Skizzen-, Modell-, Kamera-, Abbruch- und Verlauf-Werkzeuge
+    - [x] `mappe_lesen`, `skizzen_lesen` (auch als Bild), `bild_ansehen`, `lauf_abbrechen` über die Heim-Wege — gebaut, am Gerät unbestätigt (§156, C85)
+    - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — erst mit der Mappe am Mac («Visbox eigenständig», Schritt 3)
+  - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
+  - [ ] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste (Karten «Vorschlag des Assistenten» stehen schon)
+  - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)
 

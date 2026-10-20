@@ -15,7 +15,8 @@ import Foundation
 //
 //  * KEIN ZWEITER PROZESS FUER DIE APP. In KosmoOrbit meldet sich die Oberflaeche ueber einen
 //    Ereignisstrom beim Kern an. Hier liegt der Kern IN der App; was die Werkzeuge tun, sagt
-//    ein `Werkzeugtraeger` (ein Protokoll, async). Bis Stufe 3 ist das ein Platzhalter.
+//    ein `Werkzeugtraeger` (ein Protokoll, async). Seit Stufe 3 in der App die Knotenansicht und
+//    die Mac-App selbst (`Knotentraeger`); ohne laufende App (stdio) der Platzhalter.
 //  * KEINE MELDUNG «LISTE GEAENDERT». Die Werkzeugliste der Mac-App steht fest, solange sie
 //    laeuft; darum `listChanged: false` und kein Ereignisstrom (siehe `Mcpleitung`).
 //  * DIE KENNUNG HEISST «K-n» (Karte), nicht «c-n» — sie steht so auf der Karte in der
@@ -73,6 +74,11 @@ public enum Werkzeugart: String, Equatable, Sendable, CaseIterable {
     case loeschen
     /// Startet die Grafikkarte (Rendern, Varianten). **Immer ein Mensch** (Entscheid 106b).
     case rendern
+    /// Haelt etwas an, das laeuft (`lauf_abbrechen`): aendert kein Dokument und gibt die
+    /// Grafikkarte FREI statt sie zu starten — darum nie eine Karte (Stufe 4, 20.10.2026). Nur
+    /// auf der Seite der Mac-App; die Knotenansicht kennt kein solches Werkzeug, und ihre vier
+    /// Worte (`KiWerkzeugArt` in `ki-werkzeuge.ts`) bleiben gleich.
+    case anhalten
 }
 
 /// Ein Werkzeug, wie Claude es in `tools/list` sieht.
@@ -216,7 +222,7 @@ public enum Mcpfreigabe {
     /// Modus Karte.
     public static func brauchtKarte(_ art: Werkzeugart, modus: Selbstaendigkeit) -> Bool {
         switch art {
-        case .lesen: return false
+        case .lesen, .anhalten: return false
         case .loeschen, .rendern: return true
         case .aendern: return modus == .karte
         }
@@ -255,7 +261,7 @@ public struct Mcplage: Equatable, Sendable {
 
 // ===================================================================== der Traeger
 
-/// Wer die Werkzeuge ausfuehrt — in Stufe 3 die Knotenansicht ueber die Mac-App.
+/// Wer die Werkzeuge ausfuehrt — seit Stufe 3 die Knotenansicht ueber die Mac-App (`Knotentraeger`).
 ///
 /// **Der Kern prueft vorher:** Ein Name, der nicht in `werkzeuge()` steht, erreicht `rufe`
 /// nie, sondern `unbekanntesWerkzeug`. Die Argumente sind dann ein Objekt.
@@ -318,6 +324,8 @@ public actor Mcpkern {
     private let wartefrist: TimeInterval
 
     private var naechste = 1
+    /// Wann zuletzt eine Gegenstelle etwas schickte — fuer «Claude verbunden» in der Leiste.
+    public private(set) var letzterKontakt: Date?
     private var offen: [String: Offen] = [:]
     private var erledigt: [String: Mcpergebnis] = [:]
     private var erledigtFolge: [String] = []
@@ -347,6 +355,15 @@ public actor Mcpkern {
         o.warter.forEach { $0.wecke(ergebnis) }
     }
 
+    /// Alle offenen Aufrufe auf einmal beantworten — etwa, wenn die Knotenansicht neu laedt und
+    /// ihre Karten wegfallen. Gibt die Kennungen zurueck.
+    @discardableResult
+    public func beantworteOffene(_ ergebnis: Mcpergebnis) -> [String] {
+        let kennungen = offeneVorschlaege().map(\.kennung)
+        for k in kennungen { entscheide(k, ergebnis) }
+        return kennungen
+    }
+
     /// Die offenen Vorschlaege, nach Kennung — mit der Zusammenfassung ihrer Karte, falls eine
     /// liegt.
     public func offeneVorschlaege() -> [(kennung: String, karte: String?)] {
@@ -359,6 +376,7 @@ public actor Mcpkern {
     /// Liest eine Nachricht (oder ein Buendel) und gibt die Antwort — `nil` bei Meldungen und
     /// Antworten, die keine Antwort bekommen.
     public func verarbeite(_ nachricht: JSONWert) async -> JSONWert? {
+        letzterKontakt = Date()
         if case .liste(let buendel) = nachricht {
             // EIN BUENDEL (MCP 2025-03-26 kennt es, 2025-06-18 nicht mehr): jede Nachricht fuer
             // sich; ein leeres ist ungueltig.
@@ -588,11 +606,11 @@ final class Warteplatz: @unchecked Sendable {
 
 // ===================================================================== der Platzhalter
 
-/// Der Traeger bis Stufe 3: Er kennt keine eigenen Werkzeuge. `visbox_status` antwortet
-/// (der Kern), alles andere sagt «kommt mit Stufe 3».
+/// Der Traeger ohne Werkzeuge: `visbox_status` antwortet (der Kern), alles andere sagt, warum
+/// nichts geht.
 ///
-/// Zwei Lagen: **in der App** (der Hoerer laeuft, die Knotenansicht ist noch nicht
-/// angeschlossen) und **ohne App** (der Weg ueber stdio findet keine laufende Visbox).
+/// Zwei Lagen: **ohne App** (der Weg ueber stdio findet keine laufende Visbox — die eine, die
+/// seit Stufe 3 noch gebraucht wird) und **in der App** (bis Stufe 3; heute nur noch in Proben).
 public struct Mcpplatzhalter: Werkzeugtraeger {
     public enum Ort: Sendable { case inDerApp, ohneApp }
 

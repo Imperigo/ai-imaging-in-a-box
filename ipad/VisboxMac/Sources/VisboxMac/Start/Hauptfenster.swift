@@ -102,14 +102,18 @@ struct Hauptfenster: View {
             aktualisierung.starte()
             leitungstakt.starte()
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+            // DIE LESEWEGE FUER CLAUDE (KI-Bedienung Stufe 4): Mappe, Skizzen, Bild, Abbruch.
+            Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
         .onChange(of: leitung.adresse) { _, _ in
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+            Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
         .onChange(of: einrichtenOffen) { _, offen in
             // NACH DEM EINRICHTEN kann das Kennwort neu sein, bei gleicher Adresse.
             if !offen {
                 vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+                Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
                 // AUCH NACH «ABBRECHEN» gleich nachsehen statt bis zu 60 s zu warten; die Lage
                 // bleibt, bis die Antwort da ist.
                 leitungstakt.erneutVerbinden()

@@ -113,11 +113,14 @@ def test_mcp_stdio_greift_vor_dem_fenster_und_vor_dem_einzelstart():
     assert "Mcpplatzhalter(ort: .ohneApp)" in code
 
 
-def test_bis_stufe_3_nur_der_platzhalter():
+def test_seit_stufe_3_traegt_die_knotenansicht_und_ohne_app_der_platzhalter():
+    """Bis Stufe 2 stand hier der Platzhalter «kommt mit Stufe 3». Seit Stufe 3 reicht der
+    Kern in der App an die Knotenansicht und die Mac-Werkzeuge (`Knotentraeger`); nur der Weg
+    über stdio ohne laufende App behält den Platzhalter «ohne App»."""
     anschluss = _code(CLAUDE / "Claudeanschluss.swift")
-    assert "Mcpkern(traeger: Mcpplatzhalter(ort: .inDerApp), fassung: fassung)" in anschluss
-    kern = _code(KERN / "Mcpkern.swift")
-    assert "kommt mit Stufe 3" in kern
+    assert "Mcpkern(traeger: Knotentraeger(zentrale: Kizentrale.gemeinsam), fassung: fassung)" in anschluss
+    assert "Mcpplatzhalter" not in anschluss
+    assert "struct Knotentraeger: Werkzeugtraeger" in _code(CLAUDE / "Kizentrale.swift")
 
 
 def test_die_wartefrist_ist_45_sekunden_und_die_leitung_haelt_laenger():

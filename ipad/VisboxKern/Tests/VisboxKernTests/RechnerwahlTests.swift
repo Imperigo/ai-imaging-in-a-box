@@ -97,11 +97,11 @@ final class RechnerwahlTests: XCTestCase {
     func testDieSaetzeStehenSoAufDemBlatt() {
         XCTAssertEqual(Rechnerwahl.titel, "Wer rechnet?")
         XCTAssertEqual(Rechnerwahl.untertitel, "Je Arbeit wählbar. Vorgabe: Heim-PC.")
-        // Entscheide 105/106 (20.10.2026): wahr formuliert — Claude ist noch nicht angeschlossen.
+        // Entscheide 105/106 (20.10.2026): wahr formuliert — seit Stufe 3 ist Claude angeschlossen.
         XCTAssertEqual(Rechnerwahl.mcpSatz,
-                       "Claude über MCP: wird eingerichtet — dann bedient Claude \(Marke.name) "
-                       + "auf diesem Mac, unabhängig von dieser Wahl. Die Wahl gilt für die "
-                       + "Assistent-Leiste in der App.")
+                       "Claude über MCP: eingerichtet — Claude bedient \(Marke.name) auf diesem "
+                       + "Mac über die Knotenansicht, unabhängig von dieser Wahl (Einrichten › "
+                       + "Claude über MCP). Die Wahl gilt für die Assistent-Leiste in der App.")
         XCTAssertFalse(Rechnerwahl.mcpSatz.contains("steuert"))
         XCTAssertEqual(Rechnerwahl.blenderOrt, "/Applications/Blender.app")
         for satz in [Rechnerwahl.mcpSatz, Rechnerwahl.heuteSatz, Rechnerwahl.blenderSpaeter] {

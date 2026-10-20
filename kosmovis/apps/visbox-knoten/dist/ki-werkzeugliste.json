@@ -1,0 +1,406 @@
+{
+ "format": "visbox.ki-werkzeugliste/v1",
+ "werkzeuge": [
+  {
+   "name": "graph_lesen",
+   "description": "Liest die Render-Graphen der Knotenansicht: je Knoten nodeId, Typ, Label, Lage, Ports (Eingänge mit ihrer Kante), Parameter, letzter Lauf (Zustand), Grundlage und Güte; dazu alle Kanten (edgeId) und den offenen Render-Auftrag. IMMER zuerst aufrufen, um gültige graphId/nodeId/edgeId zu bekommen. Ändert nichts.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string",
+      "description": "Nur diesen Graphen; ohne: alle."
+     },
+     "katalog": {
+      "type": "boolean",
+      "description": "Auch die Knotentypen mit ihren Ports."
+     }
+    },
+    "additionalProperties": false
+   },
+   "art": "lesen"
+  },
+  {
+   "name": "vis_graphErstellen",
+   "description": "Erstellt einen leeren Render-Graphen (Node-Tree) in KosmoVis. Nodes kommen mit vis_nodeSetzen dazu, Verbindungen mit vis_verbinden.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "z.B. «Wettbewerbsbilder»"
+     }
+    },
+    "required": [
+     "name"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_nodeSetzen",
+   "description": "Setzt einen Node in den Render-Graphen. Typen: modell (Das aktuelle Projekt als GLB-Szene — der Startpunkt jedes Renders.); material (Liest die äussersten Wandschichten + Fassadenmodule als Prompt-Phrasen (V8).); prompt (Freier Stil-Text, z.B. «Sichtbeton, warmes Licht».); stimmung (Preset Morgenlicht / Abendstimmung / Weissmodell.); kombinierer (Fügt Stimmung + Stil + Material zum finalen Prompt — live sichtbar am Node.); zahl (Regler-Wert, z.B. Geometrie-Treue 0–1 oder Samples.); render (Schickt Szene + Prompt an die HomeStation — nur auf «Ausführen», nie automatisch.); kamera (Leitet benannte Standpunkte (Eingang/Übersicht, bei Räumen im Modell auch Innenraum) regelbasiert aus den Modell-Bounds ab — Vorschlag aus dem Modell, keine KI-Wahl. Mit dem Render-Node verbinden. Innenraum wird nur bestellt, wenn das Modell Räume (Zonen) hat; dann geht die Szene als IFC statt glb.); vergleich (Bilder nebeneinander mit QA-Verdikt — die heutige Varianten-Serie als Node.); blatt (Legt das Bild als Blatt-Bürger in KosmoPublish ab (ein Undo-Schritt).); referenz (Referenzbild oder Splat-Ansicht als Bild-Quelle (Stil-Referenz, Vergleich).); skizzeIpad (Die Skizze, die am iPad in die Mappe gelegt wurde — von selbst die neueste, eine ältere ist am Knoten wählbar. An «Skizze» des Render-Knotens: die Skizze führt das Bild — ihre Bemerkung ist die Anweisung, und es entsteht vom Standpunkt des Bildes, auf das gezeichnet wurde. Auch an Bildvergleich und «Aufs Blatt». Gibt es nur in Visbox.); aufnahme (Echte lokale Bildquelle: ein Schnappschuss des 3D-Viewports («Für Vis aufnehmen» in KosmoDesign) — kein Rendering, funktioniert ohne HomeStation.); kameraAus3d (Übernimmt den Blick, den du in der 3D-Ansicht eingestellt hast — beim Anlegen und auf «Kamera übernehmen», nicht laufend. Mit dem Render-Knoten verbinden. Ohne Objektiv-Shift.); varianten (Bestellt die Einstellung des Render-Knotens in allen Kombinationen aus Standpunkten, Stimmungen und Entwürfen — mit Zähler, eine Freigabe für alle. Hinter den Render-Knoten hängen, den Ausgang in den Bildvergleich (Raster).)",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "typ": {
+      "type": "string",
+      "description": "Node-Typ aus dem Katalog, z.B. «render»"
+     },
+     "x": {
+      "type": "number",
+      "description": "Canvas-X"
+     },
+     "y": {
+      "type": "number",
+      "description": "Canvas-Y"
+     },
+     "params": {
+      "type": "object",
+      "propertyNames": {
+       "type": "string"
+      },
+      "additionalProperties": {
+       "type": [
+        "string",
+        "number",
+        "boolean"
+       ]
+      }
+     }
+    },
+    "required": [
+     "graphId",
+     "typ",
+     "x",
+     "y"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_nodeParametrieren",
+   "description": "Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung (morgen/abend/weiss) oder den Wert eines Zahl-Nodes.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "nodeId": {
+      "type": "string"
+     },
+     "params": {
+      "type": "object",
+      "propertyNames": {
+       "type": "string"
+      },
+      "additionalProperties": {
+       "type": [
+        "string",
+        "number",
+        "boolean"
+       ]
+      }
+     }
+    },
+    "required": [
+     "graphId",
+     "nodeId",
+     "params"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_nodeSchieben",
+   "description": "Verschiebt einen Node auf dem Canvas (ein Schritt pro Drag, nie pro Mausbewegung).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "nodeId": {
+      "type": "string"
+     },
+     "x": {
+      "type": "number"
+     },
+     "y": {
+      "type": "number"
+     }
+    },
+    "required": [
+     "graphId",
+     "nodeId",
+     "x",
+     "y"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_verbinden",
+   "description": "Verbindet einen Ausgangs-Port mit einem Eingangs-Port (gleicher Typ: szene/bild/prompt/zahl/material). Ein belegter Eingang wird ersetzt (wie in Blender); Zyklen werden ehrlich abgelehnt.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "from": {
+      "type": "string",
+      "description": "Quell-Node"
+     },
+     "fromPort": {
+      "type": "string",
+      "description": "Ausgangs-Port, z.B. «prompt»"
+     },
+     "to": {
+      "type": "string",
+      "description": "Ziel-Node"
+     },
+     "toPort": {
+      "type": "string",
+      "description": "Eingangs-Port, z.B. «stil»"
+     }
+    },
+    "required": [
+     "graphId",
+     "from",
+     "fromPort",
+     "to",
+     "toPort"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_trennen",
+   "description": "Entfernt eine Verbindung aus dem Render-Graphen.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "edgeId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "graphId",
+     "edgeId"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_nodeLoeschen",
+   "description": "Löscht einen Node samt allen seinen Verbindungen. Immer eine Karte, in jedem Modus.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "nodeId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "graphId",
+     "nodeId"
+    ]
+   },
+   "art": "loeschen"
+  },
+  {
+   "name": "vis_nodeKollabieren",
+   "description": "Klappt einen Node im Render-Graphen ein (nur Kopf + Ports sichtbar, kein Körper) oder wieder aus.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "nodeId": {
+      "type": "string"
+     },
+     "collapsed": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "graphId",
+     "nodeId",
+     "collapsed"
+    ]
+   },
+   "art": "aendern"
+  },
+  {
+   "name": "vis_graphLoeschen",
+   "description": "Löscht einen ganzen Render-Graphen (undo-fähig). Immer eine Karte, in jedem Modus.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "graphId"
+    ]
+   },
+   "art": "loeschen"
+  },
+  {
+   "name": "vis_render",
+   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen/abend/weiss), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "nodeId": {
+      "type": "string",
+      "description": "Render-Node im Graphen (Typ «render»)"
+     },
+     "kameraWahl": {
+      "default": "auto",
+      "type": "string",
+      "enum": [
+       "auto",
+       "saved"
+      ]
+     },
+     "stimmungPreset": {
+      "type": "string",
+      "enum": [
+       "morgen",
+       "abend",
+       "weiss"
+      ]
+     },
+     "backbone": {
+      "type": "string",
+      "enum": [
+       "z-image-turbo",
+       "qwen",
+       "flux2-klein",
+       "flux-krea",
+       "sdxl",
+       "qwen-image-2.1"
+      ]
+     },
+     "grundlage": {
+      "type": "string"
+     },
+     "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+     },
+     "guete": {
+      "type": "string",
+      "enum": [
+       "vorschau",
+       "voll"
+      ]
+     },
+     "aufloesung": {
+      "description": "[Breite, Höhe] in Pixeln",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+       "type": "integer",
+       "exclusiveMinimum": 0
+      }
+     }
+    },
+    "required": [
+     "graphId",
+     "nodeId"
+    ]
+   },
+   "art": "rendern"
+  },
+  {
+   "name": "vis_varianten",
+   "description": "Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand. NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "nodeId": {
+      "type": "string"
+     },
+     "standpunkte": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "stimmungen": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "entwuerfe": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "stand": {
+      "type": "boolean"
+     }
+    }
+   },
+   "art": "rendern"
+  },
+  {
+   "name": "vis_paket",
+   "description": "Mehrere vis_*-Befehle als EIN Schritt: eine Karte, ein Rückgängig. Bis 40 Schritte; Argumente wie beim Einzelwerkzeug; «$neu:N» = die Kennung, die Schritt N (ab 0) neu anlegt (Knoten, Graph oder Kante). Vorher Probelauf: ist ein Schritt ungültig, wird nichts vorgeschlagen und die Antwort nennt ihn. Enthält das Paket Löschen oder Rendern, ist es in jedem Modus eine Karte.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "schritte": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 40,
+      "items": {
+       "type": "object",
+       "properties": {
+        "befehl": {
+         "type": "string",
+         "description": "Werkzeugname, z.B. vis_nodeSetzen"
+        },
+        "argumente": {
+         "type": "object"
+        }
+       },
+       "required": [
+        "befehl"
+       ],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": [
+     "schritte"
+    ],
+    "additionalProperties": false
+   },
+   "art": "aendern"
+  }
+ ]
+}

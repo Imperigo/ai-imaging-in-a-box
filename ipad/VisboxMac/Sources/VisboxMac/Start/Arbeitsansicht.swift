@@ -137,6 +137,11 @@ struct Assistentenplatzhalter: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { zeit in
             VStack(alignment: .leading, spacing: 12) {
+                // DER KI-TEIL AUCH OHNE HEIM-PC (Blatt 30, Feld 1): Claude bedient die Knoten aus
+                // dem Bündel; nur der Assistent braucht den Heim-PC.
+                Kileiste(assistentSatz: "Assistent: " + stand.wort,
+                         zentrale: .gemeinsam, anschluss: .gemeinsam)
+                Divider()
                 Text("Assistent")
                     .font(Macschriften.schrift(.titel, 24))
                 HStack(spacing: 10) {
@@ -190,6 +195,10 @@ struct Heimflaeche: NSViewRepresentable {
         // DAS EIGENE ADRESSSCHEMA (Schritt 1): Es muss VOR dem Bau der Ansicht stehen —
         // danach nimmt WebKit keinen Gastgeber mehr an. Die Konfiguration hält ihn fest.
         einstellung.setURLSchemeHandler(context.coordinator.quelle, forURLScheme: Knotenwege.schema)
+        // DER BOTE DER KNOTENANSICHT (KI-Bedienung Stufe 3): «visboxKi» — die Seite meldet
+        // Taetigkeit, Karten und Entscheide; die App ruft `window.visboxKi` zurueck. Wie das
+        // Schema VOR dem Bau der Ansicht.
+        Knotenki.haengeAn(einstellung, bote: context.coordinator.kibote)
         let ansicht = WKWebView(frame: .zero, configuration: einstellung)
         let lotse = context.coordinator
         lotse.melde = { satz in meldung = satz }
@@ -200,6 +209,11 @@ struct Heimflaeche: NSViewRepresentable {
         ansicht.uiDelegate = lotse
         lotse.lade(ansicht)
         return ansicht
+    }
+
+    /// Die Flaeche geht: Die Karten der Knotenansicht fallen weg, Claude hoert «VERWORFEN».
+    static func dismantleNSView(_ ansicht: WKWebView, coordinator: Flaechenlotse) {
+        Knotenki.seiteGeht("Die Knotenansicht wurde geschlossen")
     }
 
     func updateNSView(_ ansicht: WKWebView, context: Context) {
@@ -228,6 +242,8 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
     var melde: (String?) -> Void = { _ in }
     /// Der Gastgeber des eigenen Schemas: Bau aus dem Bündel, Datenwege an den Heim-PC.
     let quelle: Knotenquelle
+    /// Der Bote «visboxKi» der Knotenansicht (KI-Bedienung Stufe 3, `Knotenki`).
+    let kibote = Knotenki()
 
     init(basis: URL?, anmeldung: Anmeldung?, wahl: Flaechenwahl) {
         self.basis = basis
@@ -237,6 +253,10 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 
     func lade(_ ansicht: WKWebView) {
+        // WAS VORHER OFFEN WAR, GEHT: Die Karten einer Knotenansicht leben nur in ihr — neu
+        // geladen oder auf die Visbox-Seite umgeschaltet, gibt es sie nicht mehr.
+        Knotenki.seiteGeht(wahl.ausDemBuendel ? "Die Knotenansicht wird neu geladen"
+                           : "Die Knotenansicht wurde für die " + Flaechenwahl.seite.titel + " geschlossen")
         if wahl.ausDemBuendel && !quelle.bauVorhanden {
             melde("Die Knotenansicht fehlt im Programm — bitte die Mac-App neu laden.")
             return

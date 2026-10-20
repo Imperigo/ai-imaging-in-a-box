@@ -222,6 +222,10 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-modell-3d-kern.test.ts",
     "apps/kosmo-orbit/test/kv-modell-3d-fenster.test.tsx",
     "apps/kosmo-orbit/test/kv-modell-knoten-3d.test.tsx",
+    # KI-Bedienung Stufe 3 (Entscheide 105–106f, 108, 114, 20.10.2026): der KI-Werkzeugsatz der
+    # Knotenansicht (`modules/vis/ki-werkzeuge.ts`, kommt mit `modules/vis/**`) — Liste, Karte,
+    # Paket, graph_lesen und der eigene KI-Verlauf. Nur Vis-Befehle, darum hier grün.
+    "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
@@ -309,6 +313,11 @@ NICHT_UEBERTRAGEN = {
         "erwarten daraus ein glb und einen Modellstand — wie die Gruppe «Bauen ein Gebäude im "
         "KosmoOrbit-Kern». Den Vertrag prueft kv-grundlage.test.ts (Vertraege), den Befehl "
         "kv-grundlage-vis-render.test.ts (Kern); beide laufen hier.",
+    "apps/kosmo-orbit/test/kv-ki-werkzeuge-schema.test.ts":
+        "KI-Bedienung Stufe 3 (20.10.2026): vergleicht die Schemas des KI-Werkzeugsatzes mit "
+        "commandTools aus @kosmo/ai — das ist in Visbox ein Stellvertreter. Die Gleichheit ist "
+        "drüben belegt (Meldeblatt kosmovis-ki); hier prüft kv-ki-werkzeuge.test.ts die Form "
+        "für MCP und die Claude-API.",
     "packages/kosmo-kernel/test/bild-farbe.test.ts":
         "Vorlagen sind Ausschnitte aus einem Renderbild unbekannter Herkunft — Regel 3.",
     "packages/kosmo-kernel/test/kamera3ds-uebernahme.test.ts":
