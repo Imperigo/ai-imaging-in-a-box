@@ -8045,6 +8045,8 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## v0.1.9 aus dem Demolauf 16.10. (ab Reset Di 20.10.2026, Protokoll 74 §138)
 
+- [x] Owner-Befund Mac: Neustart nur auf Klick, ein Fenster — Visbox 0.2.10 (§140)
+
 - [ ] Nr. 85 Grundsatz: eine Blender-Grundlage, mehrere deckungsgleiche KI-Varianten (mit 84, 81, 83)
   - [x] Heim-PC: «nur Cycles» liefert das Cycles-Bild (Nr. 83), Grundlage ablegen/holen, fester Startwert, Pose (§139)
   - [x] Vertrag mit dem Integrator abgestimmt, Paket 1 «Vertrag» auf `claude/kosmovis-grundlage` (§139)

@@ -1538,3 +1538,10 @@ Wurf behält. Dabei fiel ein alter Fehler auf: Das Häkchen «nur Cycles» bekam
 dasselbe Feld verschieden lasen — jetzt liefert es das rohe Blender-Bild, den ersten der zwei Schritte, die der Owner
 verlangt. Ehrlich gesagt: Die zwei Knöpfe am Render-Knoten («Grundlage rendern», «Variante erzeugen») fehlen noch; sie
 werden zuerst gezeichnet. Und ob die Varianten am Gerät wirklich deckungsgleich sind, misst erst die HomeStation.
+
+**Ein Fenster nach dem Aktualisieren (20.10.2026, Visbox 0.2.10).** Beim Aktualisieren am Mac stand am Ende eine zweite
+und dritte Visbox neben der alten. Zwei Dinge kamen zusammen: Die App startete nach dem Herunterladen von selbst neu,
+und der kleine Helfer, der die neue App öffnet, öffnete nach einer halben Minute auch dann, wenn die alte noch lief.
+Jetzt klickt man selbst «Neu starten»; der Helfer bittet die alte App zu enden, zwingt sie notfalls und öffnet nie
+daneben; und wer Visbox ein zweites Mal startet, bekommt die laufende nach vorn statt eines neuen Fensters.
+

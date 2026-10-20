@@ -1279,14 +1279,16 @@ def test_keine_installation_ohne_klick():
     assert sum("ladeUndErsetze()" in z for z in fenster.splitlines()) == 1
 
 
-def test_nach_dem_ersetzen_startet_die_app_von_selbst_neu():
-    """Entscheid 87: Nach «fertig» ruft der Wächter selbst ``starteNeu()``; der Knopf
-    «Neu starten» im Blatt bleibt nur als Notweg."""
+def test_nach_dem_ersetzen_wartet_die_app_auf_neu_starten():
+    """Seit 0.2.10 (Owner-Befund 20.10.2026, ersetzt «von selbst» aus Entscheid 87): Nach
+    «fertig» steht «Neu starten» da, und erst der Klick beendet die alte App. Bis 0.2.9 rief
+    der Wächter selbst ``starteNeu()`` — am Mac stand danach ein zweites Fenster."""
     waechter = _mac_code(MAC_AKTUALISIEREN / "Fassungswaechter.swift")
-    assert re.search(r"schliesse\(mit: \.fertig\)\s*(//[^\n]*\s*)*self\?\.starteNeu\(\)",
-                     waechter), "kein Neustart von selbst nach dem Ersetzen"
+    assert not re.search(r"schliesse\(mit: \.fertig\)\s*(//[^\n]*\s*)*self\?\.starteNeu\(\)",
+                         waechter), "Neustart von selbst nach dem Ersetzen"
     blatt = _mac_code(MAC_AKTUALISIEREN / "Aktualisierenblatt.swift")
     assert "Später neu starten" not in blatt
+    assert "waechter.starteNeu()" in blatt
 
 
 def test_das_ipad_zeigt_nur_einen_hinweis():

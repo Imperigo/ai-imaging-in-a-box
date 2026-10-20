@@ -2243,6 +2243,10 @@ Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem te
 Bildmodell (Nr. 81). Im Vertrag ist das `vis.skip: true`. Vom 26.08. bis 20.10.2026 las
 der Heim-PC das als «gar nichts rechnen» — das Häkchen bekam darum kein Bild (Nr. 83).
 
+**Einzelinstanz (einer App)** — Eine App läuft nur einmal: Wer sie ein zweites Mal startet,
+bekommt die laufende nach vorn statt einer zweiten Kopie mit eigenem Fenster. Seit Visbox 0.2.10
+am Mac (`Einzelstart.swift`); Anlass waren zwei, dann drei Fenster nach dem Aktualisieren.
+
 **Pose (einer Kamera)** — Wo eine Kamera steht, wohin sie blickt und wie weit ihr
 Bildwinkel ist (`position`, `target`, `fov`, dazu die Hochachse). Das Ergebnis meldet
 die **gerechnete** Pose je Kamera, auch bei der Auto-Kamera — so kann ein gelungener
@@ -7334,6 +7338,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus Visbox 0.2.10 (Protokoll 74 §140): **Einzelinstanz (einer App)** |
 | 2026-10-20 | Ergaenzt aus Nr. 85/83/84 (Demolauf 16.10., Protokoll 74 §139): **Fester Startwert (einer Serie)**, **Blender-Grundlage (eines Renderings)**, **Deckungsgleiche Varianten**, **Nur Grundlage («nur Cycles»)**, **Pose (einer Kamera)** |
 | 2026-10-15 | Ergaenzt aus A1/96a/96b (Protokoll 74 §131): **Standpunkt eines Bildes**, **Steuerzeichen**, **Laufwerksbuchstabe**; berichtigt **Anweisung (an eine Skizze)** (96a: die Bemerkung gilt, nicht der Prompt); **Pfad-Trickserei** um den Skizzennamen ergänzt |
 | 2026-10-15 | Ergaenzt aus «Varianten mit einem Klick» (Entscheide 92/92a/92b, L24 Bildweg Varianten E246, Protokoll 74 §129): **Varianten-Knoten («Varianten mit einem Klick»)**, **Raster (im Bildvergleich)**, **Ebenenkombination (als Entwurf)**, **Eine Freigabe für alle**, **Befehlsjournal**, **Luft der Werkzeugliste (B19)**, **Lauf ohne Karte** |

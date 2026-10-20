@@ -19,6 +19,9 @@ struct VisboxMacApp: App {
     @StateObject private var aktualisierung = Fassungswaechter()
 
     init() {
+        // EIN VISBOX-FENSTER (Owner-Befund 20.10.2026): Laeuft schon eine, kommt sie nach vorn,
+        // und dieser Start endet — bevor ein Fenster entsteht. Nach «Neu starten» umgekehrt.
+        Einzelstart.pruefe()
         // DIE SCHRIFTEN VOR DEM ERSTEN BILDSCHIRM: Registriert wird einmal (`static let`);
         // scheitert es, gilt die Systemschrift, und der Grund steht im Protokoll.
         _ = Macschriften.stand

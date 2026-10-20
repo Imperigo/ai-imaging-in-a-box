@@ -5,7 +5,7 @@ import VisboxKern
 /// Nummer, Neuerungen aus dem Fassungsblatt, der Hinweis zur Behelfs-Unterschrift, dann
 /// Fortschritt, Abgleich der Pruefsumme, Ersetzen und der Neustart **von selbst** (Entscheid
 /// 87: der Klick auf den Knopf hat das Laden schon gestartet). «Laden und ersetzen» bleibt nur
-/// für «Erneut versuchen» nach einem Fehler; «Neu starten» nur, falls der Neustart hängt.
+/// für «Erneut versuchen» nach einem Fehler; «Neu starten», sobald ersetzt ist — erst dieser Klick beendet die alte App.
 ///
 /// **Zeigt nur an.** Die Saetze und Phasen stehen im Kern (`Aktualisierung`,
 /// `Aktualisierungsphase`), das Tun im `Fassungswaechter`.
@@ -117,7 +117,7 @@ struct Aktualisierenblatt: View {
             Button(Aktualisierung.spaeter) {}
                 .disabled(true)
         case .fertig:
-            // DER NEUSTART LAEUFT VON SELBST (Entscheid 87); der Knopf ist der Notweg.
+            // DER NEUSTART KOMMT AUF KLICK (seit 0.2.10, Owner-Befund 20.10.2026).
             Button(Aktualisierung.neuStarten) { waechter.starteNeu() }
                 .keyboardShortcut(.defaultAction)
         case .gescheitert:

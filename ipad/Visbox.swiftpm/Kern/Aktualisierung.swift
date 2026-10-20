@@ -495,16 +495,62 @@ public enum Aktualisierung {
     /// laufen soll — beim naechsten Start wird damit bestaetigt oder gewarnt.
     public static let erwarteteSchluessel = "aktualisierung.erwartet"
 
-    /// Der Befehl fuer den Helfer: warten, bis Prozess `pid` weg ist (hoechstens rund
-    /// 30 Sekunden), dann das Buendel oeffnen. **`/usr/bin/open` ohne `-n`** — die alte App
-    /// laeuft dann nicht mehr, also startet macOS die Datei am Ort neu, und das ist die neue.
-    /// Der Pfad geht als eigenes Argument hinein, nie in den Befehlstext (Leerzeichen,
-    /// Anfuehrungszeichen im Pfad).
+    /// Der Befehl fuer den Helfer: warten, bis Prozess `pid` weg ist, dann das Buendel
+    /// oeffnen. **`/usr/bin/open` ohne `-n`** — die alte App laeuft dann nicht mehr, also
+    /// startet macOS die Datei am Ort neu, und das ist die neue. Der Pfad geht als eigenes
+    /// Argument hinein, nie in den Befehlstext (Leerzeichen, Anfuehrungszeichen im Pfad).
+    ///
+    /// **SEIT 0.2.10 (Owner-Befund 20.10.2026):** Beim Aktualisieren von 0.2.8 auf 0.2.9 standen
+    /// am Ende zwei, dann drei Fenster. Der alte Helfer oeffnete nach 30 Sekunden AUCH DANN, wenn
+    /// die alte App noch lief — und eine noch laufende alte App neben einer neuen Datei am selben
+    /// Ort heisst fuer macOS: eine zweite Instanz. Jetzt **oeffnet der Helfer nie neben einer
+    /// lebenden alten App**: nach `neustartBittenNach` Schritten bittet er sie zu enden (TERM),
+    /// nach `neustartZwingenNach` zwingt er sie (KILL), und lebt sie nach `neustartAufgebenNach`
+    /// noch, gibt er auf, ohne zu oeffnen. Ein Schritt sind 0,2 Sekunden.
     public static func neustartBefehl(pid: Int32, buendel: String) -> [String] {
         ["/bin/sh", "-c",
-         "i=0; while kill -0 \"$1\" 2>/dev/null && [ $i -lt 150 ]; do sleep 0.2; i=$((i+1)); done; "
+         "i=0; while kill -0 \"$1\" 2>/dev/null; do "
+            + "[ $i -eq \(neustartBittenNach) ] && kill -TERM \"$1\" 2>/dev/null; "
+            + "[ $i -eq \(neustartZwingenNach) ] && kill -KILL \"$1\" 2>/dev/null; "
+            + "[ $i -ge \(neustartAufgebenNach) ] && exit 1; "
+            + "sleep 0.2; i=$((i+1)); done; "
             + "exec /usr/bin/open \"$2\"",
          "neustart", String(pid), buendel]
+    }
+
+    /// Schritte (je 0,2 s), bis der Helfer die alte App um ihr Ende bittet: 5 Sekunden.
+    public static let neustartBittenNach = 25
+    /// Schritte, bis er sie zwingt: 10 Sekunden.
+    public static let neustartZwingenNach = 50
+    /// Schritte, bis er aufgibt, OHNE zu oeffnen: 15 Sekunden.
+    public static let neustartAufgebenNach = 75
+
+    // ------------------------------------------------------------ Ein Visbox-Fenster (0.2.10)
+    //
+    // Owner-Befund 20.10.2026: Ein zweiter Start soll die laufende App nach vorn holen, nicht
+    // ein weiteres Fenster aufmachen. Die Entscheidung ist hier, die Ausfuehrung in der Mac-App
+    // (`Einzelstart.swift`): Sie kennt nur die Prozesse, nicht die Regel.
+
+    /// Was eine startende App tut, wenn schon andere Visbox-Prozesse laufen.
+    public enum Startentscheid: Equatable, Sendable {
+        /// Keine andere laeuft — normal starten.
+        case allein
+        /// Ein gewoehnlicher zweiter Start: die laufende nach vorn holen und selbst enden.
+        case vorneHolen(Int32)
+        /// Nach «Neu starten» ist diese die neue Fassung: Was noch laeuft, ist die alte
+        /// (oder ein Rest) — beenden lassen und selbst bleiben.
+        case alteBeenden([Int32])
+    }
+
+    /// Die Regel: Ohne andere `allein`. Steht der Merker eines Neustarts (`erwarteteSchluessel`),
+    /// ist dieser Start der gewollte — die anderen sind alt und gehen. Sonst gewinnt die zuerst
+    /// gestartete (kleinste Startzeit, bei Gleichstand kleinere Nummer) und kommt nach vorn.
+    public static func startentscheid(andere: [(pid: Int32, start: Double)],
+                                      neustartErwartet: Bool) -> Startentscheid {
+        guard !andere.isEmpty else { return .allein }
+        if neustartErwartet { return .alteBeenden(andere.map(\.pid).sorted()) }
+        let erste = andere.min { ($0.start, $0.pid) < ($1.start, $1.pid) }!
+        return .vorneHolen(erste.pid)
     }
 
     /// Wie lange die App nach `terminate` wartet, bevor sie sich selbst beendet. Ein Beenden,

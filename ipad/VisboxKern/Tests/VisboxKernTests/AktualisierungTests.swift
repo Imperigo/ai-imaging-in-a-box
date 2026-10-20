@@ -433,6 +433,34 @@ final class AktualisierungTests: XCTestCase {
         XCTAssertEqual(Array(befehl.suffix(2)), ["4242", "/Applications/Vis box.app"])
     }
 
+    // 20.10.2026 (Owner-Befund 0.2.8 → 0.2.9): nie neben einer lebenden alten App oeffnen.
+    func testDerNeustartHelferOeffnetNieNebenDerAltenApp() {
+        let text = Aktualisierung.neustartBefehl(pid: 4242, buendel: "/Applications/X.app")[2]
+        XCTAssertFalse(text.contains("-lt 150"), "der alte Rueckfall oeffnete nach 30 s trotzdem")
+        XCTAssertTrue(text.contains("kill -TERM"))
+        XCTAssertTrue(text.contains("kill -KILL"))
+        XCTAssertTrue(text.contains("exit 1"))
+        XCTAssertLessThan(Aktualisierung.neustartBittenNach, Aktualisierung.neustartZwingenNach)
+        XCTAssertLessThan(Aktualisierung.neustartZwingenNach, Aktualisierung.neustartAufgebenNach)
+        // Das Aufgeben steht VOR dem Oeffnen, in der Schleife.
+        XCTAssertLessThan(text.range(of: "exit 1")!.lowerBound,
+                          text.range(of: "exec /usr/bin/open")!.lowerBound)
+    }
+
+    func testEinZweiterStartHoltDieLaufendeNachVorn() {
+        XCTAssertEqual(Aktualisierung.startentscheid(andere: [], neustartErwartet: false), .allein)
+        XCTAssertEqual(Aktualisierung.startentscheid(andere: [], neustartErwartet: true), .allein)
+        XCTAssertEqual(Aktualisierung.startentscheid(andere: [(pid: 7, start: 20), (pid: 5, start: 10)],
+                                                     neustartErwartet: false), .vorneHolen(5))
+        XCTAssertEqual(Aktualisierung.startentscheid(andere: [(pid: 9, start: 10), (pid: 3, start: 10)],
+                                                     neustartErwartet: false), .vorneHolen(3))
+    }
+
+    func testNachNeustartGehtDieAlteUndDieNeueBleibt() {
+        XCTAssertEqual(Aktualisierung.startentscheid(andere: [(pid: 8, start: 1), (pid: 4, start: 2)],
+                                                     neustartErwartet: true), .alteBeenden([4, 8]))
+    }
+
     func testNachDemNeustartWirdBestaetigtOderGewarnt() throws {
         let neu = try XCTUnwrap(Fassungsnummer("0.2.8"))
         let alt = try XCTUnwrap(Fassungsnummer("0.2.7"))

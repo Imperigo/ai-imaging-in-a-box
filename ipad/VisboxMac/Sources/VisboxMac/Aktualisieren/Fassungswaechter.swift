@@ -13,7 +13,8 @@ import VisboxKern
 ///   und sieht danach alle zehn Minuten nach, ob die Regel des Kerns eine Frage faellig nennt
 ///   — ein Mac schlaeft, und ein Takt, der eine Stunde schliefe, verschoebe sich um jede Nacht.
 /// * **Ein Klick** (Entscheid 87): Der Knopf «● 0.x.y verfügbar» laedt sofort; nach dem
-///   Ersetzen startet die App **von selbst** neu. Ohne den Klick wird nie etwas installiert.
+///   Ersetzen steht **«Neu starten»** da (seit 0.2.10, Owner-Befund 20.10.2026 — bis dahin
+///   startete die App von selbst neu). Ohne den Klick wird nie etwas installiert.
 /// * **Still bei Fehlern der Frage:** Kein Netz oder eine gedrosselte Schnittstelle heisst
 ///   «kein Angebot», nicht eine Meldung am Bildschirm — die App laeuft ohne GitHub weiter.
 ///
@@ -29,6 +30,7 @@ final class Fassungswaechter: ObservableObject {
 
     private var takt: Task<Void, Never>?
     private var arbeitet = false
+    private var neustartLaeuft = false
 
     // EINE FLUECHTIGE SITZUNG: keine Kekse, kein Zwischenspeicher auf der Platte — die Frage
     // an GitHub soll nichts hinterlassen und immer die aktuelle Antwort bekommen.
@@ -98,9 +100,11 @@ final class Fassungswaechter: ObservableObject {
                 try await Ersetzer.ersetze(angebot, buendel: buendel, kennung: kennung) { neu in
                     Task { @MainActor in self?.melde(neu) }
                 }
+                // NEU STARTEN AUF KLICK (Owner-Befund 20.10.2026, ersetzt den Teil «von selbst»
+                // aus Entscheid 87): Bis 0.2.9 startete die App nach dem Ersetzen sofort neu —
+                // am Mac des Owners stand danach ein zweites Fenster neben dem alten. Jetzt
+                // steht «Neu starten» da, und erst der Klick beendet die alte App.
                 self?.schliesse(mit: .fertig)
-                // VON SELBST NEU STARTEN (Entscheid 87). Scheitert das, bleibt «Neu starten».
-                self?.starteNeu()
             } catch let fehler as Aktualisierungsfehler {
                 self?.schliesse(mit: .gescheitert(fehler))
             } catch {
@@ -137,7 +141,9 @@ final class Fassungswaechter: ObservableObject {
     /// bestaetigt sie (`pruefeNeustart`). Bleibt das Beenden an etwas haengen, endet die App
     /// nach `Aktualisierung.beendenFrist` von selbst — gespeichert ist zu dem Zeitpunkt alles.
     func starteNeu() {
-        guard phase == .fertig else { return }
+        // EIN NEUSTART, NICHT ZWEI: Ein zweiter Klick haette einen zweiten Helfer gestartet.
+        guard phase == .fertig, !neustartLaeuft else { return }
+        neustartLaeuft = true
         let befehl = Aktualisierung.neustartBefehl(pid: ProcessInfo.processInfo.processIdentifier,
                                                    buendel: Bundle.main.bundlePath)
         let helfer = Process()
