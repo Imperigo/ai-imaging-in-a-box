@@ -1,0 +1,50 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261020-289",
+ "art": "qa",
+ "rang": 76,
+ "erstellt": "2026-10-20T09:00:00Z",
+ "beschreibung": "Nr. 85 am Gerät: eine Blender-Grundlage, zwei KI-Varianten daraus — deckungsgleich? Dazu Nr. 83: «nur Grundlage» liefert das Cycles-Bild, und eine nicht passende Grundlage wird abgelehnt",
+ "anweisung": "ANSAGE VORAB: Visbox main ab 0db9b63 (gezogen laut LW 20.10.). Der Abholer liest vis.skip jetzt als «nur Grundlage» und legt Grundlagen unter <out-wurzel>/_grundlagen/ ab. ABLAUF ueber die Bruecke der Visbox-Flaeche (POST /bruecke/jobs, Teil 'scene' + Datei 'model.glb', dann /approve — derselbe Weg wie die Knotenansicht), synthetische glb aus tools/make_test_glb.py (gegliederter Testbau oder Quader 20x6x10 m), cameras 'auto', render.resolution [1024, 640], render.samples 64, render.passes 'alle'. 1) GRUNDLAGE: vis.skip true. Erwartet: Blender rechnet 3 Kameras, KEIN Bildmodell geladen (Log/GPU-Speicher pruefen), 3 Bilder = Cycles-Schoenbild, Ergebnis engine_used 'cycles', lieferstatus 'geliefert', grundlage.id (gl-…) mit wiederverwendet false, je Kamera pose; Ebenen schoenbild/tiefe/material-id da. Zeit gesamt. 2) VARIANTE A: dieselbe Szene ohne skip, vis.grundlage = die id aus 1, vis.seed 482913, style.prompt mit 'morning light, soft shadows'. Erwartet: KEIN Blender-Lauf (Log), je Kamera genau EIN KI-Lauf mit seed 482913, grundlage.wiederverwendet true, je Kamera seed 482913. Zeit gesamt. 3) VARIANTE B: wie 2, Prompt 'evening dusk, warm interior lights'. 4) DECKUNGSGLEICH: je Kamera A gegen B messen — (a) die Tiefenkarte, die beide Laeufe bekamen (Pfad im Befund) byte-gleich ja/nein; (b) Kantenbild beider KI-Bilder (z. B. Canny auf Graustufen) und deren Ueberdeckung (IoU der Kanten nach 3 px Dilatation) und dasselbe gegen das Cycles-Schoenbild aus 1; (c) der Geometrie-Score beider Laeufe. Zum Vergleich EIN Lauf wie heute ohne grundlage/seed mit Prompt B (= alter Weg) und dieselbe Messung gegen A. 5) ABLEHNUNG: dieselbe Variante mit render.samples 32 statt 64 -> erwartet Auftrag laut abgelehnt mit 'passt nicht' im Grund, kein Blender, kein KI-Lauf. Und vis.grundlage 'gl-0000000000000000' -> 'nicht bekannt'. 6) Rueckgabe: je Schritt Status, Grund, Zeiten (Cycles-Teil, KI-Teil), Backbone; die Messwerte aus 4 als Tabelle je Kamera; die Bilder von 1/2/3 und dem alten Weg (klein) in die Ergebnisablage. Falls eine Stufe scheitert: genau dort anhalten, Satz und Laufzettel zurueckgeben. Keine Personen oder erfundenen Figuren in Bildern — enthaelt ein Bild eine, verwerfen und mit anderem Startwert wiederholen und das vermerken. NICHT: Code aendern; Schwellen senken; Grundlagen-Dateien von Hand anpassen; Pfade, Orts- oder Benutzernamen in die Rueckgabe (Regel 3). Prozesse per PID beenden.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261015-288",
+  "entscheide": [
+   "98",
+   "98a",
+   "98b"
+  ],
+  "einbau": "C66",
+  "demolauf": [
+   "85",
+   "83",
+   "84"
+  ],
+  "visbox_stand": "0db9b63"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Zwei Bildlaeufe hintereinander (der Abholer nimmt sie nacheinander), nie zwei GPU-Laeufe gleichzeitig.",
+  "hinweise": [
+   "Nach git pull Dienst und Abholer neu starten (siehe Anweisung).",
+   "Keine Ortsnamen, Pfade, Rechnernamen oder Personen in die Rueckgabe (REGEL 3).",
+   "Prozesse nur per PID beenden."
+  ]
+ },
+ "rueckgabe": [
+  "Kopf.",
+  "Schritte 1 bis 5: Status, Grund, Zeiten (Cycles-Teil, KI-Teil), Backbone; grundlage.id und wiederverwendet je Lauf.",
+  "Deckung je Kamera als Tabelle: Tiefe byte-gleich ja/nein, Kanten-IoU A–B, A–Cycles, A–alter Weg, Score A/B.",
+  "Ablehnungen: der Grund beider Faelle woertlich.",
+  "Bilder (klein) von 1, 2, 3 und dem alten Weg in die Ergebnisablage.",
+  "Urteil in einem Satz: sind Varianten aus einer Grundlage deckungsgleich, und spart die Grundlage messbar Zeit?"
+ ]
+}
