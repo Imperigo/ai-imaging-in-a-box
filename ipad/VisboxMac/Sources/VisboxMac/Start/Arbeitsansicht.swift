@@ -21,10 +21,16 @@ import WebKit
 /// Der Assistent kommt rechts dazu, sobald er geladen ist; bis seine Seitenleiste verdrahtet
 /// ist, steht dort sein Zustand aus den Startzeilen.
 ///
+/// **Seit Schritt 2 (Entscheid 103b, 20.10.2026)** ist diese Ansicht auch ohne Rechner da: Wo
+/// bis 0.3.0 der Vorführmodus das Fenster ersetzte, steht jetzt oben das Band (im
+/// `Hauptfenster`), und die Assistent-Leiste ist gesperrt mit dem Satz aus `sperre`.
+///
 /// *Gebaut, am Gerät unbestätigt (01.10.2026).*
 struct Arbeitsansicht: View {
     @ObservedObject var leitung: Heimleitung
     let zurueck: () -> Void
+    /// Was ohne Rechner gesperrt ist (`Leitungsschalter.sperre`) — hier: der Assistent.
+    var sperre: Rechnersperre = .offen
 
     @State private var flaechenSatz: String?
     @State private var wahl: Flaechenwahl = Flaechenwahl.beimOeffnen
@@ -115,7 +121,8 @@ struct Arbeitsansicht: View {
     private var assistentenPlatz: some View {
         if let basis = leitung.adresse {
             Assistentenleiste(anschluss: AssistentAnschluss(basis: basis,
-                                                            anmeldung: leitung.anmeldung))
+                                                            anmeldung: leitung.anmeldung),
+                              gesperrt: sperre.satz)
         } else {
             Assistentenplatzhalter(stand: leitung.bild.assistent)
         }

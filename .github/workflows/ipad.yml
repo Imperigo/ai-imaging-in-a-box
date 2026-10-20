@@ -202,8 +202,10 @@ jobs:
           # DAS ICON (Owner-Entscheid 88, Blatt 20): erzeugt von `tools/make_icon.py`, Name wie
           # `CFBundleIconFile` in der Plist.
           cp App/Visbox.icns "$BUENDEL/Contents/Resources/Visbox.icns"
-          # DIE BEISPIELMAPPE FUER DEN VORFUEHRMODUS (Strom C, Entscheid 49): gelesen wird sie
-          # ueber `Bundle.main`, also muss sie im Buendel liegen, nicht im SwiftPM-Ausgabeordner.
+          # DIE BEISPIELMAPPE (Entscheid 49; bis 0.3.0 fuer den Vorfuehrmodus). Seit Entscheid
+          # 103b zeigt die App sie nicht mehr als eigene Ansicht; sie bleibt im Buendel, weil
+          # Schritt 3 («Mappe am Mac») sie als normale, mitgelieferte Mappe anbietet. Gelesen
+          # ueber `Bundle.main`, also im Buendel, nicht im SwiftPM-Ausgabeordner.
           # DIE ECHTE, WENN ES SIE GIBT (`Vorfuehrmappe/`, am Heim-PC gerechnet, auf-218), sonst
           # die Platzhalter (`Beispielmappe/`). Die Platzhalter bleiben im Repo, weil die Proben
           # des Werkzeugs auf sie bauen; unter dem Namen im Buendel aendert sich nichts.

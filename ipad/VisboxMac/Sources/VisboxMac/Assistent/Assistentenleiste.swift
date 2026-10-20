@@ -11,7 +11,9 @@ import VisboxKern
 //
 // Rechts am Fenster: «Assistent · läuft am Heim-PC», das Gespraech, darunter die violett
 // gerahmte Karte «Vorschlag:» mit «Anwenden · Ablehnen · Ändern», gestrichelt die Grenzen,
-// unten das Eingabefeld. Was sie zeigt und wann, entscheidet der Kern
+// unten das Eingabefeld. OHNE RECHNER («Visbox eigenstaendig», Schritt 2, Entscheid 103b)
+// steht statt des Felds der Satz der Sperre (`Leitungsschalter.sperre`), und nichts geht
+// hinaus — ein Satz statt eines Fehlers. Was sie zeigt und wann, entscheidet der Kern
 // (`Assistentengespraech`, `Assistentenkarte`, `Assistentenzeile`); hier wird nur
 // gezeichnet und gesendet.
 //
@@ -158,11 +160,15 @@ final class Assistentenmodell: ObservableObject {
 struct Assistentenleiste: View {
     @StateObject private var modell: Assistentenmodell
     private let beiStandpunkt: (VorgeschlagenerStandpunkt?) -> Void
+    /// Ohne Rechner: der Satz, warum der Assistent gesperrt ist (`Rechnersperre.satz`);
+    /// `nil`, wenn er geht.
+    private let gesperrt: String?
 
-    init(anschluss: AssistentAnschluss, ordner: String? = nil,
+    init(anschluss: AssistentAnschluss, ordner: String? = nil, gesperrt: String? = nil,
          beiStandpunkt: @escaping (VorgeschlagenerStandpunkt?) -> Void = { _ in }) {
         _modell = StateObject(wrappedValue: Assistentenmodell(anschluss: anschluss,
                                                               ordner: ordner))
+        self.gesperrt = gesperrt
         self.beiStandpunkt = beiStandpunkt
     }
 
@@ -185,7 +191,8 @@ struct Assistentenleiste: View {
                         }
                     }
                     if let karte = modell.gespraech.karte {
-                        Vorschlagskarte(karte: karte, gesperrt: modell.gespraech.wartet,
+                        Vorschlagskarte(karte: karte,
+                                        gesperrt: modell.gespraech.wartet || gesperrt != nil,
                                         anwenden: { Task { await modell.anwenden() } },
                                         ablehnen: { modell.ablehnen() },
                                         aendern: { modell.aendern() })
@@ -197,7 +204,7 @@ struct Assistentenleiste: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Eingabe(modell: modell)
+            Eingabe(modell: modell, gesperrt: gesperrt)
         }
         .padding(16)
         .frame(minWidth: 300, idealWidth: 340, maxWidth: 420, maxHeight: .infinity,
@@ -295,8 +302,24 @@ private struct Grenzen: View {
 
 private struct Eingabe: View {
     @ObservedObject var modell: Assistentenmodell
+    let gesperrt: String?
 
     var body: some View {
+        // OHNE RECHNER GESPERRT, MIT SATZ (Entscheid 103b): kein Feld, das nur einen Fehler
+        // zurueckbraechte.
+        if let satz = gesperrt {
+            Text(satz)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            feld
+        }
+    }
+
+    @ViewBuilder
+    private var feld: some View {
         // NUR BEI «BEREIT» EIN FELD. Sonst ein ruhiger Satz: warum nicht, und dass Bilder
         // trotzdem gehen. Ein Feld, das nichts abschickt, waere ein Bedienelement ohne
         // Wirkung.

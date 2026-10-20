@@ -3,17 +3,23 @@ import VisboxKern
 
 /// Das eine Fenster: Startzeilen oder Arbeit, und beim ersten Start das Blatt «Einrichten».
 ///
-/// **Ordnet an, entscheidet nichts.** Was das Fenster zeigt — Start, Arbeit oder
-/// Vorführmodus (Blatt 13b, Strom C, Entscheid 40) —, entscheidet `Vorfuehrschalter` im Kern
-/// (`fensterinhalt`); seine Versuche gehen über dieselbe Leitung (`Heimleitung.versuch`).
-/// Solange der Mac noch eingerichtet wird, zeigt er keinen Vorführmodus, und weist die Tür
-/// des Heim-PC ab (401/403), die Startansicht mit dem Grund — nie den Vorführmodus.
+/// **Ordnet an, entscheidet nichts.** Was das Fenster zeigt — Start oder Arbeit —, welches
+/// Band oben steht und was gesperrt ist, entscheidet `Leitungsschalter` im Kern
+/// (`fensterinhalt`, `band`, `sperre`); seine Versuche gehen über dieselbe Leitung
+/// (`Heimleitung.versuch`).
+///
+/// **Seit «Visbox eigenständig», Schritt 2 (Entscheid 103b, 20.10.2026) gibt es keinen
+/// Vorführmodus mehr.** Bis 0.3.0 ersetzte er nach der Schwelle das Fenster durch vorher
+/// gerechnete Bilder. Jetzt bleibt die Arbeit (Knoten aus dem Bündel); oben steht das Band
+/// «Heim-PC nicht erreichbar · Rechnen und Assistent gesperrt — alles andere geht. · Erneut
+/// verbinden» (Blatt 28, Feld 1), und wer noch im Start steht, kommt von selbst in die Arbeit
+/// (`oeffnetDieArbeit`). Weist die Tür ab (401/403), steht dasselbe Band mit eigenem Satz und
+/// «Einrichten» — die Arbeit bleibt offen.
 ///
 /// **«Einrichten» ist immer erreichbar** (Durchsicht 01.10.2026, H2): in der Werkzeugleiste
-/// und im Band des Vorführmodus. Vorher stand der Knopf nur in der Startansicht, und die war
-/// im Vorführmodus verdeckt — bei vertippter Adresse gab es keinen Weg hinaus.
+/// und im Band bei einer Absage.
 ///
-/// **Zwei Takte, ein Bild** (M1): Heimleitung und Vorführschalter fragen je für sich. Nach
+/// **Zwei Takte, ein Bild** (M1): Heimleitung und Leitungsschalter fragen je für sich. Nach
 /// dem Einrichten beginnt der Schalter von vorn, und jede Frage der Heimleitung meldet ihren
 /// Befund an ihn; was daraus folgt, sagt der Kern (`heimleitungFand`).
 ///
@@ -21,13 +27,13 @@ import VisboxKern
 struct Hauptfenster: View {
     @ObservedObject var leitung: Heimleitung
     @ObservedObject var aktualisierung: Fassungswaechter
-    @StateObject private var vorfuehrung: Vorfuehrsteuerung
+    @StateObject private var leitungstakt: Leitungssteuerung
     @StateObject private var vermittlung = Vermittlungsanschluss()
 
     init(leitung: Heimleitung, aktualisierung: Fassungswaechter) {
         self.leitung = leitung
         self.aktualisierung = aktualisierung
-        _vorfuehrung = StateObject(wrappedValue: Vorfuehrsteuerung(pruefe: { [leitung] in
+        _leitungstakt = StateObject(wrappedValue: Leitungssteuerung(pruefe: { [leitung] in
             await leitung.versuch()
         }))
     }
@@ -42,21 +48,7 @@ struct Hauptfenster: View {
     @State private var umzugFehler: String?
 
     var body: some View {
-        Group {
-            switch vorfuehrung.schalter.fensterinhalt(eingerichtet: !leitung.braucheEinrichten,
-                                                      arbeitet: arbeitet) {
-            case .vorfuehrung:
-                Vorfuehrbereich(steuerung: vorfuehrung,
-                                ipadVerbunden: leitung.bild.ipad.steht,
-                                einrichten: { einrichtenOffen = true })
-            case .arbeit:
-                Arbeitsansicht(leitung: leitung, zurueck: { arbeitet = false })
-            case .start:
-                Startansicht(leitung: leitung,
-                             anfangen: { arbeitet = true },
-                             einrichten: { einrichtenOffen = true })
-            }
-        }
+        flaeche
         .background {
             // DIE VERMITTLUNG MELDET NUR, WENN SIE AN IST (Entscheid 63): Sonst gehört die
             // Zeile «iPad» dem direkten Weg über Tailscale und der Zahl aus «iPad koppeln».
@@ -81,19 +73,14 @@ struct Hauptfenster: View {
             // am Rumpf auf (Mac-CI 20.10.2026: «unable to type-check … in reasonable time»).
             IpadKoppelanker(offen: $ipadKoppelnOffen, leitung: leitung)
         }
-        // DAS WEICHE BAND (20.10.2026): Ein Aussetzer ist kein Vorführmodus. Solange die
-        // Schwelle nicht erreicht ist, steht oben nur «kurz nicht erreichbar — verbinde neu …».
-        .overlay(alignment: .top) {
-            KurzWegBand(zeigen: vorfuehrung.schalter.kurzNichtErreichbar
-                        && !leitung.braucheEinrichten)
-        }
         .toolbar { werkzeuge }
         .frame(minWidth: 1100, minHeight: 700)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $einrichtenOffen) {
             // SEIT ENTSCHEID 83 (13.10.2026) zuerst die Kopplung mit Zahl (Blatt 17); der
             // bisherige Dialog ist darin der kleine Link «Von Hand eintragen …» (83c).
-            Koppeln(leitung: leitung, fertig: { einrichtenOffen = false })
+            Koppeln(leitung: leitung, leitungstakt: leitungstakt,
+                    fertig: { einrichtenOffen = false })
                 // OHNE ADRESSE UND KENNWORT GIBT ES NICHTS ZU ZEIGEN: Das Blatt geht erst zu,
                 // wenn beides gesichert ist.
                 .interactiveDismissDisabled(leitung.braucheEinrichten)
@@ -113,7 +100,7 @@ struct Hauptfenster: View {
             leitung.starte()
             // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
             aktualisierung.starte()
-            vorfuehrung.starte()
+            leitungstakt.starte()
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
         .onChange(of: leitung.adresse) { _, _ in
@@ -125,27 +112,69 @@ struct Hauptfenster: View {
                 vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
                 // AUCH NACH «ABBRECHEN» gleich nachsehen statt bis zu 60 s zu warten; die Lage
                 // bleibt, bis die Antwort da ist.
-                vorfuehrung.erneutVerbinden()
+                leitungstakt.erneutVerbinden()
             }
         }
         .onChange(of: leitung.eingerichtetUm) { _, _ in
             // NEU EINGERICHTET: Die Fehlschlaege von vorher galten einer anderen Adresse
-            // oder keiner — der Schalter beginnt von vorn, statt den Vorfuehrmodus zu zeigen.
-            vorfuehrung.neuEingerichtet()
+            // oder keiner — der Schalter beginnt von vorn, statt «nicht erreichbar» zu zeigen.
+            leitungstakt.neuEingerichtet()
         }
         .onChange(of: leitung.letzteFrage) { _, frage in
-            if let frage { vorfuehrung.heimleitungFand(frage.befund) }
+            if let frage { leitungstakt.heimleitungFand(frage.befund) }
         }
-        .onChange(of: vorfuehrung.schalter.lage) { _, lage in
-            guard lage == .abgewiesen else { return }
-            // DIE TUER WEIST AB: zurueck zum Start, wo der Grund steht — und die Startzeile
-            // gleich neu gefragt, damit sie dasselbe sagt wie der Schalter.
-            arbeitet = false
-            leitung.pruefeJetzt()
+        .onChange(of: leitungstakt.schalter.lage) { _, lage in
+            // OHNE RECHNER IN DIE ARBEIT (Entscheid 103b): an der Stelle, an der bis 0.3.0 der
+            // Vorfuehrmodus kam. Und gemerkt — kommt der Heim-PC zurueck, bleibt man dort.
+            if leitungstakt.schalter.oeffnetDieArbeit(eingerichtet: !leitung.braucheEinrichten) {
+                arbeitet = true
+            }
+            // DIE TUER WEIST AB: die Startzeile gleich neu gefragt, damit sie dasselbe sagt
+            // wie das Band. Die Arbeit bleibt offen (bis 0.3.0 ging es zurueck zum Start).
+            if lage == .abgewiesen { leitung.pruefeJetzt() }
         }
         .onDisappear {
-            vorfuehrung.halte()
+            leitungstakt.halte()
             vermittlung.halte()
+        }
+    }
+
+    // DAS BAND UND DARUNTER START ODER ARBEIT — als eigene Teile, damit der Rumpf von `body`
+    // uebersetzbar bleibt (Mac-CI 20.10.2026: «unable to type-check … in reasonable time»).
+    private var flaeche: some View {
+        let eingerichtet = !leitung.braucheEinrichten
+        let band = leitungstakt.schalter.band(eingerichtet: eingerichtet)
+        return VStack(spacing: 0) {
+            if let band, !band.weich {
+                Leitungsband(band: band,
+                             erneutVerbinden: { leitungstakt.erneutVerbinden() },
+                             einrichten: { einrichtenOffen = true })
+            }
+            inhalt(eingerichtet: eingerichtet)
+        }
+        // DAS WEICHE BAND (20.10.2026): Ein Aussetzer ist kein Zustand. Solange die Schwelle
+        // nicht erreicht ist, steht oben nur «kurz nicht erreichbar — verbinde neu …».
+        .overlay(alignment: .top) {
+            KurzWegBand(zeigen: band?.weich == true)
+        }
+    }
+
+    @ViewBuilder
+    private func inhalt(eingerichtet: Bool) -> some View {
+        let schalter = leitungstakt.schalter
+        switch schalter.fensterinhalt(eingerichtet: eingerichtet, arbeitet: arbeitet) {
+        case .arbeit:
+            Arbeitsansicht(leitung: leitung, zurueck: { arbeitet = false },
+                           sperre: schalter.sperre(eingerichtet: eingerichtet))
+        case .start:
+            Startansicht(leitung: leitung,
+                         anfangen: { arbeitet = true },
+                         einrichten: { einrichtenOffen = true },
+                         anfangenMoeglich: schalter.anfangenMoeglich(
+                            leitungSteht: leitung.bild.schonAnfangen),
+                         anfangenSatz: schalter.anfangenSatz(
+                            startzeilen: leitung.bild.anfangenSatz,
+                            leitungSteht: leitung.bild.schonAnfangen))
         }
     }
 
@@ -168,7 +197,7 @@ struct Hauptfenster: View {
         }
         // IMMER DA, in jeder Ansicht: Falsches Kennwort und vertippte Adresse behebt nur
         // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
-        Button(Vorfuehrsaetze.einrichten) { einrichtenOffen = true }
+        Button(Leitungssaetze.einrichten) { einrichtenOffen = true }
             .help("Adresse des Heim-PC, Benutzer und Kennwort")
         // DAS IPAD (Entscheid 63): Unterwegs spricht es selbst über Tailscale mit dem
         // Heim-PC. Der Mac holt dort nur die Zahl zum ersten Koppeln (`POST /api/kopplung`,
@@ -222,26 +251,6 @@ private struct Neustartmeldung: View {
         let satz: String = waechter.neustartBefund?.satz ?? ""
         Color.clear.alert(satz, isPresented: offen) {
             Button("OK", role: .cancel) { waechter.bestaetigungGesehen() }
-        }
-    }
-}
-
-/// Das weiche Band vor dem Vorführmodus (20.10.2026) — eine eigene kleine Ansicht, wie
-/// `IpadKoppelanker`, damit der Rumpf des Fensters übersetzbar bleibt.
-private struct KurzWegBand: View {
-    let zeigen: Bool
-
-    var body: some View {
-        if zeigen {
-            Text(Vorfuehrsaetze.kurzWeg)
-                .font(Macschriften.schrift(.text, 13))
-                .foregroundStyle(Startfarbe.gelb)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Capsule().fill(Startfarbe.flaeche))
-                .overlay(Capsule().stroke(Startfarbe.linie))
-                .padding(.top, 10)
-                .accessibilityLabel(Vorfuehrsaetze.kurzWeg)
         }
     }
 }

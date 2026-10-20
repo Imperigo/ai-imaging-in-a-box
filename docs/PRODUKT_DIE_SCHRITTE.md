@@ -1564,3 +1564,18 @@ Heim-PC nur noch rechnet. Ehrlich gesagt: Die Mappe liegt in diesem Schritt noch
 da, und am Mac selbst ist die neue Fassung noch nicht ausprobiert — ob das Webfenster mit dem eigenen Adressanfang in
 jeder Einzelheit so arbeitet wie erwartet, zeigt erst das Gerät.
 
+
+**Ohne Heim-PC bleibt alles bedienbar — und man sieht, wer rechnet (20.10.2026, Schritte 2 und 6 zu Visbox 0.3).**
+Bisher ersetzte die Mac-App ihr ganzes Fenster durch einen «Vorführmodus» mit vorher gerechneten Bildern, sobald der
+Heim-PC eine halbe Minute nicht antwortete. Das fällt weg. Jetzt bleibt die gewöhnliche Arbeitsfläche mit den Knoten
+stehen, und oben erscheint ein schmales Band: «Heim-PC nicht erreichbar · Rechnen und Assistent gesperrt — alles andere
+geht.» mit dem Knopf «Erneut verbinden». Wer gerade noch auf dem Startbildschirm steht, kommt von selbst in die Arbeit.
+Die Assistent-Leiste sagt in einem Satz, dass sie einen Rechner braucht, statt einen Fehler zu melden; und wer trotzdem
+ein Bild bestellt, liest am Render-Knoten denselben klaren Satz statt einer Fehlernummer. Ein kurzer Aussetzer zeigt wie
+bisher nur ein leises «kurz nicht erreichbar — verbinde neu …». Stimmt das Kennwort nicht, steht ein eigenes Band mit
+dem Knopf «Einrichten». Neu ist ausserdem unter «Einrichten» der Abschnitt «Wer rechnet?»: Für das Rendern mit Blender,
+das Bildmodell und die Bedien-KI steht je «Heim-PC» (gewählt) und «Dieses Gerät» — Letzteres sichtbar, aber gesperrt mit
+seinem Grund, etwa «kein Blender gefunden» oder «zu wenig Grafikspeicher». Die Wahl wird gespeichert. Ehrlich gesagt:
+Sie ändert heute noch nichts — alles rechnet weiter am Heim-PC, bis ein Rechner auf dem Gerät selbst gebaut ist. Die
+Render-Knöpfe am Knoten sehen ohne Heim-PC noch aus wie immer; erst der Klick sagt, dass es nicht geht. Und am Mac
+selbst ist die neue Fassung noch nicht ausprobiert.

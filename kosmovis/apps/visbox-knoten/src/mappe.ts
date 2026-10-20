@@ -139,6 +139,47 @@ export function koerperAlsBytes(roh: typeof fetch): typeof fetch {
   };
 }
 
+/**
+ * Schritt 2 von «Visbox eigenständig» (Entscheid 103b, 20.10.2026): **ohne Rechner ein Satz am
+ * Render-Knoten, keine Zahl.** Ohne Heim-PC antwortet die Mac-App auf die Render-Wege der Brücke
+ * sofort mit 503 (kein Heim-PC eingerichtet) bzw. 502 (nicht erreicht) und einem Satz in der Form
+ * des Servers (`{"fehler": satz}`, `Kern/Knotenwege.swift`). Der wörtlich übernommene Render-Weg
+ * (`vis-jobs.ts`) liest bei einer solchen Antwort nur die Zahl, und am Knoten stünde «Bridge
+ * antwortet mit: 503».
+ *
+ * Statt die Kopie anzufassen, macht dieser Umschlag aus **genau dieser** Antwort einen Fehler mit
+ * dem Satz. `bridgeBescheid` gibt einen Fehler ohne Status und ohne Netzfehler wörtlich weiter
+ * (Art `roh`) — so steht der Satz der App am Knoten und in der Meldung. Eng gefasst: nur im
+ * eigenen Schema (`main.tsx`), nur auf `/bruecke/jobs…` (Bestellen, Abfragen, Freigeben,
+ * Abbrechen, Bilder), nur 502/503, nur mit lesbarem Satz. Alles andere — auch 401/403, die
+ * `bridgeBescheid` selbst deutet — geht unverändert durch.
+ */
+export const BRUECKE_SATZ_STATUS: readonly number[] = [502, 503];
+export const BRUECKE_SATZ_PFAD = '/bruecke/jobs';
+
+export function brueckeSagtDenSatz(roh: typeof fetch, seite: () => string = () => location.href): typeof fetch {
+  return async (eingabe: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const antwort = await roh(eingabe, init);
+    if (!BRUECKE_SATZ_STATUS.includes(antwort.status)) return antwort;
+    const adresse = typeof eingabe === 'string' || eingabe instanceof URL ? String(eingabe) : eingabe.url;
+    let pfad: string;
+    try {
+      pfad = new URL(adresse, seite()).pathname;
+    } catch {
+      return antwort;
+    }
+    if (pfad !== BRUECKE_SATZ_PFAD && !pfad.startsWith(`${BRUECKE_SATZ_PFAD}/`)) return antwort;
+    let satz: unknown;
+    try {
+      satz = (JSON.parse(await antwort.clone().text()) as { fehler?: unknown }).fehler;
+    } catch {
+      return antwort;
+    }
+    if (typeof satz !== 'string' || satz.trim() === '') return antwort;
+    throw new Error(satz);
+  };
+}
+
 export function brueckeAufDiesenServer(): void {
   try {
     localStorage.setItem('kosmo.bridge', brueckenAdresse());

@@ -4882,6 +4882,43 @@ präsentiert aber auswärts wird (Owner-Entscheid 30.09.2026). Welcher Tunnel, i
 **Vorführmodus** — Eine Betriebsart für Präsentationen: Ist der Heim-PC nicht erreichbar, zeigt
 die App vorher gerechnete Bilder statt eines Fehlers — und sagt, dass es vorher gerechnete sind.
 Geplant für die Vorführfassung.
+*Im Projekt:* Gebaut für die Mac-App (Oktober 2026), **seit dem 20.10.2026 entfallen** (Entscheid
+103b): Ohne Heim-PC bleibt die gewöhnliche Arbeitsfläche, nur Rechnen und Assistent sind gesperrt
+(siehe *Ohne Rechner*).
+
+**Rechenserver** — Ein Rechner, der für andere Geräte die schweren Arbeiten übernimmt, aber selbst
+keine Oberfläche zeigt und keine Unterlagen aufbewahrt: Er nimmt einen Auftrag an, rechnet, gibt
+das Ergebnis zurück und vergisst den Auftrag danach wieder. Gearbeitet wird am eigenen Gerät; der
+Rechenserver ist nur die starke Maschine dahinter.
+*Im Projekt:* Der Heim-PC soll mit der Fassung 0.3 genau das werden — Blender, Bildmodell und
+Sprachmodell rechnen dort, Mac und iPad zeigen alles selbst (Plan «Visbox eigenständig»,
+20.10.2026).
+
+**Ohne Rechner** — Der Zustand, in dem kein Rechner antwortet: Der Heim-PC ist aus, das Netz weg,
+oder er war drei Versuche lang und eine halbe Minute nicht zu erreichen. Die App bleibt dann ganz
+bedienbar — Knoten verschieben, verbinden, vergleichen, ablegen —, und oben steht ein schmales
+Band: «Heim-PC nicht erreichbar · Rechnen und Assistent gesperrt — alles andere geht.» mit dem
+Knopf «Erneut verbinden». Was gesperrt ist, sagt an Ort und Stelle einen Satz statt einer
+Fehlermeldung. Ein einzelner Aussetzer zeigt davor nur ein leises «kurz nicht erreichbar —
+verbinde neu …».
+*Im Projekt:* Mac-App seit «Visbox eigenständig», Schritt 2 (20.10.2026), ersetzt den
+*Vorführmodus*; die Regel steht im Kern (`Kern/Leitungsschalter.swift`).
+
+**Rechner-Wahl** — Für jede schwere Arbeit lässt sich wählen, welcher Rechner sie übernimmt: der
+Heim-PC oder dieses Gerät. Visbox kennt drei solche Arbeiten — das Rendern mit Blender, das
+Bildmodell und die Bedien-KI (das Sprachmodell, das in der Assistent-Leiste antwortet). Vorgabe ist
+der Heim-PC. «Dieses Gerät» steht sichtbar daneben, ist aber gesperrt und sagt, warum («kein
+Blender gefunden», «zu wenig Grafikspeicher»), bis ein Rechner am Gerät selbst gebaut ist. Claude,
+das Visbox von aussen steuert, ist davon nicht betroffen.
+*Im Projekt:* Mac-App, Einrichten › «Wer rechnet?» (20.10.2026, Schritt 6); die Wahl wird
+gespeichert, ändert heute aber noch nichts am Weg (`Kern/Rechnerwahl.swift`).
+
+**App-Einstellungen** — Ein kleiner Speicher, den jedes Programm am Mac für seine eigenen
+Vorlieben bekommt: was man zuletzt gewählt hat, welche Ansicht offen war. Er übersteht das
+Schliessen und Neustarten, gehört nur diesem Programm und ist **kein** Ort für Geheimnisse — ein
+Kennwort gehört in den Schlüsselbund.
+*Im Projekt:* Die Mac-App merkt sich dort die Rechner-Wahl und ob sie das iPad über den Mac anbietet;
+Kennwörter liegen nie darin (bewacht von `tests/test_ipad_geruest.py`).
 
 **TestFlight und Apple-Entwicklerkonto** — Das Konto (99 USD im Jahr) erlaubt, eigene Apps über
 Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
@@ -7521,6 +7558,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritte 2 und 6 (Protokoll 74 §147): **Rechenserver**, **Ohne Rechner**, **Rechner-Wahl**, **App-Einstellungen**; **Vorführmodus** als entfallen vermerkt |
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritt 1 (Protokoll 74 §146): **Eigenes Adressschema**, **App-Bündel**, **Ursprung (einer Webseite)** |
 | 2026-10-20 | Ergaenzt aus der iPad-Zeile am Mac (Protokoll 74 §144): **Gerätebuch (des Heim-PC)**, **Geräteart (Kopf einer Anfrage)**, **Netzaussetzer** |
 | 2026-10-20 | Ergaenzt aus Fortschritt, Vorschau und Teilbild am Heim-PC (Protokoll 74 §142): **Fortschritt (eines Renderauftrags)**, **Restzeit (geschätzt)**, **Teilbild (abgebrochen)**, **Kooperativer Abbruch** |

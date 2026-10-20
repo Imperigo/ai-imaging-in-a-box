@@ -16,8 +16,8 @@ import VisboxKern
 /// stehen nur das Senden und die Uhr.
 ///
 /// **Das Signal nach aussen** ist `erreichbarkeit` («erreichbar seit / nicht erreichbar
-/// seit»). Ob die App dann in den Vorführmodus geht, entscheidet nicht diese Klasse. Für den
-/// Vorführschalter, der einen eigenen Takt hat, meldet sie dazu jede Frage (`letzteFrage`)
+/// seit»). Ob die App dann «Heim-PC nicht erreichbar» zeigt, entscheidet nicht diese Klasse. Für den
+/// Leitungsschalter, der einen eigenen Takt hat, meldet sie dazu jede Frage (`letzteFrage`)
 /// und jedes Einrichten (`eingerichtetUm`) — sonst zeigten die beiden Takte bis zu einer
 /// Minute lang Verschiedenes.
 ///
@@ -37,11 +37,11 @@ final class Heimleitung: ObservableObject {
     /// Warum der Schlüsselbund nichts hergab — `nil`, wenn er es tat oder leer ist.
     @Published private(set) var schluesselbundSatz: String?
     /// Was die letzte Frage nach `/api/fortschritt` ergab, und wann — für den
-    /// Vorführschalter (`Vorfuehrschalter.heimleitungFand`), der einen eigenen Takt hat.
+    /// Leitungsschalter (`Leitungsschalter.heimleitungFand`), der einen eigenen Takt hat.
     /// `nil`, solange ohne Adresse nicht gefragt wurde.
     @Published private(set) var letzteFrage: Leitungsfrage?
-    /// Wann zuletzt erfolgreich eingerichtet wurde — der Vorführschalter beginnt dann von
-    /// vorn (`Vorfuehrschalter.neuEingerichtet`). `nil`: in diesem Lauf noch nie.
+    /// Wann zuletzt erfolgreich eingerichtet wurde — der Leitungsschalter beginnt dann von
+    /// vorn (`Leitungsschalter.neuEingerichtet`). `nil`: in diesem Lauf noch nie.
     @Published private(set) var eingerichtetUm: Date?
 
     /// Für die Fläche (`Arbeitsansicht`) — nicht veröffentlicht, nicht gedruckt.
@@ -235,9 +235,9 @@ final class Heimleitung: ObservableObject {
         setzeKoppelangebot(nil)
     }
 
-    // ------------------------------------------------------- für den Vorführmodus
+    // ------------------------------------------------------- für den Leitungsschalter
 
-    /// Ein Versuch für den Vorführschalter (Strom C): `GET /api/fortschritt` mit dessen Frist.
+    /// Ein Versuch für den Leitungsschalter: `GET /api/fortschritt` mit dessen Frist.
     /// Über **diese** Leitung, damit Adresse, Kennwort und Zertifikatsregeln an einer Stelle
     /// bleiben; ob die Antwort die bestätigte ist, entscheidet der Kern
     /// (`Versuchsausgang.aus`), nicht diese Klasse.
@@ -247,7 +247,7 @@ final class Heimleitung: ObservableObject {
             return .keineAntwort(grund: "Auf diesem Mac ist noch kein Heim-PC eingerichtet.")
         }
         switch await hole(Anfragen.fortschritt(anmeldung: anmeldung), basis: basis,
-                          frist: Vorfuehrschalter.versuchsfrist) {
+                          frist: Leitungsschalter.versuchsfrist) {
         case .antwort(let status, let daten, _):
             return Versuchsausgang.aus(status: status, daten: daten)
         case .keine(let fehler):

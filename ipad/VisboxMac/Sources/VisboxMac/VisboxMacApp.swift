@@ -3,8 +3,8 @@ import VisboxKern
 
 /// Der Einstieg der Mac-App — **und sonst nichts.**
 ///
-/// Was die App tut, steht in den Ordnern je Strom (`Start/`, `Vermittlung/`, `Vorfuehrung/`,
-/// `Assistent/`); was sie entscheidet, im Kern (`VisboxKern`). Hier wird nur das Fenster
+/// Was die App tut, steht in den Ordnern je Strom (`Start/`, `Vermittlung/`, `Assistent/`,
+/// `Aktualisieren/`; `Vorfuehrung/` ist seit Entscheid 103b weg); was sie entscheidet, im Kern (`VisboxKern`). Hier wird nur das Fenster
 /// aufgemacht und die eine Leitung zum Heim-PC angelegt, die alle Ansichten teilen.
 ///
 /// Der Name des Fensters kommt aus der Marke — wie bei der iPad-App steht er an genau einer

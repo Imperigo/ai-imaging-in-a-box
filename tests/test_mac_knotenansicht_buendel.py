@@ -168,6 +168,8 @@ def test_die_seite_baut_die_bruecke_nicht_aus_dem_ursprung():
     assert "location.origin" not in code
     assert "localStorage.setItem('kosmo.bridge', brueckenAdresse())" in code
     main = (WIRT / "src" / "main.tsx").read_text(encoding="utf-8")
-    assert "window.fetch = koerperAlsBytes(window.fetch.bind(window))" in main
+    # Seit Schritt 2 (20.10.2026) liegt um den Umschlag noch `brueckeSagtDenSatz` (ohne Rechner ein
+    # Satz am Render-Knoten, `tests/test_mac_ohne_rechner.py`); die Bytes macht weiter dieser.
+    assert "koerperAlsBytes(window.fetch.bind(window))" in main
     # Der Umschlag vor allem, was die Seite sonst holt.
     assert main.index("koerperAlsBytes(window.fetch") < main.index("brueckeAufDiesenServer();")

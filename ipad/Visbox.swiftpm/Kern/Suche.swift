@@ -411,7 +411,7 @@ public enum Verbindungszustand: Equatable, Sendable {
 /// **Ein kurzer Aussetzer trennt nicht** (Owner-Befund vom 20.10.2026): Unterwegs über
 /// Mobilfunk und Tailscale zeigten Mac und iPad «antwortet nicht», während der Heim-PC gesund
 /// war — eine einzige Anfrage, die ihre Frist verpasste, genügte. Seither gilt am iPad
-/// **dieselbe Schwelle wie am Mac** (`Vorfuehrschalter.schwelleErreicht`): Eine HomeStation,
+/// **dieselbe Schwelle wie am Mac** (`Leitungsschalter.schwelleErreicht`): Eine HomeStation,
 /// die eben noch antwortete, gilt erst nach drei Fehlschlägen in Folge **und** 30 Sekunden
 /// ohne Antwort als nicht erreichbar.
 ///
@@ -453,7 +453,7 @@ public struct Aussetzerfilter: Equatable, Sendable {
         guard let roh else { return nil }
         if roh { return true }
         guard warErreichbar, let seit else { return false }
-        return !Vorfuehrschalter.schwelleErreicht(fehlschlaege: fehlschlaege,
+        return !Leitungsschalter.schwelleErreicht(fehlschlaege: fehlschlaege,
                                                   stille: jetzt.timeIntervalSince(seit))
     }
 

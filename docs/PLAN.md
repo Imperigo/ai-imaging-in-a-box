@@ -8084,9 +8084,10 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] Fassung 0.3.x: Oberfläche auf dem Gerät, Heim-PC nur Rechenserver
   - [x] Schritt 1: Knotenansicht ins Mac-Bündel, Adressschema `visbox://app/knoten/`, Datenwege und Brücke durch die App (Mappe noch am Heim-PC durchgereicht) — gebaut, am Gerät unbestätigt (§146, C71); Fassungsblatt-Entwurf `docs/VISBOX_0.3.0_2026-10-20.md`, Nummer noch nicht erhöht
-  - [ ] Schritt 2: ohne Rechner Zeile statt Vorführmodus (103b); Beispielmappe als normale Mappe — erst Blatt auf der Entwurfsfläche
+  - [x] Schritt 2: ohne Rechner Zeile statt Vorführmodus (103b) — Band «Heim-PC nicht erreichbar · Rechnen und Assistent gesperrt — alles andere geht. · Erneut verbinden» nach Blatt 28, Feld 1; Assistent-Leiste gesperrt mit Satz; am Render-Knoten der Satz der App statt «503»; Vorführansicht entfernt — gebaut, am Gerät unbestätigt (§147, C72). Beispielmappe als normale Mappe: mit Schritt 3
   - [ ] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen»
   - [ ] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a)
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
-  - [ ] Schritt 6: Rechner-Wahl je Arbeit
+  - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
+  - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)
 

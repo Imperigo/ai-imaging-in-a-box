@@ -46,6 +46,7 @@ import {
   aufDemVisboxServer,
   brueckeAufDiesenServer,
   imEigenenSchema,
+  brueckeSagtDenSatz,
   koerperAlsBytes,
   ladeMappe,
   ladeWirt,
@@ -97,9 +98,11 @@ legeAnfangBeimOeffnen(true);
 // (`npm run dev`) gibt es beides nicht — die Ansicht läuft dann leer, wie ohne Mappe.
 
 // IN DER MAC-APP (eigenes Adressschema, Schritt 1 von «Visbox eigenständig»): jeder Rumpf als
-// fertige Bytes, bevor die App ihn an den Heim-PC weiterreicht (`koerperAlsBytes`).
+// fertige Bytes, bevor die App ihn an den Heim-PC weiterreicht (`koerperAlsBytes`). Seit Schritt 2:
+// Ohne Rechner steht am Render-Knoten der Satz der App, nicht «antwortet mit: 503»
+// (`brueckeSagtDenSatz`).
 if (imEigenenSchema()) {
-  window.fetch = koerperAlsBytes(window.fetch.bind(window));
+  window.fetch = brueckeSagtDenSatz(koerperAlsBytes(window.fetch.bind(window)));
 }
 
 if (aufDemVisboxServer()) {

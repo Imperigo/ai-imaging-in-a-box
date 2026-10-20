@@ -6,13 +6,18 @@ import VisboxKern
 ///
 /// Die Ansicht zeigt nur. Welche Zeile was sagt, steht in `Startbild` (Kern); wann gefragt
 /// wird, in `Heimleitung`. Nichts davon muss man anklicken — der einzige Knopf ist
-/// «Schon anfangen», und der geht, sobald die Leitung steht (Entscheid 39).
+/// «Schon anfangen», und der geht, sobald die Leitung steht (Entscheid 39) — **oder** die
+/// Schwelle «Heim-PC nicht erreichbar» erreicht ist: Seit Entscheid 103b geht die Arbeit auch
+/// ohne Rechner, nur Rechnen und Assistent sind gesperrt (`Leitungsschalter.anfangenMoeglich`).
 ///
 /// *Gebaut, am Gerät unbestätigt (01.10.2026).*
 struct Startansicht: View {
     @ObservedObject var leitung: Heimleitung
     let anfangen: () -> Void
     let einrichten: () -> Void
+    /// Ob «Schon anfangen» geht, und der Satz daneben — vom Kern (`Leitungsschalter`).
+    var anfangenMoeglich: Bool
+    var anfangenSatz: String
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,17 +71,17 @@ struct Startansicht: View {
                         .padding(.horizontal, 20)
                         .frame(minHeight: 44)
                         .background(RoundedRectangle(cornerRadius: 10)
-                            .fill(leitung.bild.schonAnfangen ? Startfarbe.gruenKnopf
+                            .fill(anfangenMoeglich ? Startfarbe.gruenKnopf
                                   : Startfarbe.karte))
                         .overlay(RoundedRectangle(cornerRadius: 10)
-                            .stroke(leitung.bild.schonAnfangen ? Startfarbe.gruen
+                            .stroke(anfangenMoeglich ? Startfarbe.gruen
                                     : Startfarbe.linie, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
-                .disabled(!leitung.bild.schonAnfangen)
+                .disabled(!anfangenMoeglich)
                 .keyboardShortcut(.defaultAction)
 
-                Text(leitung.bild.anfangenSatz)
+                Text(anfangenSatz)
                     .font(Macschriften.schrift(.text, 13))
                     .foregroundStyle(Startfarbe.leise)
                     .fixedSize(horizontal: false, vertical: true)

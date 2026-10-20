@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { aufDemVisboxServer, brueckenAdresse, imEigenenSchema, koerperAlsBytes } from '../src/mappe';
+import { bridgeBescheid } from '../../kosmo-orbit/src/modules/vis/bridge-bescheid';
+import { BridgeHttpError } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import {
+  aufDemVisboxServer,
+  brueckeSagtDenSatz,
+  brueckenAdresse,
+  imEigenenSchema,
+  koerperAlsBytes,
+} from '../src/mappe';
 
 /**
  * VISBOX-EIGEN («Visbox eigenständig», Schritt 1, 20.10.2026): Die Mac-App lädt die Knoten aus
@@ -52,5 +60,63 @@ describe('eigenes Adressschema der Mac-App', () => {
     await umschlag('./mappe');
     expect(roh.mock.calls[0][1]).toBe(text);
     expect(roh.mock.calls[1][1]).toBeUndefined();
+  });
+});
+
+/**
+ * Schritt 2 (Entscheid 103b): Ohne Rechner antwortet die App auf die Render-Wege mit 503/502 und
+ * einem Satz. Am Render-Knoten soll dieser Satz stehen, nicht «Bridge antwortet mit: 503».
+ */
+describe('ohne Rechner ein Satz am Render-Knoten', () => {
+  const SATZ = 'Kein Heim-PC eingerichtet — Mappe und Rechnen gehen erst, wenn er gekoppelt ist.';
+  const seite = () => 'visbox://app/knoten/';
+  const antwort = (status: number, rumpf: string) => async () =>
+    new Response(rumpf, { status, headers: { 'Content-Type': 'application/json' } });
+
+  it('macht aus 503 mit Satz einen Fehler mit diesem Satz', async () => {
+    const f = brueckeSagtDenSatz(antwort(503, JSON.stringify({ fehler: SATZ })) as unknown as typeof fetch, seite);
+    await expect(f('visbox://app/bruecke/jobs', { method: 'POST' })).rejects.toThrow(SATZ);
+    const g = brueckeSagtDenSatz(
+      antwort(502, JSON.stringify({ fehler: 'Der Heim-PC ist nicht erreicht: x' })) as unknown as typeof fetch,
+      seite,
+    );
+    await expect(g('visbox://app/bruecke/jobs/abc/artifacts/bild.png')).rejects.toThrow('Der Heim-PC ist nicht erreicht: x');
+  });
+
+  it('und genau dieser Satz steht dann am Knoten (bridgeBescheid, Art roh)', async () => {
+    const f = brueckeSagtDenSatz(antwort(503, JSON.stringify({ fehler: SATZ })) as unknown as typeof fetch, seite);
+    const fehler = await f('visbox://app/bruecke/jobs', { method: 'POST' }).catch((e: unknown) => e);
+    // So baut `bescheidFuerBridgeFehler` die Lage aus einem Fehler, der weder Netzfehler noch
+    // BridgeHttpError ist.
+    expect(fehler).toBeInstanceOf(Error);
+    expect(fehler).not.toBeInstanceOf(TypeError);
+    expect(fehler).not.toBeInstanceOf(BridgeHttpError);
+    const bescheid = bridgeBescheid(
+      { netzfehler: false, tokenGesetzt: false, cspVerdacht: false, schreibRuf: true },
+      (fehler as Error).message,
+    );
+    expect(bescheid).toEqual({ art: 'roh', text: SATZ });
+    // OHNE UMSCHLAG stuende dort nur die Zahl.
+    expect(bridgeBescheid({ netzfehler: false, status: 503, tokenGesetzt: false, cspVerdacht: false },
+      new BridgeHttpError(503, 'Bridge antwortet mit').message).text).toBe('Bridge antwortet mit: 503');
+  });
+
+  it('lässt alles andere unverändert durch', async () => {
+    const satz = JSON.stringify({ fehler: SATZ });
+    for (const [status, rumpf, weg] of [
+      [200, '{"job_id":"j"}', 'visbox://app/bruecke/jobs'],
+      [401, satz, 'visbox://app/bruecke/jobs'], // die Tür deutet bridgeBescheid selbst
+      [503, satz, 'visbox://app/bruecke/health'], // die Gegenprobe zählt die Kopie selbst
+      [503, satz, 'visbox://app/bruecke/gpu'],
+      [503, satz, 'visbox://app/knoten/mappe'],
+      [503, 'kein json', 'visbox://app/bruecke/jobs'],
+      [503, '{"fehler":"  "}', 'visbox://app/bruecke/jobs'],
+      [502, '{"anders":1}', 'visbox://app/bruecke/jobs'],
+    ] as const) {
+      const f = brueckeSagtDenSatz(antwort(status, rumpf) as unknown as typeof fetch, seite);
+      const r = await f(weg);
+      expect(r.status).toBe(status);
+      expect(await r.text()).toBe(rumpf);
+    }
   });
 });

@@ -9,7 +9,9 @@ import VisboxKern
 ///    Feld für 6 Ziffern, «Koppeln», «Neue Zahl anfordern»; nach 3 Fehlversuchen die Meldung.
 /// 3. **Verbunden:** mit den Startzeilen.
 ///
-/// Klein darunter **«Von Hand eintragen …»** (83c) — der bisherige Dialog `Einrichten`.
+/// Klein darunter **«Von Hand eintragen …»** (83c) — der bisherige Dialog `Einrichten` —
+/// und seit «Visbox eigenständig», Schritt 6 (20.10.2026) **«Wer rechnet? …»**: die
+/// Rechner-Wahl je Arbeit (`Rechnerwahlansicht`, Blatt 28, Feld 2).
 ///
 /// Was ein Schritt heisst, steht im Kern (`Koppelablauf`); hier wird nur gezeigt und
 /// gedrückt.
@@ -17,6 +19,8 @@ import VisboxKern
 /// *Gebaut, am Gerät unbestätigt (13.10.2026).*
 struct Koppeln: View {
     @ObservedObject var leitung: Heimleitung
+    /// Der Takt der Leitung — für den Zusatz «· verbunden» in «Wer rechnet?».
+    @ObservedObject var leitungstakt: Leitungssteuerung
     let fertig: () -> Void
 
     @StateObject private var sucher = Heimsucher()
@@ -24,11 +28,15 @@ struct Koppeln: View {
     @State private var auswahl: String?
     @State private var zahl = ""
     @State private var vonHand = false
+    @State private var rechner = false
     @State private var arbeitet = false
 
     var body: some View {
         Group {
-            if vonHand {
+            if rechner {
+                Rechnerwahlansicht(leitung: leitung, leitungstakt: leitungstakt,
+                                   zurueck: { rechner = false })
+            } else if vonHand {
                 VStack(alignment: .leading, spacing: 0) {
                     Einrichten(leitung: leitung, fertig: fertig)
                     Button("← Zurück zur Suche") { vonHand = false }
@@ -86,6 +94,9 @@ struct Koppeln: View {
 
             HStack {
                 Button("Von Hand eintragen …") { vonHand = true }
+                    .buttonStyle(.link)
+                    .font(Macschriften.schrift(.text, 12))
+                Button(Rechnerwahl.titel + " …") { rechner = true }
                     .buttonStyle(.link)
                     .font(Macschriften.schrift(.text, 12))
                 Spacer()
@@ -236,6 +247,9 @@ struct Koppeln: View {
                 }
             }
             HStack {
+                Button(Rechnerwahl.titel + " …") { rechner = true }
+                    .buttonStyle(.link)
+                    .font(Macschriften.schrift(.text, 12))
                 Spacer()
                 Button("Fertig", action: fertig)
                     .keyboardShortcut(.defaultAction)
