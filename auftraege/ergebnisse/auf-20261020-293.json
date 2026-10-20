@@ -1,0 +1,813 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261020-293",
+ "worker": "local",
+ "rang": 80,
+ "folgt_auf": "auf-20261020-292",
+ "entscheide": [
+  "107",
+  "109",
+  "110",
+  "111",
+  "113"
+ ],
+ "einbau": [
+  "C79",
+  "C80",
+  "C81",
+  "C83"
+ ],
+ "status": "erledigt mit Befunden — 8/8 Stimmungen mit den getauschten Vorgabebildern gerechnet: ruhiger Verlaufshintergrund, AgX, Belichtung je Stimmung wie gesetzt, an keinem Haus ein voll weisser Bildpunkt (0,0 % nachgezaehlt). Gelaende ohne Material, Standpunkte = Render (<0,001 m), 960x600 exakt, 409 woertlich, fehlende Textur (Kopie) woertlich, Tiefe bitgleich. Befunde: qa.ueberstrahlt_anteil fehlt bei vis.skip true; Haus verschwimmt bei winter/morgen/nebel/bedeckt im Hintergrund (Kontrast <= 9 Grauwerte, mit Belichtung nicht behebbar); Vorschau auf 480-px-Grundlage zeigt kein Haus; geom_iou_grund 'kein Bildpunkt gemeinsam' auch dort, wo das Haus deckungsgleich ist; Schrift-Artefakte bleiben trotz Prompt-Zusatz.",
+ "beendet": "2026-10-20T21:05:00Z",
+ "koepfe": {
+  "stand": "main 9624145 (Visbox 0.3.6, Merge nach 4adf539); visbox-flaeche lief neu gestartet, Abholer per Timer 30 s. Kein Code geaendert, keine Datei ins Repo ausser diesem Ergebnis und den Bildern, Mappe des Dienstes nicht angefasst.",
+  "himmelsbilder": "GET /api/heim: 'Himmelsbilder 8/8.' (da 8, von 8, fehlend []). Ordnerwerte nur am Heim-PC.",
+  "winter_dateien": "beide liegen: das neu geholte Winterbild (jetzt Vorgabe) und das fruehere (weiter bestellbar), je 2k und 4k; gerechnet wurde das neue in 4k (blender-report umgebung.datei = Vorgabebild der Stimmung). Dateinamen hier bewusst nicht genannt.",
+  "weg": "Bruecke der Visbox-Flaeche als Client: POST /bruecke/jobs (multipart scene+model, Variante ohne model), /approve, /cancel; job.json im Takt 0,5 s, nvidia-smi im selben Takt. /knoten/standpunkte mit ?ordner= auf eine eigene Probemappe (derselbe Testbau), nicht die Mappe des Dienstes. Pruefpunkt 6 in einem eigenen Probe-Prozess (tools/abholen.py einmalig, eigene Ablage, eigener Ausgabeordner, Material-Variable nur fuer diesen Prozess auf die Kopie).",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb): Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m auf der Vorgabe-Platte 40x30 m; Knoten IfcWall_* (2), IfcRoof_* (1), IfcSlab_Gelaende_* (1).",
+  "szene": "kosmovis.render-scene/v1 wie die Knotenansicht: cameras 'auto' + cameras_auto, render.resolution [480,300] wo nicht anders gesagt, samples 64, style.mode none, prompt 'no people', vis.backbone z-image-turbo. 'zeit_freigabe_bis_done_s' enthaelt bis 30 s Warten auf den Abholer-Takt; 'blender_s' = timings.gesamt.",
+  "gpu": "vor jedem Lauf nvidia-smi + ollama ps: 1241 MiB, 14-62 W, ollama ps immer leer, kein fremder Auftrag queued/running (Ablage und eigene Ablage des Abholers geprueft). Laeufe strikt nacheinander. Cycles-Laeufe Spitze 1324-1328 MiB / 60-65 W; KI voll 26994 MiB / 322 W; Vorschau 25592-26958 MiB / 245-321 W. Einmal (zweite Vorschau 480) stand die Karte beim Start noch auf 25592 MiB — der eigene vorige Lauf gab gerade frei, kein fremder Prozess. Leistungsgrenze 400 W.",
+  "systemlast": "Last (1 min) 4-14 bis ~22:42, danach 26-30 durch fremde Texterkennung (tesseract/convert eines anderen Helfers, nicht angefasst). Je Lauf unten.",
+  "abholer_entladen": "kein Kosmo-Modell beruehrt; ollama ps die ganze Zeit leer."
+ },
+ "1_stimmungen": {
+  "morgen": {
+   "job": "vis-1792528625-97db23",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 19.34,
+   "blender_s": 4.2,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['morgen'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": null,
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.855279,
+      0.961072,
+      1.025368
+     ],
+     "zenit": [
+      0.244518,
+      0.383515,
+      0.651134
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": -0.5
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 177.2,
+   "haus_rgb_mittel_0_255": [
+    171.0,
+    174.5,
+    179.1
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": -1.3,
+   "haus_luma_p5_p95": "170.6-180.9",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.39 Grauwerte)",
+   "stimmung_erkennbar": "nein — graublau-milchig, eher Dunst als Morgenlicht; keine langen Schatten",
+   "bild_kurz": "Haus hellgrau, Seiten kaum unterschieden; verschwimmt fast im Hintergrund (Haus 174, Hintergrund daneben 175)",
+   "grundlage": {
+    "id": "gl-2ae2d9086259f2ef",
+    "wiederverwendet": false
+   },
+   "systemlast": "5.76 / 6.08 / 7.58 (vor dem Lauf), GPU vorher 1241 MiB, 13.97 W, 0 %, Spitze 1324 MiB / 64 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-morgen-sSE.png"
+  },
+  "mittag": {
+   "job": "vis-1792528523-886063",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 24.73,
+   "blender_s": 4.1,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['mittag'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": null,
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.308451,
+      0.433655,
+      0.614276
+     ],
+     "zenit": [
+      0.120156,
+      0.179111,
+      0.305266
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": -1.0
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 129.0,
+   "haus_rgb_mittel_0_255": [
+    184.3,
+    185.4,
+    186.9
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": 66.9,
+   "haus_luma_p5_p95": "177.7-194.1",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.43 Grauwerte)",
+   "stimmung_erkennbar": "ja — klarer blauer Verlaufshimmel, Haus hell, Seiten leicht unterschieden",
+   "bild_kurz": "Haus hell vor blauem Verlauf, gut lesbar, keine reinweisse Flaeche mehr (vorher 11,9 % = 255); Schatten weich, kaum Schlagschatten",
+   "grundlage": {
+    "id": "gl-117526b4c3d6b816",
+    "wiederverwendet": false
+   },
+   "systemlast": "7.79 / 6.48 / 7.88 (vor dem Lauf), GPU vorher 1241 MiB, 15.52 W, 0 %, Spitze 1324 MiB / 63 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-mittag-sSE.png"
+  },
+  "abend": {
+   "job": "vis-1792528645-31b540",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 37.06,
+   "blender_s": 4.2,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['abend'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": [
+     1.221704,
+     0.955511,
+     0.787871
+    ],
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.871723,
+      0.73537,
+      0.890848
+     ],
+     "zenit": [
+      0.848785,
+      0.915641,
+      1.406124
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": 0.0
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 191.0,
+   "haus_rgb_mittel_0_255": [
+    222.3,
+    207.4,
+    202.3
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": 20.8,
+   "haus_luma_p5_p95": "202.2-213.9",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.39 Grauwerte)",
+   "stimmung_erkennbar": "teilweise — warm (rosa-pfirsich, Haus R-B +20), aber hell und flach: kein tiefes Streiflicht, keine langen Schatten",
+   "bild_kurz": "Haus warmweiss vor rosa Verlauf, lesbar",
+   "grundlage": {
+    "id": "gl-3e72808f1db4bea6",
+    "wiederverwendet": false
+   },
+   "systemlast": "8.10 / 6.59 / 7.71 (vor dem Lauf), GPU vorher 1241 MiB, 55.12 W, 0 %, Spitze 1326 MiB / 64 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-abend-sSE.png"
+  },
+  "blaue-stunde": {
+   "job": "vis-1792528682-9f23c9",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 36.36,
+   "blender_s": 4.1,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['blaue-stunde'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": null,
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.944992,
+      0.785226,
+      1.055657
+     ],
+     "zenit": [
+      0.608379,
+      0.691085,
+      1.195759
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": 0.5
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 203.1,
+   "haus_rgb_mittel_0_255": [
+    218.4,
+    210.0,
+    215.1
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": 10.6,
+   "haus_luma_p5_p95": "210.3-214.3",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.39 Grauwerte)",
+   "stimmung_erkennbar": "teilweise — pastell lila-rosa, hell; kein tiefes Blau",
+   "bild_kurz": "Haus rosa-weiss, nur schwach vom Hintergrund abgesetzt (+10,6)",
+   "grundlage": {
+    "id": "gl-07090d0f5588fa9e",
+    "wiederverwendet": false
+   },
+   "systemlast": "5.72 / 6.16 / 7.53 (vor dem Lauf), GPU vorher 1241 MiB, 43.52 W, 0 %, Spitze 1324 MiB / 60 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-blaue-stunde-sSE.png"
+  },
+  "bedeckt": {
+   "job": "vis-1792528719-7035a2",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 38.59,
+   "blender_s": 6.2,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['bedeckt'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": null,
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.721824,
+      0.713573,
+      0.70488
+     ],
+     "zenit": [
+      1.710776,
+      1.714317,
+      1.735662
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": -0.5
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 176.8,
+   "haus_rgb_mittel_0_255": [
+    173.8,
+    173.5,
+    173.5
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": -8.6,
+   "haus_luma_p5_p95": "169.0-179.1",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.40 Grauwerte)",
+   "stimmung_erkennbar": "ja — grau, weich, gleichmaessig",
+   "bild_kurz": "Haus grau, minimal dunkler als der Hintergrund, Kanten schwach",
+   "grundlage": {
+    "id": "gl-b1367e36b642f64c",
+    "wiederverwendet": false
+   },
+   "systemlast": "4.23 / 5.75 / 7.34 (vor dem Lauf), GPU vorher 1241 MiB, 15.64 W, 0 %, Spitze 1324 MiB / 65 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-bedeckt-sSE.png"
+  },
+  "nebel": {
+   "job": "vis-1792528757-c6bcfb",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 38.72,
+   "blender_s": 6.2,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['nebel'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": null,
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.871359,
+      0.872731,
+      0.931634
+     ],
+     "zenit": [
+      1.04348,
+      1.199384,
+      1.488661
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": 0.0
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 193.1,
+   "haus_rgb_mittel_0_255": [
+    185.6,
+    187.7,
+    191.2
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": -7.5,
+   "haus_luma_p5_p95": "184.7-191.0",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.39 Grauwerte)",
+   "stimmung_erkennbar": "ja — milchig hellgrau",
+   "bild_kurz": "Haus hellgrau, verschwimmt leicht (-7,5)",
+   "grundlage": {
+    "id": "gl-a82f7001316c712f",
+    "wiederverwendet": false
+   },
+   "systemlast": "9.68 / 6.91 / 7.66 (vor dem Lauf), GPU vorher 1241 MiB, 22.90 W, 0 %, Spitze 1324 MiB / 63 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-nebel-sSE.png"
+  },
+  "winter": {
+   "job": "vis-1792528796-521ca8",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 37.17,
+   "blender_s": 4.2,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['winter'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": [
+     0.939067,
+     0.993614,
+     1.24268
+    ],
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.621957,
+      0.626943,
+      0.616626
+     ],
+     "zenit": [
+      0.73512,
+      0.735536,
+      0.724405
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": -0.5
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 165.8,
+   "haus_rgb_mittel_0_255": [
+    163.9,
+    166.0,
+    172.1
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": -0.5,
+   "haus_luma_p5_p95": "164.0-167.8",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.39 Grauwerte)",
+   "stimmung_erkennbar": "nein — kuehles Graublau (Haus B-R +8), aber kein Schnee- oder Winterbild erkennbar",
+   "bild_kurz": "Haus praktisch unsichtbar: Haus 166, Hintergrund daneben 166,5, Spanne am Haus nur 4 Grauwerte",
+   "grundlage": {
+    "id": "gl-7bc00d00d292b432",
+    "wiederverwendet": false
+   },
+   "systemlast": "12.63 / 8.11 / 8.04 (vor dem Lauf), GPU vorher 1241 MiB, 24.44 W, 0 %, Spitze 1324 MiB / 63 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-winter-sSE.png"
+  },
+  "weiss": {
+   "job": "vis-1792528834-eee62d",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "zeit_freigabe_bis_done_s": 39.56,
+   "blender_s": 6.2,
+   "umgebung": {
+    "datei": "<Vorgabebild der Stimmung> (4k; Name = stimmung.STIMMUNGEN['weiss'].hdri)",
+    "groesse": [
+     4096,
+     2048
+    ],
+    "staerke": 1.0,
+    "toenung": null,
+    "hintergrund": {
+     "art": "verlauf",
+     "kamerastrahl": "ruhig",
+     "weg": "himmelsbild",
+     "horizont": [
+      0.639332,
+      0.656014,
+      0.706833
+     ],
+     "zenit": [
+      0.047841,
+      0.04813,
+      0.054313
+     ]
+    },
+    "ansicht": {
+     "tonwerte": "AgX",
+     "belichtung_ev": 0.0
+    }
+   },
+   "ueberstrahlt_anteil_gemeldet": null,
+   "ueberstrahlt_anteil_gemeldet_vermerk": "fehlt in qa und qa_je_kamera (vis.skip true, siehe Befund B1)",
+   "ueberstrahlt_anteil_nachgezaehlt": 0.0,
+   "haus_bildpunkte": 14679,
+   "voll_weiss_am_haus": 0,
+   "helligkeit_mittel_0_255": 176.4,
+   "haus_rgb_mittel_0_255": [
+    193.9,
+    194.1,
+    196.5
+   ],
+   "kontrast_haus_gegen_hintergrund_daneben": 23.9,
+   "haus_luma_p5_p95": "189.2-199.1",
+   "hintergrund_ruhig": "ja — Verlauf, kein Foto hinter dem Haus (mittlerer Nachbarsprung oben 0.40 Grauwerte)",
+   "stimmung_erkennbar": "ja — neutral grau, Studio, Gips",
+   "bild_kurz": "Haus grauweiss vor dunklerem Verlauf oben, gut lesbar (+23,9)",
+   "grundlage": {
+    "id": "gl-1815e9ee413fe742",
+    "wiederverwendet": false
+   },
+   "systemlast": "13.62 / 8.86 / 8.29 (vor dem Lauf), GPU vorher 1241 MiB, 62.15 W, 0 %, Spitze 1326 MiB / 64 W",
+   "bild": "auf-20261020-293-bilder/1-stimmung-weiss-sSE.png"
+  }
+ },
+ "1_ersatzlauf_intensitaet": {
+  "anlass": "Kein Lauf ueberstrahlt (alle 0,0 %), keiner zu dunkel — aber winter zeigt das Haus nicht. Darum dort zwei Ersatzlaeufe mit render.environment.intensitaet.",
+  "winter_0.5": {
+   "job": "vis-1792529025-e1049f",
+   "helligkeit_mittel_0_255": 131.1,
+   "haus": 131.3,
+   "hintergrund_daneben": 131.9,
+   "ueberstrahlt_nachgezaehlt": 0.0,
+   "systemlast": "26.06 / 16.67 / 11.41, GPU vorher 1241 MiB / 15 W",
+   "bild": "auf-20261020-293-bilder/1-winter-intensitaet-0.5-sSE.png"
+  },
+  "winter_2.0": {
+   "job": "vis-1792529034-66bdd9",
+   "helligkeit_mittel_0_255": 193.5,
+   "haus": 193.7,
+   "hintergrund_daneben": 194.1,
+   "ueberstrahlt_nachgezaehlt": 0.0,
+   "systemlast": "26.29 / 17.03 / 11.59, GPU vorher 1241 MiB / 25 W",
+   "bild": "auf-20261020-293-bilder/1-winter-intensitaet-2.0-sSE.png"
+  },
+  "was_er_zeigt": "Die Staerke hebt und senkt Haus UND Hintergrund gleich (Abstand bleibt -0,6 / -0,5 / -0,4 Grauwerte bei 0.5 / 1.0 / 2.0) — der Verlauf hinter dem Haus wird mit derselben Staerke gerechnet. Belichtung ist hier nicht der Hebel; das Haus verschwindet, weil der ruhige Hintergrund (Medianfarben des Himmels) so hell ist wie das diffus beleuchtete Haus (runners/blender_depth_stage.py _ruhiger_hintergrund, Z. ~1167-1202; stimmung.hintergrund_aus_himmel)."
+ },
+ "2_gelaende": {
+  "job": "vis-1792529118-671666",
+  "status": "done",
+  "bestellt": {
+   "fassade": "sichtbeton-sandgestrahlt",
+   "boden": "stampflehm"
+  },
+  "objekte_je_art": {
+   "fassade": 2,
+   "dach": 1,
+   "fenster": 0,
+   "boden": 0,
+   "uebrige": 0,
+   "gelaende": 1
+  },
+  "nicht_getroffen": [
+   "boden"
+  ],
+  "arten": {
+   "fassade": {
+    "id": "sichtbeton-sandgestrahlt",
+    "groesse": "2K",
+    "objekte": 2
+   },
+   "boden": {
+    "id": "stampflehm",
+    "groesse": "2K",
+    "objekte": 0
+   }
+  },
+  "platte_ohne_material": "ja — Platte hellgrau wie ohne Material, kein Stampflehm; Fassaden graubeige Sichtbeton, Dachaufbau weiss.",
+  "wie_erwartet": true,
+  "systemlast": "26.68 / 19.43 / 12.91, GPU vorher 1241 MiB / 14 W",
+  "bild": "auf-20261020-293-bilder/2-gelaende-beton-lehm-sSE.png"
+ },
+ "3_standpunkte_gegen_render": {
+  "job": "vis-1792529165-030b1c",
+  "status": "done",
+  "bestellt": {
+   "richtungen": [
+    "s",
+    "nNW"
+   ],
+   "brennweite_mm": 50,
+   "perspektive": "senkrecht"
+  },
+  "render_resolution": [
+   960,
+   600
+  ],
+  "blender_s": {
+   "s": 6.9,
+   "nNW": 6.9,
+   "gesamt": 13.8
+  },
+  "systemlast": "28.10 / 20.96 / 13.77, GPU vorher 1241 MiB / 14 W",
+  "mit_aufloesung_960x600": {
+   "seitenverhaeltnis": 1.6,
+   "s": {
+    "abweichung_auge_m": 0.0002,
+    "abweichung_blick_auf_m": 0.0,
+    "abstand_m_weg": 82.6,
+    "abstand_m_render": 82.62,
+    "shift_y_weg": 0.05884,
+    "shift_y_render": 0.058839
+   },
+   "nNW": {
+    "abweichung_auge_m": 0.0003,
+    "abweichung_blick_auf_m": 0.0,
+    "abstand_m_weg": 87.2,
+    "abstand_m_render": 87.23,
+    "shift_y_weg": 0.05573,
+    "shift_y_render": 0.055727
+   }
+  },
+  "ohne_aufloesung": {
+   "seitenverhaeltnis": 1.6,
+   "s": {
+    "abweichung_auge_m": 0.0002,
+    "abweichung_blick_auf_m": 0.0
+   },
+   "nNW": {
+    "abweichung_auge_m": 0.0003,
+    "abweichung_blick_auf_m": 0.0
+   }
+  },
+  "deutung": "ok — Rest ist nur die Rundung des Wegs auf 3 Stellen; durchlaeufe 0 (kein Zurueckziehen). B4 aus 292 (1,06 m) behoben.",
+  "bilder": [
+   "auf-20261020-293-bilder/3-kam-senk-s.png",
+   "auf-20261020-293-bilder/3-kam-senk-nNW.png"
+  ],
+  "bild_vermerk": "auf 480 px verkleinert; gerechnet 960x600"
+ },
+ "4_groesse": {
+  "cycles": {
+   "job": "vis-1792529165-030b1c",
+   "blender_report": {
+    "s": {
+     "aufloesung": 960,
+     "hoehe": 600,
+     "seitenverhaeltnis": 1.6
+    },
+    "nNW": {
+     "aufloesung": 960,
+     "hoehe": 600,
+     "seitenverhaeltnis": 1.6
+    }
+   },
+   "dateien_960x600": "ja — s.png, beauty_.png, material_id.png, tiefe_norm.png je Kamera 960x600"
+  },
+  "ki_lauf": {
+   "job": "vis-1792529213-62983c",
+   "status": "done",
+   "vis": {
+    "skip": false,
+    "guete": "voll"
+   },
+   "richtung": "s",
+   "engine_used": "z-image-turbo",
+   "zeit_freigabe_bis_done_s": 62.1,
+   "kamera_s": 55.5,
+   "ergebnisbild_960x600": "ja (s.png 960x600; das interne KI-Raster _ki_raster/* 960x592)",
+   "ki_groesse_vermerk": "befund.json warnungen_auftrag[0]: 'Bildmasse 960x600 bleiben, wie bestellt: Blender rechnet 960x600, und das Ergebnis hat diese Grösse. Nur der KI-Schritt rechnet intern 960x600 auf 960x592 (Vielfache von 16, sonst weist die Pipeline ab) und bringt sein Bild danach auf 960x600 zurück; das Seitenverhältnis der Kamera bleibt 1.6000.'",
+   "qa_geometry": {
+    "geom_iou": 0.716,
+    "spearman": 0.327,
+    "geometry_fidelity": 0.0,
+    "status": "measured",
+    "verdict": "NICHT BEURTEILBAR (Gebaeudeanteil 13,8 %)"
+   },
+   "umriss_iou_nachgemessen": 0.646,
+   "umriss_iou_methode": "Haus im KI-Bild = Punkte, deren Farbe vom Ring um die Bauwerksmaske (6-20 px) um mehr als die halbe Kern-Ring-Distanz abweicht, im Umkreis 30 px; Obergrenze des Verfahrens am Cycles-Bild selbst 0,928. Der niedrige Wert kommt von Farbflecken im Haus, nicht vom Umriss.",
+   "silhouette_deckungsgleich": "ja — Ueberlagerung der Maskenkante: Hauptbau, Anbau und Dachaufbau liegen genau auf der Kante (Augenschein). Bild comicartig (violettes Haus, orange Platte), keine Personen.",
+   "systemlast": "27.24 / 21.74 / 14.38, GPU vorher 1241 MiB / 14 W, Spitze 26994 MiB / 322 W",
+   "bild": "auf-20261020-293-bilder/4-ki-voll-960-s.png"
+  }
+ },
+ "5_vorschau_staerke_1.0": {
+  "grundlage": "gl-117526b4c3d6b816 (Lauf mittag aus 1, 480x300), vis.seed 482913, vis.guete 'vorschau', render.faithful 0.8",
+  "vermerk_woertlich": "Bestellt war faithful 0.8; die Vorschau steuert immer mit 1.0 (Registerwert von 'z-image-turbo').",
+  "guete_vermerk": {
+   "steuerstaerke": 1.0,
+   "steuerstaerke_bestellt": 0.8,
+   "schritte": 8,
+   "ki_groesse": [
+    480,
+    288
+   ],
+   "grundlage_groesse": [
+    480,
+    300
+   ]
+  },
+  "a_no_people": {
+   "job": "vis-1792529351-5c87cb",
+   "zeit_freigabe_bis_done_s": 33.97,
+   "kamera_s": 14.8,
+   "grundlage_wiederverwendet": true,
+   "qa_geometry": {
+    "geom_iou": null,
+    "geom_iou_grund": "nicht gemessen: Soll- und Ist-Silhouette haben keinen Bildpunkt gemeinsam — 0.0 waere hier keine Messung, sondern ein Platzhalter (Rauschen ergaebe dieselbe Zahl)",
+    "status": "not_measured"
+   },
+   "qa_ueberstrahlt_anteil": 0.0,
+   "umriss_iou_nachgemessen": "nicht sinnvoll (Verfahren ergibt 0,37 aus Wolken) — im Bild ist KEIN Haus",
+   "schrift": "nein",
+   "bild_kurz": "Strand mit Wolken, Sonne links, kein Haus, keine Platte — die Steuerbilder (Tiefe, Schoenbild 480x288) zeigen das Haus richtig, das Bild folgt ihnen nicht.",
+   "systemlast": "26.99 / 23.90 / 16.24, GPU vorher 1241 MiB / 14 W",
+   "bild": "auf-20261020-293-bilder/5-vorschau-f08-480-sSE.png"
+  },
+  "b_mit_zusatz": {
+   "job": "vis-1792529385-9b8cd9",
+   "prompt": "no people, clean image without any lettering or signage",
+   "zeit_freigabe_bis_done_s": 45.45,
+   "kamera_s": 12.6,
+   "qa_geometry": {
+    "geom_iou": null,
+    "geom_iou_grund": "wie a",
+    "status": "not_measured"
+   },
+   "umriss_iou_nachgemessen": "nicht sinnvoll — kein Haus",
+   "schrift": "nein",
+   "bild_kurz": "wie a, etwas blasser; kein Haus.",
+   "systemlast": "28.43 / 24.58 / 16.75, GPU vorher 25592 MiB / 64 W (eigener voriger Lauf gab frei)",
+   "bild": "auf-20261020-293-bilder/5-vorschau-f08-480-schriftzusatz-sSE.png"
+  },
+  "zusatz_960": {
+   "anlass": "Weil die 480-px-Vorschau kein Haus zeigte (292 rechnete auf 960 er Grundlage), dieselbe Probe auf einer Grundlage mittag 960x600 (Job vis-1792529467-a55a0f, gl-0915f43db0153552, Cycles 9,1 s).",
+   "a_no_people": {
+    "job": "vis-1792529504-2a9ce9",
+    "zeit_freigabe_bis_done_s": 58.26,
+    "kamera_s": 25.9,
+    "ki_groesse": [
+     960,
+     592
+    ],
+    "qa_geometry": {
+     "geom_iou": null,
+     "geom_iou_grund": "nicht gemessen: Soll- und Ist-Silhouette haben keinen Bildpunkt gemeinsam — …",
+     "status": "not_measured"
+    },
+    "urteil_zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 67541,
+     "n_gemeinsam": 0,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "umriss_iou_nachgemessen": 0.814,
+    "schrift": "ja — drei bis vier unleserliche Textzeilen im Vordergrund auf der hellen Flaeche",
+    "bild_kurz": "dunkles Haus, Umriss folgt Hauptbau/Anbau/Dachaufbau, heller Hof (Gegenlicht) um das Haus, gelbliche Platte, Schrift vorne.",
+    "systemlast": "29.61 / 25.92 / 18.14, GPU vorher 1241 MiB / 16 W, Spitze 26958 MiB / 318 W",
+    "bild": "auf-20261020-293-bilder/5-vorschau-f08-960-sSE.png"
+   },
+   "b_mit_zusatz": {
+    "job": "vis-1792529602-d7efa7",
+    "zeit_freigabe_bis_done_s": 41.44,
+    "kamera_s": 16.6,
+    "qa_geometry": {
+     "geom_iou": null,
+     "status": "not_measured"
+    },
+    "umriss_iou_nachgemessen": 0.822,
+    "schrift": "ja — dieselben Zeilen, etwas blasser",
+    "systemlast": "27.45 / 26.29 / 19.07, GPU vorher 1241 MiB / 14 W",
+    "bild": "auf-20261020-293-bilder/5-vorschau-f08-960-schriftzusatz-sSE.png"
+   },
+   "systemlast_grundlage": "27.67 / 25.28 / 17.65, GPU vorher 1241 MiB / 14 W"
+  },
+  "ab_urteil": "Der positive Zusatz hilft nicht: Schrift bleibt (960) bzw. tritt gar nicht auf (480, dort fehlt aber das Haus); Umriss-IoU 0,814 -> 0,822, also gleich."
+ },
+ "6_fehlende_textur": {
+  "weg": "Kopie des Material-Ordners (114 Dateien) in einen eigenen Probeordner; dort NUR die Displacement-Karte von klinker 2K umbenannt. Zwei Auftraege mit knotenweg.lege_an in eine eigene Probe-Ablage, freigegeben, und tools/abholen.py einmalig mit --store <Probe-Ablage> --out-wurzel <Probe-Ausgabe> --kein-gelaende gestartet; die Material-Variable nur fuer diesen Prozess auf die Kopie. Kein zweiter Dienst, Dienst-Drop-ins unveraendert. Beide scheiterten vor Blender (keine GPU).",
+  "klinker_2k_displacement_fehlt": {
+   "job": "vis-1792529673-26d178",
+   "status": "error",
+   "lieferstatus": "fehlgeschlagen",
+   "lieferstatus_grund": "Textur 'klinker' (2K, Displacement) fehlt am Rechner.",
+   "woertlich_wie_erwartet": true,
+   "message": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- Textur 'klinker' (2K, Displacement) fehlt am Rechner."
+  },
+  "unbekannte_id": {
+   "job": "vis-1792529673-06a5dc",
+   "status": "error",
+   "render_result_vorhanden": true,
+   "lieferstatus": "fehlgeschlagen",
+   "lieferstatus_grund": "Material 'klinker-gibt-es-nicht' (dach) ist nicht in der Bibliothek des Heim-PC. Bekannt: sichtbeton-sandgestrahlt, sichtbeton-schalungsglatt, fichte, backstein, klinker, sandstein, stampflehm, verputz-weiss-glatt, verputz-weiss-rau, holzlattung-fichte, dreischichtplatte."
+  },
+  "kein_pfad_im_ergebnis": "ja (beide render-result.json ohne Pfad)",
+  "echter_ordner_unberuehrt": "ja — Pruefsumme ueber Groesse+Name aller Dateien vor und nach gleich; Kopie danach entfernt, Variable galt nur im Probe-Prozess."
+ },
+ "7_409_beim_anlegen": {
+  "grundlage": "gl-117526b4c3d6b816 (mittag aus 1)",
+  "abend": {
+   "http": 409,
+   "satz_woertlich": "Die Grundlage gl-117526b4c3d6b816 passt nicht zu dieser Variante: Stimmung weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.",
+   "ordner_angelegt": false
+  },
+  "gegenprobe_mittag": {
+   "http": 200,
+   "angenommen": true,
+   "job": "vis-1792529688-ce36f9",
+   "status": "awaiting_approval",
+   "danach": "nicht freigegeben, /cancel (200, cancelled), Ordner entfernt"
+  }
+ },
+ "8_tiefe": {
+  "mit_stimmung": "vis-1792528523-886063 (mittag, sSE)",
+  "ohne_stimmung": "vis-1792529693-7c28b1 (sSE, ohne render.environment)",
+  "gleich": "ja — tiefe_norm.png bitgleich (gleiche Pruefsumme, 0 abweichende Bildpunkte), gleiche Kamera",
+  "ohne_stimmung_bild": "Standard-Ansicht, grauer Hintergrund, Helligkeit 116,4; kein qa.ueberstrahlt_anteil (richtig, nur mit Stimmung).",
+  "systemlast": "27.89 / 26.84 / 19.95, GPU vorher 1241 MiB / 14 W",
+  "bild": "auf-20261020-293-bilder/8-ohne-stimmung-sSE.png"
+ },
+ "augenschein": {
+  "im_licht_statt_davor": "ja — kein Foto mehr hinter dem Haus, das Haus nimmt die Farbe des Himmels an und steht im selben Licht. Aber bei morgen, bedeckt, nebel und vor allem winter zu sehr: das Haus loest sich im gleich hellen Verlauf auf (Kontrast Haus/Hintergrund -1,3 / -8,6 / -7,5 / -0,5 Grauwerte; mittag +66,9).",
+  "ueberstrahlung_mittag_morgen": "weg — 0 voll weisse Bildpunkte am Haus (mittag vorher 11,9 % des Bildes = 255); hellster Hauspunkt mittag 205, morgen 182.",
+  "abend_warm": "ja, warm (Haus R 222 / B 202, Toenung 5000 K), aber hell und flach — kein tiefes, warmes Streiflicht.",
+  "winter_kuehl": "leicht kuehl (Haus R 164 / B 172, Toenung 7500 K), aber das Haus ist praktisch nicht zu sehen."
+ },
+ "befunde": [
+  "B1 qa.ueberstrahlt_anteil fehlt bei vis.skip true (nur Grundlage) in qa und qa_je_kamera: der Messaufruf steht nur im KI-Zweig (abholer.py ~Z. 4013-4019, `urteil['ueberstrahlt'] = …`); der Zweig `if nur_grundlage:` (~Z. 3703-3716, `_urteil_nur_grundlage`) kehrt vorher mit `continue` zurueck. Bei Varianten mit KI-Schritt ist er da (0.0). Nachgezaehlt: alle acht 0,0 %.",
+  "B2 Haus verschwimmt im ruhigen Hintergrund bei winter (Kontrast -0,5), morgen (-1,3), nebel (-7,5), bedeckt (-8,6): der Verlauf aus den Medianfarben des Himmels ist so hell wie das diffus beleuchtete Haus (blender_depth_stage.py _ruhiger_hintergrund ~Z. 1167; stimmung.hintergrund_aus_himmel). Belichtung/Staerke hilft nicht (winter 0.5/2.0: Abstand bleibt ~-0,5), weil sie Haus und Verlauf gleich skaliert. Vorschlag zur Pruefung: Verlauf um einen festen Abstand dunkler oder heller als die mittlere Hausleuchtdichte setzen, oder den Verlauf nicht mit der Staerke skalieren.",
+  "B3 Vorschau auf einer 480x300-Grundlage (KI 480x288) folgt den Steuerbildern nicht: Strand/Wolken ohne Haus, bei beiden Prompts. Auf einer 960x600-Grundlage folgt sie (Umriss-IoU 0,81). Die Steuerbilder (_vorschau/tiefe.png, schoenbild.png) zeigen das Haus richtig.",
+  "B4 qa.geometry.geom_iou null mit geom_iou_grund 'keinen Bildpunkt gemeinsam' auch bei der 960-Vorschau, deren Haus deckungsgleich liegt (eigene IoU 0,81): urteil n_soll 67541 = n_ist 67541, n_gemeinsam 0, hintergrund_strategie 'wie_soll' — die Zaehlung der gemeinsamen Punkte im Vorschau-Zweig pruefen (kosmo_szene.keine_gemeinsame_silhouette liest nur n_gemeinsam; Quelle geometrie_qa). Beim KI-Lauf 'voll' ohne Stimmung wurde gemessen (geom_iou 0,716).",
+  "B5 Schrift-Artefakte im Vordergrund bei der 960-Vorschau bleiben mit dem positiven Prompt-Zusatz (nur etwas blasser).",
+  "B6 abend ist warm, aber nicht 'tief' (hell, flach, keine langen Schatten); blaue-stunde pastell statt tiefblau; winter ohne erkennbare Winterstimmung."
+ ],
+ "belichtung_vorschlag": {
+  "satz": "Keine Stimmung ueberstrahlt und keine ist zu dunkel — die gesetzten Werte koennen so in die Daten (morgen -0.5, mittag -1.0, abend 0, blaue-stunde +0.5, bedeckt -0.5, nebel 0, winter -0.5, weiss 0). Gemessen ist nur, dass sie nicht ueberstrahlen; die Lesbarkeit bei winter/morgen/nebel/bedeckt haengt nicht an der Belichtung (B2). Ungemessen und nur als Hinweis: blaue-stunde ist mit 203 die hellste und blasseste, 0 waere einen Lauf wert."
+ },
+ "aufraeumen": "Eigene Auftraege (20 in der Ablage der Bruecke, 2 in der Probe-Ablage), Ausgaben, 15 eigene _grundlagen-Eintraege und 3 eigene Nullanker, Probemappe, Kopie des Material-Ordners und Probe-Skripte per gio trash entfernt; Material-Variable galt nur im Probe-Prozess; nichts committet.",
+ "urteil": "Ueberstrahlt ist keine Stimmung mehr (0,0 % voll weiss am Haus) und der Hintergrund ist in allen acht ruhig, lesbar ist das Haus aber nur bei mittag, abend, weiss und knapp blaue-stunde — bei winter, morgen, nebel und bedeckt loest es sich im gleich hellen Verlauf auf, was keine Belichtung behebt; in die Daten koennen die gesetzten Werte (morgen -0.5, mittag -1.0, abend 0, blaue-stunde +0.5, bedeckt -0.5, nebel 0, winter -0.5, weiss 0), die Lesbarkeit braucht einen Hintergrund mit Abstand zum Haus."
+}
