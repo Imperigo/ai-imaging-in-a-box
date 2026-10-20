@@ -1,5 +1,4 @@
 import Foundation
-import Security
 
 /// Was sich die App über die gekoppelte HomeStation merkt — **nur, was kein Geheimnis ist:**
 /// ihre Adresse (samt Schema), ihren Namen im Heimnetz, ob der Mac vermittelt, und den Projektordner auf ihr.
@@ -64,27 +63,10 @@ enum Verbindungsgedaechtnis {
 
     // ------------------------------------------------------------ Ablage (seit 0.2.12)
 
-    /// Der Dienst im Schlüsselbund — neben dem der Anmeldung (`Schluesselbund`), nicht in ihm:
-    /// Kein Geheimnis soll mit dem Gedächtnis zusammen gelesen oder gelöscht werden.
-    private static var dienst: String { Marke.kennung + ".verbindung" }
-
-    private static func frage(_ schluessel: String) -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: dienst,
-         kSecAttrAccount as String: schluessel]
-    }
-
     /// Liest einen Wert — aus dem Schlüsselbund, sonst (einmalig) aus den App-Einstellungen
     /// der alten Fassung, und übernimmt ihn dabei.
     private static func lies(_ schluessel: String) -> String? {
-        var f = frage(schluessel)
-        f[kSecReturnData as String] = true
-        f[kSecMatchLimit as String] = kSecMatchLimitOne
-        var ergebnis: CFTypeRef?
-        if SecItemCopyMatching(f as CFDictionary, &ergebnis) == errSecSuccess,
-           let daten = ergebnis as? Data, let text = String(data: daten, encoding: .utf8) {
-            return text
-        }
+        if let text = Gedaechtnisablage.lies(schluessel) { return text }
         // DIE ÜBERNAHME aus 0.2.11 und älter: Steht der Wert noch in den App-Einstellungen,
         // wandert er in den Schlüsselbund und verschwindet dort, wo er herkam.
         let alt: String?
@@ -103,12 +85,7 @@ enum Verbindungsgedaechtnis {
     /// Schreibt einen Wert; `nil` löscht ihn. Fehler bleiben still: Ein Gedächtnis, das
     /// nicht geschrieben werden kann, heisst nur «beim nächsten Mal neu koppeln».
     private static func schreibe(_ schluessel: String, _ wert: String?) {
-        SecItemDelete(frage(schluessel) as CFDictionary)
         UserDefaults.standard.removeObject(forKey: schluessel)
-        guard let wert, let daten = wert.data(using: .utf8) else { return }
-        var neu = frage(schluessel)
-        neu[kSecValueData as String] = daten
-        neu[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        SecItemAdd(neu as CFDictionary, nil)
+        Gedaechtnisablage.schreibe(schluessel, wert)
     }
 }

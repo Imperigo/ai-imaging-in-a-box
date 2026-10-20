@@ -10,6 +10,7 @@ from pathlib import Path
 
 WURZEL = Path(__file__).resolve().parents[1]
 GEDAECHTNIS = WURZEL / "ipad" / "Visbox.swiftpm" / "Verbindung" / "Verbindungsgedaechtnis.swift"
+ABLAGE = WURZEL / "ipad" / "Visbox.swiftpm" / "Verbindung" / "Gedaechtnisablage.swift"
 KOPPEL = WURZEL / "ipad" / "Visbox.swiftpm" / "Verbindung" / "Koppelbildschirm.swift"
 
 
@@ -19,11 +20,13 @@ def _code(datei: Path) -> str:
 
 
 def test_das_gedaechtnis_liegt_im_schluesselbund():
-    code = _code(GEDAECHTNIS)
-    assert "import Security" in code
-    assert "SecItemAdd(" in code and "SecItemCopyMatching(" in code
+    ablage = _code(ABLAGE)
+    assert "import Security" in ablage and "UserDefaults" not in ablage
+    assert "SecItemAdd(" in ablage and "SecItemCopyMatching(" in ablage
     # Ein eigener Dienst, getrennt von der Anmeldung.
-    assert '".verbindung"' in code
+    assert '".verbindung"' in ablage
+    code = _code(GEDAECHTNIS)
+    assert "Gedaechtnisablage.lies(" in code and "Gedaechtnisablage.schreibe(" in code
     # Gelesen und geschrieben wird nur noch über den Schlüsselbund ...
     for teil in ("static var adresse", "static var name", "static var ueberDenMac",
                  "static var ordner"):
