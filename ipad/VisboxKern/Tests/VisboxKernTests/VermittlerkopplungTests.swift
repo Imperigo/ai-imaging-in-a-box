@@ -23,8 +23,8 @@ final class VermittlerkopplungTests: XCTestCase {
     func testDieFristLaeuftAufDerGereichtenUhr() {
         let k = neu()
         XCTAssertEqual(k.stand(jetzt: start), .offen)
-        XCTAssertEqual(k.stand(jetzt: start + 599.9), .offen)
-        XCTAssertEqual(k.stand(jetzt: start + 600), .abgelaufen)
+        XCTAssertEqual(k.stand(jetzt: start + 119.9), .offen)
+        XCTAssertEqual(k.stand(jetzt: start + 120), .abgelaufen)
     }
 
     func testDieRichtigeZahlVerbindetEinmal() {

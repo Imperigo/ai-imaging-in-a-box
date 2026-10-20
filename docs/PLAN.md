@@ -8060,6 +8060,16 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Vertrag mit dem Integrator abgestimmt, Paket 1 «Vertrag» auf `claude/kosmovis-grundlage` (§139)
   - [ ] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
+- [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
+  - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
+  - [ ] Fortschritt und Vorschau: `progress {phase, pct}` im Laufzettel, Cycles-Schönbild als Zwischenbild, Restzeit aus den fertigen Kameras (L4-6, Nr. 62/63/71/72; Vorschlag an UI/Integrator 20.10.)
+  - [ ] Zeitbudget am Render-Knoten, beim Abbruch das letzte Zwischenergebnis behalten (L4-8, Nr. 70/76/80)
+  - [ ] Auto-Kamera auf das Projektvolumen mit festem Bildanteil 25–40 %, Augenhöhe relativ zur EG-Kote am Standpunkt (L4-3, Nr. 60/65/67; KosmoDraw)
+  - [ ] Gesicherte Blicke direkt im Kamera-Knoten wählbar, ohne offene 3D-Ansicht (L4-4, Nr. 68)
+  - [ ] Hausanteil an KI-Bild UND Grundlage messen und beide zeigen; Geometrie-Treue als Pflichteingang (L4-2)
+  - [ ] Varianten nebeneinander, Verlauf nach Grundlage gruppiert (L4-15)
+  - [ ] Grossansicht ≥ 70 % der Fläche, Prüfung einklappbar (L4-14)
+  - [ ] L24 «Varianten» als Angabe an `vis_render` statt eigener Befehl (Entscheid 102)
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
 - [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58

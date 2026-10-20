@@ -606,10 +606,10 @@ final class VermittlungTests: XCTestCase {
 
         stand.oeffneKopplung(jetzt: 100, zahl: "042917")
         let koppeln = Vermittlerlage.bestimme(bereit: true, fehler: nil, stand: stand, jetzt: 130)
-        XCTAssertEqual(koppeln, .koppeln(zahl: "042917", nochSekunden: 570))
+        XCTAssertEqual(koppeln, .koppeln(zahl: "042917", nochSekunden: 90))
         XCTAssertEqual(koppeln.wort, "wartet")
         XCTAssertTrue(koppeln.satz.contains("042 917"))
-        XCTAssertTrue(koppeln.satz.contains("10 min"))
+        XCTAssertTrue(koppeln.satz.contains("2 min"))
 
         _ = stand.beantworte(roh(try! Anfragen.verbinden(Kopplungszahl("042917")!)), jetzt: 140)
         let verbunden = Vermittlerlage.bestimme(bereit: true, fehler: nil, stand: stand, jetzt: 144)
@@ -636,7 +636,7 @@ final class VermittlungTests: XCTestCase {
         XCTAssertFalse(aus.satz.contains("123"), "eine Zahl, die niemand erreicht, steht nicht da")
         XCTAssertEqual(Vermittlerlage.bestimme(angeboten: true, bereit: true, fehler: nil,
                                                stand: stand, jetzt: 1),
-                       .koppeln(zahl: "123456", nochSekunden: 599))
+                       .koppeln(zahl: "123456", nochSekunden: 119))
     }
 
     func testEineGeltendeZahlGehtVorVerbunden() {
