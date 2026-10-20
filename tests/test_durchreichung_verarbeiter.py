@@ -95,7 +95,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 29 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m`.
     # 30 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
     # 32 seit auf-20261020-292: `umgebung_belichtung`, `umgebung_toenung` je Stimmung.
-    assert len(_multipass_einstellungen()) == 32
+    # 33 seit auf-20261020-293: `umgebung_licht` (Licht mit Schatten je Stimmung).
+    assert len(_multipass_einstellungen()) == 33
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
@@ -106,7 +107,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # ist von STEHENGEBLIEBEN nach DURCHGEREICHT gewandert (senkrechte Kamera von Hand).
     # 27 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
     # 29 seit auf-20261020-292: Belichtung und Toenung je Stimmung.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 29
+    # 30 seit auf-20261020-293: die Lichtdaten der Stimmung (`umgebung_licht`).
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 30
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 3
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5

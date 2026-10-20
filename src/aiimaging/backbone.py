@@ -335,6 +335,14 @@ class Backbone:
     vorschau_steuerstaerke: float | None = None
     vorschau_steuerstaerke_beleg: str | None = None
 
+    #: Die kleinste lange Seite, auf der dieses Modell **im KI-Schritt** rechnet — in Vorschau
+    #: und voller Güte (auf-20261020-293, Punkt 7). Ist die Grundlage kleiner, werden die
+    #: Steuerbilder für den KI-Schritt hochgerechnet und das KI-Bild danach auf die
+    #: Bestellgrösse zurückgebracht; Blender und die Prüfung bleiben bei der bestellten.
+    #: ``None`` heisst: keine Untergrenze belegt, es gilt die Grundlage.
+    ki_mindest_lange_seite: int | None = None
+    ki_mindest_lange_seite_beleg: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -937,6 +945,13 @@ _eintrag(Backbone(
     vorschau_steuerstaerke_beleg=("auf-20261020-292 Punkt 6: Umriss 0,868 (1,0) gegen 0,829 "
                                   "(0,8), gleicher Seed 482913, gleiche Grundlage; 38 s "
                                   "gegen 45 s"),
+    # DIE KLEINSTE LANGE SEITE IM KI-SCHRITT (auf-20261020-293, Befund B3, HomeStation): Auf
+    # einer 480 x 300-Grundlage (KI 480 x 288) zeigte die Vorschau Strand und Wolken ohne Haus,
+    # bei beiden Prompts; auf 960 x 600 folgte sie dem Haus (Umriss 0,81). 1024, weil das
+    # Modell auf 1024 px trainiert ist und VORSCHAU_LANGE_SEITE dieselbe Zahl traegt.
+    ki_mindest_lange_seite=1024,
+    ki_mindest_lange_seite_beleg=("auf-20261020-293 B3: 480 x 288 kein Haus, 960 x 592 "
+                                  "Umriss 0,81; Modellkarte: auf 1024 px trainiert"),
     # AM GERÄT GEMESSEN (auf-20260818-13): Mit unserer Karte (nah = hell) liegt
     # |spearman| bei 0.38–0.52, mit umgedrehter bei 0.79–0.85 — bei JEDER
     # ControlNet-Stärke rund das Doppelte. Das ControlNet erwartet nah = dunkel.
@@ -1437,6 +1452,44 @@ def vorschau_steuerstaerke_fuer(name: str | None) -> float | None:
     (dann gilt, was die Bestellung sagt)."""
     eintrag = BACKBONES.get(name or "")
     return getattr(eintrag, "vorschau_steuerstaerke", None) if eintrag else None
+
+
+def ki_mindest_lange_seite_fuer(name: str | None) -> int | None:
+    """:attr:`Backbone.ki_mindest_lange_seite` des Eintrags — ``None`` ohne Beleg."""
+    eintrag = BACKBONES.get(name or "")
+    return getattr(eintrag, "ki_mindest_lange_seite", None) if eintrag else None
+
+
+def auf_lange_seite(breite: int, hoehe: int, lange_seite: int, *,
+                    raster: int = PIXEL_RASTER) -> tuple[int, int]:
+    """Seitenverhältnis gehalten, lange Seite auf das grösste Vielfache von ``raster`` bis
+    ``lange_seite``, kurze aus dem Verhältnis auf das nächste Vielfache (mindestens eines)."""
+    breite, hoehe = int(breite), int(hoehe)
+    if breite <= 0 or hoehe <= 0:
+        raise BackboneError(f"Keine Bildgrösse: {breite} x {hoehe}.")
+    lang = max(raster, (int(lange_seite) // raster) * raster)
+    kurz_roh = lang * min(breite, hoehe) / max(breite, hoehe)
+    kurz = max(raster, int(kurz_roh / raster + 0.5) * raster)
+    return (lang, kurz) if breite >= hoehe else (kurz, lang)
+
+
+def ki_groesse(breite: int, hoehe: int, *, vorschau: bool, mindest: int | None = None,
+               lange_seite: int = VORSCHAU_LANGE_SEITE,
+               raster: int = PIXEL_RASTER) -> tuple[int, int]:
+    """Die Grösse, in der das Bildmodell rechnet — Vorschau oder voll, mit Untergrenze.
+
+    Erst wie bisher (:func:`vorschau_groesse` bzw. :func:`ki_raster_groesse`); ist die lange
+    Seite danach kleiner als ``mindest`` (:attr:`Backbone.ki_mindest_lange_seite`), wird auf
+    ``mindest`` hochgerechnet (auf-20261020-293, Punkt 7: auf 480 px fand die Vorschau das
+    Haus nicht). Hochgerechnet werden nur die Steuerbilder des KI-Schritts.
+    """
+    groesse = (vorschau_groesse(breite, hoehe, lange_seite=lange_seite, raster=raster)
+               if vorschau else ki_raster_groesse(breite, hoehe, raster=raster))
+    # Kleiner als ein Rasterfeld: keine Grundlage, sondern ein Platzhalter — dort waere jede
+    # Groesse falsch (dieselbe Ausnahme wie beim Raster, `abholer._schon_im_raster_oder_zu_klein`).
+    if mindest and min(int(breite), int(hoehe)) >= raster and max(groesse) < int(mindest):
+        return auf_lange_seite(breite, hoehe, int(mindest), raster=raster)
+    return groesse
 
 
 def ki_raster_groesse(breite: int, hoehe: int, *, raster: int = PIXEL_RASTER) -> tuple[int, int]:

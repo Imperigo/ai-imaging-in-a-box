@@ -374,11 +374,18 @@ def test_runner_rendert_genau_zweimal():
     # sein Kennbild einmal OHNE die Umgebung mit (`material_id_ohne_kontext.png`) — die
     # Gegenprobe und die Grundlage der Verdeckung. Er steht unter `if kontext is not None`,
     # ohne Splat bleibt es bei zwei Durchgängen.
-    assert len(aufrufe) == 3, [k.lineno for k in aufrufe]
+    # VIER seit auf-20261020-293: die VORPROBE der Stimmung (`_hintergrund_abstimmen`) rechnet
+    # ein kleines Bild nur fuer die Hausfarbe. Sie ist kein Durchgang des Schoenbilds — sie
+    # steht in ihrer eigenen Funktion und laeuft nur mit Lichtdaten einer Stimmung.
+    assert len(aufrufe) == 4, [k.lineno for k in aufrufe]
     zeilen = RUNNER_QUELLE.splitlines()
     bedingt = [k for k in aufrufe
                if "MATERIAL_ID_OHNE_KONTEXT" in zeilen[k.lineno - 2]]
     assert len(bedingt) == 1, "der dritte Aufruf gehört zum Kontext und nur zu ihm"
+    vorprobe = ast.parse(RUNNER_QUELLE)
+    funktion = next(f for f in ast.walk(vorprobe) if isinstance(f, ast.FunctionDef)
+                    and f.name == "_hintergrund_abstimmen")
+    assert sum(1 for k in ast.walk(funktion) if ist_render_aufruf(k)) == 1
 
 
 def test_runner_verteilt_die_farben_ueber_den_goldenen_winkel():

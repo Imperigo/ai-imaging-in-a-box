@@ -1673,6 +1673,25 @@ eine Prüfzahl, die nicht gemessen werden konnte, heisst jetzt «nicht gemessen�
 ihrer Grundlage passt, wird schon beim Bestellen abgewiesen. Die Himmelsbilder selbst wurden am Rechenrechner getauscht —
 Abend ist jetzt ein echter Sonnenuntergang, Weiss ein neutrales Studio. Ehrlich gesagt: Die Helligkeit je Stimmung ist
 ein erster Stand; ob das Haus in allen acht Stimmungen lesbar ist, misst der Rechenrechner als Nächstes.
+
+**Licht mit Schatten, und das Haus hebt sich ab (20.10.2026).** Die zweite Messung der Stimmungen zeigte das nächste
+Problem, und es war nicht kleiner: Alle Bilder wirkten milchig und flach. Das Haus war bei «Winter» praktisch
+unsichtbar, weil der ruhige Hintergrund genau so hell war wie das Haus; nirgends gab es einen Schatten, weder am Haus
+noch auf der Platte; der Abend hatte kein tiefes Licht, die blaue Stunde war pastell. Heller oder dunkler stellen half
+nicht — es macht Haus und Hintergrund gleich viel heller. Fünf Änderungen: Der Rechner sucht im Himmelsbild die Sonne
+(den kleinen, sehr hellen Fleck) und stellt eine Sonnenlampe genau dorthin; am Morgen und am Abend steht sie tief und
+gibt Streiflicht mit langen Schatten. Das Himmelsbild hellt nur noch die Schattenseiten auf. Bei Stimmungen ohne Sonne
+(bedeckt, Nebel, blaue Stunde, Weissmodell) kommt das Licht von einer grossen, weichen Lampe aus dem hellsten Teil des
+Himmels — weiche Schatten statt keiner. Vor dem eigentlichen Bild rechnet der Rechner ein kleines Probebild, misst daran,
+wie hell das Haus wird, und stellt den Hintergrund danach um einen festen Abstand dunkler oder heller. Die Platte ist
+jetzt ein ruhiges Grau, auf dem man Schatten sieht, und die Tonwertkurve hat etwas mehr Kontrast. Wie stark sich das
+Haus abhebt, steht jetzt bei jedem Bild als Zahl im Ergebnis; unter einem Grenzwert sagt ein Satz «Haus kaum sichtbar».
+Dazu zwei Fehler: Bei einem Bild ohne KI-Schritt fehlten diese Messungen ganz, und auf einem kleinen Grundlagenbild fand
+die schnelle Vorschau das Haus nicht (sie malte einen Strand) — die Vorlagen für das Bildmodell werden jetzt vorher
+vergrössert. Und eine Prüfzahl der Vorschau blieb leer, weil das Bildmodell vor der kleinen Platte Boden malt, wo das
+Modell nur Himmel hat; die gedachte Bodenfläche der Prüfung hilft jetzt auch dort beim Trennen. Ehrlich gesagt: Die
+Stärken von Sonne und Aufhellung sind gesetzt, nicht gemessen; ob die Bilder jetzt Tiefe haben, misst der Rechenrechner
+als Nächstes. Schrift-Artefakte im Vordergrund der KI-Bilder bleiben ein offener Befund.
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

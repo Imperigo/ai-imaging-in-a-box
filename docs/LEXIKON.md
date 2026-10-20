@@ -2986,6 +2986,55 @@ oder dunkler zu machen — Helligkeit regelt die **Belichtung**.
 (960 × 600 wurde 960 × 592) — und damit verschoben sich Bildwinkel und Kamerastandpunkt. Seither rechnet
 Blender die bestellte Grösse; nur das Bildmodell rechnet intern gerundet, und sein Bild wird danach
 wieder auf die bestellte Grösse gebracht.
+*Seit auf-20261020-293:* Das Bildmodell hat zusätzlich eine **Untergrenze** — siehe **Untergrenze im
+KI-Schritt**.
+
+**Untergrenze im KI-Schritt (kleinste lange Seite)** — Wie gross ein Bild mindestens sein muss, damit das
+Bildmodell das Haus darin noch «sieht». Auf einem kleinen Grundlagenbild (480 Bildpunkte breit) malte die
+schnelle Vorschau Strand und Wolken statt des Hauses; auf 960 Bildpunkten folgte sie dem Haus. Seither
+werden die Vorlagen für das Bildmodell vorher vergrössert (auf mindestens 1024 Bildpunkte lange Seite),
+und das fertige KI-Bild wird danach wieder auf die bestellte Grösse gebracht. *Im Projekt:* ein Wert am
+Eintrag des Bildmodells (`Backbone.ki_mindest_lange_seite`), seit auf-20261020-293.
+
+**Kontrast Haus–Hintergrund** — Wie deutlich sich das Haus im Bild von dem abhebt, was dahinter liegt:
+die mittlere Helligkeit des Hauses minus die mittlere Helligkeit des Himmels gleich daneben, auf einer
+Skala von 0 (schwarz) bis 255 (weiss). Bei 0 ist das Haus so hell wie sein Hintergrund und verschwimmt
+darin, auch wenn es scharf gerechnet ist. *Im Projekt:* gemessen am Bild aus Blender, nur auf dem Haus
+(Bauwerksmaske) und am Himmel daneben; steht im Ergebnis als `qa.kontrast_haus_hintergrund`. Unter 20
+steht der Satz «HAUS KAUM SICHTBAR». Anlass: auf-20261020-293 (Winter −0,5, Mittag +66,9).
+
+**Vorprobe (der Stimmung)** — Ein kleines, schnelles Probebild vor dem eigentlichen Bild, nur um eine Zahl
+zu messen: wie hell das Haus in diesem Licht wird. Danach wird der ruhige Hintergrund so gestellt, dass er
+um einen festen Abstand dunkler oder heller ist als das Haus — eine Blendenstufe, also halb oder doppelt so
+hell —, und erst dann wird das richtige Bild gerechnet. *Im Projekt:* `_hintergrund_abstimmen` im Runner,
+ein Viertel der Bildgrösse, seit auf-20261020-293.
+
+**Fülllicht** — Das weiche Licht, das die Schattenseiten eines Gebäudes aufhellt, damit sie nicht schwarz
+werden. Draussen kommt es vom ganzen Himmel. *Im Projekt:* Das Himmelsbild einer Stimmung gibt seit
+auf-20261020-293 nur noch dieses Fülllicht, mit geringerer Stärke (`fuell_staerke`); die Sonne darin wird
+abgeschnitten, weil eine eigene Sonnenlampe ihre Arbeit übernimmt — sonst stünde die Sonne doppelt da.
+
+**Sonnenlampe (aus dem Himmelsbild)** — Ein Licht, das wie die Sonne aus einer einzigen Richtung kommt und
+darum harte Schatten wirft. *Im Projekt:* Seit auf-20261020-293 sucht der Rechner im Himmelsbild die
+Sonnenscheibe (den kleinen, sehr hellen Fleck), nimmt ihre Richtung, Farbe und relative Stärke und stellt die
+Lampe genau dorthin — gedreht, wenn das Himmelsbild gedreht ist. Bei Stimmungen ohne Sonne (bedeckt, Nebel,
+blaue Stunde, Weissmodell) eine **weiche** Lampe aus dem hellsten Bereich: Sie ist gross gedacht und wirft
+darum nur weiche Schatten. Die Stärken sind gesetzt, nicht gemessen.
+
+**Streiflicht** — Licht, das sehr flach über eine Fläche streicht, etwa von einer tiefen Morgen- oder
+Abendsonne. Es macht jede Unebenheit und jede Kante sichtbar und wirft lange Schatten. *Im Projekt:* Bei
+«morgen» und «abend» steht die Sonne im Himmelsbild tief; die Sonnenlampe übernimmt diese Höhe (mindestens
+2° über dem Horizont), und das ergibt Streiflicht.
+
+**Schattenwinkel (Grösse der Lichtquelle)** — Wie gross eine Lichtquelle vom Haus aus gesehen ist, in
+Grad. Die echte Sonne ist ein halbes Grad gross: Ihre Schatten haben scharfe Kanten. Eine grosse
+Lichtquelle (ein bedeckter Himmel, ein Softbox im Studio) wirft weiche, verlaufende Schatten. *Im Projekt:*
+`winkel_grad` je Stimmung — unter 2° für Sonne, 20–50° für die weichen Lampen.
+
+**Look (einer Tonwertkurve)** — Eine Spielart derselben Tonwertkurve mit mehr oder weniger Kontrast, wie
+eine Filmsorte. *Im Projekt:* Seit auf-20261020-293 rechnen Bilder mit Himmelsbild mit «AgX – Medium High
+Contrast» statt der neutralen Fassung, gegen den milchigen, flachen Eindruck. Blender nennt den Look je
+Fassung etwas anders; der Rechner versucht beide Schreibweisen und meldet, wenn keine ging.
 
 **Dithering** — Absichtliches feines Rauschen, das Farbstufen weicher wirken lässt. *Im
 Material-ID-Pass schädlich: Es zerfaserte jede Kennfarbe um ±1, aus 5 Farben wurden 19.*
@@ -7254,6 +7303,8 @@ das erzeugte Bild aber immer; ohne Boden im Modell verwechselte die Prüfung Bod
 messen. Der Messboden liegt auf Geländehöhe und wird aus der Kamera ausgerechnet; das Bildmodell sieht ihn nie.
 Seit dem 13.10.2026 hilft er nur beim Trennen von Haus und Hintergrund; in die Punktzahl zählt allein das Haus.
 *Im Projekt:* `messboden.mit_messboden`, `abholer._mit_messboden`; Entscheid 78, gegen echtes Blender geprüft.
+*Seit auf-20261020-293* auch dann, wenn das Modell eine Geländeplatte hat: Vor einer kleinen Platte malt das
+Bildmodell weiter Boden, wo das Modell nur Himmel hat — dort hilft der Messboden beim Trennen ebenso.
 
 **Messschalter** — Eine Einstellung, die es nur gibt, damit sich **eine Ursache von einer
 anderen trennen lässt** — nicht, damit jemand sie im Alltag stellt. Sie ist
@@ -7893,6 +7944,7 @@ Modell-Knoten sein Fenster zeigt.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §158): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |
 | 2026-10-20 | Ergaenzt aus der KI-Bedienung Stufe 3/4 (Protokoll 74 §156): **KI-Werkzeugsatz (der Knotenansicht)**, **Karte (Vorschlag der KI)**, **Selbständigkeit (Karte, Coop, Voll)**, **Tätigkeitsstrom**, **Zwei Rückgängig-Verläufe**, **Verlaufs-Wache**, **Bote «visboxKi» (Script-Message-Handler)**, **Werkzeuge der Mac-App (für Claude)**, **Werkzeugliste im Bau**, **Claude Desktop**; **MCP-Anschluss in der Mac-App** und **Werkzeugträger** nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-292 (Protokoll 74 §154): **Tonwerte (Tonwertkurve)**, **Belichtung (je Stimmung)**, **Überstrahlung (voll weisse Bildpunkte)**, **Ruhiger Hintergrund (Kamerastrahl)**, **Tönung (je Stimmung)**, **Bestellte Bildgrösse und Raster**; **View-Transform** um AgX mit Himmelsbild ergänzt |
 | 2026-10-20 | Ergaenzt aus F1, dem 3D-Fenster im Modell-Knoten (Entscheid 109 A, Protokoll 74 §155): **3D-Fenster (im Modell-Knoten)**, **WebGL**, **Nachgeladener Teil (der Knotenansicht)** |

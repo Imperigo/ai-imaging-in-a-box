@@ -1,0 +1,46 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261020-294",
+  "art": "qa",
+  "beschreibung": "Nachmessung der Befunde aus 293 am Heim-PC: Licht mit Schatten (Sonnenlampe aus dem Himmelsbild, Fuelllicht), Hintergrund mit festem Abstand zum Haus (Vorprobe), graue Platte, AgX Medium High Contrast, tiefere Blaue Stunde, Kontrast im Ergebnis, Messung bei nur Grundlage, KI-Schritt mit Untergrenze 1024 px, geom_iou der Vorschau; alle acht Stimmungen als Grundlage und je zwei KI-Bilder mit architektonischem Prompt",
+  "erstellt": "2026-10-20T23:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "params": {
+    "folgt_auf": "auf-20261020-293",
+    "entscheide": [
+      "107",
+      "110",
+      "113"
+    ],
+    "einbau": [
+      "C79",
+      "C80",
+      "C81",
+      "C83"
+    ],
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "prompt": "zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig mit den Befunden aus 293 behoben — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET (nur mit Stimmung, ohne render.environment bleibt alles Wort fuer Wort wie bisher): (a) LICHT MIT SCHATTEN: Der Runner sucht im Himmelsbild die Sonnenscheibe (stimmung.sonne_aus_himmel, 128x64-Kopie, Schwelle 20x Median) und stellt bei morgen, mittag, abend, winter eine harte Sonnenlampe aus GENAU dieser Richtung (gedreht wie rotationGrad), Winkel 0,8-1,5 Grad; das Himmelsbild ist nur noch Fuelllicht (fuell_staerke 0,30-0,85) mit gekappter Sonnenscheibe. Bei bedeckt, nebel, blaue-stunde, weiss eine WEICHE Lampe aus dem hellsten Bereich (mindestens 15 Grad hoch, Winkel 20-50 Grad). Findet sich bei einer Stimmung mit Sonne keine Scheibe (z. B. winter snow_field), wird es eine weiche Lampe, und blender-report sonne.grund sagt es. Staerken gesetzt, nicht gemessen (stimmung.STIMMUNGEN[..]: sonnen_staerke, fuell_staerke, winkel_grad). (b) HINTERGRUND MIT ABSTAND: eine kleine VORPROBE (25 % Groesse, 16 Samples, durchsichtiger Film, Platte unsichtbar fuer die Kamera) misst die Hausfarbe; danach wird NUR die Staerke des ruhigen Verlaufs (Kamerastrahl) so gestellt, dass er mindestens eine Blendenstufe dunkler (morgen, mittag, abend, blaue-stunde, weiss) bzw. heller (bedeckt, nebel, winter) ist als das Haus; blender-report umgebung.hintergrund_abstand. (c) PLATTE: die Gelaendeplatte (ohne Material) ist ein ruhiges Neutralgrau 0,30 linear, bei weiss 0,55. (d) TONWERTE: AgX mit Look 'Medium High Contrast' (Blender-Name 'AgX - Medium High Contrast' oder 'Medium High Contrast'; umgebung.ansicht.look und look_grund). (e) BLAUE STUNDE: belichtung_ev -0,7 (vorher +0,5), Toenung 9000 K. (f) NEU IM ERGEBNIS: qa.kontrast_haus_hintergrund (Grauwert Haus minus Himmel daneben, am Cycles-Bild ueber die Bauwerksmaske; Lauf = kleinster Betrag, je Kamera in qa_je_kamera), Satz 'HAUS KAUM SICHTBAR' unter 20. (g) qa.ueberstrahlt_anteil und kontrast stehen jetzt AUCH bei vis.skip true (nur Grundlage), je Kamera. (h) KI-SCHRITT MIT UNTERGRENZE: z-image-turbo rechnet im KI-Schritt mindestens 1024 px lange Seite (Registerwert ki_mindest_lange_seite); eine 480x300-Grundlage geht als 1024x640 in den KI-Schritt, das Bild danach zurueck auf 480x300 — in Vorschau UND voll (auch 960x600 wird 1024x640 statt 960x592). (i) geom_iou DER VORSCHAU: Der Messboden hilft jetzt auch neben einer erkannten Gelaendeplatte beim Trennen (der gemalte Boden VOR der Platte zaehlte als naechste Punkte -> n_gemeinsam 0); urteil.messboden.neben_gelaende true. Grundlagen mit Stimmung werden neu gerechnet (neue Lichtdaten = neuer Schluessel). VORBEREITUNG wie 293 (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER; Werte NIE ins Repo oder in die Rueckgabe). Geometrie synthetisch: derselbe gegliederte Testbau wie 292/293 (tools/make_test_glb.py, Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m) auf der Vorgabe-Platte 40x30 m. Bruecke wie die Knotenansicht, cameras 'auto' mit cameras_auto {richtungen:['sSE']}, samples 64. ARCHITEKTONISCHER PROMPT fuer jeden KI-Lauf (Lehre aus 293 Punkt 4: 'no people' allein ergab eine Fantasie-Maschine): style.prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people' (die Uebersetzung macht daraus englisch; im Ergebnis steht, was gerechnet wurde). 1) GRUNDLAGE JE STIMMUNG: alle acht Stimmungen (morgen, mittag, abend, blaue-stunde, bedeckt, nebel, winter, weiss) je ein Auftrag vis.skip true, render.resolution [480,300], render.environment {preset}. Je Lauf: Bild zurueck; qa.kontrast_haus_hintergrund aus dem Ergebnis UND selbst nachgezaehlt wie in 293 (Haus gegen Himmel daneben); qa.ueberstrahlt_anteil vorhanden ja/nein (und Wert); blender-report sonne (weg, hoehe_grad, azimut_grad, staerke, winkel_grad, grund), umgebung.licht, umgebung.hintergrund_abstand (weg, richtung, faktor, abstand_ev_vorher/nachher, dauer_s), umgebung.gelaende, umgebung.ansicht (tonwerte, look, look_grund, belichtung_ev); Schatten sichtbar ja/nein (am Haus UND auf der Platte); Sonnenrichtung in Grad (Azimut/Hoehe aus dem Bericht) und ob der Schatten im Bild dazu passt; Stimmung erkennbar ja/nein (abend: tiefes warmes Streiflicht? blaue-stunde: tiefblau statt pastell? winter: Haus sichtbar?); blender_s gegen 293 (Vorprobe kostet wie viel?). 2) KI-BILDER: auf der Grundlage mittag, abend und winter je eine NEUE Grundlage render.resolution [960,600] (vis.skip true) und darauf je zwei Varianten: vis.guete 'vorschau' (vis.seed 482913) und vis.guete 'voll' (vis.seed 482913), architektonischer Prompt. Je Bild: Kontrast (qa.kontrast_haus_hintergrund gilt fuer das Cycles-Bild — dazu SELBST am KI-Bild nachgezaehlt, Haus = Bauwerksmaske), Schatten sichtbar ja/nein, Stimmung erkennbar ja/nein, Schrift-Artefakte ja/nein (Vermutung aus 293: die leere, gleichmaessige Bodenflaeche lud zum Fuellen ein — hilft die graue Platte mit Schatten?), qa.geometry (geom_iou, geom_iou_grund, n_soll/n_ist/n_gemeinsam, messboden.neben_gelaende), eigene Umriss-IoU wie in 293, vermerkte KI-Groesse (erwartet 1024x640), Zeit. 3) VORSCHAU AUF KLEINER GRUNDLAGE: auf der Grundlage mittag aus 1 (480x300) eine Vorschau (vis.seed 482913, architektonischer Prompt): zeigt sie das Haus ja/nein (293: Strand ohne Haus), vermerkte KI-Groesse (erwartet 1024x640, hochgerechnet true), Satz im Vermerk, qa.geometry.geom_iou nicht mehr null ja/nein, eigene Umriss-IoU, Zeit. 4) OHNE STIMMUNG UNVERAENDERT: ein Lauf vis.skip true ohne render.environment, sSE, 480x300 — Bild und tiefe_norm.png gegen 293 (Lauf 8) gleich ja/nein; kein kontrast/ueberstrahlt im Ergebnis. NICHT: Code aendern, Dateien ins Repo legen (keine HDRI, keine Texturen, keine Pfade), Ordnerwerte in die Rueckgabe schreiben, den echten Textur- oder Himmelsordner veraendern, Kosmo-Modelle laden oder entladen, Dienste von KosmoOrbit anfassen, die Mappe des Dienstes veraendern. Eigene Probeauftraege und Probemappen danach aufraeumen.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, 'Himmelsbilder n/8'.",
+    "1: je Stimmung Bild (480 px), qa.kontrast_haus_hintergrund (gemeldet und nachgezaehlt), qa.ueberstrahlt_anteil bei skip vorhanden ja/nein + Wert, sonne (weg, Hoehe/Azimut in Grad, Staerke, Winkel, grund), umgebung.licht, hintergrund_abstand, gelaende, ansicht (look, look_grund), Schatten am Haus/auf der Platte ja/nein, Sonnenrichtung passt zum Schatten ja/nein, Stimmung erkennbar ja/nein, blender_s.",
+    "2: je Stimmung (mittag, abend, winter) und Guete (vorschau, voll) Bild (960 px), Kontrast am KI-Bild (nachgezaehlt), Schatten ja/nein, Stimmung erkennbar ja/nein, Schrift-Artefakte ja/nein, qa.geometry (geom_iou oder null mit Grund, n_soll/n_ist/n_gemeinsam, messboden), eigene Umriss-IoU, KI-Groesse, Zeit.",
+    "3: Vorschau auf 480er-Grundlage zeigt das Haus ja/nein, KI-Groesse und Vermerk woertlich, geom_iou nicht mehr null ja/nein, Umriss-IoU.",
+    "4: ohne Stimmung Bild und Tiefe gleich wie 293 ja/nein; keine Stimmungsfelder im qa.",
+    "Urteil in einem Satz: Steht das Haus in allen acht Stimmungen mit Schatten und Abstand zum Hintergrund (Kontrast >= 20), und welche Werte (sonnen_staerke, fuell_staerke, winkel_grad, belichtung_ev, Abstand) sollen anders in die Daten?"
+  ],
+  "rang": 81
+}

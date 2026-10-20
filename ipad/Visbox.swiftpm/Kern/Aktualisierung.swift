@@ -298,11 +298,22 @@ public enum Aktualisierung {
 
     /// Ob jetzt gefragt wird. Nie gefragt → ja. Liegt die letzte Frage **in der Zukunft**
     /// (die Uhr wurde zurueckgestellt), auch ja — sonst fragte die App womoeglich nie wieder.
-    public static func sollFragen(letzte: Date?, jetzt: Date) -> Bool {
+    public static func sollFragen(letzte: Date?, jetzt: Date, gelungen: Bool = true) -> Bool {
         guard let letzte else { return true }
         if letzte > jetzt { return true }
-        return jetzt.timeIntervalSince(letzte) >= abstand
+        return jetzt.timeIntervalSince(letzte) >= (gelungen ? abstand : abstandNachFehler)
     }
+
+    /// Wie bald nach einer **gescheiterten** Frage die naechste faellig ist (Owner-Befund
+    /// 20.10.2026, «immer direkt zur neuesten»): Scheitert die Frage gleich nach einem Neustart
+    /// — das Netz ist nach dem Aufwachen noch nicht da, GitHub drosselt —, stuende sonst eine
+    /// Stunde lang kein oder ein altes Angebot da. Fuenf Minuten halten die Zahl der Fragen
+    /// weit unter der Grenze, die GitHub ohne Konto erlaubt (60 je Stunde).
+    public static let abstandNachFehler: TimeInterval = 5 * 60
+
+    /// Wie oft die Mac-App nachsieht, ob eine Frage faellig ist — ein Blick auf die Uhr, keine
+    /// Frage an GitHub. Eine Minute, damit `abstandNachFehler` auch wirklich gilt.
+    public static let blickAbstand: TimeInterval = 60
 
     // ------------------------------------------------------------------ Pruefsumme
 
@@ -567,6 +578,96 @@ public enum Aktualisierung {
     /// Die kleine Nummer neben dem Namen — leer, wenn die App nicht als Bundle laeuft.
     public static func kleineNummer(_ laufend: Fassungsnummer?) -> String {
         laufend.map { "\($0)" } ?? ""
+    }
+}
+
+/// WELCHES ANGEBOT GILT — immer die neueste Freigabe (Owner-Befund 20.10.2026).
+///
+/// Anlass, wörtlich: «wenn schon zwei neue updates da sind und ich zwei versionen
+/// hinterherhinke, dann muss ich zuerst die zweitneuste herunterladen und dann die neuste …
+/// bitte updateknopf immer direkt zur neusten verfügbaren». Bis 0.3.7 nahm der Klick das
+/// Angebot, das gerade **dastand** — gefragt worden war bis zu einer Stunde vorher, und eine
+/// gescheiterte Frage liess es noch laenger stehen. Lag inzwischen eine neuere Freigabe auf
+/// GitHub, lud der Klick die alte, und erst der naechste Neustart bot die neue an.
+///
+/// Drei Regeln, hier statt in der App, damit sie unter Linux geprueft sind:
+///
+/// 1. **Jede gelungene Antwort ersetzt das Angebot**, wenn sie eine hoehere Nummer traegt.
+///    Eine **niedrigere** Antwort (ein Zwischenspeicher auf dem Weg, der noch die alte Antwort
+///    haelt) verdraengt eine schon gesehene hoehere nicht — es gilt die hoechste Nummer, die
+///    neuer ist als die laufende. Sagt GitHub, die laufende sei die neueste, und es stand
+///    kein hoeheres Angebot da, verschwindet der Knopf.
+/// 2. **Eine gescheiterte Frage aendert nichts** — das angezeigte Angebot bleibt (`nil`
+///    heisst «keine Antwort», nicht «nichts Neues»).
+/// 3. **Waehrend geladen und ersetzt wird, steht das Angebot fest**, bis die App neu startet
+///    (bei einem Fehler wird es wieder frei). Eine neue Nummer mitten im Laden gaebe dem Blatt
+///    eine andere Nummer als der geladenen Datei; die neueste bietet der Start danach an, der
+///    sofort fragt.
+///
+/// Beim Klick fragt die App **vorher noch einmal** und laedt, was `beginne(frisch:)` sagt —
+/// scheitert diese Frage, das angezeigte Angebot.
+public struct Angebotsstand: Equatable, Sendable {
+    public let laufend: Fassungsnummer?
+    /// Was der Knopf «● 0.x.y verfügbar» zeigt — `nil`: kein Knopf.
+    public private(set) var angebot: Freigabe?
+    /// Was gerade geladen wird oder schon ersetzt ist — `nil`, solange nichts laeuft.
+    public private(set) var inArbeit: Freigabe?
+
+    public init(laufend: Fassungsnummer?, angebot: Freigabe? = nil) {
+        self.laufend = laufend
+        self.angebot = angebot.flatMap { Aktualisierung.bietetAn($0, laufend: laufend) ? $0 : nil }
+    }
+
+    public var gesperrt: Bool { inArbeit != nil }
+
+    /// Die neuere von zwei Freigaben, die beide angeboten wuerden — bei gleicher Nummer die
+    /// frische Antwort (ihre Anlagen sind die aktuellen).
+    static func neuere(_ bisher: Freigabe?, _ frisch: Freigabe?,
+                       laufend: Fassungsnummer?) -> Freigabe? {
+        let b = bisher.flatMap { Aktualisierung.bietetAn($0, laufend: laufend) ? $0 : nil }
+        let f = frisch.flatMap { Aktualisierung.bietetAn($0, laufend: laufend) ? $0 : nil }
+        guard let b else { return f }
+        guard let f else { return b }
+        return b.nummer > f.nummer ? b : f
+    }
+
+    /// Eine Antwort von GitHub einordnen (`nil`: die Frage scheiterte). Gibt zurueck, ob sich
+    /// die **Nummer** des Angebots geaendert hat — dann beginnt das Blatt wieder bei
+    /// «angeboten».
+    @discardableResult
+    public mutating func nimm(_ antwort: Freigabe?) -> Bool {
+        guard !gesperrt, let antwort else { return false }
+        let vorher = angebot?.nummer
+        if Aktualisierung.bietetAn(antwort, laufend: laufend) {
+            angebot = Self.neuere(angebot, antwort, laufend: laufend)
+        } else if let bisher = angebot, bisher.nummer > antwort.nummer {
+            // Regel 1: eine aeltere Antwort verdraengt kein hoeheres Angebot.
+            angebot = bisher
+        } else {
+            angebot = nil
+        }
+        return angebot?.nummer != vorher
+    }
+
+    /// Der Klick: Was jetzt geladen wird — die neueste aus dem angezeigten Angebot und der
+    /// frischen Antwort (`nil`: die Frage vor dem Laden scheiterte). `nil` zurueck heisst: es
+    /// gibt nichts zu laden, oder es laeuft schon ein Laden — das wird nicht unterbrochen.
+    public mutating func beginne(frisch: Freigabe?) -> Freigabe? {
+        guard !gesperrt else { return nil }
+        guard let ziel = Self.neuere(angebot, frisch, laufend: laufend) else {
+            // Die frische Antwort sagt «die laufende ist die neueste», und es stand nichts da.
+            angebot = nil
+            return nil
+        }
+        angebot = ziel
+        inArbeit = ziel
+        return ziel
+    }
+
+    /// Das Laden ist zu Ende. **Gescheitert:** das Angebot wird wieder frei, die naechste
+    /// Antwort darf es ersetzen. **Ersetzt:** es bleibt fest bis zum Neustart.
+    public mutating func beende(ersetzt: Bool) {
+        if !ersetzt { inArbeit = nil }
     }
 }
 

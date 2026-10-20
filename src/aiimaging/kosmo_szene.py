@@ -625,7 +625,8 @@ def _ki_raster_hinweis(aufl) -> str:
     b, h = int(aufl[0]), int(aufl[1])
     return (f"Bildmasse {b}x{h} bleiben, wie bestellt: Blender rechnet {b}x{h}, und das "
             f"Ergebnis hat diese Grösse. Nur der KI-Schritt rechnet intern {b}x{h} auf "
-            f"{nb}x{nh} (Vielfache von {RASTER}, sonst weist die Pipeline ab) und bringt "
+            f"{nb}x{nh} (Vielfache von {RASTER}, sonst weist die Pipeline ab) — oder grösser, "
+            f"wenn das Modell eine Untergrenze hat (auf-20261020-293) — und bringt "
             f"sein Bild danach auf {b}x{h} zurück; das Seitenverhältnis der Kamera bleibt "
             f"{b/h:.4f}.")
 
@@ -2884,7 +2885,7 @@ def _ueberstrahlt_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: lis
     werte = []
     for eintrag in je_kamera or ():
         if isinstance(eintrag, dict):
-            wert = _ueberstrahlt_von(eintrag.get("geometrie_urteil"))
+            wert = _ueberstrahlt_von(eintrag.get("geometrie_urteil") or eintrag.get("stimmung"))
             if wert is not None:
                 werte.append((wert, eintrag.get("kamera")))
     if not werte:
@@ -2900,6 +2901,47 @@ def _ueberstrahlt_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: lis
             f"UEBERSTRAHLT: Im Cycles-Bild der Kamera {kamera!r} sind {hoechster * 100:.1f} % "
             f"des Hauses voll weiss (Ziel unter {_belichtung.UEBERSTRAHLT_ZIEL * 100:.0f} %) — "
             f"dort traegt das Bild keine Zeichnung. Belichtung der Stimmung pruefen.")
+
+
+#: Der Kontrast Haus – Hintergrund im Cycles-Bild (auf-20261020-293, Punkt 1): Grauwert des
+#: Hauses minus Hintergrund daneben, 0..255. Im ``qa``-Block der Lauf mit dem KLEINSTEN
+#: Betrag (die Kamera, auf der das Haus am schlechtesten zu sehen ist), und je Kamera. Fehlt,
+#: wenn nicht gemessen — wie ``ueberstrahlt_anteil`` kein ``null``.
+FELD_KONTRAST = "kontrast_haus_hintergrund"
+#: Der Satz, wenn sich das Haus kaum abhebt.
+SATZ_KAUM_SICHTBAR = "HAUS KAUM SICHTBAR"
+
+
+def _kontrast_von(urteil):
+    befund = (urteil or {}).get("kontrast") if isinstance(urteil, dict) else None
+    wert = befund.get("kontrast") if isinstance(befund, dict) else None
+    return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
+
+
+def _kontrast_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """``qa.kontrast_haus_hintergrund``: je Kamera gemessen, für den Lauf der kleinste Betrag
+    — mit Satz «HAUS KAUM SICHTBAR», wenn er unter der Schwelle liegt."""
+    from . import belichtung as _belichtung  # noqa: PLC0415
+    werte = []
+    for eintrag in je_kamera or ():
+        if isinstance(eintrag, dict):
+            wert = _kontrast_von(eintrag.get("geometrie_urteil") or eintrag.get("stimmung"))
+            if wert is not None:
+                werte.append((wert, eintrag.get("kamera")))
+    if not werte:
+        wert = _kontrast_von(geometrie_urteil)
+        if wert is not None:
+            werte.append((wert, (geometrie_urteil or {}).get("kamera")))
+    if not werte:
+        return
+    kleinster, kamera = min(werte, key=lambda w: abs(w[0]))
+    qa[FELD_KONTRAST] = kleinster
+    if abs(kleinster) < _belichtung.KONTRAST_SCHWELLE:
+        hinweise.append(
+            f"{SATZ_KAUM_SICHTBAR}: Im Cycles-Bild der Kamera {kamera!r} hebt sich das Haus "
+            f"nur um {kleinster:+.1f} Grauwerte vom Hintergrund daneben ab (Schwelle "
+            f"{_belichtung.KONTRAST_SCHWELLE:.0f}) — es verschwimmt. Stimmung oder "
+            f"Hintergrund pruefen.")
 
 
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
@@ -2928,9 +2970,16 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                              geometrie_urteil=eintrag.get("geometrie_urteil"),
                              stil_urteil=eintrag.get("stil_urteil"))["qa"]
         satz = {"kamera": str(name)}
-        for feld in ("geometry", "style", FELD_UEBERSTRAHLT):
+        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST):
             if feld in block:
                 satz[feld] = block[feld]
+        # Ohne Geometrieurteil («nur Grundlage», auf-20261020-293): die Messung der Stimmung.
+        stimmung_messung = eintrag.get("stimmung")
+        if isinstance(stimmung_messung, dict) and not eintrag.get("geometrie_urteil"):
+            for feld, wert in ((FELD_UEBERSTRAHLT, _ueberstrahlt_von(stimmung_messung)),
+                               (FELD_KONTRAST, _kontrast_von(stimmung_messung))):
+                if wert is not None:
+                    satz[feld] = wert
         # DIE LIEFERUNG DIESER KAMERA (23.09.2026) — nur, wenn der Aufrufer sie kennt;
         # geprueft in `_lieferung_je_kamera`. Fehlt sie, fehlen die Felder und der
         # Auftrag meldet `lieferstatus: null`, statt eine Lieferung zu erfinden.
@@ -4286,6 +4335,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         # UEBERSTRAHLUNG AM HAUS (auf-20261020-292) — Zahl im `qa`-Block, Satz wie oben.
         vorher = len(hinweise)
         _ueberstrahlt_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
+        # KONTRAST HAUS – HINTERGRUND (auf-20261020-293) — gleich gebaut.
+        _kontrast_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 

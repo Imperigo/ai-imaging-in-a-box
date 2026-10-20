@@ -196,6 +196,102 @@ final class AktualisierungTests: XCTestCase {
         XCTAssertEqual(Aktualisierung.abstand, 3_600)
     }
 
+    func testNachEinerGescheitertenFrageBaldWieder() {
+        let jetzt = Date(timeIntervalSince1970: 2_000_000_000)
+        XCTAssertEqual(Aktualisierung.abstandNachFehler, 300)
+        XCTAssertFalse(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-299), jetzt: jetzt,
+                                                 gelungen: false))
+        XCTAssertTrue(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-300), jetzt: jetzt,
+                                                gelungen: false))
+        XCTAssertFalse(Aktualisierung.sollFragen(letzte: jetzt.addingTimeInterval(-300), jetzt: jetzt))
+        XCTAssertLessThanOrEqual(Aktualisierung.blickAbstand, Aktualisierung.abstandNachFehler)
+    }
+
+    // ------------------------------------------------------- Immer die neueste (20.10.2026)
+
+    private func freigabe(_ nummer: String) throws -> Freigabe {
+        try Aktualisierung.deute(antwort(tag: "v\(nummer)"))
+    }
+
+    private let n034 = Fassungsnummer("0.3.4")
+
+    func testEinKlickLaedtDieNeuesteAuchUeberZweiFassungenHinweg() throws {
+        // Laufend 0.3.4; angezeigt wurde 0.3.5, inzwischen liegt 0.3.6 auf GitHub.
+        var stand = Angebotsstand(laufend: n034)
+        XCTAssertTrue(stand.nimm(try freigabe("0.3.5")))
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.5")
+        let ziel = stand.beginne(frisch: try freigabe("0.3.6"))
+        XCTAssertEqual(ziel?.nummer.description, "0.3.6")
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.6", "das Blatt zeigt, was geladen wird")
+        XCTAssertEqual(ziel?.anlage(Aktualisierung.macPaket)?.adresse.pathComponents[5], "v0.3.6")
+    }
+
+    func testEineNeueAntwortErsetztDasAngebot() throws {
+        var stand = Angebotsstand(laufend: n034)
+        stand.nimm(try freigabe("0.3.5"))
+        XCTAssertTrue(stand.nimm(try freigabe("0.3.7")))
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.7")
+        // Dieselbe Nummer noch einmal: kein Wechsel, das Blatt bleibt, wo es ist.
+        XCTAssertFalse(stand.nimm(try freigabe("0.3.7")))
+    }
+
+    func testEineAeltereAntwortVerdraengtKeinNeueresAngebot() throws {
+        var stand = Angebotsstand(laufend: n034)
+        stand.nimm(try freigabe("0.3.7"))
+        XCTAssertFalse(stand.nimm(try freigabe("0.3.5")))
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.7")
+        // Auch nicht eine, die sagt, die laufende sei die neueste.
+        XCTAssertFalse(stand.nimm(try freigabe("0.3.4")))
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.7")
+    }
+
+    func testDieLaufendeIstDieNeuesteKeinKnopf() throws {
+        var stand = Angebotsstand(laufend: n034)
+        XCTAssertFalse(stand.nimm(try freigabe("0.3.4")))
+        XCTAssertNil(stand.angebot)
+        XCTAssertNil(stand.beginne(frisch: try freigabe("0.3.4")))
+        XCTAssertFalse(stand.gesperrt)
+        // Unbekannte laufende Nummer: nie ein Angebot.
+        var ohne = Angebotsstand(laufend: nil)
+        ohne.nimm(try freigabe("0.3.6"))
+        XCTAssertNil(ohne.angebot)
+    }
+
+    func testScheitertDieFrageBleibtDasAngezeigteAngebot() throws {
+        var stand = Angebotsstand(laufend: n034)
+        stand.nimm(try freigabe("0.3.5"))
+        XCTAssertFalse(stand.nimm(nil))
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.5")
+        // Scheitert die Frage beim Klick, wird das angezeigte Angebot geladen.
+        XCTAssertEqual(stand.beginne(frisch: nil)?.nummer.description, "0.3.5")
+    }
+
+    func testEinLaufendesLadenWirdNichtUnterbrochen() throws {
+        var stand = Angebotsstand(laufend: n034)
+        stand.nimm(try freigabe("0.3.5"))
+        XCTAssertEqual(stand.beginne(frisch: nil)?.nummer.description, "0.3.5")
+        XCTAssertTrue(stand.gesperrt)
+        // Eine neue Antwort mitten im Laden aendert nichts …
+        XCTAssertFalse(stand.nimm(try freigabe("0.3.7")))
+        XCTAssertEqual(stand.angebot?.nummer.description, "0.3.5")
+        // … und ein zweiter Klick startet kein zweites Laden.
+        XCTAssertNil(stand.beginne(frisch: try freigabe("0.3.7")))
+        // Ersetzt: fest bis zum Neustart.
+        stand.beende(ersetzt: true)
+        XCTAssertFalse(stand.nimm(try freigabe("0.3.7")))
+        XCTAssertEqual(stand.inArbeit?.nummer.description, "0.3.5")
+    }
+
+    func testNachEinemFehlerDarfDieNeuesteDasAngebotErsetzen() throws {
+        var stand = Angebotsstand(laufend: n034)
+        stand.nimm(try freigabe("0.3.5"))
+        _ = stand.beginne(frisch: nil)
+        stand.beende(ersetzt: false)
+        XCTAssertFalse(stand.gesperrt)
+        XCTAssertTrue(stand.nimm(try freigabe("0.3.7")))
+        XCTAssertEqual(stand.beginne(frisch: nil)?.nummer.description, "0.3.7")
+    }
+
     // ------------------------------------------------------------------ Pruefsumme
 
     private var summenDatei: String {

@@ -577,6 +577,12 @@ def materialwahl_ablegen(ordner, szene: dict) -> Path:
     return ziel
 
 
+#: Welche Lichtdaten der Stimmung an Blender gehen (``--umgebung-licht``, auf-20261020-293).
+LICHT_AN_BLENDER = ("sonne", "sonnen_staerke", "fuell_staerke", "winkel_grad", "look",
+                    "hintergrund_richtung", "hintergrund_abstand_ev", "gelaende_grau",
+                    "herkunft_licht")
+
+
 def umgebung_einstellungen(szene: dict) -> dict:
     """Was die bestellte Stimmung an ``seams.glb_zu_multipass`` gibt — leer ohne Stimmung.
 
@@ -595,6 +601,14 @@ def umgebung_einstellungen(szene: dict) -> dict:
                umgebung_belichtung=licht["belichtung_ev"]) if datei.get("pfad") else {}
     if aus and licht["toenung_linear"] is not None:
         aus = dict(aus, umgebung_toenung=tuple(licht["toenung_linear"]))
+    # LICHT MIT SCHATTEN (auf-20261020-293): Sonne, Fuelllicht, Look, Hintergrundabstand und
+    # Grau der Platte als JSON — ein Text, damit der Schluessel der Grundlage ihn wie jeden
+    # anderen Wert fasst (neue Lichtdaten, neue Grundlage).
+    if aus and licht.get("sonne") is not None:
+        import json as _json  # noqa: PLC0415
+        aus = dict(aus, umgebung_licht=_json.dumps(
+            {k: licht[k] for k in LICHT_AN_BLENDER if k in licht},
+            sort_keys=True, ensure_ascii=False))
     if umgebung.get("preset") == _stimmung.PRESET_WEISS:
         aus = dict(aus, umgebung_weiss=True)
     return aus
@@ -619,6 +633,9 @@ def angewandt_der_szene(szene: dict) -> dict:
             datei=datei.get("datei"),
             vorgaben=list(szene.get("umgebung_vorgaben") or ()),
             gipsmodell=umgebung.get("preset") == _stimmung.PRESET_WEISS,
+            # Seit auf-20261020-293 steht auch ohne bestellte Sonne eine Lampe: die harte
+            # Sonne aus dem Himmelsbild (`licht.sonne`) oder eine weiche aus dem hellsten
+            # Bereich. `sonnenlampe` sagt weiter nur, ob eine Sonne BESTELLT war.
             sonnenlampe=bool(szene.get("sonne")),
             prompt_satz=(zusatz or {}).get("satz"),
             # Belichtung, Farbtemperatur und Tonwerte je Stimmung (auf-20261020-292) —
@@ -2360,19 +2377,32 @@ VORSCHAU_ORDNER = "_vorschau"
 KI_RASTER_ORDNER = "_ki_raster"
 
 
+def ki_mindest_lange_seite(backbone_name) -> int | None:
+    """Die kleinste lange Seite des KI-Schritts für dieses Modell (auf-20261020-293 B3) —
+    der Registerwert, keine Zahl hier."""
+    from . import backbone as _backbone  # noqa: PLC0415
+    return _backbone.ki_mindest_lange_seite_fuer(backbone_name)
+
+
 def ki_steuerbilder(tiefe_png, schoenbild_png, ordner, *, vorschau: bool,
-                    lange_seite=None) -> dict:
+                    lange_seite=None, mindest_lange_seite=None) -> dict:
     """Die Steuerbilder in der Grösse, in der das Bildmodell rechnet.
 
     Vorschau: :func:`vorschau_steuerbilder` (verkleinert und gerastert). Volle Güte: nur
     gerastert (:func:`aiimaging.backbone.ki_raster_groesse`) — liegt die Grundlage schon
     auf dem Raster, bleibt alles, wie es ist (``verkleinert: False``). Das KI-Bild wird danach
     auf ``grundlage_groesse`` zurückgebracht, also auf die bestellte Grösse.
+
+    ``mindest_lange_seite`` (:attr:`aiimaging.backbone.Backbone.ki_mindest_lange_seite`,
+    auf-20261020-293 B3): Ist die Grundlage kleiner, werden die Steuerbilder für den
+    KI-Schritt hochgerechnet (``hochgerechnet: True``), in beiden Güten.
     """
     if vorschau:
         return vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner,
-                                     lange_seite=lange_seite)
-    return vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, nur_raster=True)
+                                     lange_seite=lange_seite,
+                                     mindest_lange_seite=mindest_lange_seite)
+    return vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, nur_raster=True,
+                                 mindest_lange_seite=mindest_lange_seite)
 
 
 def _schon_im_raster_oder_zu_klein(breite: int, hoehe: int) -> bool:
@@ -2384,7 +2414,7 @@ def _schon_im_raster_oder_zu_klein(breite: int, hoehe: int) -> bool:
 
 
 def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None,
-                          nur_raster: bool = False) -> dict:
+                          nur_raster: bool = False, mindest_lange_seite=None) -> dict:
     """Tiefenkarte und Schönbild für den KI-Schritt der Vorschau verkleinern (Entscheid 104).
 
     Das Seitenverhältnis bleibt, die lange Seite geht auf höchstens
@@ -2403,15 +2433,22 @@ def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None
     """
     from . import backbone as _backbone, bildschreiben  # noqa: PLC0415
     breite, hoehe = bildschreiben.png_masse(tiefe_png)
-    if nur_raster and _schon_im_raster_oder_zu_klein(breite, hoehe):
+    zu_klein = (bool(mindest_lange_seite) and max(breite, hoehe) < int(mindest_lange_seite)
+                and min(breite, hoehe) >= _backbone.PIXEL_RASTER)
+    if nur_raster and not zu_klein and _schon_im_raster_oder_zu_klein(breite, hoehe):
         ziel_b, ziel_h = breite, hoehe
     else:
-        ziel_b, ziel_h = (_backbone.ki_raster_groesse(breite, hoehe) if nur_raster else
-                          _backbone.vorschau_groesse(
-                              breite, hoehe,
-                              lange_seite=lange_seite or _backbone.VORSCHAU_LANGE_SEITE))
+        # DIE UNTERGRENZE DES MODELLS (auf-20261020-293 B3): `backbone.ki_groesse` rechnet
+        # erst wie bisher und dann, wenn noetig, auf die kleinste lange Seite hoch.
+        ziel_b, ziel_h = _backbone.ki_groesse(
+            breite, hoehe, vorschau=not nur_raster, mindest=mindest_lange_seite,
+            lange_seite=lange_seite or _backbone.VORSCHAU_LANGE_SEITE)
+    # `verkleinert` heisst seit 293 «in anderer Groesse als die Grundlage» (das KI-Bild geht
+    # danach zurueck) — der Name bleibt, weil ihn Ergebnis und Proben lesen; `hochgerechnet`
+    # sagt die Richtung.
     befund = {"grundlage_groesse": [breite, hoehe], "ki_groesse": [ziel_b, ziel_h],
-              "verkleinert": (ziel_b, ziel_h) != (breite, hoehe), "weg": None,
+              "verkleinert": (ziel_b, ziel_h) != (breite, hoehe),
+              "hochgerechnet": ziel_b * ziel_h > breite * hoehe, "weg": None,
               "tiefe_png": str(tiefe_png), "schoenbild_png": schoenbild_png,
               "schoenbild_grund": None}
     if not befund["verkleinert"]:
@@ -3709,6 +3746,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     massstab=massstab, blickfeld=blickfeld, modellstand=modellstand,
                     ebenen=ebenen, sonne=_sonne.aus_bestellung(szene.get("sonne")),
                     innen=innen))
+                # DIE STIMMUNG WIRD AUCH HIER GEMESSEN (auf-20261020-293, Punkt 6): Bis dahin
+                # stand die Messung nur im KI-Zweig, und dieser Zweig kehrte vorher mit
+                # `continue` zurueck — `qa.ueberstrahlt_anteil` fehlte gerade bei dem Lauf,
+                # dessen Bild das Cycles-Bild IST. Die Maske wird dafuer hier gebaut (sie liest
+                # nur den ID-Pass), und nur mit Stimmung.
+                if szene.get("umgebung"):
+                    urteile[-1].update(_stimmungsmessung(szene, bericht, _maske_bauen(
+                        bericht, gelaende_erwartet=gelaende_der_szene,
+                        gelaende_zusatz=_formgelaende_aus_bericht(bericht)).get("maske")))
                 bilder.append(urteile[-1]["bild_png"])
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
@@ -3838,9 +3884,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # SEIT auf-20261020-292 (B5) AUCH BEI «VOLL», wenn die bestellte Groesse nicht
             # aufs Raster faellt: Blender rechnet die bestellte Groesse, das Bildmodell eine
             # gerasterte, und sein Bild geht danach auf die bestellte zurueck.
+            # SEIT auf-20261020-293 (B3) MIT DER UNTERGRENZE DES MODELLS: Auf einer kleinen
+            # Grundlage (480 px) fand die Vorschau das Haus nicht — die Steuerbilder gehen
+            # dann hochgerechnet in den KI-Schritt, das Bild danach zurueck.
             steuer = ki_steuerbilder(tiefe, bericht.get("beauty_png"),
                                      aus / (VORSCHAU_ORDNER if vorschau else KI_RASTER_ORDNER),
-                                     vorschau=vorschau, lange_seite=vorschau_lange_seite)
+                                     vorschau=vorschau, lange_seite=vorschau_lange_seite,
+                                     mindest_lange_seite=ki_mindest_lange_seite(backbone_name))
             seeds_kamera = seeds_der_kamera(szene, geholt, kuerzel, seeds)
 
             def _rendere_seed(seed, ziel_png):
@@ -4014,9 +4064,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # UEBERSTRAHLUNG AM HAUS (auf-20261020-292, B1) — nur mit Stimmung: Anteil voll
             # weisser Bildpunkte des Cycles-Bilds auf der Bauwerksmaske. Eine Auskunft, kein
             # Tor; `qa.ueberstrahlt_anteil` im Ergebnis.
-            if szene.get("umgebung"):
-                urteil["ueberstrahlt"] = _belichtung_modul.ueberstrahlt_aus_png(
-                    bericht.get("beauty_png"), maske=maskenbefund.get("maske"))
+            # Seit auf-20261020-293 mit dem Kontrast Haus – Hintergrund, beides in
+            # `_stimmungsmessung` (derselbe Aufruf im Zweig «nur Grundlage»).
+            urteil.update(_stimmungsmessung(szene, bericht, maskenbefund.get("maske")))
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -4194,6 +4244,9 @@ MULTIPASS_DURCHGEREICHT = {
                            "['belichtung_ev']",
     "umgebung_toenung": "umgebung_einstellungen(szene) ← stimmung.toenung_fuer(kelvin der "
                         "Stimmung); fehlt ohne Farbtemperatur",
+    # Seit auf-20261020-293: Licht mit Schatten je Stimmung (Daten in aiimaging.stimmung).
+    "umgebung_licht": "umgebung_einstellungen(szene) ← stimmung.licht_der_stimmung(preset) "
+                      "(Sonne, Fuelllicht, Look, Hintergrundabstand, Grau der Platte) als JSON",
     "kamera_ausschnitt": "_ausschnitt_ohne_box(...) — nur Richtungskamera ohne eigene Box, "
                          "wenn die Rahmung meldet: Bauwerk = Szene",
 }
@@ -4542,6 +4595,15 @@ def _guete_vermerk(szene, backbone_name, schritte, auswahl, steuer) -> dict:
         "weg": (steuer or {}).get("weg"),
         "hinweise": [],
     }
+    # HOCHGERECHNET (auf-20261020-293 B3): nur, wenn es geschah — sonst bleibt der Vermerk
+    # Feld fuer Feld der bisherige.
+    if (steuer or {}).get("hochgerechnet"):
+        vermerk["hochgerechnet"] = True
+        vermerk["hinweise"].append(
+            f"Die Grundlage {steuer['grundlage_groesse'][0]}x{steuer['grundlage_groesse'][1]} "
+            f"ist kleiner als die Untergrenze von {backbone_name!r}; der KI-Schritt rechnet "
+            f"{steuer['ki_groesse'][0]}x{steuer['ki_groesse'][1]} und bringt sein Bild auf "
+            f"die Grundlage zurueck.")
     if bestellt and bestellt != backbone_name:
         vermerk["hinweise"].append(
             f"Bestellt war {bestellt!r}; die Vorschau rechnet immer {backbone_name!r}. Fuer "
@@ -5699,6 +5761,11 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         satz = {"kamera": str(name)}
         if _kamera_gemessen(k):
             satz["geometrie_urteil"] = k
+        elif k.get("ueberstrahlt") or k.get("kontrast"):
+            # DIE MESSUNG DER STIMMUNG AUCH OHNE GEOMETRIEURTEIL (auf-20261020-293, Punkt 6):
+            # «nur Grundlage» ist nicht gemessen, sein Cycles-Bild aber schon — Ueberstrahlung
+            # und Kontrast gehoeren je Kamera ins Ergebnis, ohne einen Geometrieblock.
+            satz["stimmung"] = {k2: k[k2] for k2 in ("ueberstrahlt", "kontrast") if k.get(k2)}
         # Aufsicht und angepasster Bildauftrag reisen auch an einer Kamera, deren Messung
         # nicht lief: Gerechnet ist sie trotzdem, und `als_ergebnis` sammelt die Saetze von
         # hier (E67 / auf-20261001-230). Kein Vertragsfeld — `kosmo_szene._qa_je_kamera`
@@ -5879,6 +5946,24 @@ ENGINE_NUR_GRUNDLAGE = {"name": "cycles", "lizenz": None, "fuehrung": None,
                         "lizenz_offen": False}
 
 
+def _stimmungsmessung(szene: dict, bericht: dict, maske) -> dict:
+    """Was am Cycles-Bild einer Stimmung gemessen wird — leer ohne Stimmung.
+
+    * ``ueberstrahlt`` (auf-20261020-292, B1): Anteil voll weisser Bildpunkte am Haus.
+    * ``kontrast`` (auf-20261020-293, Punkt 1): Grauwert des Hauses minus Hintergrund daneben.
+
+    Beides Auskunft, kein Tor; im Ergebnis ``qa.ueberstrahlt_anteil`` und
+    ``qa.kontrast_haus_hintergrund``. **Eine Stelle für beide Zweige** — mit und ohne
+    KI-Schritt —, damit kein Zweig sie wieder vergisst (293, Punkt 6).
+    """
+    if not (szene or {}).get("umgebung"):
+        return {}
+    schoen = (bericht or {}).get("beauty_png")
+    return {"ueberstrahlt": _belichtung_modul.ueberstrahlt_aus_png(schoen, maske=maske),
+            "kontrast": _belichtung_modul.kontrast_aus_pngs(
+                schoen, (bericht or {}).get("material_id_png"), maske=maske)}
+
+
 def _urteil_nur_grundlage(kuerzel, bericht, aus, *, rahmung, komposition, massstab,
                           blickfeld, modellstand, ebenen, sonne, innen) -> dict:
     """Das Urteil einer Kamera, deren Bild das Cycles-Bild ist (Nr. 83/81, 20.10.2026).
@@ -5937,17 +6022,28 @@ def _mit_messboden(soll, breite, hoehe, bericht, maskenbefund):
     laege — fuer ``qa_gegen_soll(trennhilfe=…)``. Sie zaehlen nur beim Trennen von Haus und
     Hintergrund im Bild, nicht im Score.
 
-    Nur, wenn die Maske GEMESSEN hat (``gemessen`` True) UND kein Gelaende fand
-    (``gelaende_erkannt`` False). **Befund ``auf-20261008-274`` C3:** Bis dahin genuegte
-    ``gelaende_erkannt`` False — auch bei einer ungemessenen Maske, und am Testbau mit
-    (unerkannter) Gelaendeplatte lag dann ein Messboden 25 cm unter der Platte.
+    Nur, wenn die Maske GEMESSEN hat (``gemessen`` True). **Befund ``auf-20261008-274``
+    C3:** Bis dahin genuegte ``gelaende_erkannt`` False — auch bei einer ungemessenen Maske,
+    und am Testbau mit (unerkannter) Gelaendeplatte lag dann ein Messboden 25 cm unter der
+    Platte.
+
+    **Seit auf-20261020-293 (B4) auch MIT erkanntem Gelaende.** Die Vorschau auf dem Testbau
+    (Platte 40 x 30 m, Kamera knapp darueber) meldete ``n_soll = n_ist = 67541`` und
+    ``n_gemeinsam = 0``, obwohl das Haus deckungsgleich lag (Umriss 0,81). Ursache ist
+    nicht die Bildgroesse (gemessen wird auf der Grundlage, das KI-Bild geht vorher auf ihre
+    Grösse zurueck, und eine andere Länge weist ``qa_gegen_soll`` ab), sondern derselbe Fall
+    wie 272: Das Bild malt VOR der endlichen Platte Boden, die Soll-Karte hat dort Himmel,
+    und die Auswahl «die n naechsten Punkte» nimmt den gemalten Vordergrund statt des Hauses.
+    Die Trennhilfe zaehlt nur beim Trennen (Score und Anteil bleiben die des Hauses) und
+    belegt nur HINTERGRUND-Punkte der Soll-Karte — die Platte selbst bleibt, wie sie ist.
 
     Returns:
         ``(soll, trennhilfe_oder_None, befund_oder_None)``.
     """
     from aiimaging import messboden as _messboden
     befund_maske = maskenbefund or {}
-    if befund_maske.get("gemessen") is not True or befund_maske.get("gelaende_erkannt") is not False:
+    if befund_maske.get("gemessen") is not True or befund_maske.get("gelaende_erkannt") not in (
+            False, True):
         return soll, None, None
     if not soll or isinstance(soll[0], (list, tuple)) or breite is None or hoehe is None:
         return soll, None, None
@@ -5958,8 +6054,9 @@ def _mit_messboden(soll, breite, hoehe, bericht, maskenbefund):
         return soll, None, {"angewandt": False, "grund": str(fehler)}
     trennhilfe = [a != b for a, b in zip(neu, soll)]
     angewandt = befund["n_boden"] > 0
-    return soll, (trennhilfe if angewandt else None), dict(befund, angewandt=angewandt,
-                                                           nur_zum_trennen=True)
+    return soll, (trennhilfe if angewandt else None), dict(
+        befund, angewandt=angewandt, nur_zum_trennen=True,
+        neben_gelaende=befund_maske.get("gelaende_erkannt") is True)
 
 
 def _ohne_umgebung(soll, kontext_pixel):

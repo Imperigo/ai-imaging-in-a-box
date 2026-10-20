@@ -104,7 +104,14 @@ def test_kamerastrahlen_sehen_den_verlauf_nicht_das_himmelsbild(monkeypatch):
 def test_der_runner_waehlt_is_camera_ray_und_nicht_den_transparenten_film():
     quelle = RUNNER.read_text(encoding="utf-8")
     assert '"Is Camera Ray"' in quelle
-    assert "film_transparent = True" not in quelle, "der KI-Schritt bekaeme einen Alphakanal"
+    # SEIT auf-20261020-293: Der durchsichtige Film steht genau EINMAL im Runner — in der
+    # Vorprobe `_hintergrund_abstimmen`, die nur die Hausfarbe misst und ihn im `finally`
+    # zurueckstellt. Das Schoenbild (der Eingang des KI-Schritts) bleibt deckend.
+    assert quelle.count("film_transparent = True") == 1, "der KI-Schritt bekaeme einen Alphakanal"
+    vorprobe = quelle[quelle.index("def _hintergrund_abstimmen"):]
+    vorprobe = vorprobe[:vorprobe.index("\ndef ")]
+    assert "film_transparent = True" in vorprobe
+    assert 'r.film_transparent = vorher["film"]' in vorprobe.split("finally:")[-1]
     # Der ID-Pass baut seine Welt neu (schwarz) — die Bauwerksmaske leidet nicht.
     assert "_welt_setzen((0.0, 0.0, 0.0), 0.0)" in quelle
 
