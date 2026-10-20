@@ -151,12 +151,20 @@ def art_von(name, *, kind=None, predefined=None, opening_type=None,
     """Die Art eines Bauteils — ``fassade``, ``dach``, ``fenster``, ``boden``, ``uebrige``
     oder ``gelaende``.
 
-    Reihenfolge: ``kind`` (KosmoOrbit-glb, ``extras.kind``), dann das ``Ifc*``-Präfix des
-    Namens (unsere IFC-Umwandlung), dann ``ist_gelaende`` (die Geländeregel von
-    :mod:`aiimaging.maske`, vom Aufrufer gefragt), sonst ``uebrige``. ``predefined``
+    Reihenfolge: **zuerst** ``ist_gelaende`` (die Geländeregel von :mod:`aiimaging.maske`,
+    vom Aufrufer gefragt), dann ``kind`` (KosmoOrbit-glb, ``extras.kind``), dann das
+    ``Ifc*``-Präfix des Namens (unsere IFC-Umwandlung), sonst ``uebrige``. ``predefined``
     (``PredefinedType``) macht eine Decke mit ``ROOF`` zum Dach; ``opening_type`` ``tuer``
     eine Öffnung zu «uebrige» (Entscheid 113).
+
+    **Gelände zuerst (Befund B3 aus auf-20261020-292):** Bis dahin stand ``ist_gelaende``
+    hinter dem Präfix. Die Geländeplatte heisst ``IfcSlab_Gelaende_…`` — das Präfix
+    ``IfcSlab`` machte sie zu «boden», und sie bekam Stampflehm, während die Bauwerksmaske
+    dieselbe Platte als Gelände führt. Zwei Stellen, zwei Urteile über dasselbe Objekt;
+    jetzt entscheidet die eine Geländeregel, und Gelände ist **immer** ausgenommen.
     """
+    if ist_gelaende:
+        return ART_GELAENDE
     vordef = str(predefined or "").upper()
     if isinstance(kind, str) and kind:
         art = KIND_ZU_ART.get(kind.lower())
@@ -172,8 +180,6 @@ def art_von(name, *, kind=None, predefined=None, opening_type=None,
         if klasse in ("IfcSlab", "IfcCovering") and vordef in DACH_TYPEN:
             return "dach"
         return IFC_ZU_ART[klasse]
-    if ist_gelaende:
-        return ART_GELAENDE
     return ART_UEBRIGE
 
 

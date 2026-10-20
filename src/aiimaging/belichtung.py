@@ -456,3 +456,73 @@ def pruefe_bild(pfad, rahmen: Rahmen) -> dict:
     :func:`messe` und :func:`pruefe` getrennt.
     """
     return pruefe(messe(pfad, rahmen=rahmen), rahmen)
+
+
+# ======================================================================================
+# Überstrahlung — wieviel des Hauses ist voll weiss? (auf-20261020-292, B1)
+# ======================================================================================
+
+#: Ab wann ein Bildpunkt als «voll weiss» zählt: alle drei Kanäle auf 255 (8 Bit). Dort trägt
+#: der Punkt keine Zeichnung mehr — er sagt nur noch «hell», nicht mehr, was dort ist.
+VOLL_WEISS = 255
+
+#: Das Ziel der Stimmungen am Haus: weniger als 1 % voll weisse Bildpunkte (auf-20261020-292).
+UEBERSTRAHLT_ZIEL = 0.01
+
+
+def ueberstrahlt_anteil(farben, *, maske=None, schwelle: int = VOLL_WEISS) -> dict:
+    """Der Anteil voll weisser Bildpunkte — am Haus, wenn eine Maske da ist.
+
+    **Anlass (auf-20261020-292, B1):** Bei «mittag» war das Haus eine rein weisse Fläche
+    (11,9 % der Bildpunkte = 255), ohne Kanten. Gemessen wird ohne Urteil über den Stil
+    (siehe Moduldocstring): Die Zahl sagt, wieviel Zeichnung verloren ist; ob das Absicht
+    ist, sagt sie nicht.
+
+    Args:
+        farben: ``[(r, g, b), …]`` in 0..255 (:func:`aiimaging.bildlesen.lies_png_farben`).
+        maske: gleich lange Folge von Wahrheitswerten (die Bauwerksmaske) — ``None``: das
+            ganze Bild.
+        schwelle: ab welchem Wert ein Kanal als voll gilt (Vorgabe 255).
+
+    Returns:
+        ``{anteil, anteil_bild, n_weiss, n, schwelle, bezug, ziel, unter_ziel}`` — ``anteil``
+        bezogen auf ``bezug`` (``"bauwerk"`` oder ``"bild"``); ``None`` bei leerer Maske.
+    """
+    farben = list(farben)
+    n_bild = len(farben)
+    if n_bild == 0:
+        raise BelichtungsError("Überstrahlung nicht messbar: kein einziger Bildpunkt.")
+    weiss = [min(p[0], p[1], p[2]) >= schwelle for p in farben]
+    anteil_bild = sum(weiss) / n_bild
+    if maske is not None:
+        maske = list(maske)
+        if len(maske) != n_bild:
+            raise BelichtungsError(f"Überstrahlung: Maske mit {len(maske)} Punkten zu einem "
+                                   f"Bild mit {n_bild}.")
+        n = sum(1 for m in maske if m)
+        n_weiss = sum(1 for w, m in zip(weiss, maske) if w and m)
+        bezug = "bauwerk"
+    else:
+        n, n_weiss, bezug = n_bild, sum(weiss), "bild"
+    anteil = (n_weiss / n) if n else None
+    return {"anteil": None if anteil is None else round(anteil, 6),
+            "anteil_bild": round(anteil_bild, 6), "n_weiss": n_weiss, "n": n,
+            "schwelle": schwelle, "bezug": bezug, "ziel": UEBERSTRAHLT_ZIEL,
+            "unter_ziel": None if anteil is None else anteil < UEBERSTRAHLT_ZIEL}
+
+
+def ueberstrahlt_aus_png(pfad, *, maske=None) -> dict:
+    """:func:`ueberstrahlt_anteil` für eine PNG-Datei — nie eine Ausnahme.
+
+    Nicht messbar (Datei fehlt, unlesbar, Maske passt nicht): ``{anteil: None, grund}``. Eine
+    Auskunft neben dem Bild ist kein Grund, ein gerechnetes Bild scheitern zu lassen.
+    """
+    if not pfad:
+        return {"anteil": None, "grund": "Kein Schönbild — nicht gemessen."}
+    try:
+        farben, _b, _h = bildlesen.lies_png_farben(pfad)
+        befund = ueberstrahlt_anteil(farben, maske=maske)
+    except (bildlesen.BildError, BelichtungsError, OSError, ValueError) as fehler:
+        return {"anteil": None, "grund": f"Überstrahlung nicht messbar: {fehler}"}
+    befund["grund"] = "" if befund["anteil"] is not None else "Leere Bauwerksmaske."
+    return befund

@@ -311,8 +311,11 @@ def test_ohne_gemeinsame_silhouette_ist_geom_iou_auch_in_den_toren_nicht_gemesse
     assert "geom_iou" not in tore
     assert tore["geom_iou_status"] == "not_measured"
     assert "geom_iou_nicht_gemessen" in tore["fail_reasons"]
-    # Der `qa`-Block bleibt byte-identisch: Dort steht die 0.0 weiter, der Satz ordnet sie.
-    assert erg["qa"]["geometry"]["geom_iou"] == 0.0
+    # Bis auf-20261020-292 blieb der `qa`-Block hier byte-identisch und trug die 0.0 weiter.
+    # Befund B7 dort (Punkt 8 des Auftrags): Die 0.0 ist ein Platzhalter, keine Messung —
+    # seither `null` mit Grund, wie es Tor B seit dem 22.09.2026 schon fuehrt.
+    assert erg["qa"]["geometry"]["geom_iou"] is None
+    assert "nicht gemessen" in erg["qa"]["geometry"]["geom_iou_grund"]
     # …und `status` sagt ihrer Kamerazeile, dass das `false` ungeprueft heisst (auf-142 V3).
     assert erg["qa"]["geometry"]["status"] == "not_measured"
     assert "geom_iou_widerspruch" not in tore["fail_reasons"]

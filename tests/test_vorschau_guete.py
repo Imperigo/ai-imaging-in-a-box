@@ -184,8 +184,16 @@ def test_die_vorschau_nimmt_die_grundlage_und_laesst_sie_unveraendert(tmp_path):
     n = len(protokoll["render"])
     voll, antwort = _rechne(tmp_path, attrappen, "voll", guete="voll", grundlage=kennung)
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
-    assert {a.depth_png for a in protokoll["render"][n:]} <= set(vorher[1])
+    # Seit auf-20261020-292 (B5) faellt 200 x 125 nicht aufs Raster: Die volle Guete rechnet
+    # auf gerasterten KOPIEN (192 x 112) — in voller Breite, nicht verkleinert wie die
+    # Vorschau —, und die Grundlage bleibt unberuehrt.
+    for a in protokoll["render"][n:]:
+        assert abholer.KI_RASTER_ORDNER in Path(a.depth_png).parts
+        assert bildschreiben.png_masse(a.depth_png) == (192, 112)
+    assert _dateien_der_grundlage(tmp_path, kennung) == vorher
     assert _vertrag(voll)["guete"] == "voll"
+    for name in _vertrag(voll)["images"]:
+        assert bildschreiben.png_masse(voll / name) == (GRUNDLAGE_B, GRUNDLAGE_H)
 
 
 def test_die_vorschau_nimmt_den_startwert_der_grundlage(tmp_path):
@@ -221,8 +229,13 @@ def test_voll_und_ohne_feld_rechnen_wie_bisher(tmp_path, vis):
     assert {a.schritte for a in protokoll["render"]} == {backbone.SCHRITTE_STANDARD}
     for a in protokoll["render"]:
         assert abholer.VORSCHAU_ORDNER not in Path(a.depth_png).parts
-        assert bildschreiben.png_masse(a.depth_png) == (GRUNDLAGE_B, GRUNDLAGE_H)
+        # Nicht verkleinert, nur aufs Raster (auf-20261020-292, B5) — und das Ergebnis
+        # traegt wieder die bestellte Groesse.
+        assert bildschreiben.png_masse(a.depth_png) == backbone.ki_raster_groesse(
+            GRUNDLAGE_B, GRUNDLAGE_H)
     vertrag = _vertrag(ordner)
+    for name in vertrag["images"]:
+        assert bildschreiben.png_masse(ordner / name) == (GRUNDLAGE_B, GRUNDLAGE_H)
     assert not vertrag["qa"]["verdict"]["reason"].startswith(kosmo_szene.VORSCHAU_ANFANG)
     if vis:
         assert vertrag["guete"] == "voll"
@@ -359,7 +372,7 @@ def test_der_fortschritt_der_vorschau_steigt_bis_eins(tmp_path):
     ((1000, 1600), (640, 1024)),
     ((1920, 1080), (1024, 576)),
     ((2048, 2048), (1024, 1024)),
-    ((800, 500), (800, 500)),
+    ((800, 500), (800, 496)),
     ((1024, 640), (1024, 640)),
 ])
 def test_die_groesse_der_vorschau(vorlage, erwartet):

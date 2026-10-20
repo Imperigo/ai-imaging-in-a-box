@@ -50,6 +50,11 @@ def test_das_teilbild_traegt_die_kamera_seines_bilds(tmp_path):
     # Das KI-Bild der ersten Kamera ist das Teilbild — und es heisst nach IHR.
     assert antwort["teilbild"] == "s__teilbild.png"
     ki_bild = protokoll["render"][0].ausgabe_png
+    # Seit auf-20261020-292 (B5) rechnet das Bildmodell 200 x 125 gerastert in `_ki_raster/`;
+    # das Teilbild ist das auf die bestellte Groesse zurueckgebrachte Bild daneben.
+    from pathlib import Path
+    if abholer.KI_RASTER_ORDNER in Path(ki_bild).parts:
+        ki_bild = Path(ki_bild).parent.parent / Path(ki_bild).name
     assert (ordner / "s__teilbild.png").read_bytes() == open(ki_bild, "rb").read()
     assert not (ordner / "sSE__teilbild.png").exists()
 

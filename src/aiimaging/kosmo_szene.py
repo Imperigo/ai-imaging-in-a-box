@@ -612,6 +612,24 @@ def _auf_raster(aufl):
     )
 
 
+def _ki_raster_hinweis(aufl) -> str:
+    """Der Satz, wenn die bestellte Grösse nicht auf das Raster fällt — ``""`` sonst.
+
+    Seit auf-20261020-292 (Befund B5) bleibt die Grösse **wie bestellt**: Blender rechnet sie,
+    die Prüfung misst auf ihr, und das Ergebnis hat sie. Nur der KI-Schritt rechnet auf
+    :func:`_auf_raster` gerundet und wird danach auf die bestellte Grösse zurückgebracht.
+    """
+    (nb, nh), roh = _auf_raster(aufl)
+    if not roh:
+        return ""
+    b, h = int(aufl[0]), int(aufl[1])
+    return (f"Bildmasse {b}x{h} bleiben, wie bestellt: Blender rechnet {b}x{h}, und das "
+            f"Ergebnis hat diese Grösse. Nur der KI-Schritt rechnet intern {b}x{h} auf "
+            f"{nb}x{nh} (Vielfache von {RASTER}, sonst weist die Pipeline ab) und bringt "
+            f"sein Bild danach auf {b}x{h} zurück; das Seitenverhältnis der Kamera bleibt "
+            f"{b/h:.4f}.")
+
+
 #: Welche Felder der fremden Bestellung wir **lesen** — je Block.
 #:
 #: **Warum es diese Karte gibt** (HomeStation, 11.09.2026, und der Cloud-Worker hat
@@ -1785,8 +1803,9 @@ def umgebung_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> dict 
         maengel.append(f"'render.environment.hdri' ist {hdri!r}. Erwartet ist der Namensstamm "
                        f"eines Himmelsbilds (a-z, 0-9, _; hoechstens 64 Zeichen), nie ein Pfad.")
         return antwort
+    # Die Vorgabe JE STIMMUNG (auf-20261020-292): `stimmung.STIMMUNGEN[preset]['staerke']`.
     staerke = _bereichszahl(roh, "intensitaet", "render.environment.intensitaet", 0, 10,
-                            _stimmung.VORGABE_INTENSITAET, maengel)
+                            _stimmung.vorgabe_staerke(preset), maengel)
     drehung = _bereichszahl(roh, "rotationGrad", "render.environment.rotationGrad", 0, 360,
                             _stimmung.VORGABE_DREHUNG_GRAD, maengel)
     if staerke is None or drehung is None:
@@ -1868,6 +1887,11 @@ def materialien_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> di
                     f"Bekannt: {', '.join(_materialwahl.BIBLIOTHEK)}.")
             maengel.append(satz)
             endgueltig.append(satz)
+            # AUCH INS ERGEBNIS (auf-20261020-292, B8): Bis dahin endete eine unbekannte id
+            # nur am Laufzettel, ohne render-result.json — anders als eine fehlende Textur
+            # oder ein fehlendes Himmelsbild. Die Oberflaeche liest `lieferstatus_grund`.
+            if satz not in fehlt:
+                fehlt.append(satz)
             continue
         massstab = _bereichszahl(wahl, "massstab_m", f"{pfad}.massstab_m", 0.05, 20,
                                  _materialwahl.VORGABE_MASSSTAB_M, maengel)
@@ -2156,7 +2180,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
              for k, w in enumerate(aufl)]
     maengel.extend(satz for _, satz in masse if satz)
     if all(satz is None for _, satz in masse):
-        aufl, hinweis = _auf_raster([zahl for zahl, _ in masse])
+        # BLENDER RECHNET DIE BESTELLTE GROESSE (Befund B5 aus auf-20261020-292): Bis dahin
+        # wurde hier auf das Raster abgerundet, und Blender rechnete 960x592 statt 960x600 —
+        # Seitenverhaeltnis 1,6216 statt 1,6, und der Knoten «Kamera» (der mit 1,6 rechnet)
+        # stand 1,06 m neben dem Heim-PC. Nur der KI-Schritt braucht das Raster; er rechnet
+        # intern darauf und bringt sein Bild zurueck (`abholer.ki_steuerbilder`).
+        aufl = [int(zahl) for zahl, _ in masse]
+        hinweis = _ki_raster_hinweis(aufl)
         if hinweis:
             (warnungen if gewaehlt else vorgaben).append(hinweis)
     else:
@@ -2834,6 +2864,44 @@ def _lieferstatus_des_auftrags(saetze, *, uebersprungen: bool,
         f"{zahl(ist)} von {zahl(soll)} Bildern — {fehlend}")
 
 
+#: Der Anteil voll weisser Bildpunkte am Haus im Cycles-Bild (auf-20261020-292, B1) — im
+#: ``qa``-Block des Laufs (die höchste Kamera) und je Kamera. Fehlt, wenn nicht gemessen
+#: (ohne Stimmung, oder nicht lesbar) — ein ``null`` bestünde ihr ``.optional()`` nicht.
+FELD_UEBERSTRAHLT = "ueberstrahlt_anteil"
+
+
+def _ueberstrahlt_von(urteil):
+    befund = (urteil or {}).get("ueberstrahlt") if isinstance(urteil, dict) else None
+    anteil = befund.get("anteil") if isinstance(befund, dict) else None
+    return anteil if isinstance(anteil, (int, float)) and not isinstance(anteil, bool) \
+        else None
+
+
+def _ueberstrahlt_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """``qa.ueberstrahlt_anteil``: je Kamera gemessen, für den Lauf die höchste — mit Satz,
+    wenn das Ziel (weniger als 1 % voll weiss am Haus) verfehlt ist."""
+    from . import belichtung as _belichtung  # noqa: PLC0415
+    werte = []
+    for eintrag in je_kamera or ():
+        if isinstance(eintrag, dict):
+            wert = _ueberstrahlt_von(eintrag.get("geometrie_urteil"))
+            if wert is not None:
+                werte.append((wert, eintrag.get("kamera")))
+    if not werte:
+        wert = _ueberstrahlt_von(geometrie_urteil)
+        if wert is not None:
+            werte.append((wert, (geometrie_urteil or {}).get("kamera")))
+    if not werte:
+        return
+    hoechster, kamera = max(werte, key=lambda w: w[0])
+    qa[FELD_UEBERSTRAHLT] = hoechster
+    if hoechster >= _belichtung.UEBERSTRAHLT_ZIEL:
+        hinweise.append(
+            f"UEBERSTRAHLT: Im Cycles-Bild der Kamera {kamera!r} sind {hoechster * 100:.1f} % "
+            f"des Hauses voll weiss (Ziel unter {_belichtung.UEBERSTRAHLT_ZIEL * 100:.0f} %) — "
+            f"dort traegt das Bild keine Zeichnung. Belichtung der Stimmung pruefen.")
+
+
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
     """Je Kamera ein ``{kamera, geometry?, style?}`` — in **ihrer** Form.
 
@@ -2860,7 +2928,7 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                              geometrie_urteil=eintrag.get("geometrie_urteil"),
                              stil_urteil=eintrag.get("stil_urteil"))["qa"]
         satz = {"kamera": str(name)}
-        for feld in ("geometry", "style"):
+        for feld in ("geometry", "style", FELD_UEBERSTRAHLT):
             if feld in block:
                 satz[feld] = block[feld]
         # DIE LIEFERUNG DIESER KAMERA (23.09.2026) — nur, wenn der Aufrufer sie kennt;
@@ -3528,6 +3596,13 @@ SATZ_GEOM_IOU_RANDLOS = (
     "der Score ruht hier allein auf der Rangkorrelation")
 
 
+#: Der Grund an ``qa.geometry.geom_iou_grund``, wenn ``geom_iou`` leer ist, weil Soll und Ist
+#: keinen Bildpunkt gemeinsam haben (auf-20261020-292, B7).
+SATZ_GEOM_IOU_NICHT_GEMESSEN = (
+    "nicht gemessen: Soll- und Ist-Silhouette haben keinen Bildpunkt gemeinsam — 0.0 waere "
+    "hier keine Messung, sondern ein Platzhalter (Rauschen ergaebe dieselbe Zahl)")
+
+
 def keine_gemeinsame_silhouette(urteil) -> bool:
     """Ist ``geom_iou`` dieses Kameraurteils eine FEHLENDE MESSUNG und kein Nullwert?
 
@@ -3837,7 +3912,12 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             "spearman": geometrie_urteil.get("spearman"),
             # LEER, WENN DIE SOLL-SILHOUETTE DAS GANZE BILD IST (auf-20261001-230): Dann
             # stuende hier 1.0 fuer jedes Bild — siehe `soll_silhouette_randlos`.
-            "geom_iou": (None if soll_silhouette_randlos(geometrie_urteil)
+            # UND LEER OHNE GEMEINSAME SILHOUETTE (auf-20261020-292, Befund B7): Dann ist
+            # 0.0 eine fehlende Messung, kein Wert — Tor B fuehrt sie seit dem 22.09.2026
+            # schon so (`abholer._zwei_tore_dieser_kamera`), der `qa`-Block meldete bis
+            # dahin trotzdem 0.0. Der Grund steht in `geom_iou_grund`.
+            "geom_iou": (None if (soll_silhouette_randlos(geometrie_urteil)
+                                  or keine_gemeinsame_silhouette(geometrie_urteil))
                          else geometrie_urteil.get("geom_iou")),
             "threshold": geometrie_urteil.get("schwelle", geometrie_qa.SCHWELLE_GEOMETRIE),
             "passed": bool(geometrie_urteil.get("bestanden")),
@@ -3854,6 +3934,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             # will, ob die Richtung geprüft wurde, muss das Feld auch lesen können.
             "method": geometrie_urteil.get("methode") or geometrie_qa.METHODE,
         }
+        if soll_silhouette_randlos(geometrie_urteil):
+            qa["geometry"]["geom_iou_grund"] = f"nicht anwendbar: {SATZ_GEOM_IOU_RANDLOS}"
+        elif keine_gemeinsame_silhouette(geometrie_urteil):
+            qa["geometry"]["geom_iou_grund"] = SATZ_GEOM_IOU_NICHT_GEMESSEN
         # UND OB DIE RICHTUNG UEBERHAUPT GEPRUEFT WURDE.
         #
         # `rho_maske is None` heisst: Der Maskenweg lief nicht, die gemessene Polarität
@@ -4199,6 +4283,11 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         for satz in skizze_saetze((geometrie_urteil or {}).get(URTEIL_SKIZZE)):
             qa["verdict"].setdefault("hinweise", []).append(satz)
             hinweise.append(satz)
+        # UEBERSTRAHLUNG AM HAUS (auf-20261020-292) — Zahl im `qa`-Block, Satz wie oben.
+        vorher = len(hinweise)
+        _ueberstrahlt_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
+        for satz in hinweise[vorher:]:
+            qa["verdict"].setdefault("hinweise", []).append(satz)
 
     ergebnis = {
         "schema": SCHEMA_ERGEBNIS,

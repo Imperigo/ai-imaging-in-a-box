@@ -1634,3 +1634,18 @@ Himmelsbild oder eine Textur, wird der Auftrag mit einem Satz abgelehnt, der die
 das Bestellte sähe sonst aus wie eines mit. Und jedes Ergebnis sagt, mit welchen Werten wirklich gerechnet wurde,
 auch mit denen, die der Rechner selbst eingesetzt hat. Ehrlich gesagt: Geprüft ist alles mit nachgebauten Rechnern;
 am echten Rechenrechner wird es erst gemessen, und die Bedienung in der Knotenansicht folgt noch.
+
+**Das Haus steht nicht mehr vor einem fremden Foto, und es brennt nicht mehr aus (20.10.2026).** Die erste Messung der
+Stimmungen am Rechenrechner zeigte drei Fehler, die man sofort sieht: Bei «Abend» stand hinter dem Haus das Rundumfoto
+des Himmels selbst — ein Bodenfoto mit Wald und Felsen, das Haus schwebte davor. Bei «Mittag» war das Haus eine reine
+weisse Fläche ohne Kanten. Und die Geländeplatte bekam das Bodenmaterial. Behoben: Das Himmelsfoto gibt jetzt nur noch
+Licht, Schatten und Spiegelungen; was die Kamera direkt sieht, ist ein ruhiger Verlauf in den Farben dieses Himmels. Mit
+Himmelsbild führt eine weiche Tonwertkurve die hellen Werte sanft gegen Weiss, statt sie abzuschneiden, und jede Stimmung
+hat ihre eigene Belichtung und, wo nötig, eine warme oder kühle Tönung. Wieviel des Hauses trotzdem voll weiss ist, wird
+jetzt bei jedem Bild gemessen und steht im Ergebnis (Ziel: unter einem Prozent). Das Gelände bekommt nie ein Material.
+Dazu kleinere Dinge: Das Bild hat genau die bestellte Grösse (vorher wurde es still um einige Zeilen gekürzt, und die
+Kamera stand darum etwas anders als in der Vorschau des Kamera-Knotens); die schnelle Vorschau folgt der Form enger;
+eine Prüfzahl, die nicht gemessen werden konnte, heisst jetzt «nicht gemessen» statt null; eine Variante, die nicht zu
+ihrer Grundlage passt, wird schon beim Bestellen abgewiesen. Die Himmelsbilder selbst wurden am Rechenrechner getauscht —
+Abend ist jetzt ein echter Sonnenuntergang, Weiss ein neutrales Studio. Ehrlich gesagt: Die Helligkeit je Stimmung ist
+ein erster Stand; ob das Haus in allen acht Stimmungen lesbar ist, misst der Rechenrechner als Nächstes.

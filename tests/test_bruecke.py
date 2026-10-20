@@ -126,9 +126,9 @@ def test_ein_token_falscher_form_gilt_nie(tmp_path, token):
 def test_die_szene_kommt_uebersetzt_zurueck(tmp_path):
     gelesen = bruecke.lies_auftrag(auftrag(tmp_path))
     assert gelesen["szene"]["aufloesung"] == 1600
-    # Gerastert seit Demolauf 3: 1000 ist kein Vielfaches von 16 und damit nicht
-    # renderbar. Die Bruecke reicht durch, was die Kette wirklich fahren kann.
-    assert gelesen["szene"]["hoehe"] == 992
+    # Seit auf-20261020-292 (B5) die bestellte Hoehe: Blender rechnet 1600 x 1000, nur der
+    # KI-Schritt rastert intern auf 992 und bringt sein Bild zurueck.
+    assert gelesen["szene"]["hoehe"] == 1000
     assert gelesen["szene"]["controlnet_staerke"] == 0.8
 
 

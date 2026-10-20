@@ -219,6 +219,16 @@ def _argumente():
                     help="Staerke des Himmelsbilds (Background Strength), Vorgabe 1.0.")
     ap.add_argument("--umgebung-drehung", dest="umgebung_drehung", type=float, default=None,
                     help="Drehung des Himmelsbilds um die Hochachse, Grad, Vorgabe 0.")
+    # BELICHTUNG UND TOENUNG JE STIMMUNG (auf-20261020-292, B1/B3): Daten aus
+    # `aiimaging.stimmung`. Nur mit --umgebung-hdr wirksam; dann rechnet das Schoenbild mit
+    # der Tonwertkurve AgX (sonst Filmic), der ID-Pass weiter mit «Standard».
+    ap.add_argument("--umgebung-belichtung", dest="umgebung_belichtung", type=float,
+                    default=None,
+                    help="Belichtung in Blendenstufen (view_settings.exposure), nur mit "
+                         "Himmelsbild; Vorgabe 0.")
+    ap.add_argument("--umgebung-toenung", dest="umgebung_toenung", default=None,
+                    help="Toenung des Himmelslichts 'r,g,b' (linear, Helligkeit 1), nur mit "
+                         "Himmelsbild.")
     ap.add_argument("--materialien", dest="materialien", default=None,
                     help="Materialwahl je Bauteil-Art (JSON aus abholer.materialwahl_ablegen): "
                          "Principled BSDF mit Box-Projektion, Rauheit, Relief (Bump aus der "
@@ -1098,7 +1108,108 @@ def _kamera_setzen(lo, hi, a=None):
 # Beleuchtung — schlicht, aber vorhanden
 # --------------------------------------------------------------------------------------
 
-def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0):
+def _stimmung_modul():
+    """``aiimaging.stimmung`` von hier aus — dieselbe Bauart wie :func:`_maske_modul`.
+
+    Von dort kommen die Farben des ruhigen Hintergrunds (:func:`hintergrund_aus_himmel`) und
+    die Reihenfolge der Tonwertkurven (:data:`TONWERTE`) — eine zweite Fassung hier liefe
+    beim nächsten Tausch auseinander.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import stimmung                       # noqa: PLC0415
+        return stimmung
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+#: Der Grund, wenn die Farben nicht aus dem Himmelsbild zu lesen sind: ein ruhiges Grau.
+#: Der Hintergrund bleibt auch dann ruhig — das Himmelsbild wird NIE zum Fotohintergrund.
+RUECKFALL_HINTERGRUND = {"horizont": [0.62, 0.64, 0.66], "zenit": [0.45, 0.50, 0.58]}
+
+#: Wie gross das Himmelsbild für die zwei Hintergrundfarben verkleinert wird.
+HIMMEL_PROBE_GROESSE = (128, 64)
+
+
+def _himmelsfarben(bild) -> dict:
+    """Horizont- und Zenitfarbe des Himmelsbilds — oder :data:`RUECKFALL_HINTERGRUND`.
+
+    Auf einer verkleinerten Kopie gemessen (4096 × 2048 als Liste wären 33 Mio. Zahlen);
+    die Kopie wird danach wieder entfernt. Nie eine Ausnahme: Ein Hintergrund ist kein Grund,
+    einen Lauf scheitern zu lassen — der Bericht sagt, welcher Weg galt.
+    """
+    modul = _stimmung_modul()
+    if modul is None:
+        return dict(RUECKFALL_HINTERGRUND, weg="rueckfall",
+                    grund="aiimaging.stimmung ist von hier nicht lesbar.")
+    kopie = None
+    try:
+        kopie = bild.copy()
+        b, h = HIMMEL_PROBE_GROESSE
+        kopie.scale(b, h)
+        farben = modul.hintergrund_aus_himmel(list(kopie.pixels[:]), b, h,
+                                              kanaele=int(getattr(kopie, "channels", 4) or 4))
+    except Exception as fehler:                            # noqa: BLE001
+        return dict(RUECKFALL_HINTERGRUND, weg="rueckfall",
+                    grund=f"Himmelsbild nicht lesbar fuer den Hintergrund: {fehler}")
+    finally:
+        if kopie is not None:
+            try:
+                bpy.data.images.remove(kopie)
+            except Exception:                              # noqa: BLE001
+                pass
+    if not farben.get("horizont") or not farben.get("zenit"):
+        return dict(RUECKFALL_HINTERGRUND, weg="rueckfall",
+                    grund="Himmelsbild ohne Punkte ueber dem Horizont.")
+    return dict(farben, weg="himmelsbild", grund="")
+
+
+def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung) -> None:
+    """Kamerastrahlen sehen einen Verlauf, alle anderen Strahlen das Himmelsbild.
+
+    **Anlass (auf-20261020-292, B2):** Das Himmelsbild stand als Fotohintergrund da — ein
+    Bodenfoto mit Wald und Felsen, das Haus schwebte davor. **Entscheid: «Is Camera Ray»**
+    (Light Path) statt eines transparenten Films mit nachträglichem Grund: Das Bild bleibt
+    deckend (kein Alphakanal, den der KI-Schritt oder eine Vorschau falsch läse), Licht und
+    Spiegelungen kommen weiter aus dem Himmelsbild, und der ID-Pass und die Tiefe sind nicht
+    betroffen — der ID-Pass baut seine Welt neu (schwarz), die Tiefe misst Geometrie, nicht
+    die Welt. Der Verlauf geht vom Horizont (und darunter) zum Zenit, in den Medianfarben
+    dieses Himmels, mit derselben Stärke und Tönung.
+    """
+    baum = welt.node_tree
+    tf = list(toenung) if toenung else [1.0, 1.0, 1.0]
+    horizont = (*(float(c) * t for c, t in zip(farben["horizont"], tf)), 1.0)
+    zenit = (*(float(c) * t for c, t in zip(farben["zenit"], tf)), 1.0)
+    koord = baum.nodes.new("ShaderNodeTexCoord")
+    trenne = baum.nodes.new("ShaderNodeSeparateXYZ")
+    baum.links.new(koord.outputs["Generated"], trenne.inputs["Vector"])
+    bereich = baum.nodes.new("ShaderNodeMapRange")
+    bereich.inputs["From Min"].default_value = 0.0
+    bereich.inputs["From Max"].default_value = math.sin(math.radians(45.0))
+    bereich.inputs["To Min"].default_value = 0.0
+    bereich.inputs["To Max"].default_value = 1.0
+    try:
+        bereich.clamp = True
+    except Exception:                                      # noqa: BLE001
+        pass
+    baum.links.new(trenne.outputs["Z"], bereich.inputs["Value"])
+    verlauf = _mix_farbe(baum, bereich.outputs["Result"], horizont, zenit)
+    grund = baum.nodes.new("ShaderNodeBackground")
+    baum.links.new(verlauf, grund.inputs["Color"])
+    grund.inputs["Strength"].default_value = float(staerke)
+    weg = baum.nodes.new("ShaderNodeLightPath")
+    mischung = baum.nodes.new("ShaderNodeMixShader")
+    baum.links.new(weg.outputs["Is Camera Ray"], mischung.inputs[0])
+    baum.links.new(licht_ausgang, mischung.inputs[1])
+    baum.links.new(grund.outputs["Background"], mischung.inputs[2])
+    ausgabe = next((k for k in baum.nodes if getattr(k, "type", "") == "OUTPUT_WORLD"), None)
+    if ausgabe is None:
+        ausgabe = baum.nodes.new("ShaderNodeOutputWorld")
+    baum.links.new(mischung.outputs["Shader"], ausgabe.inputs["Surface"])
+
+
+def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
+                 toenung=None):
     """Umgebungslicht als Welt setzen — gleichmässig, oder aus einem Himmelsbild.
 
     `read_factory_settings(use_empty=True)` löscht auch die Welt. Ohne sie rendert Cycles
@@ -1110,9 +1221,13 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0):
     Background (``staerke``). Die Datei wird unverändert geladen (CC0, Regel 1). Der
     ID-Pass ruft diese Funktion danach OHNE ``hdr`` — sein Grund bleibt schwarz.
 
+    **Seit auf-20261020-292 (B2/B3):** Das Himmelsbild gibt nur noch Licht und Spiegelungen;
+    die Kamera sieht einen ruhigen Verlauf (:func:`_ruhiger_hintergrund`). ``toenung``
+    (``(r, g, b)``, linear, aus ``stimmung.toenung_fuer``) färbt Licht und Grund.
+
     Returns:
-        ``None`` ohne Himmelsbild, sonst ``{datei, staerke, drehung_grad, groesse}`` — nur
-        der Dateiname, kein Pfad (Regel 3).
+        ``None`` ohne Himmelsbild, sonst ``{datei, staerke, drehung_grad, groesse, toenung,
+        hintergrund}`` — nur der Dateiname, kein Pfad (Regel 3).
     """
     welt = bpy.data.worlds.new("Welt")
     hintergrund = _welt_hintergrund(welt)
@@ -1129,10 +1244,69 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0):
     himmel.image = bpy.data.images.load(str(hdr), check_existing=True)
     baum.links.new(koord.outputs["Generated"], abbild.inputs["Vector"])
     baum.links.new(abbild.outputs["Vector"], himmel.inputs["Vector"])
-    baum.links.new(himmel.outputs["Color"], hintergrund.inputs["Color"])
+    if toenung:
+        faerben = baum.nodes.new("ShaderNodeVectorMath")
+        faerben.operation = "MULTIPLY"
+        faerben.inputs[1].default_value = tuple(float(k) for k in toenung)
+        baum.links.new(himmel.outputs["Color"], faerben.inputs[0])
+        baum.links.new(faerben.outputs["Vector"], hintergrund.inputs["Color"])
+    else:
+        baum.links.new(himmel.outputs["Color"], hintergrund.inputs["Color"])
+    farben = _himmelsfarben(himmel.image)
+    _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke, farben, toenung)
     return {"datei": Path(str(hdr)).name, "staerke": float(staerke),
             "drehung_grad": float(drehung_grad),
-            "groesse": [int(v) for v in himmel.image.size]}
+            "groesse": [int(v) for v in himmel.image.size],
+            "toenung": list(toenung) if toenung else None,
+            "hintergrund": {"art": "verlauf", "kamerastrahl": "ruhig",
+                            "horizont": list(farben["horizont"]),
+                            "zenit": list(farben["zenit"]), "weg": farben["weg"],
+                            "grund": farben["grund"]}}
+
+
+#: Die Tonwertkurven, falls ``aiimaging.stimmung`` nicht lesbar ist — dieselbe Reihenfolge.
+RUECKFALL_TONWERTE = ("AgX", "Filmic")
+
+
+def _tonwerte_setzen(szene, belichtung_ev) -> dict:
+    """Tonwertkurve und Belichtung für das Schönbild MIT Himmelsbild (auf-20261020-292, B1).
+
+    Versucht der Reihe nach ``stimmung.TONWERTE`` (AgX, Filmic) — die erste, die dieses
+    Blender kennt, gilt; kennt es keine, bleibt «Standard», und der Bericht sagt es. Der
+    ID-Pass stellt danach :func:`_tonwerte_zurueck` — seine Kennfarben brauchen «Standard».
+    """
+    modul = _stimmung_modul()
+    reihe = tuple(getattr(modul, "TONWERTE", RUECKFALL_TONWERTE) or RUECKFALL_TONWERTE)
+    gesetzt = None
+    versucht = []
+    for name in reihe:
+        try:
+            szene.view_settings.view_transform = name
+        except Exception as fehler:                        # noqa: BLE001
+            versucht.append(f"{name}: {fehler}")
+            continue
+        gesetzt = name
+        break
+    try:
+        szene.view_settings.look = "None"
+    except Exception:                                      # noqa: BLE001
+        pass
+    ev = float(belichtung_ev or 0.0)
+    szene.view_settings.exposure = ev
+    return {"tonwerte": gesetzt or "Standard", "belichtung_ev": ev,
+            "grund": ("" if gesetzt else
+                      "Keine der Tonwertkurven ist in diesem Blender vorhanden: "
+                      + "; ".join(versucht))}
+
+
+def _tonwerte_zurueck(szene) -> None:
+    """«Standard», Belichtung 0 — für den ID-Pass, dessen Kennfarben exakt bleiben müssen."""
+    szene.view_settings.view_transform = "Standard"
+    szene.view_settings.look = "None"
+    try:
+        szene.view_settings.exposure = 0.0
+    except Exception:                                      # noqa: BLE001
+        pass
 
 
 #: Was eine bestellte Sonne ausmacht — ist eines davon gesetzt, bleibt die Sonnenlampe auch
@@ -2502,6 +2676,9 @@ def _renderparameter_setzen(a) -> None:
     # Standard statt AgX: AgX ist ein Filmlook mit weicher Kompression der Lichter. Für ein
     # Bild, das gleich wieder maschinell ausgewertet wird, ist eine nachvollziehbare
     # Zuordnung von Renderwert zu Bildwert wichtiger als ein schönes Rollover.
+    # MIT HIMMELSBILD GILT ES NICHT MEHR (auf-20261020-292, B1): Dort stellt `main` danach
+    # AgX/Filmic und die Belichtung der Stimmung (`_tonwerte_setzen`) — ohne Himmelsbild
+    # bleibt es Wort fuer Wort hier.
     szene.view_settings.view_transform = "Standard"
     szene.view_settings.look = "None"
 
@@ -2640,11 +2817,22 @@ def main() -> int:
     # MIT HIMMELSBILD (Entscheid 110): das Bild als Welt, Staerke und Drehung wie bestellt.
     umgebung_befund = None
     if getattr(a, "umgebung_hdr", None):
+        toenung = None
+        if getattr(a, "umgebung_toenung", None):
+            toenung = tuple(float(k) for k in str(a.umgebung_toenung).split(","))
+            if len(toenung) != 3:
+                raise RuntimeError(f"--umgebung-toenung braucht drei Zahlen 'r,g,b', war "
+                                   f"{a.umgebung_toenung!r}.")
         umgebung_befund = _welt_setzen(
             (0.55, 0.60, 0.68),
             1.0 if a.umgebung_staerke is None else float(a.umgebung_staerke),
             hdr=a.umgebung_hdr,
-            drehung_grad=0.0 if a.umgebung_drehung is None else float(a.umgebung_drehung))
+            drehung_grad=0.0 if a.umgebung_drehung is None else float(a.umgebung_drehung),
+            toenung=toenung)
+        # TONWERTE MIT HIMMELSBILD (auf-20261020-292, B1): AgX bzw. Filmic und die
+        # Belichtung der Stimmung — nur fuer das Schoenbild, der ID-Pass stellt zurueck.
+        umgebung_befund["ansicht"] = _tonwerte_setzen(
+            szene, getattr(a, "umgebung_belichtung", None))
     else:
         _welt_setzen((0.55, 0.60, 0.68), 0.25)           # kühles, gleichmässiges Umgebungslicht
     _, sonne_befund = _sonne_setzen(mitte, spanne, a)
@@ -2695,6 +2883,10 @@ def main() -> int:
         # ein zweites Mal über dieselbe Datei.
         _kompositor_abschalten(szene)
         _welt_setzen((0.0, 0.0, 0.0), 0.0)               # schwarzer Grund, Farbwert 0 = "nichts"
+        # DIE KENNFARBEN BRAUCHEN «STANDARD» (auf-20261020-292): Mit Himmelsbild rechnet das
+        # Schoenbild mit AgX und Belichtung; beide verschoeben jede Kennfarbe, und die
+        # Bauwerksmaske laese andere Namen. Zurueck, bevor der ID-Pass rechnet.
+        _tonwerte_zurueck(szene)
         # Ein Sample, kein Denoiser, keine Bounces: Jedes Pixel trägt genau die gesetzte
         # Farbe. Mehr Samples würden Kanten mischen und neue, falsche IDs erfinden.
         szene.cycles.samples = 1

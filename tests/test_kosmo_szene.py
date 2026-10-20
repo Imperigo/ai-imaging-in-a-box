@@ -174,8 +174,11 @@ def test_die_aufloesung_ist_dort_ein_paar_und_traegt_das_seitenverhaeltnis():
     Höhe, und die Warnung dazu steht im Ergebnis.
     """
     gelesen = ks.lies_szene(szene())
-    assert (gelesen["aufloesung"], gelesen["hoehe"]) == (1600, 992)
-    assert any("1600x1000 auf 1600x992" in w for w in gelesen["warnungen"])
+    # Seit auf-20261020-292 (B5) rechnet Blender die BESTELLTE Groesse; nur der KI-Schritt
+    # rastert intern und bringt sein Bild zurueck. Der Satz sagt beides.
+    assert (gelesen["aufloesung"], gelesen["hoehe"]) == (1600, 1000)
+    assert any("1600x1000 auf 1600x992" in w and "zurück" in w
+               for w in gelesen["warnungen"])
 
 
 def test_faithful_wird_abgebildet_und_der_verlust_dabei_benannt():
@@ -447,9 +450,9 @@ def test_die_vorgabe_des_fremden_vertrags_wird_gerastert_und_gemeldet():
                            "cameras": [{"name": "a", "position": [1, 2, 3],
                                         "target": [0, 0, 0], "fov": 45,
                                         "up_axis": "z"}]})
-    assert szene["aufloesung"] % ks.RASTER == 0
-    assert szene["hoehe"] % ks.RASTER == 0
-    assert (szene["aufloesung"], szene["hoehe"]) == (1600, 992)
+    # Bestellte Groesse bleibt (auf-20261020-292, B5); gerastert wird nur im KI-Schritt.
+    assert (szene["aufloesung"], szene["hoehe"]) == (1600, 1000)
+    assert "1600x992" in " ".join(szene["vertragsvorgaben"])
     assert any("Vielfache von 16" in v for v in szene["vertragsvorgaben"]), (
         "still runden waere der Fehler — die Kamera haengt am Seitenverhaeltnis"
     )

@@ -71,6 +71,7 @@ from . import kosmo_szene as _kosmo_szene
 from . import prompts, raumkamera as _raumkamera, render
 from . import seams as _seams
 from . import sonne as _sonne
+from . import belichtung as _belichtung_modul
 from . import stimmung as _stimmung
 from . import varianten
 
@@ -588,8 +589,12 @@ def umgebung_einstellungen(szene: dict) -> dict:
     datei = (szene or {}).get("umgebung_datei") or {}
     # `dict(...)` mit Schluesselwoertern, nicht `update` — so liest die Probe der Kette
     # (tests/test_kette.py, `_was_der_abholer_bestellt`) aus dem Quelltext, was bestellt wird.
+    licht = _stimmung.licht_der_stimmung(umgebung.get("preset"))
     aus = dict(umgebung_hdr=str(datei["pfad"]), umgebung_staerke=umgebung["intensitaet"],
-               umgebung_drehung=umgebung["rotationGrad"]) if datei.get("pfad") else {}
+               umgebung_drehung=umgebung["rotationGrad"],
+               umgebung_belichtung=licht["belichtung_ev"]) if datei.get("pfad") else {}
+    if aus and licht["toenung_linear"] is not None:
+        aus = dict(aus, umgebung_toenung=tuple(licht["toenung_linear"]))
     if umgebung.get("preset") == _stimmung.PRESET_WEISS:
         aus = dict(aus, umgebung_weiss=True)
     return aus
@@ -616,6 +621,12 @@ def angewandt_der_szene(szene: dict) -> dict:
             gipsmodell=umgebung.get("preset") == _stimmung.PRESET_WEISS,
             sonnenlampe=bool(szene.get("sonne")),
             prompt_satz=(zusatz or {}).get("satz"),
+            # Belichtung, Farbtemperatur und Tonwerte je Stimmung (auf-20261020-292) —
+            # Daten des Heim-PC, keine Felder des Vertrags; hier, damit das Ergebnis sagt,
+            # womit gerechnet wurde.
+            licht={k: v for k, v in
+                   _stimmung.licht_der_stimmung(umgebung.get("preset")).items()
+                   if v is not None},
             herkunft=dict(_stimmung.HERKUNFT))
     auto = szene.get("kameras_auto")
     if auto:
@@ -2301,6 +2312,19 @@ def schritte_des_laufs(szene: dict) -> int:
             else _backbone.schritte_fuer(name))
 
 
+def steuerstaerke_des_laufs(szene: dict) -> float:
+    """Die Steuerstärke des Bildmodells: bei der Vorschau der Registerwert
+    :attr:`aiimaging.backbone.Backbone.vorschau_steuerstaerke` (auf-20261020-292: 1,0 folgt
+    dem Umriss besser als 0,8), sonst — und wenn er fehlt — ``faithful`` der Bestellung."""
+    from . import backbone as _backbone  # noqa: PLC0415
+    bestellt = szene.get("controlnet_staerke", 0.8)
+    if ist_vorschau(szene):
+        wert = _backbone.vorschau_steuerstaerke_fuer(gerechnetes_backbone(szene))
+        if wert is not None:
+            return float(wert)
+    return bestellt
+
+
 def seed_der_grundlage(geholt, kuerzel) -> int | None:
     """Der Startwert, den die Grundlage für diese Kamera behalten hat — oder ``None``.
 
@@ -2331,9 +2355,36 @@ def seeds_der_kamera(szene: dict, geholt, kuerzel, seeds) -> tuple:
 #: NIE in die Grundlage: Sie bleibt, wie Blender sie schrieb, und für die volle Güte
 #: wiederverwendbar.
 VORSCHAU_ORDNER = "_vorschau"
+#: Dasselbe für die volle Güte, wenn die bestellte Grösse nicht aufs Raster fällt
+#: (auf-20261020-292, B5): Blender rechnet 960 x 600, das Bildmodell 960 x 592.
+KI_RASTER_ORDNER = "_ki_raster"
 
 
-def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None) -> dict:
+def ki_steuerbilder(tiefe_png, schoenbild_png, ordner, *, vorschau: bool,
+                    lange_seite=None) -> dict:
+    """Die Steuerbilder in der Grösse, in der das Bildmodell rechnet.
+
+    Vorschau: :func:`vorschau_steuerbilder` (verkleinert und gerastert). Volle Güte: nur
+    gerastert (:func:`aiimaging.backbone.ki_raster_groesse`) — liegt die Grundlage schon
+    auf dem Raster, bleibt alles, wie es ist (``verkleinert: False``). Das KI-Bild wird danach
+    auf ``grundlage_groesse`` zurückgebracht, also auf die bestellte Grösse.
+    """
+    if vorschau:
+        return vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner,
+                                     lange_seite=lange_seite)
+    return vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, nur_raster=True)
+
+
+def _schon_im_raster_oder_zu_klein(breite: int, hoehe: int) -> bool:
+    """Nichts zu tun: auf dem Raster — oder kleiner als ein Rasterfeld (dann waere jede
+    Groesse falsch, und hochrechnen hiesse erfinden; die Pipeline sagt es selbst)."""
+    from . import backbone as _backbone  # noqa: PLC0415
+    r = _backbone.PIXEL_RASTER
+    return (breite % r == 0 and hoehe % r == 0) or breite < r or hoehe < r
+
+
+def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None,
+                          nur_raster: bool = False) -> dict:
     """Tiefenkarte und Schönbild für den KI-Schritt der Vorschau verkleinern (Entscheid 104).
 
     Das Seitenverhältnis bleibt, die lange Seite geht auf höchstens
@@ -2352,8 +2403,13 @@ def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None
     """
     from . import backbone as _backbone, bildschreiben  # noqa: PLC0415
     breite, hoehe = bildschreiben.png_masse(tiefe_png)
-    ziel_b, ziel_h = _backbone.vorschau_groesse(
-        breite, hoehe, lange_seite=lange_seite or _backbone.VORSCHAU_LANGE_SEITE)
+    if nur_raster and _schon_im_raster_oder_zu_klein(breite, hoehe):
+        ziel_b, ziel_h = breite, hoehe
+    else:
+        ziel_b, ziel_h = (_backbone.ki_raster_groesse(breite, hoehe) if nur_raster else
+                          _backbone.vorschau_groesse(
+                              breite, hoehe,
+                              lange_seite=lange_seite or _backbone.VORSCHAU_LANGE_SEITE))
     befund = {"grundlage_groesse": [breite, hoehe], "ki_groesse": [ziel_b, ziel_h],
               "verkleinert": (ziel_b, ziel_h) != (breite, hoehe), "weg": None,
               "tiefe_png": str(tiefe_png), "schoenbild_png": schoenbild_png,
@@ -3779,10 +3835,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DIE STEUERBILDER DER VORSCHAU (Entscheid 104): verkleinerte Kopien neben der
             # Kamera, die Grundlage bleibt, wie Blender sie schrieb. Bei der vollen Guete
             # gehen die Originale hin wie bisher.
-            steuer = (vorschau_steuerbilder(tiefe, bericht.get("beauty_png"),
-                                            aus / VORSCHAU_ORDNER,
-                                            lange_seite=vorschau_lange_seite)
-                      if vorschau else None)
+            # SEIT auf-20261020-292 (B5) AUCH BEI «VOLL», wenn die bestellte Groesse nicht
+            # aufs Raster faellt: Blender rechnet die bestellte Groesse, das Bildmodell eine
+            # gerasterte, und sein Bild geht danach auf die bestellte zurueck.
+            steuer = ki_steuerbilder(tiefe, bericht.get("beauty_png"),
+                                     aus / (VORSCHAU_ORDNER if vorschau else KI_RASTER_ORDNER),
+                                     vorschau=vorschau, lange_seite=vorschau_lange_seite)
             seeds_kamera = seeds_der_kamera(szene, geholt, kuerzel, seeds)
 
             def _rendere_seed(seed, ziel_png):
@@ -3790,13 +3848,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # Kamera und wird danach auf die Groesse der Grundlage gebracht — die
                 # Pruefung misst Punkt fuer Punkt gegen dieselbe Soll-Karte wie bei «voll».
                 klein = steuer is not None and steuer["verkleinert"]
-                roh_png = (str(aus / VORSCHAU_ORDNER / Path(ziel_png).name) if klein
-                           else ziel_png)
+                roh_png = (str(aus / (VORSCHAU_ORDNER if vorschau else KI_RASTER_ORDNER)
+                               / Path(ziel_png).name) if klein else ziel_png)
                 erg = rendern(
                     render.RenderAuftrag(
                         depth_png=steuer["tiefe_png"] if steuer else tiefe,
                         prompt=prompt_kamera,
-                        controlnet_staerke=szene.get("controlnet_staerke", 0.8),
+                        # Vorschau: der Registerwert (auf-20261020-292, Punkt 7), sonst
+                        # `faithful` der Bestellung.
+                        controlnet_staerke=steuerstaerke_des_laufs(szene),
                         backbone=backbone_name,
                         # Die Bestellung kennt kein Schrittfeld; es gilt die Modellkarte
                         # des Eintrags, sonst 20 (auf-20260930-208) — bei der Vorschau
@@ -3951,6 +4011,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             urteil[_kosmo_szene.URTEIL_GUETE] = (
                 _guete_vermerk(szene, backbone_name, schritte_lauf, auswahl, steuer)
                 if vorschau else None)
+            # UEBERSTRAHLUNG AM HAUS (auf-20261020-292, B1) — nur mit Stimmung: Anteil voll
+            # weisser Bildpunkte des Cycles-Bilds auf der Bauwerksmaske. Eine Auskunft, kein
+            # Tor; `qa.ueberstrahlt_anteil` im Ergebnis.
+            if szene.get("umgebung"):
+                urteil["ueberstrahlt"] = _belichtung_modul.ueberstrahlt_aus_png(
+                    bericht.get("beauty_png"), maske=maskenbefund.get("maske"))
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -4123,6 +4189,11 @@ MULTIPASS_DURCHGEREICHT = {
     "umgebung_staerke": "umgebung_einstellungen(szene) ← render.environment.intensitaet",
     "umgebung_drehung": "umgebung_einstellungen(szene) ← render.environment.rotationGrad",
     "umgebung_weiss": "umgebung_einstellungen(szene) ← render.environment.preset 'weiss'",
+    # Seit auf-20261020-292: Belichtung und Toenung je Stimmung (Daten in aiimaging.stimmung).
+    "umgebung_belichtung": "umgebung_einstellungen(szene) ← stimmung.STIMMUNGEN[preset]"
+                           "['belichtung_ev']",
+    "umgebung_toenung": "umgebung_einstellungen(szene) ← stimmung.toenung_fuer(kelvin der "
+                        "Stimmung); fehlt ohne Farbtemperatur",
     "kamera_ausschnitt": "_ausschnitt_ohne_box(...) — nur Richtungskamera ohne eigene Box, "
                          "wenn die Rahmung meldet: Bauwerk = Szene",
 }
@@ -4462,6 +4533,8 @@ def _guete_vermerk(szene, backbone_name, schritte, auswahl, steuer) -> dict:
         "backbone": backbone_name,
         "backbone_bestellt": bestellt,
         "schritte": schritte,
+        "steuerstaerke": steuerstaerke_des_laufs(szene),
+        "steuerstaerke_bestellt": szene.get("controlnet_staerke", 0.8),
         "seed": (auswahl or {}).get("gewaehlt"),
         "ki_groesse": list((steuer or {}).get("ki_groesse") or ()) or None,
         "grundlage_groesse": list((steuer or {}).get("grundlage_groesse") or ()) or None,
@@ -4473,6 +4546,10 @@ def _guete_vermerk(szene, backbone_name, schritte, auswahl, steuer) -> dict:
         vermerk["hinweise"].append(
             f"Bestellt war {bestellt!r}; die Vorschau rechnet immer {backbone_name!r}. Fuer "
             f"das bestellte Modell 'Voll' waehlen.")
+    if vermerk["steuerstaerke"] != vermerk["steuerstaerke_bestellt"]:
+        vermerk["hinweise"].append(
+            f"Bestellt war faithful {vermerk['steuerstaerke_bestellt']}; die Vorschau steuert "
+            f"immer mit {vermerk['steuerstaerke']} (Registerwert von {backbone_name!r}).")
     if (steuer or {}).get("schoenbild_grund"):
         vermerk["hinweise"].append(steuer["schoenbild_grund"])
     return vermerk

@@ -324,6 +324,17 @@ class Backbone:
     vorschau_schritte: int | None = None
     vorschau_schritte_beleg: str | None = None
 
+    #: Die Steuerstärke (``controlnet_staerke``) der **Vorschau** — schlägt ``faithful`` der
+    #: Bestellung, wie :attr:`vorschau_schritte` die Schrittzahl und
+    #: :data:`VORSCHAU_BACKBONE` das Modell (Entscheid 104: die Vorschau rechnet immer
+    #: gleich). ``None`` heisst nicht belegt: Dann gilt die Bestellung.
+    #:
+    #: Ein Registerwert und keine Zahl im Abholer, damit es **eine** Stelle gibt: Bei
+    #: ``z-image-turbo`` gemessen (auf-20261020-292, Punkt 6): 0,8 → Umriss 0,83, 1,0 → 0,87,
+    #: und 1,0 schneller (38 s gegen 45 s bis fertig).
+    vorschau_steuerstaerke: float | None = None
+    vorschau_steuerstaerke_beleg: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -920,6 +931,12 @@ _eintrag(Backbone(
     vorschau_schritte_beleg=("Modellkarte Tongyi-MAI/Z-Image-Turbo: auf 8 Schritte ohne "
                              "Führung destilliert (8 NFEs); gemessen 1,5 s je Bild bei "
                              "512 px und 4,8 s bei 1024 px (auf-20260930-199)"),
+    # DIE VORSCHAU STEUERT MIT 1,0 (auf-20261020-292, Punkt 6, HomeStation): Umriss gegen die
+    # Bauwerksmaske 0,868 bei 1,0 gegen 0,829 bei 0,8, gleicher Seed, gleiche Grundlage.
+    vorschau_steuerstaerke=1.0,
+    vorschau_steuerstaerke_beleg=("auf-20261020-292 Punkt 6: Umriss 0,868 (1,0) gegen 0,829 "
+                                  "(0,8), gleicher Seed 482913, gleiche Grundlage; 38 s "
+                                  "gegen 45 s"),
     # AM GERÄT GEMESSEN (auf-20260818-13): Mit unserer Karte (nah = hell) liegt
     # |spearman| bei 0.38–0.52, mit umgedrehter bei 0.79–0.85 — bei JEDER
     # ControlNet-Stärke rund das Doppelte. Das ControlNet erwartet nah = dunkel.
@@ -1415,13 +1432,33 @@ def vorschau_schritte_fuer(name: str | None) -> int:
     return wert if wert else schritte_fuer(name)
 
 
+def vorschau_steuerstaerke_fuer(name: str | None) -> float | None:
+    """Die Steuerstärke der Vorschau: :attr:`Backbone.vorschau_steuerstaerke`, sonst ``None``
+    (dann gilt, was die Bestellung sagt)."""
+    eintrag = BACKBONES.get(name or "")
+    return getattr(eintrag, "vorschau_steuerstaerke", None) if eintrag else None
+
+
+def ki_raster_groesse(breite: int, hoehe: int, *, raster: int = PIXEL_RASTER) -> tuple[int, int]:
+    """Die Grösse, in der das Bildmodell rechnet — abwärts auf ``raster``, mindestens eines.
+
+    Seit auf-20261020-292 (Befund B5) rechnet Blender die **bestellte** Grösse; nur der
+    KI-Schritt braucht Vielfache von 16 und bekommt seine Steuerbilder in dieser Grösse. Sein
+    Bild wird danach auf die bestellte Grösse zurückgebracht.
+    """
+    breite, hoehe = int(breite), int(hoehe)
+    if breite <= 0 or hoehe <= 0:
+        raise BackboneError(f"Keine Bildgrösse: {breite} x {hoehe}.")
+    return max(raster, breite - breite % raster), max(raster, hoehe - hoehe % raster)
+
+
 def vorschau_groesse(breite: int, hoehe: int, *, lange_seite: int = VORSCHAU_LANGE_SEITE,
                      raster: int = PIXEL_RASTER) -> tuple[int, int]:
     """Die Grösse des KI-Bilds einer Vorschau — Seitenverhältnis gehalten, auf ``raster``.
 
-    Ist die Vorlage schon nicht grösser als ``lange_seite``, bleibt sie, wie sie ist
-    (``(breite, hoehe)`` zurück): Die Vorschau soll nicht hochrechnen, und eine Vorlage, die
-    die volle Güte so annimmt, nimmt auch die Vorschau so an.
+    Ist die Vorlage schon nicht grösser als ``lange_seite``, bleibt sie in ihrer Grösse,
+    nur auf das Raster abgerundet (:func:`ki_raster_groesse`): Die Vorschau soll nicht
+    hochrechnen, und sie rechnet dann wie die volle Güte.
 
     Sonst wird die lange Seite auf das grösste Vielfache von ``raster`` unter
     ``lange_seite`` gesetzt und die kurze aus dem Seitenverhältnis gerechnet, auf das
@@ -1431,7 +1468,9 @@ def vorschau_groesse(breite: int, hoehe: int, *, lange_seite: int = VORSCHAU_LAN
     if breite <= 0 or hoehe <= 0:
         raise BackboneError(f"Keine Bildgrösse: {breite} x {hoehe}.")
     if max(breite, hoehe) <= lange_seite:
-        return breite, hoehe
+        # Nicht hochrechnen — aber aufs Raster (auf-20261020-292, B5): Seit Blender die
+        # bestellte Grösse rechnet, kann eine kleine Vorlage 800 x 500 sein.
+        return ki_raster_groesse(breite, hoehe, raster=raster)
     lang = max(raster, (lange_seite // raster) * raster)
     kurz_roh = lang * min(breite, hoehe) / max(breite, hoehe)
     kurz = max(raster, int(kurz_roh / raster + 0.5) * raster)

@@ -32,7 +32,9 @@ from pathlib import Path
 __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNFT",
            "VORGABE_INTENSITAET", "VORGABE_DREHUNG_GRAD", "aufloesung_fuer",
            "dateiname", "himmel_ordner", "himmel_datei", "himmelsbilder_stand",
-           "prompt_satz", "PRESET_WEISS"]
+           "prompt_satz", "PRESET_WEISS", "TONWERTE", "NEUTRAL_KELVIN",
+           "licht_der_stimmung", "toenung_fuer", "vorgabe_staerke", "hintergrund_aus_himmel",
+           "HINTERGRUND_HORIZONT_GRAD", "HINTERGRUND_ZENIT_GRAD"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -57,9 +59,39 @@ HERKUNFT = {"quelle": "Poly Haven", "lizenz": "CC0-1.0",
 VORGABE_INTENSITAET = 1.0
 VORGABE_DREHUNG_GRAD = 0.0
 
+#: Die Tonwertkurve, mit der ein Bild MIT Himmelsbild gerechnet wird — in dieser Reihenfolge
+#: versucht, die erste, die das Blender am Heim-PC kennt, gilt (der Bericht nennt sie).
+#:
+#: **Anlass (auf-20261020-292, B1):** Der Runner setzte immer «Standard» — eine gerade Linie
+#: von Renderwert zu Bildwert, für die Messläufe ohne Himmelsbild richtig (eine
+#: nachvollziehbare Zuordnung). Ein Himmelsbild bringt aber Werte weit über 1 ins Bild (die
+#: Sonne, ein heller Himmel), und «Standard» schneidet sie ab: Das Haus war bei «mittag» eine
+#: reine weisse Fläche (11,9 % der Bildpunkte voll weiss). AgX (ab Blender 4.0, Vorgabe dort)
+#: rollt die Lichter weich ab, Filmic ist sein Vorgänger. **Ohne Himmelsbild bleibt «Standard»,
+#: Wort für Wort** — jede bisherige Messung hängt daran.
+TONWERTE = ("AgX", "Filmic")
+
+#: Die Farbtemperatur, die keine Tönung bedeutet.
+NEUTRAL_KELVIN = 6500.0
+
+#: Wo der ruhige Hintergrund seine zwei Farben aus dem Himmelsbild nimmt (Grad über dem
+#: Horizont): Horizont ein Band knapp darüber, Zenit die obere Kalotte. Median, nicht
+#: Mittel — sonst färbt die Sonnenscheibe (Werte über 10'000) den ganzen Grund weiss.
+HINTERGRUND_HORIZONT_GRAD = (2.0, 15.0)
+HINTERGRUND_ZENIT_GRAD = (45.0, 90.0)
+
 #: Die acht Stimmungen.
 #:
-#: ``hdri`` ist die Vorgabe je Stimmung (Tabelle der HomeStation, 20.10.2026). ``prompt_de``
+#: ``hdri`` ist die Vorgabe je Stimmung (Tabelle der HomeStation, 20.10.2026; am selben Abend
+#: getauscht, ``hdri_vorher`` nennt das alte Bild — die alten Dateien bleiben am Heim-PC
+#: liegen und sind über ``render.environment.hdri`` weiter bestellbar). Alle Poly Haven, CC0.
+#:
+#: **Licht je Stimmung (auf-20261020-292, B1/B3) — gesetzt, nicht gemessen:**
+#: ``belichtung_ev`` (Blenders Belichtung in Blendenstufen, −1 halbiert das Licht im Bild),
+#: ``staerke`` (Vorgabe für ``intensitaet``, wenn die Bestellung keine nennt) und ``kelvin``
+#: (Farbtemperatur der Tönung des Himmelslichts, ``None`` = keine). Die Zahlen sind ein erster
+#: Stand auf den neuen Bildern; ``auf-20261020-293`` misst je Stimmung den Anteil voll weisser
+#: Bildpunkte am Haus und meldet, wo nachzustellen ist. ``prompt_de``
 #: ist der Satz, den der Knoten drüben in den Prompt legt (``VIS_STIMMUNGEN``; morgen, abend
 #: und weiss wörtlich wie dort), ``prompt_en`` der Satz, den der Heim-PC anfügt, wenn der
 #: übersetzte Prompt keines der ``merkmale`` trägt — sonst stünde die Stimmung doppelt da.
@@ -67,46 +99,147 @@ VORGABE_DREHUNG_GRAD = 0.0
 #: Bauteilwächter angefügt und soll nichts bestellen, was die Geometrie nicht trägt.
 STIMMUNGEN = {
     "morgen": {
-        "label": "Morgenlicht", "hdri": "sunny_vondelpark",
+        "label": "Morgenlicht", "hdri": "kloppenheim_06_puresky",
+        "hdri_vorher": "sunny_vondelpark",
+        "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": None,
         "prompt_de": "Morgenlicht, klare lange Schatten, frische kühle Luft",
         "prompt_en": "early morning light, clear long shadows, fresh cool air",
         "merkmale": ("morning",)},
     "mittag": {
         "label": "Mittag", "hdri": "kloofendal_43d_clear_puresky",
+        "hdri_vorher": None,
+        "belichtung_ev": -1.0, "staerke": 1.0, "kelvin": None,
         "prompt_de": "Mittagslicht, hohe Sonne, klarer Himmel",
         "prompt_en": "midday light, high sun, clear sky",
         "merkmale": ("midday", "noon")},
     "abend": {
-        "label": "Abendstimmung", "hdri": "fish_eagle_hill",
+        "label": "Abendstimmung", "hdri": "belfast_sunset_puresky",
+        "hdri_vorher": "fish_eagle_hill",
+        "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": 5000.0,
         "prompt_de": "Abendstimmung, warmes Licht, leuchtende Fenster",
         "prompt_en": "evening mood, warm low light, lit interiors glowing",
         "merkmale": ("evening", "sunset", "golden hour")},
     "blaue-stunde": {
-        "label": "Blaue Stunde", "hdri": "the_sky_is_on_fire",
+        "label": "Blaue Stunde", "hdri": "qwantani_dusk_2_puresky",
+        "hdri_vorher": "the_sky_is_on_fire",
+        "belichtung_ev": 0.5, "staerke": 1.0, "kelvin": None,
         "prompt_de": "Blaue Stunde, tiefblauer Himmel, warm leuchtende Innenräume",
         "prompt_en": "blue hour, deep blue sky, warmly lit interiors",
         "merkmale": ("blue hour", "twilight", "dusk")},
     "bedeckt": {
         "label": "Bedeckt", "hdri": "overcast_soil_puresky",
+        "hdri_vorher": None,
+        "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": None,
         "prompt_de": "bedeckter Himmel, weiches gleichmässiges Licht",
         "prompt_en": "overcast sky, soft even light",
         "merkmale": ("overcast",)},
     "nebel": {
-        "label": "Nebel", "hdri": "kloppenheim_04",
+        "label": "Nebel", "hdri": "kloofendal_misty_morning_puresky",
+        "hdri_vorher": "kloppenheim_04",
+        "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": None,
         "prompt_de": "Nebel, gedämpftes Licht, Tiefe im Dunst",
         "prompt_en": "fog, muted light, depth fading into haze",
         "merkmale": ("fog", "mist", "haze")},
     "winter": {
         "label": "Winter", "hdri": "snowy_field",
+        "hdri_vorher": None,
+        "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": 7500.0,
         "prompt_de": "Winter, Schnee am Boden, kaltes klares Licht",
         "prompt_en": "winter, snow on the ground, cold clear light",
         "merkmale": ("winter", "snow")},
     "weiss": {
-        "label": "Weissmodell", "hdri": "mud_road_puresky",
+        "label": "Weissmodell", "hdri": "studio_small_08",
+        "hdri_vorher": "mud_road_puresky",
+        "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": None,
         "prompt_de": "Weissmodell, neutrales Studiolicht, keine Materialien",
         "prompt_en": "white plaster study model, neutral studio light, no materials",
         "merkmale": ("white model", "plaster model", "white plaster", "no materials")},
 }
+
+
+def vorgabe_staerke(preset: str) -> float:
+    """Die Stärke des Himmelsbilds, wenn ``intensitaet`` nicht bestellt ist — je Stimmung."""
+    eintrag = STIMMUNGEN.get(preset) or {}
+    wert = eintrag.get("staerke")
+    return float(wert) if wert is not None else VORGABE_INTENSITAET
+
+
+def toenung_fuer(kelvin) -> tuple[float, float, float] | None:
+    """Die Tönung des Himmelslichts zu einer Farbtemperatur — linear, Helligkeit gehalten.
+
+    Relativ zu :data:`NEUTRAL_KELVIN` (``kelvin_zu_farbe(k) / kelvin_zu_farbe(6500)`` je
+    Kanal) und danach so geteilt, dass die Rec.-709-Helligkeit 1 bleibt: Die Tönung färbt,
+    die Belichtung hellt — zwei Regler, zwei Fragen. ``None`` ohne Farbtemperatur.
+    """
+    if kelvin is None:
+        return None
+    from .sonne import kelvin_zu_farbe  # noqa: PLC0415 — reine Rechnung, ohne Blender
+    k = kelvin_zu_farbe(float(kelvin))
+    n = kelvin_zu_farbe(NEUTRAL_KELVIN)
+    roh = [a / b for a, b in zip(k, n)]
+    hell = 0.2126 * roh[0] + 0.7152 * roh[1] + 0.0722 * roh[2]
+    return tuple(round(c / hell, 6) for c in roh)
+
+
+def licht_der_stimmung(preset) -> dict:
+    """``{belichtung_ev, kelvin, toenung_linear, tonwerte}`` — die Lichtdaten einer Stimmung.
+
+    ``tonwerte`` ist die Reihenfolge aus :data:`TONWERTE`; welche gegriffen hat, sagt der
+    Bericht des Runners. Unbekannte Stimmung: Belichtung 0, keine Tönung.
+    """
+    eintrag = STIMMUNGEN.get(preset) or {}
+    kelvin = eintrag.get("kelvin")
+    return {"belichtung_ev": float(eintrag.get("belichtung_ev") or 0.0),
+            "kelvin": float(kelvin) if kelvin is not None else None,
+            "toenung_linear": (list(toenung_fuer(kelvin)) if kelvin is not None else None),
+            "tonwerte": list(TONWERTE)}
+
+
+def _median(werte):
+    werte = sorted(werte)
+    n = len(werte)
+    if n == 0:
+        return None
+    mitte = n // 2
+    return werte[mitte] if n % 2 else 0.5 * (werte[mitte - 1] + werte[mitte])
+
+
+def hintergrund_aus_himmel(pixel, breite: int, hoehe: int, *, kanaele: int = 4) -> dict:
+    """Die zwei Farben des ruhigen Hintergrunds aus einem (verkleinerten) Himmelsbild.
+
+    **Anlass (auf-20261020-292, B2):** Das Himmelsbild war sichtbarer Hintergrund — ein
+    Bodenfoto mit Wald und Felsen, das Haus schwebte davor. Seither gibt das Bild nur Licht
+    und Spiegelungen; was die Kamera direkt sieht, ist ein Verlauf vom Horizont zum Zenit in
+    den Farben dieses Himmels (der Runner baut ihn mit «Is Camera Ray»).
+
+    ``pixel`` ist die flache Liste in Blenders Reihenfolge (Zeile 0 **unten**, je Bildpunkt
+    ``kanaele`` Werte), das Bild equirektangulär (oberste Zeile = Zenit, Mitte = Horizont).
+    Je Band der Median je Kanal — die Sonnenscheibe zählt dann nicht.
+
+    Returns:
+        ``{horizont: [r, g, b], zenit: [r, g, b]}`` (linear) — ``None`` je Band ohne Punkte.
+    """
+    breite, hoehe = int(breite), int(hoehe)
+    if breite <= 0 or hoehe <= 0 or len(pixel) < breite * hoehe * kanaele:
+        raise ValueError(f"Himmelsbild {breite} x {hoehe} mit {len(pixel)} Werten passt nicht.")
+
+    def band(grad):
+        unten, oben = grad
+        zeilen = [z for z in range(hoehe)
+                  if unten <= ((z + 0.5) / hoehe * 180.0 - 90.0) <= oben]
+        kanal = [[], [], []]
+        for z in zeilen:
+            basis = z * breite * kanaele
+            for x in range(breite):
+                i = basis + x * kanaele
+                for c in range(3):
+                    kanal[c].append(float(pixel[i + c]))
+        if not zeilen:
+            return None
+        return [round(_median(k), 6) for k in kanal]
+
+    return {"horizont": band(HINTERGRUND_HORIZONT_GRAD),
+            "zenit": band(HINTERGRUND_ZENIT_GRAD)}
 
 
 def aufloesung_fuer(guete) -> str:

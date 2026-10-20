@@ -1,0 +1,51 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261020-293",
+ "art": "qa",
+ "beschreibung": "Nachmessung der Befunde aus 292 am Heim-PC: alle acht Stimmungen mit den getauschten Himmelsbildern (ruhiger Hintergrund, AgX, Belichtung je Stimmung, Anteil voll weiss am Haus), Gelaende ohne Material, Standpunkte gegen Render, 960x600 bestellt = gerechnet, Vorschau mit Staerke 1.0, fehlende Textur in einer Kopie, 409 beim Anlegen",
+ "erstellt": "2026-10-20T22:00:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261020-292",
+  "entscheide": [
+   "107",
+   "109",
+   "110",
+   "111",
+   "113"
+  ],
+  "einbau": [
+   "C79",
+   "C80",
+   "C81",
+   "C83"
+  ],
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig mit den Befunden aus 292 behoben — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Mit Himmelsbild sieht die Kamera einen RUHIGEN HINTERGRUND (Verlauf Horizont->Zenit in den Medianfarben des Himmels, Light Path 'Is Camera Ray'); das Himmelsbild gibt nur noch Licht und Spiegelungen. (b) Mit Himmelsbild rechnet das Cycles-Bild mit der Tonwertkurve AgX (sonst Filmic) und einer Belichtung JE STIMMUNG (stimmung.STIMMUNGEN[..]['belichtung_ev']: morgen -0.5, mittag -1.0, abend 0, blaue-stunde +0.5, bedeckt -0.5, nebel 0, winter -0.5, weiss 0 — gesetzt, nicht gemessen); ohne Himmelsbild bleibt 'Standard', der ID-Pass rechnet immer 'Standard'. (c) abend ist warm getoent (5000 K), winter kuehl (7500 K), Helligkeit gehalten. (d) NEUE VORGABE-HIMMELSBILDER (Tausch der HomeStation): morgen kloppenheim_06_puresky, mittag kloofendal_43d_clear_puresky, abend belfast_sunset_puresky, blaue-stunde qwantani_dusk_2_puresky, bedeckt overcast_soil_puresky, nebel kloofendal_misty_morning_puresky, winter snowy_field (UNVERAENDERT im Code — die Nachricht nannte 'snow_field'; bitte melden, welche der Dateien winter__snowy_field_* / winter__snow_field_* am Rechner liegen), weiss studio_small_08. (e) Geländeplatte (IfcSlab_Gelaende_*) bekommt NIE ein Material. (f) render.resolution wird wie bestellt gerechnet (960x600 statt 960x592); nur der KI-Schritt rechnet intern gerastert (960x592) und bringt sein Bild auf 960x600 zurueck. BESTEHENDE GRUNDLAGEN mit nicht durch 16 teilbarer Hoehe (z. B. 1600x992 aus 1600x1000) passen nicht mehr zu neuen Bestellungen und werden neu gerechnet. (g) GET /knoten/standpunkte nimmt aufloesung=BxH (oder breite+hoehe, oder seitenverhaeltnis). (h) Vorschau steuert immer mit 1.0 (Registerwert vorschau_steuerstaerke an z-image-turbo), faithful der Bestellung wird dort uebergangen und im Vermerk genannt. (i) qa.geometry.geom_iou ist null mit geom_iou_grund, wenn Soll und Ist keinen Bildpunkt gemeinsam haben (statt 0.0). (j) Unbekannte Material-id: render-result.json mit lieferstatus 'fehlgeschlagen' und Satz. (k) POST /bruecke/jobs weist eine Variante, deren Stimmung/Materialien/Kamera/Groesse nicht zur Grundlage passt, sofort mit 409 und Satz ab. (l) Neu im Ergebnis: qa.ueberstrahlt_anteil (Anteil voll weisser Bildpunkte 255/255/255 am Haus im Cycles-Bild, nur mit Stimmung), je Kamera in qa_je_kamera, Satz 'UEBERSTRAHLT' ab 1 %. VORBEREITUNG wie 292 (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER; Werte NIE ins Repo oder in die Rueckgabe). GET /api/heim -> 'Himmelsbilder n/8' (mit den neuen Namen). Geometrie synthetisch: derselbe gegliederte Testbau wie 292 (tools/make_test_glb.py, Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m) auf der Vorgabe-Platte 40x30 m. Alle Bilder 480 px lange Seite (render.resolution [480,300] wo nicht anders gesagt), Prompt 'no people', Bruecke wie die Knotenansicht. 1) ALLE ACHT STIMMUNGEN NOCHMALS: je ein Auftrag mit vis.skip true, cameras 'auto' mit cameras_auto {richtungen:['sSE']}, render.environment {preset}. Je Lauf: Bild (PNG) zurueck, qa.ueberstrahlt_anteil aus dem Ergebnis UND selbst nachgezaehlt (Anteil 255/255/255 auf der Bauwerksmaske aus material_id.png), blender-report umgebung.datei/groesse/toenung, umgebung.hintergrund (weg, horizont, zenit), umgebung.ansicht (tonwerte, belichtung_ev), Hintergrund ruhig ja/nein (kein Foto hinter dem Haus), Stimmung erkennbar ja/nein (abend: warmes, tiefes Licht?), mittlere Helligkeit. Wo ueberstrahlt_anteil >= 0.01 oder das Bild zu dunkel ist: welche belichtung_ev waere passend (einen Lauf mit render.environment.intensitaet als Ersatz, z. B. 0.5 oder 2.0, und sagen, was er zeigt). 2) GELAENDE: render.materialien {fassade:{id:'sichtbeton-sandgestrahlt'}, boden:{id:'stampflehm'}} mit cameras_auto {richtungen:['sSE']}, vis.skip true: blender-report materialien.objekte_je_art (erwartet gelaende 1, boden 0, nicht_getroffen ['boden']), Platte im Bild ohne Stampflehm ja/nein, Bild zurueck. 3) STANDPUNKTE GEGEN RENDER: cameras_auto {richtungen:['s','nNW'], brennweite_mm:50, perspektive:'senkrecht'}, render.resolution [960,600], vis.skip true; dazu GET /knoten/standpunkte mit denselben Parametern UND aufloesung=960x600 (Mappe mit demselben glb, eigene Probemappe) -> Abweichung auge und blick_auf je Kamera in m (erwartet ~0). Dazu einmal OHNE aufloesung (Vorgabe 1600x1000, Seitenverhaeltnis 1.6 = 960x600) -> ebenfalls ~0. 4) GROESSE: derselbe Lauf aus 3 — blender-report aufloesung/hoehe (erwartet 960/600), Bilddateien 960x600 ja/nein; dazu ein Lauf MIT KI-Schritt (vis.skip false, vis.guete 'voll', eine Richtung s, render.resolution [960,600]): Ergebnisbild 960x600 ja/nein, Silhouette deckungsgleich mit der Bauwerksmaske (eigene Nachmessung IoU wie in 292), vermerkte KI-Groesse. 5) VORSCHAU MIT STAERKE 1.0: auf der Grundlage mittag aus 1 eine Vorschau mit vis.seed 482913 und render.faithful 0.8 (der Vermerk muss 'steuert immer mit 1.0' sagen): Zeit, qa.geometry (geom_iou oder null mit geom_iou_grund), eigene Umriss-IoU, Schrift-Artefakte im Vordergrund ja/nein. BEFUND ZUM NEGATIVPROMPT: z-image-turbo laeuft ohne Fuehrung (fuehrung 0.0) — ein Negativprompt wirkt dann nicht; darum NICHTS gesetzt. Bitte messen, ob ein positiver Zusatz hilft: dieselbe Vorschau zweimal mit gleichem Seed, style.prompt einmal 'no people' und einmal 'no people, clean image without any lettering or signage', je Bild Schrift ja/nein und Umriss-IoU. 6) FEHLENDE TEXTUR: NUR IN EINER KOPIE — den Material-Ordner in einen eigenen Probeordner kopieren, AIIMAGING_MATERIAL_ORDNER fuer diesen einen Lauf auf die Kopie setzen und dort die Displacement-Karte von klinker 2K umbenennen; render.materialien {dach:{id:'klinker'}} -> job.json status, render-result.json lieferstatus und lieferstatus_grund woertlich (erwartet \"Textur 'klinker' (2K, Displacement) fehlt am Rechner.\"). Dazu {dach:{id:'klinker-gibt-es-nicht'}} -> render-result.json jetzt vorhanden, lieferstatus_grund woertlich. Den echten Ordner NICHT anfassen; Kopie danach entfernen und die Variable zuruecksetzen. 7) 409 BEIM ANLEGEN: auf der Grundlage mittag aus 1 eine Variante (POST /bruecke/jobs, ohne Modell, vis.grundlage = deren id) mit render.environment {preset:'abend'} -> HTTP-Status (erwartet 409) und Satz woertlich; Gegenprobe mit preset 'mittag' -> angenommen (dann nicht freigeben, Auftrag entfernen). 8) TIEFE UNVERAENDERT: Tiefenkarte (tiefe_norm.png) des Laufs mittag aus 1 gegen einen Lauf derselben Kamera ohne render.environment — gleich ja/nein (die Tonwertkurve darf die Tiefe nicht beruehren). NICHT: Code aendern, Dateien ins Repo legen (keine HDRI, keine Texturen, keine Pfade), Ordnerwerte in die Rueckgabe schreiben, den echten Textur- oder Himmelsordner veraendern, Kosmo-Modelle laden oder entladen, Dienste von KosmoOrbit anfassen, die Mappe des Dienstes veraendern. Eigene Probeauftraege, Probemappe und Kopien danach aufraeumen.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Systemlast, 'Himmelsbilder n/8' aus GET /api/heim (ohne Ordnerwerte); welche winter-Dateien liegen (snowy_field / snow_field).",
+  "1: je Stimmung Bild (480 px), qa.ueberstrahlt_anteil (gemeldet und nachgezaehlt), umgebung.datei/groesse/toenung/hintergrund/ansicht, Hintergrund ruhig ja/nein, Stimmung erkennbar ja/nein, mittlere Helligkeit; wo noetig vorgeschlagene belichtung_ev.",
+  "2: materialien.objekte_je_art und nicht_getroffen; Platte ohne Material ja/nein; Bild.",
+  "3: je Kamera Abweichung auge/blick_auf /knoten/standpunkte gegen blender-report in m, mit aufloesung=960x600 und ohne.",
+  "4: blender-report aufloesung/hoehe; Dateien 960x600 ja/nein; KI-Lauf: Ergebnisbild 960x600 ja/nein, Umriss-IoU, KI-Groesse aus dem Vermerk.",
+  "5: Vorschau mit faithful 0.8 bestellt: Vermerk woertlich, Zeit, qa.geometry, Umriss-IoU, Schrift ja/nein; A/B mit Prompt-Zusatz gegen Schrift.",
+  "6: fehlende Textur (Kopie) und unbekannte id: status, lieferstatus, lieferstatus_grund woertlich; echter Ordner unberuehrt bestaetigt.",
+  "7: Variante mit anderer Stimmung: HTTP-Status und Satz woertlich; Gegenprobe angenommen ja/nein.",
+  "8: Tiefe mit/ohne Himmelsbild gleich ja/nein.",
+  "Urteil in einem Satz: Ist das Haus in allen acht Stimmungen lesbar (unter 1 % voll weiss, ruhiger Hintergrund), und welche Belichtung je Stimmung soll in die Daten?"
+ ],
+ "rang": 80
+}

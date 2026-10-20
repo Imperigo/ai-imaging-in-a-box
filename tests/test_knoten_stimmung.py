@@ -61,7 +61,8 @@ def test_acht_stimmungen_wie_der_vertrag():
                                 "nebel", "winter", "weiss")
     assert set(stimmung.STIMMUNGEN) == set(stimmung.PRESETS)
     assert stimmung.STIMMUNGEN["mittag"]["hdri"] == "kloofendal_43d_clear_puresky"
-    assert stimmung.STIMMUNGEN["weiss"]["hdri"] == "mud_road_puresky"
+    # Getauscht am 20.10.2026 abends (HomeStation; die alten Dateien bleiben liegen).
+    assert stimmung.STIMMUNGEN["weiss"]["hdri"] == "studio_small_08"
     for preset, e in stimmung.STIMMUNGEN.items():
         assert stimmung.HDRI_MUSTER.match(e["hdri"]), preset
         assert e["prompt_de"] and e["prompt_en"] and e["merkmale"]
@@ -210,11 +211,15 @@ def test_der_abholer_gibt_das_himmelsbild_an_blender(tmp_path, monkeypatch):
 
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
     kw = protokoll["multipass"][0]
-    assert Path(kw["umgebung_hdr"]) == himmel / "abend__fish_eagle_hill_4k.hdr"
+    assert Path(kw["umgebung_hdr"]) == himmel / "abend__belfast_sunset_puresky_4k.hdr"
     assert kw["umgebung_staerke"] == 1.0 and kw["umgebung_drehung"] == 30.0
+    # Belichtung und Toenung je Stimmung (auf-20261020-292).
+    assert kw["umgebung_belichtung"] == stimmung.STIMMUNGEN["abend"]["belichtung_ev"]
+    assert kw["umgebung_toenung"] == tuple(stimmung.toenung_fuer(
+        stimmung.STIMMUNGEN["abend"]["kelvin"]))
     assert "umgebung_weiss" not in kw
     angewandt = antwort["ergebnis"]["angewandt"]["environment"]
-    assert angewandt["preset"] == "abend" and angewandt["hdri"] == "fish_eagle_hill"
+    assert angewandt["preset"] == "abend" and angewandt["hdri"] == "belfast_sunset_puresky"
     assert angewandt["aufloesung"] == "4k" and angewandt["sonnenlampe"] is False
     assert set(angewandt["vorgaben"]) == {"hdri", "intensitaet"}
     assert str(tmp_path) not in json.dumps(antwort["ergebnis"]), "kein Pfad (Regel 3)"
@@ -263,7 +268,7 @@ def test_eine_fehlende_datei_ergibt_ein_ergebnis_mit_grund(tmp_path, monkeypatch
 def test_heimstand_zaehlt_die_himmelsbilder(tmp_path, monkeypatch):
     _himmel(tmp_path, monkeypatch, "mittag__kloofendal_43d_clear_puresky_2k.hdr",
             "mittag__kloofendal_43d_clear_puresky_4k.hdr",
-            "abend__fish_eagle_hill_2k.hdr")
+            "abend__belfast_sunset_puresky_2k.hdr")
     stand = stimmung.himmelsbilder_stand()
     assert stand["da"] == 1 and stand["von"] == 8
     assert "abend" in stand["fehlend"] and stand["satz"].startswith("Himmelsbilder 1/8")
@@ -323,8 +328,10 @@ def test_die_welt_aus_dem_himmelsbild(monkeypatch):
                                 drehung_grad=90.0)
     baum = bpy.data.worlds.new.return_value.node_tree
     arten = [c.args[0] for c in baum.nodes.new.call_args_list]
-    assert arten == ["ShaderNodeTexCoord", "ShaderNodeMapping", "ShaderNodeTexEnvironment"]
-    assert baum.links.new.call_count == 3
+    assert arten[:3] == ["ShaderNodeTexCoord", "ShaderNodeMapping", "ShaderNodeTexEnvironment"]
+    # Seit auf-20261020-292 (B2): Kamerastrahlen sehen einen ruhigen Verlauf, nicht das Bild.
+    assert "ShaderNodeLightPath" in arten and "ShaderNodeMixShader" in arten
+    assert befund["hintergrund"]["kamerastrahl"] == "ruhig"
     assert befund["datei"] == "mittag__x_4k.hdr", "nur der Name, kein Pfad"
     assert befund["staerke"] == 1.5 and befund["drehung_grad"] == 90.0
     # Ohne Himmelsbild bleibt es die gleichmaessige Welt.

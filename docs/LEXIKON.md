@@ -2945,7 +2945,47 @@ Stärke 1 steht im Bild genau die Farbe der Datei.
 
 **View-Transform (AgX, Standard)** — Die Umrechnung von berechneten Lichtwerten in
 Bildwerte. `AgX` bildet filmisch ab und ist für Ansichtsbilder schöner; `Standard` rechnet
-unverfälscht und ist nötig, wenn aus dem Bild wieder Zahlen werden sollen.
+unverfälscht und ist nötig, wenn aus dem Bild wieder Zahlen werden sollen. *Seit
+auf-20261020-292:* Mit Himmelsbild rechnet das Schönbild mit `AgX` (sonst dem älteren `Filmic`),
+weil «Standard» die sehr hellen Werte eines Himmels einfach abschneidet; der Kennfarben-Durchgang
+und alle Läufe ohne Himmelsbild bleiben bei `Standard`. Siehe **Tonwerte (Tonwertkurve)**.
+
+**Tonwerte (Tonwertkurve)** — Die Regel, nach der ein Programm die gerechneten Helligkeiten in die
+Helligkeiten eines Bildes übersetzt. Ein Bildschirm kann nur von Schwarz bis Weiss zeigen; ein Himmel
+mit Sonne ist aber tausendmal heller. Eine gerade Kurve («Standard») schneidet alles über Weiss ab —
+dort wird das Bild flach weiss. Eine weiche Kurve wie **AgX** führt die hellen Werte sanft gegen Weiss,
+wie ein Film: Kanten und Schattierungen bleiben auch im hellen Licht sichtbar. *Im Projekt:* seit
+auf-20261020-292 bei jedem Bild mit Himmelsbild, dazu eine **Belichtung je Stimmung**.
+
+**Belichtung (je Stimmung)** — Wie hell das ganze Bild gestellt wird, gemessen in Blendenstufen: eine
+Stufe weniger halbiert das Licht im Bild, eine mehr verdoppelt es. *Im Projekt:* Jede Stimmung trägt ihren
+Wert als Daten (`stimmung.STIMMUNGEN[…]['belichtung_ev']`) — Mittag dunkler gestellt als Abend, weil das
+Haus bei Mittag überstrahlte. Die Zahlen sind ein erster Stand und werden am Heim-PC nachgemessen
+(auf-20261020-293).
+
+**Überstrahlung (voll weisse Bildpunkte)** — Ein Bildpunkt ist überstrahlt, wenn er so hell ist, dass
+alle drei Farben auf dem Höchstwert stehen (255 von 255): Er zeigt nur noch «hell», nicht mehr, was dort
+ist — Kanten, Fugen und Schatten gehen verloren. *Im Projekt:* gemessen als Anteil voll weisser Punkte
+**am Haus** (nur auf der Bauwerksmaske, der Himmel darf hell sein); Ziel unter 1 %. Steht im Ergebnis
+als `qa.ueberstrahlt_anteil`, je Kamera und für den Lauf (`belichtung.ueberstrahlt_anteil`).
+
+**Ruhiger Hintergrund (Kamerastrahl)** — Was die Kamera hinter dem Haus sieht, wenn ein Himmelsbild
+das Licht gibt. Ein Himmelsbild ist ein Rundumfoto — mit Bäumen, Felsen, Strassen —, und direkt gezeigt
+schwebt das Haus vor einem fremden Foto. Darum unterscheidet der Rechner zwei Arten von Lichtstrahlen:
+Strahlen, die von der Kamera ausgehen («Kamerastrahl»), sehen einen schlichten Farbverlauf vom Horizont
+zum Himmel in den Farben dieses Himmelsbilds; alle anderen Strahlen — Licht, Schatten, Spiegelungen in
+Glas — sehen das echte Himmelsbild. *Im Projekt:* seit auf-20261020-292, `_ruhiger_hintergrund` im Runner.
+
+**Tönung (je Stimmung)** — Das Himmelslicht einer Stimmung wärmer oder kühler färben, angegeben als
+**Farbtemperatur** in Kelvin (6500 K neutral, darunter wärmer, darüber kühler). *Im Projekt:* Eine
+Stimmung kann ihr Himmelslicht damit tönen (Abend warm, Winter kühl), ohne es heller
+oder dunkler zu machen — Helligkeit regelt die **Belichtung**.
+
+**Bestellte Bildgrösse und Raster** — Das Bildmodell kann nur Bilder rechnen, deren Breite und Höhe durch
+16 teilbar sind. Bis auf-20261020-292 wurde darum schon das Blender-Bild auf diese Masse abgerundet
+(960 × 600 wurde 960 × 592) — und damit verschoben sich Bildwinkel und Kamerastandpunkt. Seither rechnet
+Blender die bestellte Grösse; nur das Bildmodell rechnet intern gerundet, und sein Bild wird danach
+wieder auf die bestellte Grösse gebracht.
 
 **Dithering** — Absichtliches feines Rauschen, das Farbstufen weicher wirken lässt. *Im
 Material-ID-Pass schädlich: Es zerfaserte jede Kennfarbe um ±1, aus 5 Farben wurden 19.*
@@ -7770,6 +7810,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-292 (Protokoll 74 §154): **Tonwerte (Tonwertkurve)**, **Belichtung (je Stimmung)**, **Überstrahlung (voll weisse Bildpunkte)**, **Ruhiger Hintergrund (Kamerastrahl)**, **Tönung (je Stimmung)**, **Bestellte Bildgrösse und Raster**; **View-Transform** um AgX mit Himmelsbild ergänzt |
 | 2026-10-20 | Ergaenzt aus den drei Fehlern vom Mac (Protokoll 74 §152): **Fokusring**, **Feste Bildbox (Einpassen)**; die Seite der **Variante ohne Hochladen** steht unter diesem Eintrag (nicht doppelt angelegt) |
 | 2026-10-20 | Ergaenzt aus den neuen Knoten am Heim-PC (H1–H3, Protokoll 74 §153): **Himmelsbild (HDRI)**, **Stimmung (Knoten)**, **Gipsmodell (Stimmung «Weiss»)**, **Principled BSDF**, **Box-Projektion**, **Relief (Bump)**, **Materialwahl (je Bauteil-Art)**, **Bauteil-Art**, **Fuge (im Material)**, **Senkrechte Perspektive (Zwei-Punkt-Perspektive)**, **Fester Abstand (Auto-Kamera)**, **Angewandte Vorgaben (im Ergebnis)** |
 | 2026-10-20 | Ergaenzt aus den Heim-PC-Fehlern (Protokoll 74 §150): **Variante ohne Hochladen**, **Endgültiger Mangel**, **Kantenrauschen (einer Tiefenkarte)**, **Streamender Teiler**, **Lange Wartezeit (der Mac-App)**, **Eigenes Modell (des Assistenten)**, **Rollenkarte (von KosmoOrbit)**, **Marke «eine Frage läuft»**; **Formular-Upload** und **Entladen (des Sprachmodells)** nachgeführt |

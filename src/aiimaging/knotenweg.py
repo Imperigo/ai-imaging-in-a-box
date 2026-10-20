@@ -162,6 +162,11 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
     """
     if not isinstance(szene, dict):
         raise KnotenwegError("Die Szene ist kein JSON-Objekt.")
+    # PASST DIE VARIANTE ZUR GRUNDLAGE? Schon hier, nicht erst beim Rechnen (Wunsch des
+    # Integrators, auf-20261020-292 Punkt 10) — 409 mit Satz, kein Ordner angelegt.
+    unpassend = grundlage_passt_nicht(ablage, szene)
+    if unpassend:
+        raise KnotenwegError(unpassend, 409)
     aus_grundlage = None
     if modell is None:
         aus_grundlage = _modell_fuer_variante(ablage, szene)
@@ -574,7 +579,13 @@ RICHTUNGSNAMEN = {"n": ("Nord", "frontal"), "e": ("Ost", "frontal"),
 SEITENVERHAELTNIS_VORGABE = 1600 / 1000
 
 
-def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=None) -> dict:
+#: Welche Seitenverhältnisse ``GET /knoten/standpunkte`` annimmt — dieselben Kanten wie eine
+#: Bestellung (``kosmo_szene.REGEL_KANTE`` lässt 16 … 65'536 zu), grob begrenzt.
+SEITENVERHAELTNIS_GRENZEN = (0.05, 20.0)
+
+
+def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=None,
+                     seitenverhaeltnis=None) -> dict:
     """Die drei Standpunkte, die der Abholer ohne mitgeschickte Kameras rechnet — VORAB.
 
     **Anlass (Owner-Entscheid 92, 14.10.2026, Blatt 23):** Der Auto-Kamera-Knoten in Visbox
@@ -600,9 +611,14 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=No
     der Abholer rechnet (``abholer.kamerawerte_des_auftrags``). Ohne: die drei Richtungen des
     Abholers mit den Vorgaben, wie bisher.
 
+    **Seit auf-20261020-292 (Befund B4) mit dem Seitenverhältnis des Auftrags**
+    (``seitenverhaeltnis`` = Breite/Höhe der bestellten Auflösung). Bis dahin rechnete
+    dieser Weg immer mit :data:`SEITENVERHAELTNIS_VORGABE`, der Heim-PC aber mit dem des
+    Laufs — bei 960 × 592 lag das Auge 1,06 m daneben. Ohne Angabe gilt weiter die Vorgabe.
+
     Returns:
         ``{standpunkte: [{kuerzel, name, art, abstand_m, auge, blick_auf, shift_y,
-        vollstaendig, begruendung}], satz}`` — Weltkoordinaten in Metern, Z oben. Leer mit ``satz``, wenn
+        vollstaendig, begruendung}], satz, seitenverhaeltnis}`` — Weltkoordinaten in Metern, Z oben. Leer mit ``satz``, wenn
         sich keine Box lesen liess. Nie eine Ausnahme: Ein Knoten ohne Vorschau ist kein Grund,
         die Mappe nicht zu zeigen.
     """
@@ -620,6 +636,8 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=No
     if box is None:
         return {"standpunkte": [], "satz": "Ohne lesbare Hüllbox kein Vorschlag — der Heim-PC "
                                            "rechnet die drei Richtungen trotzdem selbst."}
+    verhaeltnis = (float(seitenverhaeltnis) if seitenverhaeltnis is not None
+                   else SEITENVERHAELTNIS_VORGABE)
     werte = abholer.kamerawerte_des_auftrags(
         {"kameras_auto": kameras_auto}, auto_richtungen=abholer.AUTO_RICHTUNGEN,
         brennweite_mm=None, kamera_modus=kameras.MODUS_SHIFT, deckungsgrad=None,
@@ -631,7 +649,7 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=No
     try:
         satz = kameras.kamerasatz(
             box, kuerzel=list(werte["richtungen"]),
-            seitenverhaeltnis=SEITENVERHAELTNIS_VORGABE,
+            seitenverhaeltnis=verhaeltnis,
             ausschnitt=bool(rahmung.get("box") or rahmung.get("szene_ist_bauwerk")),
             **zusatz)
     except ValueError as fehler:
@@ -649,13 +667,18 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=No
                     "begruendung": str(k.get("begruendung") or "")})
     nach = "dem Bauwerk" if rahmung.get("box") else "der ganzen Szene"
     return {"standpunkte": aus,
-            "satz": f"Rechnet der Heim-PC aus der Hüllbox ({nach}) — Vorschau."}
+            "satz": f"Rechnet der Heim-PC aus der Hüllbox ({nach}) — Vorschau.",
+            "seitenverhaeltnis": round(verhaeltnis, 6)}
 
 
 def standpunkte_abfrage(ordner, frage: dict) -> dict:
     """``GET /knoten/standpunkte?richtungen=s,sSE&augenhoehe=1.7&brennweite=35&fuellt=0.7``
     (oder ``abstand=40`` statt ``fuellt``, dazu ``perspektive=senkrecht|frei``) — die Kegel
     des Knotens «Kamera», mit denselben Parametern gerechnet wie der Auftrag.
+
+    **Die Auflösung des Auftrags** (auf-20261020-292, B4): ``aufloesung=960x600`` (oder
+    ``breite=960&hoehe=600``, oder ``seitenverhaeltnis=1.6``) — ohne Angabe 1600 × 1000.
+    Das Seitenverhältnis geht in den Bildwinkel und damit in den Abstand ein.
 
     Geprüft wird mit derselben Funktion wie die Bestellung
     (:func:`aiimaging.kosmo_szene.kameras_auto_aus_szene`) — eine zweite Prüfung liefe
@@ -709,15 +732,55 @@ def standpunkte_abfrage(ordner, frage: dict) -> dict:
     gelesen = kosmo_szene.kameras_auto_aus_szene(bestellt, maengel=maengel)
     if maengel:
         raise KnotenwegError(" ".join(maengel), 400)
+    verhaeltnis = _seitenverhaeltnis_der_frage(wert, zahl)
     auf = projekt.oeffne(ordner)["projekt"]
     einfuhr = auf.get("import") or {}
     glb = glb_der_mappe(ordner)
     if glb is None:
         raise KnotenwegError(f"Die Mappe «{Path(ordner).name}» hat noch kein Modell.", 404)
     achse = einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else "Y"
-    antwort = heim_standpunkte(glb, achse or "Y", kameras_auto=gelesen)
+    antwort = heim_standpunkte(glb, achse or "Y", kameras_auto=gelesen,
+                               seitenverhaeltnis=verhaeltnis)
     antwort["kameras_auto"] = gelesen
     return antwort
+
+
+def _seitenverhaeltnis_der_frage(wert, zahl) -> float | None:
+    """Breite/Höhe aus ``aufloesung=BxH``, ``breite``+``hoehe`` oder ``seitenverhaeltnis``.
+
+    ``None`` ohne Angabe (dann die Vorgabe). Raises :class:`KnotenwegError` 400 mit Satz.
+    """
+    import math  # noqa: PLC0415
+    angaben = [n for n in ("aufloesung", "seitenverhaeltnis") if wert(n) is not None]
+    if wert("breite") is not None or wert("hoehe") is not None:
+        angaben.append("breite/hoehe")
+    if len(angaben) > 1:
+        raise KnotenwegError(f"Nur eine Angabe zur Bildgrösse: {', '.join(angaben)}.", 400)
+    roh = None
+    if wert("aufloesung") is not None:
+        teile = str(wert("aufloesung")).lower().replace("×", "x").split("x")
+        try:
+            b, h = (float(t) for t in teile)
+        except (TypeError, ValueError):
+            raise KnotenwegError(f"«aufloesung» ist {wert('aufloesung')!r} — erwartet "
+                                 f"Breite x Höhe, etwa 960x600.", 400) from None
+        roh = b / h if h > 0 and b > 0 else float("nan")
+    elif angaben == ["breite/hoehe"]:
+        b, h = zahl("breite"), zahl("hoehe")
+        if not all(isinstance(v, float) for v in (b, h)):
+            raise KnotenwegError("«breite» und «hoehe» gehören zusammen und sind Zahlen.", 400)
+        roh = b / h if h > 0 and b > 0 else float("nan")
+    elif angaben:
+        roh = zahl("seitenverhaeltnis")
+        if not isinstance(roh, float):
+            raise KnotenwegError(f"«seitenverhaeltnis» ist {roh!r} und keine Zahl.", 400)
+    if roh is None:
+        return None
+    unten, oben = SEITENVERHAELTNIS_GRENZEN
+    if not (math.isfinite(roh) and unten <= roh <= oben):
+        raise KnotenwegError(f"Seitenverhältnis {roh} liegt nicht zwischen {unten} und "
+                             f"{oben}.", 400)
+    return roh
 
 
 def abholer_richtungen() -> tuple:
@@ -1012,6 +1075,19 @@ def modell_der_grundlage(ablage, kennung: str, *, hoechstens: int = 500) -> Path
     (``render-result.json``, ``grundlage.id``), die jüngsten zuerst; gesucht wird in
     höchstens ``hoechstens`` Aufträgen.
     """
+    d = auftrag_der_grundlage(ablage, kennung, hoechstens=hoechstens)
+    if d is None:
+        return None
+    for name in (bruecke.DATEI_MODELL, bruecke.DATEI_MODELL_IFC):
+        if (d / name).is_file():
+            return d / name
+    return None
+
+
+def auftrag_der_grundlage(ablage, kennung: str, *, hoechstens: int = 500,
+                          mit_modell: bool = True) -> Path | None:
+    """Der Auftragsordner, dessen Ergebnis die Grundlage ``kennung`` nennt — die jüngsten
+    zuerst, mit Modelldatei (``mit_modell``). ``None``, wenn keiner da ist."""
     ordner = Path(ablage)
     if not ordner.is_dir() or not kosmo_szene.GRUNDLAGE_KENNUNG.match(str(kennung or "")):
         return None
@@ -1031,7 +1107,59 @@ def modell_der_grundlage(ablage, kennung: str, *, hoechstens: int = 500) -> Path
             continue
         if not (isinstance(gl, dict) and gl.get("id") == kennung):
             continue
-        for name in (bruecke.DATEI_MODELL, bruecke.DATEI_MODELL_IFC):
-            if (d / name).is_file():
-                return d / name
+        if not mit_modell or any((d / name).is_file()
+                                 for name in (bruecke.DATEI_MODELL, bruecke.DATEI_MODELL_IFC)):
+            return d
     return None
+
+
+#: Wie die Felder der Grundlage-Prüfung im Satz heissen (für den Architekten, nicht für uns).
+GRUNDLAGE_FELDNAMEN = {"aufloesung": "Bildbreite", "hoehe": "Bildhöhe", "samples": "Samples",
+                       "kameras": "Kameras", "kameras_auto": "Kamera (Richtungen, Abstand, "
+                       "Brennweite)", "umgebung": "Stimmung", "materialien": "Materialien"}
+
+
+def grundlage_passt_nicht(ablage, szene: dict) -> str | None:
+    """Der Satz, wenn eine Variante nicht zu ihrer Grundlage passt — ``None`` sonst.
+
+    **Anlass (Wunsch des Integrators, auf-20261020-292 Punkt 10):** Eine Variante mit anderer
+    Stimmung, anderen Materialien oder anderer Kamera als ihre Grundlage wurde angenommen und
+    erst beim Rechnen abgewiesen (``abholer.lies_grundlage``) — nach Freigabe und Warten.
+    Jetzt schon beim Anlegen, mit 409 und demselben Grund.
+
+    Verglichen wird die Szene des Auftrags, der die Grundlage gerechnet hat, mit der neuen —
+    beide durch :func:`aiimaging.kosmo_szene.lies_szene`, Feld für Feld nach
+    ``abholer.GRUNDLAGE_MUSS_PASSEN``. Ist der Grundlage-Auftrag hier nicht zu finden oder
+    nicht lesbar, sagt diese Prüfung nichts (``None``) — dann bleibt es bei der Prüfung beim
+    Rechnen; abgewiesen wird nur, was hier sicher nicht passt.
+    """
+    from . import abholer  # noqa: PLC0415 — spät, wie heim_standpunkte
+    vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
+    kennung = vis.get("grundlage")
+    if not (isinstance(kennung, str) and kosmo_szene.GRUNDLAGE_KENNUNG.match(kennung)):
+        return None
+    d = auftrag_der_grundlage(ablage, kennung, mit_modell=False)
+    if d is None or not (d / bruecke.DATEI_SZENE).is_file():
+        return None
+    try:
+        alt = json.loads((d / bruecke.DATEI_SZENE).read_text(encoding="utf-8"))
+        ersatz = {"path": "grundlage.glb", "format": "glb"}
+
+        def gelesen(roh):
+            roh = dict(roh)
+            if not isinstance(roh.get("geometry"), dict) or not roh["geometry"].get("path"):
+                roh["geometry"] = ersatz
+            return kosmo_szene.lies_szene(roh)
+
+        vorher, jetzt = gelesen(alt), gelesen(szene)
+    except Exception:                                      # noqa: BLE001 — siehe Docstring
+        return None
+    abweichend = [f for f in abholer.GRUNDLAGE_MUSS_PASSEN
+                  if abholer._vergleichbar(vorher.get(f)) != abholer._vergleichbar(jetzt.get(f))]
+    if not abweichend:
+        return None
+    namen = ", ".join(GRUNDLAGE_FELDNAMEN.get(f, f) for f in abweichend)
+    return (f"Die Grundlage {kennung} passt nicht zu dieser Variante: {namen} "
+            f"{'weicht' if len(abweichend) == 1 else 'weichen'} ab. Eine Variante entsteht "
+            f"aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die "
+            f"Werte der Grundlage bestellen.")

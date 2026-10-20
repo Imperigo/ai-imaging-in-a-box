@@ -94,7 +94,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 28 seit dem 20.10.2026 (Knoten «Stimmung»): die vier `umgebung_*`.
     # 29 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m`.
     # 30 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
-    assert len(_multipass_einstellungen()) == 30
+    # 32 seit auf-20261020-292: `umgebung_belichtung`, `umgebung_toenung` je Stimmung.
+    assert len(_multipass_einstellungen()) == 32
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
@@ -104,7 +105,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 26 und 3 seit dem 20.10.2026 (Knoten «Kamera»): `abstand_fest_m` neu, und `shift_y`
     # ist von STEHENGEBLIEBEN nach DURCHGEREICHT gewandert (senkrechte Kamera von Hand).
     # 27 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 27
+    # 29 seit auf-20261020-292: Belichtung und Toenung je Stimmung.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 29
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 3
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
@@ -233,6 +235,17 @@ def _lauf(tmp_path):
     spez.loader.exec_module(erzeuger)
     (tmp_path / "m.glb").write_bytes(
         erzeuger.baue_glb([("Halle", (-33.0, 0.0, -5.0), (33.0, 3.45, 5.0))]))
+    # «weiss» hat keine Farbtemperatur; fuer die Probe bekommt es eine, sonst ginge
+    # `umgebung_toenung` (nur mit Farbtemperatur) nie mit.
+    from unittest import mock
+    from aiimaging import stimmung as _stimmung
+    weiss_mit_kelvin = dict(_stimmung.STIMMUNGEN["weiss"], kelvin=5000.0)
+    with mock.patch.dict(_stimmung.STIMMUNGEN, {"weiss": weiss_mit_kelvin}):
+        _verarbeite_einmal(verarbeite, tmp_path, kontext, himmel)
+    return protokoll
+
+
+def _verarbeite_einmal(verarbeite, tmp_path, kontext, himmel):
     verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
                 "verzeichnis": tmp_path,
                 # Zwei Kameras: eine Richtung (mit festem Abstand aus `kameras_auto`) und
@@ -260,7 +273,6 @@ def _lauf(tmp_path):
                           "materialien_dateien": {"fassade": {
                               "karten": {"Color": himmel}, "groesse": "2K",
                               "asset": "Bricks101", "satz": None}}}})
-    return protokoll
 
 
 def test_der_multipass_bekommt_genau_die_durchgereichten(tmp_path):
