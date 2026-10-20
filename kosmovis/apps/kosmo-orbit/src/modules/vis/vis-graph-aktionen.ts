@@ -112,7 +112,10 @@ export function dreiStimmungenEinfuegen(graphIdVorgabe?: string): void {
       const bestehend = doc.get<VisGraph>(gid)?.nodes ?? [];
       const basisY = bestehend.length === 0 ? 0 : Math.max(0, ...bestehend.map((n) => n.y + groessteNodeHoehe(n.typ))) + 40;
       const modell = setze('modell', 40, basisY + 260);
-      const material = setze('material', 40, basisY + 420);
+      // F1 (Entscheid 109 A): der Modell-Knoten traegt das 3D-Fenster und ist seither 248 px
+      // (mit Wirt mehr) hoch — das Material steht darum unter seiner GROESSTEN Hoehe, nicht mehr
+      // fest bei 420 (gemessen: 30,8 px Ueberschneidung, `e2e/kv-b5-nachgang.spec.ts`).
+      const material = setze('material', 40, Math.max(basisY + 420, basisY + 260 + groessteNodeHoehe('modell') + 40));
       const vergleich = setze('vergleich', vergleichX, basisY + zeilenAbstand + 40);
       (['morgen', 'abend', 'weiss'] as const).forEach((preset, i) => {
         const y = basisY + 40 + i * zeilenAbstand;

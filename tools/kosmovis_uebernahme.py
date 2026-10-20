@@ -217,6 +217,11 @@ PROBEN = (
     # (`kv-variante-ohne-modell` bleibt drueben: es baut Waende mit `design.*`-Befehlen, die die
     # Kopie nicht traegt — wie `kv-grundlage-auftrag`.)
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts",
+    # F1 (Entscheid 109 A, 20.10.2026): das kleine 3D-Fenster (Kern und Huelle) und sein Einbau
+    # in den Modell-Knoten. three kommt dafuer als Abhaengigkeit des Stellvertreters mit.
+    "apps/kosmo-orbit/test/kv-modell-3d-kern.test.ts",
+    "apps/kosmo-orbit/test/kv-modell-3d-fenster.test.tsx",
+    "apps/kosmo-orbit/test/kv-modell-knoten-3d.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

@@ -12,6 +12,7 @@ import {
   type ModellLadeWirt,
   type ModellLadeZustand,
 } from '../src/modules/vis/modell-laden';
+import { MODELL_3D_ZUSATZ } from '../src/modules/vis/ModellKnoten';
 import { useProject } from '../src/state/project-store';
 
 /**
@@ -83,9 +84,11 @@ describe('KV-MODELL-LADEN · ohne Wirt bleibt der Modell-Knoten, wie er war', ()
     expect(container!.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it('dieselbe Hoehe wie vorher (Koerper 22)', () => {
-    // Kopf 26 + 8 + ein Ausgang 20 + Koerper 22 + 10 — die Zahl von vor dem Entscheid.
-    expect(basisNodeHoehe('modell')).toBe(86);
+  it('Hoehe wie vorher (Koerper 22) plus das 3D-Fenster (F1, Entscheid 109 A)', () => {
+    // Kopf 26 + 8 + ein Ausgang 20 + Koerper 22 + 10 — die Zahl von vor dem Entscheid 90;
+    // seit F1 steht darunter das 3D-Fenster samt Zeile (4 + 140 + 4 + 14 = 162).
+    expect(MODELL_3D_ZUSATZ).toBe(162);
+    expect(basisNodeHoehe('modell')).toBe(86 + MODELL_3D_ZUSATZ);
   });
 });
 
@@ -97,6 +100,7 @@ describe('KV-MODELL-LADEN · mit Wirt die vier Zustaende von Blatt 21', () => {
     expect(q('modell-formate')?.textContent).toBe('IFC, glb/glTF, OBJ');
     expect((q('modell-datei-waehler') as HTMLInputElement).accept).toBe('.ifc,.glb,.gltf,.obj,.pln');
     expect(basisNodeHoehe('modell')).toBe(86 - 22 + MODELL_KOERPER_H_MIT_LADEN);
+    expect(MODELL_KOERPER_H_MIT_LADEN).toBe(140 + MODELL_3D_ZUSATZ);
   });
 
   it('(2) laeuft → (3) geladen: Szene, Mappe, «Andere Datei …»', async () => {

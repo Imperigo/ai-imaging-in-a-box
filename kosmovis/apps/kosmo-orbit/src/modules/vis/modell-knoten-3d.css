@@ -1,0 +1,29 @@
+/*
+ * Das 3D-Fenster im Modell-Knoten (F1, Entscheid 109 A; `ModellKnoten.tsx`). Eigene Datei,
+ * damit vis-visual.css nicht angefasst wird. Die Masse des Fensters selbst stehen in
+ * modell-vorschau-3d.css (kommt mit der Hülle); hier nur, was der Knoten braucht, bevor die
+ * Hülle geladen ist, und die Zeile darunter. Höhen wie `MODELL_3D_H` / `MODELL_3D_HILFE_H`.
+ */
+.vis-modell-mit-3d {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+}
+
+/* Platzhalter, bis die Hülle geladen ist — dieselbe Fläche, damit nichts springt. */
+.vis-modell-3d-platz {
+  height: 140px;
+  border-radius: var(--k-radius);
+  border: 1px solid var(--k-line);
+  background: var(--k-surface);
+}
+
+.vis-modell-3d-zeile {
+  height: 14px;
+  font-size: var(--k-t-xs);
+  line-height: 14px;
+  color: var(--k-ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

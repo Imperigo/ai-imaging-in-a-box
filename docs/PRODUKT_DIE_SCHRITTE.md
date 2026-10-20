@@ -1649,3 +1649,13 @@ eine Prüfzahl, die nicht gemessen werden konnte, heisst jetzt «nicht gemessen�
 ihrer Grundlage passt, wird schon beim Bestellen abgewiesen. Die Himmelsbilder selbst wurden am Rechenrechner getauscht —
 Abend ist jetzt ein echter Sonnenuntergang, Weiss ein neutrales Studio. Ehrlich gesagt: Die Helligkeit je Stimmung ist
 ein erster Stand; ob das Haus in allen acht Stimmungen lesbar ist, misst der Rechenrechner als Nächstes.
+**Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
+wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
+das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der
+Knotenansicht. Solange der Zeiger im Fenster ist, bleibt die Knotenansicht still; daneben verschiebt und vergrössert
+sie sich wie immer. Das Fenster ist fest klein, damit die Knoten ihren Platz behalten; die Grösse kommt mit dem
+Doppelklick. Was es zum Zeichnen braucht (die freie Bibliothek three.js, MIT), lädt die Seite erst, wenn ein Modell
+geladen ist — die Knotenansicht öffnet darum nicht langsamer. Fehlt dem Rechner die Grafikfähigkeit dafür, steht dort
+ein ruhiger Satz statt eines leeren Bildes. Dasselbe Fenster ist der Grundstein für die nächsten Knoten: die
+Auto-Kamera zeigt darin ihre Kameras als Kegel. Ehrlich gesagt: Geprüft ist es im Browser des Prüfrechners; ob es in
+der Mac-App genauso zeichnet, sieht erst der Owner am Gerät.

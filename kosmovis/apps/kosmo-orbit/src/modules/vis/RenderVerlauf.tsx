@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, 
 import { createPortal } from 'react-dom';
 import { KIcon, useHerkunft, useOverlaySchliessen, zEbeneLeiter } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
+import { GueteMarke, gueteZusatz, istVorschau } from './GueteMarke';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { grundlageText, startwertText } from './grundlage';
 import type { NodeLauf } from './vis-runtime';
@@ -170,11 +171,12 @@ export function RenderVerlauf({
               data-urteil={urteil}
               data-job={e.jobId}
               {...(e.grundlageId ? { 'data-grundlage': e.grundlageId } : {})}
-              aria-label={`Lauf ${nummer} von ${uhrzeit}, ${URTEIL_LABEL[urteil]}, gross anzeigen`}
+              {...(istVorschau(e) ? { 'data-guete': 'vorschau' } : {})}
+              aria-label={`Lauf ${nummer} von ${uhrzeit}, ${URTEIL_LABEL[urteil]}${gueteZusatz(e)}, gross anzeigen`}
               onPointerDown={halte}
               onClick={() => setOffenJob(e.jobId)}
             >
-              <span className="vis-verlauf-daumen">
+              <span className={`vis-verlauf-daumen${istVorschau(e) ? ' vis-verlauf-daumen--vorschau' : ''}`}>
                 <BridgeBild jobId={e.jobId} imageName={e.bild} alt="" className="vis-verlauf-daumen-bild" />
                 <UrteilPunkt urteil={urteil} testid="render-verlauf-punkt" />
               </span>
@@ -407,10 +409,11 @@ function VerlaufGross({
               key={e.jobId}
               jobId={e.jobId}
               imageName={e.bild}
-              alt={`Lauf ${nummer}`}
+              alt={`Lauf ${nummer}${gueteZusatz(e)}`}
               testid="render-verlauf-gross-bild"
               className="vis-verlauf-gross-img"
             />
+            <GueteMarke lauf={e} testid="render-verlauf-gross-guete-marke" />
           </div>
           <div className="vis-verlauf-gross-seite">
             {art ? (

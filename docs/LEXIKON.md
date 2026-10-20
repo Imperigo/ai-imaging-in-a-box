@@ -7804,6 +7804,28 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 Stelle eines Logos steht, wenn kein freies Logo vorliegt. Es ist absichtlich keine Nachzeichnung
 einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), etwa «IFC» oder «gs».
 
+**3D-Fenster (im Modell-Knoten)** — Ein kleines Bildfeld im Knoten «Modell», in dem das Gebäude
+räumlich zu sehen ist — genau das Modell, das ein Render-Auftrag mitbekommt. Mit der Maus gezogen
+dreht es sich, das Mausrad holt es näher; ein Doppelklick öffnet dasselbe Bild gross über der
+Knotenansicht. Solange der Zeiger im Fenster ist, bleibt die Knotenansicht selbst still (sie
+verschiebt und vergrössert sich nicht). Fehlt dem Rechner die nötige Grafikfähigkeit (siehe
+**WebGL**), steht an der Stelle der Satz «Kein 3D in diesem Fenster», und alles andere geht weiter.
+*Im Projekt:* Owner-Entscheid 109 A (klein fest im Knoten, Doppelklick gross),
+`ModellKnoten.tsx` und `modell-vorschau-3d.tsx` im Vis-Werkzeug.
+
+**WebGL** — Die Fähigkeit eines Browsers (und jeder Webansicht in einer App), mit der
+Grafikkarte räumliche Bilder zu zeichnen — so wie ein CAD-Programm sein 3D-Fenster zeichnet, nur
+innerhalb einer Webseite. Ohne sie bliebe ein 3D-Fenster leer. Die meisten Rechner haben sie; in
+manchen Umgebungen fehlt sie (etwa auf einem Rechner ohne Bildschirm-Beschleunigung). Darum prüft
+das 3D-Fenster zuerst, ob sie da ist, und sagt es sonst in einem Satz. *Im Projekt:* das 3D-Fenster
+im Modell-Knoten zeichnet damit, über die freie Bibliothek three.js (MIT, im `NOTICE`).
+
+**Nachgeladener Teil (der Knotenansicht)** — Ein Stück des Programms, das der Browser erst holt,
+wenn es gebraucht wird, statt beim Öffnen der Seite. So wird die Seite nicht langsamer, nur weil
+sie etwas kann, das gerade niemand benutzt. *Im Projekt:* das 3D-Fenster samt three.js liegt in
+eigenen Dateien unter `kosmovis/apps/visbox-knoten/dist/assets/` und kommt erst, wenn ein
+Modell-Knoten sein Fenster zeigt.
+
 ---
 
 ## Änderungsverzeichnis
@@ -7811,6 +7833,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 | Datum | Änderung |
 |---|---|
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-292 (Protokoll 74 §154): **Tonwerte (Tonwertkurve)**, **Belichtung (je Stimmung)**, **Überstrahlung (voll weisse Bildpunkte)**, **Ruhiger Hintergrund (Kamerastrahl)**, **Tönung (je Stimmung)**, **Bestellte Bildgrösse und Raster**; **View-Transform** um AgX mit Himmelsbild ergänzt |
+| 2026-10-20 | Ergaenzt aus F1, dem 3D-Fenster im Modell-Knoten (Entscheid 109 A, Protokoll 74 §155): **3D-Fenster (im Modell-Knoten)**, **WebGL**, **Nachgeladener Teil (der Knotenansicht)** |
 | 2026-10-20 | Ergaenzt aus den drei Fehlern vom Mac (Protokoll 74 §152): **Fokusring**, **Feste Bildbox (Einpassen)**; die Seite der **Variante ohne Hochladen** steht unter diesem Eintrag (nicht doppelt angelegt) |
 | 2026-10-20 | Ergaenzt aus den neuen Knoten am Heim-PC (H1–H3, Protokoll 74 §153): **Himmelsbild (HDRI)**, **Stimmung (Knoten)**, **Gipsmodell (Stimmung «Weiss»)**, **Principled BSDF**, **Box-Projektion**, **Relief (Bump)**, **Materialwahl (je Bauteil-Art)**, **Bauteil-Art**, **Fuge (im Material)**, **Senkrechte Perspektive (Zwei-Punkt-Perspektive)**, **Fester Abstand (Auto-Kamera)**, **Angewandte Vorgaben (im Ergebnis)** |
 | 2026-10-20 | Ergaenzt aus den Heim-PC-Fehlern (Protokoll 74 §150): **Variante ohne Hochladen**, **Endgültiger Mangel**, **Kantenrauschen (einer Tiefenkarte)**, **Streamender Teiler**, **Lange Wartezeit (der Mac-App)**, **Eigenes Modell (des Assistenten)**, **Rollenkarte (von KosmoOrbit)**, **Marke «eine Frage läuft»**; **Formular-Upload** und **Entladen (des Sprachmodells)** nachgeführt |
