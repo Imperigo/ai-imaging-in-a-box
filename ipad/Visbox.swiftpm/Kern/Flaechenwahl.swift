@@ -5,8 +5,10 @@ import Foundation
 ///
 /// **Zuerst die Knoten.** Bis dahin öffnete die App die Visbox-Seite, und der Knotenbaum lag
 /// hinter deren Knopf «Knotenansicht». Owner: *«die Macversion ist vollständig KosmoVis-Werkzeug»*.
-/// Beides kommt weiter vom Heim-PC — am Mac wird nichts nachgebaut; der Knotenbaum ist die
-/// Kopie aus KosmoOrbit (E26) und wird dort weiterentwickelt.
+/// Am Mac wird nichts nachgebaut; der Knotenbaum ist die Kopie aus KosmoOrbit (E26) und wird
+/// dort weiterentwickelt. **Seit Schritt 1 von «Visbox eigenständig» (20.10.2026)** kommt er
+/// aus dem App-Bündel, nicht mehr vom Heim-PC (`ausDemBuendel`, `Knotenwege`); die
+/// Visbox-Seite kommt vorerst weiter vom Heim-PC.
 ///
 /// * **A** — ein Schalter «Knoten | Visbox-Seite» oben in der Kopfleiste. **Ersetzt durch
 ///   Entscheid 94** (14.10.2026): Die Knoten sind DIE Arbeitsfläche zum Rendern; die Seite
@@ -41,8 +43,26 @@ public enum Flaechenwahl: String, CaseIterable, Sendable {
         }
     }
 
-    /// Die Adresse auf dem eingerichteten Heim-PC, oder `nil`, wenn sich keine bauen lässt.
-    public func adresse(basis: URL) -> URL? {
-        Wege.adresse(Weg(pfad: pfad, methode: .get), basis: basis)
+    /// Ob die Fläche **aus dem App-Bündel** kommt («Visbox eigenständig», Schritt 1,
+    /// 20.10.2026): die Knoten ja (eigenes Adressschema, `Knotenwege`), die Visbox-Seite
+    /// vorerst nicht — ob sie überhaupt bleibt, entscheidet Schritt 5.
+    public var ausDemBuendel: Bool {
+        switch self {
+        case .knoten: return true
+        case .seite: return false
+        }
+    }
+
+    /// Die Adresse, die das Webfenster lädt — die Knoten aus dem Bündel
+    /// (`visbox://app/knoten/`, **auch ohne Heim-PC**), die Seite vom eingerichteten Heim-PC.
+    /// `nil`, wenn die Seite gefragt ist und kein Heim-PC eingerichtet ist (oder sich aus seiner
+    /// Adresse keine bauen lässt).
+    ///
+    /// `pfad` bleibt der Pfad **am Heim-PC**: Dort bedient der Server die Knoten weiter für den
+    /// Browser, und die Datenwege der Knoten liegen unter ihm (`Knotenwege.datenwege`).
+    public func adresse(basis: URL?) -> URL? {
+        if ausDemBuendel { return Knotenwege.einstieg }
+        guard let basis else { return nil }
+        return Wege.adresse(Weg(pfad: pfad, methode: .get), basis: basis)
     }
 }

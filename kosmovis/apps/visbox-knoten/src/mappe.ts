@@ -92,14 +92,56 @@ export interface LadeSicht {
   laden: LadeStand | null;
 }
 
-/** Läuft die Seite auf dem Visbox-Server (unter `/knoten/`) — oder im Entwicklungsserver? */
+/** Läuft die Seite auf dem Visbox-Server (unter `/knoten/`) bzw. in der Mac-App
+ *  (`visbox://app/knoten/`, derselbe Pfad) — oder im Entwicklungsserver? */
 export function aufDemVisboxServer(pfad: string = location.pathname): boolean {
   return pfad === '/knoten' || pfad.startsWith('/knoten/');
 }
 
+/**
+ * Die Adresse der Brücke: `/bruecke` am selben Ort wie die Seite. **Aus der Adresse der Seite
+ * gebaut, nicht aus `location.origin`** («Visbox eigenständig», Schritt 1, 20.10.2026): In der
+ * Mac-App kommt die Seite über ein eigenes Adressschema (`visbox://app/knoten/`), und für ein
+ * solches Schema darf ein Browser den Ursprung «null» nennen — `null/bruecke` wäre keine
+ * Adresse. Am Heim-PC ergibt beides dasselbe (`https://…:8443/bruecke`).
+ */
+export function brueckenAdresse(seite: string = location.href): string {
+  return new URL('/bruecke', seite).href;
+}
+
+/** Das eigene Adressschema der Mac-App (`Kern/Knotenwege.swift`, `schema`). */
+export const EIGENES_SCHEMA = 'visbox:';
+
+export function imEigenenSchema(protokoll: string = location.protocol): boolean {
+  return protokoll === EIGENES_SCHEMA;
+}
+
+/**
+ * Schritt 1 von «Visbox eigenständig»: Im eigenen Adressschema reicht die Mac-App jede Anfrage
+ * selbst an den Heim-PC weiter. WebKit gibt ihr den Rumpf aber nur **als fertige Bytes** sicher
+ * mit — ein Formular mit Datei-Teil (das Modell beim Bestellen, die Datei bei «Datei laden …»)
+ * kann unterwegs leer werden. Darum macht dieser Umschlag aus jedem Rumpf, der keine Bytes und
+ * kein Text ist, vorher Bytes: mit demselben `Content-Type` (samt `boundary`), den der Browser
+ * dem Formular gegeben hätte. Am Heim-PC (https) wird er nicht eingesetzt.
+ */
+export function koerperAlsBytes(roh: typeof fetch): typeof fetch {
+  return async (eingabe: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const rumpf = init?.body;
+    if (rumpf == null || typeof rumpf === 'string' || rumpf instanceof ArrayBuffer || ArrayBuffer.isView(rumpf)) {
+      return roh(eingabe, init);
+    }
+    const verpackt = new Response(rumpf as BodyInit);
+    const typ = verpackt.headers.get('content-type');
+    const bytes = await verpackt.arrayBuffer();
+    const koepfe = new Headers(init?.headers);
+    if (typ && !koepfe.has('content-type')) koepfe.set('content-type', typ);
+    return roh(eingabe, { ...init, headers: koepfe, body: bytes });
+  };
+}
+
 export function brueckeAufDiesenServer(): void {
   try {
-    localStorage.setItem('kosmo.bridge', `${location.origin}/bruecke`);
+    localStorage.setItem('kosmo.bridge', brueckenAdresse());
   } catch {
     // Ohne Speicher bleibt die Vorgabe der Kopie (localhost:8600) — der Render-Knoten sagt
     // dann selbst, dass keine Brücke antwortet.

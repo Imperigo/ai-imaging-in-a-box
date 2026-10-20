@@ -45,6 +45,8 @@ import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
 import {
   aufDemVisboxServer,
   brueckeAufDiesenServer,
+  imEigenenSchema,
+  koerperAlsBytes,
   ladeMappe,
   ladeWirt,
   skizzenQuelleDerMappe,
@@ -93,6 +95,12 @@ legeAnfangBeimOeffnen(true);
 
 // AUF DEM VISBOX-SERVER: Brücke hierher, dann das Modell der Mappe. Im Entwicklungsserver
 // (`npm run dev`) gibt es beides nicht — die Ansicht läuft dann leer, wie ohne Mappe.
+
+// IN DER MAC-APP (eigenes Adressschema, Schritt 1 von «Visbox eigenständig»): jeder Rumpf als
+// fertige Bytes, bevor die App ihn an den Heim-PC weiterreicht (`koerperAlsBytes`).
+if (imEigenenSchema()) {
+  window.fetch = koerperAlsBytes(window.fetch.bind(window));
+}
 
 if (aufDemVisboxServer()) {
   brueckeAufDiesenServer();

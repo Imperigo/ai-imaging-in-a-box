@@ -501,6 +501,27 @@ belong to their owners» auf jeder Werkzeugkarte.
 
 ## 3 · Programmieren, allgemein
 
+**Eigenes Adressschema** — Der Anfang einer Adresse sagt, wer sie beantwortet: `https://` geht ins Netz, `file://`
+auf die Festplatte. Ein Programm darf sich einen eigenen Anfang ausdenken — Visbox nimmt `visbox://`. Das eingebaute
+Webfenster fragt dann nicht das Netz, sondern das Programm selbst, und das Programm entscheidet je Adresse: diese Datei
+liegt in mir, jene Frage reiche ich an den Heim-PC weiter. So läuft eine Webseite ganz im Programm, ohne dass ein
+Rechner sie ausliefern muss.
+*Im Projekt:* Die Mac-App zeigt die Knotenansicht seit dem 20.10.2026 unter `visbox://app/knoten/` aus ihrem eigenen
+Paket (`Kern/Knotenwege.swift`, `Start/Knotenquelle.swift`); nur Mappe, Modell und Render-Aufträge gehen an den Heim-PC.
+
+**App-Bündel** — Auf dem Mac sieht ein Programm aus wie eine Datei, ist aber ein Ordner mit fester Ordnung: das
+Programm selbst, seine Beschreibung, Bilder, Schriften und andere mitgelieferte Teile. Was im Bündel liegt, kommt mit
+jeder neuen Fassung des Programms mit.
+*Im Projekt:* `Visbox.app/Contents/Resources/` trägt Schriften, Icon, Beispielmappe und seit dem 20.10.2026 die
+Knotenansicht (`Knoten/`); die Prüfstrecke setzt es zusammen (`.github/workflows/ipad.yml`).
+
+**Ursprung (einer Webseite)** — Woher eine Webseite stammt: Anfang, Rechner und Anschluss ihrer Adresse zusammen
+(etwa `https://heim.example:8443`). Ein Browser lässt eine Seite nur mit ihrem eigenen Ursprung frei sprechen und
+trennt danach, was sie sich merkt. Bei einem eigenen Adressschema darf ein Browser den Ursprung auch «null» nennen.
+*Im Projekt:* Die Knotenansicht baute die Adresse ihrer Brücke früher aus dem Ursprung; seit dem 20.10.2026 aus ihrer
+eigenen Adresse (`brueckenAdresse` in `kosmovis/apps/visbox-knoten/src/mappe.ts`), damit sie auch unter `visbox://`
+stimmt.
+
 **Quelltext / Code** — Der lesbare Text, aus dem ein Programm besteht.
 
 **Skript** — Ein kurzes Programm für eine bestimmte Aufgabe, meist ohne Oberfläche und
@@ -7500,6 +7521,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritt 1 (Protokoll 74 §146): **Eigenes Adressschema**, **App-Bündel**, **Ursprung (einer Webseite)** |
 | 2026-10-20 | Ergaenzt aus der iPad-Zeile am Mac (Protokoll 74 §144): **Gerätebuch (des Heim-PC)**, **Geräteart (Kopf einer Anfrage)**, **Netzaussetzer** |
 | 2026-10-20 | Ergaenzt aus Fortschritt, Vorschau und Teilbild am Heim-PC (Protokoll 74 §142): **Fortschritt (eines Renderauftrags)**, **Restzeit (geschätzt)**, **Teilbild (abgebrochen)**, **Kooperativer Abbruch** |
 | 2026-10-20 | Ergaenzt aus Entscheiden 99/99a/99b (Protokoll 74 §141): **Koppelfenster**, **Koppelschein**, **Nähe-Verbindung (MultipeerConnectivity)**, **QR-Code**; **Kopplungszahl** um die zwei Minuten am Mac ergänzt |

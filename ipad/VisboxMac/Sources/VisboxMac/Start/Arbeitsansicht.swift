@@ -3,7 +3,7 @@ import SwiftUI
 import VisboxKern
 import WebKit
 
-/// Die Arbeit nach «Schon anfangen» (Entscheid 39) — **zuerst die Knoten des Heim-PC**
+/// Die Arbeit nach «Schon anfangen» (Entscheid 39) — **zuerst die Knoten** (seit 20.10.2026 aus dem Bündel)
 /// (Entscheid 85, 14.10.2026, Blatt 19), umschaltbar auf die Visbox-Seite, daneben der Platz
 /// für den Assistenten.
 ///
@@ -11,11 +11,12 @@ import WebKit
 /// immer die Knoten (C, `Flaechenwahl.beimOeffnen`). Welche Mappe die Knoten zeigen, sagt der
 /// Heim-PC (B): die zuletzt auf der Visbox-Seite geöffnete.
 ///
-/// Die Fläche ist die Webseite, die der Visbox-Server am Heim-PC unter `/` ausliefert
-/// (`oberflaeche/seite.html`), in einer `WKWebView`: Mappe und Bilder gehen damit sofort,
-/// ohne dass der Mac etwas davon nachbauen muss. Angemeldet wird über die
-/// Basic-Herausforderung des Servers, mit Benutzer und Kennwort aus dem Schlüsselbund — und
-/// **nur gegenüber dem eingerichteten Heim-PC** (Name und Anschluss müssen stimmen).
+/// **Seit «Visbox eigenständig», Schritt 1 (20.10.2026)** kommen die Knoten aus dem App-Bündel
+/// (`visbox://app/knoten/`, `Knotenquelle`) — auch ohne Heim-PC. Ihre Datenwege und die Brücke
+/// reicht die App an den Heim-PC weiter. Nur die Visbox-Seite (`oberflaeche/seite.html`) kommt
+/// vorerst noch vom Heim-PC; sie kommt nicht ins Bündel (Entscheid 103c). Angemeldet wird dort
+/// über die Basic-Herausforderung des Servers, mit Benutzer und Kennwort aus dem Schlüsselbund —
+/// und **nur gegenüber dem eingerichteten Heim-PC** (Name und Anschluss müssen stimmen).
 ///
 /// Der Assistent kommt rechts dazu, sobald er geladen ist; bis seine Seitenleiste verdrahtet
 /// ist, steht dort sein Zustand aus den Startzeilen.
@@ -82,9 +83,11 @@ struct Arbeitsansicht: View {
 
     @ViewBuilder
     private var flaeche: some View {
-        if let basis = leitung.adresse, let anmeldung = leitung.anmeldung {
+        // DIE KNOTEN AUCH OHNE HEIM-PC (Schritt 1): Sie kommen aus dem Bündel; ihre Datenwege
+        // antworten dann sofort mit einem Satz. Die Seite braucht den Heim-PC weiter.
+        if wahl.ausDemBuendel || (leitung.adresse != nil && leitung.anmeldung != nil) {
             ZStack(alignment: .bottom) {
-                Heimflaeche(basis: basis, anmeldung: anmeldung, wahl: wahl,
+                Heimflaeche(basis: leitung.adresse, anmeldung: leitung.anmeldung, wahl: wahl,
                             meldung: $flaechenSatz)
                 if let satz = flaechenSatz {
                     Text(satz)
@@ -158,13 +161,15 @@ struct Assistentenplatzhalter: View {
 
 // ================================================================= die Webfläche
 
-/// Die Seite des Heim-PC in einer `WKWebView`.
+/// Die Knoten (aus dem Bündel) oder die Seite des Heim-PC in einer `WKWebView`.
 ///
 /// **Nichts auf der Platte:** ein flüchtiger Datenspeicher (`nonPersistent`) — keine Kekse,
-/// kein Zwischenspeicher, keine gemerkte Anmeldung über das Programmende hinaus.
+/// kein Zwischenspeicher, keine gemerkte Anmeldung über das Programmende hinaus. (Der
+/// `localStorage` der Knoten — Adresse der Brücke, Kurztasten — lebt darum nur, solange das
+/// Fenster offen ist; die Seite setzt ihn bei jedem Laden neu.)
 struct Heimflaeche: NSViewRepresentable {
-    let basis: URL
-    let anmeldung: Anmeldung
+    let basis: URL?
+    let anmeldung: Anmeldung?
     let wahl: Flaechenwahl
     @Binding var meldung: String?
 
@@ -175,6 +180,9 @@ struct Heimflaeche: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let einstellung = WKWebViewConfiguration()
         einstellung.websiteDataStore = .nonPersistent()
+        // DAS EIGENE ADRESSSCHEMA (Schritt 1): Es muss VOR dem Bau der Ansicht stehen —
+        // danach nimmt WebKit keinen Gastgeber mehr an. Die Konfiguration hält ihn fest.
+        einstellung.setURLSchemeHandler(context.coordinator.quelle, forURLScheme: Knotenwege.schema)
         let ansicht = WKWebView(frame: .zero, configuration: einstellung)
         let lotse = context.coordinator
         lotse.melde = { satz in meldung = satz }
@@ -196,6 +204,8 @@ struct Heimflaeche: NSViewRepresentable {
         if lotse.basis != basis || lotse.anmeldung != anmeldung || lotse.wahl != wahl {
             lotse.basis = basis
             lotse.anmeldung = anmeldung
+            lotse.quelle.basis = basis
+            lotse.quelle.anmeldung = anmeldung
             lotse.wahl = wahl
             lotse.lade(ansicht)
         }
@@ -205,18 +215,25 @@ struct Heimflaeche: NSViewRepresentable {
 /// Führt die Webfläche: lädt die Seite, beantwortet die Anmeldung, meldet Fehler als Satz —
 /// und öffnet den Dateiwähler, wenn die Seite danach fragt (Entscheid 90).
 final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
-    var basis: URL
-    var anmeldung: Anmeldung
+    var basis: URL?
+    var anmeldung: Anmeldung?
     var wahl: Flaechenwahl
     var melde: (String?) -> Void = { _ in }
+    /// Der Gastgeber des eigenen Schemas: Bau aus dem Bündel, Datenwege an den Heim-PC.
+    let quelle: Knotenquelle
 
-    init(basis: URL, anmeldung: Anmeldung, wahl: Flaechenwahl) {
+    init(basis: URL?, anmeldung: Anmeldung?, wahl: Flaechenwahl) {
         self.basis = basis
         self.anmeldung = anmeldung
         self.wahl = wahl
+        self.quelle = Knotenquelle(basis: basis, anmeldung: anmeldung)
     }
 
     func lade(_ ansicht: WKWebView) {
+        if wahl.ausDemBuendel && !quelle.bauVorhanden {
+            melde("Die Knotenansicht fehlt im Programm — bitte die Mac-App neu laden.")
+            return
+        }
         guard let ziel = wahl.adresse(basis: basis) else {
             melde("Aus der Adresse des Heim-PC liess sich die Seite nicht bauen.")
             return
@@ -243,7 +260,8 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
             completionHandler(.performDefaultHandling, nil)
             return
         }
-        guard raum.host.lowercased() == basis.host?.lowercased(),
+        guard let basis, let anmeldung,
+              raum.host.lowercased() == basis.host?.lowercased(),
               raum.port == (basis.port ?? 443) else {
             // EIN FREMDER FRAGT NACH DEM KENNWORT: er bekommt es nicht.
             completionHandler(.cancelAuthenticationChallenge, nil)

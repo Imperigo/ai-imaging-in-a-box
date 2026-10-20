@@ -32,6 +32,10 @@
 # sie im Einbau-Stand «gebaut, am Geraet unbestaetigt». Und ob Swift Playgrounds auf dem
 # iPad das Paket oeffnet, kann kein Mac-Lauf beantworten.
 #
+# Seit dem 20.10.2026 («Visbox eigenstaendig», Schritt 1) auch bei einem neuen Bau der
+# Knotenansicht (`kosmovis/apps/visbox-knoten/dist/`): Er liegt jetzt IM Mac-Buendel, und ein
+# neuer Bau ohne neuen Lauf hiesse eine Mac-App mit dem alten.
+#
 # Nur bei Aenderungen unter `ipad/` oder an dieser Datei: Ein Mac-Lauf kostet ein
 # Vielfaches eines Linux-Laufs, und eine Aenderung am Python-Kern aendert an der App nichts
 # (die Uebereinstimmung der Wege bewacht `tests/test_ipad_geruest.py` im Linux-Lauf).
@@ -43,10 +47,12 @@ on:
     branches: ["**"]
     paths:
       - "ipad/**"
+      - "kosmovis/apps/visbox-knoten/dist/**"
       - ".github/workflows/ipad.yml"
   pull_request:
     paths:
       - "ipad/**"
+      - "kosmovis/apps/visbox-knoten/dist/**"
       - ".github/workflows/ipad.yml"
   workflow_dispatch:
 
@@ -206,6 +212,12 @@ jobs:
           else
             ditto Beispielmappe "$BUENDEL/Contents/Resources/Beispielmappe"
           fi
+          # DIE KNOTENANSICHT IM BUENDEL («Visbox eigenstaendig», Schritt 1, 20.10.2026): Die App
+          # bedient sie ueber ihr eigenes Adressschema (`visbox://app/knoten/`, `Knotenquelle`)
+          # aus `Contents/Resources/Knoten` — nicht mehr vom Heim-PC. Der eingecheckte Bau, ganz
+          # (samt Lizenztexten der Schriften); ohne `index.html` haelt der Schritt an.
+          test -f ../../kosmovis/apps/visbox-knoten/dist/index.html
+          ditto ../../kosmovis/apps/visbox-knoten/dist "$BUENDEL/Contents/Resources/Knoten"
           plutil -lint "$BUENDEL/Contents/Info.plist"
           echo "BUENDEL=$BUENDEL" >> "$GITHUB_ENV"
           echo "NAME=$NAME" >> "$GITHUB_ENV"
@@ -224,6 +236,20 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$P" || echo "KEIN NSBonjourServices"
           echo "--- NSCameraUsageDescription:"
           /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$P" || echo "KEIN NSCameraUsageDescription"
+
+      - name: Liegt die Knotenansicht im Buendel? (Auskunft)
+        # «Visbox eigenstaendig», Schritt 1: Die App laedt die Knoten aus dem Buendel. KEIN TOR,
+        # eine Auskunft fuer das Protokoll (das Tor ist `test -f` oben): index.html, die Teile
+        # unter assets/ und der Baustand.
+        if: always()
+        continue-on-error: true
+        working-directory: ipad/VisboxMac
+        run: |
+          K="$BUENDEL/Contents/Resources/Knoten"
+          if [ -f "$K/index.html" ]; then echo "index.html liegt im Buendel"; else echo "::warning::KEINE index.html unter $K"; fi
+          ls -la "$K" "$K/assets" || true
+          du -sh "$K" || true
+          cat "$K/BAUSTAND.json" || true
 
       - name: Behelfs-Unterschrift
         # OHNE JEDE UNTERSCHRIFT STARTET EIN MAC MIT APPLE-CHIP NICHTS. Die Behelfs-Unterschrift

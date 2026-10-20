@@ -8079,3 +8079,14 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
 - [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58
 - [ ] Eigene Liste «nach Reset»: Auftrag 288, L24, Feld Skizzen-Bemerkung, Befunde kopflose LW-Probe und kv-b5
+
+## Visbox eigenständig (Owner-Auftrag 20.10.2026, Plan `docs/PLAN_VISBOX_EIGENSTAENDIG_2026-10-20.md`, Entscheide 103–103c)
+
+- [ ] Fassung 0.3.x: Oberfläche auf dem Gerät, Heim-PC nur Rechenserver
+  - [x] Schritt 1: Knotenansicht ins Mac-Bündel, Adressschema `visbox://app/knoten/`, Datenwege und Brücke durch die App (Mappe noch am Heim-PC durchgereicht) — gebaut, am Gerät unbestätigt (§146, C71); Fassungsblatt-Entwurf `docs/VISBOX_0.3.0_2026-10-20.md`, Nummer noch nicht erhöht
+  - [ ] Schritt 2: ohne Rechner Zeile statt Vorführmodus (103b); Beispielmappe als normale Mappe — erst Blatt auf der Entwurfsfläche
+  - [ ] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen»
+  - [ ] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a)
+  - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
+  - [ ] Schritt 6: Rechner-Wahl je Arbeit
+

@@ -1553,3 +1553,14 @@ Danach merkt sich das iPad die Kopplung so, dass sie auch ein Neuaufspielen übe
 gekoppelt ist, statt immer neue Zahlen anzubieten. Ein kurzer Aussetzer im Mobilfunk wirft die Apps nicht mehr gleich in
 den Vorführmodus.
 
+**Die Mac-App bringt ihre Knoten selbst mit (20.10.2026, erster Schritt zu Visbox 0.3).** Bis jetzt holte die Mac-App
+die Knotenansicht jedes Mal vom Heim-PC — war er aus, gab es keine Arbeitsfläche, und jede Änderung an den Knoten kam
+über den Heim-PC statt mit der App. Jetzt liegt die Knotenansicht im Programm selbst. Das Webfenster der App fragt dafür
+nicht mehr das Netz, sondern das Programm, über einen eigenen Adressanfang (`visbox://`): Die Teile der Ansicht liefert
+die App aus sich heraus; nur was den Heim-PC wirklich braucht — Mappe, Modell, Skizzen und die Render-Aufträge — reicht
+sie mit ihrer Anmeldung dorthin weiter. Ist kein Heim-PC da, erscheinen die Knoten trotzdem, und wo er fehlt, steht ein
+Satz statt einer Wartezeit. Das ist der erste von sechs Schritten, an deren Ende Visbox ganz auf dem Gerät läuft und der
+Heim-PC nur noch rechnet. Ehrlich gesagt: Die Mappe liegt in diesem Schritt noch am Heim-PC, der Vorführmodus ist noch
+da, und am Mac selbst ist die neue Fassung noch nicht ausprobiert — ob das Webfenster mit dem eigenen Adressanfang in
+jeder Einzelheit so arbeitet wie erwartet, zeigt erst das Gerät.
+

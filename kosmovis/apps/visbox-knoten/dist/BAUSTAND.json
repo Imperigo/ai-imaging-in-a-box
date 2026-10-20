@@ -2,8 +2,8 @@
  "quelle": {
   "kosmovis/HERKUNFT.json": "6fb241559de2f7a975cf11761c2e84d89062c0ce8a53919fad8638ca691d83b7",
   "kosmovis/apps/visbox-knoten/index.html": "042e84cfa37a7ad26a571ae68cdee0ac556b0d8fe287b3f5163b4293269134f5",
-  "kosmovis/apps/visbox-knoten/src/main.tsx": "51de61617d4c0e7751ba6799bd932d25beaa289ec48d6dd1c94ec0d29e8f9b0f",
-  "kosmovis/apps/visbox-knoten/src/mappe.ts": "04144fd0007494c3fa49119dcc2bdabe72fe6e0d9c0df24ab1c7053480cb7c81",
+  "kosmovis/apps/visbox-knoten/src/main.tsx": "7306fb397d45792d2735325e537782af45e574fe36a2f77b7d4de8b80db1edb9",
+  "kosmovis/apps/visbox-knoten/src/mappe.ts": "963db3d92431ad3b9af5283a2d33095d2004729022fd1dfb10e99a6a2148a732",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "79b71a093db0cbc793e299032ce20d0ac1a012eba2a3a6af532b5cd59fb7d6dd",
   "kosmovis/apps/visbox-knoten/vite.config.ts": "060d2f44f2ea8947dff6f2abf3c19f19f1931fb8a206047d75a58eea40301040",
   "kosmovis/package-lock.json": "c9d9ec1fc848773f6dc0155fa2c034b544492d52a863ebc4fca7826bb35d36dc"
