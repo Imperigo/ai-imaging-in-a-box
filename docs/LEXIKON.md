@@ -490,7 +490,7 @@ benutzen. *Im Projekt:* die Lizenz der Logo-Sammlung Simple Icons auf den Tafelk
 
 **Simple Icons** — Eine frei verfügbare Sammlung einfarbiger Logos bekannter Programme und Firmen,
 je als kleine Vektorgrafik, unter CC0. *Im Projekt:* Quelle der Logos auf den Tafelkarten
-«Visbox · Tools» (Fassung 13.21.0); wo die Sammlung kein Logo hat, steht eine Monogramm-Kachel.
+und Abbildungen zu den Werkzeugen (`docs/abbildungen/`, Fassung 13.21.0); wo die Sammlung kein Logo hat, steht eine Monogramm-Kachel.
 
 **Markenzeichen (auf einer Logo-Karte)** — Das Logo eines Programms gehört als Marke seinem Inhaber,
 auch wenn die Grafikdatei frei weitergegeben werden darf. Eine Karte, die solche Logos zeigt, sagt
@@ -7449,7 +7449,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 **Monogramm-Kachel** — Ein schlichtes Quadrat mit zwei, drei Buchstaben, das auf einer Karte an
 Stelle eines Logos steht, wenn kein freies Logo vorliegt. Es ist absichtlich keine Nachzeichnung
-einer Marke. *Im Projekt:* auf den Tafelkarten «Visbox · Tools», etwa «IFC» oder «gs».
+einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), etwa «IFC» oder «gs».
 
 ---
 

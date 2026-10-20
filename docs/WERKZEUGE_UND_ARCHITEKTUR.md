@@ -1,23 +1,24 @@
 # Werkzeuge und Architektur von Visbox
 
 *Stand: 20.10.2026. Owner-Wunsch vom selben Tag: die Produkte, die Visbox benutzt, mit Logo und
-Funktion auf der Kosmo-Tafel, in wenigen Worten erklärt, was jedes beiträgt — und ein Organigramm,
-wie alle Programme zusammenhängen.*
+Funktion, in wenigen Worten erklärt, was jedes beiträgt — und ein Organigramm, wie alle Programme
+zusammenhängen.*
 
-Dieses Blatt ist die ausführliche Fassung der Tafelkarten. Massgeblich für jede Lizenz bleibt
-`NOTICE`; hier steht nur, was dort (oder in `pyproject.toml`, `kosmovis/package.json`,
-`src/aiimaging/backbone.py`, `tiefenschaetzer.py`, `einbetter.py`) belegt ist.
+Massgeblich für jede Lizenz bleibt `NOTICE`; hier steht nur, was dort (oder in `pyproject.toml`,
+im Paketverzeichnis der Knotenansicht, in `src/aiimaging/backbone.py`, `tiefenschaetzer.py`,
+`einbetter.py`) belegt ist.
 
-**Tafelkarten** (Zweig `zentrale` im KosmoOrbit-Repo, Texte englisch):
+**Abbildungen** (Texte englisch, unter `docs/abbildungen/`):
 
-| Gruppe | Datei |
+| Thema | Datei |
 |---|---|
-| Visbox · Tools | `tafel/kosmovis/20261020-werkzeuge-00-lizenzen.png` … `-05-kern-dienste-schriften.png` (6 Karten) |
-| Visbox · Architecture | `tafel/kosmovis/20261020-architektur-00-uebersicht.png`, `-01-ein-auftrag.png` |
+| Architektur | [`20261020-architektur-00-uebersicht.png`](abbildungen/20261020-architektur-00-uebersicht.png) · [`20261020-architektur-01-ein-auftrag.png`](abbildungen/20261020-architektur-01-ein-auftrag.png) |
+| Lizenzen | [`20261020-werkzeuge-00-lizenzen.png`](abbildungen/20261020-werkzeuge-00-lizenzen.png) |
+| Werkzeuge | [`-01-rendern-ki`](abbildungen/20261020-werkzeuge-01-rendern-ki.png) · [`-02-bildmodelle`](abbildungen/20261020-werkzeuge-02-bildmodelle.png) · [`-03-geometrie-3d`](abbildungen/20261020-werkzeuge-03-geometrie-3d.png) · [`-04-knoten-apps`](abbildungen/20261020-werkzeuge-04-knoten-apps.png) · [`-05-kern-dienste-schriften`](abbildungen/20261020-werkzeuge-05-kern-dienste-schriften.png) |
 
 Logos stammen aus **Simple Icons** (Fassung 13.21.0, CC0), abgerufen über jsDelivr; wo es dort
 keines gibt, steht eine neutrale **Monogramm-Kachel** mit zwei, drei Buchstaben, keine
-nachgezeichnete Marke. Jede Karte trägt die Zeile «Logos: Simple Icons (CC0); trademarks belong to
+nachgezeichnete Marke. Jede Werkzeugabbildung trägt die Zeile «Logos: Simple Icons (CC0); trademarks belong to
 their owners». Die Bauskripte liegen nicht im Repo (nur im Arbeitsordner der Sitzung).
 
 ---
@@ -63,14 +64,14 @@ hinter der Prozessgrenze · **nicht ausgeliefert** = vom Nutzer oder von pip ins
 | gsplat 1.5 | Apache-2.0 | Rendert den Splat aus vielen Blickwinkeln | Heim-PC, Splat-Brücke, `.venv-splat` |
 | Open3D | MIT | Verschmilzt diese Tiefenbilder zu einem farbigen Netz | Heim-PC, Splat-Brücke, `.venv-splat` |
 | COLMAP-Dateiformat | eigener Code (Apache-2.0) | Liest die Kamerastandorte einer Fotoaufnahme | Kern; pycolmap nicht verwendet (bringt GPL-Teile mit) |
-| Epic RealityScan 2.x | proprietär — **vom Nutzer installiert, nicht ausgeliefert** | Wahlweise besseres Netz aus Fotos; nie Voraussetzung | nur am Rechner des Lizenznehmers, nie als Dienst über KosmoOrbit |
+| Epic RealityScan 2.x | proprietär — **vom Nutzer installiert, nicht ausgeliefert** | Wahlweise besseres Netz aus Fotos; nie Voraussetzung | nur am Rechner des Lizenznehmers, nie als Dienst für andere |
 | Blender (Import) | GPL — **Copyleft** | Lädt GLB und Umgebungsnetz für das Rendern | Heim-PC, dieselbe Prozessgrenze wie beim Rendern |
 
 ### Knotenansicht und Apps
 
 | Werkzeug | Lizenz | Was es zu Visbox beiträgt | Wo |
 |---|---|---|---|
-| React · react-dom | MIT | Zeichnet die Knotenansicht im Browser | Knotenansicht (`kosmovis/`), ausgeliefert |
+| React · react-dom | MIT | Zeichnet die Knotenansicht im Browser | Visbox-Knotenansicht, ausgeliefert |
 | zod | MIT | Prüft, ob Auftrag und Ergebnis die vereinbarte Form haben | Knotenansicht, Verträge |
 | zustand | MIT | Hält den Zustand der Knotenansicht | Knotenansicht, ausgeliefert |
 | TypeScript | Apache-2.0 | Sprache der Knotenansicht, vor jedem Bau geprüft | nur Bau |
@@ -87,7 +88,7 @@ hinter der Prozessgrenze · **nicht ausgeliefert** = vom Nutzer oder von pip ins
 | Python 3.11+ mit Standardbibliothek | Plattform | Die Kernbibliothek, ohne Pflicht-Abhängigkeit | überall (`pip install visbox`, `import aiimaging`) |
 | numpy | BSD-3-Clause, Rad trägt libquadmath (LGPL-2.1-or-later) — **offener Punkt** | Rechnet die 16-Bit-Tiefenkarte für das Bildmodell um | nur im Renderschritt |
 | Pillow | MIT-CMU | Liest und schreibt die Bilder | Renderkette und Prüfung |
-| MCP-SDK (mcp 1.x) | MIT, wahlweise | Lässt den Assistenten von KosmoOrbit Renders bestellen | Heim-PC, MCP-Einlass |
+| MCP-SDK (mcp 1.x) | MIT, wahlweise | Lässt Claude (oder ein anderes MCP-Programm) Renders bestellen | Heim-PC, MCP-Einlass (`aiimaging.mcp_server`) |
 | Ollama · Qwen3 30B/14B · gpt-oss 20B | MIT · Apache-2.0 — **nicht ausgeliefert** | Lokales Sprachmodell für den Visbox-Assistenten | Heim-PC, vom Owner eingerichtet |
 | Tailscale | BSD-3-Clause (tailscaled), Koordination proprietär — **nicht ausgeliefert** | Erreicht den Heim-PC von iPad und Mac unterwegs | vom Owner installiert |
 | OpenSSL · Avahi · libnotify | Apache-2.0 · LGPL-2.1-or-later · LGPL-2.1-or-later — **Copyleft-Anteil** | Koppeln im Heim-WLAN: Zertifikat, Auffinden, Zahl am Bildschirm | Heim-PC, je als eigenes Programm |
@@ -119,11 +120,11 @@ flowchart TB
   subgraph Geraete["Wo der Architekt arbeitet"]
     IPAD["iPad-App<br/>Skizze auf einem Standpunkt<br/>(SwiftUI, PencilKit)"]
     MAC["Mac-App<br/>zeigt die Knotenansicht des Heim-PC<br/>(WKWebView)"]
-    KO["KosmoOrbit · KosmoVis-Werkzeug<br/>dieselbe Knotenansicht;<br/>Claude/Kosmo bestellt auch über vis_render"]
+    CL["Claude über MCP (wahlweise)<br/>bestellt dieselben Aufträge"]
   end
-  subgraph Heim["Heim-PC (HomeStation) · Grafikkarte · Blender"]
+  subgraph Heim["Heim-PC · Grafikkarte · Blender"]
     FL["Visbox-Flächendienst<br/>oberflaeche/server.py<br/>Seite · /api/skizze · /knoten · /bruecke"]
-    BR["HomeStation-Brücke · MCP-Einlass<br/>render-scene/v1 hinein, render-result/v2 hinaus"]
+    BR["MCP-Einlass (wahlweise)<br/>aiimaging.mcp_server<br/>render-scene/v1 hinein, render-result/v2 hinaus"]
     AB[("Auftragsablagen (Ordner)<br/>jeder Auftrag wartet auf «Freigeben»")]
     AH["Abholer · tools/abholen.py<br/>alle 30 s, ein Auftrag, nur bei freier Karte"]
     BL["1 · Blender-Vorlauf<br/>Tiefe, Masken, Vorschau<br/>(eigenes Programm, GPL)"]
@@ -134,39 +135,41 @@ flowchart TB
     SP["Fotos zu 3D<br/>gsplat + Open3D in .venv-splat<br/>wahlweise RealityScan (vom Nutzer)"]
     AS["Assistent<br/>lokales Sprachmodell (Ollama)"]
   end
-  Z["Zentrale · Nachrichtenzweig zwischen den Workern"]
 
   IPAD -- "Skizze, Standpunkt" --> FL
   MAC <-- "Knotenansicht, Aufträge" --> FL
-  KO -- "Renderauftrag" --> BR
+  CL -- "Renderauftrag" --> BR
   FL --> AB
   BR --> AB
   AB -- "«Freigeben»" --> AH
   AH --> BL --> BM --> QA --> ER
   IFC -. "GLB-Modell" .-> BL
   SP -- "Umgebungsnetz" --> BL
-  ER -- "Ergebnis zurück an den Knoten" --> MAC
-  ER -- "Ergebnis zurück an den Knoten" --> KO
+  ER -- "Bild + Urteil abgelegt, am Knoten gezeigt" --> AB
   AS -. "hilft beim Auftrag" .-> FL
 ```
 
+![Wie die Programme zusammenhängen](abbildungen/20261020-architektur-00-uebersicht.png)
+
 **Lesehilfe in fünf Sätzen.**
 
-1. **Die Knotenansicht ist die Arbeitsfläche** (Owner-Klarstellung 14.10.2026): in der Mac-App, im
-   Browser des Heim-PC oder als KosmoVis-Werkzeug in KosmoOrbit. iPad und Visbox-Seite liefern nur
-   zu — die Skizze kommt über den Flächendienst in den Knoten «Sketch from iPad».
-2. **Ein Auftrag läuft immer über eine Brücke in eine Ablage**: der eigene Weg `/bruecke` des
-   Flächendienstes, die Brücke von KosmoOrbit oder der MCP-Einlass. In der Ablage wartet er auf
-   «Freigeben»; ohne diesen Klick wird nichts gerechnet.
+1. **Die Visbox-Knotenansicht ist die Arbeitsfläche** (Owner-Klarstellung 14.10.2026): in der
+   Mac-App oder im Browser des Heim-PC. iPad und Visbox-Seite liefern nur zu — die Skizze kommt
+   über den Flächendienst in den Knoten «Sketch from iPad».
+2. **Ein Auftrag läuft immer über eine Brücke in eine Ablage**: den Bestellweg des Flächendienstes
+   oder, wahlweise, den MCP-Einlass, über den auch Claude bestellen kann. In der Ablage wartet er
+   auf «Freigeben»; ohne diesen Klick wird nichts gerechnet.
 3. **Der Abholer** am Heim-PC schaut alle 30 Sekunden nach, nimmt einen freigegebenen Auftrag, aber
    nur bei freier Grafikkarte, und rechnet je Kamera: Blender-Vorlauf → Bildmodell → Prüfung.
 4. **Was copyleft ist, läuft als eigenes Programm**: Blender, IfcOpenShell (in `.venv-ifc`). Die
    Splat-Brücke (`.venv-splat`) ist frei lizenziert, steht aber wegen Regel 4 ebenfalls in einem
    eigenen Prozess (torch und CUDA nicht im Kern).
-5. **Die Zentrale** ist kein Teil eines Renders, sondern der Briefkasten, über den die Worker
-   (Integrator, UI, KosmoVis, HomeStation, LW) Aufträge, Meldungen und Tafelbilder austauschen.
+5. **Bild und Urteil** werden abgelegt und am Knoten gezeigt: bestanden, durchgefallen oder nicht
+   beurteilt.
 
-### Der Weg eines Render-Auftrags (Karte `architektur-01-ein-auftrag`)
+### Der Weg eines Render-Auftrags
+
+![Der Weg eines Render-Auftrags](abbildungen/20261020-architektur-01-ein-auftrag.png)
 
 1. **Ausführen** am Render-Knoten: Szene, Prompt, Zahlen und Kameras werden ein Auftrag.
 2. **Brücke**: Der Auftrag geht als `render-scene/v1` in die Ablage.
@@ -179,16 +182,16 @@ flowchart TB
 
 **Eine Grundlage, mehrere Varianten (Owner-Grundsatz Nr. 85):** Der langsame Teil (Blender) läuft
 einmal; jede weitere Variante braucht nur das Bildmodell und soll deckungsgleich bleiben.
-*Stand 20.10.2026 (Einbau-Stand C66, «halb»):* Heim-PC und Vertrag gebaut, der Knotenteil offen,
-die Messung der Deckungsgleichheit am Heim-PC liegt als `auf-20261020-289`.
+*Stand 20.10.2026:* Am Heim-PC wird die Grundlage abgelegt und ohne Blender wiederverwendet; der
+Teil in der Knotenansicht ist offen, die Deckungsgleichheit noch nicht gemessen.
 
 ---
 
 ## 3 · Quellen
 
-`NOTICE` · `pyproject.toml` · `kosmovis/package.json` und die Pakete darunter ·
+`NOTICE` · `pyproject.toml` · Paketverzeichnis der Knotenansicht ·
 `src/aiimaging/backbone.py`, `tiefenschaetzer.py`, `einbetter.py`, `geometrie_qa.py`,
 `stil_qa.py`, `abholer.py` · `oberflaeche/server.py`, `oberflaeche/LIESMICH.md` ·
 `tools/abholen.py` · `betrieb/README.md` · `ipad/LIESMICH.md` ·
 `docs/LAGEBEURTEILUNG_2026-08-14.md` · `docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md` ·
-`docs/EINBAU_STAND.md` (C52, C66) · `docs/PLAN.md` (Nr. 85).
+`docs/PLAN.md` (Nr. 85).
