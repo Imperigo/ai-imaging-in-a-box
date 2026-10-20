@@ -2217,6 +2217,37 @@ grösser als jeder Einfluss, den irgendeine Einstellung je gezeigt hat. Ein Verg
 zweier Einstellungen mit je einem Bild misst darum den Zufall und nicht die Einstellung —
 darum verlangen die Aufträge dieses Projekts **drei Startwerte** (0, 1, 2) je Fall.
 
+**Fester Startwert (einer Serie)** — Derselbe Startwert für alle Varianten einer Serie,
+damit sie sich nur in dem unterscheiden, was absichtlich geändert wurde (Stimmung,
+Prompt). Ohne ihn zog der Heim-PC je Kamera drei Startwerte und behielt den «besten» —
+Morgen- und Abendbild konnten so zwei verschiedene Würfe sein (Demolauf Nr. 84).
+*Wo im Projekt:* `vis.seed` im Auftrag; das Ergebnis meldet ihn je Kamera als `seed`.
+
+**Blender-Grundlage (eines Renderings)** — Das, was Blender für ein Bild rechnet, bevor
+ein Bildmodell daran arbeitet: Kamera, Geometrie und die Bilddurchgänge (Schönbild,
+Tiefe, Material-Kennung). Owner-Grundsatz Nr. 85: **ein Rendering = eine Grundlage,
+daraus mehrere KI-Varianten.** Die Grundlage wird einmal gerechnet, unter einer Kennung
+(`gl-` und 16 Zeichen) abgelegt und für jede Variante wiederverwendet — keine neue
+Kamera, kein neuer Blender-Lauf.
+*Wo im Projekt:* `abholer.lege_grundlage_ab`/`lies_grundlage`, Ablage
+`<Ausgabeordner>/_grundlagen/`; im Auftrag `vis.grundlage`, im Ergebnis
+`grundlage {id, wiederverwendet}`. Passt eine Grundlage nicht (andere Auflösung, Samples
+oder Kameras), lehnt der Heim-PC laut ab, statt still neu zu rechnen.
+
+**Deckungsgleiche Varianten** — Bilder derselben Grundlage, die sich Pixel für Pixel
+überlagern lassen: gleicher Standpunkt, gleiche Geometrie, nur Licht und Stimmung
+anders. Für einen Wettbewerb sind nur solche Varianten vergleichbar.
+
+**Nur Grundlage («nur Cycles»)** — Ein Auftrag ohne KI-Schritt: geliefert wird das rohe
+Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem teuren
+Bildmodell (Nr. 81). Im Vertrag ist das `vis.skip: true`. Vom 26.08. bis 20.10.2026 las
+der Heim-PC das als «gar nichts rechnen» — das Häkchen bekam darum kein Bild (Nr. 83).
+
+**Pose (einer Kamera)** — Wo eine Kamera steht, wohin sie blickt und wie weit ihr
+Bildwinkel ist (`position`, `target`, `fov`, dazu die Hochachse). Das Ergebnis meldet
+die **gerechnete** Pose je Kamera, auch bei der Auto-Kamera — so kann ein gelungener
+Standpunkt als feste Kamera weiterleben (Nr. 68).
+
 **Beweisgang** — Ein Durchlauf, dessen Ergebnis **Bilder** sind und nicht Zahlen. Er misst
 nichts Neues; er macht sichtbar, was die Software an jeder Station tatsächlich tut.
 *Abgrenzung zur Messung:* Eine Messung beantwortet eine offene Frage. Ein Beweisgang
@@ -7303,6 +7334,7 @@ eigenen Bild. Aufs Blatt kommt es nicht, weil es kein Bild des Projekts ist.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus Nr. 85/83/84 (Demolauf 16.10., Protokoll 74 §139): **Fester Startwert (einer Serie)**, **Blender-Grundlage (eines Renderings)**, **Deckungsgleiche Varianten**, **Nur Grundlage («nur Cycles»)**, **Pose (einer Kamera)** |
 | 2026-10-15 | Ergaenzt aus A1/96a/96b (Protokoll 74 §131): **Standpunkt eines Bildes**, **Steuerzeichen**, **Laufwerksbuchstabe**; berichtigt **Anweisung (an eine Skizze)** (96a: die Bemerkung gilt, nicht der Prompt); **Pfad-Trickserei** um den Skizzennamen ergänzt |
 | 2026-10-15 | Ergaenzt aus «Varianten mit einem Klick» (Entscheide 92/92a/92b, L24 Bildweg Varianten E246, Protokoll 74 §129): **Varianten-Knoten («Varianten mit einem Klick»)**, **Raster (im Bildvergleich)**, **Ebenenkombination (als Entwurf)**, **Eine Freigabe für alle**, **Befehlsjournal**, **Luft der Werkzeugliste (B19)**, **Lauf ohne Karte** |
 | 2026-10-15 | Nachgeführt aus dem RealityScan-Ausfall (auf-287): **Xvfb** (eigener Bildschirm für RealityScan) |

@@ -518,7 +518,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
                       status: str = STATUS_DONE, uebersprungen: bool = False,
-                      engine=None, ebenen=None) -> dict:
+                      engine=None, ebenen=None, grundlage=None) -> dict:
     """Das Ergebnis danebenlegen und den Laufzettel fortschreiben — in dieser Reihenfolge.
 
     **Die Reihenfolge ist die ganze Sorgfalt dieser Funktion.** Die fremde Oberfläche
@@ -557,6 +557,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
         kennung, namen, geometrie_urteil=geometrie_urteil,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
         nicht_gerendert=nicht_gerendert, je_kamera=je_kamera, engine=engine,
+        grundlage=grundlage,
         ebenen=ebenen_bereitstellen(ordner, ebenen))
 
     # ZUERST das Ergebnis, DANN der Laufzettel — siehe Docstring.

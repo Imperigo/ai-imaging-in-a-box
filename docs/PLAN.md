@@ -8046,6 +8046,9 @@ Bekannt und ausdrücklich nicht erledigt:
 ## v0.1.9 aus dem Demolauf 16.10. (ab Reset Di 20.10.2026, Protokoll 74 §138)
 
 - [ ] Nr. 85 Grundsatz: eine Blender-Grundlage, mehrere deckungsgleiche KI-Varianten (mit 84, 81, 83)
+  - [x] Heim-PC: «nur Cycles» liefert das Cycles-Bild (Nr. 83), Grundlage ablegen/holen, fester Startwert, Pose (§139)
+  - [x] Vertrag mit dem Integrator abgestimmt, Paket 1 «Vertrag» auf `claude/kosmovis-grundlage` (§139)
+  - [ ] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68

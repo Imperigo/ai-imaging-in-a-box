@@ -236,20 +236,26 @@ def test_eine_kamera_ueber_dem_dach_wird_an_der_ganzen_kette_gerechnet(tmp_path)
     assert [z for z in zeilen if "Komposition nicht angewandt (Aufsicht" in z]
 
 
-def test_ein_abbestellter_auftrag_beruehrt_weder_blender_noch_gpu(tmp_path):
-    """Die einzige Prüfung, die **vor** dem ersten Blender-Lauf greift."""
+def test_skip_rechnet_blender_und_beruehrt_die_gpu_nicht(tmp_path):
+    """**Seit dem 20.10.2026 «nur Grundlage»** (Demolauf Nr. 83): Blender ja, Bildmodell
+    nein. Bis dahin pruefte dieser Test, dass auch Blender nicht laeuft — die Lesart, die
+    das Haekchen «nur Cycles» ins Leere laufen liess. Die ganze Probe steht in
+    `tests/test_grundlage_varianten.py`."""
     ordner = _auftragsordner(tmp_path, skip=True)
     protokoll, attrappen = _kette(tmp_path)
+    echt = attrappen["_multipass"]
 
-    antwort = _lauf(tmp_path, ordner, attrappen)
+    def mit_schoenbild(glb, aus, **kw):
+        bericht = echt(glb, aus, **kw)
+        (Path(aus) / "beauty_.png").write_bytes(MINI_PNG)
+        return dict(bericht, beauty_png=str(Path(aus) / "beauty_.png"))
 
-    assert protokoll == {"multipass": [], "render": []}
-    assert antwort["ergebnis"]["images"] == []
-    # **Der Fund dieses Tests.** Bis er geschrieben wurde, reichte `hole_einen` das
-    # `uebersprungen` NICHT an `schreibe_ergebnis` durch: Die vierte Lage war gebaut,
-    # geprueft — und an der Naht nicht angeschlossen.
-    assert antwort["ergebnis"]["qa"]["verdict"]["reason"].startswith("ABBESTELLT")
-    assert "Abbestellt" in antwort["grund"]
+    antwort = _lauf(tmp_path, ordner, dict(attrappen, _multipass=mit_schoenbild))
+
+    assert len(protokoll["multipass"]) == 3 and protokoll["render"] == []
+    assert len(antwort["ergebnis"]["images"]) == 3
+    assert antwort["ergebnis"]["qa"]["verdict"]["reason"].startswith("NUR GRUNDLAGE")
+    assert antwort["grund"].startswith("Nur Grundlage")
 
 
 def test_drei_gleiche_ansichten_kosten_einen_renderlauf(tmp_path):

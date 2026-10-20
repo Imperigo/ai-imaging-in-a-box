@@ -133,6 +133,15 @@ BACKBONE_VON_FREMD = {
 #: Geweitet wird darum **hier, an diesem Muster** — dann folgen Funktion und Naht beide.
 FREMDE_JOB_ID = re.compile(r"^vis-\d+-[0-9a-f]{6}$")
 
+#: Die Kennung einer Blender-Grundlage (Owner-Grundsatz Nr. 85, Demolauf 16.10.2026; Vertrag
+#: mit dem Integrator 20.10.2026): ``gl-`` und 16 Hexzeichen. Vergeben vom Heim-PC, nie von
+#: der bestellenden Seite — sie reicht nur zurueck, was sie bekommen hat.
+GRUNDLAGE_KENNUNG = re.compile(r"^gl-[0-9a-f]{16}$")
+
+#: Die Spanne von ``vis.seed`` — die des Integrators (Auflage 2, 20.10.2026): eine ganze Zahl
+#: 0..2147483647, damit das Werkzeugschema ohne Sonderfall auskommt.
+SEED_HOECHSTENS = 2147483647
+
 
 def ist_fremde_job_id(wert) -> bool:
     """Trägt dieser Text die Kennungsform der fremden Warteschlange?
@@ -616,7 +625,7 @@ BEKANNTE_FELDER = {
     "render": ("resolution", "faithful", "samples", "sun",
                "environment", "himmel", "belichtung", "rauschschwelle", "passes"),
     "style": ("prompt", "mode", "refs"),
-    "vis": ("backbone", "skip", "upscale", "research_only"),
+    "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -1615,6 +1624,35 @@ def _block(fremd: dict, name: str, maengel: list) -> dict:
     return inhalt
 
 
+def _lies_grundlage_und_seed(vis: dict, skip, mit_skizze: bool, maengel: list):
+    """``(grundlage, seed)`` aus ``vis`` — beide ``None``, wenn nicht bestellt oder mangelhaft.
+
+    Was nicht stimmt, wird als Mangel gemeldet und NICHT geraten: Eine falsch geschriebene
+    Kennung als «keine Grundlage» zu lesen, hiesse still Blender neu rechnen — genau der
+    Fehler, gegen den Nr. 85 antritt.
+    """
+    grundlage = vis.get("grundlage") if isinstance(vis, dict) else None
+    if grundlage is not None and not (isinstance(grundlage, str)
+                                      and GRUNDLAGE_KENNUNG.match(grundlage)):
+        maengel.append(f"'vis.grundlage' ist {grundlage!r}. Erwartet ist die Kennung, die "
+                       f"ein frueherer Lauf als grundlage.id gemeldet hat (gl- und 16 "
+                       f"Hexzeichen).")
+        grundlage = None
+    seed = vis.get("seed") if isinstance(vis, dict) else None
+    if seed is not None and (isinstance(seed, bool) or not isinstance(seed, int)
+                             or not 0 <= seed <= SEED_HOECHSTENS):
+        maengel.append(f"'vis.seed' ist {seed!r}. Erwartet ist eine ganze Zahl von 0 bis "
+                       f"{SEED_HOECHSTENS}.")
+        seed = None
+    if grundlage is not None and skip:
+        maengel.append("'vis.grundlage' und 'vis.skip' zugleich: Die Grundlage ist schon "
+                       "gerechnet — ohne KI-Schritt entstuende nichts Neues.")
+    if grundlage is not None and mit_skizze:
+        maengel.append("'vis.grundlage' und 'skizze' zugleich: Die Skizze fuehrt ihr Bild "
+                       "selbst und rechnet keine Blender-Grundlage.")
+    return grundlage, seed
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -1936,6 +1974,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             maengel.append(
                 f"'vis.{name}' ist {wert!r}, erwartet war true, false oder null. Ein "
                 f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+    grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
+                                               skizze_block is not None, maengel)
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
@@ -1983,6 +2023,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "backbone": bb["name"],
         "ueberspringen": schalter["skip"],
         "hochskalieren": schalter["upscale"],
+        # Owner-Grundsatz Nr. 85: eine gerechnete Grundlage wiederverwenden, und ein fester
+        # Startwert fuer die ganze Serie. `None` = nicht bestellt.
+        "grundlage": grundlage,
+        "seed": seed,
         "sonne": sonne,
         # Bestellte Ebenen (E124, Schritt 1, 29.09.2026): Tupel aus EBENEN_ARTEN, leer =
         # keine bestellt.
@@ -2052,7 +2096,15 @@ DURCHGEREICHT = {
     # von sich aus: «BESTELLT UND NICHT AUSGEFUEHRT». Im Lauf vom 25.08. wurde es dann
     # belegt (auf-vis-20260825-15, Posten 2): Wer abbestellt, bekommt geliefert — und
     # zahlt die GPU-Zeit.
-    "ueberspringen": "abholer.verarbeiter: der Auftrag wird NICHT gerendert",
+    # SEIT DEM 20.10.2026 «NUR GRUNDLAGE» (Demolauf Nr. 83, Auflage 3 des Integrators): Vom
+    # 26.08. bis 20.10. hiess es hier «wird NICHT gerendert» — ihr Vertrag meinte aber
+    # «ohne KI-Schritt» (die lineart-Kopplung in render-scene.ts). Das Haekchen «nur Cycles»
+    # bekam darum gar nichts.
+    "ueberspringen": "abholer.verarbeiter: nur Grundlage — Cycles und Ebenen, KEIN "
+                     "Bildmodell; das Cycles-Bild ist das gelieferte Bild",
+    "grundlage": "abholer.verarbeiter: Kameras und Multipass aus der abgelegten "
+                 "Grundlage (abholer.lies_grundlage), kein Blender-Lauf",
+    "seed": "abholer.verarbeiter: genau dieser Startwert statt der Auswahl aus drei",
     # Seit 26.08.2026 — vorher der GEFAEHRLICHSTE der stehengebliebenen Felder, weil das
     # Bild danach richtig AUSSAH (auf-vis-20260825-15 Posten 5.3).
     "sonne": ("seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut/"
@@ -2344,6 +2396,12 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
         lieferung = _lieferung_je_kamera(eintrag)
         if lieferung is not None:
             satz.update(lieferung)
+        # STARTWERT UND GERECHNETE POSE (Nr. 85/68, 20.10.2026) — nur, was der Lauf weiss.
+        # Die Pose heisst `pose` und nicht `kamera`: `kamera` ist hier schon der Name.
+        if isinstance(eintrag.get("seed"), int) and not isinstance(eintrag.get("seed"), bool):
+            satz["seed"] = eintrag["seed"]
+        if isinstance(eintrag.get("pose"), dict):
+            satz["pose"] = dict(eintrag["pose"])
         aus.append(satz)
     return aus
 
@@ -3222,7 +3280,8 @@ def _ebenen_mit_lieferung(saetze, ebenen) -> None:
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
                  zeiten=None, uebersprungen: bool = False,
                  nicht_gerendert=(), je_kamera=None,
-                 zwei_tore_urteil=None, engine=None, ebenen=None) -> dict:
+                 zwei_tore_urteil=None, engine=None, ebenen=None,
+                 grundlage=None) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -3600,6 +3659,13 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         grund = ("ABBESTELLT: Der Auftrag trug 'skip: true' und wurde nicht gerechnet. "
                  "'passed: false' heisst hier weder durchgefallen noch ungeprueft — es "
                  "war nichts bestellt. Es ist keine GPU-Zeit angefallen.")
+    elif isinstance(geometrie_urteil, dict) and geometrie_urteil.get("nur_grundlage") is True:
+        # NUR GRUNDLAGE (Nr. 83/81, 20.10.2026): geliefert ist das Cycles-Bild. Die
+        # Geometrie-QA misst, ob ein BILDMODELL dem Modell folgt — ohne Bildmodell gibt es
+        # nichts zu messen, und «ein Lauf fehlt» waere eine falsche Aufforderung.
+        grund = ("NUR GRUNDLAGE: Geliefert ist das Cycles-Bild, ohne KI-Schritt. "
+                 "'passed: false' heisst hier weder durchgefallen noch ungeprueft — die "
+                 "Geometrie ist das Modell selbst; gemessen wird erst eine KI-Variante.")
     elif not messbar and nicht_gerendert:
         # Es IST etwas gemessen worden — nur eben vor dem Bild, und mit dem Ergebnis,
         # dass kein Bild entstehen soll. Der Satz «keine QA gelaufen» wäre hier eine
@@ -3710,6 +3776,11 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _lieferstatus_des_auftrags(saetze, uebersprungen=uebersprungen,
                                    anzahl_bilder=len(ergebnis["images"])))
     ergebnis.update(engine_felder(engine))
+    # DIE GRUNDLAGE DES LAUFS (Nr. 85, Vertrag 20.10.2026): `{id, wiederverwendet}`, nur wenn
+    # Blender gerechnet oder eine Grundlage geholt wurde — sonst fehlt das Feld.
+    if isinstance(grundlage, dict) and grundlage.get("id"):
+        ergebnis["grundlage"] = {"id": str(grundlage["id"]),
+                                 "wiederverwendet": grundlage.get("wiederverwendet") is True}
     return ergebnis
 
 

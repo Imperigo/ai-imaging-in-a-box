@@ -1528,3 +1528,13 @@ gesagt: In KosmoOrbit ist das erst eingebaut, wenn ein anderes Paket Platz in Ko
 eine Schätzung, am Heim-PC noch nicht gemessen; und dass Volumenvarianten von selbst als eigene Entwürfe erscheinen, fehlt
 noch (heute muss man sie auf Ebenen legen).
 
+**Eine Grundlage, mehrere Varianten (20.10.2026).** Im Demolauf vom 16.10. zeigten Morgen- und Abendbild desselben
+Projekts verschiedene Standpunkte und verschiedene Häuser — für einen Wettbewerb unbrauchbar. Der Owner hat daraus einen
+Grundsatz gemacht: Ein Rendering ist **eine** Blender-Grundlage (Kamera, Geometrie, Bilddurchgänge), und alle Varianten
+entstehen aus ihr; nur Stimmung, Prompt und Zufallswert ändern sich. Der Heim-PC legt dafür jetzt jede gerechnete
+Grundlage unter einer Kennung ab und holt sie für jede Variante wieder, ohne Blender neu zu rechnen; passt sie nicht
+zum Auftrag, lehnt er laut ab. Ein fester Zufallswert sorgt dafür, dass nicht jede Variante einen anderen «besten»
+Wurf behält. Dabei fiel ein alter Fehler auf: Das Häkchen «nur Cycles» bekam seit August gar nichts, weil zwei Seiten
+dasselbe Feld verschieden lasen — jetzt liefert es das rohe Blender-Bild, den ersten der zwei Schritte, die der Owner
+verlangt. Ehrlich gesagt: Die zwei Knöpfe am Render-Knoten («Grundlage rendern», «Variante erzeugen») fehlen noch; sie
+werden zuerst gezeichnet. Und ob die Varianten am Gerät wirklich deckungsgleich sind, misst erst die HomeStation.

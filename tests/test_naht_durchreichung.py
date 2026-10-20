@@ -233,26 +233,13 @@ def _abgestellte_kette(tmp_path, skip):
     return ergebnis, zaehler
 
 
-def test_ein_abbestellter_auftrag_wird_nicht_gerendert(tmp_path):
-    """Der Kern des Postens: keine Blender-Laufzeit, keine GPU-Zeit, kein Bild."""
-    ergebnis, zaehler = _abgestellte_kette(tmp_path, True)
-
-    assert zaehler == {"render": 0, "multipass": 0}
-    assert ergebnis["bilder"] == []
-    assert ergebnis["uebersprungen"] is True
-    assert "skip" in ergebnis["grund"]
-
-
-def test_ein_abbestellter_auftrag_bekommt_trotzdem_eine_antwort(tmp_path):
-    """**Der entschiedene Teil** (26.08.2026): Überspringen heisst kein Bild, aber sehr
-    wohl eine Antwort. Gar nichts zurückzugeben liesse die bestellende Seite hängen — sie
-    könnte übersprungen nicht von abgestürzt unterscheiden."""
-    ergebnis, _ = _abgestellte_kette(tmp_path, True)
-
-    assert set(ergebnis) >= {"bilder", "geometrie_urteil", "kameras", "zeiten",
-                             "uebersprungen", "grund"}
-    assert ergebnis["geometrie_urteil"] is None, (
-        "nichts gemessen — und ein erfundenes Urteil waere schlimmer als keines")
+def test_skip_heisst_nur_grundlage_und_ruft_kein_bildmodell(tmp_path):
+    """**Seit dem 20.10.2026** (Demolauf Nr. 83, Auflage 3 des Integrators): `skip` heisst
+    «nur Grundlage» — Blender ja, Bildmodell nein. Vom 26.08. bis 20.10. stand hier die
+    Pruefung, dass auch Blender NICHT laeuft; das Haekchen «nur Cycles» bekam darum gar
+    nichts. Die Attrappe schreibt kein Schoenbild — also kein Bild, laut."""
+    with pytest.raises(abholer.AbholerError, match="beauty_png"):
+        _abgestellte_kette(tmp_path, True)
 
 
 def test_ohne_skip_laeuft_alles_wie_bisher(tmp_path):

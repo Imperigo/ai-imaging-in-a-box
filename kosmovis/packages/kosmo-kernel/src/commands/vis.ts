@@ -280,6 +280,9 @@ export const renderAuftrag = registerCommand({
     kameraWahl: z.enum(['auto', 'saved']).default('auto'),
     stimmungPreset: z.enum(['morgen', 'abend', 'weiss']).optional(),
     backbone: z.enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl', 'qwen-image-2.1']).optional(),
+    // Nr. 85/84 (Vertrag 20.10.2026, Auflage 2): zwei flache Skalare, kein Tupel.
+    grundlage: z.string().optional(),
+    seed: z.number().int().min(0).max(2147483647).optional(),
     aufloesung: z
       .tuple([z.number().int().positive(), z.number().int().positive()])
       .optional()

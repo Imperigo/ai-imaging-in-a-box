@@ -583,6 +583,19 @@ export const RenderResult = z
      */
     engine_used: z.string().optional(),
     engine_license: z.string().optional(),
+    /**
+     * Nr. 85 (Vertrag 20.10.2026): die Blender-Grundlage dieses Laufs. Jeder
+     * Lauf, der Blender rechnet, meldet eine neue (`wiederverwendet: false`);
+     * ein Auftrag mit `vis.grundlage` meldet dieselbe Kennung mit
+     * `wiederverwendet: true`. Fehlt das Feld, kennt der Lauf keine Grundlage.
+     * Verlauf und «Aufs Blatt» gruppieren Varianten daran.
+     */
+    grundlage: z
+      .object({
+        id: z.string().regex(/^gl-[0-9a-f]{16}$/),
+        wiederverwendet: z.boolean(),
+      })
+      .optional(),
     guidance_applied: z.boolean().optional(),
     /**
      * P-LIZENZMARKE (E128, KosmoVis-Vertragsfrage F2 vom 30.09.2026,
@@ -686,6 +699,23 @@ export const RenderResult = z
            *  Ersatzzahl). Nebeneinander zu lesen, nicht zu verrechnen. */
           bilder_soll: z.number().int().min(0).nullable().optional(),
           bilder_ist: z.number().int().min(0).nullable().optional(),
+          /** Nr. 84: der gerechnete Startwert dieser Kamera; fehlt ohne KI-Schritt. */
+          seed: z.number().int().min(0).optional(),
+          /**
+           * Nr. 85/68: die GERECHNETE Kamera, auch bei `cameras:'auto'` — als
+           * CameraSpec-Felder, damit sie unveraendert als feste Kamera in einen
+           * Auftrag zurueck kann. Heisst `pose` und nicht `kamera`, weil
+           * `kamera` hier der Name ist. Nur Ausgabe: Listen statt Tupel-items
+           * (Nr. 1 betrifft Auftragsschemas).
+           */
+          pose: z
+            .object({
+              position: z.array(z.number()).length(3),
+              target: z.array(z.number()).length(3),
+              fov: z.number(),
+              up_axis: z.enum(['y', 'z']),
+            })
+            .optional(),
         }),
       )
       .optional(),

@@ -1260,7 +1260,7 @@ def _sechzehn_bit_rampe(breite=256, hoehe=32):
     np = _numpy_oder_ueberspringen()
     from PIL import Image
     zeile = np.linspace(0, 65535, breite, dtype=np.uint16)
-    return Image.fromarray(np.tile(zeile, (hoehe, 1)), mode="I;16")
+    return Image.fromarray(np.tile(zeile, (hoehe, 1)).astype(np.uint16))
 
 
 def test_sechzehn_bit_wird_skaliert_und_nicht_geklippt():
@@ -1298,7 +1298,7 @@ def test_eine_leere_karte_bricht_nicht_ab():
     np = _numpy_oder_ueberspringen()
     from PIL import Image
     from aiimaging.render import _tiefe_als_rgb
-    leer = Image.fromarray(np.zeros((8, 8), dtype=np.uint16), mode="I;16")
+    leer = Image.fromarray(np.zeros((8, 8), dtype=np.uint16))
     a = np.asarray(_tiefe_als_rgb(leer))[:, :, 0]
     assert a.max() == 0
 

@@ -332,29 +332,24 @@ def test_ohne_empfehlung_bleibt_die_warnung_leer(tmp_path, monkeypatch):
 
 
 # --------------------------------------------------------------------------------------
-# 5 · Abbestellt: keine Umwandlung
+# 5 · Nur Grundlage: die IFC wird umgewandelt (seit 20.10.2026)
 # --------------------------------------------------------------------------------------
 
-def test_eine_abbestellte_ifc_wird_nicht_umgewandelt(tmp_path, monkeypatch):
-    def nie(*a, **kw):
-        raise AssertionError("wer abbestellt, bekommt keinen Unterprozess")
+def test_auch_nur_grundlage_wandelt_die_ifc_um(tmp_path, monkeypatch):
+    """Bis zum 20.10.2026 hiess `skip` «abbestellt», und die IFC blieb liegen. Seither
+    heisst es «nur Grundlage» (Demolauf Nr. 83) — und Blender braucht die glb."""
+    gerufen = []
 
-    monkeypatch.setattr(seams, "ifc_zu_glb", nie)
+    def umwandeln(*a, **kw):
+        gerufen.append(a)
+        raise seams.SeamError("Attrappe: Umwandlung angestossen")
+
+    monkeypatch.setattr(seams, "ifc_zu_glb", umwandeln)
     ordner = ifc_auftrag(tmp_path, ifc_szene(vis={"backbone": "qwen", "skip": True}))
 
-    antwort, protokoll = lauf(tmp_path, ordner)
+    lauf(tmp_path, ordner)
 
-    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
-    assert protokoll["multipass"] == []
-    assert antwort["ergebnis"]["qa"]["verdict"]["reason"].startswith("ABBESTELLT")
-    # Der Modellstand sagt «nicht geprüft», mit Grund — und nicht, was der glb-Leser
-    # über eine IFC gemeldet hätte (Durchsicht 23.09.2026, Mangel 4).
-    from aiimaging import modellstand
-
-    stand = abholer.lies_befund(ordner)["modellstand"]
-    assert stand["geprueft"] is False
-    assert stand["urteil"] == modellstand.UNGEPRUEFT
-    assert stand["grund"].startswith("Abbestellt: Die IFC wurde nicht")
+    assert gerufen, "die Umwandlung wurde angestossen"
 
 
 # --------------------------------------------------------------------------------------

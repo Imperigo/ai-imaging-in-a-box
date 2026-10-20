@@ -467,7 +467,34 @@ export const RenderScene = z.object({
     .prefault({}),
   vis: z
     .object({
+      /**
+       * Nr. 85/83 (Demolauf 16.10.2026, Vertrag KosmoVis ↔ Integrator 20.10.2026):
+       * `skip:true` heisst verbindlich «NUR GRUNDLAGE» — Cycles und Passes, KEIN
+       * KI-Schritt. Geliefert wird das Cycles-Bild als Bild (`engine_used:
+       * 'cycles'`), die Passes als `ebenen`, wenn `render.passes` sie bestellt.
+       * Vom 26.08. bis 20.10.2026 las die Gegenseite `skip` als «gar nichts
+       * rechnen», und das Haekchen «nur Cycles» bekam kein Bild. `lineart`
+       * bleibt daran gekoppelt (siehe `style.mode`).
+       */
       skip: z.boolean().default(false),
+      /**
+       * Nr. 85: Kennung einer frueher gerechneten Grundlage, wie sie ein
+       * Ergebnis als `grundlage.id` gemeldet hat. Die Gegenseite nimmt deren
+       * Kameras und Passes und rechnet nur den KI-Schritt — kein Blender, keine
+       * Auto-Kamera neu. Sie lehnt laut ab, wenn die Kennung unbekannt ist oder
+       * Aufloesung, Samples oder Kameras des Auftrags nicht zur Grundlage passen
+       * (Auflage 4). Optional, kein Default.
+       */
+      grundlage: z
+        .string()
+        .regex(/^gl-[0-9a-f]{16}$/)
+        .optional(),
+      /**
+       * Nr. 84: fester Startwert des KI-Schritts — genau ein Bild je Kamera.
+       * Ohne Feld waehlt die Gegenseite wie bisher aus mehreren. Spanne wie im
+       * Werkzeugschema (Auflage 2): 0..2147483647.
+       */
+      seed: z.number().int().min(0).max(2147483647).optional(),
       /**
        * Modell-Lizenz-Sanierung 11.08.2026 (Advisor-Auftrag Phase 2, Audit
        * 10.08.): `'flux-krea'` (FLUX.1-Krea-dev, BFL-Lizenz NON-COMMERCIAL —
@@ -540,6 +567,14 @@ export const RenderScene = z.object({
     })
     .prefault({})
     .superRefine((v, ctx) => {
+      if (v.grundlage !== undefined && v.skip) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'vis.grundlage und vis.skip zugleich: Die Grundlage ist schon gerechnet — ohne KI-Schritt entstuende nichts Neues.',
+          path: ['grundlage'],
+        });
+      }
       if (v.backbone === 'flux-krea' && v.research_only !== true) {
         ctx.addIssue({
           code: 'custom',
@@ -749,6 +784,13 @@ export const RenderScene = z.object({
           message:
             'Eine Skizze braucht das Bildmodell — mit vis.skip (nur Cycles, Strichzeichnung) gibt es nichts, das sie liest.',
           path: ['vis', 'skip'],
+        });
+      }
+      if (v.vis.grundlage !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Eine Skizze fuehrt ihr Bild selbst und rechnet keine Blender-Grundlage — vis.grundlage geht dazu nicht.',
+          path: ['vis', 'grundlage'],
         });
       }
     }

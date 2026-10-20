@@ -1,0 +1,119 @@
+{
+  "schema": "kosmovis.render-result/v2",
+  "job_id": "vis-1-abcdef",
+  "images": [
+    "s.png",
+    "sSE.png",
+    "nNW.png"
+  ],
+  "qa": {
+    "geometry": {
+      "geometry_fidelity": null,
+      "spearman": null,
+      "geom_iou": null,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+      "status": "not_measured"
+    },
+    "verdict": {
+      "passed": false,
+      "reason": "NUR GRUNDLAGE: Geliefert ist das Cycles-Bild, ohne KI-Schritt. 'passed: false' heisst hier weder durchgefallen noch ungeprueft — die Geometrie ist das Modell selbst; gemessen wird erst eine KI-Variante."
+    }
+  },
+  "timings": {
+    "s": 0.0,
+    "sSE": 0.0,
+    "nNW": 0.0,
+    "gesamt": 0.0
+  },
+  "geometry_gates": {
+    "status": "not_measured",
+    "released": false,
+    "rho_mask_status": "not_measured",
+    "rho_mask_passed": false,
+    "geom_iou_status": "not_measured",
+    "geom_iou_passed": false,
+    "counter_check_status": "not_measured",
+    "fail_reasons": [
+      "zwei_tore_fehlt",
+      "kamera_nicht_gemessen"
+    ],
+    "reason": "NICHT GEMESSEN: Die Kamera 's', auf der das Urteil dieses Auftrags ruht, wurde nicht gemessen — es gibt kein rho_maske und kein geom_iou. 'passed: null' und 'released: false' heissen hier ungeprueft, nicht durchgefallen.",
+    "warnings": [],
+    "camera": "s",
+    "passed": false
+  },
+  "qa_je_kamera": [
+    {
+      "kamera": "s",
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1,
+      "pose": {
+        "position": [
+          0.0,
+          -30.0,
+          1.7
+        ],
+        "target": [
+          0.0,
+          0.0,
+          5.5
+        ],
+        "fov": 54.43222311461495,
+        "up_axis": "z"
+      }
+    },
+    {
+      "kamera": "sSE",
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1,
+      "pose": {
+        "position": [
+          0.0,
+          -30.0,
+          1.7
+        ],
+        "target": [
+          0.0,
+          0.0,
+          5.5
+        ],
+        "fov": 54.43222311461495,
+        "up_axis": "z"
+      }
+    },
+    {
+      "kamera": "nNW",
+      "lieferstatus": "geliefert",
+      "lieferstatus_grund": "",
+      "bilder_soll": 1,
+      "bilder_ist": 1,
+      "pose": {
+        "position": [
+          0.0,
+          -30.0,
+          1.7
+        ],
+        "target": [
+          0.0,
+          0.0,
+          5.5
+        ],
+        "fov": 54.43222311461495,
+        "up_axis": "z"
+      }
+    }
+  ],
+  "lieferstatus": "geliefert",
+  "lieferstatus_grund": "",
+  "engine_used": "cycles",
+  "grundlage": {
+    "id": "gl-74896f052c2aef61",
+    "wiederverwendet": false
+  }
+}

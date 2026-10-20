@@ -345,11 +345,15 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         uebersprungen=uebersprungen,
         **({"engine": ergebnis["engine"]} if ergebnis.get("engine") else {}),
         **({"ebenen": ergebnis["ebenen"]} if ergebnis.get("ebenen") else {}),
+        **({"grundlage": ergebnis["grundlage"]} if ergebnis.get("grundlage") else {}),
     )
+    anzahl = len(ergebnis.get("bilder") or [])
     antwort.update(
         tat=TAT_VERARBEITET, ergebnis=geschrieben,
         grund=("Abbestellt (skip: true) — nichts gerechnet." if uebersprungen
-               else f"{len(ergebnis.get('bilder') or [])} Bild(er) geschrieben."))
+               else f"Nur Grundlage: {anzahl} Cycles-Bild(er), kein KI-Schritt."
+               if ergebnis.get("nur_grundlage")
+               else f"{anzahl} Bild(er) geschrieben."))
     # NACH dem Vertragsergebnis und nach setze_status: Der Befund ist unsere eigene
     # Buchführung, nicht Teil der Abmachung — er darf die Reihenfolge nicht stören, an
     # der die fremde Oberfläche hängt.
@@ -2425,10 +2429,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # Alles darunter — Modellstand, Multipass, Zwischenspeicher — arbeitet auf der
         # glb; allein der Raumleser bekommt die IFC, denn Raeume gibt es nur dort.
         #
-        # Nicht bei `ueberspringen`: Wer abbestellt, bekommt keinen Unterprozess.
+        # Seit dem 20.10.2026 auch bei `skip` (Nr. 83): «nur Grundlage» rechnet Blender.
         modell = auftrag["modell"]
         umwandlung = None
-        if _ist_ifc(modell) and not szene.get("ueberspringen"):
+        if _ist_ifc(modell):
             umwandlung = _ifc_umwandeln(modell, ziel)
             modell = umwandlung["glb_path"]
             if umwandlung.get("up_axis"):
@@ -2450,30 +2454,23 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         modellstand = (_modellstand_nicht_umgewandelt() if _ist_ifc(modell)
                        else _modellstand_gemeldet(modell))
 
-        # ABBESTELLT. Bis zum 26.08.2026 las die Kette `skip: true` und rechnete
-        # trotzdem — der Abholer meldete es sogar selbst («BESTELLT UND NICHT
-        # AUSGEFUEHRT»), und im Lauf vom 25.08. wurde es belegt (auf-vis-20260825-15,
-        # Posten 2). Wer etwas abbestellt, bekam es geliefert und zahlte die GPU-Zeit.
-        #
-        # ENTSCHIEDEN (Claude, 26.08.2026, Owner-Freigabe «entscheiden und um 20:00
-        # vorlegen»): ueberspringen heisst KEIN Bild, aber SEHR WOHL eine Antwort. Gar
-        # nichts zurueckzugeben liesse die bestellende Seite haengen — sie kann nicht
-        # unterscheiden, ob wir uebersprungen haben oder abgestuerzt sind. Ein Ergebnis
-        # mit leerer Bildliste und einem Grund kann sie lesen.
-        if szene.get("ueberspringen"):
-            return {
-                "bilder": [],
-                "geometrie_urteil": None,
-                "stil_urteil": None,
-                "kameras": [],
-                "zeiten": {"gesamt": 0.0},
-                "uebersprungen": True,
-                "grund": ("Der Auftrag traegt `skip: true` und wurde NICHT gerendert. "
-                          "Das ist keine Stoerung und kein Urteil ueber die Geometrie — "
-                          "es wurde nichts gemessen, weil nichts bestellt war."),
-                "modellstand": modellstand,
-                "umwandlung": None,
-            }
+        # NUR GRUNDLAGE (Demolauf Nr. 83, Auflage 3 des Integrators, 20.10.2026). Vom 26.08.
+        # bis 20.10.2026 stand hier eine sofortige Rueckgabe ohne Bild: `skip` hiess bei uns
+        # «abbestellt», in ihrem Vertrag aber «ohne KI-Schritt» (die lineart-Kopplung in
+        # render-scene.ts). Das Haekchen «nur Cycles» bekam darum gar nichts — und genau
+        # das rohe Blender-Bild ist der erste der zwei Schritte, die der Owner verlangt
+        # (Nr. 81). Seither: Blender und Ebenen wie immer, das Cycles-Bild ist das Bild.
+        nur_grundlage = bool(szene.get("ueberspringen"))
+        # DIE GRUNDLAGE WIEDERVERWENDEN (Nr. 85) — vor jedem Blender-Lauf geprueft, laut.
+        grundlagen_wurzel = (Path(out_wurzel) / GRUNDLAGEN_ORDNER) if out_wurzel else None
+        geholt = (lies_grundlage(grundlagen_wurzel, szene["grundlage"], szene)
+                  if szene.get("grundlage") else None)
+        berichte_der_grundlage = {e["kuerzel"]: e["bericht"]
+                                  for e in (geholt or {}).get("kameras") or ()}
+        berichte_neu: dict = {}
+        # EIN FESTER STARTWERT FUER DIE SERIE (Nr. 84): genau einer statt der Auswahl aus
+        # drei — sonst behielte jede Variante womoeglich einen anderen «besten» Wurf.
+        seeds_lauf = (szene["seed"],) if szene.get("seed") is not None else seeds
 
         kameras = szene.get("kameras")
         if szene.get("innenraum"):
@@ -2537,7 +2534,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         backbone_name = szene.get("backbone") or render.VORGABE_BACKBONE
         lage_modell = (pipeline_lage(backbone_name) if pipeline_lage is not None
                        else {"rechenbar": None})
-        if lage_modell.get("rechenbar") is False:
+        if lage_modell.get("rechenbar") is False and not nur_grundlage:
             urteile_ohne = []
             for aufgabe in aufgaben:
                 kuerzel = aufgabe["kuerzel"]
@@ -2708,10 +2705,30 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
             # Gedaechtnis, das niemand bestellt hat, ist die unangenehmste Art von
             # Ueberraschung.
+            if geholt is not None and str(kuerzel) not in berichte_der_grundlage:
+                # Diese Kamera hat in der Grundlage kein Bild (sie sah dort an der Szene
+                # vorbei) — neu gerechnet wird nicht, das waere eine andere Grundlage.
+                urteile.append(dict(_uebersprungenes_urteil(kuerzel, {
+                    "abbruch": True,
+                    "abbruch_grund": (f"Die Grundlage {geholt['id']} hat fuer diese Kamera "
+                                      f"kein Bild; bitte die Grundlage neu rendern.")}),
+                    rahmung=None, komposition=None, blickfeld=None,
+                    modellstand=modellstand, **innen))
+                _urteil_ablegen(aus, urteile[-1])
+                zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                continue
             schluessel = (multipass_schluessel(einstellungen, blender=fassung)
-                          if zwischenspeicher is not None else None)
-            aus_speicher = _aus_dem_zwischenspeicher(zwischenspeicher, schluessel)
-            if aus_speicher is not None:
+                          if zwischenspeicher is not None and geholt is None else None)
+            aus_speicher = (None if geholt is not None
+                            else _aus_dem_zwischenspeicher(zwischenspeicher, schluessel))
+            if geholt is not None:
+                # AUS DER GRUNDLAGE (Nr. 85): Kamera, Tiefe, Ebenen, Schoenbild des ersten
+                # Laufs — kein Blender, keine Auto-Kamera. Der Vermerk sagt woher.
+                bericht = dict(berichte_der_grundlage[str(kuerzel)])
+                bericht["zwischenspeicher"] = {"treffer": True, "schluessel": None,
+                                               "grundlage": geholt["id"],
+                                               "gerechnet_unter": bericht.get("blender")}
+            elif aus_speicher is not None:
                 bericht = dict(aus_speicher)
                 # WOHER DAS BILD KOMMT, steht im Bericht. Ohne diese drei Zeilen saehe ein
                 # Lauf aus dem Speicher genauso aus wie ein gerechneter — nur schneller,
@@ -2806,6 +2823,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # darunter: Rahmung und Kamerahoehe sind Eigenschaften der KAMERA, die eine
             # andere Blickrichtung heilen kann. Der Massstab ist eine Eigenschaft der
             # GEOMETRIE und bei jeder Kamera derselbe.
+            # IN DIE GRUNDLAGE kommt jede Kamera, deren Multipass ganz da ist (Nr. 85).
+            if geholt is None:
+                berichte_neu[str(kuerzel)] = {k: v for k, v in bericht.items()
+                                              if k != "zwischenspeicher"}
             # DIE BESTELLTEN EBENEN (E124, Schritt 1) — hier, weil der Multipass jetzt ganz
             # da ist; auch eine Kamera, die spaeter ausgesetzt wird, hat sie.
             ebenen = ebenen_dieser_kamera(bericht, kuerzel, szene.get("ebenen"))
@@ -2814,6 +2835,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if not rahmung_pruefen and rahmung.get("abbruch"):
                 rahmung = _rahmung_abgeschaltet(rahmung)
             komposition = _komposition_vor_dem_render(bericht)
+            if nur_grundlage:
+                # DAS CYCLES-BILD IST DAS BILD (Nr. 83/81). Rahmung und Komposition werden
+                # gemeldet und halten nichts an: Sie schuetzen den KI-Schritt, und der
+                # findet hier nicht statt. Gemessen wird nichts — die Geometrie IST das Modell.
+                urteile.append(_urteil_nur_grundlage(
+                    kuerzel, bericht, aus, rahmung=rahmung, komposition=komposition,
+                    massstab=massstab, blickfeld=blickfeld, modellstand=modellstand,
+                    ebenen=ebenen, sonne=_sonne.aus_bestellung(szene.get("sonne")),
+                    innen=innen))
+                bilder.append(urteile[-1]["bild_png"])
+                _urteil_ablegen(aus, urteile[-1])
+                zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                continue
             for lage in (rahmung, komposition):
                 if lage.get("abbruch"):
                     break
@@ -2955,7 +2989,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 return erg
 
             ergebnis, urteil, auswahl = _bester_seed(
-                seeds, aus, kuerzel, _rendere_seed,
+                seeds_lauf, aus, kuerzel, _rendere_seed,
                 lambda png: messen(png, soll_pruefung, breite=breite, hoehe=hoch,
                                    modell=_tiefen_modell, schwelle=grenze,
                                    maske=maskenbefund.get("maske"), **ausblendung),
@@ -3043,6 +3077,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # jede spaetere Auswertung von hier lesen — und weil eine Messreihe wissen
             # muss, welche Bilder in DIESEM Lauf entstanden sind.
             urteil["zwischenspeicher"] = bericht.get("zwischenspeicher")
+            # DIE GERECHNETE POSE (Nr. 68/85) — damit eine Auto-Kamera als feste weiterlebt.
+            urteil["pose"] = pose_aus_bericht(bericht)
             urteil["blickfeld"] = blickfeld
             # Der Modellstand steht auch am KAMERAURTEIL und nicht nur im Ergebnissatz:
             # `_urteil_ablegen` schreibt es sofort auf die Platte, und ab dort ueberlebt
@@ -3078,6 +3114,18 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
 
         zeiten["gesamt"] = round(time.monotonic() - beginn_gesamt, 1)
+        # DIE GRUNDLAGE DIESES LAUFS (Nr. 85): geholt → dieselbe Kennung; gerechnet →
+        # abgelegt unter einer neuen. Ohne Ablage (kein --out-wurzel) keine Kennung —
+        # eine Kennung, die nichts wiederfindet, waere ein leeres Versprechen.
+        grundlage = None
+        if geholt is not None:
+            grundlage = {"id": geholt["id"], "wiederverwendet": True}
+        elif berichte_neu and grundlagen_wurzel is not None:
+            kennung = grundlage_kennung(auftrag.get("job_id") or ordner.name, berichte_neu)
+            lege_grundlage_ab(grundlagen_wurzel, kennung,
+                              job_id=auftrag.get("job_id") or ordner.name,
+                              szene=szene, berichte=berichte_neu)
+            grundlage = {"id": kennung, "wiederverwendet": False}
         # Die gemeldete Zahl traegt mit, wie sie entstanden ist — siehe `_kameraspanne`.
         # Ohne das waere der Uebergang von einer auf drei Kameras eine stille
         # Verschaerfung des Gates gewesen.
@@ -3101,6 +3149,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # verzweigen.
             "uebersprungen": False,
             "grund": "",
+            "nur_grundlage": nur_grundlage,
+            "grundlage": grundlage,
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
@@ -3405,6 +3455,124 @@ def _blender_fassung(_lauf=None) -> str:
         return f"unbekannt:{type(fehler).__name__}"
     erste = next((z.strip() for z in ausgabe.splitlines() if z.strip()), "")
     return erste or "unbekannt:leer"
+
+
+# --------------------------------------------------------------------------------------
+# Die Grundlage (Owner-Grundsatz Nr. 85, Demolauf 16.10.2026; Vertrag 20.10.2026)
+# --------------------------------------------------------------------------------------
+#
+# «Ein Render = EINE Blender-Grundlage (Kamera, Geometrie, Passes) → mehrere KI-Varianten,
+# deckungsgleich.» Bis zum 20.10.2026 rechnete jeder Auftrag Blender und bei `cameras: auto`
+# die Standpunkte neu, und der KI-Schritt zog je Kamera drei Startwerte und behielt den
+# «besten» — Morgen- und Abendbild zeigten darum verschiedene Bilder (Nr. 84).
+#
+# Seither legt jeder Lauf, der Blender rechnet, seine Multipass-Berichte unter einer
+# Kennung ab; ein Auftrag mit `vis.grundlage` holt sie und rechnet nur noch den KI-Schritt.
+# Abgelegt werden BERICHTE (sie zeigen auf die Dateien im Ausgabeordner des ersten Laufs),
+# nicht Kopien: Die Dateien liegen dort ohnehin, und eine zweite Kopie liefe auseinander.
+
+#: Der Unterordner der Ausgabewurzel, in dem die Grundlagen liegen.
+GRUNDLAGEN_ORDNER = "_grundlagen"
+#: Das Schema einer abgelegten Grundlage.
+GRUNDLAGE_SCHEMA = "aiimaging.grundlage/v1"
+#: Woran eine Grundlage zum Auftrag passen muss (Auflage 4 des Integrators, 20.10.2026):
+#: Wer ueber `vis_render` ohne Knoten bestellt, sieht keine Anzeige «veraltet» — also lehnt
+#: der Heim-PC selbst ab, laut und mit Grund.
+GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras")
+
+
+def grundlage_kennung(job_id: str, kuerzel) -> str:
+    """Die Kennung einer Grundlage: ``gl-`` und 16 Hexzeichen, aus Auftrag und Kameras."""
+    import hashlib
+    import json
+    roh = json.dumps({"job": str(job_id), "kameras": sorted(map(str, kuerzel))},
+                     sort_keys=True)
+    return "gl-" + hashlib.sha256(roh.encode("utf-8")).hexdigest()[:16]
+
+
+def _grundlage_pfad(wurzel, kennung: str) -> Path:
+    if not _kosmo_szene.GRUNDLAGE_KENNUNG.match(str(kennung)):
+        raise AbholerError(f"Keine Grundlage-Kennung: {kennung!r}.")
+    return Path(wurzel) / f"{kennung}.json"
+
+
+def _vergleichbar(wert):
+    """Ein Wert in der Form, in der er auch nach JSON hin und zurueck aussieht."""
+    import json
+    return json.loads(json.dumps(wert, sort_keys=True, default=str))
+
+
+def lege_grundlage_ab(wurzel, kennung: str, *, job_id, szene: dict, berichte: dict) -> Path:
+    """Die Grundlage eines Laufs ablegen — atomar, damit nie eine halbe gelesen wird."""
+    import json
+    ziel = _grundlage_pfad(wurzel, kennung)
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    satz = {"schema": GRUNDLAGE_SCHEMA, "id": kennung, "job_id": str(job_id),
+            "bestellt": {f: _vergleichbar(szene.get(f)) for f in GRUNDLAGE_MUSS_PASSEN},
+            "sonne": _vergleichbar(szene.get("sonne")),
+            "kameras": [{"kuerzel": str(k), "bericht": _vergleichbar(b)}
+                        for k, b in berichte.items()]}
+    tmp = ziel.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(satz, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(ziel)
+    return ziel
+
+
+def lies_grundlage(wurzel, kennung: str, szene: dict) -> dict:
+    """Die abgelegte Grundlage — geprueft gegen den Auftrag, sonst laut abgewiesen.
+
+    Abgewiesen wird, wenn die Kennung unbekannt ist, wenn eine ihrer Dateien fehlt, oder
+    wenn Aufloesung, Hoehe, Samples oder Kameras des Auftrags nicht die der Grundlage sind
+    (Auflage 4). **Nie** wird still neu gerechnet: Eine Variante auf einer anderen
+    Grundlage waere genau die nicht deckungsgleiche, gegen die Nr. 85 antritt.
+    """
+    import json
+    if wurzel is None:
+        raise AbholerError(
+            f"vis.grundlage {kennung!r} bestellt, aber dieser Abholer hat keine Ablage fuer "
+            f"Grundlagen (kein --out-wurzel). Ohne Ablage gibt es nichts wiederzuverwenden.")
+    pfad = _grundlage_pfad(wurzel, kennung)
+    if not pfad.is_file():
+        raise AbholerError(
+            f"Grundlage {kennung!r} ist hier nicht bekannt. Bitte zuerst «Grundlage rendern» "
+            f"(oder einen Lauf ohne vis.grundlage) — neu gerechnet wird nicht still, weil die "
+            f"Variante sonst nicht deckungsgleich waere.")
+    satz = json.loads(pfad.read_text(encoding="utf-8"))
+    abweichend = [f for f in GRUNDLAGE_MUSS_PASSEN
+                  if _vergleichbar(szene.get(f)) != satz.get("bestellt", {}).get(f)]
+    if abweichend:
+        raise AbholerError(
+            f"Grundlage {kennung!r} passt nicht zum Auftrag: {', '.join(abweichend)} "
+            f"{'weicht' if len(abweichend) == 1 else 'weichen'} ab. Eine Variante entsteht "
+            f"aus DERSELBEN Grundlage — bitte die Grundlage neu rendern oder die Werte der "
+            f"Grundlage bestellen.")
+    for eintrag in satz.get("kameras") or ():
+        bericht = eintrag.get("bericht") or {}
+        fehlt = [f for f in ("depth_png", "beauty_png")
+                 if not (isinstance(bericht.get(f), str) and Path(bericht[f]).is_file())]
+        if fehlt:
+            raise AbholerError(
+                f"Grundlage {kennung!r}, Kamera {eintrag.get('kuerzel')!r}: "
+                f"{', '.join(fehlt)} fehlt auf der Platte. Die Grundlage ist nicht mehr "
+                f"vollstaendig — bitte neu rendern.")
+    return satz
+
+
+def pose_aus_bericht(bericht: dict) -> dict | None:
+    """Die GERECHNETE Kamera als ``CameraSpec`` in Blenders Achse (``up_axis: "z"``).
+
+    So kann sie unveraendert als feste Kamera zurueck in einen Auftrag (Nr. 68): Unsere
+    Lesung nimmt ``z`` ohne Drehung. ``None``, wenn der Bericht die Stellung nicht nennt.
+    """
+    herkunft = (bericht or {}).get("kamera")
+    if not isinstance(herkunft, dict) or not herkunft.get("auge") or not herkunft.get("blick_auf"):
+        return None
+    try:
+        spec = _kosmo_szene.kamera_zu_spec(herkunft)
+    except _kosmo_szene.SzenenError:
+        return None
+    return {"position": list(spec["position"]), "target": list(spec["target"]),
+            "fov": spec["fov"], "up_axis": "z"}
 
 
 def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
@@ -4551,7 +4719,14 @@ def _je_kamera_mit_lieferung(kameras) -> list[dict]:
     for urteil in kameras or ():
         eintrag = _qa_je_kamera_eintraege([urteil])
         if eintrag:
-            aus.append(dict(eintrag[0], **_lieferung_der_kamera(urteil)))
+            zusatz = {}
+            # Startwert und Pose (Nr. 85/68), nur wenn der Lauf sie kennt.
+            seed = (urteil.get("seedauswahl") or {}).get("gewaehlt")
+            if isinstance(seed, int) and not isinstance(seed, bool):
+                zusatz["seed"] = seed
+            if isinstance(urteil.get("pose"), dict):
+                zusatz["pose"] = urteil["pose"]
+            aus.append(dict(eintrag[0], **_lieferung_der_kamera(urteil), **zusatz))
     return aus
 
 
@@ -4624,6 +4799,44 @@ def _zwei_tore_dieser_kamera(urteil: dict) -> dict | None:
         tore["tor_dieses"] = dict(tore["tor_dieses"], nicht_anwendbar=grund)
         tore["warnungen"] = [*(tore.get("warnungen") or ()), grund]
     return tore
+
+
+#: Die Engine eines Laufs ohne KI-Schritt: Blenders Cycles, als Prozess (Regel 2). Eine
+#: Lizenz wird nicht gemeldet — das Bild ist kein Werk des Programms, und `engine_license`
+#: spricht im Vertrag ueber Bildmodelle.
+ENGINE_NUR_GRUNDLAGE = {"name": "cycles", "lizenz": None, "fuehrung": None,
+                        "lizenz_offen": False}
+
+
+def _urteil_nur_grundlage(kuerzel, bericht, aus, *, rahmung, komposition, massstab,
+                          blickfeld, modellstand, ebenen, sonne, innen) -> dict:
+    """Das Urteil einer Kamera, deren Bild das Cycles-Bild ist (Nr. 83/81, 20.10.2026).
+
+    Nicht gemessen (``score: None``) und doch geliefert: Die Geometrie-QA misst, ob ein
+    BILDMODELL dem Modell folgt; ohne Bildmodell gibt es nichts zu messen — das Bild IST
+    das Modell. Es traegt dieselben Felder wie ein gerechnetes, damit kein Leser verzweigt.
+    """
+    import shutil
+    schoen = bericht.get("beauty_png")
+    if not (isinstance(schoen, str) and Path(schoen).is_file()):
+        raise AbholerError(
+            f"Kamera {kuerzel!r}: «nur Grundlage» bestellt, aber der Multipass hat kein "
+            f"Schoenbild (beauty_png) geschrieben. Ohne es gibt es kein Bild zu liefern. "
+            f"Grund laut Bericht: {bericht.get('beauty_png_fehler')}")
+    ziel = Path(aus) / f"{kuerzel}.png"
+    shutil.copyfile(schoen, ziel)
+    urteil = dict(_uebersprungenes_urteil(kuerzel, rahmung or {}),
+                  grund=("Nur Grundlage: das Cycles-Bild, kein KI-Schritt — nicht gemessen, "
+                         "weil kein Bildmodell gerechnet hat."),
+                  bild_png=str(ziel), nur_grundlage=True, doppelt_von=None,
+                  rahmung=rahmung, komposition=komposition, massstab=massstab,
+                  blickfeld=blickfeld, modellstand=modellstand, ebenen=ebenen,
+                  sonne=sonne, engine=dict(ENGINE_NUR_GRUNDLAGE),
+                  zwischenspeicher=bericht.get("zwischenspeicher"),
+                  pose=pose_aus_bericht(bericht), **innen)
+    urteil[_kosmo_szene.URTEIL_AUFSICHT] = None
+    urteil[_kosmo_szene.URTEIL_BILDAUFTRAG] = None
+    return urteil
 
 
 def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:

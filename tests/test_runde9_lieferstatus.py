@@ -174,14 +174,15 @@ def test_eine_kamera_die_vorbeischaut_ist_fehlgeschlagen_und_nicht_gerahmt(tmp_p
     _summe_stimmt(vertrag)
 
 
-def test_ein_abbestellter_auftrag_ist_uebersprungen_und_nicht_geliefert(tmp_path):
-    """Der Wert, für den ihr ``uebersprungen`` gebaut wurde (erg-20260917-37 F3)."""
-    vertrag = _vertrag(tmp_path, skip=True)
+def test_uebersprungen_am_auftrag_bleibt_der_fall_ohne_jede_rechnung():
+    """``uebersprungen`` am Auftrag (erg-20260917-37 F3) bleibt fuer den Fall, dass nichts
+    gerechnet wurde. Seit dem 20.10.2026 erreicht `skip` ihn nicht mehr — es heisst «nur
+    Grundlage» und liefert das Cycles-Bild (Nr. 83, `tests/test_grundlage_varianten.py`)."""
+    status, grund = kosmo_szene._lieferstatus_des_auftrags([], uebersprungen=True,
+                                                           anzahl_bilder=0)
 
-    assert vertrag["images"] == []
-    assert vertrag["lieferstatus"] == UEBERSPRUNGEN
-    assert "skip: true" in vertrag["lieferstatus_grund"]
-    assert "qa_je_kamera" not in vertrag, "abbestellt: keine Kamera gerechnet"
+    assert status == UEBERSPRUNGEN
+    assert "skip: true" in grund
 
 
 def test_die_eigene_ablage_schreibt_dieselben_felder(tmp_path, monkeypatch):

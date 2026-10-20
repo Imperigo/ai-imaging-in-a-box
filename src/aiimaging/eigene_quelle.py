@@ -287,7 +287,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(), je_kamera=None,
                       status: str = STATUS_DONE, uebersprungen: bool = False,
-                      engine=None, ebenen=None) -> dict:
+                      engine=None, ebenen=None, grundlage=None) -> dict:
     """Das Vertragsergebnis danebenlegen und den Auftrag fortschreiben — in dieser Reihenfolge.
 
     Die Reihenfolge ist dieselbe Sorgfalt wie bei der Brücke: Wer den Status zuerst setzt,
@@ -312,6 +312,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
         kennung, namen, geometrie_urteil=geometrie_urteil,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
         nicht_gerendert=nicht_gerendert, je_kamera=je_kamera, engine=engine,
+        grundlage=grundlage,
         # Dieselbe flache Ablage wie bei der Bruecke — ein Ergebnis, zwei Wege, eine Form.
         ebenen=bruecke.ebenen_bereitstellen(ordner, ebenen))
 
