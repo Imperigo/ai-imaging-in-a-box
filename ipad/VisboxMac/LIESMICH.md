@@ -176,8 +176,16 @@ ipad/VisboxMac/
     ├── Vermittlung/         Strom B: das iPad über den Mac
     ├── Vorfuehrung/         Strom C: der Vorführmodus
     ├── Assistent/           Strom D: die Seitenleiste des Assistenten
-    └── Aktualisieren/       Entscheid 84: fragen, laden, prüfen, ersetzen (Regeln im Kern)
+    ├── Aktualisieren/       Entscheid 84: fragen, laden, prüfen, ersetzen (Regeln im Kern)
+    └── Claude/              KI-Bedienung Stufe 2: MCP-Hörer nur auf 127.0.0.1:8631, `--mcp-stdio`
 ```
+
+**Claude anschliessen** (Plan KI-Bedienung, Stufe 2, gebaut, am Gerät unbestätigt): Die App hört ab Werk
+nur auf diesem Rechner auf `http://127.0.0.1:8631/mcp` (Einstellung `claudeMcp.an`). Claude Code:
+`claude mcp add --transport http visbox http://127.0.0.1:8631/mcp`. Claude Desktop startet das Programm
+im Bündel mit `--mcp-stdio` (`Visbox.app/Contents/MacOS/<Programm> --mcp-stdio`); es öffnet kein Fenster
+und reicht an die laufende App weiter. Bis Stufe 3 antwortet nur `visbox_status`; alles andere sagt
+«kommt mit Stufe 3». Kein Kennwort, kein Schlüssel.
 
 Übersetzt wird nur in der Prüfstrecke (`.github/workflows/ipad.yml`, Job `mac`): `swift build`
 für Apple-Chip, daraus `Visbox.app` mit `Contents/MacOS/<Programm>`, `Contents/Info.plist` und

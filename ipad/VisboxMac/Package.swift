@@ -16,7 +16,7 @@
 //
 // Ordner unter `Sources/VisboxMac/`, je Strom einer, damit parallele Arbeit nicht in
 // derselben Datei zusammenstoesst: `Start/` (A), `Vermittlung/` (B), `Assistent/` (D),
-// `Aktualisieren/`. `Vorfuehrung/` (C) ist seit Entscheid 103b (20.10.2026) weg: Den
+// `Aktualisieren/`, `Claude/` (MCP-Anschluss, KI-Bedienung Stufe 2). `Vorfuehrung/` (C) ist seit Entscheid 103b (20.10.2026) weg: Den
 // Vorfuehrmodus gibt es nicht mehr, sein Takt (`Leitungssteuerung`) liegt unter `Start/`.
 //
 // Kein App-Manifest wie beim iPad (`AppleProductTypes` kennt nur iOS-Apps). Das Buendel

@@ -5603,6 +5603,56 @@ oben, wo ein Sprachmodell die Pipeline bedienen soll.*
 einstellen darf — einstellen, nicht ausführen. Der Server spricht mit der eigenen
 Bibliothek, nie direkt mit Blender oder IfcOpenShell.*
 
+**MCP-Anschluss in der Mac-App** — Seit dem 20.10.2026 (Plan KI-Bedienung, Stufe 2) hat die Visbox-App
+am Mac einen eigenen MCP-Server, über den Claude (Claude Code oder Claude Desktop) Visbox bedienen soll. Er
+ist nur auf diesem Rechner erreichbar, ab Werk eingeschaltet und braucht kein Kennwort. Alles, was etwas
+ändert, wird eine Karte in der Assistent-Leiste; Rendern gibt immer ein Mensch frei, Löschen geht nur über
+eine Karte. *Im Projekt:* `ipad/Visbox.swiftpm/Kern/Mcpkern.swift` (die Regeln) und
+`ipad/VisboxMac/Sources/VisboxMac/Claude/` (das Netz); bis Stufe 3 antwortet nur das Werkzeug
+`visbox_status`, alle anderen sagen «kommt mit Stufe 3».
+
+**JSON-RPC** — Eine feste Form für Fragen und Antworten zwischen zwei Programmen, geschrieben als
+**JSON** (siehe dort). Eine Frage nennt, was getan werden soll («method»), die Angaben dazu
+(«params») und eine Nummer («id»); die Antwort trägt dieselbe Nummer und entweder das Ergebnis oder
+eine Fehlermeldung mit Zahl. Eine Nachricht ohne Nummer ist eine blosse Mitteilung und bekommt keine
+Antwort. *Im Projekt:* die Sprache, in der Claude mit dem MCP-Anschluss der Mac-App redet —
+`initialize` (Begrüssung, man einigt sich auf eine Fassung), `tools/list` (welche Werkzeuge gibt es),
+`tools/call` (eines benutzen), `ping` (bist du da?).
+
+**Hörer (Listener)** — Der Teil eines Programms, der an einem Anschluss (siehe **Anschluss (Port)**)
+wartet, bis jemand anklopft, und dann die Verbindung annimmt — wie ein Empfang, der die Tür öffnet.
+*Im Projekt:* `Claudeanschluss.swift` in der Mac-App; er wartet auf Anschluss 8631 auf Claude.
+
+**Loopback (127.0.0.1, «nur dieser Rechner»)** — Eine Adresse, die immer auf den eigenen Rechner zeigt
+und nie ins Netz hinausgeht. Wer einen Hörer nur an diese Adresse bindet, ist im WLAN unsichtbar: Andere
+Geräte können ihn weder sehen noch erreichen, nur Programme auf demselben Rechner. *Im Projekt:* Der
+MCP-Anschluss der Mac-App hört nur auf `127.0.0.1:8631` (Entscheide 106 und 106e) und prüft dazu jede
+Verbindung, ob sie wirklich vom eigenen Rechner kommt.
+
+**DNS-Rebinding (umgebogener Name)** — Ein Trick fremder Webseiten: Eine Seite lässt ihren eigenen
+Namen nachträglich auf die Adresse 127.0.0.1 zeigen und könnte so aus dem Browser heraus mit Programmen
+auf dem eigenen Rechner reden. Die Abwehr: Jede Anfrage muss im Kopf («Host») ausdrücklich
+`127.0.0.1` oder `localhost` nennen, und eine mitgeschickte Herkunft («Origin», siehe **Ursprung
+(einer Webseite)**) muss lokal sein. *Im Projekt:* `Mcpzugang` in `Kern/Mcpleitung.swift`, wie in
+KosmoOrbit.
+
+**Streamable HTTP (MCP über HTTP)** — Die Form, in der MCP über eine gewöhnliche Web-Anfrage läuft statt
+über **stdio** (siehe dort): Jede Nachricht von Claude ist eine `POST`-Anfrage an eine feste Adresse
+(hier `/mcp`), die Antwort kommt als JSON zurück. Ein offener Strom für spätere Mitteilungen ist
+erlaubt, aber nicht nötig. *Im Projekt:* Claude Code trägt den Anschluss mit
+`claude mcp add --transport http visbox http://127.0.0.1:8631/mcp` ein; Claude Desktop startet die App
+mit `--mcp-stdio`, und dieser Weg reicht jede Zeile an denselben Anschluss weiter.
+
+**Wartefrist (eines Aufrufs von Claude)** — Wie lange ein Werkzeugaufruf auf das Ergebnis oder auf den
+Klick des Architekten an der Karte wartet: 45 Sekunden, knapp unter der Zeitgrenze der Claude-Programme.
+Danach bekommt Claude «wartet noch — Vorschlag K-n liegt in der Assistent-Leiste» und fragt später mit
+`visbox_vorschlag_status` nach, statt den Aufruf zu wiederholen. *Im Projekt:* `Mcp.wartefrist`, wie
+KosmoOrbit.
+
+**Werkzeugträger** — Der Teil der App, der die Werkzeuge, die Claude aufruft, wirklich ausführt oder als
+Karte vorlegt. Der MCP-Kern selbst führt nichts aus, er reicht nur weiter und wartet. *Im Projekt:* ein
+Protokoll im Kern (`Werkzeugtraeger`); bis Stufe 3 ein Platzhalter, ab Stufe 3 die Knotenansicht.
+
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
 
@@ -7641,6 +7691,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 | Datum | Änderung |
 |---|---|
 | 2026-10-20 | Ergaenzt aus den Heim-PC-Fehlern (Protokoll 74 §150): **Variante ohne Hochladen**, **Endgültiger Mangel**, **Kantenrauschen (einer Tiefenkarte)**, **Streamender Teiler**, **Lange Wartezeit (der Mac-App)**, **Eigenes Modell (des Assistenten)**, **Rollenkarte (von KosmoOrbit)**, **Marke «eine Frage läuft»**; **Formular-Upload** und **Entladen (des Sprachmodells)** nachgeführt |
+| 2026-10-20 | Ergaenzt aus dem MCP-Kern der Mac-App (KI-Bedienung Stufe 2, Protokoll 74 §151): **MCP-Anschluss in der Mac-App**, **JSON-RPC**, **Hörer (Listener)**, **Loopback (127.0.0.1)**, **DNS-Rebinding**, **Streamable HTTP**, **Wartefrist (eines Aufrufs von Claude)**, **Werkzeugträger** |
 | 2026-10-20 | Ergaenzt aus dem Güte-Schalter am Render-Knoten (Protokoll 74 §149): **Zwischenbild**, **Zeilenregister (Render-Knoten)** |
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritte 2 und 6 (Protokoll 74 §147): **Rechenserver**, **Ohne Rechner**, **Rechner-Wahl**, **App-Einstellungen**; **Vorführmodus** als entfallen vermerkt |
 | 2026-10-20 | Ergaenzt aus der schnellen KI-Vorschau (Entscheide 104–104b, Protokoll 74 §148): **Vorschau (Güte)**, **Schritte eines Bildmodells**, **Steuerbild**; **Teilbild (abgebrochen)** um die Kamera des Bilds und **Fortschritt (eines Renderauftrags)** um die Phase «abgebrochen» ergänzt (Geräteprobe der HomeStation) |

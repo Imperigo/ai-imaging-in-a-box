@@ -8076,7 +8076,7 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] Plakette «VORSCHAU» an Bild und Verlauf (ui, `GueteMarke`)
     - [ ] Güte für den Skizzen-Weg (Owner-Frage; bis dahin grau)
     - [x] Am Gerät messen: Zeit je Phase Vorschau gegen Voll (auf-20261020-290, local) — 103–105 s bei ruhigem Rechner, Prüfung grösster Posten
-    - [x] Heim-PC-Fehler aus 290 und die Zeitüberschreitung der Variante behoben: Upload ausserhalb der Reihe und gestreamt, Variante ohne Modell, Mac 300 s für die zwei Wege mit Modell, guete+skip endet, Abbruchsatz in `message`, Zwilling mit Randrauschen, Rahmung an der gerahmten Box, Nullanker gemerkt (§150, C76)
+    - [x] Heim-PC-Fehler aus 290 und die Zeitüberschreitung der Variante behoben: Upload ausserhalb der Reihe und gestreamt, Variante ohne Modell, Mac 300 s für die zwei Wege mit Modell, guete+skip endet, Abbruchsatz in `message`, Zwilling mit Randrauschen, Rahmung an der gerahmten Box, Nullanker gemerkt (§151, C77)
     - [ ] Nachmessen am Gerät (auf-20261020-291, local)
     - [ ] Seite schickt bei einer Variante kein `model` (KosmoOrbit-Teil, parallel)
     - [ ] Messung in numpy statt reinem Python (Befund B5, nicht gebaut — ändert den Rechenweg, braucht Gegenprobe)
@@ -8112,3 +8112,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Satz «Claude über MCP …» wahr formuliert (105/106, §150)
   - [ ] `ollama pull qwen3:14b` am Heim-PC (owner), dann nachmessen (auf-20261020-291)
 
+
+## KI-Bedienung: Claude über MCP und der Assistent (Owner-Entscheid 105, 20.10.2026, Plan `docs/PLAN_KI_BEDIENUNG_2026-10-20.md`, Entscheide 106–106f, 108)
+
+- [ ] Stufen 0–7 nach dem Plan (§4)
+  - [x] Stufe 2: MCP-Kern in Swift mit Proben (JSON-RPC: `initialize` mit Fassungswahl, `ping`, `tools/list`, `tools/call`, Meldungen; Werkzeuge als Daten; Wartefrist 45 s mit «wartet noch — Vorschlag K-n liegt in der Assistent-Leiste»; `visbox_status`, `visbox_vorschlag_status`; Spielregel; Freigaberegel Karte/Coop/Voll; Host-/Origin-Prüfung; `POST /mcp`); Hörer der Mac-App nur auf `127.0.0.1:8631`, ab Werk an (`claudeMcp.an`); `--mcp-stdio` ohne Fenster; Werkzeugträger als Platzhalter («kommt mit Stufe 3») — gebaut, am Gerät unbestätigt (§150, C76)
+  - [ ] Stufe 3: Brücke App ↔ Knotenansicht als echter Werkzeugträger, Karten in der Assistent-Leiste, Tätigkeitsstrom, Einrichten (Schalter, Hinweis zu den Daten an Anthropic, 106f)

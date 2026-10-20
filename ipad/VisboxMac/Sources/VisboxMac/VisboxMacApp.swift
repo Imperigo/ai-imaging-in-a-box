@@ -4,7 +4,7 @@ import VisboxKern
 /// Der Einstieg der Mac-App — **und sonst nichts.**
 ///
 /// Was die App tut, steht in den Ordnern je Strom (`Start/`, `Vermittlung/`, `Assistent/`,
-/// `Aktualisieren/`; `Vorfuehrung/` ist seit Entscheid 103b weg); was sie entscheidet, im Kern (`VisboxKern`). Hier wird nur das Fenster
+/// `Aktualisieren/`, `Claude/`; `Vorfuehrung/` ist seit Entscheid 103b weg); was sie entscheidet, im Kern (`VisboxKern`). Hier wird nur das Fenster
 /// aufgemacht und die eine Leitung zum Heim-PC angelegt, die alle Ansichten teilen.
 ///
 /// Der Name des Fensters kommt aus der Marke — wie bei der iPad-App steht er an genau einer
@@ -19,12 +19,19 @@ struct VisboxMacApp: App {
     @StateObject private var aktualisierung = Fassungswaechter()
 
     init() {
+        // CLAUDE DESKTOP STARTET DIE APP MIT `--mcp-stdio` (Plan KI-Bedienung, Stufe 2): Dann
+        // laeuft nur der Weg ueber stdio, ohne Fenster, und die App endet danach — VOR dem
+        // Einzelstart, der sonst die laufende Visbox nach vorn holte und diesen Start beendete.
+        Claudestdio.pruefe()
         // EIN VISBOX-FENSTER (Owner-Befund 20.10.2026): Laeuft schon eine, kommt sie nach vorn,
         // und dieser Start endet — bevor ein Fenster entsteht. Nach «Neu starten» umgekehrt.
         Einzelstart.pruefe()
         // DIE SCHRIFTEN VOR DEM ERSTEN BILDSCHIRM: Registriert wird einmal (`static let`);
         // scheitert es, gilt die Systemschrift, und der Grund steht im Protokoll.
         _ = Macschriften.stand
+        // CLAUDE UEBER MCP, AB WERK AN (Entscheid 108 B): nur auf 127.0.0.1:8631, abschaltbar
+        // mit der Einstellung `claudeMcp.an`.
+        Claudeanschluss.gemeinsam.starteWennAn()
     }
 
     var body: some Scene {

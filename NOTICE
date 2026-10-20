@@ -477,6 +477,10 @@ iPad koppeln ohne Abtippen) ebenso Plattform, nicht mitgeliefert:
 MultipeerConnectivity (Naehe-Verbindung zwischen Mac und iPad, beide Apps),
 CoreImage (QR-Code im Koppelfenster des Mac), VisionKit und AVFoundation (die
 Kamera der iPad-App liest den QR-Code).
+Seit dem 20.10.2026 (KI-Bedienung, Stufe 2) hoert die Mac-App ueber Network
+zusaetzlich nur auf 127.0.0.1:8631 fuer Claude (MCP). MCP ist ein offener Standard;
+das Protokoll steht im eigenen Kern (ipad/Visbox.swiftpm/Kern/Mcpkern.swift) - kein
+MCP-Paket in der App, keine neue Abhaengigkeit.
 
 --------------------------------------------------------------------------------
 IBM Plex Sans                                      OFL-1.1

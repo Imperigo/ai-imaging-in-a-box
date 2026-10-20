@@ -122,6 +122,10 @@ ipad/
 │   │   ├── Heimkopplung.swift   der Mac koppelt sich selbst (Entscheid 83): Tailscale-Geräte,
 │   │   │                        Bonjour-Funde, Zahl anfordern, Antwort deuten, Anheften
 │   │   ├── Vermittlung.swift    der Mac als Vermittler: Tür, Weiterreichen, Zeile «iPad»
+│   │   ├── Mcpkern.swift        Claude über MCP (KI-Bedienung, Stufe 2): JSON-RPC, Werkzeuge,
+│   │   │                        Wartefrist 45 s, Freigaberegel, Platzhalter bis Stufe 3
+│   │   ├── Mcpleitung.swift     dazu: Host-/Origin-Prüfung, `POST /mcp`, Weg über stdio
+│   │   │                        (die Mac-Seite liegt in `VisboxMac/Sources/VisboxMac/Claude/`)
 │   │   ├── Naehekopplung.swift  iPad koppeln ohne Abtippen (Entscheid 99): Koppelschein für
 │   │   │                        QR-Code und Nähe, Koppelfenster (2 min), beide bestätigen
 │   │   └── Vermittlerkopplung.swift  die Kopplung iPad ↔ Mac und der Zugang des Mac

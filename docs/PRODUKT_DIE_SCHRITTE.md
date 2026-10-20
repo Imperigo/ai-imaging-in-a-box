@@ -1607,3 +1607,14 @@ nur an der Grundlage und wird für jede weitere Variante wiederverwendet. Der As
 nimmt kein fremdes mehr von der Grafikkarte. Ehrlich gesagt: Alles ist mit Attrappen geprüft, am Heim-PC wird es erst
 nachgemessen; und dass die Vorschau in der Prüfung «Geometrie nicht gemessen» zeigt, ist kein Rechenfehler — das
 Bildmodell malte bei diesem kleinen Testhaus einen Innenraum statt eines Hauses.
+**Claude kann sich mit der Mac-App verbinden — erst der Anschluss (20.10.2026, KI-Bedienung Stufe 2).** Claude (als
+Programm auf demselben Rechner) soll Visbox einmal so bedienen können wie ein Mensch: Knoten setzen, Bilder bestellen,
+Ergebnisse ansehen. Dafür hat die Mac-App jetzt einen eigenen Anschluss nach dem offenen Standard MCP. Er ist nur auf
+diesem Rechner erreichbar, nicht im WLAN, und ab Werk eingeschaltet; ein Kennwort braucht er darum nicht. Jede Anfrage
+muss sich als lokal ausweisen, damit keine fremde Webseite im Browser mithören kann. Die Regeln stehen fest, bevor es ein
+einziges Werkzeug gibt: Was etwas ändert, wird eine Karte in der Assistent-Leiste, die der Architekt anwendet oder
+ablehnt; Löschen geht nur über eine Karte; und die Grafikkarte gibt immer ein Mensch frei, auch wenn die KI sonst
+selbständig arbeiten darf. Wartet eine Karte länger als 45 Sekunden, bekommt Claude «wartet noch» und fragt später nach,
+statt den Auftrag zu wiederholen. Für Claude Desktop startet sich die App auf Wunsch ohne Fenster und reicht nur weiter.
+Ehrlich gesagt: Heute kann Claude erst fragen, ob Visbox bereit ist; alles andere antwortet «kommt mit Stufe 3», wenn die
+Knotenansicht ihre Werkzeuge an den Anschluss gibt. Am Mac selbst ist der Anschluss noch nicht ausprobiert.

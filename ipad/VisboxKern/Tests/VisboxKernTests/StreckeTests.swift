@@ -173,14 +173,16 @@ final class StreckeTests: XCTestCase {
     /// DIE WACHE GEGEN FESTE `http://`-BAUSTEINE: Keine Datei des App-Pakets setzt ein
     /// `"http://` in Code — ausser `Kern/Suche.swift` (das Heimnetz: Bonjour und eingetippt)
     /// und `Kern/Anfragen.swift` (das Gerüst, aus dem nur der Pfad gelesen wird). Bis zum
-    /// 01.10.2026 strich der Koppelbildschirm selbst ein `http://` ab.
+    /// 01.10.2026 strich der Koppelbildschirm selbst ein `http://` ab. Seit dem 20.10.2026 auch
+    /// `Kern/Mcpleitung.swift`: Dort baut niemand eine Adresse, sondern der Anschluss fuer Claude
+    /// vergleicht das `Origin` eines Browsers mit `http://localhost` (KI-Bedienung, Stufe 2).
     func testKeinFestesHttpAusserhalbDerHeimnetzregeln() throws {
         let ipad = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent()
         let paket = try XCTUnwrap(FileManager.default.contentsOfDirectory(
             at: ipad, includingPropertiesForKeys: nil).first { $0.pathExtension == "swiftpm" })
-        let erlaubt: Set<String> = ["Suche.swift", "Anfragen.swift"]
+        let erlaubt: Set<String> = ["Suche.swift", "Anfragen.swift", "Mcpleitung.swift"]
         var gelesen = 0
         let liste = FileManager.default.enumerator(at: paket, includingPropertiesForKeys: nil)
         while let datei = liste?.nextObject() as? URL {
