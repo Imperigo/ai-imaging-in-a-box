@@ -8137,7 +8137,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Sätze des Entladens (Befunde aus 291) — gebaut, am Gerät unbestätigt (§153, C82)
   - [x] Messung am Heim-PC: auf-20261020-292 (local), dazu Vorschau-Geometrie bei Steuerstärke 0,8/1,0 und 8/12 Schritten — Ergebnis `71c2049`, acht Befunde
   - [x] Befunde aus 292 behoben: ruhiger Hintergrund, AgX und Belichtung je Stimmung, Überstrahlung gemessen, Gelände ohne Material, Standpunkte mit Seitenverhältnis, bestellte Bildgrösse, Vorschau-Steuerstärke 1,0, `geom_iou` null mit Grund, Ergebnis bei unbekannter Material-id, 409 beim Anlegen; neue Himmelsbilder — gebaut, am Gerät unbestätigt (§155, C84)
-  - [ ] Nachmessung am Heim-PC: auf-20261020-293 (local) — u. a. Belichtung je Stimmung auf den neuen Bildern
+  - [x] Nachmessung am Heim-PC: auf-20261020-293 (local) — Ergebnis `94fe5c3`: nichts überstrahlt, aber milchig, flach, ohne Schatten; Haus verschwimmt bei winter/morgen/nebel/bedeckt; sechs Befunde
+  - [x] Befunde aus 293 behoben: Sonnenlampe aus dem Himmelsbild und Fülllicht, Hintergrund mit festem Abstand (Vorprobe), graue Platte, AgX «Medium High Contrast», tiefere Blaue Stunde, `qa.kontrast_haus_hintergrund`, Messung auch bei «nur Grundlage», KI-Schritt mit Untergrenze 1024 px, Messboden auch neben Gelände — gebaut, am Gerät unbestätigt (§156, C85)
+  - [ ] Nachmessung am Heim-PC: auf-20261020-294 (local) — Schatten, Kontrast je Stimmung, je zwei KI-Bilder mit architektonischem Prompt, Vorschau auf 480er-Grundlage
+  - [ ] Schrift-Artefakte im Vordergrund der KI-Bilder (B5 aus 293; 294 misst, ob die graue Platte mit Schatten hilft)
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
   - [ ] Holzlattung: Maserung quer zu den Latten (B6 aus 292)
   - [ ] Zeile «Himmelsbilder n/8» im Einrichten der Mac-App anzeigen; Satz `entladen` in der Assistent-Leiste (Visbox, Swift)
