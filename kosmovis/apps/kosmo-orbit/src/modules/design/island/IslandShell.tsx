@@ -42,8 +42,9 @@ import './inhalte/austausch';
 // fünfter Import, registriert das neue PROJEKT-Werkzeug `profil` (eigene
 // Datei statt `inhalte/projekt.tsx`, um deren Dateikreis nicht anzufassen).
 import './inhalte/profile';
-import { useLeisteAusweichen } from './leiste-lage';
+import { ISL_NEU_MESSEN, useLeisteAusweichen } from './leiste-lage';
 import './island.css';
+import { useSplatPunktAnfrage } from '../../../state/splat-punkt-anfrage';
 
 /**
  * IslandShell (PD1 Fundament, `docs/ISLAND-UI-SPEZ.md` §4.1/§4.2/§4.3).
@@ -677,6 +678,9 @@ function useViewportKlammer(ref: { current: HTMLElement | null }, aktiv: boolean
     klammereInViewport(el);
     const aufResize = () => klammereInViewport(el);
     window.addEventListener('resize', aufResize);
+    // Kontrollmass (14.10.2026): ein Inhalt, der das Fenster VERSCHIEBT (zur Seite treten, `translate`),
+    // ändert weder seine Grösse noch die des Bildschirms — er bittet mit diesem Ereignis um Neumessen.
+    el.addEventListener(ISL_NEU_MESSEN, aufResize);
     let ro: ResizeObserver | undefined;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(aufResize);
@@ -693,6 +697,7 @@ function useViewportKlammer(ref: { current: HTMLElement | null }, aktiv: boolean
     stufenHoerer.add(aufFremdeStufe);
     return () => {
       window.removeEventListener('resize', aufResize);
+      el.removeEventListener(ISL_NEU_MESSEN, aufResize);
       ro?.disconnect();
       stufenHoerer.delete(aufFremdeStufe); // Falle 2: kein Leck über Schliessen/Unmount hinweg.
     };
@@ -1498,9 +1503,16 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
   // Bauagenten-Bericht); Aussenklick ist es NUR ausserhalb der drei
   // Canvas-Klickketten-Werkzeuge (`AUSSENKLICK_AUSNAHME` oben).
   const popupOderFensterOffen = stufe === 'popup' || stufe === 'fenster';
+  // Kontrollmass (14.10.2026): solange ein Punkt im Splat erfragt wird, gehört der Klick in die
+  // 3D-Ansicht der Punktwahl — er schliesst kein Fenster (sonst schlösse der erste Tipp das Splat-Fenster,
+  // in dem der Ablauf steht; gemessen in `e2e/kontrollmass.spec.ts`).
+  const splatPunktGefragt = useSplatPunktAnfrage((z) => z.offen);
   useOverlaySchliessen(wurzelRef, schliessePopupOderFenster, {
     esc: popupOderFensterOffen,
-    aussenklick: popupOderFensterOffen && !(aktivesWerkzeugId !== null && AUSSENKLICK_AUSNAHME.has(aktivesWerkzeugId)),
+    aussenklick:
+      popupOderFensterOffen &&
+      !splatPunktGefragt &&
+      !(aktivesWerkzeugId !== null && AUSSENKLICK_AUSNAHME.has(aktivesWerkzeugId)),
   });
 
   // PB2 (Bauauftrag Punkt 2): derselbe Hook schliesst den Lang-Hover-
@@ -1799,7 +1811,8 @@ export const IslandShell = forwardRef<IslandShellHandle, IslandShellProps>(funct
    * zuvor zwischen den beiden, aber BEIDE liegen sicher über jeder
    * geschlossenen (Pill-)Insel. */
   const offen = stufe !== 'pill';
-  useLeisteAusweichen(wurzelRef, offen && inselKonfig.randKlasse === 'isl-rand-unten');
+  // Mit offenem Werkzeugfenster nur zur Seite (das Fenster braucht die Höhe, s. `leiste-lage.ts`).
+  useLeisteAusweichen(wurzelRef, offen && inselKonfig.randKlasse === 'isl-rand-unten', stufe === 'fenster');
 
   return (
     <div

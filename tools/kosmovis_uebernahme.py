@@ -116,6 +116,16 @@ WOERTLICH = (
     # keine Ebenenkombinationen; der Entwurf ist dort immer «Aktuelles Modell».
     "packages/kosmo-kernel/src/derive/varianten.ts",
     "packages/kosmo-kernel/src/derive/ebenen.ts",
+    # Nr. 85 Paket 2 auf R36/R37 (20.10.2026): was die kopierten Dateien seither zusaetzlich
+    # lesen — alle vier in sich geschlossen (nur Typen aus dem Datenmodell bzw. zustand): der
+    # Ableitungs-Cache je Bauteil (R35, `ebenen.ts`), die Bestandsmarke (`ebenen.ts`), der
+    # Liftschutz (`commands/core.ts`) und die Punktanfrage der Splat-Ebene (`IslandShell.tsx`).
+    "packages/kosmo-kernel/src/derive/ableitungs-cache.ts",
+    "packages/kosmo-kernel/src/derive/bestand-marke.ts",
+    "packages/kosmo-kernel/src/model/lift-schutz.ts",
+    f"{APP}/state/splat-punkt-anfrage.ts",
+    # R37: der Store merkt Skizzen, die ein Agent anlegt (`project-store.ts`) — ohne Import.
+    f"{APP}/state/agent-skizzen.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -201,6 +211,8 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad.test.tsx",
     # Entscheid 96 (15.10.2026): die Skizze fuehrt das Bild — Eingang und Zeile «Skizze» am Knoten.
     "apps/kosmo-orbit/test/kv-skizze-fuehrt-knoten.test.tsx",
+    # Nr. 85 Paket 2 (20.10.2026): vis.render traegt Grundlage und Startwert — nur Vis-Befehle.
+    "packages/kosmo-kernel/test/kv-grundlage-vis-render.test.ts",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
@@ -283,6 +295,11 @@ NICHT_UEBERTRAGEN = {
     "apps/kosmo-orbit/test/viewport-kamera.test.ts":
         "Runde 29: liest die Kamera aus three.js (modules/design/3d/kamera-lesen.ts) — die "
         "3D-Ansicht gibt es in Visbox nicht.",
+    "apps/kosmo-orbit/test/kv-grundlage-{auftrag,ergebnis,knoten}.test.ts(x)":
+        "Nr. 85 Paket 2 (20.10.2026): bauen eine Wand bzw. das Demohaus im Architekturkern und "
+        "erwarten daraus ein glb und einen Modellstand — wie die Gruppe «Bauen ein Gebäude im "
+        "KosmoOrbit-Kern». Den Vertrag prueft kv-grundlage.test.ts (Vertraege), den Befehl "
+        "kv-grundlage-vis-render.test.ts (Kern); beide laufen hier.",
     "packages/kosmo-kernel/test/bild-farbe.test.ts":
         "Vorlagen sind Ausschnitte aus einem Renderbild unbekannter Herkunft — Regel 3.",
     "packages/kosmo-kernel/test/kamera3ds-uebernahme.test.ts":

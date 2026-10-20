@@ -19,6 +19,8 @@ import type { BluetenArt } from '../derive/begruenung';
 
 export interface EntityMeta {
   name?: string;
+  /** L15 (15.10.2026): Id des Lifts, zu dem dieses Teil (Schachtwand, Schachttür) gehört; fehlt = freies Bauteil. */
+  liftId?: string;
   /** Reine DXF-Uebersteuerung (`dxf/export.ts`), seit E222 getrennt von `ebeneId`. */
   layer?: string;
   /**
@@ -552,6 +554,12 @@ export interface Column extends Base {
    * `b`/`t`-Eigenbau — `profilId` überschreibt diesen NUR, wenn gesetzt.
    */
   profilId?: string;
+  /**
+   * Versatz des Stuetzenfusses gegenueber dem Geschoss in mm (+ hoeher,
+   * − tiefer); die Oberkante bleibt auf OK Geschoss. Fehlt = 0, und 0 wird
+   * nie geschrieben (Paket stuetze-fussversatz, 14.10.2026).
+   */
+  fussVersatz?: Mm | undefined;
 }
 
 /** Unterzug (RE-ARCHICAD A3): Balken unter der Decke, OK = OK Geschoss. */
@@ -1049,6 +1057,8 @@ export interface Slab extends Base {
   storeyId: string;
   outline: Pt[];
   holes?: Pt[][];
+  /** L15: welche Löcher in `holes` ein Lift gemacht hat (`loch` = dasselbe Polygon wie in `holes`). Fehlt = kein Lift-Loch. */
+  liftLoecher?: { liftId: string; loch: Pt[] }[];
   /** Werkzeugbank 06 (E221): Stich je Kante in mm, positiv = Woelbung nach links; fehlt oder 0 = gerade. Rechnung `geometry/bogen.ts`. */
   outlineBogen?: Mm[];
   /** Werkzeugbank 06 (E221): Stiche der Lochkanten, je Loch (Index wie `holes`) eine Liste wie `outlineBogen`. */
@@ -1399,6 +1409,12 @@ export interface Stair extends Base {
    * keit wie bei der Steigung selbst, die auch nicht gespeichert wird.
    */
   wendelWinkel?: number;
+  /**
+   * K3 v0.1.9 (Befund Nr. 33): Seite des Ruecklaufs, NUR bei form 'u'
+   * gelesen. Fehlt = links von a→b gesehen (das Verhalten vor diesem Feld);
+   * 'rechts' spiegelt Ruecklauf und Wendepodest auf die andere Seite.
+   */
+  ruecklauf?: 'rechts';
 }
 
 /**
@@ -1557,6 +1573,13 @@ export interface Dachfenster extends Base {
   width: Mm;
   /** Wahre Laenge in der Dachflaeche entlang des Gefaelles, mm (nicht die Laenge im Grundriss). */
   height: Mm;
+  /**
+   * K3 v0.1.9 (Befund Nr. 25): Drehung im Grundriss in Grad, gegen den
+   * Uhrzeigersinn (wie `Column.rotationGrad`). Nur im Flachdach: dort liegt
+   * `width` ohne Drehung entlang x und `height` entlang y. Im geneigten Dach
+   * folgt das Fenster dem Gefaelle, das Feld fehlt dort. Fehlt = 0.
+   */
+  rotationGrad?: number;
 }
 
 /** Baugrenze (Phase 0): Polygon aus dem Baugesetz + optionale Höhenbeschränkung. */
@@ -1597,6 +1620,12 @@ export interface MassBody extends Base {
   height: Mm;
   baseOffset: Mm;
   program?: string;
+  /**
+   * Runde 29/30 (LW Nachprobe R29): Geschosszahl, wenn sie bekannt ist (die
+   * Volumenstudie kennt sie, z.B. 3 G. à 3.60 m). Fehlt das Feld, schaetzt
+   * `massFloors` sie aus der Hoehe (2.80 m je Geschoss) — wie bisher.
+   */
+  geschosse?: number;
   /** Fassadenmodul je Kante (1-basiert), Name aus settings.fassadenModule. */
   module?: { kante: number; modul: string }[];
   /**
@@ -2312,6 +2341,26 @@ export interface Terrain extends Base {
 }
 
 /**
+ * Gelaendeflaeche (Werkzeugbank 15, Owner-Entscheid E217): das Gelaende als
+ * echte Flaeche mit Hoehenpunkten, NEBEN dem `Terrain`-Profil oben (das
+ * bleibt unveraendert). Projektglobal wie `Terrain`, kein Geschoss.
+ *  - `rand`: Umriss im Grundriss, Welt-mm; `randBogen` der Stich je Kante
+ *    (Bogen-Kern, `geometry/bogen.ts`).
+ *  - `punkte`: Hoehenpunkte, z ueber Projektnull. Die Randpunkte haben keine
+ *    eigene Hoehe; sie bekommen sie aus den Hoehenpunkten
+ *    (`geometry/gelaende.ts`).
+ *  - `loecher`: Aussparungen (Baugrube), je ein Umriss.
+ *  - `bauart`: nur Oberflaeche, Oberflaeche mit Schuerze bis
+ *    `schuerzeUnterkante`, oder geschlossener Koerper. Beim Anlegen
+ *    `'schuerze'`.
+ *  - `schuerzeUnterkante` fehlt: 1000 mm unter dem tiefsten Punkt.
+ *  - `grate`: erzwungene Kanten zwischen zwei Hoehenpunkten (Index in
+ *    `punkte`); fehlt = freie Triangulierung.
+ * Ohne Entitaet bleibt `Terrain` allein (heutiges Verhalten).
+ */
+export interface Gelaendeflaeche { id: string; meta?: EntityMeta; kind: 'gelaendeflaeche'; typ: 'gewachsen' | 'neu'; rand: Pt[]; randBogen?: Mm[]; punkte: { x: Mm; y: Mm; z: Mm }[]; loecher?: Pt[][]; bauart: 'oberflaeche' | 'schuerze' | 'massiv'; schuerzeUnterkante?: Mm; grate?: [number, number][] }
+
+/**
  * Aussparung/Durchbruch (Vision A3): Symbol + Menge am Wirt (Wand oder Decke)
  * — bewusst OHNE Geometrieschnitt. Der Werkplan zeigt Kreuz + Kote
  * (Hochbauzeichner-Konvention, Lehrheft Deckenkonstruktionen); Statik und
@@ -2944,6 +2993,26 @@ export interface SolidOperation { id: string; meta?: EntityMeta; kind: 'solidope
  */
 export interface Schnitt extends Base { kind: 'schnitt'; name: string; nummer: string; a: Pt; b: Pt; depth: Mm; lookLeft: boolean; knicke?: Pt[]; reichweiteHorizontal?: 'begrenzt' | 'unbegrenzt' | 'nulltiefe'; reichweiteVertikal?: { vonStoreyId?: string; bisStoreyId?: string }; fernbereich?: { abstand: Mm }; zeigeAufGeschossen?: string[] }
 
+/**
+ * L15 (15.10.2026, Demoauftrag 01): der Lift als EIGENES Bauteil, nicht als Makro.
+ * `breite` × `tiefe` = lichtes Schachtmass, `winkel` = Richtung der Breite (Grad),
+ * `assemblyId` = Aufbau der Schachtwände. Schachtwände, -türen (`meta.liftId`) und
+ * Deckenlöcher (`Slab.liftLoecher`) tragen die Id und werden von `design.lift`
+ * erzeugt, geändert und gelöscht. Alle Felder additiv; ohne Lift ändert sich nichts.
+ */
+export interface Lift extends Base {
+  kind: 'lift';
+  mitte: Pt;
+  winkel: number;
+  breite: Mm;
+  tiefe: Mm;
+  storeyIds: string[];
+  tuerSeite: 'vorne' | 'rechts' | 'hinten' | 'links';
+  assemblyId?: string;
+  tuerBreite?: Mm;
+  tuerHoehe?: Mm;
+}
+
 export type Entity =
   | Storey | GridAxis | Assembly | Wall | Slab | Opening | Zone | MassBody | Roof | Stair | Rampe | Sheet | Boundary | ImageAsset | Furniture | ZonenTuer | Terrain | Aussparung | Column | Beam | Etikett | VisGraph | FreeMesh | Mangel | Kommentar | MassKette | Gelaender
   // v0.9.2 P-P1 (V092-SPEZ §P-P1): additiv ans Ende, wie jede spätere Entity hier.
@@ -2965,7 +3034,11 @@ export type Entity =
   // E216 Paket 07 (13.10.2026): additiv ans Ende, wie jede spaetere Entity hier.
   | SolidOperation
   // Paket 08 WB-Schnitt (13.10.2026, E220): additiv ans Ende.
-  | Schnitt;
+  | Schnitt
+  // L15 (15.10.2026): additiv ans Ende.
+  | Lift
+  // Werkzeugbank 15 (E217, 13.10.2026): additiv ans Ende.
+  | Gelaendeflaeche;
 
 /**
  * Register ALLER vom Kernel geführten Entity-Arten (v0.9.6 P-MOL,
@@ -3002,6 +3075,10 @@ export const ENTITY_KINDS = [
   'solidoperation',
   // Paket 08 WB-Schnitt (13.10.2026, E220): additiv ans Ende.
   'schnitt',
+  // L15 (15.10.2026): additiv ans Ende.
+  'lift',
+  // Werkzeugbank 15 (E217, 13.10.2026): additiv ans Ende.
+  'gelaendeflaeche',
 ] as const;
 
 export type EntityKind = (typeof ENTITY_KINDS)[number];

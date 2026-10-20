@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { AnyPatch, KosmoDoc } from '../model/doc';
 import { invertPatches, isSettingsPatch } from '../model/doc';
+import { pruefeLiftSchutz } from '../model/lift-schutz';
 
 /**
  * Command-System — die eine Schreib-Schnittstelle des Kerns.
@@ -161,6 +162,7 @@ export function execute(
     );
   }
   const patches = cmd.run(doc, parsed.data);
+  pruefeLiftSchutz(patches, commandId, (m) => new CommandError(m, commandId));
   if (!opts.dryRun) doc.apply(patches);
   const summary = cmd.summarize(parsed.data, doc);
   return {

@@ -6,7 +6,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { evaluiereGraph, type Sheet, type VisGraph } from '@kosmo/kernel';
-import { basisNodeHoehe, groessteNodeHoehe, NodeCanvas, RENDER_ZEILEN, VERLAUF_ZEILE_H, zeilenHoehe } from '../src/modules/vis/NodeCanvas';
+import { basisNodeHoehe, groessteNodeHoehe, NodeCanvas, RENDER_ZEILEN, VERLAUF_ZEILE_H, VERLAUF_ZU_H, zeilenHoehe } from '../src/modules/vis/NodeCanvas';
 import {
   laufGrund,
   laufUrteil,
@@ -130,7 +130,9 @@ beforeEach(() => {
   useVisRuntime.setState({ laeufe: {}, verlauf: {}, laufZaehler: {} });
   const { runCommand, doc } = useProject.getState();
   graphId = (runCommand('vis.graphErstellen', { name: `Verlauf-${Math.random()}` }).patches[0] as { id: string }).id;
-  runCommand('vis.nodeSetzen', { graphId, typ: 'render', x: 40, y: 20 });
+  // Owner-Entscheid 101a: zugeklappt ist die Vorgabe. Diese Faelle pruefen die OFFENE Reihe; der
+  // zugeklappte Kopf hat seine eigenen Faelle (`kv-verlauf-einklappbar` unten).
+  runCommand('vis.nodeSetzen', { graphId, typ: 'render', x: 40, y: 20, params: { verlaufOffen: true } });
   const graph = doc.get<VisGraph>(graphId)!;
   nodeId = graph.nodes.at(-1)!.id;
   schluessel = memoKey(evaluiereGraph(doc, graph).renderAuftraege.get(nodeId)!);
@@ -244,7 +246,9 @@ describe('Verlauf am Render-Knoten — die Reihe am Knoten', () => {
     montiere();
     laeufe(fertig(1), fertig(2), fertig(3));
     const reihe = q('[data-testid="render-verlauf"]', container!)!;
-    expect(reihe.querySelectorAll('button')).toHaveLength(3);
+    // Drei Daumenbilder; dazu seit Entscheid 101a der Pfeil zum Zuklappen — er loescht nichts.
+    expect(reihe.querySelectorAll('[data-testid="render-verlauf-bild"]')).toHaveLength(3);
+    expect(reihe.querySelectorAll('button')).toHaveLength(4);
     const knopfText = (b: HTMLElement): string =>
       `${b.textContent ?? ''} ${b.getAttribute('aria-label') ?? ''} ${b.dataset['testid'] ?? ''}`;
     expect(qa('button', reihe).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
@@ -559,5 +563,63 @@ describe('Verlauf am Render-Knoten — Urteil, Grund, Treue und Zeit als Rechnun
     expect(uhrzeitText(winter)).toBe('00:30');
     expect(zeitpunktText(winter)).toBe('06.01.2026 · 00:30');
     expect(uhrzeitText(undefined)).toBe('—');
+  });
+});
+
+describe('kv-verlauf-einklappbar — Owner-Entscheid 101a: der Verlauf ist einklappbar, zugeklappt die Vorgabe', () => {
+  function zuklappenAlsVorgabe(): void {
+    useProject.getState().runCommand('vis.nodeParametrieren', { graphId, nodeId, params: { verlaufOffen: false } });
+  }
+  const verlaufParam = (): unknown =>
+    useProject.getState().doc.get<VisGraph>(graphId)!.nodes.find((n) => n.id === nodeId)!.params?.['verlaufOffen'];
+
+  it('ohne Parameter zugeklappt: nur der Kopf mit der Zahl der Laeufe, keine Daumenbilder, Knoten waechst um 16 px', () => {
+    // Ein frischer Knoten ohne den Parameter (wie aus der Palette).
+    const { runCommand, doc } = useProject.getState();
+    runCommand('vis.nodeSetzen', { graphId, typ: 'render', x: 400, y: 20 });
+    nodeId = doc.get<VisGraph>(graphId)!.nodes.at(-1)!.id;
+    montiere();
+    laeufe(fertig(1));
+    const ohne = Number.parseFloat(qa('[data-testid="vis-node-render"]', container!).at(-1)!.style.height);
+    laeufe(fertig(2));
+    const kopf = qa('[data-testid="render-verlauf"]', container!).at(-1)!;
+    expect(kopf.dataset['offen']).toBe('false');
+    expect(kopf.querySelector('[data-testid="render-verlauf-anzahl"]')!.textContent).toBe('2 Läufe');
+    expect(kopf.querySelectorAll('[data-testid="render-verlauf-bild"]')).toHaveLength(0);
+    const hoehe = Number.parseFloat(qa('[data-testid="vis-node-render"]', container!).at(-1)!.style.height);
+    expect(hoehe).toBe(ohne + VERLAUF_ZU_H);
+  });
+
+  it('der Pfeil klappt auf und zu (Parameter am Knoten), Undo nimmt es zurueck', () => {
+    zuklappenAlsVorgabe();
+    montiere();
+    laeufe(fertig(1), fertig(2));
+    const zu = knotenHoehe();
+    const pfeil = () => q<HTMLButtonElement>('[data-testid="render-verlauf-umschalten"]', container!)!;
+    expect(pfeil().getAttribute('aria-expanded')).toBe('false');
+    klick(pfeil());
+    expect(verlaufParam()).toBe(true);
+    expect(daumen()).toHaveLength(2);
+    expect(pfeil().getAttribute('aria-expanded')).toBe('true');
+    expect(knotenHoehe()).toBe(zu - VERLAUF_ZU_H + VERLAUF_ZEILE_H);
+    klick(pfeil());
+    expect(verlaufParam()).toBe(false);
+    expect(daumen()).toHaveLength(0);
+    act(() => {
+      useProject.getState().undo();
+    });
+    expect(verlaufParam()).toBe(true);
+    expect(daumen()).toHaveLength(2);
+  });
+
+  it('der zugeklappte Kopf ist in der Stilvorlage so hoch, wie der Knoten fuer ihn waechst', () => {
+    const css = readFileSync(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/modules/vis/vis-visual.css'),
+      'utf8',
+    );
+    const block = /\n\.vis-verlauf--zu \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(block).toContain(`height: ${VERLAUF_ZU_H}px;`);
+    expect(block).toContain('grid-template-rows: 14px;');
+    expect(2 + 14).toBe(VERLAUF_ZU_H);
   });
 });

@@ -130,7 +130,12 @@ describe('B69 — «Hinweis anzeigen», wenn ein neuer Knoten ausserhalb des sic
     // `b:1650` heraus). Kein geratener Bildschirm — die Prüfung selbst liest
     // in der App IMMER `canvasSichtRechteck` aus `vis-runtime.ts`, hier nur
     // von Hand gesetzt, weil kein `NodeCanvas` gemountet ist.
-    useVisRuntime.setState({ canvasSichtRechteck: { x: -40, y: -50, b: 1650, h: 1400 } });
+    // Nr. 85 Paket 2 (20.10.2026): der Render-Knoten ist 660 statt 580 hoch (zwei Knoepfe und
+    // die Zeile «Grundlage»). Die Spirale legt den siebten darum nicht mehr bei (460,658) ab,
+    // sondern bei (1660,20), den achten bei (1900,20) — gemessen, nicht angenommen. Das Rechteck
+    // ist auf b:1900 gezogen, damit wieder GENAU einer (Mitte 2000) herausfaellt; die Aussage
+    // des Falls bleibt, und die Zaehlung darunter prueft ihre Voraussetzung.
+    useVisRuntime.setState({ canvasSichtRechteck: { x: -40, y: -50, b: 1900, h: 1400 } });
     const gid = neuerGraph();
 
     act(() => {
@@ -142,7 +147,7 @@ describe('B69 — «Hinweis anzeigen», wenn ein neuer Knoten ausserhalb des sic
     // Gegenprobe zur Rechteck-Annahme: wirklich genau EIN Knoten liegt
     // ausserhalb (sonst wäre "genau einmal" unten kein Beleg für die
     // Melde-Logik, sondern ein Zufallstreffer des gewählten Rechtecks).
-    const rechteck = { x: -40, y: -50, b: 1650, h: 1400 };
+    const rechteck = { x: -40, y: -50, b: 1900, h: 1400 };
     // Breite und Hoehe kommen aus DEMSELBEN Ort wie in `nodeHinzufuegen`
     // (`NODE_W`, `basisNodeHoehe`) — eine zweite, handgepflegte Zahl hier war
     // genau der Fehler, den A15 gefunden hat.

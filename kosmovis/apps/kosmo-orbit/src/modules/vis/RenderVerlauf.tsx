@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { KIcon, useHerkunft, useOverlaySchliessen, zEbeneLeiter } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
 import { LizenzOffenMarke } from './LizenzMarke';
+import { grundlageText, startwertText } from './grundlage';
 import {
   laufGrund,
   laufNummerVon,
@@ -89,14 +90,37 @@ export function HauptbildAbzeichen({ lauf, nummer }: { lauf: VerlaufEintrag; num
 export function RenderVerlauf({
   reihe,
   hauptJobId,
+  offen,
+  onUmschalten,
 }: {
   /** Neuestes zuerst (`verlaufReihe`). */
   reihe: readonly VerlaufEintrag[];
   /** Der Auftrag, dessen Bild der Knoten gerade als Hauptbild zeigt. */
   hauptJobId: string | undefined;
+  /**
+   * Owner-Entscheid 101a: aufgeklappt (die Reihe der Daumenbilder) oder nur der Kopf. Fehlt die
+   * Angabe, ist die Reihe offen — so bleibt ein Aufrufer ohne Knoten-Parameter wie bisher.
+   */
+  offen?: boolean;
+  /** Der Pfeil im Kopf: auf- bzw. zuklappen (am Knoten: Parameter `verlaufOffen`). */
+  onUmschalten?: () => void;
 }) {
   const [offenJob, setOffenJob] = useState<string | null>(null);
   const n = reihe.length;
+  const zu = offen === false;
+  const pfeil = onUmschalten ? (
+    <button
+      type="button"
+      className="k-druck vis-klapptext-mehr vis-verlauf-umschalten"
+      data-testid="render-verlauf-umschalten"
+      aria-expanded={!zu}
+      aria-label={zu ? 'Verlauf aufklappen' : 'Verlauf zuklappen'}
+      onPointerDown={halte}
+      onClick={onUmschalten}
+    >
+      {zu ? '▸ aufklappen' : '▾ zuklappen'}
+    </button>
+  ) : null;
   const offenIndex = offenJob === null ? -1 : reihe.findIndex((e) => e.jobId === offenJob);
   // Faellt der gezeigte Lauf aus der Reihe (ein neuer Lauf kam dazu, und er
   // war der fuenfte), schliesst die Ansicht, statt einen anderen zu zeigen.
@@ -104,10 +128,28 @@ export function RenderVerlauf({
     if (offenJob !== null && offenIndex < 0) setOffenJob(null);
   }, [offenJob, offenIndex]);
 
+  // Zugeklappt (Entscheid 101a) — erst NACH allen Hooks, damit ihre Reihenfolge beim Umschalten gleich bleibt.
+  if (zu) {
+    return (
+      <div className="vis-verlauf vis-verlauf--zu" data-testid="render-verlauf" data-offen="false" onPointerDown={halte}>
+        <div className="vis-verlauf-kopf vis-verlauf-kopf--zu">
+          <span className="vis-verlauf-titel">VERLAUF</span>
+          <span className="vis-verlauf-zusatz" data-testid="render-verlauf-anzahl">
+            {n} Läufe
+          </span>
+          {pfeil}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="vis-verlauf" data-testid="render-verlauf" onPointerDown={halte}>
+    <div className="vis-verlauf" data-testid="render-verlauf" data-offen="true" onPointerDown={halte}>
       <div className="vis-verlauf-kopf">
         <span className="vis-verlauf-titel">VERLAUF</span>
+        {/* Der Pfeil steht vorne, damit er in der ersten der zwei Kopfzeilen bleibt und der
+            Kopf (26 px, `overflow: hidden`) ihn nie abschneidet. */}
+        {pfeil && <>{pfeil} </>}
         <span className="vis-verlauf-zusatz">
           die letzten {n} Läufe · neuester links
         </span>
@@ -126,6 +168,7 @@ export function RenderVerlauf({
               data-testid="render-verlauf-bild"
               data-urteil={urteil}
               data-job={e.jobId}
+              {...(e.grundlageId ? { 'data-grundlage': e.grundlageId } : {})}
               aria-label={`Lauf ${nummer} von ${uhrzeit}, ${URTEIL_LABEL[urteil]}, gross anzeigen`}
               onPointerDown={halte}
               onClick={() => setOffenJob(e.jobId)}
@@ -339,6 +382,16 @@ function VerlaufGross({
               <div>
                 <dt>Bildwerkzeug</dt>
                 <dd data-testid="render-verlauf-gross-werkzeug">{e.engineUsed ?? 'nicht gemeldet'}</dd>
+              </div>
+              {/* Nr. 85 Paket 2: auf welcher Grundlage der Lauf steht, und mit welchem Startwert —
+                  zwei Varianten auf derselben Grundlage sind deckungsgleich. */}
+              <div>
+                <dt>Grundlage</dt>
+                <dd data-testid="render-verlauf-gross-grundlage">{grundlageText(e)}</dd>
+              </div>
+              <div>
+                <dt>Startwert</dt>
+                <dd data-testid="render-verlauf-gross-startwert">{startwertText(e)}</dd>
               </div>
               <div>
                 <dt>Gerechnet von</dt>

@@ -296,6 +296,11 @@ export const renderAuftrag = registerCommand({
     if (node.typ !== 'render') {
       throw new CommandError(`Node «${p.nodeId}» ist kein Render-Node (Typ «${node.typ}»)`);
     }
+    // Nr. 85 Paket 2: eine Kennung, die keine Grundlage sein kann, wird hier abgewiesen statt erst
+    // am Heim-PC — dieselbe Form wie im Vertrag (`RenderScene.vis.grundlage`).
+    if (p.grundlage !== undefined && !/^gl-[0-9a-f]{16}$/.test(p.grundlage)) {
+      throw new CommandError(`«${p.grundlage}» ist keine Grundlage — erwartet «gl-» und 16 Zeichen 0–9/a–f`);
+    }
     const wunsch: VisRenderWunsch = {
       graphId: p.graphId,
       nodeId: p.nodeId,
@@ -303,6 +308,8 @@ export const renderAuftrag = registerCommand({
       ...(p.stimmungPreset !== undefined ? { stimmungPreset: p.stimmungPreset } : {}),
       ...(p.backbone !== undefined ? { backbone: p.backbone } : {}),
       ...(p.aufloesung !== undefined ? { aufloesung: p.aufloesung } : {}),
+      ...(p.grundlage !== undefined ? { grundlage: p.grundlage } : {}),
+      ...(p.seed !== undefined ? { seed: p.seed } : {}),
     };
     return [
       {

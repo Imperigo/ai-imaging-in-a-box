@@ -98,7 +98,8 @@ function kachelUrteil(qa: JobQa): string {
 function verlaufPunkte(qas: readonly JobQa[]): string[] {
   const { runCommand, doc } = useProject.getState();
   const graphId = (runCommand('vis.graphErstellen', { name: `Echt-${Math.random()}` }).patches[0] as { id: string }).id;
-  runCommand('vis.nodeSetzen', { graphId, typ: 'render', x: 40, y: 20 });
+  // Owner-Entscheid 101a: der Verlauf ist zugeklappt die Vorgabe — hier werden seine Daumenbilder geprueft.
+  runCommand('vis.nodeSetzen', { graphId, typ: 'render', x: 40, y: 20, params: { verlaufOffen: true } });
   const graph = doc.get<VisGraph>(graphId)!;
   const nodeId = graph.nodes.at(-1)!.id;
   const schluessel = memoKey(evaluiereGraph(doc, graph).renderAuftraege.get(nodeId)!);

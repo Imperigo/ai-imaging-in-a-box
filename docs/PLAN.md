@@ -8061,7 +8061,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Nr. 85 Grundsatz: eine Blender-Grundlage, mehrere deckungsgleiche KI-Varianten (mit 84, 81, 83)
   - [x] Heim-PC: «nur Cycles» liefert das Cycles-Bild (Nr. 83), Grundlage ablegen/holen, fester Startwert, Pose (§139)
   - [x] Vertrag mit dem Integrator abgestimmt, Paket 1 «Vertrag» auf `claude/kosmovis-grundlage` (§139)
-  - [ ] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme)
+  - [x] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme) — KosmoOrbit `claude/kosmovis-grundlage`, Visbox-Kopie nachgezogen, Verlauf einklappbar (101a); am Gerät unbestätigt (§145)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)

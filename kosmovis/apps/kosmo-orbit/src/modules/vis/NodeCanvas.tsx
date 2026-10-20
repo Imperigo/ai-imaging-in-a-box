@@ -41,6 +41,7 @@ import {
   bridgeBase,
   formularZusatz,
   freigebenJob,
+  grundlageStandFuerKnoten,
   fremdnahtSatz,
   holeJob,
   interiorFaehrt,
@@ -81,6 +82,20 @@ import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
 import { SkizzeKnotenKoerper } from './SkizzeKnoten';
+import {
+  ebenenName,
+  GRUNDLAGE_PARAM,
+  GRUNDLAGE_VERALTET_SATZ,
+  grundlageAmKnoten,
+  grundlageLaufFelder,
+  grundlageNachErgebnis,
+  grundlageZustand,
+  KEINE_GRUNDLAGE_SATZ,
+  kurzKennung,
+  neuerStartwert,
+  SKIZZE_OHNE_GRUNDLAGE_SATZ,
+  STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
+} from './grundlage';
 import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
 import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
@@ -348,8 +363,19 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
   { id: 'bedienung-himmel', h: 45 },
   { id: 'bedienung-drehung', h: 20 },
   { id: 'bedienung-bildwerkzeug', h: 45 },
-  // Beim Lauf kommen «Abbrechen»/«Freigeben» dazu und die Zeile bricht um.
-  { id: 'aktionen', h: 32, hLauf: 70 },
+  // Nr. 85 Paket 2 (Entscheid 98): zwei Knoepfe «Grundlage rendern» und «Variante erzeugen»
+  // (je rund 116 px bei `size="sm"`) passen im 184 px schmalen Koerper nicht nebeneinander —
+  // zwei Zeilen à 32 px plus Abstand, eingetragen 70. Beim Lauf kommen «Abbrechen»/«Freigeben»
+  // als dritte Zeile dazu: 105. NICHT am Bild gemessen (jsdom hat kein Layout) — gerechnet aus
+  // `.k-btn-sm` (32 px) und der alten Messung (eine Zeile 32, zwei 70); die Probe am Geraet
+  // steht aus und ist gemeldet.
+  { id: 'aktionen', h: 70, hLauf: 105 },
+  // Nr. 85 Paket 2 (Entscheide 98/98a/98b): was die Grundlage ist. Seit Entscheid 101a DREI
+  // Zeilen: Kennung und Kameras, die Ebenen, der Startwert mit «neu würfeln» — veraltet steht der
+  // Satz (zwei Zeilen) an der Stelle von Kennung und Ebenen, die Kennung dann in der Kurzhilfe.
+  // Drei Zeilen à 14,2 px (Vorbehaltsklasse, groesste Schriftstufe) = 42,6, eingetragen 44;
+  // gemessen bei 1440 x 900 (Chromium, mittlere Stufe) 36,4.
+  { id: 'grundlage', h: 44 },
   // Der Klappknopf steht bewusst HIER und nicht am Fuss des Körpers: an
   // dieser Stelle liegt er beim frischen Knoten (Fenster 1400×900) noch im
   // Bild — am Fuss läge er bei y≈951 und wäre selbst nur durch Schieben zu
@@ -359,7 +385,8 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
   // Zeilen um — gemessen 41, eingetragen 44. Jede Zeile, deren Umbruch am
   // Text hängt, trägt hier eine kleine Reserve: zu viel Reserve ist ein
   // Streifen leere Karte, zu wenig ist ein stiller Schnitt.
-  { id: 'schalter', h: 44 },
+  // Owner-Entscheid 101a (20.10.2026): die Zeile `schalter` ist entfallen — «Strichzeichnung»
+  // steht seither in der Zeile `klapp` (gemessen 18,9 px in beiden, Chromium 1440 x 900).
   { id: 'prompt', h: 26 },
   // Ohne Lauf ein Streifen, mit Lauf der volle Rahmen: 110 px ist die feste
   // Höhe von `.vis-node-leerbild` (vis-visual.css) UND der Deckel, auf den
@@ -403,6 +430,28 @@ export const LIZENZ_ZEILE_H = 16;
  * so hoch wie die Knoepfe) und Kopf bleiben, wie sie waren.
  */
 export const VERLAUF_ZEILE_H = 60;
+
+/**
+ * Owner-Entscheid 101a (20.10.2026): der Verlauf ist EINKLAPPBAR, und zugeklappt ist die Vorgabe.
+ * Zugeklappt steht nur seine Kopfzeile («VERLAUF · n Läufe» und der Pfeil), 2 px Abstand plus
+ * eine Zeile (`--k-t-xs` mal `--k-lh-eng`, hoechstens 14,4 px) = 16. Der Parameter `verlaufOffen`
+ * am Knoten (`vis.nodeParametrieren`) haelt die Wahl — sie ueberlebt ein Neuladen und laesst sich
+ * zuruecknehmen.
+ *
+ * WARUM ZUGEKLAPPT DIE VORGABE IST (und nicht «zugeklappt erst ab der Hoehe, die nicht passt»):
+ * gemessen bei der App-Vorgabe 1440 x 900 (Chromium, 20.10.2026) liegt die Karte mit offenem
+ * Verlauf an der Palettenstelle 80 px tiefer als vor Nr. 85 und ragt hinaus. Eine Schwelle «ab
+ * welcher Hoehe» haenge an Fenster, Zoom und Lage des Knotens — der Knoten saehe dann je nach
+ * Ausschnitt verschieden aus, und die Platzsuche (`nodeHoehe`) rechnete mit einer Hoehe, die
+ * sich beim Verschieben aendert. Eine feste Vorgabe, die der Architekt mit einem Klick aendert,
+ * ist vorhersehbar.
+ */
+export const VERLAUF_ZU_H = 16;
+
+/** Hoehe der Verlaufszeile dieses Knotens: offen die ganze Reihe, sonst nur der Kopf. */
+export function verlaufZeileHoehe(n: Pick<VisNode, 'params'>): number {
+  return n.params?.['verlaufOffen'] === true ? VERLAUF_ZEILE_H : VERLAUF_ZU_H;
+}
 
 /**
  * Die Zeilen, die erst der Klappknopf zeigt — das Prompt-Formular und die
@@ -756,7 +805,7 @@ export function groessteNodeHoehe(typ: string): number {
 function nodeHoehe(n: VisNode, offen?: ReadonlySet<string>, laufStatus?: string, mitVerlauf = false): number {
   if (n.collapsed) return kollabierteNodeHoehe(n.typ);
   const zusatz = offen?.has(n.id) ? (KOERPER_H_ZUSATZ_OFFEN[n.typ] ?? 0) : 0;
-  const lauf = n.typ === 'render' ? renderLaufZusatz(laufStatus) + (mitVerlauf ? VERLAUF_ZEILE_H : 0) : 0;
+  const lauf = n.typ === 'render' ? renderLaufZusatz(laufStatus) + (mitVerlauf ? verlaufZeileHoehe(n) : 0) : 0;
   return basisNodeHoehe(n.typ) + zusatz + lauf;
 }
 
@@ -1230,6 +1279,9 @@ export function NodeCanvas({
                 lizenzOffen: j.result.engine_license_open === true ? true : undefined,
                 engineUsed: j.result.engine_used,
                 engineLicense: j.result.engine_license,
+                // Nr. 85 Paket 2: auf welcher Grundlage das Bild steht (und ob sie
+                // wiederverwendet wurde) — Startwert und Pose je Kamera reisen in `qaJeKamera`.
+                ...grundlageLaufFelder(j.result, lauf.grundlageId),
                 ...(hatBild
                   ? {}
                   : {
@@ -1239,6 +1291,10 @@ export function NodeCanvas({
                         'Ergebnis ohne Bild — die Bridge hat kein Bild geliefert.',
                     }),
               });
+              // Nr. 85 Paket 2 (Entscheid 98): war es «Grundlage rendern», liegt die Grundlage
+              // jetzt am Knoten (Kennung, Startwert, Stand) — einmal, denn danach ist der Lauf
+              // nicht mehr offen und wird nicht mehr abgefragt.
+              grundlageNachErgebnis(nodeId, lauf, j.result);
             } else if (j.status === 'error') {
               // P11/B6 — der echte Grund (Vertragsfeld `error`, sonst
               // `message`, s. `RenderJob` in `kosmo-contracts`) VOR dem festen
@@ -1525,9 +1581,10 @@ export function NodeCanvas({
    * `environment` kommt aus der STIMMUNG-Insel (`renderStimmungPreset`,
    * `null` ausserhalb des Island-Modus → kein Feld im Job, byte-gleich).
    */
-  const ausfuehren = (nodeId: string) => {
+  const ausfuehren = (nodeId: string, stufe?: 'grundlage' | 'variante') => {
     const preset = useVisRuntime.getState().renderStimmungPreset;
-    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined);
+    // Nr. 85 Paket 2 (Entscheid 98): die zwei Knoepfe des Render-Knotens sind die zwei Stufen.
+    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe } : undefined);
   };
 
   /** Wartenden Job freigeben (nur bei aktiver Freigabe-Pflicht). */
@@ -2194,9 +2251,16 @@ export function NodeCanvas({
       <div
         className="vis-knoten-welt"
         style={{
-          transform: `translate(${flaeche.w / 2 - view.cx * view.scale}px, ${flaeche.h / 2 - view.cy * view.scale}px) scale(${view.scale})`,
+          transform: `translate(${flaeche.w / 2 - view.cx * view.scale}px, ${flaeche.h / 2 - view.cy * view.scale}px)`,
         }}
       >
+      {/* Owner-Befund 20.10.2026 (Mac, WKWebView): mit `scale()` auf der Welt rasterte
+          WebKit die Knoten bei Massstab 1 und vergrösserte die Bitmap — Schrift, Icons und
+          Rahmen wurden beim Hineinzoomen weich. `zoom` legt die Knoten im Massstab neu aus
+          und zeichnet sie scharf; die Verschiebung bleibt `translate` (in Bildschirm-Pixeln),
+          Zeiger, Drähte und Treffer rechnen weiter über `view` und die äussere Fläche, nie
+          über Knoten-Masse. */}
+      <div className="vis-knoten-zoom" data-testid="vis-knoten-zoom" style={{ zoom: view.scale }}>
       {graph.nodes.map((n0, rfIndex) => {
         const n = nodePos(n0);
         const kat = VIS_NODE_KATALOG[n.typ];
@@ -2214,7 +2278,15 @@ export function NodeCanvas({
         const veraltetAuftrag = auftrag
           ? { ...auftrag, prompt: kombiniertePrompt(auftrag.prompt, formularZusatz(n0.params ?? {})) }
           : undefined;
-        const veraltet = lauf && veraltetAuftrag && lauf.memoKey !== memoKey(veraltetAuftrag);
+        // Nr. 85 Paket 2 (98b): der Stand, mit dem eine Grundlage JETZT gerechnet wuerde. Ein
+        // Grundlage-Lauf ist «veraltet», sobald dieser Stand abweicht — nicht bei einem anderen
+        // Prompt (der aendert die Grundlage nicht, nur die Varianten).
+        const grundlageStandJetzt =
+          n0.typ === 'render' && auftrag ? grundlageStandFuerKnoten(doc, auftrag, n0.params ?? {}) : undefined;
+        const veraltet =
+          lauf?.stufe === 'grundlage'
+            ? lauf.grundlageStand !== grundlageStandJetzt
+            : lauf && veraltetAuftrag && lauf.memoKey !== memoKey(veraltetAuftrag);
         const koerperY = KOPF_H + 8 + Math.max(sichtbareEingaenge(n.typ).length, kat.outputs.length) * PORT_ABSTAND;
         // W1 Massnahme 1: Kategorie-Icon + 2px-Tonstreifen (Hue aus dem
         // Kernel-Katalog, Zeichen aus der KIcon-Registry je Kategorie).
@@ -2492,7 +2564,9 @@ export function NodeCanvas({
                   lauf={lauf}
                   verlauf={n0.typ === 'render' ? reiheVon(n0.id) : []}
                   veraltet={!!veraltet}
-                  onAusfuehren={() => ausfuehren(n.id)}
+                  grundlageStandJetzt={grundlageStandJetzt}
+                  onGrundlage={() => ausfuehren(n.id, 'grundlage')}
+                  onAusfuehren={() => ausfuehren(n.id, 'variante')}
                   onFreigeben={() => freigeben(n.id)}
                   onAbbrechen={() => abbrechen(n.id)}
                   cloudLeer={bridgeBase() === ''}
@@ -2506,6 +2580,7 @@ export function NodeCanvas({
           </div>
         );
       })}
+      </div>
       </div>
     </div>
 
@@ -2785,6 +2860,12 @@ const KLEMME_TEXT_ZWEIZEILIG: CSSProperties = {
   overflow: 'hidden',
 };
 
+/** Nr. 85 Paket 2: eine Textzeile, gekuerzt mit «…» (Zeile «Grundlage»). */
+const KLEMME_EINZEILIG: CSSProperties = { minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' };
+
+/** Nr. 85 Paket 2: drei Zeilen (der Satz «Noch keine Grundlage …»). */
+const KLEMME_TEXT_DREIZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 3 };
+
 /** Entscheid 96/96b: die Zeile «Skizze» (`RENDER_ZEILE_SKIZZE`, 58 px) — vier Zeilen, der Rest in der Kurzhilfe. */
 const KLEMME_TEXT_VIERZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, WebkitLineClamp: 4 };
 
@@ -2959,7 +3040,10 @@ function RenderBedienung({
             onChange={(e) => param('backbone', e.target.value)}
             className="vis-node-select-voll"
             style={KLEMME_VOLL}
-            disabled={params['nurCycles'] === true || params['lineart'] === true}
+            // Nr. 85 Paket 2: das alte `nurCycles` sperrt hier nicht mehr — es hat am Knoten kein
+            // Haekchen mehr, und ein altes Projekt mit `nurCycles: true` liesse den Waehler sonst
+            // fuer immer gesperrt. Das Bildwerkzeug rechnet die Varianten.
+            disabled={params['lineart'] === true}
           >
             <option value="">Z-Image Turbo — Vorgabe</option>
             {BILDWERKZEUG_IDS.map((id) => (
@@ -3039,8 +3123,8 @@ function RenderErklaerungen({
       )}
       <Zeile id="zusatz-bildwerkzeug-hinweis">
         <div className="vis-node-final-prompt" data-testid="render-bildwerkzeug-hinweis" style={KLEMME_TEXT}>
-          {params['nurCycles'] === true || params['lineart'] === true
-            ? 'Bildwerkzeug: keines im Spiel — «nur Cycles» bzw. Strichzeichnung rechnet ohne KI-Veredelung.'
+          {params['lineart'] === true
+            ? 'Bildwerkzeug: keines im Spiel — die Strichzeichnung rechnet ohne KI-Veredelung.'
             : `Bildwerkzeug: ${werkzeug.hinweis}`}
         </div>
       </Zeile>
@@ -3053,8 +3137,8 @@ function RenderErklaerungen({
           nicht mehr etwas anderes behaupten als die Messung. */}
       <Zeile id="zusatz-ehrlichkeit">
         <div className="vis-node-final-prompt" data-testid="render-bedienung-ehrlichkeit" style={KLEMME_TEXT}>
-          {fremdnahtSatz()} «nur Cycles» rechnet ohne KI-Veredelung, «Strichzeichnung» erzwingt
-          Line-Art.
+          {fremdnahtSatz()} «Grundlage rendern» rechnet ohne KI, «Variante erzeugen» mit; «Strichzeichnung»
+          erzwingt Line-Art.
         </div>
       </Zeile>
     </>
@@ -3333,6 +3417,8 @@ function NodeKoerper({
   lauf,
   verlauf,
   veraltet,
+  grundlageStandJetzt,
+  onGrundlage,
   onAusfuehren,
   onFreigeben,
   onAbbrechen,
@@ -3352,10 +3438,15 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: { phase: string; pct: number }; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
+  /** Nr. 85 Paket 2 (98b): Stand der Eingaben jetzt — weicht er von dem der Grundlage ab, ist sie veraltet. */
+  grundlageStandJetzt?: string | undefined;
+  /** Stufe 1 (Entscheid 98): «Grundlage rendern». */
+  onGrundlage?: () => void;
+  /** Stufe 2 (Entscheid 98): «Variante erzeugen» — der KI-Auftrag auf der Grundlage. */
   onAusfuehren: () => void;
   onFreigeben: () => void;
   onAbbrechen: () => void;
@@ -3546,8 +3637,9 @@ function NodeKoerper({
       const mitSkizze = skizzeAmEingang !== undefined && skizzenQuelle() !== null;
       const promptLeer =
         !mitSkizze &&
+        // Nr. 85 Paket 2: der Knopf mit KI-Schritt ist «Variante erzeugen» — ein altes `nurCycles`
+        // bestellt an ihm nichts ab (s. `sendeGraphRenderAuftrag`), darum zaehlt nur die Strichzeichnung.
         promptFehltFuerKi(finalPrompt, {
-          nurCycles: params['nurCycles'] === true,
           lineart: params['lineart'] === true,
         });
       // Entscheid 96a: mit Skizze ist die Anweisung die Bemerkung der Skizze; die Stimmung tritt zurück.
@@ -3556,7 +3648,7 @@ function NodeKoerper({
         ? skizzeFuehrtZeile({
             skizze: skizzeAmEingang,
             backbone: renderBedienungAusParams(params).backbone,
-            ohneKi: params['nurCycles'] === true || params['lineart'] === true,
+            ohneKi: params['lineart'] === true,
             mitKameras: kamerasAmEingang === true,
             prompt: finalPrompt,
           })
@@ -3566,6 +3658,20 @@ function NodeKoerper({
       // Knopf sperrt, statt bedienbar auszusehen und folgenlos zu bleiben.
       const keineGeometrie = szeneBauteileAnzahl(doc) === 0;
       const preset = RENDER_PRESETS.find((p) => p.id === params['preset']);
+      // Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Grundlage am Knoten und ob sie noch gilt.
+      // «Variante erzeugen» ist gesperrt, bis eine AKTUELLE da ist; der Grund steht am Knopf.
+      const grundlage = grundlageAmKnoten(params);
+      const gZustand = grundlageZustand(grundlage, grundlageStandJetzt);
+      const varianteSperre =
+        params['lineart'] === true
+          ? STRICHZEICHNUNG_OHNE_VARIANTE_SATZ
+          : mitSkizze
+            ? SKIZZE_OHNE_GRUNDLAGE_SATZ
+            : gZustand === 'keine'
+              ? KEINE_GRUNDLAGE_SATZ
+              : gZustand === 'veraltet'
+                ? GRUNDLAGE_VERALTET_SATZ
+                : null;
       /**
        * A15 (17.09.2026) — DIE REIHENFOLGE DES RENDER-KÖRPERS IST EIN BEFUND,
        * KEIN GESCHMACK.
@@ -3605,23 +3711,44 @@ function NodeKoerper({
 
           <Zeile id="aktionen">
             <div className="vis-node-aktionen">
+              {/* Nr. 85 Paket 2 (Entscheid 98): Stufe 1 — das alte Haekchen «nur Cycles» als Knopf.
+                  Bestellt nur Blender (`vis.skip`) mit allen Ebenen; die Kurzhilfe sagt es. */}
+              <KTooltip text="Rechnet nur Blender: Kamera, Geometrie und Ebenen, ohne KI. Danach entstehen Varianten auf dieser Grundlage.">
+                <span>
+                  <KButton
+                    size="sm"
+                    tone={gZustand === 'aktuell' ? 'quiet' : 'accent'}
+                    data-testid="render-grundlage"
+                    onClick={onGrundlage}
+                    disabled={laeuftNoch || cloudLeer || keineGeometrie}
+                  >
+                    Grundlage rendern
+                  </KButton>
+                </span>
+              </KTooltip>
+              {/* Stufe 2 — der KI-Auftrag auf der Grundlage (`vis.grundlage` + `vis.seed`). Die
+                  Kennung `render-ausfuehren` bleibt an DIESEM Knopf: er ist der Auftrag mit
+                  KI-Schritt, an dem auch der Satz zum leeren Prompt haengt. */}
               <KButton
                 size="sm"
-                tone="accent"
+                tone={gZustand === 'aktuell' ? 'accent' : 'quiet'}
                 data-testid="render-ausfuehren"
+                data-grundlage={gZustand}
                 onClick={onAusfuehren}
-                disabled={laeuftNoch || cloudLeer || keineGeometrie}
+                disabled={laeuftNoch || cloudLeer || keineGeometrie || varianteSperre !== null}
                 title={
                   cloudLeer
                     ? 'Kein HomeStation-Server verbunden — im Cloud-Betrieb rendert die Kette nicht lokal. Ein Cloud-Renderweg (Gemini Omni Flash, Public Preview) ist im Tech-Radar (KosmoDoc) vorgemerkt — braucht deinen Entscheid + API-Schlüssel.'
                     : keineGeometrie
                       ? KEINE_GEOMETRIE_HINWEIS
-                      : promptLeer
-                        ? LEERER_PROMPT_HINWEIS
-                        : undefined
+                      : varianteSperre
+                        ? varianteSperre
+                        : promptLeer
+                          ? LEERER_PROMPT_HINWEIS
+                          : undefined
                 }
               >
-                Ausführen
+                Variante erzeugen
               </KButton>
               {status === 'wartetFreigabe' && (
                 <KButton size="sm" tone="quiet" data-testid="render-freigeben" onClick={onFreigeben}>
@@ -3643,18 +3770,101 @@ function NodeKoerper({
             </div>
           </Zeile>
 
+          {/* Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Grundlage dieses Knotens — Kennung kurz,
+              Zahl der Kameras, die gelieferten Ebenen je Kamera (oder der Satz «veraltet»), der
+              EINE Startwert aller Varianten und «neu würfeln» (ein Parameter, also rueckgaengig
+              machbar). Drei Zeilen (Entscheid 101a), Register `grundlage`. Das Cycles-Bild der Grundlage steht im
+              Bildplatz unten und danach im Verlauf. */}
+          <Zeile id="grundlage">
+            <div
+              className="vis-node-grundlage"
+              data-testid="render-grundlage-zeile"
+              data-zustand={gZustand}
+              style={KLEMME_TEXT}
+            >
+              {grundlage ? (
+                <>
+                  {/* Entscheid 101a: drei Zeilen. Veraltet steht der Satz (zwei Zeilen) an der
+                      Stelle von Kennung und Ebenen; die Kennung bleibt in der Kurzhilfe. */}
+                  {gZustand === 'veraltet' ? (
+                    <KTooltip text={`Grundlage ${kurzKennung(grundlage.id)} · ${grundlage.kameras} ${grundlage.kameras === 1 ? 'Kamera' : 'Kameras'}`}>
+                      <div
+                        data-testid="render-grundlage-veraltet"
+                        className="vis-node-grundlage--warnung"
+                        style={KLEMME_TEXT_ZWEIZEILIG}
+                        tabIndex={0}
+                      >
+                        {GRUNDLAGE_VERALTET_SATZ}
+                      </div>
+                    </KTooltip>
+                  ) : (
+                    <>
+                      <div data-testid="render-grundlage-kennung" style={KLEMME_EINZEILIG}>
+                        Grundlage {kurzKennung(grundlage.id)} · {grundlage.kameras}{' '}
+                        {grundlage.kameras === 1 ? 'Kamera' : 'Kameras'}
+                      </div>
+                      {/* Eine Zeile; wird sie gekuerzt, steht der volle Satz in der Kurzhilfe. */}
+                      <KTooltip text={`Ebenen je Kamera: ${grundlage.ebenen.length > 0 ? grundlage.ebenen.map(ebenenName).join(', ') : 'keine gemeldet'}`}>
+                        <div data-testid="render-grundlage-ebenen" style={KLEMME_EINZEILIG} tabIndex={0}>
+                          Ebenen: {grundlage.ebenen.length > 0 ? grundlage.ebenen.map(ebenenName).join(', ') : 'keine gemeldet'}
+                        </div>
+                      </KTooltip>
+                    </>
+                  )}
+                  <div style={KLEMME_EINZEILIG}>
+                    Startwert <span data-testid="render-grundlage-startwert">{grundlage.seed}</span> ·{' '}
+                    <button
+                      type="button"
+                      className="k-druck vis-klapptext-mehr"
+                      data-testid="render-neu-wuerfeln"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => param(GRUNDLAGE_PARAM.seed, neuerStartwert(Math.random, grundlage.seed))}
+                    >
+                      neu würfeln
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div data-testid="render-grundlage-keine" style={KLEMME_TEXT_DREIZEILIG}>
+                  {KEINE_GRUNDLAGE_SATZ}
+                </div>
+              )}
+            </div>
+          </Zeile>
+
           {/* A15 — derselbe Klappknopf wie an den Textkörpern (`node-expand`,
               s. `KlappText`): EIN Mechanismus, nicht ein zweiter daneben. */}
           <Zeile id="klapp">
-            <button
-              type="button"
-              className="k-druck vis-klapptext-mehr"
-              data-testid="node-expand"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={onToggleOffen}
-            >
-              {offen ? 'weniger' : '… mehr (Auftrag und Erklärungen)'}
-            </button>
+            {/* Entscheid 101a: Klappknopf und «Strichzeichnung» in EINER Zeile. Die Klammer
+                zwischen `KTooltip` und `KCheckbox` ist noetig: `KTooltip` klont genau ein Kind,
+                und das `<input>` der `KCheckbox` liegt durchsichtig unter dem gezeichneten
+                Kasten — ohne Klammer erschiene die Blase nie. Was «… mehr» aufklappt (Auftrag
+                und Erklaerungen), sagt die Kurzhilfe. */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--k-s2)', minWidth: 0 }}>
+              <KTooltip text="Auftrag und Erklärungen neben dem Knoten">
+                <button
+                  type="button"
+                  className="k-druck vis-klapptext-mehr"
+                  data-testid="node-expand"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={onToggleOffen}
+                >
+                  {offen ? 'weniger' : '… mehr'}
+                </button>
+              </KTooltip>
+              <KTooltip text="als Strichzeichnung (Line-Art)">
+                <span>
+                  <KCheckbox
+                    size="sm"
+                    className="vis-node-checkbox-label"
+                    data-testid="render-lineart"
+                    checked={params['lineart'] === true}
+                    onChange={(e) => param('lineart', e.target.checked)}
+                    label="Strichzeichnung"
+                  />
+                </span>
+              </KTooltip>
+            </div>
           </Zeile>
 
           {/* P16 (17.09.2026) — HIER STAND DER ZUSATZ, UND GENAU DAS WAR DER
@@ -3675,53 +3885,9 @@ function NodeKoerper({
               A15: eine Zeile statt zwei. Die volle Erklärung beider Schalter
               steht im aufgeklappten Ehrlichkeits-Absatz UND hier am `title`;
               weggelassen ist sie nirgends. */}
-          <Zeile id="schalter">
-            {/* Abstands-Gate (Befund 17.09.2026): 'gap: 3px 12px' lag
-                ausserhalb der Skala --k-s1..--k-s10. 12px = --k-s4,
-                unveraendert. 3px liegt genau in der Mitte zwischen --k-s1
-                (2px) und --k-s2 (4px); Owner-Entscheid: bei genauer Mitte
-                den KLEINEREN Wert nehmen -> --k-s1 (2px). Geprueft:
-                --k-s1/--k-s4 stehen auf :root in
-                packages/kosmo-ui/src/aura.css, dieses style-Objekt liegt in
-                einem React-Baum unter document.body, also ist :root immer
-                Vorfahre -> var(...) loest auf. */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--k-s1) var(--k-s4)', minWidth: 0 }}>
-              {/* Die Klammer zwischen `KTooltip` und `KCheckbox` ist noetig,
-                  nicht schmueckend: `KTooltip` klont GENAU EIN Kind und haengt
-                  ihm die Zeiger-/Fokus-Handler an, und `KCheckbox` reicht
-                  fremde Eigenschaften an das `<input>` weiter — das ist seit
-                  `aura.css` `.k-checkbox input` durchsichtig und liegt unter
-                  dem gezeichneten Kasten. Ohne die Klammer bekaeme also nur
-                  das unsichtbare Feld die Handler, und die Blase erschiene
-                  beim Zeigen auf den Kasten NIE. Der Kommentar oben sagt zu,
-                  dass die Erklaerung beider Schalter hier steht; diese
-                  Klammer haelt die Zusage. */}
-              <KTooltip text="nur Cycles — keine KI-Veredelung">
-                <span>
-                  <KCheckbox
-                    size="sm"
-                    className="vis-node-checkbox-label"
-                    data-testid="render-nur-cycles"
-                    checked={params['nurCycles'] === true}
-                    onChange={(e) => param('nurCycles', e.target.checked)}
-                    label="nur Cycles"
-                  />
-                </span>
-              </KTooltip>
-              <KTooltip text="als Strichzeichnung (Line-Art)">
-                <span>
-                  <KCheckbox
-                    size="sm"
-                    className="vis-node-checkbox-label"
-                    data-testid="render-lineart"
-                    checked={params['lineart'] === true}
-                    onChange={(e) => param('lineart', e.target.checked)}
-                    label="Strichzeichnung"
-                  />
-                </span>
-              </KTooltip>
-            </div>
-          </Zeile>
+          {/* Owner-Entscheid 101a (20.10.2026): hier stand die Zeile `schalter` mit dem einen
+              Kaestchen «Strichzeichnung». Es steht jetzt in der Zeile `klapp` neben «… mehr» —
+              das spart 25 px, ohne die der Knoten mit Verlauf nicht ins Fenster passt. */}
 
           {/* Ehrlichkeit/V8: der TATSÄCHLICHE Prompt, den «Ausführen» sendet.
               A15: bleibt IMMER stehen — ein Knopf, der etwas absendet, und
@@ -3894,7 +4060,12 @@ function NodeKoerper({
                 Hauptbild, ab zwei Laeufen. Sie wechselt das Hauptbild nicht;
                 der Knoten waechst dafuer um `VERLAUF_ZEILE_H`. */}
             {verlaufSichtbar(verlauf) && (
-              <RenderVerlauf reihe={verlauf} hauptJobId={status === 'fertig' ? lauf?.jobId : undefined} />
+              <RenderVerlauf
+                reihe={verlauf}
+                hauptJobId={status === 'fertig' ? lauf?.jobId : undefined}
+                offen={params['verlaufOffen'] === true}
+                onUmschalten={() => param('verlaufOffen', params['verlaufOffen'] !== true)}
+              />
             )}
           </Zeile>
         </div>

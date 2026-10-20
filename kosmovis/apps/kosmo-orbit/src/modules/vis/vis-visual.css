@@ -380,6 +380,15 @@
   height: 0;
   transform-origin: 0 0;
 }
+/* Zoomstufe als `zoom` statt `scale()` (NodeCanvas.tsx, Owner-Befund 20.10.: in WebKit
+   wurden die Knoten beim Hineinzoomen unscharf). Die Hülle trägt keine eigene Fläche. */
+.vis-knoten-zoom {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
 /* Der Knoten-Kasten: Lage und Groesse inline, trifft selbst nichts —
    getroffen werden seine gemalten SVG-Teile und sein Koerper. */
 .vis-knoten {
@@ -2281,4 +2290,35 @@
 .vis-raster-gross-urteil {
   margin: var(--k-s2) 0 0;
   font-size: var(--k-t-sm);
+/* Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Zeile «Grundlage» am Render-Knoten — vier Zeilen
+   in der Vorbehaltsgroesse (Register `grundlage`, 58 px). «neu würfeln» erbt Groesse und
+   Zeilenhoehe, damit die vierte Zeile nicht hoeher wird als die anderen. */
+.vis-node-grundlage {
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-knapp);
+  color: var(--k-ink-faint);
+}
+.vis-node-grundlage .vis-klapptext-mehr {
+  font-size: inherit;
+  line-height: inherit;
+}
+.vis-node-grundlage--warnung {
+  color: var(--k-warning);
+}
+
+/* Owner-Entscheid 101a (20.10.2026): der Verlauf zugeklappt — nur der Kopf, eine Zeile.
+   2 px Abstand plus eine Zeile (`--k-t-xs` mal `--k-lh-eng`) = `VERLAUF_ZU_H` (16 px,
+   NodeCanvas.tsx); `test/kv-render-verlauf.test.tsx` haelt beide gegeneinander. */
+.vis-verlauf--zu {
+  grid-template-rows: 14px;
+  height: 16px;
+}
+.vis-verlauf-kopf--zu {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vis-verlauf-umschalten {
+  font-size: inherit;
+  line-height: inherit;
+  margin-right: var(--k-s2);
 }

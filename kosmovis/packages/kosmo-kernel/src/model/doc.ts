@@ -20,7 +20,31 @@ export interface DossierEintrag {
 /** Ein Posten des Wettbewerbs-Raumprogramms (HNF-Soll je Wohnungstyp, m²). */
 export interface RaumprogrammPosten {
   typ: string;
+  /** HNF-Soll in m². Bei einem Raumposten (`anzahl` × `flaecheJe`) gesetzt
+   *  aus der Klasse: HNF → Stück × Fläche, NNF/VF/FF → 0. */
   hnfSoll: number;
+  // L11 (Demoauftrag 01, 15.10.2026): Raumposten statt Wohnungstyp — alle
+  // Felder optional, ein Wohn-Programm trägt keines davon (byte-gleich).
+  // Gesetzt nur über `design.raumprogrammSetzen`; gelesen von der
+  // Berechnungsliste und `design.raumprogrammAuslegen`.
+  /** Anzeigename, z.B. «Klassenzimmer». */
+  name?: string;
+  /** Stückzahl. */
+  anzahl?: number;
+  /** Fläche je Stück in m². */
+  flaecheJe?: number;
+  /** SIA-416-Klasse des Raums; fehlt = HNF. */
+  sia?: 'HNF' | 'NNF' | 'VF' | 'FF';
+  /** Nutzungsart; fehlt = Wohnen (Wohnungstyp). */
+  nutzung?: 'wohnen' | 'schule' | 'nichtwohnen';
+  /** Raumtyp der Zonen (`design.zoneErstellen`), z.B. «klassenzimmer». */
+  raumTyp?: string;
+  /** `anzahl` gilt je Geschoss (z.B. WC-Anlagen). */
+  jeGeschoss?: boolean;
+  /** Geschosswunsch: Geschoss-Index (0 = EG). */
+  geschoss?: number;
+  /** Nachbarschaft: Typ, neben dem der Raum liegen soll. */
+  neben?: string;
 }
 
 /**
@@ -338,6 +362,15 @@ export interface VisRenderWunsch {
   stimmungPreset?: 'morgen' | 'abend' | 'weiss';
   backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
   aufloesung?: readonly [number, number];
+  /**
+   * Nr. 85 Paket 2 (Entscheid 98): eine frueher gerechnete Grundlage (`gl-` und 16 Hex-Zeichen,
+   * wie sie das Ergebnis als `grundlage.id` meldet). Die App sendet sie als `vis.grundlage` —
+   * die Gegenseite rechnet dann nur den KI-Schritt auf derselben Kamera. Fehlt das Feld, wie
+   * bisher.
+   */
+  grundlage?: string;
+  /** Nr. 85/84 (Entscheid 98a): fester Startwert des KI-Schritts, gesendet als `vis.seed`. */
+  seed?: number;
 }
 
 /**

@@ -116,6 +116,10 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
         kameraWahl: auftrag.kameraWahl,
         ...(auftrag.backbone !== undefined ? { backbone: auftrag.backbone } : {}),
         ...(auftrag.aufloesung !== undefined ? { aufloesung: auftrag.aufloesung } : {}),
+        // Nr. 85 Paket 2: eine ueber Kosmo bestellte Grundlage und ihr Startwert reisen mit
+        // (`vis.grundlage`/`vis.seed`) — derselbe Versand wie «Variante erzeugen» am Knoten.
+        ...(auftrag.grundlage !== undefined ? { grundlage: auftrag.grundlage } : {}),
+        ...(auftrag.seed !== undefined ? { seed: auftrag.seed } : {}),
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

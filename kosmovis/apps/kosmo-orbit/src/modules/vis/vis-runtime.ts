@@ -169,6 +169,26 @@ export interface NodeLauf {
   bridgeHinweis?: string | undefined;
   /** Parameter-Hash beim Absenden — weicht der Graph ab, ist das Bild «veraltet». */
   memoKey: string;
+  /**
+   * Nr. 85 Paket 2 (Entscheid 98): welcher der zwei Schritte dieser Lauf war — «Grundlage
+   * rendern» oder «Variante erzeugen». Fehlt es, kam der Lauf ueber einen anderen Weg (Kosmo,
+   * Insel) und ist ein gewoehnlicher Auftrag wie bisher.
+   */
+  stufe?: 'grundlage' | 'variante';
+  /** Der Graph des Knotens — der Poll legt die eingetroffene Grundlage dort ab (`merkeGrundlage`). */
+  graphId?: string;
+  /** 98b: Stand der Eingaben beim Absenden einer Grundlage (`grundlageStand`, `grundlage.ts`). */
+  grundlageStand?: string;
+  /**
+   * Die Grundlage, auf der dieses Bild steht: beim Senden einer Variante die bestellte, mit dem
+   * Ergebnis die gemeldete (`result.grundlage.id`). Verlauf und Bildvergleich zeigen sie.
+   * Explizit `| undefined` wie `wartetGrund`: `patchLauf` mischt.
+   */
+  grundlageId?: string | undefined;
+  /** `result.grundlage.wiederverwendet` — wurde Blender uebersprungen? */
+  grundlageWiederverwendet?: boolean | undefined;
+  /** 98a: der bestellte Startwert (`vis.seed`); je Kamera meldet ihn `qaJeKamera[].seed`. */
+  seed?: number;
 }
 
 /** Zustände, in denen ein Lauf noch «offen» ist (der Poll fragt sie ab). */

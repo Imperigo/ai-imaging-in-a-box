@@ -1,5 +1,7 @@
 import { KosmoDoc, type Ebene, type EbenenKombination } from '../model/doc';
 import type { Aussparung, Dachfenster, Entity, EntityKind, Opening } from '../model/entities';
+import { istBestandVolumen } from './bestand-marke';
+import { ableitungsSichtVerknuepfen } from './ableitungs-cache';
 
 /**
  * E222 (Owner-Entscheid 13.10.2026, Paket 05 WB-Ebenen) — volles Ebenen-
@@ -89,10 +91,37 @@ export const STANDARDEBENEN_NAMEN: Record<EntityKind, string | null> = {
   // Paket 08 WB-Schnitt (E220): ein benannter Schnitt ist eine Ansicht, kein
   // Bauteil; er liegt auf keiner Ebene (Integrator-Festlegung Runde 25).
   schnitt: null,
+  lift: null,
+  // Werkzeugbank 15 (E217): eigene Standardebene neben dem Terrainprofil
+  // (`std:terrain`), damit sich Geländefläche und Geländelinie getrennt
+  // ausblenden und sperren lassen.
+  gelaendeflaeche: 'Geländefläche',
 };
 
 export function standardEbeneId(kind: EntityKind): string {
   return `${STD_EBENE_PRAEFIX}${kind}`;
+}
+
+/**
+ * Demo-Paket 06 «Bestand an/aus» — die EINE Standardebene, die nicht an einer
+ * Bauteilart haengt: Bestandskoerper (`program: 'bestand'`, B9, z. B. aus
+ * dem Splat) liegen ohne eigene `ebeneId` auf «Bestand» statt auf «Volumen».
+ * Damit IST der Schalter «Bestand zeigen» die Sichtbarkeit dieser Ebene
+ * (`design.ebene` Aktion `zustand`) und wirkt ueber `docFuerArbeitsansicht`
+ * in Grundriss, Schnitt und 3D zugleich, samt Kombinationen und Rueckgaengig
+ * — kein eigener Befehl, kein eigener Filter.
+ *
+ * Warum nicht eine angelegte Ebene: die muesste beim Uebernehmen jedes
+ * Bestandskoerpers zugewiesen werden, und ein Koerper ohne Zuweisung (jedes
+ * heute gespeicherte Dokument) bliebe am Schalter vorbei sichtbar.
+ */
+export const BESTAND_EBENE_ID = `${STD_EBENE_PRAEFIX}bestand`;
+export const BESTAND_EBENE_NAME = 'Bestand';
+
+/** Standardebene EINES Bauteils: `std:bestand` fuer Bestandskoerper, sonst die seiner Art. */
+export function standardEbeneVon(entity: Entity): string {
+  if (entity.kind === 'mass' && istBestandVolumen(entity)) return BESTAND_EBENE_ID;
+  return standardEbeneId(entity.kind);
 }
 
 export function istStandardEbeneId(id: string): boolean {
@@ -122,6 +151,7 @@ function gespeicherteEbene(doc: KosmoDoc, id: string): Ebene | undefined {
 export function ebeneFinden(doc: KosmoDoc, id: string): Ebene | undefined {
   const g = gespeicherteEbene(doc, id);
   if (g) return g;
+  if (id === BESTAND_EBENE_ID) return { id, name: BESTAND_EBENE_NAME, ...EBENE_VORGABE };
   const kind = artDerStandardebene(id);
   if (!kind) return undefined;
   return { id, name: STANDARDEBENEN_NAMEN[kind]!, ...EBENE_VORGABE };
@@ -135,7 +165,7 @@ export interface EbeneBezug {
 
 /** Ebene eines Bauteils: `meta.ebeneId`, sonst `std:<kind>`; haengend gemeldet zurueck. */
 export function ebeneVon(entity: Entity, doc: KosmoDoc): EbeneBezug {
-  const std = standardEbeneId(entity.kind);
+  const std = standardEbeneVon(entity);
   const eigen = entity.meta?.ebeneId;
   if (eigen === undefined) return { ebeneId: std };
   if (ebeneFinden(doc, eigen)) return { ebeneId: eigen };
@@ -149,15 +179,23 @@ export function ebeneVon(entity: Entity, doc: KosmoDoc): EbeneBezug {
  */
 export function ebenenListe(doc: KosmoDoc): Ebene[] {
   const arten = new Set<string>();
-  for (const e of doc.entities.values()) if (hatEbene(e.kind)) arten.add(e.kind);
+  let bestand = false;
+  for (const e of doc.entities.values()) {
+    if (!hatEbene(e.kind)) continue;
+    // Demo-Paket 06: ein Bestandskoerper bringt «Bestand», nicht «Volumen».
+    if (standardEbeneVon(e) === BESTAND_EBENE_ID) bestand = true;
+    else arten.add(e.kind);
+  }
   for (const g of doc.settings.ebenen ?? []) {
     const k = artDerStandardebene(g.id);
     if (k) arten.add(k);
+    if (g.id === BESTAND_EBENE_ID) bestand = true;
   }
   const out: Ebene[] = [];
   for (const kind of Object.keys(STANDARDEBENEN_NAMEN) as EntityKind[]) {
-    if (!arten.has(kind)) continue;
-    out.push(ebeneFinden(doc, standardEbeneId(kind))!);
+    if (arten.has(kind)) out.push(ebeneFinden(doc, standardEbeneId(kind))!);
+    // «Bestand» steht direkt hinter «Volumen» (oder an dessen Stelle).
+    if (kind === 'mass' && bestand) out.push(ebeneFinden(doc, BESTAND_EBENE_ID)!);
   }
   for (const g of doc.settings.ebenen ?? []) if (!istStandardEbeneId(g.id)) out.push(g);
   return out;
@@ -179,11 +217,66 @@ export function ebeneZustand(doc: KosmoDoc, ebeneId: string, kombination?: Ebene
   };
 }
 
+/**
+ * v0.1.9 Paket K4 (Fehlerprotokoll Demolauf v0.1.8, Nr. 47): eingebaute
+ * Kombination «Wettbewerb» fuer saubere Plaene — Gelaendeflaeche,
+ * Baugrenzen und Volumen aus, alles andere sichtbar (eine nicht
+ * aufgefuehrte Ebene gilt in jeder Kombination als sichtbar, «Bestand»
+ * also auch). Sperre und Drahtmodell bleiben die der Ebenen.
+ *
+ * Eingebaut, nicht gespeichert: sie steht in jedem Dokument zur Wahl, ohne
+ * Eintrag in `settings.ebenenKombinationen`, und kann darum nie doppelt
+ * entstehen. Gewaehlt wird sie wie jede Kombination (`design.ebene`
+ * Aktion `kombinationAnwenden`, `kombinationId` = `WETTBEWERB_KOMBINATION_ID`).
+ * Die Id traegt das Praefix `std:`, das fuer angelegte Kombinationen
+ * gesperrt ist. Speichert der Nutzer eine eigene Kombination unter
+ * demselben Namen, ersetzt sie die eingebaute in der Liste
+ * (`alleKombinationen`); per Id bleibt die eingebaute waehlbar.
+ */
+export const WETTBEWERB_KOMBINATION_ID = `${STD_EBENE_PRAEFIX}wettbewerb`;
+export const WETTBEWERB_KOMBINATION_NAME = 'Wettbewerb';
+
+const AUS = Object.freeze({ sichtbar: false });
+
+export const EINGEBAUTE_KOMBINATIONEN: readonly EbenenKombination[] = Object.freeze([
+  Object.freeze({
+    id: WETTBEWERB_KOMBINATION_ID,
+    name: WETTBEWERB_KOMBINATION_NAME,
+    ebenen: Object.freeze({
+      [standardEbeneId('gelaendeflaeche')]: AUS,
+      [standardEbeneId('boundary')]: AUS,
+      [standardEbeneId('mass')]: AUS,
+    }),
+  }),
+]);
+
+/** Ist das die Id einer eingebauten Kombination? */
+export function istEingebauteKombination(id: string): boolean {
+  return EINGEBAUTE_KOMBINATIONEN.some((k) => k.id === id);
+}
+
+/** Kombination nach Id: zuerst die gespeicherten, dann die eingebauten. */
+export function kombinationFinden(doc: KosmoDoc, id: string): EbenenKombination | undefined {
+  return doc.settings.ebenenKombinationen?.find((x) => x.id === id) ?? EINGEBAUTE_KOMBINATIONEN.find((x) => x.id === id);
+}
+
+/**
+ * Alle waehlbaren Kombinationen: zuerst die eingebauten, dann die
+ * gespeicherten in ihrer Reihenfolge. Eine eingebaute fehlt, wenn eine
+ * gespeicherte denselben Namen traegt (Gross-/Kleinschreibung egal) — kein
+ * Name steht doppelt in der Liste.
+ */
+export function alleKombinationen(doc: KosmoDoc): EbenenKombination[] {
+  const eigene = doc.settings.ebenenKombinationen ?? [];
+  const namen = new Set(eigene.map((k) => k.name.toLocaleLowerCase('de-CH')));
+  return [...EINGEBAUTE_KOMBINATIONEN.filter((k) => !namen.has(k.name.toLocaleLowerCase('de-CH'))), ...eigene];
+}
+
 /** Die Kombination der Arbeitsansicht; eine haengende Id faellt gemeldet auf keine zurueck. */
 export function arbeitsKombination(doc: KosmoDoc): { kombination?: EbenenKombination; rueckfall?: string } {
   const id = doc.settings.arbeitsKombinationId;
   if (id === undefined || id === null) return {};
-  const k = doc.settings.ebenenKombinationen?.find((x) => x.id === id);
+  const k = kombinationFinden(doc, id);
   return k ? { kombination: k } : { rueckfall: id };
 }
 
@@ -277,6 +370,7 @@ export function docFuerArbeitsansicht(doc: KosmoDoc): KosmoDoc {
   const m = ARBEITSANSICHT.get(doc);
   if (m && m.revision === doc.revision && m.settings === doc.settings) return m.sicht;
   const sicht = docFuerEbenen(doc);
+  ableitungsSichtVerknuepfen(sicht, doc); // R35: die Sicht teilt den Ableitungs-Cache ihres Dokuments
   ARBEITSANSICHT.set(doc, { revision: doc.revision, settings: doc.settings, sicht });
   return sicht;
 }

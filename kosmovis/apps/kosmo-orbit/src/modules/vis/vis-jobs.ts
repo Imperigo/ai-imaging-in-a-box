@@ -22,6 +22,7 @@ import {
   type Sheet,
   type SheetImage,
   type VisGraph,
+  type VisRenderAuftrag,
 } from '@kosmo/kernel';
 import { STANDARD_BRIDGE_URL } from '@kosmo/ai';
 import {
@@ -53,6 +54,14 @@ import { kuerzel } from '../../shell/tastennamen';
 // Wert-Import zurueck waere ein Kreis.
 import type { LizenzAngabe } from './varianten-diff';
 import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
+import {
+  GRUNDLAGE_VERALTET_SATZ,
+  KEINE_GRUNDLAGE_SATZ,
+  SKIZZE_OHNE_GRUNDLAGE_SATZ,
+  STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
+  grundlageAmKnoten,
+  grundlageStand,
+} from './grundlage';
 
 /**
  * Bridge-Jobs für KosmoVis (P2/HS3) — ein Weg für Graph UND Einfach-Ansicht:
@@ -1243,6 +1252,15 @@ export async function postRenderJob(params: {
    * Dokument und werden je fuer sich gerechnet. Ohne Parameter Zeichen fuer Zeichen wie bisher.
    */
   entwurf?: EbenenKombination;
+  /**
+   * Nr. 85 Paket 2 (Entscheid 98, Schritt 1 «Grundlage rendern»): welche Ebenen je Kamera
+   * zurueckkommen (`RenderScene.render.passes`). Ohne Parameter kein Feld, wie bisher.
+   */
+  passes?: 'alle' | readonly ('schoenbild' | 'tiefe' | 'material-id')[];
+  /** Nr. 85 (Schritt 2 «Variante erzeugen»): die Grundlage (`vis.grundlage`). Nie mit `nurCycles`. */
+  grundlage?: string;
+  /** Nr. 85/84 (Entscheid 98a): fester Startwert des KI-Schritts (`vis.seed`). */
+  seed?: number;
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1420,6 +1438,8 @@ export async function postRenderJob(params: {
       ...(params.himmel ? { himmel: params.himmel } : {}),
       ...(params.belichtung ? { belichtung: params.belichtung } : {}),
       ...(params.rauschschwelle !== undefined ? { rauschschwelle: params.rauschschwelle } : {}),
+      // Nr. 85 Paket 2: nur «Grundlage rendern» bestellt die Ebenen — sonst kein Feld.
+      ...(params.passes !== undefined ? { passes: params.passes === 'alle' ? ('alle' as const) : [...params.passes] } : {}),
     },
     // `refs` ZURUECKGEZOGEN 04.09.2026 (Owner-Entscheid, B97 Posten A) — der
     // einzige Erzeuger im Baum war genau diese Zeile, und sie schrieb eine
@@ -1435,6 +1455,10 @@ export async function postRenderJob(params: {
       // research_only nur bei explizitem Flag mitschicken — Produkt-Jobs
       // bleiben byte-identisch zum Stand vor der Lizenz-Sanierung.
       ...(params.researchOnly === true ? { research_only: true } : {}),
+      // Nr. 85 Paket 2: Grundlage und Startwert nur, wenn bestellt — sonst Zeichen fuer Zeichen
+      // wie bisher. Der Vertrag weist `grundlage` zusammen mit `skip` ab (superRefine).
+      ...(params.grundlage !== undefined ? { grundlage: params.grundlage } : {}),
+      ...(params.seed !== undefined ? { seed: params.seed } : {}),
     },
     ...(params.komposition ? { komposition: params.komposition } : {}),
     // B117 SCHRITT 2 (Owner-Entscheid E57): `interior`/IFC kommen NUR, wenn
@@ -1564,6 +1588,30 @@ export interface VarianteDesAuftrags {
   entwurf?: EbenenKombination;
 }
 
+/**
+ * Nr. 85 Paket 2 (98b): der Stand, mit dem eine Grundlage JETZT gerechnet wuerde — dieselbe
+ * Zusammenfuehrung wie beim Senden (Bedienung schlaegt Preset, `sunDetails` nur mit Stand).
+ * EINE Stelle fuer Knopf, Anzeige und Versand, damit «veraltet» am Knoten und die Sperre im
+ * Versand nie auseinanderlaufen.
+ */
+export function grundlageStandFuerKnoten(
+  doc: KosmoDoc,
+  roh: Pick<VisRenderAuftrag, 'samples' | 'resolution' | 'sun' | 'kameras'>,
+  params: Record<string, string | number | boolean>,
+  opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
+): string {
+  const bedienung = renderBedienungAusParams(params);
+  const sun = roh.sun ? { ...roh.sun, ...bedienung.sunDetails } : undefined;
+  return grundlageStand(doc, {
+    samples: bedienung.samples ?? roh.samples,
+    resolution: opts?.aufloesung ?? bedienung.resolution ?? roh.resolution,
+    sun,
+    himmel: bedienung.himmel,
+    kameras: roh.kameras,
+    kameraWahl: opts?.kameraWahl,
+  });
+}
+
 export function sendeGraphRenderAuftrag(
   graphId: string,
   nodeId: string,
@@ -1573,6 +1621,16 @@ export function sendeGraphRenderAuftrag(
     backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
     aufloesung?: readonly [number, number];
     variante?: VarianteDesAuftrags;
+    /**
+     * Nr. 85 Paket 2 (Entscheid 98): die zwei Knoepfe am Render-Knoten. `'grundlage'` bestellt
+     * nur Blender (`vis.skip`, `render.passes: 'alle'`); `'variante'` den KI-Schritt auf der
+     * Grundlage des Knotens mit ihrem Startwert — und sendet NICHT, wenn keine da ist oder sie
+     * veraltet ist (98b). Ohne `stufe` ein gewoehnlicher Auftrag wie bisher (Kosmo, Insel).
+     */
+    stufe?: 'grundlage' | 'variante';
+    /** `vis.render` ueber Kosmo: ausdruecklich bestellte Grundlage/Startwert (ohne `stufe`). */
+    grundlage?: string;
+    seed?: number;
   },
 ): void {
   const { doc } = useProject.getState();
@@ -1688,9 +1746,51 @@ export function sendeGraphRenderAuftrag(
     melde(kameraFov, { ton: 'fehler' });
     return;
   }
+  // Nr. 85 Paket 2 (Entscheide 98/98a/98b): der Stand der Eingaben, die eine Grundlage
+  // festlegen — mit genau den Zahlen, die gleich gesendet werden.
+  const stufe = opts?.stufe;
+  const standJetzt = grundlageStandFuerKnoten(doc, roh, node?.params ?? {}, opts);
+  let kiFest: { grundlage?: string; seed?: number } = {};
+  if (stufe === 'variante') {
+    // Zweite, tiefere Naht neben dem gesperrten Knopf: ohne aktuelle Grundlage geht nichts raus.
+    const g = grundlageAmKnoten(node?.params);
+    const sperre =
+      mode === 'lineart'
+        ? STRICHZEICHNUNG_OHNE_VARIANTE_SATZ
+        : auftrag.skizze
+          ? SKIZZE_OHNE_GRUNDLAGE_SATZ
+          : !g
+            ? KEINE_GRUNDLAGE_SATZ
+            : g.stand !== standJetzt
+              ? GRUNDLAGE_VERALTET_SATZ
+              : null;
+    if (sperre || !g) {
+      melde(sperre ?? KEINE_GRUNDLAGE_SATZ, { ton: 'fehler' });
+      return;
+    }
+    kiFest = { grundlage: g.id, seed: g.seed };
+  } else if (stufe === undefined) {
+    if (opts?.grundlage !== undefined && mode === 'lineart') {
+      melde(STRICHZEICHNUNG_OHNE_VARIANTE_SATZ, { ton: 'fehler' });
+      return;
+    }
+    kiFest = {
+      ...(opts?.grundlage !== undefined ? { grundlage: opts.grundlage } : {}),
+      ...(opts?.seed !== undefined ? { seed: opts.seed } : {}),
+    };
+  }
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
-  setzeLauf(laufId, { status: 'gesendet', memoKey: key, gestartetUm: Date.now() });
+  setzeLauf(laufId, {
+    status: 'gesendet',
+    memoKey: key,
+    gestartetUm: Date.now(),
+    graphId,
+    ...(stufe !== undefined ? { stufe } : {}),
+    ...(stufe === 'grundlage' ? { grundlageStand: standJetzt } : {}),
+    ...(kiFest.grundlage !== undefined ? { grundlageId: kiFest.grundlage } : {}),
+    ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
+  });
   // Entscheid 96: `skizze` ist die Wahl am Skizzen-Knoten (Kernel), keine Job-Angabe — sie geht
   // nicht durch `...auftrag` an `postRenderJob`, sondern aufgeloest als `skizze` (unten).
   const { skizze: skizzenWahl, ...auftragOhneSkizze } = auftrag;
@@ -1707,6 +1807,12 @@ export function sendeGraphRenderAuftrag(
       mode,
       ...(skizze ? { skizze } : {}),
       ...(variante?.entwurf ? { entwurf: variante.entwurf } : {}),
+      // Schritt 1: nur Blender, mit allen Ebenen — das alte Haekchen «nur Cycles» als Knopf.
+      ...(stufe === 'grundlage' ? { nurCycles: true, passes: 'alle' as const } : {}),
+      // Schritt 2 (oder Kosmo mit Grundlage): KI-Schritt auf der Grundlage. Ein altes
+      // `nurCycles: true` am Knoten darf ihn nicht abbestellen — der Vertrag wiese ab.
+      ...(kiFest.grundlage !== undefined ? { nurCycles: false, grundlage: kiFest.grundlage } : {}),
+      ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
     });
   // OHNE SKIZZE GENAU DER BISHERIGE AUFRUF, im selben Takt. MIT Skizze erst die Liste der Mappe
   // lesen und «neueste» aufloesen (`skizzeZurBestellung`); kennt der Wirt sie nicht oder hat sie
@@ -1715,7 +1821,9 @@ export function sendeGraphRenderAuftrag(
   // Modell — und das wird gesagt. Entscheid 96a: der Prompt wird NICHT zur Anweisung — es gilt die
   // Bemerkung der Skizze (`style.prompt` reist wie immer mit; die Bildseite rechnet eine Skizze
   // nur mit der Bemerkung).
-  const versand: Promise<GesendeterJob> = skizzenWahl
+  // Eine Grundlage rechnet aus dem Modell, nie aus einer Skizze (der Vertrag kennt beides nicht
+  // zusammen) — «Grundlage rendern» laesst die Skizze darum liegen.
+  const versand: Promise<GesendeterJob> = skizzenWahl && stufe !== 'grundlage'
     ? skizzeZurBestellung(skizzenWahl.wahl, auftrag.prompt ?? '').then((skizze) => {
         if (!skizze) melde(SKIZZE_NUR_IN_VISBOX_SATZ, { ton: 'info' });
         return senden(skizze);

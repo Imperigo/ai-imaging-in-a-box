@@ -63,7 +63,9 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
     // sonst 128-Samples-Default) + `nurCycles` (striktes `=== true` →
     // `vis.skip`, reines Cycles ohne KI-Veredelung, `vis-jobs.ts`).
     { name: 'preset', info: 'Optionales Cycles-Preset (Auflösung, Sonne, Samples) — ohne Preset gilt der 128-Samples-Standard.' },
-    { name: 'nurCycles', info: 'Reines Cycles-Rendering ohne KI-Veredelung — nur wirksam, wenn eingeschaltet.' },
+    // Nr. 85 Paket 2 (Entscheid 98): das Haekchen ist am Knoten der Knopf «Grundlage rendern»
+    // geworden; der Parameter wirkt nur noch auf den Wegen ohne die zwei Stufen (Kosmo, Insel).
+    { name: 'nurCycles', info: 'Altes Häkchen «nur Cycles» — am Knoten heute «Grundlage rendern»; wirkt nur noch beim Senden über Kosmo oder die Insel.' },
   ],
   blatt: [
     // defaults `{ titel: 'Visualisierung' }` — Titel des Blatt-Bürgers in

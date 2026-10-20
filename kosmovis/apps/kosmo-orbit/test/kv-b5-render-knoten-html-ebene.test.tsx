@@ -63,7 +63,9 @@ const FELDER = [
   'render-ausfuehren',
   'render-status',
   'node-expand',
-  'render-nur-cycles',
+  // Nr. 85 Paket 2: das Haekchen «nur Cycles» ist der Knopf «Grundlage rendern» geworden.
+  'render-grundlage',
+  'render-grundlage-zeile',
   'render-final-prompt',
 ];
 
@@ -122,9 +124,14 @@ describe('KV-B5 · Render-Knoten ohne foreignObject', () => {
     const svg = container!.querySelector('[data-testid="node-canvas"]')!;
     const [vx, vy, vw, vh] = svg.getAttribute('viewBox')!.split(/\s+/).map(Number) as [number, number, number, number];
     const welt = container!.querySelector<HTMLElement>('.vis-knoten-welt')!;
-    const m = /translate\(([-\d.e]+)px, ([-\d.e]+)px\) scale\(([-\d.e]+)\)/.exec(welt.style.transform);
+    // Owner-Befund 20.10.2026 (WebKit unscharf): Verschiebung als `translate` an der Welt,
+    // Zoomstufe als `zoom` an der inneren Hülle — kein `scale()` mehr.
+    const m = /^translate\(([-\d.e]+)px, ([-\d.e]+)px\)$/.exec(welt.style.transform);
     expect(m, welt.style.transform).not.toBeNull();
-    const [tx, ty, s] = [Number(m![1]), Number(m![2]), Number(m![3])];
+    const zoomHuelle = welt.querySelector<HTMLElement>('.vis-knoten-zoom')!;
+    expect(zoomHuelle.parentElement).toBe(welt);
+    const [tx, ty, s] = [Number(m![1]), Number(m![2]), Number(zoomHuelle.style.zoom)];
+    expect(s).toBeGreaterThan(0);
     // Flaeche (Platzhalter 1200 × 700 in jsdom) = viewBox-Breite × Zoom.
     expect(vw * s).toBeCloseTo(1200, 6);
     expect(vh * s).toBeCloseTo(700, 6);

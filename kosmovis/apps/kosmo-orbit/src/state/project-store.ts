@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { merkeAgentSkizzen } from './agent-skizzen';
 import {
   KosmoDoc,
   History,
@@ -454,6 +455,8 @@ export const useProject = create<ProjectState>((set, get) => {
       if (abgefangen) return abgefangen;
       const result = execute(get().doc, commandId, params, opts);
       if (!opts?.dryRun) {
+        // R37: Skizzen, die ein Agent per Werkzeug anlegt, sind keine iPad-Weisung (`agent-skizzen.ts`).
+        if (commandId === 'design.skizzeErstellen' && opts?.actor && opts.actor !== 'benutzer') merkeAgentSkizzen(neueIds(result.patches));
         if (verlaufAus === 0) get().history.record(result.patches); // E158: Agenten-Schritte ausserhalb der Owner-Kette
         // v0.9.4 P-GE2 (Owner-Befund Ursache 2): JEDER Befehl laeuft hier
         // durch — Kosmos Diff-Karte, ein Autopilot-Schritt, ein Handgriff in

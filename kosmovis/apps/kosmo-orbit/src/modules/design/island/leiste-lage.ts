@@ -8,6 +8,12 @@
  *     Darüberfahren; rückte sie unter dem Zeiger weg, klappte sie zu und gleich wieder auf.
  *  2. **Sonst darüber.** Dann bleibt zwischen Leiste und Pillen-Platz eine unsichtbare Brücke (`--isl-steg-hoehe`), so
  *     breit wie die Pille. Die Pille liegt nie über einer Zoomleiste, die Brücke darum auch nicht.
+ *
+ * **Nachtrag 14.10.2026 (KosmoDraw-Diagnose, `e2e/splat-volumen-text-in-box.spec.ts` rot seit L51):** Ist ein
+ * Werkzeugfenster der Insel offen, weicht die Leiste nur noch **zur Seite** aus, nie nach oben. Das Fenster steht über
+ * der Leiste; rückte sie bei 1024 × 768 um 92 px hoch, verlor das Splat-Fenster dieselben 92 px Höhe (582 → 490), und
+ * die Volumenliste lief unter seine Kante. Ein offenes Werkzeugfenster braucht die Höhe mehr als die Zoomleiste den
+ * freien Rand; ohne Fenster bleibt es bei L51.
  */
 import { useLayoutEffect, type RefObject } from 'react';
 import type { Kasten } from '../hinweis-lage';
@@ -25,7 +31,12 @@ const schneidet = (a: Kasten, b: Kasten) => a.left < b.right && a.right > b.left
  * Versatz der Leiste (`leiste`, Lage OHNE Ausweichen) und Höhe der Brücke darunter. `steg` ist 0, solange die Leiste
  * auf ihrer Zeile bleibt. Reine Rechnung.
  */
-export function leisteAusweichen(leiste: Kasten, hindernisse: readonly Kasten[], feldBreite: number): { dx: number; dy: number; steg: number } {
+export function leisteAusweichen(
+  leiste: Kasten,
+  hindernisse: readonly Kasten[],
+  feldBreite: number,
+  nurSeitlich = false,
+): { dx: number; dy: number; steg: number } {
   const im = hindernisse.filter((h) => schneidet(leiste, h));
   if (im.length === 0) return { dx: 0, dy: 0, steg: 0 };
 
@@ -45,6 +56,7 @@ export function leisteAusweichen(leiste: Kasten, hindernisse: readonly Kasten[],
     if (Math.abs(dx) <= spielraum && (besterDx === null || Math.abs(dx) < Math.abs(besterDx))) besterDx = dx;
   }
   if (besterDx !== null) return { dx: Math.round(besterDx), dy: 0, steg: 0 };
+  if (nurSeitlich) return { dx: 0, dy: 0, steg: 0 };
 
   // 2. Darüber, mit Brücke zum Platz der Pille.
   const dy = Math.min(...im.map((h) => h.top)) - LUFT - leiste.bottom;
@@ -58,9 +70,9 @@ function kasten(el: Element): Kasten {
 
 /**
  * Setzt `--isl-ausweich-x/-y` und `--isl-steg-hoehe` auf die Insel-Wurzel, solange `aktiv` (Leiste offen, unterer
- * Rand). Die Rechnung läuft gegen die Lage ohne eigenen Versatz.
+ * Rand). Die Rechnung läuft gegen die Lage ohne eigenen Versatz. `nurSeitlich`: ein Werkzeugfenster ist offen.
  */
-export function useLeisteAusweichen(wurzel: RefObject<HTMLElement | null>, aktiv: boolean): void {
+export function useLeisteAusweichen(wurzel: RefObject<HTMLElement | null>, aktiv: boolean, nurSeitlich = false): void {
   useLayoutEffect(() => {
     const el = wurzel.current;
     if (!el) return undefined;
@@ -84,7 +96,7 @@ export function useLeisteAusweichen(wurzel: RefObject<HTMLElement | null>, aktiv
         .filter((h) => !el.contains(h) && getComputedStyle(h).visibility !== 'hidden')
         .map(kasten)
         .filter((k) => k.right > k.left && k.bottom > k.top);
-      const neu = leisteAusweichen(ohne, hindernisse, window.innerWidth);
+      const neu = leisteAusweichen(ohne, hindernisse, window.innerWidth, nurSeitlich);
       if (neu.dx !== jetzt.dx || neu.dy !== jetzt.dy || neu.steg !== jetzt.steg) {
         jetzt = neu;
         setze(neu);
@@ -115,5 +127,11 @@ export function useLeisteAusweichen(wurzel: RefObject<HTMLElement | null>, aktiv
       window.removeEventListener('resize', plane);
       setze({ dx: 0, dy: 0, steg: 0 });
     };
-  }, [wurzel, aktiv]);
+  }, [wurzel, aktiv, nurSeitlich]);
 }
+
+/**
+ * Ereignis an `.isl-fenster`: «miss mich neu» (`IslandShell.tsx` `useViewportKlammer`). Für Inhalte, die
+ * das Fenster VERSCHIEBEN, ohne seine Grösse zu ändern (Kontrollmass: das Fenster tritt zur Seite).
+ */
+export const ISL_NEU_MESSEN = 'isl-neu-messen';

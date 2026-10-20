@@ -817,6 +817,14 @@ export const RenderJobStatus = z.enum([
 export const RenderJobProgress = z.object({
   phase: z.string(),
   pct: z.number().min(0).max(1),
+  // R37 (KosmoVis, Video-Befund L1-9/Nr. 63; additiv, alle optional):
+  /** Kamera i von n in dieser Phase (1-basiert). */
+  kamera_i: z.number().int().positive().optional(),
+  kamera_n: z.number().int().positive().optional(),
+  /** Artefaktname des letzten fertigen Zwischenbilds (Cycles-Bild je Kamera). */
+  vorschau: z.string().min(1).optional(),
+  /** Geschätzte Restzeit in Sekunden; `null`, solange keine Schätzung möglich ist (erste Kamera). */
+  rest_s: z.number().nonnegative().nullable().optional(),
 });
 export type RenderJobProgress = z.infer<typeof RenderJobProgress>;
 
@@ -843,6 +851,9 @@ export const RenderJob = z.object({
   worker_quelle: z.literal('abgeleitet').optional(),
   /** Laufende Etappe; der Client zeigt Phase + Prozent. */
   progress: RenderJobProgress.optional(),
+  /** R37 (Nr. 76): bei `cancelled` das letzte fertige Zwischenbild (Artefaktname) als
+   * ausdrücklich unvollständiges Teilergebnis — kein fertiger Render, keine Qualitätswerte. */
+  teilbild: z.string().min(1).optional(),
   /** Was BESTELLT wurde (nicht was gerendert wurde) — Cycles vs. KI-Veredelung. */
   requested_engine: z.enum(['cycles', 'ki']).optional(),
   /** Hält fest, was BESTELLT wurde (nicht was gerendert wurde) — der

@@ -170,9 +170,12 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     expect(zeile.dataset['warnung']).toBe('false');
   });
 
-  it('Skizze und «nur Cycles»: die Zeile sagt, dass das nicht geht', async () => {
+  // Nr. 85 Paket 2: «nur Cycles» hat am Knoten kein Haekchen mehr (es ist «Grundlage rendern»
+  // geworden, und die Grundlage laesst die Skizze liegen). Ohne KI-Schritt bleibt die
+  // Strichzeichnung — fuer sie gilt der Satz unveraendert.
+  it('Skizze und «Strichzeichnung»: die Zeile sagt, dass das nicht geht', async () => {
     registriereSkizzenQuelle(wirt());
-    montiere({ skizze: true, params: { nurCycles: true } });
+    montiere({ skizze: true, params: { lineart: true } });
     await warte();
     expect(q('render-skizze')?.textContent).toBe(SKIZZE_OHNE_KI_ZEILE);
   });
