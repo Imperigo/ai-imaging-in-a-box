@@ -321,10 +321,11 @@ geschönt — ein Befund, der eine Annahme umwirft, gehört unter **Erledigt** o
 in einfachen Worten und ohne Beschönigung. Die Genauigkeit wandert in die Dokumente; sie
 verschwindet nicht.
 
-**Fragen an den Owner immer als Auswahlfrage (Owner-Vorgabe 08.10.2026):** *«frag immer mit
-asquestion».* Eine Entscheidung, die beim Owner liegt, wird im Chat mit dem Auswahl-Werkzeug
-(AskUserQuestion) gestellt — mit Empfehlung als erste Option —, nicht als Fliesstext und nicht nur
-über die Zentrale. Was über die Zentrale an den Owner geht, wird zusätzlich so gefragt.
+**Fragen an den Owner nur über die Zentrale (Owner-Entscheid 112, 20.10.2026; ersetzt die Vorgabe vom
+08.10.2026):** Eine Entscheidung, die beim Owner liegt, geht **nur** als Zentrale-Nachricht (`art: frage`, an
+`owner` und `homestation`) — als Auswahlfrage mit Empfehlung als erster Option. Die HomeStation stellt sie ihm
+gebündelt als Klickfrage. **Im Chat wird nicht zusätzlich gefragt** (*Anlass: «teils fragst du doppelt … einmal hier
+und einmal beim Vis-Worker, genau das gleiche»*). Fragt der Owner im Chat selbst etwas, wird dort geantwortet.
 **Und jede Angabe in der Frage wird vorher gegen den eigenen Kern geprüft** (Lehre vom 08.10.2026,
 Protokoll 74 §68): Eine Frage ist so gut wie die Zahlen darin.
 
