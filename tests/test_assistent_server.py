@@ -243,7 +243,8 @@ def test_heim_nimmt_ohne_schalter_die_adresse_aus_der_umgebung(server, monkeypat
 
     def leitung(anfrage, frist):
         gesehen.append(anfrage.full_url)
-        return b'{"models": [{"name": "qwen3:30b"}]}'
+        # Das eigene Modell der Visbox (Entscheid 106d), wie es die Vorgabe nennt.
+        return b'{"models": [{"name": "qwen3:14b"}]}'
     monkeypatch.setattr(assistent, "_oeffne", leitung)
     monkeypatch.setattr(heimstand, "grafikkarte", lambda: {"frei_gb": None, "satz": "x"})
     monkeypatch.setenv(assistent.UMGEBUNG_ADRESSE, "http://127.0.0.1:23456")

@@ -404,11 +404,16 @@ def test_ein_unzulaessiges_ersatzmodell_wird_nicht_gefragt():
     assert e.protokoll == []
 
 
-def test_die_vorgabe_ist_qwen3_30b(monkeypatch):
+def test_die_vorgabe_ist_das_eigene_modell_qwen3_14b(monkeypatch):
+    """Entscheid 106d (20.10.2026): Visbox hat ein eigenes Modell — nicht Kosmos «Leiter»."""
     monkeypatch.delenv(assistent.UMGEBUNG_MODELL, raising=False)
     monkeypatch.delenv(assistent.UMGEBUNG_ADRESSE, raising=False)
     o = assistent.Ollama()
-    assert (o.modell, o.adresse) == ("qwen3:30b", "http://127.0.0.1:11434")
+    assert (o.modell, o.adresse) == ("qwen3:14b", "http://127.0.0.1:11434")
+    assert assistent.EIGENES_MODELL == assistent.VORGABE_MODELL == "qwen3:14b"
+    assert assistent.ERLAUBTE_MODELLE["qwen3:14b"]["lizenz"] == "Apache-2.0"
+    # Das eigene Modell steht nicht auf Kosmos Rollenkarte.
+    assert "qwen3:14b" not in assistent.KOSMO_ROLLENKARTE.values()
 
 
 def test_ein_ausgeschlossenes_modell_aus_der_umgebung_wird_abgewiesen(monkeypatch):
@@ -453,13 +458,109 @@ def test_chat_fragt_mit_denken_und_ohne_strom(monkeypatch):
 
 
 def test_entladen_heisst_keep_alive_null(monkeypatch):
+    monkeypatch.delenv(assistent.UMGEBUNG_MODELL, raising=False)
     leitung = _Leitung({"/api/generate": {"done": True}})
     monkeypatch.setattr(assistent, "_oeffne", leitung)
     befund = assistent.Ollama().entlade()
     assert befund["entladen"] is True
     methode, url, rumpf, _ = leitung.anfragen[0]
     assert (methode, url) == ("POST", "http://127.0.0.1:11434/api/generate")
-    assert rumpf == {"model": "qwen3:30b", "keep_alive": 0}
+    assert rumpf == {"model": "qwen3:14b", "keep_alive": 0}
+
+
+@pytest.mark.parametrize("modell", ["qwen3:30b", "gpt-oss:20b"])
+def test_ein_kosmo_modell_wird_nie_entladen_auch_per_umgebung(monkeypatch, modell):
+    """Entscheid 106d: Kosmos Rollenkarte und gpt-oss bleiben auf der Karte — auch wenn
+    sie per Umgebungsvariable als Visbox-Modell eingestellt sind. Es geht keine Anfrage
+    an Ollama, und der Satz sagt warum."""
+    monkeypatch.setenv(assistent.UMGEBUNG_MODELL, modell)
+    leitung = _Leitung({"/api/generate": {"done": True}})
+    monkeypatch.setattr(assistent, "_oeffne", leitung)
+    befund = assistent.Ollama().entlade()
+    assert befund["entladen"] is False
+    assert "Nicht entladen" in befund["satz"] and modell in befund["satz"]
+    assert leitung.anfragen == []
+
+
+def test_die_schutzliste(monkeypatch):
+    for name in ("kosmo-qwen3.6:35b-a3b", "qwen3:30b", "qwen3-coder:30b", "qwen2.5vl:7b",
+                 "kosmo-irgendwas:1b", "gpt-oss:20b", "gpt-oss:120b", "QWEN3:30B",
+                 "qwen3:30b:latest"):
+        assert assistent.geschuetzt(name) is not None, name
+    assert "KosmoOrbit" in assistent.geschuetzt("qwen3:30b")
+    assert assistent.geschuetzt("qwen3:14b") is None
+    assert assistent.geschuetzt("qwen3:14b:latest") is None
+    # Ein anderes, nicht geschuetztes Modell ist trotzdem nicht das eigene.
+    assert "nicht das eigene" in assistent.geschuetzt("qwen3:8b")
+    # Die Herkunft der Rollenkarte steht im Code.
+    quelle = (WURZEL / "src" / "aiimaging" / "assistent.py").read_text(encoding="utf-8")
+    assert "packages/kosmo-ai/src/staffelung.ts" in quelle
+
+
+# -------------------------------------------- der Abholer entlaedt nur das eigene Modell
+
+class _PsErsatz:
+    """Ein Sprachmodell, das nur ``geladene`` und ``entlade`` kennt."""
+
+    def __init__(self, modell="qwen3:14b", geladen=("qwen3:14b",), fehler=None):
+        self.modell, self._geladen, self._fehler = modell, list(geladen), fehler
+        self.entladen = 0
+
+    def geladene(self):
+        if self._fehler:
+            raise self._fehler
+        return self._geladen
+
+    def entlade(self):
+        self.entladen += 1
+        return {"entladen": True, "satz": "Das Sprachmodell qwen3:14b ist entladen."}
+
+
+def test_abholer_entlaedt_nur_wenn_nur_das_eigene_modell_liegt():
+    e = _PsErsatz()
+    befund = assistent.entlade_wenn_nur_eigenes(sprachmodell=e, anfrage_laeuft=lambda: False)
+    assert befund["entladen"] is True and e.entladen == 1
+
+
+@pytest.mark.parametrize("geladen", [("qwen3:14b", "qwen3:30b"), ("kosmo-qwen3.6:35b-a3b",),
+                                     ("qwen3:14b", "gpt-oss:20b"), ()])
+def test_abholer_entlaedt_nichts_neben_fremden_modellen(geladen):
+    e = _PsErsatz(geladen=geladen)
+    befund = assistent.entlade_wenn_nur_eigenes(sprachmodell=e, anfrage_laeuft=lambda: False)
+    assert befund["entladen"] is False and e.entladen == 0
+    assert befund["satz"]
+
+
+def test_abholer_entlaedt_nicht_waehrend_einer_frage():
+    e = _PsErsatz()
+    befund = assistent.entlade_wenn_nur_eigenes(sprachmodell=e, anfrage_laeuft=lambda: True)
+    assert befund["entladen"] is False and e.entladen == 0
+    assert "Frage" in befund["satz"]
+
+
+def test_abholer_entlaedt_kein_geschuetztes_eingestelltes_modell():
+    e = _PsErsatz(modell="qwen3:30b", geladen=("qwen3:30b",))
+    befund = assistent.entlade_wenn_nur_eigenes(sprachmodell=e, anfrage_laeuft=lambda: False)
+    assert befund["entladen"] is False and e.entladen == 0
+    assert "KosmoOrbit" in befund["satz"]
+
+
+def test_abholer_ohne_auskunft_von_ollama_entlaedt_nicht():
+    e = _PsErsatz(fehler=assistent.NichtErreichbar("aus"))
+    befund = assistent.entlade_wenn_nur_eigenes(sprachmodell=e, anfrage_laeuft=lambda: False)
+    assert befund["entladen"] is False and e.entladen == 0
+
+
+def test_die_marke_einer_laufenden_frage(tmp_path):
+    assert not assistent.frage_laeuft_in(tmp_path)
+    with assistent.frage_vermerkt(tmp_path):
+        assert assistent.frage_laeuft_in(tmp_path)
+        # Eine alte Marke (abgestuerzter Server) gilt nicht mehr.
+        assert not assistent.frage_laeuft_in(
+            tmp_path, _uhr=lambda: 10**12)
+    assert not assistent.frage_laeuft_in(tmp_path)
+    with assistent.frage_vermerkt(None):           # ohne Ablage: nichts, kein Fehler
+        pass
 
 
 def test_entladen_ohne_ollama_haelt_nicht_auf(monkeypatch):

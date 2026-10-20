@@ -63,6 +63,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from aiimaging import arbeitsgang, kameras, kette, sprache
 
@@ -77,6 +78,8 @@ __all__ = [
     "anwenden", "frage", "kontext_der_mappe", "pruefe_adresse", "pruefe_sprachmodell",
     "pruefe_vorschlag",
     "stand",
+    "EIGENES_MODELL", "KOSMO_ROLLENKARTE", "GESCHUETZTE_ANFAENGE", "geschuetzt",
+    "DATEI_FRAGE_LAEUFT", "frage_vermerkt", "frage_laeuft_in", "entlade_wenn_nur_eigenes",
 ]
 
 
@@ -118,8 +121,49 @@ UMGEBUNG_ADRESSE = "AIIMAGING_OLLAMA"
 #: Umgebungsvariable für ein anderes Modell — nur eines aus :data:`ERLAUBTE_MODELLE`.
 UMGEBUNG_MODELL = "AIIMAGING_SPRACHMODELL"
 
-#: Gemessen am Heim-PC (``auf-20261001-213``): liegt da, deutsche Werkzeugaufrufe 3 von 3.
-VORGABE_MODELL = "qwen3:30b"
+#: **Das eigene Modell der Visbox** (Owner-Entscheid 106d, 20.10.2026): ``qwen3:14b``,
+#: Apache-2.0, schon in :data:`ERLAUBTE_MODELLE`. Bis dahin stand hier ``qwen3:30b`` — am
+#: Heim-PC gemessen (``auf-20261001-213``), aber das ist Kosmos «Leiter»-Modell, und Visbox
+#: entlud es beim Anwenden. Seither hat Visbox ein eigenes, und nur dieses entlädt sie.
+VORGABE_MODELL = "qwen3:14b"
+
+#: Das Modell, das Visbox entladen darf — ihr eigenes (Entscheid 106d). Ein anderes,
+#: auch per :data:`UMGEBUNG_MODELL` eingestelltes, wird nie entladen.
+EIGENES_MODELL = VORGABE_MODELL
+
+#: **Kosmos Rollenkarte** — die Modelle, die KosmoOrbit am Heim-PC hält. Visbox entlädt sie
+#: nie (Entscheid 106d). *Herkunft:* KosmoOrbit ``packages/kosmo-ai/src/staffelung.ts``,
+#: abgeschrieben am 20.10.2026 — ändert sich die Karte drüben, gehört sie hier nachgetragen.
+KOSMO_ROLLENKARTE = {
+    "meister": "kosmo-qwen3.6:35b-a3b",
+    "leiter": "qwen3:30b",
+    "zeichner": "qwen3-coder:30b",
+    "seher": "qwen2.5vl:7b",
+}
+
+#: Namensanfänge, die nie entladen werden: Kosmos eigene Modelle und ``gpt-oss``.
+GESCHUETZTE_ANFAENGE = ("kosmo-", "gpt-oss")
+
+
+def geschuetzt(modell) -> str | None:
+    """Warum Visbox dieses Modell **nicht** entladen darf — oder ``None``, wenn sie darf.
+
+    Sie darf genau ihr eigenes (:data:`EIGENES_MODELL`). Kosmos Modelle, ``gpt-oss`` und
+    jedes andere bleiben auf der Karte, wie es auch eingestellt ist (Entscheid 106d).
+    """
+    name = str(modell or "").strip().lower()
+    basis = name[:-len(":latest")] if name.endswith(":latest") else name
+    for rolle, kosmo in KOSMO_ROLLENKARTE.items():
+        if basis == kosmo:
+            return (f"{name} ist ein Modell von KosmoOrbit (Rolle «{rolle}») — Visbox "
+                    f"entlädt es nie.")
+    for anfang in GESCHUETZTE_ANFAENGE:
+        if basis.startswith(anfang):
+            return f"{name} gehört nicht Visbox ({anfang}…) — Visbox entlädt es nie."
+    if basis != EIGENES_MODELL:
+        return (f"{name} ist nicht das eigene Modell der Visbox ({EIGENES_MODELL}) — "
+                f"entladen wird nur dieses.")
+    return None
 
 _BELEG = ("Lizenzdatei und Modellkarte gelesen am 01.10.2026; "
           "docs/VORFUEHRFASSUNG_2026-10-01.md, «Das Sprachmodell — geprüft nach Regel 1»")
@@ -296,11 +340,19 @@ class Ollama:
     def entlade(self) -> dict:
         """Das Sprachmodell von der Grafikkarte nehmen (``keep_alive: 0``).
 
-        ``{"entladen": True|None, "satz"}``. ``None`` heisst: Ollama antwortet nicht —
+        ``{"entladen": True|False|None, "satz"}``. ``False`` heisst: Es ist nicht das eigene
+        Modell der Visbox (:func:`geschuetzt`) — dann wird gar nicht gefragt. ``None``
+        heisst: Ollama antwortet nicht —
         dann hält es auch nichts auf der Karte, das sich entladen liesse, und der Lauf
         darf beginnen. Lehnt Ollama dagegen ab, wird geworfen: Dann ist nicht bekannt, ob
         die Karte frei ist, und ein Bild daneben liefe in den Speicherrand.
         """
+        # NUR DAS EIGENE MODELL (Entscheid 106d): Ist ein anderes eingestellt — Kosmos
+        # «Leiter» etwa, per Umgebungsvariable —, bleibt es auf der Karte, mit Satz.
+        # `entladen: False` hält den Lauf nicht an; ob der Speicher reicht, prüft der Abholer.
+        grund = geschuetzt(self.modell)
+        if grund is not None:
+            return {"entladen": False, "satz": f"Nicht entladen: {grund}"}
         try:
             self._rufe("POST", "/api/generate", {"model": self.modell, "keep_alive": 0},
                        frist=FRIST_ENTLADEN_S)
@@ -1131,3 +1183,102 @@ def anwenden(vorschlag, *, starte, entlade=None, mappe: dict | None = None):
         entlade = Ollama().entlade
     entlade()
     return starte(einstellungen, varianten)
+
+
+# ================================================ der Abholer und das eigene Modell
+
+#: Die Marke «eine Frage läuft» — eine Datei in der Auftragsablage, die der Server während
+#: einer Frage hält (:func:`frage_vermerkt`). Der Abholer ist ein anderer Prozess; die
+#: Sperre des Servers (``Flaeche.frage_laeuft``) sieht er nicht.
+DATEI_FRAGE_LAEUFT = "assistent-frage.json"
+
+#: Wie alt eine Marke höchstens sein darf, um zu gelten — die ganze Frist einer Frage und
+#: eine Minute dazu. Eine ältere Marke ist von einem abgestürzten Server liegen geblieben.
+MARKE_GILT_S = FRIST_FRAGE_GESAMT_S + 60.0
+
+
+class frage_vermerkt:                                    # noqa: N801 — als Satz gelesen
+    """``with frage_vermerkt(ablage): …`` — die Marke liegt, solange die Frage läuft.
+
+    Ohne Ablage (``None``) oder bei einem Schreibfehler geschieht nichts; der Abholer sieht
+    dann nur die Auslastung der Karte (``tools/abholen.py``).
+    """
+
+    def __init__(self, ablage):
+        self.datei = Path(ablage) / DATEI_FRAGE_LAEUFT if ablage else None
+
+    def __enter__(self):
+        if self.datei is not None:
+            try:
+                self.datei.parent.mkdir(parents=True, exist_ok=True)
+                self.datei.write_text(json.dumps({"seit_epoch_s": time.time()}),
+                                      encoding="utf-8")
+            except OSError:
+                self.datei = None
+        return self
+
+    def __exit__(self, *_):
+        if self.datei is not None:
+            try:
+                self.datei.unlink()
+            except OSError:
+                pass
+        return False
+
+
+def frage_laeuft_in(ablage, *, _uhr=None) -> bool:
+    """Liegt in dieser Ablage eine geltende Marke «eine Frage läuft»?"""
+    if not ablage:
+        return False
+    try:
+        satz = json.loads((Path(ablage) / DATEI_FRAGE_LAEUFT).read_text(encoding="utf-8"))
+        seit = float(satz["seit_epoch_s"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+    return 0.0 <= ((_uhr or time.time)() - seit) <= MARKE_GILT_S
+
+
+def entlade_wenn_nur_eigenes(*, sprachmodell=None, anfrage_laeuft=None) -> dict:
+    """Hält **nur** das eigene Modell der Visbox die Karte, und ohne laufende Anfrage?
+    Dann entladen — sonst nicht, mit Satz.
+
+    **Owner-Auflage der HomeStation (20.10.2026, zu Entscheid 106d):** Der Abholer darf ein
+    Sprachmodell entladen, statt zu warten — nur das der Visbox, nur ohne laufende Anfrage,
+    nie ein Modell von KosmoOrbit. Darum, in dieser Reihenfolge:
+
+    1. Ist das eingestellte Modell überhaupt das eigene (:func:`geschuetzt`)?
+    2. Was liegt laut Ollama auf der Karte (``/api/ps``)? Steht dort **irgendein** anderes
+       Modell, wird nichts angefasst — der Speicher gehört dann nicht nur uns.
+    3. Läuft eine Anfrage (``anfrage_laeuft()``, im Betrieb die Marke des Servers und die
+       Auslastung der Karte)? Dann nicht — das nähme einer Antwort das Modell weg.
+
+    Returns:
+        ``{"entladen": bool, "satz"}`` — ``True`` nur, wenn wirklich entladen wurde.
+    """
+    try:
+        modell = sprachmodell or Ollama()
+    except AssistentError as fehler:
+        return {"entladen": False, "satz": f"Kein Sprachmodell einstellbar: {fehler}"}
+    grund = geschuetzt(modell.modell)
+    if grund is not None:
+        return {"entladen": False, "satz": f"Nicht entladen: {grund}"}
+    try:
+        geladen = modell.geladene()
+    except AssistentError as fehler:
+        return {"entladen": False, "satz": f"Ollama gab keine Auskunft ({fehler})."}
+    if not geladen:
+        return {"entladen": False,
+                "satz": "Ollama hält kein Modell — der Speicher gehört einem anderen Programm."}
+    fremde = [n for n in geladen if not _enthalten(modell.modell, [n])]
+    if fremde:
+        return {"entladen": False,
+                "satz": (f"Auf der Karte liegt nicht nur das Modell der Visbox "
+                         f"({len(fremde)} weitere) — es wird nichts entladen.")}
+    if anfrage_laeuft is not None and anfrage_laeuft():
+        return {"entladen": False,
+                "satz": "Der Assistent beantwortet gerade eine Frage — es wird nicht entladen."}
+    try:
+        aus = modell.entlade()
+    except AssistentError as fehler:
+        return {"entladen": False, "satz": f"Entladen gescheitert: {fehler}"}
+    return {"entladen": aus.get("entladen") is True, "satz": aus.get("satz") or ""}

@@ -35,6 +35,32 @@ final class KnotenwegeTests: XCTestCase {
         XCTAssertEqual(bruecke, "\(Knotenwege.schema)://app/bruecke")
     }
 
+    // ------------------------------------------------------------- wie lange gewartet wird
+
+    /// 20.10.2026: Eine Variante lud das Modell hoch und lief nach 25 s in «nicht erreicht».
+    /// Lang (300 s) nur fuer POST auf die zwei Wege mit Modell, alles andere bleibt kurz.
+    func testLangeWartezeitNurFuerDieZweiWegeMitModell() {
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "POST", pfad: "/bruecke/jobs"), 300)
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "post", pfad: "/knoten/modell-laden"), 300)
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "POST", pfad: "/bruecke/jobs/"), 300)
+        // Abrufe und alle anderen Wege bleiben bei 25 s.
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "GET", pfad: "/bruecke/jobs"), 25)
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "GET", pfad: "/knoten/modell-laden"), 25)
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "POST", pfad: "/bruecke/jobs/vis-1-abcdef/approve"), 25)
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "POST", pfad: "/knoten/graph"), 25)
+        XCTAssertEqual(Knotenwege.wartezeit(methode: "GET", pfad: "/knoten/modell.glb"), 25)
+    }
+
+    func testDieLangeWartezeitLiegtUnterDerGanzenFrist() {
+        XCTAssertLessThan(Knotenwege.wartezeitLang, Knotenwege.hoechstensGanz)
+        XCTAssertGreaterThan(Knotenwege.wartezeitLang, Knotenwege.wartezeitKurz)
+        XCTAssertEqual(Knotenwege.hoechstensGanz, 600)
+        // Die Wege mit Modell sind Wege des Heim-PC, keine Dateien des Baus.
+        for weg in Knotenwege.wegeMitModell {
+            XCTAssertEqual(Knotenwege.ziel(pfad: weg), .heim(pfad: weg))
+        }
+    }
+
     // ------------------------------------------------------------- welcher Pfad wohin
 
     func testDieDatenwegeGehenAnDenHeimPC() {

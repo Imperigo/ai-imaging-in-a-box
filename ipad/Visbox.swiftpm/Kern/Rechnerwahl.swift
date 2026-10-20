@@ -105,8 +105,14 @@ public struct Rechnerwahl: Equatable, Sendable {
     public static let zuWenigGrafikspeicher = "zu wenig Grafikspeicher"
     public static let bildmodellSpaeter = "kommt in einer späteren Fassung"
     /// Blatt 28, Feld 2 — der Name kommt aus der Marke (er steht in keiner Zeichenkette).
-    public static let mcpSatz = "Claude über MCP steuert " + Marke.name + " immer — unabhängig "
-        + "von dieser Wahl. Die Wahl gilt für die Assistent-Leiste in der App."
+    ///
+    /// **Seit dem 20.10.2026 wahr formuliert** (Entscheide 105/106): Bis dahin stand hier
+    /// «Claude über MCP steuert … immer» — aber Claude war gar nicht angeschlossen; der
+    /// MCP-Server der Visbox war nur beim Hintergrunddienst am Heim-PC angemeldet. Der
+    /// Anschluss in der Mac-App ist entschieden (106, nur lokal) und noch nicht gebaut.
+    public static let mcpSatz = "Claude über MCP: wird eingerichtet — dann bedient Claude "
+        + Marke.name + " auf diesem Mac, unabhängig von dieser Wahl. Die Wahl gilt für die "
+        + "Assistent-Leiste in der App."
     /// Unter den Zeilen: was die Wahl heute bewirkt — nichts am Weg.
     public static let heuteSatz = "Heute rechnet alles am Heim-PC; die Wahl wird gespeichert "
         + "und gilt, sobald dieses Gerät rechnen kann."

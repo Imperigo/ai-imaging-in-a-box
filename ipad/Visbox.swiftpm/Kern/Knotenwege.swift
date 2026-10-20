@@ -213,6 +213,34 @@ public enum Knotenwege {
          Kopfzeile("Cache-Control", "no-store")]
     }
 
+    // ------------------------------------------------------------- wie lange gewartet wird
+
+    /// Wie lange ein Datenweg auf das erste Byte des Heim-PC wartet — gleich wie die
+    /// Vermittlung (`Heimstrecke.wartezeit`), damit «nicht erreicht» vor der Zeitgrenze der
+    /// Bruecke in der Seite (30 s) kommt.
+    public static let wartezeitKurz: TimeInterval = 25
+    /// Fuer die zwei Wege, die ein Modell **hochladen** und erst danach antworten koennen:
+    /// `POST /bruecke/jobs` und `POST /knoten/modell-laden` (20.10.2026). Bis dahin galten
+    /// auch hier 25 s, und eine Variante mit grossem Modell endete in «Der Heim-PC ist nicht
+    /// erreicht: Er hat nicht rechtzeitig geantwortet.», obwohl er arbeitete. Unter der
+    /// ganzen Frist von `hoechstensGanz` (600 s), damit eine haengende Leitung trotzdem endet.
+    public static let wartezeitLang: TimeInterval = 300
+    /// Hoechstens so lange fuer eine ganze Antwort (`timeoutIntervalForResource`).
+    public static let hoechstensGanz: TimeInterval = 600
+
+    /// Welche Wartezeit gilt fuer diese Anfrage? **Lang nur fuer POST auf die zwei Wege mit
+    /// Modell**, alles andere kurz — ein Abruf, der haengt, soll weiter schnell «nicht
+    /// erreicht» sagen.
+    public static func wartezeit(methode: String, pfad: String) -> TimeInterval {
+        guard methode.uppercased() == "POST" else { return wartezeitKurz }
+        let ohneSchraegstrich = pfad.hasSuffix("/") ? String(pfad.dropLast()) : pfad
+        return wegeMitModell.contains(ohneSchraegstrich) ? wartezeitLang : wartezeitKurz
+    }
+
+    /// Die Wege, die ein Modell hochladen — **abgeschrieben und bewacht**
+    /// (`tests/test_mac_knotenansicht_buendel.py` gegen `WEG_BRUECKE`/`WEG_KNOTEN_MODELL_LADEN`).
+    public static let wegeMitModell: Set<String> = ["/bruecke/jobs", "/knoten/modell-laden"]
+
     // ------------------------------------------------------------- Fehler als Satz
 
     /// Kein Heim-PC eingerichtet: Die Knotenansicht laedt, ihre Datenwege antworten sofort

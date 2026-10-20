@@ -1634,7 +1634,8 @@ def _block(fremd: dict, name: str, maengel: list) -> dict:
     return inhalt
 
 
-def _lies_grundlage_und_seed(vis: dict, skip, mit_skizze: bool, maengel: list):
+def _lies_grundlage_und_seed(vis: dict, skip, mit_skizze: bool, maengel: list,
+                             endgueltig: list | None = None):
     """``(grundlage, seed)`` aus ``vis`` — beide ``None``, wenn nicht bestellt oder mangelhaft.
 
     Was nicht stimmt, wird als Mangel gemeldet und NICHT geraten: Eine falsch geschriebene
@@ -1654,16 +1655,23 @@ def _lies_grundlage_und_seed(vis: dict, skip, mit_skizze: bool, maengel: list):
         maengel.append(f"'vis.seed' ist {seed!r}. Erwartet ist eine ganze Zahl von 0 bis "
                        f"{SEED_HOECHSTENS}.")
         seed = None
+    # WIDERSPRUECHE SIND ENDGUELTIG (auf-20261020-290, Befund 5): Sie stehen in der Szene,
+    # und die aendert sich nicht durch Warten — darum zusaetzlich in `endgueltig`, damit der
+    # Abholer den Auftrag mit Satz beendet, statt ihn alle 30 s neu zu lesen.
+    widerspruch = []
     if grundlage is not None and skip:
-        maengel.append("'vis.grundlage' und 'vis.skip' zugleich: Die Grundlage ist schon "
-                       "gerechnet — ohne KI-Schritt entstuende nichts Neues.")
+        widerspruch.append("'vis.grundlage' und 'vis.skip' zugleich: Die Grundlage ist schon "
+                           "gerechnet — ohne KI-Schritt entstuende nichts Neues.")
     if grundlage is not None and mit_skizze:
-        maengel.append("'vis.grundlage' und 'skizze' zugleich: Die Skizze fuehrt ihr Bild "
-                       "selbst und rechnet keine Blender-Grundlage.")
+        widerspruch.append("'vis.grundlage' und 'skizze' zugleich: Die Skizze fuehrt ihr Bild "
+                           "selbst und rechnet keine Blender-Grundlage.")
+    maengel.extend(widerspruch)
+    if endgueltig is not None:
+        endgueltig.extend(widerspruch)
     return grundlage, seed
 
 
-def _lies_guete(vis: dict, skip, maengel: list):
+def _lies_guete(vis: dict, skip, maengel: list, endgueltig: list | None = None):
     """``vis.guete`` — ``'vorschau'``, ``'voll'`` oder ``None`` (nicht bestellt, gilt «voll»).
 
     Owner-Entscheid 104 (20.10.2026): Schalter «Güte: Vorschau | Voll» am Render-Knoten. Ein
@@ -1680,8 +1688,12 @@ def _lies_guete(vis: dict, skip, maengel: list):
                        f"(oder das Feld weglassen: dann gilt 'voll').")
         return None
     if skip:
-        maengel.append(f"'vis.guete' ({guete!r}) und 'vis.skip' zugleich: «Nur Grundlage» "
-                       f"rechnet kein KI-Bild — eine Güte dafuer bestellt nichts.")
+        satz = (f"'vis.guete' ({guete!r}) und 'vis.skip' zugleich: «Nur Grundlage» "
+                f"rechnet kein KI-Bild — eine Güte dafuer bestellt nichts.")
+        maengel.append(satz)
+        # Ein Widerspruch der Bestellung — endgueltig, siehe `_lies_grundlage_und_seed`.
+        if endgueltig is not None:
+            endgueltig.append(satz)
     return guete
 
 
@@ -2006,9 +2018,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             maengel.append(
                 f"'vis.{name}' ist {wert!r}, erwartet war true, false oder null. Ein "
                 f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+    endgueltig: list[str] = []
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
-                                               skizze_block is not None, maengel)
-    guete = _lies_guete(vis, schalter.get("skip"), maengel)
+                                               skizze_block is not None, maengel, endgueltig)
+    guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
@@ -2087,6 +2100,11 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "vertragsvorgaben": tuple(vorgaben),
         "warnungen": tuple(warnungen),
         "maengel": tuple(maengel),
+        # DIE MAENGEL, DIE KEIN WARTEN HEILT (auf-20261020-290, Befund 5) — eine Teilmenge
+        # von `maengel`: Widersprueche in der Bestellung selbst. Der Abholer beendet einen
+        # solchen Auftrag mit `error` und Satz; alle anderen Maengel lassen ihn wie bisher
+        # mit Grund auf `queued` liegen.
+        "maengel_endgueltig": tuple(endgueltig),
     }
 
 
@@ -2127,6 +2145,8 @@ DURCHGEREICHT = {
     "vertragsvorgaben": "tools/abholen.py: einmal pro Lauf, nicht je Auftrag",
     "warnungen": "Antwort des Auftrags",
     "maengel": "halten den Lauf auf",
+    # Seit 20.10.2026 (auf-20261020-290, Befund 5): die Teilmenge, die den Auftrag beendet.
+    "maengel_endgueltig": "abholer.hole_einen: beenden den Auftrag mit error und Satz",
     # Seit 26.08.2026 — vorher stand es in STEHENGEBLIEBEN, und der Abholer meldete das
     # von sich aus: «BESTELLT UND NICHT AUSGEFUEHRT». Im Lauf vom 25.08. wurde es dann
     # belegt (auf-vis-20260825-15, Posten 2): Wer abbestellt, bekommt geliefert — und

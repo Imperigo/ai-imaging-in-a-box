@@ -287,6 +287,13 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             + "\n- ".join(auftrag["maengel"])
         )
         _grund_vermerken(quelle, ordner, antwort)
+        # EIN WIDERSPRUCH IN DER BESTELLUNG HEILT NICHT DURCH WARTEN (auf-20261020-290,
+        # Befund 5): `vis.guete` mit `vis.skip` blieb auf `queued` und wurde alle 30 s neu
+        # gelesen und liegengelassen — 21 Durchgaenge in zehn Minuten, kein Endzustand. Ein
+        # solcher Auftrag endet jetzt auf `error`, mit demselben Satz in `message` und
+        # `error`. Alle anderen Maengel bleiben, was sie waren: liegengelassen mit Grund.
+        if auftrag.get("maengel_endgueltig"):
+            _endgueltig_abweisen(quelle, ordner, antwort)
         return antwort
 
     darf, warum = _karte_frei(auftrag["laufzettel"], darf_rechnen)
@@ -324,6 +331,10 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         antwort.update(tat=TAT_ABGEBROCHEN, grund=f"{abbruch} Kein Ergebnis geschrieben.")
         antwort["teilbild"] = _teilbild_zustellen(quelle, ordner, abbruch.teilbild,
                                                   abbruch.kamera)
+        # DER SATZ GEHOERT AN DEN LAUFZETTEL (auf-20261020-290, 6a/6b): Er stand nur im
+        # Protokoll des Abholers, `message` blieb «Vom Nutzer abgebrochen.». Der Vermerk
+        # fasst den Status nicht an — `cancelled` bleibt (`vermerke_grund` unter der Sperre).
+        _abbruch_vermerken(quelle, ordner, antwort)
         return antwort
     except Exception as fehler:            # noqa: BLE001 — jeder Fehler ist ein Ergebnis
         if _steht_abgebrochen_in(quelle, ordner):
@@ -333,6 +344,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             antwort.update(tat=TAT_ABGEBROCHEN, grund=(
                 f"Abgebrochen; der Lauf scheiterte danach an {type(fehler).__name__}: "
                 f"{fehler}. Der Status bleibt '{bruecke.STATUS_CANCELLED}'."))
+            _abbruch_vermerken(quelle, ordner, antwort)
             return antwort
         quelle.setze_status(ordner, quelle.STATUS_ERROR, fehler=str(fehler))
         antwort.update(tat=TAT_FEHLER, grund=(
@@ -374,6 +386,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         antwort["teilbild"] = _teilbild_zustellen(
             quelle, ordner, bilder[-1] if bilder else None,
             Path(bilder[-1]).parent.name if bilder else None)
+        _abbruch_vermerken(quelle, ordner, antwort)
         return antwort
 
     uebersprungen = bool(ergebnis.get("uebersprungen"))
@@ -428,6 +441,43 @@ def _steht_abgebrochen_in(quelle, ordner) -> bool:
         return lies(ordner) == bruecke.STATUS_CANCELLED
     except Exception:                      # noqa: BLE001 — unlesbar ist kein Abbruch
         return False
+
+
+#: Der Anfang der Meldung nach einem Abbruch — wie ihn `knotenweg.abbrechen` schreibt.
+SATZ_ABGEBROCHEN = "Vom Nutzer abgebrochen."
+
+
+def _abbruch_vermerken(quelle, ordner, antwort: dict) -> None:
+    """Den Abbruchsatz in ``message`` schreiben, ohne den Status ``cancelled`` anzufassen.
+
+    ``message`` lautet danach «Vom Nutzer abgebrochen. Abgebrochen bei Kamera 2 von 2, vor
+    dem Bildmodell. Kein Ergebnis geschrieben.» — der erste Satz bleibt, damit die Anzeige
+    weiter erkennt, wer abbrach. ``grund_vermerkt`` sagt wie sonst, ob es gelang.
+    """
+    vermerk = {"grund": f"{SATZ_ABGEBROCHEN} {antwort.get('grund') or ''}".strip()}
+    _grund_vermerken(quelle, ordner, vermerk)
+    antwort["grund_vermerkt"] = vermerk.get("grund_vermerkt")
+
+
+def _endgueltig_abweisen(quelle, ordner, antwort: dict) -> None:
+    """Einen Auftrag mit endgültigem Mangel auf ``error`` setzen — mit dem Satz.
+
+    Die eigene Ablage kennt ``queued → error`` nicht (``jobs.UEBERGAENGE``); dort geht es
+    über ``running`` — ohne dass etwas gerechnet wird, im selben Augenblick. Scheitert auch
+    das, bleibt der Auftrag liegengelassen mit Grund wie bisher, und ``antwort`` sagt es.
+    """
+    satz = antwort.get("grund") or "Der Auftrag widerspricht sich."
+    try:
+        try:
+            quelle.setze_status(ordner, quelle.STATUS_ERROR, fehler=satz)
+        except Exception:                  # noqa: BLE001 — der Automat der eigenen Ablage
+            quelle.setze_status(ordner, quelle.STATUS_RUNNING)
+            quelle.setze_status(ordner, quelle.STATUS_ERROR, fehler=satz)
+    except Exception as fehler:            # noqa: BLE001 — Buchführung, kein Lauf
+        antwort["grund"] = (f"{satz}\n(Nicht als Fehler beendet: {type(fehler).__name__}: "
+                            f"{fehler} — der Auftrag bleibt liegen.)")
+        return
+    antwort["tat"] = TAT_FEHLER
 
 
 def _endstand_abgebrochen(quelle, ordner) -> None:
@@ -1551,6 +1601,43 @@ def _zeiten_mit_stillstand(zeiten, bericht: dict | None) -> dict | None:
     ergaenzt = dict(zeiten or {})
     ergaenzt["stillstand_s"] = bericht.get("laengster_stillstand_s")
     return ergaenzt
+
+
+def karte_oder_eigenes_entladen(darf_rechnen, entlade_versuch, *, versuche: int = 5,
+                                _warte=None):
+    """``darf_rechnen`` mit einem zweiten Anlauf: Ist die Karte belegt, erst das eigene
+    Sprachmodell der Visbox entladen lassen — dann noch einmal fragen.
+
+    **Owner-Auflage der HomeStation (20.10.2026, zu Entscheid 106d):** Hält NUR das Modell
+    des Visbox-Assistenten die Karte, und läuft keine Anfrage, darf der Abholer es entladen,
+    statt zu warten. Ob das so ist, entscheidet ``entlade_versuch()``
+    (:func:`aiimaging.assistent.entlade_wenn_nur_eigenes`) — hier wird nur gefragt und nach
+    dem Entladen bis zu ``versuche`` Mal im Sekundentakt nachgesehen (der Speicher wird
+    nicht im selben Augenblick frei). Nie ein Kosmo-Modell, nie während einer Frage: das
+    prüft der Versuch, nicht diese Funktion.
+    """
+    import time as _time
+    warte = _warte or _time.sleep
+
+    def auskunft() -> tuple[bool, str]:
+        darf, warum = darf_rechnen()
+        if darf:
+            return darf, warum
+        try:
+            versuch = entlade_versuch() or {}
+        except Exception as fehler:            # noqa: BLE001 — Auskunft, kein Lauf
+            versuch = {"entladen": False, "satz": f"{type(fehler).__name__}: {fehler}"}
+        if versuch.get("entladen") is not True:
+            satz = versuch.get("satz")
+            return False, f"{warum} {satz}".strip() if satz else warum
+        for _ in range(max(1, int(versuche))):
+            warte(1.0)
+            darf, nachher = darf_rechnen()
+            if darf:
+                return True, f"{versuch.get('satz')} Danach: {nachher}".strip()
+        return False, f"{versuch.get('satz')} Danach weiterhin: {nachher}".strip()
+
+    return auskunft
 
 
 def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
@@ -3335,7 +3422,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # da ist; auch eine Kamera, die spaeter ausgesetzt wird, hat sie.
             ebenen = ebenen_dieser_kamera(bericht, kuerzel, szene.get("ebenen"))
             massstab = _massstab_gemeldet(bericht)
-            rahmung = _rahmung_vor_dem_render(bericht)
+            rahmung = _rahmung_vor_dem_render(
+                bericht, gerahmte_box=einstellungen.get("kamera_huellbox"))
             if not rahmung_pruefen and rahmung.get("abbruch"):
                 rahmung = _rahmung_abgeschaltet(rahmung)
             komposition = _komposition_vor_dem_render(bericht)
@@ -3530,10 +3618,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             anker = None
             maskenanker = None
             if nullprobe:
-                anker, maskenanker = _nullprobe(
-                    aus, soll_pruefung, breite, hoch, bildschreiben=bildschreiben,
-                    messen=messen, grenze=grenze, tiefen_modell=_tiefen_modell,
-                    maske=maskenbefund.get("maske"), **ausblendung)
+                # DIE NULLANKER EINMAL JE SOLL-KARTE (auf-20261020-290, Befund 5): Sie
+                # haengen allein an Soll-Karte, Maske, Ausblendung und Schaetzer — eine
+                # Variante auf derselben Grundlage hat genau diese Eingaben, und bis hierher
+                # mass sie die drei Kontrollbilder je Kamera neu (rund 18 s). Gemerkt nach
+                # INHALT, nicht nach Namen: andere Eingabe, anderer Schluessel.
+                anker, maskenanker = _nullprobe_gemerkt(
+                    grundlagen_wurzel,
+                    lambda: _nullprobe(
+                        aus, soll_pruefung, breite, hoch, bildschreiben=bildschreiben,
+                        messen=messen, grenze=grenze, tiefen_modell=_tiefen_modell,
+                        maske=maskenbefund.get("maske"), **ausblendung),
+                    soll=soll_pruefung, breite=breite, hoehe=hoch, messen=messen,
+                    maske=maskenbefund.get("maske"), ausblendung=ausblendung, grenze=grenze)
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
                           # Welches Bild zu diesem Urteil gehoert. Steht bis zum
@@ -4400,20 +4497,82 @@ def _flache_karte(soll) -> list[float] | None:
     return flach
 
 
-def _gleiche_ansicht(a: list[float], b: list[float], *,
-                     toleranz_m: float = ZWILLING_TOLERANZ_M) -> bool:
-    """Zeigen zwei Soll-Karten dieselbe Ansicht? Gleiche Maske, Abweichung ≤ Toleranz."""
+#: Wie viele Bildpunkte zweier Soll-Karten abweichen duerfen, und sie gelten trotzdem als
+#: DIESELBE Ansicht — als Anteil aller Punkte, und nur an der Silhouettenkante.
+#:
+#: **Anlass auf-20261020-290 (6c):** Am Quader 8 × 3 × 5 m waren ``sSE`` und ``nNW`` in
+#: 1 587 197 von 1 587 200 Punkten gleich (p99 6·10⁻⁶ m), aber 3 Punkte an der Unterkante
+#: der Silhouette waren in der einen Ansicht Geometrie und in der anderen Hintergrund —
+#: Kantenrauschen der Rasterung. Bis dahin verlangte der Vergleich JEDEN Punkt gleich, und
+#: der Zwilling wurde nicht erkannt (zwei Kameras voll gerechnet). 2·10⁻⁵ sind bei
+#: 1600 × 992 rund 31 Punkte; eine echte zweite Ansicht unterscheidet sich in Tausenden, und
+#: ausserhalb der Kante zaehlt schon EIN abweichender Punkt.
+ZWILLING_KANTENANTEIL = 2e-5
+
+
+def _ist_hintergrund(wert: float) -> bool:
+    """Hintergrund ist, was nicht endlich ist ODER die Marke des Renderers traegt.
+
+    Cycles schreibt fuer «nichts getroffen» keine Unendlichkeit, sondern eine endliche, sehr
+    grosse Zahl (1e10). Bis zum 20.10.2026 galt hier nur ``isfinite`` — ein Punkt mit 1e10
+    neben einem mit 9,3 m war darum keine Maskenabweichung, sondern «10 Milliarden Meter
+    Tiefenunterschied». Die Grenze ist dieselbe wie bei der Silhouette der Pruefung
+    (:data:`aiimaging.geometrie_qa.HINTERGRUND_SCHWELLE_M`): eine Regel, eine Stelle.
+    """
     import math
 
+    from .geometrie_qa import HINTERGRUND_SCHWELLE_M
+    return not math.isfinite(wert) or wert >= HINTERGRUND_SCHWELLE_M
+
+
+def _an_der_kante(karte: list[float], i: int, breite: int | None, hoehe: int | None) -> bool:
+    """Liegt Punkt ``i`` an der Silhouettenkante — hat er einen Nachbarn mit anderer Maske?"""
+    if not breite or not hoehe or len(karte) != breite * hoehe:
+        return False
+    y, x = divmod(i, breite)
+    selbst = _ist_hintergrund(karte[i])
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            ny, nx = y + dy, x + dx
+            if (dy or dx) and 0 <= ny < hoehe and 0 <= nx < breite \
+                    and _ist_hintergrund(karte[ny * breite + nx]) != selbst:
+                return True
+    return False
+
+
+def _gleiche_ansicht(a: list[float], b: list[float], *,
+                     toleranz_m: float = ZWILLING_TOLERANZ_M,
+                     breite: int | None = None, hoehe: int | None = None,
+                     kantenanteil: float = ZWILLING_KANTENANTEIL) -> bool:
+    """Zeigen zwei Soll-Karten dieselbe Ansicht? Gleiche Maske, Abweichung ≤ Toleranz.
+
+    Hintergrund ist nicht endlich ODER ≥ der Marke (:func:`_ist_hintergrund`). Mit ``breite``
+    und ``hoehe`` duerfen hoechstens ``kantenanteil`` aller Punkte abweichen — und nur
+    solche an der Silhouettenkante (in beiden Karten). Ohne Masse gilt die strenge
+    Regel: jeder Punkt gleich.
+    """
+    import math
+
+    from .geometrie_qa import HINTERGRUND_SCHWELLE_M as grenze
     if len(a) != len(b):
         return False
-    for x, y in zip(a, b):
-        ex, ey = math.isfinite(x), math.isfinite(y)
-        if ex != ey:
-            return False
-        if ex and abs(x - y) > toleranz_m:
-            return False
-    return True
+    erlaubt = int(len(a) * kantenanteil) if breite and hoehe else 0
+    abweichend: list[int] = []
+    endlich = math.isfinite
+    for i, (x, y) in enumerate(zip(a, b)):
+        if x == y:
+            continue
+        # Dasselbe wie `_ist_hintergrund`, hier ausgeschrieben: 1,6 Mio. Punkte je Paar.
+        hx = not endlich(x) or x >= grenze
+        hy = not endlich(y) or y >= grenze
+        if hx != hy or (not hx and abs(x - y) > toleranz_m):
+            abweichend.append(i)
+            if len(abweichend) > erlaubt:
+                return False
+    # IN BEIDEN KARTEN AN DER KANTE: Ein Loch mitten in der Fassade ist in der Karte mit
+    # dem Loch auch «Kante» (sein Nachbar ist Geometrie) — in der anderen nicht.
+    return all(_an_der_kante(a, i, breite, hoehe) and _an_der_kante(b, i, breite, hoehe)
+               for i in abweichend)
 
 
 def _finde_zwilling(gesehen: list[dict], soll, breite, hoehe) -> dict | None:
@@ -4427,12 +4586,12 @@ def _finde_zwilling(gesehen: list[dict], soll, breite, hoehe) -> dict | None:
         return None
     for vorbild in gesehen:
         if (vorbild["breite"], vorbild["hoehe"]) == (breite, hoehe) \
-                and _gleiche_ansicht(vorbild["soll"], flach):
+                and _gleiche_ansicht(vorbild["soll"], flach, breite=breite, hoehe=hoehe):
             return vorbild
     return None
 
 
-def _rahmung_vor_dem_render(bericht: dict) -> dict:
+def _rahmung_vor_dem_render(bericht: dict, *, gerahmte_box=None) -> dict:
     """Kann dieser Lauf bei DIESER Rahmung überhaupt etwas zeigen — **vor** dem Bildlauf?
 
     **Der Anlass ist ein Owner-Einwand** (`auf-vis-20260825-15`, Posten 1, 25.08.2026),
@@ -4464,6 +4623,15 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
     from . import kameras
 
     weg = (bericht.get("kamera") or {}).get("weg")
+    # WELCHE BOX DIE KAMERA GERAHMT HAT (auf-20261020-290, Befund 4). Seit dem 30.09.2026
+    # rahmt die Richtungskamera nach dem BAUWERK (`_rahmung_fuer`, `--kamera-huellbox`); der
+    # Bericht nennt unter `bbox` aber weiter die SZENE. Gerechnet wurde darum «Fuellgrad der
+    # Bauwerksbox × Bauwerk/Szene» — der Anteil des Bauwerks an der Platte zum zweiten Mal:
+    # Haus 12 m auf Platte 40 m, 0,70 × 0,30 = 21 % statt 70 %, und JEDE Szene mit
+    # Gelaendeplatte wurde abgelehnt. Gemessen wird jetzt gegen die Box, die gerahmt wurde.
+    # Nur auf dem abgeleiteten Weg — nur dort hat der Runner eine Box gerahmt.
+    szene_box = (gerahmte_box if gerahmte_box is not None and weg == "abgeleitet"
+                 else bericht.get("bbox"))
 
     # DER DECKUNGSGRAD DIESES LAUFS, nicht der der Bibliothek.
     #
@@ -4520,7 +4688,7 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
         # wird nur der Breitenanteil (Bauwerk zu Szene), denn der haengt allein an den
         # beiden Huellboxen — mit der Einheitsrahmung 1,0 ist die Bildbreite genau er,
         # und alles, was auf einer Rahmung ruhen wuerde, wird danach geleert.
-        lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
+        lage = kameras.rahmungsverhaeltnis(szene_box,
                                            bericht.get("bbox_bauwerk"),
                                            deckungsgrad=1.0)
         #
@@ -4548,11 +4716,13 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
                            + (f" {lage['grund']}" if lage.get("breitenanteil") is None
                               else "")))
     else:
-        lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
+        lage = kameras.rahmungsverhaeltnis(szene_box,
                                            bericht.get("bbox_bauwerk"),
                                            deckungsgrad=deckungsgrad,
                                            gemessener_fuellgrad=gemessen)
     lage = dict(lage, weg=weg, note=bericht.get("bbox_bauwerk_note") or "",
+                gerahmt_nach=("kamerabox" if szene_box is not bericht.get("bbox")
+                              else "szene"),
                 deckungsgrad=deckungsgrad, deckungsgrad_quelle=quelle,
                 deckungsgrad_wirkungslos=wirkungslos,
                 massgebend=kamera.get("massgebend"))
@@ -5504,6 +5674,79 @@ def _ohne_umgebung(soll, kontext_pixel):
     if len(soll) != len(kontext_pixel):
         return soll
     return [_math.inf if k else w for w, k in zip(soll, kontext_pixel)]
+
+
+#: Wo die gemerkten Nullanker liegen — unter der Ablage der Grundlagen.
+NULLANKER_ORDNER = "_nullanker"
+#: Die Fassung der Rechnung hinter den Ankern. Wer an `_nullprobe`, an den Kontrollbildern
+#: oder an der Messung etwas aendert, das die Anker verschiebt, zaehlt hier hoch — dann
+#: gilt kein gemerkter Anker mehr.
+NULLANKER_FASSUNG = 1
+
+
+def nullanker_schluessel(soll, breite, hoehe, *, messen=None, maske=None,
+                         ausblendung=None, grenze=None) -> str:
+    """Der Inhaltsschluessel der Nullanker: Soll-Karte, Masse, Maske, Ausblendung, Schaetzer.
+
+    Alles, wovon :func:`_nullprobe` abhaengt, geht hinein — die Kontrollbilder sind fest
+    (``bildschreiben.KONTROLL_SEED``), der Schaetzer ist der der Messung. Gleicher
+    Schluessel heisst gleiche Eingaben, also gleiche Anker.
+    """
+    import array
+    import hashlib
+    import json as _json
+
+    from . import bildschreiben as _bs, tiefenschaetzer as _ts
+    h = hashlib.sha256()
+    h.update(_json.dumps({
+        "fassung": NULLANKER_FASSUNG, "breite": breite, "hoehe": hoehe,
+        "schaetzer": _ts.VORGABE_TIEFENSCHAETZER,
+        "messung": f"{getattr(messen, '__module__', '')}.{getattr(messen, '__qualname__', '')}",
+        "arten": list(_bs.KONTROLLARTEN), "seed": _bs.KONTROLL_SEED,
+        "grenze": grenze}, sort_keys=True)
+        .encode("utf-8"))
+    h.update(array.array("d", (float(x) for x in soll)).tobytes())
+    aus = ausblendung or {}
+    for teil in (maske, aus.get("ausblenden"), aus.get("trennhilfe")):
+        h.update(b"|-" if teil is None else b"|+")
+        if teil is not None:
+            h.update(bytes(1 if t else 0 for t in teil))
+    return h.hexdigest()[:32]
+
+
+def _nullprobe_gemerkt(wurzel, rechne, *, soll, breite, hoehe, messen=None, maske=None,
+                       ausblendung=None, grenze=None):
+    """Die Nullanker aus dem Gedaechtnis, sonst gerechnet und gemerkt.
+
+    Ohne Ablage der Grundlagen (kein ``--out-wurzel``) wird immer gerechnet — wie bisher.
+    Ein unlesbarer oder fehlender Eintrag heisst ebenfalls rechnen; gemerkt wird nur, was
+    sich messen liess (mindestens ein Anker).
+    """
+    import json as _json
+    if wurzel is None or breite is None or hoehe is None:
+        return rechne()
+    try:
+        schluessel = nullanker_schluessel(soll, breite, hoehe, messen=messen, maske=maske,
+                                          ausblendung=ausblendung, grenze=grenze)
+    except (TypeError, ValueError):
+        return rechne()
+    datei = Path(wurzel) / NULLANKER_ORDNER / f"{schluessel}.json"
+    try:
+        satz = _json.loads(datei.read_text(encoding="utf-8"))
+        return satz.get("anker"), satz.get("maskenanker")
+    except (OSError, ValueError, AttributeError):
+        pass
+    anker, maskenanker = rechne()
+    if anker or maskenanker:
+        try:
+            datei.parent.mkdir(parents=True, exist_ok=True)
+            tmp = datei.with_suffix(".json.tmp")
+            tmp.write_text(_json.dumps({"anker": anker, "maskenanker": maskenanker}),
+                           encoding="utf-8")
+            tmp.replace(datei)
+        except OSError:
+            pass
+    return anker, maskenanker
 
 
 def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,

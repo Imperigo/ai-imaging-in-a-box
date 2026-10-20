@@ -233,6 +233,8 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         "warnungen": tuple(warnungen),
         "vertragsvorgaben": tuple(szene["vertragsvorgaben"]),
         "maengel": tuple(maengel),
+        # Die Teilmenge, die kein Warten heilt (`kosmo_szene.lies_szene`, 20.10.2026).
+        "maengel_endgueltig": tuple(szene.get("maengel_endgueltig") or ()),
     }
 
 

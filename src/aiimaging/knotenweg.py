@@ -36,7 +36,9 @@ from __future__ import annotations
 
 import hmac
 import json
+import os
 import secrets
+import shutil
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -125,7 +127,7 @@ def _format(szene: dict, dateiname: str | None) -> str:
     return gewaehlt
 
 
-def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
+def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             *, kennung: str | None = None, mappe: str | None = None,
             mappe_pfad=None) -> dict:
     """Einen Auftrag annehmen: drei Dateien in einen neuen Ordner, Status wartet auf Freigabe.
@@ -133,7 +135,12 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
     Args:
         ablage: Wohin die Aufträge kommen — derselbe Ordner, den der Abholer liest.
         szene: ``render-scene/v1`` wie von der Knotenansicht gesendet.
-        modell: Die Bytes der Modelldatei.
+        modell: Die Bytes der Modelldatei — oder der :class:`~pathlib.Path` einer Datei, die
+            :func:`teile_formular` schon in die Ablage geschrieben hat (sie wird in den Auftrag
+            verschoben, nicht kopiert) — oder ``None``: **nur für eine Variante**
+            (``vis.grundlage``). Dann nimmt der Auftrag das Modell des Laufs, der die
+            Grundlage gelegt hat (:func:`modell_der_grundlage`); fehlt es auf diesem
+            Rechner, wird mit Satz abgewiesen (409) — nie gewartet.
         dateiname: Der Name, unter dem sie geschickt wurde — nur Rückfall fürs Format.
         kennung: Nur für Proben; sonst wie bei der Brücke aus Uhrzeit und Zufall.
         mappe: Der NAME der Mappe, aus der bestellt wurde (nur der Ordnername, kein Pfad —
@@ -155,11 +162,23 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
     """
     if not isinstance(szene, dict):
         raise KnotenwegError("Die Szene ist kein JSON-Objekt.")
-    if not modell:
+    aus_grundlage = None
+    if modell is None:
+        aus_grundlage = _modell_fuer_variante(ablage, szene)
+        groesse = aus_grundlage.stat().st_size
+        dateiname = aus_grundlage.name
+        # Das Format ist das der Datei, die da liegt — die Seite hat keine geschickt.
+        szene = dict(szene, geometry={**(szene.get("geometry") if isinstance(
+            szene.get("geometry"), dict) else {}), "format": FORMATE[aus_grundlage.suffix]})
+    elif isinstance(modell, Path):
+        groesse = modell.stat().st_size if modell.is_file() else 0
+    else:
+        groesse = len(modell)
+    if not groesse:
         raise KnotenwegError("Die Modelldatei ist leer.")
-    if len(modell) > MAX_MODELL_BYTES:
+    if groesse > MAX_MODELL_BYTES:
         raise KnotenwegError(
-            f"Die Modelldatei ist {len(modell) / 1e6:.0f} MB gross; angenommen werden bis "
+            f"Die Modelldatei ist {groesse / 1e6:.0f} MB gross; angenommen werden bis "
             f"{MAX_MODELL_BYTES / 1e6:.0f} MB.", 413)
     fmt = _format(szene, dateiname)
     skizze = _pruefe_skizze(szene, mappe_pfad)
@@ -171,7 +190,17 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
     ordner.mkdir(parents=True, exist_ok=False)
 
     modellpfad = ordner / (bruecke.DATEI_MODELL_IFC if fmt == "ifc" else bruecke.DATEI_MODELL)
-    modellpfad.write_bytes(modell)
+    if aus_grundlage is not None:
+        # Ein harter Verweis kostet nichts und keinen Platz; geht er nicht (anderes
+        # Laufwerk), eine Kopie. Die Datei des ersten Laufs bleibt unberührt.
+        try:
+            os.link(aus_grundlage, modellpfad)
+        except OSError:
+            shutil.copyfile(aus_grundlage, modellpfad)
+    elif isinstance(modell, Path):
+        os.replace(modell, modellpfad)
+    else:
+        modellpfad.write_bytes(modell)
     szene = dict(szene)
     # WIE DIE BRUECKE: Pfad und Ausgabeort setzt der Server, nie der Absender. Ein
     # mitgeschicktes `out` koennte sonst in einen fremden Ordner zeigen.
@@ -199,6 +228,29 @@ def lege_an(ablage, szene: dict, modell: bytes, dateiname: str | None = None,
     }
     _schreibe(ordner / bruecke.DATEI_LAUFZETTEL, zettel)
     return zettel
+
+
+#: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt.
+SATZ_GRUNDLAGE_FEHLT = (
+    "Die Variante kam ohne Modell, und die Grundlage {kennung} ist auf diesem Heim-PC nicht "
+    "zu finden (kein Auftrag hier hat sie gerechnet, oder sein Modell ist weg). Bitte "
+    "«Grundlage rendern» neu ausführen — oder die Variante mit Modell schicken.")
+
+
+def _modell_fuer_variante(ablage, szene: dict) -> Path:
+    """Das Modell für einen Auftrag ohne Modelldatei — nur mit ``vis.grundlage``, sonst Satz."""
+    vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
+    kennung = vis.get("grundlage")
+    if not kennung:
+        raise KnotenwegError("Ein Auftrag braucht die Felder «scene» und «model» — ohne "
+                             "Modell nur als Variante einer Grundlage (vis.grundlage).")
+    if not (isinstance(kennung, str) and kosmo_szene.GRUNDLAGE_KENNUNG.match(kennung)):
+        raise KnotenwegError(f"'vis.grundlage' ist {kennung!r} und keine Kennung einer "
+                             f"Grundlage (gl- und 16 Hexzeichen).")
+    gefunden = modell_der_grundlage(ablage, kennung)
+    if gefunden is None or gefunden.suffix not in FORMATE:
+        raise KnotenwegError(SATZ_GRUNDLAGE_FEHLT.format(kennung=kennung), 409)
+    return gefunden
 
 
 def _pruefe_skizze(szene: dict, mappe_pfad) -> str | None:
@@ -440,6 +492,18 @@ def gesundheit(ablage, *, _uhr=None) -> dict:
     }
 
 
+def glb_der_mappe(ordner) -> Path | None:
+    """Nur der Pfad der glb einer Mappe — ``None``, wenn sie keine hat.
+
+    Für ``GET /knoten/modell.glb`` (20.10.2026): :func:`mappe_fuer_knoten` liest dafür
+    Hüllbox und Standpunkte aus der ganzen Datei, die hier nur ausgeliefert wird. Dieselbe
+    Herkunft (``import.glb`` der Projektdatei), ohne den Rest.
+    """
+    einfuhr = projekt.oeffne(ordner)["projekt"].get("import") or {}
+    glb = projekt.loese_pfad(einfuhr.get("glb"), ordner) if einfuhr.get("glb") else None
+    return Path(glb) if glb is not None and Path(glb).is_file() else None
+
+
 def mappe_fuer_knoten(ordner) -> dict:
     """Was die Knotenansicht über das Modell der offenen Mappe wissen muss.
 
@@ -659,3 +723,218 @@ def lies_graph(ordner) -> dict:
         return {"graphen": pruefe_graphen(daten.get("graphen")), "satz": None}
     except (OSError, ValueError, AttributeError, KnotenwegError) as fehler:
         return {"graphen": [], "satz": f"Der gesicherte Graph liess sich nicht lesen ({fehler})."}
+
+
+# ================================================ Das Formular, gestreamt (20.10.2026)
+#
+# ANLASS: «Der Heim-PC ist nicht erreicht: Er hat nicht rechtzeitig geantwortet.» bei jeder
+# Variante. Der Server las den GANZEN Rumpf in den Speicher und zerlegte ihn mit dem E-Mail-
+# Leser der Standardbibliothek — beides unter der Reihe, also mit dem ganzen Server
+# angehalten; der E-Mail-Leser ist fuer grosse Teile langsam. Hier wird der Rumpf in Stuecken
+# gelesen, die Datei geht unmittelbar in eine Datei neben der Ablage, und im Speicher bleiben
+# nur die kleinen Felder.
+
+#: Wie gross ein Feld ohne Datei sein darf (die Szene ist Text).
+FELD_HOECHSTENS = 16 * 1024 * 1024
+#: Wie gross der Kopf eines Teils sein darf.
+_TEILKOPF_HOECHSTENS = 16 * 1024
+#: In welchen Stuecken gelesen wird.
+_STUECK = 1024 * 1024
+
+
+def _grenze_aus(inhaltstyp: str) -> bytes:
+    """Die Grenzmarke (``boundary``) aus ``Content-Type`` — oder ein Satz."""
+    typ = str(inhaltstyp or "")
+    if not typ.lower().startswith("multipart/form-data"):
+        raise KnotenwegError(
+            "Ein Auftrag kommt als Formular (multipart/form-data) mit Szene und Modell.")
+    for teil in typ.split(";")[1:]:
+        name, _, wert = teil.strip().partition("=")
+        if name.strip().lower() == "boundary":
+            wert = wert.strip()
+            if len(wert) >= 2 and wert[0] == wert[-1] == '"':
+                wert = wert[1:-1]
+            if wert and len(wert) <= 200:
+                return wert.encode("latin-1")
+    raise KnotenwegError("Das Formular liess sich nicht zerlegen: keine Grenzmarke.")
+
+
+def _kopf_des_teils(roh: bytes) -> tuple[str | None, str | None]:
+    """``(name, dateiname)`` aus den Kopfzeilen eines Teils (``Content-Disposition``)."""
+    name = dateiname = None
+    for zeile in roh.decode("utf-8", "replace").split("\r\n"):
+        feld, _, wert = zeile.partition(":")
+        if feld.strip().lower() != "content-disposition":
+            continue
+        for stueck in wert.split(";")[1:]:
+            schluessel, _, w = stueck.strip().partition("=")
+            w = w.strip()
+            if len(w) >= 2 and w[0] == w[-1] == '"':
+                w = w[1:-1]
+            if schluessel.strip().lower() == "name":
+                name = w
+            elif schluessel.strip().lower() == "filename":
+                dateiname = w
+    return name, dateiname
+
+
+def teile_formular(quelle, laenge: int, inhaltstyp: str, *, ordner=None,
+                   datei_felder=(), hoechstens_datei: int = MAX_MODELL_BYTES,
+                   hoechstens_feld: int = FELD_HOECHSTENS) -> dict:
+    """Ein ``multipart/form-data``-Rumpf aus einem Strom → ``{feld: (dateiname, inhalt)}``.
+
+    Liest höchstens ``laenge`` Bytes aus ``quelle`` (``.read(n)``), in Stücken. Die Felder in
+    ``datei_felder`` werden **unmittelbar** in eine eigene Datei in ``ordner`` geschrieben
+    (Name mit Punkt vorn, damit :func:`artefakt` sie nie ausliefert); ihr ``inhalt`` ist dann
+    der :class:`~pathlib.Path` dorthin. Alle anderen Felder bleiben als ``bytes`` im Speicher.
+
+    **Wer eine Datei bekommt, räumt sie auch weg** — :func:`lege_an` verschiebt sie in den
+    Auftrag; scheitert vorher etwas, löscht der Aufrufer sie (:func:`raeume_formular`). Geht
+    hier etwas schief, sind die angelegten Dateien schon wieder gelöscht.
+
+    Raises:
+        KnotenwegError: kein Formular, unvollständig, oder ein Teil zu gross (413).
+    """
+    marke = _grenze_aus(inhaltstyp)
+    trenner = b"\r\n--" + marke
+    rest = [int(laenge)]
+    puffer = bytearray(b"\r\n")         # damit auch die erste Marke «\r\n--» beginnt
+    ende_erreicht = [False]
+    felder: dict = {}
+    angelegt: list[Path] = []
+
+    def nachladen() -> bool:
+        if rest[0] <= 0:
+            return False
+        stueck = quelle.read(min(_STUECK, rest[0]))
+        if not stueck:
+            rest[0] = 0
+            return False
+        rest[0] -= len(stueck)
+        puffer.extend(stueck)
+        return True
+
+    def bis(marke_: bytes, hoechstens: int) -> bytes:
+        """Alles bis zur Marke (ohne sie) — nur für kleine Stücke (Präambel, Kopf)."""
+        while True:
+            i = puffer.find(marke_)
+            if i >= 0:
+                vorne = bytes(puffer[:i])
+                del puffer[:i + len(marke_)]
+                return vorne
+            if len(puffer) > hoechstens or not nachladen():
+                raise KnotenwegError("Das Formular liess sich nicht zerlegen.")
+
+    try:
+        bis(trenner, _TEILKOPF_HOECHSTENS + 2)          # die Präambel
+        while True:
+            while len(puffer) < 2 and nachladen():
+                pass
+            if bytes(puffer[:2]) == b"--":
+                ende_erreicht[0] = True
+                break
+            kopf = bis(b"\r\n\r\n", _TEILKOPF_HOECHSTENS)
+            name, dateiname = _kopf_des_teils(kopf.lstrip(b" \t\r\n"))
+            als_datei = name in datei_felder
+            if als_datei:
+                if ordner is None:
+                    raise KnotenwegError("Für die Datei des Formulars fehlt ein Ordner.", 500)
+                Path(ordner).mkdir(parents=True, exist_ok=True)
+                ziel = Path(ordner) / f".eingang-{secrets.token_hex(8)}"
+                angelegt.append(ziel)
+                senke = ziel.open("wb")
+                grenze_ = hoechstens_datei
+            else:
+                senke = bytearray()
+                grenze_ = hoechstens_feld
+            groesse = 0
+            try:
+                while True:
+                    i = puffer.find(trenner)
+                    if i >= 0:
+                        stueck, weiter = bytes(puffer[:i]), i + len(trenner)
+                    else:
+                        # Den Schwanz behalten: Die Marke kann über zwei Stücke reichen.
+                        behalten = len(trenner) - 1
+                        stueck = bytes(puffer[:max(0, len(puffer) - behalten)])
+                        weiter = len(stueck)
+                    groesse += len(stueck)
+                    if groesse > grenze_:
+                        raise KnotenwegError(
+                            f"Der Teil «{name}» ist zu gross — angenommen werden bis "
+                            f"{grenze_ // (1024 * 1024)} MB.", 413)
+                    if isinstance(senke, bytearray):
+                        senke.extend(stueck)
+                    else:
+                        senke.write(stueck)
+                    del puffer[:weiter]
+                    if i >= 0:
+                        break
+                    if not nachladen():
+                        raise KnotenwegError("Das Formular ist unvollständig angekommen.")
+            finally:
+                if not isinstance(senke, bytearray):
+                    senke.close()
+            if name:
+                if name in felder and als_datei:
+                    raeume_formular({name: felder[name]})
+                felder[name] = (dateiname, ziel if als_datei else bytes(senke))
+    except BaseException:
+        for pfad in angelegt:
+            try:
+                pfad.unlink()
+            except OSError:
+                pass
+        raise
+    # Was nach der Schlussmarke noch kommt (Epilog), wird gelesen und verworfen — sonst
+    # laege es in der Leitung vor der naechsten Anfrage.
+    while rest[0] > 0 and nachladen():
+        puffer.clear()
+    if not ende_erreicht[0]:
+        raise KnotenwegError("Das Formular ist unvollständig angekommen.")
+    return felder
+
+
+def raeume_formular(felder: dict) -> None:
+    """Die Dateien wegräumen, die :func:`teile_formular` angelegt hat und niemand übernahm."""
+    for _, inhalt in (felder or {}).values():
+        if isinstance(inhalt, Path):
+            try:
+                inhalt.unlink()
+            except OSError:
+                pass
+
+
+def modell_der_grundlage(ablage, kennung: str, *, hoechstens: int = 500) -> Path | None:
+    """Die Modelldatei des Auftrags, der die Grundlage ``kennung`` gerechnet hat — oder ``None``.
+
+    **Wofür (Variante ohne Hochladen, 20.10.2026):** Eine Variante (``vis.grundlage``)
+    rechnet kein Blender, der Abholer braucht das Modell aber weiter (Modellstand, Rahmung,
+    Bestand). Statt es mit jeder Variante neu zu schicken, nimmt der Auftrag das Modell des
+    Laufs, der die Grundlage gelegt hat. Gefunden wird er an seinem Ergebnis
+    (``render-result.json``, ``grundlage.id``), die jüngsten zuerst; gesucht wird in
+    höchstens ``hoechstens`` Aufträgen.
+    """
+    ordner = Path(ablage)
+    if not ordner.is_dir() or not kosmo_szene.GRUNDLAGE_KENNUNG.match(str(kennung or "")):
+        return None
+    gesehen = 0
+    for d in sorted(ordner.iterdir(), reverse=True):
+        if not (d.is_dir() and kosmo_szene.ist_fremde_job_id(d.name)):
+            continue
+        gesehen += 1
+        if gesehen > hoechstens:
+            break
+        ergebnis = d / bruecke.DATEI_ERGEBNIS
+        if not ergebnis.is_file():
+            continue
+        try:
+            gl = (json.loads(ergebnis.read_text(encoding="utf-8")) or {}).get("grundlage")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if not (isinstance(gl, dict) and gl.get("id") == kennung):
+            continue
+        for name in (bruecke.DATEI_MODELL, bruecke.DATEI_MODELL_IFC):
+            if (d / name).is_file():
+                return d / name
+    return None

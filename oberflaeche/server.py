@@ -46,6 +46,7 @@ import importlib.util
 import json
 import re
 import secrets
+import shutil
 import os
 import socket
 import ssl
@@ -1494,6 +1495,36 @@ WEGTAFEL_LESEN = {
 #:   ``nvidia-smi`` und Ollama dürfen zusammen bis etwa 9 s brauchen.
 WEGE_NEBENHER = frozenset({("POST", WEG_ASSISTENT), ("GET", WEG_HEIM)})
 
+
+def ausserhalb_der_reihe(methode: str, pfad: str) -> bool:
+    """Geht dieser Weg **ohne** die Reihe — und nimmt sie nur für seinen kurzen Schritt?
+
+    **Anlass (20.10.2026):** «Der Heim-PC ist nicht erreicht: Er hat nicht rechtzeitig
+    geantwortet.» bei jeder Variante. Unter der Reihe lief für ``POST /bruecke/jobs`` das
+    Lesen des ganzen Rumpfs (bis 768 MB über die Leitung), das Zerlegen und das Schreiben
+    des Modells — und in dieser Zeit stand der ganze Server: Fortschritt, Bilder, Mappe.
+
+    * ``POST /bruecke/jobs`` und ``POST /knoten/modell-laden``: Der Rumpf wird **draussen**
+      gelesen und zerlegt (die Datei geht unmittelbar auf die Platte); die Reihe gilt nur
+      für das Anlegen des Auftrags bzw. den Start des Ladens.
+    * ``GET /knoten/modell.glb``, ``GET /knoten/mappe``, ``GET /knoten/skizze``,
+      ``GET /bild`` und die Bilder eines Auftrags (``/bruecke/jobs/<id>/artifacts/<name>``)
+      **lesen nur** — eine Datei oder die Projektdatei, die atomar geschrieben wird
+      (``projekt.speichere``: daneben, dann umbenannt). Sie laufen ganz draussen.
+
+    Die Tür läuft für diese Wege ebenfalls draussen: Sie vergleicht für sie nur Kopf und
+    Kennwort, und das Gerätebuch hat eine eigene Sperre (siehe :meth:`Flaeche._bediene`).
+    """
+    if methode == "POST":
+        return pfad in (WEG_BRUECKE + "/jobs", WEG_KNOTEN_MODELL_LADEN)
+    if methode != "GET":
+        return False
+    if pfad in (WEG_KNOTEN_MODELL, WEG_KNOTEN_MAPPE, WEG_KNOTEN_SKIZZE, WEG_BILD):
+        return True
+    teile = [t for t in pfad[len(WEG_BRUECKE):].split("/") if t] \
+        if pfad.startswith(WEG_BRUECKE + "/") else []
+    return len(teile) == 4 and teile[0] == "jobs" and teile[2] == "artifacts"
+
 #: Der Satz, wenn schon eine Frage läuft. **Abgewiesen, nicht gewartet:** Eine zweite
 #: Frage, die wartet, hielte einen Faden und die Leitung der Mac-App bis zu vier Minuten
 #: fest — und wer zweimal fragt, hat meist einmal zu oft gedrückt.
@@ -1536,28 +1567,18 @@ def _ist_knotenweg(pfad: str) -> bool:
 def lies_formular(inhaltstyp: str, rumpf: bytes) -> dict:
     """Ein ``multipart/form-data``-Rumpf → ``{feldname: (dateiname, bytes)}``.
 
-    Mit dem E-Mail-Leser der Standardbibliothek, der dasselbe Format spricht — ``cgi`` ist
-    abgekündigt, und ein fremdes Paket wäre für vier Zeilen eine Abhängigkeit.
+    Über :func:`aiimaging.knotenweg.teile_formular` — ``cgi`` ist abgekündigt, und ein
+    fremdes Paket wäre für ein Formular eine Abhängigkeit.
 
     Raises:
         knotenweg.KnotenwegError: kein Formular.
     """
-    from email.parser import BytesParser
-    from email.policy import HTTP
-
-    if not inhaltstyp.lower().startswith("multipart/form-data"):
-        raise knotenweg.KnotenwegError(
-            "Ein Auftrag kommt als Formular (multipart/form-data) mit Szene und Modell.")
-    nachricht = BytesParser(policy=HTTP).parsebytes(
-        b"Content-Type: " + inhaltstyp.encode("latin-1") + b"\r\n\r\n" + rumpf)
-    if not nachricht.is_multipart():
-        raise knotenweg.KnotenwegError("Das Formular liess sich nicht zerlegen.")
-    felder = {}
-    for teil in nachricht.iter_parts():
-        name = teil.get_param("name", header="content-disposition")
-        if name:
-            felder[name] = (teil.get_filename(), teil.get_payload(decode=True) or b"")
-    return felder
+    # SEIT DEM 20.10.2026 DER STREAMENDE TEILER (`knotenweg.teile_formular`) — derselbe, mit
+    # dem die zwei grossen Wege ihre Datei unmittelbar auf die Platte legen. Der E-Mail-Leser
+    # war fuer ein 100-MB-Modell langsam und lief unter der Reihe.
+    import io
+    return knotenweg.teile_formular(io.BytesIO(rumpf), len(rumpf), inhaltstyp,
+                                    hoechstens_feld=len(rumpf) + 1)
 
 
 #: Die Koepfe, an denen eine weitergeleitete Anfrage erkennbar bleibt. Tailscale Serve setzt
@@ -1780,7 +1801,7 @@ class Flaeche(BaseHTTPRequestHandler):
         nur Kopfzeile und Kennwort.
         """
         weg = urllib.parse.urlparse(self.path).path
-        if (self.command, weg) in WEGE_NEBENHER:
+        if (self.command, weg) in WEGE_NEBENHER or ausserhalb_der_reihe(self.command, weg):
             if self._darf_herein():
                 handeln()
             return
@@ -1919,6 +1940,17 @@ class Flaeche(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(roh)
 
+    def _sende_datei_strom(self, pfad: Path, typ: str) -> None:
+        """Eine Datei in Stücken ausliefern — für Modelle, die nicht in den Speicher gehören."""
+        groesse = Path(pfad).stat().st_size
+        with Path(pfad).open("rb") as quelle:
+            self.send_response(200)
+            self.send_header("Content-Type", typ)
+            self.send_header("Content-Length", str(groesse))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            shutil.copyfileobj(quelle, self.wfile, 1024 * 1024)
+
     def _knotenweg_lesen(self, pfad: str, frage: dict | None = None) -> None:
         try:
             if pfad.startswith(WEG_BRUECKE):
@@ -1970,11 +2002,14 @@ class Flaeche(BaseHTTPRequestHandler):
                     self._fehler("Kein Projektordner — mit --ordner starten oder auf der "
                                  f"{NAME}-Seite einen öffnen.", 404)
                     return
-                glb = knotenweg.mappe_fuer_knoten(ordner)["glb"]
-                if not glb:
+                # NUR DER PFAD, NICHT DIE GANZE MAPPE (20.10.2026): `mappe_fuer_knoten` rechnet
+                # Huellbox und Standpunkte ueber das ganze glb — fuer eine Datei, die hier
+                # nur ausgeliefert wird. Und gestreamt statt ganz in den Speicher.
+                glb = knotenweg.glb_der_mappe(ordner)
+                if glb is None:
                     self._fehler("Die Mappe hat noch kein glb.", 404)
                     return
-                self._sende_datei(Path(glb).read_bytes(), "model/gltf-binary")
+                self._sende_datei_strom(glb, "model/gltf-binary")
             else:
                 self._knotenseite(pfad)
         except knotenweg.KnotenwegError as fehler:
@@ -2031,11 +2066,29 @@ class Flaeche(BaseHTTPRequestHandler):
             self._fehler("Die Datei ist zu gross — angenommen werden Modelle bis "
                          f"{modellladen.GROESSTE_DATEI_BYTE // (1024 * 1024)} MB.", 413)
             return
+        # AUSSERHALB DER REIHE GELESEN (20.10.2026, :func:`ausserhalb_der_reihe`): Eine
+        # grosse IFC braucht ueber die Leitung Minuten; in der Reihe hielt das den Server an.
         try:
-            felder = lies_formular(self.headers.get("Content-Type", ""), self.rfile.read(laenge))
-        except knotenweg.KnotenwegError:
-            self._fehler("Eine Datei kommt als Formular (multipart/form-data) mit dem Feld "
-                         "«datei».")
+            felder = knotenweg.teile_formular(
+                self.rfile, laenge, self.headers.get("Content-Type", ""),
+                hoechstens_feld=modellladen.GROESSTE_DATEI_BYTE + 1024 * 1024)
+        except knotenweg.KnotenwegError as fehler:
+            if fehler.code == 413:
+                self._fehler(str(fehler), 413)
+            else:
+                self._fehler("Eine Datei kommt als Formular (multipart/form-data) mit dem "
+                             "Feld «datei».")
+            return
+        with Flaeche.reihe:
+            self._modell_laden_starten(felder)
+
+    def _modell_laden_starten(self, felder: dict) -> None:
+        """Der kurze Schritt von ``POST /knoten/modell-laden`` — **in** der Reihe."""
+        klasse = type(self)
+        laufend = klasse.modell_laden
+        if laufend and laufend.get("stand") == "laeuft":
+            self._fehler(f"Es wird schon eine Datei geladen («{laufend.get('datei')}»). "
+                         "Eine zur Zeit — bitte warten, bis sie da ist.", 409)
             return
         if "datei" not in felder:
             self._fehler("Im Formular fehlt das Feld «datei».")
@@ -2062,6 +2115,51 @@ class Flaeche(BaseHTTPRequestHandler):
         klasse.modell_faden = faden
         faden.start()
         self._sende(modell_laden_sicht(stand), 202)
+
+    def _auftrag_annehmen(self, laenge: int) -> None:
+        """``POST /bruecke/jobs`` — **ausserhalb der Reihe** gelesen und zerlegt, nur das
+        Anlegen in ihr (:func:`ausserhalb_der_reihe`).
+
+        Die Modelldatei geht unmittelbar in eine Datei der Ablage (:func:`knotenweg.teile_formular`)
+        und von dort in den Auftrag. **Ohne** ``model`` nimmt :func:`knotenweg.lege_an` eine
+        Variante (``vis.grundlage``) an und holt das Modell aus der Grundlage — fehlt sie, kommt
+        ein Satz (409) statt Warten.
+        """
+        if laenge > knotenweg.MAX_MODELL_BYTES + 16 * 1024 * 1024:
+            raise knotenweg.KnotenwegError(
+                "Der Auftrag ist zu gross — angenommen werden Modelle bis "
+                f"{knotenweg.MAX_MODELL_BYTES // (1024 * 1024)} MB.", 413)
+        ablage = self._ablage()
+        felder = knotenweg.teile_formular(
+            self.rfile, laenge, self.headers.get("Content-Type", ""), ordner=ablage,
+            datei_felder=("model",), hoechstens_datei=knotenweg.MAX_MODELL_BYTES)
+        try:
+            if "scene" not in felder:
+                raise knotenweg.KnotenwegError(
+                    "Ein Auftrag braucht das Feld «scene» (und «model», ausser bei einer "
+                    "Variante mit vis.grundlage).")
+            try:
+                szene = json.loads(felder["scene"][1] or b"{}")
+            except ValueError as fehler:
+                raise knotenweg.KnotenwegError(f"Die Szene ist kein JSON: {fehler}") \
+                    from fehler
+            dateiname, modell = felder.get("model", (None, None))
+            with Flaeche.reihe:
+                # DIE EINE ABLAGE, UND DER AUFTRAG NENNT SEINE MAPPE (14.10.2026): die
+                # Ablage bleibt die vom Start, die der Abholer liest — auch fuer eine Mappe,
+                # die «Datei laden …» erst danach angelegt hat. Der Laufzettel traegt den
+                # Namen der Mappe, aus der bestellt wurde (`knotenweg.lege_an`).
+                aus_mappe = self._knoten_ordner(None)
+                # ENTSCHEID 96 (15.10.2026): eine Skizze wird in IHRER Mappe gerechnet — der
+                # Pfad geht an `lege_an` und von dort in eine Datei neben dem Auftrag, nie in
+                # die Antwort an den Browser (Regel 3, `knotenweg.DATEI_MAPPE`).
+                zettel = knotenweg.lege_an(
+                    ablage, szene, modell, dateiname,
+                    mappe=Path(aus_mappe).name if aus_mappe else None,
+                    mappe_pfad=aus_mappe or None)
+        finally:
+            knotenweg.raeume_formular(felder)
+        self._sende(zettel)
 
     def _knotenweg_handeln(self, pfad: str, laenge: int) -> None:
         if pfad == WEG_KNOTEN_MODELL_LADEN:
@@ -2092,33 +2190,7 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._fehler(f"{BRUECKE_NICHT_IN_VISBOX[rest]} gibt es in {NAME} nicht — "
                              f"das bleibt bei KosmoOrbit.", 404)
             elif teile == ["jobs"]:
-                if laenge > knotenweg.MAX_MODELL_BYTES + 16 * 1024 * 1024:
-                    raise knotenweg.KnotenwegError(
-                        "Der Auftrag ist zu gross — angenommen werden Modelle bis "
-                        f"{knotenweg.MAX_MODELL_BYTES // (1024 * 1024)} MB.", 413)
-                felder = lies_formular(self.headers.get("Content-Type", ""),
-                                       self.rfile.read(laenge))
-                if "scene" not in felder or "model" not in felder:
-                    raise knotenweg.KnotenwegError(
-                        "Ein Auftrag braucht die Felder «scene» und «model».")
-                try:
-                    szene = json.loads(felder["scene"][1] or b"{}")
-                except ValueError as fehler:
-                    raise knotenweg.KnotenwegError(f"Die Szene ist kein JSON: {fehler}") \
-                        from fehler
-                dateiname, modell = felder["model"]
-                # DIE EINE ABLAGE, UND DER AUFTRAG NENNT SEINE MAPPE (14.10.2026): die
-                # Ablage bleibt die vom Start, die der Abholer liest — auch fuer eine Mappe,
-                # die «Datei laden …» erst danach angelegt hat. Der Laufzettel traegt den
-                # Namen der Mappe, aus der bestellt wurde (`knotenweg.lege_an`).
-                aus_mappe = self._knoten_ordner(None)
-                # ENTSCHEID 96 (15.10.2026): eine Skizze wird in IHRER Mappe gerechnet — der
-                # Pfad geht an `lege_an` und von dort in eine Datei neben dem Auftrag, nie in
-                # die Antwort an den Browser (Regel 3, `knotenweg.DATEI_MAPPE`).
-                self._sende(knotenweg.lege_an(
-                    self._ablage(), szene, modell, dateiname,
-                    mappe=Path(aus_mappe).name if aus_mappe else None,
-                    mappe_pfad=aus_mappe or None))
+                self._auftrag_annehmen(laenge)
             elif len(teile) == 3 and teile[0] == "jobs" and teile[2] in ("approve", "cancel"):
                 roh = self.rfile.read(laenge) if laenge else b""
                 if teile[2] == "approve":
@@ -2794,10 +2866,13 @@ class Flaeche(BaseHTTPRequestHandler):
             # Bildmodell danach noch da, fragt der Kern nicht (eigener Satz).
             geladen = (not bild_rechnet
                        and render.gib_grafikspeicher_frei()["haelt_bildmodell"])
-            ergebnis = assistent.frage(
-                wunsch.get("nachricht"), wunsch.get("verlauf") or (),
-                sprachmodell=type(self).sprachmodell, bild_rechnet=bild_rechnet,
-                bildmodell_geladen=geladen, mappe=mappe)
+            # DIE MARKE FUER DEN ABHOLER (Owner-Auflage zu Entscheid 106d): Er ist ein
+            # anderer Prozess und entlaedt das Sprachmodell nur, wenn keine Frage laeuft.
+            with assistent.frage_vermerkt(type(self).ablage):
+                ergebnis = assistent.frage(
+                    wunsch.get("nachricht"), wunsch.get("verlauf") or (),
+                    sprachmodell=type(self).sprachmodell, bild_rechnet=bild_rechnet,
+                    bildmodell_geladen=geladen, mappe=mappe)
         except assistent.NichtErreichbar as fehler:
             satz, code = str(fehler), 503
         except assistent.AssistentError as fehler:

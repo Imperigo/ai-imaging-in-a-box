@@ -26,7 +26,7 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
     /// Brücke in der Seite (30 s) kommt.
     static let wartezeit: TimeInterval = Heimstrecke.wartezeit
     /// Höchstens so lange für eine ganze Antwort — ein grosses Modell (glb, IFC) hin oder her.
-    static let hoechstens: TimeInterval = 600
+    static let hoechstens: TimeInterval = Knotenwege.hoechstensGanz
 
     var basis: URL?
     var anmeldung: Anmeldung?
@@ -34,6 +34,10 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
     /// Der Ordner des Baus im Bündel.
     private let ordner: URL?
     private let sitzung: URLSession
+    /// Dieselbe Leitung mit der langen Wartezeit — für die Wege, die ein Modell hochladen
+    /// (`Knotenwege.wartezeit`, 20.10.2026). Eine eigene Sitzung statt `timeoutInterval` an
+    /// der Anfrage: welche der beiden Angaben `URLSession` dann nimmt, ist nicht verbürgt.
+    private let langeSitzung: URLSession
     /// Laufende Anfragen. WebKit kann eine jederzeit zurückziehen (`stop`); danach darf ihr
     /// **nichts** mehr gemeldet werden, sonst bricht WebKit das Programm ab.
     private var laufend: [ObjectIdentifier: Task<Void, Never>] = [:]
@@ -43,8 +47,14 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         self.anmeldung = anmeldung
         self.ordner = Bundle.main.resourceURL?
             .appendingPathComponent(Knotenwege.ordnerImBuendel, isDirectory: true)
+        sitzung = Knotenquelle.baueSitzung(wartezeit: Knotenquelle.wartezeit)
+        langeSitzung = Knotenquelle.baueSitzung(wartezeit: Knotenwege.wartezeitLang)
+        super.init()
+    }
+
+    private static func baueSitzung(wartezeit: TimeInterval) -> URLSession {
         let art = URLSessionConfiguration.ephemeral
-        art.timeoutIntervalForRequest = Knotenquelle.wartezeit
+        art.timeoutIntervalForRequest = wartezeit
         art.timeoutIntervalForResource = Knotenquelle.hoechstens
         art.urlCache = nil
         art.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -53,9 +63,8 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         art.waitsForConnectivity = false
         // KEIN PROXY DES SYSTEMS — dieselbe Regel wie `Heimstrecke`.
         art.connectionProxyDictionary = [:]
-        sitzung = URLSession(configuration: art, delegate: Heimvertrauenslotse.gemeinsam,
-                             delegateQueue: nil)
-        super.init()
+        return URLSession(configuration: art, delegate: Heimvertrauenslotse.gemeinsam,
+                          delegateQueue: nil)
     }
 
     /// Ob es den Bau im Bündel gibt — sonst sagt die Fläche, dass er fehlt.
@@ -142,7 +151,9 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         }
         let rumpf = Knotenquelle.rumpf(seite)
         let kennung = ObjectIdentifier(aufgabe)
-        let sitzung = self.sitzung
+        // LANG NUR FÜR DIE ZWEI WEGE MIT MODELL (Kern: `Knotenwege.wartezeit`).
+        let sitzung = Knotenwege.wartezeit(methode: auftrag.httpMethod ?? "GET", pfad: pfad)
+            > Knotenquelle.wartezeit ? self.langeSitzung : self.sitzung
         laufend[kennung] = Task { @MainActor [weak self] in
             let ergebnis: (Int, [Kopfzeile], Data)
             do {

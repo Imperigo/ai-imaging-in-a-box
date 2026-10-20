@@ -61,8 +61,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from aiimaging import (abholer, bruecke, eigene_quelle, fortschritt,  # noqa: E402
-                        render, tiefenschaetzer)
+from aiimaging import (abholer, assistent, bruecke, eigene_quelle,  # noqa: E402
+                        fortschritt, render, tiefenschaetzer)
 
 #: Ab welcher Auslastung die Karte als BESCHAEFTIGT gilt. Nicht 0 %: `nvidia-smi` meldet
 #: auch im Leerlauf gelegentlich 1-2 %, und ein Abholer, der darauf wartet, laeuft nie.
@@ -143,6 +143,33 @@ def karte_auskunft() -> tuple[bool, str]:
                       f"{speicher} MiB belegt (Grenze {SPEICHER_GRENZE_MIB}) — "
                       f"beschaeftigt, nicht belegt. Es wird gerechnet.")
     return True, f"Auslastung {last} %, {speicher} MiB belegt."
+
+
+def auslastung_prozent() -> int | None:
+    """Die Auslastung der Karte laut ``nvidia-smi`` — ``None``, wenn unbekannt."""
+    werkzeug = shutil.which("nvidia-smi")
+    if not werkzeug:
+        return None
+    try:
+        roh = subprocess.run(
+            [werkzeug, "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=15, check=True).stdout.strip()
+        return int(roh.splitlines()[0].strip())
+    except (subprocess.SubprocessError, OSError, ValueError, IndexError):
+        return None
+
+
+def anfrage_laeuft(ablagen) -> bool:
+    """Läuft gerade eine Frage an den Visbox-Assistenten? — fail-closed.
+
+    Ja, wenn in einer Ablage die Marke des Servers liegt (``assistent.frage_laeuft_in``),
+    oder wenn die Karte rechnet (Auslastung über :data:`LAST_GRENZE_PROZENT`), oder wenn die
+    Auslastung unbekannt ist. *Im Zweifel nicht entladen* (Owner-Auflage zu Entscheid 106d).
+    """
+    if any(assistent.frage_laeuft_in(pfad) for _, pfad, _ in ablagen):
+        return True
+    last = auslastung_prozent()
+    return last is None or last >= LAST_GRENZE_PROZENT
 
 
 def speicher_frei_mib() -> int | None:
@@ -516,7 +543,13 @@ def main(argv=None) -> int:
         print(f"\n=== Ablage: {name} — {pfad} ===")
         bericht = abholer.durchgang(pfad, verarbeite=verarbeite,
                                     fremde_freigabe_gilt=a.fremde_freigabe,
-                                    darf_rechnen=karte_auskunft,
+                                    # BELEGT NUR UNSER SPRACHMODELL DIE KARTE, wird es
+                                    # entladen statt gewartet (Owner-Auflage zu 106d) —
+                                    # nur das eigene, nur ohne laufende Frage.
+                                    darf_rechnen=abholer.karte_oder_eigenes_entladen(
+                                        karte_auskunft,
+                                        lambda: assistent.entlade_wenn_nur_eigenes(
+                                            anfrage_laeuft=lambda: anfrage_laeuft(ablagen))),
                                     speicher_frei=lambda: (None if render_modell.haelt_gewichte
                                                            else speicher_frei_mib()),
                                     hoechstens=a.hoechstens,
