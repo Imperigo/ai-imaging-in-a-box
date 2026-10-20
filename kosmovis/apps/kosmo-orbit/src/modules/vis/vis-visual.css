@@ -2400,3 +2400,61 @@
 .vis-guete--gesperrt {
   color: var(--k-ink-faint);
 }
+/* Vermerk «Vorschau» (GueteMarke.tsx, Entscheide 104/104a): Plakette unten links IM Bild, in der
+   Warnfarbe wie der Lizenz-Vorbehalt; der Knoten waechst nicht. */
+.vis-guete-marke-huelle {
+  position: absolute;
+  left: var(--k-s2);
+  bottom: var(--k-s2);
+  z-index: 1;
+}
+.vis-guete-marke {
+  display: inline-block;
+  padding: 0 var(--k-s2);
+  border: 1px solid var(--k-warning);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-warning-wash);
+  color: var(--k-warning-ink);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xxs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: var(--k-lh-knapp);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.vis-guete-marke:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-verlauf-knopf .vis-verlauf-daumen--vorschau {
+  outline: 2px dashed var(--k-warning);
+  outline-offset: -2px;
+}
+.vis-verlauf-gross-bild {
+  position: relative;
+}
+/* Blatt 29 (B): Beschriftung oben im Zwischenbild, zwei Zeilen hoechstens, auf heller Flaeche lesbar. */
+.vis-node-warteort-vorschau-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  padding: var(--k-s1) var(--k-s2);
+  background: color-mix(in srgb, var(--k-surface) 82%, transparent);
+  color: var(--k-ink-soft);
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-knapp);
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.vis-node-warteort-vorschau-titel {
+  color: var(--k-ink);
+  font-weight: 600;
+}
+/* Mit Zwischenbild (dieselbe Bedingung wie «klickbar»): der Fortschrittstext rueckt unter die Beschriftung oben,
+   damit beide sich nie decken. 110 px − 34 − Rand lassen 3 Zeilen Text Platz (laengste Zeile rund 85 Zeichen). */
+.vis-node-warteort--klickbar .vis-node-warteort-flaeche {
+  padding-top: 34px;
+}

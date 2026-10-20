@@ -30,6 +30,34 @@ export interface RenderWarteAnzeige {
   art: 'unbestimmt' | 'etappe' | 'fein';
   /** Artefaktname des letzten fertigen Zwischenbilds (R37 `progress.vorschau`), wenn gemeldet. */
   vorschau?: string;
+  /** Blatt 29 (B): Beschriftung des Zwischenbilds, «Zwischenbild — Kamera 1, fertig». */
+  vorschauText?: string;
+}
+
+/** Blatt 29 (B): der Satz am Zwischenbild. */
+export const ZWISCHENBILD_BLEIBT = 'Das Zwischenbild bleibt beim Abbrechen.';
+
+/** Blatt 29 (A): die Etappen eines Laufs in Reihe. Die Grundlage hat keinen KI-Schritt. */
+const ETAPPEN_REIHE: readonly { phase: string; name: string }[] = [
+  { phase: 'blender', name: 'Grundlage' },
+  { phase: 'bildmodell', name: 'KI-Bild' },
+  { phase: 'pruefung', name: 'Prüfung' },
+];
+
+/** «Grundlage ✓ · KI-Bild … · Prüfung»: fertig mit ✓, die laufende mit …, die offenen ohne Zeichen. `null` bei
+ *  einer unbekannten Phase (die Brücke darf neue erfinden; dann steht das Wort wie bisher). */
+export function etappenReihe(phase: string, stufe: 'grundlage' | 'variante' | undefined): string | null {
+  const reihe = ETAPPEN_REIHE.filter((e) => stufe !== 'grundlage' || e.phase !== 'bildmodell');
+  const i = reihe.findIndex((e) => e.phase === phase);
+  if (i < 0) return null;
+  return reihe.map((e, j) => (j < i ? `${e.name} ✓` : j === i ? `${e.name} …` : e.name)).join(' · ');
+}
+
+/** Blatt 29 (B): welche Kamera das Zwischenbild zeigt. Der Heim-PC legt es ab, sobald Blender eine Kamera fertig hat:
+ *  während «blender» von Kamera i ist es die vorige, danach die eigene. */
+export function zwischenbildText(p: { phase: string; kamera_i?: number | undefined }): string {
+  const nr = p.kamera_i === undefined ? undefined : p.phase === 'blender' ? p.kamera_i - 1 : p.kamera_i;
+  return nr !== undefined && nr >= 1 ? `Zwischenbild — Kamera ${nr}, fertig` : 'Zwischenbild — letzte fertige Kamera';
 }
 
 /** R37-Etappen des Abholers in Worten (KosmoVis-Vorschlag 20.10.2026; «KI-Bild» wie auf Blatt 29). */
@@ -38,15 +66,16 @@ const ABHOLER_ETAPPE: Record<string, string> = { blender: 'Blender', bildmodell:
 /** Entscheid 104b: der Satz, solange noch keine Kamera fertig ist. */
 export const RESTZEIT_GESCHAETZT = 'Restzeit wird geschätzt …';
 
-/** Restzeit in Worten: «noch etwa 1 min 20 s»; Sekunden unter einer Minute auf 5 s gerundet. */
+/** Restzeit in Hausschreibung wie auf Blatt 29 (D): «noch etwa 3 Min», auf ganze Minuten gerundet; darunter
+ *  «noch weniger als 1 Min»; ab einer Stunde «noch etwa 1 h 5 min» (wie `formatDauer`). */
 export function restzeitText(restS: number | null | undefined): string | null {
   if (restS === undefined) return null;
   if (restS === null || !Number.isFinite(restS)) return RESTZEIT_GESCHAETZT;
-  const s = Math.max(0, Math.round(restS));
-  if (s < 60) return `noch etwa ${Math.max(5, Math.round(s / 5) * 5)} s`;
-  const m = Math.floor(s / 60);
-  const rest = s % 60;
-  return rest > 0 ? `noch etwa ${m} min ${rest} s` : `noch etwa ${m} min`;
+  const m = Math.round(Math.max(0, restS) / 60);
+  if (m < 1) return 'noch weniger als 1 Min';
+  if (m < 60) return `noch etwa ${m} Min`;
+  const h = Math.floor(m / 60);
+  return m % 60 === 0 ? `noch etwa ${h} h` : `noch etwa ${h} h ${m % 60} min`;
 }
 
 /**
@@ -82,6 +111,10 @@ export interface RenderLaufAusschnitt {
   worker?: string | undefined;
   wartetGrund?: string | undefined;
   bridgeHinweis?: string | undefined;
+  /** Nr. 85: Grundlage (ohne KI-Schritt) oder Variante. */
+  stufe?: 'grundlage' | 'variante' | undefined;
+  /** Entscheid 104 (Antwort KosmoVis 20.10.): die am Knoten bestellte Güte — steht schon während des Laufs da. */
+  bestellteGuete?: 'vorschau' | 'voll' | undefined;
 }
 
 export function renderWarteAnzeige(
@@ -100,16 +133,19 @@ export function renderWarteAnzeige(
       const p = lauf.progress;
       if (!p || !Number.isFinite(p.pct)) return { text: `Bild wird gerechnet${seit}${zusatz}`, art: 'unbestimmt' };
       const anteil = Math.min(1, Math.max(0, p.pct));
-      const vorschau = p.vorschau !== undefined ? { vorschau: p.vorschau } : {};
+      const vorschau = p.vorschau !== undefined ? { vorschau: p.vorschau, vorschauText: zwischenbildText(p) } : {};
+      // Vorschau gilt nur für den KI-Schritt — also nur bei einer Variante; eine Grundlage hat keinen, und bei
+      // unbekannter Stufe behaupten wir keine Vorschau.
+      const guete = lauf.bestellteGuete === 'vorschau' && lauf.stufe === 'variante' ? 'Vorschau · ' : '';
       // Der Abbruch kann einen Poll lang noch als «laeuft» dastehen — dann sein Satz, keine Restzeit.
       if (p.phase === ABGEBROCHEN_PHASE) {
         return { text: `${abbruchText(p)}${zusatz}`, fortschritt: anteil, art: 'etappe', ...vorschau };
       }
       if (p.kamera_i !== undefined && p.kamera_n !== undefined) {
-        const etappe = ABHOLER_ETAPPE[p.phase] ?? ETAPPE_WORT[p.phase] ?? p.phase;
+        const etappe = etappenReihe(p.phase, lauf.stufe) ?? ABHOLER_ETAPPE[p.phase] ?? ETAPPE_WORT[p.phase] ?? p.phase;
         const rest = restzeitText(p.rest_s);
         return {
-          text: `${etappe} · Kamera ${p.kamera_i} von ${p.kamera_n} · ${Math.round(anteil * 100)} %${rest ? ` · ${rest}` : ''}${zusatz}`,
+          text: `${guete}${etappe} · Kamera ${p.kamera_i} von ${p.kamera_n} · ${Math.round(anteil * 100)} %${rest ? ` · ${rest}` : ''}${zusatz}`,
           fortschritt: anteil,
           art: 'fein',
           ...vorschau,

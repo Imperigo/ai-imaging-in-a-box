@@ -253,7 +253,9 @@ export async function ladeMappe(): Promise<string> {
   }
   const mappe = (await antwort.json()) as MappeAntwort;
   raeumeGelegtes();
-  setzeModellLadeZustand(zustandAusMappe(mappe));
+  // F1 (Entscheid 109 A): «geladen» erst, wenn die glb bereitliegt — das 3D-Fenster im
+  // Modell-Knoten holt sie mit `exportGlb`, sobald der Zustand umspringt.
+  const zustand = zustandAusMappe(mappe);
   // Entscheid 92 (Blatt 23): die Auto-Kamera zeigt, was der Heim-PC rechnen wird — vor dem
   // Hochzaehlen der Revision unten, damit der Knoten gleich in seiner Hoehe steht.
   registriereHeimStandpunkte(mappe.glb && mappe.standpunkte ? mappe.standpunkte : null);
@@ -261,15 +263,22 @@ export async function ladeMappe(): Promise<string> {
   void aktualisiereSkizzen();
   if (!mappe.glb) {
     setzeModellGlb(null);
+    setzeModellLadeZustand(zustand);
     useProject.setState((s) => ({ revision: s.revision + 1 }));
     return mappe.grund || 'Die Mappe hat noch kein Modell.';
   }
 
   const modell = await fetch(`./modell.glb${location.search}`);
-  if (!modell.ok) return 'Das Modell der Mappe liess sich nicht laden.';
+  if (!modell.ok) {
+    // Die glb der vorigen Mappe gilt nicht mehr: das 3D-Fenster sagt «Modell nicht lesbar».
+    setzeModellGlb(null);
+    setzeModellLadeZustand(zustand);
+    return 'Das Modell der Mappe liess sich nicht laden.';
+  }
   setzeModellGlb(await modell.arrayBuffer());
 
   if (!mappe.huellbox_m) {
+    setzeModellLadeZustand(zustand);
     return `Modell «${mappe.name ?? 'ohne Namen'}» geladen, aber ohne Umriss: ${mappe.grund}`;
   }
   const { doc } = useProject.getState();
@@ -294,6 +303,7 @@ export async function ladeMappe(): Promise<string> {
     { id: huelle.id, before: null, after: huelle },
   ]);
   gelegt = { geschoss, huelle };
+  setzeModellLadeZustand(zustand);
   useProject.setState((s) => ({ revision: s.revision + 1, activeStoreyId: geschoss.id }));
   return `Modell «${mappe.name ?? 'ohne Namen'}» aus der Mappe geladen.`;
 }

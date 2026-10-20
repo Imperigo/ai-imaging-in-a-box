@@ -8136,11 +8136,14 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] H3 Material: `render.materialien` je Bauteil-Art, Principled/Box/Bump/Tönung, Fugen der Holzlattung — gebaut, am Gerät unbestätigt (§153, C81)
   - [x] Sätze des Entladens (Befunde aus 291) — gebaut, am Gerät unbestätigt (§153, C82)
   - [x] Messung am Heim-PC: auf-20261020-292 (local), dazu Vorschau-Geometrie bei Steuerstärke 0,8/1,0 und 8/12 Schritten — Ergebnis `71c2049`, acht Befunde
-  - [x] Befunde aus 292 behoben: ruhiger Hintergrund, AgX und Belichtung je Stimmung, Überstrahlung gemessen, Gelände ohne Material, Standpunkte mit Seitenverhältnis, bestellte Bildgrösse, Vorschau-Steuerstärke 1,0, `geom_iou` null mit Grund, Ergebnis bei unbekannter Material-id, 409 beim Anlegen; neue Himmelsbilder — gebaut, am Gerät unbestätigt (§154, C83)
+  - [x] Befunde aus 292 behoben: ruhiger Hintergrund, AgX und Belichtung je Stimmung, Überstrahlung gemessen, Gelände ohne Material, Standpunkte mit Seitenverhältnis, bestellte Bildgrösse, Vorschau-Steuerstärke 1,0, `geom_iou` null mit Grund, Ergebnis bei unbekannter Material-id, 409 beim Anlegen; neue Himmelsbilder — gebaut, am Gerät unbestätigt (§155, C84)
   - [ ] Nachmessung am Heim-PC: auf-20261020-293 (local) — u. a. Belichtung je Stimmung auf den neuen Bildern
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
   - [ ] Holzlattung: Maserung quer zu den Latten (B6 aus 292)
   - [ ] Zeile «Himmelsbilder n/8» im Einrichten der Mac-App anzeigen; Satz `entladen` in der Assistent-Leiste (Visbox, Swift)
 - [ ] Vertrag V und Katalog K beim Integrator (Felder wie abgestimmt; Fixtures vom Heim-PC liegen bereit)
 - [ ] Oberfläche A–F und W (Bauplan §3) — nacheinander über NodeCanvas
+  - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
+  - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
+  - [ ] Einspielen A und B bei Int 1 (`kosmovis-fehler` ist mit R43 drin) und Bild in WebKitGTK und der Mac-App am Gerät
 

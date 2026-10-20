@@ -578,17 +578,24 @@ Apache License 2.0 veroeffentlicht. Herkunft je Datei (Quelle, Commit, SHA-256):
 kosmovis/HERKUNFT.json; tools/kosmovis_uebernahme.py --pruefen gleicht sie ab.
 
 Was mit der Knotenansicht an den Browser ausgeliefert wird (npm, Stand der
-Sperrdatei kosmovis/package-lock.json, am 24.09.2026 aus node_modules gelesen):
+Sperrdatei kosmovis/package-lock.json, aus node_modules gelesen, zuletzt am 20.10.2026):
 
   react, react-dom, scheduler      MIT    https://react.dev/
   zod                              MIT    https://zod.dev/
   zustand                          MIT    https://github.com/pmndrs/zustand
+  three                            MIT    https://threejs.org/
+
+three (0.184.0) kam am 20.10.2026 mit dem 3D-Fenster im Modell-Knoten dazu; es
+steht in einem eigenen Teil des Baus, den die Knotenansicht erst laedt, wenn ein
+3D-Fenster zeichnet.
 
 Nur zum Bauen und Pruefen gebraucht, nicht ausgeliefert: vite, vitest,
-@vitejs/plugin-react, jsdom (MIT), typescript (Apache-2.0) und deren
-Abhaengigkeiten - gezaehlt 167 Pakete, davon MIT/ISC/BSD/Apache/MIT-0 und ein
-CC-BY-4.0-Datensatz (caniuse-lite, Browser-Tabelle fuer das Bauwerkzeug).
-Keine Copyleft-Lizenz darunter.
+@vitejs/plugin-react, jsdom (MIT), typescript (Apache-2.0), die Typangaben
+@types/react und @types/three (MIT) und deren Abhaengigkeiten - gezaehlt am
+20.10.2026 aus kosmovis/package-lock.json: 209 Eintraege unter node_modules/
+ausser den sechs oben (190 MIT, 8 ISC, 5 Apache-2.0, 2 BSD-2-Clause,
+2 BSD-3-Clause, 1 MIT-0 und ein CC-BY-4.0-Datensatz: caniuse-lite,
+Browser-Tabelle fuer das Bauwerkzeug). Keine Copyleft-Lizenz darunter.
 
 --------------------------------------------------------------------------------
 Mitgelieferte Schriften der Knotenansicht                OFL-1.1

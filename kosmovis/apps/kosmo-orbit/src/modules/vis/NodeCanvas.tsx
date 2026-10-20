@@ -104,8 +104,9 @@ import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, 
 import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
+import { GueteMarke } from './GueteMarke';
 import { EinzelbildGross, HauptbildAbzeichen, RenderVerlauf, type EinzelbildArt } from './RenderVerlauf';
-import { ModellKnotenKoerper } from './ModellKnoten';
+import { MODELL_3D_ZUSATZ, ModellKnotenKoerper } from './ModellKnoten';
 import { modellLadenWirt } from './modell-laden';
 import { heimStandpunkte } from './heim-standpunkte';
 import { umgebungFehltSatz } from './umgebung-fehlt';
@@ -539,7 +540,9 @@ function zusatzHoehe(zeilen: readonly Koerperzeile[]): number {
 /** Höhe des Inhaltsbereichs je Node-Typ (Canvas-Einheiten). `render` kommt
  * seit A15 aus dem Zeilenregister oben, nicht mehr aus einer Einzelzahl. */
 const KOERPER_H: Record<string, number> = {
-  modell: 22,
+  // F1 (Entscheid 109 A): die Szenen-Zeile (22) und darunter das 3D-Fenster samt Zeile
+  // «Doppelklick: gross» (`MODELL_3D_ZUSATZ`, `ModellKnoten.tsx`).
+  modell: 22 + MODELL_3D_ZUSATZ,
   material: 60,
   prompt: 56,
   stimmung: 90,
@@ -727,8 +730,9 @@ export function basisNodeHoehe(typ: string): number {
  *  ArchiCAD-Datei) und darunter der Knopf. EINE Hoehe fuer alle vier Zustaende, damit der
  *  Knoten beim Laden nicht springt und die Platzsuche mit derselben Zahl rechnet.
  *  KV-STARTGRAPH: 118 → 140, fuer die Zeile «Noch geladen: …» unter dem Satz (zwei Zeilen
- *  bei langem Mappennamen). */
-export const MODELL_KOERPER_H_MIT_LADEN = 140;
+ *  bei langem Mappennamen). F1 (Entscheid 109 A): + das 3D-Fenster samt Zeile darunter
+ *  (`MODELL_3D_ZUSATZ`) — es steht im Zustand «geladen» und unter «Noch geladen: …». */
+export const MODELL_KOERPER_H_MIT_LADEN = 140 + MODELL_3D_ZUSATZ;
 
 /** KV-STARTGRAPH: warum eine Bild-Referenz nicht aufs Blatt geht (Kurzhilfe am Blatt-Knoten). */
 export const BLATT_REFERENZ_GRUND =
@@ -2587,6 +2591,7 @@ export function NodeCanvas({
                   aufnahmen={aufnahmen}
                   offen={offenerKlapptext.has(n.id)}
                   onToggleOffen={() => toggleKlapptext(n.id)}
+                  knotenZoom={view.scale}
                 />
               </div>
             )}
@@ -3500,6 +3505,7 @@ function NodeKoerper({
   aufnahmen,
   offen,
   onToggleOffen,
+  knotenZoom = 1,
 }: {
   graphId: string;
   node: VisNode;
@@ -3534,6 +3540,8 @@ function NodeKoerper({
   /** SK-V3: ist der Klapptext dieses Nodes offen (lokaler UI-State im Canvas). */
   offen: boolean;
   onToggleOffen: () => void;
+  /** F1: Zoom der Knotenansicht, für die Pixeldichte des 3D-Fensters im Modell-Knoten. */
+  knotenZoom?: number;
 }) {
   const runCommand = useProject((s) => s.runCommand);
   const doc = useProject.getState().doc;
@@ -3556,7 +3564,7 @@ function NodeKoerper({
     case 'modell':
       // Entscheid 90 (Visbox, Blatt 21): mit Lade-Faehigkeit des Wirts Knopf und Zustaende,
       // ohne sie (KosmoOrbit) die eine Zeile von vorher — s. `ModellKnoten.tsx`.
-      return <ModellKnotenKoerper bauteileImDokument={szeneBauteileAnzahl(doc)} />;
+      return <ModellKnotenKoerper bauteileImDokument={szeneBauteileAnzahl(doc)} knotenZoom={knotenZoom} />;
     case SKIZZE_IPAD_TYP:
       // Entscheide 95/95a (Visbox, Blatt 25): mit Skizzen-Quelle des Wirts Auswahl und
       // Daumenbild, ohne sie (KosmoOrbit) ein ruhiger Satz — s. `SkizzeKnoten.tsx`.
@@ -3689,7 +3697,8 @@ function NodeKoerper({
 
       const laeuftNoch = ['gesendet', 'wartetFreigabe', 'wartetGpu', 'rendert'].includes(status);
       // Fortschritt am Ort: `null`, wenn nichts unterwegs ist (bereit, fertig, Freigabe, Fehler).
-      const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige(lauf, Date.now()) : null;
+      // Entscheid 104: die bestellte Güte steht schon während des Laufs in der Zeile (Antwort KosmoVis 20.10.).
+      const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige({ ...lauf, bestellteGuete: gueteAmKnoten(params) }, Date.now()) : null;
       // V-H4 (UI-KONZEPT-065 §5): semantisches Formular — schreibt in flache
       // Render-Node-`params` über den bestehenden `vis.nodeParametrieren`-Weg;
       // derselbe Zusammenführungs-Helfer (vis-jobs.ts) speist Anzeige UND Job.
@@ -4055,6 +4064,7 @@ function NodeKoerper({
                   {verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
                     <HauptbildAbzeichen lauf={verlauf[0]} nummer={laufNummerVon(verlauf[0], 0, verlauf.length)} />
                   )}
+                  <GueteMarke lauf={lauf} testid="render-guete-marke" />
                 </div>
                 {/* P-LIZENZMARKE Schritt 2 (E154 (4)): «Lizenz offen» direkt
                     unter dem Bild, wo es erscheint. Die Zeile bleibt 110 px
@@ -4091,7 +4101,9 @@ function NodeKoerper({
                     }
                   : {})}
               >
-                {warteAnzeige.vorschau && lauf?.jobId && <RenderVorschauBild jobId={lauf.jobId} imageName={warteAnzeige.vorschau} />}
+                {warteAnzeige.vorschau && lauf?.jobId && (
+                  <RenderVorschauBild jobId={lauf.jobId} imageName={warteAnzeige.vorschau} text={warteAnzeige.vorschauText} />
+                )}
                 <div
                   className="vis-node-warteort-innen"
                   data-testid={status === 'wartetGpu' ? 'render-wartet-text' : 'render-fortschritt'}
