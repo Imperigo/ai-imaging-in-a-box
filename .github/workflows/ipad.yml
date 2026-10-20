@@ -103,7 +103,28 @@ jobs:
           xcodebuild build \
             -scheme Visbox \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/dd \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Liegt das Icon in der App? (Auskunft)
+        # OWNER-BEFUND 20.10.2026: Die iPad-App zeigt kein Icon, obwohl `appIcon: .asset("AppIcon")`
+        # im Paket steht (Entscheid 88). KEIN TOR, eine Auskunft: Steht `CFBundleIcons` in der
+        # Info.plist des gebauten Buendels, und liegt das Icon im HAUPTbuendel (Assets.car, AppIcon*.png)
+        # — oder nur im Ressourcenbuendel des Moduls, wo iPadOS es nicht sucht?
+        if: always()
+        continue-on-error: true
+        working-directory: ipad/Visbox.swiftpm
+        run: |
+          APP=$(find build/dd/Build/Products -name 'Visbox.app' -maxdepth 3 | head -1)
+          echo "Buendel: $APP"
+          ls -la "$APP" | head -50
+          echo "--- CFBundleIcons / CFBundleIconName:"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" || echo "KEIN CFBundleIcons"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons~ipad' "$APP/Info.plist" || echo "KEIN CFBundleIcons~ipad"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" || echo "KEIN CFBundleIconName"
+          echo "--- Assets.car im Hauptbuendel:"; ls -la "$APP/Assets.car" || echo "KEIN Assets.car"
+          echo "--- AppIcon-Dateien:"; find "$APP" -iname 'AppIcon*' | head -20
+          echo "--- Ressourcenbuendel:"; find "$APP" -name '*.bundle' -maxdepth 2 | while read b; do echo "$b"; ls "$b" | head -20; done
 
   mac:
     name: Mac-App bauen, als ZIP ablegen
