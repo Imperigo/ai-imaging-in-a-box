@@ -1414,6 +1414,7 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          umgebung_hdr=None, umgebung_staerke=None,
                          umgebung_drehung=None, umgebung_weiss=None,
                          umgebung_belichtung=None, umgebung_toenung=None,
+                         umgebung_licht=None,
                          abstand_fest_m=None, materialien_json=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
@@ -1561,6 +1562,12 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         if umgebung_toenung is not None:
             argumente += ["--umgebung-toenung="
                           + ",".join(f"{float(k):.6f}" for k in umgebung_toenung)]
+        # LICHT MIT SCHATTEN JE STIMMUNG (auf-20261020-293): die Daten als JSON, ein
+        # Argument — Gleichheitszeichen-Form wie oben. Ohne sie die Stimmung von vor 293.
+        if umgebung_licht is not None:
+            argumente += ["--umgebung-licht=" + (umgebung_licht if isinstance(umgebung_licht, str)
+                                                 else json.dumps(umgebung_licht, sort_keys=True,
+                                                                 ensure_ascii=False))]
     if umgebung_weiss:
         argumente.append("--umgebung-weiss")
     # DIE MATERIALIEN JE ART (Entscheide 107/111/113) — die Wahl als JSON im Auftragsordner.
@@ -1612,6 +1619,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      umgebung_hdr=None, umgebung_staerke=None,
                          umgebung_drehung=None, umgebung_weiss=None,
                          umgebung_belichtung=None, umgebung_toenung=None,
+                         umgebung_licht=None,
                          abstand_fest_m=None, materialien_json=None,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
@@ -1870,6 +1878,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               umgebung_weiss=umgebung_weiss,
                               umgebung_belichtung=umgebung_belichtung,
                               umgebung_toenung=umgebung_toenung,
+                              umgebung_licht=umgebung_licht,
                               abstand_fest_m=abstand_fest_m,
                               materialien_json=materialien_json),
     ]
@@ -2093,6 +2102,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                          umgebung_hdr=None, umgebung_staerke=None,
                          umgebung_drehung=None, umgebung_weiss=None,
                          umgebung_belichtung=None, umgebung_toenung=None,
+                         umgebung_licht=None,
                          abstand_fest_m=None, materialien_json=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
@@ -2125,6 +2135,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               umgebung_weiss=umgebung_weiss,
                               umgebung_belichtung=umgebung_belichtung,
                               umgebung_toenung=umgebung_toenung,
+                              umgebung_licht=umgebung_licht,
                               abstand_fest_m=abstand_fest_m,
                               materialien_json=materialien_json),
     ]

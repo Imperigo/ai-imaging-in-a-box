@@ -91,7 +91,7 @@ def test_nur_zum_trennen_der_boden_zaehlt_nicht_im_anteil_und_nicht_im_score(bil
     assert urteil["n_gemeinsam"] <= sum(maske)
 
 
-def test_der_abholer_legt_ihn_nur_bei_gemessener_maske_ohne_gelaende_an():
+def test_der_abholer_legt_ihn_nur_bei_gemessener_maske_an():
     soll = [math.inf] * 16
     bericht = {"kamera": KAMERA}
     zurueck, hilfe, befund = abholer._mit_messboden(
@@ -101,8 +101,13 @@ def test_der_abholer_legt_ihn_nur_bei_gemessener_maske_ohne_gelaende_an():
     assert sum(hilfe) == 8
     # 274 C3: ungemessene Maske (auch mit gelaende_erkannt False) -> kein Messboden.
     for maske in ({"gemessen": False, "gelaende_erkannt": False},
-                  {"gemessen": True, "gelaende_erkannt": True}, {}, None):
+                  {"gemessen": False, "gelaende_erkannt": True}, {}, None):
         assert abholer._mit_messboden(soll, 4, 4, bericht, maske) == (soll, None, None)
+    # SEIT auf-20261020-293 (B4) AUCH NEBEN ERKANNTEM GELAENDE: vor einer endlichen Platte
+    # malt das Bild Boden, wo die Soll-Karte Himmel hat. Nur Hintergrundpunkte, nur zum Trennen.
+    _, hilfe_g, befund_g = abholer._mit_messboden(
+        soll, 4, 4, bericht, {"gemessen": True, "gelaende_erkannt": True})
+    assert hilfe_g == hilfe and befund_g["neben_gelaende"] is True
     kaputt = abholer._mit_messboden(soll, 4, 4, {"kamera": {}},
                                     {"gemessen": True, "gelaende_erkannt": False})
     assert kaputt[1] is None and kaputt[2]["angewandt"] is False

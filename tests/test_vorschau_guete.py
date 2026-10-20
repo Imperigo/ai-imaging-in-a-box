@@ -42,6 +42,14 @@ GRUNDLAGE_B, GRUNDLAGE_H = 200, 125
 LANGE_SEITE = 128
 
 
+@pytest.fixture(autouse=True)
+def _ohne_untergrenze(monkeypatch):
+    """Diese Proben rechnen mit einer Grundlage von 200 x 125 und messen die Groessen von 292.
+    Die Untergrenze des Modells (auf-20261020-293 B3: KI-Schritt mindestens 1024 px) rechnete
+    sie auf 1024 hoch — sie hat ihre eigene Probe (`tests/test_heimfehler_auf293.py`)."""
+    monkeypatch.setattr(abholer, "ki_mindest_lange_seite", lambda _name: None)
+
+
 def _attrappen(tmp_path):
     """Blender schreibt Tiefe und Schönbild in Grundlagengrösse; das Bildmodell schreibt
     ein Bild in der Grösse der Tiefenkarte, die es bekam — wie die echte Pipeline."""

@@ -590,6 +590,8 @@ def baue_kette(
     # Belichtung und Toenung je Stimmung (auf-20261020-292) — wie im Abholer.
     umgebung_belichtung=None,
     umgebung_toenung=None,
+    # Licht mit Schatten je Stimmung (auf-20261020-293) — JSON, wie im Abholer.
+    umgebung_licht=None,
     # DER KNOTEN «KAMERA» (20.10.2026): fester Abstand, und der Shift einer senkrecht
     # gestellten Kamera von Hand (Entscheid 109) — wie im Abholer.
     abstand_fest_m=None,
@@ -800,6 +802,7 @@ def baue_kette(
                     "umgebung_belichtung": umgebung_belichtung,
                     "umgebung_toenung": (list(umgebung_toenung) if umgebung_toenung is not None
                                          else None),
+                    "umgebung_licht": umgebung_licht,
                     "abstand_fest_m": abstand_fest_m,
                     "shift_y": shift_y,
                     "materialien_json": (str(materialien_json) if materialien_json is not None
@@ -1458,7 +1461,7 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                "hoehe", "deckungsgrad", "augenhoehe", "bias_grad", "stillstand_frist_s",
                "kontext_ply", "kontext_matrix",
                "umgebung_hdr", "umgebung_staerke", "umgebung_drehung", "umgebung_weiss",
-               "umgebung_belichtung", "umgebung_toenung",
+               "umgebung_belichtung", "umgebung_toenung", "umgebung_licht",
                "abstand_fest_m", "shift_y", "materialien_json")
               if name in p}
     if "multipass_timeout" in p:

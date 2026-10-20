@@ -526,3 +526,98 @@ def ueberstrahlt_aus_png(pfad, *, maske=None) -> dict:
         return {"anteil": None, "grund": f"Überstrahlung nicht messbar: {fehler}"}
     befund["grund"] = "" if befund["anteil"] is not None else "Leere Bauwerksmaske."
     return befund
+
+
+# ======================================================================================
+# Kontrast Haus – Hintergrund — hebt sich das Haus ab? (auf-20261020-293, Punkt 1)
+# ======================================================================================
+
+#: Ab welcher Differenz (Grauwerte 0..255) das Haus als sichtbar gilt — dieselbe Zahl wie
+#: ``stimmung.KONTRAST_SCHWELLE`` (dort begründet), hier wiederholt, damit dieses Modul ohne
+#: ``stimmung`` auskommt; eine Probe hält beide gleich.
+KONTRAST_SCHWELLE = 20.0
+
+#: Wie weit «daneben» reicht: der Rahmen um das Haus, je Seite um diesen Anteil seiner
+#: Breite bzw. Höhe vergrössert. Nur der Himmel in diesem Rahmen zählt — der Himmel in einer
+#: fernen Bildecke sagt nicht, ob sich das Haus vor SEINEM Hintergrund abhebt.
+KONTRAST_RAND = 0.5
+
+
+def _grauwert(p) -> float:
+    return 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2]
+
+
+def kontrast_haus_hintergrund(farben, breite: int, hoehe: int, *, haus, hintergrund,
+                              rand: float = KONTRAST_RAND,
+                              schwelle: float = KONTRAST_SCHWELLE) -> dict:
+    """Wie stark sich das Haus vom Hintergrund daneben abhebt — mittlerer Grauwert, Differenz.
+
+    **Anlass (auf-20261020-293):** Bei winter (−0,5), morgen (−1,3), nebel (−7,5) und
+    bedeckt (−8,6) war das Haus im Cycles-Bild praktisch unsichtbar; die HomeStation hat es
+    von Hand nachgezählt. Jetzt steht die Zahl im Ergebnis.
+
+    Args:
+        farben: ``[(r, g, b), …]`` in 0..255 (das Cycles-Bild), zeilenweise von oben.
+        haus: gleich lange Folge von Wahrheitswerten — die Bauwerksmaske.
+        hintergrund: gleich lange Folge — wo die Kamera den Himmel sieht (im Material-ID-Pass
+            schwarz: kein Objekt).
+        rand: wie weit «daneben» reicht (:data:`KONTRAST_RAND`).
+
+    Returns:
+        ``{kontrast, haus, hintergrund, n_haus, n_hintergrund, schwelle, kaum_sichtbar,
+        grund}`` — ``kontrast`` = Haus minus Hintergrund (positiv: Haus heller); ``None``
+        mit ``grund``, wenn eine der beiden Flächen leer ist.
+    """
+    farben = list(farben)
+    n = len(farben)
+    breite, hoehe = int(breite), int(hoehe)
+    haus, hintergrund = list(haus), list(hintergrund)
+    if n == 0 or breite * hoehe != n or len(haus) != n or len(hintergrund) != n:
+        raise BelichtungsError(
+            f"Kontrast: Bild {breite} x {hoehe} mit {n} Punkten, Maske {len(haus)}, "
+            f"Hintergrund {len(hintergrund)} — passen nicht zusammen.")
+    leer = {"kontrast": None, "haus": None, "hintergrund": None, "n_haus": 0,
+            "n_hintergrund": 0, "schwelle": schwelle, "kaum_sichtbar": None}
+    punkte = [i for i, m in enumerate(haus) if m]
+    if not punkte:
+        return dict(leer, grund="Leere Bauwerksmaske — kein Haus im Bild.")
+    xs = [i % breite for i in punkte]
+    ys = [i // breite for i in punkte]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    dx, dy = int((x1 - x0 + 1) * rand), int((y1 - y0 + 1) * rand)
+    x0, x1 = max(0, x0 - dx), min(breite - 1, x1 + dx)
+    y0, y1 = max(0, y0 - dy), min(hoehe - 1, y1 + dy)
+    daneben = [y * breite + x for y in range(y0, y1 + 1) for x in range(x0, x1 + 1)
+               if hintergrund[y * breite + x] and not haus[y * breite + x]]
+    mittel_haus = sum(_grauwert(farben[i]) for i in punkte) / len(punkte)
+    if not daneben:
+        return dict(leer, haus=round(mittel_haus, 1), n_haus=len(punkte),
+                    grund="Kein Himmel neben dem Haus (Haus füllt den Rahmen, oder Blick von "
+                          "oben) — nicht gemessen.")
+    mittel_grund = sum(_grauwert(farben[i]) for i in daneben) / len(daneben)
+    kontrast = mittel_haus - mittel_grund
+    return {"kontrast": round(kontrast, 1), "haus": round(mittel_haus, 1),
+            "hintergrund": round(mittel_grund, 1), "n_haus": len(punkte),
+            "n_hintergrund": len(daneben), "schwelle": schwelle,
+            "kaum_sichtbar": abs(kontrast) < schwelle, "grund": ""}
+
+
+def kontrast_aus_pngs(schoen_png, material_id_png, *, maske) -> dict:
+    """:func:`kontrast_haus_hintergrund` für das Cycles-Bild und seinen ID-Pass — nie eine Ausnahme.
+
+    Hintergrund ist, wo der Material-ID-Pass schwarz ist (der Runner rechnet ihn vor
+    schwarzem Grund, Farbwert 0 = «nichts»). Nicht messbar: ``{kontrast: None, grund}``.
+    """
+    if not schoen_png:
+        return {"kontrast": None, "grund": "Kein Schönbild — nicht gemessen."}
+    if not material_id_png or maske is None:
+        return {"kontrast": None, "grund": "Ohne ID-Pass und Bauwerksmaske nicht messbar."}
+    try:
+        farben, b, h = bildlesen.lies_png_farben(schoen_png)
+        kennung, kb, kh = bildlesen.lies_png_farben(material_id_png)
+        if (kb, kh) != (b, h):
+            raise BelichtungsError(f"Schönbild {b} x {h}, ID-Pass {kb} x {kh}.")
+        himmel = [p[0] == 0 and p[1] == 0 and p[2] == 0 for p in kennung]
+        return kontrast_haus_hintergrund(farben, b, h, haus=maske, hintergrund=himmel)
+    except (bildlesen.BildError, BelichtungsError, OSError, ValueError) as fehler:
+        return {"kontrast": None, "grund": f"Kontrast nicht messbar: {fehler}"}

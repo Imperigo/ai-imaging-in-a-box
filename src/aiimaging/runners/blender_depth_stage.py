@@ -229,6 +229,14 @@ def _argumente():
     ap.add_argument("--umgebung-toenung", dest="umgebung_toenung", default=None,
                     help="Toenung des Himmelslichts 'r,g,b' (linear, Helligkeit 1), nur mit "
                          "Himmelsbild.")
+    # LICHT MIT SCHATTEN JE STIMMUNG (auf-20261020-293): die Daten aus
+    # `stimmung.licht_der_stimmung` als JSON — Sonne ja/nein, Staerken, Winkel, Look,
+    # Richtung und Abstand des Hintergrunds, Grau der Platte. Nur mit --umgebung-hdr wirksam;
+    # ohne den Schalter rechnet die Stimmung wie vor 293 (keine Lampe, kein Grau).
+    ap.add_argument("--umgebung-licht", dest="umgebung_licht", default=None,
+                    help="Lichtdaten der Stimmung als JSON (aiimaging.stimmung."
+                         "licht_der_stimmung): Sonnenlampe aus der Richtung der Sonne im "
+                         "Himmelsbild, Fuelllicht, Look, Hintergrund mit Abstand, graue Platte.")
     ap.add_argument("--materialien", dest="materialien", default=None,
                     help="Materialwahl je Bauteil-Art (JSON aus abholer.materialwahl_ablegen): "
                          "Principled BSDF mit Box-Projektion, Rauheit, Relief (Bump aus der "
@@ -1147,8 +1155,16 @@ def _himmelsfarben(bild) -> dict:
         kopie = bild.copy()
         b, h = HIMMEL_PROBE_GROESSE
         kopie.scale(b, h)
-        farben = modul.hintergrund_aus_himmel(list(kopie.pixels[:]), b, h,
-                                              kanaele=int(getattr(kopie, "channels", 4) or 4))
+        punkte = list(kopie.pixels[:])
+        kanaele = int(getattr(kopie, "channels", 4) or 4)
+        farben = modul.hintergrund_aus_himmel(punkte, b, h, kanaele=kanaele)
+        # DIE SONNE IM HIMMELSBILD (auf-20261020-293, Punkt 2) — auf derselben Kopie.
+        try:
+            sonne = modul.sonne_aus_himmel(punkte, b, h, kanaele=kanaele)
+        except Exception as fehler:                        # noqa: BLE001
+            sonne = {"gefunden": False, "weg": "rueckfall",
+                     "grund": f"Sonne nicht lesbar: {fehler}"}
+        farben = dict(farben, sonne=sonne)
     except Exception as fehler:                            # noqa: BLE001
         return dict(RUECKFALL_HINTERGRUND, weg="rueckfall",
                     grund=f"Himmelsbild nicht lesbar fuer den Hintergrund: {fehler}")
@@ -1162,6 +1178,10 @@ def _himmelsfarben(bild) -> dict:
         return dict(RUECKFALL_HINTERGRUND, weg="rueckfall",
                     grund="Himmelsbild ohne Punkte ueber dem Horizont.")
     return dict(farben, weg="himmelsbild", grund="")
+
+
+#: Der Name des Background-Knotens, den die Kamera sieht (der ruhige Verlauf).
+RUHIGER_GRUND = "Ruhiger_Grund"
 
 
 def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung) -> None:
@@ -1195,6 +1215,8 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     baum.links.new(trenne.outputs["Z"], bereich.inputs["Value"])
     verlauf = _mix_farbe(baum, bereich.outputs["Result"], horizont, zenit)
     grund = baum.nodes.new("ShaderNodeBackground")
+    # Mit Namen, damit die Vorprobe (`_hintergrund_abstimmen`, auf-20261020-293) ihn wiederfindet.
+    grund.name = RUHIGER_GRUND
     baum.links.new(verlauf, grund.inputs["Color"])
     grund.inputs["Strength"].default_value = float(staerke)
     weg = baum.nodes.new("ShaderNodeLightPath")
@@ -1209,7 +1231,7 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
 
 
 def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
-                 toenung=None):
+                 toenung=None, licht=None):
     """Umgebungslicht als Welt setzen — gleichmässig, oder aus einem Himmelsbild.
 
     `read_factory_settings(use_empty=True)` löscht auch die Welt. Ohne sie rendert Cycles
@@ -1225,9 +1247,16 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
     die Kamera sieht einen ruhigen Verlauf (:func:`_ruhiger_hintergrund`). ``toenung``
     (``(r, g, b)``, linear, aus ``stimmung.toenung_fuer``) färbt Licht und Grund.
 
+    **Seit auf-20261020-293 (Punkt 2), mit ``licht``** (den Daten der Stimmung): Das
+    Himmelsbild ist nur noch **Fülllicht** (Stärke × ``fuell_staerke``). Bei einer Stimmung
+    mit Sonne wird seine Sonnenscheibe gekappt (Vector Math «Minimum» auf die Schwelle aus
+    ``stimmung.sonne_aus_himmel``) — die Sonnenlampe (:func:`_sonne_setzen`) übernimmt sie,
+    aus derselben Richtung, sonst stünde die Sonne doppelt da. Ohne ``licht`` bleibt alles
+    wie vor 293.
+
     Returns:
         ``None`` ohne Himmelsbild, sonst ``{datei, staerke, drehung_grad, groesse, toenung,
-        hintergrund}`` — nur der Dateiname, kein Pfad (Regel 3).
+        hintergrund, licht?}`` — nur der Dateiname, kein Pfad (Regel 3).
     """
     welt = bpy.data.worlds.new("Welt")
     hintergrund = _welt_hintergrund(welt)
@@ -1244,31 +1273,77 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
     himmel.image = bpy.data.images.load(str(hdr), check_existing=True)
     baum.links.new(koord.outputs["Generated"], abbild.inputs["Vector"])
     baum.links.new(abbild.outputs["Vector"], himmel.inputs["Vector"])
+    farben = _himmelsfarben(himmel.image)
+    sonne = farben.get("sonne") or {}
+    # DAS FUELLLICHT (auf-20261020-293): mit `licht` nur ein Teil des Himmelsbilds, und bei
+    # einer Stimmung mit Sonne ohne seine Sonnenscheibe — die Lampe uebernimmt sie.
+    fuell = float((licht or {}).get("fuell_staerke") or 1.0) if licht else 1.0
+    kappung = (float(sonne["kappung"]) if licht and licht.get("sonne")
+               and sonne.get("gefunden") and sonne.get("kappung") else None)
+    farbausgang = himmel.outputs["Color"]
+    if kappung is not None:
+        kappen = baum.nodes.new("ShaderNodeVectorMath")
+        kappen.operation = "MINIMUM"
+        kappen.inputs[1].default_value = (kappung, kappung, kappung)
+        baum.links.new(farbausgang, kappen.inputs[0])
+        farbausgang = kappen.outputs["Vector"]
     if toenung:
         faerben = baum.nodes.new("ShaderNodeVectorMath")
         faerben.operation = "MULTIPLY"
         faerben.inputs[1].default_value = tuple(float(k) for k in toenung)
-        baum.links.new(himmel.outputs["Color"], faerben.inputs[0])
+        baum.links.new(farbausgang, faerben.inputs[0])
         baum.links.new(faerben.outputs["Vector"], hintergrund.inputs["Color"])
     else:
-        baum.links.new(himmel.outputs["Color"], hintergrund.inputs["Color"])
-    farben = _himmelsfarben(himmel.image)
-    _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke, farben, toenung)
-    return {"datei": Path(str(hdr)).name, "staerke": float(staerke),
-            "drehung_grad": float(drehung_grad),
-            "groesse": [int(v) for v in himmel.image.size],
-            "toenung": list(toenung) if toenung else None,
-            "hintergrund": {"art": "verlauf", "kamerastrahl": "ruhig",
-                            "horizont": list(farben["horizont"]),
-                            "zenit": list(farben["zenit"]), "weg": farben["weg"],
-                            "grund": farben["grund"]}}
+        baum.links.new(farbausgang, hintergrund.inputs["Color"])
+    hintergrund.inputs["Strength"].default_value = staerke * fuell
+    # Der ruhige Grund mit derselben Staerke wie das Fuelllicht; die Vorprobe stellt ihn
+    # danach auf den Abstand zum Haus (`_hintergrund_abstimmen`).
+    _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke * fuell, farben,
+                         toenung)
+    befund = {"datei": Path(str(hdr)).name, "staerke": float(staerke),
+              "drehung_grad": float(drehung_grad),
+              "groesse": [int(v) for v in himmel.image.size],
+              "toenung": list(toenung) if toenung else None,
+              "hintergrund": {"art": "verlauf", "kamerastrahl": "ruhig",
+                              "horizont": list(farben["horizont"]),
+                              "zenit": list(farben["zenit"]), "weg": farben["weg"],
+                              "grund": farben["grund"]}}
+    if licht:
+        befund["licht"] = {"fuell_staerke": fuell, "staerke_fuelllicht": staerke * fuell,
+                           "sonnenscheibe_gekappt": kappung is not None, "kappung": kappung,
+                           "herkunft": licht.get("herkunft_licht")}
+        befund["himmel_sonne"] = sonne or None
+    return befund
 
 
 #: Die Tonwertkurven, falls ``aiimaging.stimmung`` nicht lesbar ist — dieselbe Reihenfolge.
 RUECKFALL_TONWERTE = ("AgX", "Filmic")
 
 
-def _tonwerte_setzen(szene, belichtung_ev) -> dict:
+def _look_setzen(szene, transform, look) -> dict:
+    """Die kontrastreichere Fassung der Tonwertkurve (auf-20261020-293, Punkt 4).
+
+    Blender nennt sie je Fassung anders: «AgX - Medium High Contrast» (4.x, mit Vorsatz der
+    Kurve) oder nur «Medium High Contrast». Beide werden versucht, die erste, die greift,
+    gilt; greift keine, bleibt «None» — und der Grund steht im Bericht (Rückfall mit Grund).
+    """
+    versucht = []
+    for name in (f"{transform} - {look}", str(look)):
+        try:
+            szene.view_settings.look = name
+        except Exception as fehler:                        # noqa: BLE001
+            versucht.append(f"{name}: {fehler}")
+            continue
+        return {"look": name, "look_grund": ""}
+    try:
+        szene.view_settings.look = "None"
+    except Exception:                                      # noqa: BLE001
+        pass
+    return {"look": "None", "look_grund": ("Look nicht vorhanden in diesem Blender: "
+                                           + "; ".join(versucht))}
+
+
+def _tonwerte_setzen(szene, belichtung_ev, look=None) -> dict:
     """Tonwertkurve und Belichtung für das Schönbild MIT Himmelsbild (auf-20261020-292, B1).
 
     Versucht der Reihe nach ``stimmung.TONWERTE`` (AgX, Filmic) — die erste, die dieses
@@ -1293,10 +1368,15 @@ def _tonwerte_setzen(szene, belichtung_ev) -> dict:
         pass
     ev = float(belichtung_ev or 0.0)
     szene.view_settings.exposure = ev
-    return {"tonwerte": gesetzt or "Standard", "belichtung_ev": ev,
-            "grund": ("" if gesetzt else
-                      "Keine der Tonwertkurven ist in diesem Blender vorhanden: "
-                      + "; ".join(versucht))}
+    befund = {"tonwerte": gesetzt or "Standard", "belichtung_ev": ev,
+              "grund": ("" if gesetzt else
+                        "Keine der Tonwertkurven ist in diesem Blender vorhanden: "
+                        + "; ".join(versucht))}
+    # DER LOOK DER STIMMUNG (auf-20261020-293, Punkt 4) — nur, wenn bestellt und eine Kurve
+    # griff; ohne bleibt der Bericht der von 292.
+    if look and gesetzt:
+        befund.update(_look_setzen(szene, gesetzt, look))
+    return befund
 
 
 def _tonwerte_zurueck(szene) -> None:
@@ -1616,6 +1696,155 @@ def _alles_weiss() -> dict:
             "rauheit": GIPS_RAUHEIT}
 
 
+def _ist_gelaende_objekt(obj, maske, gelaende_namen) -> bool:
+    """Gelände nach derselben Regel wie :func:`_bauteil_art` — Name, IFC-Knoten, Material."""
+    namen = [obj.name, _ifc_name(obj)] + [s.material.name for s in obj.material_slots
+                                          if s.material is not None]
+    return any(n in gelaende_namen for n in namen) or (
+        maske is not None and any(maske.ist_gelaende(n) for n in namen))
+
+
+def _gelaende_grau(grau, gelaende_namen=()) -> dict:
+    """Die Geländeplatte als ruhiges Neutralgrau (auf-20261020-293, Punkt 3).
+
+    **Anlass:** Die Platte war hellgrau wie der Himmel — Schatten waren auf ihr nicht zu
+    sehen. Ohne gewähltes Material (die Materialwahl fasst Gelände nie an) bekommt sie ein
+    diffuses Grau, leicht dunkler; bei «weiss» ein helleres, damit das Gipsmodell darauf
+    steht. Wie beim Gips trägt das neue Material den alten Namen (:data:`URSPRUNG_MARKE`) —
+    der ID-Pass und die Bauwerksmaske sehen dasselbe wie vorher.
+    """
+    maske = _maske_modul()
+    farbe = tuple(float(c) for c in grau)
+    neu: dict = {}
+
+    def material(ursprung):
+        if ursprung not in neu:
+            mat = bpy.data.materials.new("Gelaende_Grau")
+            mat.use_nodes = True
+            baum = mat.node_tree
+            baum.nodes.clear()
+            diffus = baum.nodes.new("ShaderNodeBsdfDiffuse")
+            diffus.inputs["Color"].default_value = (*farbe, 1.0)
+            diffus.inputs["Roughness"].default_value = 1.0
+            ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
+            baum.links.new(diffus.outputs["BSDF"], ausgang.inputs["Surface"])
+            mat[MATERIAL_MARKE] = "gelaende_grau"
+            mat[URSPRUNG_MARKE] = ursprung
+            neu[ursprung] = mat
+        return neu[ursprung]
+
+    n = 0
+    for obj in list(bpy.data.objects):
+        if obj.type == "MESH" and not _ist_kontext(obj) and _ist_gelaende_objekt(
+                obj, maske, set(gelaende_namen)):
+            _ersetze_slots(obj, material)
+            n += 1
+    return {"objekte": n, "farbe_linear": list(farbe)}
+
+
+#: Wie klein die Vorprobe rechnet (Prozent der Bildgrösse) und mit wie vielen Samples —
+#: genug für einen Mittelwert über das Haus, ein Bruchteil des Schönbilds.
+VORPROBE_PROZENT = 25
+VORPROBE_SAMPLES = 16
+VORPROBE_ORDNER = "_vorprobe"
+
+
+def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
+                           gelaende_namen=()) -> dict:
+    """Den ruhigen Hintergrund auf einen festen Abstand zum Haus stellen (auf-20261020-293, 1).
+
+    **Anlass:** Das Haus verschwand bei winter, morgen, nebel und bedeckt im Hintergrund
+    (Kontrast −0,5 bis −8,6 Grauwerte). Der Verlauf hatte die Medianfarben des Himmels und war
+    so hell wie das diffus beleuchtete Haus; Stärke und Belichtung skalieren beide gleich.
+
+    **Entscheid: eine kleine Vorprobe, kein zweites Schönbild.** Ein Viertel der Grösse,
+    16 Samples, ohne Entrauschen, mit durchsichtigem Hintergrund und ohne Gelände vor der
+    Kamera (Schatten und Aufhellung bleiben): Deckend ist dort nur das Haus, und seine
+    mittlere Helligkeit ist **gemessen** — mit Material, Sonne und Geometrie dieses Laufs.
+    Eine Schätzung aus dem Himmel allein kennt weder das Material noch die Ausrichtung der
+    Fassaden; ein nachträglich eingesetzter Hintergrund (Kompositor) gäbe Säume an den Kanten
+    und änderte das Schönbild, das der KI-Schritt als Eingang bekommt. Gerechnet wird der
+    Abstand in Blendenstufen (linear, vor Tonwertkurve und Belichtung, die beide gleich
+    verschieben) mit ``stimmung.hintergrund_mit_abstand``; nur die Stärke des Verlaufs
+    ändert sich (Kamerastrahl), der Farbton bleibt. Danach wird alles zurückgestellt — der
+    durchsichtige Film gilt NUR hier, nie im Schönbild.
+
+    Nie eine Ausnahme: Misslingt die Vorprobe, bleibt der Verlauf, und der Bericht sagt es;
+    ``qa.kontrast_haus_hintergrund`` misst danach am Schönbild ohnehin nach.
+    """
+    import shutil
+    beginn = time.time()
+    modul = _stimmung_modul()
+    welt = bpy.context.scene.world
+    grund = welt.node_tree.nodes.get(RUHIGER_GRUND) if welt is not None else None
+    if modul is None or grund is None:
+        return {"weg": "ohne", "faktor": 1.0,
+                "grund": "Kein ruhiger Grund oder aiimaging.stimmung nicht lesbar."}
+    r = szene.render
+    vorher = {"prozent": r.resolution_percentage, "samples": szene.cycles.samples,
+              "entrauschen": szene.cycles.use_denoising, "film": r.film_transparent,
+              "format": r.image_settings.file_format, "tiefe": r.image_settings.color_depth,
+              "modus": r.image_settings.color_mode, "pfad": r.filepath}
+    maske = _maske_modul()
+    versteckt = [o for o in bpy.data.objects
+                 if o.type == "MESH" and (_ist_kontext(o) or _ist_gelaende_objekt(
+                     o, maske, set(gelaende_namen)))]
+    ordner = Path(out_dir) / VORPROBE_ORDNER
+    befund = {"weg": "vorprobe", "prozent": VORPROBE_PROZENT, "samples": VORPROBE_SAMPLES}
+    try:
+        for o in versteckt:
+            o.visible_camera = False
+        r.resolution_percentage = VORPROBE_PROZENT
+        szene.cycles.samples = VORPROBE_SAMPLES
+        szene.cycles.use_denoising = False
+        r.film_transparent = True
+        r.image_settings.file_format = "OPEN_EXR"
+        r.image_settings.color_depth = "32"
+        r.image_settings.color_mode = "RGBA"
+        ordner.mkdir(parents=True, exist_ok=True)
+        r.filepath = str(ordner / "haus_")
+        bpy.ops.render.render(write_still=True)
+        datei = next(iter(sorted(ordner.glob("haus_*.exr"))), None)
+        if datei is None:
+            raise RuntimeError("Die Vorprobe schrieb kein Bild.")
+        bild = bpy.data.images.load(str(datei))
+        try:
+            haus = modul.haus_leuchtdichte(list(bild.pixels[:]),
+                                           kanaele=int(getattr(bild, "channels", 4) or 4))
+        finally:
+            bpy.data.images.remove(bild)
+        if haus["leuchtdichte"] is None:
+            raise RuntimeError("In der Vorprobe ist kein deckender Hauspunkt.")
+        staerke = float(grund.inputs["Strength"].default_value)
+        tf = list(umgebung.get("toenung") or (1.0, 1.0, 1.0))
+        farben = umgebung.get("hintergrund") or {}
+        horizont = [float(c) * t * staerke for c, t in zip(farben["horizont"], tf)]
+        zenit = [float(c) * t * staerke for c, t in zip(farben["zenit"], tf)]
+        abstand = modul.hintergrund_mit_abstand(
+            horizont, zenit, haus["leuchtdichte"],
+            abstand_ev=float(licht.get("hintergrund_abstand_ev") or 1.0),
+            richtung=licht.get("hintergrund_richtung") or "auto")
+        grund.inputs["Strength"].default_value = staerke * abstand["faktor"]
+        befund.update(abstand, n_haus=haus["n"], staerke_vorher=staerke,
+                      staerke_nachher=staerke * abstand["faktor"])
+    except Exception as fehler:                            # noqa: BLE001
+        befund.update(weg="ohne", faktor=1.0, grund=f"Vorprobe misslang: {fehler}")
+    finally:
+        for o in versteckt:
+            o.visible_camera = True
+        r.resolution_percentage = vorher["prozent"]
+        szene.cycles.samples = vorher["samples"]
+        szene.cycles.use_denoising = vorher["entrauschen"]
+        r.film_transparent = vorher["film"]
+        r.image_settings.file_format = vorher["format"]
+        r.image_settings.color_depth = vorher["tiefe"]
+        r.image_settings.color_mode = vorher["modus"]
+        r.filepath = vorher["pfad"]
+        shutil.rmtree(ordner, ignore_errors=True)
+    befund["dauer_s"] = round(time.time() - beginn, 2)
+    return befund
+
+
 #: Die Drehung, die dieser Runner bis zum 26.08.2026 unbedingt setzte.
 #:
 #: Sie steht hier als **Rückfall** — und nur als der. Ist ``aiimaging.sonne`` von diesem
@@ -1625,7 +1854,67 @@ def _alles_weiss() -> dict:
 RUECKFALL_SONNE_EULER = (math.radians(50.0), 0.0, math.radians(35.0))
 
 
-def _sonne_setzen(mitte, spanne: float, a=None):
+def _licht_der_stimmung(a):
+    """Die Lichtdaten aus ``--umgebung-licht`` — ``None`` ohne (dann das Licht von vor 293)."""
+    roh = getattr(a, "umgebung_licht", None)
+    if not roh:
+        return None
+    try:
+        licht = json.loads(roh) if isinstance(roh, str) else dict(roh)
+    except (TypeError, ValueError) as fehler:
+        raise RuntimeError(f"--umgebung-licht ist kein JSON-Objekt: {fehler}") from fehler
+    if not isinstance(licht, dict):
+        raise RuntimeError("--umgebung-licht ist kein JSON-Objekt.")
+    return licht
+
+
+#: Die Sonne, wenn das Himmelsbild nicht lesbar war: 40° hoch, aus Südosten — derselbe
+#: Stand wie :data:`RUECKFALL_SONNE_EULER`, als Richtung.
+_H, _A = math.radians(40.0), math.radians(-55.0)
+RUECKFALL_HIMMEL_SONNE = {"gefunden": False, "weg": "rueckfall", "e_himmel_h": 1.0,
+                          "richtung_bild": [math.cos(_H) * math.cos(_A),
+                                            math.cos(_H) * math.sin(_A), math.sin(_H)]}
+
+
+def _lampe_der_stimmung(mitte, spanne: float, a, licht: dict, umgebung: dict | None):
+    """Die Lampe einer Stimmung (auf-20261020-293, Punkt 2): harte Sonne oder weiche Lampe.
+
+    Richtung, Stärke, Winkel und Farbe rechnet ``stimmung.lampe_aus_himmel`` (reine Rechnung,
+    ohne Blender); hier wird sie nur gestellt. Die Sonne kommt aus GENAU der Richtung der
+    Scheibe im Himmelsbild, gedreht wie das Bild (``--umgebung-drehung``) — tiefe Sonne am
+    Morgen und Abend gibt Streiflicht. Ohne Scheibe (bedeckt, Nebel, blaue Stunde, Studio)
+    eine weiche Lampe mit grossem Winkel aus dem hellsten Bereich.
+    """
+    modul = _stimmung_modul()
+    analyse = (umgebung or {}).get("himmel_sonne") or {}
+    if not analyse.get("richtung_bild"):
+        analyse = dict(RUECKFALL_HIMMEL_SONNE)
+    toenung = (umgebung or {}).get("toenung")
+    staerke = float((umgebung or {}).get("staerke") or 1.0)
+    drehung = float((umgebung or {}).get("drehung_grad") or 0.0)
+    if modul is None:
+        return None, {"weg": "rueckfall", "bestellt": (), "lampe": None,
+                      "grund": "aiimaging.stimmung ist von hier nicht lesbar — keine Lampe."}
+    lampe = modul.lampe_aus_himmel(analyse, licht, drehung_grad=drehung, staerke=staerke,
+                                   toenung=toenung)
+    daten = bpy.data.lights.new("Sonne", type="SUN")
+    daten.energy = float(lampe["energie"])
+    daten.angle = math.radians(float(lampe["winkel_grad"]))
+    daten.color = tuple(lampe["farbe"])
+    objekt = bpy.data.objects.new("Sonne", daten)
+    bpy.context.scene.collection.objects.link(objekt)
+    objekt.location = (mitte[0], mitte[1], mitte[2] + spanne * 2.0)
+    euler = modul.euler_fuer_richtung(lampe["richtung_welt"])
+    objekt.rotation_euler = euler
+    return objekt, {"weg": "himmelsbild_" + lampe["art"], "bestellt": (),
+                    "hoehe_grad": lampe["hoehe_grad"], "azimut_grad": lampe["azimut_welt_grad"],
+                    "konvention": "blender_welt_x_gegen_uhrzeiger", "euler": list(euler),
+                    "staerke": lampe["energie"], "winkel_grad": lampe["winkel_grad"],
+                    "farbe_linear": lampe["farbe"], "lampe": lampe,
+                    "grund": lampe["grund"]}
+
+
+def _sonne_setzen(mitte, spanne: float, a=None, umgebung=None):
     """Eine einzelne Sonne — **nach der Bestellung**, wenn eine vorliegt.
 
     Eine Sonne (Richtungslicht) statt einer Punktlichtquelle, weil ihre Wirkung nicht vom
@@ -1648,6 +1937,12 @@ def _sonne_setzen(mitte, spanne: float, a=None):
         :func:`aiimaging.sonne.lage`, ergänzt um ``weg`` — oder ein Rückfallvermerk.
     """
     if getattr(a, "umgebung_hdr", None) and not _sonne_bestellt(a):
+        # SEIT auf-20261020-293: MIT DEN LICHTDATEN DER STIMMUNG EINE LAMPE AUS DEM BILD.
+        # Das Himmelsbild bleibt Fuelllicht (seine Sonnenscheibe gekappt, `_welt_setzen`),
+        # die Lampe kommt aus der Richtung seiner Sonne — kein doppeltes Licht.
+        licht = _licht_der_stimmung(a)
+        if licht is not None:
+            return _lampe_der_stimmung(mitte, spanne, a, licht, umgebung)
         # MIT HIMMELSBILD KEINE SONNENLAMPE (Entscheid 110): Das Bild traegt seine Sonne
         # selbst; beide zusammen gaeben doppeltes Licht. Eine bestellte Sonne bleibt.
         return None, {"weg": "himmelsbild", "bestellt": (), "hoehe_grad": None,
@@ -2816,6 +3111,7 @@ def main() -> int:
     # ohne Zeichnung. Die Schattenseite soll dunkel bleiben, ohne zuzulaufen.
     # MIT HIMMELSBILD (Entscheid 110): das Bild als Welt, Staerke und Drehung wie bestellt.
     umgebung_befund = None
+    licht = _licht_der_stimmung(a) if getattr(a, "umgebung_hdr", None) else None
     if getattr(a, "umgebung_hdr", None):
         toenung = None
         if getattr(a, "umgebung_toenung", None):
@@ -2828,14 +3124,16 @@ def main() -> int:
             1.0 if a.umgebung_staerke is None else float(a.umgebung_staerke),
             hdr=a.umgebung_hdr,
             drehung_grad=0.0 if a.umgebung_drehung is None else float(a.umgebung_drehung),
-            toenung=toenung)
+            toenung=toenung, licht=licht)
         # TONWERTE MIT HIMMELSBILD (auf-20261020-292, B1): AgX bzw. Filmic und die
         # Belichtung der Stimmung — nur fuer das Schoenbild, der ID-Pass stellt zurueck.
+        # Seit auf-20261020-293 (Punkt 4) mit dem kontrastreicheren Look der Stimmung.
         umgebung_befund["ansicht"] = _tonwerte_setzen(
-            szene, getattr(a, "umgebung_belichtung", None))
+            szene, getattr(a, "umgebung_belichtung", None),
+            look=(licht or {}).get("look"))
     else:
         _welt_setzen((0.55, 0.60, 0.68), 0.25)           # kühles, gleichmässiges Umgebungslicht
-    _, sonne_befund = _sonne_setzen(mitte, spanne, a)
+    _, sonne_befund = _sonne_setzen(mitte, spanne, a, umgebung=umgebung_befund)
     # DIE OBERFLAECHEN VOR DEM SCHOENBILD (Entscheid 113): «weiss» macht alles zum
     # Gipsmodell. Der ID-Pass danach vergibt seine Kennungen unter den alten Namen.
     material_befund = None
@@ -2844,6 +3142,16 @@ def main() -> int:
     elif getattr(a, "materialien", None):
         material_befund = _materialien_setzen(a, bau_form.get("gelaende_namen") or ())
     szene.cycles.use_denoising = True                    # 8 Samples auf CPU rauschen sichtbar
+    if licht is not None and umgebung_befund is not None:
+        # DIE PLATTE GRAU (auf-20261020-293, Punkt 3) — nach Gips und Materialwahl, die
+        # beide das Gelaende nicht anfassen bzw. «weiss» es zu Gips machte.
+        if licht.get("gelaende_grau"):
+            umgebung_befund["gelaende"] = _gelaende_grau(
+                licht["gelaende_grau"], bau_form.get("gelaende_namen") or ())
+        # DER HINTERGRUND MIT ABSTAND ZUM HAUS (auf-20261020-293, Punkt 1): die Vorprobe,
+        # bevor der Kompositor fuer die Tiefe steht und das Schoenbild rechnet.
+        umgebung_befund["hintergrund_abstand"] = _hintergrund_abstimmen(
+            szene, out_dir, licht, umgebung_befund, bau_form.get("gelaende_namen") or ())
     szene.render.image_settings.file_format = "PNG"
     szene.render.image_settings.color_mode = "RGBA"
     szene.render.image_settings.color_depth = "8"
