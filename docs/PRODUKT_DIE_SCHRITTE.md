@@ -1590,3 +1590,20 @@ ist, ist noch nicht gemessen — erwartet sind Sekunden je Bild, gemessen wird e
 wurden fünf Fehler beim Abbrechen behoben, die eine Probe am Heim-PC gefunden hatte: Das Zwischenbild trug den Namen der
 falschen Kamera, der Satz nannte den falschen Schritt, der Fortschritt blieb stehen, die Freigabe behauptete einen Klick,
 und zwei Schreiber konnten sich den Abbruch gegenseitig überschreiben.
+
+**Varianten ohne Zeitüberschreitung, und die Messung am Heim-PC (20.10.2026).** Die erste Messung der Vorschau am Heim-PC
+ergab: Bei ruhigem Rechner brauchen drei Ansichten gut 100 Sekunden, das Bildmodell davon nur 2 Sekunden je Bild; den
+grössten Teil frisst die Prüfung. Zugleich meldete die Mac-App bei jeder Variante «Der Heim-PC ist nicht erreicht». Die
+Ursache lag nicht am Netz: Jede Variante schickte das ganze Modell noch einmal, und der Heim-PC las es in einem Zug,
+während alle anderen Anfragen warten mussten. Seither liest er die Sendung in Stücken, legt das Modell direkt ab und hält
+die anderen Anfragen nur für den kurzen Schritt des Anlegens an; eine Variante darf ganz ohne Modell kommen und bekommt
+das Modell ihrer Grundlage. Die Mac-App wartet auf die zwei Wege mit Modell bis fünf Minuten statt 25 Sekunden. Dieselbe
+Messung fand vier Fehler: Eine widersprüchliche Bestellung blieb ewig in der Warteschlange statt mit Satz zu enden; der
+Satz zum Abbrechen erreichte die Anzeige nicht; zwei gleiche Ansichten eines Quaders wurden doppelt gerechnet, weil drei
+von 1,6 Millionen Randpunkten verschieden waren; und jede Szene mit Geländeplatte wurde abgelehnt, weil die Prüfung den
+Anteil des Hauses an der Platte zweimal abzog — einmal beim Ausrichten der Kamera, einmal beim Nachrechnen. Bei der
+Prüfung wird jetzt gespart, was sich ohne Verlust sparen lässt: Die Vergleichsmessung an Bildern ohne Geometrie hängt
+nur an der Grundlage und wird für jede weitere Variante wiederverwendet. Der Assistent hat ein eigenes Sprachmodell und
+nimmt kein fremdes mehr von der Grafikkarte. Ehrlich gesagt: Alles ist mit Attrappen geprüft, am Heim-PC wird es erst
+nachgemessen; und dass die Vorschau in der Prüfung «Geometrie nicht gemessen» zeigt, ist kein Rechenfehler — das
+Bildmodell malte bei diesem kleinen Testhaus einen Innenraum statt eines Hauses.

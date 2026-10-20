@@ -8075,7 +8075,11 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] Schalter «Güte: Vorschau | Voll» am Render-Knoten, Vorgabe Vorschau, `vis.guete` aus «Variante erzeugen» und `vis_render`, `guete` am Lauf — KosmoOrbit `claude/kosmovis-vorschau` (Vertrag vom Integrator, R40), Visbox-Kopie nachgezogen; am Gerät unbestätigt (§149, C75)
     - [ ] Plakette «VORSCHAU» an Bild und Verlauf (ui, `GueteMarke`)
     - [ ] Güte für den Skizzen-Weg (Owner-Frage; bis dahin grau)
-    - [ ] Am Gerät messen: Zeit je Phase Vorschau gegen Voll (auf-20261020-290, local)
+    - [x] Am Gerät messen: Zeit je Phase Vorschau gegen Voll (auf-20261020-290, local) — 103–105 s bei ruhigem Rechner, Prüfung grösster Posten
+    - [x] Heim-PC-Fehler aus 290 und die Zeitüberschreitung der Variante behoben: Upload ausserhalb der Reihe und gestreamt, Variante ohne Modell, Mac 300 s für die zwei Wege mit Modell, guete+skip endet, Abbruchsatz in `message`, Zwilling mit Randrauschen, Rahmung an der gerahmten Box, Nullanker gemerkt (§150, C76)
+    - [ ] Nachmessen am Gerät (auf-20261020-291, local)
+    - [ ] Seite schickt bei einer Variante kein `model` (KosmoOrbit-Teil, parallel)
+    - [ ] Messung in numpy statt reinem Python (Befund B5, nicht gebaut — ändert den Rechenweg, braucht Gegenprobe)
   - [x] Fortschritt und Vorschau: `progress {phase, pct}` im Laufzettel, Cycles-Schönbild als Zwischenbild, Restzeit aus den fertigen Kameras (L4-6, Nr. 62/63/71/72; Vorschlag an UI/Integrator 20.10.) — Heim-PC gebaut, beide Ablagen (§142, C69); die Anzeige liegt drüben
   - [ ] Zeitbudget am Render-Knoten, beim Abbruch das letzte Zwischenergebnis behalten (L4-8, Nr. 70/76/80)
     - [x] Beim Abbruch das letzte Zwischenbild als `teilbild` behalten, ohne Gütewerte — Heim-PC, Blick zwischen den Phasen (§142, C69)
@@ -8103,4 +8107,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
   - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)
+- [ ] KI-Bedienung (Plan `docs/PLAN_KI_BEDIENUNG_2026-10-20.md`, Entscheide 105–106f)
+  - [x] Eigenes Assistenten-Modell `qwen3:14b`, entladen nur dieses, Schutzliste Kosmo-Rollenkarte und `gpt-oss`; Abholer entlädt es nur allein und ohne laufende Frage (106d, §150, C76)
+  - [x] Satz «Claude über MCP …» wahr formuliert (105/106, §150)
+  - [ ] `ollama pull qwen3:14b` am Heim-PC (owner), dann nachmessen (auf-20261020-291)
 

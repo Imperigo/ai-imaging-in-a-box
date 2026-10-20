@@ -2298,6 +2298,23 @@ Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem te
 Bildmodell (Nr. 81). Im Vertrag ist das `vis.skip: true`. Vom 26.08. bis 20.10.2026 las
 der Heim-PC das als «gar nichts rechnen» — das Häkchen bekam darum kein Bild (Nr. 83).
 
+**Variante ohne Hochladen** — Eine Variante (ein neues KI-Bild auf einer schon gerechneten
+Grundlage) braucht kein Blender und darum auch kein neu geschicktes Modell. Seit dem 20.10.2026
+nimmt der Heim-PC eine solche Bestellung ohne Modelldatei an und holt das Modell aus dem
+Auftrag, der die Grundlage gelegt hat (`knotenweg.modell_der_grundlage`). Fehlt die Grundlage
+auf diesem Rechner, kommt sofort ein Satz statt Warten.
+
+**Endgültiger Mangel** — Ein Fehler in einer Bestellung, den kein Warten heilt, weil er in
+der Bestellung selbst steht — etwa «Güte Vorschau» zusammen mit «nur Grundlage», was sich
+widerspricht. Ein solcher Auftrag endet seit dem 20.10.2026 sofort mit Fehler und Satz.
+Andere Mängel (etwa eine fehlende Freigabe) lassen den Auftrag weiter mit Grund warten.
+
+**Kantenrauschen (einer Tiefenkarte)** — Einzelne Bildpunkte genau am Umriss eines Körpers,
+die beim Rechnen einmal knapp «getroffen» und einmal knapp «verfehlt» werden. Zwei sonst
+gleiche Ansichten unterscheiden sich darum oft in einer Handvoll Randpunkten. Die Erkennung
+der Zwillingsansicht lässt seit dem 20.10.2026 höchstens zwei von hunderttausend Punkten
+Abweichung zu, und nur am Umriss (Befund am Quader: 3 von 1,6 Millionen).
+
 **Einzelinstanz (einer App)** — Eine App läuft nur einmal: Wer sie ein zweites Mal startet,
 bekommt die laufende nach vorn statt einer zweiten Kopie mit eigenem Fenster. Seit Visbox 0.2.10
 am Mac (`Einzelstart.swift`); Anlass waren zwei, dann drei Fenster nach dem Aktualisieren.
@@ -5110,7 +5127,23 @@ Mac-App «Knoten | Visbox-Seite» (Entscheid 85 A).
 
 **Entladen (des Sprachmodells)** — Das Sprachmodell von der Grafikkarte nehmen
 (`keep_alive: 0`), damit das Bildmodell dort Platz hat. Geschieht bei jedem «Anwenden», bevor
-gerechnet wird; der Wechsel kostet am Heim-PC rund 4 Sekunden.
+gerechnet wird; der Wechsel kostet am Heim-PC rund 4 Sekunden. Seit Entscheid 106d
+(20.10.2026) entlädt Visbox **nur ihr eigenes Modell** (`qwen3:14b`), nie eines von
+KosmoOrbit; der Abholer darf es auch selbst entladen, wenn es allein die Karte belegt und
+gerade keine Frage läuft.
+
+**Eigenes Modell (des Assistenten)** — Das Sprachmodell, das nur der Visbox-Assistent
+benutzt: `qwen3:14b` (Apache-2.0). Bis zum 20.10.2026 war es `qwen3:30b` — dasselbe Modell,
+das KosmoOrbit als «Leiter» hält; Visbox entlud es dann mitten aus der fremden Arbeit.
+
+**Rollenkarte (von KosmoOrbit)** — Die Liste, welches Sprachmodell bei KosmoOrbit welche
+Aufgabe hat (Meister, Leiter, Zeichner, Seher). Visbox führt eine Abschrift davon
+(`assistent.KOSMO_ROLLENKARTE`, mit Herkunft) als Schutzliste: Diese Modelle entlädt sie nie.
+
+**Marke «eine Frage läuft»** — Eine kleine Datei, die der Heim-PC hinlegt, solange der
+Assistent eine Frage beantwortet, und danach wieder entfernt. Der Abholer ist ein eigenes
+Programm und sieht sonst nicht, ob gerade gefragt wird; mit der Marke entlädt er das Modell
+nie mitten in einer Antwort.
 
 **Laden (eines Bildmodells)** — Die Gewichte eines Bildmodells von der Platte lesen,
 zusammensetzen und auf die Grafikkarte legen. Im Protokoll des Dienstes erscheint dafür die
@@ -7207,8 +7240,18 @@ aber nicht dazu — darum wird auf «genau `/bruecke` oder `/bruecke/…`» gepr
 **Formular-Upload (multipart/form-data)** — Die Art, wie ein Browser mehrere Teile in einer
 Anfrage schickt, etwa einen Text (die Szene) und eine Datei (das Modell). Die Teile sind
 durch eine vereinbarte Grenzzeile getrennt. Im Projekt schickt die Knotenansicht so ihre
-Bestellung; zerlegt wird sie mit dem E-Mail-Leser der Standardbibliothek, der dasselbe
-Format kennt (`lies_formular`).
+Bestellung. Bis zum 20.10.2026 zerlegte der Heim-PC sie mit dem E-Mail-Leser der
+Standardbibliothek; seither mit einem streamenden Teiler (siehe dort).
+
+**Streamender Teiler** — Ein Programmteil, der eine grosse Sendung in Stücken liest, statt
+sie erst ganz in den Arbeitsspeicher zu holen, und eine mitgeschickte Datei sofort auf die
+Platte schreibt. Im Projekt `knotenweg.teile_formular`: Der Heim-PC nimmt so ein Modell an,
+ohne dabei alle anderen Anfragen anzuhalten («die Reihe», siehe Sperre).
+
+**Lange Wartezeit (der Mac-App)** — Wie lange die Mac-App auf die erste Antwort des Heim-PC
+wartet: üblich 25 Sekunden, damit ein ausgefallener Rechner rasch gemeldet wird; für die zwei
+Wege, die ein Modell hochladen (Auftrag stellen, Datei laden), seit dem 20.10.2026 300
+Sekunden — sonst meldete die App «nicht erreicht», während der Heim-PC noch arbeitete.
 
 **Freigabe-Marke** — Ein Vermerk im Laufzettel eines Auftrags, der sagt: *Hier hat ein Mensch
 freigegeben, nicht die Maschine.* Die fremde Brücke gibt sich ihren Freigabe-Token selbst;
@@ -7597,6 +7640,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus den Heim-PC-Fehlern (Protokoll 74 §150): **Variante ohne Hochladen**, **Endgültiger Mangel**, **Kantenrauschen (einer Tiefenkarte)**, **Streamender Teiler**, **Lange Wartezeit (der Mac-App)**, **Eigenes Modell (des Assistenten)**, **Rollenkarte (von KosmoOrbit)**, **Marke «eine Frage läuft»**; **Formular-Upload** und **Entladen (des Sprachmodells)** nachgeführt |
 | 2026-10-20 | Ergaenzt aus dem Güte-Schalter am Render-Knoten (Protokoll 74 §149): **Zwischenbild**, **Zeilenregister (Render-Knoten)** |
 | 2026-10-20 | Ergaenzt aus «Visbox eigenständig», Schritte 2 und 6 (Protokoll 74 §147): **Rechenserver**, **Ohne Rechner**, **Rechner-Wahl**, **App-Einstellungen**; **Vorführmodus** als entfallen vermerkt |
 | 2026-10-20 | Ergaenzt aus der schnellen KI-Vorschau (Entscheide 104–104b, Protokoll 74 §148): **Vorschau (Güte)**, **Schritte eines Bildmodells**, **Steuerbild**; **Teilbild (abgebrochen)** um die Kamera des Bilds und **Fortschritt (eines Renderauftrags)** um die Phase «abgebrochen» ergänzt (Geräteprobe der HomeStation) |

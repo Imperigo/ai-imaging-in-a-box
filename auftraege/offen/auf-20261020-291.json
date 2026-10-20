@@ -1,0 +1,42 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261020-291",
+ "art": "qa",
+ "beschreibung": "Nachmessen der Heim-PC-Fixes vom 20.10. (Antwort auf 290): Variante ohne Modell-Upload, Zwilling am Quader, Gelaendeplatte mit Auto-Kamera, Vorschau-Zeit mit gemerkten Nullankern, Assistent mit qwen3:14b, Entladen nur des eigenen Modells",
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig mit den Heim-PC-Fixes vom 20.10. (Antwort auf auf-20261020-290) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS SICH AENDERT: (a) POST /bruecke/jobs wird ausserhalb der Reihe gelesen und gestreamt (Modell direkt in die Ablage), Sperre nur fuers Anlegen; GET /knoten/modell.glb, /knoten/mappe, /knoten/skizze, /bild und Bilder eines Auftrags laufen ausserhalb der Reihe. (b) Ein Auftrag OHNE model wird angenommen, wenn scene.vis.grundlage gesetzt ist: das Modell kommt per hartem Verweis aus dem Auftrag, der die Grundlage gerechnet hat; fehlt die Grundlage am Rechner -> 409 mit Satz. (c) vis.guete mit vis.skip endet sofort auf error mit Satz (kein Neulesen alle 30 s). (d) Abbruch: job.json message = 'Vom Nutzer abgebrochen. <Satz des Abholers>', Status bleibt cancelled. (e) Zwilling: Hintergrund 1e10 zaehlt als Hintergrund; bis 2e-5 der Punkte duerfen am Umriss abweichen. (f) Rahmungsriegel misst an der Box, die die Kamera gerahmt hat (Bauwerk), nicht mehr Bauwerk/Platte doppelt. (g) Nullanker je Soll-Karte gemerkt unter <out-wurzel>/_grundlagen/_nullanker/ (eine Variante auf derselben Grundlage misst sie nicht neu). (h) Assistent: Vorgabe-Modell qwen3:14b; entladen wird nur dieses, nie kosmo-*, gpt-oss*, qwen3:30b, qwen3-coder:30b, qwen2.5vl:7b; der Abholer entlaedt qwen3:14b selbst, wenn NUR es die Karte belegt und keine Frage laeuft (Marke assistent-frage.json in der Ablage, Auslastung < 10 %). VORBEREITUNG: ollama list — liegt qwen3:14b? Wenn nicht: NUR angeben, nicht selbst ziehen (ollama pull qwen3:14b waere noetig; der Owner entscheidet). Geometrie synthetisch aus tools/make_test_glb.py. 1) VARIANTE OHNE MODELL-UPLOAD: ueber die Bruecke der Visbox-Flaeche wie die Knotenansicht: (a) Grundlage mit vis.skip true und model.glb (gegliederter Testbau wie in 290) -> grundlage.id. (b) Variante mit vis.grundlage = id, vis.guete 'vorschau', OHNE Teil 'model' im Formular -> erwartet 200, im neuen Auftragsordner model.glb (harter Verweis: gleiche Inode wie im Grundlage-Auftrag, stat angeben), Lauf done. (c) Variante mit unbekannter Kennung gl-ffffffffffffffff ohne model -> erwartet 409 mit Satz woertlich. (d) Zeit von POST bis Antwort fuer (b) und fuer eine Variante MIT 100-MB-Modell; waehrend (d) im Takt 0,5 s GET /bruecke/health und GET /api/fortschritt -> laengste Antwortzeit. (e) Wenn der Mac da ist: dieselbe Variante aus der Mac-App (Knotenansicht) — kommt noch 'Der Heim-PC ist nicht erreicht'? (nur wenn der Owner dabei ist, sonst weglassen). 2) ZWILLING AM QUADER: cameras 'auto', Quader 8x3x5 m wie 6c in 290 -> erwartet nNW mit doppelt_von sSE (oder umgekehrt), nur zwei Kameras gerechnet; Zeiten, Restzeit-Folge. 3) GELAENDEPLATTE + AUTO-KAMERA: Vorgabe-Szene von make_test_glb (Haus 12x9x15 m auf Platte 40x30 m), cameras 'auto', einmal ohne und einmal mit gelaende true -> erwartet KEIN Abbruch 'NICHT RENDERN' mehr; je Kamera rahmung.wirksame_bildbreite, rahmung.gerahmt_nach, kamera.fuellgrad, Gebaeudeanteil, verdict. 4) VORSCHAU-ZEIT: auf derselben Grundlage zweimal hintereinander eine Vorschau (Seed 482913, dann 1) -> je Kamera Zeit Pruefung (Phase pruefung bis Kamera fertig), Gesamtzeit; erwartet: die zweite Vorschau spart die Nullanker (Ordner _nullanker, Anzahl Dateien angeben). Systemlast dazu angeben. 5) ASSISTENT mit qwen3:14b (nur wenn das Modell liegt): eine Frage ueber die Mac-App oder POST /api/assistent -> antwortet, Zeit, Modell in GET /api/heim. Dann 'Anwenden' -> ollama ps vorher/nachher: qwen3:14b entladen, kein anderes Modell angefasst. 6) ENTLADEN NUR DES EIGENEN MODELLS: (a) qwen3:14b geladen (ollama run qwen3:14b '' mit keep_alive 10m), keine Frage laufend, ein Bruecken-Auftrag mit idle_window_only -> Abholer entlaedt qwen3:14b und rechnet; Satz aus dem Abholer-Protokoll woertlich. (b) Liegt ein Kosmo-Modell (z. B. qwen3:30b) auf der Karte: NICHT selbst laden; nur wenn es ohnehin liegt, beobachten, dass der Abholer es nicht entlaedt und wartet (Satz). (c) AIIMAGING_SPRACHMODELL=qwen3:30b fuer einen Probelauf der Flaeche: 'Anwenden' entlaedt nicht, Satz 'Nicht entladen: ... KosmoOrbit ...'. NICHT: Code aendern, Schwellen senken, Kosmo-Modelle laden oder entladen, ollama pull ohne Owner, Dienste von KosmoOrbit anfassen, Mappe veraendern. Eigene Probeauftraege danach aufraeumen.",
+ "erstellt": "2026-10-20T17:30:07Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+ },
+ "params": {
+  "folgt_auf": "auf-20261020-290",
+  "entscheide": [
+   "104",
+   "104a",
+   "106d"
+  ],
+  "einbau": "C76",
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), ob qwen3:14b lag (ollama list), Systemlast.",
+  "1: Status/Code je Teil (a–d), Satz der 409 woertlich, Inode-Vergleich model.glb, Zeit POST->Antwort mit und ohne Modell, laengste Antwortzeit von health/fortschritt waehrend des Uploads; (e) nur wenn gemacht.",
+  "2: kamera_n, welche Kamera doppelt_von, Zeiten, rest_s-Folge.",
+  "3: je Lauf und Kamera rahmung.wirksame_bildbreite, gerahmt_nach, fuellgrad, Gebaeudeanteil, verdict.reason woertlich.",
+  "4: je Vorschau und Kamera Zeit Pruefung und Gesamt; Anzahl Dateien in _nullanker vor/nach.",
+  "5: Antwortzeit, Modell in /api/heim, ollama ps vor/nach Anwenden.",
+  "6: Saetze woertlich (Abholer, Anwenden), ollama ps vor/nach; was nicht beobachtbar war.",
+  "Urteil in einem Satz: Ist die Variante am Mac ohne Zeitueberschreitung bestellbar, und rechnet eine Szene mit Gelaendeplatte?"
+ ],
+ "rang": 78
+}
