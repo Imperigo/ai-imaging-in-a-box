@@ -1,7 +1,6 @@
-# Visbox 0.3.0 — Fassungsblatt (Entwurf, 20.10.2026)
+# Visbox 0.3.0 — Fassungsblatt (20.10.2026)
 
-**Codestand:** Entwurf auf `claude/ai-imaging-assessment-pstkyp` — die Nummer ist noch **nicht** erhöht (das löst die
-Freigabe aus und geschieht getrennt). Vorgänger 0.2.12 = Tag `v0.2.12` (20.10.2026)
+**Codestand:** Fassung 0.3.0 auf `main` (die Mac-App bringt die Knotenansicht selbst mit); Vorgänger 0.2.12 = Tag `v0.2.12` (20.10.2026)
 
 **Grundlage:** Owner-Auftrag 20.10.2026 «baue nächste version richtig!»; Plan
 `docs/PLAN_VISBOX_EIGENSTAENDIG_2026-10-20.md` (Schritt 1); Entscheide 103–103c; Protokoll 74 §146
@@ -26,7 +25,7 @@ jede Änderung an den Knoten kam über `git pull` am Heim-PC statt mit der App.
 | Mac: Formulare mit Datei (Modell beim Bestellen, «Datei laden …») gehen als fertige Bytes an die App, damit unterwegs nichts verloren geht | Plan Schritt 1 | gebaut, mit Probe; am Gerät unbestätigt |
 | Prüfstrecke: Der Bau der Knotenansicht liegt im Mac-Bündel (`Contents/Resources/Knoten`); ein neuer Bau startet den Mac-Lauf | Plan Schritt 1 | gebaut, mit Probe |
 
-## Annahmen (Entscheide 103–103c)
+## Entschieden (Entscheide 103–103c, Owner 20.10.2026)
 
 Die Fragen aus Plan §9 hat der Owner am 20.10.2026 per Auswahl entschieden (`docs/ENTSCHEIDE_IPAD_2026-09-21.md`):
 
@@ -35,7 +34,7 @@ Die Fragen aus Plan §9 hat der Owner am 20.10.2026 per Auswahl entschieden (`do
 * **103a — Das iPad holt die Mappe vom Mac.** In diesem Schritt unverändert (das iPad spricht weiter mit dem Heim-PC);
   Schritt 4.
 * **103b — Der Vorführmodus entfällt.** In diesem Schritt **noch nicht abgebaut**: Ohne Heim-PC zeigt die Mac-App ihn
-  weiter. Die Zeile «ohne Heim-PC» kommt in Schritt 2, erst nach einem Entwurfsblatt.
+  weiter. Die Zeile «ohne Heim-PC» kommt in Schritt 2, nach Blatt 28 der Entwurfsfläche.
 * **103c — Die Visbox-Seite kommt nicht in die App, sie wird Knoten.** In diesem Schritt kommt sie **weiter vom
   Heim-PC** («Darstellung → Visbox-Seite»); ins Bündel kommt nichts von ihr.
 
