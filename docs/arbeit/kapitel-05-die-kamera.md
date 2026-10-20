@@ -221,7 +221,7 @@ prüft die Erfindung.* Am Gerät steht die Bestätigung aus (`auf-20260924-173`,
 C22 *gebaut, am Gerät unbestätigt*).
 
 **Und am 29.09.2026 hatte die Erkennung recht, wo es zuerst nach einem Fehler aussah:** Beim
-Erzeugen der Vertragsbeispiele für KosmoOrbit hielt der Abholer die zweite von zwei eigens
+Erzeugen der Vertragsbeispiele hielt der Abholer die zweite von zwei eigens
 gesetzten Kameras für einen Zwilling der ersten. Die beiden Standpunkte lagen
 punktgespiegelt um die Gebäudemitte, und der Testbau ist
 ein Rechteck — beide Tiefenkarten waren wirklich gleich (nächster Punkt 6,030965 gegen
@@ -248,7 +248,7 @@ zum 11.09.2026 unbedingt auf die Dreiecksdatei zurückgebogen hat. **Der Weg war
 ungenutzt, sondern blockiert** — und seit dem 11.09. ist er es nicht mehr, ohne dass es
 jemand wusste. Die Frage ist damit neu gefasst und erneut gestellt.
 
-> **Nachtrag 29.09.2026 — über die Mappe lieferbar, über KosmoOrbit gebaut und
+> **Nachtrag 29.09.2026 — über die Mappe lieferbar, über den Bestellweg gebaut und
 > unbestätigt.** Die strukturelle Lücke ist auf dem eigenen Weg geschlossen: Seit dem
 > 22.09.2026 liest die Mappe die Räume einer IFC-Datei **einmal beim Anlegen**, vor der
 > Umwandlung, und hängt sie bei einer Innenbestellung an die Kette. Am 23.09.2026 auf der
@@ -261,8 +261,8 @@ jemand wusste. Die Frage ist damit neu gefasst und erneut gestellt.
 > Normierung, bei der das fernste Geometriepixel den Wert des Hintergrunds bekommt); und
 > beurteilt ist nur das Blender-Bild, kein erzeugtes.
 >
-> Der Weg über KosmoOrbit ist ein eigener Posten: Innenbestellungen von dort kommen durch,
-> gebaut, **am Gerät unbestätigt** (C19). Eine echte Innenbestellung aus KosmoOrbit hatte
+> Der Weg über den Bestellweg der Knotenansicht ist ein eigener Posten: Innenbestellungen von dort kommen durch,
+> gebaut, **am Gerät unbestätigt** (C19). Eine echte Innenbestellung auf diesem Weg hatte
 > es laut Messmaschine bis zum 23.09.2026 nicht gegeben; seither ist keine bekannt.
 
 **Zweitens: Die Standpunkte sind gerechnet, nicht beurteilt.** Dass alle acht Ecken im

@@ -77,7 +77,7 @@ Messung **nicht** als «hat getrennt» zählt.
 ### Nachtrag 29.09.2026: im Vertrag ja, in der Anzeige nein
 
 Der Satz «die dritte Antwort stand auf beiden Seiten der Schnittstelle» stimmt für den
-**Vertrag** und hat für die **Anzeige** nicht gestimmt. Am 29.09.2026 hat KosmoOrbit auf
+**Vertrag** und hat für die **Anzeige** nicht gestimmt. Am 29.09.2026 hat die Gegenseite auf
 die Frage geantwortet, ob ihr Werkzeug ein Urteil ohne Messung annehmen kann
 (`auf-20260922-142`):
 
@@ -294,7 +294,7 @@ meldete, wenn eine Antwort längst dalag.
   Betrieb liefert die Tiefenkarte flach, die Proben fütterten Zeilen. *Eine Probe, die die
   Datenform selbst erfindet, prüft die Erfindung.* Gebaut vor dieser Regel — und einen
   Monat lang von keiner Probe bemerkt.
-* **Die Sonne stand um 180 Grad verdreht** (24.09.2026). Der Vertrag von KosmoOrbit zählt
+* **Die Sonne stand um 180 Grad verdreht** (24.09.2026). Der Auftragsvertrag zählt
   die Himmelsrichtung ab Nord, wir zählten ab Süd. Im Code stand eine Warnung: *«ob der
   fremde Vertrag von Norden zählt, ist NICHT geklärt»* — dabei stand die Antwort längst
   in ihrem Vertrag. Die Warnung sah aus wie Sorgfalt und ersetzte das Nachsehen.
@@ -391,8 +391,8 @@ weniger, aber es ist nachprüfbar.
 
 | Abschnitt | Im Repo |
 |---|---|
-| 7.2 Die dritte Antwort | `src/aiimaging/kosmo_szene.py`, `docs/METHODE_2026-09-10.md` |
-| 7.2 Vertrag ja, Anzeige nein (Nachtrag) | `auftraege/ergebnisse/auf-20260922-142-antwort-geometry-gates-und-qa-je-kamera.md`, `kosmo_szene.nur_vertragsfelder`, `docs/sitzungen/2026-09-29_sitzung-72.md` §5 |
+| 7.2 Die dritte Antwort | Szenen-Einlesen in `src/aiimaging/`, `docs/METHODE_2026-09-10.md` |
+| 7.2 Vertrag ja, Anzeige nein (Nachtrag) | `auftraege/ergebnisse/auf-20260922-142-antwort-geometry-gates-und-qa-je-kamera.md`, `nur_vertragsfelder` (Szenen-Einlesen), `docs/sitzungen/2026-09-29_sitzung-72.md` §5 |
 | 7.4 Ordnung an Tiefensprüngen (Nachtrag) | `docs/sitzungen/2026-09-24_sitzung-71.md` §18 und §21, `auftraege/ergebnisse/auf-20260924-172.json` |
 | 7.5 Die Auflösung (Nachtrag) | `auftraege/ergebnisse/auf-20260918-115.json`, `docs/sitzungen/2026-09-21_sitzung-43.md` §2 |
 | 7.6 Weitere Fälle (Nachtrag) | `docs/sitzungen/2026-09-24_sitzung-71.md` §16 und §22, `docs/sitzungen/2026-09-23_sitzung-69.md` §9, Commit `9cfdf13` |

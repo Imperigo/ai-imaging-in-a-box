@@ -137,7 +137,7 @@ hiermit deklariert.
 libquadmath                                        LGPL-2.1-or-later
 Teil der GCC-Laufzeitbibliotheken, https://gcc.gnu.org/
 
-AUFLOESUNG: KEINE - offener Punkt, siehe unten
+AUFLOESUNG: Mitgeliefert - Owner-Entscheid 101 (20.10.2026), siehe unten
 
 Statisch mitgeliefert in numpy-Wheels. numpy deklariert BSD-3-Clause; die
 LGPL-Komponente wird von der Wheel-Angabe nicht genannt.
@@ -164,12 +164,11 @@ aus CLAUDE.md.
   verlangt fuer JEDE LGPL-Bibliothek die Prozessgrenze, ohne Ausnahme fuer
   statisch in einem permissiven Wheel mitgelieferte Anteile.
 
-  ENTSCHIEDEN WIRD DAS NICHT HIER. Ob die Hausregel auch fuer eine LGPL-
-  Komponente gilt, die niemand direkt einbindet, sondern die in einem
-  BSD-3-Wheel mitreist, ist eine Owner-Frage; sie steht in der Entscheidliste
-  von Sitzung 13. Bis dahin bleibt der Zustand hier benannt statt begradigt -
-  ein stillschweigend entfernter Import waere eine Antwort auf eine Frage, die
-  niemand gestellt hat.
+  ENTSCHIEDEN AM 20.10.2026 (Owner-Entscheid 101, «Ausnahme fuer
+  Mitgeliefertes»): Eine LGPL-Komponente, die unveraendert in einem
+  permissiven Paket mitreist und die niemand direkt einbindet, ist erlaubt -
+  deklariert hier, austauschbar (Auflagen 2 und 3). Die Prozessgrenze gilt
+  weiter fuer jede LGPL-Bibliothek, die wir selbst einbinden.
 
 --------------------------------------------------------------------------------
 libgomp, libgfortran            GPL-3.0-or-later WITH GCC-exception-3.1

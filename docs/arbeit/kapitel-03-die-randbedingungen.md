@@ -110,7 +110,7 @@ Messung ist bestellt und steht aus.
 >
 > 1. nur am Heimrechner und nur mit Schalter (`AIIMAGING_FORSCHUNGSMODELLE=1`, für einen
 >    Messlauf, nie dauerhaft);
-> 2. nie Vorgabe, nie bestellbar — auch nicht über den Bestellweg von KosmoOrbit;
+> 2. nie Vorgabe, nie bestellbar — auch nicht über den Bestellweg der Knotenansicht;
 > 3. markiert — jeder Lauf trägt `nur_forschung`, `pruefe_lizenz` sagt weiter «nicht im
 >    Produkt»;
 > 4. vor einem Verkauf entfernt oder lizenziert, auch darauf trainierte LoRAs.
@@ -178,17 +178,17 @@ Die Prozessgrenze hat eine Folge, die im Entwurf oben fehlt: **Was zwischen den 
 liegt, ist eine Datei, und ihr Inhalt ist der eigentliche Vertrag.** Am Glas ist das zweimal
 sichtbar geworden.
 
-* **24.09.2026:** Die Ausfuhr von KosmoOrbit schreibt Glas mit Deckkraft 0,25 **und**
+* **24.09.2026:** Die Modellausfuhr, die bei Visbox ankommt, schreibt Glas mit Deckkraft 0,25 **und**
   Durchlass (`KHR_materials_transmission`) 1. Blender macht aus beidem etwas, und rund
-  drei Viertel der Strahlen laufen ungebrochen hindurch. Die Antwort an KosmoOrbit war
-  darum kein neues Feld und keine Rendereinstellung, sondern: das Material in ihrer Datei
+  drei Viertel der Strahlen laufen ungebrochen hindurch. Die Antwort an die liefernde Seite war
+  darum kein neues Feld und keine Rendereinstellung, sondern: das Material in der Datei
   deckend (OPAQUE, Deckkraft 1) mit Durchlass ausführen. Eine eigene Glas-Regel im
   Renderaufruf wurde **bewusst nicht** gesetzt, weil sie auch unsere Tiefenkarten und damit
   die Geometrieprüfung verändert hätte — erst messen.
-* **29.09.2026, und der Fehler war unserer:** KosmoOrbit hat diesen Vorschlag angenommen,
+* **29.09.2026, und der Fehler war unserer:** Die liefernde Seite hat diesen Vorschlag angenommen,
   **unter der Bedingung**, dass unsere Transparenz-Prüfung Durchlass mitzählt. Nachgesehen:
   Sie tat es nicht. Sie zählte nur Materialien mit `alphaMode: BLEND`. Das Glas, das
-  KosmoOrbit künftig liefern will, wäre bei uns als «keine durchsichtigen Materialien»
+  künftig geliefert werden soll, wäre bei uns als «keine durchsichtigen Materialien»
   gemeldet worden. Behoben am selben Tag (`modellstand._durchlass`, zwei Proben in
   `tests/test_modellstand.py`); im Einbau-Stand als C33 *gebaut, am Gerät unbestätigt*.
 
@@ -280,8 +280,8 @@ den Ergebnissen.
 > **Nachtrag 29.09.2026 — die Oberflächen sind gekommen, und der Kern hat es nicht
 > gemerkt.** Der letzte Absatz ist überholt: Seit dem 21.09.2026 gibt es eine eigene
 > Oberfläche am Rechner (`oberflaeche/`, gebaut mit der Standardbibliothek), seit dem
-> 22.09.2026 das Gerüst einer iPad-App (`ipad/`), und seit dem 24.09.2026 eine wörtliche
-> Kopie der Knotenansicht von KosmoOrbit (`kosmovis/`, Entscheid E26). Alle drei liegen
+> 22.09.2026 das Gerüst einer iPad-App (`ipad/`), und seit dem 24.09.2026 die
+> Knotenansicht von Visbox (Entscheid E26). Alle drei liegen
 > **neben** `src/aiimaging/`, nicht darin.
 >
 > Das ist die Probe auf diese Regel, und sie ist gefahren: Am 29.09.2026 lädt ein einfacher

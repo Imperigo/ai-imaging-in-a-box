@@ -64,21 +64,20 @@ MARKE = re.compile(r"^AUFLOESUNG:\s*(\S+)", re.M)
 #: Die drei zugelassenen Werte. ``KEINE`` ist ein **benannter offener Punkt** und keine
 #: Auflösung — er ist zugelassen, damit ein ungelöster Fall im `NOTICE` sichtbar stehen
 #: kann, statt in einem Absatz zu verschwinden.
-AUFLOESUNGEN = ("Prozessgrenze", "Lizenzausnahme", "KEINE")
+#:
+#: ``Mitgeliefert`` (Owner-Entscheid 101, 20.10.2026): eine LGPL-Komponente, die unveraendert
+#: in einem permissiven Paket mitreist und die niemand direkt einbindet — erlaubt, deklariert,
+#: austauschbar. Fuer alles, was wir selbst einbinden, gilt weiter die Prozessgrenze.
+AUFLOESUNGEN = ("Prozessgrenze", "Lizenzausnahme", "Mitgeliefert", "KEINE")
 
 #: Welche Einträge heute **ohne** Auflösung dastehen — mit dem Grund, und einzeln.
 #:
 #: Dieselbe Bauart und dieselbe Gefahr wie ``ABSICHTLICH`` in `tools/tote_kanten.py`:
 #: *Eine wachsende Liste hier ist ein Zeichen dafür, dass weggesehen statt geprüft wird.*
 #: Sie ist darum kurz zu halten, und jeder Eintrag ist eine Owner-Frage und kein Freibrief.
-OFFEN_UND_BENANNT = {
-    "libquadmath": (
-        "LGPL-2.1-or-later, statisch im numpy-Wheel. numpy wird an genau EINER Stelle im "
-        "Produktpfad importiert (`aiimaging.render`, verzögert, für die Umrechnung einer "
-        "16-Bit-Tiefenkarte) — damit erreicht libquadmath den Produktprozess. Nach der "
-        "LGPL selbst unproblematisch (unverändert, austauschbar); die Hausregel in "
-        "CLAUDE.md ist strenger und verlangt die Prozessgrenze auch hier. Ob sie für eine "
-        "LGPL-Komponente gilt, die in einem BSD-3-Wheel mitreist, ist eine Owner-Frage."),
+OFFEN_UND_BENANNT: dict[str, str] = {
+    # libquadmath stand hier vom 26.08. bis 20.10.2026 — entschieden mit Owner-Entscheid 101
+    # («Ausnahme fuer Mitgeliefertes»), seither `AUFLOESUNG: Mitgeliefert`.
 }
 
 #: Blöcke, die keine Komponenten sind: Kopf des Dokuments und leere Abschnitte.

@@ -85,11 +85,11 @@ rechnet, hat sich an vier Stellen verschoben. Weil das Kapitel über die Kette s
 nicht über Modelle, hier nur das, was die Form der Kette berührt:
 
 1. **Das Vorgabemodell ist `z-image-turbo`** — in der Bibliothek seit dem 18.08.2026. Auf
-   dem Weg der Bestellungen aus KosmoOrbit rechnete eine Bestellung **ohne Modellangabe**
+   dem Weg der Bestellungen aus der Knotenansicht rechnete eine Bestellung **ohne Modellangabe**
    bis zum 29.09.2026 dagegen mit dem Bearbeitungsmodell `qwen-image-edit-2511`: 349 s je
    Bild statt rund 47 s, die Tiefe nur als Eingangsbild statt als Steuerung, und am Testbau
    ein erfundenes Haus statt des Quaders. Seit dem 29.09.2026 gilt dort der Wert aus dem
-   Vertrag von KosmoOrbit, `z-image-turbo` (Einbau-Stand C34). Das Ergebnis nennt seither
+   Auftragsvertrag, `z-image-turbo` (Einbau-Stand C34). Das Ergebnis nennt seither
    an der obersten Ebene, womit gerechnet wurde (`engine_used`, `engine_license`,
    `guidance_applied`; C35).
 2. **`qwen-image-2512` ist stillgelegt** (Owner-Entscheid 29.09.2026). Es war das einzige
@@ -103,7 +103,7 @@ nicht über Modelle, hier nur das, was die Form der Kette berührt:
    3.2). Laut Modellkarte hat es **kein** ControlNet. Ob die Geometrie über das
    Eingangsbild überhaupt ankommt, ist die eigentliche Frage — bei `qwen-image-edit-2511`
    kam sie nicht an (`auf-20260818-09` und `auf-20260818-10`). Bestellt als `auf-20260929-178`.
-4. **Die Ebenen, Schritt 1** (Entscheid E124 von KosmoOrbit, bei uns gebaut am
+4. **Die Ebenen, Schritt 1** (Entscheid E124, gebaut am
    29.09.2026, C36). Eine Bestellung kann mit `render.passes` die Bildebenen anfordern, die
    der Knoten `multipass` ohnehin rechnet — `schoenbild`, `tiefe`, `material-id` oder
    `"alle"`. Sie kommen je Kamera als `<kamera>__<art>.png` zurück, mit einem Feld `ebenen`,
@@ -175,11 +175,11 @@ lange **keinen Aufrufer**.
 > Werkstatt abgearbeitet werden, benutzt den Graphen weiterhin nicht.*
 >
 > **Nachtrag vom 29.09.2026 — und daran hat auch die Knotenansicht nichts geändert.** Seit
-> dem 24.09.2026 liegt eine Kopie der Knotenansicht von KosmoOrbit im Repo (`kosmovis/`),
+> dem 24.09.2026 liegt die Knotenansicht von Visbox im Repo,
 > und über sie ist am selben Tag das erste Bild entstanden (`auf-20260924-164`: Graph
 > Modell → Prompt → Render, «Ausführen», «Freigeben», Bild am Render-Knoten). Gerechnet hat
 > es aber der **bestehende Abholer**, ohne zweite Rechenstrecke. Die Knoten, die man dort
-> sieht, sind der Graph von KosmoOrbit, nicht `kette.baue_kette`. *Ein Bild über eine
+> sieht, sind der Graph der Knotenansicht, nicht `kette.baue_kette`. *Ein Bild über eine
 > Knotenansicht ist nicht dasselbe wie ein Bild über den Graphen dieses Kapitels.*
 
 ### Und was «zwei Wege» wirklich hiess — nachgemessen am 21.09.2026
@@ -315,6 +315,6 @@ austauschbar gebaut wie überall — es gibt nur nichts, womit man austauschen k
 | 4.6 Die offene Messung | `auftraege/offen/auf-20260919-123.json` |
 | 4.6 Ihr Ergebnis (Nachtrag) | `auftraege/ergebnisse/auf-20260919-123.json`, `docs/sitzungen/2026-09-21_sitzung-41.md` |
 | 4.2 Erster echter Lauf (Nachtrag) | `tools/beweis/31_der_weg_des_produkts.py`, `auftraege/ergebnisse/auf-20260922-137.json`, `docs/sitzungen/2026-09-22_sitzung-62.md` |
-| 4.2 Render-Knoten (Nachtrag) | `backbone.VORGABE_BACKBONE`, `kosmo_szene` (Vorgabe ohne `vis.backbone`), `docs/EINBAU_STAND.md` C34–C36 und C38, `tests/test_ebenen_e124.py`, `docs/sitzungen/2026-09-29_sitzung-72.md` §4, §5, §9 |
+| 4.2 Render-Knoten (Nachtrag) | `backbone.VORGABE_BACKBONE`, Szenen-Einlesen in `src/aiimaging/` (Vorgabe ohne `vis.backbone`), `docs/EINBAU_STAND.md` C34–C36 und C38, `tests/test_ebenen_e124.py`, `docs/sitzungen/2026-09-29_sitzung-72.md` §4, §5, §9 |
 | 4.3 Speicher in der Mappe (Nachtrag) | `docs/sitzungen/2026-09-21_sitzung-51.md` §3, `docs/sitzungen/2026-09-23_sitzung-70.md` §11 |
 | 4.4 Bild über die Knotenansicht (Nachtrag) | `auftraege/ergebnisse/auf-20260924-164.json`, `docs/sitzungen/2026-09-24_sitzung-71.md` §7 und §12 |

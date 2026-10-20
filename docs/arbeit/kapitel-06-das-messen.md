@@ -193,13 +193,13 @@ Urteil, sondern eine Warnung. Besteht dieselbe Messung **auch** gegen die fremde
 lautet das Urteil **nicht entscheidbar** — nicht «bestanden».
 
 > **Nachtrag 29.09.2026 — im Betrieb fehlt die Gegenprobe, und das Urteil sagt es.** Auf
-> dem Weg, auf dem Bestellungen aus KosmoOrbit gerechnet werden, stehen die zwei Tore seit
+> dem Weg, auf dem Bestellungen aus der Knotenansicht gerechnet werden, stehen die zwei Tore seit
 > dem 22.09.2026 je Kamera im Ergebnis (`geometry_gates`). Eine fremde Geometrie wird dort
 > aber **nicht** gerechnet. Das Urteil ist darum vorläufig und sagt es selbst
 > (`counter_check_status: fehlt`, `released: false` — auf diesem Weg immer). Der Satz
 > oben gilt also im Betrieb in seiner schwachen Form: Es gibt eine Warnung, kein Urteil.
 >
-> **Und drüben kam es bis heute nicht an.** Die Antwort von KosmoOrbit vom 29.09.2026
+> **Und drüben kam es bis heute nicht an.** Die Antwort der Gegenseite vom 29.09.2026
 > (`auf-20260922-142`): Ihr Einlesen streift ein Feld, das nicht im Vertrag steht, ab —
 > `geometry_gates` fällt dort weg und wird nur im Konsolenlog gemeldet. Sie wollen es in den
 > Vertrag nehmen, nach einem echten Beispiel von uns; gebaut ist es drüben nicht.

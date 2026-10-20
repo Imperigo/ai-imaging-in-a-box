@@ -37,8 +37,8 @@ Anhang B der Vertiefungsarbeit.
 **Owner-Entscheid 21.09.2026, und er ist der wichtigste Entscheid auf diesem Blatt:**
 
 > *Das AI-Imaging soll auch **Volumen erfinden** dürfen — nach einer Skizze, ins fertige
-> Bild gezeichnet, für schnelle Variantenstudien. Und wenn ein Bild überzeugt, soll Kosmo
-> versuchen, es im Modell nachzubauen.*
+> Bild gezeichnet, für schnelle Variantenstudien. Und wenn ein Bild überzeugt, soll
+> versucht werden, es im Modell nachzubauen.*
 
 Damit hat die Software **zwei** Aufgaben, und sie sind fast entgegengesetzt:
 
@@ -52,7 +52,7 @@ Damit hat die Software **zwei** Aufgaben, und sie sind fast entgegengesetzt:
 **Und die Prüfung ist in beiden dieselbe.** Das ist der Punkt, an dem das zusammenpasst:
 Die Software vergleicht Bild und Modell. Heute liest man daraus ein Urteil ab. Im
 Entwurfsmodus liest man **dieselbe Zahl** als Differenz — *und genau diese Differenz ist
-die Übergabe an Kosmo.* Ohne sie hätte Kosmo nur ein Bild und müsste raten, was neu ist.
+die Übergabe ans Modell.* Ohne sie gäbe es nur ein Bild, und wer nachbaut, müsste raten, was neu ist.
 
 > *Der Riegel und der Messstab sind dasselbe Gerät. Nur liest man im einen Modus ein
 > Urteil ab und im anderen eine Differenz.*
@@ -86,7 +86,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | 4 | **KI-Bild** | **gebaut** | Braucht eine Grafikkarte. Der Vorgabeweg lief dort drei Wochen lang gar nicht (repariert 21.09.). |
 | 5 | **hineinzeichnen** | **gebaut, rechnet mit Hinweis** | Seit 22.09. lässt sich eine Skizze rechnen, seit 23.09. auch aus der iPad-App, auf ein Bild als Unterlage. Auf dem Vorgabemodell kommt sie gemessen nicht an — das Bild sagt es dazu. Die App ist am Gerät unbestätigt. |
 | 6 | **neues Bild** | **nicht gebaut** | Folgt aus 5. |
-| 7 | **zurück ins Modell** (Kosmo baut nach) | **nicht gebaut** | Neu seit 21.09. Braucht die Differenz aus Schritt 6. |
+| 7 | **zurück ins Modell** (das Modell wird nachgebaut) | **nicht gebaut** | Neu seit 21.09. Braucht die Differenz aus Schritt 6. |
 
 **Dazu, quer über alle Schritte:**
 
@@ -135,11 +135,10 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 * **Ziel:** Bis Freitagabend eine Visbox-App für den Mac zum Herunterladen — sie baut beim
   Öffnen die Leitung nach Hause selbst auf, reicht das iPad durch, zeigt vorher gerechnete
-  Bilder, wenn der Heim-PC fehlt, und hat einen ersten Assistenten. Dazu ein Lieferblatt an den
-  Integrator.
+  Bilder, wenn der Heim-PC fehlt, und hat einen ersten Assistenten.
 * **Wie entschieden:** Zwanzig Fragen an den Owner, zwanzig Antworten (Entscheide 43–62). Drei
-  davon gehen sofort an KosmoOrbit: «nicht festgestellt» beim Lieferstatus soll drüben erlaubt
-  sein; die Lizenz von Qwen-2.1 gilt bis v1.0 als offen; Union-2.1 und die Formprüfung bleiben
+  davon betreffen den Auftrags- und Ergebnisvertrag: «nicht festgestellt» beim Lieferstatus soll
+  erlaubt sein; die Lizenz von Qwen-2.1 gilt bis v1.0 als offen; Union-2.1 und die Formprüfung bleiben
   bei uns.
 * **Bleibt bewusst draussen:** Entwurfsmodus (Entscheid bis 15.10.), Probe am Gerät (erst nach
   der Abgabe, bis Freitag gibt es kein iPad).
@@ -148,7 +147,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 ### 01.10.2026 (Vormittag) · Die Vorführfassung: was es schon gibt, wird mitbenutzt
 
 * **Befund:** Die Leitung nach Hause (Tailscale) und das Sprachmodell (Qwen3 über Ollama) laufen
-  am Heim-PC schon für KosmoOrbit. Visbox benutzt sie mit, statt eigene zu bauen.
+  am Heim-PC schon. Visbox benutzt sie mit, statt eigene zu bauen.
 * **Gemessen am Heim-PC:** Sprachmodell und Bildmodell passen nicht gleichzeitig auf die
   Grafikkarte; der Wechsel kostet rund 4 Sekunden. Deutsche Werkzeugaufrufe 3 von 3 richtig.
 * **Behoben:** Über die Weiterleitung kam jede Anfrage ohne Kennwort durch. Jetzt wird sie ohne
@@ -252,10 +251,10 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Gefunden:** Am Heim-PC füllte das Gebäude oft nur 2 % des Bildes, weil die Kamera das
   ganze Grundstück einrahmte. Das Bildmodell hat so ein Gebäude einfach übermalt.
 * **Umgestellt:** Am Heim-PC rahmt die Kamera jetzt das Gebäude (21 % des Bildes). Für
-  KosmoOrbit-Bestellungen ist es vorbereitet und wird eingeschaltet, sobald ein Beweislauf
+  Bestellungen über die Knotenansicht ist es vorbereitet und wird eingeschaltet, sobald ein Beweislauf
   zeigt, dass die Form dann wirklich hält.
 * **Nachtrag, Beweislauf bestanden:** Mit Gebäude-Rahmung stand die Form in 6 von 8 Bildern,
-  mit Grundstücks-Rahmung in keinem. Jetzt gilt es auch für KosmoOrbit-Bestellungen.
+  mit Grundstücks-Rahmung in keinem. Jetzt gilt es auch für Bestellungen über die Knotenansicht.
   **Schlechte Nachricht dazu:** Keine unserer Zahlen erkennt zuverlässig, ob die Form steht —
   das hat das Auge entschieden.
 * **Qwen-Image-2.1** taugt auch als Bildbearbeiter nicht; das freie Qwen-Bearbeitungsmodell
@@ -289,18 +288,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 * **Entschieden (E128):** Das neue Qwen-Bildmodell wird regulär eingebaut, nicht nur zum
   Forschen. Die Lizenz wird vor einer Veröffentlichung gekauft oder das Modell ersetzt.
-* **Eingebaut bei uns:** KosmoOrbit kann es bestellen; es ist nie Standard, und jedes Ergebnis
+* **Eingebaut:** Man kann es über die Knotenansicht bestellen; es ist nie Standard, und jedes Ergebnis
   sagt «Lizenz offen», damit niemand es aus Versehen veröffentlicht.
-* **Offen:** KosmoOrbit muss den Namen und den Vermerk in seinen Vertrag aufnehmen (Frage ist
+* **Offen:** Der Name und der Vermerk müssen noch in den Auftragsvertrag (Frage ist
   gestellt). Und die eigentliche Frage bleibt: Übernimmt das Modell die Gebäudeform? Der
   Heim-PC misst es gerade.
 
 ### 30.09.2026 · Keine Dauerwarnung mehr an Innenbildern, und leere Angaben werden benannt
 
-* **Innenbilder tragen drüben kein Warnzeichen mehr.** Der Satz «Innenansicht bestellt» ist
+* **Innenbilder tragen kein Warnzeichen mehr.** Der Satz «Innenansicht bestellt» ist
   eine Auskunft, kein Vorbehalt (Entscheid des Owners). Er steht jetzt in einem Feld für
-  Hinweise. **Offen:** KosmoOrbit zeigt dieses Feld noch gar nicht an — der Auftrag dafür
-  liegt beim UI-Worker.
+  Hinweise.
 * **Unser Eingang nimmt leere Angaben an und sagt, welche.** Schickt ein Vorgänger zum Beispiel
   «Geometrie: unbekannt», kommt keine unverständliche Fehlermeldung mehr, sondern der Satz, was
   gefehlt hat. Ohne Geometrie entsteht trotzdem kein Auftrag.
@@ -310,32 +308,32 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Qwen-Image-2.1 darf jetzt rechnen — aber nur zum Forschen.** Seine Lizenz verbietet den
   Verkauf. Weil ein Verkauf noch fern ist, hat der Owner eine Ausnahme erlaubt.
 * **Die Grenzen sind eingebaut, nicht nur aufgeschrieben:** Das Modell lädt nur am Heim-PC
-  mit einem eigenen Schalter, ist nie Standard und kann von KosmoOrbit nicht bestellt werden.
+  mit einem eigenen Schalter, ist nie Standard und kann über die Knotenansicht nicht bestellt werden.
   Jedes Bild daraus trägt den Vermerk «nur Forschung».
 * **Offen:** Ob es auf der Grafikkarte läuft und ob es die Form des Gebäudes übernimmt. Es
   hat keine eigene Formsteuerung — das ist die eigentliche Frage. Der Heim-PC misst es.
 
-### 29.09.2026 (später) · KosmoOrbit hat geantwortet — und bekommt echte Beispiele
+### 29.09.2026 (später) · Die Fragen zum Vertrag sind beantwortet — und es gibt echte Beispiele
 
-* **Alle sechs offenen Fragen an KosmoOrbit sind beantwortet.** Sie nehmen die vier
+* **Alle sechs offenen Fragen zum Auftrags- und Ergebnisvertrag sind beantwortet.** Sie nehmen die vier
   Vorschläge aus der Bildstrecke an, zwei davon mit Bedingungen.
-* **Glas:** KosmoOrbit will Glas künftig «deckend mit Durchlass» ausgeben. Unsere Prüfung
+* **Glas:** Die Modellausfuhr soll Glas künftig «deckend mit Durchlass» ausgeben. Unsere Prüfung
   hätte das bis heute als Fehler gemeldet, weil sie nur den alten Weg kannte. Jetzt zählt
-  sie beides. **Das war ein echter Fehler bei uns**, gefunden, weil sie nachgefragt haben.
+  sie beides. **Das war ein echter Fehler bei uns**, gefunden, weil nachgefragt wurde.
 * **Zusatzbilder je Ansicht (Tiefe, Material, Schönbild):** Man kann sie jetzt bestellen,
   und sie kommen mit einer Erklärung in Zahlen. Fehlt eines, steht die Ansicht als «nicht
-  geliefert» da. Angezeigt werden sie drüben erst nach einem echten Lauf.
-* **Ohne Modellangabe rechnet jetzt das schnelle Modell** — so steht es in ihrem Vertrag.
+  geliefert» da.
+* **Ohne Modellangabe rechnet jetzt das schnelle Modell** — so steht es im Auftragsvertrag.
   Das Ergebnis sagt neu, mit welchem Modell gerechnet wurde.
-* **Die Prüf-Auskunft spricht jetzt ihre Wörter** («gemessen», «nicht gemessen»), damit ihre
-  Anzeige ein ungeprüftes Bild nicht mehr als «durchgefallen» liest.
+* **Die Prüf-Auskunft spricht jetzt die Wörter des Vertrags** («gemessen», «nicht gemessen»), damit
+  die Anzeige ein ungeprüftes Bild nicht mehr als «durchgefallen» liest.
 * **Offen:** Die Beispiele sind mit echtem Blender erzeugt, das KI-Bild und die Prüfung
   darin sind Platzhalter. Den ganz echten Lauf macht der Heim-PC.
 
 ### 29.09.2026 · Drei Aufräum-Entscheide, und die Post ist endlich angekommen
 
-* **KosmoOrbit hat unsere Antworten jetzt.** Sie lagen fünf Tage nur bei uns, weil der
-  Botengang fehlte. Jetzt stehen sie direkt in deren Eingangsordner.
+* **Unsere Antworten sind zugestellt.** Sie lagen fünf Tage nur bei uns, weil der
+  Botengang fehlte.
 * **Ein Bildmodell weniger:** Das grosse Qwen-Modell mit eigener Formsteuerung wird nicht
   mehr angeboten. Es hätte 48 GB gebraucht und war nicht sauber geklärt. Damit bleibt ein
   einziges freies Modell mit Formsteuerung, das schnelle Vorgabemodell.
@@ -365,19 +363,18 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Sie entscheidet noch nichts.** Der Heim-PC prüft zuerst an echten Bildern, ob sie gute
   von schlechten trennt.
 
-### 24.09.2026 (Nacht auf den 25.) · KosmoOrbit fragt, was für das erste echte Bild fehlt
+### 24.09.2026 (Nacht auf den 25.) · Was für das erste echte Bild fehlt
 
-* **Beantwortet, Punkt für Punkt**, mit einem Ergebnisblatt für die KosmoOrbit-Seite.
-* **Ein Demohaus aus KosmoOrbit wird angenommen**, wenn drüben keine Render-Voreinstellung
-  gewählt ist. Mit Voreinstellung schickt KosmoOrbit ein Feld mit, das wir nicht lesen, und
-  der Auftrag wird abgewiesen. Das liegt jetzt als Auftrag bei ihnen.
+* **Beantwortet, Punkt für Punkt**, mit einem Ergebnisblatt.
+* **Ein Demohaus wird angenommen**, wenn keine Render-Voreinstellung gewählt ist. Mit
+  Voreinstellung kommt ein Feld mit, das wir nicht lesen, und der Auftrag wird abgewiesen.
 * **Ein alter Fehler gefunden:** Die bestellte Sonne stand um 180 Grad verdreht, weil die
   beiden Seiten die Himmelsrichtung von verschiedenen Enden zählten. Behoben. Helligkeit
   und Farbe der Sonne kommen jetzt auch an, allerdings nur im Blender-Bild, nicht im
   KI-Bild.
 * **Neu:** Ist auf der Grafikkarte zu wenig Speicher frei, wartet der Auftrag mit Grund,
   statt abzustürzen. Und der Abholer gibt ein Lebenszeichen, damit man sieht, ob er läuft.
-* **Offen:** Der Heim-PC misst am echten Gerät nach, KosmoOrbit baut seine Hälfte.
+* **Offen:** Der Heim-PC misst am echten Gerät nach.
 
 ### 24.09.2026 (tief nachts) · Alle drei automatischen Kameras rendern wieder
 
@@ -413,12 +410,12 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 * **Gezeichnet (Blatt 12 und 12b):** der Render-Knoten mit allen Empfehlungen, und daneben die
   sieben Entscheide als Bildpaare — oben die Empfehlung, unten die Alternative. Neu ist ein
   eigener Knoten «Geometrie-Pässe» und das Urteil als eigener Ausgang.
-* **Entschieden (E27):** Die Knoten-Oberfläche baut der UI-Worker in KosmoOrbit gerade
-  um — Visbox übernimmt sie, wenn er fertig meldet. Fest ist ein Punkt: **das Urteil gehört
-  an den Render-Knoten.** Die Blätter gehen ihm als Vorschlag mit.
-* **Am Abend:** Der UI-Worker hat drei Knoten-Entwürfe gezeichnet, der Owner hat «n1
-  Insel-Karte» gewählt — runde Karten mit Fächern, das Bild im Ergebnis. Gebaut wird es vom
-  Cloud-Worker in KosmoOrbit; Visbox wartet und holt es danach. Das Urteil fehlt im Entwurf
+* **Entschieden (E27):** Die Knoten-Oberfläche wird gerade umgebaut — Visbox übernimmt sie,
+  wenn sie fertig ist. Fest ist ein Punkt: **das Urteil gehört an den Render-Knoten.** Die
+  Blätter gehen als Vorschlag mit.
+* **Am Abend:** Drei Knoten-Entwürfe lagen vor, der Owner hat «n1
+  Insel-Karte» gewählt — runde Karten mit Fächern, das Bild im Ergebnis. Visbox wartet auf
+  den Bau und holt ihn danach. Das Urteil fehlt im Entwurf
   noch und ist nachgefordert.
 
 ### 24.09.2026 (abends) · Die Knotenansicht bestellt jetzt bei Visbox
@@ -430,25 +427,20 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
   echte Bild auf diesem Weg misst die HomeStation (Auftrag 164).
 * **Auf der Visbox-Seite steht oben der Knopf «Knotenansicht».**
 
-### 24.09.2026 (später) · Die Knotenansicht von KosmoOrbit ist herübergekommen — und läuft
+### 24.09.2026 (später) · Die Knotenansicht ist da — und läuft
 
-* **Neue Richtung des Owners (E26):** Statt eine eigene Knotenansicht zu zeichnen, kommt die
-  echte aus KosmoOrbit herüber — als Kopie, wird hier bis Februar weiterbearbeitet und geht
-  dann zurück.
-* **Kopiert, nicht nachgebaut:** 198 Dateien Byte für Byte, jede mit Fingerabdruck. Wo das
-  Werkzeug etwas von KosmoOrbit braucht, das nicht mitkommt (der Assistent, die
-  Plan-Blätter, der Entwurfskern), steht ein kleiner **Stellvertreter** — 19 Stück, jeder
-  sagt im Kopf, dass er einer ist. So bleibt die Rückkehr ein Austausch.
+* **Neue Richtung des Owners (E26):** Statt nur eine Ansicht des festen Ablaufs zu zeichnen,
+  bekommt Visbox eine vollständige Knotenansicht.
+* **198 Dateien, jede mit Fingerabdruck.** Wo das Werkzeug etwas braucht, das in Visbox
+  fehlt (der Assistent, die Plan-Blätter, der Entwurfskern), steht ein kleiner
+  **Stellvertreter** — 19 Stück, jeder sagt im Kopf, dass er einer ist.
 * **Es läuft im Browser:** Knoten aus der Palette legen, der Render-Knoten mit allen
-  Einstellungen, der Bildvergleich. 722 Prüfungen des Originals laufen hier grün.
+  Einstellungen, der Bildvergleich. 722 Prüfungen der Knotenansicht laufen hier grün.
 * **Noch nicht angeschlossen:** Der Modell-Knoten sagt «0 Bauteile» — das Gebäude aus der
   Mappe und das Rendern über unseren Server kommen als Nächstes.
 
 ### 24.09.2026 · Die Knoten sichtbar machen
 
-* **Die Oberfläche mit den verbundenen Knoten gehört zu KosmoOrbit.** Dort ist Visbox ein
-  Knoten unter vielen. Wir haben um Bildschirmfotos gebeten und gefragt, wie weit die acht
-  neuen Knoten sind, die am 18.09. beschlossen wurden.
 * **Visbox bekommt eine eigene Knotenansicht** ihres festen Ablaufs: Modell, Tiefenbilder,
   KI-Bild, Prüfung, mit Vorschau an jedem Kästchen und Einstellungen in verständlichen
   Namen. Gezeichnet, noch nicht gebaut.
@@ -463,7 +455,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
   jetzt gezielt gemessen.
 * **Ein stiller Fehler beim zweiten Bildmodell:** Es lief ohne Führung durch den Prompt, weil
   ein leerer Gegentext die Führung ganz abschaltet. **Behoben** — mit den Werten seiner
-  Modellkarte. Das betrifft auch jede Bestellung aus KosmoOrbit ohne Modellangabe; sie
+  Modellkarte. Das betrifft auch jede Bestellung über die Warteschlange ohne Modellangabe; sie
   rechnet jetzt etwa doppelt so lang (angesagt, wird gemessen).
 * **Das neuere Steuermodell zeichnet sichtbar viel besser** — ein sauberes Gebäude genau auf
   der Form. Ausgerechnet diese Bilder erklärt unsere Prüfung aber für «nicht messbar». Die
@@ -497,7 +489,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ### 23.09.2026 (abends) · Eine ehrliche Lieferauskunft, und eine schlechte Nachricht zum Bild
 
-* **KosmoOrbit erfährt jetzt je Kamera, ob ihr Bild kam.** Bisher stand dort still
+* **Das Ergebnis sagt jetzt je Kamera, ob ihr Bild kam.** Bisher stand dort still
   «geliefert», auch wenn Bilder fehlten — ein Feld, das niemand füllte.
 * **Ein Fehler, den die HomeStation fand, ist behoben:** Eine Projektmappe auf einem
   anderen Laufwerk fand ihr Gebäudemodell nicht mehr.
@@ -529,10 +521,10 @@ Nichts davon ändert ein Bild oder ein Urteil; es ändert, was **gesagt** wird.
 * **Neu: «Darauf skizzieren».** Ein fertiges Bild wird zur Unterlage unter dem Blatt, man
   zeichnet hinein und lässt neu rechnen. Bis dahin landete jede Skizze aus der App auf Grau,
   weil die App das Bild darunter weder zeigte noch mitschickte.
-* **Innenraum-Bestellungen aus KosmoOrbit kommen durch.** Bis heute blieb jede liegen — aus
+* **Innenraum-Bestellungen über die Warteschlange kommen durch.** Bis heute blieb jede liegen — aus
   zwei Gründen, die man nur am Stück sieht: Das Feld war unbekannt, und die Datei hiess
-  anders, als wir sie suchten. Beides behoben; ob drüben ein drittes Hindernis wartet,
-  fragt ein Auftrag an KosmoOrbit.
+  anders, als wir sie suchten. Beides behoben; ob auf der liefernden Seite ein drittes
+  Hindernis wartet, ist gefragt.
 * **Die Entwurfsfläche ist nachgezogen:** Was der Bau brauchte und kein Blatt zeigte, ist
   jetzt gezeichnet. Zwei Stellen tragen das Schild «Owner-Entscheid offen» — dort haben Sie
   das Wort.
@@ -544,8 +536,8 @@ Nichts davon ändert ein Bild oder ein Urteil; es ändert, was **gesagt** wird.
 
 ### 22.09.2026 · Die iPad-App entsteht — und sie übersetzt auf einem Mac
 
-* **Eine eigene App statt einer Webseite** (Ihr Entscheid). Sie heisst Visbox, wird später
-  KosmoSketch, und öffnet sich in Xcode und in Swift Playgrounds.
+* **Eine eigene App statt einer Webseite** (Ihr Entscheid). Sie heisst Visbox und
+  öffnet sich in Xcode und in Swift Playgrounds.
 * **Das Gerüst übersetzt** — geprüft auf einem Mac bei GitHub, weil es hier keinen gibt.
 * **Gebaut, aber noch nicht zusammengesteckt:** Zeichnen mit Ebenen, 20 Schritten zurück und
   Doppeltipp-Radierer; Leiste, Prüfzeichen, Vergleich, Varianten, Teilen; Suche im Heimnetz,
@@ -574,7 +566,7 @@ zusammengesteckt ist.
 nicht an. Soll das Hineinskizzieren dort gesperrt werden, oder weiter rechnen und den
 Vorbehalt anzeigen?
 
-### 22.09.2026 · Warum die Sonne nichts am Bild ändert — und was jetzt drüben ankommt
+### 22.09.2026 · Warum die Sonne nichts am Bild ändert — und was jetzt im Ergebnis ankommt
 
 * **Ihr Entscheid ist eingebaut:** Ein von Hand gesetzter Geländestand heisst jetzt überall
   «nicht geprüft».
@@ -591,7 +583,7 @@ Vorbehalt anzeigen?
 * **«Vorne und hinten vertauscht» stimmte nicht.** Der Wert lag so nah bei null, dass er
   «kein Zusammenhang» heisst. Das Bild folgt der Tiefenkarte nicht — aber nicht, weil etwas
   umgedreht wäre.
-* **Nach KosmoOrbit ging bis heute nur die schlechteste Kamera.** Jetzt spricht jede, bei
+* **Ins Ergebnis ging bis heute nur die schlechteste Kamera.** Jetzt spricht jede, bei
   der etwas nicht stimmt. Und ein Punkt, der seit fünf Tagen als erledigt galt, war es nicht:
   Pro Kamera kamen nur Namen an. Zurückgestuft und repariert.
 
@@ -643,7 +635,7 @@ hinterlassen, weil ich danach nicht alles laufen liess. Behoben, bevor er nach `
 Eine Durchsuchung des ganzen Programms nach sechs bekannten Fehlerarten hat **dreizehn
 bestätigte Befunde** gebracht. Der schwerste:
 
-Kommt aus der KosmoOrbit-Warteschlange ein Auftrag, in dem ein Feld ausdrücklich **leer**
+Kommt aus der Warteschlange ein Auftrag, in dem ein Feld ausdrücklich **leer**
 steht — was jeder schreibt, der die Vorgabe gelten lassen will —, dann bricht nicht dieser
 eine Auftrag ab, sondern **der ganze Durchlauf**. Und weil der kaputte Auftrag danach
 weiter als «wartend» dasteht, stolpert jeder folgende Lauf wieder über ihn. Auch unsere
@@ -1281,11 +1273,6 @@ die Innenkamera bekommt einen eigenen Bildauftrag, und ein Mass, das dort nichts
 (Arbeit für v0.1.8). Die HomeStation prüft das mit `auf-20261001-235`. Zwischenstand von 234:
 Visbox für den Mac baut am echten Mac in Xcode, alle 401 Proben grün.
 
-**02.10.2026, früh — der erste selbst gebaute Teil ist drüben eingespielt.** Der Integrator hat unseren
-Zweig mit dem Lieferstatus «nicht festgestellt» und den vier App-Befunden in KosmoOrbit v0.1.7
-übernommen (ROADMAP 1671), ohne Rückfrage. Die neue Arbeitsteilung (wir bauen, er spielt ein) hat
-damit einmal vollständig funktioniert. Am Gerät bestätigt ist es noch nicht.
-
 **02.10.2026, morgens — Nachmessung 235.** Die Korrektur für die Innenkamera wirkte im echten Lauf
 nicht: Eine Zahl kam unterwegs nicht an, und unsere Proben hatten sie von Hand eingesetzt. Behoben,
 mit einer Probe, die den echten Weg geht. Dazu drei Textfehler in den Hinweisen. Bestätigt am Gerät:
@@ -1294,8 +1281,7 @@ Entwicklungsstand der Bildbibliothek nachgerüstet (Auftrag 238).
 
 **06.10.2026 — Qwen-2.1 rechnet am Heim-PC.** Die Bildbibliothek wurde auf ihren Entwicklungsstand
 gehoben (nur zwei Pakete, das Standardmodell liefert bitgleiche Bilder). Ein echter Qwen-2.1-Lauf über
-den Bestellweg von KosmoOrbit kam geliefert zurück, mit der Marke «Lizenz offen». Diese Datei liegt
-beim Integrator, damit er seine Lizenzmarke an einem echten Ergebnis prüfen kann. Die Innenkamera-
+den Bestellweg kam geliefert zurück, mit der Marke «Lizenz offen». Die Innenkamera-
 Korrektur ist am echten Lauf bestätigt.
 
 **07.10.2026 — das Bildmodell wird je Auftrag nur noch einmal geladen (v0.1.8).** Die Messung 221
@@ -1310,9 +1296,8 @@ die Geometrieprüfung neben dem liegenden Modell weiter Platz hat und ob die Bil
 **07.10.2026 — Materialien aus dem Modell: geprüft und bewusst nicht gebaut.** Bevor Farben und Materialien aus
 der IFC in unsere 3D-Datei übernommen werden, wurde gezählt, ob das Demohaus überhaupt welche trägt. Es trägt
 keine: Die Materialnamen haben keine Farbe, und was ein Lesewerkzeug dafür einsetzt, sind seine eigenen Grautöne.
-Diese zu übernehmen hiesse, Erfundenes als Modellinformation auszugeben. Dabei fiel auf, dass der Export von
-KosmoOrbit Dächer, Treppe und Geländer weglässt — für die Prüfung gegen die Geometrie wichtiger als jede Farbe.
-Das liegt beim Integrator.
+Diese zu übernehmen hiesse, Erfundenes als Modellinformation auszugeben. Dabei fiel auf, dass die Modellausfuhr des
+Demohauses Dächer, Treppe und Geländer weglässt — für die Prüfung gegen die Geometrie wichtiger als jede Farbe.
 
 **07.10.2026 — einmal laden: am Heim-PC bestätigt, und ein Fund nebenbei.** Das Bildmodell wird je Auftrag nur
 noch einmal geladen; die Bilder bleiben bitgleich, das Standardmodell wird rund ein Sechstel schneller. Bei der
@@ -1322,7 +1307,7 @@ dem Umbau. Woran das liegt, wird gerade getrennt gemessen.
 **07.10.2026 — warum die Vorführmappe durchfiel, und die Behebung.** Die Nachmessung fand den Grund: Die Mappe
 hatte keinen Standpunkt, und ohne Standpunkt nahm die Software einen alten Notblick schräg von oben, in dem das
 Haus nur ein Sechstel des Bildes füllte. Mit Blick von Süden bestand dieselbe Mappe wie am 01.10. Jetzt rechnet
-«Anwenden» ohne Angabe frontal von Süden — genau wie der Weg, auf dem KosmoOrbit bestellt — und sagt dazu, dass
+«Anwenden» ohne Angabe frontal von Süden — genau wie der Bestellweg — und sagt dazu, dass
 es diese Vorgabe genommen hat. Das langsamere erste Qwen-Bild war Zufall der Reihenfolge, nicht der Umbau.
 
 **07.10.2026 — der Verlauf am Render-Knoten ist gebaut.** Wie auf Blatt 15 gezeichnet und vom Owner abgenommen:
@@ -1331,7 +1316,7 @@ Bild gross, ohne das Hauptbild zu ersetzen; gelöscht wird nichts. Beim Bau zeig
 Läufe bisher wirklich vergass — jetzt hält sie die letzten vier fest. Ein Satz der Zeichnung war falsch und wurde
 berichtigt. Geprüft ist es im Browser; die Probe in der Engine der Desktop-App macht der Heim-PC.
 
-**08.10.2026 — Farben aus dem Modell kommen jetzt mit.** KosmoOrbit schreibt in seine IFC inzwischen Farben je
+**08.10.2026 — Farben aus dem Modell kommen jetzt mit.** Die IFC des Demohauses trägt inzwischen Farben je
 Material, dazu Dach, Treppe, Geländer, Fenster und Türen. Unsere Umwandlung übernimmt diese Farben — aber nur die,
 die wirklich im Modell stehen, nicht die Ersatzgrautöne des Lesewerkzeugs. Die Form bleibt dabei unangetastet:
 Die Tiefenkarte, an der jedes Bild gemessen wird, ist mit und ohne Farben dieselbe, auf das Pixel. Ob unsere Messung
@@ -1345,7 +1330,7 @@ schon. Die Ursache war eindeutig, die Behebung klein, und ein neuer Test fängt 
 am Demohaus läuft.
 
 **08.10.2026 — ehrlich «nicht beurteilbar», wenn das Haus zu klein im Bild ist.** Modelle ohne Boden, wie das
-Demohaus aus KosmoOrbit, füllen das Bild nur zu knapp einem Fünftel. Dort kann der ältere Prüfwert gar nicht
+Demohaus, füllen das Bild nur zu knapp einem Fünftel. Dort kann der ältere Prüfwert gar nicht
 bestehen, und jedes Bild galt als durchgefallen. Der Owner hat entschieden: In diesem Fall steht «nicht
 beurteilbar», mit Grund und der Gebäude-Zahl als Auskunft. Auf dem Weg dahin habe ich eine Frage mit einer falschen
 Zahl gestellt; sie wurde berichtigt und neu beantwortet. Nebenbei behoben: Solche Ergebnisse wurden bisher bei
@@ -1365,13 +1350,13 @@ Hunderttausenden farbiger Punkte — kann jetzt mit ins Bild. Visbox setzt sie u
 Schönbild und in der Tiefenkarte, und das Bildmodell sieht damit, wo das Haus steht. Gemessen wird aber weiterhin
 nur das Gebäude: Die Kamera richtet sich nach ihm, und die Prüfung, ob das Bild zur Form passt, sieht die Umgebung
 nicht. Steht ein Baum der Aufnahme vor dem Haus, verdeckt er es — so wie ihn auch die Kamera sähe —, und der
-Bericht sagt, wieviel. KosmoOrbit kann die Umgebung jetzt mitschicken; wo sie liegt, sagt eine Lageangabe. Geprüft
+Bericht sagt, wieviel. Eine Bestellung kann die Umgebung jetzt mitschicken; wo sie liegt, sagt eine Lageangabe. Geprüft
 ist das an einem künstlichen Splat; wie gut es mit einem echten aussieht, misst der Heim-PC. Eine Frage ist dabei
 aufgetaucht: Mit weiter Umgebung bekommt das Haus in der Tiefenkarte weniger Kontrast — ob das stört, zeigt erst
 die Messung.
 
-**Bestand ohne Schrift (08.10.2026).** Übernimmt KosmoOrbit bestehende Gebäude aus der Punktaufnahme, markiert es
-sie in der Modelldatei. Visbox erkennt die Markierung und sagt dem Bildmodell dazu, dass diese Gebäude schlicht und
+**Bestand ohne Schrift (08.10.2026).** Sind bestehende Gebäude aus der Punktaufnahme übernommen, sind sie
+in der Modelldatei markiert. Visbox erkennt die Markierung und sagt dem Bildmodell dazu, dass diese Gebäude schlicht und
 ohne Schrift erscheinen sollen — im Demolauf hatte es einen erfundenen Schriftzug an die Halle gemalt. Ob der Satz
 wirkt, ist noch nicht gemessen; das macht der Heim-PC mit und ohne Zusatz.
 
@@ -1437,10 +1422,9 @@ Programm, das nach dem Abbruch weiterlief, und ein Pfad im Fehlertext). Alle sie
 besteht, misst der Heim-PC als Nächstes.
 
 **Die Mac-App zeigt zuerst die Knoten (14.10.2026).** Der Owner fragte, warum die Mac-App eine Webseite zeigt, wo sie doch
-das KosmoVis-Werkzeug sein soll. Die Antwort: Die Mac-App ist ein Fenster auf den Heim-PC, und der Knotenbaum lag dort
+die Knotenansicht zeigen soll. Die Antwort: Die Mac-App ist ein Fenster auf den Heim-PC, und der Knotenbaum lag dort
 hinter einem Knopf. Jetzt öffnet die App direkt die Knoten; oben schaltet ein Schalter auf die Visbox-Seite und zurück, und
-die Knoten zeigen die Mappe, die zuletzt offen war. Nachgebaut wird am Mac nichts: Der Knotenbaum ist die Kopie aus
-KosmoOrbit und wird dort weiterentwickelt.
+die Knoten zeigen die Mappe, die zuletzt offen war. Nachgebaut wird am Mac nichts.
 
 **RealityScan am echten Auftrag (14.10.2026).** Der Heim-PC hat mit der reparierten Brücke einen echten Auftrag gerechnet:
 Sie lief in knapp fünf Minuten ohne Hänger durch, das Bild besteht die Prüfung, und die Farben stimmen. Schlechte
@@ -1448,23 +1432,23 @@ Nachricht: Ein Teil des «Deckels» blieb stehen und erschien in fünf von neun 
 ein Dreieck als Deckel gilt, ist darum halbiert; ob dabei echte Teile verloren gehen, misst der Heim-PC als Nächstes.
 
 **Massstab aus der Kamerabewegung (14.10.2026).** Der Heim-PC hat einen Weg gezeigt, wie ein Scan von selbst echte Meter
-bekommt: aus dem Bewegungssensor der Kamera, mit einer zweiten Schätzung als Gegenprobe. Gebaut wird das bei KosmoPrepare,
+bekommt: aus dem Bewegungssensor der Kamera, mit einer zweiten Schätzung als Gegenprobe. Gebaut wird das dort,
 wo die Scan-Kette liegt. Visbox liest das Ergebnis und sagt im Urteil, wie verlässlich der Massstab ist — grün still, gelb
 mit der Bitte um ein Mass von Hand, rot mit dem Hinweis, dass der Behelf bleibt.
 
 **Ein Klick fürs Aktualisieren (14.10.2026).** Am Mac des Owners lief noch die Fassung, die sich selbst nicht ersetzen
 kann; darum erschien kein Knopf. Der Owner will es wie bei jeder App. Jetzt genügt ein Klick: Die App lädt die neue
 Fassung, prüft sie, ersetzt sich und startet von selbst neu; gefragt wird stündlich. Einmal muss die alte Fassung noch von
-Hand ersetzt werden. Dasselbe für KosmoOrbit liegt beim Integrator.
+Hand ersetzt werden.
 
 **Ein eigenes Icon (14.10.2026).** Bis dahin trug Visbox ein Platzhalter-Blatt. Drei Vorschläge lagen auf der
 Entwurfsfläche; der Owner wählte die Box, deren eine Seite schon Bild ist — Modell hinein, Bild heraus. Es kommt mit
 der Fassung 0.2.4 auf Mac und iPad.
 
-**Die Knotenansicht wieder gleich wie in KosmoOrbit (14.10.2026).** Am Mac zeigte Visbox noch die Knoten vom September:
-alte Boxen, kein Schieben mit zwei Fingern. Die Kopie war drei Wochen nicht nachgezogen worden, und ihr fertiger Bau
-kam nie mit `git pull` auf den Heim-PC. Beides ist behoben; dazu zoomt die Knotenfläche jetzt in beiden Programmen
-spürbar schneller. Neue Regel des Owners: Was am Vis-Werkzeug geändert wird, geht immer in beide Programme.
+**Die Knotenansicht wieder auf dem neuesten Stand (14.10.2026).** Am Mac zeigte Visbox noch die Knoten vom September:
+alte Boxen, kein Schieben mit zwei Fingern. Die Knotenansicht war drei Wochen nicht nachgezogen worden, und ihr fertiger Bau
+kam nie mit `git pull` auf den Heim-PC. Beides ist behoben; dazu zoomt die Knotenfläche jetzt
+spürbar schneller.
 
 **Die erste echte Probe des Ein-Klick-Wegs (14.10.2026).** Die App bot die neue Fassung an, scheiterte aber beim Ersetzen:
 macOS liess sie von einem versteckten, schreibgeschützten Ort laufen, weil sie nicht in «Programme» lag. Ab 0.2.6 erkennt
@@ -1484,7 +1468,6 @@ Ungereimtheiten auf, die jetzt als eigene Posten im Plan stehen.
 ArchiCAD-Datei laden kann. Jetzt geht es: «Datei laden …» im Knoten, der Heim-PC legt daraus eine Mappe an und wandelt
 IFC und andere Formate selbst um; eine neue Fassung derselben Datei bleibt in derselben Mappe, mit allen Bildern.
 ArchiCAD-Dateien sind ein geschlossenes Format — der Knoten sagt, dass sie als IFC aus ArchiCAD gespeichert werden.
-Derselbe Knoten läuft auch in KosmoOrbit, dort ohne Ladeknopf, solange KosmoOrbit keinen anbietet.
 
 **Die Textur am echten Auftrag gemessen (14.10.2026).** An vier Blickpunkten ist die Umgebung mit Textur deutlich schärfer
 als mit Eckfarben und als der Splat. Sie kostet je neuer Aufnahme rund vier Minuten mehr. Das fertige Bild mit Prüfung
@@ -1492,8 +1475,7 @@ steht noch aus.
 
 **Visbox 0.2.0 (13.10.2026).** Seit der ersten vorführbaren Fassung 0.1.0 vom 3. Oktober sind neue Fähigkeiten dazu
 gekommen; der Owner hat die neue Nummer 0.2.0 gewählt. Sie steht überall gleich — in der Bibliothek, der iPad-App und
-der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht, und zu welcher
-KosmoOrbit-Fassung es passt.
+der Mac-App —, und ein Fassungsblatt sagt, was drin ist, was am Gerät bestätigt ist und was nicht.
 
 
 **Visbox 0.2.8: sauberer Neustart und ein iPad, das sich selbst verbindet (14.10.2026).** Nach dem Aktualisieren blieb am
@@ -1506,25 +1488,24 @@ Namen — vorher wartete es bis zu einer halben Minute, bevor es überhaupt such
 bisher nur auf der alten Visbox-Seite. Jetzt holt ein eigener Knoten sie in die Knotenansicht: von selbst die neueste, eine
 ältere ist am Knoten wählbar, mit kleinem Vorschaubild. Ehrlich gesagt kann die Skizze das Bild noch nicht führen — der
 Render-Knoten nimmt heute gar kein Bild an, und die Bestellung hat kein Feld dafür. Sie lässt sich darum vorerst neben die
-Renders in den Bildvergleich legen. Ob eine Skizze künftig den Render lenken soll, ist eine eigene Entscheidung. In
-KosmoOrbit steht derselbe Knoten mit dem Satz, dass es Skizzen vom iPad in Visbox gibt.
+Renders in den Bildvergleich legen. Ob eine Skizze künftig den Render lenken soll, ist eine eigene Entscheidung.
 
 **Die Skizze führt das Bild (15.10.2026).** Was die alte Visbox-Seite schon konnte, geht jetzt auch in der Knotenansicht:
 Man hängt den Knoten «Skizze vom iPad» an den neuen Eingang «Skizze» des Render-Knotens, und der Heim-PC rechnet das Bild
 aus der Zeichnung — die Skizze auf dem Bild, über das sie gezeichnet wurde, dazu der Prompt als Anweisung, was sich ändern
 soll (ohne Prompt gilt die Bemerkung an der Skizze). Danach steht die Skizze in der Mappe als «gerechnet». Dafür hat die
-Bestellung ein neues Feld bekommen, das KosmoOrbit noch absegnen muss. Ehrlich gesagt: Auf dem Vorgabemodell kommt die
+Bestellung ein neues Feld bekommen, das im Auftragsvertrag noch bestätigt werden muss. Ehrlich gesagt: Auf dem Vorgabemodell kommt die
 Skizze gemessen nicht an — der Knoten und das Ergebnis sagen das. Ob sie beim Modell Qwen-Image 2.1 ankommt, ist noch
-ungemessen; der Heim-PC prüft es. In KosmoOrbit bleibt der Render-Knoten, wie er war, weil es dort keine Mappe mit Skizzen gibt.
+ungemessen; der Heim-PC prüft es.
 
 **Varianten mit einem Klick (15.10.2026).** Statt jedes Bild einzeln zu bestellen, hängt jetzt ein Knoten «Varianten»
 hinter dem Render-Knoten. Man hakt an, aus welchen Standpunkten, in welchen Stimmungen und für welche Entwürfe gerechnet
 werden soll; ein Zähler sagt vorher, wie viele Bilder es werden (Vorgabe: drei Standpunkte, Abendstimmung, ein Entwurf =
 drei Bilder). Ab zwölf Bildern warnt er mit der ungefähren Dauer, sperrt aber nichts. Ein Klick bestellt alles, ein
 zweiter gibt alles frei. Die Bilder erscheinen im Bildvergleich als Tabelle: Zeilen Standpunkte, Spalten Stimmungen,
-je Entwurf ein Reiter, mit einem farbigen Punkt fürs Prüfurteil. Kosmo und Claude können dasselbe mit einem Befehl
+je Entwurf ein Reiter, mit einem farbigen Punkt fürs Prüfurteil. Claude kann dasselbe mit einem Befehl
 bestellen und den Stand lesen — so soll die Wettbewerbs-Demo ihre Variantenbilder ohne eigenes Skript bekommen. Ehrlich
-gesagt: In KosmoOrbit ist das erst eingebaut, wenn ein anderes Paket Platz in Kosmos Werkzeugliste macht; die Dauer ist
+gesagt: Die Dauer ist
 eine Schätzung, am Heim-PC noch nicht gemessen; und dass Volumenvarianten von selbst als eigene Entwürfe erscheinen, fehlt
 noch (heute muss man sie auf Ebenen legen).
 

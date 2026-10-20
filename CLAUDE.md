@@ -31,6 +31,11 @@ aber ausschliesslich unter drei Auflagen:
 3. **Austauschbar und deklariert** — die Bibliothek muss ersetzbar bleiben, und sie
    gehört mit ihrer Lizenz ins `NOTICE`.
 
+**Ausnahme für Mitgeliefertes (Owner-Entscheid 101, 20.10.2026):** Eine LGPL-Komponente, die
+unverändert in einem permissiven Paket mitreist und die niemand direkt einbindet (heute
+libquadmath im numpy-Wheel), braucht keine Prozessgrenze — sie bleibt austauschbar und steht im
+`NOTICE` (`AUFLOESUNG: Mitgeliefert`). Für alles, was wir selbst einbinden, gilt Auflage 1 weiter.
+
 Dieselben drei Auflagen gelten für GPL-Komponenten, die als eigenständiges Programm
 aufgerufen werden (Blender, IfcOpenShell) — siehe Regel 2.
 
