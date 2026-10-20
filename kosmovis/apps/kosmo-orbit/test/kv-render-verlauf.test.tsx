@@ -339,6 +339,37 @@ describe('Verlauf am Render-Knoten — Abzeichen im Hauptbild (Nachtrag 4)', () 
   });
 });
 
+describe('Fehler-Nachgang 20.10.2026 — Hauptbild in fester Box (Zoom-Springen)', () => {
+  const css = (): string =>
+    readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/modules/vis/vis-visual.css'), 'utf8');
+
+  it('der Rahmen hat volle Breite und die Registerhoehe, das Bild fuellt ihn mit object-fit: contain', () => {
+    montiere();
+    laeufe(fertig(1));
+    const rahmen = document.querySelector<HTMLElement>('[data-testid="render-hauptbild"]')!;
+    expect(rahmen.style.height, 'Hoehe aus dem Register, nicht aus dem Bild').toBe('110px');
+    const bild = rahmen.querySelector<HTMLElement>('.vis-hauptbild-bild');
+    expect(bild, 'das Bild (oder sein Platzhalter) traegt die Klasse der festen Box').not.toBeNull();
+    // Keine Groesse mehr aus dem Bild: weder Breite `auto` noch eine Deckelhoehe inline.
+    expect(bild!.style.width).toBe('');
+    expect(bild!.style.maxHeight).toBe('');
+    const block = /\n\.vis-hauptbild \{([^}]*)\}/.exec(css())?.[1] ?? '';
+    expect(block).toContain('width: 100%;');
+    expect(block).not.toContain('fit-content');
+    const img = /\n\.vis-hauptbild > \.vis-hauptbild-bild \{([^}]*)\}/.exec(css())?.[1] ?? '';
+    for (const z of ['display: block;', 'width: 100%;', 'height: 100%;', 'object-fit: contain;', 'box-sizing: border-box;']) {
+      expect(img).toContain(z);
+    }
+  });
+
+  it('das Zwischenbild ist ein Block, die Rundung traegt der Warteplatz', () => {
+    const block = /\n\.vis-node-warteort-vorschau \{([^}]*)\}/.exec(css())?.[1] ?? '';
+    expect(block).toContain('display: block;');
+    expect(block).not.toContain('border-radius');
+    expect(css()).toMatch(/\.vis-node-warteort:has\(> \.vis-node-warteort-vorschau\) \{[^}]*overflow: hidden;/);
+  });
+});
+
 describe('Verlauf am Render-Knoten — ein Klick zeigt gross', () => {
   it('der Klick öffnet die grosse Ansicht ausserhalb der Leinwand, mit Urteil, Grund, Treue, Bildwerkzeug und Herkunft', () => {
     montiere();

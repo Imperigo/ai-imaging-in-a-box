@@ -61,6 +61,15 @@ describe('P3 — quelleAusLauf: die Wache fuer die Zuleitung (ROADMAP 1340)', ()
     expect(quelle && 'jobId' in quelle ? quelle.bild : undefined).toBe('data:image/png;base64,AA');
   });
 
+  it('Entscheide 104/104a: die Guete reist mit; ohne Angabe kein Feld (= voll)', () => {
+    const vorschau = quelleAusLauf(fertigerLauf({ guete: 'vorschau' }));
+    expect(vorschau && 'jobId' in vorschau ? vorschau.guete : null).toBe('vorschau');
+    const voll = quelleAusLauf(fertigerLauf({ guete: 'voll' }));
+    expect(voll && 'jobId' in voll ? voll.guete : null).toBe('voll');
+    const ohne = quelleAusLauf(fertigerLauf());
+    expect(ohne && 'guete' in ohne).toBe(false);
+  });
+
   it('ohne fertiges Bild bleibt die Quelle null — kein Rendern eines leeren Laufs', () => {
     // `jobId`/`bild` bewusst GANZ WEGGELASSEN statt auf `undefined` gesetzt:
     // `NodeLauf` traegt sie ohne `| undefined` im Typ (exactOptionalPropertyTypes).

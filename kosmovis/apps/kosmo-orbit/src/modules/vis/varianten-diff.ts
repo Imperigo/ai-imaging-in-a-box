@@ -47,6 +47,9 @@ export type KuratierQuelle =
       lizenzOffen?: boolean | undefined;
       engineUsed?: string | undefined;
       engineLicense?: string | undefined;
+      /** Entscheide 104/104a: siehe `NodeLauf.guete` — die Plakette «VORSCHAU» (UI, `GueteMarke`)
+       *  an Kuratier-Karte, Inspektor und Blatt liest sie hier. Fehlt = voll. */
+      guete?: 'vorschau' | 'voll' | undefined;
     }
   | {
       dataUrl: string;
@@ -135,6 +138,7 @@ export function quelleAusLauf(
         | 'lizenzOffen'
         | 'engineUsed'
         | 'engineLicense'
+        | 'guete'
       >
     | undefined,
 ): KuratierQuelle | null {
@@ -152,6 +156,9 @@ export function quelleAusLauf(
     ...(lauf.lizenzOffen !== undefined ? { lizenzOffen: lauf.lizenzOffen } : {}),
     ...(lauf.engineUsed !== undefined ? { engineUsed: lauf.engineUsed } : {}),
     ...(lauf.engineLicense !== undefined ? { engineLicense: lauf.engineLicense } : {}),
+    // Entscheide 104/104a (Bitte UI 20.10.2026): die Guete reist mit dem Bild, damit die Plakette
+    // «VORSCHAU» auch an Karte, Inspektor und Blatt steht. Ohne Angabe kein Feld (= voll).
+    ...(lauf.guete !== undefined ? { guete: lauf.guete } : {}),
   };
 }
 

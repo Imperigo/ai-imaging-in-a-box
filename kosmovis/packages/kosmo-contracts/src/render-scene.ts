@@ -484,6 +484,11 @@ export const RenderScene = z.object({
        * Auto-Kamera neu. Sie lehnt laut ab, wenn die Kennung unbekannt ist oder
        * Aufloesung, Samples oder Kameras des Auftrags nicht zur Grundlage passen
        * (Auflage 4). Optional, kein Default.
+       *
+       * Vorschlag KosmoVis (Fehler-Nachgang 20.10.2026): mit `grundlage` darf die Anlage
+       * (`POST /jobs`) OHNE Modelldatei kommen — die Gegenseite braucht sie fuer den
+       * KI-Schritt nicht; `geometry.path` bleibt dann leer. Ohne `grundlage` bleibt `model`
+       * Pflicht (422).
        */
       grundlage: z
         .string()

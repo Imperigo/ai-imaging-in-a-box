@@ -4034,14 +4034,23 @@ function NodeKoerper({
                     so gross wie das Bild selbst, der Knoten waechst nicht, und
                     die Abzeichen nehmen keinen Zeiger. Gezeigt, sobald die
                     Reihe steht und das Hauptbild ihr neuester Lauf ist. */}
-                <div className="vis-hauptbild" data-testid="render-hauptbild">
+                {/* Fehler-Nachgang 20.10.2026 (Owner am Mac: «das Vorschaubild buggt beim Rein- und
+                    Rauszoomen»): der Rahmen ist eine FESTE Box (volle Breite, Hoehe aus dem Register),
+                    das Bild passt sich mit `object-fit: contain` ein. Vorher schrumpfte der Rahmen auf
+                    die Bildgroesse (`fit-content`, Breite `auto` aus maxHeight und Seitenverhaeltnis) —
+                    unter dem Bruch-`zoom` der Knotenebene rundete WebKit diese Breite je Zoomschritt
+                    anders, und Bild und Abzeichen sprangen. */}
+                <div
+                  className="vis-hauptbild"
+                  data-testid="render-hauptbild"
+                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
+                >
                   <BridgeBild
                     jobId={lauf.jobId}
                     imageName={lauf.bild}
                     alt="Render"
                     testid="render-bild"
-                    className="vis-img-full"
-                    style={{ maxHeight: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0), width: 'auto', maxWidth: '100%', display: 'block', marginInline: 'auto' }}
+                    className="vis-img-full vis-hauptbild-bild"
                   />
                   {verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
                     <HauptbildAbzeichen lauf={verlauf[0]} nummer={laufNummerVon(verlauf[0], 0, verlauf.length)} />

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { RenderResult, RenderScene } from '../src';
 
@@ -47,5 +49,20 @@ describe('guete im Ergebnis', () => {
     const r = RenderResult.parse({ ...ERGEBNIS, guete: 'turbo' });
     expect(r.guete).toBeUndefined();
     expect(r.images).toEqual(['renders/a.png']);
+  });
+});
+
+describe('echte Ergebnisse vom Heim-PC (KosmoVis 0.3.2)', () => {
+  // Geschrieben vom Heim-PC-Code der Gegenseite, nicht von Hand gebaut.
+  const fixture = (name: string): unknown =>
+    JSON.parse(readFileSync(fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url)), 'utf8'));
+
+  it.each([
+    ['kv-guete-vorschau.json', 'vorschau'],
+    ['kv-guete-voll.json', 'voll'],
+  ] as const)('%s wird gelesen, guete %s, engine_used gesetzt', (datei, guete) => {
+    const r = RenderResult.parse(fixture(datei));
+    expect(r.guete).toBe(guete);
+    expect(r.engine_used).toBeTruthy();
   });
 });

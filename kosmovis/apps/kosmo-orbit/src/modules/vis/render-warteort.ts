@@ -69,6 +69,8 @@ const ETAPPE_WORT: Record<string, string> = {
   rendern: 'rendern',
   fertig: 'fertig, Bild wird abgelegt',
   'an ComfyUI übergeben': 'an den Bild-Rechner übergeben',
+  // KosmoVis 0.3.2: nach einem Abbruch schreibt der Abholer diese Phase (pct bleibt stehen, rest_s wird null).
+  abgebrochen: 'abgebrochen',
 };
 
 /** Was die Anzeige vom Lauf braucht — bewusst schmal, damit Knoten (Status als Text) und Insel (`NodeLauf`)

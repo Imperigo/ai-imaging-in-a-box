@@ -209,12 +209,42 @@ export function bridgeToken(): string {
  */
 const BRIDGE_ZEITGRENZE_MS = 30_000;
 
+/**
+ * Fehler-Nachgang 20.10.2026 (Owner am Mac, «Variante erzeugen» → «Der Heim-PC ist nicht
+ * erreicht: Er hat nicht rechtzeitig geantwortet.»): die ANLAGE eines Render-Auftrags
+ * (`POST /jobs`) traegt das ganze Modell als Multipart, und die Gegenseite nimmt es unter einer
+ * Sperre an. Mit grossen Modellen und einem beschaeftigten Heim-PC reichten 30 s nicht — der
+ * Auftrag war oft schon angelegt, die Seite meldete trotzdem «nicht erreicht». Nur dieser eine
+ * Aufruf bekommt die laengere Grenze; alle Abfragen bleiben bei `BRIDGE_ZEITGRENZE_MS`.
+ */
+export const BRIDGE_AUFTRAG_ZEITGRENZE_MS = 300_000;
+
+/**
+ * Antworten auf eine Variante OHNE Modell, nach denen sie einmal MIT Modell hinausgeht:
+ * 422 (eine Bruecke, bei der `model` noch Pflicht ist — FastAPI-Pruefung), 400/404/409 (die
+ * Gegenseite lehnt laut ab, z. B. weil die Grundlage dort fehlt). 401/403 (Anmeldung) und 5xx
+ * nicht: dort hilft ein Modell nichts.
+ */
+const MODELL_NACHREICHEN_BEI: ReadonlySet<number> = new Set([400, 404, 409, 422]);
+
+/** Satz, wenn eine Variante ohne Modell abgewiesen wurde und mit Modell noch einmal hinausgeht. */
+export const MODELL_NACHGEREICHT_SATZ =
+  'Der Heim-PC nahm die Variante ohne Modell nicht an — sie geht einmal mit dem Modell hinaus (das dauert länger).';
+
+/**
+ * Ob eine Bestellung ohne Modell hinausgeht: genau mit `vis.grundlage` («Variante erzeugen»).
+ * Die Gegenseite rechnet dann nur den KI-Schritt auf Kameras und Passes der Grundlage; das
+ * Modell (bis hierhin bei JEDER Variante neu exportiert und hochgeladen) braeuchte sie nicht.
+ */
+export function modellBleibtDaheim(params: { grundlage?: string }): boolean {
+  return params.grundlage !== undefined;
+}
+
 /** Ein Fetch mit konditionalem `X-Kosmo-Token`-Header — die einzige Naht.
  *  Traegt seit VIS-U8-ZEITGRENZE eine Zeitgrenze (`BRIDGE_ZEITGRENZE_MS`),
- *  ausser ein Aufrufer liefert selbst ein `signal` (kein heutiger Aufrufer
- *  tut das — Repo-Grep `grep -rn "signal" vis-jobs.ts auftragsbuch.ts` liefert
- *  0 Treffer ausserhalb dieser Stelle —, die Naht bleibt aber fuer einen
- *  kuenftigen eigenen AbortController offen, statt ihn zu ueberschreiben). */
+ *  ausser ein Aufrufer liefert selbst ein `signal`. Seit dem Fehler-Nachgang
+ *  20.10.2026 tut das genau einer: die Auftragsanlage in `postRenderJob`
+ *  (`BRIDGE_AUFTRAG_ZEITGRENZE_MS`). */
 export function bridgeFetch(pfad: string, init?: RequestInit): Promise<Response> {
   const token = bridgeToken();
   const headers = new Headers(init?.headers);
@@ -1262,7 +1292,7 @@ export async function postRenderJob(params: {
   grundlage?: string;
   /** Nr. 85/84 (Entscheid 98a): fester Startwert des KI-Schritts (`vis.seed`). */
   seed?: number;
-  /** Owner-Auftrag 20.10.2026: Guete des KI-Schritts (`vis.guete`). Ohne Parameter kein Feld (= voll). */
+  /** Entscheid 104: Guete des KI-Schritts (`vis.guete`). Ohne Parameter kein Feld — dann voll, wie bisher. */
   guete?: 'vorschau' | 'voll';
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
@@ -1329,8 +1359,12 @@ export async function postRenderJob(params: {
   // unbekanntes Loch genau der Art, gegen die dieser Riegel gebaut wurde,
   // neben einem Renderlauf, der auf der Gegenseite 775 Sekunden kostet. Eine
   // bekannte Rechenzeit schlaegt ein unbekanntes Loch.
-  let modell: ArrayBuffer | string;
-  {
+  //
+  // Fehler-Nachgang 20.10.2026 (Owner am Mac: «Variante erzeugen» → «Der Heim-PC ist nicht
+  // erreicht: Er hat nicht rechtzeitig geantwortet.»): das Modell wird erst gebaut, wenn es
+  // auch hinausgeht (`baueModell`, unten). Mit `vis.grundlage` geht es nicht hinaus — die
+  // Gegenseite nimmt Kameras und Passes der Grundlage und rechnet kein Blender.
+  const baueModell = (): ArrayBuffer | string => {
     const glb = exportGlb(szene, doc.settings.projectName);
     const glasnaht = pruefeGlasnaht(glb);
     if (glasnaht.urteil !== 'traegt') {
@@ -1348,8 +1382,10 @@ export async function postRenderJob(params: {
     }
     // Gesendet wird je nach Weg — geprueft wurde in beiden Faellen dasselbe
     // Modell, nur in der Darstellung, die der Riegel lesen kann.
-    modell = interiorMoeglich ? exportIfc(szene) : glb;
-  }
+    return interiorMoeglich ? exportIfc(szene) : glb;
+  };
+  const ohneModell = modellBleibtDaheim(params);
+  let modell: ArrayBuffer | string | undefined = ohneModell ? undefined : baueModell();
   // P-DREISTANDPUNKTE (HomeStation-Befund, auftraege/von-homestation/
   // auf-orbit-20260821-01.md, Auftrag 3) — SEIT B117 SCHRITT 2 FALLABHAENGIG:
   // `deriveAutoKameras` liefert «Innenraum» (bei vorhandenen Zonen) als
@@ -1511,13 +1547,28 @@ export async function postRenderJob(params: {
   // Felder sind vorher raus.
   const gesendet = ohneAbgewieseneFelder(splatTeil.szene);
   pruefeSzeneVorVersand(gesendet);
-  const form = new FormData();
-  form.append('scene', JSON.stringify(gesendet));
   // Y3 P-IFC-BESTELLUNG-Muster (`bake-auftrag.ts:116`, woertlich uebernommen).
   const dateiname = interiorMoeglich ? 'model.ifc' : 'model.glb';
   const mimeTyp = interiorMoeglich ? 'application/x-step' : 'model/gltf-binary';
-  form.append('model', new Blob([modell], { type: mimeTyp }), dateiname);
-  const res = await bridgeFetch(bridgeRoutes.jobs, { method: 'POST', body: form });
+  const sende = (mitModell: boolean): Promise<Response> => {
+    const form = new FormData();
+    form.append('scene', JSON.stringify(gesendet));
+    if (mitModell) {
+      modell ??= baueModell();
+      form.append('model', new Blob([modell], { type: mimeTyp }), dateiname);
+    }
+    // Fehler-Nachgang 20.10.2026: die Anlage traegt das Modell (mehrere MB) und die Gegenseite
+    // nimmt es unter einer Sperre an — sie bekommt ihre eigene, laengere Zeitgrenze.
+    return bridgeFetch(bridgeRoutes.jobs, { method: 'POST', body: form, signal: AbortSignal.timeout(BRIDGE_AUFTRAG_ZEITGRENZE_MS) });
+  };
+  let res = await sende(!ohneModell);
+  if (ohneModell && !res.ok && MODELL_NACHREICHEN_BEI.has(res.status)) {
+    // Die Gegenseite nimmt die Variante ohne Modell nicht an (eine Bruecke ohne den Vorschlag
+    // «model optional mit Grundlage» antwortet 422, der Heim-PC ohne die Grundlage laut mit
+    // einem Mangel). Einmal MIT Modell — danach gilt ihre Antwort, wie sie ist.
+    melde(MODELL_NACHGEREICHT_SATZ, { ton: 'info' });
+    res = await sende(true);
+  }
   if (!res.ok) throw new BridgeHttpError(res.status, 'Bridge antwortet mit');
   const job = parseJob(await res.json());
   return splatTeil.hinweis ? { ...job, umgebungFehlt: splatTeil.hinweis } : job;
@@ -1803,6 +1854,10 @@ export function sendeGraphRenderAuftrag(
     ...(stufe === 'grundlage' ? { grundlageStand: standJetzt } : {}),
     ...(kiFest.grundlage !== undefined ? { grundlageId: kiFest.grundlage } : {}),
     ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
+    // Bitte UI (20.10.2026): die BESTELLTE Guete steht ab dem Absenden am Lauf, damit der Warteplatz
+    // nicht umspringt, wenn jemand waehrend des Laufs den Schalter umstellt. Das Ergebnis setzt dann
+    // die gemeldete (`gueteAusErgebnis`, Poll) — fehlt sie dort, gilt voll.
+    ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
   });
   // Entscheid 96: `skizze` ist die Wahl am Skizzen-Knoten (Kernel), keine Job-Angabe — sie geht
   // nicht durch `...auftrag` an `postRenderJob`, sondern aufgeloest als `skizze` (unten).

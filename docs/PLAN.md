@@ -8074,6 +8074,7 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] Heim-PC gebaut: `vis.guete` 'vorschau' rechnet z-image-turbo, 8 Schritte, einen Startwert, KI-Bild ≤ 1024 px, geprüft mit Vermerk «Vorschau»; Ergebnis `guete`; beide Ablagen (Entscheide 104–104b, §148, C74)
     - [x] Schalter «Güte: Vorschau | Voll» am Render-Knoten, Vorgabe Vorschau, `vis.guete` aus «Variante erzeugen» und `vis_render`, `guete` am Lauf — KosmoOrbit `claude/kosmovis-vorschau` (Vertrag vom Integrator, R40), Visbox-Kopie nachgezogen; am Gerät unbestätigt (§149, C75)
     - [ ] Plakette «VORSCHAU» an Bild und Verlauf (ui, `GueteMarke`)
+      - [x] Zuarbeit für UI: bestellte Güte beim Absenden am Lauf, Güte in der Kuratier-Quelle (§152)
     - [ ] Güte für den Skizzen-Weg (Owner-Frage; bis dahin grau)
     - [x] Am Gerät messen: Zeit je Phase Vorschau gegen Voll (auf-20261020-290, local) — 103–105 s bei ruhigem Rechner, Prüfung grösster Posten
     - [x] Heim-PC-Fehler aus 290 und die Zeitüberschreitung der Variante behoben: Upload ausserhalb der Reihe und gestreamt, Variante ohne Modell, Mac 300 s für die zwei Wege mit Modell, guete+skip endet, Abbruchsatz in `message`, Zwilling mit Randrauschen, Rahmung an der gerahmten Box, Nullanker gemerkt (§151, C77)
@@ -8090,6 +8091,14 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Varianten nebeneinander, Verlauf nach Grundlage gruppiert (L4-15)
   - [ ] Grossansicht ≥ 70 % der Fläche, Prüfung einklappbar (L4-14)
   - [ ] L24 «Varianten» als Angabe an `vis_render` statt eigener Befehl (Entscheid 102)
+- [ ] Drei Fehler vom Mac am Vis-Werkzeug (20.10.2026, §152, C78)
+  - [x] Fokusring in Knotenfeldern: Rand statt abgeschnittenem Ring — beide Programme
+  - [x] Hauptbild in fester Box (Springen beim Zoomen) — beide Programme; nur in Chromium gemessen
+  - [x] «Variante erzeugen» ohne Modell, einmal mit Modell nachgereicht, Anlage 300 s — beide Programme; Vertragsvorschlag an Int 1
+  - [x] Heim-PC nimmt die Variante ohne Modell an (§150, C76)
+  - [ ] Am Mac prüfen: Fokus, Zoomen, Variante gegen den umgebauten Heim-PC (owner)
+  - [ ] Owner-Entscheid: Felder im Knoten eckiger (dritte Rundung) — oder so lassen
+  - [ ] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch)
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
 - [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58

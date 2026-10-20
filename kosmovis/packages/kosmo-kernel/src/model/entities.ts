@@ -1965,6 +1965,12 @@ export interface SheetImage {
   y: number;
   /** Breite in Papier-mm; Höhe folgt dem Bild-Seitenverhältnis (leer: 3:2). */
   w: number;
+  /**
+   * Video-Demolauf 20.10.2026, L9: Breite/Höhe des FELDS, wenn gewählt (z. B. 16/9).
+   * Gesetzt gilt es vor dem Bild — das Bild füllt das Feld (`slice`); fehlt es,
+   * bleibt die bisherige Regel (Seitenverhältnis des Bilds, leer 3:2).
+   */
+  verhaeltnis?: number;
   assetId: string | null;
   title?: string;
   /**

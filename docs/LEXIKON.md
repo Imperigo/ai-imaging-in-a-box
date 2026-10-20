@@ -2355,6 +2355,18 @@ wird die Höhe des Knotens berechnet; eine Probe verlangt, dass jede gezeichnete
 Register steht und umgekehrt. Wer eine Zeile hinzufügt, ohne das Register nachzuführen, schnitte
 sonst still Inhalt ab. Für den Schalter «Güte» wurde darum keine neue Zeile angelegt.
 
+**Fokusring** — Die farbige Umrandung, die zeigt, welches Bedienelement gerade die Tastatur
+hat (etwa das Textfeld, in das man tippt). Sie ist für alle wichtig, die ohne Maus arbeiten,
+und darf darum nie ganz fehlen. In der Knotenansicht wurde sie ausserhalb der Felder gezeichnet
+und vom Knoten abgeschnitten — es blieben nur ihre runden Ecken stehen. Seit dem 20.10.2026
+färbt ein Feld im Knoten stattdessen seinen eigenen Rand ein.
+
+**Feste Bildbox (Einpassen)** — Ein Rahmen, dessen Grösse vorher feststeht, und ein Bild, das
+sich darin einpasst, ohne verzerrt zu werden (im Code `object-fit: contain`). Das Gegenteil ist
+ein Rahmen, der sich nach dem Bild richtet. Beim Zoomen der Knotenansicht rechnete der Browser
+diesen zweiten Rahmen bei jedem Schritt etwas anders, und das Bild sprang; die feste Box springt
+nicht. *In diesem Projekt: das Hauptbild des Render-Knotens.*
+
 **Kooperativer Abbruch** — Ein Abbruch, der nicht hart eingreift, sondern nur einen Vermerk
 setzt («abgebrochen»), den der Rechnende selbst liest und dann aufhört. Der Heim-PC sieht
 zwischen zwei Schritten nach; ein Schritt, der schon läuft (Blender oder das Bildmodell),
@@ -7690,6 +7702,7 @@ einer Marke. *Im Projekt:* auf den Werkzeugabbildungen (`docs/abbildungen/`), et
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-20 | Ergaenzt aus den drei Fehlern vom Mac (Protokoll 74 §152): **Fokusring**, **Feste Bildbox (Einpassen)**; die Seite der **Variante ohne Hochladen** steht unter diesem Eintrag (nicht doppelt angelegt) |
 | 2026-10-20 | Ergaenzt aus den Heim-PC-Fehlern (Protokoll 74 §150): **Variante ohne Hochladen**, **Endgültiger Mangel**, **Kantenrauschen (einer Tiefenkarte)**, **Streamender Teiler**, **Lange Wartezeit (der Mac-App)**, **Eigenes Modell (des Assistenten)**, **Rollenkarte (von KosmoOrbit)**, **Marke «eine Frage läuft»**; **Formular-Upload** und **Entladen (des Sprachmodells)** nachgeführt |
 | 2026-10-20 | Ergaenzt aus dem MCP-Kern der Mac-App (KI-Bedienung Stufe 2, Protokoll 74 §151): **MCP-Anschluss in der Mac-App**, **JSON-RPC**, **Hörer (Listener)**, **Loopback (127.0.0.1)**, **DNS-Rebinding**, **Streamable HTTP**, **Wartefrist (eines Aufrufs von Claude)**, **Werkzeugträger** |
 | 2026-10-20 | Ergaenzt aus dem Güte-Schalter am Render-Knoten (Protokoll 74 §149): **Zwischenbild**, **Zeilenregister (Render-Knoten)** |

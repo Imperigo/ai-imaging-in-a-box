@@ -280,6 +280,20 @@ export function setPatchListener(fn: typeof patchListener): void {
 }
 
 /**
+ * K8 «Plan folgt der Arbeit» (v0.1.9): Zuhoerer nach jedem angewendeten
+ * Befehl (nicht Probe, nicht Sammelweg). Der Grundriss liest daraus Akteur und
+ * Patches, um einer Aenderung von Kosmo/Claude zu folgen
+ * (`modules/design/plan-folgen.ts`). Mehrere Zuhoerer, Abmeldung zurueck.
+ */
+const befehlsZuhoerer = new Set<(r: ExecutionResult) => void>();
+export function hoereBefehle(fn: (r: ExecutionResult) => void): () => void {
+  befehlsZuhoerer.add(fn);
+  return () => {
+    befehlsZuhoerer.delete(fn);
+  };
+}
+
+/**
  * v0.9.4 P-GE2 (Owner-Befund Ursache 2, zweite Haelfte von 657): neu
  * angelegte Geschosse aus den PATCHES eines Befehlsergebnisses erkennen —
  * NIE per Namenssuche im Doc (H-38, `commands/design.ts`: ein Bestand darf
@@ -481,6 +495,15 @@ export const useProject = create<ProjectState>((set, get) => {
         // (`fremd-aenderung.ts`).
         meldeLokaleAenderung();
         patchListener?.(result.patches);
+        // Der Befehl ist schon angewendet: ein Zuhoerer, der wirft, darf ihn nicht
+        // nachtraeglich als gescheitert melden (Kosmo/Claude saehen «Fehler»).
+        for (const fn of befehlsZuhoerer) {
+          try {
+            fn(result);
+          } catch (err) {
+            console.error('[project-store] Befehls-Zuhoerer warf', err);
+          }
+        }
       }
       return result;
     },

@@ -213,6 +213,10 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-skizze-fuehrt-knoten.test.tsx",
     # Nr. 85 Paket 2 (20.10.2026): vis.render traegt Grundlage und Startwert — nur Vis-Befehle.
     "packages/kosmo-kernel/test/kv-grundlage-vis-render.test.ts",
+    # Fehler-Nachgang 20.10.2026 (Owner am Mac): Fokus im eigenen Rand der Felder im Knotenkoerper.
+    # (`kv-variante-ohne-modell` bleibt drueben: es baut Waende mit `design.*`-Befehlen, die die
+    # Kopie nicht traegt — wie `kv-grundlage-auftrag`.)
+    "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

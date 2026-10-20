@@ -586,6 +586,28 @@
 .vis-node-feld--textarea {
   resize: none;
 }
+/* Fehler-Nachgang 20.10.2026 (Owner am Mac: «Textfelder mit Farbumrandung»): der Fokusring des
+   Hauses (`aura.css`, `:focus-visible` — Umriss 2 px mit 2 px Abstand plus Innenring als
+   `box-shadow … !important`) zeichnet AUSSERHALB des Feldes. Der Knotenkoerper schneidet ab
+   (`overflow: hidden`, oben), und vom Ring blieben nur die Stuecke an den runden Ecken stehen —
+   sie quollen oben und unten aus dem Stil-Text des Prompt-Knotens. Im Knotenkoerper zeigt ein
+   Feld den Fokus darum IN seinem eigenen Rand (Akzentfarbe), wie `.k-input`/`.k-select` es
+   ausserhalb tun. `!important` nur, weil der Ring es traegt; die hoehere Spezifitaet gewinnt.
+   Kaestchen, Schalter und Schiene haben keinen eigenen Rand, der den Fokus tragen koennte: sie
+   behalten den Umriss, aber ohne Abstand und ohne Innenring, damit er nicht abgeschnitten wird. */
+.vis-node-koerper input:focus-visible,
+.vis-node-koerper select:focus-visible,
+.vis-node-koerper textarea:focus-visible {
+  outline: none;
+  box-shadow: none !important;
+  border-color: var(--k-accent);
+}
+.vis-node-koerper input[type='checkbox']:focus-visible,
+.vis-node-koerper input[type='radio']:focus-visible,
+.vis-node-koerper input[type='range']:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: 0;
+}
 .vis-node-stimmung-wrap {
   display: grid;
   gap: 4px;
@@ -2090,17 +2112,29 @@
   }
 }
 
-/* Entscheid 68 / E174, Nachtrag (4): Abzeichen IM Hauptbild. Der Rahmen ist
-   genau so gross wie das Bild (die Hoehe kommt allein vom Bild, der Knoten
-   waechst nicht); die Abzeichen liegen oben im Bild und nehmen keinen Zeiger.
-   Passen beide nicht in eine Zeile (schmales Bild, langes Urteil), bricht das
-   Urteil rechts darunter um, statt das Laufschild zu ueberdecken. */
+/* Entscheid 68 / E174, Nachtrag (4): Abzeichen IM Hauptbild; sie liegen oben
+   im Rahmen und nehmen keinen Zeiger. Passen beide nicht in eine Zeile (langes
+   Urteil), bricht das Urteil rechts darunter um, statt das Laufschild zu
+   ueberdecken.
+   Fehler-Nachgang 20.10.2026: der Rahmen ist eine FESTE Box — volle Breite,
+   die Hoehe inline aus dem Register (110 px abzueglich der Hinweiszeilen,
+   NodeCanvas.tsx). Bis dahin war er `fit-content` um ein Bild mit Breite
+   `auto`: seine Breite entstand aus der Bildgroesse, und unter dem Bruch-`zoom`
+   der Knotenebene (`.vis-knoten-zoom`) rundete WebKit sie je Zoomschritt
+   anders — Bild und Abzeichen sprangen beim Rein- und Rauszoomen. Das Bild
+   fuellt die Box und passt sich mit `object-fit: contain` ein; der Knoten
+   waechst nicht. */
 .vis-hauptbild {
   position: relative;
   display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
+  width: 100%;
+}
+.vis-hauptbild > .vis-hauptbild-bild {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .vis-hauptbild-abzeichen {
   position: absolute;
@@ -2327,13 +2361,21 @@
 .vis-node-warteort {
   position: relative;
 }
+/* Fehler-Nachgang 20.10.2026: auch das Zwischenbild ist ein Block in einer festen Box (der
+   Warteplatz ist 110 px hoch, s. oben), und der Platz schneidet es an SEINEM Rand ab — vorher
+   zeichnete das Bild seine eigene Rundung unter der halbdurchsichtigen Flaeche, und beide
+   rundeten unter dem Bruch-`zoom` je Schritt verschieden. */
+.vis-node-warteort:has(> .vis-node-warteort-vorschau) {
+  overflow: hidden;
+  border-radius: var(--k-radius);
+}
 .vis-node-warteort-vorschau {
   position: absolute;
   inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--k-radius);
 }
 .vis-node-warteort-vorschau + .vis-node-warteort-innen {
   position: relative;

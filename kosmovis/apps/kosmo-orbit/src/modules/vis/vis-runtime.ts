@@ -196,6 +196,8 @@ export interface NodeLauf {
    * Entscheide 104/104a: mit welcher Guete das Ergebnis gerechnet ist (`result.guete`); fehlt =
    * voll. Bei `'vorschau'` setzt die Plakette des UI-Workers (`GueteMarke`) den Vermerk an Bild und
    * Verlauf. Explizit `| undefined`: `patchLauf` mischt, eine alte Angabe darf nicht stehen bleiben.
+   * Vor dem Ergebnis steht hier die BESTELLTE Guete (beim Absenden fest, `sendeGraphRenderAuftrag`),
+   * damit die Anzeige nicht dem Schalter am Knoten folgt, solange der Lauf rechnet.
    */
   guete?: 'vorschau' | 'voll' | undefined;
 }
