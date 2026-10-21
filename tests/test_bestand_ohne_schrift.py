@@ -71,6 +71,10 @@ def test_der_zusatz_ist_positiv_formuliert():
     assert kosmo_szene.bildauftrag_bestand("house", None) is None
 
 
+#: Der Stoff vorne aus der Vorgabe fuer Varianten (Entscheid 126) — «plaster» steht im Prompt.
+VORNE = "monolithic plaster building, made entirely of plaster, "
+
+
 def _lauf(tmp_path, rollen):
     ordner = _kosmo_ordner(tmp_path, kameras=KOSMO_AUTO_KAMERAS[:1])
     (ordner / bruecke.DATEI_MODELL).write_bytes(_mit_rollen(_kl._minimale_glb(), rollen))
@@ -83,7 +87,8 @@ def _lauf(tmp_path, rollen):
 def test_mit_bestand_bekommt_das_bild_den_zusatz_und_den_satz(tmp_path):
     ordner, prompts = _lauf(tmp_path, ["existing", None])
     assert prompts and all(p.endswith(kosmo_szene.BESTAND_ZUSATZ) for p in prompts)
-    assert prompts[0].startswith("house, plaster, clear sky, ")
+    # Seit Entscheid 126 steht der Stoff vorne (Vorgabe material_vorne), der Prompt danach.
+    assert prompts[0].startswith(VORNE + "house, plaster, clear sky, ")
     kamera = abholer.lies_befund(ordner)["kameras"][0]
     assert kamera[kosmo_szene.URTEIL_BESTAND]["n_bestand"] == 1
     hinweise = _vertrag(ordner)["qa"]["verdict"]["hinweise"]
@@ -93,7 +98,7 @@ def test_mit_bestand_bekommt_das_bild_den_zusatz_und_den_satz(tmp_path):
 
 def test_ohne_bestand_bleibt_der_bildauftrag_woertlich(tmp_path):
     ordner, prompts = _lauf(tmp_path, [None, "proposed"])
-    assert prompts and all(p == "house, plaster, clear sky" for p in prompts)
+    assert prompts and all(p == VORNE + "house, plaster, clear sky" for p in prompts)
     assert abholer.lies_befund(ordner)["kameras"][0].get(kosmo_szene.URTEIL_BESTAND) is None
     assert not any(h.startswith("BESTAND") for h in
                    _vertrag(ordner)["qa"]["verdict"].get("hinweise") or ())

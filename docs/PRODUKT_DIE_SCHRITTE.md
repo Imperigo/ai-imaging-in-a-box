@@ -2265,3 +2265,11 @@ geschätzte Entfernung stetig bleibt; Himmel, Boden und Hecken davor bleiben dra
 breit gemalten Haus 15 % statt 43 %, darum kam der Hinweis «Ausschnitt anders» nie. Der Bestand zählt auch in der Prüfung
 der Form nicht mehr als Haus, sondern nur noch als Umgebung. Die Maske der Umgebung entsteht schon beim Rendern der
 Grundlage. Ehrlich gesagt: an nachgestellten Szenen geprüft; am Heim-PC noch nicht nachgemessen.
+
+**Varianten rechnen ab jetzt mit der besten gemessenen Einstellung (21.10.2026).** Ohne besondere Angabe stellt der
+Heim-PC das gewählte Material an den Anfang der Bildbeschreibung, hält die Umgebung ausserhalb des Hauses in jedem
+Rechenschritt fest, wie sie in der Grundlage aussieht, und zeigt hinter dem Haus den Himmel der Stimmung statt eines
+ruhigen Verlaufs. Wer eine dieser Einstellungen ausdrücklich ausschaltet, bekommt sie aus. Wo eine Einstellung nicht
+passt (Vorschau, nur Grundlage, Skizze, Gipsmodell), entfällt sie mit Grund. Eine Variante auf einer älteren Grundlage
+ohne Himmel bleibt gültig und sagt am Bild, dass der Himmel dafür neu gerendert werden muss. Am Heim-PC noch nicht
+nachgemessen.

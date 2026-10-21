@@ -7554,6 +7554,12 @@ einer Bodenplatte, ist das Fernste der Boden und fällt nicht auf; steht ein Qua
 kleinen Grauwert an (z. B. 0,15), der Hintergrund bleibt schwarz — die Kante trennt sich ab.
 Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
+**Vorgabe für Varianten (Entscheid 126)** — Was der Heim-PC einstellt, wenn eine Bestellung zu einer Einstellung nichts
+sagt. Seit dem 21.10.2026 sind das drei frühere *Messschalter*: das Material vorne in der Bildbeschreibung, die Umgebung
+ausserhalb des Hauses festgehalten («Umriss halten im Lauf») und der Himmel hinter dem Haus. Eine ausdrückliche Angabe
+gewinnt immer, auch «aus». Wo eine Einstellung fachlich nicht passt, entfällt sie, und das Ergebnis sagt, warum
+(`angewandt.messschalter`, mit «Herkunft»: bestellt, Vorgabe, entfallen oder aus der Grundlage).
+
 **Zwei-Finger-Geste (Wischen und Pinch)** — Auf dem Trackpad eines Mac zwei Finger
 **gemeinsam verschieben** heisst *Wischen*: die Fläche wandert mit den Fingern mit. Zwei Finger
 **auseinander- oder zusammenziehen** heisst *Pinch*: die Ansicht wird grösser oder kleiner, und

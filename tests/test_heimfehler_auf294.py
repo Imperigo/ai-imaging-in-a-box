@@ -288,7 +288,8 @@ def test_ein_englischer_prompt_bleibt_unberuehrt(englisch):
 def test_der_gemischte_prompt_geht_englisch_in_den_ki_schritt():
     s = kosmo_szene.lies_szene({"geometry": {"path": "/x/m.glb", "format": "glb"},
                                 "cameras": "auto", "render": {}, "style": {"prompt": GEMISCHT},
-                                "vis": {}})
+                                "vis": {"material_vorne": False}})
+    # «material_vorne: false» — seit Entscheid 126 stuende sonst der Stoff vorne.
     assert s["prompt"].startswith("contemporary residential building, exposed concrete")
     assert s["prompt_sprache"]["noetig"] is True
     assert s["prompt_original"] == GEMISCHT

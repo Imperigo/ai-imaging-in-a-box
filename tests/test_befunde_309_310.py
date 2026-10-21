@@ -263,13 +263,16 @@ def test_ohne_modell_heisst_es_nicht_bekannt_wie_im_abholer():
 
 # ====================================================================== 309 Option Himmel · Messschalter
 
-def test_himmel_sichtbar_ist_ein_messschalter_vorgabe_aus(himmel):
-    aus = kosmo_szene.lies_szene(_szene("a quiet house", "abend"))
+def test_himmel_sichtbar_ist_seit_entscheid_126_vorgabe_und_false_gewinnt(himmel):
+    # Bis Entscheid 126 (21.10.2026) Vorgabe aus; seither an, ausdruecklich false gewinnt.
+    vorgabe = kosmo_szene.lies_szene(_szene("a quiet house", "abend"))
+    assert vorgabe["himmel_sichtbar"] is True and vorgabe["maengel"] == ()
+    assert vorgabe["messschalter"]["himmel_sichtbar"] == {"herkunft": "vorgabe"}
+    aus = _szene("a quiet house", "abend")
+    aus["vis"]["himmel_sichtbar"] = False
+    aus = kosmo_szene.lies_szene(aus)
     assert aus["himmel_sichtbar"] is False
-    an = _szene("a quiet house", "abend")
-    an["vis"]["himmel_sichtbar"] = True
-    an = kosmo_szene.lies_szene(an)
-    assert an["himmel_sichtbar"] is True and an["maengel"] == ()
+    assert aus["messschalter"]["himmel_sichtbar"] == {"herkunft": "bestellt"}
 
 
 def test_himmel_sichtbar_ohne_stimmung_und_falscher_wert_sind_maengel():

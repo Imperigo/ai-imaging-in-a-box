@@ -150,7 +150,9 @@ def test_angewandt_traegt_umriss_halten_additiv():
 
 def test_der_satz_des_bildmodells_nennt_die_messung():
     satz = render._umriss_halten_satz({"anteil_frei": 0.1377, "zellen": (80, 128)}, True)
-    assert "Ungemessen" not in satz and "auf-20261021-303" in satz
+    # Seit auf-20261021-314 (B1) nennt der Satz die Messung je Kamerazahl: ab 2 Kameras mehr.
+    assert "Ungemessen" not in satz and "auf-20261021-314" in satz
+    assert "ab 2 Kameras rund 320 MiB mehr" in satz and "wie ohne Schalter (" not in satz
 
 
 # ====================================================================== 303 B3 · Stoff im Prompt
@@ -182,7 +184,10 @@ def test_e3_der_stoff_steht_hoechstens_dreimal_und_ohne_doppelten_satz():
 
 
 def test_e1_ohne_material_vorne_bleibt_der_satz_hinten():
-    szene = kosmo_szene.lies_szene(_szene(STANDARD, MATERIAL), streng=False)
+    # Seit Entscheid 126 ist material_vorne Vorgabe — «ohne» heisst ausdruecklich false.
+    fremd = _szene(STANDARD, MATERIAL)
+    fremd.setdefault("vis", {})["material_vorne"] = False
+    szene = kosmo_szene.lies_szene(fremd, streng=False)
     assert szene["prompt"].endswith("exterior surfaces of smooth fair-faced concrete")
     assert not any(z.get("weggelassen") for z in szene["prompt_zusaetze"])
 
