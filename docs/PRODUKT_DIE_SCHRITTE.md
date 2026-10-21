@@ -1897,6 +1897,24 @@ statt an zweiter Stelle; eine Gewichtung in Klammern kennt dieses Modell nicht. 
 Die Messung am Heim-PC rechnet jeden Weg gegen dasselbe Kontrollbild, dazu den Material-Knoten mit Sichtbeton-Textur, der
 das gerenderte Bild als Ausgangspunkt mitgibt. Zurück kommen die Zahlen und ein Urteil von Auge: «Sichtbeton?». Nur
 frei lizenzierte Gewichte, die schon auf dem Rechner liegen.
+**Material und Umriss: was die Messung zeigte, und was danach nachgezogen ist (21.10.2026).** Die Messung am Heim-PC
+fand ein klares bestes Bild: beide Schalter zusammen, der Stoff vorne und der Hintergrund während des Malens
+festgehalten. Das Haus war ganz aus Sichtbeton, stand im Umriss, ohne sichtbare Naht, und man erkannte das Modell wieder.
+Jeder Schalter allein reichte nicht: Der festgehaltene Hintergrund allein machte aus dem Hauptbau einen Rundturm, der
+Stoff vorne allein baute noch mehr neben das Haus, und das nachträgliche Mischen sah aus wie ausgeschnitten und
+aufgeklebt. Grafikspeicher kostete das Festhalten keinen. Danach sind vier kleine Dinge nachgezogen. Beim nachträglichen
+Mischen bemängelten zwei Sätze noch das Bild von vor dem Mischen («baut über den Umriss», «nicht wiederzuerkennen»);
+jetzt sprechen sie über das Bild, das geliefert wird, und die Zahlen von vorher stehen daneben. Der Satz, der sagt, dass
+der Hintergrund festgehalten wurde, stand nur in einer Nebendatei; jetzt steht er im Ergebnis. Mit dem Material-Knoten
+stand der Stoff fünfmal in der Bildbeschreibung; jetzt höchstens dreimal, ohne doppelten Satz. Und beim Bildeingang
+merkte sich das Programm beim Vorbereiten des gerenderten Bilds einen Rechenweg, den es nie braucht; das kostete
+vermutlich die knapp vier Gigabyte Mehrbedarf und ist abgestellt. Dazu zwei Kleinigkeiten aus der Messung davor: Ein
+leerer Ordner für die Gewichte des Tiefenschätzers heisst jetzt «leer oder unvollständig» statt «unbekanntes Modell», und
+im Logbuch steht die Speicherprüfung unter ihrem Auftrag. Ehrlich gesagt: gemessen war ein Startwert, eine Kamera und eine
+Stimmung mit Material. Der Hintergrund ist dann flach wie bei einem Modellfoto, weil die Kamera in Blender nicht den
+Himmel sieht, sondern einen ruhigen Farbverlauf, der bewusst vom Haus abgesetzt ist. Ob das Himmelsbild dort besser
+wäre, und ob das beste Bild mit vier Startwerten, zwei Kameras und drei Stimmungen hält, misst der nächste Auftrag. Erst
+danach wird über die Vorgabe entschieden.
 
 **Licht ins KI-Bild: das Grundbild steht neben dem KI-Bild (21.10.2026, Entscheid 117a).** Nach den zwei Messungen hat
 der Owner gewählt: Das KI-Bild bleibt, was es ist, ein Entwurf, und daneben steht das gerenderte Grundbild, in dem Sonne

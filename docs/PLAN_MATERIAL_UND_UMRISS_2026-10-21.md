@@ -142,6 +142,33 @@ Der Bildeingang kostete in 298 **+3880 MiB**. `render._eigener_start` kodiert da
 Aktivierungen des VAE fest. a2 rechnet dasselbe unter `no_grad`; liegt seine Spitze deutlich unter der des Bildeingangs,
 ist die Ursache belegt, und `_eigener_start` bekäme dieselbe Zeile (nicht in diesem Strang geändert).
 
+## 7. Nach der Messung 303 (Strang Kern, 21.10.2026)
+
+**Gemessen (auf-20261021-303, ein Startwert, Kamera sSE, mittag, abend):** M2 (`material_vorne` + «im_lauf») ist das
+beste Bild — Sichtbeton ja, im Umriss, keine Naht, wiederzuerkennen, `geom_iou` 0,924, ausserhalb 0,0008. «im_lauf» allein
+hält den Umriss, macht aber einen Rundturm; «nachher» ist eine sichtbare Collage; `material_vorne` allein baut noch weiter
+über den Umriss (3,08). Spitze mit «im_lauf» 27 116 MiB, 320 MiB **unter** der Kontrolle — die Vermutung aus 6 ist damit
+gestützt.
+
+**Gebaut danach** (Messschalter bleiben Messschalter, kein Vertragsfeld):
+
+| Befund | Was jetzt gilt |
+|---|---|
+| B1 «nachher» | Die Sätze «KI BAUT UEBER DEN UMRISS HINAUS», «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» und `qa.ausserhalb_umriss_anteil` kommen vom gehaltenen Bild (`umriss_halten.urteil_nachher`, `kosmo_szene.urteil_fuer_umrisssaetze`); das Urteil von vorher bleibt Kameraurteil und steht im Satz «UMRISS HALTEN …». |
+| B2 Fahrplan-Satz | Der Satz des Bildmodells steht auch in `qa.verdict.hinweise` und unter `angewandt.umriss_halten` (additiv); «Ungemessen» ersetzt durch die Messung. |
+| B3 Stoff fünfmal | Höchstens dreimal im ganzen Prompt (`MATERIAL_VORNE_HOECHSTENS`, `stoff_nennungen`): der Satz des Material-Knotens hinten fällt weg, wenn vorne derselbe Stoff steht; nennt der Prompt den Stoff schon, wird der Satz vorne kürzer. **Auch M2 ändert sich** (vorne zwei statt drei Nennungen). |
+| 6 `no_grad` | `render._eigener_start` kodiert unter `torch.no_grad` — Bild gleich, Speicher erwartet kleiner. `vram_bildeingang_*` im Register bleibt bis zur Messung. |
+
+**Flacher Hintergrund — geprüft, nicht gebaut.** Mit einer Stimmung sieht der Kamerastrahl in Cycles nicht das
+Himmelsbild, sondern den ruhigen Verlauf in den Medianfarben dieses Himmels (`blender_depth_stage._ruhiger_hintergrund`,
+«Is Camera Ray», seit 292), seit 293/295 eine bis zwei Blendenstufen vom Haus weg (`stimmung.hintergrund_mit_abstand`).
+Mit «im_lauf» gilt aussen genau dieses Bild — daher das Modellfoto vor der Studiowand. Ein Messschalter «Himmel im
+Hintergrund» bräuchte den Runner, den Schlüssel der Grundlage und das Lesen der Szene und brächte das Bodenfoto aus 292
+zurück; er ist darum nur als Option in auf-20261021-307 (Auskunft je Stimmung).
+
+**Messauftrag:** auf-20261021-307 — M2 gegen die Kontrolle mit vier Startwerten, sSE und nNW, morgen, abend, bedeckt;
+Kontrollen K0 (bildpunktgleich 303 K), M2m (kürzerer Prompt), E2n (bildpunktgleich 303 E2, VRAM nach `no_grad`).
+
 ## Zu entscheiden
 
 1. **Nach der Messung: welcher Umriss-Weg wird Vorgabe?** — *Empfehlung: a2 «im_lauf»*, wenn das Auge keine Naht und

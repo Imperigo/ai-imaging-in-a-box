@@ -257,8 +257,13 @@ class EinmalGeladen:
     Geraeteangabe»* — und das hiesse UNBEKANNT, wo etwas Bekanntes dasteht.
     """
 
-    def __init__(self, lader, name_schluessel: str, wurzel_schluessel: str | None = None):
+    def __init__(self, lader, name_schluessel: str, wurzel_schluessel: str | None = None,
+                 journal: list | None = None):
         self._lader = lader
+        #: Wohin die Zeilen «Im Prozess …» gehen. ``None``: sofort ins Journal (wie bis 0.3.16).
+        #: Eine Liste: dort gesammelt, damit :func:`_berichte` sie unter den Auftrag stellt,
+        #: zu dem sie gehoeren (auf-20261021-302, B2).
+        self.journal = journal
         self._name_schluessel = name_schluessel
         self._wurzel_schluessel = wurzel_schluessel
         self._modelle: dict = {}
@@ -269,6 +274,12 @@ class EinmalGeladen:
         self.ladeweg = None
         self.entflechtung = None
         self.bedarf = None
+
+    def _zeile(self, zeile: str) -> None:
+        if self.journal is None:
+            print(f"    {zeile}")
+        else:
+            self.journal.append(zeile)
 
     @property
     def haelt_gewichte(self) -> bool:
@@ -291,12 +302,12 @@ class EinmalGeladen:
                 except Exception as fehler:
                     abweisung = render.bildeingang_abweisung_in(fehler)
                     if abweisung:
-                        print(f"    Im Prozess {abweisung}")
+                        self._zeile(f"Im Prozess {abweisung}")
                     raise
                 # DIE ZWEITE PRUEFUNG INS JOURNAL (auf-20261021-301, A2): verfuegbar, frei,
                 # eigen, verlangt — wie die Vorpruefung, aber aus diesem Prozess gesehen.
                 if getattr(modell, "bildeingang_pruefung", None):
-                    print(f"    Im Prozess {modell.bildeingang_pruefung}")
+                    self._zeile(f"Im Prozess {modell.bildeingang_pruefung}")
             else:
                 modell = self._lader(name, wurzel)
             self._modelle[schluessel] = modell
@@ -537,10 +548,17 @@ def main(argv=None) -> int:
     # werden bedient, weil beide dieselbe Bauform und denselben Fehler haben: Der
     # Tiefenschaetzer wird je Kamera vier- bis fuenfmal gerufen (Bild, drei Nullanker),
     # das Bildmodell je Kamera und Seed.
-    render_modell = EinmalGeladen(render.lade_modell, "backbone", "modell_wurzel")
+    # DIE ZEILEN «IM PROZESS» GEHOEREN UNTER IHREN AUFTRAG (auf-20261021-302, B2): Sie gingen
+    # sofort hinaus und standen im Journal VOR der Zusammenfassung des Durchgangs und vor der
+    # Karte-Zeile. Jetzt sammelt das Bildmodell sie, und `_berichte` druckt sie nach der
+    # Vorpruefung desselben Auftrags.
+    im_prozess_zeilen: list = []
+    im_prozess: dict = {}
+    render_modell = EinmalGeladen(render.lade_modell, "backbone", "modell_wurzel",
+                                  journal=im_prozess_zeilen)
     tiefen_modell = EinmalGeladen(tiefenschaetzer.lade_modell, "schaetzer")
 
-    verarbeite = abholer.verarbeiter(out_wurzel=a.out_wurzel,
+    verarbeite_ohne_journal = abholer.verarbeiter(out_wurzel=a.out_wurzel,
                                      stil=a.stil, nullprobe=not a.ohne_nullprobe,
                                      gelaende_z=a.gelaende_z,
                                      gelaende_erwartet=not a.kein_gelaende,
@@ -549,6 +567,16 @@ def main(argv=None) -> int:
                                      seeds=seeds or abholer.VORGABE_SEEDS,
                                      _render_modell=render_modell,
                                      _tiefen_modell=tiefen_modell)
+
+    def verarbeite(auftrag):
+        im_prozess_zeilen.clear()
+        try:
+            return verarbeite_ohne_journal(auftrag)
+        finally:
+            if im_prozess_zeilen:
+                im_prozess.setdefault(str((auftrag or {}).get("job_id")), []).extend(
+                    im_prozess_zeilen)
+                im_prozess_zeilen.clear()
 
     def wache_bauen(auftrag):
         """Eine Wache auf den Ausgabeordner DIESES Auftrags.
@@ -594,7 +622,7 @@ def main(argv=None) -> int:
                                     hoechstens=a.hoechstens,
                                     wache_bauen=None if a.ohne_wache else wache_bauen,
                                     quelle=quelle)
-        _berichte(bericht)
+        _berichte(bericht, im_prozess=im_prozess)
 
     # Eine Zahl, die es vorher nicht gab: Wie oft in diesem Durchgang wirklich geladen
     # wurde. Ein Auftrag mit drei Kameras und einem Backbone muss hier 1 stehen haben.
@@ -608,7 +636,7 @@ def main(argv=None) -> int:
     return 0
 
 
-def _berichte(bericht: dict) -> None:
+def _berichte(bericht: dict, im_prozess: dict | None = None) -> None:
     """Einen Durchgang ausgeben — je Ablage einmal.
 
     Herausgeloest, als es zwei Ablagen wurden. Zwei Ausgabewege fuer dieselbe Sache
@@ -635,6 +663,9 @@ def _berichte(bericht: dict) -> None:
         # Bildeingang-Satz der Kuerzung oben zum Opfer — nach dem Entladen fehlten die Zahlen.
         if bildeingang:
             print(f"    Vorpruefung {bildeingang}")
+        # Die zweite Pruefung aus dem Prozess, NACH der Vorpruefung (auf-20261021-302, B2).
+        for zeile in (im_prozess or {}).pop(str(kennung), ()):
+            print(f"    {zeile}")
         if e.get("grund_vermerkt") not in (True, None):
             print(f"    Grund NICHT am Auftrag vermerkt: {e['grund_vermerkt']}")
         w = e.get("wache")
@@ -668,6 +699,11 @@ def _berichte(bericht: dict) -> None:
         # einzelne Zeile, nicht die Liste.
         for warnung in (e.get("warnungen") or ()):
             print(f"    ! {_gekuerzt(str(warnung), GEKUERZT_AUF)}")
+    # Was keinem Auftrag zuzuordnen war, geht nicht verloren — es steht am Ende.
+    for kennung, zeilen in list((im_prozess or {}).items()):
+        for zeile in zeilen:
+            print(f"  {kennung} (ohne Zeile im Bericht): {zeile}")
+        im_prozess.pop(kennung, None)
 
     # Was JEDEN Auftrag gleich trifft — einmal pro Lauf und nicht je Auftrag.
     #

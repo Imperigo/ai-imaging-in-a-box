@@ -2567,6 +2567,14 @@ def _ausserhalb_anteil(urteil):
     return befund.get("anteil_haus") if isinstance(befund, dict) else None
 
 
+#: Was vom Urteil des GEHALTENEN Bilds in den Vermerk geht (auf-20261021-303, B1): genau die
+#: Felder, aus denen ``kosmo_szene`` die Saetze «KI BAUT UEBER DEN UMRISS HINAUS» und «HAUS IM
+#: KI-BILD NICHT WIEDERZUERKENNEN» bildet — nicht mehr, damit das Kameraurteil (vor dem Halten)
+#: das Urteil bleibt.
+UMRISS_NACHHER_SATZFELDER = ("geom_iou", "n_ist", "n_soll", "n_gemeinsam", "score",
+                             "anteil_soll", "ausserhalb_umriss", "breite", "hoehe")
+
+
 def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ordner, *,
                              urteil_vorher=None, messen=None) -> dict:
     """Art ``nachher`` des Messschalters ``vis.umriss_halten`` (Strang Treue) an einer Kamera.
@@ -2576,6 +2584,8 @@ def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ord
     ``geom_iou`` und ``ausserhalb_umriss_anteil`` vor und nach dem Halten stehen im Vermerk.
     Das Kameraurteil selbst bleibt das des KI-Bilds VOR dem Halten (die Seedwahl hat daran
     gewählt). Ein Fehler kostet das Bild nicht: Dann bleibt es, und der Vermerk sagt warum.
+    Seit auf-20261021-303 (B1) steht das Urteil des gehaltenen Bilds unter ``urteil_nachher``
+    (:data:`UMRISS_NACHHER_SATZFELDER`) — daraus kommen die Saetze zum Umriss im Ergebnis.
     """
     import shutil  # noqa: PLC0415
     from . import umrisshalt as _uh  # noqa: PLC0415
@@ -2604,6 +2614,14 @@ def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ord
             nachher = messen(str(bild)) or {}
             vermerk["geom_iou_nachher"] = nachher.get("geom_iou")
             vermerk["ausserhalb_nachher"] = _ausserhalb_anteil(nachher)
+            # DIE SAETZE GEHOEREN ZUM GELIEFERTEN BILD (auf-20261021-303, B1): Bis 0.3.16
+            # trugen «UEBER DEN UMRISS» und «NICHT WIEDERZUERKENNEN» das Urteil von VOR dem
+            # Halten — wer nur die Saetze las, hielt das gelieferte Bild fuer falsch.
+            # `kosmo_szene` bildet sie jetzt hieraus; das Vorher-Urteil bleibt das Kameraurteil.
+            vermerk["urteil_nachher"] = {
+                k: nachher[k] for k in UMRISS_NACHHER_SATZFELDER if k in nachher}
+            if "breite" not in vermerk["urteil_nachher"]:
+                vermerk["urteil_nachher"].update(breite=int(breite), hoehe=int(hoehe))
         except Exception as fehler:  # noqa: BLE001 — eine Nachmessung darf nichts kosten
             vermerk["geom_iou_nachher"] = None
             vermerk["ausserhalb_nachher"] = None
@@ -2676,6 +2694,9 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
     * ``bildeingang {staerke, weg, modus, kameras {<kamera>: modus_gerechnet}}`` — ``modus``
       ist der gerechnete Modus, wenn alle Kameras gleich rechneten, sonst ``None``.
     * ``farbabgleich {methode, kameras {<kamera>: {angewandt, streckung, …}}}``.
+    * ``umriss_halten {art, kameras {<kamera>: {angewandt, art, schritte, hinweise, …}}}`` —
+      seit auf-20261021-303 (B2), Messschalter des Strangs Treue; ``hinweise`` traegt den Satz
+      des Bildmodells («Hintergrund im Fahrplan festgehalten …»).
 
     Ohne Schalter bleibt ``angewandt`` Wort fuer Wort, wie es war.
     """
@@ -2696,7 +2717,24 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
             "methode": _fa.METHODE,
             "kameras": {k: {f: v[f] for f in _FARBABGLEICH_IM_ERGEBNIS if f in v}
                         for k, v in farbe.items()}}
+    umriss = {str(u.get("kamera")): u[URTEIL_UMRISS_HALTEN] for u in (urteile or ())
+              if isinstance(u, dict) and isinstance(u.get(URTEIL_UMRISS_HALTEN), dict)}
+    if umriss:
+        # UMRISS HALTEN (auf-20261021-303, B2): der Satz des Bildmodells stand nur im Befund.
+        arten = {v.get("art") for v in umriss.values()}
+        aus["umriss_halten"] = {
+            "art": next(iter(arten)) if len(arten) == 1 else None,
+            "kameras": {k: {f: v[f] for f in _UMRISS_HALTEN_IM_ERGEBNIS if f in v}
+                        for k, v in umriss.items()}}
     return aus
+
+
+#: Was aus dem Vermerk «Umriss halten» einer Kamera ins Ergebnis geht (``angewandt.umriss_halten``,
+#: auf-20261021-303 B2) — DASS und WIE gehalten wurde, mit dem Satz des Bildmodells; die Pfade
+#: der Masken und das ganze Urteil nach dem Halten bleiben im Befund.
+_UMRISS_HALTEN_IM_ERGEBNIS = ("angewandt", "art", "grund", "methode", "rand_px", "weich_px",
+                              "anteil_frei", "schritte", "hinweise", "geom_iou_vorher",
+                              "ausserhalb_vorher", "geom_iou_nachher", "ausserhalb_nachher")
 
 
 def ki_mindest_lange_seite(backbone_name) -> int | None:
