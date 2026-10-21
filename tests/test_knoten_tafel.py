@@ -44,10 +44,12 @@ def _katalog() -> dict[str, dict]:
     for block in re.split(r"\n  (?=(?:\w+|\[\w+\]): \{\n)", teil)[1:]:
         roh = re.search(r"typ: (?:'(\w+)'|(\w+))", block)
         typ = roh.group(1) or konst[roh.group(2)]
-        port = r"\{ name: '\w+', typ: '(\w+)', label: '([^']+)' \}"
+        # Seit dem 21.10.2026 auch Anschlüsse mit `nurVon` (Skizze am Render, die Eingänge der Oberfläche).
+        port = r"\{ name: '\w+', typ: '(\w+)', label: '([^']+)'(?:, nurVon: \[[^\]]*\])? \}"
 
         def ports(feld):
-            m = re.search(feld + r": \[(.*?)\]", block, re.S)
+            # Eine Ebene Klammern darf drin sein (`nurVon: ['…']`), sonst endete die Liste dort.
+            m = re.search(feld + r": \[((?:[^\[\]]|\[[^\]]*\])*)\]", block, re.S)
             return [(label, t) for t, label in re.findall(port, m.group(1))] if m else []
 
         aus[typ] = {"label": re.search(r"label: '([^']+)'", block).group(1),
@@ -57,10 +59,10 @@ def _katalog() -> dict[str, dict]:
 
 
 def test_der_katalog_wird_gelesen():
-    """Die Gegenprobe zum Leser: fünfzehn Knotenarten, wie der Kommentar im Katalog sagt."""
+    """Die Gegenprobe zum Leser: siebzehn Knotenarten (seit 21.10.2026), wie der Kommentar im Katalog sagt."""
     katalog = _katalog()
-    assert len(katalog) == 15
-    assert "Katalog der 15 Node-Typen" in KATALOG.read_text(encoding="utf-8")
+    assert len(katalog) == 17
+    assert "Katalog der 17 Node-Typen" in KATALOG.read_text(encoding="utf-8")
     assert katalog["render"]["inputs"][0] == ("Szene", "szene")
 
 
@@ -103,7 +105,7 @@ def test_alle_karten_ohne_heimpfad_in_der_tafelnotiz(tmp_path):
     kt = _werkzeug()
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
     jsons = sorted(tmp_path.glob("*.json"))
-    assert len(jsons) == 16  # Übersicht und fünfzehn Knoten
+    assert len(jsons) == 18  # Übersicht und siebzehn Knoten
     for p in jsons:
         assert "/home/" not in p.read_text(encoding="utf-8"), p.name
 

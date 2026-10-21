@@ -35,8 +35,31 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
   // (`renderPromptBausteine(doc)`), 'kamera' leitet Standpunkte live aus den
   // Modell-Bounds ab (`deriveAutoKameras(doc)`) — nichts einzustellen.
   modell: [],
+  // Bauplan «Neue Knoten» (Blatt 33): «Oberfläche» stellt nichts ein — sie ordnet über ihre fünf
+  // Eingänge zu (Fassade, Dach, Fenster, Boden, Übrige; Türen zählen zu Übrige).
   material: [],
-  kamera: [],
+  materialTextur: [
+    { name: 'bibliothek', info: 'Welches Material der Bibliothek (elf, Texturen CC0 am Heim-PC).' },
+    { name: 'massstab', info: 'Wie gross ein Bild der Textur auf dem Bauteil wird, in Metern (Vorgabe 1 m).' },
+    { name: 'drehung', info: 'Drehung der Textur in Grad (Vorgabe 0°).' },
+    { name: 'relief', info: 'Wie plastisch die Höhenkarte die Fläche macht, 0 bis 1 (Vorgabe 0,6).' },
+    { name: 'vorschau', info: 'Nur die Vorschau am Knoten: Kugel, Würfel oder Fläche.' },
+  ],
+  farbpalette: [
+    { name: 'farben', info: 'Bis vier Farben — sie gehen als Satz ans Bildmodell.' },
+    { name: 'leitfarbe', info: 'Welche der Farben das angehängte Material tönt.' },
+    { name: 'staerke', info: 'Wie stark sie tönt, 0 bis 1.' },
+  ],
+  // Bauplan «Neue Knoten» (Blatt 31): Auto rechnet der Heim-PC, Manuell sind eingefrorene Standpunkte.
+  kamera: [
+    { name: 'art', info: 'Auto (der Heim-PC rechnet), Manuell (von Hand gestellt) — ohne Wahl die Standpunkte aus dem Modell.' },
+    { name: 'richtungen', info: 'Auto: aus welchen Himmelsrichtungen (Vorgabe Süd, Südost, Nordwest).' },
+    { name: 'augenhoehe', info: 'Auto: Augenhöhe über dem Gelände in Metern (Vorgabe 1,70).' },
+    { name: 'brennweite', info: 'Auto: 24, 35 oder 50 mm (Vorgabe 35).' },
+    { name: 'fuellt', info: 'Auto: so viel der Bildbreite füllt das Haus (Vorgabe 70 %) — oder fester Abstand in Metern.' },
+    { name: 'perspektive', info: 'Senkrechte gerade (Vorgabe) oder frei gekippt.' },
+    { name: 'kameras', info: 'Manuell: die eingefrorenen Standpunkte mit Auge und Blickpunkt.' },
+  ],
   // kombinierer/vergleich: arbeiten rein über ihre Eingänge, keine Parameter.
   kombinierer: [],
   vergleich: [],
@@ -50,8 +73,10 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
     { name: 'text', info: 'Freier Stil-Text — geht wortgleich als Prompt-Ausgang in den Graphen.' },
   ],
   stimmung: [
-    // `evaluiereGraph` case 'stimmung': `VIS_STIMMUNGEN[params['preset'] ?? 'morgen']`.
-    { name: 'preset', info: 'Morgenlicht, Abendstimmung oder Weissmodell — liefert die passende Prompt-Phrase.' },
+    // Bauplan «Neue Knoten» (Blatt 32): `stimmungAusParams` — Liste vor Einzelwert.
+    { name: 'presets', info: 'Gewählte Stimmungen (acht, mit Himmelsbild) — die erste bestellt der Render-Knoten.' },
+    { name: 'drehung', info: 'Himmel fest drehen, in Grad — ohne Wert stellt der Heim-PC die Sonne zur Kamera.' },
+    { name: 'wirkung', info: 'Licht in Blender, Satz fürs Bildmodell, oder beides (Vorgabe).' },
   ],
   zahl: [
     // `evaluiereGraph` case 'zahl': `Number(params['wert'] ?? 0)`; min/max/

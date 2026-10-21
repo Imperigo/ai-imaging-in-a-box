@@ -75,7 +75,81 @@ export const CameraSpec = z.object({
   up_axis: z.enum(['y', 'z']),
   /** R2 — siehe Nachtrag oben. Additiv, optional, kein Default. */
   referenzpunkt: CameraReferenzpunkt.optional(),
+  /**
+   * Vorschlag V (Knoten «Kamera», Visbox-Entscheid 109 C, 21.10.2026): «senkrecht» haelt die
+   * Senkrechten senkrecht (Zwei-Punkt-Perspektive, die Bildseite rechnet einen Objektiv-Shift
+   * und blickt waagrecht), «frei» kippt die Kamera auf das Ziel. Fehlt das Feld, gilt wie
+   * bisher «frei» (gekippt) — additiv, alte Bestellungen bleiben Zeichen fuer Zeichen gleich.
+   */
+  perspektive: z.enum(['senkrecht', 'frei']).optional(),
 });
+
+/**
+ * Vorschlag V (Visbox-Entscheide 110 B / 113, 20.10.2026): die acht Stimmungen in der
+ * Reihenfolge der Visbox (`aiimaging.stimmung.STIMMUNGEN`, Kern `VIS_STIMMUNGEN`). Die ersten
+ * drei Werte von frueher (morgen, abend, weiss) bleiben gueltig.
+ */
+export const StimmungPreset = z.enum(['morgen', 'mittag', 'abend', 'blaue-stunde', 'bedeckt', 'nebel', 'winter', 'weiss']);
+export type StimmungPreset = z.infer<typeof StimmungPreset>;
+
+/**
+ * Vorschlag V (Knoten «Kamera»): die zwoelf Richtungskuerzel des Heim-PCs
+ * (`aiimaging.kameras.RICHTUNGEN`) — vier frontal, acht ueber Eck.
+ */
+export const AutoRichtung = z.enum(['n', 'e', 's', 'w', 'nNE', 'nNW', 'eEN', 'eES', 'sSE', 'sSW', 'wWS', 'wWN']);
+export type AutoRichtung = z.infer<typeof AutoRichtung>;
+
+/**
+ * Vorschlag V (Visbox-Entscheide 109/113 (3), 20.10.2026): die Auto-Kamera rechnet der Heim-PC,
+ * mit den Einstellungen des Knotens. Alles ausser `richtungen` optional und OHNE Vorgabe — der
+ * Heim-PC setzt die Vorgaben (1,70 m, 35 mm, Haus fuellt 70 %, senkrecht) und nennt sie im
+ * Ergebnis (`angewandt.cameras_auto.vorgaben`). Nur mit `cameras: 'auto'` (superRefine).
+ */
+export const CamerasAuto = z.object({
+  richtungen: z.array(AutoRichtung).min(1).max(8),
+  /** Ueber dem Gelaende am Standpunkt, Meter. */
+  augenhoehe_m: z.number().min(0.5).max(50).optional(),
+  brennweite_mm: z.union([z.literal(24), z.literal(35), z.literal(50)]).optional(),
+  abstand: z
+    .discriminatedUnion('art', [
+      z.object({ art: z.literal('auto'), fuellt: z.number().min(0.2).max(0.95).optional() }),
+      z.object({ art: z.literal('fest'), meter: z.number().min(2).max(2000) }),
+    ])
+    .optional(),
+  perspektive: z.enum(['senkrecht', 'frei']).optional(),
+});
+export type CamerasAuto = z.infer<typeof CamerasAuto>;
+
+/**
+ * Vorschlag V (Visbox-Entscheid 111, 20.10.2026): ein Material der Bibliothek fuer eine
+ * Bauteil-Art. `id` ist die Kennung der Bibliothek; der Heim-PC prueft sie gegen seine Ablage
+ * und weist Unbekanntes mit Satz ab (Entscheid 113 (2)). Keine Vorgaben hier — der Heim-PC
+ * setzt sie (1 m, 0°, Relief 0,6) und nennt sie im Ergebnis.
+ */
+export const MaterialWahl = z.object({
+  id: z.string().regex(/^[a-z0-9-]{1,48}$/),
+  massstab_m: z.number().min(0.05).max(20).optional(),
+  drehungGrad: z.number().min(0).max(360).optional(),
+  relief: z.number().min(0).max(1).optional(),
+  toenung: z
+    .object({ farbe: z.string().regex(/^#[0-9a-fA-F]{6}$/), staerke: z.number().min(0).max(1) })
+    .optional(),
+});
+export type MaterialWahl = z.infer<typeof MaterialWahl>;
+
+/** Die fuenf Bauteil-Arten (Visbox `materialwahl.ARTEN`); Tueren zaehlen zu «uebrige» (113 (7)). */
+export const BAUTEIL_ARTEN = ['fassade', 'dach', 'fenster', 'boden', 'uebrige'] as const;
+export type BauteilArt = (typeof BAUTEIL_ARTEN)[number];
+
+/** Ausdruecklich je Schluessel (kein `z.record(enum)`: zod 4 verlangt dort alle Schluessel). */
+export const Materialien = z.object({
+  fassade: MaterialWahl.optional(),
+  dach: MaterialWahl.optional(),
+  fenster: MaterialWahl.optional(),
+  boden: MaterialWahl.optional(),
+  uebrige: MaterialWahl.optional(),
+});
+export type Materialien = z.infer<typeof Materialien>;
 
 /**
  * kv-ebenen (E124): die drei Ebenen, die die Gegenseite je Kamera liefern
@@ -128,6 +202,8 @@ export const RenderScene = z.object({
   cameras: z
     .union([z.literal('auto'), z.literal('saved'), z.array(CameraSpec).min(1)])
     .default('auto'),
+  /** Vorschlag V: die Einstellungen der Auto-Kamera (`CamerasAuto`), nur mit `cameras: 'auto'`. */
+  cameras_auto: CamerasAuto.optional(),
   /**
    * AUFTRAG DREI (auftraege/von-homestation/auf-orbit-20260821-02.md,
    * Abschnitt «DREI: INNENANSICHTEN SIND FERTIG UND BEI EUCH UNBESTELLBAR»):
@@ -396,14 +472,26 @@ export const RenderScene = z.object({
        * liegenden Voll-HDRIs auflöst — die App verschifft KEINE .hdr-Assets
        * (prozedurale Previews, ehrliche Container-Grenze).
        */
+      //
+      // Vorschlag V (Visbox-Entscheide 110/113, 20.10.2026): acht Stimmungen (`StimmungPreset`).
+      // Sonst unveraendert. Gesendet wird das Objekt, wie es gebaut ist (nicht die Ausgabe von
+      // `parse`): fehlt `rotationGrad` in der Bestellung, dreht der Heim-PC den Himmel zur Kamera
+      // (`angewandt.environment.drehung_weg: 'zur_kamera'`); die Vorgabe 0 unten gilt nur fuer
+      // die gelesene Form.
       environment: z
         .object({
-          preset: z.enum(['morgen', 'abend', 'weiss']),
+          preset: StimmungPreset,
           hdri: z.string().optional(),
           intensitaet: z.number().min(0).max(10).default(1),
           rotationGrad: z.number().min(0).max(360).default(0),
         })
         .optional(),
+      /**
+       * Vorschlag V (Visbox-Entscheid 111): Materialien je Bauteil-Art aus dem Knoten
+       * «Oberflaeche». Fehlt eine Art, behaelt sie das Material aus dem Modell. Ein leeres
+       * Objekt wird abgewiesen (superRefine) — «nichts gewaehlt» heisst: Feld weglassen.
+       */
+      materialien: Materialien.optional(),
       /**
        * kv-ebenen (E124 Schritt 1, Owner-Entscheid 29.09.2026 «zwei
        * Schritte»): welche EBENEN je Kamera zurueckkommen sollen. Form nach
@@ -783,6 +871,32 @@ export const RenderScene = z.object({
   // unabhaengig voneinander, mit je eigenem Fehlerpfad, damit die Meldung
   // immer auf das tatsaechlich gesendete Feld zeigt.
   .superRefine((v, ctx) => {
+    // Vorschlag V (Knoten «Kamera»): die Einstellungen der Auto-Kamera gelten nur, wenn die
+    // Bildseite die Standpunkte selbst rechnet — nicht neben einer Liste, nicht mit einer Skizze
+    // (EIN Bild vom Standpunkt der Skizze) und nicht mit Innenansichten.
+    if (v.cameras_auto !== undefined) {
+      if (v.cameras !== 'auto') {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'cameras_auto gilt nur mit cameras "auto" — die Bildseite rechnet die Standpunkte dann selbst.',
+          path: ['cameras_auto'],
+        });
+      }
+      if (v.skizze !== undefined || v.interior !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'cameras_auto geht nicht mit einer Skizze oder Innenansichten zusammen.',
+          path: ['cameras_auto'],
+        });
+      }
+    }
+    if (v.render.materialien !== undefined && Object.keys(v.render.materialien).length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'render.materialien ohne eine einzige Bauteil-Art — das Feld weglassen, wenn nichts gewaehlt ist.',
+        path: ['render', 'materialien'],
+      });
+    }
     // Owner-Entscheid 96 (Visbox, 15.10.2026) — s. Kommentar an `skizze`.
     if (v.skizze !== undefined) {
       if (Array.isArray(v.cameras)) {

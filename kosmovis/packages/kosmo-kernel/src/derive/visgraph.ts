@@ -10,7 +10,7 @@ import {
   seitenverhaeltnisAus,
 } from './kamera-aus-3d';
 import { isVisPresetId, visPresetById, type VisPresetId } from './render-presets';
-import { VARIANTEN_TYP } from './varianten';
+import { liesListe, schreibeListe, VARIANTEN_TYP, vorfahren } from './varianten';
 
 /**
  * Render-Graph-Maschine (V1-Finish P2) — das Herz des KosmoVis-Node-Trees.
@@ -78,14 +78,34 @@ export const VIS_KATEGORIE_HUE: Record<VisKategorie, string> = {
   ausgabe: 'var(--k-mod-publish)',
 };
 
-/** Die Stimmungs-Presets — identisch mit der bisherigen Serien-Logik. */
+/**
+ * Die Stimmungen. Bauplan «Neue Knoten» Schritt K (Visbox-Entscheide 110 B / 113, 20.10.2026):
+ * acht statt drei, in der Reihenfolge der Visbox (`aiimaging.stimmung.STIMMUNGEN`). Der Satz ist
+ * der, den der Knoten in den Prompt legt — wortgleich mit `prompt_de` dort (die Visbox-Probe
+ * `test_knoten_neu_katalog.py` haelt beide gleich). Hinter jeder Stimmung liegt am Heim-PC ein
+ * Himmelsbild (CC0, Poly Haven, Entscheid 107), das in Blender das Licht gibt; die App schickt
+ * nur den Namen der Stimmung (`render.environment.preset`), das Bild waehlt der Heim-PC.
+ */
 export const VIS_STIMMUNGEN: Record<string, { label: string; prompt: string }> = {
   morgen: { label: 'Morgenlicht', prompt: 'Morgenlicht, klare lange Schatten, frische kühle Luft' },
+  mittag: { label: 'Mittag', prompt: 'Mittagslicht, hohe Sonne, klarer Himmel' },
   abend: { label: 'Abendstimmung', prompt: 'Abendstimmung, warmes Licht, leuchtende Fenster' },
+  'blaue-stunde': { label: 'Blaue Stunde', prompt: 'Blaue Stunde, tiefblauer Himmel, warm leuchtende Innenräume' },
+  bedeckt: { label: 'Bedeckt', prompt: 'bedeckter Himmel, weiches gleichmässiges Licht' },
+  nebel: { label: 'Nebel', prompt: 'Nebel, gedämpftes Licht, Tiefe im Dunst' },
+  winter: { label: 'Winter', prompt: 'Winter, Schnee am Boden, kaltes klares Licht' },
   weiss: { label: 'Weissmodell', prompt: 'Weissmodell, neutrales Studiolicht, keine Materialien' },
 };
 
-/** Katalog der 15 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
+/** Die Kennungen der Stimmungen in fester Reihenfolge — wie `RenderScene.render.environment.preset`. */
+export const VIS_STIMMUNG_IDS = ['morgen', 'mittag', 'abend', 'blaue-stunde', 'bedeckt', 'nebel', 'winter', 'weiss'] as const;
+export type VisStimmungId = (typeof VIS_STIMMUNG_IDS)[number];
+
+export function istVisStimmung(x: unknown): x is VisStimmungId {
+  return typeof x === 'string' && (VIS_STIMMUNG_IDS as readonly string[]).includes(x);
+}
+
+/** Katalog der 17 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten (seit 21.10.2026 mit Material und Farbpalette). */
 export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   modell: {
     typ: 'modell',
@@ -96,14 +116,45 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     outputs: [{ name: 'szene', typ: 'szene', label: 'Szene' }],
     defaults: {},
   },
+  // Bauplan «Neue Knoten» F4 (Entscheid 111): «Material-Bausteine» heisst «Oberfläche» und ordnet
+  // Materialien den Bauteil-Arten zu. Der SCHLUESSEL bleibt `material` — alte Kanten
+  // `material` → `kombinierer.material` bleiben gueltig, keine Uebernahme alter Graphen noetig.
+  // Die fuenf Eingaenge nehmen nur den neuen Knoten «Material» (`nurVon`); kein neuer Porttyp.
   material: {
     typ: 'material',
-    label: 'Material-Bausteine',
-    hilfe: 'Liest die äussersten Wandschichten + Fassadenmodule als Prompt-Phrasen (V8).',
-    kategorie: 'quelle',
-    inputs: [],
+    label: 'Oberfläche',
+    hilfe: 'Ordnet Materialien den Bauteil-Arten zu (Fassade, Dach, Fenster, Boden, Übrige); liest dazu die Wandschichten als Prompt-Phrasen.',
+    kategorie: 'wandler',
+    inputs: [
+      { name: 'fassade', typ: 'material', label: 'Fassade', nurVon: ['materialTextur'] },
+      { name: 'dach', typ: 'material', label: 'Dach', nurVon: ['materialTextur'] },
+      { name: 'fenster', typ: 'material', label: 'Fenster', nurVon: ['materialTextur'] },
+      { name: 'boden', typ: 'material', label: 'Boden', nurVon: ['materialTextur'] },
+      { name: 'uebrige', typ: 'material', label: 'Übrige', nurVon: ['materialTextur'] },
+    ],
     outputs: [{ name: 'material', typ: 'material', label: 'Material' }],
     defaults: {},
+  },
+  // F4 (Entscheid 111 B): ein Material der Bibliothek (Texturen CC0, ambientCG, Entscheid 107) —
+  // die Karten liegen am Heim-PC, die App kennt nur die Kennung.
+  materialTextur: {
+    typ: 'materialTextur',
+    label: 'Material',
+    hilfe: 'Ein Material aus der Bibliothek (Texturen am Heim-PC) mit Massstab, Drehung und Relief — an einen Eingang der Oberfläche.',
+    kategorie: 'quelle',
+    inputs: [{ name: 'palette', typ: 'material', label: 'Palette', nurVon: ['farbpalette'] }],
+    outputs: [{ name: 'material', typ: 'material', label: 'Material' }],
+    defaults: { bibliothek: 'sichtbeton-sandgestrahlt' },
+  },
+  // F4 (Entscheid 111 C): tönt das angehängte Material und geht als Satz ans Bildmodell.
+  farbpalette: {
+    typ: 'farbpalette',
+    label: 'Farbpalette',
+    hilfe: 'Bis vier Farben: die gewählte tönt das Material, alle gehen als Satz ans Bildmodell.',
+    kategorie: 'quelle',
+    inputs: [],
+    outputs: [{ name: 'palette', typ: 'material', label: 'Palette' }],
+    defaults: { farben: '["#e9e2d4","#b8a58a","#6f7d6a","#3d4650"]', leitfarbe: 0, staerke: 0.4 },
   },
   prompt: {
     typ: 'prompt',
@@ -117,7 +168,7 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   stimmung: {
     typ: 'stimmung',
     label: 'Stimmung',
-    hilfe: 'Preset Morgenlicht / Abendstimmung / Weissmodell.',
+    hilfe: 'Acht Stimmungen mit Himmelsbild: Licht in Blender und Satz fürs Bildmodell. Mehrfachwahl: ein Bild je Stimmung.',
     kategorie: 'wandler',
     inputs: [],
     outputs: [{ name: 'prompt', typ: 'prompt', label: 'Prompt' }],
@@ -167,7 +218,7 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   },
   kamera: {
     typ: 'kamera',
-    label: 'Auto-Kamera',
+    label: 'Kamera',
     // P-DREISTANDPUNKTE (HomeStation-Befund, auftraege/von-homestation/
     // auf-orbit-20260821-01.md, Auftrag 3): der Text nannte «ggf. Innenraum»
     // ohne zu sagen, dass er nie ankommt — genau das Versprechen, das der
@@ -182,8 +233,14 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     // laesst «Innenraum» durch, sobald `interiorFaehrt(doc)` wahr ist (Zonen im
     // Dokument) — dann sendet `postRenderJob` IFC statt glb und bestellt die
     // Innenansicht mit. Der Text sagt jetzt beides, statt «nur glb» zu behaupten.
+    //
+    // Bauplan «Neue Knoten» F2 (Entscheide 109/113 (3), 20.10.2026): drei Arten im Parameter `art`.
+    // «auto»: der Heim-PC rechnet die Standpunkte mit den Einstellungen des Knotens
+    // (`cameras: 'auto'` + `cameras_auto`); «manuell»: eingefrorene Standpunkte (`kameras`, JSON);
+    // ohne `art` wie bisher die Standpunkte aus dem Modell (`projektKameras`) — alte Graphen und
+    // KosmoOrbit-Proben bleiben Zahl fuer Zahl.
     hilfe:
-      'Leitet benannte Standpunkte (Eingang/Übersicht, bei Räumen im Modell auch Innenraum) regelbasiert aus den Modell-Bounds ab — Vorschlag aus dem Modell, keine KI-Wahl. Mit dem Render-Node verbinden. Innenraum wird nur bestellt, wenn das Modell Räume (Zonen) hat; dann geht die Szene als IFC statt glb.',
+      'Standpunkte für den Render. Auto: der Heim-PC rechnet sie aus Richtungen, Augenhöhe, Brennweite und Abstand. Manuell: eingefroren und von Hand gestellt. Ohne Wahl: Eingang/Übersicht aus dem Modell (bei Räumen auch Innenraum, dann als IFC).',
     kategorie: 'quelle',
     inputs: [],
     outputs: [{ name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' }],
@@ -281,6 +338,294 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Bauplan «Neue Knoten» (Schritt K, 21.10.2026): Stimmung, Kamera, Oberfläche/Material/
+// Farbpalette. Reine Lesefunktionen ueber die Knoten-Parameter — dieselben fuer Auswertung,
+// Knoten-Koerper und Kosmo. Listen stehen als JSON-Text in den Parametern (wie `varianten`).
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Params = VisNode['params'] | undefined;
+
+/** Worauf eine Stimmung wirkt (Entscheid 110 A): Himmelsbild in Blender, Satz fuers Bildmodell, oder beides. */
+export type StimmungWirkung = 'licht+prompt' | 'licht' | 'prompt';
+export const STIMMUNG_WIRKUNGEN: readonly StimmungWirkung[] = ['licht+prompt', 'licht', 'prompt'];
+
+export interface StimmungWahl {
+  /** Gewaehlte Stimmungen in Katalog-Reihenfolge, mindestens eine. Die erste fuehrt den Render-Knoten. */
+  presets: VisStimmungId[];
+  /** Drehung des Himmels um die Hochachse in Grad [0, 360). Fehlt: der Heim-PC dreht zur Kamera. */
+  drehungGrad?: number;
+  wirkung: StimmungWirkung;
+}
+
+/**
+ * Die Wahl am Stimmung-Knoten. Zuerst die Liste `presets` (Mehrfachwahl, Entscheid 113 (4)), sonst
+ * der alte Einzelwert `preset` (alte Graphen), sonst Morgen. Unbekanntes faellt still heraus.
+ */
+export function stimmungAusParams(params: Params): StimmungWahl {
+  const p = params ?? {};
+  const liste = liesListe(p['presets']);
+  const roh = liste ?? (typeof p['preset'] === 'string' ? [p['preset']] : []);
+  const presets = VIS_STIMMUNG_IDS.filter((id) => roh.includes(id));
+  const d = p['drehung'];
+  const wirkungRoh = p['wirkung'];
+  const wirkung = STIMMUNG_WIRKUNGEN.includes(wirkungRoh as StimmungWirkung) ? (wirkungRoh as StimmungWirkung) : 'licht+prompt';
+  return {
+    presets: presets.length > 0 ? presets : ['morgen'],
+    ...(typeof d === 'number' && Number.isFinite(d) ? { drehungGrad: ((Math.round(d) % 360) + 360) % 360 } : {}),
+    wirkung,
+  };
+}
+
+/** Parameter, die eine neue Stimmungs-Wahl schreibt — Liste UND erster Wert (fuer alte Leser). */
+export function stimmungParams(presets: readonly VisStimmungId[]): { presets: string; preset: string } {
+  const geordnet = VIS_STIMMUNG_IDS.filter((id) => presets.includes(id));
+  const liste = geordnet.length > 0 ? geordnet : (['morgen'] as VisStimmungId[]);
+  return { presets: schreibeListe(liste), preset: liste[0]! };
+}
+
+/** Kamera-Arten im Parameter `art` (s. Katalog `kamera`). Ohne `art`: «modell» (wie bisher). */
+export type KameraArt = 'modell' | 'auto' | 'manuell';
+
+/** Die acht Richtungen am Knoten und ihre Kuerzel am Heim-PC (`aiimaging.kameras.RICHTUNGEN`). */
+export const KAMERA_RICHTUNGEN: readonly { chip: string; kuerzel: string; name: string }[] = [
+  { chip: 'N', kuerzel: 'n', name: 'Nord' },
+  { chip: 'NO', kuerzel: 'nNE', name: 'Nordost' },
+  { chip: 'O', kuerzel: 'e', name: 'Ost' },
+  { chip: 'SO', kuerzel: 'sSE', name: 'Südost' },
+  { chip: 'S', kuerzel: 's', name: 'Süd' },
+  { chip: 'SW', kuerzel: 'sSW', name: 'Südwest' },
+  { chip: 'W', kuerzel: 'w', name: 'West' },
+  { chip: 'NW', kuerzel: 'nNW', name: 'Nordwest' },
+];
+
+/** Die Vorgaben des Heim-PCs (Entscheide 109 C, 113 (5)): gezeigt, wenn am Knoten nichts steht. */
+export const KAMERA_AUTO_VORGABEN = {
+  richtungen: ['s', 'sSE', 'nNW'] as readonly string[],
+  augenhoehe_m: 1.7,
+  brennweite_mm: 35 as 24 | 35 | 50,
+  fuellt: 0.7,
+  perspektive: 'senkrecht' as 'senkrecht' | 'frei',
+};
+
+export const KAMERA_BRENNWEITEN = [24, 35, 50] as const;
+
+/** Was der Knoten «Kamera» im Modus Auto bestellt — die Form von `RenderScene.cameras_auto`. */
+export interface KameraAutoWahl {
+  richtungen: string[];
+  augenhoehe_m?: number;
+  brennweite_mm?: 24 | 35 | 50;
+  abstand?: { art: 'auto'; fuellt?: number } | { art: 'fest'; meter: number };
+  perspektive?: 'senkrecht' | 'frei';
+}
+
+export function kameraArtAusParams(params: Params): KameraArt {
+  const a = params?.['art'];
+  return a === 'auto' || a === 'manuell' ? a : 'modell';
+}
+
+function zahlIn(wert: unknown, min: number, max: number): number | undefined {
+  return typeof wert === 'number' && Number.isFinite(wert) && wert >= min && wert <= max ? wert : undefined;
+}
+
+/**
+ * Die Einstellungen der Auto-Kamera. Nur, was am Knoten steht, geht mit — den Rest setzt der
+ * Heim-PC (`KAMERA_AUTO_VORGABEN`) und nennt ihn im Ergebnis. Richtungen sind Pflicht im Vertrag:
+ * ohne Wahl gelten die drei der Vorgabe.
+ */
+export function kameraAutoAusParams(params: Params): KameraAutoWahl {
+  const p = params ?? {};
+  const bekannt = KAMERA_RICHTUNGEN.map((r) => r.kuerzel);
+  const gewaehlt = (liesListe(p['richtungen']) ?? []).filter((r) => bekannt.includes(r));
+  const richtungen = gewaehlt.length > 0 ? bekannt.filter((r) => gewaehlt.includes(r)) : [...KAMERA_AUTO_VORGABEN.richtungen];
+  const auge = zahlIn(p['augenhoehe'], 0.5, 50);
+  const bw = p['brennweite'];
+  const brennweite = bw === 24 || bw === 35 || bw === 50 ? bw : undefined;
+  const fuellt = zahlIn(p['fuellt'], 0.2, 0.95);
+  const meter = zahlIn(p['abstandM'], 2, 2000);
+  const abstand: KameraAutoWahl['abstand'] =
+    p['abstandArt'] === 'fest' && meter !== undefined
+      ? { art: 'fest', meter }
+      : fuellt !== undefined
+        ? { art: 'auto', fuellt }
+        : undefined;
+  const persp = p['perspektive'];
+  return {
+    richtungen: richtungen.slice(0, 8),
+    ...(auge !== undefined ? { augenhoehe_m: auge } : {}),
+    ...(brennweite !== undefined ? { brennweite_mm: brennweite } : {}),
+    ...(abstand ? { abstand } : {}),
+    ...(persp === 'senkrecht' || persp === 'frei' ? { perspektive: persp } : {}),
+  };
+}
+
+/** Waagrechter Bildwinkel aus der Brennweite (Kleinbild, 36 mm breit — wie Blender). */
+export function fovAusBrennweiteGrad(brennweiteMm: number): number {
+  return (2 * Math.atan(36 / (2 * brennweiteMm)) * 180) / Math.PI;
+}
+
+/** Ein eingefrorener Standpunkt am Knoten (Modus Manuell), glTF-Achsen (Y oben, Meter). */
+export interface KameraManuell {
+  name: string;
+  position: [number, number, number];
+  target: [number, number, number];
+  fov: number;
+}
+
+function istVec3(v: unknown): v is [number, number, number] {
+  return Array.isArray(v) && v.length === 3 && v.every((x) => typeof x === 'number' && Number.isFinite(x));
+}
+
+/** Die eingefrorenen Standpunkte (Parameter `kameras`, JSON). Unlesbares faellt heraus. */
+export function kameraManuellAusParams(params: Params): KameraManuell[] {
+  const roh = params?.['kameras'];
+  if (typeof roh !== 'string' || roh.trim() === '') return [];
+  try {
+    const liste: unknown = JSON.parse(roh);
+    if (!Array.isArray(liste)) return [];
+    return liste.flatMap((k): KameraManuell[] => {
+      if (!k || typeof k !== 'object') return [];
+      const o = k as Record<string, unknown>;
+      const fov = zahlIn(o['fov'], 10, 120);
+      if (!istVec3(o['position']) || !istVec3(o['target']) || fov === undefined) return [];
+      return [{ name: typeof o['name'] === 'string' && o['name'] ? o['name'] : 'Kamera', position: o['position'], target: o['target'], fov }];
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** Die Bauteil-Arten der Oberflaeche (Visbox `materialwahl.ARTEN`); Tueren zaehlen zu «Übrige» (113 (7)). */
+export const VIS_BAUTEIL_ARTEN: readonly { art: 'fassade' | 'dach' | 'fenster' | 'boden' | 'uebrige'; label: string }[] = [
+  { art: 'fassade', label: 'Fassade' },
+  { art: 'dach', label: 'Dach' },
+  { art: 'fenster', label: 'Fenster' },
+  { art: 'boden', label: 'Boden' },
+  { art: 'uebrige', label: 'Übrige' },
+];
+
+/**
+ * Die Material-Bibliothek (Entscheid 111, Tabelle der HomeStation vom 20.10.2026) — dieselben elf
+ * Kennungen wie `aiimaging.materialwahl.BIBLIOTHEK` (Visbox-Probe haelt beide gleich). Die Texturen
+ * (CC0, ambientCG) liegen nur am Heim-PC; `farbe` ist der Grundton fuer die Vorschau am Knoten,
+ * solange keine Vorschaubilder ausgeliefert sind.
+ */
+export const VIS_MATERIAL_BIBLIOTHEK: readonly { id: string; label: string; farbe: string }[] = [
+  { id: 'sichtbeton-sandgestrahlt', label: 'Sichtbeton, sandgestrahlt', farbe: '#b9b6b0' },
+  { id: 'sichtbeton-schalungsglatt', label: 'Sichtbeton, schalungsglatt', farbe: '#c8c5bf' },
+  { id: 'fichte', label: 'Fichte', farbe: '#d9b98a' },
+  { id: 'backstein', label: 'Backstein', farbe: '#a8553a' },
+  { id: 'klinker', label: 'Klinker', farbe: '#7a3b2a' },
+  { id: 'sandstein', label: 'Sandstein', farbe: '#cdb58a' },
+  { id: 'stampflehm', label: 'Stampflehm', farbe: '#a88660' },
+  { id: 'verputz-weiss-glatt', label: 'Verputz weiss, glatt', farbe: '#f2f0ec' },
+  { id: 'verputz-weiss-rau', label: 'Verputz weiss, rau', farbe: '#e8e5df' },
+  { id: 'holzlattung-fichte', label: 'Holzlattung Fichte', farbe: '#cfa874' },
+  { id: 'dreischichtplatte', label: 'Dreischichtplatte', farbe: '#dcc49a' },
+];
+
+/** Die Vorgaben des Heim-PCs, wenn am Material nichts steht (`materialwahl.VORGABE_*`). */
+export const MATERIAL_VORGABEN = { massstab_m: 1, drehungGrad: 0, relief: 0.6 } as const;
+
+/** Was eine Bauteil-Art bestellt — die Form von `RenderScene.render.materialien.<art>`. */
+export interface MaterialWahlAuftrag {
+  id: string;
+  massstab_m?: number;
+  drehungGrad?: number;
+  relief?: number;
+  toenung?: { farbe: string; staerke: number };
+}
+
+export interface PaletteWahl {
+  farben: string[];
+  leitfarbe: number;
+  staerke: number;
+}
+
+const FARBE = /^#[0-9a-fA-F]{6}$/;
+
+/** Die Farbpalette am Knoten: bis vier Farben, die gewaehlte (Leitfarbe) toent, Staerke 0..1. */
+export function paletteAusParams(params: Params): PaletteWahl {
+  const p = params ?? {};
+  const farben = (liesListe(p['farben']) ?? []).filter((f) => FARBE.test(f)).slice(0, 4);
+  const leit = typeof p['leitfarbe'] === 'number' && Number.isInteger(p['leitfarbe']) ? p['leitfarbe'] : 0;
+  const staerke = zahlIn(p['staerke'], 0, 1) ?? 0.4;
+  return { farben, leitfarbe: Math.min(Math.max(0, leit), Math.max(0, farben.length - 1)), staerke };
+}
+
+/** Ein Farbwort fuer einen Menschen und das Bildmodell — grob nach Farbton, Helligkeit, Saettigung. */
+export function farbWort(hex: string): string {
+  if (!FARBE.test(hex)) return hex;
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  const hell = l > 0.8 ? 'helles ' : l < 0.3 ? 'dunkles ' : '';
+  if (sat < 0.12) return l > 0.85 ? 'Weiss' : l < 0.15 ? 'Schwarz' : `${hell}Grau`.replace(/^./, (c) => c.toUpperCase());
+  const ton =
+    h < 15 || h >= 345 ? 'Rot' : h < 40 ? (sat < 0.45 ? 'Sand' : 'Orange') : h < 65 ? (sat < 0.45 ? 'Beige' : 'Gelb') : h < 160 ? (sat < 0.3 ? 'Salbeigrün' : 'Grün') : h < 200 ? 'Türkis' : h < 255 ? (sat < 0.3 ? 'Schiefergrau' : 'Blau') : h < 300 ? 'Violett' : 'Rosa';
+  return `${hell}${ton}`.replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Der Satz der Palette fuer das Bildmodell (Entscheid 111 C). Leer ohne Farben. */
+export function paletteSatz(farben: readonly string[]): string {
+  return farben.length > 0 ? `Farbpalette: ${farben.map(farbWort).join(', ')}` : '';
+}
+
+/** Das Material am Knoten «Material» (Typ `materialTextur`), samt Toenung aus einer Palette. */
+export function materialAusParams(params: Params, palette?: PaletteWahl): MaterialWahlAuftrag | null {
+  const p = params ?? {};
+  const id = p['bibliothek'];
+  if (typeof id !== 'string' || !VIS_MATERIAL_BIBLIOTHEK.some((m) => m.id === id)) return null;
+  const massstab = zahlIn(p['massstab'], 0.05, 20);
+  const drehung = zahlIn(p['drehung'], 0, 360);
+  const relief = zahlIn(p['relief'], 0, 1);
+  const farbe = palette?.farben[palette.leitfarbe];
+  return {
+    id,
+    ...(massstab !== undefined ? { massstab_m: massstab } : {}),
+    ...(drehung !== undefined ? { drehungGrad: drehung } : {}),
+    ...(relief !== undefined ? { relief } : {}),
+    ...(farbe && palette && palette.staerke > 0 ? { toenung: { farbe, staerke: palette.staerke } } : {}),
+  };
+}
+
+/** Die erste Quelle eines Eingangs. */
+function quelleAm(graph: VisGraph, nodeId: string, port: string): VisNode | undefined {
+  const e = graph.edges.find((k) => k.to === nodeId && k.toPort === port);
+  return e ? graph.nodes.find((n) => n.id === e.from) : undefined;
+}
+
+/** Die Materialwahl eines Oberflaeche-Knotens: je verbundene Art ein Material. Leer: `null`. */
+export function oberflaecheMaterialien(graph: VisGraph, oberflaecheId: string): Partial<Record<string, MaterialWahlAuftrag>> | null {
+  const aus: Partial<Record<string, MaterialWahlAuftrag>> = {};
+  for (const { art } of VIS_BAUTEIL_ARTEN) {
+    const m = quelleAm(graph, oberflaecheId, art);
+    if (m?.typ !== 'materialTextur') continue;
+    const pal = quelleAm(graph, m.id, 'palette');
+    const wahl = materialAusParams(m.params, pal?.typ === 'farbpalette' ? paletteAusParams(pal.params) : undefined);
+    if (wahl) aus[art] = wahl;
+  }
+  return Object.keys(aus).length > 0 ? aus : null;
+}
+
+/** Die Knoten einer Art, die (mittelbar) in den Render-Knoten fliessen — in Graph-Reihenfolge. */
+export function vorgeschaltet(graph: VisGraph, renderId: string, typ: string): VisNode[] {
+  const davor = vorfahren(graph, renderId);
+  return graph.nodes.filter((n) => n.typ === typ && davor.has(n.id));
+}
+
 export function visPort(typ: string, port: string, richtung: 'in' | 'out'): VisPort | undefined {
   const kat = VIS_NODE_KATALOG[typ];
   if (!kat) return undefined;
@@ -360,6 +705,20 @@ export interface VisRenderAuftrag {
    * (`skizze-quelle.ts`), nicht hier. Ohne Kante fehlt das Feld ganz.
    */
   skizze?: { knoten: string; wahl: string };
+  /**
+   * Bauplan «Neue Knoten» F3 (Entscheid 110): die Stimmung aus dem vorgeschalteten Stimmung-Knoten,
+   * wenn sie aufs Licht wirkt — wird `render.environment`. Fehlt `rotationGrad`, dreht der Heim-PC
+   * den Himmel zur Kamera. Ohne Stimmung-Knoten fehlt das Feld (wie bisher).
+   */
+  umgebung?: { preset: VisStimmungId; rotationGrad?: number };
+  /** F3 (113 (4)): alle am Stimmung-Knoten gewaehlten Stimmungen — die erste fuehrt (`umgebung`). */
+  stimmungen?: VisStimmungId[];
+  /** F2 (109/113 (3)): Auto-Kamera am Eingang — wird `cameras: 'auto'` + `cameras_auto`. */
+  kamerasAuto?: KameraAutoWahl;
+  /** F2: Perspektive der von Hand gestellten Standpunkte (`CameraSpec.perspektive`). */
+  kamerasPerspektive?: 'senkrecht' | 'frei';
+  /** F4 (111): Materialien je Bauteil-Art aus dem vorgeschalteten Oberflaeche-Knoten. */
+  materialien?: Partial<Record<string, MaterialWahlAuftrag>>;
 }
 
 /** Auswertungs-Ergebnis je Node: Ausgangswerte der puren Ports. */
@@ -393,13 +752,35 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
         werte.set(n.id, { prompt: String(params['text'] ?? '') });
         break;
       case 'stimmung': {
-        const preset = VIS_STIMMUNGEN[String(params['preset'] ?? 'morgen')];
-        werte.set(n.id, { prompt: preset?.prompt ?? '' });
+        // F3: die erste gewaehlte Stimmung fuehrt; ihr Satz geht in den Prompt, wenn sie auf den
+        // Prompt wirkt (Entscheid 110 A). Alte Graphen (nur `preset`) rechnen wie bisher.
+        const wahl = stimmungAusParams(params);
+        werte.set(n.id, { prompt: wahl.wirkung === 'licht' ? '' : (VIS_STIMMUNGEN[wahl.presets[0]!]?.prompt ?? '') });
         break;
       }
-      case 'material':
-        werte.set(n.id, { material: renderPromptBausteine(doc).join(', ') });
+      case 'material': {
+        // F4: die Wandschichten wie bisher, dazu der Satz einer Farbpalette an einem der Materialien
+        // (Entscheid 111 C). Die Materialien selbst nennt der Heim-PC im Prompt (`materialwahl.prompt_satz`).
+        const saetze = new Set<string>();
+        for (const { art } of VIS_BAUTEIL_ARTEN) {
+          const m = quelleAm(graph, n.id, art);
+          const pal = m?.typ === 'materialTextur' ? quelleAm(graph, m.id, 'palette') : undefined;
+          if (pal?.typ === 'farbpalette') {
+            const satz = paletteSatz(paletteAusParams(pal.params).farben);
+            if (satz) saetze.add(satz);
+          }
+        }
+        werte.set(n.id, { material: [...renderPromptBausteine(doc), ...saetze].join(', ') });
         break;
+      }
+      case 'farbpalette':
+        werte.set(n.id, { palette: paletteSatz(paletteAusParams(params).farben) });
+        break;
+      case 'materialTextur': {
+        const m = VIS_MATERIAL_BIBLIOTHEK.find((x) => x.id === params['bibliothek']);
+        werte.set(n.id, { material: m?.label ?? '' });
+        break;
+      }
       case 'zahl':
         werte.set(n.id, { zahl: Number(params['wert'] ?? 0) });
         break;
@@ -443,14 +824,28 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
         // Ohne übernommene Kamera: keine Standpunkte und `kameraAus3dFehlt` — die App sendet
         // dann nicht (eine Bestellung mit `auto` wäre ein anderes Bild als versprochen).
         const kamera3d = kameraQuelle?.typ === KAMERA_AUS_3D_TYP ? kameraAus3dAusParams(kameraQuelle.params) : null;
+        // F2 (Entscheide 109/113 (3)): der Knoten «Kamera» mit `art` — «auto» schickt keine Liste,
+        // sondern seine Einstellungen (der Heim-PC rechnet), «manuell» die eingefrorenen Standpunkte.
+        const kameraArt = kameraQuelle?.typ === 'kamera' ? kameraArtAusParams(kameraQuelle.params) : 'modell';
+        const kameraParams = kameraQuelle?.params ?? {};
         const kameras =
           kameraQuelle?.typ === KAMERA_AUS_3D_TYP
             ? kamera3d
               ? [kameraAus3dStandpunkt(kamera3d, seitenverhaeltnisAus(preset?.render.resolution ?? BESTELLFORMAT_VORGABE))]
               : []
-            : kameraKante
-              ? projektKameras(doc)
-              : [];
+            : kameraArt === 'auto'
+              ? []
+              : kameraArt === 'manuell'
+                ? kameraManuellAusParams(kameraParams).map((k) => ({ ...k, begruendung: 'von Hand gestellt am Knoten «Kamera»' }))
+                : kameraKante
+                  ? projektKameras(doc)
+                  : [];
+        // F3: die erste Stimmung eines vorgeschalteten Stimmung-Knotens, wenn sie aufs Licht wirkt.
+        const stimmungKnoten = vorgeschaltet(graph, n.id, 'stimmung')[0];
+        const stimmung = stimmungKnoten ? stimmungAusParams(stimmungKnoten.params) : undefined;
+        // F4: die Materialien eines vorgeschalteten Oberflaeche-Knotens.
+        const oberflaeche = vorgeschaltet(graph, n.id, 'material').find((o) => oberflaecheMaterialien(graph, o.id));
+        const materialien = oberflaeche ? oberflaecheMaterialien(graph, oberflaeche.id) : null;
         // Entscheid 96: die Skizze am Eingang «Skizze» — nur von einem Skizzen-Knoten (eine
         // Fremdkante aus einem Hand-Edit zaehlt nicht, dieselbe Regel wie `vis.verbinden`).
         const skizzenKante = graph.edges.find((e) => e.to === n.id && e.toPort === 'skizze');
@@ -470,6 +865,24 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
             : {}),
           ...(kameras.length > 0 ? { kameras } : {}),
           ...(kameraQuelle?.typ === KAMERA_AUS_3D_TYP && !kamera3d ? { kameraAus3dFehlt: true as const } : {}),
+          ...(kameraArt === 'auto' ? { kamerasAuto: kameraAutoAusParams(kameraParams) } : {}),
+          ...(kameraArt === 'manuell' && kameras.length > 0
+            ? { kamerasPerspektive: kameraParams['perspektive'] === 'frei' ? ('frei' as const) : ('senkrecht' as const) }
+            : {}),
+          ...(stimmung
+            ? {
+                stimmungen: stimmung.presets,
+                ...(stimmung.wirkung !== 'prompt'
+                  ? {
+                      umgebung: {
+                        preset: stimmung.presets[0]!,
+                        ...(stimmung.drehungGrad !== undefined ? { rotationGrad: stimmung.drehungGrad } : {}),
+                      },
+                    }
+                  : {}),
+              }
+            : {}),
+          ...(materialien ? { materialien } : {}),
           ...(skizzenKnoten?.typ === 'skizzeIpad'
             ? {
                 skizze: {

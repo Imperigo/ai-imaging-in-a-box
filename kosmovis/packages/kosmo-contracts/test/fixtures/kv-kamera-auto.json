@@ -1,0 +1,148 @@
+{
+  "_hinweis": "Erzeugt vom Heim-PC-Code (Visbox, Zweig claude/ai-imaging-assessment-pstkyp, 20.10.2026) mit Attrappen fuer Blender und Bildmodell; Bildnamen und Zahlen der QA sind die der Attrappe. 'scene' ist die Bestellung, 'result' das geschriebene render-result.json.",
+  "tat": "verarbeitet",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "cameras": "auto",
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    },
+    "cameras_auto": {
+      "richtungen": [
+        "s",
+        "nNW"
+      ],
+      "brennweite_mm": 50,
+      "abstand": {
+        "art": "auto",
+        "fuellt": 0.6
+      },
+      "perspektive": "senkrecht"
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "s.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.81,
+        "spearman": null,
+        "geom_iou": null,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.81 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+      }
+    },
+    "timings": {
+      "s": 0.0,
+      "nNW": 0.0,
+      "gesamt": 0.0
+    },
+    "geometry_gates": {
+      "status": "not_measured",
+      "released": false,
+      "rho_mask_status": "not_measured",
+      "rho_mask_passed": false,
+      "geom_iou_status": "not_measured",
+      "geom_iou_passed": false,
+      "counter_check_status": "not_measured",
+      "fail_reasons": [
+        "zwei_tore_fehlt",
+        "kamera_nicht_gemessen"
+      ],
+      "reason": "NICHT GEMESSEN: Die Kamera 's', auf der das Urteil dieses Auftrags ruht, wurde nicht gemessen — es gibt kein rho_maske und kein geom_iou. 'passed: null' und 'released: false' heissen hier ungeprueft, nicht durchgefallen.",
+      "warnings": [],
+      "camera": "s",
+      "passed": false
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "s",
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1,
+        "seed": 0,
+        "pose": {
+          "position": [
+            0.0,
+            -30.0,
+            1.7
+          ],
+          "target": [
+            0.0,
+            0.0,
+            5.5
+          ],
+          "fov": 54.43222311461495,
+          "up_axis": "z"
+        }
+      },
+      {
+        "kamera": "nNW",
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1,
+        "seed": 0,
+        "pose": {
+          "position": [
+            0.0,
+            -30.0,
+            1.7
+          ],
+          "target": [
+            0.0,
+            0.0,
+            5.5
+          ],
+          "fov": 54.43222311461495,
+          "up_axis": "z"
+        }
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "grundlage": {
+      "id": "gl-36e272e15c27773d",
+      "wiederverwendet": false
+    },
+    "angewandt": {
+      "cameras_auto": {
+        "richtungen": [
+          "s",
+          "nNW"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 50.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.6
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m"
+        ]
+      }
+    }
+  }
+}

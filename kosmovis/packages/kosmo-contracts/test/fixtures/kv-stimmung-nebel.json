@@ -1,0 +1,138 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Stand 6df3d89, 20.10.2026): lies_szene -> abholer.angewandt_der_szene -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, mit gesetztem Kameraurteil (Zahlen gesetzt, nicht gerendert). 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde. Szene braucht v0.1.10 (preset-Enum).",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "sSE"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8,
+      "environment": {
+        "preset": "nebel"
+      }
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "sSE.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.7,
+        "spearman": -0.4,
+        "geom_iou": 0.5,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.7 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+      }
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "sSE",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "angewandt": {
+      "environment": {
+        "preset": "nebel",
+        "hdri": "kloofendal_misty_morning_puresky",
+        "intensitaet": 1.0,
+        "rotationGrad": 0.0,
+        "aufloesung": "4k",
+        "datei": "nebel__kloofendal_misty_morning_puresky_4k.hdr",
+        "vorgaben": [
+          "hdri",
+          "intensitaet",
+          "rotationGrad"
+        ],
+        "gipsmodell": false,
+        "sonnenlampe": false,
+        "drehung_weg": "zur_kamera",
+        "prompt_satz": "fog, muted light, depth fading into haze",
+        "licht": {
+          "belichtung_ev": 0.0,
+          "tonwerte": [
+            "AgX",
+            "Filmic"
+          ],
+          "sonne": false,
+          "sonnen_staerke": 0.6,
+          "fuell_staerke": 0.85,
+          "winkel_grad": 50.0,
+          "look": "Medium High Contrast",
+          "hintergrund_richtung": "heller",
+          "sonne_seitlich_grad": 70.0,
+          "sonne_seite": "links",
+          "winkel_weich_grad": 50.0,
+          "hintergrund_abstand_ev": 1.0,
+          "kontrast_schwelle": 20.0,
+          "gelaende_grau": [
+            0.3,
+            0.3,
+            0.3
+          ],
+          "herkunft_licht": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+        },
+        "herkunft": {
+          "quelle": "Poly Haven",
+          "lizenz": "CC0-1.0",
+          "adresse": "https://polyhaven.com/hdris",
+          "vermerk": "nicht ausgeliefert, am Heim-PC abgelegt, unverändert"
+        }
+      },
+      "cameras_auto": {
+        "richtungen": [
+          "sSE"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 35.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.7
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m",
+          "brennweite_mm",
+          "abstand",
+          "perspektive"
+        ]
+      }
+    }
+  }
+}

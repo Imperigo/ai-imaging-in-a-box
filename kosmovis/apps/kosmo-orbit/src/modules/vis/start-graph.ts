@@ -16,7 +16,13 @@ import { useVisRuntime } from './vis-runtime';
  *               ├─ Prompt-Kombinierer ─┐
  *     Prompt ───┘                      │
  *     Modell ──────────────────────────┼─ Render ── Varianten ── Bildvergleich
- *     Auto-Kamera ─────────────────────┘
+ *     Kamera ──────────────────────────┘
+ *     Material ── Oberfläche ── (Kombinierer, Eingang «Material»)
+ *
+ * **Material → Oberfläche** (Bauplan «Neue Knoten», Entscheid 111: «Vorlage mit Material →
+ * Oberfläche → Render»): ein Material (Vorgabe Sichtbeton) an der Fassade der Oberfläche; die
+ * Oberfläche geht in den Kombinierer, und der Render-Knoten liest ihre Materialien von dort
+ * (`vorgeschaltet` im Kern) — ohne neuen Eingang am Render-Knoten, damit dessen Lage bleibt.
  *
  * **Varianten** (L24 Bildweg Varianten, E246; Owner-Wunsch 14.10.: «direkt bereit zum
  * Ein-Klick-Render von Varianten»): der Knoten steht hinter dem Render-Knoten mit der Vorgabe
@@ -62,6 +68,8 @@ export function startGraphAnlegen(): string | undefined {
       const render = setze('render', lage.render.x, lage.render.y);
       const varianten = setze('varianten', lage.varianten.x, lage.varianten.y);
       const vergleich = setze('vergleich', lage.vergleich.x, lage.vergleich.y);
+      const material = setze('materialTextur', lage.material.x, lage.material.y);
+      const oberflaeche = setze('material', lage.oberflaeche.x, lage.oberflaeche.y);
 
       verbinde(stimmung, 'prompt', komb, 'stimmung');
       verbinde(prompt, 'prompt', komb, 'stil');
@@ -70,6 +78,8 @@ export function startGraphAnlegen(): string | undefined {
       verbinde(kamera, 'kameras', render, 'kameras');
       verbinde(render, 'bild', varianten, 'render');
       verbinde(varianten, 'bilder', vergleich, 'bild1');
+      verbinde(material, 'material', oberflaeche, 'fassade');
+      verbinde(oberflaeche, 'material', komb, 'material');
 
       useVisRuntime.getState().setAktiverGraphId(gid);
       return gid;
@@ -82,11 +92,11 @@ export function startGraphAnlegen(): string | undefined {
   }
 }
 
-/** Wo die acht Knoten des Anfangs liegen (linke obere Ecke, Welt-Pixel). Fuenf Spalten;
+/** Wo die zehn Knoten des Anfangs liegen (linke obere Ecke, Welt-Pixel). Fuenf Spalten;
  *  die Zeilen der ersten Spalte mit der GROESSTEN Hoehe jedes Knotens (aufgeklappt), damit
  *  nichts ueberlappt, wenn man einen Knoten aufklappt. Exportiert fuer die Probe. */
 export function startGraphLage(): Record<
-  'stimmung' | 'prompt' | 'modell' | 'kamera' | 'kombinierer' | 'render' | 'varianten' | 'vergleich',
+  'stimmung' | 'prompt' | 'modell' | 'kamera' | 'material' | 'kombinierer' | 'oberflaeche' | 'render' | 'varianten' | 'vergleich',
   { x: number; y: number }
 > {
   const abstand = 32;
@@ -96,12 +106,16 @@ export function startGraphLage(): Record<
   const yPrompt = y0 + groessteNodeHoehe('stimmung') + abstand;
   const yModell = yPrompt + groessteNodeHoehe('prompt') + abstand;
   const yKamera = yModell + groessteNodeHoehe('modell') + abstand;
+  const yMaterial = yKamera + groessteNodeHoehe('kamera') + abstand;
+  const yOberflaeche = y0 + groessteNodeHoehe('kombinierer') + abstand;
   return {
     stimmung: { x: x0, y: y0 },
     prompt: { x: x0, y: yPrompt },
     modell: { x: x0, y: yModell },
     kamera: { x: x0, y: yKamera },
+    material: { x: x0, y: yMaterial },
     kombinierer: { x: x0 + spalte, y: y0 },
+    oberflaeche: { x: x0 + spalte, y: yOberflaeche },
     render: { x: x0 + 2 * spalte, y: y0 },
     varianten: { x: x0 + 3 * spalte, y: y0 },
     vergleich: { x: x0 + 4 * spalte, y: y0 },

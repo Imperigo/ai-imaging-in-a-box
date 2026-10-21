@@ -102,39 +102,42 @@ KNOTEN: list[dict] = [
         "quelle": "visgraph.ts · NodeCanvas.tsx · visbox-knoten/src/mappe.ts",
     },
     {
-        "kurz": "02-material", "typ": "material", "titel": "Material-Bausteine", "gruppe": "quelle",
-        "hilfe": "Liest Materialsätze aus dem Modell für den Prompt.",
-        "ein": [], "aus": [("Material", "material")],
-        "kann": "Macht aus dem Modell kurze Sätze für die KI: äusserste Wandschicht (z. B. "
-                "«Sichtbeton»), ein geschliffener Boden, die gestellte Sonne, das Fassadenraster "
-                "mit Fensteranteil.",
-        "wie": "Rein abgeleitet, nie gespeichert: Bei jeder Änderung liest er das Modell neu und "
-               "gibt die Sätze mit Komma getrennt aus.",
-        "loest": "Nichts von selbst — er liefert Text an den Kombinierer.",
-        "zusammen": [("aus", "Material", "Prompt-Kombinierer · Eingang Material")],
-        "visbox": ("fehlt",
-                   "Eine Visbox-Mappe hat keine Wände mit Schichtaufbau, keinen Boden und keine "
-                   "Fassadenmodule im Dokument. Der Knoten zeigt «keine Material-Phrasen» und "
-                   "liefert leeren Text."),
-        "quelle": "visgraph.ts · renderprompt.ts (renderPromptBausteine)",
+        "kurz": "02-material", "typ": "material", "titel": "Oberfläche", "gruppe": "wandler",
+        "hilfe": "Ordnet Materialien den Bauteil-Arten zu; liest dazu die Wandschichten.",
+        "ein": [("Fassade", "material"), ("Dach", "material"), ("Fenster", "material"),
+                ("Boden", "material"), ("Übrige", "material")],
+        "aus": [("Material", "material")],
+        "kann": "Ordnet jeder Bauteil-Art (Fassade, Dach, Fenster, Boden, Übrige) ein Material zu; was "
+                "nichts bekommt, behält das Material aus dem Modell. Dazu macht er wie früher aus "
+                "dem Modell kurze Sätze für die KI (Wandschicht, Boden, Sonne, Fassadenraster).",
+        "wie": "Die Eingänge nehmen nur den Knoten «Material». Der Render-Knoten liest die Zuordnung "
+               "über den Kombinierer und bestellt sie als Materialien je Bauteil-Art.",
+        "loest": "Am Heim-PC bekommt jede zugeordnete Art in Blender die Textur des Materials; das "
+                 "Bild der Grundlage zeigt sie schon. Türen zählen zu «Übrige».",
+        "zusammen": [("ein", "Material", "Material · Ausgang Material, je Art"),
+                     ("aus", "Material", "Prompt-Kombinierer · Eingang Material")],
+        "visbox": ("gleich",
+                   "Gleich wie in KosmoOrbit. Die Wandschichten fehlen in einer Visbox-Mappe; die "
+                   "Zuordnung der Materialien wirkt voll."),
+        "quelle": "visgraph.ts (oberflaecheMaterialien) · OberflaecheKnoten.tsx · materialwahl.py",
     },
     {
-        "kurz": "03-auto-kamera", "typ": "kamera", "titel": "Auto-Kamera", "gruppe": "quelle",
-        "hilfe": "Schlägt Kamera-Standpunkte aus dem Modell vor — keine KI-Wahl.",
+        "kurz": "03-auto-kamera", "typ": "kamera", "titel": "Kamera", "gruppe": "quelle",
+        "hilfe": "Standpunkte: Auto rechnet der Heim-PC, Manuell von Hand gestellt.",
         "ein": [], "aus": [("Kamera-Standpunkte", "kameras")],
-        "kann": "Schlägt Standpunkte vor (Eingang, Übersicht, bei Räumen auch Innenraum) und "
-                "übernimmt von Hand gesetzte Kameras aus einer 3DS-Datei.",
-        "wie": "Rechnet die Standpunkte bei jeder Änderung neu aus der Ausdehnung des Modells. "
-               "Beschriftet ehrlich: «Vorschlag aus dem Modell» oder «von Hand gesetzt».",
-        "loest": "Hängt er am Render-Knoten, reisen seine Standpunkte im Auftrag mit. Ohne ihn "
-                 "rechnet der Heim-PC drei feste Richtungen: frontal Süd, über Eck Südost und "
-                 "Nordwest.",
+        "kann": "Auto: Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive wählen — der Heim-PC "
+                "stellt die Kameras. Manuell: die Auto-Standpunkte einfrieren und Auge und Blickpunkt "
+                "in Metern tippen.",
+        "wie": "Ein kleines 3D-Fenster zeigt das Modell mit einer Pyramide je Kamera, darunter den Blick "
+               "aus einer Kamera; beides aus derselben Rechnung wie beim Rendern, live bei jeder Wahl.",
+        "loest": "Auto bestellt «automatisch» mit den Einstellungen, Manuell eine Liste von Kameras mit "
+                 "der Perspektive. Ohne Wahl wie früher: Standpunkte aus dem Modell.",
         "zusammen": [("aus", "Kameras", "Render · Eingang Kamera-Standpunkte"),
                      ("hilfe", "Kamera vorschlagen", "setzt ihn und hängt ihn an jeden Render")],
-        "visbox": ("stellvertreter",
-                   "Leitet noch keine Standpunkte aus der Mappe ab (leere Liste) und zeigt "
-                   "«nichts abzuleiten». Der Heim-PC rechnet dann seine drei festen Richtungen."),
-        "quelle": "visgraph.ts · NodeCanvas.tsx · Stellvertreter derive/kamera.ts · abholer.py",
+        "visbox": ("gleich",
+                   "In Visbox kommen Pyramiden und Blick vom Visbox-Server; in KosmoOrbit rechnet "
+                   "der Heim-PC sie erst beim Rendern."),
+        "quelle": "visgraph.ts · KameraKnoten.tsx · heim-standpunkte.ts · knotenweg.standpunkte_abfrage",
     },
     {
         "kurz": "04-bild-referenz", "typ": "referenz", "titel": "Bild-Referenz", "gruppe": "quelle",
@@ -183,17 +186,17 @@ KNOTEN: list[dict] = [
     },
     {
         "kurz": "07-stimmung", "typ": "stimmung", "titel": "Stimmung", "gruppe": "wandler",
-        "hilfe": "Morgenlicht, Abendstimmung oder Weissmodell.",
+        "hilfe": "Acht Stimmungen mit Himmelsbild: Licht in Blender und Satz für die KI.",
         "ein": [], "aus": [("Prompt", "prompt")],
-        "kann": "Wählt eine von drei Lichtstimmungen: Morgenlicht, Abendstimmung, Weissmodell.",
-        "wie": "Jede Stimmung ist ein fester Satz, z. B. «Abendstimmung, warmes Licht, leuchtende "
-               "Fenster». Er steht am Knoten und geht als Prompt hinaus.",
-        "loest": "Nichts von selbst. Er stellt keine Sonne in Blender, er beschreibt die Stimmung "
-                 "für die KI.",
+        "kann": "Wählt Stimmungen: Morgen, Mittag, Abend, Blaue Stunde, Bedeckt, Nebel, Winter, Weiss. "
+                "Der Himmel lässt sich fest drehen; die Wirkung geht auf Licht, Satz oder beides.",
+        "wie": "Hinter jeder Stimmung liegt am Heim-PC ein Himmelsbild (CC0), das in Blender Licht und "
+               "Spiegelungen gibt, und ein Satz für die KI. Der Render-Knoten bestellt die erste.",
+        "loest": "Eine eigene Grundlage je Stimmung; zurück zur vorigen holt deren Grundlage wieder.",
         "zusammen": [("aus", "Prompt", "Prompt-Kombinierer · Eingang Stimmung"),
                      ("hilfe", "Drei Stimmungen einfügen", "baut drei Ketten mit je einer Stimmung")],
         "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
-        "quelle": "visgraph.ts (VIS_STIMMUNGEN) · vis-graph-aktionen.ts",
+        "quelle": "visgraph.ts (VIS_STIMMUNGEN) · StimmungKnoten.tsx · stimmung.py",
     },
     {
         "kurz": "08-kombinierer", "typ": "kombinierer", "titel": "Prompt-Kombinierer",
@@ -232,7 +235,7 @@ KNOTEN: list[dict] = [
         "kurz": "10-render", "typ": "render", "titel": "Render", "gruppe": "render",
         "hilfe": "Bestellt das Bild beim Heim-PC — nur auf «Ausführen», nie automatisch.",
         "ein": [("Szene", "szene"), ("Prompt", "prompt"), ("Geometrie-Treue", "zahl"),
-                ("Samples", "zahl"), ("Kamera-Standpunkte", "kameras")],
+                ("Samples", "zahl"), ("Kamera-Standpunkte", "kameras"), ("Skizze", "bild")],
         "aus": [("Bild", "bild")],
         "kann": "Der einzige Knoten, der etwas bestellt. Eigene Einstellungen: Preset, Auflösung, "
                 "Qualität gegen Zeit, Himmel, Umgebung drehen, Bildwerkzeug (KI-Modell, Vorgabe "
@@ -336,28 +339,55 @@ KNOTEN: list[dict] = [
                    "aktuellen Modell als Entwurf; in KosmoOrbit auch Blicke und Ebenenkombinationen."),
         "quelle": "visgraph.ts · derive/varianten.ts · varianten.ts · VariantenKnoten.tsx · VariantenRaster.tsx",
     },
+    {
+        "kurz": "16-material", "typ": "materialTextur", "titel": "Material", "gruppe": "quelle",
+        "hilfe": "Ein Stoff aus der Bibliothek der elf, mit Massstab, Drehung und Relief.",
+        "ein": [("Palette", "material")], "aus": [("Material", "material")],
+        "kann": "Wählt einen Stoff (Sichtbeton, Fichte, Backstein …) und zeigt ihn als Kugel, Würfel "
+                "oder Fläche; Massstab, Drehung und Relief stellt man am Knoten.",
+        "wie": "Die Texturen (CC0, ambientCG) liegen am Heim-PC; die App kennt nur die Kennung. Die "
+               "Vorschau zeigt den Grundton, bis verkleinerte Bilder ausgeliefert sind.",
+        "loest": "Nichts von selbst — an einem Eingang der Oberfläche geht er in die Bestellung.",
+        "zusammen": [("ein", "Material", "Farbpalette · Ausgang Palette"),
+                     ("aus", "Material", "Oberfläche · Eingang Fassade, Dach, Fenster, Boden oder Übrige")],
+        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
+        "quelle": "visgraph.ts (VIS_MATERIAL_BIBLIOTHEK) · OberflaecheKnoten.tsx · materialwahl.py",
+    },
+    {
+        "kurz": "17-farbpalette", "typ": "farbpalette", "titel": "Farbpalette", "gruppe": "quelle",
+        "hilfe": "Bis vier Farben; die gewählte tönt das Material.",
+        "ein": [], "aus": [("Palette", "material")],
+        "kann": "Hält bis zu vier Farben. Die Leitfarbe tönt das angehängte Material so stark wie "
+                "eingestellt; alle Farben gehen als Satz an die KI.",
+        "wie": "Aus jeder Farbe wird ein Wort («Helles Beige», «Schiefergrau»); der Satz reist über "
+               "Oberfläche und Kombinierer in den Prompt.",
+        "loest": "Am Heim-PC mischt Blender die Leitfarbe in die Textur des Materials.",
+        "zusammen": [("aus", "Material", "Material · Eingang Palette")],
+        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
+        "quelle": "visgraph.ts (paletteAusParams, farbWort) · OberflaecheKnoten.tsx",
+    },
 ]
 
 #: Die Notiz neben jedem Bild auf der Tafel — zwei bis vier Sätze.
 NOTIZEN = {
-    "00-uebersicht": "Fünfzehn Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
+    "00-uebersicht": "Siebzehn Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
                      "gleiche Sorte passt, nichts fliesst im Kreis. Nur der Render-Knoten bestellt "
                      "etwas beim Heim-PC, und erst auf «Ausführen» und «Freigeben».",
     "01-modell": "Bringt das Gebäude als Szene in den Graphen; ohne ihn rendert nichts. In Visbox "
                  "kommt das Modell fertig aus der Mappe, im Dokument steht nur seine Hüllbox.",
-    "02-material": "Liest Materialsätze (Wandschicht, Boden, Sonne, Fassadenraster) aus dem Modell "
-                   "für den Prompt. In Visbox fehlt dieser Rohstoff, der Knoten liefert leeren Text.",
-    "03-auto-kamera": "Schlägt Standpunkte aus dem Modell vor und gibt sie dem Render-Knoten mit. "
-                      "In Visbox noch Stellvertreter: keine abgeleiteten Standpunkte, der Heim-PC "
-                      "rechnet dann drei feste Richtungen.",
+    "02-material": "Die Oberfläche ordnet Materialien den Bauteil-Arten zu; was nichts bekommt, behält "
+                   "das Material aus dem Modell. Der Heim-PC legt die Texturen in Blender an.",
+    "03-auto-kamera": "Auto: der Heim-PC stellt die Kameras nach Richtungen, Augenhöhe, Brennweite, "
+                      "Abstand und Perspektive. Manuell: eingefroren und von Hand gestellt; Pyramiden "
+                      "und Blick zeigen live, was bestellt wird.",
     "04-bild-referenz": "Hält ein Vorbild-Bild; in der Kuratierfläche dient es für den Farbangleich. "
                         "Eine Linie zu Vergleich oder Blatt trägt heute kein Bild weiter.",
     "05-viewport-aufnahme": "Schnappschuss der 3D-Ansicht als Bildquelle, ohne Heim-PC. In Visbox "
                             "gibt es keine 3D-Entwurfsansicht, der Knoten bleibt leer.",
     "06-prompt": "Freier Text, der wortgleich als Prompt weitergeht. Meist an den Eingang «Stil» "
                  "des Kombinierers.",
-    "07-stimmung": "Morgenlicht, Abendstimmung oder Weissmodell als fester Satz für die KI. Stellt "
-                   "kein Licht in Blender, beschreibt es nur.",
+    "07-stimmung": "Acht Stimmungen mit Himmelsbild: Licht in Blender und ein Satz für die KI. Jede "
+                   "Stimmung rechnet ihre eigene Grundlage.",
     "08-kombinierer": "Reiht Stimmung, Stil und Material zum finalen Prompt. Ändert er sich, wird ein "
                       "fertiges Bild am Render-Knoten als «veraltet» markiert.",
     "09-zahl": "Ein Regler (Vorgabe 0,8) für Geometrie-Treue oder Samples am Render-Knoten. Eine "
@@ -378,6 +408,9 @@ NOTIZEN = {
     "15-varianten": "Bestellt die Einstellung des Render-Knotens für alle Kombinationen aus "
                     "Standpunkten, Stimmungen und Entwürfen. Ein Zähler sagt vorher, wie viele Bilder "
                     "es werden, ein Klick gibt alle frei. Der Bildvergleich zeigt sie als Raster.",
+    "16-material": "Ein Stoff aus der Bibliothek der elf mit Massstab, Drehung und Relief, als Kugel, "
+                   "Würfel oder Fläche. Die Texturen liegen am Heim-PC.",
+    "17-farbpalette": "Bis vier Farben; die Leitfarbe tönt das Material. Alle gehen als Satz an die KI.",
 }
 
 

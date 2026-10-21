@@ -20,7 +20,7 @@ import {
  *  - **Standpunkte** — woher geblickt wird: die Kamera aus der 3D-Ansicht, die von Hand
  *    gesicherten Blicke und die Standpunkte aus dem Modell (Auto-Kamera samt uebernommenen
  *    Kameras, `projektKameras`).
- *  - **Stimmungen** — der Stimmungs-Katalog (`VIS_STIMMUNGEN`: Morgen, Abend, Weissmodell).
+ *  - **Stimmungen** — der Stimmungs-Katalog (`VIS_STIMMUNGEN`, acht seit Entscheid 110 B).
  *  - **Entwuerfe** — welches Modell: das aktuelle Modell oder eine Ebenenkombination
  *    (E222, `doc.settings.ebenenKombinationen`). Eine Kombination zeigt nur ihre sichtbaren
  *    Ebenen — so liegen Volumenvarianten nebeneinander im Dokument und werden je fuer sich
@@ -224,7 +224,8 @@ export function variantenWarnt(anzahl: number): boolean {
 }
 
 /** Alle Knoten, von denen der Render-Knoten (mittelbar) einen Eingang bekommt. */
-function vorfahren(graph: VisGraph, zielId: string): Set<string> {
+/** Alle Knoten, die (mittelbar) in `zielId` fliessen. Auch fuer die neuen Knoten (`visgraph.ts`). */
+export function vorfahren(graph: VisGraph, zielId: string): Set<string> {
   const gesehen = new Set<string>();
   const offen = [zielId];
   while (offen.length > 0) {
@@ -255,7 +256,9 @@ export function graphMitStimmung(
   const nodes = graph.nodes.map((n) => {
     if (n.typ !== 'stimmung' || !davor.has(n.id)) return n;
     getroffen = true;
-    return { ...n, params: { ...(n.params ?? {}), preset: stimmung } };
+    // Bauplan «Neue Knoten» (Entscheid 110 B): der Stimmung-Knoten liest zuerst die Liste
+    // `presets` (Mehrfachwahl) — sie wird mitgesetzt, sonst gewaenne die Wahl am Knoten.
+    return { ...n, params: { ...(n.params ?? {}), preset: stimmung, presets: schreibeListe([stimmung]) } };
   });
   return { graph: { ...graph, nodes }, ohneStimmungsKnoten: !getroffen };
 }

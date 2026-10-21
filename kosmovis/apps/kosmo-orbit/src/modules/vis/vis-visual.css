@@ -2179,6 +2179,75 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════
+   Entscheid 117a (W-4, Blatt 35) — KI-Bild und Grundbild. Am Knoten traegt das
+   Bild seine Beschriftung unten links (im Bild, ohne Hoehe), und ein Klick
+   zeigt beide gross (`BildPaar.tsx`). Nebeneinander am Knoten nur, wenn jedes
+   Bild mindestens 96 px breit bleibt (`wirksameAnsicht`). */
+.vis-hauptbild--paar {
+  cursor: zoom-in;
+}
+.vis-hauptbild--paar:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-bildpaar-reihe {
+  display: flex;
+  gap: var(--k-s1);
+  width: 100%;
+  height: 100%;
+}
+.vis-bildpaar-zelle {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 96px;
+  height: 100%;
+}
+.vis-bildpaar-zelle > .vis-hauptbild-bild {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.vis-bildpaar-beschriftung {
+  position: absolute;
+  left: var(--k-s2);
+  bottom: var(--k-s2);
+  max-width: calc(100% - 2 * var(--k-s2));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--k-s1) var(--k-s2);
+  border-radius: var(--k-radius-pill);
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-eng);
+  background: var(--vis-node-flaeche);
+  color: var(--vis-node-tinte);
+  pointer-events: none;
+}
+.vis-bildpaar-umschalter {
+  display: inline-block;
+  margin-bottom: var(--k-s3);
+}
+.vis-bildpaar-gitter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--k-s3);
+}
+.vis-bildpaar-kachel {
+  margin: 0;
+  min-width: 0;
+}
+.vis-bildpaar-bild {
+  position: relative;
+  display: block;
+}
+.vis-bildpaar-text {
+  margin-top: var(--k-s2);
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+/* ════════════════════════════════════════════════════════════════════
    «Varianten» (L24 Bildweg Varianten, E246; Owner-Entscheide 92/92a/92b) —
    `VariantenKnoten.tsx` und das Raster im Bildvergleich (`VariantenRaster.tsx`).
    Der Knoten hat eine feste Koerperhoehe (`KOERPER_H.varianten`): jede Achse

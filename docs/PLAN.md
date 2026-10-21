@@ -8116,7 +8116,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§174, C102); Messauftrag auf-20261021-304
     - [ ] Blatt 36 «Mappen am Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprobe am Mac (owner): holen, öffnen, Bild rechnen, ohne Heim-PC wieder öffnen, «Datei laden …» in neue Mappe
-  - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§PAR_IPAD4, CPAR_IPAD4)
+  - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§177, C105)
     - [ ] Blatt «iPad über den Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprüfung Mac und iPad (owner): koppeln mit Schloss, Skizze in der Mac-Mappe, Bild vom Mac, ohne Mac klarer Satz
     - [ ] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid offen, dann local)
@@ -8206,8 +8206,19 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
   - [ ] Holzlattung: Maserung quer zu den Latten (B6 aus 292)
   - [ ] Zeile «Himmelsbilder n/8» im Einrichten der Mac-App anzeigen; Satz `entladen` in der Assistent-Leiste (Visbox, Swift)
-- [ ] Vertrag V und Katalog K beim Integrator (Felder wie abgestimmt; Fixtures vom Heim-PC liegen bereit)
+- [x] Vertrag V gebaut (KosmoOrbit `claude/kosmovis-vertrag-werkzeuge`, `2b2add7fd`): acht Stimmungen, `cameras_auto`, `CameraSpec.perspektive`, `render.materialien`, Probe gegen die Fixtures — Einspielen nach dem v0.1.9-Schnitt beim Integrator offen (§176, C104)
+- [x] Katalog K gebaut (KosmoOrbit `claude/kosmovis-knoten-neu`): acht Stimmungen, «Oberfläche», «Material», «Farbpalette», Kamera Auto/Manuell, Render liest Vorgeschaltetes — gebaut, am Gerät unbestätigt (§176, C104)
+- [ ] Vertrag V und Katalog K beim Integrator einspielen (integrator, nach v0.1.9; Meldeblatt `meldung-20261021-kosmovis-knoten-neu.md`)
 - [ ] Oberfläche A–F und W (Bauplan §3) — nacheinander über NodeCanvas
+  - [x] C F3 Stimmung: Himmelsbild-Vorschau (Farbverlauf bis W), acht zum Anhaken, Himmel drehen, Wirkung; `render.environment` wird gesendet; Grundlage je Stand — gebaut, am Gerät unbestätigt (§176, C104)
+  - [x] D F2 Kamera: Auto mit Richtungen, Augenhöhe, Brennweite, Abstand, Perspektive; Kegel und Blick live aus `/knoten/standpunkte` (Wirt reicht die Parameter durch); «Manuell» friert ein, Werte tippen — gebaut, am Gerät unbestätigt (§176, C104)
+  - [x] E F4 Oberfläche, Material (Kugel/Würfel/Fläche), Farbpalette; Startgraph Material → Oberfläche → Kombinierer — gebaut, am Gerät unbestätigt (§176, C104)
+  - [ ] Messung am Heim-PC: auf-20261021-306 (local) — je Stimmung, Kamera-Art und Materialwahl ein Lauf wie aus den Knoten, Grundlage je Stand, Live-Vorschau = Auftrag, Vorschaubilder (W)
+  - [ ] W Vorschaubilder (Himmel 8, Materialien 11) aus 306 in beide Programme, mit Quelle und Prüfsumme im NOTICE (wir, nach 306)
+  - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
+  - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
+  - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
+  - [ ] KosmoOrbit: neue Kamera-Knoten auf «Auto» als Vorgabe (integrator, nach dem Einspielen)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§160, C89)
