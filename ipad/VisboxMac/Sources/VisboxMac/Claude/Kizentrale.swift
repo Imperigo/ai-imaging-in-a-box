@@ -29,9 +29,12 @@ typealias Heimholer = @Sendable (_ weg: Macwerkzeuge.Heimweg) async
 /// * **Die Karten liegen hier** (Strang Karten, 21.10.2026; `Kartenablage` im Kern): Laedt die
 ///   Knotenansicht neu, wird sie geschlossen oder auf die Visbox-Seite umgeschaltet, bleiben die
 ///   offenen Karten stehen. Meldet sich die Seite wieder an, bekommt sie die Karten ihrer Mappe
-///   zurueck (`visboxKi.stelleWieder`). Verworfen wird nur mit «Ablehnen» oder nach Ablauf — und
-///   dann hoert Claude einen Satz mit Grund. Was nicht mehr passt (andere Mappe, Graph geaendert),
-///   weist «Anwenden» mit Satz ab.
+///   zurueck (`visboxKi.stelleWieder`). Eine Karte bleibt, bis sie abgelehnt, angewendet oder beim
+///   echten Beenden verworfen wird (App zu, «Claude über MCP» aus) — dann hoert Claude einen Satz
+///   mit Grund, soweit die Leitung noch steht (Regel wie KosmoOrbit ab v0.1.10). Faellt die Leitung
+///   aus, bleiben die Karten mit Vermerk «Leitung unterbrochen»; beim Wiederverbinden werden sie
+///   neu angemeldet, erst danach gehen Entscheide aus der Zwischenzeit an Claude. Was nicht mehr
+///   passt (andere Mappe, Graph geaendert), weist «Anwenden» mit Satz ab.
 ///
 /// Was hier NIE geschieht: die Grafikkarte freigeben. Dafuer gibt es keinen Weg.
 ///
@@ -52,7 +55,6 @@ final class Kizentrale: ObservableObject {
     private(set) var ablage = Kartenablage()
     /// Die Mappe der Knotenansicht (gesetzt beim Laden der Flaeche, `Flaechenlotse.lade`).
     private(set) var kartenmappe = Kartenmappe.amHeimPC
-    private var ablaufUhr: Timer?
     private var liveWerkzeuge: [Mcpwerkzeug]?
     private var heim: Heimholer?
     private lazy var gebuendelt: [Mcpwerkzeug] = Kizentrale.leseGebuendelteListe()
@@ -60,13 +62,19 @@ final class Kizentrale: ObservableObject {
     init() {
         modus = Selbstaendigkeit(gemerkt: UserDefaults.standard.string(
             forKey: Selbstaendigkeit.einstellung))
-        // DER ABLAUF (Strang Karten): einmal je Minute nachsehen, ob eine Karte zu lange liegt.
-        ablaufUhr = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.pruefeAblauf() }
+        // DIE APP GEHT ZU: echtes Beenden — die Karten fallen weg, Claude hoert den Satz, soweit
+        // die Leitung noch steht (ein letzter Versuch; die App wartet nicht darauf).
+        // (Der Name der AppKit-Meldung als Text: Der Claude-Teil importiert nur Foundation.)
+        NotificationCenter.default.addObserver(forName: Kizentrale.appGehtZu,
+                                               object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { Kizentrale.gemeinsam.beende(.appZu) }
         }
     }
 
     private var kern: Mcpkern { Claudeanschluss.gemeinsam.kern }
+
+    /// `NSApplication.willTerminateNotification`.
+    static let appGehtZu = Notification.Name("NSApplicationWillTerminateNotification")
 
     /// Ob die Knotenansicht gerade ihre Schnittstelle angemeldet hat.
     var knotenOffen: Bool { knoten != nil }
@@ -121,8 +129,7 @@ final class Kizentrale: ObservableObject {
             ablage.lege(karte, mappe: kartenmappe)
         case .entschieden(let kennung, _, let ergebnis):
             ablage.entferne(kennung)
-            let kern = self.kern
-            Task { await kern.entscheide(kennung, ergebnis) }
+            sendeAnClaude(kennung, ergebnis)
         default:
             break
         }
@@ -203,8 +210,7 @@ final class Kizentrale: ObservableObject {
         case .hier(let antwort, let satz):
             stand.entferne(kennung)
             meldung = satz
-            let kern = self.kern
-            Task { await kern.entscheide(kennung, antwort) }
+            sendeAnClaude(kennung, antwort)
             return
         case .wartet(let satz):
             meldung = satz
@@ -224,12 +230,11 @@ final class Kizentrale: ObservableObject {
             stand.entferne(kennung)
             ablage.entferne(kennung)
             meldung = "Diesen Vorschlag gibt es in der Knotenansicht nicht mehr — nichts wurde geändert."
-            let kern = self.kern
-            Task { await kern.entscheide(kennung, Kibruecke.verworfen("Die Karte war nicht mehr da")) }
+            sendeAnClaude(kennung, Kibruecke.verworfen("Die Karte war nicht mehr da"))
         }
     }
 
-    // ================================================================= Karten zurueckgeben, Ablauf
+    // ================================================================= Karten zurueckgeben
 
     /// Gibt einer neu angemeldeten Knotenansicht die Karten ihrer Mappe zurueck. Die Seite
     /// rechnet jede neu durch: Was liegt, meldet sie mit «karte»; was scheitert, bleibt hier als
@@ -245,22 +250,58 @@ final class Kizentrale: ObservableObject {
         }
     }
 
-    /// Karten, die zu lange liegen, laufen ab: Claude hoert den Satz mit Grund, die Seite raeumt
-    /// sie ab (ihr Ereignis «entschieden» kommt danach und aendert nichts mehr).
-    func pruefeAblauf(jetzt: Date = Date()) {
-        let weg = ablage.abgelaufene(jetzt: jetzt)
-        guard !weg.isEmpty else { return }
+    // ================================================================= Leitung und Beenden
+
+    /// Eine Antwort an Claude — sofort, oder zurueckgehalten, solange die Leitung unterbrochen ist.
+    private func sendeAnClaude(_ kennung: String, _ antwort: Mcpergebnis) {
+        guard ablage.anClaude(kennung, antwort) else { return }
         let kern = self.kern
-        for e in weg {
-            stand.entferne(e.karte.kennung)
-            let antwort = Kartenablage.abgelaufen(e)
-            Task { await kern.entscheide(e.karte.kennung, antwort) }
-            if e.inDerSeite, let knoten {
-                Task { _ = await knoten(Kibruecke.rumpf("entscheide(kennung, ja)"),
-                                        ["kennung": e.karte.kennung, "ja": false]) }
+        Task { await kern.entscheide(kennung, antwort) }
+    }
+
+    /// Der Hoerer fuer Claude ist ausgefallen (`Claudeanschluss`): Die Karten bleiben stehen, mit
+    /// dem Vermerk «Leitung unterbrochen».
+    func leitungWeg() {
+        guard ablage.leitungSteht else { return }
+        ablage.leitungWeg()
+        objectWillChange.send()
+    }
+
+    /// Der Hoerer ist wieder bereit: erst die offenen Karten neu anmelden, dann die Entscheide aus
+    /// der Zwischenzeit an Claude — in dieser Reihenfolge, in EINER Aufgabe.
+    func leitungWieder() {
+        guard !ablage.leitungSteht else { return }
+        let (neu, antworten) = ablage.leitungWieder()
+        objectWillChange.send()
+        let kern = self.kern
+        Task {
+            await kern.meldeNeu(neu)
+            for a in antworten { await kern.entscheide(a.kennung, a.antwort) }
+        }
+    }
+
+    /// Der Vermerk an einer Karte in der Leiste — `nil`: keiner.
+    func vermerk(_ kennung: String) -> String? {
+        ablage.vermerk(kennung)
+    }
+
+    /// Echtes Beenden (App zu, «Claude über MCP» aus): Die Karten fallen weg, sichtbar in der
+    /// Leiste, und Claude bekommt je Karte den Satz — danach raeumt die Seite sie ab (ihr Ereignis
+    /// «entschieden» aendert dann nichts mehr). Gerufen VOR dem Abschalten des Hoerers.
+    func beende(_ wie: Kartenende) {
+        let antworten = ablage.beende(wie)
+        guard !antworten.isEmpty else { return }
+        for a in antworten { stand.entferne(a.kennung) }
+        meldung = Kartenablage.beendetMeldung(antworten, wie)
+        let kern = self.kern
+        let knoten = self.knoten
+        Task {
+            for a in antworten { await kern.entscheide(a.kennung, a.antwort) }
+            guard let knoten else { return }
+            for a in antworten where a.inDerSeite {
+                _ = await knoten(Kibruecke.rumpf("entscheide(kennung, ja)"), ["kennung": a.kennung, "ja": false])
             }
         }
-        meldung = weg.map(Kartenablage.abgelaufenMeldung).joined(separator: " ")
     }
 
     /// «Claudes letzten Schritt zurücknehmen» (Entscheid 114).

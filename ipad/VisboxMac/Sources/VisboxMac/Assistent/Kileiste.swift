@@ -128,7 +128,7 @@ private struct Kikartenliste: View {
 
     var body: some View {
         ForEach(zentrale.stand.karten) { karte in
-            Kikartenansicht(karte: karte,
+            Kikartenansicht(karte: karte, vermerk: zentrale.vermerk(karte.kennung),
                             anwenden: { Task { await zentrale.entscheide(karte.kennung, ja: true) } },
                             ablehnen: { Task { await zentrale.entscheide(karte.kennung, ja: false) } })
         }
@@ -139,6 +139,8 @@ private struct Kikartenliste: View {
 /// einer Render-Karte der Satz zur Freigabe am Knoten.
 private struct Kikartenansicht: View {
     let karte: Kikarte
+    /// «Leitung unterbrochen» (Strang Karten) — die Karte bleibt, Claude hoert spaeter.
+    let vermerk: String?
     let anwenden: () -> Void
     let ablehnen: () -> Void
 
@@ -149,6 +151,11 @@ private struct Kikartenansicht: View {
                 .foregroundStyle(Assistentenfarbe.violett)
             Text(karte.zusammenfassung)
                 .fixedSize(horizontal: false, vertical: true)
+            if let vermerk {
+                Text(vermerk)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
             Kikartenzeilen(zeilen: karte.zeilen)
             HStack(spacing: 8) {
                 Button("Anwenden", action: anwenden)

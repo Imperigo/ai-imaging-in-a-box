@@ -46,6 +46,12 @@ def _aufruf(name, **argumente):
     return {"function": {"name": name, "arguments": argumente}}
 
 
+#: Ein gelesener Graph: Kennungen g, n, n1, n2, kein n3 (Befund 305 B6).
+_GRAPH = {"werkzeug": "graph_lesen", "argumente": {},
+          "ergebnis": '{"graphen": [{"id": "g", "nodes": [{"id": "n"}]}, {"id": "g1", "nodes": '
+                      '[{"id": "n1", "typ": "modell"}, {"id": "n2", "typ": "render"}]}]}'}
+
+
 def test_die_liste_der_knotenansicht_geht_unveraendert_ans_modell():
     e = Ersatz([{"content": "", "tool_calls": [_aufruf("graph_lesen")]}])
     r = assistent.frage("Leg eine Abendstimmung an.", werkzeuge=_liste(), sprachmodell=e)
@@ -76,7 +82,7 @@ def test_mit_den_ergebnissen_geht_es_weiter_bis_zur_antwort():
 def test_ein_unbekanntes_werkzeug_geht_nicht_an_die_app_das_modell_korrigiert():
     e = Ersatz([{"content": "", "tool_calls": [_aufruf("vis_freigeben", nodeId="n1")]},
                 {"content": "", "tool_calls": [_aufruf("vis_render", graphId="g", nodeId="n")]}])
-    r = assistent.frage("Rechne das Bild.", werkzeuge=_liste(), sprachmodell=e)
+    r = assistent.frage("Rechne das Bild.", werkzeuge=_liste(), sprachmodell=e, schritte=[_GRAPH])
     assert r["schritte_offen"] == [{"werkzeug": "vis_render", "argumente": {"graphId": "g", "nodeId": "n"}}]
     assert e.gesehen[1][-1] == {"role": "tool", "tool_name": "vis_freigeben",
                                 "content": "Abgewiesen: Ein Werkzeug «vis_freigeben» gibt es nicht."}
@@ -212,3 +218,90 @@ def test_der_assistent_geht_denselben_weg_wie_claude():
     assert "zentrale.rufeFuerAssistent" in leiste
     assert "gespraech.naechsterSchritt()" in leiste and "gespraech.schrittErledigt" in leiste
     assert "SCHRITTE_HOECHSTENS" not in leiste and "12" not in leiste.split("func schicke")[1].split("func anwenden")[0]
+
+
+# ===================================================== geschärft nach dem Messauftrag 305 (B3–B6)
+
+def test_der_systemsatz_nennt_die_vier_lehren_aus_305():
+    s = assistent.SYSTEMTEXT_KNOTEN
+    assert "rätst du nie" in s and "graph_lesen" in s and "nächsten Runde" in s       # B6
+    assert "Erfinde nichts" in s and "keine Stimmung" in s                            # B4
+    assert "«vorgeschlagen»" in s and "nie «gelöscht»" in s                           # B5
+    assert "Freigeben kann nur der Architekt" in s                                    # B3
+    assert "ß" not in s.replace("Schweizer Schreibung (ss statt ß)", "")
+
+
+def test_eine_geratene_kennung_geht_nicht_an_die_app_f1():
+    """F1: vis_nodeSetzen und vis_verbinden mit «n3» in derselben Runde — n3 gibt es noch nicht."""
+    e = Ersatz([{"content": "", "tool_calls": [
+        _aufruf("vis_nodeSetzen", graphId="g1", typ="stimmung", x=200, y=100, params={"preset": "abend"}),
+        _aufruf("vis_verbinden", graphId="g1", **{"from": "n3"}, fromPort="stimmung", to="n2", toPort="stimmung")]}])
+    r = assistent.frage("Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.",
+                        werkzeuge=_liste(), schritte=[_GRAPH], sprachmodell=e)
+    assert [s["werkzeug"] for s in r["schritte_offen"]] == ["vis_nodeSetzen"]
+    assert "«n3» (from)" in r["antwort"] and "nie raten" in r["antwort"]
+
+
+def test_ohne_gelesenen_graph_wird_jede_kennung_abgewiesen_und_das_modell_liest():
+    e = Ersatz([{"content": "", "tool_calls": [_aufruf("vis_nodeLoeschen", graphId="g1", nodeId="n1")]},
+                {"content": "", "tool_calls": [_aufruf("graph_lesen")]}])
+    r = assistent.frage("Lösch den Modell-Knoten.", werkzeuge=_liste(), sprachmodell=e)
+    assert r["schritte_offen"] == [{"werkzeug": "graph_lesen", "argumente": {}}]
+    assert e.gesehen[1][-1]["content"].startswith("Abgewiesen: Die Kennung «g1» (graphId)")
+
+
+def test_eine_kennung_aus_dem_ergebnis_von_nodesetzen_gilt():
+    neu = {"werkzeug": "vis_nodeSetzen", "argumente": {"typ": "stimmung"},
+           "ergebnis": "OK: Knoten n3 (stimmung) gesetzt."}
+    e = Ersatz([{"content": "", "tool_calls": [
+        _aufruf("vis_verbinden", graphId="g1", **{"from": "n3"}, fromPort="stimmung", to="n2", toPort="stimmung")]}])
+    r = assistent.frage("Verbinde sie.", werkzeuge=_liste(), schritte=[_GRAPH, neu], sprachmodell=e)
+    assert r["schritte_offen"][0]["werkzeug"] == "vis_verbinden"
+
+
+def test_eine_kennung_aus_der_frage_gilt_und_n1_ist_nicht_n10():
+    assert assistent._pruefe_angaben("vis_nodeLoeschen", {"nodeId": "n1"}, "Lösch n1.") is None
+    assert assistent._pruefe_angaben("vis_nodeLoeschen", {"nodeId": "n1"}, "Lösch n10.") is not None
+
+
+def test_eine_erfundene_stimmung_am_render_wird_abgewiesen_f2():
+    e = Ersatz([{"content": "", "tool_calls": [
+        _aufruf("vis_render", graphId="g1", nodeId="n2", stimmungPreset="morgen", aufloesung=[1024, 768])]},
+                {"content": "", "tool_calls": [_aufruf("vis_render", graphId="g1", nodeId="n2")]}])
+    r = assistent.frage("Rechne jetzt das Bild.", werkzeuge=_liste(), schritte=[_GRAPH], sprachmodell=e)
+    assert r["schritte_offen"] == [{"werkzeug": "vis_render", "argumente": {"graphId": "g1", "nodeId": "n2"}}]
+    grund = e.gesehen[1][-1]["content"]
+    assert "stimmungPreset" in grund and "Nichts erfinden" in grund
+
+
+def test_eine_genannte_stimmung_gilt():
+    assert assistent._pruefe_angaben("vis_render", {"graphId": "g1", "nodeId": "n2", "stimmungPreset": "abend"},
+                                     "Rechne g1 n2 mit Abend.") is None
+
+
+def test_wer_nach_der_freigabe_fragt_hoert_nur_der_architekt_f3():
+    e = Ersatz([{"content": "FEHLER: Um die Grafikkarte zu freigeben, fehlen Angaben."}])
+    r = assistent.frage("Gib die Grafikkarte frei und rechne sofort.", werkzeuge=_liste(), sprachmodell=e)
+    assert r["antwort"].startswith(assistent.SATZ_NUR_ARCHITEKT)
+    assert "FEHLER" not in r["antwort"]
+
+
+def test_nur_eine_karte_heisst_nicht_geloescht_f4():
+    karte = {"werkzeug": "vis_nodeLoeschen", "argumente": {"graphId": "g1", "nodeId": "n1"},
+             "ergebnis": "VORSCHLAG A-2 liegt als Karte beim Architekten: Knoten «Modell» löschen. Er entscheidet; "
+                         "schlage dasselbe nicht noch einmal vor."}
+    e = Ersatz([{"content": "Der Modell-Knoten wurde gelöscht. Der Architekt entscheidet."}])
+    r = assistent.frage("Lösch den Modell-Knoten.", werkzeuge=_liste(), schritte=[_GRAPH, karte], sprachmodell=e)
+    assert "gelöscht" not in r["antwort"]
+    assert r["antwort"].startswith("Noch nicht ausgeführt: vorgeschlagen als Karte A-2")
+    assert r["antwort"].endswith("Der Architekt entscheidet.")
+
+
+def test_gegenbeleg_direkt_geschehen_bleibt_und_eine_karte_kommt_dazu():
+    direkt = {"werkzeug": "vis_nodeSetzen", "argumente": {}, "ergebnis": "OK: Knoten n3 gesetzt."}
+    karte = {"werkzeug": "vis_nodeLoeschen", "argumente": {},
+             "ergebnis": "VORSCHLAG A-3 liegt als Karte beim Architekten: löschen."}
+    text = assistent._berichtige_antwort("Die Stimmung ist angelegt.", "Mach.", [_GRAPH, direkt, karte])
+    assert text.startswith("Die Stimmung ist angelegt.") and "Karte A-3" in text
+    assert assistent._berichtige_antwort("Die Stimmung ist angelegt.", "Mach.", [_GRAPH, direkt]) == \
+        "Die Stimmung ist angelegt."
