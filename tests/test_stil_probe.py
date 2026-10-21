@@ -102,3 +102,15 @@ def test_die_messung_erkennt_den_kaputten_stand():
     assert len(befunde) >= 10
     assert any("doppelt" in b for b in befunde)
     assert any("Claude" in b for b in befunde)
+
+
+# ── die Schalter des Werkzeugs ──────────────────────────────────────────────────────────────
+
+def test_nur_css_braucht_keinen_browser(capsys):
+    assert stil_probe.main(["--nur-css"]) == 0
+    assert "geschlossen" in capsys.readouterr().out
+
+
+def test_ohne_chrome_sagt_es_das_und_endet_mit_2(capsys, tmp_path):
+    assert stil_probe.main(["--dist", str(stil_probe.BAU), "--chrome", str(tmp_path / "kein-chrome")]) == 2
+    assert "Kein Chromium" in capsys.readouterr().out

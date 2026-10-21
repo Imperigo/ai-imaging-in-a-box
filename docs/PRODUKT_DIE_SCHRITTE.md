@@ -1982,6 +1982,16 @@ gesicherter Graph beim Öffnen entzerrt wird. Die Marke «Vorschau» steht unten
 darüber, damit nichts verdeckt ist. Die grosse Ansicht mit dem Umschalter bleibt. Geprüft ist es mit Proben und in einem
 Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
 
+**Eine verlorene Klammer, und eine Probe dagegen (21.10.2026).** Am Mac lag die Bedienung der Knotenansicht links unten
+ungestaltet übereinander: die Werkzeugknöpfe als Spalte, ein Wort doppelt, die Kugel des Assistenten als grosses Feld;
+Claudes Vorschläge waren unter den Fensterrand gerutscht. Die Ursache war eine einzige fehlende schliessende Klammer in
+einer Stildatei, entstanden, als zwei Arbeitsstände zusammengeführt wurden. Weil beim Bau alle Stildateien zu einer
+werden, galt danach fast die Hälfte der Gestaltung nirgends mehr — und weder der Bau noch die übrigen Proben merkten es,
+denn für sie ist das gültig. Seither gibt es eine Stilprobe: Sie prüft, dass jede Stildatei geschlossen ist, und öffnet
+den fertigen Bau in einem Browser ohne Fenster, um nachzumessen, ob die Inseln am Rand sitzen, die Kugel klein ist und
+Claudes Karte und das Gesprächsfeld im Fenster stehen. Sie läuft bei jedem Hochladen mit. Geprüft ist es mit dem Bau vor
+und nach der Klammer (vorher 14 Befunde, danach keiner); am Gerät ist es noch nicht gesehen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

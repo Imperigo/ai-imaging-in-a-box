@@ -8105,6 +8105,21 @@ aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ei
 ein, danach tippt man Auge und Blickpunkt in Metern. **Modell:** wie früher die Standpunkte aus dem Entwurf (nur,
 wo es einen Entwurf gibt). *Im Projekt:* Entscheide 109 und 113 (3); `KameraKnoten.tsx`.
 
+**CSS (Stilregeln einer Webseite)** — Die Sprache, in der eine Webseite sagt, wie etwas aussieht und wo es steht:
+Farbe, Grösse, Abstand, Lage. Jede Regel nennt, wofür sie gilt, und schliesst ihren Inhalt in geschweifte Klammern
+`{ … }` ein. *In diesem Projekt:* Die Knotenansicht hat rund zwei Dutzend solche Dateien; beim Bau werden sie zu einer
+zusammengefügt (Protokoll 74 §186).
+
+**Verlorene Klammer (CSS)** — Eine Stilregel, deren schliessende Klammer fehlt. Der Browser meldet keinen Fehler,
+sondern liest alle folgenden Regeln als Unterregeln dieser einen — sie gelten dann nur noch innerhalb von etwas, das es
+nicht gibt, und wirken nirgends. *In diesem Projekt:* Am 20.10.2026 beim Zusammenführen zweier Zweige entstanden; im Bau
+standen danach 928 von 1962 Regeln darunter, und am Mac lag die Insel-Oberfläche ungestaltet als Spalte (§186).
+
+**Stilprobe (am Bau)** — Eine Probe, die den fertigen Bau der Knotenansicht in einem Browser ohne Fenster öffnet und
+nachmisst, ob die Gestaltung greift: ob die Inseln am Rand sitzen, die Kugel klein ist, Claudes Karte und das
+Gesprächsfeld im Fenster stehen. Dazu prüft sie ohne Browser, dass jede Stildatei geschlossen ist. *Wozu:* Der Bau selbst
+und die übrigen Proben merken eine verlorene Klammer nicht. *Wo:* `tools/stil_probe.py`, `tests/test_stil_probe.py`.
+
 **Vorgabe beim Anlegen (eines Knotens)** — Die Einstellung, die ein Knoten bekommt, wenn man ihn neu setzt. Sie gilt
 nur in diesem Moment: Ein schon gespeicherter Knoten behält, was er hat, auch wenn sich die Vorgabe ändert. *Im
 Projekt:* seit dem 21.10.2026 legt man den Kamera-Knoten auf «Auto» an; alte Graphen bleiben bei «Modell».
@@ -8562,6 +8577,7 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus dem Strang Stil (Protokoll 74 §186): **CSS (Stilregeln einer Webseite)**, **Verlorene Klammer (CSS)**, **Stilprobe (am Bau)** |
 | 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
