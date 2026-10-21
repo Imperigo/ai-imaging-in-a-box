@@ -8622,7 +8622,7 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §191): **Probename (im Gerätebuch)** |
+| 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §192): **Probename (im Gerätebuch)** |
 | 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36, Protokoll 74 §189): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
 | 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |
 | 2026-10-21 | Ergaenzt aus dem Strang Stil (Protokoll 74 §188): **Stilprobe (am Bau)** (CSS und offene Klammer stehen seit §187) |
