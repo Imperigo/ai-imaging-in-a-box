@@ -1290,6 +1290,27 @@ def _ausserhalb_umriss(roh, sil_soll, breite, hoehe, *, polaritaet, maske, trenn
         return None
 
 
+def _haus_im_bild(roh, sil_soll, breite, hoehe, *, polaritaet, trennhilfe,
+                  ausblenden) -> dict | None:
+    """``baumasse.haus_im_bild`` auf der rohen Ist-Karte — ``None`` statt einer Ausnahme.
+
+    Dieselbe Nähe wie bei :func:`_ausserhalb_umriss`; ohne Polarität keine Zahl.
+    (Video-Befund L4-2: der Hausanteil am KI-Bild, neben dem an der Grundlage.)
+    """
+    from . import baumasse  # noqa: PLC0415
+    if polaritaet == POLARITAET_DISPARITAET:
+        naehe = [float(v) for v in roh]
+    elif polaritaet == POLARITAET_TIEFE:
+        naehe = [-float(v) for v in roh]
+    else:
+        return None
+    try:
+        return baumasse.haus_im_bild(naehe, sil_soll, int(breite or 0), int(hoehe or 0),
+                                     trennhilfe=trennhilfe, ausgeblendet=ausblenden)
+    except (TypeError, ValueError):
+        return None
+
+
 def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                   schaetzer: str = VORGABE_TIEFENSCHAETZER, modell=None, _lader=None,
                   schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
@@ -1507,6 +1528,9 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                                     ist_ergebnis["hoehe"], polaritaet=eintrag.polaritaet,
                                     maske=maske, trennhilfe=trennhilfe,
                                     ausblenden=ausblenden)
+    haus_bild = _haus_im_bild(roh, sil_soll, ist_ergebnis["breite"], ist_ergebnis["hoehe"],
+                              polaritaet=eintrag.polaritaet, trennhilfe=trennhilfe,
+                              ausblenden=ausblenden)
 
     warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(aufloesungs_warnungen) \
         + tuple(markierung["warnungen"]) + tuple(urteil["warnungen"])
@@ -1620,6 +1644,9 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # NEUE BAUMASSE AUSSERHALB DES UMRISSES (auf-20261020-294, B6) — Auskunft, kein Tor;
         # `None`, wenn nicht messbar (unbekannte Polaritaet, keine Groesse).
         "ausserhalb_umriss": ausserhalb,
+        # DER HAUSANTEIL AM KI-BILD (Video-Befund L4-2) — geschaetzt aus der Tiefe; neben
+        # `anteil_soll` (an der Grundlage gezaehlt). Auskunft, kein Tor; `None` ohne Messung.
+        "haus_im_bild": haus_bild,
         "methode": urteil["methode"],
         # ACHTUNG, zwei verschiedene Dinge mit fast demselben Namen — und seit dem
         # 26.08.2026 haengt eine Zahl daran:
@@ -1682,6 +1709,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "n_soll": None,
         "n_ist": None,
         "ausserhalb_umriss": None,
+        "haus_im_bild": None,
         "methode": geometrie_qa.METHODE,
         # Kein Zeichen, weil nichts gerechnet wurde — `None` heisst hier wie ueberall
         # „kein Wert" und nicht „ungerichtet gerechnet". Das Feld steht trotzdem da: Der

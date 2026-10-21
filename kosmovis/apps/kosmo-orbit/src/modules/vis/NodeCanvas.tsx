@@ -71,6 +71,7 @@ import {
 import { BridgeBild } from './BridgeBild';
 import { RenderVorschauBild } from './render-vorschau-bild';
 import { KameraAus3dKoerper } from './KameraAus3dKnoten';
+import { kameraKopfZusatz } from './blick-quelle';
 // L24 Bildweg Varianten (E246): Knoten «Varianten» und das Raster im Bildvergleich — eigene Dateien.
 import { VariantenKoerper } from './VariantenKnoten';
 import { VariantenRaster } from './VariantenRaster';
@@ -2517,6 +2518,8 @@ export function NodeCanvas({
               <KIcon name={kategorieIcon} size={14} x={8} y={6} className="vis-node-icon-soft" />
               <text x={28} y={17} fontSize={11.5} fontWeight="var(--k-gewicht-stark)" fill="var(--vis-node-tinte)" className="vis-node-kopf-label">
                 {kat.label}
+                {/* L4-4: der gewählte gesicherte Blick steht im Kopf — auch eingeklappt sichtbar. */}
+                {kameraKopfZusatz(n0)}
               </text>
               {/* V1-Welle Commit 2: Node-Kollaps — nur Kopf+Ports sichtbar
                   (nodeHoehe/portY berücksichtigen `collapsed`). Ein laufender

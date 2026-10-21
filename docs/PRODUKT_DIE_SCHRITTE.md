@@ -2172,3 +2172,20 @@ der Reiter «Satz» an der Stimmung und der rechte Blätterpfeil am Varianten-Kn
 Die Stilprobe misst die drei Knoten jetzt im fertigen Bau mit: nichts steht über, jede Wahlleiste ist einzeilig, keine
 zwei Namen überlappen. Ehrlich gesagt: gemessen im Browser des Prüfrechners in beiden Farbthemen und beim Zoom, mit dem
 die Knotenansicht startet; am Mac noch nicht gesehen.
+
+**Die Prüfung spricht über das Bild, das man sieht (21.10.2026).** Im Video zum Verlauf stand «Das Haus füllt 2,9 %»
+direkt neben einem KI-Bild, in dem das Haus sichtbar ein Sechstel füllt. Beides stimmte: Gezählt war am Bild aus dem
+3D-Modell (der Grundlage), und die KI hatte den Ausschnitt selbst näher gewählt. Jetzt stehen zwei Zahlen nebeneinander —
+«Grundlage 2,9 % · KI-Bild ≈ 17 %» —, mit dem Satz, dass die zweite aus der Tiefe des KI-Bilds geschätzt ist, und der Marke
+«Ausschnitt anders», wenn eine Zahl mindestens doppelt so gross ist wie die andere. Daneben stand «Geometrie 0.0 gegen
+0.65». Nachgerechnet an vier Läufen des Heim-PC war jede 0.0 dort kein Fehler, sondern eine festgehaltene Untergrenze: Das
+KI-Bild ordnet vorne und hinten anders als das Modell, die Rechnung ergäbe weniger als null. Der Satz sagt das jetzt in
+Worten («KI-Bild weicht von der Geometrie ab … kein Messfehler») und dass die Zahl bei so kleinem Haus nur Auskunft ist.
+Ehrlich gesagt: Die Schätzung am KI-Bild ist an gezeichneten Testbildern geprüft, an echten Bildern des Heim-PC noch nicht;
+die Grenze «doppelt so gross» ist gesetzt, nicht gemessen.
+**Ein gewählter Blick wird zur Kamera (21.10.2026).** In einem Vorführvideo kam ein bewusst gesicherter Blick — ein
+Fussgänger an der Hausecke — nicht im Knoten «Kamera» an: Der einzige Weg dorthin verlangte eine offene 3D-Ansicht. Jetzt
+hat der Knoten einen Reiter «Blick», der die gesicherten Blicke als Auswahl anbietet. Ein gewählter Blick wird beim Wählen
+festgehalten und als genau dieser eine Standpunkt bestellt; Varianten ändern danach nur die Stimmung. In Visbox sind die
+gesicherten Blicke die Standpunkte, die für ein Bild der Mappe am Grundriss gesetzt wurden. Claude kann einen Blick beim
+Namen wählen. Ehrlich gesagt: geprüft an Proben, am Mac noch nicht gesehen.

@@ -4,6 +4,7 @@ import { finalerRenderPrompt, renderPromptBausteine } from './renderprompt';
 import { projektKameras, type AutoKameraStandpunkt } from './kamera';
 import {
   BESTELLFORMAT_VORGABE,
+  FOV_GRENZEN_GRAD,
   KAMERA_AUS_3D_TYP,
   kameraAus3dAusParams,
   kameraAus3dStandpunkt,
@@ -240,7 +241,7 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     // ohne `art` wie bisher die Standpunkte aus dem Modell (`projektKameras`) — alte Graphen und
     // KosmoOrbit-Proben bleiben Zahl fuer Zahl.
     hilfe:
-      'Standpunkte für den Render. Auto: der Heim-PC rechnet sie aus Richtungen, Augenhöhe, Brennweite und Abstand. Manuell: eingefroren und von Hand gestellt. Ohne Wahl: Eingang/Übersicht aus dem Modell (bei Räumen auch Innenraum, dann als IFC).',
+      'Standpunkte für den Render. Auto: der Heim-PC rechnet sie aus Richtungen, Augenhöhe, Brennweite und Abstand. Blick: ein gesicherter Blick. Manuell: eingefroren und von Hand gestellt. Ohne Wahl: Eingang/Übersicht aus dem Modell (bei Räumen auch Innenraum, dann als IFC).',
     kategorie: 'quelle',
     inputs: [],
     outputs: [{ name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' }],
@@ -387,8 +388,11 @@ export function stimmungParams(presets: readonly VisStimmungId[]): { presets: st
   return { presets: schreibeListe(liste), preset: liste[0]! };
 }
 
-/** Kamera-Arten im Parameter `art` (s. Katalog `kamera`). Ohne `art`: «modell» (wie bisher). */
-export type KameraArt = 'modell' | 'auto' | 'manuell';
+/**
+ * Kamera-Arten im Parameter `art` (s. Katalog `kamera`). Ohne `art`: «modell» (wie bisher).
+ * «blick» (Video-Befund L4-4, 21.10.2026): ein gesicherter Blick ist die Kamera — s. `kameraBlickAusParams`.
+ */
+export type KameraArt = 'modell' | 'auto' | 'manuell' | 'blick';
 
 /** Die acht Richtungen am Knoten und ihre Kuerzel am Heim-PC (`aiimaging.kameras.RICHTUNGEN`). */
 export const KAMERA_RICHTUNGEN: readonly { chip: string; kuerzel: string; name: string }[] = [
@@ -424,7 +428,7 @@ export interface KameraAutoWahl {
 
 export function kameraArtAusParams(params: Params): KameraArt {
   const a = params?.['art'];
-  return a === 'auto' || a === 'manuell' ? a : 'modell';
+  return a === 'auto' || a === 'manuell' || a === 'blick' ? a : 'modell';
 }
 
 function zahlIn(wert: unknown, min: number, max: number): number | undefined {
@@ -496,6 +500,66 @@ export function kameraManuellAusParams(params: Params): KameraManuell[] {
   } catch {
     return [];
   }
+}
+
+/**
+ * **Gesicherter Blick als Kamera** (Video-Befund L4-4, 21.10.2026, Blatt «Blick zur Kamera»).
+ *
+ * Bis dahin kam ein gesicherter Blick (`design.blickSichern`) nur über «Kamera aus 3D-Ansicht» in
+ * den Graphen — und der verlangt eine offene 3D-Ansicht. Jetzt wählt man ihn direkt am Knoten
+ * «Kamera» (`art: 'blick'`). Parameter:
+ *
+ *  - `blick`: der Name, wie er am Knoten steht;
+ *  - `blickKamera`: Auge, Blickpunkt und waagrechter Bildwinkel, beim Wählen FESTGEHALTEN (JSON,
+ *    glTF-Achsen, Meter — wie `kameras` bei «manuell»). Die Grundlage bleibt so ruhig, auch wenn
+ *    der Blick später verschoben oder gelöscht wird (Blatt, Frage A).
+ *
+ * Fehlt `blickKamera` (ein Aufruf von aussen, der nur den Namen setzt), gilt der gleichnamige
+ * gesicherte Blick des Dokuments. Gibt es weder das eine noch das andere: `null` — der
+ * Render-Auftrag traegt dann `kameraBlickFehlt`, und die App sendet nicht.
+ */
+export interface KameraBlick {
+  name: string;
+  position: [number, number, number];
+  target: [number, number, number];
+  fov: number;
+}
+
+function fovImVertrag(fov: unknown): fov is number {
+  return typeof fov === 'number' && Number.isFinite(fov) && fov >= FOV_GRENZEN_GRAD[0] && fov <= FOV_GRENZEN_GRAD[1];
+}
+
+/** Der Name des gewählten Blicks (`blick`), leer ohne Wahl. */
+export function kameraBlickName(params: Params): string {
+  const n = params?.['blick'];
+  return typeof n === 'string' ? n.trim() : '';
+}
+
+export function kameraBlickAusParams(params: Params, doc?: KosmoDoc): KameraBlick | null {
+  const name = kameraBlickName(params);
+  const roh = params?.['blickKamera'];
+  if (typeof roh === 'string' && roh.trim() !== '') {
+    try {
+      const o: unknown = JSON.parse(roh);
+      if (o && typeof o === 'object') {
+        const k = o as Record<string, unknown>;
+        if (istVec3(k['position']) && istVec3(k['target']) && fovImVertrag(k['fov'])) {
+          return { name: name || 'Blick', position: k['position'], target: k['target'], fov: k['fov'] };
+        }
+      }
+    } catch {
+      // unlesbar: wie fehlend
+    }
+  }
+  if (!name || !doc) return null;
+  const b = (doc.settings.gespeicherteBlicke ?? []).find((x) => x.name === name);
+  if (!b || !fovImVertrag(b.fovGrad)) return null;
+  return {
+    name: b.name,
+    position: [b.position[0], b.position[1], b.position[2]],
+    target: [b.ziel[0], b.ziel[1], b.ziel[2]],
+    fov: b.fovGrad,
+  };
 }
 
 /** Die Bauteil-Arten der Oberflaeche (Visbox `materialwahl.ARTEN`); Tueren zaehlen zu «Übrige» (113 (7)). */
@@ -702,6 +766,12 @@ export interface VisRenderAuftrag {
    */
   kameraAus3dFehlt?: true;
   /**
+   * Der Knoten «Kamera» steht auf «Blick», aber es ist keiner gewählt (oder der Name ist keinem
+   * gesicherten Blick mehr zugeordnet und nichts festgehalten). Die App sendet dann NICHT — wie
+   * bei `kameraAus3dFehlt`, aus demselben Grund. Fehlt das Feld, ist alles wie bisher.
+   */
+  kameraBlickFehlt?: true;
+  /**
    * Owner-Entscheid 96 (Visbox, 15.10.2026): haengt eine «Skizze vom iPad» am Eingang «Skizze»,
    * steht hier ihre WAHL (Parameter `skizze`: «neueste» oder ein Dateiname) und ihr Knoten.
    * Welche Datei «neueste» ist, weiss nur der Wirt — aufgeloest wird in der App
@@ -831,6 +901,8 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
         // sondern seine Einstellungen (der Heim-PC rechnet), «manuell» die eingefrorenen Standpunkte.
         const kameraArt = kameraQuelle?.typ === 'kamera' ? kameraArtAusParams(kameraQuelle.params) : 'modell';
         const kameraParams = kameraQuelle?.params ?? {};
+        // L4-4: «blick» — der gewählte gesicherte Blick, als EIN fester Standpunkt (wie «manuell»).
+        const kameraBlick = kameraArt === 'blick' ? kameraBlickAusParams(kameraParams, doc) : null;
         const kameras =
           kameraQuelle?.typ === KAMERA_AUS_3D_TYP
             ? kamera3d
@@ -838,6 +910,10 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
               : []
             : kameraArt === 'auto'
               ? []
+              : kameraArt === 'blick'
+                ? kameraBlick
+                  ? [{ ...kameraBlick, begruendung: `gesicherter Blick «${kameraBlick.name}» am Knoten «Kamera»` }]
+                  : []
               : kameraArt === 'manuell'
                 ? kameraManuellAusParams(kameraParams).map((k) => ({ ...k, begruendung: 'von Hand gestellt am Knoten «Kamera»' }))
                 : kameraKante
@@ -869,7 +945,8 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
           ...(kameras.length > 0 ? { kameras } : {}),
           ...(kameraQuelle?.typ === KAMERA_AUS_3D_TYP && !kamera3d ? { kameraAus3dFehlt: true as const } : {}),
           ...(kameraArt === 'auto' ? { kamerasAuto: kameraAutoAusParams(kameraParams) } : {}),
-          ...(kameraArt === 'manuell' && kameras.length > 0
+          ...(kameraArt === 'blick' && !kameraBlick ? { kameraBlickFehlt: true as const } : {}),
+          ...((kameraArt === 'manuell' || kameraArt === 'blick') && kameras.length > 0
             ? { kamerasPerspektive: kameraParams['perspektive'] === 'frei' ? ('frei' as const) : ('senkrecht' as const) }
             : {}),
           ...(stimmung
