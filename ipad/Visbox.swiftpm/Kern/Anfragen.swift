@@ -508,6 +508,9 @@ public struct Serverfehler: Error, Equatable, Sendable {
         case verweigert
         /// 404 — kein Projekt, kein Bild, kein Weg.
         case nichtGefunden
+        /// 410 — **der direkte Weg ist beendet** (Entscheid 118a): Der Heim-PC nimmt ein iPad
+        /// nur noch über den Mac an. Der Satz sagt, was zu tun ist.
+        case direktBeendet
         /// Erfolg gemeldet, aber die Antwort liess sich nicht lesen. Dann ist **nicht
         /// bekannt**, was drüben geschah — und das wird nicht als Erfolg ausgegeben.
         case unlesbar
@@ -533,6 +536,7 @@ public struct Serverfehler: Error, Equatable, Sendable {
         case 401: return .nichtAngemeldet
         case 403: return .verweigert
         case 404: return .nichtGefunden
+        case 410: return .direktBeendet
         default: return .anderer
         }
     }
@@ -542,6 +546,12 @@ public struct Serverfehler: Error, Equatable, Sendable {
         let wert = try? JSONWert.lies(daten)
         if let satz = wert?["fehler"]?.alsText ?? wert?["satz"]?.alsText, !satz.isEmpty {
             return Serverfehler(code: status, satz: satz, satzVomServer: true)
+        }
+        // OHNE SATZ DES SERVERS DER EIGENE (118a): Auch eine Weiterleitung, die den Rumpf
+        // verschluckt, soll das iPad nicht mit «410» allein stehen lassen.
+        if status == 410 {
+            return Serverfehler(code: status, satz: Macanbindung.satzDirektBeendet,
+                                satzVomServer: false)
         }
         return Serverfehler(
             code: status,

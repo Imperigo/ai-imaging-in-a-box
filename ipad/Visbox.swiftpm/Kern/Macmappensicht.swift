@@ -115,6 +115,51 @@ public enum Ipadmappenwege {
             "heim_pc": .text("nicht erreicht"), "satz": .text(satzOhneHeim),
         ])
     }
+
+    // ------------------------------------------------- ohne eingerichteten Heim-PC (118a)
+
+    /// Der Satz, wenn am Mac **kein Heim-PC eingerichtet** ist (Entscheid 118a, Frage 3).
+    public static let satzKeinRechner = "Kein Rechner eingerichtet — der Mac hat keinen Heim-PC. "
+        + "Mappe, Bilder und Skizzen gehen über den Mac; gerechnet wird erst, wenn am Mac ein "
+        + "Heim-PC eingerichtet ist."
+    /// Der Satz für eine Skizze, wenn am Mac weder eine Mappe offen noch ein Heim-PC da ist.
+    public static let satzOhneMappeOhneRechner = "Am Mac ist keine Mappe offen und kein Rechner "
+        + "eingerichtet — die Skizze wartet im Parkfach. Am Mac eine Mappe öffnen."
+    /// Der Satz für Mappe und Bilder, wenn am Mac weder eine Mappe offen noch ein Heim-PC da ist.
+    public static let satzKeineMappeKeinRechner = "Am Mac ist keine Mappe offen und kein Rechner "
+        + "eingerichtet — am Mac eine Mappe öffnen."
+
+    /// Der **ruhige Laufstand ohne Heim-PC**: wie `fortschrittOhneHeim`, aber `heim_pc` sagt
+    /// «nicht eingerichtet». Das iPad bleibt damit verbunden (der Mac ist ja da) und schickt
+    /// seine Skizzen in die Mappe am Mac.
+    public static var fortschrittKeinRechner: JSONWert {
+        guard case .objekt(var felder) = fortschrittOhneHeim else { return fortschrittOhneHeim }
+        felder["heim_pc"] = .text("nicht eingerichtet")
+        felder["satz"] = .text(satzKeinRechner)
+        return .objekt(felder)
+    }
+
+    /// Was der Mac antwortet, wenn **kein Heim-PC eingerichtet** ist und die Mappe am Mac die
+    /// Anfrage nicht schon beantwortet hat (Entscheid 118a: die Vermittlung entsteht auch ohne
+    /// Heim-PC). Nie «weiterreichen» — es gibt kein Ziel:
+    ///
+    /// * der Laufstand → ruhig, «nicht eingerichtet» (200);
+    /// * Mappe und Bilder ohne offene Mappe → 404, mit dem Satz, was am Mac zu tun ist;
+    /// * eine Skizze ohne offene Mappe → 409, sie bleibt im Parkfach;
+    /// * alles andere (Rechnen, Benennen, Assistent, was die Positivliste sonst kennt) → 503
+    ///   mit «Kein Rechner eingerichtet».
+    public static func ohneRechner(_ ziel: Ipadmappenziel?) -> Leitungsantwort {
+        switch ziel {
+        case .fortschritt?:
+            return .json(fortschrittKeinRechner)
+        case .projekt?, .bild?:
+            return .fehler(satzKeineMappeKeinRechner, status: 404)
+        case .skizze?:
+            return .fehler(satzOhneMappeOhneRechner, status: 409)
+        default:
+            return .fehler(satzKeinRechner, status: 503)
+        }
+    }
 }
 
 // ============================================================================ die Sicht

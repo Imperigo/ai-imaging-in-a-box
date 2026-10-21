@@ -102,10 +102,10 @@ public enum Ipadweg: Equatable, Sendable {
     public var satz: String {
         switch self {
         case .direkt:
-            // SEIT ENTSCHEID 118 (21.10.2026) ist der direkte Weg der UEBERGANG: Die Mappe liegt
-            // am Mac, und ein iPad direkt am Heim-PC sieht sie nicht.
-            return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Das iPad spricht noch "
-                + "direkt mit dem Heim-PC (Übergang) und sieht die Mappe am Mac so nicht — im Menü "
+            // SEIT ENTSCHEID 118a (21.10.2026) ENDET DER DIREKTE WEG: Der Heim-PC weist ein iPad,
+            // das direkt spricht, mit Satz ab (410). In 0.3.16 war er noch Uebergang.
+            return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Das iPad war direkt mit "
+                + "dem Heim-PC gekoppelt — diesen Weg nimmt der Heim-PC nicht mehr an. Im Menü "
                 + "«iPad» «iPad koppeln» koppelt es mit diesem Mac."
         case .ueberMac:
             return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Das iPad arbeitet über "
