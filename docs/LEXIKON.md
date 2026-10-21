@@ -143,6 +143,21 @@ zusammengehen.
 *Im Projekt:* «claude/kosmovis-visbox-stand» (Runde 29 + startgraph + kamera-aus-3d) ist die Herkunft der
 Visbox-Kopie unter `kosmovis/`; im Blatt an den Integrator steht ausdrücklich, dass er nicht eingespielt wird.
 
+**Abgleich (der Kopie mit dem Original)** — Der Vergleich jeder wörtlich kopierten Datei mit dem **aktuellen** Stand
+des Originals, nicht mit dem Fingerabdruck, den man beim Kopieren festgehalten hat. Die gewöhnliche Prüfung sagt nur, ob
+die Kopie seit dem Kopieren still verändert wurde; ob das Original inzwischen weitergegangen ist, sieht sie nie. Der
+Abgleich liest den Stand direkt aus der Versionsgeschichte (ohne die Dateien auszupacken) und sagt je Datei: gleich,
+abweichend, dort weggefallen, hier noch nicht übernommen — oder auf einem eigenen Zweig geändert, der noch nicht
+eingespielt ist (das ist kein Fehler, sondern ein angemeldeter Weg). *Im Projekt:* `tools/kosmovis_uebernahme.py
+--abgleich`; `tools/knoten_bau.py` baut die Knotenansicht nicht, wenn der Abgleich eine Abweichung findet, ausser man
+sagt ausdrücklich «gegen den festen Stand» (`--fester-stand`), und dann steht das im Stempel des Baus.
+
+**Veraltete Spur (eines Zweigs)** — Die Kopie, die ein örtliches Repository von einem Zweig auf dem Server hält, ist nur
+so frisch wie das letzte Abholen. Holt ein Klon nur einen Zweig (so ist er eingerichtet), bleiben die Spuren aller
+anderen auf ihrem alten Stand stehen, und ein Vergleich gegen sie sieht aus wie einer gegen den echten Stand. *Im
+Projekt:* `--abgleich --holen` holt den Integrator-Zweig und die eigenen Zweige vorher ausdrücklich ab (am 21.10.2026
+stand die Spur des Hilfszweigs noch vor S3/S4, die des Kopf-Zweigs vor seinen neuen Nahtstellen, Protokoll 74 §163).
+
 **Pull Request (PR)** — Der Vorschlag, einen Zweig in einen anderen zu übernehmen. Auf
 GitHub eine Seite mit allen Änderungen, Zeile für Zeile, plus Kommentarfunktion. In
 Teams der Ort der gegenseitigen Überprüfung. Bei Alleinarbeit oft entbehrlich —
@@ -8033,6 +8048,13 @@ gibt (etwa die Sync-Leiste: Visbox hat keinen gemeinsamen Raum). Jede Ausnahme s
 Liste, und eine Probe prüft, dass jeder Kopfteil von KosmoOrbit entweder eingesetzt oder dort benannt ist. *Im
 Projekt:* `kosmovis/UI_AUSNAHMEN.json`, `tests/test_kosmovis_ui_gleichheit.py`.
 
+**Befehlspalette (⌘K)** — Ein Suchfeld, das mit der Tastenkombination Befehlstaste + K über der Arbeitsfläche aufgeht:
+Man tippt ein paar Buchstaben, und die Liste zeigt die passenden Befehle zum Ausführen. In KosmoOrbit trägt sie nur
+Befehle der ganzen App (Station wechseln, Projektdatei sichern oder öffnen, Beispielprojekt); das Vis-Werkzeug meldet dort
+keinen eigenen Befehl an. Darum ist sie in Visbox eine **UI-Ausnahme** — eine Palette nur mit Visbox-Befehlen wäre eine
+eigene, keine gleiche. *Im Projekt:* `kosmovis/UI_AUSNAHMEN.json`; eine Probe wird rot, sobald das Vis-Werkzeug dort
+Befehle anmeldet.
+
 **Kugel des Assistenten (Orb)** — Der runde, leicht bewegte Knopf unten rechts in der Knotenansicht. Ein Klick öffnet das
 Gesprächsfeld, noch einer schliesst es. Während der Assistent nachdenkt, bewegt sich die Kugel anders und sagt es mit
 einem Wort daneben. *Im Projekt:* `KosmoOrb.tsx` und `KosmoEckOrb.tsx`, wortgleich aus KosmoOrbit; dort heisst der
@@ -8094,6 +8116,7 @@ rechneten.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus dem Abgleich im Bau (Plan UI-Gleichheit S5, Protokoll 74 §163): **Abgleich (der Kopie mit dem Original)**, **Veraltete Spur (eines Zweigs)**, **Befehlspalette (⌘K)** |
 | 2026-10-20 | Ergaenzt aus Kugel, Gesprächsfeld und Einstellungs-Insel (Plan UI-Gleichheit S3/S4, Protokoll 74 §162): **Kugel des Assistenten (Orb)**, **Gesprächsfeld (des Assistenten)**, **Antwortblase (an der Kugel)**, **Seitenfenster (des Gesprächsfelds)**, **Einstellungs-Insel**, **Gemerkte Einstellung (der Knotenansicht)**; **Nahtstelle (für einen zweiten Wirt)** um die zwei neuen Nahtstellen nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-294 (Protokoll 74 §161): **Frontallicht**, **Sonne seitlich der Kamera (Drehung zur Kamera)**, **Gemischter Prompt**, **Neue Baumasse ausserhalb des Umrisses**; **Schattenwinkel** um den weichen Rückfall nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Kopfteilen der Knotenansicht (Plan UI-Gleichheit S1/S2, Protokoll 74 §159): **Kopfteile (der Knotenansicht)**, **Stationen-Palette (am Logo)**, **Speichern-Kreis**, **Zweitgruppe (des Inselkopfs)**, **Heim-PC-Chip**, **Claude-Marke**, **Erzählzeile**, **Thema (Papier, Kosmos)**, **Nahtstelle (für einen zweiten Wirt)**, **Bote «visboxWirt» (zweite Brücke)**, **UI-Ausnahme**; **Selbständigkeit**, **Tätigkeitsstrom** und **Zwei Rückgängig-Verläufe** nachgeführt (in der Knotenansicht an der Claude-Marke) |
