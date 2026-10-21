@@ -8039,7 +8039,9 @@ daneben der Grund. Rechnet der Heim-PC mehrere Kameras, zählt das schwächste B
 
 **Veraltet (ein Bild am Render-Knoten)** — Ein fertiges Bild, dessen Auftrag sich seither geändert
 hat: anderer Prompt, andere Einstellung. Das Bild bleibt stehen, der Knoten sagt aber «veraltet» —
-es zeigt nicht mehr, was ein neuer Lauf liefern würde.
+es zeigt nicht mehr, was ein neuer Lauf liefern würde. Derselbe Gedanke beim Laden eines Modells am Heim-PC
+(Befund 307 B1, 21.10.2026): Ist seit dem letzten «Datei laden …» eine andere Mappe offen, meldet dessen Stand
+`veraltet` mit Satz, statt gelöscht zu werden — nichts geht verloren, und niemand hält ihn für die offene Mappe.
 
 **KosmoPublish (Plakatblatt)** — Der Teil von KosmoOrbit, in dem Pläne und Bilder auf Blätter für
 Präsentation und Druck gesetzt werden. Der Knoten «Aufs Blatt» legt ein Render dorthin. In Visbox
@@ -8500,7 +8502,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **Veraltet (ein Bild am Render-Knoten)** um den Ladestand erweitert; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §180): **Vorgabe beim Anlegen (eines Knotens)** |
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
