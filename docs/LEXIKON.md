@@ -8308,6 +8308,59 @@ Betriebssystems (`render.modellwurzel`). So findet ein Messprogramm am Heim-PC d
 findet, versucht sonst still den Hub — am Heim-PC ein Fehler statt einer Messung, anderswo ein ungewollter Download.
 *Im Projekt:* Der Tiefenschätzer lädt seit auf-20261021-301 nur aus einem vorhandenen Ordner und sagt sonst «nie aus dem
 Netz» (`tiefenschaetzer.lade_modell`).
+**Umriss halten (Messschalter `vis.umriss_halten`)** — Ausserhalb des modellierten Hauses gilt im fertigen Bild das
+Cycles-Bild der Grundlage (Himmel, Boden, Umgebung), innerhalb malt die KI. *Wozu:* Die KI baut fast immer neben das
+Haus weitere Gebäude (`ausserhalb_umriss_anteil` rund 2 bei Aussenbildern); ein Satz im Prompt hielt sie nicht davon ab.
+Zwei Arten: «nachher» mischt die beiden Bilder nach dem KI-Schritt, «im_lauf» hält den Hintergrund schon während des
+Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus, am Gerät noch ungemessen. *Im Projekt:*
+`aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messauftrag auf-20261021-303.
+
+**Freigabemaske** — Ein Schwarz-Weiss-Bild: weiss, wo die KI malen darf, schwarz, wo das Grundbild bleibt. Sie ist die
+Bauwerksmaske plus ein schmaler Rand (2 % der langen Bildseite), damit Dachkanten, die die KI ein paar Bildpunkte
+verschiebt, nicht abgeschnitten werden. *Im Projekt:* `umrisshalt.schreibe_freigabe_png`, je Kamera unter
+`_umriss_halten/<kamera>__freigabe.png`.
+
+**Fahrplan (der Rauschstufen)** — Die Folge von Stufen, über die ein Bildmodell aus reinem Rauschen ein Bild macht:
+Stufe 1 heisst «nur Rauschen», Stufe 0 «fertiges Bild», dazwischen ein Gemisch. Jeder Diffusionsschritt geht eine Stufe
+weiter. Die Zahl einer Stufe heisst in der Fachsprache *Sigma*. *Im Projekt:* Der eigene Start (Bildeingang) beginnt
+mitten im Fahrplan; das Umriss-Halten «im_lauf» setzt nach jedem Schritt den Hintergrund auf die passende Stufe.
+
+**Hintergrund im Fahrplan festhalten (blended latent diffusion)** — Nach jedem Schritt wird das halbfertige Bild
+ausserhalb der Freigabemaske durch das Grundbild ersetzt, und zwar so verrauscht, wie es auf dieser Stufe des Fahrplans
+sein müsste. Im letzten Schritt steht dort das Grundbild selbst. *Wozu:* Das Modell sieht in jedem Schritt, was neben dem
+Haus steht, und malt die Kante dazu passend — anders als beim nachträglichen Mischen, wo es davon nichts weiss.
+Gerechnet wird im latenten Raum (der komprimierten Form des Bildes). *Im Projekt:* `umrisshalt.halte_latenten`,
+angewandt im Rückruf je Schritt (`render._umriss_halten_rueckruf`).
+
+**Material vorne (Messschalter `vis.material_vorne`)** — Der Hauptstoff des Entwurfs (etwa «exposed concrete») kommt an
+den **Anfang** der Bildbeschreibung und wird dreimal genannt. *Wozu:* Mit «Sichtbeton» an zweiter Stelle malte die KI
+Sichtbeton nur teilweise, dazwischen Holz und Stein. Der Stoff kommt aus dem Material-Knoten, sonst aus dem Prompt; der
+Satz nennt kein Bauteil. *Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus.
+
+**Gewichtung im Prompt** — Bei manchen Bildmodellen lässt sich einem Wort mehr Gewicht geben, etwa mit
+`(concrete:1.4)`. Das geht nur, wenn das Programm diese Schreibweise kennt und das Modell die Wörter einzeln liest. *Im
+Projekt:* Z-Image liest den Prompt mit einem Sprachmodell, und die Pipeline kennt die Klammern nicht — sie stünden als
+Text da. Was wirkt, sind Stellung und Wiederholung (darum *Material vorne*).
+
+**Kantenbild (Canny, HED)** — Ein Steuerbild aus Linien statt aus Tiefe: Canny findet harte Helligkeitssprünge, HED
+weichere, eher gezeichnete Linien. Eine ControlNet-Union kann ein solches Bild statt der Tiefenkarte lesen. *Im
+Projekt:* geprüft, nicht gebaut — die Z-Image-Pipeline nimmt nur **ein** Steuerbild je Lauf; Kanten zusätzlich zur Tiefe
+bräuchten einen eigenen Nachbau der Mehrfach-Steuerung.
+
+**Mehrfach-Steuerung (MultiControlNet)** — Zwei oder mehr Steuerbilder zugleich (zum Beispiel Tiefe und Kanten): Jedes
+geht durch das ControlNet, und die Hinweise werden addiert. *Im Projekt:* für Z-Image in diffusers nicht vorhanden
+(gelesen 0.39.0 und 0.42.0.dev0); Option b im Planblatt «Material und Umriss».
+
+**Steuerstärke je Schritt (`control_guidance_start`/`_end`)** — Die Steuerung wirkt nur in einem Teil des Fahrplans,
+etwa in den ersten 60 % der Schritte. Früh entscheidet das Modell die Form, spät die Oberfläche; wer die Steuerung früher
+enden lässt, bekommt mehr Textur, aber einen lockereren Umriss. *Im Projekt:* an der Z-Image-Pipeline nicht vorhanden;
+nachbaubar über einen Haken am ControlNet, zurückgestellt (Planblatt, Option c).
+
+**Ohne Gradienten rechnen (`torch.no_grad`)** — Eine Anweisung an torch, sich für eine Rechnung **keinen Rechenweg**
+(Graphen) zu merken. Den bräuchte man nur zum Trainieren; beim Erzeugen eines Bildes hält er bloss Zwischenergebnisse im
+Grafikspeicher fest. *Im Projekt:* Die Pipeline von diffusers rechnet so; was ausserhalb davon gerechnet wird, muss es
+selbst sagen. Das Umriss-Halten «im_lauf» tut es; beim eigenen Start des Bildeingangs fehlt die Zeile — eine mögliche
+Ursache seiner +3,9 GB (zu prüfen in auf-20261021-303).
 
 
 ---
@@ -8318,6 +8371,7 @@ Netz» (`tiefenschaetzer.lade_modell`).
 |---|---|
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-301 (Protokoll 74 §172): **Modellwurzel**, **Modell-Hub (offline laden)** |
+| 2026-10-21 | Ergaenzt aus dem Strang Treue (Planblatt Material und Umriss): **Umriss halten (Messschalter)**, **Freigabemaske**, **Fahrplan (der Rauschstufen)**, **Hintergrund im Fahrplan festhalten**, **Material vorne (Messschalter)**, **Gewichtung im Prompt**, **Kantenbild (Canny, HED)**, **Mehrfach-Steuerung (MultiControlNet)**, **Steuerstärke je Schritt**, **Ohne Gradienten rechnen (`torch.no_grad`)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-299 und -300 (Protokoll 74 §171): **CUDA-Kontext**, **Eigenes Assistenzmodell**, **Auslöser (eines Satzes)**, **Augenurteil** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |
 | 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |

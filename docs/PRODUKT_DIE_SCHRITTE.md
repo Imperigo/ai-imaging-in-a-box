@@ -1862,6 +1862,19 @@ fand ein Messprogramm, von Hand gestartet, die Gewichte des Tiefenschätzers nic
 liegen. Jetzt liest jedes Programm den Ort aus derselben Einstellung wie der Dienst, und der Tiefenschätzer lädt nur noch
 aus dem eigenen Ordner, nie aus dem Netz. Ehrlich gesagt: Geprüft an Proben; ob die Einstellung am Heim-PC so gelesen wird
 und die neuen Zeilen dort stehen, zeigt ein kleiner Prüfauftrag.
+**Material und Umriss: zwei neue Schalter zum Messen (21.10.2026).** Zwei Dinge trifft die KI nicht, die der Architekt
+bestellt. Sie malt Sichtbeton nur teilweise, mit Streifen aus Holz und Stein dazwischen. Und sie baut fast immer neben das
+Haus weitere Gebäude; nur beim Gipsmodell bleibt sie im Umriss. Ein Satz wie «leerer Hintergrund» half kaum, eine
+stärkere Bindung an die Tiefe auch nicht, und ein Gegen-Prompt wirkt bei diesem Modell gar nicht. Ein Planblatt prüft
+fünf Wege mit Lizenz, Speicherbedarf, Aufwand und Risiko (`docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`). Gebaut sind die
+zwei aussichtsreichsten, beide vorerst aus. *Umriss halten:* Ausserhalb des modellierten Hauses gilt das gerenderte Bild
+mit Himmel und Boden, innen malt die KI. Das geht auf zwei Arten: nachträglich gemischt, oder schon während des Malens,
+indem der Hintergrund nach jedem Rechenschritt auf das gerenderte Bild zurückgesetzt wird; dann malt die KI die Kante zum
+Hintergrund selbst. *Material vorne:* Der Stoff, etwa Sichtbeton, steht am Anfang der Bildbeschreibung und dreimal,
+statt an zweiter Stelle; eine Gewichtung in Klammern kennt dieses Modell nicht. Ohne Messung wird nichts davon Vorgabe.
+Die Messung am Heim-PC rechnet jeden Weg gegen dasselbe Kontrollbild, dazu den Material-Knoten mit Sichtbeton-Textur, der
+das gerenderte Bild als Ausgangspunkt mitgibt. Zurück kommen die Zahlen und ein Urteil von Auge: «Sichtbeton?». Nur
+frei lizenzierte Gewichte, die schon auf dem Rechner liegen.
 
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
