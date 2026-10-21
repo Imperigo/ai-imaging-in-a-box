@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt durch auf-20260930-179: Der rote Befund aus 177 (No module named 'core') ist in KosmoPrepare behoben und am Geraet nachgemessen — gruen ohne Behelf, dieselben Zahlen. Die Antwort auf 177 bleibt unveraendert stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20260930-179", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260929-177",
  "status": "fehler",

@@ -8100,7 +8100,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Heim-PC nimmt die Variante ohne Modell an (§150, C76)
   - [ ] Am Mac prüfen: Fokus, Zoomen, Variante gegen den umgebauten Heim-PC (owner)
   - [ ] Owner-Entscheid: Felder im Knoten eckiger (dritte Rundung) — oder so lassen
-  - [x] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch) *(21.10.2026: Blatt 36 gezeichnet, nach Empfehlung A–C gebaut — ein Daumen mit Blättern, gross, wählen; KO-Zweig `claude/kosmovis-varianten-daumen`, Kopie nachgezogen; am Mac unbestätigt; §188, C113)*
+  - [x] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch) *(21.10.2026: Blatt 36 gezeichnet, nach Empfehlung A–C gebaut — ein Daumen mit Blättern, gross, wählen; KO-Zweig `claude/kosmovis-varianten-daumen`, Kopie nachgezogen; am Mac unbestätigt; §189, C114)*
     - [ ] Wohin geht eine gewählte Variante (Blatt, Bildvergleich)? Eigener Entscheid (owner)
     - [ ] «Alle freigeben» ragt neben «N Bilder bestellen» über den Kartenrand (ui, schon vorher so)
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
@@ -8281,6 +8281,10 @@ Bekannt und ausdrücklich nicht erledigt:
   R44: 0 Abweichungen, 45 Dateien auf eigenen Zweigen, kein Nachzug nötig — gebaut (§163, C92)
 - [x] Nachzug R45 (`1ba59a62c`): Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich, Inspektor, Bildkachel und
   Blatt-Knoten in der Kopie; Hilfszweig, kopf und ki gemergt; Abgleich 0 Abweichungen — gebaut (§165, C94)
+- [x] Insel-Oberfläche ohne Stil (Befund Owner 0.3.15–0.3.17): Ursache verlorene CSS-Klammer (`166fbbe98`), behoben
+  `bc0a43042`; Stilprobe am Bau (CSS geschlossen, Chrome misst Inseln, Kugel, Claude-Karte, Gesprächsfeld), Pflicht im CI
+  — gebaut (§188, C113)
+- [ ] `bc0a43042` mit knoten-neu, nebeneinander, vertrag-werkzeuge zusammen einspielen (integrator)
 - [ ] Bau am Mac bestätigen, mit Abgleich-Vermerk im Stempel (owner)
 - [ ] Einspielen der eigenen Zweige bei Int 1 (kopf, modell-knoten, ki, fehler); der Abgleich zählt sie dann als «gleich»
   (integrator)
