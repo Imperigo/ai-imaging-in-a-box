@@ -8076,7 +8076,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
   - [x] Bild aufs Blatt im Original, «Aufs Blatt»/«Exportieren» je Lauf in der grossen Ansicht, Druckprüfung, leere Läufe nicht wählbar (L4-16, L3-A4, L3-A5) — Blatt «Bild aufs Blatt», KO-Zweig `claude/kosmovis-bild-aufs-blatt`, Kopie nachgezogen, Mac Sichern-Dialog; am Gerät unbestätigt (§201, C121)
     - [ ] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare)
-    - [ ] Hauptbild ohne Grundbild gross öffnen (owner)
+    - [x] Hauptbild ohne Grundbild gross öffnen — auch das allererste Bild, mit «Exportieren»/«Aufs Blatt» (Entscheid heute, erstes Bild gross; §205, C123); am Gerät unbestätigt
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
     - [x] Heim-PC gebaut: `vis.guete` 'vorschau' rechnet z-image-turbo, 8 Schritte, einen Startwert, KI-Bild ≤ 1024 px, geprüft mit Vermerk «Vorschau»; Ergebnis `guete`; beide Ablagen (Entscheide 104–104b, §148, C74)
@@ -8416,3 +8416,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Geometrie-Treue als Pflicht-Eingang des Bildmodells (zweiter Teil L4-2) — noch ohne Strang
 - [x] Fehler R48: «Variante erzeugen» ohne Modell über die Brücke rechnet (C122, §204) — gebaut, am Gerät unbestätigt
 - [ ] auf-20261021-315 (local): Kette Grundlage → Variante Vorschau in der Test-App nachfahren
+- [x] Erstes Bild gross (Entscheid heute, erstes Bild gross) und Grundlage bleibt nach dem Sichern eines Bilds aktuell (C123, §205) — gebaut, am Gerät unbestätigt; Ziel v0.1.10
+- [ ] Drei e2e-Specs drüben erwarten im Kuratieren 2 statt 4 Karten (seit L4-15 C) — Bitte an Int 1 im Meldeblatt (integrator)

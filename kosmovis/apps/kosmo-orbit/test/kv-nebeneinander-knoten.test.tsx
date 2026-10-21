@@ -30,7 +30,11 @@ import { useProject } from '../src/state/project-store';
  *  - Entscheid 119: am 196 px breiten Render-Knoten stehen KI-Bild und Grundbild schon nebeneinander (je 96 px),
  *    beide beschriftet; bei 184 px (alle anderen Knoten) fiele es auf das KI-Bild zurueck. Ein Klick zeigt beide
  *    gross, dort der Umschalter (`KTabs`), Vorgabe nebeneinander;
- *  - ohne Grundbild (aelterer Lauf) bleibt das Bild wie bisher — allein, ohne Luecke, ohne Klickflaeche.
+ *  - ohne Grundbild (aelterer Lauf oder das allererste Bild, noch ohne Verlauf) steht das Bild allein, ohne Luecke.
+ *    Die fruehere Erwartung «ohne Klickflaeche» ist gefallen (Owner-Entscheid 21.10.2026, A: «auch das allererste
+ *    Bild oeffnet per Klick die grosse Ansicht»): sonst kam ausgerechnet an das erste Bild eines Knotens niemand
+ *    heran, um es zu exportieren oder aufs Blatt zu legen. Seither oeffnet ein Klick den Lauf gross, mit
+ *    «Exportieren» und «Aufs Blatt» in der Fusszeile wie bei jedem anderen Lauf.
  */
 class StubResizeObserver {
   observe(): void {}
@@ -198,6 +202,44 @@ describe('kv-nebeneinander — am Knoten und gross', () => {
     expect(haupt.querySelectorAll('[data-testid="render-bild"], [data-testid="render-bild-laedt"]').length).toBe(1);
     expect(q('render-bild-beschriftung')).toBeNull();
     expect(q('render-grundbild')).toBeNull();
+  });
+
+  it('das allererste Bild (ohne Grundbild, ohne Verlauf) oeffnet per Klick gross — mit «Exportieren» und «Aufs Blatt» (Owner 21.10.2026, A)', () => {
+    const { graphId, nodeId } = graphMitRender();
+    // Der erste Lauf des Knotens: fertig, kein Grundbild, die Reihe des Verlaufs leer.
+    fertig(graphId, nodeId);
+    expect(useVisRuntime.getState().verlauf[nodeId]).toBeUndefined();
+    mount(graphId);
+    expect(q('render-verlauf'), 'noch kein Verlauf am Knoten').toBeNull();
+    const haupt = q('render-hauptbild') as HTMLElement;
+    expect(haupt.getAttribute('tabindex')).toBe('0');
+    act(() => haupt.click());
+    const gross = qd('render-verlauf-gross')!;
+    expect(gross, 'die grosse Ansicht des Laufs').not.toBeNull();
+    expect(gross.getAttribute('data-job')).toBe('vis-1-abcdef');
+    expect(qd('render-bildpaar-gross'), 'kein Bildpaar ohne Grundbild').toBeNull();
+    // Kein «1 von 1 im Verlauf»: der Knoten zeigt noch keinen Verlauf; die Pfeile sind aus.
+    expect(qd('render-verlauf-gross-stelle')).toBeNull();
+    expect((qd('render-verlauf-zurueck') as HTMLButtonElement).disabled).toBe(true);
+    expect((qd('render-verlauf-vor') as HTMLButtonElement).disabled).toBe(true);
+    // Die Fusszeile wie bei jedem anderen Lauf: beide Knoepfe da und frei.
+    const fuss = qd('render-verlauf-gross-ablage')!;
+    expect(fuss).not.toBeNull();
+    const blatt = qd('render-verlauf-gross-aufs-blatt') as HTMLButtonElement;
+    const exp = qd('render-verlauf-gross-exportieren') as HTMLButtonElement;
+    expect(blatt.textContent).toBe('Aufs Blatt');
+    expect(exp.textContent).toBe('Exportieren');
+    expect(blatt.disabled).toBe(false);
+    expect(exp.disabled).toBe(false);
+    // Auch mit der Tastatur: Enter oeffnet; Escape schliesst.
+    act(() => {
+      gross.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(qd('render-verlauf-gross')).toBeNull();
+    act(() => {
+      haupt.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    expect(qd('render-verlauf-gross')).not.toBeNull();
   });
 
   it('mit Grundbild: am Knoten beide nebeneinander (Entscheid 119), Klick zeigt beide gross — Vorgabe nebeneinander', () => {

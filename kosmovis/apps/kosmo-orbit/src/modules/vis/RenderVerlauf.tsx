@@ -19,6 +19,7 @@ import {
   URTEIL_LABEL,
   zeitpunktText,
   type LaufUrteil,
+  verlaufSichtbar,
   type VerlaufEintrag,
 } from './render-verlauf';
 import {
@@ -467,7 +468,9 @@ function VerlaufGross({
             {art ? EINZELBILD_TEXT[art].titel : `LAUF ${nummer}`}
           </span>
           {!art && <span className="vis-verlauf-gross-zeit">{zeitpunktText(laufZeit(e))}</span>}
-          {!art && (
+          {/* Owner-Entscheid 21.10.2026 (A, erstes Bild gross): ein Lauf ohne sichtbaren Verlauf (das allererste Bild)
+              oeffnet hier auch — «1 von 1 im Verlauf» naennte dann einen Verlauf, den der Knoten nicht zeigt. */}
+          {!art && verlaufSichtbar(reihe) && (
             <span className="vis-verlauf-gross-stelle" data-testid="render-verlauf-gross-stelle">
               {index + 1} von {n} im Verlauf
             </span>
