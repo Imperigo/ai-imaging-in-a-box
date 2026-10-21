@@ -8428,7 +8428,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] auf-20261021-317 (local): Gegenprobe modus, Bildeingang wirklich angekommen, Deckungsschwelle aus Augenurteil
 - [ ] Owner (über den Hauptstrang): womit sieht eine Variante das Grundlagenbild — Empfehlung M2 als Vorgabe für die Demo, Bildeingang Messweg, Modell mit Bildeingang nach der Demo messen
 - [ ] 20-%-Regel «Das Haus fuellt nur …» liest weiter den Anteil mit Platte — Frage an den Hauptstrang (Empfehlung: nach 317 auf das Haus allein umstellen)
-- [x] 316 ausgewertet (Strang steine, §209, C126): Material-ID je Material statt je Objekt (Namen ohne Verkettung, Kennfarben eindeutig), Boden aus der Bauwerksmaske über Form (auch ohne Namenstreffer, mit eigenen Materialen) und Rolle `extras.role: "ground"`, Formregel linear — gebaut, am Gerät unbestätigt
+- [x] 316 ausgewertet (Strang steine, §210, C126): Material-ID je Material statt je Objekt (Namen ohne Verkettung, Kennfarben eindeutig), Boden aus der Bauwerksmaske über Form (auch ohne Namenstreffer, mit eigenen Materialen) und Rolle `extras.role: "ground"`, Formregel linear — gebaut, am Gerät unbestätigt
 - [ ] auf-20261021-318 (local): Gegenprobe steine an der Steine-Probe, mit und ohne Rolle; Tabelle Instanzen ausgerollt/zusammengefügt/Instanz
 - [ ] Instanzen je Knoten zusammenfügen — nur wenn 318 (3) nach dem Fix mehr als ein Drittel je Kamera spart
 - [ ] Rahmung (glbbox und Blender-Bauwerksbox) liest `extras.role` — nach 318, klein

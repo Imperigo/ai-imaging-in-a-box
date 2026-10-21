@@ -8786,7 +8786,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §209): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
+| 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §210): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
 | 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §208): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |
 | 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |

@@ -203,3 +203,16 @@ def test_glb_mit_rolle_aendert_nur_den_knoten(tmp_path):
     assert kosmo_szene.gelaende_in_glb(tmp_path / "z.glb")["knoten"] == ["boden"]
     with pytest.raises(ValueError):
         kosmo_szene.glb_mit_rolle(quelle, tmp_path / "x.glb", "gibt_es_nicht")
+
+
+def test_werkzeug_glb_rolle_drueckt_seine_schalter(tmp_path):
+    import importlib.util
+    pfad = Path(__file__).resolve().parents[1] / "tools" / "glb_rolle.py"
+    spec = importlib.util.spec_from_file_location("werkzeug_glb_rolle", pfad)
+    modul = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modul)
+    quelle = _steine_glb(tmp_path / "q.glb", rolle=False)
+    assert modul.main([str(quelle), str(tmp_path / "z.glb"), "--knoten", "boden",
+                       "--rolle", "terrain"]) == 0
+    assert kosmo_szene.gelaende_in_glb(tmp_path / "z.glb")["knoten"] == ["boden"]
+    assert modul.main([str(quelle), str(quelle), "--knoten", "boden"]) == 2
