@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-240",
  "worker": "local",
- "status": "erledigt — A bis E gelaufen; C und D rc 0, je 960/960 und 1 Modell; D (mit Schleifenschluss) biegt im Grundriss deutlich weniger. Kein Code geaendert, nichts committet, nur das Vokabular geladen.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A bis E gelaufen; C und D rc 0, je 960/960 und 1 Modell; D (mit Schleifenschluss) biegt im Grundriss deutlich weniger. Kein Code geaendert, nichts committet, nur das Vokabular geladen.",
  "staende": {
   "kosmoprepare": "4267a8e (HEAD nach git pull --ff-only auf main, enthaelt 4267a8e); git status vorher = nachher (nur der alte target/)",
   "python": ".venv-server/bin/python; Werkzeugserver mit /usr/bin/python3 (wechselt selbst nach .venv-server)",

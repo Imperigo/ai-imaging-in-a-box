@@ -5,7 +5,8 @@
  "rang": 44,
  "folgt_auf": "auf-20261007-256",
  "owner_entscheid": "E169",
- "status": "erledigt. Drei brush-Laeufe (0.3.0) auf dem brush_eingang/ aus 256 (nur gelesen), je rc 0, mask_path Some in allen Ladezeilen, None 0. L1 (1e-9) stellt 256 nach. L2 (1e-7) und L3 (1e-6) nehmen nicht den Schleier gezielt, sondern die ganze Szene: L2 behaelt 7 % der Splats ueber 0.2, L3 0.02 % (Szene praktisch leer). Kein Code geaendert, nichts installiert, nichts committet, COLMAP nicht gefahren.",
+ "status": "ok",
+ "zusammenfassung": "erledigt. Drei brush-Laeufe (0.3.0) auf dem brush_eingang/ aus 256 (nur gelesen), je rc 0, mask_path Some in allen Ladezeilen, None 0. L1 (1e-9) stellt 256 nach. L2 (1e-7) und L3 (1e-6) nehmen nicht den Schleier gezielt, sondern die ganze Szene: L2 behaelt 7 % der Splats ueber 0.2, L3 0.02 % (Szene praktisch leer). Kein Code geaendert, nichts installiert, nichts committet, COLMAP nicht gefahren.",
  "aufbau": {
   "eingang": "<auf256>/D/brush_eingang (nur gelesen; 960 Bilder + 960 Masken, sparse/0)",
   "befehl": "RUST_LOG=info brush_app <brush_eingang> --total-steps 7000 --export-every 7000 --export-path <auf257>/Ln/aus --export-name splat.ply --max-resolution 1086 --opac-loss-weight W",

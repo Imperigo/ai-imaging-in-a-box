@@ -5,7 +5,8 @@
  "rang": 42,
  "folgt_auf": "auf-20261007-254",
  "owner_entscheid": "E169",
- "status": "erledigt (A, B samt Schwarz-Versuch). A: die neue Zonenregel verwirft jetzt die Zone in right (gewollt) UND in front (nicht gewollt) — alle 10 Hand-Bilder in front sind wieder offen; left bekommt eine Zone, die aber neben den Haenden liegt. B: brush 0.3.0 liest die Masken in unserer Ablage NICHT (mask_path: None fuer jedes geladene Bild). Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (A, B samt Schwarz-Versuch). A: die neue Zonenregel verwirft jetzt die Zone in right (gewollt) UND in front (nicht gewollt) — alle 10 Hand-Bilder in front sind wieder offen; left bekommt eine Zone, die aber neben den Haenden liegt. B: brush 0.3.0 liest die Masken in unserer Ablage NICHT (mask_path: None fuer jedes geladene Bild). Kein Code geaendert, nichts installiert, nichts committet.",
  "stand": {
   "kosmoprepare": "1ccc00c (git pull --ff-only: 29d96b8 -> 1ccc00c); 1ccc00c ist HEAD",
   "git_status": "vorher = nachher (nur das alte target/)",

@@ -7,7 +7,8 @@
  "entscheide": [
   "93"
  ],
- "status": "erledigt — Ablage = die Bruecken-Ablage auf der Datenplatte (render-jobs), die der Abholer als --store liest. visbox-flaeche per oertlichem Drop-in umgestellt und neu gestartet. Probe von Anfang bis Ende mit synthetischer Quader-Mappe: Knotenansicht -> Ausfuehren -> awaiting_approval in der Ablage (40 s ohne Freigabe unberuehrt) -> Freigeben -> queued -> running -> done in 245 s; 2 von 3 Bildern geliefert und am Render-Knoten sichtbar. Lieferstatus «fehlgeschlagen» kommt aus der Pruefung (Kamera s Rahmung 62.9 % < 65 %, zwei Tore: geom_iou 0.836 < 0.85), nicht aus dem Weg.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Ablage = die Bruecken-Ablage auf der Datenplatte (render-jobs), die der Abholer als --store liest. visbox-flaeche per oertlichem Drop-in umgestellt und neu gestartet. Probe von Anfang bis Ende mit synthetischer Quader-Mappe: Knotenansicht -> Ausfuehren -> awaiting_approval in der Ablage (40 s ohne Freigabe unberuehrt) -> Freigeben -> queued -> running -> done in 245 s; 2 von 3 Bildern geliefert und am Render-Knoten sichtbar. Lieferstatus «fehlgeschlagen» kommt aus der Pruefung (Kamera s Rahmung 62.9 % < 65 %, zwei Tore: geom_iou 0.836 < 0.85), nicht aus dem Weg.",
  "beendet": "2026-10-14T17:50:00Z",
  "koepfe": {
   "ai_imaging": "main ef9a612 nach git pull --ff-only (Visbox 0.2.9, Strg+Z in der Knotenansicht). Kein Code geaendert, betrieb/visbox-flaeche.service nicht geaendert.",

@@ -3,7 +3,8 @@
  "auftrag_id": "auf-20261008-265",
  "worker": "local",
  "rang": 52,
- "status": "erledigt: A, B, C, D gerechnet. Kein Code geaendert, nichts installiert, installierte App, Dienst-Port und Haupt-Bildschirm nicht beruehrt, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt: A, B, C, D gerechnet. Kein Code geaendert, nichts installiert, installierte App, Dienst-Port und Haupt-Bildschirm nicht beruehrt, nichts committet.",
  "A_staende": {
   "ai_imaging": "524c2d9 («Bauwerksmaske nach F6 wieder an»), git pull --ff-only: «Bereits aktuell»",
   "kosmoorbit": "4b868e845 (Integrator-Zweig nach fetch, Zweigspitze unveraendert)",

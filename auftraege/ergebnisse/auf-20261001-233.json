@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-233",
  "worker": "local",
- "status": "erledigt — B1' (Vorstufe), B7, B3 gefahren wie in 232 (B7-Huelle wieder aus kosmoprepare_info → kosmoprepare_standort), dieselben drei Unterlagen (Pruefsummen gleich wie 225/228/232), ueber den Werkzeugserver (.venv-server); Pruefsummen vorher = nachher; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — B1' (Vorstufe), B7, B3 gefahren wie in 232 (B7-Huelle wieder aus kosmoprepare_info → kosmoprepare_standort), dieselben drei Unterlagen (Pruefsummen gleich wie 225/228/232), ueber den Werkzeugserver (.venv-server); Pruefsummen vorher = nachher; kein Code geaendert",
  "staende": {
   "kosmoprepare": "da6a447 nach git pull --ff-only auf main; c98df7a ist Vorfahre (geprueft mit merge-base --is-ancestor); einziger unversionierter Eintrag der alte target/, vorher = nachher",
   "python": "Werkzeuge ueber stdio, Server mit /usr/bin/python3 (wechselt selbst nach .venv-server), Aufrufer = .venv-server/bin/python (Skript direkt2.py aus 232, gleich wie werkzeug/prepare_direkt.py plus structuredContent)"

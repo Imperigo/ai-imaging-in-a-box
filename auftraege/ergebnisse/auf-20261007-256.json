@@ -5,7 +5,8 @@
  "rang": 43,
  "folgt_auf": "auf-20261007-255",
  "owner_entscheid": "E169",
- "status": "erledigt (A, B). Kette lief durch: 960/960, 1 Modell, Maske fuer COLMAP (960x «Mask: Yes») und brush_eingang/ mit 960 Masken. Die Kette selbst zeigt keine mask_path-Zeile (brush laeuft dort ohne RUST_LOG=info, bericht.json maske.brush = «ungemessen»); eine Gegenprobe mit RUST_LOG=info auf demselben brush_eingang/ ergibt 313 von 313 «mask_path: Some», 0 «None». Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (A, B). Kette lief durch: 960/960, 1 Modell, Maske fuer COLMAP (960x «Mask: Yes») und brush_eingang/ mit 960 Masken. Die Kette selbst zeigt keine mask_path-Zeile (brush laeuft dort ohne RUST_LOG=info, bericht.json maske.brush = «ungemessen»); eine Gegenprobe mit RUST_LOG=info auf demselben brush_eingang/ ergibt 313 von 313 «mask_path: Some», 0 «None». Kein Code geaendert, nichts installiert, nichts committet.",
  "stand": {
   "kosmoprepare": "b137709 (git pull --ff-only: 1ccc00c -> b137709); b137709 ist HEAD",
   "git_status": "vorher = nachher (nur das alte target/)",

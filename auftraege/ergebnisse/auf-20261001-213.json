@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-213",
  "worker": "local",
- "status": "erledigt",
+ "status": "ok",
+ "zusammenfassung": "erledigt",
  "git_log_1": "e317cf1 Nach dem Zusammenführen mit ihrem auf-212: Ränge lückenlos",
  "A1_leitung": {
   "tailscaled": "laeuft (nativer Dienst), Zustand Running",

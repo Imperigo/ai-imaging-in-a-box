@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-223",
  "worker": "local",
- "status": "erledigt — A DONE: fest gehalten wie verlangt (fx/fy 336.1 unveraendert, Rig-Streuung 0), schrittweiser mapper lieferte (kein Rueckfall), aber 3 Modelle (176/28/28) und Verortung 11.61 m; A5: Merkmale je Bild Mittel 338, Minimum 15 (Rueckansicht Mittel 112). B: Satz unterscheidet jetzt «geprueft, nichts verdeckt» / «NICHT geprueft (ausgeschaltet)». C nicht da. Kein Code geaendert.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A DONE: fest gehalten wie verlangt (fx/fy 336.1 unveraendert, Rig-Streuung 0), schrittweiser mapper lieferte (kein Rueckfall), aber 3 Modelle (176/28/28) und Verortung 11.61 m; A5: Merkmale je Bild Mittel 338, Minimum 15 (Rueckansicht Mittel 112). B: Satz unterscheidet jetzt «geprueft, nichts verdeckt» / «NICHT geprueft (ausgeschaltet)». C nicht da. Kein Code geaendert.",
  "staende": {
   "kosmoprepare": "f9cf677 (git pull --ff-only von 28ac92a; b102b0d und 3f2adc4 sind Vorfahren)",
   "colmap": "COLMAP 4.2.1 «(Commit Unknown on Unknown with CUDA, std hash maps)»",

@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261007-251",
  "worker": "local",
- "status": "erledigt (A, B); C vom Owner, folgt. Nur angesehen; nichts installiert, kein Modell, Kette nicht gefahren, Klon nicht beruehrt, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (A, B); C vom Owner, folgt. Nur angesehen; nichts installiert, kein Modell, Kette nicht gefahren, Klon nicht beruehrt, nichts committet.",
  "A_kaesten": {
   "quelle": "Arbeitsordner C aus 249 (images/<ansicht>/, je 240 Bilder, 1086 x 1086), nur gelesen",
   "auswahl": "Bild 1, dann jedes 12. (1, 13, 25, ..., 229) = 20 je Ansicht",
