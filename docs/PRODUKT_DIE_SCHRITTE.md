@@ -1217,6 +1217,29 @@ Ein iPad, das still weiter direkt spricht, legt Skizzen an einen Ort, an dem der
 klarer Satz statt eines stillen Fehlers. Und die Mappe liegt am Mac; dass sie ohne Heim-PC nicht ans iPad käme, hätte das
 iPad vom Rechner abhängig gemacht, obwohl es zum Zeichnen keinen braucht.
 
+### 21.10.2026 · Vorschläge überstehen den Wechsel der Ansicht
+
+**Anlass:** Beim ersten Durchlauf mit Claude am Mac schlug Claude vor, die Stimmung von «morgen» auf «abend» zu stellen.
+Der Architekt wechselte kurz zur Visbox-Seite und zurück — der Vorschlag war weg, nichts geändert, und niemand hatte es
+gesagt. Der Vorschlag hatte nur in der Knotenansicht gelebt, und die wird beim Wechsel jedes Mal neu geladen.
+
+**Was gebaut ist:** Die Mac-App hebt die offenen Vorschläge selbst auf, zusammen mit der Mappe, zu der sie gehören.
+Kommt die Knotenansicht zurück, bekommt sie die Vorschläge ihrer Mappe wieder und rechnet jeden noch einmal zur Probe
+durch. Weg ist ein Vorschlag nur, wenn der Architekt ihn ablehnt oder wenn er vier Stunden ohne Entscheid liegt; in beiden
+Fällen hört Claude einen Satz mit dem Grund. Passt ein Vorschlag nicht mehr — eine andere Mappe ist offen, oder der
+Knoten, den er ändern wollte, ist inzwischen gelöscht —, bleibt er sichtbar, und «Anwenden» sagt, warum nichts geschieht.
+
+**Was der Architekt sieht:** nichts Neues — der Vorschlag steht nach dem Zurückkehren einfach noch da. Neu sind nur die
+Sätze in der Leiste, wenn ein Vorschlag nicht mehr passt oder abgelaufen ist.
+
+**Begründung des Wegs:** Ein Vorschlag gilt für eine Mappe und ihren Knotengraph, nicht für ein Fenster. Darum liegt er
+dort, wo die Arbeit über den Wechsel hinweg bleibt: in der App. Beim Zurückgeben wird er neu geprüft statt blind
+eingesetzt, weil sich der Graph in der Zwischenzeit geändert haben kann; und er wird dabei nie von selbst angewendet,
+auch wenn Claude frei arbeiten darf. Still verschwinden darf nichts: Wer einen Vorschlag gestellt hat, soll erfahren, was
+aus ihm wurde.
+
+**Offen:** die Probe am Mac (vorschlagen, Seite wechseln, zurück, anwenden).
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |
