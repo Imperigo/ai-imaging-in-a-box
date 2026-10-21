@@ -1,0 +1,1074 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-306",
+ "worker": "local",
+ "rang": 93,
+ "folgt_auf": "auf-20261021-305",
+ "entscheide": [
+  "107",
+  "109",
+  "110",
+  "111",
+  "113",
+  "117a"
+ ],
+ "einbau": "Belegt: der Heim-PC rechnet, was die neuen Knoten bestellen — acht Stimmungen mit Himmelsbild und eigener Grundlage, Drehung bestellt, Kamera Auto (Posen gleich der Live-Vorschau, <= 0,5 mm) und Manuell (senkrecht), fuenf Material-Arten mit Toenung, Abweisung unbekannter Kennung mit Satz, W-4-Grundbild auch auf wiederverwendeter Grundlage. C104/C105 am Heim-PC bestaetigt mit B1-B4; am Mac bleibt die Geraeteprobe beim Owner.",
+ "status": "erledigt, 19 Laeufe ueber die Bruecke (8 Grundlagen Stimmung, 2 Varianten, abend nochmals, W-4 ohne Stufe, abend gedreht, 3a/3b/3c, 4a/4b/4c), dazu eine 409-Probe ohne Lauf. Alle Stimmungen, Kamera Auto und Manuell, Materialien und Abweisung rechnen wie bestellt; Posen von /knoten/standpunkte gleich dem Ergebnis (groesste Abweichung 0,5 mm). W-4: render.passes [schoenbild] liefert sSE__schoenbild.png unter ebenen auch auf der wiederverwendeten Grundlage (Variante) und auf dem Weg ohne Stufe. NICHT wie erwartet: «abend nochmals als Grundlage» gibt wiederverwendet false und eine neue Kennung (B1). Vorschaubilder 8 + 11 mit quellen.json abgelegt. Code nicht geaendert.",
+ "beendet": "2026-10-21T10:20:00Z",
+ "koepfe": {
+  "stand": "main 96536c6 (Visbox 0.3.16, Tag v0.3.16), Dienst visbox-flaeche neu gestartet, Abholer per Timer 30 s. Kein Code, keine Vorgabe, keine dauerhafte Umgebungsvariable geaendert; Start-Mappe nicht angefasst, kein «Datei laden» (zuletzt geoeffnete Mappe unveraendert); fremder wartender Auftrag nicht angefasst.",
+  "weg": "Bruecke als Client wie 297-303 (POST /bruecke/jobs als Formular scene+model, Variante ohne model, /approve mit approval_token, GET /bruecke/jobs/<id> und nvidia-smi im Takt 0,25 s, Bilder ueber /bruecke/jobs/<id>/artifacts/<name>).",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb), gegliederter Testbau wie 292-303 (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m), ERGAENZT um drei Fensterbaender (IfcWindow, 9x2 m), Vorplatz (IfcSlab, 19x3,5 m) und Bruestung (IfcRailing) auf dem Anbau, damit 4b alle fuenf Arten trifft. Dieselbe glb fuer alle Laeufe.",
+  "szene": "kosmovis.render-scene/v1 wie die Knotenansicht (vis-jobs.ts): cameras auto + cameras_auto, render {resolution [960,600], samples 32[, passes, environment, materialien]}, style {mode none, prompt = Satz der Stimmung (VIS_STIMMUNGEN) bzw. «ein Haus, Abendstimmung» bei 3/4}, vis {skip, backbone z-image-turbo, upscale false}; Varianten mit vis.grundlage, seed 1, guete vorschau und render.passes [schoenbild] (grundbildMit: auch «Variante erzeugen» bestellt das Grundbild mit).",
+  "standpunkte_mappe": "GET /knoten/standpunkte mit ?ordner= auf eine eigene Probemappe (nur diese glb) — kein «Datei laden», darum blieb die zuletzt geoeffnete Mappe die Start-Mappe.",
+  "gpu_vor_jedem_lauf": "1241 MiB, 13,8-38,3 W, 0 %; ollama ps vor jedem Lauf leer. Leistungsgrenze 400 W gesetzt und unveraendert. Laeufe strikt nacheinander, Freigabe erst nach nvidia-smi unter 120 W und > 8 GB frei.",
+  "systemlast": "Last (1 min) vor den Laeufen 1,1-6,7 (Spitze beim Bau der Bilder nebenher).",
+  "kosmo_modelle": "nicht beruehrt; qwen3:14b nicht gebraucht, nicht geladen.",
+  "neue_ki_laeufe": "3 statt 2 — die dritte ist der W-4-Weg ohne Stufe (Ansage W-4)."
+ },
+ "1_stimmung": {
+  "grundlagen": {
+   "morgen": {
+    "job": "vis-1792576519-9e77f7",
+    "status": "done",
+    "dauer_s_ab_freigabe": 11.0,
+    "blender_s": 5.1,
+    "grundlage": {
+     "id": "gl-b746be4ee3511d75",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "morgen",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 99.842
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": 62.8,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 14.7 W, 0 %",
+    "vram_spitze": "1324 MiB / 64 W",
+    "bild": "auf-20261021-306-bilder/1-morgen-sSE.png"
+   },
+   "mittag": {
+    "job": "vis-1792576543-18bbf1",
+    "status": "done",
+    "dauer_s_ab_freigabe": 23.9,
+    "blender_s": 5.1,
+    "grundlage": {
+     "id": "gl-580ed937d1aa304d",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "mittag",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 84.824
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": 71.1,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 13.8 W, 0 %",
+    "vram_spitze": "1324 MiB / 65 W",
+    "bild": "auf-20261021-306-bilder/1-mittag-sSE.png"
+   },
+   "abend": {
+    "job": "vis-1792576567-4dea9d",
+    "status": "done",
+    "dauer_s_ab_freigabe": 36.4,
+    "blender_s": 5.0,
+    "grundlage": {
+     "id": "gl-bc09df3d0d5322a6",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "abend",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 285.008
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": 41.1,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, unter 120 W (Zeile beim Wiederherstellen verloren, siehe befunde B6)",
+    "vram_spitze": "1324 MiB / 65 W",
+    "bild": "auf-20261021-306-bilder/1-abend-sSE.png"
+   },
+   "blaue-stunde": {
+    "job": "vis-1792576603-911fac",
+    "status": "done",
+    "dauer_s_ab_freigabe": 37.2,
+    "blender_s": 5.0,
+    "grundlage": {
+     "id": "gl-4ff5ca80e333f51e",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "blaue-stunde",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 89.255
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": 82.5,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 26.8 W, 0 %",
+    "vram_spitze": "1328 MiB / 64 W",
+    "bild": "auf-20261021-306-bilder/1-blaue-stunde-sSE.png"
+   },
+   "bedeckt": {
+    "job": "vis-1792576641-faa447",
+    "status": "done",
+    "dauer_s_ab_freigabe": 36.7,
+    "blender_s": 5.0,
+    "grundlage": {
+     "id": "gl-4ac93a6fe3aa3aca",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "bedeckt",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 111.316
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": -32.3,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 19.1 W, 0 %",
+    "vram_spitze": "1324 MiB / 64 W",
+    "bild": "auf-20261021-306-bilder/1-bedeckt-sSE.png"
+   },
+   "nebel": {
+    "job": "vis-1792576677-c1f64b",
+    "status": "done",
+    "dauer_s_ab_freigabe": 36.9,
+    "blender_s": 5.0,
+    "grundlage": {
+     "id": "gl-6b6217b83ef2427f",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "nebel",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 95.222
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": -24.9,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 23.6 W, 0 %",
+    "vram_spitze": "1328 MiB / 65 W",
+    "bild": "auf-20261021-306-bilder/1-nebel-sSE.png"
+   },
+   "winter": {
+    "job": "vis-1792576714-fcf5b7",
+    "status": "done",
+    "dauer_s_ab_freigabe": 36.9,
+    "blender_s": 5.1,
+    "grundlage": {
+     "id": "gl-f3236624a334b2fb",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "winter",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 95.024
+     },
+     "gipsmodell": false,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": -33.0,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 23.4 W, 0 %",
+    "vram_spitze": "1328 MiB / 64 W",
+    "bild": "auf-20261021-306-bilder/1-winter-sSE.png"
+   },
+   "weiss": {
+    "job": "vis-1792576752-675352",
+    "status": "done",
+    "dauer_s_ab_freigabe": 36.7,
+    "blender_s": 5.0,
+    "grundlage": {
+     "id": "gl-1e1d7f716a242c38",
+     "wiederverwendet": false
+    },
+    "angewandt_environment": {
+     "preset": "weiss",
+     "hdri": "<Himmelsbild>",
+     "aufloesung": "4k",
+     "drehung_weg": "zur_kamera",
+     "rotationGrad": null,
+     "drehung_je_kamera": {
+      "sSE": 31.158
+     },
+     "gipsmodell": true,
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "herkunft_quelle": "Poly Haven",
+     "lizenz": "CC0-1.0"
+    },
+    "kontrast_haus_hintergrund": 57.3,
+    "ueberstrahlt_anteil": 0.0,
+    "ebenen": [
+     "schoenbild",
+     "tiefe",
+     "material-id"
+    ],
+    "gpu_vorher": "1241 MiB, 24.1 W, 0 %",
+    "vram_spitze": "1324 MiB / 64 W",
+    "bild": "auf-20261021-306-bilder/1-weiss-sSE.png"
+   }
+  },
+  "varianten": {
+   "abend": {
+    "job": "vis-1792576796-55e740",
+    "status": "done",
+    "dauer_s_ab_freigabe": 39.6,
+    "ki_s": 15.8,
+    "grundlage": {
+     "id": "gl-bc09df3d0d5322a6",
+     "wiederverwendet": true
+    },
+    "guete": "vorschau",
+    "bestellt": {
+     "vis.grundlage": "gl-bc09df3d0d5322a6",
+     "vis.seed": 1,
+     "vis.guete": "vorschau",
+     "render.passes": [
+      "schoenbild"
+     ],
+     "modell_mitgeschickt": false
+    },
+    "qa_verdict_passed": false,
+    "qa_verdict_grund_anfang": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (1), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bild",
+    "geom_iou": 0.1303,
+    "ausserhalb_umriss_anteil": 4.4987,
+    "hinweise_verdict": [
+     "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 450 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+     "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' baut das Bild weit ueber den Umriss hinaus (4.50 der Hausflaeche, Schwelle 1.5) und deckt das Modell wenig (geom_iou 0.130 unter 0.3, beide gesetzt, nicht gemessen); und zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 1.65, Schwelle 1.2), und baut zugleich weit ueber den Umriss (4.50 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+    ],
+    "ebenen": [
+     {
+      "kamera": "sSE",
+      "art": "schoenbild",
+      "datei": "sSE__schoenbild.png",
+      "bedeutung": {
+       "renderer": "cycles",
+       "samples": 32
+      }
+     }
+    ],
+    "images": [
+     "sSE.png"
+    ],
+    "gpu_vorher": "1241 MiB, 14.1 W, 0 %",
+    "ollama_ps_vorher": "leer",
+    "vram_spitze": "27436 MiB / 354 W",
+    "angewandt_environment_aufloesung": "2k"
+   },
+   "nebel": {
+    "job": "vis-1792576846-3ad624",
+    "status": "done",
+    "dauer_s_ab_freigabe": 32.9,
+    "ki_s": 10.8,
+    "grundlage": {
+     "id": "gl-6b6217b83ef2427f",
+     "wiederverwendet": true
+    },
+    "guete": "vorschau",
+    "bestellt": {
+     "vis.grundlage": "gl-6b6217b83ef2427f",
+     "vis.seed": 1,
+     "vis.guete": "vorschau",
+     "render.passes": [
+      "schoenbild"
+     ],
+     "modell_mitgeschickt": false
+    },
+    "qa_verdict_passed": false,
+    "qa_verdict_grund_anfang": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (1), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bild",
+    "geom_iou": 0.8738,
+    "ausserhalb_umriss_anteil": 0.1607,
+    "hinweise_verdict": null,
+    "ebenen": [
+     {
+      "kamera": "sSE",
+      "art": "schoenbild",
+      "datei": "sSE__schoenbild.png",
+      "bedeutung": {
+       "renderer": "cycles",
+       "samples": 32
+      }
+     }
+    ],
+    "images": [
+     "sSE.png"
+    ],
+    "gpu_vorher": "1241 MiB, 14.0 W, 0 %",
+    "ollama_ps_vorher": "leer",
+    "vram_spitze": "27436 MiB / 356 W",
+    "angewandt_environment_aufloesung": "2k"
+   }
+  },
+  "abend_nochmals": {
+   "job": "vis-1792576887-5dde52",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-b78719ff804dec5c",
+    "wiederverwendet": false
+   },
+   "erwartet": "wiederverwendet true, Kennung gl-bc09df3d0d5322a6",
+   "wiederverwendet": false,
+   "kennung_gleich": false,
+   "bild_gegen_erste_grundlage": "bildpunktgleich (0 abweichende Punkte, auch material-id), Datei nicht bytegleich (PNG-Kopf)",
+   "satz": "Der Heim-PC holt eine Grundlage nur, wenn der Auftrag vis.grundlage nennt (abholer: geholt nur mit szene.grundlage); eine Bestellung «Grundlage rendern» (vis.skip) rechnet immer neu und legt eine neue Kennung aus job_id ab. «Grundlage je Stand» ist das Gedaechtnis des Render-Knotens (grundlagenJeStand) — am Heim-PC belegt: die Variante auf gl-bc09df3d0d5322a6 lief NACH sieben weiteren Stimmungen weiter (wiederverwendet true), und eine Variante mit anderer Stimmung auf derselben Kennung wird mit 409 abgewiesen."
+  },
+  "probe_409_andere_stimmung": {
+   "code": 409,
+   "satz_woertlich": "Die Grundlage gl-bc09df3d0d5322a6 passt nicht zu dieser Variante: Stimmung weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.",
+   "lauf": "keiner (abgewiesen beim Anlegen)"
+  }
+ },
+ "w4_schoenbild": {
+  "variante_auf_wiederverwendeter_grundlage": {
+   "ja": true,
+   "abend": "sSE__schoenbild.png unter ebenen {art schoenbild, bedeutung {renderer cycles, samples 32}}, 960 x 600, bildpunkt- und bytegleich zum sSE.png der Grundlage",
+   "nebel": "ebenso, bytegleich zur Grundlage"
+  },
+  "weg_ohne_stufe": {
+   "ja": true,
+   "lauf": {
+    "job": "vis-1792576963-7bae27",
+    "status": "done",
+    "dauer_s_ab_freigabe": 32.2,
+    "ki_s": 16.1,
+    "grundlage": {
+     "id": "gl-39b0e7704f0c276d",
+     "wiederverwendet": false
+    },
+    "guete": "vorschau",
+    "bestellt": {
+     "vis.grundlage": null,
+     "vis.seed": 1,
+     "vis.guete": "vorschau",
+     "render.passes": [
+      "schoenbild"
+     ],
+     "modell_mitgeschickt": true
+    },
+    "qa_verdict_passed": false,
+    "qa_verdict_grund_anfang": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (1), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 10.8 % des Bild",
+    "geom_iou": 0.1303,
+    "ausserhalb_umriss_anteil": 4.4987,
+    "hinweise_verdict": [
+     "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 450 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+     "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' baut das Bild weit ueber den Umriss hinaus (4.50 der Hausflaeche, Schwelle 1.5) und deckt das Modell wenig (geom_iou 0.130 unter 0.3, beide gesetzt, nicht gemessen); und zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 1.65, Schwelle 1.2), und baut zugleich weit ueber den Umriss (4.50 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+    ],
+    "ebenen": [
+     {
+      "kamera": "sSE",
+      "art": "schoenbild",
+      "datei": "sSE__schoenbild.png",
+      "bedeutung": {
+       "renderer": "cycles",
+       "samples": 32
+      }
+     }
+    ],
+    "images": [
+     "sSE.png"
+    ],
+    "gpu_vorher": "1241 MiB, 14.2 W, 0 %",
+    "ollama_ps_vorher": "leer",
+    "vram_spitze": "27436 MiB / 355 W",
+    "angewandt_environment_aufloesung": "2k"
+   },
+   "satz": "render.passes [schoenbild], Modell mitgeschickt, kein vis.grundlage: Blender neu (HDRI 2k wegen Vorschau, 6895 Punkte um hoechstens 8 Stufen anders als die 4k-Grundlage), sSE__schoenbild.png unter ebenen; KI-Bild bildpunktgleich zur Variante (gleicher Startwert)."
+  }
+ },
+ "2_stimmung_gedreht": {
+  "job": "vis-1792577000-f2f536",
+  "status": "done",
+  "grundlage": {
+   "id": "gl-7a5c0918d297281b",
+   "wiederverwendet": false
+  },
+  "angewandt_environment": {
+   "preset": "abend",
+   "hdri": "<Himmelsbild>",
+   "aufloesung": "4k",
+   "drehung_weg": "bestellt",
+   "rotationGrad": 90.0,
+   "drehung_je_kamera": null,
+   "gipsmodell": false,
+   "vorgaben": [
+    "hdri",
+    "intensitaet"
+   ],
+   "herkunft_quelle": "Poly Haven",
+   "lizenz": "CC0-1.0"
+  },
+  "drehung_weg": "bestellt",
+  "rotationGrad": 90.0,
+  "ja": true,
+  "kontrast_haus_hintergrund": 70.7,
+  "gegen_ungedreht": "Kontrast 70,7 gegen 41,1; Haus von vorne hell beleuchtet statt Gegenlicht (T1 rechts unten)"
+ },
+ "3_kamera": {
+  "3a": {
+   "job": "vis-1792577043-7443da",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-4ce17b405f6f76f6",
+    "wiederverwendet": false
+   },
+   "bestellt_cameras_auto": {
+    "richtungen": [
+     "n",
+     "sSW"
+    ],
+    "brennweite_mm": 24,
+    "abstand": {
+     "art": "auto",
+     "fuellt": 0.5
+    },
+    "perspektive": "senkrecht"
+   },
+   "standpunkte_abfrage": {
+    "code": 200,
+    "antwortzeit_ms": 6.2,
+    "standpunkte": [
+     {
+      "kuerzel": "n",
+      "auge": [
+       5.4,
+       56.98,
+       1.7
+      ],
+      "blick_auf": [
+       3.5,
+       -1.75,
+       1.7
+      ],
+      "abstand_m": 58.8,
+      "shift_y": 0.03971,
+      "brennweite_mm": 24.0
+     },
+     {
+      "kuerzel": "sSW",
+      "auge": [
+       -32.663,
+       -53.396,
+       1.7
+      ],
+      "blick_auf": [
+       3.5,
+       -1.75,
+       1.7
+      ],
+      "abstand_m": 63.0,
+      "shift_y": 0.03701,
+      "brennweite_mm": 24.0
+     }
+    ]
+   },
+   "posen_ergebnis": [
+    {
+     "kamera": "n",
+     "pose": {
+      "position": [
+       5.4,
+       56.98,
+       1.7
+      ],
+      "target": [
+       3.5,
+       -1.75,
+       1.7
+      ],
+      "fov": 73.73979529168804,
+      "up_axis": "z"
+     }
+    },
+    {
+     "kamera": "sSW",
+     "pose": {
+      "position": [
+       -32.6632,
+       -53.3965,
+       1.7
+      ],
+      "target": [
+       3.5,
+       -1.75,
+       1.7
+      ],
+      "fov": 73.73979529168804,
+      "up_axis": "z"
+     }
+    }
+   ],
+   "groesste_abweichung_m": 0.0005,
+   "innerhalb_1_cm": true,
+   "angewandt_cameras_auto": {
+    "richtungen": [
+     "n",
+     "sSW"
+    ],
+    "augenhoehe_m": 1.7,
+    "brennweite_mm": 24.0,
+    "abstand": {
+     "art": "auto",
+     "fuellt": 0.5
+    },
+    "perspektive": "senkrecht",
+    "vorgaben": [
+     "augenhoehe_m"
+    ]
+   },
+   "bilder": [
+    "n.png",
+    "sSW.png"
+   ],
+   "vram_spitze": "1328 MiB / 66 W",
+   "gpu_vorher": "1241 MiB, 16.3 W, 0 %"
+  },
+  "3b": {
+   "job": "vis-1792577073-6563a0",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-7f40c5d9166bc59b",
+    "wiederverwendet": false
+   },
+   "bestellt_cameras_auto": {
+    "richtungen": [
+     "e"
+    ],
+    "augenhoehe_m": 1.6,
+    "abstand": {
+     "art": "fest",
+     "meter": 40
+    },
+    "perspektive": "frei"
+   },
+   "standpunkte_abfrage": {
+    "code": 200,
+    "antwortzeit_ms": 1.0,
+    "standpunkte": [
+     {
+      "kuerzel": "e",
+      "auge": [
+       43.5,
+       -3.65,
+       1.6
+      ],
+      "blick_auf": [
+       3.5,
+       -1.75,
+       5.1
+      ],
+      "abstand_m": 40.0,
+      "shift_y": 0.0,
+      "brennweite_mm": 35.0
+     }
+    ]
+   },
+   "posen_ergebnis": [
+    {
+     "kamera": "e",
+     "pose": {
+      "position": [
+       43.5,
+       -3.65,
+       1.6
+      ],
+      "target": [
+       3.5,
+       -1.75,
+       5.1
+      ],
+      "fov": 54.43222311461495,
+      "up_axis": "z"
+     }
+    }
+   ],
+   "groesste_abweichung_m": 0.0,
+   "innerhalb_1_cm": true,
+   "angewandt_cameras_auto": {
+    "richtungen": [
+     "e"
+    ],
+    "augenhoehe_m": 1.6,
+    "brennweite_mm": 35.0,
+    "abstand": {
+     "art": "fest",
+     "meter": 40.0
+    },
+    "perspektive": "frei",
+    "vorgaben": [
+     "brennweite_mm"
+    ]
+   },
+   "bilder": [
+    "e.png"
+   ],
+   "vram_spitze": "1328 MiB / 63 W",
+   "gpu_vorher": "1241 MiB, 24.6 W, 0 %"
+  },
+  "3c": {
+   "job": "vis-1792577128-71c71f",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-4f931288b411bbdc",
+    "wiederverwendet": false
+   },
+   "bestellt_cameras": [
+    {
+     "name": "Nord",
+     "position": [
+      5.4,
+      1.7,
+      -56.98
+     ],
+     "target": [
+      3.5,
+      1.7,
+      1.75
+     ],
+     "fov": 73.74,
+     "up_axis": "y",
+     "perspektive": "senkrecht"
+    },
+    {
+     "name": "Südwest",
+     "position": [
+      -32.663,
+      1.7,
+      53.396
+     ],
+     "target": [
+      3.5,
+      1.7,
+      1.75
+     ],
+     "fov": 73.74,
+     "up_axis": "y",
+     "perspektive": "senkrecht"
+    }
+   ],
+   "herleitung": "Standpunkte aus der Antwort von 3a, auge/blick_auf (Ost, Nord, Hoehe) nach glTF (x, z, -y), fov = 2*atan(18/24) = 73.74 Grad (gerundet auf 3 Stellen wie einfrieren()), Namen wie der Knoten (s.name)",
+   "posen_ergebnis": [
+    {
+     "kamera": "Nord",
+     "pose": {
+      "position": [
+       5.4,
+       56.98,
+       1.7
+      ],
+      "target": [
+       3.5,
+       -1.75,
+       1.7
+      ],
+      "fov": 73.74002447541726,
+      "up_axis": "z"
+     }
+    },
+    {
+     "kamera": "Südwest",
+     "pose": {
+      "position": [
+       -32.663,
+       -53.396,
+       1.7
+      ],
+      "target": [
+       3.5,
+       -1.75,
+       1.7
+      ],
+      "fov": 73.74002447541726,
+      "up_axis": "z"
+     }
+    }
+   ],
+   "angewandt": {
+    "cameras_senkrecht": [
+     "Nord",
+     "Südwest"
+    ]
+   },
+   "kanten_senkrecht": "ja (Augenurteil: alle Hauskanten senkrecht, Bild deckt sich in Breite und Hoehe des Hauses mit 3a)",
+   "gegen_3a_gemessen": {
+    "Nord": {
+     "hausbox_3a": "x 234-838, y 154-368",
+     "hausbox_3c": "x 234-838, y 116-330"
+    },
+    "Suedwest": {
+     "hausbox_3a": "x 188-698, y 165-368",
+     "hausbox_3c": "x 188-698, y 129-332"
+    },
+    "satz": "Gleiche Breite und Hoehe des Hauses, aber 36-38 px (6 % der Bildhoehe) hoeher im Bild: die eingefrorene Kamera traegt den Objektiv-Shift der Auto-Kamera (shift_y 0,040 bzw. 0,037) nicht mit (CameraSpec kennt keinen Shift)."
+   },
+   "bilder": [
+    "Nord.png",
+    "Südwest.png"
+   ],
+   "vram_spitze": "1328 MiB / 66 W"
+  }
+ },
+ "4_material": {
+  "4a": {
+   "job": "vis-1792577188-59736c",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-21c4b62ea68fda9e",
+    "wiederverwendet": false
+   },
+   "bestellt": {
+    "fassade": {
+     "id": "sichtbeton-sandgestrahlt"
+    }
+   },
+   "angewandt_materialien": {
+    "fassade": {
+     "id": "sichtbeton-sandgestrahlt",
+     "asset": "Concrete037",
+     "groesse": "2K",
+     "massstab_m": 1.0,
+     "drehungGrad": 0.0,
+     "relief": 0.6,
+     "toenung": null,
+     "vorgaben": [
+      "massstab_m",
+      "drehungGrad",
+      "relief"
+     ]
+    }
+   },
+   "herkunft": "ambientCG, CC0-1.0, nicht ausgeliefert",
+   "vram_spitze": "1324 MiB / 65 W",
+   "augenurteil": "Fassade (Hauptbau und Anbau) sandgestrahlter Sichtbeton, Fensterbaender und Dach ohne Material (weiss), wie bestellt."
+  },
+  "4b": {
+   "job": "vis-1792577218-5de25b",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-f152b0b4636f2db0",
+    "wiederverwendet": false
+   },
+   "bestellt": {
+    "fassade": {
+     "id": "backstein"
+    },
+    "dach": {
+     "id": "klinker"
+    },
+    "fenster": {
+     "id": "dreischichtplatte"
+    },
+    "boden": {
+     "id": "stampflehm",
+     "massstab_m": 2,
+     "toenung": {
+      "farbe": "#aa8866",
+      "staerke": 0.3
+     }
+    },
+    "uebrige": {
+     "id": "verputz-weiss-rau"
+    }
+   },
+   "angewandt_materialien": {
+    "fassade": {
+     "id": "backstein",
+     "asset": "Bricks101",
+     "groesse": "2K",
+     "massstab_m": 1.0,
+     "drehungGrad": 0.0,
+     "relief": 0.6,
+     "toenung": null,
+     "vorgaben": [
+      "massstab_m",
+      "drehungGrad",
+      "relief"
+     ]
+    },
+    "dach": {
+     "id": "klinker",
+     "asset": "Bricks054",
+     "groesse": "2K",
+     "massstab_m": 1.0,
+     "drehungGrad": 0.0,
+     "relief": 0.6,
+     "toenung": null,
+     "vorgaben": [
+      "massstab_m",
+      "drehungGrad",
+      "relief"
+     ]
+    },
+    "fenster": {
+     "id": "dreischichtplatte",
+     "asset": "Wood090A",
+     "groesse": "2K",
+     "massstab_m": 1.0,
+     "drehungGrad": 0.0,
+     "relief": 0.6,
+     "toenung": null,
+     "vorgaben": [
+      "massstab_m",
+      "drehungGrad",
+      "relief"
+     ]
+    },
+    "boden": {
+     "id": "stampflehm",
+     "asset": "Ground104",
+     "groesse": "2K",
+     "massstab_m": 2.0,
+     "drehungGrad": 0.0,
+     "relief": 0.6,
+     "toenung": {
+      "farbe": "#aa8866",
+      "staerke": 0.3
+     },
+     "vorgaben": [
+      "drehungGrad",
+      "relief"
+     ]
+    },
+    "uebrige": {
+     "id": "verputz-weiss-rau",
+     "asset": "Plaster003",
+     "groesse": "2K",
+     "massstab_m": 1.0,
+     "drehungGrad": 0.0,
+     "relief": 0.6,
+     "toenung": null,
+     "vorgaben": [
+      "massstab_m",
+      "drehungGrad",
+      "relief"
+     ]
+    }
+   },
+   "herkunft": "ambientCG, CC0-1.0, nicht ausgeliefert",
+   "vram_spitze": "1324 MiB / 65 W",
+   "augenurteil": "Fassade Backstein (feine Steine bei massstab 1 m), Dachaufbau Klinker, Fensterbaender Dreischichtplatte, Vorplatz Stampflehm getoent (nur als schmaler Streifen sichtbar), Bruestung (uebrige) aus sSE verdeckt; Gelaende ohne Material."
+  },
+  "4c": {
+   "job": "vis-1792577254-acd1ff",
+   "status": "error",
+   "lieferstatus": "fehlgeschlagen",
+   "lieferstatus_grund_woertlich": "Material 'gibt-es-nicht' (fassade) ist nicht in der Bibliothek des Heim-PC. Bekannt: sichtbeton-sandgestrahlt, sichtbeton-schalungsglatt, fichte, backstein, klinker, sandstein, stampflehm, verputz-weiss-glatt, verputz-weiss-rau, holzlattung-fichte, dreischichtplatte.",
+   "job_message_woertlich": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- Material 'gibt-es-nicht' (fassade) ist nicht in der Bibliothek des Heim-PC. Bekannt: sichtbeton-sandgestrahlt, sichtbeton-schalungsglatt, fichte, backstein, klinker, sandstein, stampflehm, verputz-weiss-glatt, verputz-weiss-rau, holzlattung-fichte, dreischichtplatte.",
+   "bilder": [],
+   "gpu_spitze": "1241 MiB / 24 W",
+   "satz": "Abgewiesen vor dem Rechnen: kein Bild, Grafikkarte nicht belegt (Spitze = Leerlauf 1241 MiB)."
+  }
+ },
+ "last_knoten_standpunkte": {
+  "gemessen": {
+   "testmappe_hintereinander": {
+    "n": 200,
+    "codes": {
+     "200": 200
+    },
+    "median_ms": 1.0,
+    "p95_ms": 1.3,
+    "max_ms": 7.0,
+    "cpu_ms_je_anfrage": 0.9,
+    "cpu_anteil_eines_kerns_dauerfeuer": 0.837
+   },
+   "startmappe_hintereinander": {
+    "n": 200,
+    "codes": {
+     "200": 200
+    },
+    "median_ms": 3.1,
+    "p95_ms": 3.9,
+    "max_ms": 4.3,
+    "cpu_ms_je_anfrage": 3.05,
+    "cpu_anteil_eines_kerns_dauerfeuer": 0.952
+   },
+   "testmappe_takt_10_je_s": {
+    "n": 100,
+    "codes": {
+     "200": 100
+    },
+    "median_ms": 2.1,
+    "max_ms": 2.6,
+    "cpu_anteil_eines_kerns": 0.016
+   },
+   "startmappe_takt_10_je_s": {
+    "n": 100,
+    "codes": {
+     "200": 100
+    },
+    "median_ms": 4.9,
+    "max_ms": 5.9,
+    "cpu_anteil_eines_kerns": 0.043
+   },
+   "rss_kib_vorher_nachher": [
+    47148,
+    47160
+   ]
+  },
+  "satz": "Eine Abfrage kostet am Testbau 1,0 ms (CPU 0,9 ms), an der Start-Mappe (glb 34 KB) 3,1 ms (CPU 3,05 ms); 10 Abfragen je Sekunde (schnelles Tippen) belegen 1,6 % bzw. 4,3 % eines Kerns, Speicher des Dienstes unveraendert (47 MB). Keine Last, die zaehlt. Nebenbei: brennweite nimmt nur 24, 35 oder 50 an (sonst 400 mit Satz).",
+  "methode": "200 Abfragen hintereinander und 100 im Takt 0,1 s, wechselnde Richtungen/Brennweite/fuellt|abstand/Augenhoehe/Perspektive, Zeit am Client, CPU aus /proc des Dienstes"
+ },
+ "5_vorschaubilder": {
+  "abgelegt": "auftraege/ergebnisse/auf-20261021-306-vorschau/stimmungen/<preset>.png (8, 192 x 96) und .../materialien/<id>.png (11, 192 x 192), je Ordner quellen.json mit Quelle, Asset, Lizenz CC0-1.0, SHA-256 der Original-Datei",
+  "stimmungen": "Poly Haven, CC0; Original das 4k-Himmelsbild der Stimmung; Asset-Name NICHT genannt (die Poly-Haven-Namen tragen Ortsnamen, Regel 3) — die Pruefsumme bindet das Bild an die Datei. Ausschnitt 180 Grad um die hellste Richtung, 30 Grad unter bis 60 Grad ueber dem Horizont; AgX mit Look und Belichtung der Stimmung (Blender, nur CPU); ohne Toenung.",
+  "materialien": "ambientCG, CC0; Original die 2K-Farbkarte; mittiger Ausschnitt halbe Kante, verkleinert, Farbe unveraendert.",
+  "fehlend": "keine — 8 von 8 Himmelsbildern, 11 von 11 Texturen am Heim-PC; nichts geholt.",
+  "nicht_in_kosmovis": true
+ },
+ "befunde": [
+  "B1 «Grundlage je Stand» ist kein Heim-PC-Verhalten: eine zweite Bestellung «Grundlage rendern» abend gibt wiederverwendet false und eine neue Kennung (gl-b78719ff804dec5c statt gl-bc09df3d0d5322a6), obwohl Stand und Bild gleich sind (bildpunktgleich). Die Erwartung des Auftrags trifft so nicht zu; erfuellt wird sie nur ueber den Knoten (er merkt die Kennung je Stand und schickt bei gleichem Stand keine neue Grundlage) — am Geraet zu bestaetigen. Je erneutem Klick entsteht am Heim-PC eine weitere Grundlage-Datei.",
+  "B2 Prompt aus dem Satz der Stimmung allein: «Abendstimmung, warmes Licht, leuchtende Fenster» wird zu «evening mood, warm light, leuchtende window» (leuchtende bleibt deutsch), «Nebel, gedaempftes Licht, Tiefe im Dunst» zu «fog, gedaempftes light, Tiefe in the haze» (unbekannt: gedaempftes, tiefe). Der englische Satz des Heim-PC wird nicht angefuegt (schon_im_prompt true, Merkmal evening/fog). Ergebnis abend: ein INNENRAUM mit Rundbogenfenster statt Haus (geom_iou 0,130, ueber den Umriss 4,50); nebel: Haus im Dunst (geom_iou 0,874, 0,16). Das Glossar kennt die Saetze der eigenen Stimmungsknoten nicht.",
+  "B3 Kamera Manuell aus Auto verliert den Objektiv-Shift: gleiche Pose (0 mm), gleiche Hausgroesse, aber das Haus steht 36-38 px (6 % der Bildhoehe) hoeher als in 3a. Kanten senkrecht ja.",
+  "B4 angewandt.environment.aufloesung meldet bei der Variante «2k» (Guete Vorschau), das Grundbild stammt aber aus der 4k-Grundlage (bytegleich) — die Angabe beschreibt nicht, was im Bild steht.",
+  "B5 Vorschau weiss: das Studio-Himmelsbild zeigt einen dunklen Innenraum mit Leuchten, kein helles Weiss — als Knoten-Vorschau fuer «Weissmodell» irrefuehrend; Owner/UI entscheiden, ob dort lieber ein gerendertes Gipsmodell steht.",
+  "B6 Protokoll: der Datensatz des ersten abend-Laufs wurde beim zweiten ueberschrieben und aus der API wiederhergestellt (Job, Ergebnis, Bilder vollstaendig; nur die gemerkte GPU-Zeile vor dem Lauf fehlt, die Spitze 1324 MiB/65 W ist erhalten)."
+ ],
+ "offen": [
+  "Geraeteprobe am Mac beim Owner (Stimmung waehlen, Variante, Grundbild nebeneinander, «Grundlage je Stand» beim Zurueckschalten der Stimmung).",
+  "Entscheid zu B1 (Heim-PC soll gleiche Grundlage-Bestellung wiederverwenden oder nicht) und B2 (Glossar/Prompt der Stimmungssaetze).",
+  "Einbau der Vorschaubilder in beide Programme mit NOTICE (Cloud-Worker, Schritt W)."
+ ],
+ "bilder": {
+  "ordner": "auftraege/ergebnisse/auf-20261021-306-bilder/",
+  "schoenbilder": [
+   "1-morgen-sSE.png",
+   "1-mittag-sSE.png",
+   "1-abend-sSE.png",
+   "1-blaue-stunde-sSE.png",
+   "1-bedeckt-sSE.png",
+   "1-nebel-sSE.png",
+   "1-winter-sSE.png",
+   "1-weiss-sSE.png"
+  ],
+  "tafeln": [
+   "T1-stimmungen.png",
+   "T2-kamera-material.png",
+   "T3-vorschaubilder.png"
+  ]
+ }
+}
