@@ -9,7 +9,8 @@
   "81",
   "90"
  ],
- "status": "erledigt — Die Bildprobe mit Splat-Kontext lief ganz durch den Abholer. Das texturierte Netz kam aus dem Speicher (zwischenspeicher_treffer true, kein RealityScan-Lauf), weg realityscan, format obj, 4 Texturen zu 8K. Die drei Bilder sind geliefert. Die QA besteht nicht: Geometrie 0.236/0.772/0.774 (s/sSE/nNW), der strenge Riegel faellt bei allen drei Kameras. Das liegt NICHT an der Textur: Ein Kontrolllauf desselben Auftrags ohne Kontext faellt genauso (0.000/0.786/0.787). Die Textur traegt im fertigen Bild nichts, weil die automatischen Kameras von aussen auf den Bestandskoerper schauen: Vom Netz sind nur 0.16–0.47 % des Bildes zu sehen (M3: 0.03–0.54 %). Modell laden im Knoten funktioniert (IFC unter 2 s, beim zweiten Laden «Fassung 2»), aber nicht am Dienst, wie er eingerichtet ist: Er laeuft ohne --ordner und antwortet mit 409.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Die Bildprobe mit Splat-Kontext lief ganz durch den Abholer. Das texturierte Netz kam aus dem Speicher (zwischenspeicher_treffer true, kein RealityScan-Lauf), weg realityscan, format obj, 4 Texturen zu 8K. Die drei Bilder sind geliefert. Die QA besteht nicht: Geometrie 0.236/0.772/0.774 (s/sSE/nNW), der strenge Riegel faellt bei allen drei Kameras. Das liegt NICHT an der Textur: Ein Kontrolllauf desselben Auftrags ohne Kontext faellt genauso (0.000/0.786/0.787). Die Textur traegt im fertigen Bild nichts, weil die automatischen Kameras von aussen auf den Bestandskoerper schauen: Vom Netz sind nur 0.16–0.47 % des Bildes zu sehen (M3: 0.03–0.54 %). Modell laden im Knoten funktioniert (IFC unter 2 s, beim zweiten Laden «Fassung 2»), aber nicht am Dienst, wie er eingerichtet ist: Er laeuft ohne --ordner und antwortet mit 409.",
  "beendet": "2026-10-14T16:15:00Z",
  "koepfe": {
   "ai_imaging": "main e9c5586 (Visbox 0.2.7)",

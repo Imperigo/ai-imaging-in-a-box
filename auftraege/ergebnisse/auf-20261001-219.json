@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-219",
  "worker": "local",
- "status": "erledigt — E1 ok; E2 mit Vorgabe und beiden verlangten Wiederholungen 0 Volumen (Schwellen fuer Gebaeude: hoehe_min 2 m, flaeche_min 4 m²); als Zusatz mit kleineren Schwellen 3 bzw. 4 Volumen, gemessen gegen die wahren Quader; E3 mit dem leeren Modell abgelehnt (rc 2), mit den Zusatz-Modellen gelaufen; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — E1 ok; E2 mit Vorgabe und beiden verlangten Wiederholungen 0 Volumen (Schwellen fuer Gebaeude: hoehe_min 2 m, flaeche_min 4 m²); als Zusatz mit kleineren Schwellen 3 bzw. 4 Volumen, gemessen gegen die wahren Quader; E3 mit dem leeren Modell abgelehnt (rc 2), mit den Zusatz-Modellen gelaufen; kein Code geaendert",
  "staende": {
   "kosmoprepare": "1b2d624 (enthaelt c162e08 und e8b96b9)",
   "python": ".venv-server/bin/python, numpy 2.4.6, Pillow 12.2.0 (beide vorhanden)"

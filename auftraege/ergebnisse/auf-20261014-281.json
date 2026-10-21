@@ -8,7 +8,8 @@
   "79",
   "81"
  ],
- "status": "teilweise erledigt — E1, F1, F2, M1 (Deckung, Stuecke, Lage, Schaerfe), M2 (Lage) und M3 (Zeit, Speicher) sind gemessen. Das fertige Bild mit QA, Fremdkoerpern und Konfetti fehlt: Der Hallenauftrag kam diesmal ohne Splat-Umgebung aus der App (context null), siehe offen. Fassung 3 liefert die Textur wie im Handlauf: Schaerfe 8.82/9.04/5.56/4.01 an den vier Blickpunkten gegen 6.35/7.36/3.36/1.90 mit den Eckfarben von M3 (Splat 4.08/4.87/4.84/3.16). Deckung 93.43 % (M3 93.42 %), Lage gleich. RealityScan braucht 530 s statt 301 s (+76 %). Das texturierte Netz liegt jetzt im Speicher; der naechste Splat-Auftrag mit dieser Aufnahme sollte es dort finden und RealityScan nicht neu rechnen.",
+ "status": "fehler",
+ "zusammenfassung": "teilweise erledigt — E1, F1, F2, M1 (Deckung, Stuecke, Lage, Schaerfe), M2 (Lage) und M3 (Zeit, Speicher) sind gemessen. Das fertige Bild mit QA, Fremdkoerpern und Konfetti fehlt: Der Hallenauftrag kam diesmal ohne Splat-Umgebung aus der App (context null), siehe offen. Fassung 3 liefert die Textur wie im Handlauf: Schaerfe 8.82/9.04/5.56/4.01 an den vier Blickpunkten gegen 6.35/7.36/3.36/1.90 mit den Eckfarben von M3 (Splat 4.08/4.87/4.84/3.16). Deckung 93.43 % (M3 93.42 %), Lage gleich. RealityScan braucht 530 s statt 301 s (+76 %). Das texturierte Netz liegt jetzt im Speicher; der naechste Splat-Auftrag mit dieser Aufnahme sollte es dort finden und RealityScan nicht neu rechnen.",
  "beendet": "2026-10-14T15:45:00Z",
  "koepfe": {
   "abholer": "ai-imaging main 110a168 (enthaelt FASSUNG 3; git pull --ff-only, sonst nichts geaendert)",

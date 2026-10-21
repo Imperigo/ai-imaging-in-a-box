@@ -17,7 +17,8 @@
   "C81",
   "C82"
  ],
- "status": "erledigt mit Befunden — Stimmung (8/8 Himmelsbilder, keine Sonnenlampe ausser bestellt), Gipsmodell, Auto-Kamera (50 mm, senkrecht, fester Abstand) und Materialien rechnen am Geraet; Abweisung bei fehlendem Himmelsbild woertlich wie verlangt. Befunde: Bauwerk bei mittag/morgen ueberstrahlt (reines Weiss, keine Schattierung), Gelaendeplatte bekommt das Boden-Material, /knoten/standpunkte weicht ~1,06 m ab (Seitenverhaeltnis), Vorschau-Geometriemass nicht gemessen (Haus < 20 % des Bildes), Schritte nicht ohne Codeaenderung stellbar, 5b nur mit unbekannter id (Textur nicht umbenannt).",
+ "status": "ok",
+ "zusammenfassung": "erledigt mit Befunden — Stimmung (8/8 Himmelsbilder, keine Sonnenlampe ausser bestellt), Gipsmodell, Auto-Kamera (50 mm, senkrecht, fester Abstand) und Materialien rechnen am Geraet; Abweisung bei fehlendem Himmelsbild woertlich wie verlangt. Befunde: Bauwerk bei mittag/morgen ueberstrahlt (reines Weiss, keine Schattierung), Gelaendeplatte bekommt das Boden-Material, /knoten/standpunkte weicht ~1,06 m ab (Seitenverhaeltnis), Vorschau-Geometriemass nicht gemessen (Haus < 20 % des Bildes), Schritte nicht ohne Codeaenderung stellbar, 5b nur mit unbekannter id (Textur nicht umbenannt).",
  "beendet": "2026-10-20T19:45:00Z",
  "koepfe": {
   "stand": "main ee94944 (Visbox 0.3.5); visbox-flaeche neu gestartet 21:20:07 (nach dem Kopf), Abholer per Timer 30 s. Kein Code geaendert, keine Datei ins Repo ausser diesem Ergebnis, Mappe des Dienstes nicht angefasst.",

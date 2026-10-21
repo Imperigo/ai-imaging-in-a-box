@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-245",
  "worker": "local",
- "status": "erledigt — B und C gelaufen (Rueckgabe 0). 119 Fusspunkte in der Begleitdatei; Volumen weiter 8, davon 5 ohne Boden: die fuenf liegen 8–22 m vom naechsten Fusspunkt (Mitte), also ausserhalb der 5-m-Grenze — die Fusspunkte greifen dort richtigerweise nicht. Der Hauptbau traegt jetzt den Hinweis «Innenaufnahme» (115 Kameras im Grundriss).",
+ "status": "ok",
+ "zusammenfassung": "erledigt — B und C gelaufen (Rueckgabe 0). 119 Fusspunkte in der Begleitdatei; Volumen weiter 8, davon 5 ohne Boden: die fuenf liegen 8–22 m vom naechsten Fusspunkt (Mitte), also ausserhalb der 5-m-Grenze — die Fusspunkte greifen dort richtigerweise nicht. Der Hauptbau traegt jetzt den Hinweis «Innenaufnahme» (115 Kameras im Grundriss).",
  "A_stand": {
   "kosmoprepare": "85f8cae (enthaelt 35f2ac9 und fa78d0d)",
   "git_status": "unveraendert"

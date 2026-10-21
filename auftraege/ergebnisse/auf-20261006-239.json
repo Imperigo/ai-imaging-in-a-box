@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-239",
  "worker": "local",
- "status": "erledigt — B5 haengt NICHT am Zeichenweg: Felder in allen vier Varianten oben links, auch mit Software-GL",
+ "status": "ok",
+ "zusammenfassung": "erledigt — B5 haengt NICHT am Zeichenweg: Felder in allen vier Varianten oben links, auch mit Software-GL",
  "beendet": "2026-10-06T07:39:00Z",
  "dauer_s": 1000,
  "staende": {

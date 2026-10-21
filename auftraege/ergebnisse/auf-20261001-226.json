@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-226",
  "worker": "local",
- "status": "erledigt — Abholer steht, Vertrag nimmt «local-prepare» an",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Abholer steht, Vertrag nimmt «local-prepare» an",
  "git_log_1": "3741714 Auftragsvertrag: Adressat local-prepare, eng gefasst — nur Fragen, nur ausdrücklich erlaubte Rechte",
  "worker_wert": "local-prepare",
  "rechte_beispiel": {

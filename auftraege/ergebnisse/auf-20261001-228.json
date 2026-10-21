@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-228",
  "worker": "local",
- "status": "erledigt — A2, A3, B1, B3, B5, B7 gefahren (A1 als Vorstufe fuer die Bruecke, B7 mit kosmoprepare_standort als Huellen-Vorstufe), dieselben Schritte, dasselbe IFC und dieselben Unterlagen wie 225; Pruefsummen vorher = nachher; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A2, A3, B1, B3, B5, B7 gefahren (A1 als Vorstufe fuer die Bruecke, B7 mit kosmoprepare_standort als Huellen-Vorstufe), dieselben Schritte, dasselbe IFC und dieselben Unterlagen wie 225; Pruefsummen vorher = nachher; kein Code geaendert",
  "staende": {
   "kosmopublish": "7d4ceab (git pull --ff-only von e551197; kein lokaler Zeitgeber-Commit im Weg; Arbeitsbaum vorher und nachher sauber)",
   "kosmoprepare": "4bdb390 (war schon aktuell; cbb247a ist Vorfahre); einziger unversionierter Eintrag der alte target/, vorher = nachher",

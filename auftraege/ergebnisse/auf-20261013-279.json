@@ -3,6 +3,8 @@
   "auftrag_id": "auf-20261013-279",
   "worker": "local",
   "stand": "erledigt",
+  "status": "ok",
+  "zusammenfassung": "erledigt",
   "zeit": "2026-10-14T08:45:00Z",
   "P1": {
     "ja": true,

@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-229",
  "worker": "local-prepare",
- "status": "erledigt — Helfer richtig und belegt; vom Home-PC-Worker geprueft",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Helfer richtig und belegt; vom Home-PC-Worker geprueft",
  "git_log_1": "d4fd918 auf-228: KosmoPublish A2/A3 behoben; KosmoPrepare B1/B3/B5/B7 am echten Projekt noch nicht (Fundstelle fehlt im _AttrView, Kanton in Sammelkopfzeile)",
  "helfer": {
   "modell": "kosmo-qwen3.6:35b-a3b",
