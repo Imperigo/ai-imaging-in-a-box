@@ -1,0 +1,161 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-302",
+ "art": "qa",
+ "beschreibung": "Strang Treue: Material und Umriss im KI-Bild. Matrix gegen die Kontrolle (297 3c): Umriss halten nachher / im Lauf (vis.umriss_halten), Material vorne im Prompt (vis.material_vorne), Material-Knoten Sichtbeton ohne und mit Bildeingang 0,8. Zurueck geom_iou, ausserhalb_umriss_anteil, Augenurteil 'Sichtbeton?' und zwei Tafeln.",
+ "erstellt": "2026-10-21T09:00:00Z",
+ "rang": 89,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261021-301",
+  "bezug": "auf-20261021-297",
+  "planblatt": "docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md",
+  "entscheide": [
+   "97",
+   "97a",
+   "117"
+  ],
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "kameras": [
+   "sSE"
+  ],
+  "kontrolle": "297 3c (mittag, Standardprompt, faithful 0,8, seed 482913, 960 x 600)",
+  "laeufe": [
+   {
+    "name": "K",
+    "was": "Kontrolle, ohne Schalter"
+   },
+   {
+    "name": "U1",
+    "vis": {
+     "umriss_halten": "nachher"
+    }
+   },
+   {
+    "name": "U2",
+    "vis": {
+     "umriss_halten": "im_lauf"
+    }
+   },
+   {
+    "name": "M1",
+    "vis": {
+     "material_vorne": true
+    }
+   },
+   {
+    "name": "M2",
+    "vis": {
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    }
+   },
+   {
+    "name": "E1",
+    "render": {
+     "materialien": {
+      "fassade": {
+       "id": "sichtbeton-schalungsglatt"
+      }
+     }
+    }
+   },
+   {
+    "name": "E2",
+    "render": {
+     "materialien": {
+      "fassade": {
+       "id": "sichtbeton-schalungsglatt"
+      }
+     }
+    },
+    "vis": {
+     "bildeingang": 0.8
+    }
+   },
+   {
+    "name": "E3",
+    "render": {
+     "materialien": {
+      "fassade": {
+       "id": "sichtbeton-schalungsglatt"
+      }
+     }
+    },
+    "vis": {
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    }
+   }
+  ],
+  "schalter": [
+   "vis.umriss_halten",
+   "vis.material_vorne",
+   "vis.bildeingang"
+  ],
+  "rueckgabe_je_lauf": [
+   "geom_iou",
+   "ausserhalb_umriss_anteil",
+   "n_ist/n_soll",
+   "Sichtbeton?",
+   "Haus im Umriss?",
+   "Naht/Collage?",
+   "VRAM-Spitze",
+   "Zeit"
+  ],
+  "tafeln": [
+   "T1 K|U1|U2|M1|M2",
+   "T2 K|E1|E2|E3|Cycles E1"
+  ],
+  "gewichte": [
+   {
+    "name": "Tongyi-MAI/Z-Image-Turbo",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 32.9,
+    "download_gb": 0,
+    "vram_mib_ohne_bildeingang": 27436,
+    "vram_mib_mit_bildeingang": 31316,
+    "vram_mib_umriss_halten_im_lauf": null,
+    "vram": "gemessen zusammen mit dem ControlNet (auf-20261021-298); im_lauf ungemessen"
+   },
+   {
+    "name": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 3.1,
+    "download_gb": 0,
+    "vram": "in den Zahlen oben enthalten"
+   }
+  ],
+  "texturen": [
+   {
+    "id": "sichtbeton-schalungsglatt",
+    "quelle": "ambientCG Concrete002",
+    "lizenz": "CC0-1.0",
+    "download_gb": 0
+   }
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang Treue (Planblatt docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET: OHNE SCHALTER NICHTS — jeder Lauf ohne vis.umriss_halten und ohne vis.material_vorne ist Bild fuer Bild, Prompt fuer Prompt und Ergebnis fuer Ergebnis der von 299/300/301. NEU SIND ZWEI MESSSCHALTER, Vorgabe aus, kein Vertragsfeld, nur in eigenen Probeauftraegen (Bruecke mit eigener Szene wie 301 Teil 1): (1) vis.umriss_halten 'nachher' — nach dem KI-Schritt gilt ausserhalb der Bauwerksmaske (plus Rand 2 % der langen Seite, weicher Uebergang 1 %) das Cycles-Bild der Grundlage, innen das KI-Bild; das Original liegt unter _ohne_umriss_halten/, das Kameraurteil bleibt das des KI-Bilds VOR dem Halten, im Vermerk umriss_halten am Kameraurteil (befund.json) stehen geom_iou_vorher/_nachher und ausserhalb_vorher/_nachher. (2) vis.umriss_halten 'im_lauf' — der Abholer schreibt je Kamera eine Freigabemaske unter _umriss_halten/<kamera>__freigabe.png (weiss = KI malt); im Bildmodell wird das Cycles-Bild einmal durch den VAE kodiert (unter torch.no_grad) und nach JEDEM Schritt ausserhalb der Freigabe auf das verrauschte Cycles-Bild der naechsten Rauschstufe gesetzt (im letzten Schritt das Cycles-Bild selbst); das Rauschen kommt aus einem eigenen Generator mit demselben Startwert; im Parametersatz umriss_halten_png und umriss_halten_schritte, Satz 'UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten ...' unter den Hinweisen. Ungemessen — es kann am Geraet scheitern (dann Fehlermeldung woertlich). (3) vis.material_vorne true — der Hauptstoff (aus dem Material-Knoten, sonst aus dem Prompt) kommt VOR den Prompt, dreimal: aus dem Standardprompt wird 'monolithic exposed concrete building, made entirely of exposed concrete, uniform exposed concrete on all exterior surfaces, contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky'. Mit vis.skip oder vis.guete 'vorschau' ist vis.umriss_halten ein endgueltiger Mangel (Abweisung mit Satz). Je Kamera ein Satz 'UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera ...' in qa.verdict.hinweise. GEWICHTE (nur Apache-2.0, Download 0 GB, beide liegen am Heim-PC): (W1) Tongyi-MAI/Z-Image-Turbo, Apache-2.0 (Modellkarte https://huggingface.co/Tongyi-MAI/Z-Image-Turbo, license: apache-2.0, nicht gated), Ordner z-image-turbo, 32,9 GB; (W2) alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (1.0), Apache-2.0 (Modellkarte https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union, license: apache-2.0, nicht gated), 3,1 GB; VRAM gemessen 27436 MiB ohne und 31316 MiB mit Bildeingang (298/300), mit umriss_halten 'im_lauf' UNGEMESSEN (erwartet knapp ueber 27436 MiB). TEXTUR fuer E1-E3: die CC0-Textur von sichtbeton-schalungsglatt (ambientCG Concrete002, CC0-1.0) aus dem Texturordner des Heim-PC, wie in 292/293. SZENE wie 297 3c/299 (1): Geometrie synthetisch aus tools/make_test_glb.py (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m), cameras 'auto' mit richtungen ['sSE'], render.resolution [960,600], samples 64, Standardprompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', vis.backbone z-image-turbo, vis.seed 482913, guete voll, render.environment nur {preset: mittag}, faithful weggelassen (0,8). Grundlage G-mittag wiederverwenden, wo sie passt (K, U1, U2, M1, M2); E1-E3 brauchen eine neue Grundlage mit Material. REIHENFOLGE: ein Lauf zur Zeit, K zuerst. DIE MATRIX gegen die Kontrolle K (je ein Bild, Kamera sSE): K ohne Schalter (MUSS bildpunktgleich zu 297 3c sein — sonst abbrechen und melden); U1 vis.umriss_halten 'nachher'; U2 vis.umriss_halten 'im_lauf'; M1 vis.material_vorne true; M2 vis.material_vorne true UND vis.umriss_halten 'im_lauf'; E1 render.materialien {fassade: {id: 'sichtbeton-schalungsglatt'}} ohne Schalter (der Satz 'exterior surfaces of smooth fair-faced concrete' wird wie seit 20.10. hinten angehaengt); E2 wie E1 UND vis.bildeingang 0.8 (Material-Knoten als Bildhinweis ueber den Bildeingang, Entscheid 117; verlangt 30587 MiB frei, Karte vorher leer); E3 wie E1 UND vis.material_vorne true UND vis.umriss_halten 'im_lauf'. Wenn Zeit bleibt, zusaetzlich K-abend und U2-abend (render.environment {preset: abend}), um den Himmel einer anderen Stimmung zu sehen. JE LAUF ZURUECK: status; Prompt aus befund.json woertlich; geom_iou; qa.ausserhalb_umriss_anteil (bei U1 dazu ausserhalb_vorher/_nachher und geom_iou_vorher/_nachher aus dem Vermerk); n_ist/n_soll; Satz 'NICHT WIEDERZUERKENNEN' ja/nein; die Saetze 'UMRISS HALTEN ...' woertlich (Hinweis des Bildmodells und verdict.hinweise); umriss_halten_schritte (U2, M2, E3; erwartet 20); VRAM-Spitze (nvidia-smi) und Zeit je Bild; bei U1/U2/M2/E3 bildpunktgleich zu K ausserhalb des Hauses NEIN erwartet, innen: Zahl abweichender Bildpunkte in der Bauwerksmaske gegen K. AUGENURTEIL je Bild (blind, ohne die Zahlen vorher anzusehen): 'Sichtbeton?' ja / teilweise / nein und was sonst an Material zu sehen ist; 'Haus im Umriss?' ja / teilweise / nein; 'Naht, Collage oder abgeschnittene Vorspruenge an der Hauskante?' ja / nein mit Ort; 'Haus wiederzuerkennen?' ja / teilweise / nein; ein Satz, was das Bild zeigt. TAFEL (960 px, als PNG ins Ergebnisverzeichnis): T1 K | U1 | U2 | M1 | M2; T2 K | E1 | E2 | E3 | Cycles-Bild von E1; dazu je Tafel eine Zeile mit geom_iou, ausserhalb und 'Sichtbeton?' unter jedem Bild. EINBAU — WAS DANACH IN DIE SOFTWARE KOMMT: In diesem Auftrag baut der Heim-PC nichts ein. Nach dem Augenurteil entscheidet der Owner ueber die Zentrale, ob 'im_lauf' oder 'nachher' Vorgabe wird und ob 'material_vorne' Vorgabe wird (Planblatt, Zu entscheiden 1 und 2); wird einer Vorgabe, folgt ein Vertragsfeld (Integrator) und ein Knotenteil 'Umriss halten' bzw. 'Material vorne' (Vis-Werkzeug, beide Programme), mit eigenem Auftrag und Bestaetigung am Geraet. NICHT: keine Vorgabe aendern (kein Registerwert, kein Schalter dauerhaft, keine Umgebungsvariable dauerhaft; beide Schalter nur in den eigenen Probeauftraegen); nichts laden oder herunterladen, das nicht oben unter W1/W2 steht (Download 0 GB — NICHT Union 2.0/2.1, nicht Qwen-Image-2512); kein FLUX.1-dev, kein FLUX.2-dev, kein FLUX.1 Redux, kein SDXL, kein Juggernaut, kein IP-Adapter; diffusers (0.41.0.dev0) und die anderen Bibliotheken in .venv-render nicht aufruesten; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; den echten Textur- oder Himmelsordner und die Mappe des Dienstes nicht veraendern; Dateien ins Repo nur Ergebnis, die zwei Tafeln und hoechstens zwei Kontrollbilder (keine HDRI, Texturen, Gewichte, Pfade). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und unter 8 GB belegt), Leistungsgrenze 400 W gesetzt (nvidia-smi -pl 400) — im Zweifel nicht starten.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, Leistungsgrenze gesetzt ja/nein, Grundlage wiederverwendet oder neu.",
+  "K: bildpunktgleich zu 297 3c ja/nein (Zahl abweichender Bildpunkte); geom_iou, ausserhalb_umriss_anteil, Augenurteil.",
+  "Je Lauf U1, U2, M1, M2, E1, E2, E3 (und K-abend/U2-abend, wenn gerechnet): status, Prompt woertlich, geom_iou, ausserhalb_umriss_anteil (U1 vorher/nachher), n_ist/n_soll, NICHT WIEDERZUERKENNEN ja/nein, Saetze UMRISS HALTEN woertlich, umriss_halten_schritte, VRAM-Spitze, Zeit, abweichende Bildpunkte innen gegen K, Augenurteil (Sichtbeton? / Haus im Umriss? / Naht, Collage, abgeschnitten? / wiederzuerkennen? / ein Satz).",
+  "Tafeln T1 und T2 als PNG mit der Zeile der Zahlen.",
+  "Befunde: was abweicht, woertlich; Code nicht geaendert."
+ ]
+}

@@ -2549,6 +2549,80 @@ def farbabgleich_der_kamera(bild_png, schoenbild_png, ordner, *, urteil_vorher=N
     return vermerk
 
 
+#: Der Schluessel des Vermerks «Umriss halten» am Kameraurteil (Strang Treue, 21.10.2026).
+URTEIL_UMRISS_HALTEN = _kosmo_szene.URTEIL_UMRISS_HALTEN
+
+
+def _ausserhalb_anteil(urteil):
+    befund = (urteil or {}).get("ausserhalb_umriss") if isinstance(urteil, dict) else None
+    return befund.get("anteil_haus") if isinstance(befund, dict) else None
+
+
+def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ordner, *,
+                             urteil_vorher=None, messen=None) -> dict:
+    """Art ``nachher`` des Messschalters ``vis.umriss_halten`` (Strang Treue) an einer Kamera.
+
+    Wie beim Farbabgleich: Das Original kommt nach ``<ordner>/_ohne_umriss_halten/<name>``,
+    das gehaltene Bild ersetzt das gelieferte. Gemessen wird mit ``messen`` ein zweites Mal —
+    ``geom_iou`` und ``ausserhalb_umriss_anteil`` vor und nach dem Halten stehen im Vermerk.
+    Das Kameraurteil selbst bleibt das des KI-Bilds VOR dem Halten (die Seedwahl hat daran
+    gewählt). Ein Fehler kostet das Bild nicht: Dann bleibt es, und der Vermerk sagt warum.
+    """
+    import shutil  # noqa: PLC0415
+    from . import umrisshalt as _uh  # noqa: PLC0415
+
+    if maske is None:
+        return {"angewandt": False, "art": _uh.ART_NACHHER,
+                "grund": "keine Bauwerksmaske (Material-ID-Pass oder Gelaenderegel) — ohne "
+                         "sie ist nicht bekannt, wo das Haus steht"}
+    if not schoenbild_png:
+        return {"angewandt": False, "art": _uh.ART_NACHHER,
+                "grund": "kein Cycles-Bild der Grundlage"}
+    bild = Path(bild_png)
+    ohne = Path(ordner) / _uh.ORDNER_OHNE / bild.name
+    try:
+        ohne.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(bild, ohne)
+        vermerk = _uh.halte_datei(ohne, schoenbild_png, maske, int(breite), int(hoehe), bild)
+    except (OSError, ValueError) as fehler:
+        return {"angewandt": False, "art": _uh.ART_NACHHER,
+                "grund": f"Umriss halten nicht moeglich: {type(fehler).__name__}: {fehler}"}
+    vermerk["ohne_umriss_halten_png"] = f"{_uh.ORDNER_OHNE}/{bild.name}"
+    vermerk["geom_iou_vorher"] = (urteil_vorher or {}).get("geom_iou")
+    vermerk["ausserhalb_vorher"] = _ausserhalb_anteil(urteil_vorher)
+    if messen is not None:
+        try:
+            nachher = messen(str(bild)) or {}
+            vermerk["geom_iou_nachher"] = nachher.get("geom_iou")
+            vermerk["ausserhalb_nachher"] = _ausserhalb_anteil(nachher)
+        except Exception as fehler:  # noqa: BLE001 — eine Nachmessung darf nichts kosten
+            vermerk["geom_iou_nachher"] = None
+            vermerk["ausserhalb_nachher"] = None
+            vermerk["nachmessung_grund"] = f"{type(fehler).__name__}: {fehler}"
+    return vermerk
+
+
+def umriss_halten_vermerk_im_lauf(render_ergebnis, freigabe) -> dict:
+    """Art ``im_lauf``: was das Bildmodell gemeldet hat — ``{angewandt, art, schritte, …}``.
+
+    ``angewandt`` ist True nur, wenn der Hintergrund in mindestens einem Schritt gehalten
+    wurde (``umriss_halten_schritte`` > 0); None, wenn die Naht nichts meldete.
+    """
+    from . import umrisshalt as _uh  # noqa: PLC0415
+    erg = render_ergebnis if isinstance(render_ergebnis, dict) else {}
+    schritte = (erg.get("parameter") or {}).get("umriss_halten_schritte")
+    saetze = [h for h in (erg.get("hinweise") or ()) if isinstance(h, str)
+              and h.startswith(_uh.SATZ)]
+    angewandt = None if schritte is None else schritte > 0
+    vermerk = dict(freigabe or {}, angewandt=angewandt, art=_uh.ART_IM_LAUF,
+                   schritte=schritte, hinweise=saetze)
+    if angewandt is not True:
+        vermerk["grund"] = (saetze[0] if saetze else
+                            "das Bildmodell hat nicht gemeldet, ob der Hintergrund gehalten "
+                            "wurde — UNBEKANNT")
+    return vermerk
+
+
 #: Welche Hinweise des Bildmodells zum Bildeingang gehoeren — am Anfang erkannt.
 _BILDEINGANG_SAETZE = ("BILD UND TIEFE", "MESSSCHALTER bildeingang", "BESTELLT WAR")
 
@@ -4137,6 +4211,27 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                      vorschau=vorschau, lange_seite=vorschau_lange_seite,
                                      mindest_lange_seite=ki_mindest_lange_seite(backbone_name))
             seeds_kamera = seeds_der_kamera(szene, geholt, kuerzel, seeds)
+            # DER MESSSCHALTER «UMRISS HALTEN IM LAUF» (Strang Treue): die Freigabemaske der
+            # Kamera — nur mit Schalter und Maske; sonst bleibt der Auftrag Wort fuer Wort.
+            umriss_freigabe, umriss_vermerk = None, None
+            if szene.get("umriss_halten") == "im_lauf":
+                from . import umrisshalt as _uh  # noqa: PLC0415
+                if maskenbefund.get("maske") is None:
+                    umriss_vermerk = {"angewandt": False, "art": _uh.ART_IM_LAUF,
+                                      "grund": "keine Bauwerksmaske — ohne sie ist nicht "
+                                               "bekannt, wo das Haus steht"}
+                else:
+                    try:
+                        umriss_freigabe = aus / _uh.ORDNER_MASKE / f"{kuerzel}__freigabe.png"
+                        umriss_vermerk = _uh.schreibe_freigabe_png(
+                            umriss_freigabe, maskenbefund["maske"], breite, hoch)
+                    except (OSError, ValueError) as fehler:
+                        # Ein Messschalter kostet das Bild nicht: ohne Freigabe rechnet der
+                        # Lauf wie ohne Schalter, und der Vermerk sagt warum.
+                        umriss_freigabe = None
+                        umriss_vermerk = {"angewandt": False, "art": _uh.ART_IM_LAUF,
+                                          "grund": f"Freigabe nicht baubar: "
+                                                   f"{type(fehler).__name__}: {fehler}"}
 
             def _rendere_seed(seed, ziel_png):
                 # Bei einer verkleinerten Vorschau entsteht das KI-Bild klein neben der
@@ -4164,6 +4259,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         # Messschalter «Cycles-Bild und Tiefe» (Entscheid 117) — None: aus,
                         # und dann ist der Auftrag Wort fuer Wort der von vorher.
                         bildeingang_staerke=szene.get("bildeingang"),
+                        # Messschalter «Umriss halten im Lauf» (Strang Treue) — None: aus.
+                        umriss_halten_png=(str(umriss_freigabe) if umriss_freigabe
+                                           else None),
                     ),
                     modell=_render_modell,
                 )
@@ -4191,6 +4289,17 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Pruefung oben hat das KI-Bild OHNE Abgleich gemessen; der Abgleich verschiebt
             # keinen Bildpunkt. Das Original bleibt daneben liegen, und `geom_iou` wird am
             # abgeglichenen Bild ein zweites Mal gemessen, damit der Beweis am Geraet steht.
+            # UMRISS HALTEN (Strang Treue) — nur mit `vis.umriss_halten`. «nachher» mischt hier,
+            # VOR dem Farbabgleich; «im_lauf» hat im Bildmodell gerechnet und meldet es.
+            if szene.get("umriss_halten") == "nachher":
+                umriss_vermerk = umriss_halten_der_kamera(
+                    ergebnis["bild_png"], bericht.get("beauty_png"), maskenbefund.get("maske"),
+                    breite, hoch, aus, urteil_vorher=urteil,
+                    messen=lambda png: messen(png, soll_pruefung, breite=breite, hoehe=hoch,
+                                              modell=_tiefen_modell, schwelle=grenze,
+                                              maske=maskenbefund.get("maske"), **ausblendung))
+            elif umriss_freigabe is not None:
+                umriss_vermerk = umriss_halten_vermerk_im_lauf(ergebnis, umriss_vermerk)
             farbvermerk = None
             if szene.get("farbabgleich"):
                 farbvermerk = farbabgleich_der_kamera(
@@ -4345,6 +4454,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if farbvermerk is not None:
                 # Nur mit Schalter — ohne ihn traegt das Urteil keinen neuen Schluessel.
                 urteil[URTEIL_FARBABGLEICH] = farbvermerk
+            if umriss_vermerk is not None:
+                urteil[URTEIL_UMRISS_HALTEN] = umriss_vermerk
             if szene.get("bildeingang") is not None:
                 # Ebenso der Bildeingang (auf-20261021-298, B1): was gerechnet wurde, aus dem
                 # Ergebnis des Bildmodells, nicht aus der Bestellung.
@@ -4588,6 +4699,8 @@ RENDER_DURCHGEREICHT = {
     "ausgabe_png": "Ablageort je Kamera und Startwert",
     "bildeingang_staerke": ("szene['bildeingang'] aus dem Messschalter vis.bildeingang "
                             "(Entscheid 117) — None, wenn nicht gesetzt"),
+    "umriss_halten_png": ("Freigabemaske der Kamera aus umrisshalt.schreibe_freigabe_png, nur "
+                          "mit vis.umriss_halten 'im_lauf' (Strang Treue) — sonst None"),
 }
 
 #: Felder, die `verarbeiter` **nicht** setzt — mit dem Grund und dem, was fehlt.
@@ -6081,7 +6194,9 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         # liest es nicht hinaus.
         for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG,
                            # Die Messschalter (auf-20261021-298, B1) — ebenso kein Vertragsfeld.
-                           _kosmo_szene.URTEIL_BILDEINGANG, _kosmo_szene.URTEIL_FARBABGLEICH):
+                           _kosmo_szene.URTEIL_BILDEINGANG, _kosmo_szene.URTEIL_FARBABGLEICH,
+                           # Strang Treue, ebenso kein Vertragsfeld.
+                           _kosmo_szene.URTEIL_UMRISS_HALTEN):
             if k.get(schluessel):
                 satz[schluessel] = k[schluessel]
         aus.append(satz)

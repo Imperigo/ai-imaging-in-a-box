@@ -1824,6 +1824,20 @@ ist schmal (1,16 gegen 1,27). Offen und ohne Fix notiert: Die Zahl «über den U
 malt, und ein ganz anderes Haus mit gleicher Silhouette fällt keinem der vier Gründe auf. Eine kurze Nachprobe am Heim-PC
 bestätigt das Gebaute.
 
+**Material und Umriss: zwei neue Schalter zum Messen (21.10.2026).** Zwei Dinge trifft die KI nicht, die der Architekt
+bestellt. Sie malt Sichtbeton nur teilweise, mit Streifen aus Holz und Stein dazwischen. Und sie baut fast immer neben das
+Haus weitere Gebäude; nur beim Gipsmodell bleibt sie im Umriss. Ein Satz wie «leerer Hintergrund» half kaum, eine
+stärkere Bindung an die Tiefe auch nicht, und ein Gegen-Prompt wirkt bei diesem Modell gar nicht. Ein Planblatt prüft
+fünf Wege mit Lizenz, Speicherbedarf, Aufwand und Risiko (`docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`). Gebaut sind die
+zwei aussichtsreichsten, beide vorerst aus. *Umriss halten:* Ausserhalb des modellierten Hauses gilt das gerenderte Bild
+mit Himmel und Boden, innen malt die KI. Das geht auf zwei Arten: nachträglich gemischt, oder schon während des Malens,
+indem der Hintergrund nach jedem Rechenschritt auf das gerenderte Bild zurückgesetzt wird; dann malt die KI die Kante zum
+Hintergrund selbst. *Material vorne:* Der Stoff, etwa Sichtbeton, steht am Anfang der Bildbeschreibung und dreimal,
+statt an zweiter Stelle; eine Gewichtung in Klammern kennt dieses Modell nicht. Ohne Messung wird nichts davon Vorgabe.
+Die Messung am Heim-PC rechnet jeden Weg gegen dasselbe Kontrollbild, dazu den Material-Knoten mit Sichtbeton-Textur, der
+das gerenderte Bild als Ausgangspunkt mitgibt. Zurück kommen die Zahlen und ein Urteil von Auge: «Sichtbeton?». Nur
+frei lizenzierte Gewichte, die schon auf dem Rechner liegen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

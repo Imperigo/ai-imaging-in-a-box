@@ -673,7 +673,10 @@ BEKANNTE_FELDER = {
             "leerer_hintergrund",
             # Seit 21.10.2026 (Entscheid 117, auf-20261021-298): zwei weitere Messschalter
             # von uns, NICHT im Vertrag — siehe `lies_farbabgleich` und `lies_bildeingang`.
-            "farbabgleich", "bildeingang"),
+            "farbabgleich", "bildeingang",
+            # Seit 21.10.2026 (Strang Treue, Planblatt Material und Umriss): zwei weitere
+            # Messschalter, NICHT im Vertrag — `lies_umriss_halten`, `lies_material_vorne`.
+            "umriss_halten", "material_vorne"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2140,6 +2143,75 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
     return float(wert)
 
 
+def lies_umriss_halten(vis: dict, *, skip, guete, maengel: list,
+                       endgueltig: list) -> str | None:
+    """``vis.umriss_halten`` (Strang Treue, 21.10.2026): ``"nachher"``, ``"im_lauf"`` oder null.
+
+    **Vorgabe aus.** Mit einem Wert bleibt ausserhalb des Hauses das Cycles-Bild der Grundlage
+    (:mod:`aiimaging.umrisshalt`): ``nachher`` mischt nach dem KI-Schritt, ``im_lauf`` hält
+    den Hintergrund in jedem Schritt des Fahrplans fest. Ein Messschalter von uns, kein Feld
+    des Vertrags. Endgültige Mängel: mit «nur Grundlage» (kein KI-Bild) und mit der Vorschau
+    (sie rechnet immer gleich, Entscheid 104). Ein anderer Wert: Mangel, Rückgabe ``None``.
+    """
+    from . import umrisshalt as _uh  # noqa: PLC0415
+    wert = wert_oder(vis, "umriss_halten", None)
+    if wert is None or wert is False:
+        return None
+    if wert not in _uh.ARTEN:
+        maengel.append(f"'vis.umriss_halten' ist {wert!r}, erwartet war "
+                       f"{' oder '.join(repr(a) for a in _uh.ARTEN)} oder null.")
+        return None
+    saetze = []
+    if skip:
+        saetze.append("'vis.umriss_halten' und 'vis.skip' zugleich: «Nur Grundlage» rechnet "
+                      "kein KI-Bild — es gibt keinen Umriss zu halten.")
+    if guete == GUETE_VORSCHAU:
+        saetze.append("'vis.umriss_halten' und 'vis.guete: vorschau' zugleich: Die Vorschau "
+                      "rechnet immer gleich (Entscheid 104); Umriss halten ist ein Messweg der "
+                      "vollen Guete.")
+    maengel.extend(saetze)
+    endgueltig.extend(saetze)
+    return wert
+
+
+#: Stoffwörter, die :func:`material_vorne_satz` im (übersetzten) Prompt erkennt, wenn kein
+#: Material-Knoten bestellt ist — zusätzlich zu den Stoffen der Materialbibliothek. Längere
+#: zuerst, damit «exposed concrete» nicht als «concrete» gezählt wird.
+STOFFE_IM_PROMPT = ("exposed concrete", "fair-faced concrete", "board-formed concrete",
+                    "concrete", "red brick", "brick", "natural stone", "stone", "timber",
+                    "wood", "white plaster", "plaster", "rammed earth", "sandstone")
+
+
+def material_vorne_satz(prompt_en: str, stoffe_bestellt=()) -> tuple[str | None, tuple]:
+    """``(satz, stoffe)`` für ``vis.material_vorne`` — der Stoff **vor** dem Prompt, mehrfach.
+
+    Z-Image liest den Prompt mit einem Sprachmodell (Qwen3) statt mit CLIP; eine Gewichtung
+    in Klammern wie ``(concrete:1.4)`` kennt weder dieses Modell noch die Pipeline von
+    diffusers — sie stünde als Text da. Was wirkt, sind **Stellung und Wiederholung**: Der
+    Satz nennt den Hauptstoff dreimal und steht vorne. Hauptstoff ist der erste bestellte
+    (Material-Knoten, Fassade zuerst), sonst der erste im Prompt erkannte. Kein
+    Bauteilwort (``prompts.BAUTEILWOERTER``) — der Satz bestellt Stoff, kein Bauteil.
+    ``(None, ())``, wenn kein Stoff zu finden ist.
+    """
+    stoffe = [s for s in stoffe_bestellt if s]
+    if not stoffe:
+        text = (prompt_en or "").lower()
+        kandidaten = sorted({_materialwahl.BIBLIOTHEK[k]["prompt_en"].lower()
+                             for k in _materialwahl.BIBLIOTHEK} | set(STOFFE_IM_PROMPT),
+                            key=len, reverse=True)
+        gefunden = []
+        for k in kandidaten:
+            stelle = re.search(r"(?<![\w-])" + re.escape(k) + r"(?![\w-])", text)
+            if stelle and not any(k in g for _, g in gefunden):
+                gefunden.append((stelle.start(), k))
+        stoffe = [k for _, k in sorted(gefunden)]
+    if not stoffe:
+        return None, ()
+    haupt = stoffe[0]
+    return (f"monolithic {haupt} building, made entirely of {haupt}, uniform {haupt} on all "
+            f"exterior surfaces"), tuple(stoffe)
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -2531,6 +2603,26 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     bildeingang = lies_bildeingang(vis, skip=schalter.get("skip"), guete=guete,
                                    backbone_name=bb.get("name"), maengel=maengel,
                                    endgueltig=endgueltig)
+    # DIE MESSSCHALTER AUS DEM STRANG TREUE (21.10.2026) — beide Vorgabe aus, keiner im
+    # Vertrag. `material_vorne` stellt den Stoff vor den Prompt (Satz in `prompt_zusaetze`
+    # mit `vorne`); ohne Schalter ist der Prompt Wort fuer Wort derselbe.
+    umriss_halten = lies_umriss_halten(vis, skip=schalter.get("skip"), guete=guete,
+                                       maengel=maengel, endgueltig=endgueltig)
+    vorne_wert = wert_oder(vis, "material_vorne", False)
+    if not isinstance(vorne_wert, bool):
+        maengel.append(
+            f"'vis.material_vorne' ist {vorne_wert!r}, erwartet war true, false oder null.")
+    elif vorne_wert and schalter.get("skip"):
+        satz = ("'vis.material_vorne' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein "
+                "KI-Bild — ein Prompt fuer den KI-Schritt bestellt nichts.")
+        maengel.append(satz)
+        endgueltig.append(satz)
+    elif vorne_wert:
+        bestellt = [_materialwahl.BIBLIOTHEK[z["id"]]["prompt_en"] for z in prompt_zusaetze
+                    if z.get("art") == "material" and z.get("id") in _materialwahl.BIBLIOTHEK]
+        satz, stoffe = material_vorne_satz(sprachbefund["uebersetzt"], bestellt)
+        prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
+                                "stoffe": list(stoffe), "schon_im_prompt": False})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
     kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
     if fremd.get("cameras_auto") is not None:
@@ -2571,8 +2663,14 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # dem Bauteilwaechter: Die Saetze stammen aus unseren Tabellen, nicht vom Besteller.
     render_prompt = sprachbefund["uebersetzt"]
     for zusatz in prompt_zusaetze:
-        if zusatz["satz"]:
+        if zusatz["satz"] and not zusatz.get("vorne"):
             render_prompt = (f"{render_prompt}, {zusatz['satz']}" if render_prompt.strip()
+                             else zusatz["satz"])
+    # Der Stoff VORNE (Messschalter `vis.material_vorne`) — nach allen anderen Saetzen
+    # gesetzt, damit er wirklich am Anfang steht.
+    for zusatz in prompt_zusaetze:
+        if zusatz["satz"] and zusatz.get("vorne"):
+            render_prompt = (f"{zusatz['satz']}, {render_prompt}" if render_prompt.strip()
                              else zusatz["satz"])
 
     return {
@@ -2596,6 +2694,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         # der Heim-PC wie vorher. `farbabgleich` None: nicht gelesen (Mangel steht oben).
         "farbabgleich": farbabgleich,
         "bildeingang": bildeingang,
+        # Der Messschalter «Umriss halten» (Strang Treue): None heisst aus.
+        "umriss_halten": umriss_halten,
         # Die Stimmung, wie gerechnet (ohne Pfad) — `None`: keine bestellt. Die Datei daneben
         # traegt den Pfad am Heim-PC und geht nur an den Runner, nie ins Ergebnis.
         "umgebung": (umgebung_block or {}).get("umgebung"),
@@ -2699,6 +2799,11 @@ DURCHGEREICHT = {
                      "'qa.verdict.hinweise' und 'angewandt.farbabgleich' (auf-20261021-298 B1)"),
     "bildeingang": ("render.RenderAuftrag(bildeingang_staerke=…); im render-result Satz in "
                     "'qa.verdict.hinweise' und 'angewandt.bildeingang' (auf-20261021-298 B1)"),
+    # Seit 21.10.2026 (Strang Treue): Messschalter, nicht im Vertrag. `material_vorne` reist
+    # als Satz in `prompt_zusaetze` (mit `vorne`) und damit im Prompt.
+    "umriss_halten": ("abholer.umriss_halten_der_kamera (nachher) bzw. render.RenderAuftrag("
+                      "umriss_halten_png=…) (im_lauf); Vermerk am Kameraurteil und Satz in "
+                      "'qa.verdict.hinweise'"),
     "umgebung": ("abholer.verarbeiter → GRUNDLAGE_MUSS_PASSEN und render-result "
                  "'angewandt.environment'"),
     "umgebung_datei": ("abholer.verarbeiter → seams.glb_zu_multipass(umgebung_hdr=…) → "
@@ -3217,6 +3322,8 @@ URTEIL_FARBABGLEICH = "farbabgleich"
 #: Der Anfang der beiden Saetze in ``verdict.hinweise`` — Proben und Auswerter suchen danach.
 SATZ_BILDEINGANG = "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117)"
 SATZ_FARBABGLEICH = "FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117)"
+#: Der Schluessel des Vermerks «Umriss halten» am Kameraurteil (Strang Treue, 21.10.2026).
+URTEIL_UMRISS_HALTEN = "umriss_halten"
 
 
 def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
@@ -3266,6 +3373,23 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
                 hinweise.append(
                     f"{SATZ_FARBABGLEICH}, Kamera {kamera!r}: NICHT angewandt — "
                     f"{fa.get('grund') or 'ohne Grund'}. Geliefert wird das KI-Bild, wie es war.")
+        uh = u.get(URTEIL_UMRISS_HALTEN)
+        if isinstance(uh, dict):
+            from . import umrisshalt as _uh  # noqa: PLC0415
+            if uh.get("angewandt") is True:
+                messung = ""
+                if uh.get("art") == _uh.ART_NACHHER:
+                    messung = (f"; geprueft wurde das KI-Bild VOR dem Halten, danach "
+                               f"geom_iou {uh.get('geom_iou_nachher')} und ueber den Umriss "
+                               f"{uh.get('ausserhalb_nachher')}")
+                hinweise.append(
+                    f"{_uh.SATZ}, Kamera {kamera!r}: Art '{uh.get('art')}' — ausserhalb des "
+                    f"Hauses (Rand {uh.get('rand_px')} px) gilt das Cycles-Bild{messung}. "
+                    f"Nie Vorgabe.")
+            else:
+                hinweise.append(
+                    f"{_uh.SATZ}, Kamera {kamera!r}: NICHT angewandt — "
+                    f"{uh.get('grund') or 'ohne Grund'}. Geliefert wird das KI-Bild, wie es war.")
 
 
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:

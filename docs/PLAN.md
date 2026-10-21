@@ -8186,6 +8186,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)
   - [ ] Beobachten ohne Fix: Sichtbeton im KI-Bild nur teilweise (Holz-/Steinstreifen); Schlagschatten auf 1,7 m Augenhöhe kaum sichtbar (296 notiert)
+  - [x] Material und Umriss im KI-Bild (Strang Treue, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`): Optionen a–e geprüft (Lizenz, VRAM, Aufwand, Risiko); gebaut als Messschalter, Vorgabe aus: `vis.umriss_halten` «nachher» (Maskenmischung) und «im_lauf» (Hintergrund im Fahrplan festgehalten), `vis.material_vorne` (Stoff vorne, dreimal) — gebaut, am Gerät ungemessen (§172, C100)
+  - [ ] Messung am Heim-PC: auf-20261021-302 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln
+  - [ ] Wahl nach 302 (owner, über die Zentrale): welcher Umriss-Weg und ob «Material vorne» Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
+  - [ ] Kanten zusätzlich zur Tiefe (b) und Steuerstärke je Schritt (c) — zurückgestellt bis nach 302 (wir)
   - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
   - [ ] Holzlattung: Maserung quer zu den Latten (B6 aus 292)
