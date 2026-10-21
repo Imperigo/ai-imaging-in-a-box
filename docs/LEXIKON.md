@@ -8798,6 +8798,19 @@ Licht und Ausschnitt malt das Modell frei. *Wozu der Name:* Bestellt war eine Be
 jetzt den Satz «KI-BILD OHNE GRUNDLAGENBILD» mit dem Grund. Gemessen in den Heim-PC-Aufträgen 312 und 313 (alle sechs
 KI-Läufe).
 
+**Marke «Anders gerechnet» / «Ohne Grundlagenbild»** — Ein kleines Schild am fertigen Bild, das sagt: Dieses Bild ist
+auf einem anderen Weg entstanden als bestellt. «Ohne Grundlagenbild» ist der häufigste Sonderfall (siehe *KI-Bild ohne
+Grundlagenbild*) und steht dann allein. *Wozu:* Wer zwei Varianten vergleicht, soll sehen, dass ein Unterschied vom
+Rechenweg kommen kann und nicht vom Entwurf. *Wichtig:* «Nicht gemeldet» ist nicht dasselbe wie «wie bestellt» — sagt
+das Ergebnis nichts, steht kein Schild, aber auch keine Zusicherung. *Im Projekt:* Die Angabe liest die Knotenansicht von
+Visbox aus dem Ergebnis des Heim-PCs (am Lauf als `modus`); gelesen wird zuerst das Feld `angewandt.modus`, sonst der
+Satz «KI-BILD OHNE GRUNDLAGENBILD».
+
+**Tolerant gelesen (Feld im Ergebnis)** — Ein Feld wird so gelesen, dass ein fehlender oder unerwarteter Wert nicht das
+ganze Ergebnis ungültig macht, sondern nur dieses eine Feld als «unbekannt» gilt. *Wozu:* Ein neues Feld kommt manchmal
+beim Absender an, bevor der Empfänger es offiziell kennt; ohne tolerantes Lesen würde es stillschweigend weggeworfen oder
+das Bild abgelehnt. *Im Projekt:* So liest die Knotenansicht `angewandt.modus`, bis das Feld fest im Vertrag steht.
+
 **Stetig gewachsen (Hausfläche im KI-Bild)** — Ein Rechenweg, der vom sicher bekannten Teil des Hauses aus Bildpunkt um
 Bildpunkt weitergeht, solange sich die geschätzte Entfernung nur wenig ändert — so wie eine Fassade sich stetig vom
 Betrachter entfernt, während an der Kante zum Himmel oder zu einer Hecke die Entfernung springt. Boden wird
@@ -8810,6 +8823,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Strang «modusko» (Protokoll 74 §214): **Marke «Anders gerechnet» / «Ohne Grundlagenbild»**, **Tolerant gelesen (Feld im Ergebnis)** |
 | 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §211): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
 | 2026-10-21 | Ergaenzt aus Entscheid 126 und den Befunden von auf-20261021-314 (Protokoll 74 §210, §212): **Vorgabe für Varianten**, **Kamerakürzel und deutsches Gleichwort**, **OptiX**, **Paket von Schritten (`vis_paket`, «$neu:N»)** |
 | 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §208): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |

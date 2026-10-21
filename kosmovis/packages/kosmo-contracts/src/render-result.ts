@@ -618,6 +618,40 @@ export const RenderResult = z
      */
     guete: z.enum(['vorschau', 'voll']).optional().catch(undefined),
     /**
+     * VORLAEUFIG, TOLERANT GELESEN (KosmoVis, 21.10.2026, Bitte des UI-Workers «Modus-Marke»):
+     * `angewandt.modus` aus Vertrag C17 A1 — wie das KI-Bild entstand, bestellt gegen gerechnet,
+     * oben fuer den Auftrag und je Kamera. Int 1 spielt A1 mit der Vertragswelle v0.1.10 ein; bis
+     * dahin liest dieses Feld NUR `modus`, damit `NodeLauf.modus` (`modusAusErgebnis`) es nicht
+     * beim Parsen verliert. Die uebrigen Unterfelder von `angewandt` bleiben ungelesen wie bisher.
+     * Jeder Wert ist `.catch`-tolerant: ein fehlender oder falscher Wert wird `null` («nicht
+     * gemeldet», nie `false`), ein kaputtes `angewandt` faellt still weg — nie das ganze Ergebnis.
+     * Kommt A1 von Int 1, ersetzt seine Form diese.
+     */
+    angewandt: z
+      .object({
+        modus: z
+          .object({
+            bestellt: z.string().nullable().catch(null),
+            gerechnet: z.string().nullable().catch(null),
+            abweichung: z.boolean().nullable().catch(null),
+            kameras: z
+              .record(
+                z.string(),
+                z.object({
+                  gerechnet: z.string().nullable().catch(null),
+                  abweichung: z.boolean().nullable().catch(null),
+                  satz: z.string().optional().catch(undefined),
+                }),
+              )
+              .optional()
+              .catch(undefined),
+          })
+          .optional()
+          .catch(undefined),
+      })
+      .optional()
+      .catch(undefined),
+    /**
      * Nr. 85 (Vertrag 20.10.2026): die Blender-Grundlage dieses Laufs. Jeder
      * Lauf, der Blender rechnet, meldet eine neue (`wiederverwendet: false`);
      * ein Auftrag mit `vis.grundlage` meldet dieselbe Kennung mit

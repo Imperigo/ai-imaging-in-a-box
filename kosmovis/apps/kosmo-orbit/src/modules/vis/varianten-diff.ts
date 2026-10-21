@@ -10,6 +10,7 @@ import {
 import type { RenderJob } from '@kosmo/contracts';
 import { formularFeldText, type JobLieferstatus, type JobQa } from './vis-jobs';
 import type { KurationEintrag, NodeLauf } from './vis-runtime';
+import type { LaufModus } from './modus';
 
 /**
  * N2 (auf-20260826-49 Posten B5, Owner-Entscheid 03.09.2026) — `qa_je_kamera`
@@ -50,6 +51,9 @@ export type KuratierQuelle =
       /** Entscheide 104/104a: siehe `NodeLauf.guete` — die Plakette «VORSCHAU» (UI, `GueteMarke`)
        *  an Kuratier-Karte, Inspektor und Blatt liest sie hier. Fehlt = voll. */
       guete?: 'vorschau' | 'voll' | undefined;
+      /** Bitte UI «Modus-Marke» (C17 A1): siehe `NodeLauf.modus` — die Marke «Ohne Grundlagenbild» /
+       *  «Anders gerechnet» an Kuratier-Karte und Inspektor liest sie hier. Fehlt = nichts gemeldet. */
+      modus?: LaufModus | undefined;
     }
   | {
       dataUrl: string;
@@ -173,6 +177,7 @@ export function quelleAusLauf(
         | 'engineUsed'
         | 'engineLicense'
         | 'guete'
+        | 'modus'
       >
     | undefined,
 ): KuratierQuelle | null {
@@ -193,6 +198,8 @@ export function quelleAusLauf(
     // Entscheide 104/104a (Bitte UI 20.10.2026): die Guete reist mit dem Bild, damit die Plakette
     // «VORSCHAU» auch an Karte, Inspektor und Blatt steht. Ohne Angabe kein Feld (= voll).
     ...(lauf.guete !== undefined ? { guete: lauf.guete } : {}),
+    // Bitte UI «Modus-Marke»: wie das Bild entstand, reist mit wie die Guete. Ohne Angabe kein Feld.
+    ...(lauf.modus !== undefined ? { modus: lauf.modus } : {}),
   };
 }
 

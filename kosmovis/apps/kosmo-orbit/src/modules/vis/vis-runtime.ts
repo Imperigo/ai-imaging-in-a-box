@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { JobLieferstatus, JobQa } from './vis-jobs';
 import type { RenderJob } from '@kosmo/contracts';
+import type { LaufModus } from './modus';
 
 /**
  * N4 (die Zuleitung, 03.09.2026) — ein Eintrag aus `qa_je_kamera`.
@@ -206,6 +207,14 @@ export interface NodeLauf {
    * damit die Anzeige nicht dem Schalter am Knoten folgt, solange der Lauf rechnet.
    */
   guete?: 'vorschau' | 'voll' | undefined;
+  /**
+   * Bitte UI «Modus-Marke» (21.10.2026, C17 A1): wie das KI-Bild entstand, aus dem ERGEBNIS
+   * (`modusAusErgebnis`, `modus.ts`) — `angewandt.modus`, sonst der Satz «KI-BILD OHNE
+   * GRUNDLAGENBILD» aus `qa.verdict.hinweise`. `abweichung: null` heisst «nicht gemeldet», nie
+   * «wie bestellt». Fehlt = das Ergebnis sagt nichts dazu. Explizit `| undefined`: `patchLauf`
+   * mischt, die Angabe eines frueheren Laufs darf nicht stehen bleiben.
+   */
+  modus?: LaufModus | undefined;
 }
 
 /** Zustände, in denen ein Lauf noch «offen» ist (der Poll fragt sie ab). */
