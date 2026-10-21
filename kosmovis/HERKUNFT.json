@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "941792acc09e1e121d8d36cc021c2dc9d0011639"
+    "commit": "1f2c53854a16ecadd560a78189c5f67ad5834f17"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -80,7 +80,7 @@
     "apps/kosmo-orbit/src/modules/vis/blender-jobs-runtime.ts": "d9de45a04aacc8256139d395bc2a0e290e8e910693f0c5a808ce8dccb09f5093",
     "apps/kosmo-orbit/src/modules/vis/blick-quelle.ts": "acc3a032483ce39c006edd311839d95fd11f8e1d006adb7fd5474f0675136c5c",
     "apps/kosmo-orbit/src/modules/vis/bridge-bescheid.ts": "e439fbd0622d239b38165263a7c4599555298e0b3c55cf8ce5ca428661c50241",
-    "apps/kosmo-orbit/src/modules/vis/grossansicht.ts": "ba93d811bf0286fb8557da1b00999612e44a90aa5dd10bc998e4d29d8866b9bc",
+    "apps/kosmo-orbit/src/modules/vis/grossansicht.ts": "a2d626155a85bed3eced4ffdcd670bf93814e24b78ad98b79a24b8902c3c905c",
     "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "2fb3375cf38bf5b5d7f92df569f541c76b5f63d27bd663efb776bc237fd71bc8",
     "apps/kosmo-orbit/src/modules/vis/guete.ts": "b335f398a0562f861da7da0b915f952acec0fecd3495de030073b4c9052db534",
     "apps/kosmo-orbit/src/modules/vis/heim-standpunkte.ts": "b625f835aadcf5d7680982ada0719a3e44c5f6ae8e707b4a5235312d5b7ffff1",

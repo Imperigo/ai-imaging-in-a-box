@@ -1543,14 +1543,20 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             continue
         if anteil < GESCHENKTER_ANTEIL_SCHWELLE:
             continue
-        schenkung.append(f"{k.get('kamera')}: {roh:.3f} roh, {norm:.3f} ohne den Boden "
-                         f"(die Szene schenkt {anteil:.3f})")
+        # IN WORTEN, DIE MAN OHNE DIE HERLEITUNG VERSTEHT (auf-20261021-318 B4): Bis dahin
+        # «0.971 roh, 0.961 ohne den Boden (die Szene schenkt 0.253)» — «Boden» hiess hier
+        # Untergrenze, wurde aber als Gelaende gelesen, und «schenkt» erklaerte nichts. Die
+        # Zahl ist der Anteil des Bildes, den die GANZE Geometrie fuellt (samt Gelaende und
+        # Platte, nicht die Bauwerksmaske): so viel Umriss-Treue bekaeme jedes leere Bild.
+        schenkung.append(
+            f"{k.get('kamera')} {roh:.3f}, davon {anteil:.3f} geschenkt — so viel bekaeme "
+            f"auch ein leeres, einfarbiges Bild, weil die Geometrie samt Gelaende "
+            f"{anteil * 100:.0f} % des Bildes fuellt; selbst verdient {norm:.3f}")
     if schenkung:
         zeilen.append(
-            "VON DIESEM geom_iou GEHOERT EIN TEIL DER SZENE: " + " · ".join(schenkung)
-            + "  — ein KONSTANTES Bild bekaeme hier schon den Vordergrundanteil. Der "
-              "Score rechnet weiter mit dem rohen Wert; die zweite Zahl sagt, was davon "
-              "das Bild verdient hat")
+            "UMRISS-TREUE (geom_iou) ZUM TEIL GESCHENKT: " + " · ".join(schenkung)
+            + "  (selbst verdient: 0 = nicht besser als ein leeres Bild, 1 = deckungsgleich). "
+              "Der Score rechnet weiter mit dem rohen Wert")
 
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —
@@ -5294,10 +5300,24 @@ def messschalter_angewandt(szene: dict) -> dict | None:
     herkunft = szene.get("messschalter")
     if not isinstance(herkunft, dict) or not herkunft:
         return None
-    return {name: dict({"wert": szene.get(name) if name != "material_vorne" else any(
-                z.get("art") == "material_vorne" and z.get("satz")
-                for z in szene.get("prompt_zusaetze") or ())}, **eintrag)
+    return {name: dict({"wert": _messschalter_wert(szene, name)}, **eintrag)
             for name, eintrag in sorted(herkunft.items())}
+
+
+def _messschalter_wert(szene: dict, name: str):
+    """Der gerechnete Wert eines Messschalters — **aus heisst ``false``, nie ``null``.**
+
+    Die Szene trägt einen ausgeschalteten Schalter als ``None`` (``lies_umriss_halten`` gibt für
+    ``false`` und «nicht bestellt» dasselbe zurück). Im Ergebnis stand darum bei
+    ``vis.umriss_halten: false`` ``{wert: null, herkunft: bestellt}`` (auf-20261021-317 B4,
+    319 B4) — in der Wirkung richtig, im Wort aber nicht, was bestellt war. ``material_vorne``
+    liest, ob der Satz wirklich vorne im Prompt steht.
+    """
+    if name == "material_vorne":
+        return any(z.get("art") == "material_vorne" and z.get("satz")
+                   for z in szene.get("prompt_zusaetze") or ())
+    wert = szene.get(name)
+    return False if wert is None else wert
 
 
 def _gewaehlte_seeds(urteile) -> dict:

@@ -553,19 +553,28 @@ def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
 # HomeStation: deckungsgleich heisst gleiche Grundlage UND Kanten-IoU des KI-Bilds gegen das
 # Grundbild über einer Schwelle; darunter «gleiche Grundlage, Form weicht ab», mit Warnung.
 
-#: **GESETZT, NICHT GEMESSEN** — auch nach auf-20261021-312/313: Alle sechs KI-Läufe rechneten
-#: dort txt2img statt image_edit (Befund 312 B3), die Kanten-IoU lag bei 0,024–0,051, auch bei
-#: Seed 11 mit gleichem Ausschnitt (0,024). Diese Läufe trennen nichts; die Schwelle bleibt
-#: vorläufig, gemessen wird mit Läufen, die das Grundlagenbild sehen (auf-20261021-317). Herleitung aus vorhandenen
-#: Zahlen: Kanten-IoU zwischen Varianten derselben Grundlage lag in auf-20261020-289 bei
-#: 0,21–0,42, ``geom_iou`` bei 0,12–0,70; in auf-20261021-309 hielten die Bilder mit gutem
-#: Umriss ``geom_iou`` 0,71–0,88. Die Kanten-IoU ist strenger als die Flächen-IoU (eine um
-#: einen Bildpunkt versetzte Kante zählt als zwei Fehler). 0,30 legt die Grenze in das
-#: untere Drittel der in 289 beobachteten Spanne: was darunter liegt, hat erkennbar andere
-#: Kanten. Eine Setzung — sie wandert mit in jedes Ergebnis.
-DECKUNG_KANTEN_IOU_SCHWELLE = 0.30
-DECKUNG_HERKUNFT = ("gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts "
-                    "(bis auf-20261021-317)")
+#: **GESETZT AUS auf-20261021-317 (VIER LÄUFE)** — vorher 0,30, gesetzt, nicht gemessen.
+#: 312/313 rechneten alle txt2img (Kanten-IoU 0,024–0,051) und trennten nichts. 317 hat erstmals
+#: Läufe mit Augenurteil zur Form auf derselben Grundlage (sSE, Seed 482913, 960 x 600):
+#:
+#:   ====  ===========  ==========================================
+#:   Lauf  Kanten-IoU   Augenurteil «Form wie Grundlage»
+#:   ====  ===========  ==========================================
+#:   K     0,033        nein — anderer Bau, Ausschnitt viel näher
+#:   M2    0,197        ja — Fenster und Fugen neu, Baukörper gleich
+#:   BI55  0,635        ja
+#:   BI40  0,739        ja
+#:   ====  ===========  ==========================================
+#:
+#: 0,30 stufte M2 (Form ja) als «Form weicht ab» ein: M2 malt Fenster und Fugen dazu — Kanten,
+#: die das graue Grundbild nicht hat; das senkt die Kanten-IoU, ohne dass die Form wandert. Die
+#: Lücke zwischen «nein» und «ja» liegt zwischen 0,033 und 0,197. 0,10 liegt in ihrer Mitte auf
+#: logarithmischer Skala (Wurzel aus 0,033 · 0,197 ≈ 0,08) und rundet auf eine Zahl, die man sich
+#: merken kann; nach unten bleibt der Faktor drei Abstand (K), nach oben der Faktor zwei (M2). **Schmal**: vier Bilder,
+#: ein Seed, eine Kamera, eine Grundlage — die Setzung wandert mit in jedes Ergebnis.
+DECKUNG_KANTEN_IOU_SCHWELLE = 0.10
+DECKUNG_HERKUNFT = ("gesetzt aus auf-20261021-317 (vier Läufe: Form nein 0,033; Form ja 0,197 / "
+                    "0,635 / 0,739)")
 
 DECKUNGSGLEICH = "deckungsgleich"
 FORM_WEICHT_AB = "form_weicht_ab"

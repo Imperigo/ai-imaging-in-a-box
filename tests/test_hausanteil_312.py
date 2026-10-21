@@ -127,3 +127,33 @@ def test_der_boden_zaehlt_nicht_mit():
 ])
 def test_die_rahmungsschwelle_trennt_die_laeufe_aus_312(grundlage, nachgezaehlt, erwartet):
     assert baumasse.rahmt_anders(grundlage, nachgezaehlt) is erwartet
+
+
+def _schraeg_nah():
+    """Wie im nahen Bild aus 317 (Abstand «normal»): die linke Fassade kommt schräg bis 2,2 × nah."""
+    soll, haus = _grundlage()
+    naehe, wahr = [], 0
+    for y in range(H):
+        for x in range(B):
+            fuss = 150
+            mitte = _boden(fuss)
+            if 30 <= x <= 289 and 70 <= y < fuss:
+                naehe.append(mitte * (1.0 + 1.2 * (140 - x) / 110) if x < 140 else mitte)
+                wahr += 1
+            else:
+                naehe.append(_boden(y))
+    return naehe, wahr, soll, haus
+
+
+def test_317_b3_der_rand_sagt_woran_das_haus_aufhoerte():
+    """317 B3: normal 0,308 gegen Hand 0,456. Ohne Tiefenkarte nicht zu entscheiden, warum —
+    ``rand_gruende`` zählt je Grund die Randpunkte, an denen das Wachsen stoppte."""
+    naehe, wahr, soll, haus = _schraeg_nah()
+    aus = baumasse.haus_im_bild(naehe, soll, B, H, haus=haus)
+    assert aus["n_bild"] < wahr                                  # unterschätzt, wie in 317
+    rand = aus["rand_gruende"]
+    assert rand.get("zu_nah", 0) > 0                             # die nahe Fassade fiel heraus
+    assert set(rand) <= {"ausgeblendet", "ohne_tiefe", "zu_nah", "himmel", "zu_fern", "boden", "sprung"}
+    # Frontal (Seed 11) stoppt es nicht an «zu nah».
+    gerade, _ = _ki_bild(breit=False)
+    assert "zu_nah" not in baumasse.haus_im_bild(gerade, soll, B, H, haus=haus)["rand_gruende"]

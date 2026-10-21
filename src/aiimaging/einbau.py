@@ -599,7 +599,8 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # erst mit einem belegten Rang, eine Stunde spaeter mit Rang UND Laufnummer.
         # `tests/test_auftraege.py` VERLANGT eine lueckenlose Reihe je Adressat und sagte
         # niemandem, welche Zahl frei ist. *Eine Vorschrift ohne Vergabestelle verlagert
-        # die Arbeit auf den, der zuletzt kommt.*
+        # die Arbeit auf den, der zuletzt kommt.* Seit 21.10.2026 erlaubt der Waechter
+        # Luecken nach erledigten Auftraegen; der freie Rang steht hinter dem letzten offenen.
         #
         # Sie steht hier und nicht nur als Funktion, weil dieses Werkzeug ohnehin gelesen
         # wird, bevor jemand einen Auftrag schreibt — und eine Auskunft, die man kennen

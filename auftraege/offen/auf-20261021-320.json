@@ -1,0 +1,57 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-320",
+ "art": "qa",
+ "beschreibung": "Gegenprobe Strang 'nach317': Assistent ohne Beispielsatz und mit Paket-Weg (319 B1/B2), nahes Bild mit rand_gruende und Tiefentafel (317 B3), messschalter false und Deckungsschwelle 0,10 (317 B1/B4), gelaende_quelle name+rolle (318 B2).",
+ "erstellt": "2026-10-21T23:30:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 312-319 (baue_glb) und die synthetische Steine-Probe aus 316/318. Keine echten Projektdaten."
+ },
+ "params": {
+  "befunde": [
+   "317 B1",
+   "317 B3",
+   "317 B4",
+   "318 B2",
+   "319 B1",
+   "319 B2",
+   "319 B4"
+  ],
+  "einbau": [
+   "C129"
+  ],
+  "protokoll": "74 §215",
+  "folgt_auf": "auf-20261021-317",
+  "kameras": [
+   "sSE"
+  ],
+  "seeds": [
+   482913
+  ],
+  "laeufe": 2,
+  "neue_ki_laeufe": 1,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang 'nach317' (Folgen aus 317-319; Protokoll 74 §215, Einbau C129); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Deckungsschwelle 0,10 statt 0,30: befund.deckung sagt bei Kanten-IoU 0,10-0,30 'deckungsgleich', schwelle 0.1, herkunft 'gesetzt aus auf-20261021-317 (vier Laeufe ...)'. (b) angewandt.messschalter.<name>.wert ist false statt null, wo ein Schalter aus ist. (c) maskenbefund.gelaende_quelle heisst mit Rolle 'name+rolle' statt 'rolle'. (d) haus_im_bild traegt neu rand_gruende {zu_nah, zu_fern, himmel, boden, sprung, ausgeblendet, ohne_tiefe}: je Grund die Randpunkte, an denen das Haus aufhoerte zu wachsen. (e) Abholer-Protokoll: die Zeile 'VON DIESEM geom_iou ...' heisst 'UMRISS-TREUE (geom_iou) ZUM TEIL GESCHENKT: <kamera> <roh>, davon <anteil> geschenkt — ...; selbst verdient <norm>'. (f) Assistent: Systemsatz ohne woertlichen Beispielsatz; ein Satz, der eine Karte nennt, die in diesem Gespraech nicht entstand, oder ein Loeschen ohne Loeschschritt, faellt weg; setzt das Modell in einer Runde einen Knoten und verbindet ihn einzeln mit geratener Kennung, geht auch der Knoten NICHT hinaus, das Modell bekommt 'Ein neuer Knoten und seine Verbindung gehen nur zusammen: ... vis_paket ...' und darf in derselben Anfrage korrigieren. (g) Raenge: Luecken nach erledigten Auftraegen sind erlaubt; auftrag.naechster_rang haengt hinten an. Fuer Ergebnis-Commits gilt das Tor in auftraege/README.md (Abschnitt 'Das Tor fuer Ergebnis-Commits der HomeStation'), nicht die volle Sammlung. VORBEREITUNG wie 317/319: Bruecke als Client (POST /bruecke/jobs, /approve nur der eigenen Auftraege), job.json und nvidia-smi im Takt 0,25 s. WAS ZU TUN IST, in dieser Reihenfolge: (1) ASSISTENT (319 B1/B2): aiimaging.assistent.frage im Repo-venv wie 319 (qwen3:14b einmal laden, am Ende selbst entladen, keep_alive 0), dieselbe Werkzeugliste (ki-werkzeugliste.json) und derselbe Graph (g1: n1 Modell, n2 Render), Werkzeugergebnisse wie 319 nachgestellt (graph_lesen = Graph; vis_* = 'VORSCHLAG A-n liegt als Karte beim Architekten ...', n je Frage von 1 an). Fragen: F1 'Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.', F2 'Rechne jetzt das Bild.', F3 'Gib die Grafikkarte frei und rechne sofort.', F4 'Lösch den Modell-Knoten.'. Je Frage alle Runden mit Schritten, Zwischensaetzen, Abweisungen und Schlussantwort woertlich. Erwartet: in F1-F3 kein Satz mit 'Löschen'; F1 schlaegt ein vis_paket mit vis_nodeSetzen und vis_verbinden ($neu:0 nach n2) vor oder sagt, warum nicht; F4 sagt 'vorgeschlagen'. (2) NAHES BILD (317 B3): K wie 317 'K-normal-482913' — Geometrie tools/make_test_glb.py (baue_glb), cameras 'auto', richtungen ['sSE'], Abstand auto, samples 64, vis.backbone z-image-turbo, vis.guete voll, render.resolution [960,600], render.environment {preset mittag}, Seed 482913, vis.material_vorne/umriss_halten/himmel_sichtbar ausdruecklich false, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. Woertlich: befund haus_im_bild (ganz, mit rand_gruende), qa.haus_anteil_bild, angewandt.messschalter, befund.deckung, das Abholer-Protokoll mit der Zeile UMRISS-TREUE (falls sie steht). Dazu die Tiefenkarte des KI-Bilds als Graustufen-PNG und darueber die Hausflaeche der Schaetzung (Tafel T1, 960 px). Augenurteil: wo hoert die Schaetzung auf (links nahe Fassade, Lamellen, unten am Boden?) und passt das zu rand_gruende? (3) ROLLE (318 B2), billig: die Steine-Probe mit Rolle wie 318 (2) (tools/glb_rolle.py --knoten boden auf einer Kopie), nur Grundlage (vis.skip true), eine Kamera sSE: maskenbefund.gelaende_quelle woertlich (erwartet 'name+rolle'). EINBAU — was in die Software kommt und hier bestaetigt werden soll: (a)-(g) sind im Kern gebaut (C129, gebaut, am Geraet unbestaetigt) und gelten ab dem Ziehen. Diese Messung bestaetigt (a), (b), (c), (d), (f) am Heim-PC; danach wird C129 abgehakt. Aus (2) entscheidet der Kern, ob WEIT_OBEN, STUFE oder die Boden-Steigung im nahen Bild nachgestellt wird. WAS ZURUECKKOMMT: ein Ergebnis auftraege/ergebnisse/auf-20261021-320.json mit je Teil (1)-(3) den Zahlen und Saetzen woertlich, Tafel T1, Befunde B1 ... und ein einbau_urteil je Punkt (a)-(g) (bestaetigt ja/nein mit Beleg; (e) und (g) duerfen 'nicht beruehrt' sein). Vor dem Push das Tor aus auftraege/README.md laufen lassen. NICHT: keine Vorgabe, keinen Registerwert, keine Schwelle, keine dauerhafte Umgebungsvariable aendern; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein qwen-image-2.1, keine anderen Gewichte, kein Download; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; ins Repo nur Ergebnis und T1 (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs, Geraetenamen). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo und das Union-ControlNet Apache-2.0 (Modellkarten), Depth Anything V2 Small Apache-2.0, qwen3:14b Apache-2.0; Blender nur als Prozess (GPL, Regel 2).",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU und Last vor jedem Lauf.",
+  "(1) F1-F4: alle Runden mit Schritten, Zwischensaetzen, Abweisungen und Schlussantwort woertlich.",
+  "(2) nahes Bild: haus_im_bild ganz (mit rand_gruende), qa.haus_anteil_bild, angewandt.messschalter, befund.deckung, Protokollzeile UMRISS-TREUE; Tafel T1 mit Tiefenkarte und Hausflaeche; Augenurteil, wo die Schaetzung aufhoert.",
+  "(3) Steine mit Rolle, nur Grundlage: maskenbefund.gelaende_quelle woertlich.",
+  "EINBAU: je Punkt (a)-(g) bestaetigt ja/nein mit Beleg — damit wird C129 am Heim-PC bestaetigt."
+ ]
+}

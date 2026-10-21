@@ -257,10 +257,33 @@ def test_jeder_offene_auftrag_traegt_einen_rang():
 
 def test_die_raenge_sind_lueckenlos_von_eins_an():
     """Eine Lücke ist kein Fehler der Rechnung, aber eine Frage: *Ist da einer
-    herausgefallen?* Lückenlos zu nummerieren beantwortet sie, bevor sie gestellt wird."""
+    herausgefallen?*
+
+    **Lücken nach erledigten Aufträgen sind erlaubt** (seit 21.10.2026): Bis dahin musste die
+    Reihe lückenlos von eins an laufen, und jedes Ergebnis der HomeStation (Rang 1 erledigt,
+    2 und 3 offen) machte diesen Test rot. Jetzt beantwortet der Test die Frage selbst: Jede
+    Lücke muss ein beantworteter Auftrag desselben Adressaten erklären
+    (:func:`aiimaging.auftrag.raenge_ohne_grund`). Eindeutig bleiben die Ränge
+    (``test_kein_rang_kommt_bei_einem_adressaten_zweimal_vor``)."""
     for worker in auftrag_modul.WORKER:
-        raenge = sorted(a.get("rang") for a in auftrag_modul.unerledigt(WURZEL)
-                        if a.get("worker") == worker and a.get("rang") is not None)
-        if not raenge:
-            continue
-        assert raenge == list(range(1, len(raenge) + 1)), (worker, raenge)
+        luecken = auftrag_modul.raenge_ohne_grund(worker, WURZEL)
+        assert not luecken, (
+            f"{worker}: Rang {luecken} fehlt, und kein erledigter Auftrag stand dort — "
+            f"ist ein offener Auftrag verloren gegangen?")
+
+
+def test_das_tor_fuer_ergebnis_commits_nennt_nur_vorhandene_tests():
+    """`auftraege/README.md` nennt die Tests, die ein Ergebnis-Commit der HomeStation besteht.
+
+    Eine Liste, die auf eine umbenannte Datei zeigt, liefe am Heim-PC mit «file not found»
+    rot — und sähe aus wie ein Fehler des Ergebnisses. Darum prüft dieser Test die Liste.
+    """
+    import re
+    text = (WURZEL / "auftraege" / "README.md").read_text(encoding="utf-8")
+    block = text.split("<!-- tor-ergebnis:anfang -->")[1].split("<!-- tor-ergebnis:ende -->")[0]
+    dateien = re.findall(r"tests/[\w/]+\.py", block)
+    assert "tests/test_auftraege.py" in dateien and len(dateien) == len(set(dateien))
+    fehlt = [d for d in dateien if not (WURZEL / d).is_file()]
+    assert not fehlt, f"Das Tor nennt Tests, die es nicht gibt: {fehlt}"
+    for umgebung in ("swift", "kettenlauf_echt", "icon", "flaeche"):
+        assert not any(umgebung in d for d in dateien), umgebung

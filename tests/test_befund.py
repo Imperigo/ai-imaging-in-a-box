@@ -662,15 +662,17 @@ def _kam(name, roh, norm, anteil):
 
 def _zeile(befund):
     treffer = [z for z in abholer.befund_kurz(befund)
-               if z.startswith("VON DIESEM geom_iou")]
+               if z.startswith("UMRISS-TREUE (geom_iou) ZUM TEIL GESCHENKT")]
     return treffer[0] if treffer else None
 
 
 def test_bei_viel_boden_steht_der_rohe_und_der_normierte_wert_nebeneinander():
     zeile = _zeile({"kameras": [_kam("sSE", 0.850, 0.681, 0.530)]})
     assert zeile is not None
-    assert "0.850 roh" in zeile and "0.681 ohne den Boden" in zeile
-    assert "schenkt 0.530" in zeile
+    # auf-20261021-318 B4: in Worten, die man ohne Herleitung versteht.
+    assert "sSE 0.850, davon 0.530 geschenkt" in zeile and "selbst verdient 0.681" in zeile
+    assert "leeres, einfarbiges Bild" in zeile and "53 % des Bildes" in zeile
+    assert "ohne den Boden" not in zeile and "schenkt 0.530" not in zeile
     assert "Der Score rechnet weiter mit dem rohen Wert" in zeile, (
         "der Entscheid war ausdruecklich: der Score bleibt unangetastet")
 
@@ -691,7 +693,7 @@ def test_sie_meldet_sich_auch_bei_einem_PERFEKTEN_bild():
     """
     zeile = _zeile({"kameras": [_kam("sSE", 1.000, 1.000, 0.530)]})
     assert zeile is not None
-    assert "schenkt 0.530" in zeile
+    assert "davon 0.530 geschenkt" in zeile
 
 
 def test_ohne_die_normierte_zahl_steht_nichts_da():

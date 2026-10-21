@@ -17,6 +17,34 @@ python3 tools/homeworker.py --repo . --alle       # abarbeiten
 git add auftraege/ergebnisse && git commit -m "Ergebnisse <datum>" && git push
 ```
 
+## Das Tor für Ergebnis-Commits der HomeStation
+
+Ein Ergebnis-Commit ändert nur `auftraege/ergebnisse/` (und allenfalls das Papier). Er muss
+nicht die ganze Testsammlung bestehen — wohl aber die Tests, die genau diese Ordner lesen.
+**Vor jedem Push eines Ergebnisses** läuft (rund 25 s, ohne GPU, ohne Netz):
+
+<!-- tor-ergebnis:anfang -->
+```bash
+python3 -m pytest -q tests/test_auftraege.py tests/test_auftrag.py tests/test_auftragsbloecke.py tests/test_auftragspost.py tests/test_vergabestelle.py tests/test_einbau.py tests/test_einbau_stand.py tests/test_einbau_werkzeug_alter.py tests/test_antwort_cli.py tests/test_modell_je_auftrag.py tests/test_null_im_auftrag.py
+```
+<!-- tor-ergebnis:ende -->
+
+Grün heisst: pushen. Rot heisst: nicht pushen, den Fehler im Ergebnis beheben (meist ein Feld,
+das `auftrag.pruefe_auftrag` oder `schreibe_ergebnis` verlangt).
+
+**Nicht im Tor** (sie hängen an der Umgebung, nicht am Ergebnis, und sind am Heim-PC bekannt
+rot oder übersprungen): die Swift-Proben (swift, libxml2), Proben, die Node mit TypeScript
+brauchen, das Icon-Werkzeug, `test_kettenlauf_echt`, die Unit-Proben des Dienstes
+`visbox-flaeche`. Was dort rot ist, meldet die HomeStation als Auffälligkeit im Ergebnis,
+sperrt den Push aber nicht.
+
+**Ränge mit Lücken sind erlaubt** (seit 21.10.2026). Bis dahin verlangte
+`test_die_raenge_sind_lueckenlos_von_eins_an` eine Reihe von eins an — und jedes Ergebnis riss
+eine Lücke (Rang 1 erledigt, 2 und 3 offen), der Test wurde rot. Jetzt gilt: Ränge je Adressat
+eindeutig, und jede Lücke muss ein beantworteter Auftrag desselben Adressaten erklären
+(`auftrag.raenge_ohne_grund`). Ein neuer Auftrag kommt hinter den letzten offenen
+(`auftrag.naechster_rang`), nie in eine Lücke vor ältere. Umnummeriert wird nichts.
+
 ## Jeder Auftrag kommt mit einem kopierbaren Prompt
 
 Die Auftragsdatei ist die Hälfte. Die andere ist der Text, den der Owner ohne Nachdenken

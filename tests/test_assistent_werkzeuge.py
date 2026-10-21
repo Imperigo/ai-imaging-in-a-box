@@ -224,7 +224,7 @@ def test_der_assistent_geht_denselben_weg_wie_claude():
 
 def test_der_systemsatz_nennt_die_vier_lehren_aus_305():
     s = assistent.SYSTEMTEXT_KNOTEN
-    assert "rätst du nie" in s and "graph_lesen" in s and "nächsten Runde" in s       # B6
+    assert "rätst du nie" in s and "graph_lesen" in s and "vis_paket" in s            # B6 (319 B2)
     assert "Erfinde nichts" in s and "keine Stimmung" in s                            # B4
     assert "«vorgeschlagen»" in s and "nie «gelöscht»" in s                           # B5
     assert "Freigeben kann nur der Architekt" in s                                    # B3
@@ -235,11 +235,20 @@ def test_eine_geratene_kennung_geht_nicht_an_die_app_f1():
     """F1: vis_nodeSetzen und vis_verbinden mit «n3» in derselben Runde — n3 gibt es noch nicht."""
     e = Ersatz([{"content": "", "tool_calls": [
         _aufruf("vis_nodeSetzen", graphId="g1", typ="stimmung", x=200, y=100, params={"preset": "abend"}),
-        _aufruf("vis_verbinden", graphId="g1", **{"from": "n3"}, fromPort="stimmung", to="n2", toPort="stimmung")]}])
+        _aufruf("vis_verbinden", graphId="g1", **{"from": "n3"}, fromPort="stimmung", to="n2", toPort="stimmung")]},
+        {"content": "", "tool_calls": [_aufruf("vis_paket", schritte=[
+            {"befehl": "vis_nodeSetzen", "argumente": {"graphId": "g1", "typ": "stimmung", "x": 200, "y": 100,
+                                                       "params": {"preset": "abend"}}},
+            {"befehl": "vis_verbinden", "argumente": {"graphId": "g1", "from": "$neu:0", "fromPort": "stimmung",
+                                                      "to": "n2", "toPort": "stimmung"}}])]}])
     r = assistent.frage("Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.",
                         werkzeuge=_liste(), schritte=[_GRAPH], sprachmodell=e)
-    assert [s["werkzeug"] for s in r["schritte_offen"]] == ["vis_nodeSetzen"]
-    assert "«n3» (from)" in r["antwort"] and "nie raten" in r["antwort"]
+    # 319 B2: Der Knoten geht nicht allein hinaus (er käme als Karte ohne Kennung zurück, und die
+    # Verbindung entstünde nie) — das Modell bekommt den Weg über das Paket und nimmt ihn.
+    assert [s["werkzeug"] for s in r["schritte_offen"]] == ["vis_paket"]
+    zurueck = [m for m in e.gesehen[1] if m["role"] == "tool"]
+    assert [m["tool_name"] for m in zurueck] == ["graph_lesen", "vis_verbinden", "vis_nodeSetzen"]
+    assert all(m["content"] == f"Abgewiesen: {assistent.SATZ_GLEICH_VERBINDEN}" for m in zurueck[1:])
 
 
 def test_ohne_gelesenen_graph_wird_jede_kennung_abgewiesen_und_das_modell_liest():
@@ -401,4 +410,64 @@ def test_ein_neuer_graph_nur_auf_bitte_oder_wenn_keiner_da_ist(nachricht, getan,
 def test_der_systemsatz_sagt_bestehender_graph_und_das_beispiel_aus_314():
     s = assistent.SYSTEMTEXT_KNOTEN
     assert "Arbeite im bestehenden Graph" in s and "vis_graphErstellen" in s
-    assert "nie «Der Knoten wurde gelöscht — es liegt eine Karte»" in s
+    # 319 B1: kein wörtlicher Beispielsatz mehr — qwen3:14b schrieb ihn ab.
+    assert "Das Löschen ist als Karte" not in s and "A-1" not in s and "«Der Knoten wurde" not in s
+    assert "auch nicht mit der Karte im selben Satz" in s and "keine andere" in s
+
+
+# ===================================================== auf-20261021-319 B1/B2: Beispielsatz abgeschrieben
+
+#: Wie 319 nachgestellt: jedes vis_* meldet eine Karte A-n (hier die Stimmung bzw. der Render).
+_KARTE_STIMMUNG = {"werkzeug": "vis_nodeSetzen", "argumente": {"graphId": "g1", "typ": "stimmung"},
+                   "ergebnis": "VORSCHLAG A-1 liegt als Karte beim Architekten: Stimmung «abend» anlegen."}
+_KARTE_RENDER = {"werkzeug": "vis_render", "argumente": {"graphId": "g1", "nodeId": "n2"},
+                 "ergebnis": "VORSCHLAG A-1 liegt als Karte beim Architekten: Bild rechnen."}
+
+
+def test_f1_aus_319_kein_loeschen_ohne_loeschschritt():
+    """319 F1 wörtlich: Die Karte A-1 gab es (die Stimmung), aber nicht als Löschen."""
+    text = assistent._berichtige_antwort(
+        "Das Löschen ist als Karte A-1 vorgeschlagen. Der Knoten «stimmung» wurde noch nicht in den "
+        "Graph «g1» geschrieben — er existiert dort erst, wenn die Karte angewandt wird.",
+        "Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.", [_GRAPH, _KARTE_STIMMUNG])
+    assert "Löschen" not in text and text.startswith("Der Knoten «stimmung» wurde noch nicht")
+
+
+@pytest.mark.parametrize("nachricht,antwort,bleibt", [
+    ("Rechne jetzt das Bild.",
+     "Das Löschen ist als Karte A-1 vorgeschlagen. Warte auf die Bestätigung des Architekten, um den Render zu starten.",
+     "Warte auf die Bestätigung des Architekten, um den Render zu starten."),
+    ("Gib die Grafikkarte frei und rechne sofort.",
+     "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Das Löschen ist als "
+     "Karte A-1 vorgeschlagen. Der Render-Auftrag liegt bereit — der Architekt muss ihn freigeben.",
+     "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Der Render-Auftrag "
+     "liegt bereit — der Architekt muss ihn freigeben."),
+])
+def test_f2_f3_aus_319_der_abgeschriebene_satz_faellt_weg(nachricht, antwort, bleibt):
+    assert assistent._berichtige_antwort(antwort, nachricht, [_GRAPH, _KARTE_RENDER]) == bleibt
+
+
+def test_f4_aus_319_das_echte_loeschen_bleibt():
+    assert assistent._berichtige_antwort("Das Löschen ist als Karte A-1 vorgeschlagen.", "Lösch den Modell-Knoten.",
+                                         [_GRAPH, _KARTE_LOESCHEN]) == "Das Löschen ist als Karte A-1 vorgeschlagen."
+
+
+def test_eine_karte_die_in_diesem_gespraech_nicht_entstand_faellt_weg():
+    # Kein Schritt meldete A-7 — der Satz fällt; bleibt nichts, sagt der Kern, was wirklich als Karte liegt.
+    assert assistent._berichtige_antwort("Die Stimmung liegt als Karte A-7 bereit.", "Mach.",
+                                         [_GRAPH, _KARTE_STIMMUNG]).startswith(
+        "Noch nicht ausgeführt: vorgeschlagen als Karte A-1")
+    # Ohne jede Karte bleibt nur «Fertig.».
+    assert assistent._berichtige_antwort("Das Löschen ist als Karte A-1 vorgeschlagen.", "Lösch n1.",
+                                         [_GRAPH]) == "Fertig."
+    # Eine Karte aus einer früheren Frage (im Verlauf) darf genannt werden.
+    assert assistent._berichtige_antwort("Karte A-4 liegt weiter beim Architekten.", "Und jetzt?", [_GRAPH],
+                                         gespraech="Vorgeschlagen als Karte A-4.") == \
+        "Karte A-4 liegt weiter beim Architekten."
+
+
+def test_die_frage_reicht_den_verlauf_an_die_pruefung():
+    e = Ersatz([{"content": "Karte A-4 liegt weiter beim Architekten. Das Löschen ist als Karte A-1 vorgeschlagen."}])
+    r = assistent.frage("Was liegt noch?", verlauf=[{"von": "assistent", "text": "Vorgeschlagen als Karte A-4."}],
+                        werkzeuge=_liste(), schritte=[_GRAPH], sprachmodell=e)
+    assert r["antwort"] == "Karte A-4 liegt weiter beim Architekten."

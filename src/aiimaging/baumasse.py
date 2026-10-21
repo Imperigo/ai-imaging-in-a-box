@@ -399,7 +399,9 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
         return frei(i) and math.isfinite(w) and unten <= w <= oben
 
     def wachsen(start, darf) -> int:
+        nonlocal zuletzt_besucht
         besucht = [False] * n
+        zuletzt_besucht = besucht
         stapel = list(start)
         for i in stapel:
             besucht[i] = True
@@ -415,6 +417,10 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
                     stapel.append(j)
         return zahl
 
+    zuletzt_besucht: list[bool] = []
+    #: Woran das Wachsen an jedem Randpunkt stoppte (auf-20261021-317 B3) — je Nachbar der
+    #: zuletzt geprüfte Grund; gezählt werden am Ende nur Punkte, die nicht dazukamen.
+    grund_am_rand: dict[int, str] = {}
     kern = [i for i in range(n) if soll[i] and im_band(i)]
     # DIE ALTE ZAHL (bis 312), zum Vergleich: nur im engen Band, zusammenhaengend.
     n_band = wachsen(kern, lambda i, j: im_band(j))
@@ -422,16 +428,41 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
 
     def stetig(i: int, j: int) -> bool:
         w = wert(j)
-        if not (frei(j) and math.isfinite(w) and weit_unten <= w <= weit_oben):
-            return False
-        if boden[j] or (himmel is not None and w < himmel):
-            return False
-        gross = max(abs(w), abs(wert(i)))
-        return gross > 0 and abs(w - wert(i)) <= STUFE * gross
+        grund = None
+        if not frei(j):
+            grund = "ausgeblendet"
+        elif not math.isfinite(w):
+            grund = "ohne_tiefe"
+        elif w > weit_oben:
+            grund = "zu_nah"
+        elif himmel is not None and w < himmel:
+            grund = "himmel"
+        elif w < weit_unten:
+            grund = "zu_fern"
+        elif boden[j]:
+            grund = "boden"
+        else:
+            gross = max(abs(w), abs(wert(i)))
+            if not (gross > 0 and abs(w - wert(i)) <= STUFE * gross):
+                grund = "sprung"
+        if grund is not None:
+            grund_am_rand[j] = grund
+        return grund is None
 
     zahl = wachsen(kern, stetig) if positiv else n_band
     aus.update(n_bild=zahl, anteil=round(zahl / n, 4), n_band=n_band,
                anteil_band=round(n_band / n, 4))
+    if positiv:
+        # WORAN DAS HAUS AUFHOERTE ZU WACHSEN (auf-20261021-317 B3): Im nahen Bild (Abstand
+        # «normal») schätzte der Weg 0,308 gegen 0,456 von Hand; die Ursache ist ohne Tiefenkarte
+        # nicht zu sehen. Die Zählung je Grund macht sie am nächsten Lauf sichtbar, ohne eigene
+        # Messung: viele «zu_nah» = WEIT_OBEN zu eng (schräge, nahe Fassade), viele «sprung» =
+        # STUFE zu streng (Lamellen, Fenster), viele «boden» = Boden-Steigung greift an der Wand.
+        rand: dict[str, int] = {}
+        for j, grund in grund_am_rand.items():
+            if not zuletzt_besucht[j]:
+                rand[grund] = rand.get(grund, 0) + 1
+        aus["rand_gruende"] = dict(sorted(rand.items()))
     return aus
 
 

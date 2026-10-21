@@ -156,15 +156,28 @@ def test_der_naechste_rang_schliesst_die_reihe_lueckenlos_an(tmp_path):
     assert auf.naechster_rang("local", tmp_path) == 4
 
 
-def test_eine_luecke_wird_gefuellt_und_nicht_umgangen(tmp_path):
-    """Der kleinste **freie** Rang, nicht der grösste plus eins.
+def test_ein_neuer_rang_kommt_hinten_an_nicht_in_eine_luecke(tmp_path):
+    """Hinter dem letzten offenen, nicht in die kleinste freie Zahl (seit 21.10.2026).
 
-    Sonst entstünde bei jeder beantworteten Zwischennummer eine Lücke — und der Wächter,
-    der Lückenlosigkeit verlangt, fiele über die eigene Vergabestelle.
+    Eine Lücke steht dort, wo ein erledigter Auftrag stand. Ein neuer Auftrag, der sie
+    füllte, drängte sich vor ältere offene — die HomeStation rechnete ihn zuerst.
     """
     _ablage(tmp_path, {"auf-20260909-01": _satz("auf-20260909-01", rang=1),
                        "auf-20260909-03": _satz("auf-20260909-03", rang=3)})
-    assert auf.naechster_rang("local", tmp_path) == 2
+    assert auf.naechster_rang("local", tmp_path) == 4
+
+
+def test_eine_luecke_nach_einem_ergebnis_ist_erklaert(tmp_path):
+    """Rang 1 beantwortet, 2 und 3 offen: keine Lücke ohne Grund — der Ergebnis-Commit der
+    HomeStation bleibt grün. Fehlt Rang 1 ganz, ist es eine Frage."""
+    _ablage(tmp_path, {f"auf-20260909-0{i}": _satz(f"auf-20260909-0{i}", rang=i)
+                       for i in (1, 2, 3)}, ergebnisse=("auf-20260909-01",))
+    assert [a["rang"] for a in auf.unerledigt(tmp_path)] == [2, 3]
+    assert auf.raenge_ohne_grund("local", tmp_path) == []
+    assert auf.naechster_rang("local", tmp_path) == 4
+    (tmp_path / auf.VERZ_OFFEN / "auf-20260909-01.json").unlink()
+    (tmp_path / auf.VERZ_ERGEBNISSE / "auf-20260909-01.json").unlink()
+    assert auf.raenge_ohne_grund("local", tmp_path) == [1]
 
 
 def test_jeder_adressat_hat_seine_eigene_reihe(tmp_path):
@@ -187,15 +200,15 @@ def test_ein_auftrag_ohne_rang_belegt_keinen(tmp_path):
 def test_die_vergabe_und_der_waechter_sagen_dasselbe(tmp_path):
     """Die Gegenprobe von der anderen Seite — sonst prüft die Zahl sich selbst.
 
-    Wer die vergebenen Ränge nimmt und den vergebenen anhängt, muss eine lückenlose Reihe
-    von eins an bekommen. Genau das ist die Zusicherung, an der ``main`` heute zweimal
-    zerbrochen ist.
+    Wer den vergebenen Rang anhängt, bekommt eine Reihe ohne doppelten Rang und ohne Lücke,
+    die der Wächter (:func:`aiimaging.auftrag.raenge_ohne_grund`) beanstandet.
     """
     _ablage(tmp_path, {f"auf-20260909-0{i}": _satz(f"auf-20260909-0{i}", rang=i)
                        for i in (1, 2, 3, 4)})
-    raenge = sorted([a["rang"] for a in auf.unerledigt(tmp_path)]
-                    + [auf.naechster_rang("local", tmp_path)])
-    assert raenge == list(range(1, len(raenge) + 1))
+    neu = auf.naechster_rang("local", tmp_path)
+    _ablage(tmp_path, {"auf-20260909-05": _satz("auf-20260909-05", rang=neu)})
+    raenge = sorted(a["rang"] for a in auf.unerledigt(tmp_path))
+    assert raenge == [1, 2, 3, 4, 5] and auf.raenge_ohne_grund("local", tmp_path) == []
 
 
 # ------------------------------------------- die Auskunft steht dort, wo gezaehlt wird

@@ -8427,14 +8427,19 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Erstes Bild gross (Entscheid heute, erstes Bild gross) und Grundlage bleibt nach dem Sichern eines Bilds aktuell (C124, §206) — gebaut, am Gerät unbestätigt; Ziel v0.1.10
 - [ ] Drei e2e-Specs drüben erwarten im Kuratieren 2 statt 4 Karten (seit L4-15 C) — Bitte an Int 1 im Meldeblatt (integrator)
 - [x] 312/313 ausgewertet (Strang modus, §208, C125): Ursache txt2img statt image_edit belegt (Vorgabemodell ohne Bildeingang, eigener Start nur mit Schalter), Satz «KI-BILD OHNE GRUNDLAGENBILD»; Hausanteil ohne Platte und stetig gewachsen; Bestand aus der Bauwerksmaske; Kontextmaske auch bei «Grundlage rendern» — gebaut, am Gerät unbestätigt
-- [ ] auf-20261021-317 (local): Gegenprobe modus, Bildeingang wirklich angekommen, Deckungsschwelle aus Augenurteil
+- [x] auf-20261021-317 (local): Gegenprobe modus, Bildeingang wirklich angekommen, Deckungsschwelle aus Augenurteil — Ergebnis cc2cbf94, ausgewertet §215
 - [ ] Owner (über den Hauptstrang): womit sieht eine Variante das Grundlagenbild — Empfehlung M2 als Vorgabe für die Demo, Bildeingang Messweg, Modell mit Bildeingang nach der Demo messen
 - [ ] 20-%-Regel «Das Haus fuellt nur …» liest weiter den Anteil mit Platte — Frage an den Hauptstrang (Empfehlung: nach 317 auf das Haus allein umstellen)
 - [x] Entscheid 126: M2 mit Himmel als Vorgabe für Varianten (§210, C126) — fehlen die Schalter, gilt die Vorgabe; «aus» gewinnt; Variante auf Grundlage ohne Himmel bleibt gültig mit Satz — gebaut, am Gerät unbestätigt
 - [ ] Gegenprobe Entscheid 126 am Heim-PC (local, Messauftrag des Strangs heim3)
 - [x] 316 ausgewertet (Strang steine, §211, C127): Material-ID je Material statt je Objekt (Namen ohne Verkettung, Kennfarben eindeutig), Boden aus der Bauwerksmaske über Form (auch ohne Namenstreffer, mit eigenen Materialen) und Rolle `extras.role: "ground"`, Formregel linear — gebaut, am Gerät unbestätigt
-- [ ] auf-20261021-318 (local): Gegenprobe steine an der Steine-Probe, mit und ohne Rolle; Tabelle Instanzen ausgerollt/zusammengefügt/Instanz
-- [ ] Instanzen je Knoten zusammenfügen — nur wenn 318 (3) nach dem Fix mehr als ein Drittel je Kamera spart
+- [x] auf-20261021-318 (local): Gegenprobe steine an der Steine-Probe, mit und ohne Rolle; Tabelle Instanzen ausgerollt/zusammengefügt/Instanz — Ergebnis c82e2fcd, ausgewertet §215
+- [x] Instanzen je Knoten zusammenfügen — nur wenn 318 (3) nach dem Fix mehr als ein Drittel je Kamera spart — **nein**: Bild 1–2,5 s in allen Formen, Umbau 48/124 s; ausgerollt bleibt (§215)
 - [ ] Rahmung (glbbox und Blender-Bauwerksbox) liest `extras.role` — nach 318, klein
 - [x] Befunde 314 B1–B4, B6 und OptiX im Kern (§212, C128): Assistent sagt «vorgeschlagen», kein neuer Graph ohne Bitte, Pakete geprüft; Gerätebuch behält «gekoppelt»; nNO = nNE, unbekanntes Kürzel endet sofort; Umriss-Satz je Kamera — gebaut, am Gerät unbestätigt
-- [ ] auf-20261021-319 (local): Gegenprobe Entscheid 126 und 314 B2–B4, B6
+- [x] auf-20261021-319 (local): Gegenprobe Entscheid 126 und 314 B2–B4, B6 — Ergebnis 811fa3cb, ausgewertet §215
+- [x] Folgen aus 317–319 im Kern (§215, C129): Deckungsschwelle 0,10 aus vier Läufen (Heim-PC und Vis-Marke, KO-Zweig `claude/kosmovis-deckung-schwelle`), Assistent ohne Beispielsatz und mit Paket-Weg, «aus» = false, `name+rolle`, `rand_gruende` am Hausanteil, Protokollzeile «zum Teil geschenkt» verständlich, Ränge mit Lücken nach erledigten Aufträgen, Tor für Ergebnis-Commits in `auftraege/README.md` — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-320 (local): Gegenprobe nach317 — Assistent F1–F4, nahes Bild mit `rand_gruende`, Rolle
+- [ ] Einspielen `claude/kosmovis-deckung-schwelle` bei Int 1 (v0.1.10, nach erstes-bild-gross) (integrator)
+- [ ] Werkzeugbeschreibung `vis_nodeSetzen`/`vis_verbinden` um den Paket-Weg ergänzen (Vis-Werkzeug, eigener KO-Zweig; Empfehlung ja)
+- [ ] Hausanteil im nahen Bild: nach auf-20261021-320 (2) WEIT_OBEN, STUFE oder Boden-Steigung nachstellen — oder begründet lassen
