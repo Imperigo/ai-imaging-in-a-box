@@ -19,6 +19,7 @@ enum Verbindungsgedaechtnis {
     private static let nameSchluessel = "verbindung.name"
     private static let ordnerSchluessel = "verbindung.ordner"
     private static let macSchluessel = "verbindung.ueberDenMac"
+    private static let abdruckSchluessel = "verbindung.macZertifikat"
 
     /// Wo die HomeStation zuletzt antwortete — **samt Schema**: `http://…:8731` im Heimnetz,
     /// `https://<rechner>.<netz>.ts.net:8443` unterwegs über Tailscale (Entscheid 63). Jede
@@ -46,6 +47,13 @@ enum Verbindungsgedaechtnis {
         set { schreibe(macSchluessel, newValue ? "1" : nil) }
     }
 
+    /// Der Fingerabdruck des Zertifikats des Mac, **angeheftet beim Koppeln** (Entscheid 118) —
+    /// kein Geheimnis: Er sagt nur, welches Zertifikat das iPad annimmt.
+    static var abdruck: String? {
+        get { lies(abdruckSchluessel).flatMap(Fingerabdruck.normalisiere) }
+        set { schreibe(abdruckSchluessel, newValue) }
+    }
+
     /// Der Projektordner **auf der HomeStation**; leer heisst: der, mit dem sie gestartet
     /// wurde (Protokoll §3).
     static var ordner: String {
@@ -56,7 +64,7 @@ enum Verbindungsgedaechtnis {
     /// Vergisst Adresse und Namen. Der Ordner bleibt — er gehört zur Arbeit, nicht zur
     /// Kopplung.
     static func vergiss() {
-        for schluessel in [adresseSchluessel, nameSchluessel, macSchluessel] {
+        for schluessel in [adresseSchluessel, nameSchluessel, macSchluessel, abdruckSchluessel] {
             schreibe(schluessel, nil)
         }
     }

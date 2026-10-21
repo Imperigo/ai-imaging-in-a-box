@@ -102,13 +102,15 @@ public enum Ipadweg: Equatable, Sendable {
     public var satz: String {
         switch self {
         case .direkt:
-            return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Das iPad spricht direkt "
-                + "mit dem Heim-PC — über Tailscale oder im Heimnetz. Der Mac zeigt die Oberfläche "
-                + "und holt die Zahl zum Koppeln."
+            // SEIT ENTSCHEID 118 (21.10.2026) ist der direkte Weg der UEBERGANG: Die Mappe liegt
+            // am Mac, und ein iPad direkt am Heim-PC sieht sie nicht.
+            return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Das iPad spricht noch "
+                + "direkt mit dem Heim-PC (Übergang) und sieht die Mappe am Mac so nicht — im Menü "
+                + "«iPad» «iPad koppeln» koppelt es mit diesem Mac."
         case .ueberMac:
-            return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Der Mac reicht das iPad "
-                + "durch und trägt die Leitung nach Hause — dafür muss das iPad nur ins selbe WLAN "
-                + "wie der Mac, nicht ins Heimnetz."
+            return "Gerechnet wird nie auf dem Mac und nie auf dem iPad. Das iPad arbeitet über "
+                + "diesen Mac, verschlüsselt: Mappe, Bilder und Skizzen kommen von hier, der Mac "
+                + "trägt die Leitung nach Hause — das iPad muss nur ins selbe WLAN wie der Mac."
         }
     }
 

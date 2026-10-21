@@ -239,7 +239,8 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         case .mappe:
             let glbDa = FileManager.default.fileExists(
                 atPath: ordner.appendingPathComponent(Mappenkern.modelldatei).path)
-            let namen = (mappe.knoten?["skizzen"]?.alsListe ?? []).compactMap { $0["name"]?.alsText }
+            // MIT DEN SKIZZEN VOM IPAD (Schritt 4): auch sie stehen in der Liste, wenn ihre Datei liegt.
+            let namen = Mappenkern.skizzennamen(mappe)
             let da = Set(namen.filter { name in
                 Mappenkern.skizzenweg(name).map {
                     FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)

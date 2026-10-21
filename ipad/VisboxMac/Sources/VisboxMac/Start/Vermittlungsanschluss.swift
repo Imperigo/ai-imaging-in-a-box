@@ -52,6 +52,22 @@ final class Vermittlungsanschluss: ObservableObject {
     func halte() {
         dienst?.halte()
     }
+
+    /// **Für «iPad koppeln» (Entscheid 118):** Das iPad arbeitet immer über den Mac — darum
+    /// schaltet das Koppelfenster das Anbieten ein (verschlüsselt) und lässt es an. Eine Zahl
+    /// holt sich das Fenster danach selbst (`zahlFuersKoppelfenster`). `nil`: Der Heim-PC ist
+    /// noch nicht eingerichtet — ohne ihn gibt es keinen Dienst.
+    func dienstZumKoppeln() -> Vermittlungsdienst? {
+        guard let dienst else { return nil }
+        if !angeboten {
+            angeboten = true
+            Vermittlergedaechtnis.angeboten = true
+        }
+        // HINTER DEM MERKER, wie jeder Start (die Probe `test_der_mac_bietet_sich_nur_an_wenn_
+        // eingeschaltet`): eingeschaltet hat ihn eben das Koppelfenster.
+        if angeboten { dienst.starte() }
+        return dienst
+    }
 }
 
 /// Unsichtbar: reicht jede neue Lage des Dienstes als Zeile «iPad» an die Heimleitung.

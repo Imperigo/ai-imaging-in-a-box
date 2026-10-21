@@ -5228,6 +5228,29 @@ Standpunkte des Kamera-Knotens rechnet der Heim-PC an ihr.
 *Im Projekt:* Feld `heimMappe` in `mappe.json`; ein Auftrag nennt sie im Kopf `X-Mappe-Heim`,
 seine Mappe am Mac in `X-Mappe-Am-Mac`.
 
+**Zertifikat des Mac (für das iPad)** — Ein digitaler Ausweis, den sich der Mac selbst ausstellt, damit die Leitung zum
+iPad verschlüsselt ist. Der geheime Schlüssel dazu entsteht im Schlüsselbund des Mac und verlässt ihn nie. Das iPad merkt
+sich beim Koppeln den Fingerabdruck dieses Ausweises und spricht danach mit keinem Gerät, das einen anderen zeigt.
+*Im Projekt:* Entscheid 118; gebaut im Kern `Kern/Maczertifikat.swift`, abgelegt von `Start/Macidentitaet.swift`,
+angeheftet am iPad von `Verbindung/Maclotse.swift`.
+
+**DER (Kodierung eines Zertifikats)** — Die feste Form, in der ein Zertifikat als Bytes aufgeschrieben wird: jedes Stück
+mit einer Kennung, seiner Länge und seinem Inhalt, ineinander geschachtelt. Wer die Form kennt, kann ein Zertifikat ohne
+fremde Bibliothek bauen. *Im Projekt:* `Der` in `Kern/Maczertifikat.swift`; geprüft mit OpenSSL.
+
+**Zertifikat-Gegenprobe (beim Koppeln)** — Nach dem Koppeln nennt der Mac den Fingerabdruck seines Zertifikats, und das iPad
+vergleicht ihn mit dem, den es in derselben Verbindung gesehen hat (und mit dem aus dem QR-Code, wenn es einen gab).
+Stimmen sie nicht, merkt es sich nichts. *Im Projekt:* `Macanbindung.pruefeKopplung`.
+
+**Kein Rückfall auf unverschlüsselt** — Regel für die Leitung iPad–Mac: Geht die verschlüsselte Verbindung nicht, nimmt
+das iPad nicht still die unverschlüsselte, sondern verbindet nicht und sagt warum. *Im Projekt:* Entscheid 118;
+`Anbindungsart.darfSprechen`, `Macanbindung.wiedergefunden`; der Mac bietet sich ohne Zertifikat gar nicht an.
+
+**Übergangsfassung** — Eine Fassung, in der ein alter Weg noch geht, aber mit einem Satz, dass er bald wegfällt. So
+verliert niemand die Verbindung ohne Erklärung. *Im Projekt:* Visbox mit Schritt 4 — ein iPad, das noch direkt mit dem
+Heim-PC gekoppelt ist, arbeitet weiter und sagt «Direkt am Heim-PC (Übergang)»; ab der nächsten Fassung soll der Heim-PC
+es mit Satz abweisen.
+
 **TestFlight und Apple-Entwicklerkonto** — Das Konto (99 USD im Jahr) erlaubt, eigene Apps über
 Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
 signieren, dass der Mac beim Öffnen nicht warnt. Ohne Konto (Owner-Entscheid 30.09.2026) läuft
@@ -7288,6 +7311,9 @@ nicht endet, wartet irgendwann auf den Falschen.*
 einmalige Zahl und bis wann beides gilt. Der Mac gibt ihn dem iPad als QR-Code oder über die
 Nähe-Verbindung; das iPad koppelt damit wie beim Abtippen. **Kein Kennwort darin**
 (Entscheid 99) — wer den Schein abfotografiert, hat höchstens zwei Minuten und wenige Versuche.
+*Seit Entscheid 118 (21.10.2026, Fassung 2):* vier Angaben — die Adresse **des Mac** (verschlüsselt, `https`), die Zahl
+des Mac, die Frist und der Fingerabdruck seines Zertifikats; ein Schein der Fassung 1 kommt von einem Mac mit altem
+Stand und wird mit Satz abgelehnt.
 
 **Nähe-Verbindung (MultipeerConnectivity)** — Ein Baustein von Apple, mit dem sich zwei
 Geräte in der Nähe direkt finden und verbinden — über WLAN oder Bluetooth, ohne Router, ohne
@@ -8456,6 +8482,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
 | 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §177): **Grundbild (Grundbild mit Licht)** |

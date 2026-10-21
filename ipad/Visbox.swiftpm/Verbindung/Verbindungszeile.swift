@@ -64,13 +64,24 @@ struct Verbindungszeile: View {
         HStack(spacing: 12) {
             Statuspunkt(zustand: stand.zustand)
             VStack(alignment: .leading, spacing: 3) {
-                Text(stand.zustand.wort)
-                    .font(Schrift.text(15, .semibold))
-                    .foregroundStyle(Zeichenblatt.schrift)
+                HStack(spacing: 6) {
+                    // DAS SCHLOSS (Entscheid 118): verschluesselt ueber den Mac, Zertifikat
+                    // angeheftet. Offen, wenn eine Kopplung von vorher ungeschuetzt ist.
+                    if stand.anbindung.schloss {
+                        Image(systemName: "lock.fill")
+                            .accessibilityLabel("verschlüsselt")
+                    } else if stand.anbindung == .macUngeschuetzt {
+                        Image(systemName: "lock.open")
+                            .accessibilityLabel("nicht verschlüsselt")
+                    }
+                    Text(stand.zustand.wort)
+                }
+                .font(Schrift.text(15, .semibold))
+                .foregroundStyle(Zeichenblatt.schrift)
                 Text(detail)
                     .font(Schrift.text(12))
                     .foregroundStyle(Zeichenblatt.leise)
-                    .lineLimit(2)
+                    .lineLimit(3)
             }
         }
         // 60 PT, WIE DAS BLATT «ZEICHEN» ES FUER JEDES ZIEL DES STIFTS VERLANGT — nicht die
@@ -81,15 +92,14 @@ struct Verbindungszeile: View {
     }
 
     private var zielname: String {
-        stand.stationsname ?? stand.adresse.map(Suche.anzeigename) ?? "HomeStation"
+        stand.stationsname ?? stand.adresse.map(Suche.anzeigename) ?? (stand.ueberDenMac ? "Mac" : "HomeStation")
     }
 
-    /// «über den Mac», wenn der Mac vermittelt (Protokoll §8b), «über Tailscale», wenn die App
-    /// unterwegs direkt über Tailscale spricht (Entscheid 63) — klein, im Satz, ohne eigenen
-    /// Zustand: Für die Zeile ist beides eine HomeStation wie jede andere.
+    /// «über den Mac, verschlüsselt» (Entscheid 118), «direkt» für eine Kopplung am Heim-PC von
+    /// vorher (Übergang) — klein, im Satz, ohne eigenen Zustand. Der Kern sagt es
+    /// (`Anbindungsart.zusatz`).
     private var vermittelt: String {
-        if stand.ueberDenMac { return " · über den Mac" }
-        return stand.strecke?.zusatz ?? ""
+        stand.anbindung.zusatz
     }
 
     /// Der Satz unter dem Zustand.
@@ -101,6 +111,8 @@ struct Verbindungszeile: View {
             return stand.gekoppelt ? "\(zielname)\(vermittelt) hat noch nicht geantwortet …"
                                    : "Sucht im Heimnetz …"
         case .gekoppelt:
+            // DER UEBERGANG (direkt am Heim-PC) SAGT, WAS ER NICHT KANN: die Mappe am Mac zeigen.
+            if let satz = stand.anbindung.satz { return "\(zielname)\(vermittelt) · \(satz)" }
             return "\(zielname)\(vermittelt) · antwortet"
         case .getrennt(let grund):
             return grund

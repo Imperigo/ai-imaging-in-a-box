@@ -29,7 +29,12 @@ typealias Skizzenquelle = @MainActor () -> Skizzenpaket
 /// lässt sich `gemeinsam` aus jeder Ansicht erreichen, ohne dass es auf die Fassung der
 /// SwiftUI-Schnittstellen ankommt (22.09.2026, hier nicht übersetzt).
 ///
-/// *Gebaut, am Gerät unbestätigt (22.09.2026).*
+/// **Seit Entscheid 118 (21.10.2026) über den Mac, verschlüsselt:** Gekoppelt wird nur noch mit
+/// dem Mac (`https`, Zertifikat angeheftet, `Maclotse`); eine Kopplung von vorher bleibt als
+/// Übergang (direkt am Heim-PC) oder wird abgewiesen (unverschlüsselt über den Mac) — beides
+/// mit Satz, nie still (`Anbindungsart` im Kern).
+///
+/// *Gebaut, am Gerät unbestätigt (22.09.2026; über den Mac 21.10.2026).*
 final class Verbindungsstand: ObservableObject {
     static let gemeinsam = Verbindungsstand()
 
@@ -49,6 +54,8 @@ final class Verbindungsstand: ObservableObject {
     /// Ob unterwegs **der Mac** vermittelt (Protokoll §8b) — nur für die Anzeige; gekoppelt,
     /// angemeldet und gesendet wird genau wie bei der HomeStation.
     @Published private(set) var ueberDenMac: Bool
+    /// Der angeheftete Fingerabdruck des Zertifikats des Mac (Entscheid 118) — `nil` ohne.
+    @Published private(set) var abdruck: String?
     @Published private(set) var adresse: URL?
     @Published private(set) var gefunden: [GefundenerDienst] = []
     /// Warum die Suche nicht läuft — `nil`, wenn sie läuft oder nicht gefragt ist.
@@ -93,6 +100,7 @@ final class Verbindungsstand: ObservableObject {
         adresse = Verbindungsgedaechtnis.adresse
         stationsname = Verbindungsgedaechtnis.name
         ueberDenMac = Verbindungsgedaechtnis.ueberDenMac
+        abdruck = Verbindungsgedaechtnis.abdruck
 
         do {
             parkfach = try Parkfach(ordner: Verbindungsstand.fachordner())
@@ -113,6 +121,7 @@ final class Verbindungsstand: ObservableObject {
             grund = satz
         }
 
+        heftAn()
         sucher.meldeGefunden = { [weak self] liste in self?.gefundenGemeldet(liste) }
         sucher.meldeZustand = { [weak self] satz in self?.suchSatz = satz }
         netz.pathUpdateHandler = { [weak self] pfad in
@@ -144,9 +153,20 @@ final class Verbindungsstand: ObservableObject {
 
     var gekoppelt: Bool { adresse != nil }
 
+    /// Wie das iPad angebunden ist — über den Mac verschlüsselt, ungeschützt, direkt (Übergang)
+    /// oder gar nicht. Entschieden im Kern (`Anbindungsart.bestimme`).
+    var anbindung: Anbindungsart {
+        Anbindungsart.bestimme(adresse: adresse, ueberDenMac: ueberDenMac, abdruck: abdruck)
+    }
+
+    /// Den Lotsen auf den gekoppelten Mac stellen — nur über den Mac gibt es etwas anzuheften.
+    private func heftAn() {
+        Maclotse.gemeinsam.setze(mac: ueberDenMac ? adresse : nil, abdruck: ueberDenMac ? abdruck : nil)
+    }
+
     /// Über welche Strecke die gekoppelte HomeStation erreicht wird — Heimnetz (http) oder
     /// Tailscale (https, Entscheid 63); abgelesen an der gemerkten Adresse, nie geraten.
-    var strecke: Strecke? { adresse.map(Strecke.init(basis:)) }
+    var strecke: Strecke? { adresse.map { Strecke(basis: $0, ueberDenMac: ueberDenMac) } }
 
     /// Was der Knopf zum Parkfach zählt — geparkt, ungewiss, unterwegs und offen **getrennt**
     /// (Kern: `Fachzaehlung`). Bis zur Durchsicht vom 22.09.2026 stand hier `wartend`, und
@@ -209,10 +229,33 @@ final class Verbindungsstand: ObservableObject {
 
     private func gefundenGemeldet(_ liste: [GefundenerDienst]) {
         gefunden = liste
+        // DER GEKOPPELTE MAC HAT EINE NEUE ADRESSE (Entscheid 118): uebernommen nur, wenn er
+        // weiter verschluesselt spricht — KEIN RUECKFALL AUF UNVERSCHLUESSELT (Kern:
+        // `Macanbindung.wiedergefunden`). Das Zertifikat bleibt angeheftet.
+        if ueberDenMac, let name = stationsname, let gemerkt = adresse,
+           let fund = liste.first(where: { $0.name == name && $0.ueberDenMac && $0.aufgeloest }) {
+            switch Macanbindung.wiedergefunden(gemerkt: gemerkt, fund: fund) {
+            case .neu(let neu):
+                adresse = neu
+                Verbindungsgedaechtnis.adresse = neu
+                heftAn()
+                Task { @MainActor [weak self] in await self?.pruefe() }
+            case .unverschluesselt(let satz):
+                erreichbar = false
+                grund = satz
+                bestimmeZustand()
+            case .gleich, .offen:
+                break
+            }
+            return
+        }
         // DIE GEKOPPELTE HOMESTATION HAT EINE NEUE ADRESSE BEKOMMEN (der Router vergibt sie
         // neu): Sie wird am NAMEN wiedererkannt, den sie im Heimnetz traegt — nicht geraten.
+        // (Der Uebergang: eine Kopplung direkt am Heim-PC. Sein verschluesselter Zuhoerer fuer
+        // den Mac traegt denselben Namen und zaehlt hier nicht.)
         guard let name = stationsname,
-              let wieder = liste.first(where: { $0.name == name && $0.aufgeloest }) else { return }
+              let wieder = liste.first(where: { $0.name == name && $0.aufgeloest && !$0.nurFuerDenMac })
+        else { return }
         if wieder.ueberDenMac != ueberDenMac {
             ueberDenMac = wieder.ueberDenMac
             Verbindungsgedaechtnis.ueberDenMac = wieder.ueberDenMac
@@ -227,11 +270,20 @@ final class Verbindungsstand: ObservableObject {
 
     /// Koppelt mit der sechsstelligen Zahl. Gibt zurück, ob es geklappt hat, und den Satz,
     /// der gezeigt wird.
+    ///
+    /// **Seit Entscheid 118 nur mit dem Mac, verschlüsselt:** `ziel` ist `https`, `mac` wahr.
+    /// `angeheftet` ist der Abdruck aus dem Koppelschein (QR-Code, Nähe) — dann nimmt das iPad
+    /// schon im Handschlag nur dieses Zertifikat an. Beim Abtippen lernt es das Zertifikat und
+    /// merkt es nur nach der Gegenprobe (`Macanbindung.pruefeKopplung`).
     @MainActor
     func koppele(adresse ziel: URL, name: String?, ueberDenMac mac: Bool = false,
-                 zahl eingabe: String) async -> (Bool, String) {
+                 angeheftet: String? = nil, zahl eingabe: String) async -> (Bool, String) {
         guard let zahl = Kopplungszahl(eingabe) else {
             return (false, "Die Zahl hat genau sechs Ziffern.")
+        }
+        guard mac, ziel.scheme?.lowercased() == "https" else {
+            return (false, "Seit dieser Fassung koppelt das iPad nur mit dem Mac, verschlüsselt — "
+                    + "am Mac «iPad koppeln» öffnen.")
         }
         let anfrage: Anfrage
         do {
@@ -241,8 +293,11 @@ final class Verbindungsstand: ObservableObject {
         } catch {
             return (false, "Die Anfrage liess sich nicht bauen (\(error.localizedDescription)).")
         }
+        Maclotse.gemeinsam.lerne(ziel, erwartet: angeheftet)
         let antwort = await sender.fuehreAus(anfrage, basis: ziel)
+        let gesehen = Maclotse.gemeinsam.beendeLernen(ziel)
         let ergebnis: Kopplungsergebnis
+        let neuerAbdruck: String
         switch antwort {
         case .keineAntwort(let satz, _):
             return (false, satz)
@@ -252,7 +307,18 @@ final class Verbindungsstand: ObservableObject {
             } catch let f as Serverfehler {
                 return (false, f.satz)
             } catch {
-                return (false, "Die Antwort der HomeStation war nicht lesbar.")
+                return (false, "Die Antwort des Mac war nicht lesbar.")
+            }
+            // DIE GEGENPROBE (Entscheid 118): Der Mac nennt sein Zertifikat, und es ist das,
+            // das das iPad sah — und, mit Schein, das aus dem Schein. Sonst wird nichts gemerkt.
+            if case .verbunden = ergebnis {
+                switch Macanbindung.pruefeKopplung(antwort: daten, gesehen: gesehen,
+                                                   angeheftet: angeheftet) {
+                case .gut(let a): neuerAbdruck = a
+                case .abgelehnt(let satz): return (false, satz)
+                }
+            } else {
+                neuerAbdruck = ""
             }
         }
         switch ergebnis {
@@ -265,10 +331,8 @@ final class Verbindungsstand: ObservableObject {
                     // naechsten Versuch mit derselben Zahl scheitern zu lassen, ohne Grund.
                     // WO ES DIE NEUE GIBT, haengt an der Strecke: Unterwegs zeigt sie der
                     // Mac («iPad koppeln», Entscheid 63), zuhause die HomeStation.
-                    let wo = Strecke(basis: ziel) == .tailscale
-                        ? "am Mac unter «iPad koppeln»" : "an der HomeStation"
-                    return (false, fehler + " Die Zahl ist damit verbraucht — \(wo) eine neue "
-                            + "holen.")
+                    return (false, fehler + " Die Zahl ist damit verbraucht — am Mac unter «iPad "
+                            + "koppeln» eine neue holen.")
                 }
             } else {
                 Schluesselbund.loesche()
@@ -277,9 +341,12 @@ final class Verbindungsstand: ObservableObject {
             adresse = ziel
             stationsname = name
             ueberDenMac = mac
+            abdruck = neuerAbdruck
             Verbindungsgedaechtnis.adresse = ziel
             Verbindungsgedaechtnis.name = name
             Verbindungsgedaechtnis.ueberDenMac = mac
+            Verbindungsgedaechtnis.abdruck = neuerAbdruck
+            heftAn()
             erreichbar = true
             grund = nil
             aussetzer.vergiss()
@@ -290,7 +357,8 @@ final class Verbindungsstand: ObservableObject {
                 await self?.nachsenden()
                 await self?.ladeMappe()
             }
-            return (true, satz ?? "Verbunden.")
+            return (true, (satz ?? "Verbunden.") + " Zeichen des Mac: "
+                    + Fingerabdruck.zeichen(neuerAbdruck) + " — gleich wie am Mac?")
         }
     }
 
@@ -308,6 +376,8 @@ final class Verbindungsstand: ObservableObject {
         adresse = nil
         stationsname = nil
         ueberDenMac = false
+        abdruck = nil
+        heftAn()
         erreichbar = nil
         grund = nil
         aussetzer.vergiss()
@@ -342,6 +412,15 @@ final class Verbindungsstand: ObservableObject {
     @MainActor
     func pruefe() async {
         guard let basis = adresse else {
+            bestimmeZustand()
+            return
+        }
+        // NIE UNVERSCHLUESSELT UEBER DEN MAC (Entscheid 118): Eine Kopplung von vorher bleibt
+        // stehen, aber es geht nichts darueber — die Zeile sagt warum, die Skizzen warten.
+        guard anbindung.darfSprechen else {
+            erreichbar = false
+            grund = anbindung.satz
+            aussetzer.vergiss()
             bestimmeZustand()
             return
         }
@@ -430,8 +509,9 @@ final class Verbindungsstand: ObservableObject {
             Task { @MainActor [weak self] in await self?.nachsenden() }
             return nil
         }
-        return "Geparkt. Die HomeStation ist gerade nicht erreichbar; die Skizze geht von "
-            + "selbst hinaus, sobald sie es wieder ist."
+        let wer = ueberDenMac ? "Der Mac ist" : "Die HomeStation ist"
+        return "Geparkt. \(wer) gerade nicht erreichbar; die Skizze geht von selbst hinaus, "
+            + "sobald es wieder geht."
     }
 
     /// Schickt, was im Fach wartet — eine Skizze nach der anderen, **jede durch das Tor**

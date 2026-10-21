@@ -1177,6 +1177,28 @@ kommt danach in die offene Mappe am Mac. Ist keine Mappe am Mac offen, läuft al
 dass Holen, Auftrag und die alte Mappe dort zusammen funktionieren; das iPad, das die Mappe vom Mac holt (nächster
 Schritt, der Weg ist im Plan beschrieben).
 
+### Das iPad arbeitet über den Mac, verschlüsselt
+
+**Was gebaut ist:** Das iPad spricht nicht mehr mit dem Heim-PC, sondern immer mit dem Mac — zuhause wie unterwegs. Die
+Mappe liegt am Mac; das iPad holt dort die Bilder und legt seine Skizzen hinein, und die Knotenansicht sieht eine neue
+Skizze sofort. Die Leitung zwischen iPad und Mac ist verschlüsselt: Der Mac hat dafür ein eigenes Zertifikat (einen
+digitalen Ausweis) im Schlüsselbund, und das iPad merkt sich beim Koppeln dessen Fingerabdruck. Danach spricht es mit
+keinem anderen Gerät, das sich als dieser Mac ausgibt.
+
+**Was der Architekt sieht:** Am Mac «iPad koppeln» — QR-Code, Zahl, ein Schloss und das «Zeichen des Mac». Am iPad
+«Mit dem Mac koppeln»; nach dem Koppeln steht in der Zeile oben ein Schloss und «über den Mac, verschlüsselt». Ist der
+Mac weg, sagt das iPad das in einem Satz; Skizzen warten auf dem iPad, bis er wieder da ist.
+
+**Begründung des Wegs:** Sprach das iPad weiter mit dem Heim-PC, sähe es dort eine andere Mappe als der Mac — zwei
+Stände derselben Arbeit. Verschlüsselt wird zuerst, weil über diese Leitung jetzt die ganze Mappe geht. Das Zertifikat
+kommt über den QR-Code oder die Nähe ans iPad, also über einen Weg, den ein Fremder im selben WLAN nicht umschreiben
+kann. Ein iPad, das noch direkt mit dem Heim-PC gekoppelt ist, arbeitet in dieser Fassung weiter, sagt aber, dass es die
+Mappe am Mac so nicht sieht; ab der nächsten Fassung soll der direkte Weg ganz wegfallen. Gerechnet wird mit einer Mappe
+am Mac in der Knotenansicht, nicht vom iPad aus.
+
+**Offen:** die Probe an Mac und iPad (koppeln, Skizze, Bild, ohne Mac); das Abschalten des direkten Wegs in der nächsten
+Fassung.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |

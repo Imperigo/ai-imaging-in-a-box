@@ -132,9 +132,10 @@ final class IpadzeileTests: XCTestCase {
     // ------------------------------------------------------------- «Wer rechnet wo»
 
     func testDieSaetzeZumWeg() {
-        XCTAssertTrue(Ipadweg.direkt.satz.contains("Das iPad spricht direkt mit dem Heim-PC"))
-        XCTAssertFalse(Ipadweg.direkt.satz.contains("reicht das iPad durch"))
-        XCTAssertTrue(Ipadweg.ueberMac.satz.contains("Der Mac reicht das iPad durch"))
+        // SEIT ENTSCHEID 118 ist der direkte Weg der Uebergang, und ueber den Mac kommt die Mappe.
+        XCTAssertTrue(Ipadweg.direkt.satz.contains("direkt mit dem Heim-PC (Übergang)"))
+        XCTAssertFalse(Ipadweg.direkt.satz.contains("arbeitet über"))
+        XCTAssertTrue(Ipadweg.ueberMac.satz.contains("Das iPad arbeitet über diesen Mac, verschlüsselt"))
         XCTAssertEqual(Ipadweg.direkt.wort, "direkt")
         XCTAssertEqual(Ipadweg.ueberMac.wort, "über diesen Mac")
         XCTAssertEqual(Ipadzeile.weg(bericht: nil, vermittlung: nil), .direkt,

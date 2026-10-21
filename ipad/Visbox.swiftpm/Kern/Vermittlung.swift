@@ -366,13 +366,20 @@ public struct Vermittlerstand: Sendable {
     /// Wie oft hier schon ein Gerät gekoppelt hat — damit der Mac sich merken kann, dass es
     /// geschah (ohne die Zahl oder das Kennwort zu kennen).
     public private(set) var erfolgreicheKopplungen = 0
+    /// Der Fingerabdruck des Zertifikats, mit dem der Mac dem iPad antwortet (Entscheid 118) —
+    /// er geht bei `POST /api/verbinden` als `zugang.zertifikat_sha256` mit, damit das iPad
+    /// prüfen kann, dass es den Mac sah, der antwortet (dieselbe Gegenprobe wie zwischen Mac
+    /// und Heim-PC, `Verbindungsergebnis.lies`). `nil`: kein Zertifikat — dann nennt die
+    /// Antwort keinen Zugang, und ein iPad ab 118 koppelt nicht.
+    public var abdruck: String?
 
     /// Der Satz bei Erfolg — wortgleich mit `SATZ_VERBUNDEN` des Servers.
     public static let satzVerbunden =
         "Verbunden. Benutzer und Kennwort kommen nur dieses eine Mal über die Leitung."
 
-    public init(zugang: Vermittlerzugang) {
+    public init(zugang: Vermittlerzugang, abdruck: String? = nil) {
         self.zugang = zugang
+        self.abdruck = abdruck.flatMap(Fingerabdruck.normalisiere)
     }
 
     /// Eine neue Zahl zeigen. Die alte ist damit tot.
@@ -482,10 +489,15 @@ public struct Vermittlerstand: Sendable {
         letzterKoppelgrund = nil
         letzteAnfrage = jetzt
         erfolgreicheKopplungen += 1
-        return .json(.objekt(["verbunden": .wahrheit(true),
-                              "benutzer": .text(zugang.anmeldung.benutzer),
-                              "kennwort": .text(zugang.anmeldung.kennwort),
-                              "satz": .text(Vermittlerstand.satzVerbunden)]))
+        var antwort: [String: JSONWert] = ["verbunden": .wahrheit(true),
+                                           "benutzer": .text(zugang.anmeldung.benutzer),
+                                           "kennwort": .text(zugang.anmeldung.kennwort),
+                                           "satz": .text(Vermittlerstand.satzVerbunden)]
+        if let abdruck {
+            antwort["zugang"] = .objekt(["weg": .text(Macanbindung.zugangsweg),
+                                         "zertifikat_sha256": .text(abdruck)])
+        }
+        return .json(.objekt(antwort))
     }
 }
 
@@ -626,7 +638,9 @@ public enum Vermittlerlage: Equatable, Sendable {
     public var satz: String {
         switch self {
         case .aus:
-            return "Aus — im Menü «iPad» einschalten, wenn ein iPad mitkommt."
+            // SEIT ENTSCHEID 118 arbeitet das iPad immer ueber den Mac — «iPad koppeln» schaltet
+            // das Anbieten ein (verschluesselt).
+            return "Aus — «iPad koppeln» im Menü «iPad» schaltet es ein (verschlüsselt)."
         case .startet:
             return "Der Mac bietet sich dem iPad im WLAN an …"
         case .wartet(nil):
@@ -693,9 +707,11 @@ public enum Vermittlerangebot {
     /// Woran das iPad den Mac erkennt (`GefundenerDienst.ueberDenMac`).
     public static let vermittler = "mac"
 
-    /// Die TXT-Einträge, in fester Reihenfolge.
+    /// Die TXT-Einträge, in fester Reihenfolge. **`tls=1` seit Entscheid 118** (21.10.2026):
+    /// Der Mac spricht mit dem iPad nur noch verschlüsselt, und das iPad koppelt nur mit einem
+    /// Mac, der das sagt (`Suche.waehleMac`).
     public static var eintraege: [(String, String)] {
-        [("fassung", fassung), ("vermittler", vermittler)]
+        [("fassung", fassung), ("vermittler", vermittler), ("tls", "1")]
     }
 
     /// Die TXT-Einträge in Leitungsform (RFC 6763 §6): je Eintrag ein Längenbyte und

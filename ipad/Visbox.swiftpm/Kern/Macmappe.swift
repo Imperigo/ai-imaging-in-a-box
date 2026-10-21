@@ -56,6 +56,10 @@ public struct Macmappe: Codable, Equatable, Sendable {
     public var knoten: JSONWert?
     /// Die Aufträge, die aus dieser Mappe bestellt wurden — nur ihre Bilder kommen zurück.
     public var auftraege: [String]
+    /// Die Skizzen, die das iPad **an den Mac** schickte (Schritt 4, Entscheid 118) — die Dateien
+    /// unter `ipad/`. Fehlt in einer Mappe von vorher (dann `nil`, und so wird es auch
+    /// geschrieben: ohne das Feld).
+    public var skizzen: [Macskizze]?
 
     public init(name: String, herkunft: Mappenherkunft, angelegt: String, heimMappe: String? = nil,
                 knoten: JSONWert? = nil, auftraege: [String] = []) {
@@ -261,10 +265,25 @@ public enum Mappenkern {
     /// nur sie stehen in der Liste.
     public static func knotenAntwort(_ mappe: Macmappe, glbDa: Bool, skizzenDa: Set<String>) -> JSONWert {
         var felder = mappe.knoten?.alsObjekt ?? [:]
-        let skizzen = (felder["skizzen"]?.alsListe ?? []).filter {
+        let geholt = (felder["skizzen"]?.alsListe ?? []).filter {
             guard let name = $0["name"]?.alsText else { return false }
             return skizzenDa.contains(name)
         }
+        // DIE SKIZZEN VOM IPAD (Schritt 4) in der Form von `knotenweg.skizzen_der_mappe` — der
+        // Knoten «Skizze vom iPad» sieht sie sofort. Standpunkt: der der Mappe (den eines
+        // Bildes rechnet der Heim-PC an seiner Kopie; am Mac gibt es keine).
+        let vomIpad = (mappe.skizzen ?? []).filter { skizzenDa.contains($0.name) && $0.stand != "verworfen" }
+            .map { s -> JSONWert in
+                .objekt(["name": .text(s.name), "titel": .null, "erzeugt": .text(s.erzeugt),
+                         "ueber": s.ueber.map(JSONWert.text) ?? .null, "stand": .text(s.stand),
+                         "bemerkung": s.bemerkung.map(JSONWert.text) ?? .null,
+                         "standpunkt": .text("mappe")])
+            }
+        // DIE NEUESTE ZUERST, wie am Heim-PC — STABIL: Gleich alte behalten ihre Reihenfolge.
+        let skizzen = vomIpad.isEmpty ? geholt : (geholt + vomIpad).enumerated().sorted { a, b in
+            let (ea, eb) = (a.element["erzeugt"]?.alsText ?? "", b.element["erzeugt"]?.alsText ?? "")
+            return ea != eb ? ea > eb : a.offset < b.offset
+        }.map { $0.element }
         felder["skizzen"] = .liste(skizzen)
         felder["name"] = .text(mappe.name)
         felder["mappe"] = .text(mappe.name)
@@ -284,9 +303,23 @@ public enum Mappenkern {
         return .objekt(felder)
     }
 
-    /// Der Weg einer Skizze in der Mappe (`heim/<name>`) — `nil` für einen unsicheren Namen.
+    /// Der Weg einer Skizze in der Mappe — `heim/<name>` für eine vom Heim-PC geholte,
+    /// `ipad/<datei>` (unverändert) für eine, die das iPad an den Mac schickte (Schritt 4);
+    /// `nil` für einen unsicheren Namen.
     public static func skizzenweg(_ name: String) -> String? {
-        sichererWeg(name).map { heimordner + "/" + $0 }
+        guard let sicher = sichererWeg(name) else { return nil }
+        let teile = sicher.split(separator: "/", omittingEmptySubsequences: false)
+        if teile.count == 2, teile[0] == Substring(Macskizzen.ordner), istFlacherName(String(teile[1])) {
+            return sicher
+        }
+        return heimordner + "/" + sicher
+    }
+
+    /// Die Namen aller Skizzen der Mappe — geholte und die vom iPad. Welche davon als Datei da
+    /// sind, prüft der Mac (`skizzenDa` in `knotenAntwort`).
+    public static func skizzennamen(_ mappe: Macmappe) -> [String] {
+        (mappe.knoten?["skizzen"]?.alsListe ?? []).compactMap { $0["name"]?.alsText }
+            + (mappe.skizzen ?? []).map { $0.name }
     }
 
     // ------------------------------------------------------------- der Graph

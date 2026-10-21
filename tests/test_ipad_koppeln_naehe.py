@@ -147,11 +147,13 @@ def test_ueber_die_naehe_geht_nur_der_schein_nie_das_kennwort():
     assert ".send(" not in _code(NAEHESUCHER)
 
 
-def test_der_schein_hat_genau_adresse_zahl_und_frist():
+def test_der_schein_hat_genau_adresse_zahl_frist_und_abdruck():
+    """Seit Entscheid 118 (21.10.2026) dazu der Fingerabdruck des Zertifikats des Mac — das,
+    was das iPad anheftet. Nie Kennwort oder Benutzer."""
     kern = _code(NAEHEKERN)
-    assert 'public static let felder = ["adresse", "zahl", "bis"]' in kern
+    assert 'public static let felder = ["adresse", "zahl", "bis", "abdruck"]' in kern
     text = _funktion(kern, "public var text: String")
-    assert "adresse=" in text and "&zahl=" in text and "&bis=" in text
+    assert "adresse=" in text and "&zahl=" in text and "&bis=" in text and "&abdruck=" in text
     assert not re.search(r"kennwort|passwort|benutzer", text, re.I)
 
 

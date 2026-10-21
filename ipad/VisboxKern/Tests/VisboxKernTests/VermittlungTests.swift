@@ -631,7 +631,7 @@ final class VermittlungTests: XCTestCase {
         let aus = Vermittlerlage.bestimme(angeboten: false, bereit: true, fehler: "x",
                                           stand: stand, jetzt: 1)
         XCTAssertEqual(aus, .aus)
-        XCTAssertEqual(aus.satz, "Aus — im Menü «iPad» einschalten, wenn ein iPad mitkommt.")
+        XCTAssertEqual(aus.satz, "Aus — «iPad koppeln» im Menü «iPad» schaltet es ein (verschlüsselt).")
         XCTAssertEqual(aus.alsZeilenstand(), .wartet(satz: aus.satz))
         XCTAssertFalse(aus.satz.contains("123"), "eine Zahl, die niemand erreicht, steht nicht da")
         XCTAssertEqual(Vermittlerlage.bestimme(angeboten: true, bereit: true, fehler: nil,
@@ -652,7 +652,7 @@ final class VermittlungTests: XCTestCase {
 
     func testDasIpadErkenntDenMacAmEintrag() {
         let eintraege = GefundenerDienst.txtEintraege(Vermittlerangebot.txt)
-        XCTAssertEqual(eintraege, ["fassung": "1", "vermittler": "mac"])
+        XCTAssertEqual(eintraege, ["fassung": "1", "vermittler": "mac", "tls": "1"], "tls seit Entscheid 118")
         let ueberMac = GefundenerDienst(name: "m", rechner: "192.0.2.5", anschluss: 8731,
                                         eintraege: eintraege)
         XCTAssertTrue(ueberMac.ueberDenMac)
