@@ -2025,3 +2025,20 @@ sind noch gezeichnete Farbverläufe, bis der Heim-PC die verkleinerten Bilder li
 der Render-Knoten vorerst die erste, ein Bild je Stimmung gibt es über den Varianten-Knoten; Kameras im 3D-Fenster ziehen
 geht noch nicht. Geprüft an Proben im Browser des Prüfrechners; was der Heim-PC aus diesen Bestellungen rechnet, zeigt
 die Messung dort.
+
+**Der Varianten-Knoten zeigt seine Bilder (21.10.2026, Blatt 36).** Bisher sah man die Bilder einer Varianten-Bestellung
+erst im Bildvergleich. Jetzt trägt der Varianten-Knoten selbst eine Bildzeile: ein Daumenbild, daneben Stimmung und
+Standpunkt, «2 von 6» und zwei Pfeile zum Blättern. Zwei Bilder nebeneinander hätten in der schmalen Karte die
+Mindestgrösse von 96 Bildpunkten unterschritten, und ein Streifen zum Wischen hätte mit dem Rad gestritten, das die
+Knotenansicht zoomt. Die Zeile ist in jedem Zustand gleich hoch — noch nichts bestellt, wartet, rechnet, fehlgeschlagen
+(der Grund steht in der Kurzhilfe) oder fertig —, damit der Knoten nicht springt. Gezeigt wird nur das KI-Bild; das
+Grundbild mit Licht gilt für alle Varianten gleich und steht am Render-Knoten. Ein «Vorschau»-Bild trägt seine Marke
+wie am Render-Knoten. Ein Klick zeigt das Bild gross; dort blättert man und kann eine Variante **wählen** — ein Schritt,
+den «Rückgängig» zurücknimmt, und den Claude und der Assistent im Stand des Knotens lesen. Dabei fielen drei Fehler auf,
+die mitbehoben sind: Im Stilblatt fehlte seit dem Vortag eine Klammer, wodurch ein ganzer Teil des Aussehens still
+ausfiel (unter anderem die Marke «Vorschau» und die Zeile «Grundlage»); die grosse Ansicht des Rasters im Bildvergleich
+lag beim Zoomen ausserhalb des Fensters; und die Höhe des Varianten-Knotens war 26 Bildpunkte zu knapp, die Knöpfe
+lagen halb unter dem Rand. Die Achse «Stimmungen» rollt jetzt, statt bei acht Stimmungen die letzten abzuschneiden.
+Ehrlich gesagt: Geprüft an Proben und im Browser des Prüfrechners mit einer nachgestellten Brücke; am Mac und mit echten
+Bildern des Heim-PC noch nicht gesehen. Offen ist, wohin eine gewählte Variante weitergeht (aufs Blatt, in den
+Bildvergleich) — das ist ein eigener Entscheid.

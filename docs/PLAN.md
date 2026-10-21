@@ -8100,7 +8100,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Heim-PC nimmt die Variante ohne Modell an (§150, C76)
   - [ ] Am Mac prüfen: Fokus, Zoomen, Variante gegen den umgebauten Heim-PC (owner)
   - [ ] Owner-Entscheid: Felder im Knoten eckiger (dritte Rundung) — oder so lassen
-  - [ ] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch)
+  - [x] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch) *(21.10.2026: Blatt 36 gezeichnet, nach Empfehlung A–C gebaut — ein Daumen mit Blättern, gross, wählen; KO-Zweig `claude/kosmovis-varianten-daumen`, Kopie nachgezogen; am Mac unbestätigt)*
+    - [ ] Wohin geht eine gewählte Variante (Blatt, Bildvergleich)? Eigener Entscheid (owner)
+    - [ ] «Alle freigeben» ragt neben «N Bilder bestellen» über den Kartenrand (ui, schon vorher so)
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
 - [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58
@@ -8219,7 +8221,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Messung am Heim-PC: auf-20261021-306 (local) — je Stimmung, Kamera-Art und Materialwahl ein Lauf wie aus den Knoten, Grundlage je Stand, Live-Vorschau = Auftrag, Vorschaubilder (W)
   - [ ] W Vorschaubilder (Himmel 8, Materialien 11) aus 306 in beide Programme, mit Quelle und Prüfsumme im NOTICE (wir, nach 306)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
-  - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
+  - [x] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen) *(21.10.2026: rollt in derselben Höhe, das Rad darin zoomt die Leinwand nicht)*
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
   - [ ] KosmoOrbit: neue Kamera-Knoten auf «Auto» als Vorgabe (integrator, nach dem Einspielen)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)

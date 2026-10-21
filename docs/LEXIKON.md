@@ -8478,10 +8478,32 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 ---
 
+**Bildzeile mit Blättern** — Eine Zeile in einem Knoten, die **ein** Daumenbild zeigt und daneben zwei Pfeile, mit
+denen man zum vorherigen oder nächsten Bild wechselt, dazu «2 von 6». Sie ist in jedem Zustand gleich hoch — leer,
+wartend, fehlgeschlagen oder fertig —, damit der Knoten nicht springt. *Im Projekt:* der Varianten-Knoten zeigt so die
+Bilder seiner Bestellung (Blatt 36); zwei Bilder nebeneinander hätten die Mindestgrösse von 96 Bildpunkten unterschritten.
+
+**Gewählte Variante** — Das eine Bild einer Varianten-Bestellung, das der Architekt mit «Diese Variante wählen»
+markiert. Die Wahl steht im Projekt (ein Schritt, den «Rückgängig» zurücknimmt) und gilt dem gesehenen Bild, nicht nur
+der Kombination aus Standpunkt und Stimmung: Eine neue Bestellung hebt sie darum auf. *Im Projekt:* ein blauer Ring und
+ein Haken am Daumenbild; der Stand, den Claude und der Assistent lesen, nennt sie.
+
+**Portal (in der Oberfläche)** — Ein Weg, ein Fenster der Oberfläche an einer anderen Stelle der Seite anzuzeigen, als
+es im Programm steht — meist ganz oben über allem. Nötig, wenn das Fenster sonst in einer verschobenen oder vergrösserten
+Fläche sässe und mit ihr wanderte. *Im Projekt:* die grosse Ansicht eines Varianten-Bildes und die des Rasters im
+Bildvergleich liegen so über der Knotenansicht; vorher lag die des Rasters beim Zoomen ausserhalb des Fensters.
+
+**Verschachtelte Stilregel** — Eine Regel des Stilblatts (wie etwas aussieht), die **in** einer anderen steht und dann
+nur innerhalb von deren Elementen gilt. Fehlt in einer Regel die schliessende Klammer, werden alle folgenden Regeln
+ungewollt zu solchen Unterregeln und greifen nirgends — ohne Fehlermeldung. *Im Projekt:* so fiel am 21.10.2026 ein
+ganzer Teil des Aussehens der Knotenansicht aus (Zeile «Grundlage», Marke «Vorschau», die neuen Daumen); eine Probe
+zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daumen.py`).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |

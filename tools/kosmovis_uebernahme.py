@@ -328,6 +328,9 @@ PROBEN = (
     # Bauplan «Neue Knoten» (21.10.2026, Schritte C/D/E): die Koerper von Stimmung, Kamera,
     # Oberflaeche, Material und Farbpalette und was sie bestellen — nur Vis-Teile und der Vertrag.
     "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx",
+    # Blatt 36 (21.10.2026): die Bildzeile des Varianten-Knotens (Daumen, Blaettern, gross, waehlen)
+    # und die gleiche Kartenhoehe in jedem Zustand — nur Vis-Befehle, darum hier gruen.
+    "apps/kosmo-orbit/test/kv-varianten-daumen.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.
