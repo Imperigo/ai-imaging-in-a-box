@@ -8428,5 +8428,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] auf-20261021-317 (local): Gegenprobe modus, Bildeingang wirklich angekommen, Deckungsschwelle aus Augenurteil
 - [ ] Owner (über den Hauptstrang): womit sieht eine Variante das Grundlagenbild — Empfehlung M2 als Vorgabe für die Demo, Bildeingang Messweg, Modell mit Bildeingang nach der Demo messen
 - [ ] 20-%-Regel «Das Haus fuellt nur …» liest weiter den Anteil mit Platte — Frage an den Hauptstrang (Empfehlung: nach 317 auf das Haus allein umstellen)
-- [x] Entscheid 126: M2 mit Himmel als Vorgabe für Varianten (§209, C126) — fehlen die Schalter, gilt die Vorgabe; «aus» gewinnt; Variante auf Grundlage ohne Himmel bleibt gültig mit Satz — gebaut, am Gerät unbestätigt
+- [x] Entscheid 126: M2 mit Himmel als Vorgabe für Varianten (§210, C126) — fehlen die Schalter, gilt die Vorgabe; «aus» gewinnt; Variante auf Grundlage ohne Himmel bleibt gültig mit Satz — gebaut, am Gerät unbestätigt
 - [ ] Gegenprobe Entscheid 126 am Heim-PC (local, Messauftrag des Strangs heim3)

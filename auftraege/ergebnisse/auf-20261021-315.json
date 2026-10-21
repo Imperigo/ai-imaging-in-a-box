@@ -1,0 +1,175 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-315",
+ "worker": "local",
+ "rang": 2,
+ "befunde_bezug": [
+  "R48 vis-1792595787-962e13 (Grundlage)",
+  "R48 vis-1792595849-002a06 (Variante, liegengelassen)"
+ ],
+ "protokoll": "74 §204",
+ "status": "ok",
+ "zusammenfassung": "EINBAU belegt: In der Test-App R48 (echte Bruecke) rechnet «Variante erzeugen» (Vorschau) nach «Grundlage rendern» jetzt durch, das Bild steht am Render-Knoten (LAUF 2, 'bestanden', VORSCHAU; Bildschirmfoto). (1) Grundlage vis-1792612636-c52464 (gl-91dcfa672c74b763, 3 Cycles-Bilder), Variante vis-1792612709-f7d368: done 19:59:36Z, kein model.* im Variantenordner, geometry.path leer; render-result grundlage {id gl-91dcfa672c74b763, wiederverwendet true}, lieferstatus geliefert, 3 images; Journal 'verarbeitet — 3 Bild(er) geschrieben' und 'AUS DEM ZWISCHENSPEICHER, nicht gerechnet: … (3 von 3 Kameras …)'. Eine Zeile 'angenommen' schreibt der Abholer nicht; eine Warnung 'Variante ohne Modelldatei' kam nicht, weil die Bruecke das Modell des Grundlage-Auftrags derselben Ablage fand (Weg b). (2) Testbau: Grundlage gl-51aca6365879514d (sSE, nNW, 960x600, 64 Samples), zwei Varianten ohne Modell (Standardprompt; 'evening, warm light'), beide done, je 2 Bilder, grundlage wiederverwendet true; Abholerzeit 18,8 s bzw. 18,3 s (ab running 19,8 bzw. 19,2 s); beide 'AUS DEM ZWISCHENSPEICHER, nicht gerechnet', kein Blender-Lauf, keine eigenen beauty_/tiefe_-Dateien in den Variantenordnern; beide lesen dieselben Dateien der Grundlage (<grundlage-job>/<kamera>/beauty_.png, tiefe_.exr, tiefe_norm.png), deren Zeitstempel unveraendert blieben; abgeleitete Vorschau-Tiefe und -Schoenbild beider Varianten byte-gleich. (3) Unbekannte Grundlage gl-0123456789abcdef: error nach 13 s, kein Bildmodell geladen, Satz woertlich im Ergebnis. Auffaellig: am Knoten «Bildvergleich» erscheint statt des Bildes nur ein kleines Platzhaltersymbol; kosmo_blick mit Bild zeigt die Bildkacheln schwarz, das Fenster-Bildschirmfoto zeigt sie richtig. Code nicht geaendert.",
+ "beendet": "2026-10-21T20:06:00Z",
+ "koepfe": {
+  "stand": "main 42819844 (Fassung 0.3.22, enthaelt 46ad8d4a mit dem Fix «Variante ohne Modell»); git pull --ff-only: bereits aktuell.",
+  "dienst_und_abholer_neu_gestartet": "ja: visbox-flaeche um 19:55:37Z neu gestartet, /api/hallo meldet fassung 0.3.22; der Abholer laeuft als Einmal-Dienst je Timer-Durchgang (30 s) und war beim Neustart nicht aktiv, jeder Durchgang ist ein frischer Prozess auf 0.3.22.",
+  "zeitpunkt": "2026-10-21 19:55Z bis 20:06Z",
+  "weg": "(1) Test-App R48 wie im Rezept: eigenes Xvfb, eigener dbus, eigener Netz-Namensraum, Wegwerf-Profil, MCP-Relais; Bedienung nur ueber die MCP-Werkzeuge der App (kosmo_blick, kosmo_maus: Klick auf [render-grundlage], danach [render-ausfuehren] mit Guete Vorschau); Bruecke nur als Client, Token aus der Konfiguration gelesen und nicht ausgegeben. (2)/(3) POST /jobs an dieselbe Bruecke als Client, Varianten nur mit scene (kein model-Feld).",
+  "gpu_vor_jedem_lauf": "1356 MiB, 14-39 W, 0 %; Ollama leer; Leistungsgrenze 400 W unveraendert; Laeufe strikt nacheinander.",
+  "geometrie": "(1) das Modell, das die Test-App schickt (IFC des Beispielprojekts der App); (2)/(3) synthetisch aus tools/make_test_glb.py (baue_glb) wie 303/309: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "fremder_auftrag": "In der Ablage wartet seit dem Morgen ein fremder Auftrag auf Freigabe (awaiting_approval); nicht angefasst, er rechnet nicht und wurde fuer die Leerlaufpruefung uebergangen."
+ },
+ "1_test_app": {
+  "grundlage": {
+   "job_id": "vis-1792612636-c52464",
+   "status": "done",
+   "grundlage_id": "gl-91dcfa672c74b763",
+   "wiederverwendet": false,
+   "images": 3,
+   "lieferstatus": "geliefert",
+   "journal": "vis-1792612636-c52464: verarbeitet — Nur Grundlage: 3 Cycles-Bild(er), kein KI-Schritt.",
+   "zeit": "Klick 19:57:16Z, done 19:58:09Z"
+  },
+  "variante": {
+   "job_id": "vis-1792612709-f7d368",
+   "status": "done",
+   "endzeit": "2026-10-21T19:59:36Z",
+   "bestellung": {
+    "geometry": {
+     "path": "",
+     "format": "ifc"
+    },
+    "vis.grundlage": "gl-91dcfa672c74b763",
+    "vis.guete": "vorschau",
+    "vis.backbone": "z-image-turbo",
+    "requested_engine": "ki"
+   },
+   "model_im_variantenordner": false,
+   "ordnerinhalt": [
+    "job.json",
+    "render-scene.json",
+    "render-result.json",
+    "befund.json",
+    "3 x <kamera>.png",
+    "3 x <kamera>__vorschau.png"
+   ],
+   "journal_woertlich": [
+    "Starting kosmo-abholer.service - KosmoVis-Abholer (holt Renderauftraege der Bruecke ab) — ein Durchgang...  [19:58:40Z]",
+    "Karte vor dem Durchgang: frei — Auslastung 0 %, 1356 MiB belegt.",
+    "vis-1792612709-f7d368: verarbeitet — 3 Bild(er) geschrieben.",
+    "Wache: kein Stillstand (27 Blicke, laengste Pause 11 s)",
+    "AUS DEM ZWISCHENSPEICHER, nicht gerechnet: Eingang, Übersicht, Innenraum (3 von 3 Kameras, gerechnet unter Blender 5.2.2 LTS). Die Geometriestufen dieser Kameras stammen aus einem frueheren Lauf mit denselben Einstellungen.",
+    "Geometrie: 0.7730 (schlechteste von 3 Kameras, beste 0.9935)",
+    "KEINE STARTWERT-AUSWAHL: Eingang, Übersicht, Innenraum — das behaltene Bild ist der ERSTE Wurf und nicht der beste. Nur ein Seed angefordert.",
+    "Geladen: Bildmodell 1x, Tiefenschaetzer 1x (je Backbone einmal — mehr waere der Rueckfall, s. EinmalGeladen).",
+    "Finished kosmo-abholer.service - KosmoVis-Abholer (holt Renderauftraege der Bruecke ab) — ein Durchgang.  [19:59:37Z]"
+   ],
+   "journal_hinweis": "Eine eigene Zeile 'angenommen' gibt es im Abholer-Journal nicht; die Annahme zeigt sich daran, dass der Auftrag verarbeitet und nicht liegengelassen wurde (Zaehler liegengelassen 0). Keine Warnung 'Variante ohne Modelldatei': Die Bruecke fand das Modell des Grundlage-Auftrags in derselben Ablage (Weg b), darum blieb der Weg 'aus der Grundlage allein' hier unbenutzt.",
+   "grundlage": {
+    "id": "gl-91dcfa672c74b763",
+    "wiederverwendet": true
+   },
+   "lieferstatus": "geliefert",
+   "images": 3,
+   "timings_s": {
+    "Eingang": 21.2,
+    "Übersicht": 15.9,
+    "Innenraum": 16.5,
+    "gesamt": 53.7
+   },
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true
+   },
+   "spitze": "27587 MiB / 150 W (Takt 10 s)"
+  },
+  "bild_am_knoten": true,
+  "knotenansicht": "Render-Knoten: 'Variante erzeugen' FERTIG, 'Grundlage gl-91dcfa… · 3 Kameras', Startwert, Guete Vorschau; darunter Kachel 'LAUF 2 · 21:59' (Ortszeit) mit Bild des Hauses, 'bestanden', 'VORSCHAU', 'VERLAUF 2 Laeufe'.",
+  "bildschirmfoto": "auftraege/ergebnisse/auf-20261021-315-bilder/knotenansicht-variante.png (App-Fenster, keine Pfade oder Hosts)",
+  "grundlage_neue_felder": "Die neu abgelegte Grundlage gl-91dcfa672c74b763 traegt 'bestand' und 'modellstand' (Punkt d)."
+ },
+ "2_deckungsgleich": {
+  "grundlage": {
+   "job_id": "vis-1792612949-1cf049",
+   "id": "gl-51aca6365879514d",
+   "wiederverwendet": false,
+   "zeit_ab_running_s": 10.08,
+   "spitze": "1443 MiB / 66 W",
+   "images": [
+    "sSE.png",
+    "nNW.png"
+   ]
+  },
+  "varianten": {
+   "V1_standardprompt": {
+    "job_id": "vis-1792612981-257bb8",
+    "status": "done",
+    "grundlage": {
+     "id": "gl-51aca6365879514d",
+     "wiederverwendet": true
+    },
+    "lieferstatus": "geliefert",
+    "images": 2,
+    "zeit_abholer_s": 18.8,
+    "zeit_ab_running_s": 19.75,
+    "zeit_ab_post_s": 39.86,
+    "spitze": "27587 MiB / 358 W",
+    "model_im_ordner": false
+   },
+   "V2_evening_warm_light": {
+    "job_id": "vis-1792613026-4d02e6",
+    "status": "done",
+    "grundlage": {
+     "id": "gl-51aca6365879514d",
+     "wiederverwendet": true
+    },
+    "lieferstatus": "geliefert",
+    "images": 2,
+    "zeit_abholer_s": 18.3,
+    "zeit_ab_running_s": 19.22,
+    "zeit_ab_post_s": 45.84,
+    "spitze": "27587 MiB / 357 W",
+    "model_im_ordner": false
+   }
+  },
+  "beide_gerechnet": true,
+  "depth_beauty_dieselben_dateien": true,
+  "dateien_relativ_zur_ausgabewurzel": [
+   "vis-1792612949-1cf049/<kamera>/beauty_.png",
+   "vis-1792612949-1cf049/<kamera>/tiefe_.exr",
+   "vis-1792612949-1cf049/<kamera>/tiefe_norm.png"
+  ],
+  "beleg": "Beide Varianten lesen die Kamerastufen aus derselben abgelegten Grundlage (_grundlagen/gl-51aca6365879514d.json nennt diese Dateien); in den Variantenordnern liegen keine eigenen beauty_/tiefe_-Dateien; Zeitstempel der Grundlage-Dateien vor und nach beiden Varianten gleich; die abgeleiteten _vorschau/tiefe.png und _vorschau/schoenbild.png sind je Kamera in V1 und V2 byte-gleich (sha256).",
+  "neuer_blender_lauf": false,
+  "journal_beide": "AUS DEM ZWISCHENSPEICHER, nicht gerechnet: sSE, nNW (2 von 2 Kameras, gerechnet unter Blender 5.2.2 LTS). Die Geometriestufen dieser Kameras stammen aus einem frueheren Lauf mit denselben Einstellungen.",
+  "nebenbefund": "Geometrie 0.0000/0.2937 (V1) und 0.2082/0.4509 (V2) mit 'RAHMUNG ZU WEIT' — Rahmung der Auto-Kamera bei diesem Testbau, nicht Gegenstand dieses Auftrags."
+ },
+ "3_unbekannte_grundlage": {
+  "job_id": "vis-1792613090-0049ee",
+  "http": 200,
+  "endzustand": "error",
+  "zeit_ab_post_s": 13.06,
+  "satz_woertlich": "Grundlage 'gl-0123456789abcdef' ist hier nicht bekannt. Bitte zuerst «Grundlage rendern» (oder einen Lauf ohne vis.grundlage) — neu gerechnet wird nicht still, weil die Variante sonst nicht deckungsgleich waere.",
+  "enthaelt_nicht_bekannt": true,
+  "enthaelt_grundlage_rendern": true,
+  "journal": [
+   "vis-1792613090-0049ee: fehler — Verarbeitung gescheitert: AbholerError: Grundlage 'gl-0123456789abcdef' ist hier nicht bekannt. Bitte zuerst «Grundlage rendern» (oder einen Lauf ohne vis.grund…",
+   "! Variante ohne Modelldatei: Das Modell des Auftrags, der die Grundlage gl-0123456789abcdef gerechnet hat, liegt nicht in dieser Ablage. Gerechnet wird aus der … (+77 Zeichen)",
+   "Geladen: Bildmodell 0x, Tiefenschaetzer 0x (je Backbone einmal — mehr waere der Rueckfall, s. EinmalGeladen)."
+  ],
+  "blender_oder_bildmodell": "keines (GPU blieb bei 1356 MiB / 17 W)"
+ },
+ "einbau": {
+  "belegt": true,
+  "grund": "(1) zeigt das Bild der Variante am Render-Knoten der Test-App R48."
+ },
+ "auffaelligkeiten": [
+  "Knoten «Bildvergleich»: statt des Variantenbildes nur ein kleines Platzhaltersymbol (Bild nicht geladen); QA-Text und VORSCHAU-Marke stehen dort.",
+  "kosmo_blick mit Bild gibt die Bildkacheln der Knoten schwarz wieder; das Bildschirmfoto des Fensters zeigt sie richtig (Test-App mit Software-Grafik).",
+  "Variante der Test-App: Im Ausgabeordner des Abholers liegt eine modell.glb (aus dem IFC des Grundlage-Auftrags gewandelt), im Auftragsordner der Bruecke kein model.*. Bei den Varianten aus (2) liegt in keinem der beiden Ordner ein Modell.",
+  "Der Abholer schreibt keine Zeile 'angenommen'; der Pfad 'aus der Grundlage allein' (Warnung 'Variante ohne Modelldatei' bei bekannter Grundlage) kam in (1) und (2) nicht vor, weil die Grundlage-Auftraege samt Modell in der Ablage lagen.",
+  "angewandt.modus.abweichung true (bestellt image_edit, gerechnet txt2img) wie in 314."
+ ]
+}
