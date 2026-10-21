@@ -8154,6 +8154,10 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] Messauftrag auf-20261021-310 (local): dieselben vier Fragen und das Sperrzonen-Bild im Bau nachmessen
     - [ ] Einspielen claude/kosmovis-kopf (CSS dringend) und claude/kosmovis-stimmungen bei Int 1 (integrator)
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
+  - [x] Befund Demolauf 0.3.16: offene Karten überleben den Wechsel der Ansicht (Ablage in der Mac-App, Rückgabe an die
+    neu geladene Seite, verworfen nur mit Ablehnen oder nach 4 h, beides mit Satz an Claude; unpassende Karten weist
+    «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+    - [ ] Geräteprobe: vorschlagen → Visbox-Seite → zurück → Karte steht → Anwenden wirkt (owner)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)

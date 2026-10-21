@@ -2428,7 +2428,6 @@
   margin: var(--k-s2) 0 0;
   font-size: var(--k-t-sm);
 }
-
 /* Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Zeile «Grundlage» am Render-Knoten — vier Zeilen
    in der Vorbehaltsgroesse (Register `grundlage`, 58 px). «neu würfeln» erbt Groesse und
    Zeilenhoehe, damit die vierte Zeile nicht hoeher wird als die anderen. */
