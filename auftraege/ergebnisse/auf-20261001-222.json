@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-222",
  "worker": "local",
- "status": "erledigt — A DONE (alle Schalter bekannt, 192/192 registriert, 1 Modell, brush laeuft mit Unterordnern), aber Verortung 11.86 m (schlechter als lose in 217); B DONE 0.113 m, -huffman default in jeder ffmpeg-Zeile; GPU-Merkmalssuche laeuft; C Verdeckung greift (siehe C2); D nicht da; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A DONE (alle Schalter bekannt, 192/192 registriert, 1 Modell, brush laeuft mit Unterordnern), aber Verortung 11.86 m (schlechter als lose in 217); B DONE 0.113 m, -huffman default in jeder ffmpeg-Zeile; GPU-Merkmalssuche laeuft; C Verdeckung greift (siehe C2); D nicht da; kein Code geaendert",
  "staende": {
   "kosmoprepare": "28ac92a (git pull --ff-only von 1b2d624; HEAD = 28ac92a)",
   "colmap": "COLMAP 4.2.1, Kopf von «colmap -h»: «(Commit Unknown on Unknown with CUDA, std hash maps)»",

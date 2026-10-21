@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-232",
  "worker": "local",
- "status": "erledigt — B1, B3, B5, B7 gefahren wie in 228 (B7 mit kosmoprepare_standort als Huellen-Vorstufe), dieselben drei Unterlagen (Pruefsummen gleich wie 225/228), ueber den Werkzeugserver (.venv-server); Pruefsummen vorher = nachher; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — B1, B3, B5, B7 gefahren wie in 228 (B7 mit kosmoprepare_standort als Huellen-Vorstufe), dieselben drei Unterlagen (Pruefsummen gleich wie 225/228), ueber den Werkzeugserver (.venv-server); Pruefsummen vorher = nachher; kein Code geaendert",
  "staende": {
   "kosmoprepare": "10fec5d (git pull --ff-only: bereits aktuell; 9a0323c ist Vorfahre); einziger unversionierter Eintrag der alte target/, vorher = nachher",
   "python": "Werkzeuge ueber stdio, Server mit /usr/bin/python3, wechselt selbst nach .venv-server (wie 228); Aufrufer = .venv-server/bin/python"

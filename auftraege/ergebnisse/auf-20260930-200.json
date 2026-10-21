@@ -1,7 +1,8 @@
 {
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260930-200",
- "status": "erledigt",
+ "status": "ok",
+ "zusammenfassung": "erledigt",
  "beendet": "2026-09-30T18:51:53Z",
  "stand": {
   "app_commit": "e40a606ac",

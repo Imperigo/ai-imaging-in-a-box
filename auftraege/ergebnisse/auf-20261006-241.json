@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-241",
  "worker": "local",
- "status": "erledigt — A bis D gelaufen, alle Rueckgaben 0. Lot aus dem Boden (124 Kameras), Kameras 12.59° daneben; Massstab aus der Owner-Angabe Kamerahoehe 1.75 m ±0.1 m; Boden nach der Verortung 0.31° gegen die Waagrechte. Gegenprobe: Massstab genau doppelt, Lot unveraendert. Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A bis D gelaufen, alle Rueckgaben 0. Lot aus dem Boden (124 Kameras), Kameras 12.59° daneben; Massstab aus der Owner-Angabe Kamerahoehe 1.75 m ±0.1 m; Boden nach der Verortung 0.31° gegen die Waagrechte. Gegenprobe: Massstab genau doppelt, Lot unveraendert. Kein Code geaendert, nichts installiert, nichts committet.",
  "A_stand": {
   "kosmoprepare": "e7ab173 (HEAD nach git pull --ff-only auf main, vorher 4267a8e; dazwischen c6e89a6). git status vorher = nachher (nur der alte target/)",
   "log_oneline": "e7ab173 Behelfsverortung: Lot aus dem Boden, Massstab aus einem genannten Mass",

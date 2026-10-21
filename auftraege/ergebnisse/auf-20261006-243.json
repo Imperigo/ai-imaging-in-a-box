@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-243",
  "worker": "local",
- "status": "erledigt — Kette wie 241 neu gefahren (Owner-Ja), B und C gelaufen, alle Rueckgaben 0. lot_grad jetzt 1.13 (241: 8.89); der Lauf meldet einen Knick von 2.21° (Hinweis «der Boden ist nicht eben»); 5 Kameras verworfen. Boden: je Kamera waagrecht (mittlere Normale 0.36° gegen z), die 241-Messung mit EINER Ebene durch alle Bodenpunkte kippt dagegen quer auf 10.75°. Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Kette wie 241 neu gefahren (Owner-Ja), B und C gelaufen, alle Rueckgaben 0. lot_grad jetzt 1.13 (241: 8.89); der Lauf meldet einen Knick von 2.21° (Hinweis «der Boden ist nicht eben»); 5 Kameras verworfen. Boden: je Kamera waagrecht (mittlere Normale 0.36° gegen z), die 241-Messung mit EINER Ebene durch alle Bodenpunkte kippt dagegen quer auf 10.75°. Kein Code geaendert, nichts installiert, nichts committet.",
  "vorher": "gestoppt (Arbeitsordner fehlte), Owner-Ja zum Neurechnen",
  "owner_entscheid": "laut Home-PC-Worker: Owner am 06.10.2026 im Chat «Ja, neu rechnen», Zwischendaten bis zum Ende der Verortungs-Reihe behalten. Diese Hilfs-Sitzung hat den Entscheid vom Home-PC-Worker uebernommen, nicht selbst vom Owner.",
  "A_stand": {

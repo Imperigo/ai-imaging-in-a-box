@@ -9,7 +9,8 @@
   "104a",
   "104b"
  ],
- "status": "erledigt mit Befunden — Vorschau rechnet wie bestellt (z-image-turbo, 8 Schritte, ein Startwert, KI 1024x640 -> 1600x992); Ziel <= 120 s je Lauf nur bei ruhigem Rechner erreicht (103-105 s), unter CPU-Last nicht (167 s). Abbrueche 6a/6b richtig (Kamera des Bilds, bytegleich, Endstand 'abgebrochen'); der Abbruch-Satz steht aber nur im Abholer-Protokoll, nicht am Laufzettel. 6c: Zwilling am Quader NICHT erkannt (3 Randpixel). 5: abgewiesen, Status bleibt aber 'queued'.",
+ "status": "ok",
+ "zusammenfassung": "erledigt mit Befunden — Vorschau rechnet wie bestellt (z-image-turbo, 8 Schritte, ein Startwert, KI 1024x640 -> 1600x992); Ziel <= 120 s je Lauf nur bei ruhigem Rechner erreicht (103-105 s), unter CPU-Last nicht (167 s). Abbrueche 6a/6b richtig (Kamera des Bilds, bytegleich, Endstand 'abgebrochen'); der Abbruch-Satz steht aber nur im Abholer-Protokoll, nicht am Laufzettel. 6c: Zwilling am Quader NICHT erkannt (3 Randpixel). 5: abgewiesen, Status bleibt aber 'queued'.",
  "beendet": "2026-10-20T16:12:00Z",
  "koepfe": {
   "stand": "main 63c84d2 (Visbox 0.3.2), Flaeche vom LW neu gestartet, Abholer per Timer 30 s. Kein Code geaendert, keine Schwelle, keine Grundlagen-Datei angefasst, Dienste nicht umgestellt.",

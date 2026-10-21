@@ -5,7 +5,8 @@
  "rang": 56,
  "folgt_auf": "auf-20261007-254",
  "owner_entscheid": "E191",
- "status": "erledigt (A, B, C). OWLv2 lief ohne Aktualisierung. Ergebnis: OWLv2 base trifft die nackte Hand der filmenden Person praktisch nicht — 1 von 12 Hand-Bildern (left 25, teilweise, Score 0.116, nur bei Schwelle 0.1), front 0 von 10. Nur gemessen; nichts eingebaut, Kette nicht gefahren, nichts installiert, im Klon nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (A, B, C). OWLv2 lief ohne Aktualisierung. Ergebnis: OWLv2 base trifft die nackte Hand der filmenden Person praktisch nicht — 1 von 12 Hand-Bildern (left 25, teilweise, Score 0.116, nur bei Schwelle 0.1), front 0 von 10. Nur gemessen; nichts eingebaut, Kette nicht gefahren, nichts installiert, im Klon nichts committet.",
  "bilder_herkunft": {
   "lage": "Der Arbeitsordner C aus 249 ist geloescht. Verwendet: Arbeitsordner C_ohne aus 247 (images/<ansicht>/, je 240 Bilder, 1086 x 1086), nur gelesen.",
   "gleichheit": "Die Bilder entstehen in der Kette aus derselben Owner-Aufnahme mit denselben Einstellungen (fps 2, max_frames 240, Linsen gemessen 194.4 Grad, Nahtfehler 0.5468) wie in 249. Pruefsumme ueber alle 960 Bilder ist in vier unabhaengig erzeugten Ordnern gleich (247 C, 247 C_neu, 247 C_ohne, 256 D): die Bildung ist bitgleich wiederholbar, also sind es dieselben 80 Bilder wie in 251/253/254/255. Zusaetzlich stimmen die Lagen der Person/Hand mit den 251-Kaesten ueberein (angesehen).",

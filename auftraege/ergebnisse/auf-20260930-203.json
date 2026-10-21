@@ -1,7 +1,8 @@
 {
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260930-203",
- "status": "teilweise",
+ "status": "fehler",
+ "zusammenfassung": "teilweise",
  "status_kurz": "Auftragsweg bricht bei materialize ab (Rueckgabe 1, 0 SVG): die Bruecke laesst bei allen 11 Decken ohne PredefinedType die role weg (gewollt, «statt floor zu behaupten»), der Konsument verlangt role in {floor, ceiling, roof} und verwirft den ganzen Payload. Blatt darum nur ueber einen gekennzeichneten BEHELFSLAUF (gleiche Bruecken-Datei, Decken-Liste geleert, kein Code geaendert) gesehen.",
  "beendet": "2026-09-30T19:50:00Z",
  "stand": "KosmoPublish 2cd0696 beim Lauf (45c4b46 ist Vorfahre); danach nur der Golden-Commit aus 202 (5f0832e) dazu",

@@ -1,7 +1,8 @@
 {
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260930-198",
- "status": "teilweise",
+ "status": "fehler",
+ "zusammenfassung": "teilweise",
  "beendet": "2026-09-30T13:51:35Z",
  "stand": {
   "kosmoprepare": "da8d03d (enthaelt e6d803a)",

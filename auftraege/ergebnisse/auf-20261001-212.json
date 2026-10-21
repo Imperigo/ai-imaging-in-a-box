@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-212",
  "worker": "local",
- "status": "gestoppt nach Teil A — Werkzeuge fehlen (laut Auftrag nichts installiert)",
+ "status": "fehler",
+ "zusammenfassung": "teilweise: gestoppt nach Teil A — Werkzeuge fehlen (laut Auftrag nichts installiert)",
  "staende": {
   "kosmoprepare": "d416b59 (git pull --ff-only, Kopf = d416b59)",
   "blender": "Blender 5.2.2 LTS (Snap) — fuer B/C nicht gebraucht",

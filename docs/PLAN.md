@@ -8147,10 +8147,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
   - [x] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste wie Claude (Werkzeugschleife `frage_mit_werkzeugen` am Heim-PC, Schritte in der Mac-App als Urheber «assistent», Gesprächsregeln nur in `Assistentengespraech`, Karten «Vorschlag des Assistenten · A-n» im Gesprächsfeld) — gebaut, am Gerät unbestätigt (§175, C103)
   - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§175, C103)
-    - [x] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC — beantwortet; Befunde B1–B6 (§185, C111)
-    - [x] B1: Stile im Bau wieder oben (fehlende Klammer in `vis-visual.css`), Rahmen am SVG-Knopf «Node löschen» — gebaut, am Gerät unbestätigt (§185, C111)
-    - [x] B3–B6: Systemsatz geschärft, Kennungen und erfundene Render-Angaben im Kern abgewiesen, Schlussantwort berichtigt — gebaut, am Gerät unbestätigt (§185, C111)
-    - [x] Die acht Stimmungen in den Werkzeugbeschreibungen (claude/kosmovis-stimmungen) — gebaut, am Gerät unbestätigt (§185, C111)
+    - [x] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC — beantwortet; Befunde B1–B6 (§186, C112)
+    - [x] B1: Stile im Bau wieder oben (fehlende Klammer in `vis-visual.css`), Rahmen am SVG-Knopf «Node löschen» — gebaut, am Gerät unbestätigt (§186, C112)
+    - [x] B3–B6: Systemsatz geschärft, Kennungen und erfundene Render-Angaben im Kern abgewiesen, Schlussantwort berichtigt — gebaut, am Gerät unbestätigt (§186, C112)
+    - [x] Die acht Stimmungen in den Werkzeugbeschreibungen (claude/kosmovis-stimmungen) — gebaut, am Gerät unbestätigt (§186, C112)
     - [ ] Messauftrag auf-20261021-310 (local): dieselben vier Fragen und das Sperrzonen-Bild im Bau nachmessen
     - [ ] Einspielen claude/kosmovis-kopf (CSS dringend) und claude/kosmovis-stimmungen bei Int 1 (integrator)
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
@@ -8211,7 +8211,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Wahl am Bild (owner, über die Zentrale nach 300): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern (Empfehlung des LW nach 300: W-4) — **entschieden: Entscheid 117a, W-4 nebeneinander** (Owner per Klickfrage, 21.10.2026; Blatt 35); kein Vertragsfeld, kein Kernumbau
   - [x] W-4 Knotenteil (Vis-Werkzeug, beide Programme): Render-Knoten bestellt `render.passes ['schoenbild']` mit (nicht «Grundlage rendern», «nur Cycles», Strichzeichnung, Varianten-Knoten, Skizze); Poll legt `<kamera>__schoenbild.png` an den Lauf; Klick zeigt KI-Bild und Grundbild gross mit Umschalter «nebeneinander · nur KI · nur Grundbild» (KTabs, Vorgabe nebeneinander, Knoten-Parameter `bildAnsicht`); am 184-px-Knoten Rückfall aufs KI-Bild mit Beschriftung (Vorgabe UI-Worker: je Bild ≥ 96 px, Karte wächst nicht); Attrappe der Brücke liefert die Ebene; Mac-Mappe holt das Grundbild mit — gebaut, am Gerät unbestätigt (§178, C106); KosmoOrbit-Zweig `claude/kosmovis-nebeneinander` beim Integrator (Int 1) zum Einspielen
   - [ ] W-4 am Gerät (owner, über die Zentrale): Mac-App — Variante erzeugen, Beschriftung am Knoten, Klick gross, Umschalter, Mappe ohne Heim-PC; Heim-PC liefert `schoenbild` auch auf wiederverwendeter Grundlage (gelesen, nicht gemessen)
-  - [ ] Nebeneinander direkt am Knoten nur mit breiterem Render-Knoten (heute 184 px Körper) — Frage an UI/Owner, nicht gebaut
+  - [x] Nebeneinander direkt am Knoten nur mit breiterem Render-Knoten (heute 184 px Körper) — Frage an UI/Owner, nicht gebaut — **entschieden: Entscheid 119**, Render-Knoten 212 px (Körper 196), nur er, nur in der Breite; gebaut, am Gerät unbestätigt (§185, C111)
+  - [ ] Render-Breite einspielen bei Int 1 (integrator, nach der Bildfreigabe E167) und am Mac sehen (owner)
+  - [ ] «Grundbild mit Licht» am 96-px-Bild gekürzt? Empfehlung «Grundbild» am Knoten (ui, §185)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
   - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)

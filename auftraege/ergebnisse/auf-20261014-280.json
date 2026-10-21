@@ -8,7 +8,8 @@
   "79",
   "81"
  ],
- "status": "erledigt — Die Deckung haelt (93.42 % gegen 93.46 % in M2), und die Deckel-Reste sind weg: Ueber 0.3 Einheiten bleibt kein Dreieck (M2: 189 Dreiecke, 12.4 % der Flaeche), die laengste Kante ist 0.273. In den 9 Bildern ist kein Fremdkoerper aus Deckel-Resten mehr (M2: 3 Bilder). Die QA besteht hoeher (0.971/0.948/0.919). Der strenge Riegel faellt bei nNW knapp: geom_iou 0.8486 gegen die Schwelle 0.85 (M2 0.811), dazu fehlt weiter die Gegenprobe. bereinigung steht jetzt in urteil.kontext.netz. Einen Massstab-Satz gibt es nicht, weil die Verortung keinen Block massstab hat.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Die Deckung haelt (93.42 % gegen 93.46 % in M2), und die Deckel-Reste sind weg: Ueber 0.3 Einheiten bleibt kein Dreieck (M2: 189 Dreiecke, 12.4 % der Flaeche), die laengste Kante ist 0.273. In den 9 Bildern ist kein Fremdkoerper aus Deckel-Resten mehr (M2: 3 Bilder). Die QA besteht hoeher (0.971/0.948/0.919). Der strenge Riegel faellt bei nNW knapp: geom_iou 0.8486 gegen die Schwelle 0.85 (M2 0.811), dazu fehlt weiter die Gegenprobe. bereinigung steht jetzt in urteil.kontext.netz. Einen Massstab-Satz gibt es nicht, weil die Verortung keinen Block massstab hat.",
  "beendet": "2026-10-14T12:05:00Z",
  "koepfe": {
   "abholer": "ai-imaging main edde216 (enthaelt 2083372 «Deckel-Grenze halbiert»; DECKEL_KANTE_REL = 0.025)",

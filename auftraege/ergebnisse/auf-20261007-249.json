@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261007-249",
  "worker": "local",
- "status": "erledigt — B: keiner der vier Werte (0.025, 0.05, 0.08, 0.12) maskiert irgendetwas, in keiner Ansicht; es gibt darum keine Vorschau und kein Rot. C (Fall «kein Wert»): Kette ueber das Werkzeug MIT Maske laeuft seit 26080c0 durch, ohne mask_path: 960/960 registriert, 1 Modell, colmap false. Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt — B: keiner der vier Werte (0.025, 0.05, 0.08, 0.12) maskiert irgendetwas, in keiner Ansicht; es gibt darum keine Vorschau und kein Rot. C (Fall «kein Wert»): Kette ueber das Werkzeug MIT Maske laeuft seit 26080c0 durch, ohne mask_path: 960/960 registriert, 1 Modell, colmap false. Kein Code geaendert, nichts installiert, nichts committet.",
  "A_stand": {
   "kosmoprepare": "26080c0 (git pull --ff-only: af46dae → 26080c0); 26080c0 ist HEAD",
   "log_oneline": "26080c0 Maske: COLMAP bekommt den Ordner nur, wenn eine Maske entstand (auf-20261006-247)",

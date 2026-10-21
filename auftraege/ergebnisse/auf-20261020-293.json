@@ -17,7 +17,8 @@
   "C81",
   "C83"
  ],
- "status": "erledigt mit Befunden — 8/8 Stimmungen mit den getauschten Vorgabebildern gerechnet: ruhiger Verlaufshintergrund, AgX, Belichtung je Stimmung wie gesetzt, an keinem Haus ein voll weisser Bildpunkt (0,0 % nachgezaehlt). Gelaende ohne Material, Standpunkte = Render (<0,001 m), 960x600 exakt, 409 woertlich, fehlende Textur (Kopie) woertlich, Tiefe bitgleich. Befunde: qa.ueberstrahlt_anteil fehlt bei vis.skip true; Haus verschwimmt bei winter/morgen/nebel/bedeckt im Hintergrund (Kontrast <= 9 Grauwerte, mit Belichtung nicht behebbar); Vorschau auf 480-px-Grundlage zeigt kein Haus; geom_iou_grund 'kein Bildpunkt gemeinsam' auch dort, wo das Haus deckungsgleich ist; Schrift-Artefakte bleiben trotz Prompt-Zusatz.",
+ "status": "ok",
+ "zusammenfassung": "erledigt mit Befunden — 8/8 Stimmungen mit den getauschten Vorgabebildern gerechnet: ruhiger Verlaufshintergrund, AgX, Belichtung je Stimmung wie gesetzt, an keinem Haus ein voll weisser Bildpunkt (0,0 % nachgezaehlt). Gelaende ohne Material, Standpunkte = Render (<0,001 m), 960x600 exakt, 409 woertlich, fehlende Textur (Kopie) woertlich, Tiefe bitgleich. Befunde: qa.ueberstrahlt_anteil fehlt bei vis.skip true; Haus verschwimmt bei winter/morgen/nebel/bedeckt im Hintergrund (Kontrast <= 9 Grauwerte, mit Belichtung nicht behebbar); Vorschau auf 480-px-Grundlage zeigt kein Haus; geom_iou_grund 'kein Bildpunkt gemeinsam' auch dort, wo das Haus deckungsgleich ist; Schrift-Artefakte bleiben trotz Prompt-Zusatz.",
  "beendet": "2026-10-20T21:05:00Z",
  "koepfe": {
   "stand": "main 9624145 (Visbox 0.3.6, Merge nach 4adf539); visbox-flaeche lief neu gestartet, Abholer per Timer 30 s. Kein Code geaendert, keine Datei ins Repo ausser diesem Ergebnis und den Bildern, Mappe des Dienstes nicht angefasst.",

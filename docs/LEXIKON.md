@@ -6062,7 +6062,7 @@ sich daran hält, ist aber nicht sicher. Darum prüft das Programm selbst, was s
 ausgeführt oder eine Antwort gezeigt wird: Eine Kennung, die das Modell nirgends gelesen haben kann, gilt als geraten und
 wird zurückgewiesen; eine Angabe, die niemand nannte, gilt als erfunden. Das Modell bekommt den Grund und darf
 korrigieren. *Im Projekt:* `_pruefe_angaben` und `_berichtige_antwort` in `assistent.py` (Befunde aus Messauftrag 305,
-Protokoll 74 §185).
+Protokoll 74 §186).
 
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
@@ -8570,8 +8570,15 @@ Sonne und Schatten sind echt gerechnet, Oberflächen nur so, wie sie modelliert 
 «Cycles-Bild» oder, als Datei, «Schönbild» (`<kamera>__schoenbild.png`). *Wozu:* Das KI-Bild ist ein Entwurf und nimmt
 das Licht nicht verlässlich mit (Messungen 298 und 300); daneben zeigt das Grundbild, wie Licht und Schatten wirklich
 fallen. *Im Projekt:* Entscheid 117a (W-4): Der Render-Knoten bestellt es bei jedem KI-Bild mit; ein Klick auf das Bild
-zeigt KI-Bild und Grundbild gross nebeneinander, umschaltbar «nebeneinander · nur KI · nur Grundbild». Im schmalen
-Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil zwei Bilder dort unter 96 px schrumpften.
+zeigt KI-Bild und Grundbild gross nebeneinander, umschaltbar «nebeneinander · nur KI · nur Grundbild». Seit Entscheid 119
+ist der Render-Knoten breiter, und beide Bilder stehen schon am Knoten nebeneinander; vorher stand dort nur das KI-Bild
+mit der Beschriftung «KI-Bild · + Grundbild», weil zwei Bilder unter 96 px geschrumpft wären.
+
+**Innenbreite (eines Knotens)** — Wie breit der Inhalt einer Knotenkarte ist: die Karte ohne den schmalen Rand links
+und rechts (je 8 Bildpunkte). *Wozu:* Was in den Knoten passt — zwei Bilder nebeneinander, ein Knopf neben dem anderen —,
+hängt an dieser Zahl. *Im Projekt:* Die meisten Knoten sind 200 Bildpunkte breit, innen 184; der Render-Knoten seit
+Entscheid 119 212, innen 196, damit KI-Bild und Grundbild je 96 Bildpunkte bekommen. Das Programm fragt die Breite je
+Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit der richtigen Kante rechnen.
 
 
 ---
@@ -8580,6 +8587,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **Veraltet (ein Bild am Render-Knoten)** um den Ladestand erweitert; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
@@ -8587,7 +8595,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
-| 2026-10-21 | Ergaenzt aus den Befunden von Messauftrag 305 (Protokoll 74 §185): **CSS (Stilregeln)**, **Offene Klammer (im CSS)**, **SVG (Vektorgrafik im Browser)**, **Prüfung im Kern statt Bitte** |
+| 2026-10-21 | Ergaenzt aus den Befunden von Messauftrag 305 (Protokoll 74 §186): **CSS (Stilregeln)**, **Offene Klammer (im CSS)**, **SVG (Vektorgrafik im Browser)**, **Prüfung im Kern statt Bitte** |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
 | 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §177): **Grundbild (Grundbild mit Licht)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |

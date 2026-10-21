@@ -3,7 +3,8 @@
  "auftrag_id": "auf-20261008-264",
  "worker": "local",
  "rang": 51,
- "status": "erledigt: A, B, C1–C4 gerechnet. Kein Code geaendert, nichts installiert, installierte App nicht beruehrt, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt: A, B, C1–C4 gerechnet. Kein Code geaendert, nichts installiert, installierte App nicht beruehrt, nichts committet.",
  "A_staende": {
   "ai_imaging": "f443e9b (enthaelt 7eb5020 F6); git pull --ff-only: «Bereits aktuell»",
   "kosmoorbit": "4b868e845 (Integrator-Zweig nach fetch; enthaelt 1dc7e6f09 und danach 27ea93962 «IFC: Moebel tragen den Stil ihres Materials»)",
