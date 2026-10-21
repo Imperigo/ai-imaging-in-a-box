@@ -151,3 +151,32 @@ def test_die_mac_app_schickt_die_koepfe_beim_laden():
     assert 'public static let wegModellLaden = "/knoten/modell-laden"' in kern
     assert "case .modellLaden:" in quelle
     assert "zusatz: Mappenkern.ladekoepfe(mappe)" in quelle
+
+
+# ================================================ der Stand nach dem Zurückstellen (307 B1)
+
+def test_der_stand_des_ladens_veraltet_wenn_eine_andere_mappe_offen_ist(server, start):
+    """Befund ``auf-20261021-307`` B1: Der Stand ist einer für alle Geräte. Ist nach dem Laden
+    eine andere Mappe offen, sagt er ``veraltet`` mit Satz — gelöscht wird nichts."""
+    s = _Server(server, start)
+    laden = _lade(s, "Neubau.glb", _glb())
+    assert laden["veraltet"] is False and laden["zuletzt_geoeffnet"] is True
+    assert "satz_veraltet" not in laden
+    # ZURUECKSTELLEN wie der Helfer: die Start-Mappe wieder oeffnen.
+    assert s.get("/api/projekt?ordner=" + str(start))[0] == 200
+    laden = s.get("/knoten/modell-laden")[1]["laden"]
+    assert laden["veraltet"] is True and laden["zuletzt_geoeffnet"] is False
+    assert laden["satz_veraltet"] == server.SATZ_LADEN_VERALTET
+    assert laden["mappe"] == "Neubau" and laden["stand"] == "geladen", "nichts geht verloren"
+    assert "mappe_pfad" not in laden and str(start.parent) not in str(laden), "kein Plattenpfad"
+    # WIEDER DIE GELADENE OEFFNEN: dann gilt er wieder.
+    assert s.get("/api/projekt?ordner=" + str(start.parent / "Neubau"))[0] == 200
+    assert s.get("/knoten/modell-laden")[1]["laden"]["veraltet"] is False
+
+
+def test_ein_laden_aus_der_mappe_am_mac_veraltet_nicht(server, start):
+    """Es war nie die offene Mappe — ``zuletzt_geoeffnet`` bleibt ``false``, ohne Satz."""
+    s = _Server(server, start)
+    laden = _lade(s, "Hof.glb", _glb(), MAC)
+    assert laden["zuletzt_geoeffnet"] is False and laden["veraltet"] is False
+    assert "satz_veraltet" not in laden

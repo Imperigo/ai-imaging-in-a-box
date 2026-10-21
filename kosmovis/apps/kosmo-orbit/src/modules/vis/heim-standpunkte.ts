@@ -31,6 +31,11 @@ export interface HeimStandpunkt {
   /** Weltkoordinaten des Heim-PCs: Meter, Z OBEN (nicht glTF). */
   auge: [number, number, number];
   blick_auf: [number, number, number];
+  /**
+   * Objektiv-Shift des Heim-PCs (Blender `shift_y`, Anteil der Sensorbreite 36 mm), wenn die Kamera
+   * «senkrecht» steht — `blick_auf` liegt dann auf Augenhöhe. Fehlt bei älteren Antworten.
+   */
+  shift_y?: number;
   vollstaendig: boolean;
   begruendung: string;
 }

@@ -5,7 +5,7 @@
  * Die Knotenansicht traegt den Werkzeugsatz (`modules/vis/ki-werkzeuge.ts`, woertlich aus
  * KosmoOrbit). Diese Datei haengt ihn so an, dass die Mac-App ihn bedienen kann:
  *
- *  - `window.visboxKi` — `werkzeuge`, `rufe`, `entscheide`, `offene`, `verwirf`,
+ *  - `window.visboxKi` — `werkzeuge`, `rufe`, `entscheide`, `offene`, `verwirf`, `stelleWieder`,
  *    `rueckgaengigKi`, `kiVerlauf`, seit Stufe 6 `blickMausWerkzeuge`, `blick`, `maus`. Die App ruft sie mit `callAsyncJavaScript` und liest die
  *    Antwort als JSON-Text (`alsText`), damit nichts an der Umwandlung von WebKit haengt.
  *  - jedes Ereignis (Taetigkeit, Karte, entschieden, kiverlauf) geht an
@@ -14,7 +14,11 @@
  *  - Strg+Z nimmt nur die eigenen Schritte zurueck (Entscheid 114): die Wache des Werkzeugsatzes
  *    (`kiVerlaufWache`) wird HIER gesetzt — in KosmoOrbit haelt sie `kosmo-coop.ts`.
  *  - Wechselt das Dokument (eine andere Mappe), fallen offene Karten und der KI-Verlauf weg
- *    (`verwirf`); ebenso, wenn die Seite neu laedt.
+ *    (`verwirf`, mit «VERWORFEN» an die App).
+ *  - **Laedt die Seite neu, bleiben die Karten** (Strang Karten, 21.10.2026): Die Seite meldet nur
+ *    «weg». Die Mac-App haelt die Karten (`Kizentrale`, `Kartenablage`) und gibt sie der neu
+ *    angemeldeten Seite zurueck (`stelleWieder`) — die rechnet jede im jetzigen Graph neu durch.
+ *    Anlass: Claudes Karte verschwand beim Wechsel zur Visbox-Seite, still.
  *
  * Im Browser ohne App (Heim-PC, Entwicklungsserver) fehlt `webkit.messageHandlers`: Die
  * Schnittstelle steht trotzdem, die Ereignisse gehen nirgends hin.
@@ -33,13 +37,17 @@
  */
 import { setzeVerlaufWache, useProject } from '../../kosmo-orbit/src/state/project-store';
 import {
+  behandle,
   kiSchnittstelle,
   kiSchritte,
   kiVerlaufWache,
   offeneVorschlaege,
   verwirfVorschlaege,
+  werkzeugNameFuer,
+  VIS_PAKET,
   type KiEreignis,
   type KiUrheber,
+  type KiVorschlag,
 } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
 import {
   BLICK_PARAMETER,
@@ -157,6 +165,50 @@ export async function maus(urheber: KiUrheber | undefined, argumente: unknown): 
   return { ...r, text: [`${kopf} ${folgen}`, ...rest].join('\n') };
 }
 
+// ---------------------------------------------------------------------------------- Karten zurueck
+
+/** Was `stelleWieder` je Karte sagt: liegt sie wieder, oder warum nicht (der Satz des Probelaufs). */
+export interface Wiedergabe {
+  kennung: string;
+  liegt: boolean;
+  text: string;
+}
+
+/** Ein Vorschlag, wie die App ihn zurueckgibt (die Form des Ereignisses «karte»), als Aufruf. */
+function alsAufruf(v: KiVorschlag): { kennung: string; werkzeug: string; argumente: unknown; urheber: KiUrheber } {
+  const urheber: KiUrheber = v.urheber === 'assistent' ? 'assistent' : 'claude';
+  const schritte = Array.isArray(v.schritte) ? v.schritte : [];
+  if (v.werkzeug === VIS_PAKET || schritte.length > 1) {
+    return {
+      kennung: v.kennung,
+      werkzeug: VIS_PAKET,
+      argumente: { schritte: schritte.map((s) => ({ befehl: werkzeugNameFuer(s.commandId), argumente: s.params ?? {} })) },
+      urheber,
+    };
+  }
+  const erster = schritte[0];
+  return { kennung: v.kennung, werkzeug: erster ? werkzeugNameFuer(erster.commandId) : v.werkzeug, argumente: erster?.params ?? {}, urheber };
+}
+
+/**
+ * Die offenen Karten von der Mac-App zurueck in den Werkzeugsatz (nach dem Neuladen). Jede geht
+ * durch denselben Probelauf wie beim ersten Mal, **immer im Modus «karte»** — eine zurueckgegebene
+ * Karte wird nie still angewendet. Liegt sie wieder, kommt das Ereignis «karte» wie sonst; scheitert
+ * der Probelauf (der Graph passt nicht mehr), sagt die Antwort den Satz, und die App weist sie beim
+ * Anwenden damit ab.
+ */
+export function stelleWieder(karten: unknown): Wiedergabe[] {
+  if (!Array.isArray(karten)) return [];
+  const antwort: Wiedergabe[] = [];
+  for (const roh of karten) {
+    const v = roh as KiVorschlag;
+    if (!v || typeof v.kennung !== 'string' || typeof v.werkzeug !== 'string') continue;
+    const r = behandle(alsAufruf(v), 'karte');
+    antwort.push('karte' in r ? { kennung: v.kennung, liegt: true, text: r.karte.zusammenfassung } : { kennung: v.kennung, liegt: false, text: r.sofort.text });
+  }
+  return antwort;
+}
+
 export type VisboxKi = ReturnType<typeof baueVisboxKi>;
 
 function baueVisboxKi() {
@@ -167,6 +219,7 @@ function baueVisboxKi() {
     entscheide: ki.entscheide,
     offene: ki.offene,
     verwirf: ki.verwirf,
+    stelleWieder,
     rueckgaengigKi: ki.rueckgaengigKi,
     kiVerlauf: ki.kiVerlauf,
     blickMausWerkzeuge,
@@ -205,10 +258,9 @@ export function haengeKiAn(fenster: Window, bote: KiBote | null = boteDerApp(fen
     // Die Maus-Karten der KosmoMaus gehen mit (dort «Projekt gewechselt»).
     meldeProjektWechsel();
   });
-  const beimVerlassen = () => {
-    verwirfVorschlaege(SEITE_LAEDT_NEU);
-    sende({ art: 'weg', grund: SEITE_LAEDT_NEU });
-  };
+  // DIE KARTEN BLEIBEN (Strang Karten): Die Seite sagt nur, dass sie geht — die App haelt die
+  // Karten und gibt sie nach dem Neuladen zurueck. Nichts wird hier verworfen.
+  const beimVerlassen = () => sende({ art: 'weg', grund: SEITE_LAEDT_NEU });
   fenster.addEventListener('pagehide', beimVerlassen);
   sende({ art: 'bereit', werkzeuge: schnitt.werkzeuge().length });
   return () => {

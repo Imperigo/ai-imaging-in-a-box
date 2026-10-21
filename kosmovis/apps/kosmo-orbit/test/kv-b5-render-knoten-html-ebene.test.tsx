@@ -108,10 +108,11 @@ describe('KV-B5 · Render-Knoten ohne foreignObject', () => {
     const knoten = container!.querySelector<HTMLElement>('[data-testid="vis-node-render"]')!;
     expect(knoten.style.left).toBe('320px');
     expect(knoten.style.top).toBe('120px');
-    expect(knoten.style.width).toBe('200px');
+    // Entscheid 119: der Render-Knoten ist 212 px breit (Innenbreite 196), die anderen bleiben 200.
+    expect(knoten.style.width).toBe('212px');
     const koerper = knoten.querySelector<HTMLElement>('.vis-node-koerper')!;
     expect(koerper.style.left).toBe('8px');
-    expect(koerper.style.width).toBe('184px');
+    expect(koerper.style.width).toBe('196px');
     // Unter Kopf (26) + 8 + fuenf Anschluesse des Render-Knotens.
     expect(Number.parseFloat(koerper.style.top)).toBeGreaterThan(26 + 8);
     // Die Gruppe im knoteneigenen SVG traegt dieselbe Verschiebung wie frueher.

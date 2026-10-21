@@ -8124,6 +8124,7 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid 118a: 410 mit Satz, das iPad zeigt ihn) — gebaut, am Gerät unbestätigt (§181, C108); Messauftrag auf-20261021-308 (local)
     - [x] Vermittlung am Mac auch ohne eingerichteten Heim-PC (118a, Frage 3): das iPad bekommt die Mac-Mappe, Rechnen sagt «Kein Rechner eingerichtet» — gebaut, am Gerät unbestätigt (§181, C108)
     - [x] Rechnen vom iPad bei Mac-Mappe in der Knotenansicht (118a, Frage 2) — geprüft, war mit §178 gebaut (§181)
+    - [x] Befund 307 B1: Ladestand meldet nach dem Zurückstellen `veraltet` mit Satz, statt für die offene Mappe zu gelten (§181, C108); C107 mit Ergebnis 307 erledigt
     - [ ] Geräteprüfung 118a (owner): iPad über den Mac verbinden; Heim-PC am Mac «nicht eingerichtet» — das iPad sieht die Mappe trotzdem
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
@@ -8148,6 +8149,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§175, C103)
     - [ ] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
+  - [x] Befund Demolauf 0.3.16: offene Karten überleben den Wechsel der Ansicht (Ablage in der Mac-App, Rückgabe an die
+    neu geladene Seite, verworfen nur mit Ablehnen oder nach 4 h, beides mit Satz an Claude; unpassende Karten weist
+    «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+    - [ ] Geräteprobe: vorschlagen → Visbox-Seite → zurück → Karte steht → Anwenden wirkt (owner)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)
@@ -8201,7 +8206,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Wahl am Bild (owner, über die Zentrale nach 300): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern (Empfehlung des LW nach 300: W-4) — **entschieden: Entscheid 117a, W-4 nebeneinander** (Owner per Klickfrage, 21.10.2026; Blatt 35); kein Vertragsfeld, kein Kernumbau
   - [x] W-4 Knotenteil (Vis-Werkzeug, beide Programme): Render-Knoten bestellt `render.passes ['schoenbild']` mit (nicht «Grundlage rendern», «nur Cycles», Strichzeichnung, Varianten-Knoten, Skizze); Poll legt `<kamera>__schoenbild.png` an den Lauf; Klick zeigt KI-Bild und Grundbild gross mit Umschalter «nebeneinander · nur KI · nur Grundbild» (KTabs, Vorgabe nebeneinander, Knoten-Parameter `bildAnsicht`); am 184-px-Knoten Rückfall aufs KI-Bild mit Beschriftung (Vorgabe UI-Worker: je Bild ≥ 96 px, Karte wächst nicht); Attrappe der Brücke liefert die Ebene; Mac-Mappe holt das Grundbild mit — gebaut, am Gerät unbestätigt (§178, C106); KosmoOrbit-Zweig `claude/kosmovis-nebeneinander` beim Integrator (Int 1) zum Einspielen
   - [ ] W-4 am Gerät (owner, über die Zentrale): Mac-App — Variante erzeugen, Beschriftung am Knoten, Klick gross, Umschalter, Mappe ohne Heim-PC; Heim-PC liefert `schoenbild` auch auf wiederverwendeter Grundlage (gelesen, nicht gemessen)
-  - [ ] Nebeneinander direkt am Knoten nur mit breiterem Render-Knoten (heute 184 px Körper) — Frage an UI/Owner, nicht gebaut
+  - [x] Nebeneinander direkt am Knoten nur mit breiterem Render-Knoten (heute 184 px Körper) — Frage an UI/Owner, nicht gebaut — **entschieden: Entscheid 119**, Render-Knoten 212 px (Körper 196), nur er, nur in der Breite; gebaut, am Gerät unbestätigt (§185, C111)
+  - [ ] Render-Breite einspielen bei Int 1 (integrator, nach der Bildfreigabe E167) und am Mac sehen (owner)
+  - [ ] «Grundbild mit Licht» am 96-px-Bild gekürzt? Empfehlung «Grundbild» am Knoten (ui, §185)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
   - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)
@@ -8225,8 +8232,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] C F3 Stimmung: Himmelsbild-Vorschau (Farbverlauf bis W), acht zum Anhaken, Himmel drehen, Wirkung; `render.environment` wird gesendet; Grundlage je Stand — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] D F2 Kamera: Auto mit Richtungen, Augenhöhe, Brennweite, Abstand, Perspektive; Kegel und Blick live aus `/knoten/standpunkte` (Wirt reicht die Parameter durch); «Manuell» friert ein, Werte tippen — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] E F4 Oberfläche, Material (Kugel/Würfel/Fläche), Farbpalette; Startgraph Material → Oberfläche → Kombinierer — gebaut, am Gerät unbestätigt (§176, C104)
-  - [ ] Messung am Heim-PC: auf-20261021-306 (local) — je Stimmung, Kamera-Art und Materialwahl ein Lauf wie aus den Knoten, Grundlage je Stand, Live-Vorschau = Auftrag, Vorschaubilder (W)
-  - [ ] W Vorschaubilder (Himmel 8, Materialien 11) aus 306 in beide Programme, mit Quelle und Prüfsumme im NOTICE (wir, nach 306)
+  - [x] Messung am Heim-PC: auf-20261021-306 (local) — Ergebnis `05641d3`: alles rechnet wie bestellt; Befunde B1 (jede Grundlage-Bestellung legt neu an), B2 (Satz der Stimmung halb übersetzt), B3 (Einfrieren verliert den Shift)
+  - [x] B1 und B3 behoben: gleicher Stand → bestehende Grundlage, kein neuer Auftrag; Einfrieren hebt das Ziel für denselben Shift — gebaut, am Gerät unbestätigt (§183)
+  - [x] W Vorschaubilder: sieben Himmel und elf Materialien in beiden Programmen, Prüfsummen in NOTICE, THIRD_PARTY_LICENSES und quellen.json (§183)
+  - [ ] Vorschau «weiss» mit white_studio_06 (local liefert sie mit dem nächsten Messauftrag; bis dahin Verlauf)
+  - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)

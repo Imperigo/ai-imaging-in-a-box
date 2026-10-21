@@ -7,7 +7,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { evaluiereGraph, type VisGraph } from '@kosmo/kernel';
 import { RenderResult } from '@kosmo/contracts';
-import { NodeCanvas, NODE_W } from '../src/modules/vis/NodeCanvas';
+import { koerperBreite, NodeCanvas, NODE_W } from '../src/modules/vis/NodeCanvas';
 import { memoKey, useVisRuntime, type NodeLauf } from '../src/modules/vis/vis-runtime';
 import {
   ANSICHT_PARAM,
@@ -27,8 +27,9 @@ import { useProject } from '../src/state/project-store';
  *  - der Render-Knoten bestellt das Grundbild von sich aus mit (`render.passes` enthaelt `schoenbild`), nicht mit
  *    «Grundlage rendern» (dort `alle`), «nur Cycles», Strichzeichnung oder fuer den Varianten-Knoten;
  *  - der Poll legt `<kamera>__schoenbild.png` zur Kamera des Hauptbilds an den Lauf (`NodeLauf.grundbild`);
- *  - am Knoten (184 px) faellt «nebeneinander» auf das KI-Bild zurueck (je Bild unter 96 px, Vorgabe UI-Worker),
- *    mit Beschriftung; ein Klick zeigt beide gross, dort der Umschalter (`KTabs`), Vorgabe nebeneinander;
+ *  - Entscheid 119: am 196 px breiten Render-Knoten stehen KI-Bild und Grundbild schon nebeneinander (je 96 px),
+ *    beide beschriftet; bei 184 px (alle anderen Knoten) fiele es auf das KI-Bild zurueck. Ein Klick zeigt beide
+ *    gross, dort der Umschalter (`KTabs`), Vorgabe nebeneinander;
  *  - ohne Grundbild (aelterer Lauf) bleibt das Bild wie bisher — allein, ohne Luecke, ohne Klickflaeche.
  */
 class StubResizeObserver {
@@ -115,7 +116,11 @@ describe('kv-nebeneinander — reine Regeln', () => {
     expect(grundbildZumBild([{ kamera: 'K1', art: 'tiefe', datei: 'K1__tiefe.png' }], 'K1.png')).toBeUndefined();
   });
 
-  it('Vorgabe nebeneinander; am 184 px schmalen Knoten Rueckfall auf das KI-Bild statt Bilder unter 96 px', () => {
+  it('Vorgabe nebeneinander; am 196 px breiten Render-Knoten passt es, bei 184 px Rueckfall statt Bilder unter 96 px', () => {
+    // Entscheid 119: der Render-Knoten ist so breit, dass «nebeneinander» schon am Knoten steht.
+    expect(koerperBreite('render')).toBe(196);
+    expect(nebeneinanderPasst(koerperBreite('render'))).toBe(true);
+    expect(wirksameAnsicht('nebeneinander', true, koerperBreite('render'))).toEqual({ ansicht: 'nebeneinander', rueckfall: false });
     expect(bildAnsichtAmKnoten({})).toBe('nebeneinander');
     expect(bildAnsichtAmKnoten({ [ANSICHT_PARAM]: 'nur-grundbild' })).toBe('nur-grundbild');
     expect(bildAnsichtAmKnoten({ [ANSICHT_PARAM]: 'quer' })).toBe('nebeneinander');
@@ -193,14 +198,18 @@ describe('kv-nebeneinander — am Knoten und gross', () => {
     expect(q('render-grundbild')).toBeNull();
   });
 
-  it('mit Grundbild: am Knoten das KI-Bild mit Beschriftung (Rueckfall), Klick zeigt beide gross — Vorgabe nebeneinander', () => {
+  it('mit Grundbild: am Knoten beide nebeneinander (Entscheid 119), Klick zeigt beide gross — Vorgabe nebeneinander', () => {
     const { graphId, nodeId } = graphMitRender();
     fertig(graphId, nodeId, { grundbild: 'K1__schoenbild.png', guete: 'vorschau' });
     mount(graphId);
     const haupt = q('render-hauptbild')!;
-    expect(haupt.getAttribute('data-ansicht')).toBe('nur-ki');
-    expect(haupt.getAttribute('data-rueckfall')).toBe('true');
-    expect(q('render-bild-beschriftung')!.textContent).toBe('KI-Bild · + Grundbild');
+    expect(haupt.getAttribute('data-ansicht')).toBe('nebeneinander');
+    expect(haupt.getAttribute('data-rueckfall')).toBe('false');
+    expect(haupt.querySelectorAll('.vis-bildpaar-zelle').length).toBe(2);
+    expect(q('render-bild-beschriftung')!.textContent).toBe('KI-Bild');
+    expect(q('render-grundbild-beschriftung')!.textContent).toBe('Grundbild mit Licht');
+    // Mit der Marke «Vorschau» rueckt die Beschriftung des KI-Bilds ueber sie (Klasse, CSS unten).
+    expect(haupt.classList.contains('vis-hauptbild--vorschau')).toBe(true);
     expect(q('render-guete-marke')).not.toBeNull();
     // Die Hoehe bleibt die der Registerzeile — der Knoten waechst nicht.
     expect((haupt as HTMLElement).style.height).toBe('110px');
@@ -243,6 +252,7 @@ describe('kv-nebeneinander — am Knoten und gross', () => {
   it('CSS: am Knoten haelt jede Zelle mindestens 96 px; gross rueckt das Grundbild unter das KI-Bild statt zu stauchen', () => {
     const css = readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/modules/vis/vis-visual.css'), 'utf8');
     expect(/\n\.vis-bildpaar-zelle \{[^}]*min-width: 96px;/.test(css)).toBe(true);
-    expect(/\n\.vis-bildpaar-gitter \{[^}]*minmax\(96px, 1fr\)/.test(css)).toBe(true);
+    expect(/\n\.vis-bildpaar-gitter \{[^}]*minmax\(96px, 1fr\)/.test(css)).toBe(true);    // Entscheid 119: mit der Marke «Vorschau» liegt die Beschriftung des KI-Bilds ueber ihr, nicht darunter.
+    expect(/\.vis-hauptbild--vorschau \.vis-bildpaar-zelle:first-child > \.vis-bildpaar-beschriftung \{[^}]*bottom: calc\(2 \* var\(--k-s2\) \+ 16px\)/.test(css)).toBe(true);
   });
 });

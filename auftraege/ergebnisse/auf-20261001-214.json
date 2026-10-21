@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-214",
  "worker": "local",
- "status": "erledigt",
+ "status": "ok",
+ "zusammenfassung": "erledigt",
  "git_log_1": "f892bfc Schrittblatt: der erste Vollbau-Nachmittag, mit dem, was noch niemand gesehen hat",
  "owner_go": "ja — Entscheid 50 (Sitzung 74); dazu am 01.10.2026 vormittags vom Owner im Chat ausdruecklich beauftragt",
  "B1_dienst": {

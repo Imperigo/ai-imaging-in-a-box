@@ -3,7 +3,8 @@
  "auftrag_id": "auf-20261007-259",
  "worker": "local",
  "rang": 46,
- "status": "erledigt: Demohaus ohne GUI aus dem Kernel als IFC4 erzeugt (derselbe Exporter wie «Modell als IFC» in der App), mit ifcopenshell gezaehlt, Runner unveraendert laufen lassen. Die IFC traegt 0 IfcSurfaceStyle / 0 IfcStyledItem; 2 IfcMaterial (beton, kalksandstein) ohne Farbe. Die Farben, die ifcopenshell je Bauteil liefert, sind seine eingebauten Vorgaben je IFC-Typ, nicht aus der Datei. Heutige glb: 0 Materialien. Nur CPU, kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt: Demohaus ohne GUI aus dem Kernel als IFC4 erzeugt (derselbe Exporter wie «Modell als IFC» in der App), mit ifcopenshell gezaehlt, Runner unveraendert laufen lassen. Die IFC traegt 0 IfcSurfaceStyle / 0 IfcStyledItem; 2 IfcMaterial (beton, kalksandstein) ohne Farbe. Die Farben, die ifcopenshell je Bauteil liefert, sind seine eingebauten Vorgaben je IFC-Typ, nicht aus der Datei. Heutige glb: 0 Materialien. Nur CPU, kein Code geaendert, nichts installiert, nichts committet.",
  "quelle_ifc": {
   "art": "Demohaus-Export (nicht synthetisch aus ai-imaging)",
   "weg": "Kernel-Befehl haus.demohausBauen in ein leeres Dokument, dann exportIfc des Kernels — dieselbe Funktion, die der App-Export «Modell als IFC» aufruft; ohne GUI, mit einem Wegwerf-Skript (tsx) ausserhalb jedes Repos. Die laufende Desktop-App wurde nicht beruehrt.",

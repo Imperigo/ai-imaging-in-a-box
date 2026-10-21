@@ -11,7 +11,8 @@
   "97a",
   "117"
  ],
- "status": "erledigt, alle 10 Laeufe done (K, U1, U2, M1, M2, E1, E2, E3, K-abend, U2-abend). K bildpunktgleich zu 297 3c (0 px). Bestes Bild M2 (material_vorne + im_lauf): Sichtbeton ja, Haus im Umriss ja, keine Naht, wiederzuerkennen ja; geom_iou 0,924, ausserhalb 0,0008. im_lauf haelt den Umriss ohne Collage (U2/M2/E3/U2-abend ausserhalb 0,0008-0,18) und kostet keinen Grafikspeicher (Spitze 27116 MiB, 320 MiB UNTER der Kontrolle 27436), veraendert aber allein die Form (U2 Rundturm). nachher (U1) ist eine sichtbare Collage. material_vorne allein bringt Sichtbeton (M1 ja), baut aber noch weiter ueber den Umriss (3,08). E2 (Material-Knoten + Bildeingang 0,8) zeigt Sichtbeton, ist aber fast das Cycles-Bild. Code nicht geaendert.",
+ "status": "ok",
+ "zusammenfassung": "erledigt, alle 10 Laeufe done (K, U1, U2, M1, M2, E1, E2, E3, K-abend, U2-abend). K bildpunktgleich zu 297 3c (0 px). Bestes Bild M2 (material_vorne + im_lauf): Sichtbeton ja, Haus im Umriss ja, keine Naht, wiederzuerkennen ja; geom_iou 0,924, ausserhalb 0,0008. im_lauf haelt den Umriss ohne Collage (U2/M2/E3/U2-abend ausserhalb 0,0008-0,18) und kostet keinen Grafikspeicher (Spitze 27116 MiB, 320 MiB UNTER der Kontrolle 27436), veraendert aber allein die Form (U2 Rundturm). nachher (U1) ist eine sichtbare Collage. material_vorne allein bringt Sichtbeton (M1 ja), baut aber noch weiter ueber den Umriss (3,08). E2 (Material-Knoten + Bildeingang 0,8) zeigt Sichtbeton, ist aber fast das Cycles-Bild. Code nicht geaendert.",
  "beendet": "2026-10-21T09:24:00Z",
  "koepfe": {
   "stand": "main 8778347 (Visbox 0.3.15, mit beiden Messschaltern), Dienst neu gestartet, Abholer per Timer 30 s. Kein Code, keine Vorgabe, kein Registerwert, keine dauerhafte Umgebungsvariable geaendert; Schalter nur in den eigenen Probeauftraegen; Mappe des Dienstes, echter Textur- und Himmelsordner nicht angefasst.",

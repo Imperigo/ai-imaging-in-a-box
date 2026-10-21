@@ -299,3 +299,11 @@
   outline: 2px dashed var(--k-warning);
   outline-offset: 3px;
 }
+
+/* Visbox-Befund 305 (21.10.2026): «Node löschen» ist ein SVG-<g>, an dem `outline` nicht gezeichnet
+   wird — dort trägt das Rechteck `.vis-node-knopf-rahmen` den gestrichelten Rand. */
+[data-kosmo-maus-bedient] [data-testid='node-loeschen'] .vis-node-knopf-rahmen {
+  stroke: var(--k-warning);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}

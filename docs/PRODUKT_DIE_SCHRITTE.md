@@ -1217,6 +1217,29 @@ Ein iPad, das still weiter direkt spricht, legt Skizzen an einen Ort, an dem der
 klarer Satz statt eines stillen Fehlers. Und die Mappe liegt am Mac; dass sie ohne Heim-PC nicht ans iPad käme, hätte das
 iPad vom Rechner abhängig gemacht, obwohl es zum Zeichnen keinen braucht.
 
+### 21.10.2026 · Vorschläge überstehen den Wechsel der Ansicht
+
+**Anlass:** Beim ersten Durchlauf mit Claude am Mac schlug Claude vor, die Stimmung von «morgen» auf «abend» zu stellen.
+Der Architekt wechselte kurz zur Visbox-Seite und zurück — der Vorschlag war weg, nichts geändert, und niemand hatte es
+gesagt. Der Vorschlag hatte nur in der Knotenansicht gelebt, und die wird beim Wechsel jedes Mal neu geladen.
+
+**Was gebaut ist:** Die Mac-App hebt die offenen Vorschläge selbst auf, zusammen mit der Mappe, zu der sie gehören.
+Kommt die Knotenansicht zurück, bekommt sie die Vorschläge ihrer Mappe wieder und rechnet jeden noch einmal zur Probe
+durch. Weg ist ein Vorschlag nur, wenn der Architekt ihn ablehnt oder wenn er vier Stunden ohne Entscheid liegt; in beiden
+Fällen hört Claude einen Satz mit dem Grund. Passt ein Vorschlag nicht mehr — eine andere Mappe ist offen, oder der
+Knoten, den er ändern wollte, ist inzwischen gelöscht —, bleibt er sichtbar, und «Anwenden» sagt, warum nichts geschieht.
+
+**Was der Architekt sieht:** nichts Neues — der Vorschlag steht nach dem Zurückkehren einfach noch da. Neu sind nur die
+Sätze in der Leiste, wenn ein Vorschlag nicht mehr passt oder abgelaufen ist.
+
+**Begründung des Wegs:** Ein Vorschlag gilt für eine Mappe und ihren Knotengraph, nicht für ein Fenster. Darum liegt er
+dort, wo die Arbeit über den Wechsel hinweg bleibt: in der App. Beim Zurückgeben wird er neu geprüft statt blind
+eingesetzt, weil sich der Graph in der Zwischenzeit geändert haben kann; und er wird dabei nie von selbst angewendet,
+auch wenn Claude frei arbeiten darf. Still verschwinden darf nichts: Wer einen Vorschlag gestellt hat, soll erfahren, was
+aus ihm wurde.
+
+**Offen:** die Probe am Mac (vorschlagen, Seite wechseln, zurück, anwenden).
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |
@@ -1947,6 +1970,17 @@ früher, der kein Grundbild hat, sieht aus wie bisher. Die Varianten zeigen weit
 alle Varianten derselben Grundlage gleich ist. Mit offener Mappe am Mac kommt das Grundbild mit in die Mappe, damit es
 auch ohne Heim-PC da ist. Bildeingang und Farbabgleich bleiben Schalter zum Messen, ab Werk aus. Geprüft ist es mit Proben
 und in einem Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
+
+
+**Der Render-Knoten wird breiter: beide Bilder schon am Knoten (21.10.2026, Entscheid 119).** Bis hierhin stand am Knoten
+nur das KI-Bild, weil zwei Bilder im 184 Bildpunkte breiten Knoten zu schmal geworden wären. Jetzt ist der Render-Knoten
+zwölf Bildpunkte breiter, innen 196, und jedes Bild hat 96 — genug, dass KI-Bild und Grundbild schon am Knoten
+nebeneinander stehen, beide beschriftet. Nur dieser eine Knoten wird breiter, und nur in der Breite: Er wird nicht höher,
+weil jede Zeile ihre gemessene Höhe behält. Alles, was mit seiner Breite rechnet, rechnet mit der neuen: wo die
+Verbindungen ansetzen, wie ein neuer Knoten Platz findet, wie der fertige Anfang die Knoten in Spalten legt, und wie ein
+gesicherter Graph beim Öffnen entzerrt wird. Die Marke «Vorschau» steht unten links im KI-Bild; seine Beschriftung rückt
+darüber, damit nichts verdeckt ist. Die grosse Ansicht mit dem Umschalter bleibt. Geprüft ist es mit Proben und in einem
+Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
 
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,

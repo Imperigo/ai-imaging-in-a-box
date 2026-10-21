@@ -8,7 +8,8 @@
   "79",
   "81"
  ],
- "status": "erledigt — A: Ursache gefunden (Hoehe massgebend + Rueckschub des Eckentests mit BILDRAND 0.92), nichts behoben, keine Schwelle gesenkt. B: Textur gegen Eckfarben mit Innen-Prompt, Startwert 1 fuer beide (Startwert 0 verworfen: Person im Bild).",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A: Ursache gefunden (Hoehe massgebend + Rueckschub des Eckentests mit BILDRAND 0.92), nichts behoben, keine Schwelle gesenkt. B: Textur gegen Eckfarben mit Innen-Prompt, Startwert 1 fuer beide (Startwert 0 verworfen: Person im Bild).",
  "beendet": "2026-10-15T10:30:00Z",
  "koepfe": {
   "ai_imaging": "main ed66ed5 nach git pull --ff-only. Kein Code geaendert, kein Dienst umgestellt, kein Drop-in angefasst; Abholer-Dienst inactive belassen.",

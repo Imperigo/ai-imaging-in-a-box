@@ -5,7 +5,8 @@
  "rang": 40,
  "folgt_auf": "auf-20261007-251",
  "owner_entscheid": "E169",
- "status": "erledigt (A, B, C, D). Nur eingerichtet und gemessen; nicht eingebaut, Kette nicht gefahren, core/splat_maske.py nicht beruehrt, im Klon nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (A, B, C, D). Nur eingerichtet und gemessen; nicht eingebaut, Kette nicht gefahren, core/splat_maske.py nicht beruehrt, im Klon nichts committet.",
  "A_umgebung": {
   "ort": "KosmoPrepare-Klon, neue Umgebung .venv-person neben .venv-server (nur diese angelegt; Klon per git pull --ff-only aktuell, sonst unveraendert)",
   "gitignore": "abgedeckt: Muster '.venv*/' in .gitignore (git check-ignore bestaetigt)",

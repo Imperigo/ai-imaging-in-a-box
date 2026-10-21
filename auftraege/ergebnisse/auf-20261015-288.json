@@ -10,7 +10,8 @@
   "92b"
  ],
  "einbau": "C65",
- "status": "erledigt — der Bildweg «Varianten mit einem Klick» laeuft von Anfang bis Ende: 6 Bilder (3 Standpunkte x 2 Stimmungen) mit EINEM Bestell-Klick und EINEM Freigabe-Klick, beide Auftraege fertig, Raster am Knoten gefuellt. Zwei Befunde: (1) der erste Versuch mit dem Vorgabe-Testbau (zwei Quader, 6 m Abstand) wurde von der Rahmung abgelehnt; (2) 3 von 6 Zellen fielen beim Geometrie-Urteil durch (alle Abend-Zellen und Sued/Morgen).",
+ "status": "ok",
+ "zusammenfassung": "erledigt — der Bildweg «Varianten mit einem Klick» laeuft von Anfang bis Ende: 6 Bilder (3 Standpunkte x 2 Stimmungen) mit EINEM Bestell-Klick und EINEM Freigabe-Klick, beide Auftraege fertig, Raster am Knoten gefuellt. Zwei Befunde: (1) der erste Versuch mit dem Vorgabe-Testbau (zwei Quader, 6 m Abstand) wurde von der Rahmung abgelehnt; (2) 3 von 6 Zellen fielen beim Geometrie-Urteil durch (alle Abend-Zellen und Sued/Morgen).",
  "beendet": "2026-10-20T09:50:00Z",
  "kopf": {
   "visbox": "main 0db9b63 (HEAD 86d2850); Dienst 10:29 neu gestartet (laut LW), Abholer-Takt frisch; Kein Code geaendert, nichts committet ausser dieser Datei.",

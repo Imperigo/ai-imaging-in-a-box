@@ -9,7 +9,8 @@
   "104a",
   "106d"
  ],
- "status": "erledigt mit Befunden — Variante ohne Modell 200 mit hartem Verweis (gleiche Inode), 409-Satz richtig; 100-MB-Upload blockiert health/fortschritt nicht mehr (laengste Antwort 3 ms); Zwilling am Quader erkannt (nNW doppelt_von sSE, zwei KI-Laeufe); Gelaendeplatte mit Auto-Kamera rechnet ohne 'NICHT RENDERN' (3/3); zweite Vorschau spart die Nullanker (Pruefung 22-23 s -> 0,4-0,8 s je Kamera); Assistent mit qwen3:14b antwortet (17,9 s inkl. Laden), Anwenden und Abholer entladen NUR qwen3:14b. Zwei Befunde: der Entlade-Satz geht in beiden Wegen verloren (Abholer-Protokoll und Anwenden-Antwort).",
+ "status": "ok",
+ "zusammenfassung": "erledigt mit Befunden — Variante ohne Modell 200 mit hartem Verweis (gleiche Inode), 409-Satz richtig; 100-MB-Upload blockiert health/fortschritt nicht mehr (laengste Antwort 3 ms); Zwilling am Quader erkannt (nNW doppelt_von sSE, zwei KI-Laeufe); Gelaendeplatte mit Auto-Kamera rechnet ohne 'NICHT RENDERN' (3/3); zweite Vorschau spart die Nullanker (Pruefung 22-23 s -> 0,4-0,8 s je Kamera); Assistent mit qwen3:14b antwortet (17,9 s inkl. Laden), Anwenden und Abholer entladen NUR qwen3:14b. Zwei Befunde: der Entlade-Satz geht in beiden Wegen verloren (Abholer-Protokoll und Anwenden-Antwort).",
  "beendet": "2026-10-20T18:33:00Z",
  "koepfe": {
   "stand": "main 66da651 (Visbox 0.3.3); visbox-flaeche neu gestartet 20:06:17 (nach dem Kopf), Abholer per Timer 30 s. Kein Code geaendert, keine Schwelle, Mappe des Dienstes nicht angefasst.",

@@ -1,7 +1,8 @@
 {
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260929-177",
- "status": "rot",
+ "status": "fehler",
+ "zusammenfassung": "teilweise: rot",
  "beendet": "2026-09-30T05:45:00Z",
  "stand": "520ddca",
  "geprueft": "KosmoPrepare-Klon sauber, pull --ff-only = «Bereits aktuell» (520ddca). ./run_tests.sh einmal. Blender = eigener Fork KosmoDesign 5.1.2 (einzige 5.1-Fassung; /snap/bin/blender ist inzwischen 5.2.2 LTS, Snap-Revisionen 7740/7803 = 5.2.x). Add-on geladen wie in docs/DEPLOYMENT_AI_HOMESTATION.md (Symlink nach extensions/user_default/wettbewerbsvorbereitung), aber in einem EIGENEN Benutzer-Ressourcenordner (BLENDER_USER_RESOURCES im Arbeitsordner, nachher geloescht) — nichts in ~/.config/blender, nichts systemweit. GUI auf eigenem Xvfb :97 (1920x1080x24). Zwei Laeufe: (A) STRENG wie ausgeliefert; (B) mit einem Behelf NUR im Pruefskript (Add-on-Ordner zusaetzlich in sys.path), um den Rest (Faden, Timer, Rueckschreiben, Zahlen) trotzdem zu sehen. Ausgeloest ueber ein --python-Startskript mit bpy.app.timers-Schrittfolge; Knoten ueber genau den Operator gestartet, den der Knopf ruft (wettbewerb.grundlageplan_erzeugen / wettbewerb.themenkarte_erzeugen, EXEC_DEFAULT, node_name = node.uid_key(), Kontext = Knoteneditor-Fenster). Nichts committet, kein Code geaendert. Blender und Xvfb per gemerkter PID beendet.",

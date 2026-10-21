@@ -2056,7 +2056,8 @@ class Flaeche(BaseHTTPRequestHandler):
                 antwort["glb"] = bool(antwort["glb"])
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL_LADEN:
-                self._sende(modell_laden_sicht(type(self).modell_laden))
+                self._sende(modell_laden_sicht(type(self).modell_laden,
+                                               type(self).zuletzt_geoeffnet))
             elif pfad in (WEG_KNOTEN_MAPPEN, WEG_KNOTEN_MAPPE_PAKET, WEG_KNOTEN_MAPPE_DATEI):
                 self._mappenpaket_lesen(pfad, frage or {})
             elif pfad == WEG_KNOTEN_STANDPUNKTE:
@@ -3253,14 +3254,34 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
         LAUFSTAND.beende(ergebnis=ergebnis_fuer_den_stand, fehler=fehler_fuer_den_stand)
 
 
-def modell_laden_sicht(stand: dict | None) -> dict:
+#: Der Satz, wenn der Stand des Ladens nicht mehr die offene Mappe meint (Befund 307 B1).
+SATZ_LADEN_VERALTET = ("Dieses Laden ist vorbei — seither ist eine andere Mappe offen. Der Stand "
+                       "zeigt das letzte Laden, nicht die offene Mappe.")
+
+
+def modell_laden_sicht(stand: dict | None, zuletzt_geoeffnet=None) -> dict:
     """Was ``GET /knoten/modell-laden`` sagt: die Formate (aus :mod:`aiimaging.modellladen`,
     also aus ``importeur.WEGE``) und der Stand des Ladens — **ohne Plattenpfad**: Die Mappe
-    steht nur mit ihrem Namen da (Regel 3, ein Pfad traegt den Rechnernamen nach aussen)."""
+    steht nur mit ihrem Namen da (Regel 3, ein Pfad traegt den Rechnernamen nach aussen).
+
+    **Veraltet, nicht geloescht** (Befund ``auf-20261021-307`` B1): Der Stand ist einer fuer alle
+    Geraete. Hat ein geladenes Modell die Mappe zur zuletzt geoeffneten gemacht und ist seither
+    eine andere offen (``zuletzt_geoeffnet``), steht ``veraltet: true`` mit
+    :data:`SATZ_LADEN_VERALTET` dabei und ``zuletzt_geoeffnet`` sagt ``false`` — sonst hielte man
+    ihn fuer die offene Mappe. Ein Laden aus der Mappe am Mac war nie die offene (``false``)."""
     sicht = None
     if stand:
         sicht = {k: v for k, v in stand.items() if k not in ("begonnen", "mappe_pfad")}
         sicht["seit_s"] = round(time.monotonic() - stand["begonnen"], 1)
+        geladen = stand.get("mappe_pfad")
+        veraltet = bool(geladen and stand.get("zuletzt_geoeffnet")
+                        and (not zuletzt_geoeffnet
+                             or Path(zuletzt_geoeffnet).resolve() != Path(geladen).resolve()))
+        if stand.get("stand") != "laeuft":
+            sicht["veraltet"] = veraltet
+        if veraltet:
+            sicht["zuletzt_geoeffnet"] = False
+            sicht["satz_veraltet"] = SATZ_LADEN_VERALTET
     return {"formate": modellladen.anzeige_formate(), "annehmen": modellladen.annehmen(),
             "hoechstens_mb": modellladen.GROESSTE_DATEI_BYTE // (1024 * 1024), "laden": sicht}
 
@@ -3301,6 +3322,8 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
     mappe = ergebnis.get("mappe")
     if ergebnis["stand"] == "geladen" and mappe:
         ende["mappe"] = Path(mappe).name
+        # DER PFAD NUR FUER DEN VERGLEICH (307 B1) — die Sicht laesst ihn weg (Regel 3).
+        ende["mappe_pfad"] = str(mappe)
         try:
             ende["bauteile"] = knotenweg.mappe_fuer_knoten(mappe)["bauteile"]
         except (projekt.ProjektError, OSError):

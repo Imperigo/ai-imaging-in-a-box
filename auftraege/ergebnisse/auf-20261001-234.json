@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-234",
  "worker": "local",
- "status": "offen — Teil A erledigt; Teil B wartet (Mac offline, Freigabe «Bildschirmaufnahme» fuer die Fernsteuerung noch nicht aktiv)",
+ "status": "fehler",
+ "zusammenfassung": "teilweise: offen — Teil A erledigt; Teil B wartet (Mac offline, Freigabe «Bildschirmaufnahme» fuer die Fernsteuerung noch nicht aktiv)",
  "git_log_1": "86b847c Protokoll: fünf App-Befunde aus 230 bauen wir selbst, auf dem P1-Zweig",
  "weg": "Quellstand per git archive (ipad/, dazu die von den Proben gelesenen src/aiimaging/kette.py und oberflaeche/seite.html) ueber SSH auf den Mac des Owners; gebaut dort mit Xcode. Owner-Ja zur Fernsteuerung liegt vor.",
  "A1_fassungen": {

@@ -9,7 +9,8 @@
   "91",
   "92"
  ],
- "status": "erledigt (nur gelesen und angesehen) — D1: nur --kennwort-datei gesetzt. D2: Kennwort ueber den Neustart gleich. D3: /bruecke/jobs antwortet 503 «Keine Auftragsablage», der Abholer liest die Bruecken-Ablage und die tmp-Ablage, nie einen knotenweg — Bestellen aus der Knotenansicht endet im Dienst mit 503, wie hier vermutet. D4: fertiger Anfang steht mit sieben verbundenen Knoten, Auto-Kamera mit Sued/Suedost/Nordwest samt Abstand, leere Mappe zeigt «Datei laden …». D5: Strg+Z wirkt nicht. ACHTUNG: 0.2.8 ist noch NICHT auf main; D4 und D5 darum aus einer Nebeninstanz des Zweiges, nicht aus dem Dienst.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (nur gelesen und angesehen) — D1: nur --kennwort-datei gesetzt. D2: Kennwort ueber den Neustart gleich. D3: /bruecke/jobs antwortet 503 «Keine Auftragsablage», der Abholer liest die Bruecken-Ablage und die tmp-Ablage, nie einen knotenweg — Bestellen aus der Knotenansicht endet im Dienst mit 503, wie hier vermutet. D4: fertiger Anfang steht mit sieben verbundenen Knoten, Auto-Kamera mit Sued/Suedost/Nordwest samt Abstand, leere Mappe zeigt «Datei laden …». D5: Strg+Z wirkt nicht. ACHTUNG: 0.2.8 ist noch NICHT auf main; D4 und D5 darum aus einer Nebeninstanz des Zweiges, nicht aus dem Dienst.",
  "beendet": "2026-10-14T16:58:00Z",
  "koepfe": {
   "ai_imaging": "main a57b671 nach git pull --ff-only («Bereits aktuell»). Der Auftrag 284 und Visbox 0.2.8 (fertiger Anfang, standpunkte) liegen nur auf claude/ai-imaging-assessment-pstkyp (bbd8bef, 7 Commits vor main). Auf main gibt knotenweg noch kein «standpunkte» zurueck, und der dist-Bau ist der alte (BAUSTAND main.tsx-Hash anders als auf dem Zweig).",

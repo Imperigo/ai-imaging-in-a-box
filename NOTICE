@@ -364,8 +364,30 @@ Texturen (PBR-Karten)   CC0-1.0      ambientCG, https://ambientcg.com
   Je 1K (Vorschau) und 2K, Karten Color, Roughness, NormalGL, Displacement
   (AmbientOcclusion bei sieben), als <id>__<asset>_<1K|2K>-JPG_<Karte>.jpg.
 
-Die Vorschaubilder fuer die Knotenansicht (die im Programm ausgeliefert wuerden)
-kommen spaeter und werden dann mit Datei und SHA-256 hier gefuehrt.
+Vorschaubilder fuer die Knotenansicht - AUSGELIEFERT (Schritt W, 21.10.2026,
+Entscheid 113 (1)): verkleinerte Kopien, CC0-1.0, geliefert von der HomeStation
+in auf-20261021-306; Verarbeitung und SHA-256 des Originals je Datei in
+kosmovis/apps/kosmo-orbit/public/vis/<art>/quellen.json. Datei und SHA-256 des Bildes:
+  vis/stimmungen/morgen.png                      1a8bcd9f096dd86507933729606812c928b8830235e35f2df691e3b0f0fb6755
+  vis/stimmungen/mittag.png                      660be81ee6e49561592efe040c11e45a491e49089d34294727a89decc61e3cf4
+  vis/stimmungen/abend.png                       b6d86ddd65b38518684a64f23c351e03faaa35aca7ad6a278820b44f63b7de92
+  vis/stimmungen/blaue-stunde.png                806ff1086c7318f1203eb99cbe4448694eaa57f82edf3c694ee4fce2d24c1517
+  vis/stimmungen/bedeckt.png                     78737494346e2eafa8e17b12da16029cda433b98c499aeb6e08dbe24d9b35429
+  vis/stimmungen/nebel.png                       8d5bcdf51d2a51f2f11730d476b4db860071d6011d0c34f14481b713deb05115
+  vis/stimmungen/winter.png                      cf27b1d68dc2855c9ed48fe56679357c3e1cedd5d3018fbf224da94e57324616
+  vis/materialien/sichtbeton-sandgestrahlt.png    64afe5413abaca5e20b1cd35070e1b323beb1d341d9c0deb05456fa3a13d029d
+  vis/materialien/sichtbeton-schalungsglatt.png   9bb032ba08b99907e577b657894d4af502b41bda251693532ccd4d9f1d78ee6c
+  vis/materialien/fichte.png                      b07f22cb46d956eb7117a22186c5ea564e4b0d61e811645a2b5585711a208ef8
+  vis/materialien/backstein.png                   c743323b1e606f74c9be404bb035a703f43d94d598a27899c27cf065f14903e6
+  vis/materialien/klinker.png                     21e9116ca3b569a2a1b1acc3732f586ee1825e7732d456f0d929cc7cc4a54efb
+  vis/materialien/sandstein.png                   2dc1c647ee0c4a1fcd011239fa8f503f9e50683e74f1dab304f9522c2ce9ab88
+  vis/materialien/stampflehm.png                  8f075b4a257b9ecddc1b691b221003d4ccd94a5c253270f20da18e6bb5374608
+  vis/materialien/verputz-weiss-glatt.png         5b0babdfe8af74e1bdbe35650594234e9109bb56b09fac6723b5da5653143f47
+  vis/materialien/verputz-weiss-rau.png           73d4703eecc079d7eaa1d479e3d3e00fe46895c7eedcc9208b1f5b37a3d609de
+  vis/materialien/holzlattung-fichte.png          ffb005970cb6b50fb398c4b6fb5818b4872d30adf63b47f43319f23990e3684a
+  vis/materialien/dreischichtplatte.png           f6c9617c097f31aed322ac3517ae81add47a54c47e48f6083a71264509f3c15c
+  «weiss» fehlt: die Vorschau aus 306 (altes Studio-Himmelsbild) war dunkel; die
+  Stimmung nutzt jetzt white_studio_06, dessen Vorschau die HomeStation nachliefert.
 
 --------------------------------------------------------------------------------
 

@@ -25,8 +25,13 @@ typealias Heimholer = @Sendable (_ weg: Macwerkzeuge.Heimweg) async
 /// * **Fuer die Leiste**: der Stand (`Kileistenstand`) aus den Ereignissen der Seite, die
 ///   Selbstaendigkeit (gemerkt), Anwenden/Ablehnen und «Claudes letzten Schritt zurücknehmen».
 /// * **Fuer den Kern**: Jeder Entscheid an einer Karte weckt den wartenden Aufruf
-///   (`Mcpkern.entscheide`); laedt die Knotenansicht neu, bekommen alle offenen Aufrufe
-///   «VERWORFEN».
+///   (`Mcpkern.entscheide`).
+/// * **Die Karten liegen hier** (Strang Karten, 21.10.2026; `Kartenablage` im Kern): Laedt die
+///   Knotenansicht neu, wird sie geschlossen oder auf die Visbox-Seite umgeschaltet, bleiben die
+///   offenen Karten stehen. Meldet sich die Seite wieder an, bekommt sie die Karten ihrer Mappe
+///   zurueck (`visboxKi.stelleWieder`). Verworfen wird nur mit «Ablehnen» oder nach Ablauf — und
+///   dann hoert Claude einen Satz mit Grund. Was nicht mehr passt (andere Mappe, Graph geaendert),
+///   weist «Anwenden» mit Satz ab.
 ///
 /// Was hier NIE geschieht: die Grafikkarte freigeben. Dafuer gibt es keinen Weg.
 ///
@@ -43,6 +48,11 @@ final class Kizentrale: ObservableObject {
     @Published private(set) var mappenname: String?
 
     private var knoten: Knotenaufruf?
+    /// Die offenen Karten mit Mappe und Zeit — sie ueberleben die Knotenansicht.
+    private(set) var ablage = Kartenablage()
+    /// Die Mappe der Knotenansicht (gesetzt beim Laden der Flaeche, `Flaechenlotse.lade`).
+    private(set) var kartenmappe = Kartenmappe.amHeimPC
+    private var ablaufUhr: Timer?
     private var liveWerkzeuge: [Mcpwerkzeug]?
     private var heim: Heimholer?
     private lazy var gebuendelt: [Mcpwerkzeug] = Kizentrale.leseGebuendelteListe()
@@ -50,6 +60,10 @@ final class Kizentrale: ObservableObject {
     init() {
         modus = Selbstaendigkeit(gemerkt: UserDefaults.standard.string(
             forKey: Selbstaendigkeit.einstellung))
+        // DER ABLAUF (Strang Karten): einmal je Minute nachsehen, ob eine Karte zu lange liegt.
+        ablaufUhr = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.pruefeAblauf() }
+        }
     }
 
     private var kern: Mcpkern { Claudeanschluss.gemeinsam.kern }
@@ -71,21 +85,27 @@ final class Kizentrale: ObservableObject {
 
     // ================================================================= von der Knotenansicht
 
-    /// Die Seite hat `window.visboxKi` angemeldet (Nachricht «bereit»).
+    /// Die Seite hat `window.visboxKi` angemeldet (Nachricht «bereit»): Sie bekommt die offenen
+    /// Karten ihrer Mappe zurueck.
     func knotenAngemeldet(_ aufruf: @escaping Knotenaufruf) {
         knoten = aufruf
         Task { await ladeLiveWerkzeuge() }
         Task { await leseMappenname() }
+        Task { await gibKartenZurueck() }
     }
 
-    /// Die Seite ist weg (neu geladen, auf die Visbox-Seite umgeschaltet, Fenster zu): Ihre
-    /// Karten gibt es nicht mehr — die wartenden Aufrufe bekommen «VERWORFEN».
+    /// In welcher Mappe die Knotenansicht gleich laeuft — vor dem Laden der Flaeche gesetzt.
+    func setzeKartenmappe(_ mappe: Kartenmappe) {
+        kartenmappe = mappe
+    }
+
+    /// Die Seite ist weg (neu geladen, auf die Visbox-Seite umgeschaltet, Fenster zu). **Die
+    /// Karten bleiben** (Strang Karten): Sie gelten pro Mappe, nicht pro Ansicht; die wartenden
+    /// Aufrufe warten weiter. Bis zum naechsten «bereit» entscheidet die Seite nichts.
     func knotenWeg(_ grund: String) {
-        guard knoten != nil || !stand.karten.isEmpty else { return }
         knoten = nil
         stand.nimm(.weg(grund: grund))
-        let kern = self.kern
-        Task { await kern.beantworteOffene(Kibruecke.verworfen(grund)) }
+        ablage.seiteWeg()
     }
 
     /// Eine Nachricht der Seite (`webkit.messageHandlers.visboxKi`), schon als JSON-Bytes.
@@ -96,9 +116,15 @@ final class Kizentrale: ObservableObject {
             return
         }
         stand.nimm(ereignis)
-        if case .entschieden(let kennung, _, let ergebnis) = ereignis {
+        switch ereignis {
+        case .karte(let karte):
+            ablage.lege(karte, mappe: kartenmappe)
+        case .entschieden(let kennung, _, let ergebnis):
+            ablage.entferne(kennung)
             let kern = self.kern
             Task { await kern.entscheide(kennung, ergebnis) }
+        default:
+            break
         }
     }
 
@@ -167,23 +193,74 @@ final class Kizentrale: ObservableObject {
 
     /// «Anwenden» (`ja`) oder «Ablehnen» an einer Karte. Das Ergebnis kommt als Ereignis
     /// «entschieden» zurueck und weckt dort den wartenden Aufruf von Claude.
+    ///
+    /// **Was die Seite nicht entscheiden kann, entscheidet die Ablage** (Strang Karten): Ablehnen
+    /// geht auch bei geschlossener Knotenansicht; Anwenden wartet auf sie — ausser die Karte
+    /// gehoert zu einer anderen Mappe oder passt nicht mehr zum Graph, dann weist es sie mit Satz ab.
     func entscheide(_ kennung: String, ja: Bool) async {
         meldung = nil
-        guard let knoten else {
+        switch ablage.entscheide(kennung, ja: ja, mappe: kartenmappe, seiteOffen: knoten != nil) {
+        case .hier(let antwort, let satz):
             stand.entferne(kennung)
+            meldung = satz
+            let kern = self.kern
+            Task { await kern.entscheide(kennung, antwort) }
+            return
+        case .wartet(let satz):
+            meldung = satz
+            return
+        case .anDieSeite, .unbekannt:
+            break
+        }
+        guard let knoten else {
             meldung = Kibruecke.nichtOffen
             return
         }
         let text = await knoten(Kibruecke.rumpf("entscheide(kennung, ja)"),
                                 ["kennung": kennung, "ja": ja])
         if text == nil || text == "null" {
-            // DIE SEITE KENNT DIE KARTE NICHT MEHR (etwa nach einem Mappenwechsel): weg damit,
-            // und Claude hoert, dass nichts angewendet wurde.
+            // DIE SEITE KENNT DIE KARTE NICHT MEHR: weg damit, und Claude hoert, dass nichts
+            // angewendet wurde — mit Satz, nicht still.
             stand.entferne(kennung)
+            ablage.entferne(kennung)
             meldung = "Diesen Vorschlag gibt es in der Knotenansicht nicht mehr — nichts wurde geändert."
             let kern = self.kern
             Task { await kern.entscheide(kennung, Kibruecke.verworfen("Die Karte war nicht mehr da")) }
         }
+    }
+
+    // ================================================================= Karten zurueckgeben, Ablauf
+
+    /// Gibt einer neu angemeldeten Knotenansicht die Karten ihrer Mappe zurueck. Die Seite
+    /// rechnet jede neu durch: Was liegt, meldet sie mit «karte»; was scheitert, bleibt hier als
+    /// unpassend stehen, bis «Anwenden» es mit Satz abweist oder «Ablehnen» es wegnimmt.
+    private func gibKartenZurueck() async {
+        guard let knoten, let karten = ablage.uebergabeText(kartenmappe) else { return }
+        let text = await knoten(Kibruecke.rumpf("stelleWieder(JSON.parse(karten))"), ["karten": karten])
+        let antwort = text.flatMap { try? JSONWert.lies(Data($0.utf8)) }
+        let unpassend = ablage.nimmWiedergabe(antwort)
+        if !unpassend.isEmpty {
+            meldung = "\(unpassend.joined(separator: ", ")) passt nicht mehr zum Graph — «Anwenden» "
+                + "ändert nichts; lehne den Vorschlag ab oder lass Claude einen neuen stellen."
+        }
+    }
+
+    /// Karten, die zu lange liegen, laufen ab: Claude hoert den Satz mit Grund, die Seite raeumt
+    /// sie ab (ihr Ereignis «entschieden» kommt danach und aendert nichts mehr).
+    func pruefeAblauf(jetzt: Date = Date()) {
+        let weg = ablage.abgelaufene(jetzt: jetzt)
+        guard !weg.isEmpty else { return }
+        let kern = self.kern
+        for e in weg {
+            stand.entferne(e.karte.kennung)
+            let antwort = Kartenablage.abgelaufen(e)
+            Task { await kern.entscheide(e.karte.kennung, antwort) }
+            if e.inDerSeite, let knoten {
+                Task { _ = await knoten(Kibruecke.rumpf("entscheide(kennung, ja)"),
+                                        ["kennung": e.karte.kennung, "ja": false]) }
+            }
+        }
+        meldung = weg.map(Kartenablage.abgelaufenMeldung).joined(separator: " ")
     }
 
     /// «Claudes letzten Schritt zurücknehmen» (Entscheid 114).

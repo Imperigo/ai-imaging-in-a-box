@@ -5958,6 +5958,25 @@ liegt, bis der Architekt «Anwenden» oder «Ablehnen» drückt. Bis dahin ände
 von Claude · K-12», darunter, was geschehen würde; bei einem Render-Auftrag der Satz «Rendern braucht danach
 deine Freigabe am Knoten.» *Im Projekt:* Entscheid 106a; `Kikarte` im Kern, gezeichnet in `Kileiste.swift`.
 
+**Kartenablage (offene Vorschläge in der App)** — Der Ort in der Mac-App, an dem die offenen Karten liegen, jede mit der
+Mappe, zu der sie gehört, und der Zeit, seit der sie wartet. Die Knotenansicht wird bei jedem Wechsel der Ansicht neu
+geladen und vergisst dabei alles; die App nicht. Kommt die Knotenansicht zurück, gibt die App ihr die Karten ihrer Mappe
+wieder. *Im Projekt:* `Kartenablage` im Kern, gehalten von der `Kizentrale`; Protokoll 74 §184.
+
+**Zurückgeben (einer Karte, mit neuer Probe)** — Eine Karte, die die App aufgehoben hat, geht nach dem Neuladen nicht
+unbesehen zurück, sondern wird in der Knotenansicht noch einmal zur Probe durchgerechnet, als käme der Vorschlag neu.
+Geht die Probe auf, liegt die Karte wieder da; scheitert sie (etwa weil der betroffene Knoten gelöscht ist), bleibt die
+Karte sichtbar und gilt als «passt nicht mehr». Zurückgegeben wird immer als Karte, nie still angewendet. *Im Projekt:*
+`visboxKi.stelleWieder` in `ki-wirt.ts`.
+
+**Ablauf (einer Karte)** — Eine Karte, über die vier Stunden lang niemand entschieden hat, fällt weg. Claude oder der
+Assistent bekommt dazu einen Satz mit dem Grund, damit der Vorschlag nicht still verschwindet. *Im Projekt:*
+`Kartenablage.frist`.
+
+**Passt nicht mehr (Karte)** — Eine Karte, die zu einer anderen Mappe gehört als der offenen, oder deren Probe im
+jetzigen Knotengraph scheitert. Sie bleibt stehen, bis der Architekt entscheidet; «Anwenden» ändert dann nichts und sagt
+in einem Satz, warum — dem Architekten in der Leiste und Claude als Antwort. *Im Projekt:* `Kartenablage.entscheide`.
+
 **Selbständigkeit (Karte, Coop, Voll)** — Wie frei die KI arbeiten darf, eingestellt oben in der
 Assistent-Leiste (seit dem 20.10.2026 in der Knotenansicht an der **Claude-Marke**, mit den Schaltern «Coop – ändert
 frei» und «Vollautomatik» aus KosmoOrbit): **Karte** (Vorgabe) — jede Änderung wird erst eine Karte; **Coop** und **Voll** —
@@ -8039,7 +8058,9 @@ daneben der Grund. Rechnet der Heim-PC mehrere Kameras, zählt das schwächste B
 
 **Veraltet (ein Bild am Render-Knoten)** — Ein fertiges Bild, dessen Auftrag sich seither geändert
 hat: anderer Prompt, andere Einstellung. Das Bild bleibt stehen, der Knoten sagt aber «veraltet» —
-es zeigt nicht mehr, was ein neuer Lauf liefern würde.
+es zeigt nicht mehr, was ein neuer Lauf liefern würde. Derselbe Gedanke beim Laden eines Modells am Heim-PC
+(Befund 307 B1, 21.10.2026): Ist seit dem letzten «Datei laden …» eine andere Mappe offen, meldet dessen Stand
+`veraltet` mit Satz, statt gelöscht zu werden — nichts geht verloren, und niemand hält ihn für die offene Mappe.
 
 **KosmoPublish (Plakatblatt)** — Der Teil von KosmoOrbit, in dem Pläne und Bilder auf Blätter für
 Präsentation und Druck gesetzt werden. Der Knoten «Aufs Blatt» legt ein Render dorthin. In Visbox
@@ -8524,8 +8545,15 @@ Sonne und Schatten sind echt gerechnet, Oberflächen nur so, wie sie modelliert 
 «Cycles-Bild» oder, als Datei, «Schönbild» (`<kamera>__schoenbild.png`). *Wozu:* Das KI-Bild ist ein Entwurf und nimmt
 das Licht nicht verlässlich mit (Messungen 298 und 300); daneben zeigt das Grundbild, wie Licht und Schatten wirklich
 fallen. *Im Projekt:* Entscheid 117a (W-4): Der Render-Knoten bestellt es bei jedem KI-Bild mit; ein Klick auf das Bild
-zeigt KI-Bild und Grundbild gross nebeneinander, umschaltbar «nebeneinander · nur KI · nur Grundbild». Im schmalen
-Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil zwei Bilder dort unter 96 px schrumpften.
+zeigt KI-Bild und Grundbild gross nebeneinander, umschaltbar «nebeneinander · nur KI · nur Grundbild». Seit Entscheid 119
+ist der Render-Knoten breiter, und beide Bilder stehen schon am Knoten nebeneinander; vorher stand dort nur das KI-Bild
+mit der Beschriftung «KI-Bild · + Grundbild», weil zwei Bilder unter 96 px geschrumpft wären.
+
+**Innenbreite (eines Knotens)** — Wie breit der Inhalt einer Knotenkarte ist: die Karte ohne den schmalen Rand links
+und rechts (je 8 Bildpunkte). *Wozu:* Was in den Knoten passt — zwei Bilder nebeneinander, ein Knopf neben dem anderen —,
+hängt an dieser Zahl. *Im Projekt:* Die meisten Knoten sind 200 Bildpunkte breit, innen 184; der Render-Knoten seit
+Entscheid 119 212, innen 196, damit KI-Bild und Grundbild je 96 Bildpunkte bekommen. Das Programm fragt die Breite je
+Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit der richtigen Kante rechnen.
 
 
 ---
@@ -8534,8 +8562,10 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
-| 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **Veraltet (ein Bild am Render-Knoten)** um den Ladestand erweitert; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §180): **Vorgabe beim Anlegen (eines Knotens)** |
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |

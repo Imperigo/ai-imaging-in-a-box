@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261007-263",
  "worker": "local",
- "status": "erledigt — V1–V8 in WebKitGTK geprueft",
+ "status": "ok",
+ "zusammenfassung": "erledigt — V1–V8 in WebKitGTK geprueft",
  "beendet": "2026-10-08T07:18:00Z",
  "weg": "Wie 242/246/250/252 und nach RAHMEN (Nachtrag Test-Apps inkl. 07.10.): eigene Arbeitskopie detached auf origin/claude/kosmovis-v018-render-verlauf, npm ci (Exit 0), Lizenz-Paket gebaut, «npx tauri build --no-bundle» mit eigenem Cargo-Zielordner (Exit 0), nichts installiert, installierte App nicht ersetzt. Eigener Xvfb (1920x1080x24, freie Displaynummer), eigene Sitzungs-DBus, Wegwerf-Profil (XDG_DATA/CONFIG/CACHE/RUNTIME), Start nur mit env -i, cwd im Wegwerf-Ordner, KOSMO_MCP_AUS=1, KOSMO_MCP_PORT frei, Software-GL (mesa). Profil VOR dem ersten Laden ueber eine nur lokal eingebundene, nie committete Messhilfe vorbelegt: kosmo.claude.anschluss=aus, Claude-Adresse und Sync auf toten Port, eigene Bruecken-Adresse, Betriebsart cloud, kosmo.verbindung.festeAdressen=1 (der Stand kennt den Schluessel nicht); dieselbe Hilfe sperrt fetch/WebSocket/EventSource/XHR auf 8600, 8700 und 8630. Eigene Bruecke aus der Arbeitskopie (nur 127.0.0.1, freier Port, eigene Ablage, Fehlerbericht-/Feedback-/Lernjournal-/Ablage-Pfade ins Wegwerf-Verzeichnis, CORS fuer die Tauri-Herkunft). Gerechnet vom Abholer (ai-imaging-in-a-box main cfcee8e, tools/abholen.py --store <eigene Ablage> --fremde-freigabe --hoechstens 1 --kein-gelaende, .venv-render, AIIMAGING_MODELLE wie im Dienst), je Lauf unter der geteilten GPU-Sperre bei freier Karte. Synthetisches Projekt: «Beispielprojekt laden — Demohaus», Vis-Station, frischer Graph, Modell + Prompt («Abendlicht, warme Fassade») + Render, Z-Image Turbo (Vorgabe), Qualitaet 128 (Vorgabe). Klicks mit xdotool nur auf dem eigenen Xvfb. Port 8630 und Display :0 nie angefasst.",
  "koepfe": {

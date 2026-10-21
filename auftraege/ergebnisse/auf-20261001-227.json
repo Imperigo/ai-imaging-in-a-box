@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-227",
  "worker": "local-prepare",
- "status": "erledigt — Helfer konnte nicht pruefen (Ordner im Auftrag falsch); Gegenprobe des Home-PC-Workers gruen",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Helfer konnte nicht pruefen (Ordner im Auftrag falsch); Gegenprobe des Home-PC-Workers gruen",
  "git_log_1": "86945d9 auf-228: Schlusslauf Z2 — die Befunde aus 225 am echten Projekt nachmessen",
  "helfer": {
   "modell": "kosmo-qwen3.6:35b-a3b",

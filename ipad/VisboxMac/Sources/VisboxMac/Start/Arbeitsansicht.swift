@@ -394,7 +394,8 @@ struct Heimflaeche: NSViewRepresentable {
         return ansicht
     }
 
-    /// Die Flaeche geht: Die Karten der Knotenansicht fallen weg, Claude hoert «VERWORFEN».
+    /// Die Flaeche geht: Die Seite ist weg, ihre Karten bleiben in der App (`Kizentrale`,
+    /// Strang Karten) und kommen beim naechsten Oeffnen zurueck.
     static func dismantleNSView(_ ansicht: WKWebView, coordinator: Flaechenlotse) {
         Knotenki.seiteGeht("Die Knotenansicht wurde geschlossen")
     }
@@ -443,11 +444,16 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 
     func lade(_ ansicht: WKWebView) {
-        // WAS VORHER OFFEN WAR, GEHT: Die Karten einer Knotenansicht leben nur in ihr — neu
-        // geladen oder auf die Visbox-Seite umgeschaltet, gibt es sie nicht mehr.
+        // WAS VORHER OFFEN WAR, GEHT — SEINE KARTEN NICHT (Strang Karten, 21.10.2026): Die App
+        // haelt sie (`Kizentrale`, `Kartenablage`) mit der Mappe, in der sie entstanden; die neu
+        // geladene Knotenansicht bekommt die Karten ihrer Mappe zurueck.
         Knotenki.seiteGeht(wahl.ausDemBuendel ? "Die Knotenansicht wird neu geladen"
                            : "Die Knotenansicht wurde für die " + Flaechenwahl.seite.titel + " geschlossen")
-        MainActor.assumeIsolated { wirtbote.seiteGeht() }
+        let mappe = Kartenmappe.aus(ordner: quelle.mappe)
+        MainActor.assumeIsolated {
+            wirtbote.seiteGeht()
+            Kizentrale.gemeinsam.setzeKartenmappe(mappe)
+        }
         if wahl.ausDemBuendel && !quelle.bauVorhanden {
             melde("Die Knotenansicht fehlt im Programm — bitte die Mac-App neu laden.")
             return
