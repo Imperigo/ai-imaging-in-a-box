@@ -1,0 +1,55 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-312",
+ "art": "qa",
+ "beschreibung": "Video-Befund L4-2 am Heim-PC pruefen: Traegt die Schaetzung des Hausanteils am KI-Bild (qa.haus_anteil_bild) gegen eine eigene Nachzaehlung, steht der Satz KI-BILD RAHMT ANDERS dort, wo die KI den Ausschnitt veraendert hat, und sagt der Grund-Satz bei Geometrie 0.0, was die Zahl misst?",
+ "erstellt": "2026-10-21T15:30:00Z",
+ "rang": 6,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Gegliederter Testbau wie 292-297, Vorgabe-Platte 40x30 m."
+ },
+ "params": {
+  "befunde": [
+   "Video-Befund L4-2"
+  ],
+  "einbau": [
+   "C117"
+  ],
+  "protokoll": "74 §195",
+  "folgt_auf": "auf-20261021-297",
+  "kameras": [
+   "sSE"
+  ],
+  "seeds": [
+   482913,
+   7,
+   11
+  ],
+  "abstand_fest_m": 90,
+  "laeufe": 4,
+  "neue_ki_laeufe": 4,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Hausanteil an Grundlage und KI-Bild (Video-Befund L4-2, Protokoll 74 §195, Einbau C117); die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET (jeder KI-Lauf mit Pruefung): (a) Neue Felder im render-result.json: qa.haus_anteil_grundlage (Anteil der Soll-Silhouette am Bild, gezaehlt, dieselbe Zahl wie anteil_soll und wie im Satz 'Das Haus fuellt ...') und qa.haus_anteil_bild (am KI-Bild GESCHAETZT aus der Tiefe des Schaetzers: Naehe zwischen dem fernen Fuenftel und 1,10 x dem nahen Zwanzigstel der Naehe auf dem Soll-Umriss, nur zusammenhaengend mit ihm; ohne den gedachten Boden), je 0..1, am qa-Block fuer die Kamera von qa.geometry und je Kamera in qa_je_kamera[]. Am Kameraurteil (befund.json) steht der Befund unter haus_im_bild {anteil, anteil_grundlage, n_bild, n_soll, band, verfahren}. Bei Innenansichten (randlose Silhouette) fehlen beide Felder. (b) Neuer Satz in qa.verdict.hinweise 'KI-BILD RAHMT ANDERS: Im KI-Bild der Kamera ... fuellt das Haus geschaetzt X %, in der Grundlage Y % ...', wenn ein Wert mindestens doppelt so gross ist wie der andere UND sie sich um mindestens 5 Prozentpunkte unterscheiden (baumasse.RAHMUNG_FAKTOR 2,0, RAHMUNG_MINDEST_PUNKTE 0,05, gesetzt, nicht gemessen). (c) Der Teil 'Geometrie <zahl> gegen <schwelle>' in qa.verdict.reason bleibt am Anfang wortgleich und bekommt Zusaetze: ' — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %)', wenn gesamtwert_anwendbar false ist; und bei einer 0.0 mit Rangkorrelation falschen Vorzeichens ' — KI-Bild weicht von der Geometrie ab: es ordnet die Tiefe anders als das Modell (Rangkorrelation +0.50, erwartet negativ); 0.0 ist der bei null abgeschnittene Wert, kein Messfehler' (ohne Ueberdeckung: '... die Umrisse decken sich nicht'). (d) Nichts an passed, lieferstatus, geometry_gates, qa.geometry, Seedwahl, Bild oder Prompt aendert sich. VORBEREITUNG wie 296/297 (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER; Werte NIE ins Repo oder in die Rueckgabe). Geometrie synthetisch: derselbe gegliederte Testbau wie 292-297 (tools/make_test_glb.py, Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m) auf der Vorgabe-Platte 40x30 m. Bruecke wie die Knotenansicht, samples 64, vis.backbone z-image-turbo, vis.guete 'voll', vis.seed 482913, cameras 'auto', render.resolution [960,600], render.environment {preset:'mittag'} ohne rotationGrad, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. WAS ZU TUN IST, in dieser Reihenfolge: (1) KLEINES HAUS (der Fall aus dem Video): cameras_auto {richtungen:['sSE'], abstand:{art:'fest', meter:90}} — das Haus soll in der Grundlage unter 20 % fuellen. Kommt 'NICHT GERENDERT (Rahmung)' zurueck, dieselbe Bestellung mit 60, dann 45 m; der erste Abstand, der rendert und unter 20 % bleibt, gilt auch fuer (2) — in der Rueckgabe nennen. (2) DASSELBE mit den Seeds 7 und 11 statt 482913 (zwei weitere Laeufe), damit sichtbar wird, ob die KI den Ausschnitt oft oder selten veraendert. (3) NORMALES HAUS: cameras_auto {richtungen:['sSE']} ohne abstand (Vorgabe fuellt 0,7), Seed 482913. (4) JE LAUF NACHZAEHLEN: im gelieferten KI-Bild den Umriss des Hauses (Hauptbau mit Anbau und Dachaufbau, ohne Platte, Boden, Baeume) von Hand oder mit einem Maskenwerkzeug nachfahren und die Bildpunkte zaehlen; ebenso am Cycles-Bild (Grundlage). Ein grobes Rechteck genuegt NICHT — die Zahl soll die eigene Zaehlung sein, mit der man die Schaetzung pruefen kann. (5) Je Lauf das render-result.json lesen. NICHT: keine anderen Stimmungen, keine Messschalter (vis.umriss_halten, vis.bildeingang, vis.farbabgleich, vis.leerer_hintergrund) setzen; keine Schwelle aendern; nichts am Code aendern — ein Fehler kommt als Befund zurueck; keine Pfade, Hosts oder Kennwoerter in die Rueckgabe; keine echten Projektdaten.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt.",
+  "Je Lauf (1 mit drei Seeds, 3): qa.haus_anteil_grundlage, qa.haus_anteil_bild, anteil_soll aus befund.json, haus_im_bild.band und n_bild; die eigene Nachzaehlung am KI-Bild und am Cycles-Bild (Bildpunkte und Anteil).",
+  "Je Lauf: Satz KI-BILD RAHMT ANDERS ja/nein (wortgleich), qa.verdict.reason wortgleich, geometry_fidelity, spearman.",
+  "Je Lauf das KI-Bild und das Cycles-Bild als PNG unter auftraege/ergebnisse/<id>-bilder/ (klein genug fuers Repo).",
+  "Urteil in einem Satz: Trifft die Schaetzung die Nachzaehlung auf etwa ein Fuenftel genau, oder wo weicht sie ab (Boden am Fuss, Baeume, Platte)?",
+  "EINBAU: Belegt, dass der Heim-PC beide Hausanteile, den Satz KI-BILD RAHMT ANDERS und den erklaerten Geometrie-Satz in jedes render-result.json schreibt, das die Knotenansicht liest — damit wird C117 am Heim-PC bestaetigt (die Anzeige drueben folgt dem Einspielen)."
+ ]
+}
