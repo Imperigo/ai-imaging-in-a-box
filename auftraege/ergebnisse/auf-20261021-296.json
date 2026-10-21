@@ -1,0 +1,974 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-296",
+ "worker": "local",
+ "rang": 83,
+ "folgt_auf": "auf-20261020-295",
+ "entscheide": [
+  "107",
+  "110",
+  "113"
+ ],
+ "einbau": [
+  "C93"
+ ],
+ "status": "erledigt mit Befunden — (a) abend hebt sich jetzt aus beiden Richtungen ab: Kontrast 41,1/39,5 (nachgezaehlt 40,4/38,5) statt 19,0/18,4, Hintergrund daneben 93/94 statt 115, Haus-Mittel unveraendert 133/132, kein 'HAUS KAUM SICHTBAR', Himmel weiter Abend (mauve), Streiflicht bleibt; mittag bildpunktgleich zu 295, winter -34,0/-33,8 statt -39,7/-40,1 (Aenderung 6, Betrag >= 20). (b) Satz 'NICHT WIEDERZUERKENNEN' genau bei abend voll (geom_iou 0,005), nicht bei vorschau (0,384); umriss_gilt false mit Grund. Aber: 4b Strassenbild mit geom_iou 0,197 ist ebenfalls nicht wiederzuerkennen und bekommt den Satz nicht. (c) angewandt.environment ohne rotationGrad, drehung_je_kamera gleich Blender-Bericht, 180 Grad auseinander; bestellt 0 unveraendert und bildpunktgleich. (d) Schwelle 0,25 trennt Gipsmodell (0,0, im Umriss) von beiden mittag-Bildern (1,01 / 2,15, sichtbar ausgebrochen). Ohne Stimmung bildpunktgleich 295.",
+ "beendet": "2026-10-21T01:35:00Z",
+ "koepfe": {
+  "stand": "main fd17b47 (Visbox 0.3.10, enthaelt die 295-Befunde); visbox-flaeche nach dem Pull neu gestartet, Abholer per Timer 30 s. Abholer vor dem Start geprueft: kein Auftrag offen (gesehen 0), 296 nicht aufgenommen. Kein Code geaendert, nichts ins Repo ausser diesem Ergebnis und den Bildern, Mappe des Dienstes nicht angefasst.",
+  "himmelsbilder": "GET /api/heim: 'Himmelsbilder 8/8' (da 8, von 8, fehlend []). Ordnerwerte und Dateinamen nur am Heim-PC; im Ergebnis nur Stimmungsnamen (angewandt.environment hier mit hdri/datei als '<Himmelsbild>').",
+  "weg": "Bruecke als Client wie 295: POST /bruecke/jobs (multipart scene+model; Varianten ohne model mit vis.grundlage), /approve; job.json im Takt 0,5 s. Vor jedem Lauf: kein fremder Auftrag queued/running, Karte < 2,5 GB und < 120 W.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb) wie 292-295: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "kosmovis.render-scene/v1: cameras 'auto', cameras_auto {richtungen}, samples 64, style.mode none, Standardprompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', vis.backbone z-image-turbo, KI vis.seed 482913; render.environment nur {preset} ohne rotationGrad (ausser Teil 3).",
+  "gpu": "vor jedem Lauf 1241 MiB, 14-65 W, 0 %, ollama ps immer leer. Cycles-Spitze 1324-1328 MiB / 55-66 W; KI 27436 MiB / 354-359 W. Leistungsgrenze 400 W unveraendert. 14 Laeufe strikt nacheinander.",
+  "systemlast": "Last (1 min) 1,21-2,38.",
+  "kosmo_modelle": "nicht beruehrt; ollama ps die ganze Zeit leer."
+ },
+ "1_abend_zwei_richtungen": {
+  "job": "vis-1792545476-4d30e2",
+  "zeit_freigabe_bis_done_s": 40.43,
+  "gpu_vorher": "1241 MiB, 14.07 W, 0 %",
+  "systemlast_vorher": "1.51 / 1.24 / 1.28",
+  "gpu_spitze": "1324 MiB / 65 W",
+  "ollama_ps": "leer",
+  "kameras": {
+   "sSE": {
+    "hintergrund_abstand": {
+     "weg": "vorprobe",
+     "richtung": "dunkler",
+     "faktor": 0.706101,
+     "abstand_ev": 1.0,
+     "abstand_ev_vorher": -0.622,
+     "abstand_ev_nachher": -1.124,
+     "haus_mass": "stufen",
+     "haus_linear": 0.9546652553260049,
+     "haus_stufen": 0.3923844675399034
+    },
+    "qa_kontrast_gemeldet": 41.1,
+    "kontrast_nachgezaehlt": {
+     "wert": 40.4,
+     "haus": 133.0,
+     "daneben": 92.7
+    },
+    "kontrast_295": 19.0,
+    "aenderung_gegen_295": 22.1,
+    "haus_gruppen_luma_schatten_sonne": [
+     98.9,
+     230.1
+    ],
+    "haus_links_rechts_luma": [
+     95.3,
+     170.1
+    ],
+    "himmel_mittel_rgb": [
+     107.4,
+     90.4,
+     96.2
+    ],
+    "umgebung_drehung_grad": 285.00802,
+    "voll_weiss_am_haus": 0,
+    "bild": "auf-20261021-296-bilder/1-abend-sSE.png"
+   },
+   "nNW": {
+    "hintergrund_abstand": {
+     "weg": "vorprobe",
+     "richtung": "dunkler",
+     "faktor": 0.717591,
+     "abstand_ev": 1.0,
+     "abstand_ev_vorher": -0.645,
+     "abstand_ev_nachher": -1.124,
+     "haus_mass": "stufen",
+     "haus_linear": 1.0000757201370982,
+     "haus_stufen": 0.39876953526879677
+    },
+    "qa_kontrast_gemeldet": 39.5,
+    "kontrast_nachgezaehlt": {
+     "wert": 38.5,
+     "haus": 132.3,
+     "daneben": 93.9
+    },
+    "kontrast_295": 18.4,
+    "aenderung_gegen_295": 21.1,
+    "haus_gruppen_luma_schatten_sonne": [
+     95.8,
+     230.3
+    ],
+    "haus_links_rechts_luma": [
+     93.7,
+     170.7
+    ],
+    "himmel_mittel_rgb": [
+     108.5,
+     91.5,
+     97.6
+    ],
+    "umgebung_drehung_grad": 105.00802,
+    "voll_weiss_am_haus": 0,
+    "bild": "auf-20261021-296-bilder/1-abend-nNW.png"
+   }
+  },
+  "kontrast_mindestens_20": true,
+  "satz_haus_kaum_sichtbar_fehlt": true,
+  "haus_und_hintergrund_gegen_295": {
+   "sSE": {
+    "haus": [
+     133.0,
+     133.1
+    ],
+    "daneben": [
+     92.7,
+     114.8
+    ]
+   },
+   "nNW": {
+    "haus": [
+     132.3,
+     132.4
+    ],
+    "daneben": [
+     93.9,
+     115.1
+    ]
+   },
+   "lesart": "[jetzt, 295] — das Haus bleibt, der Hintergrund wird um 22 Grauwerte dunkler"
+  },
+  "sonnen_schattenseite": "sSE Schatten 98,9 / Sonne 230,1 (Anteil dunkel 0,74), nNW 95,8 / 230,3 (0,73) — wie 295; die Schattenseite liegt nur 3-6 Grauwerte ueber dem Hintergrund daneben",
+  "vorprobe": "haus_stufen 0,392/0,399 statt haus_linear 0,955/1,000; abstand_ev_vorher -0,62/-0,65 (in Stufen) statt -1,9/-2,0 (295, linear) — darum jetzt Faktor 0,706/0,718 statt 1,0; abstand_ev_nachher -1,124 (Abstand gilt am hellsten Ende des Verlaufs, das Mittel liegt 0,12 EV weiter)",
+  "streiflicht": "ja — tiefe Sonne von rechts, helle Seite 230, Schlagschatten des Anbaus am Hauptbau",
+  "abend_statt_nacht": "ja — Himmel mauve/braun (RGB 107/90/96 statt 131/113/119), dunkler als 295, aber klar Abenddaemmerung, nicht Nacht",
+  "schlagschatten_auf_augenhoehe_sichtbar": "kaum — Platte nur ein schmaler Streifen, links dunkler (Platte Schattenanteil 0,41/0,38)",
+  "angewandt_environment": {
+   "preset": "abend",
+   "hdri": "<Himmelsbild>",
+   "intensitaet": 1.0,
+   "aufloesung": "4k",
+   "datei": "<Himmelsbild>",
+   "vorgaben": [
+    "hdri",
+    "intensitaet",
+    "rotationGrad"
+   ],
+   "gipsmodell": false,
+   "sonnenlampe": false,
+   "drehung_weg": "zur_kamera",
+   "prompt_satz": "evening mood, warm low sunlight, long raking shadows, golden hour",
+   "drehung_je_kamera": {
+    "nNW": 105.008,
+    "sSE": 285.008
+   }
+  }
+ },
+ "1_kontrolle_mittag_winter": {
+  "mittag": {
+   "job": "vis-1792545517-fdbe54",
+   "zeit_freigabe_bis_done_s": 40.39,
+   "gpu_vorher": "1241 MiB, 26.95 W, 0 %",
+   "systemlast_vorher": "1.69 / 1.30 / 1.30",
+   "gpu_spitze": "1324 MiB / 65 W",
+   "ollama_ps": "leer",
+   "kameras": {
+    "sSE": {
+     "hintergrund_abstand": {
+      "weg": "vorprobe",
+      "richtung": "dunkler",
+      "faktor": 1.0,
+      "abstand_ev": 1.0,
+      "abstand_ev_vorher": -2.147,
+      "abstand_ev_nachher": -2.147,
+      "haus_mass": "stufen",
+      "haus_linear": 0.6806779052776533,
+      "haus_stufen": 0.5415770980338781
+     },
+     "qa_kontrast_gemeldet": 68.0,
+     "kontrast_nachgezaehlt": {
+      "wert": 69.5,
+      "haus": 140.5,
+      "daneben": 70.9
+     },
+     "kontrast_295": 68.0,
+     "aenderung_gegen_295": 0.0,
+     "haus_gruppen_luma_schatten_sonne": [
+      63.5,
+      171.4
+     ],
+     "haus_links_rechts_luma": [
+      172.0,
+      109.4
+     ],
+     "himmel_mittel_rgb": [
+      49.8,
+      67.7,
+      85.6
+     ],
+     "umgebung_drehung_grad": 84.82402,
+     "voll_weiss_am_haus": 0,
+     "bild": "auf-20261021-296-bilder/1-mittag-sSE.png"
+    },
+    "nNW": {
+     "hintergrund_abstand": {
+      "weg": "vorprobe",
+      "richtung": "dunkler",
+      "faktor": 1.0,
+      "abstand_ev": 1.0,
+      "abstand_ev_vorher": -2.131,
+      "abstand_ev_nachher": -2.131,
+      "haus_mass": "stufen",
+      "haus_linear": 0.6929825073726599,
+      "haus_stufen": 0.5355552412377458
+     },
+     "qa_kontrast_gemeldet": 68.6,
+     "kontrast_nachgezaehlt": {
+      "wert": 71.0,
+      "haus": 141.3,
+      "daneben": 70.4
+     },
+     "kontrast_295": 68.6,
+     "aenderung_gegen_295": 0.0,
+     "haus_gruppen_luma_schatten_sonne": [
+      55.4,
+      171.8
+     ],
+     "haus_links_rechts_luma": [
+      172.3,
+      110.6
+     ],
+     "himmel_mittel_rgb": [
+      49.4,
+      67.2,
+      85.1
+     ],
+     "umgebung_drehung_grad": 264.82402,
+     "voll_weiss_am_haus": 0,
+     "bild": "auf-20261021-296-bilder/1-mittag-nNW.png"
+    }
+   },
+   "aenderung_ueber_10": false,
+   "betrag_mindestens_20": true,
+   "bildpunktgleich_295": "ja — sSE und nNW 0 abweichende Bildpunkte gegen 295 1-mittag (Faktor 1,0 wie 295; haus_stufen 0,54 statt linear 0,68 aendert nichts, weil der Hintergrund schon -2,1 EV weit weg liegt)",
+   "angewandt_environment": {
+    "preset": "mittag",
+    "hdri": "<Himmelsbild>",
+    "intensitaet": 1.0,
+    "aufloesung": "4k",
+    "datei": "<Himmelsbild>",
+    "vorgaben": [
+     "hdri",
+     "intensitaet",
+     "rotationGrad"
+    ],
+    "gipsmodell": false,
+    "sonnenlampe": false,
+    "drehung_weg": "zur_kamera",
+    "prompt_satz": "midday light, high sun, clear sky",
+    "drehung_je_kamera": {
+     "nNW": 264.824,
+     "sSE": 84.824
+    }
+   }
+  },
+  "winter": {
+   "job": "vis-1792545558-3303f7",
+   "zeit_freigabe_bis_done_s": 39.82,
+   "gpu_vorher": "1241 MiB, 16.92 W, 0 %",
+   "systemlast_vorher": "1.21 / 1.22 / 1.27",
+   "gpu_spitze": "1326 MiB / 66 W",
+   "ollama_ps": "leer",
+   "kameras": {
+    "sSE": {
+     "hintergrund_abstand": {
+      "weg": "vorprobe",
+      "richtung": "heller",
+      "faktor": 6.575663,
+      "abstand_ev": 1.0,
+      "abstand_ev_vorher": -1.601,
+      "abstand_ev_nachher": 1.116,
+      "haus_mass": "stufen",
+      "haus_linear": 1.1220806321584698,
+      "haus_stufen": 0.9247349262948328
+     },
+     "qa_kontrast_gemeldet": -34.0,
+     "kontrast_nachgezaehlt": {
+      "wert": -34.3,
+      "haus": 183.8,
+      "daneben": 218.1
+     },
+     "kontrast_295": -39.7,
+     "aenderung_gegen_295": 5.7,
+     "haus_gruppen_luma_schatten_sonne": [
+      121.7,
+      207.9
+     ],
+     "haus_links_rechts_luma": [
+      208.9,
+      159.1
+     ],
+     "himmel_mittel_rgb": [
+      216.6,
+      219.0,
+      224.8
+     ],
+     "umgebung_drehung_grad": 95.02402,
+     "voll_weiss_am_haus": 0,
+     "bild": "auf-20261021-296-bilder/1-winter-sSE.png"
+    },
+    "nNW": {
+     "hintergrund_abstand": {
+      "weg": "vorprobe",
+      "richtung": "heller",
+      "faktor": 6.571438,
+      "abstand_ev": 1.0,
+      "abstand_ev_vorher": -1.6,
+      "abstand_ev_nachher": 1.116,
+      "haus_mass": "stufen",
+      "haus_linear": 1.1480532806955719,
+      "haus_stufen": 0.9241406671011408
+     },
+     "qa_kontrast_gemeldet": -33.8,
+     "kontrast_nachgezaehlt": {
+      "wert": -34.2,
+      "haus": 184.0,
+      "daneben": 218.2
+     },
+     "kontrast_295": -40.1,
+     "aenderung_gegen_295": 6.3,
+     "haus_gruppen_luma_schatten_sonne": [
+      113.9,
+      208.6
+     ],
+     "haus_links_rechts_luma": [
+      209.0,
+      159.1
+     ],
+     "himmel_mittel_rgb": [
+      216.7,
+      219.1,
+      224.8
+     ],
+     "umgebung_drehung_grad": 275.02402,
+     "voll_weiss_am_haus": 0,
+     "bild": "auf-20261021-296-bilder/1-winter-nNW.png"
+    }
+   },
+   "aenderung_ueber_10": false,
+   "betrag_mindestens_20": true,
+   "lesart": "Hintergrund heller (richtung 'heller'), Faktor 6,58/6,57 statt 7,98/8,16 in 295 — wie erwartet etwas weniger aufgehellt; Kontrast -34,0/-33,8 statt -39,7/-40,1 (Aenderung +5,7/+6,3)",
+   "angewandt_environment": {
+    "preset": "winter",
+    "hdri": "<Himmelsbild>",
+    "intensitaet": 1.0,
+    "aufloesung": "4k",
+    "datei": "<Himmelsbild>",
+    "vorgaben": [
+     "hdri",
+     "intensitaet",
+     "rotationGrad"
+    ],
+    "gipsmodell": false,
+    "sonnenlampe": false,
+    "drehung_weg": "zur_kamera",
+    "prompt_satz": "winter, snow on the ground, cold clear light",
+    "drehung_je_kamera": {
+     "nNW": 275.024,
+     "sSE": 95.024
+    }
+   }
+  }
+ },
+ "2_abend_voll_und_neuer_satz": {
+  "grundlage_960": {
+   "job": "vis-1792545693-caabe1",
+   "zeit_freigabe_bis_done_s": 11.16,
+   "gpu_vorher": "1241 MiB, 14.02 W, 0 %",
+   "systemlast_vorher": "1.44 / 1.31 / 1.29",
+   "gpu_spitze": "1324 MiB / 65 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-dc11e99d8a4458b8",
+    "wiederverwendet": false
+   },
+   "qa_kontrast_haus_hintergrund": 39.9,
+   "kontrast_nachgezaehlt": {
+    "wert": 39.2,
+    "haus": 132.6,
+    "daneben": 93.4
+   },
+   "kontrast_295": 18.6,
+   "hinweise": null,
+   "bild": "auf-20261021-296-bilder/5-T1-abend-grundlage-960-sSE.png"
+  },
+  "vorschau": {
+   "job": "vis-1792545704-00b8c8",
+   "grundlage": {
+    "id": "gl-dc11e99d8a4458b8",
+    "wiederverwendet": true
+   },
+   "zeit_freigabe_bis_done_s": 43.55,
+   "kamera_s": 11.3,
+   "gpu_vorher": "1241 MiB, 23.51 W, 0 %",
+   "gpu_spitze": "27436 MiB / 354 W",
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.3842293631679444,
+    "spearman": -0.3367681159400168,
+    "geometry_fidelity": 0.35971683130331994,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 76722,
+    "n_gemeinsam": 40044
+   },
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_passt_zu_geom_iou_unter_0_1": true,
+   "seedauswahl_umriss_gilt": "fehlt (nur gesetzt, wenn false)",
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.567,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 71895,
+    "kontrast_kern_ring": 38.7,
+    "regel": "gut"
+   },
+   "aufbau_gleich_295": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "qa_je_kamera_neu": [],
+    "qa_je_kamera_fehlt": [],
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "qa_ausserhalb_umriss_anteil": 1.9185,
+   "ausserhalb_umriss": {
+    "anteil_haus": 1.9185,
+    "anteil_hintergrund": 0.414,
+    "n_neu": 112404,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 0.704101
+   },
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 192 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (482913), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.35971683130331994 gegen 0.65",
+   "haus_wiederzuerkennen": "teilweise — Mittelbau mit Dachaufsatz als Rahmen erkennbar, Anbau nicht, Seiten zerfasert",
+   "abendsonne_statt_nacht": "eher nein — dunkler Daemmerhimmel, nur warme Lichter am Bau",
+   "sichtbeton": "teilweise — helle Betonrahmen, dazwischen Ziegel/Holz",
+   "bild": "auf-20261021-296-bilder/2-abend-vorschau-960-sSE.png"
+  },
+  "voll": {
+   "job": "vis-1792545750-99d49d",
+   "grundlage": {
+    "id": "gl-dc11e99d8a4458b8",
+    "wiederverwendet": true
+   },
+   "zeit_freigabe_bis_done_s": 44.45,
+   "kamera_s": 14.6,
+   "gpu_vorher": "1241 MiB, 61.44 W, 0 %",
+   "gpu_spitze": "27436 MiB / 356 W",
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.004992736647864836,
+    "spearman": -0.5166865589962388,
+    "geometry_fidelity": 0.050790549500470045,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 86044,
+    "n_gemeinsam": 763
+   },
+   "satz_nicht_wiederzuerkennen": true,
+   "satz_passt_zu_geom_iou_unter_0_1": true,
+   "seedauswahl_umriss_gilt": false,
+   "seedauswahl_umriss_grund": "geom_iou 0.005 unter 0.1: das Haus ist im Bild nicht wiederzuerkennen; Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.",
+   "umriss_iou_eigen": {
+    "iou": 0.597,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 75531,
+    "kontrast_kern_ring": 63.1,
+    "regel": "gilt nicht (Haus nicht wiederzuerkennen, geom_iou < 0,1)"
+   },
+   "aufbau_gleich_295": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "qa_je_kamera_neu": [],
+    "qa_je_kamera_fehlt": [],
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "qa_ausserhalb_umriss_anteil": 2.0855,
+   "ausserhalb_umriss": {
+    "anteil_haus": 2.0855,
+    "anteil_hintergrund": 0.45,
+    "n_neu": 122187,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 2.015561
+   },
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 209 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' decken sich Modell und Bild kaum (geom_iou 0.005, Schwelle 0.1) (763 von 67541 Punkten des Modells gemeinsam). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.050790549500470045 gegen 0.65",
+   "haus_wiederzuerkennen": "nein — Blick unter ein grosses Vordach, Haus nicht zu finden",
+   "abendsonne_statt_nacht": "ja — tiefe warme Sonne, Streifschatten von Baeumen an der Wand",
+   "sichtbeton": "teilweise — Betonwand und Vordach, links Ziegel-/Holzfassade",
+   "bild": "auf-20261021-296-bilder/5-T2-abend-voll-960-sSE.png"
+  },
+  "ki_bild_bildpunktgleich_295": "ja — vorschau und voll 0 abweichende Bildpunkte gegen 295 3-abend, obwohl die Grundlage im Mittel 19 Grauwerte anders ist: z-image-turbo liest nur die Tiefe, nicht das Cycles-Bild (bekannt seit auf-20260919-123). Die neue Vorprobe aendert darum am KI-Bild nichts.",
+  "grundlage_295_zusaetzlich": "nicht noetig — voll liegt mit geom_iou 0,005 unter 0,1 (Bedingung 'beide ueber 0,1' nicht erfuellt)",
+  "eigene_umriss_iou_regel": "voll: Farb-IoU 0,597 wird nach der neuen Regel als 'gilt nicht (Haus nicht wiederzuerkennen)' gemeldet; vorschau: 0,567 bleibt gueltig (geom_iou 0,384). Werkzeug wie 295 (iou.py, Farbabstand Kern gegen Ring 6-20 px, Umkreis 30 px), neu gemessen."
+ },
+ "3_drehung_je_kamera": {
+  "aus_teil_1": {
+   "abend": {
+    "angewandt_environment_woertlich": {
+     "preset": "abend",
+     "hdri": "<Himmelsbild>",
+     "intensitaet": 1.0,
+     "aufloesung": "4k",
+     "datei": "<Himmelsbild>",
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "gipsmodell": false,
+     "sonnenlampe": false,
+     "drehung_weg": "zur_kamera",
+     "prompt_satz": "evening mood, warm low sunlight, long raking shadows, golden hour",
+     "drehung_je_kamera": {
+      "nNW": 105.008,
+      "sSE": 285.008
+     }
+    },
+    "rotationGrad_fehlt": true,
+    "drehung_je_kamera_vorhanden": true,
+    "blender_bericht_drehung_grad": {
+     "sSE": 285.00802,
+     "nNW": 105.00802
+    },
+    "gleich_auf_3_stellen": true,
+    "unterschied_180_grad": true,
+    "vorgaben": [
+     "hdri",
+     "intensitaet",
+     "rotationGrad"
+    ]
+   },
+   "mittag": {
+    "angewandt_environment_woertlich": {
+     "preset": "mittag",
+     "hdri": "<Himmelsbild>",
+     "intensitaet": 1.0,
+     "aufloesung": "4k",
+     "datei": "<Himmelsbild>",
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "gipsmodell": false,
+     "sonnenlampe": false,
+     "drehung_weg": "zur_kamera",
+     "prompt_satz": "midday light, high sun, clear sky",
+     "drehung_je_kamera": {
+      "nNW": 264.824,
+      "sSE": 84.824
+     }
+    },
+    "rotationGrad_fehlt": true,
+    "drehung_je_kamera_vorhanden": true,
+    "blender_bericht_drehung_grad": {
+     "sSE": 84.82402,
+     "nNW": 264.82402
+    },
+    "gleich_auf_3_stellen": true,
+    "unterschied_180_grad": true,
+    "vorgaben": [
+     "hdri",
+     "intensitaet",
+     "rotationGrad"
+    ]
+   },
+   "winter": {
+    "angewandt_environment_woertlich": {
+     "preset": "winter",
+     "hdri": "<Himmelsbild>",
+     "intensitaet": 1.0,
+     "aufloesung": "4k",
+     "datei": "<Himmelsbild>",
+     "vorgaben": [
+      "hdri",
+      "intensitaet",
+      "rotationGrad"
+     ],
+     "gipsmodell": false,
+     "sonnenlampe": false,
+     "drehung_weg": "zur_kamera",
+     "prompt_satz": "winter, snow on the ground, cold clear light",
+     "drehung_je_kamera": {
+      "nNW": 275.024,
+      "sSE": 95.024
+     }
+    },
+    "rotationGrad_fehlt": true,
+    "drehung_je_kamera_vorhanden": true,
+    "blender_bericht_drehung_grad": {
+     "sSE": 95.02402,
+     "nNW": 275.02402
+    },
+    "gleich_auf_3_stellen": true,
+    "unterschied_180_grad": true,
+    "vorgaben": [
+     "hdri",
+     "intensitaet",
+     "rotationGrad"
+    ]
+   }
+  },
+  "mittag_rotationGrad_0": {
+   "job": "vis-1792545598-97145e",
+   "zeit_freigabe_bis_done_s": 36.23,
+   "gpu_vorher": "1241 MiB, 24.09 W, 0 %",
+   "systemlast_vorher": "1.30 / 1.24 / 1.27",
+   "gpu_spitze": "1324 MiB / 65 W",
+   "ollama_ps": "leer",
+   "angewandt_environment_woertlich": {
+    "preset": "mittag",
+    "hdri": "<Himmelsbild>",
+    "intensitaet": 1.0,
+    "rotationGrad": 0.0,
+    "aufloesung": "4k",
+    "datei": "<Himmelsbild>",
+    "vorgaben": [
+     "hdri",
+     "intensitaet"
+    ],
+    "gipsmodell": false,
+    "sonnenlampe": false,
+    "drehung_weg": "bestellt",
+    "prompt_satz": "midday light, high sun, clear sky"
+   },
+   "drehung_weg_bestellt": true,
+   "rotationGrad_0_vorhanden": true,
+   "kein_drehung_je_kamera": true,
+   "umgebung_drehung": {
+    "drehung_grad": 0.0,
+    "weg": "bestellt",
+    "grund": ""
+   },
+   "qa_kontrast": 85.2,
+   "hintergrund_abstand": {
+    "faktor": 1.0,
+    "abstand_ev_vorher": -2.483,
+    "haus_linear": 0.6934172819191899,
+    "haus_stufen": 0.6836634363236539
+   },
+   "bild_gegen_295_teil_2": "bildpunktgleich — 0 abweichende Bildpunkte gegen 295 Teil 2 (und 294 1-mittag); Faktor 1,0, Kontrast 85,2 wie 295",
+   "bild": "auf-20261021-296-bilder/3-mittag-rot0-sSE.png"
+  }
+ },
+ "4_schwelle_ausserhalb_umriss": {
+  "methode_nachzaehlung": "Bereich = Zeilen bis zum Fuss des Hauses, ausserhalb Soll-Silhouette (Haus+Platte aus material_id) und 19 px Rand darum (eigene Zaehlung 278'359 Punkte, Visbox 271'498 mit gedachtem Boden). 'Himmel' = mit dem oberen Bildrand verbundenes Gebiet aus glatten (Gradient < 12), blaeulichen oder hellgrauen weichen Punkten (Wolken). Nicht-Himmel im Bereich / n_haus. Probe an den Cycles-Grundlagen: 0,0000-0,0001. Grenzen: Schattierung eines Studiohintergrunds zaehlt faelschlich mit, dunkle Untersichten koennen als Himmel gelten.",
+  "grundlage_weiss_960": {
+   "job": "vis-1792545797-1e5693",
+   "zeit_freigabe_bis_done_s": 35.52,
+   "gpu_vorher": "1241 MiB, 65.46 W, 0 %",
+   "systemlast_vorher": "2.38 / 1.55 / 1.37",
+   "gpu_spitze": "1324 MiB / 65 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-0c323696e67d7730",
+    "wiederverwendet": false
+   },
+   "qa_kontrast_haus_hintergrund": 57.7
+  },
+  "grundlage_mittag_960": {
+   "job": "vis-1792545880-30bce7",
+   "zeit_freigabe_bis_done_s": 34.88,
+   "gpu_vorher": "1241 MiB, 58.76 W, 0 %",
+   "systemlast_vorher": "1.75 / 1.54 / 1.38",
+   "gpu_spitze": "1328 MiB / 65 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-a2f274de490abfa2",
+    "wiederverwendet": false
+   },
+   "qa_kontrast_haus_hintergrund": 68.0
+  },
+  "4a_weiss_faithful_1_0": {
+   "job": "vis-1792545833-b8df18",
+   "grundlage": {
+    "id": "gl-0c323696e67d7730",
+    "wiederverwendet": true
+   },
+   "zeit_freigabe_bis_done_s": 45.58,
+   "kamera_s": 14.4,
+   "gpu_vorher": "1241 MiB, 18.19 W, 0 %",
+   "gpu_spitze": "27436 MiB / 357 W",
+   "prompt": "white plaster study model of a building on a plain base, neutral studio light, empty background, no other buildings, no people",
+   "qa_geometry": {
+    "geom_iou": 0.8699735535057731,
+    "spearman": -0.5894738486690942,
+    "geometry_fidelity": 0.7161191652409369,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 77410,
+    "n_gemeinsam": 67436
+   },
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_passt_zu_geom_iou_unter_0_1": true,
+   "seedauswahl_umriss_gilt": "fehlt (nur gesetzt, wenn false)",
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.754,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 69593,
+    "kontrast_kern_ring": 137.6,
+    "regel": "gut"
+   },
+   "aufbau_gleich_295": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "qa_je_kamera_neu": [],
+    "qa_je_kamera_fehlt": [],
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "ausserhalb_umriss": {
+    "anteil_haus": 0.0,
+    "anteil_hintergrund": 0.0,
+    "n_neu": 0,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 2.310274
+   },
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.7161191652409369 gegen 0.65",
+   "faithful": 1.0,
+   "selbst_im_umriss": "ja — weisses Gipsmodell, gerundet, mit Fensterloechern, kein Gebaeude daneben; grauer Studiohintergrund mit weichen Schatten",
+   "nachgezaehlt": {
+    "anteil_haus": 0.5831,
+    "anteil_bereich": 0.1227,
+    "lesart": "nur Schattierung des Studiohintergrunds links vom Modell, kein Gebaeude — von Hand gezaehlt 0"
+   },
+   "falsch_mitgezaehlt_platte_boden_baeume": "nein (Visbox 0 neue Punkte); falsch mitgezaehlt hat nur meine Nachzaehlung (Hintergrundschattierung)",
+   "sichtbeton": "nein — Gips, so bestellt",
+   "bild": "auf-20261021-296-bilder/4a-weiss-voll-f10-960-sSE.png"
+  },
+  "4a_mittag_faithful_1_0": {
+   "job": "vis-1792545915-6a809f",
+   "grundlage": {
+    "id": "gl-a2f274de490abfa2",
+    "wiederverwendet": true
+   },
+   "zeit_freigabe_bis_done_s": 45.58,
+   "kamera_s": 14.4,
+   "gpu_vorher": "1241 MiB, 19.34 W, 0 %",
+   "gpu_spitze": "27436 MiB / 357 W",
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "qa_geometry": {
+    "geom_iou": 0.4910794347731981,
+    "spearman": -0.3861906467632709,
+    "geometry_fidelity": 0.4354885584343209,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 77128,
+    "n_gemeinsam": 47646
+   },
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_passt_zu_geom_iou_unter_0_1": true,
+   "seedauswahl_umriss_gilt": "fehlt (nur gesetzt, wenn false)",
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.637,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 86364,
+    "kontrast_kern_ring": 25.8,
+    "regel": "gut"
+   },
+   "aufbau_gleich_295": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "qa_je_kamera_neu": [],
+    "qa_je_kamera_fehlt": [],
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "qa_ausserhalb_umriss_anteil": 1.0077,
+   "ausserhalb_umriss": {
+    "anteil_haus": 1.0077,
+    "anteil_hintergrund": 0.2175,
+    "n_neu": 59042,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 1.790621
+   },
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 101 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.4354885584343209 gegen 0.65",
+   "faithful": 1.0,
+   "selbst_im_umriss": "nein — breiter Baukoerper ueber fast die ganze Bildbreite, in der Mitte der Umriss des Hauses, durch den Hauptbau sieht man Berge",
+   "nachgezaehlt": {
+    "anteil_haus": 2.3927,
+    "anteil_bereich": 0.5036
+   },
+   "falsch_mitgezaehlt_platte_boden_baeume": "nein — Wiese/Platte liegen unter dem Fuss bzw. im Soll; Visbox zaehlt eher zu wenig (1,01 gegen 2,39 nachgezaehlt)",
+   "sichtbeton": "teilweise — Betonstreifen neben Stein-/Glasflaechen",
+   "bild": "auf-20261021-296-bilder/4a-mittag-voll-f10-960-sSE.png"
+  },
+  "4b_mittag_faithful_0_3_strasse": {
+   "job": "vis-1792545963-b754dd",
+   "grundlage": {
+    "id": "gl-a2f274de490abfa2",
+    "wiederverwendet": true
+   },
+   "zeit_freigabe_bis_done_s": 44.91,
+   "kamera_s": 14.4,
+   "gpu_vorher": "1241 MiB, 64.39 W, 0 %",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "prompt": "dense city street, row of neighbouring buildings on both sides, contemporary residential building, exposed concrete, no people, midday light, high sun, clear sky",
+   "qa_geometry": {
+    "geom_iou": 0.19726506419459372,
+    "spearman": 0.5047174414493893,
+    "geometry_fidelity": 0.0,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 165964,
+    "n_gemeinsam": 38473
+   },
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_passt_zu_geom_iou_unter_0_1": true,
+   "seedauswahl_umriss_gilt": "fehlt (nur gesetzt, wenn false)",
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.643,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 90403,
+    "kontrast_kern_ring": 29.1,
+    "regel": "gut"
+   },
+   "aufbau_gleich_295": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "qa_je_kamera_neu": [],
+    "qa_je_kamera_fehlt": [],
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "qa_ausserhalb_umriss_anteil": 2.1481,
+   "ausserhalb_umriss": {
+    "anteil_haus": 2.1481,
+    "anteil_hintergrund": 0.4636,
+    "n_neu": 125857,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 2.643356
+   },
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 215 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65",
+   "faithful": 0.3,
+   "selbst_im_umriss": "nein — Nahaufnahme einer Strassenzeile in Sichtbeton ueber das ganze Bild, das Modell ist nicht zu finden",
+   "nachgezaehlt": {
+    "anteil_haus": 2.4834,
+    "anteil_bereich": 0.5227,
+    "lesart": "untere Grenze — dunkle Balkonuntersicht oben links gilt in meiner Zaehlung als Himmel; von Hand ist der Bereich bis auf den Himmel rechts ganz Gebaeude"
+   },
+   "falsch_mitgezaehlt_platte_boden_baeume": "nein",
+   "sichtbeton": "ja — klarer Sichtbeton mit Schalungsstoessen",
+   "haus_wiederzuerkennen": "nein — trotzdem geom_iou 0,197, also kein Satz 'NICHT WIEDERZUERKENNEN'",
+   "bild": "auf-20261021-296-bilder/4b-mittag-voll-f03-strasse-960-sSE.png"
+  },
+  "urteil": "0,25 trennt 4a weiss (0,0, sichtbar im Umriss) von 4b (2,15, sichtbar ausgebrochen). Das zweite 4a-Bild (mittag, faithful 1,0, Standardprompt) blieb NICHT im Umriss (1,01, sichtbar ueber fast die ganze Breite gebaut) — die Zahl liegt dort richtig ueber 0,25. Sichtbar ist das Ausbrechen in jedem gemessenen Bild ab 0,68 (295) bzw. 1,01 (hier); zwischen 0,0 und 0,68 liegt kein gemessenes Bild, die Schwelle 0,25 liegt in dieser Luecke und ist weder enger bestaetigt noch widerlegt."
+ },
+ "5_tafelbilder": {
+  "T1": {
+   "bild": "auf-20261021-296-bilder/5-T1-abend-grundlage-960-sSE.png",
+   "satz": "Cycles-Grundlage abend 960 (sSE): tiefe Sonne von rechts, Streiflicht an Hauptbau und Anbau, Haus hebt sich vom mauvefarbenen Abendhimmel ab (Kontrast 39,9).",
+   "taugt_fuer_tafel": true
+  },
+  "T2": {
+   "bild": "auf-20261021-296-bilder/5-T2-abend-voll-960-sSE.png",
+   "satz": "KI voll auf abend: warme Abendsonne mit Streifschatten, aber Blick unter ein Vordach — das Haus ist nicht wiederzuerkennen (geom_iou 0,005), der neue Satz steht.",
+   "taugt_fuer_tafel": false,
+   "grund": "zeigt die Stimmung, nicht das Haus; taugt nur als Beispiel fuer den Satz 'NICHT WIEDERZUERKENNEN'"
+  },
+  "T3": {
+   "job": "vis-1792546010-1d27a9",
+   "zeit_freigabe_bis_done_s": 34.91,
+   "gpu_vorher": "1241 MiB, 62.19 W, 0 %",
+   "systemlast_vorher": "1.45 / 1.47 / 1.37",
+   "gpu_spitze": "1324 MiB / 66 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261021-296-bilder/5-T3-mittag-grundlage-960-nNW.png",
+   "satz": "Cycles-Grundlage mittag 960 aus nNW: harte Sonne von links, Seiten klar getrennt, schmaler Schlagschatten rechts auf der Platte, dunkelblauer Himmel (Kontrast 68,6, Drehung 264,824).",
+   "taugt_fuer_tafel": true
+  }
+ },
+ "6_ohne_stimmung": {
+  "job": "vis-1792545634-7a19fc",
+  "zeit_freigabe_bis_done_s": 34.15,
+  "gpu_vorher": "1241 MiB, 24.49 W, 0 %",
+  "systemlast_vorher": "1.53 / 1.29 / 1.29",
+  "gpu_spitze": "1324 MiB / 55 W",
+  "ollama_ps": "leer",
+  "bildpunktgleich_295_teil_5": "ja — sSE.png, beauty_.png, material_id.png je 0 abweichende Bildpunkte, tiefe_norm.png bitgleich (gleiche Pruefsumme); sSE.png auch 0 Bildpunkte gegen 294 4-ohne-stimmung",
+  "stimmungsfelder": "keine — qa leer ausser geometry/verdict, qa_je_kamera kontrast/ueberstrahlt null, blender-report umgebung leer (kein umgebung), angewandt nur cameras_auto (kein environment)",
+  "bild": "auf-20261021-296-bilder/6-ohne-stimmung-sSE.png"
+ },
+ "notiert_ohne_fix": {
+  "sichtbeton_im_ki_bild": "2 vorschau teilweise, 2 voll teilweise, 4a mittag teilweise, 4b ja (Strassenprompt), 4a weiss nein (Gips bestellt)",
+  "schlagschatten_auf_1_7_m": "in 1 (abend) kaum, nur die dunkle linke Plattenhaelfte; in T3 ja, aber schwach — schmaler dunkler Streifen rechts auf der Platte"
+ },
+ "befunde": [
+  "N1 SATZ VERFEHLT DAS STRASSENBILD: 4b (faithful 0,3, Strassenprompt) zeigt eine Strassenzeile in Nahsicht, das Haus ist nicht zu finden — geom_iou ist aber 0,197 (n_gemeinsam 38'473, n_ist 165'964, also fast das ganze Bild 'Haus'), der Satz 'NICHT WIEDERZUERKENNEN' fehlt und die eigene Farb-IoU (0,643) gilt formal. geom_iou < 0,1 faengt den Fall 'Bild voller Gebaeude' nicht; ein Bezug auf n_ist/n_soll (hier 2,46) oder auf ausserhalb_umriss_anteil (2,15) wuerde ihn fangen.",
+  "N2 KI-BILD UNABHAENGIG VON DER GRUNDLAGE: abend vorschau und voll sind bildpunktgleich zu 295, obwohl die neue Vorprobe den Hintergrund dunkler macht — z-image-turbo liest nur die Tiefe. Die Vorprobe in Stufen verbessert also das Cycles-Bild (Tafel T1), nicht das KI-Bild.",
+  "N3 4a MITTAG BRICHT AUCH MIT faithful 1,0 AUS: Standardprompt und volle Steuerstaerke bauen ueber fast die ganze Breite (1,01); nur der Gipsprompt mit 'empty background, no other buildings' bleibt im Umriss (0,0). Fuer ein Bild 'im Umriss' traegt der Prompt mehr als faithful.",
+  "N4 ausserhalb_umriss_anteil zaehlt eher zu wenig: nachgezaehlt 2,39 gegen gemeldet 1,01 (4a mittag), >= 2,48 gegen 2,15 (4b); Platte, Boden und Baeume zaehlen nicht falsch mit.",
+  "N5 abend: die Schattenseite (96-99) liegt jetzt fast auf dem Hintergrund daneben (93-94); der Kontrast kommt vom Mittel, die dunkle Seite hebt sich nur schwach ab.",
+  "N6 umriss_gilt steht am Kameraurteil nur, wenn false — bei geom_iou >= 0,1 fehlt das Feld (kein true)."
+ ],
+ "aufraeumen": "eigene Auftraege (Ablage), Ausgaben (kosmovis-bilder) und Probemappe per gio trash; Mappe des Dienstes, echter Himmels-/Materialordner nicht beruehrt; GPU leer (1241 MiB Grundlast), keine eigenen Prozesse.",
+ "urteil": "Ja — abend hebt sich jetzt aus beiden Richtungen ab (Kontrast 41,1/39,5 statt 19/18, Himmel weiter Abend); der neue Satz sagt bei abend voll (0,005) zu Recht 'nicht wiederzuerkennen' und schweigt bei der Vorschau (0,384), verfehlt aber das Strassenbild 4b (0,197), das man ebenfalls nicht erkennt; ausserhalb_umriss_anteil trennt mit 0,25 sauber 'im Umriss' (Gipsmodell 0,0) von 'ausgebrochen' (1,01 und 2,15, sichtbar ab dem kleinsten gemessenen Wert 0,68), ein Bild zwischen 0 und 0,68 fehlt noch."
+}
