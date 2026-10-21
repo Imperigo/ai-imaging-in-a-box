@@ -1,0 +1,193 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-309",
+ "art": "qa",
+ "beschreibung": "Strang Kern: M2 (material_vorne + umriss_halten im_lauf) gegen die Kontrolle mit vier Seeds, beiden Kameras sSE/nNW und drei Stimmungen (morgen, abend, bedeckt); Kontrollen nach den Fixes aus 302/303 (Stoff hoechstens dreimal, no_grad im Bildeingang); Option Himmel im Hintergrund als Auskunft; Augenurteil Sichtbeton? / Form wie Modell? / Naht? und drei Tafeln. Dazu aus 306: Stimmungssatz einmal englisch und Himmelsgroesse aus der Grundlage (Teil S).",
+ "erstellt": "2026-10-21T14:00:00Z",
+ "rang": 96,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261021-303",
+  "bezug": "auf-20261021-303",
+  "planblatt": "docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md",
+  "entscheide": [
+   "97",
+   "97a",
+   "117"
+  ],
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "kameras": [
+   "sSE",
+   "nNW"
+  ],
+  "stimmungen": [
+   "morgen",
+   "abend",
+   "bedeckt"
+  ],
+  "seeds": [
+   482913,
+   731150,
+   205877,
+   918263
+  ],
+  "kontrolle": "303 K (mittag, Standardprompt, faithful 0,8, seed 482913, 960 x 600) — bildpunktgleich",
+  "kontrollen": [
+   {
+    "name": "K0",
+    "was": "ohne Schalter, mittag, sSE, 482913 — bildpunktgleich zu 303 K"
+   },
+   {
+    "name": "M2m",
+    "vis": {
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    },
+    "was": "gegen 303 M2 (Prompt kuerzer)"
+   },
+   {
+    "name": "E2n",
+    "render": {
+     "materialien": {
+      "fassade": {
+       "id": "sichtbeton-schalungsglatt"
+      }
+     }
+    },
+    "vis": {
+     "bildeingang": 0.8
+    },
+    "was": "bildpunktgleich zu 303 E2, VRAM nach no_grad"
+   },
+   {
+    "name": "E3n",
+    "render": {
+     "materialien": {
+      "fassade": {
+       "id": "sichtbeton-schalungsglatt"
+      }
+     }
+    },
+    "vis": {
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    },
+    "was": "wenn Zeit; Stoff hoechstens dreimal"
+   }
+  ],
+  "varianten": [
+   {
+    "name": "K",
+    "was": "ohne Schalter"
+   },
+   {
+    "name": "M2",
+    "vis": {
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    }
+   }
+  ],
+  "schalter": [
+   "vis.umriss_halten",
+   "vis.material_vorne",
+   "vis.bildeingang"
+  ],
+  "rueckgabe_je_bild": [
+   "geom_iou",
+   "ausserhalb_umriss_anteil",
+   "n_ist/n_soll",
+   "Sichtbeton?",
+   "Form wie Modell?",
+   "Naht?",
+   "Hintergrund?",
+   "VRAM-Spitze",
+   "Zeit"
+  ],
+  "tafeln": [
+   "T1 je Stimmung K|M2 sSE und nNW (Seed 482913)",
+   "T2 M2 vier Seeds sSE je Stimmung",
+   "T3 K0|M2m|303 M2|E2n(|E3n)"
+  ],
+  "option_himmel": "nicht gebaut — Auskunft je Stimmung (hintergrund_abstand, Augenurteil, Himmelsbild im Blickfeld?)",
+  "gewichte": [
+   {
+    "name": "Tongyi-MAI/Z-Image-Turbo",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 32.9,
+    "download_gb": 0,
+    "vram_mib_ohne_bildeingang": 27436,
+    "vram_mib_mit_bildeingang": 31316,
+    "vram_mib_umriss_halten_im_lauf": 27116,
+    "vram": "gemessen zusammen mit dem ControlNet (auf-20261021-298/303); Bildeingang nach no_grad ungemessen"
+   },
+   {
+    "name": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 3.1,
+    "download_gb": 0,
+    "vram": "in den Zahlen oben enthalten"
+   }
+  ],
+  "texturen": [
+   {
+    "id": "sichtbeton-schalungsglatt",
+    "quelle": "ambientCG Concrete002",
+    "lizenz": "CC0-1.0",
+    "download_gb": 0
+   }
+  ],
+  "teil_s": [
+   {
+    "name": "S1",
+    "prompt": "Abendstimmung, warmes Licht, leuchtende Fenster",
+    "render": {
+     "environment": {
+      "preset": "abend"
+     }
+    },
+    "vis": {
+     "guete": "vorschau",
+     "grundlage": "abend-Grundlage aus Teil B"
+    }
+   },
+   {
+    "name": "S2",
+    "prompt": "Nebel, gedaempftes Licht, Tiefe im Dunst",
+    "render": {
+     "environment": {
+      "preset": "nebel"
+     }
+    },
+    "was": "wenn Zeit"
+   }
+  ],
+  "bezug_306": "auf-20261021-306 B2/B4"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang Kern (Befunde aus 302 und 303) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET: (1) OHNE SCHALTER NICHTS — jeder Lauf ohne vis.umriss_halten, vis.material_vorne und vis.bildeingang ist Bild fuer Bild und Prompt fuer Prompt der von 303 (K muss bildpunktgleich bleiben). (2) vis.material_vorne: der Stoff steht hoechstens dreimal im ganzen Prompt. Nennt der Prompt den Stoff schon (Standardprompt: 'exposed concrete'), wird der Satz vorne kuerzer: aus dem Standardprompt wird jetzt 'monolithic exposed concrete building, made entirely of exposed concrete, contemporary residential building, exposed concrete, architectural photography, no people, ...' (in 303 stand vorne zusaetzlich 'uniform exposed concrete on all exterior surfaces' — M2 rechnet darum NICHT mehr bildpunktgleich zu 303 M2). Mit Material-Knoten faellt der Satz hinten ('exterior surfaces of smooth fair-faced concrete') weg, wenn vorne derselbe Stoff steht (im Befund 'weggelassen: material_vorne'). (3) vis.umriss_halten 'nachher': die Saetze 'KI BAUT UEBER DEN UMRISS HINAUS' und 'HAUS IM KI-BILD NICHT WIEDERZUERKENNEN' und qa.ausserhalb_umriss_anteil kommen vom gehaltenen, gelieferten Bild; das Urteil von vorher (Seedwahl, qa.geometry) bleibt und steht im Satz 'UMRISS HALTEN ...' (vor/nach dem Halten). (4) vis.umriss_halten 'im_lauf': der Satz des Bildmodells ('UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten ...') steht jetzt auch in render-result.json unter qa.verdict.hinweise und unter angewandt.umriss_halten {art, kameras {<kamera>: {angewandt, schritte, anteil_frei, rand_px, hinweise}}}; 'Ungemessen' ist ersetzt durch die Messung aus 303. (5) vis.bildeingang: render._eigener_start kodiert das Cycles-Bild jetzt unter torch.no_grad — das Bild muss bildpunktgleich bleiben, der Grafikspeicher sollte sinken. Die Vorpruefung verlangt WEITER 30587 MiB (Registerwert unveraendert, er wird erst nach dieser Messung gesenkt) — die Karte muss fuer diesen Lauf leer sein. (6) Tiefenschaetzer: ein vorhandener, aber leerer oder unvollstaendiger Gewichtsordner endet mit 'ist da, aber leer ... leer oder unvollstaendig ... nie aus dem Netz' statt 'Unrecognized model'. (7) Journal des Abholers: die Zeilen 'Im Prozess Bildeingang: ...' stehen unter ihrem Auftrag NACH 'Vorpruefung ...', nicht mehr vor der Zusammenfassung des Durchgangs. (8) STIMMUNG IM PROMPT (aus 306 B2): Ist eine Stimmung bestellt (render.environment.preset), haengt der Heim-PC IMMER seinen englischen Satz der Stimmung an, genau einmal; die Saetze der Stimmungen im Prompt (auch der deutsche Satz des Stimmungs-Knotens, jetzt als ganze Wendung uebersetzt) werden vorher herausgenommen (prompt_zusaetze: schon_im_prompt false, herausgenommen [preset]). Ein Merkmal wie 'evening' im Prompt haelt den Satz nicht mehr zurueck. Die deutschen Saetze aller acht Stimmungen werden vollstaendig uebersetzt ('Abendstimmung, warmes Licht, leuchtende Fenster' -> 'evening mood, warm low sunlight, long raking shadows, golden hour'). Ohne bestellte Stimmung bleibt der Prompt wie bisher. (9) HIMMELSGROESSE (aus 306 B4): angewandt.environment.aufloesung kommt aus dem Blender-Bericht der verwendeten Grundlage (Dateiname des Himmelsbilds), nicht aus der Guete der Bestellung — eine Vorschau auf einer 4k-Grundlage meldet '4k'. GEWICHTE (nur Apache-2.0, Download 0 GB, beide liegen am Heim-PC): (W1) Tongyi-MAI/Z-Image-Turbo, Apache-2.0 (Modellkarte https://huggingface.co/Tongyi-MAI/Z-Image-Turbo, license: apache-2.0, nicht gated), Ordner z-image-turbo, 32,9 GB; (W2) alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (1.0), Apache-2.0 (Modellkarte https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union, license: apache-2.0, nicht gated), 3,1 GB. VRAM gemessen (298/303): 27436 MiB ohne Schalter, 27116 MiB mit im_lauf, 31316 MiB mit Bildeingang 0,8 (vor no_grad). TEXTUR fuer E2n/E3n: die CC0-Textur von sichtbeton-schalungsglatt (ambientCG Concrete002, CC0-1.0) aus dem Texturordner, wie in 303. SZENE wie 303: Geometrie synthetisch aus tools/make_test_glb.py (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m), cameras 'auto' mit richtungen ['sSE', 'nNW'] (in den Kontrollen K0/M2m/E2n/E3n nur ['sSE'] wie 303), render.resolution [960,600], samples 64, Standardprompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', vis.backbone z-image-turbo, guete voll, faithful weggelassen (0,8). Grundlagen je Stimmung einmal rechnen und fuer alle Seeds und beide Varianten wiederverwenden. REIHENFOLGE: ein Lauf zur Zeit, die Kontrollen zuerst. TEIL A — KONTROLLEN (mittag, Kamera sSE, Seeds 482913): K0 ohne Schalter (MUSS bildpunktgleich zu 303 K sein, 0 abweichende Bildpunkte — sonst abbrechen und melden); M2m vis.material_vorne true UND vis.umriss_halten 'im_lauf' (Prompt woertlich; gegen 303 M2: abweichende Bildpunkte, Augenurteil, ob die kuerzere Fassung den Sichtbeton haelt); E2n render.materialien {fassade: {id: 'sichtbeton-schalungsglatt'}} UND vis.bildeingang 0.8 (MUSS bildpunktgleich zu 303 E2 sein — no_grad aendert keine Zahl des Bilds; VRAM-Spitze mit nvidia-smi im Takt 0,25 s gegen 31316 MiB aus 303; Karte vorher leer); wenn Zeit: E3n wie 303 E3 (Material-Knoten, material_vorne, im_lauf) — Prompt woertlich, Stoff hoechstens dreimal. TEIL S — STIMMUNG AUF WIEDERVERWENDETER GRUNDLAGE (aus 306 B2/B4, nach Teil B): S1 wie die abend-Variante aus 306 — Prompt NUR der deutsche Satz des Stimmungs-Knotens 'Abendstimmung, warmes Licht, leuchtende Fenster', render.environment {preset: abend}, vis.guete 'vorschau', vis.grundlage = die abend-Grundlage aus Teil B (4k), Kamera sSE, Seed 482913. ERWARTET: Prompt aus befund.json woertlich mit dem englischen Satz 'evening mood, warm low sunlight, long raking shadows, golden hour' genau einmal und ohne deutsches Wort; ein Haus statt eines Innenraums (306: Innenraum, geom_iou 0,130, ueber den Umriss 4,50); angewandt.environment.aufloesung '4k'. Wenn Zeit: S2 ebenso mit 'Nebel, gedaempftes Licht, Tiefe im Dunst' und {preset: nebel} (eigene nebel-Grundlage, voll). Zurueck je S: Prompt woertlich, prompt_zusaetze der Stimmung, geom_iou, ausserhalb, aufloesung, Augenurteil (Haus oder Innenraum?, ein Satz). TEIL B — DIE MATRIX: zwei Varianten, K (ohne Schalter) und M2 (vis.material_vorne true UND vis.umriss_halten 'im_lauf'), je mit render.environment {preset: morgen}, {preset: abend} und {preset: bedeckt}, je mit vier Seeds (vis.seed 482913, 731150, 205877, 918263, ein Auftrag je Seed), beide Kameras sSE und nNW — 24 Auftraege, 48 Bilder. Verglichen wird M2 jeweils gegen K mit derselben Stimmung, demselben Seed und derselben Kamera. JE BILD ZURUECK: status; Prompt aus befund.json woertlich (je Variante einmal genuegt); geom_iou; qa.ausserhalb_umriss_anteil; n_ist/n_soll; Saetze 'NICHT WIEDERZUERKENNEN' und 'UEBER DEN UMRISS' ja/nein; bei M2 die Saetze 'UMRISS HALTEN ...' woertlich aus qa.verdict.hinweise UND angewandt.umriss_halten aus render-result.json (B2 aus 303: kommt der Satz des Bildmodells jetzt an?); umriss_halten_schritte; VRAM-Spitze und Zeit je Auftrag. AUGENURTEIL je Bild (blind, ohne die Zahlen vorher anzusehen): 'Sichtbeton?' ja / teilweise / nein und was sonst an Material zu sehen ist; 'Form wie Modell?' ja / teilweise / nein — rechtwinklig wie modelliert, oder Rundturm, gerundete Ecken, runder Dachaufbau, Pavillon statt Anbau (in 303 machte im_lauf allein einen Rundturm, E3 gerundete Formen, M2 nicht); 'Naht?' ja / nein mit Ort (Collage, Saum, abgeschnittene Vorspruenge an der Hauskante); 'Hintergrund?' ein Wort (Himmel / ruhiger Verlauf / Strasse / Nachbarbauten); ein Satz, was das Bild zeigt. Am Ende je Stimmung: bei wie vielen der acht M2-Bilder Sichtbeton ja, Form wie Modell ja, keine Naht — gegen K. OPTION HIMMEL IM HINTERGRUND (nicht gebaut, nur Auskunft): Mit einer Stimmung sehen die Kamerastrahlen in Cycles NICHT das Himmelsbild, sondern einen ruhigen Verlauf in den Medianfarben dieses Himmels ('Is Camera Ray', seit auf-20261020-292, weil das Himmelsbild ein Bodenfoto mit Wald und Felsen hinter das Haus stellte), und dieser Verlauf steht seit 293/295 eine bis zwei Blendenstufen vom Haus weg (stimmung.hintergrund_mit_abstand). Mit im_lauf gilt ausserhalb des Hauses genau dieses Cycles-Bild — darum der flache Hintergrund wie ein Modellfoto. Ein Messschalter, der fuer im_lauf den Kamerastrahl das Himmelsbild in voller Staerke zeigen laesst, braucht eine Aenderung im Blender-Runner, im Grundlagen-Schluessel und im Lesen der Szene und ist darum NICHT in diesem Stand. Zurueck je Stimmung: (a) aus dem Blender-Bericht der Grundlage umgebung.hintergrund_abstand (weg, faktor, abstand_ev) woertlich; (b) im Augenurteil 'Hintergrund?' bei M2; (c) ein Satz, ob ein Himmelsbild statt des Verlaufs die M2-Bilder dieser Stimmung tragen wuerde (das Himmelsbild der Stimmung einmal ansehen: Himmel oder Bodenfoto im Blickfeld der Kamera?). Daraus entscheidet der Hauptstrang, ob der Schalter gebaut wird. TAFELN (960 px, als PNG ins Ergebnisverzeichnis): T1 je Stimmung eine Zeile K | M2 fuer sSE und nNW (Seed 482913), also 3 Zeilen zu 4 Bildern; T2 M2 alle vier Seeds an sSE, je Stimmung eine Zeile; T3 die Kontrollen K0 | M2m | 303 M2 | E2n (| E3n); unter jedem Bild eine Zeile mit geom_iou, ausserhalb und 'Sichtbeton? / Form? / Naht?'. EINBAU — WAS DANACH IN DIE SOFTWARE KOMMT: In diesem Auftrag baut der Heim-PC nichts ein. Nach der Messung stellt der Hauptstrang die Owner-Frage ueber die Zentrale, ob M2 (material_vorne UND umriss_halten 'im_lauf') Vorgabe wird. Wird M2 Vorgabe, braucht es (a) ein Vertragsfeld beim Integrator (render-scene: Umriss halten und Material vorne, heute nur Messschalter vis.*) und (b) einen Knotenteil in der Knotenansicht beider Programme ('Umriss halten' / 'Material vorne'), je mit eigenem Auftrag und Bestaetigung am Geraet. Sinkt die VRAM-Spitze des Bildeingangs unter no_grad, senkt der Kern danach den Registerwert vram_bildeingang_* (Beleg diese Messung) — nicht vorher und nicht am Heim-PC. NICHT: keine Vorgabe aendern (kein Registerwert, kein Schalter dauerhaft, keine Umgebungsvariable dauerhaft; alle Schalter nur in den eigenen Probeauftraegen); nichts laden oder herunterladen, das nicht oben unter W1/W2 steht (Download 0 GB — NICHT Union 2.0/2.1, nicht Qwen-Image-2512); kein FLUX.1-dev, kein FLUX.2-dev, kein FLUX.1 Redux, kein SDXL, kein Juggernaut, kein IP-Adapter; diffusers und die anderen Bibliotheken in .venv-render nicht aufruesten; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; den echten Textur- oder Himmelsordner und die Mappe des Dienstes nicht veraendern; Dateien ins Repo nur Ergebnis, die Tafeln T1-T3 und hoechstens zwei Kontrollbilder (keine HDRI, Texturen, Gewichte, Pfade). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und unter 8 GB belegt), Leistungsgrenze 400 W gesetzt (nvidia-smi -pl 400) — im Zweifel nicht starten.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, Leistungsgrenze gesetzt ja/nein, Grundlagen je Stimmung neu oder wiederverwendet.",
+  "Teil A: K0 bildpunktgleich zu 303 K ja/nein (Zahl); M2m Prompt woertlich, abweichende Bildpunkte gegen 303 M2, Augenurteil; E2n bildpunktgleich zu 303 E2 ja/nein und VRAM-Spitze gegen 31316 MiB; E3n (wenn gerechnet) Prompt woertlich.",
+  "Teil B: je Bild status, geom_iou, ausserhalb_umriss_anteil, n_ist/n_soll, Saetze ja/nein, bei M2 die UMRISS-HALTEN-Saetze woertlich aus qa.verdict.hinweise und angewandt.umriss_halten, umriss_halten_schritte, VRAM-Spitze, Zeit, Augenurteil (Sichtbeton? / Form wie Modell? / Naht? / Hintergrund? / ein Satz); je Stimmung die Auszaehlung M2 gegen K.",
+  "Teil S: je Lauf Prompt woertlich, prompt_zusaetze der Stimmung, geom_iou, ausserhalb, angewandt.environment.aufloesung, Augenurteil Haus oder Innenraum.",
+  "Option Himmel: je Stimmung hintergrund_abstand woertlich und ein Satz.",
+  "Journal: die Zeilen 'Vorpruefung ...' und 'Im Prozess ...' von E2n in ihrer Reihenfolge.",
+  "Tafeln T1-T3 als PNG mit der Zeile der Zahlen.",
+  "Befunde: was abweicht, woertlich; Code nicht geaendert."
+ ]
+}

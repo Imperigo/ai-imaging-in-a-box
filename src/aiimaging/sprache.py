@@ -719,6 +719,33 @@ def sieht_englisch_aus(text: str) -> dict:
     }
 
 
+def _stimmungssaetze() -> dict[str, str]:
+    """Die deutschen Sätze der Stimmungen (``stimmung.STIMMUNGEN[…]["prompt_de"]``) als ganze
+    Wendungen — sie werden zum englischen Satz desselben Eintrags (auf-20261021-306, B2).
+
+    **Anlass:** Der Stimmungs-Knoten schreibt seinen deutschen Satz in den Prompt; Wort für Wort
+    wurde daraus «evening mood, warm light, leuchtende window» und «fog, gedämpftes light, Tiefe
+    in the haze» — halb übersetzt, an allen acht Stimmungen. Als ganze Wendung (längste zuerst)
+    kann kein Teil davon deutsch stehen bleiben. Auch in der Schreibung mit ae/oe/ue/ss, wie sie
+    über manche Wege ankommt. Eine Quelle, kein zweites Verzeichnis: ändert sich ein Satz in
+    ``stimmung``, folgt das Glossar.
+    """
+    from . import stimmung as _stimmung  # noqa: PLC0415 — stimmung importiert nichts von hier
+    aus: dict[str, str] = {}
+    for eintrag in _stimmung.STIMMUNGEN.values():
+        de, en = eintrag.get("prompt_de"), eintrag.get("prompt_en")
+        if not de or not en:
+            continue
+        de = " ".join(de.lower().split())
+        for form in {de, de.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")
+                     .replace("ß", "ss")}:
+            aus[form] = en
+    return aus
+
+
+GLOSSAR.update(_stimmungssaetze())
+
+
 # --------------------------------------------------------------------------------------
 # Übersetzen
 # --------------------------------------------------------------------------------------

@@ -671,6 +671,17 @@ def umgebung_einstellungen(szene: dict) -> dict:
     return aus
 
 
+def himmel_aufloesung_aus_bericht(bericht) -> str | None:
+    """Die Groesse des Himmelsbilds, mit dem Blender DIESE Kamera rechnete — ``'2k'``/``'4k'``
+    aus dem Dateinamen im Bericht (``umgebung.datei``, Ablageform ``<preset>__<hdri>_<2k|4k>.hdr``);
+    ``None``, wenn nicht ablesbar (auf-20261021-306, B4)."""
+    import re  # noqa: PLC0415
+    datei = ((bericht or {}).get("umgebung") or {}).get("datei") if isinstance(bericht, dict) \
+        else None
+    treffer = re.search(r"_(\d+k)\.[A-Za-z]+$", str(datei or ""))
+    return treffer.group(1) if treffer else None
+
+
 def drehung_aus_bericht(bericht) -> float | None:
     """Die Drehung des Himmelsbilds, die Blender fuer DIESE Kamera gerechnet hat — oder ``None``.
 
@@ -689,7 +700,14 @@ def drehung_aus_bericht(bericht) -> float | None:
     return round(float(wert) % 360.0, 3) % 360.0
 
 
-def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None) -> dict:
+def _einheitlich(je_kamera):
+    """Der eine Wert aller Kameras — ``None``, wenn keiner da ist oder sie sich unterscheiden."""
+    werte = {v for v in (je_kamera or {}).values() if v}
+    return next(iter(werte)) if len(werte) == 1 else None
+
+
+def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
+                        himmel_je_kamera: dict | None = None) -> dict:
     """``{environment?, cameras_auto?, materialien?}`` — was der Heim-PC rechnet, mit Vorgaben.
 
     Der Vertrag (mit dem Integrator, 20.10.2026) traegt fuer diese Felder keine Vorgaben;
@@ -700,6 +718,12 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None) -
     die Drehung. Stattdessen ``drehung_je_kamera {<kamera>: <grad>}`` aus dem Blender-Bericht
     je Kamera (fehlt, solange keine Kamera gerechnet hat). Bei «bestellt» bleibt
     ``rotationGrad`` wie bestellt.
+
+    **Die Groesse des Himmelsbilds (auf-20261021-306, B4):** ``aufloesung`` kommt aus dem
+    Blender-Bericht der Kameras (``himmel_je_kamera``, :func:`himmel_aufloesung_aus_bericht`) —
+    auf einer wiederverwendeten Grundlage also die der Grundlage, nicht die der Guete dieser
+    Bestellung (eine Vorschau auf einer 4k-Grundlage meldete «2k»). Nur ohne Bericht die Datei
+    der Bestellung bzw. die Guete.
     """
     szene = szene or {}
     aus: dict = {}
@@ -716,7 +740,8 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None) -
             _stimmung.licht_der_stimmung(umgebung.get("preset")).get("sonne_seitlich_grad"))
         aus["environment"] = dict(
             {k: v for k, v in umgebung.items() if not zur_kamera or k != "rotationGrad"},
-            aufloesung=datei.get("aufloesung") or _stimmung.aufloesung_fuer(szene.get("guete")),
+            aufloesung=(_einheitlich(himmel_je_kamera) or datei.get("aufloesung")
+                        or _stimmung.aufloesung_fuer(szene.get("guete"))),
             datei=datei.get("datei"),
             vorgaben=list(szene.get("umgebung_vorgaben") or ()),
             gipsmodell=umgebung.get("preset") == _stimmung.PRESET_WEISS,
@@ -2567,6 +2592,14 @@ def _ausserhalb_anteil(urteil):
     return befund.get("anteil_haus") if isinstance(befund, dict) else None
 
 
+#: Was vom Urteil des GEHALTENEN Bilds in den Vermerk geht (auf-20261021-303, B1): genau die
+#: Felder, aus denen ``kosmo_szene`` die Saetze «KI BAUT UEBER DEN UMRISS HINAUS» und «HAUS IM
+#: KI-BILD NICHT WIEDERZUERKENNEN» bildet — nicht mehr, damit das Kameraurteil (vor dem Halten)
+#: das Urteil bleibt.
+UMRISS_NACHHER_SATZFELDER = ("geom_iou", "n_ist", "n_soll", "n_gemeinsam", "score",
+                             "anteil_soll", "ausserhalb_umriss", "breite", "hoehe")
+
+
 def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ordner, *,
                              urteil_vorher=None, messen=None) -> dict:
     """Art ``nachher`` des Messschalters ``vis.umriss_halten`` (Strang Treue) an einer Kamera.
@@ -2576,6 +2609,8 @@ def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ord
     ``geom_iou`` und ``ausserhalb_umriss_anteil`` vor und nach dem Halten stehen im Vermerk.
     Das Kameraurteil selbst bleibt das des KI-Bilds VOR dem Halten (die Seedwahl hat daran
     gewählt). Ein Fehler kostet das Bild nicht: Dann bleibt es, und der Vermerk sagt warum.
+    Seit auf-20261021-303 (B1) steht das Urteil des gehaltenen Bilds unter ``urteil_nachher``
+    (:data:`UMRISS_NACHHER_SATZFELDER`) — daraus kommen die Saetze zum Umriss im Ergebnis.
     """
     import shutil  # noqa: PLC0415
     from . import umrisshalt as _uh  # noqa: PLC0415
@@ -2604,6 +2639,14 @@ def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ord
             nachher = messen(str(bild)) or {}
             vermerk["geom_iou_nachher"] = nachher.get("geom_iou")
             vermerk["ausserhalb_nachher"] = _ausserhalb_anteil(nachher)
+            # DIE SAETZE GEHOEREN ZUM GELIEFERTEN BILD (auf-20261021-303, B1): Bis 0.3.16
+            # trugen «UEBER DEN UMRISS» und «NICHT WIEDERZUERKENNEN» das Urteil von VOR dem
+            # Halten — wer nur die Saetze las, hielt das gelieferte Bild fuer falsch.
+            # `kosmo_szene` bildet sie jetzt hieraus; das Vorher-Urteil bleibt das Kameraurteil.
+            vermerk["urteil_nachher"] = {
+                k: nachher[k] for k in UMRISS_NACHHER_SATZFELDER if k in nachher}
+            if "breite" not in vermerk["urteil_nachher"]:
+                vermerk["urteil_nachher"].update(breite=int(breite), hoehe=int(hoehe))
         except Exception as fehler:  # noqa: BLE001 — eine Nachmessung darf nichts kosten
             vermerk["geom_iou_nachher"] = None
             vermerk["ausserhalb_nachher"] = None
@@ -2676,6 +2719,9 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
     * ``bildeingang {staerke, weg, modus, kameras {<kamera>: modus_gerechnet}}`` — ``modus``
       ist der gerechnete Modus, wenn alle Kameras gleich rechneten, sonst ``None``.
     * ``farbabgleich {methode, kameras {<kamera>: {angewandt, streckung, …}}}``.
+    * ``umriss_halten {art, kameras {<kamera>: {angewandt, art, schritte, hinweise, …}}}`` —
+      seit auf-20261021-303 (B2), Messschalter des Strangs Treue; ``hinweise`` traegt den Satz
+      des Bildmodells («Hintergrund im Fahrplan festgehalten …»).
 
     Ohne Schalter bleibt ``angewandt`` Wort fuer Wort, wie es war.
     """
@@ -2696,7 +2742,24 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
             "methode": _fa.METHODE,
             "kameras": {k: {f: v[f] for f in _FARBABGLEICH_IM_ERGEBNIS if f in v}
                         for k, v in farbe.items()}}
+    umriss = {str(u.get("kamera")): u[URTEIL_UMRISS_HALTEN] for u in (urteile or ())
+              if isinstance(u, dict) and isinstance(u.get(URTEIL_UMRISS_HALTEN), dict)}
+    if umriss:
+        # UMRISS HALTEN (auf-20261021-303, B2): der Satz des Bildmodells stand nur im Befund.
+        arten = {v.get("art") for v in umriss.values()}
+        aus["umriss_halten"] = {
+            "art": next(iter(arten)) if len(arten) == 1 else None,
+            "kameras": {k: {f: v[f] for f in _UMRISS_HALTEN_IM_ERGEBNIS if f in v}
+                        for k, v in umriss.items()}}
     return aus
+
+
+#: Was aus dem Vermerk «Umriss halten» einer Kamera ins Ergebnis geht (``angewandt.umriss_halten``,
+#: auf-20261021-303 B2) — DASS und WIE gehalten wurde, mit dem Satz des Bildmodells; die Pfade
+#: der Masken und das ganze Urteil nach dem Halten bleiben im Befund.
+_UMRISS_HALTEN_IM_ERGEBNIS = ("angewandt", "art", "grund", "methode", "rand_px", "weich_px",
+                              "anteil_frei", "schritte", "hinweise", "geom_iou_vorher",
+                              "ausserhalb_vorher", "geom_iou_nachher", "ausserhalb_nachher")
 
 
 def ki_mindest_lange_seite(backbone_name) -> int | None:
@@ -3652,6 +3715,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # DIE GERECHNETE DREHUNG JE KAMERA (auf-20261020-295, N3) — aus dem Blender-Bericht,
         # fuer `angewandt.environment.drehung_je_kamera`.
         drehungen: dict = {}
+        himmel_je_kamera: dict = {}
         # EIN FESTER STARTWERT FUER DIE SERIE (Nr. 84): genau einer statt der Auswahl aus
         # drei — sonst behielte jede Variante womoeglich einen anderen «besten» Wurf.
         # DIE GUETE (Entscheid 104): Bei der Vorschau ein Startwert je Kamera, das schnelle
@@ -3992,6 +4056,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 drehung = drehung_aus_bericht(bericht)
                 if drehung is not None:
                     drehungen[str(kuerzel)] = drehung
+                # Womit Blender den Himmel rechnete — auch aus einer Grundlage (306, B4).
+                himmel = himmel_aufloesung_aus_bericht(bericht)
+                if himmel is not None:
+                    himmel_je_kamera[str(kuerzel)] = himmel
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
@@ -4527,7 +4595,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Was fuer Stimmung, Kamera und Oberflaeche gerechnet wurde (20.10.2026) — seit
             # auf-20261021-298 (B1) auch die Messschalter, wenn sie gesetzt waren.
             "angewandt": angewandt_mit_messschaltern(
-                angewandt_der_szene(szene, drehung_je_kamera=drehungen), urteile),
+                angewandt_der_szene(szene, drehung_je_kamera=drehungen,
+                                    himmel_je_kamera=himmel_je_kamera), urteile),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt

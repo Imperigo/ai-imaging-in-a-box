@@ -8437,8 +8437,17 @@ Netz» (`tiefenschaetzer.lade_modell`).
 Cycles-Bild der Grundlage (Himmel, Boden, Umgebung), innerhalb malt die KI. *Wozu:* Die KI baut fast immer neben das
 Haus weitere Gebäude (`ausserhalb_umriss_anteil` rund 2 bei Aussenbildern); ein Satz im Prompt hielt sie nicht davon ab.
 Zwei Arten: «nachher» mischt die beiden Bilder nach dem KI-Schritt, «im_lauf» hält den Hintergrund schon während des
-Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus, am Gerät noch ungemessen. *Im Projekt:*
-`aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messauftrag auf-20261021-303.
+Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus. Gemessen in auf-20261021-303: «im_lauf» hält
+den Umriss ohne Naht und kostet keinen Grafikspeicher, verändert allein aber die Form (Rundturm); «nachher» wirkt wie
+eine Collage. Seither sagen die Sätze zum Umriss bei «nachher», was am gelieferten Bild gilt (*Urteil nach dem
+Halten*). *Im Projekt:* `aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messaufträge
+auf-20261021-303 und -309.
+
+**Urteil nach dem Halten** — Bei «Umriss halten nachher» wird ein anderes Bild geliefert als das, an dem die Prüfung
+gewählt hat: das KI-Bild, aussen ersetzt durch das gerenderte Bild. Das Prüfurteil bleibt das des KI-Bilds davor; die
+Sätze «KI baut über den Umriss» und «Haus nicht wiederzuerkennen» kommen aber vom gelieferten Bild, damit sie nicht
+etwas bemängeln, das im Bild gar nicht mehr steht. Die Zahlen von vorher stehen daneben. *Im Projekt:*
+`kosmo_szene.urteil_fuer_umrisssaetze`, `abholer.umriss_halten_der_kamera` (`urteil_nachher`), seit 21.10.2026.
 
 **Freigabemaske** — Ein Schwarz-Weiss-Bild: weiss, wo die KI malen darf, schwarz, wo das Grundbild bleibt. Sie ist die
 Bauwerksmaske plus ein schmaler Rand (2 % der langen Bildseite), damit Dachkanten, die die KI ein paar Bildpunkte
@@ -8458,9 +8467,16 @@ Gerechnet wird im latenten Raum (der komprimierten Form des Bildes). *Im Projekt
 angewandt im Rückruf je Schritt (`render._umriss_halten_rueckruf`).
 
 **Material vorne (Messschalter `vis.material_vorne`)** — Der Hauptstoff des Entwurfs (etwa «exposed concrete») kommt an
-den **Anfang** der Bildbeschreibung und wird dreimal genannt. *Wozu:* Mit «Sichtbeton» an zweiter Stelle malte die KI
-Sichtbeton nur teilweise, dazwischen Holz und Stein. Der Stoff kommt aus dem Material-Knoten, sonst aus dem Prompt; der
-Satz nennt kein Bauteil. *Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus.
+den **Anfang** der Bildbeschreibung, und im ganzen Text steht er **höchstens dreimal** (*Nennung eines Stoffs*):
+Nennt der Prompt ihn schon, wird der Satz vorne kürzer, und der Satz des Material-Knotens hinten fällt weg. *Wozu:* Mit
+«Sichtbeton» an zweiter Stelle malte die KI Sichtbeton nur teilweise, dazwischen Holz und Stein; vorne gestellt malte sie
+ihn ganz (auf-20261021-303). Der Stoff kommt aus dem Material-Knoten, sonst aus dem Prompt; der Satz nennt kein Bauteil.
+*Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus.
+
+**Nennung eines Stoffs** — Wie oft eine Bildbeschreibung denselben Baustoff nennt, gezählt an seinem Hauptwort:
+«exposed concrete» und «smooth fair-faced concrete» sind beide Beton, «red brick masonry» ist einmal Backstein. *Wozu:*
+In einer Messung stand der Stoff fünfmal im Text, ohne dass der Architekt das wollte — jetzt höchstens dreimal. *Im
+Projekt:* `kosmo_szene.stoff_nennungen`, `MATERIAL_VORNE_HOECHSTENS`.
 
 **Gewichtung im Prompt** — Bei manchen Bildmodellen lässt sich einem Wort mehr Gewicht geben, etwa mit
 `(concrete:1.4)`. Das geht nur, wenn das Programm diese Schreibweise kennt und das Modell die Wörter einzeln liest. *Im
@@ -8484,8 +8500,26 @@ nachbaubar über einen Haken am ControlNet, zurückgestellt (Planblatt, Option c
 **Ohne Gradienten rechnen (`torch.no_grad`)** — Eine Anweisung an torch, sich für eine Rechnung **keinen Rechenweg**
 (Graphen) zu merken. Den bräuchte man nur zum Trainieren; beim Erzeugen eines Bildes hält er bloss Zwischenergebnisse im
 Grafikspeicher fest. *Im Projekt:* Die Pipeline von diffusers rechnet so; was ausserhalb davon gerechnet wird, muss es
-selbst sagen. Das Umriss-Halten «im_lauf» tut es; beim eigenen Start des Bildeingangs fehlt die Zeile — eine mögliche
-Ursache seiner +3,9 GB (zu prüfen in auf-20261021-303).
+selbst sagen. Das Umriss-Halten «im_lauf» tat es und brauchte keinen Speicher mehr (auf-20261021-303); seit 21.10.2026
+tut es auch der eigene Start des Bildeingangs, dem dort +3,9 GB anhingen — nachgemessen in auf-20261021-309.
+
+**Satz der Stimmung (massgebend)** — Der englische Satz, den der Heim-PC für eine bestellte Stimmung an die
+Bildbeschreibung hängt, etwa «evening mood, warm low sunlight, long raking shadows, golden hour» für «Abend». *Wozu:* Der
+Stimmungs-Knoten schrieb seinen deutschen Satz selbst in die Beschreibung; halb übersetzt («leuchtende window») hielt er
+den Satz des Heim-PC zurück, und das Bild zeigte einen Innenraum. Jetzt gilt immer der Satz des Heim-PC, genau einmal;
+der Satz des Knotens wird herausgenommen, und die deutschen Sätze der acht Stimmungen werden als ganze Wendung
+übersetzt (*Halbe Übersetzung*). *Im Projekt:* `stimmung.ohne_stimmungssaetze`, `sprache._stimmungssaetze`, Befund B2
+aus auf-20261021-306.
+
+**Halbe Übersetzung** — Eine Bildbeschreibung, in der nach dem Übersetzen deutsche und englische Wörter gemischt
+stehen («fog, gedämpftes light, Tiefe in the haze»). Für das Bildmodell ist das schlechter als jede ganze Sprache. *Im
+Projekt:* `sprache.uebersetze` meldet die übrig gebliebenen Wörter unter `unbekannt`; ganze Wendungen im Glossar
+verhindern sie.
+
+**Unvollständiger Gewichtsordner** — Ein Ordner, in dem die Gewichte eines Modells liegen sollten, der aber leer ist oder
+dem die Beschreibungsdatei (`config.json`) oder die Gewichtsdatei fehlt. *Wozu:* Das Ladeprogramm meldete dann «unbekanntes
+Modell», als wäre das falsche Modell gewählt; jetzt heisst es «Ordner leer oder unvollständig». *Im Projekt:*
+`tiefenschaetzer.ordner_unvollstaendig`, Befund B1 aus auf-20261021-302.
 
 **Grundbild (Grundbild mit Licht)** — Das Bild, das Blender aus dem Modell rechnet, bevor die KI etwas dazutut: Form,
 Sonne und Schatten sind echt gerechnet, Oberflächen nur so, wie sie modelliert sind. In den Unterlagen heisst es auch
@@ -8502,6 +8536,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **Veraltet (ein Bild am Render-Knoten)** um den Ladestand erweitert; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §180): **Vorgabe beim Anlegen (eines Knotens)** |
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |

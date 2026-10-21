@@ -256,8 +256,11 @@ STIMMUNGEN = {
         "prompt_en": "winter, snow on the ground, cold clear light",
         "merkmale": ("winter", "snow")},
     "weiss": {
-        "label": "Weissmodell", "hdri": "studio_small_08",
-        "hdri_vorher": "mud_road_puresky",
+        # Getauscht am 21.10.2026 (auf-20261021-306 B5): studio_small_08 hat grosse dunkle Wandflächen und zeigte
+        # einen dunklen Raum; white_studio_06 ist eine weisse Hohlkehle mit weichem Oberlicht (HomeStation, Wahl
+        # aus 11 Poly-Haven-Studios). Das alte Bild bleibt am Heim-PC als Rückfall.
+        "label": "Weissmodell", "hdri": "white_studio_06",
+        "hdri_vorher": "studio_small_08",
         "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": None,
         "sonne": False, "sonnen_staerke": 1.2, "fuell_staerke": 0.6, "winkel_grad": 20.0,
         "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
@@ -805,6 +808,32 @@ def himmelsbilder_stand(ordner=None) -> dict:
     else:
         satz = f"Himmelsbilder {da}/{len(PRESETS)}."
     return {"da": da, "von": len(PRESETS), "fehlend": fehlend, "satz": satz}
+
+
+def ohne_stimmungssaetze(prompt_en: str) -> tuple[str, tuple[str, ...]]:
+    """``(rest, presets)`` — der Prompt ohne die englischen Sätze der Stimmungen.
+
+    **Anlass (auf-20261021-306, B2):** Der Stimmungs-Knoten legt seinen Satz selbst in den
+    Prompt. Kam er halb übersetzt an, galt die Stimmung über ein ``merkmal`` als «schon im
+    Prompt», und der Satz des Heim-PC fehlte — «abend» zeigte einen Innenraum. Ist eine Stimmung
+    bestellt, ist der Satz des Heim-PC massgebend: Die Sätze der Tabelle (wie das Glossar sie
+    aus dem deutschen Satz des Knotens macht) werden herausgenommen, und
+    :func:`kosmo_szene.lies_szene` fügt den der bestellten Stimmung einmal an. Was der Besteller
+    sonst schreibt, bleibt Wort für Wort.
+    """
+    rest, raus = prompt_en or "", []
+    for preset, eintrag in STIMMUNGEN.items():
+        satz = eintrag.get("prompt_en")
+        if not satz:
+            continue
+        muster = re.compile(r"(?:^|,)\s*" + r"\s+".join(re.escape(t) for t in satz.split())
+                            + r"\s*(?=,|$)", re.IGNORECASE)
+        neu = muster.sub("", rest)
+        if neu != rest:
+            raus.append(preset)
+            rest = neu
+    rest = re.sub(r"^\s*,\s*", "", rest).strip()
+    return rest, tuple(raus)
 
 
 def prompt_satz(preset: str, prompt_en: str) -> tuple[str | None, bool]:
