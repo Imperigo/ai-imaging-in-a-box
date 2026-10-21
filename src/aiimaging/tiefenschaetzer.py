@@ -1217,6 +1217,28 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
                                                   himmel_ergebnis=himmel)}
 
 
+def _ausserhalb_umriss(roh, sil_soll, breite, hoehe, *, polaritaet, maske, trennhilfe,
+                       ausblenden) -> dict | None:
+    """``baumasse.ausserhalb_umriss`` auf der rohen Ist-Karte — ``None`` statt einer Ausnahme.
+
+    Die Nähe ist die Disparität (grösser = näher); eine Tiefe wird negiert, bei unbekannter
+    Polarität gibt es keine Seite und darum keine Zahl.
+    """
+    from . import baumasse  # noqa: PLC0415
+    if polaritaet == POLARITAET_DISPARITAET:
+        naehe = [float(v) for v in roh]
+    elif polaritaet == POLARITAET_TIEFE:
+        naehe = [-float(v) for v in roh]
+    else:
+        return None
+    try:
+        return baumasse.ausserhalb_umriss(naehe, sil_soll, int(breite or 0), int(hoehe or 0),
+                                          haus=maske, trennhilfe=trennhilfe,
+                                          ausgeblendet=ausblenden)
+    except (TypeError, ValueError):
+        return None
+
+
 def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                   schaetzer: str = VORGABE_TIEFENSCHAETZER, modell=None, _lader=None,
                   schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
@@ -1430,6 +1452,10 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
 
     masken_ergebnis = _maskenweg(soll, roh, maske, ist_ergebnis["breite"], schaetzer,
                                  eintrag.polaritaet)
+    ausserhalb = _ausserhalb_umriss(roh, sil_soll, ist_ergebnis["breite"],
+                                    ist_ergebnis["hoehe"], polaritaet=eintrag.polaritaet,
+                                    maske=maske, trennhilfe=trennhilfe,
+                                    ausblenden=ausblenden)
 
     warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(aufloesungs_warnungen) \
         + tuple(markierung["warnungen"]) + tuple(urteil["warnungen"])
@@ -1540,6 +1566,9 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "n_gemeinsam": urteil["n_gemeinsam"],
         "n_soll": urteil["n_soll"],
         "n_ist": urteil["n_ist"],
+        # NEUE BAUMASSE AUSSERHALB DES UMRISSES (auf-20261020-294, B6) — Auskunft, kein Tor;
+        # `None`, wenn nicht messbar (unbekannte Polaritaet, keine Groesse).
+        "ausserhalb_umriss": ausserhalb,
         "methode": urteil["methode"],
         # ACHTUNG, zwei verschiedene Dinge mit fast demselben Namen — und seit dem
         # 26.08.2026 haengt eine Zahl daran:
@@ -1601,6 +1630,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "n_gemeinsam": None,
         "n_soll": None,
         "n_ist": None,
+        "ausserhalb_umriss": None,
         "methode": geometrie_qa.METHODE,
         # Kein Zeichen, weil nichts gerechnet wurde — `None` heisst hier wie ueberall
         # „kein Wert" und nicht „ungerichtet gerechnet". Das Feld steht trotzdem da: Der

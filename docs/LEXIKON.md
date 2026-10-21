@@ -3029,12 +3029,44 @@ Abendsonne. Es macht jede Unebenheit und jede Kante sichtbar und wirft lange Sch
 **Schattenwinkel (Grösse der Lichtquelle)** — Wie gross eine Lichtquelle vom Haus aus gesehen ist, in
 Grad. Die echte Sonne ist ein halbes Grad gross: Ihre Schatten haben scharfe Kanten. Eine grosse
 Lichtquelle (ein bedeckter Himmel, ein Softbox im Studio) wirft weiche, verlaufende Schatten. *Im Projekt:*
-`winkel_grad` je Stimmung — unter 2° für Sonne, 20–50° für die weichen Lampen.
+`winkel_grad` je Stimmung — unter 2° für Sonne, 20–50° für die weichen Lampen. Findet sich bei einer
+Stimmung mit Sonne keine Sonnenscheibe im Himmelsbild, nimmt die weiche Ersatzlampe seit auf-20261020-294
+ihren eigenen, grossen Winkel (`winkel_weich_grad`, 25°) — vorher behielt sie den kleinen der Sonne und warf
+harte Schatten, obwohl sie «weich» hiess.
 
 **Look (einer Tonwertkurve)** — Eine Spielart derselben Tonwertkurve mit mehr oder weniger Kontrast, wie
 eine Filmsorte. *Im Projekt:* Seit auf-20261020-293 rechnen Bilder mit Himmelsbild mit «AgX – Medium High
 Contrast» statt der neutralen Fassung, gegen den milchigen, flachen Eindruck. Blender nennt den Look je
 Fassung etwas anders; der Rechner versucht beide Schreibweisen und meldet, wenn keine ging.
+
+**Frontallicht** — Licht, das von hinten über die Schulter der Kamera auf das Haus fällt. Die Fassade, die
+man sieht, ist gleichmässig hell, ihre Schatten fallen nach hinten, hinter das Haus, wo die Kamera sie nicht
+sieht — das Bild wirkt flach. *Im Projekt:* der Befund aus auf-20261020-294: In allen acht Himmelsbildern
+stand die Sonne zufällig 0–40° neben der Blickrichtung der Kamera.
+
+**Sonne seitlich der Kamera (Drehung zur Kamera)** — Das Himmelsbild einer Stimmung wird für jede Kamera
+so um die Hochachse gedreht, dass die Sonne um einen festen Winkel neben der Linie Haus–Kamera steht, auf
+einer gewählten Seite (links oder rechts, von der Kamera aus gesehen). 0° wäre Sonne im Rücken der Kamera,
+90° Licht genau von der Seite, 180° Gegenlicht. Bei 60–100° ist eine Fassade beleuchtet, die andere im
+Schatten, und der Schlagschatten fällt seitlich ins Bild. *Im Projekt:* `sonne_seitlich_grad` und
+`sonne_seite` je Stimmung (mittag 65° links, abend 80° rechts, sonst 70° links), gerechnet in
+`stimmung.drehung_zur_kamera`, seit auf-20261020-294. Bestellt jemand ausdrücklich eine Drehung
+(`rotationGrad`), gilt seine.
+
+**Gemischter Prompt** — Ein Bildauftrag in zwei Sprachen, etwa «zeitgenoessisches Wohnhaus, Sichtbeton,
+Architekturfotografie, no people»: deutsche Fachwörter und ein englischer Zusatz. Weil «no» englisch ist
+und die deutschen Fachwörter weder Umlaut noch typisch deutsche Füllwörter tragen, hielt die
+Spracherkennung ihn für englisch und übersetzte nichts — das Bildmodell verstand «Sichtbeton» nicht und
+malte Holzlamellen. *Im Projekt:* Seit auf-20261020-294 zählen Wörter, die wörtlich im Glossar stehen; ein
+gemischter Prompt wird übersetzt, der englische Teil bleibt stehen (`sprache.ist_gemischt`).
+
+**Neue Baumasse ausserhalb des Umrisses** — Wieviel Gebäude das KI-Bild dort zeigt, wo das Modell nur
+Himmel hat, im Verhältnis zur Fläche des Hauses: 0 heisst, das Bild baut nur, was modelliert ist; 1 hiesse,
+neben dem Haus steht noch einmal so viel Gebäude. Gezählt wird, was der Tiefenschätzer so nah wie das Haus
+sieht (ein Berg oder eine Wolke ist weiter weg und zählt nicht), ohne den Boden und ohne einen schmalen Rand
+um das Haus. *Im Projekt:* `qa.ausserhalb_umriss_anteil` (Modul `baumasse`), mit dem Satz «KI BAUT UEBER DEN
+UMRISS HINAUS» ab 0,25 — gesetzt, nicht gemessen; eine Auskunft, kein Tor. Anlass: auf-20261020-294, wo aus
+der Geländeplatte ein Gebäude über die ganze Bildbreite wurde.
 
 **Dithering** — Absichtliches feines Rauschen, das Farbstufen weicher wirken lässt. *Im
 Material-ID-Pass schädlich: Es zerfaserte jede Kennfarbe um ±1, aus 5 Farben wurden 19.*
@@ -8062,7 +8094,8 @@ rechneten.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-20 | Ergaenzt aus Kugel, Gesprächsfeld und Einstellungs-Insel (Plan UI-Gleichheit S3/S4, Protokoll 74 §161): **Kugel des Assistenten (Orb)**, **Gesprächsfeld (des Assistenten)**, **Antwortblase (an der Kugel)**, **Seitenfenster (des Gesprächsfelds)**, **Einstellungs-Insel**, **Gemerkte Einstellung (der Knotenansicht)**; **Nahtstelle (für einen zweiten Wirt)** um die zwei neuen Nahtstellen nachgeführt |
+| 2026-10-20 | Ergaenzt aus Kugel, Gesprächsfeld und Einstellungs-Insel (Plan UI-Gleichheit S3/S4, Protokoll 74 §162): **Kugel des Assistenten (Orb)**, **Gesprächsfeld (des Assistenten)**, **Antwortblase (an der Kugel)**, **Seitenfenster (des Gesprächsfelds)**, **Einstellungs-Insel**, **Gemerkte Einstellung (der Knotenansicht)**; **Nahtstelle (für einen zweiten Wirt)** um die zwei neuen Nahtstellen nachgeführt |
+| 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-294 (Protokoll 74 §161): **Frontallicht**, **Sonne seitlich der Kamera (Drehung zur Kamera)**, **Gemischter Prompt**, **Neue Baumasse ausserhalb des Umrisses**; **Schattenwinkel** um den weichen Rückfall nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Kopfteilen der Knotenansicht (Plan UI-Gleichheit S1/S2, Protokoll 74 §159): **Kopfteile (der Knotenansicht)**, **Stationen-Palette (am Logo)**, **Speichern-Kreis**, **Zweitgruppe (des Inselkopfs)**, **Heim-PC-Chip**, **Claude-Marke**, **Erzählzeile**, **Thema (Papier, Kosmos)**, **Nahtstelle (für einen zweiten Wirt)**, **Bote «visboxWirt» (zweite Brücke)**, **UI-Ausnahme**; **Selbständigkeit**, **Tätigkeitsstrom** und **Zwei Rückgängig-Verläufe** nachgeführt (in der Knotenansicht an der Claude-Marke) |
 | 2026-10-20 | Ergaenzt aus den drei Fehlern am 3D-Fenster (Protokoll 74 §160): **Metallwert (eines Materials)**, **Umgebungslicht (aus einem Raum)**, **Normale (Richtung einer Fläche)**, **Schnittebene (vorne und hinten)**, **Entzerren (eines gesicherten Graphen)** |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-293 (Protokoll 74 §158): **Kontrast Haus–Hintergrund**, **Vorprobe (der Stimmung)**, **Fülllicht**, **Sonnenlampe (aus dem Himmelsbild)**, **Streiflicht**, **Schattenwinkel (Grösse der Lichtquelle)**, **Look (einer Tonwertkurve)**, **Untergrenze im KI-Schritt (kleinste lange Seite)**; **Bestellte Bildgrösse und Raster** und **Messboden** nachgeführt |

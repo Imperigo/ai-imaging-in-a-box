@@ -1692,6 +1692,27 @@ vergrössert. Und eine Prüfzahl der Vorschau blieb leer, weil das Bildmodell vo
 Modell nur Himmel hat; die gedachte Bodenfläche der Prüfung hilft jetzt auch dort beim Trennen. Ehrlich gesagt: Die
 Stärken von Sonne und Aufhellung sind gesetzt, nicht gemessen; ob die Bilder jetzt Tiefe haben, misst der Rechenrechner
 als Nächstes. Schrift-Artefakte im Vordergrund der KI-Bilder bleiben ein offener Befund.
+
+**Die Sonne kommt von der Seite, und die Prüfung sieht, wenn die KI zu viel baut (20.10.2026).** Die dritte Messung
+der Stimmungen zeigte: Das Haus hebt sich jetzt in allen acht Stimmungen vom Hintergrund ab, aber das Licht kam in
+allen acht von vorn. Die Sonne stand in jedem Himmelsbild zufällig fast hinter der Kamera (beim Abend nur 5° neben der
+Blickrichtung), die Fassaden waren gleichmässig hell und die Schatten fielen hinter das Haus, wo man sie nicht sieht.
+Die Ursache lag nicht in der Rechnung, sondern in den Bildern: Wo die Sonne in einem Rundumfoto des Himmels steht, ist
+Zufall. Gelöst ist es von der Kamera aus: Für jede Kamera wird das Himmelsbild so gedreht, dass die Sonne um einen
+festen Winkel seitlich steht (je Stimmung zwischen 65° und 80°, auf einer wählbaren Seite) — eine Fassade im Licht, eine
+im Schatten, und der Schatten fällt seitlich ins Bild. Weil jede Kamera ihr eigenes Bild aus Blender bekommt, gilt das
+für jeden Standpunkt; wer die Drehung selbst bestellt, bekommt seine. Dazu vier kleinere Dinge: Eine «weiche» Ersatzlampe
+(wenn ein Himmelsbild keine Sonnenscheibe hat) warf harte Schatten — sie ist jetzt wirklich gross. Die blaue Stunde
+ist dunkler, mit doppeltem Abstand zum Hintergrund. Der Abend ist eine halbe Stufe dunkler belichtet (das Haus war fast
+weiss), und sein Satz für das Bildmodell bestellt keine leuchtenden Innenräume mehr — das Bildmodell hatte daraus eine
+Nacht gemacht. Ein Auftrag halb deutsch, halb englisch («Sichtbeton, Architekturfotografie, no people») wurde für
+englisch gehalten und nicht übersetzt; das Bildmodell malte Holz statt Beton. Jetzt zählen die deutschen Fachwörter,
+und nur der deutsche Teil wird übersetzt. Neu ist eine Zahl für ein Problem, das bisher keine Zahl sah: Das Bildmodell
+baute aus der Geländeplatte ein Gebäude über die ganze Bildbreite. Die Prüfung zählt jetzt, wieviel Gebäude neben dem
+Haus steht, wo das Modell nur Himmel hat, und sagt es ab einem Viertel der Hausfläche in einem Satz. Ehrlich gesagt: Die
+Winkel und die Grenze sind gesetzt, nicht gemessen; ob die Schatten jetzt im Bild liegen und die Zahl zu dem passt, was
+man sieht, misst der Rechenrechner als Nächstes, aus zwei Richtungen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

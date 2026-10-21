@@ -40,7 +40,10 @@ __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNF
            "LICHT_HERKUNFT", "HINTERGRUND_ABSTAND_EV", "HINTERGRUND_RICHTUNGEN",
            "KONTRAST_SCHWELLE", "GELAENDE_GRAU", "GELAENDE_GRAU_WEISS", "SONNE_FAKTOR",
            "leuchtdichte", "richtung_im_bild", "sonne_aus_himmel", "lampe_aus_himmel",
-           "hintergrund_mit_abstand", "haus_leuchtdichte", "euler_fuer_richtung"]
+           "hintergrund_mit_abstand", "haus_leuchtdichte", "euler_fuer_richtung",
+           # auf-20261020-294: Sonne seitlich der Kamera, weicher Rueckfall mit grossem Winkel.
+           "SONNE_SEITEN", "SONNE_SEITLICH_BEREICH_GRAD", "WEICH_WINKEL_GRAD",
+           "kamera_azimut_grad", "drehung_zur_kamera", "winkel_zur_blickachse"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -122,6 +125,22 @@ WEICH_MIN_HOEHE_GRAD = 15.0
 #: Welcher Anteil der hellsten Punkte die Richtung der weichen Lampe bestimmt.
 HELLSTER_ANTEIL = 0.02
 
+#: Der Winkel der weichen Lampe, wenn eine Stimmung mit Sonne keine Sonnenscheibe im Bild
+#: hat und keinen eigenen ``winkel_weich_grad`` nennt (auf-20261020-294, B2): Bis dahin galt
+#: auch für den weichen Rückfall der kleine Winkel der Sonne (morgen 1,0°, winter 1,5°) —
+#: harte Schattenkanten aus einer Lampe, die der Bericht «weich» nannte.
+WEICH_WINKEL_GRAD = 25.0
+
+#: Die Sonne seitlich der Kamera (auf-20261020-294, B1). Wo im Himmelsbild die Sonne steht,
+#: wusste niemand: In allen acht Bildern stand sie 0–40° neben der Blickachse der Kamera
+#: (abend 5°) — Frontallicht, die Schatten fielen hinter das Haus. Seither wird das
+#: Himmelsbild JE KAMERA so gedreht, dass die Sonne ``sonne_seitlich_grad`` neben der Achse
+#: Haus–Kamera steht, auf der Seite ``sonne_seite``. 0° hiesse: Sonne im Rücken der Kamera,
+#: 90°: genau von der Seite, 180°: Gegenlicht. Der Bereich 60–100° gibt beides — eine
+#: beleuchtete Fassade und einen Schatten, der seitlich fällt und im Bild liegt.
+SONNE_SEITEN = ("links", "rechts")
+SONNE_SEITLICH_BEREICH_GRAD = (60.0, 100.0)
+
 #: Die acht Stimmungen.
 #:
 #: ``hdri`` ist die Vorgabe je Stimmung (Tabelle der HomeStation, 20.10.2026; am selben Abend
@@ -144,6 +163,18 @@ HELLSTER_ANTEIL = 0.02
 #: Schattenkante, gross = weiche), ``look`` (die kontrastreichere Fassung der Tonwertkurve,
 #: Punkt 4), ``hintergrund_richtung`` (ob der ruhige Hintergrund dunkler oder heller als das
 #: Haus gesetzt wird, Punkt 1). Blaue Stunde seit 293 tiefer: −0,7 statt +0,5, 9000 K.
+#:
+#: **Nach der Messung auf-20261020-294 — wieder gesetzt, nicht gemessen** (``auf-20261020-295``
+#: misst): ``sonne_seitlich_grad`` und ``sonne_seite`` (B1: die Sonne je Kamera seitlich der
+#: Blickachse statt dort, wo sie im Himmelsbild zufällig steht; abend 80° rechts für
+#: Streiflicht und eine andere Seite als der Morgen), ``winkel_weich_grad`` (B2: der Winkel
+#: der weichen Lampe, wenn eine Stimmung mit Sonne keine Scheibe im Bild hat — 25° statt
+#: des Sonnenwinkels), Blaue Stunde ``belichtung_ev`` −1,5 und ``hintergrund_abstand_ev`` 2
+#: (B3: pastell bei −0,7 und einer Stufe), abend ``belichtung_ev`` −0,5 statt 0 (das Haus
+#: war mit Mittel 234 fast weiss; die Belichtung senkt Licht und Schatten gleich und lässt
+#: das Verhältnis Sonne zu Fülllicht stehen — weniger ``sonnen_staerke`` hätte genau das
+#: Verhältnis verkleinert und das Bild noch flacher gemacht) und ein englischer Satz ohne
+#: «lit interiors glowing» (das KI-Bild wurde Nacht).
 #: ``prompt_de``
 #: ist der Satz, den der Knoten drüben in den Prompt legt (``VIS_STIMMUNGEN``; morgen, abend
 #: und weiss wörtlich wie dort), ``prompt_en`` der Satz, den der Heim-PC anfügt, wenn der
@@ -156,6 +187,7 @@ STIMMUNGEN = {
         "hdri_vorher": "sunny_vondelpark",
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": None,
         "sonne": True, "sonnen_staerke": 3.0, "fuell_staerke": 0.35, "winkel_grad": 1.0,
+        "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "dunkler",
         "prompt_de": "Morgenlicht, klare lange Schatten, frische kühle Luft",
         "prompt_en": "early morning light, clear long shadows, fresh cool air",
@@ -165,6 +197,7 @@ STIMMUNGEN = {
         "hdri_vorher": None,
         "belichtung_ev": -1.0, "staerke": 1.0, "kelvin": None,
         "sonne": True, "sonnen_staerke": 3.0, "fuell_staerke": 0.45, "winkel_grad": 0.8,
+        "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 65.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "dunkler",
         "prompt_de": "Mittagslicht, hohe Sonne, klarer Himmel",
         "prompt_en": "midday light, high sun, clear sky",
@@ -172,18 +205,21 @@ STIMMUNGEN = {
     "abend": {
         "label": "Abendstimmung", "hdri": "belfast_sunset_puresky",
         "hdri_vorher": "fish_eagle_hill",
-        "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": 5000.0,
+        "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": 5000.0,
         "sonne": True, "sonnen_staerke": 3.5, "fuell_staerke": 0.3, "winkel_grad": 1.0,
+        "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 80.0, "sonne_seite": "rechts",
         "look": "Medium High Contrast", "hintergrund_richtung": "dunkler",
         "prompt_de": "Abendstimmung, warmes Licht, leuchtende Fenster",
-        "prompt_en": "evening mood, warm low light, lit interiors glowing",
+        "prompt_en": "evening mood, warm low sunlight, long raking shadows, golden hour",
         "merkmale": ("evening", "sunset", "golden hour")},
     "blaue-stunde": {
         "label": "Blaue Stunde", "hdri": "qwantani_dusk_2_puresky",
         "hdri_vorher": "the_sky_is_on_fire",
-        "belichtung_ev": -0.7, "staerke": 1.0, "kelvin": 9000.0,
+        "belichtung_ev": -1.5, "staerke": 1.0, "kelvin": 9000.0,
         "sonne": False, "sonnen_staerke": 0.6, "fuell_staerke": 0.7, "winkel_grad": 30.0,
+        "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "dunkler",
+        "hintergrund_abstand_ev": 2.0,
         "prompt_de": "Blaue Stunde, tiefblauer Himmel, warm leuchtende Innenräume",
         "prompt_en": "blue hour, deep blue sky, warmly lit interiors",
         "merkmale": ("blue hour", "twilight", "dusk")},
@@ -192,6 +228,7 @@ STIMMUNGEN = {
         "hdri_vorher": None,
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": None,
         "sonne": False, "sonnen_staerke": 0.8, "fuell_staerke": 0.8, "winkel_grad": 40.0,
+        "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "bedeckter Himmel, weiches gleichmässiges Licht",
         "prompt_en": "overcast sky, soft even light",
@@ -201,6 +238,7 @@ STIMMUNGEN = {
         "hdri_vorher": "kloppenheim_04",
         "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": None,
         "sonne": False, "sonnen_staerke": 0.6, "fuell_staerke": 0.85, "winkel_grad": 50.0,
+        "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "Nebel, gedämpftes Licht, Tiefe im Dunst",
         "prompt_en": "fog, muted light, depth fading into haze",
@@ -210,6 +248,7 @@ STIMMUNGEN = {
         "hdri_vorher": "snowy_field",
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": 7500.0,
         "sonne": True, "sonnen_staerke": 2.5, "fuell_staerke": 0.45, "winkel_grad": 1.5,
+        "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "Winter, Schnee am Boden, kaltes klares Licht",
         "prompt_en": "winter, snow on the ground, cold clear light",
@@ -219,6 +258,7 @@ STIMMUNGEN = {
         "hdri_vorher": "mud_road_puresky",
         "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": None,
         "sonne": False, "sonnen_staerke": 1.2, "fuell_staerke": 0.6, "winkel_grad": 20.0,
+        "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
         "look": "Medium High Contrast", "hintergrund_richtung": "dunkler",
         "prompt_de": "Weissmodell, neutrales Studiolicht, keine Materialien",
         "prompt_en": "white plaster study model, neutral studio light, no materials",
@@ -250,12 +290,17 @@ def toenung_fuer(kelvin) -> tuple[float, float, float] | None:
     return tuple(round(c / hell, 6) for c in roh)
 
 
-def licht_der_stimmung(preset) -> dict:
+def licht_der_stimmung(preset, *, sonne_seite=None) -> dict:
     """``{belichtung_ev, kelvin, toenung_linear, tonwerte}`` — die Lichtdaten einer Stimmung.
 
     ``tonwerte`` ist die Reihenfolge aus :data:`TONWERTE`; welche gegriffen hat, sagt der
     Bericht des Runners. Unbekannte Stimmung: Belichtung 0, keine Tönung.
+
+    ``sonne_seite`` (``'links'``/``'rechts'``, auf-20261020-294) wählt die Seite der Sonne
+    gegen die Vorgabe der Stimmung — aus Python, ohne Oberfläche (Regel 4).
     """
+    if sonne_seite is not None and sonne_seite not in SONNE_SEITEN:
+        raise ValueError(f"Seite {sonne_seite!r} — erlaubt: {', '.join(SONNE_SEITEN)}.")
     eintrag = STIMMUNGEN.get(preset) or {}
     kelvin = eintrag.get("kelvin")
     aus = {"belichtung_ev": float(eintrag.get("belichtung_ev") or 0.0),
@@ -272,12 +317,21 @@ def licht_der_stimmung(preset) -> dict:
             winkel_grad=float(eintrag["winkel_grad"]),
             look=eintrag.get("look"),
             hintergrund_richtung=eintrag.get("hintergrund_richtung") or "auto",
+            # auf-20261020-294 (B1, B2): Sonne seitlich der Kamera, weicher Rueckfall.
+            sonne_seitlich_grad=float(eintrag.get("sonne_seitlich_grad") or 0.0) or None,
+            sonne_seite=eintrag.get("sonne_seite") or "links",
+            # Ohne Sonne IST die Lampe weich: ihr Winkel ist der der Stimmung.
+            winkel_weich_grad=(float(eintrag.get("winkel_weich_grad")
+                                     or max(float(eintrag["winkel_grad"]), WEICH_WINKEL_GRAD))
+                               if eintrag["sonne"] else float(eintrag["winkel_grad"])),
             hintergrund_abstand_ev=float(eintrag.get("hintergrund_abstand_ev")
                                          or HINTERGRUND_ABSTAND_EV),
             kontrast_schwelle=KONTRAST_SCHWELLE,
             gelaende_grau=list(GELAENDE_GRAU_WEISS if preset == PRESET_WEISS
                                else GELAENDE_GRAU),
             herkunft_licht=LICHT_HERKUNFT)
+        if sonne_seite is not None:
+            aus["sonne_seite"] = sonne_seite
     return aus
 
 
@@ -455,7 +509,9 @@ def lampe_aus_himmel(analyse: dict, licht: dict, *, drehung_grad: float = 0.0,
       eine Sonne von unten keines.
     * sonst (ohne Sonne bestellt, oder keine Scheibe gefunden): **weiche Lampe** aus dem
       hellsten Bereich, mindestens :data:`WEICH_MIN_HOEHE_GRAD` hoch, mit dem grossen Winkel
-      der Stimmung. Fehlt die Scheibe bei einer Stimmung mit Sonne, sagt ``grund`` es.
+      ``winkel_weich_grad`` (seit auf-20261020-294, B2; bis dahin galt hier der kleine
+      Sonnenwinkel, und der «weiche» Rückfall warf harte Schatten). Fehlt die Scheibe bei
+      einer Stimmung mit Sonne, sagt ``grund`` es.
 
     Stärke = ``sonnen_staerke`` × ``e_himmel_h`` × ``staerke`` (Vielfaches der
     Himmelshelligkeit auf einer waagrechten Fläche, wie das Fülllicht mit ``staerke``
@@ -486,10 +542,15 @@ def lampe_aus_himmel(analyse: dict, licht: dict, *, drehung_grad: float = 0.0,
     farbe = [round(c / hell, 6) for c in farbe] if hell > 0 else [1.0, 1.0, 1.0]
     e_himmel = float(analyse.get("e_himmel_h") or 0.0) or 1.0
     energie = float(licht.get("sonnen_staerke") or 0.0) * e_himmel * float(staerke)
+    if hart:
+        winkel = float(licht.get("winkel_grad") or 1.0)
+    else:
+        winkel = float(licht.get("winkel_weich_grad")
+                       or max(float(licht.get("winkel_grad") or 0.0), WEICH_WINKEL_GRAD))
     return {"art": "sonne" if hart else "weich",
             "richtung_welt": [round(c, 6) for c in richtung],
             "hoehe_grad": round(hoch, 3), "azimut_welt_grad": round(azimut, 3),
-            "energie": round(energie, 6), "winkel_grad": float(licht.get("winkel_grad") or 1.0),
+            "energie": round(energie, 6), "winkel_grad": winkel,
             "farbe": farbe, "weg": analyse.get("weg"), "grund": grund,
             "herkunft": licht.get("herkunft_licht") or LICHT_HERKUNFT}
 
@@ -509,6 +570,65 @@ def euler_fuer_richtung(richtung) -> tuple[float, float, float]:
     hoch = math.asin(max(-1.0, min(1.0, z / n)))
     azimut = math.atan2(y, x)
     return (math.pi / 2.0 - hoch, 0.0, azimut + math.pi / 2.0)
+
+
+def kamera_azimut_grad(auge, blick_auf) -> float | None:
+    """Der Azimut der Richtung Haus → Kamera, waagrecht, in Grad (Blender-Welt, x gegen Uhrzeiger).
+
+    ``auge`` ist der Standort der Kamera, ``blick_auf`` ihr Blickziel (beide wie im Bericht
+    ``kamera``). ``None``, wenn beide waagrecht zusammenfallen (Blick senkrecht nach unten) —
+    dann gibt es keine Seite, und die Drehung bleibt bei der Vorgabe.
+    """
+    try:
+        dx = float(auge[0]) - float(blick_auf[0])
+        dy = float(auge[1]) - float(blick_auf[1])
+    except (TypeError, ValueError, IndexError):
+        return None
+    if math.hypot(dx, dy) < 1e-9:
+        return None
+    return math.degrees(math.atan2(dy, dx))
+
+
+def _winkel_normal(grad: float) -> float:
+    """Ein Winkel in [-180, 180)."""
+    return (float(grad) + 180.0) % 360.0 - 180.0
+
+
+def drehung_zur_kamera(sonne_azimut_bild_grad: float, kamera_azimut: float, *,
+                       seitlich_grad: float, seite: str = "links") -> float:
+    """Die Drehung des Himmelsbilds um die Hochachse, die die Sonne seitlich der Kamera stellt.
+
+    **Anlass (auf-20261020-294, B1):** Mit Drehung 0 stand die Sonne in allen acht
+    Himmelsbildern 0–40° neben der Blickachse (abend 5°) — Frontallicht, Schatten hinter dem
+    Haus. Die Ursache waren die Daten (wo die Sonne im Bild zufällig steht), nicht die Lampe.
+
+    Gelöst **relativ zur Kamera**: Die Sonne soll ``seitlich_grad`` neben der Richtung
+    Haus → Kamera stehen (``kamera_azimut``, :func:`kamera_azimut_grad`), auf der ``seite``
+    aus Sicht der Kamera. Von der Kamera aus gesehen liegt «links» im Gegenuhrzeigersinn
+    vom Blick, also im Uhrzeigersinn von der Richtung Haus → Kamera:
+    Ziel-Azimut = ``kamera_azimut ∓ seitlich`` (links −, rechts +).
+
+    Die Mapping-Drehung des Runners stellt einen Punkt des Bilds um ``−drehung`` gedreht in
+    die Welt (:func:`lampe_aus_himmel`) — also ``drehung = Bildazimut − Zielazimut``. Dreht
+    das ganze Himmelsbild mit: Lampe und Fülllicht passen zusammen.
+
+    Returns:
+        Die Drehung in Grad, in [0, 360).
+    """
+    if seite not in SONNE_SEITEN:
+        raise ValueError(f"Seite {seite!r} — erlaubt: {', '.join(SONNE_SEITEN)}.")
+    vorzeichen = -1.0 if seite == "links" else 1.0
+    ziel = float(kamera_azimut) + vorzeichen * float(seitlich_grad)
+    return round((float(sonne_azimut_bild_grad) - ziel) % 360.0, 6)
+
+
+def winkel_zur_blickachse(sonne_azimut_welt_grad: float, kamera_azimut: float) -> float:
+    """Wie weit die Sonne waagrecht neben der Richtung Haus → Kamera steht, 0–180°.
+
+    0° = Sonne im Rücken der Kamera (Frontallicht), 90° = von der Seite, 180° = Gegenlicht.
+    Die Zahl, die 294 nachgezählt hat (dort 0–40°), steht seither im Bericht.
+    """
+    return round(abs(_winkel_normal(float(sonne_azimut_welt_grad) - float(kamera_azimut))), 3)
 
 
 def hintergrund_mit_abstand(horizont, zenit, haus: float, *,

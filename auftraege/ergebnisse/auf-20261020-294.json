@@ -1,0 +1,1517 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261020-294",
+ "worker": "local",
+ "rang": 81,
+ "folgt_auf": "auf-20261020-293",
+ "entscheide": [
+  "107",
+  "110",
+  "113"
+ ],
+ "einbau": [
+  "C79",
+  "C80",
+  "C81",
+  "C83"
+ ],
+ "status": "erledigt mit Befunden — alle acht Stimmungen mit Kontrast >= 20 (Betrag 25-96, gemeldet = nachgezaehlt bis 2,5), ueberstrahlt und Kontrast auch bei vis.skip und je Kamera, AgX Medium High Contrast, Platte grau 0,30/0,55, Vorprobe 0,22-0,53 s; KI-Schritt 1024x640 in Vorschau und voll; geom_iou in allen sieben KI-Bildern gemessen (0,36-0,68), messboden.neben_gelaende true; ohne Stimmung pixelgleich zu 293. Befunde: Sonne steht in allen acht Himmelsbildern 0-40 Grad neben der Kamerarichtung sSE (Frontallicht, Schatten fallen hinter das Haus; abend flach statt Streiflicht); weicher Rueckfall behaelt den kleinen Winkel; blaue Stunde pastell; Prompt wird nicht uebersetzt ('no people' kippt die Spracherkennung); bei 'voll' kein Vermerk der KI-Groesse; KI baut ueber den Umriss hinaus.",
+ "beendet": "2026-10-20T23:10:00Z",
+ "koepfe": {
+  "stand": "main ef0953b (Visbox 0.3.8); visbox-flaeche lief seit Neustart nach dem Kopf (Dienststart 22:47 UTC, Kopf 22:44 UTC), Abholer per Timer 30 s. Kein Code geaendert, nichts ins Repo ausser diesem Ergebnis und den Bildern, Mappe des Dienstes nicht angefasst.",
+  "himmelsbilder": "GET /api/heim: 'Himmelsbilder 8/8' (da 8, von 8, fehlend []). Ordnerwerte und Dateinamen nur am Heim-PC.",
+  "weg": "Bruecke als Client: POST /bruecke/jobs (multipart scene+model; Varianten ohne model mit vis.grundlage), /approve; job.json im Takt 0,5 s, nvidia-smi im selben Takt. Kein /cancel noetig.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb) wie 293: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m; Knoten IfcWall_* (2), IfcRoof_* (1), IfcSlab_Gelaende_* (1).",
+  "szene": "kosmovis.render-scene/v1: cameras 'auto', cameras_auto {richtungen:['sSE']}, samples 64, style.mode none, style.prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', vis.backbone z-image-turbo; KI-Varianten vis.seed 482913. 'zeit_freigabe_bis_done_s' enthaelt bis 30 s Warten auf den Abholer-Takt; 'blender_s' = timings.gesamt.",
+  "gerechneter_prompt": "befund.prompt: 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people, midday light, high sun, clear sky' (mittag; je Stimmung der englische Stimmungssatz angehaengt) — NICHT uebersetzt: prompt_sprache.noetig false, erkennung 'Englisch erkannt (no)' (Befund B4).",
+  "gpu": "vor jedem Lauf nvidia-smi + ollama ps: 1241 MiB, 14-66 W, 0 %, ollama ps immer leer, kein fremder Auftrag queued/running. Laeufe strikt nacheinander; ab dem 3. KI-Lauf wartet der Client, bis die Karte < 2,5 GB steht (einmal, mittag-voll, startete er bei 27436 MiB direkt nach der eigenen Vorschau — eigener Prozess gab gerade frei). Cycles-Spitze 1324-1328 MiB / 62-66 W; KI 27434-27436 MiB / 355-360 W. Leistungsgrenze 400 W.",
+  "systemlast": "Last (1 min) 23-26 bis ~00:52 (paralleler Video-Helfer auf der CPU, nicht angefasst), danach abfallend auf 1-4. Je Lauf unten.",
+  "kosmo_modelle": "nicht beruehrt; ollama ps die ganze Zeit leer."
+ },
+ "1_stimmungen": {
+  "mittag": {
+   "job": "vis-1792536621-83e542",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-47c4d4d3f597b65b",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 26.81,
+   "blender_s": 6.5,
+   "blender_s_293": 4.1,
+   "qa_kontrast_haus_hintergrund_gemeldet": 85.2,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": 85.2,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": 86.8,
+    "haus": 157.8,
+    "hintergrund_daneben": 71.0,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_sonne",
+    "hoehe_grad": 43.591,
+    "azimut_grad": -35.176,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 3.769152,
+    "winkel_grad": 0.8,
+    "grund": "",
+    "lampe_art": "sonne",
+    "lampe_weg": "sonnenscheibe",
+    "kompass_grad": 125.2
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.45,
+    "staerke_fuelllicht": 0.45,
+    "sonnenscheibe_gekappt": true,
+    "kappung": 4.466502,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "dunkler",
+    "faktor": 1.0,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": -2.504,
+    "abstand_ev_nachher": -2.504,
+    "staerke_vorher": 0.44999998807907104,
+    "staerke_nachher": 0.44999998807907104,
+    "dauer_s": 0.53,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": -1.0,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": null,
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     152.4,
+     169.7
+    ],
+    "haus_gruppen_anteil_dunkel": 0.69,
+    "platte_luma_p75": 136.0,
+    "platte_schattenanteil": 0.114,
+    "schatten_x_gegen_haus_px": 1.4,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.34,
+     "weg_von_kamera_anteil": 0.94
+    }
+   },
+   "schatten_am_haus": "ja — zwei Seiten klar getrennt (Gruppen 152/170), kein Schlagschatten am Haus (Sonne steht hinter der Kamera)",
+   "schatten_auf_platte": "ja — harter dunkler Keil links am Hausfuss",
+   "sonnenrichtung_passt_zum_schatten": "ja — erwartet links/hinter dem Haus (rechts-Anteil -0,34, weg von Kamera 0,94), gesehen links",
+   "stimmung_erkennbar": "ja — klarer dunkelblauer Verlauf, Haus hell, Seiten getrennt",
+   "bild_kurz": "Haus hellgrau klar vor dunkelblauem Himmel abgesetzt",
+   "systemlast_vorher": "26.15 / 25.11 / 20.22",
+   "gpu_vorher": "1241 MiB, 13.84 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-mittag-sSE.png"
+  },
+  "morgen": {
+   "job": "vis-1792536656-708027",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-eddb2f818bd33542",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 27.76,
+   "blender_s": 4.3,
+   "blender_s_293": 4.2,
+   "qa_kontrast_haus_hintergrund_gemeldet": 75.1,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": 75.1,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": 77.0,
+    "haus": 201.8,
+    "hintergrund_daneben": 124.8,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_weich",
+    "hoehe_grad": 23.184,
+    "azimut_grad": -25.158,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 7.644831,
+    "winkel_grad": 1.0,
+    "grund": "Keine Sonnenscheibe im Himmelsbild gefunden — weiche Lampe aus dem hellsten Bereich statt harter Sonne.",
+    "lampe_art": "weich",
+    "lampe_weg": "hellster_bereich",
+    "kompass_grad": 115.2
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.35,
+    "staerke_fuelllicht": 0.35,
+    "sonnenscheibe_gekappt": false,
+    "kappung": null,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "dunkler",
+    "faktor": 1.0,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": -2.633,
+    "abstand_ev_nachher": -2.633,
+    "staerke_vorher": 0.3499999940395355,
+    "staerke_nachher": 0.3499999940395355,
+    "dauer_s": 0.26,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": -0.5,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": null,
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     195.4,
+     217.4
+    ],
+    "haus_gruppen_anteil_dunkel": 0.71,
+    "platte_luma_p75": 184.9,
+    "platte_schattenanteil": 0.018,
+    "schatten_x_gegen_haus_px": -74.4,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.5,
+     "weg_von_kamera_anteil": 0.87
+    }
+   },
+   "schatten_am_haus": "ja — Seiten getrennt (195/217)",
+   "schatten_auf_platte": "ja — harter Keil links am Fuss (Rueckfall 'weich' rechnet mit 1,0 Grad, also hart)",
+   "sonnenrichtung_passt_zum_schatten": "ja — erwartet links (-0,50), gesehen links",
+   "stimmung_erkennbar": "teilweise — kuehl-graublau, frisch; lange Schatten nicht sichtbar (Augenhoehe 1,7 m, Platte nur als Streifen)",
+   "bild_kurz": "Haus hell vor graublauem Grund, gut abgesetzt",
+   "systemlast_vorher": "26.47 / 25.29 / 20.46",
+   "gpu_vorher": "1241 MiB, 13.92 W, 0 %",
+   "gpu_spitze": "1324 MiB / 65 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-morgen-sSE.png"
+  },
+  "abend": {
+   "job": "vis-1792536684-109c24",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-0be6714b6d9899ca",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 36.21,
+   "blender_s": 4.3,
+   "blender_s_293": 4.2,
+   "qa_kontrast_haus_hintergrund_gemeldet": 96.4,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": 96.4,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": 95.8,
+    "haus": 233.6,
+    "hintergrund_daneben": 137.8,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_sonne",
+    "hoehe_grad": 4.22,
+    "azimut_grad": -49.992,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 11.906489,
+    "winkel_grad": 1.0,
+    "grund": "",
+    "lampe_art": "sonne",
+    "lampe_weg": "sonnenscheibe",
+    "kompass_grad": 140.0
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.3,
+    "staerke_fuelllicht": 0.3,
+    "sonnenscheibe_gekappt": true,
+    "kappung": 18.640205,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "dunkler",
+    "faktor": 1.0,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": -3.404,
+    "abstand_ev_nachher": -3.404,
+    "staerke_vorher": 0.30000001192092896,
+    "staerke_nachher": 0.30000001192092896,
+    "dauer_s": 0.26,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": 0.0,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": [
+    1.221704,
+    0.955511,
+    0.787871
+   ],
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     229.2,
+     235.1
+    ],
+    "haus_gruppen_anteil_dunkel": 0.25,
+    "platte_luma_p75": 212.3,
+    "platte_schattenanteil": 0.0,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.09,
+     "weg_von_kamera_anteil": 1.0
+    }
+   },
+   "schatten_am_haus": "nein — Seiten fast gleich (229/235): Sonne 4,2 Grad hoch genau aus Kamerarichtung, Frontallicht",
+   "schatten_auf_platte": "nein — Schatten faellt genau hinter das Haus (weg von Kamera 1,00)",
+   "sonnenrichtung_passt_zum_schatten": "ja (unsichtbar, weil hinter dem Haus)",
+   "stimmung_erkennbar": "teilweise — warm (pfirsich vor mauve), aber kein Streiflicht, Haus fast weiss (Mittel 234, 0 Punkte voll weiss)",
+   "bild_kurz": "Haus warmweiss vor dunklerem Mauve, deutlich abgesetzt, flach",
+   "systemlast_vorher": "23.62 / 24.72 / 20.43",
+   "gpu_vorher": "1241 MiB, 37.52 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-abend-sSE.png"
+  },
+  "blaue-stunde": {
+   "job": "vis-1792536720-01b3b2",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-da314f59c2cb547b",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 35.67,
+   "blender_s": 4.3,
+   "blender_s_293": 4.1,
+   "qa_kontrast_haus_hintergrund_gemeldet": 34.7,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": 34.7,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": 35.0,
+    "haus": 192.0,
+    "hintergrund_daneben": 156.9,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_weich",
+    "hoehe_grad": 15.0,
+    "azimut_grad": -35.745,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 2.12684,
+    "winkel_grad": 30.0,
+    "grund": "",
+    "lampe_art": "weich",
+    "lampe_weg": "hellster_bereich",
+    "kompass_grad": 125.7
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.7,
+    "staerke_fuelllicht": 0.7,
+    "sonnenscheibe_gekappt": false,
+    "kappung": null,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "dunkler",
+    "faktor": 0.912876,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": -0.974,
+    "abstand_ev_nachher": -1.106,
+    "staerke_vorher": 0.699999988079071,
+    "staerke_nachher": 0.63901318911767,
+    "dauer_s": 0.25,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": -0.7,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": [
+    0.863405,
+    0.999505,
+    1.407122
+   ],
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     189.5,
+     198.3
+    ],
+    "haus_gruppen_anteil_dunkel": 0.72,
+    "platte_luma_p75": 157.6,
+    "platte_schattenanteil": 0.0,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.33,
+     "weg_von_kamera_anteil": 0.94
+    }
+   },
+   "schatten_am_haus": "schwach — Seiten 190/198",
+   "schatten_auf_platte": "kaum — schwacher Keil links am Fuss",
+   "sonnenrichtung_passt_zum_schatten": "ja (schwach)",
+   "stimmung_erkennbar": "nein — lavendel/pastell, nicht tiefblau; Haus heller als der Himmel",
+   "bild_kurz": "Haus hell-lila vor lavendelblauem Verlauf, lesbar",
+   "systemlast_vorher": "13.48 / 22.05 / 19.69",
+   "gpu_vorher": "1241 MiB, 38.39 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-blaue-stunde-sSE.png"
+  },
+  "bedeckt": {
+   "job": "vis-1792536756-493704",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-741ff6cbe58b1178",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 35.67,
+   "blender_s": 4.3,
+   "blender_s_293": 4.1,
+   "qa_kontrast_haus_hintergrund_gemeldet": -35.3,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": -35.3,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": -37.8,
+    "haus": 184.4,
+    "hintergrund_daneben": 222.2,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_weich",
+    "hoehe_grad": 52.351,
+    "azimut_grad": -13.684,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 3.736852,
+    "winkel_grad": 40.0,
+    "grund": "",
+    "lampe_art": "weich",
+    "lampe_weg": "hellster_bereich",
+    "kompass_grad": 103.7
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.8,
+    "staerke_fuelllicht": 0.8,
+    "sonnenscheibe_gekappt": false,
+    "kappung": null,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "heller",
+    "faktor": 2.920743,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": 0.085,
+    "abstand_ev_nachher": 1.631,
+    "staerke_vorher": 0.800000011920929,
+    "staerke_nachher": 2.33659443481797,
+    "dauer_s": 0.23,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": -0.5,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": null,
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     177.3,
+     201.3
+    ],
+    "haus_gruppen_anteil_dunkel": 0.7,
+    "platte_luma_p75": 176.0,
+    "platte_schattenanteil": 0.15,
+    "schatten_x_gegen_haus_px": -34.8,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.66,
+     "weg_von_kamera_anteil": 0.75
+    }
+   },
+   "schatten_am_haus": "ja, weich — Seiten 177/201",
+   "schatten_auf_platte": "ja, weich — dunkles Band links am Fuss",
+   "sonnenrichtung_passt_zum_schatten": "ja — erwartet links (-0,66)",
+   "stimmung_erkennbar": "ja — hell, gleichmaessig, grau",
+   "bild_kurz": "Haus mittelgrau vor hellgrauem Grund, abgesetzt",
+   "systemlast_vorher": "7.67 / 19.64 / 18.97",
+   "gpu_vorher": "1241 MiB, 39.15 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-bedeckt-sSE.png"
+  },
+  "nebel": {
+   "job": "vis-1792536792-114854",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-4f7ea4d3ee0ecf2c",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 36.2,
+   "blender_s": 4.3,
+   "blender_s_293": 4.1,
+   "qa_kontrast_haus_hintergrund_gemeldet": -25.1,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": -25.1,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": -25.7,
+    "haus": 200.5,
+    "hintergrund_daneben": 226.2,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_weich",
+    "hoehe_grad": 46.436,
+    "azimut_grad": -29.778,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 2.283726,
+    "winkel_grad": 50.0,
+    "grund": "",
+    "lampe_art": "weich",
+    "lampe_weg": "hellster_bereich",
+    "kompass_grad": 119.8
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.85,
+    "staerke_fuelllicht": 0.85,
+    "sonnenscheibe_gekappt": false,
+    "kappung": null,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "heller",
+    "faktor": 2.240618,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": 0.055,
+    "abstand_ev_nachher": 1.219,
+    "staerke_vorher": 0.8500000238418579,
+    "staerke_nachher": 1.904525353420496,
+    "dauer_s": 0.22,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": 0.0,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": null,
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     197.0,
+     208.1
+    ],
+    "haus_gruppen_anteil_dunkel": 0.69,
+    "platte_luma_p75": 182.8,
+    "platte_schattenanteil": 0.0,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.43,
+     "weg_von_kamera_anteil": 0.9
+    }
+   },
+   "schatten_am_haus": "schwach — Seiten 197/208",
+   "schatten_auf_platte": "nein",
+   "sonnenrichtung_passt_zum_schatten": "nicht pruefbar (kein Schatten)",
+   "stimmung_erkennbar": "ja — milchig hell, gedaempft",
+   "bild_kurz": "Haus hellgrau vor fast weissem Grund, knapp aber lesbar",
+   "systemlast_vorher": "6.37 / 17.72 / 18.35",
+   "gpu_vorher": "1241 MiB, 36.53 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-nebel-sSE.png"
+  },
+  "winter": {
+   "job": "vis-1792536828-5f7668",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-dbbb5e643624e21c",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 35.68,
+   "blender_s": 4.3,
+   "blender_s_293": 4.1,
+   "qa_kontrast_haus_hintergrund_gemeldet": -25.3,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": -25.3,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": -25.6,
+    "haus": 198.0,
+    "hintergrund_daneben": 223.7,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_weich",
+    "hoehe_grad": 34.677,
+    "azimut_grad": -29.976,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 6.366275,
+    "winkel_grad": 1.5,
+    "grund": "Keine Sonnenscheibe im Himmelsbild gefunden — weiche Lampe aus dem hellsten Bereich statt harter Sonne.",
+    "lampe_art": "weich",
+    "lampe_weg": "hellster_bereich",
+    "kompass_grad": 120.0
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.45,
+    "staerke_fuelllicht": 0.45,
+    "sonnenscheibe_gekappt": false,
+    "kappung": null,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "heller",
+    "faktor": 7.923059,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": -1.87,
+    "abstand_ev_nachher": 1.116,
+    "staerke_vorher": 0.44999998807907104,
+    "staerke_nachher": 3.5653764555497767,
+    "dauer_s": 0.23,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": -0.5,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": [
+    0.939067,
+    0.993614,
+    1.24268
+   ],
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     193.0,
+     209.4
+    ],
+    "haus_gruppen_anteil_dunkel": 0.69,
+    "platte_luma_p75": 183.9,
+    "platte_schattenanteil": 0.005,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": -0.42,
+     "weg_von_kamera_anteil": 0.91
+    }
+   },
+   "schatten_am_haus": "ja — Seiten 193/209",
+   "schatten_auf_platte": "ja — harter Keil links am Fuss (Rueckfall 'weich' mit 1,5 Grad)",
+   "sonnenrichtung_passt_zum_schatten": "ja — erwartet links (-0,42), gesehen links",
+   "stimmung_erkennbar": "ja — kuehl bläulich, Haus sichtbar; Schnee nur in der Farbe",
+   "bild_kurz": "Haus bläulichgrau vor hellem Grund, klar sichtbar (293: verschwunden)",
+   "systemlast_vorher": "3.55 / 15.76 / 17.67",
+   "gpu_vorher": "1241 MiB, 20.56 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-winter-sSE.png"
+  },
+  "weiss": {
+   "job": "vis-1792536864-c921e2",
+   "status": "done",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-49cac7f9e639fc49",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_done_s": 36.2,
+   "blender_s": 4.3,
+   "blender_s_293": 4.1,
+   "qa_kontrast_haus_hintergrund_gemeldet": 47.8,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "ueberstrahlt_anteil": 0.0,
+     "kontrast_haus_hintergrund": 47.8,
+     "lieferstatus": "geliefert"
+    }
+   ],
+   "kontrast_nachgezaehlt": {
+    "wert": 50.2,
+    "haus": 188.8,
+    "hintergrund_daneben": 138.7,
+    "verfahren": "wie 293: Grauwert (Rec.709) Haus (Bauwerksmaske aus material_id) minus Mittel ausserhalb der Maske in den Zeilen oberste Hauszeile bis halbe Haushoehe"
+   },
+   "qa_ueberstrahlt_anteil_bei_skip": {
+    "vorhanden": true,
+    "wert": 0.0,
+    "nachgezaehlt_voll_weiss_am_haus": 0
+   },
+   "sonne": {
+    "weg": "himmelsbild_weich",
+    "hoehe_grad": 27.409,
+    "azimut_grad": -93.842,
+    "konvention": "blender_welt_x_gegen_uhrzeiger",
+    "staerke": 0.574368,
+    "winkel_grad": 20.0,
+    "grund": "",
+    "lampe_art": "weich",
+    "lampe_weg": "sonnenscheibe",
+    "kompass_grad": 183.8
+   },
+   "umgebung_licht": {
+    "fuell_staerke": 0.6,
+    "staerke_fuelllicht": 0.6,
+    "sonnenscheibe_gekappt": false,
+    "kappung": null,
+    "herkunft": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+   },
+   "hintergrund_abstand": {
+    "weg": "vorprobe",
+    "richtung": "dunkler",
+    "faktor": 0.81252,
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": -2.579,
+    "abstand_ev_nachher": -2.879,
+    "staerke_vorher": 0.6000000238418579,
+    "staerke_nachher": 0.4875120193719864,
+    "dauer_s": 0.22,
+    "grund": ""
+   },
+   "gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.55,
+     0.55,
+     0.55
+    ]
+   },
+   "ansicht": {
+    "tonwerte": "AgX",
+    "belichtung_ev": 0.0,
+    "grund": "",
+    "look": "AgX - Medium High Contrast",
+    "look_grund": ""
+   },
+   "toenung": null,
+   "schatten_messung": {
+    "haus_gruppen_luma": [
+     179.5,
+     192.6
+    ],
+    "haus_gruppen_anteil_dunkel": 0.28,
+    "platte_luma_p75": 178.1,
+    "platte_schattenanteil": 0.0,
+    "erwartet_schatten_bild": {
+     "rechts_anteil": 0.63,
+     "weg_von_kamera_anteil": 0.78
+    }
+   },
+   "schatten_am_haus": "schwach — Seiten 180/193",
+   "schatten_auf_platte": "nein",
+   "sonnenrichtung_passt_zum_schatten": "nicht pruefbar (erwartet rechts +0,63, keiner sichtbar)",
+   "stimmung_erkennbar": "ja — Gipsmodell neutral vor grauem Verlauf, Platte heller (0,55)",
+   "bild_kurz": "Haus hellgrau vor dunklerem Grau, abgesetzt",
+   "systemlast_vorher": "2.36 / 14.10 / 17.04",
+   "gpu_vorher": "1241 MiB, 25.84 W, 0 %",
+   "gpu_spitze": "1324 MiB / 64 W",
+   "ollama_ps": "leer",
+   "bild": "auf-20261020-294-bilder/1-weiss-sSE.png"
+  }
+ },
+ "1_zusammenfassung": {
+  "kontrast_gemeldet": {
+   "mittag": 85.2,
+   "morgen": 75.1,
+   "abend": 96.4,
+   "blaue-stunde": 34.7,
+   "bedeckt": -35.3,
+   "nebel": -25.1,
+   "winter": -25.3,
+   "weiss": 47.8
+  },
+  "kontrast_nachgezaehlt": {
+   "mittag": 86.8,
+   "morgen": 77.0,
+   "abend": 95.8,
+   "blaue-stunde": 35.0,
+   "bedeckt": -37.8,
+   "nebel": -25.7,
+   "winter": -25.6,
+   "weiss": 50.2
+  },
+  "ueberstrahlt_bei_skip_vorhanden": "ja, in qa und qa_je_kamera, alle 0,0 (nachgezaehlt 0 voll weisse Punkte am Haus)",
+  "look": "alle acht 'AgX - Medium High Contrast', look_grund leer",
+  "gelaende": "alle 0,30 linear, weiss 0,55",
+  "belichtung_ev": {
+   "mittag": -1.0,
+   "morgen": -0.5,
+   "abend": 0.0,
+   "blaue-stunde": -0.7,
+   "bedeckt": -0.5,
+   "nebel": 0.0,
+   "winter": -0.5,
+   "weiss": 0.0
+  },
+  "kamera_kompass_grad": 145.0,
+  "sonne_kompass_grad": {
+   "mittag": 125.2,
+   "morgen": 115.2,
+   "abend": 140.0,
+   "blaue-stunde": 125.7,
+   "bedeckt": 103.7,
+   "nebel": 119.8,
+   "winter": 120.0,
+   "weiss": 183.8
+  },
+  "blender_s_gegen_293": "4,3 s gegen 4,1-4,2 s (+0,1-0,2 s); Vorprobe selbst 0,22-0,26 s, beim ersten Lauf (mittag, kalt) 0,53 s und gesamt 6,5 s.",
+  "hintergrund_abstand": "Faktor 1,0 bei mittag/morgen/abend (schon -2,5 bis -3,4 EV), blaue-stunde 0,91 (-0,97 -> -1,11 EV), weiss 0,81 (-2,58 -> -2,88), bedeckt 2,92 (+0,09 -> +1,63), nebel 2,24 (+0,06 -> +1,22), winter 7,92 (-1,87 -> +1,12)."
+ },
+ "2_ki_bilder": {
+  "grundlagen_960": {
+   "mittag": {
+    "job": "vis-1792537042-1f2022",
+    "grundlage": {
+     "id": "gl-7792e36d500ab6f1",
+     "wiederverwendet": false
+    },
+    "zeit_freigabe_bis_done_s": 19.18,
+    "blender_s": 5.0,
+    "qa_kontrast_haus_hintergrund": 85.3,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "systemlast_vorher": "1.24 / 8.33 / 14.28",
+    "gpu_vorher": "1241 MiB, 13.95 W, 0 %",
+    "gpu_spitze": "1328 MiB / 64 W",
+    "bild": "auf-20261020-294-bilder/2-mittag-grundlage-960-sSE.png"
+   },
+   "abend": {
+    "job": "vis-1792537164-c14110",
+    "grundlage": {
+     "id": "gl-cc46e75757d90a11",
+     "wiederverwendet": false
+    },
+    "zeit_freigabe_bis_done_s": 28.15,
+    "blender_s": 5.0,
+    "qa_kontrast_haus_hintergrund": 96.7,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "systemlast_vorher": "2.23 / 6.47 / 12.87",
+    "gpu_vorher": "1241 MiB, 14.71 W, 0 %",
+    "gpu_spitze": "1324 MiB / 65 W",
+    "bild": "auf-20261020-294-bilder/2-abend-grundlage-960-sSE.png"
+   },
+   "winter": {
+    "job": "vis-1792537282-6d8d38",
+    "grundlage": {
+     "id": "gl-006fa3cc23bb62da",
+     "wiederverwendet": false
+    },
+    "zeit_freigabe_bis_done_s": 35.5,
+    "blender_s": 5.0,
+    "qa_kontrast_haus_hintergrund": -25.6,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "systemlast_vorher": "1.54 / 4.80 / 11.48",
+    "gpu_vorher": "1241 MiB, 66.37 W, 0 %",
+    "gpu_spitze": "1324 MiB / 66 W",
+    "bild": "auf-20261020-294-bilder/2-winter-grundlage-960-sSE.png"
+   }
+  },
+  "varianten": {
+   "2-mittag-vorschau-960": {
+    "job": "vis-1792537062-5fc4bf",
+    "grundlage": {
+     "id": "gl-7792e36d500ab6f1",
+     "wiederverwendet": true
+    },
+    "grundlage_job": "vis-1792537042-1f2022",
+    "bild_groesse": [
+     960,
+     600
+    ],
+    "zeit_freigabe_bis_done_s": 47.11,
+    "kamera_s": 15.2,
+    "qa_kontrast_haus_hintergrund_cycles": 85.3,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "kontrast_ki_nachgezaehlt": {
+     "wert": -38.2,
+     "haus": 137.6,
+     "daneben": 175.8,
+     "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+    },
+    "qa_geometry": {
+     "geom_iou": 0.520030332575019,
+     "geom_iou_grund": null,
+     "spearman": -0.7597193220789071,
+     "geometry_fidelity": 0.628551582389514,
+     "status": "measured"
+    },
+    "zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 72773,
+     "n_gemeinsam": 48004,
+     "n_trennhilfe": 221568,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "messboden": {
+     "ebene_z": 0.0,
+     "n_boden": 221568,
+     "tiefe": "achse",
+     "angewandt": true,
+     "nur_zum_trennen": true,
+     "neben_gelaende": true
+    },
+    "umriss_iou_eigen": {
+     "iou": 0.644,
+     "haus_px_maske": 58589,
+     "haus_px_ki": 90700,
+     "kontrast_kern_ring": 4.3
+    },
+    "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+    "ki_groesse_vermerkt": [
+     1024,
+     640
+    ],
+    "hochgerechnet": true,
+    "ki_raster_datei": [
+     1024,
+     640
+    ],
+    "guete_hinweise": [
+     "Die Grundlage 960x600 ist kleiner als die Untergrenze von 'z-image-turbo'; der KI-Schritt rechnet 1024x640 und bringt sein Bild auf die Grundlage zurueck.",
+     "Bestellt war faithful 0.8; die Vorschau steuert immer mit 1.0 (Registerwert von 'z-image-turbo')."
+    ],
+    "schatten_sichtbar": "kaum — verschmiert",
+    "stimmung_erkennbar": "teilweise — blauer Himmel mit Wolken, Bild aber verwaschen/transparent",
+    "schrift_artefakte": "nein",
+    "personen": "keine",
+    "bild_kurz": "geisterhaftes, breites Gebaeude mit durchscheinendem Berg, Fassade wie Rauschen; Haus nur grob an der Stelle",
+    "systemlast_vorher": "1.65 / 7.96 / 14.03",
+    "gpu_vorher": "1241 MiB, 21.79 W, 0 %",
+    "gpu_spitze": "27436 MiB / 355 W",
+    "bild": "auf-20261020-294-bilder/2-mittag-vorschau-960-sSE.png"
+   },
+   "2-mittag-voll-960": {
+    "job": "vis-1792537109-154099",
+    "grundlage": {
+     "id": "gl-7792e36d500ab6f1",
+     "wiederverwendet": true
+    },
+    "grundlage_job": "vis-1792537042-1f2022",
+    "bild_groesse": [
+     960,
+     600
+    ],
+    "zeit_freigabe_bis_done_s": 45.91,
+    "kamera_s": 14.3,
+    "qa_kontrast_haus_hintergrund_cycles": 85.3,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "kontrast_ki_nachgezaehlt": {
+     "wert": -0.4,
+     "haus": 151.2,
+     "daneben": 151.6,
+     "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+    },
+    "qa_geometry": {
+     "geom_iou": 0.5064537353684193,
+     "geom_iou_grund": null,
+     "spearman": -0.32451825619728614,
+     "geometry_fidelity": 0.4054053317932082,
+     "status": "measured"
+    },
+    "zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 117914,
+     "n_gemeinsam": 62348,
+     "n_trennhilfe": 221568,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "messboden": {
+     "ebene_z": 0.0,
+     "n_boden": 221568,
+     "tiefe": "achse",
+     "angewandt": true,
+     "nur_zum_trennen": true,
+     "neben_gelaende": true
+    },
+    "umriss_iou_eigen": {
+     "iou": 0.622,
+     "haus_px_maske": 58589,
+     "haus_px_ki": 85666,
+     "kontrast_kern_ring": 38.4
+    },
+    "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+    "ki_groesse_vermerkt": null,
+    "hochgerechnet": null,
+    "ki_raster_datei": [
+     1024,
+     640
+    ],
+    "guete_hinweise": null,
+    "schatten_sichtbar": "ja — Schlagschatten (Baum) an der Fassade links, Seiten getrennt",
+    "stimmung_erkennbar": "ja — Mittag, klarer Himmel, Sonne",
+    "schrift_artefakte": "nein",
+    "personen": "keine",
+    "bild_kurz": "mehrgeschossiges Wohnhaus mit Holzlamellen und Glas, ueber die ganze Bildbreite statt im Umriss; graue Platte wurde zu Sockel/Garten; kein Sichtbeton",
+    "systemlast_vorher": "3.61 / 7.50 / 13.58",
+    "gpu_vorher": "27436 MiB, 64.69 W, 0 %",
+    "gpu_spitze": "27436 MiB / 357 W",
+    "bild": "auf-20261020-294-bilder/2-mittag-voll-960-sSE.png"
+   },
+   "2-abend-vorschau-960": {
+    "job": "vis-1792537192-63c119",
+    "grundlage": {
+     "id": "gl-cc46e75757d90a11",
+     "wiederverwendet": true
+    },
+    "grundlage_job": "vis-1792537164-c14110",
+    "bild_groesse": [
+     960,
+     600
+    ],
+    "zeit_freigabe_bis_done_s": 41.95,
+    "kamera_s": 10.5,
+    "qa_kontrast_haus_hintergrund_cycles": 96.7,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "kontrast_ki_nachgezaehlt": {
+     "wert": 40.1,
+     "haus": 64.0,
+     "daneben": 23.9,
+     "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+    },
+    "qa_geometry": {
+     "geom_iou": 0.5804819962696397,
+     "geom_iou_grund": null,
+     "spearman": -0.36260187995551313,
+     "geometry_fidelity": 0.45878520369307957,
+     "status": "measured"
+    },
+    "zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 82442,
+     "n_gemeinsam": 55086,
+     "n_trennhilfe": 221568,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "messboden": {
+     "ebene_z": 0.0,
+     "n_boden": 221568,
+     "tiefe": "achse",
+     "angewandt": true,
+     "nur_zum_trennen": true,
+     "neben_gelaende": true
+    },
+    "umriss_iou_eigen": {
+     "iou": 0.526,
+     "haus_px_maske": 58589,
+     "haus_px_ki": 55826,
+     "kontrast_kern_ring": 48.6
+    },
+    "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+    "ki_groesse_vermerkt": [
+     1024,
+     640
+    ],
+    "hochgerechnet": true,
+    "ki_raster_datei": [
+     1024,
+     640
+    ],
+    "guete_hinweise": [
+     "Die Grundlage 960x600 ist kleiner als die Untergrenze von 'z-image-turbo'; der KI-Schritt rechnet 1024x640 und bringt sein Bild auf die Grundlage zurueck.",
+     "Bestellt war faithful 0.8; die Vorschau steuert immer mit 1.0 (Registerwert von 'z-image-turbo')."
+    ],
+    "schatten_sichtbar": "nein",
+    "stimmung_erkennbar": "teilweise — warm leuchtende Fenster, aber Nacht statt Abendsonne",
+    "schrift_artefakte": "nein",
+    "personen": "keine",
+    "bild_kurz": "Haus mit warm leuchtenden Fenstern vor schwarzem Himmel, unscharf, Umriss grob getroffen",
+    "systemlast_vorher": "1.88 / 5.98 / 12.51",
+    "gpu_vorher": "1241 MiB, 19.89 W, 0 %",
+    "gpu_spitze": "27436 MiB / 356 W",
+    "bild": "auf-20261020-294-bilder/2-abend-vorschau-960-sSE.png"
+   },
+   "2-abend-voll-960": {
+    "job": "vis-1792537236-6ad53c",
+    "grundlage": {
+     "id": "gl-cc46e75757d90a11",
+     "wiederverwendet": true
+    },
+    "grundlage_job": "vis-1792537164-c14110",
+    "bild_groesse": [
+     960,
+     600
+    ],
+    "zeit_freigabe_bis_done_s": 43.76,
+    "kamera_s": 14.0,
+    "qa_kontrast_haus_hintergrund_cycles": 96.7,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "kontrast_ki_nachgezaehlt": {
+     "wert": 48.8,
+     "haus": 72.6,
+     "daneben": 23.9,
+     "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+    },
+    "qa_geometry": {
+     "geom_iou": 0.6809930178432894,
+     "geom_iou_grund": null,
+     "spearman": -0.07370165932250931,
+     "geometry_fidelity": 0.2240319517437047,
+     "status": "measured"
+    },
+    "zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 84135,
+     "n_gemeinsam": 61446,
+     "n_trennhilfe": 221568,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "messboden": {
+     "ebene_z": 0.0,
+     "n_boden": 221568,
+     "tiefe": "achse",
+     "angewandt": true,
+     "nur_zum_trennen": true,
+     "neben_gelaende": true
+    },
+    "umriss_iou_eigen": {
+     "iou": 0.439,
+     "haus_px_maske": 58589,
+     "haus_px_ki": 60805,
+     "kontrast_kern_ring": 58.2
+    },
+    "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+    "ki_groesse_vermerkt": null,
+    "hochgerechnet": null,
+    "ki_raster_datei": [
+     1024,
+     640
+    ],
+    "guete_hinweise": null,
+    "schatten_sichtbar": "nein (Nachtbild, Kunstlicht)",
+    "stimmung_erkennbar": "teilweise — warm leuchtende Innenraeume, aber Nacht, kein Streiflicht",
+    "schrift_artefakte": "nein",
+    "personen": "keine",
+    "bild_kurz": "sauberes Wohnhaus bei Nacht, Mittelteil im Umriss, Seitenfluegel angebaut; keine Personen",
+    "systemlast_vorher": "1.85 / 5.45 / 12.05",
+    "gpu_vorher": "1241 MiB, 65.00 W, 0 %",
+    "gpu_spitze": "27436 MiB / 358 W",
+    "bild": "auf-20261020-294-bilder/2-abend-voll-960-sSE.png"
+   },
+   "2-winter-vorschau-960": {
+    "job": "vis-1792537318-d435e1",
+    "grundlage": {
+     "id": "gl-006fa3cc23bb62da",
+     "wiederverwendet": true
+    },
+    "grundlage_job": "vis-1792537282-6d8d38",
+    "bild_groesse": [
+     960,
+     600
+    ],
+    "zeit_freigabe_bis_done_s": 41.94,
+    "kamera_s": 10.7,
+    "qa_kontrast_haus_hintergrund_cycles": -25.6,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "kontrast_ki_nachgezaehlt": {
+     "wert": -12.1,
+     "haus": 142.5,
+     "daneben": 154.5,
+     "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+    },
+    "qa_geometry": {
+     "geom_iou": 0.5358999037536092,
+     "geom_iou_grund": null,
+     "spearman": -0.5865839940894987,
+     "geometry_fidelity": 0.5606695158254728,
+     "status": "measured"
+    },
+    "zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 68102,
+     "n_gemeinsam": 47328,
+     "n_trennhilfe": 221568,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "messboden": {
+     "ebene_z": 0.0,
+     "n_boden": 221568,
+     "tiefe": "achse",
+     "angewandt": true,
+     "nur_zum_trennen": true,
+     "neben_gelaende": true
+    },
+    "umriss_iou_eigen": {
+     "iou": 0.628,
+     "haus_px_maske": 58589,
+     "haus_px_ki": 86280,
+     "kontrast_kern_ring": 18.3
+    },
+    "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+    "ki_groesse_vermerkt": [
+     1024,
+     640
+    ],
+    "hochgerechnet": true,
+    "ki_raster_datei": [
+     1024,
+     640
+    ],
+    "guete_hinweise": [
+     "Die Grundlage 960x600 ist kleiner als die Untergrenze von 'z-image-turbo'; der KI-Schritt rechnet 1024x640 und bringt sein Bild auf die Grundlage zurueck.",
+     "Bestellt war faithful 0.8; die Vorschau steuert immer mit 1.0 (Registerwert von 'z-image-turbo')."
+    ],
+    "schatten_sichtbar": "nein — verschmiert",
+    "stimmung_erkennbar": "teilweise — Schnee am unteren Rand, kuehler Himmel",
+    "schrift_artefakte": "nein",
+    "personen": "keine",
+    "bild_kurz": "wie mittag-vorschau, verwaschen, Fassade rauschartig",
+    "systemlast_vorher": "1.49 / 4.43 / 11.11",
+    "gpu_vorher": "1241 MiB, 24.14 W, 0 %",
+    "gpu_spitze": "27436 MiB / 357 W",
+    "bild": "auf-20261020-294-bilder/2-winter-vorschau-960-sSE.png"
+   },
+   "2-winter-voll-960": {
+    "job": "vis-1792537362-6991ba",
+    "grundlage": {
+     "id": "gl-006fa3cc23bb62da",
+     "wiederverwendet": true
+    },
+    "grundlage_job": "vis-1792537282-6d8d38",
+    "bild_groesse": [
+     960,
+     600
+    ],
+    "zeit_freigabe_bis_done_s": 44.36,
+    "kamera_s": 14.5,
+    "qa_kontrast_haus_hintergrund_cycles": -25.6,
+    "qa_ueberstrahlt_anteil": 0.0,
+    "kontrast_ki_nachgezaehlt": {
+     "wert": -3.8,
+     "haus": 147.6,
+     "daneben": 151.5,
+     "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+    },
+    "qa_geometry": {
+     "geom_iou": 0.5117189053341499,
+     "geom_iou_grund": null,
+     "spearman": 0.36888411332836246,
+     "geometry_fidelity": 0.0,
+     "status": "measured"
+    },
+    "zaehlung": {
+     "n_soll": 67541,
+     "n_ist": 122538,
+     "n_gemeinsam": 64342,
+     "n_trennhilfe": 221568,
+     "hintergrund_strategie": "wie_soll"
+    },
+    "messboden": {
+     "ebene_z": 0.0,
+     "n_boden": 221568,
+     "tiefe": "achse",
+     "angewandt": true,
+     "nur_zum_trennen": true,
+     "neben_gelaende": true
+    },
+    "umriss_iou_eigen": {
+     "iou": 0.622,
+     "haus_px_maske": 58589,
+     "haus_px_ki": 87015,
+     "kontrast_kern_ring": 33.3
+    },
+    "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+    "ki_groesse_vermerkt": null,
+    "hochgerechnet": null,
+    "ki_raster_datei": [
+     1024,
+     640
+    ],
+    "guete_hinweise": null,
+    "schatten_sichtbar": "ja — Schlagschatten auf der Fassade links, Seiten getrennt",
+    "stimmung_erkennbar": "ja — Schnee am Boden, kuehles klares Licht",
+    "schrift_artefakte": "nein",
+    "personen": "keine",
+    "bild_kurz": "Wohnhaus mit Satteldach-Teil und Holzfassade ueber die ganze Breite; Umriss nur im Mittelteil; keine Personen",
+    "systemlast_vorher": "1.65 / 4.06 / 10.67",
+    "gpu_vorher": "1241 MiB, 61.17 W, 0 %",
+    "gpu_spitze": "27436 MiB / 360 W",
+    "bild": "auf-20261020-294-bilder/2-winter-voll-960-sSE.png"
+   }
+  }
+ },
+ "3_vorschau_480": {
+  "zeigt_haus": "ja, aber schwach — geisterhaftes breites Gebaeude an der Stelle des Hauses mit durchscheinendem Berg (293: Strand ohne Haus)",
+  "ki_groesse": [
+   1024,
+   640
+  ],
+  "hochgerechnet": true,
+  "vermerk_woertlich": [
+   "Die Grundlage 480x300 ist kleiner als die Untergrenze von 'z-image-turbo'; der KI-Schritt rechnet 1024x640 und bringt sein Bild auf die Grundlage zurueck.",
+   "Bestellt war faithful 0.8; die Vorschau steuert immer mit 1.0 (Registerwert von 'z-image-turbo')."
+  ],
+  "geom_iou": 0.36483909415971394,
+  "geom_iou_nicht_mehr_null": true,
+  "zaehlung": {
+   "n_soll": 16922,
+   "n_ist": 17431,
+   "n_gemeinsam": 9183,
+   "n_trennhilfe": 55385,
+   "hintergrund_strategie": "wie_soll"
+  },
+  "messboden": {
+   "ebene_z": 0.0,
+   "n_boden": 55385,
+   "tiefe": "achse",
+   "angewandt": true,
+   "nur_zum_trennen": true,
+   "neben_gelaende": true
+  },
+  "umriss_iou_eigen": 0.469,
+  "kontrast_ki_nachgezaehlt": {
+   "wert": -30.2,
+   "haus": 137.1,
+   "daneben": 167.2,
+   "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+  },
+  "zeit_freigabe_bis_done_s": 38.05,
+  "kamera_s": 8.8,
+  "schrift_artefakte": "nein",
+  "detail": {
+   "job": "vis-1792537409-2d016d",
+   "grundlage": {
+    "id": "gl-47c4d4d3f597b65b",
+    "wiederverwendet": true
+   },
+   "grundlage_job": "vis-1792536621-83e542",
+   "bild_groesse": [
+    480,
+    300
+   ],
+   "zeit_freigabe_bis_done_s": 38.05,
+   "kamera_s": 8.8,
+   "qa_kontrast_haus_hintergrund_cycles": 85.2,
+   "qa_ueberstrahlt_anteil": 0.0,
+   "kontrast_ki_nachgezaehlt": {
+    "wert": -30.2,
+    "haus": 137.1,
+    "daneben": 167.2,
+    "vorbehalt": "Haus = Bauwerksmaske der Grundlage; wo die KI ueber den Umriss hinaus baut, misst 'daneben' Gebaeude"
+   },
+   "qa_geometry": {
+    "geom_iou": 0.36483909415971394,
+    "geom_iou_grund": null,
+    "spearman": -0.3851844624361906,
+    "geometry_fidelity": 0.3748737792372469,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 16922,
+    "n_ist": 17431,
+    "n_gemeinsam": 9183,
+    "n_trennhilfe": 55385,
+    "hintergrund_strategie": "wie_soll"
+   },
+   "messboden": {
+    "ebene_z": 0.0,
+    "n_boden": 55385,
+    "tiefe": "achse",
+    "angewandt": true,
+    "nur_zum_trennen": true,
+    "neben_gelaende": true
+   },
+   "umriss_iou_eigen": {
+    "iou": 0.469,
+    "haus_px_maske": 14679,
+    "haus_px_ki": 31166,
+    "kontrast_kern_ring": 6.0
+   },
+   "umriss_iou_methode": "wie 293 (iou.py): Haus im KI-Bild = Punkte, deren Farbe vom Ring 6-20 px um die Maske um mehr als die halbe Kern-Ring-Distanz abweicht, nur im Umkreis 30 px",
+   "ki_groesse_vermerkt": [
+    1024,
+    640
+   ],
+   "hochgerechnet": true,
+   "ki_raster_datei": [
+    1024,
+    640
+   ],
+   "guete_hinweise": [
+    "Die Grundlage 480x300 ist kleiner als die Untergrenze von 'z-image-turbo'; der KI-Schritt rechnet 1024x640 und bringt sein Bild auf die Grundlage zurueck.",
+    "Bestellt war faithful 0.8; die Vorschau steuert immer mit 1.0 (Registerwert von 'z-image-turbo')."
+   ],
+   "schatten_sichtbar": "kaum",
+   "stimmung_erkennbar": "teilweise — blauer Himmel",
+   "schrift_artefakte": "nein",
+   "personen": "keine",
+   "bild_kurz": "Haus da (293: Strand ohne Haus): geisterhaftes breites Gebaeude an der Stelle des Hauses, durchscheinender Berg, verwaschen",
+   "systemlast_vorher": "1.46 / 3.66 / 10.22",
+   "gpu_vorher": "1241 MiB, 53.93 W, 0 %",
+   "gpu_spitze": "27434 MiB / 358 W",
+   "bild": "auf-20261020-294-bilder/3-mittag-vorschau-480-sSE.png"
+  }
+ },
+ "4_ohne_stimmung": {
+  "job": "vis-1792537001-5e09b0",
+  "zeit_freigabe_bis_done_s": 23.99,
+  "blender_s": 2.1,
+  "bild_gleich_293": "ja — sSE.png/beauty_.png 0 abweichende Bildpunkte gegen 293 Lauf 8 (Dateipruefsumme anders, nur Metadaten)",
+  "tiefe_gleich_293": "ja — tiefe_norm.png bitgleich (gleiche Pruefsumme), material_id 0 abweichende Bildpunkte",
+  "stimmungsfelder_im_qa": "keine — qa nur geometry/verdict, qa_je_kamera ohne kontrast/ueberstrahlt; blender-report umgebung null, sonne weg 'vorgabe'",
+  "systemlast_vorher": "1.41 / 9.51 / 14.93",
+  "gpu_vorher": "1241 MiB, 13.93 W, 0 %",
+  "gpu_spitze": "1324 MiB / 62 W",
+  "bild": "auf-20261020-294-bilder/4-ohne-stimmung-sSE.png"
+ },
+ "befunde": [
+  "B1 FRONTALLICHT IN ALLEN ACHT: Die Sonne (bzw. weiche Lampe) steht im Kompass bei 104-184 Grad, die Kamera sSE bei 145 Grad — 0-40 Grad neben der Blickachse (rotationGrad 0). Schatten fallen darum hinter das Haus (Anteil 'weg von der Kamera' 0,75-1,00); sichtbar ist nur ein Keil links am Fuss. abend: Sonne 4,2 Grad hoch fast genau aus der Kamera (5 Grad daneben) -> Haus flach und fast weiss (Seiten 229/235, Mittel 234), kein Streiflicht. Ursache Lage, nicht Code: stimmung.lampe_aus_himmel nimmt die Richtung des Himmelsbilds (~Z. 476-480); Vorschlag: rotationGrad je Stimmung in die Daten (z. B. so, dass die Sonne 60-100 Grad seitlich der Hauptkamera steht) oder die Drehung an der Kamera ausrichten.",
+  "B2 WEICHER RUECKFALL BEHAELT DEN KLEINEN WINKEL: morgen und winter finden keine Sonnenscheibe (grund wie angesagt), rechnen die 'weiche' Lampe aber mit winkel_grad 1,0 bzw. 1,5 und voller sonnen_staerke (Energie 7,6 bzw. 6,4) — also harte Schatten. stimmung.py ~Z. 489: 'winkel_grad': float(licht.get('winkel_grad') or 1.0) gilt auch, wenn hart False ist; der Docstring sagt 'mit dem grossen Winkel der Stimmung'. Ergebnis im Bild gut (Schatten sichtbar), aber nicht wie beschrieben — entscheiden: Docstring anpassen oder Winkel im Rueckfall 20-50 Grad.",
+  "B3 BLAUE STUNDE PASTELL: belichtung -0,7 und 9000 K ergeben lavendel (Himmel daneben 157, Haus 192); Hintergrund nur 0,91x (Abstand -1,1 EV). Nicht tiefblau.",
+  "B4 PROMPT NICHT UEBERSETZT: 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people' geht deutsch in den KI-Schritt; sprache.py erkenne (~Z. 681-703) wertet nur Signalwoerter/Umlaute — 'no' zaehlt englisch, die Glossarwoerter (wohnhaus, sichtbeton, architekturfotografie stehen in GLOSSAR ~Z. 208/300/387) zaehlen nicht deutsch, 'oe' statt Umlaut. Bilder zeigen Holzlamellen statt Sichtbeton.",
+  "B5 KI-GROESSE BEI 'VOLL' NICHT VERMERKT: _ki_raster/*.png sind 1024x640 (Untergrenze wirkt), aber guete_vermerk (ki_groesse, hochgerechnet) steht nur bei der Vorschau (abholer.py ~Z. 4060-4062 'if vorschau else None'); warnungen_auftrag[0] nennt nur '960x592 — oder groesser, wenn das Modell eine Untergrenze hat'.",
+  "B6 KI BAUT UEBER DEN UMRISS HINAUS: in mittag/winter 'voll' wird aus der edge-on gesehenen grauen Platte ein Gebaeude ueber die ganze Bildbreite; nur der Mittelteil liegt im Umriss (Umriss-IoU 0,62, geom_iou 0,51). Vorschau 960/480 verwaschen, Fassade rauschartig. Schrift-Artefakte: keine in allen sieben Bildern (graue Platte mit Schatten hilft gegen das Fuellen mit Schrift, aber nicht gegen das Fuellen mit Gebaeude). abend wird Nacht statt Abend."
+ ],
+ "aufraeumen": "eigene Auftraege (Ablage), Ausgaben (kosmovis-bilder) und Probemappe per gio trash; Mappe des Dienstes, echter Himmels-/Materialordner nicht beruehrt.",
+ "urteil": "Ja — das Haus steht in allen acht Stimmungen mit Abstand zum Hintergrund (|Kontrast| 25-96, alle >= 20), Schatten auf der Platte aber nur bei mittag, morgen, winter, bedeckt (Keil am Fuss), weil die Sonne in allen Himmelsbildern 0-40 Grad neben der Kamera sSE steht; in die Daten sollten: rotationGrad je Stimmung (Sonne 60-100 Grad seitlich), abend sonnen_staerke 3,5 -> ~2,0 oder belichtung_ev -0,5 (Haus 234 fast weiss), blaue-stunde belichtung_ev -0,7 -> ~-1,5 und Hintergrundabstand 2 EV, im weichen Rueckfall winkel_grad 20-30; sonnen_staerke mittag/morgen 3,0, fuell_staerke 0,30-0,85 und Abstand 1 EV koennen bleiben."
+}

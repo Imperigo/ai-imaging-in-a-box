@@ -218,7 +218,9 @@ def _argumente():
     ap.add_argument("--umgebung-staerke", dest="umgebung_staerke", type=float, default=None,
                     help="Staerke des Himmelsbilds (Background Strength), Vorgabe 1.0.")
     ap.add_argument("--umgebung-drehung", dest="umgebung_drehung", type=float, default=None,
-                    help="Drehung des Himmelsbilds um die Hochachse, Grad, Vorgabe 0.")
+                    help="Drehung des Himmelsbilds um die Hochachse, Grad. Ohne Angabe: "
+                         "mit --umgebung-licht je Kamera so, dass die Sonne seitlich der "
+                         "Blickachse steht (sonne_seitlich_grad), sonst 0.")
     # BELICHTUNG UND TOENUNG JE STIMMUNG (auf-20261020-292, B1/B3): Daten aus
     # `aiimaging.stimmung`. Nur mit --umgebung-hdr wirksam; dann rechnet das Schoenbild mit
     # der Tonwertkurve AgX (sonst Filmic), der ID-Pass weiter mit «Standard».
@@ -1230,8 +1232,43 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     baum.links.new(mischung.outputs["Shader"], ausgabe.inputs["Surface"])
 
 
-def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
-                 toenung=None, licht=None):
+def _drehung_der_welt(drehung_grad, licht, sonne: dict, kamera_azimut) -> dict:
+    """Die Drehung des Himmelsbilds — bestellt, zur Kamera gerechnet, oder die Vorgabe 0.
+
+    **Seit auf-20261020-294 (B1):** Ohne bestellte Drehung (``--umgebung-drehung`` fehlt)
+    und mit Lichtdaten, die ``sonne_seitlich_grad`` nennen, wird das Bild JE KAMERA so
+    gedreht, dass die Sonne seitlich der Blickachse steht (``stimmung.drehung_zur_kamera``,
+    reine Rechnung). Eine bestellte Drehung hat Vorrang — Wort für Wort wie bisher. Ohne
+    Lichtdaten (vor 293) bleibt es bei 0.
+
+    Returns:
+        ``{drehung_grad, weg, grund, kamera_azimut_grad?, seitlich_grad?, seite?}`` — ``weg``
+        ``bestellt``, ``zur_kamera`` oder ``vorgabe``.
+    """
+    if drehung_grad is not None:
+        return {"drehung_grad": float(drehung_grad), "weg": "bestellt", "grund": ""}
+    seitlich = (licht or {}).get("sonne_seitlich_grad")
+    if not seitlich:
+        return {"drehung_grad": 0.0, "weg": "vorgabe", "grund": ""}
+    modul = _stimmung_modul()
+    azimut_bild = (sonne or {}).get("azimut_bild_grad")
+    if modul is None or not hasattr(modul, "drehung_zur_kamera"):
+        return {"drehung_grad": 0.0, "weg": "vorgabe",
+                "grund": "aiimaging.stimmung ist von hier nicht lesbar — Drehung 0."}
+    if kamera_azimut is None or azimut_bild is None:
+        return {"drehung_grad": 0.0, "weg": "vorgabe",
+                "grund": ("Ohne Blickrichtung der Kamera oder Sonnenrichtung im Himmelsbild "
+                          "keine Drehung zur Kamera — Drehung 0.")}
+    seite = (licht or {}).get("sonne_seite") or "links"
+    return {"drehung_grad": modul.drehung_zur_kamera(azimut_bild, kamera_azimut,
+                                                     seitlich_grad=float(seitlich),
+                                                     seite=seite),
+            "weg": "zur_kamera", "grund": "", "kamera_azimut_grad": round(kamera_azimut, 3),
+            "seitlich_grad": float(seitlich), "seite": seite}
+
+
+def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None = 0.0,
+                 toenung=None, licht=None, kamera_azimut=None):
     """Umgebungslicht als Welt setzen — gleichmässig, oder aus einem Himmelsbild.
 
     `read_factory_settings(use_empty=True)` löscht auch die Welt. Ohne sie rendert Cycles
@@ -1254,6 +1291,11 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
     aus derselben Richtung, sonst stünde die Sonne doppelt da. Ohne ``licht`` bleibt alles
     wie vor 293.
 
+    **Seit auf-20261020-294 (B1):** ``drehung_grad`` ``None`` heisst «nicht bestellt»; mit
+    ``licht`` und ``kamera_azimut`` (Richtung Haus → Kamera) dreht :func:`_drehung_der_welt`
+    das Bild so, dass die Sonne seitlich der Kamera steht. Gestellt wird die Drehung erst
+    nach dem Lesen der Sonne — sie hängt an deren Richtung im Bild.
+
     Returns:
         ``None`` ohne Himmelsbild, sonst ``{datei, staerke, drehung_grad, groesse, toenung,
         hintergrund, licht?}`` — nur der Dateiname, kein Pfad (Regel 3).
@@ -1268,13 +1310,18 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
     baum = welt.node_tree
     koord = baum.nodes.new("ShaderNodeTexCoord")
     abbild = baum.nodes.new("ShaderNodeMapping")
-    abbild.inputs["Rotation"].default_value = (0.0, 0.0, math.radians(float(drehung_grad)))
     himmel = baum.nodes.new("ShaderNodeTexEnvironment")
     himmel.image = bpy.data.images.load(str(hdr), check_existing=True)
     baum.links.new(koord.outputs["Generated"], abbild.inputs["Vector"])
     baum.links.new(abbild.outputs["Vector"], himmel.inputs["Vector"])
     farben = _himmelsfarben(himmel.image)
     sonne = farben.get("sonne") or {}
+    # DIE DREHUNG NACH DER SONNE (auf-20261020-294, B1): bestellt, sonst zur Kamera.
+    drehung = (_drehung_der_welt(drehung_grad, licht, sonne, kamera_azimut) if licht else
+               {"drehung_grad": float(drehung_grad or 0.0),
+                "weg": "bestellt" if drehung_grad is not None else "vorgabe", "grund": ""})
+    drehung_grad = drehung["drehung_grad"]
+    abbild.inputs["Rotation"].default_value = (0.0, 0.0, math.radians(float(drehung_grad)))
     # DAS FUELLLICHT (auf-20261020-293): mit `licht` nur ein Teil des Himmelsbilds, und bei
     # einer Stimmung mit Sonne ohne seine Sonnenscheibe — die Lampe uebernimmt sie.
     fuell = float((licht or {}).get("fuell_staerke") or 1.0) if licht else 1.0
@@ -1309,6 +1356,7 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float = 0.0,
                               "zenit": list(farben["zenit"]), "weg": farben["weg"],
                               "grund": farben["grund"]}}
     if licht:
+        befund["drehung"] = drehung
         befund["licht"] = {"fuell_staerke": fuell, "staerke_fuelllicht": staerke * fuell,
                            "sonnenscheibe_gekappt": kappung is not None, "kappung": kappung,
                            "herkunft": licht.get("herkunft_licht")}
@@ -1897,6 +1945,11 @@ def _lampe_der_stimmung(mitte, spanne: float, a, licht: dict, umgebung: dict | N
                       "grund": "aiimaging.stimmung ist von hier nicht lesbar — keine Lampe."}
     lampe = modul.lampe_aus_himmel(analyse, licht, drehung_grad=drehung, staerke=staerke,
                                    toenung=toenung)
+    # WIE WEIT NEBEN DER BLICKACHSE (auf-20261020-294, B1) — 294 zaehlte es von Hand nach.
+    kamera_azimut = ((umgebung or {}).get("drehung") or {}).get("kamera_azimut_grad")
+    neben_achse = (modul.winkel_zur_blickachse(lampe["azimut_welt_grad"], kamera_azimut)
+                   if kamera_azimut is not None and hasattr(modul, "winkel_zur_blickachse")
+                   else None)
     daten = bpy.data.lights.new("Sonne", type="SUN")
     daten.energy = float(lampe["energie"])
     daten.angle = math.radians(float(lampe["winkel_grad"]))
@@ -1911,6 +1964,9 @@ def _lampe_der_stimmung(mitte, spanne: float, a, licht: dict, umgebung: dict | N
                     "konvention": "blender_welt_x_gegen_uhrzeiger", "euler": list(euler),
                     "staerke": lampe["energie"], "winkel_grad": lampe["winkel_grad"],
                     "farbe_linear": lampe["farbe"], "lampe": lampe,
+                    "drehung_grad": drehung,
+                    "drehung_weg": ((umgebung or {}).get("drehung") or {}).get("weg"),
+                    "winkel_zur_blickachse_grad": neben_achse,
                     "grund": lampe["grund"]}
 
 
@@ -3112,6 +3168,13 @@ def main() -> int:
     # MIT HIMMELSBILD (Entscheid 110): das Bild als Welt, Staerke und Drehung wie bestellt.
     umgebung_befund = None
     licht = _licht_der_stimmung(a) if getattr(a, "umgebung_hdr", None) else None
+    # DIE BLICKRICHTUNG DIESER KAMERA (auf-20261020-294, B1): Je Kamera ein eigener
+    # Blender-Lauf, also hier genau eine — das Himmelsbild dreht sich zu ihr.
+    _stimmung_m = _stimmung_modul() if licht is not None else None
+    kamera_azimut = (_stimmung_m.kamera_azimut_grad(kamera_herkunft.get("auge"),
+                                                    kamera_herkunft.get("blick_auf"))
+                     if _stimmung_m is not None and hasattr(_stimmung_m, "kamera_azimut_grad")
+                     and isinstance(kamera_herkunft, dict) else None)
     if getattr(a, "umgebung_hdr", None):
         toenung = None
         if getattr(a, "umgebung_toenung", None):
@@ -3123,8 +3186,9 @@ def main() -> int:
             (0.55, 0.60, 0.68),
             1.0 if a.umgebung_staerke is None else float(a.umgebung_staerke),
             hdr=a.umgebung_hdr,
-            drehung_grad=0.0 if a.umgebung_drehung is None else float(a.umgebung_drehung),
-            toenung=toenung, licht=licht)
+            # `None` = nicht bestellt: mit Lichtdaten zur Kamera gedreht (294, B1), sonst 0.
+            drehung_grad=None if a.umgebung_drehung is None else float(a.umgebung_drehung),
+            toenung=toenung, licht=licht, kamera_azimut=kamera_azimut)
         # TONWERTE MIT HIMMELSBILD (auf-20261020-292, B1): AgX bzw. Filmic und die
         # Belichtung der Stimmung — nur fuer das Schoenbild, der ID-Pass stellt zurueck.
         # Seit auf-20261020-293 (Punkt 4) mit dem kontrastreicheren Look der Stimmung.

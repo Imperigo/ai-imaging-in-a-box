@@ -8148,8 +8148,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Befunde aus 292 behoben: ruhiger Hintergrund, AgX und Belichtung je Stimmung, Überstrahlung gemessen, Gelände ohne Material, Standpunkte mit Seitenverhältnis, bestellte Bildgrösse, Vorschau-Steuerstärke 1,0, `geom_iou` null mit Grund, Ergebnis bei unbekannter Material-id, 409 beim Anlegen; neue Himmelsbilder — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Nachmessung am Heim-PC: auf-20261020-293 (local) — Ergebnis `94fe5c3`: nichts überstrahlt, aber milchig, flach, ohne Schatten; Haus verschwimmt bei winter/morgen/nebel/bedeckt; sechs Befunde
   - [x] Befunde aus 293 behoben: Sonnenlampe aus dem Himmelsbild und Fülllicht, Hintergrund mit festem Abstand (Vorprobe), graue Platte, AgX «Medium High Contrast», tiefere Blaue Stunde, `qa.kontrast_haus_hintergrund`, Messung auch bei «nur Grundlage», KI-Schritt mit Untergrenze 1024 px, Messboden auch neben Gelände — gebaut, am Gerät unbestätigt (§158, C87)
-  - [ ] Nachmessung am Heim-PC: auf-20261020-294 (local) — Schatten, Kontrast je Stimmung, je zwei KI-Bilder mit architektonischem Prompt, Vorschau auf 480er-Grundlage
-  - [ ] Schrift-Artefakte im Vordergrund der KI-Bilder (B5 aus 293; 294 misst, ob die graue Platte mit Schatten hilft)
+  - [x] Nachmessung am Heim-PC: auf-20261020-294 (local) — Ergebnis `7a73536`: Haus in allen acht Stimmungen abgesetzt (|Kontrast| 25–96), Überstrahlung 0, `geom_iou` gemessen (0,36–0,68), KI-Schritt 1024×640, ohne Stimmung pixelgleich; sechs Befunde (Frontallicht, weicher Rückfall hart, Blaue Stunde pastell, abend fast weiss/Nacht, gemischter Prompt nicht übersetzt, kein Vermerk bei «voll», KI baut über den Umriss)
+  - [x] Schrift-Artefakte im Vordergrund der KI-Bilder (B5 aus 293) — in 294 in keinem der sieben KI-Bilder; die graue Platte mit Schatten hilft gegen Schrift, nicht gegen das Füllen mit Gebäude (→ B6)
+  - [x] Befunde aus 294 behoben: Sonne je Kamera seitlich der Blickachse (Himmelsbild mitgedreht, `rotationGrad` hat Vorrang), weicher Rückfall 25°, Blaue Stunde −1,5 EV mit 2 Stufen Abstand, abend −0,5 EV ohne Nachtsatz, gemischter Prompt übersetzt, Vermerk der KI-Grösse auch bei «voll», `qa.ausserhalb_umriss_anteil` mit Satz — gebaut, am Gerät unbestätigt (§161, C90)
+  - [ ] Nachmessung am Heim-PC: auf-20261020-295 (local) — acht Stimmungen aus zwei Richtungen (sSE, nNW), `rotationGrad` 0 bestellt, KI-Bilder mit gemischtem Prompt, `ausserhalb_umriss_anteil` gegen das Bild
+  - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
   - [ ] Holzlattung: Maserung quer zu den Latten (B6 aus 292)
   - [ ] Zeile «Himmelsbilder n/8» im Einrichten der Mac-App anzeigen; Satz `entladen` in der Assistent-Leiste (Visbox, Swift)
@@ -8172,13 +8175,13 @@ Bekannt und ausdrücklich nicht erledigt:
   in der Knotenansicht weg — gebaut, am Gerät unbestätigt (§159, C88)
 - [ ] Einspielen `claude/kosmovis-kopf` (vier Nahtstellen, seit S3/S4 sechs) bei Int 1 (integrator)
 - [ ] Bild am Mac: Kopfteile, Thema und Menü, Chip → «Wer rechnet?», Karte an der Marke (owner)
-- [x] Nachzug Runde 44 in die Kopie (Claude-Stapel an der Marke, `geom_iou_grund`; Hilfszweig per Merge) — §161
+- [x] Nachzug Runde 44 in die Kopie (Claude-Stapel an der Marke, `geom_iou_grund`; Hilfszweig per Merge) — §162
 - [x] S3 Kugel und Gesprächsfeld mit dem Visbox-Assistenten (Name «Assistent», Nahtstelle `registriereKosmoName`); das
   Gespräch führt die Mac-App mit `Assistentengespraech`; Assistent-Leiste in der Knotenansicht ausgemustert — gebaut, am
-  Gerät unbestätigt (§161, C90)
+  Gerät unbestätigt (§162, C91)
 - [x] S4 Einstellungs-Insel (Schale, Darstellung, Anzeige, Bewegung & Klang wortgleich über `einstellungen-teile.tsx`;
   Heim-PC, «Wer rechnet?», «Claude über MCP», Lizenzen, Neuigkeiten; Kreis und Chip öffnen sie; die App merkt Thema,
-  Akzent, Anzeige) — gebaut, am Gerät unbestätigt (§161, C90)
+  Akzent, Anzeige) — gebaut, am Gerät unbestätigt (§162, C91)
 - [ ] Am Mac: Kugel öffnet das Feld, Frage an den Heim-PC, Karte anwenden; ohne Heim-PC der Satz; Insel mit «Wer
   rechnet?» und Claude-Schalter (owner)
 - [ ] S5 Abgleich gegen den aktuellen KosmoOrbit-Stand im Bau (`--abgleich`, Abbruch in `knoten_bau.py`); Befehlspalette ⌘K

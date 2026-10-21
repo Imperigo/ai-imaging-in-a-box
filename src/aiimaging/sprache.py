@@ -1558,6 +1558,38 @@ def glossar_evidenz(text: str) -> tuple[str, ...]:
     return tuple(funde)
 
 
+def glossar_eintraege(text: str) -> tuple[str, ...]:
+    """Deutsche Glossar**einträge** im Text (nicht auch englisch) — ohne die Regeln.
+
+    Der strenge Zeuge für den **gemischten** Prompt (auf-20261020-294, B4): Trägt ein Text
+    englische Signalwörter, zählt als deutsch nur, was **wörtlich** im Glossar steht —
+    ``Sichtbeton``, ``Wohnhaus``, ``Architekturfotografie``. Die Regeln (Beugung,
+    Kompositum) des zweiten Blicks in :func:`glossar_evidenz` zählen hier nicht: Sie
+    erreichen auch englische Wörter, die unser kleiner Wortschatz nicht kennt, und ein
+    englischer Prompt soll nicht an einem Fremdwort kippen.
+    """
+    funde: list[str] = []
+    for fund in _GLOSSAR_MUSTER.finditer(text or ""):
+        wort = " ".join(fund.group(1).lower().split())
+        if wort not in ENGLISCH_AUCH and wort not in funde:
+            funde.append(wort)
+    return tuple(funde)
+
+
+def ist_gemischt(text: str) -> bool:
+    """Englische Signalwörter UND deutsche Glossareinträge — ein gemischter Prompt.
+
+    **Anlass (auf-20261020-294, B4):** «zeitgenoessisches Wohnhaus, Sichtbeton,
+    Architekturfotografie, no people» galt als englisch, weil «no» ein englisches Signalwort
+    ist und die drei Fachwörter weder Signalwort noch Umlaut tragen. Es ging deutsch in den
+    KI-Schritt, und das Bild zeigte Holzlamellen statt Sichtbeton. Seither zählen die
+    Glossareinträge: Ein solcher Prompt wird übersetzt, und der englische Teil bleibt stehen
+    (die Übersetzung fasst nur an, was der englische Wortschatz nicht kennt).
+    """
+    befund = sieht_englisch_aus(text)
+    return befund["englisch"] is True and bool(glossar_eintraege(text))
+
+
 def ist_deutsch(text: str) -> bool:
     """Die Frage „ist das deutsch?" — mit **beiden** Zeugen, an einer einzigen Stelle.
 
@@ -1575,6 +1607,9 @@ def ist_deutsch(text: str) -> bool:
     befund = sieht_englisch_aus(text)
     if befund["englisch"] is False:
         return True
+    # GEMISCHT (auf-20261020-294, B4): englische Signalwoerter neben deutschen Fachwoertern.
+    if befund["englisch"] is True:
+        return bool(glossar_eintraege(text))
     return befund["englisch"] is None and bool(glossar_evidenz(text))
 
 
@@ -1619,9 +1654,12 @@ def uebersetze(text: str, *, uebersetzer=None) -> dict:
     #   1. Die Erkennung sagt es (Umlaute, Signalwörter) — der Fall des ganzen Satzes.
     #   2. Sie kann es nicht entscheiden, aber das Glossar findet ein eindeutig deutsches
     #      Fachwort — der Fall der einzelnen Eingabe „Beton".
-    # Ein `True` der Erkennung schlägt beides: Was englisch aussieht, wird nicht angefasst.
+    # Ein `True` der Erkennung schlägt beides: Was englisch aussieht, wird nicht angefasst —
+    # AUSSER es traegt deutsche Glossareintraege (3., seit auf-20261020-294 B4): gemischt.
     if erkennung["englisch"] is False:
         anlass, evidenz = "erkennung", ()
+    elif erkennung["englisch"] is True and glossar_eintraege(original):
+        anlass, evidenz = "gemischt", glossar_eintraege(original)
     elif ist_deutsch(original):
         anlass, evidenz = "glossar", glossar_evidenz(original)
     else:
@@ -1704,6 +1742,11 @@ def sprachwarnung(text: str) -> str:
         begruendung = (
             "Deutsche Fachwörter erkannt: " + ", ".join(glossar_evidenz(text)) + "."
         )
+    elif befund["englisch"] is True:
+        begruendung = (
+            "Gemischt: englische Signalwörter (" + ", ".join(befund["englische_funde"])
+            + ") neben deutschen Fachwörtern: " + ", ".join(glossar_eintraege(text)) + "."
+        )
     return (
         f"Der Prompt sieht nicht englisch aus. {begruendung} Die Bildmodelle "
         f"sind an englischen Bild-Text-Paaren trainiert; ein deutscher Prompt wird nicht "
@@ -1717,7 +1760,8 @@ def sprachwarnung(text: str) -> str:
 __all__ = [
     "DEUTSCHE_SIGNALWOERTER", "ENGLISCHE_SIGNALWOERTER", "GLOSSAR", "SprachError",
     "VERFAHREN_ERKENNUNG", "VERFAHREN_GLOSSAR", "VERFAHREN_KEINE",
-    "ENGLISCH_AUCH", "glossar_evidenz", "glossar_uebersetzung",
+    "ENGLISCH_AUCH", "glossar_evidenz", "glossar_uebersetzung", "glossar_eintraege",
+    "ist_gemischt",
     "ART_BEUGUNG", "ART_EINTRAG", "ART_KOMPOSITUM", "ENDUNGEN", "MIN_TEILLAENGE",
     "ZAHLWOERTER",
     "MEHRZAHL_AUSLOESER", "MEHRZAHL_GEBEUGT", "MEHRZAHL_MAX_GRUPPE", "MEHRZAHL_OFFEN",

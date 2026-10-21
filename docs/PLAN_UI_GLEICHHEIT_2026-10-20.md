@@ -1,6 +1,6 @@
 # Visbox-Ansichten = KosmoVis — Abgleich und Bauplan (Entscheid 115, 20.10.2026)
 
-**Codestand:** S1 bis S4 gebaut, am Gerät unbestätigt (20.10.2026; S1/S2 Protokoll 74 §159, C88; S3/S4 §161, C90); Kopie
+**Codestand:** S1 bis S4 gebaut, am Gerät unbestätigt (20.10.2026; S1/S2 Protokoll 74 §159, C88; S3/S4 §162, C91); Kopie
 aus dem Hilfszweig `claude/kosmovis-visbox-stand` `6eb4e8d33` mit R44 und `claude/kosmovis-kopf` (`ae470609b`) samt den Nahtstellen von S3/S4
 (`kosmovis/HERKUNFT.json`). Bis dahin: Plan auf Visbox `0983b15`, Kopie `a1d80318`, dann `76e285cca`.
 **Grundlage:** Entscheid 115 (Owner, stehend): *«ansichten ui und ux sollte zu kosmovis identisch sein immer».*
@@ -78,8 +78,8 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 | S0 | Blatt 34 «Visbox = KosmoVis»; Fragen über die Zentrale; Meldeblatt an Int 1 für die Nahtstellen | 0,5 |
 | S1 ✔ | Thema; Kreise, Zweitgruppe, Palette; Mac-Kopf weg; Liste, Ausnahmen, Proben (gebaut, §159) | 1,5 |
 | S2 ✔ | Claude-Teile, Erzählzeile, Modus; Brücke `visboxWirt`; KI-Leiste in der Knotenansicht weg (gebaut, §159) | 1,5 |
-| S3 ✔ | Kugel und Gesprächsfeld mit dem Visbox-Assistenten; Assistent-Leiste ausmustern (gebaut, §161) | 1,5–2 |
-| S4 ✔ | Einstellungs-Insel (gebaut, §161) | 1 |
+| S3 ✔ | Kugel und Gesprächsfeld mit dem Visbox-Assistenten; Assistent-Leiste ausmustern (gebaut, §162) | 1,5–2 |
+| S4 ✔ | Einstellungs-Insel (gebaut, §162) | 1 |
 | S5 | Abgleich und Abbruch im Bau; Nachzug KosmoOrbit; Bau am Mac bestätigen | 0,5 |
 
 ## 6 · Fragen an den Owner (über die Zentrale, Empfehlung zuerst)
