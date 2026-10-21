@@ -5969,9 +5969,16 @@ Geht die Probe auf, liegt die Karte wieder da; scheitert sie (etwa weil der betr
 Karte sichtbar und gilt als «passt nicht mehr». Zurückgegeben wird immer als Karte, nie still angewendet. *Im Projekt:*
 `visboxKi.stelleWieder` in `ki-wirt.ts`.
 
-**Ablauf (einer Karte)** — Eine Karte, über die vier Stunden lang niemand entschieden hat, fällt weg. Claude oder der
-Assistent bekommt dazu einen Satz mit dem Grund, damit der Vorschlag nicht still verschwindet. *Im Projekt:*
-`Kartenablage.frist`.
+**Echtes Beenden (der Arbeit mit Claude)** — Die zwei Fälle, in denen offene Karten von Claude wegfallen, ohne dass der
+Architekt entschieden hat: Die App wird geschlossen, oder er schaltet «Claude über MCP» aus. Claude bekommt dann je Karte
+einen Satz mit dem Grund, soweit es noch verbunden ist, und die Leiste sagt, was wegfiel. Ein Wechsel der Ansicht oder
+eine kurze Unterbrechung ist kein Beenden. Ablaufen lässt die App eine Karte nicht. *Im Projekt:* `Kartenablage.beende`,
+Regel wie KosmoOrbit v0.1.10; Protokoll 74 §186.
+
+**Leitung unterbrochen (Vermerk)** — Der Hinweis an einer Karte von Claude, solange die App Claude nicht erreicht (ihr
+Anschluss für Claude ist ausgefallen). Die Karte bleibt stehen und lässt sich entscheiden; was der Architekt entscheidet,
+erfährt Claude erst, wenn die Verbindung zurück ist — und dann erst, nachdem die App ihm die noch offenen Karten neu
+gemeldet hat. *Im Projekt:* `Kartenablage.leitungWeg`, `leitungWieder`, `Mcpkern.meldeNeu`.
 
 **Passt nicht mehr (Karte)** — Eine Karte, die zu einer anderen Mappe gehört als der offenen, oder deren Probe im
 jetzigen Knotengraph scheitert. Sie bleibt stehen, bis der Architekt entscheidet; «Anwenden» ändert dann nichts und sagt
@@ -6062,7 +6069,7 @@ sich daran hält, ist aber nicht sicher. Darum prüft das Programm selbst, was s
 ausgeführt oder eine Antwort gezeigt wird: Eine Kennung, die das Modell nirgends gelesen haben kann, gilt als geraten und
 wird zurückgewiesen; eine Angabe, die niemand nannte, gilt als erfunden. Das Modell bekommt den Grund und darf
 korrigieren. *Im Projekt:* `_pruefe_angaben` und `_berichtige_antwort` in `assistent.py` (Befunde aus Messauftrag 305,
-Protokoll 74 §186).
+Protokoll 74 §187).
 
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
@@ -8587,6 +8594,7 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |
 | 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
@@ -8595,7 +8603,7 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
-| 2026-10-21 | Ergaenzt aus den Befunden von Messauftrag 305 (Protokoll 74 §186): **CSS (Stilregeln)**, **Offene Klammer (im CSS)**, **SVG (Vektorgrafik im Browser)**, **Prüfung im Kern statt Bitte** |
+| 2026-10-21 | Ergaenzt aus den Befunden von Messauftrag 305 (Protokoll 74 §187): **CSS (Stilregeln)**, **Offene Klammer (im CSS)**, **SVG (Vektorgrafik im Browser)**, **Prüfung im Kern statt Bitte** |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
 | 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §177): **Grundbild (Grundbild mit Licht)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
