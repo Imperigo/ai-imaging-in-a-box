@@ -1689,6 +1689,20 @@ def _block(fremd: dict, name: str, maengel: list) -> dict:
     return inhalt
 
 
+#: Der Satz, wenn eine Bestellung weder Geometrie noch eine Grundlage nennt. Der Anfang ist der
+#: Wortlaut von vor dem 21.10.2026 — er steht so in Abholer-Meldungen und Proben.
+SATZ_OHNE_PFAD = ("render-scene ohne 'geometry.path' — es gibt nichts zu rendern. Ohne Modell "
+                  "rechnet nur eine Variante einer fertigen Grundlage ('vis.grundlage', gl- und "
+                  "16 Hexzeichen); diese Bestellung nennt keine.")
+
+
+def hat_gueltige_grundlage(fremd) -> bool:
+    """Traegt die Bestellung ``vis.grundlage`` mit einer gueltigen Kennung (``gl-`` + 16 hex)?"""
+    vis = fremd.get("vis") if isinstance(fremd, dict) else None
+    kennung = vis.get("grundlage") if isinstance(vis, dict) else None
+    return isinstance(kennung, str) and bool(GRUNDLAGE_KENNUNG.match(kennung))
+
+
 def _lies_grundlage_und_seed(vis: dict, skip, mit_skizze: bool, maengel: list,
                              endgueltig: list | None = None):
     """``(grundlage, seed)`` aus ``vis`` — beide ``None``, wenn nicht bestellt oder mangelhaft.
@@ -2332,8 +2346,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         eine fehlende Sonnenangabe nur eine Warnung.
 
     Raises:
-        SzenenError: kein Wörterbuch, oder ``geometry.path`` fehlt. Ohne Geometrie gibt
-            es nichts zu rendern; alles andere hat im fremden Vertrag Vorgabewerte.
+        SzenenError: kein Wörterbuch, oder ``geometry.path`` fehlt ohne gueltige
+            ``vis.grundlage`` (:data:`SATZ_OHNE_PFAD`). Ohne Geometrie und ohne Grundlage gibt
+            es nichts zu rendern; alles andere hat im fremden Vertrag Vorgabewerte. Mit
+            Grundlage ist ``geometrie`` dann ``None``.
     """
     if not isinstance(fremd, dict):
         raise SzenenError(f"render-scene ist kein Wörterbuch: {type(fremd).__name__}")
@@ -2390,8 +2406,18 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             f"render-scene mit 'geometry' vom Typ {type(geo).__name__} statt eines "
             f"Blocks — es gibt keinen 'geometry.path' und nichts zu rendern.")
     pfad = geo.get("path")
+    # OHNE PFAD NUR ALS VARIANTE EINER GRUNDLAGE (Fehler Test-App R48, 21.10.2026). Ihr Vertrag
+    # (render-scene.ts, `vis.grundlage`, Fehler-Nachgang 20.10.2026) laesst die Anlage mit
+    # `vis.grundlage` OHNE Modelldatei zu, `geometry.path` bleibt dann leer. Bis dahin warf
+    # diese Stelle immer, und der Abholer liess «Variante erzeugen» mit diesem Satz liegen —
+    # die Variante rechnete nie. Seither: Traegt die Bestellung eine gueltige Kennung, ist der
+    # leere Pfad kein Fehler; die Kameras und Passes kommen aus der abgelegten Grundlage
+    # (`abholer.lies_grundlage`), das Modell — wenn noch da — aus dem Auftrag, der sie
+    # gerechnet hat (`bruecke.lies_auftrag`). Ohne gueltige Kennung bleibt der Satz.
     if not pfad:
-        raise SzenenError("render-scene ohne 'geometry.path' — es gibt nichts zu rendern.")
+        if not hat_gueltige_grundlage(fremd):
+            raise SzenenError(SATZ_OHNE_PFAD)
+        pfad = None
     # EIN FORMAT, DAS KEIN TEXT IST, IST EIN MANGEL — und kein Absturz (Durchsicht
     # 23.09.2026, nachgestellt mit `format: 5`: AttributeError aus `.lower()`, ueber die
     # Bruecke bis in `abholer.hole_einen`). Es wird auch nicht geraten: Das Format

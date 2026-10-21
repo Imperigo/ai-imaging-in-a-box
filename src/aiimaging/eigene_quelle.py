@@ -177,7 +177,11 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     maengel.extend(szene["maengel"])
 
     modell = Path(szene["geometrie"]) if szene.get("geometrie") else None
-    if modell is None or not modell.is_file():
+    if modell is None and szene.get("grundlage"):
+        # Eine Variante ohne Modell (`vis.grundlage`, 21.10.2026): Sie rechnet aus der
+        # abgelegten Grundlage; eine unbekannte meldet `abholer.lies_grundlage` mit Satz.
+        pass
+    elif modell is None or not modell.is_file():
         maengel.append(
             f"Die Geometrie fehlt: {modell} ist keine lesbare Datei. Der Auftrag nennt "
             f"einen Pfad, der zur Zeit des Laufs nicht mehr da ist — bei einem Auftrag "

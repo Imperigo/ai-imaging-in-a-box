@@ -2100,7 +2100,8 @@ def _glb_hochachse(hochachse) -> str:
 
 def _rahmung_fuer(kamera_huellbox, modell, hochachse, richtung):
     """Die Box für die Kamera — gegeben, nach dem Bauwerk (wenn eingeschaltet), oder None."""
-    if kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None:
+    if (kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None
+            or modell is None):
         return kamera_huellbox
     from aiimaging import glbbox
     return glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse))["box"]
@@ -2116,7 +2117,8 @@ def _ausschnitt_ohne_box(kamera_huellbox, modell, hochachse, richtung) -> bool:
     Namensregel nicht fand, bleibt es aus: Dann wäre die Szenenbox eine Platte, und der
     Ausschnitt hebelte den Rahmungsriegel aus (``test_kettenlauf_echt``, Grundstück).
     """
-    if kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None:
+    if (kamera_huellbox is not None or not RAHMUNG_NACH_BAUWERK or richtung is None
+            or modell is None):
         return False
     from aiimaging import glbbox
     return bool(glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse))
@@ -3214,6 +3216,21 @@ def _ifc_umwandeln(ifc, arbeitsordner) -> dict:
     }
 
 
+def _modellstand_ohne_modell() -> dict:
+    """Der Modellstand einer Variante ohne Modelldatei — ungeprueft, mit Grund (21.10.2026).
+
+    Gilt nur, bis die Grundlage gelesen ist: Hat sie den Modellstand ihres Laufs abgelegt,
+    ersetzt dieser hier (``verarbeiter``).
+    """
+    from . import modellstand as _ms
+
+    return {"geprueft": False, "urteil": _ms.UNGEPRUEFT, "maengel": [], "warnungen": [],
+            "quelle": None,
+            "grund": ("Variante ohne Modelldatei (vis.grundlage): Es gibt keinen glb-Kopf "
+                      "zu lesen, und die Grundlage hat keinen Modellstand abgelegt. NICHT "
+                      "GEPRUEFT.")}
+
+
 def _modellstand_nicht_umgewandelt() -> dict:
     """Der Modellstand einer ABBESTELLTEN IFC-Bestellung — ungeprueft, mit Grund.
 
@@ -3782,6 +3799,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         #
         # Seit dem 20.10.2026 auch bei `skip` (Nr. 83): «nur Grundlage» rechnet Blender.
         modell = auftrag["modell"]
+        # EINE VARIANTE OHNE MODELL (Fehler Test-App R48, 21.10.2026): Mit `vis.grundlage`
+        # darf die Bestellung ohne Modelldatei kommen; gerechnet wird aus der abgelegten
+        # Grundlage, Bestand und Modellstand kommen aus ihr (`lege_grundlage_ab`). Ohne
+        # Grundlage bleibt ein fehlendes Modell, was es war: nichts zu rendern.
+        if modell is None and not szene.get("grundlage"):
+            raise AbholerError(_kosmo_szene.SATZ_OHNE_PFAD)
         umwandlung = None
         if _ist_ifc(modell):
             umwandlung = _ifc_umwandeln(modell, ziel)
@@ -3793,7 +3816,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 hochachse, hochachse_quelle = umwandlung["up_axis"], "umwandlung"
         # Bestand liest nur die glb, die KosmoOrbit schickt; unsere IFC-Umwandlung kennt
         # keine Rolle. `None` heisst: kein Bestand, der Bildauftrag bleibt, wie er kam.
-        bestand = None if umwandlung else _kosmo_szene.bestand_in_glb(modell)
+        bestand = (None if umwandlung or modell is None
+                   else _kosmo_szene.bestand_in_glb(modell))
 
         # DER MODELLSTAND, EINMAL JE AUFTRAG UND VOR ALLEM ANDEREN. Er ist eine Eigenschaft
         # der DATEI, nicht der Kamera, er kostet einen glb-Kopf und keine GPU-Sekunde — und
@@ -3803,6 +3827,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # dieselbe Bedeutung hat. Ein Feld, das mal da ist und mal nicht, zwingt jeden
         # Auswerter zum Verzweigen — dieselbe Regel wie bei `status` und `grund`.
         modellstand = (_modellstand_nicht_umgewandelt() if _ist_ifc(modell)
+                       else _modellstand_ohne_modell() if modell is None
                        else _modellstand_gemeldet(modell))
 
         # NUR GRUNDLAGE (Demolauf Nr. 83, Auflage 3 des Integrators, 20.10.2026). Vom 26.08.
@@ -3818,6 +3843,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                   if szene.get("grundlage") else None)
         berichte_der_grundlage = {e["kuerzel"]: e["bericht"]
                                   for e in (geholt or {}).get("kameras") or ()}
+        if modell is None and geholt is not None:
+            # Ohne Modell: was die Grundlage beim Rechnen ueber das Modell wusste. Eine
+            # Grundlage von vor dem 21.10.2026 kennt das nicht — dann ungeprueft, kein Bestand.
+            bestand = geholt.get("bestand")
+            modellstand = geholt.get("modellstand") or modellstand
         berichte_neu: dict = {}
         # DIE GERECHNETE DREHUNG JE KAMERA (auf-20261020-295, N3) — aus dem Blender-Bericht,
         # fuer `angewandt.environment.drehung_je_kamera`.
@@ -4688,7 +4718,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             lege_grundlage_ab(grundlagen_wurzel, kennung,
                               job_id=auftrag.get("job_id") or ordner.name,
                               szene=szene, berichte=berichte_neu,
-                              seeds=_gewaehlte_seeds(urteile))
+                              seeds=_gewaehlte_seeds(urteile),
+                              bestand=bestand, modellstand=modellstand)
             grundlage = {"id": kennung, "wiederverwendet": False}
         # Die gemeldete Zahl traegt mit, wie sie entstanden ist — siehe `_kameraspanne`.
         # Ohne das waere der Uebergang von einer auf drei Kameras eine stille
@@ -5103,12 +5134,18 @@ def _vergleichbar(wert):
 
 
 def lege_grundlage_ab(wurzel, kennung: str, *, job_id, szene: dict, berichte: dict,
-                      seeds: dict | None = None) -> Path:
+                      seeds: dict | None = None, bestand: dict | None = None,
+                      modellstand: dict | None = None) -> Path:
     """Die Grundlage eines Laufs ablegen — atomar, damit nie eine halbe gelesen wird.
 
     ``seeds`` (``{kuerzel: startwert}``, seit 20.10.2026) ist der Startwert, den jede Kamera
     dieses Laufs behalten hat. Eine Vorschau auf dieser Grundlage ohne ``vis.seed`` rechnet
     genau ihn (Entscheid 104) — sonst stuende ihr Bild neben einem anderen Wurf.
+
+    ``bestand`` und ``modellstand`` (seit 21.10.2026) sind, was der Lauf ueber das Modell
+    wusste. Eine Variante ohne Modelldatei (``vis.grundlage``, leerer ``geometry.path``)
+    nimmt sie von hier — sonst fehlte ihr der Bestandszusatz im Prompt, und sie waere ein
+    anderer Bildauftrag als eine Variante mit Modell.
     """
     import json
     ziel = _grundlage_pfad(wurzel, kennung)
@@ -5119,7 +5156,8 @@ def lege_grundlage_ab(wurzel, kennung: str, *, job_id, szene: dict, berichte: di
             "seeds": {str(k): int(v) for k, v in (seeds or {}).items()
                       if isinstance(v, int) and not isinstance(v, bool)},
             "kameras": [{"kuerzel": str(k), "bericht": _vergleichbar(b)}
-                        for k, b in berichte.items()]}
+                        for k, b in berichte.items()],
+            "bestand": _vergleichbar(bestand), "modellstand": _vergleichbar(modellstand)}
     tmp = ziel.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(satz, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(ziel)

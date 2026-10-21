@@ -278,7 +278,12 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     warnungen.extend(szene["warnungen"])
     maengel.extend(szene["maengel"])
 
-    modell = _modell_der_bestellung(ordner, szene.get("format"), maengel)
+    if szene.get("geometrie") is None and szene.get("grundlage"):
+        # «VARIANTE ERZEUGEN» KOMMT OHNE MODELL (Fehler Test-App R48, 21.10.2026): ihr Vertrag
+        # schickt mit `vis.grundlage` keine Modelldatei. Siehe `_modell_der_grundlage`.
+        modell = _modell_der_grundlage(ordner, szene["grundlage"], warnungen)
+    else:
+        modell = _modell_der_bestellung(ordner, szene.get("format"), maengel)
     if modell is not None:
         # DER SICHTGANG, VERDRAHTET — und bis zum 19.09.2026 stand hier nur `is_file()`.
         #
@@ -329,6 +334,34 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         # Die Teilmenge, die kein Warten heilt (`kosmo_szene.lies_szene`, 20.10.2026).
         "maengel_endgueltig": tuple(szene.get("maengel_endgueltig") or ()),
     }
+
+
+def _modell_der_grundlage(ordner: Path, kennung: str, warnungen: list) -> Path | None:
+    """Das Modell einer Variante ohne Modelldatei — das des Auftrags, der die Grundlage rechnete.
+
+    Eine Variante (``vis.grundlage``) rechnet kein Blender; Kameras, Tiefe und Passes kommen
+    aus der abgelegten Grundlage (``abholer.lies_grundlage``). Das Modell braucht der Abholer
+    nur noch fuer Modellstand, Rahmungsbox und Bestand. Liegt es neben dem Auftrag selbst
+    (die Variante kam doch mit Modell), gilt dieses. Sonst wird der Auftrag in derselben
+    Ablage gesucht, dessen Ergebnis die Grundlage nennt (``knotenweg.modell_der_grundlage``,
+    derselbe Weg wie an der Visbox-Tuer) — dessen Modell ist das, auf dem die Grundlage steht,
+    und darum keine Wahl zwischen zwei Geometrien.
+
+    ``None`` ist hier **kein Mangel**: Ohne Modell rechnet der Abholer mit dem, was die
+    Grundlage abgelegt hat. Ist auch die Grundlage unbekannt, sagt es ``lies_grundlage``
+    mit Satz («bitte zuerst Grundlage rendern»), bevor ein Bildmodell geladen wird.
+    """
+    for name in (DATEI_MODELL, DATEI_MODELL_IFC):
+        if (ordner / name).is_file():
+            return ordner / name
+    from . import knotenweg  # noqa: PLC0415 — knotenweg importiert dieses Modul
+    gefunden = knotenweg.modell_der_grundlage(ordner.parent, kennung)
+    if gefunden is None:
+        warnungen.append(
+            f"Variante ohne Modelldatei: Das Modell des Auftrags, der die Grundlage {kennung} "
+            f"gerechnet hat, liegt nicht in dieser Ablage. Gerechnet wird aus der abgelegten "
+            f"Grundlage allein; Modellstand und Rahmungsbox bleiben ungeprueft.")
+    return gefunden
 
 
 def _modell_der_bestellung(ordner: Path, fmt, maengel: list) -> Path | None:
