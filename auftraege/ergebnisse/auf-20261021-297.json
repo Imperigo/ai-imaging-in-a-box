@@ -1,0 +1,942 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-297",
+ "worker": "local",
+ "rang": 84,
+ "folgt_auf": "auf-20261021-296",
+ "entscheide": [
+  "97",
+  "97a",
+  "107",
+  "113"
+ ],
+ "einbau": [
+  "C95"
+ ],
+ "status": "erledigt mit Befunden — (1) Strassenbild bildpunktgleich zu 296 4b, jetzt mit Satz 'NICHT WIEDERZUERKENNEN' (Verhaeltnis 2,46 und ausserhalb 2,15 bei geom_iou 0,197), umriss_gilt false mit beiden Ausloesern, eigene Farb-IoU gilt nicht. (2) umriss_gilt steht bei allen 7 KI-Bildern, passt zum Satz. (3) Zusatz senkt den Anteil (1,01→0,86; 0,77→0,30), haelt das Haus aber bei keinem im Umriss; geom_iou −0,10 / +0,09; Abweis-Lauf mit Satz 'zugleich', nichts gerechnet. (4) weiss Standardprompt: 1,0 → 0,0; Standard → 0,19 (im Umriss); erstes sichtbares Ausbrechen 0,30 (3d); 0,25 trennt alle Bilder richtig. (5) ohne Stimmung bildpunktgleich 296. (6) Vorprobe gegen Quantil: mittag dunkler ja, winter weniger hell ja (dann Kontrast ≈ 0). Neu: 3c/3d nicht wiederzuerkennen ohne Satz.",
+ "beendet": "2026-10-21T02:25:00Z",
+ "koepfe": {
+  "stand": "main 81c4070 (Visbox 0.3.11, enthaelt die 296-Befunde); visbox-flaeche nach dem Pull neu gestartet, Abholer per Timer 30 s, rechnet je Durchgang mit dem Stand im Repo (0.3.11). Kein Code geaendert, nichts ins Repo ausser diesem Ergebnis und den Bildern, Mappe des Dienstes nicht angefasst, vis.leerer_hintergrund nur in den eigenen Probeauftraegen gesetzt.",
+  "himmelsbilder": "GET /api/heim: 'Himmelsbilder 8/8' (da 8, von 8, fehlend []). Ordnerwerte und Dateinamen nur am Heim-PC.",
+  "weg": "Bruecke als Client wie 296: POST /bruecke/jobs (multipart scene+model; KI-Varianten ohne model mit vis.grundlage), /approve; job.json im Takt 0,5 s. Vor jedem Lauf: kein fremder Auftrag queued/running, Karte < 2,5 GB belegt und < 120 W, sonst warten (nie entladen).",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb) wie 292-296: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "kosmovis.render-scene/v1: cameras 'auto', cameras_auto {richtungen:['sSE']}, render.resolution [960,600] (Teil 5: 480x300), samples 64, style.mode none, Standardprompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', vis.backbone z-image-turbo, vis.seed 482913, guete voll; render.environment nur {preset}.",
+  "grundlagen": "G-mittag NEU (gl-633aa549be68358f, job vis-1792548057-3e5735; die 296-Grundlage gl-a2f274de490abfa2 war beim Aufraeumen von 296 mit in den Papierkorb gegangen). G-weiss NEU (gl-71ebf49b3acd6993, job vis-1792548358-1ee4e1; gl-0c323696e67d7730 ebenso weg). Kontrast der neuen Grundlagen wie 296: mittag 68,0, weiss 57,7.",
+  "gpu": "vor jedem Lauf 1241 MiB, 15-62 W, 0 %, ollama ps immer leer (kein fremdes Modell auf der Karte). Cycles-Spitze 1324 MiB / 62-66 W; KI 27436 MiB / 357-360 W; Abweis-Lauf 1241 MiB / 35 W (nichts geladen). Leistungsgrenze 400 W unveraendert. 11 Laeufe strikt nacheinander.",
+  "systemlast": "Last (1 min) 1,24-1,55.",
+  "kosmo_modelle": "nicht beruehrt; ollama ps die ganze Zeit leer."
+ },
+ "laeufe": {
+  "5-ohne-stimmung": {
+   "job": "vis-1792548048-1eb409",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 9.05,
+   "gpu_vorher": "1241 MiB, 14.91 W, 0 %",
+   "systemlast_vorher": "1.37 / 1.19 / 1.21",
+   "gpu_spitze": "1324 MiB / 62 W",
+   "ollama_ps": "leer"
+  },
+  "G-mittag-960": {
+   "job": "vis-1792548057-3e5735",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 36.12,
+   "gpu_vorher": "1241 MiB, 62.08 W, 0 %",
+   "systemlast_vorher": "1.24 / 1.16 / 1.20",
+   "gpu_spitze": "1324 MiB / 65 W",
+   "ollama_ps": "leer"
+  },
+  "1-strasse-f03": {
+   "job": "vis-1792548093-f09363",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 46.11,
+   "gpu_vorher": "1241 MiB, 23.70 W, 0 %",
+   "systemlast_vorher": "1.26 / 1.16 / 1.20",
+   "gpu_spitze": "27436 MiB / 357 W",
+   "ollama_ps": "leer"
+  },
+  "3a-mittag-f10": {
+   "job": "vis-1792548144-9a1378",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.77,
+   "gpu_vorher": "1241 MiB, 30.95 W, 0 %",
+   "systemlast_vorher": "1.37 / 1.20 / 1.21",
+   "gpu_spitze": "27436 MiB / 357 W",
+   "ollama_ps": "leer"
+  },
+  "3b-mittag-f10-leer": {
+   "job": "vis-1792548191-cd58c2",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.7,
+   "gpu_vorher": "1241 MiB, 33.09 W, 0 %",
+   "systemlast_vorher": "1.43 / 1.24 / 1.22",
+   "gpu_spitze": "27436 MiB / 358 W",
+   "ollama_ps": "leer"
+  },
+  "3c-mittag-fstd": {
+   "job": "vis-1792548238-164eb8",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.27,
+   "gpu_vorher": "1241 MiB, 34.65 W, 0 %",
+   "systemlast_vorher": "1.36 / 1.24 / 1.22",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "ollama_ps": "leer"
+  },
+  "3d-mittag-fstd-leer": {
+   "job": "vis-1792548285-b9d1bf",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.69,
+   "gpu_vorher": "1241 MiB, 37.79 W, 0 %",
+   "systemlast_vorher": "1.33 / 1.25 / 1.22",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "ollama_ps": "leer"
+  },
+  "3-abweis-skip-leer": {
+   "job": "vis-1792548332-b9ea40",
+   "status": "error",
+   "zeit_freigabe_bis_done_s": 26.11,
+   "gpu_vorher": "1241 MiB, 34.74 W, 0 %",
+   "systemlast_vorher": "1.55 / 1.31 / 1.24",
+   "gpu_spitze": "1241 MiB / 35 W",
+   "ollama_ps": "leer"
+  },
+  "G-weiss-960": {
+   "job": "vis-1792548358-1ee4e1",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 35.78,
+   "gpu_vorher": "1241 MiB, 14.87 W, 0 %",
+   "systemlast_vorher": "1.37 / 1.28 / 1.24",
+   "gpu_spitze": "1324 MiB / 66 W",
+   "ollama_ps": "leer"
+  },
+  "4-weiss-f10-std": {
+   "job": "vis-1792548394-d9b219",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 47.12,
+   "gpu_vorher": "1241 MiB, 33.60 W, 0 %",
+   "systemlast_vorher": "1.53 / 1.31 / 1.25",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "ollama_ps": "leer"
+  },
+  "4z-weiss-fstd-std": {
+   "job": "vis-1792548446-d6c080",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.24,
+   "gpu_vorher": "1241 MiB, 24.97 W, 0 %",
+   "systemlast_vorher": "1.41 / 1.30 / 1.25",
+   "gpu_spitze": "27436 MiB / 360 W",
+   "ollama_ps": "leer"
+  }
+ },
+ "1_strassenbild": {
+  "job": "vis-1792548093-f09363",
+  "status": "done",
+  "zeit_freigabe_bis_done_s": 46.11,
+  "gpu_vorher": "1241 MiB, 23.70 W, 0 %",
+  "systemlast_vorher": "1.26 / 1.16 / 1.20",
+  "gpu_spitze": "27436 MiB / 357 W",
+  "ollama_ps": "leer",
+  "grundlage": {
+   "id": "gl-633aa549be68358f",
+   "wiederverwendet": true
+  },
+  "kamera_s": 14.7,
+  "prompt": "dense city street, row of neighbouring buildings on both sides, contemporary residential building, exposed concrete, no people, midday light, high sun, clear sky",
+  "prompt_zusaetze": [
+   {
+    "art": "stimmung",
+    "preset": "mittag",
+    "satz": "midday light, high sun, clear sky",
+    "schon_im_prompt": false
+   }
+  ],
+  "qa_geometry": {
+   "geom_iou": 0.19726506419459372,
+   "spearman": 0.5047174414493893,
+   "geometry_fidelity": 0.0,
+   "status": "measured"
+  },
+  "zaehlung": {
+   "n_soll": 67541,
+   "n_ist": 165964,
+   "n_gemeinsam": 38473
+  },
+  "n_ist_n_soll": 2.457,
+  "qa_ausserhalb_umriss_anteil": 2.1481,
+  "ausserhalb_umriss": {
+   "anteil_haus": 2.1481,
+   "anteil_hintergrund": 0.4636,
+   "n_neu": 125857,
+   "n_bereich": 271498,
+   "n_haus": 58589,
+   "rand_px": 19,
+   "schwelle_naehe": 2.643356
+  },
+  "satz_ueber_umriss": true,
+  "satz_nicht_wiederzuerkennen": true,
+  "hinweise": [
+   "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 215 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+   "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild weit mehr Haus, als modelliert ist (165964 Punkte gegen 67541 im Modell, Verhaeltnis 2.46, Schwelle 2.0, gesetzt, nicht gemessen; geom_iou 0.197); und baut das Bild weit ueber den Umriss hinaus (2.15 der Hausflaeche, Schwelle 1.5) und deckt das Modell wenig (geom_iou 0.197 unter 0.3, beide gesetzt, nicht gemessen). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+  ],
+  "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65",
+  "seedauswahl_umriss_gilt": false,
+  "seedauswahl_umriss_grund": "das Bild zeigt 165964 Hauspunkte gegen 67541 im Modell (Verhaeltnis 2.46 ueber 2.0); Baumasse ausserhalb des Umrisses 2.15 der Hausflaeche (ueber 1.5) bei geom_iou 0.197 unter 0.3: das Haus ist im Bild nicht wiederzuerkennen; Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.",
+  "umriss_iou_eigen": {
+   "iou": 0.643,
+   "haus_px_maske": 58589,
+   "haus_px_ki": 90403,
+   "kontrast_kern_ring": 29.1,
+   "regel": "gilt nicht (Haus nicht wiederzuerkennen, das Bild zeigt 165964 Hauspunkte gegen 67541 im Modell (Verhaeltnis 2.46 ueber 2.0); Baumasse ausserhalb des Umrisses 2.15 der Hausflaeche (ueber 1.5) bei geom_iou 0.197 unter 0.3: das Haus ist im Bild nicht wiederzuerkennen; Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.)"
+  },
+  "nachgezaehlt": {
+   "anteil_haus": 2.4834,
+   "anteil_bereich": 0.5227,
+   "n_bereich": 278359
+  },
+  "aufbau_gleich_296": {
+   "qa_geometry_schluessel_gleich": true,
+   "geometry_gates_schluessel_gleich": true,
+   "qa_je_kamera_schluessel_gleich": true,
+   "null_in_qa_geometry": [],
+   "null_in_gates": [],
+   "null_in_qa_je_kamera": [
+    []
+   ]
+  },
+  "bildpunktgleich_296": {
+   "abweichend_px": 0,
+   "form": [
+    600,
+    960,
+    3
+   ]
+  },
+  "faithful": 0.3,
+  "ki_bild_bildpunktgleich_296_4b": "ja — 0 abweichende Bildpunkte (960x600), obwohl die Grundlage neu gerechnet ist",
+  "satz_nicht_wiederzuerkennen_wortlaut": "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild weit mehr Haus, als modelliert ist (165964 Punkte gegen 67541 im Modell, Verhaeltnis 2.46, Schwelle 2.0, gesetzt, nicht gemessen; geom_iou 0.197); und baut das Bild weit ueber den Umriss hinaus (2.15 der Hausflaeche, Schwelle 1.5) und deckt das Modell wenig (geom_iou 0.197 unter 0.3, beide gesetzt, nicht gemessen). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht.",
+  "ausloeser": [
+   "n_ist/n_soll 2,46 > 2,0",
+   "ausserhalb_umriss_anteil 2,15 > 1,5 bei geom_iou 0,197 < 0,3"
+  ],
+  "ausloeser_geom_iou_unter_0_1": "nein (0,197) — wie erwartet",
+  "umriss_iou_eigen_neue_regel": "0,643 → 'gilt nicht (Haus nicht wiederzuerkennen, Verhaeltnis 2,46 ueber 2,0; Baumasse ausserhalb 2,15 ueber 1,5 bei geom_iou 0,197 unter 0,3)'",
+  "haus_wiederzuerkennen": "nein — Strassenzeile in Sichtbeton in Nahsicht, das Modell ist nicht zu finden",
+  "sichtbeton": "ja — Sichtbeton mit Schalungsstoessen",
+  "aufbau_wie_296": "ja — gleiche Schluessel in qa.geometry, geometry_gates und qa_je_kamera, kein null",
+  "bild": "auf-20261021-297-bilder/1-strasse-voll-f03-960-sSE.png"
+ },
+ "2_umriss_gilt_je_ki_bild": {
+  "1-strasse-f03": {
+   "vorhanden": true,
+   "wert": false,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  },
+  "3a-mittag-f10": {
+   "vorhanden": true,
+   "wert": true,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  },
+  "3b-mittag-f10-leer": {
+   "vorhanden": true,
+   "wert": true,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  },
+  "3c-mittag-fstd": {
+   "vorhanden": true,
+   "wert": true,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  },
+  "3d-mittag-fstd-leer": {
+   "vorhanden": true,
+   "wert": true,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  },
+  "4-weiss-f10-std": {
+   "vorhanden": true,
+   "wert": true,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  },
+  "4z-weiss-fstd-std": {
+   "vorhanden": true,
+   "wert": true,
+   "passt_zum_satz": true,
+   "umriss_grund_nur_bei_false": true,
+   "urteil_json_gleich_befund_json": true
+  }
+ },
+ "2_urteil": "ja — umriss_gilt steht jetzt bei jedem der 7 KI-Bilder (auch true), am Kameraurteil in befund.json und gleich in urteil.json; false genau beim Strassenbild, wo auch der Satz steht; umriss_grund nur dort, mit beiden Ausloesern.",
+ "3_mittag_mit_und_ohne_zusatz": {
+  "3a_f10_ohne": {
+   "job": "vis-1792548144-9a1378",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.77,
+   "gpu_vorher": "1241 MiB, 30.95 W, 0 %",
+   "systemlast_vorher": "1.37 / 1.20 / 1.21",
+   "gpu_spitze": "27436 MiB / 357 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-633aa549be68358f",
+    "wiederverwendet": true
+   },
+   "kamera_s": 14.6,
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "mittag",
+     "satz": "midday light, high sun, clear sky",
+     "schon_im_prompt": false
+    }
+   ],
+   "qa_geometry": {
+    "geom_iou": 0.4910794347731981,
+    "spearman": -0.3861906467632709,
+    "geometry_fidelity": 0.4354885584343209,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 77128,
+    "n_gemeinsam": 47646
+   },
+   "n_ist_n_soll": 1.142,
+   "qa_ausserhalb_umriss_anteil": 1.0077,
+   "ausserhalb_umriss": {
+    "anteil_haus": 1.0077,
+    "anteil_hintergrund": 0.2175,
+    "n_neu": 59042,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 1.790621
+   },
+   "satz_ueber_umriss": true,
+   "satz_nicht_wiederzuerkennen": false,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 101 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.4354885584343209 gegen 0.65",
+   "seedauswahl_umriss_gilt": true,
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.637,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 86364,
+    "kontrast_kern_ring": 25.8,
+    "regel": "gut"
+   },
+   "nachgezaehlt": {
+    "anteil_haus": 2.3927,
+    "anteil_bereich": 0.5036,
+    "n_bereich": 278359
+   },
+   "aufbau_gleich_296": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "bildpunktgleich_296": {
+    "abweichend_px": 0,
+    "form": [
+     600,
+     960,
+     3
+    ]
+   },
+   "faithful": 1.0,
+   "ki_bild_bildpunktgleich_296_4a_mittag": "ja — 0 abweichende Bildpunkte",
+   "selbst_im_umriss": "nein — breiter Baukoerper ueber fast die ganze Bildbreite, durch den Hauptbau sieht man Berge (wie 296)",
+   "haus_wiederzuerkennen": "teilweise — der Anbau als Block in der Mitte, Hauptbau als Rahmen um ein Loch",
+   "sichtbeton": "teilweise — Betonstreifen neben Glas/Stein",
+   "hintergrund_kahl_unnatuerlich": "nein — Himmel mit Wolken, Huegel",
+   "bild": "auf-20261021-297-bilder/3a-mittag-voll-f10-960-sSE.png"
+  },
+  "3b_f10_mit": {
+   "job": "vis-1792548191-cd58c2",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.7,
+   "gpu_vorher": "1241 MiB, 33.09 W, 0 %",
+   "systemlast_vorher": "1.43 / 1.24 / 1.22",
+   "gpu_spitze": "27436 MiB / 358 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-633aa549be68358f",
+    "wiederverwendet": true
+   },
+   "kamera_s": 14.3,
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky, empty background, no other buildings",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "mittag",
+     "satz": "midday light, high sun, clear sky",
+     "schon_im_prompt": false
+    },
+    {
+     "art": "leerer_hintergrund",
+     "satz": "empty background, no other buildings",
+     "schon_im_prompt": false
+    }
+   ],
+   "qa_geometry": {
+    "geom_iou": 0.3931832711519928,
+    "spearman": -0.4914227415740257,
+    "geometry_fidelity": 0.43956706092535625,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 78466,
+    "n_gemeinsam": 41206
+   },
+   "n_ist_n_soll": 1.162,
+   "qa_ausserhalb_umriss_anteil": 0.8636,
+   "ausserhalb_umriss": {
+    "anteil_haus": 0.8636,
+    "anteil_hintergrund": 0.1864,
+    "n_neu": 50595,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 1.358849
+   },
+   "satz_ueber_umriss": true,
+   "satz_nicht_wiederzuerkennen": false,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 86 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.43956706092535625 gegen 0.65",
+   "seedauswahl_umriss_gilt": true,
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.643,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 90392,
+    "kontrast_kern_ring": 7.7,
+    "regel": "gut"
+   },
+   "nachgezaehlt": {
+    "anteil_haus": 2.0248,
+    "anteil_bereich": 0.4262,
+    "n_bereich": 278359
+   },
+   "aufbau_gleich_296": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "faithful": 1.0,
+   "selbst_im_umriss": "nein — weiter ueber fast die ganze Breite gebaut, links etwas weniger als 3a",
+   "haus_wiederzuerkennen": "teilweise — wie 3a, Hauptbau als Rahmen mit Berg im Innern",
+   "sichtbeton": "teilweise",
+   "hintergrund_kahl_unnatuerlich": "nein — Himmel mit Wolken wie 3a",
+   "bild": "auf-20261021-297-bilder/3b-mittag-voll-f10-leer-960-sSE.png"
+  },
+  "3c_std_ohne": {
+   "job": "vis-1792548238-164eb8",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.27,
+   "gpu_vorher": "1241 MiB, 34.65 W, 0 %",
+   "systemlast_vorher": "1.36 / 1.24 / 1.22",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-633aa549be68358f",
+    "wiederverwendet": true
+   },
+   "kamera_s": 14.4,
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "mittag",
+     "satz": "midday light, high sun, clear sky",
+     "schon_im_prompt": false
+    }
+   ],
+   "qa_geometry": {
+    "geom_iou": 0.5163020352454739,
+    "spearman": 0.21724816356991802,
+    "geometry_fidelity": 0.0,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 121322,
+    "n_gemeinsam": 64308
+   },
+   "n_ist_n_soll": 1.796,
+   "qa_ausserhalb_umriss_anteil": 0.7674,
+   "ausserhalb_umriss": {
+    "anteil_haus": 0.7674,
+    "anteil_hintergrund": 0.1656,
+    "n_neu": 44959,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 3.234988
+   },
+   "satz_ueber_umriss": true,
+   "satz_nicht_wiederzuerkennen": false,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 77 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65",
+   "seedauswahl_umriss_gilt": true,
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.597,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 82707,
+    "kontrast_kern_ring": 28.5,
+    "regel": "gut"
+   },
+   "nachgezaehlt": {
+    "anteil_haus": 2.2824,
+    "anteil_bereich": 0.4804,
+    "n_bereich": 278359
+   },
+   "aufbau_gleich_296": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "faithful": "Standard (0,8)",
+   "selbst_im_umriss": "nein — breiter drei- bis viergeschossiger Block ueber die ganze Breite, Buesche davor",
+   "haus_wiederzuerkennen": "nein — die Stufe Hauptbau/Anbau fehlt, ein einziger breiter Kubus",
+   "sichtbeton": "teilweise — Betonrahmen, sonst Holz-/Metallbekleidung",
+   "hintergrund_kahl_unnatuerlich": "nein",
+   "bild": "auf-20261021-297-bilder/3c-mittag-voll-fstd-960-sSE.png"
+  },
+  "3d_std_mit": {
+   "job": "vis-1792548285-b9d1bf",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.69,
+   "gpu_vorher": "1241 MiB, 37.79 W, 0 %",
+   "systemlast_vorher": "1.33 / 1.25 / 1.22",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-633aa549be68358f",
+    "wiederverwendet": true
+   },
+   "kamera_s": 14.3,
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky, empty background, no other buildings",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "mittag",
+     "satz": "midday light, high sun, clear sky",
+     "schon_im_prompt": false
+    },
+    {
+     "art": "leerer_hintergrund",
+     "satz": "empty background, no other buildings",
+     "schon_im_prompt": false
+    }
+   ],
+   "qa_geometry": {
+    "geom_iou": 0.6069749747245761,
+    "spearman": -0.6844384655074004,
+    "geometry_fidelity": 0.6445440406224248,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 86637,
+    "n_gemeinsam": 58235
+   },
+   "n_ist_n_soll": 1.283,
+   "qa_ausserhalb_umriss_anteil": 0.2959,
+   "ausserhalb_umriss": {
+    "anteil_haus": 0.2959,
+    "anteil_hintergrund": 0.0639,
+    "n_neu": 17336,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 2.149972
+   },
+   "satz_ueber_umriss": true,
+   "satz_nicht_wiederzuerkennen": false,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 30 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.6445440406224248 gegen 0.65",
+   "seedauswahl_umriss_gilt": true,
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.645,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 87941,
+    "kontrast_kern_ring": 29.3,
+    "regel": "gut"
+   },
+   "nachgezaehlt": {
+    "anteil_haus": 2.2194,
+    "anteil_bereich": 0.4671,
+    "n_bereich": 278359
+   },
+   "aufbau_gleich_296": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "faithful": "Standard (0,8)",
+   "selbst_im_umriss": "nein — zweigeschossige Zeile ueber die ganze Breite, rechts eine Strassenflucht weiterer Haeuser",
+   "haus_wiederzuerkennen": "nein — kein Hochbau, breite Zeile; trotz geom_iou 0,607 und ohne Satz",
+   "sichtbeton": "teilweise — Betonplatten und -band, sonst Holz-/Metalllamellen",
+   "hintergrund_kahl_unnatuerlich": "nein — Himmel, leere Strasse; zwei kleine Personen links trotz 'no people'",
+   "bild": "auf-20261021-297-bilder/3d-mittag-voll-fstd-leer-960-sSE.png"
+  },
+  "abweis_skip_und_schalter": {
+   "job": "vis-1792548332-b9ea40",
+   "status": "error",
+   "zeit_freigabe_bis_done_s": 26.11,
+   "gpu_vorher": "1241 MiB, 34.74 W, 0 %",
+   "systemlast_vorher": "1.55 / 1.31 / 1.24",
+   "gpu_spitze": "1241 MiB / 35 W",
+   "ollama_ps": "leer",
+   "satz_zugleich": "ja — job.json status error: \"Der Auftrag hat Mängel, die einen Lauf verbieten:\\n- 'vis.leerer_hintergrund' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein KI-Bild — ein Zusatz fuer den KI-Schritt bestellt nichts.\"",
+   "nichts_gerechnet": "ja — keine render-result.json, kein Bild, kein Ausgabeordner; Karte blieb bei 1241 MiB / 35 W"
+  },
+  "urteil_zusatz_haelt_im_umriss": "bei keinem — faithful 1,0: 1,01 → 0,86; Standard: 0,77 → 0,30 (knapp ueber 0,25, Satz 'UEBER DEN UMRISS' bleibt); sichtbar ist in allen vier Bildern ein Bau ueber die ganze Breite. Der Zusatz senkt die Zahl, haelt das Haus aber nicht im Umriss; ein Gipsmodell-Bild (296 4a weiss) bleibt durch das Gipsmodell im Umriss, nicht durch den Satz.",
+  "urteil_kostet_geom_iou": "uneinheitlich — faithful 1,0: 0,491 → 0,393 (−0,098, kostet); Standard: 0,516 → 0,607 (+0,091, hilft). n_ist/n_soll 1,14 → 1,16 bzw. 1,80 → 1,28.",
+  "urteil_faithful": "faithful 1,0 baut mit dem Standardprompt mehr ueber den Umriss als Standard (1,01 gegen 0,77; mit Zusatz 0,86 gegen 0,30)"
+ },
+ "4_pruefbild_zwischen_0_und_0_68": {
+  "4_weiss_f10_std": {
+   "job": "vis-1792548394-d9b219",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 47.12,
+   "gpu_vorher": "1241 MiB, 33.60 W, 0 %",
+   "systemlast_vorher": "1.53 / 1.31 / 1.25",
+   "gpu_spitze": "27436 MiB / 359 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-71ebf49b3acd6993",
+    "wiederverwendet": true
+   },
+   "kamera_s": 15.1,
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, white plaster study model, neutral studio light, no materials",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "weiss",
+     "satz": "white plaster study model, neutral studio light, no materials",
+     "schon_im_prompt": false
+    }
+   ],
+   "qa_geometry": {
+    "geom_iou": 0.8669896782340889,
+    "spearman": -0.6820185520287215,
+    "geometry_fidelity": 0.7689623170045854,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 77343,
+    "n_gemeinsam": 67281
+   },
+   "n_ist_n_soll": 1.145,
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "ausserhalb_umriss": {
+    "anteil_haus": 0.0,
+    "anteil_hintergrund": 0.0,
+    "n_neu": 0,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 1.807922
+   },
+   "satz_ueber_umriss": false,
+   "satz_nicht_wiederzuerkennen": false,
+   "hinweise": [],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.7689623170045854 gegen 0.65",
+   "seedauswahl_umriss_gilt": true,
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.7,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 71803,
+    "kontrast_kern_ring": 171.9,
+    "regel": "gut"
+   },
+   "nachgezaehlt": {
+    "anteil_haus": 3.7018,
+    "anteil_bereich": 0.7791,
+    "n_bereich": 278359
+   },
+   "aufbau_gleich_296": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "faithful": 1.0,
+   "selbst_im_umriss": "ja — weisses Modell mit Fensterloechern genau im Umriss; dahinter eine dunkle, felsartige Hoehlenwand, kein Gebaeude",
+   "haus_wiederzuerkennen": "ja — Hauptbau, Anbau, Dachaufbau",
+   "sichtbeton": "nein — weiss",
+   "hintergrund_kahl_unnatuerlich": "ja — dunkle Fels-/Hoehlenwand statt Himmel",
+   "nachgezaehlt_lesart": "automatisch 3,70 — unbrauchbar, die strukturierte Hoehlenwand gilt als 'nicht Himmel'; von Hand kein Gebaeude neben dem Haus: 0",
+   "bild": "auf-20261021-297-bilder/4-weiss-voll-f10-std-960-sSE.png"
+  },
+  "4z_weiss_fstd_std": {
+   "job": "vis-1792548446-d6c080",
+   "status": "done",
+   "zeit_freigabe_bis_done_s": 41.24,
+   "gpu_vorher": "1241 MiB, 24.97 W, 0 %",
+   "systemlast_vorher": "1.41 / 1.30 / 1.25",
+   "gpu_spitze": "27436 MiB / 360 W",
+   "ollama_ps": "leer",
+   "grundlage": {
+    "id": "gl-71ebf49b3acd6993",
+    "wiederverwendet": true
+   },
+   "kamera_s": 14.3,
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, white plaster study model, neutral studio light, no materials",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "weiss",
+     "satz": "white plaster study model, neutral studio light, no materials",
+     "schon_im_prompt": false
+    }
+   ],
+   "qa_geometry": {
+    "geom_iou": 0.7186471353430236,
+    "spearman": -0.5484061844031156,
+    "geometry_fidelity": 0.6277822340793796,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 84396,
+    "n_gemeinsam": 63532
+   },
+   "n_ist_n_soll": 1.25,
+   "qa_ausserhalb_umriss_anteil": 0.1946,
+   "ausserhalb_umriss": {
+    "anteil_haus": 0.1946,
+    "anteil_hintergrund": 0.042,
+    "n_neu": 11399,
+    "n_bereich": 271498,
+    "n_haus": 58589,
+    "rand_px": 19,
+    "schwelle_naehe": 1.953949
+   },
+   "satz_ueber_umriss": false,
+   "satz_nicht_wiederzuerkennen": false,
+   "hinweise": [],
+   "verdict_reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.6277822340793796 gegen 0.65",
+   "seedauswahl_umriss_gilt": true,
+   "seedauswahl_umriss_grund": null,
+   "umriss_iou_eigen": {
+    "iou": 0.597,
+    "haus_px_maske": 58589,
+    "haus_px_ki": 66016,
+    "kontrast_kern_ring": 124.4,
+    "regel": "gut"
+   },
+   "nachgezaehlt": {
+    "anteil_haus": 3.4291,
+    "anteil_bereich": 0.7218,
+    "n_bereich": 278359
+   },
+   "aufbau_gleich_296": {
+    "qa_geometry_schluessel_gleich": true,
+    "geometry_gates_schluessel_gleich": true,
+    "qa_je_kamera_schluessel_gleich": true,
+    "null_in_qa_geometry": [],
+    "null_in_gates": [],
+    "null_in_qa_je_kamera": [
+     []
+    ]
+   },
+   "faithful": "Standard (0,8)",
+   "selbst_im_umriss": "weitgehend ja — Haus im Umriss, nur ein offener Pergola-Rahmen ueber dem Anbau ragt in den Himmel; links und rechts Steinbruch-/Felswaende (links mauerartig), kein Haus",
+   "haus_wiederzuerkennen": "ja — Hauptbau mit Dachaufbau, Anbau als offene Pergola",
+   "sichtbeton": "nein — weiss",
+   "hintergrund_kahl_unnatuerlich": "ja — Steinbruchwaende statt Himmel",
+   "nachgezaehlt_lesart": "automatisch 3,43 — unbrauchbar wie bei 4; von Hand nur der Pergola-Rahmen und allenfalls die mauerartige Felswand links, deutlich unter 0,25 wenn man die Felsen nicht als Baumasse zaehlt",
+   "bild": "auf-20261021-297-bilder/4z-weiss-voll-fstd-std-960-sSE.png"
+  },
+  "stimmung_weiss_haengt_gips_an": "Auch mit dem Standardprompt haengt die Stimmung weiss 'white plaster study model, neutral studio light, no materials' an (prompt_zusaetze art stimmung) — 'weiss mit Standardprompt' ist darum ebenfalls ein Gipsmodell-Bild.",
+  "zusatzlauf_g_mittag_f10_mit_schalter": "nicht noetig/nicht neu gerechnet — das waere genau 3b (0,86), bildgleich bestellt; 4z liegt mit 0,19 schon dazwischen",
+  "urteil": "4 (faithful 1,0) liegt bei 0,0, darum 4z (Standard): 0,19, sichtbar im Umriss bis auf den Pergola-Rahmen. Das erste sichtbare Ausbrechen zwischen 0 und 0,68 ist 3d mit 0,30 (Zeile ueber die ganze Breite). 0,25 liegt damit richtig zwischen 0,19 (im Umriss) und 0,30 (ausgebrochen) und auf der richtigen Seite jedes Bildes aus 296 und 297: im Umriss 0,0 (296 4a weiss, 297 4), 0,19 (4z); ausgebrochen 0,30, 0,77, 0,86, 1,01 (zweimal), 1,92, 2,09, 2,15 (zweimal). Aber: die Zahl misst den Ausbruch viel zu klein (3d: 0,30 gemeldet, sichtbar ein Bau ueber die ganze Breite, nachgezaehlt 2,22)."
+ },
+ "5_ohne_stimmung": {
+  "job": "vis-1792548048-1eb409",
+  "status": "done",
+  "zeit_freigabe_bis_done_s": 9.05,
+  "gpu_vorher": "1241 MiB, 14.91 W, 0 %",
+  "systemlast_vorher": "1.37 / 1.19 / 1.21",
+  "gpu_spitze": "1324 MiB / 62 W",
+  "ollama_ps": "leer",
+  "bildpunktgleich_296_teil_6": "ja — sSE.png, beauty_.png, material_id.png je 0 abweichende Bildpunkte (480x300), tiefe_norm.png bitgleich (gleiche Pruefsumme)",
+  "stimmungsfelder": "keine — qa nur geometry/verdict, qa_je_kamera ohne kontrast/ueberstrahlt (Schluessel wie 296), blender-report umgebung null, angewandt nur cameras_auto (kein environment)",
+  "bild": "auf-20261021-297-bilder/5-ohne-stimmung-sSE.png"
+ },
+ "6_schattenseite_nachgezaehlt": {
+  "methode": "an den Cycles-Bildern aus 296 Teil 1 (Ablage, 480 px; bildgleich zu den Ausgaben von 296); Haus = Bauwerksmaske aus material_id; Schattenseite = dunkle Gruppe einer Zweiteilung (2-means) der Hauspunkte; Hintergrund daneben = obere Haelfte der Haushoehe ausserhalb des Hauses (wie 293-296). Grauwerte Rec. 709.",
+  "je_bild": {
+   "abend-sSE": {
+    "bild_wie_ablage": true,
+    "haus_mittel": 133.0,
+    "haus_q25": 96.2,
+    "schattenseite": 98.9,
+    "schattenanteil": 0.74,
+    "sonnenseite": 230.1,
+    "hintergrund_daneben": 92.7,
+    "abstand_schatten_hintergrund": 6.2,
+    "abstand_q25_hintergrund": 3.5,
+    "abstand_mittel_hintergrund": 40.3
+   },
+   "abend-nNW": {
+    "bild_wie_ablage": true,
+    "haus_mittel": 132.3,
+    "haus_q25": 96.3,
+    "schattenseite": 95.8,
+    "schattenanteil": 0.73,
+    "sonnenseite": 230.3,
+    "hintergrund_daneben": 93.9,
+    "abstand_schatten_hintergrund": 1.9,
+    "abstand_q25_hintergrund": 2.4,
+    "abstand_mittel_hintergrund": 38.4
+   },
+   "mittag-sSE": {
+    "bild_wie_ablage": true,
+    "haus_mittel": 140.5,
+    "haus_q25": 76.1,
+    "schattenseite": 63.5,
+    "schattenanteil": 0.29,
+    "sonnenseite": 171.4,
+    "hintergrund_daneben": 70.9,
+    "abstand_schatten_hintergrund": -7.4,
+    "abstand_q25_hintergrund": 5.2,
+    "abstand_mittel_hintergrund": 69.6
+   },
+   "mittag-nNW": {
+    "bild_wie_ablage": true,
+    "haus_mittel": 141.3,
+    "haus_q25": 67.2,
+    "schattenseite": 55.4,
+    "schattenanteil": 0.26,
+    "sonnenseite": 171.8,
+    "hintergrund_daneben": 70.4,
+    "abstand_schatten_hintergrund": -15.0,
+    "abstand_q25_hintergrund": -3.2,
+    "abstand_mittel_hintergrund": 70.9
+   },
+   "winter-sSE": {
+    "bild_wie_ablage": true,
+    "haus_mittel": 183.8,
+    "haus_q25": 136.7,
+    "schattenseite": 121.7,
+    "schattenanteil": 0.28,
+    "sonnenseite": 207.9,
+    "hintergrund_daneben": 218.1,
+    "abstand_schatten_hintergrund": -96.4,
+    "abstand_q25_hintergrund": -81.4,
+    "abstand_mittel_hintergrund": -34.3
+   },
+   "winter-nNW": {
+    "bild_wie_ablage": true,
+    "haus_mittel": 184.0,
+    "haus_q25": 137.7,
+    "schattenseite": 113.9,
+    "schattenanteil": 0.26,
+    "sonnenseite": 208.6,
+    "hintergrund_daneben": 218.2,
+    "abstand_schatten_hintergrund": -104.3,
+    "abstand_q25_hintergrund": -80.5,
+    "abstand_mittel_hintergrund": -34.2
+   }
+  },
+  "schaetzung_vorprobe_gegen_q25": {
+   "eichung": "rund 44 Grauwerte je Blendenstufe im Bereich 90-140 (295→296 abend: Hintergrund 115 → 93 bei Faktor 0,706 = −0,50 Stufen); Mittel in Stufen ≈ Mittel der Grauwerte",
+   "mittag": "ja, dunkler — Mittel − Quantil 64/74 Grauwerte ≈ 1,5/1,7 Stufen; die Vorprobe saehe den Hintergrund statt −2,15/−2,13 nur noch −0,7/−0,45 Stufen unter dem Haus (unter 1) und dunkelte ihn um ≈ 0,3/0,55 Stufen ab: Hintergrund ≈ 71 → 57 (sSE) bzw. 46 (nNW); die Schattenseite (64/55) laege dann wieder ueber dem Hintergrund statt darunter (heute −7/−15).",
+   "winter": "ja, weniger hell — Mittel − Quantil 47/46 Grauwerte ≈ 1,05 Stufen; das Ziel 'Hintergrund 1 Stufe ueber dem Haus' saenke um rund 1 Stufe, Faktor ≈ 6,6 → ≈ 3,1; Hintergrund ≈ 218 → ≈ 175-185 (Tonwertkurve oben flach). Achtung: das liegt beim Haus-Mittel 184 — der Kontrast nach qa (Mittel gegen Hintergrund) fiele von −34 gegen 0, also 'HAUS KAUM SICHTBAR'.",
+   "abend": "wuerde ebenfalls dunkler (Mittel − Quantil 37/36 ≈ 0,8 Stufen → Hintergrund ≈ 93 → ≈ 60), Schattenseite dann ≈ +35 statt +2/+6 ueber dem Hintergrund."
+  }
+ },
+ "notiert_ohne_fix": {
+  "sichtbeton_im_ki_bild": "1 Strasse ja; 3a teilweise; 3b teilweise; 3c teilweise; 3d teilweise; 4 nein (weiss); 4z nein (weiss)",
+  "ausserhalb_umriss_anteil_gegen_nachzaehlung": {
+   "1-strasse-f03": {
+    "visbox": 2.1481,
+    "nachgezaehlt": 2.4834
+   },
+   "3a-mittag-f10": {
+    "visbox": 1.0077,
+    "nachgezaehlt": 2.3927
+   },
+   "3b-mittag-f10-leer": {
+    "visbox": 0.8636,
+    "nachgezaehlt": 2.0248
+   },
+   "3c-mittag-fstd": {
+    "visbox": 0.7674,
+    "nachgezaehlt": 2.2824
+   },
+   "3d-mittag-fstd-leer": {
+    "visbox": 0.2959,
+    "nachgezaehlt": 2.2194
+   },
+   "4-weiss-f10-std": {
+    "visbox": 0.0,
+    "nachgezaehlt": 3.7018
+   },
+   "4z-weiss-fstd-std": {
+    "visbox": 0.1946,
+    "nachgezaehlt": 3.4291
+   }
+  },
+  "lesart": "bei mittag/Strasse zaehlt Visbox 1,1- bis 7,5-mal weniger als die Nachzaehlung (3d 0,30 gegen 2,22); bei weiss ist die Nachzaehlung unbrauchbar (Hoehlen-/Felswand gilt als nicht Himmel), von Hand dort ≈ 0."
+ },
+ "befunde": [
+  "N1 SATZ FEHLT BEI 3c UND 3d: beide zeigen statt Hochhaus mit Anbau eine breite Zeile ueber die ganze Bildbreite, das Haus ist nicht wiederzuerkennen — geom_iou 0,516/0,607, n_ist/n_soll 1,80/1,28, ausserhalb 0,77/0,30: kein Ausloeser greift, umriss_gilt true, eigene Farb-IoU 0,597/0,645 gilt formal. Die Tiefe deckt sich, weil die Zeile so hoch ist wie der Hauptbau; die Form (Stufe Hauptbau/Anbau) fehlt.",
+  "N2 ausserhalb_umriss_anteil zaehlt bei breiten Zeilen weit zu wenig: 3d 0,30 gemeldet, sichtbar ganze Breite, nachgezaehlt 2,22; 3c 0,77 gegen 2,28; 3a 1,01 gegen 2,39. Die Rangfolge stimmt, der Betrag nicht.",
+  "N3 'empty background, no other buildings' haelt das Haus nicht im Umriss: senkt den Anteil (1,01 → 0,86; 0,77 → 0,30), sichtbar bleibt der Bau ueber die ganze Breite; geom_iou −0,10 bei 1,0, +0,09 bei Standard.",
+  "N4 Stimmung weiss haengt selbst 'white plaster study model' an: auch mit Standardprompt entsteht ein Gipsmodell — das Bild im Umriss (4: 0,0; 4z: 0,19) verdankt sich dem Gipsmodell, nicht dem Satz; der Hintergrund wird dabei eine Hoehlen-/Felswand.",
+  "N5 Vorprobe gegen das 25-%-Quantil: wuerde mittag/abend den Hintergrund unter die Schattenseite schieben (gut), winter aber auf das Haus-Mittel ziehen (Kontrast ≈ 0, 'HAUS KAUM SICHTBAR') — nicht ohne Gegenmass einbauen.",
+  "N6 3d zeigt zwei kleine Personen trotz 'no people' im Prompt."
+ ],
+ "aufraeumen": "eigene Probeauftraege (Ablage), Ausgaben (kosmovis-bilder) und die zwei neuen Grundlagen per gio trash; Mappe des Dienstes, echter Himmels-/Materialordner nicht beruehrt; GPU leer (1241 MiB Grundlast), keine eigenen Prozesse.",
+ "urteil": "Teilweise — der Satz sagt jetzt beim Strassenbild 'nicht wiederzuerkennen' (beide neuen Ausloeser) und bei keinem Bild, in dem man das Haus erkennt, verfehlt aber 3c und 3d (breite Zeile statt Haus bei geom_iou 0,52/0,61); 'empty background, no other buildings' haelt das Haus nicht im Umriss (0,86 und 0,30, sichtbar ueber die ganze Breite); 0,25 liegt richtig zwischen 0,19 (4z, im Umriss) und 0,30 (3d, ausgebrochen) und trennt alle Bilder aus 296 und 297 richtig."
+}
