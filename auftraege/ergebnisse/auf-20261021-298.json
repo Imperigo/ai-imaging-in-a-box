@@ -1,0 +1,2539 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-298",
+ "worker": "local",
+ "rang": 85,
+ "folgt_auf": "auf-20261021-297",
+ "entscheide": [
+  "117",
+  "97",
+  "97a",
+  "104",
+  "110",
+  "113"
+ ],
+ "einbau": [
+  "C96"
+ ],
+ "status": "erledigt mit Befunden — V0: das Cycles-Bild kommt ueber den eigenen Start an (drei verschiedene sha256, rote Marke voll in V0c, keine Ausnahme). Kontrolle: 1a bildpunktgleich 297 3c (0 px), 1b-Original bildpunktgleich 1a, qa gleich, 2-K bildpunktgleich, Abweis-Laeufe je mit Satz und ohne Rechnung. Matrix: ab Staerke 0,4 haelt das Haus (geom_iou 0,55-0,98 gegen 0,005-0,58 ohne, kein Satz) und Sonnenseite, Schatten und Helligkeit der Stimmung kommen voll an — aber das KI-Bild ist dann praktisch das Cycles-Gipsmodell (Farbabstand 1-2, kein Sichtbeton, kein Material); erst 0,7 setzt kleine Fensterloecher; bei bedeckt 0,55/0,7 fehlt der Dachaufbau. Farbabgleich allein: Farbton/Helligkeit der Stimmung ja, Licht/Schatten nein, Form nicht verschoben (kanten_iou 0,97-0,99, geom_iou ±0,01), aber blass (Streckung an der Grenze 0,5). VRAM +3,8 GB mit Bildeingang (31,3 von 32,6 GB).",
+ "beendet": "2026-10-21T02:58:00Z",
+ "koepfe": {
+  "stand": "main 5f406f6 (Visbox 0.3.12), Dienst nach dem Pull neu gestartet, Abholer per Timer 30 s. Kein Code geaendert, keine Vorgabe geaendert, Schalter nur in den eigenen Probeauftraegen, Mappe des Dienstes nicht angefasst.",
+  "himmelsbilder": "GET /api/heim: 'Himmelsbilder 8/8.' (da 8, von 8, fehlend []). Ordnerwerte nur am Heim-PC.",
+  "weg": "Bruecke als Client wie 297 (POST /bruecke/jobs, /approve, job.json im Takt 0,5 s); V0 und die Nachrechnung direkt in Python mit render.rendere (Gewichte aus der Modellwurzel des Abholers, nichts geladen ausser W1/W2).",
+  "geometrie": "synthetisch aus tools/make_test_glb.py wie 292-297: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "kosmovis.render-scene/v1: cameras 'auto', cameras_auto {richtungen:['sSE']}, render.resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, vis.seed 482913, guete voll, render.environment nur {preset}, faithful weggelassen (0,8).",
+  "grundlagen": "alle vier NEU (die aus 296/297 waren weggeraeumt): G-mittag gl-81f8a7bb4da931ab, G-morgen gl-0eecbee9186aa96d, G-abend gl-ae625b180470bab1, G-bedeckt gl-71f247ceda3bbf3d; in allen KI-Laeufen wiederverwendet.",
+  "gpu": "vor jedem Lauf 1241 MiB, 14-39 W, 0 %, ollama ps leer (kein fremdes Modell). Leistungsgrenze 400 W gesetzt und unveraendert. Laeufe strikt nacheinander. Cycles-Spitze 1324-1328 MiB / 66 W; KI ohne Bildeingang 27436 MiB / 357-360 W; KI mit Bildeingang 31316 MiB / 355-359 W; Abweis-Laeufe 1241 MiB / 15-17 W.",
+  "systemlast": "Last (1 min) 1,0-3,7 (Spitze waehrend der Grundlagen).",
+  "gewichte_gegen_auftrag": "W1 z-image-turbo: transformer 9,97 + 9,97 + 4,67 GB, text_encoder 3,96 + 3,99 + 0,10 GB, vae 0,17 GB, Ordner 32,9 GB — alles wie im Auftrag. W2 Union: 3,10 GB, Ordner 3,1 GB — wie im Auftrag. Download 0 GB.",
+  "kosmo_modelle": "nicht beruehrt; ollama ps die ganze Zeit leer."
+ },
+ "L1_L2": {
+  "diffusers_fassung": "0.41.0.dev0 (NICHT 0.39.0 wie im Auftrag und im Code-Kommentar angenommen; nicht aufgeruestet, so vorgefunden). Die drei Hilfen, die der eigene Start nimmt (get_default_z_image_sigmas, calculate_shift, retrieve_latents), stehen im Modul pipeline_z_image_controlnet.",
+  "QwenImageControlNetPipeline.__call__": [
+   "prompt",
+   "negative_prompt",
+   "true_cfg_scale",
+   "height",
+   "width",
+   "num_inference_steps",
+   "sigmas",
+   "guidance_scale",
+   "control_guidance_start",
+   "control_guidance_end",
+   "control_image",
+   "controlnet_conditioning_scale",
+   "num_images_per_prompt",
+   "generator",
+   "latents",
+   "prompt_embeds",
+   "prompt_embeds_mask",
+   "negative_prompt_embeds",
+   "negative_prompt_embeds_mask",
+   "output_type",
+   "return_dict",
+   "attention_kwargs",
+   "callback_on_step_end",
+   "callback_on_step_end_tensor_inputs",
+   "max_sequence_length"
+  ],
+  "QwenImageControlNetInpaintPipeline.__call__": [
+   "prompt",
+   "negative_prompt",
+   "true_cfg_scale",
+   "height",
+   "width",
+   "num_inference_steps",
+   "sigmas",
+   "guidance_scale",
+   "control_guidance_start",
+   "control_guidance_end",
+   "control_image",
+   "control_mask",
+   "controlnet_conditioning_scale",
+   "num_images_per_prompt",
+   "generator",
+   "latents",
+   "prompt_embeds",
+   "prompt_embeds_mask",
+   "negative_prompt_embeds",
+   "negative_prompt_embeds_mask",
+   "output_type",
+   "return_dict",
+   "attention_kwargs",
+   "callback_on_step_end",
+   "callback_on_step_end_tensor_inputs",
+   "max_sequence_length"
+  ],
+  "ZImageControlNetInpaintPipeline.__call__": [
+   "prompt",
+   "height",
+   "width",
+   "num_inference_steps",
+   "sigmas",
+   "guidance_scale",
+   "image",
+   "mask_image",
+   "control_image",
+   "controlnet_conditioning_scale",
+   "cfg_normalization",
+   "cfg_truncation",
+   "negative_prompt",
+   "num_images_per_prompt",
+   "generator",
+   "latents",
+   "prompt_embeds",
+   "negative_prompt_embeds",
+   "output_type",
+   "return_dict",
+   "joint_attention_kwargs",
+   "callback_on_step_end",
+   "callback_on_step_end_tensor_inputs",
+   "max_sequence_length"
+  ],
+  "bestaetigt": "L1 ja: keine Qwen-ControlNet-Pipeline nimmt image UND strength (beide nur control_image, Inpaint dazu control_mask; beide aber latents und sigmas). L2 ja: ZImageControlNetInpaintPipeline kennt image, mask_image, control_image, kein strength. Nicht geladen, kein Download."
+ },
+ "V0": {
+  "eingang": "Tiefe und Cycles-Bild aus _ki_raster der Kamera von 1a (1024x640), Prompt wie 1a (uebersetzter Standardprompt mit Stimmungssatz mittag), seed 482913, schritte 20, controlnet_staerke 0.8; drei getrennte Prozesse.",
+  "v0a_ohne": {
+   "sha256": "fa7dfd2ee504cde5bb796e5ef8b605e436ceff16f138aee5ceb4902398f17753",
+   "status": "ok",
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "txt2img",
+   "modus_abweichung": true,
+   "schritte_gerechnet": 20,
+   "hinweise": [
+    "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier bitgleiche Bilder.",
+    "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+    "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+    "Nicht übergeben, weil unbekannt: image."
+   ],
+   "parameter_bildeingang": {
+    "modus": "image_edit",
+    "bildeingang_staerke": null,
+    "bildeingang_weg": null
+   },
+   "parameter_hat_bildeingang_schluessel": false,
+   "laufzeit_s": 11.24,
+   "dauer_modell_s": 11.215,
+   "vram_spitze_mib_nvidia_smi": 27434,
+   "torch_max_allocated_mib": 24372,
+   "torch_max_reserved_mib": 25558,
+   "leistung_spitze_w": 357.3,
+   "leistung_mittel_geladen_w": 315.0,
+   "ausnahme": null,
+   "bild": "auf-20261021-298-bilder/v0a.png"
+  },
+  "v0b_0.55": {
+   "sha256": "48e3b5478deda12720753c742ab350c4b7c2bea17783393db33e53a1bc99e39c",
+   "status": "ok",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "modus_abweichung": false,
+   "schritte_gerechnet": 11,
+   "hinweise": [
+    "MESSSCHALTER bildeingang_staerke=0.55: Das Cycles-Bild geht als Start ins Modell, die Tiefe bleibt das Steuerbild (Weg 'eigener_start', Entscheid 117). Nie Vorgabe; ob das Bild ankommt, ist am Geraet ungemessen (auf-20261021-298).",
+    "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+    "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.55 — 11 von 20 Schritten gerechnet, erste Rauschstufe 0.786. Am Geraet ungemessen (auf-20261021-298).",
+    "Gerechnet wurden 11 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Im Bildbearbeitungsmodus laufen nur 'schritte x denoise' Schritte (hier 20 x 0.6 = 12). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier."
+   ],
+   "parameter_bildeingang": {
+    "modus": "bild_und_tiefe",
+    "bildeingang_staerke": 0.55,
+    "bildeingang_weg": "eigener_start"
+   },
+   "parameter_hat_bildeingang_schluessel": true,
+   "laufzeit_s": 8.56,
+   "dauer_modell_s": 8.539,
+   "vram_spitze_mib_nvidia_smi": 31314,
+   "torch_max_allocated_mib": 28228,
+   "torch_max_reserved_mib": 29438,
+   "leistung_spitze_w": 356.2,
+   "leistung_mittel_geladen_w": 284.2,
+   "ausnahme": null,
+   "bild": "auf-20261021-298-bilder/v0b.png"
+  },
+  "v0c_0.55_rote_marke": {
+   "sha256": "395349375e110dca2bb9b08a9515374985266979ac172de1efcae26c67ea9c10",
+   "status": "ok",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "modus_abweichung": false,
+   "schritte_gerechnet": 11,
+   "hinweise": [
+    "MESSSCHALTER bildeingang_staerke=0.55: Das Cycles-Bild geht als Start ins Modell, die Tiefe bleibt das Steuerbild (Weg 'eigener_start', Entscheid 117). Nie Vorgabe; ob das Bild ankommt, ist am Geraet ungemessen (auf-20261021-298).",
+    "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ.",
+    "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.55 — 11 von 20 Schritten gerechnet, erste Rauschstufe 0.786. Am Geraet ungemessen (auf-20261021-298).",
+    "Gerechnet wurden 11 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Im Bildbearbeitungsmodus laufen nur 'schritte x denoise' Schritte (hier 20 x 0.6 = 12). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier."
+   ],
+   "parameter_bildeingang": {
+    "modus": "bild_und_tiefe",
+    "bildeingang_staerke": 0.55,
+    "bildeingang_weg": "eigener_start"
+   },
+   "parameter_hat_bildeingang_schluessel": true,
+   "laufzeit_s": 8.45,
+   "dauer_modell_s": 8.423,
+   "vram_spitze_mib_nvidia_smi": 30346,
+   "torch_max_allocated_mib": 28228,
+   "torch_max_reserved_mib": 29438,
+   "leistung_spitze_w": 356.6,
+   "leistung_mittel_geladen_w": 278.2,
+   "ausnahme": null,
+   "bild": "auf-20261021-298-bilder/v0c.png"
+  },
+  "v0a_bildpunktgleich_1a_ki_raster": "ja — 0 abweichende Bildpunkte (1024x640): der direkte Weg rechnet wie der Abholer",
+  "drei_verschiedene_sha256": true,
+  "rote_spur_v0c": "ja — 25496 rote Bildpunkte, davon 25440 im Quadrat 160x160 oben links (Mittel 236/7/3); V0b dort 0 rote Punkte; ausserhalb des Quadrats unterscheiden sich V0b und V0c im Mittel um 1,9 (Summe RGB)",
+  "abstand_zum_cycles_bild": "mittlere Abweichung je Kanal: V0a 75,0, V0b 1,9, V0c 6,4 — V0b ist praktisch das Cycles-Bild",
+  "ausnahme": "keine",
+  "vram_mehrbedarf_eigener_start": "nvidia-smi-Spitze 27434 → 31314 MiB (+3880 MiB); torch max_memory_allocated 24372 → 28228 MiB (+3856 MiB). Geschaetzt war unter 1 GB. Karte 32607 MiB: Rest rund 1,3 GB. Der Geraeteweg entscheidet weiter an 25702 MiB x 1,1 = 28273 MiB verlangt — die gemessene Spitze mit Bildeingang liegt darueber.",
+  "urteil": "ja — das Cycles-Bild kommt ueber den eigenen Start an."
+ },
+ "1_kontrolle": {
+  "1a": {
+   "job": "vis-1792549943-e75e73",
+   "bildpunktgleich_297_3c": "ja — 0 abweichende Bildpunkte (960x600), Grundlage neu gerechnet",
+   "parametersatz_ohne_bildeingang_schluessel": "ja — am direkt nachgerechneten V0a (bildpunktgleich zum KI-Rasterbild von 1a): kein bildeingang_staerke/bildeingang_weg; modus image_edit, gerechnet txt2img wie bisher. Der Bruecken-Befund selbst traegt keinen Parametersatz.",
+   "kein_vermerk_farbabgleich": "ja — kein 'farbabgleich' am Kameraurteil, kein Ordner _ohne_farbabgleich"
+  },
+  "1b": {
+   "job": "vis-1792550258-033140",
+   "original_bildpunktgleich_1a": "ja — 0 abweichende Bildpunkte",
+   "qa_feld_fuer_feld_gleich_1a": "ja — qa-Block identisch, keine abweichenden Felder",
+   "vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.5,
+     "cb": 0.5,
+     "cr": 0.6655
+    },
+    "begrenzt": [
+     "y",
+     "cb"
+    ],
+    "abstand_vorher": 63.7547,
+    "abstand_nachher": 12.0929,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.990348,
+    "geom_iou_vorher": 0.5163020352454739,
+    "geom_iou_nachher": 0.5161944324914766,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 112.5544,
+      "streuung": 77.1539
+     },
+     "cb": {
+      "mittel": 1.1794,
+      "streuung": 12.0156
+     },
+     "cr": {
+      "mittel": -2.8831,
+      "streuung": 7.0217
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 80.8938,
+      "streuung": 26.4596
+     },
+     "cb": {
+      "mittel": 18.777,
+      "streuung": 5.8081
+     },
+     "cr": {
+      "mittel": -14.6571,
+      "streuung": 4.6731
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 80.9167,
+      "streuung": 38.5506
+     },
+     "cb": {
+      "mittel": 18.6606,
+      "streuung": 5.9877
+     },
+     "cr": {
+      "mittel": -14.6772,
+      "streuung": 4.6657
+     }
+    }
+   }
+  },
+  "1c": {
+   "skip_mit_farbabgleich": {
+    "job": "vis-1792550079-f34926",
+    "endet_mit_satz": "ja — \"'vis.farbabgleich' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein KI-Bild — es gibt nichts abzugleichen.\"",
+    "nichts_gerechnet": "ja — status error, kein Ausgabeordner, Karte 1241 MiB / 15 W"
+   },
+   "skip_mit_bildeingang": {
+    "job": "vis-1792550081-f8b13a",
+    "endet_mit_satz": "ja — \"'vis.bildeingang' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein KI-Bild — ein Bildeingang bestellt nichts.\"",
+    "nichts_gerechnet": "ja — status error, kein Ausgabeordner, 1241 MiB / 17 W"
+   },
+   "vorschau_mit_bildeingang": {
+    "job": "vis-1792550112-d6efaa",
+    "endet_mit_satz": "ja — \"'vis.bildeingang' und 'vis.guete: vorschau' zugleich: Die Vorschau rechnet immer gleich (Entscheid 104); der Bildeingang ist ein Messweg der vollen Guete.\"",
+    "nichts_gerechnet": "ja — status error, kein Ausgabeordner, 1241 MiB / 17 W"
+   }
+  }
+ },
+ "2_matrix": {
+  "1a-mittag-ohne-schalter": {
+   "job": "vis-1792549943-e75e73",
+   "grundlage": "gl-81f8a7bb4da931ab",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 46.61,
+   "vorher": {
+    "gpu": "1241 MiB, 28.16 W, 0 %",
+    "ollama": [],
+    "last": "3.65 / 1.62 / 1.27",
+    "fremde": []
+   },
+   "vram_spitze_mib": 27436,
+   "leistung_spitze_w": 356.8,
+   "leistung_mittel_w": 66.1,
+   "leistung_mittel_geladen_w": 237.6,
+   "zeiten": {
+    "sSE": 14.4,
+    "gesamt": 14.4
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "qa_geometry": {
+    "geom_iou": 0.5163020352454739,
+    "spearman": 0.21724816356991802,
+    "geometry_fidelity": 0.0,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 121322,
+    "n_gemeinsam": 64308
+   },
+   "qa_ausserhalb_umriss_anteil": 0.7674,
+   "qa_kontrast_haus_hintergrund": 68.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 77 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 1.9235493667445493,
+   "kontrast_cycles_nachgezaehlt": 69.6,
+   "farbabgleich_vermerk": null,
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.7322,
+      "abhebung": 1.9235
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.597,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 82707,
+      "kontrast_kern_ring": 28.5,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -2.9,
+     "haus_luma": 131.4,
+     "hintergrund_luma": 134.3
+    }
+   },
+   "selbst": {
+    "haus": "nein — breite Zeile ueber die Bildbreite wie 297 3c",
+    "licht": "nein",
+    "art": "Render mit Textur (Fotografie)",
+    "doppelkanten": "nein"
+   },
+   "bilder_tafel": null
+  },
+  "1b-mittag-farbabgleich": {
+   "job": "vis-1792550258-033140",
+   "grundlage": "gl-81f8a7bb4da931ab",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 24.15,
+   "vorher": {
+    "gpu": "1241 MiB, 14.86 W, 0 %",
+    "ollama": [],
+    "last": "2.70 / 2.07 / 1.53",
+    "fremde": []
+   },
+   "vram_spitze_mib": 27436,
+   "leistung_spitze_w": 357.4,
+   "leistung_mittel_w": 117.6,
+   "leistung_mittel_geladen_w": 197.8,
+   "zeiten": {
+    "sSE": 17.7,
+    "gesamt": 17.7
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "qa_geometry": {
+    "geom_iou": 0.5163020352454739,
+    "spearman": 0.21724816356991802,
+    "geometry_fidelity": 0.0,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 121322,
+    "n_gemeinsam": 64308
+   },
+   "qa_ausserhalb_umriss_anteil": 0.7674,
+   "qa_kontrast_haus_hintergrund": 68.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 77 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 1.9235493667445493,
+   "kontrast_cycles_nachgezaehlt": 69.6,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.5,
+     "cb": 0.5,
+     "cr": 0.6655
+    },
+    "begrenzt": [
+     "y",
+     "cb"
+    ],
+    "abstand_vorher": 63.7547,
+    "abstand_nachher": 12.0929,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.990348,
+    "geom_iou_vorher": 0.5163020352454739,
+    "geom_iou_nachher": 0.5161944324914766,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 112.5544,
+      "streuung": 77.1539
+     },
+     "cb": {
+      "mittel": 1.1794,
+      "streuung": 12.0156
+     },
+     "cr": {
+      "mittel": -2.8831,
+      "streuung": 7.0217
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 80.8938,
+      "streuung": 26.4596
+     },
+     "cb": {
+      "mittel": 18.777,
+      "streuung": 5.8081
+     },
+     "cr": {
+      "mittel": -14.6571,
+      "streuung": 4.6731
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 80.9167,
+      "streuung": 38.5506
+     },
+     "cb": {
+      "mittel": 18.6606,
+      "streuung": 5.9877
+     },
+     "cr": {
+      "mittel": -14.6772,
+      "streuung": 4.6657
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.7322,
+      "abhebung": 1.9235
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.597,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 82707,
+      "kontrast_kern_ring": 28.5,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -2.9,
+     "haus_luma": 131.4,
+     "hintergrund_luma": 134.3
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.7317,
+      "abhebung": 1.922
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.598,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 82990,
+      "kontrast_kern_ring": 14.1,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -1.4,
+     "haus_luma": 90.3,
+     "hintergrund_luma": 91.8
+    }
+   },
+   "selbst": {
+    "haus": "nein (wie 1a)",
+    "licht": "teilweise — Farbton und Helligkeit wie Cycles, keine Sonnenseite/Schatten des Modells",
+    "art": "Render mit Textur, blasser",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bilder_tafel": null
+  },
+  "2-morgen-0": {
+   "job": "vis-1792550287-dd97bb",
+   "grundlage": "gl-0eecbee9186aa96d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 44.81,
+   "vorher": {
+    "gpu": "1241 MiB, 37.15 W, 0 %",
+    "ollama": [],
+    "last": "2.26 / 2.02 / 1.53",
+    "fremde": []
+   },
+   "vram_spitze_mib": 27436,
+   "leistung_spitze_w": 358.7,
+   "leistung_mittel_w": 72.4,
+   "leistung_mittel_geladen_w": 200.1,
+   "zeiten": {
+    "sSE": 17.6,
+    "gesamt": 17.6
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, early morning light, clear long shadows, fresh cool air",
+   "qa_geometry": {
+    "geom_iou": 0.5772100360256657,
+    "spearman": -0.6314750016381858,
+    "geometry_fidelity": 0.6037331434043394,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 80436,
+    "n_gemeinsam": 54155
+   },
+   "qa_ausserhalb_umriss_anteil": 0.3414,
+   "qa_kontrast_haus_hintergrund": 61.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 34 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 2.5969978320578173,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.5,
+     "cb": 0.5,
+     "cr": 0.5
+    },
+    "begrenzt": [
+     "y",
+     "cb",
+     "cr"
+    ],
+    "abstand_vorher": 60.6579,
+    "abstand_nachher": 14.8493,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.994184,
+    "geom_iou_vorher": 0.5772100360256657,
+    "geom_iou_nachher": 0.5817322565847726,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 107.365,
+      "streuung": 74.8754
+     },
+     "cb": {
+      "mittel": 5.8147,
+      "streuung": 22.066
+     },
+     "cr": {
+      "mittel": -9.914,
+      "streuung": 14.7986
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 134.4894,
+      "streuung": 25.1726
+     },
+     "cb": {
+      "mittel": 7.4776,
+      "streuung": 4.0521
+     },
+     "cr": {
+      "mittel": -7.4926,
+      "streuung": 2.96
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 134.6166,
+      "streuung": 37.4765
+     },
+     "cb": {
+      "mittel": 7.2692,
+      "streuung": 11.0624
+     },
+     "cr": {
+      "mittel": -7.6174,
+      "streuung": 7.4204
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.7653,
+      "abhebung": 2.597
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.638,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 88404,
+      "kontrast_kern_ring": 50.2,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 7.4,
+     "haus_luma": 155.5,
+     "hintergrund_luma": 148.1
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.7635,
+      "abhebung": 2.5899
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.638,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 88400,
+      "kontrast_kern_ring": 25.1,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 3.7,
+     "haus_luma": 158.7,
+     "hintergrund_luma": 155.0
+    }
+   },
+   "selbst": {
+    "haus": "nein — zweigeschossiger Flachbau mit Fensterbaendern statt Hochbau mit Anbau",
+    "licht": "ohne: nein (Mittagssonne, blauer Himmel); mit: teilweise (kuehles Grau wie Cycles, keine Schattenlage)",
+    "art": "Render mit Textur",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/morgen-0-ohne.png",
+    "auf-20261021-298-bilder/morgen-0-mit.png"
+   ]
+  },
+  "2-morgen-0.4": {
+   "job": "vis-1792550337-724e1c",
+   "grundlage": "gl-0eecbee9186aa96d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 40.7,
+   "vorher": {
+    "gpu": "1241 MiB, 34.65 W, 0 %",
+    "ollama": [],
+    "last": "2.13 / 2.00 / 1.55",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 356.9,
+   "leistung_mittel_w": 47.7,
+   "leistung_mittel_geladen_w": 142.5,
+   "zeiten": {
+    "sSE": 13.7,
+    "gesamt": 13.7
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, early morning light, clear long shadows, fresh cool air",
+   "qa_geometry": {
+    "geom_iou": 0.799516159786443,
+    "spearman": -0.9181463578575679,
+    "geometry_fidelity": 0.8567805145754611,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 83460,
+    "n_gemeinsam": 67089
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 61.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 20.70814951243412,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 1.0308,
+     "cb": 1.0758,
+     "cr": 1.031
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.6188,
+    "abstand_nachher": 0.1357,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.971765,
+    "geom_iou_vorher": 0.799516159786443,
+    "geom_iou_nachher": 0.7830666231221424,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 133.4873,
+      "streuung": 24.4206
+     },
+     "cb": {
+      "mittel": 6.81,
+      "streuung": 3.7665
+     },
+     "cr": {
+      "mittel": -6.7746,
+      "streuung": 2.8711
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 134.4894,
+      "streuung": 25.1726
+     },
+     "cb": {
+      "mittel": 7.4776,
+      "streuung": 4.0521
+     },
+     "cr": {
+      "mittel": -7.4926,
+      "streuung": 2.96
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 134.5119,
+      "streuung": 25.1824
+     },
+     "cb": {
+      "mittel": 7.525,
+      "streuung": 4.1032
+     },
+     "cr": {
+      "mittel": -7.5936,
+      "streuung": 2.9075
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.6776,
+      "abhebung": 20.7081
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.705,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 44920,
+      "kontrast_kern_ring": 102.8,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 61.7,
+     "haus_luma": 186.2,
+     "hintergrund_luma": 124.5
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.6799,
+      "abhebung": 20.3914
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.705,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 44909,
+      "kontrast_kern_ring": 106.1,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 63.6,
+     "haus_luma": 188.9,
+     "hintergrund_luma": 125.3
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja — Sonnenseite links hell, rechte Flanke und Anbau-Fuge im Schatten, Helligkeit wie Cycles",
+    "art": "weder Entwurf noch Textur-Render: fast das Cycles-Gipsmodell, kein Sichtbeton",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 8,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.40 — 8 von 20 Schritten gerechnet, erste Rauschstufe 0.667. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 30346,
+    "torch_max_allocated_mib": 28229,
+    "laufzeit_s": 7.58
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/morgen-0.4-ohne.png",
+    "auf-20261021-298-bilder/morgen-0.4-mit.png"
+   ]
+  },
+  "2-morgen-0.55": {
+   "job": "vis-1792550383-504cb6",
+   "grundlage": "gl-0eecbee9186aa96d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 41.28,
+   "vorher": {
+    "gpu": "1241 MiB, 27.46 W, 0 %",
+    "ollama": [],
+    "last": "2.44 / 2.10 / 1.60",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 358.1,
+   "leistung_mittel_w": 54.3,
+   "leistung_mittel_geladen_w": 164.1,
+   "zeiten": {
+    "sSE": 14.5,
+    "gesamt": 14.5
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, early morning light, clear long shadows, fresh cool air",
+   "qa_geometry": {
+    "geom_iou": 0.9767357745337751,
+    "spearman": -0.8138424772041108,
+    "geometry_fidelity": 0.8915767282295133,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 69089,
+    "n_gemeinsam": 67511
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 61.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 19.62677113922257,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 1.0103,
+     "cb": 1.0638,
+     "cr": 1.038
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.6314,
+    "abstand_nachher": 0.4169,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.991272,
+    "geom_iou_vorher": 0.9767357745337751,
+    "geom_iou_nachher": 0.9771740389069014,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 133.2699,
+      "streuung": 24.9157
+     },
+     "cb": {
+      "mittel": 6.6926,
+      "streuung": 3.8091
+     },
+     "cr": {
+      "mittel": -6.8435,
+      "streuung": 2.8516
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 134.4894,
+      "streuung": 25.1726
+     },
+     "cb": {
+      "mittel": 7.4776,
+      "streuung": 4.0521
+     },
+     "cr": {
+      "mittel": -7.4926,
+      "streuung": 2.96
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 134.3371,
+      "streuung": 25.1978
+     },
+     "cb": {
+      "mittel": 7.6248,
+      "streuung": 4.0264
+     },
+     "cr": {
+      "mittel": -7.1971,
+      "streuung": 3.1608
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.6626,
+      "abhebung": 19.6268
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.7,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 44995,
+      "kontrast_kern_ring": 105.3,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 62.8,
+     "haus_luma": 187.2,
+     "hintergrund_luma": 124.4
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.6626,
+      "abhebung": 19.5764
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.7,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 45060,
+      "kontrast_kern_ring": 106.4,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 63.5,
+     "haus_luma": 188.9,
+     "hintergrund_luma": 125.3
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja (wie 0.4)",
+    "art": "Cycles-Gipsmodell, leichte Wolken im Himmel",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 11,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.55 — 11 von 20 Schritten gerechnet, erste Rauschstufe 0.786. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 31314,
+    "torch_max_allocated_mib": 28230,
+    "laufzeit_s": 8.45
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/morgen-0.55-ohne.png",
+    "auf-20261021-298-bilder/morgen-0.55-mit.png"
+   ]
+  },
+  "2-morgen-0.7": {
+   "job": "vis-1792550429-9e5293",
+   "grundlage": "gl-0eecbee9186aa96d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 42.76,
+   "vorher": {
+    "gpu": "1241 MiB, 38.74 W, 0 %",
+    "ollama": [],
+    "last": "1.88 / 1.99 / 1.59",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 358.9,
+   "leistung_mittel_w": 60.2,
+   "leistung_mittel_geladen_w": 178.1,
+   "zeiten": {
+    "sSE": 15.4,
+    "gesamt": 15.4
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, early morning light, clear long shadows, fresh cool air",
+   "qa_geometry": {
+    "geom_iou": 0.9829908692423073,
+    "spearman": -0.8770581886020081,
+    "geometry_fidelity": 0.9285150462916427,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 68629,
+    "n_gemeinsam": 67501
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 61.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 20.088092263172904,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.9693,
+     "cb": 1.0354,
+     "cr": 1.0365
+    },
+    "begrenzt": [],
+    "abstand_vorher": 2.2165,
+    "abstand_nachher": 0.1792,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.985427,
+    "geom_iou_vorher": 0.9829908692423073,
+    "geom_iou_nachher": 0.9829627364466385,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 132.6874,
+      "streuung": 25.9692
+     },
+     "cb": {
+      "mittel": 6.5588,
+      "streuung": 3.9135
+     },
+     "cr": {
+      "mittel": -7.0968,
+      "streuung": 2.8557
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 134.4894,
+      "streuung": 25.1726
+     },
+     "cb": {
+      "mittel": 7.4776,
+      "streuung": 4.0521
+     },
+     "cr": {
+      "mittel": -7.4926,
+      "streuung": 2.96
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 134.5036,
+      "streuung": 25.1793
+     },
+     "cb": {
+      "mittel": 7.5587,
+      "streuung": 4.0077
+     },
+     "cr": {
+      "mittel": -7.3847,
+      "streuung": 2.8519
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.7958,
+      "abhebung": 20.0881
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.705,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 45265,
+      "kontrast_kern_ring": 114.4,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 65.0,
+     "haus_luma": 189.3,
+     "hintergrund_luma": 124.3
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.7899,
+      "abhebung": 20.1045
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.706,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 45282,
+      "kontrast_kern_ring": 111.0,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 63.0,
+     "haus_luma": 189.4,
+     "hintergrund_luma": 126.4
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja (wie 0.4)",
+    "art": "Cycles-Gipsmodell, Himmel mit Wolken, kein Material",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 14,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.70 — 14 von 20 Schritten gerechnet, erste Rauschstufe 0.875. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 31314,
+    "torch_max_allocated_mib": 28229,
+    "laufzeit_s": 9.45
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/morgen-0.7-ohne.png",
+    "auf-20261021-298-bilder/morgen-0.7-mit.png"
+   ]
+  },
+  "2-abend-0": {
+   "job": "vis-1792550477-3b2978",
+   "grundlage": "gl-ae625b180470bab1",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 44.22,
+   "vorher": {
+    "gpu": "1241 MiB, 34.70 W, 0 %",
+    "ollama": [],
+    "last": "2.85 / 2.22 / 1.68",
+    "fremde": []
+   },
+   "vram_spitze_mib": 27436,
+   "leistung_spitze_w": 360.0,
+   "leistung_mittel_w": 72.6,
+   "leistung_mittel_geladen_w": 204.8,
+   "zeiten": {
+    "sSE": 17.4,
+    "gesamt": 17.4
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.004992736647864836,
+    "spearman": -0.5166865589962388,
+    "geometry_fidelity": 0.050790549500470045,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 86044,
+    "n_gemeinsam": 763
+   },
+   "qa_ausserhalb_umriss_anteil": 2.0855,
+   "qa_kontrast_haus_hintergrund": 39.9,
+   "satz_nicht_wiederzuerkennen": true,
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 209 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' decken sich Modell und Bild kaum (geom_iou 0.005, Schwelle 0.1) (763 von 67541 Punkten des Modells gemeinsam); und baut das Bild weit ueber den Umriss hinaus (2.09 der Hausflaeche, Schwelle 1.5) und deckt das Modell wenig (geom_iou 0.005 unter 0.3, beide gesetzt, nicht gemessen). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ],
+   "umriss_gilt": false,
+   "umriss_grund": "geom_iou 0.005 unter 0.1; Baumasse ausserhalb des Umrisses 2.09 der Hausflaeche (ueber 1.5) bei geom_iou 0.005 unter 0.3: das Haus ist im Bild nicht wiederzuerkennen; Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.",
+   "formpruefung_umriss_abhebung": 2.8084700210136604,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.5,
+     "cb": 0.5,
+     "cr": 0.5
+    },
+    "begrenzt": [
+     "y",
+     "cb",
+     "cr"
+    ],
+    "abstand_vorher": 60.5682,
+    "abstand_nachher": 6.6798,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.71728,
+    "geom_iou_vorher": 0.004992736647864836,
+    "geom_iou_nachher": 0.0038254546405707447,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 44.7526,
+      "streuung": 46.7098
+     },
+     "cb": {
+      "mittel": -9.2113,
+      "streuung": 17.859
+     },
+     "cr": {
+      "mittel": 7.3077,
+      "streuung": 14.3715
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 96.3535,
+      "streuung": 23.0714
+     },
+     "cb": {
+      "mittel": -3.2787,
+      "streuung": 4.1312
+     },
+     "cr": {
+      "mittel": 16.4067,
+      "streuung": 2.5121
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 96.4861,
+      "streuung": 23.3692
+     },
+     "cb": {
+      "mittel": -3.5112,
+      "streuung": 8.9175
+     },
+     "cr": {
+      "mittel": 16.3155,
+      "streuung": 7.1535
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.8417,
+      "abhebung": 2.8085
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.597,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 75531,
+      "kontrast_kern_ring": 63.1,
+      "regel": "gilt nicht (geom_iou 0.005 unter 0.1; Baumasse ausserhalb des Umrisses 2.09 der Hausflaeche (ueber 1.5) bei geom_iou 0.005 unter 0.3: das Haus ist im Bild nicht wiederzuerkennen; Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.)"
+     },
+     "kontrast_ki_nachgezaehlt": 39.4,
+     "haus_luma": 97.8,
+     "hintergrund_luma": 58.4
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.754,
+      "abhebung": 3.0817
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.597,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 75539,
+      "kontrast_kern_ring": 31.5,
+      "regel": "gilt nicht (geom_iou 0.005 unter 0.1; Baumasse ausserhalb des Umrisses 2.09 der Hausflaeche (ueber 1.5) bei geom_iou 0.005 unter 0.3: das Haus ist im Bild nicht wiederzuerkennen; Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.)"
+     },
+     "kontrast_ki_nachgezaehlt": 19.7,
+     "haus_luma": 123.0,
+     "hintergrund_luma": 103.3
+    }
+   },
+   "selbst": {
+    "haus": "nein — Unterfuehrung/Vordach mit Strassenzeile, Satz kommt",
+    "licht": "ohne: teilweise (warmes Streiflicht, aber eigenes Motiv); mit: teilweise (Farbton wie Cycles, Schwarz angehoben, flau)",
+    "art": "Render mit Textur",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein am Umriss; dunkle Partien verlieren Kanten (kanten_iou 0,72)"
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/abend-0-ohne.png",
+    "auf-20261021-298-bilder/abend-0-mit.png"
+   ]
+  },
+  "2-abend-0.4": {
+   "job": "vis-1792550527-469756",
+   "grundlage": "gl-ae625b180470bab1",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 40.78,
+   "vorher": {
+    "gpu": "1241 MiB, 38.95 W, 0 %",
+    "ollama": [],
+    "last": "2.18 / 2.12 / 1.68",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 357.4,
+   "leistung_mittel_w": 47.4,
+   "leistung_mittel_geladen_w": 141.7,
+   "zeiten": {
+    "sSE": 13.7,
+    "gesamt": 13.7
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.9062441251510676,
+    "spearman": -0.9211844392163321,
+    "geometry_fidelity": 0.9136837451877874,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 74417,
+    "n_gemeinsam": 67488
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 39.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 22.239005366355016,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 1.0309,
+     "cb": 1.0247,
+     "cr": 1.0907
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.3732,
+    "abstand_nachher": 0.4173,
+    "geklippt_anteil": 1e-06,
+    "kanten_iou": 0.987946,
+    "geom_iou_vorher": 0.9062441251510676,
+    "geom_iou_nachher": 0.898410246851117,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 97.2341,
+      "streuung": 22.3789
+     },
+     "cb": {
+      "mittel": -3.5386,
+      "streuung": 4.0318
+     },
+     "cr": {
+      "mittel": 15.6929,
+      "streuung": 2.3033
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 96.3535,
+      "streuung": 23.0714
+     },
+     "cb": {
+      "mittel": -3.2787,
+      "streuung": 4.1312
+     },
+     "cr": {
+      "mittel": 16.4067,
+      "streuung": 2.5121
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 96.5459,
+      "streuung": 23.0291
+     },
+     "cb": {
+      "mittel": -3.6436,
+      "streuung": 4.1224
+     },
+     "cr": {
+      "mittel": 16.4185,
+      "streuung": 2.4682
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.804,
+      "abhebung": 22.239
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.307,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 24325,
+      "kontrast_kern_ring": 73.2,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 39.8,
+     "haus_luma": 134.3,
+     "hintergrund_luma": 94.5
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.809,
+      "abhebung": 22.2407
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.308,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 24385,
+      "kontrast_kern_ring": 75.4,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 40.8,
+     "haus_luma": 134.6,
+     "hintergrund_luma": 93.7
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja — Sonne von rechts, rechte Flanken hell, Frontseite im Schatten, warmer Ton, wie Cycles",
+    "art": "Cycles-Gipsmodell",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 8,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.40 — 8 von 20 Schritten gerechnet, erste Rauschstufe 0.667. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 31314,
+    "torch_max_allocated_mib": 28229,
+    "laufzeit_s": 7.96
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/abend-0.4-ohne.png",
+    "auf-20261021-298-bilder/abend-0.4-mit.png"
+   ]
+  },
+  "2-abend-0.55": {
+   "job": "vis-1792550573-b62649",
+   "grundlage": "gl-ae625b180470bab1",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 41.71,
+   "vorher": {
+    "gpu": "1241 MiB, 38.43 W, 0 %",
+    "ollama": [],
+    "last": "1.69 / 2.00 / 1.66",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 359.4,
+   "leistung_mittel_w": 54.2,
+   "leistung_mittel_geladen_w": 164.1,
+   "zeiten": {
+    "sSE": 14.7,
+    "gesamt": 14.7
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.6992897180711114,
+    "spearman": -0.9430594698589472,
+    "geometry_fidelity": 0.8120786851050549,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 95861,
+    "n_gemeinsam": 67243
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 39.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 21.701666087376932,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 1.0088,
+     "cb": 0.9923,
+     "cr": 1.0678
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.0574,
+    "abstand_nachher": 0.329,
+    "geklippt_anteil": 2e-06,
+    "kanten_iou": 0.995451,
+    "geom_iou_vorher": 0.6992897180711114,
+    "geom_iou_nachher": 0.676362319715165,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 96.7381,
+      "streuung": 22.8692
+     },
+     "cb": {
+      "mittel": -3.7401,
+      "streuung": 4.1633
+     },
+     "cr": {
+      "mittel": 15.5761,
+      "streuung": 2.3526
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 96.3535,
+      "streuung": 23.0714
+     },
+     "cb": {
+      "mittel": -3.2787,
+      "streuung": 4.1312
+     },
+     "cr": {
+      "mittel": 16.4067,
+      "streuung": 2.5121
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 96.1197,
+      "streuung": 23.1223
+     },
+     "cb": {
+      "mittel": -3.0897,
+      "streuung": 4.2207
+     },
+     "cr": {
+      "mittel": 16.4556,
+      "streuung": 2.5819
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.7935,
+      "abhebung": 21.7017
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.338,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 26410,
+      "kontrast_kern_ring": 78.3,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 41.5,
+     "haus_luma": 135.7,
+     "hintergrund_luma": 94.2
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.7963,
+      "abhebung": 21.7319
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.343,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 26716,
+      "kontrast_kern_ring": 78.9,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 42.0,
+     "haus_luma": 135.5,
+     "hintergrund_luma": 93.5
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja",
+    "art": "Cycles-Gipsmodell",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 11,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.55 — 11 von 20 Schritten gerechnet, erste Rauschstufe 0.786. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 30346,
+    "torch_max_allocated_mib": 28230,
+    "laufzeit_s": 8.67
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/abend-0.55-ohne.png",
+    "auf-20261021-298-bilder/abend-0.55-mit.png"
+   ]
+  },
+  "2-abend-0.7": {
+   "job": "vis-1792550620-75f1bf",
+   "grundlage": "gl-ae625b180470bab1",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 42.32,
+   "vorher": {
+    "gpu": "1241 MiB, 38.71 W, 0 %",
+    "ollama": [],
+    "last": "1.69 / 1.93 / 1.65",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 359.1,
+   "leistung_mittel_w": 61.0,
+   "leistung_mittel_geladen_w": 177.8,
+   "zeiten": {
+    "sSE": 15.4,
+    "gesamt": 15.4
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.9744234074202447,
+    "spearman": -0.8574637796530272,
+    "geometry_fidelity": 0.9140748207389506,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 69174,
+    "n_gemeinsam": 67472
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 39.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 19.314575256236704,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.962,
+     "cb": 0.9645,
+     "cr": 0.9409
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.8113,
+    "abstand_nachher": 0.3102,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.988977,
+    "geom_iou_vorher": 0.9744234074202447,
+    "geom_iou_nachher": 0.9745493413450428,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 95.8993,
+      "streuung": 23.9825
+     },
+     "cb": {
+      "mittel": -4.2313,
+      "streuung": 4.2834
+     },
+     "cr": {
+      "mittel": 15.2714,
+      "streuung": 2.6698
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 96.3535,
+      "streuung": 23.0714
+     },
+     "cb": {
+      "mittel": -3.2787,
+      "streuung": 4.1312
+     },
+     "cr": {
+      "mittel": 16.4067,
+      "streuung": 2.5121
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 96.2623,
+      "streuung": 23.1424
+     },
+     "cb": {
+      "mittel": -3.1454,
+      "streuung": 4.0069
+     },
+     "cr": {
+      "mittel": 16.6292,
+      "streuung": 2.5246
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.8226,
+      "abhebung": 19.3146
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.381,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 29070,
+      "kontrast_kern_ring": 86.3,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 44.7,
+     "haus_luma": 138.2,
+     "hintergrund_luma": 93.5
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.8204,
+      "abhebung": 19.3218
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.381,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 29111,
+      "kontrast_kern_ring": 83.1,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 43.2,
+     "haus_luma": 137.2,
+     "hintergrund_luma": 94.0
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja",
+    "art": "Gipsmodell mit ersten kleinen Fensterloechern — erster Schritt weg vom Cycles-Bild, noch kein Textur-Render",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 14,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.70 — 14 von 20 Schritten gerechnet, erste Rauschstufe 0.875. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 31314,
+    "torch_max_allocated_mib": 28229,
+    "laufzeit_s": 9.4
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/abend-0.7-ohne.png",
+    "auf-20261021-298-bilder/abend-0.7-mit.png"
+   ]
+  },
+  "2-bedeckt-0": {
+   "job": "vis-1792550667-a1f419",
+   "grundlage": "gl-71f247ceda3bbf3d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 44.34,
+   "vorher": {
+    "gpu": "1241 MiB, 32.45 W, 0 %",
+    "ollama": [],
+    "last": "1.34 / 1.80 / 1.62",
+    "fremde": []
+   },
+   "vram_spitze_mib": 27436,
+   "leistung_spitze_w": 358.7,
+   "leistung_mittel_w": 72.8,
+   "leistung_mittel_geladen_w": 199.3,
+   "zeiten": {
+    "sSE": 17.5,
+    "gesamt": 17.5
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, overcast sky, soft even light",
+   "qa_geometry": {
+    "geom_iou": 0.5024215427909544,
+    "spearman": 0.22404802730820453,
+    "geometry_fidelity": 0.0,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 125726,
+    "n_gemeinsam": 64630
+   },
+   "qa_ausserhalb_umriss_anteil": 0.7969,
+   "qa_kontrast_haus_hintergrund": -32.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 80 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 2.1599143688588174,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.5,
+     "cb": 0.5,
+     "cr": 0.5
+    },
+    "begrenzt": [
+     "y",
+     "cb",
+     "cr"
+    ],
+    "abstand_vorher": 114.8843,
+    "abstand_nachher": 22.4814,
+    "geklippt_anteil": 0.27438,
+    "kanten_iou": 0.969837,
+    "geom_iou_vorher": 0.5024215427909544,
+    "geom_iou_nachher": 0.510263142919854,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 127.6919,
+      "streuung": 86.7019
+     },
+     "cb": {
+      "mittel": -3.752,
+      "streuung": 5.5167
+     },
+     "cr": {
+      "mittel": 0.2607,
+      "streuung": 2.8962
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 216.7805,
+      "streuung": 14.471
+     },
+     "cb": {
+      "mittel": -0.2911,
+      "streuung": 0.4259
+     },
+     "cr": {
+      "mittel": 0.2266,
+      "streuung": 0.3596
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 211.3036,
+      "streuung": 36.1642
+     },
+     "cb": {
+      "mittel": -0.7884,
+      "streuung": 2.281
+     },
+     "cr": {
+      "mittel": 0.4862,
+      "streuung": 1.3927
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.794,
+      "abhebung": 2.1599
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.609,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 83332,
+      "kontrast_kern_ring": 17.8,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -20.2,
+     "haus_luma": 136.6,
+     "hintergrund_luma": 156.8
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.7885,
+      "abhebung": 2.1424
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.611,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 82347,
+      "kontrast_kern_ring": 11.9,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -4.6,
+     "haus_luma": 220.2,
+     "hintergrund_luma": 224.8
+    }
+   },
+   "selbst": {
+    "haus": "nein — breiter zweigeschossiger Holzlamellenbau mit Baeumen",
+    "licht": "ohne: teilweise (grauer Himmel, aber Haus dunkler als Himmel); mit: teilweise (hell wie Cycles, ausgewaschen, 27 % geklippt)",
+    "art": "Render mit Textur",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/bedeckt-0-ohne.png",
+    "auf-20261021-298-bilder/bedeckt-0-mit.png"
+   ]
+  },
+  "2-bedeckt-0.4": {
+   "job": "vis-1792550717-c794af",
+   "grundlage": "gl-71f247ceda3bbf3d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 40.67,
+   "vorher": {
+    "gpu": "1241 MiB, 38.73 W, 0 %",
+    "ollama": [],
+    "last": "1.55 / 1.78 / 1.63",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 355.1,
+   "leistung_mittel_w": 47.1,
+   "leistung_mittel_geladen_w": 140.2,
+   "zeiten": {
+    "sSE": 13.8,
+    "gesamt": 13.8
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, overcast sky, soft even light",
+   "qa_geometry": {
+    "geom_iou": 0.5478565605802119,
+    "spearman": -0.9383558577122416,
+    "geometry_fidelity": 0.7169968011131733,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 116640,
+    "n_gemeinsam": 65190
+   },
+   "qa_ausserhalb_umriss_anteil": 0.4143,
+   "qa_kontrast_haus_hintergrund": -32.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 41 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 26.3057459521458,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 1.0072,
+     "cb": 0.8988,
+     "cr": 1.2056
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.9022,
+    "abstand_nachher": 0.1749,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.993564,
+    "geom_iou_vorher": 0.5478565605802119,
+    "geom_iou_nachher": 0.5569554075711997,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 214.8895,
+      "streuung": 14.3672
+     },
+     "cb": {
+      "mittel": -0.3053,
+      "streuung": 0.4738
+     },
+     "cr": {
+      "mittel": 0.0669,
+      "streuung": 0.2983
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 216.7805,
+      "streuung": 14.471
+     },
+     "cb": {
+      "mittel": -0.2911,
+      "streuung": 0.4259
+     },
+     "cr": {
+      "mittel": 0.2266,
+      "streuung": 0.3596
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 216.8694,
+      "streuung": 14.4524
+     },
+     "cb": {
+      "mittel": -0.2909,
+      "streuung": 0.4717
+     },
+     "cr": {
+      "mittel": 0.0845,
+      "streuung": 0.3531
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.9291,
+      "abhebung": 26.3057
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.354,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 63610,
+      "kontrast_kern_ring": 23.7,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -33.6,
+     "haus_luma": 189.3,
+     "hintergrund_luma": 222.9
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.9291,
+      "abhebung": 26.1989
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.354,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 63630,
+      "kontrast_kern_ring": 23.6,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -33.7,
+     "haus_luma": 191.2,
+     "hintergrund_luma": 224.9
+    }
+   },
+   "selbst": {
+    "haus": "ja",
+    "licht": "ja — weiches Licht, keine Schatten, hell wie Cycles",
+    "art": "Cycles-Gipsmodell",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 8,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.40 — 8 von 20 Schritten gerechnet, erste Rauschstufe 0.667. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 30346,
+    "torch_max_allocated_mib": 28228,
+    "laufzeit_s": 7.5
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/bedeckt-0.4-ohne.png",
+    "auf-20261021-298-bilder/bedeckt-0.4-mit.png"
+   ]
+  },
+  "2-bedeckt-0.55": {
+   "job": "vis-1792550763-173393",
+   "grundlage": "gl-71f247ceda3bbf3d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 41.28,
+   "vorher": {
+    "gpu": "1241 MiB, 38.41 W, 0 %",
+    "ollama": [],
+    "last": "1.46 / 1.72 / 1.61",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 358.0,
+   "leistung_mittel_w": 53.7,
+   "leistung_mittel_geladen_w": 162.5,
+   "zeiten": {
+    "sSE": 14.6,
+    "gesamt": 14.6
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, overcast sky, soft even light",
+   "qa_geometry": {
+    "geom_iou": 0.8289122968886156,
+    "spearman": -0.9504441636039128,
+    "geometry_fidelity": 0.8876006166724415,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 75180,
+    "n_gemeinsam": 64685
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": -32.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 26.873727650206337,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.9869,
+     "cb": 0.8804,
+     "cr": 1.1947
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.5035,
+    "abstand_nachher": 0.3989,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.994042,
+    "geom_iou_vorher": 0.8289122968886156,
+    "geom_iou_nachher": 0.8196178860757889,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 215.2973,
+      "streuung": 14.6624
+     },
+     "cb": {
+      "mittel": -0.3061,
+      "streuung": 0.4838
+     },
+     "cr": {
+      "mittel": 0.0966,
+      "streuung": 0.301
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 216.7805,
+      "streuung": 14.471
+     },
+     "cb": {
+      "mittel": -0.2911,
+      "streuung": 0.4259
+     },
+     "cr": {
+      "mittel": 0.2266,
+      "streuung": 0.3596
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 216.5904,
+      "streuung": 14.3753
+     },
+     "cb": {
+      "mittel": -0.2685,
+      "streuung": 0.4079
+     },
+     "cr": {
+      "mittel": 0.5145,
+      "streuung": 0.533
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.8986,
+      "abhebung": 26.8737
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.213,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 50905,
+      "kontrast_kern_ring": 18.9,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -32.0,
+     "haus_luma": 191.3,
+     "hintergrund_luma": 223.3
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.8986,
+      "abhebung": 26.9395
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.213,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 51117,
+      "kontrast_kern_ring": 18.2,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -31.2,
+     "haus_luma": 193.2,
+     "hintergrund_luma": 224.4
+    }
+   },
+   "selbst": {
+    "haus": "teilweise — Dachaufbau fehlt",
+    "licht": "ja",
+    "art": "Cycles-Gipsmodell",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 11,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.55 — 11 von 20 Schritten gerechnet, erste Rauschstufe 0.786. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 31314,
+    "torch_max_allocated_mib": 28228,
+    "laufzeit_s": 8.39
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/bedeckt-0.55-ohne.png",
+    "auf-20261021-298-bilder/bedeckt-0.55-mit.png"
+   ]
+  },
+  "2-bedeckt-0.7": {
+   "job": "vis-1792550809-6234c7",
+   "grundlage": "gl-71f247ceda3bbf3d",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 42.75,
+   "vorher": {
+    "gpu": "1241 MiB, 38.67 W, 0 %",
+    "ollama": [],
+    "last": "1.69 / 1.73 / 1.62",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 358.9,
+   "leistung_mittel_w": 60.5,
+   "leistung_mittel_geladen_w": 178.6,
+   "zeiten": {
+    "sSE": 15.4,
+    "gesamt": 15.4
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, overcast sky, soft even light",
+   "qa_geometry": {
+    "geom_iou": 0.9201818569297435,
+    "spearman": -0.9166898650838964,
+    "geometry_fidelity": 0.9184342013892861,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 67611,
+    "n_gemeinsam": 64767
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": -32.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 26.72974879441046,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "farbabgleich_vermerk": {
+    "angewandt": true,
+    "grund": null,
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "streckung": {
+     "y": 0.9259,
+     "cb": 0.8425,
+     "cr": 1.1945
+    },
+    "begrenzt": [],
+    "abstand_vorher": 1.6038,
+    "abstand_nachher": 0.1368,
+    "geklippt_anteil": 0.0,
+    "kanten_iou": 0.981068,
+    "geom_iou_vorher": 0.9201818569297435,
+    "geom_iou_nachher": 0.9205548370592499,
+    "geom_iou_gleich": false,
+    "bildpunkte_verschoben": false,
+    "kennwerte_ki": {
+     "y": {
+      "mittel": 215.6869,
+      "streuung": 15.6296
+     },
+     "cb": {
+      "mittel": -0.3036,
+      "streuung": 0.5055
+     },
+     "cr": {
+      "mittel": 0.0718,
+      "streuung": 0.301
+     }
+    },
+    "kennwerte_vorlage": {
+     "y": {
+      "mittel": 216.7805,
+      "streuung": 14.471
+     },
+     "cb": {
+      "mittel": -0.2911,
+      "streuung": 0.4259
+     },
+     "cr": {
+      "mittel": 0.2266,
+      "streuung": 0.3596
+     }
+    },
+    "kennwerte_nachher": {
+     "y": {
+      "mittel": 216.747,
+      "streuung": 14.4759
+     },
+     "cb": {
+      "mittel": -0.3026,
+      "streuung": 0.4695
+     },
+     "cr": {
+      "mittel": 0.2295,
+      "streuung": 0.4842
+     }
+    }
+   },
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.8504,
+      "abhebung": 26.7297
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.289,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 58108,
+      "kontrast_kern_ring": 12.5,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -30.9,
+     "haus_luma": 193.3,
+     "hintergrund_luma": 224.2
+    },
+    "mit": {
+     "umrisstreue": {
+      "trefferquote": 0.8499,
+      "abhebung": 26.9241
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.368,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 65229,
+      "kontrast_kern_ring": 11.8,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": -28.7,
+     "haus_luma": 196.0,
+     "hintergrund_luma": 224.7
+    }
+   },
+   "selbst": {
+    "haus": "teilweise — Dachaufbau fehlt, Hauptbau-Kante zum Anbau verschmilzt",
+    "licht": "ja",
+    "art": "Cycles-Gipsmodell, Himmel mit Wolkenstruktur",
+    "doppelkanten": "nein",
+    "form_verschoben": "nein"
+   },
+   "bildmodell_direkt_nachgerechnet": {
+    "sha256_gleich_bruecke": true,
+    "modus_bestellt": "bild_und_tiefe",
+    "modus_gerechnet": "bild_und_tiefe",
+    "modus_abweichung": false,
+    "schritte_gerechnet": 14,
+    "hinweis_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.70 — 14 von 20 Schritten gerechnet, erste Rauschstufe 0.875. Am Geraet ungemessen (auf-20261021-298).",
+    "vram_spitze_mib": 31314,
+    "torch_max_allocated_mib": 28228,
+    "laufzeit_s": 9.31
+   },
+   "bilder_tafel": [
+    "auf-20261021-298-bilder/bedeckt-0.7-ohne.png",
+    "auf-20261021-298-bilder/bedeckt-0.7-mit.png"
+   ]
+  },
+  "2-K-abend-0.55-ohne-abgleich": {
+   "job": "vis-1792550857-a8de0a",
+   "grundlage": "gl-ae625b180470bab1",
+   "wiederverwendet": true,
+   "zeit_freigabe_bis_done_s": 38.53,
+   "vorher": {
+    "gpu": "1241 MiB, 35.78 W, 0 %",
+    "ollama": [],
+    "last": "2.52 / 1.92 / 1.69",
+    "fremde": []
+   },
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 358.5,
+   "leistung_mittel_w": 54.0,
+   "leistung_mittel_geladen_w": 208.7,
+   "zeiten": {
+    "sSE": 11.6,
+    "gesamt": 11.6
+   },
+   "prompt": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "qa_geometry": {
+    "geom_iou": 0.6992897180711114,
+    "spearman": -0.9430594698589472,
+    "geometry_fidelity": 0.8120786851050549,
+    "status": "measured"
+   },
+   "zaehlung": {
+    "n_soll": 67541,
+    "n_ist": 95861,
+    "n_gemeinsam": 67243
+   },
+   "qa_ausserhalb_umriss_anteil": 0.0,
+   "qa_kontrast_haus_hintergrund": 39.9,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "hinweise": [],
+   "umriss_gilt": true,
+   "umriss_grund": null,
+   "formpruefung_umriss_abhebung": 21.701666087376932,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "farbabgleich_vermerk": null,
+   "bilder": {
+    "ohne": {
+     "umrisstreue": {
+      "trefferquote": 0.7935,
+      "abhebung": 21.7017
+     },
+     "umriss_iou_eigen": {
+      "iou": 0.338,
+      "haus_px_maske": 58589,
+      "haus_px_ki": 26410,
+      "kontrast_kern_ring": 78.3,
+      "regel": "gut"
+     },
+     "kontrast_ki_nachgezaehlt": 41.5,
+     "haus_luma": 135.7,
+     "hintergrund_luma": 94.2
+    }
+   },
+   "selbst": {
+    "haus": "ja (bildpunktgleich 2-abend-0.55 ohne)",
+    "licht": "ja",
+    "art": "Cycles-Gipsmodell",
+    "doppelkanten": "nein"
+   },
+   "bilder_tafel": null
+  }
+ },
+ "2_K": {
+  "job": "vis-1792550857-a8de0a",
+  "bildpunktgleich_ohne_farbabgleich_von_2_abend_0_55": "ja — 0 abweichende Bildpunkte",
+  "kein_vermerk": "ja",
+  "laufzeit_farbabgleich_allein_s": "Kamerazeit 14,7 (2-abend-0.55) gegen 11,6 (2-K) = 3,1 s; ebenso 1b 17,7 gegen 1a 14,4 = 3,3 s (Abgleich + zweiter Schaetzerlauf)"
+ },
+ "2_zusammenfassung": {
+  "spalten": "Stimmung/Staerke: geom_iou ohne → mit Abgleich (n_ist bei n_soll 67541) | Satz | Kontrast KI ohne / Cycles | Farbabstand vorher → nachher | kanten_iou",
+  "morgen": {
+   "0": "0,577 → 0,582 (80436) | nein | 7,4 / 62,8 | 60,7 → 14,8 | 0,994",
+   "0.4": "0,800 → 0,783 (83460) | nein | 61,7 / 62,8 | 1,6 → 0,1 | 0,972",
+   "0.55": "0,977 → 0,977 (69089) | nein | 62,8 / 62,8 | 1,6 → 0,4 | 0,991",
+   "0.7": "0,983 → 0,983 (68629) | nein | 65,0 / 62,8 | 2,2 → 0,2 | 0,985"
+  },
+  "abend": {
+   "0": "0,005 → 0,004 (86044) | JA | 39,4 / 39,2 (anderes Motiv) | 60,6 → 6,7 | 0,717",
+   "0.4": "0,906 → 0,898 (74417) | nein | 39,8 / 39,2 | 1,4 → 0,4 | 0,988",
+   "0.55": "0,699 → 0,676 (95861) | nein | 41,5 / 39,2 | 1,1 → 0,3 | 0,995",
+   "0.7": "0,974 → 0,975 (69174) | nein | 44,7 / 39,2 | 1,8 → 0,3 | 0,989"
+  },
+  "bedeckt": {
+   "0": "0,502 → 0,510 (125726) | nein | −20,2 / −35,3 | 114,9 → 22,5 (27 % geklippt) | 0,970",
+   "0.4": "0,548 → 0,557 (116640) | nein | −33,6 / −35,3 | 1,9 → 0,2 | 0,994",
+   "0.55": "0,829 → 0,820 (75180) | nein | −32,0 / −35,3 | 1,5 → 0,4 | 0,994",
+   "0.7": "0,920 → 0,921 (67611) | nein | −30,9 / −35,3 | 1,6 → 0,1 | 0,981"
+  },
+  "ausserhalb_umriss_anteil": "Staerke 0: morgen 0,34, abend 2,09, bedeckt 0,80; mit Bildeingang: 0,0 ausser bedeckt-0.4 (0,41)",
+  "umriss_gilt": "true ueberall ausser abend-0 (false, mit Satz)",
+  "eigene_farb_iou": "mit Bildeingang morgen 0,70-0,71 (gut), abend 0,31-0,38 und bedeckt 0,21-0,37 — formal 'gut' (umriss_gilt true), aber dort traegt die Farbtrennung nicht: Haus und Himmel sind fast gleich hell (Cycles-Kontrast 39 bzw. −35, das Haus ist bei bedeckt DUNKLER als der Himmel). Als Mass hier nicht verwenden.",
+  "umrisstreue": "Abhebung ohne Bildeingang 1,9-2,8, mit Bildeingang 19-27 (Trefferquote 0,66-0,93): die Kanten liegen genau auf dem Soll, weil das Bild das Cycles-Bild ist.",
+  "geom_iou_gleich": "das Feld steht ueberall auf false, obwohl die Differenz nur 0,0001 bis 0,023 betraegt (groesste: abend-0.55 0,699 → 0,676, morgen-0.4 0,800 → 0,783) — es vergleicht offenbar exakt.",
+  "modus": "alle 9 Bildeingangslaeufe direkt nachgerechnet, sha256 je gleich dem KI-Rasterbild der Bruecke: modus_bestellt = modus_gerechnet = 'bild_und_tiefe', keine Abweichung; 0,4 → 8 von 20 Schritten (erste Rauschstufe 0,667), 0,55 → 11 (0,786), 0,7 → 14 (0,875).",
+  "laufzeit_kamera_s": "Staerke 0 mit Abgleich 17,4-17,7; 0,4 13,7-13,8; 0,55 14,5-14,7; 0,7 15,4 (alle mit Abgleich, je ~3 s davon der Abgleich)",
+  "leistung": "Spitze 355-360 W in allen KI-Laeufen; Mittel bei geladener Karte: Staerke 0 199-205 W, 0,4 140-143 W, 0,55 163-164 W, 0,7 178-179 W, 2-K 209 W",
+  "vram": "Staerke 0: 27436 MiB; jede Staerke mit Bildeingang: 31316 MiB (Nachrechnung: torch 28228-28230 MiB allocated)"
+ },
+ "notiert_ohne_fix": {
+  "B1_ergebnis_der_bruecke_ohne_modus": "Ueber die Bruecke steht weder modus_bestellt/modus_gerechnet noch der Hinweis 'BILD UND TIEFE …' noch 'MESSSCHALTER …' im render-result.json, befund.json, urteil.json oder im Journal; auch 'angewandt' nennt den Bildeingang nicht. Am Ergebnis ist nicht zu sehen, dass der Schalter gerechnet hat — gelesen nur ueber die bitgleiche Nachrechnung.",
+  "B2_schrittsatz_falsch": "Bei bild_und_tiefe sagt der Hinweis 'Gerechnet wurden 11 Diffusionsschritte … (hier 20 x 0.6 = 12)' — er rechnet mit denoise 0,6, gerechnet wurde Staerke 0,55 → 11.",
+  "B3_vram": "Bildeingang +3,8 GB (nicht unter 1 GB): Spitze 31316 von 32607 MiB; die Ladeentscheidung rechnet weiter mit 28273 MiB.",
+  "B4_diffusers": "installiert 0.41.0.dev0, nicht 0.39.0; der eigene Start laeuft damit fehlerfrei.",
+  "B5_farbabgleich_flau": "Ohne Bildeingang greift die Streckungsgrenze 0,5 in allen Achsen (KI-Bild hat weit mehr Kontrast als das Gipsmodell): das Bild wird flau, bei bedeckt 27 % geklippt, bei abend wird Schwarz angehoben und kanten_iou faellt auf 0,72.",
+  "B6_dachaufbau": "bedeckt 0,55 und 0,7: der Dachaufbau verschwindet (Haus ohne Aufbau), geom_iou 0,83/0,92 merkt es kaum.",
+  "B7_prompt_kommt_nicht_an": "mit Bildeingang verschwindet der Prompt fast ganz (kein Sichtbeton, keine Fotografie) — das Bild ist das Gipsmodell der Grundlage."
+ },
+ "bilder": {
+  "ordner": "auf-20261021-298-bilder/",
+  "ki_bilder": "<stimmung>-<staerke>-<ohne|mit>.png (960x600), 1a.png, 1b-mit.png (1b ohne = 1a)",
+  "cycles": "mittag-/morgen-/abend-/bedeckt-cycles.png",
+  "v0": "v0a.png, v0b.png, v0c.png (aus 1024x640 auf 960x600 verkleinert)",
+  "tafeln": "morgen-tafel.png, abend-tafel.png, bedeckt-tafel.png (Zeilen Staerke 0/0.4/0.55/0.7, Spalten ohne/mit Abgleich/Cycles, 960 px je Feld, 3,5-3,8 MB)"
+ },
+ "aufraeumen": "eigene Probeauftraege (Ablage), Ausgaben und die vier Grundlagen erst nach dem Push per gio trash; Mappe des Dienstes, echter Himmels-/Materialordner nicht beruehrt; keine eigenen Prozesse.",
+ "urteil": [
+  "Kommt das Bild an: ja — V0 drei verschiedene sha256, die rote Marke steht voll in V0c, keine Ausnahme; V0b weicht im Mittel nur 1,9 vom Cycles-Bild ab.",
+  "Haus und Licht: schon ab 0,4 haelt das Haus (geom_iou 0,55-0,98 gegen 0,005-0,58 ohne, kein Satz, ausserhalb 0) und Sonnenseite, Schatten und Helligkeit kommen bei allen drei Stimmungen voll an — am verlaesslichsten 0,7 (0,92-0,98), nur bedeckt verliert ab 0,55 den Dachaufbau.",
+  "Render statt Entwurf: bei keiner Staerke bis 0,7 entsteht ein Render mit Textur — das Bild bleibt das Cycles-Gipsmodell (Farbabstand 1-2), der Prompt (Sichtbeton) kommt nicht an; erst 0,7 zeigt erste Fensterloecher.",
+  "Farbabgleich allein: bringt Farbton und Helligkeit der Stimmung, verschiebt keine Form (kanten_iou 0,97-0,99, geom_iou ±0,01), bringt aber weder Sonnenseite noch Schatten, macht das Bild flau (Streckung an 0,5) und rettet das falsche Motiv nicht (abend-0 bleibt nicht wiederzuerkennen).",
+  "Empfehlung: in dieser Form weder W-1 noch W-2 als Funktion — 0,4-0,7 liefert ein Gipsmodell mit Licht (das ist das Cycles-Bild, also W-4 billiger), der Abgleich allein nur blasse Farbe; vor der Wahl lohnt eine Nachmessung mit Staerke 0,8/0,9/0,95, wo das Modell Material malen koennte, und bis dahin W-4 (Cycles-Bild neben dem KI-Bild) oder W-3."
+ ]
+}
