@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-313",
+ "art": "qa",
+ "beschreibung": "Kontextmaske am Heim-PC pruefen (Video-Befund L4-5): Je Kamera mit Bestand, Umfeld oder Splat liegt neu eine Datei <kamera>__kontext_maske.png neben dem Bild und das Feld kontext_maske am Kameraurteil. Messen, ob die Maske den Bestand trifft, und wie stark Bestandskoerper bisher in der Bauwerksmaske mitgemessen werden.",
+ "erstellt": "2026-10-21T15:30:00Z",
+ "rang": 95,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Synthetisch: das Demohaus aus KosmoOrbit/Visbox mit zwei Volumen im Programm «Bestand» daneben (Quader, z. B. 20 x 10 x 12 m und 15 x 8 x 9 m, 15 bis 30 m vom Haus). Keine echten Projektdaten."
+ },
+ "params": {
+  "befunde": [
+   "Video-Analyse 20.10.2026 L4-5"
+  ],
+  "einbau": [
+   "Einbau-Stand: Grossansicht, Vergleich, Kontext (Strang var, 21.10.2026)"
+  ],
+  "protokoll": "74 (Abschnitt Grossansicht und Vergleich, Strang var)",
+  "laeufe": [
+   "A: Grundlage rendern mit Bestand, eine Kamera Sued (schnelle Vorschau)",
+   "B: dieselbe Szene ohne Bestand (Ebene Bestand aus)"
+  ],
+  "neue_ki_laeufe": 2,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Zwei kurze Laeufe mit Vorschau-Guete. RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit der Kontextmaske (Strang var, Video-Befund L4-5); die Zentrale sagt den Stand an; erst danach git pull und den Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS IST: nichts am Bild und nichts an der Pruefung (die Bauwerksmaske ist unveraendert). Neu legt der Abholer je Kamera, in deren Material-ID-Pass Kontext steht (Material «Bestand» bzw. Knoten mit extras.role existing, IfcGeographicElement/IfcCivilElement, Splat), die Datei <kamera>__kontext_maske.png (8 Bit, weiss = Kontext) in den Ausgabeordner und schreibt am Kameraurteil im Befund das Feld kontext_maske {n_bildpunkte, n_kontext, anteil, quellen {splat, umfeld, bestand}, namen, allein, datei}. Ohne Kontext steht allein: true und es gibt keine Datei. Neu ist ausserdem varianten.deckung (Kanten-IoU KI-Bild gegen Grundbild, Schwelle 0,30 gesetzt) — nur als Funktion, noch nicht im Lauf. WAS ZU TUN IST, in dieser Reihenfolge: (1) In KosmoOrbit oder der Visbox-Knotenansicht das Demohaus laden, zwei Volumen im Programm «Bestand» neben das Haus stellen (siehe geometrie.hinweis), einen Render-Knoten mit einer Kamera Sued, Guete Vorschau. (2) Lauf A: «Grundlage rendern», dann «Variante erzeugen». (3) Lauf B: dieselbe Szene, die Ebene «Bestand» ausgeblendet (bzw. die Volumen entfernt), wieder Grundlage und Variante. (4) Je Lauf aus dem Befund (befund.json) der Kamera lesen: kontext_maske (ganz), maskenbefund.anteil_bauwerk, maskenbefund.bauwerk_namen, rho_maske und geom_iou. (5) Die Kontextmaske von Lauf A neben das Cycles-Bild legen und per Auge pruefen: weiss genau auf den beiden Bestandsquadern, schwarz auf Haus, Boden und Himmel. (6) Rechnen: Anteil der Bestands-Bildpunkte an den Bauwerks-Bildpunkten von Lauf A (= kontext_maske.quellen.bestand / (maskenbefund.anteil_bauwerk * n_bildpunkte)). NICHT: nichts am Code aendern (ein Fehler kommt als Befund zurueck); keine Schwelle verstellen; keine weiteren Laeufe als A und B; keine Dateien aus dem Ausgabeordner ins Repo; keine Pfade, Hosts oder Namen in die Rueckgabe ausser den Bauteil- und Materialnamen aus dem Befund.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Abholer neu gestartet ja/nein, Zeitpunkt.",
+  "A: kontext_maske ganz (ohne Bildpunkte), anteil_bauwerk, bauwerk_namen, rho_maske, geom_iou; Datei vorhanden ja/nein; Sichtpruefung: deckt der weisse Teil genau die Bestandsquader ja/nein, falls nein wo nicht.",
+  "B: dieselben Felder; erwartet kontext_maske.allein true und keine Datei.",
+  "Rechnung (6): Anteil Bestand an der Bauwerksmaske in Lauf A, in Prozent; dazu, ob Bestandsnamen unter bauwerk_namen stehen.",
+  "Einschaetzung in einem Satz: Soll der Bestand aus der Bauwerksmaske fallen (ja/nein/unklar), mit dem Grund aus den Zahlen.",
+  "EINBAU: Belegt, dass die Kontextmaske am Heim-PC je Kamera entsteht und den Bestand trifft (Einbau-Stand Strang var bestaetigt) — und liefert die Zahl, mit der entschieden wird, ob der Bestand aus der Bauwerksmaske faellt und ob die Kontextmaske als Eingang ins Bildmodell geht."
+ ]
+}

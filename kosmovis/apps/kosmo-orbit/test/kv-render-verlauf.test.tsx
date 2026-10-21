@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { evaluiereGraph, type Sheet, type VisGraph } from '@kosmo/kernel';
 import { basisNodeHoehe, groessteNodeHoehe, NodeCanvas, RENDER_ZEILEN, VERLAUF_ZEILE_H, VERLAUF_ZU_H, zeilenHoehe } from '../src/modules/vis/NodeCanvas';
 import {
+  HAUS_ANTEIL_VORBEHALT,
+  hausAnteilText,
   laufGrund,
   laufUrteil,
   treueText,
@@ -254,7 +256,8 @@ describe('Verlauf am Render-Knoten — die Reihe am Knoten', () => {
     expect(qa('button', reihe).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
     klick(daumen()[2]!);
     expect(qa('button', gross()!).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
-    expect(qa('button', gross()!).map((b) => b.getAttribute('aria-label'))).toEqual(['Vorheriger Lauf', 'Nächster Lauf', 'Schliessen']);
+    // L4-14 A: dazu «Prüfung ▸» (klappt die Werte auf) — auch er loescht nichts.
+    expect(qa('button', gross()!).map((b) => b.getAttribute('aria-label'))).toEqual(['Prüfung aufklappen', 'Vorheriger Lauf', 'Nächster Lauf', 'Schliessen']);
     expect(useVisRuntime.getState().verlauf[nodeId]!.map((l) => l.jobId)).toEqual(['job-2', 'job-1']);
   });
 
@@ -652,5 +655,54 @@ describe('kv-verlauf-einklappbar — Owner-Entscheid 101a: der Verlauf ist einkl
     expect(block).toContain(`height: ${VERLAUF_ZU_H}px;`);
     expect(block).toContain('grid-template-rows: 14px;');
     expect(2 + 14).toBe(VERLAUF_ZU_H);
+  });
+});
+
+describe('C18 (Blatt «Hausanteil», Video-Befund L4-2) — das Haus an Grundlage und KI-Bild', () => {
+  // Der Fall aus dem Video, wie der Heim-PC ihn liefert (Wortlaut seit Visbox-Kern L4-2).
+  const VIDEO: JobQa = {
+    verdict: {
+      passed: false,
+      reason:
+        "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 2.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %) — KI-Bild weicht von der Geometrie ab: es ordnet die Tiefe anders als das Modell (Rangkorrelation +0.50, erwartet negativ); 0.0 ist der bei null abgeschnittene Wert, kein Messfehler",
+    },
+    geometry: { geometry_fidelity: 0, threshold: 0.65, passed: false, method: 'm' },
+    haus_anteil_grundlage: 0.029,
+    haus_anteil_bild: 0.17,
+  };
+
+  it('Rechnung: beide Zahlen nebeneinander, «anders» nach der Regel des Heim-PCs', () => {
+    expect(hausAnteilText(VIDEO)).toEqual({ text: 'Grundlage 2,9 % · KI-Bild ≈ 17,0 %', anders: true });
+    expect(hausAnteilText({ verdict: { passed: true }, haus_anteil_grundlage: 0.31, haus_anteil_bild: 0.33 }))
+      .toEqual({ text: 'Grundlage 31,0 % · KI-Bild ≈ 33,0 %', anders: false });
+    // Doppelt, aber unter 5 Punkten: noch keine Marke.
+    expect(hausAnteilText({ verdict: { passed: true }, haus_anteil_grundlage: 0.01, haus_anteil_bild: 0.025 })!.anders)
+      .toBe(false);
+    expect(hausAnteilText({ verdict: { passed: true }, haus_anteil_grundlage: 0.029 }))
+      .toEqual({ text: 'Grundlage 2,9 % · KI-Bild nicht gemessen', anders: false });
+    expect(hausAnteilText({ verdict: { passed: true } })).toBeUndefined();
+    expect(hausAnteilText(undefined)).toBeUndefined();
+  });
+
+  it('gross: Zeile «Haus im Bild» mit Marke und Vorbehalt; der Grund sagt, was die 0.0 misst', () => {
+    montiere();
+    laeufe(fertig(1, { qa: VIDEO }), fertig(2));
+    klick(daumen()[1]!);
+    expect(q('[data-testid="render-verlauf-gross-hausanteil"]')!.textContent).toBe(
+      'Grundlage 2,9 % · KI-Bild ≈ 17,0 %Ausschnitt anders',
+    );
+    expect(q('[data-testid="render-verlauf-gross-ausschnitt"]')).not.toBeNull();
+    expect(q('[data-testid="render-verlauf-gross-hausanteil-vorbehalt"]')!.textContent).toBe(HAUS_ANTEIL_VORBEHALT);
+    expect(q('[data-testid="render-verlauf-gross-grund"]')!.textContent).toContain('KI-Bild weicht von der Geometrie ab');
+    expect(q('[data-testid="render-verlauf-gross-treue"]')!.textContent).toBe('nicht anwendbar — siehe Grund');
+  });
+
+  it('ohne die Felder (älterer Heim-PC): keine Zeile, kein Vorbehalt — wie bisher', () => {
+    montiere();
+    laeufe(fertig(1), fertig(2));
+    klick(daumen()[0]!);
+    expect(gross()).not.toBeNull();
+    expect(q('[data-testid="render-verlauf-gross-hausanteil"]')).toBeNull();
+    expect(q('[data-testid="render-verlauf-gross-hausanteil-vorbehalt"]')).toBeNull();
   });
 });

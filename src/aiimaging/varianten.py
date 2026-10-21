@@ -541,3 +541,79 @@ def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
     # unwahrscheinlich sind wie der beobachtete.
     return min(1.0, sum(genau(k) for k in range(n + 1)
                         if genau(k) <= beobachtet * (1 + 1e-12)))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════════════
+# DECKUNGSGLEICH — gleiche Grundlage UND gleiche Form (Video-Befund L4-1, 21.10.2026)
+# ═══════════════════════════════════════════════════════════════════════════════════════
+#
+# WARUM: «Deckungsgleich» hiess bis hierher nur «gleiche Grundlage» (Tiefe, Pose, Startwert,
+# Nr. 85). Das KI-Bild kann darauf trotzdem eine andere Form malen — und zwei Varianten, die
+# nebeneinander stehen, sehen dann aus wie ein Vergleich, der keiner ist. Abgestimmt mit der
+# HomeStation: deckungsgleich heisst gleiche Grundlage UND Kanten-IoU des KI-Bilds gegen das
+# Grundbild über einer Schwelle; darunter «gleiche Grundlage, Form weicht ab», mit Warnung.
+
+#: **GESETZT, NICHT GEMESSEN** (bis auf-20261021-312 zurück ist). Herleitung aus vorhandenen
+#: Zahlen: Kanten-IoU zwischen Varianten derselben Grundlage lag in auf-20261020-289 bei
+#: 0,21–0,42, ``geom_iou`` bei 0,12–0,70; in auf-20261021-309 hielten die Bilder mit gutem
+#: Umriss ``geom_iou`` 0,71–0,88. Die Kanten-IoU ist strenger als die Flächen-IoU (eine um
+#: einen Bildpunkt versetzte Kante zählt als zwei Fehler). 0,30 legt die Grenze in das
+#: untere Drittel der in 289 beobachteten Spanne: was darunter liegt, hat erkennbar andere
+#: Kanten. Eine Setzung — sie wandert mit in jedes Ergebnis.
+DECKUNG_KANTEN_IOU_SCHWELLE = 0.30
+DECKUNG_HERKUNFT = "gesetzt, nicht gemessen (bis auf-20261021-312)"
+
+DECKUNGSGLEICH = "deckungsgleich"
+FORM_WEICHT_AB = "form_weicht_ab"
+ANDERE_GRUNDLAGE = "andere_grundlage"
+DECKUNG_UNGEMESSEN = "ungemessen"
+
+DECKUNG_SATZ = {
+    DECKUNGSGLEICH: "deckungsgleich — gleiche Grundlage, gleiche Form",
+    FORM_WEICHT_AB: "gleiche Grundlage, Form weicht ab",
+    ANDERE_GRUNDLAGE: "andere Grundlage — nicht deckungsgleich",
+    DECKUNG_UNGEMESSEN: "gleiche Grundlage, Form nicht gemessen",
+}
+
+
+def deckung(gleiche_grundlage: bool, kanten_iou_grundlage: float | None, *,
+            schwelle: float = DECKUNG_KANTEN_IOU_SCHWELLE) -> dict:
+    """Ist ein KI-Bild mit seiner Grundlage deckungsgleich?
+
+    Args:
+        gleiche_grundlage: Steht das Bild auf derselben Grundlage (Tiefe, Pose, Startwert)?
+        kanten_iou_grundlage: Kanten-IoU des KI-Bilds gegen das Grundbild
+            (:func:`aiimaging.farbabgleich.kanten_iou`); ``None`` = nicht gemessen.
+
+    Returns:
+        ``{urteil, satz, warnung, kanten_iou, schwelle, herkunft}``. ``warnung`` ist wahr bei
+        «Form weicht ab». Ohne Messung heisst es nie «deckungsgleich» — nur «nicht gemessen».
+    """
+    if not 0.0 <= float(schwelle) <= 1.0:
+        raise ValueError(f"Schwelle {schwelle!r} liegt nicht in 0..1.")
+    if not gleiche_grundlage:
+        urteil = ANDERE_GRUNDLAGE
+    elif kanten_iou_grundlage is None:
+        urteil = DECKUNG_UNGEMESSEN
+    elif float(kanten_iou_grundlage) >= schwelle:
+        urteil = DECKUNGSGLEICH
+    else:
+        urteil = FORM_WEICHT_AB
+    return {"urteil": urteil, "satz": DECKUNG_SATZ[urteil], "warnung": urteil == FORM_WEICHT_AB,
+            "kanten_iou": None if kanten_iou_grundlage is None else round(float(kanten_iou_grundlage), 4),
+            "schwelle": schwelle, "herkunft": DECKUNG_HERKUNFT}
+
+
+def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *,
+                        schwelle: float = DECKUNG_KANTEN_IOU_SCHWELLE) -> dict:
+    """Wie :func:`deckung`, aus den beiden Bilddateien. Ungleiche Masse = nicht gemessen (mit Grund)."""
+    from pathlib import Path  # noqa: PLC0415
+    from . import bildlesen, farbabgleich  # noqa: PLC0415
+    if not grundbild_png or not Path(grundbild_png).is_file():
+        return dict(deckung(gleiche_grundlage, None, schwelle=schwelle), grund="kein Grundbild")
+    a, ba, ha = bildlesen.lies_png_farben(ki_png)
+    b, bb, hb = bildlesen.lies_png_farben(grundbild_png)
+    if (ba, ha) != (bb, hb):
+        return dict(deckung(gleiche_grundlage, None, schwelle=schwelle),
+                    grund=f"KI-Bild {ba}x{ha}, Grundbild {bb}x{hb}: ungleiche Masse")
+    return deckung(gleiche_grundlage, farbabgleich.kanten_iou(a, b, ba, ha), schwelle=schwelle)

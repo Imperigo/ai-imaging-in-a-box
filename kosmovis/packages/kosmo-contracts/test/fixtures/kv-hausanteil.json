@@ -1,0 +1,116 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Stand c9bba49, 21.10.2026): lies_szene -> abholer.angewandt_der_szene -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, mit synthetischen Kameraurteilen (Zahlen gesetzt wie im Video-Befund L4-2: Grundlage 2,9 %, KI-Bild 17 %, Score 0.0 aus Rangkorrelation +0.5047 bei Disparitaet). 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde.",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "s",
+        "nNW"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "s.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.0,
+        "spearman": 0.5047,
+        "geom_iou": 0.197,
+        "threshold": 0.65,
+        "passed": false,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": false,
+        "reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 2.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.0 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %) — KI-Bild weicht von der Geometrie ab: es ordnet die Tiefe anders als das Modell (Rangkorrelation +0.50, erwartet negativ); 0.0 ist der bei null abgeschnittene Wert, kein Messfehler; Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)",
+        "hinweise": [
+          "KI-BILD RAHMT ANDERS: Im KI-Bild der Kamera 's' fuellt das Haus geschaetzt 17.0 %, in der Grundlage 2.9 % — die KI hat den Ausschnitt naeher gewaehlt als bestellt. Zahlen zur Grundlage (Hausanteil, Geometrie) sprechen ueber die Grundlage, nicht ueber dieses Bild. Der Wert am KI-Bild ist aus der Tiefe geschaetzt, nicht gezaehlt."
+        ]
+      },
+      "haus_anteil_grundlage": 0.029,
+      "haus_anteil_bild": 0.17
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "s",
+        "geometry": {
+          "geometry_fidelity": 0.0,
+          "spearman": 0.5047,
+          "geom_iou": 0.197,
+          "threshold": 0.65,
+          "passed": false,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "haus_anteil_grundlage": 0.029,
+        "haus_anteil_bild": 0.17,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": 0.72,
+          "spearman": -0.85,
+          "geom_iou": 0.61,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "haus_anteil_grundlage": 0.31,
+        "haus_anteil_bild": 0.33,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "angewandt": {
+      "cameras_auto": {
+        "richtungen": [
+          "s",
+          "nNW"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 35.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.7
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m",
+          "brennweite_mm",
+          "abstand",
+          "perspektive"
+        ]
+      }
+    }
+  }
+}

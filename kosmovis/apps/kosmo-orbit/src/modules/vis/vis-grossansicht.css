@@ -1,0 +1,159 @@
+/* ════════════════════════════════════════════════════════════════════
+   Grossansicht und Vergleich (Visbox-Video-Befunde L4-14/L4-15, Blatt «Grossansicht und Vergleich»; Rechnung und
+   Begruendung in `grossansicht.ts`). Eigene Datei, damit die Regeln der grossen Ansicht nicht mit denen von Kamera,
+   Stimmung und Varianten in `vis-visual.css` zusammenstossen. Nur Tokens, keine rohen Masse ausser den Breiten, die
+   das Blatt nennt.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* A: so breit, wie das Fenster erlaubt; das Bild nimmt die ganze Breite und fast die ganze Hoehe. */
+.k-dialog-box.vis-verlauf-gross.vis-gross {
+  width: min(1600px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+}
+.vis-gross .vis-verlauf-gross-kopf {
+  gap: var(--k-s3);
+  flex-wrap: wrap;
+}
+.vis-gross .vis-verlauf-gross-inhalt {
+  display: block;
+  position: relative;
+}
+.vis-gross .vis-verlauf-gross-bild {
+  height: max(240px, calc(100vh - 140px));
+}
+/* Die Pruefung liegt UEBER dem rechten Bildrand — eingeklappt nimmt sie keinen Platz. */
+.vis-gross .vis-verlauf-gross-seite {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(300px, 80%);
+  background: var(--k-surface);
+  border-left: 1px solid var(--k-line);
+  box-shadow: var(--k-shadow-overlay);
+}
+.vis-gross[data-pruefung='offen'] .vis-verlauf-gross-seite {
+  display: flex;
+}
+/* Das Urteil im Kopf, solange die Pruefung zu ist — dieselbe Pille, kleiner. */
+.vis-gross-kopf-urteil.vis-verlauf-urteil {
+  align-self: center;
+  padding: 0 var(--k-s3);
+  font-size: var(--k-t-sm);
+}
+.vis-gross-pruefung.vis-verlauf-gross-knopf {
+  width: auto;
+  padding: 0 var(--k-s3);
+  font-size: var(--k-t-sm);
+}
+.vis-gross-pruefung[aria-expanded='true'] {
+  border-color: var(--k-accent);
+}
+.vis-gross-schalter {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+}
+
+/* C: die Laeufe einer Grundlage nebeneinander, gleich gross. */
+.vis-gross-reihe {
+  display: grid;
+  grid-template-columns: repeat(var(--_n, 2), minmax(0, 1fr));
+  gap: var(--k-s3);
+  height: max(240px, calc(100vh - 140px));
+  padding: var(--k-s3);
+  box-sizing: border-box;
+  background: var(--k-field);
+}
+.vis-gross-reihe-zelle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s2);
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+.vis-gross-reihe-bild {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.vis-gross-reihe-bild:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-gross-reihe-zelle--gezeigt .vis-gross-reihe-bild {
+  outline: 2px solid var(--k-accent);
+  outline-offset: -2px;
+}
+.vis-gross-reihe-img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.vis-gross-reihe-text {
+  display: flex;
+  gap: var(--k-s2);
+  align-items: center;
+  font-size: var(--k-t-sm);
+  color: var(--k-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* A fuer Bildpaar (117a) und Varianten gross: das Bild hoechstens so hoch wie das Fenster. */
+.vis-gross-bild-hoch .vis-img-full {
+  max-height: calc(100vh - 220px);
+  object-fit: contain;
+}
+
+/* C: am Knoten der Strich vor dem ersten Daumen einer neuen Grundlage — in der Luecke des Rasters, ohne Platz. */
+.vis-verlauf-knopf.vis-verlauf-knopf--neue-grundlage {
+  position: relative;
+}
+.vis-verlauf-knopf--neue-grundlage::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--k-s2) / 2 - 1px);
+  width: 2px;
+  background: var(--k-line-strong);
+  pointer-events: none;
+}
+.vis-gross-bild-block {
+  display: block;
+}
+.vis-bildpaar-schalter {
+  margin: 0 0 var(--k-s3) var(--k-s4);
+}
+/* Das Bild fuellt die Flaeche: ein kleineres Bild (Vorschau, Attrappe) wird eingepasst statt klein in der Mitte zu stehen. */
+.vis-gross .vis-verlauf-gross-img,
+.vis-gross-reihe-img {
+  width: 100%;
+  height: 100%;
+}
+/* L4-1: die Marke ueber der Reihe — liegt oben links im Bildfeld, nimmt keine Zeile. */
+.vis-gross-reihe {
+  position: relative;
+}
+.vis-gross-deckung {
+  position: absolute;
+  top: var(--k-s2);
+  left: var(--k-s3);
+  z-index: 1;
+  padding: var(--k-s1) var(--k-s2);
+  border: 1px dashed var(--k-ink-soft);
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+  color: var(--k-ink-soft);
+  font-size: var(--k-t-xs);
+}

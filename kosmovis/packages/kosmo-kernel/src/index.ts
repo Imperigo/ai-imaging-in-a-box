@@ -24,6 +24,8 @@ export * from './derive/kamera';
 export * from './derive/kamera-aus-3d';
 export * from './derive/varianten';
 export * from './derive/ebenen';
+// Video-Befund L4-5 (21.10.2026): die Bestand-Marke (wörtlich da) für den Kontext-Hinweis beim Bestellen.
+export * from './derive/bestand-marke';
 export * from './derive/render-presets';
 export * from './ifc/export';
 export * from './fundstelle';

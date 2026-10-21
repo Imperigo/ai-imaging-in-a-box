@@ -8,6 +8,7 @@ import {
   kameraQaText,
   kameraQaZeilen,
   kartenId,
+  karteSchluessel,
   kurzKennung,
   LIZENZ_MELDUNG_MS,
   LIZENZ_OFFEN_LABEL,
@@ -61,7 +62,7 @@ export function KuratierFlaeche({
 
   const idVon = useMemo(() => {
     const m = new Map<string, string>();
-    karten.forEach((k, i) => m.set(k.node.id, kartenId(k.node.typ, i)));
+    karten.forEach((k, i) => m.set(karteSchluessel(k), kartenId(k.node.typ, i)));
     return m;
   }, [karten]);
 
@@ -81,13 +82,13 @@ export function KuratierFlaeche({
   // die gewählte Karte (Filter/Verwerfen/neuer Graph), springt sie auf die
   // erste sichtbare Karte statt leerzulaufen.
   useEffect(() => {
-    if (auswahl && karten.some((k) => k.node.id === auswahl)) return;
-    setAuswahl(sichtbar[0]?.node.id ?? karten[0]?.node.id ?? null);
+    if (auswahl && karten.some((k) => karteSchluessel(k) === auswahl)) return;
+    setAuswahl((sichtbar[0] ? karteSchluessel(sichtbar[0]) : undefined) ?? (karten[0] ? karteSchluessel(karten[0]) : undefined) ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [karten, filter]);
 
-  const ausgewaehlteKarte = karten.find((k) => k.node.id === auswahl) ?? null;
-  const vergleichKarten = karten.filter((k) => vergleichAuswahl.includes(k.node.id));
+  const ausgewaehlteKarte = karten.find((k) => karteSchluessel(k) === auswahl) ?? null;
+  const vergleichKarten = karten.filter((k) => vergleichAuswahl.includes(karteSchluessel(k)));
 
   // Zwei angehakte Karten zeigen die Vergleichsfläche AUTOMATISCH (bestehender
   // Vertrag `vis-oberflaeche.spec.ts`: die Checkbox allein genügt, kein Klick
@@ -146,8 +147,8 @@ export function KuratierFlaeche({
       aus.push({ id: n.id, label: `Bild-Referenz ${kurzKennung(n.id)}`, quelle: { dataUrl: url } });
     }
     for (const k of karten) {
-      if (k.node.id === ausgewaehlteKarte?.node.id) continue;
-      aus.push({ id: k.node.id, label: `Variante ${idVon.get(k.node.id) ?? kurzKennung(k.node.id)}`, quelle: k.quelle });
+      if (karteSchluessel(k) === (ausgewaehlteKarte ? karteSchluessel(ausgewaehlteKarte) : undefined)) continue;
+      aus.push({ id: karteSchluessel(k), label: `Variante ${idVon.get(karteSchluessel(k)) ?? kurzKennung(karteSchluessel(k))}`, quelle: k.quelle });
     }
     return aus;
   }, [graph.nodes, karten, ausgewaehlteKarte, idVon]);
@@ -247,16 +248,16 @@ export function KuratierFlaeche({
                     <div className="vis-kuratier-raster">
                       {hauptKarten.map((k) => (
                         <RasterKarte
-                          key={k.node.id}
+                          key={karteSchluessel(k)}
                           karte={k}
-                          id={idVon.get(k.node.id) ?? '—'}
-                          ausgewaehlt={auswahl === k.node.id}
-                          imVergleich={vergleichAuswahl.includes(k.node.id)}
-                          onWahl={() => setAuswahl(k.node.id)}
-                          onMarkieren={() => onMarkieren(k.node.id)}
-                          onVerwerfen={() => onVerwerfen(k.node.id)}
-                          onVergleichWahl={() => onVergleichWahl(k.node.id)}
-                          onInsProjekt={() => void insProjekt(k, `Variante ${idVon.get(k.node.id) ?? ''}`)}
+                          id={idVon.get(karteSchluessel(k)) ?? '—'}
+                          ausgewaehlt={auswahl === karteSchluessel(k)}
+                          imVergleich={vergleichAuswahl.includes(karteSchluessel(k))}
+                          onWahl={() => setAuswahl(karteSchluessel(k))}
+                          onMarkieren={() => onMarkieren(karteSchluessel(k))}
+                          onVerwerfen={() => onVerwerfen(karteSchluessel(k))}
+                          onVergleichWahl={() => onVergleichWahl(karteSchluessel(k))}
+                          onInsProjekt={() => void insProjekt(k, `Variante ${idVon.get(karteSchluessel(k)) ?? ''}`)}
                         />
                       ))}
                     </div>
@@ -267,16 +268,16 @@ export function KuratierFlaeche({
                       <div data-testid="vis-kuratier-ablage" className="vis-kuratier-raster">
                         {ablage.map((k) => (
                           <RasterKarte
-                            key={k.node.id}
+                            key={karteSchluessel(k)}
                             karte={k}
-                            id={idVon.get(k.node.id) ?? '—'}
-                            ausgewaehlt={auswahl === k.node.id}
-                            imVergleich={vergleichAuswahl.includes(k.node.id)}
-                            onWahl={() => setAuswahl(k.node.id)}
-                            onMarkieren={() => onMarkieren(k.node.id)}
-                            onVerwerfen={() => onVerwerfen(k.node.id)}
-                            onVergleichWahl={() => onVergleichWahl(k.node.id)}
-                            onInsProjekt={() => void insProjekt(k, `Variante ${idVon.get(k.node.id) ?? ''}`)}
+                            id={idVon.get(karteSchluessel(k)) ?? '—'}
+                            ausgewaehlt={auswahl === karteSchluessel(k)}
+                            imVergleich={vergleichAuswahl.includes(karteSchluessel(k))}
+                            onWahl={() => setAuswahl(karteSchluessel(k))}
+                            onMarkieren={() => onMarkieren(karteSchluessel(k))}
+                            onVerwerfen={() => onVerwerfen(karteSchluessel(k))}
+                            onVergleichWahl={() => onVergleichWahl(karteSchluessel(k))}
+                            onInsProjekt={() => void insProjekt(k, `Variante ${idVon.get(karteSchluessel(k)) ?? ''}`)}
                           />
                         ))}
                       </div>
@@ -288,10 +289,10 @@ export function KuratierFlaeche({
               <VergleichAnsicht
                 a={vergleichKarten[0]!}
                 b={vergleichKarten[1]!}
-                idA={idVon.get(vergleichKarten[0]!.node.id) ?? 'A'}
-                idB={idVon.get(vergleichKarten[1]!.node.id) ?? 'B'}
-                onABehalten={() => onVerwerfen(vergleichKarten[1]!.node.id)}
-                onBInsProjekt={() => void insProjekt(vergleichKarten[1]!, `Variante ${idVon.get(vergleichKarten[1]!.node.id) ?? ''}`)}
+                idA={idVon.get(karteSchluessel(vergleichKarten[0]!)) ?? 'A'}
+                idB={idVon.get(karteSchluessel(vergleichKarten[1]!)) ?? 'B'}
+                onABehalten={() => onVerwerfen(karteSchluessel(vergleichKarten[1]!))}
+                onBInsProjekt={() => void insProjekt(vergleichKarten[1]!, `Variante ${idVon.get(karteSchluessel(vergleichKarten[1]!)) ?? ''}`)}
               />
             ) : (
               <div className="vis-kuratier-leerzustand">
@@ -306,12 +307,12 @@ export function KuratierFlaeche({
         <KuratierInspektor
           graph={graph}
           karte={ausgewaehlteKarte}
-          id={ausgewaehlteKarte ? (idVon.get(ausgewaehlteKarte.node.id) ?? '—') : '—'}
-          onMarkieren={() => ausgewaehlteKarte && onMarkieren(ausgewaehlteKarte.node.id)}
-          onVerwerfen={() => ausgewaehlteKarte && onVerwerfen(ausgewaehlteKarte.node.id)}
+          id={ausgewaehlteKarte ? (idVon.get(karteSchluessel(ausgewaehlteKarte)) ?? '—') : '—'}
+          onMarkieren={() => ausgewaehlteKarte && onMarkieren(karteSchluessel(ausgewaehlteKarte))}
+          onVerwerfen={() => ausgewaehlteKarte && onVerwerfen(karteSchluessel(ausgewaehlteKarte))}
           onInsProjekt={() =>
             ausgewaehlteKarte &&
-            void insProjekt(ausgewaehlteKarte, `Variante ${idVon.get(ausgewaehlteKarte.node.id) ?? ''}`)
+            void insProjekt(ausgewaehlteKarte, `Variante ${idVon.get(karteSchluessel(ausgewaehlteKarte)) ?? ''}`)
           }
           vorbilder={vorbilder}
         />
@@ -505,7 +506,8 @@ function RasterKarte({
       <div className="vis-raster-karte-fuss">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           <span className="vis-raster-karte-meta">
-            {kennung} · {merkmale.szene !== '—' ? merkmale.szene : merkmale.stimmung}
+            {kennung}
+            {karte.laufNummer !== undefined ? ` · Lauf ${karte.laufNummer}` : ''} · {merkmale.szene !== '—' ? merkmale.szene : merkmale.stimmung}
           </span>
           <KameraQaBadges zeilen={kameraZeilen} />
         </div>
@@ -625,7 +627,7 @@ function VergleichAnsicht({
   const bildKarte = (k: KuratierKartenDaten, label: 'A' | 'B', id: string) => {
     return (
       <div
-        key={k.node.id}
+        key={karteSchluessel(k)}
         className={`vis-vergleich-karte vis-vergleich-karte--${label.toLowerCase()}`}
       >
         {'dataUrl' in k.quelle ? (
