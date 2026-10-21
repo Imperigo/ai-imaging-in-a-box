@@ -2485,6 +2485,25 @@ Grafikkarte zeichnet alle Lagen auf einmal. *Im Projekt seit dem 21.10.2026:* Bl
 die 3D-Vorschau lesen solche Dateien; die Hüllbox des Heim-PC (`glbbox`) zählt seither alle Lagen
 mit, statt nur den einen Stein zu sehen.
 
+**Ausrollen (von Instanzen)** — Was Blender beim Einlesen einer glb mit Instanzen tut: Aus jeder Lage des
+einen Steins wird ein eigenes Objekt, alle teilen sich dieselbe Form (ein *geteiltes Mesh*). Die Datei bleibt klein,
+in Blender aber stehen dann zwanzigtausend Objekte. *Im Projekt:* an der Steine-Probe gemessen (auf-20261021-316) —
+19 600 Objekte, rund 31 s Blender und 2,4 GB je Kamera.
+
+**Geteiltes Mesh** — Mehrere Objekte zeigen auf dieselbe Form, wie mehrere Kopien eines Bauteils, die alle denselben
+Plan benutzen. Wer am Plan etwas ändert, ändert es an allen Kopien. *Im Projekt der Grund für die verketteten
+Material-Namen:* Die Kennung wurde am Plan getauscht, und die nächste Kopie las schon den getauschten Namen. Seither wird
+zuerst geplant und erst dann getauscht (`aiimaging.material_id`).
+
+**Kennfarbe (im Material-ID-Pass)** — Die Farbe, an der man im Material-ID-Bild ein Material erkennt; dazu gehört ein
+Name in der Tabelle des Laufs. Jede Kennfarbe darf nur einmal vorkommen, sonst lässt sich nicht mehr sagen, welches
+Material ein Bildpunkt zeigt. *Im Projekt:* seit dem 21.10.2026 überspringt die Planung eine schon vergebene Farbe.
+
+**Rolle am Knoten (`extras.role`)** — Ein Zusatzfeld an einem Teil der Modelldatei, das sagt, was dieses Teil *ist*,
+unabhängig von seinem Namen: `"existing"` für Bestand, `"ground"` für Boden oder Gelände. *Wozu:* Namen tragen das
+nicht verlässlich — «boden» kann ein Geschossboden sein. Die Rolle sagt es eindeutig. *Im Projekt:* gelesen von
+`kosmo_szene.bestand_in_glb` und `kosmo_szene.gelaende_in_glb`; ein Teil mit Rolle `ground` zählt nicht zum Bauwerk.
+
 **Fassungszeile (in `visbox_status`)** — Die Zeile mit der Nummer der laufenden Mac-App (etwa 0.3.21), wie sie in
 ihrer Info-Datei steht. Seit dem 21.10.2026 nennt die Statusantwort an Claude sie in einer
 eigenen Zeile, damit im Gespräch klar ist, welche App antwortet.
@@ -8767,6 +8786,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §209): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
 | 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §208): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |
 | 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |

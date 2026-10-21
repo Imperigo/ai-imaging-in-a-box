@@ -610,8 +610,16 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                   gelaende_muster: Sequence[str] = GELAENDE_MUSTER,
                   gelaende_erwartet: bool = True,
                   gelaende_zusatz: Sequence[str] = (),
-                  bestand_namen: Sequence[str] = ()) -> dict:
+                  bestand_namen: Sequence[str] = (),
+                  gelaende_rolle: Sequence[str] = ()) -> dict:
     """Farben eines Material-ID-Passes + Tabelle → Bauwerksmaske. Ohne Dateizugriff.
+
+    **Die Rolle am Knoten zählt vor jedem Namen** (auf-20261021-316, B3): ``gelaende_rolle``
+    nennt Knoten- und Materialnamen, die die glb selbst als Boden ausweist
+    (``extras.role == "ground"``, gelesen von :func:`aiimaging.kosmo_szene.gelaende_in_glb`).
+    Ein solcher Eintrag ist Gelände, auch wenn er «boden» heisst — ein Wort, das die
+    Namensregel mit Grund nie aufnimmt (:data:`WOERTER_AUSDRUECKLICH_NICHT`). Verglichen wird
+    wie ein übertragener Name; ``gelaende_quelle`` sagt dann ``"rolle"`` bzw. ``"name+rolle"``.
 
     **Der Bestand zählt nicht als Bauwerk** (auf-20261021-313, B1): Ein Bestandskörper
     (Material «Bestand» oder ein Knoten aus ``bestand_namen``, :func:`ist_bestand`) machte in
@@ -732,6 +740,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     umfeld_namen: list[str] = []
     bestand_aus: list[str] = []
     zusatz_getroffen: list[str] = []
+    rolle_getroffen: list[str] = []
     warnungen: list[str] = []
 
     for stelle, eintrag in enumerate(tabelle):
@@ -753,11 +762,18 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # *Die Reihenfolge ist Absicht.* Erst die Namensregel, dann die Uebertragung —
         # die Uebertragung ueberstimmt nichts, sie ergaenzt eine Luecke. Derselbe
         # Unterschied wie auf der Boxseite: Zweitmeinung, nicht zweite Regel.
-        von_aussen = (not umfeld and not bestand and not ist_gelaende(name, gelaende_muster)
+        # DIE ROLLE AM KNOTEN (auf-20261021-316, B3): Die Datei sagt selbst, was Boden ist.
+        nach_rolle = (not umfeld and not bestand
+                      and deckt_uebertragenen_namen(name, gelaende_rolle))
+        von_aussen = (not umfeld and not bestand and not nach_rolle
+                      and not ist_gelaende(name, gelaende_muster)
                       and deckt_uebertragenen_namen(name, gelaende_zusatz))
-        gelaende = umfeld or bestand or ist_gelaende(name, gelaende_muster) or von_aussen
+        gelaende = (umfeld or bestand or nach_rolle or ist_gelaende(name, gelaende_muster)
+                    or von_aussen)
         if von_aussen:
             zusatz_getroffen.append(name)
+        if nach_rolle:
+            rolle_getroffen.append(name)
         if farbe == HINTERGRUND_FARBE:
             raise MaskeError(
                 f"material_id_tabelle[{stelle}] ('{name}') trägt die Hintergrundfarbe "
@@ -959,6 +975,14 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                 "False) — die Maske gilt unter dieser Erklärung und nicht aus eigener "
                 "Prüfung."
             )
+    elif not gelaende_erwartet and set(gelaende_namen) <= set(rolle_getroffen):
+        # DIE DATEI WEISS ES BESSER ALS DER SCHALTER: `--kein-gelaende` sagt «keiner da»,
+        # die glb weist einen Knoten als Boden aus. Kein Widerspruch zweier Angaben, sondern
+        # eine Auskunft der Datei — sie gilt, und das steht hier.
+        warnungen.append(
+            f"Kein Gelände erwartet, aber die Datei weist {sorted(set(gelaende_namen))} "
+            f"selbst als Boden aus (extras.role 'ground') — diese Punkte sind aus der Maske "
+            f"genommen.")
     elif not gelaende_erwartet:
         warnungen.append(
             f"Der Aufrufer hat erklärt, diese Szene enthalte kein Gelände — die Regel "
@@ -1052,8 +1076,11 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # WOHER DAS GELAENDE STAMMT. `"name+form"` erst dann, wenn ein uebertragener
         # Name wirklich GEGRIFFEN hat — nicht schon, wenn eine Liste uebergeben wurde.
         # *Eine Herkunftsangabe, die eine Absicht meldet statt einer Wirkung, ist keine.*
-        "gelaende_quelle": "name+form" if zusatz_getroffen else "name",
+        "gelaende_quelle": _gelaende_quelle(gelaende_namen, zusatz_getroffen,
+                                            rolle_getroffen),
         "gelaende_von_aussen": tuple(dict.fromkeys(zusatz_getroffen)),
+        # WAS DIE DATEI SELBST ALS BODEN AUSWEIST (extras.role "ground", auf-20261021-316).
+        "gelaende_nach_rolle": tuple(dict.fromkeys(rolle_getroffen)),
         # WELCHE DER DREI LAGEN — und woran man das sieht. Bis zum 26.08.2026 bedeutete
         # `gelaende_erkannt: False` zweierlei: geprüft und nichts gefunden, oder gar
         # nichts zu prüfen gehabt. Auf Rückfrage der HomeStation (auf-47) getrennt.
@@ -1078,11 +1105,29 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     }
 
 
+def _gelaende_quelle(gelaende_namen, zusatz_getroffen, rolle_getroffen) -> str:
+    """``name`` | ``name+form`` | ``rolle`` | ``name+rolle`` (…``+form``) — nach Wirkung.
+
+    ``rolle`` allein, wenn JEDER Geländeeintrag über die Rolle kam; ``name+rolle``, wenn die
+    Namensregel daneben auch etwas fand. *Wie bei der Form: gemeldet wird, was gegriffen hat.*
+    """
+    rolle = set(rolle_getroffen)
+    teile = []
+    if not rolle or any(n not in rolle for n in gelaende_namen if n not in zusatz_getroffen):
+        teile.append("name")
+    if rolle:
+        teile.append("rolle")
+    if zusatz_getroffen:
+        teile.append("form")
+    return "+".join(teile)
+
+
 def bauwerksmaske_aus_lauf(material_id_png, report, *,
                            gelaende_zusatz: Sequence[str] = (),
                            gelaende_muster: Sequence[str] = GELAENDE_MUSTER,
                            gelaende_erwartet: bool = True,
-                           bestand_namen: Sequence[str] = ()) -> dict:
+                           bestand_namen: Sequence[str] = (),
+                           gelaende_rolle: Sequence[str] = ()) -> dict:
     """Wie :func:`bauwerksmaske`, aber von den beiden Dateien eines Blender-Laufs aus.
 
     Die dünne Schicht darüber — sie liest, sie deutet nicht. Dieselbe Trennung wie
@@ -1115,6 +1160,7 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
         farben, tabelle,
         gelaende_muster=gelaende_muster, gelaende_erwartet=gelaende_erwartet,
         gelaende_zusatz=gelaende_zusatz, bestand_namen=bestand_namen,
+        gelaende_rolle=gelaende_rolle,
     )
     ergebnis["breite"] = breite
     ergebnis["hoehe"] = hoehe
@@ -1185,7 +1231,8 @@ def umgebung_je_bildpunkt(bericht: dict) -> list[bool] | None:
 
 def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,
                       gelaende_zusatz: Sequence[str] = (),
-                      bestand_namen: Sequence[str] = ()) -> dict:
+                      bestand_namen: Sequence[str] = (),
+                      gelaende_rolle: Sequence[str] = ()) -> dict:
     """Die Bauwerksmaske aus dem Material-ID-Pass — oder eine benannte Lücke.
 
     **Warum ein Fehlschlag hier den Lauf nicht aufhält.** Die Maske ist die *zusätzliche*
@@ -1225,7 +1272,8 @@ def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,
     try:
         gebaut = bauwerksmaske_aus_lauf(
             png, bericht, gelaende_erwartet=gelaende_erwartet,
-            gelaende_zusatz=gelaende_zusatz, bestand_namen=bestand_namen)
+            gelaende_zusatz=gelaende_zusatz, bestand_namen=bestand_namen,
+            gelaende_rolle=gelaende_rolle)
     except Exception as fehler:        # noqa: BLE001 — siehe Docstring
         return {"maske": None, "gemessen": False, "grund": (
             f"Bauwerksmaske nicht baubar: {type(fehler).__name__}: {fehler}")}

@@ -126,7 +126,19 @@ def _spannen(lo, hi) -> tuple[float, float, float]:
             float(hi[2]) - float(lo[2]))
 
 
-def merkmale(knoten, alle, *, hoch: int = 1) -> dict:
+def _szenenbezug(alle, hoch: int):
+    """Unterkante, Oberkante und Spannen der Szene — einmal je Szene, nicht je Knoten.
+
+    Bis zum 21.10.2026 rechnete :func:`merkmale` sie für JEDEN Knoten neu. Bei 19 600
+    ausgerollten Backsteinen (auf-20261021-316) waren das rund 4·10⁸ Vergleiche für eine
+    Zahl, die für alle Knoten dieselbe ist. Die Ergebnisse bleiben Wort für Wort gleich.
+    """
+    lo_s = [min(float(k[1][i]) for k in alle) for i in range(3)]
+    hi_s = [max(float(k[2][i]) for k in alle) for i in range(3)]
+    return lo_s, hi_s
+
+
+def merkmale(knoten, alle, *, hoch: int = 1, _bezug=None) -> dict:
     """Die drei namensfreien Merkmale **eines** Knotens, relativ zur Szene.
 
     Args:
@@ -153,8 +165,7 @@ def merkmale(knoten, alle, *, hoch: int = 1) -> dict:
         raise GelaendeformError("Keine Knoten — über eine leere Szene sagt keine Form etwas.")
 
     achsen = [i for i in range(3) if i != hoch]
-    lo_s = [min(float(k[1][i]) for k in alle) for i in range(3)]
-    hi_s = [max(float(k[2][i]) for k in alle) for i in range(3)]
+    lo_s, hi_s = _bezug if _bezug is not None else _szenenbezug(alle, hoch)
     szene = _spannen(lo_s, hi_s)
 
     grund_szene = szene[achsen[0]] * szene[achsen[1]]
@@ -180,7 +191,7 @@ def merkmale(knoten, alle, *, hoch: int = 1) -> dict:
     }
 
 
-def urteil(knoten, alle, *, hoch: int = 1) -> dict:
+def urteil(knoten, alle, *, hoch: int = 1, _bezug=None) -> dict:
     """Ist dieser Körper Gelände, Bauwerk — oder nicht entscheidbar?
 
     Returns:
@@ -191,7 +202,7 @@ def urteil(knoten, alle, *, hoch: int = 1) -> dict:
     *Der Grund ist nicht Zierrat.* Eine Formaussage ohne Begründung ist von aussen nicht
     nachprüfbar, und der nächste, der sie liest, kann nur glauben oder verwerfen.
     """
-    m = merkmale(knoten, alle, hoch=hoch)
+    m = merkmale(knoten, alle, hoch=hoch, _bezug=_bezug)
     name = str(knoten[0])
 
     if m["grundrissanteil"] < GRUNDRISSANTEIL_MIN:
@@ -309,7 +320,8 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False) -> dict:
     die Zahl liest, soll sehen, wie viel die Form *nicht* entschieden hat — sonst sieht
     eine Regel, die bei der Hälfte passt, aus wie eine, die alles trifft.
     """
-    urteile = [urteil(k, alle, hoch=hoch) for k in alle]
+    bezug = _szenenbezug(alle, hoch) if alle else None
+    urteile = [urteil(k, alle, hoch=hoch, _bezug=bezug) for k in alle]
 
     # DIE FAMILIENPRUEFUNG, und sie ist VORGABE AUS.
     #
@@ -322,7 +334,8 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False) -> dict:
         for stamm, namen in familien(alle).items():
             if any(nach_name[n]["urteil"] == GELAENDE for n in namen if n in nach_name):
                 continue
-            u_familie = urteil(_familienbox(alle, set(namen)), alle, hoch=hoch)
+            u_familie = urteil(_familienbox(alle, set(namen)), alle, hoch=hoch,
+                               _bezug=bezug)
             if u_familie["urteil"] != GELAENDE:
                 continue
             for n in namen:
