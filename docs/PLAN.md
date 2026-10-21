@@ -8207,8 +8207,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)
   - [ ] Beobachten ohne Fix: Sichtbeton im KI-Bild nur teilweise (Holz-/Steinstreifen); Schlagschatten auf 1,7 m Augenhöhe kaum sichtbar (296 notiert)
   - [x] Material und Umriss im KI-Bild (Strang Treue, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`): Optionen a–e geprüft (Lizenz, VRAM, Aufwand, Risiko); gebaut als Messschalter, Vorgabe aus: `vis.umriss_halten` «nachher» (Maskenmischung) und «im_lauf» (Hintergrund im Fahrplan festgehalten), `vis.material_vorne` (Stoff vorne, dreimal) — gebaut, am Gerät ungemessen (§173, C101)
-  - [ ] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln
-  - [ ] Wahl nach 303 (owner, über die Zentrale): welcher Umriss-Weg und ob «Material vorne» Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
+  - [x] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln *(207c4f6: M2 bestes Bild — Sichtbeton, im Umriss, keine Naht; im_lauf allein Rundturm, nachher Collage; im_lauf 320 MiB unter der Kontrolle)*
+  - [x] Befunde aus 302/303 gebaut (Strang Kern, §182, C109): Sätze zum Umriss nach dem Halten, Fahrplan-Satz im Ergebnis, Stoff höchstens dreimal, `no_grad` im eigenen Start, leerer Gewichtsordner mit Satz, Journal «Im Prozess» nach der Vorprüfung; aus 306: Satz der Stimmung immer einmal englisch (B2), Himmelsgrösse aus der Grundlage (B4)
+  - [ ] Messung am Heim-PC: auf-20261021-309 (local) — M2 gegen K mit vier Startwerten, sSE/nNW, morgen/abend/bedeckt; Kontrollen K0/M2m/E2n; VRAM des Bildeingangs nach `no_grad`; Option Himmel als Auskunft; drei Tafeln
+  - [ ] Registerwert `vram_bildeingang_*` senken, wenn 309 die Spitze nach `no_grad` misst (wir)
+  - [ ] Messschalter «Himmel im Hintergrund» für im_lauf — nur, wenn 309 sagt, dass er die Bilder trägt (wir)
+  - [ ] Wahl nach 309 (owner, über die Zentrale, Frage stellt der Hauptstrang): ob M2 (material_vorne + im_lauf) Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
   - [ ] Kanten zusätzlich zur Tiefe (b) und Steuerstärke je Schritt (c) — zurückgestellt bis nach 303 (wir)
   - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
@@ -8222,10 +8226,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] D F2 Kamera: Auto mit Richtungen, Augenhöhe, Brennweite, Abstand, Perspektive; Kegel und Blick live aus `/knoten/standpunkte` (Wirt reicht die Parameter durch); «Manuell» friert ein, Werte tippen — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] E F4 Oberfläche, Material (Kugel/Würfel/Fläche), Farbpalette; Startgraph Material → Oberfläche → Kombinierer — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] Messung am Heim-PC: auf-20261021-306 (local) — Ergebnis `05641d3`: alles rechnet wie bestellt; Befunde B1 (jede Grundlage-Bestellung legt neu an), B2 (Satz der Stimmung halb übersetzt), B3 (Einfrieren verliert den Shift)
-  - [x] B1 und B3 behoben: gleicher Stand → bestehende Grundlage, kein neuer Auftrag; Einfrieren hebt das Ziel für denselben Shift — gebaut, am Gerät unbestätigt (§182)
-  - [x] W Vorschaubilder: sieben Himmel und elf Materialien in beiden Programmen, Prüfsummen in NOTICE, THIRD_PARTY_LICENSES und quellen.json (§182)
+  - [x] B1 und B3 behoben: gleicher Stand → bestehende Grundlage, kein neuer Auftrag; Einfrieren hebt das Ziel für denselben Shift — gebaut, am Gerät unbestätigt (§183)
+  - [x] W Vorschaubilder: sieben Himmel und elf Materialien in beiden Programmen, Prüfsummen in NOTICE, THIRD_PARTY_LICENSES und quellen.json (§183)
   - [ ] Vorschau «weiss» mit white_studio_06 (local liefert sie mit dem nächsten Messauftrag; bis dahin Verlauf)
-  - [ ] B2 Satz der Stimmung halb übersetzt (Kern, Strang Heim-PC/Glossar)
+  - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)

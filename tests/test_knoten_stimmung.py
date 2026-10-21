@@ -157,11 +157,17 @@ def test_der_satz_der_stimmung_kommt_nur_einmal_in_den_prompt(tmp_path, monkeypa
     _alle_himmel(tmp_path, monkeypatch)
     ohne = kosmo_szene.lies_szene(_szene({"preset": "bedeckt"}))
     assert ohne["prompt"].endswith(stimmung.STIMMUNGEN["bedeckt"]["prompt_en"])
+    # Seit auf-20261021-306 (B2) gilt der Satz des Heim-PC IMMER, und einmal: Der Satz des
+    # Knotens wird herausgenommen; eigene Worte des Bestellers bleiben stehen. Bis dahin hielt
+    # ein `merkmal` den Satz zurueck — auch dann, wenn es in einem halb uebersetzten Satz stand.
+    satz = stimmung.STIMMUNGEN["bedeckt"]["prompt_en"]
     mit = _szene({"preset": "bedeckt"})
-    mit["style"]["prompt"] = "a quiet house under an overcast sky"
+    mit["style"]["prompt"] = f"a quiet house under an overcast sky, {satz}"
     mit = kosmo_szene.lies_szene(mit)
-    assert mit["prompt"] == "a quiet house under an overcast sky"
-    assert mit["prompt_zusaetze"][0]["schon_im_prompt"] is True
+    assert mit["prompt"] == f"a quiet house under an overcast sky, {satz}"
+    assert mit["prompt"].count(satz) == 1
+    assert mit["prompt_zusaetze"][0]["schon_im_prompt"] is False
+    assert mit["prompt_zusaetze"][0]["herausgenommen"] == ["bedeckt"]
 
 
 def test_jedes_gelesene_feld_steht_in_der_durchreichung(tmp_path, monkeypatch):
