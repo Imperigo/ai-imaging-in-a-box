@@ -1000,6 +1000,7 @@ export function BildKachel({
   lieferstatus,
   lieferstatusGrund,
   lizenz,
+  guete,
   alt,
 }: {
   jobId: string;
@@ -1010,6 +1011,8 @@ export function BildKachel({
   lieferstatusGrund?: string | undefined;
   /** P-LIZENZMARKE Schritt 2 (E154 (4)): `lizenzOffen: true` zeigt «Lizenz offen» unter dem Bild, sperrt nichts. */
   lizenz?: LizenzAngabe | undefined;
+  /** Entscheide 104/104a: die Güte des Bildes (fehlt = voll). */
+  guete?: Guete | undefined;
   alt: string;
 }) {
   // Auftrag auf-20260827-62 (Posten 2, `docs/auftraege-kosmovis/
@@ -1078,6 +1081,7 @@ export function BildKachel({
       {/* P-LIZENZMARKE Schritt 2 (E154 (4)): dieselbe Vorbehaltszeile, der
           Grund in der Kurzhilfe. Ohne Marke rendert sie nichts. */}
       <LizenzOffenMarke lizenz={lizenz} testid="vis-bild-kachel-lizenz-offen" />
+      <GueteMarke lauf={{ guete }} testid="vis-bild-kachel-guete-marke" form="zeile" />
       {hinweise.length > 0 && (
         <span className="vis-bild-kachel-qa-hinweise" data-testid="vis-bild-kachel-qa-hinweise">
           {sichtbar.map((h, i) => (
@@ -4268,6 +4272,7 @@ function NodeKoerper({
                 lieferstatus={b.lieferstatus}
                 lieferstatusGrund={b.lieferstatusGrund}
                 lizenz={lizenzAusQuelle(b)}
+                guete={'guete' in b ? b.guete : undefined}
                 alt={`Bild ${i + 1}`}
               />
             ),
@@ -4326,6 +4331,7 @@ function NodeKoerper({
               `KOERPER_H.blatt`) — die Marke steht darum NEBEN dem Knopf, nicht
               darunter; der Grund steht in der Kurzhilfe und in der Meldung. */}
           <LizenzOffenMarke lizenz={lizenzAusQuelle(quelle)} testid="blatt-lizenz-offen" />
+          <GueteMarke lauf={quelle} testid="blatt-guete-marke" form="abzeichen" />
         </div>
       );
     }

@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "6eb4e8d336d1368bf73f5262cc8f59ffbe8c48cc"
+    "commit": "d4162d71e2750a46bd18cac2028c5074d6c8d7ca"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -35,13 +35,13 @@
     "apps/kosmo-orbit/src/modules/vis/BridgeBild.tsx": "278d9eab1dca2563322931a87fda34b6a7824600c226138faa7ff7656ce05cf1",
     "apps/kosmo-orbit/src/modules/vis/GespeicherteAnsichten.tsx": "ad59d5fe9d0f1e1c2511c24d58d304bd403d8caa916a97d3217cce1dbbf9c6d7",
     "apps/kosmo-orbit/src/modules/vis/GpuStatus.tsx": "18ec5a3e6b7b33f080accd3a76f32299ea62e0bd30f7f9978e119cd50379fa1e",
-    "apps/kosmo-orbit/src/modules/vis/GueteMarke.tsx": "6b314181891ca5c196fe3202a5f547127109524d110f5cfa4f09f0cf250bce50",
+    "apps/kosmo-orbit/src/modules/vis/GueteMarke.tsx": "1542acdc4154c3e248b3a82fa3282607c9f0309cc0106ca2f5206b0b99377927",
     "apps/kosmo-orbit/src/modules/vis/KameraAus3dKnoten.tsx": "139bb1df4e7b6dc41f1d6a2867ee09c1082b3634a4745addb586af07f9163ae8",
-    "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "e8ebca49388aabd1521dd3ae7fd045c7190bbb0a48fa1b23ee37d88ca3469649",
-    "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "45ed8d302ece438376edb79bf80d5191a802361609290601e6157ffce186a87c",
+    "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "a98039c43170ba5a6a93e1c49e623993322a234f50bd458c867a9385bb9daae0",
+    "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "29e405d2b17619781d3b3cb33648c5ee22cb82a7292cc8d158e2cb802e01651c",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "8bd0532d89cdddb0e85c65574ff733edb422124e2bb6eb087af10eeb1e327290",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "53b716b494988a3ebcba33fa71f53420ab5d2b3daf2e9006f93c764f600626ac",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "60b35786ffd9487056a6d2a28cf82de3331bd5684029786661cf325fddf72ce8",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "38de6ff6f7bb2ceb8712c6863ab0cd8a2ec5398d01616a51e327c44a37daedf9",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
     "apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx": "568ed3e90c64d4935d15c52d2185c4ef1a75cc6f6986d600f5a5fe0f4f3ae2a0",
@@ -92,7 +92,7 @@
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "586a55a812f1a40f4130c2ca05f9653d897211c4d04e3211ab5c89f1aa62a407",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "aebdec36d0c51ff34334b9a7823e7a2a4c7e6d7d8512b3f144d1e1fa6c05e349",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "def2c629fa95f319cd3684b840f43cf55a88d48eacf41711ade1b672e0961257",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "546edbc0c4bcc8cd40557dbb17bae4e498f445dc882d27057a0dcaa9424fda4a",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "9daf9160474eef4eb384e0612a1722ae22c7c8ca8c23679d36627d7fc4aa7154",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
     "apps/kosmo-orbit/src/shell/chat/kosmo-c0-kopf.css": "ce2500140fe22d6b40320711bc194a75b64cf8546277cf3f2d93d54968abbf7f",
@@ -154,6 +154,7 @@
     "apps/kosmo-orbit/test/fortschritt-sonne.test.tsx": "9bc3c0c1a2a4b4056377957386680a839c14f683859051adc38b9b6a94b7d786",
     "apps/kosmo-orbit/test/fortschritt-vis-bild.test.tsx": "d482c6055efd6edaa8cd103e38220aa6d7b8f2a8af9fb9438c91beb47dff7d88",
     "apps/kosmo-orbit/test/g5-graph-palette-streifen-deckel.test.ts": "c0133f096a8088e65259277e37a967dc836c4bc8c079cccf2b550cf3dee576eb",
+    "apps/kosmo-orbit/test/guete-marke-kuratier.test.tsx": "b5dc0141dae81fa36db2c7acd9a6ff1c57e3d7a1984a87831d3bb8a78d63eeee",
     "apps/kosmo-orbit/test/knoten-zoom.test.ts": "f280a2c5021dbd38858c46179f120f34befe743b1ef1a3db7321038cf7e9f468",
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx": "967a99760aedda96784d805a4edb1de99d7466224b19b60c7f75d6ded18f5941",
     "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "8b913943f195eef4e70933c6b39f6a5285a76a66a84b51e9a2938f548f0c3dff",

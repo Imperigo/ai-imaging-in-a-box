@@ -296,6 +296,9 @@ PROBEN = (
     # S3/S4 (20.10.2026): die Nahtstellen fuer den Namen und die Einstellungs-Teile — je der
     # Visbox-Fall und der Gegenbeleg «ohne Wirt wie bisher».
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx",
+    # R45 (Entscheid 104a, 21.10.2026): der Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich,
+    # Inspektor, Bildkachel und Blatt-Knoten — nur Vis-Teile, darum hier gruen.
+    "apps/kosmo-orbit/test/guete-marke-kuratier.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

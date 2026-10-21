@@ -20,20 +20,37 @@ export const GUETE_MARKE_TEXT = 'Vorschau';
 export const GUETE_MARKE_HINWEIS =
   'Vorschau: schnell gerechnet (Z-Image Turbo, weniger Schritte, kleineres KI-Bild) — kein fertiger Render. Für das fertige Bild am Knoten «Güte: Voll» wählen und die Variante neu rechnen.';
 
-export function istVorschau(lauf: { guete?: Guete | undefined } | null | undefined): boolean {
-  return lauf?.guete === 'vorschau';
+/** Alles, was ein Bild beschreibt (Lauf, Verlaufseintrag, Kuratier-Quelle); Quellen ohne `guete` (z. B. ein
+ *  eingefügtes Bild) gelten als voll. */
+export type MitGuete = { guete?: Guete | undefined } | object | null | undefined;
+
+export function istVorschau(lauf: MitGuete): boolean {
+  return typeof lauf === 'object' && lauf !== null && (lauf as { guete?: unknown }).guete === 'vorschau';
 }
 
 /** Zusatz für Knopfnamen und Alternativtexte: «, Vorschau» oder nichts. */
-export function gueteZusatz(lauf: { guete?: Guete | undefined } | null | undefined): string {
+export function gueteZusatz(lauf: MitGuete): string {
   return istVorschau(lauf) ? `, ${GUETE_MARKE_TEXT}` : '';
 }
 
-export function GueteMarke({ lauf, testid }: { lauf: { guete?: Guete | undefined } | null | undefined; testid: string }) {
+/**
+ * `form`: «bild» (Vorgabe) liegt unten links IM Bild; «abzeichen» steht in einer Abzeichenreihe wie «FAVORIT»
+ * (Kuratier-Karte, Vergleich); «zeile» steht als Vorbehaltszeile unter dem Bild wie die Lizenz-Marke (Inspektor,
+ * Bildkachel, Blatt-Knoten).
+ */
+export function GueteMarke({
+  lauf,
+  testid,
+  form = 'bild',
+}: {
+  lauf: MitGuete;
+  testid: string;
+  form?: 'bild' | 'abzeichen' | 'zeile';
+}) {
   if (!istVorschau(lauf)) return null;
   return (
-    <KTooltip text={GUETE_MARKE_HINWEIS} className="vis-guete-marke-huelle" lage="oben">
-      <span tabIndex={0} className="vis-guete-marke" data-testid={testid} data-guete="vorschau">
+    <KTooltip text={GUETE_MARKE_HINWEIS} className={`vis-guete-marke-huelle vis-guete-marke-huelle--${form}`} lage={form === 'bild' ? 'oben' : 'unten'}>
+      <span tabIndex={0} className="vis-guete-marke" data-testid={testid} data-guete="vorschau" data-form={form}>
         {GUETE_MARKE_TEXT}
       </span>
     </KTooltip>

@@ -20,6 +20,7 @@ import {
 import { useVisRuntime } from './vis-runtime';
 import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, kurzKennung, lieferVorbehalt, LIZENZ_OFFEN_LABEL, lizenzAusQuelle, lizenzOffenGrund, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
+import { GueteMarke } from './GueteMarke';
 import './vis-visual.css';
 
 /**
@@ -653,6 +654,7 @@ export function KuratierInspektor({
         {/* P-LIZENZMARKE Schritt 2: die Marke am Bild, der Grund in der
             Kurzhilfe und in der Meta-Zeile unten. */}
         <LizenzOffenMarke lizenz={lizenz} testid="vis-kuratier-inspektor-lizenz-offen" lage="unten" />
+        <GueteMarke lauf={karte.quelle} testid="vis-kuratier-inspektor-guete-marke" form="zeile" />
 
         <div>
           <div className="vis-inspektor-titel">Variante {id}</div>

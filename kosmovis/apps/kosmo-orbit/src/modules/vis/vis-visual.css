@@ -2402,11 +2402,45 @@
 }
 /* Vermerk «Vorschau» (GueteMarke.tsx, Entscheide 104/104a): Plakette unten links IM Bild, in der
    Warnfarbe wie der Lizenz-Vorbehalt; der Knoten waechst nicht. */
-.vis-guete-marke-huelle {
+.vis-guete-marke-huelle--abzeichen,
+.vis-guete-marke-huelle--zeile {
+  position: static;
+}
+.vis-guete-marke-huelle--bild {
   position: absolute;
   left: var(--k-s2);
   bottom: var(--k-s2);
   z-index: 1;
+}
+.vis-guete-marke-huelle--zeile {
+  display: block;
+  margin-top: var(--k-s1);
+}
+/* Als Abzeichen in einer Reihe, die den Zeiger durchlässt (Kuratier-Karte, Vergleich): die Marke nimmt ihn selbst,
+   sonst erreicht die Maus ihre Kurzhilfe nicht (kv-nachgang2, «Schwebeknopf verdeckt»). Muster wie die
+   Lizenz-Marke (`.vis-lizenz-offen-huelle--rechts`): Blase an der Reihe, ins Bild hinein. */
+.vis-guete-marke-huelle--abzeichen {
+  display: inline-block;
+  pointer-events: auto;
+}
+.vis-raster-karte-embleme .vis-guete-marke-huelle--abzeichen,
+.vis-vergleich-karte-kopf .vis-guete-marke-huelle--abzeichen {
+  position: static;
+}
+.vis-raster-karte-embleme .vis-guete-marke-huelle--abzeichen > .k-tooltip-blase {
+  left: auto;
+  right: 0;
+  transform: none;
+  white-space: normal;
+  width: max-content;
+  max-width: min(16rem, 100%);
+}
+.vis-vergleich-karte-kopf .vis-guete-marke-huelle--abzeichen > .k-tooltip-blase {
+  left: 0;
+  transform: none;
+  white-space: normal;
+  width: max-content;
+  max-width: min(16rem, 100%);
 }
 .vis-guete-marke {
   display: inline-block;

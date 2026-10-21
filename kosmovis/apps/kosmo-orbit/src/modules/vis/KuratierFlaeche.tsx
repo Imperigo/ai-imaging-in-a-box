@@ -20,6 +20,7 @@ import {
   type KuratierKartenDaten,
 } from './varianten-diff';
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
+import { GueteMarke } from './GueteMarke';
 import './vis-visual.css';
 
 /**
@@ -495,6 +496,8 @@ function RasterKarte({
           {/* P-LIZENZMARKE Schritt 2 (E154 (4)): «Lizenz offen» am Bild, in
               der Form des Favorit-Abzeichens; der Grund in der Kurzhilfe. */}
           <LizenzOffenMarke lizenz={lizenz} testid="vis-kuratier-karte-lizenz-offen" abzeichen="rechts" lage="unten" />
+          {/* Entscheid 104a: ein Vorschaubild sieht nirgends wie ein volles aus. */}
+          <GueteMarke lauf={karte.quelle} testid="vis-kuratier-karte-guete-marke" form="abzeichen" />
         </span>
       </div>
 
@@ -645,6 +648,7 @@ function VergleichAnsicht({
             abzeichen="links"
             lage="unten"
           />
+          <GueteMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-guete-marke-${label.toLowerCase()}`} form="abzeichen" />
         </div>
       </div>
     );
