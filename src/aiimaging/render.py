@@ -110,6 +110,7 @@ import math
 import os
 import platform
 import re
+import shlex
 import sys
 import tempfile
 import time
@@ -161,6 +162,13 @@ ALTWURZEL_HOMESTATION = "/ai"
 HERKUNFT_UMGEBUNG = "umgebung"
 HERKUNFT_ALTWURZEL = "altwurzel"
 HERKUNFT_ANWENDUNGSDATEN = "anwendungsdaten"
+#: Aus der Einheit des Abholers gelesen (auf-20261021-301, A6) — siehe :func:`modellwurzel`.
+HERKUNFT_ABHOLER = "abholer-einheit"
+
+#: Die Nutzereinheit des Abholers. Sie traegt ``Environment=AIIMAGING_MODELLE=…`` (siehe
+#: ``betrieb/kosmo-abholer.service``) — die Einstellung, mit der der Abholer seine Gewichte
+#: findet. Ein Prozess ausserhalb des Dienstes erbt diese Umgebung nicht.
+EINHEIT_ABHOLER = "kosmo-abholer.service"
 
 #: Ordnername unter den Anwendungsdaten. Gross auf macOS und Windows, klein unter XDG —
 #: so schreiben es die jeweiligen Konventionen, und ein Ordner, der aussieht wie die
@@ -301,6 +309,52 @@ def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
 #: **Setzung**, keine Messung: Ob dort etwas liegt, sagt :func:`modellwurzel_lage`.
 VORGABE_MODELLWURZEL = str(anwendungsdaten_wurzel())
 
+
+def abholer_einheit_pfad(*, umgebung=None, heim=None) -> Path:
+    """Wo systemd die Nutzereinheit des Abholers sucht: ``$XDG_CONFIG_HOME`` oder ``~/.config``.
+
+    Reine Pfadrechnung. Dieselbe Rechnung wie ``tests/test_betriebseinheiten.py``.
+    """
+    umgebung = os.environ if umgebung is None else umgebung
+    heim = Path(os.path.expanduser("~")) if heim is None else Path(heim)
+    xdg = umgebung.get("XDG_CONFIG_HOME")
+    basis = Path(xdg) if xdg and Path(xdg).is_absolute() else heim / ".config"
+    return basis / "systemd" / "user" / EINHEIT_ABHOLER
+
+
+def modellwurzel_der_einheit(pfad, *, heim=None) -> Path | None:
+    """Die Modellwurzel, die eine systemd-Einheit in ``Environment=`` setzt — oder ``None``.
+
+    **Der Anlass (auf-20261021-301, A6):** Ausserhalb des Abholers suchte der Tiefenschaetzer
+    seine Gewichte im Benutzerordner und meldete einen Fehler — der Abholer kennt die Ablage
+    nur, weil seine Einheit ``AIIMAGING_MODELLE`` setzt. Gelesen wird darum **dieselbe
+    Einstellung**, statt einen Pfad ins Repo zu schreiben (Regel 3).
+
+    Gilt die letzte Zuweisung (so liest es systemd). ``%h`` wird zum Heimverzeichnis. Nur ein
+    absoluter Pfad zaehlt. Eine fehlende oder unlesbare Einheit ist ``None`` — kein Fehler.
+    """
+    try:
+        text = Path(pfad).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    heim = os.path.expanduser("~") if heim is None else str(heim)
+    gefunden = None
+    for zeile in text.splitlines():
+        zeile = zeile.strip()
+        if not zeile.startswith("Environment="):
+            continue
+        try:
+            teile = shlex.split(zeile[len("Environment="):])
+        except ValueError:
+            continue
+        for teil in teile:
+            name, gleich, wert = teil.partition("=")
+            if gleich and name == UMGEBUNG_MODELLE:
+                gefunden = wert.replace("%h", heim)
+    if not gefunden or not Path(gefunden).is_absolute():
+        return None
+    return Path(gefunden)
+
 #: Obergrenze für die Schrittzahl. Nicht physikalisch begründet, sondern als Schutz vor
 #: dem Tippfehler: ``schritte=2000`` läuft nicht falsch, es läuft stundenlang und
 #: blockiert die einzige GPU des Projekts. Wer mehr braucht, hebt die Grenze bewusst an.
@@ -412,13 +466,20 @@ class RenderAuftrag:
     umriss_halten_png: str | None = None
 
 
-def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
+def modellwurzel(*, umgebung=None, einheit=None) -> tuple[Path, str]:
     """Welche Modellwurzel auf diesem Rechner gilt — **und woher sie kommt**.
 
     Drei Stufen, in dieser Reihenfolge, und die Reihenfolge ist der ganze Entwurf:
 
     1. ``$AIIMAGING_MODELLE`` — die Umgebung gewinnt immer. Sie ist der Weg, auf dem eine
        Maschine ihre Ablage festschreibt, ohne dass wir Code ändern.
+
+       **1b. Die Einheit des Abholers** (seit auf-20261021-301, A6): Ist die Variable nicht
+       gesetzt, gilt ``AIIMAGING_MODELLE`` aus der installierten Nutzereinheit
+       :data:`EINHEIT_ABHOLER` — **nur, wenn der Ordner dort existiert**. So findet ein
+       Prozess ausserhalb des Dienstes (ein Messskript, der Tiefenschaetzer von Hand)
+       dieselbe Ablage wie der Abholer. Wo die Einheit fehlt (Mac, Container), faellt die
+       Stufe still weg. Mit ``umgebung=`` nur, wenn auch ``einheit=`` genannt ist.
     2. :data:`ALTWURZEL_HOMESTATION` (``/ai``) — **aber nur, wenn es den Ordner gibt.**
        Wer ``/ai`` führt, behält es, ohne etwas zu setzen; bei einer Studentin fällt die
        Stufe durch. Sie ist ausdrücklich **nicht** der Bestandsschutz der HomeStation:
@@ -456,6 +517,17 @@ def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
     umgebung = os.environ if umgebung is None else umgebung
     if (gesetzt := umgebung.get(UMGEBUNG_MODELLE)):
         return Path(gesetzt), HERKUNFT_UMGEBUNG
+    # 1b: DIESELBE EINSTELLUNG WIE DER ABHOLER (auf-20261021-301, A6).
+    if einheit is None and not eigene_umgebung:
+        einheit = abholer_einheit_pfad()
+    if einheit is not None:
+        aus_einheit = modellwurzel_der_einheit(einheit)
+        try:
+            einheit_trifft = aus_einheit is not None and aus_einheit.is_dir()
+        except OSError:
+            einheit_trifft = False
+        if einheit_trifft:
+            return aus_einheit, HERKUNFT_ABHOLER
     alt = Path(ALTWURZEL_HOMESTATION)
     try:
         alt_vorhanden = alt.is_dir()
@@ -616,6 +688,10 @@ def modellwurzel_lage(backbone_name: str) -> dict:
     if herkunft == HERKUNFT_UMGEBUNG:
         grund = (f"{UMGEBUNG_MODELLE} zeigt auf {str(wurzel.parent)!r}, und dort liegt "
                  f"kein Ordner {ordner!r}. Der Pfad ist gesetzt und trifft nicht.")
+    elif herkunft == HERKUNFT_ABHOLER:
+        grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt die Ablage aus der Einheit "
+                 f"des Abholers ({EINHEIT_ABHOLER}) {str(wurzel.parent)!r}, und dort liegt "
+                 f"kein Ordner {ordner!r}.")
     elif herkunft == HERKUNFT_ALTWURZEL:
         grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt die vorhandene Ablage "
                  f"{ALTWURZEL_HOMESTATION!r}, und dort liegt kein Ordner "
@@ -1093,6 +1169,9 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None,
     modell.geraet = geraet
     modell.entflechtung = entflechtung
     modell.bedarf = bedarf
+    # DIE ZWEITE PRUEFUNG SAGT IHRE ZAHLEN (auf-20261021-301, A2): verfuegbar, frei, eigen,
+    # verlangt — `tools/abholen.py` schreibt den Satz ins Journal. `None`: ohne Bildeingang.
+    modell.bildeingang_pruefung = (bildeingang_bericht or {}).get("satz") or None
     if weg:
         modell.ladeweg = weg
     return modell
@@ -3511,7 +3590,8 @@ __all__ = [
     "bildeingang_schritte", "pruefe_bildeingang_karte", "schrittsatz",
     "eigener_grafikspeicher_mib", "CUDA_KONTEXT_MIB", "ABWEIS_BILDEINGANG",
     "bildeingang_abweisung_in",
-    "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
+    "ALTWURZEL_HOMESTATION", "EINHEIT_ABHOLER", "HERKUNFT_ABHOLER", "HERKUNFT_ALTWURZEL",
+    "HERKUNFT_ANWENDUNGSDATEN", "abholer_einheit_pfad", "modellwurzel_der_einheit",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "fuehrung_angewandt", "lade_modell", "modellwurzel",
     "modellwurzel_lage", "pipeline_lage", "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel", "wurzel_fuer",

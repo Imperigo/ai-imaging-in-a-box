@@ -845,6 +845,19 @@ def lade_modell(schaetzer_name: str, modell_wurzel=None):
     eintrag = fordere_zulaessigen(schaetzer_name)
     wurzel = (Path(modell_wurzel) if modell_wurzel is not None
               else standard_modell_wurzel(eintrag.name))
+    # NUR AUS DER EIGENEN ABLAGE, NIE AUS DEM NETZ (auf-20261021-301, A6). Ein Pfad, den es
+    # nicht gibt, nahm `transformers` als Kennung im Hub und versuchte zu laden — ausserhalb
+    # des Abholers ein Fehler statt einer Messung. Jetzt endet es hier mit dem Ort und dem
+    # Handgriff; die Wurzel liest `render.modellwurzel` (auch aus der Einheit des Abholers).
+    if not wurzel.is_dir():
+        from aiimaging import render  # noqa: PLC0415 — nur fuer den Satz
+        herkunft = ("uebergeben" if modell_wurzel is not None
+                    else render.modellwurzel()[1])
+        raise TiefenschaetzerError(
+            f"Gewichte fuer {eintrag.name!r} liegen nicht unter {str(wurzel)!r} (Herkunft der "
+            f"Modellwurzel: {herkunft}). Geladen wird nur aus der eigenen "
+            f"Ablage, nie aus dem Netz — {render.UMGEBUNG_MODELLE} setzen oder die Einheit "
+            f"des Abholers ({render.EINHEIT_ABHOLER}) installieren.")
 
     try:
         # NUR HIER. Siehe Docstring — und tests/test_tiefenschaetzer.py, das prüft, dass

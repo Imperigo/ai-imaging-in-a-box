@@ -207,6 +207,17 @@ REALITYSCAN_VARIABLEN = ("AIIMAGING_REALITYSCAN", "AIIMAGING_REALITYSCAN_EXE",
 
 
 @pytest.fixture(autouse=True)
+def ohne_abholer_einheit_ueberall(monkeypatch, tmp_path_factory):
+    """Keine Probe liest die installierte Einheit des Abholers (auf-20261021-301, A6).
+
+    Am Heim-PC liegt sie unter ``~/.config/systemd/user`` und naennte dort eine andere
+    Modellwurzel als im Container — dieselbe Probe naehme je nach Rechner einen anderen Weg.
+    Wer die Stufe prueft, uebergibt ``einheit=`` oder setzt die Naht in der Probe selbst.
+    """
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path_factory.getbasetemp() / "ohne-einheit"))
+
+
+@pytest.fixture(autouse=True)
 def ohne_realityscan_ueberall(monkeypatch):
     """Keine Probe benutzt ein installiertes RealityScan — nur die Attrappen der Proben."""
     for name in REALITYSCAN_VARIABLEN:
