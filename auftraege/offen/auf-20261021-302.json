@@ -1,0 +1,92 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261021-302",
+  "art": "qa",
+  "beschreibung": "Kleiner Pruefauftrag zu 301 (A1-A3, A6): Tiefenschaetzer ausserhalb des Abholers findet die Modellwurzel aus der Einheit des Abholers und laedt offline; Abweis-Satz in job.json message; Journalzeilen der zweiten Speicherpruefung und der Vorpruefung nach dem Entladen. Ein KI-Lauf.",
+  "erstellt": "2026-10-21T09:00:00Z",
+  "rang": 89,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "params": {
+    "folgt_auf": "auf-20261021-301",
+    "bezug": "auf-20261021-301",
+    "entscheide": [
+      "117",
+      "106d"
+    ],
+    "einbau": [
+      "C100"
+    ],
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "kameras": [
+      "sSE"
+    ],
+    "neue_ki_laeufe": 1,
+    "bruecken_laeufe": [
+      {
+        "name": "2",
+        "stimmung": "abend",
+        "bildeingang": 0.55,
+        "idle_window_only": false,
+        "sprachmodell": "qwen3:14b"
+      },
+      {
+        "name": "3",
+        "stimmung": "abend",
+        "bildeingang": 0.55,
+        "idle_window_only": true,
+        "sprachmodell": "qwen3:14b"
+      }
+    ],
+    "gewichte": [
+      {
+        "name": "depth-anything/Depth-Anything-V2-Small-hf",
+        "lizenz": "Apache-2.0",
+        "quelle": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf (Modellkarte, license: apache-2.0, nicht gated)",
+        "groesse_gb": 0.1,
+        "download_gb": 0
+      },
+      {
+        "name": "Tongyi-MAI/Z-Image-Turbo",
+        "lizenz": "Apache-2.0",
+        "quelle": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, license: apache-2.0, nicht gated)",
+        "groesse_gb": 32.9,
+        "download_gb": 0,
+        "vram_mib_mit_bildeingang": 31316
+      },
+      {
+        "name": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+        "lizenz": "Apache-2.0",
+        "quelle": "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Modellkarte, license: apache-2.0, nicht gated)",
+        "groesse_gb": 3.1,
+        "download_gb": 0
+      }
+    ],
+    "sprachmodell_fuer_teil_2_3": {
+      "name": "qwen3:14b",
+      "lizenz": "Apache-2.0",
+      "download_gb": 0,
+      "hinweis": "das eigene Modell der Visbox (Entscheid 106d), nur laden und wieder entladen"
+    }
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit den Befunden A1-A3 und A6 aus auf-20261021-301 (Fassung bleibt) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. REIHENFOLGE: ein kleiner Pruefauftrag, ein Lauf zur Zeit, Teile 1 bis 3 in dieser Reihenfolge. WAS AM HEIM-PC JETZT ANDERS RECHNET: Bild, Parametersatz und Pruefung unveraendert wie 301; geaendert sind nur Meldungen und wo ein Prozess AUSSERHALB des Abholers die Gewichte sucht. (A1) Weist die Vorpruefung im Abholer einen Bildeingang ab (fremdes oder eigenes Modell auf der Karte, zu wenig Speicher), steht der Satz jetzt auch in job.json message (bisher nur error und render-result.json lieferstatus_grund). (A2) Die zweite Speicherpruefung im Prozess (render.lade_modell mit Bildeingang) schreibt eine Journalzeile 'Im Prozess Bildeingang: <verfuegbar> MiB verfuegbar (<frei> frei + <eigen> eigene), verlangt 30587 MiB (...)'; weist sie ab, 'Im Prozess ABGEWIESEN: Bildeingang ...'. (A3) Der Satz der Vorpruefung steht als eigene, ungekuerzte Zeile 'Vorpruefung Bildeingang: ... verfuegbar ...' unter der Karte-Zeile — auch nach dem Entladen von qwen3:14b; die Karte-Zeile traegt ihn nicht mehr. (A6) render.modellwurzel hat eine Stufe 1b: Ist AIIMAGING_MODELLE nicht gesetzt, gilt AIIMAGING_MODELLE aus der installierten Nutzereinheit des Abholers (kosmo-abholer.service unter XDG_CONFIG_HOME bzw. ~/.config/systemd/user), aber nur, wenn der Ordner dort existiert (Herkunft 'abholer-einheit'). Und tiefenschaetzer.lade_modell laedt nur aus einem vorhandenen Ordner — fehlt er, endet es mit Satz 'nie aus dem Netz' statt einem Versuch am Hub. Im Abholer selbst (Variable gesetzt) aendert sich dadurch nichts. GEWICHTE (Download 0 GB, alle liegen am Heim-PC): depth-anything/Depth-Anything-V2-Small-hf, Apache-2.0 (Modellkarte, nicht gated), Ordner depth-anything-v2-small unter der Modellwurzel; fuer Teil 3 Tongyi-MAI/Z-Image-Turbo, Apache-2.0, und alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union, Apache-2.0, wie 301; qwen3:14b, Apache-2.0, das eigene Modell der Visbox. TEIL 1 — A6 OHNE KI-LAUF, OHNE GPU-LAST: In einer frischen Shell OHNE AIIMAGING_MODELLE (env -u AIIMAGING_MODELLE) und mit HF_HUB_OFFLINE=1 nur fuer diesen Prozess, im .venv-render: (a) python -c 'from aiimaging import render; print(render.modellwurzel())' — Herkunft 'abholer-einheit' ja/nein, Ordner gleich dem des Abholers ja/nein (den Pfad NICHT zurueckgeben, nur ja/nein); (b) tiefenschaetzer.lade_modell('depth-anything-v2-small') laedt ja/nein, und tiefenschaetzer.schaetze_tiefe an einem Bild der Grundlage aus 301 (oder einem Cycles-Bild aus tools/make_test_glb.py) liefert eine Tiefe ja/nein; (c) Gegenprobe tiefenschaetzer.lade_modell('depth-anything-v2-small', '<leerer Probeordner>') endet mit dem Satz 'nie aus dem Netz' ja/nein, kein Netzzugriff ja/nein. TEIL 2 — A1 ueber die Bruecke, wie 301 2a: qwen3:14b laden (keep_alive 10m), ein Auftrag abend mit vis.bildeingang 0.55 und idle_window_only false (im eigenen Probeauftrag vor /approve): status error, job.json message gleich dem Abweis-Satz ja/nein (woertlich), error gleich ja/nein, render-result.json lieferstatus_grund gleich ja/nein; Journalzeile 'Vorpruefung ABGEWIESEN: Bildeingang ...' woertlich. TEIL 3 — A2/A3 ueber die Bruecke, wie 301 2b: qwen3:14b noch geladen, derselbe Auftrag mit idle_window_only true, keine Frage an den Assistenten offen: entladen und gerechnet ja/nein (done), Journalzeilen woertlich: 'Karte: ...' (ohne Bildeingang-Satz ja/nein), 'Vorpruefung Bildeingang: ... verfuegbar ...' (steht ja/nein), 'Im Prozess Bildeingang: ... frei + ... eigene ...' (steht ja/nein, Zahlen). Danach qwen3:14b entladen, /api/ps leer. EINBAU — WAS DANACH IN DIE SOFTWARE KOMMT: Der Heim-PC baut nichts ein; er bestaetigt am Geraet, dass A1, A2, A3 und A6 gebaut so laufen (Einbau-Stand C100). NICHT: keine Vorgabe aendern (kein Registerwert, kein Schalter dauerhaft, keine Umgebungsvariable dauerhaft — HF_HUB_OFFLINE und das Weglassen von AIIMAGING_MODELLE nur fuer den einen Prozess in Teil 1); die Einheit des Abholers nicht aendern; nichts herunterladen (Download 0 GB); kein FLUX.1-dev, kein FLUX.2-dev, kein Depth-Anything-V2 Base oder Large (CC-BY-NC), kein SDXL; Bibliotheken in .venv-render nicht aufruesten; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; nur qwen3:14b laden und danach entladen; keine Pfade, Hosts oder Namen ins Ergebnis; Dateien ins Repo nur das Ergebnis. Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und unter 8 GB belegt, ausser in Teil 2/3 mit qwen3:14b), Leistungsgrenze 400 W gesetzt (nvidia-smi -pl 400) — im Zweifel nicht starten. Lizenzen: alles Apache-2.0.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, Leistungsgrenze gesetzt ja/nein, ollama ps vor jedem Lauf.",
+    "1: Herkunft der Modellwurzel ohne Variable (abholer-einheit ja/nein, gleich der des Abholers ja/nein — ohne Pfad); Tiefenschaetzer laedt und schaetzt offline ja/nein; Gegenprobe 'nie aus dem Netz' ja/nein, Satz woertlich (Pfad durch <ordner> ersetzt).",
+    "2: status, job.json message woertlich, message gleich error und lieferstatus_grund ja/nein, Journalzeile 'Vorpruefung ...' woertlich.",
+    "3: done ja/nein, Journalzeilen 'Karte: ...', 'Vorpruefung Bildeingang: ...', 'Im Prozess Bildeingang: ...' woertlich; qwen3:14b danach entladen ja/nein.",
+    "Befunde: was abweicht, woertlich; Code nicht geaendert."
+  ]
+}
