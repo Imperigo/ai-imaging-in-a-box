@@ -8121,9 +8121,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§178, C106)
     - [ ] Blatt «iPad über den Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprüfung Mac und iPad (owner): koppeln mit Schloss, Skizze in der Mac-Mappe, Bild vom Mac, ohne Mac klarer Satz
-    - [x] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid 118a: 410 mit Satz, das iPad zeigt ihn) — gebaut, am Gerät unbestätigt (§180, C108); Messauftrag auf-20261021-308 (local)
-    - [x] Vermittlung am Mac auch ohne eingerichteten Heim-PC (118a, Frage 3): das iPad bekommt die Mac-Mappe, Rechnen sagt «Kein Rechner eingerichtet» — gebaut, am Gerät unbestätigt (§180, C108)
-    - [x] Rechnen vom iPad bei Mac-Mappe in der Knotenansicht (118a, Frage 2) — geprüft, war mit §178 gebaut (§180)
+    - [x] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid 118a: 410 mit Satz, das iPad zeigt ihn) — gebaut, am Gerät unbestätigt (§181, C108); Messauftrag auf-20261021-308 (local)
+    - [x] Vermittlung am Mac auch ohne eingerichteten Heim-PC (118a, Frage 3): das iPad bekommt die Mac-Mappe, Rechnen sagt «Kein Rechner eingerichtet» — gebaut, am Gerät unbestätigt (§181, C108)
+    - [x] Rechnen vom iPad bei Mac-Mappe in der Knotenansicht (118a, Frage 2) — geprüft, war mit §178 gebaut (§181)
     - [ ] Geräteprüfung 118a (owner): iPad über den Mac verbinden; Heim-PC am Mac «nicht eingerichtet» — das iPad sieht die Mappe trotzdem
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
@@ -8226,7 +8226,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
-  - [ ] KosmoOrbit: neue Kamera-Knoten auf «Auto» als Vorgabe (integrator, nach dem Einspielen)
+  - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§160, C89)

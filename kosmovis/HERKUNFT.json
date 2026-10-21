@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "5c494b8fe7afd30b0ddc0de83cf4dd0b32176893"
+    "commit": "ee30c8c5c6ecbfbf279d2927b525942f8d1c27de"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -181,7 +181,7 @@
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "95c43f21dd8a2337d4e9f557e5803efdc0a7deb92c722bc860a0f6c52fcad93d",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "9abc02e7be9971e45251d22e60a5f6d0f4d0cb76f17a93615d4b67c3acacdf82",
-    "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "efb30d8e5d1c39b764db416f53bc8c7bd2341fe2e9ded3281acbb7925223b845",
+    "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "b22c7de19d2a28dd029887b70b2e3d22b8f17e2f0cbc63c3915c43d41f36bae7",
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx": "d1d2e8a2193ab5fb4f25775dccb4f357b658d46aa73e70bdfb5f1c7ee77794d4",
     "apps/kosmo-orbit/test/kv-lieferstatus-null.test.tsx": "4ed99c9808b56ff94082397415fb9fa2fb8eba616a6b6c99ccdcb7db9c7cc266",
     "apps/kosmo-orbit/test/kv-maus-sperrzonen.test.tsx": "264c7c76bda0401e616ccd3535bee15d6452f1891895f8f3ec2834104cb8e4b4",
@@ -309,7 +309,7 @@
     "packages/kosmo-kernel/src/derive/renderprompt.ts": "2af0125065143adcd64d6a4eea13a8333a58ed8c55debffcd70e60e2b2b7dd9a",
     "packages/kosmo-kernel/src/derive/textur.ts": "1c6f969c700d260fbac2afc81b876c44475653c870e98222005fd23cf2911aa1",
     "packages/kosmo-kernel/src/derive/varianten.ts": "db027f927edac0b226cee5a231f3b2809d0fad5aff6b123eb6bde6a66a667026",
-    "packages/kosmo-kernel/src/derive/visgraph.ts": "bbb295d21d7c337e6cdf7c6422ae4e0c46e1e8e2ceeee71448b0f813fbbcb6bb",
+    "packages/kosmo-kernel/src/derive/visgraph.ts": "de816942fc8295b813dd1f2fff2de302de5a5a59dd2ae5879c809e70a47a9210",
     "packages/kosmo-kernel/src/fundstelle.ts": "ef53daf1beea2576fcbb526ca87b694213946ca634a0585bada95522e541e700",
     "packages/kosmo-kernel/src/model/doc.ts": "5863b271a8b18b9d6b0b8e17fbea52b49bd5e1ca38226531c2f6b31d5a071efb",
     "packages/kosmo-kernel/src/model/entities.ts": "4a2690ccbaffedac33b249eba4cac3c8bb2eb1327e037bd0715524181ba4e095",
