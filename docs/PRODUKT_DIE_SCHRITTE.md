@@ -2189,3 +2189,17 @@ hat der Knoten einen Reiter «Blick», der die gesicherten Blicke als Auswahl an
 festgehalten und als genau dieser eine Standpunkt bestellt; Varianten ändern danach nur die Stimmung. In Visbox sind die
 gesicherten Blicke die Standpunkte, die für ein Bild der Mappe am Grundriss gesetzt wurden. Claude kann einen Blick beim
 Namen wählen. Ehrlich gesagt: geprüft an Proben, am Mac noch nicht gesehen.
+
+### Grossansicht und Vergleich der Läufe (21.10.2026)
+
+Im Demolauf war das fertige Bild nur klein zu sehen, und mehrere Bilder auf derselben Grundlage liessen sich nicht
+vergleichen. Jetzt zeigt ein Klick das Bild fensterbreit; die Prüfwerte sind eingeklappt, das Urteil bleibt sichtbar. Der
+Verlauf am Render-Knoten ordnet die Bilder nach Grundlage, und die Bilder einer Grundlage stehen auf Wunsch gleich gross
+nebeneinander. «Kuratieren» kennt jetzt jedes gerechnete Bild, nicht nur das letzte. Ob sich die Ansicht bei «fertig» von
+selbst öffnet, ist ein Schalter, ab Werk aus — ein Fenster, das sich ungefragt öffnet, unterbricht die Arbeit.
+
+Dazu der Kontext: Blendet ein Entwurf den ganzen Bestand aus, sagt Visbox das beim Bestellen, denn ein Entwurf ohne
+Nachbarn steht im Bild «im Leeren». Am Heim-PC entsteht neben der Bauwerksmaske eine eigene **Kontextmaske** — wo die
+Nachbarbauten und die Umgebung im Bild stehen. Sie ändert noch nichts am Bild; zuerst wird gemessen, ob der Bestand bisher
+fälschlich als Bauwerk mitgeprüft wurde (Protokoll 74 §197).
+
