@@ -3591,6 +3591,80 @@ SATZ_FARBABGLEICH = "FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117)
 URTEIL_UMRISS_HALTEN = "umriss_halten"
 
 
+#: Der Anfang des Satzes, wenn das KI-Bild ohne das Grundlagenbild entstand (auf-20261021-312
+#: B3, 313 B4) — Proben und Auswerter suchen danach.
+SATZ_OHNE_GRUNDLAGENBILD = "KI-BILD OHNE GRUNDLAGENBILD"
+
+
+def modus_satz(kamera, modus, backbone_name=None) -> str | None:
+    """Der Satz, wenn ein Bild anders gerechnet wurde als bestellt — sonst ``None``.
+
+    **Befund 312/313:** In allen sechs KI-Läufen stand ``angewandt.modus.abweichung: true``
+    (bestellt ``image_edit``, gerechnet ``txt2img``), und das Ergebnis lautete trotzdem
+    «geliefert» ohne ein Wort dazu. Die Vorgabe ``z-image-turbo`` hat keinen Eingang für das
+    Ausgangsbild (``Backbone.bildeingang_traegt=False``, gemessen auf-20260919-123); an die
+    Grundlage bindet dann allein die Tiefenkarte. Der Satz sagt, was gerechnet wurde, warum —
+    aus dem Register, nicht erfunden — und was trotzdem band. Er bricht nichts ab: Das Bild ist
+    ein gültiges Bild, nur nicht das bestellte.
+
+    ``None`` ohne Abweichung, ohne Vermerk oder wenn das Bildmodell nichts gemeldet hat
+    (``abweichung`` ``None`` heisst UNBEKANNT, nicht abweichend).
+    """
+    if not isinstance(modus, dict) or modus.get("abweichung") is not True:
+        return None
+    bestellt, gerechnet = modus.get("bestellt"), modus.get("gerechnet")
+    try:
+        eintrag = _backbone.hole(str(backbone_name)) if backbone_name else None
+    except _backbone.BackboneError:
+        eintrag = None
+    grund = getattr(eintrag, "bildeingang_grund", None)
+    modell = f" beim Bildmodell {backbone_name!r}" if backbone_name else ""
+    if gerechnet == "txt2img":
+        band = ("an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, "
+                "Licht und Ausschnitt malt das Modell frei)")
+    elif gerechnet == "tiefe_als_bild":
+        band = "das Modell hat die Tiefenkarte als Bild bearbeitet, nicht das Grundlagenbild"
+    else:
+        band = "was stattdessen ins Modell ging, hat es nicht gemeldet"
+    weg = ""
+    if eintrag is not None and getattr(eintrag, "bildeingang_weg", None):
+        weg = (" Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer "
+               "dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.")
+    return (f"{SATZ_OHNE_GRUNDLAGENBILD}, Kamera {kamera!r}: bestellt {bestellt!r}, gerechnet "
+            f"{gerechnet!r} — das Grundlagenbild (Cycles) ist{modell} NICHT angekommen; "
+            f"{band}." + (f" Grund: {grund}" if grund else "") + weg)
+
+
+def _modus_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """Je Kamera, deren Bild anders gerechnet wurde als bestellt, der Satz aus :func:`modus_satz`.
+
+    Nur, wo kein Messschalter ``vis.bildeingang`` gerechnet hat — dessen Satz
+    (:data:`SATZ_BILDEINGANG`) nennt die Abweichung schon. Ohne Abweichung kein Satz.
+    """
+    for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
+        if isinstance(u.get(URTEIL_BILDEINGANG), dict):
+            continue
+        modus = u.get("modus")
+        satz = (modus.get("satz") if isinstance(modus, dict) else None) or modus_satz(
+            kamera, modus, (u.get("engine") or {}).get("name")
+            if isinstance(u.get("engine"), dict) else None)
+        if satz and modus.get("abweichung") is True and satz not in hinweise:
+            hinweise.append(satz)
+
+
+def _urteile_je_kamera(geometrie_urteil, je_kamera) -> list:
+    """``[(kamera, urteil)]`` aus ``je_kamera``, sonst aus dem einen Geometrie-Urteil."""
+    urteile = []
+    for eintrag in je_kamera or ():
+        if isinstance(eintrag, dict):
+            u = eintrag.get("geometrie_urteil") if isinstance(
+                eintrag.get("geometrie_urteil"), dict) else eintrag
+            urteile.append((eintrag.get("kamera") or u.get("kamera"), u))
+    if not urteile and isinstance(geometrie_urteil, dict):
+        urteile.append((geometrie_urteil.get("kamera"), geometrie_urteil))
+    return urteile
+
+
 def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
     """Je Kamera ein Satz, DASS ein Messschalter gerechnet hat — und was (auf-20261021-298, B1).
 
@@ -3600,15 +3674,7 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
     ist. Eine Auskunft, kein Vorbehalt — ``qa.geometry`` und ``geometry_gates`` bleiben, wie
     sie waren. Ohne Schalter kein Satz.
     """
-    urteile = []
-    for eintrag in je_kamera or ():
-        if isinstance(eintrag, dict):
-            u = eintrag.get("geometrie_urteil") if isinstance(
-                eintrag.get("geometrie_urteil"), dict) else eintrag
-            urteile.append((eintrag.get("kamera") or u.get("kamera"), u))
-    if not urteile and isinstance(geometrie_urteil, dict):
-        urteile.append((geometrie_urteil.get("kamera"), geometrie_urteil))
-    for kamera, u in urteile:
+    for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
         bi = u.get(URTEIL_BILDEINGANG)
         if isinstance(bi, dict):
             gerechnet = bi.get("modus_gerechnet")
@@ -5118,6 +5184,9 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise)
         # DIE MESSSCHALTER (auf-20261021-298, B1) — nur mit Schalter, je Kamera ein Satz.
         _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise)
+        # OHNE GRUNDLAGENBILD (auf-20261021-312 B3) — an jedem Lauf, dessen Bild anders
+        # gerechnet wurde als bestellt; bis dahin stand das nur als Feld in `angewandt.modus`.
+        _modus_eintragen(geometrie_urteil, je_kamera, hinweise)
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 

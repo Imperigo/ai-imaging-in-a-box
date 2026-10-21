@@ -4687,7 +4687,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # `vis.bildeingang` — bis dahin stand eine Abweichung nur als Satz im Ergebnis.
             modus = modus_vermerk(ergebnis)
             if modus is not None:
-                urteil[URTEIL_MODUS] = modus
+                # SEIT auf-20261021-312 (B3) MIT SATZ, wenn das Bild anders gerechnet wurde als
+                # bestellt — im Befund je Kamera; `angewandt.modus` bleibt in seiner Form (C17).
+                satz = _kosmo_szene.modus_satz(kuerzel, modus,
+                                                ergebnis.get("backbone") or backbone_name)
+                urteil[URTEIL_MODUS] = dict(modus, satz=satz) if satz else modus
             if szene.get("bildeingang") is not None:
                 # Ebenso der Bildeingang (auf-20261021-298, B1): was gerechnet wurde, aus dem
                 # Ergebnis des Bildmodells, nicht aus der Bestellung.
@@ -6437,7 +6441,10 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
                            # Die Messschalter (auf-20261021-298, B1) — ebenso kein Vertragsfeld.
                            _kosmo_szene.URTEIL_BILDEINGANG, _kosmo_szene.URTEIL_FARBABGLEICH,
                            # Strang Treue, ebenso kein Vertragsfeld.
-                           _kosmo_szene.URTEIL_UMRISS_HALTEN):
+                           _kosmo_szene.URTEIL_UMRISS_HALTEN,
+                           # Wie das Bild entstand, mit Satz bei Abweichung (auf-20261021-312
+                           # B3) — die Zeile in `angewandt.modus` baut `modus_des_auftrags`.
+                           URTEIL_MODUS):
             if k.get(schluessel):
                 satz[schluessel] = k[schluessel]
         aus.append(satz)
