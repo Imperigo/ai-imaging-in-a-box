@@ -8147,11 +8147,18 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
   - [x] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste wie Claude (Werkzeugschleife `frage_mit_werkzeugen` am Heim-PC, Schritte in der Mac-App als Urheber «assistent», Gesprächsregeln nur in `Assistentengespraech`, Karten «Vorschlag des Assistenten · A-n» im Gesprächsfeld) — gebaut, am Gerät unbestätigt (§175, C103)
   - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§175, C103)
-    - [ ] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
+    - [x] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC — beantwortet; Befunde B1–B6 (§187, C112)
+    - [x] B1: Stile im Bau wieder oben (fehlende Klammer in `vis-visual.css`), Rahmen am SVG-Knopf «Node löschen» — gebaut, am Gerät unbestätigt (§187, C112)
+    - [x] B3–B6: Systemsatz geschärft, Kennungen und erfundene Render-Angaben im Kern abgewiesen, Schlussantwort berichtigt — gebaut, am Gerät unbestätigt (§187, C112)
+    - [x] Die acht Stimmungen in den Werkzeugbeschreibungen (claude/kosmovis-stimmungen) — gebaut, am Gerät unbestätigt (§187, C112)
+    - [ ] Messauftrag auf-20261021-310 (local): dieselben vier Fragen und das Sperrzonen-Bild im Bau nachmessen
+    - [ ] Einspielen claude/kosmovis-kopf (CSS dringend) und claude/kosmovis-stimmungen bei Int 1 (integrator)
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
   - [x] Befund Demolauf 0.3.16: offene Karten überleben den Wechsel der Ansicht (Ablage in der Mac-App, Rückgabe an die
-    neu geladene Seite, verworfen nur mit Ablehnen oder nach 4 h, beides mit Satz an Claude; unpassende Karten weist
-    «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+    neu geladene Seite; unpassende Karten weist «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+  - [x] Regel wie KosmoOrbit v0.1.10: keine Frist; verworfen nur mit Ablehnen oder beim echten Beenden (App zu,
+    «Claude über MCP» aus) mit Satz; Leitungsverlust → Vermerk, Wiederverbinden → neu gemeldet, dann die Entscheide —
+    gebaut, am Gerät unbestätigt (§186, C110)
     - [ ] Geräteprobe: vorschlagen → Visbox-Seite → zurück → Karte steht → Anwenden wirkt (owner)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
@@ -8274,7 +8281,7 @@ Bekannt und ausdrücklich nicht erledigt:
   Blatt-Knoten in der Kopie; Hilfszweig, kopf und ki gemergt; Abgleich 0 Abweichungen — gebaut (§165, C94)
 - [x] Insel-Oberfläche ohne Stil (Befund Owner 0.3.15–0.3.17): Ursache verlorene CSS-Klammer (`166fbbe98`), behoben
   `bc0a43042`; Stilprobe am Bau (CSS geschlossen, Chrome misst Inseln, Kugel, Claude-Karte, Gesprächsfeld), Pflicht im CI
-  — gebaut (§186, C112)
+  — gebaut (§188, C113)
 - [ ] `bc0a43042` mit knoten-neu, nebeneinander, vertrag-werkzeuge zusammen einspielen (integrator)
 - [ ] Bau am Mac bestätigen, mit Abgleich-Vermerk im Stempel (owner)
 - [ ] Einspielen der eigenen Zweige bei Int 1 (kopf, modell-knoten, ki, fehler); der Abgleich zählt sie dann als «gleich»

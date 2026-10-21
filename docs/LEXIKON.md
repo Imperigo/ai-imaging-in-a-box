@@ -5969,9 +5969,16 @@ Geht die Probe auf, liegt die Karte wieder da; scheitert sie (etwa weil der betr
 Karte sichtbar und gilt als «passt nicht mehr». Zurückgegeben wird immer als Karte, nie still angewendet. *Im Projekt:*
 `visboxKi.stelleWieder` in `ki-wirt.ts`.
 
-**Ablauf (einer Karte)** — Eine Karte, über die vier Stunden lang niemand entschieden hat, fällt weg. Claude oder der
-Assistent bekommt dazu einen Satz mit dem Grund, damit der Vorschlag nicht still verschwindet. *Im Projekt:*
-`Kartenablage.frist`.
+**Echtes Beenden (der Arbeit mit Claude)** — Die zwei Fälle, in denen offene Karten von Claude wegfallen, ohne dass der
+Architekt entschieden hat: Die App wird geschlossen, oder er schaltet «Claude über MCP» aus. Claude bekommt dann je Karte
+einen Satz mit dem Grund, soweit es noch verbunden ist, und die Leiste sagt, was wegfiel. Ein Wechsel der Ansicht oder
+eine kurze Unterbrechung ist kein Beenden. Ablaufen lässt die App eine Karte nicht. *Im Projekt:* `Kartenablage.beende`,
+Regel wie KosmoOrbit v0.1.10; Protokoll 74 §186.
+
+**Leitung unterbrochen (Vermerk)** — Der Hinweis an einer Karte von Claude, solange die App Claude nicht erreicht (ihr
+Anschluss für Claude ist ausgefallen). Die Karte bleibt stehen und lässt sich entscheiden; was der Architekt entscheidet,
+erfährt Claude erst, wenn die Verbindung zurück ist — und dann erst, nachdem die App ihm die noch offenen Karten neu
+gemeldet hat. *Im Projekt:* `Kartenablage.leitungWeg`, `leitungWieder`, `Mcpkern.meldeNeu`.
 
 **Passt nicht mehr (Karte)** — Eine Karte, die zu einer anderen Mappe gehört als der offenen, oder deren Probe im
 jetzigen Knotengraph scheitert. Sie bleibt stehen, bis der Architekt entscheidet; «Anwenden» ändert dann nichts und sagt
@@ -6056,6 +6063,13 @@ das Ergebnis zurück; das Modell entscheidet den nächsten Schritt, bis es eine 
 Schritte je Frage. Ändert ein Schritt etwas, liegt eine Karte «Vorschlag des Assistenten · A-n» im
 Gesprächsfeld. *Im Projekt:* `frage_mit_werkzeugen` in `assistent.py` (die Schleife), `Assistentengespraech`
 im Kern der App (die Regeln des Gesprächs), Plan KI-Bedienung Stufe 5.
+
+**Prüfung im Kern statt Bitte** — Was ein Sprachmodell tun soll, steht in seiner Anweisung (dem Systemprompt); ob es
+sich daran hält, ist aber nicht sicher. Darum prüft das Programm selbst, was sich prüfen lässt, bevor ein Werkzeugaufruf
+ausgeführt oder eine Antwort gezeigt wird: Eine Kennung, die das Modell nirgends gelesen haben kann, gilt als geraten und
+wird zurückgewiesen; eine Angabe, die niemand nannte, gilt als erfunden. Das Modell bekommt den Grund und darf
+korrigieren. *Im Projekt:* `_pruefe_angaben` und `_berichtige_antwort` in `assistent.py` (Befunde aus Messauftrag 305,
+Protokoll 74 §187).
 
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
@@ -7278,6 +7292,24 @@ System laufen.
 
 ## 10 · Oberfläche und Entwurf
 
+**CSS (Stilregeln)** — Die Sprache, in der eine Web-Oberfläche ihr Aussehen beschreibt: Farben, Abstände, Schriften,
+wo ein Element steht. Jede Regel nennt zuerst, *wofür* sie gilt (den Selektor, etwa «alle Leisten der KI-Maus»), und dann
+in geschweiften Klammern, *was* gilt. *Im Projekt:* die `.css`-Dateien der Knotenansicht, im Bau zu einer Datei
+zusammengehängt.
+
+**Offene Klammer (im CSS)** — Fehlt in einer Stilregel die schliessende Klammer, gilt alles, was danach kommt, als *Teil*
+dieser Regel: Moderne Browser lesen Regeln in Regeln («verschachtelt») und wenden sie nur innerhalb des äusseren Elements
+an. Weil der Bau alle Stildateien hintereinander hängt, trifft eine offene Klammer auch die Regeln der folgenden Dateien.
+Die einzelne Datei sieht dabei richtig aus — der Fehler zeigt sich erst im Bau. *Im Projekt:* Befund 305 B1, eine fehlende
+`}` nach `.vis-raster-gross-urteil` liess Leiste, Figur, Sperrzonen und die Inseln ungestaltet; bewacht von
+`kosmo-maus-im-bau.test.ts`, das den Bau liest.
+
+**SVG (Vektorgrafik im Browser)** — Ein Bildformat, das aus Formen statt aus Bildpunkten besteht (Linien, Kreise,
+Rechtecke) und im Browser wie ein Teil der Seite behandelt wird. Manche Stilregeln für gewöhnliche Elemente wirken dort
+nicht — ein Umriss (`outline`) etwa wird um eine SVG-Gruppe nicht gezeichnet; dort braucht es eine eigene Form mit Strich.
+*Im Projekt:* die Knoten der Knotenansicht; der gestrichelte Rahmen am Knopf «Node löschen» ist darum ein eigenes
+Rechteck.
+
 **Entwurfsblatt (Artboard)** — Ein einzelner gezeichneter Bildschirm in einem
 Entwurfsdokument: ein Rechteck in der Grösse, die das Gerät später hat, mit allem darin,
 was der Benutzer dort sähe. Ein Entwurfsblatt ist ein Bild eines Programms, nicht das
@@ -8105,20 +8137,10 @@ aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ei
 ein, danach tippt man Auge und Blickpunkt in Metern. **Modell:** wie früher die Standpunkte aus dem Entwurf (nur,
 wo es einen Entwurf gibt). *Im Projekt:* Entscheide 109 und 113 (3); `KameraKnoten.tsx`.
 
-**CSS (Stilregeln einer Webseite)** — Die Sprache, in der eine Webseite sagt, wie etwas aussieht und wo es steht:
-Farbe, Grösse, Abstand, Lage. Jede Regel nennt, wofür sie gilt, und schliesst ihren Inhalt in geschweifte Klammern
-`{ … }` ein. *In diesem Projekt:* Die Knotenansicht hat rund zwei Dutzend solche Dateien; beim Bau werden sie zu einer
-zusammengefügt (Protokoll 74 §186).
-
-**Verlorene Klammer (CSS)** — Eine Stilregel, deren schliessende Klammer fehlt. Der Browser meldet keinen Fehler,
-sondern liest alle folgenden Regeln als Unterregeln dieser einen — sie gelten dann nur noch innerhalb von etwas, das es
-nicht gibt, und wirken nirgends. *In diesem Projekt:* Am 20.10.2026 beim Zusammenführen zweier Zweige entstanden; im Bau
-standen danach 928 von 1962 Regeln darunter, und am Mac lag die Insel-Oberfläche ungestaltet als Spalte (§186).
-
 **Stilprobe (am Bau)** — Eine Probe, die den fertigen Bau der Knotenansicht in einem Browser ohne Fenster öffnet und
 nachmisst, ob die Gestaltung greift: ob die Inseln am Rand sitzen, die Kugel klein ist, Claudes Karte und das
 Gesprächsfeld im Fenster stehen. Dazu prüft sie ohne Browser, dass jede Stildatei geschlossen ist. *Wozu:* Der Bau selbst
-und die übrigen Proben merken eine verlorene Klammer nicht. *Wo:* `tools/stil_probe.py`, `tests/test_stil_probe.py`.
+und die übrigen Proben merken eine **offene Klammer (im CSS)** nicht. *Wo:* `tools/stil_probe.py`, `tests/test_stil_probe.py`.
 
 **Vorgabe beim Anlegen (eines Knotens)** — Die Einstellung, die ein Knoten bekommt, wenn man ihn neu setzt. Sie gilt
 nur in diesem Moment: Ein schon gespeicherter Knoten behält, was er hat, auch wenn sich die Vorgabe ändert. *Im
@@ -8577,7 +8599,8 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus dem Strang Stil (Protokoll 74 §186): **CSS (Stilregeln einer Webseite)**, **Verlorene Klammer (CSS)**, **Stilprobe (am Bau)** |
+| 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |
+| 2026-10-21 | Ergaenzt aus dem Strang Stil (Protokoll 74 §188): **Stilprobe (am Bau)** (CSS und offene Klammer stehen seit §187) |
 | 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
@@ -8586,6 +8609,7 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
+| 2026-10-21 | Ergaenzt aus den Befunden von Messauftrag 305 (Protokoll 74 §187): **CSS (Stilregeln)**, **Offene Klammer (im CSS)**, **SVG (Vektorgrafik im Browser)**, **Prüfung im Kern statt Bitte** |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
 | 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §177): **Grundbild (Grundbild mit Licht)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |

@@ -109,7 +109,7 @@ def test_die_karte_kommt_aus_der_antwort_der_knotenansicht():
     assert "rufe(JSON.parse(ruf), modus)" in zentrale, "der Modus kommt bei jedem Aufruf mit"
     assert "Kibruecke.nichtOffen" in zentrale, "ohne offene Knotenansicht ein klarer Satz"
     assert "Knotenwege.ordnerImBuendel" in zentrale and "Kibruecke.listendatei" in zentrale
-    assert "await kern.entscheide(kennung, ergebnis)" in zentrale
+    assert "sendeAnClaude(kennung, ergebnis)" in zentrale and "await kern.entscheide(kennung, antwort)" in zentrale
     # STRANG KARTEN (21.10.2026): Geht die Seite, bleiben die Karten — niemand verwirft sie still.
     weg = zentrale[zentrale.index("func knotenWeg"):zentrale.index("func empfange")]
     assert "beantworteOffene" not in weg and "ablage.seiteWeg()" in weg, weg
@@ -122,7 +122,14 @@ def test_offene_karten_ueberleben_den_wechsel_der_ansicht():
     assert 'Kibruecke.rumpf("stelleWieder(JSON.parse(karten))")' in zentrale
     assert "ablage.lege(karte, mappe: kartenmappe)" in zentrale
     assert "ablage.entscheide(kennung, ja: ja, mappe: kartenmappe, seiteOffen: knoten != nil)" in zentrale
-    assert "Kartenablage.abgelaufen(e)" in zentrale, "bei Ablauf ein Satz mit Grund an Claude"
+    # FOLGEAUFTRAG (Regel wie KosmoOrbit v0.1.10): keine Frist; echtes Beenden und Leitungsverlust.
+    assert "pruefeAblauf" not in zentrale and "Timer" not in zentrale, "keine Frist mehr"
+    assert "NSApplicationWillTerminateNotification" in zentrale and "beende(.appZu)" in zentrale
+    assert "await kern.meldeNeu(neu)" in zentrale, "beim Wiederverbinden zuerst neu anmelden"
+    anschluss = _code(CLAUDE / "Claudeanschluss.swift")
+    halte = anschluss[anschluss.index("func halte()"):anschluss.index("private func hoererZustand")]
+    assert halte.index("beende(.anschlussAus)") < halte.index("hoerer?.cancel()"), "Satz vor dem Abschalten"
+    assert "Kizentrale.gemeinsam.leitungWeg()" in anschluss and "Kizentrale.gemeinsam.leitungWieder()" in anschluss
     flaeche = _code(START / "Arbeitsansicht.swift")
     assert "Kizentrale.gemeinsam.setzeKartenmappe(mappe)" in flaeche
     wirt = _code(WIRT / "src" / "ki-wirt.ts")
@@ -130,7 +137,8 @@ def test_offene_karten_ueberleben_den_wechsel_der_ansicht():
     assert "verwirf" not in verlassen, "beim Neuladen wird in der Seite nichts verworfen"
     assert "behandle(alsAufruf(v), 'karte')" in wirt, "zurueckgegeben wird nie still angewendet"
     kern = (KERN / "Kartenablage.swift").read_text(encoding="utf-8")
-    assert "public static let frist: TimeInterval = 4 * 60 * 60" in kern
+    assert "frist" not in kern.lower().replace("wartefrist", ""), "keine Ablauf-Frist an Karten"
+    assert 'leitungUnterbrochen = "Leitung unterbrochen"' in kern
 
 
 def test_die_mac_werkzeuge_lesen_ueber_die_bestehenden_wege_und_geben_nichts_frei():
