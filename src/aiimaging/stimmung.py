@@ -256,8 +256,11 @@ STIMMUNGEN = {
         "prompt_en": "winter, snow on the ground, cold clear light",
         "merkmale": ("winter", "snow")},
     "weiss": {
-        "label": "Weissmodell", "hdri": "studio_small_08",
-        "hdri_vorher": "mud_road_puresky",
+        # Getauscht am 21.10.2026 (auf-20261021-306 B5): studio_small_08 hat grosse dunkle Wandflächen und zeigte
+        # einen dunklen Raum; white_studio_06 ist eine weisse Hohlkehle mit weichem Oberlicht (HomeStation, Wahl
+        # aus 11 Poly-Haven-Studios). Das alte Bild bleibt am Heim-PC als Rückfall.
+        "label": "Weissmodell", "hdri": "white_studio_06",
+        "hdri_vorher": "studio_small_08",
         "belichtung_ev": 0.0, "staerke": 1.0, "kelvin": None,
         "sonne": False, "sonnen_staerke": 1.2, "fuell_staerke": 0.6, "winkel_grad": 20.0,
         "sonne_seitlich_grad": 70.0, "sonne_seite": "links",

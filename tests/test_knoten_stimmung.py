@@ -62,7 +62,9 @@ def test_acht_stimmungen_wie_der_vertrag():
     assert set(stimmung.STIMMUNGEN) == set(stimmung.PRESETS)
     assert stimmung.STIMMUNGEN["mittag"]["hdri"] == "kloofendal_43d_clear_puresky"
     # Getauscht am 20.10.2026 abends (HomeStation; die alten Dateien bleiben liegen).
-    assert stimmung.STIMMUNGEN["weiss"]["hdri"] == "studio_small_08"
+    # «weiss» getauscht am 21.10.2026 (auf-20261021-306 B5), das alte Bild bleibt als Rückfall.
+    assert stimmung.STIMMUNGEN["weiss"]["hdri"] == "white_studio_06"
+    assert stimmung.STIMMUNGEN["weiss"]["hdri_vorher"] == "studio_small_08"
     for preset, e in stimmung.STIMMUNGEN.items():
         assert stimmung.HDRI_MUSTER.match(e["hdri"]), preset
         assert e["prompt_de"] and e["prompt_en"] and e["merkmale"]
