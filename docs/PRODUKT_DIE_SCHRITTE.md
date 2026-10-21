@@ -2159,3 +2159,16 @@ Bildauftrags ein eigenes Feld: was bestellt war, was gerechnet wurde, und ob das
 Kamera. Hat das Bildmodell nichts gemeldet, steht dort «nicht gemeldet» und nicht «gleich». Damit kann die Knotenansicht ein
 Zeichen am Bild setzen. Ehrlich gesagt: geprüft an Proben mit nachgestelltem Bildmodell, am Heim-PC noch nicht an einem
 echten Lauf gesehen; angezeigt wird es noch nicht.
+**Drei Knoten passen wieder in ihre Karte (21.10.2026).** Die Karten der Knotenansicht sind schmal — der Inhalt hat 184
+Bildpunkte Breite. Drei Knoten hielten das nicht ein. Am **Kamera-Knoten** brachen die Wahlknöpfe («Auto | Manuell»,
+«24 | 35 | 50») in zwei und drei Zeilen um, die Zeile darunter stand weit über den Rand, und die Felder trugen die dunkle
+Farbe auf der hellen Karte. An der **Stimmung** standen die acht Namen in zu engen Spalten und überlappten sich, und
+«Himmel drehen» brach in zwei Zeilen. Am **Varianten-Knoten** stand «Alle freigeben» über den Rand hinaus. Behoben ist
+das mit Regeln, die nur innerhalb der Knoten gelten — die gleichen Bausteine anderswo bleiben, wie sie sind: einzeilige,
+schmalere Wahlknöpfe, die Namen der Stimmungen in kleinerer Schrift und in Spalten nach ihrer Länge, die zwei Knöpfe am
+Varianten-Knoten dürfen zweizeilig werden. Der Schalter heisst jetzt kurz «Drehen»; was er tut, steht in der Kurzhilfe,
+und wer sich vorlesen lässt, hört weiter «Himmel drehen». Beim Nachmessen fielen zwei Reste auf, die mitbehoben sind:
+der Reiter «Satz» an der Stimmung und der rechte Blätterpfeil am Varianten-Knoten standen noch wenige Bildpunkte über.
+Die Stilprobe misst die drei Knoten jetzt im fertigen Bau mit: nichts steht über, jede Wahlleiste ist einzeilig, keine
+zwei Namen überlappen. Ehrlich gesagt: gemessen im Browser des Prüfrechners in beiden Farbthemen und beim Zoom, mit dem
+die Knotenansicht startet; am Mac noch nicht gesehen.

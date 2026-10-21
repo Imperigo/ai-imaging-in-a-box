@@ -886,7 +886,7 @@ export type StabRichtung = 'laengs' | 'quer';
  */
 export interface Herkunft {
   art: 'owner-entscheid' | 'lehrheft' | 'hersteller' | 'branchenkatalog';
-  /** Der Beleg im Klartext: «Baubüro Andrin, 08.08.2026», «Deckenkonstruktionen S. 11». */
+  /** Der Beleg im Klartext: «Musterbüro, 08.08.2026», «Deckenkonstruktionen S. 11». */
   beleg: string;
 }
 

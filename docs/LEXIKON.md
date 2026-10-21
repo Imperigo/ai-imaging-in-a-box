@@ -8145,7 +8145,18 @@ wo es einen Entwurf gibt). *Im Projekt:* Entscheide 109 und 113 (3); `KameraKnot
 **Stilprobe (am Bau)** — Eine Probe, die den fertigen Bau der Knotenansicht in einem Browser ohne Fenster öffnet und
 nachmisst, ob die Gestaltung greift: ob die Inseln am Rand sitzen, die Kugel klein ist, Claudes Karte und das
 Gesprächsfeld im Fenster stehen. Dazu prüft sie ohne Browser, dass jede Stildatei geschlossen ist. *Wozu:* Der Bau selbst
-und die übrigen Proben merken eine **offene Klammer (im CSS)** nicht. *Wo:* `tools/stil_probe.py`, `tests/test_stil_probe.py`.
+und die übrigen Proben merken eine **offene Klammer (im CSS)** nicht. Seit dem 21.10.2026 misst sie auch die Knoten
+Kamera, Stimmung und Varianten nach (**Überstand**, **Reiterleiste**, überlappende Beschriftungen). *Wo:*
+`tools/stil_probe.py`, `tests/test_stil_probe.py`.
+
+**Überstand (am Knoten)** — Ein Teil im Knoten — ein Knopf, eine Beschriftung —, das breiter oder tiefer reicht als der
+Kasten, in dem es steht. Weil der Kasten abschneidet, was hinausragt, sieht man davon nur eine halbe Schrift oder
+gar nichts. *Wozu man es misst:* Ein Knopf, der halb fehlt, wirkt kaputt, und einer, der ganz fehlt, ist nicht zu
+bedienen. *Im Projekt:* die **Stilprobe** misst ihn in Pixeln des Knotens, unabhängig davon, wie weit man hineinzoomt.
+
+**Reiterleiste** — Eine Reihe von Wahlknöpfen, von denen immer genau einer gilt, wie die Reiter einer Kartei (etwa
+«Auto | Manuell» am Kamera-Knoten oder «Licht + Satz | Licht | Satz» an der Stimmung). *Im Projekt:* sie soll in einer
+Zeile stehen; bricht sie in zwei um, wird der Knoten höher als vorgesehen und schneidet unten ab.
 
 **Vorgabe beim Anlegen (eines Knotens)** — Die Einstellung, die ein Knoten bekommt, wenn man ihn neu setzt. Sie gilt
 nur in diesem Moment: Ein schon gespeicherter Knoten behält, was er hat, auch wenn sich die Vorgabe ändert. *Im
@@ -8626,6 +8637,7 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 | Datum | Änderung |
 |---|---|
 | 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |
+| 2026-10-21 | Ergaenzt aus dem Strang Optik (Protokoll 74 §194): **Überstand (am Knoten)**, **Reiterleiste**; **Stilprobe (am Bau)** um die Knoten nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §192): **Probename (im Gerätebuch)** |
 | 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36, Protokoll 74 §189): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
 | 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |

@@ -123,7 +123,13 @@ describe('C · Stimmung', () => {
     const { gid, setze } = graphMit();
     const st = setze('stimmung');
     montiere(<NodeCanvas graphId={gid} />);
-    act(() => (q('stimmung-drehen') as HTMLInputElement).click());
+    // Optik-Befund 2 (UI, 21.10.2026): kurz «Drehen» am Schalter, damit die Zeile einzeilig bleibt;
+    // der volle Sinn steht für Vorleser im Namen und für alle in der Sprechblase.
+    const schalter = q('stimmung-drehen') as HTMLInputElement;
+    expect(schalter.closest('.k-switch')?.querySelector('.k-switch-label')?.textContent).toBe('Drehen');
+    expect(schalter.getAttribute('aria-label')).toBe('Himmel drehen');
+    expect(schalter.closest('.k-tooltip')?.textContent).toContain('Himmel drehen: an');
+    act(() => schalter.click());
     expect(knoten(gid, st).params['drehung']).toBe(0);
     klick(q('stimmung-wirkung-licht'));
     expect(knoten(gid, st).params['wirkung']).toBe('licht');
