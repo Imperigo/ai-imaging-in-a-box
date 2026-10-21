@@ -72,13 +72,15 @@ final class MacmappeTests: XCTestCase {
         XCTAssertEqual(Mappenkern.ziel(methode: "GET", pfad: "/knoten/skizze"), .skizze)
         XCTAssertEqual(Mappenkern.ziel(methode: "GET", pfad: "/knoten/standpunkte"), .standpunkte)
         XCTAssertEqual(Mappenkern.ziel(methode: "POST", pfad: "/knoten/mappe-holen"), .modellHolen)
+        // BEFUND auf-20261021-304 B1: «Datei laden …» geht mit dem Namen der Mappe am Mac hinueber.
+        XCTAssertEqual(Mappenkern.ziel(methode: "POST", pfad: "/knoten/modell-laden"), .modellLaden)
         XCTAssertEqual(Mappenkern.ziel(methode: "POST", pfad: "/bruecke/jobs"), .auftragAnlegen)
         XCTAssertEqual(Mappenkern.ziel(methode: "GET", pfad: "/bruecke/jobs/vis-1-abcdef"),
                        .auftragLesen("vis-1-abcdef"))
         XCTAssertEqual(Mappenkern.ziel(methode: "GET", pfad: "/bruecke/jobs/vis-1-abcdef/artifacts/k%20a.png"),
                        .auftragsbild("vis-1-abcdef", "k a.png"))
-        // WIE BISHER AN DEN HEIM-PC: Laden, Freigeben, Abbrechen, die Liste, die Gesundheit.
-        for (m, p) in [("POST", "/knoten/modell-laden"), ("GET", "/knoten/modell-laden"),
+        // WIE BISHER AN DEN HEIM-PC: der Stand des Ladens, Freigeben, Abbrechen, die Liste, die Gesundheit.
+        for (m, p) in [("GET", "/knoten/modell-laden"),
                        ("POST", "/bruecke/jobs/vis-1-abcdef/approve"), ("GET", "/bruecke/jobs"),
                        ("GET", "/bruecke/health"), ("GET", "/bruecke/jobs/vis-1-abcdef/artifacts/.x"),
                        ("GET", "/knoten/index.html")] {
@@ -168,6 +170,14 @@ final class MacmappeTests: XCTestCase {
         XCTAssertEqual(koepfe, [Kopfzeile("X-Mappe-Am-Mac", "Demohaus%20Test"),
                                 Kopfzeile("X-Mappe-Heim", "%C3%9Cbungsmappe%202")])
         XCTAssertEqual(Mappenkern.auftragskoepfe(mappe()).count, 1)
+    }
+
+    func testDateiLadenNenntSeineMappe() {
+        // BEFUND auf-20261021-304 B1: ohne diese Koepfe stellte der Heim-PC seine Mappe fuer alle um.
+        XCTAssertEqual(Mappenkern.ladekoepfe(mappe(heim: "Hof")),
+                       [Kopfzeile("X-Mappe-Am-Mac", "Demohaus%20Test"), Kopfzeile("X-Mappe-Heim", "Hof")])
+        XCTAssertEqual(Mappenkern.ladekoepfe(mappe()), [Kopfzeile("X-Mappe-Am-Mac", "Demohaus%20Test")])
+        XCTAssertEqual(Mappenkern.wegModellLaden, "/knoten/modell-laden")
     }
 
     func testStandpunkteNurMitZwilling() {

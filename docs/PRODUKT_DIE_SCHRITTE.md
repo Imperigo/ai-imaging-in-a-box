@@ -1173,6 +1173,12 @@ Heim-PC bleibt liegen, weil das iPad seine Skizzen bis zum nächsten Schritt noc
 IFC-Datei bleibt am Heim-PC, weil das Programm dafür nur dort laufen darf (Lizenz, Prozessgrenze); das fertige Modell
 kommt danach in die offene Mappe am Mac. Ist keine Mappe am Mac offen, läuft alles wie vorher.
 
+**Nachgebessert nach der Messung am Heim-PC:** Das Laden einer Datei aus einer Mappe am Mac machte die neue Mappe am
+Heim-PC zur «zuletzt geöffneten» — für alle Geräte. Die Visbox-Seite und das iPad zeigten danach plötzlich die neue
+Mappe statt ihrer eigenen. Jetzt sagt der Mac beim Laden, dass die Datei in seine Mappe gehört. Der Heim-PC legt dann
+nur eine Kopie zum Umwandeln an (den Zwilling) und lässt alles andere, wie es war. Er schreibt dabei auch nie in die
+Mappe, mit der am Heim-PC gerade gearbeitet wird. Ohne Mappe am Mac ist alles wie vorher.
+
 **Offen:** die Probe am Mac (Mappe holen, ein Bild rechnen lassen, ohne Heim-PC wieder öffnen); die Messung am Heim-PC,
 dass Holen, Auftrag und die alte Mappe dort zusammen funktionieren; das iPad, das die Mappe vom Mac holt (nächster
 Schritt, der Weg ist im Plan beschrieben).
