@@ -149,6 +149,46 @@ export function treueText(qa: JobQa | undefined): string {
 }
 
 /**
+ * Vorschlag C18 (Visbox, Video-Befund L4-2, 21.10.2026; Blatt «Hausanteil»): WIEVIEL DES
+ * BILDES DAS HAUS FUELLT — an der Grundlage UND am KI-Bild, nebeneinander.
+ *
+ * Anlass: «Das Haus fuellt nur 2.9 %» stand neben einem KI-Bild mit sichtbar grossem Haus.
+ * Gemessen war nur die Grundlage; die KI hatte den Ausschnitt naeher gewaehlt. Beide Zahlen
+ * kommen vom Heim-PC (`qa.haus_anteil_grundlage`, `qa.haus_anteil_bild`); hier wird nur
+ * geschrieben und verglichen, nichts gemessen. `anders` nach derselben Regel wie am Heim-PC
+ * (`baumasse.rahmt_anders`): ein Wert mindestens doppelt so gross wie der andere UND
+ * mindestens 5 Prozentpunkte Unterschied — gesetzt, nicht gemessen.
+ * `undefined`, wenn keine der beiden Zahlen geliefert ist: dann fehlt die Zeile, wie bisher.
+ */
+export const HAUS_RAHMUNG_FAKTOR = 2;
+export const HAUS_RAHMUNG_MINDEST = 0.05;
+export const HAUS_ANTEIL_VORBEHALT =
+  'Am KI-Bild aus der Tiefe geschätzt, nicht gezählt. Weichen beide stark ab, hat die KI den ' +
+  'Ausschnitt verändert — Zahlen zur Grundlage sprechen dann nicht über dieses Bild.';
+
+function prozent(v: number): string {
+  return `${(v * 100).toFixed(1).replace('.', ',')} %`;
+}
+
+export function hausAnteilText(
+  qa: JobQa | undefined,
+): { text: string; anders: boolean } | undefined {
+  const g = qa?.haus_anteil_grundlage;
+  const b = qa?.haus_anteil_bild;
+  if (g === undefined && b === undefined) return undefined;
+  const text =
+    `Grundlage ${g === undefined ? 'nicht gemeldet' : prozent(g)} · ` +
+    `KI-Bild ${b === undefined ? 'nicht gemessen' : `≈ ${prozent(b)}`}`;
+  let anders = false;
+  if (g !== undefined && b !== undefined) {
+    const klein = Math.min(g, b);
+    const gross = Math.max(g, b);
+    anders = gross - klein >= HAUS_RAHMUNG_MINDEST && (klein <= 0 || gross / klein >= HAUS_RAHMUNG_FAKTOR);
+  }
+  return { text, anders };
+}
+
+/**
  * Verlauf-Nachgang: die fortlaufende Nummer eines Laufs an seinem Knoten
  * (`NodeLauf.laufNummer`, vergeben in `vis-runtime.ts`). Nur ein Lauf ohne
  * Nummer (von vor diesem Feld) faellt auf seine Stelle in der Reihe zurueck,

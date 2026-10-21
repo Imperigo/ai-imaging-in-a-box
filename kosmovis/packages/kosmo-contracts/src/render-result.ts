@@ -400,6 +400,23 @@ export const Zwischenspeicher = z.object({
  * KI-Veredelungsschritt entfaellt, das Endergebnis bleibt `'geliefert'`.
  * `'uebersprungen'` meint: DIESER Render-Schritt fand insgesamt nicht statt.
  */
+/**
+ * Vorschlag C18 (Visbox, Video-Befund L4-2, 21.10.2026) — DER HAUSANTEIL AN GRUNDLAGE UND
+ * KI-BILD, je 0..1, am `qa`-Block (die Kamera von `qa.geometry`) und je Kamera.
+ *
+ * Anlass: Die Pruefung meldete «Das Haus fuellt nur 2.9 %» neben einem KI-Bild mit sichtbar
+ * grossem Haus. Gemessen war nur die Grundlage (Blender-Tiefe); die KI hatte den Ausschnitt
+ * naeher gewaehlt. `haus_anteil_grundlage` ist dieselbe Zahl wie im Grund-Satz (gezaehlt),
+ * `haus_anteil_bild` am KI-Bild aus dessen Tiefe GESCHAETZT. Optional, ohne Default; ein
+ * kaputter Wert faellt still weg (`.catch(undefined)`) und lehnt nie das Ergebnis ab. Kein Tor,
+ * aendert weder `passed` noch `lieferstatus`. Fehlt bei Innenansichten (randlose Silhouette).
+ */
+const HausAnteil = z.number().min(0).max(1).optional().catch(undefined);
+export const HausAnteilFelder = {
+  haus_anteil_grundlage: HausAnteil,
+  haus_anteil_bild: HausAnteil,
+};
+
 export const Lieferstatus = z.enum(['geliefert', 'uebersprungen', 'fehlgeschlagen']);
 
 /**
@@ -668,6 +685,7 @@ export const RenderResult = z
          */
         hinweise: z.array(z.string()).optional(),
       }),
+      ...HausAnteilFelder,
     }),
     /**
      * V2 (auf-20260826-49, Posten B5, Owner-Entscheid 03.09.2026) — QA JE
@@ -694,6 +712,7 @@ export const RenderResult = z
           kamera: z.string(),
           geometry: GeometryQA.optional(),
           style: StyleQA.optional(),
+          ...HausAnteilFelder,
           /** P6 — siehe Nachtrag `Zwischenspeicher` oben. Additiv, optional, kein Default. */
           zwischenspeicher: Zwischenspeicher.optional(),
           /**

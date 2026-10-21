@@ -7,6 +7,8 @@ import { LizenzOffenMarke } from './LizenzMarke';
 import { grundlageText, startwertText } from './grundlage';
 import type { NodeLauf } from './vis-runtime';
 import {
+  HAUS_ANTEIL_VORBEHALT,
+  hausAnteilText,
   laufGrund,
   laufNummerVon,
   laufUrteil,
@@ -313,6 +315,9 @@ function VerlaufGross({
     return () => window.removeEventListener('keydown', beiTaste, true);
   }, []);
 
+  // C18 (Blatt «Hausanteil»): nur an echten Laeufen, nicht an Teil- oder Zwischenbildern.
+  const hausZeile = art ? undefined : hausAnteilText(e.qa);
+
   const taste = (ev: ReactKeyboardEvent<HTMLDivElement>) => {
     ev.stopPropagation();
     if (ev.key === 'Tab') {
@@ -440,6 +445,19 @@ function VerlaufGross({
                   <dd data-testid="render-verlauf-gross-treue">{treueText(e.qa)}</dd>
                 </div>
               )}
+              {hausZeile && (
+                <div>
+                  <dt>Haus im Bild</dt>
+                  <dd data-testid="render-verlauf-gross-hausanteil">
+                    {hausZeile.text}
+                    {hausZeile.anders && (
+                      <span className="vis-verlauf-ausschnitt" data-testid="render-verlauf-gross-ausschnitt">
+                        Ausschnitt anders
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt>Bildwerkzeug</dt>
                 <dd data-testid="render-verlauf-gross-werkzeug">{e.engineUsed ?? 'nicht gemeldet'}</dd>
@@ -459,6 +477,11 @@ function VerlaufGross({
                 <dd data-testid="render-verlauf-gross-herkunft">{e.worker ?? 'nicht gemeldet'}</dd>
               </div>
             </dl>
+            {hausZeile && (
+              <p className="vis-verlauf-gross-vorbehalt" data-testid="render-verlauf-gross-hausanteil-vorbehalt">
+                {HAUS_ANTEIL_VORBEHALT}
+              </p>
+            )}
             <LizenzOffenMarke lizenz={e} testid="render-verlauf-gross-lizenz-offen" />
             <span className="vis-verlauf-gross-luecke" />
             <div className="vis-verlauf-gross-fuss" data-testid="render-verlauf-gross-fuss">
