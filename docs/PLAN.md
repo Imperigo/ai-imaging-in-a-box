@@ -8142,7 +8142,7 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Entschieden:** Entscheide 107, 109–113 für die Knoten; Licht ins KI-Bild nach Entscheid 117 (21.10.2026): erst
 > messen, dann am Bild wählen — `vis.farbabgleich` und `vis.bildeingang` als Messschalter, Vorgabe aus.
 > **Gemessen:** Stimmung, Kamera und Material am Heim-PC in 292–296; das KI-Bild liest nur die Tiefe (296, seit auf-123).
-> **Offen:** 297 und 298 (local), die Wahl am Bild (owner), Vertragsfelder (integrator), Knotenteile (beide Programme).
+> **Offen:** 298 und 299 (local), die Wahl am Bild (owner), Vertragsfelder (integrator), Knotenteile (beide Programme).
 
 - [ ] Heim-PC-Teil
   - [x] H1 Stimmung: `render.environment` mit Himmelsbild, Gipsmodell «weiss», Abweisung mit Satz im Ergebnis, «Himmelsbilder n/8» — gebaut, am Gerät unbestätigt (§153, C79)
@@ -8160,13 +8160,17 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Befunde aus 295 behoben: Vorprobe misst das Haus in Blendenstufen wie die Prüfung, Satz «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» bei `geom_iou` < 0,1, `angewandt.environment.drehung_je_kamera` statt `rotationGrad` bei der Drehung zur Kamera, Bezug von `ausserhalb_umriss_anteil` geprüft und dokumentiert — gebaut, am Gerät unbestätigt (§164, C93)
   - [x] Nachmessung am Heim-PC: auf-20261021-296 (local) — Ergebnis `5415d9d`: abend Kontrast 41/39, Satz «NICHT WIEDERZUERKENNEN» bei abend voll (0,005), `drehung_je_kamera` gleich dem Blender-Bericht, ohne Stimmung bildpunktgleich, 0,25 trennt Gips (0,0) von Strasse (2,15); Befunde: Strassenbild entgeht dem Satz (geom_iou 0,197, Fläche 2,46), `umriss_gilt` nur bei false, mittag bricht auch mit faithful 1,0 aus, KI-Bild liest nur die Tiefe, Schattenseite abend fast auf dem Hintergrund
   - [x] Befunde aus 296 behoben: Satz «NICHT WIEDERZUERKENNEN» auch bei `n_ist/n_soll` > 2 oder `ausserhalb_umriss_anteil` > 1,5 mit `geom_iou` < 0,3, `seedauswahl.umriss_gilt` immer true/false, Messschalter `vis.leerer_hintergrund` (Vorgabe aus) — gebaut, am Gerät unbestätigt (§167, C95)
-  - [ ] Nachmessung am Heim-PC: auf-20261021-297 (local) — Strassenbild mit Satz, `umriss_gilt` true/false, mittag mit und ohne «empty background, no other buildings» bei faithful 1,0 und Standard, ein Prüfbild zwischen 0 und 0,68 (weiss, Standardprompt), ohne Stimmung bildpunktgleich, Schattenseite nachgezählt
+  - [x] Nachmessung am Heim-PC: auf-20261021-297 (local) — Ergebnis `a5671b3`: Strassenbild mit Satz (beide Auslöser), `umriss_gilt` bei allen sieben KI-Bildern, 0,25 zwischen 0,19 und 0,30; Befunde: 3c/3d ohne Satz, `ausserhalb_umriss_anteil` zählt breite Zeilen zu klein, «leerer Hintergrund» hält nicht im Umriss, weiss hängt selbst das Gipsmodell an, Quantil kippte winter, Personen trotz «no people»
+  - [x] Befunde aus 297: `ausserhalb_umriss_anteil` geeicht — zählt alles, was nicht Himmel ist, ohne Himmel im Bild wie bisher (Eichungstabelle §169); Auslöser für 3c/3d geprüft und nicht gebaut; Negativ-Prompt bei `z-image-turbo` wirkungslos (nur notiert) — gebaut, am Gerät unbestätigt (§169, C97)
+  - [ ] Messung am Heim-PC: auf-20261021-299 (local) — Kontrolllauf mittag Standard, neue Zahl an allen KI-Bildern aus 295–297 ohne neuen KI-Lauf gegen die Nachzählung, Wiedererkennung von Auge
+  - [ ] Satz «NICHT WIEDERZUERKENNEN» für 3c/3d (breite Zeile statt Haus bei `geom_iou` 0,52/0,61): Auslöser erst nach dem Augenurteil aus 299; Kandidat «n_ist/n_soll > 1,2 und ausserhalb > 1,5», danach ein Formmass (Stufe Hauptbau/Anbau) (wir)
+  - [ ] Hintergrund der Stimmung weiss (Fels-/Höhlenwand statt Studio) — Prompt-Thema, notiert ohne Fix (§169)
   - [x] Licht ins KI-Bild (Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`): Owner-Frage entschieden — Entscheid 117, Variante A «erst messen, dann am Bild entscheiden» (Owner über LW, 21.10.2026)
   - [x] Messschalter `vis.farbabgleich` (Farbabgleich an das Cycles-Bild, kein Bildpunkt wandert) und `vis.bildeingang` (Cycles-Bild zusätzlich zur Tiefe über einen eigenen Start auf `z-image-turbo`), beide Vorgabe aus, kein Vertragsfeld — gebaut, am Gerät ungemessen (§168, C96)
   - [ ] Messung am Heim-PC: auf-20261021-298 (local) — kommt das Cycles-Bild an (Marke, sha256), Matrix 3 Stärken × 3 Stimmungen mit Farbabgleich an/aus, Kontrolle bildpunktgleich zu 297, Vergleichstafeln 960 px
   - [ ] Wahl am Bild (owner, über die Zentrale nach 298): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
-  - [ ] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — beobachten, in 297 je Bild nachgezählt (local)
+  - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)
   - [ ] Beobachten ohne Fix: Sichtbeton im KI-Bild nur teilweise (Holz-/Steinstreifen); Schlagschatten auf 1,7 m Augenhöhe kaum sichtbar (296 notiert)
   - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293

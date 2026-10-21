@@ -107,6 +107,9 @@ WIEDERERKENNUNG_FLAECHE_VERHAELTNIS = 2.0
 #: 2,15 bei 0,197; abend vorschau 1,92 bei 0,384 (Haus teilweise erkennbar — bleibt gültig);
 #: mittag faithful 1,0 1,01 bei 0,491 (Haus erkennbar, daneben gebaut — bleibt gültig, der
 #: Satz «KI BAUT UEBER DEN UMRISS HINAUS» sagt es schon).
+#: **Nach der Eichung (auf-20261021-297, Protokoll 74 §169)** liegen alle Aussenbilder bei 2,0–4,3: Die
+#: Zahl allein trennt «teilweise erkennbar» nicht mehr von «nicht erkennbar», der Auslöser trägt nur
+#: zusammen mit ``geom_iou``. Unverändert gelassen; kein Urteil aus 295–297 ändert sich.
 WIEDERERKENNUNG_AUSSERHALB_ANTEIL = 1.5
 WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB = 0.3
 

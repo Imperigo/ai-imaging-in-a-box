@@ -1,0 +1,50 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261021-299",
+  "art": "qa",
+  "beschreibung": "Eichung von ausserhalb_umriss_anteil nachmessen (Befund N2 aus 297): neue Zahl 'nicht Himmel' mit Rueckfall ohne Himmel an allen KI-Bildern aus 295-297 gegen die Nachzaehlung, ohne neuen KI-Lauf; ein Kontrolllauf mittag Standard; Wiedererkennung von Auge fuer den Ausloeser",
+  "erstellt": "2026-10-21T18:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "params": {
+    "folgt_auf": "auf-20261021-297",
+    "entscheide": [
+      "97",
+      "97a"
+    ],
+    "einbau": [
+      "C97"
+    ],
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "prompt": "zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people",
+    "kameras": [
+      "sSE"
+    ],
+    "stimmungen": [
+      "mittag"
+    ],
+    "schaetzer": "depth-anything-v2-small",
+    "neue_laeufe": 1
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit der Eichung von ausserhalb_umriss_anteil (Befund N2 aus 297; Fassung bleibt, wie sie ist) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. Liegt 298 (Licht ins KI-Bild) noch offen, zuerst 298 rechnen; dieser Auftrag aendert an 298 nichts.\n\nWAS AM HEIM-PC JETZT ANDERS RECHNET: (a) ausserhalb_umriss_anteil ZAEHLT NEU (alle KI-Laeufe mit Pruefung): Bisher zaehlte baumasse.ausserhalb_umriss im Soll-Hintergrund (ohne Platte, gedachten Boden, Splat und 2-%-Rand) nur, was der Tiefenschaetzer 'so nah wie das Haus' sah (Naehe >= fernes Fuenftel der Naehe auf dem Haus). Eine Zeile wenig hinter dem Haus fiel durch (3d: 0,30 gegen deine 2,22). Neu zaehlt alles, was NICHT HIMMEL ist: Naehe >= 0,05 x dieser Hausgrenze (baumasse.HIMMEL_NAEHE_ANTEIL; Depth Anything V2 legt Himmel und Wolken auf null oder darunter). Baeume, Hecken und ferne Huegel zaehlen mit, wie in deiner Nachzaehlung. (b) RUECKFALL OHNE HIMMEL: Liegt weniger als 2 % des Bereichs am Himmel (baumasse.MINDEST_HIMMEL_ANTEIL) — beim Gipsmodell 'weiss' mit Studio-, Fels- oder Hoehlenwand —, zaehlt wie bisher nur, was so nah wie das Haus ist. (c) Neue Felder im Befund unter ausserhalb_umriss (befund.json, nicht im Vertrag): verfahren ('nicht_himmel_aus_tiefe_im_soll_hintergrund' oder Rueckfall 'tiefe_naeher_als_haus_im_soll_hintergrund'), verfahren_grund (nur beim Rueckfall), himmel_grenze, himmel_anteil, n_nah und anteil_haus_nah (die alte Zahl zum Vergleich). (d) Folge im Ergebnis: Bei allen Aussenbildern steigt qa.ausserhalb_umriss_anteil auf rund 2,0-2,3 (Strasse 3,2, abend voll 4,3); der Satz 'KI BAUT UEBER DEN UMRISS HINAUS' steht bei denselben Bildern wie bisher, nur mit groesserer Prozentzahl; die Gipsmodelle bleiben bei 0,0 / 0,20 (Rueckfall). (e) UNVERAENDERT: die Schwelle 0,25, die drei Ausloeser von 'HAUS IM KI-BILD NICHT WIEDERZUERKENNEN' (geom_iou < 0,1; n_ist/n_soll > 2,0; ausserhalb > 1,5 bei geom_iou < 0,3), seedauswahl.umriss_gilt, Prompt, KI-Bild, Cycles-Bild, Vorprobe, qa.geometry, geometry_gates, qa_je_kamera (nur der Wert von ausserhalb_umriss_anteil aendert sich). Bekannt und so gewollt: 3c/3d bekommen den Satz NICHT WIEDERZUERKENNEN weiterhin nicht (geom_iou 0,52/0,61) — siehe Teil 3.\n\nVORBEREITUNG wie 297: Bruecke als Client, vor jedem Lauf kein fremder Auftrag, Karte < 2,5 GB und < 120 W, sonst warten (nie entladen); Leistungsgrenze 400 W; Laeufe strikt nacheinander. Geometrie synthetisch aus tools/make_test_glb.py wie 292-297, Kamera sSE, 960 x 600, Standardprompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', vis.backbone z-image-turbo, vis.seed 482913, guete voll.\n\nTEIL 1 — KONTROLLLAUF mittag Standard (EIN neuer KI-Lauf): Stimmung mittag, faithful Standard (kein vis.faithful), ohne vis.leerer_hintergrund, ohne die Schalter aus 298. Erwartet: KI-Bild bildpunktgleich zu 297 3c (und 295 3-mittag-voll); ausserhalb_umriss.verfahren 'nicht_himmel_aus_tiefe_im_soll_hintergrund', anteil_haus um 2,20 (im Container nachgerechnet 2,204), anteil_haus_nah um 0,77 (= alter Wert 0,7674), himmel_anteil um 0,53; Satz 'KI BAUT UEBER DEN UMRISS HINAUS' mit rund 220 %; geom_iou 0,516 und n_ist/n_soll 1,796 wie 297; kein Satz NICHT WIEDERZUERKENNEN. Die Grundlage dieses Laufs (material_id.png, tiefe_norm.png, Messboden im Befund) NICHT wegwerfen, bevor Teil 2 fertig ist — sie liefert die Masken fuer Teil 2.\n\nTEIL 2 — DIE NEUE ZAHL AN DEN BESTEHENDEN BILDERN AUS 295-297 (OHNE NEUEN KI-LAUF): fuer jedes KI-Bild unter auftraege/ergebnisse/auf-20261020-295-bilder, auf-20261021-296-bilder und auf-20261021-297-bilder (die KI-Bilder sSE: 297 1, 3a, 3b, 3c, 3d, 4, 4z; 296 4a-mittag, 4a-weiss, 4b, 2-abend-vorschau, 5-T2-abend-voll; 295 3-mittag-vorschau/-voll, 3-abend-vorschau/-voll, 3-winter-vorschau/-voll, 4-mittag-englisch-vorschau): Depth Anything V2 Small (depth-anything-v2-small, wie im Kern) auf dem Bild, dann aiimaging.baumasse.ausserhalb_umriss(naehe, soll_silhouette, 960, 600, haus=Bauwerksmaske, trennhilfe=Messboden) mit Soll-Silhouette, Bauwerksmaske und Messboden aus der Grundlage von Teil 1 (dieselbe Kamera, dieselbe Geometrie). Die 295-Bilder liegen im Repo nur mit 480 px: wenn du die 960-px-Originale noch hast, diese nehmen, sonst die 480-px-Bilder mit halbierten Masken (rand 10 px) und vermerken. Je Bild melden: alt (gemeldet in 295/296/297), neu (anteil_haus), anteil_haus_nah, himmel_anteil, verfahren, deine Nachzaehlung (wo es eine gibt; fuer die 295-Bilder bitte neu nachzaehlen wie in 297, 'nicht Himmel' im Bereich) und dein Urteil von Auge 'ueber den Umriss gebaut ja/nein'. Vergleichswerte aus dem Container (Masken aus dem Grundlagenbild nachgebaut, alte Zahl damit auf 0,02 genau getroffen): 297 1 Strasse 3,23 (deine Nachzaehlung 2,48 war eine Untergrenze), 3a 2,09 (2,39), 3b 1,96 (2,02), 3c 2,20 (2,28), 3d 2,11 (2,22), 4 weiss 0,00 (von Hand 0), 4z weiss 0,20 (von Hand unter 0,25), 296 4a weiss 0,00 (von Hand 0), abend voll 4,29, 295 mittag vorschau 2,08, abend vorschau 2,11, winter vorschau 2,13, winter voll 2,28, englisch 2,05 (295 an 480 px). Weicht deine neue Zahl um mehr als 0,1 vom Container-Wert ab, bitte Masken und Bereich (n_bereich, n_haus) melden.\n\nTEIL 3 — WIEDERZUERKENNEN, VON AUGE (fuer den Ausloeser, nichts rechnen): Mit der geeichten Zahl liegen alle Aussenbilder bei 2,0-2,3; die Zahl trennt 'teilweise erkennbar' (3a 2,09, 3b 1,96, abend vorschau 2,11) nicht von 'nicht erkennbar' (3c 2,20, 3d 2,11). Ein Ausloeser 'ausserhalb > 1,5 unabhaengig von geom_iou' traefe darum auch 3a, 3b und abend vorschau. Im Container passt an allen beurteilten Bildern 'n_ist/n_soll > 1,2 UND ausserhalb > 1,5' (teilweise 1,14/1,16/1,14 gegen nicht 1,80/1,28; Gips 4z 1,25 bei 0,20), aber der Abstand ist schmal und vier Bilder aus 295 sind nicht beurteilt — darum NICHT gebaut. Bitte je Bild aus 295-297 'Haus wiederzuerkennen ja / teilweise / nein' von Auge, besonders fuer die bisher unbeurteilten 295 3-mittag-vorschau, 3-winter-vorschau, 3-winter-voll und 4-mittag-englisch-vorschau, und sag, ob 'teilweise' fuer dich als erkennbar gilt (so stand es in 296 fuer abend vorschau und mittag faithful 1,0). Melde dazu n_ist/n_soll fuer 4-mittag-englisch-vorschau (fehlt in 295).\n\nTEIL 4 — NOTIERT, NICHTS ZU RECHNEN: (i) vis.leerer_hintergrund bleibt Vorgabe aus (297: wirkt zu schwach). (ii) Die Vorprobe wird NICHT auf das 25-%-Quantil umgestellt (winter kippte in deiner Schaetzung). (iii) Personen trotz 'no people' (297 3d): z-image-turbo rechnet ohne klassifikatorfreie Fuehrung (fuehrung 0,0) — ein negativer Prompt richtet dort nichts aus und wird darum nicht angeschlossen. Wenn dir im Kontrolllauf Personen auffallen, nur notieren. (iv) Fels-/Hoehlenwand hinter dem Gipsmodell: bitte nur beobachten, ob sie im Kontrolllauf (mittag) fehlt — sie gehoert zur Stimmung weiss.\n\nNICHT TUN: keinen Code aendern, nichts ins Repo ausser Ergebnis und Bildern (Kontrollbild 960 px sSE; Masken nur, wenn sie von den Container-Masken abweichen), Mappe des Dienstes nicht anfassen, keine fremden Modelle entladen, keine Ordnerwerte oder Dateinamen vom Heim-PC ins Ergebnis. Die neue Zahl ist kein Tor: kein Urteil darf sich durch sie aendern ausser der Prozentzahl im Satz.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor dem Lauf, welche Grundlage (neu/wiederverwendet), woher die Masken fuer Teil 2.",
+    "1: Kontrolllauf mittag Standard: bildpunktgleich zu 297 3c ja/nein, ausserhalb_umriss vollstaendig (anteil_haus, anteil_haus_nah, himmel_anteil, verfahren, n_bereich, n_haus), Satz UEBER DEN UMRISS woertlich, geom_iou, n_ist/n_soll, Satz NICHT WIEDERZUERKENNEN ja/nein, Aufbau qa.geometry/geometry_gates/qa_je_kamera gleich wie 297 ja/nein.",
+    "2: Tabelle je KI-Bild aus 295-297: alt / neu / anteil_haus_nah / himmel_anteil / verfahren / Nachzaehlung / von Auge ueber den Umriss ja/nein; Abweichung gegen die Container-Werte.",
+    "3: je Bild Haus wiederzuerkennen ja/teilweise/nein (von Auge), ob 'teilweise' als erkennbar gilt, n_ist/n_soll fuer 4-mittag-englisch-vorschau.",
+    "Notiert ohne Fix: Personen im Kontrollbild ja/nein; Hintergrund im Kontrollbild.",
+    "Urteil in einem Satz: Trifft die neue Zahl deine Nachzaehlung (auf 0,3 genau) und bleibt sie bei den Gipsmodellen unter 0,25?"
+  ],
+  "rang": 86
+}

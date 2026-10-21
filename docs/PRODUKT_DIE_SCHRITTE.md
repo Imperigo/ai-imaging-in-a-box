@@ -1766,6 +1766,24 @@ Die Messung rechnet drei Stärken in drei Stimmungen (Morgen, Abend, bedeckt), j
 legt die Vergleichsbilder für die Wahl ab. Nur frei lizenzierte Gewichte (Apache-2.0), die schon auf dem Rechenrechner
 liegen; nichts wird heruntergeladen. Danach wird eingebaut, was gewählt ist.
 
+**Die Zahl für «zu viel Gebäude» zählt jetzt richtig (21.10.2026).** Die sechste Messung der Stimmungen bestätigte:
+Das Strassenbild bekommt jetzt den Satz «Haus nicht wiederzuerkennen», und der Vermerk an der Auswahl steht bei jedem
+KI-Bild. Der Satz «leerer Hintergrund, keine anderen Gebäude» hielt das Haus dagegen bei keinem Bild im Umriss; er
+bleibt aus. *Die Zahl:* Sie mass breite Häuserzeilen viel zu klein — bei einem Bild mit einer Zeile über die ganze Breite
+meldete sie 0,30 der Hausfläche, nachgezählt waren es 2,2. Sie zählte nur, was der Tiefenschätzer genau so nah sah wie
+das Haus, und eine Zeile, die nur wenig dahinter steht, fiel durch. Jetzt zählt alles, was neben dem Haus nicht Himmel
+ist; den Himmel erkennt der Tiefenschätzer zuverlässig, er legt ihn auf «unendlich fern». Fünf Rechenwege wurden an den
+Bildern der letzten drei Messungen gegen die Nachzählung gelegt (Tabelle im Protokoll); dieser traf sie am besten. Eine
+Ausnahme braucht es beim Gipsmodell: Dort malt die KI statt Himmel eine Fels- oder Studiowand, und «nicht Himmel» wäre
+alles. Hat ein Bild keinen Himmel, zählt darum weiter nur, was so nah wie das Haus ist — so bleiben die Gipsmodelle bei
+0 bis 0,2, und die Grenze bei einem Viertel trennt weiter richtig. Ehrlich gesagt: Zwei Bilder, in denen eine breite Zeile
+statt des Hauses steht, bekommen den Satz «nicht wiederzuerkennen» weiterhin nicht. Die geeichte Zahl unterscheidet sie
+nicht von Bildern, in denen man das Haus teilweise noch erkennt — beide bauen gleich viel daneben. Eine Regel, die an den
+bisherigen Bildern passen würde, liegt zu knapp zwischen zwei Werten und ist darum nicht gebaut; die nächste Messung
+beurteilt erst alle Bilder von Auge. Offen und ohne Fix notiert: Trotz «no people» malte die KI zwei kleine Personen;
+ein Gegentext («was nicht zu sehen sein soll») wirkt bei unserem schnellen Modell nicht, weil es ohne die Rechnung
+arbeitet, von der ein Gegentext abgezogen würde. Und beim Gipsmodell erfindet die KI den Hintergrund selbst.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

@@ -3077,12 +3077,24 @@ gemischter Prompt wird übersetzt, der englische Teil bleibt stehen (`sprache.is
 
 **Neue Baumasse ausserhalb des Umrisses** — Wieviel Gebäude das KI-Bild dort zeigt, wo das Modell nur
 Himmel hat, im Verhältnis zur Fläche des Hauses: 0 heisst, das Bild baut nur, was modelliert ist; 1 hiesse,
-neben dem Haus steht noch einmal so viel Gebäude. Gezählt wird, was der Tiefenschätzer so nah wie das Haus
-sieht (ein Berg oder eine Wolke ist weiter weg und zählt nicht), ohne den Boden und ohne einen schmalen Rand
-um das Haus. *Im Projekt:* `qa.ausserhalb_umriss_anteil` (Modul `baumasse`), mit dem Satz «KI BAUT UEBER DEN
+neben dem Haus steht noch einmal so viel Gebäude. Gezählt wird seit der Eichung an auf-20261021-297 alles, was
+dort **nicht Himmel** ist — der Tiefenschätzer legt den Himmel und die Wolken auf «unendlich fern»; Bäume und
+ferne Hügel zählen mit —, ohne den Boden und ohne einen schmalen Rand um das Haus. Hat das Bild gar keinen
+Himmel (das Gipsmodell vor einer Fels- oder Studiowand), zählt nur, was so nah wie das Haus ist; das war bis 297
+die einzige Zählung, und sie war bei Häuserzeilen, die etwas hinter dem Haus stehen, viel zu klein (0,30 statt
+2,2). *Im Projekt:* `qa.ausserhalb_umriss_anteil` (Modul `baumasse`), mit dem Satz «KI BAUT UEBER DEN
 UMRISS HINAUS» ab 0,25 — gesetzt, nicht gemessen; eine Auskunft, kein Tor. Anlass: auf-20261020-294, wo aus
 der Geländeplatte ein Gebäude über die ganze Bildbreite wurde. Weil die Zahl an der Hausfläche gemessen wird, kann sie
-über 1 liegen (in 295: 0,7 bis 2,1 — alle sieben Bilder bauten sichtbar über die ganze Breite).
+über 1 liegen (in 295–297 nach der Eichung: Aussenbilder 2,0 bis 4,3, Gipsmodelle 0 bis 0,2).
+
+**Eichung (einer Zahl)** — Das Abgleichen einer Rechnung mit einer Zählung, der man traut: Man legt dieselben Bilder
+neben beide, sieht, wo sie auseinanderliegen, und stellt die Rechnung so ein, dass sie die Zählung trifft — ohne dabei
+die Fälle zu verderben, die schon stimmten. *Im Projekt:* `ausserhalb_umriss_anteil` wurde an den Bildern aus 295–297
+gegen die Nachzählung der HomeStation geeicht (Protokoll 74 §169, mit Tabelle); fünf Rechenwege standen zur Wahl.
+
+**Kantendichte** — Wie viele deutliche Hell-Dunkel-Übergänge auf einer Fläche liegen. Ein Himmel hat fast keine, eine
+Fassade mit Fenstern viele — eine Felswand aber auch. *Im Projekt:* als Kandidat für die Eichung von
+`ausserhalb_umriss_anteil` gerechnet und verworfen, weil sie Felswände als Gebäude zählt.
 
 **Dithering** — Absichtliches feines Rauschen, das Farbstufen weicher wirken lässt. *Im
 Material-ID-Pass schädlich: Es zerfaserte jede Kennfarbe um ±1, aus 5 Farben wurden 19.*

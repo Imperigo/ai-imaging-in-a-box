@@ -350,7 +350,10 @@ def _szene_umriss(*, anbau=False, wolke=False):
             elif anbau and 2 <= x <= 9 and 10 <= y <= 21:
                 naehe.append(1.05)
             elif wolke and 28 <= x <= 36 and 1 <= y <= 5:
-                naehe.append(0.1)
+                # Wolken liegen bei Depth Anything V2 wie der Himmel bei null (gemessen an
+                # 295-297, Eichung auf-20261021-297): unter einem Zwanzigstel der Hausnaehe.
+                # Bis 297 stand hier 0,1 — seit der Eichung zaehlt das als ferne Struktur.
+                naehe.append(0.03)
             else:
                 naehe.append(0.02)
     return naehe, soll, haus, boden
