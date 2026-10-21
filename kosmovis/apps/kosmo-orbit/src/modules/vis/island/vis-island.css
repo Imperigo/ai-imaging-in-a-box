@@ -17,7 +17,10 @@
    Z.73) — hier nur die Koordinaten, exakt wie die vier design-Anker es tun. */
 .isl-rand-sonne {
   left: 14px;
-  bottom: 14px;
+  /* Unten links liegen auch Claudes Zeile und offene Karten (Meldungsebene, über der Insel): die SONNE-Insel
+     steht über ihrem Stapel (`--claude-stapel`, sonst `--claude-fusszone`, `shell/claude-anschluss/fusszone.ts`).
+     Ohne Claude gilt wie bisher 14px. Befund KosmoVis 21.10.2026: die Karte deckte die Pille zu 57 %. */
+  bottom: max(14px, var(--claude-stapel, var(--claude-fusszone, 0px)));
 }
 
 /* NACHTRAG 01.09.2026 (Triage `e2e/inselkopf-erreichbarkeit.spec.ts` C-2,

@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "e66421ce5a96a2413ca94ef82c2960e58af705f6"
+    "commit": "9576c9e45b0e2a5d2e4ee00f8aed2a1d5c778487"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -97,7 +97,7 @@
     "apps/kosmo-orbit/src/modules/vis/island/inhalte/textur.tsx": "f287ded19694922554369512d28a42d98535e68054795bdffe6f94e8a4fef81f",
     "apps/kosmo-orbit/src/modules/vis/island/vis-glyphen.tsx": "0fb2e2dc5418e5cd19e564c080d27afcbd3b04b2197e9a0eba37ca056843c752",
     "apps/kosmo-orbit/src/modules/vis/island/vis-island-katalog.ts": "70cc98473fe32e18c065d29c38d9c73a09dd7e6afaa587334cfef365ea4c6f79",
-    "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "4a60df5316e444e270eb7b910d616f55da222872ab91b64203ec1624be0146cb",
+    "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "da6425e5218c3e7695e50562bf68b06d5f80aec1e3b20dcda145ae53c309fae2",
     "apps/kosmo-orbit/src/modules/vis/kamera-aus-3d.ts": "9f36f78d67c4f15f84c8d31e0ee904753168d9b194769d002933cb24ee903795",
     "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "f5a243713979de55cebdf768a326bea7c46eef295069bd7551a91a363f0b628d",
     "apps/kosmo-orbit/src/modules/vis/knoten-entzerren.ts": "6dfe4a0708512eaf21cbe8e386f89f483eee295477d4f7b1735f22c495dc34aa",
@@ -128,7 +128,7 @@
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "22ff6d092fbc269129eb7ca766fe61645262530d215e041b30c6dc0c8553c189",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "1a5c0fb9fdfc93e224b1ef386435eea942ed1292027ba59bd5b42b368ac8b664",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "a6e84b0282490f02c33ab452d4ded3410b74e0c188f576a1083cfffc1b158697",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "b284264479aef4deb9d3e049dde7187005b94ae3dc6cb291948092ede31eb7fb",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "0b462678ce48b1d167d22421cd9b246724513bce2712a0381a841eefb54c8294",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
     "apps/kosmo-orbit/src/shell/chat/kosmo-c0-kopf.css": "ce2500140fe22d6b40320711bc194a75b64cf8546277cf3f2d93d54968abbf7f",

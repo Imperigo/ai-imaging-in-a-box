@@ -493,7 +493,8 @@
 .vis-island-legende-overlay {
   position: absolute;
   left: 72px;
-  bottom: var(--isl-fusszone-frei, 12px);
+  /* Dieselbe Spalte wie Claudes Karten: auch ihnen ausweichen (Befund 21.10.2026, wie die SONNE-Insel). */
+  bottom: max(var(--isl-fusszone-frei, 12px), var(--claude-stapel, var(--claude-fusszone, 0px)));
   z-index: 20;
   display: grid;
   gap: 6px;
