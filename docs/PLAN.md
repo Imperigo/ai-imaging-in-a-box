@@ -8205,7 +8205,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Beobachten ohne Fix: Sichtbeton im KI-Bild nur teilweise (Holz-/Steinstreifen); Schlagschatten auf 1,7 m Augenhöhe kaum sichtbar (296 notiert)
   - [x] Material und Umriss im KI-Bild (Strang Treue, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`): Optionen a–e geprüft (Lizenz, VRAM, Aufwand, Risiko); gebaut als Messschalter, Vorgabe aus: `vis.umriss_halten` «nachher» (Maskenmischung) und «im_lauf» (Hintergrund im Fahrplan festgehalten), `vis.material_vorne` (Stoff vorne, dreimal) — gebaut, am Gerät ungemessen (§173, C101)
   - [x] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln *(207c4f6: M2 bestes Bild — Sichtbeton, im Umriss, keine Naht; im_lauf allein Rundturm, nachher Collage; im_lauf 320 MiB unter der Kontrolle)*
-  - [x] Befunde aus 302/303 gebaut (Strang Kern, §180, C108): Sätze zum Umriss nach dem Halten, Fahrplan-Satz im Ergebnis, Stoff höchstens dreimal, `no_grad` im eigenen Start, leerer Gewichtsordner mit Satz, Journal «Im Prozess» nach der Vorprüfung
+  - [x] Befunde aus 302/303 gebaut (Strang Kern, §181, C108): Sätze zum Umriss nach dem Halten, Fahrplan-Satz im Ergebnis, Stoff höchstens dreimal, `no_grad` im eigenen Start, leerer Gewichtsordner mit Satz, Journal «Im Prozess» nach der Vorprüfung
   - [ ] Messung am Heim-PC: auf-20261021-308 (local) — M2 gegen K mit vier Startwerten, sSE/nNW, morgen/abend/bedeckt; Kontrollen K0/M2m/E2n; VRAM des Bildeingangs nach `no_grad`; Option Himmel als Auskunft; drei Tafeln
   - [ ] Registerwert `vram_bildeingang_*` senken, wenn 308 die Spitze nach `no_grad` misst (wir)
   - [ ] Messschalter «Himmel im Hintergrund» für im_lauf — nur, wenn 308 sagt, dass er die Bilder trägt (wir)
@@ -8227,7 +8227,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
-  - [ ] KosmoOrbit: neue Kamera-Knoten auf «Auto» als Vorgabe (integrator, nach dem Einspielen)
+  - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§160, C89)

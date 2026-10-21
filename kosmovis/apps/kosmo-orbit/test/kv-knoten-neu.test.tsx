@@ -236,7 +236,12 @@ describe('D · Kamera', () => {
     const aufbau = runCommand('design.aufbauErstellen', { name: 'AW', target: 'wall', layers: [{ material: 'beton', thickness: 250, function: 'tragend' }] });
     runCommand('design.wandZeichnen', { storeyId: (eg.patches[0] as { id: string }).id, a: { x: 0, y: 0 }, b: { x: 5000, y: 0 }, assemblyId: (aufbau.patches[0] as { id: string }).id });
     const { gid, setze } = graphMit();
-    setze('kamera');
+    // Gespeicherter Knoten ohne `art` (vor dem 21.10.2026): bleibt «Modell», nichts wird still umgestellt.
+    const alt = setze('kamera');
+    const { runCommand: rc, doc: d } = useProject.getState();
+    const g = d.get<VisGraph>(gid)!;
+    d.apply([{ id: gid, before: g, after: { ...g, nodes: g.nodes.map((n) => (n.id === alt ? { ...n, params: {} } : n)) } }]);
+    void rc;
     montiere(<NodeCanvas graphId={gid} />);
     expect(q('kamera')?.getAttribute('data-art')).toBe('modell');
     expect(q('kamera-art-modell')).not.toBeNull();
