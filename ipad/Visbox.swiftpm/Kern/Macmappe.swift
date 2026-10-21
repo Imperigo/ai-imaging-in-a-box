@@ -113,6 +113,10 @@ public enum Mappenziel: Equatable, Sendable {
     /// `POST /knoten/mappe-holen` — nach «Datei laden …»: das Modell der neuen Mappe am Heim-PC
     /// in die offene Mappe am Mac holen. Nur die App kennt diesen Weg.
     case modellHolen
+    /// `POST /knoten/modell-laden` — «Datei laden …» an den Heim-PC, **mit** dem Namen der Mappe
+    /// am Mac (`ladekoepfe`). Dann legt der Heim-PC nur einen Zwilling an und stellt seine
+    /// zuletzt geöffnete Mappe nicht um (Befund `auf-20261021-304` B1, 21.10.2026).
+    case modellLaden
     /// `POST /bruecke/jobs` — an den Heim-PC, mit dem Namen der Mappe; die Kennung wird vermerkt.
     case auftragAnlegen
     /// `GET /bruecke/jobs/<id>` — an den Heim-PC; ist er fertig, kommen die Bilder in die Mappe.
@@ -144,6 +148,9 @@ public enum Mappenkern {
     public static let graphHoechstens = 2 * 1024 * 1024
     /// Der lokale Weg der App nach «Datei laden …» — **kein** Weg des Heim-PC.
     public static let wegModellHolen = "/knoten/mappe-holen"
+    /// Der Weg des Heim-PC für «Datei laden …» (`WEG_KNOTEN_MODELL_LADEN`) — mit Mappe am Mac
+    /// geht er **mit** `ladekoepfe` hinüber.
+    public static let wegModellLaden = "/knoten/modell-laden"
     /// Die drei Wege des Heim-PC für «An den Mac holen» (`WEG_KNOTEN_MAPPEN` …, bewacht).
     public static let wegMappen = "/knoten/mappen"
     public static let wegPaket = "/knoten/mappe-paket"
@@ -237,6 +244,7 @@ public enum Mappenkern {
         case ("GET", "/knoten/skizze"): return .skizze
         case ("GET", "/knoten/standpunkte"): return .standpunkte
         case ("POST", wegModellHolen): return .modellHolen
+        case ("POST", wegModellLaden): return .modellLaden
         case ("POST", "/bruecke/jobs"), ("POST", "/bruecke/jobs/"): return .auftragAnlegen
         default: break
         }
@@ -424,6 +432,14 @@ public enum Mappenkern {
         var aus = [Kopfzeile(kopfMappeAmMac, kodiert(mappe.name))]
         if let heim = mappe.heimMappe { aus.append(Kopfzeile(kopfMappeHeim, kodiert(heim))) }
         return aus
+    }
+
+    /// Die Köpfe für «Datei laden …» aus der Mappe am Mac — **dieselben** wie beim Auftrag:
+    /// der Name der Mappe am Mac und, falls sie schon einen hat, ihr Zwilling am Heim-PC (nur
+    /// der darf dort eine neue Fassung bekommen). Ohne diese Köpfe machte der Heim-PC die neue
+    /// Mappe für alle Geräte zur zuletzt geöffneten (Befund `auf-20261021-304` B1).
+    public static func ladekoepfe(_ mappe: Macmappe) -> [Kopfzeile] {
+        auftragskoepfe(mappe)
     }
 
     /// Prozentkodiert für Frage und Kopf (nur Buchstaben, Ziffern und `-_.~` bleiben).

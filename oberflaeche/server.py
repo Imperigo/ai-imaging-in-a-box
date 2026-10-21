@@ -2187,13 +2187,37 @@ class Flaeche(BaseHTTPRequestHandler):
         # `Path(self.ordner)` erst beim Anlegen des Fadens — ohne `--ordner` warf das, NACHDEM der
         # Stand schon «laeuft» hiess, und jedes weitere Laden bekam 409 bis zum Neustart.
         start = Path(self.ordner) if self.ordner else None
+        # AUS DER MAPPE AM MAC (Befund auf-20261021-304 B1, 21.10.2026): Bis dahin machte jedes
+        # Laden die neue Mappe zur zuletzt geoeffneten — fuer ALLE Geraete, auch wenn die Datei
+        # nur in eine Mappe am Mac sollte. Nennt die App ihre Mappe (`X-Mappe-Am-Mac`), entsteht
+        # hier nur ein Zwilling: neu angelegt oder eine neue Fassung NUR im Zwilling, den der Mac
+        # nennt (`X-Mappe-Heim`); die zuletzt geoeffnete Mappe bleibt, wie sie war.
+        am_mac = _mappenname_aus_kopf(self.headers.get(KOPF_MAPPE_AM_MAC))
+        ersetzbar = None
+        if am_mac:
+            ersetzbar = set()
+            heim = (self.headers.get(KOPF_MAPPE_HEIM) or "").strip()
+            if heim:
+                try:
+                    ersetzbar.add(Path(mappenpaket.finde(
+                        urllib.parse.unquote(heim), self.ordner,
+                        klasse.zuletzt_geoeffnet)).resolve())
+                except mappenpaket.MappenpaketError:
+                    pass
+            # Die Mappe, mit der hier gearbeitet wird, bekommt nie eine Fassung vom Mac.
+            for offen in (self.ordner, klasse.zuletzt_geoeffnet):
+                if offen:
+                    ersetzbar.discard(Path(offen).resolve())
         stand = {"kennung": secrets.token_hex(6), "stand": "laeuft", "datei": dateiname,
                  "schritt": "ablegen", "satz": f"«{dateiname}» wird geladen …",
                  "begonnen": time.monotonic()}
+        if am_mac:
+            stand["am_mac"] = am_mac
         klasse.modell_laden = stand
         faden = threading.Thread(target=_lade_modell_im_hintergrund, name="modell-laden",
                                  args=(klasse, start, dateiname, inhalt,
-                                       stand["kennung"]), daemon=True)
+                                       stand["kennung"]),
+                                 kwargs={"ersetzbar": ersetzbar}, daemon=True)
         klasse.modell_faden = faden
         faden.start()
         self._sende(modell_laden_sicht(stand), 202)
@@ -3242,10 +3266,14 @@ def modell_laden_sicht(stand: dict | None) -> dict:
 
 
 def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inhalt: bytes,
-                                kennung: str) -> None:
+                                kennung: str, *, ersetzbar=None) -> None:
     """Der Faden hinter ``POST /knoten/modell-laden``: ruft :func:`modellladen.lade` und
     schreibt den Stand zurück. Gelingt es, ist die Mappe danach die **zuletzt geöffnete**
-    (Entscheid 85 B) — Knoten und Seite zeigen sie beide."""
+    (Entscheid 85 B) — Knoten und Seite zeigen sie beide.
+
+    **Ausser aus der Mappe am Mac** (``ersetzbar`` gesetzt, Befund ``auf-20261021-304`` B1):
+    Dann ist die neue Mappe nur ein Zwilling, den der Mac holt; die zuletzt geöffnete bleibt,
+    und der Stand sagt es (``zuletzt_geoeffnet: false``)."""
 
     def gilt() -> bool:
         return bool(klasse.modell_laden) and klasse.modell_laden.get("kennung") == kennung
@@ -3257,7 +3285,8 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
                                    "satz": ereignis.get("satz") or klasse.modell_laden["satz"]}
 
     try:
-        ergebnis = modellladen.lade(start, dateiname, inhalt, melder=melder)
+        ergebnis = modellladen.lade(start, dateiname, inhalt, melder=melder,
+                                    ersetzbar=ersetzbar)
     except modellladen.ModellLadenError as fehler:
         ergebnis = {"stand": "fehler", "satz": str(fehler), "mappe": None}
     except Exception as fehler:                    # noqa: BLE001 — der Faden sagt es, statt zu sterben
@@ -3268,7 +3297,7 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
             "satz": ergebnis["satz"], "schritt": None,
             "dauer_s": ergebnis.get("dauer_s"), "herkunft": ergebnis.get("herkunft"),
             "ersetzt": bool(ergebnis.get("ersetzt")), "fassung": ergebnis.get("fassung"),
-            "mappe": None, "bauteile": None}
+            "mappe": None, "bauteile": None, "zuletzt_geoeffnet": ersetzbar is None}
     mappe = ergebnis.get("mappe")
     if ergebnis["stand"] == "geladen" and mappe:
         ende["mappe"] = Path(mappe).name
@@ -3278,7 +3307,7 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
             pass
     with Flaeche.reihe:
         if gilt():
-            if ergebnis["stand"] == "geladen" and mappe:
+            if ergebnis["stand"] == "geladen" and mappe and ersetzbar is None:
                 klasse.zuletzt_geoeffnet = str(mappe)
             klasse.modell_laden = ende
 
