@@ -273,14 +273,14 @@ def test_eine_kennung_aus_der_frage_gilt_und_n1_ist_nicht_n10():
     assert assistent._pruefe_angaben("vis_nodeLoeschen", {"nodeId": "n1"}, "Lösch n10.") is not None
 
 
-def test_eine_erfundene_stimmung_am_render_wird_abgewiesen_f2():
+def test_eine_erfundene_stimmung_am_render_faellt_weg_f2():
+    # Seit auf-20261021-320 (B1): weglassen statt abweisen — die Karte entsteht in derselben Runde.
     e = Ersatz([{"content": "", "tool_calls": [
-        _aufruf("vis_render", graphId="g1", nodeId="n2", stimmungPreset="morgen", aufloesung=[1024, 768])]},
-                {"content": "", "tool_calls": [_aufruf("vis_render", graphId="g1", nodeId="n2")]}])
+        _aufruf("vis_render", graphId="g1", nodeId="n2", stimmungPreset="morgen", aufloesung=[1024, 768])]}])
     r = assistent.frage("Rechne jetzt das Bild.", werkzeuge=_liste(), schritte=[_GRAPH], sprachmodell=e)
     assert r["schritte_offen"] == [{"werkzeug": "vis_render", "argumente": {"graphId": "g1", "nodeId": "n2"}}]
-    grund = e.gesehen[1][-1]["content"]
-    assert "stimmungPreset" in grund and "Nichts erfinden" in grund
+    assert len(e.gesehen) == 1
+    assert "stimmungPreset" in r["antwort"] and "Weggelassen" in r["antwort"]
 
 
 def test_eine_genannte_stimmung_gilt():

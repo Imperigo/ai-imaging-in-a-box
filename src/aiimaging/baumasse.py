@@ -295,6 +295,18 @@ HERKUNFT_HAUS_IM_BILD = (
 RAHMUNG_FAKTOR = 2.0
 #: Und erst ab so vielen Prozentpunkten Unterschied — 1 % gegen 2,5 % sagt noch nichts.
 RAHMUNG_MINDEST_PUNKTE = 0.05
+#: DIE TRENNHILFE DER GRUNDLAGE GILT NICHT FÜR JEDES KI-BILD (auf-20261021-320, B4): Sie ist der
+#: gedachte Boden der GRUNDLAGE (``abholer._mit_messboden``). Rahmt das KI-Bild näher, liegt
+#: ihre Oberkante mitten in der Fassade (320: y=352, darunter Sockel, Vordach, Eingang; 0,308
+#: gegen 0,456 von Hand). Sie fällt weg, wenn **beide** gelten: Das KI-Bild rahmt anders
+#: (:func:`rahmt_anders`), und hinter ihrer Kante läge stetig weiteres Haus — mindestens dieser
+#: Anteil der schon gefundenen Hausfläche. Bei gleichem Ausschnitt steht unter der Kante Boden
+#: oder eine Hecke, und die Fläche dahinter ist klein. **Gesetzt, nicht gemessen** (320: 0,25
+#: Bild hinter der Kante gegen 0,31 Haus, also 0,82).
+TRENNHILFE_SCHNEIDET_ANTEIL = 0.25
+#: Die Gründe, an denen das Wachsen stoppen kann, in der Reihenfolge der Prüfung.
+RAND_GRUENDE = ("ausgeblendet", "trennhilfe", "ohne_tiefe", "zu_nah", "himmel", "zu_fern",
+                "boden", "sprung")
 
 
 def _bodenpunkte(naehe: Sequence[float], b: int, h: int) -> list[bool]:
@@ -349,7 +361,11 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
     Returns:
         ``{anteil, anteil_grundlage, n_bild, n_soll, n_punkte, n_band, anteil_band, band,
         band_weit, grundlage_aus, verfahren, herkunft, grund}`` — ``anteil`` ``None`` mit
-        ``grund``, wenn nicht messbar.
+        ``grund``, wenn nicht messbar. Gewachsen dazu ``rand_gruende`` (je Grund der Anteil
+        am Bild hinter dieser Grenze, grösster zuerst; seit 320 B5), ``rand_punkte`` (die
+        Randpunkte je Grund, bis 320 der Inhalt von ``rand_gruende``), ``rand_gedeckelt``,
+        ``rand_einheit`` und mit Trennhilfe ``trennhilfe {angewandt, anteil_mit,
+        anteil_dahinter, grund, herkunft}`` (320 B4).
     """
     b, h = int(breite), int(hoehe)
     n = b * h
@@ -398,71 +414,128 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
         w = wert(i)
         return frei(i) and math.isfinite(w) and unten <= w <= oben
 
-    def wachsen(start, darf) -> int:
-        nonlocal zuletzt_besucht
-        besucht = [False] * n
-        zuletzt_besucht = besucht
-        stapel = list(start)
+    def wachsen(start, darf, besucht=None, deckel=None) -> tuple[int, list[bool]]:
+        besucht = [False] * n if besucht is None else besucht
+        stapel = [i for i in start if not besucht[i]]
         for i in stapel:
             besucht[i] = True
         zahl = 0
         while stapel:
             i = stapel.pop()
             zahl += 1
+            if deckel is not None and zahl >= deckel:
+                break
             x, y = i % b, i // b
             for j, ok in ((i - 1, x > 0), (i + 1, x < b - 1), (i - b, y > 0),
                           (i + b, y < h - 1)):
                 if ok and not besucht[j] and darf(i, j):
                     besucht[j] = True
                     stapel.append(j)
-        return zahl
+        return zahl, besucht
 
-    zuletzt_besucht: list[bool] = []
-    #: Woran das Wachsen an jedem Randpunkt stoppte (auf-20261021-317 B3) — je Nachbar der
-    #: zuletzt geprüfte Grund; gezählt werden am Ende nur Punkte, die nicht dazukamen.
-    grund_am_rand: dict[int, str] = {}
-    kern = [i for i in range(n) if soll[i] and im_band(i)]
-    # DIE ALTE ZAHL (bis 312), zum Vergleich: nur im engen Band, zusammenhaengend.
-    n_band = wachsen(kern, lambda i, j: im_band(j))
     boden = _bodenpunkte(naehe, b, h) if positiv else [False] * n
 
-    def stetig(i: int, j: int) -> bool:
+    def grund_von(i: int, j: int, heben: str | None = None) -> str | None:
+        """Woran das Wachsen von ``i`` nach ``j`` stoppt — ``heben`` gilt als nicht da."""
         w = wert(j)
-        grund = None
-        if not frei(j):
-            grund = "ausgeblendet"
-        elif not math.isfinite(w):
-            grund = "ohne_tiefe"
-        elif w > weit_oben:
-            grund = "zu_nah"
-        elif himmel is not None and w < himmel:
-            grund = "himmel"
-        elif w < weit_unten:
-            grund = "zu_fern"
-        elif boden[j]:
-            grund = "boden"
-        else:
+        if heben != "ausgeblendet" and ausgeblendet is not None and ausgeblendet[j]:
+            return "ausgeblendet"
+        if heben != "trennhilfe" and trennhilfe is not None and trennhilfe[j]:
+            return "trennhilfe"
+        if not math.isfinite(w):
+            return "ohne_tiefe"                     # nie gehoben: ohne Tiefe kein Vergleich
+        if heben != "zu_nah" and w > weit_oben:
+            return "zu_nah"
+        if heben != "himmel" and himmel is not None and w < himmel:
+            return "himmel"
+        if heben != "zu_fern" and w < weit_unten:
+            return "zu_fern"
+        if heben != "boden" and boden[j]:
+            return "boden"
+        if heben != "sprung":
             gross = max(abs(w), abs(wert(i)))
             if not (gross > 0 and abs(w - wert(i)) <= STUFE * gross):
-                grund = "sprung"
+                return "sprung"
+        return None
+
+    #: Woran das Wachsen an jedem Randpunkt stoppte (auf-20261021-317 B3) — je Nachbar der
+    #: zuletzt geprüfte Grund und der Punkt, von dem aus geprüft wurde.
+    grund_am_rand: dict[int, tuple[str, int]] = {}
+
+    def stetig(i: int, j: int) -> bool:
+        grund = grund_von(i, j)
         if grund is not None:
-            grund_am_rand[j] = grund
+            grund_am_rand[j] = (grund, i)
         return grund is None
 
-    zahl = wachsen(kern, stetig) if positiv else n_band
+    kern = [i for i in range(n) if soll[i] and im_band(i)]
+    # DIE ALTE ZAHL (bis 312), zum Vergleich: nur im engen Band, zusammenhaengend.
+    n_band, _ = wachsen(kern, lambda i, j: im_band(j))
+    if not positiv:
+        aus.update(n_bild=n_band, anteil=round(n_band / n, 4), n_band=n_band,
+                   anteil_band=round(n_band / n, 4))
+        return aus
+    zahl, besucht = wachsen(kern, stetig)
+
+    def dahinter(heben: str) -> tuple[int, bool]:
+        """Wie viel Fläche hinter der Grenze ``heben`` stetig weiterginge (auf-20261021-320,
+        B5) — gewachsen vom gefundenen Haus aus, alle anderen Grenzen gelten. Höchstens so
+        viel wie das gefundene Haus (``True`` = gedeckelt): ebener Boden ginge sonst bis an
+        den Bildrand, und die Zahl soll Gründe vergleichen, nicht den Boden messen."""
+        saat = [j for j, (g, i) in grund_am_rand.items()
+                if g == heben and not besucht[j] and grund_von(i, j, heben) is None]
+        if not saat:
+            return 0, False
+        deckel = max(zahl, 1)
+        mehr, _ = wachsen(saat, lambda i, j: grund_von(i, j, heben) is None,
+                          besucht=list(besucht), deckel=deckel)
+        return mehr, mehr >= deckel
+
+    punkte: dict[str, int] = {}
+    for j, (grund, _i) in grund_am_rand.items():
+        if not besucht[j]:
+            punkte[grund] = punkte.get(grund, 0) + 1
+    flaeche: dict[str, tuple[int, bool]] = {}
+
+    # DIE TRENNHILFE NUR, WO SIE FUERS KI-BILD GILT (auf-20261021-320, B4).
+    if trennhilfe is not None:
+        befund_th = {"angewandt": True, "anteil_mit": round(zahl / n, 4),
+                     "anteil_dahinter": 0.0, "grund": "",
+                     "herkunft": f"gesetzt: faellt weg, wenn das KI-Bild anders rahmt und "
+                                 f"dahinter mindestens {TRENNHILFE_SCHNEIDET_ANTEIL:.2f} x die "
+                                 f"gefundene Hausflaeche stetig weiterginge (auf-20261021-320 B4)"}
+        if punkte.get("trennhilfe"):
+            flaeche["trennhilfe"] = dahinter("trennhilfe")
+            mehr = flaeche["trennhilfe"][0]
+            befund_th["anteil_dahinter"] = round(mehr / n, 4)
+            if (mehr >= TRENNHILFE_SCHNEIDET_ANTEIL * zahl
+                    and rahmt_anders(aus["anteil_grundlage"], zahl / n) is True):
+                ohne = haus_im_bild(naehe, soll_silhouette, b, h, haus=haus, trennhilfe=None,
+                                    ausgeblendet=ausgeblendet)
+                befund_th.update(angewandt=False, grund=(
+                    "Die Trennhilfe ist der Boden der GRUNDLAGE; das KI-Bild rahmt anders, und "
+                    "hinter ihrer Kante ginge das Haus stetig weiter — sie schnitte die Fassade "
+                    "ab. Gezaehlt ist ohne sie; den Boden trennt die Steigung im KI-Bild."))
+                ohne["trennhilfe"] = befund_th
+                return ohne
+        aus["trennhilfe"] = befund_th
+
     aus.update(n_bild=zahl, anteil=round(zahl / n, 4), n_band=n_band,
                anteil_band=round(n_band / n, 4))
-    if positiv:
-        # WORAN DAS HAUS AUFHOERTE ZU WACHSEN (auf-20261021-317 B3): Im nahen Bild (Abstand
-        # «normal») schätzte der Weg 0,308 gegen 0,456 von Hand; die Ursache ist ohne Tiefenkarte
-        # nicht zu sehen. Die Zählung je Grund macht sie am nächsten Lauf sichtbar, ohne eigene
-        # Messung: viele «zu_nah» = WEIT_OBEN zu eng (schräge, nahe Fassade), viele «sprung» =
-        # STUFE zu streng (Lamellen, Fenster), viele «boden» = Boden-Steigung greift an der Wand.
-        rand: dict[str, int] = {}
-        for j, grund in grund_am_rand.items():
-            if not zuletzt_besucht[j]:
-                rand[grund] = rand.get(grund, 0) + 1
-        aus["rand_gruende"] = dict(sorted(rand.items()))
+    # WORAN DAS HAUS AUFHOERTE ZU WACHSEN (auf-20261021-317 B3), SEIT 320 (B5) NACH FLAECHE: Bis
+    # dahin zaehlte ``rand_gruende`` Randpunkte — eine lange, gezackte Kante («boden» 2457)
+    # wog mehr als die eine gerade Linie («ausgeblendet» 1347), die den groessten Teil der
+    # Flaeche abschnitt. Jetzt steht je Grund der Anteil am Bild, der HINTER dieser Grenze
+    # stetig weiterginge (gedeckelt bei der gefundenen Hausflaeche, ``rand_gedeckelt``);
+    # die Randpunkte stehen daneben in ``rand_punkte``.
+    for grund in punkte:
+        if grund not in flaeche:
+            flaeche[grund] = (0, False) if grund == "ohne_tiefe" else dahinter(grund)
+    aus["rand_gruende"] = {g: round(m / n, 4) for g, (m, _d) in
+                           sorted(flaeche.items(), key=lambda kv: (-kv[1][0], kv[0]))}
+    aus["rand_punkte"] = dict(sorted(punkte.items()))
+    aus["rand_gedeckelt"] = sorted(g for g, (_m, d) in flaeche.items() if d)
+    aus["rand_einheit"] = "anteil_am_bild_hinter_der_grenze"
     return aus
 
 

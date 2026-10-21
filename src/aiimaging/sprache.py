@@ -210,6 +210,8 @@ GLOSSAR: dict[str, str] = {
     "holzverkleidung": "timber cladding",
     "ziegel": "brick",
     "backstein": "brick",
+    # auf-20261021-320: «Sichtbackstein» blieb im Prompt der Steine-Probe unübersetzt.
+    "sichtbackstein": "exposed fair-faced brick",
     "klinker": "facing brick",
     "stein": "stone",
     "naturstein": "natural stone",

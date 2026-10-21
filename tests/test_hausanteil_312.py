@@ -153,7 +153,7 @@ def test_317_b3_der_rand_sagt_woran_das_haus_aufhoerte():
     assert aus["n_bild"] < wahr                                  # unterschätzt, wie in 317
     rand = aus["rand_gruende"]
     assert rand.get("zu_nah", 0) > 0                             # die nahe Fassade fiel heraus
-    assert set(rand) <= {"ausgeblendet", "ohne_tiefe", "zu_nah", "himmel", "zu_fern", "boden", "sprung"}
+    assert set(rand) <= set(baumasse.RAND_GRUENDE)
     # Frontal (Seed 11) stoppt es nicht an «zu nah».
     gerade, _ = _ki_bild(breit=False)
     assert "zu_nah" not in baumasse.haus_im_bild(gerade, soll, B, H, haus=haus)["rand_gruende"]

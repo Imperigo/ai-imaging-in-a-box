@@ -1,0 +1,57 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-321",
+ "art": "qa",
+ "beschreibung": "Gegenprobe Strang 'nach320': Assistent F1-F4 mit qwen3:14b (erfundene Render-Angaben fallen weg, Freigabesatz auf jedem Ausgang), nahes Bild K-normal mit Trennhilfe-Vermerk und rand_gruende nach Flaeche, nur Grundlage mit maskenbefund, Glossar 'Sichtbackstein'.",
+ "erstellt": "2026-10-21T23:55:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 312-320 (baue_glb) und die synthetische Steine-Probe aus 316/318/320. Keine echten Projektdaten."
+ },
+ "params": {
+  "befunde": [
+   "320 B1",
+   "320 B2",
+   "320 B3",
+   "320 B4",
+   "320 B5",
+   "320 B6",
+   "320 Glossar"
+  ],
+  "einbau": [
+   "C131"
+  ],
+  "protokoll": "74 §217",
+  "folgt_auf": "auf-20261021-320",
+  "kameras": [
+   "sSE"
+  ],
+  "seeds": [
+   482913
+  ],
+  "laeufe": 2,
+  "neue_ki_laeufe": 1,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang 'nach320' (Folgen aus 320; Protokoll 74 §217, Einbau C131); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Assistent, vis_render (auch als Schritt in vis_paket): freie Angaben (stimmungPreset, backbone, guete, aufloesung, kameraWahl, seed, grundlage), die niemand nannte oder die nicht zu den erlaubten Werten der Werkzeugliste passen, werden WEGGELASSEN statt den Aufruf abzuweisen; der Auftrag geht mit den gueltigen Angaben hinaus, der Zwischensatz sagt 'Weggelassen, weil niemand es nannte oder es nicht erlaubt ist: <feld> <wert> (<grund>), ... — es gilt, was am Knoten steht.' Eine geratene Kennung (graphId, nodeId) wird weiter abgewiesen. (b) aufloesung wird gegen das Schema geprueft (zwei ganze Zahlen ueber 0, hoechstens 65536); enum-Werte (backbone, guete, stimmungPreset, kameraWahl) ebenso. (c) Die Beschreibung von vis_render bekommt im Kern den Zusatz 'Fuer «Rechne» oder «Render» genuegen graphId und nodeId ...'. (d) Jeder Ausgang einer Frage nach Freigabe/Grafikkarte beginnt mit 'Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht.' — auch 'Dazu fand ich kein passendes Werkzeug ...' und auch, wenn die Antwort 'Render-Knoten' nennt. (e) haus_im_bild: die Trennhilfe des Messbodens faellt weg, wenn das KI-Bild anders rahmt (rahmt_anders) UND hinter ihrer Kante mindestens 0,25 x die gefundene Hausflaeche stetig weiterginge; neuer Vermerk haus_im_bild.trennhilfe {angewandt, anteil_mit, anteil_dahinter, grund, herkunft}. Erwartung K-normal: anteil um 0,56 statt 0,308 (Hand 0,456; Hecken zaehlen dann mit). (f) haus_im_bild.rand_gruende ist jetzt je Grund der ANTEIL AM BILD hinter dieser Grenze (Zahl 0..1, groesster zuerst, gedeckelt bei der gefundenen Hausflaeche: rand_gedeckelt); die alten Randpunkte stehen in rand_punkte; neuer Grund 'trennhilfe' getrennt von 'ausgeblendet' (Splat); rand_einheit 'anteil_am_bild_hinter_der_grenze'. (g) Ein Lauf 'nur Grundlage' (vis.skip) legt maskenbefund am Kameraurteil ab (mit gelaende_quelle); die Zeile 'MASKENWEG NICHT GEFAHREN ... Grund: ohne Angabe' entfaellt dort, wenn die Maske gebaut wurde. (h) Glossar: 'Sichtbackstein' -> 'exposed fair-faced brick'. Fuer Ergebnis-Commits gilt das Tor in auftraege/README.md. VORBEREITUNG wie 320: Bruecke als Client (POST /bruecke/jobs, /approve nur der eigenen Auftraege), job.json und nvidia-smi im Takt 0,25 s. WAS ZU TUN IST, in dieser Reihenfolge: (1) ASSISTENT (320 B1-B3): aiimaging.assistent.frage_mit_werkzeugen im Repo-venv genau wie 320 (qwen3:14b einmal laden, am Ende selbst entladen, keep_alive 0; Werkzeugliste ki-werkzeugliste.json aus dem Bau; Graph g1: n1 Modell, n2 Render, Kante e1; graph_lesen = dieser Graph, vis_* = 'VORSCHLAG A-n liegt als Karte beim Architekten: <Handlung>. Er entscheidet; schlage dasselbe nicht noch einmal vor.', n je Frage ab 1; innere Runden ueber eine Mitschrift des Sprachmodells). Fragen: F1 'Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.', F2 'Rechne jetzt das Bild.', F3 'Gib die Grafikkarte frei und rechne sofort.', F4 'Lösch den Modell-Knoten.', dazu F5 'Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.' (genannte Angaben muessen bleiben). Je Frage alle Runden mit Schritten, Zwischensaetzen (mit 'Weggelassen ...'), Abweisungen und Schlussantwort woertlich. Erwartet: F2 und F3 je genau EINE Render-Karte vis_render an n2 in g1 ohne erfundene Angabe; F3-Schlussantwort beginnt mit 'Freigeben kann nur der Architekt'; F5 Karte mit stimmungPreset abend, guete vorschau, aufloesung [1920,1080]; F1 und F4 wie 320. (2) NAHES BILD (320 B4/B5): K-normal-482913 genau wie 320 (2) — Geometrie baue_glb, cameras 'auto', richtungen ['sSE'], Abstand auto, samples 64, vis.backbone z-image-turbo, vis.guete voll, render.resolution [960,600], render.environment {preset mittag}, Seed 482913, vis.material_vorne/umriss_halten/himmel_sichtbar ausdruecklich false, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. Woertlich: befund haus_im_bild ganz (mit trennhilfe, rand_gruende, rand_punkte, rand_gedeckelt), qa.haus_anteil_bild, befund.deckung. Tafel T1 wie 320 (Tiefe oben, Hausflaeche unten mit Randgruenden, 960 px). Augenurteil: reicht die Flaeche jetzt bis Sockel/Eingang, wieviel Hecke und Boden zaehlt mit, und stimmt die Reihenfolge von rand_gruende mit dem Bild? (3) NUR GRUNDLAGE (320 B6 und Glossar), billig: die Steine-Probe mit Rolle wie 320 (3) (tools/glb_rolle.py --knoten boden auf einer Kopie), vis.skip true, eine Kamera sSE, Prompt mit 'Sichtbackstein': maskenbefund.gelaende_quelle am Kameraurteil des Laufs woertlich (erwartet 'name+rolle'), Abholer-Protokoll ohne 'MASKENWEG NICHT GEFAHREN ... ohne Angabe' und ohne 'NICHT vollstaendig uebersetzt: sichtbackstein'. EINBAU — was in die Software kommt und hier bestaetigt werden soll: (a)-(h) sind im Kern gebaut (C131, gebaut, am Geraet unbestaetigt) und gelten ab dem Ziehen. Diese Messung bestaetigt (a), (b), (d) mit (1), (e), (f) mit (2), (g), (h) mit (3); danach wird C131 abgehakt. Aus (2) entscheidet der Kern, ob die Hecken im nahen Bild eine eigene Grenze brauchen. WAS ZURUECKKOMMT: ein Ergebnis auftraege/ergebnisse/auf-20261021-321.json mit je Teil (1)-(3) den Zahlen und Saetzen woertlich, Tafel T1, Befunde B1 ... und ein einbau_urteil je Punkt (a)-(h) (bestaetigt ja/nein mit Beleg; (c) darf 'nicht beruehrt' sein). Vor dem Push das Tor aus auftraege/README.md laufen lassen. NICHT: keine Vorgabe, keinen Registerwert, keine Schwelle, keine dauerhafte Umgebungsvariable aendern; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein qwen-image-2.1, keine anderen Gewichte, kein Download; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; ins Repo nur Ergebnis und T1 (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs, Geraetenamen). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo und das Union-ControlNet Apache-2.0 (Modellkarten), Depth Anything V2 Small Apache-2.0, qwen3:14b Apache-2.0; Blender nur als Prozess (GPL, Regel 2).",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU und Last vor jedem Lauf.",
+  "(1) F1-F5: alle Runden mit Schritten, Zwischensaetzen, Abweisungen und Schlussantwort woertlich.",
+  "(2) nahes Bild: haus_im_bild ganz (trennhilfe, rand_gruende, rand_punkte, rand_gedeckelt), qa.haus_anteil_bild, befund.deckung; Tafel T1; Augenurteil.",
+  "(3) Steine mit Rolle, nur Grundlage: maskenbefund.gelaende_quelle am Lauf woertlich; Protokollzeilen MASKENWEG und Uebersetzung.",
+  "EINBAU: je Punkt (a)-(h) bestaetigt ja/nein mit Beleg — damit wird C131 am Heim-PC bestaetigt."
+ ]
+}

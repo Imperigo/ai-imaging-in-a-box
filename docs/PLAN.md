@@ -8439,8 +8439,11 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Befunde 314 B1–B4, B6 und OptiX im Kern (§212, C128): Assistent sagt «vorgeschlagen», kein neuer Graph ohne Bitte, Pakete geprüft; Gerätebuch behält «gekoppelt»; nNO = nNE, unbekanntes Kürzel endet sofort; Umriss-Satz je Kamera — gebaut, am Gerät unbestätigt
 - [x] auf-20261021-319 (local): Gegenprobe Entscheid 126 und 314 B2–B4, B6 — Ergebnis 811fa3cb, ausgewertet §215
 - [x] Folgen aus 317–319 im Kern (§215, C129): Deckungsschwelle 0,10 aus vier Läufen (Heim-PC und Vis-Marke, KO-Zweig `claude/kosmovis-deckung-schwelle`), Assistent ohne Beispielsatz und mit Paket-Weg, «aus» = false, `name+rolle`, `rand_gruende` am Hausanteil, Protokollzeile «zum Teil geschenkt» verständlich, Ränge mit Lücken nach erledigten Aufträgen, Tor für Ergebnis-Commits in `auftraege/README.md` — gebaut, am Gerät unbestätigt
-- [ ] auf-20261021-320 (local): Gegenprobe nach317 — Assistent F1–F4, nahes Bild mit `rand_gruende`, Rolle
+- [x] auf-20261021-320 (local): Gegenprobe nach317 — Assistent F1–F4, nahes Bild mit `rand_gruende`, Rolle — Ergebnis 433dde3e, ausgewertet §217
 - [ ] Einspielen `claude/kosmovis-deckung-schwelle` bei Int 1 (v0.1.10, nach erstes-bild-gross) (integrator)
 - [x] Werkzeugbeschreibung `vis_nodeSetzen`/`vis_verbinden` um den Paket-Weg ergänzen (KO-Zweig `claude/kosmovis-paket-hinweis`, Kopie und Bau nachgezogen; §216, C130) — gebaut, am Gerät unbestätigt
 - [ ] Einspielen `claude/kosmovis-paket-hinweis` bei Int 1 (v0.1.10) (integrator)
-- [ ] Hausanteil im nahen Bild: nach auf-20261021-320 (2) WEIT_OBEN, STUFE oder Boden-Steigung nachstellen — oder begründet lassen
+- [x] Hausanteil im nahen Bild: nach auf-20261021-320 (2) WEIT_OBEN, STUFE oder Boden-Steigung nachstellen — oder begründet lassen — **keiner davon**: Ursache war die Trennhilfe der Grundlage; sie fällt im anders gerahmten Bild weg (§217, C131)
+- [x] Folgen aus 320 im Kern (§217, C131): Assistent lässt erfundene/ungültige Render-Angaben weg statt abzuweisen (eine Karte in einer Runde), `aufloesung` gegen das Schema, Freigabesatz auf jedem Ausgang; Trennhilfe nur, wo sie fürs KI-Bild gilt; `rand_gruende` nach Fläche; Maskenbefund auch bei «nur Grundlage»; Glossar «Sichtbackstein» — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-321 (local): Gegenprobe nach320 — Assistent F1–F5, K-normal mit Trennhilfe-Vermerk, nur Grundlage mit Maskenbefund
+- [ ] Hecken vor dem Haus im nahen Bild (ohne Trennhilfe zählen sie mit, 0,56 gegen 0,456) — nach 321 entscheiden, ob eine eigene Grenze nötig ist (local misst, Kern entscheidet)

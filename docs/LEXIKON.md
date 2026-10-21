@@ -8809,6 +8809,24 @@ selbst jeden Satz, der eine Karte nennt, die in diesem Gespräch nicht entstand,
 Bildpunkt aufhörte, das Haus weiter wachsen zu lassen: zu nah, zu fern, Himmel, Boden, ein Sprung in der Tiefe. *Wozu:*
 Im nahen Bild von Auftrag 317 schätzte das Programm 31 % Haus, von Hand gezählt waren es 46 %; woran es lag, war ohne die
 Tiefenkarte nicht zu sehen. Seither zählt das Ergebnis je Grund mit (`rand_gruende`), und der nächste Lauf zeigt es.
+*Seit Auftrag 320 nach Fläche:* Gezählt wurden zuerst die Punkte am Rand — eine lange, gezackte Kante wog dann mehr als
+eine gerade Linie, die viel mehr Haus abschnitt. Jetzt steht je Grund, wie viel Bildfläche hinter dieser Grenze noch
+stetig weiterginge (grösster Grund zuerst); die Punkte stehen daneben (`rand_punkte`).
+
+**Trennhilfe (des Messbodens)** — Die Linie, unter der das Programm beim Prüfen eines KI-Bilds «Boden, nicht Haus»
+annimmt. Sie kommt aus der Grundlage, dem Bild, das Blender aus dem 3D-Modell rechnet. *Wozu:* Viele Modelle haben
+keinen Boden, das KI-Bild malt aber einen; die Linie hilft, Haus und Boden auseinanderzuhalten. *Der Haken (Auftrag
+320):* Rahmt das KI-Bild das Haus näher als die Grundlage, liegt die Linie mitten in der Fassade und schneidet Sockel,
+Vordach und Eingang ab. Seither fällt sie beim Schätzen des Hausanteils weg, wenn das KI-Bild anders rahmt und hinter
+ihr das Haus deutlich weiterginge; der Boden wird dann am KI-Bild selbst erkannt (an der Steigung der Tiefe).
+*Im Projekt:* `abholer._mit_messboden`, `baumasse.haus_im_bild` (Vermerk `trennhilfe`).
+
+**Erfundene Angabe (beim Assistenten)** — Ein Wert, den das Sprachmodell in einen Auftrag schreibt, obwohl niemand ihn
+nannte: eine Stimmung, eine Bildgrösse, eine Güte, ein Bildmodell. *Wozu der Begriff:* Ein kleines Modell füllt jedes
+Feld aus, das ihm die Werkzeugbeschreibung zeigt. Bis Auftrag 320 wies das Programm solche Aufrufe ab, eins nach dem
+anderen, und bei «Rechne jetzt das Bild» kam am Ende gar kein Auftrag zustande. Seither lässt das Programm erfundene oder
+unerlaubte Werte einfach weg (dann gilt, was am Knoten eingestellt ist) und sagt, was es wegliess.
+*Im Projekt:* `assistent._ohne_erfundenes`, `assistent._passt_zum_schema`.
 
 **Tor für Ergebnis-Commits** — Die kleine Auswahl an Prüfungen, die der Heim-PC besteht, bevor er ein Messergebnis
 hochlädt: nur die Tests, die die Auftrags- und Ergebnisordner lesen (rund 25 Sekunden, ohne Grafikkarte). Prüfungen, die
@@ -8848,6 +8866,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Strang «nach320» (Ergebnis 320): **Trennhilfe (des Messbodens)**, **Erfundene Angabe (beim Assistenten)**; nachgeführt **Randgrund** (nach Fläche); Glossar «Sichtbackstein» |
 | 2026-10-21 | Nachgeführt aus Strang «paket» (Protokoll 74 §216): **Paket von Schritten (`vis_paket`, «$neu:N»)** — auch die Einzelwerkzeuge nennen den Weg |
 | 2026-10-21 | Ergaenzt aus Strang «nach317» (Ergebnisse 317–319): **Abgeschriebener Beispielsatz**, **Randgrund (beim Schätzen des Hausanteils)**, **Tor für Ergebnis-Commits**; nachgeführt **Deckungsgleiche Varianten** und **Kanten-IoU** (Schwelle 0,10), **Rang** (Lücken erlaubt), **Rolle am Knoten** (`name+rolle`) |
 | 2026-10-21 | Ergaenzt aus Strang «modusko» (Protokoll 74 §214): **Marke «Anders gerechnet» / «Ohne Grundlagenbild»**, **Tolerant gelesen (Feld im Ergebnis)** |

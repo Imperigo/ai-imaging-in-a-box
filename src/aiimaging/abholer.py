@@ -4314,12 +4314,21 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # `continue` zurueck — `qa.ueberstrahlt_anteil` fehlte gerade bei dem Lauf,
                 # dessen Bild das Cycles-Bild IST. Die Maske wird dafuer hier gebaut (sie liest
                 # nur den ID-Pass), und nur mit Stimmung.
+                #
+                # DER MASKENBEFUND AUCH OHNE KI-SCHRITT (auf-20261021-320, B6): Bis dahin baute
+                # dieser Zweig die Maske nur fuer die Stimmung und legte ihren Befund nicht ab —
+                # ein Lauf «nur Grundlage» trug darum weder `maskenbefund` noch
+                # `gelaende_quelle`, und ob die Rolle «ground» griff, liess sich am Lauf selbst
+                # nicht belegen. Jetzt steht der Befund wie im KI-Zweig am Urteil.
+                maskenbefund_grundlage = _maske_bauen(
+                    bericht, gelaende_erwartet=gelaende_der_szene,
+                    gelaende_zusatz=_formgelaende_aus_bericht(bericht),
+                    bestand_namen=_bestandsnamen(bestand),
+                    gelaende_rolle=_bodennamen(boden_rolle))
+                urteile[-1]["maskenbefund"] = maskenbefund_grundlage
                 if szene.get("umgebung"):
-                    urteile[-1].update(_stimmungsmessung(szene, bericht, _maske_bauen(
-                        bericht, gelaende_erwartet=gelaende_der_szene,
-                        gelaende_zusatz=_formgelaende_aus_bericht(bericht),
-                        bestand_namen=_bestandsnamen(bestand),
-                        gelaende_rolle=_bodennamen(boden_rolle)).get("maske")))
+                    urteile[-1].update(_stimmungsmessung(szene, bericht,
+                                                         maskenbefund_grundlage.get("maske")))
                 # DIE KONTEXTMASKE GEHOERT ZUR GRUNDLAGE (auf-20261021-313, B2): Sie liest nur
                 # den Material-ID-Pass, und eine Variante auf dieser Grundlage rechnet sie
                 # sonst erst im KI-Lauf. Dieselbe Datei und derselbe Vermerk wie dort.

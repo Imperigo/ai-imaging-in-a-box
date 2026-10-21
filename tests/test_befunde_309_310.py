@@ -223,12 +223,12 @@ def test_rechne_jetzt_das_bild_bekommt_einen_anstoss_und_eine_render_karte_f2():
 def test_auch_nach_dem_anstoss_wird_nichts_erfunden():
     e = Ersatz([{"content": ""},
                 {"content": "", "tool_calls": [_aufruf("vis_render", graphId="g1", nodeId="n2",
-                                                       stimmungPreset="morgen")]},
-                {"content": "", "tool_calls": [_aufruf("vis_render", graphId="g1", nodeId="n2")]}])
+                                                       stimmungPreset="morgen")]}])
     r = assistent.frage("Rechne jetzt das Bild.", werkzeuge=_liste(), schritte=[_GRAPH],
                         sprachmodell=e)
+    # Seit auf-20261021-320 (B1): die erfundene Stimmung fällt weg, statt eine Runde zu kosten.
     assert r["schritte_offen"][0]["argumente"] == {"graphId": "g1", "nodeId": "n2"}
-    assert "Nichts erfinden" in e.gesehen[2][-1]["content"]
+    assert "stimmungPreset" in r["antwort"] and len(e.gesehen) == 2
 
 
 def test_kein_anstoss_ohne_bitte_um_ein_bild_und_nicht_zweimal():

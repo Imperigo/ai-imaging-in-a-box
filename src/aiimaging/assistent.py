@@ -1422,6 +1422,149 @@ def _pruefe_angaben(name: str, argumente: dict, bekannt: str,
     return None
 
 
+_SCHEMA_TYPEN = {
+    "string": lambda w: isinstance(w, str),
+    "integer": lambda w: isinstance(w, int) and not isinstance(w, bool),
+    "number": lambda w: (isinstance(w, (int, float)) and not isinstance(w, bool)
+                         and math.isfinite(float(w))),
+    "boolean": lambda w: isinstance(w, bool),
+    "array": lambda w: isinstance(w, list),
+    "object": lambda w: isinstance(w, dict),
+}
+
+
+#: Die grösste Kantenlänge einer bestellten Auflösung — DIESELBE wie
+#: :data:`aiimaging.kosmo_szene.KANTE_HOECHSTENS` (Blender: 4 bis 65'536). Hier abgeschrieben,
+#: weil der Assistent nur wenige Module einbinden darf (``tests/test_assistent.py``); eine Probe
+#: in ``tests/test_nach320.py`` hält beide gleich.
+KANTE_HOECHSTENS = 1 << 16
+
+
+def _passt_zum_schema(wert, schema, *, feld: str = "") -> str | None:
+    """Ein Grund, wenn ``wert`` nicht zu den erlaubten Werten des Schemas passt — sonst ``None``.
+
+    **Warum (auf-20261021-320, B2):** ``aufloesung`` wurde nur darauf geprüft, ob jemand die
+    Zahlen nannte — nie, ob sie erlaubt sind. Geprüft wird, was die Liste der Knotenansicht
+    selbst sagt (Typ, ``enum``, Grenzen, Länge einer Liste, ihre Glieder), bei ``aufloesung``
+    dazu die eine Kantenregel des Kerns (:data:`KANTE_HOECHSTENS`).
+    """
+    if not isinstance(schema, dict):
+        return None
+    typ = schema.get("type")
+    typen = typ if isinstance(typ, list) else ([typ] if isinstance(typ, str) else [])
+    if typen and not any(_SCHEMA_TYPEN.get(t, lambda _w: True)(wert) for t in typen):
+        return f"«{feld}» ist kein {' oder '.join(typen)}"
+    if "enum" in schema and isinstance(schema["enum"], list) and wert not in schema["enum"]:
+        return f"«{feld}» ist keiner der erlaubten Werte ({', '.join(map(str, schema['enum']))})"
+    if isinstance(wert, (int, float)) and not isinstance(wert, bool):
+        for schluessel, verletzt in (("minimum", lambda g: wert < g),
+                                     ("maximum", lambda g: wert > g),
+                                     ("exclusiveMinimum", lambda g: wert <= g),
+                                     ("exclusiveMaximum", lambda g: wert >= g)):
+            grenze = schema.get(schluessel)
+            if isinstance(grenze, (int, float)) and not isinstance(grenze, bool) and verletzt(grenze):
+                return f"«{feld}» verletzt {schluessel} {grenze}"
+        if feld.startswith("aufloesung") and wert > KANTE_HOECHSTENS:
+            return f"«{feld}» ist grösser als {KANTE_HOECHSTENS} Bildpunkte"
+    if isinstance(wert, list):
+        if isinstance(schema.get("minItems"), int) and len(wert) < schema["minItems"]:
+            return f"«{feld}» hat weniger als {schema['minItems']} Werte"
+        if isinstance(schema.get("maxItems"), int) and len(wert) > schema["maxItems"]:
+            return f"«{feld}» hat mehr als {schema['maxItems']} Werte"
+        for nr, teil in enumerate(wert):
+            grund = _passt_zum_schema(teil, schema.get("items"), feld=f"{feld}[{nr}]")
+            if grund is not None:
+                return grund
+    return None
+
+
+def _ohne_erfundenes(name: str, argumente: dict, bekannt: str,
+                     schema: dict | None) -> tuple[dict, list[str]]:
+    """Die freien Angaben am Render-Knoten, die niemand nannte oder die nicht erlaubt sind,
+    WEGLASSEN statt den Aufruf abzuweisen — ``(argumente ohne sie, [weggelassen])``.
+
+    **Warum (auf-20261021-320, B1):** Die Beschreibung von ``vis_render`` zählt Stimmung,
+    Backbone, Güte und Auflösung samt ihren erlaubten Werten auf, und qwen3:14b füllte sie aus
+    (F2: ``backbone 'qwen'``, ``guete 'voll'``, ``aufloesung [1024, 768]``; F3 dazu
+    ``stimmungPreset 'morgen'``). Der Kern wies je Aufruf EINE ab, das Modell strich je Runde
+    eine, und nach drei inneren Runden endete die Frage ohne Karte («Dazu fand ich kein
+    passendes Werkzeug»). In 319 war dort noch eine Karte entstanden.
+
+    **Warum Weglassen sicher ist:** Die Felder sind im Schema frei (nicht ``required``); ohne
+    sie gilt, was am Knoten steht — derselbe Satz, den die Abweisung dem Modell sagte. Der
+    Auftrag wird ohnehin eine Karte, die der Architekt sieht, bevor etwas rechnet. Kennungen
+    (``graphId``, ``nodeId``) werden NICHT weggelassen: eine geratene Kennung bleibt ein Grund
+    zum Abweisen (:func:`_pruefe_angaben`).
+    """
+    felder = ERFUNDEN_FELDER.get(name, ())
+    if not felder or not isinstance(argumente, dict):
+        return argumente, []
+    eigenschaften = (schema or {}).get("properties") if isinstance(schema, dict) else None
+    eigenschaften = eigenschaften if isinstance(eigenschaften, dict) else {}
+    neu, weg = dict(argumente), []
+    for feld in felder:
+        if feld not in neu:
+            continue
+        wert = neu[feld]
+        if wert is None:
+            del neu[feld]
+            continue
+        text = json.dumps(wert, ensure_ascii=False)
+        grund = _passt_zum_schema(wert, eigenschaften.get(feld), feld=feld)
+        if grund is None:
+            for teil in (wert if isinstance(wert, list) else [wert]):
+                if (isinstance(teil, (str, int, float)) and not isinstance(teil, bool)
+                        and str(teil).strip()
+                        and not _kommt_vor(str(teil).strip().lower(), bekannt.lower())):
+                    grund = "nannte niemand"
+                    break
+        else:
+            grund = "nicht erlaubt"
+        if grund is not None:
+            del neu[feld]
+            weg.append(f"{feld} {text} ({grund})")
+    return neu, weg
+
+
+def _paket_ohne_erfundenes(argumente: dict, bekannt: str,
+                           schemas: dict) -> tuple[dict, list[str]]:
+    """Dasselbe für die Schritte eines ``vis_paket`` (ein Render-Schritt im Paket)."""
+    schritte = argumente.get("schritte") if isinstance(argumente, dict) else None
+    if not isinstance(schritte, list):
+        return argumente, []
+    neu_schritte, weg = [], []
+    for sch in schritte:
+        if (isinstance(sch, dict) and sch.get("befehl") in ERFUNDEN_FELDER
+                and isinstance(sch.get("argumente"), dict)):
+            neu_args, w = _ohne_erfundenes(sch["befehl"], sch["argumente"], bekannt,
+                                           schemas.get(sch["befehl"]))
+            if w:
+                sch = dict(sch, argumente=neu_args)
+                weg.extend(w)
+        neu_schritte.append(sch)
+    return (dict(argumente, schritte=neu_schritte) if weg else argumente), weg
+
+
+def _satz_weggelassen(weg: list[str]) -> str:
+    return (f"Weggelassen, weil niemand es nannte oder es nicht erlaubt ist: {', '.join(weg)} "
+            f"— es gilt, was am Knoten steht.")
+
+
+def _mit_freigabesatz(text: str, nachricht: str) -> str:
+    """Wer nach der Freigabe fragt, hört :data:`SATZ_NUR_ARCHITEKT` — auf JEDEM Ausgang.
+
+    **Warum (auf-20261021-320, B3):** In F3 sagte das Modell «Freigeben kann nur der
+    Architekt.» in der ersten inneren Runde; der Bild-Anstoss verwarf den Satz, und der Ausgang
+    «Dazu fand ich kein passendes Werkzeug» hängte ihn nicht an. Und wo er anhing, fehlte er,
+    sobald die Antwort «Render-Knoten» enthielt. Jetzt zählt nur, ob der volle Satz dasteht.
+    """
+    if not _FRAGE_NACH_FREIGABE.search(nachricht or "") or SATZ_NUR_ARCHITEKT in text:
+        return text
+    # Der kurze Satz des Modells weicht dem vollen, der sagt, WO freigegeben wird (310 B3).
+    text = re.sub(r"\s*Freigeben kann nur der Architekt\b[^.!?]*[.!?]?\s*", " ", text).strip()
+    return f"{SATZ_NUR_ARCHITEKT} {text}".strip()
+
+
 #: Eine Kartenkennung, die ein Satz der Antwort nennt («Karte A-1», «Karten A-1, A-2», «Karte «A-1»»).
 _KARTE_GENANNT = re.compile(r"\bKarten?\s+«?([A-Za-z]+-\d+)\b")
 _LOESCHEN = re.compile(r"lösch|loesch|entfern", re.I)
@@ -1514,11 +1657,8 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
         elif behauptet or not text:
             # Auch wenn nach dem Verwerfen nichts blieb, sagt der Kern, was als Karte liegt.
             text = f"{text} {satz_karte}".strip()
-    if _FRAGE_NACH_FREIGABE.search(nachricht or "") and "render-knoten" not in text.lower():
-        # Der kurze Satz des Modells («Freigeben kann nur der Architekt.») weicht dem vollen, der
-        # sagt, WO freigegeben wird (auf-20261021-310, B3).
-        text = re.sub(r"^\s*Freigeben kann nur der Architekt\s*[.!]?\s*", "", text)
-        text = f"{SATZ_NUR_ARCHITEKT} {text}".strip()
+    # Wer nach der Freigabe fragt, hört den vollen Satz (310 B3; seit 320 B3 auf jedem Ausgang).
+    text = _mit_freigabesatz(text, nachricht)
     return text or "Fertig."
 
 
@@ -1533,6 +1673,18 @@ def _behauptet_getan(satz: str) -> bool:
     if _ALS_VORSCHLAG.search(satz):
         return False
     return any("karte" not in m.group(0).lower() for m in _GETAN.finditer(satz))
+
+
+#: Was der Kern an die Beschreibung eines Werkzeugs der Knotenansicht HÄNGT, bevor sie ans Modell
+#: geht (auf-20261021-320, B1): Die Beschreibung von ``vis_render`` stammt aus der Knotenansicht
+#: und zählt Stimmung, Backbone, Güte und Auflösung samt erlaubten Werten auf — qwen3:14b füllte
+#: sie aus, obwohl niemand sie nannte. Der Kern lässt Erfundenes ohnehin weg
+#: (:func:`_ohne_erfundenes`); der Zusatz spart die Mühe, es erst zu erfinden.
+ZUSATZ_BESCHREIBUNG = {
+    "vis_render": ("Für «Rechne» oder «Render» genügen graphId und nodeId des Render-Knotens aus "
+                   "graph_lesen. Alle anderen Angaben lässt du weg, wenn sie niemand nannte — "
+                   "dann gilt, was am Knoten steht; der Kern lässt Erfundenes sonst selbst weg."),
+}
 
 
 SATZ_SCHRITTE_ERSCHOEPFT = (
@@ -1577,6 +1729,8 @@ def pruefe_werkzeugliste(werkzeuge) -> list[dict]:
         if not isinstance(schema, dict) or schema.get("type") != "object":
             raise AssistentError(f"Das Schema von «{name}» ist kein Objekt-Schema.")
         namen.add(name)
+        if name in ZUSATZ_BESCHREIBUNG:
+            beschreibung = f"{beschreibung} {ZUSATZ_BESCHREIBUNG[name]}".strip()
         raus.append({"type": "function", "function": {
             "name": name, "description": beschreibung, "parameters": schema}})
     return raus
@@ -1626,6 +1780,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     frueher = _pruefe_verlauf(verlauf)
     liste = pruefe_werkzeugliste(werkzeuge)
     namen = {w["function"]["name"] for w in liste}
+    schemas = {w["function"]["name"]: w["function"].get("parameters") for w in liste}
     getan = _pruefe_schritte(schritte, namen)
     if bild_rechnet:
         raise AssistentError(SATZ_BILD_RECHNET)
@@ -1668,6 +1823,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     ende = time.monotonic() + FRIST_FRAGE_GESAMT_S
     antwort = ""
     abgewiesen: list[tuple[str, str]] = []
+    weggelassen: list[str] = []
     abgelaufen = False
     for _ in range(RUNDEN_HOECHSTENS):
         rest = ende - time.monotonic()
@@ -1704,6 +1860,13 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                     argumente = None
             if argumente is None:
                 argumente = {}
+            # ERFUNDENE FREIE ANGABEN FALLEN WEG, statt den Aufruf abzuweisen (320 B1/B2).
+            if name in ERFUNDEN_FELDER and isinstance(argumente, dict):
+                argumente, weg = _ohne_erfundenes(name, argumente, bekannt, schemas.get(name))
+                weggelassen.extend(weg)
+            elif name == "vis_paket" and isinstance(argumente, dict):
+                argumente, weg = _paket_ohne_erfundenes(argumente, bekannt, schemas)
+                weggelassen.extend(weg)
             if name not in namen:
                 abgewiesen.append((name or "?", f"Ein Werkzeug «{name}» gibt es nicht."))
             elif not isinstance(argumente, dict):
@@ -1733,6 +1896,8 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
             # Zwischensatz.
             satz = (antwort + " " if antwort else "") + " ".join(
                 f"Nicht ausgeführt: {g}" for _, g in abgewiesen)
+            if weggelassen:
+                satz = f"{satz} {_satz_weggelassen(list(dict.fromkeys(weggelassen)))}"
             return {"antwort": satz.strip(), "schritte_offen": offen[:frei]}
         nachrichten.append({"role": "assistant", "content": inhalt, "tool_calls": [
             {"function": a.get("function")} for a in aufrufe if isinstance(a, dict)]})
@@ -1742,7 +1907,9 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
         return {"antwort": _berichtige_antwort(antwort, nachricht, getan, gespraech=gespraech)}
     if abgelaufen or not abgewiesen:
         raise AssistentError(SATZ_FRIST_ABGELAUFEN)
-    return {"antwort": "Dazu fand ich kein passendes Werkzeug — " + abgewiesen[-1][1]}
+    # Auch dieser Ausgang trägt den Freigabesatz (auf-20261021-320, B3).
+    return {"antwort": _mit_freigabesatz(
+        "Dazu fand ich kein passendes Werkzeug — " + abgewiesen[-1][1], nachricht)}
 
 
 # =========================================================================== anwenden
