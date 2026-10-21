@@ -66,6 +66,7 @@ import { ohneVerlauf, useProject, wendeSchrittAn, type VerlaufWacheUrteil } from
 import { useVisRuntime } from './vis-runtime';
 import { grundlageAmKnoten } from './grundlage';
 import { gueteAmKnoten } from './guete';
+import { blickAufrufErgaenzen, waehlbareBlicke } from './blick-quelle';
 
 // ---------------------------------------------------------------------------------- Arten, Modus
 
@@ -291,6 +292,11 @@ export interface GraphLesenKnoten {
   guete?: 'vorschau' | 'voll';
   /** Typ nicht im Katalog (Alt-Stand/Import). */
   unbekannterTyp?: true;
+  /**
+   * Nur am Knoten «Kamera» (L4-4): die Namen der gesicherten Blicke, die er anbietet. Gesetzt wird
+   * einer mit vis_nodeParametrieren `{ art: 'blick', blick: '<Name>' }`.
+   */
+  blicke?: string[];
 }
 
 export interface GraphLesenGraph {
@@ -308,7 +314,7 @@ export interface GraphLesenDaten {
   katalog?: { typ: string; label: string; hilfe: string; eingaenge: string[]; ausgaenge: string[] }[];
 }
 
-function leseKnoten(graph: VisGraph, n: VisNode): GraphLesenKnoten {
+function leseKnoten(graph: VisGraph, n: VisNode, doc: KosmoDoc): GraphLesenKnoten {
   const kat = VIS_NODE_KATALOG[n.typ];
   const lauf = useVisRuntime.getState().laeufe[n.id];
   const params = n.params ?? {};
@@ -351,6 +357,7 @@ function leseKnoten(graph: VisGraph, n: VisNode): GraphLesenKnoten {
       : null,
     ...(kat ? {} : { unbekannterTyp: true as const }),
   };
+  if (n.typ === 'kamera') k.blicke = waehlbareBlicke(doc).map((b) => b.name);
   if (n.typ === 'render') {
     const g = grundlageAmKnoten(params);
     k.grundlage = g ? { id: g.id, seed: g.seed, kameras: g.kameras, ebenen: g.ebenen } : null;
@@ -368,7 +375,7 @@ export function graphLesen(doc: KosmoDoc, args: { graphId?: string; katalog?: bo
       graphId: g.id,
       name: g.name,
       gezeigt: g.id === gezeigt || (gezeigt === null && alle.length === 1),
-      knoten: g.nodes.map((n) => leseKnoten(g, n)),
+      knoten: g.nodes.map((n) => leseKnoten(g, n, doc)),
       kanten: g.edges.map((e) => ({ edgeId: e.id, from: e.from, fromPort: e.fromPort, to: e.to, toPort: e.toPort })),
     }),
   );
@@ -503,6 +510,17 @@ export function behandle(aufruf: KiAufruf, modus: KiModus = 'karte'): KiAntwort 
   return antwort;
 }
 
+/** `params.blick` ohne `blickKamera` an vis_nodeParametrieren / vis_nodeSetzen (Typ kamera): ergaenzt. */
+function mitBlickKamera(doc: KosmoDoc, commandId: string, argumente: unknown): unknown {
+  if (commandId !== 'vis.nodeParametrieren' && commandId !== 'vis.nodeSetzen') return argumente;
+  const a = alsObjekt(argumente);
+  if (commandId === 'vis.nodeSetzen' && a['typ'] !== 'kamera') return argumente;
+  const p = a['params'];
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return argumente;
+  const neu = blickAufrufErgaenzen(doc, p as Record<string, string | number | boolean>);
+  return neu === p ? argumente : { ...a, params: neu };
+}
+
 function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): KiAntwort {
   const { kennung, werkzeug } = aufruf;
   const doc = useProject.getState().doc;
@@ -550,7 +568,16 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
     }
     const kaputt = sammleNeuVerweise(s.argumente).find((n) => n >= i || probeNeu[n] === '');
     if (kaputt !== undefined) return void fehlerListe.push(`${vor}«$neu:${kaputt}» zeigt auf keinen früheren Schritt, der etwas neu anlegt`);
-    const params = ersetzeNeuVerweise(s.argumente ?? {}, probeNeu);
+    // L4-4: ein gesicherter Blick nur mit Namen bekommt hier seine Kamera — aus der Liste, die der
+    // Knoten zeigt (auch die des Wirts). Gespeichert wird der ergaenzte Aufruf, damit «Anwenden»
+    // dasselbe schreibt wie der Probelauf.
+    let argumente: unknown;
+    try {
+      argumente = mitBlickKamera(doc, commandId, s.argumente ?? {});
+    } catch (err) {
+      return void fehlerListe.push(`${vor}${err instanceof Error ? err.message : String(err)}`);
+    }
+    const params = ersetzeNeuVerweise(argumente, probeNeu);
     const cmd = getCommand(commandId)!;
     const parsed = cmd.params.safeParse(params);
     if (!parsed.success) return void fehlerListe.push(`${vor}${parsed.error.issues.map((x) => `${x.path.join('.') || '(root)'}: ${x.message}`).join('; ')}`);
@@ -565,7 +592,7 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
     patchSumme += r.patches.length;
     const a = artVonBefehl(commandId);
     if (ART_STRENGE[a] > ART_STRENGE[art]) art = a;
-    geprueft.push({ commandId, params: s.argumente ?? {}, zusammenfassung: r.summary });
+    geprueft.push({ commandId, params: argumente, zusammenfassung: r.summary });
   });
   if (fehlerListe.length > 0) {
     if (werkzeug !== VIS_PAKET) return fehler(kennung, `${fehlerListe[0]}${NICHTS}`);

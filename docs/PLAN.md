@@ -8088,7 +8088,10 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] Beim Abbruch das letzte Zwischenbild als `teilbild` behalten, ohne Gütewerte — Heim-PC, Blick zwischen den Phasen (§142, C69)
     - [ ] Zeitbudget am Render-Knoten
   - [ ] Auto-Kamera auf das Projektvolumen mit festem Bildanteil 25–40 %, Augenhöhe relativ zur EG-Kote am Standpunkt (L4-3, Nr. 60/65/67; KosmoDraw)
-  - [ ] Gesicherte Blicke direkt im Kamera-Knoten wählbar, ohne offene 3D-Ansicht (L4-4, Nr. 68)
+  - [x] Gesicherte Blicke direkt im Kamera-Knoten wählbar, ohne offene 3D-Ansicht (L4-4, Nr. 68) *(21.10.2026: Blatt «Blick zur Kamera» gezeichnet, nach Empfehlung A–C gebaut — Reiter «Blick», beim Wählen festgehalten, Name im Kopf, Claude per Name; KO-Zweig `claude/kosmovis-blick-kamera` (`d175c7961`), Visbox: Standpunkte der Bilder der Mappe als Quelle — gebaut, am Gerät unbestätigt (§196, C118))*
+    - [ ] Einspielen bei Int 1, Ziel v0.1.10 (integrator)
+    - [ ] Bitte an KosmoDesign: Augen-Knopf frei von der Maus-Leiste, «In KosmoVis rendern» je gesichertem Blick, Name beim Sichern (integrator/ui)
+    - [ ] Am Mac: Bild mit gesetztem Standpunkt in der Mappe, im Kamera-Knoten «Blick» wählen und rechnen — das Bild kommt von dort (owner)
   - [ ] Hausanteil an KI-Bild UND Grundlage messen und beide zeigen; Geometrie-Treue als Pflichteingang (L4-2)
     - [x] Beide Anteile im Kern (`baumasse.haus_im_bild`), im Ergebnis und je Kamera, Satz «KI-BILD RAHMT ANDERS»; «Geometrie 0.0» als abgeschnittener Wert belegt und in Worten (§195, C117)
     - [x] Blatt «Hausanteil» gezeichnet, nach Empfehlung A–C gebaut: Zeile «Haus im Bild» im Verlauf, KO-Zweig `claude/kosmovis-hausanteil`, Kopie nachgezogen; am Mac unbestätigt

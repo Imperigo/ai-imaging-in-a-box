@@ -2183,3 +2183,9 @@ KI-Bild ordnet vorne und hinten anders als das Modell, die Rechnung ergäbe weni
 Worten («KI-Bild weicht von der Geometrie ab … kein Messfehler») und dass die Zahl bei so kleinem Haus nur Auskunft ist.
 Ehrlich gesagt: Die Schätzung am KI-Bild ist an gezeichneten Testbildern geprüft, an echten Bildern des Heim-PC noch nicht;
 die Grenze «doppelt so gross» ist gesetzt, nicht gemessen.
+**Ein gewählter Blick wird zur Kamera (21.10.2026).** In einem Vorführvideo kam ein bewusst gesicherter Blick — ein
+Fussgänger an der Hausecke — nicht im Knoten «Kamera» an: Der einzige Weg dorthin verlangte eine offene 3D-Ansicht. Jetzt
+hat der Knoten einen Reiter «Blick», der die gesicherten Blicke als Auswahl anbietet. Ein gewählter Blick wird beim Wählen
+festgehalten und als genau dieser eine Standpunkt bestellt; Varianten ändern danach nur die Stimmung. In Visbox sind die
+gesicherten Blicke die Standpunkte, die für ein Bild der Mappe am Grundriss gesetzt wurden. Claude kann einen Blick beim
+Namen wählen. Ehrlich gesagt: geprüft an Proben, am Mac noch nicht gesehen.

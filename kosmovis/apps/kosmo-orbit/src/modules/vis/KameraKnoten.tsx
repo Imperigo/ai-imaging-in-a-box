@@ -5,6 +5,8 @@ import {
   fovAusBrennweiteGrad,
   kameraArtAusParams,
   kameraAutoAusParams,
+  kameraBlickAusParams,
+  kameraBlickName,
   kameraManuellAusParams,
   KAMERA_AUTO_VORGABEN,
   KAMERA_RICHTUNGEN,
@@ -21,6 +23,17 @@ import { useProject } from '../../state/project-store';
 import { interiorFaehrt, istUeberDiesenWegBestellbar, grundlagenNachfuehren, szeneBauteileAnzahl } from './vis-jobs';
 import { abonniereHeimStandpunkte, hatStandpunkteAbfrage, heimStandpunkte, heimStandpunkteFassung, standpunkteFuer, wahlSchluessel, type HeimStandpunkt } from './heim-standpunkte';
 import { modellLadenWirt, modellLadeStand } from './modell-laden';
+import {
+  abonniereBlickQuelle,
+  blickParams,
+  blickQuelleFassung,
+  blickStand,
+  blickZeile,
+  KAMERA_BLICK_FEHLT_HINWEIS,
+  leerSatzBlicke,
+  waehlbareBlicke,
+  type WaehlbarerBlick,
+} from './blick-quelle';
 import { modellStand } from './ModellKnoten';
 import type { Blickvorschau, VorschauKamera } from './modell-vorschau-3d-kern';
 import './knoten-neu.css';
@@ -37,6 +50,9 @@ const ModellVorschau3d = lazy(() => import('./modell-vorschau-3d').then((m) => (
  *    Rechnung (Wirt-Abfrage, `heim-standpunkte.ts`), live bei jeder Änderung.
  *  - **Manuell**: «Manuell übernehmen» friert die Auto-Standpunkte ein; dann Werte tippen (Auge und
  *    Blickpunkt in Metern, Ost/Nord/Höhe). Bestellt wird die Liste, mit `perspektive`.
+ *  - **Blick** (Video-Befund L4-4, 21.10.2026, Blatt «Blick zur Kamera»): ein gesicherter Blick
+ *    (Entwurf: «Blick sichern»; Visbox: die Standpunkte der Mappe, `blick-quelle.ts`) als EIN fester
+ *    Standpunkt — ohne offene 3D-Ansicht. Beim Wählen festgehalten; der Name steht im Kopf.
  *  - **Modell** (nur, wo es Standpunkte aus dem Entwurf gibt, KosmoOrbit): wie bisher — Eingang,
  *    Übersicht, bei Räumen Innenraum. Alte Graphen ohne `art` stehen hier; nichts ändert sich, bis man
  *    umschaltet.
@@ -110,6 +126,7 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
   const doc = useProject((s) => s.doc);
   useProject((s) => s.revision);
   useSyncExternalStore(abonniereHeimStandpunkte, heimStandpunkteFassung, heimStandpunkteFassung);
+  useSyncExternalStore(abonniereBlickQuelle, blickQuelleFassung, blickQuelleFassung);
   const p = node.params ?? {};
   const modellKameras = projektKameras(doc);
   const artGesetzt = kameraArtAusParams(p);
@@ -119,6 +136,10 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
   const manuell = kameraManuellAusParams(p);
   const [blickNr, setBlickNr] = useState(0);
   const [manuellNr, setManuellNr] = useState(0);
+  // Reiter «Blick» bei leerer Liste: zeigt den Satz, ohne `art` umzustellen (die Kamera bleibt).
+  const [blickOffen, setBlickOffen] = useState(false);
+  const blicke = waehlbareBlicke(doc);
+  const blick = art === 'blick' ? kameraBlickAusParams(p, doc) : null;
 
   const setze = (params: Record<string, string | number | boolean>) => {
     try {
@@ -132,6 +153,7 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
   const tabs = [
     ...(modellKameras.length > 0 ? [{ id: 'modell', label: 'Modell', testid: 'kamera-art-modell' }] : []),
     { id: 'auto', label: 'Auto', testid: 'kamera-art-auto' },
+    { id: 'blick', label: 'Blick', testid: 'kamera-art-blick' },
     { id: 'manuell', label: 'Manuell', testid: 'kamera-art-manuell', disabled: manuell.length === 0 && art !== 'manuell' },
   ];
 
@@ -145,6 +167,10 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
       ? kegelAusHeim(heim, wahl)
       : art === 'manuell'
         ? manuell.map((k) => ({ ...k, seitenverhaeltnis: SEITENVERHAELTNIS }))
+        : art === 'blick'
+          ? blick
+            ? [{ ...blick, seitenverhaeltnis: SEITENVERHAELTNIS }]
+            : []
         : modellKameras.map((k) => ({ name: k.name, position: k.position, target: k.target, fov: k.fov }));
 
   const stand =
@@ -162,18 +188,41 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
             : abfrage?.ergebnis?.satz ?? ''
       : art === 'manuell'
         ? `${manuell.length} ${manuell.length === 1 ? 'Standpunkt' : 'Standpunkte'} von Hand`
+        : art === 'blick'
+          ? blick
+            ? `Kamera der Grundlage: Blick «${blick.name}»`
+            : KAMERA_BLICK_FEHLT_HINWEIS
         : 'Vorschlag aus dem Modell';
+  const zeigt: KameraArt = blickOffen && art !== 'blick' ? 'blick' : art;
+  const waehleArt = (a: string) => {
+    if (a !== 'blick') {
+      setBlickOffen(false);
+      if (a !== art) setze({ art: a });
+      return;
+    }
+    if (art === 'blick') return;
+    // Der zuletzt gewählte Blick, wenn es ihn noch gibt, sonst der erste der Liste.
+    const vorher = blicke.find((b) => b.name === kameraBlickName(p)) ?? blicke[0];
+    if (vorher) {
+      setBlickOffen(false);
+      setze({ ...blickParams(vorher), ...(p['perspektive'] === undefined ? { perspektive: 'senkrecht' } : {}) });
+    } else {
+      setBlickOffen(true);
+    }
+  };
 
   return (
     <div className="vis-kn vis-kn-kamera" data-testid="kamera" data-art={art} style={{ height: KAMERA_KOERPER_H }} onPointerDown={(e) => e.stopPropagation()}>
       <KTabs
         size="sm"
         items={tabs}
-        aktiv={art}
-        onChange={(a) => setze({ art: a })}
+        aktiv={zeigt}
+        onChange={waehleArt}
         data-testid="kamera-art"
       />
-      {art === 'auto' ? (
+      {zeigt === 'blick' ? (
+        <BlickEinstellungen blicke={blicke} p={p} setze={setze} />
+      ) : art === 'auto' ? (
         <AutoEinstellungen wahl={wahl} p={p} setze={setze} />
       ) : art === 'manuell' ? (
         <ManuellEinstellungen kameras={manuell} nr={manuellNr} setNr={setManuellNr} p={p} setze={setze} />
@@ -182,9 +231,9 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
       )}
       <KameraFenster kegel={kegel} blickNr={blickNr} setBlickNr={setBlickNr} knotenZoom={knotenZoom} />
       <div className="vis-kn-zeile">
-        <KTooltip text={stand || 'Standpunkte'} lage="unten">
+        <KTooltip text={(zeigt === 'blick' && art !== 'blick' ? leerSatzBlicke() : stand) || 'Standpunkte'} lage="unten">
           <span tabIndex={0} className="vis-kn-satz vis-kn-dehnt" data-testid="kamera-stand">
-            {stand}
+            {zeigt === 'blick' && art !== 'blick' ? 'Die Kamera bleibt, wie sie war, bis ein Blick gewählt ist.' : stand}
           </span>
         </KTooltip>
         {art === 'auto' ? (
@@ -292,6 +341,82 @@ function AutoEinstellungen({
         )}
       </div>
       <PerspektiveZeile wert={wahl.perspektive ?? KAMERA_AUTO_VORGABEN.perspektive} onWahl={(v) => setze({ art: 'auto', perspektive: v })} />
+    </>
+  );
+}
+
+/**
+ * Reiter «Blick»: die Auswahl der gesicherten Blicke, darunter woher er kommt (oder warum die Kamera
+ * nicht mehr dem gesicherten Blick entspricht), und die Perspektive. Leer: der Satz.
+ */
+function BlickEinstellungen({
+  blicke,
+  p,
+  setze,
+}: {
+  blicke: WaehlbarerBlick[];
+  p: Record<string, string | number | boolean>;
+  setze: (params: Record<string, string | number | boolean>) => void;
+}) {
+  const name = kameraArtAusParams(p) === 'blick' ? kameraBlickName(p) : '';
+  if (blicke.length === 0 && !name) {
+    return (
+      <div className="vis-kn-zeile">
+        <KTooltip text={leerSatzBlicke()} lage="unten">
+          <span tabIndex={0} className="vis-kn-satz vis-kn-drei vis-kn-dehnt" data-testid="kamera-blick-leer">
+            {leerSatzBlicke()}
+          </span>
+        </KTooltip>
+      </div>
+    );
+  }
+  const stand = blickStand(p, blicke);
+  const gewaehlt = blicke.find((b) => b.name === name);
+  const festgehalten = kameraBlickAusParams(p);
+  const zeile =
+    stand === 'fehlt'
+      ? `Blick «${name}» ist nicht mehr gesichert — die Kamera bleibt, wie übernommen.`
+      : stand === 'geaendert'
+        ? `Blick «${name}» wurde seither verschoben — neu wählen übernimmt ihn.`
+        : gewaehlt
+          ? blickZeile(gewaehlt)
+          : festgehalten
+            ? blickZeile(festgehalten)
+            : 'Einen Blick wählen.';
+  return (
+    <>
+      <div className="vis-kn-zeile">
+        <span className="vis-kn-titel">Blick</span>
+        <KSelect
+          size="sm"
+          value={name}
+          onChange={(e) => {
+            const b = blicke.find((x) => x.name === e.target.value);
+            if (b) setze(blickParams(b));
+          }}
+          data-testid="kamera-blick-wahl"
+          className="vis-kn-dehnt"
+        >
+          {!gewaehlt ? (
+            <option value={name} disabled>
+              {name ? `${name} (nicht mehr gesichert)` : 'Blick wählen …'}
+            </option>
+          ) : null}
+          {blicke.map((b) => (
+            <option key={b.name} value={b.name}>
+              {b.name}
+            </option>
+          ))}
+        </KSelect>
+      </div>
+      <div className="vis-kn-zeile">
+        <KTooltip text={zeile} lage="unten">
+          <span tabIndex={0} className={`vis-kn-satz vis-kn-dehnt${stand === 'fehlt' || stand === 'geaendert' ? ' vis-bild-kachel-qa-vorbehalt' : ''}`} data-testid="kamera-blick-satz">
+            {zeile}
+          </span>
+        </KTooltip>
+      </div>
+      <PerspektiveZeile wert={p['perspektive'] === 'frei' ? 'frei' : 'senkrecht'} onWahl={(v) => setze({ perspektive: v })} />
     </>
   );
 }
