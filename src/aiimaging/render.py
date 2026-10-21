@@ -956,13 +956,20 @@ def pipeline_lage(backbone_name: str, *, diffusers_modul=None, modell_wurzel=Non
                      f"{fassung}) — dieses Bildmodell ist hier nicht rechenbar.")}
 
 
-def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
+def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None,
+                bildeingang: bool = False):
     """Ein Bildmodell laden — die einzige Stelle, die ``torch`` und ``diffusers`` kennt.
 
     Args:
         backbone_name: Name aus der Registry.
         modell_wurzel: Verzeichnis der Gewichte. ``None`` heisst
             :func:`standard_modell_wurzel`.
+        bildeingang: Wird für einen Lauf mit ``bildeingang_staerke`` geladen (Messschalter
+            ``vis.bildeingang``, Entscheid 117)? Dann entscheidet die **gemessene** Spitze mit
+            Bildeingang (:func:`bildeingang_bedarf`, auf-20261021-298) statt ``vram_gb``, und
+            zwar **vor** dem Lesen der Gewichte: Reicht der freie Speicher nicht, endet das
+            Laden mit :class:`RenderError` und dem Satz — kein Auslagerungsweg, denn der ist
+            mit Bildeingang ungemessen.
 
     Returns:
         Ein **Aufrufbares** ``modell(parameter: dict) -> str | dict``. Der Rückgabewert
@@ -1032,16 +1039,39 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
     if lage["rechenbar"] is False:
         raise RenderError(lage["satz"])
 
+    # DER BILDEINGANG ENTSCHEIDET VOR DEN GEWICHTEN (auf-20261021-298, B3): +3880 MiB
+    # gegenueber dem Lauf ohne. Reicht es nicht, wird nicht geladen — ein Satz statt eines
+    # Speicherfehlers mitten im Lauf.
+    bildeingang_bericht = None
+    if bildeingang and torch.cuda.is_available():
+        frei, _gesamt = torch.cuda.mem_get_info()
+        lage_bi = pruefe_bildeingang_karte(eintrag.name, frei_mib=int(frei // 2**20))
+        if lage_bi["reicht"] is False:
+            raise RenderError(lage_bi["satz"])
+        bildeingang_bericht = lage_bi
+
     if eintrag.konditionierung == KOND_DEPTH_CONTROLNET and eintrag.controlnet_id:
         pipeline, weg = _lade_mit_controlnet(eintrag, wurzel, torch)
     else:
         pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
         weg = None
 
-    erwartet = _erwarteter_bedarf(eintrag)
-    geraet, entflechtung, bedarf = _lege_auf_geraet(
-        pipeline, wurzel, torch, erwartet=erwartet,
-        erwartet_gemessen=_bedarf_ist_gemessen(eintrag))
+    if bildeingang_bericht is not None and bildeingang_bericht["reicht"] is True:
+        # Gemessen ist der Lauf mit Bildeingang auf dem vollen Weg; dieser Weg ist es.
+        pipeline.to("cuda")
+        b = bildeingang_bericht["bedarf"]
+        geraet, entflechtung = "cuda", None
+        bedarf = _bedarfsbericht(
+            quelle=QUELLE_BILDEINGANG, summe=b["verlangt_frei_mib"] * 2**20,
+            groesster=None, zuschlag=1.0, frei=bildeingang_bericht["frei_mib"] * 2**20,
+            grund=(f"Entschieden an {QUELLE_BILDEINGANG}: {b['lauf_mib']} MiB gemessen + "
+                   f"{b['reserve_mib']} MiB Reserve = {b['verlangt_frei_mib']} MiB verlangt, "
+                   f"{bildeingang_bericht['frei_mib']} MiB frei ({b['beleg']})."))
+    else:
+        erwartet = _erwarteter_bedarf(eintrag)
+        geraet, entflechtung, bedarf = _lege_auf_geraet(
+            pipeline, wurzel, torch, erwartet=erwartet,
+            erwartet_gemessen=_bedarf_ist_gemessen(eintrag))
 
     modell = _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
     modell.geraet = geraet
@@ -1192,6 +1222,116 @@ GERAETE_ZUSCHLAG = 1.25
 #: der Zustand von vor dem 21.09.2026, und die sichere Richtung: Eine unbelegte Zahl
 #: bekommt mehr Luft, nicht weniger.
 MESSUNG_ZUSCHLAG = 1.10
+
+#: Was mit dem Bildeingang **über** dem gemessenen Bedarf frei bleiben muss (MiB) — ein fester
+#: Betrag statt eines Vielfachen, und **gesetzt, nicht gemessen**.
+#:
+#: **Warum kein Vielfaches** (auf-20261021-298): Der Lauf mit Bildeingang braucht gemessen
+#: 30 075 MiB auf einer Karte mit 31 366 MiB frei. ``MESSUNG_ZUSCHLAG`` (1,1) verlangte
+#: 33 083 MiB — mehr, als die Karte hat; jeder Lauf würde abgewiesen. Die Spitze war in allen
+#: zehn Läufen dieselbe (31 314–31 316 MiB), die Begründung des Vielfachen (9,7 % Streuung
+#: zwischen Bedingungen) trägt hier nicht. 512 MiB decken eine zweite Browserseite und das
+#: Runden der Messung; ein grösseres KI-Bild als 1024 x 640 deckt diese Zahl **nicht**.
+BILDEINGANG_RESERVE_MIB = 512
+
+#: Die Quelle der Ladeentscheidung mit Bildeingang — siehe :func:`bildeingang_bedarf`.
+QUELLE_BILDEINGANG = "gemessene Spitze mit Bildeingang (Registry)"
+
+
+def bildeingang_bedarf(backbone_name) -> dict | None:
+    """Wie viel Grafikspeicher ein Lauf **mit Bildeingang** auf diesem Modell frei braucht.
+
+    ``{spitze_mib, grundlast_mib, lauf_mib, reserve_mib, verlangt_frei_mib, beleg}`` —
+    ``lauf_mib`` ist die gemessene Spitze der Karte abzüglich ihrer Grundlast vor dem Lauf,
+    also das, was der Lauf selbst belegt; ``verlangt_frei_mib`` dazu
+    :data:`BILDEINGANG_RESERVE_MIB`. ``None``, wenn das Register keine Messung trägt.
+
+    **Der Anlass** (auf-20261021-298, B3): +3880 MiB gegenüber dem Lauf ohne Bildeingang. Die
+    Ladeentscheidung rechnete mit ``vram_gb`` (28 273 MiB verlangt) und hätte neben einem
+    fremden Modell geladen und erst im Lauf am Speicher geendet.
+    """
+    try:
+        eintrag = backbone.hole(str(backbone_name))
+    except backbone.BackboneError:
+        return None
+    spitze = getattr(eintrag, "vram_bildeingang_spitze_mib", None)
+    grundlast = getattr(eintrag, "vram_bildeingang_grundlast_mib", None)
+    if spitze is None or grundlast is None:
+        return None
+    lauf = int(spitze) - int(grundlast)
+    return {"spitze_mib": int(spitze), "grundlast_mib": int(grundlast), "lauf_mib": lauf,
+            "reserve_mib": BILDEINGANG_RESERVE_MIB,
+            "verlangt_frei_mib": lauf + BILDEINGANG_RESERVE_MIB,
+            "beleg": eintrag.vram_bildeingang_beleg}
+
+
+def pruefe_bildeingang_karte(backbone_name, *, frei_mib=None, eigen_mib=0,
+                             fremde_modelle=None) -> dict:
+    """Darf ein Lauf **mit Bildeingang** jetzt starten? — ``{reicht, satz, ...}``.
+
+    Zwei Bedingungen, in dieser Reihenfolge:
+
+    1. **Kein fremdes Modell auf der Karte** (``fremde_modelle``: was Ollama laut ``/api/ps``
+       hält). In der Nacht von auf-20261021-298 lag dort ein 17-GB-Modell. Modelle von
+       KosmoOrbit (Rollenkarte, ``kosmo-…``) und ``gpt-oss`` entlädt Visbox **nie**
+       (Entscheid 106d, :func:`aiimaging.assistent.geschuetzt`) — warten hilft dort nicht.
+    2. **Genug frei für den gemessenen Bedarf** (:func:`bildeingang_bedarf`):
+       ``frei_mib + eigen_mib`` — was frei ist, und was dieser Prozess schon selbst hält (ein
+       geladenes Bildmodell ist unser Speicher, kein fremder) — mindestens
+       ``verlangt_frei_mib``.
+
+    ``reicht`` ist ``True``, ``False`` oder ``None``. ``None`` heisst **nicht geprüft** (keine
+    Messung im Register, oder keine Auskunft über den Speicher) — dann wird gerechnet wie bis
+    zum 21.10.2026, und der Satz sagt es. ``fremde_modelle=None`` heisst: Ollama gab keine
+    Auskunft; dann entscheidet der Speicher allein.
+
+    Reine Funktion: keine Karte, kein Netz. Die Auskünfte reicht der Aufrufer herein
+    (``tools/abholen.py``: ``nvidia-smi``, :func:`grafikspeicher_des_prozesses`, Ollama).
+    """
+    bedarf = bildeingang_bedarf(backbone_name)
+    aus = {"reicht": None, "satz": "", "bedarf": bedarf, "frei_mib": frei_mib,
+           "eigen_mib": eigen_mib, "fremde_modelle": (list(fremde_modelle)
+                                                      if fremde_modelle is not None else None)}
+    fremde = [str(m) for m in (fremde_modelle or ()) if str(m).strip()]
+    if fremde:
+        from . import assistent as _assistent  # noqa: PLC0415 — nur fuer den Satz
+        gruende = [_assistent.geschuetzt(m) or f"{m} ist das Modell der Visbox." for m in fremde]
+        aus.update(reicht=False, satz=(
+            f"ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) rechnet nur, wenn kein "
+            f"fremdes Modell auf der Grafikkarte liegt — dort liegt {', '.join(fremde)}. "
+            f"{' '.join(gruende)} Der Lauf mit Bildeingang braucht "
+            + (f"{bedarf['lauf_mib']} MiB (gemessen, {bedarf['beleg']})"
+               if bedarf else "mehr Speicher als ohne")
+            + ". Nicht geladen, nichts gerechnet; neu bestellen, wenn die Karte frei ist."))
+        return aus
+    if bedarf is None:
+        aus["satz"] = (f"Bildeingang an {backbone_name}: kein gemessener Speicherbedarf im "
+                       f"Register — nicht geprueft, gerechnet wird.")
+        return aus
+    if frei_mib is None or isinstance(frei_mib, bool) or not isinstance(frei_mib, (int, float)):
+        aus["satz"] = ("Bildeingang: freier Grafikspeicher unbekannt (keine Auskunft) — nicht "
+                       "geprueft, gerechnet wird.")
+        return aus
+    eigen = int(eigen_mib or 0) if isinstance(eigen_mib, (int, float)) else 0
+    verfuegbar = int(frei_mib) + eigen
+    aus["verfuegbar_mib"] = verfuegbar
+    if verfuegbar >= bedarf["verlangt_frei_mib"]:
+        aus.update(reicht=True, satz=(
+            f"Bildeingang: {verfuegbar} MiB verfuegbar ({int(frei_mib)} frei"
+            + (f" + {eigen} eigene" if eigen else "")
+            + f"), verlangt {bedarf['verlangt_frei_mib']} MiB ({bedarf['lauf_mib']} gemessen "
+              f"+ {bedarf['reserve_mib']} Reserve)."))
+        return aus
+    aus.update(reicht=False, satz=(
+        f"ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht "
+        f"{bedarf['verlangt_frei_mib']} MiB frei ({bedarf['lauf_mib']} MiB gemessen, "
+        f"{bedarf['beleg']}, + {bedarf['reserve_mib']} Reserve); verfuegbar sind "
+        f"{verfuegbar} MiB ({int(frei_mib)} frei"
+        + (f" + {eigen} eigene" if eigen else "")
+        + "). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer "
+          "ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm "
+          "Speicher auf der Karte."))
+    return aus
 
 
 def _gewichte_byte(wurzel) -> tuple[int, int]:
@@ -1826,6 +1966,43 @@ def _tiefe_als_rgb(bild):
     return bild.convert("RGB")
 
 
+def bildeingang_schritte(schritte, staerke) -> int:
+    """Wie viele Schritte der eigene Start bei dieser Stärke rechnet — ohne torch.
+
+    Dieselbe Rechnung wie ``get_timesteps`` der Img2img-Pipelines:
+    ``t_start = int(schritte - min(schritte * staerke, schritte))``, gerechnet wird der Rest.
+    Gemessen in auf-20261021-298 bei 20 Schritten: 0,4 → 8, 0,55 → 11, 0,7 → 14.
+    """
+    schritte = int(schritte)
+    t_start = int(max(schritte - min(schritte * float(staerke), schritte), 0))
+    return schritte - t_start
+
+
+def schrittsatz(gerechnet: int, parameter: dict) -> str:
+    """Der Satz, wenn weniger Schritte gerechnet wurden als bestellt — mit der richtigen Rechnung.
+
+    **Befund auf-20261021-298 (B2):** Der Satz rechnete auch beim Bildeingang mit ``denoise``
+    («20 x 0.6 = 12»), gerechnet wurde aber mit der Stärke des Bildeingangs (0,55 → 11). Im
+    Modus ``bild_und_tiefe`` gilt darum :func:`bildeingang_schritte`, sonst wie bisher
+    ``schritte x denoise``.
+    """
+    bestellt = parameter["schritte"]
+    if parameter.get("modus") == MODUS_BILD_UND_TIEFE and \
+            parameter.get("bildeingang_staerke") is not None:
+        staerke = float(parameter["bildeingang_staerke"])
+        rechnung = (f"Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe "
+                    f"der Staerke (hier {bestellt} Schritte, Staerke {staerke:g} → "
+                    f"{bildeingang_schritte(bestellt, staerke)})")
+    else:
+        rechnung = (f"Im Bildbearbeitungsmodus laufen nur 'schritte x denoise' Schritte "
+                    f"(hier {bestellt} x {parameter['denoise']} = "
+                    f"{int(bestellt * parameter['denoise'])})")
+    return (f"Gerechnet wurden {gerechnet} Diffusionsschritte, bestellt waren {bestellt}. Das "
+            f"ist kein Fehler, sondern die Rechnung mancher Pipelines: {rechnung}. **Der "
+            f"Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl "
+            f"vergleicht, vergleicht in Wahrheit diese hier.")
+
+
 def _eigener_start(pipeline, torch, bild, *, breite: int, hoehe: int, schritte: int,
                    staerke: float, generator) -> tuple[dict, str]:
     """Cycles-Bild als Startpunkt auf der ControlNet-Pipeline von Z-Image (Entscheid 117).
@@ -1850,7 +2027,7 @@ def _eigener_start(pipeline, torch, bild, *, breite: int, hoehe: int, schritte: 
     from diffusers.utils.torch_utils import randn_tensor                           # noqa: PLC0415
 
     voll = zmod.get_default_z_image_sigmas(int(schritte))
-    t_start = int(max(schritte - min(schritte * float(staerke), schritte), 0))
+    t_start = int(schritte) - bildeingang_schritte(schritte, staerke)
     rest = voll[t_start:]
     if not rest:
         raise RenderError(f"bildeingang_staerke {staerke}: bei {schritte} Schritten bleibt "
@@ -1875,7 +2052,8 @@ def _eigener_start(pipeline, torch, bild, *, breite: int, hoehe: int, schritte: 
     start = sigma0 * rauschen + (1.0 - sigma0) * lat
     satz = (f"BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, "
             f"Staerke {float(staerke):.2f} — {len(rest)} von {schritte} Schritten gerechnet, "
-            f"erste Rauschstufe {sigma0:.3f}. Am Geraet ungemessen (auf-20261021-298).")
+            f"erste Rauschstufe {sigma0:.3f}. Am Geraet gemessen: das Cycles-Bild kommt an "
+            f"(auf-20261021-298, rote Marke).")
     return {"latents": start, "sigmas": rest}, satz
 
 
@@ -2144,15 +2322,7 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
 
         bestellt = parameter["schritte"]
         if "callback_on_step_end" not in verworfen and gerechnet[0] != bestellt:
-            hinweise.append(
-                f"Gerechnet wurden {gerechnet[0]} Diffusionsschritte, bestellt waren "
-                f"{bestellt}. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: "
-                f"Im Bildbearbeitungsmodus laufen nur 'schritte x denoise' Schritte "
-                f"(hier {bestellt} x {parameter['denoise']} = "
-                f"{int(bestellt * parameter['denoise'])}). **Der Parametersatz nennt die "
-                f"bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, "
-                f"vergleicht in Wahrheit diese hier."
-            )
+            hinweise.append(schrittsatz(gerechnet[0], parameter))
 
         ziel = parameter["ausgabe_png"] or str(
             Path(parameter["depth_png"]).with_name(f"render_{parameter['seed']}.png")
@@ -2426,8 +2596,8 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
         hinweise.append(
             f"MESSSCHALTER bildeingang_staerke={parameter['bildeingang_staerke']}: Das "
             f"Cycles-Bild geht als Start ins Modell, die Tiefe bleibt das Steuerbild "
-            f"(Weg '{parameter['bildeingang_weg']}', Entscheid 117). Nie Vorgabe; ob das Bild "
-            f"ankommt, ist am Geraet ungemessen (auf-20261021-298).")
+            f"(Weg '{parameter['bildeingang_weg']}', Entscheid 117). Nie Vorgabe; dass das Bild "
+            f"ankommt, ist gemessen (auf-20261021-298).")
     if parameter["modus"] == MODUS_TXT2IMG and a.denoise != 0.0:
         hinweise.append(
             f"denoise={a.denoise} bleibt im Modus '{MODUS_TXT2IMG}' wirkungslos: Ohne "
@@ -3016,10 +3186,14 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
                 # Signatur soll nicht daran scheitern, dass wir hier ein Argument mehr
                 # durchreichen — und ein Test, der den Zähler beobachten will, übergibt
                 # ein `modell` und braucht den Lader gar nicht.
+                # Ebenso der Bildeingang (auf-20261021-298): Nur der echte Lader kennt ihn,
+                # und nur mit Schalter geht er mit — ohne ist der Aufruf der von vorher.
+                mehr = {}
                 if _lader is None and schrittzaehler is not None:
-                    return lader(eintrag.name, a.modell_wurzel,
-                                 schrittzaehler=schrittzaehler)
-                return lader(eintrag.name, a.modell_wurzel)
+                    mehr["schrittzaehler"] = schrittzaehler
+                if _lader is None and a.bildeingang_staerke is not None:
+                    mehr["bildeingang"] = True
+                return lader(eintrag.name, a.modell_wurzel, **mehr)
 
             if vorrat is None:
                 modell = laden()
@@ -3027,8 +3201,12 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
                 # Der Schrittzähler gehört zum Schlüssel: Er wird beim Laden in das
                 # Modell gebunden, und ein Modell mit fremdem Zähler meldete fremde
                 # Schritte.
-                modell = vorrat.hole((eintrag.name, a.modell_wurzel, lader, schrittzaehler),
-                                     laden)
+                # Der Bildeingang gehoert dazu: Ein ohne ihn geladenes Modell ist an der
+                # kleineren Zahl entschieden worden (auf-20261021-298).
+                schluessel = (eintrag.name, a.modell_wurzel, lader, schrittzaehler)
+                if a.bildeingang_staerke is not None:
+                    schluessel += ("bildeingang",)
+                modell = vorrat.hole(schluessel, laden)
                 aus_dem_vorrat = True
         antwort = modell(parameter)
     except Exception as fehler:                       # noqa: BLE001 — bewusst breit
@@ -3111,6 +3289,8 @@ __all__ = [
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
     "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",
     "Modellvorrat", "ein_modell_je_auftrag",
+    "BILDEINGANG_RESERVE_MIB", "QUELLE_BILDEINGANG", "bildeingang_bedarf",
+    "bildeingang_schritte", "pruefe_bildeingang_karte", "schrittsatz",
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "fuehrung_angewandt", "lade_modell", "modellwurzel",

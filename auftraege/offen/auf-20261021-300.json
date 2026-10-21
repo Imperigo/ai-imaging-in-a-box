@@ -1,0 +1,100 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-300",
+ "art": "qa",
+ "beschreibung": "Licht ins KI-Bild, Nachmessung zu 298 (Entscheid 117): Bildeingang mit Staerke 0.8/0.9/0.95 x morgen/abend/bedeckt mit dem Standardprompt — malt das Modell Material, haelt es die Form (geom_iou, Dachaufbau bei bedeckt), kommt das Licht noch an; Farbabgleich nur bei 0.9 als Gegenprobe; VRAM-Spitze und Abweisung bei fremdem Modell; der Bildeingang am Ergebnis der Bruecke (B1); Vergleichstafeln 960 px fuer die Wahl am Bild. Nach 299.",
+ "erstellt": "2026-10-21T03:10:00Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261021-299",
+  "bezug": "auf-20261021-298",
+  "entscheide": [
+   "117",
+   "97",
+   "97a",
+   "104",
+   "106d"
+  ],
+  "einbau": [
+   "C96",
+   "C98"
+  ],
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "prompt": "zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people",
+  "kameras": [
+   "sSE"
+  ],
+  "stimmungen": [
+   "morgen",
+   "abend",
+   "bedeckt"
+  ],
+  "staerken": [
+   0.8,
+   0.9,
+   0.95
+  ],
+  "farbabgleich_gegenprobe": {
+   "stimmung": "abend",
+   "staerke": 0.9
+  },
+  "schalter": [
+   "vis.bildeingang",
+   "vis.farbabgleich"
+  ],
+  "neue_ki_laeufe": 12,
+  "abweis_laeufe": 1,
+  "gewichte": [
+   {
+    "name": "Tongyi-MAI/Z-Image-Turbo",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 32.9,
+    "download_gb": 0,
+    "vram_mib_ohne_bildeingang": 27436,
+    "vram_mib_mit_bildeingang": 31316,
+    "vram": "gemessen zusammen mit dem ControlNet (auf-20261021-298)"
+   },
+   {
+    "name": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 3.1,
+    "download_gb": 0,
+    "vram_mib_ohne_bildeingang": null,
+    "vram_mib_mit_bildeingang": null,
+    "vram": "in den Zahlen oben enthalten"
+   }
+  ],
+  "sprachmodell_fuer_3b": {
+   "name": "qwen3:14b",
+   "lizenz": "Apache-2.0",
+   "download_gb": 0,
+   "hinweis": "das eigene Modell der Visbox (Entscheid 106d), nur laden und wieder entladen"
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit den Befunden aus auf-20261021-298 (Entscheid 117, Variante A; Fassung bleibt 0.3.12) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. REIHENFOLGE: nach 299 (299 zuerst ganz fertig rechnen und pushen), ein Lauf zur Zeit. WAS AM HEIM-PC JETZT ANDERS RECHNET: OHNE SCHALTER NICHTS — jeder Lauf ohne vis.bildeingang und ohne vis.farbabgleich ist Wort fuer Wort der von 298/299 (gleicher Parametersatz, gleiches Bild, gleiche Pruefung, gleiches Ergebnis). MIT SCHALTER fuenf Dinge: (1) SPEICHER MIT BILDEINGANG: Die Ladeentscheidung rechnet mit Bildeingang an der in 298 gemessenen Spitze (Register z-image-turbo: vram_bildeingang_spitze_mib 31316, vram_bildeingang_grundlast_mib 1241, also 30075 MiB fuer den Lauf, + 512 MiB Reserve = 30587 MiB frei verlangt; bisher 25,1 GB x 1,1 = 28273 MiB). Mit vis.bildeingang prueft der Abholer VOR dem Lauf (tools/abholen.bildeingang_karte -> render.pruefe_bildeingang_karte): liegt laut Ollama (/api/ps) irgendein Modell auf der Karte (auch eines von KosmoOrbit, kosmo-*, gpt-oss, Rollenkarte — die werden NIE entladen), oder reicht frei + eigener Prozess nicht fuer 30587 MiB, endet der Auftrag sofort auf error mit dem Satz 'ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) ...' in message/error und im render-result.json (lieferstatus fehlgeschlagen, lieferstatus_grund) — nichts geladen, nichts gerechnet, kein Ausweichen auf die Auslagerung. Dieselbe Pruefung steht in render.lade_modell(bildeingang=True) vor dem Lesen der Gewichte. Ohne vis.bildeingang wird die Karte dafuer nicht gefragt. (2) AM ERGEBNIS SICHTBAR (Befund B1): mit vis.bildeingang steht je Kamera in qa.verdict.hinweise ein Satz 'BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera ...: Staerke ..., gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), n von m Schritten ...' und im Ergebnis angewandt.bildeingang {staerke, weg, modus, kameras{<kamera>: modus_gerechnet}}; am Kameraurteil im befund.json der Vermerk 'bildeingang' mit modus_bestellt/modus_gerechnet/modus_abweichung, schritte_bestellt/schritte_gerechnet und den Saetzen des Bildmodells. Mit vis.farbabgleich ebenso ein Satz 'FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117) ...' und angewandt.farbabgleich {methode, kameras{<kamera>: {angewandt, streckung, begrenzt, geklippt_anteil, kanten_iou, geom_iou_abweichung, geom_iou_gleich}}}. Additiv, kein Vertragsfeld geaendert; qa.geometry, geometry_gates und qa_je_kamera bleiben Feld fuer Feld. (3) SCHRITTSATZ (B2): beim Bildeingang rechnet der Hinweis mit der Staerke ('20 Schritte, Staerke 0.8 -> 16'), nicht mehr mit denoise. (4) FARBABGLEICH-VERMERK (B3): geom_iou_gleich gilt bis 0,03 Abweichung (geom_iou_toleranz 0.03), dazu die Zahl geom_iou_abweichung. (5) Die Saetze des Bildmodells sagen jetzt 'gemessen (auf-20261021-298)' statt 'ungemessen'. GEWICHTE (nur Apache-2.0, wie 298; Download 0 GB, beide liegen am Heim-PC): (W1) Tongyi-MAI/Z-Image-Turbo, Apache-2.0 (Modellkarte https://huggingface.co/Tongyi-MAI/Z-Image-Turbo, license: apache-2.0, nicht gated), Ordner z-image-turbo, 32,9 GB; (W2) alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (1.0), Apache-2.0 (Modellkarte https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union), 3,1 GB. VRAM: ohne Bildeingang 27436 MiB Spitze, mit Bildeingang 31316 MiB (298, KI-Bild 1024 x 640) — bei hoeheren Staerken mehr Schritte, aber gleiche Bildgroesse; bitte die Spitze je Lauf messen. VORBEREITUNG wie 298 (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER; Werte NIE ins Repo oder in die Rueckgabe). Geometrie synthetisch wie 292-299 (tools/make_test_glb.py, Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m). Bruecke wie die Knotenansicht: samples 64, vis.backbone z-image-turbo, vis.seed 482913, vis.guete 'voll' (oder weglassen), cameras 'auto' mit cameras_auto {richtungen:['sSE']}, render.resolution [960,600], render.environment nur {preset}, style.prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people' (der Standardprompt), render.faithful weglassen (0,8). GRUNDLAGEN G-morgen, G-abend, G-bedeckt: aus 298 wiederverwenden, wenn noch in der Ablage (vis.grundlage), sonst neu (vis.skip true, 960 sSE) und sagen. 0 · KONTROLLE: (0a) abend 'voll' ohne Schalter auf G-abend: KI-Bild bildpunktgleich zu 298 abend-0-ohne ja/nein; im render-result.json kein 'bildeingang', kein 'farbabgleich', kein Satz BILDEINGANG/FARBABGLEICH ja/nein. (0b) abend mit vis.bildeingang 0.55: KI-Bild bildpunktgleich zu 298 abend-0.55-ohne ja/nein (der Speicherriegel aendert am Bild nichts); jetzt im render-result.json der Satz BILDEINGANG in qa.verdict.hinweise und angewandt.bildeingang mit modus 'bild_und_tiefe' ja/nein (Wortlaut zurueck); der Schrittsatz nennt '11' ja/nein. 1 · MATRIX STAERKE 0.8 / 0.9 / 0.95 x morgen / abend / bedeckt, je 'voll' mit vis.bildeingang und OHNE Farbabgleich (9 KI-Laeufe, auf G-morgen/G-abend/G-bedeckt): (1-S-0.8), (1-S-0.9), (1-S-0.95). Erwartet 16 / 18 / 19 von 20 Schritten. JE BILD ZURUECK: qa.geometry geom_iou mit n_soll/n_ist/n_gemeinsam; qa.ausserhalb_umriss_anteil; Satz 'NICHT WIEDERZUERKENNEN' ja/nein; Umrisstreue (trefferquote/abhebung); Kontrast Haus gegen Hintergrund im KI-Bild, nachgezaehlt wie 296/298; mittlere Abweichung je Kanal zum Cycles-Bild (wie V0 in 298, 'abstand_zum_cycles_bild'); aus dem Ergebnis der Bruecke: der Satz BILDEINGANG woertlich, angewandt.bildeingang, modus_gerechnet, schritte_gerechnet; Laufzeit (zeiten), Leistung (Spitze/Mittel W), VRAM-Spitze. SELBST am Bild (die eigentliche Frage): MALT DAS MODELL MATERIAL — Sichtbeton (Schalungsbild, Fugen, Poren, Farbe) ja/teilweise/nein, Fenster/Oeffnungen ja/nein, wirkt es wie Architekturfotografie oder wie das Cycles-Gipsmodell; HAELT DIE FORM — Haus wiederzuerkennen ja/teilweise/nein, Dachaufbau da ja/nein (bei bedeckt fehlte er in 298 schon bei 0,55 und 0,7 — bitte bei jeder Stimmung und Staerke einzeln sagen), Stufe Hauptbau/Anbau da ja/nein; KOMMT DAS LICHT NOCH AN — Sonnenseite, Schattenlage, Helligkeit wie im Cycles-Bild ja/teilweise/nein; Doppelkanten/Geisterbild ja/nein. 2 · FARBABGLEICH NUR ALS GEGENPROBE, bei EINER Staerke: (2-abend-0.9) wie 1-abend-0.9, aber mit vis.farbabgleich true. _ohne_farbabgleich/sSE.png bildpunktgleich zu 1-abend-0.9 ja/nein; Vermerk farbabgleich (streckung, begrenzt, geklippt_anteil, kanten_iou, geom_iou_vorher/nachher, geom_iou_abweichung, geom_iou_toleranz, geom_iou_gleich); der Satz FARBABGLEICH und angewandt.farbabgleich im render-result.json ja/nein; selbst: hilft er bei 0,9 (Farbe der Stimmung, wo das Modell eigenes Material malt) ja/nein, wird es flau ja/nein. 3 · SPEICHER UND ABWEISUNG: (3a) die VRAM-Spitze der Laeufe aus 1 je Staerke — liegt sie unter 32607 MiB und bei rund 31316 (wie 298) ja/nein; frei vor dem Lauf und der Satz 'Bildeingang: ... MiB verfuegbar ..., verlangt 30587 MiB' (steht im Journal unter 'Karte:') woertlich. (3b) ABWEISUNG BEI FREMDEM MODELL: ein KLEINES erlaubtes Sprachmodell von Visbox selbst in Ollama laden (qwen3:14b, Apache-2.0, schon am Heim-PC; ollama run qwen3:14b 'ok' oder Ollama-API mit keep_alive 10m), pruefen, dass /api/ps es zeigt, dann abend mit vis.bildeingang 0.9 bestellen, und zwar mit einem Laufzettel OHNE idle_window_only (mit idle_window_only entlaedt der Abholer das eigene Modell der Visbox zuerst — Owner-Auflage zu 106d, so gewollt — und die Abweisung waere nicht zu sehen; bitte sagen, ob die Bruecke den Schalter setzt): endet sofort auf error mit 'ABGEWIESEN: Bildeingang ... fremdes Modell ...' ja/nein, Satz woertlich, render-result.json mit lieferstatus fehlgeschlagen ja/nein, nichts geladen (GPU-Speicher bleibt bei Grundlast + Sprachmodell, keine Leistungsspitze) ja/nein. Danach qwen3:14b wieder entladen (keep_alive 0) und pruefen, dass /api/ps leer ist. KEIN Kosmo-Modell dafuer laden. (3c) ohne Schalter mit geladenem qwen3:14b: NICHT noetig, nicht rechnen. BILDER FUER DIE TAFEL: alle KI-Bilder 960 px breit als PNG unter auftraege/ergebnisse/auf-20261021-300-bilder/, Namen <stimmung>-<staerke>.png (z. B. abend-0.9.png), dazu abend-0.9-mit-farbabgleich.png; je Stimmung eine Vergleichstafel <stimmung>-tafel.png mit einer Zeile und fuenf Feldern: KI 0.8 | KI 0.9 | KI 0.95 | Cycles-Bild der Stimmung | KI ohne Bildeingang (aus 298 <stimmung>-0-ohne.png), 960 px je Feld oder verkleinert, wenn die Datei sonst ueber 8 MB kaeme; Beschriftung je Feld (Staerke bzw. 'Cycles' bzw. 'ohne Bildeingang'). Keine Pfade, keine Ordnerwerte in Bildern oder Namen. URTEIL (je ein Satz): Ab welcher Staerke malt das Modell Material (Sichtbeton) statt Gipsmodell? Bei welcher Staerke haelt es noch die Form (geom_iou, Dachaufbau bei bedeckt)? Kommt das Licht dort noch an? Hilft der Farbabgleich bei dieser Staerke? Deine Empfehlung fuer die Wahl am Bild: W-1 mit Staerke x, W-2, W-3 oder W-4. EINBAU — WAS DANACH IN DIE SOFTWARE KOMMT, je nach Wahl des Owners an der Tafel (wir bauen es; der Heim-PC baut in diesem Auftrag nichts ein, die Bestaetigung am Geraet ist ein eigener Folgeauftrag): (W-1) Bildeingang mit Staerke x: bildeingang_traegt=True mit Beleg auf-20261021-298/300 am Eintrag z-image-turbo, die Staerke als Registerwert, Feld am Render-Knoten in beiden Programmen (Vertragsfeld beim Integrator, Knotenteil im Vis-Werkzeug), Vorgabe aus; der Speicherriegel aus (1) bleibt. (W-2) nur Farbabgleich: Schalter am Render-Knoten, Vorgabe aus. (W-3) so lassen: Stimmung bleibt der Satz im Prompt, beide Schalter bleiben Messschalter. (W-4) beide Bilder liefern: das Cycles-Bild als zweites Bild am Render-Knoten — der Vertrag traegt es heute schon (render.passes ['schoenbild'] liefert <kamera>__schoenbild.png unter ebenen); neu waere nur der Knotenteil, der es bestellt und neben dem KI-Bild zeigt. In jedem Fall: Lexikon, Einbau-Stand C98 abhaken, Zentrale-Meldung mit Beleg. NICHT: keine Vorgabe aendern (kein Registerwert, kein Schalter dauerhaft, keine Umgebungsvariable dauerhaft); nichts laden oder herunterladen, das nicht oben unter W1/W2 steht oder in 3b genannt ist (Download 0 GB — NICHT Qwen-Image-2512, nicht Union 2.1); kein FLUX.1-dev, kein FLUX.2-dev, kein FLUX.1 Redux, kein SDXL, kein Juggernaut, kein IP-Adapter; diffusers (0.41.0.dev0) und die anderen Bibliotheken in .venv-render nicht aufruesten; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; in 3b nur qwen3:14b laden und danach entladen; den echten Textur- oder Himmelsordner und die Mappe des Dienstes nicht veraendern; Dateien ins Repo nur Ergebnis und Bilder (keine HDRI, Texturen, Gewichte, Pfade). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und unter 8 GB belegt, ausser in 3b), Leistungsgrenze 400 W gesetzt (nvidia-smi -pl 400) — im Zweifel nicht starten.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, Leistungsgrenze gesetzt ja/nein, welche Grundlagen wiederverwendet und welche neu, ollama ps vor jedem Lauf.",
+  "0: 0a bildpunktgleich zu 298 abend-0-ohne ja/nein, nichts Neues im Ergebnis ja/nein; 0b bildpunktgleich zu 298 abend-0.55-ohne ja/nein, Satz BILDEINGANG und angewandt.bildeingang im render-result.json (woertlich), Schrittsatz nennt 11 ja/nein.",
+  "1: je Bild (9 Laeufe) geom_iou mit Zaehlung, ausserhalb_umriss_anteil, Satz ja/nein, Umrisstreue, Kontrast KI/Cycles, Abstand zum Cycles-Bild je Kanal, Satz BILDEINGANG woertlich, angewandt.bildeingang, schritte_gerechnet, Laufzeit, Leistung, VRAM; selbst: Material (Sichtbeton) ja/teilweise/nein, Fenster ja/nein, Foto oder Gipsmodell, Haus ja/teilweise/nein, Dachaufbau ja/nein, Stufe Hauptbau/Anbau ja/nein, Licht ja/teilweise/nein, Doppelkanten ja/nein.",
+  "2: abend 0.9 mit Farbabgleich: Original bildpunktgleich ja/nein, Vermerk mit geom_iou_abweichung/toleranz/gleich, Satz FARBABGLEICH und angewandt.farbabgleich ja/nein; selbst: hilft er ja/nein, flau ja/nein.",
+  "3: VRAM-Spitze je Staerke und frei vor dem Lauf, Satz 'Bildeingang: ... verlangt 30587 MiB' woertlich; 3b Abweisung bei geladenem qwen3:14b: Satz woertlich, error ja/nein, lieferstatus fehlgeschlagen ja/nein, nichts geladen ja/nein, qwen3:14b danach entladen ja/nein.",
+  "Bilder: auftraege/ergebnisse/auf-20261021-300-bilder/ mit den KI-Bildern 960 px und je Stimmung eine Tafel (KI 0.8 | 0.9 | 0.95 | Cycles | ohne Bildeingang).",
+  "Urteil in fuenf Saetzen: ab welcher Staerke Material; bis wann die Form haelt (Dachaufbau bedeckt); kommt das Licht noch an; hilft der Farbabgleich; Empfehlung W-1 mit Staerke x / W-2 / W-3 / W-4."
+ ],
+ "rang": 87
+}

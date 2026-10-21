@@ -332,9 +332,18 @@ def test_mit_farbabgleich_das_original_bleibt_und_die_pruefung_misst_dasselbe(tm
         farben, b, h = bildlesen.lies_png_farben(bild)
         assert (b, h) == (B, H)
         assert umriss.bildkanten(_lum(farben), B, H) == umriss.bildkanten(_lum(KI), B, H)
-    # Die Pruefung misst das KI-Bild wie ohne Schalter: dasselbe Urteil im Vertrag.
-    assert ohne["ergebnis"]["qa"] == mit["ergebnis"]["qa"]
-    assert "farbabgleich" not in json.dumps(mit["ergebnis"])
+    # Die Pruefung misst das KI-Bild wie ohne Schalter: dasselbe Urteil im Vertrag — bis auf
+    # den Satz in `verdict.hinweise` und `angewandt.farbabgleich` (auf-20261021-298, B1).
+    qa_ohne, qa_mit = json.loads(json.dumps(ohne["ergebnis"]["qa"])), json.loads(
+        json.dumps(mit["ergebnis"]["qa"]))
+    saetze = qa_mit["verdict"].pop("hinweise", [])
+    assert qa_ohne["verdict"].get("hinweise", []) == [
+        h for h in saetze if not h.startswith(kosmo_szene.SATZ_FARBABGLEICH)]
+    assert qa_ohne == qa_mit
+    assert any(h.startswith(kosmo_szene.SATZ_FARBABGLEICH) for h in saetze)
+    assert "farbabgleich" not in json.dumps(ohne["ergebnis"])
+    assert set(mit["ergebnis"]["angewandt"]["farbabgleich"]["kameras"]) == {
+        k["kamera"] for k in kameras}
 
 
 def test_der_bildeingang_erreicht_das_bildmodell(tmp_path):

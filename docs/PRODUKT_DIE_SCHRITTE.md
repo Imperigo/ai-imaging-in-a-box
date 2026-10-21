@@ -1784,6 +1784,25 @@ beurteilt erst alle Bilder von Auge. Offen und ohne Fix notiert: Trotz «no peop
 ein Gegentext («was nicht zu sehen sein soll») wirkt bei unserem schnellen Modell nicht, weil es ohne die Rechnung
 arbeitet, von der ein Gegentext abgezogen würde. Und beim Gipsmodell erfindet die KI den Hintergrund selbst.
 
+**Licht ins KI-Bild: die erste Messung und was danach gebaut ist (21.10.2026).** Die Messung zu Entscheid 117 zeigt:
+Das gerenderte Bild kommt über den eigenen Start bei der KI an. Eine rote Marke, die zur Probe hineingemalt war, stand
+danach im KI-Bild. Schon ab einer Stärke von 0,4 hält das Haus seine Form, und Sonnenseite, Schatten und Helligkeit der
+Stimmung kommen voll an. Ehrlich gesagt, und das ist die eigentliche Nachricht: Das KI-Bild ist dann fast genau das
+gerenderte Gipsmodell. «Sichtbeton» aus der Beschreibung kommt nicht an, und bei bedecktem Himmel fehlt ab 0,55 der
+Dachaufbau. Der Farbabgleich allein bringt den Farbton der Stimmung, aber kein Licht, und das Bild wird blass. Das liegt
+nicht an einer Grenze im Abgleich, sondern daran, dass das weisse Gipsmodell selbst wenig Kontrast hat. Bis zur
+nächsten Messung ist die Empfehlung darum, beide Bilder nebeneinander zu liefern. Das geht heute schon: Das gerenderte
+Bild lässt sich als eigene Ebene mitbestellen, es fehlt nur die Anzeige am Render-Knoten. Gebaut wurden vier Dinge aus
+der Messung. *Speicher:* Mit Bildeingang braucht die KI auf der Grafikkarte 3,8 GB mehr als ohne, und die Karte ist dann
+fast voll. Die Prüfung vor dem Laden rechnet jetzt mit dieser gemessenen Zahl. Liegt ein anderes Modell auf der Karte
+oder reicht der Platz nicht, wird der Auftrag mit einem klaren Satz abgewiesen, statt zu laden und mitten im Rechnen
+abzubrechen. *Sichtbar:* Am Ergebnis steht jetzt, dass mit Bildeingang oder Farbabgleich gerechnet wurde und wie, je
+Kamera ein Satz. Bisher war das nur durch Nachrechnen zu sehen. *Kleinigkeiten:* Der Satz zur Schrittzahl rechnete beim
+Bildeingang mit dem falschen Wert. Und der Vermerk, ob der Farbabgleich die Formmessung verändert, sagte immer «nein,
+nicht gleich», weil er aufs letzte Komma verglich; jetzt gilt eine Abweichung bis 0,03 als gleich, und die Zahl steht
+daneben. Die nächste Messung rechnet höhere Stärken (0,8, 0,9 und 0,95). Dort darf die KI mehr selbst malen, und es
+zeigt sich, ob sie dann Material malt und die Form trotzdem hält.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

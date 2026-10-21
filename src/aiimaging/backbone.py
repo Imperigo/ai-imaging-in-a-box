@@ -477,6 +477,21 @@ class Backbone:
     #: Woher der Weg stammt (gelesene Quelle, Auftrag) — Pflicht neben :attr:`bildeingang_weg`.
     bildeingang_weg_beleg: str | None = None
 
+    #: Die **gemessene** Spitze der ganzen Karte (``nvidia-smi``, MiB) während eines Laufs
+    #: **mit** Bildeingang, und die Grundlast derselben Karte vor dem Lauf — beides am selben
+    #: Gerät, im selben Auftrag. ``None`` heisst nicht gemessen; dann weist
+    #: ``render.pruefe_bildeingang_karte`` keinen Lauf ab und sagt, dass es nicht rechnen kann.
+    #:
+    #: **BEFUND 21.10.2026 (auf-20261021-298, B3):** Der eigene Start kodiert das Cycles-Bild mit
+    #: dem VAE und hält dessen Zwischenstufen — **+3880 MiB** (27 436 → 31 316 MiB Spitze), nicht
+    #: «unter 1 GB» wie geschätzt. Die Ladeentscheidung rechnete weiter mit ``vram_gb`` (25,1 GB
+    #: x 1,1 = 28 273 MiB) und hätte bei einem fremden Modell auf der Karte geladen, obwohl der
+    #: Lauf danach am Speicher gescheitert wäre. Darum ein eigenes Feld: ``vram_gb`` beantwortet
+    #: «passt das Modell?», dieses «passt der Lauf mit Bildeingang?».
+    vram_bildeingang_spitze_mib: int | None = None
+    vram_bildeingang_grundlast_mib: int | None = None
+    vram_bildeingang_beleg: str | None = None
+
     #: Wie viel Grafikspeicher (MiB) vor dem Laden mindestens frei sein muss, damit der
     #: sparsamste Weg (Stufe 3) durchläuft — **gemessen**, mit Beleg in
     #: :attr:`mindest_frei_beleg`. ``None`` heisst nicht gemessen; dann gilt die
@@ -877,6 +892,20 @@ def _eintrag(backbone: Backbone) -> None:
             f"Depth-ControlNet der Familie, fuer die der Weg gebaut ist.")
     if backbone.bildeingang_weg is None and backbone.bildeingang_weg_beleg is not None:
         raise BackboneError(f"{backbone.name}: bildeingang_weg_beleg ohne bildeingang_weg.")
+    # Der Speicher des Bildeingangs (auf-20261021-298): beide Zahlen zusammen, nur mit Beleg
+    # einer Auftragskennung, nur an einem Eintrag mit vorbereitetem Weg, und die Spitze
+    # grösser als die Grundlast — sonst ist es keine Messung, sondern eine Behauptung.
+    spitze, grundlast = (backbone.vram_bildeingang_spitze_mib,
+                         backbone.vram_bildeingang_grundlast_mib)
+    if (spitze is None) != (grundlast is None) or (spitze is None) != (
+            not backbone.vram_bildeingang_beleg) or (spitze is not None and (
+            backbone.bildeingang_weg is None or int(spitze) <= int(grundlast)
+            or not re.search(r"auf-\d{8}-\d+", str(backbone.vram_bildeingang_beleg)))):
+        raise BackboneError(
+            f"{backbone.name}: vram_bildeingang_spitze_mib={spitze!r}, "
+            f"vram_bildeingang_grundlast_mib={grundlast!r} und vram_bildeingang_beleg="
+            f"{backbone.vram_bildeingang_beleg!r} passen nicht zusammen — beide Zahlen, eine "
+            f"Auftragskennung, ein vorbereiteter Weg, Spitze ueber der Grundlast.")
 
     # Derselbe Riegel für die Führung (Befund 23.09.2026, siehe `fuehrung_regler`): Ein
     # Regler ohne Wert oder ohne Beleg ist eine Vermutung über eine fremde Signatur, und
@@ -1020,6 +1049,14 @@ _eintrag(Backbone(
                            "nimmt latents und sigmas; ZImageImg2ImgPipeline zeigt den Start "
                            "(VAE, scale_noise, Rest des Fahrplans). Zu messen in "
                            "auf-20261021-298."),
+    # GEMESSEN (auf-20261021-298, HomeStation, 1024 x 640 im KI-Schritt, 20 Schritte): ohne
+    # Bildeingang 27 436 MiB Spitze, mit 31 316 MiB in allen zehn Laeufen (0,4/0,55/0,7 und
+    # V0b/V0c), Karte 32 607 MiB, vor jedem Lauf 1241 MiB belegt. Der Lauf selbst braucht also
+    # 30 075 MiB; frei bleiben rund 1,3 GB. Groessere KI-Bilder sind nicht gemessen.
+    vram_bildeingang_spitze_mib=31316,
+    vram_bildeingang_grundlast_mib=1241,
+    vram_bildeingang_beleg=("auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang "
+                            "(27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640"),
     bildeingang_grund=("ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die "
                        "Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild "
                        "dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und "

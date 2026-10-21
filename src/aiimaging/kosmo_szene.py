@@ -2695,8 +2695,10 @@ DURCHGEREICHT = {
     "prompt_zusaetze": "lies_szene → 'prompt'; befund.json und render-result 'angewandt'",
     # Seit 21.10.2026 (Entscheid 117): zwei Messschalter, nicht im Vertrag.
     "farbabgleich": ("abholer.farbabgleich_der_kamera → das gelieferte KI-Bild; Vermerk am "
-                     "Kameraurteil in befund.json (nicht im render-result)"),
-    "bildeingang": "render.RenderAuftrag(bildeingang_staerke=…)",
+                     "Kameraurteil in befund.json; im render-result Satz in "
+                     "'qa.verdict.hinweise' und 'angewandt.farbabgleich' (auf-20261021-298 B1)"),
+    "bildeingang": ("render.RenderAuftrag(bildeingang_staerke=…); im render-result Satz in "
+                    "'qa.verdict.hinweise' und 'angewandt.bildeingang' (auf-20261021-298 B1)"),
     "umgebung": ("abholer.verarbeiter → GRUNDLAGE_MUSS_PASSEN und render-result "
                  "'angewandt.environment'"),
     "umgebung_datei": ("abholer.verarbeiter → seams.glb_zu_multipass(umgebung_hdr=…) → "
@@ -3193,6 +3195,64 @@ def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> N
             f"{'; und '.join(teile)}. Masse aus Farbe und Kanten "
             f"(Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses "
             f"Bild nicht.")
+
+
+#: Die Schluessel der beiden Messschalter am Kameraurteil (Entscheid 117) — dieselben Woerter
+#: wie in ``abholer`` (``URTEIL_BILDEINGANG``, ``URTEIL_FARBABGLEICH``).
+URTEIL_BILDEINGANG = "bildeingang"
+URTEIL_FARBABGLEICH = "farbabgleich"
+#: Der Anfang der beiden Saetze in ``verdict.hinweise`` — Proben und Auswerter suchen danach.
+SATZ_BILDEINGANG = "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117)"
+SATZ_FARBABGLEICH = "FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117)"
+
+
+def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """Je Kamera ein Satz, DASS ein Messschalter gerechnet hat — und was (auf-20261021-298, B1).
+
+    **Befund 298:** Ueber die Bruecke war nicht zu sehen, dass ``vis.bildeingang`` gerechnet
+    hatte: kein ``modus``, keiner der Saetze des Bildmodells. Jetzt steht hier je Kamera, was
+    gerechnet wurde (Modus, Staerke, Schritte) bzw. dass das gelieferte Bild farbabgeglichen
+    ist. Eine Auskunft, kein Vorbehalt — ``qa.geometry`` und ``geometry_gates`` bleiben, wie
+    sie waren. Ohne Schalter kein Satz.
+    """
+    urteile = []
+    for eintrag in je_kamera or ():
+        if isinstance(eintrag, dict):
+            u = eintrag.get("geometrie_urteil") if isinstance(
+                eintrag.get("geometrie_urteil"), dict) else eintrag
+            urteile.append((eintrag.get("kamera") or u.get("kamera"), u))
+    if not urteile and isinstance(geometrie_urteil, dict):
+        urteile.append((geometrie_urteil.get("kamera"), geometrie_urteil))
+    for kamera, u in urteile:
+        bi = u.get(URTEIL_BILDEINGANG)
+        if isinstance(bi, dict):
+            gerechnet = bi.get("modus_gerechnet")
+            schritte = (f", {bi['schritte_gerechnet']} von {bi['schritte_bestellt']} Schritten"
+                        if isinstance(bi.get("schritte_gerechnet"), int)
+                        and isinstance(bi.get("schritte_bestellt"), int) else "")
+            if bi.get("modus_abweichung") is True:
+                kern = (f"bestellt '{bi.get('modus_bestellt')}', GERECHNET '{gerechnet}' — das "
+                        f"Cycles-Bild ist NICHT angekommen")
+            elif gerechnet is None:
+                kern = ("das Bildmodell hat nicht gemeldet, was es gerechnet hat — UNBEKANNT, "
+                        "ob das Cycles-Bild ankam")
+            else:
+                kern = (f"gerechnet '{gerechnet}' (Weg '{bi.get('weg')}'){schritte} — das "
+                        f"Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild")
+            hinweise.append(f"{SATZ_BILDEINGANG}, Kamera {kamera!r}: Staerke "
+                            f"{bi.get('staerke')}, {kern}. Nie Vorgabe.")
+        fa = u.get(URTEIL_FARBABGLEICH)
+        if isinstance(fa, dict):
+            if fa.get("angewandt") is True:
+                hinweise.append(
+                    f"{SATZ_FARBABGLEICH}, Kamera {kamera!r}: Geliefert wird das an das "
+                    f"Cycles-Bild angeglichene KI-Bild (Streckung {fa.get('streckung')}); "
+                    f"geprueft wurde das Bild ohne Abgleich, kein Bildpunkt verschoben "
+                    f"(Kanten gleich zu {fa.get('kanten_iou')}). Nie Vorgabe.")
+            else:
+                hinweise.append(
+                    f"{SATZ_FARBABGLEICH}, Kamera {kamera!r}: NICHT angewandt — "
+                    f"{fa.get('grund') or 'ohne Grund'}. Geliefert wird das KI-Bild, wie es war.")
 
 
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
@@ -4592,6 +4652,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _ausserhalb_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # DAS HAUS NICHT WIEDERZUERKENNEN (auf-20261020-295, N2) — nur ein Satz.
         _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise)
+        # DIE MESSSCHALTER (auf-20261021-298, B1) — nur mit Schalter, je Kamera ein Satz.
+        _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise)
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 

@@ -180,7 +180,7 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, quelle=bruecke, _uhr=None) 
 def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                darf_rechnen=None, wache_bauen=None,
                beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
-               quelle=bruecke, speicher_frei=None) -> dict:
+               quelle=bruecke, speicher_frei=None, bildeingang_karte=None) -> dict:
     """Einen einzelnen Auftrag bearbeiten — mit allen Entscheidungen davor.
 
     Args:
@@ -207,6 +207,12 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             mit Grund am Laufzettel (B161/B1). ``None`` als Antwort heisst «nicht
             anwendbar» (etwa: die eigenen Gewichte liegen schon auf der Karte);
             ``None`` als Parameter heisst: keine Prüfung, wie bis zum 24.09.2026.
+        bildeingang_karte: ``() -> {frei_mib, eigen_mib, fremde_modelle}`` — die Lage der
+            Karte für einen Auftrag mit dem Messschalter ``vis.bildeingang``
+            (auf-20261021-298). Liegt ein fremdes Modell auf der Karte oder reicht der
+            Speicher nicht für den gemessenen Bedarf (:func:`aiimaging.render.pruefe_bildeingang_karte`),
+            endet der Auftrag mit Satz auf ``error`` — nicht laden, nicht auslagern. ``None``
+            heisst: keine Prüfung, wie bis zum 21.10.2026.
         quelle: **Woher der Auftrag kommt.** Vorgabe :mod:`aiimaging.bruecke` — die
             fremde Warteschlange. Die zweite Ablage ist :mod:`aiimaging.eigene_quelle`,
             unser eigenes Auftragsverzeichnis, in das der MCP-Einlass schreibt.
@@ -324,6 +330,20 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         antwort["grund"] = warum
         _grund_vermerken(quelle, ordner, antwort)
         return antwort
+
+    # MIT BILDEINGANG: KEIN FREMDES MODELL, GENUG FUER DEN GEMESSENEN BEDARF (auf-20261021-298).
+    # Abgewiesen mit Satz und nicht in die Warteschlange gelegt: Modelle von KosmoOrbit entlaedt
+    # Visbox nie, ein Warten darauf koennte unbegrenzt dauern, und ein Messlauf soll einen
+    # Endzustand haben.
+    lage_bi = _bildeingang_lage(auftrag.get("szene") or {}, bildeingang_karte)
+    if lage_bi is not None and lage_bi["reicht"] is False:
+        antwort["grund"] = lage_bi["satz"]
+        antwort["karte"] = lage_bi["satz"]
+        _abweisung_ablegen(quelle, ordner, auftrag, lage_bi["satz"], antwort)
+        _endgueltig_abweisen(quelle, ordner, antwort)
+        return antwort
+    if lage_bi is not None and lage_bi.get("satz"):
+        antwort["karte"] = " ".join(t for t in (antwort.get("karte"), lage_bi["satz"]) if t)
 
     # Ein Auftrag, der jetzt LÄUFT, darf die Begründung von vorhin nicht mehr tragen.
     # Ohne diese Zeile bliebe „die Karte war nicht frei" an einem Auftrag stehen, der
@@ -2149,6 +2169,25 @@ def _engine_des_auftrags(urteile) -> dict | None:
     return gesehen[0] if len(namen) == 1 else None
 
 
+def _bildeingang_lage(szene: dict, bildeingang_karte) -> dict | None:
+    """Die Lage der Karte für einen Auftrag mit ``vis.bildeingang`` — oder ``None``.
+
+    ``None``, wenn der Schalter nicht gesetzt ist oder keine Auskunft übergeben wurde. Eine
+    Auskunft, die selbst scheitert, gilt als «unbekannt» (``reicht: None``), nicht als «frei».
+    """
+    if szene.get("bildeingang") is None or bildeingang_karte is None:
+        return None
+    from . import render as _render  # noqa: PLC0415
+    try:
+        karte = bildeingang_karte() or {}
+    except Exception as fehler:                         # noqa: BLE001 — Auskunft, kein Riegel
+        return {"reicht": None, "satz": (f"Bildeingang: Lage der Karte unbekannt "
+                                         f"({type(fehler).__name__}) — nicht geprueft.")}
+    return _render.pruefe_bildeingang_karte(
+        gerechnetes_backbone(szene), frei_mib=karte.get("frei_mib"),
+        eigen_mib=karte.get("eigen_mib") or 0, fremde_modelle=karte.get("fremde_modelle"))
+
+
 def _speicher_reicht(speicher_frei, backbone_name=None) -> tuple[bool, str]:
     """Reicht der freie Grafikspeicher, um überhaupt zu laden? — B161/B1.
 
@@ -2179,7 +2218,8 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
               darf_rechnen=None, hoechstens: int | None = None,
               waisenfrist_s: float = WAISENFRIST_S, wache_bauen=None,
               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
-              quelle=bruecke, speicher_frei=None, _uhr=None) -> dict:
+              quelle=bruecke, speicher_frei=None, bildeingang_karte=None,
+              _uhr=None) -> dict:
     """**Ein** Durchgang über den Ablageort. Kein Dauerlauf, keine Schleife, kein Schlaf.
 
     Warum kein Dauerlauf: Wer wie oft nachsieht, ist eine Betriebsfrage — Cron, Dienst,
@@ -2242,7 +2282,8 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
                              fremde_freigabe_gilt=fremde_freigabe_gilt,
                              darf_rechnen=darf_rechnen, wache_bauen=wache_bauen,
                              beobachtungs_takt_s=beobachtungs_takt_s,
-                             quelle=quelle, speicher_frei=speicher_frei)
+                             quelle=quelle, speicher_frei=speicher_frei,
+                             bildeingang_karte=bildeingang_karte)
         ergebnisse.append(antwort)
         # Nur ein Lauf zaehlt gegen `hoechstens` — siehe Docstring (auf-20261001-230).
         if antwort["tat"] != TAT_LIEGENGELASSEN:
@@ -2437,7 +2478,23 @@ KI_RASTER_ORDNER = "_ki_raster"
 
 #: Der Schluessel des Farbabgleich-Vermerks am Kameraurteil (Entscheid 117) — im Befund, NICHT
 #: im Vertrag (``kosmo_szene.nur_vertragsfelder`` streicht ihn wie jeden fremden Schluessel).
-URTEIL_FARBABGLEICH = "farbabgleich"
+URTEIL_FARBABGLEICH = _kosmo_szene.URTEIL_FARBABGLEICH
+
+#: Der Schluessel des Bildeingang-Vermerks am Kameraurteil (Entscheid 117, auf-20261021-298 B1):
+#: was das Bildmodell mit dem Schalter ``vis.bildeingang`` wirklich gerechnet hat. Von hier
+#: erreicht er ``verdict.hinweise`` und ``angewandt.bildeingang`` im Ergebnis.
+URTEIL_BILDEINGANG = _kosmo_szene.URTEIL_BILDEINGANG
+
+#: Bis zu welcher Abweichung ``geom_iou`` vor und nach dem Farbabgleich als **gleich** gilt.
+#:
+#: **Befund auf-20261021-298 (B3):** ``geom_iou_gleich`` stand in allen zwölf Bildern auf
+#: ``false``, obwohl die Abweichung 0,0001 bis 0,023 betrug — verglichen wurde auf 1e-9.
+#: Kein Bildpunkt wandert (``kanten_iou`` 0,97–0,99); ``geom_iou`` misst aber der
+#: Tiefenschaetzer **neu am Bild**, und der antwortet auch auf Farbe. 0,03 liegt knapp ueber
+#: der groessten gemessenen Abweichung und unter jedem Abstand, an dem ein Urteil kippt
+#: (die Satzschwelle «nicht wiederzuerkennen» liegt bei geom_iou 0,1). **Gesetzt an einer
+#: Messung, nicht selbst gemessen** — die Zahl steht daneben (``geom_iou_abweichung``).
+GEOM_IOU_TOLERANZ_FARBABGLEICH = 0.03
 
 
 def farbabgleich_der_kamera(bild_png, schoenbild_png, ordner, *, urteil_vorher=None,
@@ -2474,9 +2531,80 @@ def farbabgleich_der_kamera(bild_png, schoenbild_png, ordner, *, urteil_vorher=N
             vermerk["nachmessung_grund"] = f"{type(fehler).__name__}: {fehler}"
         vermerk["geom_iou_vorher"] = vorher
         vermerk["geom_iou_nachher"] = nachher
-        vermerk["geom_iou_gleich"] = (None if vorher is None or nachher is None
-                                      else abs(float(vorher) - float(nachher)) < 1e-9)
+        abweichung = (None if vorher is None or nachher is None
+                      else round(abs(float(vorher) - float(nachher)), 6))
+        vermerk["geom_iou_abweichung"] = abweichung
+        vermerk["geom_iou_toleranz"] = GEOM_IOU_TOLERANZ_FARBABGLEICH
+        vermerk["geom_iou_gleich"] = (None if abweichung is None
+                                      else abweichung <= GEOM_IOU_TOLERANZ_FARBABGLEICH)
     return vermerk
+
+
+#: Welche Hinweise des Bildmodells zum Bildeingang gehoeren — am Anfang erkannt.
+_BILDEINGANG_SAETZE = ("BILD UND TIEFE", "MESSSCHALTER bildeingang", "BESTELLT WAR")
+
+
+def bildeingang_vermerk(render_ergebnis, staerke) -> dict:
+    """Was der Messschalter ``vis.bildeingang`` an DIESER Kamera gerechnet hat (auf-298 B1).
+
+    ``{staerke, weg, modus_bestellt, modus_gerechnet, modus_abweichung, schritte_bestellt,
+    schritte_gerechnet, hinweise}`` — aus dem Ergebnis des Bildmodells. **Befund 298:** Ueber
+    die Bruecke stand weder ``modus`` noch einer der beiden Saetze im Ergebnis; ob der Schalter
+    gerechnet hatte, war nur ueber eine bitgleiche Nachrechnung zu sehen. ``None`` in einem
+    Feld heisst: das Bildmodell hat es nicht gemeldet.
+    """
+    erg = render_ergebnis if isinstance(render_ergebnis, dict) else {}
+    parameter = erg.get("parameter") or {}
+    return {
+        "staerke": float(staerke) if isinstance(staerke, (int, float)) else staerke,
+        "weg": parameter.get("bildeingang_weg"),
+        "modus_bestellt": erg.get("modus_bestellt"),
+        "modus_gerechnet": erg.get("modus_gerechnet"),
+        "modus_abweichung": erg.get("modus_abweichung"),
+        "schritte_bestellt": parameter.get("schritte"),
+        "schritte_gerechnet": erg.get("schritte_gerechnet"),
+        "hinweise": [h for h in (erg.get("hinweise") or ())
+                     if isinstance(h, str) and h.startswith(_BILDEINGANG_SAETZE)],
+    }
+
+
+#: Was aus dem Farbabgleich-Vermerk einer Kamera ins Ergebnis geht (``angewandt.farbabgleich``)
+#: — die Zahlen, an denen man sieht, DASS und WIE er gerechnet hat; die Kennwerte bleiben im
+#: Befund.
+_FARBABGLEICH_IM_ERGEBNIS = ("angewandt", "grund", "streckung", "begrenzt", "geklippt_anteil",
+                             "kanten_iou", "geom_iou_abweichung", "geom_iou_gleich")
+
+
+def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
+    """``angewandt`` und dazu die Messschalter aus Entscheid 117, wenn sie gerechnet haben.
+
+    **Additiv, kein Vertragsfeld** (auf-20261021-298, B1): ``angewandt`` ist das Feld, in dem
+    der Heim-PC nennt, womit er gerechnet hat; der Vertrag gibt dort keine Form vor.
+
+    * ``bildeingang {staerke, weg, modus, kameras {<kamera>: modus_gerechnet}}`` — ``modus``
+      ist der gerechnete Modus, wenn alle Kameras gleich rechneten, sonst ``None``.
+    * ``farbabgleich {methode, kameras {<kamera>: {angewandt, streckung, …}}}``.
+
+    Ohne Schalter bleibt ``angewandt`` Wort fuer Wort, wie es war.
+    """
+    aus = dict(angewandt or {})
+    bild = {str(u.get("kamera")): u[URTEIL_BILDEINGANG] for u in (urteile or ())
+            if isinstance(u, dict) and isinstance(u.get(URTEIL_BILDEINGANG), dict)}
+    if bild:
+        erster = next(iter(bild.values()))
+        modi = {v.get("modus_gerechnet") for v in bild.values()}
+        aus["bildeingang"] = {"staerke": erster.get("staerke"), "weg": erster.get("weg"),
+                              "modus": next(iter(modi)) if len(modi) == 1 else None,
+                              "kameras": {k: v.get("modus_gerechnet") for k, v in bild.items()}}
+    farbe = {str(u.get("kamera")): u[URTEIL_FARBABGLEICH] for u in (urteile or ())
+             if isinstance(u, dict) and isinstance(u.get(URTEIL_FARBABGLEICH), dict)}
+    if farbe:
+        from . import farbabgleich as _fa  # noqa: PLC0415
+        aus["farbabgleich"] = {
+            "methode": _fa.METHODE,
+            "kameras": {k: {f: v[f] for f in _FARBABGLEICH_IM_ERGEBNIS if f in v}
+                        for k, v in farbe.items()}}
+    return aus
 
 
 def ki_mindest_lange_seite(backbone_name) -> int | None:
@@ -4208,6 +4336,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if farbvermerk is not None:
                 # Nur mit Schalter — ohne ihn traegt das Urteil keinen neuen Schluessel.
                 urteil[URTEIL_FARBABGLEICH] = farbvermerk
+            if szene.get("bildeingang") is not None:
+                # Ebenso der Bildeingang (auf-20261021-298, B1): was gerechnet wurde, aus dem
+                # Ergebnis des Bildmodells, nicht aus der Bestellung.
+                urteil[URTEIL_BILDEINGANG] = bildeingang_vermerk(ergebnis,
+                                                                 szene.get("bildeingang"))
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -4262,8 +4395,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             "grundlage": grundlage,
             # Entscheid 104: nur, wenn bestellt — sonst fehlt das Feld im Ergebnis.
             "guete": szene.get("guete"),
-            # Was fuer Stimmung, Kamera und Oberflaeche gerechnet wurde (20.10.2026).
-            "angewandt": angewandt_der_szene(szene, drehung_je_kamera=drehungen),
+            # Was fuer Stimmung, Kamera und Oberflaeche gerechnet wurde (20.10.2026) — seit
+            # auf-20261021-298 (B1) auch die Messschalter, wenn sie gesetzt waren.
+            "angewandt": angewandt_mit_messschaltern(
+                angewandt_der_szene(szene, drehung_je_kamera=drehungen), urteile),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
@@ -5935,7 +6070,9 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         # nicht lief: Gerechnet ist sie trotzdem, und `als_ergebnis` sammelt die Saetze von
         # hier (E67 / auf-20261001-230). Kein Vertragsfeld — `kosmo_szene._qa_je_kamera`
         # liest es nicht hinaus.
-        for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG):
+        for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG,
+                           # Die Messschalter (auf-20261021-298, B1) — ebenso kein Vertragsfeld.
+                           _kosmo_szene.URTEIL_BILDEINGANG, _kosmo_szene.URTEIL_FARBABGLEICH):
             if k.get(schluessel):
                 satz[schluessel] = k[schluessel]
         aus.append(satz)

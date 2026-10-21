@@ -8142,7 +8142,9 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Entschieden:** Entscheide 107, 109–113 für die Knoten; Licht ins KI-Bild nach Entscheid 117 (21.10.2026): erst
 > messen, dann am Bild wählen — `vis.farbabgleich` und `vis.bildeingang` als Messschalter, Vorgabe aus.
 > **Gemessen:** Stimmung, Kamera und Material am Heim-PC in 292–296; das KI-Bild liest nur die Tiefe (296, seit auf-123).
-> **Offen:** 298 und 299 (local), die Wahl am Bild (owner), Vertragsfelder (integrator), Knotenteile (beide Programme).
+> **Gemessen (298):** Das Cycles-Bild kommt über den eigenen Start an, Haus und Licht halten ab 0,4 — aber es bleibt das
+> Gipsmodell; der Farbabgleich allein macht blass. Befunde behoben (§170, C98).
+> **Offen:** 299 und 300 (local, 300 nach 299), die Wahl am Bild (owner), Vertragsfelder (integrator), Knotenteile (beide Programme).
 
 - [ ] Heim-PC-Teil
   - [x] H1 Stimmung: `render.environment` mit Himmelsbild, Gipsmodell «weiss», Abweisung mit Satz im Ergebnis, «Himmelsbilder n/8» — gebaut, am Gerät unbestätigt (§153, C79)
@@ -8167,8 +8169,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Hintergrund der Stimmung weiss (Fels-/Höhlenwand statt Studio) — Prompt-Thema, notiert ohne Fix (§169)
   - [x] Licht ins KI-Bild (Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`): Owner-Frage entschieden — Entscheid 117, Variante A «erst messen, dann am Bild entscheiden» (Owner über LW, 21.10.2026)
   - [x] Messschalter `vis.farbabgleich` (Farbabgleich an das Cycles-Bild, kein Bildpunkt wandert) und `vis.bildeingang` (Cycles-Bild zusätzlich zur Tiefe über einen eigenen Start auf `z-image-turbo`), beide Vorgabe aus, kein Vertragsfeld — gebaut, am Gerät ungemessen (§168, C96)
-  - [ ] Messung am Heim-PC: auf-20261021-298 (local) — kommt das Cycles-Bild an (Marke, sha256), Matrix 3 Stärken × 3 Stimmungen mit Farbabgleich an/aus, Kontrolle bildpunktgleich zu 297, Vergleichstafeln 960 px
-  - [ ] Wahl am Bild (owner, über die Zentrale nach 298): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
+  - [x] Messung am Heim-PC: auf-20261021-298 (local) — Ergebnis `ff4ba81`: Bild kommt an (rote Marke, drei sha256), Kontrollen bildpunktgleich; ab 0,4 hält das Haus (geom_iou 0,55–0,98) und Licht/Schatten kommen voll an, aber das Bild ist das Cycles-Gipsmodell (kein Sichtbeton), bei bedeckt 0,55/0,7 fehlt der Dachaufbau; Farbabgleich allein blass; +3,8 GB Grafikspeicher
+  - [x] Befunde aus 298 behoben: Ladeentscheidung mit Bildeingang an der gemessenen Spitze (30 587 MiB verlangt), Abweisung bei fremdem Modell oder zu wenig Platz statt Laden; Bildeingang und Farbabgleich am Ergebnis sichtbar (`verdict.hinweise`, `angewandt`); Schrittsatz mit der Stärke; `geom_iou_gleich` mit Toleranz 0,03 — gebaut, am Gerät unbestätigt (§170, C98)
+  - [x] Farbabgleich «flau» geprüft: Ursache ist der kleine Kontrast der Gips-Vorlage, nicht die Untergrenze 0,5 (ohne sie noch blasser); Vorschlag im Protokoll, nicht gebaut (§170)
+  - [x] W-4 «beide Bilder liefern» geprüft: Die Lieferung steht schon (`render.passes ['schoenbild']` → `<kamera>__schoenbild.png`); es fehlt nur der Knotenteil, der es bestellt und neben dem KI-Bild zeigt (§170)
+  - [ ] Nachmessung am Heim-PC: auf-20261021-300 (local, nach 299) — Stärke 0,8/0,9/0,95 × morgen/abend/bedeckt: Material, Form (Dachaufbau), Licht; Farbabgleich nur bei 0,9; VRAM und Abweisung bei fremdem Modell; Bildeingang am Ergebnis; Tafeln KI 0,8/0,9/0,95 | Cycles | ohne Bildeingang
+  - [ ] Wahl am Bild (owner, über die Zentrale nach 300): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern (Empfehlung des LW bis dahin: W-4) — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
   - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)

@@ -8183,7 +8183,10 @@ Dabei bewegt sich kein Bildpunkt; jeder Punkt bekommt nur eine neue Farbe, die a
 *Im Projekt:* Schalter `vis.farbabgleich`, Vorgabe aus (Entscheid 117, `aiimaging.farbabgleich`). Das KI-Bild bekommt so
 die Farbstimmung des Cycles-Bilds, etwa das warme Abendlicht. Gerechnet für das ganze Bild auf einmal und nicht getrennt
 nach Haus, Boden und Himmel, weil das KI-Bild nicht genau auf den Flächen des Modells liegt und getrennte Abgleiche sonst
-neue Kanten an den Grenzen schüfen. Gemessen wird in auf-20261021-298.
+neue Kanten an den Grenzen schüfen. Gemessen in auf-20261021-298: Er bringt Farbton und Helligkeit der Stimmung und
+verschiebt nichts an der Form, aber kein Licht und keine Schatten, und das Bild wird blass. Der Grund: Das Gipsmodell,
+an das angeglichen wird, hat von Natur aus wenig Kontrast (weisser Gips), und der Abgleich übernimmt diesen kleinen
+Kontrast. Die Untergrenze der Streckung (0,5) bremst das sogar; ohne sie würde es noch blasser.
 
 **Kantenübereinstimmung (`kanten_iou`)** — Eine Zahl von 0 bis 1, die sagt, wie gleich die Kanten zweier Bilder liegen.
 Gezählt werden die Bildpunkte, die in beiden Bildern Kante sind, geteilt durch die, die in mindestens einem Bild Kante
@@ -8195,14 +8198,48 @@ Grenze liegt und das Runden auf ganze Farbwerte sie kippt.
 festhält, und das gerenderte Bild als Ausgangspunkt. Die Stärke (eine Zahl von 0 bis 1) sagt, wie viel davon die KI neu
 malen darf: wenig heisst nah am Rendering mit Licht und Schatten, viel heisst freier wie heute. *Im Projekt:* Schalter
 `vis.bildeingang` (Stärke 0,05 bis 1,0), Vorgabe aus, Entscheid 117. Unser Standardmodell nimmt so ein Ausgangsbild von
-sich aus nicht an; darum der eigene Start (nächster Eintrag). Gemessen wird in auf-20261021-298 mit drei Stärken
-(0,4 / 0,55 / 0,7).
+sich aus nicht an; darum der eigene Start (nächster Eintrag). Gemessen in auf-20261021-298 mit drei Stärken
+(0,4 / 0,55 / 0,7): Das gerenderte Bild kommt an, das Haus hält und das Licht kommt voll an, aber das Ergebnis bleibt
+das Gipsmodell, und «Sichtbeton» aus der Beschreibung kommt nicht an. Darum misst auf-20261021-300 höhere Stärken
+(0,8 / 0,9 / 0,95), bei denen die KI mehr selbst malt. Mit Bildeingang braucht der Lauf rund 3,8 GB mehr Speicher auf
+der Grafikkarte; liegt ein fremdes Modell dort, wird er abgewiesen (siehe «Fremdes Modell auf der Grafikkarte»).
 
 **Eigener Start (beim Bildmodell)** — Ein Bildmodell beginnt sonst mit reinem Rauschen und entfernt es Schritt für Schritt,
 bis ein Bild dasteht. Beim eigenen Start beginnt es stattdessen mit dem gerenderten Bild, dem ein Teil Rauschen beigemischt
 ist, und rechnet nur noch die letzten Schritte. Je mehr Rauschen, desto mehr malt die KI neu. *Im Projekt:*
 `render._eigener_start`, der Weg hinter dem Bildeingang mit Stärke. Unser Code, nach dem Vorbild einer Rechnung aus der
-freien Bibliothek diffusers, ohne an ihr etwas zu ändern. Am Heim-PC noch nicht gemessen.
+freien Bibliothek diffusers, ohne an ihr etwas zu ändern. Am Heim-PC gemessen (auf-20261021-298): Eine rote Marke im
+gerenderten Bild stand danach im KI-Bild. Bei 20 Schritten und Stärke 0,55 rechnet er die letzten 11.
+
+**Spitze und Grundlast (beim Grafikspeicher)** — Die *Spitze* ist der höchste Stand des belegten Speichers auf der
+Grafikkarte während eines Laufs; die *Grundlast* ist, was schon vorher belegt war (Bildschirm, Fenster). Was der Lauf
+selbst braucht, ist der Unterschied der beiden. *Im Projekt:* am Registereintrag `z-image-turbo` als
+`vram_bildeingang_spitze_mib` (31 316 MiB) und `vram_bildeingang_grundlast_mib` (1241 MiB), gemessen in
+auf-20261021-298. Der Lauf mit Bildeingang braucht also 30 075 MiB; auf der Karte mit 32 607 MiB bleiben rund 1,3 GB frei.
+
+**Reserve (beim Bildeingang)** — Ein fester Betrag Speicher, der über dem gemessenen Bedarf frei bleiben muss, bevor
+ein Lauf startet: hier 512 MiB, gesetzt, nicht gemessen. *Wozu:* Sonst üblich ist ein Aufschlag in Prozent (10 %). Beim
+Bildeingang würde er mehr verlangen, als die Karte überhaupt hat, und jeder Lauf würde abgewiesen. Ein fester Betrag
+genügt hier, weil die Spitze in allen zehn gemessenen Läufen gleich war. *Im Projekt:* `render.BILDEINGANG_RESERVE_MIB`.
+
+**Fremdes Modell auf der Grafikkarte** — Ein Sprachmodell oder anderes Modell, das ein anderes Programm (meist Ollama)
+gerade auf der Grafikkarte hält und das nicht zu unserem Bildlauf gehört. *Wozu der Begriff:* Mit Bildeingang ist die
+Karte fast voll; liegt daneben ein fremdes Modell, reicht der Speicher nicht. Modelle anderer Programme entlädt Visbox
+nie (Entscheid 106d), darauf zu warten kann beliebig dauern. *Im Projekt:* Mit `vis.bildeingang` fragt der
+Abholer vor dem Lauf, was Ollama hält, und weist den Auftrag mit einem Satz ab («ABGEWIESEN: Bildeingang …»), statt zu
+laden (`render.pruefe_bildeingang_karte`, seit auf-20261021-298).
+
+**Toleranz (bei einem Vergleich zweier Messwerte)** — Wie weit zwei Zahlen auseinanderliegen dürfen und trotzdem als
+gleich gelten. *Wozu:* Eine Zahl, die ein Messgerät oder ein Schätzer zweimal liefert, ist selten aufs letzte Komma gleich.
+Ohne Toleranz heisst jede winzige Abweichung «ungleich», und das Feld sagt nichts mehr. *Im Projekt:* beim Farbabgleich
+gilt `geom_iou` vor und nach dem Abgleich als gleich bis 0,03 Abweichung (`geom_iou_toleranz`); die Abweichung steht als
+Zahl daneben (`geom_iou_abweichung`). Gemessen waren 0,0001 bis 0,023 (auf-20261021-298).
+
+**Beide Bilder liefern (Wahl W-4)** — Eine der vier Wahlen aus Entscheid 117: Statt das Licht ins KI-Bild zu mischen,
+bekommt der Architekt das gerenderte Bild (mit Licht und Schatten) und das KI-Bild nebeneinander und wählt selbst.
+*Im Projekt:* Die Lieferung gibt es schon. Wer das Schönbild als Ebene bestellt (`render.passes ["schoenbild"]`), bekommt
+es je Kamera als `<kamera>__schoenbild.png` neben dem KI-Bild. Neu wäre nur, dass der Render-Knoten es von sich aus
+bestellt und daneben zeigt.
 
 **Unteres Quantil (25-%-Quantil)** — Der Wert, unter dem das dunkelste Viertel aller Messpunkte liegt. Bei einem Haus
 mit Sonnen- und Schattenseite liegt er auf der Schattenseite, das Mittel dagegen dazwischen. *Im Projekt:* ein
@@ -8217,6 +8254,7 @@ könnte; erst nachzählen (297).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |
 | 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-296 (Protokoll 74 §167): **Flächenverhältnis (Haus im Bild gegen Haus im Modell)**, **Gültigkeitsvermerk der Umrisstreue (`umriss_gilt`)**, **Zusatz «leerer Hintergrund» (Messschalter)**, **Farbabgleich (nach dem KI-Schritt)**, **Unteres Quantil (25-%-Quantil)**; **Haus im KI-Bild nicht wiederzuerkennen** um die zwei neuen Auslöser nachgeführt |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261020-295 (Protokoll 74 §164): **Mittel in Blendenstufen (geometrisches Mittel)**, **Haus im KI-Bild nicht wiederzuerkennen**, **Umriss-IoU (aus Farbe)**, **Drehung je Kamera (des Himmelsbilds)**, **Prüfbild (für eine Schwelle)** |

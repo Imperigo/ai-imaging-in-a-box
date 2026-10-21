@@ -1,6 +1,6 @@
 # Licht ins KI-Bild — Planblatt (21.10.2026)
 
-**Codestand:** `81c4070` (Visbox 0.3.11); seit Entscheid 117 (21.10.2026) sind Farbabgleich und Bildeingang als Messschalter gebaut, gemessen wird in auf-20261021-298.
+**Codestand:** `81c4070` (Visbox 0.3.11); seit Entscheid 117 (21.10.2026) sind Farbabgleich und Bildeingang als Messschalter gebaut, gemessen in auf-20261021-298 (`ff4ba81`, Abschnitt «Gemessen»); Nachmessung mit höheren Stärken in auf-20261021-300.
 **Grundlage:** `render`, `backbone`, `kette`, `stimmung`, `kosmo_szene` — Messung auf-20261021-296 (HomeStation), Bestand durch Lesen des Kerns.
 
 Anlass: Befund N2 aus auf-20261021-296. Entscheide E97/E97a: Das KI-Bild ist für Entwurf, Varianten und Stimmung da; so
@@ -144,6 +144,40 @@ Der Grundsatz «KI-Bild nur Entwurf» (E97) bleibt.
 2. **Nur Farbabgleich:** Schalter am Render-Knoten, Vorgabe aus.
 3. **So lassen:** Die Stimmung bleibt der Satz im Prompt.
 4. **Beide Bilder liefern:** Das Cycles-Bild steht als zweites Bild am Knoten.
+
+## Gemessen: auf-20261021-298 (21.10.2026) und was daraus folgt
+
+| Frage | Ergebnis 298 |
+|---|---|
+| Kommt das Cycles-Bild über den eigenen Start an? | **Ja.** Drei verschiedene sha256, die rote Marke steht in V0c; V0b weicht im Mittel nur 1,9 vom Cycles-Bild ab. diffusers am Heim-PC ist 0.41.0.dev0 (nicht 0.39.0), der Weg läuft damit fehlerfrei. |
+| Hält das Haus? | Ab 0,4 ja: `geom_iou` 0,55–0,98 gegen 0,005–0,58 ohne, kein Satz. **Bei bedeckt fehlt ab 0,55 der Dachaufbau**, `geom_iou` (0,83/0,92) merkt es kaum. |
+| Kommt das Licht an? | Ja, voll: Sonnenseite, Schatten, Helligkeit in allen drei Stimmungen. |
+| Entwurf oder Render? | **Weder noch: das Cycles-Gipsmodell** (Farbabstand 1–2). «Sichtbeton» und «Architekturfotografie» kommen nicht an; erst 0,7 setzt kleine Fensterlöcher. |
+| Farbabgleich allein (Zeile 0) | Farbton und Helligkeit ja, Form unverschoben (`kanten_iou` 0,97–0,99), aber kein Licht und **blass**; bei bedeckt 27 % geklippt, abend `kanten_iou` 0,72. |
+| Grafikspeicher | +3880 MiB mit Bildeingang (27 436 → 31 316 von 32 607 MiB). |
+
+**Empfehlung des LW:** in dieser Form weder W-1 noch W-2; Nachmessung mit 0,8 / 0,9 / 0,95, wo das Modell Material malen
+könnte (auf-20261021-300); bis dahin W-4.
+
+**Gebaut aus 298 (Protokoll 74 §170, C98):** Ladeentscheidung mit Bildeingang an der gemessenen Spitze (30 075 MiB +
+512 MiB Reserve) und Abweisung mit Satz bei einem fremden Modell auf der Karte oder zu wenig Platz; Bildeingang und
+Farbabgleich am Ergebnis sichtbar (`qa.verdict.hinweise`, `angewandt.bildeingang`, `angewandt.farbabgleich`); Schrittsatz
+mit der Stärke; `geom_iou_gleich` mit Toleranz 0,03.
+
+**Farbabgleich «flau» — geprüft, nicht geändert.** Nachgerechnet im Container an den Bildern aus 298 (Zeile 0): Die
+Untergrenze 0,5 bremst die Stauchung; ohne Grenze würde es noch blasser (Helligkeits-Streuung morgen 25 statt 37,
+bedeckt 15 statt 36, `kanten_iou` bedeckt 0,41). Blass macht die **Vorlage**: Das Gipsmodell hat wenig Kontrast (Streuung
+14–26 gegen 47–87 im KI-Bild). Das Klippen bei bedeckt kommt aus der Verschiebung des Mittels auf den hellen Himmel
+(216), nicht aus der Grenze. Eine Grenze 0,75 hielte Kanten und Kontrast besser (abend `kanten_iou` 0,99 statt 0,72),
+klippt bei bedeckt aber 30 %. Nicht klar besser, darum nicht gebaut. Kandidat, falls W-2 gewählt wird: nur Mittel und
+Farbton abgleichen, Kontrast des KI-Bilds behalten, Verschiebung so begrenzen, dass höchstens 2 % klippen.
+
+**W-4 «beide Bilder liefern» — geprüft.** Die Lieferung steht schon im Vertrag: `render.passes ["schoenbild"]` legt je
+Kamera das Cycles-Bild als `<kamera>__schoenbild.png` unter `ebenen` neben das KI-Bild, mit `bedeutung {renderer:
+cycles, samples}`, in der bestellten Grösse; mit wiederverwendeter Grundlage ebenso (gelesen: der abgelegte Bericht trägt den Pfad des Cycles-Bilds, `lies_grundlage` prüft, dass die Datei da ist; keine eigene Probe). **Es fehlt nur der Knotenteil**
+(Vis-Werkzeug, beide Programme): Der Render-Knoten müsste die Ebene von sich aus bestellen und das Bild neben dem
+KI-Bild zeigen. Kein Vertragsfeld, kein Kernumbau. Nicht vorhanden und für W-4 nicht nötig: ein Stimmungsvermerk an der
+Ebene (er steht schon in `angewandt.environment`).
 
 ## Zu entscheiden
 

@@ -191,6 +191,23 @@ def speicher_frei_mib() -> int | None:
         return None
 
 
+def bildeingang_karte() -> dict:
+    """Die Lage der Karte für einen Auftrag mit ``vis.bildeingang`` (auf-20261021-298).
+
+    ``{frei_mib, eigen_mib, fremde_modelle}``: frei laut ``nvidia-smi``, was dieser Prozess
+    selbst hält (:func:`aiimaging.render.grafikspeicher_des_prozesses`) und was Ollama laut
+    ``/api/ps`` auf der Karte hält. Jede Auskunft darf ``None`` sein (unbekannt) — entschieden
+    wird in :func:`aiimaging.render.pruefe_bildeingang_karte`.
+    """
+    try:
+        fremde = assistent.Ollama().geladene()
+    except Exception:                                   # noqa: BLE001 — Auskunft, kein Riegel
+        fremde = None
+    return {"frei_mib": speicher_frei_mib(),
+            "eigen_mib": render.grafikspeicher_des_prozesses().get("belegt_mib") or 0,
+            "fremde_modelle": fremde}
+
+
 class EinmalGeladen:
     """Ein Modell je Name — beim ersten Gebrauch geladen, danach **behalten**.
 
@@ -263,7 +280,13 @@ class EinmalGeladen:
         schluessel = (name, str(wurzel) if wurzel else None)
         modell = self._modelle.get(schluessel)
         if modell is None:
-            modell = self._lader(name, wurzel)
+            # MIT BILDEINGANG ENTSCHEIDET DIE GEMESSENE SPITZE (auf-20261021-298): nur beim
+            # Bildmodell, nur mit Schalter — ohne ist der Aufruf der von vorher.
+            if (self._name_schluessel == "backbone"
+                    and parameter.get("bildeingang_staerke") is not None):
+                modell = self._lader(name, wurzel, bildeingang=True)
+            else:
+                modell = self._lader(name, wurzel)
             self._modelle[schluessel] = modell
             self.ladungen += 1
         # Vom zuletzt benutzten Modell uebernehmen, nicht vom ersten: Bei zwei Backbones
@@ -554,6 +577,8 @@ def main(argv=None) -> int:
                                             anfrage_laeuft=lambda: anfrage_laeuft(ablagen))),
                                     speicher_frei=lambda: (None if render_modell.haelt_gewichte
                                                            else speicher_frei_mib()),
+                                    # Nur fuer Auftraege mit vis.bildeingang (auf-20261021-298).
+                                    bildeingang_karte=bildeingang_karte,
                                     hoechstens=a.hoechstens,
                                     wache_bauen=None if a.ohne_wache else wache_bauen,
                                     quelle=quelle)
