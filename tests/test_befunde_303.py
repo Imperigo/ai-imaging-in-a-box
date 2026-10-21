@@ -275,7 +275,7 @@ def test_eigener_start_kodiert_das_cycles_bild_unter_no_grad(monkeypatch):
 
 
 def test_der_bedarf_des_bildeingangs_bleibt_bis_zur_neuen_messung():
-    """Gesenkt wird erst nach der Messung von auf-20261021-308 — nicht hier."""
+    """Gesenkt wird erst nach der Messung von auf-20261021-309 — nicht hier."""
     from aiimaging import backbone
     eintrag = backbone.BACKBONES["z-image-turbo"]
     assert eintrag.vram_bildeingang_spitze_mib == 31316
@@ -352,9 +352,9 @@ def test_ohne_zuordnung_geht_die_zeile_nicht_verloren(capsys):
     assert "vis-9 (ohne Zeile im Bericht): Im Prozess X" in capsys.readouterr().out
 
 
-# ====================================================================== der Messauftrag 308
+# ====================================================================== der Messauftrag 309
 
-def _messauftrag_308():
+def _messauftrag_309():
     treffer = [json.loads(p.read_text(encoding="utf-8"))
                for p in sorted((WURZEL / "auftraege" / "offen").glob("auf-2026102*-*.json"))]
     treffer = [d for d in treffer if "Strang Kern" in d.get("beschreibung", "")]
@@ -363,7 +363,7 @@ def _messauftrag_308():
 
 
 def test_der_messauftrag_ist_gueltig_und_vollstaendig():
-    daten = _messauftrag_308()
+    daten = _messauftrag_309()
     assert auftrag.pruefe_auftrag(daten) == []
     assert daten["worker"] == "local" and daten["art"] == "qa"
     text = daten["anweisung"]
@@ -464,7 +464,7 @@ def test_die_himmelsgroesse_kommt_aus_der_grundlage(tmp_path, monkeypatch):
 
 
 def test_der_messauftrag_traegt_teil_s_aus_306():
-    text = _messauftrag_308()["anweisung"]
+    text = _messauftrag_309()["anweisung"]
     for stichwort in ("TEIL S", "leuchtende Fenster", "Innenraum", "aufloesung", "'4k'",
                       "genau einmal", "STIMMUNG IM PROMPT", "HIMMELSGROESSE"):
         assert stichwort in text, stichwort
