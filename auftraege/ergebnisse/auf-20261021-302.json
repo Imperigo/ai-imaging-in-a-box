@@ -1,0 +1,103 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-302",
+ "worker": "local",
+ "rang": 89,
+ "folgt_auf": "auf-20261021-301",
+ "bezug": "auf-20261021-301",
+ "entscheide": [
+  "117",
+  "106d"
+ ],
+ "einbau": [
+  "C100"
+ ],
+ "status": "erledigt, A1/A2/A3/A6 am Geraet bestaetigt, ein Befund — (1) Ohne AIIMAGING_MODELLE und mit HF_HUB_OFFLINE=1 nennt render.modellwurzel() die Herkunft 'abholer-einheit', derselbe Ordner wie der Abholer; der Tiefenschaetzer laedt offline (2,2 s) und schaetzt an einem Cycles-Bild (960 x 600, 576000 Punkte); kein Netzzugriff (strace: kein connect ausser einem lokalen Unix-Socket). Gegenprobe: ein FEHLENDER Ordner endet mit 'nie aus dem Netz'; ein VORHANDENER, LEERER Ordner aber nicht — dort meldet transformers 'Unrecognized model ...' (B1). (2) Abweisung ueber die Bruecke: error nach 23 s, job.json message = error = render-result.json lieferstatus_grund (woertlich gleich), Journalzeile 'Vorpruefung ABGEWIESEN: ...'. (3) Mit idle_window_only true entlaedt der Abholer qwen3:14b nach 30,2 s und rechnet (done, 43,6 s, VRAM-Spitze 31316 MiB / 356 W, Bild 0 px zu 301 1a); Journal: 'Karte: ...' ohne Bildeingang-Satz, eigene Zeile 'Vorpruefung Bildeingang: 30868 MiB verfuegbar ...' und 'Im Prozess Bildeingang: 30862 MiB verfuegbar (30364 frei + 498 eigene) ...'. qwen3:14b danach entladen, /api/ps leer. Code nicht geaendert.",
+ "beendet": "2026-10-21T09:07:00Z",
+ "koepfe": {
+  "stand": "main 8778347 (Visbox 0.3.15, enthaelt A1-A3/A6 aus 301), Dienst neu gestartet, Abholer per Timer 30 s. Kein Code, keine Vorgabe, kein Registerwert, keine dauerhafte Umgebungsvariable geaendert; Einheit des Abholers nicht angefasst; Mappe des Dienstes nicht angefasst.",
+  "weg": "Teil 1 in einer eigenen Shell (env -u AIIMAGING_MODELLE, HF_HUB_OFFLINE=1 nur fuer den einen Prozess, .venv-render), unter strace -e connect. Teile 2/3 ueber die Bruecke als Client wie 301 (POST /bruecke/jobs, /approve, job.json im Takt 0,5 s); idle_window_only nur in Teil 2 im eigenen Probeauftrag vor /approve auf false.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb) wie 292-301: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "cameras 'auto' mit richtungen ['sSE'], resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, vis.seed 482913, guete voll, environment {preset: abend}, vis.bildeingang 0.55, faithful weggelassen (0,8).",
+  "grundlage": "G-abend NEU (gl-8f5fb78afe3ed5ad, job vis-1792573470-ce080b; die aus 301 war weggeraeumt): done in 25.57 s, Spitze 1324 MiB / 65 W; Cycles-Bild bildpunktgleich zu 300 abend-cycles (0 px).",
+  "gpu_vor_jedem_lauf": "G-abend 1241 MiB, 14.13 W, 0 %; Teil 2 17330 MiB, 75.01 W, 18 %; Teil 3 17330 MiB, 15.26 W, 0 % (beide mit qwen3:14b). Teil 1 nur der kleine Tiefenschaetzer. Leistungsgrenze 400 W gesetzt und unveraendert (nvidia-smi power.limit 400.00 W).",
+  "ollama_ps": "vor G-abend und vor dem Laden leer; Teile 2/3 nur qwen3:14b (16 GB, 100 % GPU, selbst geladen, keep_alive 10m); danach leer.",
+  "systemlast": "Last (1 min) 1.11-1.29.",
+  "kosmo_modelle": "nicht beruehrt; einzig qwen3:14b geladen, vom Abholer in Teil 3 entladen."
+ },
+ "laeufe_bruecke": {
+  "G-abend-960": {
+   "job": "vis-1792573470-ce080b",
+   "status": "done",
+   "zeit_s": 25.57,
+   "spitze": "1324 MiB / 65 W",
+   "gpu_vorher": "1241 MiB, 14.13 W, 0 %",
+   "ollama_ps_vorher": "leer"
+  },
+  "2-abweisung-qwen": {
+   "job": "vis-1792573503-baf8f2",
+   "status": "error",
+   "zeit_s": 23.44,
+   "gpu_vorher": "17330 MiB, 75.01 W, 18 %",
+   "ollama_ps_vorher": "qwen3:14b (16 GB, 100 % GPU)",
+   "gpu_spitze": "17330 MiB / 78 W"
+  },
+  "3-idle-qwen": {
+   "job": "vis-1792573526-ad3697",
+   "status": "done",
+   "zeit_s": 43.63,
+   "gpu_vorher": "17330 MiB, 15.26 W, 0 %",
+   "ollama_ps_vorher": "qwen3:14b (16 GB, 100 % GPU)",
+   "gpu_spitze": "31316 MiB / 356 W"
+  }
+ },
+ "1_modellwurzel_offline": {
+  "a_herkunft_abholer_einheit": "ja — render.modellwurzel() gibt Herkunft 'abholer-einheit'",
+  "a_ordner_gleich_abholer": "ja (Pfad nicht zurueckgegeben)",
+  "b_tiefenschaetzer_laedt": "ja — lade_modell('depth-anything-v2-small') in 2,2 s, offline",
+  "b_schaetzt_tiefe": "ja — schaetze_tiefe am Cycles-Bild abend (300): status ok, 960 x 600, 576000 Punkte",
+  "c_fehlender_ordner_satz_woertlich": "Gewichte fuer 'depth-anything-v2-small' liegen nicht unter '<ordner>' (Herkunft der Modellwurzel: uebergeben). Geladen wird nur aus der eigenen Ablage, nie aus dem Netz — AIIMAGING_MODELLE setzen oder die Einheit des Abholers (kosmo-abholer.service) installieren.",
+  "c_nie_aus_dem_netz": "ja fuer einen Ordner, den es nicht gibt; NEIN fuer einen vorhandenen, leeren Probeordner — dort woertlich: 'Unrecognized model in <ordner>. Should have a `model_type` key in its config.json.' (ValueError aus transformers), siehe B1",
+  "c_kein_netzzugriff": "ja — strace -e connect ueber den ganzen Prozess (1b und beide Gegenproben): ein einziger connect, an einen lokalen Unix-Socket des Grafiktreibers, kein AF_INET/AF_INET6"
+ },
+ "2_abweisung_message": {
+  "job": "vis-1792573503-baf8f2",
+  "status": "error nach 23 s",
+  "idle_window_only": "Bruecke setzt true; im eigenen Probeauftrag vor /approve auf false, nach /approve weiter false",
+  "job_json_message_woertlich": "ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) rechnet nur, wenn kein anderes Modell auf der Grafikkarte liegt — dort liegt qwen3:14b (eigenes Assistenzmodell). qwen3:14b ist das eigene Assistenzmodell der Visbox; der Abholer entlaedt es nur vor einem Auftrag mit «nur bei freier Karte» (idle_window_only) und ohne laufende Frage — hier nicht. Der Lauf mit Bildeingang braucht 30075 MiB (gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640). Nicht geladen, nichts gerechnet; neu bestellen, wenn die Karte frei ist.",
+  "message_gleich_error": "ja",
+  "message_gleich_lieferstatus_grund": "ja",
+  "render_result_lieferstatus": "fehlgeschlagen",
+  "journalzeile_vorpruefung_woertlich": "Vorpruefung ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) rechnet nur, wenn kein anderes Modell auf der Grafikkarte liegt — dort liegt qwen3:14b (eigenes Assistenzmodell). qwen3:14b ist das eigene Assistenzmodell der Visbox; der Abholer entlaedt es nur vor einem Auftrag mit «nur bei freier Karte» (idle_window_only) und ohne laufende Frage — hier nicht. Der Lauf mit Bildeingang braucht 30075 MiB (gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640). Nicht geladen, nichts gerechnet; neu bestellen, wenn die Karte frei ist.",
+  "nichts_geladen": "ja — Karte blieb bei 17330 MiB, Spitze 78 W"
+ },
+ "3_entladen_und_journal": {
+  "job": "vis-1792573526-ad3697",
+  "done": "ja",
+  "entladen": "ja — qwen3:14b nach 30,2 s aus /api/ps (Karte 1241 MiB), dann gerechnet, done nach 43,6 s",
+  "vram_spitze_mib": 31316,
+  "leistung_spitze_w": 356,
+  "journal_karte_woertlich": "Karte: Das Sprachmodell qwen3:14b ist entladen; die Grafikkarte gehört dem Bild. Danach: Auslastung 1 %, 1241 MiB belegt.",
+  "karte_ohne_bildeingang_satz": "ja",
+  "journal_vorpruefung_woertlich": "Vorpruefung Bildeingang: 30868 MiB verfuegbar (30868 frei), verlangt 30587 MiB (30075 gemessen + 512 Reserve).",
+  "vorpruefung_steht": "ja, als eigene, ungekuerzte Zeile unter der Karte-Zeile",
+  "journal_im_prozess_woertlich": "Im Prozess Bildeingang: 30862 MiB verfuegbar (30364 frei + 498 eigene), verlangt 30587 MiB (30075 gemessen + 512 Reserve).",
+  "im_prozess_steht": "ja — 30364 frei + 498 eigene = 30862 verfuegbar",
+  "satz_BILDEINGANG": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.55, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 11 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe.",
+  "bildpunktgleich_301_1a": "ja — 0 abweichende Bildpunkte (960 x 600); geom_iou 0,6993 wie 301",
+  "qwen3_14b_danach_entladen": "ja — vom Abholer; /api/ps danach leer, Karte 1241 MiB"
+ },
+ "befunde": [
+  "B1 Teil 1c: tiefenschaetzer.lade_modell prueft nur, ob der Ordner existiert (is_dir). Ein vorhandener, LEERER Ordner geht an transformers weiter und endet mit 'Unrecognized model in <ordner>. Should have a `model_type` key in its config.json.' statt mit dem Satz 'nie aus dem Netz'. Ein Netzzugriff fand dabei nicht statt (HF_HUB_OFFLINE=1 gesetzt; ohne diese Variable ungeprueft). Der Satz kommt nur fuer einen Ordner, den es nicht gibt.",
+  "B2 Im Journal steht 'Im Prozess Bildeingang: ...' VOR der Zusammenfassung des Durchgangs und vor der Karte-Zeile (Zeitstempel 11:06:04 gegen 11:06:10): die Zeile geht sofort hinaus, der Block der Zusammenfassung kommt erst am Ende des Durchgangs. Inhalt richtig, nur die Reihenfolge im Journal anders als im Auftrag beschrieben.",
+  "B3 Die Karte-Zeile nach dem Entladen nennt jetzt 'Auslastung 1 %' (301: 34 %) — kein Mangel, nur notiert."
+ ],
+ "code_geaendert": "nein",
+ "offen": "B1 (leerer Ordner) beim Integrator; Abweisung IM Prozess ('Im Prozess ABGEWIESEN') am Geraet nicht ausgeloest — die zweite Pruefung liess durch.",
+ "bilder": {
+  "ordner": null,
+  "dateien": [],
+  "hinweis": "kein Bild ins Repo (Auftrag: nur das Ergebnis); das Bild von Teil 3 ist bildpunktgleich zu auf-20261021-301-bilder/1a-abend-0.55.png"
+ },
+ "aufraeumen": "eigene Probeauftraege (Ablage), Ausgaben und die Grundlage erst nach dem Push per gio trash; qwen3:14b entladen; keine eigenen Prozesse."
+}
