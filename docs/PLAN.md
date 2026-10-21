@@ -8410,6 +8410,10 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 
 ## Video-Befunde aus dem Demolauf (21.10.2026, Protokoll 74 §200)
 
+> **Entschieden:** Befunde verteilt und im Kern behoben, Strang für Strang bis «nach321» (§200–§218); Hecken im nahen Bild bewusst nicht vor der Demo (§218).
+> **Gemessen:** Gegenproben 314–321 am Heim-PC; C131 bestätigt mit auf-20261021-321 (9f54c5ba).
+> **Offen:** Gegenprobe auf-20261021-322 (local), Hecken nach 322 (Kern), Einspielen der KO-Zweige (integrator).
+
 - [x] Verteilt: Zweig und Ziel je Befund an die HomeStation (L4-1/2/4/5/14/15/16/18, L3-A4/A5)
 - [x] L4-2 Hausanteil (C117/C18), L4-4 Blick-Kamera (C118), L4-14/15/5/1 Grossansicht, Vergleich, Kontext, Deckung (C119), L4-18 Lizenz-Satz (Entscheid 120, C120) — gebaut, am Gerät unbestätigt; mit Visbox 0.3.20
 - [ ] L4-16, L3-A4/A5 Bild aufs Blatt — im Bau, wartet auf Prepare `bildAblegen` und Druckauflösung
@@ -8445,5 +8449,10 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Einspielen `claude/kosmovis-paket-hinweis` bei Int 1 (v0.1.10) (integrator)
 - [x] Hausanteil im nahen Bild: nach auf-20261021-320 (2) WEIT_OBEN, STUFE oder Boden-Steigung nachstellen — oder begründet lassen — **keiner davon**: Ursache war die Trennhilfe der Grundlage; sie fällt im anders gerahmten Bild weg (§217, C131)
 - [x] Folgen aus 320 im Kern (§217, C131): Assistent lässt erfundene/ungültige Render-Angaben weg statt abzuweisen (eine Karte in einer Runde), `aufloesung` gegen das Schema, Freigabesatz auf jedem Ausgang; Trennhilfe nur, wo sie fürs KI-Bild gilt; `rand_gruende` nach Fläche; Maskenbefund auch bei «nur Grundlage»; Glossar «Sichtbackstein» — gebaut, am Gerät unbestätigt
-- [ ] auf-20261021-321 (local): Gegenprobe nach320 — Assistent F1–F5, K-normal mit Trennhilfe-Vermerk, nur Grundlage mit Maskenbefund
-- [ ] Hecken vor dem Haus im nahen Bild (ohne Trennhilfe zählen sie mit, 0,56 gegen 0,456) — nach 321 entscheiden, ob eine eigene Grenze nötig ist (local misst, Kern entscheidet)
+- [x] auf-20261021-321 (local): Gegenprobe nach320 — Assistent F1–F5, K-normal mit Trennhilfe-Vermerk, nur Grundlage mit Maskenbefund — Ergebnis 9f54c5ba, ausgewertet §218; C131 am Heim-PC bestätigt (a)–(h)
+- [x] Hecken vor dem Haus im nahen Bild (ohne Trennhilfe zählen sie mit, 0,56 gegen 0,456) — nach 321 entschieden (§218): **keine eigene Grenze jetzt** — in der Tiefe allein nicht sicher von Sockel und Vordach zu trennen; 322 misst die Nähe je Zone als Grundlage
+- [x] Folgen aus 321 im Kern (§218, C132): Genanntes aus der Frage auf die Render-Karte, kein doppelter Stimmungs-Knoten, Freigabesatz bei jeder Render-Karte, keine Bestellung ohne Karte; unterste Bildzeilen als Boden geprüft, `rand_gruende` ohne Nullgründe — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-322 (local): Gegenprobe nach321 — Assistent F1–F6 (F6 ohne Karte), Ersatz P4/P8/P9, K-normal mit Tafel und Nähe je Zone
+- [ ] Hecken im nahen Bild: nach 322 (Nähe je Zone) entscheiden, ob eine Grenze «Vordergrund vor dem Sockel» sicher geht oder eine Bildtrennung nach Art (Vegetation) nötig ist (Kern, nach local)
+- [ ] Oberer zurückgesetzter Baukörper fehlt in der Hausfläche des nahen Bilds (Kante boden/sprung, seit 320) — bekannt, nicht angefasst (Kern)
+- [ ] «RAHMUNG ZU WEIT» und «Geometrie: 0.0000» bei K — bekannt, nicht angefasst (Kern)

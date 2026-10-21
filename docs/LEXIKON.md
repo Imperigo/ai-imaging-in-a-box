@@ -8811,7 +8811,8 @@ Im nahen Bild von Auftrag 317 schätzte das Programm 31 % Haus, von Hand gezähl
 Tiefenkarte nicht zu sehen. Seither zählt das Ergebnis je Grund mit (`rand_gruende`), und der nächste Lauf zeigt es.
 *Seit Auftrag 320 nach Fläche:* Gezählt wurden zuerst die Punkte am Rand — eine lange, gezackte Kante wog dann mehr als
 eine gerade Linie, die viel mehr Haus abschnitt. Jetzt steht je Grund, wie viel Bildfläche hinter dieser Grenze noch
-stetig weiterginge (grösster Grund zuerst); die Punkte stehen daneben (`rand_punkte`).
+stetig weiterginge (grösster Grund zuerst); die Punkte stehen daneben (`rand_punkte`). *Seit Auftrag 321:* Ein
+Grund, hinter dem keine Fläche liegt («himmel 0,0»), steht nicht mehr in der Liste; seine Punkte schon.
 
 **Trennhilfe (des Messbodens)** — Die Linie, unter der das Programm beim Prüfen eines KI-Bilds «Boden, nicht Haus»
 annimmt. Sie kommt aus der Grundlage, dem Bild, das Blender aus dem 3D-Modell rechnet. *Wozu:* Viele Modelle haben
@@ -8862,10 +8863,31 @@ Flügel weit vor und zurück; die frühere Zählung nahm nur, was gleich weit we
 43 %. *Im Projekt:* `baumasse.haus_im_bild` seit dem 21.10.2026; die alte Zahl steht zum Vergleich daneben. Die Grenzen sind
 gesetzt, nicht gemessen.
 
+**Aus der Frage übernommen (beim Assistenten)** — Eine Angabe, die der Architekt in seiner Bitte ausdrücklich nennt
+(«Vorschau», «Stimmung abend», «1920 x 1080»), die das Sprachmodell aber nicht in den Auftrag geschrieben hat; Visbox
+trägt sie selbst nach. Das Gegenstück zur *erfundenen Angabe*: Was niemand sagte, fällt weg; was jemand eindeutig sagte,
+kommt dazu. *Wozu:* Ein kleines Sprachmodell lässt Wörter fallen, und dann rechnet ein anderes Bild als bestellt. *Im
+Projekt:* `assistent._genannt_in_der_frage` seit dem 21.10.2026 (Befund 321 B1). Nur bei eindeutigem Wortlaut und nur mit
+erlaubten Werten; nennt die Frage zwei Stimmungen oder zwei Bildgrössen, wird nichts ergänzt. Die Zwischenantwort sagt
+«Aus deiner Frage übernommen: …».
+
+**Doppelte Stimmung (Stimmungs-Knoten neben dem Preset)** — Eine Stimmung lässt sich auf zwei Wegen bestellen: als eigener
+Knoten im Graph, der mit dem Render-Knoten verbunden ist, oder als Angabe direkt am Auftrag (das *Preset*). Beides zugleich,
+mit demselben Wert, ist doppelt — und der Knoten ändert den Graph, ohne dass jemand darum bat. *Im Projekt:*
+`assistent._ohne_doppelte_stimmung` lässt den neuen Knoten samt Verbindung aus dem Vorschlag weg, ausser die Bitte nennt
+ausdrücklich einen Knoten («leg … an», «verbinde»); seit dem 21.10.2026 (321 B1).
+
+**Untere Bildzeilen (bei der Bodenprüfung)** — Ob ein Bildpunkt Boden ist, prüft Visbox, indem es ein paar Zeilen darüber
+und darunter vergleicht: Boden kommt Zeile für Zeile näher, eine Wand nicht. Ganz unten im Bild gibt es kein «darunter»;
+bis zum 21.10.2026 galten die letzten Zeilen darum nie als Boden, und die geschätzte Hausfläche lief dort über die ganze
+Bildbreite. Jetzt übernehmen sie den Befund der Zeilen knapp darüber — dasselbe Fenster, nur einseitig. *Im Projekt:*
+`baumasse._bodenpunkte` (Befund 321 B4).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Strang «nach321» (Ergebnis 321, Protokoll 74 §218): **Aus der Frage übernommen (beim Assistenten)**, **Doppelte Stimmung (Stimmungs-Knoten neben dem Preset)**, **Untere Bildzeilen (bei der Bodenprüfung)**; nachgeführt **Randgrund** (Gründe ohne Fläche fallen weg) |
 | 2026-10-21 | Ergaenzt aus Strang «nach320» (Ergebnis 320): **Trennhilfe (des Messbodens)**, **Erfundene Angabe (beim Assistenten)**; nachgeführt **Randgrund** (nach Fläche); Glossar «Sichtbackstein» |
 | 2026-10-21 | Nachgeführt aus Strang «paket» (Protokoll 74 §216): **Paket von Schritten (`vis_paket`, «$neu:N»)** — auch die Einzelwerkzeuge nennen den Weg |
 | 2026-10-21 | Ergaenzt aus Strang «nach317» (Ergebnisse 317–319): **Abgeschriebener Beispielsatz**, **Randgrund (beim Schätzen des Hausanteils)**, **Tor für Ergebnis-Commits**; nachgeführt **Deckungsgleiche Varianten** und **Kanten-IoU** (Schwelle 0,10), **Rang** (Lücken erlaubt), **Rolle am Knoten** (`name+rolle`) |

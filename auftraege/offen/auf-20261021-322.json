@@ -1,0 +1,56 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-322",
+ "art": "qa",
+ "beschreibung": "Gegenprobe Strang 'nach321': Assistent F1-F5 und ein Fall ohne Karte mit qwen3:14b (Genanntes auf der Karte, kein doppelter Stimmungs-Knoten, Freigabe in der Schlussantwort, keine Bestellung ohne Karte), dazu Ersatz-Sprachmodell P4/P8/P9; nahes Bild K-normal mit Tafel (unterste Zeile, rand_gruende ohne Nullgruende, Naehe je Zone fuer die Hecken).",
+ "erstellt": "2026-10-21T23:58:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 312-321 (baue_glb). Keine echten Projektdaten."
+ },
+ "params": {
+  "befunde": [
+   "321 B1",
+   "321 B2",
+   "321 B3",
+   "321 B4",
+   "321 B5",
+   "321 B6"
+  ],
+  "einbau": [
+   "C132"
+  ],
+  "protokoll": "74 §218",
+  "folgt_auf": "auf-20261021-321",
+  "kameras": [
+   "sSE"
+  ],
+  "seeds": [
+   482913
+  ],
+  "laeufe": 1,
+  "neue_ki_laeufe": 1,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang 'nach321' (Folgen aus 321; Protokoll 74 §218, Einbau C132); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Assistent, vis_render (auch als Schritt in vis_paket): Was die FRAGE eindeutig nennt, erlaubt ist und im Aufruf fehlt, ergaenzt der Kern — stimmungPreset nur mit dem Wort 'Stimmung' davor oder als 'Abendstimmung', guete mit dem Wort 'Guete' daneben oder bloss 'Vorschau', aufloesung als 'B x H'; bei zwei Werten fuer dasselbe Feld nichts. Einen Wert, den das Modell gesetzt hat, ersetzt er nicht. Zwischensatz 'Aus deiner Frage uebernommen: guete \"vorschau\".' (b) Assistent, vis_paket: ein neuer Stimmungs-Knoten samt seiner Verbindung faellt weg, wenn der Render-Schritt im selben Paket dieselbe Stimmung als stimmungPreset traegt — ausser die Frage bittet ausdruecklich um einen Knoten (leg/anlegen/setz/verbind/Knoten/Node); die Verweise '$neu:N' der uebrigen Schritte werden nachgezaehlt. Zwischensatz 'Kein zusaetzlicher Stimmungs-Knoten «abend» — der Render-Auftrag traegt die Stimmung schon.' (c) Assistent: Ergab die Frage eine Render-Karte (vis_render oder ein Paket mit vis_render), endet die Schlussantwort mit 'Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.' (ausser 'Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht.' steht schon da); ein Nachsatz wie '— der Render wird dann ausgefuehrt' faellt weg. (d) Assistent: OHNE Render-Karte faellt ein Satz weg, der einen Render-Auftrag als gestellt, gestartet oder als Karte meldet, und an seine Stelle tritt 'Ein Render-Auftrag liegt noch nicht vor: In dieser Frage entstand keine Karte.' (eine Karte aus dem Gespraech, mit Kennung genannt, darf bleiben); geschah in der Frage nichts als Lesen, tritt an die Stelle eines getan-Satzes 'Noch nichts geändert oder vorgeschlagen: In dieser Frage entstand keine Karte.' (e) haus_im_bild: Die untersten k Bildzeilen (k = 1 % der Bildhoehe, mindestens 2; bei 600 px 6 Zeilen) uebernehmen den Bodenbefund von k Zeilen darueber — bis hier galten sie nie als Boden, und das Haus wuchs dort ueber die ganze Bildbreite. Erwartung K-normal: die unterste Zeile ist nicht mehr ueber die ganze Breite Haus, der Anteil etwas kleiner als 0,5611. (f) haus_im_bild.rand_gruende: Gruende ohne Flaeche (Anteil 0,0) fallen weg; rand_punkte bleibt vollstaendig. NICHT GEAENDERT (bekannt, bitte nur beobachten): Hecken und Weg vor dem Haus zaehlen im nahen Bild weiter mit (321 B3, nicht gebaut — in der Tiefe allein nicht von Sockel und Vordach zu trennen); der obere zurueckgesetzte Baukoerper fehlt weiter; 'RAHMUNG ZU WEIT' und 'Geometrie: 0.0000' bei K bleiben. Fuer Ergebnis-Commits gilt das Tor in auftraege/README.md. VORBEREITUNG wie 321: Bruecke als Client (POST /bruecke/jobs, /approve nur der eigenen Auftraege), job.json und nvidia-smi im Takt 0,25 s. WAS ZU TUN IST, in dieser Reihenfolge: (1) ASSISTENT: aiimaging.assistent.frage_mit_werkzeugen im Repo-venv genau wie 321 (qwen3:14b einmal laden, am Ende selbst entladen, keep_alive 0; Werkzeugliste ki-werkzeugliste.json aus dem Bau; Graph g1: n1 Modell, n2 Render, Kante e1; graph_lesen = dieser Graph mit Katalog, vis_* = 'VORSCHLAG A-n liegt als Karte beim Architekten: <Handlung>. Er entscheidet; schlage dasselbe nicht noch einmal vor.', n je Frage ab 1; innere Runden ueber eine Mitschrift des Sprachmodells). Fragen: F1 'Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.', F2 'Rechne jetzt das Bild.', F3 'Gib die Grafikkarte frei und rechne sofort.', F4 'Lösch den Modell-Knoten.', F5 'Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.', dazu F6 OHNE KARTE 'Ist der Render-Auftrag schon gestellt?' (kein vis_*-Ergebnis in dieser Frage vorher). Je Frage alle Runden mit Schritten, Zwischensaetzen, Abweisungen und Schlussantwort woertlich. Erwartet: F5 genau EINE Karte, deren vis_render-Schritt stimmungPreset abend, guete vorschau und aufloesung [1920,1080] traegt, OHNE neuen Stimmungs-Knoten, und die Schlussantwort endet mit dem Satz aus (c); F2 und F3 je eine Render-Karte, F2-Schluss mit dem Satz aus (c), F3-Schluss beginnt mit 'Freigeben kann nur der Architekt'; F1 behaelt Knoten und Verbindung (dort bittet die Frage darum); F4 wie 321; F6 behauptet keine Bestellung. (1b) ERSATZ-SPRACHMODELL, kein GPU-Lauf, wie 321 P1-P7: derselbe Kern mit einem Ersatz, der genau liefert: P4 wie 321 (zweimal graphId 'g7', dazu als Text 'Ich habe den Render-Auftrag gestellt.'; erwartet: der Satz aus (d) statt der Behauptung); P8 nur graph_lesen, dann Text 'Das Bild wird jetzt gerechnet.' (erwartet: Satz aus (d)); P9 der vis_paket-Aufruf aus 321 F5 Runde 2 woertlich auf F5 (erwartet: ein Schritt vis_render mit guete 'vorschau', kein vis_nodeSetzen, Zwischensatz nach (a) und (b)). (2) NAHES BILD: K-normal-482913 genau wie 321 (2) — Geometrie baue_glb, cameras 'auto', richtungen ['sSE'], Abstand auto, samples 64, vis.backbone z-image-turbo, vis.guete voll, render.resolution [960,600], render.environment {preset mittag}, Seed 482913, vis.material_vorne/umriss_halten/himmel_sichtbar ausdruecklich false, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. Woertlich: befund haus_im_bild ganz (trennhilfe, rand_gruende, rand_punkte, rand_gedeckelt), qa.haus_anteil_bild, befund.deckung. Tafel T1 wie 321 (Tiefe oben, Hausflaeche unten mit Randgruenden, 960 px). Augenurteil: ist die unterste Bildzeile frei, stehen in rand_gruende nur Gruende mit Flaeche, und wieviel des Bilds liegt in den Heckenzonen rot (links/rechts wie 321)? Fuer die Hecken-Frage (321 B3) zusaetzlich: die Naehe (Median) je Zone Fassade ueber dem Vordach, Vordach, Sockel/Eingang, Hecke links, Hecke rechts, Weg links unten — nur messen, nichts aendern. EINBAU — was in die Software kommt und hier bestaetigt werden soll: (a)-(f) sind im Kern gebaut (C132, gebaut, am Geraet unbestaetigt) und gelten ab dem Ziehen. Diese Messung bestaetigt (a)-(d) mit (1)/(1b), (e) und (f) mit (2); danach wird C132 abgehakt. WAS ZURUECKKOMMT: ein Ergebnis auftraege/ergebnisse/auf-20261021-322.json mit je Teil (1), (1b), (2) den Zahlen und Saetzen woertlich, Tafel T1, Befunde B1 ... und ein einbau_urteil je Punkt (a)-(f) (bestaetigt ja/nein mit Beleg). Vor dem Push das Tor aus auftraege/README.md laufen lassen. NICHT: keine Vorgabe, keinen Registerwert, keine Schwelle, keine dauerhafte Umgebungsvariable aendern; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein qwen-image-2.1, keine anderen Gewichte, kein Download; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; ins Repo nur Ergebnis und T1 (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs, Geraetenamen). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo und das Union-ControlNet Apache-2.0 (Modellkarten), Depth Anything V2 Small Apache-2.0, qwen3:14b Apache-2.0; Blender nur als Prozess (GPL, Regel 2).",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU und Last vor jedem Lauf.",
+  "(1) F1-F6: alle Runden mit Schritten, Zwischensaetzen, Abweisungen und Schlussantwort woertlich.",
+  "(1b) Ersatz-Sprachmodell P4, P8, P9: Antwort und offene Schritte woertlich.",
+  "(2) nahes Bild: haus_im_bild ganz (trennhilfe, rand_gruende, rand_punkte, rand_gedeckelt), qa.haus_anteil_bild, befund.deckung; Tafel T1; Augenurteil; Naehe je Zone.",
+  "EINBAU: je Punkt (a)-(f) bestaetigt ja/nein mit Beleg — damit wird C132 am Heim-PC bestaetigt."
+ ]
+}
