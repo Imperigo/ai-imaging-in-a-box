@@ -8423,3 +8423,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Importzeit Blender bei 19'610 Instanzen messen (local, mit Probedatei)
 - [x] Erstes Bild gross (Entscheid heute, erstes Bild gross) und Grundlage bleibt nach dem Sichern eines Bilds aktuell (C124, §206) — gebaut, am Gerät unbestätigt; Ziel v0.1.10
 - [ ] Drei e2e-Specs drüben erwarten im Kuratieren 2 statt 4 Karten (seit L4-15 C) — Bitte an Int 1 im Meldeblatt (integrator)
+- [x] 312/313 ausgewertet (Strang modus, §207, C125): Ursache txt2img statt image_edit belegt (Vorgabemodell ohne Bildeingang, eigener Start nur mit Schalter), Satz «KI-BILD OHNE GRUNDLAGENBILD»; Hausanteil ohne Platte und stetig gewachsen; Bestand aus der Bauwerksmaske; Kontextmaske auch bei «Grundlage rendern» — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-317 (local): Gegenprobe modus, Bildeingang wirklich angekommen, Deckungsschwelle aus Augenurteil
+- [ ] Owner (über den Hauptstrang): womit sieht eine Variante das Grundlagenbild — Empfehlung M2 als Vorgabe für die Demo, Bildeingang Messweg, Modell mit Bildeingang nach der Demo messen
+- [ ] 20-%-Regel «Das Haus fuellt nur …» liest weiter den Anteil mit Platte — Frage an den Hauptstrang (Empfehlung: nach 317 auf das Haus allein umstellen)

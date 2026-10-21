@@ -553,7 +553,10 @@ def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
 # HomeStation: deckungsgleich heisst gleiche Grundlage UND Kanten-IoU des KI-Bilds gegen das
 # Grundbild über einer Schwelle; darunter «gleiche Grundlage, Form weicht ab», mit Warnung.
 
-#: **GESETZT, NICHT GEMESSEN** (bis auf-20261021-312 zurück ist). Herleitung aus vorhandenen
+#: **GESETZT, NICHT GEMESSEN** — auch nach auf-20261021-312/313: Alle sechs KI-Läufe rechneten
+#: dort txt2img statt image_edit (Befund 312 B3), die Kanten-IoU lag bei 0,024–0,051, auch bei
+#: Seed 11 mit gleichem Ausschnitt (0,024). Diese Läufe trennen nichts; die Schwelle bleibt
+#: vorläufig, gemessen wird mit Läufen, die das Grundlagenbild sehen (auf-20261021-317). Herleitung aus vorhandenen
 #: Zahlen: Kanten-IoU zwischen Varianten derselben Grundlage lag in auf-20261020-289 bei
 #: 0,21–0,42, ``geom_iou`` bei 0,12–0,70; in auf-20261021-309 hielten die Bilder mit gutem
 #: Umriss ``geom_iou`` 0,71–0,88. Die Kanten-IoU ist strenger als die Flächen-IoU (eine um
@@ -561,7 +564,8 @@ def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
 #: untere Drittel der in 289 beobachteten Spanne: was darunter liegt, hat erkennbar andere
 #: Kanten. Eine Setzung — sie wandert mit in jedes Ergebnis.
 DECKUNG_KANTEN_IOU_SCHWELLE = 0.30
-DECKUNG_HERKUNFT = "gesetzt, nicht gemessen (bis auf-20261021-312)"
+DECKUNG_HERKUNFT = ("gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts "
+                    "(bis auf-20261021-317)")
 
 DECKUNGSGLEICH = "deckungsgleich"
 FORM_WEICHT_AB = "form_weicht_ab"

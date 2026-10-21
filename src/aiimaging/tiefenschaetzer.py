@@ -1291,7 +1291,7 @@ def _ausserhalb_umriss(roh, sil_soll, breite, hoehe, *, polaritaet, maske, trenn
 
 
 def _haus_im_bild(roh, sil_soll, breite, hoehe, *, polaritaet, trennhilfe,
-                  ausblenden) -> dict | None:
+                  ausblenden, maske=None) -> dict | None:
     """``baumasse.haus_im_bild`` auf der rohen Ist-Karte — ``None`` statt einer Ausnahme.
 
     Dieselbe Nähe wie bei :func:`_ausserhalb_umriss`; ohne Polarität keine Zahl.
@@ -1305,8 +1305,10 @@ def _haus_im_bild(roh, sil_soll, breite, hoehe, *, polaritaet, trennhilfe,
     else:
         return None
     try:
+        # DIE BAUWERKSMASKE, wenn da (auf-20261021-312 B2): ohne Platte, ohne Bestand.
+        haus = list(maske) if maske is not None and len(maske) == len(naehe) else None
         return baumasse.haus_im_bild(naehe, sil_soll, int(breite or 0), int(hoehe or 0),
-                                     trennhilfe=trennhilfe, ausgeblendet=ausblenden)
+                                     haus=haus, trennhilfe=trennhilfe, ausgeblendet=ausblenden)
     except (TypeError, ValueError):
         return None
 
@@ -1530,7 +1532,7 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                                     ausblenden=ausblenden)
     haus_bild = _haus_im_bild(roh, sil_soll, ist_ergebnis["breite"], ist_ergebnis["hoehe"],
                               polaritaet=eintrag.polaritaet, trennhilfe=trennhilfe,
-                              ausblenden=ausblenden)
+                              ausblenden=ausblenden, maske=maske)
 
     warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(aufloesungs_warnungen) \
         + tuple(markierung["warnungen"]) + tuple(urteil["warnungen"])

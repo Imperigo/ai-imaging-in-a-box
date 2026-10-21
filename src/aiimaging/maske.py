@@ -609,8 +609,16 @@ def tabelle_aus_report(report) -> list[dict]:
 def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                   gelaende_muster: Sequence[str] = GELAENDE_MUSTER,
                   gelaende_erwartet: bool = True,
-                  gelaende_zusatz: Sequence[str] = ()) -> dict:
+                  gelaende_zusatz: Sequence[str] = (),
+                  bestand_namen: Sequence[str] = ()) -> dict:
     """Farben eines Material-ID-Passes + Tabelle → Bauwerksmaske. Ohne Dateizugriff.
+
+    **Der Bestand zählt nicht als Bauwerk** (auf-20261021-313, B1): Ein Bestandskörper
+    (Material «Bestand» oder ein Knoten aus ``bestand_namen``, :func:`ist_bestand`) machte in
+    313 A 35,9 % der Bauwerksmaske aus und hob ``geom_iou`` von 0,66 auf 0,80 — die Prüfung
+    lobte das Bild für den Nachbarn, nicht für den Entwurf. Er fällt hier hinaus wie das
+    Umfeld und bleibt in der Kontextmaske (:func:`kontextmaske`); ``bestand_namen`` im
+    Ergebnis nennt, was hinausfiel.
 
     Args:
         farben: Die Bildpunkte als ``(r, g, b)``-Tripel in 0..255, zeilenweise von oben
@@ -722,6 +730,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     gelaende_namen: list[str] = []
     bauwerk_namen: list[str] = []
     umfeld_namen: list[str] = []
+    bestand_aus: list[str] = []
     zusatz_getroffen: list[str] = []
     warnungen: list[str] = []
 
@@ -732,6 +741,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # eigenen Liste, weil es etwas anderes IST — ein Baum ist kein Boden, und die
         # Namen im Befund sollen sagen, was ausgeschlossen wurde und warum.
         umfeld = ist_umfeld(name)
+        # DER BESTAND WIE DAS UMFELD: nicht Bauwerk (auf-20261021-313 B1), eigene Liste.
+        bestand = not umfeld and ist_bestand(name, bestand_namen)
         # DIE BRUECKE VON DER BOXSEITE — kein neuer Massstab, ein uebertragenes Ergebnis.
         #
         # `glbbox.bauwerksbox` kann Gelaende an der GESTALT erkennen, wenn der Name es
@@ -742,9 +753,9 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # *Die Reihenfolge ist Absicht.* Erst die Namensregel, dann die Uebertragung —
         # die Uebertragung ueberstimmt nichts, sie ergaenzt eine Luecke. Derselbe
         # Unterschied wie auf der Boxseite: Zweitmeinung, nicht zweite Regel.
-        von_aussen = (not umfeld and not ist_gelaende(name, gelaende_muster)
+        von_aussen = (not umfeld and not bestand and not ist_gelaende(name, gelaende_muster)
                       and deckt_uebertragenen_namen(name, gelaende_zusatz))
-        gelaende = umfeld or ist_gelaende(name, gelaende_muster) or von_aussen
+        gelaende = umfeld or bestand or ist_gelaende(name, gelaende_muster) or von_aussen
         if von_aussen:
             zusatz_getroffen.append(name)
         if farbe == HINTERGRUND_FARBE:
@@ -780,6 +791,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                 f"Umgebung ist.")
         if umfeld:
             umfeld_namen.append(name)
+        elif bestand:
+            bestand_aus.append(name)
         elif gelaende:
             gelaende_namen.append(name)
         else:
@@ -1055,6 +1068,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # WAS ALS UMFELD AUSGESCHLOSSEN WURDE, mit Namen. Ein faelschlich
         # ausgeschlossenes Bauteil verschwindet damit nicht still — es steht hier.
         "umfeld_namen": sorted(set(umfeld_namen)),
+        # WAS ALS BESTAND HINAUSFIEL (auf-20261021-313 B1) — er steht in der Kontextmaske.
+        "bestand_namen": sorted(set(bestand_aus)),
         "quelle": sorted({str(e["quelle"]) for e in tabelle
                           if e.get("quelle") is not None}),
         "muster": list(gelaende_muster),
@@ -1066,7 +1081,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
 def bauwerksmaske_aus_lauf(material_id_png, report, *,
                            gelaende_zusatz: Sequence[str] = (),
                            gelaende_muster: Sequence[str] = GELAENDE_MUSTER,
-                           gelaende_erwartet: bool = True) -> dict:
+                           gelaende_erwartet: bool = True,
+                           bestand_namen: Sequence[str] = ()) -> dict:
     """Wie :func:`bauwerksmaske`, aber von den beiden Dateien eines Blender-Laufs aus.
 
     Die dünne Schicht darüber — sie liest, sie deutet nicht. Dieselbe Trennung wie
@@ -1098,7 +1114,7 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
     ergebnis = bauwerksmaske(
         farben, tabelle,
         gelaende_muster=gelaende_muster, gelaende_erwartet=gelaende_erwartet,
-        gelaende_zusatz=gelaende_zusatz,
+        gelaende_zusatz=gelaende_zusatz, bestand_namen=bestand_namen,
     )
     ergebnis["breite"] = breite
     ergebnis["hoehe"] = hoehe
@@ -1168,7 +1184,8 @@ def umgebung_je_bildpunkt(bericht: dict) -> list[bool] | None:
 
 
 def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,
-                      gelaende_zusatz: Sequence[str] = ()) -> dict:
+                      gelaende_zusatz: Sequence[str] = (),
+                      bestand_namen: Sequence[str] = ()) -> dict:
     """Die Bauwerksmaske aus dem Material-ID-Pass — oder eine benannte Lücke.
 
     **Warum ein Fehlschlag hier den Lauf nicht aufhält.** Die Maske ist die *zusätzliche*
@@ -1208,7 +1225,7 @@ def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,
     try:
         gebaut = bauwerksmaske_aus_lauf(
             png, bericht, gelaende_erwartet=gelaende_erwartet,
-            gelaende_zusatz=gelaende_zusatz)
+            gelaende_zusatz=gelaende_zusatz, bestand_namen=bestand_namen)
     except Exception as fehler:        # noqa: BLE001 — siehe Docstring
         return {"maske": None, "gemessen": False, "grund": (
             f"Bauwerksmaske nicht baubar: {type(fehler).__name__}: {fehler}")}
@@ -1239,12 +1256,12 @@ __all__ = [
 # oder mitgemalt, wie es der Architekt am Bild wählt (Entscheid 97a).
 #
 # WAS SIE IST — und was nicht. Sie ist eine ZWEITE Punktmenge neben der Bauwerksmaske, aus
-# demselben Material-ID-Pass, ohne Zusatzkosten. Sie ändert die Bauwerksmaske NICHT: Ein
+# demselben Material-ID-Pass, ohne Zusatzkosten. Bis auf-20261021-313 zählte ein
 # Bestandskörper aus KosmoOrbit (Material «Bestand», Knoten mit ``extras.role ==
-# "existing"``) zählt dort heute als Bauwerk, weil sein Name keine Geländeregel trifft. Ob
-# er dort hinausfallen soll, ist eine Frage an die Prüfung und wird zuerst am Heim-PC
-# GEMESSEN (eine Bauwerksmaske, die den Nachbarn mitmisst, misst mehr als den Entwurf —
-# aber jede Änderung der Maske verschiebt die Schwellen, die an ihr kalibriert sind).
+# "existing"``) in der Bauwerksmaske mit, weil sein Name keine Geländeregel trifft. GEMESSEN
+# in 313 A: 35,9 % der Bauwerksmaske, ``geom_iou`` 0,80 statt 0,66 ohne Bestand. Seither
+# fällt er dort hinaus (:func:`bauwerksmaske`, ``bestand_namen``) und steht nur hier — die
+# Schwellen, die an der Maske kalibriert sind, galten für Läufe ohne Bestand und bleiben.
 #
 # DREI QUELLEN, jede mit ihrem Namen im Ergebnis:
 #   * ``splat``   — Einträge mit ``quelle: "kontext"`` (Entscheid 76), wie in der Bauwerksmaske.
@@ -1261,7 +1278,8 @@ BESTAND_MATERIAL_NAMEN: tuple[str, ...] = ("bestand",)
 
 KONTEXT_METHODE = ("Kontext = Material-ID-Pass, Einträge mit quelle 'kontext' (Splat), "
                    "Umfeld-Klassen und Bestandsmaterial bzw. Bestandsknoten; "
-                   "die Bauwerksmaske bleibt unverändert.")
+                   "Umfeld und Bestand zählen in der Bauwerksmaske nicht mit "
+                   "(Bestand seit auf-20261021-313).")
 
 
 def ist_bestand(name: str, bestand_namen: Sequence[str] = (),

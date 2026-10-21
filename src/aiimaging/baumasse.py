@@ -69,6 +69,7 @@ __all__ = ["HAUS_QUANTIL", "HIMMEL_NAEHE_ANTEIL", "MINDEST_HIMMEL_ANTEIL", "RAND
            "RAND_MIN_PX", "SCHWELLE_ANTEIL_HAUS", "HERKUNFT", "VERFAHREN", "VERFAHREN_RUECKFALL",
            "rand_px", "erweitere", "ausserhalb_umriss",
            "HAUS_BAND_OBEN", "VERFAHREN_HAUS_IM_BILD", "HERKUNFT_HAUS_IM_BILD",
+           "VERFAHREN_HAUS_IM_BILD_BAND", "WEIT_UNTEN", "WEIT_OBEN", "STUFE", "BODEN_STEIGUNG",
            "RAHMUNG_FAKTOR", "RAHMUNG_MINDEST_PUNKTE", "haus_im_bild", "rahmt_anders"]
 
 #: Ab welcher Nähe ein Punkt «so nah wie das Haus» ist: das ferne Fünftel der Nähe auf dem
@@ -256,64 +257,117 @@ def ausserhalb_umriss(naehe: Sequence[float], soll_silhouette: Sequence[bool],
 
 #: Obere Grenze des Nähe-Bands, als Vielfaches des nahen Quantils (95 %) der Nähe auf dem
 #: Haus: 10 % näher als die nächsten Punkte des Hauses zählt noch mit, Boden davor nicht mehr.
-#: **Gesetzt, nicht gemessen.**
+#: **Gesetzt, nicht gemessen.** Seit auf-20261021-312 nur noch der KERN, von dem aus gewachsen
+#: wird (:data:`VERFAHREN_HAUS_IM_BILD`), und die alte Zahl ``n_band`` zum Vergleich.
 HAUS_BAND_OBEN = 1.10
 #: Das nahe Quantil der Nähe auf dem Haus — nicht das Maximum (ein Ausreisser zöge das Band
 #: bis in den Vordergrund).
 HAUS_QUANTIL_NAH = 0.95
+#: DAS WEITE BAND, in dem das Haus wachsen darf (auf-20261021-312, B1): von der Hälfte des
+#: fernen Fünftels bis 1,6 × des nahen Zwanzigstels. Ein Haus, das die KI grösser malt, reicht
+#: mit seinen Flügeln weit vor und zurück — das enge Band schnitt sie ab (0,15 gemeldet gegen
+#: 0,43 nachgezählt). **Gesetzt, nicht gemessen.**
+WEIT_UNTEN = 0.5
+WEIT_OBEN = 1.6
+#: Wie viel sich die Nähe von einem Bildpunkt zum Nachbarn höchstens ändern darf, damit er
+#: zum selben Körper zählt (Anteil der grösseren Nähe). Eine Fassade ändert sich stetig, die
+#: Kante zu Hecke, Himmel oder fernem Bau springt. **Gesetzt, nicht gemessen.**
+STUFE = 0.03
+#: Ab welcher Steigung der Nähe je Bildzeile (abwärts, Anteil) ein Punkt BODEN ist: Eine
+#: senkrechte Wand ändert ihre Nähe von Zeile zu Zeile kaum (bei 15° Neigung rund 0,03 %),
+#: ebener Boden um 1 ÷ (Zeilen unter dem Horizont), also 0,3–1 %. **Gesetzt, nicht gemessen.**
+BODEN_STEIGUNG = 0.0015
+#: Über wie viele Zeilen die Steigung gemittelt wird — Anteil der Bildhöhe, mindestens 2.
+BODEN_FENSTER_ANTEIL = 0.01
 #: Der Weg, als Wort.
-VERFAHREN_HAUS_IM_BILD = "naeheband_des_hauses_zusammenhaengend_mit_dem_soll"
+VERFAHREN_HAUS_IM_BILD = "stetig_gewachsen_vom_haus_ohne_boden_und_himmel"
+#: Der Weg bis auf-20261021-312 — heute nur noch ``n_band`` zum Vergleich.
+VERFAHREN_HAUS_IM_BILD_BAND = "naeheband_des_hauses_zusammenhaengend_mit_dem_soll"
 #: Woher die Grenzen kommen.
 HERKUNFT_HAUS_IM_BILD = (
-    "Band [fernes Fuenftel, 1,10 x nahes Zwanzigstel] der Naehe auf dem Soll-Umriss, nur "
-    "zusammenhaengend mit ihm; gesetzt, nicht gemessen (Video-Befund L4-2, 21.10.2026)")
+    "Kern im Band [fernes Fuenftel, 1,10 x nahes Zwanzigstel] der Naehe auf der Bauwerksmaske "
+    "(ohne Platte); gewachsen ueber Nachbarn mit hoechstens 3 % Naehesprung im Band "
+    "[0,5 x, 1,6 x], ohne Himmel und ohne Boden (Steigung je Zeile ab 0,15 %); gesetzt, nicht "
+    "gemessen (auf-20261021-312 B1/B2, synthetisch nachgestellt)")
 #: Ab welchem Verhältnis (gross ÷ klein) der Satz «KI-BILD RAHMT ANDERS» steht: doppelt.
-#: **Gesetzt, nicht gemessen.**
+#: **Gesetzt; 312 widerspricht nicht** (nachgezählt: Seed 11 Faktor 1,1 bei gleichem
+#: Ausschnitt, die drei anders gerahmten 2,6 / 3,8 / 4,7) — aber alle vier rechneten txt2img.
 RAHMUNG_FAKTOR = 2.0
 #: Und erst ab so vielen Prozentpunkten Unterschied — 1 % gegen 2,5 % sagt noch nichts.
 RAHMUNG_MINDEST_PUNKTE = 0.05
 
 
+def _bodenpunkte(naehe: Sequence[float], b: int, h: int) -> list[bool]:
+    """``True``, wo die Nähe abwärts so steigt wie auf ebenem Boden (:data:`BODEN_STEIGUNG`)."""
+    k = max(2, int(round(BODEN_FENSTER_ANTEIL * h)))
+    boden = [False] * (b * h)
+    for y in range(k, h - k):
+        for x in range(b):
+            i = y * b + x
+            oben_w, unten_w, w = (float(naehe[i - k * b]), float(naehe[i + k * b]),
+                                  float(naehe[i]))
+            if not (math.isfinite(oben_w) and math.isfinite(unten_w) and math.isfinite(w)) \
+                    or w <= 0:
+                continue
+            # Nur stetig: An der Kante zu Himmel oder Hecke springt die Nähe im Fenster —
+            # das ist eine Kante, kein Boden.
+            if abs(unten_w - w) > STUFE * k * w or abs(w - oben_w) > STUFE * k * w:
+                continue
+            boden[i] = (unten_w - oben_w) / (2 * k * w) >= BODEN_STEIGUNG
+    return boden
+
+
 def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite: int,
-                 hoehe: int, *, trennhilfe: Sequence[bool] | None = None,
+                 hoehe: int, *, haus: Sequence[bool] | None = None,
+                 trennhilfe: Sequence[bool] | None = None,
                  ausgeblendet: Sequence[bool] | None = None) -> dict:
     """Wieviel des KI-Bilds das Haus füllt — geschätzt aus der Tiefe, nie eine Ausnahme.
 
     **Warum nicht gezählt:** Für das KI-Bild gibt es keine Maske, nur die Karte des
-    Tiefenschätzers. Das Haus im KI-Bild ist hier, was **so nah wie das Haus** ist — die Nähe
-    zwischen dem fernen Fünftel und 1,10 × dem nahen Zwanzigstel der Nähe, die das KI-Bild an
-    den Punkten des Soll-Umrisses hat — **und** mit diesen Punkten zusammenhängt (Vierer-
-    Nachbarschaft). Ferne Bäume fallen so heraus (zu fern), der Vordergrund (zu nah) und
-    alles, was nicht am Haus hängt. Ein Bodenstreifen am Fuss des Hauses liegt in derselben
-    Nähe und zählt mit; der gedachte Boden (``trennhilfe``) und ausgeblendete Umgebung zählen
-    nie.
+    Tiefenschätzers.
 
-    **Wie zu lesen:** Folgt die KI der Grundlage, liegt die Zahl nahe ``anteil_soll``; hat sie
-    den Ausschnitt verändert (näher, weiter), weicht sie ab. Eine Schätzung — ein Fehler des
-    Schätzers ist von einer Zutat des Bildmodells nicht zu unterscheiden.
+    **Der Weg seit auf-20261021-312** (:data:`VERFAHREN_HAUS_IM_BILD`): Der KERN sind die Punkte
+    der Bauwerksmaske (``haus``; ohne sie die Soll-Silhouette), deren Nähe im engen Band
+    [fernes Fünftel, 1,10 × nahes Zwanzigstel] liegt. Von dort WÄCHST das Haus über Nachbarn
+    (Vierer-Nachbarschaft), solange die Nähe stetig bleibt (:data:`STUFE`), im weiten Band
+    (:data:`WEIT_UNTEN`, :data:`WEIT_OBEN`) liegt, kein Himmel ist (unter
+    :data:`HIMMEL_NAEHE_ANTEIL` des fernen Fünftels) und kein Boden (:func:`_bodenpunkte`).
 
-    Args:
-        naehe: die Karte des KI-Bilds, **grösser = näher**.
-        soll_silhouette: ``True``, wo das Soll Geometrie hat — dieselbe Fläche, aus der
-            ``anteil_soll`` gezählt ist, damit beide Zahlen dasselbe meinen.
+    **Warum (312 B1):** Bis dahin zählte nur, was im engen Band lag. Malt die KI das Haus
+    grösser, reichen seine Flügel vor und zurück und fielen heraus: 0,153 / 0,159 / 0,180
+    gemeldet gegen 0,435 / 0,305 / 0,474 nachgezählt; nur bei gleichem Ausschnitt (Seed 11)
+    passte es. ``n_band`` trägt die alte Zahl zum Vergleich.
+
+    **Und die Grundlage (312 B2):** ``anteil_grundlage``/``n_soll`` zählen die Bauwerksmaske,
+    wenn sie da ist — die Soll-Silhouette trägt die Platte mit (60 m: 77016 = 66293 Haus +
+    10723 Platte). ``grundlage_aus`` sagt, welche Fläche gezählt ist.
+
+    Eine Schätzung — ein Fehler des Schätzers ist von einer Zutat des Bildmodells nicht zu
+    unterscheiden. Hecken vor dem Haus fallen an der Kante heraus, ein anschliessender Bau gleicher
+    Tiefe zählt mit; ein Steildach, das wie Boden ansteigt, fehlt.
 
     Returns:
-        ``{anteil, anteil_grundlage, n_bild, n_soll, n_punkte, band, verfahren, herkunft,
-        grund}`` — ``anteil`` ``None`` mit ``grund``, wenn nicht messbar.
+        ``{anteil, anteil_grundlage, n_bild, n_soll, n_punkte, n_band, anteil_band, band,
+        band_weit, grundlage_aus, verfahren, herkunft, grund}`` — ``anteil`` ``None`` mit
+        ``grund``, wenn nicht messbar.
     """
     b, h = int(breite), int(hoehe)
     n = b * h
     aus = {"anteil": None, "anteil_grundlage": None, "n_bild": None, "n_soll": None,
-           "n_punkte": n if n > 0 else None, "band": None,
+           "n_punkte": n if n > 0 else None, "n_band": None, "anteil_band": None,
+           "band": None, "band_weit": None, "grundlage_aus": None,
            "verfahren": VERFAHREN_HAUS_IM_BILD, "herkunft": HERKUNFT_HAUS_IM_BILD, "grund": ""}
     if n <= 0 or len(naehe) != n or len(soll_silhouette) != n:
         aus["grund"] = "Karten und Bildgrösse passen nicht zusammen — nicht gemessen."
         return aus
-    for name, liste in (("trennhilfe", trennhilfe), ("ausgeblendet", ausgeblendet)):
+    for name, liste in (("haus", haus), ("trennhilfe", trennhilfe),
+                        ("ausgeblendet", ausgeblendet)):
         if liste is not None and len(liste) != n:
             aus["grund"] = f"{name} hat {len(liste)} statt {n} Werte — nicht gemessen."
             return aus
-    soll = [bool(v) for v in soll_silhouette]
+    mit_maske = haus is not None and any(haus)
+    soll = [bool(v) for v in (haus if mit_maske else soll_silhouette)]
+    aus["grundlage_aus"] = "bauwerksmaske" if mit_maske else "soll_silhouette"
     n_soll = sum(soll)
     aus["n_soll"] = n_soll
     aus["anteil_grundlage"] = round(n_soll / n, 4)
@@ -324,33 +378,60 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
     unten = _quantil(werte, HAUS_QUANTIL)
     nah = _quantil(werte, HAUS_QUANTIL_NAH)
     # Disparitaet: groesser = naeher. Ist die nahe Grenze nicht positiv, gibt es kein
-    # «10 % naeher» — dann gilt sie selbst als obere Grenze.
+    # «10 % naeher» — dann gilt sie selbst als obere Grenze (und das weite Band = das enge).
+    positiv = nah > 0 and unten > 0
     oben = nah * HAUS_BAND_OBEN if nah > 0 else nah
+    weit_unten, weit_oben = ((unten * WEIT_UNTEN, nah * WEIT_OBEN) if positiv
+                             else (unten, oben))
+    himmel = HIMMEL_NAEHE_ANTEIL * unten if unten > 0 else None
     aus["band"] = [round(unten, 6), round(oben, 6)]
+    aus["band_weit"] = [round(weit_unten, 6), round(weit_oben, 6)]
+
+    def frei(i: int) -> bool:
+        return not ((trennhilfe is not None and trennhilfe[i])
+                    or (ausgeblendet is not None and ausgeblendet[i]))
+
+    def wert(i: int) -> float:
+        return float(naehe[i])
 
     def im_band(i: int) -> bool:
-        if trennhilfe is not None and trennhilfe[i]:
-            return False
-        if ausgeblendet is not None and ausgeblendet[i]:
-            return False
-        w = float(naehe[i])
-        return math.isfinite(w) and unten <= w <= oben
+        w = wert(i)
+        return frei(i) and math.isfinite(w) and unten <= w <= oben
 
-    besucht = [False] * n
-    stapel = [i for i in range(n) if soll[i] and im_band(i)]
-    for i in stapel:
-        besucht[i] = True
-    zahl = 0
-    while stapel:
-        i = stapel.pop()
-        zahl += 1
-        x, y = i % b, i // b
-        for j, ok in ((i - 1, x > 0), (i + 1, x < b - 1), (i - b, y > 0), (i + b, y < h - 1)):
-            if ok and not besucht[j] and im_band(j):
-                besucht[j] = True
-                stapel.append(j)
-    aus["n_bild"] = zahl
-    aus["anteil"] = round(zahl / n, 4)
+    def wachsen(start, darf) -> int:
+        besucht = [False] * n
+        stapel = list(start)
+        for i in stapel:
+            besucht[i] = True
+        zahl = 0
+        while stapel:
+            i = stapel.pop()
+            zahl += 1
+            x, y = i % b, i // b
+            for j, ok in ((i - 1, x > 0), (i + 1, x < b - 1), (i - b, y > 0),
+                          (i + b, y < h - 1)):
+                if ok and not besucht[j] and darf(i, j):
+                    besucht[j] = True
+                    stapel.append(j)
+        return zahl
+
+    kern = [i for i in range(n) if soll[i] and im_band(i)]
+    # DIE ALTE ZAHL (bis 312), zum Vergleich: nur im engen Band, zusammenhaengend.
+    n_band = wachsen(kern, lambda i, j: im_band(j))
+    boden = _bodenpunkte(naehe, b, h) if positiv else [False] * n
+
+    def stetig(i: int, j: int) -> bool:
+        w = wert(j)
+        if not (frei(j) and math.isfinite(w) and weit_unten <= w <= weit_oben):
+            return False
+        if boden[j] or (himmel is not None and w < himmel):
+            return False
+        gross = max(abs(w), abs(wert(i)))
+        return gross > 0 and abs(w - wert(i)) <= STUFE * gross
+
+    zahl = wachsen(kern, stetig) if positiv else n_band
+    aus.update(n_bild=zahl, anteil=round(zahl / n, 4), n_band=n_band,
+               anteil_band=round(n_band / n, 4))
     return aus
 
 

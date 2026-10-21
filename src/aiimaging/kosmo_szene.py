@@ -3435,7 +3435,9 @@ SATZ_RAHMT_ANDERS = "KI-BILD RAHMT ANDERS"
 def hausanteil_des_urteils(urteil) -> tuple:
     """``(grundlage, bild)`` eines Kameraurteils, je ``None``, wo nicht gemessen.
 
-    ``grundlage`` ist ``anteil_soll`` (gezaehlt an der Blender-Tiefe, dieselbe Zahl wie in
+    ``grundlage`` ist der Hausanteil der Bauwerksmaske (``haus_im_bild.anteil_grundlage`` mit
+    ``grundlage_aus: bauwerksmaske``, ohne Platte und Bestand, seit auf-20261021-312), sonst
+    ``anteil_soll`` (gezaehlt an der Blender-Tiefe, mit Platte, dieselbe Zahl wie in
     «Das Haus fuellt …»), ``bild`` ``haus_im_bild.anteil`` des GELIEFERTEN Bilds
     (:func:`urteil_fuer_umrisssaetze`). Bei randloser Soll-Silhouette (Innenansicht) beide
     ``None``: Dort ist jeder Bildpunkt «Haus», und die Zahl sagte nichts.
@@ -3449,7 +3451,13 @@ def hausanteil_des_urteils(urteil) -> tuple:
 
     geliefert = urteil_fuer_umrisssaetze(urteil)
     befund = geliefert.get("haus_im_bild") if isinstance(geliefert, dict) else None
-    return (zahl(urteil.get("anteil_soll")),
+    # DAS HAUS OHNE PLATTE (auf-20261021-312, B2): Mit Bauwerksmaske zaehlt die Grundlage das
+    # Haus allein; `anteil_soll` traegt die Platte mit (60 m: 13,4 % statt 11,6 %). Ohne Maske
+    # bleibt es `anteil_soll`.
+    eigen = urteil.get("haus_im_bild") if isinstance(urteil.get("haus_im_bild"), dict) else {}
+    grundlage = (eigen.get("anteil_grundlage") if eigen.get("grundlage_aus") == "bauwerksmaske"
+                 else urteil.get("anteil_soll"))
+    return (zahl(grundlage),
             zahl(befund.get("anteil")) if isinstance(befund, dict) else None)
 
 

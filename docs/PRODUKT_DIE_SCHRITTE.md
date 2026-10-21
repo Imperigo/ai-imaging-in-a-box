@@ -2244,3 +2244,17 @@ nachgestellten Gegenseite geprüft, am Mac noch nicht gesehen.
 **Viele gleiche Teile in einer Modelldatei (21.10.2026).** Ein Haus aus einzelnen Steinen hat rund zwanzigtausend davon; eine Modelldatei kann einen Stein einmal beschreiben und dazu eine Liste, wo er überall liegt. Blender und die 3D-Vorschau von Visbox lesen das schon. Nur die schnelle Rechnung, die vor dem Rendern die Grösse des Bauwerks aus der Datei liest, sah bis heute nur den einen Stein — die Kamera hätte das Haus zu nah gerahmt. Jetzt zählt sie alle Lagen mit. Ehrlich gesagt: an Testdateien geprüft; wie lange Blender für zwanzigtausend Steine braucht, ist nicht gemessen.
 
 **Die Statusantwort an Claude nennt die Fassung (21.10.2026).** Fragt Claude den Stand von Visbox ab, steht jetzt in einer eigenen Zeile, welche Fassung der Mac-App antwortet.
+
+**Ein Bild sagt, wenn es das Grundlagenbild nicht gesehen hat (21.10.2026).** Eine Variante schickt dem Bildmodell zwei
+Dinge: die Tiefe der Grundlage und ihr gerendertes Bild. Das Vorgabemodell kann das Bild aber gar nicht entgegennehmen —
+es malt nur nach der Tiefe, Material, Licht und Ausschnitt frei. Gemessen in sechs Läufen: Das Haus wurde mehrmals über
+die ganze Bildbreite gemalt. Bis jetzt stand im Ergebnis trotzdem einfach «geliefert». Jetzt steht beim Bild der Satz
+«KI-BILD OHNE GRUNDLAGENBILD» mit dem Grund. Ob eine Variante das Bild künftig wirklich sieht, ist eine Entscheidung des
+Owners. Zwei Wege sind vorbereitet: das Grundlagenbild als Start mitgeben, oder die Umgebung im Lauf festhalten.
+
+**Wie gross das Haus im Bild ist, zählt jetzt ehrlicher (21.10.2026).** An der Grundlage zählt nur noch das Haus, nicht
+die Geländeplatte darunter und nicht der Bestand daneben. Am KI-Bild wird die Fläche vom Haus aus «gewachsen», solange die
+geschätzte Entfernung stetig bleibt; Himmel, Boden und Hecken davor bleiben draussen. Die alte Zählung meldete bei einem
+breit gemalten Haus 15 % statt 43 %, darum kam der Hinweis «Ausschnitt anders» nie. Der Bestand zählt auch in der Prüfung
+der Form nicht mehr als Haus, sondern nur noch als Umgebung. Die Maske der Umgebung entsteht schon beim Rendern der
+Grundlage. Ehrlich gesagt: an nachgestellten Szenen geprüft; am Heim-PC noch nicht nachgemessen.

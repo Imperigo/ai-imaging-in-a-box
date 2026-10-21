@@ -2621,6 +2621,11 @@ def deckung_der_kamera(ki_png, grundbild_png) -> dict | None:
     return urteil if urteil.get("kanten_iou") is not None else None
 
 
+def _bestandsnamen(bestand) -> tuple:
+    """Die Knotennamen des Bestands (``kosmo_szene.bestand_in_glb``) — leer ohne Bestand."""
+    return tuple((bestand or {}).get("namen") or ()) if isinstance(bestand, dict) else ()
+
+
 def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | None:
     """Die Kontextmaske einer Kamera (Video-Befund L4-5): Vermerk fuers Urteil, Datei daneben.
 
@@ -2631,7 +2636,7 @@ def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | Non
     png = (bericht or {}).get("material_id_png")
     if not png:
         return None
-    namen = tuple((bestand or {}).get("namen") or ())
+    namen = _bestandsnamen(bestand)
     try:
         befund = maske_modul.kontextmaske_aus_lauf(png, bericht, bestand_namen=namen)
     except Exception as fehler:        # noqa: BLE001 — siehe Docstring
@@ -4287,7 +4292,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 if szene.get("umgebung"):
                     urteile[-1].update(_stimmungsmessung(szene, bericht, _maske_bauen(
                         bericht, gelaende_erwartet=gelaende_der_szene,
-                        gelaende_zusatz=_formgelaende_aus_bericht(bericht)).get("maske")))
+                        gelaende_zusatz=_formgelaende_aus_bericht(bericht),
+                        bestand_namen=_bestandsnamen(bestand)).get("maske")))
+                # DIE KONTEXTMASKE GEHOERT ZUR GRUNDLAGE (auf-20261021-313, B2): Sie liest nur
+                # den Material-ID-Pass, und eine Variante auf dieser Grundlage rechnet sie
+                # sonst erst im KI-Lauf. Dieselbe Datei und derselbe Vermerk wie dort.
+                kontext_grundlage = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand)
+                if kontext_grundlage is not None:
+                    urteile[-1]["kontext_maske"] = kontext_grundlage
                 bilder.append(urteile[-1]["bild_png"])
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
@@ -4348,10 +4360,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
 
             maskenbefund = _maske_bauen(
                 bericht, gelaende_erwartet=gelaende_der_szene,
-                gelaende_zusatz=_formgelaende_aus_bericht(bericht))
+                gelaende_zusatz=_formgelaende_aus_bericht(bericht),
+                # DER BESTAND IST NICHT DAS BAUWERK (auf-20261021-313, B1): 35,9 % der Maske.
+                bestand_namen=_bestandsnamen(bestand))
             # DIE KONTEXTMASKE (Video-Befund L4-5, 21.10.2026): wo Bestand, Umfeld und Splat im
-            # Bild stehen — neben der Bauwerksmaske, die sie NICHT aendert. Als Datei neben die
-            # Kamera, wenn es Kontext gibt; die Zahlen am Urteil. Noch kein Eingang ins Bildmodell.
+            # Bild stehen — der Bestand fehlt dafuer seit 313 in der Bauwerksmaske. Als Datei
+            # neben die Kamera, wenn es Kontext gibt; die Zahlen am Urteil. Noch kein Eingang
+            # ins Bildmodell.
             kontext_maske = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand)
             # DIE UMGEBUNG ZAEHLT NICHT ALS BAUWERK (auf-20261008-271): Ihre Bildpunkte
             # werden in der Pruefung ausgeblendet — nur, wenn es sie gibt; ohne Splat

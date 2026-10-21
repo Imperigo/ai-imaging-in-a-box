@@ -22,7 +22,9 @@ B, H = 40, 30
 def _szene(*, ki_naeher=False, baum=False, boden_nah=True):
     """Soll: Haus Spalten 18–21, Zeilen 12–15 (16 von 1200 Punkten, 1,3 %).
 
-    KI-Bild (Nähe, Disparität): Himmel 0,02; Haus 1,0–1,1. ``ki_naeher``: die KI malt das
+    KI-Bild (Nähe, Disparität): Himmel 0,02; Haus 1,0–1,1, stetig über die Spalten (bis
+    auf-20261021-312 sprang die Nähe hier von Zeile zu Zeile um 10 % — eine Fassade, die es
+    nicht gibt, und die der gewachsene Weg zu Recht an jeder Zeile trennt). ``ki_naeher``: die KI malt das
     Haus grösser, Spalten 12–27, Zeilen 6–17 (192 Punkte, 16 %) — sonst genau wie das Soll.
     ``baum``: ein Fleck in Hausnähe, aber nicht am Haus (Spalten 2–5, Zeilen 4–7).
     ``boden_nah``: Zeilen ab 24 sind Vordergrund, deutlich näher (2,0).
@@ -33,7 +35,7 @@ def _szene(*, ki_naeher=False, baum=False, boden_nah=True):
             soll.append(18 <= x <= 21 and 12 <= y <= 15)
             im_ki = (12 <= x <= 27 and 6 <= y <= 17) if ki_naeher else soll[-1]
             if im_ki:
-                naehe.append(1.0 + 0.1 * (y % 2))
+                naehe.append(1.0 + 0.1 * (x - 12) / 15)
             elif baum and 2 <= x <= 5 and 4 <= y <= 7:
                 naehe.append(1.02)
             elif boden_nah and y >= 24:

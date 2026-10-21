@@ -1,0 +1,60 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-317",
+ "art": "qa",
+ "beschreibung": "Gegenprobe Strang 'modus' (312 B1-B3, 313 B1/B2): der Satz KI-BILD OHNE GRUNDLAGENBILD, ob das Grundlagenbild mit vis.bildeingang wirklich ankommt (und Deckungswerte fuer die Schwelle), Hausanteil ohne Platte und stetig gewachsen gegen Nachzaehlung, Bestand ausserhalb der Bauwerksmaske und Kontextmaske bei 'Grundlage rendern'.",
+ "erstellt": "2026-10-21T20:30:00Z",
+ "rang": 3,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 312/313 (baue_glb), Platte 40x30 m; fuer (4) mit zwei Bestandsquadern wie 313 A. Keine echten Projektdaten."
+ },
+ "params": {
+  "befunde": [
+   "312 B1",
+   "312 B2",
+   "312 B3",
+   "313 B1",
+   "313 B2",
+   "313 B4"
+  ],
+  "einbau": [
+   "C125"
+  ],
+  "protokoll": "74 §207",
+  "folgt_auf": "auf-20261021-312",
+  "kameras": [
+   "sSE",
+   "s"
+  ],
+  "seeds": [
+   482913,
+   7,
+   11
+  ],
+  "laeufe": 10,
+  "neue_ki_laeufe": 8,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang 'modus' (Befunde 312 B1-B3, 313 B1/B2; Protokoll 74 §207, Einbau C125); die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) SATZ OHNE GRUNDLAGENBILD: Jeder KI-Lauf, dessen Bild anders gerechnet wurde als bestellt (heute jede Variante auf z-image-turbo ohne vis.bildeingang: bestellt image_edit, gerechnet txt2img), traegt in qa.verdict.hinweise den Satz 'KI-BILD OHNE GRUNDLAGENBILD, Kamera ...: bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte ...' mit dem Grund aus dem Register; im befund.json je Kamera modus.satz. Das Bild selbst rechnet bitgleich wie vorher; angewandt.modus bleibt in seiner Form. (b) BESTAND NICHT IN DER BAUWERKSMASKE: Material 'Bestand' und die Bestandsknoten der glb (extras.role 'existing') zaehlen nicht mehr als Bauwerk, sondern stehen in maskenbefund.bestand_namen und weiter in der Kontextmaske. Mit Bestand aendern sich darum anteil_bauwerk, rho_maske, geom_iou, die Seedwahl, qa.ausserhalb_umriss_anteil und der Hausanteil; ohne Bestand ist alles wie vorher. (c) KONTEXTMASKE BEI 'GRUNDLAGE RENDERN': Auch der Lauf ohne KI-Schritt (vis.skip) schreibt <kamera>__kontext_maske.png (wenn es Kontext gibt) und kontext_maske am Kameraurteil im Befund. (d) HAUSANTEIL: qa.haus_anteil_grundlage zaehlt mit Bauwerksmaske nur das Haus (ohne Platte, ohne Bestand; haus_im_bild.grundlage_aus 'bauwerksmaske'); erwartet bei 60 m etwa 0,115 statt 0,134. qa.haus_anteil_bild ist neu 'stetig gewachsen' (verfahren 'stetig_gewachsen_vom_haus_ohne_boden_und_himmel'): vom Kern der Bauwerksmaske ueber Nachbarn mit hoechstens 3 % Naehesprung im weiten Band [0,5 x fernes Fuenftel, 1,6 x nahes Zwanzigstel], ohne Himmel und ohne Boden (Steigung der Naehe je Zeile ab 0,15 %). Die alte Zahl steht daneben als haus_im_bild.n_band/anteil_band, dazu band_weit. Der Satz 'KI-BILD RAHMT ANDERS' (Faktor 2, 5 Punkte, unveraendert) kommt darum oefter. Der Satz 'Das Haus fuellt nur ... %' und die 20-%-Regel lesen weiter anteil_soll (mit Platte). (e) Deckung: nur der Herkunftssatz der Schwelle 0,30 ist neu (bis auf-20261021-317). VORBEREITUNG wie 312: Bruecke als Client (POST /bruecke/jobs, /approve nur der eigenen Auftraege), job.json und nvidia-smi im Takt 0,25 s. Geometrie synthetisch aus tools/make_test_glb.py (baue_glb, Hauptbau 12x9x15, Anbau 7x6x6, Dachaufbau 6x4x2,5, Platte 40x30); fuer (4) dieselbe Datei mit den zwei Bestandsquadern wie 313 A (Material 'Bestand', extras.role 'existing', 20x10x12 und 15x8x9 m hinter dem Haus). Szene wie 312: cameras 'auto', richtungen ['sSE'], samples 64, vis.backbone z-image-turbo, vis.guete 'voll', render.resolution [960,600], render.environment {preset 'mittag'}, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. K = ohne Messschalter. WAS ZU TUN IST, in dieser Reihenfolge: (1) DER SATZ: auf einer Grundlage 'normal' (Abstand wie 312 L3) K mit Seed 482913: aus render-result.json qa.verdict.hinweise den Satz KI-BILD OHNE GRUNDLAGENBILD woertlich, angewandt.modus woertlich, im befund.json modus je Kamera woertlich. Erwartet: Satz da, angewandt.modus ohne Feld 'satz'. (2) RECHNET DAS GRUNDLAGENBILD WIRKLICH: auf derselben Grundlage, Seed 482913, drei weitere KI-Laeufe: BI40 = vis.bildeingang 0.4; BI55 = vis.bildeingang 0.55; M2 = vis.umriss_halten 'im_lauf' und vis.material_vorne true mit Material-Knoten Sichtbeton (wie 309). Je Lauf: angewandt.modus und angewandt.bildeingang woertlich (erwartet bei BI40/BI55 gerechnet 'bild_und_tiefe', abweichung false, und KEIN Satz OHNE GRUNDLAGENBILD; bei M2 weiter txt2img mit Satz), sha256 des KI-Bilds gegen K (muessen verschieden sein), qa_je_kamera[].deckung, befund.deckung.urteil, geom_iou, qa.haus_anteil_bild, VRAM-Spitze; dazu Augenurteil je Bild in zwei Fragen: 'Form wie die Grundlage (Umriss, Baukoerper, Ausschnitt)?' ja/teils/nein und 'Sichtbeton/Material?' ja/nein. Zurueck: Tabelle K/BI40/BI55/M2 mit diesen Werten — daraus setzt der Kern die Deckungsschwelle (0,30, heute gesetzt): wo liegt die Kanten-IoU der Bilder mit 'Form wie die Grundlage: ja' gegen 'nein'. (3) HAUSANTEIL wie 312: Grundlage 60 m (Abstand wie 312 L1, {art fest}), K mit Seeds 482913, 7 und 11 (3 KI-Laeufe), dazu K normal aus (1). Je Lauf: qa.haus_anteil_grundlage, qa.haus_anteil_bild, haus_im_bild {anteil, n_bild, n_soll, n_band, anteil_band, band, band_weit, grundlage_aus} woertlich, Satz KI-BILD RAHMT ANDERS ja/nein; Nachzaehlung wie 312 (Umriss des Hauses von Hand an 10/20-px-Raster, ohne Platte, Boden, Hecken, Nachbarbauten; am Cycles-Bild mit Material-ID gegengeprueft). Erwartet: haus_anteil_grundlage auf 1 % genau gleich der Material-ID-Zaehlung des Hauses; haus_anteil_bild auf ein Fuenftel genau gleich der Nachzaehlung; RAHMT ANDERS genau dort, wo die Nachzaehlung mindestens doppelt so gross ist wie die Grundlage. (4) BESTAND: Szene wie 313 A (eine Kamera 's', vis.guete 'vorschau', Seed 482913), zuerst 'Grundlage rendern' (vis.skip), dann 'Variante erzeugen' auf dieser Grundlage. Grundlage: im Ausgabeordner s__kontext_maske.png vorhanden ja/nein, kontext_maske im befund.json woertlich (erwartet n_kontext etwa 28252, quellen bestand). Variante: maskenbefund.bauwerk_namen und bestand_namen woertlich (erwartet ohne die zwei Bestandsknoten bzw. mit ihnen), anteil_bauwerk (erwartet etwa 0,0875 statt 0,1366), rho_maske, geom_iou, kontext_maske (unveraendert gegen 313 A), Sichtpruefung der Kontextmaske. EINBAU — was in die Software kommt und hier bestaetigt werden soll: (a)-(d) sind im Kern gebaut (C125, gebaut, am Geraet unbestaetigt); diese Messung bestaetigt sie am Heim-PC. Die Deckungsschwelle 0,30 bleibt, bis (2) eine Trennung zeigt; dann setzt der Kern sie aus dieser Tabelle. Ob eine Variante vorgabemaessig das Grundlagenbild sieht (vis.bildeingang oder M2 als Vorgabe), entscheidet der Owner — diese Messung macht nichts zur Vorgabe. WAS ZURUECKKOMMT: ein Ergebnis auftraege/ergebnisse/auf-20261021-317.json mit je Teil (1)-(4) den Zahlen und Saetzen woertlich, eine Tafel T1 (960 px, PNG): K | BI40 | BI55 | M2 auf derselben Grundlage mit Grundbild links, und T2: die Nachzaehlung aus (3) mit Hand- und Schaetzwert; Befunde B1 ... und ein einbau_urteil je Punkt (a)-(d) (bestaetigt ja/nein). NICHT: keine Vorgabe, keinen Registerwert, keine dauerhafte Umgebungsvariable aendern; vis.bildeingang und M2 bleiben Messwege; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein qwen-image-2.1, keine anderen Gewichte, kein Download; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; ins Repo nur Ergebnis, T1 und T2 (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo und das Union-ControlNet Apache-2.0 (Modellkarten), Depth Anything V2 Small Apache-2.0; Blender nur als Prozess (GPL, Regel 2).",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU und Last vor jedem Lauf.",
+  "(1) K: Satz KI-BILD OHNE GRUNDLAGENBILD woertlich, angewandt.modus und befund modus je Kamera woertlich.",
+  "(2) Tabelle K/BI40/BI55/M2: angewandt.modus, angewandt.bildeingang, sha256 gegen K, deckung, deckung.urteil, geom_iou, haus_anteil_bild, VRAM-Spitze, Augenurteil Form und Material; Tafel T1.",
+  "(3) Je Lauf 60 m (482913, 7, 11) und normal: haus_anteil_grundlage, haus_anteil_bild, haus_im_bild woertlich, RAHMT ANDERS ja/nein, Nachzaehlung; Tafel T2.",
+  "(4) Grundlage: Kontextmaske Datei und Befund; Variante: bauwerk_namen, bestand_namen, anteil_bauwerk, rho_maske, geom_iou, kontext_maske.",
+  "EINBAU: je Punkt (a)-(d) bestaetigt ja/nein mit Beleg aus render-result.json bzw. befund.json — damit wird C125 am Heim-PC bestaetigt; nichts wird Vorgabe."
+ ]
+}

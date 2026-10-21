@@ -8665,7 +8665,8 @@ aus der Tiefe, die ein Programm im Bild liest: was so nah ist wie das Haus und d
 Ausschnitt manchmal selbst — «näher» oder «weiter» als bestellt. Dann füllt das Haus in der Grundlage 3 % und im KI-Bild
 17 %, und eine einzige Zahl spräche über ein Bild, das man nicht sieht. *Im Projekt:* seit dem 21.10.2026 im Ergebnis
 jedes Bildes und in der grossen Ansicht des Verlaufs als Zeile «Haus im Bild», mit dem Satz «KI-BILD RAHMT ANDERS» und
-der Marke «Ausschnitt anders», wenn eine Zahl mindestens doppelt so gross ist wie die andere (gesetzt, nicht gemessen).
+der Marke «Ausschnitt anders», wenn eine Zahl mindestens doppelt so gross ist wie die andere (gesetzt, nicht gemessen). Seit
+Auftrag 312: An der Grundlage zählt nur das Haus, ohne Geländeplatte und ohne Bestand; am KI-Bild wird «stetig gewachsen».
 
 **Abgeschnittener Wert (Geometrie 0.0)** — Eine Zahl, die nicht unter eine Grenze fallen darf und darum dort festgehalten
 wird, auch wenn die Rechnung weniger ergäbe. *Im Projekt:* Die Geometrie-Zahl vergleicht, ob das KI-Bild die Tiefe gleich
@@ -8690,8 +8691,10 @@ des ersten Bildes seine eigene Grundlage veraltet.
 
 **Kontextmaske** — Eine Liste mit einem Ja/Nein je Bildpunkt: *hier steht die Umgebung* — Nachbarbauten (Bestand), Bäume
 und Strassenmöbel (Umfeld) oder eine Aufnahme der Umgebung (Splat). Sie entsteht aus demselben Bild wie die
-Bauwerksmaske, ändert diese aber nicht. *Im Projekt:* am Heim-PC je Kamera als Datei neben dem Bild; sie soll später dem
-Bildmodell sagen, wo der Kontext steht (Video-Befund L4-5).
+Bauwerksmaske. Seit dem 21.10.2026 fällt der Bestand aus der Bauwerksmaske heraus und steht nur hier (er machte in einer
+Messung 36 % der Bauwerksmaske aus, und die Prüfung lobte das Bild für den Nachbarn). *Im Projekt:* am Heim-PC je Kamera
+als Datei neben dem Bild, bei «Grundlage rendern» wie bei einer Variante; sie soll später dem Bildmodell sagen, wo der
+Kontext steht (Video-Befund L4-5).
 
 **Originalauflösung** — Ein Bild so gross, wie es gerechnet wurde, Bildpunkt für Bildpunkt — nicht das, was der
 Bildschirm gerade davon zeigt. Ein Ausschnitt vom Bildschirm hat oft nur einen Bruchteil der Bildpunkte; hochgezogen auf
@@ -8744,10 +8747,27 @@ geteilt durch die Zahl, die in mindestens einem Kante sind (1 = gleich, 0 = nich
 dafür, ob die KI auf einer Grundlage dieselbe Form gemalt hat (Feld `deckung` je Kamera, Schwelle 0,30 gesetzt, nicht
 gemessen).
 
+**KI-Bild ohne Grundlagenbild** — Ein Bild, bei dem das Bildmodell das gerenderte Bild der Grundlage (das Cycles-Bild)
+gar nicht zu sehen bekam, obwohl es mitgeschickt war. Gebunden hat dann nur die Tiefenkarte: Die Form steht grob, Material,
+Licht und Ausschnitt malt das Modell frei. *Wozu der Name:* Bestellt war eine Bearbeitung des Grundlagenbilds
+(«image-edit»), gerechnet wurde ein Bild aus Text und Tiefe («txt2img») — und das Ergebnis sagte bis zum 21.10.2026 nur
+«geliefert». *Im Projekt:* Das Vorgabemodell Z-Image Turbo hat keinen Eingang für ein Ausgangsbild; jeder solche Lauf trägt
+jetzt den Satz «KI-BILD OHNE GRUNDLAGENBILD» mit dem Grund. Gemessen in den Heim-PC-Aufträgen 312 und 313 (alle sechs
+KI-Läufe).
+
+**Stetig gewachsen (Hausfläche im KI-Bild)** — Ein Rechenweg, der vom sicher bekannten Teil des Hauses aus Bildpunkt um
+Bildpunkt weitergeht, solange sich die geschätzte Entfernung nur wenig ändert — so wie eine Fassade sich stetig vom
+Betrachter entfernt, während an der Kante zum Himmel oder zu einer Hecke die Entfernung springt. Boden wird
+ausgelassen, weil er Zeile für Zeile näher kommt, eine Wand nicht. *Wozu:* Malt die KI das Haus grösser, reichen seine
+Flügel weit vor und zurück; die frühere Zählung nahm nur, was gleich weit weg war wie die Mitte, und meldete 15 % statt
+43 %. *Im Projekt:* `baumasse.haus_im_bild` seit dem 21.10.2026; die alte Zahl steht zum Vergleich daneben. Die Grenzen sind
+gesetzt, nicht gemessen.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §207): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |
 | 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |
 | 2026-10-21 | Ergaenzt aus der Deckung (Protokoll 74 §199): **Kanten-IoU**; **Deckungsgleiche Varianten** um die Form ergaenzt |

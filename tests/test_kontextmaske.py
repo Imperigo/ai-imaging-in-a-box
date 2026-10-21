@@ -1,11 +1,13 @@
 """Die Kontextmaske (Video-Befund L4-5, 21.10.2026) — synthetisch, ohne Blender.
 
 Geprüft wird, was ``maske.kontextmaske`` verspricht: drei Quellen (Splat, Umfeld, Bestand)
-mit Namen und Zählung, ``None`` statt einer leeren Maske, wenn der Entwurf allein steht, und
-dass die Bauwerksmaske dabei unverändert bleibt — ein Bestandskörper zählt dort weiter als
-Bauwerk, bis die Messung am Heim-PC etwas anderes sagt.
+mit Namen und Zählung, ``None`` statt einer leeren Maske, wenn der Entwurf allein steht. Seit
+auf-20261021-313 (B1: Bestand 35,9 % der Bauwerksmaske) fällt der Bestand aus der Bauwerksmaske
+und steht nur noch in der Kontextmaske; seit 313 B2 entsteht sie auch bei «nur Grundlage».
 """
 from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 
@@ -65,12 +67,45 @@ def test_kein_wortteil_bestandsaufnahme_ist_kein_koerper():
     assert maske.ist_bestand("Bestand.003")
 
 
-def test_die_bauwerksmaske_bleibt_unveraendert():
-    """Der Bestandskörper zählt in der Bauwerksmaske weiter als Bauwerk — das ändert erst eine Messung."""
+def test_der_bestand_faellt_aus_der_bauwerksmaske_das_umfeld_wie_bisher():
+    """313 B1: Bestand ist Kontext, nicht Entwurf — er steht in der Kontextmaske, nicht im Bauwerk."""
     b = maske.bauwerksmaske(FARBEN, TABELLE)
-    assert b["maske"][5] is True and b["maske"][6] is True     # Bestand: weiter Bauwerk
+    assert b["maske"][:3] == [True] * 3                        # das Bauwerk bleibt
+    assert b["maske"][5] is False and b["maske"][6] is False   # Bestand: draussen
     assert b["maske"][7] is False                              # Umfeld: wie bisher draussen
     assert b["maske"][8] is False                              # Splat: wie bisher draussen
+    assert b["bestand_namen"] == ["Bestand"] and "Bestand" not in b["bauwerk_namen"]
+    assert b["n_bauwerk"] == 3
+    k = maske.kontextmaske(FARBEN, TABELLE)
+    assert k["maske"][5] and k["maske"][6]
+
+
+def test_bestandsknoten_nach_namen_fallen_aus_der_bauwerksmaske_wie_in_313():
+    """313 A: die Knoten heissen wie Bauteile (IfcBuildingElementProxy_Bestand_A) — nur die
+    Namen aus der glb (``bestand_namen``) erkennen sie."""
+    tab = _tabelle(("IfcWall_Hauptbau", ROT, "objekt"), ("IfcSite_Boden", GRUEN, "objekt"),
+                   ("IfcBuildingElementProxy_Bestand_A", BLAU, "objekt"))
+    farben = [ROT, ROT, BLAU, GRUEN]
+    ohne = maske.bauwerksmaske(farben, tab)
+    assert ohne["maske"] == [True, True, True, False]          # ohne Namen nicht erkannt
+    mit = maske.bauwerksmaske(farben, tab,
+                              bestand_namen=("IfcBuildingElementProxy_Bestand_A",))
+    assert mit["maske"] == [True, True, False, False]
+    assert mit["bestand_namen"] == ["IfcBuildingElementProxy_Bestand_A"]
+    assert mit["gelaende_erkannt"] is True
+
+
+def test_der_maskenweg_des_abholers_reicht_die_bestandsnamen_durch(tmp_path):
+    from aiimaging import abholer, bildschreiben
+    tab = _tabelle(("IfcWall_Hauptbau", ROT, "objekt"), ("IfcSite_Boden", GRUEN, "objekt"),
+                   ("Halle_Nord", BLAU, "objekt"))
+    png = tmp_path / "material_id.png"
+    bildschreiben.schreibe_farb_png(png, [ROT, BLAU, GRUEN, SCHWARZ], 2, 2)
+    bericht = {"material_id_png": str(png), "material_id_tabelle": tab}
+    befund = abholer._maske_bauen(bericht, bestand_namen=abholer._bestandsnamen(
+        {"namen": ["Halle_Nord"]}))
+    assert befund["maske"] == [True, False, False, False]
+    assert abholer._bestandsnamen(None) == () and abholer._bestandsnamen({}) == ()
 
 
 def test_farbkollision_zwischen_quellen_ist_ein_fehler():
@@ -119,3 +154,34 @@ def test_abholer_ohne_kontext_ohne_datei_und_ohne_pass_nichts(tmp_path):
     assert abholer.kontextmaske_der_kamera({}, tmp_path, "nNW") is None
     kaputt = abholer.kontextmaske_der_kamera({"material_id_png": str(png), "material_id_tabelle": []}, tmp_path, "x")
     assert kaputt["gemessen"] is False and "MaskeError" in kaputt["grund"]
+
+
+def test_nur_grundlage_traegt_die_kontextmaske_313_b2(tmp_path):
+    """313 B2: Die Kontextmaske liest nur den Material-ID-Pass und gehört zur Grundlage — sie
+    entsteht jetzt auch bei «Grundlage rendern», mit Datei und Vermerk wie im KI-Lauf."""
+    import json
+
+    from aiimaging import abholer, bildschreiben
+    from test_kettenlauf_26august import MINI_PNG, _auftragsordner, _kette, _lauf
+
+    ordner = _auftragsordner(tmp_path / "a", skip=True)
+    _protokoll, attrappen = _kette(tmp_path)
+    alt = attrappen["_multipass"]
+
+    def multipass(glb, aus, **kw):
+        bericht = alt(glb, aus, **kw)
+        png = Path(aus) / "material_id.png"
+        bildschreiben.schreibe_farb_png(png, FARBEN, 5, 2)
+        schoen = Path(aus) / "schoen.png"
+        schoen.write_bytes(MINI_PNG)
+        return dict(bericht, material_id_png=str(png), material_id_tabelle=TABELLE,
+                    beauty_png=str(schoen))
+
+    antwort = _lauf(tmp_path, ordner, dict(attrappen, _multipass=multipass))
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    urteile = [json.loads(p.read_text(encoding="utf-8"))
+               for p in (tmp_path / "aus").rglob("urteil.json")]
+    assert urteile
+    for u in urteile:
+        km = u["urteil"]["kontext_maske"]
+        assert km["n_kontext"] == 4 and km["datei"].endswith("__kontext_maske.png")
