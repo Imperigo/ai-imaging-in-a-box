@@ -110,7 +110,16 @@ import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke, istVorschau } from './GueteMarke';
-import { EinzelbildGross, HauptbildAbzeichen, RenderVerlauf, type EinzelbildArt } from './RenderVerlauf';
+import { EinzelbildGross, HauptbildAbzeichen, LaufGross, RenderVerlauf, type EinzelbildArt, type GrossSchalter } from './RenderVerlauf';
+import {
+  fruehereLaeufeMitBild,
+  GROSS_BEI_FERTIG_PARAM,
+  grossBeiFertigAmKnoten,
+  grossBeiFertigWirksam,
+  useGrossSteuerung,
+  laufKartenSchluessel,
+  sollGrossOeffnen,
+} from './grossansicht';
 import { MODELL_3D_ZUSATZ, ModellKnotenKoerper } from './ModellKnoten';
 // Bauplan «Neue Knoten» (Blätter 31–33): Stimmung, Kamera, Oberfläche, Material, Farbpalette.
 import { STIMMUNG_KOERPER_H, StimmungKoerper } from './StimmungKnoten';
@@ -452,6 +461,16 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
  * damit bei ihren 110 px, und der Knoten waechst nicht.
  */
 export const LIZENZ_ZEILE_H = 16;
+
+/**
+ * Owner-Entscheid L4-18 = A (21.10.2026): unter dem Bild steht seither der SATZ
+ * «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung»
+ * statt zweier Wörter. Bei 196 px Innenbreite des Render-Knotens sind das bis
+ * drei Zeilen der Vorbehaltsklasse: 3 x 14,2 = 42,6 px, eingetragen 44. Das Bild
+ * gibt die Hoehe ab (110 → 66 px), der Knoten waechst nicht (Blatt «Lizenz-Satz
+ * am Bild»). `LIZENZ_ZEILE_H` bleibt fuer die einzeilige Zeile «Umgebung fehlt».
+ */
+export const LIZENZ_SATZ_H = 44;
 
 /**
  * Entscheid 68 / E174 (Verlauf am Render-Knoten): so viel kommt in der Zeile
@@ -1907,6 +1926,29 @@ export function NodeCanvas({
       };
     })
     .filter((k): k is NonNullable<typeof k> => k !== null);
+  // L4-15 (Blatt «Grossansicht und Vergleich» C): «Kuratieren» kennt die Laeufe — jeder fruehere Lauf mit Bild ist
+  // eine eigene Karte (Schluessel `laufKartenSchluessel`), neben der Karte des Knotens fuer den aktuellen Lauf. Vorher
+  // war es eine Karte je Knoten, und wer auf einer Grundlage drei Varianten rechnete, sah nur die letzte.
+  const laufKarten: KuratierKartenDaten[] = graph.nodes
+    .filter((n) => n.typ === 'render')
+    .flatMap((n) =>
+      fruehereLaeufeMitBild(laeufe[n.id], verlauf[n.id]).flatMap((l) => {
+        const quelle = quelleAusLauf(l);
+        if (!quelle) return [];
+        const schluessel = laufKartenSchluessel(n.id, l.jobId!);
+        const auftrag = auswertung?.renderAuftraege.get(n.id);
+        return [
+          {
+            node: n,
+            schluessel,
+            ...(l.laufNummer !== undefined ? { laufNummer: l.laufNummer } : {}),
+            quelle,
+            kur: kuration[schluessel] ?? { markiert: false, verworfen: false },
+            ...(auftrag ? { auftrag } : {}),
+          },
+        ];
+      }),
+    );
   const aufnahmeKarten: KuratierKartenDaten[] = graph.nodes
     .filter((n) => n.typ === 'aufnahme')
     .map((n) => {
@@ -1919,7 +1961,7 @@ export function NodeCanvas({
       };
     })
     .filter((k): k is NonNullable<typeof k> => k !== null);
-  const kuratierKarten: KuratierKartenDaten[] = [...renderKarten, ...aufnahmeKarten];
+  const kuratierKarten: KuratierKartenDaten[] = [...renderKarten, ...laufKarten, ...aufnahmeKarten];
   const toggleVergleich = (nodeId: string) =>
     setVergleichAuswahl((sel) => {
       if (sel.includes(nodeId)) return sel.filter((id) => id !== nodeId);
@@ -3623,6 +3665,8 @@ function NodeKoerper({
   const [einzelbild, setEinzelbild] = useState<EinzelbildArt | null>(null);
   // Entscheid 117a (W-4, Blatt 35): KI-Bild und Grundbild gross, mit dem Umschalter.
   const [bildPaarOffen, setBildPaarOffen] = useState(false);
+  // L4-14 (Blatt «Grossansicht und Vergleich» A/B): der gezeigte Lauf gross, ohne Grundbild.
+  const [laufGrossOffen, setLaufGrossOffen] = useState(false);
   const param = (feld: string, wert: string | number | boolean) => {
     try {
       runCommand('vis.nodeParametrieren', { graphId, nodeId: node.id, params: { [feld]: wert } });
@@ -3630,6 +3674,25 @@ function NodeKoerper({
       meldeFehler(err);
     }
   };
+  // L4-14 B: mit Schalter oeffnet die grosse Ansicht von selbst, wenn DIESER Knoten den Uebergang «laeuft → fertig»
+  // sieht — einmal, und nur, wenn kein anderes Fenster offen ist. Ab Werk aus (`grossBeiFertigAmKnoten`).
+  const grossSchalter: GrossSchalter = {
+    an: grossBeiFertigAmKnoten(node.params),
+    setzen: (an) => param(GROSS_BEI_FERTIG_PARAM, an),
+  };
+  // Owner-Entscheid 21.10.2026: im Praesentationsmodus (Claude oder Kosmo bedient) oeffnet sie ohne Schalter.
+  const praesentation = useGrossSteuerung((s) => s.praesentation);
+  const statusVorher = useRef<string | undefined>(lauf?.status);
+  useEffect(() => {
+    const vorher = statusVorher.current;
+    statusVorher.current = lauf?.status;
+    if (node.typ !== 'render') return;
+    if (!sollGrossOeffnen(vorher, lauf?.status, Boolean(lauf?.jobId && lauf.bild), grossBeiFertigWirksam(node.params, praesentation))) return;
+    if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
+    if (lauf?.grundbild) setBildPaarOffen(true);
+    else setLaufGrossOffen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lauf?.status, lauf?.jobId]);
   // Bug T4a: ein Node OHNE `params` (Hand-Edit/Fremd-Import/Yjs-Merge von
   // einem anderen Stand) darf die Station nie abstürzen lassen — fehlende
   // Parameter zählen wie leere/Default-Werte (Wurzel-Fix in derive/visgraph.ts
@@ -4125,7 +4188,7 @@ function NodeKoerper({
                 <div
                   className={`vis-hauptbild${bildPaar ? ' vis-hauptbild--paar' : ''}${bildPaar && bildPaar.ansicht !== 'nur-grundbild' && istVorschau(lauf) ? ' vis-hauptbild--vorschau' : ''}`}
                   data-testid="render-hauptbild"
-                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
+                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_SATZ_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
                   {...(bildPaar
                     ? {
                         'data-ansicht': bildPaar.ansicht,
@@ -4143,7 +4206,21 @@ function NodeKoerper({
                           }
                         },
                       }
-                    : {})}
+                    : {
+                        /* L4-14: auch ohne Grundbild zeigt ein Klick das Bild gross (vorher nur ueber den Verlauf). */
+                        role: 'button',
+                        tabIndex: 0,
+                        'aria-label': 'Bild gross anzeigen',
+                        onPointerDown: (e: ReactPointerEvent) => e.stopPropagation(),
+                        onClick: () => setLaufGrossOffen(true),
+                        onKeyDown: (e: ReactKeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setLaufGrossOffen(true);
+                          }
+                        },
+                      })}
                 >
                   {bildPaar?.ansicht === 'nebeneinander' && lauf.grundbild ? (
                     <span className="vis-bildpaar-reihe">
@@ -4200,6 +4277,17 @@ function NodeKoerper({
                     ansicht={bildAnsicht}
                     onAnsicht={(a) => param(ANSICHT_PARAM, a)}
                     onClose={() => setBildPaarOffen(false)}
+                    schalter={grossSchalter}
+                  />
+                )}
+                {laufGrossOffen && !lauf.grundbild && (
+                  <LaufGross
+                    reihe={verlauf}
+                    /* Nur zum Anzeigen: der Knoten haelt eine schmalere Form desselben Laufs. */
+                    lauf={lauf as unknown as VerlaufEintrag}
+                    hauptJobId={lauf.jobId}
+                    onClose={() => setLaufGrossOffen(false)}
+                    schalter={grossSchalter}
                   />
                 )}
                 {/* P-LIZENZMARKE Schritt 2 (E154 (4)): «Lizenz offen» direkt
@@ -4348,6 +4436,7 @@ function NodeKoerper({
                 hauptJobId={status === 'fertig' ? lauf?.jobId : undefined}
                 offen={params['verlaufOffen'] === true}
                 onUmschalten={() => param('verlaufOffen', params['verlaufOffen'] !== true)}
+                schalter={grossSchalter}
               />
             )}
           </Zeile>

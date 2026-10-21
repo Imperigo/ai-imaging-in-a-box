@@ -189,7 +189,7 @@ function AufsPlakatStufe2() {
             <span className="visisl-render-titel">Render (fertig)</span>
             {/* P-LIZENZMARKE Schritt 2 (E154 (4)): die Marke neben «Aufs
                 Blatt», der Grund in der Kurzhilfe. Sperrt nichts. */}
-            <LizenzOffenMarke lizenz={lauf} testid={`island-aufs-plakat-lizenz-offen-${n.id}`} />
+            <LizenzOffenMarke lizenz={lauf} testid={`island-aufs-plakat-lizenz-offen-${n.id}`} form="kurz" />
             <KButton
               size="touch"
               tone="quiet"

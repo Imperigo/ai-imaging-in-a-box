@@ -735,7 +735,8 @@ export const BILDWERKZEUG_TEXTE: Record<Bildwerkzeug, { readonly name: string; r
   // formtreue Strecke bleibt bei der Vorgabe.
   'qwen-image-2.1': {
     name: 'Qwen-Image 2.1',
-    hinweis: 'Qwen-Image 2.1 — Lizenz noch offen, keine Tiefenführung',
+    // L4-18 = A (21.10.2026): derselbe Satz wie am Bild — Wettbewerbsbilder mit Z-Image Turbo.
+    hinweis: 'Lizenz offen — nicht für Wettbewerb oder Veröffentlichung · keine Tiefenführung',
   },
 };
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { KIcon, useHerkunft, useOverlaySchliessen, zEbeneLeiter } from '@kosmo/ui';
+import { KCheckbox, KIcon, KTabs, KTooltip, useHerkunft, useOverlaySchliessen, zEbeneLeiter } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, gueteZusatz, istVorschau } from './GueteMarke';
 import { LizenzOffenMarke } from './LizenzMarke';
@@ -20,7 +20,21 @@ import {
   type LaufUrteil,
   type VerlaufEintrag,
 } from './render-verlauf';
+import {
+  DECKUNG_HILFE,
+  DECKUNG_UNGEMESSEN_SATZ,
+  GROSS_BEI_FERTIG_HILFE,
+  GROSS_BEI_FERTIG_NAME,
+  grundlageSchluessel,
+  grundlagenZusatz,
+  gruppierteReihe,
+  laeufeDerGrundlage,
+  PRUEFUNG_AUF,
+  PRUEFUNG_HILFE,
+  PRUEFUNG_ZU,
+} from './grossansicht';
 import './vis-visual.css';
+import './vis-grossansicht.css';
 
 /**
  * Entscheid 68 / E174 — der Verlauf am Render-Knoten (Vorlage: Entwurfsblatt
@@ -96,6 +110,7 @@ export function RenderVerlauf({
   hauptJobId,
   offen,
   onUmschalten,
+  schalter,
 }: {
   /** Neuestes zuerst (`verlaufReihe`). */
   reihe: readonly VerlaufEintrag[];
@@ -108,9 +123,15 @@ export function RenderVerlauf({
   offen?: boolean;
   /** Der Pfeil im Kopf: auf- bzw. zuklappen (am Knoten: Parameter `verlaufOffen`). */
   onUmschalten?: () => void;
+  /** L4-14 B: der Schalter «bei fertig gross oeffnen» in der grossen Ansicht (Knoten-Parameter). */
+  schalter?: GrossSchalter;
 }) {
   const [offenJob, setOffenJob] = useState<string | null>(null);
   const n = reihe.length;
+  // L4-15 (Blatt «Grossansicht und Vergleich» C): die Daumen nach Grundlage, neueste Grundlage links. Das Hauptbild
+  // (der neueste Lauf) bleibt vorn — es gehoert zur neuesten Grundlage.
+  const anzeige = gruppierteReihe(reihe);
+  const gruppenZusatz = grundlagenZusatz(reihe);
   const zu = offen === false;
   const pfeil = onUmschalten ? (
     <button
@@ -125,7 +146,7 @@ export function RenderVerlauf({
       {zu ? '▸ aufklappen' : '▾ zuklappen'}
     </button>
   ) : null;
-  const offenIndex = offenJob === null ? -1 : reihe.findIndex((e) => e.jobId === offenJob);
+  const offenIndex = offenJob === null ? -1 : anzeige.findIndex((e) => e.jobId === offenJob);
   // Faellt der gezeigte Lauf aus der Reihe (ein neuer Lauf kam dazu, und er
   // war der fuenfte), schliesst die Ansicht, statt einen anderen zu zeigen.
   useEffect(() => {
@@ -139,7 +160,7 @@ export function RenderVerlauf({
         <div className="vis-verlauf-kopf vis-verlauf-kopf--zu">
           <span className="vis-verlauf-titel">VERLAUF</span>
           <span className="vis-verlauf-zusatz" data-testid="render-verlauf-anzahl">
-            {n} Läufe
+            {n} Läufe{gruppenZusatz}
           </span>
           {pfeil}
         </div>
@@ -155,12 +176,13 @@ export function RenderVerlauf({
             Kopf (26 px, `overflow: hidden`) ihn nie abschneidet. */}
         {pfeil && <>{pfeil} </>}
         <span className="vis-verlauf-zusatz">
-          die letzten {n} Läufe · neuester links
+          {gruppenZusatz ? `die letzten ${n} Läufe${gruppenZusatz}` : `die letzten ${n} Läufe · neuester links`}
         </span>
       </div>
       <div className="vis-verlauf-reihe" data-anzahl={n}>
-        {reihe.map((e, i) => {
-          const nummer = laufNummerVon(e, i, n);
+        {anzeige.map((e, i) => {
+          const nummer = laufNummerVon(e, reihe.indexOf(e), n);
+          const neueGrundlage = i > 0 && grundlageSchluessel(anzeige[i - 1]!) !== grundlageSchluessel(e);
           const urteil = laufUrteil(e.qa);
           const uhrzeit = uhrzeitText(laufZeit(e));
           const istHaupt = i === 0 && e.jobId === hauptJobId;
@@ -168,7 +190,7 @@ export function RenderVerlauf({
             <button
               key={e.jobId}
               type="button"
-              className={`vis-verlauf-knopf${istHaupt ? ' vis-verlauf-knopf--haupt' : ''}`}
+              className={`vis-verlauf-knopf${istHaupt ? ' vis-verlauf-knopf--haupt' : ''}${neueGrundlage ? ' vis-verlauf-knopf--neue-grundlage' : ''}`}
               data-testid="render-verlauf-bild"
               data-urteil={urteil}
               data-job={e.jobId}
@@ -190,11 +212,13 @@ export function RenderVerlauf({
         typeof document !== 'undefined' &&
         createPortal(
           <VerlaufGross
-            reihe={reihe}
+            reihe={anzeige}
+            nummerReihe={reihe}
             index={offenIndex}
             hauptJobId={hauptJobId}
-            onWahl={(i) => setOffenJob(reihe[i]?.jobId ?? null)}
+            onWahl={(i) => setOffenJob(anzeige[i]?.jobId ?? null)}
             onClose={() => setOffenJob(null)}
+            {...(schalter ? { schalter } : {})}
           />,
           document.body,
         )}
@@ -245,24 +269,79 @@ export function EinzelbildGross({
   );
 }
 
+/** L4-14 B: der Schalter «bei fertig gross oeffnen» — Wert und Setzer kommen vom Knoten (`grossBeiFertig`). */
+export interface GrossSchalter {
+  an: boolean;
+  setzen: (an: boolean) => void;
+}
+
+/**
+ * L4-14 (Blatt «Grossansicht und Vergleich» A/B): der Lauf, den der Render-Knoten gerade zeigt, gross — ein Klick
+ * auf das Hauptbild ohne Grundbild oder, mit Schalter, von selbst bei «fertig». Dieselbe Ansicht wie im Verlauf; ist
+ * der Lauf in der Reihe, wird darin geblaettert, sonst steht er allein.
+ */
+export function LaufGross({
+  reihe,
+  lauf,
+  hauptJobId,
+  onClose,
+  schalter,
+}: {
+  reihe: readonly VerlaufEintrag[];
+  lauf: VerlaufEintrag;
+  hauptJobId: string | undefined;
+  onClose: () => void;
+  schalter?: GrossSchalter;
+}) {
+  const imVerlauf = reihe.some((e) => e.jobId === lauf.jobId);
+  const anzeige = imVerlauf ? gruppierteReihe(reihe) : [lauf];
+  const [jobId, setJobId] = useState(lauf.jobId);
+  if (typeof document === 'undefined') return null;
+  const index = Math.max(0, anzeige.findIndex((e) => e.jobId === jobId));
+  return createPortal(
+    <VerlaufGross
+      reihe={anzeige}
+      nummerReihe={imVerlauf ? reihe : anzeige}
+      index={index}
+      hauptJobId={hauptJobId}
+      onWahl={(i) => setJobId(anzeige[i]?.jobId ?? lauf.jobId)}
+      onClose={onClose}
+      {...(schalter ? { schalter } : {})}
+    />,
+    document.body,
+  );
+}
+
+type GrossModus = 'einzeln' | 'nebeneinander';
+
 function VerlaufGross({
   reihe,
+  nummerReihe,
   index,
   hauptJobId,
   onWahl,
   onClose,
   art,
+  schalter,
 }: {
+  /** In der Reihenfolge der Daumen (nach Grundlage, `gruppierteReihe`). */
   reihe: readonly VerlaufEintrag[];
+  /** Die Reihe neuestes zuerst — fuer die Laufnummer, wenn der Lauf keine eigene traegt. Fehlt sie, gilt `reihe`. */
+  nummerReihe?: readonly VerlaufEintrag[];
   index: number;
   hauptJobId: string | undefined;
   onWahl: (index: number) => void;
   onClose: () => void;
   /** Ein Einzelbild ohne Ergebnis (s. `EinzelbildGross`); fehlt es, ein Lauf des Verlaufs. */
   art?: EinzelbildArt;
+  schalter?: GrossSchalter;
 }) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const schliessenRef = useRef<HTMLButtonElement | null>(null);
+  // L4-14 A: die Pruefung ist eingeklappt; das Urteil steht im Kopf.
+  const [pruefungOffen, setPruefungOffen] = useState(false);
+  // L4-15 C: einzeln oder die Laeufe derselben Grundlage nebeneinander.
+  const [modus, setModus] = useState<GrossModus>('einzeln');
   // Das Haus-Gesetz fuer modale Flaechen (Stapel, Fokusrueckgabe an das
   // Daumenbild). Escape, die Pfeiltasten und die Tab-Falle stehen unten in
   // eigenen Horchern, weil die Taste hier enden muss (s. `halte`); der
@@ -275,14 +354,19 @@ function VerlaufGross({
 
   const e = reihe[index]!;
   const n = reihe.length;
+  const nummern = nummerReihe ?? reihe;
+  const nummerVon = (x: VerlaufEintrag) => laufNummerVon(x, Math.max(0, nummern.indexOf(x)), nummern.length);
   // Verlauf-Nachgang: die fortlaufende Nummer des Laufs am Knoten im Titel;
-  // die Stelle in der Reihe (von links, neuestes zuerst) getrennt daneben.
-  const nummer = laufNummerVon(e, index, n);
+  // die Stelle in der Reihe (von links, nach Grundlage) getrennt daneben.
+  const nummer = nummerVon(e);
   const urteil = laufUrteil(e.qa);
   const hatAelteren = index < n - 1;
   const hatNeueren = index > 0;
-  const erster = reihe[0];
-  const hauptNummer = erster && erster.jobId === hauptJobId ? laufNummerVon(erster, 0, n) : undefined;
+  const erster = nummern[0];
+  const hauptNummer = erster && erster.jobId === hauptJobId ? laufNummerVon(erster, 0, nummern.length) : undefined;
+  const geschwister = art ? [e] : laeufeDerGrundlage(reihe, e);
+  const kannNebeneinander = geschwister.length >= 2;
+  const nebeneinander = modus === 'nebeneinander' && kannNebeneinander;
 
   // Am Ende der Reihe wird der Knopf gesperrt, mit dem man dorthin kam — und
   // ein gesperrter Knopf verliert den Fokus. Der Fokus bleibt dann in der
@@ -323,7 +407,7 @@ function VerlaufGross({
     if (ev.key === 'Tab') {
       const box = boxRef.current;
       if (!box) return;
-      const knoepfe = [...box.querySelectorAll<HTMLElement>('button:not([disabled]), [tabindex="0"]')];
+      const knoepfe = [...box.querySelectorAll<HTMLElement>('button:not([disabled]), [tabindex="0"], input:not([disabled])')];
       if (knoepfe.length === 0) return;
       const aktiv = document.activeElement;
       const erster = knoepfe[0]!;
@@ -361,9 +445,11 @@ function VerlaufGross({
         aria-modal="true"
         aria-label={art === 'teilbild' ? 'Teilbild gross' : art === 'zwischenbild' ? 'Zwischenbild gross' : `Lauf ${nummer} gross`}
         tabIndex={-1}
-        className="k-dialog-box k-dialog k-aus-ausloeser vis-verlauf-gross"
+        className="k-dialog-box k-dialog k-aus-ausloeser vis-verlauf-gross vis-gross"
         data-testid="render-verlauf-gross"
         data-job={e.jobId}
+        data-pruefung={pruefungOffen ? 'offen' : 'zu'}
+        data-modus={nebeneinander ? 'nebeneinander' : 'einzeln'}
         {...(art ? { 'data-art': art } : {})}
       >
         <div className="vis-verlauf-gross-kopf">
@@ -376,7 +462,59 @@ function VerlaufGross({
               {index + 1} von {n} im Verlauf
             </span>
           )}
+          {!art && !pruefungOffen && (
+            <span
+              className={`vis-gross-kopf-urteil vis-verlauf-urteil vis-verlauf-urteil--${urteil}`}
+              data-testid="render-verlauf-gross-kopf-urteil"
+              data-urteil={urteil}
+            >
+              <UrteilPunkt urteil={urteil} />
+              {URTEIL_LABEL[urteil]}
+            </span>
+          )}
+          {!pruefungOffen && <LizenzOffenMarke lizenz={e} testid="render-verlauf-gross-kopf-lizenz" />}
           <span className="vis-verlauf-gross-luecke" />
+          {kannNebeneinander && (
+            <KTooltip text="Die Läufe derselben Grundlage gleich gross nebeneinander — höchstens die vier des Verlaufs." lage="unten">
+              <span>
+                <KTabs
+                  size="sm"
+                  items={[
+                    { id: 'einzeln', label: 'einzeln', testid: 'render-verlauf-gross-einzeln' },
+                    { id: 'nebeneinander', label: 'nebeneinander', testid: 'render-verlauf-gross-nebeneinander' },
+                  ]}
+                  aktiv={nebeneinander ? 'nebeneinander' : 'einzeln'}
+                  onChange={(id) => setModus(id as GrossModus)}
+                  data-testid="render-verlauf-gross-modus"
+                />
+              </span>
+            </KTooltip>
+          )}
+          {schalter && !art && (
+            <KTooltip text={GROSS_BEI_FERTIG_HILFE} lage="unten">
+              <span className="vis-gross-schalter">
+                <KCheckbox
+                  size="sm"
+                  label={GROSS_BEI_FERTIG_NAME}
+                  checked={schalter.an}
+                  onChange={(ev) => schalter.setzen(ev.currentTarget.checked)}
+                  data-testid="render-gross-bei-fertig"
+                />
+              </span>
+            </KTooltip>
+          )}
+          <KTooltip text={PRUEFUNG_HILFE} lage="unten">
+            <button
+              type="button"
+              className="vis-verlauf-gross-knopf vis-gross-pruefung"
+              data-testid="render-verlauf-gross-pruefung"
+              aria-expanded={pruefungOffen}
+              aria-label={pruefungOffen ? 'Prüfung zuklappen' : 'Prüfung aufklappen'}
+              onClick={() => setPruefungOffen((o) => !o)}
+            >
+              {pruefungOffen ? PRUEFUNG_ZU : PRUEFUNG_AUF}
+            </button>
+          </KTooltip>
           <button
             type="button"
             className="vis-verlauf-gross-knopf"
@@ -409,18 +547,65 @@ function VerlaufGross({
           </button>
         </div>
         <div className="vis-verlauf-gross-inhalt">
-          <div className="vis-verlauf-gross-bild">
-            <BridgeBild
-              key={e.jobId}
-              jobId={e.jobId}
-              imageName={e.bild}
-              alt={`Lauf ${nummer}${gueteZusatz(e)}`}
-              testid="render-verlauf-gross-bild"
-              className="vis-verlauf-gross-img"
-            />
-            <GueteMarke lauf={e} testid="render-verlauf-gross-guete-marke" />
-          </div>
-          <div className="vis-verlauf-gross-seite">
+          {nebeneinander ? (
+            <div
+              className="vis-gross-reihe"
+              data-testid="render-verlauf-gross-reihe"
+              data-anzahl={geschwister.length}
+              style={{ ['--_n' as string]: String(geschwister.length) }}
+            >
+              {/* L4-1: was «nebeneinander» belegt — gleiche Grundlage; die Form misst der Heim-PC noch nicht. */}
+              <KTooltip text={DECKUNG_HILFE} lage="unten">
+                <span tabIndex={0} className="vis-gross-deckung" data-testid="render-verlauf-gross-deckung" data-deckung="ungemessen">
+                  {DECKUNG_UNGEMESSEN_SATZ}
+                </span>
+              </KTooltip>
+              {geschwister.map((g) => {
+                const gNummer = nummerVon(g);
+                const gUrteil = laufUrteil(g.qa);
+                return (
+                  <figure
+                    key={g.jobId}
+                    className={`vis-gross-reihe-zelle${g.jobId === e.jobId ? ' vis-gross-reihe-zelle--gezeigt' : ''}`}
+                    data-testid="render-verlauf-gross-reihe-zelle"
+                    data-job={g.jobId}
+                  >
+                    <button
+                      type="button"
+                      className="vis-gross-reihe-bild"
+                      aria-label={`Lauf ${gNummer} einzeln zeigen`}
+                      onClick={() => {
+                        onWahl(reihe.indexOf(g));
+                        setModus('einzeln');
+                      }}
+                    >
+                      <BridgeBild jobId={g.jobId} imageName={g.bild} alt={`Lauf ${gNummer}${gueteZusatz(g)}`} className="vis-gross-reihe-img" />
+                      <GueteMarke lauf={g} testid="render-verlauf-gross-reihe-guete" />
+                    </button>
+                    <figcaption className="vis-gross-reihe-text">
+                      <UrteilPunkt urteil={gUrteil} />
+                      <span>
+                        Lauf {gNummer} · Startwert {startwertText(g)} · {URTEIL_LABEL[gUrteil]}
+                      </span>
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="vis-verlauf-gross-bild">
+              <BridgeBild
+                key={e.jobId}
+                jobId={e.jobId}
+                imageName={e.bild}
+                alt={`Lauf ${nummer}${gueteZusatz(e)}`}
+                testid="render-verlauf-gross-bild"
+                className="vis-verlauf-gross-img"
+              />
+              <GueteMarke lauf={e} testid="render-verlauf-gross-guete-marke" />
+            </div>
+          )}
+          <div className="vis-verlauf-gross-seite" data-testid="render-verlauf-gross-seite">
             {art ? (
               <span className="vis-verlauf-urteil vis-verlauf-urteil--ohne-qa" data-testid="render-verlauf-gross-urteil" data-urteil="nicht-geprueft">
                 nicht geprüft · unvollständig

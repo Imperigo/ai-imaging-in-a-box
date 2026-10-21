@@ -15,7 +15,9 @@ import {
   zellenTitel,
   type VariantenZelle,
 } from './varianten';
+import { GROSS_BREITE } from './grossansicht';
 import './varianten-daumen.css';
+import './vis-grossansicht.css';
 
 /**
  * Die Bildzeile des Varianten-Knotens (Blatt 36 «Varianten-Daumen», Owner-Wunsch «Varianten-Node
@@ -106,7 +108,7 @@ export function VariantenDaumen({ graph, node }: { graph: VisGraph; node: VisNod
             <KDialog
               titel={zellenTitel(grossZelle, bestellung)}
               onClose={() => setGross(null)}
-              breite={900}
+              breite={GROSS_BREITE}
               data-testid="varianten-daumen-gross"
               fusszeile={
                 <div className="vis-vdaumen-gross-knoepfe">
@@ -149,12 +151,15 @@ export function VariantenDaumen({ graph, node }: { graph: VisGraph; node: VisNod
                 </div>
               }
             >
-              <BridgeBild
-                jobId={grossZelle.jobId}
-                imageName={grossZelle.bild}
-                alt={`${zellenTitel(grossZelle, bestellung)}${gueteZusatz(grossZelle)}`}
-                className="vis-img-full"
-              />
+              {/* L4-14 A: so breit wie das Fenster, hoechstens so hoch wie das Fenster. */}
+              <span className="vis-gross-bild-hoch vis-gross-bild-block">
+                <BridgeBild
+                  jobId={grossZelle.jobId}
+                  imageName={grossZelle.bild}
+                  alt={`${zellenTitel(grossZelle, bestellung)}${gueteZusatz(grossZelle)}`}
+                  className="vis-img-full"
+                />
+              </span>
               <GueteMarke lauf={grossZelle} testid="varianten-daumen-gross-guete" form="zeile" />
               <LizenzOffenMarke lizenz={grossZelle.lizenz} testid="varianten-daumen-gross-lizenz-offen" />
               <p className="vis-vdaumen-gross-satz">

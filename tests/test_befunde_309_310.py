@@ -314,3 +314,55 @@ def test_der_runner_zeigt_mit_schalter_der_kamera_das_himmelsbild(monkeypatch):
                              licht=dict(licht, himmel_sichtbar=True))
     assert mit["hintergrund"] == dict(mit["hintergrund"], art="himmelsbild", kamerastrahl="himmel")
     assert gesehen[-1] is not None
+
+
+# ====================================================================== 311 B1 · Fehleintrag im Gerätebuch
+
+def _buch_mit_fehleintrag(tmp_path):
+    from aiimaging import geraetebuch
+    datei = tmp_path / "geraete.json"
+    geraetebuch.schreibe(datei, {"geraete": {
+        "ipad": {"gekoppelt_um": 1792500000.0, "zuletzt_um": 1792586000.0, "weg": "mac"},
+        "ipad-probe": {"zuletzt_um": 1792590000.0, "weg": "mac"}}})
+    return datei
+
+
+def test_beim_laden_wird_nichts_geraten(tmp_path):
+    """Ein Eintrag weg mac sieht aus wie der eines echten iPad — Laden lässt ihn stehen."""
+    from aiimaging import geraetebuch
+    buch = geraetebuch.lies(_buch_mit_fehleintrag(tmp_path))
+    assert buch["geraete"]["ipad"]["weg"] == "mac"
+
+
+def test_nur_der_genau_genannte_fehleintrag_wird_bereinigt(tmp_path):
+    from aiimaging import geraetebuch
+    buch = geraetebuch.lies(_buch_mit_fehleintrag(tmp_path))
+    falsch = geraetebuch.bereinige_fehleintrag(buch, "ipad", zuletzt_um=1792586001.0)
+    assert falsch["bereinigt"] is False and "Nichts geändert" in falsch["grund"]
+    assert geraetebuch.bereinige_fehleintrag(buch, "ipad", zuletzt_um=1792586000.0,
+                                             weg="direkt")["bereinigt"] is False
+    gut = geraetebuch.bereinige_fehleintrag(buch, "ipad", zuletzt_um=1792586000.0)
+    assert gut["bereinigt"] is True
+    assert buch["geraete"]["ipad"] == {"gekoppelt_um": 1792500000.0}
+    assert buch["geraete"]["ipad-probe"]["weg"] == "mac"                 # Probe bleibt
+    a = geraetebuch.antwort(buch, jetzt=1792600000.0)["ipad"]
+    assert a["gekoppelt"] is True and a["zuletzt_gesehen_s"] is None and a["weg"] is None
+
+
+def test_das_werkzeug_schreibt_nur_mit_ja(tmp_path):
+    import importlib.util
+    datei = _buch_mit_fehleintrag(tmp_path)
+    spez = importlib.util.spec_from_file_location("bereinigen_311", WURZEL / "tools" / "geraetebuch_bereinigen.py")
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+    vorher = datei.read_bytes()
+    assert modul.main([str(datei), "--zuletzt-um", "1792586000"]) == 0
+    assert datei.read_bytes() == vorher                                    # nur gezeigt
+    assert modul.main([str(datei), "--zuletzt-um", "1792586000", "--ja"]) == 0
+    assert "weg" not in json.loads(datei.read_text())["geraete"]["ipad"]
+    assert modul.main([str(datei), "--zuletzt-um", "1792586000", "--ja"]) == 1   # schon weg
+    # Art und Weg ausdrücklich: der Probe-Eintrag mit falschem Weg bleibt.
+    assert modul.main([str(datei), "--zuletzt-um", "1792590000", "--art", "ipad-probe",
+                       "--weg", "direkt"]) == 1
+    assert modul.main([str(datei), "--zuletzt-um", "1792590000", "--art", "ipad-probe",
+                       "--weg", "mac"]) == 0

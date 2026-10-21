@@ -187,12 +187,14 @@ describe('kv-nebeneinander — am Knoten und gross', () => {
     });
   }
 
-  it('ohne Grundbild (aelterer Lauf) wie bisher: ein Bild, keine Beschriftung, keine Klickflaeche', () => {
+  it('ohne Grundbild (aelterer Lauf): ein Bild, keine Beschriftung; ein Klick zeigt es gross (L4-14)', () => {
     const { graphId, nodeId } = graphMitRender();
     fertig(graphId, nodeId);
     mount(graphId);
     const haupt = q('render-hauptbild')!;
-    expect(haupt.getAttribute('role')).toBeNull();
+    // Bis L4-14 war das Bild ohne Grundbild keine Klickflaeche; seither oeffnet es den Lauf gross.
+    expect(haupt.getAttribute('role')).toBe('button');
+    expect(haupt.getAttribute('aria-label')).toBe('Bild gross anzeigen');
     expect(haupt.querySelectorAll('[data-testid="render-bild"], [data-testid="render-bild-laedt"]').length).toBe(1);
     expect(q('render-bild-beschriftung')).toBeNull();
     expect(q('render-grundbild')).toBeNull();

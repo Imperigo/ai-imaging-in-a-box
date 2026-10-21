@@ -23,6 +23,7 @@ import {
 } from '@kosmo/kernel';
 import { melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
+import { entwuerfeOhneBestand, OHNE_BESTAND_MELDUNG_MS, ohneBestandSatz } from './kontext-hinweis';
 import {
   abbrechenJob,
   bescheideBridgeCatch,
@@ -207,6 +208,9 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
   const kameraVon = new Map(a.standpunkte.map((s) => [s.name, s.kamera]));
   const kameras = a.heim ? undefined : a.achsen.standpunkte.map((n) => kameraVon.get(n)!).filter(Boolean);
   const entwuerfe = a.entwuerfe.filter((e) => a.achsen.entwuerfe.includes(e.id));
+  // L4-5: blendet ein Entwurf den ganzen Bestand aus, steht das Bild ohne Nachbarn — gesagt beim Bestellen.
+  const ohneBestand = ohneBestandSatz(entwuerfeOhneBestand(doc, entwuerfe));
+  if (ohneBestand) melde(ohneBestand, { dauerMs: OHNE_BESTAND_MELDUNG_MS });
   const gruppen: VariantenGruppe[] = [];
   let abbruch = false;
   for (const entwurf of entwuerfe) {

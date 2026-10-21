@@ -18,7 +18,7 @@ import {
   type EigenschaftName,
 } from './bild-rechnen';
 import { useVisRuntime } from './vis-runtime';
-import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, kurzKennung, lieferVorbehalt, LIZENZ_OFFEN_LABEL, lizenzAusQuelle, lizenzOffenGrund, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
+import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, karteSchluessel, kurzKennung, lieferVorbehalt, lizenzAusQuelle, lizenzOffenGrund, lizenzOffenSatz, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke } from './GueteMarke';
 import './vis-visual.css';
@@ -112,7 +112,7 @@ function BildFlaeche({
   vorbilder: readonly VorbildWahl[];
   alt: string;
 }) {
-  const gerechnet = useVisRuntime((s) => s.gerechneteBilder[karte.node.id]);
+  const gerechnet = useVisRuntime((s) => s.gerechneteBilder[karteSchluessel(karte)]);
   const verwirf = useVisRuntime((s) => s.verwirfGerechnetesBild);
   // Was gerade gerechnet wird, in Worten — `null`, wenn nichts läuft. Vorher ein blosses Ja/Nein, das nur die
   // Knöpfe sperrte; jetzt steht der Vorgang als unbestimmte Leiste am Ort (Owner 06.10.2026, Regel G6: die
@@ -126,7 +126,7 @@ function BildFlaeche({
   // Belichtung nach einem Neuaufbau dieser Komponente weg, waehrend die zwei
   // Nachbargriffe blieben. Wer das Feld schloss und wieder oeffnete, stand
   // ohne sein Ergebnis da, ohne dass ihm jemand sagte warum.
-  const belichtet = useVisRuntime((s) => s.gehobeneBilder[karte.node.id] ?? null);
+  const belichtet = useVisRuntime((s) => s.gehobeneBilder[karteSchluessel(karte)] ?? null);
   const setzeGehoben = useVisRuntime((s) => s.setzeGehobenesBild);
   const verwirfGehoben = useVisRuntime((s) => s.verwirfGehobenesBild);
   // Zeile 54 — aus derselben Art Ablage wie die zwei Nachbarn, nur (noch) in
@@ -143,12 +143,12 @@ function BildFlaeche({
   // aufgebaut, und ein Eintrag, der unter einem Schluessel liegt aber eine
   // andere Karte nennt, zeigte sonst das Bild der vorigen Karte als das der
   // naechsten. Guertel und Hosentraeger, und eine Probe haelt sie fest.
-  const uebernommenAktiv = uebernommen && uebernommen.nodeId === karte.node.id ? uebernommen : null;
+  const uebernommenAktiv = uebernommen && uebernommen.nodeId === karteSchluessel(karte) ? uebernommen : null;
   const [eigenschaften, setEigenschaften] = useState<readonly EigenschaftName[]>(['farbton', 'saettigung']);
   const [bereich, setBereich] = useState<BereichName>('deckenholz');
   const setBelichtet = (e: BelichtungAnzeige | null) => {
     if (e) setzeGehoben(e.nodeId, e);
-    else verwirfGehoben(karte.node.id);
+    else verwirfGehoben(karteSchluessel(karte));
   };
   // `<number>` ausgeschrieben: `HEBUNG_WAHL` ist `as const`, ohne die
   // Annotation waere der Zustand auf das Literal 1.08 festgenagelt und
@@ -157,7 +157,7 @@ function BildFlaeche({
   // Diese Komponente wird beim Kartenwechsel NICHT neu aufgebaut (kein `key`),
   // der Zustand ueberlebt ihn also. Ohne diese Wache zeigte die Belichtung der
   // vorigen Karte an der naechsten weiter — und zwar als deren Bild.
-  const belichtetAktiv = belichtet && belichtet.nodeId === karte.node.id ? belichtet : null;
+  const belichtetAktiv = belichtet && belichtet.nodeId === karteSchluessel(karte) ? belichtet : null;
   // Worauf die Belichtung rechnet: auf das, was gerade zu sehen ist (der Zuruf
   // sagt «danach»). Liegt schon ein gerechnetes Bild darunter, ist DAS die
   // Grundlage — die Belichtung stapelt sich aber nie auf sich selbst, ein
@@ -184,7 +184,7 @@ function BildFlaeche({
     setBelichtet(null);
     // Dasselbe gilt fuer die Uebernahme: sie sitzt in derselben Schicht und
     // waere sonst ein Bild ohne passenden Bericht.
-    verwirfUebernahme(karte.node.id);
+    verwirfUebernahme(karteSchluessel(karte));
     void fn().finally(() => setLaeuft(null));
   };
 
@@ -198,10 +198,10 @@ function BildFlaeche({
     if (!vorbild || eigenschaften.length === 0) return;
     setLaeuft('Übernahme aus dem Vorbild wird gerechnet');
     // Die Uebernahme ersetzt die andere Schicht-Belegung, nicht umgekehrt.
-    verwirf(karte.node.id);
+    verwirf(karteSchluessel(karte));
     setBelichtet(null);
     void rechneUebernahme(
-      karte.node.id,
+      karteSchluessel(karte),
       karte.quelle,
       vorbild.quelle,
       vorbild.label,
@@ -212,7 +212,7 @@ function BildFlaeche({
 
   const rechneHeller = () => {
     setLaeuft('Bild wird heller gerechnet');
-    void rechneBelichtung(karte.node.id, belichtungsQuelle, belichtungsGrundlage, hebung)
+    void rechneBelichtung(karteSchluessel(karte), belichtungsQuelle, belichtungsGrundlage, hebung)
       .then((e) => {
         if (e) setBelichtet(e);
       })
@@ -258,7 +258,7 @@ function BildFlaeche({
             data-testid="vis-kuratier-nachbearbeiten"
             disabled={laeuft !== null}
             title="Deckenholz dunkler, Gruen kraeftiger — zwei gemessene Masken, kein Bildpunkt wandert"
-            onClick={() => rechne('Bild wird nachbearbeitet', () => rechneNachbearbeitung(karte.node.id, karte.quelle))}
+            onClick={() => rechne('Bild wird nachbearbeitet', () => rechneNachbearbeitung(karteSchluessel(karte), karte.quelle))}
           >
             Nachbearbeiten
           </KButton>
@@ -270,7 +270,7 @@ function BildFlaeche({
               data-testid="vis-kuratier-farbangleich"
               disabled={laeuft !== null}
               title={`Farbstimmung von «${vorbild.label}» uebernehmen (Histogrammangleich je Kanal)`}
-              onClick={() => rechne('Farbe wird angeglichen', () => rechneFarbangleich(karte.node.id, karte.quelle, vorbild.quelle))}
+              onClick={() => rechne('Farbe wird angeglichen', () => rechneFarbangleich(karteSchluessel(karte), karte.quelle, vorbild.quelle))}
             >
               Farbe angleichen
             </KButton>
@@ -410,7 +410,7 @@ function BildFlaeche({
                 // (s. `vis-runtime.ts`) — der Aufruf hier ist der Guertel zum
                 // Hosentraeger und schadet nicht.
                 setBelichtet(null);
-                verwirfUebernahme(karte.node.id);
+                verwirfUebernahme(karteSchluessel(karte));
               }}
             >
               Übernahme zurücknehmen
@@ -451,7 +451,7 @@ function BildFlaeche({
                 // Die Belichtung liegt DARUEBER: bliebe sie stehen, zeigte
                 // «Zurueck zum Original» weiter ein gerechnetes Bild.
                 setBelichtet(null);
-                verwirf(karte.node.id);
+                verwirf(karteSchluessel(karte));
               }}
             >
               Zurück zum Original
@@ -572,7 +572,7 @@ export function KuratierInspektor({
             testid: 'vis-kuratier-inspektor-lizenz-zeile',
             wert: (
               <span className="vis-bild-kachel-qa-vorbehalt">
-                {LIZENZ_OFFEN_LABEL}: {lizenzGrund}
+                {lizenzOffenSatz(lizenz)}. {lizenzGrund}
               </span>
             ),
           },

@@ -73,6 +73,40 @@ export interface LizenzAngabe {
  *  und Ablage dasselbe sagen. */
 export const LIZENZ_OFFEN_LABEL = 'Lizenz offen';
 
+/**
+ * Owner-Entscheid L4-18 = A (21.10.2026): Qwen-Image-2.1 bleibt bestellbar, nie
+ * Vorgabe — am Bild steht aber nicht mehr nur «Lizenz offen», sondern der Satz
+ * «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung».
+ * Wettbewerbsbilder rechnet Z-Image Turbo. Der Zusatz ist EIN Wortlaut für alle
+ * Stellen (Render-Knoten, grosse Ansicht, Kachel, Inspektor, Ablage).
+ */
+export const LIZENZ_OFFEN_ZUSATZ = 'nicht für Wettbewerb oder Veröffentlichung';
+
+/** Wie ein Modell am Bild heisst — der Name aus `engine_used`, wo wir ihn kennen. */
+const LIZENZ_MODELLNAMEN: Readonly<Record<string, string>> = {
+  'qwen-image-2.1': 'Qwen-Image-2.1',
+};
+
+/** Der Name des Modells mit offener Lizenz, wie er am Bild steht — oder `undefined`. */
+export function lizenzModellName(angabe: LizenzAngabe | null | undefined): string | undefined {
+  const roh = angabe?.engineUsed?.trim();
+  if (!roh) return undefined;
+  return LIZENZ_MODELLNAMEN[roh] ?? roh;
+}
+
+/** Die kurze Form fuer ein Abzeichen auf einem Bild: «Qwen-Image-2.1: Lizenz offen».
+ *  Der volle Satz steht dann in der Kurzhilfe vorne (`lizenzOffenGrund`). */
+export function lizenzOffenKurz(angabe: LizenzAngabe | null | undefined): string {
+  const name = lizenzModellName(angabe);
+  return name ? `${name}: ${LIZENZ_OFFEN_LABEL}` : LIZENZ_OFFEN_LABEL;
+}
+
+/** Der Satz am Bild (L4-18 = A): «Qwen-Image-2.1: Lizenz offen — nicht für
+ *  Wettbewerb oder Veröffentlichung». */
+export function lizenzOffenSatz(angabe: LizenzAngabe | null | undefined): string {
+  return `${lizenzOffenKurz(angabe)} — ${LIZENZ_OFFEN_ZUSATZ}`;
+}
+
 /** Wie lange die Ablage-Meldung mit dem Lizenzhinweis steht: sie traegt einen
  *  ganzen Satz mehr als die gewohnte Meldung (4 s), so lange wie eine
  *  Fehlermeldung (`melde`, `@kosmo/ui`). */
@@ -92,7 +126,7 @@ export function lizenzOffenGrund(angabe: LizenzAngabe | null | undefined): strin
   const womit = modell
     ? `Gerechnet mit ${modell}${lizenz ? ` (${lizenz})` : ''}.`
     : `Das Modell, mit dem gerechnet wurde, meldet eine offene Lizenz${lizenz ? ` (${lizenz})` : ''}.`;
-  return `${womit} Die Lizenz ist vor einer Veröffentlichung zu klären.`;
+  return `${womit} Die Lizenz ist vor einer Veröffentlichung zu klären; für einen Wettbewerb oder eine Veröffentlichung mit Z-Image Turbo rechnen.`;
 }
 
 /** Die Lizenzangabe einer Kuratier-Quelle. Eine Viewport-Aufnahme hat kein
@@ -107,7 +141,7 @@ export function lizenzAusQuelle(quelle: KuratierQuelle | null | undefined): Lize
  *  bleibt dann wortgleich wie bisher. */
 export function lizenzAblageZusatz(angabe: LizenzAngabe | null | undefined): string {
   const grund = lizenzOffenGrund(angabe);
-  return grund ? `. ${LIZENZ_OFFEN_LABEL}: ${grund}` : '';
+  return grund ? `. ${lizenzOffenSatz(angabe)}. ${grund}` : '';
 }
 
 /**
@@ -265,6 +299,19 @@ export interface KuratierKartenDaten {
   quelle: KuratierQuelle;
   kur: KurationEintrag;
   auftrag?: VisRenderAuftrag;
+  /**
+   * L4-15 (Blatt «Grossansicht und Vergleich» C): die Kennung der Karte, wenn sie NICHT die des Knotens ist — ein
+   * frueherer Lauf eines Render-Knotens (`laufKartenSchluessel`). Fehlt sie, ist die Karte der aktuelle Lauf bzw. die
+   * Aufnahme, und es gilt `node.id` wie bisher.
+   */
+  schluessel?: string;
+  /** Die Laufnummer am Knoten (fuer «Lauf n» an der Karte); nur bei frueheren Laeufen gesetzt. */
+  laufNummer?: number;
+}
+
+/** Die Kennung einer Karte — fuer Auswahl, Vergleich, Stern und Ablage. */
+export function karteSchluessel(k: Pick<KuratierKartenDaten, 'node' | 'schluessel'>): string {
+  return k.schluessel ?? k.node.id;
 }
 
 /**

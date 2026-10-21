@@ -1,5 +1,5 @@
 import { KTooltip } from '@kosmo/ui';
-import { LIZENZ_OFFEN_LABEL, lizenzOffenGrund, type LizenzAngabe } from './varianten-diff';
+import { lizenzOffenGrund, lizenzOffenKurz, lizenzOffenSatz, type LizenzAngabe } from './varianten-diff';
 import './vis-visual.css';
 
 /**
@@ -15,6 +15,13 @@ import './vis-visual.css';
  * der Kurzhilfe (`KTooltip`, kein natives `title=`): beim Darueberfahren, beim
  * Fokus per Tab und beim Tippen, und fuer die Sprachausgabe immer.
  *
+ * DER SATZ AM BILD (Owner-Entscheid L4-18 = A, 21.10.2026): «Qwen-Image-2.1:
+ * Lizenz offen — nicht für Wettbewerb oder Veröffentlichung» (`lizenzOffenSatz`).
+ * Wo die Marke als Abzeichen AUF einem Bild sitzt (`abzeichen`) oder neben einem
+ * Knopf in einer Knopfzeile (`form="kurz"`), steht die kurze Form
+ * («Qwen-Image-2.1: Lizenz offen»), und der volle Satz fuehrt die Kurzhilfe an —
+ * sonst bricht das Abzeichen auf drei Zeilen um (auf-20261007-250, 1b).
+ *
  * SPERRT NICHTS: kein Knopf wird ausgegraut, kein Klick abgefangen. Ohne Marke
  * (Feld fehlt oder `false`) rendert der Baustein nichts.
  */
@@ -23,6 +30,7 @@ export function LizenzOffenMarke({
   testid,
   abzeichen,
   lage,
+  form,
 }: {
   lizenz: LizenzAngabe | null | undefined;
   testid: string;
@@ -34,9 +42,14 @@ export function LizenzOffenMarke({
    */
   abzeichen?: 'links' | 'rechts';
   lage?: 'oben' | 'unten';
+  /** `'kurz'`: nur «Modell: Lizenz offen», der Satz in der Kurzhilfe. Ein Abzeichen ist immer kurz. */
+  form?: 'satz' | 'kurz';
 }) {
   const grund = lizenzOffenGrund(lizenz);
   if (!grund) return null;
+  const kurz = abzeichen !== undefined || form === 'kurz';
+  const text = kurz ? lizenzOffenKurz(lizenz) : lizenzOffenSatz(lizenz);
+  const hilfe = kurz ? `${lizenzOffenSatz(lizenz)}. ${grund}` : grund;
   const klassen = [
     'vis-bild-kachel-qa-vorbehalt',
     'vis-lizenz-offen',
@@ -48,10 +61,10 @@ export function LizenzOffenMarke({
     .filter(Boolean)
     .join(' ');
   return (
-    <KTooltip text={grund} className={huelle} {...(lage !== undefined ? { lage } : {})}>
+    <KTooltip text={hilfe} className={huelle} {...(lage !== undefined ? { lage } : {})}>
       <span tabIndex={0} className={klassen} data-testid={testid}>
         <span aria-hidden="true">⚠ </span>
-        {LIZENZ_OFFEN_LABEL}
+        {text}
       </span>
     </KTooltip>
   );
@@ -74,7 +87,7 @@ export function LizenzOffenAblageHinweis({
   return (
     <span className="vis-bild-kachel-qa-vorbehalt vis-lizenz-offen-ablage" data-testid={testid}>
       <span aria-hidden="true">⚠ </span>
-      {LIZENZ_OFFEN_LABEL} — {grund}
+      {lizenzOffenSatz(lizenz)}. {grund}
     </span>
   );
 }

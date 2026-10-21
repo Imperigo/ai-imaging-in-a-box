@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Befund 308 B1 am Heim-PC pruefen: Eine Probe mit dem Probenamen X-Geraet: ipad-probe ueber den Mac wird wie ein iPad durchgelassen, steht aber in einem eigenen Eintrag im Geraetebuch; der Eintrag des echten iPad bleibt unberuehrt. Direkt (ohne X-Geraet-Weg: mac) bekommt auch der Probename 410 mit Satz.",
  "erstellt": "2026-10-21T14:30:00Z",
- "rang": 3,
+ "rang": 1,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,

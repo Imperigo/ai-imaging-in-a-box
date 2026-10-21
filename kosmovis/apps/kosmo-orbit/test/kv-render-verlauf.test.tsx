@@ -256,7 +256,8 @@ describe('Verlauf am Render-Knoten — die Reihe am Knoten', () => {
     expect(qa('button', reihe).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
     klick(daumen()[2]!);
     expect(qa('button', gross()!).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
-    expect(qa('button', gross()!).map((b) => b.getAttribute('aria-label'))).toEqual(['Vorheriger Lauf', 'Nächster Lauf', 'Schliessen']);
+    // L4-14 A: dazu «Prüfung ▸» (klappt die Werte auf) — auch er loescht nichts.
+    expect(qa('button', gross()!).map((b) => b.getAttribute('aria-label'))).toEqual(['Prüfung aufklappen', 'Vorheriger Lauf', 'Nächster Lauf', 'Schliessen']);
     expect(useVisRuntime.getState().verlauf[nodeId]!.map((l) => l.jobId)).toEqual(['job-2', 'job-1']);
   });
 
@@ -482,9 +483,10 @@ describe('Verlauf am Render-Knoten — ein Klick zeigt gross', () => {
     );
     klick(daumen()[1]!);
     const marke = q('[data-testid="render-verlauf-gross-lizenz-offen"]')!;
-    expect(marke.textContent).toBe('⚠ Lizenz offen');
+    // Owner-Entscheid L4-18 = A (21.10.2026): der Satz statt zweier Woerter.
+    expect(marke.textContent).toBe('⚠ Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung');
     expect(marke.closest('.k-tooltip')!.textContent).toContain(
-      'Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären.',
+      'Gerechnet mit qwen-image-2.1 (Qwen Research License Agreement). Die Lizenz ist vor einer Veröffentlichung zu klären; für einen Wettbewerb oder eine Veröffentlichung mit Z-Image Turbo rechnen.',
     );
     taste(gross()!, 'ArrowRight');
     expect(titel()).toBe('LAUF 2');

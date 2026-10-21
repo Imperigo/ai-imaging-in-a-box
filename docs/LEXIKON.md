@@ -8654,10 +8654,35 @@ ordnet wie das Modell (vorne und hinten). Ordnet es sie umgekehrt, wäre die Rec
 **0.0**. Eine 0.0 heisst also «das KI-Bild weicht von der Geometrie ab», nicht «nichts gemessen» und kein Fehler. So steht
 es seit dem 21.10.2026 auch im Satz der Prüfung.
 
+**Gebäudewort (im Prompt)** — Die zwei Wörter «architectural building», die der Heim-PC vor die Bildbeschreibung setzt,
+wenn sonst nur der Satz der Stimmung übrig wäre. *Wozu:* Das Bildmodell weiss sonst nicht, dass ein Gebäude gemeint ist —
+bei «Abendstimmung, warmes Licht» malte es eine Höhle. *Im Projekt:* seit dem 21.10.2026, nur bei leerer Beschreibung;
+was der Architekt selbst schreibt, bleibt Wort für Wort.
+
+**Kartenkennung** — Die Nummer eines Vorschlags der KI, etwa «A-1» (Assistent) oder «K-12» (Claude). *Wozu:* Der
+Architekt wendet die Karte an oder lehnt sie ab; erst danach gibt es den Knoten, den sie vorschlägt. *Im Projekt:* Eine
+Kartenkennung ist **keine** Kennung eines Knotens — seit dem 21.10.2026 weist der Heim-PC einen Aufruf ab, der damit
+etwas verbinden will, und sagt warum.
+
+**Anstoss (an den Assistenten)** — Ein Satz, den der Heim-PC dem Sprachmodell einmal nachschickt, wenn um ein Bild
+gebeten wurde und es kein Werkzeug gerufen hat. *Wozu:* Das Modell verwechselte «Rechne das Bild» mit «Gib die
+Grafikkarte frei» und tat nichts. Der Anstoss erinnert: einen Render-Auftrag als Karte vorschlagen ist erlaubt,
+freigeben nicht. Erfinden darf es dabei weiterhin nichts.
+
+**Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)** — Die Kamera sieht im Bild aus Blender das Himmelsbild der
+Stimmung statt eines ruhigen Farbverlaufs. *Wozu:* Hält die KI den Hintergrund fest («Umriss halten im Lauf»), sieht das
+Bild sonst wie ein Modellfoto vor flachem Grund aus. *Im Projekt:* seit dem 21.10.2026 gebaut, Vorgabe aus, am Heim-PC
+noch nicht gemessen; der Himmel wird wie der Verlauf eine Blendenstufe vom Haus weg gestellt.
+
+**Sicherheitsrand (beim Grafikspeicher)** — Ein Zuschlag auf eine gemessene Zahl, weil nicht jeder Fall gemessen ist.
+*Im Projekt:* Der Lauf mit Bildeingang brauchte gemessen 27'116 MiB mit einer Kamera; eingetragen sind 28'116 MiB, weil
+mehrere Kameras bis 843 MiB mehr brauchten. Darüber kommt noch die feste Reserve von 512 MiB.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden 309/310 (Protokoll 74 §197): **Gebäudewort (im Prompt)**, **Kartenkennung**, **Anstoss (an den Assistenten)**, **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)**, **Sicherheitsrand (beim Grafikspeicher)** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-2 (Protokoll 74 §195): **Hausanteil (an Grundlage und KI-Bild)**, **Abgeschnittener Wert (Geometrie 0.0)** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §196): **Gesicherter Blick** |
 | 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |
