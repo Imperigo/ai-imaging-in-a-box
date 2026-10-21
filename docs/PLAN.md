@@ -8349,7 +8349,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Vorschlag C17 über die Zentrale an den Integrator senden (Hauptstrang)
 - [x] Antwort von Int 1 zu C17 — angenommen (A1–A3, Teil B mit `drehung_je_kamera` < 360); `angewandt.modus` im Heim-PC-Ergebnis geschrieben, Fixtures zu A1–A3 auf claude/kosmovis-knoten-fixtures gelegt (21.10.2026, §193)
 - [ ] C17 bei Int 1 eingespielt (integrator), danach Anzeige «anders gerechnet als bestellt» (ui); am Heim-PC ein erster echter Lauf mit `angewandt.modus` (local)
-- [x] `NodeLauf.modus` aus dem Ergebnis für die Modus-Marke des UI-Workers, Fixture nur mit dem Hinweissatz (21.10.2026, §PNR, claude/kosmovis-nodelauf-modus)
+- [x] `NodeLauf.modus` aus dem Ergebnis für die Modus-Marke des UI-Workers, Fixture nur mit dem Hinweissatz (21.10.2026, §214, claude/kosmovis-nodelauf-modus)
 - [ ] claude/kosmovis-nodelauf-modus bei Int 1 eingespielt, vor claude/kosmo-ui-modus-marke (integrator)
 - [x] C103: Leiste, Figur und Sperrzonen ohne Stil (Befund 305) — Ursache eine offene CSS-Klammer, behoben in §187 (C112)
 - [ ] C97: Auslöser für die Bilder 3c/3d nach dem Augenurteil aus 299 (wir)
@@ -8432,3 +8432,9 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] 20-%-Regel «Das Haus fuellt nur …» liest weiter den Anteil mit Platte — Frage an den Hauptstrang (Empfehlung: nach 317 auf das Haus allein umstellen)
 - [x] Entscheid 126: M2 mit Himmel als Vorgabe für Varianten (§210, C126) — fehlen die Schalter, gilt die Vorgabe; «aus» gewinnt; Variante auf Grundlage ohne Himmel bleibt gültig mit Satz — gebaut, am Gerät unbestätigt
 - [ ] Gegenprobe Entscheid 126 am Heim-PC (local, Messauftrag des Strangs heim3)
+- [x] 316 ausgewertet (Strang steine, §211, C127): Material-ID je Material statt je Objekt (Namen ohne Verkettung, Kennfarben eindeutig), Boden aus der Bauwerksmaske über Form (auch ohne Namenstreffer, mit eigenen Materialen) und Rolle `extras.role: "ground"`, Formregel linear — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-318 (local): Gegenprobe steine an der Steine-Probe, mit und ohne Rolle; Tabelle Instanzen ausgerollt/zusammengefügt/Instanz
+- [ ] Instanzen je Knoten zusammenfügen — nur wenn 318 (3) nach dem Fix mehr als ein Drittel je Kamera spart
+- [ ] Rahmung (glbbox und Blender-Bauwerksbox) liest `extras.role` — nach 318, klein
+- [x] Befunde 314 B1–B4, B6 und OptiX im Kern (§212, C128): Assistent sagt «vorgeschlagen», kein neuer Graph ohne Bitte, Pakete geprüft; Gerätebuch behält «gekoppelt»; nNO = nNE, unbekanntes Kürzel endet sofort; Umriss-Satz je Kamera — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-319 (local): Gegenprobe Entscheid 126 und 314 B2–B4, B6

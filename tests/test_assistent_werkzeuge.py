@@ -309,3 +309,96 @@ def test_gegenbeleg_direkt_geschehen_bleibt_und_eine_karte_kommt_dazu():
     assert text.startswith("Die Stimmung ist angelegt.") and "Karte A-3" in text
     assert assistent._berichtige_antwort("Die Stimmung ist angelegt.", "Mach.", [_GRAPH, direkt]) == \
         "Die Stimmung ist angelegt."
+
+
+# ===================================================== auf-20261021-314 B3: F4 und F1 nicht wieder
+
+_KARTE_LOESCHEN = {"werkzeug": "vis_nodeLoeschen", "argumente": {"graphId": "g1", "nodeId": "n1"},
+                   "ergebnis": "VORSCHLAG A-1 liegt als Karte beim Architekten: Knoten «Modell» löschen. "
+                               "Er entscheidet; schlage dasselbe nicht noch einmal vor."}
+
+
+def test_f4_wortlaut_aus_314_geloescht_neben_der_karte_ist_eine_behauptung():
+    """314 F4 wörtlich: das Wort «Karte» im selben Satz schützte die Behauptung «wurde gelöscht»."""
+    e = Ersatz([{"content": "Der Modell-Knoten wurde gelöscht — es liegt eine Karte beim Architekten. "
+                            "Freigeben kann nur der Architekt."}])
+    r = assistent.frage("Lösch den Modell-Knoten.", werkzeuge=_liste(),
+                        schritte=[_GRAPH, _KARTE_LOESCHEN], sprachmodell=e)
+    assert "gelöscht" not in r["antwort"]
+    assert r["antwort"].startswith(
+        "Noch nicht ausgeführt: vorgeschlagen als Karte A-1 (Knoten «Modell» löschen)")
+
+
+@pytest.mark.parametrize("satz", ["Ich habe eine Karte angelegt.",
+                                  "Das Löschen ist als Karte A-1 vorgeschlagen.",
+                                  "Gelöscht ist er erst, wenn der Architekt die Karte anwendet."])
+def test_ein_vorschlag_bleibt_wie_er_ist(satz):
+    assert assistent._berichtige_antwort(satz, "Lösch n1.", [_GRAPH, _KARTE_LOESCHEN]) == satz
+
+
+def test_ein_kartenergebnis_geht_mit_dem_hinweis_ans_modell():
+    e = Ersatz([{"content": "Vorgeschlagen."}])
+    assistent.frage("Lösch den Modell-Knoten.", werkzeuge=_liste(),
+                    schritte=[_GRAPH, _KARTE_LOESCHEN], sprachmodell=e)
+    werkzeug = [m for m in e.gesehen[0] if m["role"] == "tool"]
+    assert werkzeug[-1]["content"].startswith("VORSCHLAG A-1")
+    assert werkzeug[-1]["content"].endswith(assistent.SATZ_KARTE_NICHT_GETAN)
+    assert "OK" not in assistent.SATZ_KARTE_NICHT_GETAN and "NICHT ausgeführt" in assistent.SATZ_KARTE_NICHT_GETAN
+
+
+F1 = "Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten."
+
+
+def test_f1_ein_neuer_graph_geht_nicht_hinaus_wenn_niemand_ihn_wollte():
+    """314 F1 Runde 1: vis_graphErstellen «Stimmung Abend» ging hinaus, die Knoten landeten dort."""
+    e = Ersatz([{"content": "", "tool_calls": [{"function": {"name": "vis_graphErstellen", "arguments": {"name": "Stimmung Abend"}}}]},
+                {"content": "", "tool_calls": [_aufruf("graph_lesen")]}])
+    r = assistent.frage(F1, werkzeuge=_liste(), sprachmodell=e)
+    assert r["schritte_offen"] == [{"werkzeug": "graph_lesen", "argumente": {}}]
+    assert e.gesehen[1][-1]["content"] == f"Abgewiesen: {assistent.SATZ_KEIN_NEUER_GRAPH}"
+
+
+def test_f1_ein_paket_mit_neuem_graph_und_falschen_verweisen_wird_abgewiesen():
+    """314 F1 Runden 2/3 wörtlich: $neu:0 als graphId zeigt auf einen Knoten, $neu:1 auf sich selbst."""
+    paket = {"schritte": [
+        {"argumente": {"graphId": "$neu:0", "params": {"preset": "abend"}, "typ": "stimmung", "x": 100,
+                       "y": 100}, "befehl": "vis_nodeSetzen"},
+        {"argumente": {"from": "$neu:0", "fromPort": "stimmung", "graphId": "$neu:0", "to": "$neu:1",
+                       "toPort": "stimmung"}, "befehl": "vis_verbinden"}]}
+    grund = assistent._pruefe_paket(paket, "g1 n2", set(), False)
+    assert grund.startswith("Schritt 0 (vis_nodeSetzen): «$neu:0» als graphId")
+    mit_graph = {"schritte": [{"argumente": {"name": "Stimmung Abend"}, "befehl": "vis_graphErstellen"}]
+                 + paket["schritte"]}
+    assert "vis_graphErstellen" in assistent._pruefe_paket(mit_graph, "g1 n2", set(), False)
+
+
+def test_f1_das_richtige_paket_geht_hinaus():
+    richtig = {"schritte": [
+        {"befehl": "vis_nodeSetzen", "argumente": {"graphId": "g1", "typ": "stimmung", "x": 100, "y": 100,
+                                                   "params": {"preset": "abend"}}},
+        {"befehl": "vis_verbinden", "argumente": {"graphId": "g1", "from": "$neu:0", "fromPort": "stimmung",
+                                                  "to": "n2", "toPort": "stimmung"}}]}
+    e = Ersatz([{"content": "", "tool_calls": [_aufruf("vis_paket", **richtig)]}])
+    r = assistent.frage(F1, werkzeuge=_liste(), schritte=[_GRAPH], sprachmodell=e)
+    assert r["schritte_offen"] == [{"werkzeug": "vis_paket", "argumente": richtig}]
+    # eine geratene Kennung im Paket wird abgewiesen wie beim Einzelaufruf
+    geraten = json.loads(json.dumps(richtig))
+    geraten["schritte"][1]["argumente"]["to"] = "n9"
+    assert "«n9» (to)" in assistent._pruefe_paket(geraten, _GRAPH["ergebnis"], set(), False)
+
+
+@pytest.mark.parametrize("nachricht, getan, erlaubt", [
+    ("Leg einen neuen Graph «Wettbewerb» an.", [], True),
+    (F1, [{"werkzeug": "graph_lesen", "ergebnis": "Kein Render-Graph im Projekt — lege mit "
+                                                   "vis_graphErstellen einen an."}], True),
+    (F1, [_GRAPH], False),
+    ("Lösch den Modell-Knoten.", [], False),
+])
+def test_ein_neuer_graph_nur_auf_bitte_oder_wenn_keiner_da_ist(nachricht, getan, erlaubt):
+    assert assistent._neuer_graph_erlaubt(nachricht, getan) is erlaubt
+
+
+def test_der_systemsatz_sagt_bestehender_graph_und_das_beispiel_aus_314():
+    s = assistent.SYSTEMTEXT_KNOTEN
+    assert "Arbeite im bestehenden Graph" in s and "vis_graphErstellen" in s
+    assert "nie «Der Knoten wurde gelöscht — es liegt eine Karte»" in s

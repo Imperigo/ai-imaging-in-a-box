@@ -1320,6 +1320,132 @@ def bestand_in_glb(pfad) -> dict | None:
             "namen": [str(k.get("name") or "") for k in bestand][:20]}
 
 
+#: Die Werte von glTF ``extras.role``, mit denen eine Datei einen Knoten als **Boden bzw.
+#: Gelände** ausweist (auf-20261021-316, B3; Vorgabe an KosmoDraw 21.10.2026). Dasselbe Feld
+#: wie :data:`BESTAND_ROLLE` — KosmoOrbit schreibt ``extras.role`` schon heute
+#: (``derive/gltf.ts``, ``bestandExtras``), eine zweite Stelle für dieselbe Art Angabe wäre
+#: eine zweite Konvention. ``"terrain"`` wird mitgelesen, vorgegeben wird ``"ground"``.
+GELAENDE_ROLLEN: tuple[str, ...] = ("ground", "terrain")
+
+
+def _glb_kopf(pfad) -> dict | None:
+    """Der JSON-Block einer glb/gltf — ohne trimesh, ohne Blender; ``None``, wenn unlesbar."""
+    import json as _json
+    import struct as _struct
+    from pathlib import Path as _Path
+    try:
+        pfad = _Path(pfad)
+        daten = pfad.read_bytes()
+        if pfad.suffix.lower() == ".gltf":
+            js = _json.loads(daten)
+        else:
+            laenge, art = _struct.unpack_from("<II", daten, 12)
+            if art != 0x4E4F534A:
+                return None
+            js = _json.loads(daten[20:20 + laenge])
+    except (OSError, ValueError, _struct.error, TypeError):
+        return None
+    return js if isinstance(js, dict) else None
+
+
+def gelaende_in_glb(pfad) -> dict | None:
+    """Welche Knoten die glb selbst als Boden ausweist (``extras.role`` in :data:`GELAENDE_ROLLEN`).
+
+    **Warum die Rolle und nicht der Name** (auf-20261021-316, B3). Die Probedatei von
+    KosmoDraw nennt ihren Boden «boden» — Knoten, Mesh und Material. Die Geländeregel der
+    Maske nimmt dieses Wort mit Grund nie auf (:data:`aiimaging.maske.WOERTER_AUSDRUECKLICH_NICHT`:
+    ein Geschossboden ist kein Gelände), und so zählte der Boden als Bauwerk. Was die Namen
+    nicht tragen können, sagt die Datei: ``extras.role = "ground"`` am Knoten.
+
+    Returns:
+        ``None`` ohne solchen Knoten oder bei unlesbarer Datei. Sonst
+        ``{"n_gelaende", "knoten", "materialien", "geteilt", "namen"}``:
+
+        * ``knoten`` — die Knotennamen (sie stehen in der Tabelle, wenn der Runner
+          Objektnamen vergibt);
+        * ``materialien`` — Materialnamen, die **nur** an solchen Knoten hängen (sie stehen
+          in der Tabelle, wenn der Runner Materialnamen vergibt);
+        * ``geteilt`` — Materialnamen, die ein Boden mit einem anderen Knoten teilt. Sie
+          werden **nicht** übertragen: Im Material-ID-Pass trügen beide dieselbe Kennfarbe,
+          und den Boden hinauszunehmen hiesse, das Bauwerk mit hinauszunehmen;
+        * ``namen`` — ``knoten`` und ``materialien`` zusammen, so wie
+          :func:`aiimaging.maske.bauwerksmaske` sie als ``gelaende_rolle`` nimmt.
+    """
+    js = _glb_kopf(pfad)
+    if js is None:
+        return None
+    knoten = [k for k in js.get("nodes") or () if isinstance(k, dict)]
+    meshes = [m for m in js.get("meshes") or () if isinstance(m, dict)]
+    materialien = [m for m in js.get("materials") or () if isinstance(m, dict)]
+
+    def ist_boden(k) -> bool:
+        extras = k.get("extras")
+        return (isinstance(extras, dict)
+                and str(extras.get("role") or "").strip().lower() in GELAENDE_ROLLEN)
+
+    def materialnamen(k) -> set[str]:
+        i = k.get("mesh")
+        if not isinstance(i, int) or not 0 <= i < len(meshes):
+            return set()
+        namen = set()
+        for prim in meshes[i].get("primitives") or ():
+            j = prim.get("material") if isinstance(prim, dict) else None
+            if isinstance(j, int) and 0 <= j < len(materialien):
+                namen.add(str(materialien[j].get("name") or ""))
+        return namen - {""}
+
+    boden = [k for k in knoten if ist_boden(k)]
+    if not boden:
+        return None
+    am_boden = set().union(*(materialnamen(k) for k in boden))
+    sonst = set().union(set(), *(materialnamen(k) for k in knoten
+                                 if "mesh" in k and not ist_boden(k)))
+    knotennamen = [str(k.get("name") or "") for k in boden if k.get("name")]
+    eigen = sorted(am_boden - sonst)
+    return {"n_gelaende": len(boden), "knoten": knotennamen[:50], "materialien": eigen,
+            "geteilt": sorted(am_boden & sonst),
+            "namen": list(dict.fromkeys([*knotennamen[:50], *eigen]))}
+
+
+def glb_mit_rolle(quelle, ziel, knoten: str, rolle: str = GELAENDE_ROLLEN[0]) -> dict:
+    """Eine Kopie der glb, in der ein Knoten ``extras.role = rolle`` trägt — sonst bytegleich.
+
+    Für die Messung am Heim-PC (Auftrag zur Steine-Probe, auf-20261021-316 B3): Die Probedatei
+    trägt die Rolle noch nicht; mit dieser Kopie lässt sich der Weg prüfen, bevor die nächste
+    Ausfuhr sie mitbringt. Geändert wird nur der JSON-Block (neu auf vier Bytes aufgefüllt),
+    der Binärblock wandert unverändert mit. Die Quelle bleibt unberührt.
+
+    Returns:
+        ``{"ziel", "knoten", "rolle", "bytes"}``.
+
+    Raises:
+        ValueError: keine glb, kein oder mehr als ein Knoten dieses Namens.
+    """
+    import json as _json
+    import struct as _struct
+    from pathlib import Path as _Path
+    daten = _Path(quelle).read_bytes()
+    if len(daten) < 20 or daten[:4] != b"glTF":
+        raise ValueError("Keine glb (Kopf 'glTF' fehlt).")
+    laenge, art = _struct.unpack_from("<II", daten, 12)
+    if art != 0x4E4F534A:
+        raise ValueError("Der erste Block der glb ist kein JSON.")
+    js = _json.loads(daten[20:20 + laenge])
+    rest = daten[20 + laenge:]
+    treffer = [k for k in js.get("nodes") or () if isinstance(k, dict) and k.get("name") == knoten]
+    if len(treffer) != 1:
+        raise ValueError(f"{len(treffer)} Knoten heissen {knoten!r} — erwartet genau einer.")
+    extras = treffer[0].get("extras") if isinstance(treffer[0].get("extras"), dict) else {}
+    treffer[0]["extras"] = {**extras, "role": str(rolle)}
+    roh = _json.dumps(js, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    roh += b" " * (-len(roh) % 4)
+    gesamt = 12 + 8 + len(roh) + len(rest)
+    aus = (daten[:4] + _struct.pack("<II", _struct.unpack_from("<I", daten, 4)[0], gesamt)
+           + _struct.pack("<II", len(roh), 0x4E4F534A) + roh + rest)
+    _Path(ziel).write_bytes(aus)
+    return {"ziel": str(ziel), "knoten": knoten, "rolle": str(rolle), "bytes": len(aus)}
+
+
 def bildauftrag_bestand(prompt: str, bestand: dict | None) -> dict | None:
     """Den Bildauftrag um :data:`BESTAND_ZUSATZ` ergänzen — nur, wenn Bestand da ist.
 
@@ -1972,7 +2098,7 @@ KAMERAS_AUTO_BRENNWEITEN = (24, 35, 50)
 KAMERAS_AUTO_HOECHSTENS = 8
 
 
-def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
+def kameras_auto_aus_szene(roh, *, maengel: list, endgueltig: list | None = None) -> dict | None:
     """``cameras_auto`` → ``{richtungen, augenhoehe_m, brennweite_mm, abstand, perspektive,
     vorgaben}`` — oder ``None`` (nicht bestellt bzw. mangelhaft, Satz in ``maengel``).
 
@@ -1989,14 +2115,29 @@ def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
         maengel.append(f"'cameras_auto' ist {roh!r} und kein Block {{richtungen, ...}}.")
         return None
     richtungen = roh.get("richtungen")
+    # DEUTSCHE KUERZEL ALS GLEICHWORT (auf-20261021-314, B2): «nNO» heisst «nNE».
+    umgedeutet = {}
+    if isinstance(richtungen, list):
+        gelesen = []
+        for r in richtungen:
+            neu, um = _kameras.kuerzel_lesen(r)
+            if um:
+                umgedeutet[r] = neu
+            gelesen.append(neu)
+        richtungen = gelesen
     if (not isinstance(richtungen, list) or not richtungen
             or len(richtungen) > KAMERAS_AUTO_HOECHSTENS
             or any(r not in _kameras.RICHTUNGEN for r in richtungen)
             or len(set(richtungen)) != len(richtungen)):
-        maengel.append(
-            f"'cameras_auto.richtungen' ist {richtungen!r}. Erwartet sind 1 bis "
-            f"{KAMERAS_AUTO_HOECHSTENS} verschiedene Kuerzel aus "
-            f"{', '.join(_kameras.RICHTUNGSFOLGE)}.")
+        satz = (f"'cameras_auto.richtungen' ist {roh.get('richtungen')!r}. Erwartet sind 1 bis "
+                f"{KAMERAS_AUTO_HOECHSTENS} verschiedene Kuerzel aus "
+                f"{', '.join(_kameras.RICHTUNGSFOLGE)} (deutsch auch "
+                f"{', '.join(_kameras.GLEICHWORTE_DEUTSCH)}).")
+        maengel.append(satz)
+        # ENDGUELTIG (B2): Ein unbekanntes Kuerzel wird nicht von selbst richtig — der Auftrag
+        # endet mit diesem Satz, statt still «queued» zu haengen, bis jemand abbricht.
+        if endgueltig is not None:
+            endgueltig.append(satz)
     auge = _bereichszahl(roh, "augenhoehe_m", "cameras_auto.augenhoehe_m", 0.5, 50,
                          _kameras.AUGENHOEHE_M, maengel)
     brennweite = roh.get("brennweite_mm")
@@ -2043,9 +2184,13 @@ def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
     if abstand["art"] == "auto" and not _gesetzt(abstand_roh or {}, "fuellt") \
             and "abstand" not in vorgaben:
         vorgaben.append("abstand.fuellt")
-    return {"richtungen": list(richtungen), "augenhoehe_m": float(auge),
-            "brennweite_mm": float(brennweite), "abstand": abstand,
-            "perspektive": perspektive, "vorgaben": vorgaben}
+    aus = {"richtungen": list(richtungen), "augenhoehe_m": float(auge),
+           "brennweite_mm": float(brennweite), "abstand": abstand,
+           "perspektive": perspektive, "vorgaben": vorgaben}
+    if umgedeutet:
+        # steht so in `angewandt.cameras_auto` — das Ergebnis sagt, was gelesen wurde
+        aus["umgedeutet"] = umgedeutet
+    return aus
 
 
 def kameras_auto_unvertraeglich(*, kameras, skizze, interior) -> list[str]:
@@ -2856,7 +3001,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
                                     "stoffe": list(stoffe), "schon_im_prompt": False})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
-    kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
+    kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel,
+                                          endgueltig=endgueltig)
+    # Was als deutsches Kuerzel kam (B2) — ausserhalb von `kameras_auto`, damit der Schluessel
+    # der Grundlage fuer «nNO» und «nNE» derselbe bleibt.
+    kameras_umgedeutet = dict((kameras_auto or {}).pop("umgedeutet", None) or {})
+    for de, en in kameras_umgedeutet.items():
+        warnungen.append(f"Kamerakuerzel {de!r} (deutsch) als {en!r} gelesen.")
     if fremd.get("cameras_auto") is not None:
         widerspruch = kameras_auto_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), skizze=fremd.get("skizze"),
@@ -2913,6 +3064,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         # Die Auto-Kamera mit Parametern (20.10.2026) — `None`: wie bisher die Einstellungen
         # des Abholers.
         "kameras_auto": kameras_auto,
+        # Deutsche Kuerzel, die als englische gelesen wurden (auf-20261021-314, B2).
+        "kameras_umgedeutet": kameras_umgedeutet,
         # `None` heisst hier NICHT GELESEN — dann steht der Grund unter `maengel`.
         "aufloesung": aufl[0],
         "hoehe": aufl[1],
@@ -3041,6 +3194,7 @@ DURCHGEREICHT = {
     "himmel_sichtbar": ("abholer.umgebung_einstellungen → umgebung_licht {himmel_sichtbar} → "
                         "blender_depth_stage._welt_setzen (Kamerastrahl sieht das Himmelsbild); "
                         "Bericht 'umgebung.hintergrund.art' himmelsbild"),
+    "kameras_umgedeutet": "abholer.angewandt_der_szene → 'angewandt.cameras_auto.umgedeutet'",
     "messschalter": ("abholer.angewandt_der_szene → render-result 'angewandt.messschalter' "
                      "{<name>: {wert, herkunft, grund?}} (Entscheid 126)"),
     "umriss_halten": ("abholer.umriss_halten_der_kamera (nachher) bzw. render.RenderAuftrag("
@@ -3496,14 +3650,21 @@ def _ausserhalb_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list)
             werte.append((wert, (geometrie_urteil or {}).get("kamera")))
     if not werte:
         return
-    groesster, kamera = max(werte, key=lambda w: w[0])
+    groesster, _kamera = max(werte, key=lambda w: w[0])
     qa[FELD_AUSSERHALB] = groesster
-    if groesster >= _baumasse.SCHWELLE_ANTEIL_HAUS:
-        hinweise.append(
-            f"{SATZ_AUSSERHALB}: Im KI-Bild der Kamera {kamera!r} steht neben dem Haus, wo "
-            f"das Modell Himmel hat, Baumasse im Umfang von {groesster * 100:.0f} % der "
-            f"Hausflaeche (Satz ab {_baumasse.SCHWELLE_ANTEIL_HAUS * 100:.0f} %, gesetzt, "
-            f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
+    # JE KAMERA EIN SATZ, WIE BEI «NICHT WIEDERZUERKENNEN» (auf-20261021-314, B6): Bis dahin
+    # stand er nur fuer die Kamera mit dem groessten Wert (sSE), obwohl nNW (2,13), nNE (2,25)
+    # und sSW (3,33) auch ueber der Schwelle lagen — dort stand nur «NICHT WIEDERZUERKENNEN».
+    # Beide Saetze sagen Verschiedenes (mehr gebaut als modelliert / Modell und Bild decken
+    # sich kaum) und stehen darum beide, wo beide gelten. Die Zahl im `qa`-Block bleibt der
+    # groesste Wert des Laufs.
+    for wert, kamera in werte:
+        if wert >= _baumasse.SCHWELLE_ANTEIL_HAUS:
+            hinweise.append(
+                f"{SATZ_AUSSERHALB}: Im KI-Bild der Kamera {kamera!r} steht neben dem Haus, wo "
+                f"das Modell Himmel hat, Baumasse im Umfang von {wert * 100:.0f} % der "
+                f"Hausflaeche (Satz ab {_baumasse.SCHWELLE_ANTEIL_HAUS * 100:.0f} %, gesetzt, "
+                f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
 
 
 #: DER HAUSANTEIL AN GRUNDLAGE UND KI-BILD (Video-Befund L4-2, 21.10.2026). Die Pruefung

@@ -736,6 +736,24 @@ def _form_zweitmeinung(alle_knoten, gelaende):
             "gelaende_namen": tuple(dict.fromkeys(befund["gelaende"]))}
 
 
+def _nur_dort_materialien(objektnamen) -> list[str]:
+    """Ursprungsnamen der Materialien, die NUR an diesen Objekten haengen — sortiert.
+
+    Gelesen vor jedem Tausch der Slots; ein Material, das auch ein anderes Mesh-Objekt
+    traegt, faellt heraus (es truege im ID-Pass dieselbe Farbe wie das Bauwerk).
+    """
+    namen = set(objektnamen or ())
+    if not namen:
+        return []
+    dort, sonst = set(), set()
+    for obj in (o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)):
+        ziel = dort if obj.name in namen else sonst
+        for slot in obj.material_slots:
+            if slot.material is not None:
+                ziel.add(slot.material.get(URSPRUNG_MARKE) or slot.material.name)
+    return sorted(m for m in dort - sonst if m)
+
+
 def _bbox_bauwerk():
     """Die Hüllbox der **gebauten Substanz** — Meshes, deren Name kein Gelände nennt.
 
@@ -834,13 +852,20 @@ def _bbox_bauwerk():
     b_bau = math.hypot(hi[0] - lo[0], hi[1] - lo[1])
     schrumpfung = (1.0 - b_bau / b_szene) if b_szene > 0.0 else 0.0
 
-    if not gelaende:
-        return lo, hi, ("Kein Objekt wurde als Gelaende erkannt; die Bauwerksbox ist "
-                        "hier gleich der Szenenbox. Das ist ein gueltiges Ergebnis und "
-                        "kein Rueckfall — aber ein Bruch zwischen Rahmung und Messung "
-                        "ist damit auch nicht feststellbar."), schrumpfung, LEERER_FORMBEFUND
-
+    # OHNE NAMENSTREFFER ERST DIE FORM FRAGEN (auf-20261021-316, B3). Bis zum 21.10.2026
+    # kehrte dieser Weg hier zurueck, bevor die Form gefragt war — `glbbox.bauwerksbox`
+    # fragt sie gerade in diesem Fall. Die Steine-Probe von KosmoDraw zeigte den Bruch: Die
+    # Rahmung (glbbox) erkannte den Boden «boden» an der Gestalt, der Bericht dieses Wegs
+    # nicht, und die Bauwerksmaske zaehlte ihn als Bauwerk. Jetzt faellt der Fall in den
+    # Zweig unter der Schwelle (Schrumpfung 0) und bekommt dieselbe Auskunft wie dort.
+    kein_gelaende_satz = (
+        "Kein Objekt wurde als Gelaende erkannt; die Bauwerksbox ist "
+        "hier gleich der Szenenbox. Das ist ein gueltiges Ergebnis und "
+        "kein Rueckfall — aber ein Bruch zwischen Rahmung und Messung "
+        "ist damit auch nicht feststellbar.")
     glbbox = _glbbox_modul()
+    if not gelaende and glbbox is None:
+        return lo, hi, kein_gelaende_satz, schrumpfung, LEERER_FORMBEFUND
     if glbbox is None:
         return lo, hi, (
             f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert und die Rahmung "
@@ -872,6 +897,8 @@ def _bbox_bauwerk():
                     f"der Woerter aus maske.GELAENDE_WOERTER; sie stehen im Bericht "
                     f"unter 'bbox_bauwerk_gelaende_namen' und erreichen von dort die "
                     f"Bauwerksmaske."), schrumpfung, form
+        if not gelaende:
+            return lo, hi, kein_gelaende_satz, schrumpfung, LEERER_FORMBEFUND
         return lo, hi, (
             f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert, die Rahmung "
             f"wird davon aber nur um {schrumpfung:.1%} enger — unter "
@@ -2622,6 +2649,18 @@ def _ist_ifc_knoten(name: str) -> bool:
     return bool(IFC_KNOTEN.match(str(name)))
 
 
+def _material_id_modul():
+    """``aiimaging.material_id`` von hier aus — dieselbe Bauart wie :func:`_maske_modul`.
+
+    Anders als dort gibt es KEINEN Rueckfall: Ohne Plan keine Kennungen, und eine zweite,
+    alte Planung hier waere genau der Fehler aus auf-20261021-316. Fehlt das Modul, scheitert
+    der Material-ID-Pass laut.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from aiimaging import material_id                       # noqa: PLC0415
+    return material_id
+
+
 def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
     """Jedem Material eine ID-Farbe geben und die Szene darauf umstellen.
 
@@ -2641,7 +2680,10 @@ def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
 
     Rückfall ohne Materialien
     -------------------------
-    Trägt ein Mesh gar kein Material, bekommt es **objektweise** eine eigene ID. Sonst
+    Trägt ein Mesh gar kein Material, bekommt es **objektweise** eine eigene ID — teilen
+    sich mehrere Objekte ein Mesh, **eine je Mesh** (seit auf-20261021-316, siehe
+    :mod:`aiimaging.material_id`; ein Material bekommt ohnehin eine Kennung, nie eine je
+    Objekt). Sonst
     verschmölze eine materiallose Szene zu einer einzigen Fläche. Bis zum 08.10.2026 war
     das der Normalfall der Kette: `ifc_to_glb_runner.py` übertrug nur Geometrie. Seither
     übernimmt er die `IfcSurfaceStyle` der Datei (F6) — aber nur sie; ein Bauteil ohne
@@ -2658,59 +2700,85 @@ def _material_id_zuweisen(kontext=None) -> tuple[list[dict], int]:
     nicht in einem Slot, sondern im «Set Material» seiner Geometry Nodes und wird dort
     getauscht.
     """
-    tabelle: list[dict] = []
-    nach_material: dict[str, int] = {}
+    # DER PLAN STEHT VOR JEDEM EINGRIFF (auf-20261021-316, B2). Bis zum 21.10.2026 wurde hier
+    # Objekt fuer Objekt geplant UND getauscht. Bei geteilten Meshes (19 600 ausgerollte
+    # Backstein-Instanzen, ein Mesh) las das zweite Objekt am Mesh schon «MATID_000_backstein»
+    # statt «backstein», vergab dafuer eine neue Kennung «MATID_001_MATID_000_backstein» —
+    # 19 605 Eintraege, Namen bis 255 Zeichen verkettet, Kennfarben doppelt. Jetzt werden die
+    # URSPRUENGLICHEN Namen zuerst gelesen und der Plan ohne Blender gerechnet
+    # (`aiimaging.material_id`, eine Kennung je Material, ohne Material je Mesh); getauscht
+    # wird danach.
+    plan_modul = _material_id_modul()
     # Die Materialien dieses Runners (Oberflaeche, Gips) zaehlen nicht als «echte» — sie
     # ersetzen welche, die weiter in `bpy.data.materials` stehen.
     n_echte_materialien = sum(1 for m in bpy.data.materials if not m.get(MATERIAL_MARKE))
+    # Nach Namen sortiert, damit zwei Läufe dieselben Indizes und damit dieselben Farben
+    # vergeben. Ohne feste Reihenfolge wäre die Maske nicht reproduzierbar.
+    meshes = sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
+                    key=lambda o: o.name)
+    beschreibung = []
+    for obj in meshes:
+        # Ein Slot, den `_ersetze_slots` an ein Objekt OHNE Material gehaengt hat (leerer
+        # Ursprung), zaehlt nicht als belegt: Das Objekt bleibt ein «objekt» wie zuvor.
+        # Der Name des ERSETZTEN Materials, wenn eine Oberflaeche gesetzt wurde — die
+        # Maske liest Namen und soll dasselbe sehen wie ohne Oberflaeche.
+        slots = []
+        for s in obj.material_slots:
+            if s.material is None or s.material.get(URSPRUNG_MARKE, None) == "":
+                slots.append(None)
+            else:
+                slots.append(s.material.get(URSPRUNG_MARKE) or s.material.name)
+        # EIN BAUTEIL AUS UNSERER IFC BEKOMMT SEINE ID JE OBJEKT — auch mit Material
+        # (Befund 08.10.2026, nach F6). Die Bauwerksmaske liest diese Tabelle: Gelaenderegel
+        # und Katalog-Nullbefund arbeiten auf KNOTENnamen («IfcSlab_Gelaende_…»), nicht auf
+        # Materialnamen («Beton»). Die Farben bleiben in der glb und im Beauty; nur die
+        # Kennung hier bleibt, was sie vor F6 war.
+        beschreibung.append({"name": obj.name, "mesh": obj.data.name, "slots": slots,
+                             "ifc": _ist_ifc_knoten(obj.name)})
+    plan = plan_modul.plane_material_ids(beschreibung, _id_farbe_srgb)
+    tabelle: list[dict] = plan["tabelle"]
+    kennung: dict[int, "bpy.types.Material"] = {
+        e["index"]: _emissions_material(plan_modul.kennungsname(e["index"], e["name"]),
+                                        e["farbe_srgb"])
+        for e in tabelle}
+    for obj in meshes:
+        z = plan["zuweisung"][obj.name]
+        if z["art"] == "objekt":
+            if z["am_objekt"]:
+                # Ein IFC-Bauteil an einem geteilten Mesh: Die Kennung haengt am OBJEKT,
+                # sonst traegt das Mesh nur die des letzten Objekts.
+                if not obj.material_slots:
+                    obj.data.materials.append(None)
+                for slot in obj.material_slots:
+                    slot.link = "OBJECT"
+                    slot.material = kennung[z["index"]]
+            else:
+                obj.data.materials.clear()
+                obj.data.materials.append(kennung[z["index"]])
+            continue
+        for slot, index in zip(obj.material_slots, z["indizes"]):
+            if index is not None:
+                slot.material = kennung[index]
 
     def eintragen(name: str, quelle: str) -> "bpy.types.Material":
+        # NUR NOCH FUER DEN KONTEXT, als letzter Eintrag — mit der naechsten freien Farbe.
         index = len(tabelle)
-        farbe = _id_farbe_srgb(index)
-        mat = _emissions_material(f"MATID_{index:03d}_{name}", farbe)
+        belegt = {tuple(e["farbe_srgb_8bit"]) for e in tabelle}
+        folge = index
+        while True:
+            farbe = _id_farbe_srgb(folge)
+            acht = tuple(int(round(k * 255.0)) for k in farbe)
+            if acht not in belegt or folge > index + plan_modul.FARBSUCHE_HOECHSTENS:
+                break
+            folge += 1
         tabelle.append({
             "index": index,
             "name": name,
             "quelle": quelle,
             "farbe_srgb": [round(k, 6) for k in farbe],
-            "farbe_srgb_8bit": [int(round(k * 255.0)) for k in farbe],
+            "farbe_srgb_8bit": list(acht),
         })
-        return mat
-
-    # Nach Namen sortiert, damit zwei Läufe dieselben Indizes und damit dieselben Farben
-    # vergeben. Ohne feste Reihenfolge wäre die Maske nicht reproduzierbar.
-    meshes = sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
-                    key=lambda o: o.name)
-    for obj in meshes:
-        # Ein Slot, den `_ersetze_slots` an ein Objekt OHNE Material gehaengt hat (leerer
-        # Ursprung), zaehlt nicht als belegt: Das Objekt bleibt ein «objekt» wie zuvor.
-        belegt = [s for s in obj.material_slots if s.material is not None
-                  and s.material.get(URSPRUNG_MARKE, None) != ""]
-        # EIN BAUTEIL AUS UNSERER IFC BEKOMMT SEINE ID JE OBJEKT — auch mit Material
-        # (Befund 08.10.2026, nach F6). Die Bauwerksmaske liest diese Tabelle: Gelaenderegel
-        # und Katalog-Nullbefund arbeiten auf KNOTENnamen («IfcSlab_Gelaende_…»), nicht auf
-        # Materialnamen («Beton»). Seit die Stile der IFC in die glb kommen, stand hier
-        # «Beton» statt des Bauteils — und bei einem Haus ohne Gelaende fiel die Maske weg
-        # (am Testbau mit --stile nachgestellt: gemessen=False, vorher True). Damit fehlte
-        # genau das Mass, das die Abwesenheit eines Bauwerks faengt. Die Farben bleiben in
-        # der glb und im Beauty; nur die Kennung hier bleibt, was sie vor F6 war.
-        if not belegt or _ist_ifc_knoten(obj.name):
-            obj.data.materials.clear()
-            obj.data.materials.append(eintragen(obj.name, "objekt"))
-            continue
-        for slot in obj.material_slots:
-            if slot.material is None:
-                continue
-            # Der Name des ERSETZTEN Materials, wenn eine Oberflaeche gesetzt wurde — die
-            # Maske liest Namen und soll dasselbe sehen wie ohne Oberflaeche.
-            name = slot.material.get(URSPRUNG_MARKE) or slot.material.name
-            if name not in nach_material:
-                nach_material[name] = len(tabelle)
-                slot.material = eintragen(name, "material")
-            else:
-                slot.material = bpy.data.materials[
-                    f"MATID_{nach_material[name]:03d}_{name}"
-                ]
+        return _emissions_material(plan_modul.kennungsname(index, name), farbe)
 
     if kontext is not None:
         obj, setze = kontext
@@ -3039,7 +3107,22 @@ def _renderparameter_setzen(a) -> None:
     #     Material-ID-Maske ab, bis 217/255 bei 28 von 262144 Pixeln. Ein Wechsel waere
     #     also nicht nur langsamer, er wuerde auch Zahlen verschieben.
     #
-    # Der Grund fuer CPU ist damit die Messung und nicht die Abwesenheit einer GPU.
+    # NACHGEMESSEN AM 21.10.2026 (auf-20261021-314, Teil 8; RTX 5090, 1600 x 1000, 128 Samples,
+    # Stimmung mittag mit Himmelsbild, drei Kameras, je Geraet zweimal, wieder auf einer Kopie
+    # ausserhalb des Repos):
+    #
+    #   * Direkt gerufen ist OptiX jetzt schneller: 4,4 s je Kamera gegen 5,5-5,7 s auf der
+    #     CPU (bei grossem Bild und Himmelsbild traegt die Ersparnis den Anlauf).
+    #   * AUF DEM WEG DES ABHOLERS (seams.glb_zu_multipass) sind beide gleich: 7,4 s je
+    #     Kamera, in beiden Laeufen. Die Ersparnis kommt im Produkt nicht an.
+    #   * OptiX belegt 3,9 GB Grafikspeicher mehr (1404 -> 5256 MiB) — Speicher, den sich
+    #     Blender mit dem Bildmodell teilt, das bis ~27,9 GB braucht.
+    #   * Die Bilder sind jetzt gleich: Material-ID ohne einen abweichenden Bildpunkt, Tiefe
+    #     hoechstens 0,03 mm, Schoenbild nur Rauschen (hoechstens 2/255).
+    #
+    # Der Grund fuer CPU ist damit weiter die Messung: kein Zeitgewinn am echten Weg, aber
+    # 3,9 GB weniger Spielraum auf der Karte. (Die verschobenen Kantenpixel vom 06.09. sind
+    # bei diesem Testbau nicht mehr aufgetreten — sie sind kein Grund mehr, der Speicher ist es.)
     szene.cycles.device = "CPU"
     szene.render.resolution_x = a.aufloesung
     szene.render.resolution_y = a.hoehe or a.aufloesung
@@ -3080,8 +3163,9 @@ def _bedarf_befund() -> dict:
     return {"quelle": "nichts zu entscheiden", "summe_byte": None, "groesster_byte": None,
             "zuschlag": None, "verlangt_byte": None, "frei_byte": None,
             "spielraum_byte": None, "geraet": "cpu",
-            "grund": ("Blender rechnet auf der CPU (Cycles; gemessen am 06.09.2026: auf der "
-                      "Karte langsamer und mit verschobenen Kantenpixeln der Material-ID). "
+            "grund": ("Blender rechnet auf der CPU (Cycles; gemessen am 06.09.2026 und "
+                      "21.10.2026: auf dem Weg des Abholers mit OptiX nicht schneller, 7,4 s "
+                      "je Kamera, aber 3,9 GB mehr Grafikspeicher). "
                       "In dieser Stufe wird darum kein Grafikspeicher verteilt, und es gab "
                       "nichts zu entscheiden. Wie das BILDMODELL auf die Karte gelegt wurde, "
                       "steht im Ergebnis des Bildlaufs unter geraeteweg.bedarf.grund.")}
@@ -3162,6 +3246,8 @@ def main() -> int:
     # rahmt weiterhin, was ihm gesagt wird. Sie wird berichtet, damit diesseits der
     # Prozessgrenze VOR dem Bildlauf entscheidbar ist, ob die Rahmung ein Urteil zulaesst.
     bau_lo, bau_hi, bau_note, bau_schrumpfung, bau_form = _bbox_bauwerk()
+    # Vor jedem Tausch der Slots lesen — danach tragen sie Ersatz- und Kennungsmaterialien.
+    bau_materialien = _nur_dort_materialien(bau_form["gelaende_namen"])
     # Die Kamera darf sich auf eine ANDERE Hüllbox beziehen als der Bericht: Der Bericht
     # beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll.
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
@@ -3378,6 +3464,10 @@ def main() -> int:
         # (`glbbox`), wo man sie nachrechnen kann.
         "bbox_bauwerk_entschieden_durch": bau_form["entschieden_durch"],
         "bbox_bauwerk_gelaende_namen": list(bau_form["gelaende_namen"]),
+        # DIE MATERIALNAMEN DAZU (auf-20261021-316, B3): Die Tabelle der Bauwerksmaske traegt
+        # Materialnamen, die Form Objektnamen — Deckung null (NAMENSDECKUNG_2026-09-08). Ein
+        # Material, das NUR an Form-Gelaende haengt, ist Gelaende; ein geteiltes nicht.
+        "bbox_bauwerk_gelaende_materialien": bau_materialien,
         # Welcher Sonnenstand gestellt wurde, unter welcher Azimutkonvention, und ob er
         # BESTELLT war oder die Vorgabe ist. Bis zum 26.08.2026 lief der Sonnenstand
         # einer Bestellung ins Leere, und das Bild sah trotzdem richtig aus.

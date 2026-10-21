@@ -1222,14 +1222,17 @@ SYSTEMTEXT_KNOTEN = (
     "der nächsten Runde, nicht in derselben. Antwortet vis_nodeSetzen mit «VORSCHLAG A-1 liegt "
     "als Karte», ist A-1 die Kennung der KARTE, nicht eines Knotens: Nimm sie nie als from, to "
     "oder nodeId. Soll ein neuer Knoten gleich verbunden werden, lege beides in einem vis_paket "
-    "an («$neu:0» ist der neue Knoten). "
+    "an («$neu:0» ist der neue Knoten). Arbeite im bestehenden Graph aus graph_lesen; einen neuen "
+    "Graph (vis_graphErstellen) legst du nur an, wenn ausdrücklich darum gebeten wird oder "
+    "graph_lesen keinen findet. "
     "Erfinde nichts, was weder die Nutzerin sagte noch im Graph steht: keine Stimmung, keine "
     "Auflösung, keine Güte, keine Kamera. Fehlt eine Angabe, lass sie weg — dann gilt, was am "
     "Knoten steht. Tu nur, worum gebeten wurde. "
     "Löschen und Rendern sind immer eine Karte. Antwortet ein Werkzeug mit «VORSCHLAG … liegt "
     "als Karte», ist das richtig so — schlage dasselbe nicht noch einmal vor, und nenne es "
-    "danach «vorgeschlagen», nie «gelöscht», «geändert» oder «gerechnet»: ausgeführt ist es erst, "
-    "wenn der Architekt die Karte anwendet. "
+    "danach «vorgeschlagen», nie «gelöscht», «geändert» oder «gerechnet» — auch nicht mit der Karte "
+    "im selben Satz: sage «Das Löschen ist als Karte A-1 vorgeschlagen», nie «Der Knoten wurde "
+    "gelöscht — es liegt eine Karte». Ausgeführt ist es erst, wenn der Architekt die Karte anwendet. "
     "Wird um ein Bild gebeten («Rechne», «Render», «mach ein Bild»), stelle den Auftrag mit "
     "vis_render am Render-Knoten aus dem Graph — nur mit den Angaben, die genannt wurden. Das ist "
     "kein Freigeben und erlaubt: der Auftrag wird eine Karte. "
@@ -1258,6 +1261,24 @@ _FRAGE_NACH_FREIGABE = re.compile(r"frei\s?geb|freigab|\bgib\b.*\bfrei\b|grafikk
 _KARTE = re.compile(r"^VORSCHLAG\s+(\S+)\s+liegt als Karte")
 #: Eine Kartenkennung in einem beliebigen Ergebnis (auch mitten im Text, auch in einem Paket).
 _KARTE_IRGENDWO = re.compile(r"VORSCHLAG\s+([A-Za-z]+-\d+)\b[.:,]?\s+liegt als Karte")
+#: Dieselbe Karte samt dem, was sie vorschlägt («… beim Architekten: Knoten «Modell» löschen.»).
+_KARTE_MIT_WAS = re.compile(
+    r"VORSCHLAG\s+([A-Za-z]+-\d+)\b[.:,]?\s+liegt als Karte[^:.]*(?::\s*([^.]{1,160}))?")
+#: Wer ausdrücklich um einen NEUEN Graph bittet (auf-20261021-314, B3 F1): Nur dann, oder wenn
+#: graph_lesen keinen fand, geht vis_graphErstellen durch.
+_FRAGE_NACH_NEUEM_GRAPH = re.compile(
+    r"\b(?:neu|weiter|zweit|eigen|separat|leer)\w*\s+(?:\w+[\s-]+)?(?:render-?)?"
+    r"(?:graph|node-tree|knotenbaum)"
+    r"|\b(?:graph|node-tree|knotenbaum)\w*\s+(?:\w+\s+){0,2}(?:anlegen|erstell\w*)\b"
+    r"|\b(?:leg|erstell)\w*\s+(?:einen|ein)\s+(?:\w+\s+)?(?:graph|node-tree|knotenbaum)\w*\b", re.I)
+_KEIN_GRAPH = "Kein Render-Graph im Projekt"
+#: Was ein Schritt eines Pakets neu anlegt — worauf «$neu:N» darum zeigen darf.
+_NEU_ART = {"vis_graphErstellen": "graph", "vis_nodeSetzen": "knoten", "vis_verbinden": "kante"}
+_FELD_ART = {"graphId": "graph", "nodeId": "knoten", "from": "knoten", "to": "knoten", "edgeId": "kante"}
+_NEU_VERWEIS = re.compile(r"^\$neu:(\d+)$")
+#: Angehängt an jedes Ergebnis, das nur eine Karte meldet, bevor es ans Modell geht (B3 F4).
+SATZ_KARTE_NICHT_GETAN = ("(Hinweis des Kerns: noch NICHT ausgeführt — nenne es «vorgeschlagen», "
+                          "nicht «gelöscht», «geändert» oder «gerechnet».)")
 #: Wer um ein Bild bittet (auf-20261021-310, B2): «Rechne jetzt das Bild.» rief kein Werkzeug.
 _FRAGE_NACH_BILD = re.compile(
     r"\brechne\w*|\brender(?:e|n|st)?\b(?![-\w])|\bbilder?\b(?![-\w])", re.I)
@@ -1283,6 +1304,65 @@ def _kommt_vor(wert: str, text: str) -> bool:
 def _karten_in(getan) -> set[str]:
     """Die Kennungen der Karten, die die Schritte dieser Frage gemeldet haben («A-1», …)."""
     return {m.group(1) for s in getan or () for m in _KARTE_IRGENDWO.finditer(str(s.get("ergebnis", "")))}
+
+
+def _neuer_graph_erlaubt(nachricht: str, getan) -> bool:
+    """Darf ``vis_graphErstellen`` hinaus? Nur auf ausdrückliche Bitte, oder wenn graph_lesen
+    keinen Graph fand (auf-20261021-314, B3 F1: «Leg eine Stimmung an und verbinde sie mit dem
+    Render-Knoten» baute einen neuen Graph «Stimmung Abend», statt n2 in g1 zu erreichen)."""
+    if _FRAGE_NACH_NEUEM_GRAPH.search(nachricht or ""):
+        return True
+    return any(sch.get("werkzeug") == "graph_lesen" and _KEIN_GRAPH in str(sch.get("ergebnis", ""))
+               for sch in getan or ())
+
+
+SATZ_KEIN_NEUER_GRAPH = (
+    "Gebeten wurde nicht um einen neuen Graph. Lies den bestehenden mit graph_lesen und arbeite "
+    "dort (graphId und den Render-Knoten aus dem Ergebnis); soll ein neuer Knoten gleich "
+    "verbunden werden, lege beides in einem vis_paket an («$neu:0»).")
+
+
+def _pruefe_paket(argumente: dict, bekannt: str, karten, neuer_graph_erlaubt: bool) -> str | None:
+    """Die Schritte eines ``vis_paket`` wie Einzelaufrufe prüfen (auf-20261021-314, B3 F1).
+
+    Bis dahin ging ein Paket ungeprüft hinaus: «$neu:0» als graphId zeigte auf einen
+    neuen Knoten, «$neu:1» als to auf den Verbinde-Schritt selbst. «$neu:N» muss auf einen
+    FRÜHEREN Schritt zeigen, der das Passende neu anlegt (Graph, Knoten, Kante); jede andere
+    Kennung muss bekannt sein wie bei einem Einzelaufruf.
+    """
+    schritte = argumente.get("schritte")
+    if not isinstance(schritte, list) or not schritte:
+        return None                      # die Form prüft die Knotenansicht (Probelauf)
+    for nr, sch in enumerate(schritte):
+        if not isinstance(sch, dict):
+            continue
+        befehl, args = sch.get("befehl"), sch.get("argumente") or {}
+        if not isinstance(args, dict):
+            continue
+        if befehl == "vis_graphErstellen" and not neuer_graph_erlaubt:
+            return f"Schritt {nr} (vis_graphErstellen): {SATZ_KEIN_NEUER_GRAPH}"
+        roh = {}
+        for feld in KENNUNG_FELDER:
+            wert = args.get(feld)
+            treffer = _NEU_VERWEIS.match(wert.strip()) if isinstance(wert, str) else None
+            if treffer is None:
+                if wert is not None:
+                    roh[feld] = wert
+                continue
+            ziel = int(treffer.group(1))
+            art = _NEU_ART.get((schritte[ziel] or {}).get("befehl")) \
+                if ziel < nr and isinstance(schritte[ziel], dict) else None
+            if art != _FELD_ART[feld]:
+                was = {"graph": "einen neuen Graph", "knoten": "einen neuen Knoten",
+                       "kante": "eine neue Kante"}[_FELD_ART[feld]]
+                return (f"Schritt {nr} ({befehl}): «{wert}» als {feld} muss auf einen früheren "
+                        f"Schritt zeigen, der {was} anlegt — Schritt {ziel} tut das nicht. "
+                        f"Die graphId des bestehenden Graphs steht im Ergebnis von graph_lesen.")
+        if befehl not in _OHNE_KENNUNGSPRUEFUNG and isinstance(befehl, str):
+            grund = _pruefe_angaben(befehl, roh, bekannt, karten)
+            if grund is not None:
+                return f"Schritt {nr} ({befehl}): {grund}"
+    return None
 
 
 def _pruefe_angaben(name: str, argumente: dict, bekannt: str,
@@ -1335,14 +1415,23 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict]) -> str:
     """
     text = re.sub(r"^\s*(FEHLER|VERWEIGERT)\s*:\s*", "", antwort or "").strip()
     wirkend = [s for s in getan if s["werkzeug"] not in _NUR_LESEN]
-    karten = [m.group(1).rstrip(".:,") for s in wirkend if (m := _KARTE.match(s["ergebnis"]))]
+    # Je Schritt die Karten (auch mitten im Text, auch aus einem Paket) samt dem, was sie
+    # vorschlagen — der Satz nennt es: «vorgeschlagen als Karte A-2 (Knoten «Modell» löschen)».
+    gefunden = [[(m.group(1), (m.group(2) or "").strip()) for m in
+                 _KARTE_MIT_WAS.finditer(s["ergebnis"])] for s in wirkend]
+    karten = [k for liste in gefunden for k, _ in liste]
     if karten:
-        satz_karte = (f"Noch nicht ausgeführt: vorgeschlagen als Karte {', '.join(karten)} — erst "
+        teile = [f"{k} ({w})" if w else k for liste in gefunden for k, w in liste]
+        satz_karte = (f"Noch nicht ausgeführt: vorgeschlagen als Karte {', '.join(teile)} — erst "
                       f"«Anwenden» durch den Architekten führt es aus.")
         saetze = re.split(r"(?<=[.!?])\s+", text) if text else []
-        behauptet = [s for s in saetze
-                     if _GETAN.search(s) and "Karte" not in s and "vorgeschlagen" not in s]
-        if behauptet and len(karten) == len(wirkend):
+        # EIN SATZ, DER ES ALS GETAN MELDET, BLEIBT EINE BEHAUPTUNG, AUCH WENN DIE KARTE DANEBEN
+        # STEHT (auf-20261021-314, B3 F4: «Der Modell-Knoten wurde gelöscht — es liegt eine
+        # Karte beim Architekten.»). Bis dahin schützte das Wort «Karte» irgendwo im Satz. Jetzt
+        # gilt nur, was die getan-Form selbst zur Karte macht («habe eine Karte angelegt») oder
+        # den Satz als Vorschlag ausweist («vorgeschlagen», «noch nicht», «erst …»).
+        behauptet = [s for s in saetze if _behauptet_getan(s)]
+        if behauptet and all(gefunden):
             neu, ersetzt = [], False
             for s in saetze:
                 if s in behauptet:
@@ -1360,6 +1449,19 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict]) -> str:
         text = re.sub(r"^\s*Freigeben kann nur der Architekt\s*[.!]?\s*", "", text)
         text = f"{SATZ_NUR_ARCHITEKT} {text}".strip()
     return text or "Fertig."
+
+
+#: Was einen Satz mit getan-Form als Vorschlag ausweist (B3 F4).
+_ALS_VORSCHLAG = re.compile(r"vorgeschlagen|vorschlag|noch nicht|nicht ausgeführt|erst\b|sobald|wenn der "
+                            r"architekt", re.I)
+
+
+def _behauptet_getan(satz: str) -> bool:
+    """Meldet der Satz eine Handlung als getan? Nicht, wenn die getan-Form selbst die Karte
+    betrifft («habe eine Karte angelegt») oder der Satz sie als Vorschlag ausweist."""
+    if _ALS_VORSCHLAG.search(satz):
+        return False
+    return any("karte" not in m.group(0).lower() for m in _GETAN.finditer(satz))
 
 
 SATZ_SCHRITTE_ERSCHOEPFT = (
@@ -1468,8 +1570,14 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     for sch in getan:
         nachrichten.append({"role": "assistant", "content": "", "tool_calls": [
             {"function": {"name": sch["werkzeug"], "arguments": sch["argumente"]}}]})
+        # EINE KARTE IST NICHT GETAN (auf-20261021-314, B3 F4): Das Ergebnis sagte «VORSCHLAG …
+        # liegt als Karte», und das Modell schrieb trotzdem «wurde gelöscht — es liegt eine
+        # Karte». Der Kern hängt an jedes solche Ergebnis den Satz, wie es heisst.
+        inhalt_tool = sch["ergebnis"]
+        if _KARTE_IRGENDWO.search(inhalt_tool):
+            inhalt_tool = f"{inhalt_tool} {SATZ_KARTE_NICHT_GETAN}"
         nachrichten.append({"role": "tool", "tool_name": sch["werkzeug"],
-                            "content": sch["ergebnis"]})
+                            "content": inhalt_tool})
     frei = SCHRITTE_HOECHSTENS - len(getan)
     if frei <= 0:
         nachrichten.append({"role": "user", "content": SATZ_SCHRITTE_ERSCHOEPFT})
@@ -1478,6 +1586,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     bekannt = "\n".join([nachricht] + [str(m.get("content", "")) for m in frueher]
                          + [sch["ergebnis"] for sch in getan])
     karten = _karten_in(getan)
+    neuer_graph = _neuer_graph_erlaubt(nachricht, getan)
     # BEI EINER BITTE UM EIN BILD EIN ANSTOSS (auf-20261021-310, B2) — nur, wenn vis_render
     # angeboten ist und in dieser Frage noch kein Render-Auftrag steht, und nur einmal.
     anstoss_offen = (bool(angebot) and "vis_render" in namen
@@ -1527,6 +1636,11 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                 abgewiesen.append((name or "?", f"Ein Werkzeug «{name}» gibt es nicht."))
             elif not isinstance(argumente, dict):
                 abgewiesen.append((name, "Die Angaben zum Werkzeug sind ein Objekt."))
+            elif name == "vis_graphErstellen" and not neuer_graph:
+                abgewiesen.append((name, SATZ_KEIN_NEUER_GRAPH))
+            elif name == "vis_paket" and (grund := _pruefe_paket(
+                    argumente, bekannt, karten, neuer_graph)) is not None:
+                abgewiesen.append((name, grund))
             elif (grund := _pruefe_angaben(name, argumente, bekannt, karten)) is not None:
                 abgewiesen.append((name, grund))
             else:
