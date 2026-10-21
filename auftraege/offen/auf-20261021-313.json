@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Kontextmaske am Heim-PC pruefen (Video-Befund L4-5): Je Kamera mit Bestand, Umfeld oder Splat liegt neu eine Datei <kamera>__kontext_maske.png neben dem Bild und das Feld kontext_maske am Kameraurteil. Messen, ob die Maske den Bestand trifft, und wie stark Bestandskoerper bisher in der Bauwerksmaske mitgemessen werden.",
  "erstellt": "2026-10-21T15:30:00Z",
- "rang": 3,
+ "rang": 2,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
