@@ -2601,6 +2601,19 @@ UMRISS_NACHHER_SATZFELDER = ("geom_iou", "n_ist", "n_soll", "n_gemeinsam", "scor
                              "hoehe")
 
 
+def deckung_der_kamera(ki_png, grundbild_png) -> dict | None:
+    """Das Deckungsurteil einer Kamera (L4-1): ``varianten.deckung_aus_bildern`` auf derselben
+    Grundlage — oder ``None``, wenn KI-Bild oder Grundbild fehlen, die Masse ungleich sind oder
+    das Lesen scheitert. Dann bleibt ``qa_je_kamera[].deckung`` weg (Vertrag: optional)."""
+    if not ki_png or not grundbild_png or not Path(ki_png).is_file() or not Path(grundbild_png).is_file():
+        return None
+    try:
+        urteil = varianten.deckung_aus_bildern(ki_png, grundbild_png, True)
+    except Exception:                  # noqa: BLE001 — eine Zusatzauskunft haelt den Lauf nicht auf
+        return None
+    return urteil if urteil.get("kanten_iou") is not None else None
+
+
 def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | None:
     """Die Kontextmaske einer Kamera (Video-Befund L4-5): Vermerk fuers Urteil, Datei daneben.
 
@@ -4497,6 +4510,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         maske=maskenbefund.get("maske"), **ausblendung),
                     soll=soll_pruefung, breite=breite, hoehe=hoch, messen=messen,
                     maske=maskenbefund.get("maske"), ausblendung=ausblendung, grenze=grenze)
+            # DECKUNG (Video-Befund L4-1, Knoten-Vertrag v0.1.10): Kanten-IoU des KI-Bilds gegen
+            # das Grundbild (Cycles) — nur, wenn beide da und gleich gross sind; sonst kein Feld.
+            deckung = deckung_der_kamera(ergebnis.get("bild_png"), bericht.get("beauty_png"))
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
                           # Welches Bild zu diesem Urteil gehoert. Steht bis zum
@@ -4535,6 +4551,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           komposition=komposition,
                           maskenbefund=maskenbefund, maskenanker=maskenanker,
                           kontext_maske=kontext_maske,
+                          **({"deckung": deckung} if deckung else {}),
                           # Der Boden DIESER Maskenlage — er wurde seit jeher gemessen
                           # und nie gelesen. Seit `auf-vis-20260824-10` ist er die
                           # entscheidende Zahl: Der Schaetzer hat ein festes Ortsfeld,
@@ -6467,6 +6484,10 @@ def _je_kamera_mit_lieferung(kameras) -> list[dict]:
                 zusatz["seed"] = seed
             if isinstance(urteil.get("pose"), dict):
                 zusatz["pose"] = urteil["pose"]
+            # Deckung (L4-1): die Kanten-IoU, nur wenn gemessen.
+            iou = (urteil.get("deckung") or {}).get("kanten_iou")
+            if isinstance(iou, (int, float)) and not isinstance(iou, bool) and 0.0 <= iou <= 1.0:
+                zusatz["deckung"] = float(iou)
             aus.append(dict(eintrag[0], **_lieferung_der_kamera(urteil), **zusatz))
     return aus
 

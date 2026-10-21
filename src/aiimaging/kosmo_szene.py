@@ -3601,6 +3601,11 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
             satz["seed"] = eintrag["seed"]
         if isinstance(eintrag.get("pose"), dict):
             satz["pose"] = dict(eintrag["pose"])
+        # DECKUNG (Video-Befund L4-1, Knoten-Vertrag v0.1.10): Kanten-IoU 0..1 des KI-Bilds gegen
+        # das Grundbild. Nur wenn gemessen; das Urteil (Schwelle 0,30, gesetzt) faellt drueben.
+        iou = eintrag.get("deckung")
+        if isinstance(iou, (int, float)) and not isinstance(iou, bool) and 0.0 <= iou <= 1.0:
+            satz["deckung"] = round(float(iou), 4)
         aus.append(satz)
     return aus
 
