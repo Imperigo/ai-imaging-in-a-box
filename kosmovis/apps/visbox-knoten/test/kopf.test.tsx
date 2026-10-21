@@ -103,6 +103,7 @@ describe('S1 · die Kopfteile stehen mit den Kennungen von KosmoOrbit', () => {
       'werkzeug-palette-logo',
       'werkzeug-palette-haupt-knoten',
       'werkzeug-palette-haupt-visbox-seite',
+      'werkzeug-palette-haupt-mappen',
       'island-einstellungen-kreis',
       'speichern-kreis',
       'island-kopf-zweitgruppe',
@@ -137,11 +138,14 @@ describe('S1 · die Kopfteile stehen mit den Kennungen von KosmoOrbit', () => {
     act(() => q('island-einstellungen-kreis')!.click());
     act(() => q('heimpc-chip')!.click());
     act(() => q('werkzeug-palette-haupt-visbox-seite')!.click());
+    act(() => q('werkzeug-palette-haupt-mappen')!.click());
     act(() => q('werkzeug-palette-logo')!.click());
     // Seit S4 öffnen Einstellungs-Kreis und Heim-PC-Chip die Einstellungs-Insel in der Seite —
     // kein Wunsch an die App mehr (Probe `assistent-einstellungen.test.tsx`).
     expect(wirtGesendet.slice(1)).toEqual([
       { art: 'oeffne', ziel: 'visbox-seite' },
+      // Schritt 3 (21.10.2026, Blatt 36): «Mappen …» öffnet das Fenster der App.
+      { art: 'oeffne', ziel: 'mappen' },
       { art: 'oeffne', ziel: 'startansicht' },
     ]);
   });

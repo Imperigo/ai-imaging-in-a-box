@@ -8113,8 +8113,10 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Fassung 0.3.x: Oberfläche auf dem Gerät, Heim-PC nur Rechenserver
   - [x] Schritt 1: Knotenansicht ins Mac-Bündel, Adressschema `visbox://app/knoten/`, Datenwege und Brücke durch die App (Mappe noch am Heim-PC durchgereicht) — gebaut, am Gerät unbestätigt (§146, C71); Fassungsblatt-Entwurf `docs/VISBOX_0.3.0_2026-10-20.md`, Nummer noch nicht erhöht
   - [x] Schritt 2: ohne Rechner Zeile statt Vorführmodus (103b) — Band «Heim-PC nicht erreichbar · Rechnen und Assistent gesperrt — alles andere geht. · Erneut verbinden» nach Blatt 28, Feld 1; Assistent-Leiste gesperrt mit Satz; am Render-Knoten der Satz der App statt «503»; Vorführansicht entfernt — gebaut, am Gerät unbestätigt (§147, C72). Beispielmappe als normale Mappe: mit Schritt 3
-  - [ ] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen»
-  - [ ] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a)
+  - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§174, C102); Messauftrag auf-20261021-304
+    - [ ] Blatt 36 «Mappen am Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
+    - [ ] Geräteprobe am Mac (owner): holen, öffnen, Bild rechnen, ohne Heim-PC wieder öffnen, «Datei laden …» in neue Mappe
+  - [ ] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a) — Weg vorbereitet im Plan §11 (nicht gebaut)
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
   - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)
@@ -8132,11 +8134,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Entscheid 114: zwei Rückgängig-Verläufe (KI-Verlauf im Werkzeugsatz, Wache beim Wirt) — beide Programme (claude/kosmovis-ki), gebaut, am Gerät unbestätigt (§156, C85)
   - [ ] Stufe 4: Mappe-, Skizzen-, Modell-, Kamera-, Abbruch- und Verlauf-Werkzeuge
     - [x] `mappe_lesen`, `skizzen_lesen` (auch als Bild), `bild_ansehen`, `lauf_abbrechen` über die Heim-Wege — gebaut, am Gerät unbestätigt (§156, C85)
-    - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — erst mit der Mappe am Mac («Visbox eigenständig», Schritt 3)
+    - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — die Mappe am Mac steht seit Schritt 3 (§174); die Werkzeuge selbst sind noch nicht gebaut
   - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
-  - [x] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste wie Claude (Werkzeugschleife `frage_mit_werkzeugen` am Heim-PC, Schritte in der Mac-App als Urheber «assistent», Gesprächsregeln nur in `Assistentengespraech`, Karten «Vorschlag des Assistenten · A-n» im Gesprächsfeld) — gebaut, am Gerät unbestätigt (§KI-PARA, CKI-NR)
-  - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§KI-PARA, CKI-NR)
-    - [ ] Messauftrag AUF-KI (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
+  - [x] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste wie Claude (Werkzeugschleife `frage_mit_werkzeugen` am Heim-PC, Schritte in der Mac-App als Urheber «assistent», Gesprächsregeln nur in `Assistentengespraech`, Karten «Vorschlag des Assistenten · A-n» im Gesprächsfeld) — gebaut, am Gerät unbestätigt (§175, C103)
+  - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§175, C103)
+    - [ ] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
@@ -8150,7 +8152,9 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Gemessen (299/300):** Der neue Auslöser trennt «teilweise» (bis 1,163) von «nein» (ab 1,274); Sichtbeton kommt bei
 > keiner Stärke (0,8–0,9 Gipsmodell mit Licht, 0,95 anderes Haus), Empfehlung W-4. Über die Brücke wies 0.3.13 jeden
 > Bildeingang ab — behoben (§171, C99).
-> **Offen:** 301 (local), die Wahl am Bild (owner, über die Zentrale), Vertragsfelder (integrator), Knotenteile (beide Programme).
+> **Gemessen (301):** Über die Brücke rechnet der Bildeingang wieder; kleine Befunde zu Meldungen und Modellwurzel behoben
+> (§172, C100).
+> **Offen:** 302 (local), die Wahl am Bild (owner, über die Zentrale), Vertragsfelder (integrator), Knotenteile (beide Programme).
 
 - [ ] Heim-PC-Teil
   - [x] H1 Stimmung: `render.environment` mit Himmelsbild, Gipsmodell «weiss», Abweisung mit Satz im Ergebnis, «Himmelsbilder n/8» — gebaut, am Gerät unbestätigt (§153, C79)
@@ -8182,13 +8186,19 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] W-4 «beide Bilder liefern» geprüft: Die Lieferung steht schon (`render.passes ['schoenbild']` → `<kamera>__schoenbild.png`); es fehlt nur der Knotenteil, der es bestellt und neben dem KI-Bild zeigt (§170)
   - [x] Nachmessung am Heim-PC: auf-20261021-300 (local, nach 299) — Ergebnis `68e1851`: Sichtbeton bei keiner Stärke; 0,8 Gipsmodell mit Licht, 0,9 Form wandert, 0,95 anderes Haus; bedeckt ohne Dachaufbau; Farbabgleich bei 0,9 hilft nicht; Spitze 30,3–31,3 GB; über die Brücke jeder Bildeingang abgewiesen (Blocker N1), Matrix direkt gerechnet
   - [x] Befunde aus 300 behoben: eine Rechnung «frei + eigen» für Vorprüfung und `lade_modell` (`render.eigener_grafikspeicher_mib`, eigener CUDA-Kontext zählt nicht als fremd); Abweisung im Prozess mit Ergebnis und Satz; Abweis-Satz nennt jedes Modell einmal, das eigene als «eigenes Assistenzmodell» — gebaut, am Gerät unbestätigt (§171, C99)
-  - [ ] Nachprobe am Heim-PC: auf-20261021-301 (local) — Brücken-Läufe abend 0,55 und 0,9 mit Farbabgleich, Abweis-Satz, Auslöser an den Bildern aus 295–297 ohne neuen KI-Lauf
+  - [x] Nachprobe am Heim-PC: auf-20261021-301 (local) — Ergebnis `82342f5`: über die Brücke rechnet der Bildeingang (bildpunktgleich zu 300), Abweis-Satz einmal und «eigen», mit `idle_window_only` entladen und gerechnet, vierter Auslöser 14 von 14; C99 am Gerät bestätigt
+  - [x] Befunde aus 301 behoben: Abweis-Satz der Vorprüfung auch in `message` (A1), Journalzeile der zweiten Speicherprüfung «Im Prozess …» (A2), Satz der Vorprüfung als eigene ungekürzte Zeile auch nach dem Entladen (A3), Modellwurzel aus der Unit des Abholers und Tiefenschätzer nie aus dem Netz (A6) — gebaut, am Gerät unbestätigt (§172, C100); A4/A5 notiert
+  - [ ] Prüfauftrag am Heim-PC: auf-20261021-302 (local) — A6 ohne Variable und offline, A1 wie 301 2a, A2/A3 wie 301 2b
   - [ ] Notiert ohne Fix (§171): Umriss-Zahl kippt an gemalten Himmeln (B-300-2); anderes Haus bei hohem `geom_iou` ohne Auslöser (B-300-3)
   - [ ] Wahl am Bild (owner, über die Zentrale nach 300): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern (Empfehlung des LW nach 300: W-4) — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
   - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)
   - [ ] Beobachten ohne Fix: Sichtbeton im KI-Bild nur teilweise (Holz-/Steinstreifen); Schlagschatten auf 1,7 m Augenhöhe kaum sichtbar (296 notiert)
+  - [x] Material und Umriss im KI-Bild (Strang Treue, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`): Optionen a–e geprüft (Lizenz, VRAM, Aufwand, Risiko); gebaut als Messschalter, Vorgabe aus: `vis.umriss_halten` «nachher» (Maskenmischung) und «im_lauf» (Hintergrund im Fahrplan festgehalten), `vis.material_vorne` (Stoff vorne, dreimal) — gebaut, am Gerät ungemessen (§173, C101)
+  - [ ] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln
+  - [ ] Wahl nach 303 (owner, über die Zentrale): welcher Umriss-Weg und ob «Material vorne» Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
+  - [ ] Kanten zusätzlich zur Tiefe (b) und Steuerstärke je Schritt (c) — zurückgestellt bis nach 303 (wir)
   - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
   - [ ] Holzlattung: Maserung quer zu den Latten (B6 aus 292)

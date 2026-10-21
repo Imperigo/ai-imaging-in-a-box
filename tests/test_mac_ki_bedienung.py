@@ -58,10 +58,12 @@ def test_die_werkzeugliste_liegt_im_bau():
     liste = json.loads((WIRT / "dist" / "ki-werkzeugliste.json").read_text(encoding="utf-8"))
     assert liste["format"] == "visbox.ki-werkzeugliste/v1"
     namen = [w["name"] for w in liste["werkzeuge"]]
-    assert namen[0] == "graph_lesen" and namen[-1] == "vis_paket"
+    # Seit Stufe 6 (21.10.2026) stehen Blick und Maus hinter den Werkzeugen der Knotenansicht.
+    assert namen[0] == "graph_lesen" and namen[-3:] == ["vis_paket", "visbox_blick", "visbox_maus"]
     assert {"vis_nodeSetzen", "vis_verbinden", "vis_nodeLoeschen", "vis_render"} <= set(namen)
     arten = {w["name"]: w["art"] for w in liste["werkzeuge"]}
     assert arten["vis_nodeLoeschen"] == "loeschen" and arten["vis_render"] == "rendern"
+    assert arten["visbox_blick"] == "lesen" and arten["visbox_maus"] == "bedienen"
     assert not [n for n in namen if re.search(r"freig|approv|gpu", n, re.I)]
     for w in liste["werkzeuge"]:
         assert re.fullmatch(r"[A-Za-z0-9_-]{1,64}", w["name"]) and w["inputSchema"]["type"] == "object"

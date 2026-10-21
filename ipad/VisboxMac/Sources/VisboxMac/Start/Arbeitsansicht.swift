@@ -53,6 +53,9 @@ struct Arbeitsansicht: View {
     // ausserhalb des Hauptfadens.
     @ObservedObject var zentrale: Kizentrale
     @ObservedObject var claude: Claudeanschluss
+    /// Die Mappen am Mac («Visbox eigenständig», Schritt 3, 21.10.2026): Ist eine offen, liest und
+    /// sichert die Knotenansicht in ihr (`Knotenquelle.mappe`); ohne wie bis 0.3.14 am Heim-PC.
+    @ObservedObject var mappen: Mappenablage
 
     @State private var flaechenSatz: String?
     @State private var wahl: Flaechenwahl = Flaechenwahl.beimOeffnen
@@ -91,6 +94,8 @@ struct Arbeitsansicht: View {
         }
         .background(Startfarbe.grund)
         .foregroundStyle(Startfarbe.text)
+        // WELCHE MAPPE OFFEN IST, steht im Fenstertitel (Blatt 36, Feld 3) — ohne: der Name allein.
+        .navigationTitle(mappen.offen.map { Marke.name + " — " + $0 } ?? Marke.name)
         // DIE SEITE NUR NOCH UEBER DAS MENUE (Entscheid 94): «Darstellung → Visbox-Seite».
         .onReceive(NotificationCenter.default.publisher(for: .seiteOeffnen)) { _ in
             wahl = .seite
@@ -158,6 +163,8 @@ struct Arbeitsansicht: View {
             NotificationCenter.default.post(name: .einrichtenOeffnen, object: nil)
         case .oeffne(.aktualisieren):
             NotificationCenter.default.post(name: .aktualisierenOeffnen, object: nil)
+        case .oeffne(.mappen):
+            NotificationCenter.default.post(name: .mappenOeffnen, object: nil)
         case .einstellung(let abschnitt):
             NotificationCenter.default.post(name: .einrichtenOeffnen,
                                             object: Einrichtenanfang(abschnitt: abschnitt))
@@ -194,6 +201,7 @@ struct Arbeitsansicht: View {
         if wahl.ausDemBuendel || (leitung.adresse != nil && leitung.anmeldung != nil) {
             ZStack(alignment: .bottom) {
                 Heimflaeche(basis: leitung.adresse, anmeldung: leitung.anmeldung, wahl: wahl,
+                            mappe: mappen.offenerOrdner,
                             meldung: $flaechenSatz, wirtlage: wirtlage, wuensche: erfuelle)
                 if let satz = flaechenSatz {
                     Text(satz)
@@ -338,6 +346,8 @@ struct Heimflaeche: NSViewRepresentable {
     let basis: URL?
     let anmeldung: Anmeldung?
     let wahl: Flaechenwahl
+    /// Der Ordner der offenen Mappe am Mac (Schritt 3) — `nil`: wie bisher am Heim-PC.
+    var mappe: URL?
     @Binding var meldung: String?
     /// Die Lage fuer die Kopfteile der Knotenansicht und was die App auf ihre Wuensche tut
     /// (`visboxWirt`, Plan UI-Gleichheit S1/S2).
@@ -345,7 +355,9 @@ struct Heimflaeche: NSViewRepresentable {
     var wuensche: (Knotenwirt.Wunsch) -> Void = { _ in }
 
     func makeCoordinator() -> Flaechenlotse {
-        Flaechenlotse(basis: basis, anmeldung: anmeldung, wahl: wahl)
+        let lotse = Flaechenlotse(basis: basis, anmeldung: anmeldung, wahl: wahl)
+        lotse.quelle.mappe = mappe
+        return lotse
     }
 
     func makeNSView(context: Context) -> WKWebView {
@@ -395,7 +407,10 @@ struct Heimflaeche: NSViewRepresentable {
         // NEU EINGERICHTET (andere Adresse, anderes Kennwort): neu laden, sonst bliebe die
         // Seite mit der alten Anmeldung offen.
         // ODER UMGESCHALTET (Knoten ↔ Visbox-Seite): die andere Seite laden.
-        if lotse.basis != basis || lotse.anmeldung != anmeldung || lotse.wahl != wahl {
+        // ODER EINE ANDERE MAPPE AM MAC (Schritt 3): neu laden, die Seite liest sie dann von vorn.
+        if lotse.basis != basis || lotse.anmeldung != anmeldung || lotse.wahl != wahl
+            || lotse.quelle.mappe != mappe {
+            lotse.quelle.mappe = mappe
             lotse.basis = basis
             lotse.anmeldung = anmeldung
             lotse.quelle.basis = basis

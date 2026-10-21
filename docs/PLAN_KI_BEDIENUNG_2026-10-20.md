@@ -59,8 +59,8 @@ Prüfen und Kameras bleiben in der Python-Bibliothek am Rechner (Regel 4). Der P
 | 2 | MCP-Kern in Swift mit Proben, Hörer nur lokal, `--mcp-stdio` | 2 |
 | 3 | Brücke App ↔ Knotenansicht, Karten in der Assistent-Leiste, Tätigkeitsstrom, Einrichten | 1–2 |
 | 4 | Mappe-, Skizzen-, Modell-, Kamera-, Abbruch- und Verlauf-Werkzeuge | 1–2 |
-| 5 | Der Assistent bekommt dieselbe Werkzeugliste — **gebaut 21.10.2026** (Protokoll 74 §KI-PARA) | 2 |
-| 6 | Blick und Maus mit Sperrzonen; Coop und Vollautomatik — **gebaut 21.10.2026** (§KI-PARA; Blatt «Blick und Maus») | 1–2 |
+| 5 | Der Assistent bekommt dieselbe Werkzeugliste — **gebaut 21.10.2026** (Protokoll 74 §175) | 2 |
+| 6 | Blick und Maus mit Sperrzonen; Coop und Vollautomatik — **gebaut 21.10.2026** (§175; Blatt «Blick und Maus») | 1–2 |
 | 7 | Geräteprobe mit Claude Code und Claude Desktop; Fassungsblatt | 1 |
 
 Zusammen rund **11–14 Sitzungen**. Stufe 4 ganz erst, wenn die Mappe am Mac liegt (Plan «Visbox eigenständig»,

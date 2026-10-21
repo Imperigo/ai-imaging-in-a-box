@@ -1,0 +1,68 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261021-304",
+  "art": "qa",
+  "beschreibung": "«Visbox eigenstaendig», Schritt 3 am Heim-PC pruefen: eine Mappe wie der Mac holen (Liste, Paket, Dateien), ein Auftrag mit Modell und dem Namen der Mappe am Mac rechnet nur mit Blender und gibt die Bilder zurueck, und die alte Mappe am Heim-PC laeuft ohne neue Koepfe unveraendert weiter.",
+  "erstellt": "2026-10-21T08:30:00Z",
+  "rang": 91,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "params": {
+    "entscheide": [
+      "103",
+      "103a",
+      "103b",
+      "103c"
+    ],
+    "einbau": [
+      "C102"
+    ],
+    "protokoll": "74 §174",
+    "wege_neu": [
+      "/knoten/mappen",
+      "/knoten/mappe-paket",
+      "/knoten/mappe-datei"
+    ],
+    "koepfe_neu": [
+      "X-Mappe-Am-Mac",
+      "X-Mappe-Heim"
+    ],
+    "laeufe": [
+      {
+        "name": "2",
+        "engine": "cycles",
+        "vis.skip": true,
+        "resolution": [
+          512,
+          512
+        ],
+        "samples": 16,
+        "kameras": "auto"
+      }
+    ],
+    "neue_ki_laeufe": 0,
+    "gewichte": [],
+    "download_gb": 0
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit «Visbox eigenstaendig», Schritt 3 (Mappe am Mac, Protokoll 74 §174, Einbau C102); die Zentrale sagt den Stand an; erst danach git pull, Dienst (Server) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: nichts am Rechnen. Neu sind (a) drei Lesewege fuer «An den Mac holen»: GET /knoten/mappen (Namen der Mappen am Heim-PC), GET /knoten/mappe-paket?mappe=<Name> (Modell, Skizzen, Bilder, Graph mit Groesse), GET /knoten/mappe-datei?mappe=<Name>&weg=<weg> (nur Wege aus dem Paket); (b) ein Auftrag POST /bruecke/jobs mit dem Kopf X-Mappe-Am-Mac: <Name, prozentkodiert> traegt diesen Namen im Laufzettel (Feld mappe) statt der Mappe, die am Heim-PC zuletzt offen war; mit X-Mappe-Heim: <Name> rechnet eine Skizze in dieser Mappe am Heim-PC; (c) /knoten/mappe, /knoten/standpunkte usw. nehmen zusaetzlich ?mappe=<Name>. Ohne diese Koepfe und Fragen ist alles wie bisher. WAS ZU TUN IST, in dieser Reihenfolge, ein Lauf zur Zeit, alles ueber die Bruecke des Servers (https, Anmeldung wie eure Brueckenlaeufe; die Mac-App selbst wird NICHT gebraucht — ihr spielt den Mac mit curl): (0) Eine synthetische Mappe anlegen, falls keine Probemappe da ist: ein glb mit tools/make_test_glb.py, «Datei laden …» gleichwertig mit POST /knoten/modell-laden (Formularfeld datei) und warten, bis GET /knoten/modell-laden stand=geladen meldet; ihr Name ist <M>. Keine echten Projektdaten (Regel 3). (1) HOLEN WIE DER MAC: GET /knoten/mappen — <M> steht darin (nur Namen, kein Pfad). GET /knoten/mappe-paket?mappe=<M> — format visbox.mappenpaket/v1, dateien beginnt mit modell.glb (art modell). Jede Datei mit GET /knoten/mappe-datei?mappe=<M>&weg=<weg> in einen Ordner unter /tmp holen; die Groesse muss der im Paket gleichen. Gegenprobe: weg=projekt.json und mappe=../<M> muessen 404 bzw. 400 mit Satz geben. (2) AUFTRAG MIT MODELL VOM MAC: POST /bruecke/jobs als Formular mit scene = {\"schema\":\"kosmovis.render-scene/v1\",\"geometry\":{\"format\":\"glb\"},\"cameras\":\"auto\",\"render\":{\"resolution\":[512,512],\"samples\":16},\"style\":{\"prompt\":\"ein Haus\",\"mode\":\"none\"},\"vis\":{\"skip\":true}} (nur Blender, keine KI) und model = das in (1) geholte modell.glb, mit den Koepfen X-Mappe-Am-Mac: Probe%20am%20Mac und X-Mappe-Heim: <M kodiert>. Erwartet: 200, Laufzettel mappe = «Probe am Mac». Mit approval_token freigeben (POST /bruecke/jobs/<id>/approve), dann GET /bruecke/jobs/<id> alle 5 s bis done/error (hoechstens 15 min). Jedes Bild aus result.images mit GET /bruecke/jobs/<id>/artifacts/<name> holen — so holt die Mac-App die Bilder in ihre Mappe (bilder/<id>/). (3) DIE ALTE MAPPE AM HEIM-PC LAEUFT WEITER: ohne jeden neuen Kopf GET /knoten/mappe (Antwort wie vor dem pull, glb true), GET /knoten/graph, GET /knoten/modell.glb (Groesse wie vorher), und POST /bruecke/jobs mit derselben Szene OHNE die Koepfe: Laufzettel mappe = Name der Mappe am Heim-PC wie bisher; diesen Auftrag NICHT freigeben, sondern mit POST /bruecke/jobs/<id>/cancel abbrechen. Dazu einmal die Visbox-Seite oeffnen (GET /) und die Mappe dort laden (GET /api/projekt). (4) Schlechter Kopf: X-Mappe-Am-Mac: ..%2Fetc — Auftrag angenommen, mappe = Name der Mappe am Heim-PC (der Kopf gilt als nicht gesagt); abbrechen. NICHT: keine KI-Laeufe, kein Bildeingang, keine Schalter; die Mac-App nicht anfassen; keine Mappe am Heim-PC loeschen oder verschieben; keine Koepfe oder Kennwoerter in die Rueckgabe; nichts am Code aendern — ein Fehler kommt als Befund zurueck.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor dem Lauf, Leistungsgrenze gesetzt ja/nein.",
+    "1: Antwort von /knoten/mappen (gekuerzt), Paket: Zahl der Dateien je art, Summe der Bytes; je Datei Groesse geholt = Paket ja/nein; Status und Satz der zwei Gegenproben.",
+    "2: Status von POST /bruecke/jobs, Laufzettel-Feld mappe, job_id, Endstatus, Dauer, result.images (Namen), je Bild Status und Groesse beim Holen, Journal-Zeilen des Abholers zu diesem Auftrag.",
+    "3: /knoten/mappe vor und nach dem pull gleich ja/nein (Felder name, mappe, glb, bauteile), Graph-Zahl, Modell-Groesse, Laufzettel-Feld mappe ohne Koepfe, Abbruch-Status, Visbox-Seite und /api/projekt laden ja/nein.",
+    "4: Laufzettel-Feld mappe beim schlechten Kopf.",
+    "EINBAU: Belegt, dass der Heim-PC die Mappe am Mac bedient (Holen, Auftrag mit Modell und Name, Bilder zurueck) und die Mappe am Heim-PC unveraendert weiterlaeuft — damit wird C102 am Heim-PC bestaetigt; am Mac bleibt die Geraeteprobe beim Owner."
+  ]
+}

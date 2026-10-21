@@ -385,6 +385,11 @@ export async function verfolge(
   }
   if (jetzt.stand === 'fehler') return { stand: 'fehler', datei: jetzt.datei, satz: jetzt.satz };
 
+  // SCHRITT 3 (21.10.2026): IN DER MAC-APP MIT MAPPE AM MAC kommt das Modell in DIESE Mappe —
+  // die App holt es von der neuen Mappe am Heim-PC (`holeInDieMappeAmMac`).
+  const nichtGeholt = await holeInDieMappeAmMac(jetzt.mappe);
+  if (nichtGeholt) return { stand: 'fehler', datei: jetzt.datei, satz: nichtGeholt };
+
   // GELADEN: Die neue Mappe ist am Server jetzt die zuletzt geoeffnete. Ein `?ordner=` in der
   // Adresse zeigte weiter auf die alte — er faellt weg, dann laedt `ladeMappe` die neue.
   if (location.search) history.replaceState(null, '', location.pathname);
@@ -397,6 +402,31 @@ export async function verfolge(
     ...(jetzt.fassung ? { fassung: jetzt.fassung } : {}),
     satz: jetzt.satz,
   };
+}
+
+/** Der Weg der Mac-App nach «Datei laden …» (`Mappenkern.wegModellHolen`) — nur dort bekannt. */
+export const WEG_MODELL_HOLEN = './mappe-holen';
+
+/**
+ * «Visbox eigenständig», Schritt 3 (21.10.2026, Blatt 36): Die Mappe liegt am Mac. «Datei laden …»
+ * wandelt die Datei weiter am Heim-PC (IfcOpenShell liegt dort, hinter der Prozessgrenze) und legt
+ * dort eine Mappe an; danach holt die App deren Modell **in die offene Mappe am Mac**. Gibt `null`
+ * zurück, wenn alles da ist oder nichts zu tun war (nicht in der App, oder keine Mappe am Mac
+ * offen: dann antwortet die App 404 und es bleibt wie bis 0.3.14), sonst den Satz der App.
+ */
+export async function holeInDieMappeAmMac(
+  mappe: string | null | undefined,
+  holen: typeof fetch = (e, i) => fetch(e, i),
+  protokoll: string = location.protocol,
+): Promise<string | null> {
+  if (!imEigenenSchema(protokoll) || !mappe) return null;
+  const antwort = await holen(WEG_MODELL_HOLEN, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mappe }),
+  });
+  if (antwort.ok || antwort.status === 404) return null;
+  return fehlerSatz(antwort);
 }
 
 /** Die Anfrage an den Server für die Mappe dieser Seite, mit `name` dazu (`?ordner=` bleibt). */

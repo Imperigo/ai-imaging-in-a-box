@@ -66,8 +66,8 @@ import inspect                                                  # noqa: E402
 
 import aiimaging                                                # noqa: E402
 from aiimaging import (arbeitsgang, assistent, geraetebuch, glbbox, heimnetz,  # noqa: E402
-                       heimstand, importeur, kette, knotenweg, kopplung, modellladen,
-                       projekt, render)
+                       heimstand, importeur, kette, knotenweg, kopplung, mappenpaket,
+                       modellladen, projekt, render)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -474,6 +474,19 @@ WEG_KNOTEN_GRAPH = "/knoten/graph"
 #: ``?richtungen=…&augenhoehe=…&brennweite=…&fuellt=…|abstand=…&perspektive=…``, gerechnet
 #: wie der Auftrag (``knotenweg.standpunkte_abfrage``). Liest nur, wie ``/knoten/mappe``.
 WEG_KNOTEN_STANDPUNKTE = "/knoten/standpunkte"
+#: «Visbox eigenständig», Schritt 3 (21.10.2026): «An den Mac holen». Die Mac-App fragt, welche
+#: Mappen hier liegen (``/knoten/mappen``, nur Namen), was in einer steckt
+#: (``/knoten/mappe-paket?mappe=…``) und holt jede Datei einzeln
+#: (``/knoten/mappe-datei?mappe=…&weg=…``, nur Wege aus dem Paket). Alles liest nur
+#: (:mod:`aiimaging.mappenpaket`); die Mappe bleibt hier liegen.
+WEG_KNOTEN_MAPPEN = "/knoten/mappen"
+WEG_KNOTEN_MAPPE_PAKET = "/knoten/mappe-paket"
+WEG_KNOTEN_MAPPE_DATEI = "/knoten/mappe-datei"
+#: Schritt 3: Die Mac-App nennt bei einem Auftrag aus einer Mappe AM MAC deren Namen
+#: (``X-Mappe-Am-Mac``) und, wenn die Mappe vom Heim-PC geholt wurde, die Zwillingsmappe hier
+#: (``X-Mappe-Heim``) — nur sie braucht der Heim-PC, und nur für eine Skizze.
+KOPF_MAPPE_AM_MAC = "X-Mappe-Am-Mac"
+KOPF_MAPPE_HEIM = "X-Mappe-Heim"
 WEG_BRUECKE = "/bruecke"
 
 #: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
@@ -1524,7 +1537,8 @@ def ausserhalb_der_reihe(methode: str, pfad: str) -> bool:
     if methode != "GET":
         return False
     if pfad in (WEG_KNOTEN_MODELL, WEG_KNOTEN_MAPPE, WEG_KNOTEN_SKIZZE, WEG_BILD,
-                WEG_KNOTEN_STANDPUNKTE):
+                WEG_KNOTEN_STANDPUNKTE, WEG_KNOTEN_MAPPEN, WEG_KNOTEN_MAPPE_PAKET,
+                WEG_KNOTEN_MAPPE_DATEI):
         return True
     teile = [t for t in pfad[len(WEG_BRUECKE):].split("/") if t] \
         if pfad.startswith(WEG_BRUECKE + "/") else []
@@ -1559,6 +1573,20 @@ def _einstellungen_der_mappe(ordner) -> dict:
         return dict(projekt.oeffne(Path(ordner))["projekt"].get("einstellungen") or {})
     except projekt.ProjektError:
         return {}
+
+
+def _mappenname_aus_kopf(wert) -> str | None:
+    """Der Name einer Mappe am Mac aus ``X-Mappe-Am-Mac`` — nur ein kurzer, flacher Name.
+
+    Er geht nur in den Laufzettel (``mappe``), nie in einen Pfad. Was nicht passt, gilt als
+    nicht gesagt: Dann bleibt alles wie vor Schritt 3.
+    """
+    if not isinstance(wert, str):
+        return None
+    try:
+        return mappenpaket.pruefe_kennung(urllib.parse.unquote(wert))
+    except mappenpaket.MappenpaketError:
+        return None
 
 
 def _ist_knotenweg(pfad: str) -> bool:
@@ -1884,9 +1912,41 @@ class Flaeche(BaseHTTPRequestHandler):
 
     def _knoten_ordner(self, frage: dict | None):
         """Die Mappe der Knotenansicht: die genannte, sonst die zuletzt auf der Seite
-        geöffnete (Entscheid 85 B), sonst die vom Start."""
+        geöffnete (Entscheid 85 B), sonst die vom Start.
+
+        Seit Schritt 3 (21.10.2026) auch **beim Namen** (``?mappe=…``): So fragt die Mac-App für
+        eine geholte Mappe die Standpunkte der Zwillingsmappe hier ab, ohne einen Pfad zu kennen.
+        """
+        kennung = ((frage or {}).get("mappe") or [None])[0]
+        if kennung:
+            return str(self._mappe_beim_namen(kennung))
         return (((frage or {}).get("ordner") or [None])[0]
                 or type(self).zuletzt_geoeffnet or self.ordner)
+
+    def _mappe_beim_namen(self, kennung) -> Path:
+        """Die Mappe mit dieser Kennung (:func:`aiimaging.mappenpaket.finde`)."""
+        try:
+            return mappenpaket.finde(kennung, self.ordner, type(self).zuletzt_geoeffnet)
+        except mappenpaket.MappenpaketError as fehler:
+            raise knotenweg.KnotenwegError(str(fehler), fehler.code) from fehler
+
+    def _mappenpaket_lesen(self, pfad: str, frage: dict) -> None:
+        """Die drei Wege von «An den Mac holen» (Schritt 3) — lesen nur."""
+        if pfad == WEG_KNOTEN_MAPPEN:
+            self._sende(mappenpaket.mappen_am_heim(self.ordner, type(self).zuletzt_geoeffnet))
+            return
+        kennung = (frage.get("mappe") or [None])[0]
+        ordner = self._mappe_beim_namen(kennung)
+        try:
+            if pfad == WEG_KNOTEN_MAPPE_PAKET:
+                self._sende(mappenpaket.paket(ordner))
+                return
+            ziel = mappenpaket.datei(ordner, (frage.get("weg") or [None])[0])
+        except mappenpaket.MappenpaketError as fehler:
+            raise knotenweg.KnotenwegError(str(fehler), fehler.code) from fehler
+        typ = "model/gltf-binary" if ziel.suffix.lower() == ".glb" else BILDTYPEN.get(
+            ziel.suffix.lower(), "application/octet-stream")
+        self._sende_datei_strom(ziel, typ)
 
     def _fortschritt(self, weg) -> None:
         self._sende(LAUFSTAND.sicht())
@@ -1989,6 +2049,8 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL_LADEN:
                 self._sende(modell_laden_sicht(type(self).modell_laden))
+            elif pfad in (WEG_KNOTEN_MAPPEN, WEG_KNOTEN_MAPPE_PAKET, WEG_KNOTEN_MAPPE_DATEI):
+                self._mappenpaket_lesen(pfad, frage or {})
             elif pfad == WEG_KNOTEN_STANDPUNKTE:
                 ordner = self._knoten_ordner(frage)
                 if not ordner:
@@ -2162,12 +2224,25 @@ class Flaeche(BaseHTTPRequestHandler):
                 # die «Datei laden …» erst danach angelegt hat. Der Laufzettel traegt den
                 # Namen der Mappe, aus der bestellt wurde (`knotenweg.lege_an`).
                 aus_mappe = self._knoten_ordner(None)
+                # SCHRITT 3 (21.10.2026): DIE MAPPE LIEGT AM MAC. Dann nennt der Laufzettel
+                # IHREN Namen, und eine Skizze rechnet in der Zwillingsmappe hier (falls der Mac
+                # sie nennt) — nie in der, die hier zuletzt offen war.
+                am_mac = _mappenname_aus_kopf(self.headers.get(KOPF_MAPPE_AM_MAC))
+                if am_mac:
+                    heim = (self.headers.get(KOPF_MAPPE_HEIM) or "").strip()
+                    aus_mappe = None
+                    if heim:
+                        try:
+                            aus_mappe = str(mappenpaket.finde(
+                                heim, self.ordner, type(self).zuletzt_geoeffnet))
+                        except mappenpaket.MappenpaketError:
+                            aus_mappe = None
                 # ENTSCHEID 96 (15.10.2026): eine Skizze wird in IHRER Mappe gerechnet — der
                 # Pfad geht an `lege_an` und von dort in eine Datei neben dem Auftrag, nie in
                 # die Antwort an den Browser (Regel 3, `knotenweg.DATEI_MAPPE`).
                 zettel = knotenweg.lege_an(
                     ablage, szene, modell, dateiname,
-                    mappe=Path(aus_mappe).name if aus_mappe else None,
+                    mappe=am_mac or (Path(aus_mappe).name if aus_mappe else None),
                     mappe_pfad=aus_mappe or None)
         finally:
             knotenweg.raeume_formular(felder)

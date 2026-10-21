@@ -108,6 +108,8 @@ final class KnotenwirtTests: XCTestCase {
         XCTAssertNil(Knotenwirt.wunsch(aus: try lies(#"{"art":"assistent","tat":"rechnen"}"#)))
         XCTAssertEqual(Knotenwirt.wunsch(aus: try lies(#"{"art":"oeffne","ziel":"einrichten"}"#)), .oeffne(.einrichten))
         XCTAssertEqual(Knotenwirt.wunsch(aus: try lies(#"{"art":"oeffne","ziel":"aktualisieren"}"#)), .oeffne(.aktualisieren))
+        // SCHRITT 3 (21.10.2026): «Mappen …» an der Palette am Logo.
+        XCTAssertEqual(Knotenwirt.wunsch(aus: try lies(#"{"art":"oeffne","ziel":"mappen"}"#)), .oeffne(.mappen))
     }
 
     /// Gemerkt wird nur, was auf der Liste steht — kein Weg, der App beliebige Werte unterzuschieben.

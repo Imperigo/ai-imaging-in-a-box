@@ -110,6 +110,7 @@ import math
 import os
 import platform
 import re
+import shlex
 import sys
 import tempfile
 import time
@@ -161,6 +162,13 @@ ALTWURZEL_HOMESTATION = "/ai"
 HERKUNFT_UMGEBUNG = "umgebung"
 HERKUNFT_ALTWURZEL = "altwurzel"
 HERKUNFT_ANWENDUNGSDATEN = "anwendungsdaten"
+#: Aus der Einheit des Abholers gelesen (auf-20261021-301, A6) — siehe :func:`modellwurzel`.
+HERKUNFT_ABHOLER = "abholer-einheit"
+
+#: Die Nutzereinheit des Abholers. Sie traegt ``Environment=AIIMAGING_MODELLE=…`` (siehe
+#: ``betrieb/kosmo-abholer.service``) — die Einstellung, mit der der Abholer seine Gewichte
+#: findet. Ein Prozess ausserhalb des Dienstes erbt diese Umgebung nicht.
+EINHEIT_ABHOLER = "kosmo-abholer.service"
 
 #: Ordnername unter den Anwendungsdaten. Gross auf macOS und Windows, klein unter XDG —
 #: so schreiben es die jeweiligen Konventionen, und ein Ordner, der aussieht wie die
@@ -301,6 +309,52 @@ def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
 #: **Setzung**, keine Messung: Ob dort etwas liegt, sagt :func:`modellwurzel_lage`.
 VORGABE_MODELLWURZEL = str(anwendungsdaten_wurzel())
 
+
+def abholer_einheit_pfad(*, umgebung=None, heim=None) -> Path:
+    """Wo systemd die Nutzereinheit des Abholers sucht: ``$XDG_CONFIG_HOME`` oder ``~/.config``.
+
+    Reine Pfadrechnung. Dieselbe Rechnung wie ``tests/test_betriebseinheiten.py``.
+    """
+    umgebung = os.environ if umgebung is None else umgebung
+    heim = Path(os.path.expanduser("~")) if heim is None else Path(heim)
+    xdg = umgebung.get("XDG_CONFIG_HOME")
+    basis = Path(xdg) if xdg and Path(xdg).is_absolute() else heim / ".config"
+    return basis / "systemd" / "user" / EINHEIT_ABHOLER
+
+
+def modellwurzel_der_einheit(pfad, *, heim=None) -> Path | None:
+    """Die Modellwurzel, die eine systemd-Einheit in ``Environment=`` setzt — oder ``None``.
+
+    **Der Anlass (auf-20261021-301, A6):** Ausserhalb des Abholers suchte der Tiefenschaetzer
+    seine Gewichte im Benutzerordner und meldete einen Fehler — der Abholer kennt die Ablage
+    nur, weil seine Einheit ``AIIMAGING_MODELLE`` setzt. Gelesen wird darum **dieselbe
+    Einstellung**, statt einen Pfad ins Repo zu schreiben (Regel 3).
+
+    Gilt die letzte Zuweisung (so liest es systemd). ``%h`` wird zum Heimverzeichnis. Nur ein
+    absoluter Pfad zaehlt. Eine fehlende oder unlesbare Einheit ist ``None`` — kein Fehler.
+    """
+    try:
+        text = Path(pfad).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    heim = os.path.expanduser("~") if heim is None else str(heim)
+    gefunden = None
+    for zeile in text.splitlines():
+        zeile = zeile.strip()
+        if not zeile.startswith("Environment="):
+            continue
+        try:
+            teile = shlex.split(zeile[len("Environment="):])
+        except ValueError:
+            continue
+        for teil in teile:
+            name, gleich, wert = teil.partition("=")
+            if gleich and name == UMGEBUNG_MODELLE:
+                gefunden = wert.replace("%h", heim)
+    if not gefunden or not Path(gefunden).is_absolute():
+        return None
+    return Path(gefunden)
+
 #: Obergrenze für die Schrittzahl. Nicht physikalisch begründet, sondern als Schutz vor
 #: dem Tippfehler: ``schritte=2000`` läuft nicht falsch, es läuft stundenlang und
 #: blockiert die einzige GPU des Projekts. Wer mehr braucht, hebt die Grenze bewusst an.
@@ -405,15 +459,27 @@ class RenderAuftrag:
     #: der Lauf Wort für Wort der von vorher. Verlangt ``beauty_png`` und einen Eintrag mit
     #: ``bildeingang_weg``.
     bildeingang_staerke: float | None = None
+    #: Der Messschalter «Umriss halten im Lauf» (Strang Treue, 21.10.2026): Pfad einer
+    #: Freigabemaske (weiss = die KI malt, schwarz = das Cycles-Bild ``beauty_png`` bleibt),
+    #: siehe :mod:`aiimaging.umrisshalt`. ``None`` (Vorgabe) heisst aus, und dann ist der Lauf
+    #: Wort für Wort der von vorher. Verlangt ``beauty_png``.
+    umriss_halten_png: str | None = None
 
 
-def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
+def modellwurzel(*, umgebung=None, einheit=None) -> tuple[Path, str]:
     """Welche Modellwurzel auf diesem Rechner gilt — **und woher sie kommt**.
 
     Drei Stufen, in dieser Reihenfolge, und die Reihenfolge ist der ganze Entwurf:
 
     1. ``$AIIMAGING_MODELLE`` — die Umgebung gewinnt immer. Sie ist der Weg, auf dem eine
        Maschine ihre Ablage festschreibt, ohne dass wir Code ändern.
+
+       **1b. Die Einheit des Abholers** (seit auf-20261021-301, A6): Ist die Variable nicht
+       gesetzt, gilt ``AIIMAGING_MODELLE`` aus der installierten Nutzereinheit
+       :data:`EINHEIT_ABHOLER` — **nur, wenn der Ordner dort existiert**. So findet ein
+       Prozess ausserhalb des Dienstes (ein Messskript, der Tiefenschaetzer von Hand)
+       dieselbe Ablage wie der Abholer. Wo die Einheit fehlt (Mac, Container), faellt die
+       Stufe still weg. Mit ``umgebung=`` nur, wenn auch ``einheit=`` genannt ist.
     2. :data:`ALTWURZEL_HOMESTATION` (``/ai``) — **aber nur, wenn es den Ordner gibt.**
        Wer ``/ai`` führt, behält es, ohne etwas zu setzen; bei einer Studentin fällt die
        Stufe durch. Sie ist ausdrücklich **nicht** der Bestandsschutz der HomeStation:
@@ -451,6 +517,17 @@ def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
     umgebung = os.environ if umgebung is None else umgebung
     if (gesetzt := umgebung.get(UMGEBUNG_MODELLE)):
         return Path(gesetzt), HERKUNFT_UMGEBUNG
+    # 1b: DIESELBE EINSTELLUNG WIE DER ABHOLER (auf-20261021-301, A6).
+    if einheit is None and not eigene_umgebung:
+        einheit = abholer_einheit_pfad()
+    if einheit is not None:
+        aus_einheit = modellwurzel_der_einheit(einheit)
+        try:
+            einheit_trifft = aus_einheit is not None and aus_einheit.is_dir()
+        except OSError:
+            einheit_trifft = False
+        if einheit_trifft:
+            return aus_einheit, HERKUNFT_ABHOLER
     alt = Path(ALTWURZEL_HOMESTATION)
     try:
         alt_vorhanden = alt.is_dir()
@@ -611,6 +688,10 @@ def modellwurzel_lage(backbone_name: str) -> dict:
     if herkunft == HERKUNFT_UMGEBUNG:
         grund = (f"{UMGEBUNG_MODELLE} zeigt auf {str(wurzel.parent)!r}, und dort liegt "
                  f"kein Ordner {ordner!r}. Der Pfad ist gesetzt und trifft nicht.")
+    elif herkunft == HERKUNFT_ABHOLER:
+        grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt die Ablage aus der Einheit "
+                 f"des Abholers ({EINHEIT_ABHOLER}) {str(wurzel.parent)!r}, und dort liegt "
+                 f"kein Ordner {ordner!r}.")
     elif herkunft == HERKUNFT_ALTWURZEL:
         grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt die vorhandene Ablage "
                  f"{ALTWURZEL_HOMESTATION!r}, und dort liegt kein Ordner "
@@ -780,6 +861,11 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
     _pruefe_anteil(a.denoise, "denoise", maengel)
     if a.bildeingang_staerke is not None:
         _pruefe_bildeingang(a, eintrag, maengel)
+    if a.umriss_halten_png is not None:
+        _pruefe_datei(a.umriss_halten_png, "umriss_halten_png", maengel)
+        if a.beauty_png is None:
+            maengel.append("umriss_halten_png ohne beauty_png: Es gibt kein Cycles-Bild, das "
+                           "ausserhalb des Hauses gehalten werden koennte.")
 
     # --- Ausgabeort ------------------------------------------------------------------
     if a.ausgabe_png is not None:
@@ -1083,6 +1169,9 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None,
     modell.geraet = geraet
     modell.entflechtung = entflechtung
     modell.bedarf = bedarf
+    # DIE ZWEITE PRUEFUNG SAGT IHRE ZAHLEN (auf-20261021-301, A2): verfuegbar, frei, eigen,
+    # verlangt — `tools/abholen.py` schreibt den Satz ins Journal. `None`: ohne Bildeingang.
+    modell.bildeingang_pruefung = (bildeingang_bericht or {}).get("satz") or None
     if weg:
         modell.ladeweg = weg
     return modell
@@ -2165,6 +2254,82 @@ def _eigener_start(pipeline, torch, bild, *, breite: int, hoehe: int, schritte: 
     return {"latents": start, "sigmas": rest}, satz
 
 
+def _umriss_halten_vorbereiten(pipeline, torch, bild, maske_png, *, breite: int, hoehe: int,
+                               seed: int) -> dict:
+    """Grundbild und Freigabe für «Umriss halten im Lauf» (Strang Treue, Messschalter).
+
+    **Ungeprüft am Gerät, wie der ganze Adapter.** Das Cycles-Bild geht durch den VAE der
+    Pipeline (``argmax``, skaliert wie das Steuerbild, wie :func:`_eigener_start`) — hier
+    **unter** ``torch.no_grad()``: Ausserhalb von ``pipeline.__call__`` gilt die Abschaltung
+    der Gradienten nicht, und ein Graph am Ergebnis hielte die Aktivierungen des VAE fest.
+    Das Rauschen kommt aus einem **eigenen** Generator mit demselben Startwert, damit der
+    Generator der Pipeline nicht weiterläuft — im Haus rechnet das Modell dann dasselbe
+    Anfangsrauschen wie ohne Schalter. Die Maske wird auf die Zellen der Latenten gebracht
+    (``BOX``), und eine Zelle gilt als frei, wo irgendein Punkt frei ist.
+    """
+    from diffusers.pipelines.z_image import pipeline_z_image_controlnet as zmod  # noqa: PLC0415
+    from diffusers.utils.torch_utils import randn_tensor                           # noqa: PLC0415
+    from PIL import Image                                                          # noqa: PLC0415
+
+    faktor = pipeline.vae_scale_factor * 2
+    lat_h, lat_w = 2 * (int(hoehe) // faktor), 2 * (int(breite) // faktor)
+    geraet = pipeline._execution_device
+    vae = pipeline.vae
+    with torch.no_grad():
+        # Auf das Raster der Latenten gebracht (16 px), damit die Form immer passt — die
+        # Pipeline rundet Hoehe und Breite ebenso ab.
+        eingang = pipeline.image_processor.preprocess(
+            bild, height=lat_h * pipeline.vae_scale_factor,
+            width=lat_w * pipeline.vae_scale_factor).to(device=geraet, dtype=vae.dtype)
+        lat = zmod.retrieve_latents(vae.encode(eingang), sample_mode="argmax")
+        lat = ((lat - vae.config.shift_factor) * vae.config.scaling_factor).to(torch.float32)
+    if tuple(lat.shape[-2:]) != (lat_h, lat_w):
+        raise RenderError(f"umriss_halten: Grundbild ergibt Latente {tuple(lat.shape[-2:])}, "
+                          f"das Modell rechnet {(lat_h, lat_w)}.")
+    eigener = torch.Generator(device=_generator_geraet(pipeline, torch)).manual_seed(int(seed))
+    rauschen = randn_tensor(lat.shape, generator=eigener, device=lat.device, dtype=torch.float32)
+    maske = Image.open(maske_png).convert("L").resize((lat_w, lat_h), Image.BOX)
+    frei = (torch.tensor(list(maske.getdata()), dtype=torch.float32, device=lat.device)
+            .reshape(1, 1, lat_h, lat_w) > 0).to(torch.float32)
+    return {"hintergrund": lat, "rauschen": rauschen, "frei": frei, "schritte": 0,
+            "anteil_frei": round(float(frei.mean()), 4), "zellen": (lat_h, lat_w)}
+
+
+def _umriss_halten_rueckruf(innen, umriss: dict):
+    """Der Rückruf je Schritt: erst zählen (``innen``), dann den Hintergrund festhalten.
+
+    Nach Schritt ``i`` liegen die Latenten auf der Rauschstufe ``scheduler.sigmas[i + 1]``
+    (der Fahrplan hängt die 0 an); auf dieser Stufe wird das Grundbild verrauscht und
+    ausserhalb der Freigabe eingesetzt (:func:`aiimaging.umrisshalt.halte_latenten`). Ein
+    Fehler hier wird **nicht** geschluckt: Ein Lauf, der still ohne Halten weiterrechnete,
+    sähe aus wie einer mit.
+    """
+    from . import umrisshalt as _uh  # noqa: PLC0415
+
+    def rueckruf(pipe, schritt, zeit, kwargs):
+        kwargs = innen(pipe, schritt, zeit, kwargs)
+        lat = kwargs.get("latents")
+        if lat is not None:
+            sigma = float(pipe.scheduler.sigmas[int(schritt) + 1])
+            kwargs["latents"] = _uh.halte_latenten(
+                lat, umriss["hintergrund"], umriss["rauschen"], umriss["frei"], sigma
+            ).to(lat.dtype)
+            umriss["schritte"] += 1
+        return kwargs
+
+    return rueckruf
+
+
+def _umriss_halten_satz(umriss: dict, angekommen: bool) -> str:
+    from . import umrisshalt as _uh  # noqa: PLC0415
+    if not angekommen:
+        return (f"{_uh.SATZ}: NICHT angekommen — diese Pipeline kennt 'callback_on_step_end' "
+                f"nicht; das Bild ist ohne Halten gerechnet.")
+    return (f"{_uh.SATZ}: Hintergrund im Fahrplan festgehalten (Art '{_uh.ART_IM_LAUF}'), "
+            f"frei fuer die KI {umriss['anteil_frei'] * 100:.0f} % der Zellen "
+            f"{umriss['zellen'][1]} x {umriss['zellen'][0]}. Ungemessen.")
+
+
 def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
     """Aus einer ``diffusers``-Pipeline ein Modell im Sinne dieses Moduls machen.
 
@@ -2253,6 +2418,16 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 breite=tiefe.width, hoehe=tiefe.height, schritte=parameter["schritte"],
                 staerke=parameter["bildeingang_staerke"], generator=generator)
             argumente.update(start)
+        umriss = None
+        if parameter.get("umriss_halten_png"):
+            # Strang Treue: ausserhalb des Hauses gilt in jedem Schritt das verrauschte
+            # Cycles-Bild. Der Rueckruf zaehlt weiter und haelt danach den Hintergrund fest.
+            umriss = _umriss_halten_vorbereiten(
+                pipeline, torch, Image.open(parameter["beauty_png"]).convert("RGB"),
+                parameter["umriss_halten_png"], breite=tiefe.width, hoehe=tiefe.height,
+                seed=parameter["seed"])
+            argumente["callback_on_step_end"] = _umriss_halten_rueckruf(
+                argumente["callback_on_step_end"], umriss)
 
         # DER REGLER, DER WIRKT (23.09.2026, `auf-20260923-157`): Bei
         # `QwenImageEditPlusPipeline` schaltet `true_cfg_scale` die Führung, und nur
@@ -2426,6 +2601,9 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
             # zum 30.09.2026 stand hier weiter 'txt2img' (auf-178).
             modus_gerechnet = MODUS_TIEFE_ALS_BILD
 
+        if umriss is not None:
+            hinweise.append(_umriss_halten_satz(umriss, "callback_on_step_end" not in verworfen))
+
         bild = pipeline(**genommen).images[0]
 
         bestellt = parameter["schritte"]
@@ -2449,7 +2627,11 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 # ZWEI FELDER, NICHT EINES. Sie sind meistens gleich, und genau darum
                 # faellt der Fall auf, in dem sie es nicht sind.
                 "modus_bestellt": modus_bestellt,
-                "modus_gerechnet": modus_gerechnet}
+                "modus_gerechnet": modus_gerechnet,
+                # Strang Treue: wie oft der Hintergrund wirklich festgehalten wurde — nur mit
+                # Schalter; 0 heisst: Rueckruf verworfen oder nie gerufen.
+                **({"umriss_halten_schritte": umriss["schritte"]} if umriss is not None
+                   else {})}
 
     modell.backbone = eintrag.name       # zur Fehlersuche: welches Modell steckt drin
     return modell
@@ -2543,6 +2725,9 @@ def _baue_parameter(a: RenderAuftrag, eintrag, *,
         "fuehrung_angewandt": None,
         "modell_wurzel": str(wurzel),
         **zusatz,
+        # DER MESSSCHALTER «UMRISS HALTEN IM LAUF» (Strang Treue) — nur, wenn gesetzt.
+        **({"umriss_halten_png": a.umriss_halten_png}
+           if a.umriss_halten_png is not None else {}),
     }
 
 
@@ -3363,6 +3548,10 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = antwort.get("schritte_gerechnet")
         parameter["fuehrung_regler_angekommen"] = antwort.get("fuehrung_regler_angekommen")
         parameter["fuehrung_angewandt"] = antwort.get("fuehrung_angewandt")
+        if "umriss_halten_png" in parameter:
+            # Nur mit Schalter (Strang Treue): ob und wie oft der Hintergrund gehalten wurde.
+            # None heisst: die Naht hat es nicht gemeldet (Attrappe, fremdes Modell).
+            parameter["umriss_halten_schritte"] = antwort.get("umriss_halten_schritte")
         modus_bestellt = antwort.get("modus_bestellt")
         modus_gerechnet = antwort.get("modus_gerechnet")
     else:
@@ -3401,7 +3590,8 @@ __all__ = [
     "bildeingang_schritte", "pruefe_bildeingang_karte", "schrittsatz",
     "eigener_grafikspeicher_mib", "CUDA_KONTEXT_MIB", "ABWEIS_BILDEINGANG",
     "bildeingang_abweisung_in",
-    "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
+    "ALTWURZEL_HOMESTATION", "EINHEIT_ABHOLER", "HERKUNFT_ABHOLER", "HERKUNFT_ALTWURZEL",
+    "HERKUNFT_ANWENDUNGSDATEN", "abholer_einheit_pfad", "modellwurzel_der_einheit",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "fuehrung_angewandt", "lade_modell", "modellwurzel",
     "modellwurzel_lage", "pipeline_lage", "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel", "wurzel_fuer",

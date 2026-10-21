@@ -1152,6 +1152,31 @@ Anthropic geht: Mappennamen, Prompts, der Knotengraph und Bilder, die Claude ans
 **Offen:** die Probe am Gerät mit beiden Claude-Programmen; die Werkzeuge, die die Mappe am Mac brauchen (Modell laden,
 Kameras vorschlagen, Verlauf, Mappe anlegen); der Assistent mit derselben Werkzeugliste.
 
+---
+
+### 21.10.2026 · Die Mappe liegt am Mac
+
+Bis hierhin lag jede Mappe — Modell, Knotengraph, Skizzen, Bilder — am Heim-PC, und der Mac zeigte sie nur an. Jetzt
+liegt sie am Mac, als gewöhnlicher Ordner `~/Visbox-Mappen/<Name>/`, den man im Finder sieht und mit dem Mac sichert.
+Der Heim-PC ist damit auf dem Weg zum reinen Rechner: Er bekommt je Auftrag das Modell und die Szene und gibt die Bilder
+zurück; die App legt sie in die Mappe.
+
+**Was der Architekt sieht:** ein Fenster «Mappen» (über das Logo oben links oder ⌘O) mit drei Teilen — die Mappen am
+Mac zum Öffnen, die Mappen, die noch am Heim-PC liegen, mit dem Knopf «An den Mac holen», und «Neue Mappe». Die
+Knotenansicht selbst sieht aus wie vorher; sie liest und sichert nur an einem anderen Ort. Ohne Heim-PC bleiben die
+Mappe und die schon gerechneten Bilder da.
+
+**Begründung des Wegs:** Die Knotenansicht wurde nicht umgebaut. Sie fragt weiter nach «der Mappe», «dem Graphen»,
+«dem Modell»; die App beantwortet diese Fragen jetzt selbst aus dem Ordner am Mac. So bleibt die Arbeitsfläche, die
+geprüft ist, dieselbe, und der Umzug steckt an einer Stelle. «An den Mac holen» kopiert und löscht nichts: Die Mappe am
+Heim-PC bleibt liegen, weil das iPad seine Skizzen bis zum nächsten Schritt noch dorthin schickt. Das Umwandeln einer
+IFC-Datei bleibt am Heim-PC, weil das Programm dafür nur dort laufen darf (Lizenz, Prozessgrenze); das fertige Modell
+kommt danach in die offene Mappe am Mac. Ist keine Mappe am Mac offen, läuft alles wie vorher.
+
+**Offen:** die Probe am Mac (Mappe holen, ein Bild rechnen lassen, ohne Heim-PC wieder öffnen); die Messung am Heim-PC,
+dass Holen, Auftrag und die alte Mappe dort zusammen funktionieren; das iPad, das die Mappe vom Mac holt (nächster
+Schritt, der Weg ist im Plan beschrieben).
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |
@@ -1823,6 +1848,33 @@ der Satz, aber nur an Bildern ab 960 Bildpunkten Breite, weil das Verhältnis an
 ist schmal (1,16 gegen 1,27). Offen und ohne Fix notiert: Die Zahl «über den Umriss gebaut» kippt, wo die KI einen Himmel
 malt, und ein ganz anderes Haus mit gleicher Silhouette fällt keinem der vier Gründe auf. Eine kurze Nachprobe am Heim-PC
 bestätigt das Gebaute.
+
+**Die Nachprobe, und was sie an Meldungen fand (21.10.2026).** Die Nachprobe am Heim-PC bestätigt das Gebaute: Bestellt
+über die Knotenansicht, rechnet der Bildeingang wieder, und die Bilder sind Bildpunkt für Bildpunkt dieselben wie aus dem
+direkten Aufruf. Die Abweisung nennt das eigene Sprachmodell einmal und als eigenes, und wo der Auftrag «nur bei freier
+Karte» trägt, wird es entladen und gerechnet. Der vierte Grund für «Haus nicht wiederzuerkennen» trifft alle 14 Bilder wie
+von Auge. Gefunden wurden kleine Lücken in den Meldungen, und sie sind behoben. Der Satz einer Abweisung stand im Feld,
+das die Anzeige liest, nur bei der zweiten Prüfung, nicht bei der ersten; jetzt bei beiden. Die zweite Speicherprüfung
+schrieb ihre Zahlen nirgends hin; jetzt steht im Logbuch des Heimrechners, wie viel frei war, wie viel dem eigenen Programm
+gehört und wie viel verlangt ist. Und nach dem Entladen des Sprachmodells fehlte im Logbuch die Zeile mit dem Speicher:
+Sie war geschrieben, aber an eine lange Zeile angehängt und beim Kürzen abgeschnitten; jetzt steht sie für sich. Dazu
+fand ein Messprogramm, von Hand gestartet, die Gewichte des Tiefenschätzers nicht, weil nur der Dienst wusste, wo sie
+liegen. Jetzt liest jedes Programm den Ort aus derselben Einstellung wie der Dienst, und der Tiefenschätzer lädt nur noch
+aus dem eigenen Ordner, nie aus dem Netz. Ehrlich gesagt: Geprüft an Proben; ob die Einstellung am Heim-PC so gelesen wird
+und die neuen Zeilen dort stehen, zeigt ein kleiner Prüfauftrag.
+**Material und Umriss: zwei neue Schalter zum Messen (21.10.2026).** Zwei Dinge trifft die KI nicht, die der Architekt
+bestellt. Sie malt Sichtbeton nur teilweise, mit Streifen aus Holz und Stein dazwischen. Und sie baut fast immer neben das
+Haus weitere Gebäude; nur beim Gipsmodell bleibt sie im Umriss. Ein Satz wie «leerer Hintergrund» half kaum, eine
+stärkere Bindung an die Tiefe auch nicht, und ein Gegen-Prompt wirkt bei diesem Modell gar nicht. Ein Planblatt prüft
+fünf Wege mit Lizenz, Speicherbedarf, Aufwand und Risiko (`docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`). Gebaut sind die
+zwei aussichtsreichsten, beide vorerst aus. *Umriss halten:* Ausserhalb des modellierten Hauses gilt das gerenderte Bild
+mit Himmel und Boden, innen malt die KI. Das geht auf zwei Arten: nachträglich gemischt, oder schon während des Malens,
+indem der Hintergrund nach jedem Rechenschritt auf das gerenderte Bild zurückgesetzt wird; dann malt die KI die Kante zum
+Hintergrund selbst. *Material vorne:* Der Stoff, etwa Sichtbeton, steht am Anfang der Bildbeschreibung und dreimal,
+statt an zweiter Stelle; eine Gewichtung in Klammern kennt dieses Modell nicht. Ohne Messung wird nichts davon Vorgabe.
+Die Messung am Heim-PC rechnet jeden Weg gegen dasselbe Kontrollbild, dazu den Material-Knoten mit Sichtbeton-Textur, der
+das gerenderte Bild als Ausgangspunkt mitgibt. Zurück kommen die Zahlen und ein Urteil von Auge: «Sichtbeton?». Nur
+frei lizenzierte Gewichte, die schon auf dem Rechner liegen.
 
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,

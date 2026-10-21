@@ -111,7 +111,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     assert len(abholer.MULTIPASS_DURCHGEREICHT) == 30
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 3
     # 8 seit dem 21.10.2026 (Entscheid 117): `bildeingang_staerke` aus `vis.bildeingang`.
-    assert len(abholer.RENDER_DURCHGEREICHT) == 8
+    # 9 seit dem 21.10.2026 (Strang Treue): `umriss_halten_png` aus `vis.umriss_halten`.
+    assert len(abholer.RENDER_DURCHGEREICHT) == 9
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
 
 
