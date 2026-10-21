@@ -887,6 +887,30 @@
   min-width: 0;
   object-fit: contain;
 }
+/* auf-20261021-315 (Test-App R48, echte Bruecke): nach «Variante erzeugen» zeigte der Bildvergleich nur ein Bildchen
+   von wenigen Bildpunkten. Das Bild war da — die Zeilen darunter nahmen die 132 px des Koerpers: QA, Vorschau-Vorbehalt,
+   Marke «Vorschau», ein dreizeiliger Hinweis der Bildseite und der Knopf «mehr». Im KNOTEN darum: das Bild behaelt
+   mindestens 44 px, der gekuerzte Hinweis steht in EINER Zeile mit «…» und «mehr» daneben; aufgeklappt bricht er um.
+   Ausserhalb des Knotens (Kuratier-Vergleich) bleibt alles, wie es ist. */
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > .vis-img-full {
+  min-height: 44px;
+}
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > .vis-bild-kachel-qa-hinweise {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s1);
+  min-width: 0;
+}
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > .vis-bild-kachel-qa-hinweise:not(:has([aria-expanded='true'])) > .vis-bild-kachel-qa-hinweis {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vis-node-koerper > .vis-vergleich-bilder > .vis-bild-kachel > .vis-bild-kachel-qa-hinweise:has([aria-expanded='true']) {
+  flex-wrap: wrap;
+}
 /* Und falls eine Zeile doch einmal auf das Bild faellt (eine Engine, die die
    Spalte anders rechnet): sie traegt die Flaeche der Karte, damit sie auf
    jedem Bild lesbar bleibt. `position: relative` legt sie ueber das Bild. */

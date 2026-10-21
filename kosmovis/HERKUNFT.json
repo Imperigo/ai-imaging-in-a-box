@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "15a70c5fc432376099675e2a97f61f870fd8ae57"
+    "commit": "3fa8f20ccd87c8494c9c0200552bab4a2e04b2a4"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -60,7 +60,7 @@
     "apps/kosmo-orbit/src/modules/vis/GueteMarke.tsx": "1542acdc4154c3e248b3a82fa3282607c9f0309cc0106ca2f5206b0b99377927",
     "apps/kosmo-orbit/src/modules/vis/KameraAus3dKnoten.tsx": "139bb1df4e7b6dc41f1d6a2867ee09c1082b3634a4745addb586af07f9163ae8",
     "apps/kosmo-orbit/src/modules/vis/KameraKnoten.tsx": "b17f1745420b421eed86f0686202b974c2a6e0b87807278e46ed503d8c8395c5",
-    "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "66a399c7f657e784c94754bec8d613ae25ba26dcc5b9bd5d302f7a78720184f1",
+    "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "e1a50dac238c0ec592132c1e15c9cf0badc4e257be4329663c850a6f77264b9c",
     "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "ff9f398032b54d89f00c4176e4ed416ab9fb74266ce7bae5d90ad4ddf0097139",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "95e7f3da7b027577e2d270661e14567718a7e4ffb9cc4df7d948d8f050f59650",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
@@ -128,7 +128,7 @@
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "22ff6d092fbc269129eb7ca766fe61645262530d215e041b30c6dc0c8553c189",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "695cfe6d6eb03dcb637d01e8e6975c52e7b62267b076f82f98ff04e96159c031",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "a6e84b0282490f02c33ab452d4ded3410b74e0c188f576a1083cfffc1b158697",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "0b462678ce48b1d167d22421cd9b246724513bce2712a0381a841eefb54c8294",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "fa37a8227ad74b9aab921f64182f479228b2debb9a85c3ce29ef203133afea1a",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
     "apps/kosmo-orbit/src/shell/chat/kosmo-c0-kopf.css": "ce2500140fe22d6b40320711bc194a75b64cf8546277cf3f2d93d54968abbf7f",

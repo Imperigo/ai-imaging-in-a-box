@@ -463,6 +463,8 @@ function RasterKarte({
   return (
     <div
       data-testid="vis-kuratier-karte"
+      /* L4-15: seit jeder Lauf eine Karte ist, waehlt man sie ueber die Kennung des Laufs, nicht ueber die Lage. */
+      {...('jobId' in karte.quelle ? { 'data-job': karte.quelle.jobId } : {})}
       onClick={onWahl}
       className={['vis-raster-karte', rahmenKlasse, karte.kur.verworfen ? 'vis-raster-karte--verworfen' : ''].filter(Boolean).join(' ')}
     >
@@ -650,8 +652,11 @@ function VergleichAnsicht({
             abzeichen="links"
             lage="unten"
           />
-          <GueteMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-guete-marke-${label.toLowerCase()}`} form="abzeichen" />
         </div>
+        {/* L4-15 Nachzug: seit jeder Lauf eine Karte ist, stehen Varianten mit «Vorschau» und «Lizenz offen» oft
+            zugleich im Vergleich — im Kopf brach das Lizenz-Abzeichen dann auf vier Zeilen (kv-vergleich-schmal).
+            «Vorschau» liegt darum IM Bild unten links, wie am Render-Knoten. */}
+        <GueteMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-guete-marke-${label.toLowerCase()}`} />
       </div>
     );
   };
