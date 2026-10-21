@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt: 234 sollte Visbox 0.1.0 am Mac mit Xcode bauen. Seither baut die Mac-Pruefstrecke (ipad.yml) jede Fassung, und der Owner installiert und probiert sie selbst (heute 0.3.x). Die Probe am Mac liegt beim Owner (C45 ff.), nicht bei der HomeStation. Teil A der Antwort bleibt stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": null, "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-234",
  "worker": "local",

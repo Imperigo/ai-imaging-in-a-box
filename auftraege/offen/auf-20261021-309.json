@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Strang Kern: M2 (material_vorne + umriss_halten im_lauf) gegen die Kontrolle mit vier Seeds, beiden Kameras sSE/nNW und drei Stimmungen (morgen, abend, bedeckt); Kontrollen nach den Fixes aus 302/303 (Stoff hoechstens dreimal, no_grad im Bildeingang); Option Himmel im Hintergrund als Auskunft; Augenurteil Sichtbeton? / Form wie Modell? / Naht? und drei Tafeln. Dazu aus 306: Stimmungssatz einmal englisch und Himmelsgroesse aus der Grundlage (Teil S).",
  "erstellt": "2026-10-21T14:00:00Z",
- "rang": 96,
+ "rang": 4,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,

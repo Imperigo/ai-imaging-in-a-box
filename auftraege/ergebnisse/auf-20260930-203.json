@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt durch auf-20260930-207 und auf-20260930-211: Der Befund aus 203 (Decken ohne role, materialize bricht ab) wurde in KosmoPublish/KosmoPrepare angefasst und dort nachgemessen. Die Antwort auf 203 bleibt stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20260930-207", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260930-203",
  "status": "fehler",

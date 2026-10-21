@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt durch auf-20261014-282 («M4 zu Ende»): 281 hat die Textur gemessen, das Bild mit QA fehlte, weil der Auftrag ohne Splat-Umgebung kam; 282 hat genau das nachgeholt. Die Zahlen aus 281 bleiben stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20261014-282", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261014-281",
  "worker": "local",

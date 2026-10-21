@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt durch auf-20261001-215: 212 hielt wie verlangt an, weil ffmpeg, COLMAP und brush fehlten; mit Owner-Ja hat 215 sie eingerichtet und die Kette gefahren (danach 217, 222, 223, 240 ff.). Die Antwort auf 212 bleibt stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20261001-215", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-212",
  "worker": "local",
