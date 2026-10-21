@@ -10,10 +10,20 @@ Damit Bau und Quelle nicht wieder auseinanderlaufen, schreibt dieses Werkzeug na
 Visbox-eigenen Wirtsdateien). ``tests/test_knoten_bau.py`` fällt, sobald die Quelle sich ändert
 und der Bau nicht neu gestempelt ist.
 
+**Vor dem Bau wird geprüft** (Plan UI-Gleichheit S5, 21.10.2026): zuerst die Kopie gegen ihren
+Abdruck (``kosmovis_uebernahme.pruefe``, dasselbe wie ``--pruefen``) — ein Befund bricht ab. Ist
+``KOSMO_ORBIT`` gesetzt (Pfad zu ``kosmo-orbit/`` in einem Klon), dann auch gegen den aktuellen
+Integrator-Stand (``--abgleich``); eine Abweichung bricht ebenfalls ab. Wer bewusst gegen den
+festgehaltenen Stand der Kopie bauen will (etwa, weil drüben gerade etwas Halbes liegt), gibt
+``--fester-stand`` — der Stempel vermerkt dann, gegen welchen Stand gebaut wurde und wie viele
+Abweichungen offen waren. *Ein Bau, der still auf einem alten Stand entsteht, sieht am Mac genauso
+aus wie ein aktueller.*
+
 Gebrauch::
 
-    python3 tools/knoten_bau.py            # npm ci (falls nötig), npm run build, stempeln
-    python3 tools/knoten_bau.py --stempel  # nur stempeln (nach einem Bau von Hand)
+    python3 tools/knoten_bau.py                 # prüfen, npm ci (falls nötig), bauen, stempeln
+    python3 tools/knoten_bau.py --fester-stand  # trotz Abweichung zum Integrator bauen (vermerkt)
+    python3 tools/knoten_bau.py --stempel       # nur stempeln (nach einem Bau von Hand)
 """
 from __future__ import annotations
 
@@ -21,6 +31,7 @@ import argparse
 import hashlib
 import json
 import os
+import importlib.util
 import subprocess
 from pathlib import Path
 
@@ -58,9 +69,58 @@ def fingerabdruck(wurzel: Path = WURZEL) -> dict[str, str]:
             for q in (*QUELLEN, *_stellvertreter(wurzel))}
 
 
-def stempele() -> None:
-    STEMPEL.write_text(json.dumps({"quelle": fingerabdruck()}, indent=1, sort_keys=True) + "\n",
+def stempele(abgleich: dict | None = None) -> None:
+    """Schreibt den Stempel. Ohne ``abgleich`` (``--stempel``) bleibt der Vermerk des letzten
+    Baus stehen — gestempelt wird dann nur die Quelle neu."""
+    if abgleich is None and STEMPEL.is_file():
+        abgleich = json.loads(STEMPEL.read_text(encoding="utf-8")).get("abgleich")
+    inhalt = {"quelle": fingerabdruck()}
+    if abgleich is not None:
+        inhalt["abgleich"] = abgleich
+    STEMPEL.write_text(json.dumps(inhalt, indent=1, sort_keys=True, ensure_ascii=False) + "\n",
                        encoding="utf-8")
+
+
+def _uebernahme():
+    spec = importlib.util.spec_from_file_location(
+        "kosmovis_uebernahme_bau", WURZEL / "tools" / "kosmovis_uebernahme.py")
+    modul = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modul)
+    return modul
+
+
+class BauAbbruch(SystemExit):
+    """Der Bau beginnt nicht — mit dem Grund als Text."""
+
+
+def vor_dem_bau(fester_stand: bool = False, kosmo_orbit: str | None = None) -> dict:
+    """Prüft die Kopie, bevor gebaut wird, und gibt den Vermerk für den Stempel zurück.
+
+    1. ``pruefe()``: Jede wörtliche Kopie stimmt mit ihrem Abdruck, keine Datei ohne Herkunft.
+       Ein Befund bricht immer ab — dagegen hilft kein Schalter, sondern ``geaendert`` mit Grund.
+    2. Ist ``kosmo_orbit`` gegeben (Vorgabe: Umgebung ``KOSMO_ORBIT``): der Abgleich gegen den
+       Integrator-Stand. Eine Abweichung bricht ab, ausser mit ``fester_stand``."""
+    ue = _uebernahme()
+    befunde = ue.pruefe()
+    if befunde:
+        raise BauAbbruch("Bau abgebrochen — die Kopie stimmt nicht mit ihrem Abdruck:\n  "
+                         + "\n  ".join(befunde))
+    fest = json.loads(ue.HERKUNFT.read_text(encoding="utf-8"))["quelle"]["commit"]
+    pfad = os.environ.get("KOSMO_ORBIT") if kosmo_orbit is None else kosmo_orbit
+    if not pfad:
+        return {"ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)", "fester_stand": fest}
+    bericht = ue.abgleich(Path(pfad))
+    n = ue.abgleich_befunde(bericht)
+    vermerk = {"ref": bericht["ref"], "commit": bericht["commit"], "fester_stand": fest,
+               "abweichungen": n, "eigener_zweig": len(bericht["eigen"])}
+    if not n:
+        return {**vermerk, "ergebnis": "gleich"}
+    ue.drucke_abgleich(bericht)
+    if not fester_stand:
+        raise BauAbbruch(f"Bau abgebrochen — {n} Abweichungen gegen {bericht['ref']}. Kopie "
+                         "nachziehen (tools/kosmovis_uebernahme.py) oder bewusst mit "
+                         "--fester-stand bauen.")
+    return {**vermerk, "ergebnis": "abweichend, bewusst gegen den festen Stand gebaut"}
 
 
 def braucht_npm_ci(kosmovis: Path | None = None) -> bool:
@@ -83,8 +143,12 @@ def braucht_npm_ci(kosmovis: Path | None = None) -> bool:
 def main(argv=None) -> int:
     a = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     a.add_argument("--stempel", action="store_true", help="nur stempeln, nicht bauen")
+    a.add_argument("--fester-stand", action="store_true",
+                   help="trotz Abweichung zum Integrator-Stand bauen (im Stempel vermerkt)")
     args = a.parse_args(argv)
+    vermerk = None
     if not args.stempel:
+        vermerk = vor_dem_bau(args.fester_stand)
         if braucht_npm_ci():
             subprocess.run(["npm", "ci", "--no-audit", "--no-fund"], cwd=KOSMOVIS, check=True)
         subprocess.run(["npm", "run", "build"], cwd=APP, check=True)
@@ -93,7 +157,7 @@ def main(argv=None) -> int:
         # dist/ — darum danach, geschrieben von der Probe, die sie sonst gegen die Quelle prueft.
         subprocess.run(["npx", "vitest", "run", "test/ki-werkzeugliste.test.ts"], cwd=APP,
                        check=True, env={**os.environ, "VISBOX_KI_LISTE_SCHREIBEN": "1"})
-    stempele()
+    stempele(vermerk)
     print(f"Bau gestempelt: {STEMPEL.relative_to(WURZEL)}")
     return 0
 

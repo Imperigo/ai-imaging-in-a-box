@@ -193,9 +193,9 @@
     {
       "teil": "Befehlspalette (⌘K)",
       "ko": "App.tsx: <CommandPalette />",
-      "stand": "offen",
-      "stufe": "S5",
-      "grund": "Haengt an den Aktionen der ganzen KosmoOrbit-App; ob und mit welchen Visbox-Aktionen, klaert der Abgleich S5."
+      "stand": "ausnahme",
+      "grund": "Die Palette ist in KosmoOrbit in jeder Station gemountet, traegt aber nur Befehle der ganzen App: Stationen anspringen (nav-*), Zentrale, Projekt sichern/weitergeben/oeffnen/umbenennen (.kosmo), Demohaus, Webview-Diagnose, die Lauf-Bibliothek von Kosmo (KosmoPanel) und die Befehle von KosmoDesign. Das Vis-Werkzeug meldet keinen einzigen Befehl an (kein registerActions unter modules/vis). In Visbox gibt es diese App-Befehle nicht (eine Station, die Mappe waehlt der Heim-PC, keine .kosmo-Datei); Thema, Akzent und Assistent liegen in der Einstellungs-Insel bzw. an der Kugel. Eine Palette nur mit diesen drei Befehlen waere eine Visbox-eigene, keine wortgleiche. Pruefung am Integrator-Stand 2896d6471 (R44), 21.10.2026. Meldet das Vis-Werkzeug drueben Befehle an, wird die Probe rot und die Palette kommt herueber.",
+      "entscheid": "Plan UI-Gleichheit S5 (Protokoll 74), nach der Regel des Auftrags: haengt an Nicht-Vis-Funktionen"
     }
   ],
   "einstellungen_abschnitte": [

@@ -1790,3 +1790,18 @@ behält die App über das Neuladen hinaus. Abschnitte, die es in Visbox fachlich
 Sonnenstand an dieser Stelle, Nutzungsstatistik), sind bewusst weggelassen und mit Grund aufgeschrieben. Ehrlich gesagt:
 Geprüft an den Proben und im Browser des Prüfrechners; das Gespräch mit dem echten Heim-PC und das Bild in der Mac-App
 sieht erst der Owner am Gerät.
+
+**Der Bau der Knotenansicht prüft sich, bevor er beginnt (21.10.2026).** Die Knotenansicht von Visbox besteht zu
+grossen Teilen aus Dateien, die wörtlich aus ihrer Vorlage stammen; für jede ist ein Fingerabdruck festgehalten. Bisher
+prüfte eine Probe nur, ob eine Kopie seit dem Kopieren still verändert wurde — dass die Vorlage inzwischen weitergegangen
+war, sah sie nie. Jetzt gibt es einen Abgleich: Er liest den aktuellen Stand der Vorlage direkt aus deren
+Versionsgeschichte und sagt je Datei, ob sie gleich ist, abweicht, dort weggefallen oder hier noch nicht übernommen ist.
+Eine Datei, die wir selbst geändert und zur Übernahme angemeldet haben, zählt nicht als Fehler, sondern als
+angemeldeter Weg. Das Bauwerkzeug ruft zuerst die bisherige Prüfung und dann den Abgleich; findet einer etwas, wird
+nicht gebaut. Wer bewusst gegen den festgehaltenen Stand bauen will, muss das ausdrücklich sagen, und dann steht es im
+Stempel des Baus. Der erste Abgleich fand keine Abweichung; was neu war, war schon übernommen. Die Befehlspalette (ein
+Suchfeld für Befehle, das mit Befehlstaste + K aufgeht) kommt nicht mit: Sie trägt in der Vorlage nur Befehle, die es in
+Visbox nicht gibt (Wechsel zwischen Programmteilen, Projektdateien), und die Knotenansicht meldet dort keinen eigenen an.
+Das steht mit Grund in der Liste der Ausnahmen, und eine Probe wird rot, sobald sich das ändert. Ehrlich gesagt: Geprüft an
+Proben mit einem kleinen künstlichen Repository und einmal am echten Stand; ein Bau mit dem neuen Vermerk ist noch nicht
+am Mac angekommen.

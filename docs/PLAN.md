@@ -8188,5 +8188,9 @@ Bekannt und ausdrücklich nicht erledigt:
   Akzent, Anzeige) — gebaut, am Gerät unbestätigt (§162, C91)
 - [ ] Am Mac: Kugel öffnet das Feld, Frage an den Heim-PC, Karte anwenden; ohne Heim-PC der Satz; Insel mit «Wer
   rechnet?» und Claude-Schalter (owner)
-- [ ] S5 Abgleich gegen den aktuellen KosmoOrbit-Stand im Bau (`--abgleich`, Abbruch in `knoten_bau.py`); Befehlspalette ⌘K
-  klären
+- [x] S5 Abgleich gegen den aktuellen KosmoOrbit-Stand im Bau (`--abgleich`, Abbruch in `knoten_bau.py`, `--fester-stand`
+  im Stempel vermerkt); Befehlspalette ⌘K als Ausnahme (das Vis-Werkzeug meldet dort keine Befehle an); Abgleich gegen
+  R44: 0 Abweichungen, 45 Dateien auf eigenen Zweigen, kein Nachzug nötig — gebaut (§163, C92)
+- [ ] Bau am Mac bestätigen, mit Abgleich-Vermerk im Stempel (owner)
+- [ ] Einspielen der eigenen Zweige bei Int 1 (kopf, modell-knoten, ki, fehler); der Abgleich zählt sie dann als «gleich»
+  (integrator)

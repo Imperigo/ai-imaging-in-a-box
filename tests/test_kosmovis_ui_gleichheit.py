@@ -132,7 +132,8 @@ def test_eingesetzt_heisst_wortgleich_und_vom_wirt_gezeichnet():
 def test_ausnahmen_stehen_nicht_im_wirt():
     """Was Ausnahme ist, zeichnet der Wirt nicht — sonst wäre die Ausnahme eine Behauptung."""
     wirt = _wirt_text()
-    for komp in ("AnsichtsInfo", "InselOnboarding", "StarterGuide", "StartSequenz", "KosmoMausEbene", "CursorEbene"):
+    for komp in ("AnsichtsInfo", "InselOnboarding", "StarterGuide", "StartSequenz", "KosmoMausEbene", "CursorEbene",
+                 "CommandPalette"):
         assert not re.search(rf"<{komp}\b", wirt), komp
     kopf = (WIRT / "kopf.tsx").read_text(encoding="utf-8")
     # Ohne Rundgang kein «?», ohne .kosmo-Datei keine Handgriffe am Speichern-Kreis.
@@ -206,6 +207,34 @@ def test_kosmoorbit_zeigt_keinen_kopfteil_der_hier_fehlt():
 def test_s3_s4_sind_nicht_mehr_offen():
     offen = {t["teil"]: t["stufe"] for t in _ausnahmen()["kopfteile"] if t["stand"] == "offen"}
     assert "S3" not in offen.values() and "S4" not in offen.values(), offen
+
+
+def test_nach_s5_ist_kein_kopfteil_mehr_offen():
+    offen = [t["teil"] for t in _ausnahmen()["kopfteile"] if t["stand"] == "offen"]
+    assert not offen, offen
+
+
+def _meldet_vis_befehle_an(vis: Path) -> list[str]:
+    return sorted(str(p.relative_to(vis)) for p in vis.rglob("*.ts*")
+                  if re.search(r"\bregisterActions\s*\(", p.read_text(encoding="utf-8")))
+
+
+def test_befehlspalette_ist_ausnahme_weil_das_vis_werkzeug_keine_befehle_anmeldet():
+    """S5, ⌘K: Die Ausnahme steht nur, solange ihr Grund wahr ist — das Vis-Werkzeug meldet bei der
+    Befehlspalette nichts an. Tut es das in einem Nachzug, wird diese Probe rot, und die Palette
+    kommt wortgleich herüber."""
+    eintrag = next(t for t in _ausnahmen()["kopfteile"] if t["teil"] == "Befehlspalette (⌘K)")
+    assert eintrag["stand"] == "ausnahme"
+    vis = KOPIE / "apps" / "kosmo-orbit" / "src" / "modules" / "vis"
+    assert vis.is_dir()
+    assert _meldet_vis_befehle_an(vis) == []
+    assert "CommandPalette" not in _wirt_text()
+
+
+@pytest.mark.skipif(not os.environ.get("KOSMO_ORBIT"), reason="KosmoOrbit liegt nicht daneben (KOSMO_ORBIT)")
+def test_kosmoorbit_vis_werkzeug_meldet_keine_befehle_an():
+    vis = Path(os.environ["KOSMO_ORBIT"]) / "apps" / "kosmo-orbit" / "src" / "modules" / "vis"
+    assert _meldet_vis_befehle_an(vis) == [], "Das Vis-Werkzeug meldet drueben Befehle an — ⌘K uebernehmen"
 
 
 def test_jeder_abschnitt_der_einstellungen_ist_benannt():

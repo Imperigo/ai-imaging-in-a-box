@@ -14,11 +14,20 @@ Gebrauch::
 
     python tools/kosmovis_uebernahme.py <pfad-zu/kosmo-orbit> --commit <sha>
     python tools/kosmovis_uebernahme.py --pruefen      # stimmt jede Kopie noch?
+    python tools/kosmovis_uebernahme.py --abgleich <pfad-zu/kosmo-orbit> [--ref <git-ref>] [--holen]
 
 ``--pruefen`` endet mit 1, sobald eine wörtliche Kopie vom festgehaltenen Abdruck abweicht.
 Eine Änderung an einer Kopie ist erlaubt — aber dann gehört die Datei aus :data:`WOERTLICH`
 in die Liste ``geaendert`` von ``HERKUNFT.json``, mit Grund. *Eine stille Änderung an einer
 Kopie ist genau das, was die Rückkehr im Februar unmöglich macht.*
+
+``--abgleich`` (Plan UI-Gleichheit S5, 21.10.2026) fragt das Gegenteil: nicht «stimmt die Kopie
+mit ihrem Abdruck?», sondern «stimmt sie mit dem **aktuellen** KosmoOrbit?». Gelesen wird über
+``git`` (``ls-tree``/``show``), ohne Checkout: Vorgabe ist der Integrator-Zweig, zusätzlich zählen
+die eigenen Zweige ``claude/kosmovis-*`` — eine Datei, die dort geändert und bei Int 1 noch nicht
+eingespielt ist, ist kein Abweichen, sondern ein angemeldeter Weg. Endet mit 1, sobald eine Datei
+abweicht, dort fehlt oder hier fehlt. *Ein Wächter, der nur gegen den eigenen Abdruck prüft, sieht
+nie, dass das Original weitergegangen ist.*
 """
 
 from __future__ import annotations
@@ -28,6 +37,7 @@ import fnmatch
 import hashlib
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -475,12 +485,201 @@ def pruefe() -> list[str]:
     return befunde
 
 
+#: Der Stand, gegen den ``--abgleich`` ohne ``--ref`` prüft: der Zweig von KosmoOrbit Int 1.
+INTEGRATOR_REF = "origin/claude/kosmo-orbit-v1-build-pzxkbj"
+#: Die eigenen Zweige im KosmoOrbit-Repo (Owner-Entscheid 65): Was dort geändert ist und bei Int 1
+#: noch nicht, darf die Kopie schon tragen.
+EIGENE_REFS = "refs/remotes/origin/claude/kosmovis-*"
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
+                          text=True).stdout
+
+
+def _baum(repo: Path, ref: str, praefix: str) -> dict[str, str]:
+    """Pfad (relativ zu ``kosmo-orbit/``) → Blob-Kennung, für alle Dateien von ``ref``."""
+    roh = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "-z", "--full-tree", ref,
+                          "--", praefix or "."], check=True, capture_output=True).stdout
+    baum = {}
+    for zeile in roh.decode("utf-8").split("\0"):
+        if not zeile:
+            continue
+        kopf, pfad = zeile.split("\t", 1)
+        art, blob = kopf.split()[1:3]
+        if art == "blob" and pfad.startswith(praefix):
+            baum[pfad[len(praefix):]] = blob
+    return baum
+
+
+def _blob_kennung(datei: Path) -> str:
+    """Die Kennung, die git dem Inhalt gäbe — so vergleicht sich die Kopie mit ``ls-tree``."""
+    inhalt = datei.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(inhalt) + inhalt).hexdigest()
+
+
+def _ist_probe(rel: str) -> bool:
+    return "/test/" in f"/{rel}"
+
+
+def abgleich(quelle: Path, ref: str | None = None, eigene: bool = True,
+             ziel: Path | None = None) -> dict:
+    """Die wörtliche Kopie gegen einen KosmoOrbit-Stand aus git (Plan UI-Gleichheit S5).
+
+    Zurück kommt ein Bericht: ``abweichend`` (Inhalt anders, mit Grund), ``fehlt_dort`` (die
+    Kopie führt die Datei, der Stand nicht), ``fehlt_hier`` (ein Muster aus :data:`WOERTLICH`
+    oder eine Probe aus :data:`PROBEN` trifft dort eine Datei, die die Kopie nicht führt) — alle
+    drei lassen ``--abgleich`` mit 1 enden. Dazu, nur zur Kenntnis: ``eigen`` (auf einem eigenen
+    Zweig geändert, bei Int 1 noch nicht), ``vermerkt`` (unter ``geaendert`` mit Grund) und
+    ``neu_dort`` (seit dem Quell-Commit der Kopie neu, in einem Ordner, aus dem die Kopie
+    wörtlich führt, oder eine neue Probe, die das Vis-Werkzeug nennt)."""
+    ziel = ZIEL if ziel is None else Path(ziel)
+    herkunft = json.loads((ziel / "HERKUNFT.json").read_text(encoding="utf-8"))
+    quelle = Path(quelle).resolve()
+    repo = Path(_git(quelle, "rev-parse", "--show-toplevel").strip())
+    praefix = _git(quelle, "rev-parse", "--show-prefix").strip()
+    ref = ref or INTEGRATOR_REF
+    stand = _git(repo, "rev-parse", f"{ref}^{{commit}}").strip()
+    t_ref = _baum(repo, stand, praefix)
+
+    # EIGENE ZWEIGE: Als «eigen» gilt eine Datei nur, wenn ein Commit des Zweigs sie anfasst, der
+    # weder im geprüften Stand noch beim Integrator liegt. Sonst hiesse jede Integrator-Änderung,
+    # die ein Hilfszweig nur nachgezogen hat, beim Abgleich gegen einen älteren Stand «eigen».
+    nicht = [stand]
+    try:
+        nicht.append(_git(repo, "rev-parse", "--verify", "--quiet",
+                          f"{INTEGRATOR_REF}^{{commit}}").strip())
+    except subprocess.CalledProcessError:
+        pass
+    zweige = []                         # (Name, Baum des Zweigs, Baum der Gabelung, eigene Pfade)
+    if eigene:
+        for name in _git(repo, "for-each-ref", "--format=%(refname:short)", EIGENE_REFS).split():
+            try:
+                gabel = _git(repo, "merge-base", stand, name).strip()
+            except subprocess.CalledProcessError:
+                continue
+            angefasst = {z[len(praefix):] for z in _git(
+                repo, "log", "--format=", "--name-only", name, "--not", *nicht, "--",
+                praefix or ".").splitlines() if z.startswith(praefix) and z}
+            if angefasst:
+                zweige.append((name, _baum(repo, name, praefix), _baum(repo, gabel, praefix),
+                               angefasst))
+
+    woertlich = herkunft["woertlich"]
+    geaendert = herkunft.get("geaendert", {})
+    bericht = {"ref": ref, "commit": stand, "gleich": 0, "abweichend": [], "fehlt_dort": [],
+               "fehlt_hier": [], "eigen": [], "vermerkt": [], "neu_dort": []}
+    for rel in woertlich:
+        if rel in geaendert:
+            bericht["vermerkt"].append(rel)
+            continue
+        datei = ziel / rel
+        if not datei.is_file():
+            bericht["abweichend"].append((rel, "fehlt in der Kopie (s. --pruefen)"))
+            continue
+        hier, dort = _blob_kennung(datei), t_ref.get(rel)
+        if hier == dort:
+            bericht["gleich"] += 1
+            continue
+        eigen = beidseitig = None
+        for name, t_zweig, t_gabel, angefasst in zweige:
+            z, g = t_zweig.get(rel), t_gabel.get(rel)
+            if hier == z and rel in angefasst:    # der eigene Zweig hat genau das geändert
+                if dort == g:
+                    eigen = name
+                    break
+                beidseitig = beidseitig or name
+        if eigen:
+            bericht["eigen"].append((rel, eigen))
+        elif beidseitig:
+            bericht["abweichend"].append((rel, f"auf {beidseitig} und dort geändert"))
+        elif dort is None:
+            bericht["fehlt_dort"].append(rel)
+        else:
+            bericht["abweichend"].append((rel, "Inhalt anders"))
+
+    gefuehrt = {*woertlich, *herkunft.get("stellvertreter", {}), *geaendert}
+    eigen_muster = tuple(herkunft.get("eigen", {}))
+    for rel in sorted(t_ref):
+        if rel in gefuehrt or any(_passt(rel, m) for m in (*AUSGESCHLOSSEN, *eigen_muster)):
+            continue
+        if rel in PROBEN or any(_passt(rel, m) for m in WOERTLICH):
+            bericht["fehlt_hier"].append(rel)
+
+    # NEU DORT: nur, was seit dem Quell-Commit der Kopie dazukam — sonst stünde hier jede Datei,
+    # die bewusst nicht mitkommt (der Rest der KosmoOrbit-App liegt in denselben Ordnern).
+    seit = herkunft.get("quelle", {}).get("commit", "")
+    try:
+        t_seit = _baum(repo, seit, praefix) if seit else None
+    except subprocess.CalledProcessError:
+        t_seit = None
+    if t_seit is None:
+        bericht["neu_dort_ohne_bezug"] = True
+    else:
+        ordner = {rel.rsplit("/", 1)[0] for rel in woertlich if "/" in rel and not _ist_probe(rel)}
+        for rel in sorted(set(t_ref) - set(t_seit)):
+            if rel in gefuehrt or rel in bericht["fehlt_hier"]:
+                continue
+            if _ist_probe(rel):
+                text = _git(repo, "show", f"{stand}:{praefix}{rel}")
+                if "modules/vis" in text:
+                    bericht["neu_dort"].append((rel, "neue Probe, nennt modules/vis"))
+            elif "/" in rel and rel.rsplit("/", 1)[0] in ordner:
+                bericht["neu_dort"].append((rel, "neu in einem Ordner der Kopie"))
+    return bericht
+
+
+def abgleich_befunde(bericht: dict) -> int:
+    """Wie viele Befunde den Abgleich rot machen."""
+    return len(bericht["abweichend"]) + len(bericht["fehlt_dort"]) + len(bericht["fehlt_hier"])
+
+
+def holen(quelle: Path) -> None:
+    """Die Zweige, gegen die abgeglichen wird, frisch holen — ein Klon, der nur den
+    Integrator-Zweig holt (``remote.origin.fetch`` eng), hätte sonst alte eigene Zweige."""
+    _git(Path(quelle), "fetch", "--quiet", "origin",
+         f"+refs/heads/{INTEGRATOR_REF.removeprefix('origin/')}:refs/remotes/{INTEGRATOR_REF}",
+         "+refs/heads/claude/kosmovis-*:refs/remotes/origin/claude/kosmovis-*")
+
+
+def drucke_abgleich(bericht: dict) -> None:
+    print(f"Abgleich gegen {bericht['ref']} ({bericht['commit'][:9]}): "
+          f"{bericht['gleich']} gleich, {len(bericht['eigen'])} auf eigenem Zweig, "
+          f"{len(bericht['vermerkt'])} vermerkt geändert.")
+    for rel, grund in bericht["abweichend"]:
+        print(f"abweichend: {rel} — {grund}")
+    for rel in bericht["fehlt_dort"]:
+        print(f"fehlt dort: {rel}")
+    for rel in bericht["fehlt_hier"]:
+        print(f"fehlt hier: {rel}")
+    for rel, zweig in bericht["eigen"]:
+        print(f"eigener Zweig: {rel} — {zweig}")
+    for rel, grund in bericht["neu_dort"]:
+        print(f"neu dort: {rel} — {grund}")
+    if bericht.get("neu_dort_ohne_bezug"):
+        print("neu dort: nicht bestimmt — der Quell-Commit der Kopie fehlt in diesem Klon.")
+    n = abgleich_befunde(bericht)
+    print("Die Kopie stimmt mit dem Stand." if not n else f"{n} Abweichungen gegen den Stand.")
+
+
 def main(argv=None) -> int:
     teil = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     teil.add_argument("quelle", nargs="?", help="Pfad zu kosmo-orbit/ im Original")
     teil.add_argument("--commit", help="Commit des Originals, aus dem kopiert wird")
     teil.add_argument("--pruefen", action="store_true")
+    teil.add_argument("--abgleich", metavar="KOSMO_ORBIT",
+                      help="die Kopie gegen einen KosmoOrbit-Stand aus git vergleichen")
+    teil.add_argument("--ref", help=f"Stand für --abgleich (Vorgabe {INTEGRATOR_REF})")
+    teil.add_argument("--ohne-eigene", action="store_true",
+                      help="eigene Zweige claude/kosmovis-* beim Abgleich nicht gelten lassen")
+    teil.add_argument("--holen", action="store_true", help="vor dem Abgleich git fetch")
     a = teil.parse_args(argv)
+    if a.abgleich:
+        if a.holen:
+            holen(Path(a.abgleich))
+        bericht = abgleich(Path(a.abgleich), a.ref, eigene=not a.ohne_eigene)
+        drucke_abgleich(bericht)
+        return 1 if abgleich_befunde(bericht) else 0
     if a.pruefen:
         befunde = pruefe()
         for b in befunde:

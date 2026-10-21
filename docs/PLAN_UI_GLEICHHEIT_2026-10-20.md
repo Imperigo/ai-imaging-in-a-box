@@ -1,6 +1,7 @@
 # Visbox-Ansichten = KosmoVis — Abgleich und Bauplan (Entscheid 115, 20.10.2026)
 
-**Codestand:** S1 bis S4 gebaut, am Gerät unbestätigt (20.10.2026; S1/S2 Protokoll 74 §159, C88; S3/S4 §162, C91); Kopie
+**Codestand:** S1 bis S5 gebaut, am Gerät unbestätigt (S1/S2 Protokoll 74 §159, C88; S3/S4 §162, C91; S5 §163, C92,
+21.10.2026: `--abgleich` und Abbruch im Bau, ⌘K Ausnahme); Kopie
 aus dem Hilfszweig `claude/kosmovis-visbox-stand` `6eb4e8d33` mit R44 und `claude/kosmovis-kopf` (`ae470609b`) samt den Nahtstellen von S3/S4
 (`kosmovis/HERKUNFT.json`). Bis dahin: Plan auf Visbox `0983b15`, Kopie `a1d80318`, dann `76e285cca`.
 **Grundlage:** Entscheid 115 (Owner, stehend): *«ansichten ui und ux sollte zu kosmovis identisch sein immer».*
@@ -63,8 +64,10 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 
 ## 4 · Wächter
 
-1. `--abgleich <kosmo-orbit>`: vergleicht jede wortgleiche Datei mit dem **aktuellen** KosmoOrbit-Stand.
-2. `tools/knoten_bau.py` prüft zuerst und bricht bei Abweichung ab.
+1. `--abgleich <kosmo-orbit>`: vergleicht jede wortgleiche Datei mit dem **aktuellen** KosmoOrbit-Stand (gebaut S5:
+   über git ohne Checkout, eigene Zweige `claude/kosmovis-*` als angemeldeter Weg, `--holen`, `--ref`).
+2. `tools/knoten_bau.py` prüft zuerst und bricht bei Abweichung ab (gebaut S5: `pruefe()` immer, Abgleich mit
+   `KOSMO_ORBIT`, `--fester-stand` im Stempel vermerkt).
 3. Liste um Kopf- und Inseldateien erweitert.
 4. `kosmovis/UI_AUSNAHMEN.json`: Teil → Grund → Entscheid; Blatt und Proben lesen daraus.
 5. Probe `test_kosmovis_ui_gleichheit.py`: jeder Kopfteil aus KosmoOrbit ist im Wirt eingesetzt **oder** steht in
@@ -80,7 +83,7 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 | S2 ✔ | Claude-Teile, Erzählzeile, Modus; Brücke `visboxWirt`; KI-Leiste in der Knotenansicht weg (gebaut, §159) | 1,5 |
 | S3 ✔ | Kugel und Gesprächsfeld mit dem Visbox-Assistenten; Assistent-Leiste ausmustern (gebaut, §162) | 1,5–2 |
 | S4 ✔ | Einstellungs-Insel (gebaut, §162) | 1 |
-| S5 | Abgleich und Abbruch im Bau; Nachzug KosmoOrbit; Bau am Mac bestätigen | 0,5 |
+| S5 ✔ | Abgleich und Abbruch im Bau; Nachzug KosmoOrbit (nicht nötig, R44 schon drin); ⌘K als Ausnahme (gebaut, §163); Bau am Mac bestätigen offen | 0,5 |
 
 ## 6 · Fragen an den Owner (über die Zentrale, Empfehlung zuerst)
 
