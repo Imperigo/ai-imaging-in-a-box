@@ -1986,6 +1986,16 @@ gesicherter Graph beim Öffnen entzerrt wird. Die Marke «Vorschau» steht unten
 darüber, damit nichts verdeckt ist. Die grosse Ansicht mit dem Umschalter bleibt. Geprüft ist es mit Proben und in einem
 Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
 
+**Eine verlorene Klammer, und eine Probe dagegen (21.10.2026).** Am Mac lag die Bedienung der Knotenansicht links unten
+ungestaltet übereinander: die Werkzeugknöpfe als Spalte, ein Wort doppelt, die Kugel des Assistenten als grosses Feld;
+Claudes Vorschläge waren unter den Fensterrand gerutscht. Die Ursache war eine einzige fehlende schliessende Klammer in
+einer Stildatei, entstanden, als zwei Arbeitsstände zusammengeführt wurden. Weil beim Bau alle Stildateien zu einer
+werden, galt danach fast die Hälfte der Gestaltung nirgends mehr — und weder der Bau noch die übrigen Proben merkten es,
+denn für sie ist das gültig. Seither gibt es eine Stilprobe: Sie prüft, dass jede Stildatei geschlossen ist, und öffnet
+den fertigen Bau in einem Browser ohne Fenster, um nachzumessen, ob die Inseln am Rand sitzen, die Kugel klein ist und
+Claudes Karte und das Gesprächsfeld im Fenster stehen. Sie läuft bei jedem Hochladen mit. Geprüft ist es mit dem Bau vor
+und nach der Klammer (vorher 14 Befunde, danach keiner); am Gerät ist es noch nicht gesehen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der
@@ -2116,3 +2126,20 @@ sind noch gezeichnete Farbverläufe, bis der Heim-PC die verkleinerten Bilder li
 der Render-Knoten vorerst die erste, ein Bild je Stimmung gibt es über den Varianten-Knoten; Kameras im 3D-Fenster ziehen
 geht noch nicht. Geprüft an Proben im Browser des Prüfrechners; was der Heim-PC aus diesen Bestellungen rechnet, zeigt
 die Messung dort.
+
+**Der Varianten-Knoten zeigt seine Bilder (21.10.2026, Blatt 36).** Bisher sah man die Bilder einer Varianten-Bestellung
+erst im Bildvergleich. Jetzt trägt der Varianten-Knoten selbst eine Bildzeile: ein Daumenbild, daneben Stimmung und
+Standpunkt, «2 von 6» und zwei Pfeile zum Blättern. Zwei Bilder nebeneinander hätten in der schmalen Karte die
+Mindestgrösse von 96 Bildpunkten unterschritten, und ein Streifen zum Wischen hätte mit dem Rad gestritten, das die
+Knotenansicht zoomt. Die Zeile ist in jedem Zustand gleich hoch — noch nichts bestellt, wartet, rechnet, fehlgeschlagen
+(der Grund steht in der Kurzhilfe) oder fertig —, damit der Knoten nicht springt. Gezeigt wird nur das KI-Bild; das
+Grundbild mit Licht gilt für alle Varianten gleich und steht am Render-Knoten. Ein «Vorschau»-Bild trägt seine Marke
+wie am Render-Knoten. Ein Klick zeigt das Bild gross; dort blättert man und kann eine Variante **wählen** — ein Schritt,
+den «Rückgängig» zurücknimmt, und den Claude und der Assistent im Stand des Knotens lesen. Dabei fielen drei Fehler auf,
+die mitbehoben sind: Im Stilblatt fehlte seit dem Vortag eine Klammer, wodurch ein ganzer Teil des Aussehens still
+ausfiel (unter anderem die Marke «Vorschau» und die Zeile «Grundlage»); die grosse Ansicht des Rasters im Bildvergleich
+lag beim Zoomen ausserhalb des Fensters; und die Höhe des Varianten-Knotens war 26 Bildpunkte zu knapp, die Knöpfe
+lagen halb unter dem Rand. Die Achse «Stimmungen» rollt jetzt, statt bei acht Stimmungen die letzten abzuschneiden.
+Ehrlich gesagt: Geprüft an Proben und im Browser des Prüfrechners mit einer nachgestellten Brücke; am Mac und mit echten
+Bildern des Heim-PC noch nicht gesehen. Offen ist, wohin eine gewählte Variante weitergeht (aufs Blatt, in den
+Bildvergleich) — das ist ein eigener Entscheid.

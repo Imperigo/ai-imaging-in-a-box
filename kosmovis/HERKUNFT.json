@@ -221,6 +221,7 @@
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad.test.tsx": "d88199e373e23b7c3896bc2900dbc4caaff590de3edfdaa885434b6cd7eaa624",
     "apps/kosmo-orbit/test/kv-startgraph.test.tsx": "abfaf4f5360cb88743b1b9dc34f04a41f1efceb8485840f8b65c139d65331191",
     "apps/kosmo-orbit/test/kv-urteil-echt.test.tsx": "fdc41e8dc712c879ec63d59c22ce847e9b54b79d34c0f5eb617cc00a4a537b5d",
+    "apps/kosmo-orbit/test/kv-varianten-daumen.test.tsx": "8721dd5ff3d37689720be48830c8029f73b8f16d7a45f23d92b336ddbcaadef6",
     "apps/kosmo-orbit/test/kv-vergleich-schmal.test.tsx": "52d5708230d7180e558fa1e9b4b0d722ff095dd0f79ae70ab855ad94ba0571e8",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts": "f1c79c2fd5aab7e1f74d1d0eb05168763d40c1370196b9cf116807dfeb52f2d6",
     "apps/kosmo-orbit/test/n3-status-und-nullprobe.test.ts": "d796c757d650d9b3d8d2c89505df2600d92513dd827aea571c69ad45a7709b5a",

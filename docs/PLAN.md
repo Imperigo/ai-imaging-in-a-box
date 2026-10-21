@@ -8100,7 +8100,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Heim-PC nimmt die Variante ohne Modell an (§150, C76)
   - [ ] Am Mac prüfen: Fokus, Zoomen, Variante gegen den umgebauten Heim-PC (owner)
   - [ ] Owner-Entscheid: Felder im Knoten eckiger (dritte Rundung) — oder so lassen
-  - [ ] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch)
+  - [x] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch) *(21.10.2026: Blatt 36 gezeichnet, nach Empfehlung A–C gebaut — ein Daumen mit Blättern, gross, wählen; KO-Zweig `claude/kosmovis-varianten-daumen`, Kopie nachgezogen; am Mac unbestätigt; §189, C114)*
+    - [ ] Wohin geht eine gewählte Variante (Blatt, Bildvergleich)? Eigener Entscheid (owner)
+    - [ ] «Alle freigeben» ragt neben «N Bilder bestellen» über den Kartenrand (ui, schon vorher so)
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung
 - [ ] Auto-Kamera: Nr. 60, 65, 67, 82, 68
 - [ ] Bedienung beim Rendern: Nr. 62, 71, 63, 70, 80, 76, 72, 58
@@ -8245,7 +8247,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Vorschau «weiss» mit white_studio_06 (local liefert sie mit dem nächsten Messauftrag; bis dahin Verlauf)
   - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
-  - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
+  - [x] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen) *(21.10.2026: rollt in derselben Höhe, das Rad darin zoomt die Leinwand nicht)*
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
   - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
@@ -8279,11 +8281,15 @@ Bekannt und ausdrücklich nicht erledigt:
   R44: 0 Abweichungen, 45 Dateien auf eigenen Zweigen, kein Nachzug nötig — gebaut (§163, C92)
 - [x] Nachzug R45 (`1ba59a62c`): Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich, Inspektor, Bildkachel und
   Blatt-Knoten in der Kopie; Hilfszweig, kopf und ki gemergt; Abgleich 0 Abweichungen — gebaut (§165, C94)
+- [x] Insel-Oberfläche ohne Stil (Befund Owner 0.3.15–0.3.17): Ursache verlorene CSS-Klammer (`166fbbe98`), behoben
+  `bc0a43042`; Stilprobe am Bau (CSS geschlossen, Chrome misst Inseln, Kugel, Claude-Karte, Gesprächsfeld), Pflicht im CI
+  — gebaut (§188, C113)
+- [ ] `bc0a43042` mit knoten-neu, nebeneinander, vertrag-werkzeuge zusammen einspielen (integrator)
 - [ ] Bau am Mac bestätigen, mit Abgleich-Vermerk im Stempel (owner)
 - [ ] Einspielen der eigenen Zweige bei Int 1 (kopf, modell-knoten, ki, fehler); der Abgleich zählt sie dann als «gleich»
   (integrator)
 
-## Einbau-Stand gegen die Antworten nachgeführt (Strang Buch, 21.10.2026 — Protokoll 74 §188)
+## Einbau-Stand gegen die Antworten nachgeführt (Strang Buch, 21.10.2026 — Protokoll 74 §190)
 
 > **Entschieden:** Neun überholte local-Aufträge zurückgezogen (keine nötige Messung gestrichen), 204 zugestellt, Ränge lückenlos.
 > **Gemessen:** `tools/einbau.py` vorher/nachher — Rückstand 14 → 6 (local 13 → 5 mit dem neuen 310, Deckel 8), «Antwort da» 43 → 32, ohne Spur 54 → 0.
