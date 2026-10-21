@@ -316,6 +316,9 @@ PROBEN = (
     # S3/S4 (20.10.2026): die Nahtstellen fuer den Namen und die Einstellungs-Teile — je der
     # Visbox-Fall und der Gegenbeleg «ohne Wirt wie bisher».
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx",
+    # Entscheid 117a (W-4, 21.10.2026): Grundbild neben dem KI-Bild — Regeln, Poll, Knoten und grosse Ansicht.
+    # (`kv-nebeneinander` mit der Bestellung bleibt drueben: es baut Waende mit `design.*`.)
+    "apps/kosmo-orbit/test/kv-nebeneinander-knoten.test.tsx",
     # R45 (Entscheid 104a, 21.10.2026): der Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich,
     # Inspektor, Bildkachel und Blatt-Knoten — nur Vis-Teile, darum hier gruen.
     "apps/kosmo-orbit/test/guete-marke-kuratier.test.tsx",

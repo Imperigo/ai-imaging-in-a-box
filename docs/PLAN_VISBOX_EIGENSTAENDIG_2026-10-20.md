@@ -156,7 +156,7 @@ neue von dort aber erst mit einem neuen Holen — das endet mit Schritt 5.
 
 ## 11 · Schritt 4: das iPad holt die Mappe vom Mac (Entscheide 103a, 118)
 
-**Gebaut am 21.10.2026 (Protokoll 74 §177, Einbau C105)** — mit Entscheid 118 (immer über den Mac, zuerst
+**Gebaut am 21.10.2026 (Protokoll 74 §178, Einbau C106)** — mit Entscheid 118 (immer über den Mac, zuerst
 verschlüsselt): TLS mit dem Zertifikat des Mac, Koppelschein Fassung 2 mit Fingerabdruck, Mappe/Bild/Skizze am Mac wie
 in der Tabelle unten. **Abweichend von der Vorbereitung:** `rechne-skizze` geht mit Mappe am Mac **nicht** als Auftrag
 an den Heim-PC, sondern sagt «gerechnet wird in der Knotenansicht» (Entscheid 94; keine Heim-PC-Änderung); die
