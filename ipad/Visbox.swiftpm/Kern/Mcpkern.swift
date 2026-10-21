@@ -303,7 +303,7 @@ public actor Mcpkern {
         name: statusName,
         beschreibung: "Zeigt, ob \(Marke.name) bereit ist, welche Mappe offen ist, wie viele "
             + "Vorschläge in der Assistent-Leiste warten und welcher Modus gilt (Karte, Coop, "
-            + "Voll). Zuerst aufrufen.",
+            + "Voll) und welche Fassung läuft. Zuerst aufrufen.",
         art: .lesen)
 
     /// `visbox_vorschlag_status` — nur nach «wartet noch».
@@ -544,6 +544,12 @@ public actor Mcpkern {
         return "Wartet noch — \(Marke.name) hat den Aufruf \(kennung) noch nicht beantwortet." + schluss
     }
 
+    /// Die Zeile mit der Fassung in `visbox_status`, z. B. «Fassung: Visbox 0.3.21.».
+    public static func fassungsSatz(_ fassung: String) -> String {
+        let nummer = fassung.trimmingCharacters(in: .whitespacesAndNewlines)
+        return "Fassung: \(Marke.name) \(nummer.isEmpty ? "unbekannt" : nummer)."
+    }
+
     private func status() async -> Mcpergebnis {
         let lage = await traeger.lage()
         let zahl = await liste().count
@@ -556,6 +562,10 @@ public actor Mcpkern {
             zeilen.append("\(Marke.name) läuft, die Knotenansicht ist noch nicht bereit. "
                           + "Werkzeuge: \(zahl). Offene Vorschläge: \(vorschlaege.count).")
         }
+        // DIE FASSUNG (Demolauf-Sitzung 21.10.2026): Claude sah bis dahin nur in `serverInfo`, welche
+        // App antwortet, und das liest im Gespraech niemand. Dieselbe Nummer wie dort — die Mac-App
+        // reicht sie aus der Info.plist (`CFBundleShortVersionString`, `Claudestdio`/`Claudeanschluss`).
+        zeilen.append(Mcpkern.fassungsSatz(fassung))
         zeilen.append(Mcpfreigabe.satz(lage.modus))
         let karten = vorschlaege.compactMap { v in v.karte.map { "\(v.kennung) «\($0)»" } }
         if !karten.isEmpty {

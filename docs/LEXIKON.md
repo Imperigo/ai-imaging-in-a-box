@@ -2478,6 +2478,17 @@ tatsächlich verarbeiten.
 gepackte Einzeldatei-Variante. *In diesem Projekt das Zwischenformat zwischen IFC und
 Blender.*
 
+**Instanzen (in einer glb, `EXT_mesh_gpu_instancing`)** — Ein Bauteil, das oft gleich vorkommt
+(etwa ein Stein einer Mauer), steht nur **einmal** als Form in der Datei; dazu kommt eine Liste,
+wo es überall liegt, wie es gedreht und wie gross es ist. Die Datei bleibt so klein, und die
+Grafikkarte zeichnet alle Lagen auf einmal. *Im Projekt seit dem 21.10.2026:* Blender 5.2 und
+die 3D-Vorschau lesen solche Dateien; die Hüllbox des Heim-PC (`glbbox`) zählt seither alle Lagen
+mit, statt nur den einen Stein zu sehen.
+
+**Fassungszeile (in `visbox_status`)** — Die Zeile mit der Nummer der laufenden Mac-App (etwa 0.3.21), wie sie in
+ihrer Info-Datei steht. Seit dem 21.10.2026 nennt die Statusantwort an Claude sie in einer
+eigenen Zeile, damit im Gespräch klar ist, welche App antwortet.
+
 **glb-Block (Chunk)** — Wie eine glb-Datei innen aufgebaut ist: zuerst ein **Kopf** von
 zwölf Byte — die Kennung `glTF`, die Fassungsnummer und die Gesamtlänge —, danach eine
 Folge von **Blöcken**. Jeder Block nennt zuerst seine Länge und seine Art und erst dann

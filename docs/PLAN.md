@@ -8416,3 +8416,8 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Geometrie-Treue als Pflicht-Eingang des Bildmodells (zweiter Teil L4-2) — noch ohne Strang
 - [x] Fehler R48: «Variante erzeugen» ohne Modell über die Brücke rechnet (C122, §204) — gebaut, am Gerät unbestätigt
 - [ ] auf-20261021-315 (local): Kette Grundlage → Variante Vorschau in der Test-App nachfahren
+- [x] KosmoDraw F3 Instanzen: Blender 5.2 ja, 3D-Vorschau ja, Hüllbox des Kerns nachgezogen (C123, §205)
+- [x] KosmoDraw Höhenscheiben: kein Weg nutzt den nicht-amtlichen Kosmo-Blick für Grundlagen (§205)
+- [x] Fassung in `visbox_status` (C123)
+- [x] Owner-Entscheide 121–125 eingetragen
+- [ ] Importzeit Blender bei 19'610 Instanzen messen (local, mit Probedatei)
