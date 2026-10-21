@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import Security
 import VisboxKern
 
 /// Der Mac als Vermittler für das iPad (Entscheide 42/47, Protokoll §8b): **er bietet sich
@@ -27,8 +28,15 @@ import VisboxKern
 /// ist, **anbieten** tut er sich erst nach `starte()` — und das ruft `Vermittlungsanschluss`
 /// nur, wenn «iPad über diesen Mac anbieten» an ist. Bis dahin sagt die Zeile «aus».
 ///
-/// *Gebaut, am Gerät unbestätigt (01.10.2026)* — hier nicht übersetzt (Linux kennt
-/// `Network` nicht).
+/// **Seit Entscheid 118 (21.10.2026) verschlüsselt, und der Weg des iPad überhaupt:** Der Mac
+/// spricht mit dem iPad nur noch TLS, mit seinem eigenen Zertifikat (`Macidentitaet`, im
+/// Schlüsselbund); das iPad heftet dessen Fingerabdruck beim Koppeln an. **Ohne Zertifikat
+/// bietet er sich nicht an** — kein Rückfall auf unverschlüsselt; die Zeile sagt warum. Ist am
+/// Mac eine Mappe offen, beantwortet er Mappe, Bilder und Skizzen des iPad selbst
+/// (`Ipadmappenquelle`); alles andere reicht er weiter wie bisher.
+///
+/// *Gebaut, am Gerät unbestätigt (01.10.2026; TLS und Mappe am Mac 21.10.2026)* — hier nicht
+/// übersetzt (Linux kennt `Network` nicht).
 @MainActor
 final class Vermittlungsdienst: ObservableObject {
 
@@ -40,9 +48,17 @@ final class Vermittlungsdienst: ObservableObject {
     @Published private(set) var koppelgrund: String?
     /// Ein Hinweis zum Zugang des iPad (der Schlüsselbund nahm ihn nicht) — `nil`: alles gut.
     @Published private(set) var hinweis: String?
+    /// Der Fingerabdruck des Zertifikats, mit dem der Mac dem iPad antwortet — für den
+    /// Koppelschein und das Zeichen am Bildschirm. `nil`: keines, dann bietet er sich nicht an.
+    @Published private(set) var abdruck: String?
+    /// Wo das iPad den Mac erreicht (`https://<ip>:<anschluss>`) — sobald er sich anbietet.
+    @Published private(set) var adresseFuerIpad: URL?
 
     private let heim: Heimstrecke
     private var stand: Vermittlerstand
+    /// Die Identität für TLS — `nil`: kein Zertifikat, kein Anbieten.
+    private let identitaet: SecIdentity?
+    private let identitaetsfehler: String?
     private let schlange = DispatchQueue(label: "vermittlung.leitungen")
     private let register = Leitungsregister()
     private var hoerer: NWListener?
@@ -62,7 +78,19 @@ final class Vermittlungsdienst: ObservableObject {
         heim = Heimstrecke(basis: heimBasis,
                            anmeldung: Anmeldung(benutzer: benutzer, kennwort: kennwort))
         let (zugang, satz) = Vermittlerschluessel.liesOderErzeuge()
-        stand = Vermittlerstand(zugang: zugang)
+        // DAS ZERTIFIKAT DES MAC (Entscheid 118) — oder der Satz, warum keines.
+        switch Macidentitaet.liesOderErzeuge() {
+        case .gut(let geladen):
+            identitaet = geladen.identitaet
+            identitaetsfehler = nil
+            abdruck = geladen.abdruck
+        case .fehler(let grund):
+            identitaet = nil
+            identitaetsfehler = "Ohne Zertifikat bietet sich der Mac dem iPad nicht an — "
+                + "unverschlüsselt geht nichts mehr. " + grund
+            abdruck = nil
+        }
+        stand = Vermittlerstand(zugang: zugang, abdruck: abdruck)
         // KANN DER MAC SICH DEN ZUGANG NICHT MERKEN, geht es trotzdem — nur muss das iPad
         // nach jedem Neustart neu koppeln. Das steht dann im Hinweis, statt still zu fehlen.
         hinweis = satz
@@ -83,6 +111,12 @@ final class Vermittlungsdienst: ObservableObject {
         fehler = nil
         bereit = false
         aufFestemAnschluss = true
+        // KEIN RUECKFALL AUF UNVERSCHLUESSELT (Entscheid 118): ohne Zertifikat kein Anbieten.
+        guard identitaet != nil else {
+            fehler = identitaetsfehler
+            aktualisiere()
+            return
+        }
         if mitZahl, !Vermittlergedaechtnis.gekoppelt {
             stand.oeffneKopplung(jetzt: Vermittlungsuhr.jetzt)
         }
@@ -134,6 +168,19 @@ final class Vermittlungsdienst: ObservableObject {
         aktualisiere()
     }
 
+    /// Das Koppelfenster ist zu: die Zahl gilt nicht mehr (sie liefe sonst noch bis zu ihrer
+    /// Frist).
+    func schliesseZahl() {
+        stand.schliesseKopplung()
+        aktualisiere()
+    }
+
+    /// Für das Koppelfenster (Entscheid 118): eine neue Zahl — und sie zurück, solange sie gilt.
+    func zahlFuersKoppelfenster() -> String? {
+        neueZahl()
+        return stand.koppelzahl(jetzt: Vermittlungsuhr.jetzt)
+    }
+
     /// **Das iPad vergessen:** neue Zugangsdaten. Ein gekoppeltes iPad bekommt danach die
     /// Tür und muss neu koppeln; am Heim-PC ändert sich nichts.
     func vergissIPad() {
@@ -172,7 +219,21 @@ final class Vermittlungsdienst: ObservableObject {
         case .antworte(let antwort):
             return antwort
         case .weiterreichen(let weiterreichung):
+            // MIT OFFENER MAPPE AM MAC (Schritt 4): Mappe, Bilder und Skizzen beantwortet der
+            // Mac selbst. Hierher kommt nur, was die Tuer durchliess und auf der Positivliste
+            // steht. Was der Kern nicht nennt, geht weiter wie bisher.
+            let ziel = Ipadmappenwege.ziel(anfrage.kopf)
+            if let ordner = Mappenablage.gemeinsam.offenerOrdner, let ziel,
+               let antwort = Ipadmappenquelle.antwort(ziel, anfrage, ordner: ordner) {
+                return antwort
+            }
             let ergebnis = await heim.reiche(weiterreichung)
+            // DER LAUFSTAND OHNE HEIM-PC: Mit Mappe am Mac geht das iPad weiter — nur gerechnet
+            // wird nicht. Es hoert das, statt «Mac weg».
+            if case .nichtErreicht = ergebnis, ziel == .fortschritt,
+               Mappenablage.gemeinsam.offenerOrdner != nil {
+                return .json(Ipadmappenwege.fortschrittOhneHeim)
+            }
             return Vermittlungsregel.antwort(auf: ergebnis)
         }
     }
@@ -194,10 +255,15 @@ final class Vermittlungsdienst: ObservableObject {
             ? (NWEndpoint.Port(rawValue: UInt16(Suche.vorgabeAnschluss)) ?? .any)
             : .any
         let name = Vermittlerangebot.dienstname(rechner: Host.current().localizedName ?? "diesem Mac")
+        guard let identitaet else {
+            fehler = identitaetsfehler
+            aktualisiere()
+            return
+        }
         do {
             hoerer = try Vermittlungsdienst.baueHoerer(
-                anschluss: anschluss, name: name, schlange: schlange, register: register,
-                dienst: self,
+                anschluss: anschluss, name: name, identitaet: identitaet, schlange: schlange,
+                register: register, dienst: self,
                 melde: { [weak self] zustand in
                     Task { @MainActor in self?.hoererZustand(zustand) }
                 })
@@ -212,6 +278,11 @@ final class Vermittlungsdienst: ObservableObject {
         case .bereit:
             bereit = true
             fehler = nil
+            // DIE ADRESSE FUER DEN KOPPELSCHEIN: die im WLAN, mit dem Anschluss, auf dem er hoert.
+            if let port = hoerer?.port?.rawValue,
+               let ip = Macanbindung.adresseFuerIpad(schnittstellen: Vermittlungsdienst.schnittstellen()) {
+                adresseFuerIpad = Macanbindung.adresse(ip: ip, anschluss: Int(port))
+            }
         case .wartet(let satz):
             bereit = false
             fehler = satz
@@ -240,11 +311,20 @@ final class Vermittlungsdienst: ObservableObject {
     /// Rückrufe, die `Network` auf `schlange` ruft, nicht an den Hauptfaden gebunden sind
     /// (in Swift 6 prüft die Laufzeit das und hielte das Programm an).
     nonisolated private static func baueHoerer(
-        anschluss: NWEndpoint.Port, name: String, schlange: DispatchQueue,
+        anschluss: NWEndpoint.Port, name: String, identitaet: SecIdentity, schlange: DispatchQueue,
         register: Leitungsregister, dienst: Vermittlungsdienst,
         melde: @escaping @Sendable (Hoererzustand) -> Void
     ) throws -> NWListener {
-        let parameter = NWParameters.tcp
+        // TLS MIT DEM ZERTIFIKAT DES MAC (Entscheid 118), mindestens 1.2 — die Regel des Heim-PC
+        // (`heimnetz.tls_kontext`). Kein `NWParameters.tcp` mehr: unverschluesselt hoert der
+        // Mac dem iPad nicht mehr zu.
+        let tls = NWProtocolTLS.Options()
+        guard let eigene = sec_identity_create(identitaet) else {
+            throw NWError.tls(errSecParam)
+        }
+        sec_protocol_options_set_local_identity(tls.securityProtocolOptions, eigene)
+        sec_protocol_options_set_min_tls_protocol_version(tls.securityProtocolOptions, .TLSv12)
+        let parameter = NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
         // KEIN `allowLocalEndpointReuse`: Der Anschluss soll entweder ganz diesem Mac-Dienst
         // gehoeren oder belegt sein — nicht mit einem anderen Prozess geteilt, der dann einen
         // Teil der Anfragen des iPad bekaeme. Belegt heisst: ein freier (`hoererZustand`).
@@ -274,6 +354,27 @@ final class Vermittlungsdienst: ObservableObject {
 }
 
 extension Vermittlungsdienst {
+    /// Die IPv4-Adressen dieses Mac mit dem Namen ihrer Schnittstelle (`getifaddrs`) — welche
+    /// davon das iPad bekommt, entscheidet der Kern (`Macanbindung.adresseFuerIpad`).
+    nonisolated static func schnittstellen() -> [(name: String, adresse: String)] {
+        var aus: [(name: String, adresse: String)] = []
+        var kopf: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&kopf) == 0, let erster = kopf else { return aus }
+        defer { freeifaddrs(kopf) }
+        var zeiger: UnsafeMutablePointer<ifaddrs>? = erster
+        while let z = zeiger {
+            let eintrag = z.pointee
+            zeiger = eintrag.ifa_next
+            guard let adresse = eintrag.ifa_addr, adresse.pointee.sa_family == UInt8(AF_INET),
+                  (eintrag.ifa_flags & UInt32(IFF_UP)) != 0 else { continue }
+            var text = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            guard getnameinfo(adresse, socklen_t(adresse.pointee.sa_len), &text, socklen_t(text.count),
+                              nil, 0, NI_NUMERICHOST) == 0 else { continue }
+            aus.append((name: String(cString: eintrag.ifa_name), adresse: String(cString: text)))
+        }
+        return aus
+    }
+
     /// Die Adresse der Gegenstelle, **ohne Anschluss** — jede neue Verbindung hat einen
     /// anderen, und gezählt wird je Gerät. Was keine Adresse hat, zählt unter einem Namen.
     nonisolated static func gegenstelle(_ verbindung: NWConnection) -> String {

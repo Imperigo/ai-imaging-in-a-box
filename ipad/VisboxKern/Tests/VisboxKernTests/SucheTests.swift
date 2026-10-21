@@ -165,7 +165,9 @@ final class SucheTests: XCTestCase {
                                            eintraege: [:], grund: satz)
         XCTAssertEqual(Suche.fundtext(gescheitert), "nicht erreicht")
         XCTAssertTrue(satz.contains("Lokales Netzwerk"), satz)
-        XCTAssertTrue(satz.contains("Tailscale"), satz)
+        // SEIT ENTSCHEID 118 schickt der Satz zum Mac und zum QR-Code, nicht mehr zu Tailscale.
+        XCTAssertTrue(satz.contains("QR-Code"), satz)
+        XCTAssertFalse(satz.contains("Tailscale"), satz)
         XCTAssertTrue(satz.hasPrefix("Der Mac"), satz)
         XCTAssertEqual(Suche.aufloesFrist, 5)
         XCTAssertEqual(Suche.fundtext(dienst("Heim")), "192.0.2.10:8731")

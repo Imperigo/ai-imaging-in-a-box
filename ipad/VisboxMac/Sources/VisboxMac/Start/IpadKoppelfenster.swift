@@ -4,7 +4,13 @@ import SwiftUI
 import VisboxKern
 
 /// Das Koppelfenster «iPad koppeln» (Entscheide 99/99a/99b, Blatt 27) — **drei Wege, eine
-/// Zahl, zwei Minuten**:
+/// Zahl, zwei Minuten**.
+///
+/// **Seit Entscheid 118 (21.10.2026, Blatt «iPad über den Mac»)** koppelt das iPad **mit diesem
+/// Mac**, nicht mehr direkt mit dem Heim-PC: Der Schein trägt die Adresse des Mac im WLAN
+/// (`https`), die Zahl des Mac (`Vermittlungsdienst`) und den Fingerabdruck seines Zertifikats,
+/// den das iPad anheftet. Das Fenster schaltet das Anbieten dazu ein (`dienstZumKoppeln`).
+/// Am Bildschirm steht das Zeichen des Mac — beim Abtippen vergleicht man es mit dem am iPad.
 ///
 /// * **Mac in der Nähe:** Solange das Fenster offen ist, bietet sich der Mac über
 ///   MultipeerConnectivity an (`Naeheanbieter`). Fragt ein iPad, steht hier «iPad möchte
@@ -20,6 +26,7 @@ import VisboxKern
 /// *Gebaut, am Gerät unbestätigt (20.10.2026).*
 struct IpadKoppelfenster: View {
     @ObservedObject var leitung: Heimleitung
+    @ObservedObject var vermittlung: Vermittlungsanschluss
     let schliessen: () -> Void
 
     @StateObject private var naehe = Naeheanbieter()
@@ -40,8 +47,8 @@ struct IpadKoppelfenster: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("iPad koppeln")
                 .font(Macschriften.schrift(.titel, 30))
-            Text("Am iPad im Koppelbildschirm: den Mac in der Nähe annehmen, den QR-Code lesen "
-                 + "oder Adresse und Zahl eintippen. Das Fenster gilt zwei Minuten.")
+            Text("Das iPad koppelt mit diesem Mac — die Mappe liegt hier. Am iPad den Mac in der "
+                 + "Nähe annehmen, den QR-Code lesen oder Adresse und Zahl eintippen. Zwei Minuten.")
                 .font(Macschriften.schrift(.text, 14))
                 .foregroundStyle(Startfarbe.leise)
                 .fixedSize(horizontal: false, vertical: true)
@@ -56,7 +63,7 @@ struct IpadKoppelfenster: View {
                     }
                 }
             } else if holt {
-                ProgressView("Die Zahl kommt vom Heim-PC …")
+                ProgressView("Der Mac bietet sich dem iPad an …")
             } else {
                 Text(satz ?? Naehekopplung.satzFensterZu)
                     .font(Macschriften.schrift(.text, 14))
@@ -120,7 +127,16 @@ struct IpadKoppelfenster: View {
             Text(String(schein.zahl.ziffern.prefix(3)) + " " + String(schein.zahl.ziffern.suffix(3)))
                 .font(Macschriften.schrift(.zahl, 40))
                 .textSelection(.enabled)
-            Text(Suche.eingabetext(schein.adresse))
+            Text(schein.adresse.absoluteString)
+                .font(Macschriften.schrift(.zahl, 13))
+                .foregroundStyle(Startfarbe.hell)
+                .textSelection(.enabled)
+            // DAS SCHLOSS UND DAS ZEICHEN DES MAC (Entscheid 118): QR-Code und Naehe bringen es
+            // mit; beim Abtippen steht es am iPad nach dem Koppeln — gleich wie hier?
+            Label("verschlüsselt", systemImage: "lock.fill")
+                .font(Macschriften.schrift(.text, 13, .semibold))
+                .foregroundStyle(Startfarbe.gruenText)
+            Text("Zeichen des Mac: " + Fingerabdruck.zeichen(schein.abdruck))
                 .font(Macschriften.schrift(.zahl, 13))
                 .foregroundStyle(Startfarbe.hell)
                 .textSelection(.enabled)
@@ -164,8 +180,8 @@ struct IpadKoppelfenster: View {
                 .font(Macschriften.schrift(.text, 13))
                 .foregroundStyle(Startfarbe.gelb)
         case .gesendet(let name):
-            Text("Adresse und Zahl sind bei «\(name)». Das iPad koppelt jetzt selbst mit dem "
-                 + "Heim-PC.")
+            Text("Adresse und Zahl sind bei «\(name)». Das iPad koppelt jetzt verschlüsselt mit "
+                 + "diesem Mac.")
                 .font(Macschriften.schrift(.text, 13))
                 .foregroundStyle(Startfarbe.gruenText)
                 .fixedSize(horizontal: false, vertical: true)
@@ -179,23 +195,44 @@ struct IpadKoppelfenster: View {
 
     // ---------------------------------------------------------------- Handeln
 
-    /// Holt eine neue Zahl beim Heim-PC und öffnet das Fenster für zwei Minuten.
+    /// Schaltet das Anbieten ein, holt eine Zahl **des Mac** und öffnet das Fenster für zwei
+    /// Minuten (Entscheid 118: das iPad koppelt mit dem Mac, nicht mit dem Heim-PC).
     @MainActor
     private func oeffne() async {
         guard !holt else { return }
         holt = true
         satz = nil
-        let angebot = await leitung.koppleIPad()
+        guard let dienst = vermittlung.dienstZumKoppeln() else {
+            holt = false
+            satz = "Erst den Heim-PC einrichten — der Mac reicht das iPad dorthin weiter."
+            return
+        }
+        // DER MAC BRAUCHT EINEN AUGENBLICK, bis er sich im WLAN anbietet (Anschluss, Adresse).
+        var runden = 0
+        while dienst.adresseFuerIpad == nil, dienst.abdruck != nil, runden < 50 {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            runden += 1
+        }
         holt = false
-        guard let angebot, let adresse = leitung.adresse else {
-            satz = "Keine Zahl vom Heim-PC — der Grund steht in der Zeile «iPad»."
+        guard let abdruck = dienst.abdruck else {
+            satz = dienst.zeile.satz
+            return
+        }
+        guard let adresse = dienst.adresseFuerIpad else {
+            satz = "Der Mac findet keine Adresse im WLAN, unter der das iPad ihn erreicht. "
+                + dienst.zeile.satz
+            return
+        }
+        guard let zahltext = dienst.zahlFuersKoppelfenster(), let zahl = Kopplungszahl(zahltext) else {
+            satz = "Keine Zahl zum Koppeln — der Grund steht in der Zeile «iPad»."
             return
         }
         let nun = Date()
         jetzt = nun
-        let neu = Koppelfenster(jetzt: nun.timeIntervalSince1970, zahlGiltNoch: angebot.giltNoch)
-        guard let s = neu.schein(adresse: adresse, zahl: angebot.zahl) else {
-            satz = "Die Adresse des Heim-PC lässt sich dem iPad nicht weitergeben."
+        let neu = Koppelfenster(jetzt: nun.timeIntervalSince1970,
+                                zahlGiltNoch: Vermittlerkopplung.frist)
+        guard let s = neu.schein(adresse: adresse, zahl: zahl, abdruck: abdruck) else {
+            satz = "Die Adresse des Mac lässt sich dem iPad nicht weitergeben."
             return
         }
         fenster = neu
@@ -208,6 +245,7 @@ struct IpadKoppelfenster: View {
     @MainActor
     private func schliesseFenster() {
         naehe.halte()
+        vermittlung.dienst?.schliesseZahl()
         fenster = nil
         schein = nil
         qr = nil

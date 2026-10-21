@@ -95,21 +95,29 @@ public enum Naehekopplung {
 // ============================================================ der Koppelschein
 
 /// Was der Mac dem iPad zum Koppeln gibt — als QR-Code oder über die Nähe-Verbindung, **in
-/// derselben Form**: die Adresse (wie man sie eintippen würde), die sechsstellige Zahl und
-/// bis wann der Schein gilt.
+/// derselben Form**: die Adresse **des Mac** (verschlüsselt, `https`), die sechsstellige Zahl
+/// **des Mac**, bis wann der Schein gilt — und seit Entscheid 118 (21.10.2026) der
+/// **Fingerabdruck des Zertifikats des Mac**, den das iPad anheftet.
 ///
-///     <schema>:1?adresse=<prozentkodiert>&zahl=482913&bis=<Unix-Sekunden>
+///     <schema>:2?adresse=<prozentkodiert>&zahl=482913&bis=<Unix-Sekunden>&abdruck=<64 hex>
 ///
 /// **Kein Kennwort, kein Benutzer** (Entscheid 99): Die Zahl ist einmalig und läuft ab; das
 /// Kennwort holt sich das iPad danach selbst, mit `POST /api/verbinden`, wie beim Abtippen.
 /// Wer den QR-Code abfotografiert, hat zwei Minuten und wenige Versuche — kein Kennwort.
+///
+/// **Fassung 2 (Entscheid 118):** Bis 0.3.15 trug der Schein die Adresse **des Heim-PC** und
+/// dessen Zahl, und das iPad koppelte direkt dort. Seither koppelt es **mit dem Mac** — und der
+/// Abdruck im Schein ist das, was die Leitung sicher macht: Er kommt über einen Weg, den ein
+/// Fremder im WLAN nicht umschreiben kann (Kamera, verschlüsselte Nähe-Sitzung), und das iPad
+/// nimmt danach **nur dieses** Zertifikat an. Ein Schein der Fassung 1 kommt von einem Mac mit
+/// altem Stand — er wird mit einem Satz abgelehnt, nicht still gelesen.
 public struct Koppelschein: Equatable, Sendable {
     /// Die Fassung der Form. Eine andere wird abgelehnt, nicht geraten.
-    public static let fassung = 1
+    public static let fassung = 2
     /// Höchstens so viele Bytes — ein Schein ist kurz; ein langer ist keiner von uns.
     public static let hoechstensBytes = 512
     /// Die Felder, **genau diese** — jedes andere lehnt `lies` ab.
-    public static let felder = ["adresse", "zahl", "bis"]
+    public static let felder = ["adresse", "zahl", "bis", "abdruck"]
 
     public static var schema: String { Marke.koppelschema }
 
@@ -118,16 +126,20 @@ public struct Koppelschein: Equatable, Sendable {
     /// Bis wann der Schein gilt, in Unix-Sekunden (Mac und iPad haben verschiedene Uhren,
     /// aber dieselbe Weltzeit).
     public let bis: Int
+    /// Der Fingerabdruck des Zertifikats des Mac (SHA-256, 64 Hex-Stellen, klein).
+    public let abdruck: String
 
-    /// Ein Schein — `nil`, wenn die Adresse die Prüfung des iPad nicht besteht
-    /// (`Suche.pruefe(eingabe:)`) oder die Zahl nicht sechs Ziffern hat. Was der Mac nicht
-    /// eintippen liesse, stellt er auch nicht aus.
-    public init?(adresse: URL, zahl: String, bis: Int) {
-        guard case .gut(let geprueft, _) = Suche.pruefe(eingabe: adresse.absoluteString),
-              zahl.count == 6, let z = Kopplungszahl(zahl) else { return nil }
+    /// Ein Schein — `nil`, wenn die Adresse keine des Mac ist (`Suche.pruefeMac(eingabe:)`:
+    /// nur `https`), die Zahl nicht sechs Ziffern hat oder der Abdruck keiner ist. Was der Mac
+    /// nicht eintippen liesse, stellt er auch nicht aus.
+    public init?(adresse: URL, zahl: String, bis: Int, abdruck: String) {
+        guard case .gut(let geprueft, _) = Suche.pruefeMac(eingabe: adresse.absoluteString),
+              zahl.count == 6, let z = Kopplungszahl(zahl),
+              let a = Fingerabdruck.normalisiere(abdruck) else { return nil }
         self.adresse = geprueft
         self.zahl = z
         self.bis = bis
+        self.abdruck = a
     }
 
     /// Nur Buchstaben, Ziffern und `-._~` bleiben stehen (RFC 3986, «unreserved»); alles
@@ -141,10 +153,10 @@ public struct Koppelschein: Equatable, Sendable {
 
     /// Der Schein als Text — so steht er im QR-Code und geht über die Nähe-Verbindung.
     public var text: String {
-        let roh = Suche.eingabetext(adresse)
+        let roh = adresse.absoluteString
         let kodiert = roh.addingPercentEncoding(withAllowedCharacters: Koppelschein.unkodiert) ?? ""
         return "\(Koppelschein.schema):\(Koppelschein.fassung)?adresse=\(kodiert)"
-            + "&zahl=\(zahl.ziffern)&bis=\(bis)"
+            + "&zahl=\(zahl.ziffern)&bis=\(bis)&abdruck=\(abdruck)"
     }
 
     public var daten: Data { Data(text.utf8) }
@@ -167,14 +179,20 @@ public struct Koppelschein: Equatable, Sendable {
     }
 
     /// Liest einen Schein und prüft ihn — **in dieser Reihenfolge**: Länge, Schema, Fassung,
-    /// Felder (genau die drei, keins doppelt), Zahl, Adresse, Frist. `jetzt` in Unix-Sekunden.
+    /// Felder (genau die vier, keins doppelt), Zahl, Abdruck, Adresse, Frist. `jetzt` in
+    /// Unix-Sekunden.
     public static func lies(_ text: String, jetzt: TimeInterval) -> Lesung {
         guard text.utf8.count <= hoechstensBytes else { return .schlecht(satzZuLang) }
         let kopf = "\(schema):"
         guard text.hasPrefix(kopf) else { return .schlecht(satzFremd) }
         let rest = text.dropFirst(kopf.count)
         guard let frage = rest.firstIndex(of: "?") else { return .schlecht(satzFremd) }
-        guard String(rest[..<frage]) == String(fassung) else { return .schlecht(satzFassung) }
+        let gelesen = String(rest[..<frage])
+        // FASSUNG 1 KOMMT VON EINEM MAC MIT ALTEM STAND (Entscheid 118): Er schickt die Adresse
+        // des Heim-PC — das iPad koppelte damit direkt dort, und die Mappe am Mac bliebe ihm
+        // unsichtbar. Das wird gesagt, nicht still ausgefuehrt.
+        if gelesen == "1" { return .schlecht(satzAlterMac) }
+        guard gelesen == String(fassung) else { return .schlecht(satzFassung) }
 
         var werte: [String: String] = [:]
         for paar in rest[rest.index(after: frage)...].split(separator: "&",
@@ -189,16 +207,22 @@ public struct Koppelschein: Equatable, Sendable {
             werte[name] = wert
         }
         guard let adresstext = werte["adresse"], let zahltext = werte["zahl"],
-              let bistext = werte["bis"] else { return .schlecht(satzFremd) }
+              let bistext = werte["bis"], let abdrucktext = werte["abdruck"] else {
+            return .schlecht(satzFremd)
+        }
 
         guard zahltext.count == 6, zahltext.unicodeScalars.allSatisfy({ ("0"..."9").contains($0) })
         else { return .schlecht(satzZahl) }
         guard !bistext.isEmpty, bistext.count <= 12,
               bistext.unicodeScalars.allSatisfy({ ("0"..."9").contains($0) }),
               let bis = Int(bistext) else { return .schlecht(satzFremd) }
+        // DER ABDRUCK GENAU SO, WIE DER MAC IHN SCHREIBT: 64 kleine Hex-Stellen. Eine andere
+        // Schreibweise stammt nicht vom Mac.
+        guard abdrucktext.count == 64, Fingerabdruck.normalisiere(abdrucktext) == abdrucktext
+        else { return .schlecht(satzAbdruck) }
 
         let adresse: URL
-        switch Suche.pruefe(eingabe: adresstext) {
+        switch Suche.pruefeMac(eingabe: adresstext) {
         case .gut(let url, _): adresse = url
         case .schlecht(let grund): return .schlecht("Die Adresse im Code geht nicht: " + grund)
         }
@@ -209,7 +233,8 @@ public struct Koppelschein: Equatable, Sendable {
         guard TimeInterval(bis) - jetzt <= Naehekopplung.fenster + Naehekopplung.uhrenspiel
         else { return .schlecht(satzZuLange) }
 
-        guard let schein = Koppelschein(adresse: adresse, zahl: zahltext, bis: bis) else {
+        guard let schein = Koppelschein(adresse: adresse, zahl: zahltext, bis: bis,
+                                        abdruck: abdrucktext) else {
             return .schlecht(satzFremd)
         }
         return .gut(schein)
@@ -220,7 +245,13 @@ public struct Koppelschein: Equatable, Sendable {
         + "«iPad» «iPad koppeln» öffnen und den Code dort lesen."
     public static let satzFassung = "Der Koppel-Code stammt aus einer anderen Fassung. "
         + "Beide Apps auf denselben Stand bringen oder die Zahl eintippen."
+    /// Fassung 1: ein Mac mit altem Stand (vor Entscheid 118).
+    public static let satzAlterMac = "Der Koppel-Code kommt von einem Mac mit altem Stand — er "
+        + "schickt das iPad direkt zum Heim-PC. Seit dieser Fassung arbeitet das iPad über den "
+        + "Mac: die Mac-App aktualisieren und den Code neu zeigen lassen."
     public static let satzZahl = "Im Koppel-Code steht keine sechsstellige Zahl."
+    public static let satzAbdruck = "Im Koppel-Code fehlt das Zeichen des Mac (der Fingerabdruck "
+        + "seines Zertifikats) — ohne es koppelt das iPad nicht verschlüsselt."
     public static let satzAbgelaufen = "Der Koppel-Code ist abgelaufen. Am Mac «iPad koppeln» "
         + "neu öffnen."
     public static let satzZuLange = "Der Koppel-Code gilt länger als zwei Minuten — so einen "
@@ -230,7 +261,8 @@ public struct Koppelschein: Equatable, Sendable {
 extension Koppelschein: CustomStringConvertible {
     /// **Ohne die Zahl** — sie gehört an den Bildschirm, nicht in eine Ausgabe.
     public var description: String {
-        "Koppelschein(adresse: \(adresse.absoluteString), bis: \(bis))"
+        "Koppelschein(adresse: \(adresse.absoluteString), bis: \(bis), abdruck: "
+            + "\(Fingerabdruck.zeichen(abdruck)))"
     }
 }
 
@@ -269,9 +301,11 @@ public struct Koppelfenster: Equatable, Sendable {
         return "\(s / 60):" + (sek < 10 ? "0" : "") + "\(sek)"
     }
 
-    /// Der Schein für dieses Fenster: gültig bis zu seinem Schluss.
-    public func schein(adresse: URL, zahl: Kopplungszahl) -> Koppelschein? {
-        Koppelschein(adresse: adresse, zahl: zahl.ziffern, bis: Int(schluss.rounded(.down)))
+    /// Der Schein für dieses Fenster: gültig bis zu seinem Schluss — mit der Adresse und dem
+    /// Zertifikat **des Mac** (Entscheid 118).
+    public func schein(adresse: URL, zahl: Kopplungszahl, abdruck: String) -> Koppelschein? {
+        Koppelschein(adresse: adresse, zahl: zahl.ziffern, bis: Int(schluss.rounded(.down)),
+                     abdruck: abdruck)
     }
 }
 

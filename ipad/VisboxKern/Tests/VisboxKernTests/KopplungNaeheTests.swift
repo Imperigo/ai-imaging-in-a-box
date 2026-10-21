@@ -6,11 +6,14 @@ import VisboxKern
 /// Nähe-Verbindung, das Fenster von zwei Minuten, die Absprache beider Seiten.
 final class KopplungNaeheTests: XCTestCase {
 
+    /// Seit Entscheid 118 (21.10.2026) die Adresse **des Mac**, verschlüsselt, und sein Abdruck.
     private let heim = URL(string: "https://rechner.netz.ts.net:8443")!
+    private let abdruck = String(repeating: "0f", count: 32)
     private let jetzt: TimeInterval = 1_800_000_000
 
     private func schein(bis: Int? = nil, zahl: String = "482913") throws -> Koppelschein {
-        try XCTUnwrap(Koppelschein(adresse: heim, zahl: zahl, bis: bis ?? Int(jetzt) + 120))
+        try XCTUnwrap(Koppelschein(adresse: heim, zahl: zahl, bis: bis ?? Int(jetzt) + 120,
+                                   abdruck: abdruck))
     }
 
     private func gelesen(_ text: String, jetzt t: TimeInterval? = nil) -> Koppelschein? {
@@ -27,8 +30,8 @@ final class KopplungNaeheTests: XCTestCase {
 
     func testDerScheinHatDieVerabredeteForm() throws {
         let s = try schein()
-        XCTAssertEqual(s.text, "\(Marke.koppelschema):1?adresse=https%3A%2F%2Frechner.netz.ts.net"
-                       + "%3A8443&zahl=482913&bis=\(Int(jetzt) + 120)")
+        XCTAssertEqual(s.text, "\(Marke.koppelschema):2?adresse=https%3A%2F%2Frechner.netz.ts.net"
+                       + "%3A8443&zahl=482913&bis=\(Int(jetzt) + 120)&abdruck=\(abdruck)")
     }
 
     func testHinUndZurueck() throws {
@@ -37,17 +40,20 @@ final class KopplungNaeheTests: XCTestCase {
         XCTAssertEqual(Koppelschein.lies(s.daten, jetzt: jetzt), .gut(s))
     }
 
-    func testAuchDieAdresseImHeimnetzGehtHinUndZurueck() throws {
-        let lan = URL(string: "http://192.0.2.10:8731")!
-        let s = try XCTUnwrap(Koppelschein(adresse: lan, zahl: "000123", bis: Int(jetzt) + 60))
+    func testDieAdresseImWlanGehtHinUndZurueckAberNurVerschluesselt() throws {
+        let lan = URL(string: "https://192.0.2.10:8731")!
+        let s = try XCTUnwrap(Koppelschein(adresse: lan, zahl: "000123", bis: Int(jetzt) + 60,
+                                           abdruck: abdruck))
         XCTAssertEqual(gelesen(s.text)?.adresse, lan)
         XCTAssertEqual(gelesen(s.text)?.zahl.ziffern, "000123", "führende Nullen bleiben")
+        XCTAssertNil(Koppelschein(adresse: URL(string: "http://192.0.2.10:8731")!, zahl: "000123",
+                                  bis: Int(jetzt) + 60, abdruck: abdruck), "Entscheid 118")
     }
 
-    func testImScheinStehenNurAdresseZahlUndFrist() throws {
+    func testImScheinStehenNurAdresseZahlFristUndAbdruck() throws {
         // ENTSCHEID 99: nie das Kennwort, nie der Benutzer — weder im QR-Code noch über die
-        // Nähe-Verbindung (beide tragen denselben Schein).
-        XCTAssertEqual(Koppelschein.felder, ["adresse", "zahl", "bis"])
+        // Nähe-Verbindung (beide tragen denselben Schein). Seit 118 dazu der Abdruck des Mac.
+        XCTAssertEqual(Koppelschein.felder, ["adresse", "zahl", "bis", "abdruck"])
         let text = try schein().text.lowercased()
         for verboten in ["kennwort", "passwort", "password", "benutzer", "user", "authorization"] {
             XCTAssertFalse(text.contains(verboten), verboten)
@@ -83,9 +89,11 @@ final class KopplungNaeheTests: XCTestCase {
         let ohneSchema = String(gut.drop(while: { $0 != ":" }).dropFirst())
         XCTAssertEqual(satz("https://beispiel.org/?" + ohneSchema), Koppelschein.satzFremd)
         XCTAssertEqual(satz("anderes:" + ohneSchema), Koppelschein.satzFremd)
-        XCTAssertEqual(satz(gut.replacingOccurrences(of: ":1?", with: ":2?")),
+        XCTAssertEqual(satz(gut.replacingOccurrences(of: ":2?", with: ":3?")),
                        Koppelschein.satzFassung)
-        XCTAssertEqual(satz("\(Marke.koppelschema):1"), Koppelschein.satzFremd)
+        XCTAssertEqual(satz(gut.replacingOccurrences(of: ":2?", with: ":1?")),
+                       Koppelschein.satzAlterMac, "ein Mac vor Entscheid 118")
+        XCTAssertEqual(satz("\(Marke.koppelschema):2"), Koppelschein.satzFremd)
         XCTAssertEqual(satz(""), Koppelschein.satzFremd)
     }
 
@@ -96,8 +104,8 @@ final class KopplungNaeheTests: XCTestCase {
             XCTAssertEqual(satz(gut.replacingOccurrences(of: "zahl=482913", with: "zahl=\(kodiert)")),
                            Koppelschein.satzZahl, falsch)
         }
-        XCTAssertNil(Koppelschein(adresse: heim, zahl: "12345", bis: Int(jetzt) + 60))
-        XCTAssertNil(Koppelschein(adresse: heim, zahl: " 123456", bis: Int(jetzt) + 60))
+        XCTAssertNil(Koppelschein(adresse: heim, zahl: "12345", bis: Int(jetzt) + 60, abdruck: abdruck))
+        XCTAssertNil(Koppelschein(adresse: heim, zahl: " 123456", bis: Int(jetzt) + 60, abdruck: abdruck))
     }
 
     func testFremdeDoppelteUndFehlendeFelder() throws {
@@ -120,7 +128,7 @@ final class KopplungNaeheTests: XCTestCase {
         let grund = try XCTUnwrap(satz(text))
         XCTAssertTrue(grund.hasPrefix("Die Adresse im Code geht nicht:"), grund)
         XCTAssertNil(Koppelschein(adresse: URL(string: "ftp://192.0.2.10")!, zahl: "123456",
-                                  bis: Int(jetzt) + 60))
+                                  bis: Int(jetzt) + 60, abdruck: abdruck))
     }
 
     func testZuLangWirdNichtErstGelesen() throws {
@@ -154,7 +162,8 @@ final class KopplungNaeheTests: XCTestCase {
 
     func testDerScheinDesFenstersGiltBisZuSeinemSchluss() throws {
         let f = Koppelfenster(jetzt: jetzt + 0.7, zahlGiltNoch: 600)
-        let s = try XCTUnwrap(f.schein(adresse: heim, zahl: try XCTUnwrap(Kopplungszahl("482913"))))
+        let s = try XCTUnwrap(f.schein(adresse: heim, zahl: try XCTUnwrap(Kopplungszahl("482913")),
+                                                  abdruck: abdruck))
         XCTAssertEqual(s.bis, Int(jetzt) + 120)
         XCTAssertNotNil(gelesen(s.text, jetzt: jetzt + 1))
         XCTAssertEqual(satz(s.text, jetzt: jetzt + 121), Koppelschein.satzAbgelaufen)

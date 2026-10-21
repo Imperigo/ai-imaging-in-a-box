@@ -77,7 +77,7 @@ struct Hauptfenster: View {
             // DAS KOPPELFENSTER «iPad koppeln» (Entscheid 99): ebenso ein eigener Anker, als
             // eigene Ansicht und ohne weiteren Modifikator — mit einem mehr gab der Uebersetzer
             // am Rumpf auf (Mac-CI 20.10.2026: «unable to type-check … in reasonable time»).
-            IpadKoppelanker(offen: $ipadKoppelnOffen, leitung: leitung)
+            IpadKoppelanker(offen: $ipadKoppelnOffen, leitung: leitung, vermittlung: vermittlung)
             // DAS FENSTER «MAPPEN» (Schritt 3, Blatt 36): ebenso ein eigener Anker.
             Mappenanker(leitung: leitung)
         }
@@ -239,12 +239,14 @@ struct Hauptfenster: View {
         // fremden WLAN unverschlüsselt.
         // SEIT ENTSCHEID 99 (20.10.2026) oeffnet «iPad koppeln» das Koppelfenster: Zahl,
         // QR-Code und der Mac in der Naehe, zwei Minuten lang. Es holt die Zahl selbst.
+        // SEIT ENTSCHEID 118 (21.10.2026) koppelt das iPad dort MIT DIESEM MAC, verschluesselt;
+        // das Fenster schaltet das Anbieten ein.
         if leitung.adresse != nil {
             Menu("iPad") {
                 Button("iPad koppeln") { ipadKoppelnOffen = true }
                 if let dienst = vermittlung.dienst {
                     Divider()
-                    Toggle("iPad über diesen Mac anbieten (unverschlüsselt)",
+                    Toggle("iPad über diesen Mac anbieten (verschlüsselt)",
                            isOn: Binding(get: { vermittlung.angeboten },
                                          set: { vermittlung.schalteAnbieten($0) }))
                     Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
@@ -262,10 +264,11 @@ struct Hauptfenster: View {
 private struct IpadKoppelanker: View {
     @Binding var offen: Bool
     @ObservedObject var leitung: Heimleitung
+    @ObservedObject var vermittlung: Vermittlungsanschluss
 
     var body: some View {
         Color.clear.sheet(isPresented: $offen) {
-            IpadKoppelfenster(leitung: leitung, schliessen: { offen = false })
+            IpadKoppelfenster(leitung: leitung, vermittlung: vermittlung, schliessen: { offen = false })
         }
     }
 }

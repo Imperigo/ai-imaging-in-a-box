@@ -21,6 +21,19 @@ public enum Strecke: Equatable, Sendable {
     case heimnetz
     /// `https` über Tailscale Serve zum Heim-PC (Entscheid 63).
     case tailscale
+    /// `https` **zum Mac**, mit dem beim Koppeln angehefteten Zertifikat (Entscheid 118,
+    /// 21.10.2026) — der Weg, über den das iPad seither immer arbeitet.
+    case mac
+
+    /// Die Strecke einer Adresse, wenn bekannt ist, ob **der Mac** vermittelt: `https` zum Mac
+    /// ist `.mac`, nicht Tailscale. Ohne Mac wie `init(basis:)`.
+    public init(basis: URL, ueberDenMac: Bool) {
+        if ueberDenMac, basis.scheme?.lowercased() == "https" {
+            self = .mac
+        } else {
+            self.init(basis: basis)
+        }
+    }
 
     /// Die Strecke einer Adresse.
     ///
@@ -47,6 +60,7 @@ public enum Strecke: Equatable, Sendable {
         switch self {
         case .heimnetz: return ""
         case .tailscale: return " · über Tailscale"
+        case .mac: return " · über den Mac"
         }
     }
 }
@@ -73,6 +87,7 @@ extension Leitungsfehler {
         switch strecke {
         case .heimnetz: return heimnetzsatz(beschreibung)
         case .tailscale: return tailscalesatz(beschreibung)
+        case .mac: return macsatz(beschreibung)
         }
     }
 
@@ -132,6 +147,32 @@ extension Leitungsfehler {
             return "Das Senden wurde abgebrochen."
         case .sonstig(let code):
             return "Die Leitung zum Heim-PC kam nicht zustande "
+                + "(\(Leitungsfehler.grund(beschreibung, code)))."
+        }
+    }
+
+    // DIE SAETZE ZUM MAC (Entscheid 118): Der erste Handgriff ist dort fast immer derselbe —
+    // die App am Mac offen, das iPad im selben WLAN. Ein Zertifikat, das nicht passt, heisst:
+    // nicht der Mac vom Koppeln; dann wird nicht verbunden, und es steht da, warum.
+    private func macsatz(_ beschreibung: String?) -> String {
+        switch self {
+        case .nameUnbekannt:
+            return "Der Mac ist im Netz nicht zu finden — ist das iPad im selben WLAN wie der Mac?"
+        case .keineVerbindung:
+            return "Der Mac nimmt keine Verbindung an — ist \(Marke.name) am Mac offen?"
+        case .zeitUeberschritten:
+            return "Der Mac hat nicht rechtzeitig geantwortet — ist er zugeklappt oder in einem "
+                + "anderen WLAN?"
+        case .zertifikat:
+            return Macanbindung.satzFremdesZertifikat
+        case .keinNetz:
+            return "Das iPad ist mit keinem Netz verbunden."
+        case .abgerissen:
+            return "Die Leitung zum Mac ist unterwegs abgerissen."
+        case .abgebrochen:
+            return "Das Senden wurde abgebrochen."
+        case .sonstig(let code):
+            return "Die Leitung zum Mac kam nicht zustande "
                 + "(\(Leitungsfehler.grund(beschreibung, code)))."
         }
     }

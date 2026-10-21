@@ -204,6 +204,9 @@ public struct Heimkandidat: Equatable, Sendable, Identifiable {
     public static func ausBonjour(name: String, host: String, anschluss: Int,
                                   txt: [String: String]) -> Heimkandidat? {
         guard txt["tls"] == "1", (1...65535).contains(anschluss) else { return nil }
+        // EIN MAC, DER SICH DEM IPAD ANBIETET (Entscheid 118), spricht seit 21.10.2026 auch
+        // verschluesselt — er ist aber kein Heim-PC und gehoert nicht in diese Liste.
+        guard txt["vermittler"] == nil else { return nil }
         var h = host
         // EINE IPv6-ADRESSE MIT ZONE («fe80::1%en0») kann keine Adresse tragen; die Zone
         // gilt nur auf diesem Mac. Bonjour liefert sie, `URL` nicht — also ohne.

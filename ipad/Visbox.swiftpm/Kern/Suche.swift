@@ -57,10 +57,21 @@ public struct GefundenerDienst: Equatable, Hashable, Sendable, Identifiable {
     /// beantwortet dieselben Wege und reicht sie an den Heim-PC weiter.
     public var ueberDenMac: Bool { vermittler?.lowercased() == Vermittlerangebot.vermittler }
 
+    /// Ob der Dienst **verschlüsselt** spricht (TXT `tls=1`). Seit Entscheid 118 (21.10.2026)
+    /// tut das der Mac für das iPad; der Heim-PC tut es im Heim-WLAN nur für den Mac
+    /// (`--heimnetz`, Entscheid 83b) — das iPad nimmt den nicht (`nurFuerDenMac`).
+    public var verschluesselt: Bool { eintraege["tls"] == "1" }
+
+    /// Ein verschlüsselter Zuhörer **des Heim-PC** im WLAN (`tls=1`, ohne `vermittler`): Er
+    /// ist für die Mac-App da, die sein Zertifikat beim Koppeln anheftet. Das iPad spricht nie
+    /// mit ihm — es arbeitet über den Mac (Entscheid 118).
+    public var nurFuerDenMac: Bool { verschluesselt && !ueberDenMac }
+
     /// Ob Rechner und Anschluss bekannt sind.
     public var aufgeloest: Bool { adresse != nil }
 
-    /// Die Adresse für die Anfragen — `nil`, solange nicht aufgelöst.
+    /// Die Adresse für die Anfragen — `nil`, solange nicht aufgelöst. **`https`, wenn der Dienst
+    /// verschlüsselt spricht** (`tls=1`), sonst `http`.
     public var adresse: URL? {
         guard var r = rechner?.trimmingCharacters(in: .whitespaces), !r.isEmpty,
               let a = anschluss, (1...65535).contains(a) else { return nil }
@@ -71,7 +82,7 @@ public struct GefundenerDienst: Equatable, Hashable, Sendable, Identifiable {
                 r = "[" + r.replacingOccurrences(of: "%", with: "%25") + "]"
             }
         }
-        return URL(string: "http://\(r):\(a)")
+        return URL(string: (verschluesselt ? "https" : "http") + "://\(r):\(a)")
     }
 
     /// Liest TXT-Einträge in ihrer Leitungsform (RFC 6763, §6): je Eintrag ein Längenbyte
@@ -136,11 +147,12 @@ public enum Suche {
     /// Weg über den Mac ist aus, bis man ihn einschaltet, und unverschlüsselt.
     public static func satzNichtAufgeloest(ueberDenMac: Bool) -> String {
         let wer = ueberDenMac ? "Der Mac" : "Dieser Heim-PC"
+        // SEIT ENTSCHEID 118 (21.10.2026) ist der Mac der Weg — nicht mehr Tailscale direkt
+        // zum Heim-PC. Der Satz schickt darum zum Mac und zum QR-Code.
         return "\(wer) antwortet nicht (nach \(Int(aufloesFrist)) s abgebrochen). Darf "
             + "\(Marke.name) ins lokale Netzwerk? Einstellungen › Datenschutz & Sicherheit › "
-            + "Lokales Netzwerk › \(Marke.name). Vorgesehen ist der direkte Weg über "
-            + "Tailscale: Tailscale am iPad einschalten und unten die Adresse des Heim-PC "
-            + "eintippen."
+            + "Lokales Netzwerk › \(Marke.name). Sonst am Mac «iPad koppeln» öffnen und den "
+            + "QR-Code lesen."
     }
 
     /// Was rechts im Fund steht: die Adresse, «wird aufgelöst …» oder «nicht erreicht».
@@ -172,6 +184,80 @@ public enum Suche {
         case 1: return .einer(eindeutig[0])
         default: return .mehrere(eindeutig)
         }
+    }
+
+    /// **Die Wahl zum Koppeln seit Entscheid 118:** nur Macs, die verschlüsselt sprechen
+    /// (`ueberDenMac` und `verschluesselt`). Ein Heim-PC wird nicht mehr angeboten — das iPad
+    /// arbeitet immer über den Mac —, und ein Mac mit altem Stand (ohne `tls=1`) auch nicht: Mit
+    /// ihm ginge die Leitung unverschlüsselt. Er steht in `alteMacs`, damit der Bildschirm sagen
+    /// kann, warum er fehlt.
+    public static func waehleMac(_ gefunden: [GefundenerDienst]) -> Suchergebnis {
+        waehle(gefunden.filter { $0.ueberDenMac && $0.verschluesselt })
+    }
+
+    /// Die Macs mit altem Stand: sie vermitteln, aber unverschlüsselt.
+    public static func alteMacs(_ gefunden: [GefundenerDienst]) -> [GefundenerDienst] {
+        var namen = Set<String>()
+        return gefunden.filter { d in
+            guard d.ueberDenMac, !d.verschluesselt, !namen.contains(d.name) else { return false }
+            namen.insert(d.name)
+            return true
+        }
+    }
+
+    /// Der Satz zu einem Mac mit altem Stand.
+    public static func satzAlterMac(_ name: String) -> String {
+        "«\(name)» bietet sich noch unverschlüsselt an (alter Stand). Die Mac-App aktualisieren — "
+            + "das iPad koppelt nur verschlüsselt."
+    }
+
+    /// Prüft die Adresse **eines Mac** — wie sie im Koppelschein steht oder eingetippt wird
+    /// (Entscheid 118): **nur `https`** (ohne Schema gilt `https`), ein Rechner, ein Anschluss
+    /// (ohne Angabe `vorgabeAnschluss`), nichts sonst. Ein ausdrückliches `http://` wird mit
+    /// Satz abgelehnt: Die Leitung zum Mac ist verschlüsselt, und ein Rückfall auf
+    /// unverschlüsselt geschieht nie still.
+    public static func pruefeMac(eingabe: String) -> Heimadresse.Pruefung {
+        let text = eingabe.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            return .schlecht("Die Adresse des Mac fehlt. Sie steht im Koppelfenster am Mac.")
+        }
+        guard text.rangeOfCharacter(from: .whitespacesAndNewlines) == nil else {
+            return .schlecht("In der Adresse steht ein Leerzeichen.")
+        }
+        let mitSchema = text.contains("://") ? text : "https://" + text
+        guard let teile = URLComponents(string: mitSchema) else {
+            return .schlecht("Das ist keine Adresse. Sie steht im Koppelfenster am Mac.")
+        }
+        guard teile.scheme?.lowercased() == "https" else {
+            return .schlecht("Nur verschlüsselt: Die Adresse des Mac beginnt mit https:// — "
+                             + "unverschlüsselt koppelt das iPad nicht mehr.")
+        }
+        guard teile.user == nil, teile.password == nil else {
+            return .schlecht("Benutzer und Kennwort gehören nicht in die Adresse — die App "
+                             + "bekommt sie beim Koppeln und legt sie in den Schlüsselbund.")
+        }
+        guard let rechner = teile.host, !rechner.isEmpty else {
+            return .schlecht("Der Name oder die Adresse des Mac fehlt.")
+        }
+        guard teile.path.isEmpty || teile.path == "/" else {
+            return .schlecht("Ohne Pfad: Die Adresse endet nach dem Anschluss (\(teile.path) "
+                             + "weglassen).")
+        }
+        guard teile.query == nil, teile.fragment == nil else {
+            return .schlecht("Ohne «?» und «#»: Die Adresse endet nach dem Anschluss.")
+        }
+        let anschluss = teile.port ?? vorgabeAnschluss
+        guard (1...65535).contains(anschluss) else {
+            return .schlecht("Den Anschluss \(anschluss) gibt es nicht (1 bis 65535).")
+        }
+        var aus = URLComponents()
+        aus.scheme = "https"
+        aus.host = rechner
+        aus.port = anschluss
+        guard let url = aus.url else {
+            return .schlecht("Aus «\(rechner)» liess sich keine Adresse bauen.")
+        }
+        return .gut(url, hinweis: nil)
     }
 
     /// Eine eingetippte Adresse als Adresse für die Anfragen — oder `nil`. Kurzform von

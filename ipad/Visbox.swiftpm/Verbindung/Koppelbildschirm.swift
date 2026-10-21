@@ -19,7 +19,14 @@ import SwiftUI
 ///   wird damit **genau wie beim Abtippen** (`koppeln(an:name:mac:zahl:)`). Das Eintippen
 ///   bleibt darunter, als letzter Weg.
 ///
-/// *Gebaut, am Gerät unbestätigt (22.09.2026; Nähe und QR-Code 20.10.2026).*
+/// **Seit Entscheid 118 (21.10.2026, Blatt «iPad über den Mac») nur noch mit dem Mac,
+/// verschlüsselt:** Gefunden werden nur Macs, die `tls=1` sagen (`Suche.waehleMac`); ein Mac mit
+/// altem Stand steht mit Satz da, statt still zu fehlen. Die Adresse ist `https`
+/// (`Suche.pruefeMac`). Der Schein bringt das Zertifikat des Mac mit, und das iPad nimmt danach
+/// nur dieses an; beim Abtippen steht nach dem Koppeln das Zeichen des Mac da — zum Vergleichen.
+///
+/// *Gebaut, am Gerät unbestätigt (22.09.2026; Nähe und QR-Code 20.10.2026; über den Mac
+/// 21.10.2026).*
 @MainActor
 struct Koppelbildschirm: View {
     @ObservedObject var stand: Verbindungsstand
@@ -36,7 +43,7 @@ struct Koppelbildschirm: View {
     @StateObject private var naehe = Naehesucher()
 
     /// Was die Prüfung im Kern zur Eingabe sagt — die Adresse, oder der Satz, warum nicht.
-    private var pruefung: Heimadresse.Pruefung { Suche.pruefe(eingabe: adresseText) }
+    private var pruefung: Heimadresse.Pruefung { Suche.pruefeMac(eingabe: adresseText) }
     private var ziel: URL? {
         if case .gut(let url, _) = pruefung { return url }
         return nil
@@ -63,7 +70,7 @@ struct Koppelbildschirm: View {
                 .frame(maxWidth: .infinity)
             }
             .background(Zeichenblatt.grund)
-            .navigationTitle("Mit der HomeStation koppeln")
+            .navigationTitle("Mit dem Mac koppeln")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -75,7 +82,9 @@ struct Koppelbildschirm: View {
             stand.starteSuche()
             // DIE NAEHE NUR UNGEKOPPELT: Ein gekoppeltes iPad hat am Mac nichts zu suchen.
             if !stand.gekoppelt { naehe.starte() }
-            if adresseText.isEmpty, let a = stand.adresse { adresseText = Suche.eingabetext(a) }
+            if adresseText.isEmpty, stand.ueberDenMac, let a = stand.adresse {
+                adresseText = a.absoluteString
+            }
         }
         // NUR DIE SUCHE DIESES BILDSCHIRMS endet hier. Sucht das Pruefen die gekoppelte
         // HomeStation unter ihrem Namen, sucht es weiter (`Suchwunsch`, Durchsicht 22.09.2026).
@@ -98,7 +107,7 @@ struct Koppelbildschirm: View {
         }
         .onChange(of: stand.gefunden) { _, neu in
             // GENAU EINE → DIE, aber nur, solange nichts eingetippt ist.
-            if case .einer(let d) = Suche.waehle(neu), adresseText.isEmpty, let a = d.adresse {
+            if case .einer(let d) = Suche.waehleMac(neu), adresseText.isEmpty, let a = d.adresse {
                 waehle(d, a)
             }
         }
@@ -179,16 +188,13 @@ struct Koppelbildschirm: View {
 
     private var fundteil: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Abschnittstitel(text: "Im Heimnetz gefunden")
-            switch Suche.waehle(stand.gefunden) {
+            Abschnittstitel(text: "Macs im WLAN")
+            switch Suche.waehleMac(stand.gefunden) {
             case .keiner:
-                // BERICHTIGT 01.10.2026: Seit dem 22.09. kündigt sich die HomeStation selbst an
-                // (Protokoll §8). Unterwegs ist seit Entscheid 63 nicht mehr der Mac der Weg,
-                // sondern Tailscale direkt zum Heim-PC — dort findet die Suche nichts, und der
-                // Satz schickt darum zum Eintippen, nicht zur Mac-App.
-                Text("Noch keine gefunden. Zu Hause: läuft die HomeStation im Heimnetz? "
-                     + "Unterwegs: Tailscale am iPad einschalten und unten die Adresse des "
-                     + "Heim-PC eintippen.")
+                // SEIT ENTSCHEID 118 (21.10.2026) der Mac, zuhause wie unterwegs: Er bietet sich
+                // an, sobald dort «iPad koppeln» offen war.
+                Text("Noch kein Mac gefunden. Am Mac im Menü «iPad» «iPad koppeln» öffnen — "
+                     + "gleiches WLAN oder der Hotspot des Mac.")
                     .font(Schrift.text(14))
                     .foregroundStyle(Zeichenblatt.leise)
             case .einer(let d):
@@ -198,6 +204,12 @@ struct Koppelbildschirm: View {
                     .font(Schrift.text(14))
                     .foregroundStyle(Zeichenblatt.leise)
                 ForEach(liste) { d in fundknopf(d) }
+            }
+            // EIN MAC MIT ALTEM STAND (unverschluesselt) fehlt nicht still — er steht mit Satz da.
+            ForEach(Suche.alteMacs(stand.gefunden)) { alt in
+                Label(Suche.satzAlterMac(alt.name), systemImage: "lock.open")
+                    .font(Schrift.text(13))
+                    .foregroundStyle(Zeichenblatt.schrift)
             }
             if let s = stand.suchSatz {
                 Text(s)
@@ -214,14 +226,12 @@ struct Koppelbildschirm: View {
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(d.name)
-                    // UNTERWEGS VERMITTELT DER MAC (Protokoll §8b): klein und ruhig dazu, damit
-                    // klar ist, wer antwortet. Gekoppelt wird genau gleich.
-                    if d.ueberDenMac {
-                        Text("über den Mac")
-                            .font(Schrift.text(12))
-                            .foregroundStyle(Zeichenblatt.leise)
+                    // DAS SCHLOSS (Entscheid 118): Nur verschluesselte Macs stehen hier.
+                    if d.verschluesselt {
+                        Image(systemName: "lock.fill")
+                            .accessibilityLabel("verschlüsselt")
                     }
+                    Text(d.name)
                     Spacer()
                     Text(Suche.fundtext(d))
                         .font(Schrift.zahl(13))
@@ -244,8 +254,8 @@ struct Koppelbildschirm: View {
 
     private var adressteil: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Abschnittstitel(text: "Oder die Adresse eintippen")
-            TextField(Heimadresse.beispiel, text: $adresseText)
+            Abschnittstitel(text: "Oder die Adresse des Mac eintippen")
+            TextField("https://192.168.1.24:8731", text: $adresseText)
                 .font(Schrift.zahl(18))
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
@@ -268,9 +278,8 @@ struct Koppelbildschirm: View {
             default:
                 EmptyView()
             }
-            Text("Zu Hause: die Adresse aus dem Fenster der HomeStation, z. B. "
-                 + "192.168.1.20:8731. Unterwegs: die Adresse des Heim-PC aus Tailscale, "
-                 + "\(Heimadresse.beispiel) — dafür muss Tailscale am iPad an sein.")
+            Text("Sie steht am Mac im Fenster «iPad koppeln», unter der Zahl. Immer https — "
+                 + "unverschlüsselt koppelt das iPad nicht.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
         }
@@ -279,7 +288,7 @@ struct Koppelbildschirm: View {
     private var zahlteil: some View {
         VStack(alignment: .leading, spacing: 10) {
             // DER LETZTE WEG (Entscheid 99): eintippen, wenn Naehe und QR-Code nicht gehen.
-            Abschnittstitel(text: "Zahl eintippen — von der HomeStation oder vom Mac")
+            Abschnittstitel(text: "Zahl eintippen — vom Mac")
             TextField("000000", text: $zahl)
                 .font(Schrift.zahl(44, .medium))
                 .keyboardType(.numberPad)
@@ -297,10 +306,8 @@ struct Koppelbildschirm: View {
                         .prefix(6))
                     if sauber != neu { zahl = sauber }
                 }
-            // UNTERWEGS ZEIGT SIE DER MAC (Entscheid 63): Er fragt den Heim-PC danach.
-            // Gekoppelt wird trotzdem direkt mit dem Heim-PC — der Mac reicht nur die Zahl.
-            Text("Zu Hause steht sie im Fenster der HomeStation, zwei Minuten lang. Unterwegs "
-                 + "zeigt sie der Mac unter «iPad koppeln», zwei Minuten lang. Sie gilt nur für "
+            // SEIT ENTSCHEID 118 zeigt sie immer der Mac — er ist es, mit dem gekoppelt wird.
+            Text("Der Mac zeigt sie unter «iPad koppeln», zwei Minuten lang. Sie gilt nur für "
                  + "wenige Versuche.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
@@ -309,7 +316,7 @@ struct Koppelbildschirm: View {
 
     private var ordnerteil: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Abschnittstitel(text: "Projektordner auf der HomeStation — freiwillig")
+            Abschnittstitel(text: "Projektordner auf der HomeStation — nur ohne Mappe am Mac")
             TextField("leer: der Ordner, mit dem sie gestartet wurde", text: $stand.ordner)
                 .font(Schrift.zahl(15))
                 .textInputAutocapitalization(.never)
@@ -342,9 +349,22 @@ struct Koppelbildschirm: View {
     private var trennteil: some View {
         VStack(alignment: .leading, spacing: 10) {
             Abschnittstitel(text: "Gekoppelt")
-            Text("Trennen vergisst die HomeStation auf diesem iPad. Drüben bleibt das Gerät "
-                 + "angemeldet — einen Weg, es dort zu vergessen, gibt es nicht. Geparkte "
-                 + "Skizzen bleiben auf dem iPad.")
+            // DAS SCHLOSS UND DAS ZEICHEN DES MAC — oder warum keines (Entscheid 118).
+            switch stand.anbindung {
+            case .macVerschluesselt(let zeichen):
+                Label("Über den Mac, verschlüsselt · Zeichen des Mac: \(zeichen)",
+                      systemImage: "lock.fill")
+                    .font(Schrift.text(14))
+                    .foregroundStyle(Zeichenblatt.schrift)
+            default:
+                if let satz = stand.anbindung.satz {
+                    Label(satz, systemImage: "lock.open")
+                        .font(Schrift.text(14))
+                        .foregroundStyle(Zeichenblatt.schrift)
+                }
+            }
+            Text("Trennen vergisst den Mac auf diesem iPad. Am Mac bleibt das iPad angemeldet, "
+                 + "bis dort «iPad vergessen» gewählt wird. Geparkte Skizzen bleiben auf dem iPad.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
             Button("Trennen") {
@@ -360,15 +380,15 @@ struct Koppelbildschirm: View {
 
     private func waehle(_ d: GefundenerDienst, _ a: URL) {
         gewaehlt = d
-        adresseText = Suche.eingabetext(a)
+        adresseText = a.absoluteString
     }
 
     private func koppeln() async {
         guard let ziel else { return }
-        // DER NAME GILT NUR, WENN DIE ADRESSE NOCH SEINE IST — sonst ist sie eingetippt.
+        // DER NAME GILT NUR, WENN DIE ADRESSE NOCH SEINE IST — sonst ist sie eingetippt. Ein Mac
+        // ist es immer (Entscheid 118); ohne Schein wird sein Zertifikat beim Koppeln gelernt.
         let name = (gewaehlt?.adresse == ziel) ? gewaehlt?.name : nil
-        let mac = (gewaehlt?.adresse == ziel) && gewaehlt?.ueberDenMac == true
-        await koppeln(an: ziel, name: name, mac: mac, zahl: zahl)
+        await koppeln(an: ziel, name: name, mac: true, angeheftet: nil, zahl: zahl)
     }
 
     /// Mit dem Schein vom Mac (Nähe oder QR-Code): Adresse und Zahl stehen dann sichtbar in
@@ -376,14 +396,19 @@ struct Koppelbildschirm: View {
     private func koppeln(mit schein: Koppelschein) async {
         guard !laeuft else { return }
         gewaehlt = nil
-        adresseText = Suche.eingabetext(schein.adresse)
-        await koppeln(an: schein.adresse, name: nil, mac: false, zahl: schein.zahl.ziffern)
+        adresseText = schein.adresse.absoluteString
+        // DER NAME, unter dem der Mac im WLAN steht — damit das iPad ihn wiederfindet, wenn der
+        // Router ihm eine neue Adresse gibt.
+        let name = stand.gefunden.first { $0.ueberDenMac && $0.adresse == schein.adresse }?.name
+        await koppeln(an: schein.adresse, name: name, mac: true, angeheftet: schein.abdruck,
+                      zahl: schein.zahl.ziffern)
     }
 
-    private func koppeln(an ziel: URL, name: String?, mac: Bool, zahl eingabe: String) async {
+    private func koppeln(an ziel: URL, name: String?, mac: Bool, angeheftet: String?,
+                         zahl eingabe: String) async {
         laeuft = true
         let (ok, text) = await stand.koppele(adresse: ziel, name: name, ueberDenMac: mac,
-                                             zahl: eingabe)
+                                             angeheftet: angeheftet, zahl: eingabe)
         laeuft = false
         geklappt = ok
         satz = text

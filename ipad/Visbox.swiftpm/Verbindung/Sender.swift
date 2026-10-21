@@ -31,7 +31,9 @@ final class Sender {
         art.timeoutIntervalForRequest = 30
         art.urlCache = nil
         art.requestCachePolicy = .reloadIgnoringLocalCacheData
-        sitzung = URLSession(configuration: art)
+        // DAS ZERTIFIKAT DES MAC (Entscheid 118): fuer die Adresse des Mac nur das angeheftete
+        // (`Maclotse`); jede andere Adresse prueft das System wie bisher.
+        sitzung = URLSession(configuration: art, delegate: Maclotse.gemeinsam, delegateQueue: nil)
     }
 
     /// Führt eine Anfrage aus. `fortschritt` bekommt (gesendet, gesamt oder `nil`) — von
@@ -65,7 +67,14 @@ final class Sender {
             }
             return .antwort(status: http.statusCode, daten: daten)
         } catch {
-            return .keineAntwort(grund: Sender.satz(error, strecke: Strecke(basis: basis)),
+            // EIN ABGELEHNTES ZERTIFIKAT heisst fuer `URLSession` nur «abgebrochen» — gesagt wird,
+            // was es war.
+            if Maclotse.gemeinsam.nimmAblehnung(adresse) {
+                return .keineAntwort(grund: Macanbindung.satzFremdesZertifikat,
+                                     gesendeteBytes: zaehler.gesendet)
+            }
+            let strecke = Strecke(basis: basis, ueberDenMac: Maclotse.gemeinsam.kennt(basis))
+            return .keineAntwort(grund: Sender.satz(error, strecke: strecke),
                                  gesendeteBytes: zaehler.gesendet)
         }
     }
