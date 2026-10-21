@@ -2182,7 +2182,39 @@ STOFFE_IM_PROMPT = ("exposed concrete", "fair-faced concrete", "board-formed con
                     "wood", "white plaster", "plaster", "rammed earth", "sandstone")
 
 
-def material_vorne_satz(prompt_en: str, stoffe_bestellt=()) -> tuple[str | None, tuple]:
+#: Wie oft der Hauptstoff mit ``vis.material_vorne`` HOECHSTENS im ganzen Prompt steht
+#: (auf-20261021-303, B3: bei E3 stand er fuenfmal — dreimal vorne, einmal im Satz des
+#: Material-Knotens hinten, einmal im Prompt des Bestellers).
+MATERIAL_VORNE_HOECHSTENS = 3
+
+#: Die Wörter, an denen eine Nennung desselben Stoffs erkannt wird — «exposed concrete» und
+#: «smooth fair-faced concrete» sind beide Beton. Benachbarte Wörter zählen als eine Nennung
+#: («red brick masonry» ist einmal Backstein).
+STOFF_KOPFWOERTER = ("concrete", "brick", "masonry", "clinker", "stone", "sandstone",
+                     "timber", "wood", "plaster", "render", "earth")
+
+
+def stoff_nennungen(text: str, stoff: str) -> int:
+    """Wie oft ``text`` den Stoff ``stoff`` nennt — gezählt an seinen Kopfwörtern.
+
+    Kopfwörter sind die Wörter des Stoffs aus :data:`STOFF_KOPFWOERTER` (sonst sein letztes
+    Wort); eine Folge benachbarter Kopfwörter ist eine Nennung.
+    """
+    woerter = re.findall(r"[a-z][a-z-]*", (stoff or "").lower())
+    kopf = {w for w in woerter if w in STOFF_KOPFWOERTER} or set(woerter[-1:])
+    if not kopf:
+        return 0
+    zahl, vorher = 0, False
+    for wort in re.findall(r"[a-z][a-z-]*", (text or "").lower()):
+        treffer = wort in kopf
+        if treffer and not vorher:
+            zahl += 1
+        vorher = treffer
+    return zahl
+
+
+def material_vorne_satz(prompt_en: str, stoffe_bestellt=(), *,
+                        rest_prompt: str | None = None) -> tuple[str | None, tuple]:
     """``(satz, stoffe)`` für ``vis.material_vorne`` — der Stoff **vor** dem Prompt, mehrfach.
 
     Z-Image liest den Prompt mit einem Sprachmodell (Qwen3) statt mit CLIP; eine Gewichtung
@@ -2192,6 +2224,11 @@ def material_vorne_satz(prompt_en: str, stoffe_bestellt=()) -> tuple[str | None,
     (Material-Knoten, Fassade zuerst), sonst der erste im Prompt erkannte. Kein
     Bauteilwort (``prompts.BAUTEILWOERTER``) — der Satz bestellt Stoff, kein Bauteil.
     ``(None, ())``, wenn kein Stoff zu finden ist.
+
+    **Höchstens dreimal im ganzen Prompt** (auf-20261021-303, B3): Nennt der übrige Prompt
+    (``rest_prompt``, ohne Angabe ``prompt_en``) den Stoff schon, wird der Satz vorne um so
+    viele Nennungen kürzer — mindestens eine bleibt vorne. Aus «Sichtbeton» im Standardprompt
+    wird also «monolithic exposed concrete building, made entirely of exposed concrete».
     """
     stoffe = [s for s in stoffe_bestellt if s]
     if not stoffe:
@@ -2208,8 +2245,10 @@ def material_vorne_satz(prompt_en: str, stoffe_bestellt=()) -> tuple[str | None,
     if not stoffe:
         return None, ()
     haupt = stoffe[0]
-    return (f"monolithic {haupt} building, made entirely of {haupt}, uniform {haupt} on all "
-            f"exterior surfaces"), tuple(stoffe)
+    schon = stoff_nennungen(prompt_en if rest_prompt is None else rest_prompt, haupt)
+    teile = (f"monolithic {haupt} building", f"made entirely of {haupt}",
+             f"uniform {haupt} on all exterior surfaces")
+    return ", ".join(teile[:max(1, MATERIAL_VORNE_HOECHSTENS - schon)]), tuple(stoffe)
 
 
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
@@ -2548,6 +2587,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # im Ergebnis unter `lieferstatus_grund` (`fehlende_dateien`).
     fehlende_dateien: list[str] = []
     prompt_zusaetze: list[dict] = []
+    # Der Prompt, an den die Saetze der Knoten kommen — ohne die Saetze der Stimmungen, wenn
+    # eine bestellt ist (auf-20261021-306, B2; `stimmung.ohne_stimmungssaetze`).
+    prompt_basis = sprachbefund["uebersetzt"]
     umgebung_block = umgebung_aus_szene(render.get("environment"), guete=guete,
                                         grundlage=grundlage)
     if umgebung_block is not None:
@@ -2556,11 +2598,17 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         if umgebung_block["fehlt"]:
             fehlende_dateien.append(umgebung_block["fehlt"])
         if umgebung_block["umgebung"] is not None:
-            satz, schon = _stimmung.prompt_satz(umgebung_block["umgebung"]["preset"],
-                                                sprachbefund["uebersetzt"])
-            prompt_zusaetze.append({"art": "stimmung",
-                                    "preset": umgebung_block["umgebung"]["preset"],
-                                    "satz": satz, "schon_im_prompt": schon})
+            # DER SATZ DES HEIM-PC GILT, IMMER UND EINMAL (auf-20261021-306, B2): Bis dahin
+            # entschied ein `merkmal` im Prompt, ob er fehlte — kam der Satz des Knotens halb
+            # uebersetzt an («evening mood, warm light, leuchtende window»), fehlte er, und
+            # «abend» zeigte einen Innenraum. Jetzt werden die Saetze der Stimmungen aus dem
+            # Prompt genommen und der der bestellten angefuegt.
+            preset = umgebung_block["umgebung"]["preset"]
+            prompt_basis, herausgenommen = _stimmung.ohne_stimmungssaetze(prompt_basis)
+            prompt_zusaetze.append({"art": "stimmung", "preset": preset,
+                                    "satz": _stimmung.STIMMUNGEN[preset]["prompt_en"],
+                                    "schon_im_prompt": False,
+                                    "herausgenommen": list(herausgenommen)})
     # DIE MATERIALIEN (Entscheide 107/111/113) — siehe `materialien_aus_szene`. «weiss»
     # macht alle Oberflaechen zum Gipsmodell; Materialien daneben widersprechen sich.
     material_block = materialien_aus_szene(render.get("materialien"), guete=guete,
@@ -2577,7 +2625,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             maengel.append(satz)
             endgueltig.append(satz)
         for art, wahl in (material_block["materialien"] or {}).items():
-            satz, schon = _materialwahl.prompt_satz(art, wahl["id"], sprachbefund["uebersetzt"])
+            satz, schon = _materialwahl.prompt_satz(art, wahl["id"], prompt_basis)
             prompt_zusaetze.append({"art": "material", "bauteil_art": art, "id": wahl["id"],
                                     "satz": satz, "schon_im_prompt": schon})
     # DER ZUSATZ «LEERER HINTERGRUND» (auf-20261021-296, N3) — unser Messschalter, Vorgabe
@@ -2594,7 +2642,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         maengel.append(satz)
         endgueltig.append(satz)
     elif leer_wert:
-        satz, schon = zusatz_leerer_hintergrund(sprachbefund["uebersetzt"])
+        satz, schon = zusatz_leerer_hintergrund(prompt_basis)
         prompt_zusaetze.append({"art": "leerer_hintergrund", "satz": satz,
                                 "schon_im_prompt": schon})
     # DIE MESSSCHALTER AUS ENTSCHEID 117 (21.10.2026) — beide Vorgabe aus, keiner im Vertrag.
@@ -2620,7 +2668,21 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     elif vorne_wert:
         bestellt = [_materialwahl.BIBLIOTHEK[z["id"]]["prompt_en"] for z in prompt_zusaetze
                     if z.get("art") == "material" and z.get("id") in _materialwahl.BIBLIOTHEK]
-        satz, stoffe = material_vorne_satz(sprachbefund["uebersetzt"], bestellt)
+        # KEINE DOPPELUNG (auf-20261021-303, B3): Der Satz des Material-Knotens hinten
+        # («exterior surfaces of <Stoff>») sagt, was vorne schon steht — er faellt weg und
+        # bleibt mit `weggelassen` im Befund. Der Prompt des Bestellers bleibt Wort fuer Wort;
+        # nennt er den Stoff schon, wird der Satz vorne kuerzer (`material_vorne_satz`).
+        if bestellt:
+            for z in prompt_zusaetze:
+                if (z.get("art") == "material" and z.get("satz")
+                        and _materialwahl.BIBLIOTHEK.get(z.get("id"), {}).get("prompt_en")
+                        == bestellt[0]):
+                    z["weggelassen"] = "material_vorne"
+        rest = ", ".join([prompt_basis] + [
+            z["satz"] for z in prompt_zusaetze if z.get("satz") and not z.get("vorne")
+            and not z.get("weggelassen")])
+        satz, stoffe = material_vorne_satz(prompt_basis, bestellt,
+                                           rest_prompt=rest)
         prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
                                 "stoffe": list(stoffe), "schon_im_prompt": False})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
@@ -2661,9 +2723,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
 
     # DER PROMPT MIT DEN SAETZEN DER KNOTEN — nur, was er noch nicht traegt. Angefuegt NACH
     # dem Bauteilwaechter: Die Saetze stammen aus unseren Tabellen, nicht vom Besteller.
-    render_prompt = sprachbefund["uebersetzt"]
+    render_prompt = prompt_basis
     for zusatz in prompt_zusaetze:
-        if zusatz["satz"] and not zusatz.get("vorne"):
+        if zusatz["satz"] and not zusatz.get("vorne") and not zusatz.get("weggelassen"):
             render_prompt = (f"{render_prompt}, {zusatz['satz']}" if render_prompt.strip()
                              else zusatz["satz"])
     # Der Stoff VORNE (Messschalter `vis.material_vorne`) — nach allen anderen Saetzen
@@ -2803,7 +2865,8 @@ DURCHGEREICHT = {
     # als Satz in `prompt_zusaetze` (mit `vorne`) und damit im Prompt.
     "umriss_halten": ("abholer.umriss_halten_der_kamera (nachher) bzw. render.RenderAuftrag("
                       "umriss_halten_png=…) (im_lauf); Vermerk am Kameraurteil und Satz in "
-                      "'qa.verdict.hinweise'"),
+                      "'qa.verdict.hinweise' (dazu der Satz des Bildmodells) und "
+                      "'angewandt.umriss_halten' (auf-20261021-303 B2)"),
     "umgebung": ("abholer.verarbeiter → GRUNDLAGE_MUSS_PASSEN und render-result "
                  "'angewandt.environment'"),
     "umgebung_datei": ("abholer.verarbeiter → seams.glb_zu_multipass(umgebung_hdr=…) → "
@@ -3187,6 +3250,26 @@ FELD_AUSSERHALB = "ausserhalb_umriss_anteil"
 SATZ_AUSSERHALB = "KI BAUT UEBER DEN UMRISS HINAUS"
 
 
+def urteil_fuer_umrisssaetze(urteil):
+    """Das Urteil, von dem die Saetze zum Umriss kommen — bei «Umriss halten nachher» das des
+    GEHALTENEN Bilds (auf-20261021-303, B1).
+
+    Mit ``vis.umriss_halten: "nachher"`` wird ein anderes Bild geliefert als das, an dem die
+    Seedwahl gewaehlt hat. Das Kameraurteil (und damit ``qa.geometry``) bleibt das von vor dem
+    Halten; die Saetze «KI BAUT UEBER DEN UMRISS HINAUS» und «HAUS IM KI-BILD NICHT
+    WIEDERZUERKENNEN» und ``qa.ausserhalb_umriss_anteil`` sagen aber etwas ueber das gelieferte
+    Bild — sie lesen darum ``umriss_halten.urteil_nachher`` (``abholer.umriss_halten_der_kamera``).
+    Ohne Schalter, bei «im_lauf» oder ohne Nachmessung: das Urteil, wie es ist.
+    """
+    if not isinstance(urteil, dict):
+        return urteil
+    uh = urteil.get(URTEIL_UMRISS_HALTEN)
+    if (isinstance(uh, dict) and uh.get("angewandt") is True and uh.get("art") == "nachher"
+            and isinstance(uh.get("urteil_nachher"), dict) and uh["urteil_nachher"]):
+        return dict(urteil, **uh["urteil_nachher"])
+    return urteil
+
+
 def _ausserhalb_von(urteil):
     befund = (urteil or {}).get("ausserhalb_umriss") if isinstance(urteil, dict) else None
     wert = befund.get("anteil_haus") if isinstance(befund, dict) else None
@@ -3200,11 +3283,11 @@ def _ausserhalb_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list)
     werte = []
     for eintrag in je_kamera or ():
         if isinstance(eintrag, dict):
-            wert = _ausserhalb_von(eintrag.get("geometrie_urteil"))
+            wert = _ausserhalb_von(urteil_fuer_umrisssaetze(eintrag.get("geometrie_urteil")))
             if wert is not None:
                 werte.append((wert, eintrag.get("kamera")))
     if not werte:
-        wert = _ausserhalb_von(geometrie_urteil)
+        wert = _ausserhalb_von(urteil_fuer_umrisssaetze(geometrie_urteil))
         if wert is not None:
             werte.append((wert, (geometrie_urteil or {}).get("kamera")))
     if not werte:
@@ -3269,14 +3352,16 @@ def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> N
     werte = []
     for eintrag in je_kamera or ():
         if isinstance(eintrag, dict):
-            urteil = eintrag.get("geometrie_urteil")
+            # Bei «Umriss halten nachher» das gehaltene Bild (auf-20261021-303, B1).
+            urteil = urteil_fuer_umrisssaetze(eintrag.get("geometrie_urteil"))
             befund = wiedererkennung_des_urteils(urteil)
             if befund is not None:
                 werte.append((befund, eintrag.get("kamera"), urteil))
     if not werte:
-        befund = wiedererkennung_des_urteils(geometrie_urteil)
+        urteil = urteil_fuer_umrisssaetze(geometrie_urteil)
+        befund = wiedererkennung_des_urteils(urteil)
         if befund is not None:
-            werte.append((befund, (geometrie_urteil or {}).get("kamera"), geometrie_urteil))
+            werte.append((befund, (urteil or {}).get("kamera"), urteil))
     for befund, kamera, urteil in werte:
         if befund["gilt"]:
             continue
@@ -3379,13 +3464,27 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
             if uh.get("angewandt") is True:
                 messung = ""
                 if uh.get("art") == _uh.ART_NACHHER:
-                    messung = (f"; geprueft wurde das KI-Bild VOR dem Halten, danach "
-                               f"geom_iou {uh.get('geom_iou_nachher')} und ueber den Umriss "
-                               f"{uh.get('ausserhalb_nachher')}")
+                    # Seit auf-20261021-303 (B1): die Saetze zum Umriss gelten dem gehaltenen
+                    # Bild; das Urteil von vorher (Seedwahl, qa.geometry) steht hier.
+                    gehalten = ("die Saetze zum Umriss gelten dem gelieferten, gehaltenen Bild"
+                                if isinstance(uh.get("urteil_nachher"), dict)
+                                and uh["urteil_nachher"] else
+                                "die Saetze zum Umriss gelten dem Bild VOR dem Halten (nicht "
+                                "nachgemessen)")
+                    messung = (f"; nach dem Halten geom_iou {uh.get('geom_iou_nachher')} und "
+                               f"ueber den Umriss {uh.get('ausserhalb_nachher')}, {gehalten}; "
+                               f"vor dem Halten geom_iou {uh.get('geom_iou_vorher')} und ueber "
+                               f"den Umriss {uh.get('ausserhalb_vorher')} — daran hat die "
+                               f"Seedwahl gewaehlt, und qa.geometry bleibt dieses Urteil")
                 hinweise.append(
                     f"{_uh.SATZ}, Kamera {kamera!r}: Art '{uh.get('art')}' — ausserhalb des "
                     f"Hauses (Rand {uh.get('rand_px')} px) gilt das Cycles-Bild{messung}. "
                     f"Nie Vorgabe.")
+                # DER SATZ DES BILDMODELLS (auf-20261021-303, B2) — bei «im_lauf» stand er nur
+                # im Befund; jetzt auch hier, Wort fuer Wort, einmal je Wortlaut.
+                for satz in uh.get("hinweise") or ():
+                    if isinstance(satz, str) and satz and satz not in hinweise:
+                        hinweise.append(satz)
             else:
                 hinweise.append(
                     f"{_uh.SATZ}, Kamera {kamera!r}: NICHT angewandt — "

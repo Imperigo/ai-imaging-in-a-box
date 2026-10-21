@@ -438,7 +438,7 @@ WEG_GERAETE = "/api/geraete"
 #: Namen. Gesetzt von ``Anfragen`` im Kern der App.
 KOPF_GERAET = "X-Geraet"
 #: Der Kopf, den die Vermittlung des Mac an jede weitergereichte Anfrage des iPad hängt
-#: (``mac``). Fehlt er, kam das iPad direkt.
+#: (``mac``). Fehlt er, kam das iPad direkt — und wird seit Entscheid 118a mit 410 abgewiesen.
 KOPF_WEG = "X-Geraet-Weg"
 #: Höchstens so viele Bytes liest `POST /api/verbinden` — der einzige Weg, der ohne Anmeldung
 #: einen Rumpf annimmt. Gleich der Grenze der Vermittlung am Mac (`koppelRumpfGrenze`).
@@ -1735,6 +1735,14 @@ class Flaeche(BaseHTTPRequestHandler):
         # bei der Suche, wen er vor sich hat, auch hinter einer Weiterleitung ohne Kennwort.
         if self.command == "GET" and weg == WEG_HALLO:
             return True
+        # DER DIREKTE WEG DES IPAD ENDET (Entscheid 118a, 21.10.2026): Ein iPad spricht nur
+        # noch ueber den Mac (dessen Vermittlung setzt `X-Geraet-Weg: mac`). Kommt es direkt,
+        # bekommt es 410 mit dem Satz, was zu tun ist — vor Anmeldung und Kopplung, damit auch
+        # ein altes Koppeln direkt am Heim-PC nicht mehr geht. Ohne Geraetekopf (Mac-App,
+        # Visbox-Seite, KosmoOrbit, Werkzeuge der HomeStation) aendert sich nichts.
+        if geraetebuch.direkt_vom_ipad(self._kopf(KOPF_GERAET), self._kopf(KOPF_WEG)):
+            self._fehler(geraetebuch.SATZ_DIREKT_BEENDET, 410)
+            return False
         if self.kennwort is None and _ueber_weiterleitung(self.headers):
             self._fehler(
                 f"Diese Anfrage kam über eine Weiterleitung (z. B. Tailscale Serve). So ist "
@@ -2048,7 +2056,8 @@ class Flaeche(BaseHTTPRequestHandler):
                 antwort["glb"] = bool(antwort["glb"])
                 self._sende(antwort)
             elif pfad == WEG_KNOTEN_MODELL_LADEN:
-                self._sende(modell_laden_sicht(type(self).modell_laden))
+                self._sende(modell_laden_sicht(type(self).modell_laden,
+                                               type(self).zuletzt_geoeffnet))
             elif pfad in (WEG_KNOTEN_MAPPEN, WEG_KNOTEN_MAPPE_PAKET, WEG_KNOTEN_MAPPE_DATEI):
                 self._mappenpaket_lesen(pfad, frage or {})
             elif pfad == WEG_KNOTEN_STANDPUNKTE:
@@ -2179,13 +2188,37 @@ class Flaeche(BaseHTTPRequestHandler):
         # `Path(self.ordner)` erst beim Anlegen des Fadens — ohne `--ordner` warf das, NACHDEM der
         # Stand schon «laeuft» hiess, und jedes weitere Laden bekam 409 bis zum Neustart.
         start = Path(self.ordner) if self.ordner else None
+        # AUS DER MAPPE AM MAC (Befund auf-20261021-304 B1, 21.10.2026): Bis dahin machte jedes
+        # Laden die neue Mappe zur zuletzt geoeffneten — fuer ALLE Geraete, auch wenn die Datei
+        # nur in eine Mappe am Mac sollte. Nennt die App ihre Mappe (`X-Mappe-Am-Mac`), entsteht
+        # hier nur ein Zwilling: neu angelegt oder eine neue Fassung NUR im Zwilling, den der Mac
+        # nennt (`X-Mappe-Heim`); die zuletzt geoeffnete Mappe bleibt, wie sie war.
+        am_mac = _mappenname_aus_kopf(self.headers.get(KOPF_MAPPE_AM_MAC))
+        ersetzbar = None
+        if am_mac:
+            ersetzbar = set()
+            heim = (self.headers.get(KOPF_MAPPE_HEIM) or "").strip()
+            if heim:
+                try:
+                    ersetzbar.add(Path(mappenpaket.finde(
+                        urllib.parse.unquote(heim), self.ordner,
+                        klasse.zuletzt_geoeffnet)).resolve())
+                except mappenpaket.MappenpaketError:
+                    pass
+            # Die Mappe, mit der hier gearbeitet wird, bekommt nie eine Fassung vom Mac.
+            for offen in (self.ordner, klasse.zuletzt_geoeffnet):
+                if offen:
+                    ersetzbar.discard(Path(offen).resolve())
         stand = {"kennung": secrets.token_hex(6), "stand": "laeuft", "datei": dateiname,
                  "schritt": "ablegen", "satz": f"«{dateiname}» wird geladen …",
                  "begonnen": time.monotonic()}
+        if am_mac:
+            stand["am_mac"] = am_mac
         klasse.modell_laden = stand
         faden = threading.Thread(target=_lade_modell_im_hintergrund, name="modell-laden",
                                  args=(klasse, start, dateiname, inhalt,
-                                       stand["kennung"]), daemon=True)
+                                       stand["kennung"]),
+                                 kwargs={"ersetzbar": ersetzbar}, daemon=True)
         klasse.modell_faden = faden
         faden.start()
         self._sende(modell_laden_sicht(stand), 202)
@@ -3221,23 +3254,47 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
         LAUFSTAND.beende(ergebnis=ergebnis_fuer_den_stand, fehler=fehler_fuer_den_stand)
 
 
-def modell_laden_sicht(stand: dict | None) -> dict:
+#: Der Satz, wenn der Stand des Ladens nicht mehr die offene Mappe meint (Befund 307 B1).
+SATZ_LADEN_VERALTET = ("Dieses Laden ist vorbei — seither ist eine andere Mappe offen. Der Stand "
+                       "zeigt das letzte Laden, nicht die offene Mappe.")
+
+
+def modell_laden_sicht(stand: dict | None, zuletzt_geoeffnet=None) -> dict:
     """Was ``GET /knoten/modell-laden`` sagt: die Formate (aus :mod:`aiimaging.modellladen`,
     also aus ``importeur.WEGE``) und der Stand des Ladens — **ohne Plattenpfad**: Die Mappe
-    steht nur mit ihrem Namen da (Regel 3, ein Pfad traegt den Rechnernamen nach aussen)."""
+    steht nur mit ihrem Namen da (Regel 3, ein Pfad traegt den Rechnernamen nach aussen).
+
+    **Veraltet, nicht geloescht** (Befund ``auf-20261021-307`` B1): Der Stand ist einer fuer alle
+    Geraete. Hat ein geladenes Modell die Mappe zur zuletzt geoeffneten gemacht und ist seither
+    eine andere offen (``zuletzt_geoeffnet``), steht ``veraltet: true`` mit
+    :data:`SATZ_LADEN_VERALTET` dabei und ``zuletzt_geoeffnet`` sagt ``false`` — sonst hielte man
+    ihn fuer die offene Mappe. Ein Laden aus der Mappe am Mac war nie die offene (``false``)."""
     sicht = None
     if stand:
         sicht = {k: v for k, v in stand.items() if k not in ("begonnen", "mappe_pfad")}
         sicht["seit_s"] = round(time.monotonic() - stand["begonnen"], 1)
+        geladen = stand.get("mappe_pfad")
+        veraltet = bool(geladen and stand.get("zuletzt_geoeffnet")
+                        and (not zuletzt_geoeffnet
+                             or Path(zuletzt_geoeffnet).resolve() != Path(geladen).resolve()))
+        if stand.get("stand") != "laeuft":
+            sicht["veraltet"] = veraltet
+        if veraltet:
+            sicht["zuletzt_geoeffnet"] = False
+            sicht["satz_veraltet"] = SATZ_LADEN_VERALTET
     return {"formate": modellladen.anzeige_formate(), "annehmen": modellladen.annehmen(),
             "hoechstens_mb": modellladen.GROESSTE_DATEI_BYTE // (1024 * 1024), "laden": sicht}
 
 
 def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inhalt: bytes,
-                                kennung: str) -> None:
+                                kennung: str, *, ersetzbar=None) -> None:
     """Der Faden hinter ``POST /knoten/modell-laden``: ruft :func:`modellladen.lade` und
     schreibt den Stand zurück. Gelingt es, ist die Mappe danach die **zuletzt geöffnete**
-    (Entscheid 85 B) — Knoten und Seite zeigen sie beide."""
+    (Entscheid 85 B) — Knoten und Seite zeigen sie beide.
+
+    **Ausser aus der Mappe am Mac** (``ersetzbar`` gesetzt, Befund ``auf-20261021-304`` B1):
+    Dann ist die neue Mappe nur ein Zwilling, den der Mac holt; die zuletzt geöffnete bleibt,
+    und der Stand sagt es (``zuletzt_geoeffnet: false``)."""
 
     def gilt() -> bool:
         return bool(klasse.modell_laden) and klasse.modell_laden.get("kennung") == kennung
@@ -3249,7 +3306,8 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
                                    "satz": ereignis.get("satz") or klasse.modell_laden["satz"]}
 
     try:
-        ergebnis = modellladen.lade(start, dateiname, inhalt, melder=melder)
+        ergebnis = modellladen.lade(start, dateiname, inhalt, melder=melder,
+                                    ersetzbar=ersetzbar)
     except modellladen.ModellLadenError as fehler:
         ergebnis = {"stand": "fehler", "satz": str(fehler), "mappe": None}
     except Exception as fehler:                    # noqa: BLE001 — der Faden sagt es, statt zu sterben
@@ -3260,17 +3318,19 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
             "satz": ergebnis["satz"], "schritt": None,
             "dauer_s": ergebnis.get("dauer_s"), "herkunft": ergebnis.get("herkunft"),
             "ersetzt": bool(ergebnis.get("ersetzt")), "fassung": ergebnis.get("fassung"),
-            "mappe": None, "bauteile": None}
+            "mappe": None, "bauteile": None, "zuletzt_geoeffnet": ersetzbar is None}
     mappe = ergebnis.get("mappe")
     if ergebnis["stand"] == "geladen" and mappe:
         ende["mappe"] = Path(mappe).name
+        # DER PFAD NUR FUER DEN VERGLEICH (307 B1) — die Sicht laesst ihn weg (Regel 3).
+        ende["mappe_pfad"] = str(mappe)
         try:
             ende["bauteile"] = knotenweg.mappe_fuer_knoten(mappe)["bauteile"]
         except (projekt.ProjektError, OSError):
             pass
     with Flaeche.reihe:
         if gilt():
-            if ergebnis["stand"] == "geladen" and mappe:
+            if ergebnis["stand"] == "geladen" and mappe and ersetzbar is None:
                 klasse.zuletzt_geoeffnet = str(mappe)
             klasse.modell_laden = ende
 

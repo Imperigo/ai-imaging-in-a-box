@@ -105,12 +105,32 @@ def test_die_karte_kommt_aus_der_antwort_der_knotenansicht():
     assert "brauchtKarte" not in zentrale, "nicht allein aus der Art des Werkzeugs"
     # NUR DIE WEGE VON window.visboxKi, keiner gibt frei.
     aufrufe = set(re.findall(r'Kibruecke\.rumpf\("(\w+)\(', zentrale))
-    assert aufrufe == {"rufe", "entscheide", "werkzeuge", "rueckgaengigKi"}, aufrufe
+    assert aufrufe == {"rufe", "entscheide", "werkzeuge", "rueckgaengigKi", "stelleWieder"}, aufrufe
     assert "rufe(JSON.parse(ruf), modus)" in zentrale, "der Modus kommt bei jedem Aufruf mit"
     assert "Kibruecke.nichtOffen" in zentrale, "ohne offene Knotenansicht ein klarer Satz"
     assert "Knotenwege.ordnerImBuendel" in zentrale and "Kibruecke.listendatei" in zentrale
     assert "await kern.entscheide(kennung, ergebnis)" in zentrale
-    assert "beantworteOffene(Kibruecke.verworfen(grund))" in zentrale
+    # STRANG KARTEN (21.10.2026): Geht die Seite, bleiben die Karten — niemand verwirft sie still.
+    weg = zentrale[zentrale.index("func knotenWeg"):zentrale.index("func empfange")]
+    assert "beantworteOffene" not in weg and "ablage.seiteWeg()" in weg, weg
+
+
+def test_offene_karten_ueberleben_den_wechsel_der_ansicht():
+    """Strang Karten: Die App haelt die Karten und gibt sie der neu geladenen Seite zurueck."""
+    zentrale = _code(CLAUDE / "Kizentrale.swift")
+    assert "Task { await gibKartenZurueck() }" in zentrale, "nach «bereit» zurueckgeben"
+    assert 'Kibruecke.rumpf("stelleWieder(JSON.parse(karten))")' in zentrale
+    assert "ablage.lege(karte, mappe: kartenmappe)" in zentrale
+    assert "ablage.entscheide(kennung, ja: ja, mappe: kartenmappe, seiteOffen: knoten != nil)" in zentrale
+    assert "Kartenablage.abgelaufen(e)" in zentrale, "bei Ablauf ein Satz mit Grund an Claude"
+    flaeche = _code(START / "Arbeitsansicht.swift")
+    assert "Kizentrale.gemeinsam.setzeKartenmappe(mappe)" in flaeche
+    wirt = _code(WIRT / "src" / "ki-wirt.ts")
+    verlassen = wirt[wirt.index("const beimVerlassen"):wirt.index("fenster.addEventListener('pagehide'")]
+    assert "verwirf" not in verlassen, "beim Neuladen wird in der Seite nichts verworfen"
+    assert "behandle(alsAufruf(v), 'karte')" in wirt, "zurueckgegeben wird nie still angewendet"
+    kern = (KERN / "Kartenablage.swift").read_text(encoding="utf-8")
+    assert "public static let frist: TimeInterval = 4 * 60 * 60" in kern
 
 
 def test_die_mac_werkzeuge_lesen_ueber_die_bestehenden_wege_und_geben_nichts_frei():

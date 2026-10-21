@@ -190,22 +190,30 @@ def _traegt_dieselbe_datei(ordner: Path, dateiname: str) -> bool:
     return Path(str(pfad).replace("\\", "/")).name.casefold() == dateiname.casefold()
 
 
-def ziel_fuer(eltern, dateiname) -> tuple[Path, bool]:
+def ziel_fuer(eltern, dateiname, *, ersetzbar=None) -> tuple[Path, bool]:
     """Wohin eine Datei dieses Namens gehört: ``(mappe, ersetzen)``.
 
     ``ersetzen`` ist ``True``, wenn dort schon eine Mappe mit **derselben Datei** liegt
     (90b). Sonst der erste freie Name aus ``<name>``, ``<name>-2``, ``<name>-3`` … —
     ein vorhandener Ordner, der nicht dieselbe Datei trägt (eine andere Mappe, ein
     fremder Ordner), wird nie angefasst.
+
+    ``ersetzbar`` (Befund ``auf-20261021-304`` B1, 21.10.2026): ``None`` heisst wie bisher —
+    jede Mappe mit derselben Datei bekommt eine neue Fassung. Eine Menge von Ordnern heisst:
+    **nur** diese dürfen eine neue Fassung bekommen, jede andere gleichnamige bleibt unberührt
+    und die Datei kommt in den nächsten freien Namen. So legt ein Laden aus der Mappe am Mac
+    höchstens einen Zwilling an und schreibt nie in die Mappe, mit der am Heim-PC gearbeitet wird.
     """
     eltern = Path(eltern)
     dateiname = pruefe_dateiname(dateiname)
     name = mappenname(dateiname)
+    erlaubt = None if ersetzbar is None else {Path(p).resolve() for p in ersetzbar}
     for nummer in range(1, 1000):
         kandidat = eltern / (name if nummer == 1 else f"{name}-{nummer}")
         if not kandidat.exists():
             return kandidat, False
-        if _traegt_dieselbe_datei(kandidat, dateiname):
+        if _traegt_dieselbe_datei(kandidat, dateiname) and (
+                erlaubt is None or kandidat.resolve() in erlaubt):
             return kandidat, True
     raise ModellLadenError(
         f"Neben der Start-Mappe liegen schon 999 Ordner namens «{name}…» — bitte aufräumen "
@@ -217,7 +225,7 @@ def _fehler(satz: str, **mehr) -> dict:
 
 
 def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float | None = None,
-         _starte=None) -> dict:
+         ersetzbar=None, _starte=None) -> dict:
     """Eine geladene Datei zu einer Mappe machen — neu (90a) oder als neue Fassung (90b).
 
     Args:
@@ -226,6 +234,8 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
         dateiname: Der Name der Datei, wie der Browser ihn schickt.
         inhalt: Die Bytes.
         melder: Bekommt ``{"schritt": …, "satz": …}`` vor jedem Schritt — für den Knoten.
+        ersetzbar: Welche Mappen eine neue Fassung bekommen dürfen (:func:`ziel_fuer`);
+            ``None`` wie bisher alle mit derselben Datei.
 
     Returns:
         ``{stand, satz, mappe, ersetzt, fassung, herkunft, import}``. ``stand`` ist
@@ -265,7 +275,7 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
     else:
         eltern = mappen_ordner()
         eltern.mkdir(parents=True, exist_ok=True)
-    mappe, ersetzen = ziel_fuer(eltern, dateiname)
+    mappe, ersetzen = ziel_fuer(eltern, dateiname, ersetzbar=ersetzbar)
     fassung = (projekt.modellfassung(projekt.oeffne(mappe)["projekt"]) + 1) if ersetzen else 1
     ablage = mappe / QUELLORDNER / f"f{fassung}"
     neu_angelegt = not mappe.exists()

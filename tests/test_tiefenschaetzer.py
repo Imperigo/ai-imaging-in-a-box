@@ -934,6 +934,9 @@ def test_lade_modell_scheitert_erst_am_fehlenden_gpu_stack(tmp_path, ohne_gpu_st
     ``sys.modules`` lag — also genau auf der Maschine, auf der ``lade_modell`` wirklich
     gerufen wird. Ein Test, der sich dort wegduckt, wo es ernst wird, belegt nichts.
     """
+    # Ein vollstaendiger Ordner (seit auf-20261021-302 B1 wird ein leerer vorher abgewiesen).
+    (tmp_path / "config.json").write_text('{"model_type": "depth_anything"}', encoding="utf-8")
+    (tmp_path / "model.safetensors").write_bytes(b"")
     with pytest.raises(ts.TiefenschaetzerError, match="torch/transformers"):
         ts.lade_modell(ts.VORGABE_TIEFENSCHAETZER, tmp_path)
 

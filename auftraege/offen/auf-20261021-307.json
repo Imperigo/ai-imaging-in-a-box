@@ -1,0 +1,50 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261021-307",
+  "art": "qa",
+  "beschreibung": "Befund 304 B1 behoben pruefen: «Datei laden …» vom Mac (mit X-Mappe-Am-Mac) legt am Heim-PC nur einen Zwilling an und stellt die Heim-Mappe aller anderen Geraete nicht mehr um; ohne Kopf wie bisher.",
+  "erstellt": "2026-10-21T12:00:00Z",
+  "rang": 94,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "params": {
+    "befund": "auf-20261021-304 B1",
+    "einbau": [
+      "C107"
+    ],
+    "protokoll": "74 §179",
+    "koepfe": [
+      "X-Mappe-Am-Mac",
+      "X-Mappe-Heim"
+    ],
+    "weg": "POST /knoten/modell-laden",
+    "laeufe": [],
+    "neue_ki_laeufe": 0,
+    "gewichte": [],
+    "download_gb": 0
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit der Behebung von Befund auf-20261021-304 B1 (Protokoll 74 §179, Einbau C107); die Zentrale sagt den Stand an; erst danach git pull, Dienst (Server) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS IST: (a) POST /knoten/modell-laden MIT dem Kopf X-Mappe-Am-Mac: <Name, prozentkodiert> (so schickt es die Mac-App ab jetzt, wenn eine Mappe am Mac offen ist) legt die Mappe am Heim-PC nur noch als Zwilling an und macht sie NICHT mehr zur zuletzt geoeffneten — /knoten/mappe, die Knotenansicht, die Visbox-Seite (GET /api/projekt) und das iPad im Uebergang zeigen danach weiter dieselbe Mappe wie vorher. GET /knoten/modell-laden meldet dann laden.am_mac = <Name> und laden.zuletzt_geoeffnet = false. (b) Mit diesem Kopf bekommt eine vorhandene Mappe mit derselben Datei NUR dann eine neue Fassung, wenn der Mac sie mit X-Mappe-Heim: <Name> als seinen Zwilling nennt — nie die Start-Mappe oder die zuletzt geoeffnete; sonst kommt die Datei in den naechsten freien Namen (<name>-2 ...). (c) OHNE den Kopf (Visbox-Seite, KosmoOrbit, Mac ohne Mappe am Mac) alles wie bisher: die neue Mappe wird die zuletzt geoeffnete, laden.zuletzt_geoeffnet = true. Am Rechnen aendert sich nichts. WAS ZU TUN IST, in dieser Reihenfolge, alles ueber den Server (https, Anmeldung wie eure Brueckenlaeufe; die Mac-App wird NICHT gebraucht — ihr spielt den Mac mit Python urllib oder curl): (0) STAND VORHER: GET /knoten/mappe und GET /api/projekt merken (Felder name, mappe, glb, bauteile bzw. der Mappenname der Seite, KEINEN Pfad in die Rueckgabe). Das ist <H>, die Heim-Mappe aller Geraete. (1) DEN FEHLER AUS 304 NACHSTELLEN UND ZEIGEN, DASS ER BEHOBEN IST: ein synthetisches glb mit tools/make_test_glb.py (z. B. Hauptbau/Anbau/Dachaufbau/Platte wie in 304), Dateiname probe-307.glb. POST /knoten/modell-laden als Formular (Feld datei) MIT dem Kopf X-Mappe-Am-Mac: Probe%20am%20Mac. Antwort 202; GET /knoten/modell-laden alle 2 s bis laden.stand nicht mehr laeuft. Erwartet: stand geladen, laden.mappe = probe-307 (der Zwilling), laden.am_mac = «Probe am Mac», laden.zuletzt_geoeffnet = false. SOFORT DANACH, ohne Kopf: GET /knoten/mappe und GET /api/projekt — beide wie in (0), also weiter <H>, NICHT probe-307. Auch GET /knoten/modell.glb hat die Groesse von <H>. (2) DER MAC KANN DEN ZWILLING HOLEN: GET /knoten/mappen nennt probe-307; GET /knoten/mappe-paket?mappe=probe-307 beginnt mit modell.glb; diese Datei mit GET /knoten/mappe-datei?mappe=probe-307&weg=modell.glb holen, Groesse = Paket. Danach nochmals GET /knoten/mappe: weiter <H>. (3) NEUE FASSUNG NUR IM GENANNTEN ZWILLING: dasselbe probe-307.glb noch einmal laden, jetzt mit X-Mappe-Am-Mac: Probe%20am%20Mac UND X-Mappe-Heim: probe-307. Erwartet: laden.mappe = probe-307, laden.ersetzt = true, laden.fassung = 2, zuletzt_geoeffnet = false; GET /knoten/mappe weiter <H>. (4) GEGENPROBE OHNE KOPF, wie bisher: probe-307-c.glb (ein zweites synthetisches glb) OHNE Kopf laden. Erwartet: laden.zuletzt_geoeffnet = true, GET /knoten/mappe zeigt jetzt probe-307-c (so war es bisher fuer jedes Laden). (5) DIE OFFENE MAPPE BEKOMMT NIE EINE FASSUNG VOM MAC — gleich anschliessend, solange probe-307-c die zuletzt geoeffnete ist: dasselbe probe-307-c.glb mit X-Mappe-Am-Mac: Probe%20am%20Mac UND X-Mappe-Heim: probe-307-c laden. Erwartet: laden.mappe = probe-307-c-2, laden.ersetzt = false; GET /knoten/mappe zeigt weiter probe-307-c mit fassung 1. DANACH SOFORT ZURUECKSTELLEN wie in 304: GET /api/projekt?ordner=<Pfad der Start-Mappe>, und pruefen, dass GET /knoten/mappe wieder <H> zeigt. Die Zeit zwischen dem Laden in (4) und dem Zurueckstellen angeben (soll unter zwei Minuten liegen). (6) SCHLECHTER KOPF gilt als nicht gesagt: probe-307-d.glb mit X-Mappe-Am-Mac: ..%2Fetc — erwartet laden.zuletzt_geoeffnet = true (wie ohne Kopf); sofort zurueckstellen wie in (5). AUFRAEUMEN erst nach dem letzten Push: die Probemappen probe-307* per gio trash, keine eigenen Prozesse. NICHT: keine KI-Laeufe, kein Blender-Lauf (es wird nur geladen, nicht gerechnet); die Mac-App nicht anfassen; die Heim-Mappe <H> nicht laden, nicht ersetzen, nicht verschieben; keine Koepfe, Kennwoerter, Pfade oder Hosts in die Rueckgabe; nichts am Code aendern — ein Fehler kommt als Befund zurueck.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Dienst neu gestartet ja/nein, Systemlast.",
+    "0: <H> — Felder name, mappe, glb, bauteile, fassung von /knoten/mappe; Mappenname von /api/projekt (kein Pfad).",
+    "1: Status des POST, Endstand von laden (stand, mappe, am_mac, zuletzt_geoeffnet, dauer_s); /knoten/mappe und /api/projekt danach gleich <H> ja/nein; Modellgroesse gleich ja/nein.",
+    "2: probe-308 in /knoten/mappen ja/nein; Paket beginnt mit modell.glb ja/nein; Groesse geholt = Paket ja/nein; /knoten/mappe danach gleich <H> ja/nein.",
+    "3: laden (mappe, ersetzt, fassung, zuletzt_geoeffnet); /knoten/mappe gleich <H> ja/nein.",
+    "4: laden.zuletzt_geoeffnet; /knoten/mappe zeigt probe-308-c ja/nein.",
+    "5: laden (mappe, ersetzt); /knoten/mappe weiter probe-308-c mit fassung 1 ja/nein; zurueckgestellt nach wie vielen Sekunden; danach gleich <H> ja/nein.",
+    "6: laden.zuletzt_geoeffnet beim schlechten Kopf; zurueckgestellt ja/nein.",
+    "EINBAU: Belegt, dass «Datei laden …» aus der Mappe am Mac die Heim-Mappe anderer Geraete nicht mehr umstellt und ohne Kopf alles wie bisher ist — damit wird C107 am Heim-PC bestaetigt; die Geraeteprobe am Mac bleibt beim Owner."
+  ]
+}

@@ -259,9 +259,11 @@ def test_material_vorne_stellt_den_stoff_aus_dem_prompt_an_den_anfang():
     prompt = "contemporary residential building, exposed concrete, architectural photography"
     szene = kosmo_szene.lies_szene(_szene(prompt, material_vorne=True), streng=False)
     assert not szene["maengel"]
+    # Der Prompt nennt den Stoff schon einmal — vorne stehen darum zwei Nennungen, im ganzen
+    # Prompt drei (seit auf-20261021-303, B3; bis 0.3.16 vier).
     assert szene["prompt"].startswith("monolithic exposed concrete building, made entirely of "
-                                      "exposed concrete, uniform exposed concrete on all "
-                                      "exterior surfaces, contemporary residential building")
+                                      "exposed concrete, contemporary residential building")
+    assert kosmo_szene.stoff_nennungen(szene["prompt"], "exposed concrete") == 3
     assert szene["prompt"].endswith(prompt)
     zusatz = [z for z in szene["prompt_zusaetze"] if z["art"] == "material_vorne"]
     assert len(zusatz) == 1 and zusatz[0]["vorne"] is True
@@ -454,7 +456,9 @@ def _messauftrag():
     treffer = []
     for pfad in sorted((WURZEL / "auftraege" / "offen").glob("auf-2026102*-*.json")):
         daten = json.loads(pfad.read_text(encoding="utf-8"))
-        if "vis.umriss_halten" in json.dumps(daten.get("params", {})):
+        # Der Messauftrag DIESES Strangs (303); der Nachfolger 307 traegt «Strang Kern».
+        if ("vis.umriss_halten" in json.dumps(daten.get("params", {}))
+                and "Strang Treue" in daten.get("beschreibung", "")):
             treffer.append(daten)
     assert len(treffer) == 1, [t.get("auftrag_id") for t in treffer]
     return treffer[0]

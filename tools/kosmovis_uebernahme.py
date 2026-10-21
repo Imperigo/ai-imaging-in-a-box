@@ -75,6 +75,9 @@ WOERTLICH = (
     f"{APP}/fonts.css",
     "apps/kosmo-orbit/public/fonts/*.woff2",
     "apps/kosmo-orbit/public/fonts/README.md",
+    # Schritt W (Bauplan «Neue Knoten», 21.10.2026): die Vorschaubilder der Himmel und Materialien
+    # (CC0, verkleinert, mit quellen.json) — Vite nimmt `publicDir: '../kosmo-orbit/public'`.
+    "apps/kosmo-orbit/public/vis/**",
     # Die Insel-Bühne, auf der das Vis-Werkzeug steht (ohne die Inhalte des Design-Moduls)
     f"{APP}/modules/design/island/IslandShell.tsx",
     f"{APP}/modules/design/island/island.css",

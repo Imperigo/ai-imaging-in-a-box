@@ -38,6 +38,17 @@ Das iPad fragt alle zehn Sekunden. Jede Anfrage auf die Platte zu schreiben, hie
 8640 Schreibvorgänge am Tag für eine Anzeige, die auf die Minute genügt. Geschrieben wird
 darum **bei jeder Kopplung, bei jedem Wechsel des Wegs und sonst höchstens einmal je
 :data:`SCHREIBABSTAND_S`**; im Arbeitsspeicher steht immer der neueste Stand.
+
+Der direkte Weg endet (Owner-Entscheid 118a, 21.10.2026)
+---------------------------------------------------------
+Seit Entscheid 118 arbeitet das iPad **über den Mac**: Die Mappe liegt dort, und ein iPad, das
+direkt mit dem Heim-PC spricht, sähe einen zweiten Stand derselben Arbeit. In 0.3.16 ging der
+direkte Weg noch, mit Hinweis (Übergang). Seither weist der Heim-PC ein iPad, das direkt
+spricht, **mit einem Satz ab** (:func:`direkt_vom_ipad`, :data:`SATZ_DIREKT_BEENDET`, Antwort
+410). Woran es erkennbar ist: ``X-Geraet: ipad`` ohne ``X-Geraet-Weg: mac`` — den Wegkopf setzt
+die Vermittlung des Mac an jede Anfrage, die sie weiterreicht. Wer keinen Gerätekopf schickt
+(Mac-App mit ``mac``, Visbox-Seite, KosmoOrbit, die Werkzeuge der HomeStation), ist nicht
+gemeint.
 """
 from __future__ import annotations
 
@@ -47,8 +58,8 @@ import time
 from pathlib import Path
 
 __all__ = [
-    "ARTEN", "DATEINAME", "SCHREIBABSTAND_S", "WEGE",
-    "antwort", "gemerkt", "lies", "schreibe", "vermerke_anfrage", "vermerke_kopplung",
+    "ARTEN", "DATEINAME", "SATZ_DIREKT_BEENDET", "SCHREIBABSTAND_S", "WEGE",
+    "antwort", "direkt_vom_ipad", "gemerkt", "lies", "schreibe", "vermerke_anfrage", "vermerke_kopplung",
     "zum_schreiben",
 ]
 
@@ -64,6 +75,22 @@ DATEINAME = "geraete.json"
 
 #: Höchstens so oft wird eine blosse Meldung («es fragt wieder») auf die Platte geschrieben.
 SCHREIBABSTAND_S = 60.0
+
+#: Der Satz für ein iPad, das direkt mit dem Heim-PC spricht (Entscheid 118a). Er sagt, was
+#: zu tun ist — ohne Rechnernamen, ohne Adresse.
+SATZ_DIREKT_BEENDET = ("Das iPad verbindet sich jetzt über den Mac — am Mac «iPad koppeln» "
+                       "öffnen und das iPad mit dem Mac koppeln. Direkt nimmt der Heim-PC "
+                       "das iPad nicht mehr an.")
+
+
+def direkt_vom_ipad(geraet, weg) -> bool:
+    """Ob eine Anfrage von einem iPad **direkt** kommt — ``X-Geraet: ipad`` ohne
+    ``X-Geraet-Weg: mac`` (Entscheid 118a). Gross- und Kleinschreibung und Leerraum am Rand
+    zählen nicht; ein fehlender Gerätekopf heisst «kein iPad», nicht «direkt».
+    """
+    if (geraet or "").strip().lower() != "ipad":
+        return False
+    return (weg or "").strip().lower() != "mac"
 
 
 def _jetzt(jetzt) -> float:

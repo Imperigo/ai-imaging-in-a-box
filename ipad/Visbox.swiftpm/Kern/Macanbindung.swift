@@ -24,8 +24,10 @@ public enum Anbindungsart: Equatable, Sendable {
     /// Über den Mac, aber **ohne** Verschlüsselung oder ohne angeheftetes Zertifikat (eine
     /// Kopplung aus der Zeit vor 118). Gesendet wird darüber nichts.
     case macUngeschuetzt
-    /// Direkt am Heim-PC (Heimnetz oder Tailscale) — die **Übergangsfassung**: Es geht noch,
-    /// aber die Mappe am Mac sieht das iPad so nicht.
+    /// Direkt am Heim-PC (Heimnetz oder Tailscale) — **eine Kopplung von vorher**: In 0.3.16
+    /// ging sie noch (Übergang); seit Entscheid 118a weist der Heim-PC sie mit 410 ab
+    /// (`Macanbindung.satzDirektBeendet`). Gefragt wird trotzdem, damit der Satz des Heim-PC
+    /// ankommt — und ein Heim-PC mit altem Stand weiter antwortet, bis er nachgezogen ist.
     case direkt(Strecke)
     /// Nicht gekoppelt.
     case keine
@@ -82,9 +84,14 @@ public enum Macanbindung {
     public static let satzUngeschuetzt = "Über den Mac gekoppelt, aber unverschlüsselt (alter "
         + "Stand) — darüber geht nichts mehr. Am Mac «iPad koppeln» öffnen und neu koppeln; die "
         + "Skizzen warten im Parkfach."
-    /// Direkt am Heim-PC (Übergang).
-    public static let satzDirekt = "Direkt am Heim-PC (Übergang). Die Mappe am Mac sieht das "
-        + "iPad so nicht — am Mac «iPad koppeln» öffnen und mit dem Mac koppeln."
+    /// Direkt am Heim-PC — der Weg endet (Entscheid 118a).
+    public static let satzDirekt = "Direkt am Heim-PC — dieser Weg endet, der Heim-PC nimmt "
+        + "das iPad so nicht mehr an. Am Mac «iPad koppeln» öffnen und mit dem Mac koppeln."
+    /// **Wortgleich mit dem Satz des Heim-PC** (`aiimaging.geraetebuch.SATZ_DIREKT_BEENDET`,
+    /// bewacht in `tests/test_ipad_ueber_den_mac.py`) — für eine 410 ohne lesbaren Satz.
+    public static let satzDirektBeendet = "Das iPad verbindet sich jetzt über den Mac — am Mac "
+        + "«iPad koppeln» öffnen und das iPad mit dem Mac koppeln. Direkt nimmt der Heim-PC das "
+        + "iPad nicht mehr an."
     /// Der Mac nannte bei der Kopplung kein Zertifikat.
     public static let satzOhneAbdruck = "Der Mac nannte beim Koppeln kein Zertifikat (alter "
         + "Stand) — nichts gemerkt. Die Mac-App aktualisieren und neu koppeln."

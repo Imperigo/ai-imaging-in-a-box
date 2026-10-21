@@ -8,7 +8,9 @@ es angemeldet über ``GET /api/geraete`` heraus.
 Geprüft wird an der Wirkung, über ganze Anfragen an ``Flaeche``:
 
 * die angenommene Zahl wird vermerkt — fürs iPad, nie für einen Mac, der sich selbst koppelt;
-* angemeldete Anfragen mit ``X-Geraet: ipad`` werden vermerkt, mit dem Weg;
+* angemeldete Anfragen mit ``X-Geraet: ipad`` über den Mac werden vermerkt, mit dem Weg;
+* ein iPad, das **direkt** spricht, bekommt seit Entscheid 118a 410 mit Satz, und nichts wird
+  vermerkt (Mac-App, Seite und Werkzeuge ohne Gerätekopf bleiben unberührt);
 * das Buch übersteht einen Neustart (eine neue Klasse liest die Datei);
 * angemeldet lesbar, unangemeldet abgewiesen, und **kein Geheimnis** darin (Datei 0600).
 """
@@ -98,7 +100,7 @@ def test_ohne_kopplung_ist_kein_ipad_gekoppelt(server):
 def test_eine_angenommene_zahl_fuers_ipad_wird_vermerkt_und_geschrieben(server, tmp_path):
     datei = tmp_path / "dienst" / geraetebuch.DATEINAME
     klasse = _klasse(server, datei)
-    code, antwort, _ = _koppeln_wie_der_mac(klasse, server, koepfe={"X-Geraet": "ipad"})
+    code, antwort, _ = _koppeln_wie_der_mac(klasse, server)
     assert code == 200 and antwort["verbunden"] is True
     code, buch, _ = _buch(klasse, server)
     assert buch["ipad"]["gekoppelt"] is True
@@ -134,8 +136,7 @@ def test_eine_abgelehnte_zahl_vermerkt_nichts(server):
     _frage(klasse, server, befehl="POST", weg=server.WEG_KOPPLUNG)
     falsch = "000000" if klasse.kopplung_offen.pin != "000000" else "111111"
     code, _, _ = _frage(klasse, server, befehl="POST", weg=server.WEG_VERBINDEN,
-                        angemeldet=False, rumpf=json.dumps({"pin": falsch}).encode(),
-                        koepfe={"X-Geraet": "ipad"})
+                        angemeldet=False, rumpf=json.dumps({"pin": falsch}).encode())
     assert code == 403
     assert _buch(klasse, server)[1]["ipad"]["gekoppelt"] is False
 
@@ -144,16 +145,62 @@ def test_eine_abgelehnte_zahl_vermerkt_nichts(server):
 
 def test_eine_angemeldete_anfrage_vom_ipad_wird_vermerkt_mit_dem_weg(server):
     klasse = _klasse(server)
+    # UEBER DIE VERMITTLUNG DES MAC — der einzige Weg seit Entscheid 118a:
     assert _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
-                  koepfe={"X-Geraet": "ipad"})[0] == 200
+                  koepfe={"x-geraet": "ipad", "X-Geraet-Weg": "mac"})[0] == 200
     buch = _buch(klasse, server)[1]["ipad"]
     assert buch["gekoppelt"] is True, "wer das Kennwort hat, ist gekoppelt"
-    assert buch["zuletzt_gesehen_s"] == 0 and buch["weg"] == "direkt"
+    assert buch["zuletzt_gesehen_s"] == 0 and buch["weg"] == "mac"
     assert buch["gekoppelt_vor_s"] is None, "wann, weiss das Buch dann nicht"
-    # UEBER DIE VERMITTLUNG DES MAC:
-    _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
-           koepfe={"x-geraet": "ipad", "X-Geraet-Weg": "mac"})
-    assert _buch(klasse, server)[1]["ipad"]["weg"] == "mac"
+
+
+# ================================================= 2a · der direkte Weg endet (118a)
+
+def test_ein_direkt_sprechendes_ipad_bekommt_410_mit_satz(server):
+    klasse = _klasse(server)
+    for koepfe in ({"X-Geraet": "ipad"}, {"X-Geraet": " iPad ", "X-Geraet-Weg": "direkt"},
+                   {"x-geraet": "ipad", "X-Geraet-Weg": ""}):
+        code, antwort, _ = _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
+                                  koepfe=koepfe)
+        assert code == 410, koepfe
+        assert antwort == {"fehler": geraetebuch.SATZ_DIREKT_BEENDET}
+        assert "über den Mac" in antwort["fehler"] and "«iPad koppeln»" in antwort["fehler"]
+    assert _buch(klasse, server)[1]["ipad"]["gekoppelt"] is False, "abgewiesen heisst: nicht da"
+
+
+def test_auch_unangemeldet_und_beim_koppeln_kommt_der_satz(server):
+    """Vor Tür und Kopplung: Ein altes iPad, das direkt am Heim-PC koppeln will, erfährt den
+    neuen Weg, statt an einer Zahl zu scheitern — und die Zahl bleibt für den Mac offen."""
+    klasse = _klasse(server)
+    assert _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
+                  angemeldet=False, koepfe={"X-Geraet": "ipad"})[0] == 410
+    code, antwort, _ = _koppeln_wie_der_mac(klasse, server, koepfe={"X-Geraet": "ipad"})
+    assert code == 410 and antwort["fehler"] == geraetebuch.SATZ_DIREKT_BEENDET
+    assert "kennwort" not in antwort and "benutzer" not in antwort
+    assert server.kopplung.stand(klasse.kopplung_offen) == server.kopplung.STAND_OFFEN
+    assert _buch(klasse, server)[1]["ipad"]["gekoppelt"] is False
+
+
+def test_andere_geraete_bleiben_unberuehrt(server):
+    """Mac-App (``mac``), Seite, KosmoOrbit und Werkzeuge (ohne Kopf) und das iPad über den Mac."""
+    klasse = _klasse(server)
+    for koepfe in ({}, {"X-Geraet": "mac"}, {"X-Geraet-Weg": "mac"},
+                   {"X-Geraet": "ipad", "X-Geraet-Weg": "mac"},
+                   {"X-Geraet": "ipad", "X-Geraet-Weg": " MAC "}):
+        assert _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
+                      koepfe=koepfe)[0] == 200, koepfe
+    # DAS HALLO bleibt fuer jeden offen (es traegt kein Geheimnis):
+    assert _frage(klasse, server, befehl="GET", weg=server.WEG_HALLO, angemeldet=False,
+                  koepfe={"X-Geraet": "ipad"})[0] == 200
+
+
+def test_die_regel_in_der_bibliothek():
+    assert geraetebuch.direkt_vom_ipad("ipad", None) is True
+    assert geraetebuch.direkt_vom_ipad("IPAD", "direkt") is True
+    assert geraetebuch.direkt_vom_ipad("ipad", "mac") is False
+    assert geraetebuch.direkt_vom_ipad(None, None) is False
+    assert geraetebuch.direkt_vom_ipad("mac", None) is False
+    assert geraetebuch.direkt_vom_ipad("ipad-pro", None) is False
 
 
 def test_der_mac_und_fremde_arten_werden_nicht_vermerkt(server):
@@ -167,7 +214,7 @@ def test_der_mac_und_fremde_arten_werden_nicht_vermerkt(server):
 def test_eine_unangemeldete_anfrage_mit_ipad_kopf_vermerkt_nichts(server):
     klasse = _klasse(server)
     code, _, _ = _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
-                        angemeldet=False, koepfe={"X-Geraet": "ipad"})
+                        angemeldet=False, koepfe={"X-Geraet": "ipad", "X-Geraet-Weg": "mac"})
     assert code == 401
     assert _buch(klasse, server)[1]["ipad"]["gekoppelt"] is False
 
@@ -189,7 +236,7 @@ def test_meldungen_werden_hoechstens_einmal_je_minute_geschrieben():
 def test_das_buch_uebersteht_einen_neustart(server, tmp_path):
     datei = tmp_path / geraetebuch.DATEINAME
     erste = _klasse(server, datei)
-    assert _koppeln_wie_der_mac(erste, server, koepfe={"X-Geraet": "ipad"})[0] == 200
+    assert _koppeln_wie_der_mac(erste, server)[0] == 200
     # DER NEUSTART: eine neue Klasse (wie `baue_server` sie je Server baut), dieselbe Datei.
     zweite = _klasse(server, datei)
     buch = _buch(zweite, server)[1]["ipad"]
@@ -217,8 +264,8 @@ def test_ein_kaputtes_buch_haelt_nichts_auf(server, tmp_path):
     klasse = _klasse(server, datei)
     assert _buch(klasse, server)[1]["ipad"]["gekoppelt"] is False
     assert _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
-                  koepfe={"X-Geraet": "ipad"})[0] == 200
-    assert json.loads(datei.read_text(encoding="utf-8"))["geraete"]["ipad"]["weg"] == "direkt"
+                  koepfe={"X-Geraet": "ipad", "X-Geraet-Weg": "mac"})[0] == 200
+    assert json.loads(datei.read_text(encoding="utf-8"))["geraete"]["ipad"]["weg"] == "mac"
     # FREMDES WIRD WEGGELASSEN, NICHT GERATEN:
     datei.write_text(json.dumps({"geraete": {"ipad": {"zuletzt_um": "gestern", "weg": "funk"},
                                              "mac": {"zuletzt_um": 5}}}), encoding="utf-8")
@@ -240,7 +287,7 @@ def test_kein_geheimnis_im_buch(server, tmp_path):
     _frage(klasse, server, befehl="POST", weg=server.WEG_KOPPLUNG)
     pin = klasse.kopplung_offen.pin
     _frage(klasse, server, befehl="POST", weg=server.WEG_VERBINDEN, angemeldet=False,
-           rumpf=json.dumps({"pin": pin}).encode(), koepfe={"X-Geraet": "ipad"})
+           rumpf=json.dumps({"pin": pin}).encode())
     _, _, text = _buch(klasse, server)
     inhalt = datei.read_text(encoding="utf-8")
     for geheim in (KENNWORT, pin, server.BENUTZER):

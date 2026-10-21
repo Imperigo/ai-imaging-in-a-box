@@ -126,7 +126,8 @@ public enum Kibruecke {
         return Mcpergebnis(text: text, fehler: wert?["ok"]?.alsWahrheit != true)
     }
 
-    /// Der Satz an Claude fuer eine Karte, die wegfiel, weil die Knotenansicht neu lud.
+    /// Der Satz an Claude fuer eine Karte, die nicht angewendet wurde und wegfaellt — mit Grund
+    /// (abgelaufen, andere Mappe, passt nicht mehr zum Graph, nicht mehr in der Seite).
     public static func verworfen(_ grund: String) -> Mcpergebnis {
         Mcpergebnis(text: "VERWORFEN: \(grund) — der Vorschlag wurde nicht angewendet; nichts "
                     + "wurde geändert.", fehler: true)
@@ -144,17 +145,21 @@ public struct Kikarte: Equatable, Sendable, Identifiable {
     public let zusammenfassung: String
     /// Je Schritt die Zusammenfassung (bei einem Paket mehrere).
     public let schritte: [String]
+    /// Der Vorschlag, wie die Seite ihn schickte — damit die App ihn einer neu geladenen
+    /// Knotenansicht zurueckgeben kann (`Kartenablage`, `visboxKi.stelleWieder`).
+    public let roh: JSONWert?
 
     public var id: String { kennung }
 
     public init(kennung: String, werkzeug: String, art: Werkzeugart, urheber: Kiurheber,
-                zusammenfassung: String, schritte: [String] = []) {
+                zusammenfassung: String, schritte: [String] = [], roh: JSONWert? = nil) {
         self.kennung = kennung
         self.werkzeug = werkzeug
         self.art = art
         self.urheber = urheber
         self.zusammenfassung = zusammenfassung
         self.schritte = schritte
+        self.roh = roh
     }
 
     /// Aus `vorschlag` des Ereignisses — `nil`, wenn etwas fehlt.
@@ -165,7 +170,7 @@ public struct Kikarte: Equatable, Sendable, Identifiable {
         let urheber = v["urheber"]?.alsText.flatMap(Kiurheber.init(rawValue:)) ?? .claude
         let schritte = (v["schritte"]?.alsListe ?? []).compactMap { $0["zusammenfassung"]?.alsText }
         self.init(kennung: kennung, werkzeug: werkzeug, art: art, urheber: urheber,
-                  zusammenfassung: zusammenfassung, schritte: schritte)
+                  zusammenfassung: zusammenfassung, schritte: schritte, roh: v)
     }
 
     /// «VORSCHLAG VON CLAUDE · K-12» (Blatt 30, Feld 1).
@@ -335,8 +340,12 @@ public struct Kileistenstand: Equatable, Sendable {
             // EINE KARTE IST KEINE ARBEIT MEHR (108 C): Sie wartet auf den Architekten und steht
             // als Karte da, nicht im Strom.
             taetigkeiten.removeAll { $0.kennung == karte.kennung }
-            karten.removeAll { $0.kennung == karte.kennung }
-            karten.append(karte)
+            // ZURUECKGEGEBEN (die Seite lud neu): an ihrem Platz, nicht hinten angehaengt.
+            if let i = karten.firstIndex(where: { $0.kennung == karte.kennung }) {
+                karten[i] = karte
+            } else {
+                karten.append(karte)
+            }
         case .entschieden(let kennung, _, _):
             karten.removeAll { $0.kennung == kennung }
         case .kiverlauf(let claude, let assistent):
@@ -345,8 +354,10 @@ public struct Kileistenstand: Equatable, Sendable {
         case .bereit:
             knotenBereit = true
         case .weg:
+            // DIE KARTEN BLEIBEN (Strang Karten, 21.10.2026): Sie gelten pro Mappe, nicht pro
+            // Ansicht — die App gibt sie der neu geladenen Seite zurueck (`Kartenablage`). Was
+            // wegfaellt, ist die laufende Arbeit und der KI-Verlauf der Seite (Entscheid 114).
             knotenBereit = false
-            karten = []
             taetigkeiten = []
             letzterSchritt = [:]
         }

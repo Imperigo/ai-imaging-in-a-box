@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { VisGraph } from '@kosmo/kernel';
 import { ENTZERREN_ABSTAND, entzerreGraph, entzerreLagen } from '../src/modules/vis/knoten-entzerren';
-import { NODE_W } from '../src/modules/vis/NodeCanvas';
+import { nodeBreite, RENDER_NODE_W } from '../src/modules/vis/NodeCanvas';
 
 /**
  * Gesicherte Graphen beim Laden einmal sanft entzerren (Owner-Befund am Mac 20.10.2026: die
@@ -14,7 +14,7 @@ const knoten = (id: string, typ: string, x: number, y: number) => ({ id, typ, x,
 
 function ueberlappt(ns: readonly { x: number; y: number; typ: string }[]): boolean {
   return ns.some((a, i) =>
-    ns.some((b, j) => j > i && a.x < b.x + NODE_W && b.x < a.x + NODE_W && a.y < b.y + hoehe(b) && b.y < a.y + hoehe(a)),
+    ns.some((b, j) => j > i && a.x < b.x + nodeBreite(b.typ) && b.x < a.x + nodeBreite(a.typ) && a.y < b.y + hoehe(b) && b.y < a.y + hoehe(a)),
   );
 }
 
@@ -44,6 +44,16 @@ describe('entzerreLagen', () => {
     expect(ueberlappt(nachher)).toBe(false);
     expect(neu.has('r')).toBe(false);
     for (const n of ns) expect(neu.get(n.id) ?? n.y, `${n.id} rückt nie nach oben`).toBeGreaterThanOrEqual(n.y);
+  });
+
+  it('Entscheid 119: der breitere Render-Knoten zaehlt mit seiner eigenen Breite', () => {
+    // Die Kamera steht 205 px rechts vom Render-Knoten: mit 200 px Breite frei, mit 212 px ueberlappt sie.
+    const ns = [knoten('r', 'render', 0, 0), knoten('k', 'kamera', 205, 100)];
+    expect(RENDER_NODE_W).toBeGreaterThan(205);
+    const neu = entzerreLagen(ns, hoehe);
+    expect(neu.get('k')).toBe(400 + ENTZERREN_ABSTAND);
+    // Umgekehrt: rechts von einem 200 px breiten Knoten ist 205 px frei.
+    expect(entzerreLagen([knoten('k', 'kamera', 0, 0), knoten('r', 'render', 205, 100)], hoehe).size).toBe(0);
   });
 
   it('entzerreGraph: derselbe Gegenstand ohne Überlappung, sonst eine Kopie mit neuen y', () => {

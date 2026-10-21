@@ -120,6 +120,7 @@ auch jeden Test darüber. Kein ``bpy``, kein ``ifcopenshell`` (Regel 2).
 """
 from __future__ import annotations
 
+import json
 import math
 import time
 from collections.abc import Sequence
@@ -809,6 +810,33 @@ def standard_modell_wurzel(schaetzer_name: str) -> Path:
     return render.standard_modell_wurzel(hole(schaetzer_name).name)
 
 
+#: Woran ein Gewichtsordner als vollständig gilt: eine ``config.json`` mit ``model_type`` (das
+#: verlangt ``transformers`` beim Laden aus einem Ordner) und mindestens eine Gewichtsdatei.
+GEWICHTSDATEIEN = ("*.safetensors", "*.bin")
+
+
+def ordner_unvollstaendig(wurzel) -> str | None:
+    """Was am Gewichtsordner ``wurzel`` fehlt — ``None``, wenn nichts fehlt (auf-20261021-302 B1).
+
+    Geprüft wird nur, was ``transformers`` sonst mit einem irreführenden Satz quittiert: keine
+    ``config.json``, eine ohne ``model_type``, keine Gewichtsdatei. Ob die Gewichte die richtigen
+    sind, prüft das nicht.
+    """
+    wurzel = Path(wurzel)
+    konfig = wurzel / "config.json"
+    if not konfig.is_file():
+        return ("leer" if not any(wurzel.iterdir()) else "ohne config.json")
+    try:
+        daten = json.loads(konfig.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as fehler:
+        return f"seine config.json ist unlesbar ({type(fehler).__name__})"
+    if not isinstance(daten, dict) or not daten.get("model_type"):
+        return "seine config.json nennt kein 'model_type'"
+    if not any(any(wurzel.glob(muster)) for muster in GEWICHTSDATEIEN):
+        return "ohne Gewichtsdatei (*.safetensors oder *.bin)"
+    return None
+
+
 def lade_modell(schaetzer_name: str, modell_wurzel=None):
     """Einen Tiefenschätzer laden — die einzige Stelle, die ``torch`` und ``transformers`` kennt.
 
@@ -858,6 +886,16 @@ def lade_modell(schaetzer_name: str, modell_wurzel=None):
             f"Modellwurzel: {herkunft}). Geladen wird nur aus der eigenen "
             f"Ablage, nie aus dem Netz — {render.UMGEBUNG_MODELLE} setzen oder die Einheit "
             f"des Abholers ({render.EINHEIT_ABHOLER}) installieren.")
+    # DER ORDNER IST DA, ABER LEER ODER UNVOLLSTAENDIG (auf-20261021-302, B1): Bis 0.3.16 ging
+    # er an `transformers` weiter und endete mit «Unrecognized model … model_type» — ein Satz,
+    # der nach einem falschen Modell klingt, nicht nach fehlenden Dateien.
+    unvollstaendig = ordner_unvollstaendig(wurzel)
+    if unvollstaendig:
+        raise TiefenschaetzerError(
+            f"Der Ordner der Gewichte fuer {eintrag.name!r} ist da, aber {unvollstaendig} "
+            f"({str(wurzel)!r}). Er ist leer oder unvollstaendig — die Gewichte neu in diesen "
+            f"Ordner legen (Modellkarte: {eintrag.modell_id}). Geladen wird nur aus der "
+            f"eigenen Ablage, nie aus dem Netz.")
 
     try:
         # NUR HIER. Siehe Docstring — und tests/test_tiefenschaetzer.py, das prüft, dass

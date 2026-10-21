@@ -74,13 +74,29 @@ export function kegelAusHeim(standpunkte: readonly HeimStandpunkt[], wahl: Kamer
   }));
 }
 
+/**
+ * Befund B3 aus auf-20261021-306: Die senkrechte Auto-Kamera blickt waagrecht und verschiebt das Objektiv
+ * (`shift_y`); eingefroren ohne Shift stand das Haus 6 % höher im Bild. Der Vertrag kennt keinen Shift —
+ * aber der Heim-PC rechnet ihn bei `perspektive: 'senkrecht'` aus der Neigung zum Ziel zurück
+ * (`kameras.shift_aus_ziel`: shift_mm = Brennweite · tan Neigung, shift_y = shift_mm / 36 mm). Beim
+ * Einfrieren wird darum das Ziel so weit angehoben, dass genau dieser Shift wieder herauskommt.
+ */
+export function zielMitShift(auge: readonly [number, number, number], blickAuf: readonly [number, number, number], shiftY: number, brennweiteMm: number): [number, number, number] {
+  const abstand = Math.hypot(blickAuf[0] - auge[0], blickAuf[1] - auge[1]);
+  if (!Number.isFinite(shiftY) || shiftY === 0 || abstand <= 1e-9) return [blickAuf[0], blickAuf[1], blickAuf[2]];
+  const tangens = (shiftY * 36) / brennweiteMm;
+  return [blickAuf[0], blickAuf[1], auge[2] + abstand * tangens];
+}
+
 /** «Manuell übernehmen»: die Auto-Standpunkte eingefroren, in der Form des Parameters `kameras`. */
 export function einfrieren(standpunkte: readonly HeimStandpunkt[], wahl: KameraAutoWahl): KameraManuell[] {
-  return kegelAusHeim(standpunkte, wahl).map((k) => ({
-    name: k.name ?? 'Kamera',
-    position: [...k.position] as [number, number, number],
-    target: [...k.target] as [number, number, number],
-    fov: Math.round(k.fov * 1000) / 1000,
+  const brennweite = wahl.brennweite_mm ?? KAMERA_AUTO_VORGABEN.brennweite_mm;
+  const fov = Math.round(fovAusBrennweiteGrad(brennweite) * 1000) / 1000;
+  return standpunkte.map((s) => ({
+    name: s.name,
+    position: heimZuGltf(s.auge),
+    target: heimZuGltf(s.shift_y ? zielMitShift(s.auge, s.blick_auf, s.shift_y, brennweite) : s.blick_auf),
+    fov,
   }));
 }
 

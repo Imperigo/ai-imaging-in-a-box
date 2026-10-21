@@ -2240,10 +2240,17 @@ def _eigener_start(pipeline, torch, bild, *, breite: int, hoehe: int, schritte: 
     pipeline.scheduler.set_timesteps(sigmas=rest, device=geraet, mu=mu)
     sigma0 = float(pipeline.scheduler.sigmas[0])
     vae = pipeline.vae
-    eingang = pipeline.image_processor.preprocess(bild, height=hoehe, width=breite).to(
-        device=geraet, dtype=vae.dtype)
-    lat = zmod.retrieve_latents(vae.encode(eingang), generator=generator, sample_mode="argmax")
-    lat = ((lat - vae.config.shift_factor) * vae.config.scaling_factor).to(torch.float32)
+    # UNTER `no_grad` (auf-20261021-303, Nebenbefund): Ausserhalb von `pipeline.__call__` gilt
+    # dessen Abschaltung der Gradienten nicht, und ein Graph am Ergebnis hielte die
+    # Aktivierungen des VAE bis zum Ende fest. «Umriss halten im Lauf» kodiert dasselbe Bild
+    # unter `no_grad` und brauchte 320 MiB WENIGER als ohne Schalter; der Bildeingang ohne
+    # `no_grad` 3880 MiB MEHR. Die Zahlen des Bilds aendert das nicht — nur den Speicher.
+    with torch.no_grad():
+        eingang = pipeline.image_processor.preprocess(bild, height=hoehe, width=breite).to(
+            device=geraet, dtype=vae.dtype)
+        lat = zmod.retrieve_latents(vae.encode(eingang), generator=generator,
+                                    sample_mode="argmax")
+        lat = ((lat - vae.config.shift_factor) * vae.config.scaling_factor).to(torch.float32)
     rauschen = randn_tensor(lat.shape, generator=generator, device=lat.device,
                             dtype=torch.float32)
     start = sigma0 * rauschen + (1.0 - sigma0) * lat
@@ -2327,7 +2334,8 @@ def _umriss_halten_satz(umriss: dict, angekommen: bool) -> str:
                 f"nicht; das Bild ist ohne Halten gerechnet.")
     return (f"{_uh.SATZ}: Hintergrund im Fahrplan festgehalten (Art '{_uh.ART_IM_LAUF}'), "
             f"frei fuer die KI {umriss['anteil_frei'] * 100:.0f} % der Zellen "
-            f"{umriss['zellen'][1]} x {umriss['zellen'][0]}. Ungemessen.")
+            f"{umriss['zellen'][1]} x {umriss['zellen'][0]}. Grafikspeicher gemessen wie "
+            f"ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB).")
 
 
 def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):

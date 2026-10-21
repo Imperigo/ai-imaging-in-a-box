@@ -928,7 +928,8 @@ eine eigene Adresse (den *Endpoint*), die per HTTP angesprochen wird.
 **HTTP-Statuscode** — Die dreistellige Zahl, mit der ein Webserver jede Anfrage
 beantwortet, noch bevor er Inhalt liefert. `200` heisst „hier ist es", `404` „gibt es
 nicht", `401` „du bist nicht angemeldet", `403` „angemeldet oder nicht — du darfst
-nicht". *Die Unterscheidung entschied in der Lizenzprüfung vom 18.08.2026 über die
+nicht", `410` „diesen Weg gibt es hier nicht mehr" (seit Entscheid 118a die Antwort des
+Heim-PC an ein iPad, das direkt statt über den Mac spricht — mit dem Satz, was zu tun ist). *Die Unterscheidung entschied in der Lizenzprüfung vom 18.08.2026 über die
 Aussage: `401` bei einem Modell heisst, dass die Lizenzdatei existiert und eine
 Zustimmung fehlt; kein Treffer in der Suche heisst, dass es sie gar nicht gibt — so
 geschehen bei Depth-Anything-V2-Giant, dessen Gewichte öffentlich schlicht nicht
@@ -5228,6 +5229,13 @@ Standpunkte des Kamera-Knotens rechnet der Heim-PC an ihr.
 *Im Projekt:* Feld `heimMappe` in `mappe.json`; ein Auftrag nennt sie im Kopf `X-Mappe-Heim`,
 seine Mappe am Mac in `X-Mappe-Am-Mac`.
 
+**Zuletzt geöffnete Mappe** — Die Mappe, die der Heim-PC zeigt, wenn ein Gerät nicht sagt, welche es will: die
+Visbox-Seite ohne Angabe, die Knotenansicht ohne Mappe am Mac, das iPad im Übergang. Sie wechselt, wenn jemand am
+Heim-PC eine Mappe öffnet oder eine Datei lädt — **nicht** aber, wenn die Datei aus einer Mappe am Mac kommt: Dann legt
+der Heim-PC nur einen Zwilling an (Befund vom 21.10.2026: vorher stellte ein Laden vom Mac die Mappe für alle Geräte um).
+*Im Projekt:* `zuletzt_geoeffnet` in `oberflaeche/server.py`; der Stand von `GET /knoten/modell-laden` sagt mit
+`zuletzt_geoeffnet`, ob ein Laden sie umgestellt hat.
+
 **Zertifikat des Mac (für das iPad)** — Ein digitaler Ausweis, den sich der Mac selbst ausstellt, damit die Leitung zum
 iPad verschlüsselt ist. Der geheime Schlüssel dazu entsteht im Schlüsselbund des Mac und verlässt ihn nie. Das iPad merkt
 sich beim Koppeln den Fingerabdruck dieses Ausweises und spricht danach mit keinem Gerät, das einen anderen zeigt.
@@ -5249,7 +5257,13 @@ das iPad nicht still die unverschlüsselte, sondern verbindet nicht und sagt war
 **Übergangsfassung** — Eine Fassung, in der ein alter Weg noch geht, aber mit einem Satz, dass er bald wegfällt. So
 verliert niemand die Verbindung ohne Erklärung. *Im Projekt:* Visbox mit Schritt 4 — ein iPad, das noch direkt mit dem
 Heim-PC gekoppelt ist, arbeitet weiter und sagt «Direkt am Heim-PC (Übergang)»; ab der nächsten Fassung soll der Heim-PC
-es mit Satz abweisen.
+es mit Satz abweisen. Seit Entscheid 118a (21.10.2026) tut er das: Antwort 410 mit dem Satz «Das iPad verbindet sich jetzt
+über den Mac …», und das iPad zeigt ihn an.
+
+**Kein Rechner eingerichtet (Mac ohne Heim-PC)** — Der Zustand, in dem am Mac kein Heim-PC eingerichtet ist. Der Mac
+vermittelt dann trotzdem fürs iPad: Es koppelt mit dem Mac und sieht Mappe, Bilder und Skizzen der Mappe am Mac; nur, was
+der Heim-PC rechnen müsste, beantwortet der Mac mit dem Satz «Kein Rechner eingerichtet». *Im Projekt:* Entscheid 118a,
+Frage 3; die Antworten bestimmt der Kern (`Ipadmappenwege.ohneRechner`).
 
 **TestFlight und Apple-Entwicklerkonto** — Das Konto (99 USD im Jahr) erlaubt, eigene Apps über
 Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
@@ -5943,6 +5957,25 @@ ihn über MCP, später der Assistent dieselbe Liste.
 liegt, bis der Architekt «Anwenden» oder «Ablehnen» drückt. Bis dahin ändert sich nichts. Kopf «Vorschlag
 von Claude · K-12», darunter, was geschehen würde; bei einem Render-Auftrag der Satz «Rendern braucht danach
 deine Freigabe am Knoten.» *Im Projekt:* Entscheid 106a; `Kikarte` im Kern, gezeichnet in `Kileiste.swift`.
+
+**Kartenablage (offene Vorschläge in der App)** — Der Ort in der Mac-App, an dem die offenen Karten liegen, jede mit der
+Mappe, zu der sie gehört, und der Zeit, seit der sie wartet. Die Knotenansicht wird bei jedem Wechsel der Ansicht neu
+geladen und vergisst dabei alles; die App nicht. Kommt die Knotenansicht zurück, gibt die App ihr die Karten ihrer Mappe
+wieder. *Im Projekt:* `Kartenablage` im Kern, gehalten von der `Kizentrale`; Protokoll 74 §184.
+
+**Zurückgeben (einer Karte, mit neuer Probe)** — Eine Karte, die die App aufgehoben hat, geht nach dem Neuladen nicht
+unbesehen zurück, sondern wird in der Knotenansicht noch einmal zur Probe durchgerechnet, als käme der Vorschlag neu.
+Geht die Probe auf, liegt die Karte wieder da; scheitert sie (etwa weil der betroffene Knoten gelöscht ist), bleibt die
+Karte sichtbar und gilt als «passt nicht mehr». Zurückgegeben wird immer als Karte, nie still angewendet. *Im Projekt:*
+`visboxKi.stelleWieder` in `ki-wirt.ts`.
+
+**Ablauf (einer Karte)** — Eine Karte, über die vier Stunden lang niemand entschieden hat, fällt weg. Claude oder der
+Assistent bekommt dazu einen Satz mit dem Grund, damit der Vorschlag nicht still verschwindet. *Im Projekt:*
+`Kartenablage.frist`.
+
+**Passt nicht mehr (Karte)** — Eine Karte, die zu einer anderen Mappe gehört als der offenen, oder deren Probe im
+jetzigen Knotengraph scheitert. Sie bleibt stehen, bis der Architekt entscheidet; «Anwenden» ändert dann nichts und sagt
+in einem Satz, warum — dem Architekten in der Leiste und Claude als Antwort. *Im Projekt:* `Kartenablage.entscheide`.
 
 **Selbständigkeit (Karte, Coop, Voll)** — Wie frei die KI arbeiten darf, eingestellt oben in der
 Assistent-Leiste (seit dem 20.10.2026 in der Knotenansicht an der **Claude-Marke**, mit den Schaltern «Coop – ändert
@@ -8025,7 +8058,9 @@ daneben der Grund. Rechnet der Heim-PC mehrere Kameras, zählt das schwächste B
 
 **Veraltet (ein Bild am Render-Knoten)** — Ein fertiges Bild, dessen Auftrag sich seither geändert
 hat: anderer Prompt, andere Einstellung. Das Bild bleibt stehen, der Knoten sagt aber «veraltet» —
-es zeigt nicht mehr, was ein neuer Lauf liefern würde.
+es zeigt nicht mehr, was ein neuer Lauf liefern würde. Derselbe Gedanke beim Laden eines Modells am Heim-PC
+(Befund 307 B1, 21.10.2026): Ist seit dem letzten «Datei laden …» eine andere Mappe offen, meldet dessen Stand
+`veraltet` mit Satz, statt gelöscht zu werden — nichts geht verloren, und niemand hält ihn für die offene Mappe.
 
 **KosmoPublish (Plakatblatt)** — Der Teil von KosmoOrbit, in dem Pläne und Bilder auf Blätter für
 Präsentation und Druck gesetzt werden. Der Knoten «Aufs Blatt» legt ein Render dorthin. In Visbox
@@ -8069,6 +8104,10 @@ an dem die Palette hängt, so stark wie eingestellt. Alle Farben gehen zusätzli
 aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ein Klick friert die Auto-Standpunkte
 ein, danach tippt man Auge und Blickpunkt in Metern. **Modell:** wie früher die Standpunkte aus dem Entwurf (nur,
 wo es einen Entwurf gibt). *Im Projekt:* Entscheide 109 und 113 (3); `KameraKnoten.tsx`.
+
+**Vorgabe beim Anlegen (eines Knotens)** — Die Einstellung, die ein Knoten bekommt, wenn man ihn neu setzt. Sie gilt
+nur in diesem Moment: Ein schon gespeicherter Knoten behält, was er hat, auch wenn sich die Vorgabe ändert. *Im
+Projekt:* seit dem 21.10.2026 legt man den Kamera-Knoten auf «Auto» an; alte Graphen bleiben bei «Modell».
 
 **Kegel (einer Kamera im 3D-Fenster)** — Eine kleine Pyramide aus Linien, die zeigt, wo eine Kamera steht und
 wohin sie schaut. Im Kamera-Knoten steht für jeden Standpunkt ein Kegel im Modell; darunter das kleine Bild,
@@ -8417,8 +8456,17 @@ Netz» (`tiefenschaetzer.lade_modell`).
 Cycles-Bild der Grundlage (Himmel, Boden, Umgebung), innerhalb malt die KI. *Wozu:* Die KI baut fast immer neben das
 Haus weitere Gebäude (`ausserhalb_umriss_anteil` rund 2 bei Aussenbildern); ein Satz im Prompt hielt sie nicht davon ab.
 Zwei Arten: «nachher» mischt die beiden Bilder nach dem KI-Schritt, «im_lauf» hält den Hintergrund schon während des
-Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus, am Gerät noch ungemessen. *Im Projekt:*
-`aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messauftrag auf-20261021-303.
+Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus. Gemessen in auf-20261021-303: «im_lauf» hält
+den Umriss ohne Naht und kostet keinen Grafikspeicher, verändert allein aber die Form (Rundturm); «nachher» wirkt wie
+eine Collage. Seither sagen die Sätze zum Umriss bei «nachher», was am gelieferten Bild gilt (*Urteil nach dem
+Halten*). *Im Projekt:* `aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messaufträge
+auf-20261021-303 und -309.
+
+**Urteil nach dem Halten** — Bei «Umriss halten nachher» wird ein anderes Bild geliefert als das, an dem die Prüfung
+gewählt hat: das KI-Bild, aussen ersetzt durch das gerenderte Bild. Das Prüfurteil bleibt das des KI-Bilds davor; die
+Sätze «KI baut über den Umriss» und «Haus nicht wiederzuerkennen» kommen aber vom gelieferten Bild, damit sie nicht
+etwas bemängeln, das im Bild gar nicht mehr steht. Die Zahlen von vorher stehen daneben. *Im Projekt:*
+`kosmo_szene.urteil_fuer_umrisssaetze`, `abholer.umriss_halten_der_kamera` (`urteil_nachher`), seit 21.10.2026.
 
 **Freigabemaske** — Ein Schwarz-Weiss-Bild: weiss, wo die KI malen darf, schwarz, wo das Grundbild bleibt. Sie ist die
 Bauwerksmaske plus ein schmaler Rand (2 % der langen Bildseite), damit Dachkanten, die die KI ein paar Bildpunkte
@@ -8438,9 +8486,16 @@ Gerechnet wird im latenten Raum (der komprimierten Form des Bildes). *Im Projekt
 angewandt im Rückruf je Schritt (`render._umriss_halten_rueckruf`).
 
 **Material vorne (Messschalter `vis.material_vorne`)** — Der Hauptstoff des Entwurfs (etwa «exposed concrete») kommt an
-den **Anfang** der Bildbeschreibung und wird dreimal genannt. *Wozu:* Mit «Sichtbeton» an zweiter Stelle malte die KI
-Sichtbeton nur teilweise, dazwischen Holz und Stein. Der Stoff kommt aus dem Material-Knoten, sonst aus dem Prompt; der
-Satz nennt kein Bauteil. *Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus.
+den **Anfang** der Bildbeschreibung, und im ganzen Text steht er **höchstens dreimal** (*Nennung eines Stoffs*):
+Nennt der Prompt ihn schon, wird der Satz vorne kürzer, und der Satz des Material-Knotens hinten fällt weg. *Wozu:* Mit
+«Sichtbeton» an zweiter Stelle malte die KI Sichtbeton nur teilweise, dazwischen Holz und Stein; vorne gestellt malte sie
+ihn ganz (auf-20261021-303). Der Stoff kommt aus dem Material-Knoten, sonst aus dem Prompt; der Satz nennt kein Bauteil.
+*Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus.
+
+**Nennung eines Stoffs** — Wie oft eine Bildbeschreibung denselben Baustoff nennt, gezählt an seinem Hauptwort:
+«exposed concrete» und «smooth fair-faced concrete» sind beide Beton, «red brick masonry» ist einmal Backstein. *Wozu:*
+In einer Messung stand der Stoff fünfmal im Text, ohne dass der Architekt das wollte — jetzt höchstens dreimal. *Im
+Projekt:* `kosmo_szene.stoff_nennungen`, `MATERIAL_VORNE_HOECHSTENS`.
 
 **Gewichtung im Prompt** — Bei manchen Bildmodellen lässt sich einem Wort mehr Gewicht geben, etwa mit
 `(concrete:1.4)`. Das geht nur, wenn das Programm diese Schreibweise kennt und das Modell die Wörter einzeln liest. *Im
@@ -8464,8 +8519,26 @@ nachbaubar über einen Haken am ControlNet, zurückgestellt (Planblatt, Option c
 **Ohne Gradienten rechnen (`torch.no_grad`)** — Eine Anweisung an torch, sich für eine Rechnung **keinen Rechenweg**
 (Graphen) zu merken. Den bräuchte man nur zum Trainieren; beim Erzeugen eines Bildes hält er bloss Zwischenergebnisse im
 Grafikspeicher fest. *Im Projekt:* Die Pipeline von diffusers rechnet so; was ausserhalb davon gerechnet wird, muss es
-selbst sagen. Das Umriss-Halten «im_lauf» tut es; beim eigenen Start des Bildeingangs fehlt die Zeile — eine mögliche
-Ursache seiner +3,9 GB (zu prüfen in auf-20261021-303).
+selbst sagen. Das Umriss-Halten «im_lauf» tat es und brauchte keinen Speicher mehr (auf-20261021-303); seit 21.10.2026
+tut es auch der eigene Start des Bildeingangs, dem dort +3,9 GB anhingen — nachgemessen in auf-20261021-309.
+
+**Satz der Stimmung (massgebend)** — Der englische Satz, den der Heim-PC für eine bestellte Stimmung an die
+Bildbeschreibung hängt, etwa «evening mood, warm low sunlight, long raking shadows, golden hour» für «Abend». *Wozu:* Der
+Stimmungs-Knoten schrieb seinen deutschen Satz selbst in die Beschreibung; halb übersetzt («leuchtende window») hielt er
+den Satz des Heim-PC zurück, und das Bild zeigte einen Innenraum. Jetzt gilt immer der Satz des Heim-PC, genau einmal;
+der Satz des Knotens wird herausgenommen, und die deutschen Sätze der acht Stimmungen werden als ganze Wendung
+übersetzt (*Halbe Übersetzung*). *Im Projekt:* `stimmung.ohne_stimmungssaetze`, `sprache._stimmungssaetze`, Befund B2
+aus auf-20261021-306.
+
+**Halbe Übersetzung** — Eine Bildbeschreibung, in der nach dem Übersetzen deutsche und englische Wörter gemischt
+stehen («fog, gedämpftes light, Tiefe in the haze»). Für das Bildmodell ist das schlechter als jede ganze Sprache. *Im
+Projekt:* `sprache.uebersetze` meldet die übrig gebliebenen Wörter unter `unbekannt`; ganze Wendungen im Glossar
+verhindern sie.
+
+**Unvollständiger Gewichtsordner** — Ein Ordner, in dem die Gewichte eines Modells liegen sollten, der aber leer ist oder
+dem die Beschreibungsdatei (`config.json`) oder die Gewichtsdatei fehlt. *Wozu:* Das Ladeprogramm meldete dann «unbekanntes
+Modell», als wäre das falsche Modell gewählt; jetzt heisst es «Ordner leer oder unvollständig». *Im Projekt:*
+`tiefenschaetzer.ordner_unvollstaendig`, Befund B1 aus auf-20261021-302.
 
 **Grundbild (Grundbild mit Licht)** — Das Bild, das Blender aus dem Modell rechnet, bevor die KI etwas dazutut: Form,
 Sonne und Schatten sind echt gerechnet, Oberflächen nur so, wie sie modelliert sind. In den Unterlagen heisst es auch
@@ -8504,6 +8577,11 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 | Datum | Änderung |
 |---|---|
 | 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
+| 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **Veraltet (ein Bild am Render-Knoten)** um den Ladestand erweitert; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §180): **Vorgabe beim Anlegen (eines Knotens)** |
+| 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |

@@ -244,7 +244,10 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     kategorie: 'quelle',
     inputs: [],
     outputs: [{ name: 'kameras', typ: 'kameras', label: 'Kamera-Standpunkte' }],
-    defaults: {},
+    // Integrator-Folgeauftrag (21.10.2026, Entscheid 113 (3)): NEU angelegte Kamera-Knoten stehen auf
+    // «Auto» (der Heim-PC rechnet). `defaults` gelten nur beim Anlegen (`vis.nodeSetzen`) — ein
+    // gespeicherter Knoten ohne `art` bleibt «Modell» und wird nie still umgestellt.
+    defaults: { art: 'auto' },
   },
   vergleich: {
     typ: 'vergleich',

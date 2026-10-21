@@ -4,7 +4,9 @@ import { History, KosmoDoc, setzeModellGlb, stimmungParams, type VisGraph } from
 import { RenderScene } from '@kosmo/contracts';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
-import { sendeGraphRenderAuftrag } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { grundlageStandFuerKnoten, sendeGraphRenderAuftrag } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { GRUNDLAGE_PARAM } from '../../kosmo-orbit/src/modules/vis/grundlage';
+import { evaluiereGraph } from '@kosmo/kernel';
 import { registriereStandpunkteAbfrage, standpunkteFuer } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { huellboxAlsNetz, standpunkteAbfrageDerMappe } from '../src/mappe';
 
@@ -116,5 +118,29 @@ describe('Visbox · neue Knoten', () => {
     expect(gesendet!['cameras_auto']).toEqual({ richtungen: ['sSE'] });
     expect(r['materialien']).toEqual({ fassade: { id: 'klinker' } });
     expect(RenderScene.safeParse(gesendet).success).toBe(true);
+  });
+
+  it('Befund B1 (306): «Grundlage rendern» für denselben Stand sendet nichts, nach einer anderen Stimmung wieder', async () => {
+    const { runCommand, doc } = useProject.getState();
+    const graphId = (runCommand('vis.graphErstellen', { name: 'B1' }).patches[0] as { id: string }).id;
+    const setze = (typ: string, params?: Record<string, string | number | boolean>) => {
+      runCommand('vis.nodeSetzen', { graphId, typ, x: 0, y: 0, ...(params ? { params } : {}) });
+      return doc.get<VisGraph>(graphId)!.nodes.at(-1)!.id;
+    };
+    const modell = setze('modell');
+    const st = setze('stimmung', stimmungParams(['abend']));
+    const render = setze('render');
+    runCommand('vis.verbinden', { graphId, from: modell, fromPort: 'szene', to: render, toPort: 'szene' });
+    runCommand('vis.verbinden', { graphId, from: st, fromPort: 'prompt', to: render, toPort: 'prompt' });
+    const roh = evaluiereGraph(doc, doc.get<VisGraph>(graphId)!).renderAuftraege.get(render)!;
+    const stand = grundlageStandFuerKnoten(doc, roh, doc.get<VisGraph>(graphId)!.nodes.find((n) => n.id === render)!.params);
+    runCommand('vis.nodeParametrieren', { graphId, nodeId: render, params: { [GRUNDLAGE_PARAM.id]: 'gl-00000000000000ab', [GRUNDLAGE_PARAM.stand]: stand } });
+    sendeGraphRenderAuftrag(graphId, render, undefined, { stufe: 'grundlage' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(gesendet).toBeNull();
+    runCommand('vis.nodeParametrieren', { graphId, nodeId: st, params: stimmungParams(['nebel']) });
+    sendeGraphRenderAuftrag(graphId, render, undefined, { stufe: 'grundlage' });
+    await vi.waitFor(() => expect(gesendet).not.toBeNull());
+    expect((gesendet!['render'] as Record<string, unknown>)['environment']).toEqual({ preset: 'nebel' });
   });
 });

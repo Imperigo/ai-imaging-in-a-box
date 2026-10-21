@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { newId } from '../model/ids';
 import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import type { KosmoDoc, VisRenderWunsch } from '../model/doc';
-import { hatZyklus, visPort, VIS_NODE_KATALOG, VIS_STIMMUNGEN } from '../derive/visgraph';
+import { hatZyklus, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
 import {
   findeVariantenKnotenIn,
   gewaehlteAchsen,
@@ -85,11 +85,18 @@ export const addNode = registerCommand({
   },
 });
 
+/**
+ * Die acht Stimmungen als Satz fuer die Werkzeugbeschreibungen (Kennung und Anzeigename), aus
+ * `VIS_STIMMUNGEN` — nie doppelt gepflegt. Anlass (Visbox, erster Claude-Lauf am Mac, 21.10.2026):
+ * Claude kannte nur «morgen/abend/weiss», weil die Beschreibungen die Stimmungen nicht nannten.
+ */
+export const STIMMUNGEN_SATZ = VIS_STIMMUNG_IDS.map((id) => `${id} (${VIS_STIMMUNGEN[id]?.label ?? id})`).join(', ');
+
 export const setNodeParams = registerCommand({
   id: 'vis.nodeParametrieren',
   title: 'Node parametrieren',
   description:
-    'Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes.',
+    `Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes. Stimmungen (preset, oder presets als JSON-Liste für mehrere): ${STIMMUNGEN_SATZ}.`,
   params: z.object({
     graphId: z.string(),
     nodeId: z.string(),
@@ -273,13 +280,13 @@ export const renderAuftrag = registerCommand({
   id: 'vis.render',
   title: 'Rendern',
   description:
-    'Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset, KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht.',
+    `Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (${STIMMUNGEN_SATZ}), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht.`,
   params: z.object({
     graphId: z.string(),
     nodeId: z.string().describe('Render-Node im Graphen (Typ «render»)'),
     kameraWahl: z.enum(['auto', 'saved']).default('auto'),
     // Bauplan «Neue Knoten» K (Entscheid 110 B): die acht Stimmungen, wie `VIS_STIMMUNG_IDS`.
-    stimmungPreset: z.enum(['morgen', 'mittag', 'abend', 'blaue-stunde', 'bedeckt', 'nebel', 'winter', 'weiss']).optional(),
+    stimmungPreset: z.enum(VIS_STIMMUNG_IDS).optional(),
     backbone: z.enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl', 'qwen-image-2.1']).optional(),
     // Nr. 85/84 (Vertrag 20.10.2026, Auflage 2): zwei flache Skalare, kein Tupel.
     grundlage: z.string().optional(),

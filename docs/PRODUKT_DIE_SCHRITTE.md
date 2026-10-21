@@ -1173,6 +1173,12 @@ Heim-PC bleibt liegen, weil das iPad seine Skizzen bis zum nächsten Schritt noc
 IFC-Datei bleibt am Heim-PC, weil das Programm dafür nur dort laufen darf (Lizenz, Prozessgrenze); das fertige Modell
 kommt danach in die offene Mappe am Mac. Ist keine Mappe am Mac offen, läuft alles wie vorher.
 
+**Nachgebessert nach der Messung am Heim-PC:** Das Laden einer Datei aus einer Mappe am Mac machte die neue Mappe am
+Heim-PC zur «zuletzt geöffneten» — für alle Geräte. Die Visbox-Seite und das iPad zeigten danach plötzlich die neue
+Mappe statt ihrer eigenen. Jetzt sagt der Mac beim Laden, dass die Datei in seine Mappe gehört. Der Heim-PC legt dann
+nur eine Kopie zum Umwandeln an (den Zwilling) und lässt alles andere, wie es war. Er schreibt dabei auch nie in die
+Mappe, mit der am Heim-PC gerade gearbeitet wird. Ohne Mappe am Mac ist alles wie vorher.
+
 **Offen:** die Probe am Mac (Mappe holen, ein Bild rechnen lassen, ohne Heim-PC wieder öffnen); die Messung am Heim-PC,
 dass Holen, Auftrag und die alte Mappe dort zusammen funktionieren; das iPad, das die Mappe vom Mac holt (nächster
 Schritt, der Weg ist im Plan beschrieben).
@@ -1198,6 +1204,41 @@ am Mac in der Knotenansicht, nicht vom iPad aus.
 
 **Offen:** die Probe an Mac und iPad (koppeln, Skizze, Bild, ohne Mac); das Abschalten des direkten Wegs in der nächsten
 Fassung.
+
+**Nachtrag: der direkte Weg endet, und der Mac geht auch ohne Heim-PC (21.10.2026).** Der Heim-PC nimmt ein iPad, das
+direkt mit ihm spricht, nicht mehr an. Er antwortet mit einem Satz: «Das iPad verbindet sich jetzt über den Mac — am Mac
+‹iPad koppeln› öffnen und das iPad mit dem Mac koppeln.» Das iPad zeigt diesen Satz in seiner Verbindungszeile, statt
+still zu scheitern, und seine Skizzen bleiben auf dem iPad liegen, bis es mit dem Mac gekoppelt ist. Woran der Heim-PC
+den Unterschied erkennt: Was über den Mac kommt, trägt einen Vermerk «über den Mac»; alles andere, das sich als iPad
+ausgibt, kam direkt. Der Mac selbst, die Webseite und die Werkzeuge am Heim-PC tragen keinen solchen Vermerk und merken
+nichts davon. Dazu geht die Verbindung iPad–Mac jetzt **auch ohne eingerichteten Heim-PC**: Das iPad koppelt mit dem Mac
+und sieht die Mappe am Mac mit Bildern und Skizzen; wer rechnen will, liest «Kein Rechner eingerichtet». *Begründung:*
+Ein iPad, das still weiter direkt spricht, legt Skizzen an einen Ort, an dem der Architekt sie nicht sucht — darum ein
+klarer Satz statt eines stillen Fehlers. Und die Mappe liegt am Mac; dass sie ohne Heim-PC nicht ans iPad käme, hätte das
+iPad vom Rechner abhängig gemacht, obwohl es zum Zeichnen keinen braucht.
+
+### 21.10.2026 · Vorschläge überstehen den Wechsel der Ansicht
+
+**Anlass:** Beim ersten Durchlauf mit Claude am Mac schlug Claude vor, die Stimmung von «morgen» auf «abend» zu stellen.
+Der Architekt wechselte kurz zur Visbox-Seite und zurück — der Vorschlag war weg, nichts geändert, und niemand hatte es
+gesagt. Der Vorschlag hatte nur in der Knotenansicht gelebt, und die wird beim Wechsel jedes Mal neu geladen.
+
+**Was gebaut ist:** Die Mac-App hebt die offenen Vorschläge selbst auf, zusammen mit der Mappe, zu der sie gehören.
+Kommt die Knotenansicht zurück, bekommt sie die Vorschläge ihrer Mappe wieder und rechnet jeden noch einmal zur Probe
+durch. Weg ist ein Vorschlag nur, wenn der Architekt ihn ablehnt oder wenn er vier Stunden ohne Entscheid liegt; in beiden
+Fällen hört Claude einen Satz mit dem Grund. Passt ein Vorschlag nicht mehr — eine andere Mappe ist offen, oder der
+Knoten, den er ändern wollte, ist inzwischen gelöscht —, bleibt er sichtbar, und «Anwenden» sagt, warum nichts geschieht.
+
+**Was der Architekt sieht:** nichts Neues — der Vorschlag steht nach dem Zurückkehren einfach noch da. Neu sind nur die
+Sätze in der Leiste, wenn ein Vorschlag nicht mehr passt oder abgelaufen ist.
+
+**Begründung des Wegs:** Ein Vorschlag gilt für eine Mappe und ihren Knotengraph, nicht für ein Fenster. Darum liegt er
+dort, wo die Arbeit über den Wechsel hinweg bleibt: in der App. Beim Zurückgeben wird er neu geprüft statt blind
+eingesetzt, weil sich der Graph in der Zwischenzeit geändert haben kann; und er wird dabei nie von selbst angewendet,
+auch wenn Claude frei arbeiten darf. Still verschwinden darf nichts: Wer einen Vorschlag gestellt hat, soll erfahren, was
+aus ihm wurde.
+
+**Offen:** die Probe am Mac (vorschlagen, Seite wechseln, zurück, anwenden).
 
 ## Was als Nächstes dran ist
 
@@ -1897,6 +1938,24 @@ statt an zweiter Stelle; eine Gewichtung in Klammern kennt dieses Modell nicht. 
 Die Messung am Heim-PC rechnet jeden Weg gegen dasselbe Kontrollbild, dazu den Material-Knoten mit Sichtbeton-Textur, der
 das gerenderte Bild als Ausgangspunkt mitgibt. Zurück kommen die Zahlen und ein Urteil von Auge: «Sichtbeton?». Nur
 frei lizenzierte Gewichte, die schon auf dem Rechner liegen.
+**Material und Umriss: was die Messung zeigte, und was danach nachgezogen ist (21.10.2026).** Die Messung am Heim-PC
+fand ein klares bestes Bild: beide Schalter zusammen, der Stoff vorne und der Hintergrund während des Malens
+festgehalten. Das Haus war ganz aus Sichtbeton, stand im Umriss, ohne sichtbare Naht, und man erkannte das Modell wieder.
+Jeder Schalter allein reichte nicht: Der festgehaltene Hintergrund allein machte aus dem Hauptbau einen Rundturm, der
+Stoff vorne allein baute noch mehr neben das Haus, und das nachträgliche Mischen sah aus wie ausgeschnitten und
+aufgeklebt. Grafikspeicher kostete das Festhalten keinen. Danach sind vier kleine Dinge nachgezogen. Beim nachträglichen
+Mischen bemängelten zwei Sätze noch das Bild von vor dem Mischen («baut über den Umriss», «nicht wiederzuerkennen»);
+jetzt sprechen sie über das Bild, das geliefert wird, und die Zahlen von vorher stehen daneben. Der Satz, der sagt, dass
+der Hintergrund festgehalten wurde, stand nur in einer Nebendatei; jetzt steht er im Ergebnis. Mit dem Material-Knoten
+stand der Stoff fünfmal in der Bildbeschreibung; jetzt höchstens dreimal, ohne doppelten Satz. Und beim Bildeingang
+merkte sich das Programm beim Vorbereiten des gerenderten Bilds einen Rechenweg, den es nie braucht; das kostete
+vermutlich die knapp vier Gigabyte Mehrbedarf und ist abgestellt. Dazu zwei Kleinigkeiten aus der Messung davor: Ein
+leerer Ordner für die Gewichte des Tiefenschätzers heisst jetzt «leer oder unvollständig» statt «unbekanntes Modell», und
+im Logbuch steht die Speicherprüfung unter ihrem Auftrag. Und aus der Messung der neuen Knoten: Der deutsche Satz des Stimmungs-Knotens kam halb übersetzt an («leuchtende window»), der englische Satz des Heim-PC fehlte darum, und die Abendstimmung zeigte einen Innenraum statt des Hauses. Jetzt hängt der Heim-PC bei einer bestellten Stimmung immer seinen eigenen Satz an, genau einmal, und nimmt den des Knotens heraus; die Sätze aller acht Stimmungen werden ganz übersetzt. Und das Ergebnis nennt die Grösse des Himmelsbilds, mit dem das Grundbild wirklich gerechnet wurde. Ehrlich gesagt: gemessen war ein Startwert, eine Kamera und eine
+Stimmung mit Material. Der Hintergrund ist dann flach wie bei einem Modellfoto, weil die Kamera in Blender nicht den
+Himmel sieht, sondern einen ruhigen Farbverlauf, der bewusst vom Haus abgesetzt ist. Ob das Himmelsbild dort besser
+wäre, und ob das beste Bild mit vier Startwerten, zwei Kameras und drei Stimmungen hält, misst der nächste Auftrag. Erst
+danach wird über die Vorgabe entschieden.
 
 **Licht ins KI-Bild: das Grundbild steht neben dem KI-Bild (21.10.2026, Entscheid 117a).** Nach den zwei Messungen hat
 der Owner gewählt: Das KI-Bild bleibt, was es ist, ein Entwurf, und daneben steht das gerenderte Grundbild, in dem Sonne

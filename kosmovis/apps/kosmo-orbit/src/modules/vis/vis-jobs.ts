@@ -66,6 +66,7 @@ import {
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
   grundlageAmKnoten,
   grundlageFuerStand,
+  grundlageSchonDaSatz,
   grundlageStand,
 } from './grundlage';
 
@@ -1873,6 +1874,24 @@ export function sendeGraphRenderAuftrag(
   // festlegen — mit genau den Zahlen, die gleich gesendet werden.
   const stufe = opts?.stufe;
   const standJetzt = grundlageStandFuerKnoten(doc, roh, node?.params ?? {}, opts);
+  // Befund B1 (306): «Grundlage rendern» ein zweites Mal fuer denselben Stand legte am Heim-PC eine neue
+  // Grundlage an. Der Knoten nennt jetzt die bestehende (auch eine gemerkte desselben Stands) und sendet
+  // nichts; neu gerechnet wird nur bei einer Aenderung.
+  if (stufe === 'grundlage') {
+    const da = grundlageAmKnoten(node?.params, standJetzt);
+    if (da && da.stand === standJetzt) {
+      const zurueck = grundlageFuerStand(node?.params, standJetzt);
+      if (zurueck && !variante) {
+        try {
+          useProject.getState().runCommand('vis.nodeParametrieren', { graphId, nodeId, params: zurueck });
+        } catch (err) {
+          meldeFehler(err);
+        }
+      }
+      melde(grundlageSchonDaSatz(da.id), { ton: 'info' });
+      return;
+    }
+  }
   let kiFest: { grundlage?: string; seed?: number; guete?: Guete } = {};
   if (stufe === 'variante') {
     // Zweite, tiefere Naht neben dem gesperrten Knopf: ohne aktuelle Grundlage geht nichts raus.

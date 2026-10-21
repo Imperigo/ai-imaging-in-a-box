@@ -108,7 +108,7 @@ import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, 
 import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
-import { GueteMarke } from './GueteMarke';
+import { GueteMarke, istVorschau } from './GueteMarke';
 import { EinzelbildGross, HauptbildAbzeichen, RenderVerlauf, type EinzelbildArt } from './RenderVerlauf';
 import { MODELL_3D_ZUSATZ, ModellKnotenKoerper } from './ModellKnoten';
 // Bauplan «Neue Knoten» (Blätter 31–33): Stimmung, Kamera, Oberfläche, Material, Farbpalette.
@@ -144,6 +144,27 @@ import './vis-visual.css';
 export const NODE_W = 200;
 /** Blatt 36: die Bildzeile des Varianten-Knotens (Daumen 96 × 60 px, `varianten-daumen.css`). */
 export const VARIANTEN_DAUMEN_H = 60;
+/**
+ * Entscheid 119 (Owner, 21.10.2026; Blatt «Render-Knoten breiter»): der RENDER-Knoten ist breiter als die
+ * anderen, Innenbreite 196 px statt 184. Erst ab 196 px stehen KI-Bild und Grundbild schon am Knoten
+ * nebeneinander, je mindestens `BILD_MIN_BREITE` (96) breit (`nebeneinander.ts`, W-4). Nur der Render-Knoten
+ * waechst, und nur in der Breite: die Hoehen im Zeilenregister (`RENDER_ZEILEN`) sind bei 184 px gemessen und
+ * bleiben Obergrenzen — ein breiterer Koerper bricht hoechstens weniger um, nie mehr. Das Beiblatt behaelt seine
+ * 184 px Inhaltsspalte (`BEIBLATT_INHALT_W`), weil `RENDER_ZEILEN_ZUSATZ` bei dieser Breite gemessen ist.
+ *
+ * Wer eine Knotenbreite braucht, fragt `nodeBreite(typ)` — nie `NODE_W` fuer einen bestimmten Knoten.
+ */
+export const RENDER_NODE_W = 212;
+/** Innenbreite des Koerpers (Polster je 8 px links und rechts). */
+export const KOERPER_POLSTER_X = 8;
+/** Breite der Karte dieser Knotenart (Welt-Pixel). */
+export function nodeBreite(typ: string): number {
+  return typ === 'render' ? RENDER_NODE_W : NODE_W;
+}
+/** Breite des Inhalts (Koerper) dieser Knotenart. */
+export function koerperBreite(typ: string): number {
+  return nodeBreite(typ) - 2 * KOERPER_POLSTER_X;
+}
 const PORT_ABSTAND = 20;
 /** V1-Welle Commit 2 (Node-Kollaps): Port-Abstand im eingeklappten Zustand —
  * kompakter als PORT_ABSTAND; `portY()` wählt je nach `node.collapsed`. */
@@ -683,7 +704,7 @@ const BEIBLATT_RESERVE_UNTEN = 60;
 /** Inhaltsspalte GENAU so breit wie im Kartenkoerper (Koerper-Breite
  *  `NODE_W - 16`) — die Hoehen in `RENDER_ZEILEN_ZUSATZ` sind bei dieser
  *  Breite gemessen. Ein breiteres Beiblatt haette sie alle ungueltig gemacht. */
-const BEIBLATT_INHALT_W = NODE_W - 16;
+const BEIBLATT_INHALT_W = NODE_W - 2 * KOERPER_POLSTER_X;
 export const BEIBLATT_W = BEIBLATT_INHALT_W + 2 * BEIBLATT_POLSTER + 2;
 /** Nennhoehe fuer die Klemmrechnung — Obergrenze, nicht Zusicherung: faellt
  *  die bedingte Zeile weg, ist das Beiblatt kuerzer (ein Stueck leere Karte,
@@ -728,7 +749,8 @@ export function beiblattPlatz(
 
   const maxHoehe = Math.max(0, Math.min(BEIBLATT_H_NENN, feldUnten - feldOben));
 
-  const rechtsDavon = schirmX(knoten.x + NODE_W) + BEIBLATT_ABSTAND;
+  // Das Beiblatt gehoert zum Render-Knoten (Entscheid 119: er ist `RENDER_NODE_W` breit).
+  const rechtsDavon = schirmX(knoten.x + RENDER_NODE_W) + BEIBLATT_ABSTAND;
   const linksDavon = schirmX(knoten.x) - BEIBLATT_ABSTAND - BEIBLATT_W;
   const links =
     rechtsDavon + BEIBLATT_W <= feldRechts
@@ -857,7 +879,7 @@ function portPos(n: VisNode, port: string, richtung: 'in' | 'out'): { x: number;
   const liste = richtung === 'in' ? sichtbareEingaenge(n.typ) : (kat?.outputs ?? []);
   const i = Math.max(0, liste.findIndex((p) => p.name === port));
   return {
-    x: n.x + (richtung === 'in' ? -PORT_ABSATZ : NODE_W + PORT_ABSATZ),
+    x: n.x + (richtung === 'in' ? -PORT_ABSATZ : nodeBreite(n.typ) + PORT_ABSATZ),
     y: n.y + portY(n, i),
   };
 }
@@ -929,7 +951,7 @@ function berechneFit(
   for (const n of nodes) {
     minX = Math.min(minX, n.x);
     minY = Math.min(minY, n.y);
-    maxX = Math.max(maxX, n.x + NODE_W);
+    maxX = Math.max(maxX, n.x + nodeBreite(n.typ));
     maxY = Math.max(maxY, n.y + nodeHoehe(n));
   }
   const scale = Math.min(1, (flaeche.w - 80) / Math.max(1, maxX - minX), (flaeche.h - 80) / Math.max(1, maxY - minY));
@@ -1972,7 +1994,7 @@ export function NodeCanvas({
           const getroffen = graph.nodes
             .filter((n) => {
               const h = nodeHoehe(n, offenerKlapptext, laeufe[n.id]?.status, mitVerlauf(n));
-              return n.x < x1 && n.x + NODE_W > x0 && n.y < y1 && n.y + h > y0;
+              return n.x < x1 && n.x + nodeBreite(n.typ) > x0 && n.y < y1 && n.y + h > y0;
             })
             .map((n) => n.id);
           setAuswahl(new Set(getroffen));
@@ -2345,6 +2367,9 @@ export function NodeCanvas({
             ? lauf.grundlageStand !== grundlageStandJetzt
             : lauf && veraltetAuftrag && lauf.memoKey !== memoKey(veraltetAuftrag);
         const koerperY = KOPF_H + 8 + Math.max(sichtbareEingaenge(n.typ).length, kat.outputs.length) * PORT_ABSTAND;
+        // Entscheid 119: Breite je Knotenart (der Render-Knoten ist breiter, `nodeBreite`).
+        const nb = nodeBreite(n.typ);
+        const kb = koerperBreite(n.typ);
         // W1 Massnahme 1: Kategorie-Icon + 2px-Tonstreifen (Hue aus dem
         // Kernel-Katalog, Zeichen aus der KIcon-Registry je Kategorie).
         const kategorieFarbe = VIS_KATEGORIE_HUE[kat.kategorie];
@@ -2360,7 +2385,7 @@ export function NodeCanvas({
           <div
             key={n.id}
             className="vis-knoten"
-            style={{ left: n.x, top: n.y, width: NODE_W, height: h }}
+            style={{ left: n.x, top: n.y, width: nb, height: h }}
             data-testid={`vis-node-${n.typ}`}
             data-rf-index={rfIndex}
             tabIndex={rf.tabIndexFuer(rfIndex)}
@@ -2377,9 +2402,9 @@ export function NodeCanvas({
                 nichts (`pointer-events: none`), nur seine gemalten Teile. */}
             <svg
               className="vis-knoten-svg"
-              width={NODE_W + 2 * KNOTEN_SVG_RAND}
+              width={nb + 2 * KNOTEN_SVG_RAND}
               height={h + 2 * KNOTEN_SVG_RAND}
-              viewBox={`${n.x - KNOTEN_SVG_RAND} ${n.y - KNOTEN_SVG_RAND} ${NODE_W + 2 * KNOTEN_SVG_RAND} ${h + 2 * KNOTEN_SVG_RAND}`}
+              viewBox={`${n.x - KNOTEN_SVG_RAND} ${n.y - KNOTEN_SVG_RAND} ${nb + 2 * KNOTEN_SVG_RAND} ${h + 2 * KNOTEN_SVG_RAND}`}
               style={{ left: -KNOTEN_SVG_RAND, top: -KNOTEN_SVG_RAND }}
               focusable="false"
             >
@@ -2387,7 +2412,7 @@ export function NodeCanvas({
             {/* KV1 (docs/AUFTRAG-EINBAU-KOSMOVIS-KNOTEN-N1-AN-INTEGRATOR.md):
                 runde Insel-Karte statt der frueheren geschnittenen Ecke —
                 Radius 16 px, dieselbe Rundung wie die Insel-Pop-ups
-                (`--k-radius`). Layout/Positionierung (NODE_W, h) bleibt
+                (`--k-radius`). Layout/Positionierung (`nodeBreite`, h) bleibt
                 unangetastet, nur die Flaeche wechselt von <path> auf <rect>.
                 Rand folgt weiter der KPipelineNode-Anatomie (1.5px
                 Rollenborder 55%, running-Puls nur bei laufendem Status,
@@ -2395,7 +2420,7 @@ export function NodeCanvas({
             <rect
               x={0}
               y={0}
-              width={NODE_W}
+              width={nb}
               height={h}
               rx={16}
               ry={16}
@@ -2410,7 +2435,7 @@ export function NodeCanvas({
                 data-testid="vis-node-ausgewaehlt"
                 x={-3}
                 y={-3}
-                width={NODE_W + 6}
+                width={nb + 6}
                 height={h + 6}
                 fill="none"
                 stroke="var(--k-accent)"
@@ -2455,7 +2480,7 @@ export function NodeCanvas({
                 svgRef.current?.setPointerCapture?.(e.pointerId);
               }}
             >
-              <rect width={NODE_W} height={KOPF_H} fill="transparent" />
+              <rect width={nb} height={KOPF_H} fill="transparent" />
               <KIcon name={kategorieIcon} size={14} x={8} y={6} className="vis-node-icon-soft" />
               <text x={28} y={17} fontSize={11.5} fontWeight="var(--k-gewicht-stark)" fill="var(--vis-node-tinte)" className="vis-node-kopf-label">
                 {kat.label}
@@ -2489,11 +2514,11 @@ export function NodeCanvas({
                     (ab x=178) stehen — Drag am restlichen Kopf ist
                     unverändert, weil dieser g weiterhin vor der Drag-Rect
                     gemalt wird (Dokumentreihenfolge = Trefferpriorität). */}
-                <rect x={NODE_W - 48} y={3} width={24} height={20} fill="transparent" />
+                <rect x={nb - 48} y={3} width={24} height={20} fill="transparent" />
                 <KIcon
                   name={n0.collapsed ? 'pfeil-unten' : 'pfeil-oben'}
                   size={14}
-                  x={NODE_W - 40}
+                  x={nb - 40}
                   y={6}
                   className="vis-node-icon-faint"
                 />
@@ -2507,12 +2532,16 @@ export function NodeCanvas({
                 }}
               >
                 <title>Node löschen</title>
-                <KIcon name="schliessen" size={14} x={NODE_W - 22} y={6} className="vis-node-icon-faint" />
+                {/* Visbox-Befund 305 (21.10.2026): `outline` zeichnet der Browser an einem SVG-<g> nicht —
+                    der gestrichelte Sperrzonen-Rahmen der KosmoMaus braucht ein eigenes Rechteck
+                    (`kosmo-maus.css`, `.vis-node-knopf-rahmen`). Ohne bedienenden Agenten unsichtbar. */}
+                <rect className="vis-node-knopf-rahmen" x={nb - 25} y={3} width={20} height={20} rx={10} fill="transparent" />
+                <KIcon name="schliessen" size={14} x={nb - 22} y={6} className="vis-node-icon-faint" />
               </g>
             </g>
             {/* Tonstreifen (W1): zurückhaltender Kategorie-Hue, 2px, ersetzt die
                 bisherige neutrale Hairline unter dem Kopf. */}
-            <rect x={0} y={KOPF_H} width={NODE_W} height={2} fill={kategorieFarbe} />
+            <rect x={0} y={KOPF_H} width={nb} height={2} fill={kategorieFarbe} />
 
             {/* Eingänge links */}
             {sichtbareEingaenge(n.typ).map((p, i) => {
@@ -2560,9 +2589,9 @@ export function NodeCanvas({
               const y = portY(n, i);
               return (
                 <g key={p.name}>
-                  <circle cx={NODE_W + PORT_ABSATZ} cy={y} r={5} fill={PORT_FARBE[p.typ]} stroke={PORT_FARBE[p.typ]} data-testid={`port-out-${p.name}`} />
+                  <circle cx={nb + PORT_ABSATZ} cy={y} r={5} fill={PORT_FARBE[p.typ]} stroke={PORT_FARBE[p.typ]} data-testid={`port-out-${p.name}`} />
                   <circle
-                    cx={NODE_W + PORT_ABSATZ}
+                    cx={nb + PORT_ABSATZ}
                     cy={y}
                     r={11}
                     fill="transparent"
@@ -2585,7 +2614,7 @@ export function NodeCanvas({
                       setPending({ from: n.id, fromPort: p.name, typ: p.typ, x: pos.x, y: pos.y });
                     }}
                   />
-                  <text x={NODE_W - 10} y={y + 3.5} fontSize={10} textAnchor="end" fill="var(--vis-node-tinte)">{p.label}</text>
+                  <text x={nb - 10} y={y + 3.5} fontSize={10} textAnchor="end" fill="var(--vis-node-tinte)">{p.label}</text>
                 </g>
               );
             })}
@@ -2608,7 +2637,7 @@ export function NodeCanvas({
               <div
                 className={`vis-node-koerper${drag || marquee ? ' vis-node-koerper--gesperrt' : ''}`}
                 data-knoten-koerper={n.id}
-                style={{ left: 8, top: koerperY, width: NODE_W - 16, height: h - koerperY - 8 }}
+                style={{ left: 8, top: koerperY, width: kb, height: h - koerperY - 8 }}
               >
                 <NodeKoerper
                   graphId={graphId}
@@ -3441,8 +3470,9 @@ function RenderAuftragsFormular({
  * Zoom-Horcher der Leinwand nicht, und es gibt keine zweite Bedeutung fuer
  * dasselbe Rad, sondern zwei verschiedene Flaechen.
  *
- * Die Inhaltsspalte ist **genau so breit wie im Knoten** (`NODE_W - 16` =
- * 184 px). Das ist kein Zufall und keine Bequemlichkeit: die Hoehen in
+ * Die Inhaltsspalte ist **so breit, wie der Knoten bis Entscheid 119 war** (`NODE_W - 16` =
+ * 184 px; der Render-Knoten selbst ist seither 196 px breit, das Beiblatt nicht).
+ * Das ist kein Zufall und keine Bequemlichkeit: die Hoehen in
  * `RENDER_ZEILEN_ZUSATZ` sind bei 184 px Breite am Bild gemessen worden.
  * Ein breiteres Beiblatt haette sie alle ungueltig gemacht, und das Register
  * waere von einer Messung zu einer Behauptung geworden.
@@ -3730,10 +3760,11 @@ function NodeKoerper({
       // Fortschritt am Ort: `null`, wenn nichts unterwegs ist (bereit, fertig, Freigabe, Fehler).
       // Entscheid 104: die bestellte Güte steht schon während des Laufs in der Zeile (Antwort KosmoVis 20.10.).
       const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige({ ...lauf, bestellteGuete: gueteAmKnoten(params) }, Date.now()) : null;
-      // Entscheid 117a (W-4): was das Bild am Knoten zeigt. Der Koerper ist `NODE_W - 16` breit; dort passt
-      // «nebeneinander» nicht (je Bild unter 96 px) und faellt auf das KI-Bild zurueck — gross stehen beide nebeneinander.
+      // Entscheid 117a (W-4): was das Bild am Knoten zeigt. Seit Entscheid 119 ist der Koerper des Render-Knotens
+      // 196 px breit (`koerperBreite('render')`): «nebeneinander» passt (je Bild 96 px) und steht schon am Knoten;
+      // bei 184 px fiel es auf das KI-Bild zurueck. Die grosse Ansicht (`BildPaar.tsx`) bleibt zusaetzlich.
       const bildAnsicht = bildAnsichtAmKnoten(params);
-      const bildPaar = lauf?.grundbild ? wirksameAnsicht(bildAnsicht, true, NODE_W - 16) : null;
+      const bildPaar = lauf?.grundbild ? wirksameAnsicht(bildAnsicht, true, koerperBreite('render')) : null;
       // V-H4 (UI-KONZEPT-065 §5): semantisches Formular — schreibt in flache
       // Render-Node-`params` über den bestehenden `vis.nodeParametrieren`-Weg;
       // derselbe Zusammenführungs-Helfer (vis-jobs.ts) speist Anzeige UND Job.
@@ -4088,7 +4119,7 @@ function NodeKoerper({
                     zeigt KI-Bild und Grundbild gross nebeneinander (dort der Umschalter). Ohne Grundbild (aelterer
                     Lauf) bleibt alles wie bisher — die KI-Kachel allein, ohne Luecke. */}
                 <div
-                  className={`vis-hauptbild${bildPaar ? ' vis-hauptbild--paar' : ''}`}
+                  className={`vis-hauptbild${bildPaar ? ' vis-hauptbild--paar' : ''}${bildPaar && bildPaar.ansicht !== 'nur-grundbild' && istVorschau(lauf) ? ' vis-hauptbild--vorschau' : ''}`}
                   data-testid="render-hauptbild"
                   style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
                   {...(bildPaar

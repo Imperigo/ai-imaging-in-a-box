@@ -8118,10 +8118,16 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§174, C102); Messauftrag auf-20261021-304
     - [ ] Blatt 36 «Mappen am Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprobe am Mac (owner): holen, öffnen, Bild rechnen, ohne Heim-PC wieder öffnen, «Datei laden …» in neue Mappe
+    - [x] Ergebnis auf-20261021-304: C102 am Heim-PC bestätigt; Befund B1 («Datei laden …» stellte die Heim-Mappe für alle Geräte um) behoben — mit Mappe am Mac nur ein Zwilling, die zuletzt geöffnete bleibt (§179, C107)
+    - [ ] Messauftrag auf-20261021-307 (local): Fehler aus 304 nachstellen, behoben zeigen, Gegenprobe ohne Kopf
   - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§178, C106)
     - [ ] Blatt «iPad über den Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprüfung Mac und iPad (owner): koppeln mit Schloss, Skizze in der Mac-Mappe, Bild vom Mac, ohne Mac klarer Satz
-    - [ ] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid offen, dann local)
+    - [x] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid 118a: 410 mit Satz, das iPad zeigt ihn) — gebaut, am Gerät unbestätigt (§181, C108); Messauftrag auf-20261021-308 (local)
+    - [x] Vermittlung am Mac auch ohne eingerichteten Heim-PC (118a, Frage 3): das iPad bekommt die Mac-Mappe, Rechnen sagt «Kein Rechner eingerichtet» — gebaut, am Gerät unbestätigt (§181, C108)
+    - [x] Rechnen vom iPad bei Mac-Mappe in der Knotenansicht (118a, Frage 2) — geprüft, war mit §178 gebaut (§181)
+    - [x] Befund 307 B1: Ladestand meldet nach dem Zurückstellen `veraltet` mit Satz, statt für die offene Mappe zu gelten (§181, C108); C107 mit Ergebnis 307 erledigt
+    - [ ] Geräteprüfung 118a (owner): iPad über den Mac verbinden; Heim-PC am Mac «nicht eingerichtet» — das iPad sieht die Mappe trotzdem
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
   - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)
@@ -8145,6 +8151,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§175, C103)
     - [ ] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
+  - [x] Befund Demolauf 0.3.16: offene Karten überleben den Wechsel der Ansicht (Ablage in der Mac-App, Rückgabe an die
+    neu geladene Seite, verworfen nur mit Ablehnen oder nach 4 h, beides mit Satz an Claude; unpassende Karten weist
+    «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+    - [ ] Geräteprobe: vorschlagen → Visbox-Seite → zurück → Karte steht → Anwenden wirkt (owner)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)
@@ -8204,8 +8214,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)
   - [ ] Beobachten ohne Fix: Sichtbeton im KI-Bild nur teilweise (Holz-/Steinstreifen); Schlagschatten auf 1,7 m Augenhöhe kaum sichtbar (296 notiert)
   - [x] Material und Umriss im KI-Bild (Strang Treue, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`): Optionen a–e geprüft (Lizenz, VRAM, Aufwand, Risiko); gebaut als Messschalter, Vorgabe aus: `vis.umriss_halten` «nachher» (Maskenmischung) und «im_lauf» (Hintergrund im Fahrplan festgehalten), `vis.material_vorne` (Stoff vorne, dreimal) — gebaut, am Gerät ungemessen (§173, C101)
-  - [ ] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln
-  - [ ] Wahl nach 303 (owner, über die Zentrale): welcher Umriss-Weg und ob «Material vorne» Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
+  - [x] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln *(207c4f6: M2 bestes Bild — Sichtbeton, im Umriss, keine Naht; im_lauf allein Rundturm, nachher Collage; im_lauf 320 MiB unter der Kontrolle)*
+  - [x] Befunde aus 302/303 gebaut (Strang Kern, §182, C109): Sätze zum Umriss nach dem Halten, Fahrplan-Satz im Ergebnis, Stoff höchstens dreimal, `no_grad` im eigenen Start, leerer Gewichtsordner mit Satz, Journal «Im Prozess» nach der Vorprüfung; aus 306: Satz der Stimmung immer einmal englisch (B2), Himmelsgrösse aus der Grundlage (B4)
+  - [ ] Messung am Heim-PC: auf-20261021-309 (local) — M2 gegen K mit vier Startwerten, sSE/nNW, morgen/abend/bedeckt; Kontrollen K0/M2m/E2n; VRAM des Bildeingangs nach `no_grad`; Option Himmel als Auskunft; drei Tafeln
+  - [ ] Registerwert `vram_bildeingang_*` senken, wenn 309 die Spitze nach `no_grad` misst (wir)
+  - [ ] Messschalter «Himmel im Hintergrund» für im_lauf — nur, wenn 309 sagt, dass er die Bilder trägt (wir)
+  - [ ] Wahl nach 309 (owner, über die Zentrale, Frage stellt der Hauptstrang): ob M2 (material_vorne + im_lauf) Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
   - [ ] Kanten zusätzlich zur Tiefe (b) und Steuerstärke je Schritt (c) — zurückgestellt bis nach 303 (wir)
   - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293
   - [ ] Knotenansicht schickt `aufloesung` an `/knoten/standpunkte` (Vis-Werkzeug, beide Programme)
@@ -8218,12 +8232,15 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] C F3 Stimmung: Himmelsbild-Vorschau (Farbverlauf bis W), acht zum Anhaken, Himmel drehen, Wirkung; `render.environment` wird gesendet; Grundlage je Stand — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] D F2 Kamera: Auto mit Richtungen, Augenhöhe, Brennweite, Abstand, Perspektive; Kegel und Blick live aus `/knoten/standpunkte` (Wirt reicht die Parameter durch); «Manuell» friert ein, Werte tippen — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] E F4 Oberfläche, Material (Kugel/Würfel/Fläche), Farbpalette; Startgraph Material → Oberfläche → Kombinierer — gebaut, am Gerät unbestätigt (§176, C104)
-  - [ ] Messung am Heim-PC: auf-20261021-306 (local) — je Stimmung, Kamera-Art und Materialwahl ein Lauf wie aus den Knoten, Grundlage je Stand, Live-Vorschau = Auftrag, Vorschaubilder (W)
-  - [ ] W Vorschaubilder (Himmel 8, Materialien 11) aus 306 in beide Programme, mit Quelle und Prüfsumme im NOTICE (wir, nach 306)
+  - [x] Messung am Heim-PC: auf-20261021-306 (local) — Ergebnis `05641d3`: alles rechnet wie bestellt; Befunde B1 (jede Grundlage-Bestellung legt neu an), B2 (Satz der Stimmung halb übersetzt), B3 (Einfrieren verliert den Shift)
+  - [x] B1 und B3 behoben: gleicher Stand → bestehende Grundlage, kein neuer Auftrag; Einfrieren hebt das Ziel für denselben Shift — gebaut, am Gerät unbestätigt (§183)
+  - [x] W Vorschaubilder: sieben Himmel und elf Materialien in beiden Programmen, Prüfsummen in NOTICE, THIRD_PARTY_LICENSES und quellen.json (§183)
+  - [ ] Vorschau «weiss» mit white_studio_06 (local liefert sie mit dem nächsten Messauftrag; bis dahin Verlauf)
+  - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [x] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen) *(21.10.2026: rollt in derselben Höhe, das Rad darin zoomt die Leinwand nicht)*
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
-  - [ ] KosmoOrbit: neue Kamera-Knoten auf «Auto» als Vorgabe (integrator, nach dem Einspielen)
+  - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§160, C89)

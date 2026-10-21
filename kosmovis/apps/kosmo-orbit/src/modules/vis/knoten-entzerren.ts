@@ -1,5 +1,5 @@
 import type { VisGraph, VisNode } from '@kosmo/kernel';
-import { NODE_W, ruhendeNodeHoehe } from './NodeCanvas';
+import { nodeBreite, ruhendeNodeHoehe } from './NodeCanvas';
 
 /**
  * **Gesicherte Graphen beim Laden einmal sanft entzerren** (Owner-Befund am Mac, 20.10.2026:
@@ -29,28 +29,30 @@ type Lage = Pick<VisNode, 'id' | 'x' | 'y' | 'typ' | 'collapsed'>;
 
 /**
  * Neue Lagen für überlappende Knoten — `Map` von Knoten-Kennung auf neues `y`. Leer, wenn
- * nichts überlappt. Rein: die Höhe kommt als Funktion (Vorgabe `ruhendeNodeHoehe`).
+ * nichts überlappt. Rein: Höhe und Breite kommen als Funktion (Vorgabe `ruhendeNodeHoehe` und
+ * `nodeBreite` — seit Entscheid 119 ist der Render-Knoten breiter als die anderen).
  */
 export function entzerreLagen(
   knoten: readonly Lage[],
   hoehe: (n: Lage) => number = ruhendeNodeHoehe,
-  breite = NODE_W,
+  breite: (n: Lage) => number = (n) => nodeBreite(n.typ),
   abstand = ENTZERREN_ABSTAND,
 ): Map<string, number> {
   const reihe = [...knoten].sort((a, b) => a.y - b.y || a.x - b.x);
-  const gesetzt: { x: number; y: number; h: number }[] = [];
+  const gesetzt: { x: number; y: number; h: number; b: number }[] = [];
   const neu = new Map<string, number>();
   for (const n of reihe) {
     const h = hoehe(n);
+    const b = breite(n);
     let y = n.y;
     // Höchstens so oft, wie Knoten da sind: jeder Durchgang rückt unter einen weiteren.
     for (let runde = 0; runde <= gesetzt.length; runde++) {
-      const im = gesetzt.find((p) => n.x < p.x + breite && p.x < n.x + breite && y < p.y + p.h && p.y < y + h);
+      const im = gesetzt.find((p) => n.x < p.x + p.b && p.x < n.x + b && y < p.y + p.h && p.y < y + h);
       if (!im) break;
       y = im.y + im.h + abstand;
     }
     if (y !== n.y) neu.set(n.id, y);
-    gesetzt.push({ x: n.x, y, h });
+    gesetzt.push({ x: n.x, y, h, b });
   }
   return neu;
 }
