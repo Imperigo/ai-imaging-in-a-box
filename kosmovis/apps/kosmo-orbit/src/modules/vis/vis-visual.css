@@ -2224,6 +2224,13 @@
   color: var(--vis-node-tinte);
   pointer-events: none;
 }
+/* Entscheid 119: am 196 px breiten Render-Knoten stehen beide Bilder nebeneinander. Die Marke «Vorschau» sitzt unten
+   links im KI-Bild (`.vis-guete-marke-huelle--bild`) — die Beschriftung des KI-Bilds rueckt darum ueber sie, statt
+   unter ihr zu liegen (Marke 16 px hoch wie `LIZENZ_ZEILE_H`, dazu ein Abstand). Das Grundbild traegt keine Marke. */
+.vis-hauptbild--vorschau > .vis-bildpaar-beschriftung,
+.vis-hauptbild--vorschau .vis-bildpaar-zelle:first-child > .vis-bildpaar-beschriftung {
+  bottom: calc(2 * var(--k-s2) + 16px);
+}
 .vis-bildpaar-umschalter {
   display: inline-block;
   margin-bottom: var(--k-s3);
@@ -2393,6 +2400,8 @@
 .vis-raster-gross-urteil {
   margin: var(--k-s2) 0 0;
   font-size: var(--k-t-sm);
+}
+
 /* Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Zeile «Grundlage» am Render-Knoten — vier Zeilen
    in der Vorbehaltsgroesse (Register `grundlage`, 58 px). «neu würfeln» erbt Groesse und
    Zeilenhoehe, damit die vierte Zeile nicht hoeher wird als die anderen. */

@@ -84,7 +84,7 @@
   },
   {
    "name": "vis_nodeParametrieren",
-   "description": "Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes.",
+   "description": "Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes. Stimmungen (preset, oder presets als JSON-Liste für mehrere): morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell).",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -262,7 +262,7 @@
   },
   {
    "name": "vis_render",
-   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset, KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.",
+   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell)), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.",
    "inputSchema": {
     "type": "object",
     "properties": {

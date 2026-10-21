@@ -3,7 +3,10 @@ import { KosmoDoc, type VisGraph } from '@kosmo/kernel';
 import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
 import { nodeHinzufuegen } from '../src/modules/vis/vis-graph-aktionen';
-import { NODE_W, basisNodeHoehe } from '../src/modules/vis/NodeCanvas';
+import { basisNodeHoehe, nodeBreite } from '../src/modules/vis/NodeCanvas';
+
+/** Entscheid 119: der Render-Knoten ist breiter als die anderen (`nodeBreite`). */
+const RENDER_B = nodeBreite('render');
 
 /**
  * A21 · EIN NEU GESETZTER KNOTEN STEHT GANZ IM BILD (17.09.2026).
@@ -42,7 +45,7 @@ import { NODE_W, basisNodeHoehe } from '../src/modules/vis/NodeCanvas';
  * - `p-knotenfeld-knotenplatz.test.ts` hält die Knoten auseinander; ob sie im
  *   Bild liegen, sieht es nicht.
  *
- * Diese Probe prüft die ganze Kiste (x…x+NODE_W, y…y+Höhe) gegen das
+ * Diese Probe prüft die ganze Kiste (x…x+Breite, y…y+Höhe) gegen das
  * sichtbare Weltrechteck.
  *
  * ROT VOR GRÜN, nachgestellt am 17.09.2026 (Schnitt: `START_X = anker.x`,
@@ -68,7 +71,7 @@ import { NODE_W, basisNodeHoehe } from '../src/modules/vis/NodeCanvas';
  * keine Probe, und eine, die es verschweigt, ist schlimmer.
  *
  * Keine Zahl unten ist eingetippt: Breite und Höhe kommen aus denselben
- * Quellen, die auch `nodeHinzufuegen()` benutzt (`NODE_W`, `basisNodeHoehe`).
+ * Quellen, die auch `nodeHinzufuegen()` benutzt (`nodeBreite`, `basisNodeHoehe`).
  */
 
 /**
@@ -133,11 +136,11 @@ describe('A21 — der erste Knoten liegt GANZ im sichtbaren Ausschnitt, nicht nu
       // ihn ganz zeigen — dann wäre ein grünes «liegt ganz drin» eine
       // Unwahrheit über die Platzierung.
       expect(hoehe, `Knoten höher als das Fenster ${f.b}×${f.h}`).toBeLessThanOrEqual(f.h);
-      expect(NODE_W, `Knoten breiter als das Fenster ${f.b}×${f.h}`).toBeLessThanOrEqual(f.b);
+      expect(RENDER_B, `Knoten breiter als das Fenster ${f.b}×${f.h}`).toBeLessThanOrEqual(f.b);
 
       expect(n.x, `${f.b}×${f.h}: linke Kante links aus dem Bild`).toBeGreaterThanOrEqual(r.x);
       expect(n.y, `${f.b}×${f.h}: Oberkante über dem Bild`).toBeGreaterThanOrEqual(r.y);
-      expect(n.x + NODE_W, `${f.b}×${f.h}: rechte Kante rechts aus dem Bild`).toBeLessThanOrEqual(r.x + r.b);
+      expect(n.x + RENDER_B, `${f.b}×${f.h}: rechte Kante rechts aus dem Bild`).toBeLessThanOrEqual(r.x + r.b);
       expect(n.y + hoehe, `${f.b}×${f.h}: Unterkante unter dem Fensterrand`).toBeLessThanOrEqual(r.y + r.h);
     }
   });
@@ -150,7 +153,7 @@ describe('A21 — der erste Knoten liegt GANZ im sichtbaren Ausschnitt, nicht nu
     const gid = neuerGraph('A21 Mitte');
     nodeHinzufuegen(gid, 'render');
     const n = useProject.getState().doc.get<VisGraph>(gid)!.nodes[0]!;
-    expect(n.x + NODE_W / 2).toBe(mitte.x);
+    expect(n.x + RENDER_B / 2).toBe(mitte.x);
     expect(n.y + basisNodeHoehe('render') / 2).toBe(mitte.y);
   });
 
@@ -181,7 +184,7 @@ describe('A21 — der erste Knoten liegt GANZ im sichtbaren Ausschnitt, nicht nu
       const h = basisNodeHoehe(typ);
       expect(n.x, `${typ}: links raus`).toBeGreaterThanOrEqual(r.x);
       expect(n.y, `${typ}: oben raus`).toBeGreaterThanOrEqual(r.y);
-      expect(n.x + NODE_W, `${typ}: rechts raus`).toBeLessThanOrEqual(r.x + r.b);
+      expect(n.x + nodeBreite(typ), `${typ}: rechts raus`).toBeLessThanOrEqual(r.x + r.b);
       expect(n.y + h, `${typ}: unten raus`).toBeLessThanOrEqual(r.y + r.h);
     }
   });
@@ -200,7 +203,7 @@ describe('A21 — der erste Knoten liegt GANZ im sichtbaren Ausschnitt, nicht nu
       nodeHinzufuegen(gid, 'render');
       const n = useProject.getState().doc.get<VisGraph>(gid)!.nodes[0]!;
       const r = rechteckFuer(f);
-      const mx = n.x + NODE_W / 2;
+      const mx = n.x + RENDER_B / 2;
       const my = n.y + hoehe / 2;
       if (mx < r.x || mx > r.x + r.b || my < r.y || my > r.y + r.h) melden++;
     }

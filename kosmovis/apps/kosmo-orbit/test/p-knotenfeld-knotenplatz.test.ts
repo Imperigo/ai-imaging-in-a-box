@@ -3,7 +3,7 @@ import { KosmoDoc, type VisGraph } from '@kosmo/kernel';
 import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
 import { nodeHinzufuegen } from '../src/modules/vis/vis-graph-aktionen';
-import { NODE_W, basisNodeHoehe } from '../src/modules/vis/NodeCanvas';
+import { basisNodeHoehe, nodeBreite } from '../src/modules/vis/NodeCanvas';
 
 /**
  * P-KNOTENFELD Posten 8 (`auftraege/von-homestation/auf-orbit-20260825-07.md`
@@ -34,7 +34,7 @@ import { NODE_W, basisNodeHoehe } from '../src/modules/vis/NodeCanvas';
  */
 
 function box(n: { x: number; y: number; typ: string }): { x0: number; y0: number; x1: number; y1: number } {
-  return { x0: n.x, y0: n.y, x1: n.x + NODE_W, y1: n.y + basisNodeHoehe(n.typ) };
+  return { x0: n.x, y0: n.y, x1: n.x + nodeBreite(n.typ), y1: n.y + basisNodeHoehe(n.typ) };
 }
 
 function ueberlappt(a: ReturnType<typeof box>, b: ReturnType<typeof box>): boolean {

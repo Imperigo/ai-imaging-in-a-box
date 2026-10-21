@@ -6,7 +6,7 @@ import { evaluiereGraph, History, KosmoDoc, VIS_NODE_KATALOG, type VisGraph } fr
 import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
 import { VisWorkspace } from '../src/modules/vis/VisWorkspace';
-import { BLATT_REFERENZ_GRUND, groessteNodeHoehe, NODE_W, NodeCanvas } from '../src/modules/vis/NodeCanvas';
+import { BLATT_REFERENZ_GRUND, groessteNodeHoehe, NODE_W, NodeCanvas, nodeBreite, RENDER_NODE_W } from '../src/modules/vis/NodeCanvas';
 import { anfangFallsLeer, legeAnfangBeimOeffnen, startGraphAnlegen, startGraphLage } from '../src/modules/vis/start-graph';
 import { registriereModellLaden, ladeModellDatei, setzeModellLadeZustand } from '../src/modules/vis/modell-laden';
 import { registriereHeimStandpunkte } from '../src/modules/vis/heim-standpunkte';
@@ -118,6 +118,14 @@ describe('KV-STARTGRAPH · der fertige Anfang', () => {
     expect(graphen()).toHaveLength(0);
   });
 
+  it('Entscheid 119: rechts vom breiteren Render-Knoten bleibt derselbe Abstand von 80 px wie zwischen den anderen Spalten', () => {
+    const lage = startGraphLage();
+    expect(RENDER_NODE_W).toBeGreaterThan(NODE_W);
+    expect(lage.render.x - (lage.kombinierer.x + NODE_W)).toBe(80);
+    expect(lage.varianten.x - (lage.render.x + RENDER_NODE_W)).toBe(80);
+    expect(lage.vergleich.x - (lage.varianten.x + NODE_W)).toBe(80);
+  });
+
   it('die Knoten ueberlappen sich nicht — auch aufgeklappt nicht', () => {
     const lage = Object.entries(startGraphLage());
     for (const [a, pa] of lage) {
@@ -125,7 +133,8 @@ describe('KV-STARTGRAPH · der fertige Anfang', () => {
         if (a >= b) continue;
         const ha = groessteNodeHoehe(a);
         const hb = groessteNodeHoehe(b);
-        const ueber = pa.x < pb.x + NODE_W && pb.x < pa.x + NODE_W && pa.y < pb.y + hb && pb.y < pa.y + ha;
+        // Entscheid 119: Breite je Knotenart (der Render-Knoten ist breiter).
+        const ueber = pa.x < pb.x + nodeBreite(b) && pb.x < pa.x + nodeBreite(a) && pa.y < pb.y + hb && pb.y < pa.y + ha;
         expect(ueber, `${a} und ${b}`).toBe(false);
       }
     }
@@ -144,7 +153,8 @@ describe('KV-STARTGRAPH · der fertige Anfang', () => {
         if (a >= b) continue;
         const ha = groessteNodeHoehe(a);
         const hb = groessteNodeHoehe(b);
-        const ueber = pa.x < pb.x + NODE_W && pb.x < pa.x + NODE_W && pa.y < pb.y + hb && pb.y < pa.y + ha;
+        // Entscheid 119: Breite je Knotenart (der Render-Knoten ist breiter).
+        const ueber = pa.x < pb.x + nodeBreite(b) && pb.x < pa.x + nodeBreite(a) && pa.y < pb.y + hb && pb.y < pa.y + ha;
         expect(ueber, `${a} und ${b}`).toBe(false);
       }
     }

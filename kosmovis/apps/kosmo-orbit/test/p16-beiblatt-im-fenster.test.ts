@@ -6,7 +6,7 @@ import { nodeHinzufuegen } from '../src/modules/vis/vis-graph-aktionen';
 import {
   BEIBLATT_H_NENN,
   BEIBLATT_W,
-  NODE_W,
+  RENDER_NODE_W,
   basisNodeHoehe,
   beiblattFeld,
   beiblattPlatz,
@@ -112,7 +112,7 @@ function karteAufSchirm(
 ): { links: number; oben: number; rechts: number; unten: number } {
   const links = flaeche.w / 2 + (n.x - SICHT.cx) * SICHT.scale;
   const oben = flaeche.h / 2 + (n.y - SICHT.cy) * SICHT.scale;
-  return { links, oben, rechts: links + NODE_W * SICHT.scale, unten: oben + basisNodeHoehe('render') * SICHT.scale };
+  return { links, oben, rechts: links + RENDER_NODE_W * SICHT.scale, unten: oben + basisNodeHoehe('render') * SICHT.scale };
 }
 
 function frischerRenderKnoten(f: { b: number; h: number }): { x: number; y: number } {
@@ -192,7 +192,7 @@ describe('P16 — das Beiblatt des aufgeklappten Render-Knotens liegt bei allen 
     const flaeche = { w: 1280, h: 720 };
     const feld = beiblattFeld(flaeche);
     // Ein Knoten so weit rechts, dass rechts neben ihm kein Platz mehr ist.
-    const n = { x: SICHT.cx + flaeche.w / 2 - NODE_W - 10, y: SICHT.cy };
+    const n = { x: SICHT.cx + flaeche.w / 2 - RENDER_NODE_W - 10, y: SICHT.cy };
     const p = beiblattPlatz(n, SICHT, flaeche);
     const karte = karteAufSchirm(n, flaeche);
 
