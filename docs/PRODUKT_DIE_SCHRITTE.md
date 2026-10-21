@@ -1971,6 +1971,17 @@ alle Varianten derselben Grundlage gleich ist. Mit offener Mappe am Mac kommt da
 auch ohne Heim-PC da ist. Bildeingang und Farbabgleich bleiben Schalter zum Messen, ab Werk aus. Geprüft ist es mit Proben
 und in einem Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
 
+
+**Der Render-Knoten wird breiter: beide Bilder schon am Knoten (21.10.2026, Entscheid 119).** Bis hierhin stand am Knoten
+nur das KI-Bild, weil zwei Bilder im 184 Bildpunkte breiten Knoten zu schmal geworden wären. Jetzt ist der Render-Knoten
+zwölf Bildpunkte breiter, innen 196, und jedes Bild hat 96 — genug, dass KI-Bild und Grundbild schon am Knoten
+nebeneinander stehen, beide beschriftet. Nur dieser eine Knoten wird breiter, und nur in der Breite: Er wird nicht höher,
+weil jede Zeile ihre gemessene Höhe behält. Alles, was mit seiner Breite rechnet, rechnet mit der neuen: wo die
+Verbindungen ansetzen, wie ein neuer Knoten Platz findet, wie der fertige Anfang die Knoten in Spalten legt, und wie ein
+gesicherter Graph beim Öffnen entzerrt wird. Die Marke «Vorschau» steht unten links im KI-Bild; seine Beschriftung rückt
+darüber, damit nichts verdeckt ist. Die grosse Ansicht mit dem Umschalter bleibt. Geprüft ist es mit Proben und in einem
+Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der
