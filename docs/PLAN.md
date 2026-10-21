@@ -8414,3 +8414,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] 312 (Hausanteil von Hand, Schwellen), 313 (Bestand in der Bauwerksmaske), 314 (Speicher, Himmel, Gegenproben, Gerätebuch, CPU/OptiX) — local, nach 0.3.20
 - [ ] Owner: drei Klickfragen (Hilfszweig, Blick festhalten, Grossansicht nur auf Wunsch); Lizenzanfrage versenden
 - [ ] Geometrie-Treue als Pflicht-Eingang des Bildmodells (zweiter Teil L4-2) — noch ohne Strang
+- [x] Fehler R48: «Variante erzeugen» ohne Modell über die Brücke rechnet (C122, §204) — gebaut, am Gerät unbestätigt
+- [ ] auf-20261021-315 (local): Kette Grundlage → Variante Vorschau in der Test-App nachfahren

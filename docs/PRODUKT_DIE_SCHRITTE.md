@@ -2230,3 +2230,5 @@ dort aufs Blatt gesetzt; beim Platzieren prüft eine Rechnung, ob das Bild an se
 (150 dpi), und warnt sonst mit der grössten Breite, die noch reicht. Visbox selbst hat kein Blatt; dort zählt das
 Exportieren. Ehrlich gesagt: geprüft an Proben, am Mac und mit echten Bildern des Heim-PC noch nicht gesehen; ein erstes
 Bild ohne Verlauf und ohne Grundbild hat noch keine grosse Ansicht.
+
+**Eine Variante rechnet auch ohne neu geschicktes Modell (21.10.2026).** In einer Testfassung kam auf «Grundlage rendern» das Grundbild, aber «Variante erzeugen» danach nie: Die Variante kommt bewusst ohne Modell — sie braucht kein Blender, nur die Tiefe und die Ebenen der Grundlage —, und der Heim-PC wies einen leeren Geometriepfad auf diesem Weg immer ab und liess den Auftrag liegen. Jetzt nimmt er eine Variante mit gültiger Grundlage an, nimmt das Modell des Laufs, der die Grundlage gerechnet hat, und rechnet notfalls aus der abgelegten Grundlage allein. Fehlt die Grundlage, sagt er «bitte zuerst Grundlage rendern». Ehrlich gesagt: an einer nachgestellten Bestellung geprüft, am Heim-PC noch nicht nachgefahren.

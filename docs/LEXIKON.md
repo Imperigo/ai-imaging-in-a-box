@@ -2320,7 +2320,12 @@ der Heim-PC das als «gar nichts rechnen» — das Häkchen bekam darum kein Bil
 Grundlage) braucht kein Blender und darum auch kein neu geschicktes Modell. Seit dem 20.10.2026
 nimmt der Heim-PC eine solche Bestellung ohne Modelldatei an und holt das Modell aus dem
 Auftrag, der die Grundlage gelegt hat (`knotenweg.modell_der_grundlage`). Fehlt die Grundlage
-auf diesem Rechner, kommt sofort ein Satz statt Warten.
+auf diesem Rechner, kommt sofort ein Satz statt Warten. **Seit dem 21.10.2026 auch auf dem
+zweiten Weg:** Kam die Bestellung nicht über die Visbox-Tür, sondern über die Brücke, liess der
+Heim-PC sie mit leerem Geometriepfad liegen («ohne geometry.path»), und die Variante rechnete nie.
+Jetzt nimmt er sie mit gültiger Grundlage an, sucht das Modell beim Auftrag der Grundlage und
+rechnet notfalls aus der abgelegten Grundlage allein (`bruecke.lies_auftrag`,
+`abholer.verarbeiter`). Ohne Grundlage bleibt der Satz.
 
 **Endgültiger Mangel** — Ein Fehler in einer Bestellung, den kein Warten heilt, weil er in
 der Bestellung selbst steht — etwa «Güte Vorschau» zusammen mit «nur Grundlage», was sich

@@ -1,0 +1,42 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-315",
+ "art": "qa",
+ "beschreibung": "Fehler aus der Test-App R48 nachfahren: «Grundlage rendern», danach «Variante erzeugen» in Vorschau-Guete. Die Variante kommt ohne Modell und mit leerem geometry.path; der Abholer liess sie bis heute liegen ('render-scene ohne geometry.path'). Seit dem Fix rechnet er sie aus der abgelegten Grundlage. Gegenprobe am Geraet, dass sie wirklich rechnet und deckungsgleich ist.",
+ "erstellt": "2026-10-21T18:00:00Z",
+ "rang": 4,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Fuer Teil (2) derselbe gegliederte Testbau wie 303/309 (baue_glb). Teil (1) nimmt das Modell, das die Test-App selbst schickt."
+ },
+ "params": {
+  "befunde": [
+   "R48 vis-1792595787-962e13 (Grundlage)",
+   "R48 vis-1792595849-002a06 (Variante, liegengelassen)"
+  ],
+  "protokoll": "74 §204",
+  "laeufe": 4,
+  "neue_ki_laeufe": 3,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Fix «Variante ohne Modell» (heim2). Erst git pull, dann Dienst und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Eine Bestellung mit gueltiger vis.grundlage (gl- und 16 Hexzeichen) und LEEREM geometry.path wird angenommen statt liegengelassen. Ohne gueltige Grundlage bleibt sie liegen, mit dem Satz 'render-scene ohne geometry.path — es gibt nichts zu rendern. Ohne Modell rechnet nur eine Variante einer fertigen Grundlage (vis.grundlage …); diese Bestellung nennt keine.' (b) Liegt im Auftragsordner kein model.glb/model.ifc, nimmt die Bruecke das Modell des Auftrags derselben Ablage, dessen render-result.json grundlage.id = diese Kennung traegt (wie die Visbox-Tuer). Fehlt auch das, rechnet der Abholer aus der abgelegten Grundlage allein; dann steht eine Warnung 'Variante ohne Modelldatei …' am Auftrag, Rahmungsbox und Modellstand kommen aus der Grundlage bzw. bleiben ungeprueft. (c) Ist die Grundlage hier unbekannt, endet der Auftrag mit dem Satz '… ist hier nicht bekannt. Bitte zuerst «Grundlage rendern» …' — kein Blender, kein Bildmodell. (d) Jede NEU abgelegte Grundlage (_grundlagen/gl-….json) traegt zusaetzlich 'bestand' und 'modellstand'; aeltere ohne diese Felder bleiben gueltig. WAS ZU TUN IST, in dieser Reihenfolge: (1) TEST-APP WIE R48, echte Bruecke: Ein Render-Knoten, 'Grundlage rendern' (stufe grundlage, nur Cycles, passes alle), warten bis fertig; danach am selben Knoten 'Variante erzeugen' mit Guete 'Vorschau'. Zurueck: beide job_id; Status und Endzeit der Variante; ob im Ordner der Variante ein model.* liegt (erwartet: nein); aus dem Abholer-Journal die Zeilen zur Variante woertlich (angenommen, Warnungen, Ende); aus render-result.json der Variante grundlage {id, wiederverwendet} (erwartet: dieselbe id, true), lieferstatus, Anzahl images; ob in der App das Bild am Knoten ankommt (Bildschirmfoto der Knotenansicht, ohne Pfade/Hosts). (2) DECKUNGSGLEICH: am Testbau aus tools/make_test_glb.py ueber die Bruecke als Client: eine Grundlage (cameras auto, sSE und nNW, samples 64, resolution [960,600], vis.skip true), darauf zwei Varianten OHNE Modell (POST /jobs nur mit scene, geometry.path leer, vis.grundlage = gemeldete id, vis.guete 'vorschau', vis.seed 482913) mit zwei Prompts (Standardprompt; 'evening, warm light'). Zurueck: ob beide rechnen; ob depth/beauty der beiden Varianten dieselben Dateien sind (Pfad relativ zur Ausgabewurzel genuegt); Zeit je Variante; kein neuer Blender-Lauf im Journal. (3) GEGENPROBE OHNE GRUNDLAGE: POST /jobs mit leerem geometry.path, vis.grundlage 'gl-0123456789abcdef' (unbekannt). Zurueck: Endzustand und Satz woertlich (erwartet: error mit 'nicht bekannt' und 'Grundlage rendern'). EINBAU: Der Fix ist im Kern (kosmo_szene.lies_szene, bruecke.lies_auftrag, abholer.verarbeiter) gebaut und mit tests/test_variante_ohne_modell.py bewacht; eingebaut gilt er, wenn (1) in der Test-App ein Bild am Knoten zeigt. Diese Rueckgabe belegt den Einbau, nicht eine Messung. NICHT: keinen Code aendern, keine Fassungsnummer, kein FLUX, keine echten Projektdaten, keine Pfade, Hosts, IPs oder Kennwoerter in der Rueckgabe; die App nicht umbauen (sie schickt vertragsgemaess, Bestaetigung des Integrators); nicht mit Modell nachreichen, um den Fehler zu umgehen — genau der Weg ohne Modell ist zu pruefen.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt.",
+  "(1) Test-App: beide job_id, Status und Endzeit der Variante, model.* im Variantenordner ja/nein, Journalzeilen zur Variante woertlich, grundlage {id, wiederverwendet}, lieferstatus, Anzahl images, Bild am Knoten ja/nein (Bildschirmfoto ohne Pfade/Hosts).",
+  "(2) Deckungsgleich: beide Varianten gerechnet ja/nein, depth/beauty dieselben Dateien ja/nein (relativ zur Ausgabewurzel), Zeit je Variante, neuer Blender-Lauf ja/nein.",
+  "(3) Unbekannte Grundlage: Endzustand und Satz woertlich.",
+  "EINBAU: ob (1) das Bild am Knoten zeigt — das belegt den Einbau."
+ ]
+}
