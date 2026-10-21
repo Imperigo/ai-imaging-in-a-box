@@ -48,7 +48,7 @@ def _szene_aendern(ordner, **render):
 NEUE_HIMMEL = {"morgen": "kloppenheim_06_puresky", "mittag": "kloofendal_43d_clear_puresky",
                "abend": "belfast_sunset_puresky", "blaue-stunde": "qwantani_dusk_2_puresky",
                "bedeckt": "overcast_soil_puresky", "nebel": "kloofendal_misty_morning_puresky",
-               "winter": "snow_field", "weiss": "studio_small_08"}
+               "winter": "snow_field", "weiss": "white_studio_06"}
 
 
 def test_die_vorgaben_sind_die_getauschten_himmelsbilder():
