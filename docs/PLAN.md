@@ -8100,7 +8100,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Heim-PC nimmt die Variante ohne Modell an (§150, C76)
   - [ ] Am Mac prüfen: Fokus, Zoomen, Variante gegen den umgebauten Heim-PC (owner)
   - [ ] Owner-Entscheid: Felder im Knoten eckiger (dritte Rundung) — oder so lassen
-  - [x] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch) *(21.10.2026: Blatt 36 gezeichnet, nach Empfehlung A–C gebaut — ein Daumen mit Blättern, gross, wählen; KO-Zweig `claude/kosmovis-varianten-daumen`, Kopie nachgezogen; am Mac unbestätigt)*
+  - [x] Varianten-Daumen im Varianten-Knoten: erst als Blatt zeichnen (Owner-Wunsch) *(21.10.2026: Blatt 36 gezeichnet, nach Empfehlung A–C gebaut — ein Daumen mit Blättern, gross, wählen; KO-Zweig `claude/kosmovis-varianten-daumen`, Kopie nachgezogen; am Mac unbestätigt; §186, C112)*
     - [ ] Wohin geht eine gewählte Variante (Blatt, Bildvergleich)? Eigener Entscheid (owner)
     - [ ] «Alle freigeben» ragt neben «N Bilder bestellen» über den Kartenrand (ui, schon vorher so)
 - [ ] Nr. 54, 61, 59: nodeId in Antworten, Graph in `modell_lesen`, Port-testids, Port-Beschriftung und Typprüfung

@@ -8583,7 +8583,7 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
+| 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36, Protokoll 74 §186): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
 | 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
