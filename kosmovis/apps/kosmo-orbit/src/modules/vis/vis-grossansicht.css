@@ -59,8 +59,10 @@
 
 /* C: die Laeufe einer Grundlage nebeneinander, gleich gross. */
 .vis-gross-reihe {
+  /* Zahl der Spalten; `RenderVerlauf.tsx` setzt sie inline je Reihe, hier die Vorgabe (css-var-konsistenz). */
+  --_n: 2;
   display: grid;
-  grid-template-columns: repeat(var(--_n, 2), minmax(0, 1fr));
+  grid-template-columns: repeat(var(--_n), minmax(0, 1fr));
   gap: var(--k-s3);
   height: max(240px, calc(100vh - 140px));
   padding: var(--k-s3);

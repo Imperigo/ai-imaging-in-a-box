@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "93a35b24d2081e2f8cc22bcdd71c7fbfec90a2a1"
+    "commit": "62af849c12138502c22cc0f27d7f717ae64d4d90"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -106,7 +106,7 @@
     "apps/kosmo-orbit/src/modules/vis/modell-laden.ts": "e317ab3058a973942f118cea62c96f20b5504fe5414d6d660e91749ebd6378cb",
     "apps/kosmo-orbit/src/modules/vis/modell-vorschau-3d-gross.tsx": "a0a680c57edd398feb221626ec3c1b9085be99efcde2536cf4bd8dd3f4b868ab",
     "apps/kosmo-orbit/src/modules/vis/modell-vorschau-3d-kern.ts": "adb4afcd107f9b4256e53b5aabcf8d9627a6f3b8592a5170c889039d915b4982",
-    "apps/kosmo-orbit/src/modules/vis/modell-vorschau-3d.css": "237f099c3275d8e8bd190dd91d2a517b7f1055a3813fcf6a36ea4a8d6104a5d9",
+    "apps/kosmo-orbit/src/modules/vis/modell-vorschau-3d.css": "883e52bf09b43f03dc1f9185c9f85deea253959a3da241db3438ab72178416af",
     "apps/kosmo-orbit/src/modules/vis/modell-vorschau-3d.tsx": "e6d42704c3f9400c91a79a626556baaa0444d788583e9eecac6492f03eac0338",
     "apps/kosmo-orbit/src/modules/vis/nebeneinander.ts": "0482555d9da85da994ca9666bed8c0033635f66edbff77b124103943808f26b2",
     "apps/kosmo-orbit/src/modules/vis/render-verlauf.ts": "f8f954f87373c98c11632d30d127b929ddbb917b1f6e7fa470aa153dee7f6114",
@@ -118,14 +118,14 @@
     "apps/kosmo-orbit/src/modules/vis/textur-bild.ts": "abec18984a77e22435f978c9a3a73602ac366ae736e9061c40d069ab7b2defe5",
     "apps/kosmo-orbit/src/modules/vis/textur-material.ts": "f0d1c71d25348fef45ba51b2a9b173520c4c117d94008f1faec7aaec29d61cac",
     "apps/kosmo-orbit/src/modules/vis/umgebung-fehlt.ts": "276548dabb696a5fac7340f1ad73048b705d72a964adce98a71a6fbb2c608db9",
-    "apps/kosmo-orbit/src/modules/vis/varianten-daumen.css": "a3615e360f293a47e9abd5da83dc0f926ab855130ba82a65ef9ffaa87666e732",
+    "apps/kosmo-orbit/src/modules/vis/varianten-daumen.css": "8e5ff9b28aa3ca69a59d87457c8816e2087022d45577d5a54926489eb1f80c7e",
     "apps/kosmo-orbit/src/modules/vis/varianten-diff.ts": "a1ab9bd8260aff6a7a48c06c82177f264318c8b77b9ef69579ab654637d82380",
     "apps/kosmo-orbit/src/modules/vis/varianten.ts": "4ca52ebf38b8f557ccd46e6fe63fb4f441969ef05f00a638118103009916b60e",
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "cfbe605072e4767fb86eab91f44aa32bab017a6f439c09dc1cb235862080cfa2",
-    "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "52733cbadcc7bfcaa4137c2066ffaf51274972b454831636e5a7ff624a045f00",
+    "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "bdc371b836a91c1aac490c05b98aa8982df0206ea4999df68a3f34b34b377ee7",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "bf536f09d74c53bc59f05f74ff9856d09a082a3c51b3b656ed5059cc143c9806",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "a6e84b0282490f02c33ab452d4ded3410b74e0c188f576a1083cfffc1b158697",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "d8bdd8d055adb3b191d0db8a454394155fc1939632596a61a731c605c151c24f",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "df1546878d11dd13bff0c0bb4fa4f7aa8b3b73aa3fb932a40212f3b5439b2a41",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
     "apps/kosmo-orbit/src/shell/chat/kosmo-c0-kopf.css": "ce2500140fe22d6b40320711bc194a75b64cf8546277cf3f2d93d54968abbf7f",
@@ -454,9 +454,7 @@
     "packages/kosmo-ui/tsconfig.json": "4277908660594ffe72545e017d525b331ec7c15bb7ac7538d07d1011e7b0c2ac",
     "tsconfig.base.json": "4a84ae266c5ee08dd584a7969e0f85c111287dd7b9531f38da7d4bf9fa337969"
   },
-  "geaendert": {
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "Strang Blick, 21.10.2026: Stand des lokalen Hilfszweig-Merges ecdccae1e (Hilfszweig 0dc2bb3d6 + claude/kosmovis-blick-kamera 8b5ba2296, Kennung statt Name). NodeCanvas tragen zwei eigene Zweige (varianten-vergleich und blick-kamera); der Merge liegt drüben noch nicht, weil der Hilfszweig erst nach der Freigabe des Owners nachgeführt wird. Danach Eintrag streichen und neu ziehen."
-  },
+  "geaendert": {},
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",
     "packages/kosmo-kernel/package.json": "Nur zod und @kosmo/data als Abhängigkeit (Original: Architekturkern mit clipper2-ts, earcut, suncalc).",
