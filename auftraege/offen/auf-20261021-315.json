@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Fehler aus der Test-App R48 nachfahren: «Grundlage rendern», danach «Variante erzeugen» in Vorschau-Guete. Die Variante kommt ohne Modell und mit leerem geometry.path; der Abholer liess sie bis heute liegen ('render-scene ohne geometry.path'). Seit dem Fix rechnet er sie aus der abgelegten Grundlage. Gegenprobe am Geraet, dass sie wirklich rechnet und deckungsgleich ist.",
  "erstellt": "2026-10-21T18:00:00Z",
- "rang": 2,
+ "rang": 1,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
