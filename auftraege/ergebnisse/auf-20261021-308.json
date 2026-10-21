@@ -1,0 +1,154 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-308",
+ "worker": "local",
+ "rang": 3,
+ "entscheide": [
+  "118",
+  "118a"
+ ],
+ "befund": "auf-20261021-307 B1",
+ "einbau": "C108 am Heim-PC bestaetigt: ein direkt sprechendes iPad (X-Geraet: ipad ohne X-Geraet-Weg: mac) bekommt 410 mit dem Satz aus SATZ_DIREKT_BEENDET, angemeldet, unangemeldet und bei POST /api/verbinden; ueber den Mac 200; ohne Geraetekopf, mit X-Geraet: mac, Seite, Bruecke und /api/hallo unveraendert. Dazu 307 B1: der Ladestand meldet nach dem Zurueckstellen veraltet mit Satz. Die Geraeteprobe am Mac und iPad bleibt beim Owner.",
+ "protokoll": "74 §181",
+ "status": "ok",
+ "zusammenfassung": "erledigt, C108 am Heim-PC bestaetigt — direkt sprechendes iPad: GET /api/fortschritt angemeldet 410, mit X-Geraet-Weg: direkt 410, unangemeldet 410 (nicht 401), POST /api/verbinden 410 ohne Feld kennwort (einziges Feld fehler); alle vier Saetze wortgleich mit SATZ_DIREKT_BEENDET. Ueber den Mac: 200 mit Feld laeuft (false), /api/geraete danach ipad.weg mac, zuletzt_gesehen_s 0. Ohne Kopf 200, X-Geraet: mac 200, Seite 200 text/html, /bruecke/health 200, /api/hallo unangemeldet mit X-Geraet: ipad 200 (fassung 0.3.18), homeworker.py --liste und --gpu laufen wie vorher. Ladestand: nach dem Laden veraltet false, zuletzt_geoeffnet true; nach dem Zurueckstellen (1.0 s) veraltet true, zuletzt_geoeffnet false, satz_veraltet da, mappe probe-308, kein Plattenpfad. Geraetebuch durch die 410-Anfragen und Schritt 3 unveraendert (sha256 und Zeit gleich); geschrieben nur durch die eine Anfrage ueber den Mac in Schritt 2, wie der Auftrag es erwartet (Befund B1). Start-Mappe am Ende zuletzt geoeffnet, ihre Dateien unveraendert. Code nicht geaendert.",
+ "beendet": "2026-10-21T11:54:00Z",
+ "koepfe": {
+  "stand": "main 6c21d21 (Visbox 0.3.18), Dienst neu gestartet ja (vor der Probe, laeuft seit 13:51 Ortszeit), Probe 13:53 Ortszeit. Kein Code geaendert; Mac-App und iPad nicht angefasst; keine Kopplung geoeffnet; nur Anfragen als Client an den Dienst (Python urllib, Anmeldung wie die Brueckenlaeufe, Benutzer und Kennwort aus der Kennwortdatei).",
+  "systemlast": "2.38 / 1.73 / 1.51 vorher, 2.43 / 1.75 / 1.52 nachher",
+  "gpu": "1532 MiB, rund 167 W, 54 % — eine fremde Messung lief auf der Karte, vorher und nachher gleich; von dieser Probe kein Lauf, kein Modell geladen, Grenze 400 W",
+  "ollama_ps": "leer",
+  "probemappe": "NEU angelegt mit POST /knoten/modell-laden (Formularfeld datei, synthetische glb aus tools/make_test_glb.py, probe-308.glb, 1304 Byte): Mappe probe-308. Sie bleibt liegen, wie der Auftrag sagt.",
+  "takt": "GET /knoten/modell-laden jede Sekunde; das Laden war nach der ersten Abfrage fertig"
+ },
+ "geraetebuch_vorher": {
+  "datei": "geraete.json neben der Kennwortdatei (ausserhalb des Repos)",
+  "inhalt": "ipad: weg direkt, zuletzt_um vom Vortag",
+  "api_geraete": {
+   "gekoppelt": true,
+   "gekoppelt_vor_s": null,
+   "zuletzt_gesehen_s": 72189,
+   "weg": "direkt"
+  }
+ },
+ "1_direkt_sprechendes_ipad": {
+  "satz_erwartet": "Das iPad verbindet sich jetzt über den Mac — am Mac «iPad koppeln» öffnen und das iPad mit dem Mac koppeln. Direkt nimmt der Heim-PC das iPad nicht mehr an.",
+  "fortschritt_angemeldet_ipad": {
+   "http": 410,
+   "fehler_wortgleich": "ja"
+  },
+  "fortschritt_angemeldet_ipad_weg_direkt": {
+   "http": 410,
+   "fehler_wortgleich": "ja"
+  },
+  "fortschritt_unangemeldet_ipad": {
+   "http": 410,
+   "fehler_wortgleich": "ja",
+   "nicht_401": "ja"
+  },
+  "verbinden_post_ipad": {
+   "http": 410,
+   "fehler_wortgleich": "ja",
+   "feld_kennwort": "nein",
+   "felder": [
+    "fehler"
+   ]
+  },
+  "geraetebuch_danach_gleich": "ja — sha256 und Aenderungszeit gleich wie vorher"
+ },
+ "3_andere_geraete_unberuehrt": {
+  "fortschritt_ohne_kopf": {
+   "http": 200,
+   "feld_laeuft": "ja"
+  },
+  "fortschritt_x_geraet_mac": {
+   "http": 200,
+   "feld_laeuft": "ja"
+  },
+  "seite": {
+   "http": 200,
+   "typ": "text/html; charset=utf-8"
+  },
+  "bruecke_health": {
+   "http": 200,
+   "felder": [
+    "abholer",
+    "ok",
+    "services",
+    "version"
+   ]
+  },
+  "hallo_unangemeldet_x_geraet_ipad": {
+   "http": 200,
+   "rumpf": {
+    "visbox": true,
+    "fassung": "0.3.18",
+    "name": "Visbox Heim-PC"
+   }
+  },
+  "hallo_unangemeldet_ohne_kopf": {
+   "http": 200
+  },
+  "werkzeuglauf_wie_vorher": "ja — tools/homeworker.py --liste (4 unerledigt fuer local, darunter dieser) und --gpu laufen durch",
+  "geraetebuch_danach_gleich": "ja — sha256 und Aenderungszeit gleich wie vorher",
+  "reihenfolge": "vor Schritt 2 gemessen, damit das Geraetebuch je Schritt verglichen ist"
+ },
+ "2_ueber_den_mac": {
+  "fortschritt_ipad_weg_mac": {
+   "http": 200,
+   "feld_laeuft": "ja",
+   "laeuft": false
+  },
+  "api_geraete": {
+   "http": 200,
+   "ipad_weg": "mac",
+   "zuletzt_gesehen_s": 0,
+   "gekoppelt": true
+  },
+  "geraetebuch_danach": "geaendert — weg direkt → mac, zuletzt_um neu (die eine angemeldete Anfrage ueber den Mac wird vermerkt, wie der Auftrag mit ipad.weg = mac erwartet); sonst kein Eintrag dazu"
+ },
+ "2b_ladestand_nach_dem_zurueckstellen": {
+  "knoten_mappe_vorher": {
+   "mappe": "<Ordnername>",
+   "glb": true,
+   "bauteile": 35,
+   "fassung": 1
+  },
+  "post_http": 202,
+  "nach_dem_laden": {
+   "stand": "geladen",
+   "mappe": "probe-308",
+   "veraltet": false,
+   "zuletzt_geoeffnet": true,
+   "satz_veraltet": "nein",
+   "satz": "Mappe «probe-308» angelegt.",
+   "plattenpfad": "nein"
+  },
+  "zurueckgestellt": "GET /api/projekt?ordner=<Pfad der Start-Mappe> → 200, 1.0 s nach dem Laden",
+  "nach_dem_zurueckstellen": {
+   "stand": "geladen",
+   "mappe": "probe-308",
+   "veraltet": true,
+   "zuletzt_geoeffnet": false,
+   "satz_veraltet": "ja — «Dieses Laden ist vorbei — seither ist eine andere Mappe offen. Der Stand zeigt das letzte Laden, nicht die offene Mappe.»",
+   "satz": "Mappe «probe-308» angelegt.",
+   "plattenpfad": "nein"
+  },
+  "knoten_mappe_nachher_gleich_vorher": "ja (mappe, glb, bauteile 35, fassung 1)",
+  "start_mappe_dateien_unveraendert": "ja — 3 von 3 Dateien mit gleicher Aenderungszeit und gleichem sha256",
+  "mappen_nach_der_probe": "<Ordnername>, probe-308, bau, quader",
+  "behoben": "ja — in 307 zeigte derselbe Stand nach dem Zurueckstellen weiter zuletzt_geoeffnet true"
+ },
+ "befunde": [
+  "B1 Die eine angemeldete Probeanfrage ueber den Mac (Schritt 2) hat den Eintrag des echten iPad im Geraetebuch ueberschrieben: vorher weg direkt (vom Vortag), danach weg mac und zuletzt_gesehen_s 0. Die Mac-App sieht das iPad dadurch als «ueber den Mac, gerade gesehen», obwohl kein iPad ueber den Mac kam. Erwartet vom Auftrag, aber der Probelauf hinterlaesst einen falschen Geraetestand bis zur naechsten echten iPad-Anfrage. Die 410-Anfragen und Schritt 3 schrieben nichts.",
+  "B2 Ob eine Koppelzahl offen ist, zeigt keine Anfrage ohne Anmeldung an der Kopplung; geprueft wurde nur, dass POST /api/verbinden mit X-Geraet: ipad schon an der Tuer mit 410 endet, also keine Zahl verbraucht und keinen Versuch zaehlt. Eine Kopplung wurde weder geoeffnet noch angefasst."
+ ],
+ "code_geaendert": "nein",
+ "offen": "Geraeteprobe am Mac und iPad mit 0.3.18 (Owner): iPad mit dem Mac koppeln, ein direkt verbundenes iPad zeigt den Satz.",
+ "bilder": {
+  "ordner": null,
+  "dateien": [],
+  "hinweis": "keine Bilder — es wurde nur geladen und gefragt, nicht gerechnet"
+ },
+ "aufraeumen": "Probemappe probe-308 bleibt liegen (Auftrag). Die eigene glb liegt nur im Arbeitsordner der Sitzung, nicht im Repo; keine eigenen Prozesse."
+}
