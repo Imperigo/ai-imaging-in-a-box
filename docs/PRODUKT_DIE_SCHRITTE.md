@@ -2274,6 +2274,15 @@ passt (Vorschau, nur Grundlage, Skizze, Gipsmodell), entfällt sie mit Grund. Ei
 ohne Himmel bleibt gültig und sagt am Bild, dass der Himmel dafür neu gerendert werden muss. Am Heim-PC noch nicht
 nachgemessen.
 
+**Ein Haus aus zwanzigtausend Steinen, richtig gelesen (21.10.2026).** Eine Probe mit einer Mauer aus einzelnen
+Backsteinen zeigte zwei Fehler. Erstens bekam jeder Stein eine eigene Kennung im Material-Bild, und die Namen hängten sich
+immer länger aneinander — am Ende hiess kaum noch ein Stein «backstein». Der Grund: Alle Steine teilen sich eine Form, und
+beim Umbenennen las der nächste Stein schon den neuen Namen. Jetzt wird zuerst geplant und dann getauscht: eine Kennung je
+Material, also drei für die ganze Mauer, jede mit eigener Farbe. Zweitens zählte der Boden als Bauwerk, weil er «boden»
+heisst — ein Wort, das Visbox absichtlich nicht als Gelände liest, denn auch ein Geschossboden heisst so. Jetzt erkennt
+Visbox ihn an seiner Form (gross, flach, unten), auch wenn kein Name hilft, und eine Modelldatei kann ihn ausdrücklich als
+Boden kennzeichnen. Ehrlich gesagt: ohne Blender geprüft; ob es am Heim-PC so rechnet und wie viel schneller es wird, ist
+noch nicht gemessen.
 **Der Assistent sagt, was er wirklich getan hat (21.10.2026).** Schlägt er das Löschen eines Knotens vor, liegt eine
 Karte bereit, und erst «Anwenden» löscht. Er sagte trotzdem «Der Knoten wurde gelöscht — es liegt eine Karte». Jetzt
 prüft Visbox jeden Schlusssatz: Was nur vorgeschlagen ist, heisst «vorgeschlagen», mit dem Namen der Karte. Und wer

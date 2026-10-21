@@ -1320,6 +1320,132 @@ def bestand_in_glb(pfad) -> dict | None:
             "namen": [str(k.get("name") or "") for k in bestand][:20]}
 
 
+#: Die Werte von glTF ``extras.role``, mit denen eine Datei einen Knoten als **Boden bzw.
+#: Gelände** ausweist (auf-20261021-316, B3; Vorgabe an KosmoDraw 21.10.2026). Dasselbe Feld
+#: wie :data:`BESTAND_ROLLE` — KosmoOrbit schreibt ``extras.role`` schon heute
+#: (``derive/gltf.ts``, ``bestandExtras``), eine zweite Stelle für dieselbe Art Angabe wäre
+#: eine zweite Konvention. ``"terrain"`` wird mitgelesen, vorgegeben wird ``"ground"``.
+GELAENDE_ROLLEN: tuple[str, ...] = ("ground", "terrain")
+
+
+def _glb_kopf(pfad) -> dict | None:
+    """Der JSON-Block einer glb/gltf — ohne trimesh, ohne Blender; ``None``, wenn unlesbar."""
+    import json as _json
+    import struct as _struct
+    from pathlib import Path as _Path
+    try:
+        pfad = _Path(pfad)
+        daten = pfad.read_bytes()
+        if pfad.suffix.lower() == ".gltf":
+            js = _json.loads(daten)
+        else:
+            laenge, art = _struct.unpack_from("<II", daten, 12)
+            if art != 0x4E4F534A:
+                return None
+            js = _json.loads(daten[20:20 + laenge])
+    except (OSError, ValueError, _struct.error, TypeError):
+        return None
+    return js if isinstance(js, dict) else None
+
+
+def gelaende_in_glb(pfad) -> dict | None:
+    """Welche Knoten die glb selbst als Boden ausweist (``extras.role`` in :data:`GELAENDE_ROLLEN`).
+
+    **Warum die Rolle und nicht der Name** (auf-20261021-316, B3). Die Probedatei von
+    KosmoDraw nennt ihren Boden «boden» — Knoten, Mesh und Material. Die Geländeregel der
+    Maske nimmt dieses Wort mit Grund nie auf (:data:`aiimaging.maske.WOERTER_AUSDRUECKLICH_NICHT`:
+    ein Geschossboden ist kein Gelände), und so zählte der Boden als Bauwerk. Was die Namen
+    nicht tragen können, sagt die Datei: ``extras.role = "ground"`` am Knoten.
+
+    Returns:
+        ``None`` ohne solchen Knoten oder bei unlesbarer Datei. Sonst
+        ``{"n_gelaende", "knoten", "materialien", "geteilt", "namen"}``:
+
+        * ``knoten`` — die Knotennamen (sie stehen in der Tabelle, wenn der Runner
+          Objektnamen vergibt);
+        * ``materialien`` — Materialnamen, die **nur** an solchen Knoten hängen (sie stehen
+          in der Tabelle, wenn der Runner Materialnamen vergibt);
+        * ``geteilt`` — Materialnamen, die ein Boden mit einem anderen Knoten teilt. Sie
+          werden **nicht** übertragen: Im Material-ID-Pass trügen beide dieselbe Kennfarbe,
+          und den Boden hinauszunehmen hiesse, das Bauwerk mit hinauszunehmen;
+        * ``namen`` — ``knoten`` und ``materialien`` zusammen, so wie
+          :func:`aiimaging.maske.bauwerksmaske` sie als ``gelaende_rolle`` nimmt.
+    """
+    js = _glb_kopf(pfad)
+    if js is None:
+        return None
+    knoten = [k for k in js.get("nodes") or () if isinstance(k, dict)]
+    meshes = [m for m in js.get("meshes") or () if isinstance(m, dict)]
+    materialien = [m for m in js.get("materials") or () if isinstance(m, dict)]
+
+    def ist_boden(k) -> bool:
+        extras = k.get("extras")
+        return (isinstance(extras, dict)
+                and str(extras.get("role") or "").strip().lower() in GELAENDE_ROLLEN)
+
+    def materialnamen(k) -> set[str]:
+        i = k.get("mesh")
+        if not isinstance(i, int) or not 0 <= i < len(meshes):
+            return set()
+        namen = set()
+        for prim in meshes[i].get("primitives") or ():
+            j = prim.get("material") if isinstance(prim, dict) else None
+            if isinstance(j, int) and 0 <= j < len(materialien):
+                namen.add(str(materialien[j].get("name") or ""))
+        return namen - {""}
+
+    boden = [k for k in knoten if ist_boden(k)]
+    if not boden:
+        return None
+    am_boden = set().union(*(materialnamen(k) for k in boden))
+    sonst = set().union(set(), *(materialnamen(k) for k in knoten
+                                 if "mesh" in k and not ist_boden(k)))
+    knotennamen = [str(k.get("name") or "") for k in boden if k.get("name")]
+    eigen = sorted(am_boden - sonst)
+    return {"n_gelaende": len(boden), "knoten": knotennamen[:50], "materialien": eigen,
+            "geteilt": sorted(am_boden & sonst),
+            "namen": list(dict.fromkeys([*knotennamen[:50], *eigen]))}
+
+
+def glb_mit_rolle(quelle, ziel, knoten: str, rolle: str = GELAENDE_ROLLEN[0]) -> dict:
+    """Eine Kopie der glb, in der ein Knoten ``extras.role = rolle`` trägt — sonst bytegleich.
+
+    Für die Messung am Heim-PC (Auftrag zur Steine-Probe, auf-20261021-316 B3): Die Probedatei
+    trägt die Rolle noch nicht; mit dieser Kopie lässt sich der Weg prüfen, bevor die nächste
+    Ausfuhr sie mitbringt. Geändert wird nur der JSON-Block (neu auf vier Bytes aufgefüllt),
+    der Binärblock wandert unverändert mit. Die Quelle bleibt unberührt.
+
+    Returns:
+        ``{"ziel", "knoten", "rolle", "bytes"}``.
+
+    Raises:
+        ValueError: keine glb, kein oder mehr als ein Knoten dieses Namens.
+    """
+    import json as _json
+    import struct as _struct
+    from pathlib import Path as _Path
+    daten = _Path(quelle).read_bytes()
+    if len(daten) < 20 or daten[:4] != b"glTF":
+        raise ValueError("Keine glb (Kopf 'glTF' fehlt).")
+    laenge, art = _struct.unpack_from("<II", daten, 12)
+    if art != 0x4E4F534A:
+        raise ValueError("Der erste Block der glb ist kein JSON.")
+    js = _json.loads(daten[20:20 + laenge])
+    rest = daten[20 + laenge:]
+    treffer = [k for k in js.get("nodes") or () if isinstance(k, dict) and k.get("name") == knoten]
+    if len(treffer) != 1:
+        raise ValueError(f"{len(treffer)} Knoten heissen {knoten!r} — erwartet genau einer.")
+    extras = treffer[0].get("extras") if isinstance(treffer[0].get("extras"), dict) else {}
+    treffer[0]["extras"] = {**extras, "role": str(rolle)}
+    roh = _json.dumps(js, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    roh += b" " * (-len(roh) % 4)
+    gesamt = 12 + 8 + len(roh) + len(rest)
+    aus = (daten[:4] + _struct.pack("<II", _struct.unpack_from("<I", daten, 4)[0], gesamt)
+           + _struct.pack("<II", len(roh), 0x4E4F534A) + roh + rest)
+    _Path(ziel).write_bytes(aus)
+    return {"ziel": str(ziel), "knoten": knoten, "rolle": str(rolle), "bytes": len(aus)}
+
+
 def bildauftrag_bestand(prompt: str, bestand: dict | None) -> dict | None:
     """Den Bildauftrag um :data:`BESTAND_ZUSATZ` ergänzen — nur, wenn Bestand da ist.
 

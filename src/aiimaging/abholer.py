@@ -2632,6 +2632,11 @@ def _bestandsnamen(bestand) -> tuple:
     return tuple((bestand or {}).get("namen") or ()) if isinstance(bestand, dict) else ()
 
 
+def _bodennamen(boden) -> tuple:
+    """Knoten- und eigene Materialnamen des Bodens (``kosmo_szene.gelaende_in_glb``) — leer ohne."""
+    return tuple((boden or {}).get("namen") or ()) if isinstance(boden, dict) else ()
+
+
 def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | None:
     """Die Kontextmaske einer Kamera (Video-Befund L4-5): Vermerk fuers Urteil, Datei daneben.
 
@@ -3829,6 +3834,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # keine Rolle. `None` heisst: kein Bestand, der Bildauftrag bleibt, wie er kam.
         bestand = (None if umwandlung or modell is None
                    else _kosmo_szene.bestand_in_glb(modell))
+        # DER BODEN, DEN DIE DATEI SELBST AUSWEIST (extras.role "ground", auf-20261021-316 B3):
+        # Er faellt aus der Bauwerksmaske wie die Platte, auch wenn er «boden» heisst.
+        boden_rolle = (None if umwandlung or modell is None
+                       else _kosmo_szene.gelaende_in_glb(modell))
 
         # DER MODELLSTAND, EINMAL JE AUFTRAG UND VOR ALLEM ANDEREN. Er ist eine Eigenschaft
         # der DATEI, nicht der Kamera, er kostet einen glb-Kopf und keine GPU-Sekunde — und
@@ -4303,7 +4312,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     urteile[-1].update(_stimmungsmessung(szene, bericht, _maske_bauen(
                         bericht, gelaende_erwartet=gelaende_der_szene,
                         gelaende_zusatz=_formgelaende_aus_bericht(bericht),
-                        bestand_namen=_bestandsnamen(bestand)).get("maske")))
+                        bestand_namen=_bestandsnamen(bestand),
+                        gelaende_rolle=_bodennamen(boden_rolle)).get("maske")))
                 # DIE KONTEXTMASKE GEHOERT ZUR GRUNDLAGE (auf-20261021-313, B2): Sie liest nur
                 # den Material-ID-Pass, und eine Variante auf dieser Grundlage rechnet sie
                 # sonst erst im KI-Lauf. Dieselbe Datei und derselbe Vermerk wie dort.
@@ -4372,7 +4382,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 bericht, gelaende_erwartet=gelaende_der_szene,
                 gelaende_zusatz=_formgelaende_aus_bericht(bericht),
                 # DER BESTAND IST NICHT DAS BAUWERK (auf-20261021-313, B1): 35,9 % der Maske.
-                bestand_namen=_bestandsnamen(bestand))
+                bestand_namen=_bestandsnamen(bestand),
+                # DER BODEN MIT ROLLE AUCH NICHT (auf-20261021-316, B3).
+                gelaende_rolle=_bodennamen(boden_rolle))
             # DIE KONTEXTMASKE (Video-Befund L4-5, 21.10.2026): wo Bestand, Umfeld und Splat im
             # Bild stehen — der Bestand fehlt dafuer seit 313 in der Bauwerksmaske. Als Datei
             # neben die Kamera, wenn es Kontext gibt; die Zahlen am Urteil. Noch kein Eingang
@@ -6198,7 +6210,11 @@ def _formgelaende_aus_bericht(bericht: dict) -> tuple:
     if str(bericht.get("bbox_bauwerk_entschieden_durch") or "") != "form":
         return ()
     namen = bericht.get("bbox_bauwerk_gelaende_namen") or []
-    return tuple(str(n) for n in namen)
+    # UND IHRE EIGENEN MATERIALE (auf-20261021-316, B3): Traegt die Tabelle Materialnamen,
+    # deckt sich kein Objektname — der Runner meldet darum die Materiale, die NUR an
+    # Form-Gelaende haengen. Ein geteiltes Material steht dort nicht.
+    materialien = bericht.get("bbox_bauwerk_gelaende_materialien") or []
+    return tuple(dict.fromkeys(str(n) for n in [*namen, *materialien]))
 
 
 def _kamera_ueber_dach(kamera: dict) -> dict:
