@@ -3,7 +3,7 @@
 **Codestand:** Fassung 0.3.24 auf `main` (Bildvergleich nach einer Variante, Rechenweg am Lauf); Vorgänger 0.3.23 =
 Tag `v0.3.23`
 
-**Grundlage:** Ergebnis 315 (Bildvergleich zeigte nur einen Platzhalter); Protokoll 74 §213–§214. Abgeglichen gegen
+**Grundlage:** Ergebnis 315 (Bildvergleich zeigte nur einen Platzhalter); Protokoll 74 §213 (mit Nachtrag)–§214. Abgeglichen gegen
 alle Änderungen seit `v0.3.23` (`git log v0.3.23..` ohne Zusammenführungen).
 
 Visbox zählt selbst (Entscheid 66): Bibliothek `aiimaging`, iPad-App und Mac-App tragen dieselbe Nummer
@@ -22,6 +22,7 @@ Grundlage für die Marke «anders gerechnet / ohne Grundlagenbild».
 |---|---|---|
 | Der Bildvergleich zeigt das Bild einer Variante (mindestens 44 px, Hinweis einzeilig mit «mehr») | — (315) | gebaut, mit Probe; am Gerät unbestätigt |
 | Im Kuratieren ist jeder Lauf mit Bild eine Karte; «Vorschau» liegt im Bild, damit «Lizenz offen» nicht umbricht | — | gebaut, mit Probe |
+| Die Kurzhilfe am Lizenz-Abzeichen der Kuratier-Karte wird nicht mehr abgeschnitten (seit dem längeren Lizenz-Satz fehlten unten 41,6 px) | 120 | gebaut, mit Probe |
 | Jeder Lauf trägt seinen Rechenweg (bestellt, gerechnet, Abweichung, Satz je Kamera) für die Marke am Bild | — | gebaut, mit Probe; die Marke selbst folgt mit der Vorlage |
 
 ## Stand am Gerät
