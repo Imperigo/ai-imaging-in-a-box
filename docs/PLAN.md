@@ -8191,6 +8191,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] S5 Abgleich gegen den aktuellen KosmoOrbit-Stand im Bau (`--abgleich`, Abbruch in `knoten_bau.py`, `--fester-stand`
   im Stempel vermerkt); Befehlspalette ⌘K als Ausnahme (das Vis-Werkzeug meldet dort keine Befehle an); Abgleich gegen
   R44: 0 Abweichungen, 45 Dateien auf eigenen Zweigen, kein Nachzug nötig — gebaut (§163, C92)
+- [x] Nachzug R45 (`1ba59a62c`): Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich, Inspektor, Bildkachel und
+  Blatt-Knoten in der Kopie; Hilfszweig, kopf und ki gemergt; Abgleich 0 Abweichungen — gebaut (§165, C94)
 - [ ] Bau am Mac bestätigen, mit Abgleich-Vermerk im Stempel (owner)
 - [ ] Einspielen der eigenen Zweige bei Int 1 (kopf, modell-knoten, ki, fehler); der Abgleich zählt sie dann als «gleich»
   (integrator)
