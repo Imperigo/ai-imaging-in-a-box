@@ -63,6 +63,33 @@ METHODE = ("umriss aus bildkanten: sobel auf luminanz, kanten ueber dem 0.85-qua
            "trefferquote / zufallserwartung; v1, nicht geeicht")
 
 
+#: Unter welcher Überdeckung der Silhouetten (``geom_iou``) das Haus im Bild nicht mehr
+#: wiederzuerkennen ist — dann gilt keine Aussage aus Farbe und Kanten als «gut»
+#: (auf-20261020-295, N2). **Gesetzt, nicht gemessen:** abend voll hatte 0,005 und zeigte
+#: den Blick unter ein Vordach; die Bilder mit erkennbarem Haus lagen bei 0,38–0,52.
+WIEDERERKENNUNG_GEOM_IOU = 0.1
+
+
+def umriss_gilt(geom_iou) -> bool | None:
+    """Darf eine Aussage aus Farbe und Kanten (Umrisstreue, Umriss-IoU) für dieses Bild gelten?
+
+    **Anlass (auf-20261020-295, N2):** Das KI-Bild «abend voll» zeigte den Blick unter ein
+    Vordach, das Haus war nicht wiederzuerkennen (``geom_iou`` 0,005, 763 gemeinsame von
+    67'541 Punkten). Eine Umriss-IoU aus Farbabständen meldete 0,60 — sie sah eine Kante
+    dort, wo das Haus hätte stehen sollen, und keinen Baukörper. Kanten und Farbe sagen,
+    *ob am Umriss etwas wechselt*, nicht, *ob dort das Haus steht*.
+
+    Returns:
+        ``False`` unter :data:`WIEDERERKENNUNG_GEOM_IOU`, ``True`` darüber, ``None`` ohne
+        Zahl (dann entscheidet diese Regel nichts).
+    """
+    if not isinstance(geom_iou, (int, float)) or isinstance(geom_iou, bool):
+        return None
+    if not math.isfinite(float(geom_iou)):
+        return None
+    return float(geom_iou) >= WIEDERERKENNUNG_GEOM_IOU
+
+
 def _ist_hintergrund(wert: float) -> bool:
     return not math.isfinite(wert) or wert >= HINTERGRUND_AB_M
 
@@ -190,5 +217,5 @@ def umriss_aus_dateien(bild_png, soll: Sequence[float], breite: int, hoehe: int,
 
 
 __all__ = ["HINTERGRUND_AB_M", "KANTEN_MINDESTSTAERKE", "KANTEN_QUANTIL", "METHODE",
-           "SPRUNG_RELATIV", "TOLERANZ_PX", "bildkanten", "sprungkanten",
-           "umriss_aus_dateien", "umriss_treue"]
+           "SPRUNG_RELATIV", "TOLERANZ_PX", "WIEDERERKENNUNG_GEOM_IOU", "bildkanten",
+           "sprungkanten", "umriss_aus_dateien", "umriss_gilt", "umriss_treue"]

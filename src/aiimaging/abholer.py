@@ -582,7 +582,9 @@ LICHT_AN_BLENDER = ("sonne", "sonnen_staerke", "fuell_staerke", "winkel_grad", "
                     "hintergrund_richtung", "hintergrund_abstand_ev", "gelaende_grau",
                     "herkunft_licht",
                     # auf-20261020-294 (B1, B2): Sonne seitlich der Kamera, weicher Rueckfall.
-                    "sonne_seitlich_grad", "sonne_seite", "winkel_weich_grad")
+                    "sonne_seitlich_grad", "sonne_seite", "winkel_weich_grad",
+                    # auf-20261020-295 (N1): wie die Vorprobe das Haus misst.
+                    "haus_mass")
 
 
 def drehung_bestellt(szene: dict) -> bool:
@@ -631,11 +633,33 @@ def umgebung_einstellungen(szene: dict) -> dict:
     return aus
 
 
-def angewandt_der_szene(szene: dict) -> dict:
+def drehung_aus_bericht(bericht) -> float | None:
+    """Die Drehung des Himmelsbilds, die Blender fuer DIESE Kamera gerechnet hat — oder ``None``.
+
+    Nur bei ``umgebung.drehung.weg`` «zur_kamera» (auf-20261020-294, B1): Dann steht die
+    wirkliche Drehung nur im Bericht der Kamera, nicht in der Bestellung.
+    """
+    drehung = ((bericht or {}).get("umgebung") or {}).get("drehung") \
+        if isinstance(bericht, dict) else None
+    if not isinstance(drehung, dict) or drehung.get("weg") != "zur_kamera":
+        return None
+    wert = drehung.get("drehung_grad")
+    if not isinstance(wert, (int, float)) or isinstance(wert, bool):
+        return None
+    return round(float(wert), 3)
+
+
+def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None) -> dict:
     """``{environment?, cameras_auto?, materialien?}`` — was der Heim-PC rechnet, mit Vorgaben.
 
     Der Vertrag (mit dem Integrator, 20.10.2026) traegt fuer diese Felder keine Vorgaben;
     der Heim-PC setzt sie und nennt sie hier. Nur, was bestellt war. Ohne Pfade (Regel 3).
+
+    **Die Drehung (auf-20261020-295, N3):** Bei ``drehung_weg`` «zur_kamera» fehlt
+    ``rotationGrad`` — die Vorgabe 0 wurde nicht gerechnet, und ein Leser hielte sie fuer
+    die Drehung. Stattdessen ``drehung_je_kamera {<kamera>: <grad>}`` aus dem Blender-Bericht
+    je Kamera (fehlt, solange keine Kamera gerechnet hat). Bei «bestellt» bleibt
+    ``rotationGrad`` wie bestellt.
     """
     szene = szene or {}
     aus: dict = {}
@@ -644,8 +668,14 @@ def angewandt_der_szene(szene: dict) -> dict:
         datei = szene.get("umgebung_datei") or {}
         zusatz = next((z for z in szene.get("prompt_zusaetze") or ()
                        if z.get("art") == "stimmung"), None)
+        # Gedreht wird je Kamera nur, wenn nicht bestellt UND die Stimmung eine seitliche
+        # Sonne nennt — sonst geht `rotationGrad` (die Vorgabe 0) an Blender, wie
+        # `umgebung_einstellungen` es tut, und bleibt hier stehen.
+        bestellt = drehung_bestellt(szene)
+        zur_kamera = not bestellt and bool(
+            _stimmung.licht_der_stimmung(umgebung.get("preset")).get("sonne_seitlich_grad"))
         aus["environment"] = dict(
-            umgebung,
+            {k: v for k, v in umgebung.items() if not zur_kamera or k != "rotationGrad"},
             aufloesung=datei.get("aufloesung") or _stimmung.aufloesung_fuer(szene.get("guete")),
             datei=datei.get("datei"),
             vorgaben=list(szene.get("umgebung_vorgaben") or ()),
@@ -655,9 +685,11 @@ def angewandt_der_szene(szene: dict) -> dict:
             # Bereich. `sonnenlampe` sagt weiter nur, ob eine Sonne BESTELLT war.
             sonnenlampe=bool(szene.get("sonne")),
             # WIE GEDREHT WIRD (auf-20261020-294, B1): «zur_kamera» — je Kamera, Sonne
-            # seitlich der Blickachse (die gerechnete Drehung steht im Blender-Bericht);
-            # «bestellt» — `rotationGrad` wie bestellt.
-            drehung_weg="bestellt" if drehung_bestellt(szene) else "zur_kamera",
+            # seitlich der Blickachse (die gerechnete Drehung seit 295 unter
+            # `drehung_je_kamera`, `rotationGrad` fehlt); «bestellt» — `rotationGrad` wie
+            # bestellt; «vorgabe» — eine Stimmung ohne seitliche Sonne, Drehung 0.
+            drehung_weg=("bestellt" if bestellt else "zur_kamera" if zur_kamera
+                         else "vorgabe"),
             prompt_satz=(zusatz or {}).get("satz"),
             # Belichtung, Farbtemperatur und Tonwerte je Stimmung (auf-20261020-292) —
             # Daten des Heim-PC, keine Felder des Vertrags; hier, damit das Ergebnis sagt,
@@ -666,6 +698,9 @@ def angewandt_der_szene(szene: dict) -> dict:
                    _stimmung.licht_der_stimmung(umgebung.get("preset")).items()
                    if v is not None},
             herkunft=dict(_stimmung.HERKUNFT))
+        if zur_kamera and drehung_je_kamera:
+            aus["environment"]["drehung_je_kamera"] = {
+                str(k): float(v) for k, v in sorted(drehung_je_kamera.items())}
     auto = szene.get("kameras_auto")
     if auto:
         aus["cameras_auto"] = {k: (dict(v) if isinstance(v, dict) else
@@ -3348,6 +3383,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         berichte_der_grundlage = {e["kuerzel"]: e["bericht"]
                                   for e in (geholt or {}).get("kameras") or ()}
         berichte_neu: dict = {}
+        # DIE GERECHNETE DREHUNG JE KAMERA (auf-20261020-295, N3) — aus dem Blender-Bericht,
+        # fuer `angewandt.environment.drehung_je_kamera`.
+        drehungen: dict = {}
         # EIN FESTER STARTWERT FUER DIE SERIE (Nr. 84): genau einer statt der Auswahl aus
         # drei — sonst behielte jede Variante womoeglich einen anderen «besten» Wurf.
         # DIE GUETE (Entscheid 104): Bei der Vorschau ein Startwert je Kamera, das schnelle
@@ -3685,6 +3723,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # dem Zwischenspeicher oder aus der Grundlage (dort dient deren Schoenbild).
             if isinstance(bericht, dict):
                 fort.vorschau_da(kuerzel, bericht.get("beauty_png"))
+                drehung = drehung_aus_bericht(bericht)
+                if drehung is not None:
+                    drehungen[str(kuerzel)] = drehung
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
@@ -4047,6 +4088,18 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Bewacht fuer BEIDE Quellen an der geschriebenen Datei: Bruecke und eigene
             # Ablage in `tests/test_vertrag_jede_kamera_spricht.py`.
             urteil[_kosmo_szene.URTEIL_ZWEI_TORE] = _zwei_tore_dieser_kamera(urteil)
+            # DIE UMRISSTREUE GILT NICHT, WENN DAS HAUS FEHLT (auf-20261020-295, N2): Bei
+            # geom_iou unter 0,1 sagt die Seedwahl nach Kanten nichts ueber das Haus — der
+            # Vermerk steht an der Auswahl, der Satz in `verdict.hinweise`.
+            from . import umriss as _umriss_regel  # noqa: PLC0415
+            if (_umriss_regel.umriss_gilt(urteil.get("geom_iou")) is False
+                    and isinstance(urteil.get("seedauswahl"), dict)):
+                urteil["seedauswahl"] = dict(
+                    urteil["seedauswahl"], umriss_gilt=False,
+                    umriss_grund=(f"geom_iou {float(urteil['geom_iou']):.3f} unter "
+                                  f"{_umriss_regel.WIEDERERKENNUNG_GEOM_IOU:.1f}: das Haus "
+                                  f"ist im Bild nicht wiederzuerkennen; Kanten und Farbe "
+                                  f"am Umriss sagen dann nichts ueber das Haus."))
             urteil["doppelt_von"] = None
             # OB DIE GEOMETRIESTUFE GERECHNET ODER GEHOLT WURDE. Sie steht am
             # Kameraurteil und nicht nur im Multipassbericht, weil `befund_kurz` und
@@ -4145,7 +4198,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Entscheid 104: nur, wenn bestellt — sonst fehlt das Feld im Ergebnis.
             "guete": szene.get("guete"),
             # Was fuer Stimmung, Kamera und Oberflaeche gerechnet wurde (20.10.2026).
-            "angewandt": angewandt_der_szene(szene),
+            "angewandt": angewandt_der_szene(szene, drehung_je_kamera=drehungen),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt

@@ -1713,6 +1713,26 @@ Haus steht, wo das Modell nur Himmel hat, und sagt es ab einem Viertel der Hausf
 Winkel und die Grenze sind gesetzt, nicht gemessen; ob die Schatten jetzt im Bild liegen und die Zahl zu dem passt, was
 man sieht, misst der Rechenrechner als Nächstes, aus zwei Richtungen.
 
+**Der Abend hebt sich ab, und die Prüfung sagt, wenn das Haus fehlt (21.10.2026).** Die vierte Messung der Stimmungen
+bestätigte: Die Sonne steht jetzt in allen acht Stimmungen aus beiden Richtungen genau dort, wo sie stehen soll, und die
+Schatten fallen seitlich ins Bild. Vier Dinge waren noch nicht recht. *Der Abend:* Das Haus hob sich kaum vom Himmel ab.
+Die Kamera sah fast nur die Schattenseite, das Probebild vor dem Rechnen hatte aber das Haus im Durchschnitt gemessen —
+und dieser Durchschnitt gehörte der hellen Sonnenseite, die zwanzigmal heller ist. Der Himmel galt darum als dunkel
+genug, obwohl er heller war als die Schattenseite. Jetzt mittelt das Probebild die Helligkeit so, wie das fertige Bild
+sie zeigt (in Blendenstufen); damit misst die Steuerung dieselbe Grösse wie die Prüfung danach. Den Abstand zum Himmel zu
+verdoppeln wäre der einfachere Weg gewesen; er hätte den Abendhimmel fast nachtdunkel gemacht, und eine Nacht war der
+Fehler der Messung davor. *Das fehlende Haus:* Ein KI-Bild zeigte den Blick unter ein Vordach — vom Haus war nichts
+mehr zu erkennen, und eine Nachrechnung aus Farbe und Kanten fand den Umriss trotzdem «gut». Deckt sich das Bild kaum
+mit dem Modell (weniger als ein Zehntel), sagt das Ergebnis jetzt in einem Satz, dass das Haus nicht wiederzuerkennen ist
+und dass Masse aus Farbe und Kanten dort nicht gelten. *Die Drehung:* Das Ergebnis nannte als Drehung des Himmels 0°, auch
+wenn je Kamera ganz anders gedreht worden war; jetzt steht dort je Kamera die gerechnete Drehung. *Die Zahl für zu viel
+Gebäude:* Sie ist an der Hausfläche gemessen und kann darum über 1 liegen; nachgezählt an den Bildern zählt sie eher zu
+wenig als zu viel. Alle sieben KI-Bilder bauten sichtbar über die ganze Bildbreite — ob die Grenze bei einem Viertel
+richtig liegt, liess sich darum nicht prüfen. Ehrlich gesagt: Gemessen ist noch nichts davon am Rechenrechner; die
+nächste Messung bestellt dafür zwei Prüfbilder, eines, das sicher im Umriss bleibt (ein Gipsmodell mit voller
+Steuerung), und eines, das sicher ausbricht. Offen und ohne Fix notiert: Der Sichtbeton erscheint im KI-Bild nur
+teilweise, und Schlagschatten sind auf Augenhöhe kaum zu sehen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

@@ -3066,7 +3066,8 @@ neben dem Haus steht noch einmal so viel Gebäude. Gezählt wird, was der Tiefen
 sieht (ein Berg oder eine Wolke ist weiter weg und zählt nicht), ohne den Boden und ohne einen schmalen Rand
 um das Haus. *Im Projekt:* `qa.ausserhalb_umriss_anteil` (Modul `baumasse`), mit dem Satz «KI BAUT UEBER DEN
 UMRISS HINAUS» ab 0,25 — gesetzt, nicht gemessen; eine Auskunft, kein Tor. Anlass: auf-20261020-294, wo aus
-der Geländeplatte ein Gebäude über die ganze Bildbreite wurde.
+der Geländeplatte ein Gebäude über die ganze Bildbreite wurde. Weil die Zahl an der Hausfläche gemessen wird, kann sie
+über 1 liegen (in 295: 0,7 bis 2,1 — alle sieben Bilder bauten sichtbar über die ganze Breite).
 
 **Dithering** — Absichtliches feines Rauschen, das Farbstufen weicher wirken lässt. *Im
 Material-ID-Pass schädlich: Es zerfaserte jede Kennfarbe um ±1, aus 5 Farben wurden 19.*
@@ -8088,12 +8089,46 @@ unten gerückt, bis sie frei stehen; alles andere bleibt, wo es war. *Im Projekt
 Modell-Knoten mit dem 3D-Fenster höher wurde und ältere gesicherte Anordnungen noch mit der alten Höhe
 rechneten.
 
+**Mittel in Blendenstufen (geometrisches Mittel)** — Eine Art, Helligkeiten zu mitteln, bei der jede Verdopplung
+gleich viel zählt: Eine Fläche, halb so hell wie eine andere, und eine doppelt so helle liegen gleich weit von der
+Mitte. Das gewöhnliche Mittel dagegen gehört der hellsten Fläche — ist ein Viertel des Hauses zwanzigmal heller als
+der Rest, liegt sein Mittel fast ganz bei diesem Viertel. Das Auge und die Grauwerte eines fertigen Bilds folgen eher
+den Stufen. *Im Projekt:* Seit auf-20261020-295 misst die Vorprobe der Stimmung das Haus so
+(`stimmung.HAUS_MASS` «stufen»), damit sie dieselbe Grösse steuert, die die Prüfung am Bild als Kontrast misst.
+Anlass: Bei «abend» sah die Kamera vor allem die Schattenseite, das gewöhnliche Mittel aber die Sonnenseite — der
+Hintergrund blieb zu hell, das Haus verschwamm.
+
+**Haus im KI-Bild nicht wiederzuerkennen** — Der Satz, wenn sich die Fläche des Modells und die Fläche des Hauses im
+erzeugten Bild kaum decken (Überdeckung unter 0,1, also weniger als ein Zehntel gemeinsam). Dann zeigt das Bild etwas
+anderes als das Haus, etwa den Blick unter ein Vordach. Masse, die nur Farbe und Kanten am Umriss lesen, können dann
+trotzdem gut aussehen — sie sehen, dass sich dort etwas ändert, nicht, dass dort das Haus steht. *Im Projekt:* Satz
+«HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» in den Hinweisen des Ergebnisses, Grenze `umriss.WIEDERERKENNUNG_GEOM_IOU`
+(gesetzt, nicht gemessen), seit auf-20261020-295.
+
+**Umriss-IoU (aus Farbe)** — Ein Mass, das die HomeStation selbst nachrechnet: Es sucht um die Fläche des Modells,
+wo sich im erzeugten Bild die Farbe deutlich ändert, und vergleicht die so gefundene Fläche mit der des Modells.
+Es misst Farbwechsel, nicht den Baukörper. *Im Projekt:* kein Feld des Ergebnisses; bei «abend voll» in 295 meldete es
+0,60, obwohl das Haus nicht zu sehen war — seither gilt es unter der Grenze oben nicht als «gut».
+
+**Drehung je Kamera (des Himmelsbilds)** — Wie weit das Rundumfoto des Himmels für eine bestimmte Kamera gedreht
+wurde, damit die Sonne seitlich steht. Zwei Kameras auf gegenüberliegenden Seiten bekommen zwei Drehungen, 180°
+auseinander. *Im Projekt:* `angewandt.environment.drehung_je_kamera` im Ergebnis, aus dem Bericht von Blender je
+Kamera; seit auf-20261020-295 steht dort dafür kein `rotationGrad` mehr, weil die Vorgabe 0 gar nicht gerechnet wurde.
+
+**Prüfbild (für eine Schwelle)** — Ein Bild, das absichtlich so bestellt wird, dass man vorher weiss, auf welcher
+Seite einer Grenze es landen soll — eines, das sicher drinnen bleibt, und eines, das sicher hinausfällt. Erst wenn
+die Zahl beide richtig einordnet, ist die Grenze geprüft. *Im Projekt:* für die Grenze 0,25 von
+`qa.ausserhalb_umriss_anteil` in auf-20261021-296: ein Gipsmodell mit voller Steuerung (bleibt im Umriss) und ein Bild
+mit schwacher Steuerung und einem Strassen-Prompt (bricht aus).
+
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261020-295 (Protokoll 74 §164): **Mittel in Blendenstufen (geometrisches Mittel)**, **Haus im KI-Bild nicht wiederzuerkennen**, **Umriss-IoU (aus Farbe)**, **Drehung je Kamera (des Himmelsbilds)**, **Prüfbild (für eine Schwelle)** |
 | 2026-10-20 | Ergaenzt aus Kugel, Gesprächsfeld und Einstellungs-Insel (Plan UI-Gleichheit S3/S4, Protokoll 74 §162): **Kugel des Assistenten (Orb)**, **Gesprächsfeld (des Assistenten)**, **Antwortblase (an der Kugel)**, **Seitenfenster (des Gesprächsfelds)**, **Einstellungs-Insel**, **Gemerkte Einstellung (der Knotenansicht)**; **Nahtstelle (für einen zweiten Wirt)** um die zwei neuen Nahtstellen nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Befunden von auf-20261020-294 (Protokoll 74 §161): **Frontallicht**, **Sonne seitlich der Kamera (Drehung zur Kamera)**, **Gemischter Prompt**, **Neue Baumasse ausserhalb des Umrisses**; **Schattenwinkel** um den weichen Rückfall nachgeführt |
 | 2026-10-20 | Ergaenzt aus den Kopfteilen der Knotenansicht (Plan UI-Gleichheit S1/S2, Protokoll 74 §159): **Kopfteile (der Knotenansicht)**, **Stationen-Palette (am Logo)**, **Speichern-Kreis**, **Zweitgruppe (des Inselkopfs)**, **Heim-PC-Chip**, **Claude-Marke**, **Erzählzeile**, **Thema (Papier, Kosmos)**, **Nahtstelle (für einen zweiten Wirt)**, **Bote «visboxWirt» (zweite Brücke)**, **UI-Ausnahme**; **Selbständigkeit**, **Tätigkeitsstrom** und **Zwei Rückgängig-Verläufe** nachgeführt (in der Knotenansicht an der Claude-Marke) |

@@ -43,7 +43,9 @@ __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNF
            "hintergrund_mit_abstand", "haus_leuchtdichte", "euler_fuer_richtung",
            # auf-20261020-294: Sonne seitlich der Kamera, weicher Rueckfall mit grossem Winkel.
            "SONNE_SEITEN", "SONNE_SEITLICH_BEREICH_GRAD", "WEICH_WINKEL_GRAD",
-           "kamera_azimut_grad", "drehung_zur_kamera", "winkel_zur_blickachse"]
+           "kamera_azimut_grad", "drehung_zur_kamera", "winkel_zur_blickachse",
+           # auf-20261020-295: die Vorprobe misst das Haus in Blendenstufen.
+           "HAUS_MASS", "HAUS_MASSE", "STUFEN_UNTERGRENZE"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -327,6 +329,9 @@ def licht_der_stimmung(preset, *, sonne_seite=None) -> dict:
             hintergrund_abstand_ev=float(eintrag.get("hintergrund_abstand_ev")
                                          or HINTERGRUND_ABSTAND_EV),
             kontrast_schwelle=KONTRAST_SCHWELLE,
+            # auf-20261020-295 (N1): die Vorprobe misst das Haus in Blendenstufen — als
+            # Lichtdatum, damit eine Grundlage von vorher kein Treffer mehr ist.
+            haus_mass=HAUS_MASS,
             gelaende_grau=list(GELAENDE_GRAU_WEISS if preset == PRESET_WEISS
                                else GELAENDE_GRAU),
             herkunft_licht=LICHT_HERKUNFT)
@@ -684,27 +689,60 @@ def hintergrund_mit_abstand(horizont, zenit, haus: float, *,
             "zenit": [round(float(c) * faktor, 6) for c in zenit], "grund": ""}
 
 
-def haus_leuchtdichte(pixel, *, kanaele: int = 4, deckend_ab: float = 0.99) -> dict:
+#: Wie die Vorprobe das Haus misst (auf-20261020-295, N1): ``"stufen"`` — das Mittel in
+#: Blendenstufen (geometrisches Mittel der Helligkeit), ``"linear"`` — das Mittel der
+#: Helligkeit selbst (293 bis 295).
+#:
+#: **Anlass:** Bei «abend» mass die Vorprobe den Hintergrund 1,9 Stufen unter dem Haus und
+#: liess ihn stehen; im Bild hob sich das Haus aber nur um +18 Grauwerte ab (Schwelle 20).
+#: Die Kamera sah zu drei Vierteln die Schattenseite (Grauwert 98) und zu einem Viertel die
+#: Sonnenseite (230). **Das lineare Mittel gehört der Sonnenseite** — sie ist dort rund
+#: zwanzigmal heller und zieht den Wert hoch —, das Mittel der Grauwerte, das
+#: ``qa.kontrast_haus_hintergrund`` bildet, gehört der Schattenseite. Grauwerte nach der
+#: Tonwertkurve (AgX) wachsen ungefähr mit den Blendenstufen, nicht mit dem Licht: Das
+#: Mittel in Stufen ist darum, was die Messung am Bild sieht. Seither misst die Vorprobe
+#: dieselbe Grösse wie die Prüfung — sonst stimmen Steuerung und Messung nie überein.
+#: Bei einem gleichmässig hellen Haus sind beide Mittel gleich.
+HAUS_MASS = "stufen"
+HAUS_MASSE = ("stufen", "linear")
+#: Untergrenze der Helligkeit eines Hauspunkts im Mittel in Stufen — ein schwarzer Punkt
+#: (Helligkeit 0) hätte sonst unendlich viele Stufen Abstand.
+STUFEN_UNTERGRENZE = 1.0e-6
+
+
+def haus_leuchtdichte(pixel, *, kanaele: int = 4, deckend_ab: float = 0.99,
+                      mass: str = HAUS_MASS) -> dict:
     """Die mittlere Helligkeit des Hauses in der Vorprobe des Runners — reine Rechnung.
 
     Die Vorprobe rechnet ein kleines Bild mit durchsichtigem Hintergrund und ohne Gelände
-    vor der Kamera: Deckend (Alpha ab ``deckend_ab``) ist dort nur das Haus. Mittel der
-    Rec.-709-Helligkeit über diese Punkte, linear (vor Tonwertkurve und Belichtung — die
-    verschieben Haus und Hintergrund gleich).
+    vor der Kamera: Deckend (Alpha ab ``deckend_ab``) ist dort nur das Haus. Gemittelt wird
+    die Rec.-709-Helligkeit über diese Punkte, linear (vor Tonwertkurve und Belichtung — die
+    verschieben Haus und Hintergrund gleich) — **seit auf-20261020-295 in Blendenstufen**
+    (``mass`` ``"stufen"``, :data:`HAUS_MASS`), damit die Vorprobe dieselbe Grösse misst wie
+    ``qa.kontrast_haus_hintergrund`` am fertigen Bild.
 
     Returns:
-        ``{leuchtdichte, n, n_bild}`` — ``leuchtdichte`` ``None`` ohne deckenden Punkt.
+        ``{leuchtdichte, linear, stufen, mass, n, n_bild}`` — ``leuchtdichte`` ist der Wert
+        nach ``mass``; ``linear`` und ``stufen`` stehen beide daneben, damit der Bericht
+        zeigt, wie weit sie auseinanderliegen. ``None`` ohne deckenden Punkt.
     """
     if kanaele < 4:
         raise ValueError("Die Vorprobe braucht einen Alphakanal (RGBA).")
+    if mass not in HAUS_MASSE:
+        raise ValueError(f"Mass {mass!r} — erlaubt: {', '.join(HAUS_MASSE)}.")
     n_bild = len(pixel) // kanaele
-    summe, n = 0.0, 0
+    summe, summe_log, n = 0.0, 0.0, 0
     for i in range(n_bild):
         j = i * kanaele
         if float(pixel[j + 3]) >= deckend_ab:
-            summe += leuchtdichte((pixel[j], pixel[j + 1], pixel[j + 2]))
+            hell = leuchtdichte((pixel[j], pixel[j + 1], pixel[j + 2]))
+            summe += hell
+            summe_log += math.log2(max(hell, STUFEN_UNTERGRENZE))
             n += 1
-    return {"leuchtdichte": (summe / n) if n else None, "n": n, "n_bild": n_bild}
+    linear = (summe / n) if n else None
+    stufen = (2.0 ** (summe_log / n)) if n else None
+    return {"leuchtdichte": stufen if mass == "stufen" else linear,
+            "linear": linear, "stufen": stufen, "mass": mass, "n": n, "n_bild": n_bild}
 
 
 def aufloesung_fuer(guete) -> str:
