@@ -517,6 +517,9 @@ final class ParkfachTests: XCTestCase {
     func testDieAntwortEntscheidetWasAusDerSkizzeWird() {
         XCTAssertEqual(Sendeergebnis.aus(status: 401, daten: Data(#"{"fehler": "Nicht angemeldet."}"#.utf8)),
                        .nichtAngemeldet(grund: "Nicht angemeldet."))
+        // DER BEENDETE DIREKTE WEG (118a) ist wie die Tür: zurück ins Fach, nicht abgewiesen.
+        XCTAssertEqual(Sendeergebnis.aus(status: 410, daten: Data(#"{"fehler": "Über den Mac."}"#.utf8)),
+                       .nichtAngemeldet(grund: "Über den Mac."))
         XCTAssertEqual(Sendeergebnis.aus(status: 404, daten: Data(#"{"fehler": "Unbekannter Weg: /api/skizze"}"#.utf8)),
                        .abgewiesen(grund: "Unbekannter Weg: /api/skizze", code: 404))
         // EIN ERFOLG, DER SICH NICHT LESEN LAESST, IST NICHT «ANGEKOMMEN».

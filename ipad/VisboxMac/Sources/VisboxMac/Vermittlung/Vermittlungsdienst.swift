@@ -54,7 +54,10 @@ final class Vermittlungsdienst: ObservableObject {
     /// Wo das iPad den Mac erreicht (`https://<ip>:<anschluss>`) — sobald er sich anbietet.
     @Published private(set) var adresseFuerIpad: URL?
 
-    private let heim: Heimstrecke
+    /// Die Leitung zum Heim-PC — `nil`: **kein Heim-PC eingerichtet** (Entscheid 118a). Dann
+    /// gibt es trotzdem die Vermittlung: Das iPad koppelt mit dem Mac und bekommt die Mappe am
+    /// Mac; was nur der Heim-PC kann, sagt «kein Rechner eingerichtet» (`Ipadmappenwege.ohneRechner`).
+    private let heim: Heimstrecke?
     private var stand: Vermittlerstand
     /// Die Identität für TLS — `nil`: kein Zertifikat, kein Anbieten.
     private let identitaet: SecIdentity?
@@ -71,12 +74,12 @@ final class Vermittlungsdienst: ObservableObject {
     private var aufFestemAnschluss = true
 
     /// - Parameters:
-    ///   - heimBasis: der Heim-PC im eigenen Tailscale-Netz, `https://<rechner>.<netz>.ts.net:8443`.
-    ///   - benutzer, kennwort: die Anmeldung **des Mac** am Heim-PC (aus seinem Schlüsselbund).
-    ///     Sie geht nur zum Heim-PC, nie zum iPad.
-    init(heimBasis: URL, benutzer: String, kennwort: String) {
-        heim = Heimstrecke(basis: heimBasis,
-                           anmeldung: Anmeldung(benutzer: benutzer, kennwort: kennwort))
+    ///   - heim: die Leitung zum Heim-PC im eigenen Tailscale-Netz
+    ///     (`https://<rechner>.<netz>.ts.net:8443`) mit der Anmeldung **des Mac** (aus seinem
+    ///     Schlüsselbund; sie geht nur zum Heim-PC, nie zum iPad) — oder `nil`, wenn kein
+    ///     Heim-PC eingerichtet ist (Entscheid 118a).
+    init(heim: Heimstrecke?) {
+        self.heim = heim
         let (zugang, satz) = Vermittlerschluessel.liesOderErzeuge()
         // DAS ZERTIFIKAT DES MAC (Entscheid 118) — oder der Satz, warum keines.
         let eigenerAbdruck: String?
@@ -229,6 +232,9 @@ final class Vermittlungsdienst: ObservableObject {
                let antwort = Ipadmappenquelle.antwort(ziel, anfrage, ordner: ordner) {
                 return antwort
             }
+            // OHNE EINGERICHTETEN HEIM-PC (Entscheid 118a): nichts weiterreichen — der Kern sagt,
+            // was das iPad hoert (ruhiger Laufstand, «kein Rechner eingerichtet»).
+            guard let heim else { return Ipadmappenwege.ohneRechner(ziel) }
             let ergebnis = await heim.reiche(weiterreichung)
             // DER LAUFSTAND OHNE HEIM-PC: Mit Mappe am Mac geht das iPad weiter — nur gerechnet
             // wird nicht. Es hoert das, statt «Mac weg».

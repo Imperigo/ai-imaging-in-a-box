@@ -202,8 +202,9 @@ public enum Sendeergebnis: Equatable, Sendable {
     case angekommen(skizze: String?, hinweis: String?)
     /// Drüben abgewiesen (400, 404, …). Die Skizze bleibt mit dem Satz liegen.
     case abgewiesen(grund: String, code: Int?)
-    /// Die Tür (401/403): nicht die Skizze ist falsch, sondern die Anmeldung. Zurück ins
-    /// Fach; sie geht wieder, sobald neu gekoppelt ist.
+    /// Die Tür (401/403) — oder der beendete direkte Weg (410, Entscheid 118a): nicht die
+    /// Skizze ist falsch, sondern die Anmeldung. Zurück ins Fach; sie geht wieder, sobald neu
+    /// gekoppelt ist.
     case nichtAngemeldet(grund: String)
     /// Kein Byte ist hinaus — sie **kann** nicht angekommen sein. Zurück ins Fach.
     case nichtErreicht(grund: String)
@@ -225,7 +226,7 @@ public enum Sendeergebnis: Equatable, Sendable {
             }
         }
         let fehler = Serverfehler.aus(status: status, daten: daten)
-        if status == 401 || status == 403 {
+        if status == 401 || status == 403 || status == 410 {
             return .nichtAngemeldet(grund: fehler.satz)
         }
         return .abgewiesen(grund: fehler.satz, code: status)

@@ -1,0 +1,47 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-308",
+ "art": "qa",
+ "beschreibung": "Entscheid 118a am Heim-PC pruefen: ein iPad, das direkt spricht (X-Geraet: ipad ohne X-Geraet-Weg: mac), bekommt 410 mit dem Satz, was zu tun ist; ueber den Mac (X-Geraet-Weg: mac) geht es wie bisher; Mac-App, Visbox-Seite, KosmoOrbit und eure Werkzeuge bleiben unberuehrt.",
+ "erstellt": "2026-10-21T10:30:00Z",
+ "rang": 95,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "entscheide": [
+   "118",
+   "118a"
+  ],
+  "einbau": [
+   "C108"
+  ],
+  "protokoll": "74 §181",
+  "wege_neu": [],
+  "koepfe_neu": [],
+  "tuer_neu": "410 fuer X-Geraet: ipad ohne X-Geraet-Weg: mac",
+  "laeufe": [],
+  "neue_ki_laeufe": 0,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Kein Lauf auf der Karte; nur Anfragen an den Dienst. RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit Entscheid 118a (Protokoll 74 §181, Einbau C108); die Zentrale sagt den Stand an; erst danach git pull und den Dienst (Server) neu starten, der Abholer braucht keinen Neustart. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS IST: nichts am Rechnen. Neu weist die Tuer des Servers jede Anfrage mit dem Kopf X-Geraet: ipad OHNE X-Geraet-Weg: mac ab — Antwort 410, Rumpf {\"fehler\": \"Das iPad verbindet sich jetzt ueber den Mac — am Mac «iPad koppeln» oeffnen und das iPad mit dem Mac koppeln. Direkt nimmt der Heim-PC das iPad nicht mehr an.\"} (Satz aus aiimaging.geraetebuch.SATZ_DIREKT_BEENDET, mit Umlauten). Das gilt vor Anmeldung und Kopplung, auch fuer POST /api/verbinden; GET /api/hallo bleibt offen. Ohne Geraetekopf (Visbox-Seite, KosmoOrbit, eure Werkzeuge) und mit X-Geraet: mac (Mac-App) aendert sich nichts. Ein iPad, das noch direkt gekoppelt ist, sieht ab jetzt diesen Satz statt einer Verbindung — das ist gewollt. WAS ZU TUN IST, in dieser Reihenfolge, mit curl gegen den laufenden Dienst (https, Anmeldung wie eure Brueckenlaeufe, Benutzer und Kennwort aus der Kennwortdatei; die Mac-App und das iPad werden NICHT gebraucht): (1) DIREKT SPRECHENDES IPAD: GET /api/fortschritt angemeldet mit -H 'X-Geraet: ipad' — erwartet 410 und genau den Satz oben im Feld fehler. Dasselbe mit -H 'X-Geraet: ipad' -H 'X-Geraet-Weg: direkt' (410) und unangemeldet mit -H 'X-Geraet: ipad' (410, nicht 401). Dazu POST /api/verbinden mit -H 'X-Geraet: ipad' und Rumpf {\"pin\": \"000000\"} — 410, kein Feld kennwort in der Antwort. (2) UEBER DEN MAC: GET /api/fortschritt angemeldet mit -H 'X-Geraet: ipad' -H 'X-Geraet-Weg: mac' — erwartet 200 mit dem Laufstand (Feld laeuft); danach GET /api/geraete angemeldet: ipad.weg = mac, zuletzt_gesehen_s klein. (3) ANDERE GERAETE UNBERUEHRT: angemeldet GET /api/fortschritt ohne Geraetekopf (200), mit -H 'X-Geraet: mac' (200); GET / (die Visbox-Seite, 200, HTML); GET /bruecke/health oder den Gesundheitsweg der Bruecke, den eure Laeufe sonst nehmen (200); GET /api/hallo unangemeldet mit -H 'X-Geraet: ipad' (200). Ein Lauf eurer Werkzeuge (tools/homeworker.py --status oder was ihr sonst zum Pruefen nehmt) laeuft wie vorher. NICHT: keine KI-Laeufe, kein Rendern, keine Schalter; die Mac-App und das iPad nicht anfassen; keine Kopplung oeffnen (kein --kopplung); kein Kennwort, keine Koepfe mit Anmeldung und keine Adressen in die Rueckgabe; nichts am Code aendern — ein Fehler kommt als Befund zurueck.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst neu gestartet ja/nein, Zeitpunkt.",
+  "1: je Anfrage Status und Feld fehler (wortgleich mit SATZ_DIREKT_BEENDET ja/nein); bei /api/verbinden: Feld kennwort vorhanden ja/nein.",
+  "2: Status von /api/fortschritt ueber den Mac, Feld laeuft vorhanden ja/nein; /api/geraete: ipad.weg und zuletzt_gesehen_s.",
+  "3: je Anfrage Status (ohne Kopf, mac, Seite, Bruecke, hallo); Werkzeuglauf wie vorher ja/nein.",
+  "EINBAU: Belegt, dass der Heim-PC ein direkt sprechendes iPad mit 410 und Satz abweist und alles andere unveraendert annimmt — damit wird C108 am Heim-PC bestaetigt; am Mac und iPad bleibt die Geraeteprobe beim Owner."
+ ]
+}

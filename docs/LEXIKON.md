@@ -928,7 +928,8 @@ eine eigene Adresse (den *Endpoint*), die per HTTP angesprochen wird.
 **HTTP-Statuscode** — Die dreistellige Zahl, mit der ein Webserver jede Anfrage
 beantwortet, noch bevor er Inhalt liefert. `200` heisst „hier ist es", `404` „gibt es
 nicht", `401` „du bist nicht angemeldet", `403` „angemeldet oder nicht — du darfst
-nicht". *Die Unterscheidung entschied in der Lizenzprüfung vom 18.08.2026 über die
+nicht", `410` „diesen Weg gibt es hier nicht mehr" (seit Entscheid 118a die Antwort des
+Heim-PC an ein iPad, das direkt statt über den Mac spricht — mit dem Satz, was zu tun ist). *Die Unterscheidung entschied in der Lizenzprüfung vom 18.08.2026 über die
 Aussage: `401` bei einem Modell heisst, dass die Lizenzdatei existiert und eine
 Zustimmung fehlt; kein Treffer in der Suche heisst, dass es sie gar nicht gibt — so
 geschehen bei Depth-Anything-V2-Giant, dessen Gewichte öffentlich schlicht nicht
@@ -5256,7 +5257,13 @@ das iPad nicht still die unverschlüsselte, sondern verbindet nicht und sagt war
 **Übergangsfassung** — Eine Fassung, in der ein alter Weg noch geht, aber mit einem Satz, dass er bald wegfällt. So
 verliert niemand die Verbindung ohne Erklärung. *Im Projekt:* Visbox mit Schritt 4 — ein iPad, das noch direkt mit dem
 Heim-PC gekoppelt ist, arbeitet weiter und sagt «Direkt am Heim-PC (Übergang)»; ab der nächsten Fassung soll der Heim-PC
-es mit Satz abweisen.
+es mit Satz abweisen. Seit Entscheid 118a (21.10.2026) tut er das: Antwort 410 mit dem Satz «Das iPad verbindet sich jetzt
+über den Mac …», und das iPad zeigt ihn an.
+
+**Kein Rechner eingerichtet (Mac ohne Heim-PC)** — Der Zustand, in dem am Mac kein Heim-PC eingerichtet ist. Der Mac
+vermittelt dann trotzdem fürs iPad: Es koppelt mit dem Mac und sieht Mappe, Bilder und Skizzen der Mappe am Mac; nur, was
+der Heim-PC rechnen müsste, beantwortet der Mac mit dem Satz «Kein Rechner eingerichtet». *Im Projekt:* Entscheid 118a,
+Frage 3; die Antworten bestimmt der Kern (`Ipadmappenwege.ohneRechner`).
 
 **TestFlight und Apple-Entwicklerkonto** — Das Konto (99 USD im Jahr) erlaubt, eigene Apps über
 Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
@@ -8528,6 +8535,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 | Datum | Änderung |
 |---|---|
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus Entscheid 118a (Protokoll 74 §181): **Kein Rechner eingerichtet (Mac ohne Heim-PC)**; **HTTP-Statuscode** um `410` und **Übergangsfassung** um das Ende des direkten Wegs nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §180): **Vorgabe beim Anlegen (eines Knotens)** |
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |

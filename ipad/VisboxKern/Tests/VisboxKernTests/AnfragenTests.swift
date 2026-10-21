@@ -287,6 +287,26 @@ final class AnfragenTests: XCTestCase {
         }
     }
 
+    func testDerBeendeteDirekteWegHatEigeneArtUndSatz() {
+        // ENTSCHEID 118a: Der Heim-PC weist ein direkt sprechendes iPad mit 410 ab.
+        func fehler(_ daten: Data) -> Serverfehler? {
+            do { _ = try liesAntwort(status: 410, daten: daten) } catch let f as Serverfehler {
+                return f
+            } catch {}
+            return nil
+        }
+        guard let vom = fehler(json(#"{"fehler": "Über den Mac."}"#)),
+              let ohne = fehler(Data()) else { return XCTFail("410 ist kein Erfolg") }
+        XCTAssertEqual(vom.art, Serverfehler.Art.direktBeendet)
+        XCTAssertEqual(vom.satz, "Über den Mac.")
+        XCTAssertTrue(vom.satzVomServer)
+        // OHNE LESBAREN SATZ der eigene, wortgleich mit dem des Heim-PC — nie nur «410».
+        XCTAssertEqual(ohne.satz, Macanbindung.satzDirektBeendet)
+        XCTAssertFalse(ohne.satzVomServer)
+        XCTAssertTrue(ohne.satz.contains("«iPad koppeln»"))
+        XCTAssertThrowsError(try Fortschrittsstand.lies(status: 410, daten: Data()))
+    }
+
     func testOhneLesbarenSatzSagtDieAppDassErVonIhrKommt() {
         XCTAssertThrowsError(try Fortschrittsstand.lies(status: 502, daten: json("<html>"))) {
             let f = $0 as? Serverfehler

@@ -241,19 +241,19 @@ struct Hauptfenster: View {
         // QR-Code und der Mac in der Naehe, zwei Minuten lang. Es holt die Zahl selbst.
         // SEIT ENTSCHEID 118 (21.10.2026) koppelt das iPad dort MIT DIESEM MAC, verschluesselt;
         // das Fenster schaltet das Anbieten ein.
-        if leitung.adresse != nil {
-            Menu("iPad") {
-                Button("iPad koppeln") { ipadKoppelnOffen = true }
-                if let dienst = vermittlung.dienst {
-                    Divider()
-                    Toggle("iPad über diesen Mac anbieten (verschlüsselt)",
-                           isOn: Binding(get: { vermittlung.angeboten },
-                                         set: { vermittlung.schalteAnbieten($0) }))
-                    Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
-                        .disabled(!vermittlung.angeboten)
-                    Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }
-                        .disabled(!vermittlung.angeboten)
-                }
+        // SEIT ENTSCHEID 118a (21.10.2026) AUCH OHNE HEIM-PC: Die Verbindung iPad–Mac geht ohne
+        // eingerichteten Heim-PC; das iPad bekommt dann die Mappe am Mac.
+        Menu("iPad") {
+            Button("iPad koppeln") { ipadKoppelnOffen = true }
+            if let dienst = vermittlung.dienst {
+                Divider()
+                Toggle("iPad über diesen Mac anbieten (verschlüsselt)",
+                       isOn: Binding(get: { vermittlung.angeboten },
+                                     set: { vermittlung.schalteAnbieten($0) }))
+                Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
+                    .disabled(!vermittlung.angeboten)
+                Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }
+                    .disabled(!vermittlung.angeboten)
             }
         }
     }

@@ -244,4 +244,42 @@ final class MacmappensichtTests: XCTestCase {
         XCTAssertTrue(Ipadmappenwege.satzRechnenAmMac.contains("Knotenansicht"))
         XCTAssertTrue(Ipadmappenwege.satzBenennenAmMac.contains("Knotenansicht"))
     }
+
+    // ------------------------------------------- ohne eingerichteten Heim-PC (118a)
+
+    func testOhneRechnerBleibtDasIpadVerbundenUndHoertWarum() throws {
+        let laufstand = Ipadmappenwege.ohneRechner(.fortschritt)
+        XCTAssertEqual(laufstand.status, 200)
+        let stand = try Fortschrittsstand.lies(status: 200, daten: laufstand.rumpf)
+        XCTAssertEqual(stand.laeuft, false, "ohne Heim-PC rechnet niemand — das ist wahr")
+        let o = try JSONWert.lies(laufstand.rumpf)
+        XCTAssertEqual(o["heim_pc"]?.alsText, "nicht eingerichtet")
+        XCTAssertEqual(o["satz"]?.alsText, Ipadmappenwege.satzKeinRechner)
+        XCTAssertTrue(Ipadmappenwege.satzKeinRechner.hasPrefix("Kein Rechner eingerichtet"))
+        // DIESELBEN FELDER wie der ruhige Laufstand, nur zwei Werte anders.
+        guard case .objekt(let a) = Ipadmappenwege.fortschrittKeinRechner,
+              case .objekt(let b) = Ipadmappenwege.fortschrittOhneHeim else { return XCTFail() }
+        XCTAssertEqual(Set(a.keys), Set(b.keys))
+    }
+
+    func testOhneRechnerUndOhneMappeSagtDerMacWasFehlt() throws {
+        func satz(_ a: Leitungsantwort) throws -> String? { try JSONWert.lies(a.rumpf)["fehler"]?.alsText }
+        let rechnen = Ipadmappenwege.ohneRechner(.rechnen)
+        XCTAssertEqual(rechnen.status, 503)
+        XCTAssertEqual(try satz(rechnen), Ipadmappenwege.satzKeinRechner)
+        XCTAssertEqual(Ipadmappenwege.ohneRechner(nil).status, 503, "was die Mappe nicht kennt")
+        XCTAssertEqual(Ipadmappenwege.ohneRechner(.benennen).status, 503)
+        let projekt = Ipadmappenwege.ohneRechner(.projekt)
+        XCTAssertEqual(projekt.status, 404)
+        XCTAssertEqual(try satz(projekt), Ipadmappenwege.satzKeineMappeKeinRechner)
+        XCTAssertEqual(Ipadmappenwege.ohneRechner(.bild(name: "a.png")).status, 404)
+        // DIE SKIZZE BLEIBT IM PARKFACH, mit Satz (abgewiesen, nicht verloren).
+        let skizze = Ipadmappenwege.ohneRechner(.skizze)
+        XCTAssertEqual(Sendeergebnis.aus(status: skizze.status, daten: skizze.rumpf),
+                       .abgewiesen(grund: Ipadmappenwege.satzOhneMappeOhneRechner, code: 409))
+        for s in [Ipadmappenwege.satzKeinRechner, Ipadmappenwege.satzKeineMappeKeinRechner,
+                  Ipadmappenwege.satzOhneMappeOhneRechner] {
+            XCTAssertFalse(s.contains("ß"), "Schweizer Schreibung")
+        }
+    }
 }

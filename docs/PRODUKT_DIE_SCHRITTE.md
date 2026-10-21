@@ -1205,6 +1205,18 @@ am Mac in der Knotenansicht, nicht vom iPad aus.
 **Offen:** die Probe an Mac und iPad (koppeln, Skizze, Bild, ohne Mac); das Abschalten des direkten Wegs in der nächsten
 Fassung.
 
+**Nachtrag: der direkte Weg endet, und der Mac geht auch ohne Heim-PC (21.10.2026).** Der Heim-PC nimmt ein iPad, das
+direkt mit ihm spricht, nicht mehr an. Er antwortet mit einem Satz: «Das iPad verbindet sich jetzt über den Mac — am Mac
+‹iPad koppeln› öffnen und das iPad mit dem Mac koppeln.» Das iPad zeigt diesen Satz in seiner Verbindungszeile, statt
+still zu scheitern, und seine Skizzen bleiben auf dem iPad liegen, bis es mit dem Mac gekoppelt ist. Woran der Heim-PC
+den Unterschied erkennt: Was über den Mac kommt, trägt einen Vermerk «über den Mac»; alles andere, das sich als iPad
+ausgibt, kam direkt. Der Mac selbst, die Webseite und die Werkzeuge am Heim-PC tragen keinen solchen Vermerk und merken
+nichts davon. Dazu geht die Verbindung iPad–Mac jetzt **auch ohne eingerichteten Heim-PC**: Das iPad koppelt mit dem Mac
+und sieht die Mappe am Mac mit Bildern und Skizzen; wer rechnen will, liest «Kein Rechner eingerichtet». *Begründung:*
+Ein iPad, das still weiter direkt spricht, legt Skizzen an einen Ort, an dem der Architekt sie nicht sucht — darum ein
+klarer Satz statt eines stillen Fehlers. Und die Mappe liegt am Mac; dass sie ohne Heim-PC nicht ans iPad käme, hätte das
+iPad vom Rechner abhängig gemacht, obwohl es zum Zeichnen keinen braucht.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |
