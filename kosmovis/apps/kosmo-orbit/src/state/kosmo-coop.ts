@@ -33,7 +33,7 @@ import { create } from 'zustand';
 import { execute, isSettingsPatch, type AnyPatch, type ExecutionResult, type KosmoDoc } from '@kosmo/kernel';
 import { merkeAngehalten, useProject } from './project-store';
 import { URHEBER_NAME, useKosmoMaus, type Urheber } from './kosmo-maus-freigabe';
-import { abonniere, behandle, kiSchritte, rueckgaengigKi, werkzeugNameFuer, type KiUrheber } from '../modules/vis/ki-werkzeuge';
+import { abonniere, behandle, kiSchritte, offeneVorschlaege, rueckgaengigKi, werkzeugNameFuer, type KiUrheber } from '../modules/vis/ki-werkzeuge';
 
 export type CoopWeg = 'mcp' | 'maus' | 'chat' | 'werkzeug';
 
@@ -321,7 +321,11 @@ export function versucheCoop(wer: Urheber, commandId: string, params: unknown, _
   } catch {
     return null;
   }
-  const kennung = `${MAUS_KENNUNG}${++mausFolge}`;
+  // NACH DEM NEULADEN zaehlt die Folge von vorn, die App gibt aber die alten Maus-Karten zurueck
+  // (Strang Karten): eine Kennung, die schon als Karte liegt, wird uebersprungen.
+  const belegt = new Set(offeneVorschlaege().map((v) => v.kennung));
+  let kennung = `${MAUS_KENNUNG}${++mausFolge}`;
+  while (belegt.has(kennung)) kennung = `${MAUS_KENNUNG}${++mausFolge}`;
   wendetAn = true;
   let antwort;
   try {

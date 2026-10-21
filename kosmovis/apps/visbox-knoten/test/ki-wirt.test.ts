@@ -9,7 +9,8 @@ import { alsText, boteDerApp, haengeKiAn, MAPPE_GEWECHSELT, SEITE_LAEDT_NEU, typ
 /**
  * VISBOX-EIGEN (KI-Bedienung Stufe 3, Entscheide 105–106f, 108, 114): Der Wirt haengt den
  * KI-Werkzeugsatz als `window.visboxKi` an, reicht jedes Ereignis an die Mac-App, setzt die Wache
- * fuer Strg+Z und verwirft offene Karten, wenn die Mappe wechselt oder die Seite neu laedt.
+ * fuer Strg+Z und verwirft offene Karten, wenn die Mappe wechselt. Laedt die Seite neu, bleiben die
+ * Karten (Strang Karten, 21.10.2026): Die App gibt sie mit `stelleWieder` zurueck.
  */
 
 let graphId = '';
@@ -49,7 +50,7 @@ afterEach(() => {
 
 describe('window.visboxKi', () => {
   it('steht mit allen Wegen der App — und keiner gibt die Grafikkarte frei', () => {
-    expect(Object.keys(ki()).sort()).toEqual(['alsText', 'blick', 'blickMausWerkzeuge', 'entscheide', 'kiVerlauf', 'maus', 'offene', 'rueckgaengigKi', 'rufe', 'verwirf', 'werkzeuge']);
+    expect(Object.keys(ki()).sort()).toEqual(['alsText', 'blick', 'blickMausWerkzeuge', 'entscheide', 'kiVerlauf', 'maus', 'offene', 'rueckgaengigKi', 'rufe', 'stelleWieder', 'verwirf', 'werkzeuge']);
     expect(Object.keys(ki()).filter((k) => /freig|approv|gpu/i.test(k))).toEqual([]);
     expect(gesendet[0]).toEqual({ art: 'bereit', werkzeuge: ki().werkzeuge().length });
     expect(ki().werkzeuge().map((w) => w.name)).toContain('graph_lesen');
@@ -124,11 +125,84 @@ describe('Mappenwechsel und Neuladen', () => {
     expect(String((e['ergebnis'] as { text: string }).text)).toContain(`VERWORFEN: ${MAPPE_GEWECHSELT}`);
   });
 
-  it('beim Verlassen der Seite (pagehide) fallen die Karten weg, und die App hört «weg»', () => {
+  it('beim Verlassen der Seite (pagehide) wird nichts verworfen — die App hört nur «weg»', () => {
     ki().rufe({ kennung: 'K-6', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto' } }, 'voll');
     gesendet = [];
     window.dispatchEvent(new Event('pagehide'));
-    expect(ki().offene()).toEqual([]);
+    expect(ki().offene().map((v) => v.kennung)).toEqual(['K-6']);
+    expect(gesendet.filter((n) => n['art'] === 'entschieden')).toEqual([]);
     expect(gesendet.at(-1)).toEqual({ art: 'weg', grund: SEITE_LAEDT_NEU });
+  });
+});
+
+/** Die Seite laedt neu: Modulzustand weg, Wirt neu angehaengt — wie in der WKWebView. */
+function neuLaden(): void {
+  ab();
+  leereKiZustand();
+  gesendet = [];
+  ab = haengeKiAn(window, bote);
+}
+
+/** Der Vorschlag, wie die App ihn aus dem Ereignis «karte» haelt. */
+function karteAusEreignis(kennung: string): unknown {
+  const e = gesendet.find((n) => n['art'] === 'karte' && (n['vorschlag'] as { kennung: string }).kennung === kennung);
+  return JSON.parse(JSON.stringify(e!['vorschlag']));
+}
+
+describe('Karten überleben das Neuladen (Strang Karten)', () => {
+  it('Karte offen → Seite neu geladen → die App gibt sie zurück → sie liegt wieder, und Anwenden wirkt', () => {
+    ki().rufe({ kennung: 'K-3', werkzeug: 'vis_nodeParametrieren', argumente: { graphId, nodeId: modellId, params: { stimmung: 'abend' } } }, 'karte');
+    const roh = karteAusEreignis('K-3');
+    window.dispatchEvent(new Event('pagehide'));
+    neuLaden();
+    expect(ki().offene()).toEqual([]);
+    const antwort = ki().stelleWieder([roh]);
+    expect(antwort).toEqual([{ kennung: 'K-3', liegt: true, text: expect.any(String) }]);
+    expect(ki().offene().map((v) => v.kennung)).toEqual(['K-3']);
+    expect(gesendet.some((n) => n['art'] === 'karte')).toBe(true);
+    const ergebnis = ki().entscheide('K-3', true)!;
+    expect(ergebnis.ok).toBe(true);
+    expect(graph().nodes.find((n) => n.id === modellId)!.params['stimmung']).toBe('abend');
+  });
+
+  it('eine zurückgegebene Karte wird nie still angewendet — auch in Voll bleibt sie eine Karte', () => {
+    ki().rufe({ kennung: 'K-4', werkzeug: 'vis_nodeSchieben', argumente: { graphId, nodeId: renderId, x: 50, y: 60 } }, 'karte');
+    const roh = karteAusEreignis('K-4');
+    neuLaden();
+    expect(ki().stelleWieder([roh])[0]!.liegt).toBe(true);
+    expect(graph().nodes.find((n) => n.id === renderId)!.x).toBe(300);
+  });
+
+  it('passt die Karte nicht mehr zum Graph, sagt die Antwort den Satz — nichts liegt, nichts ist geändert', () => {
+    ki().rufe({ kennung: 'K-7', werkzeug: 'vis_nodeParametrieren', argumente: { graphId, nodeId: modellId, params: { stimmung: 'abend' } } }, 'karte');
+    const roh = karteAusEreignis('K-7');
+    neuLaden();
+    useProject.getState().runCommand('vis.nodeLoeschen', { graphId, nodeId: modellId });
+    const [w] = ki().stelleWieder([roh]);
+    expect(w).toMatchObject({ kennung: 'K-7', liegt: false });
+    expect(w!.text).toMatch(/^FEHLER: /);
+    expect(ki().offene()).toEqual([]);
+  });
+
+  it('ein Paket kommt als Paket zurück (ein Rückgängig)', () => {
+    ki().rufe(
+      {
+        kennung: 'K-8',
+        werkzeug: 'vis_paket',
+        argumente: { schritte: [{ befehl: 'vis_nodeSetzen', argumente: { graphId, typ: 'stimmung', x: 10, y: 10 } }, { befehl: 'vis_nodeSchieben', argumente: { graphId, nodeId: '$neu:0', x: 20, y: 20 } }] },
+      },
+      'karte',
+    );
+    const roh = karteAusEreignis('K-8');
+    neuLaden();
+    const [w] = ki().stelleWieder([roh]);
+    expect(w!.liegt).toBe(true);
+    expect(ki().offene()[0]!.werkzeug).toBe('vis_paket');
+    expect(ki().offene()[0]!.schritte).toHaveLength(2);
+  });
+
+  it('Unlesbares gibt die Seite nicht als Karte aus', () => {
+    expect(ki().stelleWieder(null)).toEqual([]);
+    expect(ki().stelleWieder([{ nix: 1 }])).toEqual([]);
   });
 });
