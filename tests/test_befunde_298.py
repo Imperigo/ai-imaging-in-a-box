@@ -34,15 +34,17 @@ FREI_LEER = 32607 - 1241
 
 def test_die_messung_steht_am_vorgabemodell():
     eintrag = backbone.hole("z-image-turbo")
-    assert eintrag.vram_bildeingang_spitze_mib == 31316
+    # Seit auf-20261021-309 (E2n, no_grad): 27116 gemessen + 1000 Rand fuer mehrere Kameras.
+    assert eintrag.vram_bildeingang_spitze_mib == 28116
     assert eintrag.vram_bildeingang_grundlast_mib == 1241
-    assert "auf-20261021-298" in eintrag.vram_bildeingang_beleg
+    assert "auf-20261021-309" in eintrag.vram_bildeingang_beleg
     bedarf = render.bildeingang_bedarf("z-image-turbo")
-    assert bedarf["lauf_mib"] == 30075
-    assert bedarf["verlangt_frei_mib"] == 30075 + render.BILDEINGANG_RESERVE_MIB
-    # Die alte Rechnung (vram_gb x Zuschlag) lag 1,8 GB darunter — das war der Befund.
+    assert bedarf["lauf_mib"] == 26875
+    assert bedarf["verlangt_frei_mib"] == 26875 + render.BILDEINGANG_RESERVE_MIB == 27387
+    # Bis 309 lag die alte Rechnung (vram_gb x Zuschlag) 1,8 GB darunter — das war der Befund
+    # von 298. Seit no_grad liegt der gemessene Bedarf mit Rand unter ihr.
     alt = int(eintrag.vram_gb * 1024 * render.MESSUNG_ZUSCHLAG)
-    assert alt == 28272 and bedarf["verlangt_frei_mib"] - alt > 1800
+    assert alt == 28272 and bedarf["verlangt_frei_mib"] < alt
 
 
 def test_ohne_messung_kein_bedarf_und_kein_riegel():
@@ -86,10 +88,9 @@ def test_ein_fremdes_modell_wird_abgewiesen_und_genannt():
 
 
 def test_zu_wenig_platz_wird_abgewiesen_auch_wo_die_alte_rechnung_lud():
-    lage = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=29000, fremde_modelle=[])
-    assert 29000 >= 28273, "die alte Ladeentscheidung haette hier voll geladen"
+    lage = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=26000, fremde_modelle=[])
     assert lage["reicht"] is False
-    assert "Auslagerung" in lage["satz"] and "30587" in lage["satz"]
+    assert "Auslagerung" in lage["satz"] and "27387" in lage["satz"]
 
 
 def test_eigener_speicher_zaehlt_mit():
@@ -133,7 +134,7 @@ def test_lade_modell_weist_mit_bildeingang_vor_den_gewichten_ab(tmp_path, monkey
 
     modul.DiffusionPipeline = _Pipeline
     monkeypatch.setitem(sys.modules, "diffusers", modul)
-    monkeypatch.setitem(sys.modules, "torch", _ersatz_torch(29000))
+    monkeypatch.setitem(sys.modules, "torch", _ersatz_torch(26000))
     monkeypatch.setattr(render, "_lade_mit_controlnet",
                         lambda *a, **k: gerufen.append("controlnet") or (_ for _ in ()).throw(
                             AssertionError("darf nicht laden")))

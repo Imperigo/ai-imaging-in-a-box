@@ -235,11 +235,13 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
     return zettel
 
 
-#: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt.
+#: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt. Seit
+#: auf-20261020-289 (B2) mit dem vereinbarten Wortlaut «nicht bekannt» — wie der Satz des
+#: Abholers, wenn ein Modell mitkam (bis dahin hiess es an der Tür «nicht zu finden»).
 SATZ_GRUNDLAGE_FEHLT = (
-    "Die Variante kam ohne Modell, und die Grundlage {kennung} ist auf diesem Heim-PC nicht "
-    "zu finden (kein Auftrag hier hat sie gerechnet, oder sein Modell ist weg). Bitte "
-    "«Grundlage rendern» neu ausführen — oder die Variante mit Modell schicken.")
+    "Die Variante kam ohne Modell, und die Grundlage {kennung} ist hier nicht bekannt (kein "
+    "Auftrag auf diesem Heim-PC hat sie gerechnet, oder sein Modell ist weg). Bitte zuerst "
+    "«Grundlage rendern» — oder die Variante mit Modell schicken.")
 
 
 def _modell_fuer_variante(ablage, szene: dict) -> Path:

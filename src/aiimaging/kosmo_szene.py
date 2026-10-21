@@ -676,7 +676,7 @@ BEKANNTE_FELDER = {
             "farbabgleich", "bildeingang",
             # Seit 21.10.2026 (Strang Treue, Planblatt Material und Umriss): zwei weitere
             # Messschalter, NICHT im Vertrag — `lies_umriss_halten`, `lies_material_vorne`.
-            "umriss_halten", "material_vorne"),
+            "umriss_halten", "material_vorne", "himmel_sichtbar"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2053,6 +2053,26 @@ def kameras_auto_unvertraeglich(*, kameras, skizze, interior) -> list[str]:
     return saetze
 
 
+#: Das Gebäudewort, das vor den Prompt kommt, wenn sein **Bauteil leer** ist
+#: (auf-20261021-309, B3). Nimmt :func:`stimmung.ohne_stimmungssaetze` den Satz des
+#: Stimmungs-Knotens heraus und schrieb der Besteller sonst nichts, bestand der Prompt nur noch
+#: aus dem Stimmungssatz: S1 «abend» zeigte eine Höhle mit einem Gefäss, S2 «nebel» ein
+#: verschmiertes Gestell — nichts im Prompt sagte, dass ein Gebäude gemeint ist. Englisch, wie
+#: alles, was das Bildmodell liest; der Stimmungssatz bleibt einmal dahinter.
+GEBAEUDEWORT = "architectural building"
+
+
+def zusatz_gebaeudewort(prompt_en: str) -> str | None:
+    """:data:`GEBAEUDEWORT`, wenn der Bauteil des Prompts **leer** ist — sonst ``None``.
+
+    Leer heisst: nach dem Herausnehmen der Stimmungssätze bleibt nichts als Leerzeichen und
+    Kommas. Was der Besteller selbst schreibt, bleibt Wort für Wort und bekommt nichts dazu.
+    """
+    if (prompt_en or "").strip(" ,\t\n"):
+        return None
+    return GEBAEUDEWORT
+
+
 #: Der Zusatz für den KI-Schritt, den ``vis.leerer_hintergrund: true`` an den Prompt hängt
 #: (auf-20261021-296, N3). **Vorbereitet, nicht eingebaut — Vorgabe aus.** In 296 blieb nur
 #: das Gipsmodell mit diesem Satz im Prompt im Umriss (``ausserhalb_umriss_anteil`` 0,0);
@@ -2171,6 +2191,36 @@ def lies_umriss_halten(vis: dict, *, skip, guete, maengel: list,
                       "vollen Guete.")
     maengel.extend(saetze)
     endgueltig.extend(saetze)
+    return wert
+
+
+def lies_himmel_sichtbar(vis: dict, *, umgebung_bestellt: bool, maengel: list,
+                         endgueltig: list) -> bool | None:
+    """``vis.himmel_sichtbar`` (auf-20261021-309, Option Himmel): true/false/null, **Vorgabe aus**.
+
+    Mit ``true`` sieht die Kamera in Cycles das **Himmelsbild der Stimmung** statt des ruhigen
+    Verlaufs (seit auf-20261020-292 die Vorgabe, weil manche Himmelsbilder ein Bodenfoto hinter
+    das Haus stellten). In 309 waren die Himmel von morgen, abend und bedeckt reine Himmel; mit
+    ``umriss_halten: im_lauf`` bleibt ausserhalb des Hauses genau dieses Cycles-Bild — der
+    Schalter prüft, ob der flache «Modellfoto»-Hintergrund damit verschwindet. Die Vorprobe
+    stellt den Himmel wie den Verlauf eine Blendenstufe vom Haus weg. Ein Messschalter von uns,
+    kein Feld des Vertrags; er geht über die Lichtdaten der Stimmung an Blender und steht damit
+    im Schlüssel der Grundlage (mit und ohne Schalter sind es zwei Grundlagen).
+
+    Endgültiger Mangel: ``true`` ohne bestellte Stimmung — dann gibt es kein Himmelsbild.
+    ``None`` heisst: nicht gelesen (Mangel).
+    """
+    wert = wert_oder(vis, "himmel_sichtbar", False)
+    if not isinstance(wert, bool):
+        maengel.append(
+            f"'vis.himmel_sichtbar' ist {wert!r}, erwartet war true, false oder null. Ein "
+            f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+        return None
+    if wert and not umgebung_bestellt:
+        satz = ("'vis.himmel_sichtbar' ohne 'render.environment': Ohne Stimmung gibt es kein "
+                "Himmelsbild, das die Kamera sehen koennte.")
+        maengel.append(satz)
+        endgueltig.append(satz)
     return wert
 
 
@@ -2609,6 +2659,16 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
                                     "satz": _stimmung.STIMMUNGEN[preset]["prompt_en"],
                                     "schon_im_prompt": False,
                                     "herausgenommen": list(herausgenommen)})
+    # DAS GEBAEUDEWORT (auf-20261021-309, B3): Ist der Bauteil des Prompts leer (nur der
+    # Stimmungssatz war da), kommt «architectural building» VOR alle Saetze der Knoten — sonst
+    # malte das Bildmodell eine Hoehle. Ein Eintrag in `prompt_zusaetze`, damit es im Ergebnis
+    # steht; der Stimmungssatz bleibt einmal.
+    gebaeude = zusatz_gebaeudewort(prompt_basis)
+    if gebaeude:
+        prompt_basis = ""
+        prompt_zusaetze.insert(0, {"art": "gebaeudewort", "satz": gebaeude,
+                                   "schon_im_prompt": False,
+                                   "grund": "Bauteil des Prompts leer (auf-20261021-309, B3)"})
     # DIE MATERIALIEN (Entscheide 107/111/113) — siehe `materialien_aus_szene`. «weiss»
     # macht alle Oberflaechen zum Gipsmodell; Materialien daneben widersprechen sich.
     material_block = materialien_aus_szene(render.get("materialien"), guete=guete,
@@ -2656,6 +2716,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # mit `vorne`); ohne Schalter ist der Prompt Wort fuer Wort derselbe.
     umriss_halten = lies_umriss_halten(vis, skip=schalter.get("skip"), guete=guete,
                                        maengel=maengel, endgueltig=endgueltig)
+    # DER HIMMEL HINTER DEM HAUS (auf-20261021-309, Option Himmel) — Messschalter, Vorgabe aus.
+    himmel_sichtbar = lies_himmel_sichtbar(
+        vis, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
+        maengel=maengel, endgueltig=endgueltig)
     vorne_wert = wert_oder(vis, "material_vorne", False)
     if not isinstance(vorne_wert, bool):
         maengel.append(
@@ -2758,6 +2822,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "bildeingang": bildeingang,
         # Der Messschalter «Umriss halten» (Strang Treue): None heisst aus.
         "umriss_halten": umriss_halten,
+        # Der Messschalter «Himmel sichtbar» (309): False/None heisst aus.
+        "himmel_sichtbar": himmel_sichtbar,
         # Die Stimmung, wie gerechnet (ohne Pfad) — `None`: keine bestellt. Die Datei daneben
         # traegt den Pfad am Heim-PC und geht nur an den Runner, nie ins Ergebnis.
         "umgebung": (umgebung_block or {}).get("umgebung"),
@@ -2863,6 +2929,9 @@ DURCHGEREICHT = {
                     "'qa.verdict.hinweise' und 'angewandt.bildeingang' (auf-20261021-298 B1)"),
     # Seit 21.10.2026 (Strang Treue): Messschalter, nicht im Vertrag. `material_vorne` reist
     # als Satz in `prompt_zusaetze` (mit `vorne`) und damit im Prompt.
+    "himmel_sichtbar": ("abholer.umgebung_einstellungen → umgebung_licht {himmel_sichtbar} → "
+                        "blender_depth_stage._welt_setzen (Kamerastrahl sieht das Himmelsbild); "
+                        "Bericht 'umgebung.hintergrund.art' himmelsbild"),
     "umriss_halten": ("abholer.umriss_halten_der_kamera (nachher) bzw. render.RenderAuftrag("
                       "umriss_halten_png=…) (im_lauf); Vermerk am Kameraurteil und Satz in "
                       "'qa.verdict.hinweise' (dazu der Satz des Bildmodells) und "
@@ -3270,9 +3339,33 @@ def urteil_fuer_umrisssaetze(urteil):
     return urteil
 
 
+#: Welche Zählung von ``baumasse.ausserhalb_umriss`` bei «Umriss halten im Lauf» gilt
+#: (auf-20261021-309, B1): ``anteil_haus_nah`` — was so nah wie das Haus ist.
+FELD_AUSSERHALB_IM_LAUF = "anteil_haus_nah"
+
+
+def haelt_im_lauf(urteil) -> bool:
+    """Ob am Kameraurteil «Umriss halten» mit Art ``im_lauf`` gerechnet hat."""
+    uh = urteil.get(URTEIL_UMRISS_HALTEN) if isinstance(urteil, dict) else None
+    return (isinstance(uh, dict) and uh.get("angewandt") is True
+            and uh.get("art") == "im_lauf")
+
+
 def _ausserhalb_von(urteil):
+    """Die Baumasse ausserhalb des Umrisses (Vielfaches der Hausfläche) — ``None``, wo nicht
+    gemessen.
+
+    **BEI «UMRISS HALTEN IM LAUF» DIE ZÄHLUNG «SO NAH WIE DAS HAUS» (auf-20261021-309, B1):**
+    Mit ``im_lauf`` ist ausserhalb des Hauses das festgehaltene Cycles-Bild — dort kann das
+    Bildmodell nichts bauen. Die Zählung «nicht Himmel» las den flachen Verlauf dieses
+    Hintergrunds bei abend und bedeckt aber als Baumasse (bis 4,53 der Hausfläche, M2-bedeckt
+    sSE), und bei 11 von 24 sauberen M2-Bildern stand «KI BAUT UEBER DEN UMRISS HINAUS».
+    ``anteil_haus_nah`` zählt nur, was so nah wie das Haus ist, und trennte in 309 richtig
+    (höchstens 0,002). Ohne Schalter und bei ``nachher`` bleibt ``anteil_haus``.
+    """
     befund = (urteil or {}).get("ausserhalb_umriss") if isinstance(urteil, dict) else None
-    wert = befund.get("anteil_haus") if isinstance(befund, dict) else None
+    feld = FELD_AUSSERHALB_IM_LAUF if haelt_im_lauf(urteil) else "anteil_haus"
+    wert = befund.get(feld) if isinstance(befund, dict) else None
     return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
 
 

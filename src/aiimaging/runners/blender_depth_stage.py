@@ -1186,7 +1186,8 @@ def _himmelsfarben(bild) -> dict:
 RUHIGER_GRUND = "Ruhiger_Grund"
 
 
-def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung) -> None:
+def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung,
+                         himmel_farbe=None) -> None:
     """Kamerastrahlen sehen einen Verlauf, alle anderen Strahlen das Himmelsbild.
 
     **Anlass (auf-20261020-292, B2):** Das Himmelsbild stand als Fotohintergrund da — ein
@@ -1197,6 +1198,12 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     betroffen — der ID-Pass baut seine Welt neu (schwarz), die Tiefe misst Geometrie, nicht
     die Welt. Der Verlauf geht vom Horizont (und darunter) zum Zenit, in den Medianfarben
     dieses Himmels, mit derselben Stärke und Tönung.
+
+    **Messschalter «Himmel sichtbar»** (``himmel_farbe``, auf-20261021-309 Option Himmel; nur
+    mit ``vis.himmel_sichtbar``, Vorgabe aus): Die Kamera sieht dann das Himmelsbild selbst
+    (dieselbe gekappte, getönte Farbe wie das Fülllicht) statt des Verlaufs. Der Knoten trägt
+    denselben Namen (:data:`RUHIGER_GRUND`), damit die Vorprobe ihn wie den Verlauf auf den
+    Abstand zum Haus stellt (309: Faktor morgen 1,0, abend 0,72, bedeckt 3,2).
     """
     baum = welt.node_tree
     tf = list(toenung) if toenung else [1.0, 1.0, 1.0]
@@ -1215,7 +1222,8 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     except Exception:                                      # noqa: BLE001
         pass
     baum.links.new(trenne.outputs["Z"], bereich.inputs["Value"])
-    verlauf = _mix_farbe(baum, bereich.outputs["Result"], horizont, zenit)
+    verlauf = (himmel_farbe if himmel_farbe is not None
+               else _mix_farbe(baum, bereich.outputs["Result"], horizont, zenit))
     grund = baum.nodes.new("ShaderNodeBackground")
     # Mit Namen, damit die Vorprobe (`_hintergrund_abstimmen`, auf-20261020-293) ihn wiederfindet.
     grund.name = RUHIGER_GRUND
@@ -1339,19 +1347,21 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None 
         faerben.operation = "MULTIPLY"
         faerben.inputs[1].default_value = tuple(float(k) for k in toenung)
         baum.links.new(farbausgang, faerben.inputs[0])
-        baum.links.new(faerben.outputs["Vector"], hintergrund.inputs["Color"])
-    else:
-        baum.links.new(farbausgang, hintergrund.inputs["Color"])
+        farbausgang = faerben.outputs["Vector"]
+    baum.links.new(farbausgang, hintergrund.inputs["Color"])
     hintergrund.inputs["Strength"].default_value = staerke * fuell
     # Der ruhige Grund mit derselben Staerke wie das Fuelllicht; die Vorprobe stellt ihn
-    # danach auf den Abstand zum Haus (`_hintergrund_abstimmen`).
+    # danach auf den Abstand zum Haus (`_hintergrund_abstimmen`). Mit dem Messschalter
+    # «Himmel sichtbar» (nur ueber die Lichtdaten, Vorgabe aus) ist es das Himmelsbild selbst.
+    himmel_sichtbar = bool(licht and licht.get("himmel_sichtbar") is True)
     _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke * fuell, farben,
-                         toenung)
+                         toenung, himmel_farbe=farbausgang if himmel_sichtbar else None)
     befund = {"datei": Path(str(hdr)).name, "staerke": float(staerke),
               "drehung_grad": float(drehung_grad),
               "groesse": [int(v) for v in himmel.image.size],
               "toenung": list(toenung) if toenung else None,
-              "hintergrund": {"art": "verlauf", "kamerastrahl": "ruhig",
+              "hintergrund": {"art": "himmelsbild" if himmel_sichtbar else "verlauf",
+                              "kamerastrahl": "himmel" if himmel_sichtbar else "ruhig",
                               "horizont": list(farben["horizont"]),
                               "zenit": list(farben["zenit"]), "weg": farben["weg"],
                               "grund": farben["grund"]}}

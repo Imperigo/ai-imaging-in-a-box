@@ -1,0 +1,65 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-313",
+ "art": "qa",
+ "beschreibung": "Gegenprobe der Fixes aus 309/310 (Gebaeudewort, VRAM-Bedarf des Bildeingangs, Ausserhalb-Messung bei im_lauf, Assistent mit Kartenkennung und Render-Bitte) und die zwei offenen Bedingungen fuer M2 als Vorgabe: Grafikspeicher je Kamerazahl M2 gegen K und der neue Messschalter vis.himmel_sichtbar.",
+ "erstellt": "2026-10-21T16:30:00Z",
+ "rang": 7,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 303/309 (baue_glb), Vorgabe-Platte 40x30 m."
+ },
+ "params": {
+  "befunde": [
+   "309 B1",
+   "309 B2",
+   "309 B3",
+   "309 E2n",
+   "309 Option Himmel",
+   "310 B1",
+   "310 B2",
+   "310 B3",
+   "289 B2"
+  ],
+  "einbau": [
+   "C119"
+  ],
+  "protokoll": "74 §197",
+  "folgt_auf": "auf-20261021-310",
+  "kameras": [
+   "sSE",
+   "nNW",
+   "nNO",
+   "sSW"
+  ],
+  "kamerazahlen": [
+   1,
+   2,
+   4
+  ],
+  "seeds": [
+   482913
+  ],
+  "stimmungen": [
+   "morgen",
+   "abend",
+   "bedeckt"
+  ],
+  "laeufe": 22,
+  "neue_ki_laeufe": 18,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit den Fixes aus 309/310 (Protokoll 74 §197, Einbau C119); die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) PROMPT: Ist nach dem Herausnehmen der Stimmungssaetze vom Prompt nichts uebrig (z. B. bestellt 'Abendstimmung, warmes Licht, leuchtende Fenster' mit Stimmung abend), steht vorne 'architectural building' (prompt_zusaetze art 'gebaeudewort'), dahinter der Stimmungssatz einmal englisch. Nennt der Besteller selbst etwas, bleibt sein Text Wort fuer Wort. (b) VRAM BILDEINGANG: Das Register traegt fuer z-image-turbo jetzt 28116 MiB Spitze (gemessen 27116 in 309 E2n mit no_grad, plus 1000 MiB Rand fuer mehrere Kameras), Grundlast 1241; verlangt frei sind 27387 MiB statt 30587. Laeufe mit vis.bildeingang starten darum frueher; die Ablehnung bei fremdem Modell bleibt. (c) AUSSERHALB DES UMRISSES: Mit vis.umriss_halten 'im_lauf' gilt fuer qa.ausserhalb_umriss_anteil, die Saetze 'KI BAUT UEBER DEN UMRISS HINAUS' und 'HAUS IM KI-BILD NICHT WIEDERZUERKENNEN' und die Seedwahl (umriss_gilt) die Zaehlung anteil_haus_nah (so nah wie das Haus), nicht mehr 'nicht Himmel' — der festgehaltene Hintergrund zaehlt nicht als Baumasse. Ohne Schalter und bei 'nachher' unveraendert. (d) NEUER MESSSCHALTER vis.himmel_sichtbar (true/false/null, Vorgabe aus, kein Vertragsfeld): Mit einer Stimmung sieht die Kamera in Cycles das Himmelsbild statt des ruhigen Verlaufs; die Vorprobe stellt es wie den Verlauf eine Blendenstufe vom Haus weg (Bericht umgebung.hintergrund.art 'himmelsbild', kamerastrahl 'himmel'). Er reist in den Lichtdaten (--umgebung-licht) und steht damit im Schluessel der Grundlage: mit und ohne Schalter sind es zwei Grundlagen. Ohne render.environment endgueltiger Mangel. (e) ASSISTENT: Eine Kartenkennung ('A-1' aus 'VORSCHLAG A-1 liegt als Karte') wird als from/to/nodeId abgewiesen ('... ist die Kennung einer KARTE ...', mit Hinweis auf vis_paket und '$neu:0'); bei einer Bitte um ein Bild (rechne/render/Bild) ohne Werkzeug bekommt das Modell einmal den Anstoss zu vis_render; der kurze Satz 'Freigeben kann nur der Architekt.' weicht bei einer Frage nach Freigabe/Grafikkarte dem vollen Satz des Kerns. (f) WORTLAUT 289: Ohne Modell und unbekannte Grundlage sagt die Tuer jetzt 'ist hier nicht bekannt' (409) wie der Abholer. VORBEREITUNG wie 309 (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER; Werte NIE ins Repo oder in die Rueckgabe). Geometrie synthetisch aus tools/make_test_glb.py (baue_glb) wie 303/309. Bruecke als Client wie 309: samples 64, vis.backbone z-image-turbo, vis.guete 'voll', vis.seed 482913, render.resolution [960,600], Standardprompt, faithful weggelassen. K = ohne Messschalter; M2 = wie in 309 (vis.umriss_halten 'im_lauf', vis.material_vorne true mit Material-Knoten Sichtbeton). WAS ZU TUN IST, in dieser Reihenfolge: (1) SPEICHER JE KAMERAZAHL (B2 aus 309): Stimmung mittag, je eine Grundlage fuer 1, 2 und 4 Kameras (cameras 'auto', richtungen ['sSE'] / ['sSE','nNW'] / ['sSE','nNW','nNO','sSW']), darauf je K und M2 (6 KI-Laeufe); nvidia-smi im Takt 0,25 s, Karte vor jedem Lauf leer. Dazu E2n wie 309 (vis.bildeingang 0.55 mit Material Sichtbeton) mit 2 und 4 Kameras (2 KI-Laeufe): Spitze gegen die eingetragenen 28116 MiB, und die Journalzeile 'Vorpruefung Bildeingang: ... verlangt 27387 MiB' woertlich. Zurueck: Tabelle Kamerazahl x Variante (K, M2, E2n) mit Spitze MiB, Grundlast vorher, Zeit s; ob M2 bei 1/2/4 Kameras unter, gleich oder ueber K liegt, und um wie viel. (2) HIMMEL-SCHALTER (309 Option Himmel): fuer morgen, abend und bedeckt je zwei Kameras ['sSE','nNW'], M2 einmal ohne und einmal mit vis.himmel_sichtbar true (6 KI-Laeufe, 6 Grundlagen; die ohne Schalter duerfen die von (1) nicht wiederverwenden, weil die Stimmung anders ist). Zurueck je Stimmung: aus dem Blender-Bericht umgebung.hintergrund.art und kamerastrahl, umgebung.hintergrund_abstand (weg, faktor, abstand_ev) woertlich — erwartet ohne Schalter etwa die Faktoren aus 309 (morgen 1,0, abend 0,72, bedeckt 3,2); ob der Faktor mit Himmelsbild aehnlich bleibt; qa.kontrast_haus_hintergrund mit und ohne; im Augenurteil 'Hintergrund?' (reiner Himmel / ruhiger Verlauf / Bodenfoto, Wald, Felsen) und ob der flache Modellfoto-Eindruck weg ist; dazu qa.ausserhalb_umriss_anteil und ob 'KI BAUT UEBER DEN UMRISS HINAUS' noch steht (soll bei sauberen Bildern fehlen). (3) GEGENPROBE AUSSERHALB (309 B1): die Bilder aus (2) ohne Schalter je Kamera: qa.ausserhalb_umriss_anteil gegen ausserhalb_umriss.anteil_haus und anteil_haus_nah im befund.json — der gemeldete Wert muss anteil_haus_nah sein; Zahl der Saetze 'UEBER DEN UMRISS' und 'NICHT WIEDERZUERKENNEN' gegen 309 (dort 11 von 24 bzw. 1). (4) GEGENPROBE PROMPT (309 B3): S1 und S2 wie 309 (Prompt 'Abendstimmung, warmes Licht, leuchtende Fenster' mit Stimmung abend; 'Nebel, gedaempftes Licht, Tiefe im Dunst' mit nebel; vis.guete 'vorschau', ohne Messschalter, Grundlagen von 309 wiederverwenden falls vorhanden, sonst neu; 2 KI-Laeufe): prompt woertlich (erwartet 'architectural building, evening mood, ...'), prompt_zusaetze, und Augenurteil: Haus ja/nein, Hoehle/Innenraum ja/nein. (5) GEGENPROBE ASSISTENT (310 B1-B3): wie 310 Teil 1 (aiimaging.assistent.frage(F, werkzeuge=W, schritte=S) im Repo-venv, W aus ki-werkzeugliste.json, qwen3:14b, Wache auf /api/ps) dieselben vier Fragen F1-F4 woertlich, die Schritte einzeln weitergegeben wie in 310. Zurueck je Frage: Schritte, Zwischensaetze und Schlussantwort woertlich, Abweisungen des Kerns woertlich. Erwartet: F1 nimmt 'A-1' nicht als from (Abweisung 'Kennung einer KARTE' oder ein vis_paket mit '$neu:0' oder die Antwort, dass erst nach dem Anwenden verbunden wird); F2 'Rechne jetzt das Bild.' endet mit einer vis_render-Karte OHNE erfundene Angabe (keine stimmungPreset/backbone/guete/aufloesung/kameraWahl/seed); F3 beginnt mit 'Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht.'; F4 meldet nichts als geloescht. Danach qwen3:14b selbst entladen (keep_alive 0). (6) WORTLAUT 289: dieselbe Variante ohne Modell mit vis.grundlage 'gl-0000000000000000' an die Tuer: HTTP-Code und Satz woertlich (erwartet 409 '... ist hier nicht bekannt ...'). EINBAU — was in die Software kommt und hier bestaetigt werden soll: Die Fixes (a)-(c), (e), (f) sind im Kern gebaut (C119, gebaut, am Geraet unbestaetigt); diese Messung bestaetigt sie am Heim-PC. (d) vis.himmel_sichtbar bleibt Messschalter (Vorgabe aus) — ob er Vorgabe von M2 wird, entscheidet der Owner nach dieser Messung. Der Wert 28116 MiB bleibt im Register, wenn die Spitzen mit Bildeingang bei 2 und 4 Kameras darunter liegen; liegt eine darueber, die Zahl melden (der Kern hebt ihn an). Die Ergebnisse (1) und (2) sind die Bedingungen (2) und (3) aus der Empfehlung von 309 fuer 'M2 als Vorgabe' — diese Messung macht M2 NICHT zur Vorgabe. WAS ZURUECKKOMMT: ein Ergebnis auftraege/ergebnisse/auf-20261021-313.json mit je Teil (1)-(6) den Zahlen und Saetzen woertlich, eine Tafel T1 (960 px, PNG): je Stimmung eine Zeile M2 ohne | M2 mit Himmel fuer sSE und nNW; Befunde B1 ... und ein einbau_urteil je Fix (bestaetigt ja/nein). NICHT: M2 nicht zur Vorgabe machen, keine Vorgabe, keinen Registerwert, keine dauerhafte Umgebungsvariable aendern; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein qwen-image-2.1, keine anderen Gewichte, kein Download; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle (kosmo-*, gpt-oss) nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; den echten Textur- oder Himmelsordner und die Mappe des Dienstes nicht veraendern; ins Repo nur das Ergebnis und T1 (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo Apache-2.0 (Modellkarte), Depth Anything V2 Small Apache-2.0, qwen3:14b Apache-2.0; Blender nur als Prozess (GPL, Regel 2)."
+}
