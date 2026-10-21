@@ -5228,6 +5228,13 @@ Standpunkte des Kamera-Knotens rechnet der Heim-PC an ihr.
 *Im Projekt:* Feld `heimMappe` in `mappe.json`; ein Auftrag nennt sie im Kopf `X-Mappe-Heim`,
 seine Mappe am Mac in `X-Mappe-Am-Mac`.
 
+**Zuletzt geöffnete Mappe** — Die Mappe, die der Heim-PC zeigt, wenn ein Gerät nicht sagt, welche es will: die
+Visbox-Seite ohne Angabe, die Knotenansicht ohne Mappe am Mac, das iPad im Übergang. Sie wechselt, wenn jemand am
+Heim-PC eine Mappe öffnet oder eine Datei lädt — **nicht** aber, wenn die Datei aus einer Mappe am Mac kommt: Dann legt
+der Heim-PC nur einen Zwilling an (Befund vom 21.10.2026: vorher stellte ein Laden vom Mac die Mappe für alle Geräte um).
+*Im Projekt:* `zuletzt_geoeffnet` in `oberflaeche/server.py`; der Stand von `GET /knoten/modell-laden` sagt mit
+`zuletzt_geoeffnet`, ob ein Laden sie umgestellt hat.
+
 **Zertifikat des Mac (für das iPad)** — Ein digitaler Ausweis, den sich der Mac selbst ausstellt, damit die Leitung zum
 iPad verschlüsselt ist. Der geheime Schlüssel dazu entsteht im Schlüsselbund des Mac und verlässt ihn nie. Das iPad merkt
 sich beim Koppeln den Fingerabdruck dieses Ausweises und spricht danach mit keinem Gerät, das einen anderen zeigt.
@@ -8482,6 +8489,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |

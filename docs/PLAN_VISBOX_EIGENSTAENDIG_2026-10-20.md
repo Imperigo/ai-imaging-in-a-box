@@ -148,6 +148,9 @@ Vorlage: Blatt 28 Feld 3 und das neue Blatt 36 «Mappen am Mac» (`MappenAmMac.d
   «Ohne Mappe am Mac (wie bisher)». Die Beispielmappe ist eine gewöhnliche Mappe (Bilder ohne Modell).
 * **«Datei laden …»** wandelt weiter am Heim-PC (IfcOpenShell bleibt dort, Regel 1); danach holt die App das Modell
   der neuen Mappe am Heim-PC in die **offene** Mappe am Mac (`POST ./mappe-holen`, nur die App kennt den Weg).
+  **Nachtrag (Befund 304 B1, §179):** Das Laden geht dabei mit `X-Mappe-Am-Mac` (und `X-Mappe-Heim`) hinüber; der
+  Heim-PC legt nur einen Zwilling an und macht ihn **nicht** zur zuletzt geöffneten Mappe — Visbox-Seite und iPad
+  sehen weiter ihre Mappe. Eine neue Fassung bekommt nur der genannte Zwilling, nie die offene Mappe am Heim-PC.
 
 **Was nicht gebaut ist:** Das Modell bleibt je Auftrag ganz im Hochladen (keine Wiederverwendung über Aufträge
 hinweg ausser der Grundlage, Nr. 85). Die Bilder der Beispielmappe zeigt die Knotenansicht nicht (sie liest nur
