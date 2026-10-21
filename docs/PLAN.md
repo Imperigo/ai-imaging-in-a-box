@@ -8282,3 +8282,78 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Bau am Mac bestätigen, mit Abgleich-Vermerk im Stempel (owner)
 - [ ] Einspielen der eigenen Zweige bei Int 1 (kopf, modell-knoten, ki, fehler); der Abgleich zählt sie dann als «gleich»
   (integrator)
+
+## Einbau-Stand gegen die Antworten nachgeführt (Strang Buch, 21.10.2026 — Protokoll 74 §188)
+
+> **Entschieden:** Neun überholte local-Aufträge zurückgezogen (keine nötige Messung gestrichen), 204 zugestellt, Ränge lückenlos.
+> **Gemessen:** `tools/einbau.py` vorher/nachher — Rückstand 14 → 6 (local 13 → 5 mit dem neuen 310, Deckel 8), «Antwort da» 43 → 32, ohne Spur 54 → 0.
+> **Offen:** Posten am Gerät (owner, Liste unten), Nachfrage an ui, Owner-Frage C43, Vertragsvorschlag C17 (wir).
+
+- [x] 43 Posten «Antwort da» gelesen: 10 abgehakt mit Gerätebeleg (C8, C10, C32, C38, C40, C41, C44, C47, C58, C98),
+  C9 verworfen, 12 auf «halb» (Heim-PC belegt, Rest drüben), die übrigen mit Grund stehen gelassen
+- [x] 55 Antworten ohne Spur je mit einer Zeile in §186 aufgeschrieben
+- [x] Neun überholte Aufträge an `local` zurückgezogen (177, 197, 198, 203, 212, 234, 244, 247, 281; Nachfolger je in
+  §186) — local von 13 auf 5 (mit 310), unter dem Deckel 8
+- [x] `auf-20260930-204` (ui) als zugestellt vermerkt — der Block lag seit dem 30.09. unter `auftraege/bloecke/`
+- [x] C16 und C55 sagen, worauf ihr Beleg ruht
+- [ ] Offene Aufträge, die gelten: `auf-20261007-258` Teil B (local; wartet auf den Schalter «Bedienen», owner),
+  `auf-20261020-289` (local; «deckungsgleich A gegen B» hat niemand gefahren), `auf-20261021-308` (local),
+  `auf-20261021-309` (local), `auf-20261021-310` (local), `auf-20260930-204` (ui)
+- [ ] Nachfrage an `ui`, ob unser Repo noch gelesen wird — letzte Antwort 30.09.2026 (Hauptstrang, Zentrale)
+- [ ] Owner-Frage zu C43: welcher Weg für die Formprüfung (Hauptstrang, Zentrale)
+- [ ] Gebündelter Vertragsvorschlag zu C17 an den Integrator — seit 29.09.2026 nicht geschrieben (wir)
+- [x] C103: Leiste, Figur und Sperrzonen ohne Stil (Befund 305) — Ursache eine offene CSS-Klammer, behoben in §187 (C112)
+- [ ] C97: Auslöser für die Bilder 3c/3d nach dem Augenurteil aus 299 (wir)
+- [ ] C79: Zeile «Himmelsbilder n/8» im Einrichten der Mac-App (wir)
+- [ ] Nachweise ohne offenen Auftrag bei der nächsten Sammel-Nachprobe: C33 Glas auf dem glb-Weg, C46 Ergebnis mit
+  lieferstatus null, C53 Verortung mit Massstab, C82 Lauf bei belegter Karte (local)
+- [ ] Regel 3: `auftraege/ergebnisse/auf-20260930-200.json` nennt in einem Stapeltitel einen Vornamen (Hauptstrang)
+
+**Am Gerät zu bestätigen (owner) — ein Satz je Posten:**
+
+- [ ] C20 iPad: zeichnen, über den Mac koppeln, Skizze senden, das Bild mit Urteil kommt zurück.
+- [ ] C23 iPad: Überschriften in Instrument Serif, Text in IBM Plex — nicht in der Systemschrift.
+- [ ] C45 Mac: App starten, mit Kennwort einrichten, die Fläche des Heim-PC erscheint.
+- [ ] C50 Knotenansicht: viermal rechnen — vier Daumenbilder unter dem Hauptbild, neuestes links, Klick zeigt gross.
+- [ ] C51 Heim-PC mit RealityScan: Splat-Auftrag aus Fotos rechnen — im Ergebnis steht der Weg «realityscan».
+- [ ] C52 Mac: nach «Schon anfangen» kommen zuerst die Knoten, oben der Schalter «Knoten / Visbox-Seite».
+- [ ] C54 Mac: «● verfügbar» klicken — lädt, ersetzt und startet neu.
+- [ ] C56 Mac: die Knotenansicht sieht aus wie in KosmoOrbit, das Mausrad zoomt schneller.
+- [ ] C57 Mac: aus «Downloads» gestartet, «In Programme verschieben» klicken — startet danach aus «Programme».
+- [ ] C59 Mac: im Modell-Knoten «Datei laden …» eine IFC wählen; dieselbe Datei nochmals heisst «Fassung 2».
+- [ ] C60 Mac und iPad: nach dem Aktualisieren steht die neue Nummer neben dem Namen, das iPad verbindet von selbst.
+- [ ] C61 Mac: neue leere Mappe zeigt sieben verbundene Knoten, die Auto-Kamera drei Blicke.
+- [ ] C62 KosmoOrbit: Knoten «Kamera aus 3D-Ansicht» übernimmt den Blick der 3D-Ansicht.
+- [ ] C63 iPad und Mac: eine gesendete Skizze erscheint von selbst im Knoten «Skizze vom iPad».
+- [ ] C64 iPad und Mac: Skizze an den Render-Knoten, ausführen, freigeben — das Bild folgt der Skizze.
+- [ ] C66 Mac: «Grundlage rendern», dann zweimal «Variante erzeugen» — das Haus steht in beiden gleich.
+- [ ] C67 Mac: nach dem Herunterladen «Neu starten» statt Neustart von selbst, nie zwei Fenster.
+- [ ] C68 iPad neben dem Mac: koppeln ohne Abtippen, auf beiden bestätigen (oder QR-Code).
+- [ ] C69 Mac: während eines Laufs zeigt der Render-Knoten Phase, Fortschritt und ein Teilbild.
+- [ ] C70 Mac: die Zeile «iPad» zeigt den echten Stand; ein kurzer Aussetzer wechselt nicht in den Vorführmodus.
+- [ ] C71 Mac: die Knotenansicht öffnet auch, wenn der Heim-PC nicht erreichbar ist.
+- [ ] C72 Mac: Heim-PC aus — die App bleibt bedienbar, Rechnen gesperrt mit Satz.
+- [ ] C73 Mac: Einrichten › «Wer rechnet?» nennt je Arbeit den Heim-PC.
+- [ ] C75 Mac: am Render-Knoten «Güte: Vorschau · Voll» umschalten — Vorschau kommt schneller und trägt den Vermerk.
+- [ ] C76 Mac: eine Variante mit Modell bestellen — keine Zeitüberschreitung.
+- [ ] C77 Mac: Claude über MCP verbinden — die Werkzeugliste von Visbox erscheint.
+- [ ] C78 Mac: Fokus im Feld ohne abgeschnittenen Ring, Hauptbild springt beim Zoomen nicht, «Variante erzeugen» ohne Modell geht.
+- [ ] C84 Mac: das kleine 3D-Fenster im Modell-Knoten dreht mit der Maus.
+- [ ] C85 Mac: Claude bedient die Knotenansicht, die Leiste zeigt, was es tut.
+- [ ] C86 Mac: zwei Fassungen im Rückstand — «● verfügbar» lädt direkt die neueste.
+- [ ] C88 Mac: dunkles Thema vor dem ersten Bild, Kopfteile und Stationen-Palette wie in KosmoOrbit.
+- [ ] C89 Mac: 3D-Fenster drehen und heranzoomen — nicht schwarz, nichts abgeschnitten.
+- [ ] C91 Mac: Kugel öffnet das Gesprächsfeld, der Kreis die Einstellungs-Insel.
+- [ ] C92 Mac: der Bau-Stempel trägt den Abgleich-Vermerk.
+- [ ] C94 Mac: ein Vorschaubild trägt den Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich und Inspektor.
+- [ ] C102 Mac: Mappe holen, öffnen, Bild rechnen, dann ohne Heim-PC öffnen.
+- [ ] C103 Mac: Claude-Blick und -Maus sichtbar, klickt nie in Sperrzonen (Stil behoben in C112).
+- [ ] C104 Mac: Knoten Stimmung, Kamera und Material anlegen und rechnen — das Bild folgt der Wahl.
+- [ ] C105 Mac: Klick auf das Bild zeigt KI-Bild und Grundbild gross nebeneinander.
+- [ ] C106 iPad über den Mac: Schloss und «Zeichen des Mac» an beiden Bildschirmen.
+- [ ] C108 iPad: ohne Heim-PC vermittelt der Mac; direkt zum Heim-PC kommt der Satz, was zu tun ist.
+- [ ] C110 Mac: offene Karte, zur Visbox-Seite und zurück — die Karte ist noch da.
+- [ ] C111 Mac: am Render-Knoten stehen Grundbild und KI-Bild nebeneinander.
+
+*Am Heim-PC statt beim Owner:* C33, C46, C53, C82 (oben), C101 und C109 (`auf-20261021-309`, local). *Erst nach dem
+Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
