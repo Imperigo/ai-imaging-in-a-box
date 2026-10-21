@@ -1,0 +1,276 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-306",
+ "art": "qa",
+ "beschreibung": "Die neuen Knoten am Heim-PC pruefen: je Stimmung, Kamera-Art und Materialwahl eine Bestellung genau so, wie die Knotenansicht sie baut (Grundlage, bei abend und nebel auch Variante), Grundlage je Stand, Live-Vorschau gleich Auftrag, und die Vorschaubilder der Himmel und Texturen (Schritt W).",
+ "erstellt": "2026-10-21T09:30:00Z",
+ "rang": 93,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "entscheide": [
+   "107",
+   "109",
+   "110",
+   "111",
+   "113"
+  ],
+  "einbau": [
+   "C104"
+  ],
+  "protokoll": "74 §176",
+  "vertrag": "Vorschlag V (claude/kosmovis-vertrag-werkzeuge), Fixtures claude/kosmovis-knoten-fixtures",
+  "laeufe": [
+   {
+    "name": "1-morgen",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "morgen"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-mittag",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "mittag"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-abend",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "abend"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-blaue-stunde",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "blaue-stunde"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-bedeckt",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "bedeckt"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-nebel",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "nebel"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-winter",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "winter"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-weiss",
+    "vis.skip": true,
+    "passes": "alle",
+    "environment": {
+     "preset": "weiss"
+    },
+    "cameras_auto": {
+     "richtungen": [
+      "sSE"
+     ]
+    }
+   },
+   {
+    "name": "1-abend-variante",
+    "vis.grundlage": "aus 1-abend",
+    "vis.seed": 1,
+    "vis.guete": "vorschau"
+   },
+   {
+    "name": "1-nebel-variante",
+    "vis.grundlage": "aus 1-nebel",
+    "vis.seed": 1,
+    "vis.guete": "vorschau"
+   },
+   {
+    "name": "1-abend-nochmals",
+    "vis.skip": true,
+    "erwartet": "grundlage.wiederverwendet true"
+   },
+   {
+    "name": "2-abend-90",
+    "vis.skip": true,
+    "environment": {
+     "preset": "abend",
+     "rotationGrad": 90
+    }
+   },
+   {
+    "name": "3a",
+    "vis.skip": true,
+    "cameras_auto": {
+     "richtungen": [
+      "n",
+      "sSW"
+     ],
+     "brennweite_mm": 24,
+     "abstand": {
+      "art": "auto",
+      "fuellt": 0.5
+     },
+     "perspektive": "senkrecht"
+    }
+   },
+   {
+    "name": "3b",
+    "vis.skip": true,
+    "cameras_auto": {
+     "richtungen": [
+      "e"
+     ],
+     "augenhoehe_m": 1.6,
+     "abstand": {
+      "art": "fest",
+      "meter": 40
+     },
+     "perspektive": "frei"
+    }
+   },
+   {
+    "name": "3c",
+    "vis.skip": true,
+    "cameras": "Liste aus 3a, perspektive senkrecht"
+   },
+   {
+    "name": "4a",
+    "vis.skip": true,
+    "materialien": {
+     "fassade": {
+      "id": "sichtbeton-sandgestrahlt"
+     }
+    }
+   },
+   {
+    "name": "4b",
+    "vis.skip": true,
+    "materialien": {
+     "fassade": {
+      "id": "backstein"
+     },
+     "dach": {
+      "id": "klinker"
+     },
+     "fenster": {
+      "id": "dreischichtplatte"
+     },
+     "boden": {
+      "id": "stampflehm",
+      "massstab_m": 2,
+      "toenung": {
+       "farbe": "#aa8866",
+       "staerke": 0.3
+      }
+     },
+     "uebrige": {
+      "id": "verputz-weiss-rau"
+     }
+    }
+   },
+   {
+    "name": "4c",
+    "vis.skip": true,
+    "materialien": {
+     "fassade": {
+      "id": "gibt-es-nicht"
+     }
+    },
+    "erwartet": "abgewiesen mit Satz"
+   }
+  ],
+  "neue_ki_laeufe": 2,
+  "gewichte": [],
+  "download_gb": 0,
+  "vorschaubilder": {
+   "stimmungen": 8,
+   "materialien": 11,
+   "format": "PNG",
+   "groesse": {
+    "stimmung": [
+     192,
+     96
+    ],
+    "material": [
+     192,
+     192
+    ]
+   }
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit den neuen Knoten der Knotenansicht (Stimmung, Kamera, Oberflaeche/Material/Farbpalette; Protokoll 74 §176, Einbau C104); die Zentrale sagt den Stand an; erst danach git pull, Dienst (Server) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: am Kern nichts — neu ist, was die Knotenansicht bestellt: (a) jeder Graph mit Stimmung-Knoten schickt render.environment {preset[, rotationGrad]} (bisher nie), also Himmelsbild und Licht in Blender und eine eigene Grundlage je Stimmung; (b) ein Kamera-Knoten auf «Auto» schickt cameras \"auto\" mit cameras_auto (Richtungen, Augenhoehe, Brennweite, Abstand, Perspektive), auf «Manuell» eine Kameraliste mit perspektive; (c) der fertige Anfang (neuer Graph) haengt Material «Sichtbeton, sandgestrahlt» an die Fassade, also render.materialien {fassade:{id}}; (d) der Kamera-Knoten fragt GET /knoten/standpunkte mit Parametern bei jeder Aenderung. Ohne diese Knoten ist alles wie bisher. WAS ZU TUN IST, ein Lauf zur Zeit, alles ueber die Bruecke des Servers (POST /bruecke/jobs, Freigabe mit approval_token, Bilder ueber /bruecke/jobs/<id>/artifacts/<name>), Geometrie ein synthetisches glb aus tools/make_test_glb.py (gegliederter Testbau, keine echten Daten, Regel 3), Aufloesung 960x600, samples 32, Guete vorschau. Jede Szene genau so, wie die Knotenansicht sie baut (Form der Fixtures auf claude/kosmovis-knoten-fixtures): schema kosmovis.render-scene/v1, geometry {format glb}, style {mode none, prompt «ein Haus, Abendstimmung» bzw. der Satz der Stimmung}, vis {backbone z-image-turbo, upscale false}. (1) STIMMUNG, je ein Lauf fuer alle acht (morgen, mittag, abend, blaue-stunde, bedeckt, nebel, winter, weiss): «Grundlage rendern» = vis.skip true, render.passes \"alle\", render.environment {preset}, cameras \"auto\", cameras_auto {richtungen [\"sSE\"]}. Danach fuer abend und nebel je «Variante erzeugen» = vis.grundlage = die gemeldete Kennung, vis.seed 1, vis.guete vorschau, ohne skip. Dann noch einmal abend als Grundlage bestellen: result.grundlage.wiederverwendet muss true sein und die Kennung gleich (Grundlage je Stand). (2) STIMMUNG gedreht: abend mit rotationGrad 90 (Grundlage): angewandt.environment.drehung_weg = bestellt. (3) KAMERA Auto: (3a) cameras_auto {richtungen [\"n\",\"sSW\"], brennweite_mm 24, abstand {art auto, fuellt 0.5}, perspektive senkrecht}; (3b) cameras_auto {richtungen [\"e\"], augenhoehe_m 1.6, abstand {art fest, meter 40}, perspektive frei}; beide als Grundlage (vis.skip). Vor jedem Lauf GET /knoten/standpunkte?richtungen=…&brennweite=…&fuellt=…|abstand=…&augenhoehe=…&perspektive=…&aufloesung=960x600 mit denselben Werten: die Posen (auge, blick_auf) muessen den Posen in qa_je_kamera[].pose des Ergebnisses gleichen (Toleranz 1 cm). (3c) KAMERA Manuell: aus der Antwort von 3a die Standpunkte in glTF-Achsen umrechnen (x, z, -y), als cameras-Liste mit fov 2*atan(18/24) in Grad und perspektive senkrecht bestellen (Grundlage) — die Kanten muessen senkrecht stehen. (4) MATERIAL: (4a) wie der fertige Anfang: render.materialien {fassade {id sichtbeton-sandgestrahlt}}; (4b) alle fuenf Arten: fassade backstein, dach klinker, fenster dreischichtplatte, boden stampflehm (massstab_m 2, toenung {farbe #aa8866, staerke 0.3}), uebrige verputz-weiss-rau; (4c) unbekannte Kennung {fassade {id «gibt-es-nicht»}}: Abweisung mit Satz in lieferstatus_grund, kein Bild. Alle als Grundlage. (5) VORSCHAUBILDER (Schritt W, Entscheide 107 und 113 (1)): aus den acht Himmelsbildern je eine verkleinerte Vorschau 192x96 PNG (Ausschnitt um den Horizont, Tonwerte AgX wie im Schoenbild) und aus den elf Texturen je ein Ausschnitt 192x192 PNG der Farbkarte, unveraendert in Farbe; ablegen unter auftraege/ergebnisse/<auftrag>-vorschau/stimmungen/<preset>.png und .../materialien/<id>.png, dazu eine Datei quellen.json je Bild mit Quelle (Poly Haven bzw. ambientCG), Asset-Name, Lizenz CC0-1.0 und SHA-256 der Original-Datei. NICHT: keine echten Projektdaten, keine Pfade des Heim-PC in Rueckgabe oder quellen.json (nur Asset-Namen), keine neuen Downloads ausser wenn ein Himmelsbild oder eine Textur fehlt (dann melden statt holen), nichts am Code aendern — ein Fehler kommt als Befund zurueck; die Vorschaubilder nicht in kosmovis/ legen (das macht der Cloud-Worker mit NOTICE).",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor dem Lauf, Leistungsgrenze gesetzt ja/nein.",
+  "1: je Stimmung job_id, Endstatus, Dauer, grundlage.id, angewandt.environment (preset, hdri, drehung_weg, gipsmodell), ein Schoenbild sSE je Stimmung in auftraege/ergebnisse/<auftrag>-bilder/; abend/nebel Variante: Bild, qa.verdict; abend nochmals: wiederverwendet und Kennung.",
+  "2: angewandt.environment.drehung_weg und rotationGrad.",
+  "3: je Lauf Posen aus /knoten/standpunkte gegen qa_je_kamera[].pose (groesste Abweichung in m), angewandt.cameras_auto mit vorgaben, Bilder; 3c: Kanten senkrecht ja/nein (Augenurteil), Bild.",
+  "4: angewandt.materialien je Art (id, asset, vorgaben, toenung), Bilder 4a/4b; 4c: lieferstatus und Satz wortgleich.",
+  "5: Liste der Vorschaubilder mit quellen.json (Asset, Lizenz, SHA-256), fehlende Himmelsbilder oder Texturen.",
+  "EINBAU: Belegt, dass der Heim-PC rechnet, was die neuen Knoten der Knotenansicht bestellen (Stimmung, Kamera Auto/Manuell, Materialien, Grundlage je Stand, Live-Vorschau = Auftrag) — damit wird C104 am Heim-PC bestaetigt; die Vorschaubilder baut danach der Cloud-Worker in beide Programme ein (Schritt W). Am Mac bleibt die Geraeteprobe beim Owner."
+ ]
+}

@@ -70,6 +70,12 @@ export interface NodeLauf {
    * nicht fertig.
    */
   bilder?: string[];
+  /**
+   * Entscheid 117a (W-4, Blatt 35): das gerenderte Grundbild (`<kamera>__schoenbild.png` aus `result.ebenen`) zur
+   * Kamera von `bild` — der Render-Knoten zeigt es neben dem KI-Bild. Fehlt es (aelterer Lauf, «Grundlage rendern»,
+   * Heim-PC ohne Ebene), steht das KI-Bild allein. Im Poll immer ausdruecklich gesetzt, auch als `undefined`.
+   */
+  grundbild?: string | undefined;
   qa?: JobQa;
   /**
    * N4 — `qa_je_kamera` aus dem Vertrag, additiv NEBEN `qa`. `qa` bleibt die

@@ -105,7 +105,7 @@ export function istVisStimmung(x: unknown): x is VisStimmungId {
   return typeof x === 'string' && (VIS_STIMMUNG_IDS as readonly string[]).includes(x);
 }
 
-/** Katalog der 15 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten. */
+/** Katalog der 17 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten (seit 21.10.2026 mit Material und Farbpalette). */
 export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   modell: {
     typ: 'modell',

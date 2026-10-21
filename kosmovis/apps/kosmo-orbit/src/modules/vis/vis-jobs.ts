@@ -58,6 +58,7 @@ import { kuerzel } from '../../shell/tastennamen';
 import type { LizenzAngabe } from './varianten-diff';
 import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
+import { mitGrundbild } from './nebeneinander';
 import {
   GRUNDLAGE_VERALTET_SATZ,
   KEINE_GRUNDLAGE_SATZ,
@@ -1923,6 +1924,13 @@ export function sendeGraphRenderAuftrag(
     // die gemeldete (`gueteAusErgebnis`, Poll) — fehlt sie dort, gilt voll.
     ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
   });
+  // Entscheid 117a (W-4): das Grundbild nur, wenn ein KI-Bild entsteht — «Grundlage rendern», «nur Cycles» und die
+  // Strichzeichnung liefern selbst das Blender-Bild; der Varianten-Knoten zeigt nur das KI-Bild.
+  const grundbildMit =
+    stufe !== 'grundlage' &&
+    variante === undefined &&
+    mode !== 'lineart' &&
+    !(auftrag.nurCycles === true && kiFest.grundlage === undefined);
   // Entscheid 96: `skizze` ist die Wahl am Skizzen-Knoten (Kernel), keine Job-Angabe — sie geht
   // nicht durch `...auftrag` an `postRenderJob`, sondern aufgeloest als `skizze` (unten).
   // Neue Knoten: `umgebung` und `stimmungen` sind Kernel-Angaben, keine Job-Parameter. Die Stimmung
@@ -1945,6 +1953,10 @@ export function sendeGraphRenderAuftrag(
       ...(variante?.entwurf ? { entwurf: variante.entwurf } : {}),
       // Schritt 1: nur Blender, mit allen Ebenen — das alte Haekchen «nur Cycles» als Knopf.
       ...(stufe === 'grundlage' ? { nurCycles: true, passes: 'alle' as const } : {}),
+      // Entscheid 117a (W-4): mit KI-Schritt bestellt der Render-Knoten das Grundbild von sich aus mit
+      // (`passes` enthaelt `schoenbild`) — es steht nach dem Lauf neben dem KI-Bild. Nicht der Varianten-Knoten
+      // (dort nur das KI-Bild, Blatt 35 C) und nicht die Skizze (sie rechnet ohne Blender-Bild).
+      ...(grundbildMit && !skizze ? { passes: mitGrundbild() } : {}),
       // Schritt 2 (oder Kosmo mit Grundlage): KI-Schritt auf der Grundlage. Ein altes
       // `nurCycles: true` am Knoten darf ihn nicht abbestellen — der Vertrag wiese ab.
       ...(kiFest.grundlage !== undefined ? { nurCycles: false, grundlage: kiFest.grundlage } : {}),
