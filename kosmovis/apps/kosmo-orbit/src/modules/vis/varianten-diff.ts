@@ -265,6 +265,19 @@ export interface KuratierKartenDaten {
   quelle: KuratierQuelle;
   kur: KurationEintrag;
   auftrag?: VisRenderAuftrag;
+  /**
+   * L4-15 (Blatt «Grossansicht und Vergleich» C): die Kennung der Karte, wenn sie NICHT die des Knotens ist — ein
+   * frueherer Lauf eines Render-Knotens (`laufKartenSchluessel`). Fehlt sie, ist die Karte der aktuelle Lauf bzw. die
+   * Aufnahme, und es gilt `node.id` wie bisher.
+   */
+  schluessel?: string;
+  /** Die Laufnummer am Knoten (fuer «Lauf n» an der Karte); nur bei frueheren Laeufen gesetzt. */
+  laufNummer?: number;
+}
+
+/** Die Kennung einer Karte — fuer Auswahl, Vergleich, Stern und Ablage. */
+export function karteSchluessel(k: Pick<KuratierKartenDaten, 'node' | 'schluessel'>): string {
+  return k.schluessel ?? k.node.id;
 }
 
 /**

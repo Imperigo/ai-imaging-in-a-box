@@ -256,7 +256,8 @@ describe('Verlauf am Render-Knoten — die Reihe am Knoten', () => {
     expect(qa('button', reihe).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
     klick(daumen()[2]!);
     expect(qa('button', gross()!).map(knopfText).filter((t) => /lösch|loesch|entfern/i.test(t))).toEqual([]);
-    expect(qa('button', gross()!).map((b) => b.getAttribute('aria-label'))).toEqual(['Vorheriger Lauf', 'Nächster Lauf', 'Schliessen']);
+    // L4-14 A: dazu «Prüfung ▸» (klappt die Werte auf) — auch er loescht nichts.
+    expect(qa('button', gross()!).map((b) => b.getAttribute('aria-label'))).toEqual(['Prüfung aufklappen', 'Vorheriger Lauf', 'Nächster Lauf', 'Schliessen']);
     expect(useVisRuntime.getState().verlauf[nodeId]!.map((l) => l.jobId)).toEqual(['job-2', 'job-1']);
   });
 

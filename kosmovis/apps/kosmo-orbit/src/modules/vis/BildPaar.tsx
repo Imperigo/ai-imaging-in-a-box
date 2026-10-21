@@ -1,6 +1,6 @@
 import type { KeyboardEvent as ReactKeyboardEvent, SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { KDialog, KTabs, KTooltip } from '@kosmo/ui';
+import { KCheckbox, KDialog, KTabs, KTooltip } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, type MitGuete } from './GueteMarke';
 import {
@@ -11,7 +11,10 @@ import {
   KI_BILD_NAME,
   type BildAnsicht,
 } from './nebeneinander';
+import { GROSS_BEI_FERTIG_HILFE, GROSS_BEI_FERTIG_NAME, GROSS_BREITE } from './grossansicht';
+import type { GrossSchalter } from './RenderVerlauf';
 import './vis-visual.css';
+import './vis-grossansicht.css';
 
 /**
  * Entscheid 117a (Blatt 35) — KI-Bild und Grundbild gross. Geoeffnet mit einem Klick auf das Bild am Render-Knoten,
@@ -23,6 +26,9 @@ import './vis-visual.css';
  * den Knoten wachsen (Vorgaben des UI-Workers, Probe kv-b5). Seit Entscheid 119 ist der Koerper des Render-Knotens
  * 196 px breit (vorher 184): «nebeneinander» steht damit schon am Knoten, je Bild 96 px (`wirksameAnsicht`); bei
  * 184 px fiel es auf das KI-Bild zurueck. Gross stehen beide gleich gross nebeneinander, und diese Ansicht bleibt.
+ *
+ * L4-14 (Blatt «Grossansicht und Vergleich» A): so breit, wie das Fenster erlaubt (`GROSS_BREITE`), jedes Bild
+ * hoechstens so hoch wie das Fenster — vorher 960 px fuer beide zusammen.
  *
  * Das Gitter waechst nicht unter 96 px je Bild: in einem sehr schmalen Fenster rueckt das Grundbild unter das KI-Bild,
  * statt beide zu stauchen. Per Portal an `document.body` wie die grosse Ansicht des Verlaufs — ausserhalb der
@@ -41,6 +47,7 @@ export function BildPaarGross({
   ansicht,
   onAnsicht,
   onClose,
+  schalter,
 }: {
   /** Fuer die Vorschau-Marke am KI-Bild (Entscheid 104a). */
   lauf: MitGuete;
@@ -50,6 +57,8 @@ export function BildPaarGross({
   ansicht: BildAnsicht;
   onAnsicht: (a: BildAnsicht) => void;
   onClose: () => void;
+  /** L4-14 B: «bei fertig gross oeffnen» (Knoten-Parameter `grossBeiFertig`). */
+  schalter?: GrossSchalter;
 }) {
   if (typeof document === 'undefined') return null;
   const zeigeKi = ansicht !== 'nur-grundbild';
@@ -68,7 +77,7 @@ export function BildPaarGross({
         }
       }}
     >
-      <KDialog titel="KI-Bild und Grundbild" onClose={onClose} breite={960} data-testid="render-bildpaar-gross">
+      <KDialog titel="KI-Bild und Grundbild" onClose={onClose} breite={GROSS_BREITE} data-testid="render-bildpaar-gross">
         <KTooltip text={ANSICHT_KURZHILFE} lage="unten">
           <span className="vis-bildpaar-umschalter">
             <KTabs
@@ -80,7 +89,20 @@ export function BildPaarGross({
             />
           </span>
         </KTooltip>
-        <div className="vis-bildpaar-gitter" data-testid="render-bildpaar" data-ansicht={ansicht}>
+        {schalter && (
+          <KTooltip text={GROSS_BEI_FERTIG_HILFE} lage="unten">
+            <span className="vis-gross-schalter vis-bildpaar-schalter">
+              <KCheckbox
+                size="sm"
+                label={GROSS_BEI_FERTIG_NAME}
+                checked={schalter.an}
+                onChange={(ev) => schalter.setzen(ev.currentTarget.checked)}
+                data-testid="render-gross-bei-fertig"
+              />
+            </span>
+          </KTooltip>
+        )}
+        <div className="vis-bildpaar-gitter vis-gross-bild-hoch" data-testid="render-bildpaar" data-ansicht={ansicht}>
           {zeigeKi && (
             <figure className="vis-bildpaar-kachel" data-testid="render-bildpaar-ki">
               <span className="vis-bildpaar-bild">

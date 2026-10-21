@@ -8655,10 +8655,25 @@ ordnet wie das Modell (vorne und hinten). Ordnet es sie umgekehrt, wäre die Rec
 **0.0**. Eine 0.0 heisst also «das KI-Bild weicht von der Geometrie ab», nicht «nichts gemessen» und kein Fehler. So steht
 es seit dem 21.10.2026 auch im Satz der Prüfung.
 
+**Grossansicht (eines Bildes)** — Das fertige Bild über der ganzen Arbeitsfläche, so gross, wie das Fenster erlaubt.
+Die Prüfwerte liegen eingeklappt daneben; ein Knopf legt sie über den Bildrand, ohne dem Bild Breite zu nehmen. *Im
+Projekt:* ein Klick auf das Bild am Render-Knoten oder auf ein Daumenbild des Verlaufs; das Bild nimmt mindestens 70 % der
+Ansicht (Video-Befund L4-14).
+
+**Läufe einer Grundlage** — Alle Bilder, die das Bildmodell auf **demselben** Blender-Bild gerechnet hat, nur mit anderem
+Startwert oder Auftrag. Sie sind deckungsgleich und lassen sich darum nebeneinander vergleichen. *Im Projekt:* der Verlauf
+am Render-Knoten ordnet seine Daumen danach, ein Strich trennt zwei Grundlagen; die Grossansicht zeigt sie «nebeneinander».
+
+**Kontextmaske** — Eine Liste mit einem Ja/Nein je Bildpunkt: *hier steht die Umgebung* — Nachbarbauten (Bestand), Bäume
+und Strassenmöbel (Umfeld) oder eine Aufnahme der Umgebung (Splat). Sie entsteht aus demselben Bild wie die
+Bauwerksmaske, ändert diese aber nicht. *Im Projekt:* am Heim-PC je Kamera als Datei neben dem Bild; sie soll später dem
+Bildmodell sagen, wo der Kontext steht (Video-Befund L4-5).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Grossansicht und Vergleich (Protokoll 74 §197): **Grossansicht (eines Bildes)**, **Läufe einer Grundlage**, **Kontextmaske** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-2 (Protokoll 74 §195): **Hausanteil (an Grundlage und KI-Bild)**, **Abgeschnittener Wert (Geometrie 0.0)** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §196): **Gesicherter Blick** |
 | 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |
