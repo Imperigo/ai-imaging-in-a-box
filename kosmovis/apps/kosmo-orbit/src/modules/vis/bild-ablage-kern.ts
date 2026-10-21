@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { getCommand, gesichertesVisBild, type AnyPatch, type ImageAsset } from '@kosmo/kernel';
+import * as kern from '@kosmo/kernel';
+import { abgelegtesBild, bildFeldRechteck, druckaufloesung, druckaufloesungSatz, getCommand, type AnyPatch, type ImageAsset, type SheetImage } from '@kosmo/kernel';
 import { ohneVerlauf, useProject } from '../../state/project-store';
 import type { NodeLauf } from './vis-runtime';
 
@@ -16,7 +17,7 @@ import type { NodeLauf } from './vis-runtime';
  *    Handgriff des Architekten ist;
  *  - «Aufs Blatt» setzt dieses Projektbild per `assetId` (`publish.bildFuellen`), statt es ein
  *    zweites Mal als Text durch den Werkzeugkanal zu schicken;
- *  - beim Platzieren wird die Druckaufloesung am Platz geprueft (`druckPruefung`) und gewarnt;
+ *  - beim Platzieren wird die Druckaufloesung am Platz geprueft (`druckWarnung`, dieselbe Rechnung wie Publish) und gewarnt;
  *  - ein Lauf ohne fertiges Bild ist nicht waehlbar und sagt, warum (`laufNichtWaehlbar`).
  *
  * Die Netzseite (Bild holen, Export) und das Nachholen fuer den Verlauf liegen in
@@ -25,18 +26,18 @@ import type { NodeLauf } from './vis-runtime';
  */
 
 /**
- * Bis zu dieser Groesse (Bytes des Bildes) kommt ein Bild ins Projekt. Die harte Grenze liegt
- * beim Abgleich: der Sync-Server deckelt EINE Nachricht auf 8 MiB (`KOSMO_SYNC_MAX_BYTES`), und
- * Base64 macht aus 5 MiB rund 6,7 MiB — darueber risse die Verbindung, statt zu melden. Ein
- * groesseres Bild bleibt am Heim-PC; «Aufs Blatt» bettet es dann wie bisher direkt ein, und
- * «Exportieren» holt es von dort.
+ * Bis zu dieser Groesse (Bytes des Bildes, 5 MB) kommt ein Bild unveraendert ins Projekt. Die harte Grenze liegt beim
+ * Abgleich: der Sync-Server deckelt EINE Nachricht auf 8 MiB (`KOSMO_SYNC_MAX_BYTES`), darueber bricht die Verbindung
+ * mit 1009 still ab; Base64 macht aus 5 MB rund 6,36 MiB (Prepare gemessen, Integrator entschieden 21.10.2026).
+ * Darueber: `fuerDenAbgleich` (JPEG, dann verkleinern, sonst mit Satz abgelehnt).
  */
-export const ABLAGE_GRENZE_BYTES = 5 * 1024 * 1024;
+export const ABLAGE_GRENZE_BYTES = 5_000_000;
 
-/** Unter dieser Aufloesung am Platz warnt das Platzieren (Druck, gesperrt wird nichts). */
-export const DRUCK_DPI_MIN = 150;
+/** So klein wird hoechstens verkleinert (lange Seite); darunter wird abgelehnt — ein Plakatbild braucht mehr. */
+export const VERKLEINERN_MIN_PX = 1200;
 
-const MM_JE_ZOLL = 25.4;
+/** Unter dieser Aufloesung am Platz warnt das Platzieren — dieselbe Schwelle wie Publish. */
+export const DRUCK_DPI_MIN = kern.DRUCK_DPI_MIN;
 
 export interface BildMasse {
   width: number;
@@ -50,7 +51,7 @@ export function ablageSchluessel(jobId: string, bild: string): string {
 
 /** Bytes → «4,2 MB» (wie die Meldungen sonst: eine Nachkommastelle, Komma). */
 export function mbText(bytes: number): string {
-  return (bytes / 1_048_576).toFixed(1).replace('.', ',');
+  return (bytes / 1_000_000).toFixed(1).replace('.', ',');
 }
 
 /**
@@ -104,50 +105,16 @@ export function bildMasseAusDataUrl(dataUrl: string): BildMasse | null {
 }
 
 /**
- * Die Druckaufloesung am Platz: Pixel gegen die Breite des Felds auf dem Papier. Hat das Feld ein
- * festes Seitenverhaeltnis (`verhaeltnis`, Breite/Hoehe), fuellt das Bild es (`slice`) — dann
- * zaehlt die knappere Richtung. Ohne Verhaeltnis folgt die Hoehe dem Bild, es zaehlt die Breite.
+ * Druckaufloesung am Platz — EINE Rechnung mit Publish (Prepare, `derive/sheet.ts` `druckaufloesung`,
+ * `druckaufloesungSatz`, `bildFeldRechteck`). Gibt den Warnsatz zurueck, wenn es unter 150 dpi liegt, sonst `null`.
  */
-export function druckDpi(px: BildMasse, breiteMm: number, verhaeltnis?: number): number {
-  const jeBreite = (px.width * MM_JE_ZOLL) / breiteMm;
-  if (verhaeltnis === undefined || !(verhaeltnis > 0)) return jeBreite;
-  const hoeheMm = breiteMm / verhaeltnis;
-  return Math.min(jeBreite, (px.height * MM_JE_ZOLL) / hoeheMm);
-}
-
-export interface DruckPruefung {
-  /** Reicht es fuer den Druck (≥ `DRUCK_DPI_MIN`)? `null`: Masse unbekannt, nichts behauptet. */
-  ok: boolean | null;
-  dpi?: number;
-  /** Die groesste Breite in mm, bei der es noch reicht (nur wenn es nicht reicht). */
-  hoechstensMm?: number;
-  satz: string;
-}
-
-/**
- * VORLAEUFIG bis Prepare `derive/bildgroesse.ts` (`druckaufloesung`, `druckaufloesungSatz`, Zweig
- * `claude/kosmo-pubprep-bild-druckaufloesung`) eingespielt ist — dann rufen die zwei Stellen in `vis-jobs.ts` jene
- * Funktion, und diese faellt weg (Naht mit Prepare, 21.10.2026). Rechteck wie `imagePaperBounds`.
- *
- * Der Satz zum Platzieren. Reicht es nicht, sagt er Pixel, Breite, dpi und die groesste Breite,
- * bei der es noch reicht — ein kleines Bild wird nicht hochgerechnet, nur benannt.
- */
-export function druckPruefung(px: BildMasse | null | undefined, breiteMm: number, verhaeltnis?: number): DruckPruefung {
-  if (!px) return { ok: null, satz: 'Grösse des Bildes unbekannt — die Druckauflösung ist nicht geprüft.' };
-  const dpi = druckDpi(px, breiteMm, verhaeltnis);
-  const mm = Math.round(breiteMm);
-  if (dpi >= DRUCK_DPI_MIN) {
-    return { ok: true, dpi, satz: `${Math.round(dpi)} dpi bei ${mm} mm Breite — druckfähig.` };
-  }
-  const hoechstensMm = Math.floor((breiteMm * dpi) / DRUCK_DPI_MIN);
-  return {
-    ok: false,
-    dpi,
-    hoechstensMm,
-    satz:
-      `Zu grob für den Druck: ${px.width} × ${px.height} px auf ${mm} mm sind ${Math.round(dpi)} dpi, ` +
-      `nötig sind ${DRUCK_DPI_MIN}. Höchstens ${hoechstensMm} mm breit setzen oder grösser rendern.`,
-  };
+export function druckWarnung(
+  asset: Pick<ImageAsset, 'width' | 'height' | 'data'> | undefined,
+  feld: Pick<SheetImage, 'x' | 'y' | 'w' | 'verhaeltnis'>,
+): string | null {
+  const d = druckaufloesung(asset, bildFeldRechteck(feld, asset));
+  if (!d || d.dpi >= DRUCK_DPI_MIN) return null;
+  return druckaufloesungSatz(d).replace(/^ · /, '');
 }
 
 /**
@@ -174,8 +141,8 @@ export function laufNichtWaehlbar(lauf: Pick<NodeLauf, 'status' | 'jobId' | 'bil
 
 export type AblageStand =
   | { zustand: 'sichert' }
-  | { zustand: 'gesichert'; assetId: string; masse: BildMasse | null }
-  | { zustand: 'zu-gross'; bytes: number }
+  | { zustand: 'gesichert'; assetId: string; masse: BildMasse | null; satz?: string }
+  | { zustand: 'zu-gross'; bytes: number; satz: string }
   | { zustand: 'fehler'; grund: string; um: number };
 
 interface BildAblageZustand {
@@ -197,40 +164,44 @@ export function ablageSatz(stand: AblageStand | undefined, masse?: BildMasse | n
       return 'Wird in voller Auflösung ins Projekt gesichert …';
     case 'gesichert': {
       const m = stand.masse ?? masse;
-      return m ? `${m.width} × ${m.height} px · im Projekt gesichert` : 'Im Projekt gesichert';
+      const kopf = m ? `${m.width} × ${m.height} px · im Projekt gesichert` : 'Im Projekt gesichert';
+      return stand.satz ? `${kopf} — ${stand.satz}` : kopf;
     }
     case 'zu-gross':
-      return `Nicht im Projekt gesichert: ${mbText(stand.bytes)} MB, Grenze ${mbText(ABLAGE_GRENZE_BYTES)} MB. Es liegt weiter am Heim-PC.`;
+      return stand.satz;
     case 'fehler':
       return `Noch nicht im Projekt: ${stand.grund}`;
   }
 }
 
 /**
- * NAHT MIT PREPARE (21.10.2026): abgelegt wird ueber `publish.bildAblegen({ name, dataUrl }) → Asset-Kennung`
- * (Prepare, Zweig `claude/kosmo-pubprep-bild-ablegen`, Ziel v0.1.10, noch nicht eingespielt). Solange es den Befehl
- * nicht gibt, springt der STELLVERTRETER `vis.bildSichern` ein (Kern-Vorschlag dieses Zweigs) — er faellt weg, sobald
- * `bildAblegen` da ist. Welcher Weg gilt, entscheidet allein `getCommand('publish.bildAblegen')`.
+ * NAHT MIT PREPARE (21.10.2026): abgelegt wird ueber `publish.bildAblegen({ name, dataUrl, herkunft? })` →
+ * «Bild-Id <id>» (Prepare, `claude/kosmo-pubprep-bild-ablegen`); gleiches `jobId + bild + guete` legt nichts neu an.
+ * Wiedergefunden wird mit `abgelegtesBild(doc, { jobId, bild, guete })`; die Zuordnung der Sitzung ist nur Rueckfall.
+ * Ohne `bildAblegen` (Visbox) wird nicht abgelegt. Der Kern lehnt ueber 5 MiB selbst ab (zweite Sicherung); sein Satz
+ * wird durchgereicht.
  */
 export const ABLEGEN_BEFEHL = 'publish.bildAblegen';
-export const ABLEGEN_STELLVERTRETER = 'vis.bildSichern';
 
-/**
- * Welcher Lauf welches Projektbild hat. `bildAblegen` traegt (noch) keine Herkunft am Asset — darum merkt KosmoVis sich
- * die Zuordnung hier (fuer diese Sitzung). Der Stellvertreter schreibt sie zusaetzlich als `visHerkunft` ans Asset.
- * Bitte an Prepare: `bildAblegen` mit optionaler Herkunft, dann haelt sie auch ueber das Neuladen.
- */
 const zuordnung = new Map<string, string>();
 
-export function ablegenWeg(): 'bildAblegen' | 'stellvertreter' {
-  return getCommand(ABLEGEN_BEFEHL) ? 'bildAblegen' : 'stellvertreter';
+export function ablegenDa(): boolean {
+  return !!getCommand(ABLEGEN_BEFEHL);
 }
 
-/** Das Projektbild dieses Laufs, wenn es im Projekt liegt (und noch da ist). */
-export function projektBild(jobId: string, bild: string): ImageAsset | undefined {
+/**
+ * Das Projektbild dieses Laufs, wenn es im Projekt liegt (und noch da ist) — ueber die Herkunft am Asset
+ * (`abgelegtesBild`, Prepare), also auch nach dem Neuladen. Ohne bekannte Guete gilt jedes Bild desselben Laufs und
+ * derselben Datei (ein Aufrufer ohne Lauf soll es nicht ein zweites Mal ablegen).
+ */
+export function projektBild(jobId: string, bild: string, guete?: 'vorschau' | 'voll'): ImageAsset | undefined {
   const doc = useProject.getState().doc;
-  const mitHerkunft = gesichertesVisBild(doc, jobId, bild);
-  if (mitHerkunft) return mitHerkunft;
+  const genau = abgelegtesBild(doc, { jobId, bild, guete });
+  if (genau) return genau;
+  if (guete === undefined) {
+    const irgendeins = doc.byKind<ImageAsset>('imageasset').find((a) => a.herkunft?.jobId === jobId && a.herkunft.bild === bild);
+    if (irgendeins) return irgendeins;
+  }
   const id = zuordnung.get(ablageSchluessel(jobId, bild));
   const a = id ? doc.get<ImageAsset>(id) : undefined;
   return a && a.kind === 'imageasset' ? a : undefined;
@@ -249,10 +220,135 @@ function neuesAsset(patches: readonly AnyPatch[]): string | undefined {
   return undefined;
 }
 
+function bytesVon(dataUrl: string): number {
+  const komma = dataUrl.indexOf(',');
+  const b64 = komma >= 0 ? dataUrl.slice(komma + 1) : dataUrl;
+  const fuellung = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
+  return Math.max(0, Math.floor((b64.length * 3) / 4) - fuellung);
+}
+
 /**
- * Ob gesichert wird (Nahtstelle des Wirts). In KosmoOrbit immer; Visbox hat kein Blatt und kein
- * Projekt, in dem das Bild bliebe (die Mappe sichert nur Graphen) — dort schaltet der Wirt es
- * ab, und «Aufs Blatt» faellt in der Grossansicht weg (UI_AUSNAHMEN, Entscheid 115).
+ * Umkodieren fuer den Abgleich (Nahtstelle, in Proben ersetzbar): das Bild als JPEG mit `qualitaet`, die lange Seite
+ * hoechstens `langeSeite` px. `null`, wenn es hier nicht geht (kein Canvas).
+ */
+export type Umkodierer = (dataUrl: string, o: { qualitaet: number; langeSeite?: number }) => Promise<string | null>;
+
+const canvasUmkodierer: Umkodierer = async (dataUrl, o) => {
+  if (typeof document === 'undefined' || typeof Image === 'undefined') return null;
+  const img = new Image();
+  const geladen = new Promise<boolean>((ok) => {
+    img.onload = () => ok(true);
+    img.onerror = () => ok(false);
+  });
+  img.src = dataUrl;
+  if (!(await geladen) || !img.naturalWidth) return null;
+  const lang = Math.max(img.naturalWidth, img.naturalHeight);
+  const f = o.langeSeite && lang > o.langeSeite ? o.langeSeite / lang : 1;
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.naturalWidth * f));
+  c.height = Math.max(1, Math.round(img.naturalHeight * f));
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.drawImage(img, 0, 0, c.width, c.height);
+  const url = c.toDataURL('image/jpeg', o.qualitaet);
+  return url.startsWith('data:image/jpeg') ? url : null;
+};
+
+let umkodierer: Umkodierer = canvasUmkodierer;
+export function setzeUmkodierer(u: Umkodierer | null): void {
+  umkodierer = u ?? canvasUmkodierer;
+}
+
+/**
+ * Vor dem Ablegen (Integrator/Prepare 21.10.2026): der Abgleich deckelt eine Nachricht auf 8 MiB, Base64 ×1,33 —
+ * ueber 5 MB Rohbild riss die Verbindung still. Darum: unter der Grenze bleibt das Bild, wie es ist; darueber als JPEG
+ * (Qualitaet 0,9); reicht das nicht, verkleinert (lange Seite in Stufen, nie unter 1200 px); geht auch das nicht,
+ * abgelehnt — immer mit Satz, nie still. Das Original bleibt ueber «Exportieren» erhaeltlich.
+ */
+export async function fuerDenAbgleich(
+  dataUrl: string,
+): Promise<{ dataUrl: string; satz?: string } | { abgelehnt: string }> {
+  const roh = bytesVon(dataUrl);
+  if (roh <= ABLAGE_GRENZE_BYTES) return { dataUrl };
+  const grenze = `${mbText(ABLAGE_GRENZE_BYTES)} MB`;
+  const masse = bildMasseAusDataUrl(dataUrl);
+  const jpeg = await umkodierer(dataUrl, { qualitaet: 0.9 });
+  if (jpeg && bytesVon(jpeg) <= ABLAGE_GRENZE_BYTES) {
+    return { dataUrl: jpeg, satz: `${mbText(roh)} MB über der Grenze von ${grenze} — als JPEG (Qualität 90 %) abgelegt, ${mbText(bytesVon(jpeg))} MB, gleiche Auflösung. Das Original gibt «Exportieren».` };
+  }
+  if (jpeg && masse) {
+    let lang = Math.max(masse.width, masse.height);
+    while (lang * 0.75 >= VERKLEINERN_MIN_PX) {
+      lang = Math.round(lang * 0.75);
+      const klein = await umkodierer(dataUrl, { qualitaet: 0.9, langeSeite: lang });
+      if (klein && bytesVon(klein) <= ABLAGE_GRENZE_BYTES) {
+        const m = bildMasseAusDataUrl(klein);
+        return {
+          dataUrl: klein,
+          satz: `${mbText(roh)} MB über der Grenze von ${grenze} — als JPEG verkleinert auf ${m ? `${m.width} × ${m.height}` : `${lang} px`} abgelegt, ${mbText(bytesVon(klein))} MB. Das Original gibt «Exportieren».`,
+        };
+      }
+    }
+  }
+  return {
+    abgelehnt:
+      `Nicht im Projekt abgelegt: ${mbText(roh)} MB, und auch als JPEG${masse ? ' und verkleinert bis 1200 px' : ''} nicht unter ${grenze} — ` +
+      `der Abgleich trüge es nicht. Das Original gibt «Exportieren».`,
+  };
+}
+
+/**
+ * Ein geholtes Bild ins Projekt (je Bild ein eigener `bildAblegen`-Aufruf), ohne Rueckgaengig-Schritt (Prepare: ok,
+ * Ablegen legt nur das Asset an; Setzen ist ein eigener Schritt). Gibt den Stand zurueck.
+ */
+export async function sichereImProjekt(
+  jobId: string,
+  bild: string,
+  name: string,
+  dataUrl: string,
+  zusatz: { guete?: 'vorschau' | 'voll' | undefined; lizenzOffen?: { modell?: string; lizenz?: string } | undefined } = {},
+): Promise<AblageStand> {
+  const schluessel = ablageSchluessel(jobId, bild);
+  const setze = (st: AblageStand): AblageStand => {
+    setzeAblageStand(schluessel, st);
+    return st;
+  };
+  const vorhanden = projektBild(jobId, bild, zusatz.guete);
+  if (vorhanden) return setze({ zustand: 'gesichert', assetId: vorhanden.id, masse: masseVon(vorhanden) });
+  if (!ablegenDa()) return setze({ zustand: 'fehler', grund: 'Ablegen ins Projekt gibt es hier nicht.', um: Date.now() });
+  const vorbereitet = await fuerDenAbgleich(dataUrl);
+  if ('abgelehnt' in vorbereitet) return setze({ zustand: 'zu-gross', bytes: bytesVon(dataUrl), satz: vorbereitet.abgelehnt });
+  const herkunft = {
+    jobId,
+    bild,
+    ...(zusatz.guete ? { guete: zusatz.guete } : {}),
+    ...(zusatz.lizenzOffen ? { lizenzOffen: zusatz.lizenzOffen } : {}),
+  };
+  try {
+    const r = ohneVerlauf(() => useProject.getState().runCommand(ABLEGEN_BEFEHL, { name, dataUrl: vorbereitet.dataUrl, herkunft }));
+    const id = neuesAsset(r.patches) ?? projektBild(jobId, bild, zusatz.guete)?.id;
+    if (!id) return setze({ zustand: 'fehler', grund: 'Das Projekt hat das Bild nicht angenommen.', um: Date.now() });
+    zuordnung.set(schluessel, id);
+    const a = useProject.getState().doc.get<ImageAsset>(id);
+    return setze({
+      zustand: 'gesichert',
+      assetId: id,
+      masse: a ? masseVon(a) : bildMasseAusDataUrl(vorbereitet.dataUrl),
+      ...(vorbereitet.satz ? { satz: vorbereitet.satz } : {}),
+    });
+  } catch (err) {
+    return setze({ zustand: 'fehler', grund: err instanceof Error ? err.message : String(err), um: Date.now() });
+  }
+}
+
+export function masseVon(a: Pick<ImageAsset, 'width' | 'height'>): BildMasse | null {
+  return a.width && a.height ? { width: a.width, height: a.height } : null;
+}
+
+/**
+ * Ob es ein Blatt gibt (Nahtstelle des Wirts). In KosmoOrbit immer; Visbox hat kein Blatt und kein Projekt, in dem das
+ * Bild bliebe (die Mappe sichert nur Graphen) — dort schaltet der Wirt es ab: kein Ablegen, und «Aufs Blatt» faellt in
+ * der Grossansicht weg (UI_AUSNAHMEN, Entscheid 115).
  */
 let blattDa = true;
 export function setzeBlattDa(da: boolean): void {
@@ -260,65 +356,4 @@ export function setzeBlattDa(da: boolean): void {
 }
 export function istBlattDa(): boolean {
   return blattDa;
-}
-
-/**
- * Ein geholtes Bild ins Projekt: liegt es schon dort, bleibt es; ist es zu gross, bleibt es am
- * Heim-PC (Stand `zu-gross`). Ohne Rueckgaengig-Schritt. Gibt den Stand zurueck.
- */
-export function sichereImProjekt(
-  jobId: string,
-  bild: string,
-  name: string,
-  dataUrl: string,
-  zusatz: { guete?: 'vorschau' | 'voll' | undefined; lizenzOffen?: { modell?: string; lizenz?: string } | undefined } = {},
-): AblageStand {
-  const schluessel = ablageSchluessel(jobId, bild);
-  const vorhanden = projektBild(jobId, bild);
-  if (vorhanden) {
-    const stand: AblageStand = { zustand: 'gesichert', assetId: vorhanden.id, masse: masseVon(vorhanden) };
-    setzeAblageStand(schluessel, stand);
-    return stand;
-  }
-  const komma = dataUrl.indexOf(',');
-  const b64 = komma >= 0 ? dataUrl.slice(komma + 1) : dataUrl;
-  const fuellung = b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0;
-  const bytes = Math.max(0, Math.floor((b64.length * 3) / 4) - fuellung);
-  if (bytes > ABLAGE_GRENZE_BYTES) {
-    const stand: AblageStand = { zustand: 'zu-gross', bytes };
-    setzeAblageStand(schluessel, stand);
-    return stand;
-  }
-  const masse = bildMasseAusDataUrl(dataUrl);
-  try {
-    const r = ohneVerlauf(() =>
-      ablegenWeg() === 'bildAblegen'
-        ? useProject.getState().runCommand(ABLEGEN_BEFEHL, { name, dataUrl })
-        : useProject.getState().runCommand(ABLEGEN_STELLVERTRETER, {
-            jobId,
-            bild,
-            name,
-            dataUrl,
-            ...(masse ? { width: masse.width, height: masse.height } : {}),
-            ...(zusatz.guete ? { guete: zusatz.guete } : {}),
-            ...(zusatz.lizenzOffen ? { lizenzOffen: zusatz.lizenzOffen } : {}),
-          }),
-    );
-    const id = neuesAsset(r.patches);
-    if (id) zuordnung.set(schluessel, id);
-  } catch (err) {
-    const stand: AblageStand = { zustand: 'fehler', grund: err instanceof Error ? err.message : String(err), um: Date.now() };
-    setzeAblageStand(schluessel, stand);
-    return stand;
-  }
-  const neu = projektBild(jobId, bild);
-  const stand: AblageStand = neu
-    ? { zustand: 'gesichert', assetId: neu.id, masse }
-    : { zustand: 'fehler', grund: 'Das Projekt hat das Bild nicht angenommen.', um: Date.now() };
-  setzeAblageStand(schluessel, stand);
-  return stand;
-}
-
-export function masseVon(a: Pick<ImageAsset, 'width' | 'height'>): BildMasse | null {
-  return a.width && a.height ? { width: a.width, height: a.height } : null;
 }

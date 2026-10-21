@@ -11,6 +11,7 @@ import {
   fovImVertrag,
   kamerasFuerBestellformat,
   KAMERA_AUS_3D_NAME,
+  getCommand,
   sheetPaperSize,
   visPresetById,
   docFuerEbenen,
@@ -18,6 +19,7 @@ import {
   type AutoKameraStandpunkt,
   type EbenenKombination,
   type HimmelArt,
+  type ImageAsset,
   type KosmoDoc,
   type Sheet,
   type SheetImage,
@@ -59,7 +61,7 @@ import type { LizenzAngabe } from './varianten-diff';
 import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
 import { mitGrundbild } from './nebeneinander';
-import { bildMasseAusDataUrl, druckPruefung, istBlattDa, masseVon, projektBild, sichereImProjekt, type BildMasse, type DruckPruefung } from './bild-ablage-kern';
+import { ABLAGE_GRENZE_BYTES, ablegenDa, druckWarnung, istBlattDa, mbText, projektBild, sichereImProjekt } from './bild-ablage-kern';
 import { KAMERA_BLICK_FEHLT_HINWEIS } from './blick-quelle';
 import {
   GRUNDLAGE_VERALTET_SATZ,
@@ -2627,6 +2629,13 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
   // Nachricht, s. `messeBildGroesse` oben).
   const bildGroesse = messeBildGroesse(dataUrl);
   console.info(`[Blattbild] ${bildGroesse.mbText} MB (${bildGroesse.base64Zeichen} Base64-Zeichen)`);
+  // Abgleich-Grenze (Integrator/Prepare 21.10.2026): ueber 5 MB Rohbild brach die Verbindung still (1009). Dieser Weg
+  // (Aufnahme, Skizze, ohne Ablegen) setzt die dataURL direkt — darum hier mit Satz abgelehnt statt still verloren.
+  if (bildGroesse.bytes > ABLAGE_GRENZE_BYTES) {
+    throw new Error(
+      `Nicht aufs Blatt gelegt: ${mbText(bildGroesse.bytes)} MB — über der Grenze von ${mbText(ABLAGE_GRENZE_BYTES)} MB, die der Abgleich trägt.`,
+    );
+  }
   const slotLabel = label ?? bildLabel({});
   // P-LIZENZMARKE Schritt 2, Publish-Teil 2 (E154 (4), ROADMAP 1691): die
   // Marke geht mit dem Bild auf das Blatt. Ohne Marke bleibt das Feld weg —
@@ -2643,8 +2652,7 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
       sheet = doc.get<Sheet>((res.patches[0] as { id: string }).id)!;
     }
     const leer = (sheet.bilder ?? []).find((b) => !b.assetId);
-    // L3-A5 (Demolauf 16.10.): die Druckaufloesung am Platz — gewarnt, nicht gesperrt.
-    meldeDruck(druckPruefung(bildMasseAusDataUrl(dataUrl), leer?.w ?? BLATTBILD_BREITE, leer?.verhaeltnis));
+    const vorher = new Set((sheet.bilder ?? []).filter((b) => b.assetId).map((b) => b.id));
     if (leer) {
       runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: leer.id, dataUrl, ...lizenzFeld });
       // `bildFuellen` kennt kein `title`-Param (Kernel-Vertrag bleibt
@@ -2663,6 +2671,8 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
         ...lizenzFeld,
       });
     }
+    // L3-A5 (Demolauf 16.10.): die Druckaufloesung am Platz — gewarnt, nicht gesperrt (Rechnung von Publish).
+    meldeDruckAmFeld(sheet.id, leer?.id, vorher);
     return sheet.name;
   } finally {
     history.endGroup();
@@ -2672,24 +2682,33 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
 /**
  * L3-A5 (Demolauf 16.10.2026): der Bildschirmausschnitt 369 × 228 px ging ohne ein Wort aufs A0.
  * Reicht die Aufloesung am Platz nicht, sagt es eine eigene Meldung NACH der Ablage-Meldung des
- * Aufrufers (darum im naechsten Takt) — gesperrt wird nichts. Reicht sie oder sind die Masse
- * unbekannt, bleibt es still.
+ * Aufrufers (darum im naechsten Takt) — gesperrt wird nichts. Gerechnet wie Publish
+ * (`druckaufloesung`, `bildFeldRechteck`) am gefuellten Feld.
  */
 export const DRUCK_MELDUNG_MS = 10_000;
-function meldeDruck(p: DruckPruefung): void {
-  if (p.ok !== false) return;
-  setTimeout(() => melde(p.satz, { ton: 'info', dauerMs: DRUCK_MELDUNG_MS }), 0);
+function meldeDruckAmFeld(sheetId: string, feldId: string | undefined, vorher: ReadonlySet<string>): void {
+  const doc = useProject.getState().doc;
+  const sheet = doc.get<Sheet>(sheetId);
+  const feld = (sheet?.bilder ?? []).find((b) => (feldId ? b.id === feldId : !vorher.has(b.id) && b.assetId));
+  if (!feld?.assetId) return;
+  const satz = druckWarnung(doc.get<ImageAsset>(feld.assetId), feld);
+  if (satz) setTimeout(() => melde(satz, { ton: 'info', dauerMs: DRUCK_MELDUNG_MS }), 0);
+}
+
+/** Kennt `publish.bildPlatzieren` schon `assetId` (Prepare, bild-ablegen)? Dann setzt EIN Befehl das neue Feld. */
+function platzierenMitAsset(): boolean {
+  const params = getCommand('publish.bildPlatzieren')?.params as { shape?: Record<string, unknown> } | undefined;
+  return !!params?.shape && 'assetId' in params.shape;
 }
 
 /**
- * Video-Befunde L4-16/L3-A4 — ein Bild, das schon im Projekt liegt (`vis.bildSichern`), aufs
- * Blatt: per `assetId` (`publish.bildFuellen`, seit R34), nicht ein zweites Mal als Text.
- * Dieselbe Platzwahl wie `platziereBildAufsBlatt` — erst ein leeres Feld, sonst ein neues am
- * ersten freien Platz; ohne Blatt entsteht eines. `publish.bildPlatzieren` kennt noch keine
- * `assetId` (Bitte an Publish im Meldeblatt): das neue Feld entsteht darum leer und wird im
- * selben Rueckgaengig-Schritt gefuellt. Gibt den Blattnamen zurueck.
+ * Video-Befunde L4-16/L3-A4 — ein Bild, das schon im Projekt liegt (`publish.bildAblegen`), aufs
+ * Blatt: per `assetId`, nicht ein zweites Mal als Text. Erst ein leeres Feld
+ * (`publish.bildFuellen({ sheetId, bildId, assetId })`), sonst ein neues am ersten freien Platz —
+ * mit `publish.bildPlatzieren({ …, assetId })` in EINEM Befehl, wo Publish das kann, sonst leer
+ * platziert und gefuellt. Ohne Blatt entsteht eines. Alles ein Rueckgaengig-Schritt.
  */
-export function platziereProjektBildAufsBlatt(assetId: string, label?: string, lizenz?: LizenzAngabe, masse?: BildMasse | null): string {
+export function platziereProjektBildAufsBlatt(assetId: string, label?: string, lizenz?: LizenzAngabe): string {
   const slotLabel = label ?? bildLabel({});
   const marke = lizenzFuersBlatt(lizenz);
   const lizenzFeld = marke ? { lizenzOffen: marke } : {};
@@ -2702,17 +2721,23 @@ export function platziereProjektBildAufsBlatt(assetId: string, label?: string, l
       const res = runCommand('publish.blattErstellen', { name: 'Renderblatt', format: 'A1', orientation: 'quer' });
       sheet = doc.get<Sheet>((res.patches[0] as { id: string }).id)!;
     }
-    let feld = (sheet.bilder ?? []).find((b) => !b.assetId);
-    meldeDruck(druckPruefung(masse, feld?.w ?? BLATTBILD_BREITE, feld?.verhaeltnis));
-    if (!feld) {
+    const leer = (sheet.bilder ?? []).find((b) => !b.assetId);
+    const vorher = new Set((sheet.bilder ?? []).map((b) => b.id));
+    if (leer) {
+      runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: leer.id, assetId, ...lizenzFeld });
+      runCommand('publish.bildAnpassen', { sheetId: sheet.id, bildId: leer.id, title: slotLabel });
+    } else {
       const platz = freierBildPlatz(sheet.bilder ?? [], sheetPaperSize(sheet));
-      const vorher = new Set((sheet.bilder ?? []).map((b) => b.id));
-      runCommand('publish.bildPlatzieren', { sheetId: sheet.id, x: platz.x, y: platz.y, w: BLATTBILD_BREITE, title: slotLabel, ...lizenzFeld });
-      feld = (doc.get<Sheet>(sheet.id)?.bilder ?? []).find((b) => !vorher.has(b.id));
-      if (!feld) throw new Error('Das neue Bildfeld fehlt auf dem Blatt.');
+      if (platzierenMitAsset()) {
+        runCommand('publish.bildPlatzieren', { sheetId: sheet.id, x: platz.x, y: platz.y, w: BLATTBILD_BREITE, title: slotLabel, assetId, ...lizenzFeld });
+      } else {
+        runCommand('publish.bildPlatzieren', { sheetId: sheet.id, x: platz.x, y: platz.y, w: BLATTBILD_BREITE, title: slotLabel, ...lizenzFeld });
+        const feld = (doc.get<Sheet>(sheet.id)?.bilder ?? []).find((b) => !vorher.has(b.id));
+        if (!feld) throw new Error('Das neue Bildfeld fehlt auf dem Blatt.');
+        runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: feld.id, assetId, ...lizenzFeld });
+      }
     }
-    runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: feld.id, assetId, ...lizenzFeld });
-    runCommand('publish.bildAnpassen', { sheetId: sheet.id, bildId: feld.id, title: slotLabel });
+    meldeDruckAmFeld(sheet.id, leer?.id, new Set(vorher));
     return sheet.name;
   } finally {
     history.endGroup();
@@ -2744,19 +2769,19 @@ export async function bildAufsBlatt(
   // ist der Heim-PC weg, gilt der Name des Projektbilds und die Angabe des Aufrufers.
   const imProjekt = istBlattDa() ? projektBild(jobId, imageName) : undefined;
   if (imProjekt) {
+    // Die Lizenzmarke: genannt gewinnt, sonst nimmt Publish sie aus der Herkunft des Bildes (Prepare).
     const h = await holeHerkunft(jobId, lizenz);
-    // Ohne Angabe (Heim-PC weg, Aufrufer ohne Lauf) gilt der Vermerk, mit dem das Bild gesichert wurde.
-    const vermerk = imProjekt.visHerkunft?.lizenzOffen;
-    const angabe: LizenzAngabe | undefined =
-      h.angabe ?? (vermerk ? { lizenzOffen: true, engineUsed: vermerk.modell, engineLicense: vermerk.lizenz } : undefined);
-    return platziereProjektBildAufsBlatt(imProjekt.id, h.label ?? imProjekt.name, angabe, masseVon(imProjekt));
+    // Ohne Angabe (Heim-PC weg) nimmt Publish die Marke aus der Herkunft des Bildes; genannt gewinnt.
+    return platziereProjektBildAufsBlatt(imProjekt.id, h.label ?? imProjekt.name, h.angabe);
   }
   const { dataUrl, label, angabe } = await holeBildMitHerkunft(jobId, imageName, lizenz);
-  if (istBlattDa()) {
-    const stand = sichereImProjekt(jobId, imageName, label, dataUrl, { lizenzOffen: lizenzFuersBlatt(angabe) });
-    if (stand.zustand === 'gesichert') return platziereProjektBildAufsBlatt(stand.assetId, label, angabe, stand.masse);
+  if (istBlattDa() && ablegenDa()) {
+    const stand = await sichereImProjekt(jobId, imageName, label, dataUrl, { lizenzOffen: lizenzFuersBlatt(angabe) });
+    if (stand.zustand === 'gesichert') return platziereProjektBildAufsBlatt(stand.assetId, label, angabe);
+    // Nie still verlieren: zu gross auch nach JPEG und Verkleinern, oder abgewiesen — mit Satz.
+    throw new Error(stand.zustand === 'zu-gross' ? stand.satz : stand.zustand === 'fehler' ? stand.grund : 'Nicht abgelegt.');
   }
-  // Zu gross fuers Projekt (oder nicht angenommen): wie bisher direkt eingebettet.
+  // Ohne Ablegen (aeltere Gegenseite): wie bisher direkt eingebettet, mit der Abgleich-Grenze.
   return platziereBildAufsBlatt(dataUrl, titel, label, angabe);
 }
 

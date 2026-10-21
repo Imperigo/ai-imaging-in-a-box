@@ -8075,7 +8075,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme) — KosmoOrbit `claude/kosmovis-grundlage`, Visbox-Kopie nachgezogen, Verlauf einklappbar (101a); am Gerät unbestätigt (§145)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
   - [x] Bild aufs Blatt im Original, «Aufs Blatt»/«Exportieren» je Lauf in der grossen Ansicht, Druckprüfung, leere Läufe nicht wählbar (L4-16, L3-A4, L3-A5) — Blatt «Bild aufs Blatt», KO-Zweig `claude/kosmovis-bild-aufs-blatt`, Kopie nachgezogen, Mac Sichern-Dialog; am Gerät unbestätigt (§201, C121)
-    - [ ] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare)
+    - [x] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare) *(21.10.2026: Prepare `2bd8a07d0`, KosmoVis legt über bildAblegen ab, §207)*
+    - [x] Grenze des Abgleichs vor dem Ablegen: JPEG, verkleinern, sonst mit Satz abgelehnt (§207)
     - [x] Hauptbild ohne Grundbild gross öffnen — auch das allererste Bild, mit «Exportieren»/«Aufs Blatt» (Entscheid heute, erstes Bild gross; §206, C124); am Gerät unbestätigt
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)

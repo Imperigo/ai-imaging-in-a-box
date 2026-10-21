@@ -2244,3 +2244,11 @@ nachgestellten Gegenseite geprüft, am Mac noch nicht gesehen.
 **Viele gleiche Teile in einer Modelldatei (21.10.2026).** Ein Haus aus einzelnen Steinen hat rund zwanzigtausend davon; eine Modelldatei kann einen Stein einmal beschreiben und dazu eine Liste, wo er überall liegt. Blender und die 3D-Vorschau von Visbox lesen das schon. Nur die schnelle Rechnung, die vor dem Rendern die Grösse des Bauwerks aus der Datei liest, sah bis heute nur den einen Stein — die Kamera hätte das Haus zu nah gerahmt. Jetzt zählt sie alle Lagen mit. Ehrlich gesagt: an Testdateien geprüft; wie lange Blender für zwanzigtausend Steine braucht, ist nicht gemessen.
 
 **Die Statusantwort an Claude nennt die Fassung (21.10.2026).** Fragt Claude den Stand von Visbox ab, steht jetzt in einer eigenen Zeile, welche Fassung der Mac-App antwortet.
+
+**Grosse Bilder reissen den Abgleich nicht mehr (21.10.2026).** Die Projektdatei wird mit anderen Geräten in Stücken
+abgeglichen, und ein Stück darf höchstens 8 MiB gross sein; ein grösseres Bild brach die Verbindung ohne Meldung ab. Jetzt
+wird ein fertiges Bild über 5 MB vor dem Ablegen als JPEG gespeichert und, wenn das nicht reicht, verkleinert — für ein
+A0-Plakat bleibt das weit genug. Geht auch das nicht, wird es abgelehnt, und ein Satz sagt warum. Das Original in voller
+Grösse gibt weiterhin «Exportieren». Ehrlich gesagt: geprüft an Proben mit nachgestelltem Umkodieren; am Gerät mit einem
+echten grossen Bild noch nicht gesehen.
+
