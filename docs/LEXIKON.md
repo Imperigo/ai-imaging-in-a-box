@@ -8125,7 +8125,10 @@ erzeugten Bild kaum decken (Überdeckung unter 0,1, also weniger als ein Zehntel
 anderes als das Haus, etwa den Blick unter ein Vordach. Masse, die nur Farbe und Kanten am Umriss lesen, können dann
 trotzdem gut aussehen — sie sehen, dass sich dort etwas ändert, nicht, dass dort das Haus steht. *Im Projekt:* Satz
 «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» in den Hinweisen des Ergebnisses, Grenze `umriss.WIEDERERKENNUNG_GEOM_IOU`
-(gesetzt, nicht gemessen), seit auf-20261020-295.
+(gesetzt, nicht gemessen), seit auf-20261020-295. Seit auf-20261021-296 steht der Satz auch, wenn das Bild mehr als
+doppelt so viel «Haus» zeigt, wie modelliert ist, oder weit über den Umriss baut und sich zugleich wenig mit dem Modell
+deckt. Anlass war ein Strassenbild: Dort war das ganze Bild voller Häuser. Ein Teil davon deckte sich darum zufällig
+mit dem Modell (0,197), das Haus selbst war aber nicht zu finden (`umriss.wiedererkennung`).
 
 **Umriss-IoU (aus Farbe)** — Ein Mass, das die HomeStation selbst nachrechnet: Es sucht um die Fläche des Modells,
 wo sich im erzeugten Bild die Farbe deutlich ändert, und vergleicht die so gefundene Fläche mit der des Modells.
@@ -8144,12 +8147,43 @@ die Zahl beide richtig einordnet, ist die Grenze geprüft. *Im Projekt:* für di
 mit schwacher Steuerung und einem Strassen-Prompt (bricht aus).
 
 
+**Flächenverhältnis (Haus im Bild gegen Haus im Modell)** — Wie viele Bildpunkte die Prüfung im erzeugten Bild für
+«Haus» hält, geteilt durch die Bildpunkte, die das Modell an dieser Stelle bedeckt. Um 1 heisst: ungefähr so viel Haus,
+wie gebaut ist. Über 2 heisst: Das Bild ist voller Gebäude, und das modellierte geht darin unter. *Im Projekt:*
+`n_ist ÷ n_soll` am Kameraurteil. Über 2 (`umriss.WIEDERERKENNUNG_FLAECHE_VERHAELTNIS`, gesetzt, nicht gemessen) gilt
+das Haus seit auf-20261021-296 als nicht wiederzuerkennen; das Strassenbild dort hatte 2,46.
+
+**Gültigkeitsvermerk der Umrisstreue (`umriss_gilt`)** — Ein Ja/Nein an der Auswahl des Startwerts. Es sagt, ob die
+Masse, die nur Kanten und Farbe am Umriss lesen, für dieses Bild etwas über das Haus aussagen. Ja, wenn das Haus
+wiederzuerkennen ist; Nein mit Grund, wenn nicht. *Im Projekt:* `seedauswahl.umriss_gilt` am Kameraurteil. Seit
+auf-20261021-296 steht es immer, wenn die Überdeckung gemessen ist, auch als «ja»; vorher fehlte das Feld bei «ja», und
+ein fehlendes Feld liess offen, ob geprüft wurde.
+
+**Zusatz «leerer Hintergrund» (Messschalter)** — Ein Satz, den der Heim-PC auf Wunsch an die Bildbeschreibung für die
+KI hängt: «empty background, no other buildings» (leerer Hintergrund, keine anderen Gebäude). Er soll die KI davon
+abhalten, neben das Haus weitere Gebäude zu malen. *Im Projekt:* `vis.leerer_hintergrund: true` in der Bestellung,
+Vorgabe aus, `kosmo_szene.ZUSATZ_LEERER_HINTERGRUND`. Vorbereitet, nicht eingebaut, seit auf-20261021-296. Dort blieb nur
+das Gipsmodell mit genau diesem Satz im Umriss. Ob es am Satz lag, misst auf-20261021-297 mit und ohne.
+
+**Farbabgleich (nach dem KI-Schritt)** — Die Farben eines erzeugten Bilds werden im Mittel und in ihrer Streuung an ein
+zweites Bild angeglichen, getrennt nach Haus, Boden und Himmel. Dabei bewegt sich kein Bildpunkt; nur die Farbe ändert
+sich. *Im Projekt:* Option D1 im Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`. Die Farbstimmung des
+Cycles-Bilds käme damit ins KI-Bild. Noch nicht gebaut.
+
+**Unteres Quantil (25-%-Quantil)** — Der Wert, unter dem das dunkelste Viertel aller Messpunkte liegt. Bei einem Haus
+mit Sonnen- und Schattenseite liegt er auf der Schattenseite, das Mittel dagegen dazwischen. *Im Projekt:* ein
+Vorschlag aus auf-20261021-296. Die Vorprobe der Stimmung könnte den Himmel gegen die Schattenseite stellen statt gegen
+das Mittel, damit sich bei «abend» auch die dunkle Seite abhebt. Nicht gebaut, weil es mittag und winter verschieben
+könnte; erst nachzählen (297).
+
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-296 (Protokoll 74 §167): **Flächenverhältnis (Haus im Bild gegen Haus im Modell)**, **Gültigkeitsvermerk der Umrisstreue (`umriss_gilt`)**, **Zusatz «leerer Hintergrund» (Messschalter)**, **Farbabgleich (nach dem KI-Schritt)**, **Unteres Quantil (25-%-Quantil)**; **Haus im KI-Bild nicht wiederzuerkennen** um die zwei neuen Auslöser nachgeführt |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261020-295 (Protokoll 74 §164): **Mittel in Blendenstufen (geometrisches Mittel)**, **Haus im KI-Bild nicht wiederzuerkennen**, **Umriss-IoU (aus Farbe)**, **Drehung je Kamera (des Himmelsbilds)**, **Prüfbild (für eine Schwelle)** |
 | 2026-10-21 | Ergaenzt aus dem Abgleich im Bau (Plan UI-Gleichheit S5, Protokoll 74 §163): **Abgleich (der Kopie mit dem Original)**, **Veraltete Spur (eines Zweigs)**, **Befehlspalette (⌘K)** |
 | 2026-10-20 | Ergaenzt aus Kugel, Gesprächsfeld und Einstellungs-Insel (Plan UI-Gleichheit S3/S4, Protokoll 74 §162): **Kugel des Assistenten (Orb)**, **Gesprächsfeld (des Assistenten)**, **Antwortblase (an der Kugel)**, **Seitenfenster (des Gesprächsfelds)**, **Einstellungs-Insel**, **Gemerkte Einstellung (der Knotenansicht)**; **Nahtstelle (für einen zweiten Wirt)** um die zwei neuen Nahtstellen nachgeführt |

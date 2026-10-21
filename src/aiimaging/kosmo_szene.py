@@ -667,7 +667,10 @@ BEKANNTE_FELDER = {
                "environment", "himmel", "belichtung", "rauschschwelle", "passes",
                "materialien"),
     "style": ("prompt", "mode", "refs"),
-    "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed", "guete"),
+    "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed", "guete",
+            # Seit 21.10.2026 (auf-20261021-296, N3): unser Messschalter, NICHT im Vertrag
+            # drüben — siehe `ZUSATZ_LEERER_HINTERGRUND`. Vorgabe aus.
+            "leerer_hintergrund"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2044,6 +2047,31 @@ def kameras_auto_unvertraeglich(*, kameras, skizze, interior) -> list[str]:
     return saetze
 
 
+#: Der Zusatz für den KI-Schritt, den ``vis.leerer_hintergrund: true`` an den Prompt hängt
+#: (auf-20261021-296, N3). **Vorbereitet, nicht eingebaut — Vorgabe aus.** In 296 blieb nur
+#: das Gipsmodell mit diesem Satz im Prompt im Umriss (``ausserhalb_umriss_anteil`` 0,0);
+#: mittag mit Standardprompt baute auch bei ``faithful`` 1,0 über fast die ganze Breite
+#: (1,01). Ob es am Satz liegt oder am Gipsmodell, misst auf-20261021-297 mit und ohne.
+#: Ein Schalter von uns, kein Feld des Vertrags drüben: Wird er Vorgabe oder bestellbar über
+#: die Knotenansicht, ist das eine Vertragsänderung (Integrator) und ein Knotenteil (beide
+#: Programme).
+ZUSATZ_LEERER_HINTERGRUND = "empty background, no other buildings"
+#: Woran erkannt wird, dass der Prompt den Zusatz schon trägt (klein geschrieben).
+ZUSATZ_LEERER_HINTERGRUND_MERKMALE = ("empty background", "no other buildings")
+
+
+def zusatz_leerer_hintergrund(prompt_en: str) -> tuple[str | None, bool]:
+    """``(satz, schon_da)`` — :data:`ZUSATZ_LEERER_HINTERGRUND`, wenn der Prompt ihn nicht trägt.
+
+    Dieselbe Form wie ``stimmung.prompt_satz``: Trägt der (übersetzte) Prompt eines der
+    Merkmale schon, wird nichts angefügt — sonst stünde es doppelt da.
+    """
+    text = (prompt_en or "").lower()
+    if all(m in text for m in ZUSATZ_LEERER_HINTERGRUND_MERKMALE):
+        return None, True
+    return ZUSATZ_LEERER_HINTERGRUND, False
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -2412,6 +2440,23 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             satz, schon = _materialwahl.prompt_satz(art, wahl["id"], sprachbefund["uebersetzt"])
             prompt_zusaetze.append({"art": "material", "bauteil_art": art, "id": wahl["id"],
                                     "satz": satz, "schon_im_prompt": schon})
+    # DER ZUSATZ «LEERER HINTERGRUND» (auf-20261021-296, N3) — unser Messschalter, Vorgabe
+    # aus. Gelesen wie `skip`: nur true, false oder null; mit «nur Grundlage» bestellt er
+    # nichts und widerspricht der Bestellung (wie `vis.guete`).
+    leer_wert = wert_oder(vis, "leerer_hintergrund", False)
+    if not isinstance(leer_wert, bool):
+        maengel.append(
+            f"'vis.leerer_hintergrund' ist {leer_wert!r}, erwartet war true, false oder "
+            f"null. Ein anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+    elif leer_wert and schalter.get("skip"):
+        satz = ("'vis.leerer_hintergrund' und 'vis.skip' zugleich: «Nur Grundlage» rechnet "
+                "kein KI-Bild — ein Zusatz fuer den KI-Schritt bestellt nichts.")
+        maengel.append(satz)
+        endgueltig.append(satz)
+    elif leer_wert:
+        satz, schon = zusatz_leerer_hintergrund(sprachbefund["uebersetzt"])
+        prompt_zusaetze.append({"art": "leerer_hintergrund", "satz": satz,
+                                "schon_im_prompt": schon})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
     kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
     if fremd.get("cameras_auto") is not None:
@@ -2999,6 +3044,20 @@ def _wiedererkennung_von(urteil):
     return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
 
 
+def wiedererkennung_des_urteils(urteil) -> dict | None:
+    """:func:`umriss.wiedererkennung` für ein Kameraurteil — ``None``, wo nicht gemessen.
+
+    Liest ``geom_iou``, ``n_ist``/``n_soll`` und ``ausserhalb_umriss.anteil_haus`` am Urteil
+    (auf-20261021-296, N1). Eine Stelle für Satz und Seedwahl, damit beide dasselbe meinen.
+    """
+    from . import umriss as _umriss  # noqa: PLC0415
+    wert = _wiedererkennung_von(urteil)
+    if wert is None:
+        return None
+    return _umriss.wiedererkennung(wert, n_ist=urteil.get("n_ist"), n_soll=urteil.get("n_soll"),
+                                   ausserhalb_anteil=_ausserhalb_von(urteil))
+
+
 def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
     """Der Satz «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» je Kamera unter der Schwelle.
 
@@ -3007,28 +3066,49 @@ def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> N
     Farbe und Kanten darf darum nicht «gut» heissen, wenn die Silhouetten sich kaum decken
     (``umriss.umriss_gilt``). Nur ein Satz in ``verdict.hinweise`` — ``qa.geometry`` und
     ``geometry_gates`` bleiben Feld für Feld, wie sie waren.
+
+    **Seit auf-20261021-296 (N1)** auch, wenn das Bild weit mehr «Haus» zeigt, als modelliert
+    ist, oder weit über den Umriss baut und die Silhouetten sich zugleich wenig decken
+    (:func:`umriss.wiedererkennung`) — das Strassenbild lag bei ``geom_iou`` 0,197.
     """
     from . import umriss as _umriss  # noqa: PLC0415
     werte = []
     for eintrag in je_kamera or ():
         if isinstance(eintrag, dict):
-            wert = _wiedererkennung_von(eintrag.get("geometrie_urteil"))
-            if wert is not None:
-                werte.append((wert, eintrag.get("kamera"), eintrag.get("geometrie_urteil")))
+            urteil = eintrag.get("geometrie_urteil")
+            befund = wiedererkennung_des_urteils(urteil)
+            if befund is not None:
+                werte.append((befund, eintrag.get("kamera"), urteil))
     if not werte:
-        wert = _wiedererkennung_von(geometrie_urteil)
-        if wert is not None:
-            werte.append((wert, (geometrie_urteil or {}).get("kamera"), geometrie_urteil))
-    for wert, kamera, urteil in werte:
-        if _umriss.umriss_gilt(wert) is not False:
+        befund = wiedererkennung_des_urteils(geometrie_urteil)
+        if befund is not None:
+            werte.append((befund, (geometrie_urteil or {}).get("kamera"), geometrie_urteil))
+    for befund, kamera, urteil in werte:
+        if befund["gilt"]:
             continue
-        n_g, n_s = urteil.get("n_gemeinsam"), urteil.get("n_soll")
-        zaehlung = (f" ({n_g} von {n_s} Punkten des Modells gemeinsam)"
-                    if isinstance(n_g, int) and isinstance(n_s, int) else "")
+        wert = float(urteil["geom_iou"])
+        n_g, n_s, n_i = urteil.get("n_gemeinsam"), urteil.get("n_soll"), urteil.get("n_ist")
+        teile = []
+        if _umriss.AUSLOESER_GEOM_IOU in befund["ausloeser"]:
+            zaehlung = (f" ({n_g} von {n_s} Punkten des Modells gemeinsam)"
+                        if isinstance(n_g, int) and isinstance(n_s, int) else "")
+            teile.append(f"decken sich Modell und Bild kaum (geom_iou {wert:.3f}, Schwelle "
+                         f"{_umriss.WIEDERERKENNUNG_GEOM_IOU:.1f}){zaehlung}")
+        if _umriss.AUSLOESER_FLAECHE in befund["ausloeser"]:
+            teile.append(f"zeigt das Bild weit mehr Haus, als modelliert ist ({n_i} Punkte "
+                         f"gegen {n_s} im Modell, Verhaeltnis {n_i / n_s:.2f}, Schwelle "
+                         f"{_umriss.WIEDERERKENNUNG_FLAECHE_VERHAELTNIS:.1f}, gesetzt, nicht "
+                         f"gemessen; geom_iou {wert:.3f})")
+        if _umriss.AUSLOESER_AUSSERHALB in befund["ausloeser"]:
+            teile.append(f"baut das Bild weit ueber den Umriss hinaus "
+                         f"({_ausserhalb_von(urteil):.2f} der Hausflaeche, Schwelle "
+                         f"{_umriss.WIEDERERKENNUNG_AUSSERHALB_ANTEIL:.1f}) und deckt das Modell "
+                         f"wenig (geom_iou {wert:.3f} unter "
+                         f"{_umriss.WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB:.1f}, beide gesetzt, "
+                         f"nicht gemessen)")
         hinweise.append(
-            f"{SATZ_NICHT_WIEDERZUERKENNEN}: Im KI-Bild der Kamera {kamera!r} decken sich "
-            f"Modell und Bild kaum (geom_iou {wert:.3f}, Schwelle "
-            f"{_umriss.WIEDERERKENNUNG_GEOM_IOU:.1f}){zaehlung}. Masse aus Farbe und Kanten "
+            f"{SATZ_NICHT_WIEDERZUERKENNEN}: Im KI-Bild der Kamera {kamera!r} "
+            f"{'; und '.join(teile)}. Masse aus Farbe und Kanten "
             f"(Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses "
             f"Bild nicht.")
 

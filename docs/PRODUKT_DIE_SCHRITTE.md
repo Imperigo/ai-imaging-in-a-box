@@ -1733,6 +1733,25 @@ nächste Messung bestellt dafür zwei Prüfbilder, eines, das sicher im Umriss b
 Steuerung), und eines, das sicher ausbricht. Offen und ohne Fix notiert: Der Sichtbeton erscheint im KI-Bild nur
 teilweise, und Schlagschatten sind auf Augenhöhe kaum zu sehen.
 
+**Auch ein Bild voller Häuser zeigt das Haus nicht (21.10.2026).** Die fünfte Messung der Stimmungen bestätigte: Der
+Abend hebt sich jetzt aus beiden Richtungen deutlich ab, der Himmel bleibt Abend und wird nicht Nacht, und der Satz «Haus
+nicht wiederzuerkennen» steht genau beim Bild unter dem Vordach. Die Grenze für «zu viel Gebäude» trennt die beiden
+Prüfbilder sauber: Das Gipsmodell blieb im Umriss, das Strassenbild brach aus. Drei Dinge waren noch nicht recht. *Das
+Strassenbild:* Man erkennt das Haus darin nicht, der Satz fehlte trotzdem. Das Bild war fast ganz Gebäude, und so deckte
+ein Teil davon zufällig die Fläche des Modells. Jetzt gilt das Haus auch dann als nicht wiederzuerkennen, wenn das Bild
+mehr als doppelt so viel «Haus» zeigt, wie modelliert ist, oder wenn es weit über den Umriss hinaus baut und sich dabei
+wenig mit dem Modell deckt. Der Satz nennt, woran es lag. *Der Vermerk an der Auswahl* stand bisher nur, wenn das Haus
+fehlte; jetzt steht er immer, als Ja oder Nein. *Das Haus im Umriss halten:* Auch mit voller Steuerung durch die Tiefe
+malte die KI bei Mittag Gebäude über die ganze Bildbreite. Nur das Gipsmodell blieb im Umriss, und dessen Beschreibung
+sagte ausdrücklich «leerer Hintergrund, keine anderen Gebäude». Dieser Satz ist jetzt als Schalter vorbereitet, vorerst
+aus. Die nächste Messung vergleicht mit und ohne, bevor er eingebaut wird. Ehrlich gesagt, und das ist die wichtigere
+Nachricht: Die Arbeit am Licht der letzten Messungen wirkt nur im gerenderten Bild. Die KI liest vom Modell nur die Tiefe,
+die Stimmung kommt bei ihr nur als Satz in der Beschreibung an. Die KI-Bilder vom Abend sind darum bildpunktgleich
+geblieben, obwohl der Himmel im gerenderten Bild jetzt viel dunkler ist. Wie das Licht als Grundlage ins KI-Bild kommen
+könnte, stellt ein eigenes Planblatt zur Wahl (`docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`). Die Empfehlung ist, erst zu
+messen, ob ein freies Modell das gerenderte Bild und die Tiefe zugleich annimmt. Offen und ohne Fix notiert: Bei
+«Abend» liegt die Schattenseite des Hauses noch fast so dunkel wie der Himmel daneben.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

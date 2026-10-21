@@ -70,7 +70,7 @@ METHODE = ("umriss aus bildkanten: sobel auf luminanz, kanten ueber dem 0.85-qua
 WIEDERERKENNUNG_GEOM_IOU = 0.1
 
 
-def umriss_gilt(geom_iou) -> bool | None:
+def umriss_gilt(geom_iou, *, n_ist=None, n_soll=None, ausserhalb_anteil=None) -> bool | None:
     """Darf eine Aussage aus Farbe und Kanten (Umrisstreue, Umriss-IoU) für dieses Bild gelten?
 
     **Anlass (auf-20261020-295, N2):** Das KI-Bild «abend voll» zeigte den Blick unter ein
@@ -79,15 +79,94 @@ def umriss_gilt(geom_iou) -> bool | None:
     dort, wo das Haus hätte stehen sollen, und keinen Baukörper. Kanten und Farbe sagen,
     *ob am Umriss etwas wechselt*, nicht, *ob dort das Haus steht*.
 
+    **Seit auf-20261021-296 (N1)** zählen auch Fläche und Baumasse ausserhalb des Umrisses
+    (siehe :func:`wiedererkennung`); ohne diese Angaben gilt die Regel wie bisher allein
+    nach ``geom_iou``.
+
     Returns:
-        ``False`` unter :data:`WIEDERERKENNUNG_GEOM_IOU`, ``True`` darüber, ``None`` ohne
-        Zahl (dann entscheidet diese Regel nichts).
+        ``False``, wenn :func:`wiedererkennung` einen Auslöser findet, ``True`` sonst,
+        ``None`` ohne Zahl (dann entscheidet diese Regel nichts).
     """
-    if not isinstance(geom_iou, (int, float)) or isinstance(geom_iou, bool):
+    befund = wiedererkennung(geom_iou, n_ist=n_ist, n_soll=n_soll,
+                             ausserhalb_anteil=ausserhalb_anteil)
+    return None if befund is None else befund["gilt"]
+
+
+#: Malt das KI-Bild mehr als doppelt so viel «Haus», wie modelliert ist (``n_ist ÷ n_soll``),
+#: ist das Haus nicht wiederzuerkennen — auch wenn ``geom_iou`` über 0,1 liegt
+#: (auf-20261021-296, N1). **Gesetzt, nicht gemessen:** Das Strassenbild hatte 2,46
+#: (165'964 gegen 67'541 Punkte, ``geom_iou`` 0,197, das Haus nicht zu finden); die Bilder
+#: mit erkennbarem Haus lagen bei 1,14–1,15. Über 2 ist ``geom_iou`` zwangsläufig unter 0,5
+#: (die Vereinigung ist mindestens ``n_ist``).
+WIEDERERKENNUNG_FLAECHE_VERHAELTNIS = 2.0
+
+#: Baut das KI-Bild ausserhalb des Umrisses mehr als das 1,5-Fache der Hausfläche
+#: (``qa.ausserhalb_umriss_anteil``) UND liegt ``geom_iou`` zugleich unter
+#: :data:`WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB`, ist das Haus ebenfalls nicht
+#: wiederzuerkennen (auf-20261021-296, N1). **Beide gesetzt, nicht gemessen:** Strassenbild
+#: 2,15 bei 0,197; abend vorschau 1,92 bei 0,384 (Haus teilweise erkennbar — bleibt gültig);
+#: mittag faithful 1,0 1,01 bei 0,491 (Haus erkennbar, daneben gebaut — bleibt gültig, der
+#: Satz «KI BAUT UEBER DEN UMRISS HINAUS» sagt es schon).
+WIEDERERKENNUNG_AUSSERHALB_ANTEIL = 1.5
+WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB = 0.3
+
+#: Die drei Auslöser, in der Reihenfolge, in der :func:`wiedererkennung` sie nennt.
+AUSLOESER_GEOM_IOU = "geom_iou"
+AUSLOESER_FLAECHE = "flaeche"
+AUSLOESER_AUSSERHALB = "ausserhalb"
+
+
+def _zahl(wert) -> float | None:
+    if not isinstance(wert, (int, float)) or isinstance(wert, bool):
         return None
-    if not math.isfinite(float(geom_iou)):
+    wert = float(wert)
+    return wert if math.isfinite(wert) else None
+
+
+def wiedererkennung(geom_iou, *, n_ist=None, n_soll=None, ausserhalb_anteil=None) -> dict | None:
+    """Ist das Haus im KI-Bild wiederzuerkennen — und wenn nicht, woran sieht man es?
+
+    Drei Auslöser, jeder für sich genügt:
+
+    * ``geom_iou`` unter :data:`WIEDERERKENNUNG_GEOM_IOU` (auf-20261020-295: Blick unter ein
+      Vordach, 0,005);
+    * ``n_ist ÷ n_soll`` über :data:`WIEDERERKENNUNG_FLAECHE_VERHAELTNIS` — das Bild ist fast
+      ganz «Haus», das modellierte darin nicht zu finden (auf-20261021-296, Strassenbild);
+    * ``ausserhalb_anteil`` über :data:`WIEDERERKENNUNG_AUSSERHALB_ANTEIL` zusammen mit
+      ``geom_iou`` unter :data:`WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB`.
+
+    Returns:
+        ``None`` ohne gemessenes ``geom_iou`` (dann entscheidet diese Regel nichts); sonst
+        ``{gilt, ausloeser: [..], grund}`` — ``grund`` nur, wenn ``gilt`` falsch ist.
+        Fehlende Zählungen oder Anteile lösen nichts aus.
+    """
+    iou = _zahl(geom_iou)
+    if iou is None:
         return None
-    return float(geom_iou) >= WIEDERERKENNUNG_GEOM_IOU
+    ausloeser, teile = [], []
+    if iou < WIEDERERKENNUNG_GEOM_IOU:
+        ausloeser.append(AUSLOESER_GEOM_IOU)
+        teile.append(f"geom_iou {iou:.3f} unter {WIEDERERKENNUNG_GEOM_IOU:.1f}")
+    ist, soll = _zahl(n_ist), _zahl(n_soll)
+    if ist is not None and soll is not None and soll > 0:
+        verhaeltnis = ist / soll
+        if verhaeltnis > WIEDERERKENNUNG_FLAECHE_VERHAELTNIS:
+            ausloeser.append(AUSLOESER_FLAECHE)
+            teile.append(f"das Bild zeigt {ist:.0f} Hauspunkte gegen {soll:.0f} im Modell "
+                         f"(Verhaeltnis {verhaeltnis:.2f} ueber "
+                         f"{WIEDERERKENNUNG_FLAECHE_VERHAELTNIS:.1f})")
+    anteil = _zahl(ausserhalb_anteil)
+    if (anteil is not None and anteil > WIEDERERKENNUNG_AUSSERHALB_ANTEIL
+            and iou < WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB):
+        ausloeser.append(AUSLOESER_AUSSERHALB)
+        teile.append(f"Baumasse ausserhalb des Umrisses {anteil:.2f} der Hausflaeche (ueber "
+                     f"{WIEDERERKENNUNG_AUSSERHALB_ANTEIL:.1f}) bei geom_iou {iou:.3f} unter "
+                     f"{WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB:.1f}")
+    if not ausloeser:
+        return {"gilt": True, "ausloeser": [], "grund": None}
+    return {"gilt": False, "ausloeser": ausloeser,
+            "grund": ("; ".join(teile) + ": das Haus ist im Bild nicht wiederzuerkennen; "
+                      "Kanten und Farbe am Umriss sagen dann nichts ueber das Haus.")}
 
 
 def _ist_hintergrund(wert: float) -> bool:
@@ -216,6 +295,9 @@ def umriss_aus_dateien(bild_png, soll: Sequence[float], breite: int, hoehe: int,
     return umriss_treue(luminanz, soll, breite, hoehe, toleranz_px=toleranz_px)
 
 
-__all__ = ["HINTERGRUND_AB_M", "KANTEN_MINDESTSTAERKE", "KANTEN_QUANTIL", "METHODE",
-           "SPRUNG_RELATIV", "TOLERANZ_PX", "WIEDERERKENNUNG_GEOM_IOU", "bildkanten",
-           "sprungkanten", "umriss_aus_dateien", "umriss_gilt", "umriss_treue"]
+__all__ = ["AUSLOESER_AUSSERHALB", "AUSLOESER_FLAECHE", "AUSLOESER_GEOM_IOU",
+           "HINTERGRUND_AB_M", "KANTEN_MINDESTSTAERKE", "KANTEN_QUANTIL", "METHODE",
+           "SPRUNG_RELATIV", "TOLERANZ_PX", "WIEDERERKENNUNG_AUSSERHALB_ANTEIL",
+           "WIEDERERKENNUNG_FLAECHE_VERHAELTNIS", "WIEDERERKENNUNG_GEOM_IOU",
+           "WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB", "bildkanten", "sprungkanten",
+           "umriss_aus_dateien", "umriss_gilt", "umriss_treue", "wiedererkennung"]

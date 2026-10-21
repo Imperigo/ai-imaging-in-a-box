@@ -4093,15 +4093,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # DIE UMRISSTREUE GILT NICHT, WENN DAS HAUS FEHLT (auf-20261020-295, N2): Bei
             # geom_iou unter 0,1 sagt die Seedwahl nach Kanten nichts ueber das Haus — der
             # Vermerk steht an der Auswahl, der Satz in `verdict.hinweise`.
-            from . import umriss as _umriss_regel  # noqa: PLC0415
-            if (_umriss_regel.umriss_gilt(urteil.get("geom_iou")) is False
-                    and isinstance(urteil.get("seedauswahl"), dict)):
-                urteil["seedauswahl"] = dict(
-                    urteil["seedauswahl"], umriss_gilt=False,
-                    umriss_grund=(f"geom_iou {float(urteil['geom_iou']):.3f} unter "
-                                  f"{_umriss_regel.WIEDERERKENNUNG_GEOM_IOU:.1f}: das Haus "
-                                  f"ist im Bild nicht wiederzuerkennen; Kanten und Farbe "
-                                  f"am Umriss sagen dann nichts ueber das Haus."))
+            # Seit auf-20261021-296: auch bei zu viel «Haus» im Bild oder weit ueber den
+            # Umriss gebaut (N1), und `umriss_gilt` steht IMMER, wenn geom_iou gemessen ist —
+            # true wie false (N6); ein fehlendes Feld hiess sonst «nicht geprueft» und
+            # «gilt» zugleich. `umriss_grund` nur bei false.
+            wiedererkannt = _kosmo_szene.wiedererkennung_des_urteils(urteil)
+            if wiedererkannt is not None and isinstance(urteil.get("seedauswahl"), dict):
+                urteil["seedauswahl"] = dict(urteil["seedauswahl"],
+                                             umriss_gilt=wiedererkannt["gilt"])
+                if not wiedererkannt["gilt"]:
+                    urteil["seedauswahl"]["umriss_grund"] = wiedererkannt["grund"]
             urteil["doppelt_von"] = None
             # OB DIE GEOMETRIESTUFE GERECHNET ODER GEHOLT WURDE. Sie steht am
             # Kameraurteil und nicht nur im Multipassbericht, weil `befund_kurz` und
