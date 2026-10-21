@@ -49,6 +49,15 @@ export const GRUNDLAGE_FEHLT_KENNUNG_SATZ =
   'Das Cycles-Bild ist da, aber der Heim-PC hat keine Grundlage gemeldet — Varianten gehen erst, wenn er Grundlagen ablegt.';
 export const STRICHZEICHNUNG_OHNE_VARIANTE_SATZ =
   'Eine Strichzeichnung hat keinen KI-Schritt — «Grundlage rendern» liefert sie, Varianten gibt es dafür nicht.';
+/**
+ * Befund B1 aus auf-20261021-306: Der Heim-PC legt bei JEDEM «Grundlage rendern» eine neue Grundlage an
+ * (eine Grundlage wird nur geholt, wenn der Auftrag ihre Kennung nennt — und das geht nur mit dem
+ * KI-Schritt). «Grundlage je Stand» haelt darum der Knoten: Liegt fuer genau diesen Stand (Modell,
+ * Kameras, Stimmung, Materialien, Format) schon eine Grundlage vor, wird nicht neu gerechnet.
+ */
+export function grundlageSchonDaSatz(id: string): string {
+  return `Für diesen Stand liegt die Grundlage ${kurzKennung(id)} schon vor — «Variante erzeugen» rechnet auf ihr. Neu gerechnet wird, sobald sich Modell, Kamera, Stimmung, Material oder Format ändern.`;
+}
 export const SKIZZE_OHNE_GRUNDLAGE_SATZ =
   'Mit Skizze entsteht das Bild aus der Skizze — dafür gibt es keine Grundlage. Skizze lösen oder «Grundlage rendern» ohne Skizze.';
 

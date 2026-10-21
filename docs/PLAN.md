@@ -8226,8 +8226,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] C F3 Stimmung: Himmelsbild-Vorschau (Farbverlauf bis W), acht zum Anhaken, Himmel drehen, Wirkung; `render.environment` wird gesendet; Grundlage je Stand — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] D F2 Kamera: Auto mit Richtungen, Augenhöhe, Brennweite, Abstand, Perspektive; Kegel und Blick live aus `/knoten/standpunkte` (Wirt reicht die Parameter durch); «Manuell» friert ein, Werte tippen — gebaut, am Gerät unbestätigt (§176, C104)
   - [x] E F4 Oberfläche, Material (Kugel/Würfel/Fläche), Farbpalette; Startgraph Material → Oberfläche → Kombinierer — gebaut, am Gerät unbestätigt (§176, C104)
-  - [ ] Messung am Heim-PC: auf-20261021-306 (local) — je Stimmung, Kamera-Art und Materialwahl ein Lauf wie aus den Knoten, Grundlage je Stand, Live-Vorschau = Auftrag, Vorschaubilder (W)
-  - [ ] W Vorschaubilder (Himmel 8, Materialien 11) aus 306 in beide Programme, mit Quelle und Prüfsumme im NOTICE (wir, nach 306)
+  - [x] Messung am Heim-PC: auf-20261021-306 (local) — Ergebnis `05641d3`: alles rechnet wie bestellt; Befunde B1 (jede Grundlage-Bestellung legt neu an), B2 (Satz der Stimmung halb übersetzt), B3 (Einfrieren verliert den Shift)
+  - [x] B1 und B3 behoben: gleicher Stand → bestehende Grundlage, kein neuer Auftrag; Einfrieren hebt das Ziel für denselben Shift — gebaut, am Gerät unbestätigt (§183)
+  - [x] W Vorschaubilder: sieben Himmel und elf Materialien in beiden Programmen, Prüfsummen in NOTICE, THIRD_PARTY_LICENSES und quellen.json (§183)
+  - [ ] Vorschau «weiss» mit white_studio_06 (local liefert sie mit dem nächsten Messauftrag; bis dahin Verlauf)
+  - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)

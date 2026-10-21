@@ -1,0 +1,183 @@
+{
+ "schema": "aiimaging.vorschau-quellen/v1",
+ "auftrag": "auf-20261021-306",
+ "bilder": [
+  {
+   "bild": "sichtbeton-sandgestrahlt.png",
+   "id": "sichtbeton-sandgestrahlt",
+   "label": "Sichtbeton, sandgestrahlt",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Concrete037",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "5a854a2aa06d69762eb194f25e98b164c8432ef0fc83ba60748f9c21ac77d1d6",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "64afe5413abaca5e20b1cd35070e1b323beb1d341d9c0deb05456fa3a13d029d"
+  },
+  {
+   "bild": "sichtbeton-schalungsglatt.png",
+   "id": "sichtbeton-schalungsglatt",
+   "label": "Sichtbeton, schalungsglatt",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Concrete002",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 1193, unveraendert am Heim-PC",
+   "sha256_original": "b49b3b9498cea1bdfb24398597a1f47e165528553d3027777f74d1082f2ec6a8",
+   "verarbeitung": "mittiger Ausschnitt 596 x 596 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "9bb032ba08b99907e577b657894d4af502b41bda251693532ccd4d9f1d78ee6c"
+  },
+  {
+   "bild": "fichte.png",
+   "id": "fichte",
+   "label": "Fichte",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Wood096",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "421925658a123eaaf1f6ad09086d7d9556948d9a1ae92d353523bf6721271893",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "b07f22cb46d956eb7117a22186c5ea564e4b0d61e811645a2b5585711a208ef8"
+  },
+  {
+   "bild": "backstein.png",
+   "id": "backstein",
+   "label": "Backstein",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Bricks101",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "de4450a5d7e007df9a3df537ce55a7f1f833c16b50f6b112bbee5bc2e61ceada",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "c743323b1e606f74c9be404bb035a703f43d94d598a27899c27cf065f14903e6"
+  },
+  {
+   "bild": "klinker.png",
+   "id": "klinker",
+   "label": "Klinker",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Bricks054",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "970081b4c8c887e11b1093105751a11e5b30e5a504408e2ae998577b7c24c4dc",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "21e9116ca3b569a2a1b1acc3732f586ee1825e7732d456f0d929cc7cc4a54efb"
+  },
+  {
+   "bild": "sandstein.png",
+   "id": "sandstein",
+   "label": "Sandstein",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Rock004",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "1cc92165dbfc848f1f895ee97cb7799934e8c99e286ec8ea8eb0511966a88e62",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "2dc1c647ee0c4a1fcd011239fa8f503f9e50683e74f1dab304f9522c2ce9ab88"
+  },
+  {
+   "bild": "stampflehm.png",
+   "id": "stampflehm",
+   "label": "Stampflehm",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Ground104",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "78d6d390ca6ded709a7374ec2cc12fa55041d72fa848a3f2a210fb58affff2fa",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "8f075b4a257b9ecddc1b691b221003d4ccd94a5c253270f20da18e6bb5374608"
+  },
+  {
+   "bild": "verputz-weiss-glatt.png",
+   "id": "verputz-weiss-glatt",
+   "label": "Verputz weiss, glatt",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Plaster002",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "1f765dd2ef3f4bd820b7691febbd611fc9dc7394f504acb0f2560d166940738c",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "5b0babdfe8af74e1bdbe35650594234e9109bb56b09fac6723b5da5653143f47"
+  },
+  {
+   "bild": "verputz-weiss-rau.png",
+   "id": "verputz-weiss-rau",
+   "label": "Verputz weiss, rau",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Plaster003",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "ba3ff81703ce5f8631f3ff51f42f8ccab7efb65243238450e3036064b2f1cba0",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "73d4703eecc079d7eaa1d479e3d3e00fe46895c7eedcc9208b1f5b37a3d609de"
+  },
+  {
+   "bild": "holzlattung-fichte.png",
+   "id": "holzlattung-fichte",
+   "label": "Holzlattung Fichte",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Planks021",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "11f0af636930125ab470c466ffe6c3277ac12bf26ec32cf3100c0ea19de1dada",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "ffb005970cb6b50fb398c4b6fb5818b4872d30adf63b47f43319f23990e3684a"
+  },
+  {
+   "bild": "dreischichtplatte.png",
+   "id": "dreischichtplatte",
+   "label": "Dreischichtplatte",
+   "groesse_px": [
+    192,
+    192
+   ],
+   "quelle": "ambientCG",
+   "asset": "Wood090A",
+   "lizenz": "CC0-1.0",
+   "original": "Farbkarte (Color) 2K, 2048 x 2048, unveraendert am Heim-PC",
+   "sha256_original": "3619bb9afae9c1d65a9b77d64ec2accd2b024f771968cbd77951cd2841462a5c",
+   "verarbeitung": "mittiger Ausschnitt 1024 x 1024 (halbe Kante der Karte), auf 192 x 192 verkleinert (Lanczos), Farbe unveraendert (sRGB, keine Toenung, keine Tonwertkurve)",
+   "sha256_bild": "f6c9617c097f31aed322ac3517ae81add47a54c47e48f6083a71264509f3c15c"
+  }
+ ],
+ "_hinweis": "Vorschaubilder der Knotenansicht (Entscheide 107, 113 (1)), geliefert von der HomeStation in auf-20261021-306. Ausschnitt der Farbkarte, Farbe unveraendert."
+}

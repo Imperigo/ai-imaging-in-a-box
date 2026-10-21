@@ -8,7 +8,10 @@ import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
 import { groessteNodeHoehe, NodeCanvas } from '../src/modules/vis/NodeCanvas';
 import { STIMMUNG_KOERPER_H } from '../src/modules/vis/StimmungKnoten';
-import { einfrieren, gltfZuHeim, heimZuGltf, KAMERA_KOERPER_H } from '../src/modules/vis/KameraKnoten';
+import { einfrieren, gltfZuHeim, heimZuGltf, KAMERA_KOERPER_H, zielMitShift } from '../src/modules/vis/KameraKnoten';
+import { VORSCHAUBILDER } from '../src/modules/vis/knoten-neu-vorschau';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { FARBPALETTE_KOERPER_H, MATERIAL_KOERPER_H, oberflaecheZeile } from '../src/modules/vis/OberflaecheKnoten';
 import {
   registriereHeimStandpunkte,
@@ -338,3 +341,67 @@ describe('Grundlage je Stand', () => {
     expect(knoten(gid, render).params[GRUNDLAGE_PARAM.stand]).toBe(standAbend);
   });
 });
+
+describe('Befunde aus auf-20261021-306 und Schritt W', () => {
+  it('B3: Einfrieren behält den Objektiv-Shift — das Ziel steigt so, dass der Heim-PC denselben Shift zurückrechnet', () => {
+    const auge: [number, number, number] = [0, -30, 1.7];
+    const blick: [number, number, number] = [0, 0, 1.7];
+    const z = zielMitShift(auge, blick, 0.04, 35);
+    // shift_aus_ziel: shift_mm = f · tan(Neigung), shift_y = shift_mm / 36
+    const tangens = (z[2] - auge[2]) / 30;
+    expect((35 * tangens) / 36).toBeCloseTo(0.04, 9);
+    const k = einfrieren([{ kuerzel: 's', name: 'Süd', art: 'frontal', abstand_m: 30, auge, blick_auf: blick, shift_y: 0.04, vollstaendig: true, begruendung: '' }], { richtungen: ['s'] })[0]!;
+    expect(gltfZuHeim(k.target)[2]).toBeCloseTo(z[2], 9);
+    // ohne Shift (ältere Antwort) bleibt das Ziel, wie es kam
+    expect(einfrieren([{ kuerzel: 's', name: 'Süd', art: 'frontal', abstand_m: 30, auge, blick_auf: blick, vollstaendig: true, begruendung: '' }], { richtungen: ['s'] })[0]!.target).toEqual(heimZuGltf(blick));
+  });
+
+  it.skipIf(!MIT_ENTWURF)('B1: «Grundlage rendern» für denselben Stand nennt die bestehende Grundlage und sendet nichts (braucht den Entwurf von KosmoOrbit)', async () => {
+    vi.stubGlobal('localStorage', { getItem: (k: string) => (k === 'kosmo.bridge' ? 'http://localhost:8600' : null), setItem: () => undefined, removeItem: () => undefined });
+    let gesendet = 0;
+    vi.stubGlobal('fetch', (async () => {
+      gesendet++;
+      return { ok: true, json: async () => ({ job_id: 'vis-1751400000-a1b2c3', status: 'queued', scene: 's.json', created_at: '2026-10-21T00:00:00Z', idle_window_only: true }) };
+    }) as unknown as typeof fetch);
+    const { runCommand } = useProject.getState();
+    const eg = runCommand('design.geschossErstellen', { name: 'EG', index: 0, elevation: 0, height: 3000 });
+    const aufbau = runCommand('design.aufbauErstellen', { name: 'AW', target: 'wall', layers: [{ material: 'beton', thickness: 250, function: 'tragend' }] });
+    runCommand('design.wandZeichnen', { storeyId: (eg.patches[0] as { id: string }).id, a: { x: 0, y: 0 }, b: { x: 5000, y: 0 }, assemblyId: (aufbau.patches[0] as { id: string }).id });
+    const { gid, setze } = graphMit();
+    const modell = setze('modell');
+    const st = setze('stimmung', { presets: '["abend"]', preset: 'abend' });
+    const render = setze('render');
+    verbinde(gid, modell, 'szene', render, 'szene');
+    verbinde(gid, st, 'prompt', render, 'prompt');
+    const doc = useProject.getState().doc;
+    const roh = evaluiereGraph(doc, doc.get<VisGraph>(gid)!).renderAuftraege.get(render)!;
+    const stand = grundlageStandFuerKnoten(doc, roh, knoten(gid, render).params);
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: render, params: { [GRUNDLAGE_PARAM.id]: 'gl-00000000000000ab', [GRUNDLAGE_PARAM.stand]: stand } });
+    const { sendeGraphRenderAuftrag } = await import('../src/modules/vis/vis-jobs');
+    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(gesendet).toBe(0);
+    // Andere Stimmung = anderer Stand: jetzt wird neu gerechnet.
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: st, params: { presets: '["nebel"]', preset: 'nebel' } });
+    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage' });
+    await vi.waitFor(() => expect(gesendet).toBe(1));
+  });
+
+  it('Schritt W: sieben Himmel und elf Materialien als Bild ausgeliefert, «weiss» bleibt der Verlauf; jede Datei steht in quellen.json mit Prüfsumme', () => {
+    // Die Proben laufen im Ordner der App (vitest im Arbeitsbereich), dort liegt `public/`.
+    const oeffentlich = (rel: string) => resolve(process.cwd(), 'public', rel);
+    expect(Object.keys(VORSCHAUBILDER.stimmungen)).toHaveLength(7);
+    expect(VORSCHAUBILDER.stimmungen.weiss).toBeUndefined();
+    expect(Object.keys(VORSCHAUBILDER.materialien)).toHaveLength(11);
+    for (const art of ['stimmungen', 'materialien'] as const) {
+      const quellen = JSON.parse(readFileSync(oeffentlich(`vis/${art}/quellen.json`), 'utf8')) as { bilder: { bild: string; lizenz: string; sha256_bild: string }[] };
+      for (const pfad of Object.values(VORSCHAUBILDER[art])) {
+        expect(existsSync(oeffentlich(pfad!)), pfad).toBe(true);
+        const q = quellen.bilder.find((b) => pfad!.endsWith(`/${b.bild}`));
+        expect(q?.lizenz, pfad).toBe('CC0-1.0');
+        expect(q?.sha256_bild, pfad).toMatch(/^[0-9a-f]{64}$/);
+      }
+    }
+  });
+});
+

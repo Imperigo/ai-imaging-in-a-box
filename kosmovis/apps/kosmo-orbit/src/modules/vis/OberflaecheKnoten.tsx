@@ -80,7 +80,13 @@ export const MATERIAL_KOERPER_H = 24 + MATERIAL_VORSCHAU + 24 + 24 + 24 + 4 * 4;
 
 export type VorschauForm = 'kugel' | 'wuerfel' | 'flaeche';
 
-function vorschauStil(form: VorschauForm, farbe: string, muster: ReturnType<typeof flaechenMuster>): CSSProperties {
+function vorschauStil(form: VorschauForm, farbe: string, muster: ReturnType<typeof flaechenMuster>, bild?: string, toenung?: { farbe: string; staerke: number }): CSSProperties {
+  if (bild) {
+    // Schritt W: die Farbkarte als Bild; eine Toenung als halbdurchsichtige Schicht darueber, die Kugel mit Licht.
+    const ton = toenung ? `linear-gradient(${toenung.farbe}${Math.round(toenung.staerke * 255).toString(16).padStart(2, '0')}, ${toenung.farbe}${Math.round(toenung.staerke * 255).toString(16).padStart(2, '0')}), ` : '';
+    const licht = form === 'kugel' ? 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), rgba(0,0,0,0) 45%, rgba(0,0,0,0.45) 100%), ' : '';
+    return { background: `${licht}${ton}url("${bild}") center / cover`, ...(form === 'kugel' ? { borderRadius: '50%' } : {}) };
+  }
   if (form === 'kugel') {
     return { background: `radial-gradient(circle at 35% 30%, ${hell(farbe, 0.35)}, ${farbe} 55%, ${hell(farbe, -0.4)} 100%)`, borderRadius: '50%' };
   }
@@ -114,18 +120,30 @@ export function MaterialKoerper({ graph, node }: { graph: VisGraph; node: VisNod
         ))}
       </KSelect>
       <div className="vis-kn-material-oben">
-        <KTooltip text={`${eintrag.label}${wahl?.toenung ? `, getönt ${Math.round(wahl.toenung.staerke * 100)} % ${farbWort(wahl.toenung.farbe)}` : ''} — Vorschau aus dem Grundton; die Textur (CC0, ambientCG) liegt am Heim-PC.`} lage="unten">
+        <KTooltip text={`${eintrag.label}${wahl?.toenung ? `, getönt ${Math.round(wahl.toenung.staerke * 100)} % ${farbWort(wahl.toenung.farbe)}` : ''} — ${bildUrl ? 'Vorschau aus der Farbkarte' : 'Vorschau aus dem Grundton'}; die Textur (CC0, ambientCG) liegt am Heim-PC.`} lage="unten">
           <div className="vis-kn-material-vorschau" tabIndex={0} data-testid="material-vorschau" data-form={form} style={{ width: MATERIAL_VORSCHAU, height: MATERIAL_VORSCHAU }}>
             {form === 'wuerfel' ? (
               <svg width={MATERIAL_VORSCHAU} height={MATERIAL_VORSCHAU} viewBox="0 0 96 96" aria-hidden>
-                <polygon points="48,10 86,30 48,50 10,30" fill={hell(farbe, 0.25)} />
-                <polygon points="10,30 48,50 48,90 10,70" fill={farbe} />
-                <polygon points="48,50 86,30 86,70 48,90" fill={hell(farbe, -0.25)} />
+                {bildUrl ? (
+                  <defs>
+                    <pattern id={`mat-${node.id}`} patternUnits="userSpaceOnUse" width="96" height="96">
+                      <image href={bildUrl} width="96" height="96" preserveAspectRatio="xMidYMid slice" />
+                    </pattern>
+                  </defs>
+                ) : null}
+                <polygon points="48,10 86,30 48,50 10,30" fill={bildUrl ? `url(#mat-${node.id})` : hell(farbe, 0.25)} />
+                <polygon points="10,30 48,50 48,90 10,70" fill={bildUrl ? `url(#mat-${node.id})` : farbe} />
+                <polygon points="48,50 86,30 86,70 48,90" fill={bildUrl ? `url(#mat-${node.id})` : hell(farbe, -0.25)} />
+                {bildUrl ? (
+                  <>
+                    <polygon points="48,10 86,30 48,50 10,30" fill="#ffffff" opacity={0.18} />
+                    <polygon points="48,50 86,30 86,70 48,90" fill="#000000" opacity={0.25} />
+                    {wahl?.toenung ? <polygon points="48,10 86,30 86,70 48,90 10,70 10,30" fill={wahl.toenung.farbe} opacity={wahl.toenung.staerke} /> : null}
+                  </>
+                ) : null}
               </svg>
-            ) : bildUrl && form === 'flaeche' ? (
-              <img src={bildUrl} alt="" className="vis-kn-bild-img" />
             ) : (
-              <div className="vis-kn-material-form" style={vorschauStil(form, farbe, muster)} />
+              <div className="vis-kn-material-form" data-bild={bildUrl ? 'foto' : 'grundton'} style={vorschauStil(form, farbe, muster, bildUrl, wahl?.toenung)} />
             )}
           </div>
         </KTooltip>
