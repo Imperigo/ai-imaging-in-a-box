@@ -154,9 +154,13 @@ hinweg ausser der Grundlage, Nr. 85). Die Bilder der Beispielmappe zeigt die Kno
 Auftragsbilder). Bilder, die am Heim-PC nur in der Mappe liegen (Visbox-Seite, `/api/rechne`), kommen beim Holen mit,
 neue von dort aber erst mit einem neuen Holen — das endet mit Schritt 5.
 
-## 11 · Schritt 4 vorbereitet: das iPad holt die Mappe vom Mac (Entscheid 103a)
+## 11 · Schritt 4: das iPad holt die Mappe vom Mac (Entscheide 103a, 118)
 
-**Nicht gebaut** — dies ist der genaue Weg, damit die nächste Sitzung ihn ohne Suche bauen kann.
+**Gebaut am 21.10.2026 (Protokoll 74 §PAR_IPAD4, Einbau CPAR_IPAD4)** — mit Entscheid 118 (immer über den Mac, zuerst
+verschlüsselt): TLS mit dem Zertifikat des Mac, Koppelschein Fassung 2 mit Fingerabdruck, Mappe/Bild/Skizze am Mac wie
+in der Tabelle unten. **Abweichend von der Vorbereitung:** `rechne-skizze` geht mit Mappe am Mac **nicht** als Auftrag
+an den Heim-PC, sondern sagt «gerechnet wird in der Knotenansicht» (Entscheid 94; keine Heim-PC-Änderung); die
+Zwillingsmappe fällt darum noch nicht weg. Der Text darunter ist die Vorbereitung, wie sie stand.
 
 **Heute (erhoben, Quelltext):** Das iPad spricht nur mit dem Heim-PC: `GET /api/projekt` (Mappe), `GET /bild?name=`
 (Bilder, Skizzen), `POST /api/skizze` (Skizze ablegen), `POST /api/rechne-skizze` (Skizze rechnen), `GET

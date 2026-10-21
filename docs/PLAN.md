@@ -8116,7 +8116,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§174, C102); Messauftrag auf-20261021-304
     - [ ] Blatt 36 «Mappen am Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprobe am Mac (owner): holen, öffnen, Bild rechnen, ohne Heim-PC wieder öffnen, «Datei laden …» in neue Mappe
-  - [ ] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a) — Weg vorbereitet im Plan §11 (nicht gebaut)
+  - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§PAR_IPAD4, CPAR_IPAD4)
+    - [ ] Blatt «iPad über den Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
+    - [ ] Geräteprüfung Mac und iPad (owner): koppeln mit Schloss, Skizze in der Mac-Mappe, Bild vom Mac, ohne Mac klarer Satz
+    - [ ] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid offen, dann local)
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
   - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)

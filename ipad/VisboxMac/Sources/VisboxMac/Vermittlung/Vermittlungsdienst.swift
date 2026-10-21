@@ -79,18 +79,20 @@ final class Vermittlungsdienst: ObservableObject {
                            anmeldung: Anmeldung(benutzer: benutzer, kennwort: kennwort))
         let (zugang, satz) = Vermittlerschluessel.liesOderErzeuge()
         // DAS ZERTIFIKAT DES MAC (Entscheid 118) — oder der Satz, warum keines.
+        let eigenerAbdruck: String?
         switch Macidentitaet.liesOderErzeuge() {
         case .gut(let geladen):
             identitaet = geladen.identitaet
             identitaetsfehler = nil
-            abdruck = geladen.abdruck
+            eigenerAbdruck = geladen.abdruck
         case .fehler(let grund):
             identitaet = nil
             identitaetsfehler = "Ohne Zertifikat bietet sich der Mac dem iPad nicht an — "
                 + "unverschlüsselt geht nichts mehr. " + grund
-            abdruck = nil
+            eigenerAbdruck = nil
         }
-        stand = Vermittlerstand(zugang: zugang, abdruck: abdruck)
+        stand = Vermittlerstand(zugang: zugang, abdruck: eigenerAbdruck)
+        abdruck = eigenerAbdruck
         // KANN DER MAC SICH DEN ZUGANG NICHT MERKEN, geht es trotzdem — nur muss das iPad
         // nach jedem Neustart neu koppeln. Das steht dann im Hinweis, statt still zu fehlen.
         hinweis = satz
