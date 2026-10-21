@@ -23,6 +23,12 @@
  *    Auto-Kamera (`registriereHeimStandpunkte`): dieselben drei Richtungen, die der Abholer ohne
  *    mitgeschickte Kameras rechnet, als Vorschau — der Auftrag bleibt `cameras: 'auto'`.
  *
+ * 4a. Seit dem Bauplan «Neue Knoten» (Entscheide 109/113 (3), 21.10.2026) die **Standpunkte mit
+ *    den Einstellungen des Knotens «Kamera»** (`standpunkteAbfrageDerMappe`, registriert in
+ *    `main.tsx`): `GET ./standpunkte?richtungen=…&augenhoehe=…&brennweite=…&fuellt=…|abstand=…
+ *    &perspektive=…` — dieselbe Rechnung, die der Heim-PC mit `cameras_auto` fährt
+ *    (`knotenweg.standpunkte_abfrage`). Die Kegel im 3D-Fenster des Knotens kommen daher.
+ *
  * 5. Seit Entscheiden 95/95a (14.10.2026, Blatt 25) die **Skizzen-Quelle** für den Knoten «Skizze
  *    vom iPad» (`skizzenQuelleDerMappe`, registriert in `main.tsx`): die Liste aus `GET ./mappe`
  *    (Feld `skizzen`, die neueste zuerst, `knotenweg.skizzen_der_mappe`), das Bild aus
@@ -40,7 +46,12 @@ import {
   type ModellLadeWirt,
   type ModellLadeZustand,
 } from '../../kosmo-orbit/src/modules/vis/modell-laden';
-import { registriereHeimStandpunkte, type HeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
+import {
+  registriereHeimStandpunkte,
+  standpunkteSuchteil,
+  type HeimStandpunkte,
+  type StandpunkteAbfrage,
+} from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import {
   aktualisiereSkizzen,
   type Skizze,
@@ -451,5 +462,22 @@ export function skizzenQuelleDerMappe(): SkizzenQuelle {
       return Array.isArray(mappe.skizzen) ? mappe.skizzen.filter((s) => typeof s?.name === 'string' && s.name) : [];
     },
     bildUrl: (name) => `./skizze${mappenFrage({ name })}`,
+  };
+}
+
+/**
+ * Bauplan «Neue Knoten» F2 (21.10.2026): die Standpunkte für die Einstellungen am Knoten «Kamera»,
+ * gerechnet vom Visbox-Server mit derselben Funktion wie der Auftrag. Die Mappe dieser Seite
+ * (`?ordner=`, sonst die zuletzt geöffnete) — wie Skizzen und Modell.
+ */
+export function standpunkteAbfrageDerMappe(): StandpunkteAbfrage {
+  return async (wahl) => {
+    const mappe = mappenFrage();
+    const such = standpunkteSuchteil(wahl);
+    const antwort = await fetch(`./standpunkte${mappe ? `${mappe}&${such}` : `?${such}`}`);
+    if (antwort.status === 404) return null;
+    if (!antwort.ok) throw new Error(await fehlerSatz(antwort));
+    const roh = (await antwort.json()) as Partial<HeimStandpunkte>;
+    return { standpunkte: Array.isArray(roh.standpunkte) ? roh.standpunkte : [], satz: typeof roh.satz === 'string' ? roh.satz : '' };
   };
 }

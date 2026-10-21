@@ -322,6 +322,9 @@ PROBEN = (
     # KI-Bedienung Stufe 6 (21.10.2026): die Sperrzonen der KosmoMaus im Vis-Werkzeug (Render- und
     # Varianten-Freigabe, Loeschen, Kennwoerter), die Nahtstellen und die sichtbaren Sperrzonen.
     "apps/kosmo-orbit/test/kv-maus-sperrzonen.test.tsx",
+    # Bauplan «Neue Knoten» (21.10.2026, Schritte C/D/E): die Koerper von Stimmung, Kamera,
+    # Oberflaeche, Material und Farbpalette und was sie bestellen — nur Vis-Teile und der Vertrag.
+    "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

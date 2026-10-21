@@ -129,7 +129,8 @@ describe('NodeCanvas — Tastatur-Auswahl (S3-a)', () => {
     expect(gs[0]!.getAttribute('aria-pressed')).toBe('false');
     expect(gs[1]!.getAttribute('aria-pressed')).toBe('true');
     expect(polite()).toContain('ausgewählt');
-    expect(polite()).toContain('Material-Bausteine');
+    // Bauplan «Neue Knoten» (Entscheid 111): «Material-Bausteine» heisst «Oberfläche».
+    expect(polite()).toContain('Oberfläche');
   });
 
   it('Leertaste wählt genauso wie Enter, und Escape hebt die Auswahl wieder auf (bestehender globaler Weg)', () => {

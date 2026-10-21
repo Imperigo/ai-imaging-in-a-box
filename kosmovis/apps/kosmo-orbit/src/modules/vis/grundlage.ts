@@ -1,4 +1,4 @@
-import { BESTELLFORMAT_VORGABE, type AutoKameraStandpunkt, type KosmoDoc } from '@kosmo/kernel';
+import { BESTELLFORMAT_VORGABE, type AutoKameraStandpunkt, type KosmoDoc, type VisGraph } from '@kosmo/kernel';
 import type { RenderJob } from '@kosmo/contracts';
 import { melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
@@ -161,6 +161,17 @@ export interface GrundlageEingaben {
   himmel?: unknown;
   kameras?: readonly AutoKameraStandpunkt[] | undefined;
   kameraWahl?: 'auto' | 'saved' | undefined;
+  /**
+   * Bauplan «Neue Knoten» (Entscheid 110 A): das Himmelsbild gibt das Licht in Blender — eine
+   * andere Stimmung ist ein anderes Cycles-Bild und braucht ihre eigene Grundlage (Nr. 85).
+   */
+  umgebung?: unknown;
+  /** F2: die Einstellungen der Auto-Kamera (andere Richtungen = andere Bilder). */
+  kamerasAuto?: unknown;
+  /** F2: die Perspektive der von Hand gestellten Standpunkte. */
+  kamerasPerspektive?: unknown;
+  /** F4: die Materialien je Bauteil-Art. */
+  materialien?: unknown;
 }
 
 /**
@@ -180,6 +191,12 @@ export function grundlageStand(doc: KosmoDoc, e: GrundlageEingaben): string {
         sonne: e.sun ?? null,
         himmel: e.himmel ?? null,
         kameras: e.kameras && e.kameras.length > 0 ? e.kameras : (e.kameraWahl ?? 'auto'),
+        // Neue Knoten: nur, wenn gesetzt — ohne sie bleibt der Stand Zeichen fuer Zeichen der
+        // alte, und eine bestehende Grundlage veraltet durch das Einspielen nicht.
+        ...(e.umgebung !== undefined ? { umgebung: e.umgebung } : {}),
+        ...(e.kamerasAuto !== undefined ? { kamerasAuto: e.kamerasAuto } : {}),
+        ...(e.kamerasPerspektive !== undefined ? { kamerasPerspektive: e.kamerasPerspektive } : {}),
+        ...(e.materialien !== undefined ? { materialien: e.materialien } : {}),
       }),
     ),
   );
@@ -195,8 +212,74 @@ export interface GrundlageAmKnoten {
   ebenen: string[];
 }
 
-/** Die Grundlage aus den Knoten-Parametern, oder `null`, wenn keine (gueltige) da ist. */
-export function grundlageAmKnoten(params: Record<string, unknown> | undefined): GrundlageAmKnoten | null {
+/**
+ * Bauplan «Neue Knoten» (Entscheid 110 A, «Grundlage je Stand»): jede Stimmung (und jede andere
+ * Kamera- oder Materialwahl) rechnet ihre eigene Grundlage. Damit ein Wechsel zurueck zur
+ * vorigen Stimmung die vorige Grundlage wiederfindet, statt neu zu rechnen, liegen die letzten
+ * Grundlagen je Stand als JSON am Render-Knoten: `{ <stand>: {id, seed, kameras, ebenen} }`.
+ * Die flachen Parameter (`GRUNDLAGE_PARAM`) bleiben die eine, die der Knoten zeigt.
+ */
+export const GRUNDLAGEN_JE_STAND_PARAM = 'grundlagenJeStand';
+/** So viele Staende werden gemerkt (die aeltesten fallen heraus). */
+export const GRUNDLAGEN_JE_STAND_HOECHSTENS = 16;
+
+type GemerkteGrundlage = { id: string; seed: number; kameras: number; ebenen: string[] };
+
+/** Die gemerkten Grundlagen je Stand; Unlesbares faellt still heraus. */
+export function grundlagenJeStand(params: Record<string, unknown> | undefined): Record<string, GemerkteGrundlage> {
+  const roh = params?.[GRUNDLAGEN_JE_STAND_PARAM];
+  if (typeof roh !== 'string' || roh === '') return {};
+  try {
+    const o: unknown = JSON.parse(roh);
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return {};
+    const aus: Record<string, GemerkteGrundlage> = {};
+    for (const [stand, g] of Object.entries(o as Record<string, unknown>)) {
+      const x = g as Partial<GemerkteGrundlage> | null;
+      if (!x || typeof x.id !== 'string' || !GRUNDLAGE_KENNUNG.test(x.id)) continue;
+      aus[stand] = {
+        id: x.id,
+        seed: typeof x.seed === 'number' && Number.isInteger(x.seed) ? x.seed : startwertAusKennung(x.id),
+        kameras: typeof x.kameras === 'number' ? x.kameras : 0,
+        ebenen: Array.isArray(x.ebenen) ? x.ebenen.filter((e): e is string => typeof e === 'string') : [],
+      };
+    }
+    return aus;
+  } catch {
+    return {};
+  }
+}
+
+/** Fuegt eine Grundlage zu den gemerkten hinzu (neueste zuletzt, hoechstens 16). */
+export function mitGrundlageJeStand(params: Record<string, unknown> | undefined, stand: string, g: GemerkteGrundlage): string {
+  const alt = grundlagenJeStand(params);
+  delete alt[stand];
+  const eintraege = [...Object.entries(alt), [stand, g] as const].slice(-GRUNDLAGEN_JE_STAND_HOECHSTENS);
+  return JSON.stringify(Object.fromEntries(eintraege));
+}
+
+/** Die Parameter, die die gemerkte Grundlage des Stands `standJetzt` wieder zur gezeigten machen — `null`, wenn keine noetig/da. */
+export function grundlageFuerStand(params: Record<string, unknown> | undefined, standJetzt: string): Record<string, string | number> | null {
+  if (params?.[GRUNDLAGE_PARAM.stand] === standJetzt) return null;
+  const g = grundlagenJeStand(params)[standJetzt];
+  if (!g) return null;
+  return {
+    [GRUNDLAGE_PARAM.id]: g.id,
+    [GRUNDLAGE_PARAM.seed]: g.seed,
+    [GRUNDLAGE_PARAM.stand]: standJetzt,
+    [GRUNDLAGE_PARAM.kameras]: g.kameras,
+    [GRUNDLAGE_PARAM.ebenen]: g.ebenen.join(','),
+  };
+}
+
+/**
+ * Die Grundlage aus den Knoten-Parametern, oder `null`, wenn keine (gueltige) da ist. Mit
+ * `standJetzt`: passt die gezeigte nicht, aber eine gemerkte desselben Stands, gilt diese.
+ */
+export function grundlageAmKnoten(params: Record<string, unknown> | undefined, standJetzt?: string): GrundlageAmKnoten | null {
+  if (standJetzt !== undefined) {
+    const gemerkt = grundlageFuerStand(params, standJetzt);
+    if (gemerkt) return grundlageAmKnoten({ ...(params ?? {}), ...gemerkt });
+  }
   const p = params ?? {};
   const id = p[GRUNDLAGE_PARAM.id];
   if (typeof id !== 'string' || !GRUNDLAGE_KENNUNG.test(id)) return null;
@@ -269,15 +352,20 @@ export function grundlageLaufFelder(
  */
 export function merkeGrundlage(graphId: string, nodeId: string, g: GrundlageImErgebnis, stand: string): void {
   try {
-    useProject.getState().runCommand('vis.nodeParametrieren', {
+    const { doc, runCommand } = useProject.getState();
+    const knoten = doc.get<VisGraph>(graphId)?.nodes.find((n) => n.id === nodeId);
+    const seed = startwertAusKennung(g.id);
+    runCommand('vis.nodeParametrieren', {
       graphId,
       nodeId,
       params: {
         [GRUNDLAGE_PARAM.id]: g.id,
-        [GRUNDLAGE_PARAM.seed]: startwertAusKennung(g.id),
+        [GRUNDLAGE_PARAM.seed]: seed,
         [GRUNDLAGE_PARAM.stand]: stand,
         [GRUNDLAGE_PARAM.kameras]: g.kameras,
         [GRUNDLAGE_PARAM.ebenen]: g.ebenen.join(','),
+        // «Grundlage je Stand»: dieselbe Grundlage auch unter ihrem Stand gemerkt.
+        [GRUNDLAGEN_JE_STAND_PARAM]: mitGrundlageJeStand(knoten?.params, stand, { id: g.id, seed, kameras: g.kameras, ebenen: g.ebenen }),
       },
     });
   } catch (err) {

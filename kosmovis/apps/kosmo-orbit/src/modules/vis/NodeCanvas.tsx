@@ -11,17 +11,14 @@ import {
   useSyncExternalStore,
 } from 'react';
 import {
-  augeImModell,
   evaluiereGraph,
   HIMMEL_ARTEN,
   KAMERA_AUS_3D_TYP,
   VARIANTEN_TYP,
-  projektKameras,
   RENDER_PRESETS,
   renderPromptBausteine,
   VIS_KATEGORIE_HUE,
   VIS_NODE_KATALOG,
-  VIS_STIMMUNGEN,
   type VisGraph,
   type VisKategorie,
   type VisNode,
@@ -45,11 +42,9 @@ import {
   grundlageStandFuerKnoten,
   fremdnahtSatz,
   holeJob,
-  interiorFaehrt,
   authFehlerSatz,
   istAuthFehler,
   kombiniertePrompt,
-  istUeberDiesenWegBestellbar,
   KEINE_GEOMETRIE_HINWEIS,
   LEERER_PROMPT_HINWEIS,
   mappeJobStatus,
@@ -107,8 +102,18 @@ import { LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke } from './GueteMarke';
 import { EinzelbildGross, HauptbildAbzeichen, RenderVerlauf, type EinzelbildArt } from './RenderVerlauf';
 import { MODELL_3D_ZUSATZ, ModellKnotenKoerper } from './ModellKnoten';
+// Bauplan «Neue Knoten» (Blätter 31–33): Stimmung, Kamera, Oberfläche, Material, Farbpalette.
+import { STIMMUNG_KOERPER_H, StimmungKoerper } from './StimmungKnoten';
+import { KAMERA_KOERPER_H, KameraKoerper } from './KameraKnoten';
+import {
+  FARBPALETTE_KOERPER_H,
+  FarbpaletteKoerper,
+  MATERIAL_KOERPER_H,
+  MaterialKoerper,
+  OBERFLAECHE_ZUORDNUNG_H,
+  OberflaecheZuordnung,
+} from './OberflaecheKnoten';
 import { modellLadenWirt } from './modell-laden';
-import { heimStandpunkte } from './heim-standpunkte';
 import { umgebungFehltSatz } from './umgebung-fehlt';
 import { laufNummerVon, verlaufReihe, verlaufSichtbar, type VerlaufEintrag } from './render-verlauf';
 import './vis-visual.css';
@@ -543,9 +548,13 @@ const KOERPER_H: Record<string, number> = {
   // F1 (Entscheid 109 A): die Szenen-Zeile (22) und darunter das 3D-Fenster samt Zeile
   // «Doppelklick: gross» (`MODELL_3D_ZUSATZ`, `ModellKnoten.tsx`).
   modell: 22 + MODELL_3D_ZUSATZ,
-  material: 60,
+  // Neue Knoten (Blatt 33): die Zuordnung der Bauteil-Arten über dem Klapptext der Wandschichten.
+  material: 60 + OBERFLAECHE_ZUORDNUNG_H + 4,
+  materialTextur: MATERIAL_KOERPER_H,
+  farbpalette: FARBPALETTE_KOERPER_H,
   prompt: 56,
-  stimmung: 90,
+  // Neue Knoten (Blatt 32): Himmelsbild, acht Stimmungen, Drehen, Wirkung — feste Höhe.
+  stimmung: STIMMUNG_KOERPER_H,
   kombinierer: 80,
   zahl: 38,
   // «Skizze vom iPad» (Entscheide 95/95a, `SkizzeKnoten.tsx`): Auswahl und Daumenbild (80 px);
@@ -564,7 +573,8 @@ const KOERPER_H: Record<string, number> = {
   vergleich: 132,
   blatt: 38,
   referenz: 92,
-  kamera: 54,
+  // Neue Knoten (Blatt 31): Art, Einstellungen, 3D-Fenster mit Kegeln, Blick — feste Höhe.
+  kamera: KAMERA_KOERPER_H,
   aufnahme: 118,
   // «Kamera aus 3D-Ansicht» (14.10.2026, `KameraAus3dKnoten.tsx`): vier einzeilige Zeilen
   // (Auge, Blickfeld, Objektiv-Shift, Umgebung) und der Knopf; ohne Kamera der Satz über drei
@@ -622,7 +632,6 @@ const KOERPER_H: Record<string, number> = {
  */
 const KOERPER_H_ZUSATZ_OFFEN: Record<string, number> = {
   kombinierer: 70,
-  stimmung: 70,
   material: 70,
 };
 
@@ -741,7 +750,7 @@ export const BLATT_REFERENZ_GRUND =
 /** Entscheid 92 (Visbox, Blatt 23): Koerperhoehe der Auto-Kamera, wenn der Wirt die
  *  Standpunkte des Heim-PCs kennt (`registriereHeimStandpunkte`) — drei Zeilen und der Satz
  *  darunter. Ohne Wirt (KosmoOrbit) bleibt es `KOERPER_H.kamera`. */
-export const KAMERA_KOERPER_H_MIT_HEIM = 96;
+export const KAMERA_KOERPER_H_MIT_HEIM = KAMERA_KOERPER_H;
 
 /**
  * Owner-Entscheid 96 (Visbox, 15.10.2026): die Zeile «Skizze» im Render-Körper — sie steht NUR, wo
@@ -756,7 +765,6 @@ export const RENDER_ZEILE_SKIZZE: Koerperzeile = { id: 'skizze', h: 58 };
 
 function koerperHoehe(typ: string): number {
   if (typ === 'modell' && modellLadenWirt()) return MODELL_KOERPER_H_MIT_LADEN;
-  if (typ === 'kamera' && heimStandpunkte()) return KAMERA_KOERPER_H_MIT_HEIM;
   if (typ === 'render' && skizzenQuelle()) return (KOERPER_H[typ] ?? 30) + RENDER_ZEILE_SKIZZE.h + ZEILEN_ABSTAND;
   return KOERPER_H[typ] ?? 30;
 }
@@ -3579,16 +3587,30 @@ function NodeKoerper({
       // Entscheide 95/95a (Visbox, Blatt 25): mit Skizzen-Quelle des Wirts Auswahl und
       // Daumenbild, ohne sie (KosmoOrbit) ein ruhiger Satz — s. `SkizzeKnoten.tsx`.
       return <SkizzeKnotenKoerper wahl={skizzenWahl(params)} onWahl={(w) => param('skizze', w)} />;
-    case 'material':
+    case 'material': {
+      // Neue Knoten (Blatt 33): «Oberfläche» — über den Phrasen der Wandschichten die Zuordnung.
+      const g = doc.get<VisGraph>(graphId);
       return (
-        <KlappText
-          testid="material"
-          text={material ?? ''}
-          platzhalter="keine Material-Phrasen — Wandaufbauten sprechen mit"
-          offen={offen}
-          onToggleOffen={onToggleOffen}
-        />
+        <div className="vis-kn">
+          {g ? <OberflaecheZuordnung graph={g} node={node} /> : null}
+          <KlappText
+            testid="material"
+            text={material ?? ''}
+            platzhalter="keine Material-Phrasen — Wandaufbauten sprechen mit"
+            offen={offen}
+            onToggleOffen={onToggleOffen}
+          />
+        </div>
       );
+    }
+    case 'materialTextur': {
+      const g = doc.get<VisGraph>(graphId);
+      return g ? <MaterialKoerper graph={g} node={node} /> : null;
+    }
+    case 'farbpalette': {
+      const g = doc.get<VisGraph>(graphId);
+      return g ? <FarbpaletteKoerper graph={g} node={node} /> : null;
+    }
     case 'prompt':
       return (
         <textarea
@@ -3602,34 +3624,9 @@ function NodeKoerper({
           className="vis-node-feld vis-node-feld--textarea"
         />
       );
-    case 'stimmung': {
-      const presetKey = String(params['preset'] ?? 'morgen');
-      return (
-        <div className="vis-node-stimmung-wrap">
-          <KSelect
-            size="sm"
-            value={presetKey}
-            data-testid="stimmung-preset"
-            onChange={(e) => param('preset', e.target.value)}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="vis-node-select-voll"
-          >
-            {Object.entries(VIS_STIMMUNGEN).map(([key, s]) => (
-              <option key={key} value={key}>{s.label}</option>
-            ))}
-          </KSelect>
-          {/* SK-V3: die Stimmungs-Beschreibung (der tatsächliche Prompt-Text
-              des Presets) sichtbar — clampt wie kombinierer-prompt/material. */}
-          <KlappText
-            testid="stimmung-beschrieb"
-            text={VIS_STIMMUNGEN[presetKey]?.prompt ?? ''}
-            platzhalter="kein Beschrieb"
-            offen={offen}
-            onToggleOffen={onToggleOffen}
-          />
-        </div>
-      );
-    }
+    case 'stimmung':
+      // Neue Knoten (Blatt 32, Entscheide 110/113): eigener Körper, s. `StimmungKnoten.tsx`.
+      return <StimmungKoerper graphId={graphId} node={node} />;
     case 'zahl': {
       const min = Number(params['min'] ?? 0);
       const max = Number(params['max'] ?? 1);
@@ -4418,100 +4415,10 @@ function NodeKoerper({
         </div>
       );
     }
-    case 'kamera': {
-      // Reine Anzeige — live aus den aktuellen Modell-Bounds abgeleitet,
-      // nie gespeichert (wie der Material-Node). Ehrlich: «Vorschlag aus dem
-      // Modell», keine KI-Wahl.
-      // 12.09.2026: `projektKameras` statt `deriveAutoKameras` — dieselbe
-      // Ableitung, davor die von Hand gesetzten, aus einer 3DS-Datei
-      // uebernommenen Standpunkte (`doc.settings.uebernommeneKameras`). Die
-      // Anzeige MUSS dieselbe Quelle lesen wie der Auftrag (`visgraph.ts`),
-      // sonst verspricht die Oberflaeche wieder etwas anderes, als die
-      // Leitung traegt — der Befund, der `istUeberDiesenWegBestellbar`
-      // ueberhaupt erzwungen hat.
-      const kameras = projektKameras(doc);
-      const uebernommen = new Set((doc.settings.uebernommeneKameras ?? []).map((k) => k.name));
-      // B117 SCHRITT 2 (Owner-Entscheid E57): dieselbe Bedingung wie im
-      // Auftrag (`vis-jobs.ts` `postRenderJob`) — EINE Funktion, nicht zwei
-      // gleichlautende Pruefungen (s. Kommentar an `istUeberDiesenWegBestell
-      // bar` in vis-jobs.ts).
-      const interiorMoeglich = interiorFaehrt(doc);
-      // Entscheid 92 (Visbox, Blatt 23): ohne eigene Standpunkte, aber mit denen des
-      // Heim-PCs vom Wirt — die Vorschau dessen, was `cameras: 'auto'` dort heisst. Nicht
-      // bestellt (Begruendung im Kopf von `heim-standpunkte.ts`), darum eigens beschriftet.
-      const heim = kameras.length === 0 ? heimStandpunkte() : null;
-      if (heim) {
-        return (
-          <div className="vis-node-kamera-liste" data-testid="vis-auto-kamera-liste">
-            {heim.standpunkte.map((k) => (
-              <KTooltip key={k.kuerzel} text={k.begruendung || `${k.name}, ${k.art}`}>
-                <div data-testid={`vis-kamera-heim-${k.kuerzel}`}>
-                  <b>{k.name}</b> — {k.art}
-                  {Number.isFinite(k.abstand_m) ? `, ${Math.round(k.abstand_m)} m` : ''}
-                </div>
-              </KTooltip>
-            ))}
-            <span className="vis-node-kamera-leer" data-testid="vis-kamera-heim-satz">
-              {heim.satz}
-            </span>
-          </div>
-        );
-      }
-      return (
-        <div className="vis-node-kamera-liste" data-testid="vis-auto-kamera-liste">
-          {kameras.length === 0 ? (
-            <span className="vis-node-kamera-leer">
-              Keine Geometrie im Modell — nichts abzuleiten.
-            </span>
-          ) : (
-            kameras.map((k) =>
-              uebernommen.has(k.name) ? (
-                /* Ein uebernommener Standpunkt ist KEIN «Vorschlag aus dem
-                   Modell» — das waere schlicht falsch, nichts an ihm ist
-                   abgeleitet. Und ob er zu DIESEM Modell gehoert, wird
-                   gemessen statt angenommen: die 3DS-Datei bringt ihren
-                   eigenen Nullpunkt mit (`augeImModell`, `derive/kamera.ts`).
-                   Ein Auge ausserhalb der Huellbox ist genau der Fall, der am
-                   26.08.2026 ein Bild 60 m neben dem Bau erzeugt hat — hier
-                   steht er, statt still zu passieren. */
-                <KTooltip key={k.name} text={k.begruendung}>
-                  <div data-testid={`vis-kamera-uebernommen-${k.name}`}>
-                    <b>{k.name}</b> — von Hand gesetzt, übernommen
-                    {augeImModell(doc, k.position) === false && (
-                      <span className="vis-node-kamera-nicht-bestellt">
-                        {' '}· Auge ausserhalb dieses Modells
-                      </span>
-                    )}
-                  </div>
-                </KTooltip>
-              ) : istUeberDiesenWegBestellbar(k.name, interiorMoeglich) ? (
-                <KTooltip key={k.name} text={k.begruendung}>
-                  <div>
-                    <b>{k.name}</b> — Vorschlag aus dem Modell
-                  </div>
-                </KTooltip>
-              ) : (
-                /* P-DREISTANDPUNKTE-Nachtrag (v0.9.46, ROADMAP 1074): der
-                   Standpunkt wird zu Recht abgeleitet, ueber DIESEN Weg aber
-                   nicht bestellt (er sendet immer glb und nie ein
-                   `interior`-Feld; Innenansichten haengen seit P-INTERIOR
-                   hart an beidem). Bis eben zeigte das Panel ihn wie jeden
-                   anderen — der Knoten versprach also weiter mehr, als er
-                   bestellt, nur lag die Luecke nach dem Auftrags-Fix in der
-                   ANZEIGE statt im Auftrag. NICHT verstecken, sondern die
-                   Grenze benennen: der Vorschlag ist echt und ueber den
-                   IFC-Weg erreichbar — hier ist er es nicht. Deklarierte
-                   Grenze statt Attrappe, dieselbe Linie wie ueberall sonst
-                   in diesem Programm. */
-                <div key={k.name} className="vis-node-kamera-nicht-bestellt" title={k.begruendung}>
-                  <b>{k.name}</b> — abgeleitet, ueber diesen Weg nicht bestellbar (braucht IFC)
-                </div>
-              ),
-            )
-          )}
-        </div>
-      );
-    }
+    case 'kamera':
+      // Neue Knoten (Blatt 31, Entscheide 109/113): Auto, Manuell und — wo es sie gibt — die
+      // Standpunkte aus dem Modell wie bisher; s. `KameraKnoten.tsx`.
+      return <KameraKoerper graphId={graphId} node={node} knotenZoom={knotenZoom} />;
     case KAMERA_AUS_3D_TYP: {
       const g = doc.get<VisGraph>(graphId);
       return g ? <KameraAus3dKoerper graph={g} node={node} /> : null;

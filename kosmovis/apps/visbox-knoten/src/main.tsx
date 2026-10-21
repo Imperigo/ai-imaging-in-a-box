@@ -59,6 +59,7 @@ import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
+import { registriereStandpunkteAbfrage } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
 import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
 import { haengeKiAn } from './ki-wirt';
@@ -77,6 +78,7 @@ import {
   ladeMappe,
   ladeWirt,
   skizzenQuelleDerMappe,
+  standpunkteAbfrageDerMappe,
   verfolge,
   type LadeSicht,
 } from './mappe';
@@ -144,6 +146,8 @@ if (aufDemVisboxServer()) {
   brueckeAufDiesenServer();
   registriereModellLaden(ladeWirt());
   registriereSkizzenQuelle(skizzenQuelleDerMappe());
+  // Bauplan «Neue Knoten» F2: die Kegel des Knotens «Kamera» mit seinen Einstellungen.
+  registriereStandpunkteAbfrage(standpunkteAbfrageDerMappe());
   void ladeMappe()
     .then((satz) => melde(satz))
     .catch((fehler: unknown) => melde(`Die Mappe liess sich nicht laden: ${String(fehler)}`, { ton: 'fehler' }))

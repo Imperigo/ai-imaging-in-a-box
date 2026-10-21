@@ -143,7 +143,8 @@ describe('G5 · GRAPH-Palette (island-palette-eintrag-blatt) vs. open-project', 
     // Fünfzehn Node-Typen (seit «Kamera aus 3D-Ansicht», «Skizze vom iPad» und «Varianten», 14./15.10.2026) — wächst der Katalog, wächst die Popup-/Fenster-Liste
     // mit (E-10 Antwort c, kein Scroll) und der Fund bliebe strukturell
     // derselbe: der jeweils letzte Eintrag der letzten Kategorie.
-    expect(eintraege).toHaveLength(15);
+    // Bauplan «Neue Knoten» (21.10.2026): + «Material» und «Farbpalette» = 17.
+    expect(eintraege).toHaveLength(17);
   });
 
   it('GRAPH sitzt am linken Rand, vertikal mittig — nicht an der Streifen-Ecke wie SONNE', () => {
