@@ -2259,6 +2259,13 @@ die ganze Bildbreite gemalt. Bis jetzt stand im Ergebnis trotzdem einfach «geli
 «KI-BILD OHNE GRUNDLAGENBILD» mit dem Grund. Ob eine Variante das Bild künftig wirklich sieht, ist eine Entscheidung des
 Owners. Zwei Wege sind vorbereitet: das Grundlagenbild als Start mitgeben, oder die Umgebung im Lauf festhalten.
 
+**Die Knotenansicht merkt sich, wie ein Bild entstand (21.10.2026).** Zu jedem fertigen Bild hält die Knotenansicht von
+Visbox jetzt fest, ob es so gerechnet wurde wie bestellt: was bestellt war, was gerechnet wurde, ob es abwich, und je
+Kamera dasselbe. Meldet ein älteres Ergebnis nur den Satz «KI-BILD OHNE GRUNDLAGENBILD», gilt das Bild als abweichend,
+ohne die Werte zu erfinden. Sagt das Ergebnis gar nichts, steht nichts da — «nicht gemeldet» wird nie als «wie bestellt»
+gezeigt. Darauf setzt das Schild «Ohne Grundlagenbild» bzw. «Anders gerechnet» am Bild auf. Ehrlich gesagt: geprüft an
+Ergebnissen aus dem Kern, mit nachgestellten Läufen; das Schild selbst und ein echter Lauf am Gerät stehen noch aus.
+
 **Wie gross das Haus im Bild ist, zählt jetzt ehrlicher (21.10.2026).** An der Grundlage zählt nur noch das Haus, nicht
 die Geländeplatte darunter und nicht der Bestand daneben. Am KI-Bild wird die Fläche vom Haus aus «gewachsen», solange die
 geschätzte Entfernung stetig bleibt; Himmel, Boden und Hecken davor bleiben draussen. Die alte Zählung meldete bei einem

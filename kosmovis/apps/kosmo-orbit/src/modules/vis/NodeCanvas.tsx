@@ -96,6 +96,7 @@ import {
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
 } from './grundlage';
 import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, gueteAusErgebnis, type Guete } from './guete';
+import { modusAusErgebnis } from './modus';
 import { BildPaarGross } from './BildPaar';
 import {
   ANSICHT_PARAM,
@@ -1384,6 +1385,9 @@ export function NodeCanvas({
                 // Entscheid 104a: die Guete, die das Ergebnis meldet — immer gesetzt, auch als
                 // `undefined`, damit der Vermerk «Vorschau» eines frueheren Laufs nicht stehen bleibt.
                 guete: gueteAusErgebnis(j.result),
+                // Bitte UI «Modus-Marke» (C17 A1): wie das KI-Bild entstand — immer gesetzt, auch als
+                // `undefined`, wie `guete`.
+                modus: modusAusErgebnis(j.result),
                 // Nr. 85 Paket 2: auf welcher Grundlage das Bild steht (und ob sie
                 // wiederverwendet wurde) — Startwert und Pose je Kamera reisen in `qaJeKamera`.
                 ...grundlageLaufFelder(j.result, lauf.grundlageId),

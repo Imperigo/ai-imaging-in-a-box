@@ -1,0 +1,89 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Kernstand 2a2691a): abholer.modus_vermerk je Kamera -> kosmo_szene.modus_satz (Bildmodell z-image-turbo) -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, danach angewandt.modus entfernt; Kameraurteile gesetzt, nicht gerendert. 'scene' ist die Bestellung, 'result' das render-result.json, wie es ein Heim-PC ohne Vertrag C17 A1 schreibt: eine von zwei Kameras (sSE) rechnete txt2img statt image_edit, das Ergebnis sagt es NUR mit dem Satz in qa.verdict.hinweise, der mit 'KI-BILD OHNE GRUNDLAGENBILD' beginnt und die Kamera als Kamera '<name>' nennt (kosmo_szene.SATZ_OHNE_GRUNDLAGENBILD). Ein Leser macht daraus {bestellt: null, gerechnet: null, abweichung: true, satz} — null heisst nicht gemeldet, nie gleich.",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "sSE",
+        "nNW"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "sSE.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.7,
+        "spearman": -0.4,
+        "geom_iou": 0.5,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.7 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)",
+        "hinweise": [
+          "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+        ]
+      }
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "sSE",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": ""
+  }
+}
