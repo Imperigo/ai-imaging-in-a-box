@@ -134,7 +134,8 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
     # belegten Rang, eine Stunde spaeter Rang UND Laufnummer — beide Male wurde `main`
     # rot, und aufgeraeumt hat der, der zuletzt pushte. `tests/test_auftraege.py`
     # VERLANGT eine lueckenlose Reihe je Adressat und sagte niemandem, welcher Rang frei
-    # ist.
+    # ist. (Seit 21.10.2026: Luecken nach erledigten Auftraegen erlaubt, der freie Rang
+    # steht hinter dem letzten offenen — `auftrag.raenge_ohne_grund`.)
     #
     # *Eine Vorschrift ohne Vergabestelle verlagert die Arbeit auf den, der zuletzt
     # kommt.* Die Auskunft gehoert darum in die Zeile, die man ohnehin liest, bevor man

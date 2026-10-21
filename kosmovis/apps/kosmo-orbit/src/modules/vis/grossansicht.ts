@@ -156,15 +156,19 @@ export function fruehereLaeufeMitBild<T extends Pick<NodeLauf, 'jobId' | 'status
 
 /**
  * L4-1 (mit der HomeStation abgestimmt, 21.10.2026): «deckungsgleich» heisst gleiche Grundlage UND gleiche Form (Kanten-
- * IoU des KI-Bilds gegen das Grundbild ueber einer Schwelle; Heim-PC `varianten.deckung`, Schwelle 0,30 gesetzt, nicht
- * gemessen). Solange das Ergebnis die Zahl noch nicht traegt, sagt die Vergleichsansicht nur, was belegt ist.
+ * IoU des KI-Bilds gegen das Grundbild ueber einer Schwelle; Heim-PC `varianten.deckung`, Schwelle 0,10 gesetzt aus
+ * auf-20261021-317, vier Laeufe). Solange das Ergebnis die Zahl noch nicht traegt, sagt die Vergleichsansicht nur, was belegt ist.
  */
 export const DECKUNG_UNGEMESSEN_SATZ = 'gleiche Grundlage · Form ungeprüft';
 export const DECKUNG_GLEICH_SATZ = 'deckungsgleich';
 export const DECKUNG_ABWEICHEND_SATZ = 'gleiche Grundlage, Form weicht ab';
-/** Schwelle der Kanten-IoU — GESETZT, NICHT GEMESSEN (bis auf-20261021-312), wie am Heim-PC (`varianten.deckung`). */
-export const DECKUNG_SCHWELLE = 0.3;
-export const DECKUNG_SCHWELLE_HERKUNFT = 'Schwelle 0,30 gesetzt, nicht gemessen';
+/**
+ * Schwelle der Kanten-IoU, wie am Heim-PC (`varianten.deckung`) — GESETZT AUS auf-20261021-317 (vier Laeufe, ein Seed,
+ * eine Kamera): Form nein 0,033 (K); Form ja 0,197 (M2), 0,635 / 0,739 (Bildeingang 0,55 / 0,40). Die fruehere Setzung
+ * 0,30 stufte M2 als «Form weicht ab» ein, weil M2 Fenster und Fugen dazumalt, die das graue Grundbild nicht hat.
+ */
+export const DECKUNG_SCHWELLE = 0.1;
+export const DECKUNG_SCHWELLE_HERKUNFT = 'Schwelle 0,10 gesetzt aus auf-20261021-317 (vier Läufe)';
 
 export type DeckungUrteil = 'deckungsgleich' | 'weicht-ab' | 'ungemessen';
 
@@ -198,5 +202,5 @@ export function deckungDerReihe(laeufe: readonly Pick<NodeLauf, 'qaJeKamera' | '
   return { urteil: 'ungemessen', satz: DECKUNG_UNGEMESSEN_SATZ };
 }
 export const DECKUNG_HILFE =
-  'Dieselbe Grundlage (Tiefe, Standpunkt, Startwert) heisst noch nicht dieselbe Form. Deckungsgleich, wenn die Kanten des KI-Bilds die des Grundbilds zu mindestens 30 % treffen (Schwelle gesetzt, nicht gemessen); ohne Messung «Form ungeprüft».';
+  'Dieselbe Grundlage (Tiefe, Standpunkt, Startwert) heisst noch nicht dieselbe Form. Deckungsgleich, wenn die Kanten des KI-Bilds die des Grundbilds zu mindestens 10 % treffen (Schwelle gesetzt aus vier Läufen: ein Bild mit neuen Fenstern und Fugen trifft 20 %, ein anderer Bau 3 %); ohne Messung «Form ungeprüft».';
 

@@ -160,7 +160,8 @@ def test_boden_mit_rolle_faellt_aus_der_bauwerksmaske():
     mit = maske.bauwerksmaske(FARBEN, TABELLE, gelaende_erwartet=False,
                               gelaende_rolle=("boden",))
     assert mit["n_bauwerk"] == 3 and mit["n_gelaende"] == 3
-    assert mit["gelaende_quelle"] == "rolle"
+    # auf-20261021-318 B2: angeglichen an «name+form» — die Namensregel steht immer vorn.
+    assert mit["gelaende_quelle"] == "name+rolle"
     assert mit["gelaende_nach_rolle"] == ("boden",)
     assert mit["bauwerk_namen"] == ["backstein", "moertel"]
     assert not any("Eine der beiden Angaben stimmt nicht" in w for w in mit["warnungen"])
@@ -216,3 +217,12 @@ def test_werkzeug_glb_rolle_drueckt_seine_schalter(tmp_path):
                        "--rolle", "terrain"]) == 0
     assert kosmo_szene.gelaende_in_glb(tmp_path / "z.glb")["knoten"] == ["boden"]
     assert modul.main([str(quelle), str(quelle), "--knoten", "boden"]) == 2
+
+
+def test_quelle_wie_in_318_ohne_und_mit_rolle_gleich_gebaut():
+    """auf-20261021-318: ohne Rolle «name+form», mit Rolle bis dahin «rolle» — jetzt «name+rolle»."""
+    ohne = maske.bauwerksmaske(FARBEN, TABELLE, gelaende_zusatz=("boden",))
+    mit = maske.bauwerksmaske(FARBEN, TABELLE, gelaende_zusatz=("boden",), gelaende_rolle=("boden",))
+    assert ohne["gelaende_quelle"] == "name+form" and ohne["gelaende_von_aussen"] == ("boden",)
+    assert mit["gelaende_quelle"] == "name+rolle" and mit["gelaende_von_aussen"] == ()
+    assert mit["maske"] == ohne["maske"]          # bildpunktgleich, wie 318 gemessen

@@ -174,8 +174,25 @@ def test_angewandt_traegt_wert_und_herkunft(himmel):
     s = kosmo_szene.lies_szene(_szene(umriss_halten=False))
     ms = abholer.angewandt_der_szene(s)["messschalter"]
     assert ms["material_vorne"] == {"wert": True, "herkunft": "vorgabe"}
-    assert ms["umriss_halten"] == {"wert": None, "herkunft": "bestellt"}
+    # auf-20261021-317 B4 / 319 B4: aus heisst false, nicht null.
+    assert ms["umriss_halten"] == {"wert": False, "herkunft": "bestellt"}
     assert ms["himmel_sichtbar"] == {"wert": True, "herkunft": "vorgabe"}
+
+
+def test_alle_drei_aus_bestellt_stehen_als_false_da(himmel):
+    s = kosmo_szene.lies_szene(_szene(umriss_halten=False, material_vorne=False, himmel_sichtbar=False))
+    ms = abholer.angewandt_der_szene(s)["messschalter"]
+    assert {n: (e["wert"], e["herkunft"]) for n, e in ms.items()} == {
+        "himmel_sichtbar": (False, "bestellt"), "material_vorne": (False, "bestellt"),
+        "umriss_halten": (False, "bestellt")}
+    assert all(e["wert"] is False for e in ms.values())      # kein null, auch nicht als 0
+
+
+def test_entfallene_vorgabe_ist_aus_also_false():
+    szene = {"messschalter": {"umriss_halten": {"herkunft": "vorgabe_entfaellt", "grund": "x"}},
+             "umriss_halten": None}
+    assert abholer.messschalter_angewandt(szene)["umriss_halten"]["wert"] is False
+    assert abholer.messschalter_angewandt(dict(szene, umriss_halten="im_lauf"))["umriss_halten"]["wert"] == "im_lauf"
 
 
 def test_der_himmelsatz_der_grundlage_steht_in_den_hinweisen():

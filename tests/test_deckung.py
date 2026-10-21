@@ -8,7 +8,7 @@ from aiimaging import bildschreiben, varianten as v
 
 def test_vier_urteile():
     assert v.deckung(True, 0.5)["urteil"] == v.DECKUNGSGLEICH
-    d = v.deckung(True, 0.2)
+    d = v.deckung(True, 0.05)
     assert d["urteil"] == v.FORM_WEICHT_AB and d["warnung"] is True
     assert d["satz"] == "gleiche Grundlage, Form weicht ab"
     assert v.deckung(True, None)["urteil"] == v.DECKUNG_UNGEMESSEN
@@ -18,9 +18,23 @@ def test_vier_urteile():
 
 def test_die_schwelle_ist_als_setzung_gekennzeichnet():
     d = v.deckung(True, 0.4)
-    assert d["schwelle"] == 0.30 and "gesetzt, nicht gemessen" in d["herkunft"]
+    assert d["schwelle"] == 0.10 and "gesetzt aus auf-20261021-317 (vier Läufe" in d["herkunft"]
+    assert "nicht gemessen" not in d["herkunft"]
     with pytest.raises(ValueError):
         v.deckung(True, 0.4, schwelle=1.5)
+
+
+def test_die_schwelle_trennt_die_vier_laeufe_aus_317():
+    """auf-20261021-317: K Form nein 0,033; M2, BI55, BI40 Form ja 0,197 / 0,635 / 0,739.
+
+    Die alte Setzung 0,30 stufte M2 als «Form weicht ab» ein, obwohl Hauptbau, Anbau und
+    Dachaufbau an derselben Stelle stehen (Augenurteil ja). Die neue trennt alle vier richtig.
+    """
+    augenurteil = {0.033: False, 0.1969: True, 0.6347: True, 0.7387: True}
+    for iou, form_ja in augenurteil.items():
+        assert (v.deckung(True, iou)["urteil"] == v.DECKUNGSGLEICH) is form_ja, iou
+    assert v.deckung(True, 0.1969, schwelle=0.30)["urteil"] == v.FORM_WEICHT_AB   # der alte Fehler
+    assert 0.033 < v.DECKUNG_KANTEN_IOU_SCHWELLE < 0.1969
 
 
 def _bild(pfad, kante_bei):
@@ -33,7 +47,7 @@ def test_aus_bildern_gleiche_form_und_versetzte_form(tmp_path):
     grund = _bild(tmp_path / "g.png", 8)
     assert v.deckung_aus_bildern(_bild(tmp_path / "a.png", 8), grund, True)["urteil"] == v.DECKUNGSGLEICH
     weit = v.deckung_aus_bildern(_bild(tmp_path / "b.png", 3), grund, True)
-    assert weit["urteil"] == v.FORM_WEICHT_AB and weit["kanten_iou"] < 0.30
+    assert weit["urteil"] == v.FORM_WEICHT_AB and weit["kanten_iou"] < v.DECKUNG_KANTEN_IOU_SCHWELLE
 
 
 def test_ohne_grundbild_oder_mit_anderer_groesse_nicht_gemessen(tmp_path):
@@ -49,7 +63,7 @@ def test_abholer_misst_die_deckung_nur_mit_beiden_bildern(tmp_path):
     from aiimaging import abholer
     grund = _bild(tmp_path / "g.png", 8)
     d = abholer.deckung_der_kamera(_bild(tmp_path / "a.png", 3), grund)
-    assert d["urteil"] == v.FORM_WEICHT_AB and 0.0 <= d["kanten_iou"] < 0.30
+    assert d["urteil"] == v.FORM_WEICHT_AB and 0.0 <= d["kanten_iou"] < v.DECKUNG_KANTEN_IOU_SCHWELLE
     assert abholer.deckung_der_kamera(tmp_path / "a.png", None) is None
     assert abholer.deckung_der_kamera(None, grund) is None
     klein = tmp_path / "k.png"

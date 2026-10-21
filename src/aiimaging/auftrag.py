@@ -244,22 +244,40 @@ def naechste_laufnummer(repo_wurzel) -> int:
 
 
 def naechster_rang(worker: str, repo_wurzel) -> int:
-    """Der kleinste freie Rang dieses Adressaten.
+    """Der Rang hinter dem letzten unbeantworteten Auftrag dieses Adressaten (ohne einen: 1).
 
-    ``tests/test_auftraege.py`` verlangt je Adressat eine **lückenlose Reihe von eins
-    an** — und sagte bisher niemandem, welcher Rang frei ist. Vier Lanes schreiben in
-    dieselbe Warteschlange; wer zuletzt pusht, macht ``main`` rot, und aufräumen muss der
-    Nächste. *Eine Vorschrift ohne Vergabestelle verlagert die Arbeit auf den, der zuletzt
-    kommt.*
+    **Hinten angehängt, nicht in eine Lücke** (seit 21.10.2026, Strang nach317): Bis dahin
+    galt eine lückenlose Reihe von eins an, und die Vergabe füllte die kleinste freie Zahl.
+    Jedes Ergebnis der HomeStation riss aber eine Lücke (Rang 1 erledigt, 2 und 3 offen), und
+    ``tests/test_auftraege.py`` wurde nach jedem Ergebnis-Commit rot. Jetzt sind Lücken
+    erlaubt, wo ein erledigter Auftrag stand (:func:`raenge_ohne_grund`) — und ein neuer
+    Auftrag darf sich nicht in eine solche Lücke VOR ältere offene drängen.
 
     Gezählt wird über die **unbeantworteten** Aufträge, denn nur die stehen in der Reihe.
     """
     belegt = {a.get("rang") for a in unerledigt(repo_wurzel)
               if a.get("worker") == worker and isinstance(a.get("rang"), int)}
-    rang = 1
-    while rang in belegt:
-        rang += 1
-    return rang
+    return max(belegt, default=0) + 1
+
+
+def raenge_ohne_grund(worker: str, repo_wurzel) -> list[int]:
+    """Die Lücken in der Reihe dieses Adressaten, die **kein** erledigter Auftrag erklärt.
+
+    Eine Lücke unter dem höchsten offenen Rang ist erlaubt, wenn dort ein beantworteter
+    Auftrag desselben Adressaten stand — er ist herausgefallen, weil er fertig ist. Eine Lücke
+    ohne einen solchen ist die Frage, die die Lückenlosigkeit früher beantwortete: *Ist da
+    einer verloren gegangen?* Leer heisst: die Reihe ist in Ordnung.
+
+    **Kein Nachrücken:** Die offenen Aufträge umzunummerieren hiesse, nach jedem Ergebnis
+    fremde Auftragsdateien zu ändern — mehrere Stränge schreiben in denselben Ordner, und
+    jede solche Änderung wäre ein Zusammenstoss mehr.
+    """
+    alle = [a for a in offene_auftraege(repo_wurzel) if a.get("worker") == worker
+            and isinstance(a.get("rang"), int) and not isinstance(a.get("rang"), bool)]
+    offen = {a["rang"] for a in alle if zustand(a["auftrag_id"], repo_wurzel) in UNBEANTWORTET}
+    erledigt = {a["rang"] for a in alle} - offen
+    return [r for r in range(1, max(offen, default=0) + 1)
+            if r not in offen and r not in erledigt]
 
 
 def neue_auftrag_id(zeitstempel: str | None = None, laufnummer: int = 1,

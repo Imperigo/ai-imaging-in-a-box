@@ -619,7 +619,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     (``extras.role == "ground"``, gelesen von :func:`aiimaging.kosmo_szene.gelaende_in_glb`).
     Ein solcher Eintrag ist Gelände, auch wenn er «boden» heisst — ein Wort, das die
     Namensregel mit Grund nie aufnimmt (:data:`WOERTER_AUSDRUECKLICH_NICHT`). Verglichen wird
-    wie ein übertragener Name; ``gelaende_quelle`` sagt dann ``"rolle"`` bzw. ``"name+rolle"``.
+    wie ein übertragener Name; ``gelaende_quelle`` sagt dann ``"name+rolle"`` (wie ``"name+form"``).
 
     **Der Bestand zählt nicht als Bauwerk** (auf-20261021-313, B1): Ein Bestandskörper
     (Material «Bestand» oder ein Knoten aus ``bestand_namen``, :func:`ist_bestand`) machte in
@@ -684,7 +684,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         * ``anteil_bauwerk`` — ``n_bauwerk / n_bildpunkte``. Zum Vergleich: Im Messstand
           waren es 17,02 %.
         * ``gelaende_erkannt`` — ob die Regel auf mindestens einen Tabelleneintrag passte.
-        * ``gelaende_quelle`` — ``"name"`` oder ``"name+form"``. **Eine Maske, der man
+        * ``gelaende_quelle`` — ``"name"``, ``"name+form"``, ``"name+rolle"`` oder
+          ``"name+rolle+form"``. **Eine Maske, der man
           nicht ansieht, woher ihr Gelände stammt, ist die Maske, die den Boden mitzählte,
           ohne es zu sagen.**
         * ``gelaende_von_aussen`` — welche Einträge nur über :attr:`gelaende_zusatz`
@@ -1106,16 +1107,20 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
 
 
 def _gelaende_quelle(gelaende_namen, zusatz_getroffen, rolle_getroffen) -> str:
-    """``name`` | ``name+form`` | ``rolle`` | ``name+rolle`` (…``+form``) — nach Wirkung.
+    """``name`` | ``name+form`` | ``name+rolle`` | ``name+rolle+form`` — nach Wirkung.
 
-    ``rolle`` allein, wenn JEDER Geländeeintrag über die Rolle kam; ``name+rolle``, wenn die
-    Namensregel daneben auch etwas fand. *Wie bei der Form: gemeldet wird, was gegriffen hat.*
+    **«name» steht immer vorn**: Die Namensregel läuft immer, auch wenn sie nichts findet — so
+    hiess es von Anfang an ``name+form``, auch wenn allein die Form den Boden fand. Dahinter
+    steht, was **zusätzlich** gegriffen hat: ``+rolle`` (die glb weist den Knoten selbst als
+    Boden aus), ``+form`` (ein übertragener Name der Formregel).
+
+    *Angeglichen nach auf-20261021-318 (B2):* Bis dahin hiess es mit Rolle allein ``rolle`` —
+    dieselbe Steine-Probe meldete ohne Rolle ``name+form`` und mit Rolle ``rolle``, als sei die
+    Namensregel mit der Rolle verschwunden. Jetzt ``name+rolle``: dieselbe Form wie ``name+form``.
     """
-    rolle = set(rolle_getroffen)
-    teile = []
-    if not rolle or any(n not in rolle for n in gelaende_namen if n not in zusatz_getroffen):
-        teile.append("name")
-    if rolle:
+    del gelaende_namen   # «name» steht immer; die Liste trägt die Wirkung im Befund selbst
+    teile = ["name"]
+    if rolle_getroffen:
         teile.append("rolle")
     if zusatz_getroffen:
         teile.append("form")

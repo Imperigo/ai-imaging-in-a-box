@@ -1839,6 +1839,9 @@ bestimmt, was zuerst gemessen wird.
 *Und warum er im Auftrag steht und nicht im ausführenden Skript:* Wer weiss, was zuerst
 zählt, ist der, der den Auftrag stellt. Eine Sortierregel im Skript wäre eine
 Betriebsentscheidung an der falschen Stelle.
+*Seit dem 21.10.2026:* Ränge sind je Adressat eindeutig, dürfen aber **Lücken** haben, wo ein erledigter Auftrag
+stand; ein neuer Auftrag kommt hinter den letzten offenen, nie in eine Lücke. Vorher riss jedes Ergebnis eine Lücke,
+und eine Prüfung wurde rot.
 
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
@@ -2308,8 +2311,9 @@ oder Kameras), lehnt der Heim-PC laut ab, statt still neu zu rechnen.
 **Deckungsgleiche Varianten** — Bilder derselben Grundlage, die sich Pixel für Pixel
 überlagern lassen: gleicher Standpunkt, gleiche Geometrie, nur Licht und Stimmung
 anders. Für einen Wettbewerb sind nur solche Varianten vergleichbar. Seit dem 21.10.2026 heisst
-«deckungsgleich» zusätzlich: die **Kanten-IoU** des KI-Bilds gegen die Grundlage liegt über einer Schwelle (0,30, gesetzt);
-darunter steht «gleiche Grundlage, Form weicht ab».
+«deckungsgleich» zusätzlich: die **Kanten-IoU** des KI-Bilds gegen die Grundlage liegt über einer Schwelle;
+darunter steht «gleiche Grundlage, Form weicht ab». Die Schwelle war zuerst 0,30 (gesetzt, nicht gemessen) und ist seit
+Auftrag 317 **0,10**: Ein Bild, das die Form hielt und nur Fenster und Fugen dazumalte, traf 0,20, ein anderer Bau 0,03.
 
 **Nur Grundlage («nur Cycles»)** — Ein Auftrag ohne KI-Schritt: geliefert wird das rohe
 Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem teuren
@@ -2503,6 +2507,8 @@ Material ein Bildpunkt zeigt. *Im Projekt:* seit dem 21.10.2026 überspringt die
 unabhängig von seinem Namen: `"existing"` für Bestand, `"ground"` für Boden oder Gelände. *Wozu:* Namen tragen das
 nicht verlässlich — «boden» kann ein Geschossboden sein. Die Rolle sagt es eindeutig. *Im Projekt:* gelesen von
 `kosmo_szene.bestand_in_glb` und `kosmo_szene.gelaende_in_glb`; ein Teil mit Rolle `ground` zählt nicht zum Bauwerk.
+Im Befund heisst die Herkunft dann `gelaende_quelle: "name+rolle"` — gebaut wie `"name+form"`: vorn steht immer die
+Namensregel, dahinter, was zusätzlich griff (seit Auftrag 318 angeglichen; vorher hiess es mit Rolle nur `"rolle"`).
 
 **Fassungszeile (in `visbox_status`)** — Die Zeile mit der Nummer der laufenden Mac-App (etwa 0.3.21), wie sie in
 ihrer Info-Datei steht. Seit dem 21.10.2026 nennt die Statusantwort an Claude sie in einer
@@ -8787,8 +8793,25 @@ mehrere Kameras bis 843 MiB mehr brauchten. Darüber kommt noch die feste Reserv
 
 **Kanten-IoU** — Wie gut zwei Bilder dieselben Kanten haben: Zahl der Bildpunkte, die in beiden Bildern Kante sind,
 geteilt durch die Zahl, die in mindestens einem Kante sind (1 = gleich, 0 = nichts gemeinsam). *Im Projekt:* das Mass
-dafür, ob die KI auf einer Grundlage dieselbe Form gemalt hat (Feld `deckung` je Kamera, Schwelle 0,30 gesetzt, nicht
-gemessen).
+dafür, ob die KI auf einer Grundlage dieselbe Form gemalt hat (Feld `deckung` je Kamera, Schwelle 0,10, gesetzt aus
+Auftrag 317 mit vier Bildern). Neue Fenster und Fugen sind auch Kanten, die die Grundlage nicht hat — darum liegt ein Bild
+mit gehaltener Form schon bei 0,2, nicht bei 0,5.
+
+**Abgeschriebener Beispielsatz** — Ein kleines Sprachmodell übernimmt einen Satz, der ihm in seiner Anweisung als
+*Beispiel* gezeigt wurde, wörtlich in seine Antwort — auch dort, wo er nicht passt. *Im Projekt:* Der Assistent der
+Knotenansicht bekam als Beispiel «Das Löschen ist als Karte A-1 vorgeschlagen» und schrieb diesen Satz in Auftrag 319
+an drei Antworten, in denen nichts gelöscht wurde. Seither steht die Regel ohne Beispielsatz, und das Programm streicht
+selbst jeden Satz, der eine Karte nennt, die in diesem Gespräch nicht entstand, oder ein Löschen, das keiner vorschlug.
+
+**Randgrund (beim Schätzen des Hausanteils)** — Der Grund, warum die Schätzung «wieviel Haus ist im KI-Bild» an einem
+Bildpunkt aufhörte, das Haus weiter wachsen zu lassen: zu nah, zu fern, Himmel, Boden, ein Sprung in der Tiefe. *Wozu:*
+Im nahen Bild von Auftrag 317 schätzte das Programm 31 % Haus, von Hand gezählt waren es 46 %; woran es lag, war ohne die
+Tiefenkarte nicht zu sehen. Seither zählt das Ergebnis je Grund mit (`rand_gruende`), und der nächste Lauf zeigt es.
+
+**Tor für Ergebnis-Commits** — Die kleine Auswahl an Prüfungen, die der Heim-PC besteht, bevor er ein Messergebnis
+hochlädt: nur die Tests, die die Auftrags- und Ergebnisordner lesen (rund 25 Sekunden, ohne Grafikkarte). Prüfungen, die
+von der Ausstattung des Rechners abhängen (Swift, Node mit TypeScript), gehören nicht dazu. *Im Projekt:* in
+`auftraege/README.md`, mit einer Probe, die prüft, dass jede genannte Testdatei existiert.
 
 **KI-Bild ohne Grundlagenbild** — Ein Bild, bei dem das Bildmodell das gerenderte Bild der Grundlage (das Cycles-Bild)
 gar nicht zu sehen bekam, obwohl es mitgeschickt war. Gebunden hat dann nur die Tiefenkarte: Die Form steht grob, Material,
@@ -8823,6 +8846,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Strang «nach317» (Ergebnisse 317–319): **Abgeschriebener Beispielsatz**, **Randgrund (beim Schätzen des Hausanteils)**, **Tor für Ergebnis-Commits**; nachgeführt **Deckungsgleiche Varianten** und **Kanten-IoU** (Schwelle 0,10), **Rang** (Lücken erlaubt), **Rolle am Knoten** (`name+rolle`) |
 | 2026-10-21 | Ergaenzt aus Strang «modusko» (Protokoll 74 §214): **Marke «Anders gerechnet» / «Ohne Grundlagenbild»**, **Tolerant gelesen (Feld im Ergebnis)** |
 | 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §211): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
 | 2026-10-21 | Ergaenzt aus Entscheid 126 und den Befunden von auf-20261021-314 (Protokoll 74 §210, §212): **Vorgabe für Varianten**, **Kamerakürzel und deutsches Gleichwort**, **OptiX**, **Paket von Schritten (`vis_paket`, «$neu:N»)** |

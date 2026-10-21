@@ -1212,17 +1212,26 @@ _NIE_ALS_WERKZEUG = re.compile(r"freig|approv|gpu", re.I)
 #: selbst (:func:`_pruefe_angaben`, :func:`_berichtige_antwort`). **Der Systemsatz lebt nur hier**;
 #: die Mac-App (``Assistentengespraech``) führt die Gesprächsregeln (eine Karte, Längen), nicht
 #: den Satz an das Modell.
+#:
+#: **Ohne wörtliches Beispiel seit auf-20261021-319** (B1): Der Satz nannte als Beispiel
+#: «Das Löschen ist als Karte A-1 vorgeschlagen», und qwen3:14b schrieb ihn in F1 (Stimmung),
+#: F2 (Rendern) und F3 (Freigeben) als Schlussantwort ab, obwohl nichts gelöscht wurde. Ein
+#: kleines Modell kopiert Beispielsätze; die Regel steht darum ohne Beispiel, und der Kern
+#: verwirft einen Satz, der eine fremde Karte oder ein Löschen ohne Löschschritt nennt
+#: (:func:`_ohne_fremde_karten`). Ebenso weg: «verbinde ihn in der nächsten Runde» — ein neuer
+#: Knoten, der nur als Karte vorliegt, hat auch dort keine Kennung (319 B2); verbunden wird im
+#: Paket.
 SYSTEMTEXT_KNOTEN = (
     "Du bist der Assistent der Bild-App Visbox für Architektinnen und Architekten. Du bedienst "
     "die Knotenansicht, in der aus einem 3D-Modell über Knoten (Modell, Kamera, Stimmung, "
     "Render) ein Bild entsteht — mit denselben Werkzeugen wie Claude. "
     "Kennungen (graphId, nodeId, from, to, edgeId) rätst du nie: Lies zuerst den Graph "
-    "(graph_lesen) und nimm nur Kennungen, die in einem Ergebnis stehen. Die Kennung eines "
-    "neuen Knotens kennst du erst aus dem Ergebnis von vis_nodeSetzen — verbinde ihn darum in "
-    "der nächsten Runde, nicht in derselben. Antwortet vis_nodeSetzen mit «VORSCHLAG A-1 liegt "
-    "als Karte», ist A-1 die Kennung der KARTE, nicht eines Knotens: Nimm sie nie als from, to "
-    "oder nodeId. Soll ein neuer Knoten gleich verbunden werden, lege beides in einem vis_paket "
-    "an («$neu:0» ist der neue Knoten). Arbeite im bestehenden Graph aus graph_lesen; einen neuen "
+    "(graph_lesen) und nimm nur Kennungen, die in einem Ergebnis stehen. Soll ein neuer Knoten "
+    "verbunden werden, lege Knoten und Verbindung zusammen in EINEM vis_paket an («$neu:0» ist "
+    "der neue Knoten) — einzeln geht es nicht: Ein neuer Knoten hat noch keine Kennung, auch "
+    "nicht in der nächsten Runde, solange er nur als Karte vorliegt. Antwortet ein Werkzeug mit "
+    "«VORSCHLAG … liegt als Karte», ist die Kennung darin die Kennung der KARTE, nicht eines "
+    "Knotens: Nimm sie nie als from, to oder nodeId. Arbeite im bestehenden Graph aus graph_lesen; einen neuen "
     "Graph (vis_graphErstellen) legst du nur an, wenn ausdrücklich darum gebeten wird oder "
     "graph_lesen keinen findet. "
     "Erfinde nichts, was weder die Nutzerin sagte noch im Graph steht: keine Stimmung, keine "
@@ -1231,8 +1240,9 @@ SYSTEMTEXT_KNOTEN = (
     "Löschen und Rendern sind immer eine Karte. Antwortet ein Werkzeug mit «VORSCHLAG … liegt "
     "als Karte», ist das richtig so — schlage dasselbe nicht noch einmal vor, und nenne es "
     "danach «vorgeschlagen», nie «gelöscht», «geändert» oder «gerechnet» — auch nicht mit der Karte "
-    "im selben Satz: sage «Das Löschen ist als Karte A-1 vorgeschlagen», nie «Der Knoten wurde "
-    "gelöscht — es liegt eine Karte». Ausgeführt ist es erst, wenn der Architekt die Karte anwendet. "
+    "im selben Satz. Nenne dabei nur, was ein Werkzeug in diesem Gespräch wirklich als Karte "
+    "gemeldet hat: dessen Handlung und dessen Kartenkennung, keine andere. Ausgeführt ist es "
+    "erst, wenn der Architekt die Karte anwendet. "
     "Wird um ein Bild gebeten («Rechne», «Render», «mach ein Bild»), stelle den Auftrag mit "
     "vis_render am Render-Knoten aus dem Graph — nur mit den Angaben, die genannt wurden. Das ist "
     "kein Freigeben und erlaubt: der Auftrag wird eine Karte. "
@@ -1314,6 +1324,14 @@ def _neuer_graph_erlaubt(nachricht: str, getan) -> bool:
         return True
     return any(sch.get("werkzeug") == "graph_lesen" and _KEIN_GRAPH in str(sch.get("ergebnis", ""))
                for sch in getan or ())
+
+
+#: Wer einen neuen Knoten setzt und ihn in derselben Runde einzeln verbinden will (319 B2).
+SATZ_GLEICH_VERBINDEN = (
+    "Ein neuer Knoten und seine Verbindung gehen nur zusammen: Lege beides in EINEM vis_paket an "
+    "— Schritt 0 vis_nodeSetzen, Schritt 1 vis_verbinden mit «$neu:0» als from oder to und dem "
+    "bestehenden Knoten aus graph_lesen auf der anderen Seite. Einzeln hat der neue Knoten noch "
+    "keine Kennung.")
 
 
 SATZ_KEIN_NEUER_GRAPH = (
@@ -1404,7 +1422,53 @@ def _pruefe_angaben(name: str, argumente: dict, bekannt: str,
     return None
 
 
-def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict]) -> str:
+#: Eine Kartenkennung, die ein Satz der Antwort nennt («Karte A-1», «Karten A-1, A-2», «Karte «A-1»»).
+_KARTE_GENANNT = re.compile(r"\bKarten?\s+«?([A-Za-z]+-\d+)\b")
+_LOESCHEN = re.compile(r"lösch|loesch|entfern", re.I)
+_ALS_KARTE_GEMELDET = re.compile(r"\bKarte|vorgeschlagen|vorschlag", re.I)
+
+
+def _loeschen_in(getan) -> bool:
+    """Schlug ein Schritt dieser Frage ein Löschen vor (Werkzeug, Paket-Schritt oder Kartentext)?"""
+    for sch in getan or ():
+        if "loeschen" in str(sch.get("werkzeug", "")).lower():
+            return True
+        if "loeschen" in json.dumps(sch.get("argumente") or {}, ensure_ascii=False).lower():
+            return True
+        if any(_LOESCHEN.search(m.group(2) or "") for m in _KARTE_MIT_WAS.finditer(str(sch.get("ergebnis", "")))):
+            return True
+    return False
+
+
+def _ohne_fremde_karten(saetze: list[str], getan, gespraech: str) -> list[str]:
+    """Die Sätze ohne die, die eine Karte nennen, die in diesem Gespräch nicht entstand.
+
+    **Warum (auf-20261021-319, B1):** qwen3:14b schrieb den Beispielsatz des Systemsatzes «Das
+    Löschen ist als Karte A-1 vorgeschlagen.» in F1 bis F3 ab — dort wurde nichts gelöscht. Eine
+    Bitte im Systemsatz ist bei einem 14-B-Modell keine Gewähr; darum prüft der Kern selbst:
+
+    * Ein Satz, der eine **Kartenkennung** nennt, die weder ein Schritt dieser Frage meldete noch
+      im Gespräch (Frage, Verlauf) steht, wird verworfen.
+    * Ein Satz, der ein **Löschen als Karte/Vorschlag** meldet, wird verworfen, wenn kein Schritt
+      dieser Frage etwas zum Löschen vorschlug — auch wenn die Kennung stimmt (in 319 F1 hiess die
+      Stimmungs-Karte tatsächlich A-1).
+    """
+    bekannt = _karten_in(getan)
+    loeschen = _loeschen_in(getan)
+    raus = []
+    for satz in saetze:
+        genannt = [m.group(1) for m in _KARTE_GENANNT.finditer(satz)]
+        fremd = [k for k in genannt if k not in bekannt and not _kommt_vor(k, gespraech)]
+        falsches_loeschen = (not loeschen and _LOESCHEN.search(satz) is not None
+                             and _ALS_KARTE_GEMELDET.search(satz) is not None)
+        if fremd or falsches_loeschen:
+            continue
+        raus.append(satz)
+    return raus
+
+
+def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
+                        gespraech: str = "") -> str:
     """Die Schlussantwort an das halten, was wirklich geschah (Befunde B3 und B5).
 
     * «FEHLER:» am Anfang ist die Sprache der Werkzeuge, nicht die an den Menschen — weg.
@@ -1412,8 +1476,14 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict]) -> str:
       meldet («wurde gelöscht»), durch den richtigen ersetzt; sind einige direkt geschehen, steht
       der Kartensatz dazu.
     * Wer nach der Freigabe fragt, hört :data:`SATZ_NUR_ARCHITEKT`, was das Modell auch sagte.
+    * Ein Satz, der eine Karte nennt, die in diesem Gespräch nicht entstand, oder ein Löschen ohne
+      Löschschritt, fällt weg (:func:`_ohne_fremde_karten`, auf-20261021-319 B1). ``gespraech``
+      ist der Text von Verlauf und Frage — eine Karte aus einer früheren Frage darf genannt werden.
     """
     text = re.sub(r"^\s*(FEHLER|VERWEIGERT)\s*:\s*", "", antwort or "").strip()
+    if text:
+        text = " ".join(_ohne_fremde_karten(re.split(r"(?<=[.!?])\s+", text), getan,
+                                            f"{nachricht or ''}\n{gespraech}")).strip()
     wirkend = [s for s in getan if s["werkzeug"] not in _NUR_LESEN]
     # Je Schritt die Karten (auch mitten im Text, auch aus einem Paket) samt dem, was sie
     # vorschlagen — der Satz nennt es: «vorgeschlagen als Karte A-2 (Knoten «Modell» löschen)».
@@ -1441,7 +1511,8 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict]) -> str:
                     continue
                 neu.append(s)
             text = " ".join(neu)
-        elif behauptet:
+        elif behauptet or not text:
+            # Auch wenn nach dem Verwerfen nichts blieb, sagt der Kern, was als Karte liegt.
             text = f"{text} {satz_karte}".strip()
     if _FRAGE_NACH_FREIGABE.search(nachricht or "") and "render-knoten" not in text.lower():
         # Der kurze Satz des Modells («Freigeben kann nur der Architekt.») weicht dem vollen, der
@@ -1586,6 +1657,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     bekannt = "\n".join([nachricht] + [str(m.get("content", "")) for m in frueher]
                          + [sch["ergebnis"] for sch in getan])
     karten = _karten_in(getan)
+    gespraech = "\n".join(str(m.get("content", "")) for m in frueher)
     neuer_graph = _neuer_graph_erlaubt(nachricht, getan)
     # BEI EINER BITTE UM EIN BILD EIN ANSTOSS (auf-20261021-310, B2) — nur, wenn vis_render
     # angeboten ist und in dieser Frage noch kein Render-Auftrag steht, und nur einmal.
@@ -1619,7 +1691,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                 nachrichten.append({"role": "assistant", "content": inhalt})
                 nachrichten.append({"role": "user", "content": SATZ_BILD_ANSTOSS})
                 continue
-            return {"antwort": _berichtige_antwort(antwort, nachricht, getan)}
+            return {"antwort": _berichtige_antwort(antwort, nachricht, getan, gespraech=gespraech)}
         offen, abgewiesen = [], []
         for aufruf in aufrufe:
             funktion = aufruf.get("function") if isinstance(aufruf, dict) else None
@@ -1645,6 +1717,16 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                 abgewiesen.append((name, grund))
             else:
                 offen.append({"werkzeug": name, "argumente": argumente})
+        # EIN NEUER KNOTEN UND SEINE VERBINDUNG GEHEN NUR ZUSAMMEN (auf-20261021-319, B2): In F1
+        # setzte das Modell die Stimmung und verband sie in derselben Runde mit der geratenen
+        # Kennung «n3»; der Kern wies die Verbindung ab, liess den Knoten aber hinaus — er kam als
+        # Karte zurück, ohne Kennung, und eine Verbindung zu n2 entstand nie. Jetzt bleibt auch
+        # der Knoten hier, und das Modell bekommt in derselben Anfrage den Weg über vis_paket.
+        if (any(o["werkzeug"] == "vis_nodeSetzen" for o in offen)
+                and any(n == "vis_verbinden" for n, _ in abgewiesen)):
+            offen = [o for o in offen if o["werkzeug"] != "vis_nodeSetzen"]
+            abgewiesen = [(n, SATZ_GLEICH_VERBINDEN if n == "vis_verbinden" else g)
+                          for n, g in abgewiesen] + [("vis_nodeSetzen", SATZ_GLEICH_VERBINDEN)]
         if offen:
             # DIE GUELTIGEN GEHEN HINAUS, HOECHSTENS SO VIELE, WIE NOCH FREI SIND — die Mac-App
             # fuehrt sie aus; eine Abweisung daneben wird nicht still verschluckt, sie steht im
@@ -1657,7 +1739,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
         for name, grund in abgewiesen:
             nachrichten.append({"role": "tool", "tool_name": name, "content": f"Abgewiesen: {grund}"})
     if antwort:
-        return {"antwort": _berichtige_antwort(antwort, nachricht, getan)}
+        return {"antwort": _berichtige_antwort(antwort, nachricht, getan, gespraech=gespraech)}
     if abgelaufen or not abgewiesen:
         raise AssistentError(SATZ_FRIST_ABGELAUFEN)
     return {"antwort": "Dazu fand ich kein passendes Werkzeug — " + abgewiesen[-1][1]}
