@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { VIS_STIMMUNGEN } from '@kosmo/kernel';
 import { KDialog, KTabs, KTooltip } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
@@ -73,19 +74,41 @@ export function VariantenRaster({ variantenId }: { variantenId: string }) {
           <Zeile key={standpunkt} standpunkt={standpunkt} stimmungen={bestellung.stimmungen} zelle={zelle} onGross={setGross} />
         ))}
       </div>
-      {gross && gross.jobId && gross.bild && (
-        <KDialog
-          titel={`${gross.standpunkt} · ${VIS_STIMMUNGEN[gross.stimmung]?.label ?? gross.stimmung} · ${bestellung.entwuerfe.find((e) => e.id === gross.entwurf)?.name ?? gross.entwurf}`}
-          onClose={() => setGross(null)}
-          breite={900}
-          data-testid="varianten-raster-gross"
-        >
-          <BridgeBild jobId={gross.jobId} imageName={gross.bild} alt={gross.standpunkt} className="vis-img-full" />
-          {gross.urteil && <p className="vis-raster-gross-urteil">{URTEIL_TEXT[gross.urteil]}</p>}
-        </KDialog>
-      )}
+      {/* Blatt 36 (Nachgang): per Portal an `document.body` wie die grosse Ansicht des Verlaufs — in der
+          gezoomten Knotenebene lag der Dialog sonst nach der Ebene statt nach dem Fenster. */}
+      {gross &&
+        gross.jobId &&
+        gross.bild &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div onKeyDown={(e) => halteTaste(e, () => setGross(null))} onPointerDown={halte} onClick={halte} onDoubleClick={halte} onWheel={halte}>
+            <KDialog
+              titel={`${gross.standpunkt} · ${VIS_STIMMUNGEN[gross.stimmung]?.label ?? gross.stimmung} · ${bestellung.entwuerfe.find((e) => e.id === gross.entwurf)?.name ?? gross.entwurf}`}
+              onClose={() => setGross(null)}
+              breite={900}
+              data-testid="varianten-raster-gross"
+            >
+              <BridgeBild jobId={gross.jobId} imageName={gross.bild} alt={gross.standpunkt} className="vis-img-full" />
+              {gross.urteil && <p className="vis-raster-gross-urteil">{URTEIL_TEXT[gross.urteil]}</p>}
+            </KDialog>
+          </div>,
+          document.body,
+        )}
     </div>
   );
+}
+
+/** Ereignisse aus der grossen Ansicht gehoeren ihr (nicht dem Knoten, nicht der Leinwand). */
+function halte(e: SyntheticEvent): void {
+  e.stopPropagation();
+}
+/** Escape schliesst hier selbst: der Riegel oben haelt das Ereignis auch vom Horcher des Dialogs fern. */
+function halteTaste(e: ReactKeyboardEvent, schliessen: () => void): void {
+  e.stopPropagation();
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    schliessen();
+  }
 }
 
 function Zeile({

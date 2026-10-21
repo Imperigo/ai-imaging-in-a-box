@@ -1870,6 +1870,16 @@
   transform: translate(-50%, -50%);
 }
 
+/* L5-12: Popover und Kopfzeile der Ansichts-Info liegen in beiden Themen auf
+   dunklem Glas (im Papier greift der Rückfall `rgba(20,23,31,0.62)`), trugen dort
+   aber die dunkle Papier-Tinte (2,4–3,3:1). Wie bei den Kopfkreisen oben: helle
+   Glastinte lokal. */
+.isl-buehnenkopf-popover,
+.isl-ansichts-info-label {
+  --k-ink: var(--isl-pill-ink);
+  --f-ink: var(--isl-pill-ink);
+  --k-ink-soft: var(--k-glass-ink-soft);
+}
 .isl-buehnenkopf-popover {
   position: absolute;
   top: calc(100% + var(--k-s3));

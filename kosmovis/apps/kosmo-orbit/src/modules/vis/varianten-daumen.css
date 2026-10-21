@@ -1,0 +1,147 @@
+/*
+ * Die Bildzeile des Varianten-Knotens (Blatt 36 «Varianten-Daumen», `VariantenDaumen.tsx`). Eigene
+ * Datei, damit vis-visual.css nicht angefasst wird. Die Zeile ist fest `VARIANTEN_DAUMEN_H` hoch
+ * (NodeCanvas, `KOERPER_H.varianten`): jeder Zustand steht in derselben Box, die Karte springt nicht.
+ */
+.vis-vdaumen {
+  display: flex;
+  gap: var(--k-s3);
+  height: 60px;
+  min-width: 0;
+}
+
+/* Der Daumen: 96 × 60 px (16:10), nie kleiner (Vorgabe UI: Bilder nicht unter 96 px). */
+.vis-vdaumen-bild {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 96px;
+  height: 60px;
+  padding: 0;
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+  overflow: hidden;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-micro);
+  color: var(--k-ink-faint);
+}
+.vis-vdaumen-bild--fertig {
+  cursor: zoom-in;
+}
+.vis-vdaumen-bild--fertig:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-vdaumen-bild--gewaehlt {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+.vis-vdaumen-bild--leer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 var(--k-s2);
+  border-style: dashed;
+}
+.vis-vdaumen-bild--fehl {
+  color: var(--k-danger);
+  border-color: var(--k-danger);
+}
+.vis-vdaumen-warten {
+  width: 100%;
+}
+
+/* Das Bild fuellt den Daumen; `contain`, damit ein schmales Format nicht beschnitten wird. */
+.vis-vdaumen-img {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--k-surface);
+}
+
+/* Die Marken liegen im Bild (wie am Render-Knoten): «Vorschau» unten links, «Lizenz offen» oben rechts. */
+.vis-vdaumen-bild .vis-guete-marke-huelle--bild {
+  left: var(--k-s1);
+  bottom: var(--k-s1);
+}
+.vis-vdaumen-bild .vis-lizenz-offen-huelle--rechts {
+  position: absolute;
+  top: var(--k-s1);
+  right: var(--k-s1);
+  z-index: 1;
+}
+.vis-vdaumen-haken {
+  position: absolute;
+  top: var(--k-s1);
+  left: var(--k-s1);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--k-radius-pill);
+  border: 1px solid var(--k-accent);
+  background: var(--k-accent-wash);
+  color: var(--k-accent-ink);
+  font-size: var(--k-t-micro);
+  line-height: var(--k-lh-eins);
+  pointer-events: none;
+}
+
+/* Rechts daneben: Titel, «n von N», Blaettern. Zwei Zeilen à 12 px und die Knoepfe (32 px). */
+.vis-vdaumen-seite {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+}
+.vis-vdaumen-titel,
+.vis-vdaumen-zahl {
+  display: block;
+  height: 12px;
+  line-height: var(--k-lh-eng);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--k-t-micro);
+}
+.vis-vdaumen-titel {
+  color: var(--k-ink-soft);
+}
+.vis-vdaumen-zahl {
+  color: var(--k-ink-faint);
+}
+.vis-vdaumen-blaettern {
+  display: flex;
+  gap: var(--k-s2);
+}
+
+/* Gross: Knoepfe in der Fusszeile, Satz unter dem Bild. */
+.vis-vdaumen-gross-knoepfe {
+  display: flex;
+  gap: var(--k-s3);
+  align-items: center;
+  width: 100%;
+}
+.vis-vdaumen-gross-luft {
+  flex: 1;
+}
+.vis-vdaumen-gross-satz {
+  margin: var(--k-s2) 0 0;
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+
+/* Nachgang (Hinweis aus dem Strang Knoten): mit acht Stimmungen passen nicht alle Haken in zwei Zeilen. Die Wahl bleibt
+   40 px hoch (`.vis-varianten-wahl`, die Karte waechst nicht) und rollt statt abzuschneiden; das Rad darin rollt die
+   Liste, nicht die Leinwand (`VariantenKnoten.tsx`, Achse). */
+.vis-varianten .vis-varianten-wahl {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

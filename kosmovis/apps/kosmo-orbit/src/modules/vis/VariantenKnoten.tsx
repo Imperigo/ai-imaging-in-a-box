@@ -7,9 +7,11 @@ import {
   type VisGraph,
   type VisNode,
 } from '@kosmo/kernel';
+import { useEffect, useRef } from 'react';
 import { KButton, KCheckbox, KTooltip, melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import { useVisRuntime } from './vis-runtime';
+import { VariantenDaumen } from './VariantenDaumen';
 import {
   alleFreigeben,
   DAUER_ANNAHME_SATZ,
@@ -29,7 +31,8 @@ import {
  *
  * Von oben: der Zaehler «N Bilder (S × St × E)», die drei Achsen zum Anhaken, eine Zeile fuer
  * die Warnung ab 12 Bildern (mit ungefaehrer Dauer, kein Limit) und den Stand der letzten
- * Bestellung, darunter EIN Knopf «N Bilder bestellen» und EIN Knopf «Alle freigeben». Die Hoehe
+ * Bestellung, die Bildzeile mit den Daumen (Blatt 36, `VariantenDaumen.tsx`), darunter EIN Knopf
+ * «N Bilder bestellen» und EIN Knopf «Alle freigeben». Die Hoehe
  * ist fest (`KOERPER_H.varianten`); eine lange Liste bricht um und steht ganz in der Kurzhilfe.
  *
  * Jedes Anhaken ist ein `vis.nodeParametrieren` (ein Rueckgaengig-Schritt). Bestellt wird mit
@@ -151,6 +154,8 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
         </span>
       </KTooltip>
 
+      <VariantenDaumen graph={graph} node={node} />
+
       <div className="vis-varianten-knoepfe">
         <KButton
           size="sm"
@@ -169,6 +174,19 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
 }
 
 function Achse({ titel, testid, voll, children }: { titel: string; testid: string; voll: string; children: React.ReactNode }) {
+  // Blatt 36 (Nachgang, Hinweis aus dem Strang Knoten): mit acht Stimmungen reichen zwei Zeilen Haken nicht. Die Wahl
+  // bleibt zwei Zeilen hoch (die Karte waechst nicht, kv-b5) und rollt (`varianten-daumen.css`). Das Rad gehoert dann
+  // ihr: die Leinwand hoert nativ auf `wheel`, ein React-Riegel kaeme zu spaet — darum ein eigener Horcher.
+  const wahlRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = wahlRef.current;
+    if (!el) return;
+    const rad = (e: WheelEvent) => {
+      if (!e.ctrlKey && el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
+    };
+    el.addEventListener('wheel', rad, { passive: true });
+    return () => el.removeEventListener('wheel', rad);
+  }, []);
   return (
     <div className="vis-varianten-achse" data-testid={testid}>
       <KTooltip text={voll ? `${titel}: ${voll}` : `${titel}: keine gewählt`} lage="unten">
@@ -176,7 +194,9 @@ function Achse({ titel, testid, voll, children }: { titel: string; testid: strin
           {titel}
         </span>
       </KTooltip>
-      <div className="vis-varianten-wahl">{children}</div>
+      <div ref={wahlRef} className="vis-varianten-wahl" data-testid={`${testid}-wahl`}>
+        {children}
+      </div>
     </div>
   );
 }
