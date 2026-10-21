@@ -1512,7 +1512,8 @@
 .vis-kuratier-statuszeile-text {
   font-family: var(--k-font-mono);
   font-size: var(--k-t-xs);
-  color: var(--k-ink-faint);
+  /* --k-ink-soft statt -faint: hell gemessen 4,57:1 (L5-12, 21.10.2026), knapp über der Grenze — Reserve. */
+  color: var(--k-ink-soft);
 }
 
 /* ── Kurations-Inspektor (KKeyValue-Einsatz + Vorschau-Slot) ───────── */
@@ -2135,7 +2136,7 @@
   margin-left: var(--k-s2);
   padding: 0 var(--k-s1);
   border: 1px dashed var(--k-warning);
-  border-radius: var(--k-radius-xs);
+  border-radius: var(--k-radius);
   color: var(--k-ink);
   font-family: var(--k-font-ui);
   white-space: nowrap;

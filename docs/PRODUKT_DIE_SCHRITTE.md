@@ -2216,6 +2216,10 @@ Himmelsbild zeigt statt eines Verlaufs — gebaut, noch nicht gemessen. Am Bild 
 «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung» (Owner-Entscheid 120); Wettbewerbsbilder
 rechnet Z-Image Turbo. Ehrlich gesagt: Alles ist an Testdaten geprüft; ob es am Heim-PC trägt, misst der nächste Auftrag.
 
+Und eine Schärfung: «deckungsgleich» hiess bis jetzt nur «auf derselben Grundlage gerechnet». Neu misst der Heim-PC je Bild,
+ob die KI auch dieselben Kanten gemalt hat. Liegt der Wert unter der Schwelle, sagt der Vergleich «gleiche Grundlage, Form
+weicht ab» — ein Vergleich, der keiner ist, wird so sichtbar. Die Schwelle ist vorerst gesetzt und wird gemessen.
+
 **Ein Bild kommt im Original aufs Blatt und aus der Ansicht hinaus (21.10.2026).** Im Demolauf vom 16.10. kam am Ende kein
 Rendering auf das A0-Blatt: «Aufs Blatt» nahm nur den letzten Lauf, und der war abgebrochen; die Bilder lagen nur am
 Heim-PC; ein Bildschirmausschnitt von 369 × 228 Bildpunkten wurde hochgezogen und war unbrauchbar. Jetzt nimmt der Knoten

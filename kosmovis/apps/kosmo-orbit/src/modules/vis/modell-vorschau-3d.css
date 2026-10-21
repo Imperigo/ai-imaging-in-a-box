@@ -47,6 +47,12 @@
   pointer-events: none;
 }
 
+/* L5-12 (21.10.2026): dasselbe in der Karte — «3D wird geladen …» stand im dunklen Thema in der Kartentinte auf
+   dunkler Fläche (3,32:1). Bis das Bild da ist, trägt das Fenster dort die Kartenfläche. */
+[data-theme='orbit'] .vis-knoten-ebene .vis-modell-3d--knoten {
+  background: var(--vis-node-flaeche);
+}
+
 .vis-modell-3d--gross {
   width: 100%;
   height: min(64vh, 640px);

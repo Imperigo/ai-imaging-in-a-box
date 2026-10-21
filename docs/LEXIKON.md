@@ -2307,7 +2307,9 @@ oder Kameras), lehnt der Heim-PC laut ab, statt still neu zu rechnen.
 
 **Deckungsgleiche Varianten** — Bilder derselben Grundlage, die sich Pixel für Pixel
 überlagern lassen: gleicher Standpunkt, gleiche Geometrie, nur Licht und Stimmung
-anders. Für einen Wettbewerb sind nur solche Varianten vergleichbar.
+anders. Für einen Wettbewerb sind nur solche Varianten vergleichbar. Seit dem 21.10.2026 heisst
+«deckungsgleich» zusätzlich: die **Kanten-IoU** des KI-Bilds gegen die Grundlage liegt über einer Schwelle (0,30, gesetzt);
+darunter steht «gleiche Grundlage, Form weicht ab».
 
 **Nur Grundlage («nur Cycles»)** — Ein Auftrag ohne KI-Schritt: geliefert wird das rohe
 Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem teuren
@@ -8715,11 +8717,17 @@ noch nicht gemessen; der Himmel wird wie der Verlauf eine Blendenstufe vom Haus 
 *Im Projekt:* Der Lauf mit Bildeingang brauchte gemessen 27'116 MiB mit einer Kamera; eingetragen sind 28'116 MiB, weil
 mehrere Kameras bis 843 MiB mehr brauchten. Darüber kommt noch die feste Reserve von 512 MiB.
 
+**Kanten-IoU** — Wie gut zwei Bilder dieselben Kanten haben: Zahl der Bildpunkte, die in beiden Bildern Kante sind,
+geteilt durch die Zahl, die in mindestens einem Kante sind (1 = gleich, 0 = nichts gemeinsam). *Im Projekt:* das Mass
+dafür, ob die KI auf einer Grundlage dieselbe Form gemalt hat (Feld `deckung` je Kamera, Schwelle 0,30 gesetzt, nicht
+gemessen).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |
+| 2026-10-21 | Ergaenzt aus der Deckung (Protokoll 74 §199): **Kanten-IoU**; **Deckungsgleiche Varianten** um die Form ergaenzt |
 | 2026-10-21 | Ergaenzt aus den Befunden 309/310 (Protokoll 74 §198): **Gebäudewort (im Prompt)**, **Kartenkennung**, **Anstoss (an den Assistenten)**, **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)**, **Sicherheitsrand (beim Grafikspeicher)** |
 | 2026-10-21 | Ergaenzt aus Grossansicht und Vergleich (Protokoll 74 §197): **Grossansicht (eines Bildes)**, **Läufe einer Grundlage**, **Kontextmaske** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-2 (Protokoll 74 §195): **Hausanteil (an Grundlage und KI-Bild)**, **Abgeschnittener Wert (Geometrie 0.0)** |

@@ -49,6 +49,11 @@
   color: var(--k-danger);
   border-color: var(--k-danger);
 }
+/* L5-12 (21.10.2026): im dunklen Thema ist die Karte hell, `--k-surface` aber dunkel — «fehlgeschlagen» stand in der
+   Kartentinte auf dunkler Box (2,35:1). Die Box trägt dort die Kartenfläche; das Papier-Thema bleibt, wie es ist. */
+[data-theme='orbit'] .vis-knoten-ebene .vis-vdaumen-bild {
+  background: var(--vis-node-flaeche);
+}
 .vis-vdaumen-warten {
   width: 100%;
 }

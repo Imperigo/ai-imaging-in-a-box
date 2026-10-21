@@ -8074,7 +8074,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Vertrag mit dem Integrator abgestimmt, Paket 1 «Vertrag» auf `claude/kosmovis-grundlage` (§139)
   - [x] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme) — KosmoOrbit `claude/kosmovis-grundlage`, Visbox-Kopie nachgezogen, Verlauf einklappbar (101a); am Gerät unbestätigt (§145)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
-  - [x] Bild aufs Blatt im Original, «Aufs Blatt»/«Exportieren» je Lauf in der grossen Ansicht, Druckprüfung, leere Läufe nicht wählbar (L4-16, L3-A4, L3-A5) — Blatt «Bild aufs Blatt», KO-Zweig `claude/kosmovis-bild-aufs-blatt`, Kopie nachgezogen, Mac Sichern-Dialog; am Gerät unbestätigt (§199, C121)
+  - [x] Bild aufs Blatt im Original, «Aufs Blatt»/«Exportieren» je Lauf in der grossen Ansicht, Druckprüfung, leere Läufe nicht wählbar (L4-16, L3-A4, L3-A5) — Blatt «Bild aufs Blatt», KO-Zweig `claude/kosmovis-bild-aufs-blatt`, Kopie nachgezogen, Mac Sichern-Dialog; am Gerät unbestätigt (§200, C121)
     - [ ] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare)
     - [ ] Hauptbild ohne Grundbild gross öffnen (owner)
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
@@ -8116,6 +8116,9 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] Messen am Gerät: Bestand in der Bauwerksmaske, Anteil der Kontextmaske (auf-20261021-313, local)
     - [ ] Standard-Ebene «Bestand nah» und Auto-Kamera mit den nahen Nachbarn (integrator, Bitte im Meldeblatt)
     - [ ] Kontextmaske als Eingang ins Bildmodell (Messschalter, nach auf-20261021-313)
+  - [ ] «Deckungsgleich» = gleiche Grundlage UND gleiche Form (L4-1)
+    - [x] Heim-PC `varianten.deckung`, Feld `qa_je_kamera[].deckung` (Vertrag v0.1.10), Marke in der Vergleichsansicht (§199)
+    - [ ] Schwelle 0,30 messen (auf-20261021-312, local)
   - [ ] L24 «Varianten» als Angabe an `vis_render` statt eigener Befehl (Entscheid 102)
 - [ ] Drei Fehler vom Mac am Vis-Werkzeug (20.10.2026, §152, C78)
   - [x] Fokusring in Knotenfeldern: Rand statt abgeschnittenem Ring — beide Programme
