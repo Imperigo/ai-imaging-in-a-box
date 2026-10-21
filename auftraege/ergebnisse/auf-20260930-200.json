@@ -14,12 +14,12 @@
  "punkte": {
   "1a": {
    "ja_nein": "ja",
-   "befund": "Spalte «GRUNDLAGEN 41» mit genau zwei Stapelkarten («Golden Rules Andrin» 17 Dokumente, «lehrhefte» 24 Dokumente), je «Grundlage · in allen Projekten», drei Titel + «+ 14 weitere» bzw. «+ 21 weitere», Knopf «Aufklappen». Keine Einzelkarten. In Projekt 1 kam zuerst die Paketfrage; mit Escape geschlossen, kein Paket gewaehlt. Die Spalte steht rechts neben dem Ablagefeld (Mitte des Bildes), nicht am rechten Bildrand.",
+   "befund": "Spalte «GRUNDLAGEN 41» mit genau zwei Stapelkarten («Golden Rules (Name entfernt, Regel 3)» 17 Dokumente, «lehrhefte» 24 Dokumente), je «Grundlage · in allen Projekten», drei Titel + «+ 14 weitere» bzw. «+ 21 weitere», Knopf «Aufklappen». Keine Einzelkarten. In Projekt 1 kam zuerst die Paketfrage; mit Escape geschlossen, kein Paket gewaehlt. Die Spalte steht rechts neben dem Ablagefeld (Mitte des Bildes), nicht am rechten Bildrand.",
    "abzug": "s04-p1-nach-escape.png"
   },
   "1b": {
    "ja_nein": "ja",
-   "befund": "«Aufklappen» bei «Golden Rules Andrin»: die 17 Karten erscheinen (01.–17., Spalten «GRUNDLAGEN (FORTSETZUNG)»), jede traegt «UNBEKANNT · Grundlage · …», nirgends «Bibliothek». Knopf wird zu «Zuklappen»; danach wieder nur die zwei Stapel. Beim Aufklappen rutscht der Stapel an den linken Rand und das Ablagefeld steht zwischen den Fortsetzungsspalten, rechts laufen Spalten aus dem Bild.",
+   "befund": "«Aufklappen» bei «Golden Rules (Name entfernt, Regel 3)»: die 17 Karten erscheinen (01.–17., Spalten «GRUNDLAGEN (FORTSETZUNG)»), jede traegt «UNBEKANNT · Grundlage · …», nirgends «Bibliothek». Knopf wird zu «Zuklappen»; danach wieder nur die zwei Stapel. Beim Aufklappen rutscht der Stapel an den linken Rand und das Ablagefeld steht zwischen den Fortsetzungsspalten, rechts laufen Spalten aus dem Bild.",
    "abzug": "s05-p1-aufgeklappt.png"
   },
   "2a": {
