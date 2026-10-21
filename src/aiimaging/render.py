@@ -2334,8 +2334,16 @@ def _umriss_halten_satz(umriss: dict, angekommen: bool) -> str:
                 f"nicht; das Bild ist ohne Halten gerechnet.")
     return (f"{_uh.SATZ}: Hintergrund im Fahrplan festgehalten (Art '{_uh.ART_IM_LAUF}'), "
             f"frei fuer die KI {umriss['anteil_frei'] * 100:.0f} % der Zellen "
-            f"{umriss['zellen'][1]} x {umriss['zellen'][0]}. Grafikspeicher gemessen wie "
-            f"ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB).")
+            f"{umriss['zellen'][1]} x {umriss['zellen'][0]}. {SATZ_UMRISS_SPEICHER}")
+
+
+#: Was «Umriss halten im Lauf» an Grafikspeicher kostet — **gemessen**, je Kamerazahl
+#: (auf-20261021-314, B1; zuvor stand hier nur die Messung mit 1 Kamera aus 303, «wie ohne
+#: Schalter», und das galt ab 2 Kameras nicht mehr). M2 (Material vorne + Umriss im Lauf) gegen
+#: K: 1 Kamera 27231 gegen 27551 MiB, 2 Kameras 27909 gegen 27587, 4 Kameras 27909 gegen 27591.
+#: Die Spitze bleibt unter dem eingetragenen Rand der Karte (32 GB).
+SATZ_UMRISS_SPEICHER = ("Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras "
+                        "rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).")
 
 
 def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):

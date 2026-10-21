@@ -226,13 +226,24 @@ def _szene(prompt="a house", render_block=None, **vis):
             "style": {"prompt": prompt}, "vis": vis}
 
 
-def test_ohne_schalter_bleiben_prompt_und_szene_wie_sie_waren():
-    for vis in ({}, {"umriss_halten": None, "material_vorne": None},
-                {"umriss_halten": False, "material_vorne": False}):
-        szene = kosmo_szene.lies_szene(_szene("exposed concrete house", **vis), streng=False)
-        assert szene["prompt"] == "exposed concrete house" and not szene["maengel"]
-        assert szene["umriss_halten"] is None
-        assert not [z for z in szene["prompt_zusaetze"] if z["art"] == "material_vorne"]
+def test_ausdruecklich_aus_bleiben_prompt_und_szene_wie_sie_waren():
+    # Seit Entscheid 126 heisst «ohne Schalter» die Vorgabe M2; «aus» ist ausdruecklich false.
+    szene = kosmo_szene.lies_szene(_szene("exposed concrete house", umriss_halten=False,
+                                          material_vorne=False), streng=False)
+    assert szene["prompt"] == "exposed concrete house" and not szene["maengel"]
+    assert szene["umriss_halten"] is None
+    assert not [z for z in szene["prompt_zusaetze"] if z["art"] == "material_vorne"]
+    assert szene["messschalter"]["umriss_halten"] == {"herkunft": "bestellt"}
+
+
+@pytest.mark.parametrize("vis", [{}, {"umriss_halten": None, "material_vorne": None}])
+def test_ohne_schalter_gilt_die_vorgabe_m2(vis):
+    szene = kosmo_szene.lies_szene(_szene("exposed concrete house", **vis), streng=False)
+    assert not szene["maengel"]
+    assert szene["umriss_halten"] == "im_lauf"
+    assert szene["prompt"].startswith("monolithic exposed concrete building")
+    assert szene["messschalter"]["umriss_halten"] == {"herkunft": "vorgabe"}
+    assert szene["messschalter"]["material_vorne"] == {"herkunft": "vorgabe"}
 
 
 @pytest.mark.parametrize("art", umrisshalt.ARTEN)
@@ -336,8 +347,8 @@ def _lauf(tmp_path, monkeypatch=None, **vis):
     return ordner, antwort, protokoll
 
 
-def test_lauf_ohne_schalter_traegt_keinen_vermerk(tmp_path):
-    ordner, _antwort, protokoll = _lauf(tmp_path)
+def test_lauf_mit_schalter_aus_traegt_keinen_vermerk(tmp_path):
+    ordner, _antwort, protokoll = _lauf(tmp_path, umriss_halten=False)
     kameras = abholer.lies_befund(ordner)["kameras"]
     assert kameras and all(abholer.URTEIL_UMRISS_HALTEN not in k for k in kameras)
     assert all(a.umriss_halten_png is None for a in protokoll["render"])

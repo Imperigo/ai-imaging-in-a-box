@@ -7573,6 +7573,12 @@ einer Bodenplatte, ist das Fernste der Boden und fällt nicht auf; steht ein Qua
 kleinen Grauwert an (z. B. 0,15), der Hintergrund bleibt schwarz — die Kante trennt sich ab.
 Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 
+**Vorgabe für Varianten (Entscheid 126)** — Was der Heim-PC einstellt, wenn eine Bestellung zu einer Einstellung nichts
+sagt. Seit dem 21.10.2026 sind das drei frühere *Messschalter*: das Material vorne in der Bildbeschreibung, die Umgebung
+ausserhalb des Hauses festgehalten («Umriss halten im Lauf») und der Himmel hinter dem Haus. Eine ausdrückliche Angabe
+gewinnt immer, auch «aus». Wo eine Einstellung fachlich nicht passt, entfällt sie, und das Ergebnis sagt, warum
+(`angewandt.messschalter`, mit «Herkunft»: bestellt, Vorgabe, entfallen oder aus der Grundlage).
+
 **Zwei-Finger-Geste (Wischen und Pinch)** — Auf dem Trackpad eines Mac zwei Finger
 **gemeinsam verschieben** heisst *Wischen*: die Fläche wandert mit den Fingern mit. Zwei Finger
 **auseinander- oder zusammenziehen** heisst *Pinch*: die Ansicht wird grösser oder kleiner, und
@@ -8786,7 +8792,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §210): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
+| 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §211): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |
 | 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §208): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |
 | 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |

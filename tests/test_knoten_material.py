@@ -141,7 +141,12 @@ def test_die_wahl_wird_gelesen_mit_vorgaben(tmp_path, monkeypatch):
     assert s["materialien"]["boden"]["toenung"] == {"farbe": "#aa8866", "staerke": 0.3}
     assert s["materialien_vorgaben"]["boden"] == ["drehungGrad", "relief"]
     assert set(s["materialien_dateien"]) == {"fassade", "boden"}
-    assert "exterior surfaces of sandblasted exposed concrete" in s["prompt"]
+    # Seit Entscheid 126 (material_vorne Vorgabe) steht der Stoff vorne; der Satz hinten
+    # faellt weg (auf-20261021-303, B3) und bleibt mit `weggelassen` im Befund.
+    assert s["prompt"].startswith("monolithic sandblasted exposed concrete building")
+    assert [z.get("weggelassen") for z in s["prompt_zusaetze"]
+            if z.get("art") == "material" and z.get("id") == "sichtbeton-sandgestrahlt"] == \
+        ["material_vorne"]
 
 
 @pytest.mark.parametrize("wahl, wort, endgueltig", [

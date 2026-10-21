@@ -2303,6 +2303,58 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
     return float(wert)
 
 
+#: **Die Vorgabe für Varianten (Entscheid 126, 21.10.2026, Klickfrage A des Owners):** M2 —
+#: der Stoff vorne, der Umriss im Lauf gehalten — und dazu der Himmel sichtbar. Fehlt ein
+#: Schalter in der Bestellung (oder steht ``null``), gilt am Heim-PC dieser Wert; ein
+#: ausdrücklich gesetzter Schalter gewinnt, auch «aus» (``false``). Die App schickt die drei
+#: Schalter heute nicht mit (sie stehen nicht im Vertrag) — die Vorgabe gilt darum für jede
+#: Bestellung aus der Knotenansicht. Wo ein Schalter fachlich nicht passt (``skip`` ohne
+#: KI-Schritt, die Vorschau, eine Skizze, keine Stimmung, das Gipsmodell), entfällt die Vorgabe
+#: still mit Grund in ``messschalter`` — ein ausdrücklicher Schalter bleibt dort ein Mangel.
+VARIANTEN_VORGABE = {"material_vorne": True, "umriss_halten": "im_lauf",
+                     "himmel_sichtbar": True}
+#: Woher der Wert eines Schalters kommt (``messschalter.<name>.herkunft``).
+HERKUNFT_BESTELLT = "bestellt"
+HERKUNFT_VORGABE = "vorgabe"
+#: Vorgabe nicht angewandt — der Grund steht daneben.
+HERKUNFT_ENTFAELLT = "vorgabe_entfaellt"
+#: Auf einer wiederverwendeten Grundlage: der Wert der Grundlage (nur ``himmel_sichtbar``).
+HERKUNFT_GRUNDLAGE = "grundlage"
+#: Die Modelle, an denen «Umriss halten im Lauf» gemessen ist (auf-20261021-303/309/314) — der
+#: Weg greift in die Latenten der Z-Image-Pipeline (``render._umriss_halten_vorbereiten``). Für
+#: ein anderes Modell entfällt die Vorgabe; bestellt bleibt bestellt.
+UMRISS_IM_LAUF_GEMESSEN = ("z-image-turbo",)
+
+
+def bestellt_schalter(vis, name: str) -> bool:
+    """Steht der Schalter ausdrücklich in der Bestellung (nicht fehlend, nicht ``null``)?"""
+    return isinstance(vis, dict) and vis.get(name) is not None
+
+
+def varianten_vorgabe_entfaellt(name: str, *, skip, guete, skizze: bool,
+                                umgebung: dict | None, backbone: str | None = None) -> str | None:
+    """Warum die Vorgabe :data:`VARIANTEN_VORGABE` für diesen Schalter **nicht** gilt — oder None."""
+    if skizze:
+        return "eine Skizze fuehrt ihr eigenes Bild, sie ist keine Variante einer Grundlage"
+    if name == "himmel_sichtbar":
+        # Der Himmel ist Teil der GRUNDLAGE (Lichtdaten an Blender) — er gilt auch fuer
+        # «Nur Grundlage», damit die Varianten darauf ihn tragen.
+        if not (umgebung or {}).get("preset"):
+            return "keine Stimmung bestellt — ohne sie gibt es kein Himmelsbild"
+        from . import stimmung as _stimmung  # noqa: PLC0415
+        if umgebung.get("preset") == _stimmung.PRESET_WEISS:
+            return "das Gipsmodell (Stimmung «weiss») bleibt vor dem ruhigen Verlauf"
+        return None
+    if skip:
+        return "«Nur Grundlage» rechnet kein KI-Bild"
+    if name == "umriss_halten" and guete == GUETE_VORSCHAU:
+        return "die Vorschau rechnet immer gleich (Entscheid 104)"
+    if name == "umriss_halten" and backbone not in UMRISS_IM_LAUF_GEMESSEN:
+        return (f"am Bildmodell {backbone!r} ist «Umriss halten im Lauf» nicht gemessen "
+                f"(gemessen: {', '.join(UMRISS_IM_LAUF_GEMESSEN)})")
+    return None
+
+
 def lies_umriss_halten(vis: dict, *, skip, guete, maengel: list,
                        endgueltig: list) -> str | None:
     """``vis.umriss_halten`` (Strang Treue, 21.10.2026): ``"nachher"``, ``"im_lauf"`` oder null.
@@ -2866,13 +2918,31 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # DIE MESSSCHALTER AUS DEM STRANG TREUE (21.10.2026) — beide Vorgabe aus, keiner im
     # Vertrag. `material_vorne` stellt den Stoff vor den Prompt (Satz in `prompt_zusaetze`
     # mit `vorne`); ohne Schalter ist der Prompt Wort fuer Wort derselbe.
-    umriss_halten = lies_umriss_halten(vis, skip=schalter.get("skip"), guete=guete,
+    # DIE VORGABE FUER VARIANTEN (Entscheid 126, 21.10.2026): fehlt ein Schalter, gilt M2 mit
+    # Himmel; ein ausdruecklich gesetzter gewinnt. Die Vorgabe wird VOR dem Lesen eingesetzt,
+    # damit sie durch dieselbe Pruefung geht wie ein bestellter Schalter — nur dort, wo sie
+    # fachlich passt (sonst entfaellt sie mit Grund, ohne Mangel).
+    messschalter: dict = {}
+    vis_mit_vorgabe = dict(vis) if isinstance(vis, dict) else {}
+    for name, vorgabe in VARIANTEN_VORGABE.items():
+        if bestellt_schalter(vis, name):
+            messschalter[name] = {"herkunft": HERKUNFT_BESTELLT}
+            continue
+        grund = varianten_vorgabe_entfaellt(
+            name, skip=schalter.get("skip"), guete=guete, skizze=skizze_block is not None,
+            umgebung=(umgebung_block or {}).get("umgebung"), backbone=bb.get("name"))
+        if grund is None:
+            vis_mit_vorgabe[name] = vorgabe
+            messschalter[name] = {"herkunft": HERKUNFT_VORGABE}
+        else:
+            messschalter[name] = {"herkunft": HERKUNFT_ENTFAELLT, "grund": grund}
+    umriss_halten = lies_umriss_halten(vis_mit_vorgabe, skip=schalter.get("skip"), guete=guete,
                                        maengel=maengel, endgueltig=endgueltig)
-    # DER HIMMEL HINTER DEM HAUS (auf-20261021-309, Option Himmel) — Messschalter, Vorgabe aus.
+    # DER HIMMEL HINTER DEM HAUS (auf-20261021-309, Option Himmel) — seit Entscheid 126 Vorgabe.
     himmel_sichtbar = lies_himmel_sichtbar(
-        vis, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
+        vis_mit_vorgabe, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
         maengel=maengel, endgueltig=endgueltig)
-    vorne_wert = wert_oder(vis, "material_vorne", False)
+    vorne_wert = wert_oder(vis_mit_vorgabe, "material_vorne", False)
     if not isinstance(vorne_wert, bool):
         maengel.append(
             f"'vis.material_vorne' ist {vorne_wert!r}, erwartet war true, false oder null.")
@@ -2899,8 +2969,18 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             and not z.get("weggelassen")])
         satz, stoffe = material_vorne_satz(prompt_basis, bestellt,
                                            rest_prompt=rest)
-        prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
-                                "stoffe": list(stoffe), "schon_im_prompt": False})
+        if satz is None and messschalter["material_vorne"]["herkunft"] == HERKUNFT_VORGABE:
+            # Die VORGABE (Entscheid 126) ohne Stoff im Prompt und ohne Material-Knoten: Es
+            # gibt nichts nach vorne zu stellen — kein leerer Zusatz, der Prompt bleibt.
+            messschalter["material_vorne"] = {
+                "herkunft": HERKUNFT_ENTFAELLT,
+                "grund": "kein Stoff im Prompt und kein Material-Knoten"}
+            for z in prompt_zusaetze:
+                if z.get("weggelassen") == "material_vorne":
+                    z.pop("weggelassen")
+        else:
+            prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
+                                    "stoffe": list(stoffe), "schon_im_prompt": False})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
     kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
     if fremd.get("cameras_auto") is not None:
@@ -2976,6 +3056,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "umriss_halten": umriss_halten,
         # Der Messschalter «Himmel sichtbar» (309): False/None heisst aus.
         "himmel_sichtbar": himmel_sichtbar,
+        # Woher die drei Schalter der Varianten-Vorgabe kommen (Entscheid 126): je Name
+        # {herkunft: bestellt|vorgabe|vorgabe_entfaellt|grundlage, grund?}; der Wert steht oben.
+        "messschalter": messschalter,
         # Die Stimmung, wie gerechnet (ohne Pfad) — `None`: keine bestellt. Die Datei daneben
         # traegt den Pfad am Heim-PC und geht nur an den Runner, nie ins Ergebnis.
         "umgebung": (umgebung_block or {}).get("umgebung"),
@@ -3084,6 +3167,8 @@ DURCHGEREICHT = {
     "himmel_sichtbar": ("abholer.umgebung_einstellungen → umgebung_licht {himmel_sichtbar} → "
                         "blender_depth_stage._welt_setzen (Kamerastrahl sieht das Himmelsbild); "
                         "Bericht 'umgebung.hintergrund.art' himmelsbild"),
+    "messschalter": ("abholer.angewandt_der_szene → render-result 'angewandt.messschalter' "
+                     "{<name>: {wert, herkunft, grund?}} (Entscheid 126)"),
     "umriss_halten": ("abholer.umriss_halten_der_kamera (nachher) bzw. render.RenderAuftrag("
                       "umriss_halten_png=…) (im_lauf); Vermerk am Kameraurteil und Satz in "
                       "'qa.verdict.hinweise' (dazu der Satz des Bildmodells) und "
@@ -3859,13 +3944,17 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
                 hinweise.append(
                     f"{_uh.SATZ}, Kamera {kamera!r}: Art '{uh.get('art')}' — ausserhalb des "
                     f"Hauses (Rand {uh.get('rand_px')} px) gilt das Cycles-Bild{messung}. "
-                    f"Nie Vorgabe.")
+                    + ("Vorgabe fuer Varianten (Entscheid 126)." if uh.get("vorgabe")
+                       else "Bestellt."))
                 # DER SATZ DES BILDMODELLS (auf-20261021-303, B2) — bei «im_lauf» stand er nur
                 # im Befund; jetzt auch hier, Wort fuer Wort, einmal je Wortlaut.
                 for satz in uh.get("hinweise") or ():
                     if isinstance(satz, str) and satz and satz not in hinweise:
                         hinweise.append(satz)
-            else:
+            elif not uh.get("vorgabe"):
+                # Nur ein BESTELLTER Schalter, der nicht wirkte, bekommt den Satz; die Vorgabe
+                # fuer Varianten (Entscheid 126) steht dann nur im Vermerk und unter
+                # `angewandt.umriss_halten` — sonst truege jedes Bild ohne Maske einen Vorbehalt.
                 hinweise.append(
                     f"{_uh.SATZ}, Kamera {kamera!r}: NICHT angewandt — "
                     f"{uh.get('grund') or 'ohne Grund'}. Geliefert wird das KI-Bild, wie es war.")
@@ -5321,6 +5410,13 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         # OHNE GRUNDLAGENBILD (auf-20261021-312 B3) — an jedem Lauf, dessen Bild anders
         # gerechnet wurde als bestellt; bis dahin stand das nur als Feld in `angewandt.modus`.
         _modus_eintragen(geometrie_urteil, je_kamera, hinweise)
+        # DER HIMMEL KAM AUS DER GRUNDLAGE (Entscheid 126) — Variante auf einer Grundlage,
+        # deren Himmel von der Vorgabe abweicht: Auskunft, kein Vorbehalt.
+        himmel = (((angewandt or {}).get("messschalter") or {}).get("himmel_sichtbar") or {}) \
+            if isinstance(angewandt, dict) else {}
+        if himmel.get("herkunft") == HERKUNFT_GRUNDLAGE and himmel.get("grund") \
+                and himmel["grund"] not in hinweise:
+            hinweise.append(himmel["grund"])
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 

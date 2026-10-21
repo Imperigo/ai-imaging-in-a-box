@@ -795,6 +795,10 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                  == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
     if senkrecht:
         aus["cameras_senkrecht"] = senkrecht
+    # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
+    schalter = messschalter_angewandt(szene)
+    if schalter:
+        aus["messschalter"] = schalter
     return aus
 
 
@@ -2876,7 +2880,7 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
 #: Was aus dem Vermerk «Umriss halten» einer Kamera ins Ergebnis geht (``angewandt.umriss_halten``,
 #: auf-20261021-303 B2) — DASS und WIE gehalten wurde, mit dem Satz des Bildmodells; die Pfade
 #: der Masken und das ganze Urteil nach dem Halten bleiben im Befund.
-_UMRISS_HALTEN_IM_ERGEBNIS = ("angewandt", "art", "grund", "methode", "rand_px", "weich_px",
+_UMRISS_HALTEN_IM_ERGEBNIS = ("angewandt", "vorgabe", "art", "grund", "methode", "rand_px", "weich_px",
                               "anteil_frei", "schritte", "hinweise", "geom_iou_vorher",
                               "ausserhalb_vorher", "geom_iou_nachher", "ausserhalb_nachher")
 
@@ -3855,6 +3859,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         grundlagen_wurzel = (Path(out_wurzel) / GRUNDLAGEN_ORDNER) if out_wurzel else None
         geholt = (lies_grundlage(grundlagen_wurzel, szene["grundlage"], szene)
                   if szene.get("grundlage") else None)
+        # DER HIMMEL KOMMT AUS DER GRUNDLAGE (Entscheid 126) — eine Variante rechnet kein
+        # Blender; der Satz steht in `angewandt.messschalter` und von dort in den Hinweisen.
+        if geholt is not None:
+            szene, _ = himmel_der_grundlage(szene, geholt)
         berichte_der_grundlage = {e["kuerzel"]: e["bericht"]
                                   for e in (geholt or {}).get("kameras") or ()}
         if modell is None and geholt is not None:
@@ -4709,6 +4717,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # Nur mit Schalter — ohne ihn traegt das Urteil keinen neuen Schluessel.
                 urteil[URTEIL_FARBABGLEICH] = farbvermerk
             if umriss_vermerk is not None:
+                # AUS DER VORGABE FUER VARIANTEN (Entscheid 126) — der Satz am Bild sagt es;
+                # ein NICHT angewandter Vorgabe-Schalter bleibt im Vermerk, ohne Satz.
+                if ((szene.get("messschalter") or {}).get("umriss_halten") or {}).get(
+                        "herkunft") == _kosmo_szene.HERKUNFT_VORGABE:
+                    umriss_vermerk = dict(umriss_vermerk, vorgabe=True)
                 urteil[URTEIL_UMRISS_HALTEN] = umriss_vermerk
             # WIE DAS BILD ENTSTAND (Vertrag C17 A1): an jedem KI-Lauf, nicht nur mit
             # `vis.bildeingang` — bis dahin stand eine Abweichung nur als Satz im Ergebnis.
@@ -5188,7 +5201,10 @@ def lege_grundlage_ab(wurzel, kennung: str, *, job_id, szene: dict, berichte: di
                       if isinstance(v, int) and not isinstance(v, bool)},
             "kameras": [{"kuerzel": str(k), "bericht": _vergleichbar(b)}
                         for k, b in berichte.items()],
-            "bestand": _vergleichbar(bestand), "modellstand": _vergleichbar(modellstand)}
+            "bestand": _vergleichbar(bestand), "modellstand": _vergleichbar(modellstand),
+            # MIT ODER OHNE HIMMEL (Entscheid 126): steht im Cycles-Bild der Grundlage. Eine
+            # Grundlage von vor dem 21.10.2026 kennt das Feld nicht — sie ist ohne Himmel.
+            "himmel_sichtbar": szene.get("himmel_sichtbar") is True}
     tmp = ziel.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(satz, ensure_ascii=False, indent=1), encoding="utf-8")
     tmp.replace(ziel)
@@ -5233,6 +5249,53 @@ def lies_grundlage(wurzel, kennung: str, szene: dict) -> dict:
                 f"{', '.join(fehlt)} fehlt auf der Platte. Die Grundlage ist nicht mehr "
                 f"vollstaendig — bitte neu rendern.")
     return satz
+
+
+def himmel_der_grundlage(szene: dict, geholt: dict) -> tuple[dict, str | None]:
+    """``(szene, satz)`` — ``himmel_sichtbar`` einer Variante an ihre Grundlage gehalten.
+
+    Der Himmel steht im Cycles-Bild der GRUNDLAGE (Lichtdaten an Blender); eine Variante
+    rechnet kein Blender. Seit Entscheid 126 ist der Himmel Vorgabe — eine Variante auf einer
+    Grundlage OHNE Himmel (vor 126 gerechnet, oder mit ``false`` bestellt) waere sonst still
+    ein Bild, das «Himmel» meldet und den Verlauf zeigt.
+
+    * Kam der Wert aus der **Vorgabe** (nicht bestellt): es gilt der Wert der Grundlage, mit
+      Satz, wenn er von der Vorgabe abweicht (Herkunft «grundlage»).
+    * War er **ausdruecklich bestellt** und weicht ab: laut abgewiesen, wie jedes andere Feld,
+      das nicht zur Grundlage passt — neu gerechnet wird nicht still.
+    """
+    in_grundlage = geholt.get("himmel_sichtbar") is True
+    gerechnet = szene.get("himmel_sichtbar") is True
+    if gerechnet == in_grundlage:
+        return szene, None
+    herkunft = ((szene.get("messschalter") or {}).get("himmel_sichtbar") or {}).get("herkunft")
+    if herkunft == _kosmo_szene.HERKUNFT_BESTELLT:
+        raise AbholerError(
+            f"Grundlage {geholt.get('id')!r} passt nicht zum Auftrag: sie ist "
+            f"{'mit' if in_grundlage else 'ohne'} sichtbaren Himmel gerechnet, bestellt ist "
+            f"'vis.himmel_sichtbar: {str(gerechnet).lower()}'. Der Himmel steht im Cycles-Bild "
+            f"der Grundlage — bitte die Grundlage neu rendern oder den Schalter weglassen.")
+    satz = (f"HIMMEL WIE IN DER GRUNDLAGE: Die Grundlage {geholt.get('id')} ist "
+            f"{'mit' if in_grundlage else 'ohne'} sichtbaren Himmel gerechnet; die Variante "
+            f"behaelt ihn so (Vorgabe waere {'aus' if in_grundlage else 'an'}). Fuer den "
+            f"Himmel hinter dem Haus die Grundlage neu rendern.")
+    messschalter = dict(szene.get("messschalter") or {})
+    messschalter["himmel_sichtbar"] = {"herkunft": _kosmo_szene.HERKUNFT_GRUNDLAGE,
+                                       "grund": satz}
+    return dict(szene, himmel_sichtbar=in_grundlage, messschalter=messschalter), satz
+
+
+def messschalter_angewandt(szene: dict) -> dict | None:
+    """``angewandt.messschalter`` (Entscheid 126) — je Schalter der Varianten-Vorgabe der
+    gerechnete Wert und woher er kam: ``{<name>: {wert, herkunft, grund?}}``. ``None``, wenn
+    die Szene keine Herkunft traegt (alte Szene)."""
+    herkunft = szene.get("messschalter")
+    if not isinstance(herkunft, dict) or not herkunft:
+        return None
+    return {name: dict({"wert": szene.get(name) if name != "material_vorne" else any(
+                z.get("art") == "material_vorne" and z.get("satz")
+                for z in szene.get("prompt_zusaetze") or ())}, **eintrag)
+            for name, eintrag in sorted(herkunft.items())}
 
 
 def _gewaehlte_seeds(urteile) -> dict:
