@@ -8312,7 +8312,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Owner-Frage zu C43: welcher Weg für die Formprüfung (Hauptstrang, Zentrale)
 - [x] Gebündelter Vertragsvorschlag zu C17 an den Integrator — geschrieben 21.10.2026 (§192): das meiste erledigt oder zugesagt, neu `angewandt.modus`, `angewandt.umriss_halten`, `angewandt.cameras_senkrecht`
 - [ ] Vorschlag C17 über die Zentrale an den Integrator senden (Hauptstrang)
-- [ ] Antwort von Int 1 zu C17; nach Zusage `angewandt.modus` im Heim-PC-Ergebnis schreiben und Fixture legen (integrator, dann wir)
+- [x] Antwort von Int 1 zu C17 — angenommen (A1–A3, Teil B mit `drehung_je_kamera` < 360); `angewandt.modus` im Heim-PC-Ergebnis geschrieben, Fixtures zu A1–A3 auf claude/kosmovis-knoten-fixtures gelegt (21.10.2026, §XXX)
+- [ ] C17 bei Int 1 eingespielt (integrator), danach Anzeige «anders gerechnet als bestellt» (ui); am Heim-PC ein erster echter Lauf mit `angewandt.modus` (local)
 - [x] C103: Leiste, Figur und Sperrzonen ohne Stil (Befund 305) — Ursache eine offene CSS-Klammer, behoben in §187 (C112)
 - [ ] C97: Auslöser für die Bilder 3c/3d nach dem Augenurteil aus 299 (wir)
 - [ ] C79: Zeile «Himmelsbilder n/8» im Einrichten der Mac-App (wir)
