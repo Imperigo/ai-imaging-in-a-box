@@ -825,7 +825,9 @@ def blicke_der_mappe(p: dict, hoechstens: int = BLICKE_HOECHSTENS) -> list[dict]
     (:data:`aiimaging.kameras.BRENNWEITE_MM`) — **geraten wird nicht**.
 
     Returns:
-        ``[{name, bild, auge, blick_auf, brennweite_mm, erzeugt}]`` — Weltkoordinaten des
+        ``[{id, name, bild, auge, blick_auf, brennweite_mm, erzeugt}]`` — ``id`` ist
+        ``bild:<Bild der Mappe>`` und bleibt, auch wenn der Titel des Bildes sich ändert (der
+        Knoten hält die Kennung, nicht den Namen; Wunsch von KosmoDraw, v0.1.10). Weltkoordinaten des
         Heim-PCs (Meter, Z oben), der neueste zuerst, höchstens ``hoechstens``.
     """
     from aiimaging.kameras import BRENNWEITE_MM  # spät: wie heim_standpunkte
@@ -843,7 +845,8 @@ def blicke_der_mappe(p: dict, hoechstens: int = BLICKE_HOECHSTENS) -> list[dict]
         brennweite = (float(bw) if isinstance(bw, (int, float)) and not isinstance(bw, bool)
                       and 5 <= bw <= 300 else BRENNWEITE_MM)
         titel = b.get("titel") if isinstance(b.get("titel"), str) and b.get("titel").strip() else None
-        eintrag = {"name": titel.strip() if titel else Path(str(b["bild"])).stem,
+        eintrag = {"id": f"bild:{b['bild']}",
+                   "name": titel.strip() if titel else Path(str(b["bild"])).stem,
                    "bild": str(b["bild"]), "auge": auge, "blick_auf": ziel,
                    "brennweite_mm": brennweite, "erzeugt": b.get("erzeugt")}
         schluessel = (tuple(round(v, 3) for v in auge), tuple(round(v, 3) for v in ziel),

@@ -8617,7 +8617,8 @@ alle Varianten derselbe bleiben; nur die Stimmung ändert sich. *Im Projekt:* De
 Blicke im Reiter «Blick» als Auswahl an, ohne dass eine 3D-Ansicht offen sein muss. In Visbox sind das die Standpunkte, die
 für ein Bild der Mappe am Grundriss gesetzt wurden (auch der eines Bildes unter einer Skizze vom iPad). Beim Wählen wird
 der Blick **festgehalten**: Wird er später verschoben oder gelöscht, bleibt die Kamera, wie sie war, und der Knoten sagt es.
-Der Name des Blicks steht im Kopf des Knotens.
+Der Name des Blicks steht im Kopf des Knotens. Festgehalten wird der Blick an seiner **Kennung**, nicht am Namen: Ein
+umbenannter Blick bleibt derselbe, und zwei Blicke dürfen gleich heissen.
 
 **Bildzeile mit Blättern** — Eine Zeile in einem Knoten, die **ein** Daumenbild zeigt und daneben zwei Pfeile, mit
 denen man zum vorherigen oder nächsten Bild wechselt, dazu «2 von 6». Sie ist in jedem Zustand gleich hoch — leer,
