@@ -149,12 +149,21 @@ function streuwertVon(e: object): string {
  * Neuladen denselben Stand hat. Je Dokument-Revision einmal zusammengesetzt, je Bauteil-Objekt
  * einmal gestreut.
  */
+/**
+ * Was NICHT zum Modell zaehlt: die Render-Graphen selbst und die Blatt-Ebene (`sheet`, `imageasset`; der Kern
+ * fuehrt sie ebenso als Publish-Ebene, `design.ts`). Befund 21.10.2026 (e2e `kv-grossansicht`): seit fertige
+ * Bilder beim Fertigwerden als `imageasset` ins Projekt gesichert werden (L4-16), aenderte genau dieses Sichern
+ * den Modellstand — die eben gerechnete Grundlage stand sofort auf «veraltet», «Variante erzeugen» blieb
+ * gesperrt, und das erste Bild verschwand vom Knoten. Ein Bild aufs Blatt legen aendert kein Cycles-Bild.
+ */
+const NICHT_MODELL: ReadonlySet<string> = new Set(['visgraph', 'imageasset', 'sheet', 'preparegraph']);
+
 export function modellStand(doc: KosmoDoc): string {
   const alt = modellStandCache.get(doc);
   if (alt && alt.revision === doc.revision) return alt.stand;
   const teile: string[] = [];
   for (const e of doc.entities.values()) {
-    if (e.kind !== 'visgraph') teile.push(`${e.id}:${streuwertVon(e)}`);
+    if (!NICHT_MODELL.has(e.kind)) teile.push(`${e.id}:${streuwertVon(e)}`);
   }
   teile.sort();
   const stand = streuwert(teile.join('|'));

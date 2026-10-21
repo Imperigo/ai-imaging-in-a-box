@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "9576c9e45b0e2a5d2e4ee00f8aed2a1d5c778487"
+    "commit": "c94263affa556754a6cbd8ea8db483130e739025"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -66,7 +66,7 @@
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
     "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "12d6ddbd81eb7b821bbe69256baa5ddc8d46256e149955e171615513abb055ca",
     "apps/kosmo-orbit/src/modules/vis/OberflaecheKnoten.tsx": "73d507f1a08aeed4c1533caac8beb30296c725639c9108e3602207510c7f3d98",
-    "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "870e6a3313a201b2559013ad41d1faaad38c041d38e733468e702cf437213b24",
+    "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "b7795e7a90a7a6adf1a7cd64a329e5ad005524c176509bfe4409c0f3b47d11bd",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
     "apps/kosmo-orbit/src/modules/vis/StimmungKnoten.tsx": "c5950b2bacd594f278bb0da85dded63352d9a2fe5a21a642239def37c63cf52c",
     "apps/kosmo-orbit/src/modules/vis/VariantenDaumen.tsx": "91fef6105dff1bd344c2186db4a0dc106745e5c9ee49fc030a5e44473c27da9a",
@@ -81,7 +81,7 @@
     "apps/kosmo-orbit/src/modules/vis/blick-quelle.ts": "acc3a032483ce39c006edd311839d95fd11f8e1d006adb7fd5474f0675136c5c",
     "apps/kosmo-orbit/src/modules/vis/bridge-bescheid.ts": "e439fbd0622d239b38165263a7c4599555298e0b3c55cf8ce5ca428661c50241",
     "apps/kosmo-orbit/src/modules/vis/grossansicht.ts": "ba93d811bf0286fb8557da1b00999612e44a90aa5dd10bc998e4d29d8866b9bc",
-    "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "506b494d41979bc876196e7600ff35f8938513fbfd5fb3a840062ee00ed5ddee",
+    "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "2fb3375cf38bf5b5d7f92df569f541c76b5f63d27bd663efb776bc237fd71bc8",
     "apps/kosmo-orbit/src/modules/vis/guete.ts": "b335f398a0562f861da7da0b915f952acec0fecd3495de030073b4c9052db534",
     "apps/kosmo-orbit/src/modules/vis/heim-standpunkte.ts": "b625f835aadcf5d7680982ada0719a3e44c5f6ae8e707b4a5235312d5b7ffff1",
     "apps/kosmo-orbit/src/modules/vis/island/index.ts": "093b23a1447d6bffae1c21cf674eb47e138bf5a9d6998396436eadf017b96997",
@@ -219,7 +219,7 @@
     "apps/kosmo-orbit/test/kv-modell-3d-kern.test.ts": "51336863a1035e5dcd9e76a6c6dee452f87909153076162d70d3d51b4d7625a0",
     "apps/kosmo-orbit/test/kv-modell-knoten-3d.test.tsx": "f36c4524df14086e02ca01801a2ae4597c96cbf39dddb25058a058c3a6f5a758",
     "apps/kosmo-orbit/test/kv-modell-laden.test.tsx": "6c60b658b2e708cd475192c0d9e10fe51f4265fdd8bbc39334e51203a06acdf1",
-    "apps/kosmo-orbit/test/kv-nebeneinander-knoten.test.tsx": "b6b9e49c411f283538aa049b3ac29fb848e74d31cf4ffd7c88026fd271f21cf6",
+    "apps/kosmo-orbit/test/kv-nebeneinander-knoten.test.tsx": "fd4761e3fff353a46550470916b2ea6582e1a87d136005488747c6f0e4e358af",
     "apps/kosmo-orbit/test/kv-nicht-beurteilbar.test.tsx": "cd5c80351ddc5f1b6b39497f41dffc1638a3db3ab4592c7ac0fc5bddf8bdd84e",
     "apps/kosmo-orbit/test/kv-qa-hinweise.test.tsx": "193185add02c05da4b51bbbd83fc1ab21d6671d7ede1b89b07972b5d58e7ee6d",
     "apps/kosmo-orbit/test/kv-qa-status.test.ts": "55d87bde1a30ac8ef98e61b79604b4815949cb1352e31005461d2f21e6042e15",

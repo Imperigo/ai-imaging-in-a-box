@@ -353,4 +353,21 @@ final class McpkernTests: XCTestCase {
         XCTAssertTrue(t.hasPrefix("\(Marke.name) ist bereit. Mappe: «Probe». Werkzeuge: 5. Offene Vorschläge: 0."), t)
         XCTAssertTrue(t.contains("Modus: Coop"), t)
     }
+
+    /// Demolauf-Sitzung 21.10.2026: `visbox_status` nennt die Fassung — dieselbe wie `serverInfo`.
+    func testDerStatusNenntDieFassung() async throws {
+        let k = kern(Probetraeger(modus: .karte))
+        let zeilen = text(try await rufe(k, Mcpkern.statusName)).components(separatedBy: "\n")
+        XCTAssertEqual(zeilen.count > 1 ? zeilen[1] : "", "Fassung: \(Marke.name) 9.9.9.")
+    }
+
+    func testOhneAppNenntDerStatusDieFassungAuch() async throws {
+        let k = Mcpkern(traeger: Mcpplatzhalter(ort: .ohneApp), fassung: "0.3.21")
+        let t = text(try await rufe(k, Mcpkern.statusName))
+        XCTAssertTrue(t.contains("Fassung: \(Marke.name) 0.3.21."), t)
+    }
+
+    func testEineLeereFassungHeisstUnbekannt() {
+        XCTAssertEqual(Mcpkern.fassungsSatz("  "), "Fassung: \(Marke.name) unbekannt.")
+    }
 }

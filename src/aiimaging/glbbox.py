@@ -248,6 +248,68 @@ def _mesh_grenzen(js: dict, index: int):
     return (lo, hi) if lo[0] < math.inf else None
 
 
+#: Die glTF-Erweiterung fuer Instanzen: ein Mesh, viele Lagen (Anfrage 21.10.2026, Steine als
+#: Instanzen, 19'610 je Referenzhaus).
+EXT_INSTANZEN = "EXT_mesh_gpu_instancing"
+
+
+def _accessor_spanne(js: dict, stelle):
+    """``(min, max)`` eines Accessors als Listen, oder ``None`` ohne beides."""
+    try:
+        acc = js["accessors"][stelle]
+    except (KeyError, IndexError, TypeError):
+        return None
+    mn, mx = acc.get("min"), acc.get("max")
+    if not isinstance(mn, (list, tuple)) or not isinstance(mx, (list, tuple)) or not mn \
+            or len(mn) != len(mx):
+        return None
+    return [float(v) for v in mn], [float(v) for v in mx]
+
+
+def _instanz_grenzen(js: dict, grenzen, ext):
+    """Die Huelle ALLER Instanzen eines Knotens mit ``EXT_mesh_gpu_instancing`` — im Knotenraum.
+
+    **Warum (Anfrage 21.10.2026):** Mit der Erweiterung steht ein Stein EINMAL als Mesh im Kopf,
+    seine 19'610 Lagen stehen als Accessors ``TRANSLATION``/``ROTATION``/``SCALE`` in den
+    Binaerdaten. Ohne diese Stelle haette die Box nur den einen Stein am Knotenursprung gesehen
+    — zu klein, und eine zu kleine Box schneidet das Bauwerk an (Modulkopf).
+
+    Gelesen wird weiter **nur der JSON-Kopf**: die ``min``/``max`` der Accessors. Die Huelle ist
+    **nie kleiner** als die wahre: Verschiebung als Spanne; sind Drehung oder Skalierung dabei,
+    wird der Stein als Kugel um den Knotenursprung genommen (Radius bis zur fernsten Ecke, mal
+    der groessten Skalierung). Fehlt ``min``/``max`` an der Verschiebung (die Spezifikation
+    verlangt es dort nicht), gibt es **keine** Box (``None``) — derselbe Weg wie ein Mesh ohne
+    Grenzen: lieber keine Auskunft als eine zu kleine.
+    """
+    attribute = (ext or {}).get("attributes") or {}
+    if not isinstance(attribute, dict):
+        return None
+    lo, hi = grenzen
+    spannen = {}
+    for name in ("TRANSLATION", "ROTATION", "SCALE"):
+        if name in attribute:
+            spanne = _accessor_spanne(js, attribute[name])
+            if spanne is None:
+                return None
+            spannen[name] = spanne
+    if not spannen:
+        return grenzen
+    if "ROTATION" in spannen or "SCALE" in spannen:
+        groesste = 1.0
+        if "SCALE" in spannen:
+            mn, mx = spannen["SCALE"]
+            groesste = max(abs(v) for v in mn + mx)
+        radius = math.sqrt(sum(max(abs(lo[i]), abs(hi[i])) ** 2 for i in range(3))) * groesste
+        lo, hi = [-radius] * 3, [radius] * 3
+    if "TRANSLATION" in spannen:
+        tmin, tmax = spannen["TRANSLATION"]
+        if len(tmin) < 3:
+            return None
+        lo = [lo[i] + tmin[i] for i in range(3)]
+        hi = [hi[i] + tmax[i] for i in range(3)]
+    return lo, hi
+
+
 def knotenboxen(js: dict) -> dict:
     """Alle Mesh-Knoten einer glTF-Struktur mit Name und Welt-Hüllbox — in glTF-Koordinaten.
 
@@ -293,6 +355,9 @@ def knotenboxen(js: dict) -> dict:
         welt = _mal(eltern, _knotenmatrix(n))
         if "mesh" in n:
             grenzen = _mesh_grenzen(js, n["mesh"])
+            instanzen = (n.get("extensions") or {}).get(EXT_INSTANZEN)
+            if grenzen is not None and instanzen is not None:
+                grenzen = _instanz_grenzen(js, grenzen, instanzen)
             name = str(n.get("name") or "")
             if grenzen is None:
                 ohne.append(name)

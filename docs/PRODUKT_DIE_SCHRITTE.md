@@ -2228,7 +2228,19 @@ Ansicht jedes Laufs hat «Exportieren»: die Datei so gross, wie sie gerechnet w
 Sichern-Fenster. Wo es ein Blatt gibt, wird jedes fertige Bild in Originalauflösung in die Projektdatei gesichert und von
 dort aufs Blatt gesetzt; beim Platzieren prüft eine Rechnung, ob das Bild an seinem Platz für den Druck fein genug ist
 (150 dpi), und warnt sonst mit der grössten Breite, die noch reicht. Visbox selbst hat kein Blatt; dort zählt das
-Exportieren. Ehrlich gesagt: geprüft an Proben, am Mac und mit echten Bildern des Heim-PC noch nicht gesehen; ein erstes
-Bild ohne Verlauf und ohne Grundbild hat noch keine grosse Ansicht.
+Exportieren. Ehrlich gesagt: geprüft an Proben, am Mac und mit echten Bildern des Heim-PC noch nicht gesehen.
+
+**Auch das allererste Bild öffnet gross (21.10.2026).** Das erste Bild eines Render-Knotens — noch ohne Grundbild daneben
+und ohne Verlauf — öffnet per Klick dieselbe grosse Ansicht wie jedes andere, mit «Exportieren» (und «Aufs Blatt», wo es
+ein Blatt gibt) in der Fusszeile. Sonst käme man ausgerechnet an das erste Bild nicht zum Weitergeben. Im Kopf fehlt dann
+die Angabe «1 von 1 im Verlauf», weil der Knoten noch keinen Verlauf zeigt. Beim Prüfen im Browser fiel dabei ein Fehler
+auf: Wo fertige Bilder in die Projektdatei gesichert werden, zählte genau dieses Sichern als Änderung am Modell — die eben
+gerechnete Grundlage galt sofort als veraltet, «Variante erzeugen» blieb gesperrt, und das erste Bild verschwand vom
+Knoten. Gesicherte Bilder und Blätter zählen jetzt nicht mehr zum Modell. Ehrlich gesagt: im Browser mit einer
+nachgestellten Gegenseite geprüft, am Mac noch nicht gesehen.
 
 **Eine Variante rechnet auch ohne neu geschicktes Modell (21.10.2026).** In einer Testfassung kam auf «Grundlage rendern» das Grundbild, aber «Variante erzeugen» danach nie: Die Variante kommt bewusst ohne Modell — sie braucht kein Blender, nur die Tiefe und die Ebenen der Grundlage —, und der Heim-PC wies einen leeren Geometriepfad auf diesem Weg immer ab und liess den Auftrag liegen. Jetzt nimmt er eine Variante mit gültiger Grundlage an, nimmt das Modell des Laufs, der die Grundlage gerechnet hat, und rechnet notfalls aus der abgelegten Grundlage allein. Fehlt die Grundlage, sagt er «bitte zuerst Grundlage rendern». Ehrlich gesagt: an einer nachgestellten Bestellung geprüft, am Heim-PC noch nicht nachgefahren.
+
+**Viele gleiche Teile in einer Modelldatei (21.10.2026).** Ein Haus aus einzelnen Steinen hat rund zwanzigtausend davon; eine Modelldatei kann einen Stein einmal beschreiben und dazu eine Liste, wo er überall liegt. Blender und die 3D-Vorschau von Visbox lesen das schon. Nur die schnelle Rechnung, die vor dem Rendern die Grösse des Bauwerks aus der Datei liest, sah bis heute nur den einen Stein — die Kamera hätte das Haus zu nah gerahmt. Jetzt zählt sie alle Lagen mit. Ehrlich gesagt: an Testdateien geprüft; wie lange Blender für zwanzigtausend Steine braucht, ist nicht gemessen.
+
+**Die Statusantwort an Claude nennt die Fassung (21.10.2026).** Fragt Claude den Stand von Visbox ab, steht jetzt in einer eigenen Zeile, welche Fassung der Mac-App antwortet.

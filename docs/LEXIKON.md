@@ -2478,6 +2478,17 @@ tatsächlich verarbeiten.
 gepackte Einzeldatei-Variante. *In diesem Projekt das Zwischenformat zwischen IFC und
 Blender.*
 
+**Instanzen (in einer glb, `EXT_mesh_gpu_instancing`)** — Ein Bauteil, das oft gleich vorkommt
+(etwa ein Stein einer Mauer), steht nur **einmal** als Form in der Datei; dazu kommt eine Liste,
+wo es überall liegt, wie es gedreht und wie gross es ist. Die Datei bleibt so klein, und die
+Grafikkarte zeichnet alle Lagen auf einmal. *Im Projekt seit dem 21.10.2026:* Blender 5.2 und
+die 3D-Vorschau lesen solche Dateien; die Hüllbox des Heim-PC (`glbbox`) zählt seither alle Lagen
+mit, statt nur den einen Stein zu sehen.
+
+**Fassungszeile (in `visbox_status`)** — Die Zeile mit der Nummer der laufenden Mac-App (etwa 0.3.21), wie sie in
+ihrer Info-Datei steht. Seit dem 21.10.2026 nennt die Statusantwort an Claude sie in einer
+eigenen Zeile, damit im Gespräch klar ist, welche App antwortet.
+
 **glb-Block (Chunk)** — Wie eine glb-Datei innen aufgebaut ist: zuerst ein **Kopf** von
 zwölf Byte — die Kennung `glTF`, die Fassungsnummer und die Gesamtlänge —, danach eine
 Folge von **Blöcken**. Jeder Block nennt zuerst seine Länge und seine Art und erst dann
@@ -8671,6 +8682,12 @@ Ansicht (Video-Befund L4-14).
 Startwert oder Auftrag. Sie sind deckungsgleich und lassen sich darum nebeneinander vergleichen. *Im Projekt:* der Verlauf
 am Render-Knoten ordnet seine Daumen danach, ein Strich trennt zwei Grundlagen; die Grossansicht zeigt sie «nebeneinander».
 
+**Modellstand (einer Grundlage)** — Ein kurzer Fingerabdruck des Gebäudemodells: Ändert sich eine Wand, ein Fenster oder
+ein Dach, ändert sich der Fingerabdruck. Die Grundlage am Render-Knoten merkt sich, mit welchem Modellstand sie gerechnet
+wurde; passt er nicht mehr, heisst sie «veraltet», und Varianten warten auf eine neue. *Im Projekt:* Bilder, die in die
+Projektdatei gesichert werden, und Blätter gehören seit dem 21.10.2026 nicht mehr dazu — vorher machte schon das Sichern
+des ersten Bildes seine eigene Grundlage veraltet.
+
 **Kontextmaske** — Eine Liste mit einem Ja/Nein je Bildpunkt: *hier steht die Umgebung* — Nachbarbauten (Bestand), Bäume
 und Strassenmöbel (Umfeld) oder eine Aufnahme der Umgebung (Splat). Sie entsteht aus demselben Bild wie die
 Bauwerksmaske, ändert diese aber nicht. *Im Projekt:* am Heim-PC je Kamera als Datei neben dem Bild; sie soll später dem
@@ -8731,6 +8748,7 @@ gemessen).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |
 | 2026-10-21 | Ergaenzt aus der Deckung (Protokoll 74 §199): **Kanten-IoU**; **Deckungsgleiche Varianten** um die Form ergaenzt |
 | 2026-10-21 | Ergaenzt aus den Befunden 309/310 (Protokoll 74 §198): **Gebäudewort (im Prompt)**, **Kartenkennung**, **Anstoss (an den Assistenten)**, **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)**, **Sicherheitsrand (beim Grafikspeicher)** |
