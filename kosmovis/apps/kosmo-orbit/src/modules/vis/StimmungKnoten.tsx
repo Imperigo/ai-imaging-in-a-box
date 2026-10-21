@@ -11,7 +11,7 @@ import {
 import { KCheckbox, KSlider, KSwitch, KTabs, KTooltip, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import { grundlagenNachfuehren } from './vis-jobs';
-import { STIMMUNG_VERLAUF, VERLAUF_SATZ, VORSCHAUBILDER } from './knoten-neu-vorschau';
+import { BILD_SATZ, STIMMUNG_VERLAUF, VERLAUF_SATZ, VORSCHAUBILDER } from './knoten-neu-vorschau';
 import './knoten-neu.css';
 
 /*
@@ -80,11 +80,12 @@ export function StimmungKoerper({ graphId, node }: { graphId: string; node: VisN
 
   return (
     <div className="vis-kn vis-kn-stimmung" data-testid="stimmung" style={{ height: STIMMUNG_KOERPER_H }} onPointerDown={(e) => e.stopPropagation()}>
-      <KTooltip text={`${VIS_STIMMUNGEN[bild]?.label ?? bild}: ${VIS_STIMMUNGEN[bild]?.prompt ?? ''}${bildUrl ? '' : ` — ${VERLAUF_SATZ}`}`} lage="unten">
+      <KTooltip text={`${VIS_STIMMUNGEN[bild]?.label ?? bild}: ${VIS_STIMMUNGEN[bild]?.prompt ?? ''}${bildUrl ? ` — ${BILD_SATZ}` : ` — ${VERLAUF_SATZ}`}`} lage="unten">
         <div
           className="vis-kn-bild"
           data-testid="stimmung-bild"
           data-stimmung={bild}
+          data-bild={bildUrl ? 'foto' : 'verlauf'}
           tabIndex={0}
           style={{ height: STIMMUNG_BILD_H, background: `linear-gradient(180deg, ${verlauf[0]}, ${verlauf[1]})` }}
         >

@@ -4,14 +4,16 @@ import type { VisStimmungId } from '@kosmo/kernel';
  * Bauplan «Neue Knoten» (Blätter 32/33 der Entwurfsfläche): was die Knoten Stimmung und Material
  * zeigen, solange die Vorschaubilder nicht ausgeliefert sind.
  *
- * **Warum ohne Bilder:** Die Himmelsbilder (Poly Haven) und Texturen (ambientCG) sind CC0
- * (Entscheid 107) und liegen am Heim-PC. Verkleinerte Vorschauen sind zugelassen (Entscheid 113 (1)),
- * aber noch nicht geliefert (Schritt W: die HomeStation legt sie an, mit Quelle und Prüfsumme im
- * NOTICE). Bis dahin zeigt der Knoten den Farbverlauf des Blatts — gezeichnet, nicht fotografiert,
- * und so beschriftet.
+ * **Schritt W (21.10.2026, geliefert in auf-20261021-306):** Die Himmelsbilder (Poly Haven) und Texturen
+ * (ambientCG) sind CC0 (Entscheid 107) und liegen am Heim-PC; verkleinerte Vorschauen sind zugelassen
+ * (Entscheid 113 (1)). Ausgeliefert unter `public/vis/stimmungen/<id>.png` (192 × 96, Tonwerte wie im
+ * Schönbild) und `public/vis/materialien/<id>.png` (192 × 192, Ausschnitt der Farbkarte), je mit
+ * `quellen.json` (Quelle, Lizenz, Prüfsumme von Original und Bild); im NOTICE bzw. in
+ * THIRD_PARTY_LICENSES geführt.
  *
- * **Wenn die Bilder kommen:** Name in `VORSCHAUBILDER` eintragen (Pfad unter `public/`, wird in beiden
- * Programmen ausgeliefert); der Knoten zeigt dann das Bild über dem Verlauf. Nichts sonst ändert sich.
+ * **«weiss» fehlt noch:** Das Studio-Himmelsbild ergibt eine dunkle Vorschau, die das Gegenteil von
+ * «Weiss» zeigte; die HomeStation sucht ein helleres. Bis dahin zeigt dieser eine Knoten den gezeichneten
+ * Verlauf und sagt es in der Kurzhilfe.
  */
 
 /** Verlauf oben → unten je Stimmung (Blatt 32). */
@@ -26,11 +28,20 @@ export const STIMMUNG_VERLAUF: Record<VisStimmungId, readonly [string, string]> 
   weiss: ['#ffffff', '#e9e9e9'],
 };
 
-/** Ausgelieferte Vorschaubilder (Schritt W), Pfad relativ zur Seite. Heute keine. */
+const STIMMUNGEN_MIT_BILD: readonly VisStimmungId[] = ['morgen', 'mittag', 'abend', 'blaue-stunde', 'bedeckt', 'nebel', 'winter'];
+const MATERIALIEN_MIT_BILD = [
+  'sichtbeton-sandgestrahlt', 'sichtbeton-schalungsglatt', 'fichte', 'backstein', 'klinker', 'sandstein',
+  'stampflehm', 'verputz-weiss-glatt', 'verputz-weiss-rau', 'holzlattung-fichte', 'dreischichtplatte',
+] as const;
+
+/** Ausgelieferte Vorschaubilder (Schritt W), Pfad relativ zur Seite (`base: './'` in beiden Bauten). */
 export const VORSCHAUBILDER: { stimmungen: Partial<Record<VisStimmungId, string>>; materialien: Partial<Record<string, string>> } = {
-  stimmungen: {},
-  materialien: {},
+  stimmungen: Object.fromEntries(STIMMUNGEN_MIT_BILD.map((id) => [id, `vis/stimmungen/${id}.png`])),
+  materialien: Object.fromEntries(MATERIALIEN_MIT_BILD.map((id) => [id, `vis/materialien/${id}.png`])),
 };
+
+/** Die Kurzhilfe unter einem Himmelsbild: woher es kommt. */
+export const BILD_SATZ = 'Vorschau des Himmelsbilds (Poly Haven, CC0), Licht wie im Schönbild';
 
 /** Der Satz unter einem gezeichneten Verlauf — damit niemand ihn für das Himmelsbild hält. */
 export const VERLAUF_SATZ = 'Farbverlauf — das Himmelsbild liegt am Heim-PC';
