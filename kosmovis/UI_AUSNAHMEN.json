@@ -73,7 +73,7 @@
       "komponente": "VollautomatikSchalter",
       "datei": "apps/kosmo-orbit/src/shell/kosmo-maus/KosmoCoop.tsx",
       "testid": "visbox-modus",
-      "vermerk": "Die Selbstaendigkeit der Mac-App (Karte | Coop | Voll, Entscheid 108 A) — an der Marke statt «Mitschauen und Bedienen» (Nahtstelle ausklapper)."
+      "vermerk": "Die Selbstaendigkeit der Mac-App (Karte | Coop | Voll, Entscheid 108 A). Seit Stufe 6 an der Marke unter «Mitschauen und Bedienen»: KosmoMausFreigabeSchalter woertlich (je Agent Mitschauen, Bedienen, Coop — die zwei Coop-Schalter stehen gleich, die Selbstaendigkeit gilt fuer beide), darunter Vollautomatik und der Satz (Nahtstelle ausklapper)."
     },
     {
       "teil": "Coop-Praesenz und Verlauf",
@@ -81,7 +81,7 @@
       "stand": "eingesetzt",
       "datei": "apps/kosmo-orbit/src/shell/kosmo-maus/KosmoCoop.tsx",
       "testid": "kosmo-coop-praesenz",
-      "vermerk": "Schritte ohne Karte aus dem KI-Verlauf des Werkzeugsatzes (Entscheid 114, getrennt von Strg+Z); nur Claude."
+      "vermerk": "Schritte ohne Karte aus dem KI-Verlauf des Werkzeugsatzes (Entscheid 114, getrennt von Strg+Z); seit Stufe 5/6 von Claude und vom Assistenten, auch aus der Maus (Kennung M-…)."
     },
     {
       "teil": "Fensterrahmen der Vollautomatik",
@@ -145,9 +145,11 @@
     {
       "teil": "Maus-Ebene und Schalter «Mitschauen»/«Bedienen»",
       "ko": "main.tsx: <KosmoMausEbene />; KosmoMausFreigabeSchalter an der Marke",
-      "stand": "ausnahme",
-      "grund": "Claude bedient Visbox nur ueber Werkzeuge (MCP in der Mac-App), nie mit eigenem Zeiger.",
-      "entscheid": "Plan §2"
+      "stand": "eingesetzt",
+      "komponente": "KosmoMausEbene",
+      "datei": "apps/kosmo-orbit/src/shell/kosmo-maus/KosmoMausEbene.tsx",
+      "testid": "kosmo-maus-leiste",
+      "vermerk": "Seit KI-Bedienung Stufe 6 (21.10.2026): Claude und der Assistent klicken mit eigener Maus (kosmo-maus.ts woertlich, Werkzeuge visbox_blick/visbox_maus). Die Sperrzonen von KosmoOrbit plus Varianten-Freigabe, Bestell-Knoepfe, Loeschen, Kennwoerter (Zweig claude/kosmovis-kopf) und die Visbox-Teile (WIRT_SPERRZONEN in ki-wirt.ts). Vis-Befehle der Maus gehen durch den KI-Werkzeugsatz (versucheCoop im Stellvertreter kosmo-coop.ts)."
     },
     {
       "teil": "Sichern, Weitergeben, Öffnen am Speichern-Kreis",

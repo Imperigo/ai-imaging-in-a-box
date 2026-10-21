@@ -87,6 +87,9 @@ final class Assistentenmodell: ObservableObject {
 
     let anschluss: AssistentAnschluss
     let ordner: String?
+    /// Stufe 5 (KI-Bedienung, 21.10.2026): woher die Werkzeugliste kommt und wo die Schritte laufen —
+    /// dieselbe Zentrale wie fuer Claude.
+    var zentrale: Kizentrale { .gemeinsam }
 
     /// Wie oft der Stand nachgesehen wird — **gesetzt**: oft genug, dass die Eingabe nach
     /// einem Bild bald wieder steht, selten genug, dass die Startzeile nicht drängelt.
@@ -120,7 +123,7 @@ final class Assistentenmodell: ObservableObject {
     func sende() async {
         // ZU LANG ODER LEER: nichts geht hinaus, der Text bleibt im Feld, der Satz steht im
         // Hinweis (der Kern entscheidet, `Assistentengespraech.sende`).
-        guard let bitte = gespraech.sende(eingabe) else { return }
+        guard let bitte = gespraech.sende(eingabe, werkzeuge: zentrale.werkzeugeFuerAssistent()) else { return }
         eingabe = ""
         // DIE NACHRICHT ZURUECK INS FELD — sie kam nicht in den Verlauf. Nur, wenn das
         // Feld noch leer ist: Was inzwischen getippt wurde, wird nicht ueberschrieben.
@@ -134,7 +137,7 @@ final class Assistentenmodell: ObservableObject {
     /// in der Seite, der Satz steht im Hinweis. Ging sie hinaus, wird das Feld der Seite leer; kam sie
     /// nicht an, liegt sie wieder darin.
     func frageVonSeite(_ text: String) async {
-        guard let bitte = gespraech.sende(text) else { return }
+        guard let bitte = gespraech.sende(text, werkzeuge: zentrale.werkzeugeFuerAssistent()) else { return }
         legeInsSeitenfeld("")
         if let zurueck = await schicke(bitte) {
             legeInsSeitenfeld(zurueck)
@@ -151,11 +154,23 @@ final class Assistentenmodell: ObservableObject {
     }
 
     /// Schickt die Bitte; gibt die Nachricht zurueck, wenn sie scheiterte (sie kam nicht in den Verlauf).
+    ///
+    /// Stufe 5: Nennt der Heim-PC Werkzeugschritte, fuehrt die App sie in der Knotenansicht aus und
+    /// fragt mit den Ergebnissen weiter, bis er fertig ist. Wie viele, entscheidet der Heim-PC; was
+    /// als naechstes hinausgeht, der Kern (`Assistentengespraech`) — hier wird nur ausgefuehrt.
     private func schicke(_ bitte: Assistentenbitte) async -> String? {
+        var naechste: Assistentenbitte? = bitte
         do {
-            let anfrage = try Anfragen.assistent(bitte, anmeldung: anschluss.anmeldung)
-            let (status, daten) = try await anschluss.schicke(anfrage)
-            gespraech.empfange(try Assistentenantwort.lies(status: status, daten: daten))
+            while let b = naechste {
+                naechste = nil
+                let anfrage = try Anfragen.assistent(b, anmeldung: anschluss.anmeldung)
+                let (status, daten) = try await anschluss.schicke(anfrage)
+                gespraech.empfange(try Assistentenantwort.lies(status: status, daten: daten))
+                while let schritt = gespraech.naechsterSchritt() {
+                    let ergebnis = await zentrale.rufeFuerAssistent(schritt.aufruf, kennung: schritt.kennung)
+                    if let weiter = gespraech.schrittErledigt(ergebnis) { naechste = weiter }
+                }
+            }
             return nil
         } catch {
             return gespraech.scheitert(Self.satz(zu: error))

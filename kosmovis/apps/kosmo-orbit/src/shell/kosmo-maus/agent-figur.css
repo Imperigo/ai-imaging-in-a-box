@@ -1,0 +1,373 @@
+/* Teil C · Claude und Kosmo als Figuren (Owner 07.10.2026; Entwurf
+   «KosmoOrbit Coop-Modus» C1–C3). Nur Tokens aus aura.css. Die Lage
+   (Spitze und Körper) setzt die Feder in `AgentFigur.tsx` als `transform`;
+   hier stehen Gestalt, Charakter und die Zustände. */
+
+.agent-figur {
+  position: fixed;
+  z-index: calc(var(--k-ebene-meldung) + 1);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  --km-farbe: var(--k-rolle-agent);
+  --km-hell: color-mix(in srgb, var(--km-farbe) 45%, var(--k-plan-paper));
+  --km-pupille: var(--k-print-ink);
+  /* Blickrichtung: setzt die Feder in AgentFigur.tsx am Blick-Punkt selbst. */
+  --blick-x: 0px;
+  --blick-y: 0px;
+}
+
+.agent-figur[data-urheber='kosmo'] {
+  --km-farbe: var(--k-mod-kosmo);
+  --km-hell: color-mix(in srgb, var(--km-farbe) 40%, var(--k-plan-paper));
+}
+
+/* ── Spitze: die Form der KosmoOrbit-Maus, Hotspot (16,4) auf dem Ziel ── */
+
+.agent-spitze {
+  position: absolute;
+  left: -16px;
+  top: -4px;
+  width: 32px;
+  height: 32px;
+  will-change: transform;
+}
+
+.agent-spitze-form {
+  width: 32px;
+  height: 32px;
+  transform-origin: 16px 4px;
+  animation: agent-morph 240ms var(--k-ease-bounce) both;
+}
+
+.agent-spitze-svg {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--k-print-ink) 45%, transparent));
+}
+
+.agent-strich {
+  fill: none;
+  stroke: var(--km-farbe);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.agent-fuellung {
+  fill: var(--km-farbe);
+  stroke: var(--k-plan-paper);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.agent-punkt {
+  fill: var(--km-farbe);
+}
+
+@keyframes agent-morph {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-14deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Körper: folgt federnd, Mitte auf (22, 26) unter der Spitze ──────── */
+
+.agent-koerper-lage {
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 40px;
+  height: 40px;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.agent-koerper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.agent-atem {
+  position: absolute;
+  inset: 0;
+  animation: agent-atmen 3.2s ease-in-out infinite;
+}
+
+@keyframes agent-atmen {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.06) translateY(-2px);
+  }
+}
+
+.agent-koerper-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+/* Claude: ein Funke, dreht langsam; beim Denken schnell und zusammengezogen. */
+.agent-funke {
+  transform-origin: 50% 50%;
+  animation: agent-drehen 14s linear infinite;
+  filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--km-farbe) 55%, transparent));
+}
+
+.agent-koerper-flaeche {
+  fill: var(--km-farbe);
+}
+
+.agent-koerper-licht {
+  fill: var(--km-hell);
+  opacity: 0.6;
+}
+
+/* Kosmo: sein Orb mit Umlaufbahn und Mond. */
+.agent-orb {
+  position: absolute;
+  inset: 0;
+}
+
+.agent-orb-kern {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--km-hell),
+    var(--km-farbe) 60%,
+    color-mix(in srgb, var(--km-farbe) 60%, var(--k-print-ink))
+  );
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--km-farbe) 45%, transparent);
+}
+
+.agent-bahn {
+  transform-origin: 50% 50%;
+  animation: agent-drehen 6s linear infinite;
+}
+
+.agent-bahn-linie {
+  fill: none;
+  stroke: var(--km-hell);
+  stroke-width: 2.4;
+}
+
+.agent-mond {
+  fill: var(--km-hell);
+}
+
+@keyframes agent-drehen {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Blick: schaut in Fahrtrichtung oder zu deinem Zeiger (--blick-x/-y aus der Feder). */
+.agent-blick {
+  position: absolute;
+  left: 16px;
+  top: 15px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--km-pupille);
+  box-shadow: 0 0 0 2px var(--km-hell);
+  transform: translate(var(--blick-x), var(--blick-y));
+  transition: transform var(--k-dauer-antippen) var(--k-ease-standard);
+}
+
+.agent-figur[data-urheber='kosmo'] .agent-blick {
+  top: 12px;
+}
+
+/* ── Zustände (C2) ──────────────────────────────────────────────────── */
+
+/* Klicken: der Druck läuft per Web Animations (AgentFigur.tsx), ohne Neuaufbau. */
+
+.agent-figur[data-zustand='denkt'] .agent-funke {
+  animation-duration: 1.4s;
+}
+
+.agent-figur[data-zustand='denkt'] .agent-atem {
+  animation-duration: 1.6s;
+}
+
+.agent-figur[data-zustand='denkt'] .agent-bahn {
+  animation-duration: 1.2s;
+}
+
+.agent-figur[data-zustand='denkt'] .agent-orb-kern {
+  box-shadow: 0 0 16px var(--km-farbe);
+}
+
+.agent-figur[data-zustand='zieht'] .agent-atem,
+.agent-figur[data-zustand='tippt'] .agent-atem {
+  animation-duration: 1.1s;
+}
+
+.agent-figur[data-zustand='geht'] .agent-koerper,
+.agent-figur[data-zustand='geht'] .agent-spitze-form,
+.agent-figur[data-zustand='geht'] .agent-schild {
+  animation: agent-gehen 420ms ease-in forwards;
+}
+
+@keyframes agent-gehen {
+  to {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+}
+
+/* ── Schild: was er tut; beim Darüberfahren die Karte (C3) ─────────── */
+
+.agent-schild {
+  position: absolute;
+  left: 44px;
+  top: 9px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--k-s2);
+  line-height: var(--k-lh-eins);
+  border-radius: var(--k-radius-pill);
+  background: var(--km-farbe);
+  color: var(--k-ink-invers);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-sm);
+  white-space: nowrap;
+  transform-origin: 0 50%;
+  transition:
+    padding 180ms var(--k-ease-standard),
+    border-radius 180ms var(--k-ease-standard);
+}
+
+.agent-schild .kosmo-maus-zeiger-name {
+  font-weight: var(--k-gewicht-betont);
+}
+
+.agent-satz {
+  margin-left: var(--k-s1);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-tippt {
+  display: inline-flex;
+  gap: var(--k-s2); /* Skala statt 3px (Integrator, L31) */
+  margin-left: var(--k-s1);
+}
+
+.agent-tippt span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: agent-punkt 1.2s ease-in-out infinite;
+}
+
+.agent-tippt span:nth-child(2) {
+  animation-delay: var(--k-dauer-antippen);
+}
+
+.agent-tippt span:nth-child(3) {
+  animation-delay: calc(var(--k-dauer-antippen) * 2);
+}
+
+@keyframes agent-punkt {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.agent-schild--offen {
+  display: block;
+  width: 260px;
+  height: auto;
+  padding: var(--k-s2) var(--k-s3);
+  border-radius: var(--k-radius);
+  border: 1px solid var(--km-farbe);
+  background: var(--k-surface);
+  color: var(--k-ink);
+  box-shadow: var(--k-shadow-overlay);
+  white-space: normal;
+}
+
+.agent-schild--offen .kosmo-maus-zeiger-name {
+  color: var(--km-farbe);
+}
+
+.agent-schild--offen .agent-satz {
+  max-width: none;
+  overflow: visible;
+  line-height: var(--k-lh-lesen);
+}
+
+.agent-karte {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--k-s2);
+  margin-top: var(--k-s2);
+  animation: agent-morph 200ms var(--k-ease-standard) both;
+}
+
+.agent-karte-vorher {
+  margin: 0;
+  padding-left: var(--k-s4);
+  font-size: var(--k-t-xs);
+  color: var(--k-ink-soft);
+}
+
+/* Am rechten Rand öffnen Körper und Schild nach links (Versatz -22 in der Feder). */
+.agent-figur[data-seite='links'] .agent-koerper-lage {
+  left: -42px;
+}
+
+.agent-figur[data-seite='links'] .agent-schild {
+  left: auto;
+  right: 44px;
+  transform-origin: 100% 50%;
+}
+
+/* Bei «weniger Bewegung»: alles steht; Form und Schild wechseln trotzdem. */
+@media (prefers-reduced-motion: reduce) {
+  .agent-spitze-form,
+  .agent-atem,
+  .agent-funke,
+  .agent-bahn,
+  .agent-karte,
+  .agent-tippt span {
+    animation: none;
+  }
+  .agent-figur[data-zustand='geht'] .agent-koerper,
+  .agent-figur[data-zustand='geht'] .agent-spitze-form,
+  .agent-figur[data-zustand='geht'] .agent-schild {
+    animation: none;
+    opacity: 0;
+  }
+  .agent-blick,
+  .agent-schild {
+    transition: none;
+  }
+}

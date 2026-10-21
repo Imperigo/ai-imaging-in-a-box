@@ -75,7 +75,8 @@ __all__ = [
     "STAND_BEREIT", "STAND_LAEDT", "STAND_FEHLT", "STAND_AUS", "STAENDE",
     "RECHENZEIT_JE_VARIANTE_S", "FRIST_FRAGE_GESAMT_S",
     "SATZ_BILD_RECHNET", "SATZ_BILDMODELL_GELADEN", "SATZ_FRIST_ABGELAUFEN",
-    "anwenden", "frage", "kontext_der_mappe", "pruefe_adresse", "pruefe_sprachmodell",
+    "anwenden", "frage", "frage_mit_werkzeugen", "pruefe_werkzeugliste", "SYSTEMTEXT_KNOTEN",
+    "SCHRITTE_HOECHSTENS", "ERGEBNIS_HOECHSTENS", "WERKZEUGE_HOECHSTENS", "kontext_der_mappe", "pruefe_adresse", "pruefe_sprachmodell",
     "pruefe_vorschlag",
     "stand",
     "EIGENES_MODELL", "KOSMO_ROLLENKARTE", "GESCHUETZTE_ANFAENGE", "geschuetzt",
@@ -1010,7 +1011,7 @@ def kontext_der_mappe(mappe) -> str | None:
     return " ".join(zeilen)
 
 
-def _chat(modell, nachrichten: list, frist: float) -> dict:
+def _chat(modell, nachrichten: list, frist: float, werkzeuge: list | None = None) -> dict:
     """Eine Runde — mit dem Rest der Gesamtfrist, **wenn das Sprachmodell eine kennt.**
 
     :class:`Ollama` nimmt ``frist``; ein Ersatz in einer Probe oder ein anderes Modell mit
@@ -1022,13 +1023,15 @@ def _chat(modell, nachrichten: list, frist: float) -> dict:
         nimmt_frist = "frist" in inspect.signature(modell.chat).parameters
     except (TypeError, ValueError):
         nimmt_frist = False
+    liste = WERKZEUGE if werkzeuge is None else werkzeuge
     if nimmt_frist:
-        return modell.chat(nachrichten, WERKZEUGE, frist=frist)
-    return modell.chat(nachrichten, WERKZEUGE)
+        return modell.chat(nachrichten, liste, frist=frist)
+    return modell.chat(nachrichten, liste)
 
 
 def frage(nachricht, verlauf=(), *, sprachmodell=None, bild_rechnet: bool = False,
-          bildmodell_geladen: bool = False, mappe: dict | None = None) -> dict:
+          bildmodell_geladen: bool = False, mappe: dict | None = None,
+          werkzeuge=None, schritte=()) -> dict:
     """Eine Bitte an den Assistenten → ``{"antwort", "vorschlag"?}``. **Rechnet nie.**
 
     ``antwort`` ist nur, was das Modell als Antwort schrieb (``content``), nie sein
@@ -1056,6 +1059,10 @@ def frage(nachricht, verlauf=(), *, sprachmodell=None, bild_rechnet: bool = Fals
     schon geprüfter Vorschlag mit einem Satz dazu zurück; ohne Vorschlag ein Satz
     (:class:`AssistentError`) — kein Hänger.
 
+    **Mit** ``werkzeuge`` (Plan KI-Bedienung Stufe 5, 21.10.2026): der Assistent bedient die
+    Knotenansicht mit **derselben Werkzeugliste wie Claude**, die die Mac-App mitschickt — siehe
+    :func:`frage_mit_werkzeugen`. Ohne bleibt alles wie bisher (die drei Vorschlagswerkzeuge).
+
     Raises:
         AssistentError: mit dem Satz für den Menschen (leer, zu lang, Modell nicht
             zugelassen, Ollama lehnt ab, ein Bild rechnet, Gesamtfrist abgelaufen).
@@ -1065,6 +1072,10 @@ def frage(nachricht, verlauf=(), *, sprachmodell=None, bild_rechnet: bool = Fals
         raise AssistentError("Es fehlt die Nachricht — was soll das Bild zeigen?")
     if len(nachricht) > NACHRICHT_HOECHSTENS:
         raise AssistentError(f"Die Nachricht ist länger als {NACHRICHT_HOECHSTENS} Zeichen.")
+    if werkzeuge is not None:
+        return frage_mit_werkzeugen(nachricht, verlauf, werkzeuge=werkzeuge, schritte=schritte,
+                                    sprachmodell=sprachmodell, bild_rechnet=bild_rechnet,
+                                    bildmodell_geladen=bildmodell_geladen)
     frueher = _pruefe_verlauf(verlauf)
     if bild_rechnet:
         raise AssistentError(SATZ_BILD_RECHNET)
@@ -1156,6 +1167,225 @@ def frage(nachricht, verlauf=(), *, sprachmodell=None, bild_rechnet: bool = Fals
     elif not antwort:
         antwort = "Dazu habe ich keinen Vorschlag."
     return {"antwort": antwort, **ergebnis}
+
+
+# ============================================== mit der Werkzeugliste der Knotenansicht
+
+#: **Stufe 5 des Plans «KI-Bedienung»** (``docs/PLAN_KI_BEDIENUNG_2026-10-20.md``, 21.10.2026):
+#: Der Assistent bekommt dieselbe Werkzeugliste wie Claude über MCP — die Werkzeuge der
+#: Knotenansicht (``vis_*``, ``graph_lesen``, ``vis_paket``), Blick und Maus, die der Mac-App. Die
+#: Liste schickt die Mac-App mit (sie hält sie, wie für Claude); die **Schleife** steht hier:
+#: Das Modell ruft Werkzeuge, dieser Kern prüft die Aufrufe und gibt sie als ``schritte_offen``
+#: zurück; die Mac-App führt sie in der Knotenansicht aus (als Urheber «assistent» — dort gilt
+#: dieselbe Regel wie für Claude: Karte, Coop oder Voll; Löschen und Rendern immer Karte; die
+#: Grafikkarte gibt nie eine KI frei) und fragt mit den Ergebnissen (``schritte``) weiter.
+#:
+#: *Warum die Schleife nicht ganz hier läuft:* Die Werkzeuge wirken in der Knotenansicht am Mac,
+#: nicht am Heim-PC. Jede Anfrage ist darum **eine** Runde des Modells; was es bisher tat, kommt
+#: mit der nächsten Anfrage zurück. Die Grenzen (wie viele Schritte, wie lang ein Ergebnis) gelten
+#: hier, an einer Stelle — die Mac-App zählt nicht nach.
+
+#: So viele Werkzeuge nimmt eine Liste höchstens — **gesetzt** (heute rund 25).
+WERKZEUGE_HOECHSTENS = 64
+#: So gross darf die Liste als JSON sein — **gesetzt**: Sie geht bei jeder Runde ans Modell.
+WERKZEUGLISTE_ZEICHEN_HOECHSTENS = 120_000
+#: So viele Werkzeugschritte darf eine Frage machen — **gesetzt**. Danach antwortet das Modell
+#: ohne Werkzeuge (es bekommt keine mehr angeboten) und sagt, was es tat.
+SCHRITTE_HOECHSTENS = 12
+#: So lang darf das Ergebnis eines Schritts sein, das ans Modell geht — **gesetzt**; länger wird
+#: gekürzt (``graph_lesen`` eines grossen Graphen ist lang, das Kontextfenster nicht).
+ERGEBNIS_HOECHSTENS = 6000
+#: So lang darf eine Beschreibung sein.
+BESCHREIBUNG_HOECHSTENS = 4000
+
+_WERKZEUGNAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
+#: **Nie ein Werkzeug des Assistenten**, auch wenn eine Liste es nennte: was freigibt. Die
+#: Grafikkarte gibt ein Mensch am Render-Knoten frei (Entscheid 106b); die Liste der Mac-App hat
+#: kein solches Werkzeug — diese Wache hält es auch für eine falsche Liste fest.
+_NIE_ALS_WERKZEUG = re.compile(r"freig|approv|gpu", re.I)
+
+SYSTEMTEXT_KNOTEN = (
+    "Du bist der Assistent der Bild-App Visbox für Architektinnen und Architekten. Du bedienst "
+    "die Knotenansicht, in der aus einem 3D-Modell über Knoten (Modell, Kamera, Stimmung, "
+    "Render) ein Bild entsteht — mit denselben Werkzeugen wie Claude. Lies zuerst den Graph "
+    "(graph_lesen) oder sieh in die Ansicht (visbox_blick), bevor du etwas änderst. Jede "
+    "Änderung kann eine Karte werden, die die Nutzerin anwendet: Antwortet ein Werkzeug mit "
+    "«VORSCHLAG … liegt als Karte», ist das richtig so — schlage dasselbe nicht noch einmal vor. "
+    "Löschen und Rendern sind immer eine Karte, und die Grafikkarte gibt nur die Nutzerin am "
+    "Render-Knoten frei; das kannst und darfst du nicht. Behaupte nie, ein Bild sei gerechnet "
+    "oder geprüft. Antwortet ein Werkzeug mit «FEHLER» oder «VERWEIGERT», korrigiere den Aufruf "
+    "oder sage kurz, warum es nicht geht. Antworte am Ende in ein bis drei kurzen Sätzen auf "
+    "Deutsch, in Schweizer Schreibung (ss statt ß), und sage, was du getan oder vorgeschlagen "
+    "hast.")
+
+SATZ_SCHRITTE_ERSCHOEPFT = (
+    "Du hast für diese Frage alle Werkzeugschritte gebraucht. Antworte jetzt ohne Werkzeug: "
+    "Sage kurz, was du getan oder vorgeschlagen hast und was noch offen ist.")
+
+
+def pruefe_werkzeugliste(werkzeuge) -> list[dict]:
+    """Die Liste der Mac-App (``[{name, description, inputSchema}]``) → Werkzeuge für Ollama.
+
+    Geprüft wird die **Form**, nicht der Inhalt: Namen wie bei MCP, ein Objekt-Schema, Grössen.
+    Ein Werkzeug, das freigibt, wird abgewiesen (:data:`_NIE_ALS_WERKZEUG`).
+    """
+    if not isinstance(werkzeuge, (list, tuple)) or not werkzeuge:
+        raise AssistentError("Die Werkzeugliste ist eine nicht leere Liste.")
+    if len(werkzeuge) > WERKZEUGE_HOECHSTENS:
+        raise AssistentError(f"Die Werkzeugliste hat mehr als {WERKZEUGE_HOECHSTENS} Werkzeuge.")
+    try:
+        zeichen = len(json.dumps(werkzeuge, ensure_ascii=False))
+    except (TypeError, ValueError):
+        raise AssistentError("Die Werkzeugliste ist kein JSON.") from None
+    if zeichen > WERKZEUGLISTE_ZEICHEN_HOECHSTENS:
+        raise AssistentError(f"Die Werkzeugliste ist länger als "
+                             f"{WERKZEUGLISTE_ZEICHEN_HOECHSTENS} Zeichen.")
+    raus, namen = [], set()
+    for w in werkzeuge:
+        if not isinstance(w, dict):
+            raise AssistentError("Ein Werkzeug ist {«name», «description», «inputSchema»}.")
+        name, beschreibung = w.get("name"), w.get("description", "")
+        schema = w.get("inputSchema")
+        if not isinstance(name, str) or not _WERKZEUGNAME.fullmatch(name):
+            raise AssistentError("Ein Werkzeugname ist 1 bis 64 Zeichen aus Buchstaben, Ziffern, "
+                                 "«_» und «-».")
+        if _NIE_ALS_WERKZEUG.search(name):
+            raise AssistentError(f"«{name}» ist kein Werkzeug des Assistenten — freigeben kann "
+                                 f"nur ein Mensch.")
+        if name in namen:
+            raise AssistentError(f"Das Werkzeug «{name}» steht zweimal in der Liste.")
+        if not isinstance(beschreibung, str) or len(beschreibung) > BESCHREIBUNG_HOECHSTENS:
+            raise AssistentError(f"Die Beschreibung von «{name}» ist kein Text oder länger als "
+                                 f"{BESCHREIBUNG_HOECHSTENS} Zeichen.")
+        if not isinstance(schema, dict) or schema.get("type") != "object":
+            raise AssistentError(f"Das Schema von «{name}» ist kein Objekt-Schema.")
+        namen.add(name)
+        raus.append({"type": "function", "function": {
+            "name": name, "description": beschreibung, "parameters": schema}})
+    return raus
+
+
+def _kuerze(text: str, hoechstens: int) -> str:
+    return text if len(text) <= hoechstens else text[:hoechstens - 1] + "…"
+
+
+def _pruefe_schritte(schritte, namen) -> list[dict]:
+    """``[{werkzeug, argumente, ergebnis}]`` — was die Mac-App ausführte, in Reihenfolge."""
+    if schritte is None:
+        return []
+    if not isinstance(schritte, (list, tuple)):
+        raise AssistentError("Die Schritte sind eine Liste.")
+    if len(schritte) > SCHRITTE_HOECHSTENS:
+        raise AssistentError(f"Mehr als {SCHRITTE_HOECHSTENS} Schritte in einer Frage.")
+    raus = []
+    for sch in schritte:
+        if (not isinstance(sch, dict) or sch.get("werkzeug") not in namen
+                or not isinstance(sch.get("argumente", {}), dict)
+                or not isinstance(sch.get("ergebnis"), str)):
+            raise AssistentError("Ein Schritt ist {«werkzeug» aus der Liste, «argumente»: {…}, "
+                                 "«ergebnis»: Text}.")
+        raus.append({"werkzeug": sch["werkzeug"], "argumente": sch.get("argumente") or {},
+                     "ergebnis": _kuerze(sch["ergebnis"], ERGEBNIS_HOECHSTENS)})
+    return raus
+
+
+def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprachmodell=None,
+                         bild_rechnet: bool = False, bildmodell_geladen: bool = False) -> dict:
+    """Eine Runde des Assistenten mit der Werkzeugliste der Knotenansicht. **Rechnet nie.**
+
+    Zurück kommt entweder ``{"antwort", "schritte_offen": [{"werkzeug", "argumente"}]}`` — die
+    Mac-App führt sie aus und fragt mit ``schritte`` (dieselbe Nachricht, derselbe Verlauf, dazu
+    je Schritt ``ergebnis``) weiter — oder ``{"antwort"}``: fertig. ``antwort`` ist dann, was ins
+    Gespräch kommt; bei offenen Schritten ein Zwischensatz (kann leer sein).
+
+    Ein Aufruf, den die Liste nicht kennt oder der kein Objekt als Angaben hat, geht **nicht** an
+    die Mac-App: Das Modell bekommt hier «Abgewiesen: …» und darf in derselben Anfrage
+    korrigieren (höchstens :data:`RUNDEN_HOECHSTENS` Runden).
+    """
+    if not isinstance(nachricht, str) or not nachricht.strip():
+        raise AssistentError("Es fehlt die Nachricht — was soll der Assistent tun?")
+    if len(nachricht) > NACHRICHT_HOECHSTENS:
+        raise AssistentError(f"Die Nachricht ist länger als {NACHRICHT_HOECHSTENS} Zeichen.")
+    frueher = _pruefe_verlauf(verlauf)
+    liste = pruefe_werkzeugliste(werkzeuge)
+    namen = {w["function"]["name"] for w in liste}
+    getan = _pruefe_schritte(schritte, namen)
+    if bild_rechnet:
+        raise AssistentError(SATZ_BILD_RECHNET)
+    if bildmodell_geladen:
+        raise AssistentError(SATZ_BILDMODELL_GELADEN)
+    modell = sprachmodell if sprachmodell is not None else Ollama()
+    pruefe_sprachmodell(getattr(modell, "modell", None))
+
+    nachrichten = ([{"role": "system", "content": SYSTEMTEXT_KNOTEN}] + frueher
+                   + [{"role": "user", "content": nachricht.strip()}])
+    # WAS SCHON GESCHAH, IN DER FORM, DIE OLLAMA KENNT: je Schritt der Aufruf des Modells und das
+    # Ergebnis des Werkzeugs. Das Ergebnis kommt von der Knotenansicht — es ist Text, nie eine Rolle.
+    for sch in getan:
+        nachrichten.append({"role": "assistant", "content": "", "tool_calls": [
+            {"function": {"name": sch["werkzeug"], "arguments": sch["argumente"]}}]})
+        nachrichten.append({"role": "tool", "tool_name": sch["werkzeug"],
+                            "content": sch["ergebnis"]})
+    frei = SCHRITTE_HOECHSTENS - len(getan)
+    if frei <= 0:
+        nachrichten.append({"role": "user", "content": SATZ_SCHRITTE_ERSCHOEPFT})
+    angebot = liste if frei > 0 else []
+
+    ende = time.monotonic() + FRIST_FRAGE_GESAMT_S
+    antwort = ""
+    abgewiesen: list[tuple[str, str]] = []
+    abgelaufen = False
+    for _ in range(RUNDEN_HOECHSTENS):
+        rest = ende - time.monotonic()
+        if rest <= 0:
+            abgelaufen = True
+            break
+        try:
+            botschaft = _chat(modell, nachrichten, rest, angebot)
+        except ZeitUeberschritten:
+            abgelaufen = True
+            break
+        if not isinstance(botschaft, dict):
+            raise AssistentError("Das Sprachmodell antwortete ohne Botschaft.")
+        inhalt = _ohne_denken(botschaft.get("content"))
+        antwort = inhalt or antwort
+        aufrufe = botschaft.get("tool_calls") or []
+        if not isinstance(aufrufe, list) or not aufrufe or not angebot:
+            return {"antwort": antwort or "Fertig."}
+        offen, abgewiesen = [], []
+        for aufruf in aufrufe:
+            funktion = aufruf.get("function") if isinstance(aufruf, dict) else None
+            name = funktion.get("name") if isinstance(funktion, dict) else None
+            argumente = funktion.get("arguments") if isinstance(funktion, dict) else None
+            if isinstance(argumente, str):
+                try:
+                    argumente = json.loads(argumente or "{}")
+                except ValueError:
+                    argumente = None
+            if argumente is None:
+                argumente = {}
+            if name not in namen:
+                abgewiesen.append((name or "?", f"Ein Werkzeug «{name}» gibt es nicht."))
+            elif not isinstance(argumente, dict):
+                abgewiesen.append((name, "Die Angaben zum Werkzeug sind ein Objekt."))
+            else:
+                offen.append({"werkzeug": name, "argumente": argumente})
+        if offen:
+            # DIE GUELTIGEN GEHEN HINAUS, HOECHSTENS SO VIELE, WIE NOCH FREI SIND — die Mac-App
+            # fuehrt sie aus; eine Abweisung daneben wird nicht still verschluckt, sie steht im
+            # Zwischensatz.
+            satz = (antwort + " " if antwort else "") + " ".join(
+                f"Nicht ausgeführt: {g}" for _, g in abgewiesen)
+            return {"antwort": satz.strip(), "schritte_offen": offen[:frei]}
+        nachrichten.append({"role": "assistant", "content": inhalt, "tool_calls": [
+            {"function": a.get("function")} for a in aufrufe if isinstance(a, dict)]})
+        for name, grund in abgewiesen:
+            nachrichten.append({"role": "tool", "tool_name": name, "content": f"Abgewiesen: {grund}"})
+    if antwort:
+        return {"antwort": antwort}
+    if abgelaufen or not abgewiesen:
+        raise AssistentError(SATZ_FRIST_ABGELAUFEN)
+    return {"antwort": "Dazu fand ich kein passendes Werkzeug — " + abgewiesen[-1][1]}
 
 
 # =========================================================================== anwenden

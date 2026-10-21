@@ -132,7 +132,7 @@ def test_eingesetzt_heisst_wortgleich_und_vom_wirt_gezeichnet():
 def test_ausnahmen_stehen_nicht_im_wirt():
     """Was Ausnahme ist, zeichnet der Wirt nicht — sonst wäre die Ausnahme eine Behauptung."""
     wirt = _wirt_text()
-    for komp in ("AnsichtsInfo", "InselOnboarding", "StarterGuide", "StartSequenz", "KosmoMausEbene", "CursorEbene",
+    for komp in ("AnsichtsInfo", "InselOnboarding", "StarterGuide", "StartSequenz", "CursorEbene",
                  "CommandPalette"):
         assert not re.search(rf"<{komp}\b", wirt), komp
     kopf = (WIRT / "kopf.tsx").read_text(encoding="utf-8")

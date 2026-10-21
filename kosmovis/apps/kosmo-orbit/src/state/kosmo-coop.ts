@@ -17,13 +17,23 @@
  *    (`haengeAnKiVerlauf`) und nimmt sie dort zurueck. Die Wache fuer Strg+Z setzt der Wirt
  *    (`ki-wirt.ts`), nicht diese Datei.
  *
- * Es zaehlen nur Schritte von Claude: Der Assistent bedient die Knotenansicht heute nicht (S3).
+ * Die Schritte von Claude und vom Assistenten (Plan KI-Bedienung Stufe 5, 21.10.2026) stehen hier;
+ * der zweite Urheber heisst in den woertlichen Teilen «kosmo» (sein Name kommt aus `kosmoName()`,
+ * in Visbox «Assistent»), im Werkzeugsatz «assistent».
+ *
+ * **Die Wache der KosmoMaus** (Stufe 6, `state/kosmo-maus.ts` woertlich) fragt hier, bevor eine
+ * Handlung der Agenten-Maus einen Befehl ausfuehrt (`versucheCoop`). In KosmoOrbit wendet der Coop
+ * dort direkt an, sonst wird eine Maus-Karte. **In Visbox geht jeder Vis-Befehl einer Agenten-Hand
+ * durch den KI-Werkzeugsatz** (`behandle` mit dem Modus der App): dieselbe Regel wie ein Werkzeug-
+ * aufruf (`brauchtKarte` — Karte, Coop oder Voll; Loeschen und Rendern immer Karte), dieselben
+ * Karten in der Leiste der Mac-App, derselbe KI-Verlauf mit «zurücknehmen» (Entscheid 114). Eine
+ * zweite Kartenart fuer dieselbe Aenderung gaebe es sonst nur, weil die KI geklickt statt gerufen hat.
  */
 import { create } from 'zustand';
-import { isSettingsPatch, type AnyPatch, type KosmoDoc } from '@kosmo/kernel';
-import { useProject } from './project-store';
-import { URHEBER_NAME, type Urheber } from './kosmo-maus-freigabe';
-import { abonniere, kiSchritte, rueckgaengigKi } from '../modules/vis/ki-werkzeuge';
+import { execute, isSettingsPatch, type AnyPatch, type ExecutionResult, type KosmoDoc } from '@kosmo/kernel';
+import { merkeAngehalten, useProject } from './project-store';
+import { URHEBER_NAME, useKosmoMaus, type Urheber } from './kosmo-maus-freigabe';
+import { abonniere, behandle, kiSchritte, rueckgaengigKi, werkzeugNameFuer, type KiUrheber } from '../modules/vis/ki-werkzeuge';
 
 export type CoopWeg = 'mcp' | 'maus' | 'chat' | 'werkzeug';
 
@@ -136,10 +146,20 @@ export const stoppeCoop = halteAlleAn;
 const gesehen = new Map<string, { zeit: string; folge: number; stufe: CoopStufe }>();
 let folge = 0;
 
+/** Der Urheber der woertlichen Teile zum Urheber des Werkzeugsatzes — und zurueck. */
+export function kiUrheberVon(u: Urheber): KiUrheber {
+  return u === 'claude' ? 'claude' : 'assistent';
+}
+function urheberVon(u: KiUrheber): Urheber {
+  return u === 'claude' ? 'claude' : 'kosmo';
+}
+
+/** Die Kennungen der Schritte aus der Agenten-Maus («M-…», wie «K-…» der Werkzeugaufrufe). */
+const MAUS_KENNUNG = 'M-';
+
 function leseSchritte(): void {
   const z = useKosmoCoop.getState();
   const gruppen = kiSchritte()
-    .filter((s) => s.urheber === 'claude')
     .map((s): CoopGruppe => {
       let merk = gesehen.get(s.kennung);
       if (!merk) {
@@ -148,8 +168,8 @@ function leseSchritte(): void {
       }
       return {
         kennung: s.kennung,
-        urheber: 'claude',
-        weg: 'mcp',
+        urheber: urheberVon(s.urheber),
+        weg: s.kennung.startsWith(MAUS_KENNUNG) ? 'maus' : s.urheber === 'claude' ? 'mcp' : 'chat',
         commandId: '',
         zusammenfassung: s.zusammenfassung,
         zeit: merk.zeit,
@@ -201,12 +221,24 @@ export interface PraesenzEintrag {
   offen: number;
 }
 
-/** Wer im Projekt arbeitet: du und Claude (ohne KosmoMaus bedient niemand mit eigenem Zeiger). */
+/** Wer im Projekt arbeitet: du, Claude und der Assistent; «bedient» aus der KosmoMaus (Zeiger steht). */
 export function coopPraesenz(): PraesenzEintrag[] {
   const st = useProject.getState();
   const z = useKosmoCoop.getState();
   const eigen = [...st.journal].reverse().find((e) => e.actor === 'benutzer');
-  const letzte = [...coopSchritte(z)].reverse().find((g) => g.urheber === 'claude');
+  const agent = (u: Urheber): PraesenzEintrag => {
+    const seine = coopSchritte(z).filter((g) => g.urheber === u);
+    const letzte = seine.at(-1);
+    return {
+      wer: u,
+      name: URHEBER_NAME[u],
+      coop: z.an[u] || z.vollautomatik,
+      vollautomatik: z.vollautomatik,
+      bedient: useKosmoMaus.getState().zeigerJe[u] !== null,
+      zuletzt: letzte ? { zusammenfassung: letzte.zusammenfassung, zeit: letzte.zeit, kennungen: kennungenVon(letzte) } : null,
+      offen: seine.filter((g) => !g.zurueckgenommen).length,
+    };
+  };
   return [
     {
       wer: 'du',
@@ -217,15 +249,8 @@ export function coopPraesenz(): PraesenzEintrag[] {
       zuletzt: eigen ? { zusammenfassung: eigen.summary, zeit: eigen.ts, kennungen: [] } : null,
       offen: 0,
     },
-    {
-      wer: 'claude',
-      name: URHEBER_NAME.claude,
-      coop: z.an.claude || z.vollautomatik,
-      vollautomatik: z.vollautomatik,
-      bedient: false,
-      zuletzt: letzte ? { zusammenfassung: letzte.zusammenfassung, zeit: letzte.zeit, kennungen: kennungenVon(letzte) } : null,
-      offen: coopSchritte(z).filter((g) => !g.zurueckgenommen).length,
-    },
+    agent('claude'),
+    agent('kosmo'),
   ];
 }
 
@@ -241,28 +266,72 @@ export interface Zuruecknahme {
 }
 
 /**
- * «Zurücknehmen» an einem Schritt. Der Verlauf des Werkzeugsatzes nimmt nur den **letzten** stehenden
- * Schritt von Claude zurueck (Entscheid 114, `rueckgaengigKi`); an einem frueheren sagt der Satz, dass
+ * «Zurücknehmen» an einem Schritt. Der Verlauf des Werkzeugsatzes nimmt je Urheber nur den **letzten**
+ * stehenden Schritt zurueck (Entscheid 114, `rueckgaengigKi`); an einem frueheren sagt der Satz, dass
  * zuerst die spaeteren dran sind — statt sie still mitzunehmen.
  */
 export function nimmSchrittZurueck(kennung: string, _opts: { mitAbhaengigen?: boolean } = {}): Zuruecknahme {
-  const alle = coopSchritte();
-  const g = alle.find((x) => x.kennung === kennung);
+  const g = coopSchritte().find((x) => x.kennung === kennung);
   if (!g) return { status: 'unbekannt', abhaengige: [], schritte: [], satz: 'Diesen Schritt gibt es im offenen Projekt nicht (mehr).' };
-  const letzter = alle[alle.length - 1];
+  const seine = coopSchritte().filter((x) => x.urheber === g.urheber);
+  const letzter = seine[seine.length - 1];
   if (letzter && letzter.kennung !== kennung) {
     return {
       status: 'blockiert',
       abhaengige: [],
       schritte: [],
-      satz: `«${g.zusammenfassung}» lässt sich erst zurücknehmen, wenn die späteren Schritte von Claude zurückgenommen sind — zuerst «${letzter.zusammenfassung}».`,
+      satz: `«${g.zusammenfassung}» lässt sich erst zurücknehmen, wenn die späteren Schritte von ${URHEBER_NAME[g.urheber]} zurückgenommen sind — zuerst «${letzter.zusammenfassung}».`,
     };
   }
-  const r = rueckgaengigKi('claude');
+  const r = rueckgaengigKi(kiUrheberVon(g.urheber));
   leseSchritte();
   return r.ok
     ? { status: 'zurueckgenommen', abhaengige: [], schritte: [g], satz: r.satz }
     : { status: 'blockiert', abhaengige: [], schritte: [], satz: r.satz };
+}
+
+// ---------------------------------------------------------------------------------- Wache der KosmoMaus
+
+let wendetAn = false;
+let mausFolge = 0;
+
+/** Laeuft gerade ein Schritt aus `versucheCoop`? Dann laesst die Wache den Befehl durch (wie dort). */
+export function coopWendetGeradeAn(): boolean {
+  return wendetAn;
+}
+
+/** Wendet die App Aenderungen dieses Agenten ohne Karte an (Coop oder Voll)? */
+export function coopWirksam(urheber: Urheber): boolean {
+  const z = useKosmoCoop.getState();
+  return z.vollautomatik || z.an[urheber];
+}
+
+/**
+ * Die Wache der KosmoMaus fragt, bevor ein Befehl einer Agenten-Hand laeuft. Ein Vis-Befehl geht durch
+ * den Werkzeugsatz (`behandle`, Modus der App): in «Karte» und bei Loeschen/Rendern eine Karte, sonst
+ * direkt als KI-Schritt. Das Ergebnis traegt bei einer Karte oder einem Fehler das Kennzeichen
+ * «angehalten» (`merkeAngehalten`) — das Projekt ist dann unveraendert. `null`: kein Vis-Befehl, die
+ * Wache legt wie dort eine Maus-Karte an. `_weg` wie dort (immer «maus» in Visbox).
+ */
+export function versucheCoop(wer: Urheber, commandId: string, params: unknown, _weg: CoopWeg = 'maus'): ExecutionResult | null {
+  if (!commandId.startsWith('vis.')) return null;
+  let probe: ExecutionResult;
+  try {
+    probe = execute(useProject.getState().doc, commandId, params, { actor: wer === 'claude' ? 'claude' : 'kosmo', dryRun: true });
+  } catch {
+    return null;
+  }
+  const kennung = `${MAUS_KENNUNG}${++mausFolge}`;
+  wendetAn = true;
+  let antwort;
+  try {
+    antwort = behandle({ kennung, werkzeug: werkzeugNameFuer(commandId), argumente: params, urheber: kiUrheberVon(wer) }, modusAus());
+  } finally {
+    wendetAn = false;
+  }
+  leseSchritte();
+  if ('sofort' in antwort && antwort.sofort.ok) return probe;
+  return merkeAngehalten(probe);
 }
 
 /** Nur fuer Proben. */
@@ -276,4 +345,5 @@ export function setzeCoopZurueck(): void {
   });
   gesehen.clear();
   folge = 0;
+  mausFolge = 0;
 }

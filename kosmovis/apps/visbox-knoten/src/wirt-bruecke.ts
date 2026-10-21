@@ -28,6 +28,7 @@ import type { ThemeName } from '@kosmo/ui';
 import { setzeClaudeLage, type ClaudeLage } from '../../kosmo-orbit/src/state/claude-anschluss';
 import { registriereModusWeg, setzeModusVonApp, type VisboxModus } from '../../kosmo-orbit/src/state/kosmo-coop';
 import type { AutosaveLage } from '../../kosmo-orbit/src/state/project-vault';
+import { useKosmoMaus } from '../../kosmo-orbit/src/state/kosmo-maus-freigabe';
 import { setzeGespraechVonApp, registriereGespraechWeg, type GespraechVonApp, type GespraechWunsch, type Assistentenstand } from '../../kosmo-orbit/src/shell/kosmo-gespraech';
 import { setzeThema } from './thema';
 
@@ -47,7 +48,9 @@ export type Rechnerort = 'heimPC' | 'diesesGeraet';
  * bleibenden Speicher) und legt es vor dem ersten Bild zurück. **Nur diese Schlüssel**: Thema, Akzent,
  * Anzeige (Schrift, Bewegung) und der Rückgängig-Schalter — dieselbe Liste im Kern (`Knotenwirt.merkbar`).
  */
-export const MERKBAR: readonly string[] = ['kosmo.thema', 'kosmo.akzent', 'kosmo.anzeige', 'kosmo.touch-undo-geste'];
+// Seit KI-Bedienung Stufe 6 (21.10.2026) dazu die Schalter «Mitschauen»/«Bedienen» je Agent
+// (`kosmo-maus-freigabe.ts`): wer «Bedienen» ausschaltet, findet es nach dem Neuladen aus — wie dort.
+export const MERKBAR: readonly string[] = ['kosmo.thema', 'kosmo.akzent', 'kosmo.anzeige', 'kosmo.touch-undo-geste', 'kosmo.maus.freigabe'];
 
 /** Was die Seite von der App will. */
 export type WirtWunsch =
@@ -357,7 +360,12 @@ export function haengeWirtAn(fenster: Window, b: WirtBote | null = boteDesWirts(
   // DAS GESPRAECH FUEHRT DIE APP (S3): ohne App kein Weg — das Feld sagt dann, wo es das gibt.
   registriereGespraechWeg(b ? (w) => sende({ art: 'assistent', ...w }) : null);
   sende({ art: 'bereit' });
+  // Die Freigaben der KosmoMaus merkt die App (MERKBAR) — bei jedem Wechsel am Schalter, Esc, Stopp.
+  const abFreigabe = useKosmoMaus.subscribe((z, vorher) => {
+    if (z.freigaben !== vorher.freigaben) merkeEinstellungen();
+  });
   return () => {
+    abFreigabe();
     registriereModusWeg(null);
     registriereGespraechWeg(null);
     bote = null;

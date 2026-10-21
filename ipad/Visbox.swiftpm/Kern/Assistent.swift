@@ -78,10 +78,26 @@ public struct Assistentenvorschlag: Codable, Equatable, Sendable {
 public struct Assistentenantwort: Codable, Equatable, Sendable {
     public let antwort: String
     public let vorschlag: Assistentenvorschlag?
+    /// Stufe 5 (KI-Bedienung, 21.10.2026): Werkzeugaufrufe, die die App in der Knotenansicht
+    /// ausfuehrt, bevor sie weiterfragt (`schritte_offen`). Leer: Die Antwort ist fertig.
+    public let schritte: [Assistentenaufruf]
 
-    public init(antwort: String, vorschlag: Assistentenvorschlag?) {
+    public init(antwort: String, vorschlag: Assistentenvorschlag?, schritte: [Assistentenaufruf] = []) {
         self.antwort = antwort
         self.vorschlag = vorschlag
+        self.schritte = schritte
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case antwort, vorschlag
+        case schritte = "schritte_offen"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        antwort = try c.decode(String.self, forKey: .antwort)
+        vorschlag = try c.decodeIfPresent(Assistentenvorschlag.self, forKey: .vorschlag)
+        schritte = try c.decodeIfPresent([Assistentenaufruf].self, forKey: .schritte) ?? []
     }
 
     /// Liest die Antwort — oder wirft den `Serverfehler` mit dem Satz des Servers.
@@ -92,6 +108,42 @@ public struct Assistentenantwort: Codable, Equatable, Sendable {
         } catch {
             throw Serverfehler.unlesbar(status, "keine Antwort des Assistenten")
         }
+    }
+}
+
+// ======================================================= Werkzeugschritte (Stufe 5, 21.10.2026)
+
+/// Ein Werkzeugaufruf des Assistenten, wie der Heim-PC ihn zurueckgibt — die App fuehrt ihn in der
+/// Knotenansicht aus (als Urheber «assistent»: Karte, Coop oder Voll wie bei Claude).
+public struct Assistentenaufruf: Codable, Equatable, Sendable {
+    public let werkzeug: String
+    public let argumente: [String: JSONWert]
+
+    public init(werkzeug: String, argumente: [String: JSONWert]) {
+        self.werkzeug = werkzeug
+        self.argumente = argumente
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        werkzeug = try c.decode(String.self, forKey: .werkzeug)
+        argumente = (try? c.decodeIfPresent([String: JSONWert].self, forKey: .argumente)) ?? [:]
+    }
+}
+
+/// Ein ausgefuehrter Schritt — geht mit der naechsten Anfrage zurueck an den Heim-PC.
+public struct Assistentenschritt: Equatable, Sendable {
+    public let aufruf: Assistentenaufruf
+    public let ergebnis: String
+
+    public init(aufruf: Assistentenaufruf, ergebnis: String) {
+        self.aufruf = aufruf
+        self.ergebnis = ergebnis
+    }
+
+    var alsJSON: JSONWert {
+        .objekt(["werkzeug": .text(aufruf.werkzeug), "argumente": .objekt(aufruf.argumente),
+                 "ergebnis": .text(ergebnis)])
     }
 }
 
@@ -211,14 +263,21 @@ public enum Assistentengrenzen {
 
 // ================================================================== der Zustand der Leiste
 
-/// Eine Bitte, wie sie hinausgeht: die neue Nachricht und der Verlauf **davor**.
+/// Eine Bitte, wie sie hinausgeht: die neue Nachricht und der Verlauf **davor** — seit Stufe 5
+/// dazu die Werkzeugliste der Knotenansicht und die schon ausgefuehrten Schritte dieser Frage.
 public struct Assistentenbitte: Equatable, Sendable {
     public let nachricht: String
     public let verlauf: [Gespraechsbeitrag]
+    /// Leer: die drei Vorschlagswerkzeuge von frueher (Knotenansicht nicht offen).
+    public let werkzeuge: [Mcpwerkzeug]
+    public let schritte: [Assistentenschritt]
 
-    public init(nachricht: String, verlauf: [Gespraechsbeitrag]) {
+    public init(nachricht: String, verlauf: [Gespraechsbeitrag], werkzeuge: [Mcpwerkzeug] = [],
+                schritte: [Assistentenschritt] = []) {
         self.nachricht = nachricht
         self.verlauf = verlauf
+        self.werkzeuge = werkzeuge
+        self.schritte = schritte
     }
 }
 
@@ -248,6 +307,11 @@ public struct Assistentengespraech: Equatable, Sendable {
     public static let verlaufTextHoechstens = 4000
 
     public private(set) var beitraege: [Gespraechsbeitrag] = []
+    /// Stufe 5: die Frage, an der der Assistent gerade mit Werkzeugen arbeitet — `nil`: keine.
+    /// Solange sie laeuft, ist `wartet` wahr; ihre Schritte fuehrt die App aus.
+    public private(set) var lauf: Assistentenlauf?
+    /// Zaehlt die Kennungen der Schritte («A-1», «A-2», …) ueber das ganze Gespraech.
+    public private(set) var schrittzahl = 0
     /// Die Nachricht, die gerade unterwegs ist — **noch nicht im Verlauf.** Gezeigt wird sie
     /// trotzdem (`angezeigt`), damit niemand meint, sie sei verloren.
     public private(set) var unterwegs: String?
@@ -277,7 +341,7 @@ public struct Assistentengespraech: Equatable, Sendable {
     /// Die Nutzerin schickt `text` ab. `nil`, wenn nichts hinausgeht: leer, es wartet schon
     /// eine Anfrage, oder die Nachricht ist zu lang — dann steht der Satz in `hinweis`, und
     /// der Text bleibt im Eingabefeld (die Leiste leert es nur, wenn etwas hinausgeht).
-    public mutating func sende(_ text: String) -> Assistentenbitte? {
+    public mutating func sende(_ text: String, werkzeuge: [Mcpwerkzeug] = []) -> Assistentenbitte? {
         let nachricht = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !nachricht.isEmpty, !wartet else { return nil }
         // VOR DEM SENDEN GEPRUEFT, nicht erst drueben: Der Server weist sie ohnehin ab, und
@@ -293,7 +357,9 @@ public struct Assistentengespraech: Equatable, Sendable {
         vorschlag = nil
         hinweis = nil
         wartet = true
-        return Assistentenbitte(nachricht: nachricht, verlauf: verlauf)
+        lauf = werkzeuge.isEmpty ? nil
+            : Assistentenlauf(nachricht: nachricht, verlauf: verlauf, werkzeuge: werkzeuge)
+        return Assistentenbitte(nachricht: nachricht, verlauf: verlauf, werkzeuge: werkzeuge)
     }
 
     /// Der Verlauf, wie er hinausgeht: **die letzten `verlaufHoechstens`**, und jeder Beitrag
@@ -312,8 +378,18 @@ public struct Assistentengespraech: Equatable, Sendable {
         }
     }
 
-    /// Der Server hat geantwortet: **jetzt erst** kommen Frage und Antwort in den Verlauf.
+    /// Der Server hat geantwortet: **jetzt erst** kommen Frage und Antwort in den Verlauf — ausser
+    /// er nennt noch Werkzeugschritte (Stufe 5): dann bleibt die Frage unterwegs, der Zwischensatz
+    /// steht im Hinweis, und die App holt die Schritte mit `naechsterSchritt`.
     public mutating func empfange(_ antwort: Assistentenantwort) {
+        if var l = lauf, !antwort.schritte.isEmpty {
+            l.offen = antwort.schritte
+            lauf = l
+            let satz = antwort.antwort.trimmingCharacters(in: .whitespacesAndNewlines)
+            hinweis = satz.isEmpty ? nil : satz
+            return
+        }
+        lauf = nil
         if let frage = unterwegs {
             beitraege.append(Gespraechsbeitrag(von: .mensch, text: frage))
         }
@@ -330,11 +406,32 @@ public struct Assistentengespraech: Equatable, Sendable {
     /// verloren ist.
     @discardableResult
     public mutating func scheitert(_ satz: String) -> String? {
+        lauf = nil
         let zurueck = unterwegs
         unterwegs = nil
         hinweis = satz
         wartet = false
         return zurueck
+    }
+
+    /// Der naechste Schritt, den die App ausfuehrt, mit seiner Kennung — `nil`, wenn keiner offen
+    /// ist (dann geht mit `schrittErledigt` die naechste Bitte hinaus oder die Frage ist fertig).
+    public mutating func naechsterSchritt() -> (kennung: String, aufruf: Assistentenaufruf)? {
+        guard let l = lauf, let aufruf = l.offen.first else { return nil }
+        schrittzahl += 1
+        return (Assistentenschrittergebnis.kennungVorsatz + String(schrittzahl), aufruf)
+    }
+
+    /// Ein Schritt ist ausgefuehrt. Sind alle offenen erledigt, kommt die naechste Bitte zurueck —
+    /// dieselbe Nachricht, derselbe Verlauf, dazu alle Schritte dieser Frage. Wie viele Schritte
+    /// eine Frage machen darf, sagt der Heim-PC (`SCHRITTE_HOECHSTENS`), nicht die App.
+    public mutating func schrittErledigt(_ ergebnis: String) -> Assistentenbitte? {
+        guard var l = lauf, !l.offen.isEmpty else { return nil }
+        l.getan.append(Assistentenschritt(aufruf: l.offen.removeFirst(), ergebnis: ergebnis))
+        lauf = l
+        guard l.offen.isEmpty else { return nil }
+        return Assistentenbitte(nachricht: l.nachricht, verlauf: l.verlauf, werkzeuge: l.werkzeuge,
+                                schritte: l.getan)
     }
 
     /// «Ablehnen»: die Karte verwerfen. Gerechnet wird nichts.
@@ -366,6 +463,17 @@ public struct Assistentengespraech: Equatable, Sendable {
     }
 }
 
+/// Eine Frage, an der der Assistent mit Werkzeugen arbeitet (Stufe 5).
+public struct Assistentenlauf: Equatable, Sendable {
+    public let nachricht: String
+    public let verlauf: [Gespraechsbeitrag]
+    public let werkzeuge: [Mcpwerkzeug]
+    /// Was die App noch ausfuehren muss, in Reihenfolge.
+    public var offen: [Assistentenaufruf] = []
+    /// Was schon ausgefuehrt ist, mit Ergebnis.
+    public var getan: [Assistentenschritt] = []
+}
+
 // ============================================================================ die Anfragen
 
 extension Anfragen {
@@ -380,6 +488,17 @@ extension Anfragen {
         var rumpf: [String: JSONWert] = ["nachricht": .text(bitte.nachricht)]
         if !bitte.verlauf.isEmpty {
             rumpf["verlauf"] = .liste(bitte.verlauf.map(\.alsJSON))
+        }
+        // STUFE 5: die Liste wie Claude sie sieht (Name, Beschreibung, Schema) — die Art bleibt in
+        // der App, sie entscheidet ueber Karten, nicht das Modell.
+        if !bitte.werkzeuge.isEmpty {
+            rumpf["werkzeuge"] = .liste(bitte.werkzeuge.map {
+                .objekt(["name": .text($0.name), "description": .text($0.beschreibung),
+                         "inputSchema": $0.eingabe])
+            })
+        }
+        if !bitte.schritte.isEmpty {
+            rumpf["schritte"] = .liste(bitte.schritte.map(\.alsJSON))
         }
         return try baue(Wege.assistent, rumpf: rumpf, anmeldung: anmeldung)
     }

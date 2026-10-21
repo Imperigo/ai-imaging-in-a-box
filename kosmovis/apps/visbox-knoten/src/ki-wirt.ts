@@ -6,7 +6,7 @@
  * KosmoOrbit). Diese Datei haengt ihn so an, dass die Mac-App ihn bedienen kann:
  *
  *  - `window.visboxKi` — `werkzeuge`, `rufe`, `entscheide`, `offene`, `verwirf`,
- *    `rueckgaengigKi`, `kiVerlauf`. Die App ruft sie mit `callAsyncJavaScript` und liest die
+ *    `rueckgaengigKi`, `kiVerlauf`, seit Stufe 6 `blickMausWerkzeuge`, `blick`, `maus`. Die App ruft sie mit `callAsyncJavaScript` und liest die
  *    Antwort als JSON-Text (`alsText`), damit nichts an der Umwandlung von WebKit haengt.
  *  - jedes Ereignis (Taetigkeit, Karte, entschieden, kiverlauf) geht an
  *    `webkit.messageHandlers.visboxKi.postMessage` — dort fuehrt die App die Assistent-Leiste
@@ -20,9 +20,37 @@
  * Schnittstelle steht trotzdem, die Ereignisse gehen nirgends hin.
  *
  * Die GPU-Freigabe ist auch hier kein Weg: `window.visboxKi` hat nichts, das freigibt.
+ *
+ * **Blick und Maus** (Plan «KI-Bedienung» Stufe 6, 21.10.2026; Vorlage `kosmo_blick`/`kosmo_maus`
+ * von KosmoOrbit, woertlich in `state/kosmo-maus.ts`): `blick(urheber, argumente)` gibt das Lagebild
+ * der Knotenansicht als Text (fuer Claude auf Wunsch mit Bild), `maus(urheber, argumente)` klickt,
+ * tippt, zieht mit einer EIGENEN Maus der KI (nicht der des Architekten). Was die Maus am Graph
+ * aendert, geht durch denselben Werkzeugsatz wie ein Werkzeugaufruf (`versucheCoop` im Stellvertreter
+ * `kosmo-coop.ts`): Karte, Coop oder Voll; Loeschen und Rendern immer Karte. Die Sperrzonen stehen in
+ * `kosmo-maus.ts` («Freigeben», «Alle freigeben», die direkt sendenden Bestell-Knoepfe, Loeschen,
+ * Kennwoerter, Karten, Schalter, Rueckgaengig) und hier fuer die Teile, die es nur in Visbox gibt
+ * (`WIRT_SPERRZONEN`). Die Namen der zwei Werkzeuge bildet die App wie alle (`blickMausWerkzeuge`).
  */
 import { setzeVerlaufWache, useProject } from '../../kosmo-orbit/src/state/project-store';
-import { kiSchnittstelle, kiVerlaufWache, verwirfVorschlaege, type KiEreignis } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
+import {
+  kiSchnittstelle,
+  kiSchritte,
+  kiVerlaufWache,
+  offeneVorschlaege,
+  verwirfVorschlaege,
+  type KiEreignis,
+  type KiUrheber,
+} from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
+import {
+  BLICK_PARAMETER,
+  MAUS_PARAMETER,
+  fuehreBlickAus,
+  fuehreMausAus,
+  registriereSperrzone,
+  type WerkzeugAntwort,
+} from '../../kosmo-orbit/src/state/kosmo-maus';
+import { registriereAppName } from '../../kosmo-orbit/src/state/kosmo-name';
+import { meldeProjektWechsel } from '../../kosmo-orbit/src/state/project-vault';
 
 /** Der Bote der Mac-App (`WKScriptMessageHandler` «visboxKi»). */
 export interface KiBote {
@@ -47,6 +75,88 @@ export function alsText(wert: unknown): string {
   return JSON.stringify(wert ?? null);
 }
 
+// ---------------------------------------------------------------------------------- Blick und Maus
+
+/** Der Name der App in den Saetzen der KosmoMaus («… in Visbox einschalten»). */
+export const APP_NAME = 'Visbox';
+
+/** Die Namen der zwei Werkzeuge — wie die App sie Claude nennt (`Mcp.servername` + «_blick»). */
+export const BLICK_NAME = 'visbox_blick';
+export const MAUS_NAME = 'visbox_maus';
+
+export const BLICK_BESCHREIBUNG =
+  'Sieht in die Knotenansicht von Visbox: Bereich, Dialoge, Meldungen, Fehler, Fokus, offene Karten, den Modus und die sichtbaren Bedienelemente mit testid und Rechteck; gesperrte stehen als solche da. Mit bild:true für Claude zusätzlich ein Bild (höchstens 1280 px). Ändert nichts. Braucht «Mitschauen».';
+export const MAUS_BESCHREIBUNG =
+  'Eine eigene Maus in der Knotenansicht (nicht die des Architekten); zuerst visbox_blick. Klick/tippen per testid oder Text trifft nur Sichtbares. Ändert ein Klick den Render-Graph, gilt der Modus: Karte, Coop oder Voll — Löschen und Rendern immer eine Karte. Nie: «Freigeben»/«Alle freigeben» (Grafikkarte), die Bestell-Knöpfe, Löschen, Karten, Schalter, Rückgängig, Kennwörter. Keine Dateien von der Platte. Braucht «Bedienen».';
+
+/** Die zwei Werkzeuge in der Form der Werkzeugliste (`art`: lesen bzw. bedienen — nie selbst eine Karte). */
+export function blickMausWerkzeuge(): { name: string; description: string; inputSchema: unknown; art: 'lesen' | 'bedienen' }[] {
+  return [
+    { name: BLICK_NAME, description: BLICK_BESCHREIBUNG, inputSchema: BLICK_PARAMETER, art: 'lesen' },
+    { name: MAUS_NAME, description: MAUS_BESCHREIBUNG, inputSchema: MAUS_PARAMETER, art: 'bedienen' },
+  ];
+}
+
+/** Der Urheber des Werkzeugsatzes zum Urheber der KosmoMaus («kosmo» traegt in Visbox den Namen «Assistent»). */
+function mausUrheber(u: KiUrheber | undefined): 'claude' | 'kosmo' {
+  return u === 'assistent' ? 'kosmo' : 'claude';
+}
+
+/**
+ * Die Teile, die es nur in Visbox gibt und die eine KI nie bedient: der Schalter «Claude über MCP»,
+ * die Anmeldung am Heim-PC, «Wer rechnet?», «Aktualisieren» und das Gespräch mit dem Assistenten.
+ */
+export const WIRT_SPERRZONEN: readonly { selektor: string; grund: string }[] = [
+  { selektor: '[data-testid="einstellungen-claude-schalter"]', grund: '«Claude über MCP» schaltet nur der Architekt.' },
+  { selektor: '[data-testid="einstellungen-heimpc-einrichten"], [data-testid="einstellungen-heimpc"]', grund: 'Die Anmeldung am Heim-PC richtet nur der Architekt ein.' },
+  { selektor: '[data-testid="einstellungen-rechner"]', grund: '«Wer rechnet?» wählt nur der Architekt.' },
+  { selektor: '[data-testid="einstellungen-aktualisieren"]', grund: 'Aktualisieren bleibt beim Architekten.' },
+  { selektor: '.kp-panel', grund: 'Das Gespräch mit dem Assistenten führt der Architekt.' },
+];
+
+function pruefeWirtSperrzone(el: Element): string | null {
+  for (const z of WIRT_SPERRZONEN) if (el.closest(z.selektor)) return z.grund;
+  return null;
+}
+
+/**
+ * Was die Maus am Graph ausloeste, als Satz an die KI: neue Karten (Kennung «M-…») und Schritte ohne
+ * Karte. Die woertliche Antwort der KosmoMaus kennt nur ihre eigenen Maus-Karten — in Visbox gehen
+ * Vis-Befehle durch den Werkzeugsatz, darum sagt es der Wirt.
+ */
+function folgenDerMaus(kartenVorher: Set<string>, schritteVorher: Set<string>): string {
+  const karten = offeneVorschlaege().filter((v) => !kartenVorher.has(v.kennung));
+  const schritte = kiSchritte().filter((s) => !schritteVorher.has(s.kennung));
+  const teile: string[] = [];
+  if (karten.length) {
+    teile.push(
+      `Die Handlung wollte den Render-Graph ändern — als Karte für den Architekten angehalten: ${karten
+        .map((v) => `${v.kennung} «${v.zusammenfassung}»`)
+        .join(', ')}. Erst «Anwenden» ändert ihn.`,
+    );
+  }
+  if (schritte.length) {
+    teile.push(`Ohne Karte angewendet (Coop/Voll, in der Leiste zurücknehmbar): ${schritte.map((s) => `«${s.zusammenfassung}»`).join(', ')}.`);
+  }
+  return teile.join(' ');
+}
+
+/** `visbox_blick`: das Lagebild, fuer Claude mit Bild auf Wunsch. Nur auf diesem Rechner. */
+export async function blick(urheber: KiUrheber | undefined, argumente: unknown): Promise<WerkzeugAntwort> {
+  return fuehreBlickAus(mausUrheber(urheber), argumente, 'lokal');
+}
+
+/** `visbox_maus`: eine Handlung der eigenen Maus; die Antwort nennt, was sie am Graph ausloeste. */
+export async function maus(urheber: KiUrheber | undefined, argumente: unknown): Promise<WerkzeugAntwort> {
+  const karten = new Set(offeneVorschlaege().map((v) => v.kennung));
+  const schritte = new Set(kiSchritte().map((s) => s.kennung));
+  const r = await fuehreMausAus(mausUrheber(urheber), argumente, 'lokal');
+  const folgen = folgenDerMaus(karten, schritte);
+  if (!folgen) return r;
+  const [kopf, ...rest] = r.text.split('\n');
+  return { ...r, text: [`${kopf} ${folgen}`, ...rest].join('\n') };
+}
+
 export type VisboxKi = ReturnType<typeof baueVisboxKi>;
 
 function baueVisboxKi() {
@@ -59,6 +169,9 @@ function baueVisboxKi() {
     verwirf: ki.verwirf,
     rueckgaengigKi: ki.rueckgaengigKi,
     kiVerlauf: ki.kiVerlauf,
+    blickMausWerkzeuge,
+    blick,
+    maus,
     alsText,
   };
 }
@@ -82,11 +195,15 @@ export function haengeKiAn(fenster: Window, bote: KiBote | null = boteDerApp(fen
   };
   const abEreignisse = ki.abonniere((e) => sende(e));
   setzeVerlaufWache(kiVerlaufWache);
+  registriereAppName(APP_NAME);
+  const abSperre = registriereSperrzone(pruefeWirtSperrzone);
   let doc = useProject.getState().doc;
   const abDoc = useProject.subscribe((s) => {
     if (s.doc === doc) return;
     doc = s.doc;
     verwirfVorschlaege(MAPPE_GEWECHSELT);
+    // Die Maus-Karten der KosmoMaus gehen mit (dort «Projekt gewechselt»).
+    meldeProjektWechsel();
   });
   const beimVerlassen = () => {
     verwirfVorschlaege(SEITE_LAEDT_NEU);
@@ -96,6 +213,8 @@ export function haengeKiAn(fenster: Window, bote: KiBote | null = boteDerApp(fen
   sende({ art: 'bereit', werkzeuge: schnitt.werkzeuge().length });
   return () => {
     abEreignisse();
+    abSperre();
+    registriereAppName(null);
     abDoc();
     fenster.removeEventListener('pagehide', beimVerlassen);
     setzeVerlaufWache(null);

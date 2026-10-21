@@ -5946,6 +5946,38 @@ Terminal). Es startet MCP-Server als Programm und spricht über **stdio** mit ih
 Einrichten › «Claude über MCP» schreibt «Visbox hinzufügen» den Eintrag in die Einstellungsdatei von
 Claude Desktop (Visbox mit `--mcp-stdio`); alles andere in der Datei bleibt.
 
+**Blick (der KI auf die Knotenansicht)** — Was Claude oder der Assistent von der Knotenansicht sieht, ohne
+etwas zu ändern: ein Lagebild als Text (welcher Bereich offen ist, welche Knöpfe und Felder sichtbar sind,
+welche Karten liegen, welche Regel gerade gilt) und für Claude auf Wunsch ein Bild der Ansicht. Der Assistent
+bekommt nur den Text — sein Modell kann keine Bilder lesen. *Im Projekt:* Werkzeug `visbox_blick`, braucht den
+Schalter «Mitschauen»; der Text kommt aus `kosmo-blick-live.ts`, wörtlich aus KosmoOrbit.
+
+**Maus der KI (eigener Zeiger)** — Eine zweite, eigene Maus in der Knotenansicht, mit der Claude oder der
+Assistent klicken, tippen, ziehen oder scrollen — nicht die Maus des Architekten, die bleibt frei. Man sieht
+sie als kleine Figur mit einem Schild («Claude · klickt …») und oben eine Leiste «Claude bedient — Esc
+beendet». Ändert ein Klick den Render-Graph, gilt dieselbe Regel wie bei jedem Werkzeug: Karte, Coop oder
+Voll; Löschen und Rendern immer eine Karte. *Im Projekt:* Werkzeug `visbox_maus`, braucht den Schalter
+«Bedienen»; `kosmo-maus.ts` wörtlich aus KosmoOrbit, die Weiche zum **KI-Werkzeugsatz** in `kosmo-coop.ts`.
+
+**Sperrzone (der Maus der KI)** — Ein Knopf oder Feld, das die Maus der KI nie trifft, auch nicht in
+«Voll»: «Freigeben» am Render-Knoten und «Alle freigeben» (beides startet die Grafikkarte), die Knöpfe, die
+ein Bild direkt bestellen, Löschen, die Karten selbst, die Schalter an der Marke, Rückgängig,
+Kennwort-Felder, die Anmeldung am Heim-PC und das Gespräch mit dem Assistenten. Solange eine KI bedient, sind
+die Sperrzonen gestrichelt umrandet. *Im Projekt:* `sperrGrund` in `kosmo-maus.ts` (dazu `WIRT_SPERRZONEN`
+in `ki-wirt.ts`); Probe `kv-maus-sperrzonen`.
+
+**Mitschauen und Bedienen (Schalter)** — Zwei Schalter je KI an der **Claude-Marke**: «Mitschauen» erlaubt den
+**Blick**, «Bedienen» die **Maus der KI**. Ab Werk beide an; schaltet der Architekt einen aus, bleibt er aus,
+auch nach dem Neuladen. Eine KI kann sich nie selbst einschalten, nur ihr Bedienen beenden. *Im Projekt:*
+`kosmo-maus-freigabe.ts`, wörtlich; gemerkt von der Mac-App (`kosmo.maus.freigabe`).
+
+**Werkzeugschleife (des Assistenten)** — Wie der Assistent mit Werkzeugen arbeitet: Sein Modell am Heim-PC
+sagt, welches Werkzeug es aufrufen will; die Mac-App führt den Aufruf in der Knotenansicht aus und schickt
+das Ergebnis zurück; das Modell entscheidet den nächsten Schritt, bis es eine Antwort gibt. Höchstens zwölf
+Schritte je Frage. Ändert ein Schritt etwas, liegt eine Karte «Vorschlag des Assistenten · A-n» im
+Gesprächsfeld. *Im Projekt:* `frage_mit_werkzeugen` in `assistent.py` (die Schleife), `Assistentengespraech`
+im Kern der App (die Regeln des Gesprächs), Plan KI-Bedienung Stufe 5.
+
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
 
@@ -8281,6 +8313,7 @@ könnte; erst nachzählen (297).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74, Blick und Maus): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-299 und -300 (Protokoll 74 §171): **CUDA-Kontext**, **Eigenes Assistenzmodell**, **Auslöser (eines Satzes)**, **Augenurteil** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |
 | 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |

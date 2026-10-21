@@ -14,6 +14,10 @@ typealias Heimholer = @Sendable (_ weg: Macwerkzeuge.Heimweg) async
 /// Die KI-Bedienung der Mac-App (Plan KI-Bedienung, Stufe 3 und 4; Entscheide 105–106f, 108,
 /// 114): der Ort, an dem MCP-Kern, Knotenansicht und Assistent-Leiste zusammenkommen.
 ///
+/// * **Fuer den Assistenten** (Stufe 5, 21.10.2026): dieselbe Liste und derselbe Weg, als Urheber
+///   «assistent» (`rufeFuerAssistent`) — seine Karten heissen «Vorschlag des Assistenten · A-n».
+/// * **Blick und Maus** (Stufe 6): `visbox_blick`, `visbox_maus` gehen an die Seite
+///   (`Kibedienen`); die Sperrzonen stehen dort.
 /// * **Fuer Claude** (`Knotentraeger`): Werkzeuge nennen — die der Knotenansicht, solange sie
 ///   offen ist, sonst die Liste aus dem Bau (`Knoten/ki-werkzeugliste.json`), dazu die der Mac-App
 ///   —, Aufrufe an `window.visboxKi.rufe` reichen, die Mac-Werkzeuge selbst ausfuehren.
@@ -110,17 +114,28 @@ final class Kizentrale: ObservableObject {
     }
 
     func rufe(_ aufruf: Mcpaufruf, werkzeug: Mcpwerkzeug) async -> Traegerantwort {
+        await rufe(aufruf, urheber: .claude)
+    }
+
+    /// Ein Aufruf von Claude oder vom Assistenten (Stufe 5: dieselbe Liste, derselbe Weg, nur der
+    /// Urheber unterscheidet sie). Blick und Maus (Stufe 6) gehen an `visboxKi.blick`/`maus`.
+    func rufe(_ aufruf: Mcpaufruf, urheber: Kiurheber) async -> Traegerantwort {
         if Macwerkzeuge.ist(aufruf.werkzeug) {
             return .ergebnis(await fuehreMacWerkzeugAus(aufruf))
         }
         guard let knoten else {
             return .ergebnis(Mcpergebnis(text: Kibruecke.nichtOffen, fehler: true))
         }
-        let ruf: JSONWert = .objekt([
-            "kennung": .text(aufruf.kennung), "werkzeug": .text(aufruf.werkzeug),
-            "argumente": .objekt(aufruf.argumente), "urheber": .text(Kiurheber.claude.rawValue),
-        ])
-        guard let rufText = (try? ruf.daten()).flatMap({ String(data: $0, encoding: .utf8) }),
+        if let rumpf = Kibedienen.rumpf(aufruf.werkzeug) {
+            guard let argumente = (try? JSONWert.objekt(aufruf.argumente).daten())
+                .flatMap({ String(data: $0, encoding: .utf8) }),
+                  let text = await knoten(rumpf, ["urheber": urheber.rawValue, "argumente": argumente]),
+                  let antwort = try? JSONWert.lies(Data(text.utf8)) else {
+                return .ergebnis(Mcpergebnis(text: Kibruecke.unlesbar, fehler: true))
+            }
+            return .ergebnis(Kibedienen.ergebnis(aus: antwort))
+        }
+        guard let rufText = Kibruecke.ruf(aufruf, urheber: urheber),
               let text = await knoten(
                 Kibruecke.rumpf("rufe(JSON.parse(ruf), modus)"),
                 ["ruf": rufText, "modus": modus.rawValue]),
@@ -128,6 +143,24 @@ final class Kizentrale: ObservableObject {
             return .ergebnis(Mcpergebnis(text: Kibruecke.unlesbar, fehler: true))
         }
         return Kibruecke.traegerantwort(aus: antwort)
+    }
+
+    // ================================================================= fuer den Assistenten (Stufe 5)
+
+    /// Die Werkzeuge fuer den Assistenten — **dieselben wie fuer Claude**, solange die
+    /// Knotenansicht offen ist; sonst keine (dann fragt er mit seinen drei Vorschlagswerkzeugen
+    /// wie bisher). Die zwei des MCP-Kerns (`visbox_status`, `visbox_vorschlag_status`) nicht: Der
+    /// Assistent wartet nie auf eine Karte.
+    func werkzeugeFuerAssistent() -> [Mcpwerkzeug] {
+        knoten == nil ? [] : werkzeuge()
+    }
+
+    /// Ein Schritt des Assistenten in der Knotenansicht. Eine Karte wartet nicht: Das Modell hoert,
+    /// dass sie beim Architekten liegt (`Assistentenschrittergebnis`).
+    func rufeFuerAssistent(_ aufruf: Assistentenaufruf, kennung: String) async -> String {
+        let antwort = await rufe(Mcpaufruf(kennung: kennung, werkzeug: aufruf.werkzeug,
+                                           argumente: aufruf.argumente), urheber: .assistent)
+        return Assistentenschrittergebnis.text(antwort, kennung: kennung).text
     }
 
     // ================================================================= aus der Leiste

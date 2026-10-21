@@ -18,7 +18,8 @@
  * «entschieden» geht ueber den Boten `visboxKi` an die App und weckt dort den wartenden Aufruf.
  * Eine eigene Antwort ueber die Leitung gibt es darum nicht (`antworte` tut nichts).
  *
- * Der Assistent nutzt den Werkzeugsatz heute nicht; seine Karten kaemen mit S3 (Kugel und Gespraech).
+ * Die Karten des Assistenten (Stufe 5) stehen nicht hier, sondern in der Mac-App und im Gespraechsfeld;
+ * die Marke «Claude» zeigt nur Claudes eigene.
  */
 import { create } from 'zustand';
 import { abonniere, entscheide, offeneVorschlaege, VIS_PAKET, type KiVorschlag } from '../modules/vis/ki-werkzeuge';
@@ -137,4 +138,14 @@ export function haengeAnWerkzeugsatz(): () => void {
     if (e.phase === 'beginn') beginneTaetigkeit(e.kennung, e.werkzeug, 'claude', e.zeit);
     else beendeTaetigkeit({ kennung: e.kennung, ok: e.ok, text: e.text }, e.zeit);
   });
+}
+
+/**
+ * KI-Bedienung Stufe 6 (21.10.2026): die KosmoMaus (`state/kosmo-maus.ts`, woertlich) verwirft beim
+ * Projektwechsel auch Claudes offene Karten. In Visbox liegen sie im Werkzeugsatz — der Wirt verwirft
+ * sie dort selbst (`visboxKi.verwirf`, neues Dokument), mit «VERWORFEN» an Claude ueber die App. Hier
+ * darum nichts doppelt: leer.
+ */
+export function verwirfClaudeVorschlaege(_grund: string): ClaudeVorschlag[] {
+  return [];
 }

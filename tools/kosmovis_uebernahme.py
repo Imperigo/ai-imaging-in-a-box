@@ -190,6 +190,26 @@ WOERTLICH = (
     f"{APP}/shell/einstellungen.css",
     f"{APP}/shell/orbit-065.css",
     f"{APP}/shell/akzente.ts",
+    # KI-BEDIENUNG STUFE 6 (Plan `docs/PLAN_KI_BEDIENUNG_2026-10-20.md`, 21.10.2026): Blick und Maus
+    # — KosmoBlick (Lagebild als Text, fuer Claude mit Bild) und KosmoMaus (eine eigene Maus der KI,
+    # mit Sperrzonen), samt Figur, Leiste, Schaltern «Mitschauen»/«Bedienen». Die Nahtstellen
+    # (`registriereSperrzone`, `registriereAppName`, Sperrzonen fuer Varianten-Freigabe, Loeschen und
+    # Kennwoerter) liegen auf `claude/kosmovis-kopf`. Was die Dateien darueber hinaus aus dem Programm
+    # lesen (Coop-Wache, Projektwechsel, Station, Dateien von der Platte, Modus-Satz), sind
+    # Stellvertreter (HERKUNFT.json).
+    f"{APP}/state/kosmo-maus.ts",
+    f"{APP}/state/kosmo-maus-ereignisse.ts",
+    f"{APP}/state/kosmo-blick-live.ts",
+    f"{APP}/state/normansicht.ts",
+    f"{APP}/state/harmlose-fensterhinweise.ts",
+    f"{APP}/state/maus-karten-im-panel.ts",
+    f"{APP}/shell/kosmo-maus/KosmoMausEbene.tsx",
+    f"{APP}/shell/kosmo-maus/KosmoMausSchalter.tsx",
+    f"{APP}/shell/kosmo-maus/AgentFigur.tsx",
+    f"{APP}/shell/kosmo-maus/agent-figur.css",
+    f"{APP}/shell/zeiger-bilder.ts",
+    f"{APP}/shell/werkzeug-glyphen.tsx",
+    f"{APP}/shell/stations-werkzeuge.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -299,6 +319,9 @@ PROBEN = (
     # R45 (Entscheid 104a, 21.10.2026): der Vermerk «Vorschau» auch an Kuratier-Karte, Vergleich,
     # Inspektor, Bildkachel und Blatt-Knoten — nur Vis-Teile, darum hier gruen.
     "apps/kosmo-orbit/test/guete-marke-kuratier.test.tsx",
+    # KI-Bedienung Stufe 6 (21.10.2026): die Sperrzonen der KosmoMaus im Vis-Werkzeug (Render- und
+    # Varianten-Freigabe, Loeschen, Kennwoerter), die Nahtstellen und die sichtbaren Sperrzonen.
+    "apps/kosmo-orbit/test/kv-maus-sperrzonen.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

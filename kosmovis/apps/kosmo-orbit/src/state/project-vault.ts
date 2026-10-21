@@ -13,3 +13,28 @@ export interface AutosaveLage {
   /** Nur bei `stand: 'fehler'` — der Grund, so wie ihn der Browser nennt. */
   readonly grund?: string;
 }
+
+/**
+ * KI-Bedienung Stufe 6 (21.10.2026): KosmoBlick nennt die Kennung des offenen Projekts, und die
+ * KosmoMaus verwirft beim Projektwechsel offene Karten (`state/kosmo-maus.ts`, woertlich). In Visbox
+ * ist das «Projekt» die Mappe in der Knotenansicht; ihre Kennung haelt der Wirt nicht — darum leer.
+ * Einen Wechsel meldet der Wirt (`meldeProjektWechsel`), wenn ein neues Dokument geladen wird
+ * (`ki-wirt.ts`, `verwirf`), damit die Maus-Karten wie die KI-Karten mitgehen.
+ */
+export function aktivesProjektId(): string {
+  return '';
+}
+
+type ProjektWechselHoerer = () => void;
+const projektWechselHoerer = new Set<ProjektWechselHoerer>();
+
+/** Wie dort: wer wissen muss, dass das Projekt wechselte. Liefert das Abmelden. */
+export function beiProjektWechsel(cb: ProjektWechselHoerer): () => void {
+  projektWechselHoerer.add(cb);
+  return () => void projektWechselHoerer.delete(cb);
+}
+
+/** Visbox: der Wirt meldet ein neues Dokument (andere Mappe). */
+export function meldeProjektWechsel(): void {
+  for (const cb of [...projektWechselHoerer]) cb();
+}

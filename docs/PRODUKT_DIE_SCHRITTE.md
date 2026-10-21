@@ -1896,3 +1896,23 @@ Visbox nicht gibt (Wechsel zwischen Programmteilen, Projektdateien), und die Kno
 Das steht mit Grund in der Liste der Ausnahmen, und eine Probe wird rot, sobald sich das ändert. Ehrlich gesagt: Geprüft an
 Proben mit einem kleinen künstlichen Repository und einmal am echten Stand; ein Bau mit dem neuen Vermerk ist noch nicht
 am Mac angekommen.
+
+**Der Assistent bedient die Knotenansicht wie Claude, und beide sehen und klicken selbst (21.10.2026).** Bisher kannte
+der Assistent am Heim-PC nur drei Vorschläge (Standpunkt, Bildauftrag, Varianten), während Claude die ganze
+Knotenansicht über Werkzeuge bediente. Jetzt bekommt der Assistent dieselbe Liste: Er kann den Graph lesen, Knoten
+anlegen, einstellen und verbinden, ein Bild bestellen. Sein Sprachmodell sagt, welches Werkzeug es aufrufen will; die
+Mac-App führt den Aufruf aus und gibt das Ergebnis zurück, bis das Modell antwortet — höchstens zwölf Schritte je
+Frage. Es gelten dieselben Regeln wie für Claude: Im Modus «Karte» wird jede Änderung ein Vorschlag, den der Architekt
+anwendet; in «Coop» und «Voll» ändert die KI selbst, und jeder Schritt lässt sich zurücknehmen; Löschen und Rendern sind
+immer ein Vorschlag, und die Grafikkarte gibt nie eine KI frei. Die Vorschläge des Assistenten stehen in seinem
+Gesprächsfeld. Dazu kommen **Blick und Maus**: Eine KI kann sich die Knotenansicht ansehen — als Text, der sagt, was
+sichtbar ist, und für Claude auf Wunsch als Bild; der Assistent bekommt nur den Text, weil sein Modell keine Bilder
+liest. Und sie kann mit einer eigenen Maus klicken, tippen und ziehen — eine zweite Maus, die als kleine Figur mit
+Schild zu sehen ist, die eigene bleibt frei. Bestimmte Stellen trifft diese Maus nie: «Freigeben» und «Alle freigeben»
+(beide starten die Grafikkarte), die Knöpfe, die ein Bild direkt bestellen, Löschen, die Vorschläge selbst, die
+Schalter, Rückgängig, Kennwort-Felder und die Anmeldung am Heim-PC. Solange eine KI bedient, sind diese Stellen
+gestrichelt umrandet; die Taste Esc oder «Stopp» beendet das Bedienen sofort. Ändert ein Klick den Graph, gilt dieselbe
+Regel wie bei einem Werkzeug — es entsteht also keine zweite Art von Vorschlag. An der Marke «Claude» stehen je KI die
+Schalter «Mitschauen» und «Bedienen»; was der Architekt dort ausschaltet, bleibt aus. Ehrlich gesagt: Geprüft an
+Proben im Browser des Prüfrechners und mit einem nachgespielten Sprachmodell; ob das echte Modell am Heim-PC die
+Werkzeuge brauchbar ruft und wie die Maus am Mac aussieht, zeigen erst die Messung am Heim-PC und das Gerät.

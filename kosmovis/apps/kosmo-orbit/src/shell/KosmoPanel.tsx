@@ -22,11 +22,18 @@
  *    Modell nicht bereit, ohne App), **der Satz**, warum nicht (Entscheid 103b, wie
  *    `brueckeSagtDenSatz` am Render-Knoten): kein Feld, das nur einen Fehler zurueckbraechte.
  *
+ * Seit KI-Bedienung Stufe 5 (21.10.2026) stehen im Verlauf auch die **Karten der Werkzeugaufrufe des
+ * Assistenten** (`assistent-ki-karte`, Kennung «A-…» bzw. «M-…» aus seiner Maus): Er bedient die
+ * Knotenansicht mit derselben Werkzeugliste wie Claude; was eine Karte braucht, liegt im Werkzeugsatz
+ * (`modules/vis/ki-werkzeuge.ts`), und «Anwenden»/«Ablehnen» entscheiden dort — wie dort Kosmos Karten
+ * im Feld stehen. Ein Bild bestellt er nie selbst: Auch nach «Anwenden» gibt die Grafikkarte der
+ * Architekt am Render-Knoten frei.
+ *
  * Was dort im Kopf steht und hier nicht (Kosten des Motors, Lizenz, Projektfarbe, Vorlesen,
  * Zeitleiste, Motor-Einstellungen) und was unten steht (Feedback, Anhang, Mikrofon, Zuruf), hat in
  * Visbox keinen Gegenstand — benannt in `kosmovis/UI_AUSNAHMEN.json`.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Hairline, KButton, KIcon, useBewegung } from '@kosmo/ui';
 import { KosmoKopfOrb } from './kosmo-fenster/KosmoKopfOrb';
 import { kosmoZustandAusStatus } from './kosmo-eck-orb/KosmoEckOrb';
@@ -35,6 +42,7 @@ import { useSeitenfensterBreit } from './chat/use-seitenfenster-breit';
 import { useKosmoGespraech, wuenscheGespraech } from './kosmo-gespraech';
 import { useKosmoStatus } from '../state/kosmo-status';
 import { kosmoName } from '../state/kosmo-name';
+import { abonniere, entscheide, offeneVorschlaege, type KiVorschlag } from '../modules/vis/ki-werkzeuge';
 import './kosmo-panel.css';
 
 export interface KosmoPanelProps {
@@ -49,6 +57,26 @@ export interface KosmoPanelProps {
   ort?: string;
 }
 
+/** Die offenen Karten des Assistenten im Werkzeugsatz — neu gelesen bei «karte» und «entschieden». */
+let kartenStand: KiVorschlag[] = [];
+function leseAssistentenKarten(): KiVorschlag[] {
+  const neu = offeneVorschlaege().filter((v) => v.urheber === 'assistent');
+  if (neu.length !== kartenStand.length || neu.some((v, i) => v !== kartenStand[i])) kartenStand = neu;
+  return kartenStand;
+}
+export function useAssistentenKarten(): KiVorschlag[] {
+  return useSyncExternalStore(
+    (weiter) => abonniere((e) => {
+      if (e.art === 'karte' || e.art === 'entschieden') weiter();
+    }),
+    leseAssistentenKarten,
+    leseAssistentenKarten,
+  );
+}
+
+/** Der Satz unter einer Render-Karte (wie `Kikarte.rendernSatz` in der App). */
+export const RENDERN_SATZ = 'Rendern braucht danach deine Freigabe am Knoten.';
+
 /** Der Text fuer das Feld nach einer Ansage der App — nur, wenn er niemandes Tippen ueberschreibt. */
 export function feldNachApp(jetzt: string, gesendet: string | null, vonApp: string): string | null {
   if (jetzt.trim() === '') return vonApp;
@@ -58,6 +86,7 @@ export function feldNachApp(jetzt: string, gesendet: string | null, vonApp: stri
 
 export function KosmoPanel({ sichtbar = true, onClose, ohneMotorSatz, ort = 'Heim-PC' }: KosmoPanelProps) {
   const g = useKosmoGespraech();
+  const kiKarten = useAssistentenKarten();
   const zustand = useKosmoStatus((s) => s.zustand);
   const pegel = useKosmoStatus((s) => s.pegel);
   const seitenfenster = useSeitenfensterBreit();
@@ -165,6 +194,23 @@ export function KosmoPanel({ sichtbar = true, onClose, ohneMotorSatz, ort = 'Hei
             </div>
           </div>
         )}
+        {kiKarten.map((v) => (
+          <div key={v.kennung} className="kp-karte kp-karte--offen" data-testid="assistent-ki-karte" data-kennung={v.kennung} data-art={v.art}>
+            <div className="kp-eyebrow k-label k-label-eng">
+              Vorschlag {name === 'Assistent' ? 'des Assistenten' : `von ${name}`} · {v.kennung}
+            </div>
+            <p className="kp-schritt-satz">{v.zusammenfassung}</p>
+            <div className="kp-knopf-reihe">
+              <KButton size="sm" tone="accent" data-testid="assistent-ki-anwenden" onClick={() => entscheide(v.kennung, true)}>
+                Anwenden
+              </KButton>
+              <KButton size="sm" tone="ghost" data-testid="assistent-ki-ablehnen" onClick={() => entscheide(v.kennung, false)}>
+                Ablehnen
+              </KButton>
+            </div>
+            {v.art === 'rendern' && <div className="kp-hinweis-soft">{RENDERN_SATZ}</div>}
+          </div>
+        ))}
         {g.hinweis && (
           <div className="k-einblenden kp-system-zeile kp-system-zeile--fluss" data-testid="assistent-hinweis">
             <span className="kp-system-text">{g.hinweis}</span>

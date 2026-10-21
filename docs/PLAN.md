@@ -8134,7 +8134,10 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] `mappe_lesen`, `skizzen_lesen` (auch als Bild), `bild_ansehen`, `lauf_abbrechen` über die Heim-Wege — gebaut, am Gerät unbestätigt (§156, C85)
     - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — erst mit der Mappe am Mac («Visbox eigenständig», Schritt 3)
   - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
-  - [ ] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste (Karten «Vorschlag des Assistenten» stehen schon)
+  - [x] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste wie Claude (Werkzeugschleife `frage_mit_werkzeugen` am Heim-PC, Schritte in der Mac-App als Urheber «assistent», Gesprächsregeln nur in `Assistentengespraech`, Karten «Vorschlag des Assistenten · A-n» im Gesprächsfeld) — gebaut, am Gerät unbestätigt (§KI-PARA, CKI-NR)
+  - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§KI-PARA, CKI-NR)
+    - [ ] Messauftrag AUF-KI (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
+    - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)

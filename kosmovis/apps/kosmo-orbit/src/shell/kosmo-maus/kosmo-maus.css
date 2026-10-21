@@ -275,3 +275,27 @@
   color: var(--km-farbe);
   background: color-mix(in srgb, var(--km-farbe) 16%, transparent);
 }
+
+/* KosmoVis-Kopf (Visbox Plan KI-Bedienung Stufe 6, 21.10.2026): die Sperrzonen gestrichelt,
+   nur solange ein Agent sichtbar bedient (`BEDIENT_ATTR` am Wurzelelement). Die Liste ist
+   `SPERRZONEN_SICHTBAR_SELEKTOR` in `state/kosmo-maus.ts` — Probe `kv-maus-sperrzonen`. */
+[data-kosmo-maus-bedient]
+  :is(
+    [data-testid='render-freigeben'],
+    [data-testid='varianten-freigeben'],
+    [data-testid='video-splat-freigeben'],
+    [data-testid='train-freigabe-knopf'],
+    [data-testid='train-freigabe-bestaetigen'],
+    [data-testid='render-ausfuehren'],
+    [data-testid='render-grundlage'],
+    [data-testid^='island-render-ausfuehren-'],
+    [data-testid='varianten-bestellen'],
+    [data-testid='node-loeschen'],
+    [data-testid='visisl-graph-loeschen'],
+    input[type='password'],
+    [autocomplete='current-password'],
+    [autocomplete='new-password']
+  ) {
+  outline: 2px dashed var(--k-warning);
+  outline-offset: 3px;
+}

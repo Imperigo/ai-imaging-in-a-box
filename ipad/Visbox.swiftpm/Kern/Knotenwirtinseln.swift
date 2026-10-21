@@ -45,9 +45,11 @@ extension Knotenwirt {
     public static let assistentName = "Assistent"
 
     /// Was die Seite ueber das Neuladen hinaus behaelt (die Schluessel von `localStorage`, wie
-    /// KosmoOrbit sie nennt): Thema, Akzent, Anzeige, der Rueckgaengig-Schalter. **Nur diese** —
+    /// KosmoOrbit sie nennt): Thema, Akzent, Anzeige, der Rueckgaengig-Schalter, seit Stufe 6 die
+    /// Schalter «Mitschauen»/«Bedienen» der KosmoMaus. **Nur diese** —
     /// dieselbe Liste wie `MERKBAR` in `wirt-bruecke.ts` (bewacht).
-    public static let merkbar: [String] = ["kosmo.thema", "kosmo.akzent", "kosmo.anzeige", "kosmo.touch-undo-geste"]
+    public static let merkbar: [String] = ["kosmo.thema", "kosmo.akzent", "kosmo.anzeige", "kosmo.touch-undo-geste",
+                                            "kosmo.maus.freigabe"]
     /// So lang darf ein gemerkter Wert sein — die Anzeige ist ein kleines JSON-Objekt.
     public static let merkWertHoechstens = 200
     /// Wo die App die gemerkten Werte haelt (App-Einstellungen); das Thema bleibt bei `Thema.einstellung`.

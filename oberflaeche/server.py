@@ -2851,6 +2851,10 @@ class Flaeche(BaseHTTPRequestHandler):
         """Eine Bitte an den Assistenten → ``{antwort, vorschlag?}``. **Rechnet nie** —
         :func:`aiimaging.assistent.frage` kennt keinen Weg dorthin.
 
+        Mit ``werkzeuge`` (Stufe 5 «KI-Bedienung», 21.10.2026) → ``{antwort, schritte_offen?}``:
+        der Assistent ruft die Werkzeuge der Knotenansicht; ausgefuehrt werden sie in der
+        Mac-App, die mit ``schritte`` weiterfragt (:func:`aiimaging.assistent.frage_mit_werkzeugen`).
+
         Während ein Bild rechnet, antwortet er nicht: Sein Modell passte nicht neben das
         Bildmodell auf die Grafikkarte (der Satz kommt aus dem Kern). Ebenso nicht, wenn
         das Bildmodell nach einem Lauf noch auf der Karte liegt und sich nicht freigeben
@@ -2884,7 +2888,10 @@ class Flaeche(BaseHTTPRequestHandler):
                 ergebnis = assistent.frage(
                     wunsch.get("nachricht"), wunsch.get("verlauf") or (),
                     sprachmodell=type(self).sprachmodell, bild_rechnet=bild_rechnet,
-                    bildmodell_geladen=geladen, mappe=mappe)
+                    bildmodell_geladen=geladen, mappe=mappe,
+                    # STUFE 5 (KI-Bedienung): mit der Werkzeugliste der Knotenansicht, wenn die
+                    # Mac-App sie mitschickt; die Schritte fuehrt die App aus, nie dieser Server.
+                    werkzeuge=wunsch.get("werkzeuge"), schritte=wunsch.get("schritte") or ())
         except assistent.NichtErreichbar as fehler:
             satz, code = str(fehler), 503
         except assistent.AssistentError as fehler:

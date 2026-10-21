@@ -401,6 +401,123 @@
     "additionalProperties": false
    },
    "art": "aendern"
+  },
+  {
+   "name": "visbox_blick",
+   "description": "Sieht in die Knotenansicht von Visbox: Bereich, Dialoge, Meldungen, Fehler, Fokus, offene Karten, den Modus und die sichtbaren Bedienelemente mit testid und Rechteck; gesperrte stehen als solche da. Mit bild:true für Claude zusätzlich ein Bild (höchstens 1280 px). Ändert nichts. Braucht «Mitschauen».",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "bild": {
+      "type": "boolean",
+      "description": "zusätzlich ein Bild der App (nur Claude, max. 1280 px)"
+     }
+    },
+    "additionalProperties": false
+   },
+   "art": "lesen"
+  },
+  {
+   "name": "visbox_maus",
+   "description": "Eine eigene Maus in der Knotenansicht (nicht die des Architekten); zuerst visbox_blick. Klick/tippen per testid oder Text trifft nur Sichtbares. Ändert ein Klick den Render-Graph, gilt der Modus: Karte, Coop oder Voll — Löschen und Rendern immer eine Karte. Nie: «Freigeben»/«Alle freigeben» (Grafikkarte), die Bestell-Knöpfe, Löschen, Karten, Schalter, Rückgängig, Kennwörter. Keine Dateien von der Platte. Braucht «Bedienen».",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "aktion": {
+      "type": "string",
+      "enum": [
+       "klick",
+       "doppelklick",
+       "rechtsklick",
+       "tippen",
+       "taste",
+       "ziehen",
+       "rad",
+       "waehlen",
+       "datei",
+       "schweben",
+       "beenden"
+      ]
+     },
+     "testid": {
+      "type": "string",
+      "description": "aus kosmo_blick (bevorzugt)"
+     },
+     "text": {
+      "type": "string",
+      "description": "sichtbare Beschriftung"
+     },
+     "x": {
+      "type": "number",
+      "description": "CSS-px von links"
+     },
+     "y": {
+      "type": "number",
+      "description": "CSS-px von oben"
+     },
+     "nach": {
+      "type": "object",
+      "properties": {
+       "testid": {
+        "type": "string"
+       },
+       "text": {
+        "type": "string"
+       },
+       "x": {
+        "type": "number"
+       },
+       "y": {
+        "type": "number"
+       }
+      },
+      "additionalProperties": false,
+      "description": "ziehen: Ziel wie oben"
+     },
+     "eingabe": {
+      "type": "string",
+      "description": "tippen: Text; taste: z.B. «Enter», «Control+a»; waehlen: Wert"
+     },
+     "dx": {
+      "type": "number"
+     },
+     "dy": {
+      "type": "number",
+      "description": "rad: positiv = nach unten"
+     },
+     "dauer_ms": {
+      "type": "number",
+      "description": "schweben (Hover, kein Klick): ms, Vorgabe 300, max. 3000"
+     },
+     "tasten": {
+      "type": "array",
+      "items": {
+       "enum": [
+        "ctrl",
+        "shift",
+        "alt",
+        "meta"
+       ]
+      }
+     },
+     "pfad": {
+      "type": "string",
+      "description": "datei: absoluter Pfad im Heimordner (nur Desktop-App)"
+     },
+     "pfade": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "datei: mehrere Pfade in EINE Auswahl (Wolke + .verortung.json)"
+     }
+    },
+    "required": [
+     "aktion"
+    ],
+    "additionalProperties": false
+   },
+   "art": "bedienen"
   }
  ]
 }

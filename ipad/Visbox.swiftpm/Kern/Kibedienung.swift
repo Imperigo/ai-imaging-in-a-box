@@ -57,6 +57,22 @@ public enum Kibruecke {
         "return \(name).alsText(\(name).\(aufruf));"
     }
 
+    /// Wie `rumpf`, aber fuer einen Weg, der ein Versprechen gibt (Blick und Maus, Stufe 6):
+    /// `callAsyncJavaScript` wartet auf `await`.
+    public static func rumpfWartend(_ aufruf: String) -> String {
+        "return \(name).alsText(await \(name).\(aufruf));"
+    }
+
+    /// Der Ruf an die Knotenansicht als JSON-Text (`ruf` in `rufe(JSON.parse(ruf), modus)`) —
+    /// derselbe fuer Claude und den Assistenten, nur der Urheber unterscheidet sie (Stufe 5).
+    public static func ruf(_ aufruf: Mcpaufruf, urheber: Kiurheber) -> String? {
+        let wert: JSONWert = .objekt([
+            "kennung": .text(aufruf.kennung), "werkzeug": .text(aufruf.werkzeug),
+            "argumente": .objekt(aufruf.argumente), "urheber": .text(urheber.rawValue),
+        ])
+        return (try? wert.daten()).flatMap { String(data: $0, encoding: .utf8) }
+    }
+
     /// Der Satz, wenn die Knotenansicht nicht offen ist — jedes ihrer Werkzeuge antwortet so.
     public static let nichtOffen = "Die Knotenansicht ist in \(Marke.name) nicht offen — nichts wurde "
         + "ausgeführt. Der Architekt öffnet sie mit «Schon anfangen» (oder «Zurück zu den Knoten»); "
@@ -276,6 +292,8 @@ public enum Kiworte {
         case Macwerkzeuge.skizzenLesenName: return "sieht die Skizzen an"
         case Macwerkzeuge.laufAbbrechenName: return "bricht einen Lauf ab"
         case Macwerkzeuge.bildAnsehenName: return "sieht ein Bild an"
+        case Kibedienen.blickName: return "schaut in die Knotenansicht"
+        case Kibedienen.mausName: return "bedient die Knotenansicht"
         default: return "arbeitet"
         }
     }
@@ -656,6 +674,77 @@ public enum Macwerkzeuge {
     }
 }
 
+// ===================================================================== Blick und Maus (Stufe 6)
+
+/// `visbox_blick` und `visbox_maus` (Plan KI-Bedienung Stufe 6, 21.10.2026; Vorlage `kosmo_blick`,
+/// `kosmo_maus` von KosmoOrbit, woertlich in der Seite: `state/kosmo-maus.ts`). Die Liste mit
+/// ihren Schemas kommt aus der Seite (`visboxKi.blickMausWerkzeuge`, im Bau `ki-werkzeugliste.json`);
+/// hier steht, wie die App sie ruft und ihre Antwort liest.
+///
+/// **Die Maus ist nie selbst eine Karte** (`Werkzeugart.bedienen`): Was ein Klick am Graph aendert,
+/// haelt die Wache der Seite an und legt es durch den Werkzeugsatz — Karte, Coop oder Voll; Loeschen
+/// und Rendern immer Karte. Die Sperrzonen (Freigeben, Bestell-Knoepfe, Loeschen, Karten, Schalter,
+/// Kennwoerter, Rueckgaengig) stehen in der Seite. **Kein Weg hier gibt die Grafikkarte frei.**
+public enum Kibedienen {
+    public static let blickName = Mcp.servername + "_blick"
+    public static let mausName = Mcp.servername + "_maus"
+
+    public static func ist(_ name: String) -> Bool {
+        name == blickName || name == mausName
+    }
+
+    /// Der Rumpf fuer die Seite: `blick(urheber, JSON.parse(argumente))` bzw. `maus(…)`.
+    public static func rumpf(_ name: String) -> String? {
+        switch name {
+        case blickName: return Kibruecke.rumpfWartend("blick(urheber, JSON.parse(argumente))")
+        case mausName: return Kibruecke.rumpfWartend("maus(urheber, JSON.parse(argumente))")
+        default: return nil
+        }
+    }
+
+    /// Die Antwort der Seite (`{ok, text, bild?: {data, mimeType}}`) als Ergebnis. Ein Bild nur in
+    /// einer Art, die Claude liest, und nur bis `Macwerkzeuge.bildHoechstens` (roh) — sonst der Text
+    /// allein mit einem Satz.
+    public static func ergebnis(aus wert: JSONWert) -> Mcpergebnis {
+        guard let text = wert["text"]?.alsText else {
+            return Mcpergebnis(text: Kibruecke.unlesbar, fehler: true)
+        }
+        let fehler = wert["ok"]?.alsWahrheit != true
+        guard let daten = wert["bild"]?["data"]?.alsText, let art = wert["bild"]?["mimeType"]?.alsText else {
+            return Mcpergebnis(text: text, fehler: fehler)
+        }
+        guard ["image/png", "image/jpeg", "image/webp"].contains(art) else {
+            return Mcpergebnis(text: text + "\nBILD: nicht mitgeschickt (keine Art, die Claude liest).", fehler: fehler)
+        }
+        guard daten.utf8.count / 4 * 3 <= Macwerkzeuge.bildHoechstens else {
+            return Mcpergebnis(text: text + "\nBILD: nicht mitgeschickt (zu gross).", fehler: fehler)
+        }
+        return Mcpergebnis(text: text, bild: (daten: daten, art: art), fehler: fehler)
+    }
+}
+
+// ===================================================================== der Assistent mit Werkzeugen (Stufe 5)
+
+/// Was ein Werkzeugschritt des Assistenten als Ergebnis an sein Modell zurueckgibt (Plan
+/// KI-Bedienung Stufe 5, 21.10.2026). Der Assistent wartet nie auf einen Entscheid: Eine Karte
+/// liegt dann beim Architekten («Vorschlag des Assistenten · A-n»), und das Modell hoert genau das.
+/// Ein Bild kann sein Modell nicht lesen — es bekommt den Text und einen Satz.
+public enum Assistentenschrittergebnis {
+    /// Die Kennungen der Aufrufe des Assistenten: «A-1», «A-2», … (Claudes heissen «K-n»).
+    public static let kennungVorsatz = "A-"
+
+    public static func text(_ antwort: Traegerantwort, kennung: String) -> (text: String, ok: Bool) {
+        switch antwort {
+        case .karte(let satz):
+            return ("VORSCHLAG \(kennung) liegt als Karte beim Architekten: \(satz). Er entscheidet; "
+                    + "schlage dasselbe nicht noch einmal vor.", true)
+        case .ergebnis(let e):
+            let bild = e.bild == nil ? "" : "\n(Ein Bild dazu sieht nur Claude.)"
+            return (e.text + bild, !e.fehler)
+        }
+    }
+}
+
 // ===================================================================== Claude Desktop
 
 /// «Visbox hinzufügen» fuer Claude Desktop (Blatt 30, Feld 3): ein Eintrag in dessen
@@ -716,6 +805,8 @@ public enum Claudeeinrichtung {
         + "will. Das geht an Anthropic."
     public static let werkzeugeTitel = "Werkzeuge:"
     public static let werkzeuge = "Knoten setzen, verbinden, einstellen, löschen (über Karte), "
-        + "Grundlage und Varianten bestellen, Mappe und Skizzen lesen, Bild ansehen, Lauf abbrechen."
+        + "Grundlage und Varianten bestellen, Mappe und Skizzen lesen, Bild ansehen, Lauf abbrechen, "
+        + "die Knotenansicht ansehen und mit eigener Maus bedienen (nie «Freigeben», Bestellen "
+        + "oder Löschen)."
     public static let nurHier = "Nur auf diesem Mac. Kein Weg aus dem Internet."
 }

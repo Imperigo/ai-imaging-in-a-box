@@ -16,8 +16,10 @@
  *  - die Zweitgruppe (`InselZweitgruppe`): Heim-PC-Chip in der Optik des Sync-Chips (Klick: «Wer
  *    rechnet?» in der Einstellungs-Insel, Entscheid 116 (5)), Rückgängig, Wiederholen, die Fassung der App; kein Rundgang
  *    (116 (7): er hat keine Vis-Schritte);
- *  - die Claude-Marke mit Karten (`ClaudeAnschluss`), an ihr die Selbständigkeit (der Modus-Schalter),
- *    der Fensterrahmen der Vollautomatik und die Erzählzeile;
+ *  - die Claude-Marke mit Karten (`ClaudeAnschluss`), an ihr «Mitschauen und Bedienen» samt Coop und
+ *    Vollautomatik (seit Stufe 6 wortgleich die Schalter von dort), der Fensterrahmen der Vollautomatik,
+ *    die Erzählzeile und die Maus-Ebene (`KosmoMausEbene`: Figur, Leiste «… bedient — Esc beendet»,
+ *    die Sperrzonen gestrichelt, solange eine KI bedient), wie `main.tsx` dort;
  *  - seit S3 das Gesprächsfeld des Assistenten (`VisboxAssistent`): die Kugel steht wortgleich in der
  *    Vis-Station (`KosmoOrb` in `VisWorkspace`), ihr Klick öffnet das Feld (`KosmoPanel`, Stellvertreter
  *    mit der Anatomie von dort). Der Name ist «Assistent» (Entscheid 116 (2), `ASSISTENT_NAME`,
@@ -26,7 +28,7 @@
  * Was KosmoOrbit dort zeigt und Visbox nicht hat, steht mit Grund in `kosmovis/UI_AUSNAHMEN.json`;
  * die Probe `tests/test_kosmovis_ui_gleichheit.py` hält beides zusammen.
  */
-import { KIcon, KSwitch, StationLogo } from '@kosmo/ui';
+import { KIcon, StationLogo } from '@kosmo/ui';
 import { WerkzeugPalette } from '../../kosmo-orbit/src/shell/werkzeug-palette/WerkzeugPalette';
 import { registrierePalettenQuelle, type PalettenGruppe } from '../../kosmo-orbit/src/shell/werkzeug-palette/werkzeug-palette';
 import { SpeichernKreis } from '../../kosmo-orbit/src/shell/speichern-kreis/SpeichernKreis';
@@ -35,8 +37,9 @@ import { ClaudeAnschluss } from '../../kosmo-orbit/src/shell/claude-anschluss/Cl
 import { ClaudeFensterRahmen } from '../../kosmo-orbit/src/shell/claude-anschluss/ClaudeFensterRahmen';
 import { ErzaehlZeile } from '../../kosmo-orbit/src/shell/claude-anschluss/ErzaehlZeile';
 import { VollautomatikSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoCoop';
-import { eigen } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausSchalter';
-import { modusAus, setzeCoop, useKosmoCoop, type VisboxModus } from '../../kosmo-orbit/src/state/kosmo-coop';
+import { eigen, KosmoMausFreigabeSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausSchalter';
+import { KosmoMausEbene } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausEbene';
+import { modusAus, useKosmoCoop, type VisboxModus } from '../../kosmo-orbit/src/state/kosmo-coop';
 import { registriereKosmoName } from '../../kosmo-orbit/src/state/kosmo-name';
 import { KosmoPanel } from '../../kosmo-orbit/src/shell/KosmoPanel';
 import { useKosmoGespraech, zeigeKosmo } from '../../kosmo-orbit/src/shell/kosmo-gespraech';
@@ -78,35 +81,26 @@ export function heimChip(rechner: RechnerLage | null): InselChip {
 
 /** Der Satz unter den Schaltern je Selbständigkeit — wie die Regel in der App (`Mcpfreigabe`). */
 export const MODUS_SATZ: Record<VisboxModus, string> = {
-  karte: 'Jede Änderung von Claude kommt als Karte zum Anwenden.',
-  coop: 'Im Coop ändert Claude den Render-Graph ohne Karte; du nimmst es unten links zurück. Löschen und Rendern bleiben Karten.',
+  karte: 'Jede Änderung von Claude und dem Assistenten kommt als Karte zum Anwenden — auch, wenn sie mit eigenem Zeiger klicken.',
+  coop: 'Im Coop ändern Claude und der Assistent den Render-Graph ohne Karte; du nimmst es zurück. Löschen und Rendern bleiben Karten.',
   voll: 'Vollautomatik: wie Coop, auch für Pakete. Löschen bleibt eine Karte, die Grafikkarte gibst du am Render-Knoten frei.',
 };
 
+/** Der Titel an der Marke — wie KosmoOrbit ohne Ausklapper («Mitschauen und Bedienen»). */
+export const MARKE_TITEL = 'Mitschauen und Bedienen';
+
 /**
- * Der Modus-Schalter an der Claude-Marke: «Coop – ändert frei» und «Vollautomatik» aus KosmoOrbit,
- * zusammen die Selbständigkeit der App (Karte | Coop | Voll). Nimmt nur echte Klicks, wie dort.
+ * Was an der Claude-Marke aufklappt (Plan KI-Bedienung Stufe 6, 21.10.2026; vorher nur die
+ * Selbständigkeit): die Schalter «Mitschauen», «Bedienen» und «Coop – ändert frei» je Agent wortgleich
+ * aus KosmoOrbit (`KosmoMausFreigabeSchalter`), darunter «Vollautomatik» und ein Satz zur Regel. Die
+ * Selbständigkeit der App gilt fuer beide Agenten zugleich (`setzeCoop` im Stellvertreter) — die zwei
+ * Coop-Schalter stehen darum immer gleich. Alle nehmen nur echte Klicks, wie dort.
  */
 export function ModusSchalter() {
-  const coop = useKosmoCoop((z) => z.an.claude);
   const modus = useKosmoCoop((z) => modusAus(z));
   return (
     <div className="kosmo-maus-gruppen" data-testid="visbox-modus" data-modus={modus} {...eigen()}>
-      <fieldset className="kosmo-maus-gruppe" data-urheber="claude">
-        <legend className="kosmo-maus-gruppe-name">Claude</legend>
-        <KSwitch
-          className="kosmo-maus-schalter-zeile"
-          role="switch"
-          label="Coop – ändert frei"
-          aria-label="Claude: Coop – ändert das Projekt ohne Karte"
-          data-testid="kosmo-maus-freigabe-claude-coop"
-          checked={coop}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            if (!e.nativeEvent.isTrusted) return;
-            setzeCoop('claude', e.target.checked);
-          }}
-        />
-      </fieldset>
+      <KosmoMausFreigabeSchalter vorsatz="kosmo-maus" />
       <VollautomatikSchalter />
       <p className="claude-anschluss-hinweis" data-testid="visbox-modus-satz">
         {MODUS_SATZ[modus]}
@@ -163,7 +157,8 @@ export function VisboxKopf() {
 export function VisboxClaude() {
   return (
     <>
-      <ClaudeAnschluss ausklapper={{ titel: 'Selbständigkeit', inhalt: <ModusSchalter /> }} />
+      <ClaudeAnschluss ausklapper={{ titel: MARKE_TITEL, inhalt: <ModusSchalter /> }} />
+      <KosmoMausEbene />
       <ClaudeFensterRahmen />
       <ErzaehlZeile />
     </>

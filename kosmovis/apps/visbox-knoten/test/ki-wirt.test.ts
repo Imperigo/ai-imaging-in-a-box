@@ -49,7 +49,7 @@ afterEach(() => {
 
 describe('window.visboxKi', () => {
   it('steht mit allen Wegen der App — und keiner gibt die Grafikkarte frei', () => {
-    expect(Object.keys(ki()).sort()).toEqual(['alsText', 'entscheide', 'kiVerlauf', 'offene', 'rueckgaengigKi', 'rufe', 'verwirf', 'werkzeuge']);
+    expect(Object.keys(ki()).sort()).toEqual(['alsText', 'blick', 'blickMausWerkzeuge', 'entscheide', 'kiVerlauf', 'maus', 'offene', 'rueckgaengigKi', 'rufe', 'verwirf', 'werkzeuge']);
     expect(Object.keys(ki()).filter((k) => /freig|approv|gpu/i.test(k))).toEqual([]);
     expect(gesendet[0]).toEqual({ art: 'bereit', werkzeuge: ki().werkzeuge().length });
     expect(ki().werkzeuge().map((w) => w.name)).toContain('graph_lesen');

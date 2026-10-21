@@ -193,11 +193,13 @@ describe('S2 · Claude-Marke, Karten, Erzählzeile, Selbständigkeit', () => {
     expect(q('claude-verbunden')).toBeNull();
     act(() => wirt().lage({ claude: { verbunden: true } }));
     act(() => q('claude-verbunden')!.click());
-    expect(q('kosmo-maus-schalter')!.getAttribute('aria-label')).toBe('Selbständigkeit');
+    expect(q('kosmo-maus-schalter')!.getAttribute('aria-label')).toBe('Mitschauen und Bedienen');
     expect(q('kosmo-maus-freigabe-claude-coop')).not.toBeNull();
     expect(q('kosmo-einstellungen-vollautomatik')).not.toBeNull();
-    // Keine KosmoMaus in Visbox: keine Schalter «Mitschauen»/«Bedienen».
-    expect(q('kosmo-maus-freigabe-claude-mitschauen')).toBeNull();
+    // Seit Stufe 6 (21.10.2026): die Schalter «Mitschauen»/«Bedienen» je Agent, wortgleich.
+    for (const u of ['claude', 'kosmo']) {
+      for (const art of ['mitschauen', 'bedienen', 'coop']) expect(q(`kosmo-maus-freigabe-${u}-${art}`), `${u}-${art}`).not.toBeNull();
+    }
     expect(q('visbox-modus')!.dataset.modus).toBe('karte');
   });
 

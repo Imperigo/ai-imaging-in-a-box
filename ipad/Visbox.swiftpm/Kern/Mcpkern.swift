@@ -79,6 +79,12 @@ public enum Werkzeugart: String, Equatable, Sendable, CaseIterable {
     /// auf der Seite der Mac-App; die Knotenansicht kennt kein solches Werkzeug, und ihre vier
     /// Worte (`KiWerkzeugArt` in `ki-werkzeuge.ts`) bleiben gleich.
     case anhalten
+    /// Bedient die Knotenansicht mit einer eigenen Maus der KI (`visbox_maus`, Stufe 6,
+    /// 21.10.2026). Der Klick selbst ist nie eine Karte: Was er am Graph aendert, haelt die Wache
+    /// der Seite an und legt es durch den Werkzeugsatz — dort gilt `brauchtKarte` mit der Art des
+    /// ausgeloesten Befehls (Loeschen und Rendern immer Karte). Die Sperrzonen (Freigeben,
+    /// Bestellen, Loeschen, Karten, Schalter, Kennwoerter) stehen in der Seite (`kosmo-maus.ts`).
+    case bedienen
 }
 
 /// Ein Werkzeug, wie Claude es in `tools/list` sieht.
@@ -222,7 +228,7 @@ public enum Mcpfreigabe {
     /// Modus Karte.
     public static func brauchtKarte(_ art: Werkzeugart, modus: Selbstaendigkeit) -> Bool {
         switch art {
-        case .lesen, .anhalten: return false
+        case .lesen, .anhalten, .bedienen: return false
         case .loeschen, .rendern: return true
         case .aendern: return modus == .karte
         }
