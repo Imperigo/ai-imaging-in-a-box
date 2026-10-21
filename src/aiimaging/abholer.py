@@ -2435,6 +2435,50 @@ VORSCHAU_ORDNER = "_vorschau"
 KI_RASTER_ORDNER = "_ki_raster"
 
 
+#: Der Schluessel des Farbabgleich-Vermerks am Kameraurteil (Entscheid 117) — im Befund, NICHT
+#: im Vertrag (``kosmo_szene.nur_vertragsfelder`` streicht ihn wie jeden fremden Schluessel).
+URTEIL_FARBABGLEICH = "farbabgleich"
+
+
+def farbabgleich_der_kamera(bild_png, schoenbild_png, ordner, *, urteil_vorher=None,
+                            messen=None) -> dict:
+    """Das KI-Bild einer Kamera an ihr Cycles-Bild angleichen (Entscheid 117, D1).
+
+    Das Original kommt nach ``<ordner>/_ohne_farbabgleich/<name>`` (für die Tafel und die
+    Nachprüfung), das abgeglichene Bild ersetzt das gelieferte. Der Vermerk trägt die
+    Kennwerte vorher/nachher, die Kantenübereinstimmung (``kanten_iou``) und — wenn
+    ``messen`` gegeben ist — ``geom_iou`` vor und nach dem Abgleich. Ein Fehler hier kostet
+    das Bild nicht: Dann bleibt es unverändert, und der Vermerk sagt warum.
+    """
+    import shutil  # noqa: PLC0415
+    from . import farbabgleich as _fa  # noqa: PLC0415
+
+    bild = Path(bild_png)
+    ohne = Path(ordner) / _fa.ORDNER_OHNE / bild.name
+    try:
+        ohne.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(bild, ohne)
+        vermerk = _fa.gleiche_datei_ab(ohne, schoenbild_png, bild)
+    except (OSError, ValueError) as fehler:
+        # Das Bild bleibt, wie es war (die Kopie wird nur gelesen, `bild` erst am Ende
+        # geschrieben); ValueError deckt auch einen unlesbaren PNG-Kopf ab.
+        return {"angewandt": False, "methode": _fa.METHODE,
+                "grund": f"Farbabgleich nicht moeglich: {type(fehler).__name__}: {fehler}"}
+    vermerk["ohne_farbabgleich_png"] = f"{_fa.ORDNER_OHNE}/{bild.name}"
+    if vermerk.get("angewandt") and messen is not None:
+        vorher = (urteil_vorher or {}).get("geom_iou")
+        try:
+            nachher = (messen(str(bild)) or {}).get("geom_iou")
+        except Exception as fehler:  # noqa: BLE001 — eine Nachmessung darf nichts kosten
+            nachher = None
+            vermerk["nachmessung_grund"] = f"{type(fehler).__name__}: {fehler}"
+        vermerk["geom_iou_vorher"] = vorher
+        vermerk["geom_iou_nachher"] = nachher
+        vermerk["geom_iou_gleich"] = (None if vorher is None or nachher is None
+                                      else abs(float(vorher) - float(nachher)) < 1e-9)
+    return vermerk
+
+
 def ki_mindest_lange_seite(backbone_name) -> int | None:
     """Die kleinste lange Seite des KI-Schritts für dieses Modell (auf-20261020-293 B3) —
     der Registerwert, keine Zahl hier."""
@@ -3980,6 +4024,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                     else bericht.get("beauty_png")),
                         seed=seed,
                         ausgabe_png=roh_png,
+                        # Messschalter «Cycles-Bild und Tiefe» (Entscheid 117) — None: aus,
+                        # und dann ist der Auftrag Wort fuer Wort der von vorher.
+                        bildeingang_staerke=szene.get("bildeingang"),
                     ),
                     modell=_render_modell,
                 )
@@ -4003,6 +4050,18 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                    maske=maskenbefund.get("maske"), **ausblendung),
                 maske_da=maskenbefund.get("maske") is not None,
                 soll=soll_umriss, breite=breite, hoehe=hoch)
+            # DER FARBABGLEICH (Entscheid 117, D1) — nur mit `vis.farbabgleich: true`. Die
+            # Pruefung oben hat das KI-Bild OHNE Abgleich gemessen; der Abgleich verschiebt
+            # keinen Bildpunkt. Das Original bleibt daneben liegen, und `geom_iou` wird am
+            # abgeglichenen Bild ein zweites Mal gemessen, damit der Beweis am Geraet steht.
+            farbvermerk = None
+            if szene.get("farbabgleich"):
+                farbvermerk = farbabgleich_der_kamera(
+                    ergebnis["bild_png"], bericht.get("beauty_png"), aus,
+                    urteil_vorher=urteil,
+                    messen=lambda png: messen(png, soll_pruefung, breite=breite, hoehe=hoch,
+                                              modell=_tiefen_modell, schwelle=grenze,
+                                              maske=maskenbefund.get("maske"), **ausblendung))
             bilder.append(ergebnis["bild_png"])
             fort.ki_bild_da(kuerzel, ergebnis["bild_png"])
             fort.phase("pruefung")
@@ -4146,6 +4205,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Seit auf-20261020-293 mit dem Kontrast Haus – Hintergrund, beides in
             # `_stimmungsmessung` (derselbe Aufruf im Zweig «nur Grundlage»).
             urteil.update(_stimmungsmessung(szene, bericht, maskenbefund.get("maske")))
+            if farbvermerk is not None:
+                # Nur mit Schalter — ohne ihn traegt das Urteil keinen neuen Schluessel.
+                urteil[URTEIL_FARBABGLEICH] = farbvermerk
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -4380,6 +4442,8 @@ RENDER_DURCHGEREICHT = {
     "seed": ("je Durchgang aus VORGABE_SEEDS, siehe _bester_seed; genau einer bei vis.seed "
              "oder bei der Vorschau (seeds_der_kamera)"),
     "ausgabe_png": "Ablageort je Kamera und Startwert",
+    "bildeingang_staerke": ("szene['bildeingang'] aus dem Messschalter vis.bildeingang "
+                            "(Entscheid 117) — None, wenn nicht gesetzt"),
 }
 
 #: Felder, die `verarbeiter` **nicht** setzt — mit dem Grund und dem, was fehlt.

@@ -1,6 +1,6 @@
 # Licht ins KI-Bild — Planblatt (21.10.2026)
 
-**Codestand:** `6ba1e31` (Visbox 0.3.10 mit Ergebnis auf-20261021-296); Plan, noch nichts gebaut.
+**Codestand:** `81c4070` (Visbox 0.3.11); seit Entscheid 117 (21.10.2026) sind Farbabgleich und Bildeingang als Messschalter gebaut, gemessen wird in auf-20261021-298.
 **Grundlage:** `render`, `backbone`, `kette`, `stimmung`, `kosmo_szene` — Messung auf-20261021-296 (HomeStation), Bestand durch Lesen des Kerns.
 
 Anlass: Befund N2 aus auf-20261021-296. Entscheide E97/E97a: Das KI-Bild ist für Entwurf, Varianten und Stimmung da; so
@@ -108,7 +108,47 @@ Tiefe **und** Ausgangsbild zugleich annimmt, ist die eine offene Frage. Sie ist 
 kostet wenig, verschiebt keinen Bildpunkt und bringt wenigstens die Farbstimmung des Cycles-Bilds. B zurückstellen,
 bis ein permissiver Adapter für unser Modell belegt ist. D2 nicht bauen, solange die Geometrietreue unter 0,5 liegt.
 
+## Entschieden: Entscheid 117 (21.10.2026)
+
+**Variante A — erst messen, dann am Bild entscheiden** (Owner über LW, Vollmacht «alles nach Empfehlung»). Bedingungen:
+nur Apache-2.0- oder MIT-Gewichte mit Lizenz je Datei (FLUX-Redux und SDXL-Adapter ausgeschlossen); Download-Grösse und
+Grafikspeicher je Gewicht im Auftrag, ein Lauf zur Zeit, 400-W-Grenze; drei Stärken × drei Stimmungen (morgen, abend,
+bedeckt), Farbabgleich als eigener Schalter; am Ende Vergleichsbilder für die Tafel, der Owner wählt am Bild.
+Der Grundsatz «KI-Bild nur Entwurf» (E97) bleibt.
+
+### Was dafür gebaut ist (beides Messschalter, Vorgabe aus, kein Vertragsfeld)
+
+| Baustein | Wo | Stand |
+|---|---|---|
+| **D1 Farbabgleich** | `aiimaging.farbabgleich`, Schalter `vis.farbabgleich`, im Lauf `abholer.farbabgleich_der_kamera` | **gebaut, am Gerät ungemessen.** Mittel und Streuung je Achse (Helligkeit nach Rec.709, zwei Farbdifferenzen), für das ganze Bild. Kein Bildpunkt wandert; die Helligkeit wird linear abgebildet, darum bleibt die Kantenkarte gleich (Probe). **Nicht** getrennt nach Haus, Boden, Himmel wie oben unter D1 erwogen: Die Masken stammen aus dem Modell, das KI-Bild weicht davon ab, und drei Abgleiche schüfen an jeder Maskengrenze eine neue Kante. Geprüft wird das KI-Bild ohne Abgleich; das Original bleibt daneben, `geom_iou` wird am abgeglichenen Bild nachgemessen. |
+| **A Bildeingang mit Stärke** | Schalter `vis.bildeingang` (0,05–1,0), `RenderAuftrag.bildeingang_staerke`, `render._eigener_start`, Registerfeld `Backbone.bildeingang_weg` an `z-image-turbo` | **vorbereitet, am Gerät ungemessen.** `bildeingang_traegt` bleibt `False`, bis gemessen ist. |
+
+### Welche Modellwege tragen könnten (gelesen in diffusers 0.39.0, 21.10.2026)
+
+- **Z-Image mit eigenem Start (vorbereitet, Weg der Messung).** `ZImageControlNetPipeline` kennt kein `image` und keine
+  `strength`, wohl aber `latents` und `sigmas`. Der eigene Start kodiert das Cycles-Bild mit dem VAE, verrauscht es auf
+  die Stufe der Stärke und lässt nur den Rest des Fahrplans rechnen; die Tiefe bleibt Steuerbild. Nachgebaut nach
+  `ZImageImg2ImgPipeline`, ohne Eingriff in diffusers. Gewichte liegen am Heim-PC (Apache-2.0, 0 GB Download).
+- **Z-Image mit `ZImageControlNetInpaintPipeline`: kein Stärkeweg.** Sie nimmt `image`, `mask_image` und
+  `control_image`, aber keine `strength`; das Bild erreicht das Modell nur über die Maske im Steuerkontext (braucht
+  Union 2.0/2.1). Nicht vorbereitet; die HomeStation bestätigt nur die Signatur.
+- **Qwen-Image-2512 mit ControlNet-Union: in diffusers 0.39.0 nicht vorhanden.** Keine Qwen-Pipeline nimmt Ausgangsbild
+  mit Stärke und Steuerbild zugleich (`QwenImageControlNetPipeline` nur `control_image`,
+  `QwenImageControlNetInpaintPipeline` `control_image` und `control_mask`). Der Eintrag bleibt stillgelegt
+  (29.09.2026), 57,7 GB werden nicht geladen.
+
+### Was danach in die Software kommt (je nach Wahl am Bild)
+
+1. **Bildeingang mit Stärke x:** `bildeingang_traegt=True` mit Beleg 298, Stärke als Registerwert, Feld am Render-Knoten
+   (Vertragsfeld beim Integrator, Knotenteil in beiden Programmen), Vorgabe aus.
+2. **Nur Farbabgleich:** Schalter am Render-Knoten, Vorgabe aus.
+3. **So lassen:** Die Stimmung bleibt der Satz im Prompt.
+4. **Beide Bilder liefern:** Das Cycles-Bild steht als zweites Bild am Knoten.
+
 ## Zu entscheiden
+
+*Entschieden am 21.10.2026 als Entscheid 117 (oben). Die Frage bleibt hier im Wortlaut stehen.*
+
 
 *Frage an den Owner (Auswahl, Empfehlung zuerst; über die Zentrale, `art: frage`, an `owner` und `homestation`):*
 

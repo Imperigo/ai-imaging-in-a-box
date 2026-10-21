@@ -670,7 +670,10 @@ BEKANNTE_FELDER = {
     "vis": ("backbone", "skip", "upscale", "research_only", "grundlage", "seed", "guete",
             # Seit 21.10.2026 (auf-20261021-296, N3): unser Messschalter, NICHT im Vertrag
             # drüben — siehe `ZUSATZ_LEERER_HINTERGRUND`. Vorgabe aus.
-            "leerer_hintergrund"),
+            "leerer_hintergrund",
+            # Seit 21.10.2026 (Entscheid 117, auf-20261021-298): zwei weitere Messschalter
+            # von uns, NICHT im Vertrag — siehe `lies_farbabgleich` und `lies_bildeingang`.
+            "farbabgleich", "bildeingang"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2072,6 +2075,71 @@ def zusatz_leerer_hintergrund(prompt_en: str) -> tuple[str | None, bool]:
     return ZUSATZ_LEERER_HINTERGRUND, False
 
 
+def lies_farbabgleich(vis: dict, *, skip, maengel: list, endgueltig: list) -> bool | None:
+    """``vis.farbabgleich`` (Entscheid 117, D1): true/false/null, **Vorgabe aus**.
+
+    Mit ``true`` gleicht der Heim-PC die Farben des KI-Bilds an das Cycles-Bild an
+    (:mod:`aiimaging.farbabgleich`); nichts an der Form verschiebt sich. Ein Messschalter von
+    uns, kein Feld des Vertrags. Mit «nur Grundlage» gibt es kein KI-Bild — endgültiger
+    Mangel, wie bei ``vis.leerer_hintergrund``. ``None`` heisst: nicht gelesen (Mangel).
+    """
+    wert = wert_oder(vis, "farbabgleich", False)
+    if not isinstance(wert, bool):
+        maengel.append(
+            f"'vis.farbabgleich' ist {wert!r}, erwartet war true, false oder null. Ein "
+            f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+        return None
+    if wert and skip:
+        satz = ("'vis.farbabgleich' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein "
+                "KI-Bild — es gibt nichts abzugleichen.")
+        maengel.append(satz)
+        endgueltig.append(satz)
+    return wert
+
+
+#: Der kleinste und groesste Wert von ``vis.bildeingang`` (die Staerke, Entscheid 117).
+BILDEINGANG_SPANNE = (0.05, 1.0)
+
+
+def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
+                     maengel: list, endgueltig: list) -> float | None:
+    """``vis.bildeingang`` (Entscheid 117, Variante A): eine Stärke oder null, **Vorgabe aus**.
+
+    Mit einer Zahl in :data:`BILDEINGANG_SPANNE` geht das Cycles-Bild **zusätzlich** zur Tiefe
+    ins Bildmodell — über den vorbereiteten, ungemessenen Weg des Eintrags
+    (``Backbone.bildeingang_weg``). Die Stärke sagt, wie viel neu gemalt wird. Ein Messschalter
+    von uns, kein Feld des Vertrags; bestellt nur über die Brücke mit eigener Szene.
+
+    Endgültige Mängel (der Auftrag endet mit Satz): mit «nur Grundlage» (kein KI-Bild), mit
+    der Vorschau (sie rechnet immer mit demselben Modell, Entscheid 104) und an einem Modell
+    ohne vorbereiteten Weg. Ein Wert, der keine Zahl ist: Mangel, Rückgabe ``None``.
+    """
+    wert = wert_oder(vis, "bildeingang", None)
+    if wert is None:
+        return None
+    unten, oben = BILDEINGANG_SPANNE
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
+            or not math.isfinite(float(wert)) or not (unten <= float(wert) <= oben):
+        maengel.append(
+            f"'vis.bildeingang' ist {wert!r}, erwartet war eine Staerke von {unten} bis "
+            f"{oben} oder null.")
+        return None
+    saetze = []
+    if skip:
+        saetze.append("'vis.bildeingang' und 'vis.skip' zugleich: «Nur Grundlage» rechnet "
+                      "kein KI-Bild — ein Bildeingang bestellt nichts.")
+    if guete == GUETE_VORSCHAU:
+        saetze.append("'vis.bildeingang' und 'vis.guete: vorschau' zugleich: Die Vorschau "
+                      "rechnet immer gleich (Entscheid 104); der Bildeingang ist ein Messweg "
+                      "der vollen Guete.")
+    if backbone_name and not _backbone.bildeingang_weg_fuer(backbone_name):
+        saetze.append(f"'vis.bildeingang' an {backbone_name!r}: Fuer dieses Modell ist kein "
+                      f"Weg vorbereitet, auf dem das Cycles-Bild zusaetzlich zur Tiefe ankommt.")
+    maengel.extend(saetze)
+    endgueltig.extend(saetze)
+    return float(wert)
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -2457,6 +2525,12 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         satz, schon = zusatz_leerer_hintergrund(sprachbefund["uebersetzt"])
         prompt_zusaetze.append({"art": "leerer_hintergrund", "satz": satz,
                                 "schon_im_prompt": schon})
+    # DIE MESSSCHALTER AUS ENTSCHEID 117 (21.10.2026) — beide Vorgabe aus, keiner im Vertrag.
+    farbabgleich = lies_farbabgleich(vis, skip=schalter.get("skip"), maengel=maengel,
+                                     endgueltig=endgueltig)
+    bildeingang = lies_bildeingang(vis, skip=schalter.get("skip"), guete=guete,
+                                   backbone_name=bb.get("name"), maengel=maengel,
+                                   endgueltig=endgueltig)
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
     kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
     if fremd.get("cameras_auto") is not None:
@@ -2518,6 +2592,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "prompt_original": sprachbefund["original"],
         # Welche Saetze der Knoten der Heim-PC angefuegt hat (oder schon vorfand) — 20.10.2026.
         "prompt_zusaetze": tuple(prompt_zusaetze),
+        # Die Messschalter aus Entscheid 117 (21.10.2026): False/None heisst aus — dann rechnet
+        # der Heim-PC wie vorher. `farbabgleich` None: nicht gelesen (Mangel steht oben).
+        "farbabgleich": farbabgleich,
+        "bildeingang": bildeingang,
         # Die Stimmung, wie gerechnet (ohne Pfad) — `None`: keine bestellt. Die Datei daneben
         # traegt den Pfad am Heim-PC und geht nur an den Runner, nie ins Ergebnis.
         "umgebung": (umgebung_block or {}).get("umgebung"),
@@ -2615,6 +2693,10 @@ DURCHGEREICHT = {
     "prompt": "render.RenderAuftrag(prompt=…)",
     # Seit 20.10.2026 (Entscheide 110/113): die Saetze der Knoten, die angefuegt wurden.
     "prompt_zusaetze": "lies_szene → 'prompt'; befund.json und render-result 'angewandt'",
+    # Seit 21.10.2026 (Entscheid 117): zwei Messschalter, nicht im Vertrag.
+    "farbabgleich": ("abholer.farbabgleich_der_kamera → das gelieferte KI-Bild; Vermerk am "
+                     "Kameraurteil in befund.json (nicht im render-result)"),
+    "bildeingang": "render.RenderAuftrag(bildeingang_staerke=…)",
     "umgebung": ("abholer.verarbeiter → GRUNDLAGE_MUSS_PASSEN und render-result "
                  "'angewandt.environment'"),
     "umgebung_datei": ("abholer.verarbeiter → seams.glb_zu_multipass(umgebung_hdr=…) → "

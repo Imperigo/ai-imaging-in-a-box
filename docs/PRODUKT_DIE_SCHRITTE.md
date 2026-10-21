@@ -1752,6 +1752,20 @@ könnte, stellt ein eigenes Planblatt zur Wahl (`docs/PLAN_LICHT_INS_KI_BILD_202
 messen, ob ein freies Modell das gerenderte Bild und die Tiefe zugleich annimmt. Offen und ohne Fix notiert: Bei
 «Abend» liegt die Schattenseite des Hauses noch fast so dunkel wie der Himmel daneben.
 
+**Licht ins KI-Bild: erst messen, dann am Bild wählen (21.10.2026, Entscheid 117).** Der Owner hat entschieden, zuerst
+zu messen, wie das Licht der Stimmung ins KI-Bild kommen kann, und danach an Vergleichsbildern zu wählen. Dafür gibt es
+zwei neue Schalter, beide vorerst aus. *Der Farbabgleich* bringt nach dem KI-Schritt die mittleren Farben und ihre
+Schwankung auf die des gerenderten Bilds; jeder Bildpunkt behält seinen Ort, nur seine Farbe ändert sich. Eine Probe zeigt,
+dass die Kanten am selben Ort bleiben. Geprüft wird weiter das KI-Bild ohne Abgleich, das Original bleibt daneben liegen.
+*Der Bildeingang mit Stärke* gibt der KI das gerenderte Bild als Ausgangspunkt mit, zusätzlich zur Tiefe; die Stärke sagt,
+wie viel sie neu malen darf. Unser Standardmodell nimmt ein solches Bild von sich aus nicht an. Darum beginnt die
+Rechnung mit dem gerenderten Bild statt mit reinem Rauschen und rechnet nur die letzten Schritte, die Tiefe führt weiter
+die Form. Ob das wirkt, ist noch nicht gemessen. Ein grösseres freies Modell (Qwen-Image) hätte den Weg nicht verkürzt: Die
+Bibliothek, die wir verwenden, kann bei ihm Bild, Stärke und Tiefe nicht zugleich übergeben, und es wären 58 GB zu laden.
+Die Messung rechnet drei Stärken in drei Stimmungen (Morgen, Abend, bedeckt), jedes Bild mit und ohne Farbabgleich, und
+legt die Vergleichsbilder für die Wahl ab. Nur frei lizenzierte Gewichte (Apache-2.0), die schon auf dem Rechenrechner
+liegen; nichts wird heruntergeladen. Danach wird eingebaut, was gewählt ist.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

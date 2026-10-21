@@ -1,0 +1,89 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261021-298",
+  "art": "qa",
+  "beschreibung": "Licht ins KI-Bild (Entscheid 117, Variante A: erst messen): Kommt das Cycles-Bild ueber den vorbereiteten eigenen Start zusaetzlich zur Tiefe ins Bildmodell (z-image-turbo, Apache-2.0, nichts herunterladen)? Matrix 3 Staerken (0.4/0.55/0.7) x 3 Stimmungen (morgen, abend, bedeckt) mit Farbabgleich an/aus, Kontrolle ohne Schalter bildpunktgleich zu 297, Vergleichsbilder 960 px fuer die Tafel; der Owner waehlt am Bild.",
+  "erstellt": "2026-10-21T18:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py"
+  },
+  "params": {
+    "folgt_auf": "auf-20261021-297",
+    "entscheide": [
+      "117",
+      "97",
+      "97a",
+      "104",
+      "110",
+      "113"
+    ],
+    "einbau": [
+      "C96"
+    ],
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "prompt": "zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people",
+    "kameras": [
+      "sSE"
+    ],
+    "stimmungen": [
+      "morgen",
+      "abend",
+      "bedeckt"
+    ],
+    "staerken": [
+      0.4,
+      0.55,
+      0.7
+    ],
+    "schalter": [
+      "vis.farbabgleich",
+      "vis.bildeingang"
+    ],
+    "gewichte": [
+      {
+        "name": "Tongyi-MAI/Z-Image-Turbo",
+        "lizenz": "Apache-2.0",
+        "quelle": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, license: apache-2.0, nicht gated)",
+        "groesse_gb": 32.9,
+        "download_gb": 0,
+        "vram_gb": 25.1,
+        "vram": "gemessen zusammen mit dem ControlNet (auf-20260909-92)"
+      },
+      {
+        "name": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+        "lizenz": "Apache-2.0",
+        "quelle": "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Modellkarte, license: apache-2.0, nicht gated)",
+        "groesse_gb": 3.1,
+        "download_gb": 0,
+        "vram_gb": null,
+        "vram": "in den 25,1 GB oben enthalten"
+      }
+    ],
+    "nicht_geladen": [
+      "Qwen/Qwen-Image-2512 (Apache-2.0, 57,7 GB)",
+      "alibaba-pai/Qwen-Image-2512-Fun-Controlnet-Union (Apache-2.0, 3,5 GB)"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit Entscheid 117 (Owner ueber LW, 21.10.2026, Variante A: erst messen, dann am Bild entscheiden; Fassung bleibt 0.3.11) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET: OHNE SCHALTER NICHTS. Es kommen zwei Messschalter dazu, beide VORGABE AUS, beide KEIN Feld des Vertrags drueben (die Knotenansicht sendet sie nicht; bestellen nur ueber die Bruecke mit eigener Szene). Ohne sie rechnet jeder Lauf Wort fuer Wort wie in 297: gleicher Parametersatz an das Bildmodell, gleiches Bild, gleiche Pruefung; im Register bleibt z-image-turbo Vorgabe und bildeingang_traegt=False. (a) vis.farbabgleich (true/false/null): Mit true gleicht der Heim-PC NACH dem KI-Schritt die Farben des KI-Bilds an das Cycles-Bild derselben Kamera an (aiimaging.farbabgleich: Mittel und Streuung je Achse, Helligkeit Y nach Rec.709 und zwei Farbdifferenzen, fuer das ganze Bild; Streckung begrenzt auf 0,5 bis 2,0). Kein Bildpunkt wandert: jeder neue Farbwert haengt nur am alten Wert desselben Punkts. Die Pruefung (qa, geom_iou, Seedwahl, Saetze) misst wie bisher das KI-Bild OHNE Abgleich; geliefert wird das abgeglichene Bild, das Original bleibt als <kamera>/_ohne_farbabgleich/<kamera>.png im Ausgabeordner. Danach misst der Abholer geom_iou am abgeglichenen Bild ein zweites Mal (ein Schaetzerlauf mehr je Kamera). Im befund.json steht am Kameraurteil der Vermerk 'farbabgleich' mit angewandt, methode, kennwerte_ki/kennwerte_vorlage/kennwerte_nachher, streckung, begrenzt, abstand_vorher/abstand_nachher, geklippt_anteil, kanten_iou (Kantenkarte vorher gegen nachher, 1,0 = gleich), geom_iou_vorher/geom_iou_nachher/geom_iou_gleich, ohne_farbabgleich_png. Fehlt das Cycles-Bild oder passt die Groesse nicht: angewandt false mit grund, Bild unveraendert. Mit vis.skip true zusammen: endgueltiger Mangel ('zugleich'); ein anderer Wert als true/false/null: Mangel. (b) vis.bildeingang (Staerke 0.05 bis 1.0, oder null): Mit einer Zahl geht das Cycles-Bild ZUSAETZLICH zur Tiefe ins Bildmodell — ueber einen EIGENEN START auf derselben Pipeline (render._eigener_start; Registerfeld bildeingang_weg='eigener_start' an z-image-turbo): das Cycles-Bild durch den VAE der Pipeline, verrauscht auf die Stufe, die die Staerke verlangt, dann rechnet ZImageControlNetPipeline nur den Rest des Fahrplans (latents und sigmas), die Tiefe bleibt auf control_image. Nachgebaut nach ZImageImg2ImgPipeline aus diffusers 0.39.0 (gelesen 21.10.2026; kein Eingriff in diffusers). Bei 20 Schritten und Staerke 0.55 rechnet er 11 Schritte. Im Ergebnis des Bildmodells: modus_bestellt 'bild_und_tiefe', modus_gerechnet ('bild_und_tiefe' wenn latents, sigmas und control_image genommen wurden, sonst 'txt2img' mit Satz 'BESTELLT WAR ...'), dazu die Hinweise 'MESSSCHALTER bildeingang_staerke=...' und 'BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start ... n von m Schritten gerechnet, erste Rauschstufe ...'. DIESER WEG IST AM GERAET UNGEPRUEFT (hier gibt es weder torch noch Gewichte). Bricht er mit einer Ausnahme ab (AttributeError, falsche Form der latents, Fehler im Scheduler): die Meldung wortwoertlich zurueck, NICHT den Code aendern. Endgueltige Maengel: mit vis.skip true, mit vis.guete 'vorschau' (die Vorschau rechnet immer gleich, Entscheid 104) und an einem Modell ohne vorbereiteten Weg (z. B. vis.backbone qwen); Wert ausserhalb 0.05-1.0, Text oder true: Mangel. GEWICHTE (nur Apache-2.0, Lizenz je Datei an der Modellkarte geprueft; Groessen aus der Hugging-Face-Schnittstelle am 21.10.2026). DOWNLOAD IN DIESEM AUFTRAG: 0 GB — beide liegen schon am Heim-PC. (W1) Tongyi-MAI/Z-Image-Turbo, Lizenz Apache-2.0 (Modellkarte https://huggingface.co/Tongyi-MAI/Z-Image-Turbo, Front-Matter 'license: apache-2.0', nicht gated, Repo-Stand f332072aa7), Ordner z-image-turbo: transformer/diffusion_pytorch_model-00001..00003 (9,97 + 9,97 + 4,67 GB), text_encoder/model-00001..00003 (3,96 + 3,99 + 0,10 GB), vae/diffusion_pytorch_model.safetensors (0,17 GB); Repo zusammen 32,9 GB. (W2) alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Fassung 1.0), Lizenz Apache-2.0 (Modellkarte https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union, Front-Matter 'license: apache-2.0', nicht gated, Repo-Stand 01c794d57f), Ordner z-image-controlnet-union, Datei Z-Image-Turbo-Fun-Controlnet-Union.safetensors 3,1 GB. VRAM W1+W2 voll geladen: gemessen 25,1 GB Spitze (auf-20260909-92; 22,9 bis 25,1 GB je Bedingung). Der eigene Start kodiert zusaetzlich ein Bild mit dem VAE: geschaetzt unter 1 GB mehr, NICHT gemessen — bitte die Spitze je Lauf messen. Vor dem ersten Lauf: Dateigroessen in beiden Ordnern gegen die Zahlen oben halten, Abweichung melden (Zahlen, keine Pfade). NICHT GELADEN, NUR GELESEN (keine GPU, kein Download): (L1) Qwen-Image-2512 (Apache-2.0, 57,7 GB) mit Qwen-Image-2512-Fun-Controlnet-Union (Apache-2.0, 3,5 GB): In diffusers 0.39.0 nimmt keine Qwen-Pipeline Ausgangsbild mit Staerke UND Steuerbild zugleich (QwenImageControlNetPipeline nur control_image; QwenImageControlNetInpaintPipeline control_image und control_mask, kein image, keine strength); der Eintrag qwen-image-2512 bleibt stillgelegt (Owner 29.09.2026). Bitte in .venv-render bestaetigen: diffusers-Fassung, und die Signaturen von QwenImageControlNetPipeline.__call__ und QwenImageControlNetInpaintPipeline.__call__ (Namen der Argumente). (L2) ZImageControlNetInpaintPipeline: kennt image, mask_image, control_image, aber KEINE strength (das Bild geht nur ueber die Maske in den Steuerkontext, und das braucht Union 2.0/2.1) — kein Staerkeweg, nicht Teil der Matrix; nur bestaetigen, dass die Klasse in der installierten Fassung so steht. VORBEREITUNG wie 297 (AIIMAGING_HIMMEL_ORDNER, AIIMAGING_MATERIAL_ORDNER; Werte NIE ins Repo oder in die Rueckgabe). Geometrie synthetisch: derselbe gegliederte Testbau wie 292-297 (tools/make_test_glb.py, Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m) auf der Vorgabe-Platte 40x30 m. Bruecke wie die Knotenansicht, samples 64, vis.backbone z-image-turbo, vis.seed 482913, vis.guete 'voll' (oder weglassen), cameras 'auto' mit cameras_auto {richtungen:['sSE']}, render.resolution [960,600], render.environment nur {preset} ohne rotationGrad, style.prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people', render.faithful weglassen (Vorgabe 0,8). GRUNDLAGEN (vis.skip true, 960 sSE): G-mittag (aus 296/297 wiederverwenden, wenn in der Ablage, sonst neu und sagen), G-morgen, G-abend, G-bedeckt (neu, je ein Blender-Lauf; wenn aus 296/297 schon da, wiederverwenden und sagen). V0 · VORPROBE KOMMT DAS BILD AN (gleich nach Lauf 1a unten und vor allen anderen KI-Laeufen, wie auf-20260919-123): direkt in Python mit render.rendere und RenderAuftrag(depth_png = die gerasterte Tiefenkarte aus dem Ordner _ki_raster der Kamera von Lauf 1a, beauty_png = das gerasterte Cycles-Bild aus demselben Ordner — beide 1024x640, weil 600 nicht durch 16 teilbar ist, prompt Standardprompt uebersetzt, backbone 'z-image-turbo', seed 482913, schritte 20, controlnet_staerke 0.8) drei Laeufe: (V0a) ohne bildeingang_staerke; (V0b) bildeingang_staerke 0.55; (V0c) bildeingang_staerke 0.55 mit einer Kopie des Cycles-Bilds, in die oben links ein rotes Quadrat 160x160 px (RGB 255,0,0) gemalt ist. Zurueck: sha256 aller drei, modus_bestellt/modus_gerechnet/modus_abweichung, die Hinweise wortwoertlich, Laufzeit, VRAM-Spitze, Leistung; SELBST am Bild: rote Spur in V0c ja/nein. Erwartet: drei verschiedene sha256 und eine Spur. Wenn V0b mit Ausnahme abbricht oder V0a und V0b dieselbe sha256 tragen: Teil 2 NUR mit Farbabgleich (die Zeilen 'Staerke 0') rechnen und den Rest als 'Bildeingang kommt nicht an' melden. 1 · KONTROLLE OHNE SCHALTER: (1a) G-mittag 'voll' ohne beide Schalter = 297 Teil 3c: KI-Bild bildpunktgleich zu 297 3c ja/nein (wenn 297 noch nicht gerechnet ist: sagen und als Referenz ablegen); Parametersatz ohne die Schluessel bildeingang_staerke/bildeingang_weg ja/nein; kein Vermerk 'farbabgleich' im befund.json ja/nein. (1b) dasselbe mit vis.farbabgleich true: _ohne_farbabgleich/sSE.png bildpunktgleich zu 1a ja/nein; qa-Block des Ergebnisses Feld fuer Feld gleich wie 1a ja/nein; Vermerk wie unten. (1c) Abweis-Laeufe ohne GPU: vis.skip true mit vis.farbabgleich true, vis.skip true mit vis.bildeingang 0.55, vis.guete 'vorschau' mit vis.bildeingang 0.55 — je endet mit Satz ja/nein, nichts gerechnet ja/nein. 2 · MATRIX 3 STAERKEN x 3 STIMMUNGEN, FARBABGLEICH ALS EIGENER SCHALTER: fuer jede Stimmung S in (morgen, abend, bedeckt) auf G-S je 'voll' mit vis.farbabgleich true (ein Lauf liefert beide Bilder, ohne und mit Abgleich): (2-S-0) ohne vis.bildeingang; (2-S-0.4) vis.bildeingang 0.4; (2-S-0.55) vis.bildeingang 0.55; (2-S-0.7) vis.bildeingang 0.7. Das sind 12 KI-Laeufe. Dazu (2-K) abend mit vis.bildeingang 0.55 und vis.farbabgleich false: bildpunktgleich zu _ohne_farbabgleich von 2-abend-0.55 ja/nein (der Schalter Farbabgleich aendert das KI-Bild selbst nicht). JE BILD ZURUECK (fuer beide Fassungen, ohne und mit Abgleich, wo es zwei gibt): qa.geometry geom_iou mit n_soll/n_ist/n_gemeinsam; der Umriss (qa Umrisstreue trefferquote/abhebung, und deine eigene Umriss-IoU mit der Regel umriss_gilt); qa.ausserhalb_umriss_anteil; Satz 'NICHT WIEDERZUERKENNEN' ja/nein; Kontrast Haus gegen Hintergrund im KI-Bild, nachgezaehlt wie in 296 (Grauwert-Mittel auf der Bauwerksmaske gegen den Hintergrund daneben), und derselbe Kontrast im Cycles-Bild der Stimmung; aus dem Vermerk farbabgleich: abstand_vorher/abstand_nachher, kanten_iou, geom_iou_vorher/geom_iou_nachher/geom_iou_gleich, geklippt_anteil, begrenzt; modus_bestellt/modus_gerechnet, der Hinweis 'BILD UND TIEFE ...' wortwoertlich; Laufzeit je Bild (zeiten) und fuer den Farbabgleich allein (Differenz zu 2-K); Leistung (Spitze und Mittel in W) und VRAM-Spitze je Lauf. SELBST am Bild: Haus wiederzuerkennen ja/teilweise/nein; Licht der Stimmung aus dem Cycles-Bild sichtbar (Sonnenseite, Schattenlage, Helligkeit) ja/teilweise/nein; wirkt es wie ein Entwurf oder wie ein Render mit Textur (E97: das KI-Bild bleibt Entwurf); Doppelkanten oder Geisterbild ja/nein; verschiebt der Farbabgleich sichtbar etwas an der Form ja/nein (erwartet nein). BILDER FUER DIE TAFEL: alle KI-Bilder 960 px breit als PNG unter auftraege/ergebnisse/auf-20261021-298-bilder/, Namen <stimmung>-<staerke>-<ohne|mit>.png (z. B. abend-0.55-mit.png, morgen-0-ohne.png), dazu je Stimmung das Cycles-Bild (<stimmung>-cycles.png), V0a/V0b/V0c (v0a.png ...) und 1a/1b; je Stimmung eine Vergleichstafel <stimmung>-tafel.png (Zeilen: Staerke 0 / 0.4 / 0.55 / 0.7; Spalten: ohne Abgleich / mit Abgleich; daneben das Cycles-Bild), 960 px je Feld oder verkleinert, wenn die Datei sonst ueber 8 MB kaeme. Keine Pfade, keine Ordnerwerte in den Bildern oder Namen. URTEIL (je ein Satz): Kommt das Cycles-Bild ueber den eigenen Start an (V0)? Bei welcher Staerke haelt das Haus (geom_iou mindestens wie ohne, Satz nicht da) UND kommt das Licht der Stimmung sichtbar an? Ab welcher Staerke wirkt es wie ein Render mit Textur statt wie ein Entwurf? Bringt der Farbabgleich allein (Zeile 0) die Farbstimmung, ohne an der Form etwas zu verschieben (kanten_iou nahe 1, geom_iou gleich)? Deine Empfehlung fuer die Wahl am Bild. EINBAU — WAS DANACH IN DIE SOFTWARE KOMMT, je nach Wahl des Owners an der Tafel (wir bauen es, der Heim-PC baut in diesem Auftrag nichts ein; die Bestaetigung am Geraet ist ein eigener Folgeauftrag): (W-1) Bildeingang mit Staerke x (mit oder ohne Abgleich): bildeingang_traegt=True mit Beleg auf-20261021-298 am Eintrag z-image-turbo, die gewaehlte Staerke als Registerwert, und ein Feld am Render-Knoten in beiden Programmen (Vertragsfeld beim Integrator, Knotenteil im Vis-Werkzeug); Vorgabe aus, bis der Owner sie einschaltet. (W-2) nur Farbabgleich: Schalter 'Farbe wie Cycles' am Render-Knoten (Vertragsfeld und Knotenteil wie oben), Vorgabe aus. (W-3) so lassen: beide Schalter bleiben Messschalter oder werden entfernt; die Stimmung bleibt der Satz im Prompt. (W-4) beide Bilder liefern: das Cycles-Bild als zweites Bild neben dem KI-Bild am Knoten (Knotenteil). In jedem Fall: Lexikon, Einbau-Stand C96 abhaken, Zentrale-Meldung mit Beleg. NICHT: keine Vorgabe aendern (kein Registerwert, kein Schalter dauerhaft, keine Umgebungsvariable dauerhaft); nichts laden oder herunterladen, das nicht oben unter W1/W2 steht (Download 0 GB — insbesondere NICHT Qwen-Image-2512, nicht Union 2.1 neu); kein FLUX.1-dev, kein FLUX.2-dev, kein FLUX.1 Redux, kein SDXL, kein Juggernaut, kein IP-Adapter; diffusers und die anderen Bibliotheken in .venv-render nicht aufruesten; Code nicht aendern, auch nicht bei einem Fehler im eigenen Start (melden statt flicken); Dateien ins Repo nur Ergebnis und Bilder (keine HDRI, keine Texturen, keine Gewichte, keine Pfade); Ordnerwerte nicht in die Rueckgabe; den echten Textur- oder Himmelsordner nicht veraendern; Kosmo-Modelle nicht laden oder entladen; Dienste von KosmoOrbit nicht anfassen; die Mappe des Dienstes nicht veraendern. Eigene Probeauftraege und Probemappen danach aufraeumen. Laeufe strikt nacheinander (ein Lauf zur Zeit), vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und unter 8 GB belegt), Leistungsgrenze 400 W gesetzt (nvidia-smi -pl 400) — im Zweifel nicht starten.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, Leistungsgrenze gesetzt ja/nein, 'Himmelsbilder n/8', welche Grundlagen wiederverwendet (G-mittag, G-morgen, G-abend, G-bedeckt) und welche neu; Dateigroessen W1/W2 gegen den Auftrag.",
+    "L1/L2: diffusers-Fassung in .venv-render; Argumentnamen von QwenImageControlNetPipeline.__call__, QwenImageControlNetInpaintPipeline.__call__ und ZImageControlNetInpaintPipeline.__call__.",
+    "V0: sha256 V0a/V0b/V0c, modus_bestellt/modus_gerechnet/modus_abweichung, Hinweise wortwoertlich, Laufzeit, VRAM-Spitze, Leistung, rote Spur ja/nein; bei Ausnahme die Meldung wortwoertlich.",
+    "1: 1a bildpunktgleich zu 297 3c ja/nein, Parametersatz ohne neue Schluessel ja/nein, kein Vermerk ja/nein; 1b Original bildpunktgleich zu 1a ja/nein, qa gleich ja/nein, Vermerk; 1c je Abweis-Lauf Satz ja/nein, nichts gerechnet ja/nein.",
+    "2: je Bild der Matrix (12 Laeufe, je ohne und mit Abgleich) und 2-K: geom_iou mit Zaehlung, Umriss, ausserhalb_umriss_anteil, Satz ja/nein, Kontrast KI-Bild und Cycles-Bild, Vermerk farbabgleich (abstand, kanten_iou, geom_iou vorher/nachher/gleich, geklippt_anteil, begrenzt), modus, Hinweis BILD UND TIEFE, Laufzeit, Leistung, VRAM; selbst: Haus, Licht, Entwurf oder Render, Doppelkanten, Form verschoben; 2-K bildpunktgleich ja/nein.",
+    "Bilder: auftraege/ergebnisse/auf-20261021-298-bilder/ mit den KI-Bildern 960 px, den Cycles-Bildern, V0 und je Stimmung eine Vergleichstafel.",
+    "Urteil in fuenf Saetzen: kommt das Bild an; welche Staerke haelt Haus und bringt Licht; ab wann Render statt Entwurf; leistet der Farbabgleich allein etwas ohne Formverschiebung; Empfehlung fuer die Wahl am Bild."
+  ],
+  "rang": 85
+}

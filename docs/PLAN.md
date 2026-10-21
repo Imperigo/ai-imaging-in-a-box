@@ -8139,6 +8139,11 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## Neue Knoten im Vis-Werkzeug (Bauplan `docs/PLAN_KNOTEN_NEU_2026-10-20.md`, Entscheide 107, 109–113)
 
+> **Entschieden:** Entscheide 107, 109–113 für die Knoten; Licht ins KI-Bild nach Entscheid 117 (21.10.2026): erst
+> messen, dann am Bild wählen — `vis.farbabgleich` und `vis.bildeingang` als Messschalter, Vorgabe aus.
+> **Gemessen:** Stimmung, Kamera und Material am Heim-PC in 292–296; das KI-Bild liest nur die Tiefe (296, seit auf-123).
+> **Offen:** 297 und 298 (local), die Wahl am Bild (owner), Vertragsfelder (integrator), Knotenteile (beide Programme).
+
 - [ ] Heim-PC-Teil
   - [x] H1 Stimmung: `render.environment` mit Himmelsbild, Gipsmodell «weiss», Abweisung mit Satz im Ergebnis, «Himmelsbilder n/8» — gebaut, am Gerät unbestätigt (§153, C79)
   - [x] H2 Kamera: `cameras_auto` je Auftrag, fester Abstand, senkrecht von Hand, `GET /knoten/standpunkte` in Server und Mac-App — gebaut, am Gerät unbestätigt (§153, C80)
@@ -8156,7 +8161,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Nachmessung am Heim-PC: auf-20261021-296 (local) — Ergebnis `5415d9d`: abend Kontrast 41/39, Satz «NICHT WIEDERZUERKENNEN» bei abend voll (0,005), `drehung_je_kamera` gleich dem Blender-Bericht, ohne Stimmung bildpunktgleich, 0,25 trennt Gips (0,0) von Strasse (2,15); Befunde: Strassenbild entgeht dem Satz (geom_iou 0,197, Fläche 2,46), `umriss_gilt` nur bei false, mittag bricht auch mit faithful 1,0 aus, KI-Bild liest nur die Tiefe, Schattenseite abend fast auf dem Hintergrund
   - [x] Befunde aus 296 behoben: Satz «NICHT WIEDERZUERKENNEN» auch bei `n_ist/n_soll` > 2 oder `ausserhalb_umriss_anteil` > 1,5 mit `geom_iou` < 0,3, `seedauswahl.umriss_gilt` immer true/false, Messschalter `vis.leerer_hintergrund` (Vorgabe aus) — gebaut, am Gerät unbestätigt (§167, C95)
   - [ ] Nachmessung am Heim-PC: auf-20261021-297 (local) — Strassenbild mit Satz, `umriss_gilt` true/false, mittag mit und ohne «empty background, no other buildings» bei faithful 1,0 und Standard, ein Prüfbild zwischen 0 und 0,68 (weiss, Standardprompt), ohne Stimmung bildpunktgleich, Schattenseite nachgezählt
-  - [ ] Licht ins KI-Bild (Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`): Owner-Frage über die Zentrale (owner); danach Messauftrag Cycles-Bild als Ausgang mit Tiefe (local)
+  - [x] Licht ins KI-Bild (Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`): Owner-Frage entschieden — Entscheid 117, Variante A «erst messen, dann am Bild entscheiden» (Owner über LW, 21.10.2026)
+  - [x] Messschalter `vis.farbabgleich` (Farbabgleich an das Cycles-Bild, kein Bildpunkt wandert) und `vis.bildeingang` (Cycles-Bild zusätzlich zur Tiefe über einen eigenen Start auf `z-image-turbo`), beide Vorgabe aus, kein Vertragsfeld — gebaut, am Gerät ungemessen (§168, C96)
+  - [ ] Messung am Heim-PC: auf-20261021-298 (local) — kommt das Cycles-Bild an (Marke, sha256), Matrix 3 Stärken × 3 Stimmungen mit Farbabgleich an/aus, Kontrolle bildpunktgleich zu 297, Vergleichstafeln 960 px
+  - [ ] Wahl am Bild (owner, über die Zentrale nach 298): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
   - [ ] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — beobachten, in 297 je Bild nachgezählt (local)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)

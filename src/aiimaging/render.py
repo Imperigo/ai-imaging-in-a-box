@@ -327,6 +327,11 @@ MODUS_IMAGE_EDIT = "image_edit"
 #: dort ``txt2img`` — eine Bearbeitung der Tiefenkarte ist aber kein Text-zu-Bild-Lauf
 #: (Befund auf-20260929-178).
 MODUS_TIEFE_ALS_BILD = "tiefe_als_bild"
+#: Cycles-Bild **und** Tiefe zugleich (Entscheid 117, 21.10.2026): bestellt nur über
+#: ``RenderAuftrag.bildeingang_staerke`` (Messschalter ``vis.bildeingang``), gerechnet über den
+#: vorbereiteten Weg des Eintrags (:data:`aiimaging.backbone.BILDEINGANG_EIGENER_START`).
+#: **Am Gerät ungemessen** — auf-20261021-298 misst, ob das Bild ankommt.
+MODUS_BILD_UND_TIEFE = "bild_und_tiefe"
 
 
 class RenderError(RuntimeError):
@@ -395,6 +400,11 @@ class RenderAuftrag:
     beauty_png: str | None = None
     ausgabe_png: str | None = None
     modell_wurzel: str | None = None
+    #: Der Messschalter «Cycles-Bild und Tiefe» (Entscheid 117): eine Stärke in (0, 1] —
+    #: wie viel vom Fahrplan neu gemalt wird. ``None`` (Vorgabe) heisst aus, und dann ist
+    #: der Lauf Wort für Wort der von vorher. Verlangt ``beauty_png`` und einen Eintrag mit
+    #: ``bildeingang_weg``.
+    bildeingang_staerke: float | None = None
 
 
 def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
@@ -624,6 +634,22 @@ def modellwurzel_lage(backbone_name: str) -> dict:
 # Prüfung — der ganze Entscheid, bevor irgendetwas Teures passiert
 # --------------------------------------------------------------------------------------
 
+def _pruefe_bildeingang(a, eintrag, maengel: list[str]) -> None:
+    """Der Messschalter «Cycles-Bild und Tiefe» (Entscheid 117) — nur, wenn gesetzt."""
+    wert = a.bildeingang_staerke
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
+            or not math.isfinite(float(wert)) or not (0.0 < float(wert) <= 1.0):
+        maengel.append(f"bildeingang_staerke {wert!r}: erwartet eine Zahl ueber 0 bis 1.")
+    if a.beauty_png is None:
+        maengel.append("bildeingang_staerke ohne beauty_png: Es gibt kein Cycles-Bild, das "
+                       "ins Modell gehen koennte.")
+    if eintrag is not None and not getattr(eintrag, "bildeingang_weg", None):
+        maengel.append(
+            f"bildeingang_staerke an {eintrag.name!r}: Fuer dieses Modell ist kein Weg "
+            f"vorbereitet, auf dem das Cycles-Bild zusaetzlich zur Tiefe ankommt "
+            f"(bildeingang_traegt={eintrag.bildeingang_traegt!r}).")
+
+
 def _pruefe_anteil(wert, bezeichnung: str, maengel: list[str]) -> None:
     """Eine Zahl in ``[0, 1]``. ``bool`` zählt nicht als Zahl.
 
@@ -752,6 +778,8 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
 
     _pruefe_anteil(a.controlnet_staerke, "controlnet_staerke", maengel)
     _pruefe_anteil(a.denoise, "denoise", maengel)
+    if a.bildeingang_staerke is not None:
+        _pruefe_bildeingang(a, eintrag, maengel)
 
     # --- Ausgabeort ------------------------------------------------------------------
     if a.ausgabe_png is not None:
@@ -1798,6 +1826,59 @@ def _tiefe_als_rgb(bild):
     return bild.convert("RGB")
 
 
+def _eigener_start(pipeline, torch, bild, *, breite: int, hoehe: int, schritte: int,
+                   staerke: float, generator) -> tuple[dict, str]:
+    """Cycles-Bild als Startpunkt auf der ControlNet-Pipeline von Z-Image (Entscheid 117).
+
+    **Ungeprüft, wie der ganze Adapter** — hier gibt es weder torch noch Gewichte; gemessen
+    wird in auf-20261021-298 (Marke ins Cycles-Bild, sha256 mit und ohne). Nachgebaut ist,
+    was ``ZImageImg2ImgPipeline`` in diffusers 0.39.0 tut (gelesen 21.10.2026):
+
+    1. Fahrplan wie die Pipeline: ``get_default_z_image_sigmas(schritte)``; davon bleibt der
+       Rest ab ``t_start = int(schritte - min(schritte * staerke, schritte))`` — dieselbe
+       Rechnung wie ``get_timesteps``.
+    2. Die Verschiebung ``mu`` aus der Bildgrösse (``calculate_shift`` mit den Werten des
+       Schedulers); der Scheduler wird einmal mit dem Rest gestellt, um die erste
+       **verschobene** Rauschstufe zu lesen — die Pipeline stellt ihn danach gleich.
+    3. Das Cycles-Bild durch den VAE der Pipeline (``argmax`` wie beim Steuerbild), skaliert
+       wie dort, und verrauscht wie ``scale_noise``: ``σ·Rauschen + (1−σ)·Bild``.
+
+    Returns:
+        ``({"latents": …, "sigmas": …}, Satz für die Hinweise)``.
+    """
+    from diffusers.pipelines.z_image import pipeline_z_image_controlnet as zmod  # noqa: PLC0415
+    from diffusers.utils.torch_utils import randn_tensor                           # noqa: PLC0415
+
+    voll = zmod.get_default_z_image_sigmas(int(schritte))
+    t_start = int(max(schritte - min(schritte * float(staerke), schritte), 0))
+    rest = voll[t_start:]
+    if not rest:
+        raise RenderError(f"bildeingang_staerke {staerke}: bei {schritte} Schritten bleibt "
+                          f"kein Schritt zu rechnen.")
+    faktor = pipeline.vae_scale_factor * 2
+    lat_h, lat_w = 2 * (int(hoehe) // faktor), 2 * (int(breite) // faktor)
+    konf = pipeline.scheduler.config
+    mu = zmod.calculate_shift((lat_h // 2) * (lat_w // 2),
+                              konf.get("base_image_seq_len", 256),
+                              konf.get("max_image_seq_len", 4096),
+                              konf.get("base_shift", 0.5), konf.get("max_shift", 1.15))
+    geraet = pipeline._execution_device
+    pipeline.scheduler.set_timesteps(sigmas=rest, device=geraet, mu=mu)
+    sigma0 = float(pipeline.scheduler.sigmas[0])
+    vae = pipeline.vae
+    eingang = pipeline.image_processor.preprocess(bild, height=hoehe, width=breite).to(
+        device=geraet, dtype=vae.dtype)
+    lat = zmod.retrieve_latents(vae.encode(eingang), generator=generator, sample_mode="argmax")
+    lat = ((lat - vae.config.shift_factor) * vae.config.scaling_factor).to(torch.float32)
+    rauschen = randn_tensor(lat.shape, generator=generator, device=lat.device,
+                            dtype=torch.float32)
+    start = sigma0 * rauschen + (1.0 - sigma0) * lat
+    satz = (f"BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, "
+            f"Staerke {float(staerke):.2f} — {len(rest)} von {schritte} Schritten gerechnet, "
+            f"erste Rauschstufe {sigma0:.3f}. Am Geraet ungemessen (auf-20261021-298).")
+    return {"latents": start, "sigmas": rest}, satz
+
+
 def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
     """Aus einer ``diffusers``-Pipeline ein Modell im Sinne dieses Moduls machen.
 
@@ -1878,6 +1959,14 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
         if parameter["modus"] == MODUS_IMAGE_EDIT:
             argumente["image"] = Image.open(parameter["beauty_png"]).convert("RGB")
             argumente["strength"] = parameter["denoise"]
+        start_satz = None
+        if parameter["modus"] == MODUS_BILD_UND_TIEFE:
+            # Entscheid 117: das Cycles-Bild als Start, die Tiefe weiter als Steuerbild.
+            start, start_satz = _eigener_start(
+                pipeline, torch, Image.open(parameter["beauty_png"]).convert("RGB"),
+                breite=tiefe.width, hoehe=tiefe.height, schritte=parameter["schritte"],
+                staerke=parameter["bildeingang_staerke"], generator=generator)
+            argumente.update(start)
 
         # DER REGLER, DER WIRKT (23.09.2026, `auf-20260923-157`): Bei
         # `QwenImageEditPlusPipeline` schaltet `true_cfg_scale` die Führung, und nur
@@ -1894,7 +1983,7 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 argumente["negative_prompt"] = karte
 
         genommen, verworfen = _vertraegliche_argumente(pipeline, argumente)
-        hinweise = []
+        hinweise = [start_satz] if start_satz else []
 
         if regler is not None and regler in verworfen:
             # NICHTS DAVON, auch nicht der Leer-Negativprompt: Er ist nur dazu da, die
@@ -2034,6 +2123,17 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                     f"bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier "
                     f"bitgleiche Bilder."
                 )
+        elif modus_bestellt == MODUS_BILD_UND_TIEFE:
+            # Angekommen heisst: Start UND Fahrplan genommen, und die Tiefe auf ihrem eigenen
+            # Eingang. Fehlt eines, war es ein Text-zu-Bild-Lauf mit verworfenem Start.
+            if not all(n in genommen and n not in verworfen
+                       for n in ("latents", "sigmas", "control_image")):
+                modus_gerechnet = MODUS_TXT2IMG
+                hinweise.append(
+                    f"BESTELLT WAR '{MODUS_BILD_UND_TIEFE}', GERECHNET WURDE "
+                    f"'{MODUS_TXT2IMG}': Diese Pipeline nimmt den eigenen Start "
+                    f"(latents/sigmas) oder das Steuerbild nicht — das Cycles-Bild ist nicht "
+                    f"angekommen.")
         elif ("control_image" in verworfen and "image" in genommen
               and "image" not in verworfen and not ist_controlnet_naht(pipeline, genommen)):
             # Bestellt war txt2img, gerechnet wurde eine Bearbeitung der Tiefenkarte. Bis
@@ -2092,6 +2192,13 @@ def _baue_parameter(a: RenderAuftrag, eintrag, *,
     Was nicht hier steht, kann das Modell nicht benutzt haben.
     """
     modus = MODUS_IMAGE_EDIT if a.beauty_png else MODUS_TXT2IMG
+    # DER MESSSCHALTER «BILD UND TIEFE» (Entscheid 117): eigener Modus und zwei Schluessel —
+    # nur, wenn gesetzt. Ohne ihn ist der Satz Wort fuer Wort der von vorher.
+    zusatz = {}
+    if a.bildeingang_staerke is not None:
+        modus = MODUS_BILD_UND_TIEFE
+        zusatz = {"bildeingang_staerke": float(a.bildeingang_staerke),
+                  "bildeingang_weg": getattr(eintrag, "bildeingang_weg", None)}
     wurzel = a.modell_wurzel if a.modell_wurzel is not None else str(
         wurzel_fuer(eintrag.name)
     )
@@ -2157,6 +2264,7 @@ def _baue_parameter(a: RenderAuftrag, eintrag, *,
         # `fuehrung_regler_angekommen` erst nach dem Lauf bekannt. `None`: nicht belegt.
         "fuehrung_angewandt": None,
         "modell_wurzel": str(wurzel),
+        **zusatz,
     }
 
 
@@ -2314,6 +2422,12 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
             "von 1.0."
         )
 
+    if parameter["modus"] == MODUS_BILD_UND_TIEFE:
+        hinweise.append(
+            f"MESSSCHALTER bildeingang_staerke={parameter['bildeingang_staerke']}: Das "
+            f"Cycles-Bild geht als Start ins Modell, die Tiefe bleibt das Steuerbild "
+            f"(Weg '{parameter['bildeingang_weg']}', Entscheid 117). Nie Vorgabe; ob das Bild "
+            f"ankommt, ist am Geraet ungemessen (auf-20261021-298).")
     if parameter["modus"] == MODUS_TXT2IMG and a.denoise != 0.0:
         hinweise.append(
             f"denoise={a.denoise} bleibt im Modus '{MODUS_TXT2IMG}' wirkungslos: Ohne "
@@ -2992,7 +3106,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
 
 
 __all__ = [
-    "MAX_SCHRITTE", "MAX_SEED", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
+    "MAX_SCHRITTE", "MAX_SEED", "MODUS_BILD_UND_TIEFE", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
     "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",

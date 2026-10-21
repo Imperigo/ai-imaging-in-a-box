@@ -8165,10 +8165,32 @@ abhalten, neben das Haus weitere Gebäude zu malen. *Im Projekt:* `vis.leerer_hi
 Vorgabe aus, `kosmo_szene.ZUSATZ_LEERER_HINTERGRUND`. Vorbereitet, nicht eingebaut, seit auf-20261021-296. Dort blieb nur
 das Gipsmodell mit genau diesem Satz im Umriss. Ob es am Satz lag, misst auf-20261021-297 mit und ohne.
 
-**Farbabgleich (nach dem KI-Schritt)** — Die Farben eines erzeugten Bilds werden im Mittel und in ihrer Streuung an ein
-zweites Bild angeglichen, getrennt nach Haus, Boden und Himmel. Dabei bewegt sich kein Bildpunkt; nur die Farbe ändert
-sich. *Im Projekt:* Option D1 im Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`. Die Farbstimmung des
-Cycles-Bilds käme damit ins KI-Bild. Noch nicht gebaut.
+**Farbabgleich (nach dem KI-Schritt)** — Die Farben eines erzeugten Bilds werden an ein zweites Bild angeglichen: Die
+mittlere Helligkeit und Farbe und wie stark sie schwanken (die Streuung) werden auf die Werte des zweiten Bilds gebracht.
+Dabei bewegt sich kein Bildpunkt; jeder Punkt bekommt nur eine neue Farbe, die allein von seiner alten Farbe abhängt.
+*Im Projekt:* Schalter `vis.farbabgleich`, Vorgabe aus (Entscheid 117, `aiimaging.farbabgleich`). Das KI-Bild bekommt so
+die Farbstimmung des Cycles-Bilds, etwa das warme Abendlicht. Gerechnet für das ganze Bild auf einmal und nicht getrennt
+nach Haus, Boden und Himmel, weil das KI-Bild nicht genau auf den Flächen des Modells liegt und getrennte Abgleiche sonst
+neue Kanten an den Grenzen schüfen. Gemessen wird in auf-20261021-298.
+
+**Kantenübereinstimmung (`kanten_iou`)** — Eine Zahl von 0 bis 1, die sagt, wie gleich die Kanten zweier Bilder liegen.
+Gezählt werden die Bildpunkte, die in beiden Bildern Kante sind, geteilt durch die, die in mindestens einem Bild Kante
+sind; 1 heisst: dieselben Kanten am selben Ort. *Im Projekt:* im Vermerk des Farbabgleichs. Sie belegt, dass der
+Abgleich nichts an der Form verschoben hat; kleine Abweichungen entstehen nur, wo eine schwache Kante genau an der
+Grenze liegt und das Runden auf ganze Farbwerte sie kippt.
+
+**Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)** — Die KI bekommt zwei Dinge: die Tiefenkarte, die die Form
+festhält, und das gerenderte Bild als Ausgangspunkt. Die Stärke (eine Zahl von 0 bis 1) sagt, wie viel davon die KI neu
+malen darf: wenig heisst nah am Rendering mit Licht und Schatten, viel heisst freier wie heute. *Im Projekt:* Schalter
+`vis.bildeingang` (Stärke 0,05 bis 1,0), Vorgabe aus, Entscheid 117. Unser Standardmodell nimmt so ein Ausgangsbild von
+sich aus nicht an; darum der eigene Start (nächster Eintrag). Gemessen wird in auf-20261021-298 mit drei Stärken
+(0,4 / 0,55 / 0,7).
+
+**Eigener Start (beim Bildmodell)** — Ein Bildmodell beginnt sonst mit reinem Rauschen und entfernt es Schritt für Schritt,
+bis ein Bild dasteht. Beim eigenen Start beginnt es stattdessen mit dem gerenderten Bild, dem ein Teil Rauschen beigemischt
+ist, und rechnet nur noch die letzten Schritte. Je mehr Rauschen, desto mehr malt die KI neu. *Im Projekt:*
+`render._eigener_start`, der Weg hinter dem Bildeingang mit Stärke. Unser Code, nach dem Vorbild einer Rechnung aus der
+freien Bibliothek diffusers, ohne an ihr etwas zu ändern. Am Heim-PC noch nicht gemessen.
 
 **Unteres Quantil (25-%-Quantil)** — Der Wert, unter dem das dunkelste Viertel aller Messpunkte liegt. Bei einem Haus
 mit Sonnen- und Schattenseite liegt er auf der Schattenseite, das Mittel dagegen dazwischen. *Im Projekt:* ein
@@ -8183,6 +8205,7 @@ könnte; erst nachzählen (297).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-296 (Protokoll 74 §167): **Flächenverhältnis (Haus im Bild gegen Haus im Modell)**, **Gültigkeitsvermerk der Umrisstreue (`umriss_gilt`)**, **Zusatz «leerer Hintergrund» (Messschalter)**, **Farbabgleich (nach dem KI-Schritt)**, **Unteres Quantil (25-%-Quantil)**; **Haus im KI-Bild nicht wiederzuerkennen** um die zwei neuen Auslöser nachgeführt |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261020-295 (Protokoll 74 §164): **Mittel in Blendenstufen (geometrisches Mittel)**, **Haus im KI-Bild nicht wiederzuerkennen**, **Umriss-IoU (aus Farbe)**, **Drehung je Kamera (des Himmelsbilds)**, **Prüfbild (für eine Schwelle)** |
 | 2026-10-21 | Ergaenzt aus dem Abgleich im Bau (Plan UI-Gleichheit S5, Protokoll 74 §163): **Abgleich (der Kopie mit dem Original)**, **Veraltete Spur (eines Zweigs)**, **Befehlspalette (⌘K)** |

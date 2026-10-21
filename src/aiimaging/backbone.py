@@ -176,6 +176,20 @@ POL_UNBEKANNT = "unbekannt"
 
 TIEFENPOLARITAETEN = (POL_NAH_HELL, POL_NAH_DUNKEL, POL_UNBEKANNT)
 
+#: Der vorbereitete Weg «Cycles-Bild und Tiefe zugleich» (Entscheid 117, 21.10.2026) auf
+#: der ControlNet-Pipeline von Z-Image: **eigener Start**. Diese Pipeline kennt weder
+#: ``image`` noch ``strength`` (auf-20260919-123), wohl aber ``latents`` und ``sigmas``
+#: (diffusers 0.39.0, ``ZImageControlNetPipeline.__call__``, gelesen am 21.10.2026). Der Weg
+#: kodiert das Cycles-Bild mit dem VAE der Pipeline, verrauscht es auf die Stufe, die die
+#: Stärke verlangt, und lässt die Pipeline nur den Rest des Fahrplans rechnen — die Tiefe
+#: bleibt auf ``control_image``. Dasselbe, was ``ZImageImg2ImgPipeline`` intern tut, nur mit
+#: Steuerbild. Eigener Code (Apache-2.0), kein Eingriff in diffusers. **Am Gerät ungemessen.**
+BILDEINGANG_EIGENER_START = "eigener_start"
+BILDEINGANG_WEGE = (BILDEINGANG_EIGENER_START,)
+#: Familien, für die :data:`BILDEINGANG_EIGENER_START` gebaut ist: Er liest den Fahrplan
+#: (``get_default_z_image_sigmas``, ``calculate_shift``) aus dem Z-Image-Modul von diffusers.
+BILDEINGANG_FAMILIEN = {BILDEINGANG_EIGENER_START: ("z-image",)}
+
 #: Was der Multipass dieses Projekts schreibt. Der Bezugspunkt jeder Umkehrfrage.
 UNSERE_POLARITAET = POL_NAH_HELL
 
@@ -452,6 +466,16 @@ class Backbone:
     #: Gerät über die Pipeline gezeigt hat. ``None`` bei ungemessenen Einträgen; dann sagt
     #: ``bildeingang_lage`` den Grund aus der Konditionierungsart.
     bildeingang_grund: str | None = None
+
+    #: Ein **vorbereiteter, ungemessener** Weg, auf dem das Cycles-Bild **zusätzlich** zur
+    #: Tiefe ins Modell kommt (Entscheid 117, 21.10.2026, Variante A: erst messen). Einer aus
+    #: :data:`BILDEINGANG_WEGE` oder ``None`` (kein Weg vorbereitet). Gelesen nur, wenn ein
+    #: Auftrag ``vis.bildeingang`` mit einer Stärke trägt — **ohne den Schalter ändert das
+    #: Feld nichts**, und :attr:`bildeingang_traegt` bleibt, was gemessen ist, bis
+    #: auf-20261021-298 den Weg gemessen hat.
+    bildeingang_weg: str | None = None
+    #: Woher der Weg stammt (gelesene Quelle, Auftrag) — Pflicht neben :attr:`bildeingang_weg`.
+    bildeingang_weg_beleg: str | None = None
 
     #: Wie viel Grafikspeicher (MiB) vor dem Laden mindestens frei sein muss, damit der
     #: sparsamste Weg (Stufe 3) durchläuft — **gemessen**, mit Beleg in
@@ -839,6 +863,21 @@ def _eintrag(backbone: Backbone) -> None:
             f"ein Urteil braucht eine Auftragskennung, und ohne Urteil steht keine."
         )
 
+    # Der vorbereitete Bildeingang (Entscheid 117): nur ein bekannter Weg, nur mit Beleg, und
+    # nur an einer Familie, für die er gebaut ist — sonst fiele er erst am Gerät auf.
+    if backbone.bildeingang_weg is not None and (
+            backbone.bildeingang_weg not in BILDEINGANG_WEGE
+            or not str(backbone.bildeingang_weg_beleg or "").strip()
+            or backbone.konditionierung != KOND_DEPTH_CONTROLNET
+            or backbone.controlnet_familie
+            not in BILDEINGANG_FAMILIEN.get(backbone.bildeingang_weg, ())):
+        raise BackboneError(
+            f"{backbone.name}: bildeingang_weg={backbone.bildeingang_weg!r} passt nicht — "
+            f"bekannt sind {', '.join(BILDEINGANG_WEGE)}, je mit Beleg und nur an einem "
+            f"Depth-ControlNet der Familie, fuer die der Weg gebaut ist.")
+    if backbone.bildeingang_weg is None and backbone.bildeingang_weg_beleg is not None:
+        raise BackboneError(f"{backbone.name}: bildeingang_weg_beleg ohne bildeingang_weg.")
+
     # Derselbe Riegel für die Führung (Befund 23.09.2026, siehe `fuehrung_regler`): Ein
     # Regler ohne Wert oder ohne Beleg ist eine Vermutung über eine fremde Signatur, und
     # ein Leer-Negativprompt ohne Regler schaltet nichts ein.
@@ -972,6 +1011,15 @@ _eintrag(Backbone(
     bildeingang_traegt=False,
     bildeingang_beleg="auf-20260919-123 (sieben Läufe, eine sha256); bestätigt in "
                       "auf-20260922-137 V5 (modus_abweichung=True)",
+    # DER VORBEREITETE WEG (Entscheid 117, 21.10.2026): Cycles-Bild UND Tiefe über einen
+    # eigenen Start auf derselben Pipeline — nur mit `vis.bildeingang`, ungemessen. Das Urteil
+    # oben bleibt, bis auf-20261021-298 gemessen hat: Es gilt für den Eingang der Pipeline
+    # selbst, und den nutzt der eigene Start nicht.
+    bildeingang_weg=BILDEINGANG_EIGENER_START,
+    bildeingang_weg_beleg=("diffusers 0.39.0 gelesen 21.10.2026: ZImageControlNetPipeline "
+                           "nimmt latents und sigmas; ZImageImg2ImgPipeline zeigt den Start "
+                           "(VAE, scale_noise, Rest des Fahrplans). Zu messen in "
+                           "auf-20261021-298."),
     bildeingang_grund=("ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die "
                        "Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild "
                        "dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und "
@@ -1414,6 +1462,12 @@ def schritte_fuer(name: str | None, standard: int = SCHRITTE_STANDARD) -> int:
     eintrag = BACKBONES.get(name or "")
     wert = getattr(eintrag, "schritte_vorgabe", None) if eintrag else None
     return wert if wert else standard
+
+
+def bildeingang_weg_fuer(name: str | None) -> str | None:
+    """Der vorbereitete Weg «Cycles-Bild und Tiefe» eines Eintrags (Entscheid 117) oder ``None``."""
+    eintrag = BACKBONES.get(name or "")
+    return getattr(eintrag, "bildeingang_weg", None) if eintrag else None
 
 
 #: Die beiden Güten am Render-Knoten (Owner-Entscheid 104, 20.10.2026). Fehlt das Feld in
