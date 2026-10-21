@@ -1,0 +1,444 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-303",
+ "worker": "local",
+ "rang": 90,
+ "folgt_auf": "auf-20261021-302",
+ "bezug": "auf-20261021-297",
+ "planblatt": "docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md",
+ "entscheide": [
+  "97",
+  "97a",
+  "117"
+ ],
+ "status": "erledigt, alle 10 Laeufe done (K, U1, U2, M1, M2, E1, E2, E3, K-abend, U2-abend). K bildpunktgleich zu 297 3c (0 px). Bestes Bild M2 (material_vorne + im_lauf): Sichtbeton ja, Haus im Umriss ja, keine Naht, wiederzuerkennen ja; geom_iou 0,924, ausserhalb 0,0008. im_lauf haelt den Umriss ohne Collage (U2/M2/E3/U2-abend ausserhalb 0,0008-0,18) und kostet keinen Grafikspeicher (Spitze 27116 MiB, 320 MiB UNTER der Kontrolle 27436), veraendert aber allein die Form (U2 Rundturm). nachher (U1) ist eine sichtbare Collage. material_vorne allein bringt Sichtbeton (M1 ja), baut aber noch weiter ueber den Umriss (3,08). E2 (Material-Knoten + Bildeingang 0,8) zeigt Sichtbeton, ist aber fast das Cycles-Bild. Code nicht geaendert.",
+ "beendet": "2026-10-21T09:24:00Z",
+ "koepfe": {
+  "stand": "main 8778347 (Visbox 0.3.15, mit beiden Messschaltern), Dienst neu gestartet, Abholer per Timer 30 s. Kein Code, keine Vorgabe, kein Registerwert, keine dauerhafte Umgebungsvariable geaendert; Schalter nur in den eigenen Probeauftraegen; Mappe des Dienstes, echter Textur- und Himmelsordner nicht angefasst.",
+  "weg": "Bruecke als Client wie 297-302 (POST /bruecke/jobs, /approve, job.json und nvidia-smi im Takt 0,25 s); Varianten ohne Modell ueber vis.grundlage.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb) wie 292-302: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "cameras 'auto' mit richtungen ['sSE'], resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, vis.seed 482913, guete voll, environment {preset: mittag} (K-abend/U2-abend: abend), faithful weggelassen (0,8).",
+  "grundlagen": "G-mittag NEU (gl-70b6994171586e99, job vis-1792573697-69bad6) fuer K/U1/U2/M1/M2; G-mittag-E NEU mit render.materialien {fassade: sichtbeton-schalungsglatt} (gl-c0237cee72502d4f, job vis-1792573969-73220e) fuer E1-E3, Textur aus dem Texturordner (CC0); G-abend aus 302 wiederverwendet fuer K-abend/U2-abend. Bauwerksmaske beider Mittag-Grundlagen gleich (0 px, 58589 Hauspunkte). Cycles-Spitze 1328 MiB / 66 W.",
+  "gpu_vor_jedem_lauf": "1241 MiB, 14-39 W, 0 %; ollama ps vor jedem Lauf leer. Leistungsgrenze 400 W gesetzt und unveraendert. Laeufe strikt nacheinander.",
+  "systemlast": "Last (1 min) 1,15-2,55.",
+  "kosmo_modelle": "nicht beruehrt; ollama ps die ganze Zeit leer.",
+  "augenurteil_blind": "Die Bilder wurden einzeln ohne Zahlen angesehen und beurteilt, bevor die Auswertung lief; gesehen hatte ich vorher nur die VRAM-Spitzen und den Vermerk von U1 (beim Suchen der Felder)."
+ },
+ "K_bildpunktgleich_297_3c": "ja — 0 abweichende Bildpunkte (960 x 600)",
+ "laeufe": {
+  "K": {
+   "job": "vis-1792573729-9ceac0",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "geom_iou": 0.5163,
+   "ausserhalb_umriss_anteil": 2.1868,
+   "n_ist_n_soll": 1.796,
+   "satz_nicht_wiederzuerkennen": "ja",
+   "satz_ueber_umriss": "ja",
+   "vram_spitze": "27436 MiB / 356 W",
+   "zeit_s": 45.78,
+   "gpu_vorher": "1241 MiB, 30.59 W, 0 %",
+   "abweichend_innen_gegen_K": 0,
+   "abweichend_aussen_gegen_K": 0,
+   "grundlage": {
+    "id": "gl-70b6994171586e99",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "teilweise — Betonrahmen um das Glasband, sonst horizontale Lamellen (Metall/Holz), beige Streifen",
+    "haus_im_umriss": "nein — Baukoerper ueber fast die ganze Bildbreite",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "teilweise",
+    "satz": "Breiter, gestreifter Lamellenbau mit Glasband vor Wolkenhimmel und Gebuesch; Hauptbau und Anbau zu einem Block verschmolzen."
+   },
+   "weitere_saetze_verdict": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 219 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 1.80, Schwelle 1.2), und baut zugleich weit ueber den Umriss (2.19 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ]
+  },
+  "U1": {
+   "job": "vis-1792573780-ecc6ce",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "geom_iou": 0.5163,
+   "ausserhalb_umriss_anteil": 2.1868,
+   "n_ist_n_soll": 1.796,
+   "satz_nicht_wiederzuerkennen": "ja",
+   "satz_ueber_umriss": "ja",
+   "vram_spitze": "27436 MiB / 358 W",
+   "zeit_s": 43.65,
+   "gpu_vorher": "1241 MiB, 38.56 W, 0 %",
+   "abweichend_innen_gegen_K": "0 von 58589",
+   "abweichend_aussen_gegen_K": "496666 von 517411",
+   "grundlage": {
+    "id": "gl-70b6994171586e99",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "teilweise — wie K (derselbe Hausteil)",
+    "haus_im_umriss": "ja (durch das Halten)",
+    "naht_collage_abgeschnitten": "ja — deutliche Collage: ausgeschnittener KI-Ausschnitt vor flachem Cycles-Hintergrund, ein Stueck Wolkenhimmel ueber dem Dach (oben Mitte), ausgefranste Lamellen links und rechts der Hauskante, Vordach/Platte unten abgeschnitten; Licht innen (Tag mit Wolken) passt nicht zum flachen Hintergrund",
+    "wiederzuerkennen": "teilweise",
+    "satz": "Ein aus dem KI-Bild herausgeschnittenes Hausstueck klebt mit Wolkenfetzen und Fransen auf einem einfarbigen Hintergrund."
+   },
+   "umriss_halten_vermerk": {
+    "angewandt": true,
+    "art": "nachher",
+    "methode": "maskenmischung_nach_dem_ki_schritt",
+    "rand_px": 19,
+    "weich_px": 10,
+    "anteil_haus": 0.1017,
+    "anteil_ki": 0.1564,
+    "anteil_grund": 0.8436,
+    "punkte_geaendert": 496666,
+    "ohne_umriss_halten_png": "_ohne_umriss_halten/sSE.png",
+    "geom_iou_vorher": 0.5163020352454739,
+    "ausserhalb_vorher": 2.1868,
+    "geom_iou_nachher": 0.789345963118838,
+    "ausserhalb_nachher": 0.0599
+   },
+   "umriss_halten_schritte": null,
+   "satz_UMRISS_HALTEN_verdict_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'nachher' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild; geprueft wurde das KI-Bild VOR dem Halten, danach geom_iou 0.789345963118838 und ueber den Umriss 0.0599. Nie Vorgabe."
+   ],
+   "weitere_saetze_verdict": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 219 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 1.80, Schwelle 1.2), und baut zugleich weit ueber den Umriss (2.19 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ]
+  },
+  "U2": {
+   "job": "vis-1792573829-ab267d",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "geom_iou": 0.9204,
+   "ausserhalb_umriss_anteil": 0.0008,
+   "n_ist_n_soll": 1.085,
+   "satz_nicht_wiederzuerkennen": "nein",
+   "satz_ueber_umriss": "nein",
+   "vram_spitze": "27116 MiB / 357 W",
+   "zeit_s": 41.27,
+   "gpu_vorher": "1241 MiB, 34.46 W, 0 %",
+   "abweichend_innen_gegen_K": "58583 von 58589",
+   "abweichend_aussen_gegen_K": "517410 von 517411",
+   "grundlage": {
+    "id": "gl-70b6994171586e99",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "teilweise — glatte hellgraue Flaeche, eher Putz als Beton",
+    "haus_im_umriss": "ja",
+    "naht_collage_abgeschnitten": "nein — saubere Kante, Licht stimmig",
+    "wiederzuerkennen": "teilweise — Lage und Hoehen stimmen, aber Hauptbau als Rundturm, Dachaufbau rund, Anbau als verglaster Pavillon auf Stuetzen",
+    "satz": "Weisser Rundbau mit Bandfenster und Glaspavillon auf der Platte vor flachem Hintergrund — wirkt wie ein Modellfoto."
+   },
+   "umriss_halten_vermerk": {
+    "art": "im_lauf",
+    "methode": "hintergrund_im_fahrplan_festgehalten",
+    "rand_px": 19,
+    "anteil_frei": 0.1377,
+    "angewandt": true,
+    "schritte": 20,
+    "hinweise": [
+     "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+    ]
+   },
+   "umriss_halten_schritte": 20,
+   "satz_UMRISS_HALTEN_verdict_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+   ],
+   "satz_UMRISS_HALTEN_bildmodell_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+   ]
+  },
+  "M1": {
+   "job": "vis-1792573875-d9f705",
+   "status": "done",
+   "prompt_woertlich": "monolithic exposed concrete building, made entirely of exposed concrete, uniform exposed concrete on all exterior surfaces, contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "geom_iou": 0.411,
+   "ausserhalb_umriss_anteil": 3.0784,
+   "n_ist_n_soll": 2.398,
+   "satz_nicht_wiederzuerkennen": "ja",
+   "satz_ueber_umriss": "ja",
+   "vram_spitze": "27436 MiB / 360 W",
+   "zeit_s": 41.59,
+   "gpu_vorher": "1241 MiB, 34.71 W, 0 %",
+   "abweichend_innen_gegen_K": "58586 von 58589",
+   "abweichend_aussen_gegen_K": "516974 von 517411",
+   "grundlage": {
+    "id": "gl-70b6994171586e99",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "ja — Brettschalungsbeton auf allen Flaechen, dazu Betonlamellen",
+    "haus_im_umriss": "nein — ein grosser Wuerfel ueber das Modell hinaus",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "nein — Anbau und Dachaufbau fehlen, ein einziger Block mit Durchgang",
+    "satz": "Monolithischer Sichtbetonwuerfel mit Brettschalung und Lamellen, viel groesser als das Modell."
+   },
+   "weitere_saetze_verdict": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 308 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild weit mehr Haus, als modelliert ist (161938 Punkte gegen 67541 im Modell, Verhaeltnis 2.40, Schwelle 2.0, gesetzt, nicht gemessen; geom_iou 0.411); und zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 2.40, Schwelle 1.2), und baut zugleich weit ueber den Umriss (3.08 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ]
+  },
+  "M2": {
+   "job": "vis-1792573922-5c8fae",
+   "status": "done",
+   "prompt_woertlich": "monolithic exposed concrete building, made entirely of exposed concrete, uniform exposed concrete on all exterior surfaces, contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "geom_iou": 0.924,
+   "ausserhalb_umriss_anteil": 0.0008,
+   "n_ist_n_soll": 1.081,
+   "satz_nicht_wiederzuerkennen": "nein",
+   "satz_ueber_umriss": "nein",
+   "vram_spitze": "27116 MiB / 359 W",
+   "zeit_s": 41.23,
+   "gpu_vorher": "1241 MiB, 32.09 W, 0 %",
+   "abweichend_innen_gegen_K": "58585 von 58589",
+   "abweichend_aussen_gegen_K": "517411 von 517411",
+   "grundlage": {
+    "id": "gl-70b6994171586e99",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "ja — gleichmaessiger hellgrauer Sichtbeton mit feinen Fugen, Lochfenster",
+    "haus_im_umriss": "ja",
+    "naht_collage_abgeschnitten": "nein — nur ein leichter heller Saum an der linken Oberkante des Hauptbaus",
+    "wiederzuerkennen": "ja — Hauptbau (vier Geschosse), Anbau, Dachaufbau, alles rechtwinklig",
+    "satz": "Heller Sichtbetonbau mit Lochfenstern, Anbau und Dachaufbau wie modelliert, vor flachem Hintergrund."
+   },
+   "umriss_halten_vermerk": {
+    "art": "im_lauf",
+    "methode": "hintergrund_im_fahrplan_festgehalten",
+    "rand_px": 19,
+    "anteil_frei": 0.1377,
+    "angewandt": true,
+    "schritte": 20,
+    "hinweise": [
+     "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+    ]
+   },
+   "umriss_halten_schritte": 20,
+   "satz_UMRISS_HALTEN_verdict_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+   ],
+   "satz_UMRISS_HALTEN_bildmodell_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+   ]
+  },
+  "E1": {
+   "job": "vis-1792574001-a33b8b",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky, exterior surfaces of smooth fair-faced concrete",
+   "geom_iou": 0.4695,
+   "ausserhalb_umriss_anteil": 3.6376,
+   "n_ist_n_soll": 2.096,
+   "satz_nicht_wiederzuerkennen": "ja",
+   "satz_ueber_umriss": "ja",
+   "vram_spitze": "27436 MiB / 359 W",
+   "zeit_s": 46.37,
+   "gpu_vorher": "1241 MiB, 25.81 W, 0 %",
+   "abweichend_innen_gegen_K": "58585 von 58589",
+   "abweichend_aussen_gegen_K": "514537 von 517411",
+   "grundlage": {
+    "id": "gl-c0237cee72502d4f",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "teilweise — hellgraue Beton-/Plattenflaechen, dazu Metalllamellen, Glas und zwei Bildpaneele mit Ornament",
+    "haus_im_umriss": "nein — geschwungener Eckbau, Nachbarbau links",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "nein",
+    "satz": "Geschwungener Eckbau aus Platten, Lamellen und Glas mit Ornamentpaneelen, links ein weiterer Bau."
+   },
+   "weitere_saetze_verdict": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 364 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild weit mehr Haus, als modelliert ist (141584 Punkte gegen 67541 im Modell, Verhaeltnis 2.10, Schwelle 2.0, gesetzt, nicht gemessen; geom_iou 0.469); und zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 2.10, Schwelle 1.2), und baut zugleich weit ueber den Umriss (3.64 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ]
+  },
+  "E2": {
+   "job": "vis-1792574052-0eff67",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky, exterior surfaces of smooth fair-faced concrete",
+   "geom_iou": 0.8755,
+   "ausserhalb_umriss_anteil": 0.4353,
+   "n_ist_n_soll": 1.13,
+   "satz_nicht_wiederzuerkennen": "nein",
+   "satz_ueber_umriss": "ja",
+   "vram_spitze": "31316 MiB / 360 W",
+   "zeit_s": 40.47,
+   "gpu_vorher": "1241 MiB, 29.02 W, 0 %",
+   "abweichend_innen_gegen_K": "58588 von 58589",
+   "abweichend_aussen_gegen_K": "517411 von 517411",
+   "grundlage": {
+    "id": "gl-c0237cee72502d4f",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "ja — grauer Sichtbeton mit Schalungsfugen wie die Textur",
+    "haus_im_umriss": "ja (bis auf einen erfundenen dunklen Durchgang unter dem Anbau)",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "ja",
+    "satz": "Fast das Cycles-Bild mit etwas mehr Licht und Kanten: ein Render, kaum ein Entwurf."
+   },
+   "weitere_saetze_verdict": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 44 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.8, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 16 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe."
+   ]
+  },
+  "E3": {
+   "job": "vis-1792574098-74cda3",
+   "status": "done",
+   "prompt_woertlich": "monolithic smooth fair-faced concrete building, made entirely of smooth fair-faced concrete, uniform smooth fair-faced concrete on all exterior surfaces, contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky, exterior surfaces of smooth fair-faced concrete",
+   "geom_iou": 0.9325,
+   "ausserhalb_umriss_anteil": 0.0681,
+   "n_ist_n_soll": 1.072,
+   "satz_nicht_wiederzuerkennen": "nein",
+   "satz_ueber_umriss": "nein",
+   "vram_spitze": "27116 MiB / 360 W",
+   "zeit_s": 41.7,
+   "gpu_vorher": "1241 MiB, 32.36 W, 0 %",
+   "abweichend_innen_gegen_K": "58589 von 58589",
+   "abweichend_aussen_gegen_K": "517411 von 517411",
+   "grundlage": {
+    "id": "gl-c0237cee72502d4f",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "ja — heller glatter Sichtbeton mit Schalungsstoessen, stark ueberstrahlt",
+    "haus_im_umriss": "ja",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "teilweise — Hauptbau mit gerundeten Ecken, Dachaufbau rund, Anbau eckig",
+    "satz": "Heller, abgerundeter Sichtbetonbau ohne Fenster mit rundem Dachaufbau vor flachem Hintergrund."
+   },
+   "umriss_halten_vermerk": {
+    "art": "im_lauf",
+    "methode": "hintergrund_im_fahrplan_festgehalten",
+    "rand_px": 19,
+    "anteil_frei": 0.1377,
+    "angewandt": true,
+    "schritte": 20,
+    "hinweise": [
+     "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+    ]
+   },
+   "umriss_halten_schritte": 20,
+   "satz_UMRISS_HALTEN_verdict_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+   ],
+   "satz_UMRISS_HALTEN_bildmodell_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+   ]
+  },
+  "K-abend": {
+   "job": "vis-1792574145-e883dd",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "geom_iou": 0.005,
+   "ausserhalb_umriss_anteil": 4.266,
+   "n_ist_n_soll": 1.274,
+   "satz_nicht_wiederzuerkennen": "ja",
+   "satz_ueber_umriss": "ja",
+   "vram_spitze": "27436 MiB / 360 W",
+   "zeit_s": 41.52,
+   "gpu_vorher": "1241 MiB, 36.88 W, 0 %",
+   "abweichend_innen_gegen_K": "0 von 58589",
+   "abweichend_aussen_gegen_K": "0 von 517411",
+   "grundlage": {
+    "id": "gl-8f5fb78afe3ed5ad",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "teilweise — Betonplatten im warmen Licht",
+    "haus_im_umriss": "nein",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "nein",
+    "satz": "Unterfuehrung bzw. Ueberbauung mit Nachbarhaeusern im Abendlicht, das Haus ist nicht zu finden (wie 295/296 abend voll)."
+   },
+   "vergleich": "gegen K-abend statt K",
+   "weitere_saetze_verdict": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 427 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' decken sich Modell und Bild kaum (geom_iou 0.005, Schwelle 0.1) (763 von 67541 Punkten des Modells gemeinsam); und baut das Bild weit ueber den Umriss hinaus (4.27 der Hausflaeche, Schwelle 1.5) und deckt das Modell wenig (geom_iou 0.005 unter 0.3, beide gesetzt, nicht gemessen); und zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 1.27, Schwelle 1.2), und baut zugleich weit ueber den Umriss (4.27 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht."
+   ]
+  },
+  "U2-abend": {
+   "job": "vis-1792574192-e2cc24",
+   "status": "done",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "geom_iou": 0.6992,
+   "ausserhalb_umriss_anteil": 0.1837,
+   "n_ist_n_soll": 1.147,
+   "satz_nicht_wiederzuerkennen": "nein",
+   "satz_ueber_umriss": "nein",
+   "vram_spitze": "27116 MiB / 360 W",
+   "zeit_s": 41.43,
+   "gpu_vorher": "1241 MiB, 31.71 W, 0 %",
+   "abweichend_innen_gegen_K": "58589 von 58589",
+   "abweichend_aussen_gegen_K": "517411 von 517411",
+   "grundlage": {
+    "id": "gl-8f5fb78afe3ed5ad",
+    "wiederverwendet": true
+   },
+   "augenurteil": {
+    "sichtbeton": "teilweise — glatter beiger Beton/Putz im Abendlicht",
+    "haus_im_umriss": "ja",
+    "naht_collage_abgeschnitten": "nein",
+    "wiederzuerkennen": "teilweise — Hauptbau mit grosser Loggia, Anbau als offener Rahmen mit Gelaender",
+    "satz": "Kleines Haus mit Loggia und Dachterrasse im warmen Licht vor flachem mauvefarbenem Hintergrund."
+   },
+   "vergleich": "gegen K-abend statt K",
+   "umriss_halten_vermerk": {
+    "art": "im_lauf",
+    "methode": "hintergrund_im_fahrplan_festgehalten",
+    "rand_px": 19,
+    "anteil_frei": 0.1377,
+    "angewandt": true,
+    "schritte": 20,
+    "hinweise": [
+     "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+    ]
+   },
+   "umriss_halten_schritte": 20,
+   "satz_UMRISS_HALTEN_verdict_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+   ],
+   "satz_UMRISS_HALTEN_bildmodell_woertlich": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen."
+   ]
+  }
+ },
+ "vram": {
+  "ohne_schalter": "27436 MiB (K, U1, M1, E1, K-abend)",
+  "im_lauf": "27116 MiB (U2, M2, E3, U2-abend) — 320 MiB weniger als ohne Schalter, nicht mehr",
+  "bildeingang_0_8": "31316 MiB (E2)",
+  "zeit_je_bild_s": "40,5-46,4 (Freigabe bis done), im_lauf 41,2-41,7 — keine Mehrzeit",
+  "zu_planblatt_6": "Der VAE-Durchlauf von im_lauf unter no_grad kostet keinen messbaren Speicher; der Bildeingang (+3880 MiB) macht denselben Durchlauf ohne no_grad. Das stuetzt die Vermutung des Planblatts (Ursache: fehlendes no_grad in _eigener_start); belegt ist es erst mit der geaenderten Zeile."
+ },
+ "tafeln": {
+  "T1": "auf-20261021-303-bilder/T1-umriss-und-material.png (K | U1 | U2 | M1 | M2)",
+  "T2": "auf-20261021-303-bilder/T2-material-knoten.png (K | E1 | E2 | E3 | Cycles-Bild von E1)",
+  "zeile": "unter jedem Bild geom_iou, ausserhalb, Sichtbeton? (U1 mit Werten nach dem Halten)"
+ },
+ "urteil": {
+  "umriss": "im_lauf haelt den Umriss ohne Naht und ohne Collage (alle vier Laeufe), geom_iou steigt von 0,52 auf 0,92-0,93 (abend 0,005 auf 0,70). nachher schneidet sichtbar aus (Collage, Wolkenfetzen, Fransen). Allein veraendert im_lauf aber die Form des Hauses (U2 Rundturm, E3 gerundet) — mit material_vorne (M2) nicht.",
+  "material": "material_vorne bringt Sichtbeton von 'teilweise' auf 'ja' (M1, M2, E3), allein aber mit noch mehr Bau ueber den Umriss (M1 3,08). Der Material-Knoten allein (E1) bringt es nicht ('teilweise', ausserhalb 3,64). Mit Bildeingang 0,8 (E2) ist der Sichtbeton da, das Bild aber fast das Cycles-Bild.",
+  "nebenwirkung": "Mit im_lauf steht ausserhalb des Hauses das Cycles-Bild der Grundlage: bei mittag und abend ein flacher, einfarbiger Hintergrund ohne Himmel und Umgebung — die Bilder wirken wie Modellfotos vor einer Studiowand.",
+  "empfehlung": "Zu entscheiden 1 und 2: im_lauf UND material_vorne zusammen (M2) als Vorgabe-Kandidat; nachher nicht. Vorbehalt: ein Startwert, eine Kamera, eine Stimmung mit Material; der Hintergrund ist dann der flache Cycles-Hintergrund."
+ },
+ "befunde": [
+  "B1 U1 (nachher): qa.verdict.hinweise traegt weiter 'KI BAUT UEBER DEN UMRISS HINAUS ... 219 %' und 'HAUS IM KI-BILD NICHT WIEDERZUERKENNEN', geom_iou bleibt 0,5163 — gebaut so (Kameraurteil vor dem Halten), aber das gelieferte Bild hat ausserhalb 0,06 und geom_iou 0,789; wer nur die Saetze liest, haelt das gelieferte Bild fuer falsch.",
+  "B2 Der Satz des Bildmodells 'UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Ungemessen.' steht nur im Vermerk (befund.json kameras[0].umriss_halten.hinweise und urteil.json), NICHT in render-result.json; dort steht nur der Satz 'UMRISS HALTEN (...), Kamera 'sSE': Art 'im_lauf' ...' in qa.verdict.hinweise.",
+  "B3 E3: material_vorne mit dem Material-Knoten nimmt 'smooth fair-faced concrete' dreimal nach vorne, der hintere Satz 'exterior surfaces of smooth fair-faced concrete' bleibt zusaetzlich stehen, und 'exposed concrete' aus dem Standardprompt ebenso — der Stoff steht fuenfmal im Prompt.",
+  "B4 E2 traegt 'KI BAUT UEBER DEN UMRISS HINAUS ... 44 %', obwohl das Bild nur einen dunklen Durchgang unter dem Anbau und die Plattenkante zeigt — Grenzfall des Satzes.",
+  "B5 im_lauf-Vermerk sagt 'Ungemessen' — gemessen jetzt: Spitze 27116 MiB, Zeit wie ohne Schalter, umriss_halten_schritte 20 in allen vier Laeufen.",
+  "B6 Mit Grundlage-Wiederverwendung landen Varianten-Ausgaben ohne material_id/blender-report im Ausgabeordner; fuer die Maske innen/aussen wurde die Bauwerksmaske der Grundlage genommen (kein Mangel, nur wie gemessen)."
+ ],
+ "code_geaendert": "nein",
+ "offen": "Owner-Entscheid ueber die Zentrale (Planblatt Zu entscheiden 1 und 2); Gegenprobe mit weiteren Startwerten und Kameras; Hintergrund bei im_lauf (flach) ist eine eigene Frage.",
+ "bilder": {
+  "ordner": "auf-20261021-303-bilder/",
+  "dateien": [
+   "T1-umriss-und-material.png (4800 x 666)",
+   "T2-material-knoten.png (4800 x 666)"
+  ]
+ },
+ "aufraeumen": "eigene Probeauftraege (Ablage), Ausgaben und Grundlagen erst nach dem letzten Push per gio trash; keine eigenen Prozesse."
+}

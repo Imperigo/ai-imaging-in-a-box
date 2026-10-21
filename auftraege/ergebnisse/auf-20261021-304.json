@@ -1,0 +1,169 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-304",
+ "worker": "local",
+ "rang": 91,
+ "entscheide": [
+  "103",
+  "103a",
+  "103b",
+  "103c"
+ ],
+ "einbau": "C102 am Heim-PC bestaetigt: Holen, Auftrag mit Modell und Name, Bilder zurueck; die Mappe am Heim-PC laeuft unveraendert weiter. Die Geraeteprobe am Mac bleibt beim Owner.",
+ "protokoll": "74 §174",
+ "status": "erledigt, C102 am Heim-PC bestaetigt — Holen wie der Mac (Liste, Paket, Datei) geht, Groesse gleich, beide Gegenproben mit Satz (404/400); ein Auftrag mit Modell und den Koepfen rechnet nur mit Blender (done in 15 s, 3 Bilder, alle 200), Laufzettel mappe = 'Probe am Mac'; die Mappe am Heim-PC laeuft ohne Koepfe unveraendert (name/mappe/glb/bauteile gleich, Graph 1, Modell 34008 Byte gleich), Auftrag ohne Kopf traegt ihren Namen und liess sich abbrechen; schlechter Kopf gilt als nicht gesagt. Code nicht geaendert.",
+ "beendet": "2026-10-21T09:20:00Z",
+ "koepfe": {
+  "stand": "main 8778347 (Visbox 0.3.15), Dienst neu gestartet, Abholer per Timer 30 s. Kein Code geaendert; die Mac-App nicht angefasst; nur curl-gleiche Anfragen als Client an den Dienst (Python urllib, Anmeldung wie die Brueckenlaeufe).",
+  "systemlast": "1.22 / 1.36 / 1.37",
+  "gpu_vor_dem_lauf": "1241 MiB, 14.31 W, 0 %",
+  "leistungsgrenze_gesetzt": "ja, 400 W (unveraendert)",
+  "ollama_ps": "leer",
+  "probemappe": "NEU angelegt mit POST /knoten/modell-laden (Formularfeld datei, synthetisches glb aus tools/make_test_glb.py wie 292-303, Hauptbau/Anbau/Dachaufbau/Platte), stand geladen nach dem ersten Abfragen, Mappe 'probe-304' mit 4 Bauteilen. Sie wird nach dem letzten Push weggeraeumt."
+ },
+ "1_holen": {
+  "mappen_gekuerzt": [
+   {
+    "mappe": "<Ordnername>",
+    "modell": true,
+    "skizzen": 0,
+    "bilder": 0
+   },
+   {
+    "mappe": "probe-304",
+    "modell": true,
+    "skizzen": 0,
+    "bilder": 0
+   },
+   {
+    "mappe": "bau",
+    "modell": true,
+    "skizzen": 0,
+    "bilder": 0
+   },
+   {
+    "mappe": "quader",
+    "modell": true,
+    "skizzen": 0,
+    "bilder": 0
+   }
+  ],
+  "mappen_nur_namen": "ja — keine Pfade, nur mappe/name/Zahlen/Zeit",
+  "paket_format": "visbox.mappenpaket/v1",
+  "dateien_beginnen_mit_modell_glb": "ja",
+  "dateien_je_art": {
+   "modell": 1
+  },
+  "summe_bytes": 2336,
+  "paket_traegt_ausserdem": "knoten (Huellbox, Standpunkte), graph (leer), projekt — inline, nicht als Datei; kein absoluter Pfad im Paket",
+  "je_datei": [
+   {
+    "weg": "modell.glb",
+    "http": 200,
+    "geholt_bytes": 2336,
+    "paket_bytes": 2336,
+    "gleich": "ja"
+   }
+  ],
+  "gegenprobe_projekt_json": {
+   "http": 404,
+   "satz": "Diese Datei gehört nicht zum Paket der Mappe: 'projekt.json'."
+  },
+  "gegenprobe_punktpunkt": {
+   "http": 400,
+   "satz": "Kein Mappenname: '../<M>'.",
+   "dasselbe_am_paket": 400
+  }
+ },
+ "2_auftrag_vom_mac": {
+  "post_http": 200,
+  "laufzettel_mappe": "Probe am Mac",
+  "job_id": "vis-1792574381-37ef30",
+  "approve_http": 200,
+  "endstatus": "done",
+  "dauer_s": 15.1,
+  "takt": "GET /bruecke/jobs/<id> alle 5 s",
+  "result_images": [
+   "s.png",
+   "sSE.png",
+   "nNW.png"
+  ],
+  "bilder_geholt": [
+   {
+    "name": "s.png",
+    "http": 200,
+    "bytes": 254928,
+    "typ": "image/png"
+   },
+   {
+    "name": "sSE.png",
+    "http": 200,
+    "bytes": 257440,
+    "typ": "image/png"
+   },
+   {
+    "name": "nNW.png",
+    "http": 200,
+    "bytes": 256627,
+    "typ": "image/png"
+   }
+  ],
+  "laufzettel_mappe_nach_done": "Probe am Mac",
+  "journal_abholer": [
+   "vis-…-37ef30: verarbeitet — Nur Grundlage: 3 Cycles-Bild(er), kein KI-Schritt.",
+   "Karte: Auslastung 0 %, 1241 MiB belegt.",
+   "Wache: kein Stillstand (4 Blicke, laengste Pause 0 s)",
+   "Prompt uebersetzt (glossar): 'ein Haus' -> 'a house'",
+   "Geometrie-SCORE: UNGEMESSEN, keine Kamera lieferte einen Wert (...)",
+   "MASKENWEG NICHT GEFAHREN: s, sSE, nNW — (...)"
+  ],
+  "gpu": "Karte vorher 1241 MiB; nur Blender (vis.skip), kein Bildmodell geladen"
+ },
+ "3_alte_mappe": {
+  "knoten_mappe_vor_und_nach_gleich": {
+   "name": true,
+   "mappe": true,
+   "glb": true,
+   "bauteile": true,
+   "schluessel": true
+  },
+  "felder": {
+   "name": "<Name der Mappe am Heim-PC>",
+   "mappe": "<Ordnername>",
+   "glb": true,
+   "bauteile": 35
+  },
+  "vorher_gemessen": "vor dem Anlegen der Probemappe (nach dem Pull/Neustart), nicht vor dem Pull",
+  "graph_zahl": 1,
+  "modell_bytes": 34008,
+  "modell_gleich": "ja",
+  "laufzettel_mappe_ohne_koepfe": "Ordnername der Mappe am Heim-PC (wie bisher)",
+  "abbruch": {
+   "http": 200,
+   "status": "cancelled",
+   "message": "Vom Nutzer abgebrochen."
+  },
+  "visbox_seite_laden": "ja — GET / 200, text/html; charset=utf-8",
+  "api_projekt_laden": "ja — GET /api/projekt 200, Mappe am Heim-PC"
+ },
+ "4_schlechter_kopf": {
+  "kopf": "X-Mappe-Am-Mac: ..%2Fetc",
+  "post_http": 200,
+  "laufzettel_mappe": "Ordnername der Mappe am Heim-PC — Kopf gilt als nicht gesagt",
+  "abbruch": "cancelled"
+ },
+ "befunde": [
+  "B1 «Datei laden …» (POST /knoten/modell-laden) macht die neue Mappe zur zuletzt geoeffneten (Entscheid 85 B) — ab da zeigen /knoten/mappe, die Knotenansicht und die Visbox-Seite fuer ALLE Geraete die Probemappe, und ein Auftrag ohne Kopf traegt ihren Namen. Zurueck nur ueber GET /api/projekt?ordner=<Pfad der Start-Mappe> (so hier gemacht, nach rund 3 Minuten). Gebaut so; fuer den Mac, der nur holen will, eine Nebenwirkung.",
+  "B2 GET /knoten/modell-laden liefert den Stand unter 'laden' (laden.stand, laden.mappe), nicht oben — im Auftrag steht 'stand=geladen'; kein Mangel, nur die Form.",
+  "B3 /knoten/mappen nennt neben der Start-Mappe und der Probemappe zwei weitere Mappen ('bau', 'quader') aus dem Rueckfall-Ordner fruehrerer Proben; nicht angefasst.",
+  "B4 Das Paket listet nur modell.glb als Datei; Graph, Knoten und Projekt kommen inline im Paket (keine Skizzen, keine Bilder in der Probemappe)."
+ ],
+ "code_geaendert": "nein",
+ "offen": "Geraeteprobe am Mac (Owner).",
+ "bilder": {
+  "ordner": null,
+  "dateien": [],
+  "hinweis": "keine Bilder ins Repo; die drei Blender-Bilder liegen nur in der eigenen Holablage und werden weggeraeumt"
+ },
+ "aufraeumen": "Probemappe, eigene Probeauftraege (Ablage) und Holordner erst nach dem letzten Push per gio trash; keine eigenen Prozesse."
+}
