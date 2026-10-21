@@ -166,6 +166,16 @@ function visBefehle() {
 const RENDER_ZUSATZ =
   ' NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.';
 const LOESCHEN_ZUSATZ = ' Immer eine Karte, in jedem Modus.';
+/**
+ * Der Paketweg an den beiden Einzelwerkzeugen, die er betrifft (Visbox-Messung auf-20261021-319,
+ * 21.10.2026): Assistent und Claude setzten einen Knoten und verbanden ihn in derselben Runde mit
+ * einer GERATENEN Kennung — nur `vis_paket` erklaerte «$neu», die Einzelwerkzeuge schwiegen davon.
+ * Der Satz steht hier und nicht im Kernbefehl (`commands/vis.ts`), weil `vis_paket` nur in diesem
+ * Werkzeugsatz existiert; der Kosmo-Chat von `@kosmo/ai` kennt es nicht.
+ */
+export const PAKET_HINWEIS =
+  ' Neu setzen und gleich verbinden: vis_paket mit «$neu:0» (die Kennung eines neuen Knotens gibt es erst in der Antwort).';
+const MIT_PAKET_HINWEIS = new Set(['vis.nodeSetzen', 'vis.verbinden']);
 
 const GRAPH_LESEN_SCHEMA: Record<string, unknown> = {
   type: 'object',
@@ -210,7 +220,8 @@ const PAKET_BESCHREIBUNG = `Mehrere vis_*-Befehle als EIN Schritt: eine Karte, e
 export function visWerkzeuge(_doc: KosmoDoc = useProject.getState().doc): KiWerkzeug[] {
   const befehle = visBefehle().map((cmd): KiWerkzeug => {
     const art = artVonBefehl(cmd.id);
-    const zusatz = art === 'rendern' ? RENDER_ZUSATZ : art === 'loeschen' ? LOESCHEN_ZUSATZ : '';
+    const zusatz = (art === 'rendern' ? RENDER_ZUSATZ : art === 'loeschen' ? LOESCHEN_ZUSATZ : '')
+      + (MIT_PAKET_HINWEIS.has(cmd.id) ? PAKET_HINWEIS : '');
     return {
       name: werkzeugNameFuer(cmd.id),
       description: cmd.description + zusatz,

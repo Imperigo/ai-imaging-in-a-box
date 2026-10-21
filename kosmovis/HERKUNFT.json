@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "1f2c53854a16ecadd560a78189c5f67ad5834f17"
+    "commit": "2c0f40ef36f4d8099f1c860da0634ff64c46a0c6"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -99,7 +99,7 @@
     "apps/kosmo-orbit/src/modules/vis/island/vis-island-katalog.ts": "70cc98473fe32e18c065d29c38d9c73a09dd7e6afaa587334cfef365ea4c6f79",
     "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "da6425e5218c3e7695e50562bf68b06d5f80aec1e3b20dcda145ae53c309fae2",
     "apps/kosmo-orbit/src/modules/vis/kamera-aus-3d.ts": "9f36f78d67c4f15f84c8d31e0ee904753168d9b194769d002933cb24ee903795",
-    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "7650743cd70e78c15c4e3bbc3fdbbf1547ab52d08cbc7524947c1b9d3dcc7d77",
+    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "689dc2de0f32f6f71f8bd9f27b9844cdb3c3dabeaceafb922941894b623607ef",
     "apps/kosmo-orbit/src/modules/vis/knoten-entzerren.ts": "6dfe4a0708512eaf21cbe8e386f89f483eee295477d4f7b1735f22c495dc34aa",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu-vorschau.ts": "5d935d6fbed19aec021bce8edf6ec2a0279d1013eb932d6a1c138a69a880dce3",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu.css": "51a01e6e378df06324ba11e54631e0b3e597c6ff8dbaeb4225d5d2971e3a080b",
@@ -209,7 +209,7 @@
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx": "967a99760aedda96784d805a4edb1de99d7466224b19b60c7f75d6ded18f5941",
     "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "206dc146b4f18c597ca6ef79431a0f6102236cba4a7b3e86c04eb8d8ac7cc7ab",
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
-    "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "95c43f21dd8a2337d4e9f557e5803efdc0a7deb92c722bc860a0f6c52fcad93d",
+    "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "f16745e312574811f5491a047fc0a757242664c4eedc67d84516a1c75f726138",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
     "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "39cf0f4d16d4b51d6c0b6dd5166ea7349cc80f1961ec378ad0b9757d014c03c5",
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx": "d1d2e8a2193ab5fb4f25775dccb4f357b658d46aa73e70bdfb5f1c7ee77794d4",
