@@ -8640,11 +8640,26 @@ ungewollt zu solchen Unterregeln und greifen nirgends — ohne Fehlermeldung. *I
 ganzer Teil des Aussehens der Knotenansicht aus (Zeile «Grundlage», Marke «Vorschau», die neuen Daumen); eine Probe
 zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daumen.py`).
 
+**Hausanteil (an Grundlage und KI-Bild)** — Wieviel der Bildfläche das Haus füllt, als Prozentzahl — **zweimal**
+gemessen: an der Grundlage (dem Bild aus dem 3D-Modell, dort gezählt Punkt für Punkt) und am KI-Bild (dort geschätzt
+aus der Tiefe, die ein Programm im Bild liest: was so nah ist wie das Haus und daran hängt). *Wozu:* Die KI wählt den
+Ausschnitt manchmal selbst — «näher» oder «weiter» als bestellt. Dann füllt das Haus in der Grundlage 3 % und im KI-Bild
+17 %, und eine einzige Zahl spräche über ein Bild, das man nicht sieht. *Im Projekt:* seit dem 21.10.2026 im Ergebnis
+jedes Bildes und in der grossen Ansicht des Verlaufs als Zeile «Haus im Bild», mit dem Satz «KI-BILD RAHMT ANDERS» und
+der Marke «Ausschnitt anders», wenn eine Zahl mindestens doppelt so gross ist wie die andere (gesetzt, nicht gemessen).
+
+**Abgeschnittener Wert (Geometrie 0.0)** — Eine Zahl, die nicht unter eine Grenze fallen darf und darum dort festgehalten
+wird, auch wenn die Rechnung weniger ergäbe. *Im Projekt:* Die Geometrie-Zahl vergleicht, ob das KI-Bild die Tiefe gleich
+ordnet wie das Modell (vorne und hinten). Ordnet es sie umgekehrt, wäre die Rechnung negativ; die Zahl bleibt dann bei
+**0.0**. Eine 0.0 heisst also «das KI-Bild weicht von der Geometrie ab», nicht «nichts gemessen» und kein Fehler. So steht
+es seit dem 21.10.2026 auch im Satz der Prüfung.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §195): **Gesicherter Blick** |
+| 2026-10-21 | Ergaenzt aus dem Video-Befund L4-2 (Protokoll 74 §195): **Hausanteil (an Grundlage und KI-Bild)**, **Abgeschnittener Wert (Geometrie 0.0)** |
+| 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §196): **Gesicherter Blick** |
 | 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |
 | 2026-10-21 | Ergaenzt aus dem Strang Optik (Protokoll 74 §194): **Überstand (am Knoten)**, **Reiterleiste**; **Stilprobe (am Bau)** um die Knoten nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §192): **Probename (im Gerätebuch)** |

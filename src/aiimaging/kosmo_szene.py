@@ -3302,6 +3302,67 @@ def _ausserhalb_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list)
             f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
 
 
+#: DER HAUSANTEIL AN GRUNDLAGE UND KI-BILD (Video-Befund L4-2, 21.10.2026). Die Pruefung
+#: meldete «Das Haus fuellt nur 2.9 %» neben einem KI-Bild mit sichtbar grossem Haus: gemessen
+#: war nur die Grundlage (``anteil_soll``), die KI hatte den Ausschnitt naeher erfunden. Jetzt
+#: stehen beide Zahlen im ``qa``-Block (Lauf: die Kamera von ``qa.geometry``) und je Kamera,
+#: 0..1. Fehlen, wenn nicht gemessen — kein ``null``. Auskunft, kein Tor.
+FELD_HAUS_GRUNDLAGE = "haus_anteil_grundlage"
+FELD_HAUS_BILD = "haus_anteil_bild"
+#: Der Satz, wenn die KI das Haus deutlich anders rahmt als die Grundlage.
+SATZ_RAHMT_ANDERS = "KI-BILD RAHMT ANDERS"
+
+
+def hausanteil_des_urteils(urteil) -> tuple:
+    """``(grundlage, bild)`` eines Kameraurteils, je ``None``, wo nicht gemessen.
+
+    ``grundlage`` ist ``anteil_soll`` (gezaehlt an der Blender-Tiefe, dieselbe Zahl wie in
+    «Das Haus fuellt …»), ``bild`` ``haus_im_bild.anteil`` des GELIEFERTEN Bilds
+    (:func:`urteil_fuer_umrisssaetze`). Bei randloser Soll-Silhouette (Innenansicht) beide
+    ``None``: Dort ist jeder Bildpunkt «Haus», und die Zahl sagte nichts.
+    """
+    if not isinstance(urteil, dict) or soll_silhouette_randlos(urteil):
+        return None, None
+
+    def zahl(w):
+        return (round(float(w), 4) if isinstance(w, (int, float)) and not isinstance(w, bool)
+                and math.isfinite(w) and 0.0 <= w <= 1.0 else None)
+
+    geliefert = urteil_fuer_umrisssaetze(urteil)
+    befund = geliefert.get("haus_im_bild") if isinstance(geliefert, dict) else None
+    return (zahl(urteil.get("anteil_soll")),
+            zahl(befund.get("anteil")) if isinstance(befund, dict) else None)
+
+
+def _hausprozent(w: float) -> str:
+    return f"{w * 100:.1f} %"
+
+
+def _hausanteil_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """``qa.haus_anteil_grundlage`` und ``qa.haus_anteil_bild`` — mit Satz, wenn die KI das
+    Haus deutlich anders rahmt (:func:`baumasse.rahmt_anders`, gesetzt, nicht gemessen)."""
+    from . import baumasse as _baumasse  # noqa: PLC0415
+    grundlage, bild = hausanteil_des_urteils(geometrie_urteil)
+    if grundlage is not None:
+        qa[FELD_HAUS_GRUNDLAGE] = grundlage
+    if bild is not None:
+        qa[FELD_HAUS_BILD] = bild
+    urteile = [(e.get("kamera"), e.get("geometrie_urteil")) for e in (je_kamera or ())
+               if isinstance(e, dict)]
+    if not urteile:
+        urteile = [((geometrie_urteil or {}).get("kamera"), geometrie_urteil)]
+    for kamera, urteil in urteile:
+        g, b = hausanteil_des_urteils(urteil)
+        if _baumasse.rahmt_anders(g, b):
+            wo = f" der Kamera {kamera!r}" if kamera else ""
+            hinweise.append(
+                f"{SATZ_RAHMT_ANDERS}: Im KI-Bild{wo} fuellt das Haus geschaetzt "
+                f"{_hausprozent(b)}, in der Grundlage {_hausprozent(g)} — die KI hat den Ausschnitt "
+                f"{'naeher' if b > g else 'weiter'} gewaehlt als bestellt. Zahlen zur "
+                f"Grundlage (Hausanteil, Geometrie) sprechen ueber die Grundlage, nicht ueber "
+                f"dieses Bild. Der Wert am KI-Bild ist aus der Tiefe geschaetzt, nicht gezaehlt.")
+
+
 #: Der Satz, wenn das Haus im KI-Bild nicht wiederzuerkennen ist (auf-20261020-295, N2).
 SATZ_NICHT_WIEDERZUERKENNEN = "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN"
 
@@ -3517,7 +3578,8 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                              geometrie_urteil=eintrag.get("geometrie_urteil"),
                              stil_urteil=eintrag.get("stil_urteil"))["qa"]
         satz = {"kamera": str(name)}
-        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST, FELD_AUSSERHALB):
+        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST, FELD_AUSSERHALB,
+                     FELD_HAUS_GRUNDLAGE, FELD_HAUS_BILD):
             if feld in block:
                 satz[feld] = block[feld]
         # Ohne Geometrieurteil («nur Grundlage», auf-20261020-293): die Messung der Stimmung.
@@ -4060,6 +4122,46 @@ def _gegen_schwelle(schwelle) -> str:
     Programmfehler und nicht wie eine fehlende Angabe (Durchsicht 30.09.2026).
     """
     return "ohne Schwelle" if schwelle is None else f"gegen {schwelle}"
+
+
+def geometrie_satz(fid, schwelle, urteil=None) -> str:
+    """«Geometrie 0.0 gegen 0.65» — und, wo die nackte Zahl irrefuehrt, was sie misst.
+
+    **Anlass (Video-Befund L4-2, 21.10.2026):** «Geometrie 0.0 gegen 0.65» stand neben
+    «nicht beurteilbar» und einem KI-Bild mit grossem Haus. Nachgerechnet an den Heim-PC-
+    Ergebnissen 290, 296, 297 und 298 (Protokoll 74): Jede 0.0 dort ist ein ABGESCHNITTENER
+    Wert — die Rangkorrelation hatte das falsche Vorzeichen (+0.22 bis +0.59 bei Disparitaet,
+    erwartet negativ), der Score wird dann bei 0 gekappt. Kein Rechenfehler, sondern: Das
+    KI-Bild ordnet die Tiefe anders als das Modell — meist, weil es den Ausschnitt veraendert
+    hat. Der Satz sagt das jetzt in Worten.
+
+    Zwei Zusaetze, beide nur wo sie zutreffen; der Anfang «Geometrie <zahl> gegen <schwelle>»
+    bleibt wortgleich (ihre Oberflaeche und unsere Proben lesen ihn):
+
+    * **nicht anwendbar** (``gesamtwert_anwendbar`` False, unter 20 % Hausanteil): die Zahl
+      ist nur Auskunft und kein Urteil (Entscheid 70);
+    * **abgeschnitten** (Score 0 bei gemessener Polaritaet und Rangkorrelation mit falschem
+      Vorzeichen, oder ohne Ueberdeckung): «KI-Bild weicht von der Geometrie ab».
+    """
+    satz = f"Geometrie {fid} {_gegen_schwelle(schwelle)}"
+    u = urteil if isinstance(urteil, dict) else {}
+    zusaetze = []
+    if u.get("gesamtwert_anwendbar") is False:
+        zusaetze.append("nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage "
+                        "weniger als 20 %)")
+    if isinstance(fid, (int, float)) and not isinstance(fid, bool) and fid == 0:
+        zeichen, rho, iou = u.get("polaritaet_zeichen"), u.get("spearman"), u.get("geom_iou")
+        if (zeichen in (-1, 1) and isinstance(rho, (int, float))
+                and not isinstance(rho, bool) and zeichen * rho <= 0):
+            zusaetze.append(
+                f"KI-Bild weicht von der Geometrie ab: es ordnet die Tiefe anders als das "
+                f"Modell (Rangkorrelation {rho:+.2f}, erwartet "
+                f"{'negativ' if zeichen < 0 else 'positiv'}); 0.0 ist der bei null "
+                f"abgeschnittene Wert, kein Messfehler")
+        elif isinstance(iou, (int, float)) and not isinstance(iou, bool) and iou == 0:
+            zusaetze.append("KI-Bild weicht von der Geometrie ab: die Umrisse decken sich "
+                            "nicht")
+    return satz + "".join(f" — {z}" for z in zusaetze)
 
 
 def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
@@ -4634,7 +4736,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             teile.append("Geometrie-Score nicht gemessen"
                          + (f" (Schwelle {_schw})" if _schw is not None else ""))
         else:
-            teile.append(f"Geometrie {_fid} {_gegen_schwelle(_schw)}")
+            teile.append(geometrie_satz(_fid, _schw, geometrie_urteil))
     if qa.get("style"):
         if qa["style"]["style_score"] is None:
             # Kein Skalar, also auch kein "x gegen y" — der Satz muss sagen, WOMIT
@@ -4886,6 +4988,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _kontrast_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # NEUE BAUMASSE AUSSERHALB DES UMRISSES (auf-20261020-294, B6) — gleich gebaut.
         _ausserhalb_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
+        # DER HAUSANTEIL AN GRUNDLAGE UND KI-BILD (Video-Befund L4-2) — gleich gebaut.
+        _hausanteil_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # DAS HAUS NICHT WIEDERZUERKENNEN (auf-20261020-295, N2) — nur ein Satz.
         _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise)
         # DIE MESSSCHALTER (auf-20261021-298, B1) — nur mit Schalter, je Kamera ein Satz.

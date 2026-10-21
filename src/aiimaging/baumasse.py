@@ -67,7 +67,9 @@ from typing import Sequence
 
 __all__ = ["HAUS_QUANTIL", "HIMMEL_NAEHE_ANTEIL", "MINDEST_HIMMEL_ANTEIL", "RAND_ANTEIL",
            "RAND_MIN_PX", "SCHWELLE_ANTEIL_HAUS", "HERKUNFT", "VERFAHREN", "VERFAHREN_RUECKFALL",
-           "rand_px", "erweitere", "ausserhalb_umriss"]
+           "rand_px", "erweitere", "ausserhalb_umriss",
+           "HAUS_BAND_OBEN", "VERFAHREN_HAUS_IM_BILD", "HERKUNFT_HAUS_IM_BILD",
+           "RAHMUNG_FAKTOR", "RAHMUNG_MINDEST_PUNKTE", "haus_im_bild", "rahmt_anders"]
 
 #: Ab welcher Nähe ein Punkt «so nah wie das Haus» ist: das ferne Fünftel der Nähe auf dem
 #: Haus. Nicht das Minimum — ein einzelner falsch geschätzter Punkt auf dem Haus zöge sonst
@@ -241,3 +243,127 @@ def ausserhalb_umriss(naehe: Sequence[float], soll_silhouette: Sequence[bool],
     if not bereich:
         aus["grund"] = "Kein Hintergrund neben dem Haus — der Anteil am Hintergrund fehlt."
     return aus
+
+
+# --------------------------------------------------------------------------------------
+# DER HAUSANTEIL IM KI-BILD (Video-Befund L4-2, 21.10.2026)
+# --------------------------------------------------------------------------------------
+#
+# Die Pruefung meldete «Das Haus fuellt nur 2.9 %» direkt neben einem KI-Bild, in dem das
+# Haus sichtbar 15–20 % fuellt. Beide stimmten: Gemessen war nur die GRUNDLAGE (``anteil_soll``,
+# aus der Blender-Tiefe), und die KI hatte den Ausschnitt «naeher» erfunden. Die Zahl sprach
+# also ueber ein anderes Bild als das, neben dem sie stand. Seither stehen zwei Zahlen da.
+
+#: Obere Grenze des Nähe-Bands, als Vielfaches des nahen Quantils (95 %) der Nähe auf dem
+#: Haus: 10 % näher als die nächsten Punkte des Hauses zählt noch mit, Boden davor nicht mehr.
+#: **Gesetzt, nicht gemessen.**
+HAUS_BAND_OBEN = 1.10
+#: Das nahe Quantil der Nähe auf dem Haus — nicht das Maximum (ein Ausreisser zöge das Band
+#: bis in den Vordergrund).
+HAUS_QUANTIL_NAH = 0.95
+#: Der Weg, als Wort.
+VERFAHREN_HAUS_IM_BILD = "naeheband_des_hauses_zusammenhaengend_mit_dem_soll"
+#: Woher die Grenzen kommen.
+HERKUNFT_HAUS_IM_BILD = (
+    "Band [fernes Fuenftel, 1,10 x nahes Zwanzigstel] der Naehe auf dem Soll-Umriss, nur "
+    "zusammenhaengend mit ihm; gesetzt, nicht gemessen (Video-Befund L4-2, 21.10.2026)")
+#: Ab welchem Verhältnis (gross ÷ klein) der Satz «KI-BILD RAHMT ANDERS» steht: doppelt.
+#: **Gesetzt, nicht gemessen.**
+RAHMUNG_FAKTOR = 2.0
+#: Und erst ab so vielen Prozentpunkten Unterschied — 1 % gegen 2,5 % sagt noch nichts.
+RAHMUNG_MINDEST_PUNKTE = 0.05
+
+
+def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite: int,
+                 hoehe: int, *, trennhilfe: Sequence[bool] | None = None,
+                 ausgeblendet: Sequence[bool] | None = None) -> dict:
+    """Wieviel des KI-Bilds das Haus füllt — geschätzt aus der Tiefe, nie eine Ausnahme.
+
+    **Warum nicht gezählt:** Für das KI-Bild gibt es keine Maske, nur die Karte des
+    Tiefenschätzers. Das Haus im KI-Bild ist hier, was **so nah wie das Haus** ist — die Nähe
+    zwischen dem fernen Fünftel und 1,10 × dem nahen Zwanzigstel der Nähe, die das KI-Bild an
+    den Punkten des Soll-Umrisses hat — **und** mit diesen Punkten zusammenhängt (Vierer-
+    Nachbarschaft). Ferne Bäume fallen so heraus (zu fern), der Vordergrund (zu nah) und
+    alles, was nicht am Haus hängt. Ein Bodenstreifen am Fuss des Hauses liegt in derselben
+    Nähe und zählt mit; der gedachte Boden (``trennhilfe``) und ausgeblendete Umgebung zählen
+    nie.
+
+    **Wie zu lesen:** Folgt die KI der Grundlage, liegt die Zahl nahe ``anteil_soll``; hat sie
+    den Ausschnitt verändert (näher, weiter), weicht sie ab. Eine Schätzung — ein Fehler des
+    Schätzers ist von einer Zutat des Bildmodells nicht zu unterscheiden.
+
+    Args:
+        naehe: die Karte des KI-Bilds, **grösser = näher**.
+        soll_silhouette: ``True``, wo das Soll Geometrie hat — dieselbe Fläche, aus der
+            ``anteil_soll`` gezählt ist, damit beide Zahlen dasselbe meinen.
+
+    Returns:
+        ``{anteil, anteil_grundlage, n_bild, n_soll, n_punkte, band, verfahren, herkunft,
+        grund}`` — ``anteil`` ``None`` mit ``grund``, wenn nicht messbar.
+    """
+    b, h = int(breite), int(hoehe)
+    n = b * h
+    aus = {"anteil": None, "anteil_grundlage": None, "n_bild": None, "n_soll": None,
+           "n_punkte": n if n > 0 else None, "band": None,
+           "verfahren": VERFAHREN_HAUS_IM_BILD, "herkunft": HERKUNFT_HAUS_IM_BILD, "grund": ""}
+    if n <= 0 or len(naehe) != n or len(soll_silhouette) != n:
+        aus["grund"] = "Karten und Bildgrösse passen nicht zusammen — nicht gemessen."
+        return aus
+    for name, liste in (("trennhilfe", trennhilfe), ("ausgeblendet", ausgeblendet)):
+        if liste is not None and len(liste) != n:
+            aus["grund"] = f"{name} hat {len(liste)} statt {n} Werte — nicht gemessen."
+            return aus
+    soll = [bool(v) for v in soll_silhouette]
+    n_soll = sum(soll)
+    aus["n_soll"] = n_soll
+    aus["anteil_grundlage"] = round(n_soll / n, 4)
+    werte = [float(naehe[i]) for i in range(n) if soll[i] and math.isfinite(float(naehe[i]))]
+    if not werte:
+        aus["grund"] = "Kein Haus in der Grundlage — nichts, woran die Nähe zu messen wäre."
+        return aus
+    unten = _quantil(werte, HAUS_QUANTIL)
+    nah = _quantil(werte, HAUS_QUANTIL_NAH)
+    # Disparitaet: groesser = naeher. Ist die nahe Grenze nicht positiv, gibt es kein
+    # «10 % naeher» — dann gilt sie selbst als obere Grenze.
+    oben = nah * HAUS_BAND_OBEN if nah > 0 else nah
+    aus["band"] = [round(unten, 6), round(oben, 6)]
+
+    def im_band(i: int) -> bool:
+        if trennhilfe is not None and trennhilfe[i]:
+            return False
+        if ausgeblendet is not None and ausgeblendet[i]:
+            return False
+        w = float(naehe[i])
+        return math.isfinite(w) and unten <= w <= oben
+
+    besucht = [False] * n
+    stapel = [i for i in range(n) if soll[i] and im_band(i)]
+    for i in stapel:
+        besucht[i] = True
+    zahl = 0
+    while stapel:
+        i = stapel.pop()
+        zahl += 1
+        x, y = i % b, i // b
+        for j, ok in ((i - 1, x > 0), (i + 1, x < b - 1), (i - b, y > 0), (i + b, y < h - 1)):
+            if ok and not besucht[j] and im_band(j):
+                besucht[j] = True
+                stapel.append(j)
+    aus["n_bild"] = zahl
+    aus["anteil"] = round(zahl / n, 4)
+    return aus
+
+
+def rahmt_anders(anteil_grundlage, anteil_bild) -> bool | None:
+    """Ob das KI-Bild das Haus deutlich anders rahmt als die Grundlage — ``None`` ohne Zahl.
+
+    Ja ab :data:`RAHMUNG_FAKTOR` (doppelt oder halb so gross) **und**
+    :data:`RAHMUNG_MINDEST_PUNKTE` Unterschied. Beides gesetzt, nicht gemessen.
+    """
+    zahlen = (anteil_grundlage, anteil_bild)
+    if not all(isinstance(z, (int, float)) and not isinstance(z, bool) for z in zahlen):
+        return None
+    klein, gross = sorted(float(z) for z in zahlen)
+    if gross - klein < RAHMUNG_MINDEST_PUNKTE:
+        return False
+    return klein <= 0 or gross / klein >= RAHMUNG_FAKTOR

@@ -2597,7 +2597,8 @@ def _ausserhalb_anteil(urteil):
 #: KI-BILD NICHT WIEDERZUERKENNEN» bildet — nicht mehr, damit das Kameraurteil (vor dem Halten)
 #: das Urteil bleibt.
 UMRISS_NACHHER_SATZFELDER = ("geom_iou", "n_ist", "n_soll", "n_gemeinsam", "score",
-                             "anteil_soll", "ausserhalb_umriss", "breite", "hoehe")
+                             "anteil_soll", "ausserhalb_umriss", "haus_im_bild", "breite",
+                             "hoehe")
 
 
 def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ordner, *,
