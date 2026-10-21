@@ -8394,6 +8394,14 @@ Grafikspeicher fest. *Im Projekt:* Die Pipeline von diffusers rechnet so; was au
 selbst sagen. Das Umriss-Halten «im_lauf» tut es; beim eigenen Start des Bildeingangs fehlt die Zeile — eine mögliche
 Ursache seiner +3,9 GB (zu prüfen in auf-20261021-303).
 
+**Grundbild (Grundbild mit Licht)** — Das Bild, das Blender aus dem Modell rechnet, bevor die KI etwas dazutut: Form,
+Sonne und Schatten sind echt gerechnet, Oberflächen nur so, wie sie modelliert sind. In den Unterlagen heisst es auch
+«Cycles-Bild» oder, als Datei, «Schönbild» (`<kamera>__schoenbild.png`). *Wozu:* Das KI-Bild ist ein Entwurf und nimmt
+das Licht nicht verlässlich mit (Messungen 298 und 300); daneben zeigt das Grundbild, wie Licht und Schatten wirklich
+fallen. *Im Projekt:* Entscheid 117a (W-4): Der Render-Knoten bestellt es bei jedem KI-Bild mit; ein Klick auf das Bild
+zeigt KI-Bild und Grundbild gross nebeneinander, umschaltbar «nebeneinander · nur KI · nur Grundbild». Im schmalen
+Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil zwei Bilder dort unter 96 px schrumpften.
+
 
 ---
 
@@ -8402,6 +8410,7 @@ Ursache seiner +3,9 GB (zu prüfen in auf-20261021-303).
 | Datum | Änderung |
 |---|---|
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
+| 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §176): **Grundbild (Grundbild mit Licht)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-301 (Protokoll 74 §172): **Modellwurzel**, **Modell-Hub (offline laden)** |
 | 2026-10-21 | Ergaenzt aus dem Strang Treue (Planblatt Material und Umriss): **Umriss halten (Messschalter)**, **Freigabemaske**, **Fahrplan (der Rauschstufen)**, **Hintergrund im Fahrplan festhalten**, **Material vorne (Messschalter)**, **Gewichtung im Prompt**, **Kantenbild (Canny, HED)**, **Mehrfach-Steuerung (MultiControlNet)**, **Steuerstärke je Schritt**, **Ohne Gradienten rechnen (`torch.no_grad`)** |

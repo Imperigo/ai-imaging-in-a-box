@@ -1876,6 +1876,20 @@ Die Messung am Heim-PC rechnet jeden Weg gegen dasselbe Kontrollbild, dazu den M
 das gerenderte Bild als Ausgangspunkt mitgibt. Zurück kommen die Zahlen und ein Urteil von Auge: «Sichtbeton?». Nur
 frei lizenzierte Gewichte, die schon auf dem Rechner liegen.
 
+**Licht ins KI-Bild: das Grundbild steht neben dem KI-Bild (21.10.2026, Entscheid 117a).** Nach den zwei Messungen hat
+der Owner gewählt: Das KI-Bild bleibt, was es ist, ein Entwurf, und daneben steht das gerenderte Grundbild, in dem Sonne
+und Schatten echt gerechnet sind. Der Render-Knoten bestellt dieses Grundbild jetzt bei jedem KI-Bild von sich aus mit;
+der Heim-PC liefert es ohnehin schon, es wurde nur nicht abgeholt. Ein Klick auf das Bild am Knoten zeigt beide gross und
+gleich gross nebeneinander, beschriftet «KI-Bild» und «Grundbild mit Licht»; die Marke «Vorschau» steht nur am KI-Bild.
+Ein Umschalter darüber wählt «nebeneinander», «nur KI» oder «nur Grundbild», und die Wahl gilt auch für das Bild am
+Knoten. Ehrlich gesagt: Am Knoten selbst stehen die zwei Bilder nicht nebeneinander. Der Knoten ist 184 Bildpunkte breit,
+und jedes Bild wäre dort schmaler als 96 Bildpunkte, die Grenze, ab der ein Bild noch lesbar ist. Darum zeigt der Knoten
+das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», und nebeneinander steht es in der grossen Ansicht. Ein Lauf von
+früher, der kein Grundbild hat, sieht aus wie bisher. Die Varianten zeigen weiter nur das KI-Bild, weil das Grundbild für
+alle Varianten derselben Grundlage gleich ist. Mit offener Mappe am Mac kommt das Grundbild mit in die Mappe, damit es
+auch ohne Heim-PC da ist. Bildeingang und Farbabgleich bleiben Schalter zum Messen, ab Werk aus. Geprüft ist es mit Proben
+und in einem Browserlauf gegen eine Attrappe des Heim-PC; am Gerät ist es noch nicht gesehen.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

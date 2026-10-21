@@ -100,6 +100,15 @@ import {
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
 } from './grundlage';
 import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, gueteAusErgebnis, type Guete } from './guete';
+import { BildPaarGross } from './BildPaar';
+import {
+  ANSICHT_PARAM,
+  GRUNDBILD_NAME,
+  KI_BILD_NAME,
+  bildAnsichtAmKnoten,
+  grundbildZumBild,
+  wirksameAnsicht,
+} from './nebeneinander';
 import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
 import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
@@ -1284,6 +1293,12 @@ export function NodeCanvas({
                 bild: j.result.images[0] ?? '',
                 // L24 Bildweg Varianten (E246): alle Bilder, eines je Kamera — fuer das Raster.
                 bilder: j.result.images,
+                // Entscheid 117a (W-4): das Grundbild zur Kamera des Hauptbilds. Nach «Grundlage rendern» IST das Bild
+                // das Grundbild — dann keines daneben. Immer gesetzt, auch als `undefined` (patchLauf mischt).
+                grundbild:
+                  lauf.stufe === 'grundlage'
+                    ? undefined
+                    : grundbildZumBild(j.result.ebenen, j.result.images[0] ?? '', j.result.images, j.result.qa_je_kamera),
                 // Entscheid 68 / E174: der Verlauf nennt die Uhrzeit des Ergebnisses.
                 fertigUm: Date.now(),
                 qa: j.result.qa,
@@ -3527,7 +3542,7 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
@@ -3557,6 +3572,8 @@ function NodeKoerper({
   const doc = useProject.getState().doc;
   // Blatt 29: Zwischenbild oder Teilbild gross (die Ansicht des Verlaufs, `EinzelbildGross`).
   const [einzelbild, setEinzelbild] = useState<EinzelbildArt | null>(null);
+  // Entscheid 117a (W-4, Blatt 35): KI-Bild und Grundbild gross, mit dem Umschalter.
+  const [bildPaarOffen, setBildPaarOffen] = useState(false);
   const param = (feld: string, wert: string | number | boolean) => {
     try {
       runCommand('vis.nodeParametrieren', { graphId, nodeId: node.id, params: { [feld]: wert } });
@@ -3709,6 +3726,10 @@ function NodeKoerper({
       // Fortschritt am Ort: `null`, wenn nichts unterwegs ist (bereit, fertig, Freigabe, Fehler).
       // Entscheid 104: die bestellte Güte steht schon während des Laufs in der Zeile (Antwort KosmoVis 20.10.).
       const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige({ ...lauf, bestellteGuete: gueteAmKnoten(params) }, Date.now()) : null;
+      // Entscheid 117a (W-4): was das Bild am Knoten zeigt. Der Koerper ist `NODE_W - 16` breit; dort passt
+      // «nebeneinander» nicht (je Bild unter 96 px) und faellt auf das KI-Bild zurueck — gross stehen beide nebeneinander.
+      const bildAnsicht = bildAnsichtAmKnoten(params);
+      const bildPaar = lauf?.grundbild ? wirksameAnsicht(bildAnsicht, true, NODE_W - 16) : null;
       // V-H4 (UI-KONZEPT-065 §5): semantisches Formular — schreibt in flache
       // Render-Node-`params` über den bestehenden `vis.nodeParametrieren`-Weg;
       // derselbe Zusammenführungs-Helfer (vis-jobs.ts) speist Anzeige UND Job.
@@ -4059,23 +4080,89 @@ function NodeKoerper({
                     die Bildgroesse (`fit-content`, Breite `auto` aus maxHeight und Seitenverhaeltnis) —
                     unter dem Bruch-`zoom` der Knotenebene rundete WebKit diese Breite je Zoomschritt
                     anders, und Bild und Abzeichen sprangen. */}
+                {/* Entscheid 117a (W-4, Blatt 35): mit Grundbild traegt das Bild seine Beschriftung, und ein Klick
+                    zeigt KI-Bild und Grundbild gross nebeneinander (dort der Umschalter). Ohne Grundbild (aelterer
+                    Lauf) bleibt alles wie bisher — die KI-Kachel allein, ohne Luecke. */}
                 <div
-                  className="vis-hauptbild"
+                  className={`vis-hauptbild${bildPaar ? ' vis-hauptbild--paar' : ''}`}
                   data-testid="render-hauptbild"
                   style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
+                  {...(bildPaar
+                    ? {
+                        'data-ansicht': bildPaar.ansicht,
+                        'data-rueckfall': String(bildPaar.rueckfall),
+                        role: 'button',
+                        tabIndex: 0,
+                        'aria-label': 'KI-Bild und Grundbild gross anzeigen',
+                        onPointerDown: (e: ReactPointerEvent) => e.stopPropagation(),
+                        onClick: () => setBildPaarOffen(true),
+                        onKeyDown: (e: ReactKeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setBildPaarOffen(true);
+                          }
+                        },
+                      }
+                    : {})}
                 >
-                  <BridgeBild
-                    jobId={lauf.jobId}
-                    imageName={lauf.bild}
-                    alt="Render"
-                    testid="render-bild"
-                    className="vis-img-full vis-hauptbild-bild"
-                  />
-                  {verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
+                  {bildPaar?.ansicht === 'nebeneinander' && lauf.grundbild ? (
+                    <span className="vis-bildpaar-reihe">
+                      <span className="vis-bildpaar-zelle">
+                        <BridgeBild jobId={lauf.jobId} imageName={lauf.bild} alt={KI_BILD_NAME} testid="render-bild" className="vis-img-full vis-hauptbild-bild" />
+                        <span className="vis-bildpaar-beschriftung" data-testid="render-bild-beschriftung">{KI_BILD_NAME}</span>
+                      </span>
+                      <span className="vis-bildpaar-zelle">
+                        <BridgeBild jobId={lauf.jobId} imageName={lauf.grundbild} alt={GRUNDBILD_NAME} testid="render-grundbild" className="vis-img-full vis-hauptbild-bild" />
+                        <span className="vis-bildpaar-beschriftung" data-testid="render-grundbild-beschriftung">{GRUNDBILD_NAME}</span>
+                      </span>
+                    </span>
+                  ) : bildPaar?.ansicht === 'nur-grundbild' && lauf.grundbild ? (
+                    <>
+                      <BridgeBild
+                        jobId={lauf.jobId}
+                        imageName={lauf.grundbild}
+                        alt={GRUNDBILD_NAME}
+                        testid="render-grundbild"
+                        className="vis-img-full vis-hauptbild-bild"
+                      />
+                      <span className="vis-bildpaar-beschriftung" data-testid="render-grundbild-beschriftung">
+                        {GRUNDBILD_NAME}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <BridgeBild
+                        jobId={lauf.jobId}
+                        imageName={lauf.bild}
+                        alt="Render"
+                        testid="render-bild"
+                        className="vis-img-full vis-hauptbild-bild"
+                      />
+                      {bildPaar && (
+                        <span className="vis-bildpaar-beschriftung" data-testid="render-bild-beschriftung">
+                          {KI_BILD_NAME} · + Grundbild
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {/* Abzeichen und Vorschau-Marke gehoeren zum KI-Bild — nicht, wenn nur das Grundbild steht. */}
+                  {bildPaar?.ansicht !== 'nur-grundbild' && verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
                     <HauptbildAbzeichen lauf={verlauf[0]} nummer={laufNummerVon(verlauf[0], 0, verlauf.length)} />
                   )}
-                  <GueteMarke lauf={lauf} testid="render-guete-marke" />
+                  {bildPaar?.ansicht !== 'nur-grundbild' && <GueteMarke lauf={lauf} testid="render-guete-marke" />}
                 </div>
+                {bildPaarOffen && lauf.grundbild && (
+                  <BildPaarGross
+                    lauf={lauf}
+                    jobId={lauf.jobId}
+                    ki={lauf.bild}
+                    grundbild={lauf.grundbild}
+                    ansicht={bildAnsicht}
+                    onAnsicht={(a) => param(ANSICHT_PARAM, a)}
+                    onClose={() => setBildPaarOffen(false)}
+                  />
+                )}
                 {/* P-LIZENZMARKE Schritt 2 (E154 (4)): «Lizenz offen» direkt
                     unter dem Bild, wo es erscheint. Die Zeile bleibt 110 px
                     hoch (Register `bild`): das Bild gibt die Hoehe der Marke

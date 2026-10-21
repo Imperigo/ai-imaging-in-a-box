@@ -201,7 +201,18 @@ Weg wie der Abholer (belegt: der direkte Lauf 0,55 ist bildpunktgleich zu 298).
 
 **Empfehlung des LW: W-4** — das Cycles-Bild neben dem KI-Bild in der Knotenansicht, über `render.passes
 ['schoenbild']` (die Lieferung steht, es fehlt nur der Knotenteil). W-1 in keiner Stärke, W-2 nicht.
-*Der Owner-Entscheid kommt über die Zentrale und wird hier erst eingetragen, wenn er da ist.*
+*Der Owner-Entscheid kommt über die Zentrale und wird hier erst eingetragen, wenn er da ist.* **Eingetragen:** Entscheid
+117a (Owner per Klickfrage, 21.10.2026) — W-4, nebeneinander.
+
+**W-4 gebaut (Protokoll 74 §176, C104), beide Programme gleich (E115):** Der Render-Knoten bestellt das Grundbild mit
+(`render.passes` enthält `schoenbild`; «Grundlage rendern» bleibt bei `alle`; nicht mit «nur Cycles», Strichzeichnung,
+Skizze und nicht für den Varianten-Knoten). Der Poll legt `<kamera>__schoenbild.png` zur Kamera des Hauptbilds an den
+Lauf. Ein Klick auf das Bild zeigt KI-Bild und Grundbild gross und gleich gross nebeneinander, Umschalter «nebeneinander ·
+nur KI · nur Grundbild» (Vorgabe nebeneinander, Knoten-Parameter `bildAnsicht`), Vorschau-Marke nur am KI-Bild. **Am
+Knoten selbst** fällt «nebeneinander» auf das KI-Bild mit Beschriftung «KI-Bild · + Grundbild» zurück: Der Körper ist
+184 px breit, zwei Bilder wären je unter 96 px (Vorgabe des UI-Workers; die Karte wächst nicht). Ohne Grundbild (älterer
+Lauf) wie bisher. Mac-Mappe holt das Grundbild mit (`Mappenkern.fertigeBilder`). Kein Vertragsfeld, kein Kernumbau; Bildeingang
+und Farbabgleich bleiben Messschalter, Vorgabe aus. Am Gerät unbestätigt.
 
 **Gebaut aus 300 (Protokoll 74 §171, C99), beide Schalter bleiben Messschalter mit Vorgabe aus:** (1) der Blocker N1 —
 `render.lade_modell` zählte den eigenen CUDA-Kontext (~500 MiB) als fremd und wies jeden Lauf ab, den die Vorprüfung

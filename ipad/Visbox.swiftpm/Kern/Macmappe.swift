@@ -358,11 +358,23 @@ public enum Mappenkern {
 
     /// Die Bilder eines **fertigen** Auftrags (`status == "done"`, `result.images`) — `nil`,
     /// solange er läuft oder wenn das Ergebnis nicht lesbar ist. Nur flache Namen.
+    ///
+    /// Entscheid 117a (W-4, 21.10.2026): dazu das **Grundbild** jeder Kamera (`result.ebenen`,
+    /// Art `schoenbild`, `<kamera>__schoenbild.png`) — der Render-Knoten zeigt es neben dem
+    /// KI-Bild, also muss es auch ohne Heim-PC aus der Mappe kommen. Eine bestellte, aber
+    /// fehlende Ebene (`datei: null`) und ein Name mit Pfad bleiben weg; Tiefe und Material-ID
+    /// zeigt der Knoten nicht und holt der Mac darum nicht.
     public static func fertigeBilder(laufzettel: Data) -> [String]? {
         guard let wert = try? JSONWert.lies(laufzettel), wert["status"]?.alsText == "done",
               let bilder = wert["result"]?["images"]?.alsListe else { return nil }
         let namen = bilder.compactMap { $0.alsText }.filter(istFlacherName)
-        return namen.count == bilder.count ? namen : nil
+        guard namen.count == bilder.count else { return nil }
+        let grundbilder = (wert["result"]?["ebenen"]?.alsListe ?? []).compactMap { ebene -> String? in
+            guard ebene["art"]?.alsText == "schoenbild", let datei = ebene["datei"]?.alsText,
+                  istFlacherName(datei), !namen.contains(datei) else { return nil }
+            return datei
+        }
+        return namen + grundbilder
     }
 
     /// Wo ein Auftrag in der Mappe liegt: `bilder/<id>`, und eine Datei darin.

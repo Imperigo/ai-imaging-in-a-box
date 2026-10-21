@@ -140,6 +140,18 @@ final class MacmappeTests: XCTestCase {
 
     // ------------------------------------------------------------- Aufträge
 
+    /// Entscheid 117a (W-4): das Grundbild kommt mit in die Mappe; fehlende Ebene, Pfad und Tiefe nicht.
+    func testDasGrundbildKommtMitInDieMappe() {
+        let fertig = Data(#"""
+        {"status":"done","result":{"images":["K1.png","K2.png"],"ebenen":[
+          {"kamera":"K1","art":"schoenbild","datei":"K1__schoenbild.png"},
+          {"kamera":"K1","art":"tiefe","datei":"K1__tiefe.png"},
+          {"kamera":"K2","art":"schoenbild","datei":null,"grund":"fehlt"},
+          {"kamera":"K3","art":"schoenbild","datei":"../x.png"}]}}
+        """#.utf8)
+        XCTAssertEqual(Mappenkern.fertigeBilder(laufzettel: fertig), ["K1.png", "K2.png", "K1__schoenbild.png"])
+    }
+
     func testDieBilderEinesFertigenAuftrags() {
         let fertig = Data(#"{"job_id":"vis-1-abcdef","status":"done","result":{"images":["k1.png","k2.png"]}}"#.utf8)
         XCTAssertEqual(Mappenkern.fertigeBilder(laufzettel: fertig), ["k1.png", "k2.png"])
