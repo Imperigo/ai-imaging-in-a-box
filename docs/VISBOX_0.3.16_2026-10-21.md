@@ -44,3 +44,16 @@ darum steht das gerenderte Grundbild jetzt daneben (Entscheid 117a).
 
 Volle Suite ohne GPU, grün (Zahl in `README.md`). iPad/Mac: Prüfstrecke `.github/workflows/ipad.yml`; der Job
 `freigabe` legt die Freigabe erst auf `main` an.
+
+## Nachtrag (21.10.2026): ebenfalls in dieser Fassung
+
+Beim Zusammenführen lag der Bau von Schritt 4 «iPad über den Mac» (Entscheid 118, Blatt 40, Protokoll 74 §178,
+Einbau C106) schon auf dem Zweig und ist mit 0.3.16 ausgeliefert worden, ohne in diesem Blatt zu stehen:
+
+| Fähigkeit | Entscheid | Stand |
+|---|---|---|
+| iPad koppelt mit dem Mac (QR-Code oder Nähe); die Leitung ist verschlüsselt, das iPad nimmt nur das Zertifikat des Mac an | 118 | gebaut, mit Probe; am Gerät unbestätigt |
+| Mit offener Mappe am Mac kommen Projekt und Bilder vom Mac, Skizzen landen in der Mac-Mappe | 118 | gebaut, mit Probe; am Gerät unbestätigt |
+| Ein iPad, das noch direkt am Heim-PC hängt, arbeitet weiter und sagt, dass es die Mac-Mappe so nicht sieht (Übergang) | 118 | gebaut, mit Probe |
+
+Am Heim-PC ändert sich dadurch nichts. Neu koppeln geht nur noch mit dem Mac.
