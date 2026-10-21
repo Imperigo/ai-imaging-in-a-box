@@ -8791,7 +8791,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus Entscheid 126 und den Befunden von auf-20261021-314 (Protokoll 74 §210, §211): **Vorgabe für Varianten**, **Kamerakürzel und deutsches Gleichwort**, **OptiX**, **Paket von Schritten (`vis_paket`, «$neu:N»)** |
+| 2026-10-21 | Ergaenzt aus Entscheid 126 und den Befunden von auf-20261021-314 (Protokoll 74 §210, §212): **Vorgabe für Varianten**, **Kamerakürzel und deutsches Gleichwort**, **OptiX**, **Paket von Schritten (`vis_paket`, «$neu:N»)** |
 | 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §208): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |
 | 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |
