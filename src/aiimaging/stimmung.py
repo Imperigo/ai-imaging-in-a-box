@@ -624,7 +624,8 @@ def drehung_zur_kamera(sonne_azimut_bild_grad: float, kamera_azimut: float, *,
         raise ValueError(f"Seite {seite!r} — erlaubt: {', '.join(SONNE_SEITEN)}.")
     vorzeichen = -1.0 if seite == "links" else 1.0
     ziel = float(kamera_azimut) + vorzeichen * float(seitlich_grad)
-    return round((float(sonne_azimut_bild_grad) - ziel) % 360.0, 6)
+    # Erst runden, dann in den Kreis legen: ein Wert knapp unter 360 runde sonst auf genau 360.0.
+    return round((float(sonne_azimut_bild_grad) - ziel) % 360.0, 6) % 360.0
 
 
 def winkel_zur_blickachse(sonne_azimut_welt_grad: float, kamera_azimut: float) -> float:

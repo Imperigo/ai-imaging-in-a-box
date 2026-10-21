@@ -646,7 +646,9 @@ def drehung_aus_bericht(bericht) -> float | None:
     wert = drehung.get("drehung_grad")
     if not isinstance(wert, (int, float)) or isinstance(wert, bool):
         return None
-    return round(float(wert), 3)
+    # In [0, 360) gelegt, auch nach dem Runden: der Vertrag nimmt 0..360, und ein fehlerhafter
+    # Bericht (−5, 725) soll das Ergebnis drüben nicht verwerfen lassen.
+    return round(float(wert) % 360.0, 3) % 360.0
 
 
 def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None) -> dict:
