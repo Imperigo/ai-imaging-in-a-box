@@ -2203,3 +2203,16 @@ Nachbarn steht im Bild «im Leeren». Am Heim-PC entsteht neben der Bauwerksmask
 Nachbarbauten und die Umgebung im Bild stehen. Sie ändert noch nichts am Bild; zuerst wird gemessen, ob der Bestand bisher
 fälschlich als Bauwerk mitgeprüft wurde (Protokoll 74 §197).
 
+**Fünf Befunde aus dem Heim-PC behoben, und ein Satz zur Lizenz (21.10.2026).** Der Heim-PC hatte bei einer Messreihe
+fünf Dinge gefunden. Bestellte man nur eine Stimmung («Abendstimmung, warmes Licht»), blieb vom Prompt nur der
+Stimmungssatz übrig, und das Bildmodell malte eine Höhle — jetzt steht dann «architectural building» davor. Der Lauf mit
+dem Grundbild als Eingang braucht weniger Grafikspeicher als bisher eingetragen (gemessen 27'116 statt 31'316 MiB);
+eingetragen ist die Messung mit einem Rand für mehrere Kameras. Bei «Umriss halten im Lauf» zählte die Prüfung den
+festgehaltenen, flachen Hintergrund als zusätzliche Baumasse und meldete bei sauberen Bildern «baut über den Umriss» —
+jetzt zählt dort nur, was so nah ist wie das Haus. Der Assistent nahm die Nummer einer Karte als Nummer eines Knotens;
+das weist der Heim-PC jetzt mit Satz ab. Und auf «Rechne jetzt das Bild» schlug er gar nichts mehr vor; er bekommt jetzt
+einmal den Hinweis, dass ein Render-Auftrag als Karte erlaubt ist. Dazu ein neuer Messschalter, der hinter dem Haus das
+Himmelsbild zeigt statt eines Verlaufs — gebaut, noch nicht gemessen. Am Bild von Qwen-Image-2.1 steht jetzt der Satz
+«Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung» (Owner-Entscheid 120); Wettbewerbsbilder
+rechnet Z-Image Turbo. Ehrlich gesagt: Alles ist an Testdaten geprüft; ob es am Heim-PC trägt, misst der nächste Auftrag.
+

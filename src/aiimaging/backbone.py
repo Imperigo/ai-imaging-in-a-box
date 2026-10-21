@@ -1053,10 +1053,20 @@ _eintrag(Backbone(
     # Bildeingang 27 436 MiB Spitze, mit 31 316 MiB in allen zehn Laeufen (0,4/0,55/0,7 und
     # V0b/V0c), Karte 32 607 MiB, vor jedem Lauf 1241 MiB belegt. Der Lauf selbst braucht also
     # 30 075 MiB; frei bleiben rund 1,3 GB. Groessere KI-Bilder sind nicht gemessen.
-    vram_bildeingang_spitze_mib=31316,
+    #
+    # GESENKT NACH auf-20261021-309 (E2n): Seit das VAE-Kodieren des eigenen Starts unter
+    # `no_grad` laeuft, lag die Spitze mit Bildeingang bei 27 116 MiB (eine Kamera,
+    # bildpunktgleich zu 298/303 E2), 4200 MiB unter 298. Eingetragen sind 28 116 MiB: die
+    # Messung plus 1000 MiB Rand fuer MEHRERE KAMERAS — mit Bildeingang ist nur eine gemessen,
+    # und in 309 lag M2 mit zwei Kameras 843 MiB ueber der einen (27 959 gegen 27 116); K +201.
+    # Darueber kommt weiter BILDEINGANG_RESERVE_MIB. Verlangt frei: 28 116 - 1241 + 512 =
+    # 27 387 MiB statt 30 587. Je Kamerazahl misst auf-20261021-313.
+    vram_bildeingang_spitze_mib=28116,
     vram_bildeingang_grundlast_mib=1241,
-    vram_bildeingang_beleg=("auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang "
-                            "(27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640"),
+    vram_bildeingang_beleg=("auf-20261021-309 E2n: nvidia-smi-Spitze 27116 MiB mit Bildeingang "
+                            "und no_grad (eine Kamera, KI-Bild 1024 x 640), Grundlast 1241 MiB; "
+                            "eingetragen 28116 mit 1000 MiB Rand fuer mehrere Kameras (M2 mit "
+                            "zwei Kameras +843); vorher auf-20261021-298: 31316"),
     bildeingang_grund=("ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die "
                        "Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild "
                        "dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und "

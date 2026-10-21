@@ -274,12 +274,12 @@ def test_eigener_start_kodiert_das_cycles_bild_unter_no_grad(monkeypatch):
     assert "latents" in start and satz.startswith("BILD UND TIEFE")
 
 
-def test_der_bedarf_des_bildeingangs_bleibt_bis_zur_neuen_messung():
-    """Gesenkt wird erst nach der Messung von auf-20261021-309 — nicht hier."""
+def test_der_bedarf_des_bildeingangs_ist_nach_der_messung_gesenkt():
+    """Gesenkt nach der Messung von auf-20261021-309 (E2n 27116 MiB), mit Rand."""
     from aiimaging import backbone
     eintrag = backbone.BACKBONES["z-image-turbo"]
-    assert eintrag.vram_bildeingang_spitze_mib == 31316
-    assert "auf-20261021-298" in eintrag.vram_bildeingang_beleg
+    assert eintrag.vram_bildeingang_spitze_mib == 28116
+    assert "auf-20261021-309" in eintrag.vram_bildeingang_beleg
 
 
 # ====================================================================== 302 B1 · leerer Ordner

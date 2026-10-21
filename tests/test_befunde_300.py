@@ -29,7 +29,8 @@ WURZEL = Path(__file__).resolve().parents[1]
 #: auf-20261021-300, 3a: vor dem Lauf frei laut nvidia-smi; im Prozess laut mem_get_info.
 FREI_VORHER = 30868
 FREI_IM_PROZESS = 30364
-VERLANGT = 30587
+#: Seit auf-20261021-309 aus dem Register (28116 - 1241 + 512).
+VERLANGT = render.bildeingang_bedarf("z-image-turbo")["verlangt_frei_mib"]
 
 
 def _torch(*, angelegt=True, reserviert_mib=0, frei_mib=FREI_IM_PROZESS):
@@ -74,8 +75,12 @@ def test_vorpruefung_und_prozess_rechnen_dasselbe(monkeypatch):
     assert vorher["verfuegbar_mib"] == im_prozess["verfuegbar_mib"] == FREI_VORHER
     assert vorher["reicht"] is True and im_prozess["reicht"] is True
     # Der Fehler von 0.3.13 — ohne eigen — bleibt als Gegenprobe abgewiesen.
-    alt = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=FREI_IM_PROZESS)
+    # Seit 309 reicht 30364 auch ohne; die Gegenprobe darum knapp unter dem Bedarf.
+    knapp = VERLANGT - 200
+    alt = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=knapp)
     assert alt["reicht"] is False and str(VERLANGT) in alt["satz"]
+    neu = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=knapp, eigen_mib=504)
+    assert neu["reicht"] is True
 
 
 class _Geladen(Exception):
@@ -115,11 +120,11 @@ def test_lade_modell_laedt_bei_leerer_karte_mit_eigenem_kontext(tmp_path, monkey
 
 def test_lade_modell_weist_bei_wirklich_zu_wenig_weiter_ab(tmp_path, monkeypatch):
     _diffusers(monkeypatch)
-    monkeypatch.setitem(sys.modules, "torch", _torch(frei_mib=29000))
+    monkeypatch.setitem(sys.modules, "torch", _torch(frei_mib=26000))
     monkeypatch.setattr(render, "_prozesse_auf_der_karte", lambda: {})
     monkeypatch.setattr(render, "_lade_mit_controlnet",
                         lambda *a, **k: (_ for _ in ()).throw(AssertionError("darf nicht laden")))
-    with pytest.raises(render.RenderError, match="29000 frei \\+ 504 eigene"):
+    with pytest.raises(render.RenderError, match="26000 frei \\+ 504 eigene"):
         render.lade_modell("z-image-turbo", modell_wurzel=_wurzel(tmp_path), bildeingang=True)
 
 
@@ -149,7 +154,7 @@ def _ordner(tmp_path, **vis):
 
 def test_abweisung_im_prozess_gibt_ein_ergebnis_mit_dem_satz(tmp_path):
     from test_kettenlauf_26august import _kette
-    satz = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=FREI_IM_PROZESS)["satz"]
+    satz = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=26000)["satz"]
     _p, attrappen = _kette(tmp_path / "k")
 
     def rendere(a, **kw):

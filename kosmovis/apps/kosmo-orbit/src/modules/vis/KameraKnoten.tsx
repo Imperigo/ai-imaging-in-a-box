@@ -6,7 +6,6 @@ import {
   kameraArtAusParams,
   kameraAutoAusParams,
   kameraBlickAusParams,
-  kameraBlickName,
   kameraManuellAusParams,
   KAMERA_AUTO_VORGABEN,
   KAMERA_RICHTUNGEN,
@@ -25,10 +24,13 @@ import { abonniereHeimStandpunkte, hatStandpunkteAbfrage, heimStandpunkte, heimS
 import { modellLadenWirt, modellLadeStand } from './modell-laden';
 import {
   abonniereBlickQuelle,
+  blickAnzeigeName,
+  blickBeschriftung,
   blickParams,
   blickQuelleFassung,
   blickStand,
   blickZeile,
+  gewaehlterBlick,
   KAMERA_BLICK_FEHLT_HINWEIS,
   leerSatzBlicke,
   waehlbareBlicke,
@@ -139,7 +141,9 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
   // Reiter «Blick» bei leerer Liste: zeigt den Satz, ohne `art` umzustellen (die Kamera bleibt).
   const [blickOffen, setBlickOffen] = useState(false);
   const blicke = waehlbareBlicke(doc);
-  const blick = art === 'blick' ? kameraBlickAusParams(p, doc) : null;
+  const blickRoh = art === 'blick' ? kameraBlickAusParams(p, doc) : null;
+  // Der heutige Name (umbenannt bleibt gültig), sonst der beim Wählen festgehaltene.
+  const blick = blickRoh ? { ...blickRoh, name: blickAnzeigeName(p, blicke) || blickRoh.name } : null;
 
   const setze = (params: Record<string, string | number | boolean>) => {
     try {
@@ -202,7 +206,7 @@ export function KameraKoerper({ graphId, node, knotenZoom = 1 }: { graphId: stri
     }
     if (art === 'blick') return;
     // Der zuletzt gewählte Blick, wenn es ihn noch gibt, sonst der erste der Liste.
-    const vorher = blicke.find((b) => b.name === kameraBlickName(p)) ?? blicke[0];
+    const vorher = gewaehlterBlick(p, blicke) ?? blicke[0];
     if (vorher) {
       setBlickOffen(false);
       setze({ ...blickParams(vorher), ...(p['perspektive'] === undefined ? { perspektive: 'senkrecht' } : {}) });
@@ -358,7 +362,9 @@ function BlickEinstellungen({
   p: Record<string, string | number | boolean>;
   setze: (params: Record<string, string | number | boolean>) => void;
 }) {
-  const name = kameraArtAusParams(p) === 'blick' ? kameraBlickName(p) : '';
+  const istBlick = kameraArtAusParams(p) === 'blick';
+  const gewaehlt = istBlick ? gewaehlterBlick(p, blicke) : undefined;
+  const name = istBlick ? blickAnzeigeName(p, blicke) : '';
   if (blicke.length === 0 && !name) {
     return (
       <div className="vis-kn-zeile">
@@ -371,7 +377,6 @@ function BlickEinstellungen({
     );
   }
   const stand = blickStand(p, blicke);
-  const gewaehlt = blicke.find((b) => b.name === name);
   const festgehalten = kameraBlickAusParams(p);
   const zeile =
     stand === 'fehlt'
@@ -389,22 +394,22 @@ function BlickEinstellungen({
         <span className="vis-kn-titel">Blick</span>
         <KSelect
           size="sm"
-          value={name}
+          value={gewaehlt?.id ?? ''}
           onChange={(e) => {
-            const b = blicke.find((x) => x.name === e.target.value);
+            const b = blicke.find((x) => x.id === e.target.value);
             if (b) setze(blickParams(b));
           }}
           data-testid="kamera-blick-wahl"
           className="vis-kn-dehnt"
         >
           {!gewaehlt ? (
-            <option value={name} disabled>
+            <option value="" disabled>
               {name ? `${name} (nicht mehr gesichert)` : 'Blick wählen …'}
             </option>
           ) : null}
           {blicke.map((b) => (
-            <option key={b.name} value={b.name}>
-              {b.name}
+            <option key={b.id} value={b.id}>
+              {blickBeschriftung(b, blicke)}
             </option>
           ))}
         </KSelect>

@@ -91,6 +91,8 @@ export interface MappeAntwort {
 
 /** Ein Standpunkt eines Bildes der Mappe, wie `knotenweg.blicke_der_mappe` ihn nennt. */
 export interface MappenBlick {
+  /** `bild:<Bild>` — stabil, auch wenn der Titel sich ändert (der Knoten hält die Kennung). */
+  id?: string;
   name: string;
   bild: string;
   auge: [number, number, number];
@@ -109,7 +111,7 @@ export function blickeAusMappe(blicke: readonly MappenBlick[] | undefined): Waeh
   return (blicke ?? []).flatMap((b) => {
     if (!Array.isArray(b.auge) || !Array.isArray(b.blick_auf) || !(b.brennweite_mm > 0)) return [];
     const fov = (2 * Math.atan(36 / (2 * b.brennweite_mm)) * 180) / Math.PI;
-    return [{ name: b.name, herkunft: 'Mappe', position: gltf(b.auge), target: gltf(b.blick_auf), fov: Math.round(fov * 1000) / 1000 }];
+    return [{ id: b.id ?? `bild:${b.bild}`, name: b.name, herkunft: 'Mappe', position: gltf(b.auge), target: gltf(b.blick_auf), fov: Math.round(fov * 1000) / 1000 }];
   });
 }
 

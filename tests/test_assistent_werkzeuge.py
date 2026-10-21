@@ -280,8 +280,12 @@ def test_eine_genannte_stimmung_gilt():
 
 
 def test_wer_nach_der_freigabe_fragt_hoert_nur_der_architekt_f3():
-    e = Ersatz([{"content": "FEHLER: Um die Grafikkarte zu freigeben, fehlen Angaben."}])
+    # Seit auf-20261021-310 (B2): «rechne» bekommt einmal den Anstoss zu vis_render; ruft das
+    # Modell auch danach kein Werkzeug, bleibt es bei der Antwort.
+    e = Ersatz([{"content": "FEHLER: Um die Grafikkarte zu freigeben, fehlen Angaben."},
+                {"content": "FEHLER: Um die Grafikkarte zu freigeben, fehlen Angaben."}])
     r = assistent.frage("Gib die Grafikkarte frei und rechne sofort.", werkzeuge=_liste(), sprachmodell=e)
+    assert e.gesehen[1][-1]["content"] == assistent.SATZ_BILD_ANSTOSS
     assert r["antwort"].startswith(assistent.SATZ_NUR_ARCHITEKT)
     assert "FEHLER" not in r["antwort"]
 

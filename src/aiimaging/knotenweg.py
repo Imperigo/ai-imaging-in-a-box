@@ -236,11 +236,13 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
     return zettel
 
 
-#: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt.
+#: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt. Seit
+#: auf-20261020-289 (B2) mit dem vereinbarten Wortlaut «nicht bekannt» — wie der Satz des
+#: Abholers, wenn ein Modell mitkam (bis dahin hiess es an der Tür «nicht zu finden»).
 SATZ_GRUNDLAGE_FEHLT = (
-    "Die Variante kam ohne Modell, und die Grundlage {kennung} ist auf diesem Heim-PC nicht "
-    "zu finden (kein Auftrag hier hat sie gerechnet, oder sein Modell ist weg). Bitte "
-    "«Grundlage rendern» neu ausführen — oder die Variante mit Modell schicken.")
+    "Die Variante kam ohne Modell, und die Grundlage {kennung} ist hier nicht bekannt (kein "
+    "Auftrag auf diesem Heim-PC hat sie gerechnet, oder sein Modell ist weg). Bitte zuerst "
+    "«Grundlage rendern» — oder die Variante mit Modell schicken.")
 
 
 def _modell_fuer_variante(ablage, szene: dict) -> Path:
@@ -825,7 +827,9 @@ def blicke_der_mappe(p: dict, hoechstens: int = BLICKE_HOECHSTENS) -> list[dict]
     (:data:`aiimaging.kameras.BRENNWEITE_MM`) — **geraten wird nicht**.
 
     Returns:
-        ``[{name, bild, auge, blick_auf, brennweite_mm, erzeugt}]`` — Weltkoordinaten des
+        ``[{id, name, bild, auge, blick_auf, brennweite_mm, erzeugt}]`` — ``id`` ist
+        ``bild:<Bild der Mappe>`` und bleibt, auch wenn der Titel des Bildes sich ändert (der
+        Knoten hält die Kennung, nicht den Namen; Wunsch von KosmoDraw, v0.1.10). Weltkoordinaten des
         Heim-PCs (Meter, Z oben), der neueste zuerst, höchstens ``hoechstens``.
     """
     from aiimaging.kameras import BRENNWEITE_MM  # spät: wie heim_standpunkte
@@ -843,7 +847,8 @@ def blicke_der_mappe(p: dict, hoechstens: int = BLICKE_HOECHSTENS) -> list[dict]
         brennweite = (float(bw) if isinstance(bw, (int, float)) and not isinstance(bw, bool)
                       and 5 <= bw <= 300 else BRENNWEITE_MM)
         titel = b.get("titel") if isinstance(b.get("titel"), str) and b.get("titel").strip() else None
-        eintrag = {"name": titel.strip() if titel else Path(str(b["bild"])).stem,
+        eintrag = {"id": f"bild:{b['bild']}",
+                   "name": titel.strip() if titel else Path(str(b["bild"])).stem,
                    "bild": str(b["bild"]), "auge": auge, "blick_auf": ziel,
                    "brennweite_mm": brennweite, "erzeugt": b.get("erzeugt")}
         schluessel = (tuple(round(v, 3) for v in auge), tuple(round(v, 3) for v in ziel),

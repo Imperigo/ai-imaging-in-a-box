@@ -11,10 +11,10 @@ import {
   karteSchluessel,
   kurzKennung,
   LIZENZ_MELDUNG_MS,
-  LIZENZ_OFFEN_LABEL,
   lizenzAblageZusatz,
   lizenzAusQuelle,
   lizenzOffenGrund,
+  lizenzOffenSatz,
   varianteDiff,
   varianteMerkmale,
   type KameraQaZeile,
@@ -555,7 +555,7 @@ function RasterKarte({
             className="vis-raster-karte-kurzhilfe"
             text={
               lizenzOffen
-                ? `Ins Projekt (KosmoPublish) — ${LIZENZ_OFFEN_LABEL}: vor einer Veröffentlichung klären`
+                ? `Ins Projekt (KosmoPublish) — ${lizenzOffenSatz(lizenz)}`
                 : 'Ins Projekt (KosmoPublish)'
             }
           >

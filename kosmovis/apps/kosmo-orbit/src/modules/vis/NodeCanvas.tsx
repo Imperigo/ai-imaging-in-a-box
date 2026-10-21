@@ -463,6 +463,16 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
 export const LIZENZ_ZEILE_H = 16;
 
 /**
+ * Owner-Entscheid L4-18 = A (21.10.2026): unter dem Bild steht seither der SATZ
+ * «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung»
+ * statt zweier Wörter. Bei 196 px Innenbreite des Render-Knotens sind das bis
+ * drei Zeilen der Vorbehaltsklasse: 3 x 14,2 = 42,6 px, eingetragen 44. Das Bild
+ * gibt die Hoehe ab (110 → 66 px), der Knoten waechst nicht (Blatt «Lizenz-Satz
+ * am Bild»). `LIZENZ_ZEILE_H` bleibt fuer die einzeilige Zeile «Umgebung fehlt».
+ */
+export const LIZENZ_SATZ_H = 44;
+
+/**
  * Entscheid 68 / E174 (Verlauf am Render-Knoten): so viel kommt in der Zeile
  * `bild` UNTER dem Hauptbild dazu, solange die Reihe der letzten Laeufe steht
  * (`RenderVerlauf.tsx`, ab zwei Laeufen). Keine eigene Registerzeile: die
@@ -2519,7 +2529,7 @@ export function NodeCanvas({
               <text x={28} y={17} fontSize={11.5} fontWeight="var(--k-gewicht-stark)" fill="var(--vis-node-tinte)" className="vis-node-kopf-label">
                 {kat.label}
                 {/* L4-4: der gewählte gesicherte Blick steht im Kopf — auch eingeklappt sichtbar. */}
-                {kameraKopfZusatz(n0)}
+                {kameraKopfZusatz(n0, useProject.getState().doc)}
               </text>
               {/* V1-Welle Commit 2: Node-Kollaps — nur Kopf+Ports sichtbar
                   (nodeHoehe/portY berücksichtigen `collapsed`). Ein laufender
@@ -4178,7 +4188,7 @@ function NodeKoerper({
                 <div
                   className={`vis-hauptbild${bildPaar ? ' vis-hauptbild--paar' : ''}${bildPaar && bildPaar.ansicht !== 'nur-grundbild' && istVorschau(lauf) ? ' vis-hauptbild--vorschau' : ''}`}
                   data-testid="render-hauptbild"
-                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
+                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_SATZ_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
                   {...(bildPaar
                     ? {
                         'data-ansicht': bildPaar.ansicht,

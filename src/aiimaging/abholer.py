@@ -663,9 +663,14 @@ def umgebung_einstellungen(szene: dict) -> dict:
     # anderen Wert fasst (neue Lichtdaten, neue Grundlage).
     if aus and licht.get("sonne") is not None:
         import json as _json  # noqa: PLC0415
-        aus = dict(aus, umgebung_licht=_json.dumps(
-            {k: licht[k] for k in LICHT_AN_BLENDER if k in licht},
-            sort_keys=True, ensure_ascii=False))
+        lichtdaten = {k: licht[k] for k in LICHT_AN_BLENDER if k in licht}
+        # DER MESSSCHALTER «HIMMEL SICHTBAR» (auf-20261021-309, Option Himmel): nur mit
+        # `vis.himmel_sichtbar: true`, in den Lichtdaten — damit im Schluessel der Grundlage.
+        # Ohne Schalter bleibt der Text Wort fuer Wort wie vorher.
+        if szene.get("himmel_sichtbar") is True:
+            lichtdaten["himmel_sichtbar"] = True
+        aus = dict(aus, umgebung_licht=_json.dumps(lichtdaten, sort_keys=True,
+                                                   ensure_ascii=False))
     if umgebung.get("preset") == _stimmung.PRESET_WEISS:
         aus = dict(aus, umgebung_weiss=True)
     return aus
@@ -4590,7 +4595,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Umriss gebaut (N1), und `umriss_gilt` steht IMMER, wenn geom_iou gemessen ist —
             # true wie false (N6); ein fehlendes Feld hiess sonst «nicht geprueft» und
             # «gilt» zugleich. `umriss_grund` nur bei false.
-            wiedererkannt = _kosmo_szene.wiedererkennung_des_urteils(urteil)
+            # Mit dem Vermerk «Umriss halten», der erst unten ans Urteil kommt: Bei «im_lauf»
+            # zaehlt die Baumasse ausserhalb «so nah wie das Haus» (auf-20261021-309, B1).
+            wiedererkannt = _kosmo_szene.wiedererkennung_des_urteils(
+                dict(urteil, **{URTEIL_UMRISS_HALTEN: umriss_vermerk})
+                if umriss_vermerk is not None else urteil)
             if wiedererkannt is not None and isinstance(urteil.get("seedauswahl"), dict):
                 urteil["seedauswahl"] = dict(urteil["seedauswahl"],
                                              umriss_gilt=wiedererkannt["gilt"])

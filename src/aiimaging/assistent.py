@@ -1219,7 +1219,10 @@ SYSTEMTEXT_KNOTEN = (
     "Kennungen (graphId, nodeId, from, to, edgeId) rätst du nie: Lies zuerst den Graph "
     "(graph_lesen) und nimm nur Kennungen, die in einem Ergebnis stehen. Die Kennung eines "
     "neuen Knotens kennst du erst aus dem Ergebnis von vis_nodeSetzen — verbinde ihn darum in "
-    "der nächsten Runde, nicht in derselben. "
+    "der nächsten Runde, nicht in derselben. Antwortet vis_nodeSetzen mit «VORSCHLAG A-1 liegt "
+    "als Karte», ist A-1 die Kennung der KARTE, nicht eines Knotens: Nimm sie nie als from, to "
+    "oder nodeId. Soll ein neuer Knoten gleich verbunden werden, lege beides in einem vis_paket "
+    "an («$neu:0» ist der neue Knoten). "
     "Erfinde nichts, was weder die Nutzerin sagte noch im Graph steht: keine Stimmung, keine "
     "Auflösung, keine Güte, keine Kamera. Fehlt eine Angabe, lass sie weg — dann gilt, was am "
     "Knoten steht. Tu nur, worum gebeten wurde. "
@@ -1227,8 +1230,12 @@ SYSTEMTEXT_KNOTEN = (
     "als Karte», ist das richtig so — schlage dasselbe nicht noch einmal vor, und nenne es "
     "danach «vorgeschlagen», nie «gelöscht», «geändert» oder «gerechnet»: ausgeführt ist es erst, "
     "wenn der Architekt die Karte anwendet. "
+    "Wird um ein Bild gebeten («Rechne», «Render», «mach ein Bild»), stelle den Auftrag mit "
+    "vis_render am Render-Knoten aus dem Graph — nur mit den Angaben, die genannt wurden. Das ist "
+    "kein Freigeben und erlaubt: der Auftrag wird eine Karte. "
     "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — du nicht, und kein "
-    "Werkzeug kann es. Wird danach gefragt, sage genau das: «Freigeben kann nur der Architekt.» "
+    "Werkzeug kann es. Nur wenn nach dem Freigeben oder der Grafikkarte gefragt wird, sage: "
+    "«Freigeben kann nur der Architekt.» "
     "Behaupte nie, ein Bild sei gerechnet oder geprüft. Antwortet ein Werkzeug mit «FEHLER» "
     "oder «VERWEIGERT», korrigiere den Aufruf oder sage kurz, warum es nicht geht; beginne deine "
     "Antwort selbst nie mit «FEHLER». Antworte am Ende in ein bis drei kurzen Sätzen auf "
@@ -1249,6 +1256,18 @@ ERFUNDEN_FELDER = {"vis_render": ("stimmungPreset", "backbone", "guete", "aufloe
 SATZ_NUR_ARCHITEKT = "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht."
 _FRAGE_NACH_FREIGABE = re.compile(r"frei\s?geb|freigab|\bgib\b.*\bfrei\b|grafikkarte|\bgpu\b", re.I)
 _KARTE = re.compile(r"^VORSCHLAG\s+(\S+)\s+liegt als Karte")
+#: Eine Kartenkennung in einem beliebigen Ergebnis (auch mitten im Text, auch in einem Paket).
+_KARTE_IRGENDWO = re.compile(r"VORSCHLAG\s+([A-Za-z]+-\d+)\b[.:,]?\s+liegt als Karte")
+#: Wer um ein Bild bittet (auf-20261021-310, B2): «Rechne jetzt das Bild.» rief kein Werkzeug.
+_FRAGE_NACH_BILD = re.compile(
+    r"\brechne\w*|\brender(?:e|n|st)?\b(?![-\w])|\bbilder?\b(?![-\w])", re.I)
+#: Der Anstoss, wenn das Modell bei einer Bitte um ein Bild kein Werkzeug ruft (B2) — einmal je
+#: Anfrage. Er verlangt nichts Erfundenes: die Prüfung der Angaben gilt weiter.
+SATZ_BILD_ANSTOSS = (
+    "Gebeten wurde um ein Bild. Stelle den Auftrag mit vis_render am Render-Knoten (Kennungen "
+    "aus graph_lesen; ist der Graph noch nicht gelesen, lies ihn zuerst) — nur mit genannten "
+    "Angaben, sonst ohne. Das ist kein Freigeben: Der Auftrag wird eine Karte, freigeben kann "
+    "nur der Architekt.")
 #: Ein Satz, der eine Handlung als **getan** meldet (Befund B5).
 _GETAN = re.compile(
     r"\b(wurde|wurden|ist|sind|habe|hat|haben)\b[^.!?]*?\b(gelöscht|entfernt|gerechnet|"
@@ -1261,7 +1280,13 @@ def _kommt_vor(wert: str, text: str) -> bool:
     return re.search(r"(?<![A-Za-z0-9_-])" + re.escape(wert) + r"(?![A-Za-z0-9_-])", text) is not None
 
 
-def _pruefe_angaben(name: str, argumente: dict, bekannt: str) -> str | None:
+def _karten_in(getan) -> set[str]:
+    """Die Kennungen der Karten, die die Schritte dieser Frage gemeldet haben («A-1», …)."""
+    return {m.group(1) for s in getan or () for m in _KARTE_IRGENDWO.finditer(str(s.get("ergebnis", "")))}
+
+
+def _pruefe_angaben(name: str, argumente: dict, bekannt: str,
+                    karten: frozenset | set = frozenset()) -> str | None:
     """Ein Grund zum Abweisen, wenn der Aufruf eine Kennung rät oder eine Angabe erfindet.
 
     ``bekannt`` ist, was das Modell wissen **kann**: die Frage, der Verlauf und die Ergebnisse der
@@ -1269,6 +1294,16 @@ def _pruefe_angaben(name: str, argumente: dict, bekannt: str) -> str | None:
     die dort nicht steht, erfunden (B4). Das Modell bekommt den Grund und darf korrigieren.
     """
     if name not in _OHNE_KENNUNGSPRUEFUNG:
+        # EINE KARTE IST KEIN KNOTEN (auf-20261021-310, B1): «A-1» stand im Ergebnis von
+        # vis_nodeSetzen und galt darum als bekannt — vis_verbinden {from: 'A-1'} ging durch.
+        for feld in KENNUNG_FELDER:
+            wert = argumente.get(feld)
+            if isinstance(wert, str) and wert.strip() in karten:
+                return (f"«{wert.strip()}» ({feld}) ist die Kennung einer KARTE (eines Vorschlags), "
+                        f"nicht eines Knotens — den Knoten gibt es erst, wenn der Architekt die "
+                        f"Karte anwendet. Verbinde nur Knoten aus graph_lesen; soll ein neuer "
+                        f"Knoten gleich verbunden werden, lege beides in einem vis_paket an "
+                        f"(«$neu:0»).")
         for feld in KENNUNG_FELDER:
             wert = argumente.get(feld)
             if (isinstance(wert, (str, int)) and not isinstance(wert, bool) and str(wert).strip()
@@ -1319,7 +1354,10 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict]) -> str:
             text = " ".join(neu)
         elif behauptet:
             text = f"{text} {satz_karte}".strip()
-    if _FRAGE_NACH_FREIGABE.search(nachricht or "") and "nur der architekt" not in text.lower():
+    if _FRAGE_NACH_FREIGABE.search(nachricht or "") and "render-knoten" not in text.lower():
+        # Der kurze Satz des Modells («Freigeben kann nur der Architekt.») weicht dem vollen, der
+        # sagt, WO freigegeben wird (auf-20261021-310, B3).
+        text = re.sub(r"^\s*Freigeben kann nur der Architekt\s*[.!]?\s*", "", text)
         text = f"{SATZ_NUR_ARCHITEKT} {text}".strip()
     return text or "Fertig."
 
@@ -1439,6 +1477,12 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     # WAS DAS MODELL WISSEN KANN — gegen das werden Kennungen und Angaben geprüft (B4, B6).
     bekannt = "\n".join([nachricht] + [str(m.get("content", "")) for m in frueher]
                          + [sch["ergebnis"] for sch in getan])
+    karten = _karten_in(getan)
+    # BEI EINER BITTE UM EIN BILD EIN ANSTOSS (auf-20261021-310, B2) — nur, wenn vis_render
+    # angeboten ist und in dieser Frage noch kein Render-Auftrag steht, und nur einmal.
+    anstoss_offen = (bool(angebot) and "vis_render" in namen
+                     and _FRAGE_NACH_BILD.search(nachricht) is not None
+                     and not any(sch["werkzeug"] in ("vis_render", "vis_paket") for sch in getan))
 
     ende = time.monotonic() + FRIST_FRAGE_GESAMT_S
     antwort = ""
@@ -1460,6 +1504,12 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
         antwort = inhalt or antwort
         aufrufe = botschaft.get("tool_calls") or []
         if not isinstance(aufrufe, list) or not aufrufe or not angebot:
+            if anstoss_offen and time.monotonic() < ende:
+                anstoss_offen = False
+                antwort = ""        # der Satz vor dem Anstoss ist keine Antwort auf die Bitte
+                nachrichten.append({"role": "assistant", "content": inhalt})
+                nachrichten.append({"role": "user", "content": SATZ_BILD_ANSTOSS})
+                continue
             return {"antwort": _berichtige_antwort(antwort, nachricht, getan)}
         offen, abgewiesen = [], []
         for aufruf in aufrufe:
@@ -1477,7 +1527,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                 abgewiesen.append((name or "?", f"Ein Werkzeug «{name}» gibt es nicht."))
             elif not isinstance(argumente, dict):
                 abgewiesen.append((name, "Die Angaben zum Werkzeug sind ein Objekt."))
-            elif (grund := _pruefe_angaben(name, argumente, bekannt)) is not None:
+            elif (grund := _pruefe_angaben(name, argumente, bekannt, karten)) is not None:
                 abgewiesen.append((name, grund))
             else:
                 offen.append({"werkzeug": name, "argumente": argumente})

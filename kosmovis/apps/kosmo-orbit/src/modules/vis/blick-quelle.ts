@@ -1,4 +1,4 @@
-import { kameraArtAusParams, kameraBlickAusParams, kameraBlickName, type KosmoDoc, type VisNode } from '@kosmo/kernel';
+import { kameraArtAusParams, kameraBlickAusParams, kameraBlickId, kameraBlickName, type KosmoDoc, type VisNode } from '@kosmo/kernel';
 
 /**
  * **GESICHERTE BLICKE FÜR DEN KNOTEN «KAMERA»** (Video-Befund L4-4, 21.10.2026, Blatt «Blick zur
@@ -17,11 +17,19 @@ import { kameraArtAusParams, kameraBlickAusParams, kameraBlickName, type KosmoDo
  *  - **Wirt** (Visbox): die Standpunkte der offenen Mappe, die der Wirt hier anmeldet
  *    (`registriereBlickQuelle`, Muster `registriereModellLaden`). Visbox hat keinen Entwurf.
  *
+ * KENNUNG STATT NAME (Wunsch von KosmoDraw, v0.1.10): Blicke sind umbenennbar
+ * (`design.blickUmbenennen`). Der Knoten hält darum die Kennung (`blickId`) fest und liest den
+ * Namen jedes Mal neu; ein umbenannter Blick bleibt gültig, ohne Satz. Zwei Blicke dürfen gleich
+ * heissen — die Auswahl unterscheidet sie an der Kennung, ein Aufruf nur mit Namen wird dann
+ * abgewiesen.
+ *
  * Kein React im Kern: ein kleiner Speicher mit Hörern wie `heim-standpunkte.ts`.
  */
 
 /** Ein Blick, wie der Knoten ihn anbietet — glTF-Achsen (Y oben), Meter, waagrechter Bildwinkel. */
 export interface WaehlbarerBlick {
+  /** Stabil über Umbenennen: `GespeicherterBlick.id`, beim Wirt seine eigene (Visbox: `bild:<Bild>`). */
+  id: string;
   name: string;
   /** Woher: «Entwurf» (gesichert in der 3D-Ansicht) oder was der Wirt nennt («Mappe» …). */
   herkunft: string;
@@ -72,16 +80,17 @@ function rund(x: number, stellen = 3): number {
 }
 
 /**
- * Alle wählbaren Blicke, in fester Reihenfolge: zuerst die des Entwurfs, dann die des Wirts. Ein
- * Name steht nur einmal; ein gleichnamiger des Wirts bekommt seine Herkunft in Klammern.
+ * Alle wählbaren Blicke, in fester Reihenfolge: zuerst die des Entwurfs, dann die des Wirts. Jede
+ * Kennung steht einmal; gleiche Namen bleiben stehen (die Auswahl zeigt dann die Herkunft dazu).
  */
 export function waehlbareBlicke(doc: KosmoDoc): WaehlbarerBlick[] {
   const out: WaehlbarerBlick[] = [];
   const belegt = new Set<string>();
   for (const b of doc.settings.gespeicherteBlicke ?? []) {
-    if (belegt.has(b.name)) continue;
-    belegt.add(b.name);
+    if (belegt.has(b.id)) continue;
+    belegt.add(b.id);
     out.push({
+      id: b.id,
       name: b.name,
       herkunft: 'Entwurf',
       position: [b.position[0], b.position[1], b.position[2]],
@@ -90,12 +99,33 @@ export function waehlbareBlicke(doc: KosmoDoc): WaehlbarerBlick[] {
     });
   }
   for (const b of quelle?.blicke ?? []) {
-    const name = belegt.has(b.name) ? `${b.name} (${b.herkunft})` : b.name;
-    if (belegt.has(name)) continue;
-    belegt.add(name);
-    out.push({ ...b, name });
+    if (belegt.has(b.id)) continue;
+    belegt.add(b.id);
+    out.push({ ...b });
   }
   return out;
+}
+
+/** Der Eintrag in der Auswahl: der Name, bei gleichen Namen mit der Herkunft (und Nummer) dazu. */
+export function blickBeschriftung(b: WaehlbarerBlick, liste: readonly WaehlbarerBlick[]): string {
+  const gleich = liste.filter((x) => x.name === b.name);
+  if (gleich.length < 2) return b.name;
+  const gleicheHerkunft = gleich.filter((x) => x.herkunft === b.herkunft);
+  return gleicheHerkunft.length < 2 ? `${b.name} (${b.herkunft})` : `${b.name} (${b.herkunft} ${gleicheHerkunft.indexOf(b) + 1})`;
+}
+
+/** Der gewählte Blick des Knotens in der Liste: über die Kennung, ohne sie über den einzigen gleichen Namen. */
+export function gewaehlterBlick(params: VisNode['params'], liste: readonly WaehlbarerBlick[]): WaehlbarerBlick | undefined {
+  const id = kameraBlickId(params ?? {});
+  if (id) return liste.find((x) => x.id === id);
+  const name = kameraBlickName(params ?? {});
+  const gleich = name ? liste.filter((x) => x.name === name) : [];
+  return gleich.length === 1 ? gleich[0] : undefined;
+}
+
+/** Der Name, der am Knoten steht: der heutige des Blicks, sonst der beim Wählen festgehaltene. */
+export function blickAnzeigeName(params: VisNode['params'], liste: readonly WaehlbarerBlick[]): string {
+  return gewaehlterBlick(params, liste)?.name ?? kameraBlickName(params ?? {});
 }
 
 /** Der Satz für die leere Liste: der des Wirts, sonst `KEIN_BLICK_SATZ`. */
@@ -107,6 +137,7 @@ export function leerSatzBlicke(): string {
 export function blickParams(b: WaehlbarerBlick): Record<string, string> {
   return {
     art: 'blick',
+    blickId: b.id,
     blick: b.name,
     blickKamera: JSON.stringify({ position: b.position.map((v) => rund(v)), target: b.target.map((v) => rund(v)), fov: rund(b.fov) }),
   };
@@ -124,9 +155,9 @@ export function blickZeile(b: { herkunft?: string; position: readonly number[]; 
  * Liste), `ohne` (keiner gewählt).
  */
 export function blickStand(params: VisNode['params'], liste: readonly WaehlbarerBlick[]): 'gleich' | 'geaendert' | 'fehlt' | 'ohne' {
-  const name = kameraBlickName(params ?? {});
-  if (!name) return 'ohne';
-  const b = liste.find((x) => x.name === name);
+  if (!kameraBlickId(params ?? {}) && !kameraBlickName(params ?? {})) return 'ohne';
+  // Umbenannt zählt nicht: verglichen wird über die Kennung, und nur die Pose.
+  const b = gewaehlterBlick(params, liste);
   if (!b) return 'fehlt';
   const k = kameraBlickAusParams(params ?? {});
   if (!k) return 'gleich';
@@ -135,34 +166,38 @@ export function blickStand(params: VisNode['params'], liste: readonly Waehlbarer
 }
 
 /** Der Zusatz im Knotenkopf: « · Ecke SO/SW» am Knoten «Kamera» mit gewähltem Blick, sonst leer. */
-export function kameraKopfZusatz(node: Pick<VisNode, 'typ' | 'params'>): string {
+export function kameraKopfZusatz(node: Pick<VisNode, 'typ' | 'params'>, doc: KosmoDoc): string {
   if (node.typ !== 'kamera' || kameraArtAusParams(node.params ?? {}) !== 'blick') return '';
-  const name = kameraBlickName(node.params ?? {});
+  const name = blickAnzeigeName(node.params, waehlbareBlicke(doc));
   if (!name) return '';
   return ` · ${name.length > 18 ? `${name.slice(0, 17)}…` : name}`;
 }
 
 /**
- * Für Aufrufe von aussen (Claude, Assistent): `{ art: 'blick', blick: 'Name' }` ohne festgehaltene
- * Kamera wird um `blickKamera` ergänzt — aus derselben Liste, die der Knoten zeigt (also auch mit
- * den Blicken des Wirts, die der Kern nicht kennt). Ein unbekannter Name wirft mit der Liste der
- * gesicherten. Alles andere bleibt, wie es ist.
+ * Für Aufrufe von aussen (Claude, Assistent): `{ art: 'blick', blick: 'Name' }` oder
+ * `{ art: 'blick', blickId: '…' }` ohne festgehaltene Kamera wird ergänzt — Kennung, Name und
+ * Kamera aus derselben Liste, die der Knoten zeigt (also auch mit den Blicken des Wirts, die der
+ * Kern nicht kennt). Der Name wird beim Setzen auf die Kennung aufgelöst. Unbekannt oder (nur mit
+ * Namen) mehrdeutig: wirft mit der Liste der gesicherten. Alles andere bleibt, wie es ist.
  */
 export function blickAufrufErgaenzen(
   doc: KosmoDoc,
   params: Record<string, string | number | boolean>,
 ): Record<string, string | number | boolean> {
   const name = typeof params['blick'] === 'string' ? params['blick'].trim() : '';
-  if (!name) return params;
+  const id = typeof params['blickId'] === 'string' ? params['blickId'].trim() : '';
+  if (!name && !id) return params;
   if (typeof params['blickKamera'] === 'string' && params['blickKamera'].trim() !== '') return params;
   const liste = waehlbareBlicke(doc);
-  const b = liste.find((x) => x.name === name);
+  const aufzaehlung = liste.map((x) => `«${x.name}» (blickId ${x.id})`).join(', ');
+  const treffer = id ? liste.filter((x) => x.id === id) : liste.filter((x) => x.name === name);
+  if (treffer.length > 1) {
+    throw new Error(`Blick «${name}» ist mehrdeutig — ${treffer.length} heissen so; mit blickId wählen: ${aufzaehlung}.`);
+  }
+  const b = treffer[0];
   if (!b) {
-    throw new Error(
-      liste.length > 0
-        ? `Blick «${name}» gibt es nicht — gesichert sind: ${liste.map((x) => `«${x.name}»`).join(', ')}.`
-        : `Blick «${name}» gibt es nicht — es ist noch kein Blick gesichert.`,
-    );
+    const wer = id ? `blickId «${id}»` : `Blick «${name}»`;
+    throw new Error(liste.length > 0 ? `${wer} gibt es nicht — gesichert sind: ${aufzaehlung}.` : `${wer} gibt es nicht — es ist noch kein Blick gesichert.`);
   }
   return { ...params, ...blickParams(b) };
 }

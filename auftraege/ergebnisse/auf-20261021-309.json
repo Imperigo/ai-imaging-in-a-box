@@ -1,0 +1,1950 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-309",
+ "worker": "local",
+ "rang": 4,
+ "folgt_auf": "auf-20261021-303",
+ "bezug": "auf-20261021-303",
+ "planblatt": "docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md",
+ "entscheide": [
+  "97",
+  "97a",
+  "117"
+ ],
+ "status": "ok",
+ "zusammenfassung": "erledigt, alle 31 Bildlaeufe done (Teil A 4, Teil B 24, Teil S 2+1 Grundlage) plus 6 Grundlagen. K0 bildpunktgleich zu 303 K (0 px). E2n bildpunktgleich zu 303 E2 (0 px), VRAM-Spitze nach no_grad 27116 MiB statt 31316 (-4200 MiB). M2m (kuerzerer Satz vorne) weicht in 219695 Bildpunkten von 303 M2 ab, haelt Sichtbeton nur teilweise (Platten statt Ortbeton), Form rechtwinklig mit Versatz, geom_iou 0,916. Matrix: M2 gegen K je Stimmung Sichtbeton ja 6/0, 7/1, 8/0 von 8; Form wie Modell ja 3/0, 3/0, 3/0; keine Naht 5/8, 5/8, 6/8 (K jeweils 8/8, weil K das Bild ganz neu malt); geom_iou-Mittel M2 0,88/0,72/0,76 gegen K 0,50/0,53/0,35. Der Satz des Bildmodells steht jetzt in qa.verdict.hinweise und angewandt.umriss_halten (B2 aus 303 behoben). Befunde: ausserhalb_umriss_anteil zaehlt bei M2 den festgehaltenen flachen Cycles-Hintergrund in abend/bedeckt als Baumasse (bis 4,53, Saetze UEBER DEN UMRISS/NICHT WIEDERZUERKENNEN bei sauberem Bild); mit zwei Kameras liegt M2 ~320 MiB UEBER K. S1: Prompt englisch einmal, ohne deutsches Wort, aufloesung 4k — aber kein Haus, sondern ein Gefaess in einer Hoehle (der Prompt nennt kein Gebaeude mehr). Code nicht geaendert.",
+ "beendet": "2026-10-21T13:05:00Z",
+ "koepfe": {
+  "stand": "main 7a91b5e (Visbox 0.3.18), git pull: bereits aktuell; Dienst lief seit nach dem 0.3.18-Stand, Abholer per Timer 30 s (frischer Prozess je Durchgang). Kein Code, keine Vorgabe, kein Registerwert, keine dauerhafte Umgebungsvariable geaendert; Schalter nur in den eigenen Probeauftraegen; Mappe des Dienstes, Textur- und Himmelsordner nicht angefasst.",
+  "weg": "Bruecke als Client wie 303 (POST /bruecke/jobs, /approve nur der eigenen Auftraege, job.json und nvidia-smi im Takt 0,25 s); Varianten ohne Modell ueber vis.grundlage.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb) wie 303: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "cameras 'auto' mit richtungen ['sSE'] (Teil A) bzw. ['sSE','nNW'] (Teil B/S), resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, guete voll (S: vorschau), faithful weggelassen.",
+  "grundlagen": {
+   "G-mittag": {
+    "job": "vis-1792585286-20950b",
+    "id": "gl-8af0cdb5b1edfe1c",
+    "neu": true,
+    "zeit_s": 31.9,
+    "spitze": "1324 MiB / 66 W"
+   },
+   "G-mittag-E": {
+    "job": "vis-1792585418-526a55",
+    "id": "gl-e23cd12c89aae7ee",
+    "neu": true,
+    "zeit_s": 34.18,
+    "spitze": "1328 MiB / 66 W"
+   },
+   "G-morgen": {
+    "job": "vis-1792585562-79c169",
+    "id": "gl-a19f9df328ad63f2",
+    "neu": true,
+    "zeit_s": 25.69,
+    "spitze": "1328 MiB / 67 W"
+   },
+   "G-abend": {
+    "job": "vis-1792586155-e0f366",
+    "id": "gl-d012e282f6336c34",
+    "neu": true,
+    "zeit_s": 56.23,
+    "spitze": "1492 MiB / 67 W"
+   },
+   "G-bedeckt": {
+    "job": "vis-1792586791-e6850e",
+    "id": "gl-cdcbe907dccf3718",
+    "neu": true,
+    "zeit_s": 54.1,
+    "spitze": "1441 MiB / 68 W"
+   },
+   "G-nebel": {
+    "job": "vis-1792587551-469ef1",
+    "id": "gl-4b421c9fef99e49f",
+    "neu": true,
+    "zeit_s": 63.2,
+    "spitze": "1398 MiB / 67 W"
+   }
+  },
+  "grundlagen_hinweis": "jede Grundlage einmal neu gerechnet (die von 303 waren weggeraeumt) und fuer alle Seeds und beide Varianten wiederverwendet (wiederverwendet true in jedem KI-Lauf). Cycles-Spitze 1324-1492 MiB / 66-68 W.",
+  "gpu_vor_jedem_lauf": "1241-1405 MiB, 14-70 W, 0 %; nie ein Modell auf der Karte. Leistungsgrenze 400 W gesetzt und unveraendert. Laeufe strikt nacheinander.",
+  "systemlast": "Last (1 min) 1,4-2,6 bis K-morgen-918263; danach lief ein fremdes Kosmo-Sprachmodell (35b) auf der CPU (ollama ps: 100 % CPU, nicht auf der Karte) und hob die Last bis 60 (bei S2). Nicht angefasst; die Grafikkarte blieb davon frei, die Laufzeiten stiegen von ~45 auf 55-90 s.",
+  "kosmo_modelle": "nicht beruehrt; ein fremdes Modell lag zeitweise im Hauptspeicher (CPU), nie auf der Karte.",
+  "augenurteil_blind": "Die Bilder wurden je Stimmung als Raster ohne Zahlen angesehen und beurteilt, bevor ana309 lief; gesehen hatte ich vorher nur VRAM-Spitze, Zeit und die Zahl abweichender Bildpunkte der Kontrollen."
+ },
+ "teil_A": {
+  "K0": {
+   "job": "vis-1792585318-813a41",
+   "status": "done",
+   "vram_spitze": "27436 MiB / 359 W",
+   "zeit_s": 46.37,
+   "gpu_vorher": "1241 MiB, 27.77 W, 0 %",
+   "grundlage": {
+    "id": "gl-8af0cdb5b1edfe1c",
+    "wiederverwendet": true
+   },
+   "bilder": {
+    "sSE": {
+     "geom_iou": 0.5163,
+     "ausserhalb_umriss_anteil": 2.1868,
+     "n_ist_n_soll": 1.796,
+     "satz_nicht_wiederzuerkennen": "ja",
+     "satz_ueber_den_umriss": "ja",
+     "seed": 482913,
+     "lieferstatus": "geliefert",
+     "augenurteil": {
+      "sichtbeton": "teilweise — Betonrahmen um das Glasband, sonst Lamellen (bildpunktgleich zu 303 K, Urteil von dort)",
+      "form_wie_modell": "nein — Baukoerper ueber fast die ganze Bildbreite",
+      "naht": "nein",
+      "hintergrund": "Himmel",
+      "satz": "Breiter Lamellenbau mit Glasband vor Wolkenhimmel (= 303 K)."
+     }
+    }
+   },
+   "bildpunktgleich_303_K": "ja — 0 abweichende Bildpunkte (960 x 600)",
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky"
+  },
+  "M2m": {
+   "job": "vis-1792585370-b28979",
+   "status": "done",
+   "vram_spitze": "27116 MiB / 360 W",
+   "zeit_s": 43.18,
+   "gpu_vorher": "1241 MiB, 38.59 W, 0 %",
+   "grundlage": {
+    "id": "gl-8af0cdb5b1edfe1c",
+    "wiederverwendet": true
+   },
+   "bilder": {
+    "sSE": {
+     "geom_iou": 0.9156,
+     "ausserhalb_umriss_anteil": 0.0013,
+     "n_ist_n_soll": 1.092,
+     "satz_nicht_wiederzuerkennen": "nein",
+     "satz_ueber_den_umriss": "nein",
+     "seed": 482913,
+     "lieferstatus": "geliefert",
+     "umriss_halten_saetze_verdict_woertlich": [
+      "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+     ],
+     "angewandt_umriss_halten": {
+      "angewandt": true,
+      "art": "im_lauf",
+      "methode": "hintergrund_im_fahrplan_festgehalten",
+      "rand_px": 19,
+      "anteil_frei": 0.1377,
+      "schritte": 20,
+      "hinweise": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+      ]
+     },
+     "umriss_halten_schritte": 20,
+     "augenurteil": {
+      "sichtbeton": "teilweise — hellgraue Platten mit Fugen, eher Plattenverkleidung als Ortbeton",
+      "form_wie_modell": "teilweise — rechtwinklig mit Anbau und Dachaufbau, aber obere Geschosse gegen das Erdgeschoss versetzt (Versatz an der linken Kante)",
+      "naht": "nein — kein Saum, nur der Versatz an der Hauskante",
+      "hintergrund": "ruhiger Verlauf",
+      "satz": "Heller Plattenbau mit Lochfenstern, Anbau und Dachaufbau, oben leicht versetzt, vor flachem Verlauf."
+     }
+    }
+   },
+   "prompt_woertlich": "monolithic exposed concrete building, made entirely of exposed concrete, contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "stoff_im_prompt": 3,
+   "abweichend_gegen_303_M2": "219695 von 576000 Bildpunkten",
+   "urteil_gegen_303_M2": "Die kuerzere Fassung haelt den Sichtbeton schwaecher: 303 M2 gleichmaessiger Sichtbeton mit Lochfenstern, M2m hellgraue Plattenverkleidung mit versetzten Fenstern und einem Versatz der oberen Geschosse; Umriss gleich gut (geom_iou 0,916 gegen 0,924, ausserhalb 0,0013 gegen 0,0008)."
+  },
+  "E2n": {
+   "job": "vis-1792585452-c7f54d",
+   "status": "done",
+   "vram_spitze": "27116 MiB / 359 W",
+   "zeit_s": 45.22,
+   "gpu_vorher": "1241 MiB, 17.11 W, 0 %",
+   "grundlage": {
+    "id": "gl-e23cd12c89aae7ee",
+    "wiederverwendet": true
+   },
+   "bilder": {
+    "sSE": {
+     "geom_iou": 0.8755,
+     "ausserhalb_umriss_anteil": 0.4353,
+     "n_ist_n_soll": 1.13,
+     "satz_nicht_wiederzuerkennen": "nein",
+     "satz_ueber_den_umriss": "ja",
+     "seed": 482913,
+     "lieferstatus": "geliefert",
+     "augenurteil": {
+      "sichtbeton": "ja — grauer Sichtbeton mit Schalungsfugen wie die Textur (bildpunktgleich zu 303 E2)",
+      "form_wie_modell": "ja — bis auf den erfundenen dunklen Durchgang unter dem Anbau",
+      "naht": "nein",
+      "hintergrund": "ruhiger Verlauf",
+      "satz": "Fast das Cycles-Bild (= 303 E2)."
+     }
+    }
+   },
+   "prompt_woertlich": "contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky, exterior surfaces of smooth fair-faced concrete",
+   "bildpunktgleich_303_E2": "ja — 0 abweichende Bildpunkte",
+   "vram_spitze_gegen_303": "27116 MiB gegen 31316 MiB in 303 (-4200 MiB, gleich wie ohne Bildeingang mit im_lauf); Karte vorher leer (1241 MiB)",
+   "journal_reihenfolge": [
+    "vis-…-c7f54d: verarbeitet — 1 Bild(er) geschrieben.",
+    "Karte: Auslastung 0 %, 1241 MiB belegt.",
+    "Vorpruefung Bildeingang: 30868 MiB verfuegbar (30868 frei), verlangt 30587 MiB (30075 gemessen + 512 Reserve).",
+    "Im Prozess Bildeingang: 30861 MiB verfuegbar (30363 frei + 498 eigene), verlangt 30587 MiB (30075 gemessen + 512 Reserve)."
+   ],
+   "journal_urteil": "Vorpruefung steht vor Im Prozess, beide unter ihrem Auftrag (Punkt 7 erfuellt)."
+  },
+  "E3n": {
+   "job": "vis-1792585503-d6e48b",
+   "status": "done",
+   "vram_spitze": "27116 MiB / 360 W",
+   "zeit_s": 42.29,
+   "gpu_vorher": "1241 MiB, 26.52 W, 0 %",
+   "grundlage": {
+    "id": "gl-e23cd12c89aae7ee",
+    "wiederverwendet": true
+   },
+   "bilder": {
+    "sSE": {
+     "geom_iou": 0.945,
+     "ausserhalb_umriss_anteil": 0.0511,
+     "n_ist_n_soll": 1.058,
+     "satz_nicht_wiederzuerkennen": "nein",
+     "satz_ueber_den_umriss": "nein",
+     "seed": 482913,
+     "lieferstatus": "geliefert",
+     "umriss_halten_saetze_verdict_woertlich": [
+      "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+     ],
+     "angewandt_umriss_halten": {
+      "angewandt": true,
+      "art": "im_lauf",
+      "methode": "hintergrund_im_fahrplan_festgehalten",
+      "rand_px": 19,
+      "anteil_frei": 0.1377,
+      "schritte": 20,
+      "hinweise": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+      ]
+     },
+     "umriss_halten_schritte": 20,
+     "augenurteil": {
+      "sichtbeton": "ja — heller glatter Sichtbeton mit Schalungsstoessen",
+      "form_wie_modell": "teilweise — rechte Ecke des Hauptbaus gerundet, Dachaufbau weich gerundet, Anbau eckig; anders als 303 E3 jetzt mit Fenstern",
+      "naht": "nein",
+      "hintergrund": "ruhiger Verlauf",
+      "satz": "Heller Sichtbetonbau mit Lochfenstern, rechte Ecke rund, vor dunklem Verlauf."
+     }
+    }
+   },
+   "prompt_woertlich": "monolithic smooth fair-faced concrete building, made entirely of smooth fair-faced concrete, contemporary residential building, exposed concrete, architectural photography, no people, midday light, high sun, clear sky",
+   "stoff_im_prompt": "smooth fair-faced concrete 2x, exposed concrete 1x (zusammen 3)",
+   "prompt_zusaetze": [
+    {
+     "art": "stimmung",
+     "preset": "mittag",
+     "satz": "midday light, high sun, clear sky",
+     "schon_im_prompt": false,
+     "herausgenommen": []
+    },
+    {
+     "art": "material",
+     "bauteil_art": "fassade",
+     "id": "sichtbeton-schalungsglatt",
+     "satz": "exterior surfaces of smooth fair-faced concrete",
+     "schon_im_prompt": false,
+     "weggelassen": "material_vorne"
+    },
+    {
+     "art": "material_vorne",
+     "satz": "monolithic smooth fair-faced concrete building, made entirely of smooth fair-faced concrete",
+     "vorne": true,
+     "stoffe": [
+      "smooth fair-faced concrete"
+     ],
+     "schon_im_prompt": false
+    }
+   ],
+   "abweichend_gegen_303_E3": "244409 Bildpunkte",
+   "urteil": "Sichtbeton ja, jetzt mit Fenstern; rechte Ecke und Dachaufbau weiterhin gerundet."
+  }
+ },
+ "teil_B": {
+  "prompt_woertlich": {
+   "K-morgen": "contemporary residential building, exposed concrete, architectural photography, no people, early morning light, clear long shadows, fresh cool air",
+   "K-abend": "contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "K-bedeckt": "contemporary residential building, exposed concrete, architectural photography, no people, overcast sky, soft even light",
+   "M2-morgen": "monolithic exposed concrete building, made entirely of exposed concrete, contemporary residential building, exposed concrete, architectural photography, no people, early morning light, clear long shadows, fresh cool air",
+   "M2-abend": "monolithic exposed concrete building, made entirely of exposed concrete, contemporary residential building, exposed concrete, architectural photography, no people, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "M2-bedeckt": "monolithic exposed concrete building, made entirely of exposed concrete, contemporary residential building, exposed concrete, architectural photography, no people, overcast sky, soft even light"
+  },
+  "satz_bildmodell_kommt_an": "ja — der Satz 'UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten ...' steht in jedem M2-Lauf in qa.verdict.hinweise und unter angewandt.umriss_halten.kameras.<kamera>.hinweise; 'Ungemessen' ist ersetzt (B2 aus 303 behoben).",
+  "beispiel_satz_bildmodell_woertlich": "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB).",
+  "laeufe": {
+   "K-morgen-482913": {
+    "job": "vis-1792585588-efb62a",
+    "status": "done",
+    "vram_spitze": "27472 MiB / 360 W",
+    "zeit_s": 63.67,
+    "gpu_vorher": "1241 MiB, 28.16 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.5772,
+      "ausserhalb_umriss_anteil": 2.0361,
+      "n_ist_n_soll": 1.191,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Beton mit Holzlattung, Glas",
+       "form_wie_modell": "nein — breiter Zweigeschosser ueber die ganze Bildbreite",
+       "naht": "nein",
+       "hintergrund": "Himmel",
+       "satz": "Langer Flachbau aus Beton und Holz mit Glasband auf Wiese vor Wolkenhimmel."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.757,
+      "ausserhalb_umriss_anteil": 1.8638,
+      "n_ist_n_soll": 1.205,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Beton mit Holz und Metall",
+       "form_wie_modell": "nein — flacher Langbau statt Turm",
+       "naht": "nein",
+       "hintergrund": "Himmel",
+       "satz": "Zweigeschossiger Beton-Holz-Bau auf Wiese, Nachbarbau rechts."
+      }
+     }
+    }
+   },
+   "K-morgen-731150": {
+    "job": "vis-1792585716-825c22",
+    "status": "done",
+    "vram_spitze": "27472 MiB / 363 W",
+    "zeit_s": 51.11,
+    "gpu_vorher": "1241 MiB, 38.42 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.7716,
+      "ausserhalb_umriss_anteil": 0.3538,
+      "n_ist_n_soll": 1.227,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — Stahl/Glas-Balkonbau",
+       "form_wie_modell": "nein — Turm mit umlaufenden Balkonen, Anbau als Sockel",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Rohbauartiger Balkonturm auf spiegelnder Flaeche."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.7636,
+      "ausserhalb_umriss_anteil": 0.2386,
+      "n_ist_n_soll": 1.219,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — weisses Raster, dunkle Fuellung",
+       "form_wie_modell": "teilweise — rechtwinkliger Block, Anbau fehlt",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Weisser Rasterblock mit fuenf Geschossen auf heller Platte."
+      }
+     }
+    }
+   },
+   "K-morgen-205877": {
+    "job": "vis-1792585833-0bed1f",
+    "status": "done",
+    "vram_spitze": "27472 MiB / 361 W",
+    "zeit_s": 54.1,
+    "gpu_vorher": "1241 MiB, 39.41 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.4263,
+      "ausserhalb_umriss_anteil": 2.116,
+      "n_ist_n_soll": 2.129,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — weisser Putz, Glasbruestung",
+       "form_wie_modell": "nein — Nahaufnahme, Haus fuellt das Bild",
+       "naht": "nein",
+       "hintergrund": "Strasse",
+       "satz": "Weisse Villa mit Glasbalkon in Nahsicht."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.5467,
+      "ausserhalb_umriss_anteil": 1.8482,
+      "n_ist_n_soll": 1.709,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — hellgraue Platten",
+       "form_wie_modell": "nein — verschachtelter Block ueber das Bild",
+       "naht": "nein",
+       "hintergrund": "Strasse",
+       "satz": "Hellgrauer, verschachtelter Bau mit Rundecken, bildfuellend."
+      }
+     }
+    }
+   },
+   "K-morgen-918263": {
+    "job": "vis-1792585972-8719f8",
+    "status": "done",
+    "vram_spitze": "27472 MiB / 358 W",
+    "zeit_s": 85.22,
+    "gpu_vorher": "1241 MiB, 70.34 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.174,
+      "ausserhalb_umriss_anteil": 1.5318,
+      "n_ist_n_soll": 1.202,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — weiss, Lamellen, Glas",
+       "form_wie_modell": "teilweise — Turm mit Anbau, aber Wand rechts dazu",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Weisser Turm mit Glasanbau auf Wasserflaeche, rechts eine Lamellenwand."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.0145,
+      "ausserhalb_umriss_anteil": 3.941,
+      "n_ist_n_soll": 1.421,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — Lamellen und Glas",
+       "form_wie_modell": "nein — Langbau unter Vordach",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Lamellenfassade unter einem Vordach, Nahsicht."
+      }
+     }
+    }
+   },
+   "M2-morgen-482913": {
+    "job": "vis-1792585657-867fcb",
+    "status": "done",
+    "vram_spitze": "27794 MiB / 362 W",
+    "zeit_s": 53.25,
+    "gpu_vorher": "1241 MiB, 38.10 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.9066,
+      "ausserhalb_umriss_anteil": 0.1191,
+      "n_ist_n_soll": 1.097,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Betonplatten",
+       "form_wie_modell": "teilweise — Dachaufbau gerundet, Vordach auskragend, Hauptbau niedrig",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonbau mit gerundetem Aufbau und Vordach vor flachem Verlauf."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.7778,
+      "ausserhalb_umriss_anteil": 1.3632,
+      "n_ist_n_soll": 1.178,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — glatter Beton",
+       "form_wie_modell": "teilweise — Anbau als Stufe, Turm breiter",
+       "naht": "ja — Sockel unten verwischt/abgeschnitten",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonblock mit Fensterband und Stufe, Sockel verwischt."
+      }
+     }
+    }
+   },
+   "M2-morgen-731150": {
+    "job": "vis-1792585773-2424e2",
+    "status": "done",
+    "vram_spitze": "27794 MiB / 361 W",
+    "zeit_s": 54.45,
+    "gpu_vorher": "1241 MiB, 37.08 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8177,
+      "ausserhalb_umriss_anteil": 0.0554,
+      "n_ist_n_soll": 1.149,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "teilweise — dunkler Beton mit Rasterfassade",
+       "form_wie_modell": "teilweise — Anbau als schwebende Auskragung, Sockel auf Stuetzen",
+       "naht": "ja — verwischte Kante links (Saum)",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Dunkler Rasterbau mit schwebender Auskragung, linke Kante verwischt."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8531,
+      "ausserhalb_umriss_anteil": 1.2638,
+      "n_ist_n_soll": 1.16,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton, offenes Skelett",
+       "form_wie_modell": "ja — rechtwinklig, Anbau als Stufe",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Offenes Betonskelett mit Lochfenstern, rechtwinklig wie modelliert."
+      }
+     }
+    }
+   },
+   "M2-morgen-205877": {
+    "job": "vis-1792585893-f2f074",
+    "status": "done",
+    "vram_spitze": "27794 MiB / 360 W",
+    "zeit_s": 72.01,
+    "gpu_vorher": "1241 MiB, 40.13 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.9448,
+      "ausserhalb_umriss_anteil": 0.0008,
+      "n_ist_n_soll": 1.056,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "teilweise — heller Putz/Beton",
+       "form_wie_modell": "ja — Hauptbau, Anbau, Dachaufbau rechtwinklig (schiefe Fenster)",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Heller Kubus mit Anbau und Dachgelaender, Fenster schief."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8704,
+      "ausserhalb_umriss_anteil": 0.2706,
+      "n_ist_n_soll": 1.149,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — heller glatter Beton",
+       "form_wie_modell": "teilweise — Anbau verwischt, Rohr an der Ecke",
+       "naht": "ja — Saum links am Anbau",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Heller Betonturm, Anbau links verschwommen."
+      }
+     }
+    }
+   },
+   "M2-morgen-918263": {
+    "job": "vis-1792586063-9c6878",
+    "status": "done",
+    "vram_spitze": "27794 MiB / 357 W",
+    "zeit_s": 86.07,
+    "gpu_vorher": "1241 MiB, 70.23 W, 0 %",
+    "grundlage": {
+     "id": "gl-a19f9df328ad63f2",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.9535,
+      "ausserhalb_umriss_anteil": 0.0156,
+      "n_ist_n_soll": 1.042,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — glatter grauer Beton",
+       "form_wie_modell": "ja — Hauptbau, Anbau, Dachaufbau rechtwinklig",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Grauer Betonkubus mit weissem Anbau und Dachaufbau, sauber."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8954,
+      "ausserhalb_umriss_anteil": 0.1469,
+      "n_ist_n_soll": 1.116,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — glatter Beton",
+       "form_wie_modell": "teilweise — Turm ja, Anbau als dunkle Nische",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonturm mit dunklem Eingangsbereich links."
+      }
+     }
+    }
+   },
+   "K-abend-482913": {
+    "job": "vis-1792586212-bff8b9",
+    "status": "done",
+    "vram_spitze": "27637 MiB / 359 W",
+    "zeit_s": 86.24,
+    "gpu_vorher": "1405 MiB, 29.34 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.005,
+      "ausserhalb_umriss_anteil": 4.266,
+      "n_ist_n_soll": 1.274,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Beton unter Vordach, Holz, Backstein dahinter",
+       "form_wie_modell": "nein — Unterfahrt/Vordach in Nahsicht, Haus nicht zu erkennen",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Dunkle Unterfahrt unter einem Betonvordach mit Streiflicht, Nachbarbauten links."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.7934,
+      "ausserhalb_umriss_anteil": 1.8819,
+      "n_ist_n_soll": 1.141,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Beton mit Holz",
+       "form_wie_modell": "nein — langer Zweigeschosser mit Treppe",
+       "naht": "nein",
+       "hintergrund": "Himmel",
+       "satz": "Zweigeschossiger Betonbau mit Holzfeld und Aussentreppe im Abendlicht."
+      }
+     }
+    }
+   },
+   "K-abend-731150": {
+    "job": "vis-1792586394-ba3c5e",
+    "status": "done",
+    "vram_spitze": "27637 MiB / 358 W",
+    "zeit_s": 71.26,
+    "gpu_vorher": "1405 MiB, 43.96 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.7189,
+      "ausserhalb_umriss_anteil": 0.2559,
+      "n_ist_n_soll": 1.212,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — Backstein/Holz, Glas",
+       "form_wie_modell": "nein — Terrassenturm mit Schraegstuetze, Anbau als Sockel",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Brauner Terrassenturm auf einer Wasserflaeche im Abendlicht."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8569,
+      "ausserhalb_umriss_anteil": 0.0996,
+      "n_ist_n_soll": 1.163,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Beton-Raster",
+       "form_wie_modell": "teilweise — rechtwinkliger Block, Anbau fehlt",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Heller Rasterblock mit Balkonen auf grosser Platte."
+      }
+     }
+    }
+   },
+   "K-abend-205877": {
+    "job": "vis-1792586536-ce1629",
+    "status": "done",
+    "vram_spitze": "27631 MiB / 360 W",
+    "zeit_s": 58.3,
+    "gpu_vorher": "1400 MiB, 41.44 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.4334,
+      "ausserhalb_umriss_anteil": 2.1801,
+      "n_ist_n_soll": 2.308,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Betonplatten, Putz",
+       "form_wie_modell": "nein — Nahaufnahme mit Flugdach",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Zweigeschossiges Haus mit Flugdach und warmem Streiflicht, bildfuellend."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.316,
+      "ausserhalb_umriss_anteil": 2.1631,
+      "n_ist_n_soll": 1.666,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton mit Flecken",
+       "form_wie_modell": "nein — Nahaufnahme, bildfuellend",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Sichtbetonhaus mit Lochfenstern in Nahsicht, Abendsonne auf dem Sockel."
+      }
+     }
+    }
+   },
+   "K-abend-918263": {
+    "job": "vis-1792586663-6032ff",
+    "status": "done",
+    "vram_spitze": "27631 MiB / 361 W",
+    "zeit_s": 56.95,
+    "gpu_vorher": "1400 MiB, 42.41 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.4925,
+      "ausserhalb_umriss_anteil": 0.4709,
+      "n_ist_n_soll": 1.304,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — Lamellen, Putz",
+       "form_wie_modell": "nein — Langbau ueber die ganze Breite",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Lamellenbau mit Auskragungen ueber die ganze Bildbreite."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.6332,
+      "ausserhalb_umriss_anteil": 3.5094,
+      "n_ist_n_soll": 1.21,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — helle Betonscheiben, Glas",
+       "form_wie_modell": "nein — Langbau mit Balkonen",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Heller Langbau mit Glasfront und Balkonen im Abendlicht."
+      }
+     }
+    }
+   },
+   "M2-abend-482913": {
+    "job": "vis-1792586310-9572c1",
+    "status": "done",
+    "vram_spitze": "27959 MiB / 358 W",
+    "zeit_s": 77.11,
+    "gpu_vorher": "1405 MiB, 21.54 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.734,
+      "ausserhalb_umriss_anteil": 0.1061,
+      "n_ist_n_soll": 1.159,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton, warm beleuchtet",
+       "form_wie_modell": "teilweise — Hauptbau mit Loggia, Anbau als offener Rahmen",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonbau mit grosser Loggia und offenem Rahmen als Anbau vor rosa Verlauf."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.4848,
+      "ausserhalb_umriss_anteil": 3.6196,
+      "n_ist_n_soll": 1.625,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Beton",
+       "form_wie_modell": "teilweise — Block mit Stufe, Kanten weich",
+       "naht": "ja — Sockel und rechte Kante verwischt",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonblock mit Stufe, unten und rechts verwischt."
+      }
+     }
+    }
+   },
+   "M2-abend-731150": {
+    "job": "vis-1792586471-dffeff",
+    "status": "done",
+    "vram_spitze": "27953 MiB / 360 W",
+    "zeit_s": 59.2,
+    "gpu_vorher": "1405 MiB, 43.45 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8491,
+      "ausserhalb_umriss_anteil": 0.8252,
+      "n_ist_n_soll": 1.056,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "nein — dunkle Platten und Holz/Corten",
+       "form_wie_modell": "teilweise — Dachaufbau rund, Anbau auf Stuetzen",
+       "naht": "ja — Saum links unten",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Dunkler Bau mit Holzfeldern, rundem Dachaufbau und Anbau auf Stuetzen."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.5121,
+      "ausserhalb_umriss_anteil": 0.5791,
+      "n_ist_n_soll": 1.162,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton-Skelett",
+       "form_wie_modell": "ja — rechtwinklig, Anbau als Stufe",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Offenes Betonskelett, rechtwinklig wie modelliert."
+      }
+     }
+    }
+   },
+   "M2-abend-205877": {
+    "job": "vis-1792586599-771fe5",
+    "status": "done",
+    "vram_spitze": "27953 MiB / 360 W",
+    "zeit_s": 58.31,
+    "gpu_vorher": "1400 MiB, 38.50 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8708,
+      "ausserhalb_umriss_anteil": 2.4531,
+      "n_ist_n_soll": 1.107,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — fleckiger Sichtbeton",
+       "form_wie_modell": "teilweise — Anbau mit Rundung und Vordach",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Fleckiger Betonkubus mit Dachaufbau, Anbau gerundet."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8423,
+      "ausserhalb_umriss_anteil": 3.7299,
+      "n_ist_n_soll": 1.159,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — heller Beton",
+       "form_wie_modell": "teilweise — Anbau als Mauerscheibe, Rundteil an der Ecke",
+       "naht": "ja — Saum am Anbau links",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Heller Betonturm mit beleuchteten Fenstern, links verwischt."
+      }
+     }
+    }
+   },
+   "M2-abend-918263": {
+    "job": "vis-1792586725-39fe09",
+    "status": "done",
+    "vram_spitze": "27953 MiB / 360 W",
+    "zeit_s": 60.28,
+    "gpu_vorher": "1400 MiB, 44.06 W, 0 %",
+    "grundlage": {
+     "id": "gl-d012e282f6336c34",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8634,
+      "ausserhalb_umriss_anteil": 0.0001,
+      "n_ist_n_soll": 1.14,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — glatter Beton",
+       "form_wie_modell": "ja — Hauptbau, Anbau, Dachaufbau rechtwinklig",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Grauer Betonkubus mit hellem Anbau und Dachaufbau, sauber."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.5552,
+      "ausserhalb_umriss_anteil": 0.488,
+      "n_ist_n_soll": 1.202,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton",
+       "form_wie_modell": "ja — Turm mit Schlitz, Anbau als Rahmen",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonturm mit Schlitz und verglastem Anbau."
+      }
+     }
+    }
+   },
+   "K-bedeckt-482913": {
+    "job": "vis-1792586845-07a070",
+    "status": "done",
+    "vram_spitze": "27585 MiB / 358 W",
+    "zeit_s": 67.69,
+    "gpu_vorher": "1354 MiB, 16.33 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.5024,
+      "ausserhalb_umriss_anteil": 2.1194,
+      "n_ist_n_soll": 1.861,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — vergraute Holzlattung, Betonrahmen, Glas",
+       "form_wie_modell": "nein — breiter Kubus ueber die Bildbreite",
+       "naht": "nein",
+       "hintergrund": "Himmel",
+       "satz": "Breiter Bau mit vergrauter Holzlattung und Glasfeldern hinter Gebuesch."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.3246,
+      "ausserhalb_umriss_anteil": 1.9843,
+      "n_ist_n_soll": 1.471,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Holzlattung und Betonrahmen",
+       "form_wie_modell": "nein — Zeile aus drei Koerpern, bildfuellend",
+       "naht": "nein",
+       "hintergrund": "Himmel",
+       "satz": "Verschachtelter Holz-Beton-Bau hinter Gebuesch, bildfuellend."
+      }
+     }
+    }
+   },
+   "K-bedeckt-731150": {
+    "job": "vis-1792586994-3b1add",
+    "status": "done",
+    "vram_spitze": "27585 MiB / 359 W",
+    "zeit_s": 89.37,
+    "gpu_vorher": "1354 MiB, 39.44 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.6685,
+      "ausserhalb_umriss_anteil": 0.631,
+      "n_ist_n_soll": 1.291,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — Stahl/Glas-Terrassen",
+       "form_wie_modell": "nein — Terrassenturm auf Ponton",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Terrassenturm auf einer Wasserflaeche mit Spiegelung."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.6533,
+      "ausserhalb_umriss_anteil": 0.4047,
+      "n_ist_n_soll": 1.297,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — weisses Raster, Glas",
+       "form_wie_modell": "teilweise — rechtwinkliger Block, Platte als Keil",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Weisser Rasterblock auf einer keilfoermigen Platte, schwebend."
+      }
+     }
+    }
+   },
+   "K-bedeckt-205877": {
+    "job": "vis-1792587174-e945a6",
+    "status": "done",
+    "vram_spitze": "27542 MiB / 357 W",
+    "zeit_s": 69.66,
+    "gpu_vorher": "1311 MiB, 39.22 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.1489,
+      "ausserhalb_umriss_anteil": 3.4979,
+      "n_ist_n_soll": 2.192,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — weisser Putz, Glas",
+       "form_wie_modell": "nein — Nahaufnahme, bildfuellend",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Weisses Haus mit Rahmenfassade in Nahsicht."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.4148,
+      "ausserhalb_umriss_anteil": 2.7093,
+      "n_ist_n_soll": 2.307,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "nein — weisser Putz, Glas",
+       "form_wie_modell": "nein — Nahaufnahme mit Polygonfenster",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Weisses Haus mit grossem Polygonfenster, bildfuellend."
+      }
+     }
+    }
+   },
+   "K-bedeckt-918263": {
+    "job": "vis-1792587326-7e9e45",
+    "status": "done",
+    "vram_spitze": "27542 MiB / 357 W",
+    "zeit_s": 72.5,
+    "gpu_vorher": "1311 MiB, 43.32 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.0598,
+      "ausserhalb_umriss_anteil": 3.8425,
+      "n_ist_n_soll": 1.588,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Platten, Putz",
+       "form_wie_modell": "nein — Nahaufnahme hinter Stuetzen",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Grauer Bau hinter Stuetzen und Vordach, schwarzweiss wirkend."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.0202,
+      "ausserhalb_umriss_anteil": 3.4182,
+      "n_ist_n_soll": 1.436,
+      "satz_nicht_wiederzuerkennen": "ja",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "augenurteil": {
+       "sichtbeton": "teilweise — Beton, Lamellen",
+       "form_wie_modell": "nein — durch ein Fenster gesehen, Stuetzen vorne",
+       "naht": "nein",
+       "hintergrund": "Nachbarbauten",
+       "satz": "Lamellenbau, gesehen durch Fensterpfosten."
+      }
+     }
+    }
+   },
+   "M2-bedeckt-482913": {
+    "job": "vis-1792586918-80cf45",
+    "status": "done",
+    "vram_spitze": "27907 MiB / 360 W",
+    "zeit_s": 68.9,
+    "gpu_vorher": "1354 MiB, 42.99 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.6016,
+      "ausserhalb_umriss_anteil": 0.0111,
+      "n_ist_n_soll": 1.187,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — glatter grauer Beton",
+       "form_wie_modell": "teilweise — Hauptbau und Anbau rechtwinklig, Dachaufbau fehlt",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Grauer Betonkubus mit Anbau, ohne Dachaufbau, im Nebelgrau."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8092,
+      "ausserhalb_umriss_anteil": 0.499,
+      "n_ist_n_soll": 1.102,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 482913,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — grauer Beton",
+       "form_wie_modell": "teilweise — Balkone und Vorspruenge, Kanten gezackt",
+       "naht": "ja — ausgefranste linke Kante",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Grauer Wohnblock mit Balkonen, linke Kante ausgefranst."
+      }
+     }
+    }
+   },
+   "M2-bedeckt-731150": {
+    "job": "vis-1792587091-4008e2",
+    "status": "done",
+    "vram_spitze": "27864 MiB / 358 W",
+    "zeit_s": 77.61,
+    "gpu_vorher": "1354 MiB, 69.80 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8706,
+      "ausserhalb_umriss_anteil": 2.3113,
+      "n_ist_n_soll": 1.148,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton-Skelett",
+       "form_wie_modell": "ja — Hauptbau, Anbau, gestaffelter Dachaufbau",
+       "naht": "ja — verwischte linke Kante",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonskelett mit Anbau, linke Kante verwischt."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.3763,
+      "ausserhalb_umriss_anteil": 1.1075,
+      "n_ist_n_soll": 1.258,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 731150,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton-Skelett",
+       "form_wie_modell": "ja — rechtwinklig, Anbau als Stufe",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Offenes Betonskelett, rechtwinklig wie modelliert."
+      }
+     }
+    }
+   },
+   "M2-bedeckt-205877": {
+    "job": "vis-1792587249-28cf0c",
+    "status": "done",
+    "vram_spitze": "27864 MiB / 358 W",
+    "zeit_s": 71.23,
+    "gpu_vorher": "1311 MiB, 38.70 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8962,
+      "ausserhalb_umriss_anteil": 0.8037,
+      "n_ist_n_soll": 1.042,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton mit Ankerloechern",
+       "form_wie_modell": "teilweise — Dachaufbau fehlt, Anbau als Schuppen",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonkubus mit Schalungsspuren und Schuppen-Anbau."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.8247,
+      "ausserhalb_umriss_anteil": 2.4923,
+      "n_ist_n_soll": 1.116,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 205877,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton",
+       "form_wie_modell": "teilweise — Anbau als Pergola mit Stuetze",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonkubus mit Tor und einer Pergola statt Anbau."
+      }
+     }
+    }
+   },
+   "M2-bedeckt-918263": {
+    "job": "vis-1792587404-b6cf12",
+    "status": "done",
+    "vram_spitze": "27864 MiB / 358 W",
+    "zeit_s": 72.6,
+    "gpu_vorher": "1311 MiB, 41.64 W, 0 %",
+    "grundlage": {
+     "id": "gl-cdcbe907dccf3718",
+     "wiederverwendet": true
+    },
+    "bilder": {
+     "sSE": {
+      "geom_iou": 0.8694,
+      "ausserhalb_umriss_anteil": 4.5268,
+      "n_ist_n_soll": 1.09,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "ja",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1377,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — glatter Beton",
+       "form_wie_modell": "ja — Hauptbau, Anbau, Dachaufbau rechtwinklig",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Grauer Betonkubus mit hellem Anbau und Dachaufbau, sauber."
+      }
+     },
+     "nNW": {
+      "geom_iou": 0.829,
+      "ausserhalb_umriss_anteil": 1.9012,
+      "n_ist_n_soll": 1.133,
+      "satz_nicht_wiederzuerkennen": "nein",
+      "satz_ueber_den_umriss": "nein",
+      "seed": 918263,
+      "lieferstatus": "geliefert",
+      "umriss_halten_saetze_verdict_woertlich": [
+       "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Nie Vorgabe."
+      ],
+      "angewandt_umriss_halten": {
+       "angewandt": true,
+       "art": "im_lauf",
+       "methode": "hintergrund_im_fahrplan_festgehalten",
+       "rand_px": 19,
+       "anteil_frei": 0.1456,
+       "schritte": 20,
+       "hinweise": [
+        "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher gemessen wie ohne Schalter (auf-20261021-303: Spitze 27116 MiB gegen 27436 MiB)."
+       ]
+      },
+      "umriss_halten_schritte": 20,
+      "augenurteil": {
+       "sichtbeton": "ja — Sichtbeton",
+       "form_wie_modell": "teilweise — Turm ja, Anbau als offener Rahmen",
+       "naht": "nein",
+       "hintergrund": "ruhiger Verlauf",
+       "satz": "Betonturm mit offenem Rahmen als Anbau."
+      }
+     }
+    }
+   }
+  }
+ },
+ "auszaehlung_je_stimmung": {
+  "morgen": {
+   "K": {
+    "sichtbeton_ja": 0,
+    "form_wie_modell_ja": 0,
+    "keine_naht": 8,
+    "von": 8,
+    "geom_iou_mittel": 0.504,
+    "geom_iou_min": 0.0145,
+    "ausserhalb_median": 1.856,
+    "satz_nicht_wiederzuerkennen": 5,
+    "satz_ueber_den_umriss": 4
+   },
+   "M2": {
+    "sichtbeton_ja": 6,
+    "form_wie_modell_ja": 3,
+    "keine_naht": 5,
+    "von": 8,
+    "geom_iou_mittel": 0.877,
+    "geom_iou_min": 0.7778,
+    "ausserhalb_median": 0.133,
+    "satz_nicht_wiederzuerkennen": 0,
+    "satz_ueber_den_umriss": 3
+   }
+  },
+  "abend": {
+   "K": {
+    "sichtbeton_ja": 1,
+    "form_wie_modell_ja": 0,
+    "keine_naht": 8,
+    "von": 8,
+    "geom_iou_mittel": 0.531,
+    "geom_iou_min": 0.005,
+    "ausserhalb_median": 2.022,
+    "satz_nicht_wiederzuerkennen": 4,
+    "satz_ueber_den_umriss": 4
+   },
+   "M2": {
+    "sichtbeton_ja": 7,
+    "form_wie_modell_ja": 3,
+    "keine_naht": 5,
+    "von": 8,
+    "geom_iou_mittel": 0.714,
+    "geom_iou_min": 0.4848,
+    "ausserhalb_median": 0.702,
+    "satz_nicht_wiederzuerkennen": 1,
+    "satz_ueber_den_umriss": 4
+   }
+  },
+  "bedeckt": {
+   "K": {
+    "sichtbeton_ja": 0,
+    "form_wie_modell_ja": 0,
+    "keine_naht": 8,
+    "von": 8,
+    "geom_iou_mittel": 0.349,
+    "geom_iou_min": 0.0202,
+    "ausserhalb_median": 2.414,
+    "satz_nicht_wiederzuerkennen": 6,
+    "satz_ueber_den_umriss": 4
+   },
+   "M2": {
+    "sichtbeton_ja": 8,
+    "form_wie_modell_ja": 3,
+    "keine_naht": 6,
+    "von": 8,
+    "geom_iou_mittel": 0.76,
+    "geom_iou_min": 0.3763,
+    "ausserhalb_median": 1.504,
+    "satz_nicht_wiederzuerkennen": 0,
+    "satz_ueber_den_umriss": 4
+   }
+  }
+ },
+ "auszaehlung_hinweis": "K hat nie eine Naht, weil das ganze Bild neu gemalt wird; Form wie Modell 'ja' nur, wenn Hauptbau, Anbau und Dachaufbau rechtwinklig und an ihrem Ort stehen. Bei M2 ist 'teilweise' meist: Anbau als Rahmen/Pergola/Stufe, Dachaufbau fehlt oder rund. Seed 918263 an sSE ist in allen drei Stimmungen fast dasselbe saubere Bild.",
+ "teil_S": {
+  "S1": {
+   "job": "vis-1792587493-ec47a4",
+   "status": "done",
+   "bestellt_prompt": "Abendstimmung, warmes Licht, leuchtende Fenster",
+   "prompt_woertlich": "evening mood, warm low sunlight, long raking shadows, golden hour",
+   "prompt_zusaetze_stimmung": [
+    {
+     "art": "stimmung",
+     "preset": "abend",
+     "satz": "evening mood, warm low sunlight, long raking shadows, golden hour",
+     "schon_im_prompt": false,
+     "herausgenommen": [
+      "abend"
+     ]
+    }
+   ],
+   "englischer_satz_genau_einmal": true,
+   "deutsches_wort_im_prompt": "nein",
+   "angewandt_environment_aufloesung": "4k",
+   "guete": "vorschau",
+   "grundlage": {
+    "id": "gl-d012e282f6336c34",
+    "wiederverwendet": true
+   },
+   "vram_spitze": "27542 MiB / 355 W",
+   "zeit_s": 52.62,
+   "je_kamera": {
+    "sSE": {
+     "geom_iou": 0.8262,
+     "ausserhalb_umriss_anteil": 0.0021,
+     "augenurteil": "Kein Haus und kein Wohnraum: ein glasiges Gefaess in einer dunklen, verwischten Hoehle."
+    },
+    "nNW": {
+     "geom_iou": 0.1195,
+     "ausserhalb_umriss_anteil": 2.3969,
+     "augenurteil": "Ein dunkler Kasten mit warm leuchtender Oeffnung in einer Hoehle; kein Haus."
+    }
+   },
+   "haus_oder_innenraum": "weder noch, eher Innenraum/Hoehle: an beiden Kameras ein dunkler, verwischter Hoehlenraum mit einem glasigen Gefaess bzw. Kasten — kein Haus. Der Prompt traegt nur noch den Stimmungssatz, kein Wort fuer ein Gebaeude; sSE trifft trotzdem den Umriss (0,826), nNW nicht (0,120)."
+  },
+  "S2": {
+   "job": "vis-1792587614-3cd053",
+   "status": "done",
+   "bestellt_prompt": "Nebel, gedämpftes Licht, Tiefe im Dunst",
+   "prompt_woertlich": "fog, muted light, depth fading into haze",
+   "prompt_zusaetze_stimmung": [
+    {
+     "art": "stimmung",
+     "preset": "nebel",
+     "satz": "fog, muted light, depth fading into haze",
+     "schon_im_prompt": false,
+     "herausgenommen": [
+      "nebel"
+     ]
+    }
+   ],
+   "englischer_satz_genau_einmal": true,
+   "deutsches_wort_im_prompt": "nein",
+   "angewandt_environment_aufloesung": "4k",
+   "guete": "vorschau",
+   "grundlage": {
+    "id": "gl-4b421c9fef99e49f",
+    "wiederverwendet": true
+   },
+   "vram_spitze": "27542 MiB / 354 W",
+   "zeit_s": 67.14,
+   "je_kamera": {
+    "sSE": {
+     "geom_iou": 0.8602,
+     "ausserhalb_umriss_anteil": 4.0137,
+     "augenurteil": "Im Nebel ein verschmiertes, durchsichtiges Gestell mit dunklem Kasten; kaum ein Haus."
+    },
+    "nNW": {
+     "geom_iou": 0.8108,
+     "ausserhalb_umriss_anteil": 0.5421,
+     "augenurteil": "Im Nebel ein Turm aus Stuetzen mit rundem Aufsatz auf dunklem Boden; eher Gestell als Haus."
+    }
+   },
+   "haus_oder_innenraum": "kein Innenraum, aber auch kaum ein Haus: verschmiertes Gestell im Nebel (nNW ein Turm auf Stuetzen); Vorschau-Guete.",
+   "grundlage_neu": "G-nebel neu (guete voll, 2 Kameras), dann S2 auf ihr."
+  }
+ },
+ "option_himmel": {
+  "morgen": {
+   "hintergrund_abstand_woertlich": {
+    "sSE": {
+     "weg": "vorprobe",
+     "faktor": 1.0,
+     "abstand_ev": 1.0
+    },
+    "nNW": {
+     "weg": "vorprobe",
+     "faktor": 1.0,
+     "abstand_ev": 1.0
+    }
+   },
+   "hintergrund_M2": "ruhiger Verlauf (8 von 8)",
+   "satz": "Das Himmelsbild ist ein reiner Himmel mit Wolken ueber flachem Horizont (kein Bodenfoto im Blickfeld); es wuerde die M2-Bilder tragen und den flachen Modellfoto-Eindruck nehmen — unter dem Horizont liegt eine weiche Spiegelung, die die Platte nur zum Teil verdeckt."
+  },
+  "abend": {
+   "hintergrund_abstand_woertlich": {
+    "sSE": {
+     "weg": "vorprobe",
+     "faktor": 0.715562,
+     "abstand_ev": 1.0
+    },
+    "nNW": {
+     "weg": "vorprobe",
+     "faktor": 0.70545,
+     "abstand_ev": 1.0
+    }
+   },
+   "hintergrund_M2": "ruhiger Verlauf, rosa-violett (8 von 8)",
+   "satz": "Reiner Abendhimmel mit heller Sonne am Horizont, kein Boden im Bild; wuerde die M2-Bilder tragen, die Sonne steht aber hell hinter dem Haus (Gegenlicht) — der Abstand von einer Blendenstufe muesste dann aus dem Himmel selbst kommen."
+  },
+  "bedeckt": {
+   "hintergrund_abstand_woertlich": {
+    "sSE": {
+     "weg": "vorprobe",
+     "faktor": 3.195152,
+     "abstand_ev": 1.0
+    },
+    "nNW": {
+     "weg": "vorprobe",
+     "faktor": 3.199327,
+     "abstand_ev": 1.0
+    }
+   },
+   "hintergrund_M2": "ruhiger Verlauf, hellgrau (8 von 8)",
+   "satz": "Grauer Wolkenhimmel ohne Boden; er saehe dem jetzigen hellen Verlauf sehr aehnlich — hier bringt der Schalter wenig."
+  },
+  "gemeinsam": "Alle drei Himmelsbilder sind reine Himmel (im Bericht 4096 x 2048, hintergrund art 'verlauf', kamerastrahl 'ruhig'); keines stellt Wald oder Felsen hinter das Haus. Fuer morgen und abend lohnt der Schalter am meisten."
+ },
+ "befunde": [
+  "B1 Messung ausserhalb bei M2: Mit im_lauf ist ausserhalb des Hauses das Cycles-Bild, trotzdem zaehlt qa.ausserhalb_umriss_anteil in abend und bedeckt den flachen Verlauf als Baumasse — z. B. M2-bedeckt-918263 sSE 4,53 (himmel_anteil 0,023, anteil_haus_nah 0,001), M2-abend-205877 nNW 3,73. Folge: 'KI BAUT UEBER DEN UMRISS HINAUS' bei 11 von 24 M2-Bildern und 'NICHT WIEDERZUERKENNEN' bei M2-abend-482913 nNW, obwohl das Auge keinen Bau neben dem Haus sieht. Bei morgen (blauer Verlauf) stimmt die Zahl (0,0008-0,27, ausser zwei nNW-Bildern mit 1,26 und 1,36). anteil_haus_nah trennt richtig (<= 0,002).",
+  "B2 VRAM mit zwei Kameras: M2 liegt mit zwei Kameras 322 MiB UEBER K (27794/27959/27864-27907 gegen 27472/27637/27542-27585 MiB); mit einer Kamera 320 MiB darunter (27116 gegen 27436). Der Satz des Bildmodells sagt 'Grafikspeicher gemessen wie ohne Schalter' — gilt nur fuer eine Kamera.",
+  "B3 S1: Der englische Satz steht genau einmal, ohne deutsches Wort, aufloesung '4k' (Punkte 8 und 9 erfuellt) — aber das Bild zeigt eine dunkle Hoehle mit einem Gefaess statt eines Hauses: Der Prompt besteht nur aus dem Stimmungssatz, nachdem der deutsche Satz herausgenommen wurde; nichts im Prompt sagt 'building'. In 306 war es ein Innenraum, jetzt ein Hoehlenraum.",
+  "B4 M2m: Der kuerzere Satz vorne aendert das Bild stark (219695 Bildpunkte) und haelt den Sichtbeton schwaecher als 303 M2 (Platten statt Ortbeton); Umriss gleich gut.",
+  "B5 Wiederkehrende Formfehler bei M2: Anbau als offener Rahmen/Pergola/Stuetzen, Dachaufbau fehlt oder rund, Naht (Saum, verwischte Kante oder Sockel) bei 8 von 24 Bildern, haeufiger an nNW.",
+  "B6 Waehrend der Matrix lief ein fremdes Kosmo-Sprachmodell auf der CPU (nicht auf der Karte); nicht angefasst, Laufzeiten dadurch laenger."
+ ],
+ "empfehlung_M2_vorgabe": "Ja, mit Auflagen: M2 bringt Sichtbeton (21 von 24 gegen 1 von 24) und haelt den Umriss (geom_iou-Mittel 0,78 gegen 0,46), rechtwinklig wie modelliert aber nur 9 von 24 und eine Naht bei 8 von 24. Vor der Vorgabe: (1) die Ausserhalb-Messung fuer im_lauf auf anteil_haus_nah oder die Bauwerksmaske umstellen (B1), sonst meldet die Visbox bei sauberen Bildern 'baut ueber den Umriss'; (2) den Grafikspeicher-Satz je Kamerazahl messen (B2); (3) den flachen Hintergrund mit dem Himmel-Schalter pruefen, weil der Modellfoto-Eindruck bleibt.",
+ "tafeln": {
+  "ordner": "auftraege/ergebnisse/auf-20261021-309-bilder",
+  "dateien": [
+   "T1-stimmungen-K-M2.png",
+   "T2-M2-vier-seeds.png",
+   "T3-kontrollen.png"
+  ],
+  "inhalt": "T1 je Stimmung eine Zeile K sSE | M2 sSE | K nNW | M2 nNW (Seed 482913); T2 M2 an sSE, vier Seeds je Stimmung; T3 K0 | M2m | 303 M2 | E2n | E3n; unter jedem Bild geom_iou, ausserhalb und Sichtbeton?/Form?/Naht?"
+ },
+ "code_geaendert": "nein",
+ "offen": "Owner-Frage M2 als Vorgabe (ueber die Zentrale); B1 Ausserhalb-Messung bei im_lauf und B3 Stimmungssatz ohne Gebaeude-Wort beim Hauptstrang; Senkung von vram_bildeingang_* durch den Kern (Beleg E2n: 27116 MiB).",
+ "aufraeumen": "eigene Probeauftraege und Grundlagen nach dem letzten Push per gio trash weggeraeumt."
+}
